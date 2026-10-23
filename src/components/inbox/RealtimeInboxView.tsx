@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef, lazy, Suspense, type MouseEventHandler } from 'react';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { usePullToRefresh } from '@/hooks/ui/usePullToRefresh';
 import { MiniChatPiP } from '@/components/mobile/MiniChatPiP';
@@ -57,27 +57,53 @@ interface SearchResult {
 interface TalkMeHeaderButtonProps {
   testId: string;
   count: number | null;
+  countUnavailable: boolean;
   loading: boolean;
   queueName?: string;
-  onClick: () => void;
+  onClick: MouseEventHandler<HTMLButtonElement>;
 }
 
-function TalkMeHeaderButton({ testId, count, loading, queueName, onClick }: TalkMeHeaderButtonProps) {
+function TalkMeHeaderButton({ testId, count, countUnavailable, loading, queueName, onClick }: TalkMeHeaderButtonProps) {
   const queueSuffix = queueName ? ` em ${queueName}` : '';
-  const countLabel = count === null ? '' : `: ${count} atendimentos aguardando`;
+  const waitingLabel = count === null
+    ? ''
+    : `${count} ${count === 1 ? 'atendimento aguardando' : 'atendimentos aguardando'}`;
+  const statusLabel = countUnavailable ? 'contagem de atendimentos indisponível' : waitingLabel;
+  const accessibleStatus = statusLabel ? `: ${statusLabel}` : '';
+  const titleStatus = statusLabel ? ` — ${statusLabel}` : '';
 
   return (
     <LiquidMetalButton
       data-testid={testId}
+      data-talkme-trigger="1"
       label="TALK ME"
       count={count}
       loading={loading}
       compact
-      aria-label={`TALK ME${countLabel}${queueSuffix}`}
-      title={`Abrir atendimentos aguardando${queueSuffix}`}
+      aria-label={`TALK ME${accessibleStatus}${queueSuffix}`}
+      title={`Abrir TALK ME${titleStatus}${queueSuffix}`}
       onClick={onClick}
     />
   );
+}
+
+function isVisibleTalkMeTrigger(element: HTMLButtonElement): boolean {
+  if (!element.isConnected || element.disabled) return false;
+
+  let current: HTMLElement | null = element;
+  while (current) {
+    const style = window.getComputedStyle(current);
+    if (
+      current.hidden
+      || current.getAttribute('aria-hidden') === 'true'
+      || current.classList.contains('hidden')
+      || style.display === 'none'
+      || style.visibility === 'hidden'
+    ) return false;
+    current = current.parentElement;
+  }
+
+  return true;
 }
 
 /**
@@ -123,9 +149,32 @@ export function RealtimeInboxView() {
   });
   const bulkActions = useInboxBulkActions({ refetch: inbox.refetch, filteredConversations: inboxFilters.filteredConversations });
   const [talkMeOpen, setTalkMeOpen] = useState(false);
+  const talkMeTriggerRef = useRef<HTMLButtonElement | null>(null);
   const talkMeEnabled = useFeatureFlag('inbox.talk-me', false);
   const talkMe = useTalkMeQueue(talkMeOpen, talkMeEnabled);
   const talkMeCount = talkMe.queuesError ? null : (talkMe.selectedQueue?.waitingCount ?? null);
+  const handleOpenTalkMe = useCallback<MouseEventHandler<HTMLButtonElement>>((event) => {
+    talkMeTriggerRef.current = event.currentTarget;
+    setTalkMeOpen(true);
+  }, []);
+  const handleTalkMeOpenChange = useCallback((open: boolean) => {
+    setTalkMeOpen(open);
+    if (open) return;
+
+    const openingTrigger = talkMeTriggerRef.current;
+    window.requestAnimationFrame(() => {
+      const firstAvailableTrigger = document.querySelector<HTMLButtonElement>(
+        '[data-talkme-trigger]:not([disabled])',
+      );
+      const availableTriggers = document.querySelectorAll<HTMLButtonElement>(
+        '[data-talkme-trigger]:not([disabled])',
+      );
+      const trigger = [openingTrigger, firstAvailableTrigger, ...availableTriggers]
+        .find((candidate): candidate is HTMLButtonElement =>
+          candidate !== null && isVisibleTalkMeTrigger(candidate));
+      trigger?.focus();
+    });
+  }, []);
   // Rostos das conversas fixadas exibidos no header do chat (ocupam o espaço
   // livre quando o painel de detalhes está fechado).
   const pinnedConversations = useMemo(
@@ -312,7 +361,7 @@ export function RealtimeInboxView() {
       {talkMeEnabled && (
         <TalkMeView
           open={talkMeOpen}
-          onOpenChange={setTalkMeOpen}
+          onOpenChange={handleTalkMeOpenChange}
           controller={talkMe}
           onAccepted={async (contactId) => {
             await inbox.refetch();
@@ -348,8 +397,9 @@ export function RealtimeInboxView() {
         bulkActions={bulkActions}
         pullToRefresh={pullToRefresh}
         conversationActions={conversationActions}
-        onOpenTalkMe={() => setTalkMeOpen(true)}
+        onOpenTalkMe={handleOpenTalkMe}
         talkMeCount={talkMe.queuesError ? null : (talkMe.selectedQueue?.waitingCount ?? null)}
+        talkMeCountUnavailable={Boolean(talkMe.queuesError)}
         talkMeLoading={talkMe.queuesLoading}
         talkMeQueueName={talkMe.selectedQueue?.name}
         talkMeEnabled={talkMeEnabled}
@@ -370,9 +420,10 @@ export function RealtimeInboxView() {
                     <TalkMeHeaderButton
                       testId="talk-me-button"
                       count={talkMeCount}
+                      countUnavailable={Boolean(talkMe.queuesError)}
                       loading={talkMe.queuesLoading}
                       queueName={talkMe.selectedQueue?.name}
-                      onClick={() => setTalkMeOpen(true)}
+                      onClick={handleOpenTalkMe}
                     />
                   ) : null}
                 />
@@ -467,9 +518,10 @@ export function RealtimeInboxView() {
                 <TalkMeHeaderButton
                   testId="talk-me-button-empty"
                   count={talkMeCount}
+                  countUnavailable={Boolean(talkMe.queuesError)}
                   loading={talkMe.queuesLoading}
                   queueName={talkMe.selectedQueue?.name}
-                  onClick={() => setTalkMeOpen(true)}
+                  onClick={handleOpenTalkMe}
                 />
               </div>
             )}

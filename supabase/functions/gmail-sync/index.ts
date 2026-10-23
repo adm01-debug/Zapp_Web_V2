@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { handleCors, errorResponse, jsonResponse, Logger, requireEnv } from "../_shared/validation.ts";
-import { ensureValidToken, gmailFetch, reconcileEmailThreads, recordGmailAccountFailure, runGmailFullSync, sanitizeGmailErrorMessage, syncLabels, syncMessageIds } from "../_shared/gmail-helpers.ts";
+import { claimGmailAccountSync, ensureValidToken, gmailFetch, GMAIL_REAUTH_HTTP_STATUS, gmailReauthErrorPayload, isGmailReauthError, reconcileEmailThreads, recordGmailAccountFailure, runGmailFullSync, sanitizeGmailErrorMessage, syncLabels, syncMessageIds, type GmailSyncClaim } from "../_shared/gmail-helpers.ts";
 
 const GMAIL_RESOURCE_ID_RE = /^[0-9A-Za-z_-]{1,200}$/;
 // Cor de marcador do Gmail: o schema só garante o formato hex; a paleta exata é
@@ -80,6 +80,7 @@ export async function runGmailIncrementalSync(
   account: { id: string; history_id: string },
   accessToken: string,
   log: Logger,
+  claim?: GmailSyncClaim,
 ): Promise<GmailIncrementalSyncOutcome> {
   const changedMessageIds = new Set<string>();
   const deletedMessageIds = new Set<string>();
@@ -106,7 +107,6 @@ export async function runGmailIncrementalSync(
   for (const deletedId of deletedMessageIds) changedMessageIds.delete(deletedId);
   const changedResult = await syncMessageIds(supabase, account.id, accessToken, log, [...changedMessageIds]);
   if (changedResult.failed > 0) {
-    await supabase.from("gmail_accounts").update({ sync_status: "error", last_sync_at: new Date().toISOString(), last_error: `${changedResult.failed} eventos incrementais falharam; cursor preservado` }).eq("id", account.id);
     return { status: 207, payload: { success: false, cursor_advanced: false, changed_messages: changedMessageIds.size, ...changedResult } };
   }
 
@@ -121,12 +121,16 @@ export async function runGmailIncrementalSync(
     }
     await reconcileEmailThreads(supabase, account.id, affectedDeletedThreadIds);
   }
-  const { data: advanced, error: cursorError } = await supabase.from("gmail_accounts").update({
+  let cursorUpdate = supabase.from("gmail_accounts").update({
     history_id: latestHistoryId,
     sync_status: "synced",
     last_sync_at: new Date().toISOString(),
     last_error: null,
-  }).eq("id", account.id).eq("history_id", account.history_id).select("id");
+    error_count: 0,
+    next_attempt_at: null,
+  }).eq("id", account.id).eq("history_id", account.history_id);
+  if (claim) cursorUpdate = cursorUpdate.eq("updated_at", claim.updatedAt);
+  const { data: advanced, error: cursorError } = await cursorUpdate.select("id");
   if (cursorError) throw new Error("Failed to persist Gmail history cursor");
   const cursorAdvanced = Boolean(advanced && advanced.length > 0);
   return { status: 200, payload: { success: true, cursor_advanced: cursorAdvanced, changed_messages: changedMessageIds.size, deleted_messages: deletedMessageIds.size, synced: changedResult.synced, history_pages: pages } };
@@ -291,7 +295,7 @@ export async function handleGmailSync(req: Request): Promise<Response> {
 
     const { data: account } = await supabase
       .from("gmail_accounts")
-      .select("id, email_address, is_active, sync_status, token_expires_at, history_id, user_id")
+      .select("id, email_address, is_active, sync_status, error_count, next_attempt_at, token_expires_at, history_id, user_id, updated_at")
       .eq("id", body.account_id).eq("user_id", user.id).eq("is_active", true).single();
 
     // Conta do próprio usuário: o filtro por `user_id` é o que nega o não-dono.
@@ -302,7 +306,37 @@ export async function handleGmailSync(req: Request): Promise<Response> {
       return errorResponse("Gmail account not found or inactive", 403, req);
     }
 
-    const accessToken = await ensureValidToken(supabase, account, log);
+    if (body.action === "sync-incremental" && !account.history_id) {
+      log.done(400);
+      return errorResponse("No history_id. Run full sync first.", 400, req);
+    }
+
+    const isSyncAction = body.action === "sync-inbox" || body.action === "sync-incremental";
+    const claim = isSyncAction ? await claimGmailAccountSync(supabase, account) : null;
+    if (isSyncAction && !claim) {
+      log.done(409, { action: body.action, reason: "sync_already_claimed" });
+      return errorResponse("Gmail sync already in progress", 409, req);
+    }
+
+    let accessToken: string;
+    try {
+      accessToken = await ensureValidToken(supabase, account, log, (updatedAt) => {
+        if (claim) claim.updatedAt = updatedAt;
+      });
+    } catch (err) {
+      const previousErrorCount = Number.isFinite(account.error_count) ? Math.max(0, account.error_count ?? 0) : 0;
+      const failureClaim = claim ?? (account.updated_at ? { updatedAt: account.updated_at, errorCount: previousErrorCount } : undefined);
+      try {
+        await recordGmailAccountFailure(supabase, account.id, err, previousErrorCount + 1, previousErrorCount, failureClaim);
+      } catch (recordErr) {
+        log.error("Falha ao registrar o estado de erro da conta Gmail", { error: recordErr instanceof Error ? recordErr.message : String(recordErr) });
+      }
+      if (isGmailReauthError(err)) {
+        log.done(GMAIL_REAUTH_HTTP_STATUS, { action: body.action, reauth_required: true });
+        return jsonResponse(gmailReauthErrorPayload(), GMAIL_REAUTH_HTTP_STATUS, req);
+      }
+      throw err;
+    }
 
     switch (body.action) {
       case "sync-labels": {
@@ -312,9 +346,11 @@ export async function handleGmailSync(req: Request): Promise<Response> {
       }
 
       case "sync-inbox": {
-        await supabase.from("gmail_accounts").update({ sync_status: "syncing" }).eq("id", account.id);
         try {
-          const result = await runGmailFullSync(supabase, account.id, accessToken, log, body.query || "in:inbox", body.maxResults || 50);
+          const result = await runGmailFullSync(supabase, account.id, accessToken, log, body.query || "in:inbox", body.maxResults || 50, {
+            ...claim!,
+            errorCount: account.error_count,
+          });
           if (result.failed > 0) {
             log.done(207, { synced: result.synced, failed: result.failed });
             return jsonResponse({ success: false, ...result }, 207, req);
@@ -324,7 +360,17 @@ export async function handleGmailSync(req: Request): Promise<Response> {
         } catch (err: unknown) {
           try {
             // token revogado/expirado vira 'reauth_required'; o resto 'error'.
-            await recordGmailAccountFailure(supabase, account.id, err, 1);
+            const previousErrorCount = Number.isFinite(account.error_count)
+              ? Math.max(0, account.error_count ?? 0)
+              : 0;
+            await recordGmailAccountFailure(
+              supabase,
+              account.id,
+              err,
+              previousErrorCount + 1,
+              previousErrorCount,
+              { ...claim!, errorCount: previousErrorCount },
+            );
           } catch (recordErr) {
             log.error("Falha ao registrar o estado de erro da conta Gmail", { error: recordErr instanceof Error ? recordErr.message : String(recordErr) });
           }
@@ -333,10 +379,30 @@ export async function handleGmailSync(req: Request): Promise<Response> {
       }
 
       case "sync-incremental": {
-        if (!account.history_id) { log.done(400); return errorResponse("No history_id. Run full sync first.", 400, req); }
-        const outcome = await runGmailIncrementalSync(supabase, account, accessToken, log);
-        log.done(outcome.status, { changedMessages: outcome.payload.changed_messages, deletedMessages: outcome.payload.deleted_messages, synced: outcome.payload.synced, pages: outcome.payload.history_pages, cursorAdvanced: outcome.payload.cursor_advanced });
-        return jsonResponse(outcome.payload, outcome.status, req);
+        try {
+          const outcome = await runGmailIncrementalSync(supabase, account, accessToken, log, claim!);
+          if (outcome.status === 207) {
+            const previousErrorCount = Number.isFinite(account.error_count) ? Math.max(0, account.error_count ?? 0) : 0;
+            await recordGmailAccountFailure(
+              supabase,
+              account.id,
+              new Error(`${String(outcome.payload.failed)} eventos incrementais falharam; cursor preservado`),
+              previousErrorCount + 1,
+              previousErrorCount,
+              { ...claim!, errorCount: previousErrorCount },
+            );
+          }
+          log.done(outcome.status, { changedMessages: outcome.payload.changed_messages, deletedMessages: outcome.payload.deleted_messages, synced: outcome.payload.synced, pages: outcome.payload.history_pages, cursorAdvanced: outcome.payload.cursor_advanced });
+          return jsonResponse(outcome.payload, outcome.status, req);
+        } catch (err) {
+          const previousErrorCount = Number.isFinite(account.error_count) ? Math.max(0, account.error_count ?? 0) : 0;
+          try {
+            await recordGmailAccountFailure(supabase, account.id, err, previousErrorCount + 1, previousErrorCount, { ...claim!, errorCount: previousErrorCount });
+          } catch (recordErr) {
+            log.error("Falha ao registrar o estado de erro da conta Gmail", { error: recordErr instanceof Error ? recordErr.message : String(recordErr) });
+          }
+          throw err;
+        }
       }
 
       case "get-thread": {

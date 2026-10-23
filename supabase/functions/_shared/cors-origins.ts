@@ -13,6 +13,7 @@
 export const EXACT_ALLOWED_ORIGINS = new Set([
   'https://zapp-web-v2.vercel.app',
   'https://zappweb.app.br',
+  'https://www.zappweb.app.br',
 ]);
 
 /** Origem devolvida quando a do pedido não é aceita (ou não existe). */

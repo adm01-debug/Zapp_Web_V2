@@ -81,7 +81,7 @@ async function fetchSearchInsights(days: number): Promise<SearchInsights> {
   // A RPC nasce na migration irmã 20261016112552 (HZ1-06) e ainda não está no
   // types.ts gerado. O contrato fica replicado aqui até o artefato ser
   // ressincronizado — então esta ponte vira um `supabase.rpc('get_search_insights', …)`.
-  const rpc = supabase.rpc as unknown as (
+  const rpc = supabase.rpc.bind(supabase) as unknown as (
     fn: 'get_search_insights',
     args: { p_days: number },
   ) => Promise<{ data: unknown; error: { message: string } | null }>;
