@@ -105,7 +105,7 @@ describe('rulesToPostgrest — campos de audiencia novos', () => {
   it('assigned_to (kind uuid): igualdade, preenchido e vazio apontam para a coluna assigned_to', () => {
     const uuid = '11111111-2222-3333-4444-555555555555';
     expect(filtroDe('assigned_to', 'eq', uuid)).toBe(`assigned_to.eq."${uuid}"`);
-    expect(filtroDe('assigned_to', 'neq', uuid)).toBe(`or(assigned_to.is.null,assigned_to.neq."${uuid}"`);
+    expect(filtroDe('assigned_to', 'neq', uuid)).toBe(`or(assigned_to.is.null,assigned_to.neq."${uuid}")`);
     expect(filtroDe('assigned_to', 'is_set', '')).toBe('assigned_to.not.is.null');
     // Coluna uuid nao compara com string vazia (`eq.`): "vazio" aqui e apenas nulo.
     expect(filtroDe('assigned_to', 'is_empty', '')).toBe('assigned_to.is.null');
@@ -357,7 +357,7 @@ describe('real_sector/real_uf (ponte Singu): resolução falha fechada', () => {
       ] }],
     } as never);
     expect(incompleteCount).toBe(3);
-    expect(complete.groups[0].rules.map((r) => r.field)).toEqual([]);
+    expect(complete.groups).toHaveLength(0);
   });
 
   it('countAudience rejeita real_sector e não manda regra nenhuma ao motor', async () => {
