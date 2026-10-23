@@ -3,16 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { invokeEdge } from '@/lib/invokeEdge';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 
 interface AuditLogRow {
   id: string;
@@ -30,7 +20,6 @@ interface RunResult {
 export function MediaMigrationTool() {
   const [pendingCount, setPendingCount] = useState<number | null>(null);
   const [countError, setCountError] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [running, setRunning] = useState(false);
   const [runResult, setRunResult] = useState<RunResult | null>(null);
   const [runError, setRunError] = useState<{ message: string; code?: string } | null>(null);
@@ -91,11 +80,10 @@ export function MediaMigrationTool() {
   }, []);
 
   async function handleRun() {
-    setDialogOpen(false);
     setRunning(true);
     setRunError(null);
     setRunResult(null);
-    const { data, error } = await invokeEdge<RunResult>('migrate-media-storage', { method: 'POST' });
+    const { data, error } = await invokeEdge('migrate-media-storage', { method: 'POST' });
     setRunning(false);
     if (error) {
       setRunError({ message: error.message, code: error.code });
@@ -103,8 +91,9 @@ export function MediaMigrationTool() {
       return;
     }
     if (data) {
-      setRunResult(data);
-      toast.success(`${data.migrated} mídias migradas com sucesso!`);
+      const result = data as RunResult;
+      setRunResult(result);
+      toast.success(`${result.migrated} mídias migradas com sucesso!`);
     }
   }
 
@@ -118,33 +107,18 @@ export function MediaMigrationTool() {
         ) : null}
       </div>
 
-      <Button disabled={running} onClick={() => setDialogOpen(true)}>
+      <Button disabled={running} onClick={() => void handleRun()}>
         Iniciar Migração
       </Button>
-
-      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Iniciar a migração de mídia?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {pendingCount} mídias aguardam migração. Este processo pode levar alguns minutos.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRun}>Iniciar migração</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {running && (
         <div>
           <div
             role="progressbar"
             aria-label="Progresso da migração de mídia"
-            aria-valuetext="Migrando mídias"
+            data-state="indeterminate"
           />
-          <p>Aguarde: o total só aparece quando a execução termina</p>
+          <p>Processando mídias...</p>
         </div>
       )}
 

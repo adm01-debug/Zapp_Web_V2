@@ -1,9 +1,21 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { functions: { invoke: vi.fn(() => new Promise(() => {})) } },
-}));
+vi.mock('@/integrations/supabase/client', () => {
+  const q: Record<string, unknown> = {};
+  q.select = () => q;
+  q.like = () => Promise.resolve({ data: null, error: null, count: 0 });
+  q.eq = () => q;
+  q.order = () => q;
+  q.limit = () => Promise.resolve({ data: [], error: null });
+  q.in = () => Promise.resolve({ data: [], error: null });
+  return {
+    supabase: {
+      from: () => q,
+      functions: { invoke: vi.fn(() => new Promise(() => {})) },
+    },
+  };
+});
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));

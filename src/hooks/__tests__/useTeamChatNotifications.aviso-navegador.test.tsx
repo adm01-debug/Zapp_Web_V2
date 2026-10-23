@@ -93,6 +93,7 @@ const mensagem = (senderId: string, conversationId = 'c1') => ({
 
 describe('useTeamChatNotifications — aviso do navegador (HZ3-001)', () => {
   beforeEach(() => {
+    vi.stubGlobal('Notification', { permission: 'granted' });
     vi.clearAllMocks();
     h.avisos.length = 0;
     h.handler = null;

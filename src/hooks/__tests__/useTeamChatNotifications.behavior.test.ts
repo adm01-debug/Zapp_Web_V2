@@ -45,6 +45,7 @@ class FakeAudioContext {
 }
 
 vi.stubGlobal('AudioContext', FakeAudioContext);
+vi.stubGlobal('Notification', { permission: 'default' });
 
 const h = vi.hoisted(() => ({
   membership: [] as Array<{ id: string; is_muted: boolean }>,
