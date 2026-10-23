@@ -1,8 +1,11 @@
 # Dossiê — `hermes/telefonia-contrato-dados-26092615475e51`
 
 > Análise produzida em 2026-10-23 por sessão `claude/dazzling-cannon-j7iw08`.
-> Método: diff 3-pontos (sem base comum — ver §Diff), 6 módulos-fonte lidos, typecheck/vitest/eslint
-> re-executados nesta sessão em worktree `/tmp/wt-telefonia-v3`, cherry-pick real testado.
+> Método: diff 3-pontos (sem base comum — ver §Diff), todos os 20 arquivos do diff lidos integralmente
+> nesta sessão (incluindo session.ts reduce, migration 596 linhas completas, 6 arquivos de teste),
+> typecheck/vitest/eslint re-executados em worktree `/tmp/wt-tel-final` nesta sessão, cherry-pick real testado.
+> Inventário lido nesta sessão: branches.json entry confirmado (Category B, ahead=8098, merge_base=NONE),
+> RELATORIO_INVENTARIO.md, top30.txt — branch não consta no top30.
 
 ---
 

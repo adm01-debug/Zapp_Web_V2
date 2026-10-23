@@ -9,7 +9,7 @@
       "dossie": "analise/dossies/hermes-telefonia-contrato-dados-26092615475e51.md",
       "analisado_em": "2026-10-23",
       "sessao": "claude/dazzling-cannon-j7iw08",
-      "notas": "Fases 1-2 do plano de telefonia (biblioteca de domínio + contrato de dados). Conteúdo 100% em main: migration 20260926800000 em produção, src/lib/calls/ evoluído para 21 arquivos (branch tinha 6). Typecheck 0 erros, 217 testes passam, eslint exit 0 — verificados em worktree /tmp/wt-telefonia-v3 nesta sessão. Cherry-pick real: 2 conflitos add/add doc-only, código=patches vazios. Zero refs SINGU. Sem escrita remota nesta sessão."
+      "notas": "Fases 1-2 do plano de telefonia (biblioteca de domínio + contrato de dados). Conteúdo 100% em main: migration 20260926800000 em produção, src/lib/calls/ evoluído para 21 arquivos (branch tinha 6). Diff completo lido nesta sessão: todos 20 arquivos, incluindo session.ts (380 linhas, reduce puro), migration (596 linhas, 4 RPCs + ACL), 6 arquivos de teste. Typecheck 0 erros, 217 testes passam, eslint exit 0 — verificados em worktree /tmp/wt-tel-final nesta sessão. Cherry-pick real: 2 conflitos add/add doc-only, código=patches vazios. Zero refs SINGU. Sem escrita remota nesta sessão (nota: commit bfaf39be foi push de sessão anterior — reconhecido no dossiê)."
     }
   ]
 }
