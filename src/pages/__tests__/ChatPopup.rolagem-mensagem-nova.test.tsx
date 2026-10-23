@@ -111,9 +111,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
   getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
-  // GA53: a cadeia de import alcanca invokeEdge (createLogger) e o correlacao
-  // de requisicoes (generateCorrelationId); sem eles a suite nem carrega.
-  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
   generateCorrelationId: () => 'test-correlation-id',
 }));
 

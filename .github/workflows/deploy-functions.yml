@@ -143,7 +143,7 @@ jobs:
       - name: Resolver ref para rollback automatico
         if: inputs.rollback_to_last_success == true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           node --input-type=module <<'NODE'
@@ -218,7 +218,7 @@ jobs:
       - name: Serializar escopo TODAS contra deploys por funcao
         # Roda com a ferramenta fixada do GITHUB_SHA (vale tambem em rollback).
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           SCOPE: ${{ inputs.function_name || 'all' }}
         run: node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/serialize-scope.mjs"
 
@@ -590,7 +590,7 @@ jobs:
         if: success() && inputs.dry_run != true
         id: deployment
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           ESCOPO: ${{ inputs.function_name }}
         run: |
           set -euo pipefail

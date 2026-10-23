@@ -9,6 +9,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260930460000_harden_talk_me_client_table_privileges.sql"
+search_hardening_migration="$repo_root/supabase/migrations/20261020190001_talk_me_search_hardening.sql"
 postgres_image="${TALK_ME_ACL_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-talk-me-acl-test-$$"
 tmp_dir="$(mktemp -d /tmp/zapp-v2-talk-me-acl.XXXXXX)"
@@ -51,6 +52,7 @@ expect_error() {
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 [[ -f "$migration" ]] || fail "migration nao encontrada: $migration"
+[[ -f "$search_hardening_migration" ]] || fail "migration nao encontrada: $search_hardening_migration"
 
 docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=test_only "$postgres_image" >/dev/null
 ready_checks=0
@@ -165,8 +167,10 @@ SQL
 
 psql_file "$tmp_dir/pre.sql"
 psql_file "$migration"
+psql_file "$search_hardening_migration"
 # Reaplicacao deve preservar exatamente o mesmo contrato.
 psql_file "$migration"
+psql_file "$search_hardening_migration"
 
 tables="ARRAY['contacts','messages','queues','queue_members','feature_flags','whatsapp_groups']"
 extras="ARRAY['TRUNCATE','REFERENCES','TRIGGER','MAINTAIN']"
@@ -217,6 +221,10 @@ expect_value 'A9 os dois triggers continuam anexados e ativos' '2' \
   "SELECT count(*) FROM pg_trigger WHERE tgrelid='public.contacts'::regclass
    AND tgname IN ('trg_prevent_contact_queue_hijack','trg_prevent_contact_assignee_hijack')
    AND tgenabled='O' AND NOT tgisinternal;"
+expect_value 'A10 anon nao executa a funcao de fila recriada' 'f' \
+  "SELECT has_function_privilege('anon','public.talk_me_list_waiting(uuid,text,integer,timestamptz,uuid)','EXECUTE');"
+expect_value 'A11 authenticated executa a funcao de fila recriada' 't' \
+  "SELECT has_function_privilege('authenticated','public.talk_me_list_waiting(uuid,text,integer,timestamptz,uuid)','EXECUTE');"
 
 agent='{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}'
 admin='{"sub":"10000000-0000-0000-0000-000000000003","role":"authenticated"}'

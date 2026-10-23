@@ -1,13 +1,14 @@
 # docs:
-#   gatilho: pull_request, push na main, merge_group e dispatch
-#   prova: lint, tipos, testes, build, security e E2E do codigo
+#   gatilho: pull_request, push na main e dispatch
+#   prova: tipos, testes de unidade, contratos Node/Edge, build, security e E2E publico
 #   falha: PR fica vermelho e o merge e bloqueado pelos required checks
 #   avisa: autor do PR e revisor, via checks do GitHub
 # nao-e-bug:
-#   - merge_group inerte: o gatilho merge_group esta nos YAMLs mas a fila de merge nao pode ser ligada -- conta adm01-debug e tipo User, nao Organization (merge queue e exclusivo de org)
+#   - merge_group ausente: este workflow declara somente push, pull_request e workflow_dispatch; a fila de merge nao esta disponivel para a conta adm01-debug (tipo User, nao Organization)
 # =================================================
-# CI minimo (16/10/2026, decisao do Joaquim): tipos + testes de unidade + build.
-# Guardas de banco, E2E, auditorias e contratos de workflow sairam do CI por PR.
+# O CI principal executa TypeCheck, Vitest, contratos Node/Edge, build, auditoria
+# de dependencias/segredos e E2E publico nos PRs. Guardas de banco que dependem
+# de servicos/credenciais de producao continuam fora do CI de PR.
 # =================================================
 
 name: CI/CD Pipeline
@@ -121,6 +122,11 @@ jobs:
         with:
           node-version: '24'
 
+      - name: 🦕 Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
+
       - name: 🧄 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
@@ -137,9 +143,18 @@ jobs:
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: 🧩 Run Node CI scripts tests
-        run: node --test scripts/ci/*.unit.mjs
+        run: >-
+          node --test scripts/ci/*.unit.mjs
         env:
           CI: true
+
+      - name: 🧪 Test Vercel ignore-build guard
+        run: node scripts/vercel/ignore-build.unit.mjs
+
+      - name: 🦕 Test Edge handlers
+        run: |
+          deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')
 
   build:
     name: 🏗️ Build
@@ -201,6 +216,10 @@ jobs:
           echo "CSS Files:"
           find dist -name "*.css" -exec du -h {} \;
 
+      # Vitest roda em shards sem coletar coverage. Não tente anexar `coverage/`
+      # neste runner: ele é separado dos shards e o upload anterior era no-op.
+      # Cobertura no CI exige agregação dos shards e aplicação dos thresholds uma vez.
+
   # ===========================================
   # JOB 4: Security Audit
   # ===========================================
@@ -219,6 +238,13 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -268,6 +294,13 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
@@ -290,26 +323,25 @@ jobs:
         # githubactions:S8543: `bunx playwright` sem versao puxaria um release
         # nao verificado).
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         # O cache guarda os browsers, não os pacotes do apt: com o cache quente
         # as bibliotecas do sistema ainda precisam ser instaladas.
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.63.0 install-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install-deps chromium firefox webkit
 
-      # Projetos "chromium", "firefox-auth" e "webkit-auth" exercitam auth.spec.ts
-      # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
-      # referenciar esses secrets (scripts/ci/check-pr-workflow-secrets.mjs), então
-      # o login real roda em .github/workflows/e2e-logado.yml, depois do merge na main.
+      # O projeto "chromium" exercita auth.spec.ts deslogado. Workflows de PR não
+      # recebem E2E_TEST_EMAIL/E2E_TEST_PASSWORD; o cross-browser de login roda em
+      # .github/workflows/e2e-logado.yml, depois do merge na main.
       # chromium-mapa (E71/E72 picker, E73 cadastro, E74 mapa/pino) entra AQUI também:
       # ele já roda no e2e-logado.yml (pós-merge), mas é deslogado — o projeto não
       # declara `setup` nem `storageState`; as specs autenticam por sessão FALSA
       # (installFakeSession) com REST/RPC e Mapbox mockados, logo executam sem secret
       # algum. Sem esta linha os PRs passavam com E2E VERDE sem rodar spec alguma do
       # mapa (#463 / E75).
-      - name: 🧪 Run Playwright E2E (chromium + firefox + webkit, sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
+      - name: 🧪 Run Playwright E2E (PR sem autenticação)
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
         env:
           CI: true
 
@@ -342,10 +374,11 @@ jobs:
   # O GitHub Actions não oferece `paths:` por job — o filtro `paths` só existe no
   # gatilho do workflow, e usá-lo aqui restringiria TODOS os jobs do ci.yml. Para
   # não alterar os jobs existentes, o filtro de caminhos roda em STEP
-  # (`git diff --name-only` contra a base do PR), a alternativa prevista na
-  # auditoria de GitHub Actions (E64).
+  # (diff entre o SHA base do evento e o merge sintético do PR), alternativa
+  # prevista na auditoria de GitHub Actions (E64).
   mutation-mapa:
     name: 🧬 Mutação do mapa (não bloqueante)
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     continue-on-error: true
@@ -354,24 +387,33 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # W48: checkout raso; o fetch do BASE_REF abaixo traz só o ancestral necessário.
-          fetch-depth: 1
+          # Dois níveis incluem os pais do merge sintético (base e head), sem
+          # baixar o histórico inteiro só para filtrar caminhos.
+          fetch-depth: 2
 
       # Filtro de caminhos (E70): só o módulo do mapa justifica a rodada.
       - name: 🔎 Detectar mudança no módulo do mapa (paths filter)
         id: paths
         env:
-          BASE_REF: ${{ github.base_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
-          if [ -z "${BASE_REF:-}" ]; then
-            # push/dispatch/merge_group: sem base de PR, roda (fail-open).
-            echo "map_changed=true" >> "$GITHUB_OUTPUT"
-            exit 0
+          if [ -z "${BASE_SHA:-}" ]; then
+            echo "::error::O evento pull_request não informou o SHA da base; filtro de caminhos inconclusivo."
+            exit 1
           fi
-          # W48: busca apenas os últimos 50 commits da base — suficiente para achar o merge-base.
-          git fetch origin "${BASE_REF}" --depth=50 --quiet
-          changed="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
+
+          # fetch-depth=2 traz o merge sintético e os pais diretos. A história
+          # anterior ao SHA base não participa deste filtro.
+          if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "::error::O SHA base '${BASE_SHA}' não está entre os pais do merge sintético."
+            exit 1
+          fi
+
+          # Em pull_request, actions/checkout usa o merge sintético do GitHub
+          # como HEAD. Comparar sua árvore com o SHA base do evento evita buscar
+          # todos os ancestrais apenas para descobrir os caminhos tocados.
+          changed="$(git diff --name-only "$BASE_SHA" HEAD)"
           printf 'Arquivos alterados no PR:\n%s\n' "$changed"
           if printf '%s\n' "$changed" | grep -Eq '^(src/lib/mapbox|src/components/inbox/location-picker/)'; then
             echo "map_changed=true" >> "$GITHUB_OUTPUT"
@@ -384,6 +426,14 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        if: steps.paths.outputs.map_changed == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
 
       - name: 📚 Install dependencies
         if: steps.paths.outputs.map_changed == 'true'
