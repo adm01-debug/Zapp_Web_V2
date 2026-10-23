@@ -562,6 +562,8 @@ test('E69: o build continua atrás do lint E do test', () => {
   const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
   assert.ok(anc.has('typecheck'), 'build deixou de esperar o lint');
   assert.ok(anc.has('unit-tests'), 'build deixou de esperar o test');
+});
+
 // W99: novos invariantes de segurança de workflow
 
 test('W99: todo curl usa --proto e --tlsv1.2', async () => {
