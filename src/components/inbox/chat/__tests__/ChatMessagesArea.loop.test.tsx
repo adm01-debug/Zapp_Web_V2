@@ -15,16 +15,19 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Message } from '@/types/chat';
 import { ChatMessagesArea } from '../ChatMessagesArea';
 
-// ResizeObserverMock que dispara o callback de forma assíncrona (setTimeout 0)
-// para evitar stack overflow: o virtual-core re-observa itens dentro do callback
-// de medição, o que causa recursão infinita se o disparo for síncrono.
+// ResizeObserverMock que dispara o callback de forma síncrona com guard de
+// recursão: evita stack overflow (o virtual-core re-observa itens dentro do
+// callback de medição) sem sair do ciclo de render síncrono do React.
 class ResizeObserverMock {
   private cb: ResizeObserverCallback;
+  private static _depth = 0;
   constructor(cb: ResizeObserverCallback) {
     this.cb = cb;
   }
   observe(target: Element) {
-    setTimeout(() => {
+    if (ResizeObserverMock._depth > 0) return;
+    ResizeObserverMock._depth++;
+    try {
       this.cb(
         [
           {
@@ -40,7 +43,9 @@ class ResizeObserverMock {
         ],
         this,
       );
-    }, 0);
+    } finally {
+      ResizeObserverMock._depth--;
+    }
   }
   unobserve() {}
   disconnect() {}

@@ -20,11 +20,14 @@ import { ChatMessagesArea, type ChatMessagesAreaRef } from '../ChatMessagesArea'
 const ALTURA_ITEM = 120;
 class ResizeObserverMock {
   private cb: ResizeObserverCallback;
+  private static _depth = 0;
   constructor(cb: ResizeObserverCallback) {
     this.cb = cb;
   }
   observe(target: Element) {
-    setTimeout(() => {
+    if (ResizeObserverMock._depth > 0) return;
+    ResizeObserverMock._depth++;
+    try {
       this.cb(
         [
           {
@@ -40,7 +43,9 @@ class ResizeObserverMock {
         ],
         this,
       );
-    }, 0);
+    } finally {
+      ResizeObserverMock._depth--;
+    }
   }
   unobserve() {}
   disconnect() {}
@@ -128,7 +133,9 @@ function renderArea(props: AreaProps) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <ChatMessagesArea ref={(r) => { areaRef.current = r; }} {...props} />
+      <div style={{ height: 600, overflowY: 'auto' }}>
+        <ChatMessagesArea ref={(r) => { areaRef.current = r; }} {...props} />
+      </div>
     </QueryClientProvider>,
   );
 }

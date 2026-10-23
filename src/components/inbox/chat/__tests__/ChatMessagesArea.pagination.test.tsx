@@ -19,18 +19,22 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Message } from '@/types/chat';
 import { ChatMessagesArea } from '../ChatMessagesArea';
 
-// Mesmo mock do ChatMessagesArea.loop.test.tsx: disparo assincrono do callback
-// (setTimeout 0) para nao recursar dentro da re-observacao do virtual-core.
-// Altura 120 e diferente do estimateSize (100) do componente: forca a correcao
-// estimate -> real logo depois do prepend, que e onde a ancora costuma pular.
+// ResizeObserverMock síncrono com guard de recursão: garante que containerSize
+// seja atualizado dentro do ciclo act() do React (sem setTimeout que escapa do
+// ciclo e não aciona re-render visível ao waitFor).
+// Altura 120 é diferente do estimateSize (100) do componente: força a correção
+// estimate -> real logo depois do prepend, que é onde a âncora costuma pular.
 const ALTURA_ITEM = 120;
 class ResizeObserverMock {
   private cb: ResizeObserverCallback;
+  private static _depth = 0;
   constructor(cb: ResizeObserverCallback) {
     this.cb = cb;
   }
   observe(target: Element) {
-    setTimeout(() => {
+    if (ResizeObserverMock._depth > 0) return;
+    ResizeObserverMock._depth++;
+    try {
       this.cb(
         [
           {
@@ -46,7 +50,9 @@ class ResizeObserverMock {
         ],
         this,
       );
-    }, 0);
+    } finally {
+      ResizeObserverMock._depth--;
+    }
   }
   unobserve() {}
   disconnect() {}
