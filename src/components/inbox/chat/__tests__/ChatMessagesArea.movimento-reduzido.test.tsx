@@ -65,6 +65,11 @@ vi.mock('@/services/chat.service', () => ({
   ChatService: { deleteMessage: vi.fn(async () => {}) },
 }));
 
+vi.mock('@/hooks/reactions/useBatchReactions', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ReactionsBatchProvider: ({ children }: { children: any }) => children,
+}));
+
 function makeMessage(id: string, sender: 'contact' | 'agent', timestamp: Date): Message {
   return {
     id,
