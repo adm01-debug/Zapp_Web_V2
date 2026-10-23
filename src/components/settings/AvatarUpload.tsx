@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -10,22 +11,10 @@ import { getLogger } from '@/lib/logger';
 
 const log = getLogger('AvatarUpload');
 
-/**
- * Extrai o caminho do objeto no bucket `avatars` a partir da URL pública
- * salva no perfil (ex.: .../object/public/avatars/<id>/avatar-<ts>.png?t=123).
- */
-function avatarPathFromUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-  const marcador = '/object/public/avatars/';
-  const inicio = url.indexOf(marcador);
-  if (inicio === -1) return null;
-  const caminho = url.slice(inicio + marcador.length).split('?')[0].split('#')[0];
-  return caminho ? decodeURIComponent(caminho) : null;
-}
-
 export function AvatarUpload() {
   const { user, profile, refreshProfile } = useAuth();
   const feedback = useActionFeedback();
+  const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,42 +30,39 @@ export function AvatarUpload() {
 
     setUploading(true);
     const ext = file.name.split('.').pop();
-    // Caminho único por upload: trocar a foto mais de uma vez não sobrescreve a anterior.
-    const filePath = `${user.id}/avatar-${Date.now()}.${ext}`;
-    const previousUrl = avatarUrl ?? profile?.avatar_url ?? null;
+    const filePath = `${user.id}/avatar.${ext}`;
 
     await feedback.withFeedback(
       async () => {
-        // Upload to storage (sem upsert: cada envio grava um objeto novo)
         const { error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(filePath, file);
+          .upload(filePath, file, { upsert: true });
         if (uploadError) throw uploadError;
 
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(filePath);
-
-        const urlWithCache = `${publicUrl}?t=${Date.now()}`;
-
-        // Update profile
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({ avatar_url: urlWithCache })
+          .update({ avatar_url: filePath })
           .eq('user_id', user.id);
         if (updateError) throw updateError;
 
-        setAvatarUrl(urlWithCache);
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+        setAvatarUrl(`${publicUrl}?t=${Date.now()}`);
         await refreshProfile();
+        await queryClient.invalidateQueries({ queryKey: ['team-profiles-rpc'] });
+        await queryClient.invalidateQueries({ queryKey: ['user-profile'] });
 
-        // Remove o objeto antigo do bucket para não acumular fotos órfãs.
-        const previousPath = avatarPathFromUrl(previousUrl);
-        if (previousPath && previousPath !== filePath) {
-          const { error: removeError } = await supabase.storage
-            .from('avatars')
-            .remove([previousPath]);
-          if (removeError) log.warn('Falha ao remover avatar antigo do bucket', removeError);
+        const { data: existingFiles } = await supabase.storage.from('avatars').list(user.id);
+        if (existingFiles) {
+          const newFileName = `avatar.${ext}`;
+          const toRemove = existingFiles
+            .filter(f => f.name !== newFileName)
+            .map(f => `${user.id}/${f.name}`);
+          if (toRemove.length > 0) {
+            const { error: removeError } = await supabase.storage.from('avatars').remove(toRemove);
+            if (removeError) log.warn('Falha ao remover avatars antigos do bucket', removeError);
+          }
         }
       },
       {
@@ -90,7 +76,7 @@ export function AvatarUpload() {
 
   const handleRemove = async () => {
     if (!user) return;
-    
+
     await feedback.withFeedback(
       async () => {
         const { error } = await supabase
@@ -100,6 +86,8 @@ export function AvatarUpload() {
         if (error) throw error;
         setAvatarUrl(null);
         await refreshProfile();
+        await queryClient.invalidateQueries({ queryKey: ['team-profiles-rpc'] });
+        await queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       },
       {
         successMessage: 'Foto removida!',
