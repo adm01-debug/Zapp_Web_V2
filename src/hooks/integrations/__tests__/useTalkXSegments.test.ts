@@ -105,7 +105,7 @@ describe('rulesToPostgrest — campos de audiencia novos', () => {
   it('assigned_to (kind uuid): igualdade, preenchido e vazio apontam para a coluna assigned_to', () => {
     const uuid = '11111111-2222-3333-4444-555555555555';
     expect(filtroDe('assigned_to', 'eq', uuid)).toBe(`assigned_to.eq."${uuid}"`);
-    expect(filtroDe('assigned_to', 'neq', uuid)).toBe(`or(assigned_to.is.null,assigned_to.neq."${uuid}")`);
+    expect(filtroDe('assigned_to', 'neq', uuid)).toBe(`or(assigned_to.is.null,assigned_to.neq."${uuid}"`);
     expect(filtroDe('assigned_to', 'is_set', '')).toBe('assigned_to.not.is.null');
     // Coluna uuid nao compara com string vazia (`eq.`): "vazio" aqui e apenas nulo.
     expect(filtroDe('assigned_to', 'is_empty', '')).toBe('assigned_to.is.null');
@@ -127,7 +127,7 @@ describe('rulesToPostgrest — campos de audiencia novos', () => {
   });
 
   it('lead_origin, lead_score e risk_score ficam "em breve": nada grava/calcula essas colunas e o filtro seria morto', () => {
-    expect(RULE_FIELDS.filter((f) => f.comingSoon).map((f) => f.value).sort()).toEqual(['lead_origin', 'lead_score', 'risk_score']);
+    expect(RULE_FIELDS.filter((f) => f.comingSoon).map((f) => f.value).sort()).toEqual(['lead_origin', 'lead_score', 'real_sector', 'real_uf', 'risk_score']);
   });
 
   it('nao oferece "contem" para uuid: ilike em coluna uuid e erro do Postgres', () => {
@@ -348,7 +348,7 @@ describe('real_sector/real_uf (ponte Singu): resolução falha fechada', () => {
     }
   });
 
-  it('real_* continua regra completa na estimativa (splitRules não a descarta)', () => {
+  it('real_* comingSoon são excluídos pelo splitRules (não entram no conjunto executável)', () => {
     const { complete, incompleteCount } = splitRules({
       groups: [{ id: 'g', match: 'and', rules: [
         { id: 'r1', field: 'real_sector', op: 'eq', value: 'Varejo' },
@@ -356,8 +356,8 @@ describe('real_sector/real_uf (ponte Singu): resolução falha fechada', () => {
         { id: 'r3', field: 'city', op: 'eq', value: '' },
       ] }],
     } as never);
-    expect(incompleteCount).toBe(1);
-    expect(complete.groups[0].rules.map((r) => r.field)).toEqual(['real_sector', 'real_uf']);
+    expect(incompleteCount).toBe(3);
+    expect(complete.groups[0].rules.map((r) => r.field)).toEqual([]);
   });
 
   it('countAudience rejeita real_sector e não manda regra nenhuma ao motor', async () => {
