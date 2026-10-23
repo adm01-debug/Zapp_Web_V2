@@ -60,6 +60,10 @@
       "categoria": "ordem-idempotencia",
       "motivo": "relation 'conversation_tasks' is already member of publication. Mesmo caso do anterior."
     },
+    "20260927570000_talkx_e27_realtime_campaign_events.sql": {
+      "categoria": "ordem-idempotencia",
+      "motivo": "relation 'talkx_campaign_events' is already member of publication. A migration irma duplicada 20260927500001 ja adicionou as 3 tabelas do E27 (talkx_campaign_events, talkx_segments, talkx_templates) a supabase_realtime; a segunda copia falha em 42710. Canonico: as 3 tabelas existem na publicacao. Causa real: irma duplicada, nao estado pre-existente da imagem. Medido em talkx-e27-replay-divergence.test.sh."
+    },
     "20260925153000_revoke_anon_execute_notify_due_reminders.sql": {
       "categoria": "cascata-objeto-existe-no-canonico",
       "motivo": "function public.notify_due_reminders() does not exist no replay. Canonico: a funcao existe. Ela e criada por migration que depende de objeto nao criado no banco vazio."
