@@ -83,12 +83,14 @@ CREATE TABLE public.talkx_recipients (
   sent_at timestamptz,
   delivered_at timestamptz,
   error_message text,
+  manual_retry_count integer NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   click_count integer NOT NULL DEFAULT 0,
   replied_at timestamptz,
   read_at timestamptz
 );
+CREATE TABLE public.contacts (id uuid PRIMARY KEY, name text, phone text);
 SQL
 
 # call <papel> <uid> <argumentos SQL da funcao> -> linha como jsonb
@@ -138,6 +140,10 @@ SELECT '$camp',
 FROM generate_series(1, 15) g;
 INSERT INTO public.talkx_recipients (campaign_id, contact_id, status) VALUES
   ('b0000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000999', 'pending');
+INSERT INTO public.contacts (id, phone)
+SELECT ('30000000-0000-0000-0000-000000000' || lpad((100 + g)::text, 3, '0'))::uuid,
+       '000000000' || lpad((100 + g)::text, 3, '0')
+FROM generate_series(1, 15) g;
 SQL
 
 # === Pagina 1 (5 de 15) ===
