@@ -131,6 +131,13 @@ export function MediaMigrationTool() {
 
       {runResult && (
         <div>
+          <div
+            role="progressbar"
+            aria-label="Progresso da migração"
+            aria-valuenow={runResult.migrated}
+            aria-valuemin={0}
+            aria-valuemax={runResult.processed}
+          />
           <p>Processados</p>
           <p>
             {runResult.processed} processados, {runResult.migrated} migrados,{' '}

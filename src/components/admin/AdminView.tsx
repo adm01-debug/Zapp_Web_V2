@@ -15,6 +15,7 @@ import {
   Shield, Users, Search, Crown, UserCog, User, History, RefreshCw,
   UserPlus, Building, Eye, Loader2,
   AlertTriangle, ChevronLeft, ChevronRight, Clock,
+  BookOpen, Link, BarChart2, Database,
   type LucideIcon,
 } from 'lucide-react';
 import { useUserRole, AppRole } from '@/hooks/system/useUserRole';
@@ -44,7 +45,7 @@ function normalizarLimiteChats(valor: number): number {
 
 type GoogleServiceKey = 'google_sheets' | 'google_docs' | 'google_calendar' | 'google_drive';
 
-type AdminTab = 'users' | 'audit' | 'crm' | 'cron';
+type AdminTab = 'users' | 'audit' | 'crm' | 'cron' | 'training' | 'migration' | 'webhooks' | 'analytics';
 
 // SL-160/P2-3.4: a integração com Google Calendar não existe no produto (não há OAuth
 // nem sincronização em src/ ou supabase/functions — só a tela de demonstração, fora dos
@@ -120,12 +121,17 @@ export function AdminView() {
   const [auditPage, setAuditPage] = useState(1);
 
   const { users, auditLogs, auditTotal, loading, error, fetchData, handleRoleChange, handleToggleActive, handleSaveUser, handleSaveRamal, handleCreateUser } =
-    useAdminData((activeTab === 'cron' ? 'users' : activeTab) as 'users' | 'audit' | 'crm', {
+    useAdminData((['users', 'audit', 'crm'].includes(activeTab) ? activeTab : 'users') as 'users' | 'audit' | 'crm', {
       from: auditFrom || undefined,
       to: auditTo || undefined,
       page: auditPage,
       pageSize: AUDIT_PAGE_SIZE,
     });
+
+  useEffect(() => {
+    if (activeTab === 'users') fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   // Indica se a aba atual carrega dados de usuários (controla o indicador de loading).
   const usaDadosDeUsuario = activeTab === 'users';
@@ -222,6 +228,10 @@ export function AdminView() {
     ['users', Users, `Usuários (${users.length})`],
     ['audit', History, 'Auditoria'],
     ['crm', Building, 'CRM 360°'],
+    ['training', BookOpen, 'Treinamento'],
+    ['migration', Database, 'Migração de Mídia'],
+    ['webhooks', Link, 'Webhooks'],
+    ['analytics', BarChart2, 'Analytics'],
   ];
   if (isAdmin) abas.push(['cron', Clock, 'Tarefas agendadas']);
 
@@ -529,6 +539,14 @@ export function AdminView() {
         <SectionErrorBoundary key="crm" sectionName="CRM Admin">
           <AdminCRMDashboard />
         </SectionErrorBoundary>
+      ) : activeTab === 'training' ? (
+        <div className="py-8 text-muted-foreground">Módulo de treinamento em desenvolvimento.</div>
+      ) : activeTab === 'migration' ? (
+        <div className="py-8 text-muted-foreground">Ferramenta de migração de mídia em desenvolvimento.</div>
+      ) : activeTab === 'webhooks' ? (
+        <div className="py-8 text-muted-foreground">Configuração de webhooks em desenvolvimento.</div>
+      ) : activeTab === 'analytics' ? (
+        <div className="py-8 text-muted-foreground">Painel de analytics em desenvolvimento.</div>
       ) : activeTab === 'cron' ? (
         <CronJobsPanel />
       ) : null}
