@@ -335,6 +335,8 @@ async function enqueueAndDispatch(
 
 /** O que ficou na fila offline sai com a MESMA chave estável: sem duplicar (item 024). */
 async function deliverQueuedOfflineMessage(message: OfflineQueuedMessage): Promise<void> {
+  const currentUserId = readAuthenticatedUserId();
+  if (message.userId && currentUserId !== message.userId) return;
   // A drenagem obedece ao MESMO throttle do envio online: a volta da rede não
   // pode virar rajada de requests contra o servidor (item 026).
   await sendThrottle.wait();
@@ -424,7 +426,7 @@ export async function sendOutboundMessage(
     // A fila offline guarda o PRÓPRIO id no item enfileirado, então a chave da
     // ação não precisa sobreviver a este envio. Deixá-la viva era o defeito: o
     // mesmo texto mandado depois, já online, reaproveitava o id e a Edge o
-    // descartaria como idempotente sem nenhum WhatsApp sair.
+    // descartava como idempotente sem nenhum WhatsApp sair.
     const result = await enqueueOffline(input, clientMessageId);
     clearPendingAction(key, clientMessageId);
     return result;
