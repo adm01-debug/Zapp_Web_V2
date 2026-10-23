@@ -3,13 +3,13 @@
   "analisadas": [
     {
       "branch": "hermes/telefonia-contrato-dados-26092615475e51",
-      "tip_sha": "4c41d3b1",
+      "tip_sha": "4c41d3b1a",
       "veredito": "SUPERADA",
       "confianca": 0.95,
       "dossie": "analise/dossies/hermes-telefonia-contrato-dados-26092615475e51.md",
       "analisado_em": "2026-10-23",
       "sessao": "claude/dazzling-cannon-j7iw08",
-      "notas": "Phases 1-2 of telephony plan (domain library + DB schema). Content 100% in main: 9 cols + 4 RPCs in prod (20260926800000), src/lib/calls/ evolved to 21 files. Project at T74+ in main. Verified: typecheck 0 errors, 217 tests pass, migration 100% additive, no SINGU refs, no remote writes."
+      "notas": "Fases 1-2 do plano de telefonia (biblioteca de domínio + contrato de dados). Conteúdo 100% em main: migration 20260926800000 em produção, src/lib/calls/ evoluído para 21 arquivos (branch tinha 6). Typecheck 0 erros, 217 testes passam, eslint exit 0 — verificados em worktree /tmp/wt-telefonia-v3 nesta sessão. Cherry-pick real: 2 conflitos add/add doc-only, código=patches vazios. Zero refs SINGU. Sem escrita remota nesta sessão."
     }
   ]
 }
