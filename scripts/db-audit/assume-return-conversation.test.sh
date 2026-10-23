@@ -34,7 +34,7 @@
 #                -> o contrato FALHA.
 #   MUTACAO D  — copia sem a barreira do dono no devolver
 #                ('v_contact.assigned_to <> v_profile_id AND NOT v_is_admin' -> 'NOT v_is_admin'):
-#                so admin devolveria; o dono nao-admin e barrado -> o contrato FALHA.
+#                so admin devolve; o dono nao-admin e barrado -> o contrato FALHA.
 #   MUTACAO E  — copia sem o portao de fila no devolver: admin fora da fila devolve
 #                contato alheio -> o contrato FALHA.
 #   MUTACAO F  — copia voltando a bloquear resolved no assumir: resolved nao reabre
@@ -279,7 +279,7 @@ exige_falha() { # fase
   local fase="$1" evid
   evid="$( ( "$2" "$fase" ) 2>&1 || true )"
   if [[ "$evid" == *'[FAIL]'* ]]; then
-    printf '%s\n' "$evid" | sed 's/^/[EVIDENCIA] /'
+    printf '%s\n' "$evid" | sed 's/\[FAIL\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'
     return 0
   fi
   printf '%s\n' "$evid" >&2
@@ -460,9 +460,9 @@ ok 'bootstrap: roles, auth.uid(), helpers reais, FSM real, guarda de responsavel
 echo
 echo '── ANTES: a RPC "Assumir" nao existe (lacuna V2) ──────────────────────────'
 assert_eq 'ANTES' 'to_regprocedure(assume_conversation)' '<null>' \
-  "$(psql_q -c "SELECT coalesce(to_regprocedure('$SIG_A')::text,'<null>')")"
+  "$(psql_q -c "SELECT coalesce(to_regprocedure('$SIG_A')::text,'<null>')")" 
 assert_eq 'ANTES' 'to_regprocedure(return_conversation_to_queue)' '<null>' \
-  "$(psql_q -c "SELECT coalesce(to_regprocedure('$SIG_R')::text,'<null>')")"
+  "$(psql_q -c "SELECT coalesce(to_regprocedure('$SIG_R')::text,'<null>')")" 
 ok 'ANTES: nenhuma das duas RPCs existe'
 
 echo
@@ -482,9 +482,9 @@ grep '^--   drop function' "$migration" | sed 's/^--   //' > "$tmp_dir/rollback.
 [[ -s "$tmp_dir/rollback.sql" ]] || fail 'ROLLBACK: o arquivo da migration nao tem o bloco de rollback'
 psql_file "$tmp_dir/rollback.sql" >/dev/null
 assert_eq 'ROLLBACK' 'assume_conversation removida' '<null>' \
-  "$(psql_q -c "SELECT coalesce(to_regprocedure('$SIG_A')::text,'<null>')")"
+  "$(psql_q -c "SELECT coalesce(to_regprocedure('$SIG_A')::text,'<null>')")" 
 assert_eq 'ROLLBACK' 'return_conversation_to_queue removida' '<null>' \
-  "$(psql_q -c "SELECT coalesce(to_regprocedure('$SIG_R')::text,'<null>')")"
+  "$(psql_q -c "SELECT coalesce(to_regprocedure('$SIG_R')::text,'<null>')")" 
 psql_file "$migration" >/dev/null
 if ! checa_contrato 'REAPLICACAO'; then fail 'REAPLICACAO: aplicar a migration de novo deveria funcionar'; fi
 ok 'ROLLBACK: as duas funcoes somem; reaplicar restaura e o contrato volta a passar (idempotencia)'
