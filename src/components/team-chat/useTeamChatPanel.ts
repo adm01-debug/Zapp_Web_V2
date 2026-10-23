@@ -327,10 +327,10 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const retrySearch = () => { setServerSearch(null); setServerSearchError(null); };
 
   const filteredMessages = useMemo(() => {
-    if (!searchActive) return messages;
+    if (!searchActive || searchBelowMinChars) return messages;
     if (!serverSearchMatches || !serverSearch) return [];
     return serverSearch.results;
-  }, [messages, searchActive, serverSearchMatches, serverSearch]);
+  }, [messages, searchActive, serverSearchMatches, serverSearch, searchBelowMinChars]);
 
   const checkNearBottom = useCallback(() => {
     const el = scrollRef.current;
