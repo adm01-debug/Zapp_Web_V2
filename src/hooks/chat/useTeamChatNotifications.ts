@@ -147,7 +147,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
     if (!profile) return;
 
     const channel = supabase
-      .channel('team-chat-notifications')
+      .channel(`team-chat-notifications:${profile.id}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
