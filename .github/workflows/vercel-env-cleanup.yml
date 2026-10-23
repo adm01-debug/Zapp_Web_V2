@@ -1,0 +1,44 @@
+# docs:
+#   gatilho: dispatch manual com dry-run por padrão
+#   prova: remove variáveis Vercel perigosas ou mortas conforme o inventário
+#   falha: o script aborta antes de alterar variáveis e informa a causa
+#   avisa: operador que disparou o workflow
+
+name: V043-V065 Vercel Env Cleanup
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'DRY_RUN=1 lista o que seria removido sem apagar nada. DRY_RUN=0 aplica.'
+        required: true
+        default: '1'
+        type: choice
+        options: ['1', '0']
+
+jobs:
+  cleanup:
+    name: Remove vars perigosas/mortas do Vercel
+    # Só executa código da main quando o secret de Vercel está no ambiente.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Limpar vars Vercel (V043-V065)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_READONLY_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: node scripts/ci/vercel-env-cleanup.mjs
