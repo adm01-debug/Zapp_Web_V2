@@ -58,10 +58,6 @@ export function marcadorDe(nomes) {
   return `${PREFIXO}${hash} -->`;
 }
 
-/**
- * Titulo da issue: especifico quando so falhou o auth.setup (nao ha spec real quebrado),
- * generico nos demais casos.
- */
 /** Lista legivel para o corpo da issue. */
 export function corpoDe(nomes) {
   const lista = normalizar(nomes);

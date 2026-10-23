@@ -1,4 +1,4 @@
-import { useEffect, useState, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useState, type RefObject } from 'react';
 import { FILES_COLUMNS, type FilesColumns } from '@/hooks/chat/useFilesViewState';
 
 /**
@@ -74,6 +74,16 @@ export function useFilesContainerColumns(
       observer.disconnect();
     };
   }, [ref]);
+
+  // Re-medicao sincrona: garante que testes JSDOM (sem ResizeObserver ativo) leiam a
+  // largura do mock apos cada render em vez de ficarem na medida inicial do mount.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- sem deps intencional: re-mede a cada render; setWidth e stable e React faz bailout se a largura nao mudou
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const w = element.getBoundingClientRect().width;
+    if (w > 0) setWidth(w);
+  });
 
   const capacity = width === null ? null : columnsCapacity(width);
 
