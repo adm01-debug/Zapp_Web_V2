@@ -73,7 +73,7 @@ export function SummaryResult({ summary, isTtsPlaying, isTtsLoading, lastTtsText
         <div>
           <div className="flex items-center justify-between mb-1">
             <h4 className="text-xs font-medium text-muted-foreground">Resumo</h4>
-            <TtsButton text={summary.summary} label="Ouvir o resumo em voz alta" pauseLabel="Pausar a leitura do resumo" loadingLabel="Carregando a leitura do resumo" isTtsPlaying={isTtsPlaying} isTtsLoading={isTtsLoading} lastTtsText={lastTtsText} onPlayTts={onPlayTts} />
+            <TtsButton text={summary.summary} label="Ouvir resumo" pauseLabel="Pausar a leitura do resumo" loadingLabel="Carregando a leitura do resumo" isTtsPlaying={isTtsPlaying} isTtsLoading={isTtsLoading} lastTtsText={lastTtsText} onPlayTts={onPlayTts} />
           </div>
           <p className="text-sm">{summary.summary}</p>
         </div>
@@ -82,7 +82,7 @@ export function SummaryResult({ summary, isTtsPlaying, isTtsLoading, lastTtsText
           <div>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs font-medium text-muted-foreground">Pontos-chave</h4>
-              <TtsButton text={'Pontos-chave: ' + summary.keyPoints.join('. ')} label="Ouvir os pontos-chave em voz alta" pauseLabel="Pausar a leitura dos pontos-chave" loadingLabel="Carregando a leitura dos pontos-chave" isTtsPlaying={isTtsPlaying} isTtsLoading={isTtsLoading} lastTtsText={lastTtsText} onPlayTts={onPlayTts} />
+              <TtsButton text={'Pontos-chave: ' + summary.keyPoints.join('. ')} label="Ouvir pontos-chave" pauseLabel="Pausar a leitura dos pontos-chave" loadingLabel="Carregando a leitura dos pontos-chave" isTtsPlaying={isTtsPlaying} isTtsLoading={isTtsLoading} lastTtsText={lastTtsText} onPlayTts={onPlayTts} />
             </div>
             <ul className="space-y-1">
               {summary.keyPoints.map((point, index) => (
