@@ -268,6 +268,13 @@ beforeAll(async () => {
 }, 120_000);
 
 beforeEach(() => {
+  // Neutraliza o mock global de setup.ts (clientHeight=600) para este arquivo.
+  // O virtual-core usa offsetHeight (não clientHeight) para o tamanho do contêiner;
+  // clientHeight=600 aciona measureElement via ResizeObserver em loop infinito.
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+    configurable: true,
+    get() { return 0; },
+  });
   vi.clearAllMocks();
   mocks.contactId = CONTACT_ID;
   mocks.messages = useMessagesState();
