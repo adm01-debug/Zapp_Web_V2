@@ -89,7 +89,7 @@ function startFakeWebhook() {
   let ready!: (v: { url: string }) => void;
   const whenReady = new Promise<{ url: string }>((resolve) => { ready = resolve; });
   const server = Deno.serve(
-    { port: 0, onListen: ({ hostname, port }) => ready({ url: `http://${hostname}:${port}` }) },
+    { hostname: "127.0.0.1", port: 0, onListen: ({ hostname, port }) => ready({ url: `http://${hostname}:${port}` }) },
     async (req) => {
       const body = await req.json().catch(() => null);
       calls.push({ path: new URL(req.url).pathname, body });

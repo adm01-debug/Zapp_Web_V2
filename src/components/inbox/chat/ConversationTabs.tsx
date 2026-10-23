@@ -114,7 +114,11 @@ export function ConversationTabs({ activeTab, onTabChange, counts, extraCounts, 
           <EmailUnreadChip count={emailUnread.count} onOpen={emailUnread.onOpen} />
         </div>
       )}
-      {trailingAction && <div className="shrink-0 px-2 sm:px-3">{trailingAction}</div>}
+      {trailingAction && (
+        <div data-testid="conversation-tabs-trailing-action" className="shrink-0 px-2 sm:px-3">
+          {trailingAction}
+        </div>
+      )}
     </div>
   );
 }
