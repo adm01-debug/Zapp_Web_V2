@@ -69,7 +69,15 @@ export function WarRoomDashboard({ agents: propsAgents, queues: propsQueues }: W
             onClick={() => setAutoRefresh(prev => !prev)}
             aria-label={autoRefresh ? 'Pausar atualização automática' : 'Retomar atualização automática'}
           >
-            {autoRefresh ? <Pause className="h-4 w-4" /> : <Play className="h-m'%isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+            {autoRefresh ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => void document.documentElement.requestFullscreen?.()}
+            aria-label={isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+          >
+            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
           </Button>
         </div>
       </div>

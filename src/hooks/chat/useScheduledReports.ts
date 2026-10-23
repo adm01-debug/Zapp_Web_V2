@@ -141,7 +141,7 @@ export function useScheduledReports() {
       fetchReports();
     } catch (err) {
       log.error('Error toggling report:', err);
-      toast.error('Erro ao atualizar o relatorio');
+      toast.error('Erro ao ativar/desativar relatório');
     }
   }, [fetchReports]);
 

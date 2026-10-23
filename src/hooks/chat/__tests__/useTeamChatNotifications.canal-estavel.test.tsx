@@ -70,12 +70,12 @@ vi.mock('@/hooks/system/usePushNotifications', () => ({
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: vi.fn() }));
 
 vi.mock('@/lib/logger', () => ({
-  getLogger: () => {
+  getLogger: () => ({
     error: vi.fn(),
     warn: (...args: unknown[]) => h.logWarn(...args),
     debug: vi.fn(),
     info: vi.fn(),
-  },
+  }),
   createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
@@ -119,7 +119,7 @@ beforeEach(() => {
   h.show.mockReset();
   h.NotifCtor.mockReset();
   // HZ3-001: a source usa `Notification.permission` e `new Notification(...)` diretamente
-  Object.defineProperty(window, 'Notification', { configurable: true, writable: true, value: Object.assign(h.NotifCtor, {* permission: 'granted' }) });
+  Object.defineProperty(window, 'Notification', { configurable: true, writable: true, value: Object.assign(h.NotifCtor, { permission: 'granted' }) });
 });
 
 afterEach(() => {
@@ -201,7 +201,7 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     await act(async () => { await h.handler!(mensagem()); });
 
     expect(h.fromTables).toContain('team_conversation_members');
-    expect((h.NotifCtor).not.toHaveBeenCalled();
+    expect(h.NotifCtor).not.toHaveBeenCalled();
     expect(h.logWarn).toHaveBeenCalledWith(
       'Falha ao confirmar participação na conversa; sem notificação:',
       'permission denied',
