@@ -138,10 +138,18 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
   const { showNotification, permission } = usePushNotifications();
   const activeIdRef = useRef(activeConversationId);
+  const notifSettingsRef = useRef(notifSettings);
+  const permissionRef = useRef(permission);
+  const isQuietHoursRef = useRef(isQuietHours);
+  const showNotificationRef = useRef(showNotification);
 
-  useEffect(() => {
-    activeIdRef.current = activeConversationId;
-  }, [activeConversationId]);
+  // Sync refs every render so the channel handler always reads current values
+  // without needing to be recreated.
+  activeIdRef.current = activeConversationId;
+  notifSettingsRef.current = notifSettings;
+  permissionRef.current = permission;
+  isQuietHoursRef.current = isQuietHours;
+  showNotificationRef.current = showNotification;
 
   useEffect(() => {
     if (!profile) return;
@@ -193,9 +201,14 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           membership,
         })) return;
 
+        const currentNotifSettings = notifSettingsRef.current;
+        const currentIsQuietHours = isQuietHoursRef.current;
+        const currentPermission = permissionRef.current;
+        const currentShowNotification = showNotificationRef.current;
+
         // Play sound if enabled — volume do painel (10-100), nunca fixo
-        if (notifSettings.soundEnabled && !isQuietHours()) {
-          playTeamChatSound(notifSettings.soundVolume);
+        if (currentNotifSettings.soundEnabled && !currentIsQuietHours()) {
+          playTeamChatSound(currentNotifSettings.soundVolume);
         }
 
         // Show browser notification if enabled
@@ -207,7 +220,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         // silenciava quem concedeu a permissão e não assinou o push: ficava só com o
         // som. O liga/desliga de avisos do chat interno continua valendo por
         // `notifSettings.browserNotifications`.
-        if (permission === 'granted' && notifSettings.browserNotifications && !isQuietHours()) {
+        if (currentPermission === 'granted' && currentNotifSettings.browserNotifications && !currentIsQuietHours()) {
           // Nome do remetente por RPC segura: para o agente a leitura direta de
           // `profiles` é barrada pela RLS (o título virava 'Colega').
           // `get_team_profiles()` é SECURITY DEFINER e já mascara email/telefone.
@@ -225,7 +238,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
 
-          await showNotification({
+          await currentShowNotification({
             title: `💬 Teams: ${senderName}`,
             body,
             tag: `team-msg-${msg.conversation_id}`,
@@ -245,7 +258,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile, notifSettings.soundEnabled, notifSettings.soundVolume, notifSettings.browserNotifications, permission, isQuietHours, showNotification]);
+  }, [profile]);
 
   /**
    * Clique na notificação do chat interno: o service worker repassa o clique da

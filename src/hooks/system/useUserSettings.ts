@@ -135,6 +135,7 @@ export function useUserSettings() {
           // PGRST116 = no rows returned
           log.error('Error fetching settings:', error);
           setIsError(true);
+          toast({ title: 'Erro ao carregar configurações', description: error.message, variant: 'destructive' });
           return;
         }
 
