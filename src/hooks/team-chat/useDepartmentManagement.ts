@@ -138,14 +138,22 @@ export function useCreateDepartmentInvite(departmentId: string) {
       const code = generateInviteCode();
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data: { user } } = await supabase.auth.getUser();
+      // department_invites.created_by referencia profiles.id (FK), não auth.uid().
+      // profiles.id ≠ user.id (auth UID) — buscar o profile pelo user_id.
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user?.id ?? '')
+        .single();
+      const profileId = profileData?.id ?? null;
       const { error: inviteErr } = await supabase
         .from('department_invites')
-        .insert({ department_id: departmentId, code, expires_at: expiresAt, created_by: user?.id ?? null });
+        .insert({ department_id: departmentId, code, expires_at: expiresAt, created_by: profileId });
       if (inviteErr) throw inviteErr;
       await supabase.from('department_audit_logs').insert({
         department_id: departmentId,
         action: 'create_invite',
-        profile_id: user?.id ?? null,
+        profile_id: profileId,
         details: { code, profile_name: actorName },
       });
     },

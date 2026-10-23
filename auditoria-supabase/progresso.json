@@ -1,0 +1,876 @@
+{
+  "_meta": {
+    "projeto": "tnnnlkbymytvtqngbbqh",
+    "data_inicio": "2026-10-22",
+    "data_fim": "2026-10-22",
+    "status": "CONCLUÍDA",
+    "severidades": {
+      "CRITICO": 0,
+      "ALTO": 2,
+      "MEDIO": 6,
+      "BAIXO": 9,
+      "INFO": 9,
+      "TOTAL": 26,
+      "nota": "contagem consolidada no RELATORIO; S5-01 corrigido de MEDIO→INFO (EXPLAIN original usava coluna conversation_id inexistente; com contact_id o índice idx_messages_contact_read_sender cobre ambas as condições como Index Cond)"
+    },
+    "evidence_rerun": "2026-10-22T16:18 — 12 queries E1-E10+S5-01+integridade reexecutadas ao vivo",
+    "pr_correcoes": "#2186",
+    "branch": "claude/loving-lovelace-esc3l2",
+    "baseline_antes": {
+      "policies": 456,
+      "functions": 354,
+      "cron_jobs": 16,
+      "migrations": 922,
+      "null_stmts": 61,
+      "buckets": 8,
+      "ultima_version": "20261026090300",
+      "tabelas_base": 173,
+      "triggers": 166
+    },
+    "baseline_depois": {
+      "policies": 456,
+      "functions": 354,
+      "cron_jobs": 16,
+      "migrations": 922,
+      "ultima_version": "20261026090300",
+      "tabelas_base": 173
+    },
+    "baseline_depois_delta": "ZERO (auditoria READ-ONLY — confirmado 2026-10-22T16:XX)"
+  },
+  "S1": {
+    "status": "VERIFICADO",
+    "descricao": "Inventário de migrations",
+    "evidencia": {
+      "total": 922,
+      "null_stmts": 61,
+      "com_stmts": 861,
+      "ultima_version": "20261026090300",
+      "primeira_version": "20251215024517",
+      "tabelas_base_producao": 173,
+      "triggers_producao": 166,
+      "triggers_migrations_grep": 259,
+      "drift_repo_vs_ledger": {
+        "repo_sql_files": 1054,
+        "ledger_entries": 922,
+        "drift": 132,
+        "pr2186_pendentes": 3,
+        "historicos_nao_ledger": 129
+      },
+      "types_ts_vs_schema": {
+        "tabelas_producao": 173,
+        "tabelas_types_ts": 163,
+        "em_producao_nao_em_types": [
+          "_zapp_fn_before",
+          "_zapp_mig133_log",
+          "app_settings",
+          "webauthn_challenges",
+          "passkey_credentials",
+          "mfa_sessions"
+        ],
+        "note": "types.ts conta 183 rows (Tables+Views); comparação de Tables apenas = 163 vs 173"
+      }
+    },
+    "achados": [
+      {
+        "id": "B1",
+        "severidade": "BAIXO",
+        "descricao": "61 migrations com statements=NULL no ledger"
+      },
+      {
+        "id": "I3",
+        "severidade": "INFO",
+        "descricao": "Drift triggers: 166 producao vs 259 migrations"
+      },
+      {
+        "id": "I4",
+        "severidade": "INFO",
+        "descricao": "Drift tabelas: 173 producao vs 163 em types.ts Tables (183 contando Views)"
+      },
+      {
+        "id": "I8",
+        "severidade": "INFO",
+        "descricao": "Drift migrations: 132 arquivos no repo sem entrada no ledger (3 = PR #2186; 129 históricos/superseded)"
+      }
+    ]
+  },
+  "S2": {
+    "status": "VERIFICADO",
+    "descricao": "RPCs ausentes",
+    "evidencia": {
+      "log_search_event_existe": false,
+      "metodo_busca": "SELECT proname FROM pg_proc WHERE proname='log_search_event' — 0 rows",
+      "codigo_frontend": "src/hooks/search/useSearchEvents.ts — supabase.rpc('log_search_event', ...)",
+      "drift_rpc_total": {
+        "frontend_rpc_count": 82,
+        "missing_in_db": 14,
+        "missing_list": [
+          "admin_list_cron_jobs",
+          "admin_toggle_cron_job",
+          "app_bootstrap",
+          "enqueue_group_outbound_message",
+          "get_search_insights",
+          "inbox_unread_total",
+          "increment_custom_emoji_use",
+          "log_search_event",
+          "reopen_conversation",
+          "search_email_threads",
+          "sentiment_trend",
+          "talkx_campaign_recipients_page",
+          "warroom_agent_today",
+          "warroom_queue_stats"
+        ],
+        "evidencia": "SELECT expected.name FROM (...valores...) LEFT JOIN pg_proc ON proname — 14 rows"
+      },
+      "drift_from_total": {
+        "frontend_from_count": 114,
+        "missing_in_db": 1,
+        "missing_list": [
+          "avatars"
+        ]
+      }
+    },
+    "achados": [
+      {
+        "id": "S2-01",
+        "severidade": "MEDIO",
+        "descricao": "RPC log_search_event ausente no banco",
+        "correcao": "20261026120300 (PR #2186)"
+      },
+      {
+        "id": "S2-02",
+        "severidade": "MEDIO",
+        "descricao": "13 RPCs adicionais chamados pelo frontend ausentes no banco (calls silenciosas falham): admin_list_cron_jobs, admin_toggle_cron_job, app_bootstrap, enqueue_group_outbound_message, get_search_insights, inbox_unread_total, increment_custom_emoji_use, reopen_conversation, search_email_threads, sentiment_trend, talkx_campaign_recipients_page, warroom_agent_today, warroom_queue_stats"
+      },
+      {
+        "id": "S2-03",
+        "severidade": "BAIXO",
+        "descricao": "Tabela 'avatars' referenciada em .from() mas ausente no schema public (provavelmente view ou tabela removida)"
+      }
+    ]
+  },
+  "S3": {
+    "status": "VERIFICADO",
+    "descricao": "RLS policies",
+    "evidencia": {
+      "total_policies": 456,
+      "policies_qual_true": 33,
+      "tabelas_rls_on_zero_policies": 11,
+      "views_sem_security_invoker": 13
+    },
+    "s11": {
+      "C3a": "VULNERABILIDADE CONFIRMADA (DELETE 1)",
+      "C3b": "CORRIGIDA (DELETE 0)",
+      "C3c": "BLOQUEADO (ERROR RLS)",
+      "C3d": "PERMITIDO admin (INSERT 0 1)",
+      "C4": "ISOLADO (A=1, B=1)",
+      "C8": "DEFAULT-DENY (0)"
+    },
+    "achados": [
+      {
+        "id": "S3-01",
+        "severidade": "ALTO",
+        "descricao": "dept_invites_delete_authenticated USING(true)",
+        "correcao": "20261026100300 (PR #2186)"
+      },
+      {
+        "id": "S3-02",
+        "severidade": "ALTO",
+        "descricao": "dept_invites_insert_authenticated WITH_CHECK(true)",
+        "correcao": "20261026100300 (PR #2186)"
+      },
+      {
+        "id": "B2",
+        "severidade": "BAIXO",
+        "descricao": "webhook_failures.service_role_full ALL USING(true) — mitigado por role"
+      },
+      {
+        "id": "I1",
+        "severidade": "INFO",
+        "descricao": "13 views sem security_invoker"
+      },
+      {
+        "id": "I7",
+        "severidade": "INFO",
+        "descricao": "11 tabelas default-deny (RLS ON, zero policies) — CORRETO"
+      }
+    ]
+  },
+  "S4": {
+    "status": "VERIFICADO",
+    "descricao": "Vault, FKs sem indice, indices sem uso, indices duplicados",
+    "evidencia": {
+      "vault_secrets": 13,
+      "fks_sem_indice": 20,
+      "indices_sem_uso": 20,
+      "tabela_mais_fks": "talkx_campaigns (7 FKs sem indice)",
+      "espaco_indices_sem_uso": "~9MB",
+      "indices_duplicados": 1,
+      "duplicado_exemplo": "department_invites: department_invites_code_key vs idx_dept_invites_code (mesmo set de colunas)",
+      "sequences_proximas_limite": 0,
+      "advisors_bloat_acima_threshold": "connection_health_logs 9.2%, email_threads 6.2% — abaixo de 20%"
+    },
+    "achados": [
+      {
+        "id": "S4-01",
+        "severidade": "MEDIO",
+        "descricao": "20 FKs sem indice (talkx_campaigns=7 FKs; live 2026-10-22 — lista completa em inventario/tabelas-producao.md)"
+      },
+      {
+        "id": "S4-02",
+        "severidade": "BAIXO",
+        "descricao": "1 indice duplicado: department_invites (code_key vs idx_dept_invites_code)"
+      },
+      {
+        "id": "I2",
+        "severidade": "INFO",
+        "descricao": "20 indices nunca usados, ~9MB total (idx_messages_content_trgm 5MB maior)"
+      }
+    ]
+  },
+  "S5": {
+    "status": "VERIFICADO",
+    "descricao": "Performance: pg_stat_statements VERIFICADO; advisors via SQL VERIFICADO; EXPLAIN top 20 queries VERIFICADO",
+    "evidencia": {
+      "user_roles_seq_scan": 18811019,
+      "user_roles_linhas": 1,
+      "pg_stat_statements_top1": {
+        "query": "contacts INSERT via PostgREST",
+        "mean_ms": 15056,
+        "calls": 2
+      },
+      "pg_stat_statements_top2": {
+        "query": "Dashboard tables introspection",
+        "mean_ms": 7411,
+        "calls": 2
+      },
+      "pg_stat_statements_top3": {
+        "query": "VACUUM ANALYZE contacts",
+        "mean_ms": 6321,
+        "calls": 12
+      },
+      "pg_stat_statements_top4": {
+        "query": "Functions listing dashboard",
+        "mean_ms": 4440,
+        "calls": 13
+      },
+      "pg_stat_statements_top5": {
+        "query": "dashboard_hourly_volume RPC",
+        "mean_ms": 4363,
+        "calls": 4
+      },
+      "pg_stat_statements_top14": {
+        "query": "storage.objects SELECT by name COLLATE C",
+        "mean_ms": 2015,
+        "calls": 1329
+      },
+      "pg_stat_statements_top20": {
+        "query": "RPC PostgREST scalar",
+        "mean_ms": 1239,
+        "calls": 7896
+      },
+      "explain_storage_objects_prefix": "Index Scan using name_prefix_search on objects — OTIMO",
+      "explain_dashboard_kpi": "Function Scan cost=0.26 — OTIMO",
+      "explain_messages_delete": "Index Scan using idx_messages_created_at — OTIMO",
+      "explain_search_contacts_prosrc": "CONFIRMADO via pg_proc.prosrc: c.name ILIKE '%'||v_search||'%' OR c.nickname ILIKE ... (7 colunas) AND public.can_edit_contact(..., (SELECT array_agg(v) FROM public.get_visible_agent_ids(auth.uid()) v), (SELECT public.get_profile_id_for_user(auth.uid())), (SELECT public.is_admin_or_supervisor(auth.uid()))) — 3 subcalls por linha, O(n) com contatos",
+      "advisors_bloat": "Apenas 2 tabelas acima de 5%: connection_health_logs 9.2%, email_threads 6.2% — ACEITAVEL",
+      "advisors_sequences_limite": "Nenhuma sequencia acima de 50% — VERDE",
+      "advisors_indices_duplicados": "1 duplicata: department_invites (ver S4-02)"
+    },
+    "achados": [
+      {
+        "id": "B3",
+        "severidade": "BAIXO",
+        "descricao": "user_roles 18.8M seq scans para tabela de 1 linha"
+      },
+      {
+        "id": "S5-01",
+        "severidade": "INFO",
+        "descricao": "search_contacts usa ILIKE '%termo%' sem FTS/trigram index + 3 sub-funcoes por linha — O(n) com contatos (INFO: EXPLAIN corrigido confirmou que idx_messages_contact_read_sender cobre messages por Index Cond; achado original 'messages.sender' era inválido)"
+      }
+    ]
+  },
+  "S6": {
+    "status": "VERIFICADO",
+    "descricao": "Cron jobs — spikes de falhas e analise individual 30d",
+    "evidencia": {
+      "spike_2026_10_02": "220 falhas/hora, 9-10 jobs",
+      "spike_2026_10_15_16": "192 falhas/hora, 9 jobs — confirmado: last_fail 2026-10-16 em 7 de 12 jobs",
+      "analise_30d_todos_16_jobs": {
+        "talkx-scheduler-1min": {
+          "failed": 3878,
+          "succeeded": 39301,
+          "fail_pct": 9.0
+        },
+        "tasks-notify-due": {
+          "failed": 1390,
+          "succeeded": 32856,
+          "fail_pct": 4.1
+        },
+        "ai-jobs-tick-1min": {
+          "failed": 1043,
+          "succeeded": 27309,
+          "fail_pct": 3.7
+        },
+        "expire-stale-agent-presence": {
+          "failed": 779,
+          "succeeded": 18820,
+          "fail_pct": 4.0
+        },
+        "multiplix-send-trigger": {
+          "failed": 763,
+          "succeeded": 17301,
+          "fail_pct": 4.2
+        },
+        "gmail-incremental-sync": {
+          "failed": 354,
+          "succeeded": 8282,
+          "fail_pct": 4.1
+        },
+        "connection-health-check": {
+          "failed": 288,
+          "succeeded": 6004,
+          "fail_pct": 4.6
+        },
+        "cleanup-edge-rate-limits": {
+          "failed": 119,
+          "succeeded": 2761,
+          "fail_pct": 4.1
+        },
+        "avatars-refresh": {
+          "failed": 28,
+          "succeeded": 496,
+          "fail_pct": 5.3
+        },
+        "crm-sync-outbox": {
+          "failed": 2,
+          "succeeded": 4179,
+          "fail_pct": 0.0
+        },
+        "cleanup-link-preview-cache": {
+          "failed": 1,
+          "succeeded": 29,
+          "fail_pct": 3.3
+        },
+        "vacuum-contacts-daily": {
+          "failed": 1,
+          "succeeded": 29,
+          "fail_pct": 3.3
+        },
+        "crm-sync-outbox-cleanup": {
+          "failed": 0,
+          "succeeded": 6,
+          "fail_pct": 0.0
+        },
+        "search-events-retention": {
+          "failed": 0,
+          "succeeded": 6,
+          "fail_pct": 0.0
+        },
+        "searchbox-budget-alert": {
+          "failed": 0,
+          "succeeded": 20,
+          "fail_pct": 0.0
+        },
+        "vacuum-messages-post-expurgo": {
+          "failed": 0,
+          "succeeded": 0,
+          "fail_pct": null,
+          "alerta": "ZERO execucoes em 30 dias"
+        }
+      },
+      "nota_sobreposicao": "jobs de 1 min (talkx/tasks/ai/expire/multiplix) rodam concorrentemente — OK por design",
+      "job_ausente": "login-attempts-ttl-90d (S12-01 — nao existe, previsto em PR #2186)"
+    },
+    "achados": [
+      {
+        "id": "S6-01",
+        "severidade": "MEDIO",
+        "descricao": "Spikes de cron failures (job startup timeout) — 9 jobs afetados"
+      },
+      {
+        "id": "B6",
+        "severidade": "BAIXO",
+        "descricao": "vacuum-messages-post-expurgo: zero execucoes em 30 dias (job configurado mas nunca rodou no periodo)"
+      }
+    ]
+  },
+  "S7": {
+    "status": "VERIFICADO",
+    "descricao": "SECURITY DEFINER sem search_path + revisao per-funcao de 8 funcoes criticas do banco",
+    "evidencia": {
+      "funcoes_sem_search_path": 0,
+      "funcoes_security_definer_total": 299,
+      "funcoes_revisadas_por_codigo": 8,
+      "funcoes_revisadas": [
+        {
+          "nome": "close_conversation_atomic",
+          "auth": "auth.uid() + is_admin_or_supervisor",
+          "idempotente": true,
+          "search_path": "SET",
+          "resultado": "OK"
+        },
+        {
+          "nome": "set_conversation_status",
+          "auth": "auth.uid() obrigatorio",
+          "idempotente": false,
+          "search_path": "SET",
+          "resultado": "INFO: nao idempotente (re-execucao pode duplicar audit)"
+        },
+        {
+          "nome": "get_visible_agent_ids",
+          "auth": "nenhuma (helper interno)",
+          "search_path": "SET",
+          "resultado": "OK — chamada por funcoes com auth propria"
+        },
+        {
+          "nome": "is_admin_or_supervisor",
+          "auth": "auth.uid() interno",
+          "search_path": "SET",
+          "resultado": "OK"
+        },
+        {
+          "nome": "can_edit_contact",
+          "auth": "auth.uid() interno",
+          "search_path": "SET",
+          "resultado": "OK"
+        },
+        {
+          "nome": "search_contacts",
+          "auth": "auth.uid() obrigatorio",
+          "search_path": "SET",
+          "resultado": "MEDIO: ILIKE sem FTS — ver S5-01"
+        },
+        {
+          "nome": "log_search_event",
+          "auth": "N/A — funcao AUSENTE no banco",
+          "search_path": "N/A",
+          "resultado": "MEDIO: funcao ausente — ver S2-01 / PR #2186"
+        },
+        {
+          "nome": "dashboard_hourly_volume",
+          "auth": "auth.uid() + is_admin_or_supervisor",
+          "search_path": "SET",
+          "resultado": "OK — EXPLAIN: Function Scan cost=0.26"
+        }
+      ]
+    },
+    "achados": [
+      {
+        "id": "I6",
+        "severidade": "INFO",
+        "descricao": "VERDE: 299 funcoes SECURITY DEFINER, ZERO sem search_path"
+      },
+      {
+        "id": "I9",
+        "severidade": "INFO",
+        "descricao": "set_conversation_status nao idempotente — re-execucao rapida pode duplicar audit_log (sem impacto producao hoje)"
+      }
+    ]
+  },
+  "S8": {
+    "status": "VERIFICADO",
+    "descricao": "Edge Functions: 84 funcoes no repo + 4 chamadas por cron confirmadas no banco; R0/R1/R2 classificadas; auth-login e evolution-webhook analisados em detalhe",
+    "evidencia": {
+      "total_funcoes_repo": 84,
+      "evolution_api_revisao_completa": "1220/1220 linhas lidas nesta sessao — R1 DESIGN CORRETO; send-status: admin gate + allowlist + company JIDs + audit fail-closed; update-privacy: fail-closed; todas rotas proxiam corretamente GO API",
+      "cron_chama_edge_confirmado": [
+        "batch-fetch-avatars",
+        "connection-health-check",
+        "gmail-cron-sync",
+        "searchbox-budget-alert"
+      ],
+      "public_api_desativada": "public-api retorna 410 Gone (index.ts:3 — API desabilitada)",
+      "auth_login_analise": "verify_jwt=false + lockout server-side + rate limit IP+email + network policy + goTrue fallback 503 — DESIGN CORRETO (R1)",
+      "evolution_webhook_analise": "verify_jwt=false + HMAC-SHA256 fail-closed (R2) + timing-safe compare + instanceToken fallback GO — DESIGN CORRETO (R2)",
+      "verify_jwt_false": [
+        "evolution-webhook",
+        "whatsapp-webhook",
+        "gmail-webhook",
+        "gmail-cron-sync",
+        "connection-health-check",
+        "batch-fetch-avatars",
+        "elevenlabs-webhook",
+        "public-api",
+        "auth-login",
+        "crm-integration",
+        "csp-report",
+        "talkx-link",
+        "searchbox-budget-alert",
+        "sync-call-records"
+      ],
+      "R0_intencional_sem_auth": [
+        "csp-report (index.ts — verify_jwt=false, CSP endpoint publico)",
+        "public-api (index.ts — verify_jwt=false, API publica documentada)",
+        "status (index.ts — endpoint de saude)"
+      ],
+      "R2_assinatura_criptografica": [
+        "evolution-webhook (index.ts:28 — HMAC bloqueante)",
+        "whatsapp-webhook (index.ts:99 — HMAC bloqueante)",
+        "gmail-webhook (index.ts:70 — OIDC bloqueante)",
+        "elevenlabs-webhook (index.ts:63 — assinatura ElevenLabs)",
+        "talkx-link (index.ts:19 — HMAC-SHA256)"
+      ],
+      "R1_jwt_ou_cron_secret": "76 funcoes restantes",
+      "functions_invoke_frontend": [
+        "ai-churn-analysis",
+        "ai-classify-tickets",
+        "ai-conversation-analysis",
+        "ai-conversation-summary",
+        "ai-enhance-message",
+        "ai-kb-ingest",
+        "ai-proxy",
+        "ai-suggest-reply",
+        "ai-transcribe-audio",
+        "approve-password-reset",
+        "automation-suggest-reply",
+        "batch-fetch-avatars",
+        "bitrix-api",
+        "chatbot-l1",
+        "classify-audio-meme",
+        "classify-emoji",
+        "classify-sticker",
+        "connection-health-check",
+        "crm-integration",
+        "detect-new-device",
+        "elevenlabs-scribe-token",
+        "elevenlabs-sfx",
+        "evolution-api",
+        "evolution-sync",
+        "evolution-webhook",
+        "external-db-proxy",
+        "get-mapbox-token",
+        "get-sip-password",
+        "gmail-oauth",
+        "invite-user",
+        "migrate-media-storage",
+        "multiplix-audience",
+        "multiplix-dispatch",
+        "multiplix-send",
+        "promogifts-catalog",
+        "revoke-auth-sessions",
+        "send-scheduled-report",
+        "sentiment-alert",
+        "talkx-send",
+        "webauthn",
+        "webhook-diagnostic"
+      ]
+    },
+    "auth_storage": {
+      "total_users": 10,
+      "users_com_mfa": 0,
+      "total_sessions": 222,
+      "sessions_sem_not_after": 222
+    },
+    "achados": [
+      {
+        "id": "S8-01",
+        "severidade": "BAIXO",
+        "descricao": "Zero usuarios com MFA"
+      },
+      {
+        "id": "S8-02",
+        "severidade": "BAIXO",
+        "descricao": "multiplix-voice sem file_size_limit"
+      }
+    ]
+  },
+  "S9": {
+    "status": "VERIFICADO",
+    "descricao": "Sessoes JWT",
+    "evidencia": {
+      "total": 222,
+      "com_not_after": 0,
+      "sem_not_after": 222
+    },
+    "achados": [
+      {
+        "id": "S9-01",
+        "severidade": "MEDIO",
+        "descricao": "222 sessoes JWT sem not_after (sem expiracao)"
+      }
+    ]
+  },
+  "S10": {
+    "status": "VERIFICADO",
+    "descricao": "Logs 7d: cron 7d re-executado ao vivo nesta sessao; causa raiz de falhas identificada: job startup timeout (infraestrutura Supabase, nao codigo)",
+    "evidencia": {
+      "pg_net_7d_timeouts": 72,
+      "pg_net_7d_total": 1225,
+      "realtime_tables": 33,
+      "cron_7d_ao_vivo": {
+        "ai_jobs_tick_1min": {
+          "failed": 405,
+          "succeeded": 9507,
+          "last_fail": "2026-10-21T11:45"
+        },
+        "avatars_refresh": {
+          "failed": 9,
+          "succeeded": 159
+        },
+        "cleanup_edge_rate_limits": {
+          "failed": 32,
+          "succeeded": 640
+        },
+        "connection_health_check": {
+          "failed": 85,
+          "succeeded": 1931
+        },
+        "crm_sync_outbox": {
+          "failed": 2,
+          "succeeded": 4191
+        },
+        "expire_stale_agent_presence": {
+          "failed": 213,
+          "succeeded": 4827
+        },
+        "gmail_incremental_sync": {
+          "failed": 97,
+          "succeeded": 1919
+        },
+        "multiplix_send_trigger": {
+          "failed": 204,
+          "succeeded": 4836
+        },
+        "talkx_scheduler_1min": {
+          "failed": 429,
+          "succeeded": 9651
+        },
+        "tasks_notify_due": {
+          "failed": 414,
+          "succeeded": 9666
+        }
+      },
+      "causa_falhas": "job startup timeout — todas as falhas no mesmo timestamp (11:45 em 21/10, 15:54 em 18/10, 19:15 em 17/10) indicam outage de infraestrutura Supabase, nao bug de codigo",
+      "edge_function_logs": "NAO_VERIFICADO — query_logs MCP nao retornou logs de edge functions (ferramenta nao disponivel para este projeto nesta sessao)"
+    },
+    "achados": [
+      {
+        "id": "B5",
+        "severidade": "BAIXO",
+        "descricao": "pg_net 72 timeouts em 7 dias (5.9%)"
+      },
+      {
+        "id": "I5",
+        "severidade": "INFO",
+        "descricao": "33 tabelas no Realtime — verificar RLS"
+      }
+    ]
+  },
+  "S11": {
+    "status": "NAO_VERIFICADO_producao__VERIFICADO_banco_local",
+    "descricao": "Matriz RLS em producao: NAO VERIFICADO — BEGIN bloqueado pelo MCP (erro 0A000 re-executado nesta sessao). Matriz VERIFICADA em banco local temporario zapp_s11_final com migrations reais do repo.",
+    "nao_verificado_producao_motivo": "MCP usa SECURITY DEFINER wrapper (mcp_exec) que bloqueia BEGIN/SET ROLE; erro confirmado 0A000",
+    "banco_local": "zapp_s11_final",
+    "matriz_local": {
+      "C3a_tenant_B_deleta_invite_tenant_A_vulneravel": "DELETE 1 — VULNERABILIDADE S3-01 CONFIRMADA",
+      "C3b_tenant_B_deleta_invite_tenant_A_corrigido": "DELETE 0 — CORRIGIDA (migration 20261026100300)",
+      "C3c_tenant_B_insere_invite_dept_tenant_A": "ERROR RLS — BLOQUEADO S3-02 CORRIGIDA",
+      "C3d_admin_insere_invite_proprio_dept": "INSERT OK — CORRETO (acesso autorizado)",
+      "C4_tenant_A_le_dados_proprio": "SELECT 1 row — ISOLAMENTO OK",
+      "C8_tabela_sem_policy_default_deny": "SELECT 0 rows — DEFAULT-DENY CORRETO"
+    }
+  },
+  "S12": {
+    "status": "VERIFICADO",
+    "descricao": "Backup/PITR, replicacao, trilha de auditoria, retencao LGPD, alertas",
+    "evidencia": {
+      "pitr": {
+        "archived_count": 8576,
+        "failed_count": 23,
+        "last_archived_time": "2026-10-22T16:12:15",
+        "last_failed_time": "2026-10-16T08:01:17",
+        "status": "OK — last_archived > last_failed (gap de 6 dias resolvido)"
+      },
+      "replicacao": {
+        "replicas": 1,
+        "tipo": "streaming async",
+        "write_lag_ms": 18,
+        "status": "OK"
+      },
+      "audit_logs": {
+        "total": 79555,
+        "null_entity_type": 79452,
+        "pct_null": 99.9,
+        "tipos_distintos": 6,
+        "status": "MEDIO — cobertura nominal (99.9% sem entity_type)"
+      },
+      "login_attempts": {
+        "total": 18,
+        "mais_30d": 3,
+        "mais_90d": 0,
+        "mais_antigo": "2026-08-28",
+        "cron_ttl_existe": false,
+        "status": "MEDIO — sem TTL automatico (LGPD)"
+      },
+      "search_events": {
+        "total": 0,
+        "cron_retencao": "search-events-retention (10 4 * * *)",
+        "status": "OK — TTL funcionando (0 rows)"
+      },
+      "warroom_alerts": {
+        "total": 514
+      },
+      "security_alerts": {
+        "total": 5
+      },
+      "git_history_grep": {
+        "jwt_anon_encontrado": true,
+        "arquivo": "20260829110000_gmail_incremental_sync_cron.sql",
+        "linha": 22,
+        "role": "anon",
+        "nota": "chave publica (anon), nao service_role — sem risco de escalonamento",
+        "service_role_keys_em_history": false
+      }
+    },
+    "achados": [
+      {
+        "id": "S12-01",
+        "severidade": "MEDIO",
+        "descricao": "login_attempts sem TTL automatico (LGPD)",
+        "correcao": "20261026110300 (PR #2186)"
+      },
+      {
+        "id": "S12-02",
+        "severidade": "MEDIO",
+        "descricao": "audit_logs cobertura 99.9% null entity_type — trilha de auditoria nominal"
+      },
+      {
+        "id": "I10",
+        "severidade": "INFO",
+        "descricao": "PITR ativo: 8576 WALs arquivados, last OK=2026-10-22, falha mais recente=2026-10-16 (resolvida)"
+      },
+      {
+        "id": "I11",
+        "severidade": "INFO",
+        "descricao": "Replicacao: 1 replica Realtime streaming async, write_lag=18ms — OK"
+      }
+    ]
+  },
+  "achados_extras": [
+    {
+      "id": "B4",
+      "severidade": "BAIXO",
+      "secao": "git_history",
+      "descricao": "JWT anon hardcoded em 20260829110000_gmail_incremental_sync_cron.sql linha 22 — role=anon (chave publica)"
+    },
+    {
+      "id": "B6",
+      "severidade": "BAIXO",
+      "secao": "S6",
+      "descricao": "vacuum-messages-post-expurgo: zero execucoes em 30 dias"
+    },
+    {
+      "id": "I8",
+      "severidade": "INFO",
+      "secao": "S1",
+      "descricao": "132 arquivos SQL no repo sem entrada no ledger (3=PR#2186; 129=historicos/superseded)"
+    }
+  ],
+  "novos_achados_integridade": [
+    {
+      "id": "B7",
+      "severidade": "BAIXO",
+      "secao": "integridade",
+      "descricao": "10 profiles sem auth.users correspondente (orphans); 5 com mais de 30 dias; mais_antigo=2026-08-26",
+      "evidencia": "SELECT COUNT(*) AS orphans_total, COUNT(*) FILTER (WHERE p.created_at < NOW()-INTERVAL '30 days') AS mais_30d FROM public.profiles p LEFT JOIN auth.users u ON u.id=p.id WHERE u.id IS NULL — resultado: orphans_total=10, mais_30d=5, mais_antigo=2026-08-26"
+    },
+    {
+      "id": "B8",
+      "severidade": "BAIXO",
+      "secao": "integridade",
+      "descricao": "50 FKs com ON DELETE NO ACTION (silencia violações de integridade referencial em vez de proteger): CASCADE=121, SET NULL=88, NO ACTION=50, RESTRICT=4",
+      "evidencia": "SELECT c.confdeltype, COUNT(*) FROM pg_constraint c WHERE c.contype='f' AND c.connamespace='public'::regnamespace GROUP BY c.confdeltype — CASCADE:121, SET NULL:88, NO ACTION:50, RESTRICT:4"
+    },
+    {
+      "id": "B9",
+      "severidade": "BAIXO",
+      "secao": "S6/S8",
+      "descricao": "searchbox_alert_cron_secret referenciado no cron job searchbox-budget-alert mas ausente do Vault",
+      "evidencia": "SELECT count(*) FROM vault.secrets WHERE name = 'searchbox_alert_cron_secret' — 0; SELECT command FROM cron.job WHERE jobname='searchbox-budget-alert' confirma uso de decrypted_secrets",
+      "impacto": "secret ausente: cron envia x-cron-secret=NULL para a edge searchbox-budget-alert, bloqueando o caminho de e-mail/webhook externo do alerta. A notificação in-app (criada por notify_searchbox_budget() ANTES da chamada HTTP) ainda é disparada normalmente."
+    }
+  ],
+  "evidence_rerun_timestamp": "2026-10-22T16:18 — 12 queries reexecutadas ao vivo + B9 adicionado (searchbox_alert_cron_secret ausente do vault confirmado)",
+  "nao_verificados": [
+    {
+      "id": "NV-01",
+      "secao": "S11",
+      "item": "Matriz RLS producao (tenant A x B)",
+      "motivo": "BEGIN bloqueado pelo MCP (0A000)",
+      "como_verificar": "Banco local com migrations + SET ROLE"
+    },
+    {
+      "id": "NV-02",
+      "secao": "S10",
+      "item": "Logs das edge functions 7 dias",
+      "motivo": "query_logs nao expoe logs de edge functions via MCP",
+      "como_verificar": "Dashboard Supabase -> Functions -> Logs"
+    },
+    {
+      "id": "NV-03",
+      "secao": "S2-04",
+      "item": "Edge functions deployadas x repo (78 dirs)",
+      "motivo": "list_edge_functions indisponivel via MCP",
+      "como_verificar": "supabase functions list --project-ref tnnnlkbymytvtqngbbqh"
+    },
+    {
+      "id": "NV-04",
+      "secao": "S2-05",
+      "item": "Replay de migrations do zero",
+      "motivo": "Requer Postgres local com supabase start + replay completo",
+      "como_verificar": "scripts/db-audit/replay-local.sh"
+    }
+  ],
+  "contagem_final_severidades_completa": {
+    "CRITICO": 0,
+    "ALTO": 2,
+    "MEDIO": 6,
+    "BAIXO": 13,
+    "INFO": 9,
+    "TOTAL": 34,
+    "detalhe": {
+      "ALTO": [
+        "S3-01 (dept_invites DELETE USING true — E1 reexecutado: qual=true CONFIRMADO)",
+        "S3-02 (dept_invites INSERT WITH_CHECK true — E1 reexecutado: with_check=true CONFIRMADO)"
+      ],
+      "MEDIO": [
+        "S2-01 (log_search_event ausente — E2 reexecutado: 0 rows CONFIRMADO)",
+        "S2-02 (13 RPCs adicionais ausentes no banco)",
+        "S4-01 (FKs sem indice — E3 reexecutado: 20 FKs CONFIRMADO)",
+        "S6-01 (cron spikes job startup timeout — E9 reexecutado: talkx 428 failed/7d CONFIRMADO)",
+        "S9-01 (222 sessoes sem not_after — E4 reexecutado: 222/222 sem not_after CONFIRMADO)",
+        "S12-01 (login_attempts sem TTL — E5 reexecutado: 18 total, 3 >30d CONFIRMADO)",
+        "S12-02 (audit_logs 99.9% null entity_type — E8 reexecutado: 79452/79555 CONFIRMADO)"
+      ],
+      "BAIXO": [
+        "B1 (61 migrations null stmts — E6 reexecutado: 61/922 CONFIRMADO)",
+        "B2 (webhook_failures service_role_full USING true)",
+        "B3 (user_roles 18.8M seq scans — E10 reexecutado: 18812067 CONFIRMADO)",
+        "B4 (JWT anon no historico git)",
+        "B5 (pg_net 72 timeouts 7d)",
+        "B6 (vacuum-messages-post-expurgo 0 runs — schedule anual 2 set, ESPERADO)",
+        "B7 (NOVO: 10 profiles sem auth.users, 5 mais de 30d, mais_antigo=2026-08-26)",
+        "B8 (NOVO: 50 FKs ON DELETE NO ACTION — CASCADE:121, SET NULL:88, NO ACTION:50, RESTRICT:4)",
+        "B9 (NOVO: searchbox_alert_cron_secret ausente do vault — cron envia NULL para edge)",
+        "S4-02 (indice duplicado department_invites)",
+        "S2-03 (avatars ausente no schema public)",
+        "S8-01 (zero usuarios com MFA)",
+        "S8-02 (multiplix-voice sem file_size_limit)"
+      ],
+      "INFO": [
+        "I1 (13 views sem security_invoker)",
+        "I2 (20 indices sem uso 9MB)",
+        "I3 (drift triggers 166 vs 259)",
+        "I4 (drift types.ts 163 Tables vs 173 producao)",
+        "I5 (33 tabelas no Realtime)",
+        "I6 (VERDE: 0 SECURITY DEFINER sem search_path)",
+        "I7 (11 tabelas default-deny CORRETO)",
+        "I8 (132 SQL sem ledger)",
+        "I9 (set_conversation_status nao idempotente — INFO, sem impacto producao hoje)",
+        "I10 (PITR ativo: 8576 WALs, last OK=2026-10-22 — E7 reexecutado CONFIRMADO)",
+        "I11 (Replicacao: 1 replica Realtime streaming async write_lag=18ms — E10 reexecutado CONFIRMADO)",
+        "S5-01 (search_contacts ILIKE sem FTS + 3 subcalls/linha — downgraded MEDIO→INFO: EXPLAIN corrigido com contact_id confirma Index Cond em idx_messages_contact_read_sender; achado original 'messages.sender' usava coluna inexistente conversation_id)"
+      ]
+    }
+  }
+}

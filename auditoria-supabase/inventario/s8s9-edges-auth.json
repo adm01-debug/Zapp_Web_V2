@@ -1,0 +1,226 @@
+{
+  "auditoria": "s8s9-edges-auth",
+  "data": "2026-10-22",
+  "secao": "8 (Edge Functions) + 9 (Auth/Storage/Realtime)",
+
+  "s8_edge_functions": {
+    "total_funcoes": 83,
+    "funcoes_verify_jwt_false": [
+      "evolution-webhook",
+      "whatsapp-webhook",
+      "gmail-webhook",
+      "gmail-cron-sync",
+      "connection-health-check",
+      "batch-fetch-avatars",
+      "elevenlabs-webhook",
+      "public-api",
+      "auth-login",
+      "crm-integration",
+      "csp-report",
+      "talkx-link",
+      "searchbox-budget-alert",
+      "sync-call-records"
+    ],
+    "count_verify_jwt_false": 14,
+    "auth_alternativa_por_funcao": {
+      "evolution-webhook": "HMAC (EVOLUTION_WEBHOOK_SECRET) OU instanceToken por corpo — fail-closed; strictMode=false pois Evolution GO nao assina (nao ha outro caminho); modo 'shadow' disponivel via EVOLUTION_WEBHOOK_ENFORCE",
+      "whatsapp-webhook": "HMAC Meta (verifyMetaWebhookSignature, WHATSAPP_APP_SECRET obrigatorio) — fail-closed",
+      "gmail-webhook": "OIDC Google (verifyGmailOidcRequest, GMAIL_OIDC_*) — verificado no shared",
+      "gmail-cron-sync": "x-cron-secret header contra CRON_SECRET env",
+      "connection-health-check": "isAuthorizedCronOrUser (cron-secret-auth.ts, cron ou usuario privilegiado)",
+      "batch-fetch-avatars": "authorizeCronOrUser (cron-secret-auth.ts, cron ou admin/supervisor via RPC)",
+      "elevenlabs-webhook": "HMAC (verifyElevenLabsSignature, ELEVENLABS_WEBHOOK_SECRET) — fail-closed",
+      "public-api": "DESABILITADA — retorna 410 Gone",
+      "auth-login": "Por design (nao ha sessao ainda) — rate-limit IP + gate de lockout via RPC",
+      "crm-integration": "requireAuth() manual no corpo do handler (JWT verificado internamente)",
+      "csp-report": "SEM auth — publico por design (CSP report-uri; navegador envia sem JWT)",
+      "talkx-link": "GET sem auth (clique rastreavel); POST usa HMAC-SHA256 (MULTIPLIX_SCOPE_HMAC_SECRET)",
+      "searchbox-budget-alert": "x-cron-secret header contra CRON_SECRET env — fail-closed (sem segredo, recusa)",
+      "sync-call-records": "timingSafeStringEqual com header contra BITRIX_WEBHOOK_URL"
+    },
+    "secrets_hardcoded": "NENHUM — tokens em arquivos .test.ts sao ficticios ('eyJtest.servicekey.forauth', 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZ2VudCJ9.fake', etc)",
+    "cors": "Restrito — whitelist de origens exatas (cors-origins.ts): https://zapp-web-v2.vercel.app, https://zappweb.app.br, https://www.zappweb.app.br + regex para preview Vercel. Sem wildcard '*'.",
+    "env_vars_usadas": [
+      "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_ANON_KEY",
+      "EVOLUTION_API_KEY", "EVOLUTION_API_URL", "EVOLUTION_API_FLAVOR",
+      "EVOLUTION_INSTANCE_NAME", "EVOLUTION_INSTANCE_TOKEN",
+      "EVOLUTION_WEBHOOK_ENFORCE", "EVOLUTION_VPS_SUPABASE_URL", "EVOLUTION_VPS_SUPABASE_ANON_KEY",
+      "WHATSAPP_VERIFY_TOKEN", "WHATSAPP_APP_SECRET",
+      "GMAIL_OIDC_JWKS_URL", "GMAIL_OIDC_AUDIENCE", "GMAIL_OIDC_EMAIL",
+      "GMAIL_CAS_JWT", "GMAIL_CAS_POSTGREST_URL",
+      "ELEVENLABS_WEBHOOK_SECRET",
+      "RESEND_API_KEY", "BITRIX_WEBHOOK_URL", "CHATBOT_L1_WEBHOOK_SECRET",
+      "CRON_SECRET", "INTERNAL_ALERT_SECRET", "MULTIPLIX_SCOPE_HMAC_SECRET",
+      "SIP_PASSWORD", "PROMOGIFTS_SUPABASE_URL", "PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY",
+      "MEDIA_EGRESS_ALLOWED_HOSTS", "MEDIA_EGRESS_ALLOWED_ORIGINS",
+      "PREVIEW_EGRESS_PROXY_URL", "PREVIEW_EGRESS_SHARED_SECRET",
+      "AI_JOBS_ENABLE_AI_GENERATE", "AI_OUTBOX_HMAC_SECRET",
+      "TALKX_LEGACY_SIGNATURE_ACCEPT_UNTIL", "DENO_ENV"
+    ]
+  },
+
+  "s9_auth": {
+    "q6_auth_config": "NAO DISPONIVEL — relation auth.config nao existe via service_role neste projeto Supabase Cloud (configuracao interna gerenciada)",
+    "q10_auth_stats": {
+      "query": "SELECT count(*) as total, count(*) FILTER (WHERE email_confirmed_at IS NOT NULL) as email_confirmed, count(*) FILTER (WHERE phone_confirmed_at IS NOT NULL) as phone_confirmed, count(*) FILTER (WHERE banned_until IS NOT NULL AND banned_until>NOW()) as currently_banned, count(*) FILTER (WHERE deleted_at IS NOT NULL) as soft_deleted FROM auth.users",
+      "resultado": {
+        "total": 10,
+        "email_confirmed": 10,
+        "phone_confirmed": 0,
+        "currently_banned": 1,
+        "soft_deleted": 0
+      }
+    },
+    "q11_mfa": {
+      "query": "SELECT count(*) as mfa_factors_total, count(*) FILTER (WHERE status='verified') as verified FROM auth.mfa_factors",
+      "resultado": {
+        "mfa_factors_total": 0,
+        "verified": 0
+      }
+    },
+    "q12_identities_providers": {
+      "query": "SELECT provider, count(*) as cnt FROM auth.identities GROUP BY provider ORDER BY 2 DESC",
+      "resultado": [
+        {"provider": "email", "cnt": 8},
+        {"provider": "google", "cnt": 1}
+      ]
+    }
+  },
+
+  "s9_storage": {
+    "q7_policies": {
+      "query": "SELECT schemaname, tablename, policyname, roles, cmd, qual FROM pg_policies WHERE schemaname='storage' ORDER BY tablename, cmd",
+      "total_policies": 30,
+      "resumo": {
+        "DELETE": 9,
+        "INSERT": 7,
+        "SELECT": 8,
+        "UPDATE": 5,
+        "buckets_cobertos": ["audio-memes", "audio-messages", "avatars", "custom-emojis", "stickers", "team-chat-files", "whatsapp-media"]
+      },
+      "alerta_roles_public": [
+        {
+          "policyname": "Conversation members can read team chat files",
+          "roles": ["public"],
+          "cmd": "SELECT",
+          "bucket": "team-chat-files",
+          "obs": "Role 'public' inclui anon; QUAL exige auth.uid() (NULL para anon -> sem acesso na pratica), mas deveria ser role 'authenticated'"
+        }
+      ]
+    },
+    "q8_objetos_por_bucket": {
+      "query": "SELECT bucket_id, count(*) as objects FROM storage.objects GROUP BY bucket_id ORDER BY bucket_id",
+      "resultado": [
+        {"bucket_id": "audio-memes", "objects": 542},
+        {"bucket_id": "audio-messages", "objects": 5716},
+        {"bucket_id": "avatars", "objects": 3631},
+        {"bucket_id": "whatsapp-media", "objects": 9719}
+      ]
+    },
+    "buckets": {
+      "publicos": ["audio-memes (public=true, max 5MB)", "avatars (public=true, max 5MB)", "custom-emojis (public=true, max 512KB)", "stickers (public=true, max 5MB)"],
+      "privados": ["audio-messages (private, max 50MB)", "multiplix-voice (private, sem limite)", "team-chat-files (private, max 10MB)", "whatsapp-media (private, max 100MB)"]
+    }
+  },
+
+  "s9_realtime": {
+    "q9_publicacao": {
+      "query": "SELECT schemaname, tablename FROM pg_publication_tables WHERE pubname='supabase_realtime' ORDER BY 1,2",
+      "total_tabelas": 33,
+      "tabelas_sensiveis": ["messages", "contacts", "calls", "notifications", "whatsapp_connections", "team_messages", "email_messages", "email_threads", "sales_deals", "talkx_campaign_events", "talkx_recipients", "whisper_messages"],
+      "todas_tabelas": [
+        "agent_achievements", "agent_presence", "agent_stats", "calls", "contacts",
+        "conversation_sla", "conversation_tasks", "email_messages", "email_threads",
+        "message_reactions", "messages", "multiplix_dispatches", "multiplix_recipients",
+        "notifications", "payment_links", "queue_goals", "queue_members", "queues",
+        "sales_deals", "talkx_campaign_events", "talkx_campaign_segments", "talkx_campaigns",
+        "talkx_recipients", "talkx_segments", "talkx_templates", "team_conversation_members",
+        "team_conversations", "team_message_reactions", "team_message_receipts",
+        "team_messages", "warroom_alerts", "whatsapp_connections", "whisper_messages"
+      ]
+    }
+  },
+
+  "achados": [
+    {
+      "id": "S8-01",
+      "severidade": "ALTO",
+      "titulo": "Nenhum MFA configurado para nenhum usuario",
+      "evidence": "SELECT count(*) as mfa_factors_total, count(*) FILTER (WHERE status='verified') as verified FROM auth.mfa_factors; => mfa_factors_total=0, verified=0. Total de 10 usuarios, todos sem segundo fator.",
+      "impacto": "Comprometimento de senha = comprometimento total da conta. Plataforma de comunicacao empresarial com acesso a mensagens, contatos e dados de vendas.",
+      "fix": "Habilitar MFA (TOTP) obrigatorio para todos os usuarios via auth.config (Dashboard Supabase -> Authentication -> MFA) e forcando via politica no login."
+    },
+    {
+      "id": "S8-02",
+      "severidade": "MEDIO",
+      "titulo": "Politica de storage 'Conversation members can read team-chat-files' usa role 'public' em vez de 'authenticated'",
+      "evidence": "SELECT policyname, roles, cmd FROM pg_policies WHERE schemaname='storage' AND 'public' = ANY(roles); => {policyname: 'Conversation members can read team chat files', roles: ['public'], cmd: 'SELECT'}. Bucket team-chat-files e privado (public=false).",
+      "impacto": "Na pratica, inofensivo (QUAL exige auth.uid() que retorna NULL para anon). Mas o role 'public' aplica a politica tambem ao papel anon — qualquer mudanca futura no QUAL ou em is_admin_or_supervisor pode expor arquivos de chat para usuarios nao autenticados.",
+      "fix": "Corrigir a politica para roles: ['authenticated']: ALTER POLICY \"Conversation members can read team chat files\" ON storage.objects TO authenticated USING (...);"
+    },
+    {
+      "id": "S8-03",
+      "severidade": "MEDIO",
+      "titulo": "evolution-webhook aceita modo 'shadow' via EVOLUTION_WEBHOOK_ENFORCE que anula autenticacao",
+      "evidence": "grep 'EVOLUTION_WEBHOOK_ENFORCE' supabase/functions/evolution-webhook/index.ts => funcao evolutionEnforceMode(); 'shadow' so loga sem rejeitar. Padrao e 'token' (correto). Modo 'shadow' ativavel via secret no Dashboard.",
+      "impacto": "Se EVOLUTION_WEBHOOK_ENFORCE for definido como 'shadow' (rollback explicito documentado), qualquer origem pode injetar eventos de webhook sem credencial, resultando em mensagens falsas, mudancas de status e atualizacoes de contatos.",
+      "fix": "Monitorar o valor de EVOLUTION_WEBHOOK_ENFORCE nos secrets da edge function. Remover o modo 'shadow' do codigo ou adicionar alerta/auditoria automatica quando ele e ativado."
+    },
+    {
+      "id": "S8-04",
+      "severidade": "MEDIO",
+      "titulo": "33 tabelas na publicacao supabase_realtime incluindo dados sensiveis; RLS e unica barreira",
+      "evidence": "SELECT count(*) FROM pg_publication_tables WHERE pubname='supabase_realtime'; => 33 tabelas incluindo messages, contacts, calls, sales_deals, whisper_messages, payment_links, talkx_recipients.",
+      "impacto": "Qualquer falha de RLS em uma dessas tabelas (politica mal configurada, tabela sem RLS, funcao SECURITY DEFINER mal usada) expoe dados em tempo real para todos os clientes autenticados — incluindo dados de outros segmentos ou clientes.",
+      "fix": "Auditar RLS de cada tabela na publicacao. Confirmar que todas tem 'ALTER TABLE ... ENABLE ROW LEVEL SECURITY' e que nenhuma tem policy tipo 'TO public USING (true)'. Priorizar: messages, contacts, calls, sales_deals, whisper_messages."
+    },
+    {
+      "id": "S8-05",
+      "severidade": "BAIXO",
+      "titulo": "Bucket 'audio-memes' publico — acesso de leitura irrestrito para qualquer URL",
+      "evidence": "SELECT id, name, public FROM storage.buckets WHERE id='audio-memes'; => public=true. Policy 'Public read audio memes' roles=['authenticated'], mas bucket publico permite CDN sem auth.",
+      "impacto": "Qualquer pessoa com a URL de um objeto pode baixar audio memes sem autenticacao. Potencial para enumeracao de conteudo ou uso indevido de midias de usuarios.",
+      "fix": "Avaliar se acesso publico e intencional. Se sim, documentar. Se nao, alterar bucket para private e usar URLs assinadas para acesso."
+    },
+    {
+      "id": "S8-06",
+      "severidade": "BAIXO",
+      "titulo": "Janela de assinatura legada do talkx-link ja expirou (DEFAULT_LEGACY_SIGNATURE_ACCEPT_UNTIL)",
+      "evidence": "grep 'DEFAULT_LEGACY_SIGNATURE_ACCEPT_UNTIL' supabase/functions/talkx-link/index.ts => const DEFAULT_LEGACY_SIGNATURE_ACCEPT_UNTIL = '2026-10-20T23:59:59.999-03:00'. Data atual: 2026-10-22.",
+      "impacto": "Sem TALKX_LEGACY_SIGNATURE_ACCEPT_UNTIL configurado, o codigo usa o default que ja passou. Chamadas com assinatura do esquema legado nao sao mais aceitas. Se houver sistema externo usando o esquema legado, as conversoes pararam de ser registradas.",
+      "fix": "Confirmar que todos os sistemas que geram conversoes ja usam o esquema v1. Limpar o codigo de suporte a assinatura legada (DEFAULT_LEGACY_SIGNATURE_ACCEPT_UNTIL e parseLegacySignatureAcceptUntil)."
+    },
+    {
+      "id": "S8-07",
+      "severidade": "BAIXO",
+      "titulo": "csp-report e uma funcao publica sem rate-limiting agressivo (MAX_REPORTS=10, MAX_BODY=8KB)",
+      "evidence": "head -60 supabase/functions/csp-report/index.ts => MAX_BODY=8*1024, MAX_REPORTS=10, sem rate-limit por IP explicito no handler.",
+      "impacto": "Endpoint publico pode ser abusado para gerar volume de logs. Sem rate-limit por IP, um agressor pode saturar os logs da edge function com relatorios CSP falsos.",
+      "fix": "Adicionar rate-limit por IP (enforceRateLimit) similar ao usado em whatsapp-webhook e outros handlers publicos."
+    },
+    {
+      "id": "S8-08",
+      "severidade": "INFO",
+      "titulo": "1 usuario atualmente banido entre 10 usuarios ativos",
+      "evidence": "SELECT count(*) FILTER (WHERE banned_until IS NOT NULL AND banned_until>NOW()) as currently_banned FROM auth.users; => 1",
+      "impacto": "Informacao operacional. Confirmar que o ban e intencional e tem data de expiracao adequada.",
+      "fix": "Verificar via Dashboard quem e o usuario banido e por quanto tempo."
+    },
+    {
+      "id": "S8-09",
+      "severidade": "INFO",
+      "titulo": "public-api edge function desabilitada (retorna 410 Gone)",
+      "evidence": "cat supabase/functions/public-api/index.ts => return errorResponse('Public API is disabled', 410, req). verify_jwt=false mas sem efeito.",
+      "impacto": "Nenhum — funcao desabilitada. Considerar remover da lista de funcoes deployadas.",
+      "fix": "Remover o deploy da funcao public-api ou manter como placeholder documentado."
+    },
+    {
+      "id": "S8-10",
+      "severidade": "INFO",
+      "titulo": "auth.config inacessivel via MCP service_role",
+      "evidence": "SELECT * FROM auth.config; => erro HTTP 404: relation 'auth.config' does not exist",
+      "impacto": "Nao foi possivel auditar configuracoes de auth (OTP, magic link, SMTP). Configuracoes devem ser verificadas via Dashboard Supabase -> Authentication -> Settings.",
+      "fix": "Verificar manualmente via Dashboard: email confirmation obrigatorio, OTP expiry, session lifetime, refresh token rotation."
+    }
+  ]
+}

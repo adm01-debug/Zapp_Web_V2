@@ -1,0 +1,34 @@
+-- PROPOSTA P008 — NÃO APLICADA — Auditoria 2026-10-22
+-- Objeto: cron.job jobid=5 (vacuum-messages-post-expurgo) + migration 20261006202215
+-- Problema: Job ativo com schedule '20 3 2 9 *' (uma vez por ano, 2 de setembro).
+--   VACUUM FULL adquire lock exclusivo em messages durante execução — potencial downtime.
+--   Migration de remoção (20261006202215_remover_cron_vacuum_messages_post_expurgo.sql)
+--   existe no repo mas o job persiste ativo no banco.
+--   Runs nos últimos 30 dias: 0. Última execução: 2026-09-02.
+--
+--   Evidência:
+--     SELECT jobid, jobname, schedule, active FROM cron.job WHERE jobid=5;
+--     → {jobid: 5, schedule: '20 3 2 9 *', active: true}
+--
+--     SELECT version FROM supabase_migrations.schema_migrations WHERE version='20261006202215';
+--     → (verificar se retorna 0 ou 1 row)
+--
+-- Impacto se não corrigido: Job ocupa slot no pool pg_cron; possível downtime de minutes
+--   no próximo 2 de setembro caso execute em tabela grande e sem supervisão.
+--
+-- ROLLBACK:
+--   SELECT cron.schedule('vacuum-messages-post-expurgo', '20 3 2 9 *',
+--     'VACUUM FULL ANALYZE public.messages;');
+--   -- (ou UPDATE cron.job SET active = true WHERE jobid = 5;)
+--
+-- ATENÇÃO: Verificar antes se migration foi registrada no ledger:
+--   SELECT version, name FROM supabase_migrations.schema_migrations
+--   WHERE version = '20261006202215';
+-- Se a migration não estiver no ledger, aplicar o arquivo pelo fluxo normal (PR + merge + apply)
+-- em vez de executar o SQL abaixo diretamente.
+
+-- Desativar o job (preserva histórico em cron.job_run_details)
+SELECT cron.unschedule('vacuum-messages-post-expurgo');
+
+-- Alternativa mais conservadora (somente desabilita sem remover):
+-- UPDATE cron.job SET active = false WHERE jobid = 5 AND jobname = 'vacuum-messages-post-expurgo';

@@ -87,7 +87,7 @@ partir do código e falha quando:
 | `invite-user` | A | `src/components/agents/InviteAgentDialog.tsx:48` · `supabase/config.toml:89` |
 | `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:456` · `supabase/config.toml:49` |
 | `metrics` | E | — sem chamador no repositório — |
-| `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:28` |
+| `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:119` |
 | `multiplix-audience` | A | `src/hooks/integrations/useMultiplixAudience.ts:9` |
 | `multiplix-dispatch` | A | `src/hooks/integrations/useMultiplixDispatches.ts:132` |
 | `multiplix-send` | A | `src/hooks/integrations/useMultiplixDispatches.ts:408` · `supabase/migrations/20260927320000_multiplix_cron_scheduler.sql:63` · `supabase/migrations/20260929610000_multiplix_cron_window_and_limits.sql:149` |

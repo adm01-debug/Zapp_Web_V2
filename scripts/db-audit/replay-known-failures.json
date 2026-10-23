@@ -2,7 +2,7 @@
   "_comment": "Falhas ESPERADAS do replay local (scripts/db-audit/replay-local.sh). Cada entrada e uma migration que nao aplica em banco vazio por motivo JA investigado e medido no banco canonico. O replay fica VERDE quando nao ha falha fora desta lista - e isso o transforma em gate contra drift novo. NUNCA adicione entrada sem medir o objeto no canonico e/ou apontar a versao substituta: o valor deste arquivo e ser a fronteira entre 'esperado' e 'regressao'.",
   "_metodo": "Medir o objeto real no canonico antes de aceitar: pg_proc (funcao ou coluna), pg_policies, information_schema. Receita em docs/MIGRATIONS.md secao 7.",
   "_contexto": "docs/audits/REPLAY_LOCAL_MIGRATIONS_2026-10-03.md",
-  "_atualizado_em": "2026-10-04",
+  "_atualizado_em": "2026-10-22",
   "esperadas": {
     "20260906000001_e31_contacts_is_lid_legacy.sql": {
       "categoria": "ambiente",
@@ -87,6 +87,34 @@
     "20261003192707_fixture_e2e_aba_arquivos_segunda_midia.sql": {
       "categoria": "ambiente",
       "motivo": "Mesma causa da 20261003182707: segunda midia da fixture E2E, depende do contato que so existe no canonico. Canonico: aplicada (ledger 20261003192707). Medido em 04/10/2026."
+    },
+    "20261011003008_talkx_n102c_window_open.sql": {
+      "categoria": "arquivo-superado",
+      "motivo": "cannot change return type of existing function. A funcao ja existe no banco com assinatura diferente (versao anterior). Canonico: funcao presente com assinatura atual. Replay falha por conflito de tipo de retorno entre esta versao e a anterior aplicada no banco local."
+    },
+    "20261012192938_team_chat_media_path_sender_conversation.sql": {
+      "categoria": "cascata-objeto-existe-no-canonico",
+      "motivo": "column media_path does not exist no replay. A coluna existe no canonico mas depende de migration anterior que nao aplica em banco vazio. Canonico: coluna presente nas tabelas team_chat."
+    },
+    "20261013210002_realtime_canais_privados.sql": {
+      "categoria": "ambiente",
+      "motivo": "relation realtime.messages does not exist no replay. A tabela realtime.messages e uma tabela interna do Supabase Cloud que nao existe na imagem postgres:17-alpine usada no replay local. Canonico: publicacao realtime configurada."
+    },
+    "20261013230007_my_active_sessions.sql": {
+      "categoria": "ambiente",
+      "motivo": "relation auth.sessions does not exist no replay. A tabela auth.sessions e uma tabela interna do Supabase Auth que nao existe na imagem postgres:17-alpine usada no replay local. Canonico: view my_active_sessions presente."
+    },
+    "20261026100300_dept_invites_ownership_fix.sql": {
+      "categoria": "cascata-objeto-existe-no-canonico",
+      "motivo": "function is_admin_or_supervisor() does not exist no replay. A funcao existe no canonico mas nao e criada por nenhuma migration replicavel (provavelmente parte das 61 migrations com statements NULL). Canonico: funcao presente, policies department_invites corrigidas (S3-01). Medido em 22/10/2026."
+    },
+    "20261026110300_login_attempts_ttl_lgpd.sql": {
+      "categoria": "ambiente",
+      "motivo": "cron.schedule() exige pg_cron instalado. A imagem postgres:17-alpine usada no replay nao tem pg_cron; outras migrations de cron (20260902000200, 20261002541230) ja estao nesta lista pelo mesmo motivo. Canonico: indice idx_login_attempts_updated_at presente, job cleanup-login-attempts-pii agendado (S12-01). Medido em 22/10/2026."
+    },
+    "20261026120300_log_search_event_rpc.sql": {
+      "categoria": "ambiente",
+      "motivo": "GRANT EXECUTE TO authenticated, service_role e REVOKE FROM anon falham na imagem postgres:17-alpine: essas roles nao existem no banco vazio. O mesmo motivo ja cobre outras migrations com GRANT/REVOKE para essas roles. Canonico: funcao log_search_event presente, EXECUTE concedido a authenticated e service_role, revogado de anon (S2-01). Medido em 22/10/2026."
     }
   }
 }

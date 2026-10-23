@@ -1,0 +1,231 @@
+{
+  "generated_at": "2026-10-22T00:00:00Z",
+  "project": "tnnnlkbymytvtqngbbqh",
+  "section": "S1 - Inventário Completo",
+
+  "Q1_schemas_ativos": {
+    "query": "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('pg_catalog','pg_toast','information_schema') ORDER BY 1",
+    "result": [
+      "auth","cron","extensions","graphql","graphql_public","net","ops","ops_backup",
+      "pg_temp_13","pg_temp_15","pg_temp_18","pg_temp_2","pg_temp_21","pg_temp_23",
+      "pg_temp_24","pg_temp_28","pg_temp_30","pg_temp_34","pg_temp_37","pg_temp_39",
+      "pg_temp_40","pg_temp_42","pg_temp_43","pg_temp_44","pg_temp_47","pg_temp_49",
+      "pg_temp_50","pg_temp_53","pg_temp_54","pg_temp_56","pg_temp_58","pg_temp_59",
+      "pg_temp_7","pgbouncer","public","realtime","storage","supabase_migrations","vault"
+    ],
+    "notes": "Total 64 schemas (excluindo pg_catalog/pg_toast/information_schema). 26 schemas pg_temp_* / pg_toast_temp_* ativos (conexões abertas). Schemas de negócio: public, auth, cron, extensions, graphql, net, ops, ops_backup, pgbouncer, realtime, storage, supabase_migrations, vault."
+  },
+
+  "Q2_tabelas_public": {
+    "query": "SELECT t.tablename, t.rowsecurity, (SELECT count(*) FROM pg_policy p WHERE p.polrelid=c.oid) as policies FROM pg_tables t JOIN pg_class c ON c.relname=t.tablename JOIN pg_namespace n ON n.nspname=t.schemaname AND n.oid=c.relnamespace WHERE t.schemaname='public' ORDER BY tablename",
+    "total_tables": 173,
+    "all_rls_enabled": true,
+    "tables_with_zero_policies": [
+      "_zapp_fn_before",
+      "_zapp_mig133_log",
+      "ai_budget_reservations",
+      "ai_jobs",
+      "catalog_rate_limit_hits",
+      "catalog_rate_limits",
+      "edge_rate_limits",
+      "gmail_oauth_states",
+      "link_preview_cache",
+      "talkx_storage_purge_queue",
+      "talkx_test_send_claims"
+    ],
+    "notes": "TODAS as 173 tabelas têm rowsecurity=true. 11 tabelas têm RLS ativo mas 0 policies (default-deny para anon/authenticated; acessíveis apenas via service_role — comportamento intencionalmente restritivo)."
+  },
+
+  "Q3_views_public": {
+    "query": "SELECT table_name FROM information_schema.views WHERE table_schema='public' ORDER BY 1",
+    "result": [
+      "catalog_send_stats",
+      "channel_connections_safe",
+      "gmail_accounts_safe",
+      "password_reset_requests_safe",
+      "profiles_public",
+      "searchbox_usage_daily",
+      "talkx_campaign_metrics",
+      "talkx_campaign_optouts",
+      "talkx_engine_health",
+      "team_message_read_state",
+      "whatsapp_connections_agent",
+      "whatsapp_connections_public",
+      "whatsapp_connections_safe"
+    ],
+    "total_views": 13
+  },
+
+  "Q4_enums": {
+    "query": "SELECT t.typname, array_agg(e.enumlabel ORDER BY e.enumsortorder) as vals FROM pg_type t ...",
+    "result": [
+      {"typname": "ai_provider_type", "vals": ["lovable_ai","openai_compatible","google_gemini","custom_webhook","custom_agent"]},
+      {"typname": "app_role", "vals": ["admin","supervisor","agent","special_agent"]},
+      {"typname": "channel_type", "vals": ["whatsapp","instagram","telegram","messenger","webchat","email"]},
+      {"typname": "multiplix_block_type", "vals": ["text","voice_ai","audio_recorded","file"]},
+      {"typname": "multiplix_dispatch_status", "vals": ["draft","scheduled","sending","paused","completed","completed_with_failures","failed","cancelled"]},
+      {"typname": "multiplix_eligibility", "vals": ["eligible","no_destination","suppressed","out_of_scope","media_pending","connection_unavailable","requires_template"]},
+      {"typname": "multiplix_item_status", "vals": ["pending","sending","sent","delivered","read","failed","failed_transient","skipped","cancelled","outcome_unknown"]},
+      {"typname": "multiplix_recipient_status", "vals": ["pending","sending","sent","delivered","read","failed","skipped","cancelled","outcome_unknown"]},
+      {"typname": "service_account_type", "vals": ["google_sheets","google_docs","google_calendar","google_drive","dropbox"]},
+      {"typname": "talkx_blacklist_reason", "vals": ["opt_out","invalid_number","manual","lgpd","no_commercial_permission","bounce"]}
+    ],
+    "total_enums": 10
+  },
+
+  "Q5_extensoes": {
+    "query": "SELECT extname, extversion FROM pg_extension ORDER BY extname",
+    "result": [
+      {"extname": "pg_cron", "extversion": "1.6.4"},
+      {"extname": "pg_net", "extversion": "0.20.4"},
+      {"extname": "pg_stat_statements", "extversion": "1.11"},
+      {"extname": "pg_trgm", "extversion": "1.6"},
+      {"extname": "pgcrypto", "extversion": "1.3"},
+      {"extname": "plpgsql", "extversion": "1.0"},
+      {"extname": "supabase_vault", "extversion": "0.3.1"},
+      {"extname": "uuid-ossp", "extversion": "1.1"}
+    ],
+    "notes": "pg_cron + pg_net ativos — conforme CLAUDE.md seção 0 regra 6: banco local deve bloquear cron.launch_active_jobs e apontar host oficial para 127.0.0.1 antes de aplicar migrations localmente."
+  },
+
+  "Q6_sequences": {
+    "query": "SELECT sequencename, last_value, max_value, ... FROM pg_sequences WHERE schemaname='public'",
+    "result": [
+      {"sequencename": "catalog_rate_limit_hits_id_seq", "last_value": 744, "max_value": 9223372036854775807, "pct_used": 0.0},
+      {"sequencename": "contact_deletion_audit_id_seq", "last_value": 619, "max_value": 9223372036854775807, "pct_used": 0.0}
+    ],
+    "notes": "Apenas 2 sequences no schema public, ambas bigint (max ~9.2e18). Uso atual: 744 e 619 — pct_used praticamente 0%. Sem risco de overflow."
+  },
+
+  "Q7_triggers": {
+    "query": "SELECT trigger_name, event_object_table, event_manipulation, action_timing, action_statement FROM information_schema.triggers WHERE trigger_schema='public'",
+    "total_triggers": 166,
+    "notes": "166 triggers no schema public. Predominantemente: update_updated_at_column (padrao), guards de imutabilidade, auditorias de role, gamification hooks, FSM triggers (contatos, campanhas, mensagens), SLA triggers."
+  },
+
+  "Q8_cron_jobs": {
+    "query": "SELECT jobid, jobname, schedule, active, ... FROM cron.job ORDER BY jobid",
+    "total_jobs": 16,
+    "all_active": true,
+    "result": [
+      {"jobid": 1, "jobname": "cleanup-link-preview-cache", "schedule": "12 3 * * *", "active": true},
+      {"jobid": 4, "jobname": "gmail-incremental-sync", "schedule": "0-55/5 * * * *", "active": true, "note": "chama edge function via pg_net"},
+      {"jobid": 5, "jobname": "vacuum-messages-post-expurgo", "schedule": "20 3 2 9 *", "active": true, "note": "VACUUM FULL ANALYZE public.messages — agendado para 2 de setembro (anual), parece job de manutenção pontual ainda ativo"},
+      {"jobid": 6, "jobname": "vacuum-contacts-daily", "schedule": "42 3 * * *", "active": true},
+      {"jobid": 9, "jobname": "cleanup-edge-rate-limits", "schedule": "7-52/15 * * * *", "active": true},
+      {"jobid": 11, "jobname": "talkx-scheduler-1min", "schedule": "* * * * *", "active": true},
+      {"jobid": 13, "jobname": "expire-stale-agent-presence", "schedule": "1-59/2 * * * *", "active": true},
+      {"jobid": 15, "jobname": "multiplix-send-trigger", "schedule": "0-58/2 * * * *", "active": true},
+      {"jobid": 16, "jobname": "tasks-notify-due", "schedule": "* * * * *", "active": true},
+      {"jobid": 17, "jobname": "connection-health-check", "schedule": "2-57/5 * * * *", "active": true, "note": "chama edge function via pg_net"},
+      {"jobid": 18, "jobname": "avatars-refresh", "schedule": "7 * * * *", "active": true, "note": "chama edge function via pg_net"},
+      {"jobid": 20, "jobname": "ai-jobs-tick-1min", "schedule": "1-59 * * * *", "active": true},
+      {"jobid": 21, "jobname": "searchbox-budget-alert", "schedule": "0 12 * * *", "active": true, "note": "chama edge function via pg_net"},
+      {"jobid": 22, "jobname": "crm-sync-outbox", "schedule": "1-59/2 * * * *", "active": true},
+      {"jobid": 23, "jobname": "crm-sync-outbox-cleanup", "schedule": "17 4 * * *", "active": true},
+      {"jobid": 24, "jobname": "search-events-retention", "schedule": "10 4 * * *", "active": true}
+    ]
+  },
+
+  "Q9_vault_secrets_names": {
+    "query": "SELECT name, created_at::date as created FROM vault.secrets ORDER BY name",
+    "result": [
+      {"name": "ai_jobs_cron_secret", "created": "2026-10-02"},
+      {"name": "avatars_refresh_cron_secret", "created": "2026-09-30"},
+      {"name": "connection_health_check_cron_secret", "created": "2026-09-30"},
+      {"name": "gmail_cron_secret", "created": "2026-08-29"},
+      {"name": "gmail_encryption_key", "created": "2026-08-27"},
+      {"name": "multiplix_cron_secret", "created": "2026-09-27"},
+      {"name": "multiplix_send_url", "created": "2026-09-29"},
+      {"name": "sicoob_service_role_key", "created": "2026-08-27"},
+      {"name": "talkx_anon_key", "created": "2026-09-08"},
+      {"name": "talkx_cron_secret", "created": "2026-10-02"},
+      {"name": "talkx_scheduler_url", "created": "2026-09-08"},
+      {"name": "talkx_send_url", "created": "2026-10-02"},
+      {"name": "zapp_anon_key", "created": "2026-09-01"}
+    ],
+    "total_secrets": 13,
+    "notes": "Valores NÃO recuperados (vault.secrets.decrypted_secret não consultado). Somente nomes e datas de criação. Presença de sicoob_service_role_key — chave de banco externo armazenada no vault."
+  },
+
+  "Q10_storage_buckets": {
+    "query": "SELECT id, name, public, file_size_limit FROM storage.buckets ORDER BY name",
+    "result": [
+      {"id": "audio-memes", "name": "audio-memes", "public": true, "file_size_limit_mb": 5},
+      {"id": "audio-messages", "name": "audio-messages", "public": false, "file_size_limit_mb": 50},
+      {"id": "avatars", "name": "avatars", "public": true, "file_size_limit_mb": 5},
+      {"id": "custom-emojis", "name": "custom-emojis", "public": true, "file_size_limit_mb": 0.5},
+      {"id": "multiplix-voice", "name": "multiplix-voice", "public": false, "file_size_limit": null, "note": "sem limite de tamanho definido"},
+      {"id": "stickers", "name": "stickers", "public": true, "file_size_limit_mb": 5},
+      {"id": "team-chat-files", "name": "team-chat-files", "public": false, "file_size_limit_mb": 10},
+      {"id": "whatsapp-media", "name": "whatsapp-media", "public": false, "file_size_limit_mb": 100}
+    ],
+    "public_buckets": ["audio-memes", "avatars", "custom-emojis", "stickers"],
+    "bucket_without_size_limit": ["multiplix-voice"]
+  },
+
+  "Q11_migrations_summary": {
+    "query": "SELECT count(*) as total, count(*) FILTER (WHERE statements IS NULL) as null_stmts, max(version) as latest FROM supabase_migrations.schema_migrations",
+    "result": {
+      "total": 922,
+      "null_stmts": 61,
+      "latest_version": "20261026090300",
+      "latest_version_date": "2026-10-26",
+      "audit_date": "2026-10-22"
+    },
+    "notes": "61 migrations com statements NULL — falta de evidência no ledger (ALTO). Latest version 20261026090300 é datado de 2026-10-26, 4 dias no futuro em relação a hoje (2026-10-22) — pode indicar pré-datagem ou erro de timestamp."
+  },
+
+  "Q12_realtime_publications": {
+    "query": "SELECT schemaname, tablename FROM pg_publication_tables WHERE pubname='supabase_realtime' ORDER BY 1,2",
+    "total_tables_in_realtime": 33,
+    "tables": [
+      "agent_achievements","agent_presence","agent_stats","calls","contacts",
+      "conversation_sla","conversation_tasks","email_messages","email_threads",
+      "message_reactions","messages","multiplix_dispatches","multiplix_recipients",
+      "notifications","payment_links","queue_goals","queue_members","queues",
+      "sales_deals","talkx_campaign_events","talkx_campaign_segments","talkx_campaigns",
+      "talkx_recipients","talkx_segments","talkx_templates","team_conversation_members",
+      "team_conversations","team_message_reactions","team_message_receipts","team_messages",
+      "warroom_alerts","whatsapp_connections","whisper_messages"
+    ],
+    "notes": "33 tabelas publicadas no canal supabase_realtime. Todas protegidas por RLS — clientes só recebem eventos de linhas que têm acesso via policy."
+  },
+
+  "Q13_functions_summary_top50": {
+    "query": "SELECT p.proname, p.prosecdef, p.provolatile, array_to_string(p.proconfig,'|') as config FROM pg_proc p ... LIMIT 50",
+    "notes": "Top 50 funções listadas (alfabético). Quase todas com prosecdef=true (SECURITY DEFINER) e search_path=public,pg_temp (mitigação de search_path injection). Exceções sem search_path fixo: ai_is_canonical_* (imutáveis/IMMUTABLE), ai_text_array, calculate_level — todas IMMUTABLE/STABLE sem acesso a dados sensíveis. ai_usage_cost_summary e ai_usage_summary têm search_path=public sem pg_temp — verificar se há risco de substituição de função em pg_temp.",
+    "functions_without_search_path": [
+      "ai_is_canonical_churn_risk",
+      "ai_is_canonical_priority",
+      "ai_is_canonical_sentiment",
+      "ai_is_canonical_urgency",
+      "ai_text_array",
+      "calculate_level"
+    ],
+    "functions_with_partial_search_path": [
+      {"proname": "ai_usage_cost_summary", "config": "search_path=public"},
+      {"proname": "ai_usage_summary", "config": "search_path=public, pg_temp"}
+    ]
+  },
+
+  "findings_summary": {
+    "ALTO": [
+      "61 migrations com statements NULL no ledger — evidência de DDL aplicado sem documentação SQL"
+    ],
+    "MÉDIO": [
+      "Latest migration version 20261026090300 é datado 4 dias no futuro (2026-10-26 vs hoje 2026-10-22)",
+      "Bucket multiplix-voice sem file_size_limit — uploads ilimitados possíveis",
+      "Job cron vacuum-messages-post-expurgo (schedule '20 3 2 9 *') ainda ativo — VACUUM FULL em tabela de produção agendado anualmente"
+    ],
+    "BAIXO": [
+      "11 tabelas com RLS ativo e 0 policies (default-deny total via API — possivelmente intencional)",
+      "2 funções SECURITY DEFINER com search_path incompleto (sem pg_temp): ai_usage_cost_summary"
+    ],
+    "INFO": [
+      "4 buckets públicos (audio-memes, avatars, custom-emojis, stickers) — provavelmente intencional para mídia pública",
+      "16 cron jobs ativos, todos chamando funções internas ou edge functions via pg_net",
+      "13 secrets no vault (nomes apenas, valores não lidos)"
+    ]
+  }
+}

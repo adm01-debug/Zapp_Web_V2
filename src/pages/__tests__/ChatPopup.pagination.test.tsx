@@ -18,7 +18,7 @@
  *     1000) passa a existir na lista renderizada e o início do histórico é
  *     anunciado de forma acessível.
  */
-import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -103,6 +103,10 @@ vi.mock('@/integrations/supabase/client', () => ({
     storage: {
       from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }), remove: vi.fn() }),
     },
+    channel: vi.fn().mockReturnValue({
+      on: vi.fn().mockReturnValue({ subscribe: vi.fn().mockReturnValue({}) }),
+    }),
+    removeChannel: vi.fn().mockResolvedValue('ok'),
   },
 }));
 
@@ -267,10 +271,17 @@ beforeAll(async () => {
   await import('@/components/inbox/ChatPanel');
 }, 120_000);
 
+let layoutMock: { mockRestore(): void };
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.contactId = CONTACT_ID;
   mocks.messages = useMessagesState();
+  layoutMock = medirLayout();
+});
+
+afterEach(() => {
+  layoutMock.mockRestore();
 });
 
 describe('ChatPopup — histórico antigo alcançável (R2-INB-004)', () => {
