@@ -105,6 +105,10 @@ vi.mock('@/hooks/crm/useAgentPresence', () => ({
   useAgentPresenceMap: () => ({}),
 }));
 
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, isSupervisor: false }),
+}));
+
 import { AgentsView } from '@/components/agents/AgentsView';
 
 function renderView() {
