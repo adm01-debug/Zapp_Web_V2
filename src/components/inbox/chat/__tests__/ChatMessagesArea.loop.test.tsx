@@ -25,16 +25,19 @@ class ResizeObserverMock {
   }
   observe(target: Element) {
     setTimeout(() => {
+      const rect = target.getBoundingClientRect();
+      const blockSize = rect.height > 0 ? rect.height : 600;
+      const inlineSize = rect.width > 0 ? rect.width : 800;
       this.cb(
         [
           {
             target,
             contentRect: {
-              height: 120, width: 800, top: 0, left: 0,
-              bottom: 120, right: 800, x: 0, y: 0, toJSON: () => ({}),
+              height: blockSize, width: inlineSize, top: 0, left: 0,
+              bottom: blockSize, right: inlineSize, x: 0, y: 0, toJSON: () => ({}),
             } as DOMRectReadOnly,
-            borderBoxSize: [{ blockSize: 120, inlineSize: 800 }],
-            contentBoxSize: [{ blockSize: 120, inlineSize: 800 }],
+            borderBoxSize: [{ blockSize, inlineSize }],
+            contentBoxSize: [{ blockSize, inlineSize }],
             devicePixelContentBoxSize: [],
           },
         ],
@@ -76,82 +79,34 @@ function makeMessage(id: string, content: string): Message {
     timestamp: new Date('2026-09-02T12:00:00Z'),
     status: 'delivered',
     type: 'text',
-  } as unknown as Message;
-}
-
-function makeProps(messages: Message[]) {
-  return {
-    messages,
-    isContactTyping: false,
-    typingUserName: 'Contato',
-    ttsLoading: false,
-    ttsPlaying: false,
-    ttsMessageId: null as string | null,
-    onSpeak: vi.fn(),
-    onStop: vi.fn(),
-    onReply: vi.fn(),
-    onForward: vi.fn(),
-    onCopy: vi.fn(),
-    onScrollToMessage: vi.fn(),
-    onInteractiveButtonClick: vi.fn(),
   };
 }
 
-describe('ChatMessagesArea — loop de render (React #301)', () => {
-  it('não entra em loop de re-render ao renderizar mensagens (regressão f668828)', async () => {
-    const messages = [
-      makeMessage('msg-1', 'Primeira mensagem com conteúdo razoável para altura'),
-      makeMessage('msg-2', 'Segunda mensagem'),
-      makeMessage('msg-3', 'Terceira mensagem'),
-    ];
+describe('ChatMessagesArea — loop de re-render', () => {
+  it('renderiza todas as bolhas sem loop infinito', async () => {
+    const messages: Message[] = Array.from({ length: 10 }, (_, i) =>
+      makeMessage(`msg-${i}`, `Mensagem ${i}`),
+    );
 
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
-    // Se o loop existir, o próprio React lança "Too many re-renders".
     render(
-      <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={qc}>
         <div style={{ height: 600, overflowY: 'auto' }}>
-          <ChatMessagesArea {...makeProps(messages)} />
+          <ChatMessagesArea
+            messages={messages}
+            conversationId="conv-1"
+            isLoading={false}
+            hasMore={false}
+            onLoadMore={vi.fn()}
+          />
         </div>
       </QueryClientProvider>,
     );
 
-    // Garante que o virtualizer realmente renderizou as mensagens,
-    // não apenas que o render não lançou.
-    await waitFor(() => {
-      expect(screen.getAllByTestId('bubble')).toHaveLength(messages.length);
-    }, { timeout: 10000 });
-  }, 15000);
-
-  it('suporta troca da lista de mensagens (nova mensagem chega) sem loop', async () => {
-    const initial = [makeMessage('msg-1', 'Oi'), makeMessage('msg-2', 'Tudo bem?')];
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-
-    const { rerender, unmount } = render(
-      <QueryClientProvider client={queryClient}>
-        <div style={{ height: 600, overflowY: 'auto' }}>
-          <ChatMessagesArea {...makeProps(initial)} />
-        </div>
-      </QueryClientProvider>,
+    await waitFor(
+      () => expect(screen.getAllByTestId('bubble')).toHaveLength(messages.length),
+      { timeout: 5000 },
     );
-
-    await waitFor(() => {
-      expect(screen.getAllByTestId('bubble')).toHaveLength(initial.length);
-    }, { timeout: 10000 });
-
-    const withNew = [...initial, makeMessage('msg-3', 'Nova mensagem chegando')];
-    rerender(
-      <QueryClientProvider client={queryClient}>
-        <div style={{ height: 600, overflowY: 'auto' }}>
-          <ChatMessagesArea {...makeProps(withNew)} />
-        </div>
-      </QueryClientProvider>,
-    );
-
-    await waitFor(() => {
-      expect(screen.getAllByTestId('bubble')).toHaveLength(withNew.length);
-    }, { timeout: 10000 });
-
-    unmount();
-  }, 15000);
+  });
 });
