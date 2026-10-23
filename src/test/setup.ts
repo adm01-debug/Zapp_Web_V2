@@ -1,5 +1,32 @@
 import "@testing-library/jest-dom";
 import { expect, vi } from "vitest";
+
+// Global mock for @/lib/logger — evita import.meta.env.DEV em ambiente jsdom
+// e elimina console noise nos testes sem precisar de vi.mock em cada arquivo.
+vi.mock('@/lib/logger', () => {
+  const makeLogger = () => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    withCorrelation: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  });
+  const logger = makeLogger();
+  return {
+    createLogger: vi.fn(() => makeLogger()),
+    getLogger: vi.fn(() => makeLogger()),
+    logger,
+    log: logger,
+    generateCorrelationId: vi.fn((prefix = 'req') => `${prefix}_mock_0`),
+    getSessionId: vi.fn(() => 'mock-session-id'),
+    logPerformance: vi.fn((_label: string, fn: () => void) => fn()),
+  };
+});
 import { configure } from "@testing-library/react";
 // CT-67 — matcher de acessibilidade do axe (`expect(container).toHaveNoViolations()`)
 // disponível para TODA a suíte via `setupFiles` (vitest.config.ts). O matcher
