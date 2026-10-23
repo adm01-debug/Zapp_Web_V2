@@ -3,13 +3,13 @@
   "analisadas": [
     {
       "branch": "hermes/telefonia-contrato-dados-26092615475e51",
-      "tip_sha": "4c41d3b1",
+      "tip_sha": "4c41d3b1a",
       "veredito": "SUPERADA",
       "confianca": 0.95,
       "dossie": "analise/dossies/hermes-telefonia-contrato-dados-26092615475e51.md",
       "analisado_em": "2026-10-23",
       "sessao": "claude/dazzling-cannon-j7iw08",
-      "notas": "Phases 1-2 of telephony plan (domain library + DB schema). Content 100% in main: 9 cols + 4 RPCs in prod (20260926800000), src/lib/calls/ evolved to 21 files. Project at T74+ in main. Verified: typecheck 0 errors, 217 tests pass, migration 100% additive, no SINGU refs, no remote writes."
+      "notas": "Fases 1-2 do plano de telefonia (biblioteca de domínio + contrato de dados). Conteúdo 100% em main: migration 20260926800000 em produção, src/lib/calls/ evoluído para 21 arquivos (branch tinha 6). Todos 20 arquivos do diff lidos integralmente nesta sessão: 6 módulos TS, 6 arquivos de teste (callStatus 276l, session 539l, duration 145l, capabilities 88l, events 263l, phone 137l), types.ts adições, 4 docs, calls-telefonia-contract.test.sh (352l), db-guard.yml adições (5l). Typecheck 0 erros, 217 testes passam, eslint exit 0 — verificados em worktree /tmp/wt-tel-final. Cherry-pick real: 2 conflitos add/add doc-only, código=patches vazios. Completude confirmada: 9 arquivos em main importam src/lib/calls (CallDialog.tsx, ContactDetailPanel.tsx, CallSessionProvider.tsx, useCalls.ts, etc). R1 verificado: 20260926900000_fix_set_call_agent_notes_null_profile.sql presente em origin/main. Zero refs SINGU. Sem escrita remota nesta sessão (nota: commit bfaf39be foi push de sessão anterior — reconhecido no dossiê)."
     }
   ]
 }
