@@ -16,7 +16,7 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-migration_file="$repo_root/supabase/migrations/20261010062941_talkx_campaign_recipients_page.sql"
+migration_file="$repo_root/supabase/migrations/20261023100000_talkx_campaign_recipients_page_add_segment.sql"
 postgres_image="${TALKX_RECIPIENTS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-talkx-recipients-$RANDOM-$$"
 admin_uid='30000000-0000-0000-0000-000000000001'
