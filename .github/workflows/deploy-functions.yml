@@ -40,6 +40,7 @@ on:
       - '!supabase/functions/**/*.test.ts'
       - '!supabase/functions/**/*.md'
       - '!supabase/functions/**/fixtures/**'
+      - '!supabase/functions/**/__fixtures__/**'
   workflow_dispatch:
     inputs:
       function_name:
@@ -63,7 +64,7 @@ on:
         default: false
         type: boolean
       rollback_to_last_success:
-        description: 'W66: resolver automaticamente o ultimo Deployment bem-sucedido do environment e publicar com esse SHA (E61 sem automacao manual).'
+        description: 'W66/GA30: resolver automaticamente o ultimo Deployment bem-sucedido ANTERIOR ao SHA atual e publicar com esse SHA (E61 sem automacao manual). Recusa se nao houver. Rollback com migration aplicada no lote exige PR de revert da migration (deploy nao desfaz DDL).'
         required: false
         default: false
         type: boolean
@@ -146,42 +147,10 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          node --input-type=module <<'NODE'
-          const token = process.env.GITHUB_TOKEN;
-          const repo  = process.env.GITHUB_REPOSITORY;
-          const env   = 'producao-edge-functions';
-          const base  = 'https://api.github.com';
-          const headers = {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/vnd.github+json',
-            'X-GitHub-Api-Version': '2022-11-28',
-          };
-          const depsRes = await fetch(
-            `${base}/repos/${repo}/deployments?environment=${encodeURIComponent(env)}&per_page=20`,
-            { headers },
-          );
-          if (!depsRes.ok) {
-            process.stderr.write(`GitHub API retornou HTTP ${depsRes.status} ao listar deployments\n`);
-            process.exit(1);
-          }
-          const deps = await depsRes.json();
-          for (const dep of deps) {
-            const stRes = await fetch(
-              `${base}/repos/${repo}/deployments/${dep.id}/statuses?per_page=5`,
-              { headers },
-            );
-            if (!stRes.ok) continue;
-            const statuses = await stRes.json();
-            if (statuses.some((s) => s.state === 'success')) {
-              const { appendFileSync } = await import('node:fs');
-              appendFileSync(process.env.GITHUB_ENV, `RESOLVED_SOURCE_REF=${dep.sha}\n`);
-              process.stdout.write(`Rollback para o ultimo Deployment bem-sucedido: ${dep.sha}\n`);
-              process.exit(0);
-            }
-          }
-          process.stderr.write(`Nenhum Deployment com status success encontrado no environment ${env}\n`);
-          process.exit(1);
-          NODE
+          # GA30: resolvedor extraido para scripts/edge-deploy/resolve-rollback-ref.mjs
+          # (fixture em resolve-rollback-ref.unit.mjs: success mais recente =
+          # SHA atual -> escolhe o anterior; sem anterior -> recusa com exit 1).
+          node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/resolve-rollback-ref.mjs"
 
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -309,10 +278,17 @@ jobs:
           REESCREVER: ${{ steps.decisoes_secrets.outputs.reescrever }}
         run: |
           set -euo pipefail
+          # GA33: saude dos preflights externos (vira GITHUB_ENV no fim do passo).
+          CRM_PREFLIGHT_OK=true; CATALOGO_PREFLIGHT_OK=true
           if [ -n "$CRON_SECRET" ]; then
             echo "Setando CRON_SECRET nas edges"
             if [ "$REESCREVER" = "true" ]; then
-              supabase secrets set CRON_SECRET="$CRON_SECRET" --project-ref "$PROJECT_REF"
+              # GA32: valor fora do argv (aparece no ps). `printf` e builtin do
+              # bash: o segredo nunca vira argumento de processo filho.
+              ENVFILE="$(mktemp)"; chmod 600 "$ENVFILE"
+              printf 'CRON_SECRET=%s\n' "$CRON_SECRET" > "$ENVFILE"
+              supabase secrets set --env-file "$ENVFILE" --project-ref "$PROJECT_REF"
+              rm -f "$ENVFILE"
             fi
           fi
           # Deploy total (FN vazio) também inclui crm-integration e deve falhar
@@ -332,30 +308,32 @@ jobs:
           if (claims.ref !== expected || claims.role !== 'service_role') throw new Error('Identidade da chave CRM invalida');
           console.log('OK: endpoint e identidade service_role do CRM comprovados.');
           NODE
+            HDR_CRM="$(mktemp)"; chmod 600 "$HDR_CRM"
+            { printf 'header = "apikey: %s\n' "$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY"; printf 'header = "Authorization: Bearer %s\n' "$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY"; } > "$HDR_CRM"
             STATUS=$(curl --proto '=https' --tlsv1.2 --silent --show-error --output /tmp/crm-preflight.json --write-out '%{http_code}' \
               --connect-timeout 10 --max-time 30 \
               "$EXTERNAL_SUPABASE_URL/rest/v1/rpc/get_contact_360_by_phone" \
               -H 'Content-Type: application/json' \
-              -H "apikey: $EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" \
-              -H "Authorization: Bearer $EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" \
+              -K "$HDR_CRM" \
               --data '{"p_phone":"00000000"}')
             if [ "$STATUS" != "200" ]; then
-              echo "::error::Preflight read-only do CRM falhou (HTTP $STATUS)."
-              exit 1
+              echo "::warning::Preflight read-only do CRM falhou (HTTP $STATUS) -- crm-integration fora do deploy; demais funcoes seguem (GA33)."
+              CRM_PREFLIGHT_OK=false
             fi
             # O contexto empresarial do Email usa estas projeções específicas.
             # Consultas limitadas a uma linha provam schema + privilégio server-side
             # sem registrar nem expor conteúdo do CRM externo no log do deploy.
+              HDR_CRMSCHEMA="$(mktemp)"; chmod 600 "$HDR_CRMSCHEMA"
+              { printf 'header = "apikey: %s\n' "$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY"; printf 'header = "Authorization: Bearer %s\n' "$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY"; } > "$HDR_CRMSCHEMA"
             while IFS='|' read -r TABELA COLUNAS; do
               [ -n "$TABELA" ] || continue
               STATUS=$(curl --proto '=https' --tlsv1.2 --silent --show-error --output /dev/null --write-out '%{http_code}' \
                 --connect-timeout 10 --max-time 30 --get "$EXTERNAL_SUPABASE_URL/rest/v1/$TABELA" \
-                -H "apikey: $EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" \
-                -H "Authorization: Bearer $EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" \
+                -K "$HDR_CRMSCHEMA" \
                 --data-urlencode "select=$COLUNAS" --data-urlencode 'limit=1')
               if [ "$STATUS" != "200" ]; then
-                echo "::error::Preflight do contrato empresarial falhou para $TABELA (HTTP $STATUS)."
-                exit 1
+                echo "::warning::Preflight do contrato empresarial falhou para $TABELA (HTTP $STATUS) -- crm-integration fora do deploy (GA33)."
+                CRM_PREFLIGHT_OK=false
               fi
             done <<'CRM_EMAIL_CONTEXT_SCHEMA'
           companies|id,nome_crm,razao_social,nome_fantasia,website,ramo_atividade,logo_url,updated_at
@@ -367,33 +345,40 @@ jobs:
           carriers|id,company_id
           CRM_EMAIL_CONTEXT_SCHEMA
             if [ "$REESCREVER" = "true" ]; then
-              supabase secrets set \
-                EXTERNAL_SUPABASE_URL="$EXTERNAL_SUPABASE_URL" \
-                EXTERNAL_SUPABASE_SERVICE_ROLE_KEY="$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY" \
-                --project-ref "$PROJECT_REF"
+              ENVFILE="$(mktemp)"; chmod 600 "$ENVFILE"
+              {
+                printf 'EXTERNAL_SUPABASE_URL=%s\n' "$EXTERNAL_SUPABASE_URL"
+                printf 'EXTERNAL_SUPABASE_SERVICE_ROLE_KEY=%s\n' "$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY"
+              } > "$ENVFILE"
+              supabase secrets set --env-file "$ENVFILE" --project-ref "$PROJECT_REF"
+              rm -f "$ENVFILE"
             fi
           fi
           if [ "$FN" = "promogifts-catalog" ] || [ -z "$FN" ]; then
             if [ -z "$PROMOGIFTS_SUPABASE_URL" ] || [ -z "$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" ]; then
+            HDR_CATALOGO="$(mktemp)"; chmod 600 "$HDR_CATALOGO"
+            { printf 'header = "apikey: %s\n' "$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY"; printf 'header = "Authorization: Bearer %s\n' "$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY"; } > "$HDR_CATALOGO"
               echo "::error::Credenciais server-side do catalogo ausentes."
               exit 1
             fi
             echo "Validando acesso server-side minimo ao catalogo"
             STATUS=$(curl --proto '=https' --tlsv1.2 --silent --output /tmp/promogifts-preflight.json --write-out '%{http_code}' \
               "$PROMOGIFTS_SUPABASE_URL/rest/v1/products?select=id&limit=1" \
-              -H "apikey: $PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
-              -H "Authorization: Bearer $PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY")
+              -K "$HDR_CATALOGO" \
             if [ "$STATUS" != "200" ]; then
-              echo "::error::Preflight do catalogo falhou (HTTP $STATUS)."
-              exit 1
+              echo "::warning::Preflight do catalogo falhou (HTTP $STATUS) -- promogifts-catalog fora do deploy; demais funcoes seguem (GA33)."
+              CATALOGO_PREFLIGHT_OK=false
             fi
             node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/promogifts-preflight.json','utf8'));if(!Array.isArray(d))process.exit(1);console.log('OK: catalogo acessivel; linhas amostradas='+d.length)"
             echo "Setando endpoint e credencial server-side do catalogo nas edges"
             if [ "$REESCREVER" = "true" ]; then
-              supabase secrets set \
-                PROMOGIFTS_SUPABASE_URL="$PROMOGIFTS_SUPABASE_URL" \
-                PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY="$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
-                --project-ref "$PROJECT_REF"
+              ENVFILE="$(mktemp)"; chmod 600 "$ENVFILE"
+              {
+                printf 'PROMOGIFTS_SUPABASE_URL=%s\n' "$PROMOGIFTS_SUPABASE_URL"
+                printf 'PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY=%s\n' "$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY"
+              } > "$ENVFILE"
+              supabase secrets set --env-file "$ENVFILE" --project-ref "$PROJECT_REF"
+              rm -f "$ENVFILE"
             fi
           fi
           # fetch-link-preview nunca pode ser promovida sem o proxy HTTPS e
@@ -418,11 +403,17 @@ jobs:
           console.log('OK: configuracao do proxy de previews validada.');
           NODE
             if [ "$REESCREVER" = "true" ]; then
-              supabase secrets set \
-                PREVIEW_EGRESS_PROXY_URL="$PREVIEW_EGRESS_PROXY_URL" \
-                PREVIEW_EGRESS_SHARED_SECRET="$PREVIEW_EGRESS_SHARED_SECRET" \
-                --project-ref "$PROJECT_REF"
+              ENVFILE="$(mktemp)"; chmod 600 "$ENVFILE"
+              {
+                printf 'PREVIEW_EGRESS_PROXY_URL=%s\n' "$PREVIEW_EGRESS_PROXY_URL"
+                printf 'PREVIEW_EGRESS_SHARED_SECRET=%s\n' "$PREVIEW_EGRESS_SHARED_SECRET"
+              } > "$ENVFILE"
+              supabase secrets set --env-file "$ENVFILE" --project-ref "$PROJECT_REF"
+              rm -f "$ENVFILE"
             fi
+          # GA33: saude dos preflights externos para o passo Deploy (vira GITHUB_ENV).
+          echo "CRM_PREFLIGHT_OK=$CRM_PREFLIGHT_OK" >> "$GITHUB_ENV"
+          echo "CATALOGO_PREFLIGHT_OK=$CATALOGO_PREFLIGHT_OK" >> "$GITHUB_ENV"
           fi
 
       - name: Capturar inventario estrutural antes do deploy
@@ -451,7 +442,22 @@ jobs:
           deno-version: '2.9.5'
 
       - name: Typecheck das edge functions (deno check)
-        run: deno check supabase/functions/**/index.ts
+        # GA27: o portao existe e falha fechado (tipo com erro = sem deploy). A lista
+        # e explicita (find, sem _shared) em vez do glob **, que no bash sem
+        # globstar nao e recursivo.
+        run: |
+          set -euo pipefail
+          mapfile -t ALVOS < <(find supabase/functions -maxdepth 2 -name 'index.ts' ! -path '*/_shared/*' | sort)
+          test "${#ALVOS[@]}" -gt 0
+          deno check "${ALVOS[@]}"
+
+      - name: Testes das edge functions (deno test)
+        # GA27: a suite (scripts/ci/deno.json --frozen) roda ANTES do Deploy e
+        # falha fechado: teste quebrado = sem deploy. Medido verde em main
+        # (deno test integral exit 0 em 2026-10-20).
+        run: |
+          set -euo pipefail
+          deno test --no-check --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net supabase/functions/
 
       - name: Deploy
         if: inputs.dry_run != true
@@ -467,12 +473,38 @@ jobs:
           EVIDENCE_DIR="$RUNNER_TEMP/edge-deployment-evidence"
           mkdir -p "$EVIDENCE_DIR"
           DEPLOY_LOG="$EVIDENCE_DIR/deploy-output.log"
+          # GA33: o smoke do CRM/catalogo so bloqueia as funcoes que dependem
+          # deles. Com preflight doente, o escopo `all` publica tudo EXCETO a
+          # funcao dependente; o escopo da propria funcao doente falha fechado.
+          pode() {
+            case "$1" in
+              crm-integration) [ "${CRM_PREFLIGHT_OK:-true}" = "true" ] ;;
+              promogifts-catalog) [ "${CATALOGO_PREFLIGHT_OK:-true}" = "true" ] ;;
+              *) return 0 ;;
+            esac
+          }
           if [ -n "$FN" ]; then
+            if ! pode "$FN"; then
+              echo "::error::Preflight de dependencia do escopo $FN esta doente -- deploy recusado (GA33)."
+              exit 1
+            fi
             echo "Deploy da funcao: $FN"
             supabase functions deploy "$FN" --project-ref "$PROJECT_REF" 2>&1 | tee "$DEPLOY_LOG"
           else
             echo "Deploy de TODAS as funcoes"
-            supabase functions deploy --project-ref "$PROJECT_REF" 2>&1 | tee "$DEPLOY_LOG"
+            mapfile -t TODAS < <(node -p "require('./supabase/deployment-manifest.json').functions.map((f) => f.name).join('\n')")
+            PULAR=""
+            for f in crm-integration promogifts-catalog; do pode "$f" || PULAR="$PULAR $f"; done
+            if [ -n "$PULAR" ]; then echo "::warning::Deploy parcial (GA33): preflight doente, pulando:$PULAR"; fi
+            for f in "${TODAS[@]}"; do
+              case "$PULAR" in
+                *"$f"*) echo "Pulando $f (preflight doente)" ;;
+                *)
+                  echo "Deploy da funcao: $f"
+                  supabase functions deploy "$f" --project-ref "$PROJECT_REF" 2>&1 | tee -a "$DEPLOY_LOG"
+                  ;;
+              esac
+            done
           fi
           # O CLI pula (sem bump de versao) uma funcao cujo bundle local bate
           # byte a byte com o ja publicado, sinalizando "No change found in
@@ -493,7 +525,9 @@ jobs:
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/unchanged-from-log.mjs" "$EVIDENCE_DIR/deploy-output.log" "$EVIDENCE_DIR/unchanged-functions.json"
 
       - name: Capturar e validar manifesto remoto pos-deploy
-        if: inputs.dry_run != true
+        # GA34: com !cancelled(), um deploy parcial cancelado/falho ainda deixa a
+        # evidencia do que subiu (o passo seguinte lista as funcoes alteradas).
+        if: ${{ !cancelled() && inputs.dry_run != true }}
         # E55 (auditoria de 01/10/2026): teto proprio do passo. O job inteiro tem
         # 100 min, mas a atestacao nao pode consumir esse orcamento: se a Management
         # API nao estabilizar em 10 min, o passo falha com a ultima causa observada
@@ -518,6 +552,32 @@ jobs:
             --run-id "$GITHUB_RUN_ID" \
             --scope "$SCOPE" \
             --unchanged "$EVIDENCE_DIR/unchanged-functions.json"
+
+      # GA34: num deploy parcial (falha no meio do loop), lista o que mudou de
+      # versao em relacao ao snapshot pre-deploy -- a causa fica no erro sem
+      # precisar revirar a Management API.
+      - name: Listar funcoes alteradas num deploy parcial
+        if: failure() && inputs.dry_run != true
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          EVIDENCE_DIR="$RUNNER_TEMP/edge-deployment-evidence"
+          if node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/collect-remote.mjs" --snapshot \
+            --manifest supabase/deployment-manifest.json \
+            --output "$EVIDENCE_DIR/edge-after-falha.json" 2>/dev/null; then
+            node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const antes = new Map(JSON.parse(readFileSync(`${process.env.RUNNER_TEMP}/edge-deployment-evidence/edge-before.json`, 'utf8')).functions.map((f) => [f.slug, f.version]));
+          const depois = JSON.parse(readFileSync(`${process.env.RUNNER_TEMP}/edge-deployment-evidence/edge-after-falha.json`, 'utf8')).functions;
+          const mudaram = depois.filter((f) => antes.get(f.slug) !== f.version).map((f) => `${f.slug} (v${antes.get(f.slug) ?? '?'} -> v${f.version ?? '?'})`);
+          if (mudaram.length > 0) console.error(`::error::Deploy parcial (GA34): subiram antes da falha: ${mudaram.join(', ')}`);
+          else console.error('::error::Deploy parcial (GA34): nenhuma funcao mudou de versao antes da falha.');
+          NODE
+          else
+            echo "::warning::Nao foi possivel recapturar o inventario remoto para listar o deploy parcial."
+          fi
+          exit 0
 
       - name: Executar smoke positivo e negativo por funcao
         if: inputs.dry_run != true

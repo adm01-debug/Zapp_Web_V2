@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "command": "eslint . --format json",
   "eslintVersion": "9.32.0",
-  "eslintConfigSha256": "9e63ecfc90d89ad9c7301e29f7e6e9dbda238aa561d33fb496af781cfff9d2c2",
+  "eslintConfigSha256": "90fc1544b450c6b53cfd31eeb4b45929918092d0997f23e63b05928f9c4b0ddf",
   "files": [
     {
       "path": "e2e/inbox-contact-sidebar.spec.ts",
@@ -398,7 +398,7 @@
     },
     {
       "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
-      "sha256": "51109d10cfa2419d2d3cb7b262c72ab5a54b84a401cfa93c95ae936a520573d9"
+      "sha256": "59addfbfddbd1615559e4721fd3410b9a2d83838afdc1fc7cb0e18f536d1aedf"
     },
     {
       "path": "src/components/inbox/chat/ChatSearchBar.tsx",
@@ -422,7 +422,7 @@
     },
     {
       "path": "src/components/inbox/chat/MessageBubble.tsx",
-      "sha256": "b26c3697607a48af8aadd4bb9042f54df7ec9683290d9607261c05a779a0eabb"
+      "sha256": "06dd5b7a7b5ce40b1dd9c3c6e7a0d47a31e71d2aa0b3665c842433023c313963"
     },
     {
       "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
@@ -1218,7 +1218,7 @@
     },
     {
       "path": "src/hooks/gamification/useAgentCelebrations.ts",
-      "sha256": "4f98f75128cbbb5acc341139d18305630b8dbc78dafaf2f8fa07388b236f68e4"
+      "sha256": "7124d883163763f80fb48de955bd04f33703046bdae86466d151360204984c86"
     },
     {
       "path": "src/hooks/inbox/useConnectionQueues.ts",
@@ -10560,9 +10560,9 @@
     },
     {
       "file": "src/hooks/gamification/useAgentCelebrations.ts",
-      "line": 266,
+      "line": 277,
       "column": 46,
-      "endLine": 266,
+      "endLine": 277,
       "endColumn": 59,
       "severity": 2,
       "ruleId": "local/no-secret-compare",

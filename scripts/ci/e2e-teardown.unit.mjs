@@ -13,7 +13,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { RPC_PADRAO, limparFixture, principal } from './e2e-teardown.mjs';
+import { RPC_PADRAO, limparFixture, logoutSessaoAtual, principal, principalLogout } from './e2e-teardown.mjs';
 
 const BASE = 'https://projeto-teste.supabase.co';
 const CHAVE_PUBLICA = 'chave-publica-do-projeto';
@@ -152,4 +152,40 @@ test('e2e-logado.yml: o teardown de conversation_closures chama a RPC com o logi
   assert.doesNotMatch(passo, /curl\b/, 'a limpeza direta por REST com a service role saiu deste passo');
   assert.match(passo, /secrets\.E2E_TEST_EMAIL/);
   assert.match(passo, /secrets\.E2E_TEST_PASSWORD/);
+});
+
+test('GA39: logout revoga a sessao do teardown sem scope=global (nao derruba run paralelo)', async () => {
+  const { chamadas, impl } = fetchFalso({});
+  const r = await logoutSessaoAtual({ ...args, fetchImpl: impl });
+  assert.equal(r.status, 200);
+  const saidas = chamadas.filter((c) => String(c.url).endsWith('/auth/v1/logout'));
+  assert.equal(saidas.length, 1, 'um POST de logout por teardown');
+  assert.doesNotMatch(String(saidas[0].url), /scope=global/, 'logout simples: so a sessao atual');
+  assert.match(String(saidas[0].opcoes.headers.authorization), /^Bearer /, 'revoga o JWT obtido no login');
+});
+
+test('GA39: principal aceita o subcomando logout e pula sem credencial', async () => {
+  const { impl } = fetchFalso({});
+  assert.equal(await principal(['logout'], envBase(), impl), 0);
+  assert.equal(await principal(['logout'], {}, impl), 0, 'sem credencial pula sem falhar');
+});
+
+// GA43: falha no teardown/logou anota ::warning:: (visivel no run) sem bloquear
+// o CI (continue-on-error no YAML + exit 1 aqui). Senha nunca vai ao argv:
+// viaja em env para o body JSON do fetch (sem jq/argv).
+test('GA43: falha no teardown e no logout emite ::warning::', async () => {
+  const erros = [];
+  const consoleOriginal = console.error;
+  console.error = (msg) => erros.push(String(msg));
+  try {
+    const { impl: implRuim } = fetchFalso({ loginStatus: 500 });
+    assert.equal(await principalLogout(envBase(), implRuim), 1);
+    assert.equal(await principal([RPC_PADRAO], envBase(), implRuim), 1);
+  } finally {
+    console.error = consoleOriginal;
+  }
+  assert.ok(erros.length >= 2, `esperava 2 erros, vi ${erros.length}`);
+  for (const msg of erros) {
+    assert.ok(msg.startsWith('::warning::'), `sem ::warning::: ${msg}`);
+  }
 });

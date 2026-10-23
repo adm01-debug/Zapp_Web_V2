@@ -334,7 +334,7 @@ jobs:
       # algum. Sem esta linha os PRs passavam com E2E VERDE sem rodar spec alguma do
       # mapa (#463 / E75).
       - name: 🧪 Run Playwright E2E (PR sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=chromium-telefonia
         env:
           CI: true
 

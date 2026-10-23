@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 // W65: pós-deploy health check — 5 min após deploy, consulta logs de erro pela
 // Management API e falha com ::error:: se a taxa de 5xx superar o limiar.
-// Degradação controlada: falha de transporte ou API indisponível → ::warning::,
-// nunca ::error:: — o check não pode derrubar deploys por indisponibilidade de
-// observabilidade.
+// GA29: o endpoint e o método seguem a Management API Reference ("Get project
+// logs"): GET /v1/projects/{ref}/analytics/endpoints/logs com `sql` +
+// `iso_timestamp_start/end`, SQL em dialeto ClickHouse sobre a tabela unificada
+// `logs` (`source = 'edge_logs'`, status em
+// `log_attributes['response.status_code']`). O POST em `logs.all` (BigQuery)
+// devolvia 404 em todo deploy — e como todo erro virava warning, a saúde nunca
+// falhava. Agora 4xx = ::error:: (configuração/permissão errada é defeito real);
+// só 5xx/transporte/timeout continuam ::warning:: (observabilidade indisponível
+// não derruba um deploy bem-sucedido).
 import { readFile } from 'node:fs/promises';
 
 const CANONICAL_PROJECT = 'tnnnlkbymytvtqngbbqh';
@@ -44,44 +50,63 @@ async function resolveScope(scope, manifestPath) {
   return [];
 }
 
-// Monta a SQL de análise de logs de edge para a janela configurada.
-// A API de analytics do Supabase usa BigQuery-flavored SQL contra a tabela
-// `edge_logs`. O campo de status HTTP fica em metadata[offset(0)].response.statusCode
-// (array UNNEST necessário porque metadata é REPEATED).
-function buildLogsSql(slugs, windowMinutes) {
-  const slugFilter = slugs.length > 0
-    ? `AND m.function IN (${slugs.map((s) => `'${s}'`).join(', ')})`
-    : '';
-  return (
-    `SELECT ` +
-    `  COUNT(1) AS total, ` +
-    `  COUNTIF(CAST(m.response.statusCode AS INT64) >= 500) AS errors ` +
-    `FROM edge_logs ` +
-    `  CROSS JOIN UNNEST(metadata) AS m ` +
-    `WHERE timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${windowMinutes} MINUTE) ` +
-    slugFilter
-  ).trim();
+// Slugs entram na SQL por interpolacao: a forma e travada aqui para a consulta
+// nunca carregar dado arbitrario.
+export function slugValido(slug) {
+  return typeof slug === 'string' && /^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(slug);
 }
 
-// Chama a Management API de analytics do Supabase.
-// Lança se o HTTP não for 2xx; devolve null se a resposta não tiver linhas.
-async function queryAnalytics({ projectRef, token, sql, fetchImpl = fetch }) {
-  const url = `${MGMT_BASE}/v1/projects/${projectRef}/analytics/endpoints/logs.all`;
-  const res = await fetchImpl(url, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ sql }),
-    signal: AbortSignal.timeout(30_000),
-  });
+// Monta a SQL de análise de logs de edge (dialeto ClickHouse, tabela unificada
+// `logs`). A janela de tempo vai nos parametros `iso_timestamp_*` da API, nao na
+// SQL. O filtro por funcao usa a URL da invocacao
+// (`https://<ref>.supabase.co/functions/v1/<slug>...`), presente nos eventos de
+// requisicao do gateway.
+export function buildLogsSql(slugs) {
+  const validos = (slugs ?? []).filter(slugValido);
+  const escopo = validos.length > 0
+    ? ` AND (${validos.map((s) => `position(log_attributes['request.url'], '/functions/v1/${s}') > 0`).join(' OR ')})`
+    : '';
+  return (
+    `SELECT count() AS total, ` +
+    `countIf(toInt32OrZero(log_attributes['response.status_code']) >= 500) AS errors ` +
+    `FROM logs WHERE source = 'edge_logs'` +
+    escopo
+  );
+}
+
+// Chama a Management API de analytics do Supabase (GET .../endpoints/logs).
+// 2xx com linhas: devolve a primeira ({ total, errors }); 2xx sem linhas: null.
+// 4xx: configuração/permissão/escopo errado — `severidade: 'erro'` (GA29).
+// 5xx/transporte/timeout: `severidade: 'aviso' (observabilidade indisponível).
+// Não logar corpo de resposta: pode conter detalhes de autenticação.
+export async function queryAnalytics({ projectRef, token, sql, inicio, fim, fetchImpl = fetch }) {
+  const params = new URLSearchParams({ sql, iso_timestamp_start: inicio, iso_timestamp_end: fim });
+  const url = `${MGMT_BASE}/v1/projects/${projectRef}/analytics/endpoints/logs?${params}`;
+  let res;
+  try {
+    res = await fetchImpl(url, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch (err) {
+    const aviso = new Error(`Management API inacessivel: ${err.message}`);
+    aviso.severidade = 'aviso';
+    throw aviso;
+  }
   if (!res.ok) {
-    // Não logar o corpo da resposta: pode conter detalhes de autenticação.
-    throw new Error(`Management API retornou HTTP ${res.status} na consulta de analytics`);
+    const erro = new Error(`Management API retornou HTTP ${res.status} na consulta de analytics`);
+    erro.status = res.status;
+    erro.severidade = res.status >= 500 ? 'aviso' : 'erro';
+    throw erro;
   }
   const json = await res.json();
-  // A API retorna { result: [{ total: N, errors: N }] } quando bem-sucedida.
+  // A API retorna { result: [{ total, errors }], error } quando bem-sucedida.
+  if (typeof json.error === 'string' && json.error) {
+    const erro = new Error(`Management API devolveu erro: ${json.error}`);
+    erro.severidade = 'erro';
+    throw erro;
+  }
   if (!Array.isArray(json.result) || json.result.length === 0) return null;
   return json.result[0];
 }
@@ -109,16 +134,27 @@ async function main() {
     await new Promise((resolve) => setTimeout(resolve, args.waitMs));
   }
 
-  const sql = buildLogsSql(slugs, WINDOW_MINUTES);
+  const fim = new Date();
+  const inicio = new Date(fim.getTime() - WINDOW_MINUTES * 60_000);
+  const sql = buildLogsSql(slugs);
   let row;
   try {
     row = await queryAnalytics({
       projectRef: args.projectRef,
       token,
       sql,
+      inicio: inicio.toISOString(),
+      fim: fim.toISOString(),
     });
   } catch (err) {
-    // Falha de transporte ou API indisponível → warning, não bloqueia o deploy.
+    // GA29: 4xx (endpoint/permissao/escopo) = defeito real, ::error:: com exit 1.
+    // Só 5xx/transporte/timeout continuam aviso: observabilidade indisponível
+    // não derruba um deploy bem-sucedido.
+    if (err && err.severidade === 'erro') {
+      console.error(`::error::Health check FALHOU na Management API: ${err.message}.`);
+      process.exitCode = 1;
+      return;
+    }
     console.error(`::warning::Health check falhou ao consultar a Management API: ${err.message}. Prosseguindo.`);
     return;
   }
@@ -153,6 +189,8 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(`::warning::health-check.mjs falhou inesperadamente: ${err.message}. Prosseguindo.`);
-});
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((err) => {
+    console.error(`::warning::health-check.mjs falhou inesperadamente: ${err.message}. Prosseguindo.`);
+  });
+}

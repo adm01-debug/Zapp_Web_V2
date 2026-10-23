@@ -77,6 +77,7 @@ export function useFilesContainerColumns(
 
   // Re-medicao sincrona: garante que testes JSDOM (sem ResizeObserver ativo) leiam a
   // largura do mock apos cada render em vez de ficarem na medida inicial do mount.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- sem deps intencional: re-mede a cada render; setWidth e stable e React faz bailout se a largura nao mudou
   useLayoutEffect(() => {
     const element = ref.current;
     if (!element) return;

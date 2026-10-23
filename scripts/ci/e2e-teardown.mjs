@@ -68,11 +68,59 @@ export async function limparFixture({ rpc, url, anonKey, email, password, fetchI
   return { rpc, status: resposta.status };
 }
 
+/** GA39 (defensivo): revoga a sessao obtida pelo PROPRIO teardown (logout simples,
+ * SEM `scope=global`), para nao derrubar runs paralelos enquanto GA09 (concurrency
+ * com grupo fixo) nao estiver verde. Nao limpa as sessoes antigas acumuladas --
+ * isso e GA40, decisao do Joaquim.
+ */
+export async function logoutSessaoAtual({ url, anonKey, email, password, fetchImpl = globalThis.fetch }) {
+  const base = String(url).replace(/\/+$/, '');
+  const login = await fetchImpl(`${base}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { apikey: anonKey, 'content-type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!login.ok) throw new Error(`login do usuario de teste recusado (HTTP ${login.status})`);
+  const sessao = await login.json();
+  const token = sessao && sessao.access_token;
+  if (!token) throw new Error('login do usuario de teste nao devolveu access_token');
+  const saida = await fetchImpl(`${base}/auth/v1/logout`, {
+    method: 'POST',
+    headers: { apikey: anonKey, authorization: `Bearer ${token}` },
+  });
+  if (!saida.ok) throw new Error(`logout recusado (HTTP ${saida.status})`);
+  return { status: saida.status };
+}
+
+/** Devolve o codigo de saida do logout (0 = ok ou pulado; 1 = falhou, sem bloquear o CI). */
+export async function principalLogout(env = process.env, fetchImpl = globalThis.fetch) {
+  const faltando = VARIAVEIS_NECESSARIAS.filter((nome) => !env[nome]);
+  if (faltando.length > 0) {
+    console.log(`logout pulado: variavel(is) ausente(s): ${faltando.join(', ')}`);
+    return 0;
+  }
+  try {
+    const r = await logoutSessaoAtual({
+      url: env.SUPABASE_URL,
+      anonKey: env.SUPABASE_ANON_KEY,
+      email: env.E2E_TEST_EMAIL,
+      password: env.E2E_TEST_PASSWORD,
+      fetchImpl,
+    });
+    console.log(`logout OK (HTTP ${r.status})`);
+    return 0;
+  } catch (erro) {
+    console.error(`::warning::logout falhou - nao bloqueia CI: ${erro.message}`);
+    return 1;
+  }
+}
+
 /** Devolve o codigo de saida do passo (0 = ok ou pulado; 1 = falhou). */
 export async function principal(argv, env = process.env, fetchImpl = globalThis.fetch) {
   const rpc = argv[0];
+  if (rpc === 'logout') return await principalLogout(env, fetchImpl);
   if (!rpc || !/^[a-z0-9_]+$/.test(rpc)) {
-    console.error('uso: e2e-teardown.mjs <rpc>');
+    console.error('uso: e2e-teardown.mjs <rpc>|logout');
     return 2;
   }
 
@@ -97,7 +145,7 @@ export async function principal(argv, env = process.env, fetchImpl = globalThis.
     console.log(`teardown OK (rpc ${r.rpc}, HTTP ${r.status})`);
     return 0;
   } catch (erro) {
-    console.error(`teardown falhou - nao bloqueia CI: ${erro.message}`);
+    console.error(`::warning::teardown falhou - nao bloqueia CI: ${erro.message}`);
     return 1;
   }
 }

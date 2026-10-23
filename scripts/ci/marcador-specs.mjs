@@ -20,7 +20,9 @@ import { join } from 'node:path';
 /** Marcador invisivel que identifica a causa (mesma ideia de `<!-- causa:<sha> -->`). */
 export const PREFIXO = '<!-- e2e-logado-specs:';
 
-/** Diretorios de `test-results/`, ordenados e sem repeticao. Arquivos soltos ficam fora. */
+/** Diretorios de `test-results/`, ordenados e sem repeticao. Arquivos soltos ficam fora.
+ * GA42: `.playwright-artifacts-*` nao sao testes (a #1915 contou diretorios como
+ * testes) e o sufixo `-retryN` nao muda a causa (2 runs iguais = 1 comentario). */
 export function nomesDeTestResults(dir) {
   let entradas;
   try {
@@ -28,10 +30,13 @@ export function nomesDeTestResults(dir) {
   } catch {
     return []; // sem test-results nao ha falha identificada -- ver o aviso em marcadorDe
   }
-  return entradas
-    .filter((e) => e.isDirectory())
-    .map((e) => e.name)
-    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  return [
+    ...new Set(
+      entradas
+        .filter((e) => e.isDirectory() && !e.name.startsWith('.playwright-artifacts'))
+        .map((e) => e.name.replace(/-retry\d+$/, '')),
+    ),
+  ].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
 /** Nomes validos: string, nao vazia, sem repeticao, ordenados. */

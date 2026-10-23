@@ -70,6 +70,32 @@ export function arquivosDeTexto(dir) {
   return saida.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
+// GA38: o JWT do usuario de teste (e2e/.auth/user.json) e os tokens das respostas de
+// login circulam no trace mesmo quando e-mail/senha literais ja sumiram. Padroes
+// estruturais, independentes do valor do segredo: JWT, access/refresh_token (JSON e
+// query string) e cabecalho Authorization Bearer.
+const PADROES_TOKEN = [
+  [/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '[redigido]'],
+  [/("access_token"\s*:\s*")[^"\s]+/g, '$1[redigido]'],
+  [/("refresh_token"\s*:\s*")[^"\s]+/g, '$1[redigido]'],
+  [/([?&]access_token=)[^&\s"'<]+/g, '$1[redigido]'],
+  [/([?&]refresh_token=)[^&\s"'<]+/g, '$1[redigido]'],
+  [/((?:Authorization|authorization)["'\s:]*Bearer\s+)[A-Za-z0-9._~+/=-]+/g, '$1[redigido]'],
+];
+
+/** Redige padroes estruturais de token. Devolve o texto e a contagem. */
+export function redigirPadroes(texto) {
+  let saida = texto;
+  let ocorrencias = 0;
+  for (const [re, reposicao] of PADROES_TOKEN) {
+    const achados = saida.match(re);
+    if (!achados) continue;
+    ocorrencias += achados.length;
+    saida = saida.replace(re, reposicao);
+  }
+  return { texto: saida, ocorrencias };
+}
+
 /** Redige todos os segredos da lista, numa passada só por arquivo. */
 export function redigirConteudo(texto, segredos) {
   let saida = texto;
@@ -257,10 +283,25 @@ export function redigirZip(buffer, segredos) {
   let ocorrencias = 0;
   for (const e of entradas) {
     const conteudo = e.conteudo();
-    const r = extensaoDe(e.nome.toString('utf8')) === '.zip'
-      ? redigirZip(conteudo, segredos)
-      : redigirBytes(conteudo, segredos);
-    if (r.ocorrencias === 0) continue;
+    if (extensaoDe(e.nome.toString('utf8')) === '.zip') {
+      const r = redigirZip(conteudo, segredos);
+      if (r.ocorrencias === 0) continue;
+      e.novoConteudo = r.buffer;
+      ocorrencias += r.ocorrencias;
+      continue;
+    }
+    // GA38: padroes estruturais (JWT/Bearer/token) em entradas de texto. Binario
+    // que nao decodifica como UTF-8 segue so pelo caminho de bytes (forma literal).
+    let atual = conteudo;
+    try {
+      const p = redigirPadroes(new TextDecoder('utf8', { fatal: true }).decode(conteudo));
+      if (p.ocorrencias > 0) atual = Buffer.from(p.texto, 'utf8');
+      ocorrencias += p.ocorrencias;
+    } catch {
+      // binario: nada a fazer aqui, redigirBytes abaixo cobre o literal
+    }
+    const r = redigirBytes(atual, segredos);
+    if (r.ocorrencias === 0 && atual === conteudo) continue;
     e.novoConteudo = r.buffer;
     ocorrencias += r.ocorrencias;
   }
@@ -281,9 +322,12 @@ export function redigirTextoComZipEmbutido(texto, segredos) {
     return `data:application/zip;base64,${r.buffer.toString('base64')}`;
   });
   const r = redigirConteudo(comZip, segredos);
+  // GA38: padroes estruturais (JWT, access/refresh_token, Bearer) nao dependem do
+  // valor do segredo -- o trace carrega o token mesmo com e-mail/senha redigidos.
+  const p = redigirPadroes(r.texto);
   // redigirConteudo cobre só a forma literal; as escapadas (JSON/HTML) passam aqui.
-  const b = redigirBytes(Buffer.from(r.texto, 'utf8'), segredos);
-  return { texto: b.buffer.toString('utf8'), ocorrencias: ocorrencias + r.ocorrencias + b.ocorrencias };
+  const b = redigirBytes(Buffer.from(p.texto, 'utf8'), segredos);
+  return { texto: b.buffer.toString('utf8'), ocorrencias: ocorrencias + r.ocorrencias + p.ocorrencias + b.ocorrencias };
 }
 
 /** ZIPs soltos sob `dir` (traces do Playwright em `data/*.zip`). */
