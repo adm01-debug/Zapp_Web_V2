@@ -117,7 +117,8 @@ assert_last_definer() { # $1=rotulo $2=basename do arquivo de origem $3=regex ER
   grep -qxF "$origin" <<< "$migrations_sorted" \
     || fail "guarda de vigencia: arquivo de origem de $label nao esta em supabase/migrations ($origin)"
   while IFS= read -r rel; do
-    if grep -qiE "$pattern" "$migrations_dir/$rel"; then
+    # Linhas de comentario SQL nao sao DDL (ex.: bloco "Rollback" com CREATE OR REPLACE comentado).
+    if grep -qiE "$pattern" <<< "$(grep -vE '^[[:space:]]*--' "$migrations_dir/$rel" || true)"; then
       later+="$rel "
     fi
   done < <(awk -v o="$origin" '$0==o{seen=1; next} seen{print}' <<< "$migrations_sorted")
@@ -127,6 +128,8 @@ assert_last_definer() { # $1=rotulo $2=basename do arquivo de origem $3=regex ER
 }
 
 # Helpers SECURITY DEFINER extraidos verbatim mais abaixo:
+# ALTER FUNCTION fica de fora de proposito: 20261010150628 e 20261016170000 so trocam o search_path
+# (pg_temp) e reafirmam GRANTs; ALTER nao muda o corpo extraido. CREATE/DROP seguem barrados.
 assert_last_definer 'helper is_admin_or_supervisor' \
   '20261016170000_fix_security_definer_search_path.sql' \
   '(CREATE( OR REPLACE)? FUNCTION public\.is_admin_or_supervisor|ALTER FUNCTION[^;]*public\.is_admin_or_supervisor|DROP FUNCTION[^;]*public\.is_admin_or_supervisor)'
@@ -428,7 +431,19 @@ awk '/CREATE OR REPLACE FUNCTION public.dashboard_kpi/,/\$function\$;/' \
 grep -q 'CREATE OR REPLACE FUNCTION public.dashboard_kpi' "$tmp_dir/kpi_final.sql" \
   || fail 'extracao de dashboard_kpi da migration conversation_closures_reopen_same_day veio vazia'
 grep -q '\$function\$;' "$tmp_dir/kpi_final.sql" \
-  || fail 'extracao de dashboard_kpi nao fechou o corpo da funcao'
+  || fail 'extracao de dashboard_kpi de 20261003272707 nao fechou o corpo da funcao'
+psql_file "$tmp_dir/kpi_final.sql"
+
+# Definição FINAL de dashboard_kpi: 20261007013217 é o último arquivo a redefinir
+# a função (migration posterior que reconstruiu dashboard_kpi com a guarda de
+# ciclo de reabertura no mesmo dia). Extrai só o CREATE OR REPLACE dessa função.
+awk '/CREATE OR REPLACE FUNCTION public.dashboard_kpi/,/\$function\$;/' \
+  "$migrations_dir/20261007013217_conversation_closures_reopen_same_day.sql" \
+  > "$tmp_dir/kpi_final.sql"
+grep -q 'CREATE OR REPLACE FUNCTION public.dashboard_kpi' "$tmp_dir/kpi_final.sql" \
+  || fail 'extracao de dashboard_kpi de 20261007013217 veio vazia'
+grep -q '\$function\$;' "$tmp_dir/kpi_final.sql" \
+  || fail 'extracao de dashboard_kpi de 20261007013217 nao fechou o corpo da funcao'
 psql_file "$tmp_dir/kpi_final.sql"
 
 # Harderning de ACL (migrations reais): tira EXECUTE de anon e de PUBLIC.

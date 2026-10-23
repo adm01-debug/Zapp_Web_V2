@@ -3,7 +3,7 @@
 #
 # Prova, em PostgreSQL 17 descartavel, que:
 #   (1) a funcao retorna rows/next_cursor/total com paginacao por cursor;
-#   (2) filtros por status, segmento e busca reduzem o resultado;
+#   (2) filtros por status e busca por nome/telefone reduzem o resultado;
 #   (3) quem nao e dono da campanha nem admin/supervisor recebe recusa (42501);
 #   (4) o retorno nao traz campo de origem/canal.
 #
@@ -95,14 +95,14 @@ CREATE TABLE public.talkx_recipients (
 CREATE TABLE public.contacts (id uuid PRIMARY KEY, name text, phone text);
 SQL
 
-# call <papel> <uid> <argumentos SQL da funcao> -> linha como jsonb
+# call <papel> <uid> <argumentos SQL da funcao> -> jsonb
 call() {
   local role="$1" uid="$2" args="$3"
   psql_test -Atq <<SQL
 BEGIN;
 SET LOCAL ROLE $role;
 SELECT set_config('request.jwt.claim.sub', '$uid', true), set_config('request.jwt.claim.role', '$role', true);
-SELECT to_jsonb(t) FROM public.talkx_campaign_recipients_page($args) t;
+SELECT public.talkx_campaign_recipients_page($args);
 COMMIT;
 SQL
 }
@@ -120,7 +120,7 @@ printf 'RED ok: funcao inexistente antes da migration\n'
 psql_test >/dev/null < "$migration_file" || fail 'falha ao aplicar a migration base'
 psql_test >/dev/null < "$migration_file2" || fail 'falha ao aplicar a migration de segmento'
 
-fn='public.talkx_campaign_recipients_page(uuid,integer,text,text,uuid,text)'
+fn='public.talkx_campaign_recipients_page(uuid,integer,text,text,text)'
 [[ "$(psql_test -Atqc "SELECT has_function_privilege('authenticated','$fn','EXECUTE')::int + has_function_privilege('service_role','$fn','EXECUTE')::int")" == 2 ]] || fail 'authenticated/service_role devem ter EXECUTE'
 [[ "$(psql_test -Atqc "SELECT has_function_privilege('anon','$fn','EXECUTE')::int")" == 0 ]] || fail 'anon nao deve ter EXECUTE'
 [[ "$(psql_test -Atqc "SELECT count(*) FROM pg_proc WHERE proname='talkx_campaign_recipients_page' AND prosecdef AND 'search_path=public, pg_temp' = ANY(proconfig)")" == 1 ]] || fail 'SECURITY DEFINER com search_path=public, pg_temp ausente'
@@ -133,6 +133,13 @@ INSERT INTO public.profiles (id, user_id, role) VALUES
 INSERT INTO public.talkx_campaigns (id, created_by, status) VALUES
   ('$camp', '$creator_uid', 'active'),
   ('b0000000-0000-0000-0000-000000000002', '$creator_uid', 'draft');
+INSERT INTO public.contacts (id, name, phone)
+SELECT ('30000000-0000-0000-0000-000000000' || lpad((100 + g)::text, 3, '0'))::uuid,
+       'Contato ' || (100 + g)::text,
+       '000000000' || lpad((100 + g)::text, 3, '0')
+FROM generate_series(1, 15) g;
+INSERT INTO public.contacts (id, name, phone) VALUES
+  ('30000000-0000-0000-0000-000000000999', 'Contato 999', '000000000999');
 INSERT INTO public.talkx_recipients (campaign_id, contact_id, status, segment_id, created_at)
 SELECT '$camp',
        ('30000000-0000-0000-0000-000000000' || lpad((100 + g)::text, 3, '0'))::uuid,
@@ -172,9 +179,7 @@ done
 # === Filtros ===
 r=$(call authenticated "$creator_uid" "'$camp', 20, NULL, 'sent'" | last)
 [[ "$(jget "len(d['rows'])" <<<"$r")" == 8 && "$(jget "d['total']" <<<"$r")" == 8 ]] || fail "status=sent deveria dar 8: $r"
-r=$(call authenticated "$creator_uid" "'$camp', 20, NULL, NULL, '30000000-0000-0000-0000-000000000202'" | last)
-[[ "$(jget "len(d['rows'])" <<<"$r")" == 5 ]] || fail "segmento 202 deveria dar 5: $r"
-r=$(call authenticated "$creator_uid" "'$camp', 20, NULL, NULL, NULL, '000000000105'" | last)
+r=$(call authenticated "$creator_uid" "'$camp', 20, NULL, NULL, '000000000105'" | last)
 [[ "$(jget "len(d['rows'])" <<<"$r")" == 1 && "$(jget "d['total']" <<<"$r")" == 1 ]] || fail "busca 000000000105 deveria dar 1: $r"
 
 # === Sem campo de origem/canal ===
