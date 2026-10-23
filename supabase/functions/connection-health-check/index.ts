@@ -198,8 +198,8 @@ async function isWithinBusinessHours(supabase: SupabaseClient, connectionId: str
 
 /**
  * PE-87 — "caixa muda": mantém UM alerta `warning` por conexão enquanto ela segue
- * conectada sem mensagem recebida (upsert pela dedupe_key) e APAGA quando a
- * mensagem volta a chegar (auto-resolve do episódio).
+ * conectada sem mensagem recebida (upsert pela dedupe_key) e libera a chave quando
+ * a mensagem volta a chegar, preservando a linha histórica do episódio.
  */
 async function syncInboxSilenceAlert(
   supabase: SupabaseClient,
@@ -208,7 +208,7 @@ async function syncInboxSilenceAlert(
 ): Promise<void> {
   const key = inboxSilenceDedupeKey(args.connectionId);
   if (!args.silent) {
-    const { error } = await supabase.from('warroom_alerts').delete().eq('dedupe_key', key);
+    const { error } = await supabase.from('warroom_alerts').update({ dedupe_key: null }).eq('dedupe_key', key);
     if (error) log.warn('Falha ao auto-resolver alerta de caixa muda', { error: error.message });
     return;
   }
@@ -293,6 +293,19 @@ function alertDedupeKey(alert: AlertToCreate): string {
     : `conn-down:v1:${alert.connection_id}`;
 }
 
+function alertContent(alert: AlertToCreate): { title: string; message: string } {
+  if (alert.kind === 'disconnected') {
+    return {
+      title: 'WhatsApp ' + alert.instance_id + ' desconectado',
+      message: 'A instância ' + alert.instance_id + ' perdeu conexão com o WhatsApp.',
+    };
+  }
+  return {
+    title: 'Conexão ' + alert.instance_id + ' degradada',
+    message: 'A instância ' + alert.instance_id + ': ' + (REASON_LABEL[alert.reason ?? ''] ?? 'conexão degradada') + '.',
+  };
+}
+
 /** Remove duplicados do MESMO episódio dentro da execução (mesma conexão + tipo). */
 function dedupeAlerts(alerts: AlertToCreate[]): AlertToCreate[] {
   const seen = new Set<string>();
@@ -333,7 +346,7 @@ export async function handleConnectionHealthCheck(
     // idas à RPC.
     let cronSecretCache: string | null | undefined;
     const readVaultSecret = async (): Promise<string | null> => {
-      if (cronSecretCache !== undefined) return cronSecretCache;
+      if (typeof cronSecretCache !== 'undefined') return cronSecretCache;
       const { data, error } = await supabase.rpc('get_connection_health_check_cron_secret');
       cronSecretCache = !error && typeof data === 'string' ? data : null;
       return cronSecretCache;
@@ -352,14 +365,15 @@ export async function handleConnectionHealthCheck(
     // serem pulados — um não-admin autenticado escapava da checagem. Só o segredo
     // que casa em tempo constante com o do Vault (mesma fonte do guard) dispensa.
     const cronSecret = req.headers.get('x-cron-secret');
-    const vaultSecret = cronSecret !== null ? await readVaultSecret() : null;
-    const isCronCall = cronSecret !== null && vaultSecret !== null
+    const vaultSecret = cronSecret ? await readVaultSecret() : null;
+    const isCronCall = typeof cronSecret === 'string' && cronSecret.length > 0
+      && typeof vaultSecret === 'string' && vaultSecret.length > 0
       && timingSafeStringEqual(cronSecret, vaultSecret);
 
     if (!isCronCall) {
       const authHeader = req.headers.get('Authorization');
       const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
-      const isServiceKeyCall = serviceKey !== '' && timingSafeStringEqual(token, serviceKey);
+      const isServiceKeyCall = Boolean(serviceKey) && timingSafeStringEqual(token, serviceKey);
 
       if (!isServiceKeyCall) {
         // Identidade do chamante para o cheque de papel e o rate limit.
@@ -466,6 +480,7 @@ export async function handleConnectionHealthCheck(
       let errorMessage: string | null = null;
       let responseTime = 0;
       let openReason: string | null = null;
+      let connectionRecoveryConfirmed = false;
 
       if (Date.now() > deadline) {
         healthStatus = 'timeout';
@@ -506,7 +521,7 @@ export async function handleConnectionHealthCheck(
       }
       const padrao = Deno.env.get('EVOLUTION_INSTANCE_NAME') ?? '';
       const tokenLegado = Deno.env.get('EVOLUTION_INSTANCE_TOKEN') ?? '';
-      const usaTokenDoAmbiente = padrao !== '' && conn.instance_id === padrao && tokenLegado !== '';
+      const usaTokenDoAmbiente = padrao !== '' && conn.instance_id === padrao && Boolean(tokenLegado);
       const semCredencial = resolveSessionRoute(flavor, 'status', conn.instance_id).auth === 'instance'
         && !instanceToken && !usaTokenDoAmbiente;
 
@@ -570,6 +585,9 @@ export async function handleConnectionHealthCheck(
               // idempotente por episódio (dedupe_key) e auto-resolve quando a
               // mensagem volta a chegar.
               if (dbStatus === 'connected') {
+                // Libera a chave apenas depois que o CAS confirmar a recuperação;
+                // a linha do alerta permanece como histórico do incidente.
+                connectionRecoveryConfirmed = conn.status !== 'connected';
                 const withinHours = await isWithinBusinessHours(supabase, conn.id);
                 if (withinHours) {
                   const staleInbound = lastInboundKnown && lastInboundAt !== null
@@ -607,6 +625,12 @@ export async function handleConnectionHealthCheck(
                     : `status.eq.${conn.status}`)
                   .select('id');
                 if (updated?.length) {
+                  if (dbStatus === 'connected' && connectionRecoveryConfirmed) {
+                    const { error: resolvedIncidentError } = await supabase.from('warroom_alerts')
+                      .update({ dedupe_key: null })
+                      .in('dedupe_key', [`conn-down:v1:${conn.id}`, `conn-degraded:v1:${conn.id}`]);
+                    if (resolvedIncidentError) log.warn('Falha ao encerrar alerta de conexão recuperada', { error: resolvedIncidentError.message });
+                  }
                   // Trilha de auditoria: só quando o CAS CONFIRMOU a transição —
                   // é isso que o diálogo de auditoria (CA2) lê por instance_id.
                   statusAuditEvents.push({
@@ -617,7 +641,13 @@ export async function handleConnectionHealthCheck(
                     newStatus: dbStatus,
                   });
                   if (dbStatus === 'disconnected' && conn.status === 'connected') {
-                    alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number });
+                    alertsToCreate.push({
+                      connection_id: conn.id,
+                      instance_id: conn.instance_id,
+                      phone: conn.phone_number,
+                      kind: 'disconnected',
+                      reason: openReason,
+                    });
                   }
                 }
               }
@@ -655,6 +685,8 @@ export async function handleConnectionHealthCheck(
       results[index] = { instance_id: conn.instance_id, status: healthStatus, response_time_ms: responseTime, error: errorMessage, reason: openReason };
     };
 
+    await runWithConcurrency(connections, HEALTH_CHECK_CONCURRENCY, checkConnection);
+
     // Trilha de auditoria das transições automáticas de status. Mesmo formato do
     // helper compartilhado dos cartões de conexão (`writeConnectionAuditLog`):
     // entity_type 'connection', uuid da linha em `entity_id`, instance_id textual
@@ -683,7 +715,9 @@ export async function handleConnectionHealthCheck(
       }
     }
 
-    for (const alert of alertsToCreate) {
+    const newAlerts = dedupeAlerts(alertsToCreate);
+    for (const alert of newAlerts) {
+      const { title, message } = alertContent(alert);
       // Schema real de warroom_alerts: alert_type/title/message/source
       // (severity/description/metadata nao existem — o insert antigo falhava
       // com PGRST204 e o alerta critico nunca era gravado).
@@ -719,10 +753,10 @@ export async function handleConnectionHealthCheck(
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     await supabase.from('connection_health_logs').delete().lt('checked_at', sevenDaysAgo);
 
-    log.done(200, { checked: results.length, alerts: alertsToCreate.length });
+    log.done(200, { checked: results.length, alerts: newAlerts.length });
     return jsonResponse({
       success: true, checked_at: new Date().toISOString(),
-      connections: results, alerts_created: alertsToCreate.length,
+      connections: results, alerts_created: newAlerts.length,
     }, 200, req);
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';

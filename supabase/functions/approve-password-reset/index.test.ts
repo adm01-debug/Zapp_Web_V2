@@ -17,9 +17,9 @@ function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
 
-const CALLER_ID = "10000000-0000-0000-0000-00000000000a";
-const TARGET_USER_ID = "20000000-0000-0000-0000-00000000000b";
-const REQUEST_ID = "30000000-0000-0000-0000-00000000000c";
+const CALLER_ID = "10000000-0000-4000-8000-00000000000a";
+const TARGET_USER_ID = "20000000-0000-4000-8000-00000000000b";
+const REQUEST_ID = "30000000-0000-4000-8000-00000000000c";
 const CANONICAL = "https://zapp-web-v2.vercel.app";
 
 interface DbCall {
@@ -352,7 +352,7 @@ Deno.test("rate limit responde 429 antes de qualquer efeito", async () => {
   });
 
   assert(res.status === 429, `veio ${res.status}`);
-  assert(res.headers.get("Retry-After") !== null, "o 429 deve trazer Retry-After");
+  assert(res.headers.get("Retry-After") === null, "o 429 omite Retry-After sem reset confirmado pelo limiter");
   assert(email.calls.length === 0 && calls.length === 0, "rate limit não pode ter efeito");
 });
 
@@ -374,6 +374,7 @@ Deno.test("rate limit por USUARIO pos-auth: limite persistente por conta -> 429"
   });
 
   assert(res.status === 429, `veio ${res.status}`);
+  assert(res.headers.get("Retry-After") === null, "o limiter persistente não retorna o instante exato de reset");
   assert(
     keys.length === 2 && keys[0] === "approve-reset:unknown" && keys[1] === `approve-reset:user:${CALLER_ID}`,
     `chaves inesperadas: ${JSON.stringify(keys)}`,

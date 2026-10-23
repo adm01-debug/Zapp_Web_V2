@@ -1,4 +1,4 @@
- import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
  import { useInboxUIState } from '@/hooks/inbox/useInboxUIState';
  import { ChatService } from '@/services/chat.service';
 import { useOfflineCache } from '@/hooks/system/useOfflineCache';
@@ -278,7 +278,7 @@ export function useRealtimeInbox() {
    // EXCEÇÃO (PE-24): áudio fora dos limites do WhatsApp é recusado AQUI, antes do upload,
    // e o motivo é avisado aqui — esta é a camada que conhece a mensagem exata da validação
    // (a de cima só tem um texto genérico). A gravação não sobe para o bucket.
-   const handleSendAudio = useCallback(async (blob: Blob): Promise<boolean> => {
+   const handleSendAudio = useCallback(async (blob: Blob, replyTo?: string | null): Promise<boolean> => {
      if (!selectedContactId) throw new Error('Selecione uma conversa primeiro');
      const contactId = selectedContactId;
      const ptt = await validatePttBlob(blob);
@@ -311,7 +311,7 @@ export function useRealtimeInbox() {
          };
          pendingAudioSendRef.current = envio;
        }
-       await sendMessage(contactId, '[Áudio]', 'audio', envio.publicUrl, undefined, null, envio.clientMessageId);
+       await sendMessage(contactId, '[Áudio]', 'audio', envio.publicUrl, undefined, replyTo ?? null, envio.clientMessageId);
        // Aceita: a gravação deixa de ser retentável — um áudio novo é ação nova.
        pendingAudioSendRef.current = null;
        return true;
