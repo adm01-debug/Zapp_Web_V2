@@ -12,9 +12,9 @@ A guarda `scripts/ci/docs-estado-registry-convention.unit.mjs` recalcula esta ta
 partir do código e falha quando:
 
 * aparece uma edge nova que não está aqui (ou uma linha aponta para edge que não existe);
-* uma âncora citada (`arquivo:linha`) deixa de conter o nome da edge — chamador apagado;
- ou o grupo publicado deixa de ser o primeiro chamador real na ordem A → B → C → D;
- * uma edge marcada como **�¿a** passa a ter chamador, inclusive entrada externa em
+* uma âncora citada (`arquivo:linha`) deixa de conter o nome da edge — chamador removido;
+* o grupo publicado deixa de ser o primeiro chamador real na ordem A → B → C → D;
+* uma edge marcada como **órfã** passa a ter chamador, inclusive entrada externa em
   `supabase/config.toml` (ou vice-versa).
 
 ## Totais
@@ -85,7 +85,7 @@ partir do código e falha quando:
 | `gmail-webhook` | A | `src/components/admin/GmailWebhookMonitor.tsx:230` · `supabase/config.toml:14` |
 | `health` | E | — sem chamador no repositório — |
 | `invite-user` | A | `src/components/agents/InviteAgentDialog.tsx:48` · `supabase/config.toml:89` |
-| `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:456` · `supabase/config.toml:49` |
+| `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:458` · `supabase/config.toml:49` |
 | `metrics` | E | — sem chamador no repositório — |
 | `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:28` |
 | `multiplix-audience` | A | `src/hooks/integrations/useMultiplixAudience.ts:9` |
