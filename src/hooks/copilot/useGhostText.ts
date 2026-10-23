@@ -155,7 +155,7 @@ export function useGhostText({
           return;
         }
         const raw = data.suggestions[0].text ?? '';
-        const suffix = raw.startsWith(text) ? raw.slice(text.length) : raw;
+        const suffix = raw.startsWith(text) ? raw.slice(text.length) : '';
         setGhostSuffix(suffix.trim() ? ` ${suffix.trim()}` : '');
       } catch (err) {
         if (err instanceof Error && err.name !== 'AbortError') {

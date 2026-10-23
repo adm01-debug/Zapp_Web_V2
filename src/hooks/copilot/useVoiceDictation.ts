@@ -14,6 +14,7 @@
  *   5. A resposta gerada é colocada no rascunho (nunca enviada).
  */
 import { useState, useRef, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { invokeEdge } from '@/lib/invokeEdge';
 import { createLogger } from '@/lib/logger';
 
@@ -91,22 +92,33 @@ export function useVoiceDictation({
       const abortCtrl = new AbortController();
       processAbortRef.current = abortCtrl;
 
+      const tempPath = `dictation/${contactId}/${Date.now()}.webm`;
       setState('transcribing');
       try {
-        // 1. Transcrição via ai-transcribe-audio.
-        const formData = new FormData();
-        formData.append('audio', blob, 'dictation.webm');
+        // 1. Upload do áudio para o bucket aprovado e transcrição via audioUrl.
+        const { error: uploadError } = await supabase.storage
+          .from('audio-messages')
+          .upload(tempPath, blob, { contentType: blob.type || 'audio/webm' });
+
+        if (abortCtrl.signal.aborted) return;
+        if (uploadError) throw new Error(`Upload falhou: ${uploadError.message}`);
+
+        const { data: urlData } = supabase.storage.from('audio-messages').getPublicUrl(tempPath);
+        const audioUrl = urlData.publicUrl;
+
         const { data: transcribeData, error: transcribeError } = await invokeEdge<{
           transcription?: string;
-          text?: string;
-        }>('ai-transcribe-audio', { body: formData });
+        }>('ai-transcribe-audio', { body: { audioUrl } });
+
+        // Remove o arquivo temporário após a transcrição (fire-and-forget)
+        void supabase.storage.from('audio-messages').remove([tempPath]);
 
         if (abortCtrl.signal.aborted) return;
 
-        if (transcribeError || (!transcribeData?.transcription && !transcribeData?.text)) {
+        if (transcribeError || !transcribeData?.transcription) {
           throw new Error('Transcrição falhou ou retornou vazia.');
         }
-        const instruction = transcribeData.transcription ?? transcribeData.text ?? '';
+        const instruction = transcribeData.transcription ?? '';
         log.info('voz transcrita', { len: instruction.length });
 
         // 2. Gera a mensagem com base na instrução transcrita.
@@ -140,6 +152,7 @@ export function useVoiceDictation({
         setState('idle');
         setErrorMessage(null);
       } catch (err) {
+        void supabase.storage.from('audio-messages').remove([tempPath]);
         if (abortCtrl.signal.aborted) return;
         const msg = err instanceof Error ? err.message : 'Erro desconhecido';
         log.error('ditado por voz: falhou', { msg });
