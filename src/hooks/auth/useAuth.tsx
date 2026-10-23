@@ -10,6 +10,7 @@ import { log } from '@/lib/logger';
 import { clearEmailDraftSessions } from '@/lib/emailDraftSession';
 import { clearInboxDraftSessions } from '@/lib/inboxDraftSession';
 import { clearTeamChatDraftSessions } from '@/lib/teamChatDraftSession';
+import { offlineSendQueue } from '@/lib/offlineQueue';
 
 interface AuthContextType {
   user: User | null;
@@ -162,6 +163,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         clearInboxDraftSessions();
         // HZ2-016: idem para o rascunho do Chat de Equipe (`zapp.teamchat.draft:<uid>:*`).
         clearTeamChatDraftSessions();
+        void offlineSendQueue.clear();
       }
     });
 

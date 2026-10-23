@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 
 const mockFrom = vi.fn();
@@ -17,6 +17,19 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 import { useRateLimitLogs } from '@/hooks/system/useRateLimitLogs';
+
+beforeAll(() => {
+  if (!AbortSignal.any) {
+    (AbortSignal as unknown as { any: (signals: AbortSignal[]) => AbortSignal }).any = (signals) => {
+      const controller = new AbortController();
+      for (const s of signals) {
+        if (s.aborted) { controller.abort(s.reason); break; }
+        s.addEventListener('abort', () => controller.abort(s.reason), { once: true });
+      }
+      return controller.signal;
+    };
+  }
+});
 
 const mockLogs = [
   { id: '1', ip_address: '1.2.3.4', endpoint: '/api/messages', user_id: null, request_count: 50, blocked: false, user_agent: 'Chrome', country: 'BR', city: 'SP', created_at: '2024-01-01' },

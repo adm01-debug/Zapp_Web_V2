@@ -250,6 +250,11 @@ function buildUi(): ReactNode {
 function medirLayout() {
   const proto = HTMLElement.prototype;
   const original = Object.getOwnPropertyDescriptor(proto, 'offsetHeight');
+  const bcrSpy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+    return this.getAttribute('role') === 'log'
+      ? { width: 800, height: ALTURA_JANELA, top: 0, left: 0, bottom: ALTURA_JANELA, right: 800, x: 0, y: 0, toJSON: () => ({}) } as DOMRect
+      : { width: 0, height: 0, top: 0, left: 0, bottom: 0, right: 0, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
+  });
   Object.defineProperty(proto, 'offsetHeight', {
     configurable: true,
     get(this: HTMLElement) {
@@ -258,6 +263,7 @@ function medirLayout() {
   });
   return {
     mockRestore() {
+      bcrSpy.mockRestore();
       if (original) Object.defineProperty(proto, 'offsetHeight', original);
       else delete (proto as unknown as Record<string, unknown>).offsetHeight;
     },

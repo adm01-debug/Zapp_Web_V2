@@ -109,6 +109,10 @@ vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({ isAdmin: true, isSupervisor: false }),
 }));
 
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'user-1' }, profile: { id: 'user-1' } }),
+}));
+
 import { AgentsView } from '@/components/agents/AgentsView';
 
 function renderView() {

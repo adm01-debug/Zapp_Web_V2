@@ -81,7 +81,7 @@ afterEach(() => {
 
 function abrirAuditoria() {
   render(<AdminView />);
-  fireEvent.click(screen.getByRole('tab', { name: 'Auditoria' }));
+  fireEvent.click(screen.getByRole('tab', { name: /Auditoria/ }));
 }
 
 describe('AdminView — estados das listas (usuários e auditoria)', () => {
@@ -130,7 +130,7 @@ describe('AdminView — estados das listas (usuários e auditoria)', () => {
     render(<AdminView />);
     expect(screen.getByPlaceholderText('Buscar usuários...')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('tab', { name: 'CRM 360°' }));
+    fireEvent.click(screen.getByRole('tab', { name: /CRM 360/ }));
     expect(screen.queryByPlaceholderText('Buscar usuários...')).toBeNull();
     expect(screen.queryByPlaceholderText('Buscar logs...')).toBeNull();
   });

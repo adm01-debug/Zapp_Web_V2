@@ -66,6 +66,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [hasOlderMessages, setHasOlderMessages] = useState(true);
   const [isFetchingOlder, setIsFetchingOlder] = useState(false);
   const [olderError, setOlderError] = useState(false);
+  const [searchRetryCount, setSearchRetryCount] = useState(0);
 
   // Rascunho e resposta são da conversa: o painel não remonta ao trocar de
   // conversa, então o reset acontece no render (mesmo padrão de
@@ -83,7 +84,18 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const isNearBottomRef = useRef(true);
   const savedScrollFromBottomRef = useRef<number | null>(null);
 
-  const { messages: newestMessages, isLoading, isError: messagesQueryError, refetch: refetchNewest } = useTeamMessages(conversation.id, undefined);
+  const onTeamMessageEvent = useCallback((event: unknown) => {
+    const ev = event as { type: string; id: string; content?: string; is_edited?: boolean; updated_at?: string };
+    if (ev.type === 'update') {
+      setOlderMessages(prev => prev.map(m => m.id === ev.id
+        ? { ...m, content: ev.content ?? m.content, is_edited: ev.is_edited ?? m.is_edited, updated_at: ev.updated_at ?? m.updated_at }
+        : m));
+    } else if (ev.type === 'delete') {
+      setOlderMessages(prev => prev.filter(m => m.id !== ev.id));
+    }
+  }, []);
+
+  const { messages: newestMessages, isLoading, isError: messagesIsError, refetch: refetchMessages } = useTeamMessages(conversation.id, onTeamMessageEvent);
   const sendMutation = useSendTeamMessage();
   const deleteMutation = useDeleteTeamMessage();
   const editMutation = useEditTeamMessage();
@@ -194,6 +206,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     if (el) savedScrollFromBottomRef.current = el.scrollHeight - el.scrollTop;
     setIsFetchingOlder(true);
     try {
+      setOlderError(false);
       // TC-006 — keyset composto `(created_at, id)`. Só `created_at` pulava as
       // mensagens que empatam no mesmo instante: o lote seguinte trazia
       // `created_at < cursor` e as empatadas com o instante do cursor ficavam
@@ -253,7 +266,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [serverSearchError, setServerSearchError] = useState<{ conversationId: string; term: string; message: string } | null>(null);
 
   useEffect(() => {
-    if (!searchTerm) return;
+    if (!searchTerm || searchTerm.length < 3) return;
     // A conversa da requisição é lida aqui, ao disparar: é ela, junto com o termo,
     // que diz se a resposta ainda interessa ao que está na tela.
     const conversationId = conversation.id;
@@ -305,7 +318,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       });
     })();
     return () => { cancelado = true; };
-  }, [searchTerm, conversation.id]);
+  }, [searchTerm, conversation.id, searchRetryCount]);
 
   const searchActive = searchTerm.length > 0;
   // `isSearching` separa "buscando" de "nada encontrado" na tela: mostrar
@@ -319,12 +332,13 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // busca dela ainda está pendente.
   const serverSearchMatches = serverSearch?.conversationId === conversation.id
     && serverSearch?.term === searchTerm;
-  const searchError = searchActive && serverSearchError?.conversationId === conversation.id && serverSearchError?.term === searchTerm;
-  const isSearchingMessages = searchActive && !searchError && !serverSearchMatches;
-  const searchBelowMinChars = debouncedSearchQuery.trim().length > 0 && debouncedSearchQuery.trim().length < 2;
-  const searchIsCapped = serverSearch?.results?.length === 100;
-  const refetchMessages = () => { refetchNewest(); };
-  const retrySearch = () => { setServerSearch(null); setServerSearchError(null); };
+  const searchError = !!(searchActive
+    && serverSearchError?.conversationId === conversation.id
+    && serverSearchError?.term === searchTerm);
+  const isSearching = searchActive && !searchError && !serverSearchMatches;
+  const isSearchingMessages = isSearching;
+  const searchBelowMinChars = showSearch && searchQuery.trim().length > 0 && searchQuery.trim().length < 3;
+  const searchIsCapped = !!(serverSearchMatches && serverSearch && serverSearch.results.length >= 100);
 
   const filteredMessages = useMemo(() => {
     if (!searchActive || searchBelowMinChars) return messages;
@@ -483,17 +497,23 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     });
   }, [profile, conversation.id, sendMutation]);
 
+  const retrySearch = useCallback(() => {
+    setSearchRetryCount(prev => prev + 1);
+  }, []);
+
   return {
     profile,
     messages,
     filteredMessages,
-    isSearching: isSearchingMessages,
+    isSearching,
     isSearchingMessages,
     searchError,
     searchBelowMinChars,
     searchIsCapped,
+    retrySearch,
     isLoading,
-    messagesError: !!messagesQueryError,
+    messagesError: messagesIsError,
+    refetchMessages,
     olderError,
     isMuted,
     canTransfer,

@@ -138,7 +138,14 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
   const { showNotification, permission } = usePushNotifications();
   const activeIdRef = useRef(activeConversationId);
-  const showNotifRef = useRef(showNotification);
+  const channelIdRef = useRef<string>('');
+
+  // Refs for values that change independently of the channel lifecycle — updating
+  // them here avoids adding them as deps of the channel effect and prevents the
+  // channel from being torn down and recreated every time settings change.
+  const notifSettingsRef = useRef(notifSettings);
+  const isQuietHoursRef = useRef(isQuietHours);
+  const showNotificationRef = useRef(showNotification);
   const permissionRef = useRef(permission);
 
   useEffect(() => {
@@ -146,15 +153,21 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
   }, [activeConversationId]);
 
   useEffect(() => {
-    showNotifRef.current = showNotification;
+    notifSettingsRef.current = notifSettings;
+    isQuietHoursRef.current = isQuietHours;
+    showNotificationRef.current = showNotification;
     permissionRef.current = permission;
-  }, [showNotification, permission]);
+  }, [notifSettings, isQuietHours, showNotification, permission]);
 
   useEffect(() => {
     if (!profile) return;
 
+    if (!channelIdRef.current) {
+      channelIdRef.current = Math.random().toString(36).slice(2);
+    }
+
     const channel = supabase
-      .channel(`team-chat-notifications:${profile.id}`)
+      .channel('team-chat-notifications:' + channelIdRef.current)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -201,8 +214,8 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         })) return;
 
         // Play sound if enabled — volume do painel (10-100), nunca fixo
-        if (notifSettings.soundEnabled && !isQuietHours()) {
-          playTeamChatSound(notifSettings.soundVolume);
+        if (notifSettingsRef.current.soundEnabled && !isQuietHoursRef.current()) {
+          playTeamChatSound(notifSettingsRef.current.soundVolume);
         }
 
         // Show browser notification if enabled
@@ -214,7 +227,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         // silenciava quem concedeu a permissão e não assinou o push: ficava só com o
         // som. O liga/desliga de avisos do chat interno continua valendo por
         // `notifSettings.browserNotifications`.
-        if (Notification.permission === 'granted' && notifSettings.browserNotifications && !isQuietHours()) {
+        if (permissionRef.current === 'granted' && notifSettingsRef.current.browserNotifications && !isQuietHoursRef.current()) {
           // Nome do remetente por RPC segura: para o agente a leitura direta de
           // `profiles` é barrada pela RLS (o título virava 'Colega').
           // `get_team_profiles()` é SECURITY DEFINER e já mascara email/telefone.
@@ -231,7 +244,9 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           } catch (err) { log.error('Unexpected error in useTeamChatNotifications:', err); }
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
-          const notif = new Notification(`💬 Teams: ${senderName}`, {
+
+          await showNotificationRef.current({
+            title: `💬 Teams: ${senderName}`,
             body,
             tag: `team-msg-${msg.conversation_id}`,
           });

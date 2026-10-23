@@ -389,6 +389,23 @@ drainOfflineQueueOnReconnect(offlineSendQueue, deliverQueuedOfflineMessage, {
   userId: readAuthenticatedUserId,
 });
 
+function readCurrentUserId(): string | undefined {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return undefined;
+    const s = window.localStorage;
+    for (let i = 0; i < s.length; i += 1) {
+      const key = s.key(i);
+      if (!key || !/^sb-.+-auth-token$/.test(key)) continue;
+      const raw = s.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw) as { access_token?: unknown; user?: { id?: unknown } } | null;
+      const id = parsed?.user?.id;
+      if (typeof parsed?.access_token === 'string' && typeof id === 'string' && id) return id;
+    }
+  } catch { /* storage blocked */ }
+  return undefined;
+}
+
 async function enqueueOffline(
   input: SendOutboundMessageInput,
   clientMessageId: string,
@@ -402,7 +419,7 @@ async function enqueueOffline(
     caption: input.caption ?? null,
     replyToId: input.replyToId ?? null,
     whatsappConnectionId: input.whatsappConnectionId ?? null,
-    userId: readAuthenticatedUserId() ?? undefined,
+    userId: readCurrentUserId(),
   });
   // `pending`: a bolha mostra "enviando" até a fila drenar — nada foi entregue ainda.
   return { id: queued.clientMessageId, status: 'pending', externalId: null, idempotent: false };
