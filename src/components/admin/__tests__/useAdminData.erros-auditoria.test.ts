@@ -36,6 +36,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       }),
     },
     rpc: vi.fn(),
+    functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) },
   },
   SUPABASE_URL: 'https://local.test',
 }));

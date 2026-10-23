@@ -60,8 +60,8 @@ describe('useDashboardKpi — período escolhido (E34)', () => {
     expect(rpc).toHaveBeenCalledWith('dashboard_kpi', {
       p_from: null,
       p_until: null,
-      p_queue: null,
-      p_agent: null,
+      p_queue: undefined,
+      p_agent: undefined,
     });
   });
 
