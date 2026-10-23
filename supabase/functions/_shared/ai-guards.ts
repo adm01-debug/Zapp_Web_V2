@@ -208,6 +208,8 @@ export async function enforceAiGuards(opts: AiGuardOptions): Promise<Response | 
   //    rejects bursts this isolate already saw, sparing an RPC round-trip.
   const rl = checkRateLimit(`ai:user:${functionName}:${userId}`, perMin, 60_000);
   if (!rl.allowed) {
+    // The local counter does not expose its exact reset time; errorResponse
+    // intentionally omits Retry-After rather than promising a false 60s wait.
     return errorResponse(`Limite de IA por usuário excedido (${perMin}/min). Tente novamente em instantes.`, 429, req);
   }
 
@@ -218,6 +220,7 @@ export async function enforceAiGuards(opts: AiGuardOptions): Promise<Response | 
     windowSeconds: opts.sharedWindowSeconds,
   });
   if (!decision.allowed) {
+    // Shared-window verdict currently returns hits but not a reset timestamp.
     return errorResponse(`Limite de IA por usuário excedido (${decision.limit}/min). Tente novamente em instantes.`, 429, req);
   }
 
@@ -237,6 +240,7 @@ export async function enforceAiGuards(opts: AiGuardOptions): Promise<Response | 
       return null;
     }
     if ((count ?? 0) >= quota) {
+      // This is a rolling 24-hour quota, so no fixed Retry-After is accurate.
       return errorResponse(`Cota diária de IA excedida (${quota}/dia). Tente novamente mais tarde.`, 429, req);
     }
   } catch (_e) {

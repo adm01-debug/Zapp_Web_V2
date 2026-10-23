@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Trash2, ExternalLink, Phone, MessageSquare,
-  GripVertical, X, Check, List, Layers, ChevronDown,
+  X, Check, List, Layers, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,10 +38,11 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
     messageType, setMessageType,
     body, setBody, footer, setFooter, headerText, setHeaderText,
     buttons, listButtonText, setListButtonText,
-    sections, expandedSections,
+    sections, sectionIds, expandedSections,
     resetForm, addButton, updateButton, removeButton,
+    moveButtonToFirst,
     addSection, updateSection, removeSection,
-    addRowToSection, updateRow, removeRow,
+    addRowToSection, updateRow, removeRow, moveRow,
     toggleSection, getTotalRows,
     validate, buildMessage,
   } = useInteractiveMessage();
@@ -52,6 +53,9 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
   // Fecha/limpa só depois do ACEITE do transporte; em rejeição a composição
   // continua no formulário (R2-INB-003).
   const handleOpenChange = (nextOpen: boolean) => {
+    // Não desmonta o formulário enquanto o transporte ainda decide se a
+    // mensagem foi aceita. A Promise pode concluir depois que o diálogo some.
+    if (!nextOpen && isSending) return;
     if (!nextOpen) setSendError(null);
     onOpenChange(nextOpen);
   };
@@ -64,7 +68,10 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
     try {
       await onSend(buildMessage());
       resetForm();
-      handleOpenChange(false);
+      // O fechamento de sucesso é intencional mesmo com isSending=true;
+      // fechamentos originados pelo usuário durante o envio são bloqueados.
+      setSendError(null);
+      onOpenChange(false);
     } catch (error) {
       setSendError(
         error instanceof Error && error.message
@@ -89,6 +96,7 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
           </DialogDescription>
         </DialogHeader>
 
+        <fieldset disabled={isSending} className="m-0 min-w-0 border-0 p-0">
         <Tabs value={messageType} onValueChange={(v) => setMessageType(v as 'buttons' | 'list')}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="buttons" className="gap-2">
@@ -146,12 +154,16 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
                   <motion.div key={button.id} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="p-3 rounded-lg border border-border bg-muted/30 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <GripVertical className="w-4 h-4 text-muted-foreground" />
                         <Badge variant="secondary" className="gap-1">{getButtonTypeIcon(button.type)}{getButtonTypeLabel(button.type)}</Badge>
                       </div>
-                      <Button type="button" variant="ghost" size="icon" aria-label={`Remover botão ${index + 1}`} className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => removeButton(index)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button type="button" variant="ghost" size="icon" aria-label="Subir botão para a primeira posição" disabled={index === 0} className="h-7 w-7" onClick={() => moveButtonToFirst(index)}>
+                          <ChevronUp className="w-4 h-4" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" aria-label={`Remover botão ${index + 1}`} className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => removeButton(index)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Input placeholder="Título do botão (máx. 20 caracteres)" value={button.title} onChange={(e) => updateButton(index, { title: e.target.value })} maxLength={20} />
@@ -190,22 +202,24 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
 
               <AnimatePresence mode="popLayout">
                 {sections.map((section, sectionIndex) => {
-                  const sectionId = `section_${sectionIndex}`;
+                  const sectionId = sectionIds[sectionIndex];
                   const isExpanded = expandedSections.includes(sectionId);
                   return (
-                    <motion.div key={sectionIndex} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="rounded-lg border border-border bg-muted/30 overflow-hidden">
+                    <motion.div key={sectionId} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="rounded-lg border border-border bg-muted/30 overflow-hidden">
                       <Collapsible open={isExpanded} onOpenChange={() => toggleSection(sectionId)}>
-                        <CollapsibleTrigger className="w-full p-3 flex items-center justify-between hover:bg-muted/50 transition-colors">
-                          <div className="flex items-center gap-2">
-                            <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
-                            <Badge variant="outline" className="gap-1"><List className="w-3 h-3" />Seção {sectionIndex + 1}</Badge>
-                            {section.title && <span className="text-sm text-muted-foreground truncate max-w-[150px]">{section.title}</span>}
-                            <Badge variant="secondary" className="text-3xs">{section.rows.length} {section.rows.length === 1 ? 'item' : 'itens'}</Badge>
-                          </div>
-                          <Button type="button" variant="ghost" size="icon" aria-label={`Remover seção ${sectionIndex + 1}`} className="h-7 w-7 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); removeSection(sectionIndex); }}>
+                        <div className="flex items-center">
+                          <CollapsibleTrigger aria-label={`Seção ${sectionIndex + 1}`} className="flex-1 min-w-0 p-3 flex items-center justify-between hover:bg-muted/50 transition-colors">
+                            <div className="flex items-center gap-2">
+                              <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
+                              <Badge variant="outline" className="gap-1"><List className="w-3 h-3" />Seção {sectionIndex + 1}</Badge>
+                              {section.title && <span className="text-sm text-muted-foreground truncate max-w-[150px]">{section.title}</span>}
+                              <Badge variant="secondary" className="text-3xs">{section.rows.length} {section.rows.length === 1 ? 'item' : 'itens'}</Badge>
+                            </div>
+                          </CollapsibleTrigger>
+                          <Button type="button" variant="ghost" size="icon" aria-label={`Remover seção ${sectionIndex + 1}`} className="h-7 w-7 mr-3 text-destructive hover:text-destructive" onClick={() => removeSection(sectionIndex)}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
-                        </CollapsibleTrigger>
+                        </div>
                         <CollapsibleContent>
                           <div className="p-3 pt-0 space-y-3 border-t border-border/50">
                             <div className="space-y-1">
@@ -224,6 +238,14 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
                                 {section.rows.map((row, rowIndex) => (
                                   <motion.div key={row.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="p-2 rounded-md bg-background border border-border/50 space-y-2">
                                     <div className="flex items-start gap-2">
+                                      <div className="flex flex-col gap-1">
+                                        <Button type="button" variant="ghost" size="icon" aria-label="Subir item" disabled={rowIndex === 0} className="h-6 w-6" onClick={() => moveRow(sectionIndex, rowIndex, 'up')}>
+                                          <ChevronUp className="w-3 h-3" />
+                                        </Button>
+                                        <Button type="button" variant="ghost" size="icon" aria-label="Descer item" disabled={rowIndex === section.rows.length - 1} className="h-6 w-6" onClick={() => moveRow(sectionIndex, rowIndex, 'down')}>
+                                          <ChevronDown className="w-3 h-3" />
+                                        </Button>
+                                      </div>
                                       <div className="flex-1 space-y-2">
                                         <Input placeholder="Título do item (máx. 24)" value={row.title} onChange={(e) => updateRow(sectionIndex, rowIndex, { title: e.target.value })} maxLength={24} className="h-8 text-sm" />
                                         <Input placeholder="Descrição (opcional, máx. 72)" value={row.description || ''} onChange={(e) => updateRow(sectionIndex, rowIndex, { description: e.target.value })} maxLength={72} className="h-8 text-sm" />
@@ -265,6 +287,7 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
           listButtonText={listButtonText}
           sections={sections}
         />
+        </fieldset>
 
         {sendError && (
           <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
@@ -273,7 +296,7 @@ export function InteractiveMessageBuilder({ open, onOpenChange, onSend }: Intera
         )}
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancelar</Button>
+          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isSending}>Cancelar</Button>
           <Button onClick={() => { void handleSend(); }} disabled={isSending} className="gap-2"><Check className="w-4 h-4" />{isSending ? 'Enviando...' : 'Enviar Mensagem'}</Button>
         </DialogFooter>
       </DialogContent>
