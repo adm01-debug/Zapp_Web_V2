@@ -158,7 +158,7 @@ assert_last_definer 'policy "Agents or admins can view closures"' \
 
 # RPCs do dashboard (lista fixa — a cadeia e aplicada mais abaixo):
 assert_last_definer 'RPC dashboard_kpi' \
-  '20261003272707_reconcile_local_replay_with_canonical.sql' \
+  '20261007013217_conversation_closures_reopen_same_day.sql' \
   '(CREATE( OR REPLACE)? FUNCTION public\.dashboard_kpi|ALTER FUNCTION[^;]*public\.dashboard_kpi|DROP FUNCTION[^;]*public\.dashboard_kpi)'
 assert_last_definer 'RPC dashboard_hourly_volume' \
   '20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql' \
@@ -417,10 +417,10 @@ for f in \
   psql_file "$migrations_dir/$f" || fail "falha ao aplicar $f"
 done
 
-# Definição final de dashboard_kpi vive na migration de reconciliação
-# (arquivo multi-objeto): extrai só o CREATE OR REPLACE dessa função.
-awk '/CREATE OR REPLACE FUNCTION public.dashboard_kpi/,/\$function\$;/' \
-  "$migrations_dir/20261003272707_reconcile_local_replay_with_canonical.sql" \
+# Definição final de dashboard_kpi vive em 20261007013217 (última a redefinir a função).
+# Padrões ancorados ao início da linha para não capturar o bloco de rollback comentado.
+awk '/^CREATE OR REPLACE FUNCTION public\.dashboard_kpi/,/^\$function\$;$/' \
+  "$migrations_dir/20261007013217_conversation_closures_reopen_same_day.sql" \
   > "$tmp_dir/kpi_final.sql"
 grep -q 'CREATE OR REPLACE FUNCTION public.dashboard_kpi' "$tmp_dir/kpi_final.sql" \
   || fail 'extracao de dashboard_kpi da migration de reconciliacao veio vazia'
