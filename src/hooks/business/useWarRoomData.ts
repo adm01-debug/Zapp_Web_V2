@@ -3,8 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useAgentPresenceMap } from '@/hooks/crm/useAgentPresence';
 
-export const WARROOM_MAX_ROWS = 200;
-
 export interface WarRoomAgent {
   id: string;
   name: string;
@@ -75,6 +73,9 @@ interface WarRoomQueueRpcRow {
 interface WarRoomAgentBase extends Omit<WarRoomAgent, 'status'> {
   user_id: string | null;
 }
+
+/** Limite de segurança: nenhum RPC do War Room deve devolver mais do que este número de linhas. */
+export const WARROOM_MAX_ROWS = 200;
 
 /**
  * War Room.
