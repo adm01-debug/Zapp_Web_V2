@@ -177,7 +177,7 @@ então esse caminho nunca foi executável por agente de qualquer forma.
 
 ## Auditoria e plano de correções (2026-09-16)
 
-**Plano vigente:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (auditoria exaustiva dos 16 arquivos de `.github/workflows/` (+3 workflows dinâmicos) + meta CI score 10/10; supercede PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md).
+**Plano vigente:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (auditoria exaustiva dos 15 arquivos atuais de `.github/workflows/` (+3 workflows dinâmicos; 18 no total) + meta CI score 10/10; supercede PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md).
 Auditoria exaustiva local↔GitHub↔banco em `docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md`.
 Estado dos achados após re-auditoria de 2026-09-17:
 - `messages` >75% dead tuples — **RESOLVIDO**: autovacuum executou em 2026-09-16 18:37; em
@@ -262,17 +262,20 @@ GitHub medida em 03/10/2026 (`docs/audits/e95-perimetro-github-2026-10-03.md`).
 
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
-Auditoria dos 16 workflows + 3 dinâmicos (19 total), da branch protection, dos secrets e dos environments. O que passou a
-valer (confira antes de propor mudança de CI, para não refazer o que já existe):
+Retrato da auditoria de 2026-09-25: 16 workflows + 3 dinâmicos (19 total), branch protection, secrets e environments. O que passou a
+valer naquele retrato (confira antes de propor mudança de CI, para não refazer o que já existe):
 
-**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions) — retificada em 05/10/2026:** são **16**
+**Snapshot histórico de 05/10/2026 (auditoria exaustiva de GitHub Actions):** naquele retrato havia 16
 arquivos em `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
 `codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`, `db-migrate.yml`,
 `deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `settings-guard.yml`, `supabase-sync.yml`,
 `talkx-status-regen.yml`, `targeted-ledger-evidence.yml`, `types-sync.yml`), mais 3 workflows dinâmicos
-que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — **19 no
-total**. A fonte canônica do inventário é o **gerado** `docs/ci/README.md`
-(`scripts/ci/render-workflow-docs.mjs --check`), não esta lista manual. Plano completo em
+que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — 19 no
+total naquela data. A lista é histórica; a fonte canônica atual do inventário é o **gerado** `docs/ci/README.md`
+(`scripts/ci/render-workflow-docs.mjs --check`), não esta lista manual.
+
+**Inventário vigente (2026-10-20):** **15** arquivos YAML em `.github/workflows/` e 3 workflows dinâmicos — 18 no total.
+Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.
 
 **Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
@@ -589,3 +592,46 @@ valor — comentários individuais não podem ter labels removidas e a issue fic
 comentário-resumo e abrir uma nova limpa** (mesmo título + link para a anterior). O
 `db-live-guard` já tem dedupe de 6 h (E44); o `types-sync` ganhará dedupe em E20.
 Referência: issue #888 (`[types-sync]`, 89 comentários), fechada em 2026-10-01.
+
+## 4. Vercel — ZAPP Web V2 (auditoria 2026-10-18)
+
+| O que | Valor |
+|---|---|
+| Projeto | `zapp_web_v2` (ID: `prj_J4wb8egzz8iL1CJnSOXJDtqnbvRp`) |
+| Team | `juca1` / `team_QyN41X0q8hrqhW80AwokbFLv` |
+| Domínio canônico | `https://zappweb.app.br` (apex — V017 a implementar pelo Joaquim) |
+| Alias de projeto | `https://zapp-web-v2.vercel.app` |
+| Preview URL pattern | `https://zappwebv2-{hash}-juca1.vercel.app` |
+| Região | `iad1` |
+| Framework | Vite / React |
+| Build | `bun run build` |
+| Output | `dist/` |
+| Node | 24.x |
+| Ignorar build | `sh scripts/vercel/ignore-build.sh` |
+| MCP Vercel | ferramentas `mcp__Vercel__*` — escrita = ação de produção |
+
+### Deploy e edge functions
+
+- **Front (Vercel):** automático na `main` — merge em `main` = deploy em produção.
+- **Edge functions:** NÃO sobem com o front. Requerem `workflow_dispatch` do `deploy-functions.yml` + aprovação de Joaquim em `producao-edge-functions`.
+- `FALLBACK_ORIGIN` atual: `https://zapp-web-v2.vercel.app`. Mudar para `https://zappweb.app.br` 7 dias após DNS estabilizar (V185).
+
+### Regras de env vars no Vercel
+
+- **Nunca** colocar chaves de servidor (OPENAI, ANTHROPIC, GROQ, EVOLUTION) — sem serverless neste projeto.
+- **Nunca** colocar `POSTGRES_*` ou `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_JWT_SECRET` — são do back-end.
+- `VITE_ZAPP_LOCAL_SUPABASE_*` são **apenas para dev local** (WSL), não devem existir no Vercel.
+- Vars `VITE_*` injetadas no bundle são públicas — nunca colocar segredo com prefixo `VITE_`.
+- Baseline de vars esperadas: `scripts/ci/vercel-env-baseline.json`.
+- Snapshot do estado "antes": `docs/audits/vercel-snapshot-2026-10-18-antes.json`.
+
+### Ações pendentes do Joaquim (pós-auditoria 2026-10-18)
+
+1. **V017** — Inverter redirect: apex canônico, `www` → apex (Dashboard Vercel → Domains).
+2. **V023** — Deploy edge functions após merge (dispatch + aprovar `producao-edge-functions`).
+3. **V043–V065** — Remover 17 vars de integração morta + 5 chaves servidor + VITE_* não lidas.
+4. **V175/V176** — Pausar e deletar projeto legado `zapp-web` (`prj_OsErjUqsrMbwwC7S1LVfawmNgEce`).
+
+### Projeto legado
+
+- `zapp-web` (ID: `prj_OsErjUqsrMbwwC7S1LVfawmNgEce`) — **não é o projeto atual**. A ser pausado/deletado pelo Joaquim após confirmar que não tem tráfego real.
