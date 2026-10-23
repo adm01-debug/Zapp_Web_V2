@@ -1,58 +1,43 @@
-import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { FileText, Search, Filter, Calendar, User, Globe, AlertTriangle, Shield, Activity } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
-import { localDayKey } from '@/lib/localDay';
-import { ptBR } from 'date-fns/locale';
 
-interface AuditLog {
-  id: string;
-  action: string;
-  entity_type: string | null;
-  entity_id: string | null;
-  user_id: string | null;
-  details: Record<string, unknown> | null;
-  ip_address: string | null;
-  user_agent: string | null;
-  created_at: string;
-}
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { FileText, Search, Filter, Calendar, User, Globe, AlertTriangle, Shield, Activity } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useAuditLogDashboard, type AuditLogRow } from "@/hooks/security/useAuditLogDashboard";
 
-// Contrato compartilhado de ações e entidades de papel: todo evento de papel em
-// public.audit_logs começa com `role_` (audit_role_changes grava role_granted /
-// role_revoked / role_changed com entity_type='user_roles'; o provisionamento de
-// signup grava role_auto_provisioned / role_auto_provision_denied).
-export const ROLE_ACTION_PREFIX = 'role_';
-export const ROLE_FILTER_VALUE = 'role_events';
-// eslint-disable-next-line react-refresh/only-export-components -- contrato compartilhado exigido no proprio arquivo (cartao R2-AUTH-032)
+
+// Contrato compartilhado de acoes e entidades de papel.
+export const ROLE_ACTION_PREFIX = "role_";
+export const ROLE_FILTER_VALUE = "role_events";
+// eslint-disable-next-line react-refresh/only-export-components -- contrato compartilhado exigido no proprio arquivo
 export const isRoleAction = (action: string) => action.startsWith(ROLE_ACTION_PREFIX);
-// eslint-disable-next-line react-refresh/only-export-components -- contrato compartilhado exigido no proprio arquivo (cartao R2-AUTH-032)
+// eslint-disable-next-line react-refresh/only-export-components -- contrato compartilhado exigido no proprio arquivo
 export const isSensitiveAction = (action: string) =>
-  isRoleAction(action) || action.includes('delete') || action.includes('export') || action.includes('role_change');
+  isRoleAction(action) || action.includes("delete") || action.includes("export") || action.includes("role_change");
 
-// eslint-disable-next-line react-refresh/only-export-components -- contrato compartilhado exigido no proprio arquivo (cartao R2-AUTH-032)
+// eslint-disable-next-line react-refresh/only-export-components -- contrato compartilhado exigido no proprio arquivo
 export const ENTITY_TYPES_BY_FILTER: Record<string, string[]> = {
-  contact: ['contact'], message: ['message'], campaign: ['campaign'],
-  user: ['user', 'user_roles'], settings: ['settings'],
+  contact: ["contact"], message: ["message"], campaign: ["campaign"],
+  user: ["user", "user_roles"], settings: ["settings"],
 };
 
 const ACTION_COLORS: Record<string, string> = {
-  login: 'bg-success/10 text-success',
-  logout: 'bg-muted text-muted-foreground',
-  create: 'bg-info/10 text-info',
-  update: 'bg-warning/10 text-warning',
-  delete: 'bg-destructive/10 text-destructive',
-  export: 'bg-secondary/10 text-secondary',
-  mfa_enabled: 'bg-success/10 text-success',
-  mfa_disabled: 'bg-destructive/10 text-destructive',
-  password_change: 'bg-warning/10 text-warning',
-  role_change: 'bg-accent/10 text-accent-foreground',
+  login: "bg-success/10 text-success",
+  logout: "bg-muted text-muted-foreground",
+  create: "bg-info/10 text-info",
+  update: "bg-warning/10 text-warning",
+  delete: "bg-destructive/10 text-destructive",
+  export: "bg-secondary/10 text-secondary",
+  mfa_enabled: "bg-success/10 text-success",
+  mfa_disabled: "bg-destructive/10 text-destructive",
+  password_change: "bg-warning/10 text-warning",
+  role_change: "bg-accent/10 text-accent-foreground",
 };
 
 const LOGS_PAGE_LIMIT = 200;
@@ -70,67 +55,33 @@ const ACTION_ICONS: Record<string, typeof Shield> = {
 };
 
 export function AuditLogDashboard() {
-  const [logs, setLogs] = useState<AuditLog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [actionFilter, setActionFilter] = useState<string>('all');
-  const [entityFilter, setEntityFilter] = useState<string>('all');
-  const [stats, setStats] = useState({ total: 0, today: 0, suspicious: 0, uniqueUsers: 0 });
+  const [search, setSearch] = useState("");
+  const [actionFilter, setActionFilter] = useState<string>("all");
+  const [entityFilter, setEntityFilter] = useState<string>("all");
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
-  const [truncated, setTruncated] = useState(false);
 
-  const fetchLogs = useCallback(async () => {
-    setLoading(true);
-    let query = supabase
-      .from('audit_logs')
-      .select('id, action, entity_type, user_id, details, ip_address, created_at')
-      .order('created_at', { ascending: false })
-      .limit(LOGS_PAGE_LIMIT);
+  // HZ1-08: totais no servidor e lista paginada; filtros traduzidos aqui.
+  const actionLike = actionFilter === ROLE_FILTER_VALUE ? "role_%" : null;
+  const actionEq = actionFilter !== "all" && actionFilter !== ROLE_FILTER_VALUE ? actionFilter : null;
+  const entityTypes = entityFilter === "all" ? null : (ENTITY_TYPES_BY_FILTER[entityFilter] ?? [entityFilter]);
 
-    if (actionFilter === ROLE_FILTER_VALUE) {
-      query = query.like('action', ROLE_ACTION_PREFIX + '%');
-    } else if (actionFilter !== 'all') {
-      query = query.eq('action', actionFilter);
-    }
-    if (entityFilter !== 'all') {
-      query = query.in('entity_type', ENTITY_TYPES_BY_FILTER[entityFilter] ?? [entityFilter]);
-    }
+  const { stats, logs, nomesPorUsuario, loading, error } = useAuditLogDashboard({ actionLike, actionEq, entityTypes });
 
-    const { data, error } = await query;
-    if (!error && data) {
-      setLogs(data as AuditLog[]);
-      // A consulta corta em LOGS_PAGE_LIMIT: com a página cheia o número exibido
-      // é "os N mais recentes", não o total — o aviso na tela deixa isso claro.
-      setTruncated(data.length >= LOGS_PAGE_LIMIT);
-      
-      const today = localDayKey(new Date());
-      const todayLogs = data.filter(l => localDayKey(l.created_at) === today);
-      const uniqueUsers = new Set(data.map(l => l.user_id).filter(Boolean));
-      const suspicious = data.filter(l => isSensitiveAction(l.action));
-      
-      setStats({
-        total: data.length,
-        today: todayLogs.length,
-        suspicious: suspicious.length,
-        uniqueUsers: uniqueUsers.size,
-      });
-    }
-    setLoading(false);
-  }, [actionFilter, entityFilter]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-filtro padrão, sem estado derivado de props para sincronizar.
-    fetchLogs();
-  }, [fetchLogs]);
+  
+  const truncated = !loading && !error && logs.length >= LOGS_PAGE_LIMIT;
 
-  const filteredLogs = logs.filter(log => {
+
+  const filteredLogs = logs.filter((log: AuditLogRow) => {
     if (!search) return true;
     const s = search.toLowerCase();
+    const nome = log.user_id ? (nomesPorUsuario[log.user_id] ?? "") : "";
     return (
       log.action.toLowerCase().includes(s) ||
-      log.entity_type?.toLowerCase().includes(s) ||
-      log.ip_address?.includes(s) ||
-      log.user_id?.includes(s)
+      (log.entity_type ?? "").toLowerCase().includes(s) ||
+      (log.ip_address ?? "").includes(s) ||
+      (log.user_id ?? "").includes(s) ||
+      nome.toLowerCase().includes(s)
     );
   });
 
@@ -138,7 +89,7 @@ export function AuditLogDashboard() {
     for (const [key, color] of Object.entries(ACTION_COLORS)) {
       if (action.includes(key)) return color;
     }
-    return 'bg-muted text-muted-foreground';
+    return "bg-muted text-muted-foreground";
   };
 
   const getActionIcon = (action: string) => {
@@ -150,21 +101,31 @@ export function AuditLogDashboard() {
 
   return (
     <div className="space-y-6 w-full min-w-0">
+      {error && (
+        <div role="alert" className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          Falha ao carregar auditoria: {error}
+        </div>
+      )}
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: truncated ? 'Últimos 200' : 'Total de Logs', value: stats.total, icon: FileText, color: 'text-primary' },
-          { label: 'Hoje', value: stats.today, icon: Calendar, color: 'text-success' },
-          { label: 'Ações Sensíveis', value: stats.suspicious, icon: AlertTriangle, color: 'text-destructive' },
-          { label: 'Usuários Únicos', value: stats.uniqueUsers, icon: User, color: 'text-info' },
+
+          { label: "Total de Logs", value: (error || !stats) ? "—" : stats.total, icon: FileText, color: "text-primary" },
+          { label: "Hoje", value: (error || !stats) ? "—" : stats.ultimas24h, icon: Calendar, color: "text-success", hint: "últimas 24 h" },
+          { label: "Ações Sensíveis", value: (error || !stats) ? "—" : stats.sensiveis24h, icon: AlertTriangle, color: "text-destructive", hint: "últimas 24 h" },
+          { label: "Usuários Únicos", value: (error || !stats) ? "—" : stats.usuariosUnicos7d, icon: User, color: "text-info" },
+
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center gap-3">
-                <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                <stat.icon className={"w-5 h-5 " + stat.color} />
                 <div>
                   <p className="text-2xl font-bold">{stat.value}</p>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  {'hint' in stat && stat.hint ? (
+                    <p className="text-[11px] text-muted-foreground/80">{stat.hint}</p>
+                  ) : null}
                 </div>
               </div>
             </CardContent>
@@ -250,8 +211,9 @@ export function AuditLogDashboard() {
                   Nenhum log encontrado
                 </p>
               ) : (
-                filteredLogs.map((log) => {
+                filteredLogs.map((log: AuditLogRow) => {
                   const Icon = getActionIcon(log.action);
+                  const autor = log.user_id ? (nomesPorUsuario[log.user_id] ?? log.user_id) : null;
                   return (
                     <motion.div
                       key={log.id}
@@ -260,7 +222,7 @@ export function AuditLogDashboard() {
                       className="rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex items-center gap-3 p-3">
-                        <div className={`p-2 rounded-lg ${getActionColor(log.action)}`}>
+                        <div className={"p-2 rounded-lg " + getActionColor(log.action)}>
                           <Icon className="w-4 h-4" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -274,6 +236,12 @@ export function AuditLogDashboard() {
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                             <span>{format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</span>
+                            {autor && (
+                              <>
+                                <span>•</span>
+                                <span>{autor}</span>
+                              </>
+                            )}
                             {log.ip_address && (
                               <>
                                 <span>•</span>
@@ -292,7 +260,7 @@ export function AuditLogDashboard() {
                             aria-expanded={expandedLogId === log.id}
                             className="shrink-0 rounded-md border border-border bg-secondary/50 px-2 py-0.5 text-xs font-medium text-secondary-foreground transition-colors hover:bg-secondary/70"
                           >
-                            {expandedLogId === log.id ? '−detalhes' : '+detalhes'}
+                            {expandedLogId === log.id ? "−detalhes" : "+detalhes"}
                           </button>
                         )}
                       </div>

@@ -445,6 +445,23 @@ jobs:
           EVIDENCIA="$RUNNER_TEMP/edge-deployment-evidence"
           node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/deploy-plan.mjs" --manifest supabase/deployment-manifest.json --remoto "$EVIDENCIA/edge-before.json" --escopo "$FN" --saida "$EVIDENCIA/deploy-plan.json"
 
+      # O `deno check` resolve @types/node em node_modules/: sem as deps instaladas
+      # ele aborta com 'Could not find "@types/node" in a node_modules folder ...
+      # Did you forget to run `deno install`?' (erro medido na main).
+      - name: 🧄 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+
+      - name: 📚 Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
       - name: Setup Deno
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:

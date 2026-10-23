@@ -179,7 +179,7 @@ describe('useRealtimeInbox.handleSendAudio — PK-28: citação da resposta', ()
     );
   });
 
-  it('sem resposta pendente o contrato antigo continua igual (nenhum argumento a mais)', async () => {
+  it('sem resposta pendente o reply vai nulo e o id de entrega continua', async () => {
     await expect(sendAudio()).resolves.toBe(true);
 
     expect(sendMessageMock).toHaveBeenCalledWith('c1', '[Áudio]', 'audio', 'audio/arquivo.webm', undefined, null, expect.any(String));

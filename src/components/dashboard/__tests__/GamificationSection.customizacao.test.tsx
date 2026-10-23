@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { GamificationSection } from '../overview/GamificationSection';
+import { TestQueryWrapper } from '@/test/mocks/queryClient';
 import type { DashboardWidget } from '@/hooks/analytics/useDashboardWidgets';
 import type { DashboardStats } from '../DashboardWidgetRenderer';
 
@@ -30,7 +31,7 @@ const leaderboard = widget({ id: 'leaderboard', type: 'leaderboard', order: 5, l
 const filas = widget({ id: 'queues', type: 'queues', order: 2, level: 2 });
 
 function renderSecao(visibleWidgets: DashboardWidget[], isStaff = true) {
-  render(<GamificationSection stats={stats} isStaff={isStaff} visibleWidgets={visibleWidgets} />);
+  render(<GamificationSection stats={stats} isStaff={isStaff} visibleWidgets={visibleWidgets} />, { wrapper: TestQueryWrapper });
   fireEvent.click(screen.getByRole('button', { name: /Expandir/i }));
 }
 

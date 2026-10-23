@@ -74,6 +74,9 @@ vi.mock('framer-motion', () => ({
     span: ({ children, ...props }: { children?: import('react').ReactNode } & Record<string, unknown>) => <span {...props}>{children}</span>,
   },
   AnimatePresence: ({ children }: { children?: import('react').ReactNode }) => children,
+  // Grupos usa o movimento reduzido do sistema (MotionConfig + useReducedMotion).
+  MotionConfig: ({ children }: { children?: import('react').ReactNode }) => children,
+  useReducedMotion: () => false,
 }));
 vi.mock('@/components/effects/AuroraBorealis', () => ({ AuroraBorealis: () => null }));
 vi.mock('@/components/dashboard/FloatingParticles', () => ({ FloatingParticles: () => null }));

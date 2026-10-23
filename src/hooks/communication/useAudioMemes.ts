@@ -200,7 +200,16 @@ export function useAudioMemes(open: boolean) {
       const payload: File | Blob = converted.ok ? converted.blob : file;
       const contentType = converted.ok ? 'audio/mpeg' : (file.type || 'audio/mpeg');
       const ext = converted.ok ? 'mp3' : getFileExtensionWithDefault(file.name, 'mp3');
-      const storagePath = `meme_${Date.now()}_${crypto.randomUUID()}.${ext}`;
+      // PK-16/PK-17 — o bucket `audio-memes` tem policy por pasta: a chave do
+      // objeto SAI da raiz do próprio usuário (`(storage.foldername(name))[1] =
+      // auth.uid()`). Sem sessão não há pasta: avisa e não sobe objeto solto.
+      const { data: sessao } = await supabase.auth.getUser();
+      const usuario = sessao?.user;
+      if (!usuario) {
+        toast.error('Sessão expirada: entre novamente para enviar o áudio');
+        return;
+      }
+      const storagePath = `${usuario.id}/meme_${Date.now()}_${crypto.randomUUID()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('audio-memes')

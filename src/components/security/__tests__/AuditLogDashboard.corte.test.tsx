@@ -12,13 +12,31 @@ const estado = vi.hoisted(() => ({ dados: [] as unknown[] }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
+    channel: () => ({ on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }) }),
+    removeChannel: () => {},
     from: vi.fn(() => ({
       select: vi.fn(() => ({
+        gte: vi.fn(function () { return this; }),
+        or: vi.fn(function () { return this; }),
+        range: vi.fn(function () { return this; }),
+        not: vi.fn(function () { return this; }),
+        in: vi.fn(function () { return this; }),
+        order: vi.fn(function () { return this; }),
         order: vi.fn(() => ({
+          gte: vi.fn(function () { return this; }),
+          or: vi.fn(function () { return this; }),
+          range: vi.fn(function () { return this; }),
+          not: vi.fn(function () { return this; }),
+          in: vi.fn(function () { return this; }),
+          order: vi.fn(function () { return this; }),
           limit: vi.fn(() => {
             const resultado = Promise.resolve({ data: estado.dados, error: null });
             const construtor = {
               eq: () => construtor,
+              gte: () => construtor,
+              or: () => construtor,
+              range: () => construtor,
+              not: () => construtor,
               in: () => construtor,
               like: () => construtor,
               then: resultado.then.bind(resultado),
@@ -51,7 +69,7 @@ describe('AuditLogDashboard — recorte de 200 registros', () => {
     estado.dados = Array.from({ length: 200 }, (_, i) => linha(String(i)));
     render(<AuditLogDashboard />);
 
-    await waitFor(() => expect(screen.getByText('Últimos 200')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Total de Logs')).toBeInTheDocument());
     expect(screen.getByText(/pode haver registros mais antigos fora do recorte/)).toBeInTheDocument();
   });
 

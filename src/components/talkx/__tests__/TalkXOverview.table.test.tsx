@@ -39,6 +39,7 @@ if (typeof window.ResizeObserver === 'undefined') {
 if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {};
 
 import { TalkXOverview } from '../TalkXOverview';
+import { TestQueryWrapper } from '@/test/mocks/queryClient';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
 
@@ -132,7 +133,7 @@ function renderOverview() {
     onDelete: vi.fn(),
     onGoTab: vi.fn(),
   };
-  render(<TalkXOverview {...props} />);
+  render(<TalkXOverview {...props} />, { wrapper: TestQueryWrapper });
   return props;
 }
 

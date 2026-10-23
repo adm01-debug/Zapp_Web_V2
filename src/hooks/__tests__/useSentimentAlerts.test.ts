@@ -41,10 +41,11 @@ vi.mock('@/utils/notificationSounds', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
+  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
-  // useSentimentAlerts abre a conversa via `openContactChat`
-  // (src/components/catalog/useSendProduct), cujo grafo importa o logger
-  // nomeado — o mock precisa do export real.
+  // useSentimentAlerts abre a conversa via `openContactChat`,
+  // (src/components/catalog/useSendProduct), cujo grafo importa o logger,
+  // nomeado — o mock precisa do export real.,
   getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
   createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));

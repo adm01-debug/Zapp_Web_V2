@@ -701,6 +701,31 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     enabled: audienceSource === 'segment' && segmentIds.length > 0,
   });
 
+
+  // X131: rail Resumo le o publico do SERVIDOR (talkx_resolve_audience count).
+  const railRulesKey = audienceSource === "segment" ? JSON.stringify(segmentIds) : audienceRulesKey;
+  const railHasRules = audienceSource === "contacts" ? effectiveAudienceRules.groups.some((g) => g.rules.length > 0) : false;
+  const railSummaryEnabled = audienceSource === "segment" ? segmentIds.length > 0 : audienceSource === "contacts" && railHasRules;
+  const { data: railSummary, isPending: railSummaryPending, isError: railSummaryError } = useQuery({
+    queryKey: ["talkx-wizard-rail-summary", audienceSource, railRulesKey],
+    queryFn: async () => {
+      const rpc = supabase.rpc as unknown as (n: string, a: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+      const { data, error } = await rpc("talkx_resolve_audience", {
+        p_rules: audienceSource === "segment" ? { groups: [] } : { groups: effectiveAudienceRules.groups },
+        p_segment_ids: audienceSource === "segment" ? segmentIds : null,
+        p_mode: "count",
+        p_limit: null,
+        p_after: null,
+      });
+      if (error) throw new Error(error.message);
+      const r = (data ?? {}) as { eligible?: number; suppressed?: number };
+      const eligible = Number(r.eligible ?? 0);
+      const suppressed = Number(r.suppressed ?? 0);
+      return { eligible, suppressed, total: eligible + suppressed };
+    },
+    enabled: railSummaryEnabled,
+    staleTime: 15_000,
+  });
   const companies = useMemo(() => {
     if (!contacts) return [] as string[];
     const companySet = new Set<string>();
@@ -1157,7 +1182,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     businessHoursOnly, setBusinessHoursOnly, respectSuppression, setRespectSuppression,
     confirmConsent, setConfirmConsent, confirmContent, setConfirmContent, confirmSuppression, setConfirmSuppression,
     connections, contacts, companies, filteredContacts,
-    previewMessage, estimatedTime, estimatedSeconds, audienceTotal, suppressedCount, eligibleCount,
+    previewMessage, estimatedTime, estimatedSeconds, audienceTotal, suppressedCount, eligibleCount, railSummary, railSummaryPending, railSummaryError, railHasRules,
     toggleContact, selectAll, handleSave,
     clearFilters, toggleMedia, toggleSchedule, onClose,
   };

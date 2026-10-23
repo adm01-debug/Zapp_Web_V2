@@ -19,8 +19,6 @@ import { makeQueryClient, makeWrapper } from '@/test/mocks/tarefas';
 import type { WorkItem } from '@/hooks/tasks/workItem.types';
 
 /** Dia e hora escolhidos na tela: 2026-10-20 09:00 em São Paulo (UTC-3). */
-const DIA = '2026-10-20';
-const NOVE_H_LOCAL = new Date(2026, 9, 20, 9, 0, 0, 0);
 /** O mesmo 09:00 de São Paulo em ISO — o instante que o banco tem de guardar. */
 const NOVE_H_ISO = '2026-10-20T12:00:00.000Z';
 
@@ -118,25 +116,34 @@ describe('WorkItemSheet — prazo e alarme no fuso do aparelho (R2-MOD-050)', ()
   });
 
   it('criar pelo QuickAdd e editar no Sheet o mesmo 09:00 produzem o mesmo instante ISO', async () => {
-    // Criação (QuickAdd): alarme 20/10 09:00.
+    // Dia SEMPRE futuro: o QuickAdd bloqueia alarme no passado (Etapa 38) e a
+    // data fixa original (2026-10-20) apodreceu — virou passado e o `onAdd`
+    // nunca era chamado. O Sheet não valida passado, então só a criação precisa
+    // do dia dinâmico; a paridade do instante é o que o teste prova.
+    const amanha = new Date(Date.now() + 86_400_000);
+    const noveH = new Date(amanha.getFullYear(), amanha.getMonth(), amanha.getDate(), 9, 0, 0, 0);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const dia = `${noveH.getFullYear()}-${pad(noveH.getMonth() + 1)}-${pad(noveH.getDate())}`;
+    const oitoHISO = new Date(noveH.getTime() - 3_600_000).toISOString();
+    // Criação (QuickAdd): alarme dia 09:00.
     const onAdd = vi.fn().mockResolvedValue(undefined);
     const Wrapper = makeWrapper(makeQueryClient());
     render(<Wrapper><QuickAdd onAdd={onAdd} /></Wrapper>);
     const input = screen.getByTestId('quick-add-input');
     fireEvent.change(input, { target: { value: 'Ligar' } });
     fireEvent.click(screen.getByTestId('quick-add-chip-remind'));
-    fireEvent.change(screen.getByTestId('quick-add-remind-date'), { target: { value: DIA } });
+    fireEvent.change(screen.getByTestId('quick-add-remind-date'), { target: { value: dia } });
     fireEvent.change(screen.getByTestId('quick-add-remind-time'), { target: { value: '09:00' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     await waitFor(() => expect(onAdd).toHaveBeenCalledTimes(1));
 
     const criado = onAdd.mock.calls[0][0].remindAt as string;
-    expect(criado).toBe(NOVE_H_LOCAL.toISOString());
+    expect(criado).toBe(noveH.toISOString());
 
     cleanup();
 
-    // Edição (Sheet): o mesmo 20/10 09:00 no prazo, vindo de um 08:00.
-    const item = { ...base, due_date: '2026-10-20T11:00:00.000Z' };
+    // Edição (Sheet): o mesmo 09:00 no prazo, vindo de um 08:00.
+    const item = { ...base, due_date: oitoHISO };
     const p = props({ item });
     render(<WorkItemSheet {...p} />);
     fireEvent.click(screen.getByTestId('sheet-prazo'));
@@ -145,7 +152,7 @@ describe('WorkItemSheet — prazo e alarme no fuso do aparelho (R2-MOD-050)', ()
 
     const patch = p.onSave.mock.calls[0][1] as { dueDate?: string | null };
     expect(patch.dueDate).toBe(criado);
-    expect(instanteGravadoPeloBanco(patch.dueDate as string)).toBe(NOVE_H_LOCAL.getTime());
+    expect(instanteGravadoPeloBanco(patch.dueDate as string)).toBe(noveH.getTime());
   });
 
   it('prazo de dia inteiro (23:59 local) volta intacto: só o título entra no patch', () => {

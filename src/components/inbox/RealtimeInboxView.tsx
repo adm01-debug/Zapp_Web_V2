@@ -5,6 +5,7 @@ import { MiniChatPiP } from '@/components/mobile/MiniChatPiP';
 import { resolverAbaAtiva, type TabState } from '@/components/inbox/resolveActiveTab';
 import { NewMessageIndicator } from './NewMessageIndicator';
 import { InboxEmptyChat } from './InboxEmptyChat';
+import { ConversationEmptyState } from '@/components/shared/ConversationEmptyState';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 import { ConversationListSidebar } from './ConversationListSidebar';
 import { chipDoStatusReaberto } from './conversation-list/reopenChip';
@@ -13,7 +14,7 @@ import { useInboxBulkActions } from '@/hooks/inbox/useInboxBulkActions';
 import { useInboxFilters } from '@/hooks/inbox/useInboxFilters';
 import { useRealtimeInbox } from '@/hooks/inbox/useRealtimeInbox';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
-import { WifiOff, RefreshCw, Loader2, MessageSquarePlus } from 'lucide-react';
+import { WifiOff, RefreshCw, Loader2, MessageSquarePlus, UserX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -525,11 +526,32 @@ export function RealtimeInboxView() {
                 />
               </div>
             )}
-            <InboxEmptyChat
-              waitingCount={inboxFilters.chipCounts?.waiting ?? 0}
-              unreadCount={inboxFilters.chipCounts?.unread ?? 0}
-              onNewConversation={() => inbox.setShowNewConversation(true)}
-            />
+            {inbox.selectedContactId && inbox.selectedContactFallbackStatus === 'loading' ? (
+              <div className="flex-1 flex items-center justify-center">
+                <Loader2 aria-hidden="true" className="w-6 h-6 text-primary motion-safe:animate-spin" />
+              </div>
+            ) : inbox.selectedContactId && (inbox.selectedContactFallbackStatus === 'not-found' || inbox.selectedContactFallbackStatus === 'error') ? (
+              // Link/notificação/busca abriram um contato que não veio na lista e não
+              // pôde ser carregado: mostra o motivo em vez de uma área de chat muda.
+              <ConversationEmptyState
+                icon={inbox.selectedContactFallbackStatus === 'not-found' ? UserX : WifiOff}
+                title={inbox.selectedContactFallbackStatus === 'not-found' ? 'Conversa não encontrada' : 'Não foi possível abrir a conversa'}
+                description={
+                  inbox.selectedContactFallbackStatus === 'not-found'
+                    ? 'O link é inválido ou você não tem acesso a este contato.'
+                    : (inbox.selectedContactFallbackError ?? 'Houve uma falha ao carregar o contato.')
+                }
+                action={<Button variant="outline" onClick={() => inbox.setSelectedContactId(null)}>Voltar à lista</Button>}
+                className="bg-inbox-panel overflow-hidden"
+              />
+            ) : (
+              <InboxEmptyChat
+                waitingCount={inboxFilters.chipCounts?.waiting ?? 0}
+                unreadCount={inboxFilters.chipCounts?.unread ?? 0}
+                onNewConversation={() => inbox.setShowNewConversation(true)}
+              />
+            )}
+
           </div>
         )}
       </div>

@@ -38,6 +38,7 @@ vi.mock('@/integrations/supabase/client', () => {
 });
 
 vi.mock('@/lib/logger', () => ({
+  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
   log: mocks.logStub,
   logger: mocks.logStub,
   getLogger: () => mocks.logStub,
@@ -59,6 +60,8 @@ vi.mock('@/hooks/integrations/useEvolutionApi', () => ({ useEvolutionApi: () => 
 vi.mock('@/hooks/chat/useQuickReplies', () => ({ useQuickReplies: () => ({ quickReplies: [], incrementUseCount: vi.fn() }) }));
 
 vi.mock('@/hooks/communication/useTextToSpeech', () => ({
+  // VoiceSelector (via ChatInputToolbars) importa a constante no topo do modulo.
+  LOCAL_VOICE_ID: 'local',
   useTextToSpeech: () => ({
     speak: vi.fn(), stop: vi.fn(), isLoading: false, isPlaying: false, currentMessageId: null,
     voiceId: '', setVoiceId: vi.fn(), speed: 1, setSpeed: vi.fn(),

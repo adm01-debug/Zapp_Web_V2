@@ -99,7 +99,10 @@ export function useTeamReadState(
   });
 
   useEffect(() => {
-    if (!conversationId) return;
+    // Sem mensagem própria na página não há recibo para acompanhar — e um canal
+    // aberto à toa atrapalha quem conta os canais da conversa (o canal de
+    // mensagens é o dono do tópico `team-messages-<conversa>`).
+    if (!conversationId || !idsKey) return;
     const channel = supabase
       .channel(`team-read-state-${conversationId}`)
       // Sem filtro por `conversation_id`: a publicação replica
@@ -113,7 +116,7 @@ export function useTeamReadState(
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [conversationId, queryClient]);
+  }, [conversationId, idsKey, queryClient]);
 
   return { readStates: query.data ?? SEM_LEITURA, isLoading: query.isLoading };
 }

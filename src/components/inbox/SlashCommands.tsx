@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { HOVER_REVEAL } from './hoverActions';
 import { ArrowRight, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -128,7 +129,7 @@ export function SlashCommands({ inputValue, onSelectCommand, onClose, isOpen }: 
                           {/* L8: só o atalho REAL do registro vai para o hover. A letra
                               de catálogo (`shortcut`) não é um atalho de teclado e não
                               pode mais ser anunciada como `⌘X`. */}
-                          {cmd.shortcutLabel && <kbd className="px-2 py-1 text-xs font-medium bg-muted rounded text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">{cmd.shortcutLabel}</kbd>}
+                          {cmd.shortcutLabel && <kbd className={`px-2 py-1 text-xs font-medium bg-muted rounded text-muted-foreground ${HOVER_REVEAL} transition-opacity`}>{cmd.shortcutLabel}</kbd>}
                           {cmd.subCommands && <ArrowRight className="w-4 h-4 text-muted-foreground" />}
                         </motion.button>
                       );

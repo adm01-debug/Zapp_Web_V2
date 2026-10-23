@@ -61,6 +61,7 @@ vi.mock('sonner', () => ({
 
 import { toast } from 'sonner';
 import { TalkXCampaignPaused } from '../TalkXCampaignPaused';
+import { TestQueryWrapper } from '@/test/mocks/queryClient';
 
 const PAUSED_CAMPAIGN = {
   id: 'camp-pausada-1',
@@ -125,7 +126,7 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
 
   it('cabeçalho nomeia a campanha pausada e o banner mostra a data da pausa', () => {
     setQueryState({ campaigns: [PAUSED_CAMPAIGN] });
-    render(view());
+    render(view(), { wrapper: TestQueryWrapper });
 
     expect(screen.getByText('Campanha Pausada • Reativação de Leads')).toBeTruthy();
     expect(screen.getByText(/Nenhum novo contato será processado/)).toBeTruthy();
@@ -136,7 +137,7 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
 
   it('quem pausou é nomeado quando o contêiner resolve paused_by', () => {
     setQueryState({ campaigns: [PAUSED_CAMPAIGN] });
-    render(view({ pausedByName: 'Ana Souza' }));
+    render(view({ pausedByName: 'Ana Souza' }), { wrapper: TestQueryWrapper });
 
     expect(screen.getByText(/Pausada por Ana Souza em 06 set 2026/)).toBeTruthy();
   });
@@ -146,7 +147,7 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
     let resolveStart: (v: boolean) => void = () => undefined;
     h.startCampaign.mockImplementation(() => new Promise<boolean>((resolve) => { resolveStart = resolve; }));
 
-    render(view());
+    render(view(), { wrapper: TestQueryWrapper });
 
     fireEvent.click(screen.getByRole('button', { name: 'Retomar campanha' }));
     expect(screen.getByText('Retomar campanha?')).toBeTruthy();
@@ -166,7 +167,7 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
     setQueryState({ campaigns: [PAUSED_CAMPAIGN] });
     h.startCampaign.mockResolvedValue(false);
 
-    render(view());
+    render(view(), { wrapper: TestQueryWrapper });
     fireEvent.click(screen.getByRole('button', { name: 'Retomar campanha' }));
     fireEvent.click(screen.getByRole('button', { name: 'Retomar' }));
 
@@ -178,7 +179,7 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
     setQueryState({ campaigns: [PAUSED_CAMPAIGN] });
     h.startCampaign.mockRejectedValue(new Error('falha de rede T13'));
 
-    render(view());
+    render(view(), { wrapper: TestQueryWrapper });
     fireEvent.click(screen.getByRole('button', { name: 'Retomar campanha' }));
     fireEvent.click(screen.getByRole('button', { name: 'Retomar' }));
 
@@ -191,7 +192,7 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
     let resolveCancel: () => void = () => undefined;
     h.cancelCampaign.mockImplementation(() => new Promise<void>((resolve) => { resolveCancel = resolve; }));
 
-    render(view());
+    render(view(), { wrapper: TestQueryWrapper });
 
     fireEvent.click(screen.getByRole('button', { name: 'Encerrar campanha' }));
     expect(screen.getByText('Encerrar campanha?')).toBeTruthy();
@@ -209,7 +210,7 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
     setQueryState({ campaigns: [PAUSED_CAMPAIGN] });
     h.cancelCampaign.mockRejectedValue(new Error('falha de rede T13'));
 
-    render(view());
+    render(view(), { wrapper: TestQueryWrapper });
     fireEvent.click(screen.getByRole('button', { name: 'Encerrar campanha' }));
     fireEvent.click(screen.getByRole('button', { name: 'Encerrar' }));
 
@@ -220,7 +221,7 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
 
   it('consulta com erro: mostra o erro e não o conteúdo', () => {
     setQueryState({ isError: true, error: new Error('falha exclusiva T13') });
-    const { container } = render(view());
+    const { container } = render(view(), { wrapper: TestQueryWrapper });
 
     expect(screen.getByText(/Não foi possível carregar/)).toBeTruthy();
     expect(screen.queryByText(/Campanha Pausada/)).toBeNull();
@@ -229,7 +230,7 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
 
   it('sem a campanha na lista: mostra o vazio, não o conteúdo', () => {
     setQueryState({ campaigns: [] });
-    const { container } = render(view());
+    const { container } = render(view(), { wrapper: TestQueryWrapper });
 
     expect(screen.getByText(/Campanha pausada não encontrada/)).toBeTruthy();
     expect(container.querySelector('[data-talkx-query="content"]')).toBeNull();
@@ -237,7 +238,7 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
 
   it('campanha retomada por fora: avisa o contêiner pai para navegar', async () => {
     setQueryState({ campaigns: [{ ...PAUSED_CAMPAIGN, status: 'sending', paused_at: null }] });
-    render(view());
+    render(view(), { wrapper: TestQueryWrapper });
 
     await waitFor(() => expect(h.onStatusChange).toHaveBeenCalledTimes(1));
     expect(h.onStatusChange.mock.calls[0][0].status).toBe('sending');

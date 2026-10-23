@@ -1,5 +1,10 @@
 import { useTheme } from '@/hooks/ui/useTheme';
 import { Toaster as Sonner, toast } from 'sonner';
+import { registrarToast } from '@/lib/lazyToast';
+
+// t_fd52bf49 — este módulo lazy é quem carrega a lib: registra o `toast` real
+// na fachada (que NÃO importa o sonner) para os avisos de boot saírem.
+registrarToast(toast);
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 

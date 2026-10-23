@@ -239,7 +239,7 @@ vi.mock('@/hooks/chat/useQuickReplies', () => ({
 
 vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }) }));
 
-const NOME_FAVORITAR = 'Favoritar resposta: Boas-vindas';
+const NOME_FAVORITAR = 'Favoritar Boas-vindas';
 
 describe('hoverActions — o favoritar da resposta rápida é alcançável', () => {
   it('é um botão nativo com nome: aceita foco e alterna ao clique', () => {

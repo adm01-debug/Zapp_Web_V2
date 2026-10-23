@@ -57,13 +57,12 @@ export function CRMSyncButton({ conversation, messageCount }: { conversation: Co
         <TooltipTrigger asChild>
           {/* <button disabled> não recebe foco nem dispara hover, e o Radix abre o
               Tooltip pelo TRIGGER: sem um wrapper focável o motivo ('CRM não
-              configurado') ficava inalcançável por teclado. Mesmo padrão do
-              `Tile` em contact-details/ContactActionButtons.tsx. */}
+              configurado') ficava inalcançável por teclado. O wrapper NÃO repete
+              `role="button"`/`aria-label`: o <button> real já é o controle (com nome
+              e `disabled`) — dois botões aninhados com o mesmo nome duplicavam o
+              anúncio e a busca por role/nome. */}
           <span
             tabIndex={0}
-            role="button"
-            aria-disabled="true"
-            aria-label="CRM não configurado"
             className="inline-flex cursor-not-allowed"
           >
             <Button
@@ -123,12 +122,10 @@ export function CRMSyncButton({ conversation, messageCount }: { conversation: Co
       <Tooltip>
         <TooltipTrigger asChild>
           {/* Mesmo wrapper focável do estado sem CRM: o motivo precisa continuar
-              alcançável por teclado neste estado desabilitado. */}
+              alcançável por teclado neste estado desabilitado. Sem `role`/`aria-label`
+              aqui pelo mesmo motivo do wrapper acima. */}
           <span
             tabIndex={0}
-            role="button"
-            aria-disabled="true"
-            aria-label="Contato não encontrado no CRM"
             className="inline-flex cursor-not-allowed"
           >
             <Button
@@ -161,6 +158,7 @@ export function CRMSyncButton({ conversation, messageCount }: { conversation: Co
           variant="outline"
           size="icon"
           onClick={handleSync}
+          aria-label={tooltipText} title={tooltipText}
           disabled={isSyncing}
           aria-label={tooltipText}
           data-testid="crm-sync-button"

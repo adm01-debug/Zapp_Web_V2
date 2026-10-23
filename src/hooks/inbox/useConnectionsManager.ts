@@ -309,9 +309,9 @@ export function useConnectionsManager() {
 
   // t_cce2f0f7: o resultado era engolido e a falha era anunciada DUAS vezes (o
   // sonner do `withToast` dentro do `disconnectInstance` + o `use-toast` daqui),
-  // enquanto a tela fechava o diálogo como sucesso. Agora: uma única origem de
-  // aviso (o sonner da Evolution) e um retorno booleano — `false` significa que a
-  // sessão NÃO caiu, e o diálogo continua aberto com o motivo.
+  // enquanto a tela fechava o diálogo como sucesso. Agora: o hook é dono de UM
+  // aviso (`use-toast`, com o motivo da Evolution) e devolve `false` — a sessão
+  // NÃO caiu, e o diálogo continua aberto com o motivo (ver ConnectionCard).
   const handleDisconnect = async (connection: WhatsAppConnection): Promise<boolean> => {
     if (!connection.instance_id) return false;
 
@@ -319,6 +319,11 @@ export function useConnectionsManager() {
       await disconnectInstance(connection.instance_id);
     } catch (error: unknown) {
       log.error('Error disconnecting connection:', error);
+      toast({
+        title: 'Erro ao desconectar',
+        description: error instanceof Error ? error.message : 'Não foi possível desconectar. Tente novamente.',
+        variant: 'destructive',
+      });
       return false;
     }
 

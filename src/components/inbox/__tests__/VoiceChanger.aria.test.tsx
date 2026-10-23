@@ -31,6 +31,8 @@ vi.mock('framer-motion', () => {
   return {
     motion: { div: passthrough('div'), button: passthrough('button') },
     AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+    // O componente lê a preferência de movimento reduzido do sistema.
+    useReducedMotion: () => false,
   };
 });
 
@@ -48,7 +50,9 @@ describe('VoiceChanger — botão de prévia com nome acessível (A11Y-13)', () 
 
     fireEvent.click(screen.getByRole('button', { name: /Voz Teste/ }));
 
-    const botao = await screen.findByRole('button', { name: /prévia da voz/ });
+    // A conversão toca a prévia sozinha (play simulado resolve): o botão nasce
+    // como "Pausar prévia". "Ouvir prévia" só aparece depois de pausar.
+    const botao = await screen.findByRole('button', { name: /Pausar prévia/ });
     expect(botao).toBeInTheDocument();
   });
 });

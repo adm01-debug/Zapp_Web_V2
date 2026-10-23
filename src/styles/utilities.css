@@ -288,3 +288,28 @@
     transform: translate(-50%, -50%);
   }
 }
+
+/* ===== SUPERFÍCIE MOBILE — ÁREA SEGURA E ROLAGEM SEM BARRA =====
+   O app declara `viewport-fit=cover` e usa `safe-area-top`/`safe-area-bottom`
+   nos cabeçalhos/barras/folhas fixas e `scrollbar-none` nas listas de celular.
+   Sem estas regras o conteúdo ia por baixo do notch e do indicador de home. */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+@media (max-width: 767px) {
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  body {
+    overscroll-behavior-y: none;
+  }
+}

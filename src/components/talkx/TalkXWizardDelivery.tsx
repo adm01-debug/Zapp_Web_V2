@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  CalendarDays, Clock, Gauge, ShieldCheck, Users, Send, MessageSquare, Target, Bookmark, Ban, FileText,
+  CalendarDays, Clock, Gauge, ShieldCheck, Users, MessageSquare, Target, Bookmark, Ban, FileText,
   Sliders, Smartphone, ShieldAlert, Check, Rocket, Pencil, AlertTriangle,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -13,24 +13,14 @@ import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCa
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { WizardState } from './TalkXCampaignWizard';
-import { IconTile, WhatsAppBubble, RailCard, MetaRow, InsightCard, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState, TalkXConfirmDialog } from './talkxShared';
+import { IconTile, WhatsAppBubble, RailCard, MetaRow, InsightCard, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import type { TalkXPreviewInteractive } from './TalkXMessagePreview';
 import { TalkXNoData } from './kit/states';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
 import { formatScheduleRelative, type WizardStep } from './useCampaignEditor';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
-
-/**
- * X136 — as três confirmações do disparo, com o texto do mock 09.
- * Ficam DENTRO do modal do kit (`TalkXConfirmDialog`), que só libera
- * "Confirmar lançamento" quando as três estão marcadas.
- */
-const LAUNCH_CONFIRMATIONS: { id: string; label: string }[] = [
-  { id: 'consent', label: 'Confirmo que possuo o consentimento dos contatos.' },
-  { id: 'content', label: 'Revisei e estou de acordo com o conteúdo da mensagem.' },
-  { id: 'suppression', label: 'A lista de supressão foi aplicada corretamente.' },
-];
+import { TalkXLifecycleDialog, useTalkXLifecycle } from './useTalkXLifecycle';
 
 function formatLocalSchedule(localDateTime: string, timezone: string): string {
   const [date = '', time = ''] = localDateTime.split('T');
@@ -247,8 +237,10 @@ function ForecastRow({ icon: Icon, label }: { icon: React.ElementType; label: st
 }
 
 export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed: WizardState; campaign: TalkXCampaign | null; onLaunched: (id: string, status: 'scheduled' | 'sending') => void; onEditStep?: (step: 1 | 2 | 3, returnTo: 4) => void }) {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // X051 — o disparo sai dos handlers próprios e passa pelo controlador ÚNICO
+  // de ciclo de vida: UM diálogo do kit (`TalkXLifecycleDialog`), com o
+  // executor próprio do wizard (salva o rascunho e gera o snapshot).
+  const lifecycle = useTalkXLifecycle();
   const sample = ed.contacts?.[0];
   // Review da PR #909: sem os campos customizados reais do contato de
   // exemplo, o preview sempre mostrava "[variavel]" mesmo quando o envio
@@ -299,6 +291,46 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
   const audienceOk = ed.eligibleCount > 0 || !!campaign;
   const allGood = waOk && audienceOk && (ed.messageTemplate.trim().length > 0 || (ed.hasMedia && ed.mediaUrl.trim().length > 0));
   const launchAllowed = allGood && ed.canProceed[4] && !ed.saving;
+  // X051 — abre a confirmação SEM salvar nem disparar: quem dispara é o
+  // confirmar, pelo executor próprio do wizard (`ed.handleSave`, que salva o
+  // rascunho e gera o snapshot) — nunca pela `startCampaign` direta, que
+  // pularia o salvamento.
+  const solicitarDisparo = () => {
+    if (!launchAllowed) return;
+    const agendado = ed.isScheduled && !!ed.scheduledAt;
+    lifecycle.request({
+      kind: 'start',
+      target: {
+        id: campaign?.id ?? 'rascunho',
+        name: ed.name || 'Campanha',
+        total_recipients: ed.eligibleCount,
+      },
+      details: [
+        {
+          label: 'Segmento',
+          value: ed.audienceSource === 'segment' && ed.selectedSegments.length > 0
+            ? ed.selectedSegments.map((s) => s.name).join(', ')
+            : 'Contatos ZAPP',
+        },
+        { label: 'Destinatários', value: `${fmtInt(ed.eligibleCount)} contatos` },
+        {
+          label: 'Envio',
+          value: agendado
+            ? formatLocalSchedule(ed.scheduledAt as string, ed.scheduleTimezone)
+            : 'Imediato',
+        },
+      ],
+      run: async () => {
+        const modo = agendado ? 'schedule' : 'launch';
+        const id = await ed.handleSave(modo);
+        // Recusa do salvamento (`null`): devolve `false` e o controlador mantém
+        // o diálogo aberto com o erro, em vez de fechar como se tivesse dado certo.
+        if (!id) return false;
+        onLaunched(id, agendado ? 'scheduled' : 'sending');
+        return true;
+      },
+    });
+  };
   // T09 — CTA do template na prévia: só o que o template carrega (nunca inventado).
   const templateInteractive = templatePreviewInteractive(ed.selectedTemplate);
   // T09 — 2 recomendações REAIS do motor (horário ideal + template campeão).
@@ -306,20 +338,6 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
   const { data: insights } = useTalkXInsights();
   const timingInsight = insights?.find((insight) => insight.id === 'best-hour') ?? null;
   const templateInsight = insights?.find((insight) => insight.id === 'best-template') ?? null;
-
-  const launch = async () => {
-    if (!launchAllowed) return;
-    setError(null);
-    try {
-      const id = await ed.handleSave(ed.isScheduled && ed.scheduledAt ? 'schedule' : 'launch');
-      if (id) {
-        setConfirmOpen(false);
-        onLaunched(id, ed.isScheduled && ed.scheduledAt ? 'scheduled' : 'sending');
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Falha ao lançar a campanha');
-    }
-  };
 
 
   return (
@@ -384,38 +402,17 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
           </div>
         </div>
 
-        <PrimaryButton size="lg" icon={Rocket} className="w-full justify-center h-12 text-base" disabled={!launchAllowed} onClick={() => setConfirmOpen(true)}>
+        <PrimaryButton size="lg" icon={Rocket} className="w-full justify-center h-12 text-base" disabled={!launchAllowed} onClick={solicitarDisparo}>
           {ed.isScheduled && ed.scheduledAt ? 'Agendar campanha' : 'Lançar campanha'}
         </PrimaryButton>
-        {error && <p className="text-xs text-dash-red">{error}</p>}
       </div>
 
-      {/* X136 — o disparo confirma pelo modal do kit (`TalkXConfirmDialog`):
-          as 3 caixas ficam DENTRO do modal e "Confirmar lançamento" só
-          habilita com as três marcadas. Antes era um `Dialog` próprio, com as
-          confirmações num cartão de fora repetidas dentro do modal como texto. */}
-      <TalkXConfirmDialog
-        open={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        onConfirm={() => { void launch(); }}
-        icon={Send}
-        iconColor="blue"
-        title="Confirmar disparo?"
-        description={ed.isScheduled && ed.scheduledAt
-          ? `A campanha ficará agendada para ${formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone)} e será enviada para ${fmtInt(ed.eligibleCount)} contatos. Esta ação não pode ser desfeita.`
-          : `A campanha será enviada para ${fmtInt(ed.eligibleCount)} contatos. Esta ação não pode ser desfeita.`}
-        details={[
-          { label: 'Campanha', value: ed.name || '—' },
-          { label: 'Público', value: ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—') : 'Contatos ZAPP' },
-          { label: 'Destinatários', value: `${fmtInt(ed.eligibleCount)} contatos` },
-          { label: 'Duração estimada', value: ed.estimatedTime ?? '—' },
-          { label: 'Envio', value: ed.isScheduled && ed.scheduledAt ? 'Agendado' : 'Imediato' },
-        ]}
-        checks={LAUNCH_CONFIRMATIONS}
-        confirmLabel={ed.isScheduled && ed.scheduledAt ? 'Confirmar agendamento' : 'Confirmar lançamento'}
-        cancelLabel="Cancelar"
-        loading={ed.saving}
-      />
+        {/* X051 — o disparo sai do modal próprio e passa pelo controlador ÚNICO:
+            UM diálogo do kit, com as linhas do pedido (segmento, destinatários,
+            envio) e o executor próprio do wizard (salva o rascunho e gera o
+            snapshot). As três confirmações obrigatórias (X136) seguem no cartão
+            "Confirmações obrigatórias" — é ele que habilita o lançamento. */}
+        <TalkXLifecycleDialog controller={lifecycle} />
     </div>
   );
 }

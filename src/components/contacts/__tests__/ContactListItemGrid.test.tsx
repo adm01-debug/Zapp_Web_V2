@@ -61,12 +61,15 @@ function root(): Element {
 }
 
 describe('ContactListItem · alinhamento por grid (não por min-w arbitrário)', () => {
-  it('usa CSS grid e não usa nenhum min-w-[Npx] arbitrário', () => {
+  it('usa CSS grid e não usa nenhum min-w-[Npx] arbitrário nas trilhas', () => {
     const { container } = render(<ContactListItem {...itemProps(baseContact())} />);
     const classes = root().getAttribute('class') || '';
 
     expect(classes.split(/\s+/)).toContain('grid');
-    expect(container.innerHTML).not.toMatch(/min-w-\[\d+px\]/);
+    // `min-w-[Npx]` de alvo de toque (`[@media(pointer:coarse)]:min-w-[44px]` nos
+    // botões) não é largura de coluna: só conta quando a classe nasce sem
+    // variante (espaço ou aspas antes do `min-w-`).
+    expect(container.innerHTML).not.toMatch(/[\s"]min-w-\[\d+px\]/);
   });
 
   it('as trilhas do template não usam pixels (só auto/fr) e o nº de colunas bate com as células visíveis', () => {

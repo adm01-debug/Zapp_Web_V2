@@ -181,7 +181,7 @@ describe('handleAddConnection', () => {
     h.createConnection.mockRejectedValueOnce(new Error('GO fora do ar'));
     const r = await mount();
 
-    await act(async () => { r.result.current.setNewConnection({ name: 'X', phone_number: '1' }); });
+    await act(async () => { r.result.current.setNewConnection({ name: 'X', phone_number: '+55 11 98765-4321' }); });
     await act(async () => { await r.result.current.handleAddConnection(); });
 
     expect(r.result.current.isCreating).toBe(false);

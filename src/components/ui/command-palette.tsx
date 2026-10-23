@@ -14,6 +14,9 @@ import {
   fuzzyMatch, highlightMatch,
 } from './command-palette-data';
 
+/** Id da lista de itens: o campo (`combobox`) aponta para ela por `aria-controls`. */
+const LISTBOX_ID = 'command-palette-listbox';
+
 interface CommandPaletteProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -87,6 +90,13 @@ export function CommandPalette({
     [query, groupedCommands, quickAccessItems, recentCommands]
   );
 
+  // Cada item visível é uma `option` da lista: o id sai da posição em `allItems`
+  // (a MESMA ordem em que a lista desenha), então o `aria-activedescendant` do
+  // campo sempre aponta para um id que existe.
+  const optionIdAt = (index: number) => `${LISTBOX_ID}-option-${index}`;
+  const activeDescendant =
+    allItems.length > 0 && selectedIndex < allItems.length ? optionIdAt(selectedIndex) : undefined;
+
   // R2-INF-032 (#377): cada digitação é um TERMO novo. A resposta de um termo anterior que ainda
   // estava em voo quando o debounce de 300 ms liberou a busca seguinte não pode mais virar
   // resultado — sem esta trava, a resposta do catálogo ANTIGO substituía os resultados da consulta
@@ -141,6 +151,13 @@ export function CommandPalette({
     return () => window.removeEventListener('keydown', h);
   }, [open, allItems, selectedIndex, executeCommand]);
 
+  // O item realçado pelas setas precisa entrar na vista: a lista é rolável e a
+  // navegação por teclado não move o scroll sozinha.
+  React.useEffect(() => {
+    if (!open || allItems.length === 0) return;
+    document.getElementById(`${LISTBOX_ID}-option-${selectedIndex}`)?.scrollIntoView?.({ block: 'nearest' });
+  }, [open, selectedIndex, allItems.length]);
+
   // Os dois ajustes abaixo são entregues no próximo tick para não mudar estado durante o
   // render. Cada id fica guardado em ref e o retorno do efeito limpa o que estiver pendente —
   // sem isso a paleta aberta e fechada em sequência rápida (ou desmontada) deixava o `setTimeout`
@@ -170,10 +187,21 @@ export function CommandPalette({
         <div className="flex items-center border-b border-border px-4">
           <Search className="h-5 w-5 text-muted-foreground flex-shrink-0" />
           <input ref={inputRef} value={query} onChange={(e) => handleQueryChange(e.target.value)} placeholder={placeholder}
+            role="combobox"
+            aria-label="Buscar comandos"
+            aria-expanded={open}
+            aria-controls={LISTBOX_ID}
+            aria-autocomplete="list"
+            aria-activedescendant={activeDescendant}
             className="flex-1 px-4 py-4 text-base bg-transparent border-0 outline-none placeholder:text-muted-foreground"
             autoComplete="off" autoCorrect="off" spellCheck={false} />
-          {query && <button onClick={() => handleQueryChange('')} className="p-1.5 hover:bg-muted rounded-md transition-colors"><X className="h-4 w-4 text-muted-foreground" /></button>}
+          {query && <button type="button" aria-label="Limpar busca" onClick={() => handleQueryChange('')} className="p-1.5 hover:bg-muted rounded-md transition-colors"><X className="h-4 w-4 text-muted-foreground" /></button>}
           {isSearching && <Loader2 className="h-4 w-4 text-muted-foreground animate-spin ml-2" />}
+        </div>
+
+        {/* A contagem de resultados é anunciada numa região viva. */}
+        <div role="status" aria-live="polite" className="sr-only">
+          {query ? `${allItems.length} ${allItems.length === 1 ? 'resultado' : 'resultados'}` : ''}
         </div>
 
         <div className="flex items-center justify-between px-4 py-2 bg-muted/30 text-xs text-muted-foreground border-b border-border">
@@ -204,13 +232,13 @@ export function CommandPalette({
                   </div>
                 </div>
               )}
-              <div>
+              <div id={LISTBOX_ID} role="listbox" aria-label="Acesso rápido">
                 {recentCommands.length > 0 && (
                   <div className="mb-2">
-                    <div className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><Clock className="h-3 w-3" />Recentes</span></div>
+                    <div role="presentation" className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><Clock className="h-3 w-3" />Recentes</span></div>
                     <div className="space-y-0.5">
                       {recentCommands.map((cmd, idx) => (
-                        <button key={`recent-${cmd.id}`} onClick={() => executeCommand(cmd)}
+                        <button key={`recent-${cmd.id}`} role="option" id={optionIdAt(idx)} aria-selected={idx === selectedIndex} onClick={() => executeCommand(cmd)}
                           className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', idx === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50')}>
                           <div className="flex items-center gap-3">
                             <span className="text-muted-foreground group-hover:text-foreground transition-colors">{cmd.icon}</span>
@@ -221,10 +249,10 @@ export function CommandPalette({
                     </div>
                   </div>
                 )}
-                <div className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><Star className="h-3 w-3" />Acesso rápido</span></div>
+                <div role="presentation" className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><Star className="h-3 w-3" />Acesso rápido</span></div>
                 <div className="space-y-0.5">
                   {quickAccessItems.map((cmd, idx) => (
-                    <button key={cmd.id} onClick={() => executeCommand(cmd)}
+                    <button key={cmd.id} role="option" id={optionIdAt(recentCommands.length + idx)} aria-selected={recentCommands.length + idx === selectedIndex} onClick={() => executeCommand(cmd)}
                       className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', recentCommands.length + idx === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50')}>
                       <div className="flex items-center gap-3">
                         <span className="text-muted-foreground group-hover:text-foreground transition-colors">{cmd.icon}</span>
@@ -245,14 +273,19 @@ export function CommandPalette({
                   <Search className="h-8 w-8 mb-2 opacity-50" /><p className="text-sm">Nenhum resultado para "{query}"</p><p className="text-xs mt-1">Tente outros termos</p>
                 </div>
               )}
+              {groupedCommands.length > 0 && (
+              <div id={LISTBOX_ID} role="listbox" aria-label="Resultados da busca">
               {groupedCommands.map((group) => (
-                <div key={group.title} className="mb-2">
-                  <div className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground">{group.title}</span></div>
+                <div key={group.title} role="group" aria-label={group.title} className="mb-2">
+                  <div role="presentation" className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground">{group.title}</span></div>
                   <div className="space-y-0.5">
                     {group.items.map((item, idx) => {
                       const gi = groupedCommands.slice(0, groupedCommands.indexOf(group)).reduce((a, g) => a + g.items.length, 0) + idx;
                       return (
-                        <motion.button key={item.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.02 }}
+
+                        <motion.button key={item.id} role="option" id={optionIdAt(gi)} aria-selected={gi === selectedIndex}
+                          initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.02 }}
+
                           onClick={() => executeCommand(item)} disabled={item.disabled}
                           className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', gi === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50', item.disabled && 'opacity-50 cursor-not-allowed')}>
                           <div className="flex items-center gap-3">
@@ -269,6 +302,8 @@ export function CommandPalette({
                   </div>
                 </div>
               ))}
+              </div>
+              )}
             </div>
           )}
         </ScrollArea>

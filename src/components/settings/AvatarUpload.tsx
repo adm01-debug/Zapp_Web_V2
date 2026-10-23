@@ -7,25 +7,32 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useActionFeedback } from '@/hooks/ui/useActionFeedback';
 import { getLogger } from '@/lib/logger';
+import { useQueryClient } from '@tanstack/react-query';
 
 const log = getLogger('AvatarUpload');
 
 /**
- * Extrai o caminho do objeto no bucket `avatars` a partir da URL pública
- * salva no perfil (ex.: .../object/public/avatars/<id>/avatar-<ts>.png?t=123).
+ * C-1 — o upload usa nome estável por usuário (`<id>/avatar.<ext>`, com
+ * `upsert`); se a extensão muda (jpg -> webp) o arquivo antigo ficava órfão.
+ * O formato anterior vem da listagem da pasta; se ela falha, da extensão da
+ * URL salva no perfil (`.../avatar.png?t=1`).
  */
-function avatarPathFromUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-  const marcador = '/object/public/avatars/';
-  const inicio = url.indexOf(marcador);
-  if (inicio === -1) return null;
-  const caminho = url.slice(inicio + marcador.length).split('?')[0].split('#')[0];
-  return caminho ? decodeURIComponent(caminho) : null;
+function formatoAnterior(listados: Array<{ name: string }> | null, extNova: string): string | null {
+  const nova = `avatar.${extNova.toLowerCase()}`;
+  return listados?.find((o) => /^avatar\.[a-z0-9]+$/i.test(o.name) && o.name.toLowerCase() !== nova)?.name ?? null;
+}
+
+/** A lista falhou: a extensão da URL do perfil é a candidata (best-effort). */
+function formatoDaUrl(avatarUrl: string | null | undefined, extNova: string): string | null {
+  const achado = avatarUrl?.split('?')[0].split('#')[0].match(/\/avatar\.([A-Za-z0-9]+)$/);
+  if (achado && `avatar.${achado[1].toLowerCase()}` !== `avatar.${extNova.toLowerCase()}`) return `avatar.${achado[1]}`;
+  return null;
 }
 
 export function AvatarUpload() {
   const { user, profile, refreshProfile } = useAuth();
   const feedback = useActionFeedback();
+  const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,17 +47,31 @@ export function AvatarUpload() {
     }
 
     setUploading(true);
-    const ext = file.name.split('.').pop();
-    // Caminho único por upload: trocar a foto mais de uma vez não sobrescreve a anterior.
-    const filePath = `${user.id}/avatar-${Date.now()}.${ext}`;
+    const ext = file.name.split('.').pop() ?? 'png';
+    // C-1: nome estável por usuário — trocar a foto sobrescreve o próprio
+    // arquivo (a troca de `avatar-<ts>.<ext>` único deixava órfã a cada envio).
+    const filePath = `${user.id}/avatar.${ext}`;
     const previousUrl = avatarUrl ?? profile?.avatar_url ?? null;
+    // Formato anterior antes do upload: a lista diz o que está na pasta; se
+    // ela falha, a extensão da URL do perfil é a candidata (best-effort).
+    let listados: Array<{ name: string }> | null = null;
+    let listaFalhou = false;
+    try {
+      const listado = await supabase.storage.from('avatars').list(user.id);
+      if (listado.error) listaFalhou = true;
+      else listados = (listado.data ?? []) as Array<{ name: string }>;
+    } catch {
+      listaFalhou = true;
+    }
+    // Lista ok: manda embora o que ela disser; lista falha: candidata da URL.
+    const antigo = formatoAnterior(listados, ext) ?? (listaFalhou ? formatoDaUrl(previousUrl, ext) : null);
 
     await feedback.withFeedback(
       async () => {
-        // Upload to storage (sem upsert: cada envio grava um objeto novo)
+        // Upload to storage (nome estável + upsert: mesma extensão sobrescreve)
         const { error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(filePath, file);
+          .upload(filePath, file, { upsert: true });
         if (uploadError) throw uploadError;
 
         // Get public URL
@@ -70,14 +91,19 @@ export function AvatarUpload() {
         setAvatarUrl(urlWithCache);
         await refreshProfile();
 
-        // Remove o objeto antigo do bucket para não acumular fotos órfãs.
-        const previousPath = avatarPathFromUrl(previousUrl);
-        if (previousPath && previousPath !== filePath) {
+        // Remove o formato antigo para não acumular órfão; mesma extensão não
+        // remove nada (o upsert já sobrescreveu o próprio arquivo).
+        if (antigo) {
           const { error: removeError } = await supabase.storage
             .from('avatars')
-            .remove([previousPath]);
+            .remove([`${user.id}/${antigo}`]);
           if (removeError) log.warn('Falha ao remover avatar antigo do bucket', removeError);
         }
+
+        // C-1: a foto nova tem que aparecer no app inteiro — invalida a lista
+        // de membros e o perfil do usuário.
+        await queryClient.invalidateQueries({ queryKey: ['team-profiles-rpc'] });
+        await queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       },
       {
         loadingMessage: 'Enviando foto...',

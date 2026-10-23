@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuickReplies, QuickReplyTemplate, CreateTemplateInput } from '@/hooks/chat/useQuickReplies';
 import { cn } from '@/lib/utils';
+import { HOVER_REVEAL_TAP } from './hoverActions';
 import { toast } from 'sonner';
 import { QuickReplyCardList } from './quick-replies/QuickReplyCardList';
 import { QuickReplyDialog } from './quick-replies/QuickReplyDialog';
@@ -87,16 +88,27 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
         </div>
         <ScrollArea className="h-[200px]">
           <div className="space-y-1">
-            {displayedTemplates.map((template) => (
-              <motion.button key={template.id} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} onClick={() => handleSelect(template)} className="w-full p-2 text-left rounded-lg hover:bg-muted/50 transition-colors group">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm truncate">{template.title}</span>
-                  <Star className={cn("w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity", isFavorite(template.id) && "opacity-100 fill-warning text-warning")}
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(template.id); }} />
+            {displayedTemplates.map((template) => {
+              const favorita = isFavorite(template.id);
+              return (
+                <div key={template.id} className="flex items-center gap-1 rounded-lg hover:bg-muted/50 transition-colors group">
+                  <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} onClick={() => handleSelect(template)} className="flex-1 min-w-0 p-2 text-left">
+                    <span className="block font-medium text-sm truncate">{template.title}</span>
+                    <p className="text-xs text-muted-foreground truncate">{template.content}</p>
+                  </motion.button>
+                  {/* Estrela fora do botão da linha: botão próprio com nome e alvo de toque. */}
+                  <button
+                    type="button"
+                    aria-label={favorita ? `Remover ${template.title} dos favoritos` : `Favoritar ${template.title}`}
+                    aria-pressed={favorita}
+                    onClick={() => toggleFavorite(template.id)}
+                    className={cn('shrink-0 mr-1 rounded-md flex items-center justify-center transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', HOVER_REVEAL_TAP)}
+                  >
+                    <Star className={cn('w-3.5 h-3.5 transition-colors', favorita && 'fill-warning text-warning')} />
+                  </button>
                 </div>
-                <p className="text-xs text-muted-foreground truncate">{template.content}</p>
-              </motion.button>
-            ))}
+              );
+            })}
           </div>
         </ScrollArea>
       </div>

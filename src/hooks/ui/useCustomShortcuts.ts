@@ -244,6 +244,17 @@ function stopRecordingBinding() {
   endRecording();
 }
 
+/**
+ * A tecla escrita para o modificador Ctrl/Cmd depende da plataforma: no Mac o
+ * atalho é o Cmd e a convenção da tela é o glifo ⌘ (mesmo critério de
+ * `src/components/a11y/a11yComponents.tsx`). Sem isso a dica saía como "Ctrl"
+ * também no Mac.
+ */
+function rotuloDoModificadorCtrl(): string {
+  const plataforma = typeof navigator === 'undefined' ? '' : navigator.platform || '';
+  return plataforma.includes('Mac') ? '⌘' : 'Ctrl';
+}
+
 export function useCustomShortcuts() {
   const { shortcuts, isRecording, pendingShortcut } = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
@@ -269,7 +280,7 @@ export function useCustomShortcuts() {
   const formatShortcut = useCallback((shortcut: ShortcutBinding) => {
     const binding = getActiveBinding(shortcut);
     const parts: string[] = [];
-    if (binding.modifiers.ctrlKey) parts.push('Ctrl');
+    if (binding.modifiers.ctrlKey) parts.push(rotuloDoModificadorCtrl());
     if (binding.modifiers.shiftKey) parts.push('Shift');
     if (binding.modifiers.altKey) parts.push('Alt');
     parts.push(binding.key === ' ' ? 'Space' : binding.key);

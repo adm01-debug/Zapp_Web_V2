@@ -89,9 +89,13 @@ export function useSentimentData(period: string) {
   const [analyses, setAnalyses] = useState<ConversationAnalysis[]>([]);
   const [agents, setAgents] = useState<AgentProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<Error | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    // Nova tentativa parte sem o erro anterior; quem consome decide pelo
+    // `fetchError` atual se mostra o erro ou o conteúdo.
+    setFetchError(null);
     const daysAgo = Number.parseInt(period);
     const startDate = appDayStart(daysAgo).toISOString();
 
@@ -129,6 +133,10 @@ export function useSentimentData(period: string) {
       setAgents((agentsData || []) as AgentProfile[]);
     } catch (error) {
       log.error('Error fetching sentiment data:', error);
+      // Sem este sinal a tela não distingue "a leitura falhou" de "sem dados":
+      // o catch antigo só registrava no log e o painel seguia como se o período
+      // estivesse vazio. Agora a falha vira estado (`error`/`isError`).
+      setFetchError(error instanceof Error ? error : new Error('Falha ao carregar os dados de sentimento'));
     } finally {
       setLoading(false);
     }
@@ -216,7 +224,7 @@ export function useSentimentData(period: string) {
     }).filter(a => a.totalAnalyses > 0).sort((a, b) => (b.avgScore ?? -1) - (a.avgScore ?? -1));
   }, [analyses, agents, period]);
 
-  return { alerts, analyses, agents, loading, stats, dailyData, agentData, fetchData };
+  return { alerts, analyses, agents, loading, error: fetchError, isError: fetchError !== null, incomplete: false, stats, dailyData, agentData, fetchData };
 }
 
 export function getSentimentColor(score: number | null) {

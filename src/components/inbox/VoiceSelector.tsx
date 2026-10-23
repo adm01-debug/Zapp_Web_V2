@@ -15,6 +15,7 @@ import { Volume2, Check, Play, Square, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { attachMediaVolume } from '@/lib/mediaVolumeElement';
+import { guardarPreviaDeVoz, lerPreviaDeVoz } from '@/lib/voicePreviewCache';
 import { LOCAL_VOICE_ID } from '@/hooks/communication/useTextToSpeech';
 
 export interface ElevenLabsVoice {
@@ -67,8 +68,14 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
   const [loadingVoiceId, setLoadingVoiceId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const stopPreview = () => {
+    // G6: fechar o menu no meio da geração aborta o fetch — a resposta que chegar
+    // depois não pode tocar por baixo da voz nova.
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setLoadingVoiceId(null);
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -93,28 +100,41 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
     stopPreview();
     
     setLoadingVoiceId(voice.id);
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/elevenlabs-tts`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(await edgeAuthHeaders()),
-          },
-          body: JSON.stringify({ 
-            text: voice.sampleText || `Olá! Eu sou ${voice.name}.`,
-            voiceId: voice.id
-          }),
-        }
-      );
+      // G6: o texto de amostra é fixo, então o mesmo blob vale para a sessão
+      // inteira — a MESMA voz tocada duas vezes paga uma só síntese.
+      let audioBlob = lerPreviaDeVoz(voice.id);
+      if (!audioBlob) {
+        const response = await fetch(
+          `${SUPABASE_URL}/functions/v1/elevenlabs-tts`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(await edgeAuthHeaders()),
+            },
+            body: JSON.stringify({ 
+              text: voice.sampleText || `Olá! Eu sou ${voice.name}.`,
+              voiceId: voice.id
+            }),
+            signal: controller.signal,
+          }
+        );
 
-      if (!response.ok) {
-        throw new Error('Erro ao gerar preview');
+        if (!response.ok) {
+          throw new Error('Erro ao gerar preview');
+        }
+
+        audioBlob = await response.blob();
+        guardarPreviaDeVoz(voice.id, audioBlob);
       }
 
-      const audioBlob = await response.blob();
+      // O menu fechou durante a geração: o áudio atrasado não toca.
+      if (controller.signal.aborted) return;
+
       const audioUrl = URL.createObjectURL(audioBlob);
       audioUrlRef.current = audioUrl;
 
@@ -140,10 +160,15 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
 
       await audio.play();
     } catch (error) {
+      // Abortar por fechamento do menu não é erro para o usuário.
+      if (controller.signal.aborted) return;
       log.error('Preview error:', error);
       toast.error('Erro ao carregar preview da voz');
     } finally {
-      setLoadingVoiceId(null);
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+        setLoadingVoiceId(null);
+      }
     }
   };
 
@@ -198,6 +223,8 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   {/* Preview button */}
                   <button
+                    type="button"
+                    aria-label={`Ouvir prévia da voz ${voice.name}`}
                     onClick={(e) => playPreview(voice, e)}
                     className={cn(
                       "flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors",

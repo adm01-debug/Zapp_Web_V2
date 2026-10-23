@@ -1,18 +1,19 @@
 import React, { useMemo, useState } from 'react';
 import {
+
   Users, Play, CheckCircle2, Target, Send, MoreVertical, Eye, Pencil, Zap, Plus,
-  FileText, Bookmark, MessageSquare, BarChart3, Loader2,
+  FileText, Bookmark, MessageSquare, BarChart3, Loader2, ChevronDown,
+
 } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Checkbox } from '@/components/ui/checkbox';
 import { ProgressBar, VerTodasButton } from '@/components/dashboard/overview/DashboardCard';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
 import {
-  CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile,
+  CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, TalkXTable, StatusPill, RailCard, RailAction, IconTile,
   TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard,
-  InsightCard, TalkXQueryBoundary,
-  fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, OBJECTIVES, TALKX_CHANNELS,
+  InsightCard, TalkXQueryBoundary, EntityCell, ProgressCell, ResultsCell, ChannelCell, DateByCell,
+  fmtInt, pct, fmtAgo, OBJECTIVES, TALKX_CHANNELS,
+  type TalkXColumn, type TalkXSort,
 } from './talkxShared';
 import type { TalkXPeriodRange } from './kit/periods';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
@@ -78,6 +79,8 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   // usa a matriz de ações atual, mas delega ciclo de vida ao hook único.
   const lifecycle = useTalkXLifecycle();
   const [search, setSearch] = useState('');
+  // TL-115: o bloco de rascunhos nasce recolhido e abre no clique do cabeçalho.
+  const [rascunhosAbertos, setRascunhosAbertos] = useState(false);
   const [status, setStatus] = useState<string>(() => saved?.status ?? 'all');
   const [objective, setObjective] = useState<string>(() => saved?.objective ?? 'all');
   const [channel, setChannel] = useState<string>(() => saved?.channel ?? 'all');
@@ -90,6 +93,9 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   const [layout, setLayout] = useState<'list' | 'grid'>(loadLayout);
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // X079 — ordenação da tabela (cliente, por Campanha) e blocos N35 recolhidos.
+  const [sort, setSort] = useState<TalkXSort | null>(null);
+  const [insightsOpen, setInsightsOpen] = useState(false);
 
   // X080 — as ações de linha (matriz por status + confirmação das ações que
   // mudam o estado da campanha) ficam em um lugar só e servem a tabela, a grade
@@ -188,7 +194,69 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
     return r;
   }, [noPeriodo, status, objective, channel, segment, creator, search]);
 
-  const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
+  // X079 — a tabela da Visão geral usa as colunas e células do kit
+  // (`TalkXTable` + `EntityCell`/`ChannelCell`/`ProgressCell`/`ResultsCell`/`DateByCell`):
+  // miniatura quando há mídia de imagem, logo do canal, ponto pulsante na linha
+  // em envio, "—" no rascunho, entregues com a taxa, data relativa e ordenação
+  // por Campanha. A seleção zera ao trocar qualquer filtro ou o período
+  // (`selectionResetKey` inclui `channel` e o período).
+  const sorted = useMemo(() => {
+    if (!sort || sort.key !== 'name') return filtered;
+    const dir = sort.dir === 'asc' ? 1 : -1;
+    return [...filtered].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR') * dir);
+  }, [filtered, sort]);
+  const pageItems = sorted.slice((page - 1) * pageSize, page * pageSize);
+
+  const tableColumns: TalkXColumn<TalkXCampaign>[] = [
+    {
+      key: 'campanha', header: 'Campanha', sortKey: 'name',
+      render: (c) => (
+        <button type="button" onClick={() => onView(c)} className="flex items-center gap-3 text-left min-w-0 group">
+          <EntityCell
+            name={c.name}
+            description={c.description || c.message_template}
+            mediaUrl={c.media_url}
+            mediaType={c.media_type}
+            icon={objectiveIcon(c.objective)}
+            color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'}
+          />
+        </button>
+      ),
+    },
+    {
+      key: 'segmento', header: 'Segmento / Público',
+      render: (c) => (
+        <>
+          <span className="inline-block text-2xs font-medium px-2 py-0.5 rounded-md bg-muted/50 border border-border/60 text-foreground truncate max-w-[180px]">{segmentName(c.segment_id) ?? (c.audience_source === 'crm360' ? 'CRM 360°' : 'Seleção manual')}</span>
+          <span className="block text-2xs text-foreground-secondary mt-1">{fmtInt(c.total_recipients)} contatos</span>
+        </>
+      ),
+    },
+    { key: 'canal', header: 'Canal', render: () => <ChannelCell /> },
+    {
+      key: 'status', header: 'Status',
+      render: (c) => (
+        <span className="inline-flex items-center gap-1.5">
+          {c.status === 'sending' && <span className="talkx-dot-pulse" aria-hidden="true" />}
+          <StatusPill status={c.status} map={CAMPAIGN_STATUS} />
+        </span>
+      ),
+    },
+    {
+      key: 'progresso', header: 'Progresso',
+      render: (c) => <ProgressCell status={c.status} value={pct(c.sent_count + c.failed_count, c.total_recipients)} />,
+    },
+    {
+      key: 'resultados', header: 'Resultados',
+      render: (c) => <ResultsCell sent={c.sent_count} delivered={c.delivered_count} failed={c.failed_count} />,
+    },
+    {
+      key: 'agendada', header: 'Agendada em',
+      render: (c) => <DateByCell date={c.scheduled_at ?? c.started_at} by={creators[c.created_by ?? ''] || undefined} />,
+    },
+  ];
+
+  const selectionResetKey = `${status}|${objective}|${channel}|${segment}|${creator}|${period}|${search}`;
 
   // X077 — os cinco números do topo saem da RPC `talkx_overview_stats` para o período da
   // barra (padrão: 30 dias); nenhum KPI é calculado aqui. Campo ausente = "Sem dados ainda".
@@ -205,7 +273,6 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   // campanha fora do período escolhido.
   const latest = useMemo(() => [...noPeriodo].sort((a, b) => (b.started_at ?? b.updated_at).localeCompare(a.started_at ?? a.updated_at)).slice(0, 4), [noPeriodo]);
 
-  const toggleAll = () => setSelected((prev) => prev.size === pageItems.length ? new Set() : new Set(pageItems.map((c) => c.id)));
 
   // X047 — a Visão geral passa pelo boundary de consulta: carregando -> erro ->
   // vazio -> conteúdo. Com a consulta em erro a tela mostra o erro com retry
@@ -249,20 +316,59 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
           view={layout} onView={setLayout}
         />
 
-        {/* E68: Rascunhos pendentes */}
+        {/* Tabela */}
+        <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
+          {filtered.length === 0 ? (
+            <div className="p-4"><TalkXFilteredEmptyState onClearFilters={clear} /></div>
+          ) : layout === 'grid' ? (
+            <div className="p-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
+              {pageItems.map((c) => <CampaignGridCard key={c.id} c={c} segmentName={segmentName(c.segment_id)} onView={() => onView(c)} onEdit={() => onEdit(c)} />)}
+            </div>
+          ) : (
+            <TalkXTable
+              columns={tableColumns}
+              rows={pageItems}
+              getId={(c) => c.id}
+              selectable
+              selected={selected}
+              onSelectionChange={setSelected}
+              selectionResetKey={selectionResetKey}
+              sort={sort}
+              onSortChange={setSort}
+              rowActions={(c) => rowActions.actionsFor(c).map((a) => ({ label: a.label, icon: a.icon, danger: a.destructive, onSelect: () => rowActions.run(a.id, c) }))}
+              rowBusy={(c) => rowActions.pendingId === c.id}
+              emptyState={<div className="p-4"><TalkXFilteredEmptyState onClearFilters={clear} /></div>}
+            />
+          )}
+          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={(n) => { setPageSize(n); setPage(1); }} noun="campanhas" /></div>}
+        </section>
+
+        {/* N35: os blocos que o mock não tem ficam ABAIXO da tabela e recolhidos por padrão. */}
         {(() => {
           const drafts = campaigns.filter((c) => c.status === 'draft');
           if (drafts.length === 0) return null;
           return (
             <section className="rounded-2xl bg-card border border-dash-amber/30 overflow-hidden">
-              <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between">
-                <div className="flex items-center gap-2">
+
+              {/* TL-115: o cabeçalho é o gatilho do bloco (recolhido por padrão); o
+                  nome acessível sai como "Rascunhos pendentes(N)". */}
+              <button
+                type="button"
+                onClick={() => setRascunhosAbertos((v) => !v)}
+                aria-expanded={rascunhosAbertos}
+                aria-label={`Rascunhos pendentes(${drafts.length})`}
+                className="w-full px-4 py-3 border-b border-border/50 flex items-center justify-between text-left hover:bg-muted/20 transition-colors"
+              >
+                <span className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-dash-amber" />
-                  <p className="text-[13px] font-semibold text-foreground">Rascunhos pendentes</p>
+                  <span className="text-[13px] font-semibold text-foreground">Rascunhos pendentes</span>
                   <span className="text-2xs text-muted-foreground">({drafts.length})</span>
-                </div>
-              </div>
+                </span>
+                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${rascunhosAbertos ? 'rotate-180' : ''}`} aria-hidden="true" />
+              </button>
+              {rascunhosAbertos && (
               <div className="divide-y divide-border/50">
+
                 {drafts.slice(0, 5).map((c) => (
                   <div key={c.id} className="px-4 py-3 flex items-center justify-between gap-4 hover:bg-muted/10 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
@@ -284,17 +390,22 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                   </div>
                 ))}
               </div>
+              )}
             </section>
           );
         })()}
 
-        {/* E94: Insights heurísticos */}
         {insights && insights.length > 0 && (
           <section className="space-y-3">
-            <div className="flex items-center gap-2 px-1">
-              <span className="text-sm font-semibold text-foreground">Insights</span>
-              <span className="text-xs text-muted-foreground">({insights.length})</span>
-            </div>
+            <button
+              type="button"
+              aria-expanded={insightsOpen}
+              onClick={() => setInsightsOpen((o) => !o)}
+              className="flex items-center gap-2 px-1"
+            >
+              <span className="text-sm font-semibold text-foreground">{`Insights(${insights.length})`}</span>
+            </button>
+            {insightsOpen && (
             <div className="space-y-2">
               {insights.map((insight) => (
                 <InsightCard
@@ -308,93 +419,11 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                 />
               ))}
             </div>
+            )}
           </section>
         )}
 
-        {/* Tabela */}
-        <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
-          {filtered.length === 0 ? (
-            <div className="p-4"><TalkXFilteredEmptyState onClearFilters={clear} /></div>
-          ) : layout === 'grid' ? (
-            <div className="p-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
-              {pageItems.map((c) => <CampaignGridCard key={c.id} c={c} segmentName={segmentName(c.segment_id)} onView={() => onView(c)} onEdit={() => onEdit(c)} />)}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[980px] border-collapse">
-                <thead className="bg-muted/20 border-b border-border/60">
-                  <tr>
-                    <Th className="w-10"><Checkbox checked={pageItems.length > 0 && selected.size === pageItems.length} onCheckedChange={toggleAll} aria-label="Selecionar todas" /></Th>
-                    <Th>Campanha</Th><Th>Segmento / Público</Th><Th>Canal</Th><Th>Status</Th><Th className="w-[150px]">Progresso</Th><Th>Resultados</Th><Th>Agendada em</Th><Th className="text-right">Ações</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pageItems.map((c) => {
-                    const done = c.sent_count + c.failed_count;
-                    const progress = pct(done, c.total_recipients);
-                    const pbTone = c.status === 'completed' ? 'success' : c.status === 'paused' ? 'warning' : c.status === 'cancelled' ? 'danger' : 'info';
-                    const when = c.scheduled_at ?? c.started_at ?? null;
-                    return (
-                      <tr key={c.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
-                        <Td><Checkbox checked={selected.has(c.id)} onCheckedChange={() => setSelected((p) => { const n = new Set(p); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; })} aria-label={`Selecionar ${c.name}`} /></Td>
-                        <Td>
-                          <button type="button" onClick={() => onView(c)} className="flex items-center gap-3 text-left min-w-0 group">
-                            <IconTile icon={objectiveIcon(c.objective)} color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'} size={40} />
-                            <span className="min-w-0">
-                              <span className="block text-sm font-semibold text-foreground truncate group-hover:text-[hsl(var(--primary-text))]">{c.name}</span>
-                              <span className="block text-2xs text-foreground-secondary truncate max-w-[260px]">{c.description || c.message_template}</span>
-                            </span>
-                          </button>
-                        </Td>
-                        <Td>
-                          <span className="inline-block text-2xs font-medium px-2 py-0.5 rounded-md bg-muted/50 border border-border/60 text-foreground truncate max-w-[180px]">{segmentName(c.segment_id) ?? (c.audience_source === 'crm360' ? 'CRM 360°' : 'Seleção manual')}</span>
-                          <span className="block text-2xs text-foreground-secondary mt-1">{fmtInt(c.total_recipients)} contatos</span>
-                        </Td>
-                        <Td><span className="w-8 h-8 rounded-full bg-whatsapp/15 border border-whatsapp/30 flex items-center justify-center"><MessageSquare className="w-4 h-4 text-whatsapp" /></span></Td>
-                        <Td><StatusPill status={c.status} map={CAMPAIGN_STATUS} /></Td>
-                        <Td>
-                          {c.total_recipients > 0 && c.status !== 'draft' && c.status !== 'scheduled' ? (
-                            <div className="min-w-[110px]"><p className="text-xs font-semibold text-foreground mb-1">{progress}%</p><ProgressBar value={progress} tone={pbTone} height={6} /></div>
-                          ) : <span className="text-muted-foreground text-xs">{c.total_recipients > 0 ? '0%' : '—'}</span>}
-                        </Td>
-                        <Td>
-                          {done > 0 ? (
-                            <><span className="block text-xs font-semibold text-foreground">{fmtInt(c.sent_count)} enviados</span><span className="block text-2xs text-foreground-secondary">{c.failed_count > 0 ? `${fmtInt(c.failed_count)} falhas (${fmtPct(c.failed_count, done)})` : `${fmtPct(c.sent_count, done)} de sucesso`}</span></>
-                          ) : <span className="text-muted-foreground text-xs">—</span>}
-                        </Td>
-                        <Td>
-                          {when ? (<><span className="block text-xs text-foreground">{fmtDateTime(when)}</span><span className="block text-2xs text-foreground-secondary">por {creators[c.created_by ?? ''] ?? '—'}</span></>) : <span className="text-muted-foreground text-xs">—</span>}
-                        </Td>
-                        <Td className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button type="button" disabled={rowActions.pendingId === c.id} aria-busy={rowActions.pendingId === c.id} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50 disabled:opacity-70" aria-label="Ações">
-                                {rowActions.pendingId === c.id
-                                  ? <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
-                                  : <MoreVertical className="w-4 h-4" />}
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              {rowActions.actionsFor(c).map((action, i) => (
-                                <React.Fragment key={action.id}>
-                                  {action.destructive && i > 0 && <DropdownMenuSeparator />}
-                                  <DropdownMenuItem className={action.destructive ? 'text-dash-red' : undefined} onClick={() => rowActions.run(action.id, c)}>
-                                    <action.icon className="w-4 h-4 mr-2" />{action.label}
-                                  </DropdownMenuItem>
-                                </React.Fragment>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </Td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={(n) => { setPageSize(n); setPage(1); }} noun="campanhas" /></div>}
-        </section>
+
       </div>
 
       {/* Rail */}

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useSyncExternalStore } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useSyncExternalStore } from 'react';
 import {
   X, Check, Copy, ChevronLeft, ChevronRight, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
@@ -26,6 +26,7 @@ import { useTalkX } from '@/hooks/integrations/useTalkX';
 import { KpiCard } from './kit/kpi';
 import { PRESETS_DO_PRODUTO } from './kit/dialogPresets';
 import { useTalkXConfirm } from './kit/useTalkXConfirm';
+import type { TalkXTemplateTab } from './talkxTemplateRoute';
 import {
   IconTile, RailCard, TalkXSkeletonRows, TEMPLATE_CATEGORIES, TEMPLATE_STATUS,
   VARIABLE_KEYS, personalizePreview, fmtInt,
@@ -56,20 +57,23 @@ function usePainelLargo() {
 interface Props {
   templates: TalkXTemplate[];
   isLoading: boolean;
+  isError?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
   editing: TalkXTemplate | null;
+  /** X094 — sub-aba que o endereço pede aberta (o pai é remontado por template). */
+  initialTtab?: TalkXTemplateTab;
+  /** X094 — troca feita NA biblioteca lateral: o pai espelha no endereço. */
+  onActiveTemplateChange?: (templateId: string) => void;
   onClose: () => void;
   /** X091 — clique do widget "Em andamento" abre o monitor da campanha. */
   onOpenMonitor?: (campaignId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, isError = false, error = null, onRetry, editing, initialTtab, onActiveTemplateChange, onClose, onOpenMonitor }: Props) {
   const {
     createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
     saveVariant, deleteVariant, countVariantRecipients,
-    // X047 — a biblioteca desta tela é a MESMA consulta que o pai consome; o erro
-    // tem de chegar à tela. Antes o editor só recebia `isLoading` e, com a consulta
-    // falhando, caía no vazio ("Nenhum template") como se a base estivesse vazia.
-    isError: templatesIsError, error: templatesError, refetch: refetchTemplates,
   } = useTalkXTemplates();
   const messageEditorRef = useRef<TalkXMessageEditorHandle>(null);
   const { confirmar, dialogo } = useTalkXConfirm();
@@ -101,9 +105,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     tags: string[]; custom_variables: string[]; created_at: string;
   }>>([]);
   const [loadingVersions, setLoadingVersions] = useState(false);
-  const [showVersions, setShowVersions] = useState(false);
+  const [showVersions, setShowVersions] = useState(initialTtab === 'historico');
   const [variants, setVariants] = useState<TemplateVariant[]>([]);
-  const [showVariants, setShowVariants] = useState(false);
+  const [showVariants, setShowVariants] = useState(initialTtab === 'ab');
   const [savingVariant, setSavingVariant] = useState(false);
   // R2-MOD-024: respostas atrasadas não podem contaminar o template seguinte.
   // `activeTemplateIdRef` guarda o template REALMENTE ativo agora (independe do
@@ -211,6 +215,14 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
   };
 
   const loadTemplate = async (t: TalkXTemplate) => {
+    // X094 + R2-MOD-024 — quem manda na troca é o MODO:
+    // - na rota (`initialTtab` vem do endereço, que preserva o `ttab` na troca),
+    //   a sub-aba aberta acompanha: recarrega para o template novo;
+    // - fora da rota (editor isolado) a troca zera os painéis: resposta lenta
+    //   de A nunca alcança B nem reabre painel sozinha.
+    const seguirSubAba = initialTtab === 'ab' || initialTtab === 'historico';
+    const manterVariantes = seguirSubAba && showVariants;
+    const manterHistorico = seguirSubAba && showVersions;
     setVersions([]); setShowVersions(false);
     if (isDirty && !(await confirmar(PRESETS_DO_PRODUTO.descartarAlteracoes))) return;
     // A ref muda antes do estado para fechar a janela entre o clique e o efeito.
@@ -226,6 +238,13 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     setEName(t.name); setEDesc(t.description ?? ''); setECat(t.category);
     setEContent(t.content); setEMediaUrl(t.media_url ?? ''); setEMediaType(t.media_type ?? '');
     setEHasMedia(!!t.media_url); setEStatus(t.status); setETags(t.tags ?? []); setECustomVars(t.custom_variables ?? []);
+    // X094 — o pai espelha a troca no endereço (preserva o `ttab`). Não há
+    // remonto (`mirrorEditorTemplate` não mexe no estado para não perder a
+    // edição em curso): é o `loadTemplate` que recarrega a sub-aba — só no
+    // modo rota (ver acima).
+    onActiveTemplateChange?.(t.id);
+    if (manterVariantes) { setShowVariants(true); await loadVariants(t.id); }
+    else if (manterHistorico) { setShowVersions(true); await fetchVersions(t.id); }
   };
 
   // V26 — variáveis conhecidas do editor: as built-in + as personalizadas deste template.
@@ -281,6 +300,19 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     if (!isActiveOrigin(templateId)) return;
     setVariants(vs);
   };
+
+  // X094 — link direto/F5 numa sub-aba (`ttab=ab|historico`): o painel da sub-aba
+  // já nasce aberto (estado inicial acima) e busca o template do endereço na
+  // montagem. Vale por montagem do editor (a chave do pai o recria por template
+  // ao ABRIR pelo endereço; dentro do editor a troca é `loadTemplate`).
+  const ttabMontagemRef = useRef(initialTtab);
+  useEffect(() => {
+    const id = editing?.id;
+    if (!id) return;
+    if (ttabMontagemRef.current === 'ab') { void loadVariants(id); }
+    else if (ttabMontagemRef.current === 'historico') { void fetchVersions(id); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const removeVariant = async (variant: TemplateVariant) => {
     const templateId = variant.template_id;
@@ -476,9 +508,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
           {/* Lista compacta — X047: carregando -> erro -> vazio -> conteúdo */}
           <div className="flex-1 overflow-y-auto space-y-1">
             <TalkXQueryBoundary
-              query={{ isLoading, isError: templatesIsError, error: templatesError }}
+              query={{ isLoading, isError, error }}
               entity="os templates"
-              onRetry={() => { void refetchTemplates(); }}
+              onRetry={() => { void onRetry?.(); }}
               skeleton={<TalkXSkeletonRows rows={5} />}
               isEmpty={libFiltered.length === 0}
               empty={<p className="text-2xs text-muted-foreground text-center pt-4">Nenhum template</p>}

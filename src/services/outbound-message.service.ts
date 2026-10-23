@@ -10,6 +10,7 @@ import {
   type OfflineQueuedMessage,
 } from '@/lib/offlineQueue';
 import { sendThrottle } from '@/lib/sendThrottle';
+import { readAuthenticatedUserId } from '@/lib/mediaVolumeStore';
 
 export type OutboundMessageType = 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location';
 
@@ -376,19 +377,30 @@ function avisarFilaOffline(error: unknown, message?: OfflineQueuedMessage): void
 export function drainOfflineSendQueue(): Promise<OfflineQueueDrainResult | null> {
   return drainOfflineQueueOnOpen(offlineSendQueue, deliverQueuedOfflineMessage, {
     onError: avisarFilaOffline,
+    shouldDeliver: somenteDoUsuarioAtual,
   });
 }
 
 // Reconciliação ao reconectar (item 025): a fila local drena no evento `online`.
 drainOfflineQueueOnReconnect(offlineSendQueue, deliverQueuedOfflineMessage, {
   onError: avisarFilaOffline,
+  shouldDeliver: somenteDoUsuarioAtual,
 });
+
+// A fila offline é POR USUÁRIO no aparelho: item sem dono (legado) drena como
+// antes; item com dono só sai na sessão dele — trocar de atendente na mesma
+// máquina nunca envia o texto alheio.
+function somenteDoUsuarioAtual(message: OfflineQueuedMessage): boolean {
+  if (!message.userId) return true;
+  return readAuthenticatedUserId() === message.userId;
+}
 
 async function enqueueOffline(
   input: SendOutboundMessageInput,
   clientMessageId: string,
 ): Promise<OutboundMessageDeliveryResult> {
   const queued = await offlineSendQueue.enqueue({
+    userId: readAuthenticatedUserId() ?? undefined,
     clientMessageId,
     contactId: input.contactId,
     content: input.content,

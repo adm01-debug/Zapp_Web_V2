@@ -28,6 +28,8 @@ vi.mock('@/integrations/supabase/client', () => ({
     functions: { invoke: mocks.invoke },
     from: mocks.tableFrom,
     auth: { getUser: mocks.getUser },
+    channel: () => { const ch: Record<string, unknown> = {}; ch.on = () => ch; ch.subscribe = () => ch; return ch; },
+    removeChannel: () => {},
   },
 }));
 

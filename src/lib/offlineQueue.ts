@@ -64,6 +64,8 @@ export interface OfflineQueueDrainResult {
 export interface OfflineQueueDrainOptions {
   /** Chamado quando a drenagem falha (sem mensagem quando a leitura da fila falha). */
   onError?: OfflineQueueErrorHandler;
+  /** Quando definido, mensagens recusadas ficam na fila (não contam como enviadas). */
+  shouldDeliver?: (message: OfflineQueuedMessage) => boolean;
 }
 
 /** Handler de erro da fila: recebe a mensagem quando a falha foi da entrega dela. */
@@ -233,6 +235,9 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
       }
       commitSnapshot(pending.length);
       for (const message of pending) {
+        // Fila por usuário: item de outro atendente fica parado (não conta
+        // como enviado, não é removido e não trava os demais).
+        if (drainOptions.shouldDeliver && !drainOptions.shouldDeliver(message)) continue;
         try {
           await driver.put({ ...message, attempts: message.attempts + 1 });
           await deliver(message);
@@ -338,12 +343,12 @@ export type OnlineScope = Pick<Window, 'addEventListener' | 'removeEventListener
 export function drainOfflineQueueOnReconnect(
   queue: OfflineQueue,
   deliver: (message: OfflineQueuedMessage) => Promise<void>,
-  options: { scope?: OnlineScope | null; onError?: OfflineQueueErrorHandler } = {},
+  options: { scope?: OnlineScope | null; onError?: OfflineQueueErrorHandler; shouldDeliver?: (message: OfflineQueuedMessage) => boolean } = {},
 ): () => void {
   const scope = options.scope !== undefined ? options.scope : typeof window === 'undefined' ? null : window;
   if (!scope) return () => {};
   const handleOnline = () => {
-    void queue.drain(deliver, { onError: options.onError });
+    void queue.drain(deliver, { onError: options.onError, shouldDeliver: options.shouldDeliver });
   };
   scope.addEventListener('online', handleOnline);
   return () => scope.removeEventListener('online', handleOnline);
@@ -364,9 +369,9 @@ export function drainOfflineQueueOnReconnect(
 export function drainOfflineQueueOnOpen(
   queue: OfflineQueue,
   deliver: (message: OfflineQueuedMessage) => Promise<void>,
-  options: { online?: boolean; onError?: OfflineQueueErrorHandler } = {},
+  options: { online?: boolean; onError?: OfflineQueueErrorHandler; shouldDeliver?: (message: OfflineQueuedMessage) => boolean } = {},
 ): Promise<OfflineQueueDrainResult | null> {
   const online = options.online ?? (typeof navigator === 'undefined' ? true : navigator.onLine !== false);
   if (!online) return Promise.resolve(null);
-  return queue.drain(deliver, { onError: options.onError });
+  return queue.drain(deliver, { onError: options.onError, shouldDeliver: options.shouldDeliver });
 }

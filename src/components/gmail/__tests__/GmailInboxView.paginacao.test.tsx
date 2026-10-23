@@ -132,6 +132,9 @@ describe('GmailInboxView — a tela antiga pagina em vez de baixar a caixa intei
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(supabase.channel).mockReturnValue({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() } as unknown as ReturnType<typeof supabase.channel>);
+    // A busca por termo passa pela RPC `search_email_threads` (corpo/anexo);
+    // sem linhas casadas o OR de colunas continua valendo (mesmo contrato).
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: [], error: null });
     window.history.replaceState({}, '', '/');
   });
 

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plug, Save, Info, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -98,7 +98,9 @@ export function IntegrationKeysSection() {
       <CardContent className="space-y-5">
         <Alert className="border-warning/30 bg-warning/10">
           <Info className="h-4 w-4 !text-warning" />
-          <AlertTitle className="text-warning">Chave registrada não é a chave usada</AlertTitle>
+          {/* Sem nível de título: o CardTitle (h3) seguido do h5 do AlertTitle
+              quebrava `heading-order` do axe. O Alert já tem role="alert". */}
+          <p className="mb-1 font-medium leading-none tracking-tight text-warning">Chave registrada não é a chave usada</p>
           <AlertDescription>
             A autoridade efetiva da integração de voz é a variável de ambiente do servidor
             ELEVENLABS_API_KEY, consumida pelas Edge Functions de voz. A chave salva nesta tela

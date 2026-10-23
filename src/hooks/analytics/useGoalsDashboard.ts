@@ -15,6 +15,8 @@ export interface Goal {
   icon: React.ElementType;
   color: string;
   priority: 'high' | 'medium' | 'low';
+  /** false = meta percentual sem denominador no período (sai da média do progresso). */
+  hasData: boolean;
 }
 
 export const PERIOD_OPTIONS = [
@@ -118,17 +120,18 @@ export function useGoalsDashboard() {
     enabled: !!profile?.id,
   });
 
-  const { data: analysesCounts, isLoading: loadingAnalyses } = useQuery({
-    queryKey: ['goals-analyses', period, profile?.id],
+  // A taxa de resolução sai dos DESFECHOS dos contatos atribuídos no período
+  // (`conversation_status`), não das análises de IA: nem toda conversa é
+  // analisada, então a análise subestimava o denominador e a taxa mentia.
+  const { data: resolvedContactsCount, isLoading: loadingResolvedContacts } = useQuery({
+    queryKey: ['goals-resolved-contacts', period, profile?.id],
     queryFn: async () => {
-      if (!profile?.id) return { total: 0, resolved: 0 };
-      const base = () => supabase.from('conversation_analyses').select('id', { count: 'exact', head: true })
-        .eq('analyzed_by', profile.id).gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
-      const { count: total, error: totalError } = await base();
-      if (totalError) throw totalError;
-      const { count: resolved, error: resolvedError } = await base().eq('status', 'resolvido');
-      if (resolvedError) throw resolvedError;
-      return { total: total ?? 0, resolved: resolved ?? 0 };
+      if (!profile?.id) return 0;
+      const { count, error } = await supabase.from('contacts').select('id', { count: 'exact', head: true })
+        .eq('assigned_to', profile.id).eq('conversation_status', 'resolved')
+        .gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
+      if (error) throw error;
+      return count ?? 0;
     },
     enabled: !!profile?.id,
   });
@@ -147,9 +150,11 @@ export function useGoalsDashboard() {
   const goals = useMemo((): Goal[] => {
     const messagesSent = messagesCount ?? 0;
     const contactsHandled = contactsCount ?? 0;
-    const totalAnalyses = analysesCounts?.total ?? 0;
-    const resolvedAnalyses = analysesCounts?.resolved ?? 0;
-    const resolutionRate = totalAnalyses > 0 ? Math.round((resolvedAnalyses / totalAnalyses) * 100) : 0;
+    const resolvedContacts = resolvedContactsCount ?? 0;
+    // Sem contatos atribuídos no período a taxa não tem denominador: fica 0 e
+    // sai da média do progresso (`hasData` false) em vez de derrubá-lo.
+    const hasResolutionData = contactsHandled > 0;
+    const resolutionRate = hasResolutionData ? Math.round((resolvedContacts / contactsHandled) * 100) : 0;
 
     // E42: bug de precedência — `!x === false` avalia (!x) === false, então
     // "sem config" (x undefined) virava SEMPRE inativo em vez de "usar
@@ -163,28 +168,31 @@ export function useGoalsDashboard() {
     if (isMessageGoalActive) {
       allGoals.push({ id: 'messages-sent', label: 'Mensagens Enviadas', description: 'Total de mensagens enviadas no período',
         target: getGoalTarget('messages_sent', period, customGoals), current: messagesSent, unit: 'mensagens',
-        icon: MessageSquare, color: 'hsl(var(--primary))', priority: 'high' });
+        icon: MessageSquare, color: 'hsl(var(--primary))', priority: 'high', hasData: true });
     }
     if (isContactGoalActive) {
       allGoals.push({ id: 'contacts-handled', label: 'Contatos Atendidos', description: 'Novos contatos atribuídos a você',
         target: getGoalTarget('contacts_handled', period, customGoals), current: contactsHandled, unit: 'contatos',
-        icon: Users, color: 'hsl(var(--chart-2))', priority: 'high' });
+        icon: Users, color: 'hsl(var(--chart-2))', priority: 'high', hasData: true });
     }
     if (isResolutionGoalActive) {
       allGoals.push({ id: 'resolution-rate', label: 'Taxa de Resolução', description: 'Percentual de conversas resolvidas',
         target: getGoalTarget('resolution_rate', period, customGoals), current: resolutionRate, unit: '%',
-        icon: CheckCircle2, color: 'hsl(var(--chart-3))', priority: 'medium' });
+        icon: CheckCircle2, color: 'hsl(var(--chart-3))', priority: 'medium', hasData: hasResolutionData });
     }
     return allGoals;
-  }, [messagesCount, contactsCount, analysesCounts, period, customGoals]);
+  }, [messagesCount, contactsCount, resolvedContactsCount, period, customGoals]);
 
   const overallProgress = useMemo(() => {
-    if (goals.length === 0) return 0;
-    return Math.round(goals.reduce((acc, g) => acc + Math.min((g.current / g.target) * 100, 100), 0) / goals.length);
+    // Meta percentual sem denominador (`hasData` false) sai da média: entrar
+    // como 0% derrubaria o progresso de metas que têm dado de verdade.
+    const comDado = goals.filter((g) => g.hasData);
+    if (comDado.length === 0) return 0;
+    return Math.round(comDado.reduce((acc, g) => acc + Math.min((g.current / g.target) * 100, 100), 0) / comDado.length);
   }, [goals]);
 
   const completedGoals = useMemo(() => goals.filter(g => g.current >= g.target).length, [goals]);
-  const isLoading = loadingMessages || loadingContacts || loadingAnalyses;
+  const isLoading = loadingMessages || loadingContacts || loadingResolvedContacts;
 
   useEffect(() => {
     if (isLoading || goals.length === 0) return;

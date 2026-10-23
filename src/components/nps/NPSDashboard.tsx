@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { motion } from '@/components/ui/motion';
-import { useNPSSurveys } from '@/hooks/business/useNPSSurveys';
+import { NPS_SURVEY_LIMIT, useNPSSurveys } from '@/hooks/business/useNPSSurveys';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus, Users, ThumbsUp, ThumbsDown, Meh, BarChart3 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, TrendingUp, TrendingDown, Minus, Users, ThumbsUp, ThumbsDown, Meh, BarChart3 } from 'lucide-react';
 
 function ScoreGauge({ score }: { score: number }) {
   const color = score >= 50 ? 'text-success' : score >= 0 ? 'text-warning' : 'text-destructive';
@@ -42,7 +43,7 @@ function MetricCard({ icon: Icon, label, value, color }: {
 }
 
 export function NPSDashboard() {
-  const { surveys, isLoading, metrics } = useNPSSurveys();
+  const { surveys, isLoading, metrics, error, isTruncated, refetch } = useNPSSurveys();
 
   const recentSurveys = useMemo(() => surveys.slice(0, 10), [surveys]);
 
@@ -54,6 +55,41 @@ export function NPSDashboard() {
           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24" />)}
         </div>
       </SkeletonRegion>
+    );
+  }
+
+  // Falha de leitura NÃO é "nenhuma pesquisa respondida": sem este estado o painel
+  // caía no estado vazio (ou exibia NPS 0) e o usuário lia dado fabricado.
+  if (error) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6 w-full min-w-0"
+      >
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Net Promoter Score (NPS)</h2>
+          <p className="text-sm text-muted-foreground">Meça a lealdade dos seus clientes</p>
+        </div>
+
+        <Card>
+          <CardContent
+            data-testid="nps-error-state"
+            role="alert"
+            className="flex flex-col items-center justify-center gap-3 py-12 px-6 text-center"
+          >
+            <AlertTriangle className="w-10 h-10 text-destructive/70" strokeWidth={1.6} />
+            <p className="text-sm font-semibold text-foreground">Não foi possível carregar as pesquisas NPS</p>
+            <p className="text-xs text-muted-foreground max-w-[420px] leading-snug">
+              A leitura das respostas falhou, então não há pontuação nem contagens para mostrar —
+              zero aqui seria dado inventado.
+            </p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              Tentar novamente
+            </Button>
+          </CardContent>
+        </Card>
+      </motion.div>
     );
   }
 
@@ -101,6 +137,15 @@ export function NPSDashboard() {
         <h2 className="text-xl font-bold text-foreground">Net Promoter Score (NPS)</h2>
         <p className="text-sm text-muted-foreground">Meça a lealdade dos seus clientes</p>
       </div>
+
+      {/* A agregação é feita no cliente sobre as respostas mais recentes: quando o
+          teto de leitura é atingido, o número precisa dizer em que base se apoia. */}
+      {isTruncated && (
+        <p data-testid="nps-truncation-notice" className="text-xs text-warning">
+          Baseado nas últimas {NPS_SURVEY_LIMIT} respostas respondidas — pesquisas mais antigas podem
+          estar fora do cálculo.
+        </p>
+      )}
 
       {/* Main Score + Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
