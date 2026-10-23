@@ -178,24 +178,34 @@ jobs:
             exit 0
           fi
           # Checks do head novo nascem em action_required (GITHUB_TOKEN): liberar.
-          runs=""
+          # Filtra por head_branch da PR para nao aprovar runs de outros branches com mesmo SHA.
+          head_branch=""
+          head_branch=$(gh api "repos/$REPO/pulls/$PR" --jq '.head.ref' 2>/dev/null) || head_branch=""
+          # Continua polling apos encontrar runs: CI e DB Guard registram em momentos diferentes;
+          # para so na tentativa 3+ com algo aprovado, garantindo >= 30s de janela para workflows tardios.
+          aprovados=""
           for tentativa in 1 2 3 4 5 6; do
-            if ! runs=$(gh api "repos/$REPO/actions/runs?head_sha=$sha_depois&status=action_required&per_page=20" \
-              --jq '.workflow_runs[].id'); then
-              echo "PR #$PR ($sha_depois): falha temporaria ao listar runs (tentativa $tentativa)"
-              runs=""
+            novos=""
+            if [ -n "$head_branch" ]; then
+              novos=$(gh api "repos/$REPO/actions/runs?head_sha=$sha_depois&status=action_required&per_page=20" \
+                --jq --arg b "$head_branch" '.workflow_runs[] | select(.head_branch == $b) | .id' 2>/dev/null) || novos=""
+            else
+              novos=$(gh api "repos/$REPO/actions/runs?head_sha=$sha_depois&status=action_required&per_page=20" \
+                --jq '.workflow_runs[].id' 2>/dev/null) || novos=""
             fi
-            [ -n "$runs" ] && break
+            for run in $novos; do
+              if echo " $aprovados " | grep -q " $run "; then continue; fi
+              if gh api -X POST "repos/$REPO/actions/runs/$run/approve" >/dev/null; then
+                echo "PR #$PR: run $run liberado"
+              else
+                echo "PR #$PR: run $run recusado pelo GITHUB_TOKEN - aprovar na aba Actions"
+              fi
+              aprovados="$aprovados $run"
+            done
+            [ -n "$aprovados" ] && [ "$tentativa" -ge 3 ] && break
             sleep 10
           done
-          if [ -z "$runs" ]; then
+          if [ -z "$aprovados" ]; then
             echo "PR #$PR ($sha_depois): nenhum run aguardando aprovacao"
             exit 0
           fi
-          for run in $runs; do
-            if gh api -X POST "repos/$REPO/actions/runs/$run/approve" >/dev/null; then
-              echo "PR #$PR: run $run liberado"
-            else
-              echo "PR #$PR: run $run recusado pelo GITHUB_TOKEN - aprovar na aba Actions"
-            fi
-          done
