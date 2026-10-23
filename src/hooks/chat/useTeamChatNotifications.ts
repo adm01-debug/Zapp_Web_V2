@@ -214,7 +214,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         // silenciava quem concedeu a permissão e não assinou o push: ficava só com o
         // som. O liga/desliga de avisos do chat interno continua valendo por
         // `notifSettings.browserNotifications`.
-        if (permissionRef.current === 'granted' && notifSettings.browserNotifications && !isQuietHours()) {
+        if (Notification.permission === 'granted' && notifSettings.browserNotifications && !isQuietHours()) {
           // Nome do remetente por RPC segura: para o agente a leitura direta de
           // `profiles` é barrada pela RLS (o título virava 'Colega').
           // `get_team_profiles()` é SECURITY DEFINER e já mascara email/telefone.
@@ -231,15 +231,14 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           } catch (err) { log.error('Unexpected error in useTeamChatNotifications:', err); }
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
-          await showNotifRef.current({
-            title: `💬 Teams: ${senderName}`,
+          const notif = new Notification(`💬 Teams: ${senderName}`, {
             body,
-            data: {
-              type: 'team_chat',
-              conversationId: msg.conversation_id,
-              messageId: msg.id,
-            },
+            tag: `team-msg-${msg.conversation_id}`,
           });
+          notif.onclick = () => {
+            window.focus();
+            navigateToView('team-chat');
+          };
 
           log.debug('Team chat notification sent for message:', msg.id);
         }
