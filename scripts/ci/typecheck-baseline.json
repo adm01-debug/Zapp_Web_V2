@@ -48,24 +48,6 @@
       "contextHash": "296f94686c01c0db03888e6b312e13e94d5eeec67fdb3fb2e24dc47735b3e969"
     },
     {
-      "file": "src/components/connections/ConnectionCard.tsx",
-      "line": 221,
-      "column": 23,
-      "severity": "error",
-      "code": "TS2304",
-      "message": "Cannot find name 'handleDisconnectDialogOpenChange'.",
-      "contextHash": "b47b870dc8914fa1c793b461e52b267cdfeb9c636a4a6cfbe0b6a6a98307e971"
-    },
-    {
-      "file": "src/components/connections/ConnectionsView.tsx",
-      "line": 220,
-      "column": 73,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type '(connection: WhatsAppConnection) => Promise<boolean>' is not assignable to type '(c: WhatsAppConnection) => void | Promise<void>'. Type 'Promise<boolean>' is not assignable to type 'void | Promise<void>'. Type 'Promise<boolean>' is not assignable to type 'Promise<void>'. Type 'boolean' is not assignable to type 'void'.",
-      "contextHash": "55af550c718334bf387e7ae2c2925f8030c40ad1084593d9a464e80586dee5a0"
-    },
-    {
       "file": "src/components/dashboard/SentimentAlertsDashboard.tsx",
       "line": 14,
       "column": 38,
@@ -282,24 +264,6 @@
       "contextHash": "ecc8e64272360bff105e46ce88e577173804e2085864ba473248b2d14792d5a0"
     },
     {
-      "file": "src/components/inbox/chat/__tests__/MessageBubble.interactive-list-item.test.tsx",
-      "line": 90,
-      "column": 7,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type '{ message: Message; isFirstInGroup: true; isLastInGroup: true; ttsLoading: false; ttsPlaying: false; ttsMessageId: null; onSpeak: Mock<Procedure>; onStop: Mock<Procedure>; ... 7 more ...; registerRef: Mock<...>; }' is not assignable to type 'IntrinsicAttributes & MessageBubbleProps'. Property 'onInteractiveListItemClick' does not exist on type 'IntrinsicAttributes & MessageBubbleProps'. Did you mean 'onInteractiveButtonClick'?",
-      "contextHash": "0ac814e9e598545ffede5c59b7968fafecb7b39052c3fbd49b3cd294e00c3685"
-    },
-    {
-      "file": "src/components/inbox/chat/ChatMessagesArea.tsx",
-      "line": 452,
-      "column": 17,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type '{ message: Message; isFirstInGroup: boolean; isLastInGroup: boolean; contactAvatar: string | undefined; instanceName: string | undefined; contactJid: string | undefined; ... 16 more ...; registerRef: (el: HTMLDivElement | null) => void; }' is not assignable to type 'IntrinsicAttributes & MessageBubbleProps'. Property 'onInteractiveListItemClick' does not exist on type 'IntrinsicAttributes & MessageBubbleProps'. Did you mean 'onInteractiveButtonClick'?",
-      "contextHash": "b267f4622d840372cc578fc17235da22c1bc35694178824a94d951adc04d63cf"
-    },
-    {
       "file": "src/components/inbox/ChatPanel.tsx",
       "line": 375,
       "column": 42,
@@ -319,7 +283,7 @@
     },
     {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 596,
+      "line": 608,
       "column": 15,
       "severity": "error",
       "code": "TS2322",
@@ -328,7 +292,7 @@
     },
     {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 363,
+      "line": 374,
       "column": 11,
       "severity": "error",
       "code": "TS2322",
@@ -346,7 +310,7 @@
     },
     {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
-      "line": 477,
+      "line": 529,
       "column": 15,
       "severity": "error",
       "code": "TS2322",
@@ -624,15 +588,6 @@
       "contextHash": "2886f4a1a3d8f03498df7152ee766ae22ee5336829ca4de0cf665f018d478026"
     },
     {
-      "file": "src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx",
-      "line": 173,
-      "column": 50,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 2.",
-      "contextHash": "1a95e7db3b82516658ba38353dd932c2fa3efe1968836ac10106016eb2f6c999"
-    },
-    {
       "file": "src/hooks/inbox/useInboxBulkActions.ts",
       "line": 141,
       "column": 46,
@@ -678,24 +633,6 @@
       "contextHash": "c5773759595f9beee4be1c5c9dfc108ba86e4cd2c70996dac1f16c1c6ab0a170"
     },
     {
-      "file": "src/hooks/integrations/__tests__/useTalkXSuppression.test.ts",
-      "line": 35,
-      "column": 36,
-      "severity": "error",
-      "code": "TS2305",
-      "message": "Module '\"@/hooks/integrations/useTalkXSuppression\"' has no exported member 'BlacklistEntry'.",
-      "contextHash": "0cf221831f0beef56a246a5f81471198f5c06505ebe19ca844b438cb724362d3"
-    },
-    {
-      "file": "src/hooks/integrations/__tests__/useTalkXSuppression.test.ts",
-      "line": 35,
-      "column": 10,
-      "severity": "error",
-      "code": "TS2724",
-      "message": "'\"@/hooks/integrations/useTalkXSuppression\"' has no exported member named 'useTalkXSuppression'. Did you mean 'useTalkXSuppressionStats'?",
-      "contextHash": "0cf221831f0beef56a246a5f81471198f5c06505ebe19ca844b438cb724362d3"
-    },
-    {
       "file": "src/hooks/integrations/useGmail.ts",
       "line": 242,
       "column": 54,
@@ -715,7 +652,7 @@
     },
     {
       "file": "src/hooks/system/__tests__/configuracoes.leituraErro.test.tsx",
-      "line": 72,
+      "line": 73,
       "column": 47,
       "severity": "error",
       "code": "TS2339",
@@ -730,87 +667,6 @@
       "code": "TS2345",
       "message": "Argument of type '\"app_bootstrap\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | \"ai_budget_release\" | ... 270 more ... | \"user_has_permission\"'.",
       "contextHash": "183109a6f455279acb5084b759623aacb8578cf972097b72663d14ea6f523746"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 94,
-      "column": 27,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'all_read' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\"> | SelectQueryError<\"column 'message_id' does not exist on 'contacts'.\"> | ... 167 more ... | SelectQueryError<...>'. Property 'all_read' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\">'.",
-      "contextHash": "7dbd66f89f3071240c27f0cc5170c8477e334a5432e83f1d36aefef1052f2847"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 91,
-      "column": 34,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'conversation_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\"> | SelectQueryError<\"column 'message_id' does not exist on 'contacts'.\"> | ... 167 more ... | SelectQueryError<...>'. Property 'conversation_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\">'.",
-      "contextHash": "c92b99e72bc531e19d89e08dfb552af87f06337abe39bb877b3acdeed702e72c"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 92,
-      "column": 38,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'member_count' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\"> | SelectQueryError<\"column 'message_id' does not exist on 'contacts'.\"> | ... 167 more ... | SelectQueryError<...>'. Property 'member_count' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\">'.",
-      "contextHash": "2db3f6a31827402a76d51c9aa919756c3338503f2711f57941a2efec50537001"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 88,
-      "column": 21,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'message_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\"> | SelectQueryError<\"column 'message_id' does not exist on 'contacts'.\"> | ... 167 more ... | SelectQueryError<...>'. Property 'message_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\">'.",
-      "contextHash": "7279814c61e6f8f7212671d35872fe9b107cdedaf635fdc7fad0f66e769ed8f2"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 89,
-      "column": 20,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'message_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\"> | SelectQueryError<\"column 'message_id' does not exist on 'contacts'.\"> | ... 167 more ... | SelectQueryError<...>'. Property 'message_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\">'.",
-      "contextHash": "dbcc37224cc0457d8eeb8adaa7035de8b2bb79c74ec52aa32052d13aed38ced6"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 90,
-      "column": 29,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'message_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\"> | SelectQueryError<\"column 'message_id' does not exist on 'contacts'.\"> | ... 167 more ... | SelectQueryError<...>'. Property 'message_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\">'.",
-      "contextHash": "270acda5ac56b5feb8209c7f749a31b62193863a9b982e01662818ddf64fa9a3"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 93,
-      "column": 36,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'read_count' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\"> | SelectQueryError<\"column 'message_id' does not exist on 'contacts'.\"> | ... 167 more ... | SelectQueryError<...>'. Property 'read_count' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\">'.",
-      "contextHash": "2a654d1085cdc96dd26b52cccfd77147fb7e02e71bc902994b49bcbc952677a4"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 79,
-      "column": 17,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '\"conversation_id\"' is not assignable to parameter of type 'never'.",
-      "contextHash": "bf5e4a5018b942943323a3d4a529047dfe4588be34007b30a94b5875728aaa01"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 77,
-      "column": 19,
-      "severity": "error",
-      "code": "TS2769",
-      "message": "No overload matches this call. Overload 1 of 2, '(relation: \"profiles\" | \"contacts\" | \"ai_providers\" | \"audio_memes\" | \"whatsapp_connections\" | \"campaigns\" | \"channel_connections\" | \"queues\" | \"chatbot_flows\" | \"sales_deals\" | \"conversation_analyses\" | ... 158 more ... | \"whisper_messages\"): PostgrestQueryBuilder<...>', gave the following error. Argument of type '\"team_message_read_state\"' is not assignable to parameter of type '\"profiles\" | \"contacts\" | \"ai_providers\" | \"audio_memes\" | \"whatsapp_connections\" | \"campaigns\" | \"channel_connections\" | \"queues\" | \"chatbot_flows\" | \"sales_deals\" | \"conversation_analyses\" | ... 158 more ... | \"whisper_messages\"'. Overload 2 of 2, '(relation: \"profiles_public\" | \"whatsapp_connections_agent\" | \"whatsapp_connections_public\" | \"whatsapp_connections_safe\" | \"channel_connections_safe\" | \"gmail_accounts_safe\" | ... 5 more ... | \"talkx_engine_health\"): PostgrestQueryBuilder<...>', gave the following error. Argument of type '\"team_message_read_state\"' is not assignable to parameter of type '\"profiles_public\" | \"whatsapp_connections_agent\" | \"whatsapp_connections_public\" | \"whatsapp_connections_safe\" | \"channel_connections_safe\" | \"gmail_accounts_safe\" | \"talkx_campaign_metrics\" | ... 4 more ... | \"talkx_engine_health\"'.",
-      "contextHash": "037e0c89b17b2337dd6def20f60c8964b5e9344b20630490aa266090606e0609"
     },
     {
       "file": "src/hooks/ui/useOnboarding.ts",

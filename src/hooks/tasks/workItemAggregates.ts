@@ -99,7 +99,7 @@ export function bucketByDue(items: WorkItem[], now: Date = new Date()): BucketsB
 
 /** Fase F (auditoria): busca que ignora acento e caixa — "cafe" acha "Café". */
 function normalizarBusca(texto: string): string {
-  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
 /**

@@ -290,7 +290,11 @@ export function useDiagnosticsData() {
     if (messagesCountError) throw messagesCountError;
     const { count: connectionsCount, error: connectionsCountError } = await supabase
       .from('whatsapp_connections').select('id', { count: 'estimated', head: true });
-    if (connectionsCountError) throw connectionsCountError;
+    // Erro nesta contagem = banco inacessível: não lança (isso pularia o setHealth),
+    // propaga para dbError para que classifyHealth marque 'down'.
+    if (connectionsCountError && !dbError) {
+      dbError = connectionsCountError;
+    }
 
     const realtime = await probeRealtime();
 

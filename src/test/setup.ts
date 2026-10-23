@@ -128,12 +128,14 @@ globalThis.fetch = ((input: unknown, init?: unknown) => {
 }) as typeof fetch;
 
 // ==========================================================================
-// MOCK getBoundingClientRect — @tanstack/react-virtual no jsdom.
+// MOCK getBoundingClientRect / clientHeight / clientWidth — jsdom + virtualizer.
 //
-// O virtualizador mede a altura do contêiner por getBoundingClientRect() antes
-// de calcular quais itens são visíveis. O jsdom retorna zeros por padrão, então
-// getVirtualItems() retorna [] e nenhum item é renderizado (nem data-testid).
-// Retornar uma dimensão não-nula faz o virtualizador funcionar nos testes.
+// O @tanstack/react-virtual (v3+) mede o contêiner de rolagem por clientHeight
+// (via getRect → element.clientHeight), NÃO por getBoundingClientRect. O jsdom
+// retorna 0 para ambos por padrão, então outerSize===0 e getVirtualItems() não
+// retorna nenhum item. Mocks abaixo garantem 800×600 para toda instância de
+// HTMLElement — getBoundingClientRect cobre hooks que usam essa API diretamente
+// (ex.: useFilesContainerColumns); clientHeight/clientWidth cobrem o virtualizer.
 // Testes que precisam de valores específicos usam vi.spyOn e sobrescrevem isso.
 // ==========================================================================
 Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
@@ -141,6 +143,14 @@ Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
   value: function () {
     return { width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) };
   },
+});
+Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+  configurable: true,
+  get() { return 600; },
+});
+Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+  configurable: true,
+  get() { return 800; },
 });
 
 // ==========================================================================

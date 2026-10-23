@@ -174,7 +174,7 @@ test('E98: a lista de exceções não cresce em silêncio', () => {
   assert.equal(EXCECOES_TLS.size, 1, 'exceção de TLS mudou: confirme se o motivo ainda vale');
 });
 
-// E97 (auditoria de GitHub Actions, 2026-10-01): todo workflow com passo shell
+// E97 (auditoria de GitHub Actions, 2026-10-01 — SL-095): todo workflow com passo shell
 // roda com `-euo pipefail`. Sem isto, um `run:` multi-linha segue depois do
 // primeiro comando que falha — e o gate passa sem ter testado nada.
 //
@@ -545,7 +545,7 @@ function ancestrais(grafo, job) {
   return vistos;
 }
 
-test('E69: unit-tests/node-scripts não esperam o typecheck (rodam em paralelo)', () => {
+test('E69: test/node-scripts não esperam o lint-and-typecheck (rodam em paralelo)', () => {
   const grafo = grafoDeNeeds(wf['ci.yml']);
   for (const job of ['unit-tests', 'node-scripts']) {
     assert.ok(grafo.has(job), `job ${job} sumiu do ci.yml`);
