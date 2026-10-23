@@ -104,4 +104,20 @@ describe('InternalNotesPanel — selo com a lista de nomes indisponível', () =>
     expect(screen.getByText(/Falar com/)).toBeInTheDocument();
     expect(screen.getByText(/sobre o pedido/)).toBeInTheDocument();
   });
+
+  it('escapa pontuação no nome sem quebrar o reconhecimento da menção', async () => {
+    nomesMock.nomes = ['Ana (Suporte)'];
+    db.notes = [
+      {
+        id: 'n1',
+        content: 'Falar com @Ana (Suporte) sobre o pedido',
+        created_at: '2026-01-06T12:00:00',
+        author: { id: 'a1', name: 'Ana (Suporte)', avatar_url: null },
+      },
+    ];
+    renderPanel();
+
+    expect(await screen.findByText('@Ana (Suporte)')).toBeInTheDocument();
+    expect(screen.getByText(/sobre o pedido/)).toBeInTheDocument();
+  });
 });
