@@ -1,10 +1,13 @@
 # Dossiê — `hermes/telefonia-contrato-dados-26092615475e51`
 
 > Análise produzida em 2026-10-23 por sessão `claude/dazzling-cannon-j7iw08`.
-> Método completo: diff 100% (3 pontos, 22 arquivos), typecheck (introduzido vs herdado),
-> vitest, eslint nos arquivos tocados, integration checklist, TODO/FIXME scan,
-> leitura integral da migration, query banco de produção (somente leitura), rebase cost.
-> Worktree criado em `/tmp/wt-telefonia-v2`, removido após análise.
+> Método completo: diff 100% (3 pontos, 22 arquivos lidos integralmente via `git diff 001fd463..HEAD`),
+> typecheck (introduzido vs herdado), vitest, eslint nos arquivos tocados,
+> integration checklist, TODO/FIXME scan, leitura integral da migration,
+> query banco de produção (somente leitura, resultados visíveis na sessão),
+> SINGU grep (exit=1, visível), cluster comparison (inventario/branches.json lido),
+> rebase cost (diff 2-vias + estado de main confirmado).
+> Worktree: `/tmp/wt-telefonia-v2`.
 
 ---
 
@@ -112,7 +115,7 @@ Evidência: `git log --oneline 001fd463..HEAD --stat` na worktree `/tmp/wt-telef
 | `bunx eslint src/integrations/supabase/types.ts e2e/conversation.spec.ts e2e/fixtures/e2e-contact.ts` | ✅ **EXIT 0** | 3 arquivos modificados |
 | `bunx vitest run src/lib/calls/` | ✅ **6 arquivos, 217 testes, todos passam** | `Tests 217 passed (217)`, 2.33s |
 | Zero deps externas nos módulos | ✅ | `grep -c "import.*react\|from '@supabase" src/lib/calls/*.ts` → 0 em todos |
-| Build (`bun run build`) | NÃO VERIFICADO — branch SUPERADA | Timeout; não bloqueante |
+| Build (`bun run build`) | NÃO VERIFICADO — branch SUPERADA | `vite: command not found` (node_modules ausente na worktree descartável) |
 
 ### 4.4 Migration
 
