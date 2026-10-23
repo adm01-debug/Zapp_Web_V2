@@ -76,9 +76,12 @@ export function useGhostText({
   commandMenuOpen = false,
 }: UseGhostTextOptions): GhostTextState {
   // suffix + forInput: evita setState no body do effect (react-hooks/set-state-in-effect).
-  // O ghostSuffix visível é '' quando forInput !== inputValue atual (input mudou, completion antiga).
+  // inputGenRef incrementa a cada mudança de inputValue/enabled no effect (mutação de ref, sem setState).
+  // Usado apenas em callbacks assíncronos (não durante render) para descartar respostas de requests
+  // antigos quando o usuário continuou digitando ou desabilitou a feature antes da resposta chegar.
+  const inputGenRef = useRef(0);
   const [ghostState, setGhostState] = useState({ suffix: '', forInput: '' });
-  const ghostSuffix = ghostState.forInput === inputValue ? ghostState.suffix : '';
+  const ghostSuffix = enabled && ghostState.forInput === inputValue ? ghostState.suffix : '';
   const [suspended, setSuspended] = useState(false);
   const [loading, setLoading] = useState(false);
   const latencySamples = useRef<number[]>([]);
@@ -129,7 +132,7 @@ export function useGhostText({
   }, []);
 
   const requestCompletion = useCallback(
-    async (text: string) => {
+    async (text: string, genAtCall: number) => {
       if (!enabled || suspended || text.trim().length < MIN_INPUT_LEN) return;
       abortRef.current?.abort();
       abortRef.current = new AbortController();
@@ -154,6 +157,7 @@ export function useGhostText({
         );
         const elapsed = Date.now() - t0;
         recordLatency(elapsed);
+        if (genAtCall !== inputGenRef.current) return;
         if (error || !data?.suggestions?.length) {
           setGhostState({ suffix: '', forInput: text });
           return;
@@ -164,7 +168,7 @@ export function useGhostText({
         if (err instanceof Error && err.name !== 'AbortError') {
           log.error('ghost text: erro na requisição', { msg: err.message });
         }
-        setGhostState({ suffix: '', forInput: text });
+        if (genAtCall === inputGenRef.current) setGhostState({ suffix: '', forInput: text });
       } finally {
         setLoading(false);
       }
@@ -173,11 +177,17 @@ export function useGhostText({
   );
 
   useEffect(() => {
-    if (!enabled) return;
+    inputGenRef.current += 1;
+    const gen = inputGenRef.current;
+    if (!enabled) {
+      abortRef.current?.abort();
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      return;
+    }
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (inputValue.trim().length >= MIN_INPUT_LEN) {
       debounceRef.current = setTimeout(() => {
-        void requestCompletion(inputValue);
+        void requestCompletion(inputValue, gen);
       }, DEBOUNCE_MS);
     }
     return () => {
