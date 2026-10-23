@@ -53,6 +53,8 @@ export interface TalkXTemplateConversionState {
   error: Error | null;
 }
 
+export const EMPTY_CONVERSION: TalkXTemplateConversionState = { ranking: null, isLoading: false, isError: false, error: null };
+
 type ConversionRow = {
   template_id?: string | null;
   sent_count?: number | null;

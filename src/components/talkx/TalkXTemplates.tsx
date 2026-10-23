@@ -9,6 +9,7 @@ import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCa
 import { cn } from '@/lib/utils';
 import { useTalkXTemplates, type TalkXTemplate } from '@/hooks/integrations/useTalkXTemplates';
 import { useTalkXTemplateLibraryStats, pointsDelta } from '@/hooks/integrations/useTalkXTemplateStats';
+import { type TalkXTemplateConversionState, type TalkXTemplateConversion, SUGGESTION_MIN_SENT, EMPTY_CONVERSION } from '@/hooks/integrations/useTalkXTemplatesConversion';
 import { RailCard, RailAction, HeroCard, TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, extractVariables, fmtInt, fmtDateTime, fmtTime, TalkXConfirmDialog } from './talkxShared';
 import { useTalkXFilterState } from './kit/useFilterState';
 import { TalkXQueryBoundary } from './kit/states';

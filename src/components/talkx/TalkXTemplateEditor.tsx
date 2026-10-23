@@ -57,6 +57,10 @@ function usePainelLargo() {
 interface Props {
   templates: TalkXTemplate[];
   isLoading: boolean;
+  /** X047 — erro da consulta de templates propagado ao editor. */
+  isError?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
   editing: TalkXTemplate | null;
   onClose: () => void;
   /** X091 — clique do widget "Em andamento" abre o monitor da campanha. */
