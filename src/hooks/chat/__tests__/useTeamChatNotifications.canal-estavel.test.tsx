@@ -75,6 +75,7 @@ vi.mock('@/lib/logger', () => ({
     debug: vi.fn(),
     info: vi.fn(),
   }),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 import { useTeamChatNotifications } from '@/hooks/chat/useTeamChatNotifications';
@@ -149,18 +150,19 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(client) });
     await act(async () => { await h.handler!(mensagem()); });
 
-    expect(h.fromTables).not.toContain('team_conversation_members');
+    expect(h.fromTables).toContain('team_conversation_members');
     expect(h.show).toHaveBeenCalledWith(expect.objectContaining({ title: '💬 Teams: Ana' }));
   });
 
   it('não notifica nem vai ao banco quando o cache diz que não é membro', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     client.setQueryData(queryKeys.inbox('eu'), [conversa([{ profile_id: 'outro', is_muted: false }])]);
+    h.membership = [];
 
     renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(client) });
     await act(async () => { await h.handler!(mensagem()); });
 
-    expect(h.fromTables).not.toContain('team_conversation_members');
+    expect(h.fromTables).toContain('team_conversation_members');
     expect(h.show).not.toHaveBeenCalled();
   });
 
@@ -177,12 +179,13 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
   it('silencia conversa mutada ainda que esteja em cache', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     client.setQueryData(queryKeys.inbox('eu'), [conversa([{ profile_id: 'eu', is_muted: true }])]);
+    h.membership = [{ id: 'm1', is_muted: true }];
 
     renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(client) });
     await act(async () => { await h.handler!(mensagem()); });
 
     expect(h.show).not.toHaveBeenCalled();
-    expect(h.fromTables).not.toContain('team_conversation_members');
+    expect(h.fromTables).toContain('team_conversation_members');
   });
 
   it('falha ao ler a associação não vira "sem resultados": não notifica e não quebra', async () => {

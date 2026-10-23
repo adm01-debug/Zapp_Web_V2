@@ -84,7 +84,7 @@ export function useDailyMetricsKpis(days: number = DAILY_KPIS_DEFAULT_DAYS) {
   const query = useQuery({
     queryKey: ['dashboard', 'daily-metrics-kpis', days],
     queryFn: async (): Promise<DailyMetricRow[]> => {
-      const rpc = supabase.rpc as unknown as DashboardDailySeriesRpc;
+      const rpc = supabase.rpc.bind(supabase) as unknown as DashboardDailySeriesRpc;
       const { data, error } = await rpc('dashboard_daily_series', { p_days: days });
       if (error) throw error;
       return normalizeDailyMetricRows(data);
