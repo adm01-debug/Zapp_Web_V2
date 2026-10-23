@@ -42,7 +42,7 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | `wallet` | `ClientWalletView` | `src/components/wallet/ClientWalletView.tsx` | Full | `src/hooks/business/useClientWallet.ts` |
 | `catalog` | `ProductManagement` | `src/components/catalog/ExternalProductManagement.tsx` | Full | `src/hooks/integrations/useExternalCatalog.ts` |
 | `transcriptions` | `TranscriptionsHistoryView` | `src/components/transcriptions/TranscriptionsHistoryView.tsx` | Full | `src/components/transcriptions/TranscriptionsHistoryView.tsx` |
-| `admin` | `AdminView` | `src/components/admin/AdminView.tsx` | Full | `src/hooks/system/useUserRole.ts` |
+| `admin` | `AdminView` | `src/components/admin/AdminView.tsx` | Full | `src/components/admin/AdminView.tsx` |
 | `sentiment` | `SentimentAlertsDashboard` | `src/components/dashboard/SentimentAlertsDashboard.tsx` | Partial | `src/components/dashboard/SentimentAlertsDashboard.tsx` |
 | `reports` | `AdvancedReportsView` | `src/components/reports/AdvancedReportsView.tsx` | Partial | `src/components/reports/AdvancedReportsView.tsx` |
 | `security` | `SecurityView` | `src/components/security/SecurityView.tsx` | Full | `src/hooks/system/useUserRole.ts` |
