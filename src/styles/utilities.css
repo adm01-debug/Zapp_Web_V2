@@ -69,6 +69,18 @@
   .scrollbar-thin::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.2); border-radius: 2px; }
   .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.35); }
 
+  /* Safe areas and touch scrolling on mobile (viewport-fit=cover). */
+  @media (max-width: 767px) {
+    .safe-area-top { padding-top: env(safe-area-inset-top, 0); }
+    .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
+    .scrollbar-none {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .scrollbar-none::-webkit-scrollbar { display: none; }
+    body { overscroll-behavior-y: none; }
+  }
+
   /* Gradient Text */
   .gradient-text { @apply bg-clip-text text-transparent; background-image: var(--gradient-primary); }
   .gradient-text-secondary { @apply bg-clip-text text-transparent; background-image: var(--gradient-secondary); }

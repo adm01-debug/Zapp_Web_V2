@@ -65,8 +65,9 @@ interface ConversationListSidebarProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- retorno do gesto legado inclui handlers dinâmicos.
   pullToRefresh: any;
   conversationActions?: ReturnType<typeof useConversationActions>;
-  onOpenTalkMe?: () => void;
+  onOpenTalkMe?: React.MouseEventHandler<HTMLButtonElement>;
   talkMeCount?: number | null;
+  talkMeCountUnavailable?: boolean;
   talkMeLoading?: boolean;
   talkMeQueueName?: string;
   talkMeEnabled?: boolean;
@@ -80,6 +81,7 @@ export function ConversationListSidebar({
   conversationActions,
   onOpenTalkMe = () => undefined,
   talkMeCount = null,
+  talkMeCountUnavailable = false,
   talkMeLoading = false,
   talkMeQueueName,
   talkMeEnabled = false,
@@ -87,6 +89,15 @@ export function ConversationListSidebar({
   const isMobile = useIsMobile();
   const { isZen = false, toggleZen } = useLayoutContext();
   const contactSearchRef = useRef<HTMLInputElement>(null);
+  const talkMeQueueSuffix = talkMeQueueName ? ` em ${talkMeQueueName}` : '';
+  const talkMeWaitingLabel = talkMeCount === null
+    ? ''
+    : `${talkMeCount} ${talkMeCount === 1 ? 'atendimento aguardando' : 'atendimentos aguardando'}`;
+  const talkMeStatusLabel = talkMeCountUnavailable
+    ? 'contagem de atendimentos indisponível'
+    : talkMeWaitingLabel;
+  const talkMeAccessibleStatus = talkMeStatusLabel ? `: ${talkMeStatusLabel}` : '';
+  const talkMeTitleStatus = talkMeStatusLabel ? ` — ${talkMeStatusLabel}` : '';
 
   /* ── Largura ajustável da lista (desktop) ─────────────────────────────── */
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -403,12 +414,13 @@ export function ConversationListSidebar({
           {isMobile && talkMeEnabled && (
             <LiquidMetalButton
               data-testid="talk-me-button-mobile"
+              data-talkme-trigger="1"
               label="TALK ME"
               count={talkMeCount}
               loading={talkMeLoading}
               compact
-              aria-label={`TALK ME${talkMeCount === null ? '' : `: ${talkMeCount} atendimentos aguardando`}${talkMeQueueName ? ` em ${talkMeQueueName}` : ''}`}
-              title={`Abrir atendimentos aguardando${talkMeQueueName ? ` em ${talkMeQueueName}` : ''}`}
+              aria-label={`TALK ME${talkMeAccessibleStatus}${talkMeQueueSuffix}`}
+              title={`Abrir TALK ME${talkMeTitleStatus}${talkMeQueueSuffix}`}
               onClick={onOpenTalkMe}
             />
           )}
