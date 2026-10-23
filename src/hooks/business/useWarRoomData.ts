@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useAgentPresenceMap } from '@/hooks/crm/useAgentPresence';
 
+export const WARROOM_MAX_ROWS = 200;
+
 export interface WarRoomAgent {
   id: string;
   name: string;
@@ -102,6 +104,9 @@ export function useWarRoomData({ refetchInterval = 30000 }: WarRoomDataOptions =
       if (activeProfiles.error) throw activeProfiles.error;
 
       const rows = (today.data ?? []) as unknown as WarRoomAgentRpcRow[];
+      if (rows.length > WARROOM_MAX_ROWS) {
+        throw new Error(`warroom_agent_today devolveu ${rows.length} linhas (teto: ${WARROOM_MAX_ROWS})`);
+      }
       const userIdByProfile = new Map(
         (activeProfiles.data ?? []).map(p => [p.id, p.user_id ?? null] as const),
       );
@@ -145,6 +150,9 @@ export function useWarRoomData({ refetchInterval = 30000 }: WarRoomDataOptions =
       if (error) throw error;
 
       const rows = (data ?? []) as unknown as WarRoomQueueRpcRow[];
+      if (rows.length > WARROOM_MAX_ROWS) {
+        throw new Error(`warroom_queue_stats devolveu ${rows.length} linhas (teto: ${WARROOM_MAX_ROWS})`);
+      }
       return rows.map((q): WarRoomQueue => ({
         id: q.id,
         name: q.name,
