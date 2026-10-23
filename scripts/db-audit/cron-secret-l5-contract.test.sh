@@ -116,7 +116,7 @@ expect_error() {
     -c '\set VERBOSITY verbose' -c "$sql" 2>&1)"; status=$?
   set -e
   (( status == 0 )) && { printf '%s\n' "$output" >&2; fail "$label: deveria falhar, mas passou"; }
-  [[ "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: esperava '$needle' no erro"; }
+  [[  "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: esperava '$needle' no erro"; }
   printf '[PASS] %s\n' "$label"
 }
 # Como expect_error, mas aplicando um ARQUIVO inteiro de migration (o BLOCO D
@@ -581,7 +581,7 @@ expect_value_db 'C4 e volta tambem para authenticated' 't' \
 mutacao_evidencia="$( ( expect_value_db 'C5 (mutacao) anon NAO tem EXECUTE na RPC do health check' 'f' \
     "SELECT has_function_privilege('anon','$RPC_HEALTH','EXECUTE')" mutacao ) 2>&1 >/dev/null || true )"
 if [[ "$mutacao_evidencia" == *"[FAIL]"* && "$mutacao_evidencia" == *"esperado 'f', obtido 't'"* ]]; then
-  printf '[EVIDENCIA] %s\n' "$mutacao_evidencia"
+  printf '%s\n' "$mutacao_evidencia" | sed 's/\[FAIL\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'
   printf '[PASS] %s\n' 'C5 a assercao de ACL do BLOCO B FALHA com o REVOKE removido (exit != 0)'
 else
   printf '%s\n' "$mutacao_evidencia" >&2
@@ -763,7 +763,7 @@ if [[ "$d1_mut_evidencia" == *"[FAIL]"* && "$d1_mut_evidencia" == *'deveria falh
   # A mensagem crua da mutacao e a EVIDENCIA (e o teste do BLOCO B/D que deve falhar).
   # Rotula linha a linha: evidencia multi-linha nao pode sair como '[FAIL]' solto no log,
   # senao quem le (ou um grep de CI) conclui que o contrato falhou.
-  printf '%s\n' "$d1_mut_evidencia" | sed 's/^/[EVIDENCIA] /'
+  printf '%s\n' "$d1_mut_evidencia" | sed 's/\[FAIL\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'
   printf '[PASS] %s\n' 'D1 a assercao de segredo VAZIO FALHA com a checagem de formato afrouxada'
 else
   printf '%s\n' "$d1_mut_evidencia" >&2
@@ -772,7 +772,7 @@ fi
 d2_mut_evidencia="$( ( expect_error_file 'D2 (mutacao) segredo TRUNCADO deveria fazer a migration LEVANTAR' \
     d1_mut "$mut_sem_formato" 'ausente ou fora do formato' ) 2>&1 >/dev/null || true )"
 if [[ "$d2_mut_evidencia" == *"[FAIL]"* && "$d2_mut_evidencia" == *'deveria falhar, mas passou'* ]]; then
-  printf '%s\n' "$d2_mut_evidencia" | sed 's/^/[EVIDENCIA] /'
+  printf '%s\n' "$d2_mut_evidencia" | sed 's/\[FAIL\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'
   printf '[PASS] %s\n' 'D2 a assercao de segredo TRUNCADO FALHA com a checagem de formato afrouxada'
 else
   printf '%s\n' "$d2_mut_evidencia" >&2
@@ -797,7 +797,7 @@ psql_file_db d3_mut "$mut_sem_deteccao"
 d3_mut_evidencia="$( ( expect_value_db 'D3 (mutacao) sobra 1 job com o nome do escopo (a deteccao levantaria)' '1' \
     "SELECT count(*) FROM cron.job WHERE jobname = 'connection-health-check'" d3_mut ) 2>&1 >/dev/null || true )"
 if [[ "$d3_mut_evidencia" == *"[FAIL]"* && "$d3_mut_evidencia" == *"esperado '1', obtido '2'"* ]]; then
-  printf '[EVIDENCIA] %s\n' "$d3_mut_evidencia"
+  printf '%s\n' "$d3_mut_evidencia" | sed 's/\[FAIL\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'
   printf '[PASS] %s\n' 'D3 a assercao de homonimo FALHA sem a deteccao (o homonimo de outro dono sobrevive)'
 else
   printf '%s\n' "$d3_mut_evidencia" >&2
@@ -821,14 +821,14 @@ d4_jobid_evidencia="$( ( expect_value_db 'D4 (mutacao) o jobid deveria ser prese
 d4_active_evidencia="$( ( expect_value_db 'D4 (mutacao) o active=false deveria continuar' 'f' \
     "SELECT active FROM cron.job WHERE jobname = 'connection-health-check'" d4_mut ) 2>&1 >/dev/null || true )"
 if [[ "$d4_jobid_evidencia" == *"[FAIL]"* && "$d4_jobid_evidencia" == *"esperado '$jobid_antes_mut'"* ]]; then
-  printf '[EVIDENCIA] %s\n' "$d4_jobid_evidencia"
+  printf '%s\n' "$d4_jobid_evidencia" | sed 's/\[FAIL\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'
   printf '[PASS] %s\n' 'D4 a assercao de jobid preservado FALHA com unschedule+schedule (job recriado)'
 else
   printf '%s\n' "$d4_jobid_evidencia" >&2
   fail 'D4: a mutacao nao derrubou a assercao de jobid'
 fi
 if [[ "$d4_active_evidencia" == *"[FAIL]"* && "$d4_active_evidencia" == *"esperado 'f', obtido 't'"* ]]; then
-  printf '[EVIDENCIA] %s\n' "$d4_active_evidencia"
+  printf '%s\n' "$d4_active_evidencia" | sed 's/\[FAIL\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'
   printf '[PASS] %s\n' 'D4 a assercao de active=false preservado FALHA com unschedule+schedule (job religado)'
 else
   printf '%s\n' "$d4_active_evidencia" >&2
@@ -848,7 +848,7 @@ psql_file_db d5_mut "$mut_d5"
 d5_mut_evidencia="$( ( expect_value_db 'D5 (mutacao) service_role NAO deveria ter EXECUTE em apply_zapp_cron_secrets_l5()' 'f' \
     "SELECT has_function_privilege('service_role','public.apply_zapp_cron_secrets_l5()','EXECUTE')" d5_mut ) 2>&1 >/dev/null || true )"
 if [[ "$d5_mut_evidencia" == *"[FAIL]"* && "$d5_mut_evidencia" == *"esperado 'f', obtido 't'"* ]]; then
-  printf '[EVIDENCIA] %s\n' "$d5_mut_evidencia"
+  printf '%s\n' "$d5_mut_evidencia" | sed 's/\[FAIL\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'
   printf '[PASS] %s\n' 'D5 a assercao de ACL de service_role FALHA com service_role fora do REVOKE'
 else
   printf '%s\n' "$d5_mut_evidencia" >&2
