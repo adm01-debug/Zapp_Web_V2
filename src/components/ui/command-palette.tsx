@@ -252,7 +252,7 @@ export function CommandPalette({
                     {group.items.map((item, idx) => {
                       const gi = groupedCommands.slice(0, groupedCommands.indexOf(group)).reduce((a, g) => a + g.items.length, 0) + idx;
                       return (
-                        <motion.button key={item.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.02 }}
+                        <motion.button key={item.id} role="option" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.02 }}
                           onClick={() => executeCommand(item)} disabled={item.disabled}
                           className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', gi === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50', item.disabled && 'opacity-50 cursor-not-allowed')}>
                           <div className="flex items-center gap-3">
