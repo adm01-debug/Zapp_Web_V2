@@ -81,7 +81,7 @@ afterEach(() => {
 
 function abrirAuditoria() {
   render(<AdminView />);
-  fireEvent.click(screen.getByRole('button', { name: 'Auditoria' }));
+  fireEvent.click(screen.getByRole('tab', { name: /Auditoria/ }));
 }
 
 describe('AdminView — estados das listas (usuários e auditoria)', () => {
@@ -102,7 +102,7 @@ describe('AdminView — estados das listas (usuários e auditoria)', () => {
     expect(screen.queryByRole('table')).toBeNull();
     expect(screen.queryByText('Nenhum usuário cadastrado.')).toBeNull();
     // A página continua montada (a aba está lá); o que falta é o conteúdo.
-    expect(screen.getByRole('button', { name: /Usuários/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Usuários/ })).toBeInTheDocument();
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
@@ -130,7 +130,7 @@ describe('AdminView — estados das listas (usuários e auditoria)', () => {
     render(<AdminView />);
     expect(screen.getByPlaceholderText('Buscar usuários...')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'CRM 360°' }));
+    fireEvent.click(screen.getByRole('tab', { name: /CRM 360/ }));
     expect(screen.queryByPlaceholderText('Buscar usuários...')).toBeNull();
     expect(screen.queryByPlaceholderText('Buscar logs...')).toBeNull();
   });
