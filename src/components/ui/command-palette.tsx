@@ -248,7 +248,7 @@ export function CommandPalette({
               {groupedCommands.map((group) => (
                 <div key={group.title} className="mb-2">
                   <div className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground">{group.title}</span></div>
-                  <div className="space-y-0.5">
+                  <div role="listbox" aria-label="Resultados da busca" className="space-y-0.5">
                     {group.items.map((item, idx) => {
                       const gi = groupedCommands.slice(0, groupedCommands.indexOf(group)).reduce((a, g) => a + g.items.length, 0) + idx;
                       return (

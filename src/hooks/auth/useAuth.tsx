@@ -161,7 +161,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         clearInboxDraftSessions();
         // HZ2-016: idem para o rascunho do Chat de Equipe (`zapp.teamchat.draft:<uid>:*`).
         clearTeamChatDraftSessions();
-        void offlineSendQueue.clear();
+        offlineSendQueue.clear().catch((err) => log.error('[AuthProvider] offlineSendQueue.clear failed:', err));
       }
     });
 
@@ -234,7 +234,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
        clearInboxDraftSessions();
        // HZ2-016: idem para o rascunho do Chat de Equipe.
        clearTeamChatDraftSessions();
-       void offlineSendQueue.clear();
+       offlineSendQueue.clear().catch((err) => log.error('[AuthProvider] offlineSendQueue.clear failed:', err));
      }
    };
 
