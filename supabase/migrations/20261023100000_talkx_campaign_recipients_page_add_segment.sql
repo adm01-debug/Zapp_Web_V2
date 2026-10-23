@@ -1,8 +1,12 @@
--- N-095 addendum: adiciona p_segment_id (uuid) como 5o parametro e filtro
--- de segmento nas queries de total e paginacao.
+-- N-131 / N-095: adiciona parametro p_segment_id (uuid) a talkx_campaign_recipients_page.
 -- Rollback:
---   DROP FUNCTION IF EXISTS public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text);
---   (a versao 5-arg do migration 20261010062941 fica ativa automaticamente)
+--   REVOKE ALL ON FUNCTION public.talkx_campaign_recipients_page(uuid,integer,text,text,uuid,text) FROM PUBLIC, anon, authenticated, service_role;
+--   DROP FUNCTION IF EXISTS public.talkx_campaign_recipients_page(uuid,integer,text,text,uuid,text);
+--   (restaurar versao de 20261010062941 se necessario)
+--
+-- A funcao original (20261010062941) tem 5 argumentos sem p_segment_id.
+-- DROP + CREATE e necessario porque o PostgreSQL rejeita CREATE OR REPLACE
+-- que muda o numero de parametros.
 
 DROP FUNCTION IF EXISTS public.talkx_campaign_recipients_page(uuid, integer, text, text, text);
 
@@ -128,4 +132,4 @@ $$;
 REVOKE ALL ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text) TO authenticated, service_role;
 COMMENT ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text) IS
-  'Talk X (N-095/N-131): pagina de destinatarios por cursor keyset (created_at,id) com contato embutido, filtro de status, segmento e busca por nome/telefone; KPIs da campanha calculados no servidor. Retorna jsonb {rows,next_cursor,total,kpis}. Nenhum campo de origem/canal.';
+  'Talk X (N-131): pagina de destinatarios por cursor keyset (created_at,id) com contato embutido, filtros de status e segmento, busca por nome/telefone e KPIs da campanha calculados no servidor. Retorna jsonb {rows,next_cursor,total,kpis}. Nenhum campo de origem/canal.';

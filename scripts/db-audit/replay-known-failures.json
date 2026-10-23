@@ -2,7 +2,7 @@
   "_comment": "Falhas ESPERADAS do replay local (scripts/db-audit/replay-local.sh). Cada entrada e uma migration que nao aplica em banco vazio por motivo JA investigado e medido no banco canonico. O replay fica VERDE quando nao ha falha fora desta lista - e isso o transforma em gate contra drift novo. NUNCA adicione entrada sem medir o objeto no canonico e/ou apontar a versao substituta: o valor deste arquivo e ser a fronteira entre 'esperado' e 'regressao'.",
   "_metodo": "Medir o objeto real no canonico antes de aceitar: pg_proc (funcao ou coluna), pg_policies, information_schema. Receita em docs/MIGRATIONS.md secao 7.",
   "_contexto": "docs/audits/REPLAY_LOCAL_MIGRATIONS_2026-10-03.md",
-  "_atualizado_em": "2026-10-23",
+  "_atualizado_em": "2026-10-04",
   "esperadas": {
     "20260906000001_e31_contacts_is_lid_legacy.sql": {
       "categoria": "ambiente",
@@ -86,7 +86,7 @@
     },
     "20261011003008_talkx_n102c_window_open.sql": {
       "categoria": "arquivo-superado",
-      "motivo": "cannot change return type of existing function. A funcao talkx_campaign_recipients_page ja existe com assinatura de 5 argumentos no ponto do replay; esta migration tenta recriar com assinatura diferente. Superada por 20261023100000_talkx_campaign_recipients_page_add_segment.sql que faz DROP + CREATE correto. Canonico: funcao de 6 argumentos existe em producao."
+      "motivo": "cannot change return type of existing function. Migration 20261011000003 criou talkx_campaign_window_open com RETURNS TABLE (allowed boolean, reason text, next_window timestamptz); esta migration tenta CREATE OR REPLACE com RETURNS boolean, o que o PostgreSQL rejeita. A funcao final no canonico retorna boolean (assinatura de 20261011003008); a transicao foi aplicada de forma diferente na producao. Canonico: funcao talkx_campaign_window_open existe em producao com RETURNS boolean."
     },
     "20261012192938_team_chat_media_path_sender_conversation.sql": {
       "categoria": "arquivo-superado",
