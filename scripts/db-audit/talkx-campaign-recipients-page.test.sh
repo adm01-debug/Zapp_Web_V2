@@ -92,11 +92,9 @@ CREATE TABLE public.talkx_recipients (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   click_count integer NOT NULL DEFAULT 0,
-  manual_retry_count integer NOT NULL DEFAULT 0,
   replied_at timestamptz,
   read_at timestamptz
 );
-CREATE TABLE public.contacts (id uuid PRIMARY KEY, name text, phone text);
 SQL
 
 # call <papel> <uid> <argumentos SQL da funcao> -> jsonb
@@ -153,11 +151,6 @@ SELECT '$camp',
 FROM generate_series(1, 15) g;
 INSERT INTO public.talkx_recipients (campaign_id, contact_id, status) VALUES
   ('b0000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000999', 'pending');
-INSERT INTO public.contacts (id, name, phone)
-SELECT ('30000000-0000-0000-0000-000000000' || lpad((100 + g)::text, 3, '0'))::uuid,
-       CASE WHEN g <= 3 THEN 'Contato Alvo ' || g::text ELSE 'Contato Normal ' || g::text END,
-       '119' || lpad(g::text, 8, '0')
-FROM generate_series(1, 15) g;
 SQL
 
 # === Pagina 1 (5 de 15) ===
