@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 
 const mockFrom = vi.fn();
@@ -18,6 +18,19 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 import { useRateLimitLogs } from '@/hooks/system/useRateLimitLogs';
 
+beforeAll(() => {
+  if (!AbortSignal.any) {
+    (AbortSignal as unknown as { any: (signals: AbortSignal[]) => AbortSignal }).any = (signals) => {
+      const controller = new AbortController();
+      for (const s of signals) {
+        if (s.aborted) { controller.abort(s.reason); break; }
+        s.addEventListener('abort', () => controller.abort(s.reason), { once: true });
+      }
+      return controller.signal;
+    };
+  }
+});
+
 const mockLogs = [
   { id: '1', ip_address: '1.2.3.4', endpoint: '/api/messages', user_id: null, request_count: 50, blocked: false, user_agent: 'Chrome', country: 'BR', city: 'SP', created_at: '2024-01-01' },
   { id: '2', ip_address: '5.6.7.8', endpoint: '/api/auth', user_id: 'u1', request_count: 200, blocked: true, user_agent: 'Bot', country: 'US', city: 'NY', created_at: '2024-01-01' },
@@ -33,11 +46,13 @@ describe('useRateLimitLogs', () => {
   afterEach(() => vi.useRealTimers());
   beforeEach(() => {
     vi.clearAllMocks();
+    const q2 = {
+      limit: vi.fn().mockReturnValue(queryResult(mockLogs)),
+      range: vi.fn().mockReturnValue(queryResult(mockLogs)),
+    };
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockReturnValue(queryResult(mockLogs)),
-        }),
+        order: vi.fn().mockReturnValue({ order: vi.fn().mockReturnValue(q2) }),
       }),
     });
   });
@@ -83,9 +98,10 @@ describe('useRateLimitLogs', () => {
   it('handles empty logs', async () => {
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
+        order: vi.fn().mockReturnValue({ order: vi.fn().mockReturnValue({
           limit: vi.fn().mockReturnValue(queryResult([])),
-        }),
+          range: vi.fn().mockReturnValue(queryResult([])),
+        }) }),
       }),
     });
 
@@ -99,9 +115,10 @@ describe('useRateLimitLogs', () => {
   it('handles fetch error', async () => {
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
+        order: vi.fn().mockReturnValue({ order: vi.fn().mockReturnValue({
+          range: vi.fn().mockReturnValue(queryResult(null, new Error('fail'))),
           limit: vi.fn().mockReturnValue(queryResult(null, new Error('fail'))),
-        }),
+        }) }),
       }),
     });
 
@@ -114,9 +131,9 @@ describe('useRateLimitLogs', () => {
     const { result } = renderHook(() => useRateLimitLogs());
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(result.current.loading).toBe(false);
-    expect(mockFrom).toHaveBeenCalledTimes(1);
-    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
     expect(mockFrom).toHaveBeenCalledTimes(2);
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    expect(mockFrom).toHaveBeenCalledTimes(4);
     expect(mockChannel).not.toHaveBeenCalled();
   });
 
@@ -126,7 +143,7 @@ describe('useRateLimitLogs', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     unmount();
     await vi.advanceTimersByTimeAsync(60_000);
-    expect(mockFrom).toHaveBeenCalledTimes(1);
+    expect(mockFrom).toHaveBeenCalledTimes(2);
   });
 
   it('updates statistics together with refreshed rows', async () => {
@@ -134,7 +151,7 @@ describe('useRateLimitLogs', () => {
     const { result } = renderHook(() => useRateLimitLogs());
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     const updated = [{ ...mockLogs[0], request_count: 900, blocked: true }];
-    mockFrom.mockReturnValue({ select: vi.fn(() => ({ order: vi.fn(() => ({ limit: vi.fn(() => queryResult(updated)) })) })) });
+    mockFrom.mockReturnValue({ select: vi.fn(() => ({ order: vi.fn(() => ({ order: vi.fn(() => ({ limit: vi.fn(() => queryResult(updated)), range: vi.fn(() => queryResult(updated)) })) })) })) });
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
     expect(result.current.logs).toEqual(updated);
     expect(result.current.stats?.totalRequests).toBe(900);

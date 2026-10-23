@@ -78,7 +78,7 @@ async function fetchBreachedConversationIds(): Promise<string[]> {
 
 export function useWarRoomAlerts(soundEnabled?: boolean) {
   const queryClient = useQueryClient();
-  const { showNotification, permission } = usePushNotifications();
+  usePushNotifications(); // subscribes to push permission state — direct Notification() used below
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // Segunda batida do alerta crítico (`setTimeout`), para cancelar no desmonte.
   const segundaBatida = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -92,7 +92,7 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
   // fora do inbox) e não deve entrar no `mediaVolumeStore`. O volume dele é o volume de
   // alerta do painel (`user_settings.sound_volume`, 10-100) — não um valor fixo.
   useEffect(() => {
-    audioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgip6LbUg3WX2OgGtLPE51g3lgSkRHZXVzYFRDSWBwaV5WTFFcaGReW1haYmhkYl9eYGVpZ2VkZGRnamlnZmZnaGlpaGdnaGhpaWhoaGhpaWhoaGlpaGlpaGhpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaQ==');
+    audioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgip6LbUg3WX2OgGtLPE51g3lgSkRHZXVzYFRDSWBwaV5WTFFcaGReW1haYmhkYl9eYGVpZ2VkZGRmamlnZmZnaGlpaGdnaGhpaWloaGhpaWloaGlpaGlpaGhpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaQ==');
   }, []);
 
   // Volume do alerta = volume de alerta do painel (10-100 -> 0.1-1.0).
@@ -146,10 +146,9 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
             playAlertSound();
           }
 
-          // Push notification
-          if (permission === 'granted') {
-            showNotification({
-              title: `⚠️ ${alert.title}`,
+          // Direct browser notification (bypasses Service Worker)
+          if (settings.browserNotifications && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            new Notification(`⚠️ ${alert.title}`, {
               body: alert.message,
               tag: `warroom-${alert.id}`,
               requireInteraction: alert.alert_type === 'critical',
@@ -162,7 +161,7 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient, playAlertSound, permission, showNotification]);
+  }, [queryClient, playAlertSound, settings.browserNotifications]);
 
   // A segunda batida tem vida própria: este efeito (realtime) se refaz a cada mudança
   // de identidade de `showNotification`/`playAlertSound`, e limpar o timer no cleanup
