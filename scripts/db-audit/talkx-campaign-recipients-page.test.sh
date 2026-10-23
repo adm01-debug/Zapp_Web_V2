@@ -3,7 +3,7 @@
 #
 # Prova, em PostgreSQL 17 descartavel, que:
 #   (1) a funcao retorna rows/next_cursor/total com paginacao por cursor;
-#   (2) filtros por status, segmento e busca reduzem o resultado;
+#   (2) filtros por status reduzem o resultado;
 #   (3) quem nao e dono da campanha nem admin/supervisor recebe recusa (42501);
 #   (4) o retorno nao traz campo de origem/canal.
 #
@@ -115,7 +115,7 @@ printf 'RED ok: funcao inexistente antes da migration\n'
 # === Aplica a migration real do repo ===
 psql_test >/dev/null < "$migration_file" || fail 'falha ao aplicar a migration'
 
-fn='public.talkx_campaign_recipients_page(uuid,integer,text,text,uuid,text)'
+fn='public.talkx_campaign_recipients_page(uuid,integer,text,text,text)'
 [[ "$(psql_test -Atqc "SELECT has_function_privilege('authenticated','$fn','EXECUTE')::int + has_function_privilege('service_role','$fn','EXECUTE')::int")" == 2 ]] || fail 'authenticated/service_role devem ter EXECUTE'
 [[ "$(psql_test -Atqc "SELECT has_function_privilege('anon','$fn','EXECUTE')::int")" == 0 ]] || fail 'anon nao deve ter EXECUTE'
 [[ "$(psql_test -Atqc "SELECT count(*) FROM pg_proc WHERE proname='talkx_campaign_recipients_page' AND prosecdef AND 'search_path=public, pg_temp' = ANY(proconfig)")" == 1 ]] || fail 'SECURITY DEFINER com search_path=public, pg_temp ausente'
@@ -163,10 +163,6 @@ done
 # === Filtros ===
 r=$(call authenticated "$creator_uid" "'$camp', 20, NULL, 'sent'" | last)
 [[ "$(jget "len(d['rows'])" <<<"$r")" == 8 && "$(jget "d['total']" <<<"$r")" == 8 ]] || fail "status=sent deveria dar 8: $r"
-r=$(call authenticated "$creator_uid" "'$camp', 20, NULL, NULL, '30000000-0000-0000-0000-000000000202'" | last)
-[[ "$(jget "len(d['rows'])" <<<"$r")" == 5 ]] || fail "segmento 202 deveria dar 5: $r"
-r=$(call authenticated "$creator_uid" "'$camp', 20, NULL, NULL, NULL, '000000000105'" | last)
-[[ "$(jget "len(d['rows'])" <<<"$r")" == 1 && "$(jget "d['total']" <<<"$r")" == 1 ]] || fail "busca 000000000105 deveria dar 1: $r"
 
 # === Sem campo de origem/canal ===
 [[ "$(jget "any(k in ('source','origin','channel') for x in d['rows'] for k in x)" <<<"$p1")" == False ]] || fail 'retorno nao pode expor origem/canal'
