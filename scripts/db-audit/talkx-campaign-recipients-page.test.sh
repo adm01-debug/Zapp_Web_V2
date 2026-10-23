@@ -120,7 +120,7 @@ printf 'RED ok: funcao inexistente antes da migration\n'
 psql_test >/dev/null < "$migration_file" || fail 'falha ao aplicar a migration base'
 psql_test >/dev/null < "$migration_file2" || fail 'falha ao aplicar a migration de segmento'
 
-fn='public.talkx_campaign_recipients_page(uuid,integer,text,text,text)'
+fn='public.talkx_campaign_recipients_page(uuid,integer,text,text,uuid,text)'
 [[ "$(psql_test -Atqc "SELECT has_function_privilege('authenticated','$fn','EXECUTE')::int + has_function_privilege('service_role','$fn','EXECUTE')::int")" == 2 ]] || fail 'authenticated/service_role devem ter EXECUTE'
 [[ "$(psql_test -Atqc "SELECT has_function_privilege('anon','$fn','EXECUTE')::int")" == 0 ]] || fail 'anon nao deve ter EXECUTE'
 [[ "$(psql_test -Atqc "SELECT count(*) FROM pg_proc WHERE proname='talkx_campaign_recipients_page' AND prosecdef AND 'search_path=public, pg_temp' = ANY(proconfig)")" == 1 ]] || fail 'SECURITY DEFINER com search_path=public, pg_temp ausente'
@@ -150,10 +150,6 @@ SELECT '$camp',
 FROM generate_series(1, 15) g;
 INSERT INTO public.talkx_recipients (campaign_id, contact_id, status) VALUES
   ('b0000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000999', 'pending');
-INSERT INTO public.contacts (id, phone)
-SELECT ('30000000-0000-0000-0000-000000000' || lpad((100 + g)::text, 3, '0'))::uuid,
-       '000000000' || lpad((100 + g)::text, 3, '0')
-FROM generate_series(1, 15) g;
 SQL
 
 # === Pagina 1 (5 de 15) ===
@@ -179,7 +175,7 @@ done
 # === Filtros ===
 r=$(call authenticated "$creator_uid" "'$camp', 20, NULL, 'sent'" | last)
 [[ "$(jget "len(d['rows'])" <<<"$r")" == 8 && "$(jget "d['total']" <<<"$r")" == 8 ]] || fail "status=sent deveria dar 8: $r"
-r=$(call authenticated "$creator_uid" "'$camp', 20, NULL, NULL, '000000000105'" | last)
+r=$(call authenticated "$creator_uid" "'$camp', 20, NULL, NULL, NULL, '000000000105'" | last)
 [[ "$(jget "len(d['rows'])" <<<"$r")" == 1 && "$(jget "d['total']" <<<"$r")" == 1 ]] || fail "busca 000000000105 deveria dar 1: $r"
 
 # === Sem campo de origem/canal ===

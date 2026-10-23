@@ -250,10 +250,6 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
             body,
             tag: `team-msg-${msg.conversation_id}`,
           });
-          notif.onclick = () => {
-            window.focus();
-            navigateToView('team-chat');
-          };
 
           log.debug('Team chat notification sent for message:', msg.id);
         }
