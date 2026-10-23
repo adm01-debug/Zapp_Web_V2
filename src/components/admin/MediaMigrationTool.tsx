@@ -3,17 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { invokeEdge } from '@/lib/invokeEdge';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 
 interface AuditLogRow {
   id: string;
@@ -118,28 +107,7 @@ export function MediaMigrationTool() {
         ) : null}
       </div>
 
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button disabled={running}>Iniciar Migração</Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Iniciar a migração de mídia?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {pendingCount !== null
-                ? `${pendingCount} mídias aguardam migração para o storage interno.`
-                : 'As mídias serão migradas para o storage interno.'}
-              {' '}Esta operação pode levar alguns minutos.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void handleRun()}>
-              Iniciar migração
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <Button disabled={running} onClick={() => void handleRun()}>Iniciar Migração</Button>
 
       {running && (
         <div>
@@ -147,8 +115,9 @@ export function MediaMigrationTool() {
             role="progressbar"
             aria-label="Progresso da migração de mídia"
             aria-valuetext="Migrando mídias"
+            data-state="indeterminate"
           />
-          <p>Processando mídias... o total só aparece quando a execução termina.</p>
+          <p>Processando mídias...</p>
         </div>
       )}
 
