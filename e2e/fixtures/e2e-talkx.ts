@@ -106,7 +106,7 @@ export function buildE2EDraftCleanupUrl(
   campaignName: string,
   userId: string,
 ): URL {
-  assertSafeDraftName(campaignName);
+  assertSafeDraftNamawait page.locator('body').click();e(campaignName);
   if (!UUID_PATTERN.test(userId)) {
     throw new Error('Recusado: UUID do usuário inválido para cleanup de draft E2E.');
   }
