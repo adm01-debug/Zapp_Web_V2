@@ -76,8 +76,8 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   // Empresa/Cidade/UF. company/city/state seguem intactos (segmentos salvos).
   // requiresPreResolution: a resolução de audiência falha fechada enquanto o front
   // não resolver p_contact_ids via ponte Singu — nunca descarta a regra em silêncio.
-  { value: 'real_sector', label: 'Setor de atividade (real)', kind: 'enum', category: 'basico', requiresPreResolution: true },
-  { value: 'real_uf', label: 'UF (real)', kind: 'enum', category: 'basico', requiresPreResolution: true },
+  { value: 'real_sector', label: 'Setor de atividade (real)', kind: 'enum', category: 'basico', requiresPreResolution: true, comingSoon: true },
+  { value: 'real_uf', label: 'UF (real)', kind: 'enum', category: 'basico', requiresPreResolution: true, comingSoon: true },
   // Valores canônicos dos grupos (mesma lista que classifica public.contacts.group_category),
   // para a regra nunca oferecer categoria que o banco não guarda.
   { value: 'group_category', label: 'Grupo', kind: 'enum', category: 'basico', options: GROUP_CATEGORIES.map((c) => c.value) },

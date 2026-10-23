@@ -143,7 +143,7 @@ export function RealtimeInboxView() {
   // `snoozedIds` entra no filtro para a lista ativa suspender a conversa adiada e
   // retomá-la no vencimento do prazo (R2-INB-029).
   const inboxFilters = useInboxFilters({
-    conversations: inbox.cachedConversations,
+    conversations: inbox.cachedConversations ?? [],
     profileId: inbox.profile?.id,
     snoozedIds: conversationActions.snoozedIds,
   });

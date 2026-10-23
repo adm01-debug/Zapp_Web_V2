@@ -144,6 +144,11 @@ SELECT '$camp',
 FROM generate_series(1, 15) g;
 INSERT INTO public.talkx_recipients (campaign_id, contact_id, status) VALUES
   ('b0000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000999', 'pending');
+INSERT INTO public.contacts (id, name, phone)
+SELECT ('30000000-0000-0000-0000-000000000' || lpad((100 + g)::text, 3, '0'))::uuid,
+       CASE WHEN g <= 3 THEN 'Contato Alvo ' || g::text ELSE 'Contato Normal ' || g::text END,
+       '119' || lpad(g::text, 8, '0')
+FROM generate_series(1, 15) g;
 SQL
 
 # === Pagina 1 (5 de 15) ===
@@ -169,6 +174,10 @@ done
 # === Filtros ===
 r=$(call authenticated "$creator_uid" "'$camp', 20, NULL, 'sent'" | last)
 [[ "$(jget "len(d['rows'])" <<<"$r")" == 8 && "$(jget "d['total']" <<<"$r")" == 8 ]] || fail "status=sent deveria dar 8: $r"
+
+# === Busca por nome ===
+r=$(call authenticated "$creator_uid" "'$camp', 20, NULL, NULL, 'Alvo'" | last)
+[[ "$(jget "d['total']" <<<"$r")" == 3 && "$(jget "len(d['rows'])" <<<"$r")" == 3 ]] || fail "p_search='Alvo' deveria dar 3: $r"
 
 # === Sem campo de origem/canal ===
 [[ "$(jget "any(k in ('source','origin','channel') for x in d['rows'] for k in x)" <<<"$p1")" == False ]] || fail 'retorno nao pode expor origem/canal'
