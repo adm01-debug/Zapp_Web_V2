@@ -69,15 +69,15 @@ CREATE FUNCTION public.is_admin_or_supervisor(_user_id uuid)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT EXISTS (SELECT 1 FROM public.profiles WHERE user_id = _user_id AND role IN ('admin','supervisor'))
 $$;
-CREATE TABLE public.contacts (
-  id uuid PRIMARY KEY,
-  name text,
-  phone text
-);
 CREATE TABLE public.talkx_campaigns (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   created_by uuid REFERENCES public.profiles(id),
   status text NOT NULL DEFAULT 'draft'
+);
+CREATE TABLE public.contacts (
+  id uuid PRIMARY KEY,
+  name text,
+  phone text
 );
 CREATE TABLE public.talkx_recipients (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -91,6 +91,7 @@ CREATE TABLE public.talkx_recipients (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   click_count integer NOT NULL DEFAULT 0,
+  manual_retry_count integer NOT NULL DEFAULT 0,
   replied_at timestamptz,
   read_at timestamptz
 );
