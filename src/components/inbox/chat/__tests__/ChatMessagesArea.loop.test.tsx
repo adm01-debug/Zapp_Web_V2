@@ -15,9 +15,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Message } from '@/types/chat';
 import { ChatMessagesArea } from '../ChatMessagesArea';
 
-// ResizeObserverMock que dispara o callback de forma síncrona com guard de
-// recursão: evita stack overflow (o virtual-core re-observa itens dentro do
-// callback de medição) sem sair do ciclo de render síncrono do React.
+// ResizeObserverMock que dispara o callback de forma assíncrona (setTimeout 0)
+// para evitar stack overflow: o virtual-core re-observa itens dentro do callback
+// de medição, o que causa recursão infinita se o disparo for síncrono.
 class ResizeObserverMock {
   private cb: ResizeObserverCallback;
   private static _depth = 0;
@@ -83,6 +83,36 @@ vi.mock('@/services/chat.service', () => ({
 vi.mock('@/hooks/reactions/useBatchReactions', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ReactionsBatchProvider: ({ children }: { children: any }) => children,
+}));
+
+vi.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: (opts: {
+    count: number;
+    estimateSize: () => number;
+    getScrollElement: () => Element | null;
+    getItemKey?: (i: number) => unknown;
+  }) => {
+    const est = opts.estimateSize();
+    const items = Array.from({ length: opts.count }, (_, i) => ({
+      index: i,
+      key: opts.getItemKey ? opts.getItemKey(i) : i,
+      start: i * est,
+      size: est,
+      lane: 0 as const,
+    }));
+    return {
+      getVirtualItems: () => items,
+      getTotalSize: () => opts.count * est,
+      measureElement: vi.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      scrollToIndex: vi.fn().mockImplementation((index: number, _o?: any) => {
+        const el = opts.getScrollElement?.();
+        if (el) el.scrollTo({ top: index * est, behavior: 'auto' });
+      }),
+      measurementsCache: items,
+      cancelScroll: vi.fn(),
+    };
+  },
 }));
 
 function makeMessage(id: string, content: string): Message {

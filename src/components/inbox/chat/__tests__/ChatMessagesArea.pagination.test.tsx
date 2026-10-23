@@ -19,11 +19,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Message } from '@/types/chat';
 import { ChatMessagesArea } from '../ChatMessagesArea';
 
-// ResizeObserverMock síncrono com guard de recursão: garante que containerSize
-// seja atualizado dentro do ciclo act() do React (sem setTimeout que escapa do
-// ciclo e não aciona re-render visível ao waitFor).
-// Altura 120 é diferente do estimateSize (100) do componente: força a correção
-// estimate -> real logo depois do prepend, que é onde a âncora costuma pular.
+// Mesmo mock do ChatMessagesArea.loop.test.tsx: disparo assincrono do callback
+// (setTimeout 0) para nao recursar dentro da re-observacao do virtual-core.
+// Altura 120 e diferente do estimateSize (100) do componente: forca a correcao
+// estimate -> real logo depois do prepend, que e onde a ancora costuma pular.
 const ALTURA_ITEM = 120;
 class ResizeObserverMock {
   private cb: ResizeObserverCallback;
@@ -90,6 +89,36 @@ vi.mock('@/services/chat.service', () => ({
 vi.mock('@/hooks/reactions/useBatchReactions', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ReactionsBatchProvider: ({ children }: { children: any }) => children,
+}));
+
+vi.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: (opts: {
+    count: number;
+    estimateSize: () => number;
+    getScrollElement: () => Element | null;
+    getItemKey?: (i: number) => unknown;
+  }) => {
+    const est = opts.estimateSize();
+    const items = Array.from({ length: opts.count }, (_, i) => ({
+      index: i,
+      key: opts.getItemKey ? opts.getItemKey(i) : i,
+      start: i * est,
+      size: est,
+      lane: 0 as const,
+    }));
+    return {
+      getVirtualItems: () => items,
+      getTotalSize: () => opts.count * est,
+      measureElement: vi.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      scrollToIndex: vi.fn().mockImplementation((index: number, _o?: any) => {
+        const el = opts.getScrollElement?.();
+        if (el) el.scrollTo({ top: index * est, behavior: 'auto' });
+      }),
+      measurementsCache: items,
+      cancelScroll: vi.fn(),
+    };
+  },
 }));
 
 const MESMO_TIMESTAMP = new Date('2026-09-02T12:00:00Z');

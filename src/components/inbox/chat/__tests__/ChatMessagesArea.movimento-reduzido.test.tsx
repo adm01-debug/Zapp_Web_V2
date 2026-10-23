@@ -83,6 +83,36 @@ vi.mock('@/hooks/reactions/useBatchReactions', () => ({
   ReactionsBatchProvider: ({ children }: { children: any }) => children,
 }));
 
+vi.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: (opts: {
+    count: number;
+    estimateSize: () => number;
+    getScrollElement: () => Element | null;
+    getItemKey?: (i: number) => unknown;
+  }) => {
+    const est = opts.estimateSize();
+    const items = Array.from({ length: opts.count }, (_, i) => ({
+      index: i,
+      key: opts.getItemKey ? opts.getItemKey(i) : i,
+      start: i * est,
+      size: est,
+      lane: 0 as const,
+    }));
+    return {
+      getVirtualItems: () => items,
+      getTotalSize: () => opts.count * est,
+      measureElement: vi.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      scrollToIndex: vi.fn().mockImplementation((index: number, _o?: any) => {
+        const el = opts.getScrollElement?.();
+        if (el) el.scrollTo({ top: index * est, behavior: 'auto' });
+      }),
+      measurementsCache: items,
+      cancelScroll: vi.fn(),
+    };
+  },
+}));
+
 function makeMessage(id: string, sender: 'contact' | 'agent', timestamp: Date): Message {
   return {
     id,
