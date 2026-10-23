@@ -3014,20 +3014,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "copilot_feedback_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "copilot_feedback_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "copilot_feedback_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
