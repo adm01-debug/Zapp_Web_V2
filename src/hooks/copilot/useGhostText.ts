@@ -75,32 +75,36 @@ export function useGhostText({
   selectionEnd,
   commandMenuOpen = false,
 }: UseGhostTextOptions): GhostTextState {
-  const [ghostSuffix, setGhostSuffix] = useState('');
+  // suffix + forInput: evita setState no body do effect (react-hooks/set-state-in-effect).
+  // O ghostSuffix visível é '' quando forInput !== inputValue atual (input mudou, completion antiga).
+  const [ghostState, setGhostState] = useState({ suffix: '', forInput: '' });
+  const ghostSuffix = ghostState.forInput === inputValue ? ghostState.suffix : '';
   const [suspended, setSuspended] = useState(false);
   const [loading, setLoading] = useState(false);
   const latencySamples = useRef<number[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const dismiss = useCallback(() => setGhostSuffix(''), []);
+  const dismiss = useCallback(() => setGhostState({ suffix: '', forInput: '' }), []);
 
   const accept = useCallback(() => {
     if (ghostSuffix) {
       const insertAt = selectionEnd ?? inputValue.length;
       onAccept(inputValue.slice(0, insertAt) + ghostSuffix + inputValue.slice(insertAt));
-      setGhostSuffix('');
+      setGhostState({ suffix: '', forInput: '' });
     }
   }, [ghostSuffix, inputValue, selectionEnd, onAccept]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>): boolean => {
       if (!ghostSuffix) return false;
-      if (e.key === 'Tab' && !e.shiftKey) {
+      const kbCode = e.key;
+      if (kbCode === 'Tab' && !e.shiftKey) {
         e.preventDefault();
         accept();
         return true;
       }
-      if (e.key === 'Escape' && !commandMenuOpen) {
+      if (kbCode === 'Escape' && !commandMenuOpen) {
         e.preventDefault();
         dismiss();
         return true;
@@ -151,17 +155,17 @@ export function useGhostText({
         const elapsed = Date.now() - t0;
         recordLatency(elapsed);
         if (error || !data?.suggestions?.length) {
-          setGhostSuffix('');
+          setGhostState({ suffix: '', forInput: text });
           return;
         }
         const raw = data.suggestions[0].text ?? '';
         const suffix = raw.startsWith(text) ? raw.slice(text.length) : '';
-        setGhostSuffix(suffix.trim() ? ` ${suffix.trim()}` : '');
+        setGhostState({ suffix: suffix.trim() ? ` ${suffix.trim()}` : '', forInput: text });
       } catch (err) {
         if (err instanceof Error && err.name !== 'AbortError') {
           log.error('ghost text: erro na requisição', { msg: err.message });
         }
-        setGhostSuffix('');
+        setGhostState({ suffix: '', forInput: text });
       } finally {
         setLoading(false);
       }
@@ -170,8 +174,7 @@ export function useGhostText({
   );
 
   useEffect(() => {
-    if (!enabled) { setGhostSuffix(''); return; }
-    setGhostSuffix('');
+    if (!enabled) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (inputValue.trim().length >= MIN_INPUT_LEN) {
       debounceRef.current = setTimeout(() => {

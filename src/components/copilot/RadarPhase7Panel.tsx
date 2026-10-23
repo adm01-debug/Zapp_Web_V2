@@ -160,7 +160,7 @@ export function RadarPhase7Panel({
         {/* CV-066 — feedback da última sugestão exibida */}
         {lastSuggestionText && (
           <CopilotFeedback
-            suggestionId={`${conversationId}-${Date.now()}`}
+            suggestionId={`${conversationId}-${lastSuggestionText}`}
             onFeedback={(rating, reason) =>
               recordFeedback(`${conversationId}-last`, rating, reason)
             }

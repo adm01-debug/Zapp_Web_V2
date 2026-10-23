@@ -82,7 +82,7 @@ export function useFilesContainerColumns(
     if (!element) return;
     const w = element.getBoundingClientRect().width;
     if (w > 0) setWidth(w);
-  });
+  }, [ref]);
 
   const capacity = width === null ? null : columnsCapacity(width);
 
