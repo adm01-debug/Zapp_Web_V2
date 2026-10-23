@@ -190,7 +190,7 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
 // como separador de filtros — escapa-la geraria uma barra invertida espuria
 // no valor buscado (achado do Codex na PR #896: "Acme, Inc" deixava de bater
 // porque o escape da virgula, ao passar por esta funcao, dobrava a barra).
-const quoted = (v: string) => `"${v.replace(/[\\"]/, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
+const quoted = (v: string) => `"${v.replace(/[\\"]/,(c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
 
 const SINGU_BRIDGE_FIELDS = ['real_sector', 'real_uf'] as const;
 function checkSinguBridgeFields(rules: SegmentRules | null | undefined): void {
@@ -208,7 +208,7 @@ function ruleToFilter(r: SegmentRule): string | null {
   // "Em breve" nunca gera filtro PostgREST: a coluna não é calculada e qualquer
   // filtro sobre ela seria morto (sempre 0/nulo). Falha fechada via rulesToPostgrest.
   if (def.comingSoon) return null;
-  if ((SINGU_BRIDGE_FIELDS as readonly string[]).includes(r.field)) throw new Error(`${r.field}: requer p_contact_ids`);
+  if ((SINGU_BRIDGE_FIELDS as readonly string[]).includes(r.field)) throw new Error(`Regra de segmento inválida: ${r.field} requer p_contact_ids`);
   const v = r.value.trim();
   switch (r.op) {
     case 'is_set': return `${r.field}.not.is.null`;
