@@ -177,7 +177,7 @@ então esse caminho nunca foi executável por agente de qualquer forma.
 
 ## Auditoria e plano de correções (2026-09-16)
 
-**Plano vigente:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (auditoria exaustiva dos 16 arquivos de `.github/workflows/` (+3 workflows dinâmicos) + meta CI score 10/10; supercede PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md).
+**Plano vigente:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (auditoria exaustiva dos 15 arquivos atuais de `.github/workflows/` (+3 workflows dinâmicos; 18 no total) + meta CI score 10/10; supercede PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md).
 Auditoria exaustiva local↔GitHub↔banco em `docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md`.
 Estado dos achados após re-auditoria de 2026-09-17:
 - `messages` >75% dead tuples — **RESOLVIDO**: autovacuum executou em 2026-09-16 18:37; em
@@ -262,17 +262,20 @@ GitHub medida em 03/10/2026 (`docs/audits/e95-perimetro-github-2026-10-03.md`).
 
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
-Auditoria dos 16 workflows + 3 dinâmicos (19 total), da branch protection, dos secrets e dos environments. O que passou a
-valer (confira antes de propor mudança de CI, para não refazer o que já existe):
+Retrato da auditoria de 2026-09-25: 16 workflows + 3 dinâmicos (19 total), branch protection, secrets e environments. O que passou a
+valer naquele retrato (confira antes de propor mudança de CI, para não refazer o que já existe):
 
-**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions) — retificada em 05/10/2026:** são **16**
+**Snapshot histórico de 05/10/2026 (auditoria exaustiva de GitHub Actions):** naquele retrato havia 16
 arquivos em `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
 `codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`, `db-migrate.yml`,
 `deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `settings-guard.yml`, `supabase-sync.yml`,
 `talkx-status-regen.yml`, `targeted-ledger-evidence.yml`, `types-sync.yml`), mais 3 workflows dinâmicos
-que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — **19 no
-total**. A fonte canônica do inventário é o **gerado** `docs/ci/README.md`
-(`scripts/ci/render-workflow-docs.mjs --check`), não esta lista manual. Plano completo em
+que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — 19 no
+total naquela data. A lista é histórica; a fonte canônica atual do inventário é o **gerado** `docs/ci/README.md`
+(`scripts/ci/render-workflow-docs.mjs --check`), não esta lista manual.
+
+**Inventário vigente (2026-10-20):** **15** arquivos YAML em `.github/workflows/` e 3 workflows dinâmicos — 18 no total.
+Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.
 
 **Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
