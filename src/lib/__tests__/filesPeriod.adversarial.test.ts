@@ -191,7 +191,7 @@ describe('filesPeriod (adversarial) — intervalo personalizado nos extremos', (
     const itens = [
       item(iso(local(2026, 3, 8, 0, 0, 0, 0)), 'posterior'),
       item(iso(local(2026, 3, 7, 23, 59, 59, 999)), 'no-limite'),
-      item(iso(local(2026, 3, 6, 12, 0)), 'muito-antigo'),
+      item(iso(local(2020, 1, 1)), 'muito-antigo'),
     ];
     expect(filterByPeriod(itens, range).map((i) => i.id)).toEqual(['no-limite', 'muito-antigo']);
   });
