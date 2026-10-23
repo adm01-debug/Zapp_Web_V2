@@ -34,11 +34,21 @@ function avatarObjectPath(value: string | null): string | null {
 
 export interface UserWithRole {
   id: string;
+  user_id: string;
   name: string;
   email: string;
   role: AppRole;
   is_active: boolean;
   avatar_url: string | null;
+  nickname?: string | null;
+  signature?: string | null;
+  job_title?: string | null;
+  department?: string | null;
+  phone?: string | null;
+  access_level?: string;
+  max_chats?: number;
+  can_download?: boolean;
+  created_at?: string;
 }
 
 export interface CreateUserFieldError {
@@ -74,6 +84,14 @@ interface AuditParams {
   pageSize?: number;
 }
 
+function translateRoleChangeError(error: { code?: string; message?: string }): string {
+  if (error.code === '42501') return 'Acesso negado.';
+  const msg = error.message ?? '';
+  if (msg.includes('cannot_demote_self')) return 'Você não pode remover o próprio papel de administrador.';
+  if (msg.includes('cannot_demote_last_admin')) return 'A instalação precisa de pelo menos um administrador.';
+  return 'Erro ao atualizar papel.';
+}
+
 export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +100,9 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
   const [auditTotal, setAuditTotal] = useState(0);
   const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
+  const [createUserError, setCreateUserError] = useState<CreateUserFieldError | null>(null);
   const deletingIdRef = useRef<string | null>(null);
+  const inFlightToggleRef = useRef<Set<string>>(new Set());
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -111,7 +131,7 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
           toast.error('Erro ao carregar usuários');
           return;
         }
-        const raw = (profileData ?? []) as UserWithRole[];
+        const raw = (profileData ?? []).map((u: { id: string }) => ({ ...u, user_id: u.id })) as UserWithRole[];
         const signed = await Promise.all(
           raw.map(async (u) => {
             const path = avatarObjectPath(u.avatar_url);
@@ -166,23 +186,111 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
         return false;
       }
       setIsCreatingUser(true);
+      const invokeArgs = {
+        name: payload.name,
+        email: payload.email,
+        password: payload.password,
+        role: payload.role,
+      };
       try {
-        await invokeEdge('create-user', {
-          name: payload.name,
-          email: payload.email,
-          password: payload.password,
-          role: payload.role,
-        });
+        try {
+          await invokeEdge('create-user', invokeArgs);
+        } catch (err) {
+          const parsed = await readEdgeError(err);
+          if (parsed.status === 401) {
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              setCreateUserError({ field: null, message: 'Erro ao criar usuário' });
+              toast.error('Erro ao criar usuário');
+              return false;
+            }
+            try {
+              await invokeEdge('create-user', invokeArgs);
+            } catch (retryErr) {
+              const rp = await readEdgeError(retryErr);
+              const fe = mapCreateUserError(rp.message);
+              setCreateUserError(fe);
+              toast.error(fe.message);
+              return false;
+            }
+          } else {
+            const fe = mapCreateUserError(parsed.message);
+            setCreateUserError(fe);
+            toast.error(fe.message);
+            return false;
+          }
+        }
+        setCreateUserError(null);
+        toast.success('Usuário criado com sucesso!');
         await fetchData();
         return true;
-      } catch (err) {
-        log.error('handleCreateUser error', err);
-        return false;
       } finally {
         setIsCreatingUser(false);
       }
     },
     [fetchData]
+  );
+
+  const handleRoleChange = useCallback(
+    async (userId: string, role: AppRole): Promise<void> => {
+      const { error: rpcError } = await supabase.rpc('admin_set_role', {
+        _user_id: userId,
+        _role: role,
+      });
+      if (rpcError) {
+        toast.error(translateRoleChangeError(rpcError as { code?: string; message?: string }));
+        return;
+      }
+      toast.success('Papel atualizado com sucesso.');
+      await fetchData();
+    },
+    [fetchData]
+  );
+
+  const handleToggleActive = useCallback(
+    async (user: UserWithRole): Promise<void> => {
+      if (inFlightToggleRef.current.has(user.id)) return;
+      inFlightToggleRef.current.add(user.id);
+      try {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ is_active: !user.is_active })
+          .eq('id', user.id);
+        if (updateError) {
+          toast.error('Erro ao atualizar status do usuário.');
+          return;
+        }
+        toast.success(user.is_active ? 'Usuário desativado.' : 'Usuário ativado.');
+        await fetchData();
+      } finally {
+        inFlightToggleRef.current.delete(user.id);
+      }
+    },
+    [fetchData]
+  );
+
+  const handleSaveRamal = useCallback(
+    async (profileId: string, ramal: string, sipPassword: string): Promise<boolean> => {
+      const { error: rpcError } = await supabase.rpc('set_voip_profile_credentials', {
+        p_profile_id: profileId,
+        p_ramal: ramal,
+        p_sip_password: sipPassword,
+      });
+      if (rpcError) {
+        const msg = (rpcError as { message?: string }).message ?? '';
+        if (msg.includes('ramal_em_uso')) {
+          toast.error('Este ramal já está em uso por outro atendente.');
+        } else if (msg.includes('not_authorized')) {
+          toast.error('Apenas administradores podem definir o ramal.');
+        } else {
+          toast.error('Erro ao salvar ramal.');
+        }
+        return false;
+      }
+      toast.success('Ramal salvo com sucesso.');
+      return true;
+    },
+    []
   );
 
   // Legacy fetchUsers kept for existing callers
@@ -201,7 +309,7 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
         }
         return;
       }
-      const raw = (data ?? []) as UserWithRole[];
+      const raw = (data ?? []).map((u: { id: string }) => ({ ...u, user_id: u.id })) as UserWithRole[];
       const signed = await Promise.all(
         raw.map(async (u) => {
           const path = avatarObjectPath(u.avatar_url);
@@ -233,7 +341,7 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
         });
         if (!(response as { ok?: boolean }).ok) {
           const errMsg = await readEdgeError(response as Response);
-          return mapCreateUserError(errMsg);
+          return mapCreateUserError(errMsg.message);
         }
         toast.success('Usuário criado com sucesso');
         await fetchUsers();
@@ -298,7 +406,7 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
         const response = await invokeEdge('delete-user', { userId });
         if (!(response as { ok?: boolean }).ok) {
           const errMsg = await readEdgeError(response as Response);
-          toast.error(errMsg ?? 'Erro ao excluir usuário');
+          toast.error(errMsg.message ?? 'Erro ao excluir usuário');
           return false;
         }
         toast.success('Usuário excluído com sucesso');
@@ -324,9 +432,13 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
     auditTotal,
     isCreatingUser,
     isDeletingUser,
+    createUserError,
     deletingIdRef,
     fetchData,
     handleCreateUser,
+    handleRoleChange,
+    handleToggleActive,
+    handleSaveRamal,
     fetchUsers,
     createUser,
     updateUserRole,

@@ -39,7 +39,7 @@ partir do código e falha quando:
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:91` |
 | `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:62` · `src/components/inbox/chat/AIRewriteButton.tsx:50` |
 | `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
-| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:126` · `src/hooks/integrations/useKnowledgeBase.ts:197` |
+| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:133` · `src/hooks/integrations/useKnowledgeBase.ts:204` |
 | `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:102` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1400` |
@@ -56,7 +56,7 @@ partir do código e falha quando:
 | `classify-sticker` | A | `src/components/inbox/chat/MessageBubble.tsx:329` · `src/hooks/sticker-picker/useStickerPicker.ts:148` · `supabase/functions/_shared/evolution-webhook-messages.ts:1377` |
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
 | `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:101` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/components/monitoring/hooks/useMonitoringActions.ts:18` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
-| `create-user` | A | `src/components/admin/useAdminData.ts:448` · `src/components/admin/useAdminData.ts:455` |
+| `create-user` | A | `src/components/admin/useAdminData.ts:197` · `src/components/admin/useAdminData.ts:336` |
 | `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/migrations/20261016011302_crm_sync_outbox_cron.sql:34` · `supabase/config.toml:55` |
 | `csp-report` | D | `supabase/config.toml:58` |
 | `detect-new-device` | A | `src/lib/avisoDispositivo.ts:117` |
