@@ -156,12 +156,12 @@ CREATE POLICY "Admins can view reset requests" ON public.password_reset_requests
 CREATE POLICY "Users can request own password reset" ON public.password_reset_requests FOR INSERT TO authenticated
   WITH CHECK (user_id = auth.uid());
 
--- Gatilhos REAIS, com o corpo vigente (a referencia a reset_token E o defeito)
+-- Gatilhos REAIS, corpo vigente apos 20261006231105 (reset_token removida em 20260411111454)
 CREATE OR REPLACE FUNCTION public.sanitize_reset_request()
  RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public' AS $function$
 BEGIN
   IF auth.uid() IS NOT NULL THEN
-    NEW.reset_token := NULL;
+    -- A coluna reset_token foi REMOVIDA em 20260411111454; nao referenciar aqui.
     NEW.token_expires_at := NULL;
     NEW.reviewed_by := NULL;
     NEW.reviewed_at := NULL;

@@ -93,6 +93,7 @@ export function useUserSettings() {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   // Escolha feita na tela nesta sessão. Sem isso, um fetch que responde atrasado
   // (login lento, troca de usuário) aplica o valor do banco por cima do que o
@@ -133,6 +134,7 @@ export function useUserSettings() {
         if (error && error.code !== 'PGRST116') {
           // PGRST116 = no rows returned
           log.error('Error fetching settings:', error);
+          setIsError(true);
           return;
         }
 
@@ -293,6 +295,7 @@ export function useUserSettings() {
     settings,
     isLoading,
     isSaving,
+    isError,
     updateSettings,
     saveSettings,
     resetSettings,
