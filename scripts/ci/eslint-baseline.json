@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "command": "eslint . --format json",
   "eslintVersion": "9.32.0",
-  "eslintConfigSha256": "9e63ecfc90d89ad9c7301e29f7e6e9dbda238aa561d33fb496af781cfff9d2c2",
+  "eslintConfigSha256": "efe6299cb84142d5526a20255fee5d1563b865787a8e62d12e4b73e022188a11",
   "files": [
     {
       "path": "e2e/inbox-contact-sidebar.spec.ts",
@@ -398,7 +398,7 @@
     },
     {
       "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
-      "sha256": "51109d10cfa2419d2d3cb7b262c72ab5a54b84a401cfa93c95ae936a520573d9"
+      "sha256": "59addfbfddbd1615559e4721fd3410b9a2d83838afdc1fc7cb0e18f536d1aedf"
     },
     {
       "path": "src/components/inbox/chat/ChatSearchBar.tsx",
@@ -422,7 +422,7 @@
     },
     {
       "path": "src/components/inbox/chat/MessageBubble.tsx",
-      "sha256": "b26c3697607a48af8aadd4bb9042f54df7ec9683290d9607261c05a779a0eabb"
+      "sha256": "06dd5b7a7b5ce40b1dd9c3c6e7a0d47a31e71d2aa0b3665c842433023c313963"
     },
     {
       "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
@@ -1165,6 +1165,10 @@
       "sha256": "ea6f0869db804891ba4449b468bfe270ae233e438b91a95033ebedeb00b9e8d4"
     },
     {
+      "path": "src/hooks/chat/useFilesContainerColumns.ts",
+      "sha256": "93745dd019cbe86a17a77d365d3859527c771deb47c432ac122dbbcf90e4ad2b"
+    },
+    {
       "path": "src/hooks/chat/useFilesSelection.ts",
       "sha256": "4b12a7a34983f9c58d1d2f7c39aaefe10980ff6ad30d22b08e95560e3386e5c2"
     },
@@ -1218,7 +1222,7 @@
     },
     {
       "path": "src/hooks/gamification/useAgentCelebrations.ts",
-      "sha256": "4f98f75128cbbb5acc341139d18305630b8dbc78dafaf2f8fa07388b236f68e4"
+      "sha256": "7124d883163763f80fb48de955bd04f33703046bdae86466d151360204984c86"
     },
     {
       "path": "src/hooks/inbox/useConnectionQueues.ts",
@@ -10335,6 +10339,20 @@
       "contextHash": "8c2b14949a6f3e8da1d4b51d6521f488c5b27c5f62ac0b65b6d6cb5569cd6298"
     },
     {
+      "file": "src/hooks/chat/useFilesContainerColumns.ts",
+      "line": 80,
+      "column": 3,
+      "endLine": 80,
+      "endColumn": 18,
+      "severity": 1,
+      "ruleId": "react-hooks/exhaustive-deps",
+      "messageId": null,
+      "message": "React Hook useLayoutEffect contains a call to 'setWidth'. Without a list of dependencies, this can lead to an infinite chain of updates. To fix this, pass [ref] as a second argument to the useLayoutEffect Hook.",
+      "spanHash": "f809da716dd5e0b8e2dd13835aad869333a029adadb27afdc27801bd71409b9b",
+      "lineHash": "d4000bc37df2aee66354e6a5816cb8f6161295473edf29eeb0746935989c873b",
+      "contextHash": "c3ffa0e0b0dbccc39a16df958a47793d8d3ce92b93514ccc1f12391074cc8f03"
+    },
+    {
       "file": "src/hooks/chat/useFilesSelection.ts",
       "line": 40,
       "column": 7,
@@ -10560,9 +10578,9 @@
     },
     {
       "file": "src/hooks/gamification/useAgentCelebrations.ts",
-      "line": 266,
+      "line": 277,
       "column": 46,
-      "endLine": 266,
+      "endLine": 277,
       "endColumn": 59,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
