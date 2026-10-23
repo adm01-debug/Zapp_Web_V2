@@ -73,7 +73,7 @@ function CronJobsPanel() {
 
   useEffect(() => {
     async function fetchJobs() {
-      const { data } = await (supabase.rpc as (name: string) => Promise<{ data: unknown; error: unknown }>)('admin_list_cron_jobs');
+      const { data } = await (supabase.rpc as unknown as (name: string) => Promise<{ data: unknown; error: unknown }>)('admin_list_cron_jobs');
       if (data) setJobs(data as unknown as CronJob[]);
       setCronLoading(false);
     }
