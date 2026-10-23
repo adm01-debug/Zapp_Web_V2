@@ -4,12 +4,12 @@
     {
       "branch": "hermes/telefonia-contrato-dados-26092615475e51",
       "tip_sha": "4c41d3b1",
-      "veredito": "FUNCIONAL_MERGEADO",
+      "veredito": "SUPERADA",
       "confianca": 0.95,
       "dossie": "analise/dossies/hermes-telefonia-contrato-dados-26092615475e51.md",
       "analisado_em": "2026-10-23",
       "sessao": "claude/dazzling-cannon-j7iw08",
-      "notas": "Phases 1-2 of telephony plan (domain library + DB schema). Content already merged to main as 20260926800000 migration and src/lib/calls/ modules. Project advanced to T74+ in main."
+      "notas": "Phases 1-2 of telephony plan (domain library + DB schema). Content 100% in main: 9 cols + 4 RPCs in prod (20260926800000), src/lib/calls/ evolved to 21 files. Project at T74+ in main. Verified: typecheck 0 errors, 217 tests pass, migration 100% additive, no SINGU refs, no remote writes."
     }
   ]
 }

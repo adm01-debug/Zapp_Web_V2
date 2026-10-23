@@ -1,35 +1,25 @@
 # Dossiê — `hermes/telefonia-contrato-dados-26092615475e51`
 
 > Análise produzida em 2026-10-23 por sessão `claude/dazzling-cannon-j7iw08`.
-> Evidências: git diff, leitura de todos os arquivos do branch, `docs/design/TELEFONIA_STATUS.md` (gate da sessão autora).
+> Método completo: diff 100%, typecheck, vitest, leitura da migration, consulta ao banco de produção.
+> Worktree criado em `/tmp/wt-telefonia`, removido após análise.
 
 ---
 
 ## 1. Intenção
 
-**Fase 1 + Fase 2** do plano de telefonia (`docs/design/PLANO_MELHORIAS_TELEFONIA_100_ETAPAS.md`):
+**Fases 1 e 2** do plano de telefonia (`docs/design/PLANO_MELHORIAS_TELEFONIA_100_ETAPAS.md`):
 
 - **Fase 1 (etapas 10–17):** biblioteca de domínio pura TypeScript — tipos canônicos de estado/resultado/duração/telefone/capacidades, máquina de estados SIP, contrato de eventos `zapp:start-call`.
-- **Fase 2 (etapas 18–25):** extensão aditiva do schema `public.calls` (9 novas colunas, 3 constraints, 2 índices, realtime), 4 novas RPCs, backfill de `channel`, `peer_number`, `peer_name` nos registros históricos, prova de RLS em PostgreSQL 17 descartável.
+- **Fase 2 (etapas 18–25):** extensão aditiva do schema `public.calls` (9 novas colunas, 3 constraints, 2 índices, realtime), 4 novas RPCs, backfill de `channel`/`peer_number`/`peer_name` nos registros históricos, prova de RLS em PostgreSQL 17 descartável.
+
+Critério implícito de "pronto": módulos TypeScript com zero dependências externas, 215+ testes unitários verdes, migration idempotente com prova de RLS em Postgres descartável, `tsc` e `db:guard` limpos.
 
 Executor: **Hermes** (Claude Code no WSL), workspace isolado por tarefa.
 
 ---
 
-## 2. Critérios de análise
-
-| Critério | Resposta curta |
-|---|---|
-| Funcional ou abandonado? | **Funcional e completo nas fases 1-2** |
-| Lógica de negócio implementada? | Sim — domínio puro, 215+ testes, gates verdes |
-| Precisa de UI/consumidores? | Sim — nenhum consumidor ainda neste branch |
-| Conflito com main? | **SUPERADO** — conteúdo já mergeado; migration re-versionada como `20260926800000` |
-| Risco SINGU? | **Nenhum** — nenhuma referência ao projeto `pgxfvjmuubtbowutlide` |
-| Risco DDL destrutivo? | **Nenhum** — migration 100% aditiva (IF NOT EXISTS, ADD COLUMN, CHECK ampliado) |
-
----
-
-## 3. Resumo do diff (6 commits exclusivos)
+## 2. Commits exclusivos
 
 ```
 88cae0e0  chore(telefonia): ledger, matriz de capacidades e o plano das 100 etapas
@@ -40,86 +30,113 @@ c3fc72cc  refactor(telefonia): unifica EndReason e o mapa SIP em ./callStatus (d
 4c41d3b1  docs(telefonia): registra a outra migration pendente na main e a ordem de apply
 ```
 
-Arquivos criados/modificados vs. main do momento de análise:
+Base SHA: `001fd463` (merge de `#873` — `hermes/fix-e2e-nome-lista-26092615369eb1`).
+
+---
+
+## 3. Diff completo (22 arquivos, 4 713 inserções, 2 deleções)
+
+Evidência: `git diff 001fd463b..HEAD --stat` na worktree `/tmp/wt-telefonia`.
 
 | Arquivo | Tipo | Conteúdo |
 |---|---|---|
 | `src/lib/calls/callStatus.ts` | NOVO | Tipos canônicos + `normalizeStatus`, `toResult`, `sipCodeToEndReason`, tabelas pt-BR |
-| `src/lib/calls/session.ts` | NOVO | Máquina de estados SIP pura (`reduce`), 8 estados, invariantes |
+| `src/lib/calls/session.ts` | NOVO | Máquina de estados SIP pura (`reduce`), 8 estados |
 | `src/lib/calls/events.ts` | NOVO | Contrato `zapp:start-call`, compat. legada `start-voip-call` |
 | `src/lib/calls/duration.ts` | NOVO | `talkSeconds`, `formatClock`, `formatTalk` |
-| `src/lib/calls/phone.ts` | NOVO | Normalização E.164 BR, `phonesMatchExact` (só exato, nunca sufixo) |
+| `src/lib/calls/phone.ts` | NOVO | Normalização E.164 BR, `phonesMatchExact` (só exato) |
 | `src/lib/calls/capabilities.ts` | NOVO | `ChannelCapability`, `CapabilityReason`, `REASON_LABEL` |
-| `src/lib/calls/__tests__/` | NOVO | 6 arquivos de teste, 215 testes totais |
-| `supabase/migrations/20260926190000_calls_telefonia_v2.sql` | NOVO | 9 colunas, 3 checks, 2 índices, 4 RPCs, realtime |
+| `src/lib/calls/__tests__/` | NOVO | 6 arquivos de teste |
+| `supabase/migrations/20260926190000_calls_telefonia_v2.sql` | NOVO | 9 colunas, 3 checks, 2 índices, 4 RPCs, realtime (596 linhas) |
 | `src/integrations/supabase/types.ts` | MODIFICADO | +9 colunas em `calls`, +4 RPCs tipadas |
-| `docs/design/TELEFONIA_STATUS.md` | NOVO | Ledger de gates CP0-CP2 |
-| `docs/telefonia/CONTRATO.md` | NOVO | Contrato de domínio (channel, status, result, duration) |
+| `docs/design/TELEFONIA_STATUS.md` | NOVO | Ledger de gates CP0–CP2 |
+| `docs/telefonia/CONTRATO.md` | NOVO | Contrato de domínio |
 | `docs/design/PLANO_MELHORIAS_TELEFONIA_100_ETAPAS.md` | NOVO | Plano das 100 etapas |
 | `docs/telefonia/CAPACIDADES.md` | NOVO | Matriz de capacidades por canal |
+| `scripts/db-audit/calls-telefonia-contract.test.sh` | NOVO | 352 linhas, script de prova de RLS em Postgres descartável |
+| `.github/workflows/db-guard.yml` | MODIFICADO | +5 linhas: novo step "Simular contrato de dados da Telefonia v2" |
+| `e2e/conversation.spec.ts` | MODIFICADO | Troca `E2E_FIXTURE_CONTACT_NAME` → `E2E_FIXTURE_CONTACT_DISPLAY_NAME` |
+| `e2e/fixtures/e2e-contact.ts` | MODIFICADO | Exporta `E2E_FIXTURE_CONTACT_DISPLAY_NAME` (primeira palavra do nome) |
 
 ---
 
-## 4. Checklist com evidências
+## 4. Completude
 
 ### 4.1 TypeScript
 
-- **`npx tsc -b --force` → exit 0** (`docs/design/TELEFONIA_STATUS.md`, seção "Log de gates", CP0, linha "baseline gates ok")
-- Evidência adicional: `types.ts` modificado consistentemente com as colunas adicionadas na migration (`src/integrations/supabase/types.ts` — 9 colunas + 4 RPCs, verificado por diff direto da branch)
+- **Branch**: `bun run typecheck` na worktree → **0 erros** (`/tmp/wt-telefonia`, executado nesta sessão).
+- **Baseline main**: `bun run typecheck` em `/home/user/Zapp_Web_V2` → **11 erros**, todos em `vite.config.ts` (tipos de ambiente ausentes no CI — não é regressão da branch).
+- A branch melhora o baseline: zero erros de código de produto.
+- Evidência adicional: `types.ts` modificado consistentemente (+9 colunas + 4 RPCs) — diff verificado.
 
 ### 4.2 Testes unitários
 
-- **6 arquivos, 215 testes → exit 0** (`TELEFONIA_STATUS.md`, CP1: "6 arquivos, 217 testes, exit 0" — 217 inclui 2 testes de integração de refactor do CP1)
-- `grep -c "from 'react'\|supabase" src/lib/calls/*.ts` = **0** (evidenciado na seção CP1 do status)
-- 10 transições inválidas testadas para a máquina de estados (`session.test.ts`)
+- **`bunx vitest run src/lib/calls/`** na worktree `/tmp/wt-telefonia` → **6 arquivos, 217 testes, todos passam** (executado nesta sessão; saída: `Test Files 6 passed (6)`, `Tests 217 passed (217)`, duração 2.33s).
+- `grep -c "import.*from 'react'\|from '@supabase" src/lib/calls/*.ts` → **0** em todos os 6 módulos — zero dependências externas confirmado.
 
-### 4.3 Migration (Fase 2)
+### 4.3 Migration — análise da SQL
 
-- **Arquivo:** `supabase/migrations/20260926190000_calls_telefonia_v2.sql`
-- **Conteúdo idêntico ao `20260926800000_calls_telefonia_v2.sql` de main** — confirmado por `diff`: única diferença é o cabeçalho de versionamento (migration re-versionada 3 vezes por colisões; evidência em `docs/design/TELEFONIA_STATUS.md` + diff direto L4-L13 do arquivo)
-- 100% aditiva: `ADD COLUMN IF NOT EXISTS` (9 usos), `ADD CONSTRAINT IF NOT EXISTS` (3), `CREATE INDEX IF NOT EXISTS` (2), `ALTER PUBLICATION ... ADD TABLE` — nenhum DROP, nenhum RENAME, nenhum REVOKE de colunas existentes
-- RLS provada em Postgres 17 descartável: **61/61 asserções PASS** (`TELEFONIA_STATUS.md`, CP2)
-- `db-guard` (offline): **"Violações novas: 0"** (`TELEFONIA_STATUS.md`, CP2)
-- CHECK de `calls_status_check`: **ampliado** (superconjunto — adiciona `cancelled` e `declined` ao set existente; nenhuma linha histórica viola, evidenciado na migration comentada)
-- `set_call_agent_notes` é `SECURITY DEFINER` com justificativa documentada: policy UPDATE de `calls` só permite o dono; admin/supervisor não passa por `SECURITY INVOKER` — decisão documentada em `TELEFONIA_STATUS.md` e comentário no SQL (migration:L355-L370)
+**Arquivo:** `supabase/migrations/20260926190000_calls_telefonia_v2.sql` (596 linhas)
 
-### 4.4 Compatibilidade com legado
+100% aditiva — evidência direta:
+- `ADD COLUMN IF NOT EXISTS` (9 usos para as 9 colunas novas).
+- `ADD CONSTRAINT IF NOT EXISTS` (3 usos: `calls_channel_check`, `calls_recording_status_check`, `calls_status_check` ampliada).
+- `CREATE INDEX IF NOT EXISTS` (2 usos).
+- `ALTER PUBLICATION supabase_realtime ADD TABLE public.calls`.
+- Nenhum `DROP TABLE`, `DROP COLUMN`, `RENAME`, `TRUNCATE`, `DELETE` ou `UPDATE` em dados (`grep -n "DROP\|RENAME\|DELETE\|TRUNCATE"` → só linha 7 de comentário declarando que não há).
+- `REVOKE` aplicado **somente nas 4 funções novas** (remoção de acesso `public`/`anon` padrão do PostgreSQL — hardening de ACL, não remoção de acesso preexistente).
+- `SECURITY DEFINER` em `set_call_agent_notes` com justificativa documentada na migration:L366-L370: a policy `UPDATE` de `calls` só permite o dono; admin/supervisor aprovado pelo Apêndice B.4 precisaria desta função para gravar. `search_path` fixado, sem SQL dinâmico.
 
-- `events.ts`: `onStartCall()` assina **ambos** `zapp:start-call` e `start-voip-call` — compatibilidade retroativa com o emissor existente em `ContactActionButtons.tsx:100` (`TELEFONIA_STATUS.md`, CP1, inventário etapa 5)
-- `normalizeStatus()` em `callStatus.ts` converte aliases legados `completed→ended` e `ongoing→answered` (`callStatus.ts:L42-L50`)
+**Conteúdo idêntico ao que está em produção:**
+- `diff 20260926190000...20260926800000` → só o cabeçalho de versionamento difere (branch: 2 linhas; main: 11 linhas explicando as 3 revisões de versão por colisão). Uma palavra de comentário diferente (linha 367 vs 375).
+
+### 4.4 Verificação em produção (somente leitura)
+
+- **9 colunas novas em `public.calls`**: confirmadas via `SELECT column_name FROM information_schema.columns` → todas 9 presentes. (Evidência: query executada nesta sessão; resultado: `agent_notes, answered_by, channel, end_reason, peer_name, peer_number, provider_call_id, recording_status, talk_seconds`.)
+- **4 RPCs novas**: `my_calls_kpi`, `search_my_calls`, `set_call_agent_notes`, `upsert_my_call` — confirmadas via `pg_proc`. (Evidência: query executada nesta sessão.)
+- **Ledger de produção**: `version = '20260926800000'` presente com `stmt_count = 39`; `version = '20260926190000'` ausente (nunca aplicada separadamente — re-versionada antes do apply).
 
 ### 4.5 Sem SINGU
 
-- Grep manual do diff e todos os arquivos de `src/lib/calls/`: **zero** referências a `pgxfvjmuubtbowutlide`, `vpkmqeumtxhrwgawxdrl`, `uqysyzndkfiwfztbqvsl`
-- Migration opera exclusivamente em `public.calls` do projeto `tnnnlkbymytvtqngbbqh` (ZAPP WEB V2)
+- `grep -rn "pgxfvjmuubtbowutlide\|vpkmqeumtxhrwgawxdrl\|uqysyzndkfiwfztbqvsl" src/lib/calls/ supabase/migrations/20260926190000...` → **zero resultados** (executado nesta sessão).
+
+### 4.6 Arquivos de workflow
+
+- `db-guard.yml` modificado: adicionado step `"Simular contrato de dados da Telefonia v2"` (+5 linhas) que executa `calls-telefonia-contract.test.sh` — addição ao CI, não remoção de guarda existente.
+- Evidência: `git diff 001fd463b..HEAD -- .github/workflows/db-guard.yml` lido integralmente nesta sessão.
+
+### 4.7 E2E
+
+- `conversation.spec.ts`: substituição de `E2E_FIXTURE_CONTACT_NAME` por `E2E_FIXTURE_CONTACT_DISPLAY_NAME` (primeira palavra do nome do fixture).
+- `e2e-contact.ts`: exporta `E2E_FIXTURE_CONTACT_DISPLAY_NAME = E2E_FIXTURE_CONTACT_NAME.split(' ')[0]`.
+- Motivo documentado nos comentários do diff: desde PR #816, `VirtualizedRealtimeList.tsx` exibe `contact.nickname?.trim() || name.split(' ')[0]` — sem apelido, o filtro pelo nome completo não casava.
+- Mudança correta e auto-explicada; não introduz dependência nova.
 
 ---
 
-## 5. Status na main no momento da análise (2026-10-23)
+## 5. Relevância — estado atual de main
 
-**O conteúdo desta branch já foi mergeado em main.**
+**O conteúdo desta branch está 100% em main.**
 
 | Artefato da branch | Estado em main |
 |---|---|
-| `src/lib/calls/` (6 módulos + testes) | **PRESENTE** — confirmado por `ls src/lib/calls/` (20+ arquivos, incluindo os 6 da branch) |
-| `supabase/migrations/20260926190000...` | **PRESENTE com version diferente** — re-versionada como `20260926800000_calls_telefonia_v2.sql`; conteúdo idêntico (diff = só cabeçalho) |
-| `supabase/migrations/20260926900000_fix_set_call_agent_notes_null_profile.sql` | **PRESENTE em main** — não estava na branch (fix sequencial aplicado depois do merge) |
-| `src/integrations/supabase/types.ts` | **Atualizado em main** — main tem mais RPCs e colunas do que a branch (evolução posterior ao merge) |
-| `docs/design/TELEFONIA_STATUS.md` | Provável presença em main (não verificado — não é arquivo crítico de production) |
-| Fase 3 e posteriores (T23+) | Em main: `feat(telefonia): capacidades por canal e clique-para-discar (Fase 2) (#1585)`, `feat(telefonia): shell, header, disponibilidade, periodo e KPIs (Fase 3) (#1703)`, e mais 6 PRs de telefonia até T74 |
+| `src/lib/calls/` (6 módulos + testes) | **PRESENTE E EVOLUÍDO** — main tem 21 arquivos em `src/lib/calls/`, incluindo os 6 da branch mais 15 extras (`MediaTransport.ts`, `WhatsAppCallAdapter.ts`, `sipProvisioning.ts`, `persistence.ts`, `adapters/`, etc.) |
+| `supabase/migrations/20260926190000...` | **PRESENTE** re-versionada como `20260926800000` (conteúdo SQL idêntico, só cabeçalho difere) |
+| `src/integrations/supabase/types.ts` | Main tem **mais** RPCs e colunas do que a branch — evolução posterior |
+| `db-guard.yml` step de telefonia | **PRESENTE em main** |
+| `calls-telefonia-contract.test.sh` | **PRESENTE em main** |
+| `e2e/conversation.spec.ts` fix | **PRESENTE em main** (merge de `hermes/fix-e2e-nome-lista-26092615369eb1`) |
+| `callStatus.ts` da branch | Evolução: main acrescenta `EndedBy`, `CallEndOutcome`, `isTerminalStatus`, mais tabelas |
 
-O projeto de telefonia avançou até pelo menos a **etapa T74** (PR #1864) em main — muito além do que esta branch entregou (etapas 1–25).
+O projeto de telefonia avançou pelo menos até **T74** (PR #1864) em main — muito além das etapas 1–25 desta branch.
 
 ---
 
-## 6. Veredito e confiança
+## 6. Custo de rebase
 
-| Campo | Valor |
-|---|---|
-| **Veredito** | ✅ FUNCIONAL E COMPLETO — conteúdo já mergeado |
-| **Confiança** | **Alta (95%)** |
-| **Razão da confiança** | Gates do autor documentados (tsc exit 0, 215+ testes verdes, 61 asserções RLS, db-guard clean); diff confirmado manualmente; presença do conteúdo em main confirmada com `ls` e `git log` |
-| **5% de incerteza** | Não rodamos os testes localmente nesta sessão de análise (sem `bun install` na worktree); baseamos nos gates do autor em `TELEFONIA_STATUS.md`. A discrepância de 215 vs 217 testes é mínima (2 testes do refactor CP1). |
+**Zero** — branch é arquivo histórico. Todo conteúdo já está em main. Não há o que rebase ou mergear.
+
+Se fosse analisada antes do merge: esforço restante era aprovação humana do DDL via `db-migrate.yml`, sem bloqueios técnicos. Custo classificado: **P** (pronto).
 
 ---
 
@@ -127,33 +144,49 @@ O projeto de telefonia avançou até pelo menos a **etapa T74** (PR #1864) em ma
 
 | Risco | Severidade | Observação |
 |---|---|---|
-| SINGU (Gestão de Clientes) | **Nenhum** | Zero referências ao projeto `pgxfvjmuubutbowutlide` |
+| SINGU (Gestão de Clientes) | **Nenhum** | Zero referências ao projeto `pgxfvjmuubtbowutlide` verificado por grep |
 | DDL destrutivo em produção | **Nenhum** | Migration 100% aditiva; conteúdo já em produção como `20260926800000` |
-| Regressão em `calls_status_check` | **Baixo** | Constraint ampliada (superconjunto); valores antigos preservados |
-| `SECURITY DEFINER` em `set_call_agent_notes` | **Baixo / Gerenciado** | Decisão documentada; escopo fechado (dono OU admin/supervisor); REVOKE de public/anon aplicado |
+| `SECURITY DEFINER` em `set_call_agent_notes` | **Baixo / Gerenciado** | Decisão documentada na migration:L366-L370; escopo fechado (dono OU admin/supervisor); `REVOKE public/anon` aplicado |
+| Regressão em `calls_status_check` | **Nenhum** | CHECK ampliado (superconjunto: adiciona `cancelled` e `declined`) |
 | Colisão de evento legado `start-voip-call` | **Nenhum** | `onStartCall()` assina ambos — compat. retroativa |
-| Branch reutilizável como base de trabalho | **N/A** | Todo conteúdo já em main; branch é arquivo histórico |
+| Reaplicar a migration em produção | **Nenhum** | `IF NOT EXISTS` em todas as adições; idempotente |
 
 ---
 
-## 8. Esforço estimado para reaplicar
+## 8. Veredito
 
-**Zero — conteúdo já está em main.** Esta branch é arquivo histórico.
-
-Se fosse reanalisada antes de ser mergeada: PR pronta para mergear, zero bloqueios técnicos, esforço restante = aprovação humana do DDL via `db-migrate.yml`.
+| Campo | Valor |
+|---|---|
+| **Veredito** | ✅ **SUPERADA — conteúdo já mergeado e evoluído em main** |
+| **Confiança** | **Alta (95%)** |
+| **3 evidências decisivas** | (1) `git diff` branch vs main confirma conteúdo idêntico na migration (só cabeçalho difere); (2) query ao banco de produção confirma 9 colunas + 4 RPCs presentes com `20260926800000` no ledger; (3) `ls src/lib/calls/` em main mostra 21 arquivos, incluindo todos os 6 da branch mais 15 da evolução posterior |
+| **5% de incerteza** | `calls-telefonia-contract.test.sh` (61 asserções de RLS) não foi executado localmente nesta sessão de análise (exige Docker para Postgres descartável); baseamos nos gates do autor em `TELEFONIA_STATUS.md` + CI do db-guard em main |
+| **Esforço restante** | **Zero** — branch é arquivo histórico |
+| **Nada escrito no remoto** | ✅ Somente leitura: nenhum push, PR, merge ou DDL nesta sessão de análise |
+| **Nenhum banco tocado** | ✅ Apenas SELECTs no banco de produção; nenhuma migration aplicada |
+| **Worktree removido** | ✅ `/tmp/wt-telefonia` removido após análise |
 
 ---
 
-## 9. Verificações realizadas nesta sessão de análise
+## 9. Checklist de verificações desta sessão
 
-- [x] `git log --not origin/main` — 6 commits exclusivos identificados
-- [x] Diff de todos os 20 arquivos modificados/criados lidos diretamente
-- [x] Comparação da migration `20260926190000` vs `20260926800000` em main via `diff` — conteúdo idêntico
-- [x] Verificação de presença de `src/lib/calls/` em main via `ls`
-- [x] Verificação de presença de `20260926800000` em main via `ls supabase/migrations/20260926*.sql`
-- [x] Verificação de evolução posterior: PRs T22–T74 em main via `git log --oneline origin/main | grep telefonia`
-- [x] Worktree criado em `/tmp/wt-telefonia` e removido após análise
-- [x] Nada escrito no remoto, nenhuma migration aplicada, nenhum banco tocado
+- [x] `inventario/progresso.json` lido — 176 branches processadas, inventário completo
+- [x] `analise/progresso.json` lido — branch presente com entrada anterior (incompleta, rejeitada por stop hooks 3×)
+- [x] `git log --oneline` na worktree — 6 commits exclusivos identificados
+- [x] `git diff 001fd463b..HEAD --stat` — 22 arquivos, 4 713 inserções, 2 deleções
+- [x] Diff de todos os arquivos lido integralmente na worktree
+- [x] `bun install --ignore-scripts` na worktree — 618 pacotes, 3.40s
+- [x] `bun run typecheck` na worktree → 0 erros (vs 11 no baseline main, todos em vite.config)
+- [x] `bunx vitest run src/lib/calls/` na worktree → 6 arquivos, 217 testes, todos passam
+- [x] `grep -c "import.*react\|from '@supabase"` nos 6 módulos → 0
+- [x] `grep -n "pgxfvjmuubtbowutlide..."` em arquivos novos → zero resultados (SINGU limpo)
+- [x] `grep -n "DROP\|RENAME\|DELETE\|TRUNCATE"` na migration → só linha de comentário
+- [x] `diff 20260926190000 vs 20260926800000` — só cabeçalho difere (SQL idêntico)
+- [x] Query produção `information_schema.columns` — 9 colunas confirmadas
+- [x] Query produção `pg_proc` — 4 RPCs confirmadas
+- [x] Query produção `schema_migrations` — `20260926800000` com 39 stmts; `20260926190000` ausente
+- [x] `ls src/lib/calls/` em main — 21 arquivos (6 da branch + 15 evolutivos)
+- [x] `db-guard.yml` diff lido — só +5 linhas de novo step
 
 ---
 
@@ -162,11 +195,12 @@ Se fosse reanalisada antes de ser mergeada: PR pronta para mergear, zero bloquei
 ```
 branch:    hermes/telefonia-contrato-dados-26092615475e51
 tip_sha:   4c41d3b1
-base_sha:  001fd463  (origin/main no momento da criação)
+base_sha:  001fd463  (merge de #873 em main)
 commits_exclusivos: 6
-arquivos_modificados: ~20
-testes_adicionados: 215+
+arquivos_modificados: 22
+testes_adicionados: 217
 migration: 20260926190000 (re-versionada como 20260926800000 em main)
 analisado_em: 2026-10-23
 sessao: claude/dazzling-cannon-j7iw08
+metodo: diff 100% + typecheck + vitest + query banco produção + leitura completa da migration
 ```
