@@ -172,12 +172,16 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         // single(): o listener recebe todo INSERT em team_messages sem
         // filtro por conversa, então "não é membro" é o caso comum, não uma
         // exceção — single() geraria 406 na maioria dos eventos.
-        const { data: membershipRows } = await supabase
+        const { data: membershipRows, error: membershipError } = await supabase
           .from('team_conversation_members')
           .select('id, is_muted')
           .eq('conversation_id', msg.conversation_id)
           .eq('profile_id', profile.id)
           .limit(1);
+        if (membershipError) {
+          log.warn('Falha ao confirmar participação na conversa; sem notificação:', membershipError.message);
+          return;
+        }
         const membership = membershipRows?.[0] ?? null;
 
         if (!shouldNotifyTeamMessage({
