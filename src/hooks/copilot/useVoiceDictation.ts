@@ -8,10 +8,12 @@
  * Fluxo:
  *   1. Vendedor pressiona o botão de voz no RADAR.
  *   2. Grava via `MediaRecorder` (webm/ogg).
- *   3. Envia o blob para `ai-transcribe-audio`.
- *   4. A transcrição é processada pelo RADAR: envia para `ai-suggest-reply`
+ *   3. Faz upload do blob para `audio-messages/${userId}/dictation/...`.
+ *   4. Envia a URL pública para `ai-transcribe-audio` (sem messageId —
+ *      caminho de ditado autorizado por ownership do objeto no bucket).
+ *   5. A transcrição é processada pelo RADAR: envia para `ai-suggest-reply`
  *      com o texto transcrito como instrução explícita.
- *   5. A resposta gerada é colocada no rascunho (nunca enviada).
+ *   6. A resposta gerada é colocada no rascunho (nunca enviada).
  */
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -93,20 +95,43 @@ export function useVoiceDictation({
       const abortCtrl = new AbortController();
       processAbortRef.current = abortCtrl;
 
-      const tempPath = `dictation/${contactId}/${Date.now()}.webm`;
       setState('transcribing');
+
+      // Política INSERT do bucket exige que o primeiro segmento seja o userId
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData?.user?.id;
+      if (!userId) {
+        setState('error');
+        setErrorMessage('Usuário não autenticado.');
+        return;
+      }
+
+      // Path com userId como primeiro segmento — compatível com INSERT e DELETE
+      const tempPath = `${userId}/dictation/${Date.now()}.webm`;
+
       try {
-        // 1. Upload do áudio para o bucket aprovado e transcrição via audioUrl.
+        // 1. Upload do áudio para o bucket aprovado
         const { error: uploadError } = await supabase.storage
           .from('audio-messages')
           .upload(tempPath, blob, { contentType: blob.type || 'audio/webm' });
 
-        if (abortCtrl.signal.aborted) return;
-        if (uploadError) throw new Error(`Upload falhou: ${uploadError.message}`);
+        if (uploadError) {
+          // Upload falhou — nada para limpar; verifica abort antes de lançar
+          if (abortCtrl.signal.aborted) return;
+          throw new Error(`Upload falhou: ${uploadError.message}`);
+        }
+
+        // Upload bem-sucedido — se já foi cancelado, limpar o arquivo e sair
+        if (abortCtrl.signal.aborted) {
+          void supabase.storage.from('audio-messages').remove([tempPath]);
+          return;
+        }
 
         const { data: urlData } = supabase.storage.from('audio-messages').getPublicUrl(tempPath);
         const audioUrl = urlData.publicUrl;
 
+        // 2. Transcrição via ai-transcribe-audio
+        //    Sem messageId = caminho de ditado; a edge verifica ownership pelo userId do JWT
         const { data: transcribeData, error: transcribeError } = await invokeEdge<{
           transcription?: string;
         }>('ai-transcribe-audio', { body: { audioUrl } });
@@ -122,7 +147,7 @@ export function useVoiceDictation({
         const instruction = transcribeData.transcription ?? '';
         log.info('voz transcrita', { len: instruction.length });
 
-        // 2. Gera a mensagem com base na instrução transcrita.
+        // 3. Gera a mensagem com base na instrução transcrita.
         setState('generating');
         const recentMessages = messages.slice(-10).map((m) => ({
           content: m.content,
