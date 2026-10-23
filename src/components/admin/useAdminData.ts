@@ -10,7 +10,7 @@ import { invokeEdge, readEdgeError } from '@/lib/invokeEdge';
 
 const log = getLogger('useAdminData');
 
-const AVATAL_BUCKET = 'avatars';
+const AVATAR_BUCKET = 'avatars';
 // Mesma validade curta usada no AvatarUpload: o perfil guarda só o caminho e a
 // tela assina a URL sob demanda — o bucket `avatars` deixou de ser público.
 const AVATAR_SIGNED_URL_TTL_SECONDS = 300;
@@ -47,6 +47,14 @@ export interface CreateUserFieldError {
 }
 
 export const MIN_PASSWORD_LENGTH = 8;
+export const AUDIT_PAGE_SIZE = 50;
+
+export const accessLevelConfig = {
+  basic: { label: 'Básico', description: '' },
+  standard: { label: 'Padrão', description: '' },
+  advanced: { label: 'Avançado', description: '' },
+  full: { label: 'Completo', description: '' },
+};
 
 export function mapCreateUserError(rawMessage: string | undefined): CreateUserFieldError {
   if (!rawMessage) return { field: null, message: 'Erro ao criar usuário' };
@@ -59,23 +67,135 @@ export function mapCreateUserError(rawMessage: string | undefined): CreateUserFi
   return { field: null, message: 'Erro ao criar usuário' };
 }
 
-export function useAdminData() {
+interface AuditParams {
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isCreatingUser, setIsCceatingUser] = useState(false);
-  const [isDeletingUser, setIsDeetingUser] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [auditLogs, setAuditLogs] = useState<unknown[]>([]);
+  const [auditTotal, setAuditTotal] = useState(0);
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
   const deletingIdRef = useRef<string | null>(null);
 
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (tab === 'users') {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, name, email, role, is_active, avatar_url')
+          .order('name', { ascending: true });
+        if (profileError) {
+          const msg = (profileError as { message?: string }).message ?? 'Erro ao carregar usuários';
+          setError(msg);
+          if (isAccessDeniedError(profileError)) {
+            toast.error(describeAccessError(profileError, 'Usuários'));
+          } else {
+            toast.error('Erro ao carregar usuários');
+          }
+          setUsers([]);
+          return;
+        }
+        const { error: roleError } = await supabase.from('user_roles').select('*');
+        if (roleError) {
+          const msg = (roleError as { message?: string }).message ?? 'Erro ao carregar usuários';
+          setError(msg);
+          toast.error('Erro ao carregar usuários');
+          return;
+        }
+        const raw = (profileData ?? []) as UserWithRole[];
+        const signed = await Promise.all(
+          raw.map(async (u) => {
+            const path = avatarObjectPath(u.avatar_url);
+            if (!path) return u;
+            const { data: signedData } = await supabase.storage
+              .from(AVATAR_BUCKET)
+              .createSignedUrl(path, AVATAR_SIGNED_URL_TTL_SECONDS);
+            return { ...u, avatar_url: signedData?.signedUrl ?? null };
+          })
+        );
+        setUsers(signed);
+      } else if (tab === 'audit') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let query: any = supabase
+          .from('audit_logs')
+          .select('id, user_id, action, entity_type, details, created_at', { count: 'exact' });
+        if (auditParams?.from) {
+          const fromDate = new Date(`${auditParams.from}T00:00:00`);
+          query = query.gte('created_at', fromDate.toISOString());
+        }
+        if (auditParams?.to) {
+          const toDate = new Date(`${auditParams.to}T23:59:59.999`);
+          query = query.lte('created_at', toDate.toISOString());
+        }
+        const page = auditParams?.page ?? 1;
+        const pageSize = auditParams?.pageSize ?? AUDIT_PAGE_SIZE;
+        const rangeFrom = (page - 1) * pageSize;
+        query = query.range(rangeFrom, rangeFrom + pageSize - 1);
+        const { data, error: auditError, count } = await query;
+        if (auditError) {
+          const msg = (auditError as { message?: string }).message ?? 'Erro ao carregar auditoria';
+          setError(msg);
+          toast.error('Erro ao carregar auditoria');
+          setAuditLogs([]);
+          return;
+        }
+        setAuditLogs(data ?? []);
+        setAuditTotal(count ?? 0);
+      }
+    } catch (err) {
+      log.error('fetchData error', err);
+      setError('Erro ao carregar dados');
+    } finally {
+      setLoading(false);
+    }
+  }, [tab, auditParams]);
+
+  const handleCreateUser = useCallback(
+    async (payload: { name: string; email: string; password: string; role: AppRole }): Promise<boolean> => {
+      if (payload.password.length < MIN_PASSWORD_LENGTH) {
+        toast.error(`A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres`);
+        return false;
+      }
+      setIsCreatingUser(true);
+      try {
+        await invokeEdge('create-user', {
+          name: payload.name,
+          email: payload.email,
+          password: payload.password,
+          role: payload.role,
+        });
+        await fetchData();
+        return true;
+      } catch (err) {
+        log.error('handleCreateUser error', err);
+        return false;
+      } finally {
+        setIsCreatingUser(false);
+      }
+    },
+    [fetchData]
+  );
+
+  // Legacy fetchUsers kept for existing callers
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('id, name, email, role, is_active, avatar_url')
         .order('name', { ascending: true });
-      if (error) {
-        if (isAccessDeniedError(error)) {
-          toast.error(describeAccessError(error, 'Usuários'));
+      if (fetchError) {
+        if (isAccessDeniedError(fetchError)) {
+          toast.error(describeAccessError(fetchError, 'Usuários'));
         } else {
           toast.error('Erro ao carregar usuários');
         }
@@ -111,8 +231,8 @@ export function useAdminData() {
           password: payload.password,
           role: payload.role,
         });
-        if (!response.ok) {
-          const errMsg = await readEdgeError(response);
+        if (!(response as { ok?: boolean }).ok) {
+          const errMsg = await readEdgeError(response as Response);
           return mapCreateUserError(errMsg);
         }
         toast.success('Usuário criado com sucesso');
@@ -131,11 +251,11 @@ export function useAdminData() {
   const updateUserRole = useCallback(
     async (userId: string, newRole: AppRole): Promise<boolean> => {
       try {
-        const { error } = await supabase
+        const { error: updateError } = await supabase
           .from('profiles')
           .update({ role: newRole })
           .eq('id', userId);
-        if (error) {
+        if (updateError) {
           toast.error('Erro ao atualizar papel');
           return false;
         }
@@ -152,11 +272,11 @@ export function useAdminData() {
   const toggleUserActive = useCallback(
     async (userId: string, isActive: boolean): Promise<boolean> => {
       try {
-        const { error } = await supabase
+        const { error: updateError } = await supabase
           .from('profiles')
           .update({ is_active: isActive })
           .eq('id', userId);
-        if (error) {
+        if (updateError) {
           toast.error('Erro ao atualizar status');
           return false;
         }
@@ -173,11 +293,11 @@ export function useAdminData() {
   const deleteUser = useCallback(
     async (userId: string): Promise<boolean> => {
       deletingIdRef.current = userId;
-      setIsDeltingUser(true);
+      setIsDeletingUser(true);
       try {
         const response = await invokeEdge('delete-user', { userId });
-        if (!response.ok) {
-          const errMsg = await readEdgeError(response);
+        if (!(response as { ok?: boolean }).ok) {
+          const errMsg = await readEdgeError(response as Response);
           toast.error(errMsg ?? 'Erro ao excluir usuário');
           return false;
         }
@@ -189,7 +309,7 @@ export function useAdminData() {
         toast.error('Erro ao excluir usuário');
         return false;
       } finally {
-        setIsDeltingUser(false);
+        setIsDeletingUser(false);
         deletingIdRef.current = null;
       }
     },
@@ -199,9 +319,14 @@ export function useAdminData() {
   return {
     users,
     loading,
+    error,
+    auditLogs,
+    auditTotal,
     isCreatingUser,
     isDeletingUser,
     deletingIdRef,
+    fetchData,
+    handleCreateUser,
     fetchUsers,
     createUser,
     updateUserRole,
