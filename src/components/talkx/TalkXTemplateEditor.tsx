@@ -294,10 +294,14 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab
     setVariants(vs);
   };
 
-  // X094 — se o editor abre com ttab=ab, busca as variantes do template inicial.
+  // X094 — se o editor abre com ttab=ab ou ttab=historico, busca os dados do template inicial.
   useEffect(() => {
     if (initialTtab === 'ab' && editing?.id) {
       void loadVariants(editing.id);
+    }
+    if (initialTtab === 'historico' && editing?.id) {
+      setShowVersions(true);
+      void fetchVersions(editing.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -532,6 +536,14 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab
 
       {/* === COLUNA CENTRO: editor === */}
       <div className="flex-1 min-w-0 space-y-3">
+        {/* X094 — trilha da tela 05, no mesmo desenho do wizard. */}
+        <nav aria-label="Trilha de navegação" className="flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5">
+          <span>Talk X</span>
+          <span className="text-border">›</span>
+          <span>Campanhas</span>
+          <span className="text-border">›</span>
+          <span className="text-foreground font-medium">Templates</span>
+        </nav>
         {/* X091 — faixa de KPIs da tela 05 (números da biblioteca, RPC X086) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard icon={FileText} color="blue" index={0} label="Total de Templates" value={libStats?.total ?? null} bars={libStats?.created_series ?? null} comparison={{ current: libStats?.created_current_month ?? null, previous: libStats?.created_previous_month ?? null, kind: 'relative' }} hint="vs. mês anterior (templates criados)" />
