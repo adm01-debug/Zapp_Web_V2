@@ -681,7 +681,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     queryKey: ['talkx-wizard-segment-counts', segmentIds, JSON.stringify(selectedSegments.map((s) => s.rules))],
     queryFn: async () => {
       const counts: Record<string, number> = {};
-      await Promise.all(
+      await Promise.allSettled(
         selectedSegments.map(async (s) => {
           counts[s.id] = await countAudience(s.rules as SegmentRules);
         })

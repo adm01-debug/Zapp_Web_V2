@@ -26,11 +26,14 @@ import { ChatMessagesArea } from '../ChatMessagesArea';
 const ALTURA_ITEM = 120;
 class ResizeObserverMock {
   private cb: ResizeObserverCallback;
+  private static _depth = 0;
   constructor(cb: ResizeObserverCallback) {
     this.cb = cb;
   }
   observe(target: Element) {
-    setTimeout(() => {
+    if (ResizeObserverMock._depth > 0) return;
+    ResizeObserverMock._depth++;
+    try {
       this.cb(
         [
           {
@@ -46,7 +49,9 @@ class ResizeObserverMock {
         ],
         this,
       );
-    }, 0);
+    } finally {
+      ResizeObserverMock._depth--;
+    }
   }
   unobserve() {}
   disconnect() {}
@@ -54,6 +59,14 @@ class ResizeObserverMock {
 
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
+  (globalThis as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
+  Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
+    configurable: true,
+    value: () => ({
+      height: 600, width: 800, top: 0, left: 0,
+      right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}),
+    }),
+  });
 });
 
 vi.mock('../MessageBubble', () => ({
@@ -71,6 +84,41 @@ vi.mock('@/services/realtime.service', () => ({
 
 vi.mock('@/services/chat.service', () => ({
   ChatService: { deleteMessage: vi.fn(async () => {}) },
+}));
+
+vi.mock('@/hooks/reactions/useBatchReactions', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ReactionsBatchProvider: ({ children }: { children: any }) => children,
+}));
+
+vi.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: (opts: {
+    count: number;
+    estimateSize: () => number;
+    getScrollElement: () => Element | null;
+    getItemKey?: (i: number) => unknown;
+  }) => {
+    const est = opts.estimateSize();
+    const items = Array.from({ length: opts.count }, (_, i) => ({
+      index: i,
+      key: opts.getItemKey ? opts.getItemKey(i) : i,
+      start: i * est,
+      size: est,
+      lane: 0 as const,
+    }));
+    return {
+      getVirtualItems: () => items,
+      getTotalSize: () => opts.count * est,
+      measureElement: vi.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      scrollToIndex: vi.fn().mockImplementation((index: number, _o?: any) => {
+        const el = opts.getScrollElement?.();
+        if (el) el.scrollTo({ top: index * est, behavior: 'auto' });
+      }),
+      measurementsCache: items,
+      cancelScroll: vi.fn(),
+    };
+  },
 }));
 
 const MESMO_TIMESTAMP = new Date('2026-09-02T12:00:00Z');

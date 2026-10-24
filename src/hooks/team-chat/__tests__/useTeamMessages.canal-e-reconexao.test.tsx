@@ -21,6 +21,11 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: 'profile-1' } }),
 }));
 
+vi.mock('@/hooks/team-chat/useTeamReadState', () => ({
+  useTeamReadState: () => ({ readStates: {}, isLoading: false }),
+  deriveOwnMessageStatus: () => 'sent',
+}));
+
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
   createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),

@@ -72,6 +72,7 @@ jobs:
       POSTGRES_SERVICE_USER: postgres
       POSTGRES_SERVICE_PASS: shim_test_password
       DOCKER_SHIM_STATE_DIR: /tmp/docker-shim-state
+      PGUSER: postgres
     permissions:
       contents: read
       # pull-requests: read apenas para o passo de imutabilidade abaixo (lista

@@ -74,6 +74,11 @@ CREATE TABLE public.talkx_campaigns (
   created_by uuid REFERENCES public.profiles(id),
   status text NOT NULL DEFAULT 'draft'
 );
+CREATE TABLE public.contacts (
+  id uuid PRIMARY KEY,
+  name text,
+  phone text
+);
 CREATE TABLE public.talkx_recipients (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   campaign_id uuid NOT NULL REFERENCES public.talkx_campaigns(id),
@@ -90,7 +95,6 @@ CREATE TABLE public.talkx_recipients (
   replied_at timestamptz,
   read_at timestamptz
 );
-CREATE TABLE public.contacts (id uuid PRIMARY KEY, name text, phone text);
 SQL
 
 # call <papel> <uid> <argumentos SQL da funcao> -> jsonb

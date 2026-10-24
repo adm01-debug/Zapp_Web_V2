@@ -143,7 +143,7 @@ export function RealtimeInboxView() {
   // `snoozedIds` entra no filtro para a lista ativa suspender a conversa adiada e
   // retomá-la no vencimento do prazo (R2-INB-029).
   const inboxFilters = useInboxFilters({
-    conversations: inbox.cachedConversations,
+    conversations: inbox.cachedConversations ?? [],
     profileId: inbox.profile?.id,
     snoozedIds: conversationActions.snoozedIds,
   });
@@ -178,7 +178,7 @@ export function RealtimeInboxView() {
   // Rostos das conversas fixadas exibidos no header do chat (ocupam o espaço
   // livre quando o painel de detalhes está fechado).
   const pinnedConversations = useMemo(
-    () => inbox.cachedConversations
+    () => (inbox.cachedConversations ?? [])
       .filter((c) => conversationActions.pinnedIds.has(c.contact.id))
       .map((c) => ({ id: c.contact.id, name: (c.contact.name || '').trim() || 'Sem nome', avatarUrl: c.contact.avatar_url })),
     [inbox.cachedConversations, conversationActions.pinnedIds],
@@ -232,7 +232,7 @@ export function RealtimeInboxView() {
   // região `aria-live` quando SOBE. `null` marca a carga inicial: abrir a Inbox
   // já com conversas não lidas não é mensagem nova e não pode ser anunciado.
   const totalNaoLidas = useMemo(
-    () => inbox.cachedConversations.reduce((total, c) => total + (c.unreadCount ?? 0), 0),
+    () => (inbox.cachedConversations ?? []).reduce((total, c) => total + (c.unreadCount ?? 0), 0),
     [inbox.cachedConversations],
   );
   const totalNaoLidasAnteriorRef = useRef<number | null>(null);

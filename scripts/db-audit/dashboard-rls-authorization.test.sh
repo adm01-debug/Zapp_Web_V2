@@ -69,7 +69,7 @@ expect_error() {
     -c '\set VERBOSITY verbose' -c "$sql" 2>&1)"; status=$?
   set -e
   (( status == 0 )) && { printf '%s\n' "$output" >&2; fail "$label: deveria falhar, mas passou"; }
-  [[ "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: esperava '$needle' no erro"; }
+  [[  "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: esperava '$needle' no erro"; }
   printf '[PASS] %s\n' "$label"
 }
 expect_value() {
