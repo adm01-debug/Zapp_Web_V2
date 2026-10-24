@@ -48,6 +48,10 @@ class ResizeObserverMock {
 
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
+  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+    height: 600, width: 800, top: 0, left: 0, bottom: 600, right: 800, x: 0, y: 0,
+    toJSON: () => ({}),
+  } as DOMRect);
 });
 
 // Mock pesado: o alvo é o virtualizer, não as bolhas.
