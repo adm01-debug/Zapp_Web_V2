@@ -65,7 +65,8 @@ export function useCopilotLearning({
     (outcome: 'closed' | 'lost', dealValue?: number) => {
       if (!enabled) return;
       void (async () => {
-        const { error } = await supabase.from('copilot_outcomes').insert({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any).from('copilot_outcomes').insert({
           conversation_id: conversationId,
           contact_id: contactId,
           seller_id: sellerId,
@@ -84,7 +85,8 @@ export function useCopilotLearning({
     (objectionType: string, treatmentText: string) => {
       if (!enabled || !treatmentText.trim()) return;
       void (async () => {
-        const { error } = await supabase.from('copilot_objection_catalog').insert({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any).from('copilot_objection_catalog').insert({
           conversation_id: conversationId,
           objection_type: objectionType,
           treatment_text: treatmentText,

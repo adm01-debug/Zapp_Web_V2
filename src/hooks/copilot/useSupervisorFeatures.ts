@@ -76,7 +76,8 @@ export function useSupervisorFeatures({
     if (!enabled) return;
     setState((s) => ({ ...s, helpRequested: true }));
     void (async () => {
-      const { error } = await supabase.from('copilot_help_requests').insert({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).from('copilot_help_requests').insert({
         conversation_id: conversationId,
         contact_id: contactId,
         seller_id: sellerId,
@@ -93,7 +94,8 @@ export function useSupervisorFeatures({
     (moment: LearningMoment) => {
       if (!enabled) return;
       void (async () => {
-        const { error } = await supabase.from('copilot_learning_moments').insert({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any).from('copilot_learning_moments').insert({
           conversation_id: conversationId,
           message_id: moment.messageId,
           tag: moment.tag,
@@ -113,7 +115,8 @@ export function useSupervisorFeatures({
       const clamped = Math.max(1, Math.min(5, score));
       setState((s) => ({ ...s, conversationScore: clamped }));
       void (async () => {
-        const { error } = await supabase.from('copilot_conversation_scores').upsert({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any).from('copilot_conversation_scores').upsert({
           conversation_id: conversationId,
           score: clamped,
           scored_by: sellerId,

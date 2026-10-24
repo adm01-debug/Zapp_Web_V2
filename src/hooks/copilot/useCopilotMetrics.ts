@@ -90,7 +90,8 @@ export function useCopilotMetrics({
       });
 
       void (async () => {
-        const { error } = await supabase.from('copilot_usage').insert({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any).from('copilot_usage').insert({
           conversation_id: conversationId,
           seller_id: sellerId,
           tokens: record.tokens,
@@ -108,7 +109,8 @@ export function useCopilotMetrics({
       setState((s) => ({ ...s, optedIn: optIn }));
       log.info('opt-in alterado', { optIn, sellerId });
       void (async () => {
-        const { error } = await supabase.from('copilot_seller_settings').upsert({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any).from('copilot_seller_settings').upsert({
           seller_id: sellerId,
           opted_in: optIn,
         });
