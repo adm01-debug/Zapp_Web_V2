@@ -52,26 +52,38 @@
 
 - `.channel('team-chat-notifications')` → `.channel(\`team-chat-notifications:${profile.id}\`)` para evitar colisão de canal quando múltiplos usuários estão logados.
 
-### Commit `3367754` — Contrato DB offline: guard dashboard_kpi + awk ancorado
+### Commit `33677542` — Contrato DB offline: guard dashboard_kpi + awk ancorado
 
 **Arquivo:** `scripts/db-audit/dashboard-rls-authorization.test.sh`
 
 - `assert_last_definer 'RPC dashboard_kpi'`: origem atualizada de `20261003272707_reconcile_local_replay_with_canonical.sql` → `20261007013217_conversation_closures_reopen_same_day.sql` (última migration a redefinir a função com lógica nova).
 - `awk` extraction: padrões ancorados com `^` para não capturar o bloco de rollback comentado presente no mesmo arquivo.
 
+### Commit `d5c33c0` — Unit Tests: FilesTab fase 6 aguarda React 18
+
+**Arquivo:** `src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx`
+
+- Dois testes de etapa 31 (`describe 'FilesTab fase 6 — detalhes'`) tornados `async`.
+- `expect(gridClass())` envolvido em `await waitFor()` para aguardar o React 18 batcher
+  propagar a largura medida via `useLayoutEffect` antes de assertar `grid-cols`.
+
 ---
 
-## Resultado final (commit `33677542`)
+## Resultado final (commit `d5c33c0`)
 
-| Check obrigatório | Status |
-|---|---|
-| `Replay local das migrations` | ✅ success |
-| `🔒 Security Audit` | ✅ success |
-| `Contrato DB offline` | ⏳ aguardando conclusão |
-| `🔍 Lint & TypeCheck` | ⏳ aguardando conclusão |
-| `🧪 Unit Tests (1/3, 2/3, 3/3)` | ⏳ aguardando conclusão |
-| `🏗️ Build` | ⏳ aguardando conclusão |
-| `🎭 E2E Tests (Playwright)` | ⚠️ bloqueado — ver PENDENCIAS.md |
+| Check obrigatório | Status | Observação |
+|---|---|---|
+| `Replay local das migrations` | ✅ success | Run 40041507876, job 120713417221 |
+| `🔒 Security Audit` | 🔄 aguardando | CI re-disparado (run anterior travado em pending) |
+| `🔍 Lint & TypeCheck` | 🔄 aguardando | CI re-disparado |
+| `🧪 Unit Tests (1/3, 2/3, 3/3)` | 🔄 aguardando | CI re-disparado |
+| `🏗️ Build` | 🔄 aguardando | CI re-disparado |
+| `Contrato DB offline` | ❌ failure | Step 135 — falha **pré-existente na `main`** (run 40040378700 na `main` falha identicamente); ver PENDENCIAS.md §2 |
+| `🎭 E2E Tests (Playwright)` | ⚠️ bloqueado | `E2E_TEST_PASSWORD` inválido — ver PENDENCIAS.md §1 |
+
+> **Nota:** o run `40041502906` do CI/CD Pipeline ficou travado em `pending` desde sua criação
+> (23:46 UTC, commit `d5c33c0`). Um novo dispatch foi feito. Os checks de Lint, TypeCheck,
+> Unit Tests, Build e Security Audit estarão disponíveis quando esse run concluir.
 
 ---
 
@@ -86,4 +98,5 @@
 ## Lacunas identificadas (sem implementação — risco não justifica mudança)
 
 1. **E2E logado bloqueado por credencial inválida** — ver PENDENCIAS.md (depende do Joaquim).
-2. **Múltiplos guards `assert_last_definer` com ponteiros de origem** — qualquer nova migration que toque função guardada exige atualizar o ponteiro manualmente; considerar automação futura.
+2. **Step 135 falha pré-existente** — ver PENDENCIAS.md §2 (depende do Joaquim).
+3. **Múltiplos guards `assert_last_definer` com ponteiros de origem** — qualquer nova migration que toque função guardada exige atualizar o ponteiro manualmente; considerar automação futura.
