@@ -12,7 +12,7 @@ import React from 'react';
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   return {
     ...actual,
     motion: { div: ({ children }: { children?: React.ReactNode }) => <div>{children}</div> },

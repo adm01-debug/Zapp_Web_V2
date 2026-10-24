@@ -21,7 +21,7 @@ const { toastErro, toastSucesso } = vi.hoisted(() => ({
 vi.mock('sonner', () => ({ toast: { error: toastErro, success: toastSucesso } }));
 
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   const React = await import('react');
     const semAnimacao = ({
       whileTap,

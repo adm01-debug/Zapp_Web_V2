@@ -39,7 +39,7 @@ vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({ isAdmin: h.isAdmin, isSupervisor: false, roles: [], loading: false }),
 }));
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   return {
     ...actual,
     useReducedMotion: () => h.reducedMotion,

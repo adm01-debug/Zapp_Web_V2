@@ -38,7 +38,7 @@ vi.mock('sonner', () => ({ toast: estado.toastSonner }));
 // jsdom + framer-motion não concluem as animações do AnimatePresence, então os
 // estados de gravação/prévia não montavam de forma determinística.
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   return {
     ...actual,
     motion: {

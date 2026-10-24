@@ -48,7 +48,7 @@ vi.mock('@/lib/aiRequest/context', () => ({
 
 type AnyProps = Record<string, unknown> & { children?: ReactNode };
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   const passthrough =
       (tag: 'div' | 'button' | 'span') =>
       ({ children, ...props }: AnyProps) => {

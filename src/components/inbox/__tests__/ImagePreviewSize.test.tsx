@@ -17,7 +17,7 @@ vi.mock('sonner', () => ({
 
 // Mock framer-motion (same pattern as ImagePreviewDownload.test.tsx)
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   return {
     ...actual,
     motion: {

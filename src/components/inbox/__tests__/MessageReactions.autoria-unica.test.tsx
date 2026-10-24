@@ -51,7 +51,7 @@ vi.mock('@/components/ui/tooltip', () => ({
 }));
 
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   type MotionProps = Record<string, unknown> & { children?: React.ReactNode };
   const strip = ({
     whileHover: _whileHover,

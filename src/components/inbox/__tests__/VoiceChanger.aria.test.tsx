@@ -21,7 +21,7 @@ vi.mock('@/components/ui/popover', () => ({
   PopoverContent: ({ children }: AnyProps) => <div>{children}</div>,
 }));
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   const passthrough =
       (tag: 'div' | 'button') =>
       ({ children, ...props }: AnyProps) => {

@@ -8,7 +8,7 @@ import React from 'react';
  * A prova renderiza o componente REAL (sem dublê de status).
  */
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   return {
     ...actual,
     motion: { div: ({ children }: { children?: React.ReactNode }) => <div>{children}</div> },

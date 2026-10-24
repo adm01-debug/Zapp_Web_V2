@@ -61,7 +61,7 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   return {
     ...actual,
     AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>, useReducedMotion: vi.fn(() => null),

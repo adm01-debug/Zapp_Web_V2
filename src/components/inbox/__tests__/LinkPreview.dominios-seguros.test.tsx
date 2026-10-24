@@ -5,7 +5,7 @@ import React from 'react';
 // framer-motion real monta os elementos via `motion.*`; o mock mantém o DOM
 // equivalente (a/tag reais) e tira as props de animação.
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   return {
     ...actual,
     motion: {

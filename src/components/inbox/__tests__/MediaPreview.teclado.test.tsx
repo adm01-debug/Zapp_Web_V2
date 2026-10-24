@@ -22,7 +22,7 @@ import React from 'react';
 const estado = vi.hoisted(() => ({ forcarFalha: false }));
 
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   const passthrough = (tag: string) =>
       React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
         const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;

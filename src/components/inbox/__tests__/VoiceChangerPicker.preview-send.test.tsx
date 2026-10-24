@@ -33,7 +33,7 @@ vi.mock('sonner', () => ({ toast: toastMock }));
 // estados de gravação/prévia não montavam de forma determinística. Mesmo
 // pass-through usado nos testes de controles de volume do repositório.
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   return {
     ...actual,
     motion: {

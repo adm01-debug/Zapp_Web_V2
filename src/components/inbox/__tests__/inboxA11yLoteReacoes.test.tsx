@@ -23,7 +23,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // vez; trocar o `matchMedia` depois não adianta. Aqui ele vira um interruptor.
 const movimento = { reduzido: true };
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   const real = await vi.importActual<typeof import('framer-motion')>('framer-motion');
   return {
     ...actual,

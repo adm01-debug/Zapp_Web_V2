@@ -11,7 +11,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
  * `motion` do framer-motion por tags nativas para o DOM ser inspecionável.
  */
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   const make = (tag: string) =>
       React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
         const {

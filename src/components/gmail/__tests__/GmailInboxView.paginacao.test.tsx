@@ -32,7 +32,7 @@ vi.mock('@/hooks/system/useNavigationHistory', () => ({ RESERVED_HASHES: new Set
 
 // Apresentação apenas: o que o teste mede é a consulta, não o desenho do item.
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   return {
     ...actual,
     AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,

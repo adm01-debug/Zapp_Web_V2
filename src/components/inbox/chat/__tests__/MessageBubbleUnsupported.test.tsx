@@ -16,7 +16,7 @@ import { Message, type UnsupportedMessageKind } from '@/types/chat';
 const reduced = vi.hoisted(() => ({ value: false }));
 
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   const passthrough = ({
       children,
       whileHover: _whileHover,

@@ -10,7 +10,7 @@ vi.mock('sonner', () => ({ toast: { error: toastError, success: vi.fn() } }));
 // hook REAL (useSpeechToText) ficam de pé: é o indicador deles que está sob teste.
 
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   return {
     ...actual,
     motion: {

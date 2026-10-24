@@ -25,7 +25,7 @@ vi.mock('@/components/ui/tooltip', () => ({
   TooltipProvider: ({ children }: AnyProps) => <>{children}</>,
 }));
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   const passthrough =
       (tag: 'div' | 'button') =>
       ({ children, ...props }: AnyProps) => {

@@ -9,7 +9,7 @@ import type { WhatsAppStatusMessage } from '@/hooks/integrations/useWhatsAppStat
 // em cada modo, não a animação em si).
 const fm = vi.hoisted(() => ({ reduced: false }));
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   const React = await import('react');
     const motionDiv = ({
       initial,

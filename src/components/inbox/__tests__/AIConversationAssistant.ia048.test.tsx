@@ -52,7 +52,7 @@ vi.mock('@/components/inbox/ai-tools/VisionIcon', () => ({
   VisionIcon: () => <span data-testid="vision-icon" />,
 }));
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   return {
     ...actual,
     motion: {

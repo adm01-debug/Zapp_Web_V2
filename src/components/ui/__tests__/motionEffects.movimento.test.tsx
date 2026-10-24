@@ -17,7 +17,7 @@ import { createElement, type ReactNode } from 'react';
 const reduzido = { value: false };
 
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   const propsDeMovimento = new Set([
       'initial', 'animate', 'exit', 'transition', 'variants', 'whileHover',
       'whileTap', 'whileFocus', 'layout', 'layoutId', 'drag', 'onAnimationComplete',

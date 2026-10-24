@@ -8,7 +8,7 @@ import { sanitizeEmailHtml, buildBodyPreview } from '@/lib/emailHtml';
 // não pixels (honestidade de teste — o layout visual é validado na matriz manual).
 
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   return {
     ...actual,
     motion: new Proxy({}, {

@@ -58,7 +58,7 @@ vi.mock('@/components/ui/select', async () => {
 });
 vi.mock('@/lib/utils', () => ({ cn: (...args: unknown[]) => args.filter(Boolean).join(' ') }));
 vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('framer-motion')>();
   return {
     ...actual,
     motion: { button: ({ children, ...props }: React.ComponentProps<'button'>) => <button {...props}>{children}</button> },
