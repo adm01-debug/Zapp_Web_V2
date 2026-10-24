@@ -13,7 +13,7 @@
     "8_edge_functions": "CONCLUÍDO — 20 variáveis Deno.env verificadas: todas via Deno.env.get() sem hardcode; 13 secrets vault por nome; 63 funções não lidas individualmente justificado: verify_jwt=true baseline + nenhum INVOKE chamado durante auditoria + code path sem efeito externo; logs 7d: NÃO VERIFICADO — supabase_functions.hooks e edge_logs não acessíveis via SQL/db_query",
     "9_auth_storage_realtime": "CONCLUÍDO — 10 usuários, 0 MFA factors (HIGH-7), providers: email+google; 9 buckets auditados com MIME e políticas; Realtime: tabelas `conversations`/`tasks`/`accounts` ausentes do schema (MEDIUM-9)",
     "10_logs_7d": "NÃO VERIFICADO — Motivo exato: `supabase_functions.hooks` retorna 42P01 (relation not found) via mcp_exec; tabela de logs de edge function não exposta via SQL; pg_stat_statements retorna 42P01 pelo mesmo motivo (mcp_exec é SECURITY DEFINER, cria contexto de execução separado sem search_path para extensions); advisor Security/Performance disponíveis mas não substituem logs de requisição raw",
-    "11_rls": "CONCLUÍDO (produção) + NÃO TESTADO (tenant isolation) — 7 tabelas com policies verificadas individualmente: messages (12 policies), whatsapp_connections (8), contacts (6), conversations (0 policies — tabela AUSENTE), tasks (0 — AUSENTE), accounts (0 — AUSENTE), departments (4); 39 UPDATE sem WITH CHECK confirmados (CRITICAL-2); matrix completa de isolamento de tenant NÃO TESTADO: motivo exato = mcp_exec é SECURITY DEFINER, `SET LOCAL role = 'authenticated'` retorna 403 em produção; roteiro em testes/rls_matrix_roteiro.md",
+    "11_rls": "CONCLUÍDO — produção + matrix tenant A×B EXECUTADA em Postgres 16 local (2026-10-24): 7 tabelas verificadas individualmente; 39 UPDATE sem WITH CHECK confirmados (CRITICAL-2); matrix completa: T-01 a T-05 SELECT isolation PASS, T-06/07 INSERT WITH CHECK PASS, T-C2 CRITICAL-2 CONFIRMADO (org_id trocado quando SELECT usa user_id em vez de is_member_of), T-08 ataque BLOQUEADO quando SELECT usa is_member_of(organization_id), T-09 DELETE cross-tenant PASS; nuance: PostgreSQL aplica SELECT USING como implicit WITH CHECK na linha nova — tabelas com is_member_of em SELECT estão protegidas; risco real em tabelas onde SELECT e UPDATE usam apenas user_id sem org check",
     "12_lacunas": "CONCLUÍDO — backup schema sem RLS, department_invites DELETE sem restrição de tenant, e2e UUID hardcoded"
   },
   "findings_count": {
@@ -27,10 +27,10 @@
   "not_verified_items": {
     "pg_stat_statements_top20": "42P01 via mcp_exec SECURITY DEFINER — sem access ao search_path de extensions",
     "edge_function_logs_7d": "supabase_functions.hooks não acessível via SQL; tabela edge_logs não exposta",
-    "rls_tenant_isolation_matrix": "SET LOCAL role bloqueado por SECURITY DEFINER em produção; requer Postgres temporário com migrations",
+    "rls_tenant_isolation_matrix": "EXECUTADO em Postgres 16 local (2026-10-24) — matrix A×B completa; CRITICAL-2 confirmado; ver Seção 11 do relatório",
     "gmail_webhook_code": "função não lida individualmente; verify_jwt=true confirma auth baseline"
   },
-  "last_updated": "2026-10-24T22:30:00Z",
+  "last_updated": "2026-10-24T23:45:00Z",
   "production_snapshot_initial": {
     "snapshot_at": "2026-10-24T20:53:57Z",
     "migration_count": 1054,

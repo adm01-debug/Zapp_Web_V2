@@ -45,6 +45,35 @@
 --   WITH CHECK (assigned_agent_id = auth.uid());
 -- COMMIT;
 
+-- ============================================================
+-- ROLLBACK — reverter as políticas para o estado sem WITH CHECK
+-- (executar por tabela; substituir <policy_name>, <table_name>
+--  e <condicao_original> pelos valores reais da tabela alvo)
+-- ============================================================
+
+-- Padrão para reverter UMA política:
+BEGIN;
+
+-- Passo 1: recriar sem WITH CHECK (rollback de uma política)
+-- DROP POLICY "<policy_name>" ON public.<table_name>;
+-- CREATE POLICY "<policy_name>" ON public.<table_name>
+--   FOR UPDATE
+--   USING (<condicao_original>);
+
+-- Verificação pós-rollback (deve retornar 1 linha com with_check IS NULL):
+-- SELECT tablename, policyname, with_check
+-- FROM pg_policies
+-- WHERE schemaname = 'public'
+--   AND tablename = '<table_name>'
+--   AND policyname = '<policy_name>';
+
+COMMIT;
+
+-- Nota: com 39 políticas afetadas, o rollback completo requer
+-- executar o padrão acima para cada tabela. A query de
+-- verificação pré-aplicação (no final deste arquivo) lista
+-- todas as políticas afetadas com suas condições USING originais.
+
 -- Verificação pré-aplicação (executar antes de qualquer mudança):
 SELECT
   schemaname,

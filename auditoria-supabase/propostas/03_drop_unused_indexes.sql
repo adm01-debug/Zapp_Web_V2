@@ -41,8 +41,36 @@ LIMIT 20;
 -- DROP INDEX IF EXISTS public.<index_name>;
 -- COMMIT;
 
--- Rollback template:
--- BEGIN;
--- CREATE INDEX <index_name> ON public.<table_name>
---   USING GIN (<coluna> gin_trgm_ops);
--- COMMIT;
+-- ============================================================
+-- ROLLBACK — recriar os 4 índices trigram identificados
+-- (executar se os índices forem necessários após remoção)
+-- ============================================================
+BEGIN;
+
+CREATE INDEX email_messages_body_text_trgm_idx
+  ON public.email_messages
+  USING GIN (body_text gin_trgm_ops);   -- 17 MB liberados
+
+CREATE INDEX email_attachments_filename_trgm_idx
+  ON public.email_attachments
+  USING GIN (filename gin_trgm_ops);    -- 11 MB liberados
+
+CREATE INDEX idx_messages_content_trgm
+  ON public.messages
+  USING GIN (content gin_trgm_ops);    -- 5 MB liberados
+
+CREATE INDEX idx_messages_media_url_trgm
+  ON public.messages
+  USING GIN (media_url gin_trgm_ops);  -- 4,4 MB liberados
+
+COMMIT;
+
+-- Verificação pós-rollback (deve retornar 4 linhas):
+-- SELECT indexname, pg_size_pretty(pg_relation_size(indexname::regclass))
+-- FROM pg_stat_user_indexes
+-- WHERE indexname IN (
+--   'email_messages_body_text_trgm_idx',
+--   'email_attachments_filename_trgm_idx',
+--   'idx_messages_content_trgm',
+--   'idx_messages_media_url_trgm'
+-- );

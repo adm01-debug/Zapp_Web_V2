@@ -53,7 +53,32 @@ ORDER BY tc.table_name, kcu.column_name;
 --   ON public.<table_name>(<column_name>);
 -- COMMIT;
 
--- Rollback template:
--- BEGIN;
--- DROP INDEX IF EXISTS public.idx_<table>_<column>;
--- COMMIT;
+-- ============================================================
+-- ROLLBACK — remover todos os índices criados por esta proposta
+-- (executar se algum índice causar regressão inesperada)
+-- ============================================================
+
+-- Identificar os índices criados por esta proposta (padrão idx_<table>_<column>):
+-- SELECT indexname FROM pg_indexes
+-- WHERE schemaname = 'public'
+--   AND indexname LIKE 'idx_%'
+--   AND indexdef NOT LIKE '%UNIQUE%'
+-- ORDER BY indexname;
+
+-- Remover todos de uma vez (ajustar lista após aplicar o CREATE):
+BEGIN;
+
+-- DROP INDEX IF EXISTS public.idx_<table1>_<coluna1>;
+-- DROP INDEX IF EXISTS public.idx_<table2>_<coluna2>;
+-- ... (um DROP por cada índice criado acima — preencher após executar o apply)
+
+-- Verificação pós-rollback (deve retornar 0 para os índices removidos):
+-- SELECT count(*) FROM pg_indexes
+-- WHERE schemaname = 'public'
+--   AND indexname IN ('idx_<table1>_<coluna1>', 'idx_<table2>_<coluna2>');
+
+COMMIT;
+
+-- Nota: os 35 índices específicos são gerados dinamicamente pela
+-- query de identificação no início deste arquivo. Salvar a lista
+-- antes de aplicar para usar no rollback.

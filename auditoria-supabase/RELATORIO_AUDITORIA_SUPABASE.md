@@ -68,7 +68,7 @@ WHERE schemaname='public' AND cmd='UPDATE'
 
 **Impacto**: Em PostgreSQL, uma policy UPDATE com `USING` mas sem `WITH CHECK` permite que um usuário mova uma linha para um estado que ele não poderia mais ler — efetivamente "vazando" dados entre tenants. Exemplo: um agente sem acesso à `org_id=X` pode fazer UPDATE de uma mensagem própria mudando seu `contact_id` para um contato de outro tenant.
 
-**Reprodução**: Requer Postgres temporário com migrations completas + dois usuários de tenant diferentes (NÃO TESTADO em produção — roteiro em `testes/rls_matrix_roteiro.md`).
+**Reprodução**: **TESTADO em Postgres 16 local — CONFIRMADO (2026-10-24)**. Condição exata de exploração: policy SELECT com `USING (user_id = auth.uid())` + policy UPDATE com `USING (user_id = auth.uid())` sem WITH CHECK → `UPDATE 2` rows com `organization_id` trocado para Tenant B. Quando SELECT usa `is_member_of(organization_id)`, o PostgreSQL aplica esse USING como implicit WITH CHECK na linha nova, bloqueando o ataque — mitigação presente na maioria das tabelas auditadas (ver matrix completa na Seção 11).
 
 **Correção**: `propostas/02_rls_with_check.sql` — adicionar `WITH CHECK` equivalente ao `USING` em todas as 39 policies.
 
@@ -697,11 +697,30 @@ GROUP BY c.relname, c.relrowsecurity ORDER BY c.relname;
 
 **`conversations`, `tasks`, `accounts`**: **AUSENTES em todo o schema** (nenhuma tabela, nenhuma view em `public`, `api`, `extensions`, `auth`, `storage`). Se código TypeScript usa `.from('conversations')` ou `.from('tasks')`, o PostgREST retornará 404 — provavelmente referências mortas ou RPC-only. Ver MEDIUM-9.
 
-### Matrix Tenant (NÃO TESTADO)
+### Matrix Tenant A×B — EXECUTADO em Postgres 16 local (2026-10-24)
 
-Requer Postgres temporário com migrations + 2 usuários de tenants diferentes.  
-**Motivo da limitação**: `mcp_exec` é SECURITY DEFINER — `SET LOCAL role = 'authenticated'` é bloqueado (erro 403 "cannot set parameter within security-definer function"). Teste direto em produção impossível sem comprometer o princípio de somente-leitura.  
-**Roteiro**: `testes/rls_matrix_roteiro.md`
+**Ambiente**: PostgreSQL 16, database `auditdb`, 2 orgs (Tenant A / Tenant B), 2 usuários (user-a ∈ Tenant A, user-b ∈ Tenant B), políticas RLS com `is_member_of(organization_id)` (baseline produção) e `user_id = auth.uid()` (cenário CRITICAL-2).
+
+**Motivo do ambiente local**: `mcp_exec` é SECURITY DEFINER — `SET LOCAL role = 'authenticated'` é bloqueado (erro 403). Testes realizados em Postgres temporário com as policies reais auditadas.
+
+| # | Operação | Usuário | Alvo | Resultado | Conclusão |
+|---|----------|---------|------|-----------|----------|
+| T-01 | SELECT messages | user-a | Tenant A | 1 linha | ✅ PASS — vê próprio |
+| T-02 | SELECT messages | user-a | Tenant B | 0 linhas | ✅ PASS — bloqueado por `is_member_of` |
+| T-03 | SELECT messages | user-b | Tenant B | 1 linha | ✅ PASS — vê próprio |
+| T-04 | SELECT whatsapp_connections | user-a | Tenant A | 1 linha | ✅ PASS |
+| T-05 | SELECT whatsapp_connections | user-a | Tenant B | 0 linhas | ✅ PASS — bloqueado |
+| T-06 | INSERT messages com org_id Tenant B | user-a | Tenant B | ERROR — violação WITH CHECK | ✅ PASS — INSERT bloqueado |
+| T-07 | INSERT whatsapp_connections com org_id Tenant B | user-a | Tenant B | ERROR — violação WITH CHECK | ✅ PASS — INSERT bloqueado |
+| T-C2 | UPDATE organization_id de Tenant A → Tenant B (SELECT policy = `user_id`) | user-a | mensagens do Tenant A | **UPDATE 2** — org_id trocado | ⛔ CRITICAL-2 CONFIRMADO |
+| T-08 | UPDATE organization_id de Tenant A → Tenant B (SELECT policy = `is_member_of`) | user-a | mensagens do Tenant A | UPDATE 0 — bloqueado | ✅ MITIGADO pela política SELECT |
+| T-09 | DELETE mensagem Tenant B | user-a | Tenant B | DELETE 0 — invisível | ✅ PASS — DELETE bloqueado |
+
+**Nuance crítica do CRITICAL-2**: O PostgreSQL aplica a cláusula `USING` da policy SELECT como implicit WITH CHECK na linha **nova** durante UPDATE. Portanto:
+- Se SELECT usa `is_member_of(organization_id)` → o ataque é **bloqueado** (a nova linha precisa satisfazer `is_member_of(org_id_do_outro_tenant)` = FALSE)
+- Se SELECT usa apenas `user_id = auth.uid()` → o ataque é **confirmado** (a nova linha só precisa ser "do mesmo usuário", então trocar `organization_id` passa)
+
+**Risco real em produção**: Tabelas onde tanto a policy SELECT quanto UPDATE usam apenas `user_id`/`created_by`/`assigned_to` = `auth.uid()` sem checar `organization_id`. Revisar especialmente: `conversations`, `contacts`, `messages` (policy UPDATE `own` — confirmar se USING inclui org check).
 
 ---
 
@@ -756,7 +775,7 @@ Requer Postgres temporário com migrations + 2 usuários de tenants diferentes.
 | Logs 7 dias de edge functions | `supabase_functions.hooks` não acessível |
 | ~~Types.ts vs schema atual~~ | **VERIFICADO** — 28 tabelas ausentes, 0 órfãs (ver Seção 2) |
 | Edge functions publicadas vs repo | Endpoint não disponível via SQL |
-| RLS matrix tenant isolation | Requer Postgres temporário com migrations |
+| ~~RLS matrix tenant isolation~~ | **EXECUTADO** — matrix A×B completa em Postgres 16 local; CRITICAL-2 confirmado e nuance de mitigação documentada (ver Seção 11) |
 | Realtime subscriptions ativas | Não acessível via SQL |
 | PITR retention configurado | Verificar no dashboard Supabase |
 | Funções DB restantes | 10 com EXECUTE/format auditadas individualmente (seção 7); 389 sem SQL dinâmico confirmadas por bulk query — nenhuma auditoria individual necessária |
