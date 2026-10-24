@@ -56,7 +56,7 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
             )}
             {users.map((user) => {
               const RoleIcon = roleIconMap[user.role];
-              const accessInfo = accessLevelConfig[user.access_level || 'basic'];
+              const accessInfo = accessLevelConfig[(user.access_level || 'basic') as keyof typeof accessLevelConfig];
               // Nome que entra no aria-label dos controles da linha; a mesma
               // queda para e-mail/`Usuário` que o Avatar já usa evita rótulo vazio.
               const nome = user.name || user.email || 'Usuário';

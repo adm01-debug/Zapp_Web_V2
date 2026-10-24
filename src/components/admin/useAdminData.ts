@@ -36,19 +36,28 @@ export interface UserWithRole {
   id: string;
   user_id: string;
   name: string;
-  email: string;
+  email: string | null;
   role: AppRole;
   is_active: boolean;
   avatar_url: string | null;
-  nickname?: string | null;
-  signature?: string | null;
-  job_title?: string | null;
-  department?: string | null;
-  phone?: string | null;
-  access_level?: string;
-  max_chats?: number;
-  can_download?: boolean;
-  created_at?: string;
+  nickname: string | null;
+  signature: string | null;
+  job_title: string | null;
+  department: string | null;
+  phone: string | null;
+  access_level: string | null;
+  max_chats: number | null;
+  can_download: boolean;
+  created_at: string;
+}
+
+export interface AuditLog {
+  id: string;
+  action: string;
+  entity_type: string | null;
+  details: unknown;
+  created_at: string;
+  user?: { name: string } | null;
 }
 
 export interface CreateUserFieldError {
@@ -84,25 +93,30 @@ interface AuditParams {
   pageSize?: number;
 }
 
-function translateRoleChangeError(error: { code?: string; message?: string }): string {
-  if (error.code === '42501') return 'Acesso negado.';
-  const msg = error.message ?? '';
-  if (msg.includes('cannot_demote_self')) return 'Você não pode remover o próprio papel de administrador.';
-  if (msg.includes('cannot_demote_last_admin')) return 'A instalação precisa de pelo menos um administrador.';
-  return 'Erro ao atualizar papel.';
-}
+type CreateUserPayload = {
+  name: string;
+  email: string;
+  password: string;
+  role: AppRole;
+  nickname?: string | null;
+  signature?: string | null;
+  job_title?: string | null;
+  avatarFile?: File | null;
+  gmail_email?: string | null;
+  google_services?: string[];
+  dropbox_email?: string | null;
+};
 
 export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [auditLogs, setAuditLogs] = useState<unknown[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [auditTotal, setAuditTotal] = useState(0);
   const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
-  const [createUserError, setCreateUserError] = useState<CreateUserFieldError | null>(null);
   const deletingIdRef = useRef<string | null>(null);
-  const inFlightToggleRef = useRef<Set<string>>(new Set());
+  const togglingIdRef = useRef<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -111,7 +125,7 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
       if (tab === 'users') {
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, name, email, role, is_active, avatar_url')
+          .select('id, user_id, name, email, role, is_active, avatar_url, nickname, signature, job_title, department, phone, access_level, max_chats, can_download, created_at')
           .order('name', { ascending: true });
         if (profileError) {
           const msg = (profileError as { message?: string }).message ?? 'Erro ao carregar usuários';
@@ -131,7 +145,7 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
           toast.error('Erro ao carregar usuários');
           return;
         }
-        const raw = (profileData ?? []).map((u: { id: string }) => ({ ...u, user_id: u.id })) as UserWithRole[];
+        const raw = (profileData ?? []) as UserWithRole[];
         const signed = await Promise.all(
           raw.map(async (u) => {
             const path = avatarObjectPath(u.avatar_url);
@@ -180,117 +194,46 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
   }, [tab, auditParams]);
 
   const handleCreateUser = useCallback(
-    async (payload: { name: string; email: string; password: string; role: AppRole }): Promise<boolean> => {
-      if (payload.password.length < MIN_PASSWORD_LENGTH) {
-        toast.error(`A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres`);
-        return false;
-      }
+    async (payload: CreateUserPayload): Promise<boolean> => {
       setIsCreatingUser(true);
-      const invokeArgs = {
-        name: payload.name,
-        email: payload.email,
-        password: payload.password,
-        role: payload.role,
-      };
       try {
-        try {
-          await invokeEdge('create-user', invokeArgs);
-        } catch (err) {
-          const parsed = await readEdgeError(err);
-          if (parsed.status === 401) {
-            const { error: refreshError } = await supabase.auth.refreshSession();
-            if (refreshError) {
-              setCreateUserError({ field: null, message: 'Erro ao criar usuário' });
-              toast.error('Erro ao criar usuário');
-              return false;
-            }
-            try {
-              await invokeEdge('create-user', invokeArgs);
-            } catch (retryErr) {
-              const rp = await readEdgeError(retryErr);
-              const fe = mapCreateUserError(rp.message);
-              setCreateUserError(fe);
-              toast.error(fe.message);
-              return false;
-            }
-          } else {
-            const fe = mapCreateUserError(parsed.message);
-            setCreateUserError(fe);
-            toast.error(fe.message);
+        let avatarPath: string | null = null;
+
+        if (payload.avatarFile) {
+          const ext = payload.avatarFile.name.split('.').pop() ?? 'jpg';
+          avatarPath = `${crypto.randomUUID()}.${ext}`;
+          const { error: uploadError } = await supabase.storage
+            .from(AVATAR_BUCKET)
+            .upload(avatarPath, payload.avatarFile);
+          if (uploadError) {
+            toast.error('Erro ao fazer upload da foto');
             return false;
           }
         }
-        setCreateUserError(null);
-        toast.success('Usuário criado com sucesso!');
+
+        const { avatarFile: _avatarFile, ...rest } = payload;
+        const body: Record<string, unknown> = { ...rest };
+        if (avatarPath !== null) {
+          body.avatar_url = avatarPath;
+        }
+
+        const { error: invokeError } = await invokeEdge('create-user', { body });
+        if (invokeError) {
+          const errMsg = await readEdgeError(invokeError);
+          toast.error(errMsg.message ?? 'Erro ao criar usuário');
+          return false;
+        }
+
         await fetchData();
         return true;
+      } catch (err) {
+        log.error('handleCreateUser error', err);
+        return false;
       } finally {
         setIsCreatingUser(false);
       }
     },
     [fetchData]
-  );
-
-  const handleRoleChange = useCallback(
-    async (userId: string, role: AppRole): Promise<void> => {
-      const { error: rpcError } = await supabase.rpc('admin_set_role', {
-        _user_id: userId,
-        _role: role,
-      });
-      if (rpcError) {
-        toast.error(translateRoleChangeError(rpcError as { code?: string; message?: string }));
-        return;
-      }
-      toast.success('Papel atualizado com sucesso.');
-      await fetchData();
-    },
-    [fetchData]
-  );
-
-  const handleToggleActive = useCallback(
-    async (user: UserWithRole): Promise<void> => {
-      if (inFlightToggleRef.current.has(user.id)) return;
-      inFlightToggleRef.current.add(user.id);
-      try {
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ is_active: !user.is_active })
-          .eq('id', user.id);
-        if (updateError) {
-          toast.error('Erro ao atualizar status do usuário.');
-          return;
-        }
-        toast.success(user.is_active ? 'Usuário desativado.' : 'Usuário ativado.');
-        await fetchData();
-      } finally {
-        inFlightToggleRef.current.delete(user.id);
-      }
-    },
-    [fetchData]
-  );
-
-  const handleSaveRamal = useCallback(
-    async (profileId: string, ramal: string, sipPassword: string): Promise<boolean> => {
-      const { error: rpcError } = await supabase.rpc('set_voip_profile_credentials', {
-        p_profile_id: profileId,
-        p_ramal: ramal,
-        p_sip_password: sipPassword,
-      });
-      if (rpcError) {
-        const msg = (rpcError as { message?: string }).message ?? '';
-        if (msg.includes('ramal_em_uso')) {
-          toast.error('Este ramal já está em uso por outro atendente.');
-        } else if (msg.includes('not_authorized')) {
-          toast.error('Apenas administradores podem definir o ramal.');
-        } else {
-          toast.error('Erro ao salvar ramal.');
-        }
-        return false;
-      }
-      toast.success('Ramal salvo com sucesso.');
-      return true;
-    },
-    []
   );
 
   // Legacy fetchUsers kept for existing callers
@@ -299,7 +242,7 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
     try {
       const { data, error: fetchError } = await supabase
         .from('profiles')
-        .select('id, name, email, role, is_active, avatar_url')
+        .select('id, user_id, name, email, role, is_active, avatar_url, nickname, signature, job_title, department, phone, access_level, max_chats, can_download, created_at')
         .order('name', { ascending: true });
       if (fetchError) {
         if (isAccessDeniedError(fetchError)) {
@@ -309,7 +252,7 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
         }
         return;
       }
-      const raw = (data ?? []).map((u: { id: string }) => ({ ...u, user_id: u.id })) as UserWithRole[];
+      const raw = (data ?? []) as UserWithRole[];
       const signed = await Promise.all(
         raw.map(async (u) => {
           const path = avatarObjectPath(u.avatar_url);
@@ -333,14 +276,16 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
     async (payload: { name: string; email: string; password: string; role: AppRole }): Promise<CreateUserFieldError | null> => {
       setIsCreatingUser(true);
       try {
-        const response = await invokeEdge('create-user', {
-          name: payload.name,
-          email: payload.email,
-          password: payload.password,
-          role: payload.role,
+        const { error: invokeError } = await invokeEdge('create-user', {
+          body: {
+            name: payload.name,
+            email: payload.email,
+            password: payload.password,
+            role: payload.role,
+          },
         });
-        if (!(response as { ok?: boolean }).ok) {
-          const errMsg = await readEdgeError(response as Response);
+        if (invokeError) {
+          const errMsg = await readEdgeError(invokeError);
           return mapCreateUserError(errMsg.message);
         }
         toast.success('Usuário criado com sucesso');
@@ -351,6 +296,58 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
         return { field: null, message: 'Erro ao criar usuário' };
       } finally {
         setIsCreatingUser(false);
+      }
+    },
+    [fetchUsers]
+  );
+
+  const handleSaveUser = useCallback(
+    async (user: UserWithRole, avatarFile: File | null): Promise<boolean> => {
+      try {
+        let avatarPath: string | null;
+
+        if (avatarFile) {
+          const ext = avatarFile.name.split('.').pop() ?? 'jpg';
+          const uploadPath = `${crypto.randomUUID()}.${ext}`;
+          const { error: uploadError } = await supabase.storage
+            .from(AVATAR_BUCKET)
+            .upload(uploadPath, avatarFile);
+          if (uploadError) {
+            toast.error('Erro ao fazer upload da foto');
+            return false;
+          }
+          avatarPath = uploadPath;
+        } else {
+          avatarPath = avatarObjectPath(user.avatar_url);
+        }
+
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            name: user.name,
+            nickname: user.nickname,
+            signature: user.signature,
+            job_title: user.job_title,
+            department: user.department,
+            phone: user.phone,
+            access_level: user.access_level,
+            max_chats: user.max_chats,
+            can_download: user.can_download,
+            avatar_url: avatarPath,
+          })
+          .eq('id', user.id);
+
+        if (updateError) {
+          toast.error('Erro ao salvar usuário');
+          return false;
+        }
+        toast.success('Usuário atualizado com sucesso');
+        await fetchUsers();
+        return true;
+      } catch (err) {
+        log.error('handleSaveUser error', err);
+        toast.error('Erro ao salvar usuário');
+        return false;
       }
     },
     [fetchUsers]
@@ -377,6 +374,57 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
     [fetchUsers]
   );
 
+  const handleRoleChange = useCallback(
+    async (userId: string, role: AppRole): Promise<void> => {
+      try {
+        const { error: rpcError } = await supabase.rpc('admin_set_role', {
+          _user_id: userId,
+          _role: role,
+        });
+        if (rpcError) {
+          const code = (rpcError as { code?: string }).code;
+          if (code === 'cannot_demote_self') {
+            toast.error('Você não pode remover o próprio papel de administrador.');
+          } else if (code === '42501') {
+            toast.error('Acesso negado para alterar o papel deste usuário.');
+          } else {
+            toast.error(rpcError.message ?? 'Erro ao atualizar papel');
+          }
+          return;
+        }
+        toast.success('Papel atualizado com sucesso');
+        await fetchUsers();
+      } catch (err) {
+        log.error('handleRoleChange error', err);
+      }
+    },
+    [fetchUsers]
+  );
+
+  const handleToggleActive = useCallback(
+    async (user: UserWithRole): Promise<void> => {
+      if (togglingIdRef.current === user.id) return;
+      togglingIdRef.current = user.id;
+      try {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ is_active: !user.is_active })
+          .eq('id', user.id);
+        if (updateError) {
+          toast.error('Erro ao atualizar status');
+          return;
+        }
+        toast.success('Status atualizado com sucesso');
+        await fetchUsers();
+      } catch (err) {
+        log.error('handleToggleActive error', err);
+      } finally {
+        togglingIdRef.current = null;
+      }
+    },
+    [fetchUsers]
+  );
+
   const toggleUserActive = useCallback(
     async (userId: string, isActive: boolean): Promise<boolean> => {
       try {
@@ -398,14 +446,43 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
     [fetchUsers]
   );
 
+  const handleSaveRamal = useCallback(
+    async (profileId: string, ramal: string, sipPassword: string): Promise<boolean> => {
+      try {
+        const { error: rpcError } = await supabase.rpc('set_voip_profile_credentials', {
+          p_profile_id: profileId,
+          p_ramal: ramal,
+          p_sip_password: sipPassword,
+        });
+        if (rpcError) {
+          const code = (rpcError as { code?: string }).code;
+          if (code === 'ramal_em_uso') {
+            toast.error('Este ramal já está em uso por outro atendente.');
+          } else if (code === 'not_authorized') {
+            toast.error('Apenas administradores podem definir o ramal.');
+          } else {
+            toast.error(rpcError.message ?? 'Erro ao salvar ramal');
+          }
+          return false;
+        }
+        toast.success('Ramal configurado com sucesso');
+        return true;
+      } catch (err) {
+        log.error('handleSaveRamal error', err);
+        return false;
+      }
+    },
+    []
+  );
+
   const deleteUser = useCallback(
     async (userId: string): Promise<boolean> => {
       deletingIdRef.current = userId;
       setIsDeletingUser(true);
       try {
-        const response = await invokeEdge('delete-user', { userId });
-        if (!(response as { ok?: boolean }).ok) {
-          const errMsg = await readEdgeError(response as Response);
+        const { error: invokeError } = await invokeEdge('delete-user', { body: { userId } });
+        if (invokeError) {
+          const errMsg = await readEdgeError(invokeError);
           toast.error(errMsg.message ?? 'Erro ao excluir usuário');
           return false;
         }
@@ -432,17 +509,17 @@ export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {
     auditTotal,
     isCreatingUser,
     isDeletingUser,
-    createUserError,
     deletingIdRef,
     fetchData,
     handleCreateUser,
-    handleRoleChange,
-    handleToggleActive,
-    handleSaveRamal,
     fetchUsers,
     createUser,
+    handleSaveUser,
     updateUserRole,
+    handleRoleChange,
+    handleToggleActive,
     toggleUserActive,
+    handleSaveRamal,
     deleteUser,
   };
 }
