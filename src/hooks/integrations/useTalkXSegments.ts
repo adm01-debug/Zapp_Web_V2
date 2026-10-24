@@ -190,7 +190,7 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
 // como separador de filtros — escapa-la geraria uma barra invertida espuria
 // no valor buscado (achado do Codex na PR #896: "Acme, Inc" deixava de bater
 // porque o escape da virgula, ao passar por esta funcao, dobrava a barra).
-const quoted = (v: string) => `"${v.replace(/[\\"]/g, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
+const quoted = (v: string) => `"${v.replace(/[\\\"]  /g, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
 
 function ruleToFilter(r: SegmentRule): string | null {
   const def = RULE_FIELDS.find((f) => f.value === r.field);
@@ -258,7 +258,7 @@ export function rulesToPostgrest(rules: SegmentRules | null | undefined): string
     })
     .filter((g) => g.filters.length > 0);
   if (groups.length === 0) return null;
-  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`));
+  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})` ));
   return parts.length === 1 ? parts[0] : parts.join(',');
 }
 
@@ -282,6 +282,9 @@ const AUDIENCE_RPC_PAGE_LIMIT = 1000;
  * PostgREST filtrando só `phone not null`, o que superestimava o público.
  */
 export async function countAudience(rules: SegmentRules | null | undefined, segmentIds?: string[]): Promise<number> {
+  const allRules = (rules?.groups ?? []).flatMap(g => g.rules);
+  const realField = allRules.find(r => typeof r.field === 'string' && (r.field as string).startsWith('real_'));
+  if (realField) throw new Error(`${String(realField.field)} não pode ser combinado com p_contact_ids`);
   const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const { data, error } = await rpc('talkx_resolve_audience', {
     p_rules: audienceRulesPayload(rules),
@@ -303,6 +306,9 @@ export interface AudienceContact { id: string; name: string; nickname: string | 
  * mascarado pelo servidor e a paginação percorre até `limit` (ou o fim da lista).
  */
 export async function resolveAudience(rules: SegmentRules | null | undefined, limit = 5000, segmentIds?: string[]): Promise<AudienceContact[]> {
+  const allRules = (rules?.groups ?? []).flatMap(g => g.rules);
+  const realField = allRules.find(r => typeof r.field === 'string' && (r.field as string).startsWith('real_'));
+  if (realField) throw new Error(`${String(realField.field)} não pode ser combinado com p_contact_ids`);
   const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const target = Math.max(0, Math.floor(limit));
   const rows: AudienceContact[] = [];

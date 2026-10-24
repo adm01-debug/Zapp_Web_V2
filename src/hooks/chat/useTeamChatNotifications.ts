@@ -5,6 +5,7 @@ import { useNotificationSettings } from '@/hooks/system/useNotificationSettings'
 import { usePushNotifications } from '@/hooks/system/usePushNotifications';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
 
 const log = getLogger('TeamChatNotifications');
@@ -147,7 +148,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
     if (!profile) return;
 
     const channel = supabase
-      .channel('team-chat-notifications')
+      .channel('team-chat-notifications:' + uniqueRealtimeTopic(''))
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -245,7 +246,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile, notifSettings.soundEnabled, notifSettings.soundVolume, notifSettings.browserNotifications, permission, isQuietHours, showNotification]);
+  }, [profile, permission]);
 
   /**
    * Clique na notificação do chat interno: o service worker repassa o clique da
