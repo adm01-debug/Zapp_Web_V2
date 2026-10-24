@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { classificar, decidir, estadoDoCheck, checksObrigatorios, resolverDesconhecidos, confirmarCandidato } from './fila-merge.mjs';
 
 const OBRIG = ['🧪 Unit Tests', 'Contrato DB offline'];
@@ -24,6 +25,23 @@ test('os checks obrigatórios saem do baseline do settings-guard (fonte única)'
   const lista = checksObrigatorios();
   assert.equal(lista.length, 6);
   assert.ok(lista.includes('🧩 Node CI Scripts'));
+});
+
+test('F3 (18/10, decisão do Joaquim): strict=false no baseline não exige esta fila serial', () => {
+  // A fila serial (este arquivo) existe para o problema O(N²) de 15/10, que só acontece
+  // com strict=true (cada merge deixa todas as PRs BEHIND e reinicia a CI de todas).
+  // F3 decidiu strict=false (opção A) em vez de reativar a fila (opção B). Este teste é
+  // o canário: se strict voltar a true sem reativar a fila, ele avisa aqui.
+  const baseline = JSON.parse(
+    readFileSync(new URL('./github-settings-baseline.json', import.meta.url), 'utf8'),
+  );
+  assert.equal(
+    baseline.branch_protection_main.strict,
+    false,
+    'se isto virou true, reative a fila serial (F3-B: auto-update-pr-branch.yml) antes de prosseguir',
+  );
+  // checksObrigatorios() lê só required_status_checks — não depende de strict.
+  assert.equal(checksObrigatorios().length, 6);
 });
 
 test('estado do check: ausente e em andamento são pendentes; cancelado não conta como falha', () => {

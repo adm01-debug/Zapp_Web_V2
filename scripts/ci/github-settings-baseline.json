@@ -6,7 +6,7 @@
   ],
   "medido_em": "2026-10-16",
   "branch_protection_main": {
-    "strict": true,
+    "strict": false,
     "enforce_admins": true,
     "required_approving_review_count": 0,
     "required_linear_history": true,
