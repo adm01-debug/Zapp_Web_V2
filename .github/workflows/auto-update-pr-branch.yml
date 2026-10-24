@@ -188,7 +188,7 @@ jobs:
             novos=""
             if [ -n "$head_branch" ]; then
               novos=$(gh api "repos/$REPO/actions/runs?head_sha=$sha_depois&status=action_required&per_page=20" \
-                --jq --arg b "$head_branch" '.workflow_runs[] | select(.head_branch == $b) | .id' 2>/dev/null) || novos=""
+                | jq -r --arg b "$head_branch" '.workflow_runs[] | select(.head_branch == $b) | .id' 2>/dev/null) || novos=""
             else
               novos=$(gh api "repos/$REPO/actions/runs?head_sha=$sha_depois&status=action_required&per_page=20" \
                 --jq '.workflow_runs[].id' 2>/dev/null) || novos=""
