@@ -6,6 +6,7 @@ import {
   coletarJobs,
   coletarRuns,
   corpoDoKpi,
+  detectarLote,
   duracaoMinutos,
   maisLentos,
   paginaTemMais,
@@ -186,4 +187,80 @@ test('#365: o corpo do KPI publica o ranking real dos jobs, nao um ranking vazio
   assert.match(md, /build/, 'o job mais lento tem de aparecer — antes o ranking saia vazio');
   assert.doesNotMatch(md, /nenhum job/, 'com jobs reais o placeholder nao pode aparecer');
   assert.match(md, /\| workflow \| runs \|/);
+});
+
+test('GA54: fixture com 20 runs no mesmo branch em 24 h dispara o alerta de lote', () => {
+  const agora = Date.parse('2026-10-03T12:00:00Z');
+  const runs = Array.from({ length: 20 }, (_, i) => ({
+    name: 'CI',
+    conclusion: 'success',
+    head_branch: 'claude/lote-grande',
+    run_started_at: new Date(agora - (i + 1) * 3600 * 1000).toISOString(),
+    updated_at: new Date(agora - i * 3600 * 1000).toISOString(),
+  }));
+  const lotes = detectarLote(runs, { agora });
+  assert.equal(lotes.length, 1);
+  assert.equal(lotes[0].branch, 'claude/lote-grande');
+  assert.equal(lotes[0].pushes, 20);
+  const md = corpoDoKpi(runs, [], { agora, janelaDias: 7 });
+  assert.match(md, /Lotes de push/, 'o corpo do KPI tem de acusar o lote');
+  assert.match(md, /claude\/lote-grande/);
+});
+
+test('GA54: abaixo do limite (15) ou fora da janela nao ha alerta', () => {
+  const agora = Date.parse('2026-10-03T12:00:00Z');
+  const runs = Array.from({ length: 15 }, (_, i) => ({
+    name: 'CI',
+    conclusion: 'success',
+    head_branch: 'claude/no-limite',
+    run_started_at: new Date(agora - (i + 1) * 3600 * 1000).toISOString(),
+    updated_at: new Date(agora - i * 3600 * 1000).toISOString(),
+  }));
+  assert.deepEqual(detectarLote(runs, { agora }), []);
+  const velhos = Array.from({ length: 30 }, (_, i) => ({
+    name: 'CI',
+    conclusion: 'success',
+    head_branch: 'claude/velho',
+    run_started_at: new Date(agora - 3 * 86400 * 1000 - i * 3600 * 1000).toISOString(),
+    updated_at: new Date(agora - 3 * 86400 * 1000).toISOString(),
+  }));
+  assert.deepEqual(detectarLote(velhos, { agora }), [], 'fora da janela de 24 h nao conta');
+});
+
+test('GA54: fixture com 20 runs no mesmo branch em 24 h dispara o alerta de lote', () => {
+  const agora = Date.parse('2026-10-03T12:00:00Z');
+  const runs = Array.from({ length: 20 }, (_, i) => ({
+    name: 'CI',
+    conclusion: 'success',
+    head_branch: 'claude/lote-grande',
+    run_started_at: new Date(agora - (i + 1) * 3600 * 1000).toISOString(),
+    updated_at: new Date(agora - i * 3600 * 1000).toISOString(),
+  }));
+  const lotes = detectarLote(runs, { agora });
+  assert.equal(lotes.length, 1);
+  assert.equal(lotes[0].branch, 'claude/lote-grande');
+  assert.equal(lotes[0].pushes, 20);
+  const md = corpoDoKpi(runs, [], { agora, janelaDias: 7 });
+  assert.match(md, /Lotes de push/, 'o corpo do KPI tem de acusar o lote');
+  assert.match(md, /claude\/lote-grande/);
+});
+
+test('GA54: abaixo do limite (15) ou fora da janela nao ha alerta', () => {
+  const agora = Date.parse('2026-10-03T12:00:00Z');
+  const runs = Array.from({ length: 15 }, (_, i) => ({
+    name: 'CI',
+    conclusion: 'success',
+    head_branch: 'claude/no-limite',
+    run_started_at: new Date(agora - (i + 1) * 3600 * 1000).toISOString(),
+    updated_at: new Date(agora - i * 3600 * 1000).toISOString(),
+  }));
+  assert.deepEqual(detectarLote(runs, { agora }), []);
+  const velhos = Array.from({ length: 30 }, (_, i) => ({
+    name: 'CI',
+    conclusion: 'success',
+    head_branch: 'claude/velho',
+    run_started_at: new Date(agora - 3 * 86400 * 1000 - i * 3600 * 1000).toISOString(),
+    updated_at: new Date(agora - 3 * 86400 * 1000).toISOString(),
+  }));
+  assert.deepEqual(detectarLote(velhos, { agora }), [], 'fora da janela de 24 h nao conta');
 });
