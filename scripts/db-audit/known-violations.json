@@ -1,5 +1,5 @@
 {
-  "_comment": "Baseline (ratchet) do supabase-usage-guard. Entradas aqui são violações CONHECIDAS e aceitas (ex: tabela usada via join indireto, schema divergente temporário). O guard falha em CI se houver NOVAS violações fora deste baseline. Para remover uma entrada: certifique-se que o alvo existe em schema-catalog.json, senão o guard vai acusar nova violação. NOTA 2026-10-11 (t_7457095e): a chave rpc:talkx_campaign_window_open:* é TEMPORÁRIA pelo mesmo motivo — o chamador é o talkx-scheduler (edge, supabase/functions/talkx-scheduler/index.ts) e o alvo vem do cartão-irmão de banco (branch v2/talkx-campaign-dnd-weekdays-261010181233-2610102047340b, migration 20261011000003_20261010_talkx_campaigns_dnd_weekdays.sql), ainda fora de dia/. REMOVER esta chave assim que a migration estiver na dia: então o alvo passa a existir, a chave fica obsoleta e o guard volta a falhar sozinho pedindo a remoção.",
+  "_comment": "Baseline (ratchet) do supabase-usage-guard. Entradas aqui são violações CONHECIDAS e aceitas (ex: tabela usada via join indireto, schema divergente temporário). O guard falha em CI se houver NOVAS violações fora deste baseline. Para remover uma entrada: certifique-se que o alvo existe em schema-catalog.json, senão o guard vai acusar nova violação. NOTA 2026-10-11 (t_7457095e): a chave rpc:talkx_campaign_window_open:* é TEMPORÁRIA pelo mesmo motivo — o chamador é o talkx-scheduler (edge, supabase/functions/talkx-scheduler/index.ts) e o alvo vem do cartão-irmão de banco (branch v2/talkx-campaign-dnd-weekdays-261010181233-2610102047340b, migration 20261011000003_20261010_talkx_campaigns_dnd_weekdays.sql), ainda fora de dia/. REMOVER esta chave assim que a migration estiver na dia: então o alvo passa a existir, a chave fica obsoleta e o guard volta a falhar sozinho pedindo a remoção. NOTA 2026-10-24 (CV-071–CV-150 fases 13-15): as 7 entradas from:copilot_* adicionadas aqui são TEMPORÁRIAS — tabelas dos hooks das fases 13–15 do copiloto de vendas (CV-121–CV-150) ainda sem migration de banco. REMOVER assim que as migrations das fases 13-15 estiverem mergeadas e schema-catalog.json atualizado.",
   "_gerado_em": "2026-08-27",
   "_contexto": "docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'",
   "known": [
@@ -33,7 +33,14 @@
     "rpc:consume_login_gate:supabase/functions/auth-login/index.ts",
     "rpc:multiplix_materialize_legacy_queue:supabase/functions/multiplix-send/index.ts",
     "rpc:talkx_campaign_window_open:supabase/functions/talkx-scheduler/index.ts",
-    "from:talkx_test_sends:supabase/functions/talkx-send/index.ts"
+    "from:talkx_test_sends:supabase/functions/talkx-send/index.ts",
+    "from:copilot_outcomes:src/hooks/copilot/useCopilotLearning.ts",
+    "from:copilot_objection_catalog:src/hooks/copilot/useCopilotLearning.ts",
+    "from:copilot_usage:src/hooks/copilot/useCopilotMetrics.ts",
+    "from:copilot_seller_settings:src/hooks/copilot/useCopilotMetrics.ts",
+    "from:copilot_help_requests:src/hooks/copilot/useSupervisorFeatures.ts",
+    "from:copilot_learning_moments:src/hooks/copilot/useSupervisorFeatures.ts",
+    "from:copilot_conversation_scores:src/hooks/copilot/useSupervisorFeatures.ts"
   ],
   "_resolvido": {
     "from:department_whatsapp_configs (SL-144)": "A tabela department_whatsapp_configs nao existe no schema (ela nao esta em schema-catalog.json nem em nenhuma migration) e useSaveDepartmentWhatsApp era o unico consumidor. O acesso direto saiu em 2026-10-08: a gravacao passou para public.set_department_whatsapp_config (migration 20261006213734), que esta no catalogo — o guard nao acusa violacao e a entrada do baseline ficou obsoleta.",
