@@ -4,6 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { TeamConversation, TeamConversationType, TeamMember, TeamMessage } from './teamChatTypes';
 import { queryKeys } from './queryKeys';
+import { getLogger } from '@/lib/logger';
+
+const log = getLogger('useTeamConversations');
 
 export function useTeamConversations() {
   const { profile } = useAuth();
@@ -117,7 +120,13 @@ export function useTeamConversations() {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'team_message_receipts' }, () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
       })
-      .subscribe();
+      // E91: o canal nao avisa quando cai - CHANNEL_ERROR/TIMED_OUT eram
+      // silenciosos e a lista de conversas envelhecia sem rastro no log.
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          log.warn('team:inbox CHANNEL_ERROR', { status });
+        }
+      });
     return () => { supabase.removeChannel(channel); };
   }, [profile, queryClient]);
 

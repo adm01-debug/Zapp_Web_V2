@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getLogger } from '@/lib/logger';
+
+const log = getLogger('useTeamTyping');
 
 interface TypingUser { userId: string; name: string; }
 
@@ -46,7 +49,13 @@ export function useTeamTyping(
       } else {
         setTypingUsers(prev => prev.filter(u => u.userId !== p.userId));
       }
-    }).subscribe();
+    })
+      // E91: a queda do canal de digitacao era silenciosa.
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          log.warn('team-typing CHANNEL_ERROR', { conversationId, status });
+        }
+      });
     return () => {
       // F88: nenhum timer sobrevive ao unmount — nem o que esconde o aviso
       // recebido, nem o que envia o "parou de digitar" no canal que vai sair.

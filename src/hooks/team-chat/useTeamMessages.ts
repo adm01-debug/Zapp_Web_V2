@@ -112,6 +112,10 @@ export function useTeamMessages(conversationId: string | null) {
       .subscribe((status) => {
         // A queda do canal não avisa: o que ficou em memória envelhece. Só na
         // RE-inscrição (depois da primeira) a página corrente é refeita.
+        // E91: a queda do canal era silenciosa; loga o estado de erro.
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          log.warn('team:messages CHANNEL_ERROR', { conversationId, status });
+        }
         if (status !== 'SUBSCRIBED') return;
         if (jaInscrito) revalidar();
         jaInscrito = true;
