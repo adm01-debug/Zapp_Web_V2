@@ -26,6 +26,9 @@ const estado = vi.hoisted(() => ({
   onOpenChangeRaiz: undefined as ((v: boolean) => void) | undefined,
   upload: vi.fn(),
   createSignedUrl: vi.fn(),
+  // VoiceChangerPicker usa bucket privado (createSignedUrl); getPublicUrl não
+  // existe mais nesse caminho — o espião só prova que a falha não cai nele.
+  getPublicUrl: vi.fn(),
   contatoConnectionId: 'conn-1' as string | null,
   instanceId: 'inst-1' as string | null,
   rpcs: [] as string[],
@@ -74,7 +77,8 @@ vi.mock('@/components/ui/popover', () => ({
 }));
 
 vi.mock('@/components/ui/tooltip', () => ({
-  Tooltip: ({ children }: { children: ReactNode }) => React.createElement(React.Fragment, null, children),
+  Tooltip: ({ children }: { children: ReactNode }) =>
+    React.createElement(React.Fragment, null, children),
   TooltipTrigger: ({ children }: { children: ReactNode }) =>
     React.createElement(React.Fragment, null, children),
   TooltipContent: ({ children }: { children: ReactNode }) =>
@@ -127,6 +131,18 @@ vi.mock('@/integrations/supabase/client', () => {
         getUser: async () => ({ data: { user: { id: 'u1' } } }),
       },
       storage: { from: () => ({ upload: estado.upload, createSignedUrl: estado.createSignedUrl }) },
+      // useAudioMemes assina realtime num ÚNICO canal com DOIS `.on()` encadeados
+      // (audio_memes + audio_meme_favorites) antes do `.subscribe()`.
+      channel: () => {
+        const canal: Record<string, unknown> = {};
+        canal.on = () => canal;
+        canal.subscribe = (cb?: (status: string) => void) => {
+          cb?.('SUBSCRIBED');
+          return canal;
+        };
+        return canal;
+      },
+      removeChannel: () => {},
     },
     SUPABASE_URL: 'http://localhost:54321',
     SUPABASE_ANON_KEY: 'anon-de-teste',
@@ -148,7 +164,11 @@ const PUBLIC_URL = 'https://cdn.test/voz-transformada.mp3';
     `handlers.handleAudioSend`), que sobe no bucket privado na pasta do contato e
     devolve `false` quando o envio falha. O picker não sobe mais nada em
     `audio-memes/voice-changer/...` (bucket público). */
-function FluxoVoz({ onSendAudioBlob }: { onSendAudioBlob: (blob: Blob) => void | boolean | Promise<void | boolean> }) {
+function FluxoVoz({
+  onSendAudioBlob,
+}: {
+  onSendAudioBlob: (blob: Blob) => void | boolean | Promise<void | boolean>;
+}) {
   return React.createElement(VoiceChangerPicker, { onSendAudioBlob });
 }
 
@@ -177,7 +197,7 @@ class MockMediaRecorder {
   });
   constructor(
     public stream: unknown,
-    public options?: unknown,
+    public options?: unknown
   ) {
     MockMediaRecorder.instances.push(this);
   }
@@ -217,7 +237,9 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     rejeicoesNaoTratadas.length = 0;
     process.on('unhandledRejection', guardarRejeicaoNaoTratada);
     estado.upload.mockReset().mockResolvedValue({ error: null });
-    estado.createSignedUrl.mockReset().mockResolvedValue({ data: { signedUrl: PUBLIC_URL }, error: null });
+    estado.createSignedUrl
+      .mockReset()
+      .mockResolvedValue({ data: { signedUrl: PUBLIC_URL }, error: null });
     estado.contatoConnectionId = 'conn-1';
     estado.instanceId = 'inst-1';
 
@@ -279,7 +301,7 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
       mediaUrl: AUDIO_URL,
     });
     expect(estado.toastZapp).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: 'destructive' }),
+      expect.objectContaining({ variant: 'destructive' })
     );
   });
 
@@ -300,7 +322,7 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     expect(estado.enviar).toHaveBeenCalledTimes(1);
     expect(estado.toastZapp).toHaveBeenCalledTimes(1);
     expect(estado.toastZapp).toHaveBeenCalledWith(
-      expect.objectContaining({ title: '🔊 Áudio meme enviado!' }),
+      expect.objectContaining({ title: '🔊 Áudio meme enviado!' })
     );
   });
 
@@ -323,7 +345,7 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     expect((capturado as Error).message).toBe('Conexão WhatsApp não disponível.');
     // O toast de erro já saiu dentro de `ensureInstance` — ele tem de continuar.
     expect(estado.toastZapp).toHaveBeenCalledWith(
-      expect.objectContaining({ description: 'Conexão WhatsApp não disponível.' }),
+      expect.objectContaining({ description: 'Conexão WhatsApp não disponível.' })
     );
   });
 
@@ -331,7 +353,9 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
 
   // Percorre o caminho REAL do VoiceChangerPicker (renderiza → abre → grava →
   // para → transforma), parando com a prévia transformada na tela.
-  async function chegarNaPrevia(onSendAudioBlob: (blob: Blob) => void | boolean | Promise<void | boolean>): Promise<HTMLButtonElement> {
+  async function chegarNaPrevia(
+    onSendAudioBlob: (blob: Blob) => void | boolean | Promise<void | boolean>
+  ): Promise<HTMLButtonElement> {
     render(React.createElement(FluxoVoz, { onSendAudioBlob }));
     act(() => {
       estado.onOpenChange?.(true);
@@ -424,7 +448,7 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     expect(estado.enviar).toHaveBeenCalledTimes(1);
     expect(estado.rpcs).toContain('fn_send_audio_meme');
     expect(estado.toastZapp).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: 'destructive' }),
+      expect.objectContaining({ variant: 'destructive' })
     );
     // A rejeição do envio é tratada no ponto de chamada do picker.
     expect(rejeicoesNaoTratadas).toHaveLength(0);
@@ -447,7 +471,7 @@ describe('useChatMediaSending — PK-28: citação da resposta', () => {
     });
 
     expect(estado.enviar).toHaveBeenCalledWith(
-      expect.objectContaining({ messageType: 'audio', replyToId: 'reply-meme-1' }),
+      expect.objectContaining({ messageType: 'audio', replyToId: 'reply-meme-1' })
     );
   });
 
@@ -459,7 +483,7 @@ describe('useChatMediaSending — PK-28: citação da resposta', () => {
     });
 
     expect(estado.enviar).toHaveBeenCalledWith(
-      expect.objectContaining({ messageType: 'image', replyToId: 'reply-emoji-1' }),
+      expect.objectContaining({ messageType: 'image', replyToId: 'reply-emoji-1' })
     );
   });
 
