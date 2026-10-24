@@ -153,8 +153,8 @@ describe('SummaryResult — botões de áudio com nome acessível', () => {
         buildFullNarrationText={() => 'texto completo'}
       />,
     );
-    expect(screen.getByRole('button', { name: 'Ouvir resumo' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Ouvir pontos-chave' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ouvir o resumo em voz alta' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ouvir os pontos-chave em voz alta' })).toBeInTheDocument();
   });
 });
 
@@ -185,7 +185,7 @@ describe('HistoryTab — não inventa valor ausente', () => {
 
     expect(screen.queryByText('%')).not.toBeInTheDocument();
     expect(screen.queryByText('msgs')).not.toBeInTheDocument();
-    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqualTo(2);
   });
 });
 
