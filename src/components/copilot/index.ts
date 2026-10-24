@@ -1,5 +1,5 @@
 /**
- * Barrel de componentes do Copiloto de Vendas (RADAR) — Fase 7.
+ * Barrel de componentes do Copiloto de Vendas (RADAR) — Fases 7–15.
  */
 export { GhostTextOverlay, GhostTextHint } from './GhostTextOverlay';
 export { CopilotFeedback } from './CopilotFeedback';
@@ -12,3 +12,15 @@ export { VoiceDictationButton } from './VoiceDictation';
 export type { VoiceDictationButtonProps } from './VoiceDictation';
 export { RadarPhase7Panel } from './RadarPhase7Panel';
 export type { RadarPhase7PanelProps } from './RadarPhase7Panel';
+
+// Phase 8–15
+export { ObjectionCard } from './ObjectionCard';
+export type { ObjectionCardProps } from './ObjectionCard';
+export { DeadlineCard } from './DeadlineCard';
+export type { DeadlineCardProps } from './DeadlineCard';
+export { LeadThermometer } from './LeadThermometer';
+export type { LeadThermometerProps } from './LeadThermometer';
+export { BuyingSignalsCard } from './BuyingSignalsCard';
+export type { BuyingSignalsCardProps } from './BuyingSignalsCard';
+export { RadarPhase8to15Panel } from './RadarPhase8to15Panel';
+export type { RadarPhase8to15PanelProps } from './RadarPhase8to15Panel';
