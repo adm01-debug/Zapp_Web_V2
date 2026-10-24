@@ -79,7 +79,7 @@ export function useGoalsDashboard() {
   // semana de segunda a domingo — as duas telas não podem contar recortes diferentes.
   const dateRange = useMemo(() => goalPeriodRange(period), [period]);
 
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading: loadingProfile } = useQuery({
     queryKey: ['my-profile', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -184,7 +184,8 @@ export function useGoalsDashboard() {
   }, [goals]);
 
   const completedGoals = useMemo(() => goals.filter(g => g.current >= g.target).length, [goals]);
-  const isLoading = loadingMessages || loadingContacts || loadingAnalyses;
+  // Inclui o perfil: as contagens só habilitam depois dele, então sem isto a tela mostraria 0% antes dos dados.
+  const isLoading = loadingProfile || loadingMessages || loadingContacts || loadingAnalyses;
 
   useEffect(() => {
     if (isLoading || goals.length === 0) return;
