@@ -30,7 +30,7 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # O nome carrega a versao da migration: acha pelo sufixo para o teste nao quebrar quando ela muda.
 migration="$(ls "$repo_root"/supabase/migrations/*_tasks_rearm_on_remind_change.sql 2>/dev/null | head -1)"
-postgres_image="${TASKS_REARM_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TASKS_REARM_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-tasks-rearm-test-$$"
 
 cleanup() {

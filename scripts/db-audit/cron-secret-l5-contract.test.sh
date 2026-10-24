@@ -77,7 +77,7 @@ fi
 migration_secrets="$migrations_dir/20260930240000_cron_secret_dedicado_l5.sql"
 migration_reschedule="$migrations_dir/20260930250000_reschedule_cron_secrets_l5.sql"
 migration_endurece="$migrations_dir/20260930430000_cron_sem_dml_direto_v2.sql"
-postgres_image="${CRON_SECRET_L5_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${CRON_SECRET_L5_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-cron-secret-l5-test-$$"
 
 cleanup() {

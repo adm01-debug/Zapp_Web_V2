@@ -23,7 +23,7 @@ if (( ${#migrations[@]} != 1 )); then
   exit 1
 fi
 migration="${migrations[0]}"
-postgres_image="${IA_USAGE_OUTBOX_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${IA_USAGE_OUTBOX_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-ia-usage-outbox-test-$$"
 
 cleanup() {

@@ -31,8 +31,8 @@ v12_lifecycle="$repo_root/supabase/migrations/20260930650000_talkx_v12_server_li
 guard_sql="$repo_root/scripts/db-audit/check-talkx-transition-contract.sql"
 deno_test="$repo_root/scripts/db-audit/talkx-transition-postgrest.test.ts"
 
-pg_image="${TALKX_TRANSITION_POSTGREST_PG_IMAGE:-postgres:17-alpine}"
-pgrst_image="${TALKX_TRANSITION_POSTGREST_IMAGE:-public.ecr.aws/supabase/postgrest:v14.5}"
+pg_image="${TALKX_TRANSITION_POSTGREST_PG_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
+pgrst_image="${TALKX_TRANSITION_POSTGREST_IMAGE:-public.ecr.aws/supabase/postgrest:v14.5@sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b}"
 pg_name="zapp-talkx-transition-pg-$$"
 pgrst_name="zapp-talkx-transition-pgrst-$$"
 net_name="zapp-talkx-transition-net-$$"

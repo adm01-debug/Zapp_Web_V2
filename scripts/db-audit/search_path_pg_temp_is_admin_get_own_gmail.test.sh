@@ -35,7 +35,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261010150628_search_path_pg_temp_is_admin_get_own_gmail.sql"
 origin_is_admin="$repo_root/supabase/migrations/20251215025014_fcc5bc79-55e3-4972-8765-6a7840fdce5a.sql"
 origin_gmail="$repo_root/supabase/migrations/20260828210000_get_own_gmail_accounts_filter_active.sql"
-postgres_image="${SEARCH_PATH_PG_TEMP_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${SEARCH_PATH_PG_TEMP_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-search-path-pg-temp-test-$$"
 
 cleanup() {

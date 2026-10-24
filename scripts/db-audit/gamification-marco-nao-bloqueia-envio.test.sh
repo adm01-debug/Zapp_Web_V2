@@ -35,7 +35,7 @@ migration="$repo_root/supabase/migrations/20261006221628_gamification_marco_nao_
 arq_enqueue="$repo_root/supabase/migrations/20260930200000_enforce_enqueue_connection_scope.sql"
 arq_grant="$repo_root/supabase/migrations/20260928110000_fix_grant_agent_achievement_conflict_target.sql"
 arq_canonico="$repo_root/supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql"
-postgres_image="${GAMIFICATION_MARCO_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${GAMIFICATION_MARCO_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-gamification-marco-test-$$"
 sem_correcao="${ZAPP_GAMIFICATION_SEM_CORRECAO:-0}"
 

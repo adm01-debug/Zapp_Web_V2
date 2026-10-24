@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-POSTGRES_IMAGE="${CATALOG_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+POSTGRES_IMAGE="${CATALOG_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 CONTAINER="zapp-v2-catalog-manifest-test-$$"
 TMP_DIR="$(mktemp -d /tmp/zapp-v2-catalog-manifest-test.XXXXXX)"
 

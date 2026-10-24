@@ -50,7 +50,7 @@ const consulta = extrairConsultaDoLedger(
   readFileSync(path.join(raizDoRepo, '.github/workflows/db-migrate.yml'), 'utf8'),
 );
 
-const imagem = process.env.LEDGER_POSTAPPLY_TEST_POSTGRES_IMAGE ?? 'postgres:17-alpine';
+const imagem = process.env.LEDGER_POSTAPPLY_TEST_POSTGRES_IMAGE ?? 'postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24';
 const container = `zapp-v2-ledger-postapply-${process.pid}`;
 const tempDir = mkdtempSync(path.join(os.tmpdir(), 'zapp-ledger-postapply-'));
 

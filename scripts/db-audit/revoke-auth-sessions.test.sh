@@ -21,7 +21,7 @@ trap cleanup EXIT
 
 [ -f "$MIGRATION" ] || { echo "[FALHOU] migration nao encontrada: $MIGRATION"; exit 1; }
 
-docker run --rm -d --name "$CNAME" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres postgres:17-alpine >/dev/null
+docker run --rm -d --name "$CNAME" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres ${POSTGRES_TEST_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24} >/dev/null
 
 for _ in $(seq 1 60); do
   docker exec "$CNAME" pg_isready -U postgres -d postgres >/dev/null 2>&1 && break

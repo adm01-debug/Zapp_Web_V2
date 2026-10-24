@@ -11,7 +11,7 @@ search_hardening_migration="$repo_root/supabase/migrations/20261020190001_talk_m
 provenance_trigger_migration="$repo_root/supabase/migrations/20261006114108_r2_db_022_provenance_trigger.sql"
 pending_migration="$repo_root/supabase/migrations/20261011010003_talk_me_list_pending_messages.sql"
 pending_origins_migration="$repo_root/supabase/migrations/20261011010100_talk_me_pending_history_origins.sql"
-postgres_image="${TALK_ME_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALK_ME_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-talk-me-test-$$"
 tmp_dir="$(mktemp -d)"
 

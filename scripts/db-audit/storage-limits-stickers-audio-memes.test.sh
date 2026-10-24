@@ -15,7 +15,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261011003015_storage_limits_stickers_audio_memes.sql"
-postgres_image="${STICKERS_MEMES_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${STICKERS_MEMES_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-storage-stickers-memes-test-$$"
 test_password="stickers-memes-test-only"
 

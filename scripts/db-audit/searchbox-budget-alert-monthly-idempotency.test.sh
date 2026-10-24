@@ -46,7 +46,7 @@ else
 fi
 migration_antiga="$migrations_dir/20261002601230_searchbox_budget_alert_cron.sql"
 migration_nova="$migrations_dir/20261006235031_searchbox_budget_alert_email_ledger.sql"
-postgres_image="${SEARCHBOX_ALERT_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${SEARCHBOX_ALERT_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-searchbox-alert-test-$$"
 
 cleanup() {

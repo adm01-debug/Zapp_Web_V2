@@ -3,6 +3,7 @@ paths:
     ignore:
       - 'SC2129'
       - 'SC2012'
-  ".github/workflows/branch-hygiene-audit.yml":
-    ignore:
-      - 'could not parse as YAML'
+  # GA60: o ignore de 'could not parse as YAML' do branch-hygiene-audit.yml
+  # saiu em 2026-10-20 (o arquivo volta a parsear; validado no PR). Se o
+  # actionlint voltar a reclamar de parse, e regressao real — nao recolocar
+  # ignore sem corrigir o YAML.

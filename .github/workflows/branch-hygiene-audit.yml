@@ -125,6 +125,11 @@ jobs:
           cat "$RELATORIO" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publicar na issue semanal [branch-hygiene]
+        # GA64: publica mesmo se o relatorio falhou (menos em cancelamento) e
+        # e o ULTIMO passo — em 29/10 vencem os alertas do Scorecard e o job
+        # ficaria vermelho toda semana sem publicar. O SLA conta so CodeQL ou
+        # alertas nao dispensados (dispensas com justificativa no YAML).
+        if: ${{ !cancelled() }}
         # E91: alem do Job Summary (efemero), mantem UMA issue aberta com a tabela,
         # para o historico ficar consultavel. Mesmo mecanismo do [kpi-actions] em
         # actions-kpi.mjs: procura a aberta por titulo e atualiza; se nao houver,

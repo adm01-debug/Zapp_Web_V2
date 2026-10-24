@@ -18,7 +18,7 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration_base="$repo_root/supabase/migrations/20261004185228_team_membership_bootstrap_owner_grants.sql"
 migration_fix="$repo_root/supabase/migrations/20261005110431_team_chat_department_create_transfer_guards.sql"
-postgres_image="${TEAM_DEPT_GUARD_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TEAM_DEPT_GUARD_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-team-dept-guard-test-$$"
 
 cleanup() {

@@ -15,7 +15,7 @@ migration="$repo_root/supabase/migrations/20261011124430_message_attempts.sql"
 metrics_migration="$repo_root/supabase/migrations/20261011152008_get_send_metrics.sql"
 helpers_migration="$repo_root/supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql"
 messages_rls_migration="$repo_root/supabase/migrations/20260902023200_consolidate_rls_select_messages_contacts.sql"
-postgres_image="${MESSAGE_ATTEMPTS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${MESSAGE_ATTEMPTS_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-message-attempts-$$"
 
 cleanup() {

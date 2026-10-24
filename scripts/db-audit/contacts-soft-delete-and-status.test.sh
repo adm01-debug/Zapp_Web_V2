@@ -40,7 +40,7 @@ migration_can_delete_hoisted="$repo_root/supabase/migrations/20260929820000_cont
 # SEC-RLS_CONTATOS_MENSAGENS-02/03 (oraculo de UUID): aplicada no meio do roteiro, depois do RED
 # que fixa o defeito de can_delete_contacts e antes do GREEN que prova o fechamento.
 migration_oraculo_uuid="$repo_root/supabase/migrations/20261009055051_sec_rls_02_03_oraculo_uuid_contato.sql"
-postgres_image="${CONTACTS_F1_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${CONTACTS_F1_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-contacts-f1-test-$$"
 tmp_dir="$(mktemp -d /tmp/zapp-v2-contacts-f1-test.XXXXXX)"
 

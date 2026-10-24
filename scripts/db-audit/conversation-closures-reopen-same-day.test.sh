@@ -29,7 +29,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migrations_dir="$repo_root/supabase/migrations"
 migration="$migrations_dir/20261007013217_conversation_closures_reopen_same_day.sql"
 reconcile="$migrations_dir/20261003272707_reconcile_local_replay_with_canonical.sql"
-postgres_image="${CONVERSATION_CLOSURE_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${CONVERSATION_CLOSURE_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-closure-reopen-test-$$"
 
 cleanup() {

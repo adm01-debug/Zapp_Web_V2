@@ -59,7 +59,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -101,6 +101,15 @@ jobs:
             const arquivos = await github.paginate(github.rest.pulls.listFiles, {
               owner, repo, pull_number, per_page: 100,
             });
+            // GA68: a API lista no maximo 3000 arquivos por PR — acima disso a
+            // lista vem truncada e o guard teria ponto cego justo em `supabase/`
+            // (que vem por ultimo). Falhar fechado em vez de aprovar no escuro.
+            if (arquivos.length >= 3000) {
+              core.setFailed(
+                'Este PR toca >= 3000 arquivos: a API de arquivos trunca a lista e o guard nao cobre tudo (fail closed, GA68). Quebre o PR em partes menores.'
+              );
+              return;
+            }
             // So bloqueia 'modified' (conteudo mudou, MESMO nome de arquivo) —
             // e exatamente o padrao do incidente de 26/09 (arquivo editado
             // depois de aplicado, drift entre ledger e disco). 'renamed' fica
@@ -130,9 +139,19 @@ jobs:
             // sao permitidas porque nao ha SQL historico imutavel a preservar.
             // O drift checker (check-migration-drift.mjs) ainda valida que o
             // file_sha256 no evidence bate com o arquivo corrigido.
-            const evidenceRaw = require('fs').readFileSync('scripts/db-audit/migration-evidence.json', 'utf8');
-            const evidence = JSON.parse(evidenceRaw);
             const baseSha = context.payload.pull_request.base.sha;
+            // GA69: excecoes lidas do baseSha, nao do checkout da PR (a PR pode
+            // ter adulterado o evidence para auto-dispensar; fail closed).
+            let evidence;
+            try {
+              const evResp = await github.rest.repos.getContent({
+                owner, repo, path: 'scripts/db-audit/migration-evidence.json', ref: baseSha,
+              });
+              evidence = JSON.parse(Buffer.from(evResp.data.content, 'base64').toString('utf-8'));
+            } catch (_) {
+              core.setFailed('Nao foi possivel ler scripts/db-audit/migration-evidence.json no baseSha (fail closed, GA69).');
+              return;
+            }
             const violacoes = [];
             for (const f of candidatas) {
               // Excecao 2: kind ledger-only/name-and-file-pinned no evidence
@@ -245,7 +264,10 @@ jobs:
       # entao nao colide com o servico compartilhado.
       - name: Validar SQL de catalogo e manifesto no PostgreSQL 17
         env:
+          # GA67: imagem pinada injetada (antes caia no default sem digest).
+          CATALOG_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
+
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/catalog-manifest.test.sh
 
       - name: Provar politica confiavel do rate limit do catalogo

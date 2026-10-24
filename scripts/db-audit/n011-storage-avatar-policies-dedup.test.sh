@@ -38,7 +38,7 @@ repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 migrations="$repo_root/supabase/migrations"
 origin_migration="$migrations/20260511233306_0e3f3b66-5585-4762-af6b-549c050f6275.sql"
 fix_migration="$migrations/20261011000019_n011_storage_drop_duplicate_avatar_policies.sql"
-postgres_image="${N011_AVATAR_DEDUP_TEST_POSTGRES_IMAGE:-${POSTGRES_TEST_IMAGE:-postgres:17-alpine}}"
+postgres_image="${N011_AVATAR_DEDUP_TEST_POSTGRES_IMAGE:-${POSTGRES_TEST_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}}"
 container_name="n011-avatar-dedup-test-$$"
 
 cleanup() { docker rm -f "$container_name" >/dev/null 2>&1 || true; }

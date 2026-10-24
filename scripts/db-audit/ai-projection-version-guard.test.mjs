@@ -188,7 +188,7 @@ test('R2-INF-023: trava atômica de versão da projeção (Postgres descartável
 
   const tmp = mkdtempSync(join(tmpdir(), 'ai-projection-guard-'));
   try {
-    docker(['run', '--rm', '-d', '--name', CONTAINER, '-e', 'POSTGRES_PASSWORD=test_only', 'postgres:17-alpine']);
+    docker(['run', '--rm', '-d', '--name', CONTAINER, '-e', 'POSTGRES_PASSWORD=test_only', 'postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24']);
     let pronto = 0;
     for (let i = 0; i < 90 && pronto < 2; i += 1) {
       const r = spawnSync(DOCKER, [...PSQL, '-c', 'SELECT 1'], { encoding: 'utf8' });

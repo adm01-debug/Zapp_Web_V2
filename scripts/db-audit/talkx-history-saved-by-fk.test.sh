@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-postgres_image="${TALKX_HISTORY_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_HISTORY_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 prestate="${TALKX_HISTORY_FK_PRESTATE:-NO_ACTION}"
 container_name="zapp-talkx-fk-$RANDOM-$$"
 test_password="talkx_fk_test_only"

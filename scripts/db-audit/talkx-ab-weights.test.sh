@@ -35,7 +35,7 @@ else
     || { printf 'FAIL: esperava exatamente 1 migration talkx_ab_weights_constraint, achei %s\n' "${#migration_candidates[@]}" >&2; exit 1; }
   migration_n103="${migration_candidates[0]}"
 fi
-postgres_image="${TALKX_AB_WEIGHTS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_AB_WEIGHTS_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="talkx-ab-weights-test-$$"
 test_password="talkx_ab_weights_test_only"
 

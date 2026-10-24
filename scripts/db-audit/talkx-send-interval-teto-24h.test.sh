@@ -11,7 +11,7 @@ set -Eeuo pipefail
 #  4) a RPC aceita 86400000 (24h exatos) e um valor normal (5000ms).
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-postgres_image="${TALKX_SEND_INTERVAL_TETO_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_SEND_INTERVAL_TETO_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-talkx-teto-$RANDOM-$$"
 test_password="talkx_teto_24h_test_only"
 

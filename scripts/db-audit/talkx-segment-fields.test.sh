@@ -32,7 +32,7 @@ set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 migration="$repo_root/supabase/migrations/20261011003001_talkx_segment_fields.sql"
-postgres_image="${TALKX_SEGMENT_FIELDS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_SEGMENT_FIELDS_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="talkx-segment-fields-test-$$"
 test_password="talkx_segment_fields_test_only"
 

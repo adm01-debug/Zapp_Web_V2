@@ -8,7 +8,7 @@ quarantine_migration="$repo_root/supabase/migrations/20260911180000_quarantine_t
 outcome_counter_migration="$repo_root/supabase/migrations/20260911190000_account_for_talkx_unknown_provider_outcomes.sql"
 delivery_ack_migration="$repo_root/supabase/migrations/20260911120000_talkx_e87_external_id_delivered.sql"
 receipt_migration="$repo_root/supabase/migrations/20260912110000_harden_talkx_delivery_receipts.sql"
-postgres_image="${TALKX_DELIVERY_LEASES_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_DELIVERY_LEASES_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="talkx-delivery-leases-test-$$"
 test_password="talkx_delivery_leases_test_only"
 

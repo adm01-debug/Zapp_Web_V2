@@ -26,7 +26,7 @@ migrations_dir="$repo_root/supabase/migrations"
 old_migration="$migrations_dir/20260930700000_fix_whatsapp_storage_policies.sql"
 fix_migration_name="20261011003024_whatsapp_media_policies_sem_curinga_like.sql"
 fix_migration="$migrations_dir/$fix_migration_name"
-postgres_image="${WHATSAPP_MEDIA_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${WHATSAPP_MEDIA_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="whatsapp-media-policies-$$"
 test_password="whatsapp_media_test_only"
 

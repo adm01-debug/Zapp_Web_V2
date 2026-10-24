@@ -29,7 +29,7 @@ base_migration="$(ls "$repo_root"/supabase/migrations/*_talkx_v4_x021_links_conv
 # o glob acha o arquivo.
 fix_migration="$(ls "$repo_root"/supabase/migrations/*_talkx_conversion_defaults_webhook.sql 2>/dev/null | head -1 || true)"
 
-pg_image="${TALKX_CONV_DEFAULTS_PG_IMAGE:-postgres:17-alpine}"
+pg_image="${TALKX_CONV_DEFAULTS_PG_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 pg_name="zapp-talkx-conv-defaults-$$"
 passed=0
 

@@ -18,7 +18,7 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 guard_sql="$repo_root/scripts/db-audit/check-live-invariants.sql"
 container_name="zapp-v2-live-invariants-test-$$"
-postgres_image="${LIVE_INVARIANTS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${LIVE_INVARIANTS_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 passed=0
 
 cleanup() {

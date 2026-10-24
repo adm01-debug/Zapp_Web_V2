@@ -21,7 +21,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="${RESET_GATILHO_MIGRATION:-$repo_root/supabase/migrations/20261006231105_recuperacao_gatilho_sem_coluna_removida.sql}"
-postgres_image="${RESET_GATILHO_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${RESET_GATILHO_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-reset-gatilho-test-$$"
 
 cleanup() {

@@ -31,7 +31,7 @@ sync_migration="$migrations/20260830070000_fn_effective_role_and_sync_trigger.sq
 is_admin_migration="$migrations/20260830080000_fn_is_admin_and_fix_permissions_rls.sql"
 escalation_migration="$migrations/20260830161547_fix_prevent_privilege_escalation_allow_internal_sync.sql"
 scope_migration="$migrations/20261011003025_fecha_get_profile_role_for_check.sql"
-postgres_image="${PROFILES_ESCALATION_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${PROFILES_ESCALATION_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="profiles-escalation-test-$$"
 
 cleanup() { docker rm -f "$container_name" >/dev/null 2>&1 || true; }

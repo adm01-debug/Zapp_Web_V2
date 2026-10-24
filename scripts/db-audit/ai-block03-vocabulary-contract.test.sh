@@ -30,7 +30,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="${1:-$repo_root/supabase/migrations/20260930150000_ai_block03_vocabulary_contract.sql}"
-postgres_image="${AI_VOCAB_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${AI_VOCAB_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 
 main_container="zapp-v2-aivocab-main-test-$$"
 mut_a_container="zapp-v2-aivocab-muta-test-$$"

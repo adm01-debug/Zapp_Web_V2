@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-postgres_image="${TALKX_HISTORY_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_HISTORY_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 precreate_runtime="${TALKX_HISTORY_PRECREATE_RUNTIME:-true}"
 invalid_prestate="${TALKX_HISTORY_INVALID_PRESTATE:-false}"
 invalid_live_prestate="${TALKX_HISTORY_INVALID_LIVE_PRESTATE:-false}"
@@ -23,6 +23,12 @@ trap cleanup EXIT INT TERM
 
 fail() { printf '[FAIL] %s\n' "$1" >&2; exit 1; }
 psql_test() { docker exec -i "$container_name" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
+# GA70: sob o docker-shim o banco chama-se shim_<container> (exportado em
+# $DOCKER_SHIM_STATE_DIR/<container>.db); fora dele e 'postgres'.
+expected_db() {
+  local f="${DOCKER_SHIM_STATE_DIR:-/tmp/docker-shim-state}/$container_name.db"
+  if [[ -f "$f" ]]; then cat "$f"; else printf 'postgres'; fi
+}
 
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
@@ -530,10 +536,10 @@ grep -q '^0|0$' <<<"$cascade_result" \
   || { printf '%s\n' "$cascade_result" >&2; fail 'exclusao do template nao propagou o cascade do historico'; }
 
 runtime_proof="$(psql_test -At < "$repo_root/scripts/db-audit/talkx-template-history-runtime.sql")"
-RUNTIME_PROOF="$runtime_proof" node --input-type=module <<'NODE'
+EXPECTED_DB="$(expected_db)" RUNTIME_PROOF="$runtime_proof" node --input-type=module <<'NODE'
 const proof = JSON.parse(process.env.RUNTIME_PROOF);
 const ok = proof.server_major === 17
-  && proof.database === 'postgres'
+  && proof.database === process.env.EXPECTED_DB
   && proof.table_count === 1
   && proof.variant_table_count === 1
   && proof.custom_variables_column_count === 1

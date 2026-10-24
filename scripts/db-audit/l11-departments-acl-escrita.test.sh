@@ -55,7 +55,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260930530000_l11_departments_acl_escrita.sql"
-postgres_image="${L11_DEPARTMENTS_ACL_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${L11_DEPARTMENTS_ACL_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-l11-departments-acl-test-$$"
 # TMPDIR do ambiente de tarefa/CI pode apontar para um diretorio proprio; nunca /tmp por
 # padrao da casa. mkdir -p garante o pai antes do primeiro uso.

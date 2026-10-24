@@ -25,7 +25,7 @@ migration="$repo_root/supabase/migrations/20261010071402_conversation_events_ins
 arq_politica_antiga="$repo_root/supabase/migrations/20260412170036_1c09550f-234f-4215-954f-9e0efd5ed610.sql"
 arq_profile="$repo_root/supabase/migrations/20260928140000_tasks_unify_reminders_kanban.sql"
 arq_visible="$repo_root/supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql"
-postgres_image="${CONVEVENTS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${CONVEVENTS_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-convevents-test-$$"
 sem_correcao="${ZAPP_CONVEVENTS_SEM_CORRECAO:-0}"
 

@@ -21,7 +21,7 @@ set -euo pipefail
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 migration_x016="$repo_root/supabase/migrations/20261002391230_talkx_audience_rpc.sql"
 migration_x017="$repo_root/supabase/migrations/20261002421230_talkx_audience_snapshot.sql"
-postgres_image="${TALKX_AUDIENCE_SNAPSHOT_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_AUDIENCE_SNAPSHOT_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="talkx-audience-snapshot-test-$$"
 test_password="talkx_audience_snapshot_test_only"
 

@@ -25,7 +25,7 @@ trap cleanup EXIT INT TERM
 
 command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao acessivel'
-docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD="$test_password" postgres:17-alpine >/dev/null
+docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD="$test_password" ${POSTGRES_TEST_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24} >/dev/null
 
 ready=false
 for _ in $(seq 1 90); do

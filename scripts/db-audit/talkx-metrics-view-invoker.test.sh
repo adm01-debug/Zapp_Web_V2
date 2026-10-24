@@ -16,7 +16,7 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260928410000_fix_talkx_campaign_metrics_security_invoker.sql"
 guard_sql="$repo_root/scripts/db-audit/check-talkx-view-invoker.sql"
-postgres_image="${TALKX_METRICS_INVOKER_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_METRICS_INVOKER_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-talkx-metrics-invoker-test-$$"
 test_password="talkx_metrics_invoker_test_only"
 agent_a_user="11111111-1111-1111-1111-111111111111"

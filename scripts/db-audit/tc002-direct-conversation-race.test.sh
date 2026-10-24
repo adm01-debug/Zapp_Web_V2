@@ -28,7 +28,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261006222858_tc002_find_or_create_direct_pair_upsert.sql"
 pre_e16="$repo_root/supabase/migrations/20260927270007_team_chat_e16_find_or_create_direct_conversation.sql"
 pre_e29="$repo_root/supabase/migrations/20260929190000_team_chat_e29_conversations_constraints.sql"
-postgres_image="${TC002_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TC002_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-tc002-direct-pair-test-$$"
 
 cleanup() {

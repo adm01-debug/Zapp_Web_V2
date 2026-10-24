@@ -30,7 +30,7 @@ seed_audio="$repo_root/supabase/migrations/20251215025014_fcc5bc79-55e3-4972-876
 seed_wa="$repo_root/supabase/migrations/20251223002656_c427b632-b6ab-4ca4-9b78-38a343925147.sql"
 seed_voice="$repo_root/supabase/migrations/20261003132707_f64_voz_assets_e_grants.sql"
 privatize="$repo_root/supabase/migrations/20260905030000_private_media_buckets.sql"
-postgres_image="${STORAGE_LIMITS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${STORAGE_LIMITS_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-storage-limits-wam-$$"
 test_password="storage_limits_test_only"
 

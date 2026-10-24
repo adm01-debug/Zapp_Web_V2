@@ -20,7 +20,7 @@ migration="$repo_root/supabase/migrations/20260930090000_harden_status_and_wa_ta
 # SEC-RLS_CONTATOS_MENSAGENS-02/03: fecha o oraculo de UUID (require_contact_edit_permission,
 # set_conversation_status e can_delete_contacts). Aplicada ao final do roteiro (BLOCO D).
 migration_oraculo_uuid="$repo_root/supabase/migrations/20261009055051_sec_rls_02_03_oraculo_uuid_contato.sql"
-postgres_image="${WA_TAG_AUTHZ_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${WA_TAG_AUTHZ_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-wa-tag-authz-test-$$"
 
 cleanup() {

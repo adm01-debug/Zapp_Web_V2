@@ -12,7 +12,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration_file="$repo_root/supabase/migrations/20260930112833_talkx_settings_policies_replay_safe.sql"
-postgres_image="${TALKX_SETTINGS_RLS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TALKX_SETTINGS_RLS_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-talkx-settings-rls-$RANDOM-$$"
 test_password="talkx_settings_rls_test_only"
 admin_uid='30000000-0000-0000-0000-000000000001'

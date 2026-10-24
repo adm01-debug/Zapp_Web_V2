@@ -11,7 +11,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20261011003020_revoke_anon_privileges_contact_messages.sql"
-postgres_image="${ANON_PRIVS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${ANON_PRIVS_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-anon-privs-test-$$"
 tmp_dir="$(mktemp -d /tmp/zapp-v2-anon-privs.XXXXXX)"
 

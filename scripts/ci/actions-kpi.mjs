@@ -110,14 +110,48 @@ export function tabelaLentos(lentos) {
   ].join('\n');
 }
 
+// GA54 (R6 com dente): conta runs por head_branch nas ultimas 24 h; branch com
+// mais de LIMITE_PUSHES_LOTE runs provavelmente recebeu > 15 pushes no dia
+// (15/10: 96 pushes numa branch geraram 414 runs). Puro, para o teste provar
+// com fixture (20 runs no mesmo branch disparam o alerta).
+export const LIMITE_PUSHES_LOTE = 15;
+export const JANELA_LOTE_HORAS = 24;
+export function detectarLote(runs, { limite = LIMITE_PUSHES_LOTE, janelaHoras = JANELA_LOTE_HORAS, agora = Date.now() } = {}) {
+  const corte = agora - janelaHoras * 3600 * 1000;
+  const porBranch = new Map();
+  for (const run of runs ?? []) {
+    const inicio = Date.parse(run.run_started_at ?? run.created_at ?? '');
+    if (!Number.isFinite(inicio) || inicio < corte) continue;
+    const branch = run.head_branch ?? '(sem branch)';
+    porBranch.set(branch, (porBranch.get(branch) ?? 0) + 1);
+  }
+  return [...porBranch.entries()]
+    .filter(([, n]) => n > limite)
+    .map(([branch, pushes]) => ({ branch, pushes }))
+    .sort((a, b) => b.pushes - a.pushes);
+}
+
+export function tabelaLote(lotes) {
+  if (!lotes.length) return '';
+  return [
+    '### Lotes de push (> 15 runs no mesmo branch em 24 h)',
+    '',
+    ...lotes.map((l) => `- \`${l.branch}\`: ${l.pushes} runs — prefira acumular num unico push (R6); o KPI comenta na PR pedindo lote.`),
+    '',
+  ].join('\n');
+}
+
 // Monta o corpo publicado (Job Summary + issue): tabela por workflow + ranking dos
-// jobs. Puro, para o teste provar que o ranking saem dos jobs reais e nao vazio.
+// jobs + alerta de lote. Puro, para o teste provar que o ranking saem dos jobs
+// reais e nao vazio.
 export function corpoDoKpi(runs, jobs, { janelaDias = 7, agora = Date.now(), titulo } = {}) {
   const agregado = agregar(runs, { janelaDias, agora });
+  const lotes = detectarLote(runs, { agora });
   return [
     tabela(agregado, { titulo: titulo ?? `KPI do GitHub Actions — ${janelaDias} dias` }),
     '',
     tabelaLentos(maisLentos(jobs, { limite: 5 })),
+    tabelaLote(lotes),
   ].join('\n');
 }
 

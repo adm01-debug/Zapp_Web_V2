@@ -44,7 +44,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # Override existe só para o teste de mutação local (rodar contra uma cópia
 # adulterada fora do repo); CI e uso normal apontam para o diretório real.
 migrations_dir="${DASH_RLS_TEST_MIGRATIONS_DIR:-$repo_root/supabase/migrations}"
-postgres_image="${DASH_RLS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${DASH_RLS_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-dash-rls-test-$$"
 
 cleanup() {

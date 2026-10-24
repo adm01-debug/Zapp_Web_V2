@@ -22,7 +22,7 @@ set -euo pipefail
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 migrations_dir="$repo_root/supabase/migrations"
 migration_file="20261003132707_f64_voz_assets_e_grants.sql"
-postgres_image="${F64_VOZ_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${F64_VOZ_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="f64-voz-assets-grants-$$"
 test_password="f64_voz_test_only"
 

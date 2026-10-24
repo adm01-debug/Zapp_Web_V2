@@ -14,6 +14,10 @@
 # All other commands pass through to $DOCKER_REAL.
 #
 # Set SKIP_DOCKER_SHIM=1 to bypass (needed for tests that start PostgREST).
+#
+# GA70: o nome do banco e exportado em $DOCKER_SHIM_STATE_DIR/<container>.db
+# (conteudo = nome sanitizado). Testes que afirmam proof.database leem esse
+# arquivo como EXPECTED_DB (fallback postgres fora do shim).
 
 DOCKER_REAL="${DOCKER_REAL:-/usr/bin/docker}"
 PG_HOST="${POSTGRES_SERVICE_HOST:-localhost}"
@@ -58,7 +62,12 @@ case "${1:-}" in
     # Two separate calls: psql wraps multi-statement -c in a transaction,
     # and CREATE DATABASE cannot run inside a transaction block.
     _svc -d postgres -c "DROP DATABASE IF EXISTS \"$db\" WITH (FORCE);" > /dev/null 2>&1 || true
-    _svc -d postgres -c "CREATE DATABASE \"$db\";" > /dev/null
+    # GA66: CREATE falho nao pode sair 0.
+    if !     _svc -d postgres -c "CREATE DATABASE \"$db\";" > /dev/null 2>&1; then
+      printf 'docker-shim: CREATE DATABASE falhou para %s\n' "$db" >&2
+      rm -f "$STATE/$cname.db" "$STATE/$cname.roles"
+      exit 1
+    fi
     printf 'shimid_%s\n' "$cname"
     ;;
 
@@ -141,16 +150,18 @@ case "${1:-}" in
       exec "$DOCKER_REAL" rm "${orig[@]}"
     fi
     db="$(< "$STATE/$cname.db")"
-    old="$(< "$STATE/$cname.roles" 2>/dev/null || true)"
-    # Drop database FIRST so its objects (ALTER DEFAULT PRIVILEGES grants) are
-    # removed before we try to drop roles that depend on them.  If roles are
-    # dropped first, service_role fails silently and leaks into the next test.
-    _svc -d postgres -c "DROP DATABASE IF EXISTS \"$db\" WITH (FORCE);" > /dev/null 2>&1 || true
+    # GA66: sem snapshot de roles nao ha como saber o que o teste criou.
+    # Fail closed: banco derrubado, roles preservados.
+    if [[ ! -s "$STATE/$cname.roles" ]]; then
+      printf 'docker-shim: sem snapshot de roles para %s; roles preservados\n' "$cname" >&2
+    else
+      old="$(< "$STATE/$cname.roles")"
     cur="$(_svc -d postgres -tAX -c "SELECT rolname FROM pg_roles ORDER BY rolname" 2>/dev/null || true)"
     while IFS= read -r role; do
       [[ -z "$role" ]] && continue
       _svc -d postgres -c "DROP ROLE IF EXISTS \"$role\";" > /dev/null 2>&1 || true
     done < <(comm -23 <(printf '%s\n' "$cur" | sort) <(printf '%s\n' "$old" | sort))
+    fi
     rm -f "$STATE/$cname.db" "$STATE/$cname.roles"
     ;;
 

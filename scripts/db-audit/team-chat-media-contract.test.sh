@@ -39,7 +39,7 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migrations_dir="$repo_root/supabase/migrations"
 migration_file="20261007010651_team_chat_media_contract_locators.sql"
-postgres_image="${TEAM_CHAT_MEDIA_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${TEAM_CHAT_MEDIA_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-team-chat-media-$$"
 
 # Migrations REAIS que montam o estado anterior, na ordem de versão.

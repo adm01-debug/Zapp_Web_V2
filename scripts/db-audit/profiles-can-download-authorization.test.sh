@@ -65,7 +65,7 @@ for m in "${antes[@]}"; do
   [[ -f "$m" ]] || { echo "[FAIL] migration base nao encontrada: $m" >&2; exit 1; }
 done
 
-postgres_image="${PROFILES_CAN_DOWNLOAD_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
+postgres_image="${PROFILES_CAN_DOWNLOAD_TEST_POSTGRES_IMAGE:-postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a3278a52a7ec49117deedb300e552b24}"
 container_name="zapp-v2-can-download-test-$$"
 
 cleanup() {
