@@ -8,18 +8,28 @@ import type React from 'react';
  * chave SOLTA (`meme_<ts>_<uuid>.mp3`), então o Storage recusava (42501) e o objeto
  * ficava sem dono para o RLS.
  */
-const mocks = vi.hoisted(() => ({
-  storageFrom: vi.fn(),
-  upload: vi.fn(),
-  remove: vi.fn(),
-  getPublicUrl: vi.fn(),
-  rpc: vi.fn(),
-  invoke: vi.fn(),
-  tableFrom: vi.fn(),
-  getUser: vi.fn(),
-  toastError: vi.fn(),
-  toastInfo: vi.fn(),
-}));
+const mocks = vi.hoisted(() => {
+  // useAudioMemes assina `audio_memes`/`audio_meme_favorites` via Realtime
+  // (dois `.on()` encadeados antes do `.subscribe()`); sem o mock encadeável,
+  // montar o componente quebra com "supabase.channel is not a function".
+  const realtimeChannel: { on: () => unknown; subscribe: () => unknown } = {
+    on: () => realtimeChannel,
+    subscribe: () => realtimeChannel,
+  };
+  return {
+    storageFrom: vi.fn(),
+    upload: vi.fn(),
+    remove: vi.fn(),
+    getPublicUrl: vi.fn(),
+    rpc: vi.fn(),
+    invoke: vi.fn(),
+    tableFrom: vi.fn(),
+    getUser: vi.fn(),
+    toastError: vi.fn(),
+    toastInfo: vi.fn(),
+    realtimeChannel,
+  };
+});
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -28,6 +38,8 @@ vi.mock('@/integrations/supabase/client', () => ({
     functions: { invoke: mocks.invoke },
     from: mocks.tableFrom,
     auth: { getUser: mocks.getUser },
+    channel: () => mocks.realtimeChannel,
+    removeChannel: () => {},
   },
 }));
 
@@ -100,6 +112,8 @@ describe('useAudioMemes — meme sempre na pasta do usuário (PK-16)', () => {
 
     expect(mocks.upload).not.toHaveBeenCalled();
     expect(result.current.pendingUpload).toBeNull();
-    expect(mocks.toastError).toHaveBeenCalledWith('Sessão expirada: entre novamente para enviar o áudio');
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      'Sessão expirada: entre novamente para enviar o áudio'
+    );
   });
 });
