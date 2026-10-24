@@ -27,8 +27,8 @@ function formatPhone(digits: string): string {
     if (rest.length <= 5) {
       return `+55 ${ddd} ${rest}`;
     }
-    // Fixo (10 dígitos no total): 8 após o DDD → XXXX-XXXX.
-    if (rest.length === 8) {
+    // Fixo (10 dígitos no total): 8 após o DDD, sem '9' inicial → XXXX-XXXX.
+    if (rest.length === 8 && !rest.startsWith('9')) {
       return `+55 ${ddd} ${rest.slice(0, 4)}-${rest.slice(4)}`;
     }
     // Celular (11 dígitos) e parciais: 5-4.
@@ -42,7 +42,7 @@ function formatPhone(digits: string): string {
   if (digits.length <= 4) return `+${digits.slice(0, 2)} ${digits.slice(2)}`;
 
   // Internacional ou incompleto.
-  return `+${digits.slice(0, 2)} ${digits.slice(2)}`;
+  return `+${digits}`;
 }
 
 /** Extrai apenas os dígitos de uma string. */
@@ -69,7 +69,8 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
     let digits = extractDigits(e.target.value);
 
     // Prefixa 55 quando o operador digita um DDD brasileiro direto (ex.: "11...").
-    if (digits.length >= 2 && !digits.startsWith('55')) {
+    // Não aplica em números internacionais que já vieram com '+'.
+    if (digits.length >= 2 && !digits.startsWith('55') && !e.target.value.startsWith('+')) {
       const possibleDDD = parseInt(digits.slice(0, 2), 10);
       if (possibleDDD >= 11 && possibleDDD <= 99) {
         digits = '55' + digits;

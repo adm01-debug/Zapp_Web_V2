@@ -392,7 +392,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
         description="As mensagens começam a ser enviadas para a audiência selecionada."
         details={[
           { label: 'Campanha', value: ed.name || '—' },
-          { label: 'Público', value: ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—') : 'Contatos ZAPP' },
+          { label: 'Segmento', value: ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—') : 'Contatos ZAPP' },
           { label: 'Destinatários', value: `${fmtInt(ed.eligibleCount)} contatos` },
           { label: 'Duração estimada', value: ed.estimatedTime ?? '—' },
           { label: 'Envio', value: ed.isScheduled && ed.scheduledAt ? 'Agendado' : 'Imediato' },
