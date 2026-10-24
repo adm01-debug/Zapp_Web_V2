@@ -20,6 +20,10 @@ on:
         type: choice
         options: ['1', '0']
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
 jobs:
   cleanup:
     name: Remove vars perigosas/mortas do Vercel
