@@ -2,6 +2,7 @@ import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
+import { usePushNotifications } from '@/hooks/system/usePushNotifications';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
@@ -107,6 +108,7 @@ export function playTeamChatSound(volume: number = 70) {
 export function useTeamChatNotifications(activeConversationId: string | null) {
   const { profile } = useAuth();
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
+  const { showNotification, permission } = usePushNotifications();
   const activeIdRef = useRef(activeConversationId);
 
   // Refs atualizados a cada render -- leitura fresca dentro do effect sem entrar nas deps
@@ -114,6 +116,10 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
   notifSettingsRef.current = notifSettings;
   const isQuietHoursRef = useRef(isQuietHours);
   isQuietHoursRef.current = isQuietHours;
+  const showNotificationRef = useRef(showNotification);
+  showNotificationRef.current = showNotification;
+  const permissionRef = useRef(permission);
+  permissionRef.current = permission;
 
   useEffect(() => {
     activeIdRef.current = activeConversationId;
@@ -169,7 +175,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           playTeamChatSound(settings.soundVolume);
         }
 
-        if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && settings.browserNotifications && !quietHours()) {
+        if (permissionRef.current === 'granted' && settings.browserNotifications && !quietHours()) {
           let senderName = 'Colega';
           try {
             const { data, error: erroPerfis } = await supabase.rpc('get_team_profiles');
@@ -183,8 +189,11 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           } catch (err) { log.error('Unexpected error in useTeamChatNotifications:', err); }
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
-          const n = new Notification(`\u{1F4AC} Teams: ${senderName}`, { body, tag: `team-msg-${msg.conversation_id}` });
-          n.onclick = () => { window.focus(); navigateToView('team-chat'); };
+          await showNotificationRef.current({
+            title: `\u{1F4AC} Teams: ${senderName}`,
+            body,
+            tag: `team-msg-${msg.conversation_id}`,
+          });
           log.debug('Team chat notification sent for message:', msg.id);
         }
       })
