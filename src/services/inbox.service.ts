@@ -108,13 +108,25 @@ function mapSilenceRow(raw: Record<string, unknown>): InboxSilenceConnection {
 }
 
 /**
+ * `types.ts` é gerado do banco e ainda não conhece a RPC `admin_inbox_silence` (migration
+ * 20261013230009, já aplicada em produção); o tipo virá do próximo sync de types (workflow
+ * types-sync) e então este cast pode virar `supabase.rpc('admin_inbox_silence')` direto.
+ * Mesmo padrão de useQueueGoals.ts / useSearchInsights.ts. O retorno é tratado como
+ * `unknown` e validado linha a linha por `mapSilenceRow`.
+ */
+type PendingInboxSilenceRpc = (fn: 'admin_inbox_silence') => {
+  abortSignal: (signal: AbortSignal) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
+};
+
+/**
  * Silêncio do inbound por conexão (admin/supervisor), para o painel de monitoramento.
  *
  * Mora na camada de serviços: o hook `useInboxSilence` não fala com o Supabase. O
  * `signal` propaga o cancelamento da leitura (aba escondida/desmontada) para a RPC.
  */
 export async function fetchInboxSilence(signal: AbortSignal): Promise<InboxSilenceConnection[]> {
-  const { data, error } = await supabase.rpc('admin_inbox_silence').abortSignal(signal);
+  const rpc = supabase.rpc.bind(supabase) as unknown as PendingInboxSilenceRpc;
+  const { data, error } = await rpc('admin_inbox_silence').abortSignal(signal);
   if (error) throw new Error(error.message);
-  return (data ?? []).map(raw => mapSilenceRow(raw as Record<string, unknown>));
+  return (Array.isArray(data) ? data : []).map(raw => mapSilenceRow(raw as Record<string, unknown>));
 }
