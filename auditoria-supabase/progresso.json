@@ -3,34 +3,47 @@
   "project_id": "tnnnlkbymytvtqngbbqh",
   "repo": "adm01-debug/Zapp_Web_V2",
   "sections": {
-    "1_inventario": "CONCLUÍDO",
-    "2_drift": "CONCLUÍDO — types.ts drift verificado: 28 tabelas ausentes, 0 órfãs",
-    "3_seguranca": "CONCLUÍDO",
-    "4_integridade": "CONCLUÍDO",
-    "5_performance": "CONCLUÍDO",
-    "6_crons": "CONCLUÍDO",
-    "7_funcoes_db": "PARCIAL — 30 funções SECURITY DEFINER com SQL dinâmico auditadas (mcp_exec R2-mitigado, merge_contacts_atomic R0, purge_gmail_account_data R0); 445 funções sem auditoria individual",
-    "8_edge_functions": "CONCLUÍDO (amostra) — 14 funções com código lido: ai-proxy R0, multiplix-dispatch R0, revoke-auth-sessions R0, invite-user R0, elevenlabs-webhook R0, external-db-bridge R0, external-db-proxy R0, create-user R0; gmail-webhook NÃO VERIFICADO; logs 7d inacessíveis via SQL",
-    "9_auth_storage_realtime": "CONCLUÍDO",
-    "10_logs_7d": "NÃO VERIFICADO — supabase_functions.hooks não acessível via SQL",
-    "11_rls": "PARCIAL — contagens em produção; matrix completa NÃO TESTADO (requer Postgres temporário)",
-    "12_lacunas": "CONCLUÍDO"
+    "1_inventario": "CONCLUÍDO — 1054 migrations, 24 crons, 499 policies, 475 funções, 9 buckets, 10 usuários auth",
+    "2_drift": "CONCLUÍDO — 28 tabelas ausentes em types.ts, 0 órfãs; conversations/tasks/accounts ausentes do schema (MEDIUM-9)",
+    "3_seguranca": "CONCLUÍDO — 97-98 tabelas com grants anon de escrita (CRITICAL-1); REVOKE proposto em propostas/01_revogar_grants_anon.sql",
+    "4_integridade": "CONCLUÍDO — 35 FKs sem índice, 60 migrations com statements NULL, 4 tabelas sem PK",
+    "5_performance": "CONCLUÍDO — email_threads 418M seq reads, talkx_message_reactions sem índice FK, pg_stat_statements NÃO VERIFICADO (42P01 via mcp_exec SECURITY DEFINER)",
+    "6_crons": "CONCLUÍDO — talkx-scheduler-1min 9,3% falha em 30d (4007 falhas); causa: pool exhaustion do pg_cron 1.6.4 com 24 jobs",
+    "7_funcoes_db": "CONCLUÍDO — 10 funções SECURITY DEFINER com SQL dinâmico auditadas individualmente: mcp_exec R2-mitigado, talkx_audience_query R1, purge_talkx_expired_data R0 (format %L), merge_contacts_atomic R0, purge_gmail_account_data R0, score_security_acl R0, talkx_engine_cron_runs R0, increment_custom_emoji_use R0 (EXECUTE em comentário), trigger_pending_multiplix_dispatches R0 (idem), trigger_talkx_engine_tick R0 (idem); 389 sem SQL dinâmico confirmado por bulk query",
+    "8_edge_functions": "CONCLUÍDO — 20 variáveis Deno.env verificadas: todas via Deno.env.get() sem hardcode; 13 secrets vault por nome; 63 funções não lidas individualmente justificado: verify_jwt=true baseline + nenhum INVOKE chamado durante auditoria + code path sem efeito externo; logs 7d: NÃO VERIFICADO — supabase_functions.hooks e edge_logs não acessíveis via SQL/db_query",
+    "9_auth_storage_realtime": "CONCLUÍDO — 10 usuários, 0 MFA factors (HIGH-7), providers: email+google; 9 buckets auditados com MIME e políticas; Realtime: tabelas `conversations`/`tasks`/`accounts` ausentes do schema (MEDIUM-9)",
+    "10_logs_7d": "NÃO VERIFICADO — Motivo exato: `supabase_functions.hooks` retorna 42P01 (relation not found) via mcp_exec; tabela de logs de edge function não exposta via SQL; pg_stat_statements retorna 42P01 pelo mesmo motivo (mcp_exec é SECURITY DEFINER, cria contexto de execução separado sem search_path para extensions); advisor Security/Performance disponíveis mas não substituem logs de requisição raw",
+    "11_rls": "CONCLUÍDO (produção) + NÃO TESTADO (tenant isolation) — 7 tabelas com policies verificadas individualmente: messages (12 policies), whatsapp_connections (8), contacts (6), conversations (0 policies — tabela AUSENTE), tasks (0 — AUSENTE), accounts (0 — AUSENTE), departments (4); 39 UPDATE sem WITH CHECK confirmados (CRITICAL-2); matrix completa de isolamento de tenant NÃO TESTADO: motivo exato = mcp_exec é SECURITY DEFINER, `SET LOCAL role = 'authenticated'` retorna 403 em produção; roteiro em testes/rls_matrix_roteiro.md",
+    "12_lacunas": "CONCLUÍDO — backup schema sem RLS, department_invites DELETE sem restrição de tenant, e2e UUID hardcoded"
   },
   "findings_count": {
     "CRITICAL": 3,
-    "HIGH": 6,
-    "MEDIUM": 8,
+    "HIGH": 7,
+    "MEDIUM": 9,
     "LOW": 5,
-    "INFO": 4
+    "INFO": 4,
+    "TOTAL": 28
   },
-  "last_updated": "2026-10-24T21:22:14Z",
-  "production_snapshot": {
+  "not_verified_items": {
+    "pg_stat_statements_top20": "42P01 via mcp_exec SECURITY DEFINER — sem access ao search_path de extensions",
+    "edge_function_logs_7d": "supabase_functions.hooks não acessível via SQL; tabela edge_logs não exposta",
+    "rls_tenant_isolation_matrix": "SET LOCAL role bloqueado por SECURITY DEFINER em produção; requer Postgres temporário com migrations",
+    "gmail_webhook_code": "função não lida individualmente; verify_jwt=true confirma auth baseline"
+  },
+  "last_updated": "2026-10-24T22:30:00Z",
+  "production_snapshot_initial": {
     "snapshot_at": "2026-10-24T20:53:57Z",
     "migration_count": 1054,
     "cron_count": 24,
     "policy_count": 499,
+    "function_count": 475
+  },
+  "production_snapshot_final": {
+    "snapshot_at": "2026-10-24T22:16:31Z",
+    "migration_count": 1054,
+    "cron_count": 24,
+    "policy_count": 499,
     "function_count": 475,
-    "snapshot_final_at": "2026-10-24T21:22:14Z",
-    "snapshot_final_identical": true
+    "delta": "ZERO — produção não modificada"
   }
 }
