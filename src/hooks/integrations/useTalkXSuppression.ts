@@ -278,12 +278,14 @@ export function useTalkXSuppressionStats(days = 30) {
 /* Z008 — useTalkXSuppression: lista, isSuppressed (fail-closed), mutações   */
 /* -------------------------------------------------------------------------- */
 
+export type SuppressionReasonCode = 'manual' | 'opt_out' | 'invalid_number' | 'lgpd' | 'no_commercial_permission' | 'bounce';
+
 export interface BlacklistEntry {
   id: string;
   contact_id: string | null;
   phone: string | null;
   reason: string | null;
-  reason_code: string | null;
+  reason_code: SuppressionReasonCode | null;
   origin: string | null;
   campaign_id: string | null;
   blocked_by: string | null;
@@ -296,7 +298,7 @@ export interface AddBlacklistEntryInput {
   phone?: string;
   contact_id?: string;
   reason?: string;
-  reason_code?: 'opt_out' | 'invalid_number' | 'manual' | 'lgpd' | 'no_commercial_permission' | 'bounce';
+  reason_code?: SuppressionReasonCode;
   origin?: string;
   campaign_id?: string;
   expires_at?: string;
