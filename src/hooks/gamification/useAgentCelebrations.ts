@@ -166,6 +166,7 @@ export function useAgentCelebrations(
     nivelConhecido.current = null;
     achievementsCountRef.current = null;
 
+    const mountTime = new Date().toISOString();
     void (async () => {
       const [conquistas, stats] = await Promise.all([
         supabase
@@ -179,7 +180,15 @@ export function useAgentCelebrations(
       if (!vivo) return;
       if (conquistas.error) log.warn('Falha ao carregar conquistas do perfil', conquistas.error);
       for (const linha of (conquistas.data ?? []) as Achievement[]) {
-        if (linha?.id) conquistasConhecidas.current.add(String(linha.id));
+        if (!linha?.id) continue;
+        const id = String(linha.id);
+        const earnedAt = String(linha.earned_at ?? '');
+        if (earnedAt > mountTime) {
+          // Chegou na janela de corrida: celebra (e registra como conhecido internamente).
+          celebrarConquista(linha);
+        } else {
+          conquistasConhecidas.current.add(id);
+        }
       }
       if (stats.error) log.warn('Falha ao carregar stats do perfil', stats.error);
       const statsLinha = stats.data as AgentStats | null;
@@ -190,7 +199,7 @@ export function useAgentCelebrations(
     return () => {
       vivo = false;
     };
-  }, [enabled, profileId]);
+  }, [enabled, profileId, celebrarConquista]);
 
   // Ressincronização: o que chegou durante a queda volta pelo banco — e o que já
   // foi celebrado cai no mesmo filtro de ids, então não repete.

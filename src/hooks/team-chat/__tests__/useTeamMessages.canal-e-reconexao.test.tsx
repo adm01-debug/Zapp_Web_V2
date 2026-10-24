@@ -65,11 +65,14 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const a = render('conv-1');
     const b = render('conv-1');
 
-    await waitFor(() => expect(h.nomes.length).toBeGreaterThanOrEqual(2));
-
-    expect(h.nomes[0].startsWith('team-messages-conv-1:')).toBe(true);
-    expect(h.nomes[1].startsWith('team-messages-conv-1:')).toBe(true);
-    expect(h.nomes[0]).not.toBe(h.nomes[1]);
+    await waitFor(() => {
+      const teamMsgNomes = h.nomes.filter(n => n.startsWith('team-messages-'));
+      expect(teamMsgNomes.length).toBeGreaterThanOrEqual(2);
+    });
+    const teamMsgNomes = h.nomes.filter(n => n.startsWith('team-messages-'));
+    expect(teamMsgNomes[0].startsWith('team-messages-conv-1:')).toBe(true);
+    expect(teamMsgNomes[1].startsWith('team-messages-conv-1:')).toBe(true);
+    expect(teamMsgNomes[0]).not.toBe(teamMsgNomes[1]);
 
     a.unmount();
     b.unmount();
