@@ -100,7 +100,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     id: string; template_id: string; version_number: number; name: string; description: string | null; content: string;
     category: string; status: string; media_url: string|null; media_type: string|null;
     tags: string[]; custom_variables: string[]; created_at: string;
-  }>>([]);
+  }>>();
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
   const [variants, setVariants] = useState<TemplateVariant[]>([]);
@@ -654,7 +654,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
           {/* E45: Variaveis customizadas */}
           <div>
             <p className="text-xs text-foreground-secondary mb-1.5">Variáveis personalizadas</p>
-            <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-primary-glow">{'{{'}var{'}}'}</span> na mensagem.</p>
+            <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-primary-glow">{'{{'+'var'+'}}'}</span> na mensagem.</p>
             <div className="flex items-center gap-2 flex-wrap mb-2">
               {eCustomVars.map((v) => (
                 <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violeta/10 border border-violeta/20 text-xs font-mono text-[hsl(var(--violeta-text))]">
