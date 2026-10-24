@@ -2,13 +2,16 @@
  * Padronização do cabeçalho do grupo de telas do "Gestão" (auditoria de UX 10/10).
  *
  * Critério de pronto do cartão: as telas do grupo usam o MESMO PageHeader com
- * trilha consistente. Antes desta mudança, Contatos não tinha cabeçalho nenhum
- * (só `sr-only`), CRM 360° montava um `<h1>` próprio com badge ao lado e a Agenda
- * trazia o título dentro do `CardHeader`, sem trilha — três padrões diferentes.
+ * trilha consistente. CRM 360° montava um `<h1>` próprio com badge ao lado e a
+ * Agenda trazia o título dentro do `CardHeader`, sem trilha — dois padrões
+ * diferentes, agora unificados.
  *
- * O teste monta as TRÊS telas reais e cobra o contrato visível de cada uma:
- * um `h1` com o nome do módulo e a trilha `Gestão > <telas>` no cabeçalho
- * compartilhado. Sem a mudança (base), cada uma dessas asserções fica vermelha.
+ * Contatos é a EXCEÇÃO deliberada do grupo: o topo do módulo não tem cabeçalho
+ * visual (título, subtítulo e ações saíram no plano
+ * PLANO_CONTATOS_CABECALHO_BOTAO_VERDE_50_ETAPAS_2026-09-30; o cadastro é feito
+ * pelo botão verde flutuante). O lote 880 (025d0258dc) reintroduziu o PageHeader
+ * ali por padronização; esta asserção guarda a decisão de produto — só `h1`
+ * `sr-only`, sem trilha.
  */
 import type { ReactNode } from 'react';
 import { render, fireEvent, screen, within } from '@testing-library/react';
@@ -148,9 +151,16 @@ function exigirCabecalho(nome: string, folha: string) {
 }
 
 describe('cabeçalho do grupo — trilha consistente (Gestão > X)', () => {
-  it('Contatos usa o PageHeader compartilhado (antes: só `sr-only`, sem cabeçalho)', () => {
-    montar(<ContactsView />);
-    exigirCabecalho('Contatos', 'Contatos');
+  it('Contatos NÃO tem cabeçalho visual: só o título `sr-only`, sem trilha', () => {
+    const { container } = montar(<ContactsView />);
+
+    // Sem PageHeader: nenhum <header> e nenhuma trilha de breadcrumb no topo.
+    expect(container.querySelector('header')).toBeNull();
+    expect(screen.queryByRole('navigation', { name: 'breadcrumb' })).toBeNull();
+
+    // O nome do módulo continua sendo anunciado, mas fora do fluxo visual.
+    const titulo = screen.getByRole('heading', { level: 1, name: 'Contatos' });
+    expect(titulo).toHaveClass('sr-only');
   });
 
   it('CRM 360° usa o PageHeader compartilhado (antes: `<h1>` próprio com badge)', () => {

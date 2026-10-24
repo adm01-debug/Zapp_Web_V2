@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { MotionConfig } from 'framer-motion';
 import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
 import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
@@ -118,12 +118,16 @@ export function ContactsView() {
   const canMerge = canMergeContacts(adminAccess);
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="relative bg-background w-full min-w-0" data-contacts-v2={areasV2Ligadas.join(' ')}>
       <ScrollToTopButton
         scrollRef={layoutScrollRef}
         className="bottom-[calc(228px+env(safe-area-inset-bottom,0px))] md:bottom-[168px] md:right-8"
       />
 
+      {/* Identificação semântica: o cabeçalho visual foi removido (contrato do
+          plano de 50 etapas) e o documento continua anunciando Contatos. */}
+      <h1 className="sr-only">Contatos</h1>
 
       {/* ContactDialogs vive fora de qualquer condição de lista vazia/carregamento:
           uma única instância preserva os quatro diálogos e o gatilho verde flutuante. */}
@@ -141,11 +145,6 @@ export function ContactsView() {
       />
 
       <div className="space-y-4">
-      <PageHeader
-        title="Contatos"
-        breadcrumbs={[{ label: 'Gestão' }, { label: 'Contatos' }]}
-      />
-
       {canMerge && (
         <ContactMergeDialog
           open={isMergeOpen} onOpenChange={setIsMergeOpen}
@@ -199,7 +198,7 @@ export function ContactsView() {
       />
       </div>
 
-      <div className="space-y-3 mt-3">
+      <div className="space-y-3 mt-3 pb-[calc(160px+env(safe-area-inset-bottom,0px))]">
       {!loading && (
         <ContactResultsSummary
           totalCount={totalCount}
@@ -271,5 +270,6 @@ export function ContactsView() {
         canChangeTypeSelection={canChangeTypeSelection}
       />
     </div>
+    </MotionConfig>
   );
 }
