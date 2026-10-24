@@ -30,6 +30,11 @@
 
 -- 1) Backfill: rows que já nasceram com cid divergente passam a apontar para a conversa da PRÓPRIA mensagem.
 --    (DML com WHERE; roda antes do trigger novo para não depender dele.)
+--    session_replication_role=replica desabilita triggers de usuário durante o backfill para que APENAS
+--    conversation_id seja alterado — sem disparar team_message_receipts_update_guard_trig, que preencheria
+--    read_at em recibos legados com status='read' e read_at=NULL como efeito colateral indesejado.
+SET LOCAL session_replication_role = replica;
+
 UPDATE public.team_message_receipts r
    SET conversation_id = m.conversation_id
   FROM public.team_messages m
@@ -41,6 +46,8 @@ UPDATE public.team_message_reactions r
   FROM public.team_messages m
  WHERE m.id = r.message_id
    AND r.conversation_id IS DISTINCT FROM m.conversation_id;
+
+SET LOCAL session_replication_role = DEFAULT;
 
 -- 2) Recibos: o cid passa a ser SEMPRE o da mensagem (antes só quando NULL). Vale para INSERT e UPDATE, então
 --    trocar `message_id` re-deriva o cid em vez de conservar o antigo. Mensagem sem conversa resolvível é
