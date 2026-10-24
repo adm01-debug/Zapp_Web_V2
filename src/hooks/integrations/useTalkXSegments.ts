@@ -51,7 +51,8 @@ export interface TalkXSegment {
   name: string;
   description: string | null;
   origin: 'zapp' | 'crm360' | 'custom';
-  status: 'active' | 'inactive';
+  /** X101: `draft` é o rascunho do ciclo de vida do segmento (coluna `status`). */
+  status: 'active' | 'inactive' | 'draft';
   is_favorite: boolean;
   rules: SegmentRules;
   estimated_count: number;
@@ -414,6 +415,169 @@ export function useSegmentLibraryStats() {
 }
 
 /* ------------------------------------------------------------------ */
+/* X115 — filtros e paginação da biblioteca (tela 02)                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * X115 — o recorte da biblioteca de segmentos vive na URL (para o endereço ser
+ * compartilhável) e o tamanho de página é preferência do operador (localStorage,
+ * por usuário). As funções desta seção são puras de propósito: a tela lê e
+ * escreve o recorte por elas, e o teste prova a ida (URL -> tela) e a volta
+ * (tela -> URL) sem depender de cliques.
+ *
+ * As chaves levam o prefixo `seg` porque a URL do Talk X já usa `tab`, `sub`,
+ * `view`, `wizard` e `step` (`talkxTabRoute`/`talkxWizardRoute`): o mesmo
+ * endereço carrega a aba e o recorte sem um sobrescrever o outro.
+ */
+export const SEGMENT_LIBRARY_URL = {
+  search: 'segq',
+  origin: 'segorigem',
+  status: 'segstatus',
+  owner: 'segproprietario',
+  page: 'segpagina',
+  pageSize: 'segporpagina',
+} as const;
+
+/** Valor do filtro de proprietário para o segmento sem `created_by`. */
+export const SEGMENT_LIBRARY_OWNER_NONE = 'sem-proprietario';
+
+export interface SegmentLibraryFilters {
+  search: string;
+  origin: string;
+  status: string;
+  owner: string;
+  page: number;
+}
+
+export const DEFAULT_SEGMENT_LIBRARY_FILTERS: SegmentLibraryFilters = {
+  search: '', origin: 'all', status: 'all', owner: 'all', page: 1,
+};
+
+/** Padrão da biblioteca: 8 por página (o valor que a main já usa; o kit oferece 8/10/20/50). */
+export const SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT = 8;
+
+/** As opções do seletor são as do kit (`TalkXPagination`). */
+export const SEGMENT_LIBRARY_PAGE_SIZES = [8, 10, 20, 50] as const;
+
+const SEGMENT_LIBRARY_ORIGINS = ['all', 'zapp', 'crm360', 'custom'] as const;
+const SEGMENT_LIBRARY_STATUSES = ['all', 'active', 'inactive', 'draft'] as const;
+
+function valorDoDominio(valor: string | null, dominio: readonly string[]): string {
+  return valor && dominio.includes(valor) ? valor : 'all';
+}
+
+/**
+ * Lê o recorte da URL. Valor ausente, vazio ou fora do domínio cai no padrão —
+ * um endereço colado com `segstatus=qualquercoisa` não deixa a lista vazia sem
+ * que o usuário veja filtro nenhum ativo.
+ */
+export function parseSegmentLibraryFilters(search: string): SegmentLibraryFilters {
+  const params = new URLSearchParams(search);
+  const pagina = Number(params.get(SEGMENT_LIBRARY_URL.page));
+  const owner = params.get(SEGMENT_LIBRARY_URL.owner) ?? '';
+  return {
+    search: params.get(SEGMENT_LIBRARY_URL.search) ?? '',
+    origin: valorDoDominio(params.get(SEGMENT_LIBRARY_URL.origin), SEGMENT_LIBRARY_ORIGINS),
+    status: valorDoDominio(params.get(SEGMENT_LIBRARY_URL.status), SEGMENT_LIBRARY_STATUSES),
+    owner: owner || 'all',
+    page: Number.isInteger(pagina) && pagina > 0 ? pagina : 1,
+  };
+}
+
+/** Tamanho de página pedido por um endereço compartilhado (fora do kit → null). */
+export function readSegmentLibraryPageSizeFromUrl(search: string): number | null {
+  const bruto = Number(new URLSearchParams(search).get(SEGMENT_LIBRARY_URL.pageSize));
+  return isSegmentLibraryPageSize(bruto) ? bruto : null;
+}
+
+/**
+ * Monta a URL com o recorte. Valor no padrão SAI da URL: o endereço de "nenhum
+ * filtro" volta a ser o endereço limpo, e os parâmetros do módulo (`tab`, `sub`,
+ * `view`, `wizard`, `step`) seguem intactos.
+ */
+export function formatSegmentLibraryUrl(current: URL, filters: SegmentLibraryFilters, pageSize: number | null): string {
+  const url = new URL(current.href);
+  escreverParam(url.searchParams, SEGMENT_LIBRARY_URL.search, filters.search, '');
+  escreverParam(url.searchParams, SEGMENT_LIBRARY_URL.origin, filters.origin, 'all');
+  escreverParam(url.searchParams, SEGMENT_LIBRARY_URL.status, filters.status, 'all');
+  escreverParam(url.searchParams, SEGMENT_LIBRARY_URL.owner, filters.owner, 'all');
+  escreverParam(url.searchParams, SEGMENT_LIBRARY_URL.page, String(filters.page), '1');
+  escreverParam(
+    url.searchParams,
+    SEGMENT_LIBRARY_URL.pageSize,
+    pageSize === null ? '' : String(pageSize),
+    String(SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT),
+  );
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function escreverParam(params: URLSearchParams, chave: string, valor: string, padrao: string): void {
+  if (valor && valor !== padrao) params.set(chave, valor);
+  else params.delete(chave);
+}
+
+/**
+ * Escreve o recorte na URL sem entrada de histórico: filtrar não é navegar.
+ *
+ * O estado é PRESERVADO e apenas marcado com `seglib`: passar `null` (ou um
+ * objeto novo do zero) apagaria o `idx`/`key` que o roteador gravou em
+ * `history.state` e quebraria o voltar/avançar do navegador.
+ */
+export function syncSegmentLibraryUrl(filters: SegmentLibraryFilters, pageSize: number | null): void {
+  if (typeof window === 'undefined' || !window.history?.replaceState) return;
+  const atual = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const proxima = formatSegmentLibraryUrl(new URL(window.location.href), filters, pageSize);
+  // Endereço já certo: não mexe no histórico (nem no `history.state` do roteador).
+  if (proxima === atual) return;
+  const estado = { ...(window.history.state ?? {}), seglib: true };
+  window.history.replaceState(estado, '', proxima);
+}
+
+/**
+ * Tira da URL os parâmetros `seg*` do recorte (sem entrada de histórico). A tela
+ * chama ao sair, para o recorte não vazar para as outras abas do Talk X.
+ */
+export function clearSegmentLibraryUrl(): void {
+  if (typeof window === 'undefined' || !window.history?.replaceState) return;
+  const url = new URL(window.location.href);
+  let mudou = false;
+  Object.values(SEGMENT_LIBRARY_URL).forEach((chave) => {
+    if (url.searchParams.has(chave)) { url.searchParams.delete(chave); mudou = true; }
+  });
+  if (mudou) window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+}
+
+export function segmentLibraryPageSizeKey(userId: string | null | undefined): string {
+  return `zapp.talkx.segments.page-size:${userId ?? 'anonimo'}`;
+}
+
+export function isSegmentLibraryPageSize(value: unknown): value is number {
+  return typeof value === 'number' && (SEGMENT_LIBRARY_PAGE_SIZES as readonly number[]).includes(value);
+}
+
+/**
+ * Preferência de tamanho de página do operador. Leitura defensiva: valor fora
+ * das opções do kit, chave ausente ou storage indisponível caem no padrão (8).
+ */
+export function readSegmentLibraryPageSize(userId: string | null | undefined): number {
+  try {
+    const bruto = Number(window.localStorage.getItem(segmentLibraryPageSizeKey(userId)));
+    return isSegmentLibraryPageSize(bruto) ? bruto : SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT;
+  } catch {
+    return SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT;
+  }
+}
+
+export function saveSegmentLibraryPageSize(userId: string | null | undefined, size: number): void {
+  if (!isSegmentLibraryPageSize(size)) return;
+  try {
+    window.localStorage.setItem(segmentLibraryPageSizeKey(userId), String(size));
+  } catch {
+    /* storage indisponível: a escolha vale para esta tela, sem persistir */
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* X114 — seleção em massa e ações pela RPC guardada                   */
 /* (talkx_segment_bulk_action, entregue em t_9c7ad8fc)                 */
 /* ------------------------------------------------------------------ */
@@ -632,6 +796,8 @@ export function useTalkXSegments() {
     // X114 — seleção e ações em massa (RPC guardada talkx_segment_bulk_action).
     // `runBulkAction` devolve o resultado POR SEGMENTO; a tela decide o que
     // mostrar, mas item barrado pela guarda chega aqui com `succeeded: false`.
+    // Preferência de tamanho de página é por usuário (localStorage); a tela lê o id daqui.
+    userId: profile?.id ?? null,
     selectedIds,
     isSelected: (id: string) => selectedIds.includes(id),
     toggleSelect: (id: string) => setSelectedIds((prev) =>

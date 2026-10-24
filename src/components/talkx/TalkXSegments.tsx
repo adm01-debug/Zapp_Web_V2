@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { PrimaryButton, GhostButton, Pill, ProgressBar, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { DashboardKpiCard, type KpiDelta } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
-import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type TalkXSegmentBulkAction, type TalkXSegmentBulkResult } from '@/hooks/integrations/useTalkXSegments';
+import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, DEFAULT_SEGMENT_LIBRARY_FILTERS, SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT, SEGMENT_LIBRARY_OWNER_NONE, parseSegmentLibraryFilters, readSegmentLibraryPageSize, readSegmentLibraryPageSizeFromUrl, saveSegmentLibraryPageSize, syncSegmentLibraryUrl, clearSegmentLibraryUrl, type SegmentLibraryFilters, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type TalkXSegmentBulkAction, type TalkXSegmentBulkResult } from '@/hooks/integrations/useTalkXSegments';
 import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, TalkXBulkBar, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
@@ -31,15 +31,23 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     libraryStats = null, libraryStatsLoading = false, libraryStatsError = null, refetchLibraryStats = () => {},
     // X114 — seleção/ações em massa. Defaults só para os mocks de tela que
     // injetam um hook mínimo: o hook real sempre devolve os seis.
+    userId = null,
     selectedIds = [], toggleSelect = () => {}, selectAll = () => {}, clearSelection = () => {}, runBulkAction = async () => [], isBulkRunning = false,
   } = useTalkXSegments();
   const [bulkResult, setBulkResult] = useState<TalkXSegmentBulkResult[] | null>(null);
   const [bulkTag, setBulkTag] = useState('');
-  const [search, setSearch] = useState('');
-  const [filterOrigin, setFilterOrigin] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(8);
+  // X115 — o recorte da biblioteca (busca, origem, status, proprietário e página) vive
+  // no endereço: o link compartilhado abre a tela já recortada. O tamanho da página
+  // é preferência do operador (localStorage, por usuário) e também pode vir no link.
+  const [filters, setFilters] = useState<SegmentLibraryFilters>(
+    () => parseSegmentLibraryFilters(window.location.search),
+  );
+  const [pageSize, setPageSize] = useState<number>(
+    () => readSegmentLibraryPageSizeFromUrl(window.location.search) ?? readSegmentLibraryPageSize(userId),
+  );
+  // Link com `segporpagina` manda mais que a preferência guardada.
+  const pageSizeFromUrl = useRef(readSegmentLibraryPageSizeFromUrl(window.location.search));
+  const { search, origin: filterOrigin, status: filterStatus, owner: filterOwner } = filters;
   const [selected, setSelected] = useState<TalkXSegment | null>(null);
   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
   const [editing, setEditing] = useState<EditingSeed | null>(null);
@@ -80,6 +88,8 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     // não sobrevive à navegação.
     setEditing(null);
     setRoute(routed.route);
+    // O recorte da biblioteca acompanha o endereço do histórico.
+    setFilters(parseSegmentLibraryFilters(window.location.search));
   }, []);
 
   useEffect(() => {
@@ -98,15 +108,60 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     if (!isError) toast.error('Segmento não encontrado ou sem acesso.');
   }, [isError, isLoading, route, routedSegment]);
 
+  // Opções de proprietário derivadas dos próprios segmentos que a consulta (com RLS)
+  // devolveu: o filtro nunca oferece nem recorta nada além do que o usuário já lê.
+  const ownerOptions = useMemo(() => {
+    const owners = new Map<string, string>();
+    segments.forEach((s) => { if (s.created_by && s.creator?.name) owners.set(s.created_by, s.creator.name); });
+    return Array.from(owners.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [segments]);
+
   const filtered = useMemo(() => {
     let r = segments;
     if (filterOrigin !== 'all') r = r.filter((s) => s.origin === filterOrigin);
     if (filterStatus !== 'all') r = r.filter((s) => s.status === filterStatus);
+    if (filterOwner === SEGMENT_LIBRARY_OWNER_NONE) r = r.filter((s) => !s.created_by);
+    else if (filterOwner !== 'all') r = r.filter((s) => s.created_by === filterOwner);
     if (search.trim()) { const q = search.toLowerCase(); r = r.filter((s) => s.name.toLowerCase().includes(q) || (s.description ?? '').toLowerCase().includes(q)); }
     return r;
-  }, [segments, filterOrigin, filterStatus, search]);
+  }, [segments, filterOrigin, filterStatus, filterOwner, search]);
 
+  // Página fora do intervalo (link antigo, filtro que encolheu a lista) cai na última existente.
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const page = Math.min(filters.page, pageCount);
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  // O perfil pode chegar depois da primeira renderização: relê a preferência do usuário certo.
+  useEffect(() => {
+    if (pageSizeFromUrl.current === null) setPageSize(readSegmentLibraryPageSize(userId));
+  }, [userId]);
+
+  // Espelha o recorte no endereço sem criar entrada de histórico (filtrar não é navegar).
+  // Enquanto a lista carrega `filtered` está vazio: não regrava a página pedida pelo link.
+  useEffect(() => {
+    syncSegmentLibraryUrl({ ...filters, page: isLoading ? filters.page : page }, pageSize);
+  }, [filters, page, pageSize, isLoading]);
+  // Ao sair da tela os parâmetros `seg*` saem do endereço (não vazam para outras abas).
+  useEffect(() => clearSegmentLibraryUrl, []);
+
+  // Mudar o recorte volta para a 1ª página; só `setPage` mexe na página.
+  const setFilterValue = (campo: 'search' | 'origin' | 'status' | 'owner', value: string) => {
+    setFilters((prev) => ({ ...prev, [campo]: value, page: 1 }));
+  };
+  const setSearch = (v: string) => setFilterValue('search', v);
+  const setPage = (p: number) => setFilters((prev) => ({ ...prev, page: p }));
+  // "Limpar filtros" também devolve o tamanho de página ao padrão e grava a escolha:
+  // sem persistir, a preferência antiga voltaria na próxima visita.
+  const clearFilters = () => {
+    setFilters(DEFAULT_SEGMENT_LIBRARY_FILTERS);
+    saveSegmentLibraryPageSize(userId, SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT);
+    setPageSize(SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT);
+  };
+  const choosePageSize = (size: number) => {
+    saveSegmentLibraryPageSize(userId, size);
+    setPageSize(size);
+    setPage(1);
+  };
 
   /* X114 — seleção e ações em massa da biblioteca. O resultado vem POR SEGMENTO
      do hook (RPC guardada): a tela nunca resume o lote como um veredito único. */
@@ -316,15 +371,21 @@ export function TalkXSegments({ onUseCampaign }: Props) {
         </TalkXQueryBoundary>
 
         <FilterBarV2
-          search={search} onSearch={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar segmentos…"
+          search={search} onSearch={setSearch} placeholder="Buscar segmentos…"
           filters={[
-            { key: 'origin', label: 'Todas as origens', options: [{ value: 'zapp', label: 'ZAPP' }, { value: 'crm360', label: 'CRM 360°' }, { value: 'custom', label: 'Personalizado' }] },
-            { key: 'status', label: 'Todos os status', options: [{ value: 'active', label: 'Ativo' }, { value: 'inactive', label: 'Inativo' }] },
+            { key: 'origin', label: 'Origem', allLabel: 'Todas as origens', options: [{ value: 'zapp', label: 'ZAPP' }, { value: 'crm360', label: 'CRM 360°' }, { value: 'custom', label: 'Personalizado' }] },
+            { key: 'status', label: 'Status', allLabel: 'Todos os status', options: [{ value: 'active', label: 'Ativo' }, { value: 'inactive', label: 'Inativo' }, { value: 'draft', label: 'Rascunho' }] },
+            // "Sem proprietário" cobre o segmento sem `created_by`: ele não entra na lista de
+            // criadores e, sem a opção, não teria como ser recortado. O item "Todos" é o
+            // sentinela `all` da barra ("sem recorte").
+            { key: 'owner', label: 'Proprietário', allLabel: 'Todos', options: [...ownerOptions.map(([id, name]) => ({ value: id, label: name })), { value: SEGMENT_LIBRARY_OWNER_NONE, label: 'Sem proprietário' }] },
           ]}
-          values={{ origin: filterOrigin, status: filterStatus }}
-          onFilter={(k, v) => { if (k === 'origin') setFilterOrigin(v); else setFilterStatus(v); setPage(1); }}
-          hasActive={filterOrigin !== 'all' || filterStatus !== 'all' || search.trim() !== ''}
-          onClear={() => { setSearch(''); setFilterOrigin('all'); setFilterStatus('all'); setPage(1); }}
+          values={{ origin: filterOrigin, status: filterStatus, owner: filterOwner }}
+          onFilter={(k, v) => {
+            if (k === 'origin' || k === 'status' || k === 'owner') setFilterValue(k, v);
+          }}
+          hasActive={filterOrigin !== 'all' || filterStatus !== 'all' || filterOwner !== 'all' || search.trim() !== ''}
+          onClear={clearFilters}
           rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>}
         />
 
@@ -412,7 +473,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
             </div>
           )}
           </TalkXQueryBoundary>
-          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={(n) => { setPageSize(n); setPage(1); }} noun="segmentos" /></div>}
+          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={choosePageSize} noun="segmentos" /></div>}
         </section>
       </div>
 
