@@ -1,16 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const mockFrom = vi.fn();
 const mockGetUser = vi.fn();
+// Consultas de leitura montadas (para inspecionar `.eq/.or/.order/.limit`).
+const selectChains: Array<Record<string, ReturnType<typeof vi.fn>>> = [];
+// Assinantes de `onAuthStateChange` (limpeza de cache no logout).
+const authCbs: Array<(event: string) => void> = [];
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (...args: unknown[]) => mockFrom(...args),
     auth: {
       getUser: () => mockGetUser(),
+      onAuthStateChange: vi.fn((cb: (event: string) => void) => {
+        authCbs.push(cb);
+        return { data: { subscription: { unsubscribe: vi.fn() } } };
+      }),
     },
   },
 }));
@@ -21,11 +29,37 @@ vi.mock('sonner', () => ({
 
 import { useSavedFilters } from '@/hooks/chat/useSavedFilters';
 
+/**
+ * Construtor da consulta encadeada de `saved_filters` (a leitura agora faz
+ * dois `.order()` e um `.limit()`); resolvido no fim, como o PostgREST real.
+ */
+function selectChain(result: { data: unknown; error: unknown }, reject = false) {
+  const q: Record<string, ReturnType<typeof vi.fn>> = {};
+  q.eq = vi.fn(() => q);
+  q.or = vi.fn(() => q);
+  q.order = vi.fn(() => q);
+  q.limit = vi.fn(() => (reject ? Promise.reject(result.error) : Promise.resolve(result)));
+  selectChains.push(q);
+  return q;
+}
+
+function lastSelectChain() {
+  return selectChains[selectChains.length - 1];
+}
+
 function createWrapper() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   return ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={qc}>{children}</QueryClientProvider>
   );
+}
+
+function wrapperWithClient() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+  );
+  return { qc, wrapper };
 }
 
 const mockFilters = [
@@ -36,15 +70,11 @@ const mockFilters = [
 describe('useSavedFilters', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    selectChains.length = 0;
+    authCbs.length = 0;
     mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
     mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          or: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({ data: mockFilters, error: null }),
-          }),
-        }),
-      }),
+      select: vi.fn().mockReturnValue(selectChain({ data: mockFilters, error: null })),
       insert: vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({ data: { id: 'new' }, error: null }),
@@ -112,16 +142,44 @@ describe('useSavedFilters', () => {
 
   it('handles fetch error gracefully', async () => {
     mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          or: vi.fn().mockReturnValue({
-            order: vi.fn().mockRejectedValue(new Error('DB error')),
-          }),
-        }),
-      }),
+      select: vi.fn().mockReturnValue(selectChain({ data: null, error: new Error('DB error') }, true)),
     });
 
     const { result } = renderHook(() => useSavedFilters('contacts'), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
+  });
+
+  it('aplica teto (.limit) e desempate por id na leitura de filtros salvos', async () => {
+    renderHook(() => useSavedFilters('contacts'), { wrapper: createWrapper() });
+    await waitFor(() => expect(selectChains.length).toBeGreaterThan(0));
+
+    const chain = lastSelectChain();
+    expect(chain.limit).toHaveBeenCalledWith(50);
+    // Ordem determinística: created_at desc + id como desempate.
+    expect(chain.order.mock.calls).toEqual([
+      ['created_at', { ascending: false }],
+      ['id', { ascending: true }],
+    ]);
+  });
+
+  it('não pede filtro compartilhado ao ler presets do Inbox (são só do dono)', async () => {
+    renderHook(() => useSavedFilters('inbox_filters'), { wrapper: createWrapper() });
+    await waitFor(() => expect(selectChains.length).toBeGreaterThan(0));
+
+    const chain = lastSelectChain();
+    expect(chain.eq).toHaveBeenCalledWith('entity_type', 'inbox_filters');
+    expect(chain.eq).toHaveBeenCalledWith('user_id', 'u1');
+    expect(chain.or).not.toHaveBeenCalled();
+  });
+
+  it('limpa o cache de filtros salvos quando o Supabase emite SIGNED_OUT', async () => {
+    const { qc, wrapper } = wrapperWithClient();
+    renderHook(() => useSavedFilters('contacts'), { wrapper });
+    await waitFor(() => expect(authCbs.length).toBeGreaterThan(0));
+    await waitFor(() => expect(qc.getQueryData(['saved-filters', 'contacts'])).toBeDefined());
+
+    act(() => authCbs.forEach((cb) => cb('SIGNED_OUT')));
+
+    expect(qc.getQueryData(['saved-filters', 'contacts'])).toBeUndefined();
   });
 });
