@@ -35,6 +35,7 @@ import { InfoBox } from './new-task/InfoBox';
 import { NewTaskFooter } from './new-task/NewTaskFooter';
 import {
   esquecerRascunhoDaCaptura,
+  guardarRascunhoDaCaptura,
   lerRascunhoDaCaptura,
 } from './new-task/rascunhoDaCaptura';
 
@@ -114,7 +115,7 @@ export function NewTaskDialog({
    * por busca e fora da lista padrão continua na prévia (antes a prévia lia uma
    * segunda instância da busca, que nunca recebia o termo digitado).
    */
-  const [contatoEscolhido, setContatoEscolhido] = useState<ContactOption | null>(defaultContact);
+  const [contatoEscolhido, setContatoEscolhido] = useState<ContactOption | null>(rascunho?.contact ?? defaultContact);
   const trocarContato = (id: string | null, opcao?: ContactOption | null) => {
     setContactId(id);
     setContatoEscolhido(opcao ?? null);
@@ -158,10 +159,12 @@ export function NewTaskDialog({
 
   /**
    * Etapa 168: captura de verdade otimista — o modal fecha ANTES do INSERT
-   * resolver. Se o banco recusar, o modal CONTINUA fechado e o próprio hook já
-   * mostra o erro em toast ("Erro ao criar tarefa" / "O horario do aviso ja
-   * passou"); nada apareceu na lista, então não há o que desfazer nem "Tarefa
-   * criada". `criando` evita o pedido de descarte (etapa 170) nesse fechamento.
+   * resolver. Se o banco recusar, o hook já mostra o erro em toast ("Erro ao
+   * criar tarefa" / "O horario do aviso ja passou") e o modal REABRE com o que
+   * foi digitado (título, prioridade, prazo, lembrete e contato) — o rascunho
+   * não se perde. Nada apareceu na lista, então não há o que desfazer nem
+   * "Tarefa criada". `criando` evita o pedido de descarte (etapa 170) no
+   * fechamento legítimo.
    */
   const criar = async () => {
     const texto = title.trim();
@@ -182,7 +185,24 @@ export function NewTaskDialog({
         remindAt,
       });
     } catch {
-      return; // o hook já avisou o erro.
+      // O hook já avisou o erro em toast. O modal já fechou (otimista): devolve o
+      // rascunho pela caixa do QuickAdd e reabre, para o usuário corrigir e
+      // tentar de novo em vez de redigitar tudo.
+      guardarRascunhoDaCaptura({
+        title,
+        priority,
+        dueDate,
+        remindAt,
+        contactId,
+        contact: contatoDaPrevia,
+      });
+      // Se o componente seguir montado (modo controlado por `open`), destrava o
+      // botão para o novo envio; desmontado, é um no-op.
+      setEnviando(false);
+      setCriando(false);
+      tasksUi?.openModal();
+      onOpenChange?.(true);
+      return;
     }
 
     if (!id) return; // 23505: o pedido repetido caiu no índice único (já existe).

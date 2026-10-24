@@ -23,6 +23,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TasksUiProvider } from '@/components/tasks/shared/TasksUiContext';
 import { useTasksUi } from '@/components/tasks/shared/tasksUi';
 import { NewTaskDialog } from '@/components/tasks/shared/NewTaskDialog';
+import { esquecerRascunhoDaCaptura } from '@/components/tasks/shared/new-task/rascunhoDaCaptura';
 import { duePresetISO } from '@/hooks/tasks/workItemPresets';
 
 const NOW = new Date(2026, 9, 13, 12, 0, 0, 0);
@@ -40,7 +41,11 @@ beforeEach(() => {
   }
 });
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  // A caixa do rascunho é do módulo (compartilhada entre testes): zera a cada um.
+  esquecerRascunhoDaCaptura();
+});
 
 function AbrirEMontar() {
   const { modalOpen, openModal } = useTasksUi();
@@ -131,18 +136,54 @@ describe('NewTaskDialog — criação otimista (etapa 168)', () => {
     expect(sonda()).toHaveTextContent('aberto');
   });
 
-  it('INSERT recusado não vira "Tarefa criada": o modal continua fechado e o erro fica com o hook', async () => {
+  it('INSERT recusado não vira "Tarefa criada": o erro fica com o hook e o modal reabre com o rascunho', async () => {
     setWriteResult({ error: { message: 'permission denied' } });
     montar();
     fireEvent.change(titulo(), { target: { value: 'Ligar para Ana' } });
+    fireEvent.click(screen.getByRole('radio', { name: 'Alta' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Criar tarefa' }));
 
     await waitFor(() => expect(supabaseMock.insert).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(supabaseMock.toast.error).toHaveBeenCalled());
     expect(supabaseMock.undoToast).not.toHaveBeenCalled();
-    // Captura otimista: o fechamento já aconteceu antes do banco responder,
-    // então a recusa não reabre o modal — o erro aparece em toast.
-    expect(sonda()).toHaveTextContent('fechado');
+    // Captura otimista: o modal fechou antes do banco responder; como o banco
+    // recusou, ele REABRE com o que foi digitado (o toast de erro permanece).
+    await waitFor(() => expect(sonda()).toHaveTextContent('aberto'));
+    expect(titulo().value).toBe('Ligar para Ana');
+    expect(screen.getByRole('radio', { name: 'Alta' })).toHaveAttribute('aria-checked', 'true');
+    expect(supabaseMock.toast.error).toHaveBeenCalledWith('Erro ao criar tarefa');
+  });
+
+  it('depois da recusa o usuário pode tentar de novo sem redigitar e criar normalmente', async () => {
+    setWriteResult({ error: { message: 'permission denied' } });
+    montar();
+    fireEvent.change(titulo(), { target: { value: 'Ligar para Ana' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Criar tarefa' }));
+    await waitFor(() => expect(supabaseMock.toast.error).toHaveBeenCalled());
+    await waitFor(() => expect(sonda()).toHaveTextContent('aberto'));
+
+    setWriteResult({ data: { id: 'nt-1' }, error: null });
+    fireEvent.click(screen.getByRole('button', { name: 'Criar tarefa' }));
+
+    await waitFor(() => expect(supabaseMock.insert).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(sonda()).toHaveTextContent('fechado'));
+    await waitFor(() => expect(supabaseMock.undoToast).toHaveBeenCalled());
+  });
+
+  it('cancelar o modal reaberto descarta o rascunho: o próximo "abrir" nasce vazio', async () => {
+    setWriteResult({ error: { message: 'permission denied' } });
+    montar();
+    fireEvent.change(titulo(), { target: { value: 'Ligar para Ana' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Criar tarefa' }));
+    await waitFor(() => expect(sonda()).toHaveTextContent('aberto'));
+    await waitFor(() => expect(supabaseMock.toast.error).toHaveBeenCalled());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    fireEvent.click(await screen.findByTestId('nt-descarte-confirmar'));
+    await waitFor(() => expect(sonda()).toHaveTextContent('fechado'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'abrir modal' }));
+    expect(titulo().value).toBe('');
   });
 });
