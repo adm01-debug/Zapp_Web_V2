@@ -39,7 +39,7 @@ interface ContactNotesProps {
 export function ContactNotes({ contactId, className }: ContactNotesProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { notes: rawNotes, isLoading, refetch, currentProfileId, editNote, togglePin } = useContactNotes(contactId);
+  const { notes: rawNotes, isLoading, refetch, currentProfileId, editNote, togglePin, pinSupported } = useContactNotes(contactId);
   const [newNote, setNewNote] = useState('');
   const [adding, setAdding] = useState(false);
   const [showInput, setShowInput] = useState(false);
@@ -309,7 +309,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
             const colors = getAvatarColor(note.author_name || '');
             const minha = note.author_id === currentProfileId;
             const editando = editingId === note.id;
-            const fixada = note.is_pinned === true;
+            const fixada = pinSupported && note.is_pinned === true;
             return (
               <motion.div
                 key={note.id}
@@ -405,6 +405,9 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
                     >
                       <Pencil className="w-3 h-3" />
                     </Button>
+                    {/* Fixar só aparece quando a coluna existe (notas carregadas trazem
+                        `is_pinned` booleano): antes da migration a tela é a de sempre. */}
+                    {pinSupported && (
                     <Button
                       variant="ghost" size="icon"
                       aria-label={fixada ? 'Desafixar nota' : 'Fixar nota'}
@@ -418,6 +421,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
                         ? <Loader2 className="w-3 h-3 motion-safe:animate-spin" />
                         : fixada ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
                     </Button>
+                    )}
                     <Button
                       variant="ghost" size="icon"
                       aria-label="Excluir nota"

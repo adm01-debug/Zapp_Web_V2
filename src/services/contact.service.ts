@@ -115,7 +115,11 @@ export class ContactService {
       (from, to) =>
         supabase
           .from('contact_notes')
-          .select(`id, contact_id, author_id, content, category, is_done, is_pinned, due_date, created_at, updated_at`)
+          // `select('*')` de propósito (compatibilidade de deploy): `is_pinned` só vem na
+          // linha quando a coluna existe no banco. Uma lista explícita de colunas com
+          // `is_pinned` quebraria a LEITURA inteira entre a publicação do front e o apply da
+          // migration `20261026200000_contact_notes_pinned.sql` (db-migrate é depois).
+          .select('*')
           .eq('contact_id', contactId)
           .order('created_at', { ascending: false })
           .order('id', { ascending: false })
@@ -165,9 +169,10 @@ export class ContactService {
         content,
         category: options?.category ?? 'note',
         due_date: options?.dueDate ?? null,
-        // `is_pinned` explícito no insert (aceita fixar já na criação). Ausente
-        // vale `false`, que é o mesmo `DEFAULT false` da coluna no banco.
-        is_pinned: options?.isPinned ?? false,
+        // `is_pinned` só entra no payload quando for `true` (fixar já na criação). Nunca
+        // enviamos `is_pinned: false`: o `DEFAULT false` da coluna já cobre, e o campo
+        // ausente mantém o INSERT válido antes de a coluna existir em produção.
+        ...(options?.isPinned === true ? { is_pinned: true } : {}),
       })
       .select()
       .single();

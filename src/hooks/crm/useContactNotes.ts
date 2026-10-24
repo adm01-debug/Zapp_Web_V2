@@ -66,6 +66,14 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
   // (o hook não busca de novo); o desempate por `id` mantém a ordem determinística.
   const sortedNotes = useMemo(() => [...allNotes].sort(compareContactNotes), [allNotes]);
 
+  // A coluna `is_pinned` pode ainda não existir em produção (o front é publicado antes do
+  // `db-migrate`). Só oferecemos fixar quando alguma nota carregada expõe a marca booleana
+  // (`select('*')` só devolve a chave se a coluna existe). Sem notas não há o que fixar.
+  const pinSupported = useMemo(
+    () => allNotes.some((n) => typeof n.is_pinned === 'boolean'),
+    [allNotes],
+  );
+
   const categoryFilter = options?.category;
   const notes = useMemo(
     () => (categoryFilter ? sortedNotes.filter((n) => n.category === categoryFilter) : sortedNotes),
@@ -132,7 +140,9 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
               ...n,
               content: updated.content,
               is_done: updated.is_done,
-              is_pinned: updated.is_pinned,
+              // Só copia a marca se o banco a devolveu (coluna existe): evita criar a chave
+              // `is_pinned: undefined` e sinalizar suporte onde ele não há.
+              ...(typeof updated.is_pinned === 'boolean' ? { is_pinned: updated.is_pinned } : {}),
               due_date: updated.due_date,
               updated_at: updated.updated_at,
             }
@@ -178,8 +188,18 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
   const togglePin = useCallback((id: string) => {
     const note = sortedNotes.find((n) => n.id === id);
     if (!note) throw new Error('Nota não encontrada na lista carregada');
+    if (!pinSupported) {
+      // Coluna `is_pinned` ausente (migration ainda não aplicada): não tenta gravar, avisa
+      // e rejeita sem tocar no cache nem no banco.
+      toast({
+        title: 'Fixar notas indisponível',
+        description: 'Este recurso ainda não está ativo neste ambiente.',
+        variant: 'destructive',
+      });
+      throw new Error('Fixar notas indisponível: coluna is_pinned ausente');
+    }
     return updateNoteMutation.mutateAsync({ id, updates: { is_pinned: note.is_pinned !== true } });
-  }, [sortedNotes, updateNoteMutation]);
+  }, [sortedNotes, pinSupported, updateNoteMutation]);
 
   return {
     notes,
@@ -193,6 +213,8 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
     editNote,
     toggleNoteDone,
     togglePin,
+    /** true quando as notas carregadas expõem `is_pinned` (coluna existe no banco). */
+    pinSupported,
     isAdding: addNoteMutation.isPending,
     isDeleting: deleteNoteMutation.isPending,
     isUpdating: updateNoteMutation.isPending,

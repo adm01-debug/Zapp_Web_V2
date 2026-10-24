@@ -90,12 +90,16 @@ const NOTA_MINHA = {
   content: 'Minha nota',
   created_at: '2026-10-06T12:00:00.000Z',
   author_id: 'profile-me',
+  // Banco COM a coluna (depois da migration): os controles de fixar aparecem. O caso sem a
+  // coluna está em ContactNotes.semColuna.test.tsx.
+  is_pinned: false,
 };
 const NOTA_COLEGA = {
   id: 'nota-colega',
   content: 'Nota do colega',
   created_at: '2026-10-06T11:00:00.000Z',
   author_id: 'profile-colega',
+  is_pinned: false,
 };
 
 /** Cartão da nota na lista (o motion.div que envolve autor + conteúdo + botão). */

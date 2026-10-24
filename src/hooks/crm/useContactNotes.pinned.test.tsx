@@ -199,7 +199,7 @@ describe('useContactNotes — editar e fixar', () => {
     expect(h.state.updatePayload).toEqual({ is_pinned: true });
   });
 
-  it('addNote com isPinned manda is_pinned no insert; sem o parâmetro manda false', async () => {
+  it('addNote com isPinned manda is_pinned no insert; sem o parâmetro NÃO manda a chave (compat. de deploy)', async () => {
     const { result } = renderHook(() => useContactNotes('c1'), { wrapper });
 
     await act(async () => {
@@ -210,7 +210,8 @@ describe('useContactNotes — editar e fixar', () => {
     await act(async () => {
       await result.current.addNote('texto', 'note');
     });
-    expect(h.state.insertPayload).toMatchObject({ is_pinned: false });
+    // Antes da migration a coluna não existe: enviar `is_pinned: false` quebraria o INSERT.
+    expect(h.state.insertPayload).not.toHaveProperty('is_pinned');
   });
 });
 
