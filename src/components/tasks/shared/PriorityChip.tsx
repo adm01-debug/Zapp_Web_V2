@@ -1,15 +1,18 @@
 import type { Priority } from '@/hooks/tasks/workItem.types';
 import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
 
+/**
+ * D12 (etapa 170): a pílula tem SEMPRE a cor da prioridade (Média é ÂMBAR; o
+ * azul é do segmento do controle), a mesma escada do `PriorityPill`.
+ *
+ * Etapa 80 (E.3): `--warning-text`/`--destructive-text` (tokens.css) em vez da cor
+ * de PREENCHIMENTO, que como texto dava ~2:1.
+ */
 const PRIORITY_STYLES: Record<Priority, string> = {
   low:    'bg-muted/60 text-muted-foreground border-border/40',
-  medium: 'bg-primary/15 text-primary border-primary/30',
-  // Etapa 80 (E.3): `text-warning`/`text-destructive` são cor de PREENCHIMENTO — como
-  // texto davam 2,1:1 (âmbar no claro) e 2,6:1 (vermelho no escuro). O par de texto
-  // (`--warning-text`/`--destructive-text`, em tokens.css) fecha ≥4,5:1 nos dois modos
-  // sem mexer em preenchimento nem borda.
-  high:   'bg-warning/15 text-[hsl(var(--warning-text))] border-warning/40',
-  urgent: 'bg-destructive/15 text-[hsl(var(--destructive-text))] border-destructive/40',
+  medium: 'bg-warning/15 text-[hsl(var(--warning-text))] border-warning/40',
+  high:   'bg-destructive/15 text-[hsl(var(--destructive-text))] border-destructive/40',
+  urgent: 'bg-destructive/20 text-[hsl(var(--destructive-text))] border-destructive',
 };
 
 /** Fase F2 (auditoria): prioridade nula ou fora do mapa não pode derrubar o card

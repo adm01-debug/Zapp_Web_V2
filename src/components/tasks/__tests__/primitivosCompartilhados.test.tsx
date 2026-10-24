@@ -141,9 +141,12 @@ describe('PriorityPill — prioridade com o rótulo de workItemLabels e uma cor 
     const media = classes('medium');
     const baixa = classes('low');
 
-    expect(alta).toContain('--warning-text');
+    // D12 / etapa 170: a pílula tem SEMPRE a cor da prioridade — Média é ÂMBAR
+    // (`--warning-text`), não `primary` (o azul é do segmento do controle).
+    expect(media).toContain('--warning-text');
+    expect(media).not.toContain('text-primary');
+    expect(alta).toContain('--destructive-text');
     expect(urgente).toContain('--destructive-text');
-    expect(media).toContain('text-primary');
     expect(baixa).toContain('text-muted-foreground');
 
     // quatro prioridades, quatro classes distintas

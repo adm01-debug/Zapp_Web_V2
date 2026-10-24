@@ -4,16 +4,16 @@ import type { Priority } from '@/hooks/tasks/workItem.types';
 import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
 
 /**
- * Um par de cor por prioridade (D12). Os valores `high`/`urgent` usam os tokens
- * de TEXTO (`--warning-text`/`--destructive-text`): a cor crua é de
- * PREENCHIMENTO e como texto ficava em ~2:1. Mesma decisão do `PriorityChip`,
- * agora num primitivo sem o `compact` obrigatório.
+ * D12: a pílula tem SEMPRE a cor da prioridade (`--primary` é do SEGMENTO do
+ * controle). `medium`/`high`/`urgent` usam os tokens de TEXTO
+ * (`--warning-text`/`--destructive-text`): a cor crua é de PREENCHIMENTO e como
+ * texto ficava em ~2:1 (etapa 80 / E.3).
  */
 const PRIORITY_STYLES: Record<Priority, string> = {
   low:    'bg-muted/60 text-muted-foreground border-border/40',
-  medium: 'bg-primary/15 text-primary border-primary/30',
-  high:   'bg-warning/15 text-[hsl(var(--warning-text))] border-warning/40',
-  urgent: 'bg-destructive/15 text-[hsl(var(--destructive-text))] border-destructive/40',
+  medium: 'bg-warning/15 text-[hsl(var(--warning-text))] border-warning/40',
+  high:   'bg-destructive/15 text-[hsl(var(--destructive-text))] border-destructive/40',
+  urgent: 'bg-destructive/20 text-[hsl(var(--destructive-text))] border-destructive',
 };
 
 interface Props {
