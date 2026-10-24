@@ -123,15 +123,20 @@ export async function resolverDesconhecidos(prs, behindBy) {
 }
 
 async function decisaoAtual(repo) {
-  const json = execFileSync(resolverExecutavel('gh'), [
-    'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
-    '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
-  ], { encoding: 'utf8' });
-  const behindBy = async (head) => Number(execFileSync(resolverExecutavel('gh'), [
-    'api', `repos/${repo}/compare/main...${head}`, '--jq', '.behind_by',
-  ], { encoding: 'utf8' }).trim());
-  const prs = await resolverDesconhecidos(JSON.parse(json), behindBy);
-  return decidir(prs, checksObrigatorios());
+  try {
+    const json = execFileSync(resolverExecutavel('gh'), [
+      'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
+      '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
+    ], { encoding: 'utf8' });
+    const behindBy = async (head) => Number(execFileSync(resolverExecutavel('gh'), [
+      'api', `repos/${repo}/compare/main...${head}`, '--jq', '.behind_by',
+    ], { encoding: 'utf8' }).trim());
+    const prs = await resolverDesconhecidos(JSON.parse(json), behindBy);
+    return decidir(prs, checksObrigatorios());
+  } catch (err) {
+    console.error('[fila-merge] falha ao consultar PRs:', err?.message ?? err);
+    return { acao: 'aguardar', motivo: 'erro ao consultar PRs via gh CLI', fila: [] };
+  }
 }
 
 async function main() {

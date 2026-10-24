@@ -28,7 +28,7 @@ const CONTAGEM_ANTIGA = [/dos\s+17\s+workflows/i, /17\s+no\s+total/i, /14\s+work
 const TOCA_STRICT_FALSE = /strict[ ]*[:=][ ]*`?false|`strict`[^\n]{0,40}`false`/i;
 const ROTULO_HISTORICO = /revogad|REVOGAD|históric|HISTÓRIC|superad|SUPERAD|reconciliad|Reconcilia/;
 const RE_ITEM = /^\s*-\s*\[([  xX~!])\]\s*\*\*(E\d{1,3})\*\*/;
-const RE_RECON = /^\|\s*\*\*(E\d{1,3})\*\*[^|]*\|\s*`\([ x~!]\)`\s*\*{0,2}([A-ZÇÃÉÍÓÚÊÔÂÀ\- ]+)/;
+const RE_RECON = /^\|\s*\*\*(E\d{1,3})\*\*[^|]*\|\s*`[(\[]([ x~!])[)\]]`\s*\*{0,2}([A-ZÇÃÉÍÓÚÊÔÂÀ\- ]+)/;
 
 const linhas = (t) => t.split('\n');
 const paragrafos = (t) => t.split(/\n[ \t]*\n/);
