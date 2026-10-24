@@ -248,7 +248,6 @@ function ForecastRow({ icon: Icon, label }: { icon: React.ElementType; label: st
 
 export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed: WizardState; campaign: TalkXCampaign | null; onLaunched: (id: string, status: 'scheduled' | 'sending') => void; onEditStep?: (step: 1 | 2 | 3, returnTo: 4) => void }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const sample = ed.contacts?.[0];
   // Review da PR #909: sem os campos customizados reais do contato de
   // exemplo, o preview sempre mostrava "[variavel]" mesmo quando o envio
@@ -308,17 +307,10 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
   const templateInsight = insights?.find((insight) => insight.id === 'best-template') ?? null;
 
   const launch = async () => {
-    if (!launchAllowed) return;
-    setError(null);
-    try {
-      const id = await ed.handleSave(ed.isScheduled && ed.scheduledAt ? 'schedule' : 'launch');
-      if (id) {
-        setConfirmOpen(false);
-        onLaunched(id, ed.isScheduled && ed.scheduledAt ? 'scheduled' : 'sending');
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Falha ao lançar a campanha');
-    }
+    const mode = (ed.isScheduled && ed.scheduledAt) ? 'schedule' : 'launch';
+    const id = await ed.handleSave(mode);
+    if (!id) throw new Error('O envio não foi aceito');
+    onLaunched(id, mode === 'schedule' ? 'scheduled' : 'sending');
   };
 
 
@@ -387,14 +379,13 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
         <PrimaryButton size="lg" icon={Rocket} className="w-full justify-center h-12 text-base" disabled={!launchAllowed} onClick={() => setConfirmOpen(true)}>
           {ed.isScheduled && ed.scheduledAt ? 'Agendar campanha' : 'Lançar campanha'}
         </PrimaryButton>
-        {error && <p className="text-xs text-dash-red">{error}</p>}
       </div>
 
       {/* X136 — o disparo confirma pelo modal do kit (`TalkXConfirmDialog`). */}
       <TalkXConfirmDialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
-        onConfirm={() => { void launch(); }}
+        onConfirm={() => launch()}
         icon={Send}
         iconColor="blue"
         title="Confirmar disparo?"
