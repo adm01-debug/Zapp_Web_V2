@@ -1,4 +1,5 @@
 import { useMemo, useCallback, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useUrlFilters } from '@/hooks/system/useUrlFilters';
 import { InboxFiltersState } from '@/components/inbox/InboxFilters';
 import { FILTER_OPTIONS } from '@/components/inbox/ContactTypeFilter';
@@ -104,6 +105,7 @@ function readStoredPrefs(storageKey: string | null): Partial<InboxFilterPrefs> |
 }
 
 export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInboxFiltersProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const storageKey = profileId ? inboxFiltersStorageKey(profileId) : null;
   const ownerKey = storageKey ?? NO_OWNER;
 
@@ -121,9 +123,9 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
       ...tabsForChip(chipTab),
       queueId: storedPrefs?.queueId ?? null,
       // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
-      contactType: contactTypeFromUrl() ?? storedPrefs?.contactType ?? null,
+      contactType: (searchParams.get('type') && searchParams.get('type') !== 'all' ? searchParams.get('type') : null) ?? storedPrefs?.contactType ?? null,
     };
-  }, [storedPrefs]);
+  }, [storedPrefs, searchParams]);
 
   const prefs = draft[ownerKey] ?? basePrefs;
   const { chipTab, mainTab, subTab, queueId: selectedQueueId, contactType: selectedContactType } = prefs;
@@ -165,14 +167,16 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
 
   const handleContactTypeChange = useCallback((value: string | null) => {
     applyPrefs({ contactType: value && value !== 'all' ? value : null });
-    const params = new URLSearchParams(window.location.search);
-    if (value && value !== 'all') {
-      params.set('type', value);
-    } else {
-      params.delete('type');
-    }
-    window.history.replaceState(null, '', params.toString() ? `?${params}` : window.location.pathname + window.location.hash);
-  }, [applyPrefs]);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value && value !== 'all') {
+        next.set('type', value);
+      } else {
+        next.delete('type');
+      }
+      return next;
+    }, { replace: true });
+  }, [applyPrefs, setSearchParams]);
 
   // Convert URL filters to InboxFiltersState
   const filters = useMemo<InboxFiltersState>(() => ({

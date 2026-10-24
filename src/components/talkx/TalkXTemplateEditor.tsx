@@ -60,9 +60,10 @@ interface Props {
   onClose: () => void;
   /** X091 — clique do widget "Em andamento" abre o monitor da campanha. */
   onOpenMonitor?: (campaignId: string) => void;
+  onActiveTemplateChange?: (templateId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor, onActiveTemplateChange }: Props) {
   const {
     createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
     saveVariant, deleteVariant, countVariantRecipients,
@@ -226,6 +227,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     setEName(t.name); setEDesc(t.description ?? ''); setECat(t.category);
     setEContent(t.content); setEMediaUrl(t.media_url ?? ''); setEMediaType(t.media_type ?? '');
     setEHasMedia(!!t.media_url); setEStatus(t.status); setETags(t.tags ?? []); setECustomVars(t.custom_variables ?? []);
+    onActiveTemplateChange?.(t.id);
   };
 
   // V26 — variáveis conhecidas do editor: as built-in + as personalizadas deste template.

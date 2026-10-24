@@ -72,6 +72,8 @@ vi.mock('@/routes/AppRoutes', () => ({
   AppRoutes: () => <div data-testid="rotas">tela atual</div>,
 }));
 
+vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ profile: null }) }));
+
 const { default: App } = await import('@/App');
 
 beforeEach(() => {
