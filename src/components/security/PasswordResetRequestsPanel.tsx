@@ -31,8 +31,9 @@ export function PasswordResetRequestsPanel() {
     try {
       const { error } = await supabase.functions.invoke('approve-password-reset', { body: { requestId: request.id, action: 'approve' } });
       if (error) {
-        if (isAccessDeniedError(error)) throw new Error(ACCESS_DENIED_MESSAGE);
-        throw new Error((await parseEdgeError(error, 'Erro ao aprovar')).message);
+        const parsed = await parseEdgeError(error, 'Erro ao aprovar');
+        if (isAccessDeniedError(parsed)) throw new Error(ACCESS_DENIED_MESSAGE);
+        throw new Error(parsed.message);
       }
       toast.success('Solicitação aprovada! Email de reset enviado.');
       fetchRequests();
@@ -46,8 +47,9 @@ export function PasswordResetRequestsPanel() {
     try {
       const { error } = await supabase.functions.invoke('approve-password-reset', { body: { requestId: selectedRequest.id, action: 'reject', rejectionReason: reason } });
       if (error) {
-        if (isAccessDeniedError(error)) throw new Error(ACCESS_DENIED_MESSAGE);
-        throw new Error((await parseEdgeError(error, 'Erro ao rejeitar')).message);
+        const parsed = await parseEdgeError(error, 'Erro ao rejeitar');
+        if (isAccessDeniedError(parsed)) throw new Error(ACCESS_DENIED_MESSAGE);
+        throw new Error(parsed.message);
       }
       toast.success('Solicitação rejeitada');
       setRejectDialogOpen(false); setSelectedRequest(null); fetchRequests();
