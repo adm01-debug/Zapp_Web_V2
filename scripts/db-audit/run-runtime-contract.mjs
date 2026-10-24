@@ -28,7 +28,7 @@
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const CONTRATOS = join(AQUI, 'contracts');
@@ -271,17 +271,30 @@ export function principal(argv, { dir = CONTRATOS } = {}) {
     process.exit(2);
   }
 
-  if (invocacao.arquivo && !existsSync(invocacao.arquivo)) {
-    console.error(`::error::contrato de runtime ausente no disco: ${invocacao.arquivo}`);
-    process.exit(2);
+  // GA18: o -f do contrato nunca escapa do repo. Um "-f x.sql" escrito no
+  // texto do contrato (ate em comentario) nao vira arquivo executado: aqui
+  // so entra o -f da continuacao declarada, confinado ao repo e com .sql.
+  let arquivoConfinado = null;
+  if (invocacao.arquivo) {
+    const RAIZ = dirname(dirname(AQUI));
+    const resolvido = resolve(RAIZ, invocacao.arquivo);
+    if (!resolvido.startsWith(RAIZ + sep) || !resolvido.endsWith('.sql')) {
+      console.error(`::error::contrato com -f fora do repo: ${invocacao.arquivo}`);
+      process.exit(2);
+    }
+    if (!existsSync(resolvido)) {
+      console.error(`::error::contrato de runtime ausente no disco: ${invocacao.arquivo}`);
+      process.exit(2);
+    }
+    arquivoConfinado = resolvido;
   }
   if (invocacao.generico) {
     // stderr de proposito: o stdout e o JSON da prova, que o workflow faz JSON.parse.
     console.error(`Sem contrato dedicado para ${versao}; usando o contrato runtime generico.`);
   }
 
-  const args = invocacao.arquivo
-    ? [...invocacao.flags, '-f', invocacao.arquivo]
+  const args = arquivoConfinado
+    ? [...invocacao.flags, '-f', arquivoConfinado]
     : [...invocacao.flags, '-c', invocacao.sql];
 
   const r = spawnSync(process.execPath, [PSQL_SAFE, ...args], { encoding: 'utf8' });

@@ -133,6 +133,7 @@ function runGuard({
   psqlFailCount = 0,
   psqlFailMessage = 'connection refused (fake)',
   retryDelaysMs = null,
+  argv = [],
 } = {}) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'migration-drift-test-'));
   const migrationsDir = path.join(tmp, 'migrations');
@@ -181,7 +182,7 @@ function runGuard({
   else delete env.DESTINO_URL;
 
   try {
-    return spawnSync(process.execPath, [SCRIPT], {
+    return spawnSync(process.execPath, [SCRIPT, ...argv], {
       cwd: ROOT,
       encoding: 'utf8',
       env,
@@ -428,9 +429,10 @@ test('falha fechado para marcador file-sha256 malformado', () => {
   assert.match(result.stderr, /marcador file-sha256 invalido/);
 });
 
-test('falha quando arquivo do repo nao possui versao no banco', () => {
+test('GA19: arquivo do repo sem versao no banco sai 3 (so apply pendente)', () => {
   const result = runGuard({ ledger: [] });
-  assert.equal(result.status, 1);
+  assert.equal(result.status, 3);
+  assert.match(result.stderr, /somente apply pendente/);
   assert.match(result.stderr, /Arquivo no repo sem registro no banco/);
 });
 
@@ -1100,7 +1102,7 @@ function divergenceRegex(version, disk, ledger, reason) {
 
 test('linha de divergencia: arquivo sem registro no banco mostra disco e nenhum ledger', () => {
   const result = runGuard({ ledger: [] });
-  assert.equal(result.status, 1);
+  assert.equal(result.status, 3);
   assert.match(result.stderr, divergenceRegex(VERSION, FILE, '(nenhum)', 'arquivo sem registro no banco'));
 });
 
@@ -1195,3 +1197,24 @@ for (const [reason, name, statements, expectedLedger] of [
     assert.match(result.stderr, divergenceRegex(VERSION, FILE, expectedLedger, reason));
   });
 }
+
+test('GA19: falha de autenticacao no ledger sai 2, nunca 3 (nao vira apply pendente)', () => {
+  const result = runGuard({
+    psqlFailCount: 1,
+    psqlFailMessage: 'FATAL: password authentication failed for user "tester" (fake)',
+    retryDelaysMs: '',
+  });
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /FALHA: falha ao consultar schema_migrations/);
+  assert.doesNotMatch(result.stderr, /apply pendente/);
+});
+
+test('GA26 (prepare): --json emite a tabela version | disco | ledger | classe', () => {
+  const result = runGuard({ ledger: [], argv: ['--json'] });
+  assert.equal(result.status, 3);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.deepEqual(payload.linhas, [
+    { version: VERSION, disco: FILE, ledger: null, classe: 'apply-pendente' },
+  ]);
+});

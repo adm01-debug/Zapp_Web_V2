@@ -554,11 +554,13 @@ function compare(migrations, records, exceptionsByVersion) {
   const withoutFile = records.filter(({ version }) => !byFileVersion.has(version));
   let verifiedEvidence = 0;
   let pinnedWithoutHistoricalContent = 0;
+  let malformedNames = 0;
 
   for (const record of records) {
     if (typeof record.name === 'string'
         && (record.name !== record.name.trim() || /[\0-\x1f\x7f]/u.test(record.name))) {
       errors.push(`name malformado no ledger para ${record.version}`);
+      malformedNames += 1;
     }
   }
 
@@ -797,7 +799,25 @@ function compare(migrations, records, exceptionsByVersion) {
     }
   }
 
-  return { errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent };
+  // GA19: "so apply pendente" tem codigo exclusivo (exit 3). E quando ha
+  // versions no disco sem registro no ledger, NENHUM registro sem arquivo
+  // (DDL fora do Git) e nenhum outro erro (conteudo, nome malformado,
+  // marcador). Qualquer outra divergencia e drift real (exit 1); falha de
+  // infra (ledger inacessivel, arquivos ilegíveis) continua exit 2 no main().
+  // O bloco de presenca empurra exatamente 1 + 2 linhas por version pendente;
+  // o laco por migration pula versions sem registro, entao qualquer linha a
+  // mais prova erro de outra classe.
+  const pendingApply = withoutRecord.map(({ version }) => version);
+  const externalOnly = withoutFile.map(({ version }) => version);
+  const pendingOnly = pendingApply.length > 0
+    && externalOnly.length === 0
+    && malformedNames === 0
+    && errors.length === 1 + 2 * pendingApply.length;
+
+  return {
+    errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent,
+    pendingApply, externalOnly, pendingOnly,
+  };
 }
 
 function printErrors(errors) {
@@ -816,6 +836,8 @@ function printDriftErrors(errors) {
 }
 
 function main() {
+  // GA26 (prepare): --json leva SO JSON ao stdout; o log humano vai a stderr.
+  if (process.argv.includes('--json')) console.log = console.error;
   let evidence;
   let local;
   try {
@@ -853,8 +875,33 @@ function main() {
     return 1;
   }
 
+  // GA26 (prepare, porte da #1930): --json emite a tabela
+  // version | disco | ledger | classe em JSON (o redirecionamento do log
+  // para stderr acontece no topo do main, antes de qualquer console.log).
+  const asJson = process.argv.includes('--json');
   const result = compare(local.migrations, parsed.records, local.exceptionsByVersion);
+  if (asJson) {
+    const linhas = [
+      ...result.pendingApply.map((version) => {
+        const m = local.migrations.find((x) => x.version === version);
+        return { version, disco: m ? m.fileName : null, ledger: null, classe: 'apply-pendente' };
+      }),
+      ...result.externalOnly.map((version) => {
+        const r = parsed.records.find((x) => x.version === version);
+        return { version, disco: null, ledger: r ? r.name : null, classe: 'ddl-fora-do-git' };
+      }),
+    ];
+    process.stdout.write(JSON.stringify({ ok: result.errors.length === 0, linhas }) + '\n');
+  }
   if (result.errors.length) {
+    if (result.pendingOnly) {
+      // GA19: exit 3 e exclusivo de "so apply pendente". Erro de autenticacao
+      // ou conexao com o ledger sai 2 no bloco queryLedger acima e nunca
+      // cai aqui como verde/pendente.
+      console.error('\nAVISO: somente apply pendente (exit 3) — migrations no disco sem registro no ledger; sem drift real.');
+      printDriftErrors(result.errors);
+      return 3;
+    }
     console.error('\nFALHA: drift de migrations detectado:');
     printDriftErrors(result.errors);
     console.error('\nVer docs/MIGRATIONS.md para o procedimento de reconciliacao.');

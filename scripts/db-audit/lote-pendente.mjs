@@ -2,16 +2,20 @@
 /**
  * W26: fonte única da regra "apply pendente".
  *
- * Chama check-migration-drift.mjs --classificar, escreve uma seção no
+ * Chama check-migration-drift.mjs, escreve uma seção no
  * GITHUB_STEP_SUMMARY e sai com o mesmo código de saída:
  *   exit 0 — sem drift e sem apply-pendente (clean)
- *   exit 1 — drift real (arquivo em produção sem par no disco, ou vice-versa)
- *   exit 2 — somente apply-pendente (migrations no disco sem ledger no banco)
+ *   exit 1 — drift real (conteudo divergente ou DDL fora do Git)
+ *   exit 2 — erro de infra (ledger inacessivel, falha de autenticacao, etc.)
+ *   exit 3 — somente apply-pendente (migrations no disco sem ledger no banco)
  *
- * Cada chamador aplica sua própria política sobre exit 2:
+ * GA19: o 3 e exclusivo de apply-pendente; o 2 voltou a ser so erro. Uma
+ * falha de autenticacao no ledger NUNCA vira "apply aguardado" verde.
+ *
+ * Cada chamador aplica sua própria política sobre exit 3:
  *   db-live-guard  → em push trata como neutro (exit 0); em schedule/dispatch
- *                    mantém exit 2 para abrir issue.
- *   types-sync     → usa exit 2 para setar awaiting_apply=true e pular gates.
+ *                    mantém exit 3 para abrir issue.
+ *   types-sync     → usa exit 3 para setar awaiting_apply=true e pular gates.
  *
  * Uso:
  *   node scripts/db-audit/lote-pendente.mjs [-- <args extras para check-migration-drift>]
@@ -58,8 +62,9 @@ if (!process.env.DESTINO_URL) {
       '',
       'Todas as migrations locais estão registradas no ledger do banco.',
     ]);
-  } else if (rc === 2) {
-    // W21: --classificar retorna 2 para apply-pendente (neutro)
+  } else if (rc === 3) {
+    // GA19 (sobre W21/W26): somente apply-pendente; exit 2 agora e erro e cai
+    // no ramo "drift real" abaixo (falha fechada, nunca verde).
     writeSummary([
       '### ⏳ Lote pendente — apply aguardado',
       '',
