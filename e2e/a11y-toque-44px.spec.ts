@@ -124,8 +124,9 @@ async function areaToque44(alvo: Locator, nome: string): Promise<void> {
 
 /** Fechar do dialog (Radix DialogPrimitive.Close) do "Adicionar Contato". */
 async function abrirDialogo(page: Page): Promise<Locator> {
-  // O FAB é `fixed z-20` e no celular os cards da lista passam por cima dele no hit-test,
-  // então ele é acionado pelo teclado (o que também prova que ele é alcançável por foco).
+  // Acionado pelo teclado: prova que o FAB é alcançável por foco. O toque direto
+  // está provado em a11y-fab-cabecalho.spec.ts (medição: o centro do FAB sempre
+  // recebe o hit-test; o portal z-20 no body vence os cards).
   const fab = page.getByTestId('contact-create-fab');
   await fab.focus();
   await fab.press('Enter');
@@ -216,7 +217,7 @@ test.describe('alvos de toque 44px — celular (ponteiro grosso)', () => {
 
     // ── Botão fechar do dialog ──
     const dialogo = await abrirDialogo(page);
-    const fechar = dialogo.getByRole('button', { name: 'Close' });
+    const fechar = dialogo.getByRole('button', { name: 'Fechar' });
     await expect(fechar).toBeVisible();
     await esperarEntrada(page, dialogo);
 
@@ -267,12 +268,12 @@ test.describe('alvos de toque 44px — desktop (ponteiro fino)', () => {
 
     const dialogo = await abrirDialogo(page);
     await esperarEntrada(page, dialogo);
-    const f = await caixa(dialogo.getByRole('button', { name: 'Close' }), 'fechar do dialog');
+    const f = await caixa(dialogo.getByRole('button', { name: 'Fechar' }), 'fechar do dialog');
     expect(f.width, `largura do fechar no desktop: ${f.width}px`).toBeLessThanOrEqual(32);
     expect(f.height, `altura do fechar no desktop: ${f.height}px`).toBeLessThanOrEqual(32);
 
     // Ponteiro fino continua fechando no clique (o caminho do mouse).
-    await dialogo.getByRole('button', { name: 'Close' }).click();
+    await dialogo.getByRole('button', { name: 'Fechar' }).click();
     await expect(page.getByRole('dialog', { name: 'Adicionar Contato' })).toHaveCount(0);
   });
 });
