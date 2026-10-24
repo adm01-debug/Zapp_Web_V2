@@ -43,10 +43,11 @@ vi.mock('../useAdminData', () => ({
     loading: false,
     auditTotal: 0,
     error: null,
-    fetchData: vi.fn(),
+    fetchData: fetchDataSpy,
     handleRoleChange: vi.fn(),
     handleToggleActive: vi.fn(),
     handleSaveUser: vi.fn(),
+    handleSaveRamal: vi.fn(),
     handleCreateUser: vi.fn(),
   }),
   accessLevelConfig: {

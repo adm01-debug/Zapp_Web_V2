@@ -13,7 +13,7 @@ import type { FilesColumns } from '@/hooks/chat/useFilesViewState';
 /** Contêiner falso: medimos o que o rect devolve, sem layout real de navegador. */
 function containerOf(width: number): HTMLDivElement {
   const element = document.createElement('div');
-  element.getBoundingClientRect = () => ({ width, height: 400, top: 0, left: 0, right: width, bottom: 400, x: 0, y: 0, toJSON: () => ({}) });
+  Object.defineProperty(element, 'getBoundingClientRect', { configurable: true, value: () => ({ width, height: 400, top: 0, left: 0, right: width, bottom: 400, x: 0, y: 0, toJSON: () => ({}) }) });
   document.body.appendChild(element);
   return element;
 }
@@ -128,7 +128,7 @@ describe('useFilesContainerColumns', () => {
     const { result } = renderHook(() => useFilesContainerColumns(ref, 8));
     expect(result.current.effective).toBe(3);
 
-    element.getBoundingClientRect = () => ({ width: 1474, height: 400, top: 0, left: 0, right: 1474, bottom: 400, x: 0, y: 0, toJSON: () => ({}) });
+    Object.defineProperty(element, 'getBoundingClientRect', { configurable: true, value: () => ({ width: 1474, height: 400, top: 0, left: 0, right: 1474, bottom: 400, x: 0, y: 0, toJSON: () => ({}) }) });
     act(() => {
       document.body.dispatchEvent(new Event('noop'));
       observers.forEach((notify) => notify());

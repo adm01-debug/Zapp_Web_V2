@@ -166,6 +166,7 @@ export function useAgentCelebrations(
     nivelConhecido.current = null;
     achievementsCountRef.current = null;
 
+    const mountTime = new Date().toISOString();
     void (async () => {
       const [conquistas, stats] = await Promise.all([
         supabase
@@ -179,7 +180,12 @@ export function useAgentCelebrations(
       if (!vivo) return;
       if (conquistas.error) log.warn('Falha ao carregar conquistas do perfil', conquistas.error);
       for (const linha of (conquistas.data ?? []) as Achievement[]) {
-        if (linha?.id) conquistasConhecidas.current.add(String(linha.id));
+        if (!linha?.id) continue;
+        if (linha.earned_at && linha.earned_at > mountTime) {
+          celebrarConquista(linha);
+        } else {
+          conquistasConhecidas.current.add(String(linha.id));
+        }
       }
       if (stats.error) log.warn('Falha ao carregar stats do perfil', stats.error);
       const statsLinha = stats.data as AgentStats | null;

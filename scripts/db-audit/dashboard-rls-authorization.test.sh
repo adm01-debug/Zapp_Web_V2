@@ -69,7 +69,7 @@ expect_error() {
     -c '\set VERBOSITY verbose' -c "$sql" 2>&1)"; status=$?
   set -e
   (( status == 0 )) && { printf '%s\n' "$output" >&2; fail "$label: deveria falhar, mas passou"; }
-  [[ "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: esperava '$needle' no erro"; }
+  [[  "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: esperava '$needle' no erro"; }
   printf '[PASS] %s\n' "$label"
 }
 expect_value() {
@@ -309,6 +309,8 @@ grep -q 'CREATE OR REPLACE FUNCTION public.is_admin_or_supervisor' "$tmp_dir/hel
   || fail 'extracao de is_admin_or_supervisor veio vazia'
 grep -q '\$\$;' "$tmp_dir/helpers.sql" \
   || fail 'extracao de is_admin_or_supervisor nao fechou o corpo da funcao'
+# search_path pg_temp adicionado em 20261010150628 + confirmado em 20261016170000.
+printf 'ALTER FUNCTION public.is_admin_or_supervisor(uuid) SET search_path = public, pg_temp;\nREVOKE EXECUTE ON FUNCTION public.is_admin_or_supervisor(uuid) FROM PUBLIC, anon;\nGRANT EXECUTE ON FUNCTION public.is_admin_or_supervisor(uuid) TO authenticated;\n' >> "$tmp_dir/helpers.sql"
 
 for fn in get_profile_id_for_user get_visible_agent_ids is_contact_visible_to_user; do
   extract_between "CREATE OR REPLACE FUNCTION public.$fn" 'TO authenticated, service_role;' \
@@ -421,13 +423,13 @@ for f in \
   psql_file "$migrations_dir/$f" || fail "falha ao aplicar $f"
 done
 
-# Definição intermediária de dashboard_kpi: migration de reconciliação
-# (arquivo multi-objeto) — extrai só o CREATE OR REPLACE dessa função.
+# Definição final de dashboard_kpi vive na migration conversation_closures_reopen_same_day
+# (arquivo multi-objeto): extrai só o CREATE OR REPLACE dessa função.
 awk '/CREATE OR REPLACE FUNCTION public.dashboard_kpi/,/\$function\$;/' \
-  "$migrations_dir/20261003272707_reconcile_local_replay_with_canonical.sql" \
+  "$migrations_dir/20261007013217_conversation_closures_reopen_same_day.sql" \
   > "$tmp_dir/kpi_final.sql"
 grep -q 'CREATE OR REPLACE FUNCTION public.dashboard_kpi' "$tmp_dir/kpi_final.sql" \
-  || fail 'extracao de dashboard_kpi de 20261003272707 veio vazia'
+  || fail 'extracao de dashboard_kpi da migration conversation_closures_reopen_same_day veio vazia'
 grep -q '\$function\$;' "$tmp_dir/kpi_final.sql" \
   || fail 'extracao de dashboard_kpi de 20261003272707 nao fechou o corpo da funcao'
 psql_file "$tmp_dir/kpi_final.sql"

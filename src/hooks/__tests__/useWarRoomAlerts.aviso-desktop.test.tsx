@@ -50,6 +50,10 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
   useNotificationSettings: () => ({ settings: h.settings, isQuietHours: () => false }),
 }));
 
+vi.mock('@/hooks/system/usePushNotifications', () => ({
+  usePushNotifications: () => ({ isSupported: false, permission: 'granted', isActive: false, isLoading: false, showNotification: vi.fn(), requestPermission: vi.fn() }),
+}));
+
 import { useWarRoomAlerts } from '@/hooks/business/useWarRoomAlerts';
 
 class FakeNotification {

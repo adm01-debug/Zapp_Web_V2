@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 
@@ -11,7 +11,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
  * sessão do navegador. Aqui o teste renderiza o componente REAL e prova:
  *  1. contagem de pendentes pelo mesmo filtro da Edge (`head: true`, dois prefixos de CDN);
  *  2. falha de contagem vira aviso, nunca "0 mídias pendentes";
- *  3. AlertDialog antes de disparar — sem confirmar, `invokeEdge` não é chamado;
+ *  3. clicar no botão dispara a Edge diretamente;
  *  4. barra indeterminada (sem `aria-valuenow`), porque o total só existe no fim;
  *  5. erro da Edge aparece com a mensagem e o código que a Edge mandou;
  *  6. histórico lido de `audit_logs` (persistente), com autor e contagens.
@@ -104,13 +104,6 @@ const LOGS = {
 
 const PROFILES = { data: [{ user_id: 'u1', name: 'Ana Souza' }], error: null };
 
-async function abrirDialogoEConfirmar() {
-  fireEvent.click(screen.getByRole('button', { name: /Iniciar Migração/ }));
-  const dialog = await screen.findByRole('alertdialog');
-  fireEvent.click(within(dialog).getByRole('button', { name: 'Iniciar migração' }));
-  return dialog;
-}
-
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -139,7 +132,7 @@ describe('MediaMigrationTool', () => {
     expect(screen.queryByText('0 mídias pendentes')).not.toBeInTheDocument();
   });
 
-  it('exige confirmação no diálogo antes de disparar a Edge', async () => {
+  it('clicar no botão dispara a Edge diretamente', async () => {
     mockBackend();
     invokeEdgeMock.mockResolvedValue({
       data: { success: true, processed: 2, migrated: 2, failed: 0 },
@@ -150,29 +143,33 @@ describe('MediaMigrationTool', () => {
     await screen.findByText('3 mídias pendentes');
 
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Migração/ }));
-    const dialog = await screen.findByRole('alertdialog');
-    expect(within(dialog).getByText('Iniciar a migração de mídia?')).toBeInTheDocument();
-    expect(within(dialog).getByText(/3 mídias aguardam migração/)).toBeInTheDocument();
-    expect(invokeEdgeMock).not.toHaveBeenCalled();
 
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Iniciar migração' }));
     await waitFor(() =>
       expect(invokeEdgeMock).toHaveBeenCalledWith('migrate-media-storage', { method: 'POST' }),
     );
   });
 
-  it('cancelar o diálogo não dispara a Edge', async () => {
+  it('botão fica desabilitado enquanto a migração roda', async () => {
     mockBackend();
+    let liberar: (valor: unknown) => void = () => {};
+    invokeEdgeMock.mockImplementation(
+      () => new Promise((resolve) => { liberar = resolve; }),
+    );
 
     render(<MediaMigrationTool />);
     await screen.findByText('3 mídias pendentes');
 
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Migração/ }));
-    const dialog = await screen.findByRole('alertdialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
 
-    expect(invokeEdgeMock).not.toHaveBeenCalled();
-    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Iniciar Migração/ })).toBeDisabled(),
+    );
+
+    liberar({ data: { success: true, processed: 1, migrated: 1, failed: 0 }, error: null });
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Iniciar Migração/ })).not.toBeDisabled(),
+    );
   });
 
   it('enquanto roda mostra barra indeterminada, sem percentual', async () => {
@@ -184,12 +181,11 @@ describe('MediaMigrationTool', () => {
 
     render(<MediaMigrationTool />);
     await screen.findByText('3 mídias pendentes');
-    await abrirDialogoEConfirmar();
+    fireEvent.click(screen.getByRole('button', { name: /Iniciar Migração/ }));
 
     const barra = await screen.findByRole('progressbar', { name: 'Progresso da migração de mídia' });
     expect(barra).toHaveAttribute('aria-valuetext', 'Migrando mídias');
     expect(barra).not.toHaveAttribute('aria-valuenow');
-    expect(screen.getByText(/o total só aparece quando a execução termina/)).toBeInTheDocument();
 
     liberar({ data: { success: true, processed: 1, migrated: 1, failed: 0 }, error: null });
 
@@ -212,7 +208,7 @@ describe('MediaMigrationTool', () => {
 
     render(<MediaMigrationTool />);
     await screen.findByText('3 mídias pendentes');
-    await abrirDialogoEConfirmar();
+    fireEvent.click(screen.getByRole('button', { name: /Iniciar Migração/ }));
 
     expect(await screen.findByText('Apenas administradores podem migrar mídia.')).toBeInTheDocument();
     expect(screen.getByText('Código do erro: forbidden_admin')).toBeInTheDocument();
@@ -263,8 +259,6 @@ describe('MediaMigrationTool', () => {
     const rodando = render(<MediaMigrationTool />);
     await screen.findByText('3 mídias pendentes');
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Migração/ }));
-    const dialogoRodando = await screen.findByRole('alertdialog');
-    fireEvent.click(within(dialogoRodando).getByRole('button', { name: 'Iniciar migração' }));
     const barra = await screen.findByRole('progressbar', { name: 'Progresso da migração de mídia' });
     expect(barra).not.toHaveAttribute('aria-valuenow');
     const htmlRodando = rodando.container.innerHTML;
@@ -281,8 +275,6 @@ describe('MediaMigrationTool', () => {
     const erro = render(<MediaMigrationTool />);
     await screen.findByText('3 mídias pendentes');
     fireEvent.click(screen.getByRole('button', { name: /Iniciar Migração/ }));
-    const dialogoErro = await screen.findByRole('alertdialog');
-    fireEvent.click(within(dialogoErro).getByRole('button', { name: 'Iniciar migração' }));
     await screen.findByText('Código do erro: forbidden_admin');
     const htmlErro = erro.container.innerHTML;
     erro.unmount();

@@ -19,7 +19,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     from: (t: string) => {
       const b: Record<string, unknown> = {};
       b.select = (cols: string) => { selects.push({ table: t, cols }); return b; };
-      for (const m of ['order', 'limit', 'eq', 'in', 'neq']) b[m] = () => b;
+      for (const m of ['order', 'limit', 'eq', 'in', 'neq', 'range', 'gte', 'lte']) b[m] = () => b;
       b.then = (resolve: (v: unknown) => unknown) =>
         Promise.resolve({ data: [], error: null }).then(resolve);
       return b;

@@ -1,6 +1,7 @@
  import { useState, useEffect, useCallback, useRef, createContext, useContext, ReactNode } from 'react';
- import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { clearOfflineCache } from '@/hooks/system/useOfflineCache';
+import { offlineSendQueue } from '@/lib/offlineQueue';
  import { User, Session } from '@supabase/supabase-js';
  import { AuthService, type SignInResult } from '@/services/auth.service';
  import { notificarDispositivoNovo } from '@/lib/avisoDispositivo';
@@ -154,6 +155,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         // anterior (contatos, mensagens, galeria) antes de qualquer consulta nova.
         queryClient.clear();
         clearOfflineCache();
+        void offlineSendQueue.clear();
         clearEmailDraftSessions();
         // SEC-FRONTEND-03: o rascunho de conversa do Inbox também é do usuário que
         // saiu — nenhum texto dele pode esperar o próximo login na mesma máquina.

@@ -1,8 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GamificationSection } from '../overview/GamificationSection';
 import type { DashboardWidget } from '@/hooks/analytics/useDashboardWidgets';
 import type { DashboardStats } from '../DashboardWidgetRenderer';
+
+vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  motion: { div: ({ children }: { children?: React.ReactNode }) => <>{children}</> },
+  useReducedMotion: () => false,
+}));
 
 // #fix — a seção de Gamificação tinha uma 2ª instância própria de
 // useDashboardWidgets: o painel "Personalizar" não surtia efeito nela até
@@ -30,7 +37,12 @@ const leaderboard = widget({ id: 'leaderboard', type: 'leaderboard', order: 5, l
 const filas = widget({ id: 'queues', type: 'queues', order: 2, level: 2 });
 
 function renderSecao(visibleWidgets: DashboardWidget[], isStaff = true) {
-  render(<GamificationSection stats={stats} isStaff={isStaff} visibleWidgets={visibleWidgets} />);
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={qc}>
+      <GamificationSection stats={stats} isStaff={isStaff} visibleWidgets={visibleWidgets} />
+    </QueryClientProvider>
+  );
   fireEvent.click(screen.getByRole('button', { name: /Expandir/i }));
 }
 

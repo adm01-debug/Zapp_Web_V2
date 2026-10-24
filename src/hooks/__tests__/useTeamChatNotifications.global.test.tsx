@@ -116,6 +116,7 @@ describe('TC-007 — listener global de notificações do Team Chat', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.stubGlobal('AudioContext', FakeAudioContext);
+    vi.stubGlobal('Notification', { permission: 'default' });
     grafo.rampas = [];
     h.profile = { id: 'eu' };
     h.channelCalls = 0;

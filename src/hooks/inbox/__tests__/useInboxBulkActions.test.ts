@@ -565,8 +565,8 @@ describe('useInboxBulkActions — bulkArchive', () => {
 
     const restores = contactUpdates().slice(1);
     expect(restores).toHaveLength(2);
-    expect(restores[0]).toMatchObject({ payload: { assigned_to: 'ag-1' }, filters: { id: c1 } });
-    expect(restores[1]).toMatchObject({ payload: { assigned_to: null }, filters: { id: c2 } });
+    expect(restores[0]).toMatchObject({ payload: { assigned_to: 'ag-1' }, filters: { id: [c1] } });
+    expect(restores[1]).toMatchObject({ payload: { assigned_to: null }, filters: { id: [c2] } });
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 

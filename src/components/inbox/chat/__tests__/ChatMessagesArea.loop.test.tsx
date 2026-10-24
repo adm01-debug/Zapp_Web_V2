@@ -48,6 +48,10 @@ class ResizeObserverMock {
 
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+    configurable: true,
+    get: function() { return 600; }
+  });
 });
 
 // Mock pesado: o alvo é o virtualizer, não as bolhas.
@@ -65,6 +69,15 @@ vi.mock('@/services/realtime.service', () => ({
 
 vi.mock('@/services/chat.service', () => ({
   ChatService: { deleteMessage: vi.fn(async () => {}) },
+}));
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }) },
+    from: () => ({
+      select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
+    }),
+  },
 }));
 
 function makeMessage(id: string, content: string): Message {

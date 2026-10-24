@@ -42,7 +42,7 @@ function formatPhone(digits: string): string {
   if (digits.length <= 4) return `+${digits.slice(0, 2)} ${digits.slice(2)}`;
 
   // Internacional ou incompleto.
-  return `+${digits.slice(0, 2)} ${digits.slice(2)}`;
+  return `+${digits}`;
 }
 
 /** Extrai apenas os dígitos de uma string. */

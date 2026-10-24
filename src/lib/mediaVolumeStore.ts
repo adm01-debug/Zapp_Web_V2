@@ -142,7 +142,7 @@ function isSupabaseSessionKey(key: string | null): boolean {
  * o ref do projeto (o mesmo padrão já usado nos fixtures do e2e). Tolerante (E02):
  * storage bloqueado, JSON estranho ou sessão sem `user.id` → `null` = "sem usuário".
  */
-function readAuthenticatedUserId(): string | null {
+export function readAuthenticatedUserId(): string | null {
   try {
     if (typeof window === 'undefined' || !window.localStorage) return null;
     const storage = window.localStorage;

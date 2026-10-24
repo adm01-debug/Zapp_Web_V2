@@ -99,7 +99,7 @@ export function useTeamReadState(
   });
 
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId || ownMessageIds.length === 0) return;
     const channel = supabase
       .channel(`team-read-state-${conversationId}`)
       // Sem filtro por `conversation_id`: a publicação replica
@@ -113,7 +113,7 @@ export function useTeamReadState(
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [conversationId, queryClient]);
+  }, [conversationId, queryClient, ownMessageIds.length]);
 
   return { readStates: query.data ?? SEM_LEITURA, isLoading: query.isLoading };
 }

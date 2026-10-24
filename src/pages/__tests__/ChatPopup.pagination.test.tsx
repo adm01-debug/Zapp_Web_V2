@@ -32,6 +32,11 @@ const ALTURA_JANELA = 600;
 function medirLayout() {
   const proto = HTMLElement.prototype;
   const original = Object.getOwnPropertyDescriptor(proto, 'offsetHeight');
+  const bcrSpy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+    return this.getAttribute('role') === 'log'
+      ? { width: 800, height: ALTURA_JANELA, top: 0, left: 0, bottom: ALTURA_JANELA, right: 800, x: 0, y: 0, toJSON: () => ({}) } as DOMRect
+      : { width: 0, height: 0, top: 0, left: 0, bottom: 0, right: 0, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
+  });
   Object.defineProperty(proto, 'offsetHeight', {
     configurable: true,
     get(this: HTMLElement) {
@@ -40,6 +45,7 @@ function medirLayout() {
   });
   return {
     mockRestore() {
+      bcrSpy.mockRestore();
       if (original) Object.defineProperty(proto, 'offsetHeight', original);
       else delete (proto as unknown as Record<string, unknown>).offsetHeight;
     },
@@ -103,6 +109,8 @@ vi.mock('@/integrations/supabase/client', () => ({
     storage: {
       from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }), remove: vi.fn() }),
     },
+    channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
+    removeChannel: vi.fn(),
   },
 }));
 
@@ -268,6 +276,13 @@ beforeAll(async () => {
 }, 120_000);
 
 beforeEach(() => {
+  // Neutraliza o mock global de setup.ts (clientHeight=600) para este arquivo.
+  // O virtual-core usa offsetHeight (não clientHeight) para o tamanho do contêiner;
+  // clientHeight=600 aciona measureElement via ResizeObserver em loop infinito.
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+    configurable: true,
+    get() { return 0; },
+  });
   vi.clearAllMocks();
   mocks.contactId = CONTACT_ID;
   mocks.messages = useMessagesState();

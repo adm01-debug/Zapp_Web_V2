@@ -64,6 +64,8 @@ export interface OfflineQueueDrainResult {
 export interface OfflineQueueDrainOptions {
   /** Chamado quando a drenagem falha (sem mensagem quando a leitura da fila falha). */
   onError?: OfflineQueueErrorHandler;
+  /** Quando informado, só mensagens deste usuário (ou sem userId) são entregues. */
+  userId?: string | (() => string | null);
 }
 
 /** Handler de erro da fila: recebe a mensagem quando a falha foi da entrega dela. */
@@ -232,7 +234,9 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
         return { sent: 0, remaining: snapshot };
       }
       commitSnapshot(pending.length);
-      for (const message of pending) {
+      const uid = typeof drainOptions.userId === 'function' ? drainOptions.userId() : drainOptions.userId;
+      const ownMessages = uid ? pending.filter(m => !m.userId || m.userId === uid) : pending;
+      for (const message of ownMessages) {
         try {
           await driver.put({ ...message, attempts: message.attempts + 1 });
           await deliver(message);
@@ -338,12 +342,12 @@ export type OnlineScope = Pick<Window, 'addEventListener' | 'removeEventListener
 export function drainOfflineQueueOnReconnect(
   queue: OfflineQueue,
   deliver: (message: OfflineQueuedMessage) => Promise<void>,
-  options: { scope?: OnlineScope | null; onError?: OfflineQueueErrorHandler } = {},
+  options: { scope?: OnlineScope | null; onError?: OfflineQueueErrorHandler; userId?: string | (() => string | null) } = {},
 ): () => void {
   const scope = options.scope !== undefined ? options.scope : typeof window === 'undefined' ? null : window;
   if (!scope) return () => {};
   const handleOnline = () => {
-    void queue.drain(deliver, { onError: options.onError });
+    void queue.drain(deliver, { onError: options.onError, userId: options.userId });
   };
   scope.addEventListener('online', handleOnline);
   return () => scope.removeEventListener('online', handleOnline);
@@ -364,9 +368,9 @@ export function drainOfflineQueueOnReconnect(
 export function drainOfflineQueueOnOpen(
   queue: OfflineQueue,
   deliver: (message: OfflineQueuedMessage) => Promise<void>,
-  options: { online?: boolean; onError?: OfflineQueueErrorHandler } = {},
+  options: { online?: boolean; onError?: OfflineQueueErrorHandler; userId?: string | (() => string | null) } = {},
 ): Promise<OfflineQueueDrainResult | null> {
   const online = options.online ?? (typeof navigator === 'undefined' ? true : navigator.onLine !== false);
   if (!online) return Promise.resolve(null);
-  return queue.drain(deliver, { onError: options.onError });
+  return queue.drain(deliver, { onError: options.onError, userId: options.userId });
 }

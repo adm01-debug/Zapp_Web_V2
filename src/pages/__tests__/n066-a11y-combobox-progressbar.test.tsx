@@ -2,11 +2,26 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+
+const { mockInvokeEdge } = vi.hoisted(() => ({ mockInvokeEdge: vi.fn() }));
+vi.mock('@/lib/invokeEdge', () => ({ invokeEdge: mockInvokeEdge }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: () => ({ select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }) }),
+    from: () => {
+      const q: Record<string, unknown> = {};
+      q.select = (_cols?: unknown, opts?: { head?: boolean }) => {
+        if ((opts as { head?: boolean } | undefined)?.head) {
+          return { like: () => Promise.resolve({ count: 0, error: null }) };
+        }
+        q.eq = () => q;
+        q.order = () => q;
+        q.limit = () => Promise.resolve({ data: [], error: null });
+        q.in = () => Promise.resolve({ data: [], error: null });
+        return q;
+      };
+      return q;
+    },
     functions: { invoke: vi.fn() },
   },
 }));
@@ -51,8 +66,7 @@ describe('N-066: nomes acessíveis em combobox e progressbar', () => {
 
   describe('MediaMigrationTool — 2 progressbars nomeados', () => {
     it('progresso da migração de mídia tem nome acessível (estado em execução)', async () => {
-      const mockInvoke = vi.mocked(supabase.functions.invoke);
-      mockInvoke.mockResolvedValueOnce({ data: null, error: null });
+      mockInvokeEdge.mockImplementationOnce(() => new Promise(() => {}));
 
       render(<MediaMigrationTool />);
       fireEvent.click(screen.getByRole('button', { name: /iniciar migração/i }));
@@ -63,8 +77,7 @@ describe('N-066: nomes acessíveis em combobox e progressbar', () => {
     });
 
     it('progresso do resultado da migração tem nome acessível (estado com resultado)', async () => {
-      const mockInvoke = vi.mocked(supabase.functions.invoke);
-      mockInvoke.mockResolvedValueOnce({
+      mockInvokeEdge.mockResolvedValueOnce({
         data: { success: true, processed: 10, migrated: 8, failed: 2 },
         error: null,
       });
@@ -98,8 +111,7 @@ describe('N-066: nomes acessíveis em combobox e progressbar', () => {
     });
 
     it('MediaMigrationTool não acusa controles sem nome', async () => {
-      const mockInvoke = vi.mocked(supabase.functions.invoke);
-      mockInvoke.mockResolvedValueOnce({
+      mockInvokeEdge.mockResolvedValueOnce({
         data: { success: true, processed: 10, migrated: 8, failed: 2 },
         error: null,
       });

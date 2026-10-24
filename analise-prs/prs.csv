@@ -1,0 +1,138 @@
+number,title,draft,author,head_sha,mergeable_state,created_at
+2187,"fix(tests): corrige falhas de testes no baseline main — mocks, lógica e código morto",False,adm01-debug,32c5739ba9608d8c6c52a36b1c4d59aec1874cb1,,2026-10-22T23:16:46Z
+2186,fix(security): auditoria Supabase 2026-10-22 — department_invites ownership + login_attempts TTL LGPD,False,adm01-debug,9639f91a61635c8fac80976ea0e6151c893912ea,,2026-10-22T12:46:33Z
+2185,docs(pendencias): §8 RESOLVIDO + §9 inventário de workflows da main,False,adm01-debug,bdcf238519fdc128a3c72fb3be679701ed660001,,2026-10-22T02:10:20Z
+2183,chore(ci): remove workflows alienígenas eslint.yml e static.yml,False,adm01-debug,4c8172e07f1c9c01e2676bfcafa44bd42446428c,,2026-10-22T01:21:57Z
+2181,Create nextjs.yml,False,adm01-debug,193c25a3e11652c273c6fe47ab98a47c33733698,,2026-10-21T20:48:57Z
+2179,Add manual workflow for greeting,False,adm01-debug,c97406b805718037e139e6539cdc2725257f6264,,2026-10-21T20:48:51Z
+2178,Add GitHub Super Linter workflow,False,adm01-debug,de69811641a8d08745ed81ada69035306749f374,,2026-10-21T20:46:39Z
+2177,Add GitHub Actions workflow for Python package,False,adm01-debug,ebbb1149d84fde2e4ae98f9b316da83a445e7c69,,2026-10-21T20:46:37Z
+2176,Add Django CI workflow for testing on multiple Python versions,False,adm01-debug,8258afa1bc8dac27c6ae2dc53c2f42964d48fcae,,2026-10-21T20:46:36Z
+2175,Add GitHub Actions workflow for Python package with Conda,False,adm01-debug,6ff158b84de24591abcd8a60079ae958cc3b8f3c,,2026-10-21T20:46:34Z
+2174,Add GitHub Actions workflow for Python package publishing,False,adm01-debug,e6d3a6e5c4a61a946f3be7182c50b37ef89113a5,,2026-10-21T20:46:32Z
+2173,Add GitHub Actions workflow for npm publishing,False,adm01-debug,4bbb6dc8c574d1842bf819bdd94fa4497ad1c011,,2026-10-21T20:46:30Z
+2172,Add Docker Image CI workflow,False,adm01-debug,82799384d1e9c317faec26b55c20d86a0fdff938,,2026-10-21T20:46:28Z
+2171,Add Docker publish workflow configuration,False,adm01-debug,31e1479d84f319f0b22a897280fd5b6014bfff75,,2026-10-21T20:46:27Z
+2170,Add GitHub Actions workflow for npm package publishing,False,adm01-debug,91c0b026c57f7035b8803ec03bb01d6c807071f0,,2026-10-21T20:46:24Z
+2169,Add Node.js CI workflow for testing,False,adm01-debug,7041c6420636d3f374b720376e934afea89f1998,,2026-10-21T20:46:22Z
+2168,Add SLSA generic generator workflow,False,adm01-debug,3f1203ce8155d818eecff09b6fda601adcb3d912,,2026-10-21T20:46:19Z
+2167,Add GitHub Actions workflow for Node.js with Webpack,False,adm01-debug,f7db833cb103dded89301641f00726faacbd9bde,,2026-10-21T20:46:16Z
+2166,Add GitHub Actions workflow for Deno,False,adm01-debug,c4679415819b41548ab15bd0d8f5c1c3e47c4ca3,,2026-10-21T20:46:13Z
+2165,Add PMD code scanning workflow,False,adm01-debug,421fbb4859589deb4e44fa804539642cb2cb495a,,2026-10-21T20:42:41Z
+2164,Add GitHub Actions workflow for rust-clippy analysis,False,adm01-debug,69d4cbf37c9130a729959d7f620abc991447fa6f,,2026-10-21T20:42:39Z
+2163,Add lintr workflow for R code analysis,False,adm01-debug,7c0100ba95363cba44d65865645bf8a6d6bf1c5f,,2026-10-21T20:42:37Z
+2162,Add PHPMD workflow for PHP code analysis,False,adm01-debug,6cd723f6fd9813ad38bbdf50cde4645edd87dd0e,,2026-10-21T20:42:35Z
+2161,Add puppet-lint GitHub Actions workflow,False,adm01-debug,d5b253d025518e4b500961b0219b9214112df164,,2026-10-21T20:42:31Z
+2160,Add Hadolint workflow for Dockerfile linting,False,adm01-debug,c0109c4fccd6717795c8143936e62d4f06fe5523,,2026-10-21T20:42:21Z
+2159,Add Bearer workflow for code scanning,False,adm01-debug,254cf575cc31c288ad406ead14391f273a6934b4,,2026-10-21T20:42:06Z
+2157,Add Dependency Review Action workflow,False,adm01-debug,3ad95d829b5605d1ff4e6978c4b2de537f17240d,,2026-10-21T20:40:44Z
+2155,fix(ci): destrava workflows que falhavam antes de executar,False,adm01-debug,64934014e107190fc83f304c291a2faf35308b7b,,2026-10-21T12:38:46Z
+2152,test(e2e): spec de toque 44px volta ao verde com seletores do app real,False,adm01-debug,3eca130737aa49024286ab3a96be626897da6e35,,2026-10-21T11:55:45Z
+2151,fix(ci): destravar workflows que falhavam antes de executar,False,adm01-debug,0770f6b5ef6f1f0df653ffe5c9dd479955673848,,2026-10-21T11:52:52Z
+2149,docs(reconciliation): P053 registra regressão do cabeçalho (19/20/25) e superseded (16/28),False,adm01-debug,d78360c437f7621d9cf75aed0fec813e9f96906d,,2026-10-21T11:28:09Z
+2148,test(e2e): destrava specs deslogados de Contatos com boot e health mockados,False,adm01-debug,288afb20c90fc9bd1fdd81e1be39ca2d500a8d58,,2026-10-21T11:27:17Z
+2147,fix(db-audit): guard n011 com teto dinamico por dominio e canonico atual,False,adm01-debug,0913cfeb5e0a88f3246ce8a16e6449eea782120c,,2026-10-21T11:01:25Z
+2146,feat(team-chat): TeamChatView seleciona conversa via ?cid= (receptor E90),False,adm01-debug,9723899ed344f9cf0282736664731f8069c96fed,,2026-10-21T11:01:10Z
+2145,"fix(ci): Resto GA86 GA99 GA100 (sonar, contracts, adocao)",False,adm01-debug,dc8b634941014141d81b0874a273cff3a1029c09,,2026-10-21T10:55:45Z
+2144,"fix(ci): Resto GA37 GA96-GA98 (docs deploy, regen, CODEOWNERS)",False,adm01-debug,52761c075664078a4892990e4e66420062b941b5,,2026-10-21T10:55:43Z
+2143,"fix(ci): Resto GA20-GA25 (Gate 3, DESTINO split, auto-merge grants)",False,adm01-debug,f63da0dd8e8c2c0c5cc7db55fdc1d72119feae8b,,2026-10-21T10:55:40Z
+2142,"fix(ci): Resto GA13-GA17 (db-migrate 2 jobs, apply_all_missing, portao destrutivo)",False,adm01-debug,ed39966869956b375238f640711208916295f7fa,,2026-10-21T10:55:37Z
+2141,feat(E83): entrar por codigo - aceite desacoplado (somente arquivos novos),False,adm01-debug,a671e697b462e9b1981f3ce27588ce2844fb66fe,,2026-10-21T10:40:33Z
+2139,Codex/fix failed workflows 20261020,False,adm01-debug,bf0ce76953011856fa1601c039a4e660f08c652d,,2026-10-21T00:14:04Z
+2138,"fix(ci): desbloqueia a main - contratos de CI, Pin do Playwright/E2E, E88 e DB Guard offline",True,adm01-debug,ec7caab90ab0d5ccbfb8cfa832ddbe945d9e829c,,2026-10-20T23:59:06Z
+2137,fix(db): recria canonicamente as policies de receipt do team chat (replay),False,adm01-debug,b397e0d4a288292448d12ceabc970400ea9368c4,,2026-10-20T23:13:03Z
+2135,fix(contatos): restaura topo sem cabeçalho e devolve o toque ao FAB,False,adm01-debug,0e0c3786bca6b9dfd1970c3bb556073c2f2491d1,,2026-10-20T23:03:26Z
+2131,feat(E83): entrar no canal de departamento por código de convite,False,adm01-debug,e53fff23023463e546b276c87438dc1f3a7f9f40,,2026-10-20T22:59:14Z
+2129,fix(ci): Fases 7+8 do plano GA75-GA95,False,adm01-debug,1b2db4d1b64b221ac7e2b09a445e80150cc43775,,2026-10-20T22:57:44Z
+2128,fix(ci): Fases 2+3 do plano GA27-GA47,False,adm01-debug,963d20aeea68f0993338c354380069a5f3791e83,,2026-10-20T22:57:42Z
+2127,fix(e91): log de CHANNEL_ERROR nos canais Realtime do Team Chat (hardening E91),False,adm01-debug,2d048ab45eebf74f984e06cf71b1a637a629c9e5,,2026-10-20T22:56:09Z
+2126,fix(ci): Fases 4+5+6 do plano GA49-GA74,False,adm01-debug,16f473a09784f4167fa7532c65e37a5f95bff5f2,,2026-10-20T22:53:57Z
+2125,fix(ci): Fase 1 do plano GA18 GA19 + GA26 prepare,False,adm01-debug,19c48a20cdbd6933cca7c8587d256e342a8217db,,2026-10-20T22:53:55Z
+2124,fix(ci): Fase 0 do plano GA02-GA12,False,adm01-debug,e966771219ba418e3c97ca22b79407bfaa9fdd58,,2026-10-20T22:53:52Z
+2123,"fix(ci): restaura o parse dos contratos de workflow e corrige 8 violações (cache do Bun, TE05/exit-code, concurrency duplicada)",False,adm01-debug,d90d3f78f9d026828c1e888ea6ce91f6643a3c45,,2026-10-20T22:50:48Z
+2121,docs(contatos): incorpora o plano de 50 etapas e a auditoria com plano de correção em 60 etapas,False,adm01-debug,9e949fcaf189bc1f54acd600f45de216b920a213,,2026-10-20T22:37:32Z
+2120,fix(inbox): fecha a semântica de tablist das 8 abas da conversa (etapa 15 do plano de 20 etapas),False,adm01-debug,4006fde22d6884216e5f52a049114bc566dce018,,2026-10-20T22:36:37Z
+2119,docs(inbox): registra o encerramento do plano de 20 etapas das abas da conversa,False,adm01-debug,9bdc002371a3c6969f64c23fecede06abe1c6b95,,2026-10-20T22:36:23Z
+2116,"feat: security headers V130-V133 — COOP, Reporting-Endpoints, report-to (plano Vercel V130-V150)",True,adm01-debug,62b188bad4983adb51050478b99a831e179c8a5a,,2026-10-19T18:40:34Z
+2113,"fix(evolution-api): remover set-presence, find-chats e find-status-messages (GO_GAPS D6)",True,adm01-debug,5615e53d9bf6f97feeb0a79a432c4934c87e06d1,,2026-10-19T15:00:40Z
+2112,chore(inbox): remove órfão ConversationMemorySection + desbloqueia gates da main,False,devin-ai-integration[bot],656ee4ccb17eb97ea8c1a8451fd26d3470cbb8d1,,2026-10-19T14:47:09Z
+2111,fix(types): narrowar reason_code em useTalkXSuppression para union type,False,adm01-debug,ec57655d549eb83a1102e3dbb2f4989e22a265fc,,2026-10-19T13:41:59Z
+2110,fix(tests): add createLogger to vi.mock('@/lib/logger') em 20 testes,False,adm01-debug,e34c3f4dcef601052f121d8d583fae0d549edc6f,,2026-10-19T13:25:05Z
+2109,fix(test): mock useCustomEmojis.upload suporta duplo .order(),False,adm01-debug,23abac7c02fcf6bce0e1aaaef8d9840f75de562e,,2026-10-19T13:15:16Z
+2108,fix(ci): GA20/GA21/GA22/GA23/GA27/GA38/GA39/GA55/GA72 + GA75–GA78/GA92 — auditoria GitHub Actions,True,adm01-debug,f03cd845aaa4fcf551bd5170c78fe687aeaf73f1,,2026-10-19T13:09:01Z
+2107,docs(g9): absorver planos de docs ausentes da main — E274,False,adm01-debug,fbfc51c4cf025a124879552faec6c0bc5f94d2d0,,2026-10-19T12:56:06Z
+2105,docs: plano de integração de branches em 300 etapas (153 branches → só main),False,adm01-debug,0c5d236d57ab6083adab23afb1cf5b029cfbdffd,,2026-10-19T12:34:15Z
+2104,fix(ci): PGUSER postgres + GA75 endpoint + GA77 sem auto-restore + TS2322 + security-unit,False,adm01-debug,054d4d89d34bd7f5dae78f7b3f17efdef700a152,,2026-10-19T12:17:16Z
+2102,⬆️ deps: Bump the deps-semanal group with 11 updates,False,dependabot[bot],5688a804e55dc167331b12a5676612556215012c,,2026-10-19T12:13:00Z
+2100,"fix: GA09/GA62/GA75/GA92/GA98/GA100 — concurrency, codeql diário, endpoint, rate-limit, docs",True,adm01-debug,7502fd2ec5f0cfdebcef8378b625f00afd44e2b3,,2026-10-19T12:10:07Z
+2098,"fix: corrigir falhas de CI — testes, a11y, bundle e motion (261019)",False,adm01-debug,16a4c54f0aaabc4ad8bd77a919c9d04cdc38f891,,2026-10-19T10:44:33Z
+2097,fix: corrige falhas pré-existentes nos Unit Tests (useKnowledgeBase + useTalkXSegments),False,adm01-debug,ced0f5bac19e4472dcd2daff4a5995427ee7306c,,2026-10-19T10:08:18Z
+2095,"fix(security): Z018+Z020 — external-db-proxy code-leak em 502, catch via internalErrorResponse (Z017+Z019 auditados, já corretos)",False,adm01-debug,df97e3a136204e00658acd80a50b62da094a22a0,,2026-10-18T20:00:45Z
+2093,"fix: migration-evidence expectedKeys, version collision, playwright unpin (Z022+Z023+Z024)",True,adm01-debug,f0b5b7cd2659132b552b912d60a91f0bb1172d4d,,2026-10-18T19:52:22Z
+2092,fix(ci): types-sync job summary + gmail-cron-sync raw-500 (Z029+Z015p),True,adm01-debug,a4437b87d6baaefbbaaa88596d4fd55bde94167e,,2026-10-18T19:52:08Z
+2091,fix: timing-safe comparison em searchbox-budget-alert e whatsapp-webhook (Z011-B/C),False,adm01-debug,626811d3af6321a620b3891be646df0788239645,,2026-10-18T18:50:03Z
+2090,fix: fila de envio offline não era por usuário — trocar de atendente na mesma máquina drenava o texto alheio — 4 arquivos (lote F1a),False,adm01-debug,2e6076e33d24ce9683c4efa25bcef5aff4398dd2,,2026-10-18T16:44:59Z
+2089,"fix: ChatService.uploadAudio gravava sempre como .webm, ignorando o mime real do Blob — 1 arquivo (lote F1a)",False,adm01-debug,95de970b0f24bbc78276beaacee307fe6f3e1083,,2026-10-18T16:35:46Z
+2088,fix: área segura mobile (safe-area-*) e rolagem sem barra (scrollbar-none) sem regra CSS (t_edd11f2d) — 1 arquivo (lote F1a),False,adm01-debug,ced1c1b497c839f2afecad9b54bef40c99f4dfe6,,2026-10-18T16:33:38Z
+2087,fix(test): mock de supabase.rpc ausente ao buscar em GmailInboxView.paginacao (lote F1a),False,adm01-debug,a7cf28b9d3060f3ff4b1ffec2a07f632e03a410a,,2026-10-18T16:30:24Z
+2086,fix: botão de remover atendente do QueueCard sem nome exato e morto ao toque (N-180.6) — 1 arquivo (lote F1a),False,adm01-debug,32108e9cea46d1a2bda230915e0fdd8361617b48,,2026-10-18T16:27:28Z
+2085,fix: WhatsAppTemplatesManager sem gate de escrita admin-only (RLS) — 2 arquivos (lote F1a),False,adm01-debug,a8b26e5f4336829668576b256d2e0eb9432ead08,,2026-10-18T16:24:19Z
+2084,fix: Leaderboard não distinguia RPC caída de ranking vazio — 1 arquivo (lote F1a),False,adm01-debug,4398d18bd48c483daaa85b330c33f794a391734c,,2026-10-18T16:19:02Z
+2083,fix: NPSDashboard não expunha erro de leitura nem aviso de teto (t_1944d290) — 1 arquivo (lote F1a),False,adm01-debug,82585eef29f4da5716194be2bfd90178bd3a06ba,,2026-10-18T16:17:18Z
+2082,fix: falha de leitura em useUserSettings ficava invisível (C-1) — 1 arquivo (lote F1a),False,adm01-debug,847ffd692d0e01f4784f21ec99daf8c064dafe1b,,2026-10-18T16:12:33Z
+2081,fix: contagem de whatsapp_connections lançava e derrubava toda a coleta de diagnóstico (N-216) — 1 arquivo (lote F1a),False,adm01-debug,4b0d88a78a3797f7d349d23a90b8f5e8de7d87b6,,2026-10-18T16:08:44Z
+2080,fix: useTeamChatNotifications — canal recriado no volume + aviso sem Service Worker + cache do inbox (HZ5-09/PE-75) — 2 arquivos (lote F1a),False,adm01-debug,ee3d010dbd516e7f7c02be0e0e5404cb77fefcdb,,2026-10-18T16:04:19Z
+2079,fix(test): assume canal errado quando useTeamReadState abre o seu próprio — useTeamMessages (lote F1a),False,adm01-debug,436fdf58d6163f712fdfbef579a06502b9ea85b4,,2026-10-18T16:02:32Z
+2078,ci(F3): baseline strict=false — opção A sem fila serial,False,adm01-debug,3de493255896590c849b34882cc8ed4da29a6b6d,,2026-10-18T16:01:51Z
+2077,fix: remove teste obsoleto de mutations.ts — gamificação é só leitura no cliente (lote F1a),False,adm01-debug,d1e81f9ae029034334cc7a9dcb534024b6f80500,,2026-10-18T15:46:11Z
+2076,fix(test): mock de framer-motion sem useReducedMotion/MotionConfig em GroupsView.a11y — 1 arquivo (lote F1a),False,adm01-debug,f190aa201ca232aad3d0dfdeb7a544709e8ceb6e,,2026-10-18T15:44:50Z
+2075,fix: aviso de desktop do War Room saía pelo caminho que exige Service Worker — 1 arquivo (lote F1a),False,adm01-debug,b31078562f17b2759a177939589d7df7a9b399b3,,2026-10-18T15:37:35Z
+2074,fix: overlay de useScreenProtection sem role=alert/aria-live — 1 arquivo (lote F1a),False,adm01-debug,ff66b4565275a4b77825706a49894ebc97aafd5c,,2026-10-18T15:36:42Z
+2073,fix: useKnowledgeBase não expunha erro de leitura (t_1944d290) — 2 arquivos (lote F1a),False,adm01-debug,7ffe64f5ea9b5f25affc00006b88d407172673f0,,2026-10-18T15:30:05Z
+2072,fix: supabase.rpc perde o this + lead_origin sem comingSoon + real_sector/real_uf sem falha fechada — useTalkXSegments.ts (lote F1a),False,adm01-debug,81e74308988ec077cc83947068d1b60a55bdea9a,,2026-10-18T15:25:37Z
+2071,fix: remove hook morto useTalkXSuppression (TL-002) — 1 produto + 1 teste (lote F1a),False,adm01-debug,617bdcedd22db4823f6a7b42d0c4dc0827190cf2,,2026-10-18T15:15:55Z
+2070,fix: avatar assinado ao carregar + testes de handleCreateUser na camada antiga de Edge — 4 arquivos (lote F1a),False,adm01-debug,5a37b9288e9a9d38e0be161a8261917428b64ab8,,2026-10-18T15:11:51Z
+2069,fix(test): mock de supabase sem .range()/.gte()/.lte() em useAdminData.select — 1 arquivo (lote F1a),False,adm01-debug,0428318bcc54530a1d99985661c63ef4338f1648,,2026-10-18T15:07:34Z
+2068,fix(test): mock de useAdminData sem AUDIT_PAGE_SIZE/MIN_PASSWORD_LENGTH — 2 arquivos (lote F1a),False,adm01-debug,db9875016595018b99b7f05950b91a17b9560587,,2026-10-18T14:53:32Z
+2067,fix(test): 2 mocks locais incompletos — 1 arquivo (lote F1a),False,adm01-debug,d08b8e84c7d6c4b4f0871173865b00c40154a90d,,2026-10-18T14:46:14Z
+2066,fix: useAudioMemes sobe chave solta no bucket com policy por pasta (PK-16/PK-17),False,adm01-debug,a89cac42e6127c5da268adb7a26af7a6e4174bf8,,2026-10-18T14:45:37Z
+2065,fix(test): mock de supabase.channel ausente em AgentsView — 2 arquivos (lote F1a),False,adm01-debug,8d59be9d6d21823d122f655f07de034fb3b6d498,,2026-10-18T14:44:33Z
+2064,fix(test): mock de supabase.channel incompleto — 1 arquivo (lote F1a),False,adm01-debug,fcc63eed6a01989618897299e68fecb0ab9f8339,,2026-10-18T14:40:39Z
+2063,fix(test): useAuth sem AuthProvider no teste — 2 arquivos (lote F1a),False,adm01-debug,81543b967efb9b1fa8002855faf6fabc7ee16f65,,2026-10-18T14:38:27Z
+2062,fix(test): mock de framer-motion sem useReducedMotion — 1 arquivo (lote F1a),False,adm01-debug,8cf96c52d608805a3936e171f5e3741eec3f5217,,2026-10-18T14:35:12Z
+2061,fix(test): AuthProvider ausente em testes do inbox — 2 arquivos (lote F1a),False,adm01-debug,4044867c0ab848b9d1a517e724e9c7dafbc4a899,,2026-10-18T14:35:00Z
+2060,fix(test): mock da cadeia supabase sem o 2º .order() — 1 arquivo (lote F1a),False,adm01-debug,88d8e4709efa4fdd47bab769e0a608a618db41b9,,2026-10-18T14:34:45Z
+2059,fix(test): ConnectionCard — handleDisconnectDialogOpenChange indefinido — 6 arquivos (lote F1a),False,adm01-debug,ab04821621026d5fa515818c5bdcac98783a4b3d,,2026-10-18T14:33:22Z
+2058,fix(test): mock de @/lib/logger sem createLogger — 9 arquivos (lote F1a),False,adm01-debug,10d843f921877efd12442c18274944bf48ac0eff,,2026-10-18T14:25:31Z
+2057,feat(ci): lint-ratchet.mjs --base <ref> para lint escopado por PR,False,adm01-debug,c7424ed8631ee6db6222cc6dbb58da644227fb05,,2026-10-18T14:13:51Z
+2056,"fix(ci): restaura auto-update-pr-branch e settings-guard, corrige docs de notifica-falha-main",False,adm01-debug,4ce5a6e9705cf497dae51305d0045fdc8d391322,,2026-10-18T14:12:54Z
+2054,"fix(ci+security): Z011–Z032 — requireAuth, timingSafeEqual, node-scripts split, test.skip removidos, pg_isready flags",True,adm01-debug,005d27504bda3be2a7bcad7a8d798b3a4c281765,,2026-10-18T13:45:37Z
+2051,ci(W85/W86/W87): OpenSSF Scorecard semanal + dependency-review no security job,False,adm01-debug,fe00bdfe514243e184cdb2c7ca933cb228cc79ad,,2026-10-18T12:16:08Z
+2046,W45: pular test/build/security/e2e/db-guard em PR draft,False,adm01-debug,29afe32579a37795e5f5a0ab638a4a87ba7af1af,,2026-10-18T12:14:09Z
+2044,"ci(W39/W49/W50): playwright versao dinamica, VITE_* scoped, codeql dispatch",False,adm01-debug,2585efb40e68225c508c9c17231ec02640f2a867,,2026-10-18T12:13:55Z
+2042,ci(W94+W32): talkx-status-regen concurrency + MIGRATIONS daily lote section,False,adm01-debug,5fe12a3305d1e2180ccda39fc56ca177e67118be,,2026-10-18T12:13:48Z
+2040,fix(e2e-logado): restaura W71 — workflow_run em vez de push na main,False,adm01-debug,570face48da5f0483bcc24aeaad594532472a457,,2026-10-18T12:08:10Z
+2037,fix(ci): GA20+GA21 — Gate 3 recupera catálogo antigo via git show; DESTINO_URL sai do GITHUB_ENV,True,adm01-debug,ab374c5b5a3b1c485ec6ca938c33885aa123820a,,2026-10-17T00:23:58Z
+2036,fix(ci): GA04/GA05 — console.error no heredoc db-migrate + fixtures GA05,True,adm01-debug,fe4f40c672abad3b0f43309ba21e679c6c0d83a7,,2026-10-17T00:15:40Z
+2035,fix: mock global @/lib/logger no Vitest — desbloqueia CI de todos os PRs do Copiloto RADAR,True,adm01-debug,260c5297cd76b261851256527e62ff1d081faaab,,2026-10-17T00:07:37Z
+2034,fix(ci): GA02 + GA10 — guarda CLAUDE.md no CI e contrato de nomes do notificador,True,adm01-debug,f64a9673262a37dda7701beaf05c4d01c1a3e251,,2026-10-17T00:06:11Z
+2032,"feat: RADAR Copiloto — Fase 15: Custos, Piloto e Rollout (CV-141–150)",True,adm01-debug,6fd40abfa7331d3d8b8040bfe723d13b3592f7da,,2026-10-16T23:21:15Z
+2030,feat: RADAR copiloto CV-131–140 — Aprendizado contínuo e avaliação (Fase 14),True,adm01-debug,5ef9d9e5cf1bd706e5ed299beb6532fee331efe0,,2026-10-16T23:16:34Z
+2029,"feat: RADAR Phase 13 — Supervisor, coaching e treinamento (CV-121–130)",True,adm01-debug,285fd6751cdbc77c3e69b141a57ac5f88ff2a81f,,2026-10-16T23:12:33Z
+2026,"feat: CV-111–120 Guardrails, segurança e LGPD — Fase 12 do RADAR",True,adm01-debug,6d65e42d6ad21f4738c28eb8911d26f8f943e6be,,2026-10-16T23:02:01Z
+2025,"feat: RADAR Fase 11 — Multimodal CV-101–110 (áudio, imagem, documento)",True,adm01-debug,d69101f9df5cdbe687ddb6054a226dadbe63c222,,2026-10-16T22:52:02Z
+2024,"feat(copilot): Phase 10 — sinais, temperatura, timing, follow-up (CV-091–098)",True,adm01-debug,9b9a335bfe590f116f7624cb8eaa18ed04db0fa8,,2026-10-16T22:43:59Z
+2022,"feat: RADAR copilot Phase 9 — Catalog, Budget, Timeline (CV-081–090)",True,adm01-debug,b5f2833f52b679b9b1c971298e1881872feecbc3,,2026-10-16T22:32:34Z
+2013,"feat: CV-071–080 — Fase 8 RADAR objeções, battlecard, guardrail de desconto e risco de perda",True,adm01-debug,cd63d6dd63da0bc132e507930792e0d8a454dfc8,,2026-10-16T22:08:27Z
+2005,"feat: Fase 7 RADAR — ghost text, feedback, templates e voz (CV-061–070)",False,adm01-debug,bb239fbe76678c06219d613429bb2a0dbd2b5d2b,,2026-10-16T22:00:03Z
+2003,"feat: CV-051–060 — Fase 6 RADAR painel flutuante (popup, drag, DND, atalhos, a11y)",True,adm01-debug,b93278e0d66c19e509cd4832c54949016c15340e,,2026-10-16T21:39:13Z
+2002,"feat: RADAR CV-041–050 — Sugestões ao vivo com caminhos, tone chips e split",True,adm01-debug,36685402c7e5f19858e6967fffeacdccaa8c8272,,2026-10-16T20:59:38Z
+2000,feat: RADAR Fase 4 — Inteligência B·R·I·N·D·E (CV-031–040),True,adm01-debug,a4dad9beb22bfe7f9f0479712f876acf524e65d7,,2026-10-16T20:44:30Z
+1998,feat: CV-021–030 Motor copilot-live — worker incremental com roteamento dois andares,True,adm01-debug,c011c762210d3c881ced1935118eff8d41e3e031,,2026-10-16T20:20:49Z
+1997,feat: CV-010–020 — Fase 2 RADAR copilot (migrations + feature flag),True,adm01-debug,b30b8efb9d855bfc05b9af294e83652919e037f6,,2026-10-16T19:58:38Z
+1991,fix: corrige nomes de workflows no notificador e cancelamento de scroll programático,True,adm01-debug,8836e94c850ca1e51afdd7e67e5a7ee80249710b,,2026-10-16T19:16:58Z
+1987,fix: reconciliar regressões e preparar publicação do lote 880,True,adm01-debug,f586369d2f7b56c57ed6dbc33e13b1e3235fd15a,,2026-10-16T19:03:49Z
+1979,docs: plano de correções dos workflows em FAILURE — 200 etapas (2026-10-16),False,adm01-debug,dec13f873301e59ede77d97c4905faee023c7ee6,,2026-10-16T17:40:28Z
+1975,ci: reativar 8 suites no job node-scripts (allowlist → runner),False,adm01-debug,a7c3edaeb264d296c123a6ccefbc5b655264b39e,,2026-10-16T16:03:45Z
+1930,feat(db-audit): W21 — check-migration-drift --classificar: 4 classes de drift,False,adm01-debug,8b401af1bb17bff3eed71f3bba4da6b21391ed96,,2026-10-14T22:20:19Z
+1922,fix(ci): mutação do mapa só roda em pull_request (W10),False,adm01-debug,a2e1c193963448ec649faeb6f997fb95e0abb779,,2026-10-14T20:51:40Z

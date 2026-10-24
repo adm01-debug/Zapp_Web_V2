@@ -142,6 +142,16 @@ Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
     return { width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) };
   },
 });
+// @tanstack/react-virtual usa scrollElement.clientHeight (não getBoundingClientRect)
+// para calcular o range visível. No jsdom clientHeight é 0 por padrão → 0 itens.
+Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+  configurable: true,
+  get() { return 600; },
+});
+Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+  configurable: true,
+  get() { return 800; },
+});
 
 // ==========================================================================
 // TETO DE ESPERA DAS CONSULTAS ASSINCRONAS — determinismo sob carga.

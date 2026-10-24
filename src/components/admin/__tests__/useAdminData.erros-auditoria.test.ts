@@ -36,12 +36,21 @@ vi.mock('@/integrations/supabase/client', () => ({
       }),
     },
     rpc: vi.fn(),
+    functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) },
   },
   SUPABASE_URL: 'https://local.test',
 }));
 
 vi.mock('sonner', () => ({
   toast: { error: h.toastError, success: vi.fn(), warning: vi.fn() },
+}));
+
+vi.mock('@/lib/invokeEdge', () => ({
+  invokeEdge: vi.fn(async (name: string, opts?: { body?: unknown }) => {
+    await fetch(name, { method: 'POST', body: JSON.stringify(opts?.body ?? {}) });
+    return {};
+  }),
+  readEdgeError: vi.fn().mockResolvedValue({ message: '', status: 500 }),
 }));
 
 import {

@@ -49,6 +49,13 @@ vi.mock('@/components/team-chat/TeamChatNotificationsListener', () => ({
 }));
 vi.mock('@/hooks/system/useServiceWorker', () => ({ useServiceWorker: vi.fn() }));
 vi.mock('@/hooks/ui/useScreenProtection', () => ({ useScreenProtection: vi.fn() }));
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: null }),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+vi.mock('@/hooks/realtime/useGlobalIncomingMessageAlerts', () => ({
+  useGlobalIncomingMessageAlerts: vi.fn(),
+}));
 
 vi.mock('@/hooks/chat/useTeamChat', () => ({ useTeamConversations: () => ({ data: [] }) }));
 vi.mock('@/hooks/chat/useTeamChatNotifications', () => ({

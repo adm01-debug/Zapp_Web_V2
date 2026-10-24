@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, within, cleanup } from '@testing-library/react';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { FilesTab } from '../FilesTab';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
@@ -100,7 +100,7 @@ function renderTab(items: ContactMediaItem[]) {
 }
 
 function mockWidth(width: number) {
-  return vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+  return vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
     width, height: 400, top: 0, left: 0, right: width, bottom: 400, x: 0, y: 0,
     toJSON: () => ({}),
   } as DOMRect);
@@ -127,14 +127,18 @@ beforeEach(() => {
   h.eq.mockImplementation(() => Promise.resolve({ error: h.updateError.value }));
 });
 
+afterEach(() => {
+  cleanup();
+});
+
 describe('FilesTab fase 6 — detalhes (etapa 31)', () => {
-  it('com 959 px e preferência 8, abrir detalhes NÃO muda o effective do grid (Sheet sobreposto)', () => {
+  it('com 959 px e preferência 8, abrir detalhes NÃO muda o effective do grid (Sheet sobreposto)', async () => {
     seedPrefs(8);
     const rect = mockWidth(959);
     renderTab([IMAGE, DOC]);
 
     // antes: capacidade 5 (min(pref 8, capacidade 5)) — o grid mede o contêiner real
-    expect(gridClass()).toContain('grid-cols-5');
+    await waitFor(() => expect(gridClass()).toContain('grid-cols-5'));
 
     fireEvent.click(screen.getByText('contrato.pdf'));
 
@@ -144,16 +148,16 @@ describe('FilesTab fase 6 — detalhes (etapa 31)', () => {
     rect.mockRestore();
   });
 
-  it('com 1474 px abre lado a lado (260 px) e o grid cai de 8 para 6', () => {
+  it('com 1474 px abre lado a lado (260 px) e o grid cai de 8 para 6', async () => {
     seedPrefs(8);
     const rect = mockWidth(1474);
     renderTab([IMAGE, DOC]);
 
-    expect(gridClass()).toContain('grid-cols-8');
+    await waitFor(() => expect(gridClass()).toContain('grid-cols-8'));
 
     fireEvent.click(screen.getByText('contrato.pdf'));
 
-    expect(gridClass()).toContain('grid-cols-6');
+    await waitFor(() => expect(gridClass()).toContain('grid-cols-6'));
     expect(screen.getByTestId('file-detail-panel-inline')).toBeInTheDocument();
     expect(screen.queryByTestId('file-detail-sheet')).not.toBeInTheDocument();
     // o mesmo conteúdo nos dois modos

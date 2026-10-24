@@ -44,8 +44,6 @@ class FakeAudioContext {
   }
 }
 
-vi.stubGlobal('AudioContext', FakeAudioContext);
-
 const h = vi.hoisted(() => ({
   membership: [] as Array<{ id: string; is_muted: boolean }>,
   settings: { soundEnabled: true, soundVolume: 60, browserNotifications: false },
@@ -107,6 +105,8 @@ const mensagem = (senderId: string, conversationId = 'c1') => ({
 
 describe('useTeamChatNotifications (produção) — som de alerta', () => {
   beforeEach(() => {
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    vi.stubGlobal('Notification', Object.assign(vi.fn(), { permission: 'default' }));
     vi.useFakeTimers();
     grafo.rampas = [];
     h.handler = null;

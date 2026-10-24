@@ -29,7 +29,7 @@ export interface QueueAlert {
  * Linha de `public.rpc_queue_goal_metrics()` (PM-02, cartão t_35099565): as métricas REAIS por
  * fila visível ao usuário. `null` = não medido (fila sem base ou métrica sem base no período) e
  * `0` = dado (fila existe e está vazia). Trocar um pelo outro inventa alerta (NULL tratado como
- * zero) ou esconde fila estourada (zero tratado como sem medição).
+ * zero) ou esconde fila estoura (zero tratado como sem medição).
  */
 export interface QueueGoalMetricsRow {
   queue_id: string;

@@ -249,6 +249,7 @@ expect_ok_as() {  # expect_ok_as <rotulo> <papel> <jwt> <sql>  (sql NAO pode ter
 }
 
 printf '\n============ BLOCO B — migration aplicada ============\n'
+psql_file "$repo_root/supabase/migrations/20261006231105_recuperacao_gatilho_sem_coluna_removida.sql" >/dev/null
 psql_file "$migration" >/dev/null
 psql_file "$tmp_dir/seed.sql" >/dev/null
 

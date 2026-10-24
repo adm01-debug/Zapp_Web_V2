@@ -11,7 +11,7 @@
  * sair; e as guardas que existem de verdade (sem permissão / liga-desliga do painel
  * em `notifSettings.browserNotifications`) continuam valendo.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
 const h = vi.hoisted(() => {
@@ -92,7 +92,12 @@ const mensagem = (senderId: string, conversationId = 'c1') => ({
 });
 
 describe('useTeamChatNotifications — aviso do navegador (HZ3-001)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   beforeEach(() => {
+    vi.stubGlobal('Notification', Object.assign(vi.fn(), { permission: 'granted' }));
     vi.clearAllMocks();
     h.avisos.length = 0;
     h.handler = null;

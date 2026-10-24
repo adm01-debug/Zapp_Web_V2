@@ -229,7 +229,7 @@ export function SettingsView() {
         </TabsContent>
 
         <TabsContent value="appearance">
-          <AppearanceSettings settings={settings} updateSettings={updateSettings} onResetOnboarding={handleResetOnboarding} />
+          <AppearanceSettings settings={settings} updateSettings={updateSettings} isSaving={isSaving} onSave={saveSettings} onResetOnboarding={handleResetOnboarding} />
         </TabsContent>
 
         <TabsContent value="shortcuts">

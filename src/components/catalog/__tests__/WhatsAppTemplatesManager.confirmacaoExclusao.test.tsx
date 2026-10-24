@@ -9,6 +9,10 @@ import { render, screen, fireEvent } from '@testing-library/react';
 
 const mocks = vi.hoisted(() => ({ handleDelete: vi.fn() }));
 
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true }),
+}));
+
 vi.mock('@/hooks/integrations/useWhatsAppTemplates', () => ({
   TEMPLATE_CATEGORIES: [{ value: 'marketing', label: 'Marketing', color: '' }],
   TEMPLATE_LANGUAGES: [{ value: 'pt_BR', label: 'Português (BR)' }],

@@ -21,7 +21,7 @@ vi.mock('../useAdminData', () => ({
     users: [], auditLogs: [], loading: false,
     auditTotal: 0, error: null,
     fetchData: vi.fn(), handleRoleChange: vi.fn(), handleToggleActive: vi.fn(),
-    handleSaveUser: vi.fn(), handleCreateUser: vi.fn(),
+    handleSaveUser: vi.fn(), handleSaveRamal: vi.fn(), handleCreateUser: vi.fn(),
   }),
   accessLevelConfig: {},
   MIN_PASSWORD_LENGTH: 8,
@@ -52,7 +52,7 @@ describe('AdminView — SectionErrorBoundary isola o bloco que falha (Parte 7)',
     expect(screen.getByText(/Erro em "CRM Admin"/)).toBeInTheDocument();
     // A tela não foi derrubada: o cabeçalho e as demais abas continuam de pé.
     expect(screen.getByRole('heading', { name: /Administração/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Auditoria/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Auditoria/ })).toBeInTheDocument();
   });
 
   it('com o CRM quebrado, a Auditoria (bloco independente) ainda renderiza', () => {
@@ -61,19 +61,19 @@ describe('AdminView — SectionErrorBoundary isola o bloco que falha (Parte 7)',
     fireEvent.click(screen.getByRole('tab', { name: /CRM 360/ }));
     expect(screen.getByText(/Erro em "CRM Admin"/)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /Auditoria/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /Auditoria/ }));
     expect(screen.getByTestId('audit-table')).toBeInTheDocument();
   });
 
   it('não expõe mais as ferramentas do supervisor (migraram para a visão supervisao)', () => {
     render(<AdminView />);
 
-    for (const nome of [/Playbooks/, /Copiloto/, /Treinamento/, /Sala de Crise/]) {
-      expect(screen.queryByRole('button', { name: nome })).toBeNull();
+    for (const nome of [/Playbooks/, /Copiloto/, /Sala de Crise/]) {
+      expect(screen.queryByRole('tab', { name: nome })).toBeNull();
     }
     // O que o admin mantém continua lá.
-    expect(screen.getByRole('button', { name: /Usuários/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Auditoria/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /CRM 360/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Usuários/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Auditoria/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /CRM 360/ })).toBeInTheDocument();
   });
 });

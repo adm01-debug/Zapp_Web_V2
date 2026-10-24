@@ -17,6 +17,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration_file="$repo_root/supabase/migrations/20261010062941_talkx_campaign_recipients_page.sql"
+migration_file2="$repo_root/supabase/migrations/20261023100000_talkx_campaign_recipients_page_add_segment.sql"
 postgres_image="${TALKX_RECIPIENTS_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-talkx-recipients-$RANDOM-$$"
 admin_uid='30000000-0000-0000-0000-000000000001'
@@ -34,6 +35,7 @@ fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 psql_test() { docker exec -i "$container_name" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
 
 [[ -f "$migration_file" ]] || fail "migration do N-095 nao existe"
+[[ -f "$migration_file2" ]] || fail "migration de segmento N-095 nao existe"
 
 ready=false
 for attempt in 1 2 3; do
@@ -114,10 +116,11 @@ if call authenticated "$creator_uid" "'$camp', 5" >/dev/null 2>&1; then
 fi
 printf 'RED ok: funcao inexistente antes da migration\n'
 
-# === Aplica a migration real do repo ===
-psql_test >/dev/null < "$migration_file" || fail 'falha ao aplicar a migration'
+# === Aplica as migrations do repo (base 5-arg + segmento 6-arg) ===
+psql_test >/dev/null < "$migration_file" || fail 'falha ao aplicar a migration base'
+psql_test >/dev/null < "$migration_file2" || fail 'falha ao aplicar a migration de segmento'
 
-fn='public.talkx_campaign_recipients_page(uuid,integer,text,text,text)'
+fn='public.talkx_campaign_recipients_page(uuid,integer,text,text,uuid,text)'
 [[ "$(psql_test -Atqc "SELECT has_function_privilege('authenticated','$fn','EXECUTE')::int + has_function_privilege('service_role','$fn','EXECUTE')::int")" == 2 ]] || fail 'authenticated/service_role devem ter EXECUTE'
 [[ "$(psql_test -Atqc "SELECT has_function_privilege('anon','$fn','EXECUTE')::int")" == 0 ]] || fail 'anon nao deve ter EXECUTE'
 [[ "$(psql_test -Atqc "SELECT count(*) FROM pg_proc WHERE proname='talkx_campaign_recipients_page' AND prosecdef AND 'search_path=public, pg_temp' = ANY(proconfig)")" == 1 ]] || fail 'SECURITY DEFINER com search_path=public, pg_temp ausente'
@@ -172,7 +175,7 @@ done
 # === Filtros ===
 r=$(call authenticated "$creator_uid" "'$camp', 20, NULL, 'sent'" | last)
 [[ "$(jget "len(d['rows'])" <<<"$r")" == 8 && "$(jget "d['total']" <<<"$r")" == 8 ]] || fail "status=sent deveria dar 8: $r"
-r=$(call authenticated "$creator_uid" "'$camp', 20, NULL, NULL, '000000000105'" | last)
+r=$(call authenticated "$creator_uid" "'$camp', 20, NULL, NULL, NULL, '000000000105'" | last)
 [[ "$(jget "len(d['rows'])" <<<"$r")" == 1 && "$(jget "d['total']" <<<"$r")" == 1 ]] || fail "busca 000000000105 deveria dar 1: $r"
 
 # === Sem campo de origem/canal ===

@@ -14,8 +14,13 @@ const { mockInvokeEdge, mockRefreshSession, mockFrom, mockUpload } = vi.hoisted(
   mockUpload: vi.fn(),
 }));
 
-vi.mock('@/lib/supabaseHelpers', () => ({
-  invokeEdge: mockInvokeEdge,
+vi.mock('@/lib/invokeEdge', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/invokeEdge')>('@/lib/invokeEdge');
+  return { ...actual, invokeEdge: mockInvokeEdge };
+});
+
+vi.mock('@/integrations/supabase/client', () => ({
+  SUPABASE_URL: 'https://proj.supabase.co',
   supabase: {
     auth: { refreshSession: mockRefreshSession },
     from: mockFrom.mockImplementation(() => ({
@@ -29,6 +34,7 @@ vi.mock('@/lib/supabaseHelpers', () => ({
       from: vi.fn(() => ({
         upload: mockUpload,
         getPublicUrl: vi.fn(() => ({ data: { publicUrl: 'https://exemplo/avatar.png' } })),
+        createSignedUrl: vi.fn().mockResolvedValue({ data: { signedUrl: 'https://signed/avatar.png' }, error: null }),
       })),
     },
   },
