@@ -27,6 +27,8 @@
  * em dependência de rede/hidratação. O try/catch local é o mesmo contrato.
  */
 
+import { isSupabaseSessionKey, readAuthenticatedUserId } from './authSession';
+
 export interface MediaVolumeState {
   volume: number;
   muted: boolean;
@@ -53,10 +55,6 @@ export const MEDIA_VOLUME_CHANNEL_NAME = 'zapp-media-volume';
 export const MEDIA_VOLUME_STEP = 5;
 
 export const DEFAULT_MEDIA_VOLUME_STATE: MediaVolumeState = { volume: 80, muted: false };
-
-/** Sessão do `supabase-js` no `localStorage`: `sb-<ref>-auth-token`. */
-const SUPABASE_SESSION_KEY_PREFIX = 'sb-';
-const SUPABASE_SESSION_KEY_SUFFIX = '-auth-token';
 
 type Listener = () => void;
 
@@ -132,35 +130,6 @@ function readPersistedMuted(raw: string | null): boolean {
   return raw === 'true' || raw === '1';
 }
 
-function isSupabaseSessionKey(key: string | null): boolean {
-  return Boolean(key && key.startsWith(SUPABASE_SESSION_KEY_PREFIX) && key.endsWith(SUPABASE_SESSION_KEY_SUFFIX));
-}
-
-/**
- * Id do usuário autenticado da sessão persistida pelo `supabase-js` (o cliente usa
- * `window.localStorage` — `@/integrations/supabase/client`). A varredura não presume
- * o ref do projeto (o mesmo padrão já usado nos fixtures do e2e). Tolerante (E02):
- * storage bloqueado, JSON estranho ou sessão sem `user.id` → `null` = "sem usuário".
- */
-function readAuthenticatedUserId(): string | null {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return null;
-    const storage = window.localStorage;
-    for (let index = 0; index < storage.length; index += 1) {
-      const key = storage.key(index);
-      if (!isSupabaseSessionKey(key)) continue;
-      const raw = storage.getItem(key as string);
-      if (!raw) continue;
-      const parsed = JSON.parse(raw) as { access_token?: unknown; user?: { id?: unknown } } | null;
-      const userId = parsed?.user?.id;
-      if (typeof parsed?.access_token === 'string' && typeof userId === 'string' && userId) return userId;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
 function readPersistedState(userId: string | null): MediaVolumeState {
   const keys = mediaVolumeStorageKeys(userId);
   return {
@@ -183,8 +152,10 @@ function migrateLegacyKeys(userId: string | null): void {
   const keys = mediaVolumeStorageKeys(userId);
   const legacyVolume = readStorage(MEDIA_VOLUME_STORAGE_KEYS.volume);
   const legacyMuted = readStorage(MEDIA_VOLUME_STORAGE_KEYS.muted);
-  if (legacyVolume !== null && readStorage(keys.volume) === null) writeStorage(keys.volume, legacyVolume);
-  if (legacyMuted !== null && readStorage(keys.muted) === null) writeStorage(keys.muted, legacyMuted);
+  if (legacyVolume !== null && readStorage(keys.volume) === null)
+    writeStorage(keys.volume, legacyVolume);
+  if (legacyMuted !== null && readStorage(keys.muted) === null)
+    writeStorage(keys.muted, legacyMuted);
   writeStorage(MEDIA_VOLUME_LEGACY_MIGRATION_KEY, '1');
 }
 
@@ -245,7 +216,11 @@ function applyExternalState(payload: unknown): void {
   if (!payload || typeof payload !== 'object') return;
   // A identidade pode ter mudado desde o último evento (login/logout em outra aba).
   syncIdentity(false);
-  const { userId, volume, muted } = payload as { userId?: unknown; volume?: unknown; muted?: unknown };
+  const { userId, volume, muted } = payload as {
+    userId?: unknown;
+    volume?: unknown;
+    muted?: unknown;
+  };
   // Outra conta no mesmo navegador não manda no meu volume (é o B7 de novo, agora entre abas).
   if (userId !== currentUserId) return;
   const patch: Partial<MediaVolumeState> = {};
