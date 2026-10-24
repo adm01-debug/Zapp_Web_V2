@@ -1,0 +1,6 @@
+worktree=/home/joaquim_ataides/projetos/Zapp_Web_V3_fix_10_10_exec_20260826
+head=f050a9a252d9de689b6178dc26d335e02e680b78
+entries=5
+untracked=1
+unstaged_patch_bytes=5498
+staged_patch_bytes=0

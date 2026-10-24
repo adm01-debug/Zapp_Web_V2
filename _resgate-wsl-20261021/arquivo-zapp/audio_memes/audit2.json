@@ -1,0 +1,3418 @@
+{
+ "rls_status": {
+  "ms": 7,
+  "rows": [
+   {
+    "relname": "audio_memes",
+    "relrowsecurity": true,
+    "relforcerowsecurity": false
+   }
+  ],
+  "row_count": 1,
+  "truncated": false
+ },
+ "policies": [
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert own achievements",
+   "roles": "{authenticated}",
+   "table": "agent_achievements",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((profile_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own or admin all achievements",
+   "roles": "{authenticated}",
+   "table": "agent_achievements",
+   "using": "((profile_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage skills",
+   "roles": "{authenticated}",
+   "table": "agent_skills",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own or admin all skills",
+   "roles": "{authenticated}",
+   "table": "agent_skills",
+   "using": "((profile_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Only admins can update agent stats",
+   "roles": "{authenticated}",
+   "table": "agent_stats",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert own stats",
+   "roles": "{authenticated}",
+   "table": "agent_stats",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((profile_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view agent stats",
+   "roles": "{authenticated}",
+   "table": "agent_stats",
+   "using": "((profile_id IN ( SELECT p.id\n   FROM profiles p\n  WHERE (p.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins and supervisors can manage visibility grants",
+   "roles": "{authenticated}",
+   "table": "agent_visibility_grants",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Special agents can view own grants",
+   "roles": "{authenticated}",
+   "table": "agent_visibility_grants",
+   "using": "(has_role(auth.uid(), 'special_agent'::app_role) AND (agent_id IN ( SELECT p.id\n   FROM profiles p\n  WHERE (p.user_id = auth.uid()))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete ai tags",
+   "roles": "{authenticated}",
+   "table": "ai_conversation_tags",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admins can update ai tags",
+   "roles": "{authenticated}",
+   "table": "ai_conversation_tags",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Agents can delete tags on assigned contacts",
+   "roles": "{authenticated}",
+   "table": "ai_conversation_tags",
+   "using": "((EXISTS ( SELECT 1\n   FROM (contacts c\n     JOIN profiles p ON ((p.id = c.assigned_to)))\n  WHERE ((c.id = ai_conversation_tags.contact_id) AND (p.user_id = auth.uid())))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view ai tags",
+   "roles": "{authenticated}",
+   "table": "ai_conversation_tags",
+   "using": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT p.id\n           FROM profiles p\n          WHERE (p.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert ai tags for assigned contacts",
+   "roles": "{authenticated}",
+   "table": "ai_conversation_tags",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT profiles.id\n           FROM profiles\n          WHERE (profiles.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete AI providers",
+   "roles": "{authenticated}",
+   "table": "ai_providers",
+   "using": "has_role(auth.uid(), 'admin'::app_role)",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert AI providers",
+   "roles": "{authenticated}",
+   "table": "ai_providers",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "has_role(auth.uid(), 'admin'::app_role)"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admins can update AI providers",
+   "roles": "{authenticated}",
+   "table": "ai_providers",
+   "using": "has_role(auth.uid(), 'admin'::app_role)",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view AI providers",
+   "roles": "{authenticated}",
+   "table": "ai_providers",
+   "using": "has_role(auth.uid(), 'admin'::app_role)",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view all AI usage logs",
+   "roles": "{authenticated}",
+   "table": "ai_usage_logs",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Service role can insert AI usage logs",
+   "roles": "{service_role}",
+   "table": "ai_usage_logs",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "true"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own AI usage logs",
+   "roles": "{authenticated}",
+   "table": "ai_usage_logs",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete allowed countries",
+   "roles": "{authenticated}",
+   "table": "allowed_countries",
+   "using": "is_admin(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert allowed countries",
+   "roles": "{authenticated}",
+   "table": "allowed_countries",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view allowed countries",
+   "roles": "{authenticated}",
+   "table": "allowed_countries",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Users manage own meme favorites",
+   "roles": "{authenticated}",
+   "table": "audio_meme_favorites",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "(user_id = auth.uid())"
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Authenticated users can insert audio memes",
+   "roles": "{authenticated}",
+   "table": "audio_memes",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(uploaded_by = auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can read audio memes",
+   "roles": "{authenticated}",
+   "table": "audio_memes",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Authenticated users can update audio memes",
+   "roles": "{authenticated}",
+   "table": "audio_memes",
+   "using": "((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": "((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete own audio memes",
+   "roles": "{authenticated}",
+   "table": "audio_memes",
+   "using": "((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Block authenticated deletes on audit_logs",
+   "roles": "{authenticated}",
+   "table": "audit_logs",
+   "using": "false",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Block authenticated updates on audit_logs",
+   "roles": "{authenticated}",
+   "table": "audit_logs",
+   "using": "false",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Block direct audit log inserts",
+   "roles": "{authenticated}",
+   "table": "audit_logs",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "false"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Only admins can view audit logs",
+   "roles": "{authenticated}",
+   "table": "audit_logs",
+   "using": "has_role(auth.uid(), 'admin'::app_role)",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage auto-close config",
+   "roles": "{authenticated}",
+   "table": "auto_close_config",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can view auto-close config",
+   "roles": "{authenticated}",
+   "table": "auto_close_config",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admin/supervisor can create automations",
+   "roles": "{authenticated}",
+   "table": "automations",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admin/supervisor can delete automations",
+   "roles": "{authenticated}",
+   "table": "automations",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admin/supervisor can update automations",
+   "roles": "{authenticated}",
+   "table": "automations",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Automations visible to admins only",
+   "roles": "{authenticated}",
+   "table": "automations",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage away messages",
+   "roles": "{authenticated}",
+   "table": "away_messages",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can view away messages",
+   "roles": "{authenticated}",
+   "table": "away_messages",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete blocked countries",
+   "roles": "{authenticated}",
+   "table": "blocked_countries",
+   "using": "is_admin(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert blocked countries",
+   "roles": "{authenticated}",
+   "table": "blocked_countries",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view blocked countries",
+   "roles": "{authenticated}",
+   "table": "blocked_countries",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete blocked IPs",
+   "roles": "{authenticated}",
+   "table": "blocked_ips",
+   "using": "is_admin(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert blocked IPs",
+   "roles": "{authenticated}",
+   "table": "blocked_ips",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin(auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admins can update blocked IPs",
+   "roles": "{authenticated}",
+   "table": "blocked_ips",
+   "using": "is_admin(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Only admins can view blocked IPs",
+   "roles": "{authenticated}",
+   "table": "blocked_ips",
+   "using": "((EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::app_role)))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage business hours",
+   "roles": "{authenticated}",
+   "table": "business_hours",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can view business hours",
+   "roles": "{authenticated}",
+   "table": "business_hours",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert calls",
+   "roles": "{authenticated}",
+   "table": "calls",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((agent_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update their calls",
+   "roles": "{authenticated}",
+   "table": "calls",
+   "using": "(agent_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own calls",
+   "roles": "{authenticated}",
+   "table": "calls",
+   "using": "((agent_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view AB variants",
+   "roles": "{authenticated}",
+   "table": "campaign_ab_variants",
+   "using": "(auth.uid() IS NOT NULL)",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Campaign owners or admins can delete AB variants",
+   "roles": "{authenticated}",
+   "table": "campaign_ab_variants",
+   "using": "(EXISTS ( SELECT 1\n   FROM campaigns c\n  WHERE ((c.id = campaign_ab_variants.campaign_id) AND ((c.created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid())))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Campaign owners or admins can insert AB variants",
+   "roles": "{authenticated}",
+   "table": "campaign_ab_variants",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(EXISTS ( SELECT 1\n   FROM campaigns c\n  WHERE ((c.id = campaign_ab_variants.campaign_id) AND ((c.created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid())))))"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Campaign owners or admins can update AB variants",
+   "roles": "{authenticated}",
+   "table": "campaign_ab_variants",
+   "using": "(EXISTS ( SELECT 1\n   FROM campaigns c\n  WHERE ((c.id = campaign_ab_variants.campaign_id) AND ((c.created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid())))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert campaign contacts",
+   "roles": "{authenticated}",
+   "table": "campaign_contacts",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage campaign contacts",
+   "roles": "{authenticated}",
+   "table": "campaign_contacts",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view campaign contacts",
+   "roles": "{authenticated}",
+   "table": "campaign_contacts",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert campaigns",
+   "roles": "{authenticated}",
+   "table": "campaigns",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage campaigns",
+   "roles": "{authenticated}",
+   "table": "campaigns",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Campaigns visible to admins or creator",
+   "roles": "{authenticated}",
+   "table": "campaigns",
+   "using": "(is_admin_or_supervisor(auth.uid()) OR (created_by = ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())\n LIMIT 1)))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins full access to channels",
+   "roles": "{authenticated}",
+   "table": "channel_connections",
+   "using": "has_role(auth.uid(), 'admin'::app_role)",
+   "permissive": "PERMISSIVE",
+   "with_check": "has_role(auth.uid(), 'admin'::app_role)"
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage routing rules",
+   "roles": "{authenticated}",
+   "table": "channel_routing_rules",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view routing rules",
+   "roles": "{authenticated}",
+   "table": "channel_routing_rules",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage chatbot executions",
+   "roles": "{authenticated}",
+   "table": "chatbot_executions",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view chatbot executions",
+   "roles": "{authenticated}",
+   "table": "chatbot_executions",
+   "using": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT p.id\n           FROM profiles p\n          WHERE (p.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert chatbot flows",
+   "roles": "{authenticated}",
+   "table": "chatbot_flows",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage chatbot flows",
+   "roles": "{authenticated}",
+   "table": "chatbot_flows",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view chatbot flows",
+   "roles": "{authenticated}",
+   "table": "chatbot_flows",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage wallet rules",
+   "roles": "{authenticated}",
+   "table": "client_wallet_rules",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Wallet rules visible to admins only",
+   "roles": "{authenticated}",
+   "table": "client_wallet_rules",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete health logs",
+   "roles": "{authenticated}",
+   "table": "connection_health_logs",
+   "using": "is_admin(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert health logs",
+   "roles": "{authenticated}",
+   "table": "connection_health_logs",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view health logs",
+   "roles": "{authenticated}",
+   "table": "connection_health_logs",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Authenticated can delete own custom fields",
+   "roles": "{authenticated}",
+   "table": "contact_custom_fields",
+   "using": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT profiles.id\n           FROM profiles\n          WHERE (profiles.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Authenticated can update own custom fields",
+   "roles": "{authenticated}",
+   "table": "contact_custom_fields",
+   "using": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT profiles.id\n           FROM profiles\n          WHERE (profiles.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view custom fields",
+   "roles": "{authenticated}",
+   "table": "contact_custom_fields",
+   "using": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT p.id\n           FROM profiles p\n          WHERE (p.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert custom fields for assigned contacts",
+   "roles": "{authenticated}",
+   "table": "contact_custom_fields",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT profiles.id\n           FROM profiles\n          WHERE (profiles.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "ALL",
+   "name": "service_role_full_access",
+   "roles": "{service_role}",
+   "table": "contact_identity_map",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": "true"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "supervisor_read",
+   "roles": "{authenticated}",
+   "table": "contact_identity_map",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Authenticated users can insert notes",
+   "roles": "{authenticated}",
+   "table": "contact_notes",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(author_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())))"
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete their own notes",
+   "roles": "{authenticated}",
+   "table": "contact_notes",
+   "using": "(author_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update their own notes",
+   "roles": "{authenticated}",
+   "table": "contact_notes",
+   "using": "(author_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view notes on accessible contacts",
+   "roles": "{authenticated}",
+   "table": "contact_notes",
+   "using": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT profiles.id\n           FROM profiles\n          WHERE (profiles.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "contact_notes_select_policy",
+   "roles": "{authenticated}",
+   "table": "contact_notes",
+   "using": "(is_admin_or_supervisor(auth.uid()) OR (author_id IN ( SELECT p.id\n   FROM profiles p\n  WHERE (p.user_id = auth.uid()))) OR (contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Agents can delete purchases for assigned contacts",
+   "roles": "{authenticated}",
+   "table": "contact_purchases",
+   "using": "(is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Agents can insert purchases for assigned contacts",
+   "roles": "{authenticated}",
+   "table": "contact_purchases",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Agents can update purchases for assigned contacts",
+   "roles": "{authenticated}",
+   "table": "contact_purchases",
+   "using": "(is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Agents can view purchases for assigned contacts",
+   "roles": "{authenticated}",
+   "table": "contact_purchases",
+   "using": "(is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Authenticated can delete contact tags",
+   "roles": "{authenticated}",
+   "table": "contact_tags",
+   "using": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT profiles.id\n           FROM profiles\n          WHERE (profiles.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert tags for assigned contacts",
+   "roles": "{authenticated}",
+   "table": "contact_tags",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT profiles.id\n           FROM profiles\n          WHERE (profiles.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view contact tags",
+   "roles": "{authenticated}",
+   "table": "contact_tags",
+   "using": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT p.id\n           FROM profiles p\n          WHERE (p.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert contacts",
+   "roles": "{authenticated}",
+   "table": "contacts",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(is_admin_or_supervisor(auth.uid()) OR ((assigned_to IS NOT NULL) AND (assigned_to IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())))))"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update their assigned contacts",
+   "roles": "{authenticated}",
+   "table": "contacts",
+   "using": "((assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "contacts_select_policy",
+   "roles": "{authenticated}",
+   "table": "contacts",
+   "using": "(is_admin_or_supervisor(auth.uid()) OR (assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)) OR (EXISTS ( SELECT 1\n   FROM queue_members qm\n  WHERE ((qm.queue_id = contacts.queue_id) AND (qm.profile_id = get_profile_id_for_user(auth.uid())) AND (qm.is_active = true)))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can view analyses",
+   "roles": "{authenticated}",
+   "table": "conversation_analyses",
+   "using": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT p.id\n           FROM profiles p\n          WHERE (p.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert own analyses",
+   "roles": "{authenticated}",
+   "table": "conversation_analyses",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((analyzed_by IS NULL) OR (analyzed_by IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Agents can create closures for their contacts",
+   "roles": "{authenticated}",
+   "table": "conversation_closures",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_contact_visible_to_user(contact_id, auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Agents or admins can view closures",
+   "roles": "{authenticated}",
+   "table": "conversation_closures",
+   "using": "(is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Agents or admins can view conversation events",
+   "roles": "{authenticated}",
+   "table": "conversation_events",
+   "using": "(is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Authorized users can insert events",
+   "roles": "{authenticated}",
+   "table": "conversation_events",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(((performed_by IS NULL) OR (performed_by = ( SELECT p.id\n   FROM profiles p\n  WHERE (p.user_id = auth.uid())\n LIMIT 1))) AND (is_admin_or_supervisor(auth.uid()) OR (contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to = ( SELECT p.id\n           FROM profiles p\n          WHERE (p.user_id = auth.uid())\n         LIMIT 1))))))"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "conversation_events_select_policy",
+   "roles": "{authenticated}",
+   "table": "conversation_events",
+   "using": "(is_admin_or_supervisor(auth.uid()) OR (contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Agents can insert memory for their contacts",
+   "roles": "{authenticated}",
+   "table": "conversation_memory",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_contact_visible_to_user(contact_id, auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Agents can update memory for their contacts",
+   "roles": "{authenticated}",
+   "table": "conversation_memory",
+   "using": "is_contact_visible_to_user(contact_id, auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Agents or admins can view memory",
+   "roles": "{authenticated}",
+   "table": "conversation_memory",
+   "using": "(is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert SLA",
+   "roles": "{authenticated}",
+   "table": "conversation_sla",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admins can update SLA",
+   "roles": "{authenticated}",
+   "table": "conversation_sla",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can view SLA data",
+   "roles": "{authenticated}",
+   "table": "conversation_sla",
+   "using": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT p.id\n           FROM profiles p\n          WHERE (p.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "conversation_sla_select_policy",
+   "roles": "{authenticated}",
+   "table": "conversation_sla",
+   "using": "(is_admin_or_supervisor(auth.uid()) OR (contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can create own snoozes",
+   "roles": "{authenticated}",
+   "table": "conversation_snoozes",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(snoozed_by IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())))"
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete own snoozes",
+   "roles": "{authenticated}",
+   "table": "conversation_snoozes",
+   "using": "(snoozed_by IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own snoozes",
+   "roles": "{authenticated}",
+   "table": "conversation_snoozes",
+   "using": "(snoozed_by IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Agents can create tasks for their contacts",
+   "roles": "{authenticated}",
+   "table": "conversation_tasks",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_contact_visible_to_user(contact_id, auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Agents can update own or assigned tasks",
+   "roles": "{authenticated}",
+   "table": "conversation_tasks",
+   "using": "((assigned_to = get_profile_id_for_user(auth.uid())) OR (created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Agents or admins can view tasks",
+   "roles": "{authenticated}",
+   "table": "conversation_tasks",
+   "using": "(is_contact_visible_to_user(contact_id, auth.uid()) OR (assigned_to = get_profile_id_for_user(auth.uid())) OR (created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Creators or admins can delete tasks",
+   "roles": "{authenticated}",
+   "table": "conversation_tasks",
+   "using": "((created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete crisis alerts",
+   "roles": "{authenticated}",
+   "table": "crisis_room_alerts",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert crisis alerts",
+   "roles": "{authenticated}",
+   "table": "crisis_room_alerts",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admins can update crisis alerts",
+   "roles": "{authenticated}",
+   "table": "crisis_room_alerts",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view crisis alerts",
+   "roles": "{authenticated}",
+   "table": "crisis_room_alerts",
+   "using": "(auth.uid() IS NOT NULL)",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage csat config",
+   "roles": "{authenticated}",
+   "table": "csat_auto_config",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view csat config",
+   "roles": "{authenticated}",
+   "table": "csat_auto_config",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert CSAT surveys",
+   "roles": "{authenticated}",
+   "table": "csat_surveys",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((agent_id IS NULL) OR (agent_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own CSAT surveys",
+   "roles": "{authenticated}",
+   "table": "csat_surveys",
+   "using": "((agent_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Authenticated users can insert custom emojis",
+   "roles": "{authenticated}",
+   "table": "custom_emojis",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(uploaded_by = auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Authenticated users can update custom emojis",
+   "roles": "{authenticated}",
+   "table": "custom_emojis",
+   "using": "((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": "((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can view custom emojis",
+   "roles": "{authenticated}",
+   "table": "custom_emojis",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete own or admin custom emojis",
+   "roles": "{authenticated}",
+   "table": "custom_emojis",
+   "using": "((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view deal activities",
+   "roles": "{authenticated}",
+   "table": "deal_activities",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Agents can view activities on their deals",
+   "roles": "{authenticated}",
+   "table": "deal_activities",
+   "using": "(is_admin_or_supervisor(auth.uid()) OR (performed_by = get_profile_id_for_user(auth.uid())) OR (deal_id IN ( SELECT sd.id\n   FROM sales_deals sd\n  WHERE (sd.assigned_to = get_profile_id_for_user(auth.uid())))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Authenticated can insert deal activities",
+   "roles": "{authenticated}",
+   "table": "deal_activities",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((performed_by IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "ALL",
+   "name": "department_invitations_admin_all",
+   "roles": "{authenticated}",
+   "table": "department_invitations",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "ALL",
+   "name": "departments_admin_write",
+   "roles": "{authenticated}",
+   "table": "departments",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "departments_select",
+   "roles": "{authenticated}",
+   "table": "departments",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view attachments of own accounts",
+   "roles": "{authenticated}",
+   "table": "email_attachments",
+   "using": "(EXISTS ( SELECT 1\n   FROM (email_messages em\n     JOIN gmail_accounts ga ON ((ga.id = em.gmail_account_id)))\n  WHERE ((em.id = email_attachments.email_message_id) AND ((ga.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid())))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "service_role inserts email attachments",
+   "roles": "{service_role}",
+   "table": "email_attachments",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "true"
+  },
+  {
+   "cmd": "ALL",
+   "name": "Users can manage labels of own accounts",
+   "roles": "{authenticated}",
+   "table": "email_labels",
+   "using": "(EXISTS ( SELECT 1\n   FROM gmail_accounts ga\n  WHERE ((ga.id = email_labels.gmail_account_id) AND (ga.user_id = auth.uid()))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view labels of own accounts",
+   "roles": "{authenticated}",
+   "table": "email_labels",
+   "using": "(EXISTS ( SELECT 1\n   FROM gmail_accounts ga\n  WHERE ((ga.id = email_labels.gmail_account_id) AND ((ga.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid())))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update messages of own accounts",
+   "roles": "{authenticated}",
+   "table": "email_messages",
+   "using": "(EXISTS ( SELECT 1\n   FROM gmail_accounts ga\n  WHERE ((ga.id = email_messages.gmail_account_id) AND ((ga.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid())))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view messages of own accounts",
+   "roles": "{authenticated}",
+   "table": "email_messages",
+   "using": "(EXISTS ( SELECT 1\n   FROM gmail_accounts ga\n  WHERE ((ga.id = email_messages.gmail_account_id) AND ((ga.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid())))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete threads of own accounts",
+   "roles": "{authenticated}",
+   "table": "email_threads",
+   "using": "(EXISTS ( SELECT 1\n   FROM gmail_accounts ga\n  WHERE ((ga.id = email_threads.gmail_account_id) AND (ga.user_id = auth.uid()))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update threads of own accounts",
+   "roles": "{authenticated}",
+   "table": "email_threads",
+   "using": "(EXISTS ( SELECT 1\n   FROM gmail_accounts ga\n  WHERE ((ga.id = email_threads.gmail_account_id) AND ((ga.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid())))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view threads of own accounts",
+   "roles": "{authenticated}",
+   "table": "email_threads",
+   "using": "(EXISTS ( SELECT 1\n   FROM gmail_accounts ga\n  WHERE ((ga.id = email_threads.gmail_account_id) AND ((ga.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid())))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view entity versions",
+   "roles": "{authenticated}",
+   "table": "entity_versions",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Block authenticated version inserts",
+   "roles": "{authenticated}",
+   "table": "entity_versions",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "false"
+  },
+  {
+   "cmd": "ALL",
+   "name": "Users can manage own favorites",
+   "roles": "{authenticated}",
+   "table": "favorite_contacts",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage followup executions",
+   "roles": "{authenticated}",
+   "table": "followup_executions",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view followup executions",
+   "roles": "{authenticated}",
+   "table": "followup_executions",
+   "using": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT p.id\n           FROM profiles p\n          WHERE (p.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage followup sequences",
+   "roles": "{authenticated}",
+   "table": "followup_sequences",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view followup sequences",
+   "roles": "{authenticated}",
+   "table": "followup_sequences",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage followup steps",
+   "roles": "{authenticated}",
+   "table": "followup_steps",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view followup steps",
+   "roles": "{authenticated}",
+   "table": "followup_steps",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage geo settings",
+   "roles": "{authenticated}",
+   "table": "geo_blocking_settings",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Geo blocking visible to admins only",
+   "roles": "{authenticated}",
+   "table": "geo_blocking_settings",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage global settings",
+   "roles": "{authenticated}",
+   "table": "global_settings",
+   "using": "is_admin(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view global settings",
+   "roles": "{authenticated}",
+   "table": "global_settings",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Block authenticated gmail deletes",
+   "roles": "{authenticated}",
+   "table": "gmail_accounts",
+   "using": "false",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Block authenticated gmail inserts",
+   "roles": "{authenticated}",
+   "table": "gmail_accounts",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "false"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Block authenticated gmail updates",
+   "roles": "{authenticated}",
+   "table": "gmail_accounts",
+   "using": "false",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Service role only for gmail accounts",
+   "roles": "{service_role}",
+   "table": "gmail_accounts",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": "true"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view their own gmail accounts",
+   "roles": "{authenticated}",
+   "table": "gmail_accounts",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Users can manage their own goals",
+   "roles": "{authenticated}",
+   "table": "goals_configurations",
+   "using": "((profile_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": "((profile_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view their own goals",
+   "roles": "{authenticated}",
+   "table": "goals_configurations",
+   "using": "((profile_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage IP whitelist",
+   "roles": "{authenticated}",
+   "table": "ip_whitelist",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view IP whitelist",
+   "roles": "{authenticated}",
+   "table": "ip_whitelist",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage knowledge base",
+   "roles": "{authenticated}",
+   "table": "knowledge_base_articles",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view knowledge base",
+   "roles": "{authenticated}",
+   "table": "knowledge_base_articles",
+   "using": "((is_published = true) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage kb files",
+   "roles": "{authenticated}",
+   "table": "knowledge_base_files",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view knowledge base files",
+   "roles": "{authenticated}",
+   "table": "knowledge_base_files",
+   "using": "((article_id IN ( SELECT a.id\n   FROM knowledge_base_articles a\n  WHERE (a.is_published = true))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "admin_read",
+   "roles": "{authenticated}",
+   "table": "lid_audit_snapshot_20260902",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "service_role_full_access",
+   "roles": "{service_role}",
+   "table": "lid_audit_snapshot_20260902",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": "true"
+  },
+  {
+   "cmd": "ALL",
+   "name": "service_role manages link preview cache",
+   "roles": "{service_role}",
+   "table": "link_preview_cache",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": "true"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins/supervisors can read metrics",
+   "roles": "{authenticated}",
+   "table": "link_preview_cache_metrics",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "service_role inserts cache metrics",
+   "roles": "{service_role}",
+   "table": "link_preview_cache_metrics",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "true"
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Block authenticated inserts on login_attempts",
+   "roles": "{authenticated}",
+   "table": "login_attempts",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "false"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Block authenticated updates on login_attempts",
+   "roles": "{authenticated}",
+   "table": "login_attempts",
+   "using": "false",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Only admins can delete login attempts",
+   "roles": "{authenticated}",
+   "table": "login_attempts",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Only admins can view login attempts",
+   "roles": "{authenticated}",
+   "table": "login_attempts",
+   "using": "has_role(auth.uid(), 'admin'::app_role)",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete their own reactions",
+   "roles": "{authenticated}",
+   "table": "message_reactions",
+   "using": "(user_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert reactions for assigned contacts",
+   "roles": "{authenticated}",
+   "table": "message_reactions",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT p.id\n           FROM profiles p\n          WHERE (p.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view reactions on accessible messages",
+   "roles": "{authenticated}",
+   "table": "message_reactions",
+   "using": "((message_id IN ( SELECT m.id\n   FROM messages m\n  WHERE (m.contact_id IN ( SELECT c.id\n           FROM contacts c\n          WHERE ((c.assigned_to IN ( SELECT p.id\n                   FROM profiles p\n                  WHERE (p.user_id = auth.uid()))) OR (c.assigned_to IS NULL)))))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "message_reactions_delete_policy",
+   "roles": "{authenticated}",
+   "table": "message_reactions",
+   "using": "(EXISTS ( SELECT 1\n   FROM (messages m\n     JOIN contacts c ON ((c.id = m.contact_id)))\n  WHERE ((m.id = message_reactions.message_id) AND (is_admin_or_supervisor(auth.uid()) OR (c.assigned_to = get_profile_id_for_user(auth.uid())) OR (c.assigned_to IS NULL)))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "message_reactions_insert_policy",
+   "roles": "{authenticated}",
+   "table": "message_reactions",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(EXISTS ( SELECT 1\n   FROM (messages m\n     JOIN contacts c ON ((c.id = m.contact_id)))\n  WHERE ((m.id = message_reactions.message_id) AND (is_admin_or_supervisor(auth.uid()) OR (c.assigned_to = get_profile_id_for_user(auth.uid())) OR (c.assigned_to IS NULL)))))"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "message_reactions_select_policy",
+   "roles": "{authenticated}",
+   "table": "message_reactions",
+   "using": "(is_admin_or_supervisor(auth.uid()) OR (user_id = auth.uid()) OR (contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "message_reactions_update_policy",
+   "roles": "{authenticated}",
+   "table": "message_reactions",
+   "using": "(EXISTS ( SELECT 1\n   FROM (messages m\n     JOIN contacts c ON ((c.id = m.contact_id)))\n  WHERE ((m.id = message_reactions.message_id) AND (is_admin_or_supervisor(auth.uid()) OR (c.assigned_to = get_profile_id_for_user(auth.uid())) OR (c.assigned_to IS NULL)))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can create their own templates",
+   "roles": "{authenticated}",
+   "table": "message_templates",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(user_id = auth.uid())"
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete their own templates",
+   "roles": "{authenticated}",
+   "table": "message_templates",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update their own templates",
+   "roles": "{authenticated}",
+   "table": "message_templates",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view their templates and global ones",
+   "roles": "{authenticated}",
+   "table": "message_templates",
+   "using": "((user_id = auth.uid()) OR (is_global = true))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert messages",
+   "roles": "{authenticated}",
+   "table": "messages",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((agent_id IS NULL) OR (agent_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update messages from their assigned contacts",
+   "roles": "{authenticated}",
+   "table": "messages",
+   "using": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "messages_select_policy",
+   "roles": "{authenticated}",
+   "table": "messages",
+   "using": "(is_admin_or_supervisor(auth.uid()) OR (contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1\n   FROM (contacts c\n     JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))\n  WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(auth.uid())) AND (qm.is_active = true)))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage capi events",
+   "roles": "{authenticated}",
+   "table": "meta_capi_events",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view capi events",
+   "roles": "{authenticated}",
+   "table": "meta_capi_events",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Users can manage own MFA sessions",
+   "roles": "{authenticated}",
+   "table": "mfa_sessions",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "(user_id = auth.uid())"
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Block authenticated notification inserts",
+   "roles": "{authenticated}",
+   "table": "notifications",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "false"
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete own notifications",
+   "roles": "{authenticated}",
+   "table": "notifications",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update own notifications",
+   "roles": "{authenticated}",
+   "table": "notifications",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own notifications",
+   "roles": "{authenticated}",
+   "table": "notifications",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins and own agents can view NPS surveys",
+   "roles": "{authenticated}",
+   "table": "nps_surveys",
+   "using": "(is_admin_or_supervisor(auth.uid()) OR (agent_id = ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())\n LIMIT 1)))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete NPS surveys",
+   "roles": "{authenticated}",
+   "table": "nps_surveys",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admins can update NPS surveys",
+   "roles": "{authenticated}",
+   "table": "nps_surveys",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can create own NPS surveys",
+   "roles": "{authenticated}",
+   "table": "nps_surveys",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((agent_id IS NOT NULL) AND (agent_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))))"
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert reputation",
+   "roles": "{authenticated}",
+   "table": "number_reputation",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admins can update reputation",
+   "roles": "{authenticated}",
+   "table": "number_reputation",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view reputation",
+   "roles": "{authenticated}",
+   "table": "number_reputation",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete own passkeys",
+   "roles": "{authenticated}",
+   "table": "passkey_credentials",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert own passkeys",
+   "roles": "{authenticated}",
+   "table": "passkey_credentials",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(user_id = auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update own passkeys",
+   "roles": "{authenticated}",
+   "table": "passkey_credentials",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own passkeys",
+   "roles": "{authenticated}",
+   "table": "passkey_credentials",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete password reset requests",
+   "roles": "{authenticated}",
+   "table": "password_reset_requests",
+   "using": "has_role(auth.uid(), 'admin'::app_role)",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admins can update reset requests without token access",
+   "roles": "{authenticated}",
+   "table": "password_reset_requests",
+   "using": "has_role(auth.uid(), 'admin'::app_role)",
+   "permissive": "PERMISSIVE",
+   "with_check": "has_role(auth.uid(), 'admin'::app_role)"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view reset requests",
+   "roles": "{authenticated}",
+   "table": "password_reset_requests",
+   "using": "has_role(auth.uid(), 'admin'::app_role)",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can request own password reset",
+   "roles": "{authenticated}",
+   "table": "password_reset_requests",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(user_id = auth.uid())"
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete payment links",
+   "roles": "{authenticated}",
+   "table": "payment_links",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Authenticated can insert payment links",
+   "roles": "{authenticated}",
+   "table": "payment_links",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((created_by IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update own payment links",
+   "roles": "{authenticated}",
+   "table": "payment_links",
+   "using": "((created_by IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own payment links",
+   "roles": "{authenticated}",
+   "table": "payment_links",
+   "using": "((created_by IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete performance snapshots",
+   "roles": "{authenticated}",
+   "table": "performance_snapshots",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view all performance snapshots",
+   "roles": "{authenticated}",
+   "table": "performance_snapshots",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert own performance snapshots",
+   "roles": "{authenticated}",
+   "table": "performance_snapshots",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(profile_id = ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())\n LIMIT 1))"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own performance snapshots",
+   "roles": "{authenticated}",
+   "table": "performance_snapshots",
+   "using": "(profile_id = ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())\n LIMIT 1))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admin supervisor can view permissions",
+   "roles": "{authenticated}",
+   "table": "permissions",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage permissions",
+   "roles": "{authenticated}",
+   "table": "permissions",
+   "using": "is_admin(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin(auth.uid())"
+  },
+  {
+   "cmd": "ALL",
+   "name": "Users can manage own pins",
+   "roles": "{authenticated}",
+   "table": "pinned_conversations",
+   "using": "(pinned_by IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete playbooks",
+   "roles": "{authenticated}",
+   "table": "playbooks",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can manage playbooks",
+   "roles": "{authenticated}",
+   "table": "playbooks",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admins can update playbooks",
+   "roles": "{authenticated}",
+   "table": "playbooks",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view playbooks",
+   "roles": "{authenticated}",
+   "table": "playbooks",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert products",
+   "roles": "{authenticated}",
+   "table": "products",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage products",
+   "roles": "{authenticated}",
+   "table": "products",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can view products",
+   "roles": "{authenticated}",
+   "table": "products",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admin supervisor can view all profiles",
+   "roles": "{authenticated}",
+   "table": "profiles",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admins can update any profile",
+   "roles": "{authenticated}",
+   "table": "profiles",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Block sensitive field changes by non-admins",
+   "roles": "{authenticated}",
+   "table": "profiles",
+   "using": null,
+   "permissive": "RESTRICTIVE",
+   "with_check": "(is_admin_or_supervisor(auth.uid()) OR ((role = ( SELECT p.role\n   FROM profiles p\n  WHERE (p.user_id = auth.uid()))) AND (access_level = ( SELECT p.access_level\n   FROM profiles p\n  WHERE (p.user_id = auth.uid()))) AND (permissions = ( SELECT p.permissions\n   FROM profiles p\n  WHERE (p.user_id = auth.uid()))) AND (is_active = ( SELECT p.is_active\n   FROM profiles p\n  WHERE (p.user_id = auth.uid())))))"
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert their own profile safely",
+   "roles": "{authenticated}",
+   "table": "profiles",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((auth.uid() = user_id) AND ((role IS NULL) OR (role = 'agent'::text)) AND ((access_level IS NULL) OR (access_level = 'basic'::text)) AND ((permissions IS NULL) OR (permissions = '{}'::jsonb)))"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update own profile",
+   "roles": "{authenticated}",
+   "table": "profiles",
+   "using": "(auth.uid() = user_id)",
+   "permissive": "PERMISSIVE",
+   "with_check": "(auth.uid() = user_id)"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own profile",
+   "roles": "{authenticated}",
+   "table": "profiles",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete telemetry",
+   "roles": "{authenticated}",
+   "table": "query_telemetry",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert own telemetry",
+   "roles": "{authenticated}",
+   "table": "query_telemetry",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(user_id = auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own telemetry",
+   "roles": "{authenticated}",
+   "table": "query_telemetry",
+   "using": "((user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage queue goals",
+   "roles": "{authenticated}",
+   "table": "queue_goals",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can view queue goals",
+   "roles": "{authenticated}",
+   "table": "queue_goals",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage queue members",
+   "roles": "{authenticated}",
+   "table": "queue_members",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Queue members visible to admins or self",
+   "roles": "{authenticated}",
+   "table": "queue_members",
+   "using": "(is_admin_or_supervisor(auth.uid()) OR (profile_id = ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())\n LIMIT 1)))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage queue positions",
+   "roles": "{authenticated}",
+   "table": "queue_positions",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view queue positions",
+   "roles": "{authenticated}",
+   "table": "queue_positions",
+   "using": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT p.id\n           FROM profiles p\n          WHERE (p.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage queue skills",
+   "roles": "{authenticated}",
+   "table": "queue_skill_requirements",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view queue skills",
+   "roles": "{authenticated}",
+   "table": "queue_skill_requirements",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage queues",
+   "roles": "{authenticated}",
+   "table": "queues",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can view queues",
+   "roles": "{authenticated}",
+   "table": "queues",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage rate limit configs",
+   "roles": "{authenticated}",
+   "table": "rate_limit_configs",
+   "using": "is_admin(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can read rate limit configs",
+   "roles": "{authenticated}",
+   "table": "rate_limit_configs",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert rate limit logs",
+   "roles": "{authenticated}",
+   "table": "rate_limit_logs",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view rate limit logs",
+   "roles": "{authenticated}",
+   "table": "rate_limit_logs",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Users can manage own reminders",
+   "roles": "{authenticated}",
+   "table": "reminders",
+   "using": "(profile_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admin supervisor can view role permissions",
+   "roles": "{authenticated}",
+   "table": "role_permissions",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage role permissions",
+   "roles": "{authenticated}",
+   "table": "role_permissions",
+   "using": "is_admin(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin(auth.uid())"
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete deals",
+   "roles": "{authenticated}",
+   "table": "sales_deals",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert deals",
+   "roles": "{authenticated}",
+   "table": "sales_deals",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((assigned_to IS NULL) OR (assigned_to IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update assigned deals",
+   "roles": "{authenticated}",
+   "table": "sales_deals",
+   "using": "((assigned_to IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view assigned or admin deals",
+   "roles": "{authenticated}",
+   "table": "sales_deals",
+   "using": "(is_admin_or_supervisor(auth.uid()) OR (assigned_to IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage pipeline stages",
+   "roles": "{authenticated}",
+   "table": "sales_pipeline_stages",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view pipeline stages",
+   "roles": "{authenticated}",
+   "table": "sales_pipeline_stages",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete own saved filters",
+   "roles": "{authenticated}",
+   "table": "saved_filters",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert own saved filters",
+   "roles": "{authenticated}",
+   "table": "saved_filters",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(user_id = auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update own saved filters",
+   "roles": "{authenticated}",
+   "table": "saved_filters",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own saved filters",
+   "roles": "{authenticated}",
+   "table": "saved_filters",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view shared filters",
+   "roles": "{authenticated}",
+   "table": "saved_filters",
+   "using": "(is_shared = true)",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can create scheduled messages",
+   "roles": "{authenticated}",
+   "table": "scheduled_messages",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((created_by IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete their scheduled messages",
+   "roles": "{authenticated}",
+   "table": "scheduled_messages",
+   "using": "((created_by IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update their scheduled messages",
+   "roles": "{authenticated}",
+   "table": "scheduled_messages",
+   "using": "((created_by IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view their scheduled messages",
+   "roles": "{authenticated}",
+   "table": "scheduled_messages",
+   "using": "((created_by IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admin/supervisor can delete report configs",
+   "roles": "{authenticated}",
+   "table": "scheduled_report_configs",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admin/supervisor can insert report configs",
+   "roles": "{authenticated}",
+   "table": "scheduled_report_configs",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admin/supervisor can update report configs",
+   "roles": "{authenticated}",
+   "table": "scheduled_report_configs",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can read report configs",
+   "roles": "{authenticated}",
+   "table": "scheduled_report_configs",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert scheduled reports",
+   "roles": "{authenticated}",
+   "table": "scheduled_reports",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage scheduled reports",
+   "roles": "{authenticated}",
+   "table": "scheduled_reports",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view scheduled reports",
+   "roles": "{authenticated}",
+   "table": "scheduled_reports",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert security alerts",
+   "roles": "{authenticated}",
+   "table": "security_alerts",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage security alerts",
+   "roles": "{authenticated}",
+   "table": "security_alerts",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Authenticated users can insert sicoob mappings",
+   "roles": "{authenticated}",
+   "table": "sicoob_contact_mapping",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Only admins can view sicoob mappings",
+   "roles": "{authenticated}",
+   "table": "sicoob_contact_mapping",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Service role can manage sicoob mappings",
+   "roles": "{service_role}",
+   "table": "sicoob_contact_mapping",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": "true"
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage SLA configurations",
+   "roles": "{authenticated}",
+   "table": "sla_configurations",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can view SLA configurations",
+   "roles": "{authenticated}",
+   "table": "sla_configurations",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins and supervisors can delete SLA rules",
+   "roles": "{authenticated}",
+   "table": "sla_rules",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins and supervisors can insert SLA rules",
+   "roles": "{authenticated}",
+   "table": "sla_rules",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admins and supervisors can update SLA rules",
+   "roles": "{authenticated}",
+   "table": "sla_rules",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "SLA rules visible to admins only",
+   "roles": "{authenticated}",
+   "table": "sla_rules",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can view stickers",
+   "roles": "{authenticated}",
+   "table": "stickers",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Sticker delete with ownership",
+   "roles": "{authenticated}",
+   "table": "stickers",
+   "using": "((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Sticker insert with ownership",
+   "roles": "{authenticated}",
+   "table": "stickers",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Sticker update with ownership",
+   "roles": "{authenticated}",
+   "table": "stickers",
+   "using": "((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": "((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage tags",
+   "roles": "{authenticated}",
+   "table": "tags",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can view tags",
+   "roles": "{authenticated}",
+   "table": "tags",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert tags",
+   "roles": "{authenticated}",
+   "table": "tags",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((created_by IS NULL) OR (created_by IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can add to blacklist",
+   "roles": "{authenticated}",
+   "table": "talkx_blacklist",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can remove from blacklist",
+   "roles": "{authenticated}",
+   "table": "talkx_blacklist",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Only admins can view blacklist",
+   "roles": "{authenticated}",
+   "table": "talkx_blacklist",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view all campaigns",
+   "roles": "{authenticated}",
+   "table": "talkx_campaigns",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can create campaigns",
+   "roles": "{authenticated}",
+   "table": "talkx_campaigns",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(created_by = ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())\n LIMIT 1))"
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete own draft campaigns",
+   "roles": "{authenticated}",
+   "table": "talkx_campaigns",
+   "using": "((created_by = ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())\n LIMIT 1)) AND (status = 'draft'::text))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update own campaigns",
+   "roles": "{authenticated}",
+   "table": "talkx_campaigns",
+   "using": "(created_by = ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())\n LIMIT 1))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own campaigns",
+   "roles": "{authenticated}",
+   "table": "talkx_campaigns",
+   "using": "(created_by = ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())\n LIMIT 1))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete recipients of own campaigns",
+   "roles": "{authenticated}",
+   "table": "talkx_recipients",
+   "using": "(EXISTS ( SELECT 1\n   FROM talkx_campaigns tc\n  WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id\n           FROM profiles\n          WHERE (profiles.user_id = auth.uid())\n         LIMIT 1)) AND (tc.status = 'draft'::text))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert recipients to own campaigns",
+   "roles": "{authenticated}",
+   "table": "talkx_recipients",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(EXISTS ( SELECT 1\n   FROM talkx_campaigns tc\n  WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id\n           FROM profiles\n          WHERE (profiles.user_id = auth.uid())\n         LIMIT 1)))))"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update recipients of own campaigns",
+   "roles": "{authenticated}",
+   "table": "talkx_recipients",
+   "using": "(EXISTS ( SELECT 1\n   FROM talkx_campaigns tc\n  WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id\n           FROM profiles\n          WHERE (profiles.user_id = auth.uid())\n         LIMIT 1)))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view recipients of own campaigns",
+   "roles": "{authenticated}",
+   "table": "talkx_recipients",
+   "using": "(EXISTS ( SELECT 1\n   FROM talkx_campaigns tc\n  WHERE ((tc.id = talkx_recipients.campaign_id) AND ((tc.created_by = ( SELECT profiles.id\n           FROM profiles\n          WHERE (profiles.user_id = auth.uid())\n         LIMIT 1)) OR is_admin_or_supervisor(auth.uid())))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admins can update conversation members",
+   "roles": "{authenticated}",
+   "table": "team_conversation_members",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Members and admins can add conversation members",
+   "roles": "{authenticated}",
+   "table": "team_conversation_members",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(is_team_conversation_member(auth.uid(), conversation_id) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Members and admins can view conversation members",
+   "roles": "{authenticated}",
+   "table": "team_conversation_members",
+   "using": "(is_team_conversation_member(auth.uid(), conversation_id) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Members can leave or admins can remove",
+   "roles": "{authenticated}",
+   "table": "team_conversation_members",
+   "using": "((profile_id = ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid())\n LIMIT 1)) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Authenticated users can create conversations",
+   "roles": "{authenticated}",
+   "table": "team_conversations",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(created_by = ( SELECT p.id\n   FROM profiles p\n  WHERE (p.user_id = auth.uid())\n LIMIT 1))"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Creator can update conversation",
+   "roles": "{authenticated}",
+   "table": "team_conversations",
+   "using": "(created_by = ( SELECT p.id\n   FROM profiles p\n  WHERE (p.user_id = auth.uid())\n LIMIT 1))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Members can view their conversations",
+   "roles": "{authenticated}",
+   "table": "team_conversations",
+   "using": "(is_team_conversation_member(auth.uid(), id) OR (created_by = ( SELECT p.id\n   FROM profiles p\n  WHERE (p.user_id = auth.uid())\n LIMIT 1)))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "team_message_reactions_delete",
+   "roles": "{authenticated}",
+   "table": "team_message_reactions",
+   "using": "(EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = team_message_reactions.profile_id) AND (p.user_id = auth.uid()))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "team_message_reactions_insert",
+   "roles": "{authenticated}",
+   "table": "team_message_reactions",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = team_message_reactions.profile_id) AND (p.user_id = auth.uid())))) AND (EXISTS ( SELECT 1\n   FROM team_messages tm\n  WHERE ((tm.id = team_message_reactions.message_id) AND is_team_conversation_member(auth.uid(), tm.conversation_id)))))"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "team_message_reactions_select",
+   "roles": "{authenticated}",
+   "table": "team_message_reactions",
+   "using": "(EXISTS ( SELECT 1\n   FROM ((team_messages tm\n     JOIN team_conversation_members tcm ON ((tcm.conversation_id = tm.conversation_id)))\n     JOIN profiles p ON ((p.id = tcm.profile_id)))\n  WHERE ((tm.id = team_message_reactions.message_id) AND (p.user_id = auth.uid()))))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Members can send messages",
+   "roles": "{authenticated}",
+   "table": "team_messages",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(is_team_conversation_member(auth.uid(), conversation_id) AND (sender_id = ( SELECT p.id\n   FROM profiles p\n  WHERE (p.user_id = auth.uid())\n LIMIT 1)))"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Members can view conversation messages",
+   "roles": "{authenticated}",
+   "table": "team_messages",
+   "using": "is_team_conversation_member(auth.uid(), conversation_id)",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Senders can delete own messages",
+   "roles": "{authenticated}",
+   "table": "team_messages",
+   "using": "(sender_id = ( SELECT p.id\n   FROM profiles p\n  WHERE (p.user_id = auth.uid())\n LIMIT 1))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Senders can edit own messages",
+   "roles": "{authenticated}",
+   "table": "team_messages",
+   "using": "(sender_id = ( SELECT p.id\n   FROM profiles p\n  WHERE (p.user_id = auth.uid())\n LIMIT 1))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete own training sessions",
+   "roles": "{authenticated}",
+   "table": "training_sessions",
+   "using": "((profile_id = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert own training sessions",
+   "roles": "{authenticated}",
+   "table": "training_sessions",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((profile_id = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update own training sessions",
+   "roles": "{authenticated}",
+   "table": "training_sessions",
+   "using": "((profile_id = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own training sessions",
+   "roles": "{authenticated}",
+   "table": "training_sessions",
+   "using": "((profile_id = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view all user devices",
+   "roles": "{authenticated}",
+   "table": "user_devices",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete their own devices",
+   "roles": "{authenticated}",
+   "table": "user_devices",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert their own devices",
+   "roles": "{authenticated}",
+   "table": "user_devices",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(user_id = auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update their own devices",
+   "roles": "{authenticated}",
+   "table": "user_devices",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view their own devices",
+   "roles": "{authenticated}",
+   "table": "user_devices",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Only admins can manage roles",
+   "roles": "{authenticated}",
+   "table": "user_roles",
+   "using": "has_role(auth.uid(), 'admin'::app_role)",
+   "permissive": "PERMISSIVE",
+   "with_check": "has_role(auth.uid(), 'admin'::app_role)"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users view own roles, admins view all",
+   "roles": "{authenticated}",
+   "table": "user_roles",
+   "using": "((user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view all service accounts",
+   "roles": "{authenticated}",
+   "table": "user_service_accounts",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Only admins can delete service accounts",
+   "roles": "{authenticated}",
+   "table": "user_service_accounts",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Only admins can insert service accounts",
+   "roles": "{authenticated}",
+   "table": "user_service_accounts",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Only admins can update service accounts",
+   "roles": "{authenticated}",
+   "table": "user_service_accounts",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own service accounts",
+   "roles": "{authenticated}",
+   "table": "user_service_accounts",
+   "using": "(auth.uid() = user_id)",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Authenticated can insert own sessions",
+   "roles": "{authenticated}",
+   "table": "user_sessions",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(user_id = auth.uid())"
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete their own sessions",
+   "roles": "{authenticated}",
+   "table": "user_sessions",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update their own sessions",
+   "roles": "{authenticated}",
+   "table": "user_sessions",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view their own sessions",
+   "roles": "{authenticated}",
+   "table": "user_sessions",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert their own settings",
+   "roles": "{authenticated}",
+   "table": "user_settings",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(user_id = auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Users can update their own settings",
+   "roles": "{authenticated}",
+   "table": "user_settings",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view their own settings",
+   "roles": "{authenticated}",
+   "table": "user_settings",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert own voice logs",
+   "roles": "{authenticated}",
+   "table": "voice_command_logs",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(auth.uid() = user_id)"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can read own voice logs",
+   "roles": "{authenticated}",
+   "table": "voice_command_logs",
+   "using": "(auth.uid() = user_id)",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete warroom alerts",
+   "roles": "{authenticated}",
+   "table": "warroom_alerts",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert alerts",
+   "roles": "{authenticated}",
+   "table": "warroom_alerts",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admins can update alerts",
+   "roles": "{authenticated}",
+   "table": "warroom_alerts",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view warroom alerts",
+   "roles": "{authenticated}",
+   "table": "warroom_alerts",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Block anon access to webauthn challenges",
+   "roles": "{anon}",
+   "table": "webauthn_challenges",
+   "using": "false",
+   "permissive": "PERMISSIVE",
+   "with_check": "false"
+  },
+  {
+   "cmd": "ALL",
+   "name": "Users can manage own challenges",
+   "roles": "{authenticated}",
+   "table": "webauthn_challenges",
+   "using": "(user_id = auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "(user_id = auth.uid())"
+  },
+  {
+   "cmd": "ALL",
+   "name": "service_role_full",
+   "roles": "{service_role}",
+   "table": "webhook_failures",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": "true"
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete rate limits",
+   "roles": "{authenticated}",
+   "table": "webhook_rate_limits",
+   "using": "is_admin(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert rate limits",
+   "roles": "{authenticated}",
+   "table": "webhook_rate_limits",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin(auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admins can update rate limits",
+   "roles": "{authenticated}",
+   "table": "webhook_rate_limits",
+   "using": "is_admin(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admins can view rate limits",
+   "roles": "{authenticated}",
+   "table": "webhook_rate_limits",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage connection queues",
+   "roles": "{authenticated}",
+   "table": "whatsapp_connection_queues",
+   "using": "is_admin(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view connection queues",
+   "roles": "{authenticated}",
+   "table": "whatsapp_connection_queues",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Admin supervisor view connections",
+   "roles": "{authenticated}",
+   "table": "whatsapp_connections",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Admins can delete connections",
+   "roles": "{authenticated}",
+   "table": "whatsapp_connections",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert connections",
+   "roles": "{authenticated}",
+   "table": "whatsapp_connections",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Admins can update connections",
+   "roles": "{authenticated}",
+   "table": "whatsapp_connections",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage whatsapp flows",
+   "roles": "{authenticated}",
+   "table": "whatsapp_flows",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated can view whatsapp flows",
+   "roles": "{authenticated}",
+   "table": "whatsapp_flows",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage whatsapp groups",
+   "roles": "{authenticated}",
+   "table": "whatsapp_groups",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can view whatsapp groups",
+   "roles": "{authenticated}",
+   "table": "whatsapp_groups",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Admins can insert templates",
+   "roles": "{authenticated}",
+   "table": "whatsapp_templates",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "is_admin_or_supervisor(auth.uid())"
+  },
+  {
+   "cmd": "ALL",
+   "name": "Admins can manage templates",
+   "roles": "{authenticated}",
+   "table": "whatsapp_templates",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can view templates",
+   "roles": "{authenticated}",
+   "table": "whatsapp_templates",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete own whisper messages",
+   "roles": "{authenticated}",
+   "table": "whisper_messages",
+   "using": "is_admin_or_supervisor(auth.uid())",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "name": "Users can insert own whisper messages",
+   "roles": "{authenticated}",
+   "table": "whisper_messages",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "((sender_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Users can view own whisper messages",
+   "roles": "{authenticated}",
+   "table": "whisper_messages",
+   "using": "((sender_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR (target_agent_id IN ( SELECT profiles.id\n   FROM profiles\n  WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  }
+ ]
+}

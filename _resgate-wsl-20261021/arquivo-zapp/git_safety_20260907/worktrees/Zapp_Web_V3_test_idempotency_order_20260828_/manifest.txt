@@ -1,0 +1,6 @@
+worktree=/home/joaquim_ataides/projetos/Zapp_Web_V3_test_idempotency_order_20260828
+head=f56efb5994b194a6c32066f6a263fb855ac91895
+entries=1
+untracked=1
+unstaged_patch_bytes=0
+staged_patch_bytes=0

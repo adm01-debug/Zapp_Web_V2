@@ -1,0 +1,261 @@
+diff --git a/bun.lock b/bun.lock
+index 7ee49599031728c06511513d09c148138e1c0487..cb67eff39775d00f223d91c8f6169b9c27f52868 100644
+--- a/bun.lock
++++ b/bun.lock
+@@ -71,7 +71,6 @@
+         "react-i18next": "^17.0.8",
+         "react-resizable-panels": "^4.12.1",
+         "react-router-dom": "^7.18.1",
+-        "react-window": "^2.2.7",
+         "recharts": "^3.9.2",
+         "serialize-javascript": "7.1.0",
+         "sip.js": "0.21.2",
+@@ -1916,8 +1915,6 @@
+ 
+     "react-style-singleton": ["react-style-singleton@2.2.3", "", { "dependencies": { "get-nonce": "^1.0.0", "tslib": "^2.0.0" }, "peerDependencies": { "@types/react": "*", "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react"] }, "sha512-b6jSvxvVnyptAiLjbkWLE/lOnR4lfTtDAl+eUC7RZy+QQWc6wRzIV2CE6xBuMmDxc2qIihtDCZD5NPOFl7fRBQ=="],
+ 
+-    "react-window": ["react-window@2.3.0", "", { "peerDependencies": { "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0" } }, "sha512-FW6TIpaOH646k51X7yE+LSCWGkt5Pfsnc1fVyq/sCI9h0pTqmMiBXM04pzFKg3Bt7NGkeV6kqbU8d/QjmFS7Ug=="],
+-
+     "read-cache": ["read-cache@1.0.0", "", { "dependencies": { "pify": "^2.3.0" } }, "sha512-Owdv/Ft7IjOgm/i0xvNDZ1LrRANRfew4b2prF3OWMQLxLfu3bS8FVhCsrSCMK4lR56Y9ya+AThoTpDCTxCmpRA=="],
+ 
+     "readdirp": ["readdirp@3.6.0", "", { "dependencies": { "picomatch": "^2.2.1" } }, "sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA=="],
+diff --git a/src/components/ui/registry.json b/src/components/ui/registry.json
+index ac604d56509af3f89f493f7e4705b2d50d64f8dc..a926afed4f560f3b37c31b874fc5443457667410 100644
+--- a/src/components/ui/registry.json
++++ b/src/components/ui/registry.json
+@@ -1,4 +1,29 @@
+ {
++  "card": {
++    "name": "card",
++    "variants": {
++      "variant": [
++        "default",
++        "elevated",
++        "hover",
++        "hover",
++        "interactive",
++        "hover",
++        "hover",
++        "selected",
++        "ghost",
++        "glass",
++        "neon",
++        "gradient"
++      ],
++      "padding": [
++        "none",
++        "sm",
++        "default",
++        "lg"
++      ]
++    }
++  },
+   "dialog": {
+     "name": "dialog",
+     "variants": {
+@@ -11,6 +36,15 @@
+       ]
+     }
+   },
++  "bubble": {
++    "name": "bubble",
++    "variants": {
++      "side": [
++        "sent",
++        "received"
++      ]
++    }
++  },
+   "icon-button": {
+     "name": "icon-button",
+     "variants": {
+@@ -39,33 +73,31 @@
+       ]
+     }
+   },
+-  "card": {
+-    "name": "card",
++  "badge": {
++    "name": "badge",
+     "variants": {
+       "variant": [
+         "default",
+-        "elevated",
+         "hover",
++        "secondary",
+         "hover",
+-        "interactive",
++        "destructive",
+         "hover",
++        "outline",
+         "hover",
+-        "selected",
+-        "ghost",
+-        "glass",
+-        "neon",
+-        "gradient"
+-      ],
+-      "padding": [
+-        "none",
+-        "sm",
+-        "default",
+-        "lg"
++        "subtle",
++        "success",
++        "warning",
++        "info",
++        "whatsapp",
++        "hover",
++        "glowPurple",
++        "hover"
+       ]
+     }
+   },
+-  "alert": {
+-    "name": "alert",
++  "toast": {
++    "name": "toast",
+     "variants": {
+       "variant": [
+         "default",
+@@ -73,20 +105,8 @@
+       ]
+     }
+   },
+-  "avatar": {
+-    "name": "avatar",
+-    "variants": {
+-      "size": [
+-        "xs",
+-        "sm",
+-        "default",
+-        "lg",
+-        "xl"
+-      ]
+-    }
+-  },
+-  "toast": {
+-    "name": "toast",
++  "alert": {
++    "name": "alert",
+     "variants": {
+       "variant": [
+         "default",
+@@ -94,37 +114,18 @@
+       ]
+     }
+   },
+-  "bubble": {
+-    "name": "bubble",
+-    "variants": {
+-      "side": [
+-        "sent",
+-        "received"
+-      ]
+-    }
+-  },
+-  "input": {
+-    "name": "input",
++  "toggle": {
++    "name": "toggle",
+     "variants": {
+       "variant": [
+         "default",
+-        "visible",
+-        "glow",
+-        "visible",
+-        "visible",
+-        "neon",
+-        "visible",
+-        "visible",
+-        "ghost",
+-        "visible",
+-        "visible",
+-        "underline",
+-        "visible",
+-        "visible"
++        "outline",
++        "hover",
++        "hover"
+       ],
+-      "inputSize": [
+-        "sm",
++      "size": [
+         "default",
++        "sm",
+         "lg"
+       ]
+     }
+@@ -190,19 +191,15 @@
+       ]
+     }
+   },
+-  "toggle": {
+-    "name": "toggle",
++  "avatar": {
++    "name": "avatar",
+     "variants": {
+-      "variant": [
+-        "default",
+-        "outline",
+-        "hover",
+-        "hover"
+-      ],
+       "size": [
+-        "default",
++        "xs",
+         "sm",
+-        "lg"
++        "default",
++        "lg",
++        "xl"
+       ]
+     }
+   },
+@@ -225,26 +222,29 @@
+       ]
+     }
+   },
+-  "badge": {
+-    "name": "badge",
++  "input": {
++    "name": "input",
+     "variants": {
+       "variant": [
+         "default",
+-        "hover",
+-        "secondary",
+-        "hover",
+-        "destructive",
+-        "hover",
+-        "outline",
+-        "hover",
+-        "subtle",
+-        "success",
+-        "warning",
+-        "info",
+-        "whatsapp",
+-        "hover",
+-        "glowPurple",
+-        "hover"
++        "visible",
++        "glow",
++        "visible",
++        "visible",
++        "neon",
++        "visible",
++        "visible",
++        "ghost",
++        "visible",
++        "visible",
++        "underline",
++        "visible",
++        "visible"
++      ],
++      "inputSize": [
++        "sm",
++        "default",
++        "lg"
+       ]
+     }
+   },

@@ -1,0 +1,92 @@
+{
+ "count": [
+  {
+   "n": 542
+  }
+ ],
+ "mimetypes": [
+  {
+   "n": 542,
+   "mt": "audio/mpeg"
+  }
+ ],
+ "dryrun": [],
+ "conv_sizes": [
+  {
+   "name": "meme_mm_mm_009_A_banquinha_do_atestado_j__est__funcionando__conv.mp3",
+   "size": 234501
+  },
+  {
+   "name": "meme_mm_mm_011_O_cara_ficou_lombrado_depois_de_fumar_um_cigarro_d__conv.mp3",
+   "size": 403341
+  },
+  {
+   "name": "meme_mm_mm_012_Vamos_organizar_a_confafefiziza__o_do_grupo__n____conv.mp3",
+   "size": 109293
+  },
+  {
+   "name": "meme_mm_mm_013_A_galera_t__usando_muita_droga_hoje__conv.mp3",
+   "size": 41613
+  },
+  {
+   "name": "meme_mm_mm_015_O_gago_dono_do_bar_dizendo_quais_cervejas_ele_tem__conv.mp3",
+   "size": 546525
+  },
+  {
+   "name": "meme_mm_mm_016_Visualizou_e_n_o_respondeu_por_qu____conv.mp3",
+   "size": 24453
+  },
+  {
+   "name": "meme_mm_mm_017_Vai_me_ver_hoje__Vai_falar_o_que_pra_sua_mulher___conv.mp3",
+   "size": 34437
+  },
+  {
+   "name": "meme_mm_mm_018_Por_que_tu_n_o_me_responde__Tua_mulher_t__contigo___conv.mp3",
+   "size": 25077
+  },
+  {
+   "name": "meme_mm_mm_019_Oi_amor__t__podendo_falar_ou_sua_mulher_t__perto___conv.mp3",
+   "size": 25221
+  },
+  {
+   "name": "meme_mm_mm2_000_Rita_Lee_boazinha_chata_paca__conv.mp3",
+   "size": 135051
+  },
+  {
+   "name": "meme_mm_mm2_001_Rita_Lee_-_Ela___toda_boazinha__conv.mp3",
+   "size": 132065
+  },
+  {
+   "name": "meme_mm_mm2_002_Clash__conv.mp3",
+   "size": 86685
+  },
+  {
+   "name": "meme_mm_mm2_003_E_o_pix__nada_ainda___conv.mp3",
+   "size": 27195
+  }
+ ],
+ "total_size": [
+  {
+   "n": 542,
+   "total": 90155394,
+   "pretty": "86 MB"
+  }
+ ],
+ "cachecontrol": [
+  {
+   "n": 542,
+   "cc": "no-cache"
+  }
+ ],
+ "null_meta": [
+  {
+   "n": 0
+  }
+ ],
+ "n_objects": 542,
+ "n_rows": 542,
+ "orphan_objects": [],
+ "orphan_rows": [],
+ "suffix_mismatch_urlenc": [],
+ "bucket_error": "Expecting value: line 1 column 1 (char 0)"
+}

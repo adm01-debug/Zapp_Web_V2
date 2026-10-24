@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "owner": "root",
+  "state": "ALLOCATION_ONLY_NOT_REVIEW",
+  "files": [
+    {
+      "path": "scripts/db-audit/cron-secret-l5-contract.test.sh",
+      "line_start": 1,
+      "line_end": 882,
+      "source_sha256": "bfcf688b2244d85cbbd84b5a5b7e89b663d5578715cc6a6a454f578ff2c01e7f",
+      "git_blob_sha": "9efbb61d1332ece54d6a024c430e606c50bd875a"
+    },
+    {
+      "path": "scripts/db-audit/drop-redundant-messages-external-id-index.test.sh",
+      "line_start": 1,
+      "line_end": 143,
+      "source_sha256": "85a880958f2df80b35de97d78de62a33b7e90feb3f36fba98f72b4922bc76512",
+      "git_blob_sha": "a763e0da1405fd97b92001a090535ddb26c5ffa7"
+    },
+    {
+      "path": "scripts/db-audit/send-messages-permission-authorization.test.sh",
+      "line_start": 1,
+      "line_end": 335,
+      "source_sha256": "20080a0dfef013da3fa45cc17920afaea10f54cb7f5a02c4daaa1f6850f43fcf",
+      "git_blob_sha": "3c830651803bbea13fde469179b666c6ee37e1a6"
+    },
+    {
+      "path": "scripts/db-audit/talk-me-queue-contract.test.sh",
+      "line_start": 1,
+      "line_end": 357,
+      "source_sha256": "42b0364204e0438a891a500854d8e5e29c99ea9412c55446ac7078c77340e404",
+      "git_blob_sha": "86941160cc05d1f1ceba8850e527259eccaf1898"
+    },
+    {
+      "path": "scripts/db-audit/talkx-campaign-state-transitions.test.sh",
+      "line_start": 1,
+      "line_end": 179,
+      "source_sha256": "c2e2a835e5f2fd793d4e1f8c7f6643fc71db550793230b07cc3cd276a06fdf58",
+      "git_blob_sha": "03c5e4931dcd93ffbc7fc3dbcf8013fd570d947e"
+    },
+    {
+      "path": "scripts/db-audit/talkx-guards-fail-closed.test.sh",
+      "line_start": 1,
+      "line_end": 200,
+      "source_sha256": "4ac00b9f1979e1c658efeb6812593f3a7749e604f248923a141dda839b7a040e",
+      "git_blob_sha": "d546111ae0c466d474822bbb25844f9361c027ab"
+    },
+    {
+      "path": "scripts/db-audit/talkx-receipts-replies.test.sh",
+      "line_start": 1,
+      "line_end": 404,
+      "source_sha256": "0a19be52977729e0aab0da982883402b122ae72b622fee6c57a5d2b97d4f0b22",
+      "git_blob_sha": "44e487c108f075d370223c2ace078ee770165e2e"
+    },
+    {
+      "path": "scripts/db-audit/talkx-settings-replay-idempotent.test.sh",
+      "line_start": 1,
+      "line_end": 126,
+      "source_sha256": "5caa7cd4098fdc0de7294292cee72592732b712418000d2784408a0170e28875",
+      "git_blob_sha": "d630f837d90ced607ebbf3f6e7f50359c6a0ca55"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v19-retry-recipient.test.sh",
+      "line_start": 1,
+      "line_end": 84,
+      "source_sha256": "a05803316af16e749e34b2b4a78414ba79461435591fa0f6170d070d64cb1879",
+      "git_blob_sha": "d073a74efadb5eb75fcd26fce7ee433c5b57c307"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v25-owner.test.sh",
+      "line_start": 1,
+      "line_end": 237,
+      "source_sha256": "4283daee91ddec858cc64285838b5f1830ed481152b6873e1785afc0012c7e5a",
+      "git_blob_sha": "701bfdc1aaa5cd7ee0c9defe8e068a88d83c1be5"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v26-template-version.test.sh",
+      "line_start": 1,
+      "line_end": 266,
+      "source_sha256": "0c751f0d1080833a8f1bb1b4258852e52c73a4edcbdb1cb42c6ac242c558d237",
+      "git_blob_sha": "718d405a7d9f44f3f40a6764e1b050391c8d16c5"
+    },
+    {
+      "path": "scripts/db-audit/user-settings-sound-integrity-contract.test.sh",
+      "line_start": 1,
+      "line_end": 316,
+      "source_sha256": "d46adda179f1809bdf54318c4e7e53a52d763554678465827cf06dd80736b796",
+      "git_blob_sha": "380c5e14d53de8d30376022bb977153e32b70aad"
+    }
+  ]
+}

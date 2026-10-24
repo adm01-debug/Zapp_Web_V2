@@ -1,0 +1,3 @@
+## fix/wave-webkit-e2e-20260826...origin/fix/wave-webkit-e2e-20260826
+ M src/features/auth/components/ProtectedRoute.tsx
+ M src/tests/e2e/auth-session-toggle.spec.ts

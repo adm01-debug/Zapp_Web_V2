@@ -1,0 +1,4 @@
+local_only=70
+patch_equivalent=25
+patch_not_proven=43
+merge_or_nonpatch=2

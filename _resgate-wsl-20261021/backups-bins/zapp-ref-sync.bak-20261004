@@ -1,0 +1,14 @@
+#!/bin/bash
+# Mantém ~/projetos/Zapp_Web_V2 (cópia de referência) igual à main do GitHub.
+# Depois de atualizar, reconstrói o grafo do Graphify aqui mesmo (síncrono: o systemd
+# mataria um processo deixado em segundo plano pelo hook post-merge).
+# Só atualiza se a pasta estiver limpa, na main, e o avanço for direto (ff-only).
+REPO="$HOME/projetos/Zapp_Web_V2"
+LOG="$HOME/.local/state/zapp-ref-sync.log"
+log() { echo "$(date "+%F %T") $*" >> "$LOG"; }
+cd "$REPO" || { log "ERRO pasta ausente"; exit 1; }
+[ "$(git branch --show-current)" = main ] || { log "PULOU fora da main"; exit 0; }
+[ -z "$(git status --porcelain --untracked-files=no)" ] || { log "PULOU pasta com alterações"; exit 0; }
+git fetch -q origin main || { log "ERRO fetch"; exit 1; }
+[ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] && exit 0
+if GRAPHIFY_SKIP_HOOK=1 git merge --ff-only -q origin/main; then log "ATUALIZOU para $(git rev-parse --short HEAD)"; PYTHONHASHSEED=0 graphify update . >graphify-out/.post-merge.log 2>&1 && log "GRAFO reconstruído" || log "ERRO grafo"; else log "PULOU avanço não é direto"; fi

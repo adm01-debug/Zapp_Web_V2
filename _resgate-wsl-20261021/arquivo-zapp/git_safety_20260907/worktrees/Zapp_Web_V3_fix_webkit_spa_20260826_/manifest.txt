@@ -1,0 +1,6 @@
+worktree=/home/joaquim_ataides/projetos/Zapp_Web_V3_fix_webkit_spa_20260826
+head=95a09ea12fb40dd809df5fc065b6fb6f7536b35b
+entries=6
+untracked=3
+unstaged_patch_bytes=4365
+staged_patch_bytes=0

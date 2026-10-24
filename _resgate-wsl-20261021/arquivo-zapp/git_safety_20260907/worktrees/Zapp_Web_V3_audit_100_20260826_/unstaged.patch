@@ -1,0 +1,58 @@
+diff --git a/reports/schema-status/report.json b/reports/schema-status/report.json
+index da5bc9d0adf5db1bae095509d63eead30f7c44d3..9bd858bc155aef6151e824d19b539239b226a9d0 100644
+--- a/reports/schema-status/report.json
++++ b/reports/schema-status/report.json
+@@ -1,5 +1,5 @@
+ {
+-  "generated_at": "2026-08-05T21:59:21.321Z",
++  "generated_at": "2026-08-29T15:08:35.461Z",
+   "ci": {
+     "run_id": null,
+     "run_attempt": null,
+@@ -21,8 +21,8 @@
+       "evo"
+     ],
+     "local_only": false,
+-    "meta_url_present": true,
+-    "meta_token_present": true
++    "meta_url_present": false,
++    "meta_token_present": false
+   },
+   "local": {
+     "status": "ok",
+@@ -36,9 +36,9 @@
+     "error": null
+   },
+   "remote": {
+-    "status": "warning",
+-    "reason": "postgres-meta HTTP 500 — pulada",
+-    "http_status": 500,
++    "status": "skipped",
++    "reason": "ZAPP_META_URL/ZAPP_META_TOKEN ausentes",
++    "http_status": null,
+     "present_schemas": [],
+     "missing_schemas": [],
+     "error": null
+diff --git a/reports/schema-status/report.md b/reports/schema-status/report.md
+index 07ec86bd882a08b3468a32bcb917d37bb88ccbb0..5d5657925d355acd8a0116fa965f475461e6ea8c 100644
+--- a/reports/schema-status/report.md
++++ b/reports/schema-status/report.md
+@@ -1,6 +1,6 @@
+ # Schema Status Report — ✅ OK
+ 
+-- **Gerado em:** 2026-08-05T21:59:21.321Z
++- **Gerado em:** 2026-08-29T15:08:35.461Z
+ - **Requeridos:** `zapp, evo`
+ 
+ ## Local (arquivo `types.ts`)
+@@ -16,8 +16,7 @@
+ 
+ | Campo | Valor |
+ |-------|-------|
+-| Status | ⚠️ warning |
+-| Motivo | postgres-meta HTTP 500 — pulada |
+-| HTTP | `500` |
++| Status | ⏭️ skipped |
++| Motivo | ZAPP_META_URL/ZAPP_META_TOKEN ausentes |
+ | Schemas presentes | _(nenhum)_ |
+ | Schemas ausentes | _(nenhum)_ |

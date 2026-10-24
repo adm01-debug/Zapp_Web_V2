@@ -1,0 +1,7 @@
+## fix/webkit-spa-auth-session-20260826...origin/fix/webkit-spa-auth-session-20260826 [gone]
+ M src/features/auth/components/ProtectedRoute.tsx
+ M src/features/auth/components/__tests__/ProtectedRoute.devBypass.test.tsx
+ M src/tests/e2e/auth-session-toggle.spec.ts
+?? .codex-temp-playwright.config.ts
+?? .codex-temp-vite-config.ts
+?? .codex-temp-vitest.config.ts

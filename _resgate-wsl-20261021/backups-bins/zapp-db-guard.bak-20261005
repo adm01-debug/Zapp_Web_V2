@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Trava contra o banco de PRODUÇÃO do Zapp Web V2 (decisão 4 da Arquitetura V2).
+#   zapp-db-guard check <cópia>      falha se a cópia de trabalho apontar para a produção
+#   zapp-db-guard run -- <comando>   roda o comando só se nem o ambiente nem os argumentos
+#                                    contiverem o identificador da produção
+set -u
+PROD_REF="tnnnlkbymytvtqngbbqh"
+barra() { echo "DB_GUARD: BLOQUEADO — $*" >&2; exit 97; }
+case "${1:-}" in
+check)
+  W="$(cd "${2:-.}" && pwd)" || barra "cópia não encontrada"
+  # .env.production e .env.example são versionados e descrevem a produção de propósito; os demais não podem
+  for f in "$W"/.env "$W"/.env.local "$W"/.env.test "$W"/.env.development "$W"/.env.development.local "$W"/.env.test.local "$W"/supabase/.env "$W"/supabase/.env.local; do
+    [ -f "$f" ] && grep -q "$PROD_REF" "$f" && barra "$(basename "$f") da cópia aponta para a produção"
+  done
+  [ -f "$W/supabase/.temp/project-ref" ] && grep -q "$PROD_REF" "$W/supabase/.temp/project-ref" && barra "a cópia está ligada (supabase link) ao projeto de produção"
+  env | grep -E '^(SUPABASE|VITE_SUPABASE|DATABASE|DESTINO|PG|POSTGRES|DB_)[A-Z_]*=' | grep -q "$PROD_REF" && barra "variável de ambiente aponta para a produção"
+  echo "DB_GUARD: ok (nenhuma referência ativa à produção em $W)"; exit 0 ;;
+run)
+  shift; [ "${1:-}" = "--" ] && shift
+  [ $# -gt 0 ] || barra "uso: zapp-db-guard run -- <comando>"
+  env | grep -q "$PROD_REF" && barra "o ambiente contém o identificador da produção ($(env | grep "$PROD_REF" | cut -d= -f1 | tr '\n' ' '))"
+  printf '%s\n' "$@" | grep -q "$PROD_REF" && barra "o comando contém o identificador da produção"
+  exec "$@" ;;
+*) echo "uso: zapp-db-guard check <cópia> | zapp-db-guard run -- <comando>" >&2; exit 2 ;;
+esac

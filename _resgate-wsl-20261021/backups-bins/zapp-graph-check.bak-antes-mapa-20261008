@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Verificador do grafo do Zapp V2: compara o commit carimbado no grafo com a main do GitHub
+# e escreve o estado num arquivo na Área de Trabalho. Não altera repositório nem grafo.
+set -u
+REPO="$HOME/projetos/Zapp_Web_V2"; STATE="$HOME/.local/state"
+OUT="/mnt/c/Users/Joaquim Ataides/Desktop/MAPA_ZAPP_V2/ESTADO_DO_GRAFO.txt"
+LAG="$STATE/zapp-graph-check.atrasado-desde"; LOG="$STATE/zapp-ref-sync.log"
+LIMITE=900   # 15 min = três ciclos perdidos
+agora=$(date +%s)
+remoto=$(git -C "$REPO" ls-remote origin refs/heads/main 2>/dev/null | cut -f1)
+grafo=$(sed -n 's/.*"commit":"\([0-9a-f]*\)".*/\1/p' "$REPO/graphify-out/.fresh.json" 2>/dev/null)
+quando=$(sed -n 's/.*"atualizado_em":"\([^"]*\)".*/\1/p' "$REPO/graphify-out/.fresh.json" 2>/dev/null)
+sync=$(cat "$STATE/zapp-ref-sync.status" 2>/dev/null || echo "sem registro")
+ia=$(tail -1 "$STATE/graphify-ia.log" 2>/dev/null || echo "camada de IA ainda sem execução")
+if [ -z "$remoto" ]; then estado="SEM REDE"; detalhe="não consegui consultar o GitHub"
+elif [ "$remoto" = "$grafo" ]; then estado="EM DIA"; detalhe="grafo no mesmo commit da main"; rm -f "$LAG"
+else
+  [ -f "$LAG" ] || echo "$agora" > "$LAG"
+  atraso=$(( agora - $(cat "$LAG") ))
+  if [ "$atraso" -ge "$LIMITE" ]; then estado="ALERTA: ATRASADO"; else estado="ATUALIZANDO"; fi
+  detalhe="main em ${remoto:0:9}, grafo em ${grafo:0:9}, atraso de $(( atraso / 60 )) min"
+fi
+case "$sync" in *BLOQUEADO*|*ERRO*) [ "$estado" = "EM DIA" ] || estado="ALERTA: PARADO";; esac
+{
+  echo "GRAFO DO ZAPP WEB V2 — $estado"
+  echo "Conferido em: $(date '+%d/%m/%Y %H:%M:%S')"
+  echo "Situação: $detalhe"
+  echo "Última reconstrução do grafo: ${quando:-desconhecida}"
+  echo "Última sincronização: $sync"
+  echo "Camada de IA: $ia"
+  echo
+  echo "Últimas linhas do registro:"; tail -5 "$LOG" 2>/dev/null
+} > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
+case "$estado" in ALERTA*) echo "$(date '+%F %T') $estado — $detalhe — $sync" >> "$STATE/zapp-graph-alertas.log";; esac
+# rotação: mantém as últimas 3000 linhas do registro
+[ "$(wc -l < "$LOG" 2>/dev/null || echo 0)" -gt 4000 ] && tail -3000 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
+exit 0

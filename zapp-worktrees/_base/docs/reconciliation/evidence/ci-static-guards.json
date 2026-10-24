@@ -1,0 +1,49 @@
+[
+  {
+    "command": [
+      "node",
+      "scripts/ci/render-workflow-docs.mjs",
+      "--check"
+    ],
+    "exit_code": 0,
+    "stdout": "OK: docs/ci/README.md bate com os 16 workflows.\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "node",
+      "scripts/ci/check-test-inventory.mjs"
+    ],
+    "exit_code": 0,
+    "stdout": "check-test-inventory: OK — ci.yml usa glob (supabase/functions/**/*.test.ts); .test.sh verificados individualmente\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "node",
+      "scripts/ci/check-workflow-pins.mjs"
+    ],
+    "exit_code": 0,
+    "stdout": "OK: 16 workflows usam somente Actions fixadas por SHA, repositórios autorizados e imagens com digest.\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "node",
+      "scripts/ci/check-pr-workflow-secrets.mjs"
+    ],
+    "exit_code": 0,
+    "stdout": "OK: workflows de PR e push irrestrito nao recebem secrets privilegiados.\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "node",
+      "scripts/ci/check-quarantine.mjs",
+      "--hoje=2026-10-03"
+    ],
+    "exit_code": 0,
+    "stdout": "check-quarantine: OK -- 0 spec(s) em quarentena, nenhum vencido.\n",
+    "stderr": ""
+  }
+]

@@ -1,0 +1,130 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
+import { getLogger } from '@/lib/logger';
+
+const log = getLogger('OfflineCache');
+const CACHE_KEY = 'offline_conversations';
+const CACHE_TTL = 1000 * 60 * 30; // 30 min
+
+interface CacheEntry {
+  data: ConversationWithMessages[];
+  timestamp: number;
+}
+
+function readCache(): ConversationWithMessages[] | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const entry: CacheEntry = JSON.parse(raw);
+    if (Date.now() - entry.timestamp > CACHE_TTL) {
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    return entry.data;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(data: ConversationWithMessages[]) {
+  // Progressive degradation on quota errors: shrink conversation count and
+  // per-conversation message window until it fits, then give up silently.
+  const tiers: Array<{ convs: number; msgs: number }> = [
+    { convs: 50, msgs: 20 },
+    { convs: 30, msgs: 10 },
+    { convs: 15, msgs: 5 },
+    { convs: 10, msgs: 3 },
+  ];
+  for (const { convs, msgs } of tiers) {
+    try {
+      const trimmed = data.slice(0, convs).map(c => ({
+        ...c,
+        messages: c.messages.slice(-msgs),
+      }));
+      const entry: CacheEntry = { data: trimmed, timestamp: Date.now() };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+      return;
+    } catch (e) {
+      const isQuota = e instanceof DOMException && (
+        e.name === 'QuotaExceededError' || e.code === 22
+      );
+      if (!isQuota) {
+        log.warn('Failed to write offline cache', e);
+        return;
+      }
+      // Free space and try a smaller tier
+      try { localStorage.removeItem(CACHE_KEY); } catch { /* noop */ }
+    }
+  }
+  // All tiers failed — drop cache silently to avoid log spam
+}
+
+export function useOfflineCache(conversations: ConversationWithMessages[], loading: boolean) {
+  const [cachedData, setCachedData] = useState<ConversationWithMessages[] | null>(null);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const lastWriteRef = useRef(0);
+
+  // Track online/offline status
+  useEffect(() => {
+    const goOnline = () => setIsOffline(false);
+    const goOffline = () => setIsOffline(true);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
+
+  // Load cache on mount
+  useEffect(() => {
+    const cached = readCache();
+    if (cached) {
+      setCachedData(cached);
+      log.info(`Loaded ${cached.length} conversations from offline cache`);
+    }
+  }, []);
+
+  // Write cache when conversations update (throttled)
+  useEffect(() => {
+    if (!loading && conversations.length > 0) {
+      const now = Date.now();
+      if (now - lastWriteRef.current > 10000) { // throttle: max every 10s
+        writeCache(conversations);
+        lastWriteRef.current = now;
+      }
+    }
+  }, [conversations, loading]);
+
+  // R2-INB-015: o cache sustenta a leitura enquanto, offline, não houver dados
+  // vivos — inclusive DEPOIS que a carga termina. Antes o fallback só valia
+  // enquanto `loading` era true: quando a busca falhava sem conexão,
+  // `loading=false` zerava a lista e abandonava um cache ainda válido (o Inbox
+  // "aparecia e desaparecia"). A recuperação é explícita: quando os dados ao
+  // vivo chegam, eles reassumem a tela e `usingCache` volta a false.
+  const semDadosVivosOffline = isOffline && conversations.length === 0;
+  const effectiveData = semDadosVivosOffline ? (cachedData || conversations) : conversations;
+  const usingCache = semDadosVivosOffline && !!cachedData;
+
+  const clearCache = useCallback(() => {
+    localStorage.removeItem(CACHE_KEY);
+    setCachedData(null);
+  }, []);
+
+  return {
+    conversations: effectiveData,
+    isOffline,
+    usingCache,
+    clearCache,
+  };
+}
+
+/**
+ * Apaga o cache offline de conversas. Ele nao e escopado por usuario, entao
+ * precisa ser limpo no sign-out para o proximo login na mesma aba nao ver as
+ * conversas do anterior. Fica no fim do arquivo de proposito: inserir linhas
+ * acima desloca o ranking do lint-ratchet, cuja chave inclui o numero da linha.
+ */
+export function clearOfflineCache() {
+  try { localStorage.removeItem(CACHE_KEY); } catch { /* storage indisponivel */ }
+}

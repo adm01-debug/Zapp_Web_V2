@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Portão local de uma cópia de trabalho do Zapp Web V2 (verify.sh da Arquitetura V2).
+# Roda, nesta ordem e parando no primeiro vermelho: trava contra produção, tipos, lint, migrations,
+# estrutura do banco local, testes unitários e build. Uso: zapp-verify <cópia> [nome-do-conjunto] [--rapido]
+# --rapido pula testes unitários e build (para checagem a cada edição).
+# --aceitar <arquivo>: diferenças de estrutura esperadas (formato do zapp-db-local check).
+# Também aceita: zapp-verify fast <cópia> [nome]  |  zapp-verify full <cópia> [nome]
+set -u
+RAPIDO=0
+case "${1:-}" in fast) RAPIDO=1; shift;; full) shift;; esac
+W="$(cd "${1:-.}" && pwd)" || { echo "cópia não encontrada" >&2; exit 2; }
+NOME="${2:-}"; [ "${NOME#--}" != "$NOME" ] && NOME=""
+ACEITAR=""; ant=""
+for a in "$@"; do [ "$a" = "--rapido" ] && RAPIDO=1; [ "$ant" = "--aceitar" ] && ACEITAR="$(realpath -- "$a")"; ant="$a"; done
+# registros FORA da cópia, para não sujar o git status dela
+LOG="$HOME/.local/state/zapp-verify/$(printf '%s' "$W" | md5sum | cut -c1-12)"; mkdir -p "$LOG"; RES="$LOG/resultado.txt"; : > "$RES"
+echo "$W" > "$LOG/copia.txt"
+T_INI=$(date +%s)
+passo() {  # passo <nome> <comando...>
+  local n="$1"; shift; local t0=$(date +%s)
+  if ( cd "$W" && "$@" ) > "$LOG/$n.log" 2>&1; then
+    printf 'OK      %-12s %4ss\n' "$n" "$(( $(date +%s)-t0 ))" | tee -a "$RES"
+  else
+    printf 'FALHOU  %-12s %4ss  (ver %s)\n' "$n" "$(( $(date +%s)-t0 ))" "$LOG/$n.log" | tee -a "$RES"
+    tail -15 "$LOG/$n.log" | cut -c1-200
+    echo "VERIFY: VERMELHO em $n ($(( $(date +%s)-T_INI ))s)" | tee -a "$RES"; exit 1
+  fi
+}
+[ -e "$W/node_modules" ] || passo dependencias bun install --frozen-lockfile
+passo db_guard   zapp-db-guard check "$W"
+passo tipos      node scripts/ci/typecheck-ratchet.mjs
+passo lint       node scripts/ci/lint-ratchet.mjs
+passo migrations node scripts/db-audit/check-migration-drift.mjs
+if [ -n "$NOME" ]; then
+  passo travas zapp-db-local travas "$W" "$NOME"
+  # Migration nova (fora a de reconciliação) muda a estrutura de propósito: aí a comparação com o
+  # retrato da produção é só informativa. Sem migration nova, a estrutura tem de ser idêntica.
+  # Com --aceitar <arquivo>, vale a lista: só reprova diferença fora dela.
+  NOVAS_MIG="$( { git -C "$W" diff --name-only --diff-filter=A origin/main...HEAD -- supabase/migrations 2>/dev/null
+                  git -C "$W" status --porcelain -- supabase/migrations 2>/dev/null | grep -E '^(\?\?|A )' | cut -c4-; } \
+                | grep '\.sql$' | grep -v '20261003272707_' | sort -u )"
+  if [ -n "$ACEITAR" ]; then passo banco_local zapp-db-local check "$W" "$NOME" --aceitar "$ACEITAR"
+  elif [ -z "$NOVAS_MIG" ]; then passo banco_local zapp-db-local check "$W" "$NOME"
+  else
+    t0=$(date +%s); zapp-db-local check "$W" "$NOME" > "$LOG/banco_local.log" 2>&1; rc=$?
+    if [ $rc = 0 ]; then printf 'OK      %-12s %4ss\n' banco_local "$(( $(date +%s)-t0 ))" | tee -a "$RES"
+    elif grep -q '^ESTRUTURA:' "$LOG/banco_local.log"; then
+      printf 'AVISO   %-12s %4ss  %s — há %s migration(s) nova(s), diferença esperada; não reprova (ver %s)\n' banco_local "$(( $(date +%s)-t0 ))" \
+        "$(grep -m1 '^ESTRUTURA:' "$LOG/banco_local.log")" "$(printf '%s\n' "$NOVAS_MIG" | wc -l)" "$LOG/banco_local.log" | tee -a "$RES"
+    else passo banco_local zapp-db-local check "$W" "$NOME"   # nem conseguiu comparar: vermelho de verdade
+    fi
+  fi
+fi
+if [ "$RAPIDO" = 0 ]; then
+  passo testes   zapp-db-guard run -- bun run test
+  passo build    zapp-db-guard run -- bun run build
+fi
+echo "VERIFY: VERDE ($(( $(date +%s)-T_INI ))s) — registros em $LOG" | tee -a "$RES"

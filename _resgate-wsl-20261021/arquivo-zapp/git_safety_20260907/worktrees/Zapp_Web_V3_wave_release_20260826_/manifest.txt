@@ -1,0 +1,6 @@
+worktree=/home/joaquim_ataides/projetos/Zapp_Web_V3_wave_release_20260826
+head=e5a7e14f9850a48fbb33a648f7bd91cf573142a1
+entries=2
+untracked=1
+unstaged_patch_bytes=4157
+staged_patch_bytes=0

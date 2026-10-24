@@ -1,0 +1,2 @@
+dirty_worktrees=13
+dirty_entries=33

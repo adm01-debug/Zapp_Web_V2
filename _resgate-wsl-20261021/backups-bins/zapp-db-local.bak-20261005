@@ -1,0 +1,204 @@
+#!/usr/bin/env bash
+# Banco local do Zapp Web V2 por cópia de trabalho (Fase 0 da Arquitetura V2).
+# Sobe um conjunto enxuto do Supabase (CLI 2.119, recurso experimental "stack"), aplica as
+# migrations da cópia no modo "aplica e continua", aplica a reconciliação e confere a estrutura
+# contra o retrato da produção versionado na cópia (supabase/schema-manifest.json).
+# NUNCA fala com a produção. Uso:
+#   zapp-db-local up     <cópia> [nome] [--aceitar <arq>]  sobe e monta (idempotente: destrói e refaz o banco)
+#   zapp-db-local check  <cópia> [nome] [--aceitar <arq>]  só compara a estrutura com o retrato da produção
+#       --aceitar: arquivo com uma diferença esperada por linha, no formato "seção|objeto"
+#       (o mesmo que o check grava em <estado>/check-diferencas.txt). Diferença aceita não reprova.
+# Códigos de saída:
+#   up    0 = conjunto de pé, travas conferidas, seed ok e nenhuma falha NOVA de migration.
+#             A comparação de estrutura é impressa e gravada em <estado>/check.txt (+ check.rc),
+#             mas NÃO decide o código: migration nova que muda a estrutura é esperada diferir.
+#         1 = falha nova de migration, seed falhou, trava não entrou ou erro de infraestrutura.
+#   check 0 = estrutura idêntica (ou só diferenças aceitas); 1 = há diferença não aceita.
+#   zapp-db-local travas <cópia> [nome]   confere as travas contra a produção e contra saída de rede
+#   zapp-db-local psql   <cópia> [nome]   abre psql (ou lê SQL do stdin) como postgres
+#   zapp-db-local env    <cópia> [nome]   imprime URL e chaves LOCAIS para o app/testes
+#   zapp-db-local down   <cópia> [nome]   apaga o conjunto
+#   zapp-db-local list                    lista os conjuntos
+set -u
+export SUPABASE_EXPERIMENTAL_STACK=1
+SB="$HOME/.local/opt/supabase-2.119/node_modules/.bin/supabase"
+BASE="$HOME/.local/share/zapp-local"
+PROD_REF="tnnnlkbymytvtqngbbqh"
+die() { echo "ERRO: $*" >&2; exit 1; }
+cmd="${1:-}"; [ -n "$cmd" ] || die "uso: zapp-db-local up|check|travas|psql|env|down|list <cópia> [nome]"
+if [ "$cmd" = list ]; then "$SB" stack list 2>/dev/null | tail -1; exit 0; fi
+ACEITAR=""
+if [ "$cmd" = up ] || [ "$cmd" = check ]; then
+  ARGS=(); i=2
+  while [ $i -le $# ]; do
+    a="${!i}"
+    if [ "$a" = --aceitar ]; then i=$((i+1)); ACEITAR="$(realpath -- "${!i:-/nao-informado}" 2>/dev/null)"; [ -f "$ACEITAR" ] || die "--aceitar pede um arquivo que exista"
+    else ARGS+=("$a"); fi
+    i=$((i+1))
+  done
+  set -- "$cmd" "${ARGS[@]}"
+fi
+W="$(cd "${2:-.}" 2>/dev/null && pwd)" || die "cópia de trabalho não encontrada: ${2:-.}"
+[ -f "$W/supabase/config.toml" ] || die "$W não tem supabase/config.toml"
+NOME="${3:-$(basename "$W" | tr -c 'a-zA-Z0-9\n' '-' | tr 'A-Z' 'a-z' | cut -c1-28 | sed 's/-*$//')}"
+SHADOW="$BASE/stacks/$NOME"          # pasta-sombra: só o config, para a ferramenta não aplicar migrations sozinha
+ST="$SHADOW/estado"; mkdir -p "$SHADOW/supabase" "$ST"
+banco() { docker ps --format '{{.Names}}' | grep -E "^supabase-$NOME-$NOME-database-" | head -1; }
+q() { docker exec -i "$(banco)" psql -U "${PGU:-postgres}" -d postgres -X "$@"; }
+# Confere as travas de verdade (não só se o comando de travar rodou). Devolve 1 se alguma falhou.
+travas() {
+  local C ok=1 id n; C="$(banco)"
+  docker exec "$C" cat /etc/hosts 2>/dev/null | grep -q "$PROD_REF" || { echo "TRAVA FALHOU: DNS da produção não está preso no banco" >&2; ok=0; }
+  [ "$(PGU=supabase_admin q -At -c 'show cron.launch_active_jobs' 2>/dev/null)" = off ] || { echo "TRAVA FALHOU: agendador (pg_cron) ligado" >&2; ok=0; }
+  [ "$(PGU=supabase_admin q -At -c 'select count(*) from cron.job where active' 2>/dev/null)" = 0 ] || { echo "TRAVA FALHOU: há tarefa agendada ativa" >&2; ok=0; }
+  [ "$(PGU=supabase_admin q -At -c 'show pg_net.batch_size' 2>/dev/null)" = 0 ] || { echo "TRAVA FALHOU: envio do pg_net não está desligado" >&2; ok=0; }
+  # teste funcional: uma chamada para a própria máquina (porta morta) NÃO pode ser despachada
+  if [ "$(PGU=supabase_admin q -At -c "select to_regproc('net.http_get') is not null" 2>/dev/null)" = t ]; then
+    id="$(PGU=supabase_admin q -At -c "select net.http_get('http://127.0.0.1:9/zapp-local-teste-de-trava')" 2>/dev/null | head -1)"
+    sleep 3
+    n="$(PGU=supabase_admin q -At -c "select count(*) from net._http_response where id = ${id:-0}" 2>/dev/null)"
+    PGU=supabase_admin q -q -c "delete from net.http_request_queue where id = ${id:-0}" >/dev/null 2>&1
+    [ "$n" = 0 ] || { echo "TRAVA FALHOU: o pg_net despachou uma chamada de teste" >&2; ok=0; }
+  fi
+  [ $ok = 1 ] && echo "TRAVAS: conferidas (DNS da produção preso, agendador desligado, pg_net sem envio)"
+  [ $ok = 1 ]
+}
+
+case "$cmd" in
+up)
+  T0=$(date +%s)
+  cp "$W/supabase/config.toml" "$SHADOW/supabase/config.toml"
+  # as edge functions da cópia são servidas pelo conjunto local (o login do app passa por auth-login)
+  # cópia de verdade: a pasta-sombra é montada dentro do contêiner, e um atalho para fora dela ficaria quebrado lá
+  [ -L "$SHADOW/supabase/functions" ] && unlink "$SHADOW/supabase/functions"
+  mkdir -p "$SHADOW/supabase/functions" && cp -a "$W/supabase/functions/." "$SHADOW/supabase/functions/"
+  ( cd "$BASE/stacks" && "$SB" stack destroy --stack "$NOME" --yes --workdir "$SHADOW" >/dev/null 2>&1 )
+  # a pasta-sombra se chama $NOME, por isso o contêiner é supabase-$NOME-$NOME-...
+  # O processo-hospedeiro do conjunto precisa SOBREVIVER a quem chamou. Chamado de dentro de um
+  # serviço systemd (timer da pré-visualização), ele morria junto com o serviço e levava os
+  # contêineres: o banco sumia a cada execução. Por isso sobe num escopo próprio do systemd.
+  # --output-format json: fora de sessão de agente a ferramenta imprime tabela, não JSON.
+  LANCA=(); command -v systemd-run >/dev/null 2>&1 && systemctl --user is-system-running >/dev/null 2>&1 \
+    && LANCA=(systemd-run --user --scope --quiet --collect)
+  [ ${#LANCA[@]} -eq 0 ] && systemctl --user show-environment >/dev/null 2>&1 && LANCA=(systemd-run --user --scope --quiet --collect)
+  "${LANCA[@]}" "$SB" stack start --stack "$NOME" --runtime docker --eager -x studio -x mail -x analytics \
+        --output-format json --agent no --workdir "$SHADOW" > "$ST/start.log" 2>&1 || { tail -5 "$ST/start.log" >&2; die "o conjunto não subiu"; }
+  grep -E '^\{.*"endpoints"' "$ST/start.log" | tail -1 > "$ST/stack.json"
+  python3 -c "import json,sys; j=json.load(open(sys.argv[1])); assert j['endpoints'] and j['env']" "$ST/stack.json" 2>/dev/null \
+    || die "não consegui ler os endereços do conjunto (saída inesperada da ferramenta; ver $ST/start.log)"
+  C="$(banco)"; [ -n "$C" ] || die "contêiner do banco não encontrado"
+  # TRAVA 1: nenhum contêiner do conjunto enxerga a produção. As migrations gravam a URL de
+  # produção em crons, funções e no cofre; sem isto o banco local chamaria as edge functions reais.
+  for c in $(docker ps --format '{{.Names}}' | grep -E "^supabase-$NOME-$NOME-"); do
+    # imagens mínimas não têm grep: acrescenta direto (linha repetida em /etc/hosts é inofensiva)
+    docker exec -u 0 "$c" sh -c "echo '127.0.0.1 $PROD_REF.supabase.co $PROD_REF.functions.supabase.co db.$PROD_REF.supabase.co' >> /etc/hosts" 2>/dev/null \
+      || echo "aviso: não consegui travar o DNS em ${c#supabase-$NOME-$NOME-}" >&2
+  done
+  docker exec "$C" cat /etc/hosts | grep -q "$PROD_REF" || die "trava de DNS não entrou no banco; abortando antes das migrations"
+  # TRAVA 2: o agendador (pg_cron) não dispara nada no banco local
+  PGU=supabase_admin q -q -c "alter system set cron.launch_active_jobs = off" -c "select pg_reload_conf()" >/dev/null || die "não consegui desligar o agendador"
+  # TRAVA 3: o pg_net não despacha nada, para NENHUM destino (a trava de DNS só cobre a produção;
+  # Evolution, Gmail e qualquer IP seguiriam alcançáveis se alguém chamasse uma função à mão).
+  # Lote de tamanho zero: a fila aceita as chamadas (as funções não quebram), o trabalhador não envia.
+  # Vale com um simples recarregar. NÃO derrubar o trabalhador do pg_net para aplicar: isso põe o
+  # banco em recuperação por alguns segundos e as primeiras migrations falham (medido em 04/10/2026).
+  PGU=supabase_admin q -q -c "alter system set pg_net.batch_size = 0" -c "select pg_reload_conf()" >/dev/null || die "não consegui desligar o envio do pg_net"
+  # o que a ferramenta criaria se ela mesma aplicasse as migrations
+  PGU=supabase_admin q -q -v ON_ERROR_STOP=1 >/dev/null <<'SQL'
+create schema if not exists supabase_migrations;
+create table if not exists supabase_migrations.schema_migrations(version text primary key, statements text[], name text);
+grant usage on schema supabase_migrations to postgres;
+grant all on all tables in schema supabase_migrations to postgres;
+alter schema supabase_migrations owner to postgres;
+alter table supabase_migrations.schema_migrations owner to postgres;
+SQL
+  OK=0; : > "$ST/falhas.tsv"; : > "$ST/como-admin.txt"
+  # Transação única (tudo ou nada) só para migrations NOVAS, de versão posterior ao corte. As
+  # históricas ficam como sempre: a estrutura idêntica à produção depende da aplicação parcial de
+  # algumas delas (medido em 04/10/2026: com transação única em todas, 33 falhas e 108 diferenças).
+  # Migration nova que falha não deixa resto no banco. ZAPP_DB_LOCAL_TX=todas|nenhuma muda a regra.
+  CORTE_TX=20261003272707
+  for f in $(ls "$W"/supabase/migrations/*.sql | sort); do
+    v="$(basename "$f")"; v="${v%%_*}"; TX=()
+    case "${ZAPP_DB_LOCAL_TX:-novas}" in
+      todas) TX=(-1 -f -) ;;
+      nenhuma) ;;
+      *) [[ "$v" > "$CORTE_TX" ]] && ! grep -qi 'concurrently' "$f" && TX=(-1 -f -) ;;
+    esac
+    out=$(q -q -v ON_ERROR_STOP=1 "${TX[@]}" < "$f" 2>&1) && { OK=$((OK+1)); continue; }
+    # O postgres local não tem os poderes do postgres da produção sobre cron/app.settings. Só as
+    # migrations da lista explícita são reaplicadas como supabase_admin; para qualquer outra,
+    # "permission denied" é falha de verdade (senão uma migration nova passaria num falso verde).
+    if printf '%s' "$out" | grep -q 'permission denied' && grep -qxF "$(basename "$f")" "$BASE/reaplicar-como-admin.txt" 2>/dev/null; then
+      PGU=supabase_admin q -q -v ON_ERROR_STOP=1 "${TX[@]}" < "$f" >/dev/null 2>&1 && { OK=$((OK+1)); basename "$f" >> "$ST/como-admin.txt"; continue; }
+    fi
+    printf '%s\t%s\n' "$(basename "$f")" "$(printf '%s' "$out" | grep -m1 'ERROR:' | cut -c1-170)" >> "$ST/falhas.tsv"
+  done
+  TOTAL=$(ls "$W"/supabase/migrations/*.sql | wc -l); F=$(wc -l < "$ST/falhas.tsv")
+  PGU=supabase_admin q -q -c "update cron.job set active = false" >/dev/null 2>&1
+  q -q -v ON_ERROR_STOP=1 < "$BASE/reconcile.sql" > "$ST/reconcile.log" 2>&1 || { tail -3 "$ST/reconcile.log" >&2; die "reconciliação falhou"; }
+  if [ -f "$BASE/seed.sql" ]; then
+    q -q -v ON_ERROR_STOP=1 < "$BASE/seed.sql" > "$ST/seed.log" 2>&1 && SEED=ok || { SEED=FALHOU; tail -3 "$ST/seed.log" >&2; }
+    # fixtures E2E que dependem de dados (falham antes do seed): tenta de novo
+    for f in $(cut -f1 "$ST/falhas.tsv" | grep fixture_e2e); do
+      q -q -v ON_ERROR_STOP=1 < "$W/supabase/migrations/$f" >/dev/null 2>&1 && sed -i "/^$f\t/d" "$ST/falhas.tsv"
+    done
+    F=$(wc -l < "$ST/falhas.tsv")
+  else SEED="sem seed"; fi
+  # falhas novas só depois do seed: as fixtures E2E falham na primeira passada por falta de dados
+  NOVAS=0
+  if [ -f "$BASE/falhas-esperadas.txt" ]; then
+    NOVAS=$(cut -f1 "$ST/falhas.tsv" | grep -vxFf "$BASE/falhas-esperadas.txt" | wc -l)
+    [ "$NOVAS" -gt 0 ] && { echo "FALHAS NOVAS (fora da lista esperada):"; cut -f1 "$ST/falhas.tsv" | grep -vxFf "$BASE/falhas-esperadas.txt" | sed 's/^/  /'; }
+  fi
+  echo "migrations: $OK ok, $F falha(s) de $TOTAL ($(wc -l < "$ST/como-admin.txt") reaplicadas como supabase_admin) | seed: $SEED | $(( $(date +%s)-T0 ))s"
+  if [ -n "$ACEITAR" ]; then "$0" check "$W" "$NOME" --aceitar "$ACEITAR"; else "$0" check "$W" "$NOME"; fi > "$ST/check.txt" 2>&1
+  echo $? > "$ST/check.rc"; cat "$ST/check.txt"
+  travas || exit 1
+  [ "$NOVAS" -gt 0 ] && exit 1
+  [ "$SEED" = FALHOU ] && exit 1
+  exit 0 ;;
+check)
+  [ -n "$(banco)" ] || die "conjunto $NOME não está de pé"
+  q -At -v ON_ERROR_STOP=1 < "$W/scripts/db-audit/manifest.sql" > "$ST/manifest-local.json" || die "não consegui extrair o manifesto"
+  python3 - "$ST/manifest-local.json" "$W/supabase/schema-manifest.json" "$ST/check-diferencas.txt" "$ACEITAR" <<'PY'
+import json,sys
+loc=json.load(open(sys.argv[1])); prod=json.load(open(sys.argv[2])); tot=0; chaves=[]
+aceitas=set()
+if sys.argv[4]:
+    aceitas={l.strip() for l in open(sys.argv[4], encoding='utf-8') if l.strip() and not l.lstrip().startswith('#')}
+for s in prod:
+    if not isinstance(prod[s],dict) or s=='database_identity': continue
+    a,b=prod[s],loc.get(s,{})
+    sp=sorted(set(a)-set(b)); sl=sorted(set(b)-set(a)); df=sorted(k for k in set(a)&set(b) if a[k]!=b[k]); n=len(sp)+len(sl)+len(df); tot+=n
+    chaves+=[f"{s}|{x}" for x in sp+sl+df]
+    if n:
+        print(f"[{s}] só produção={len(sp)} só local={len(sl)} diferentes={len(df)}")
+        for lab,l in (('só produção',sp),('só local',sl),('diferente',df)):
+            for x in l[:8]: print(f"    {lab}: {x[:110]}{'  (aceita)' if f'{s}|{x}' in aceitas else ''}")
+open(sys.argv[3],'w',encoding='utf-8').write(''.join(c+'\n' for c in chaves))
+fora=[c for c in chaves if c not in aceitas]; sobra=sorted(aceitas-set(chaves))
+if tot==0: print("ESTRUTURA: IDÊNTICA ao retrato da produção")
+elif not fora: print(f"ESTRUTURA: {tot} diferença(s), todas na lista de aceitas")
+else: print(f"ESTRUTURA: {tot} diferença(s) em relação ao retrato da produção" + (f" ({len(fora)} fora da lista de aceitas)" if aceitas else ""))
+if sobra: print(f"aviso: {len(sobra)} linha(s) da lista de aceitas não apareceram como diferença")
+sys.exit(0 if not fora else 1)
+PY
+  ;;
+travas) [ -n "$(banco)" ] || die "conjunto $NOME não está de pé"; travas ;;
+psql)  [ -n "$(banco)" ] || die "conjunto $NOME não está de pé"; if [ -t 0 ]; then docker exec -it "$(banco)" psql -U postgres -d postgres; else q "${@:4}"; fi ;;
+env)
+  [ -f "$ST/stack.json" ] || die "rode 'up' primeiro"
+  python3 - "$ST/stack.json" "$PROD_REF" <<'PY'
+import json,sys
+j=json.load(open(sys.argv[1])); e=j.get('env',{}); ep=j.get('endpoints',{})
+out={k:v for k,v in e.items()}
+for k,v in out.items():
+    assert sys.argv[2] not in str(v), "valor de produção no ambiente local"
+    print(f'{k}={v}')
+print(f"# banco: 127.0.0.1:{ep.get('database.sql',{}).get('port')}  api: 127.0.0.1:{ep.get('rest.http',{}).get('port')}")
+PY
+  ;;
+down)  "$SB" stack destroy --stack "$NOME" --yes --workdir "$SHADOW" 2>&1 | grep -v '^{' | tail -1; rm -rf "$SHADOW" ;;
+*) die "comando desconhecido: $cmd" ;;
+esac

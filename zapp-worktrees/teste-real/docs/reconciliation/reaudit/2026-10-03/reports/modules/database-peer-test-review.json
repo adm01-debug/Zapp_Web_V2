@@ -1,0 +1,1553 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "reviewer": "/root/grill_me_primary_review",
+  "owner": "database",
+  "status": "COMPLETE_FINITE_TEST_READING",
+  "allocation": "reports/database/test-review-roster.json files[104:156], ordem original preservada",
+  "files": [
+    {
+      "path": "src/lib/__tests__/mapboxCostGuard.aviso-antecipado.test.ts",
+      "line_start": 1,
+      "line_end": 112,
+      "git_blob_sha": "816743b96f0c47f0c7dcdcd2cf3d80f3196fe5d4",
+      "source_sha256": "07d0258383aa9d1cb207ea0258882f951469fdc1b1f89e976c8ebcfcc9c31905",
+      "uncontained_bodies_at_allocation": 11,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 104,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          112
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit_with_mocks",
+        "positive": "Importa mapboxCostGuard real; verifica limiares 7/8/9/10 para teto 10, evento e payload, deduplicação e teto 20.",
+        "limits": "RPC e logAudit são mocks; não demonstra persistência no banco, faturamento Mapbox, virada do mês ou múltiplas abas."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "RPC e logAudit são mocks; não demonstra persistência no banco, faturamento Mapbox, virada do mês ou múltiplas abas."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/mapboxCostGuard.evento-mensal.test.ts",
+      "line_start": 1,
+      "line_end": 47,
+      "git_blob_sha": "06859085701c4069c0903c1518e9f140485ed69d",
+      "source_sha256": "8d9456b14d6294850e820d997f67519e206ed6a6acf962c3b794e8075fd2e34d",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 105,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          47
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit_with_mocks",
+        "positive": "Reseta o estado em memória preservando localStorage e exige um único log após refresh repetido.",
+        "limits": "Simula reload pelo helper de teste; não recarrega navegador nem confirma escrita de audit_logs. Não atravessa mês."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Simula reload pelo helper de teste; não recarrega navegador nem confirma escrita de audit_logs. Não atravessa mês."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/mapboxCostGuard.test.ts",
+      "line_start": 1,
+      "line_end": 85,
+      "git_blob_sha": "ccaa199b6a63d645429e8cf2226a0c19fba9acb0",
+      "source_sha256": "76e6dd79b58683805561840502a34788159281ddb06059cfdb2279bfd88b07af",
+      "uncontained_bodies_at_allocation": 11,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 106,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          85
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit_with_mocks",
+        "positive": "Estado inicial, abaixo/acima do teto, deduplicação e rejeição da RPC são observados no helper real.",
+        "limits": "A falha só parte do estado inicial true; não verifica preservação do estado degradado false. RPC/persistência são mocks."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "A falha só parte do estado inicial true; não verifica preservação do estado degradado false. RPC/persistência são mocks."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/mapboxCostGuard.teto-configuravel.test.ts",
+      "line_start": 1,
+      "line_end": 79,
+      "git_blob_sha": "eaf51eb27bc2925aa83769ef1184f0e8bb4b4c09",
+      "source_sha256": "5cec75b6a48e53ebff6b0e85124e94d9b44b6c8bf5c93eca36b4c946b867a7de",
+      "uncontained_bodies_at_allocation": 10,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 107,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          79
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit_with_mocks",
+        "positive": "Helper real respeita teto configurado, fallback inválido e releitura do valor após vi.stubEnv.",
+        "limits": "A alteração dinâmica do import.meta.env no teste não prova que uma aplicação Vite já compilada receba nova variável de implantação sem rebuild/reload; é limite da promessa nas linhas 67–77."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "A alteração dinâmica do import.meta.env no teste não prova que uma aplicação Vite já compilada receba nova variável de implantação sem rebuild/reload; é limite da promessa nas linhas 67–77."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/mapboxSession.sessaoFantasma.test.ts",
+      "line_start": 1,
+      "line_end": 102,
+      "git_blob_sha": "c1a96a6c9a1bcebc4a9d3df026efbfff7b301d03",
+      "source_sha256": "9c7fc269e512e88e54c4408535441b9db8cce1db62cb1901e19d7403e5f19424",
+      "uncontained_bodies_at_allocation": 15,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 108,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          102
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit_with_mocks",
+        "positive": "Helper real conta uma sessão por token, conta primeira suggest/retrieve e propaga source; abrir/fechar sem nota não registra.",
+        "limits": "Chama noteSuggestCall/noteRetrieveCall diretamente com fetch mockado; não prova que o consumidor as chama somente em requisições faturáveis nem preço/cobrança do provedor."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Chama noteSuggestCall/noteRetrieveCall diretamente com fetch mockado; não prova que o consumidor as chama somente em requisições faturáveis nem preço/cobrança do provedor."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/notificationDedupe.test.ts",
+      "line_start": 1,
+      "line_end": 43,
+      "git_blob_sha": "0a8f0eb791084c9e289df1874a8a417d87ec016c",
+      "source_sha256": "17e65a1b1ceffb4f707fca433106c40710820c426f490781670f6b72513d9587",
+      "uncontained_bodies_at_allocation": 7,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 109,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          43
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Helper real testa TTL inclusive fronteira, identidades independentes, 300 eventos, TTL misto, limite 2000 e liberação após expiração.",
+        "limits": "Escopo é mapa em memória com relógio explícito; não testa deduplicação entre processos/abas ou escolha da identidade pelo consumidor."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Escopo é mapa em memória com relógio explícito; não testa deduplicação entre processos/abas ou escolha da identidade pelo consumidor."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/phoneNormalization.test.ts",
+      "line_start": 1,
+      "line_end": 104,
+      "git_blob_sha": "c2ce76c0b761d62d14fa1c5518b14e0c6a861be5",
+      "source_sha256": "e527cf14a8dea02329cd9cd0403e0c1c326be31e10ed87ffc7959872f07e7c71",
+      "uncontained_bodies_at_allocation": 26,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 110,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          104
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "local_replica_only",
+        "positive": "Exemplos exercitam as funções locais de normalização declaradas nas linhas 5–12.",
+        "limits": "Não importa evolution-webhook nem verifica seu código; mudanças reais passam despercebidas. Encaminhado à família GOV003/TC011."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não importa evolution-webhook nem verifica seu código; mudanças reais passam despercebidas. Encaminhado à família GOV003/TC011."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/postgrestFilters.test.ts",
+      "line_start": 1,
+      "line_end": 34,
+      "git_blob_sha": "5157c2395397c3c1e0f1fc8de4c39c795861bd83",
+      "source_sha256": "88c1397562dc2452571612243939c6a32575b0196e81927267841f4843a210d6",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 111,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          34
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Importa escapeOrFilterValue real e compara escapes exatos de aspas, barra, vírgula, parênteses e vazio.",
+        "limits": "Não submete strings ao parser PostgREST real nem verifica cada chamador."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não submete strings ao parser PostgREST real nem verifica cada chamador."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/retry.random.test.ts",
+      "line_start": 1,
+      "line_end": 86,
+      "git_blob_sha": "d695160206e071f5a08c840d40daa787cc484c70",
+      "source_sha256": "36039c5a68f535f9edd05b9e7a311c0fb81b3029eadc8cf6782744bb228fe5a9",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 112,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          86
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit_with_mocks",
+        "positive": "withRetry real agenda 1250 ms, repete a operação e respeita máximo 1100 ms com fonte aleatória controlada.",
+        "limits": "Dois cenários recuperam na segunda tentativa; não demonstram limite de tentativas, predicado de retry ou distribuição do jitter."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Dois cenários recuperam na segunda tentativa; não demonstram limite de tentativas, predicado de retry ou distribuição do jitter."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/rlsConversationAccess.test.ts",
+      "line_start": 1,
+      "line_end": 184,
+      "git_blob_sha": "44918070c4e355c45f0ebee7e88f1b888eeeabe2",
+      "source_sha256": "ee736ac7351c81d2ea580de49b68877cc83c7c159a84ce6544782f33befb3bea",
+      "uncontained_bodies_at_allocation": 29,
+      "preferred_area": "database",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 113,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          184
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "local_replica_only",
+        "positive": "Matriz de papéis/autenticação/atribuição é calculada por funções locais das linhas 29–58.",
+        "limits": "Nenhum SQL, migration ou helper real é importado. A equivalência alegada com políticas RLS não é verificada; mistura user.id e atribuição sem mapear profiles. Família GOV003/TC011."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Nenhum SQL, migration ou helper real é importado. A equivalência alegada com políticas RLS não é verificada; mistura user.id e atribuição sem mapear profiles. Família GOV003/TC011."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/rlsGroupAccess.test.ts",
+      "line_start": 1,
+      "line_end": 149,
+      "git_blob_sha": "dcd5a3f038bbda19927dc9d8c59d3fbe9316cfe7",
+      "source_sha256": "4b324fc554c0f7a968b625eb5063c211168766912d39e971232522595baa3ffc",
+      "uncontained_bodies_at_allocation": 35,
+      "preferred_area": "database",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 114,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          149
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "local_replica_only",
+        "positive": "Exemplos CRUD executam funções locais de papéis e autenticação.",
+        "limits": "A afirmação de correspondência com RLS não consulta políticas nem banco; mudanças reais não afetam esses testes. Família GOV003/TC011."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "A afirmação de correspondência com RLS não consulta políticas nem banco; mudanças reais não afetam esses testes. Família GOV003/TC011."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/secureRandom.test.ts",
+      "line_start": 1,
+      "line_end": 100,
+      "git_blob_sha": "d8afa895b5a8aa00e410d2597dd5b41f3ccafc0e",
+      "source_sha256": "3d0bbdf16999bfc97227aacbd7c628082cead36de973c3c375cb7da4968368f2",
+      "uncontained_bodies_at_allocation": 21,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 115,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          100
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Helpers reais verificam intervalos, parâmetros inválidos, alfabeto e chamada de crypto.getRandomValues.",
+        "limits": "Amostragem de unicidade não prova ausência de colisões; exigir 1000 floats distintos pode falhar por acaso. Não é certificação criptográfica."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Amostragem de unicidade não prova ausência de colisões; exigir 1000 floats distintos pode falhar por acaso. Não é certificação criptográfica."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/singuLabels.test.ts",
+      "line_start": 1,
+      "line_end": 80,
+      "git_blob_sha": "517346845e6609796ee618c407f7b2bb953460fe",
+      "source_sha256": "d5e67a583cb663cf517389896cc2eea0305d5ef693e6677690cc693756a3825f",
+      "uncontained_bodies_at_allocation": 13,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 116,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          80
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Dicionários e funções reais verificam rótulos, fallback cru/null, asa e ordem/limite de dois metaprogramas.",
+        "limits": "Não valida o modelo comportamental nem integração com dados remotos; testa apresentação local."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não valida o modelo comportamental nem integração com dados remotos; testa apresentação local."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/storage_object_reference.test.ts",
+      "line_start": 1,
+      "line_end": 67,
+      "git_blob_sha": "1f1baaf4f3f11dc4404ee7525bb5cbca77dd7ead",
+      "source_sha256": "86dc9a60dadddef635b52ffb6c37f6c8ea086a836cc8deb100cb44d512abe515",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 117,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          67
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Parser real verifica três tipos de URL Storage, retirada de credencial, allowlists de origem/bucket e paths inválidos.",
+        "limits": "Não executa Storage, RLS ou renovação de URL; um localizador público não prova que o objeto seja público."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não executa Storage, RLS ou renovação de URL; um localizador público não prova que o objeto seja público."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/urlSafety.test.ts",
+      "line_start": 1,
+      "line_end": 34,
+      "git_blob_sha": "6470dcfb3ea580638bb072051cb935033aac7a59",
+      "source_sha256": "c0d2049c8dc9006d52589aea159ea4a0c409c01be27b6489bbfc507de8d786e4",
+      "uncontained_bodies_at_allocation": 7,
+      "preferred_area": "database",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 118,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          34
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "isSafeHttpUrl real aceita HTTP(S) absoluto e rejeita esquemas ativos, relativos, tipos inválidos e tamanho excessivo.",
+        "limits": "Escopo de protocolo/formato para links; não constitui proteção SSRF nem valida cada consumidor."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Escopo de protocolo/formato para links; não constitui proteção SSRF nem valida cada consumidor."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/utils.test.ts",
+      "line_start": 1,
+      "line_end": 54,
+      "git_blob_sha": "0e96d39dc1f93d0dddda25d364b77fd2e34bd46d",
+      "source_sha256": "992f1b91ef3555d76d334fa836657df0aa64fd8e83e98eeb2a096ca44da010f8",
+      "uncontained_bodies_at_allocation": 11,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 119,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          54
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "cn real combina condicionais, arrays, objetos e conflitos Tailwind com valores esperados.",
+        "limits": "Strings de classes não comprovam CSS computado, layout ou acessibilidade."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Strings de classes não comprovam CSS computado, layout ou acessibilidade."
+      ]
+    },
+    {
+      "path": "src/lib/__tests__/zappSchemas.test.ts",
+      "line_start": 1,
+      "line_end": 173,
+      "git_blob_sha": "6c0a678304dce40a4bdb0b608f74c045667a487f",
+      "source_sha256": "fcee688bcf06236e297c1c5c674c13b4fd67e17ae2fed784799eb0f20e9d7241",
+      "uncontained_bodies_at_allocation": 39,
+      "preferred_area": "database",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 120,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          173
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Schemas reais fazem safeParse/parse para defaults, status, UUID, coerção numérica e contato; templates/filtros reais são inspecionados.",
+        "limits": "Não verifica persistência nem consumidor do schema. Coerção de ativo testa só string true, não false."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não verifica persistência nem consumidor do schema. Coerção de ativo testa só string true, não false."
+      ]
+    },
+    {
+      "path": "src/lib/aiRequest/__tests__/context.test.ts",
+      "line_start": 1,
+      "line_end": 121,
+      "git_blob_sha": "15f97afe48fdbee38f131eafde7b6036fe782055",
+      "source_sha256": "41a531bf7500cf97ed942aace5cf00914f6c489d0a050a0e7b15f99fe5c5b9c0",
+      "uncontained_bodies_at_allocation": 21,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 121,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          121
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_hook",
+        "positive": "Helpers e hook reais verificam identidade, geração, troca de contato/período, invalidate, snapshot e preservação após render sem mudança de contexto.",
+        "limits": "Não prova que todo consumidor usa isCurrent antes de aplicar uma resposta; unicidade é amostra de 200 IDs."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não prova que todo consumidor usa isCurrent antes de aplicar uma resposta; unicidade é amostra de 200 IDs."
+      ]
+    },
+    {
+      "path": "src/services/__tests__/chat.service.test.ts",
+      "line_start": 1,
+      "line_end": 60,
+      "git_blob_sha": "c42bf27aab52fb100a90ccd61618b20d619cf46f",
+      "source_sha256": "2b715e5ed401243049c7fa6a3506f732b9c164a79111a30226e6d6fa5ed143fb",
+      "uncontained_bodies_at_allocation": 9,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 122,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          60
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit_with_mocks",
+        "positive": "ChatService real exige path/contentType do upload, gera localizador sem token e propaga erro sem chamar getPublicUrl.",
+        "limits": "Storage é mock; retorno tem path de fixture diferente do pedido e só contém bucket. Não valida ACL ou acesso real."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Storage é mock; retorno tem path de fixture diferente do pedido e só contém bucket. Não valida ACL ou acesso real."
+      ]
+    },
+    {
+      "path": "src/services/__tests__/external-crm.service.test.ts",
+      "line_start": 1,
+      "line_end": 77,
+      "git_blob_sha": "b696f3e54701c018f2a0038d3e094f4a0bb17fb7",
+      "source_sha256": "a692cff09fd5730b23a1364a0704393218ad6ad7f9e39403b371061138b48ddb",
+      "uncontained_bodies_at_allocation": 21,
+      "preferred_area": "providers",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 123,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          77
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit_with_mocks",
+        "positive": "Service real divide 205 contatos em lotes 100/100/5, preserva resultado parcial e falha total; sidebar verifica ação/payload e propaga erro.",
+        "limits": "CRM é mock; tamanho >=205 não confirma correspondência de todos os telefones originais. Não valida contrato externo/RLS."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "CRM é mock; tamanho >=205 não confirma correspondência de todos os telefones originais. Não valida contrato externo/RLS."
+      ]
+    },
+    {
+      "path": "src/test/fakeBroadcastChannel.ts",
+      "line_start": 1,
+      "line_end": 35,
+      "git_blob_sha": "f0b63ab6c5a02ed03ded66d0ec1fa5a67d7dd97f",
+      "source_sha256": "fc5d9e2fd11f7800bbbc16ca12273efe5e8fd15cf93063a34562b2c403449859",
+      "uncontained_bodies_at_allocation": 3,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 124,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          35
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "test_support",
+        "positive": "FakeBroadcastChannel entrega a pares do mesmo nome sem eco e expõe reset.",
+        "limits": "Entrega síncrona sem structured clone; close é vi.fn sem remover peer. Suporta testes específicos, não reproduz ciclo de fechamento ou agendamento do navegador."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Entrega síncrona sem structured clone; close é vi.fn sem remover peer. Suporta testes específicos, não reproduz ciclo de fechamento ou agendamento do navegador."
+      ]
+    },
+    {
+      "path": "src/test/guardaDeRede.test.ts",
+      "line_start": 1,
+      "line_end": 47,
+      "git_blob_sha": "6443515d7177950bf7f22af2ba5a03ac4e8450cb",
+      "source_sha256": "c68572c36be23846b1e4b04efcd424901c44b0e65a219ca3b1a3f0c1d34c50cf",
+      "uncontained_bodies_at_allocation": 6,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 125,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          47
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_harness_guard",
+        "positive": "Testes chamam fetch e exigem rejeição identificável da guarda para domínio Supabase e passagem de destino local.",
+        "limits": "Não executado nesta revisão. Depende do setup; não prova bloqueio de todas as APIs de rede e não revalida as medições históricas citadas nos comentários."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não executado nesta revisão. Depende do setup; não prova bloqueio de todas as APIs de rede e não revalida as medições históricas citadas nos comentários."
+      ]
+    },
+    {
+      "path": "src/test/mocks/supabase.ts",
+      "line_start": 1,
+      "line_end": 67,
+      "git_blob_sha": "ca3791fb8542bf946248037f493694cc8c4f892f",
+      "source_sha256": "28b1b237f6e708f7c2d628b21c0c182084580dbf55a217ad69397b00ac285358",
+      "uncontained_bodies_at_allocation": 3,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 126,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          67
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "test_support",
+        "positive": "Mock cria builder Promise, métodos rastreáveis e respostas configuráveis por tabela, auth e canal.",
+        "limits": "eq/order/limit/range/mutations não alteram resultado; consultas ignoram filtros salvo assertions explícitas do consumidor. Não emula banco/RLS/realtime."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "eq/order/limit/range/mutations não alteram resultado; consultas ignoram filtros salvo assertions explícitas do consumidor. Não emula banco/RLS/realtime."
+      ]
+    },
+    {
+      "path": "src/utils/__tests__/notificationSounds.test.ts",
+      "line_start": 1,
+      "line_end": 122,
+      "git_blob_sha": "c9cb51caf0e251f7d2471793e589eecb190773e8",
+      "source_sha256": "db3905d712f9910cfb19aec11c65207b882f91de4c909b4eadec3ea646c7db48",
+      "uncontained_bodies_at_allocation": 35,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 127,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          122
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit_with_mocks",
+        "positive": "Função real é chamada com AudioContext construtível; caso inválido quiet avança timers e exige criação de oscilador (107–116), controle positivo contra silêncio.",
+        "limits": "A maioria dos casos 49–104 verifica apenas not.toThrow, insuficiente quando catch engole erro. Sem áudio real, ganho/volume ou autoplay verificado."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "A maioria dos casos 49–104 verifica apenas not.toThrow, insuficiente quando catch engole erro. Sem áudio real, ganho/volume ou autoplay verificado."
+      ]
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/ai-audio-authz.test.ts",
+      "line_start": 1,
+      "line_end": 50,
+      "git_blob_sha": "4118cc1c8138fb6a2a45a90269b90b5f84bdc3d7",
+      "source_sha256": "35fa5f1d7f8d40e5adcd89843cea1ed9289cb75fd80c3b444a1ac35f718d1c5b",
+      "uncontained_bodies_at_allocation": 5,
+      "preferred_area": "providers",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 128,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          50
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Helper real rejeita messageId ausente/inválido e Bearer ausente com status definidos.",
+        "limits": "O teste 41–49 compara duas strings UUID inválidas; não representa objeto inexistente versus objeto de outro usuário. RLS real e autorização de objeto ficam fora deste arquivo, como reconhecido no cabeçalho."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "O teste 41–49 compara duas strings UUID inválidas; não representa objeto inexistente versus objeto de outro usuário. RLS real e autorização de objeto ficam fora deste arquivo, como reconhecido no cabeçalho."
+      ]
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/avatar-storage-path.test.ts",
+      "line_start": 1,
+      "line_end": 53,
+      "git_blob_sha": "deb5c469a9381d35e38dc7c49e796264c17185cb",
+      "source_sha256": "9a004b22124907da2264c1037b3255d8e168611b9937db6c59349d2c45c8399a",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "providers",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 129,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          53
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit_with_mocks",
+        "positive": "Helper real normaliza telefone, usa path fixo/upsert e verifica que list/remove não são chamados; URL recebe versão.",
+        "limits": "Fetch e Storage são mocks com sucesso único; não simula uploads concorrentes, validação de bytes ou falha remota."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Fetch e Storage são mocks com sucesso único; não simula uploads concorrentes, validação de bytes ou falha remota."
+      ]
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts",
+      "line_start": 1,
+      "line_end": 66,
+      "git_blob_sha": "71af0212e47b28b525ea739972a71ba6cf5cd42f",
+      "source_sha256": "3b80254d40104447cb03909037b58e618fb6165e597103cdfe9275aef33e10a4",
+      "uncontained_bodies_at_allocation": 11,
+      "preferred_area": "providers",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 130,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          66
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit_with_mocks",
+        "positive": "evoFetch real e rota tradutora recebem token explícito/fallback; sem token exige 400 e nenhuma chamada ao fetcher.",
+        "limits": "Só rota de texto GO; não confirma todos os chamadores e associação correta entre conexão e token. withEnv não usa finally para exceção síncrona de fn, embora os casos atuais sejam async."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Só rota de texto GO; não confirma todos os chamadores e associação correta entre conexão e token. withEnv não usa finally para exceção síncrona de fn, embora os casos atuais sejam async."
+      ]
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/postgrest-filters.test.ts",
+      "line_start": 1,
+      "line_end": 28,
+      "git_blob_sha": "bd711fdf54f43cc4f364c41c1efb9c3a10b87a2f",
+      "source_sha256": "d8fecb3f4589ea5a927451668794cfa643def0e68939f9c94127a6e958522c63",
+      "uncontained_bodies_at_allocation": 5,
+      "preferred_area": "providers",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 131,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          28
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Helper Edge real retorna escapes exatos para injeção de OR, aspas, barra e parênteses.",
+        "limits": "Não executa parser PostgREST nem endpoint consumidor."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não executa parser PostgREST nem endpoint consumidor."
+      ]
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/ssrf.test.ts",
+      "line_start": 1,
+      "line_end": 62,
+      "git_blob_sha": "4d405ba5afc322c08fb84d73e3b3b1ab5e6d5475",
+      "source_sha256": "739653cbbbe90626b0cc460308d54508993ddd92c4f69bcdb601a1c84ea2d71a",
+      "uncontained_bodies_at_allocation": 2,
+      "preferred_area": "providers",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 132,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          62
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Primitivas reais classificam IPs especiais e validam origem/bucket/path em URLs Storage, incluindo sufixo malicioso e dupla codificação.",
+        "limits": "Não exercita resolução DNS, redirects, TOCTOU ou download efetivo; escopo explícito de primitivas."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não exercita resolução DNS, redirects, TOCTOU ou download efetivo; escopo explícito de primitivas."
+      ]
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/talkx-v20-window-business-hours.test.ts",
+      "line_start": 1,
+      "line_end": 48,
+      "git_blob_sha": "d8e3fd8c711627ac7faffd604cddf33be855d3df",
+      "source_sha256": "d377ad83a5741fb1e247307be3e5d6e2f987b9f866cc3395e77d947007b8c25c",
+      "uncontained_bodies_at_allocation": 5,
+      "preferred_area": "providers",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 133,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          48
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Funções reais verificam alteração de horário/dias, parse de JSON inválido e retomada de daily_limit apenas no dia seguinte.",
+        "limits": "Fixtures usam meio do dia e conexão sempre connected; não verificam fronteiras de meia-noite/DST, persistência ou worker."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Fixtures usam meio do dia e conexão sempre connected; não verificam fronteiras de meia-noite/DST, persistência ou worker."
+      ]
+    },
+    {
+      "path": "supabase/functions/_shared/__tests__/webhook-signature-ambiguity.test.ts",
+      "line_start": 1,
+      "line_end": 43,
+      "git_blob_sha": "a63dfb0b3cfc5bbd4419add162489b71bcbf5dbb",
+      "source_sha256": "e5dcc3f734ed09239f831128d78340cb604e98b92982a309d507aff801f7d1a9",
+      "uncontained_bodies_at_allocation": 3,
+      "preferred_area": "providers",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 134,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          43
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Parser real recusa chaves repetidas, aceita ordem/espaços e verificador devolve malformed_signature.",
+        "limits": "Não cria HMAC válido nem testa tolerância temporal/secret real; esse arquivo é dedicado à ambiguidade."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não cria HMAC válido nem testa tolerância temporal/secret real; esse arquivo é dedicado à ambiguidade."
+      ]
+    },
+    {
+      "path": "supabase/functions/_shared/messaging/__tests__/index.test.ts",
+      "line_start": 1,
+      "line_end": 60,
+      "git_blob_sha": "1ebfc61c4297f435dbf74571a3fbc7f2adb512dc",
+      "source_sha256": "1a4bacabd0d525a0dcba3236c9a942e7639a282f3f4e1167d6e40dd6bbe2946a",
+      "uncontained_bodies_at_allocation": 4,
+      "preferred_area": "providers",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 135,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          60
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_exports_smoke",
+        "positive": "Importa face pública real do kernel, confere tipos das funções, constantes e amostra de correlation IDs.",
+        "limits": "Smoke de exports não prova comportamento de envio/elegibilidade/mídia nem importação pelos dois consumidores em si; título e comentários delimitam parte do objetivo."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Smoke de exports não prova comportamento de envio/elegibilidade/mídia nem importação pelos dois consumidores em si; título e comentários delimitam parte do objetivo."
+      ]
+    },
+    {
+      "path": "supabase/functions/ai-auto-tag/auth_test.ts",
+      "line_start": 1,
+      "line_end": 44,
+      "git_blob_sha": "8845684d6db07545d964e1c083063f316706a245",
+      "source_sha256": "0970c385eef34408bcf893f29c6a7269d29e28b8d0f50e5f693219de5163139b",
+      "uncontained_bodies_at_allocation": 2,
+      "preferred_area": "providers",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 136,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          44
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "conditional_network_integration",
+        "positive": "Descreve dois POSTs contra endpoint configurado exigindo 401 por credencial ausente/inválida.",
+        "limits": "ignore: !BASE pula ambos sem SUPABASE_FUNCTIONS_URL; não executado. Status pode vir do gateway e não demonstra autorização por objeto ou caminho autenticado."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "ignore: !BASE pula ambos sem SUPABASE_FUNCTIONS_URL; não executado. Status pode vir do gateway e não demonstra autorização por objeto ou caminho autenticado."
+      ]
+    },
+    {
+      "path": "supabase/functions/message-delivery/index.test.ts",
+      "line_start": 1,
+      "line_end": 51,
+      "git_blob_sha": "c489b27e5e79cfde674759159dcd9d5e97db238f",
+      "source_sha256": "4d3f162ca973292b143359d1b7bef74a26271c6d2b632c051bd8ecacc2273155",
+      "uncontained_bodies_at_allocation": 6,
+      "preferred_area": "providers",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 137,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          51
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_handler_and_unit",
+        "positive": "Handler real rejeita GET e POST sem auth; providerPayload real monta rota/número de poll, rejeita contato inválido e preserva quote sem caption de placeholder.",
+        "limits": "Não percorre caminho autenticado de claim/persistência/provedor; não espiona leitura de secrets apesar do título, nem confere todos os campos de poll."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não percorre caminho autenticado de claim/persistência/provedor; não espiona leitura de secrets apesar do título, nem confere todos os campos de poll."
+      ]
+    },
+    {
+      "path": "supabase/functions/multiplix-dispatch/__tests__/f53-rate-limit.test.ts",
+      "line_start": 1,
+      "line_end": 75,
+      "git_blob_sha": "2c5c17c02ac1d86a971f5306b77a0e44d795a859",
+      "source_sha256": "39e0cc5dc8e92f8ed8cf122379bff096b8f84a3be1a269581af8a9b366e088dc",
+      "uncontained_bodies_at_allocation": 5,
+      "preferred_area": "providers",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 138,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          75
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "source_contract",
+        "positive": "Lê arquivos de produção e exige enforceRateLimit, Retry-After por ocorrência textual de 429 e chave por conexão.",
+        "limits": "Todas as assertions são texto; inclusive audience/dispatch não montam resposta HTTP real. Janela de oito linhas pode aceitar token sem relação de fluxo; não prova quota efetiva."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Todas as assertions são texto; inclusive audience/dispatch não montam resposta HTTP real. Janela de oito linhas pode aceitar token sem relação de fluxo; não prova quota efetiva."
+      ]
+    },
+    {
+      "path": "supabase/functions/public-api/index.test.ts",
+      "line_start": 1,
+      "line_end": 35,
+      "git_blob_sha": "06d0bc1946d75248db613dff791287058d7ad4a0",
+      "source_sha256": "bb40eec3527e2988146e47bdf561882fe326b438759fd3aedc288b3ce88b29a6",
+      "uncontained_bodies_at_allocation": 3,
+      "preferred_area": "providers",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 139,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          35
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_handler",
+        "positive": "Handler real retorna tombstone 410/no-store para POST inválido com chave legada e preserva preflight permitido.",
+        "limits": "Só uma origem e uma credencial de fixture; não demonstra todas as origens/métodos nem espiona efeitos, embora fluxo seja estreito."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Só uma origem e uma credencial de fixture; não demonstra todas as origens/métodos nem espiona efeitos, embora fluxo seja estreito."
+      ]
+    },
+    {
+      "path": "supabase/functions/sync-call-records/index.test.ts",
+      "line_start": 1,
+      "line_end": 66,
+      "git_blob_sha": "493bcad266d9e6559334617770c2243b3cb78a2a",
+      "source_sha256": "274b9e0236902ec2353bf44a6b17fb20dbe85aa125a86a041f78d27f73cfc9a7",
+      "uncontained_bodies_at_allocation": 7,
+      "preferred_area": "providers",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 140,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          66
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Helpers reais testam janela ±90 s, match por últimos nove dígitos, ausência de candidato, campos fechados e gravação/duração.",
+        "limits": "Não executa reconciliador inteiro nem observa INSERT/UPDATE; frase nunca cria chamada é maior que prova dos helpers. Não simula múltiplos candidatos ambíguos."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não executa reconciliador inteiro nem observa INSERT/UPDATE; frase nunca cria chamada é maior que prova dos helpers. Não simula múltiplos candidatos ambíguos."
+      ]
+    },
+    {
+      "path": "tests/contracts/ai-auto-tag-writes.contract.test.ts",
+      "line_start": 1,
+      "line_end": 81,
+      "git_blob_sha": "68a825b796184e8022eafd92100e0dc1ab6e100a",
+      "source_sha256": "fd04b3bb67739bd169072cebabdd2e2d51ef823d28f9189bd305d1374409f87f",
+      "uncontained_bodies_at_allocation": 12,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 141,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          81
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "source_contract",
+        "positive": "Contrato textual reconhece explicitamente que lê fonte; exige normalização, RPC transacional e tratamento de erro, e proíbe antigo delete/insert.",
+        "limits": "Regex/tokens não exercitam transação, autorização ou propagação real do erro; relações de fluxo não são validadas semanticamente pelo teste."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Regex/tokens não exercitam transação, autorização ou propagação real do erro; relações de fluxo não são validadas semanticamente pelo teste."
+      ]
+    },
+    {
+      "path": "tests/contracts/ai-json-extraction.contract.test.ts",
+      "line_start": 1,
+      "line_end": 79,
+      "git_blob_sha": "624199877b491734431fceb069ca2ead10e92791",
+      "source_sha256": "d9a67bc5491d0899d0bca809d9aebe97931325d77e89fa0ac679522b490280db",
+      "uncontained_bodies_at_allocation": 16,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 142,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          79
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Helpers reais verificam extração gulosa, cercas, aninhamento, conteúdo inválido/truncado e objeto dentro de array.",
+        "limits": "Contrato preserva deliberadamente extração gulosa; não valida schema do conteúdo ou todos os consumidores."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Contrato preserva deliberadamente extração gulosa; não valida schema do conteúdo ou todos os consumidores."
+      ]
+    },
+    {
+      "path": "tests/contracts/ai-response-envelope.contract.test.ts",
+      "line_start": 1,
+      "line_end": 107,
+      "git_blob_sha": "c5fb0ba53315533a352741df0a063d4e58e45f61",
+      "source_sha256": "9ca7bb28dc538d2b3ee16eb6ba88116c5cfde985974d0d67798d6ee27791f825",
+      "uncontained_bodies_at_allocation": 15,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 143,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          107
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "source_contract",
+        "positive": "Lê consumidores reais e exige acesso ao envelope, propagação textual de erro e ausência de defaults numéricos antigos.",
+        "limits": "Não renderiza UI nem injeta envelope; ocorrência de payload.error não demonstra que erro é exibido no ramo correto."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não renderiza UI nem injeta envelope; ocorrência de payload.error não demonstra que erro é exibido no ramo correto."
+      ]
+    },
+    {
+      "path": "tests/contracts/ai-values.contract.test.ts",
+      "line_start": 1,
+      "line_end": 110,
+      "git_blob_sha": "4c9c77ead778bf27dc821bb687b48f0dfc6a6252",
+      "source_sha256": "2de4614c453ff6c950e042a7128183f6ad0e84569cf47c6a5d4e9a3383ce728f",
+      "uncontained_bodies_at_allocation": 17,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 144,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          110
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Normalizadores reais distinguem ausência/zero/escala/faixa, agregam amostras válidas e verificam identidade exata dos exports frontend/Edge.",
+        "limits": "Não valida todos os consumidores ou persistência; contrato de escala é testado localmente e não certifica dados de origem."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não valida todos os consumidores ou persistência; contrato de escala é testado localmente e não certifica dados de origem."
+      ]
+    },
+    {
+      "path": "tests/contracts/alert-sound-persistence.contract.test.ts",
+      "line_start": 1,
+      "line_end": 85,
+      "git_blob_sha": "782f9c8351fe87f4f1e843d7a12ace1f5d42a22d",
+      "source_sha256": "0d402bef0dffe0a5170910fbd68ff12b0f9c48229632abdecdbe1fe67a45bf81",
+      "uncontained_bodies_at_allocation": 9,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 145,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          85
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "source_contract",
+        "positive": "Remove comentários para parte das verificações; testa tokens de volume persistido, divisão por 100 e ausência de imports do volume de mídia.",
+        "limits": "Não toca áudio nem altera preferência no fluxo real; divisão textual não prova ganho aplicado. Regex de imports só cobre mesma linha."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não toca áudio nem altera preferência no fluxo real; divisão textual não prova ganho aplicado. Regex de imports só cobre mesma linha."
+      ]
+    },
+    {
+      "path": "tests/contracts/axe-campanhas.contract.test.ts",
+      "line_start": 1,
+      "line_end": 36,
+      "git_blob_sha": "627e6a882892ba771d68a8765aff4d8b3fa196a9",
+      "source_sha256": "853149f736c29b1ff2544e40c7f1a9ed4209de9da9a99c54ad313350d2f28741",
+      "uncontained_bodies_at_allocation": 3,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 146,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          36
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "source_contract",
+        "positive": "Verifica aria-label de três SelectTrigger no arquivo real de Multiplix e quantidade mínima.",
+        "limits": "Não executa axe nem monta DOM; medições históricas referidas no comentário não foram revalidadas. Arquivo já adjudicado no lote próprio de 73; leitura compartilhada não é cobertura adicional única."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não executa axe nem monta DOM; medições históricas referidas no comentário não foram revalidadas. Arquivo já adjudicado no lote próprio de 73; leitura compartilhada não é cobertura adicional única."
+      ],
+      "shared_read_reference": "reports/modules/test-review.json"
+    },
+    {
+      "path": "tests/contracts/axe-shell-landmarks.contract.test.ts",
+      "line_start": 1,
+      "line_end": 64,
+      "git_blob_sha": "1be79af86aaaf67fd5018fd1cfb7018b738065ea",
+      "source_sha256": "eab441259a6b145a2022bff2e03d4b69a87c1ff3ca1e0648af17bbdfef702e2b",
+      "uncontained_bodies_at_allocation": 6,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 147,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          64
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "source_contract",
+        "positive": "Confere roles, labels, id, um único token dialog e nav no fonte do shell.",
+        "limits": "Não executa axe/DOM. Linhas 54–56 só provam presença de componentes e não que sejam irmãos fora do AppShell, apesar do título."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não executa axe/DOM. Linhas 54–56 só provam presença de componentes e não que sejam irmãos fora do AppShell, apesar do título."
+      ]
+    },
+    {
+      "path": "tests/contracts/cors-origins.contract.test.ts",
+      "line_start": 1,
+      "line_end": 74,
+      "git_blob_sha": "382588264e25dbb1b09eabdc9593849b7883d24c",
+      "source_sha256": "3d0e9940b131ede4a9eec626f325fcf632c652c3a99776a586f261ba866996c0",
+      "uncontained_bodies_at_allocation": 12,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 148,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          74
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "source_contract",
+        "positive": "Inspeciona allowlist, padrões de origem e string canônica nas duas superfícies reais.",
+        "limits": "Não chama getCorsHeaders nem avalia regex contra origens adversariais; slice/token depende de forma do fonte, não fluxo HTTP."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não chama getCorsHeaders nem avalia regex contra origens adversariais; slice/token depende de forma do fonte, não fluxo HTTP."
+      ]
+    },
+    {
+      "path": "tests/contracts/error-format.contract.test.ts",
+      "line_start": 1,
+      "line_end": 66,
+      "git_blob_sha": "6288148ea80357377d89ddad7584a93b06c55cf6",
+      "source_sha256": "b6a4c72fa509ac70bcbcb3d3138ba1c6500eaf3b6fb0f13adb6c92e8884aa6bb",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 149,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          66
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Schemas/helpers reais geram Response 422 com JSON, versão, paths e suporte a ZodError/FieldError; ausência é assertada antes de guards.",
+        "limits": "Não chama endpoints consumidores; não prova que cada handler usa o formato."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não chama endpoints consumidores; não prova que cada handler usa o formato."
+      ]
+    },
+    {
+      "path": "tests/contracts/ia053-streaming-registrado.test.ts",
+      "line_start": 1,
+      "line_end": 98,
+      "git_blob_sha": "26a74c00c3fb4c8a63124caa3e43fbbad71a04bf",
+      "source_sha256": "3c85612ce552de16eea56383f26fcaa4e19c2ec13dca434b0f63cdf84411162f",
+      "uncontained_bodies_at_allocation": 10,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 150,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          98
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "source_contract",
+        "positive": "Delimita ramo textual de stream e exige medidor, registrador, fatos de desfecho e null para uso desconhecido.",
+        "limits": "Contrato de ligação textual explicitamente separado de testes comportamentais; não transmite stream, verifica cancelamento nem observa gravação ou waitUntil real."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Contrato de ligação textual explicitamente separado de testes comportamentais; não transmite stream, verifica cancelamento nem observa gravação ou waitUntil real."
+      ]
+    },
+    {
+      "path": "tests/contracts/ia055-custo-no-relatorio.test.ts",
+      "line_start": 1,
+      "line_end": 122,
+      "git_blob_sha": "92eff9123f4d5b984b61c9e939e795050328f9d1",
+      "source_sha256": "534382063c1c5b13d51c4143f0517cc93b100093e5b2c4fb46c8a693fd4b0e3b",
+      "uncontained_bodies_at_allocation": 18,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 151,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          122
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "source_contract",
+        "positive": "Lê migration específica, hook e tela; exige vigência, moeda única, invoker, RPC e apresentação de custo com ausência.",
+        "limits": "Não executa SQL ou UI; não resolve redefinições posteriores da RPC. Evidência é sintaxe em migration fixa, não estado efetivo do banco ou custo calculado."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não executa SQL ou UI; não resolve redefinições posteriores da RPC. Evidência é sintaxe em migration fixa, não estado efetivo do banco ou custo calculado."
+      ]
+    },
+    {
+      "path": "tests/contracts/ia057-indicadores-de-saude.test.ts",
+      "line_start": 1,
+      "line_end": 83,
+      "git_blob_sha": "bbf96c1078f85afdeed1e49b0608f0579b4880c2",
+      "source_sha256": "404b9ea45bbd85b2d53a2e5efcf2d287d170c4bae07db8fa01fd79b92f4db7d4",
+      "uncontained_bodies_at_allocation": 11,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 152,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          83
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "source_contract",
+        "positive": "Verifica fonte do painel quanto a ausência de amostra, denominadores, filtros e nomes de percentis com ordem textual do vazio.",
+        "limits": "Não calcula percentis com dados nem renderiza indicadores; tokens não provam efeito visual/consultas completas."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não calcula percentis com dados nem renderiza indicadores; tokens não provam efeito visual/consultas completas."
+      ]
+    },
+    {
+      "path": "tests/contracts/media-volume-surfaces.contract.test.ts",
+      "line_start": 1,
+      "line_end": 88,
+      "git_blob_sha": "eca098e7580df94f75686634d94ba62cd350ec8f",
+      "source_sha256": "2e0b13d67876d2b6e95c1a36dec6644cc93176b982cdd2c35d4d9f76425deb9c",
+      "uncontained_bodies_at_allocation": 7,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 153,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          88
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "source_contract",
+        "positive": "Lista superfícies e isenções explícitas e verifica identificadores de controle de volume no código/documentação local.",
+        "limits": "Ocorrência de import/token pode satisfazer integração sem aplicar ganho; catálogo fixo não descobre novas superfícies automaticamente. Não toca players reais."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Ocorrência de import/token pode satisfazer integração sem aplicar ganho; catálogo fixo não descobre novas superfícies automaticamente. Não toca players reais."
+      ]
+    },
+    {
+      "path": "tests/contracts/notification-events.contract.test.ts",
+      "line_start": 1,
+      "line_end": 104,
+      "git_blob_sha": "0aaffc7d520774561d23f20d6ceacb034e30421c",
+      "source_sha256": "c77aa763dc6a171abbc7ea676bb0edc488b21b5b7f03de955dba25c0f85b6317",
+      "uncontained_bodies_at_allocation": 9,
+      "preferred_area": "root",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 154,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          104
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Helpers reais normalizam estados/vídeo, recusam notificação fora de ringing/offer, constroem identidades e escapam rótulos.",
+        "limits": "Não verifica entrega/RLS, consumo de evento no overlay, roteamento WhatsApp/SIP ou desfecho remoto; não fecha CALL006–008."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não verifica entrega/RLS, consumo de evento no overlay, roteamento WhatsApp/SIP ou desfecho remoto; não fecha CALL006–008."
+      ]
+    },
+    {
+      "path": "tests/contracts/schemas.contract.test.ts",
+      "line_start": 1,
+      "line_end": 142,
+      "git_blob_sha": "d10d54df21762277327c8ac5530cd72317bcc2e8",
+      "source_sha256": "40c49846c5100b183323b5fac5fbd392aac5fa78abee72a7b2452339d0e06faa",
+      "uncontained_bodies_at_allocation": 8,
+      "preferred_area": "database",
+      "review_status": "COMPLETE_FINITE_TEST_READING",
+      "allocation_index": 155,
+      "reviewer": "/root/grill_me_primary_review",
+      "review_level": "semantic",
+      "ranges_read": [
+        [
+          1,
+          142
+        ]
+      ],
+      "symbols_read": "Corpo integral: imports, fixtures/mocks/helpers, cada callback de teste e assertion; nenhuma execução de suíte.",
+      "adjudication": {
+        "kind": "runtime_unit",
+        "positive": "Tabela executa schemas reais com payloads válidos/inválidos e Responses 422; compara exports com tabela e testa SafeString.",
+        "limits": "Não invoca handlers nem APIs externas. Aceitar shape interno ElevenLabs não valida tradução ao provedor ou action da UI (MOD070); ausência de esquema na tabela é detectada, mas completude de cenários não."
+      },
+      "test_execution": "NOT_RUN",
+      "remaining_gaps": [
+        "Não invoca handlers nem APIs externas. Aceitar shape interno ElevenLabs não valida tradução ao provedor ou action da UI (MOD070); ausência de esquema na tabela é detectada, mas completude de cenários não."
+      ]
+    }
+  ],
+  "summary": {
+    "files_reviewed": 52,
+    "source_lines_read": 4082,
+    "adjudication_kinds": {
+      "runtime_unit_with_mocks": 11,
+      "runtime_unit": 19,
+      "local_replica_only": 3,
+      "runtime_hook": 1,
+      "test_support": 2,
+      "runtime_harness_guard": 1,
+      "runtime_exports_smoke": 1,
+      "conditional_network_integration": 1,
+      "runtime_handler_and_unit": 1,
+      "source_contract": 11,
+      "runtime_handler": 1
+    },
+    "shared_with_modules_original_roster": 1,
+    "suites_executed": 0,
+    "sql_executed": 0,
+    "new_findings": 0
+  },
+  "validation": {
+    "all_source_sha256_match_roster": true,
+    "all_git_blob_sha_match_roster": true,
+    "all_ranges_equal_1_to_eof": true,
+    "all_read_journal_entries_present": true,
+    "all_52_have_individual_adjudication": true
+  },
+  "limits": [
+    "Leitura semântica de testes não é resultado de execução; nenhuma suíte, banco, rede ou serviço acionado.",
+    "Cópias locais 110/113/114 são loci da família GOV003/TC011 do root; contratos textuais explicitamente distintos de controles comportamentais.",
+    "Nenhum arquivo de produção ou artefato do dono database foi alterado.",
+    "O registro 146 repete arquivo já lido no lote próprio; a união global deve deduplicar por path/hash."
+  ]
+}

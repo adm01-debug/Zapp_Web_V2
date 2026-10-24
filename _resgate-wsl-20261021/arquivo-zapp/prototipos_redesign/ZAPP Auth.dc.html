@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Outfit',system-ui,sans-serif;background:#04050a;color:#e8eaf2;height:100vh;overflow:hidden;}
+    a,a:hover{color:inherit;text-decoration:none;}
+    input::placeholder{color:rgba(232,234,242,.28);}
+    ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:rgba(110,231,255,.15);border-radius:4px;}
+    @keyframes aurora1{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(80px,-40px) scale(1.15);}66%{transform:translate(-60px,50px) scale(.92);}}
+    @keyframes aurora2{0%,100%{transform:translate(0,0);}50%{transform:translate(-90px,-60px) scale(1.2);}}
+    @keyframes float-y{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+    @keyframes fade-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes border-flow{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+    @keyframes strength-fill{from{width:0;}to{width:var(--sw);}}
+    @keyframes badge-pop{from{opacity:0;transform:scale(.7);}to{opacity:1;transform:scale(1);}}
+    @keyframes scan{0%{transform:translateY(-100%);}100%{transform:translateY(500%);}}
+  </style>
+</helmet>
+
+<div style="display:flex;height:100vh;overflow:hidden;background:#04050a;position:relative;">
+
+  <!-- Aurora BG -->
+  <div style="position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;">
+    <div style="position:absolute;top:-15%;left:15%;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(34,211,238,.14),transparent 65%);filter:blur(70px);animation:aurora1 20s ease-in-out infinite;"></div>
+    <div style="position:absolute;bottom:-20%;right:10%;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.12),transparent 65%);filter:blur(60px);animation:aurora2 25s ease-in-out infinite;"></div>
+    <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(110,231,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(110,231,255,.018) 1px,transparent 1px);background-size:52px 52px;mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,black 30%,transparent 75%);"></div>
+  </div>
+
+  <!-- LEFT: Benefits panel -->
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px;position:relative;z-index:1;border-right:1px solid rgba(110,231,255,.07);">
+    <!-- Logo -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:56px;animation:fade-in .4s ease both;">
+      <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#22d3ee,#8b5cf6);display:flex;align-items:center;justify-content:center;box-shadow:0 0 28px rgba(34,211,238,.4);animation:float-y 4s ease-in-out infinite;">
+        <span style="color:#04050a;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px;">Z</span>
+      </div>
+      <div>
+        <h1 style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#e8eaf2;letter-spacing:-.3px;">ZAPP</h1>
+        <p style="font-size:11px;color:rgba(232,234,242,.35);">WhatsApp CRM · v3.0</p>
+      </div>
+    </div>
+
+    <!-- Headline -->
+    <div style="margin-bottom:48px;animation:fade-in .4s .1s ease both;">
+      <h2 style="font-family:'Space Grotesk',sans-serif;font-size:34px;font-weight:700;color:#e8eaf2;letter-spacing:-.6px;line-height:1.2;max-width:420px;">Atendimento inteligente que <span style="background:linear-gradient(90deg,#22d3ee,#8b5cf6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">transforma</span> conversas em resultados.</h2>
+      <p style="font-size:14px;color:rgba(232,234,242,.5);margin-top:14px;max-width:380px;line-height:1.65;">Copilot IA + WhatsApp + CRM + SLA + Gamificação — tudo em um único workspace futurista.</p>
+    </div>
+
+    <!-- Benefits -->
+    <div style="display:flex;flex-direction:column;gap:16px;animation:fade-in .4s .2s ease both;">
+      <sc-for list="{{ benefits }}" as="b">
+        <div style="display:flex;align-items:flex-start;gap:14px;">
+          <div style="width:36px;height:36px;border-radius:11px;background:{{ b.bg }};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px;box-shadow:0 0 14px {{ b.glow }};">{{ b.icon }}</div>
+          <div>
+            <p style="font-size:13px;font-weight:600;color:#e8eaf2;">{{ b.title }}</p>
+            <p style="font-size:11.5px;color:rgba(232,234,242,.45);margin-top:2px;line-height:1.5;">{{ b.desc }}</p>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- Social proof -->
+    <div style="margin-top:48px;display:flex;align-items:center;gap:14px;animation:fade-in .4s .3s ease both;">
+      <div style="display:flex;">
+        <sc-for list="{{ avatarProof }}" as="ap">
+          <div style="width:32px;height:32px;border-radius:50%;background:{{ ap.bg }};border:2px solid #04050a;margin-left:-8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;font-family:'Space Grotesk',sans-serif;">{{ ap.init }}</div>
+        </sc-for>
+      </div>
+      <div>
+        <div style="display:flex;gap:2px;margin-bottom:3px;">
+          <sc-for list="{{ stars }}" as="s"><span style="color:#fbbf24;font-size:12px;">★</span></sc-for>
+        </div>
+        <p style="font-size:11px;color:rgba(232,234,242,.45);">+1.200 agentes · 98.4% satisfação</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Login form -->
+  <div style="width:480px;min-width:480px;display:flex;flex-direction:column;justify-content:center;padding:60px 48px;position:relative;z-index:1;">
+    <!-- Scan line effect -->
+    <div style="position:absolute;left:0;right:0;height:60px;background:linear-gradient(180deg,transparent,rgba(34,211,238,.03),transparent);animation:scan 6s linear infinite;pointer-events:none;"></div>
+
+    <div style="animation:fade-in .4s .1s ease both;">
+      <h2 style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:#e8eaf2;letter-spacing:-.3px;margin-bottom:6px;">{{ formTitle }}</h2>
+      <p style="font-size:13px;color:rgba(232,234,242,.4);margin-bottom:32px;">{{ formSubtitle }}</p>
+
+      <!-- Google SSO -->
+      <button onClick="{{ loginGoogle }}" style="width:100%;height:44px;border-radius:12px;border:1px solid rgba(110,231,255,.18);background:rgba(255,255,255,.04);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;margin-bottom:20px;" style-hover="background:rgba(255,255,255,.08);border-color:rgba(110,231,255,.35);">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        <span style="font-size:13px;font-weight:500;color:rgba(232,234,242,.8);">Continuar com Google</span>
+      </button>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+        <div style="flex:1;height:1px;background:rgba(110,231,255,.1);"></div>
+        <span style="font-size:11px;color:rgba(232,234,242,.25);font-family:'Space Grotesk',sans-serif;">ou com e-mail</span>
+        <div style="flex:1;height:1px;background:rgba(110,231,255,.1);"></div>
+      </div>
+
+      <!-- Email field -->
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11px;font-weight:600;color:rgba(232,234,242,.5);font-family:'Space Grotesk',sans-serif;letter-spacing:.06em;display:block;margin-bottom:6px;">E-MAIL</label>
+        <div style="border-radius:12px;padding:1px;background:{{ emailFocus ? 'linear-gradient(90deg,#22d3ee,#8b5cf6)' : 'rgba(110,231,255,.1)' }};background-size:200% auto;animation:{{ emailFocus ? 'border-flow 3s linear infinite' : 'none' }};transition:all .3s;">
+          <div style="border-radius:11px;background:rgba(8,10,18,.97);position:relative;">
+            <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(110,231,255,.4)" stroke-width="1.8" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <input type="email" placeholder="seu@email.com" onFocus="{{ onEmailFocus }}" onBlur="{{ onEmailBlur }}" onInput="{{ onEmailInput }}" style="width:100%;height:44px;border-radius:11px;border:none;background:transparent;color:#e8eaf2;font-family:'Outfit',sans-serif;font-size:13px;padding:0 12px 0 38px;outline:none;"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Password field -->
+      <div style="margin-bottom:8px;">
+        <label style="font-size:11px;font-weight:600;color:rgba(232,234,242,.5);font-family:'Space Grotesk',sans-serif;letter-spacing:.06em;display:block;margin-bottom:6px;">SENHA</label>
+        <div style="border-radius:12px;padding:1px;background:{{ passFocus ? 'linear-gradient(90deg,#22d3ee,#8b5cf6)' : 'rgba(110,231,255,.1)' }};transition:all .3s;">
+          <div style="border-radius:11px;background:rgba(8,10,18,.97);position:relative;">
+            <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(110,231,255,.4)" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="{{ showPass ? 'text' : 'password' }}" placeholder="••••••••" onFocus="{{ onPassFocus }}" onBlur="{{ onPassBlur }}" onInput="{{ onPassInput }}" style="width:100%;height:44px;border-radius:11px;border:none;background:transparent;color:#e8eaf2;font-family:'Outfit',sans-serif;font-size:14px;padding:0 40px 0 38px;outline:none;letter-spacing:.08em;"/>
+            <button onClick="{{ toggleShowPass }}" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:rgba(232,234,242,.3);" style-hover="color:rgba(232,234,242,.7);">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <sc-if value="{{ showPass }}" hint-placeholder-val="{{ false }}"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></sc-if>
+                <sc-if value="{{ !showPass }}" hint-placeholder-val="{{ true }}"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></sc-if>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <!-- Password strength -->
+        <sc-if value="{{ isSignup && passStrength > 0 }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:8px;">
+            <div style="height:3px;border-radius:2px;background:rgba(255,255,255,.07);overflow:hidden;margin-bottom:5px;">
+              <div style="height:100%;border-radius:2px;background:{{ strengthColor }};width:{{ strengthPct }}%;transition:width .4s ease;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;">
+              <span style="font-size:10px;color:{{ strengthColor }};">{{ strengthLabel }}</span>
+              <span style="font-size:10px;color:rgba(232,234,242,.3);">{{ strengthHint }}</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- Forgot password link -->
+      <sc-if value="{{ !isSignup }}" hint-placeholder-val="{{ true }}">
+        <div style="text-align:right;margin-bottom:20px;">
+          <button onClick="{{ forgotPass }}" style="border:none;background:transparent;cursor:pointer;font-size:11.5px;color:rgba(110,231,255,.6);font-family:'Space Grotesk',sans-serif;" style-hover="color:#6ee7ff;">Esqueci minha senha</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isSignup }}" hint-placeholder-val="{{ false }}"><div style="margin-bottom:20px;"></div></sc-if>
+
+      <!-- Error message -->
+      <sc-if value="{{ errorMsg }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 12px;border-radius:9px;background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.3);margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span style="font-size:11.5px;color:#f87171;">{{ errorMsg }}</span>
+        </div>
+      </sc-if>
+
+      <!-- Submit button -->
+      <button onClick="{{ handleSubmit }}" style="width:100%;height:46px;border-radius:13px;border:none;cursor:pointer;background:linear-gradient(135deg,#22d3ee,#8b5cf6);color:#04050a;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;letter-spacing:.02em;transition:all .2s;box-shadow:0 0 24px rgba(34,211,238,.3);" style-hover="transform:translateY(-1px);box-shadow:0 0 36px rgba(34,211,238,.45);">{{ btnLabel }}</button>
+
+      <!-- Toggle login/signup -->
+      <p style="text-align:center;margin-top:18px;font-size:12.5px;color:rgba(232,234,242,.4);">{{ togglePrompt }} <button onClick="{{ toggleMode }}" style="border:none;background:transparent;cursor:pointer;font-size:12.5px;color:#6ee7ff;font-family:'Outfit',sans-serif;font-weight:600;" style-hover="color:#22d3ee;">{{ toggleLabel }}</button></p>
+
+      <!-- Badges -->
+      <div style="display:flex;justify-content:center;gap:12px;margin-top:28px;">
+        <sc-for list="{{ trustBadges }}" as="tb">
+          <div style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(110,231,255,.08);">
+            <span style="font-size:12px;">{{ tb.icon }}</span>
+            <span style="font-size:10px;color:rgba(232,234,242,.4);">{{ tb.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: {&quot;width&quot;: 1200, &quot;height&quot;: 720},
+  &quot;mode&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;login&quot;,&quot;signup&quot;], &quot;default&quot;: &quot;login&quot;, &quot;section&quot;: &quot;Formulário&quot;},
+  &quot;accent&quot;: {&quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#22d3ee&quot;, &quot;options&quot;: [&quot;#22d3ee&quot;,&quot;#8b5cf6&quot;,&quot;#34d399&quot;,&quot;#f472b6&quot;], &quot;section&quot;: &quot;Visual&quot;}
+}">
+class Component extends DCLogic {
+  state = {
+    isSignup: false, loading: false, errorMsg: null,
+    email: '', password: '',
+    emailFocus: false, passFocus: false,
+    showPass: false,
+  };
+
+  renderVals() {
+    const s = this.state;
+
+    const passLen = s.password.length;
+    const hasUpper = /[A-Z]/.test(s.password);
+    const hasNum = /\d/.test(s.password);
+    const hasSpec = /[^A-Za-z0-9]/.test(s.password);
+    const score = passLen >= 8 ? 1 : 0 + (hasUpper ? 1 : 0) + (hasNum ? 1 : 0) + (hasSpec ? 1 : 0);
+    const strengthMap = [
+      {label:'Muito fraca',color:'#f87171',pct:10,hint:'Use 8+ caracteres'},
+      {label:'Fraca',color:'#fb923c',pct:30,hint:'Adicione maiúsculas'},
+      {label:'Regular',color:'#fbbf24',pct:55,hint:'Adicione números'},
+      {label:'Boa',color:'#34d399',pct:80,hint:'Adicione símbolos'},
+      {label:'Forte',color:'#22d3ee',pct:100,hint:'Perfeita! 💪'},
+    ];
+    const sm = strengthMap[Math.max(0, Math.min(4, score))];
+
+    const benefits = [
+      {icon:'⚡',title:'Copilot IA em tempo real',desc:'Sugestões contextuais, resumos automáticos e KB integrada.',bg:'rgba(251,191,36,.12)',glow:'rgba(251,191,36,.3)'},
+      {icon:'🎯',title:'SLA + Gamificação',desc:'XP, conquistas e ranking para motivar sua equipe.',bg:'rgba(34,211,238,.1)',glow:'rgba(34,211,238,.25)'},
+      {icon:'🔗',title:'WhatsApp + E-mail + VoIP',desc:'Todos os canais num único painel futurista.',bg:'rgba(139,92,246,.1)',glow:'rgba(139,92,246,.25)'},
+      {icon:'📊',title:'Analytics em tempo real',desc:'War Room, dashboards e exports em 1 clique.',bg:'rgba(52,211,153,.1)',glow:'rgba(52,211,153,.25)'},
+    ];
+
+    const avatarProof = [
+      {init:'JQ',bg:'linear-gradient(135deg,#22d3ee,#8b5cf6)'},
+      {init:'MS',bg:'linear-gradient(135deg,#ec4899,#8b5cf6)'},
+      {init:'PC',bg:'linear-gradient(135deg,#f59e0b,#ef4444)'},
+      {init:'AR',bg:'linear-gradient(135deg,#10b981,#0d9488)'},
+      {init:'+',bg:'rgba(255,255,255,.12)'},
+    ];
+
+    const trustBadges = [
+      {icon:'🔒',label:'SSL · 256-bit'},
+      {icon:'🛡',label:'LGPD'},
+      {icon:'⚡',label:'99.9% uptime'},
+    ];
+
+    return {
+      benefits, avatarProof, stars:[1,2,3,4,5], trustBadges,
+      isSignup: s.isSignup, loading: s.loading, errorMsg: s.errorMsg,
+      emailFocus: s.emailFocus, passFocus: s.passFocus, showPass: s.showPass,
+      passStrength: passLen > 0 ? score : 0,
+      strengthColor: sm.color, strengthPct: sm.pct, strengthLabel: sm.label, strengthHint: sm.hint,
+      formTitle: s.isSignup ? 'Criar conta gratuita' : 'Bem-vindo de volta 👋',
+      formSubtitle: s.isSignup ? 'Comece em 30 segundos, sem cartão.' : 'Entre na sua conta ZAPP.',
+      submitLabel: s.isSignup ? 'Criar conta' : 'Entrar',
+      btnLabel: s.loading ? 'Entrando...' : (s.isSignup ? 'Criar conta' : 'Entrar'),
+      togglePrompt: s.isSignup ? 'Já tem conta?' : 'Não tem conta?',
+      toggleLabel: s.isSignup ? 'Fazer login' : 'Criar grátis',
+      onEmailFocus: () => this.setState({emailFocus:true}),
+      onEmailBlur: () => this.setState({emailFocus:false}),
+      onEmailInput: (e) => this.setState({email:e.target.value,errorMsg:null}),
+      onPassFocus: () => this.setState({passFocus:true}),
+      onPassBlur: () => this.setState({passFocus:false}),
+      onPassInput: (e) => this.setState({password:e.target.value,errorMsg:null}),
+      toggleShowPass: () => this.setState(st=>({showPass:!st.showPass})),
+      toggleMode: () => this.setState(st=>({isSignup:!st.isSignup,errorMsg:null,password:''})),
+      loginGoogle: () => this.setState({loading:true,errorMsg:null}),
+      forgotPass: () => this.setState({errorMsg:'Link de recuperação enviado para seu e-mail!'}),
+      handleSubmit: () => {
+        if(!s.email) return this.setState({errorMsg:'Por favor insira seu e-mail.'});
+        if(s.password.length < 6) return this.setState({errorMsg:'Senha deve ter pelo menos 6 caracteres.'});
+        this.setState({loading:true,errorMsg:null});
+        setTimeout(()=>this.setState({loading:false,errorMsg:'Credenciais inválidas. Tente novamente.'}),1500);
+      },
+    };
+  }
+}
+
+</script>
+</body>
+</html>

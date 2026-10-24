@@ -1,0 +1,94 @@
+diff --git a/src/features/auth/components/ProtectedRoute.tsx b/src/features/auth/components/ProtectedRoute.tsx
+index 72ea44c19e49084e4cb18058d417a1be882af3d8..1f88a2187a56381cbbae11e9dd912e01ea26b959 100644
+--- a/src/features/auth/components/ProtectedRoute.tsx
++++ b/src/features/auth/components/ProtectedRoute.tsx
+@@ -53,6 +53,25 @@ interface ProtectedRouteProps {
+   routePath?: string;
+ }
+ 
++function buildAuthRedirectTarget(
++  location: Pick<Location, 'pathname' | 'search' | 'hash'>,
++  reason?: string
++) {
++  const nextPath = `${location.pathname}${location.search}${location.hash}`;
++  const searchParams = new URLSearchParams();
++
++  if (nextPath.startsWith('/') && !nextPath.startsWith('//')) {
++    searchParams.set('next', nextPath);
++  }
++
++  if (reason) {
++    searchParams.set('reason', reason);
++  }
++
++  const query = searchParams.toString();
++  return query ? `/auth?${query}` : '/auth';
++}
++
+ /** Route guard that redirects unauthenticated users and enforces role/permission requirements before rendering children. */
+ export function ProtectedRoute({
+   children,
+@@ -232,7 +251,9 @@ export function ProtectedRoute({
+     // E51 51.6 (anti-loop): se já estamos em /auth, redirecionar para
+     // /auth?reason=timeout recairia na mesma tela → loop. Renderiza saída.
+     if (location.pathname !== '/auth') {
+-      return <Navigate to="/auth?reason=timeout" state={{ from: location }} replace />;
++      return (
++        <Navigate to={buildAuthRedirectTarget(location, 'timeout')} state={{ from: location }} replace />
++      );
+     }
+     return (
+       <div
+@@ -303,7 +324,7 @@ export function ProtectedRoute({
+ 
+   if (!user || timedOut) {
+     recordAuthzFailure({ route: location.pathname, reason: 'unauthenticated' });
+-    return <Navigate to="/auth" state={{ from: location }} replace />;
++    return <Navigate to={buildAuthRedirectTarget(location)} state={{ from: location }} replace />;
+   }
+ 
+   // Resolve effective required roles: DB override wins when present
+diff --git a/src/features/auth/components/__tests__/ProtectedRoute.devBypass.test.tsx b/src/features/auth/components/__tests__/ProtectedRoute.devBypass.test.tsx
+index 00afb7705fffcd27126d25ae8e0bd554f29a877e..416ae938f318a0fc70440a17c78a1bcf54dee7c5 100644
+--- a/src/features/auth/components/__tests__/ProtectedRoute.devBypass.test.tsx
++++ b/src/features/auth/components/__tests__/ProtectedRoute.devBypass.test.tsx
+@@ -93,7 +93,8 @@ function renderProtected(ui: ReactElement, initialPath = '/admin') {
+ function AuthStateProbe() {
+   const location = useLocation();
+   const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? 'none';
+-  return <div>{`AUTH_FROM:${from}`}</div>;
++  const next = new URLSearchParams(location.search).get('next') ?? 'none';
++  return <div>{`AUTH_FROM:${from}|AUTH_NEXT:${next}`}</div>;
+ }
+ 
+ beforeEach(() => {
+@@ -330,7 +331,7 @@ describe('ProtectedRoute — contrato RBAC do bypass dev (E51)', () => {
+         </MemoryRouter>
+       );
+ 
+-      expect(await screen.findByText('AUTH_FROM:/crm')).toBeInTheDocument();
++      expect(await screen.findByText('AUTH_FROM:/crm|AUTH_NEXT:/crm')).toBeInTheDocument();
+       expect(screen.queryByText('CRM_CHILDREN')).not.toBeInTheDocument();
+     });
+   });
+diff --git a/src/tests/e2e/auth-session-toggle.spec.ts b/src/tests/e2e/auth-session-toggle.spec.ts
+index 31eeec1c9e5d0a05ee98588390ca09664ba2c4cb..f5c64ce4bbf7374cfdb2888567a8cc12dacedc45 100644
+--- a/src/tests/e2e/auth-session-toggle.spec.ts
++++ b/src/tests/e2e/auth-session-toggle.spec.ts
+@@ -360,10 +360,14 @@ test.describe('Auth guard — alternância sessão válida ↔ expirada sem loop
+         )})`
+       ).toBe(1);
+ 
++      // Em cold boot o contrato durável entre documentos é `?next`. O
++      // `history.state` continua coberto no teste unitário do ProtectedRoute e
++      // nas transições SPA acima; no WebKit ele pode chegar nulo após reload
++      // completo apesar do redirect funcional ter preservado a rota.
+       await expect
+-        .poll(() => readRedirectSource(page), {
++        .poll(() => readAuthNextParam(page), {
+           timeout: 5_000,
+-          message: `[${mode}] cold boot deve preservar history.state.usr.from = ${route}`,
++          message: `[${mode}] cold boot deve preservar /auth?next = ${route}`,
+         })
+         .toBe(route);
+     }

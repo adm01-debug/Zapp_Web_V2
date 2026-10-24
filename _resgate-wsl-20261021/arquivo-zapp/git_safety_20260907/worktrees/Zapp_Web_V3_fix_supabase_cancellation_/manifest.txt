@@ -1,0 +1,6 @@
+worktree=/home/joaquim_ataides/projetos/Zapp_Web_V3_fix_supabase_cancellation
+head=f6224b7c5bae7cf06cb1bab48f7447f5b23fc110
+entries=2
+untracked=1
+unstaged_patch_bytes=4157
+staged_patch_bytes=0

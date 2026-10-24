@@ -1,0 +1,1015 @@
+❌ Erro: REPORT n=20
+=== zapp.fn_handle_reaction(p_payload jsonb, p_instance text) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_handle_reaction(p_payload jsonb, p_instance text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'auth', 'extensions'
+AS $function$DECLARE v_reaction_emoji TEXT; v_target_msg_id TEXT; v_remote_jid TEXT; v_push_name TEXT; v_from_me BOOLEAN; BEGIN IF (p_payload->>'messageType') != 'reactionMessage' THEN RETURN jsonb_build_object('ok', false, 'error', 'not_a_reaction'); END IF; v_reaction_emoji := p_payload->'message'->'reactionMessage'->>'text'; v_target_msg_id := p_payload->'message'->'reactionMessage'->'key'->>'id'; v_remote_jid := p_payload->'key'->>'remoteJid'; v_push_name := p_payload->>'pushName'; v_from_me := COALESCE((p_payload->'key'->>'fromMe')::boolean, false); IF v_reaction_emoji IS NULL OR v_reaction_emoji = '' THEN DELETE FROM evolution_reactions WHERE message_id = v_target_msg_id AND instance_name = p_instance AND remote_jid = v_remote_jid AND from_me = v_from_me; RETURN jsonb_build_object('ok', true, 'action', 'removed', 'target_message_id', v_target_msg_id); END IF; INSERT INTO evolution_reactions (message_id, instance_name, remote_jid, push_name, emoji, from_me) VALUES (v_target_msg_id, p_instance, v_remote_jid, v_push_name, v_reaction_emoji, v_from_me) ON CONFLICT (message_id, instance_name, remote_jid, from_me) DO UPDATE SET emoji = EXCLUDED.emoji, push_name = EXCLUDED.push_name, reacted_at = now(); RETURN jsonb_build_object('ok', true, 'action', 'upserted', 'emoji', v_reaction_emoji, 'target_message_id', v_target_msg_id, 'from_me', v_from_me); END;$function$
+
+=== zapp.fn_handle_whatsapp_status(p_payload jsonb, p_instance text) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_handle_whatsapp_status(p_payload jsonb, p_instance text DEFAULT 'wpp_pink_test'::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+DECLARE
+  v_msg_key JSONB; v_message JSONB; v_participant TEXT; v_push_name TEXT;
+  v_message_id TEXT; v_msg_type TEXT; v_content TEXT; v_media_url TEXT;
+  v_media_meta JSONB; v_media_mime TEXT; v_contact_id UUID;
+  v_status_id UUID; v_msg_subkey TEXT;
+BEGIN
+  v_msg_key := p_payload->'key'; v_message := p_payload->'message';
+  v_participant := COALESCE(v_msg_key->>'participant', p_payload->>'participant');
+  v_push_name := p_payload->>'pushName'; v_message_id := v_msg_key->>'id';
+  v_msg_type := p_payload->>'messageType';
+  v_content := COALESCE(p_payload->>'body', v_message->>'conversation', '');
+  IF v_participant IS NULL OR v_participant = '' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'no participant in status payload');
+  END IF;
+  SELECT id INTO v_contact_id FROM zapp.evolution_contacts WHERE remote_jid=v_participant;
+  IF v_contact_id IS NULL AND v_participant LIKE '%@s.whatsapp.net' THEN
+    INSERT INTO zapp.evolution_contacts (remote_jid, push_name, instance_name, lead_source)
+    VALUES (v_participant, v_push_name, p_instance, 'whatsapp_status')
+    ON CONFLICT (remote_jid) DO UPDATE SET push_name=COALESCE(NULLIF(EXCLUDED.push_name,''), evolution_contacts.push_name)
+    RETURNING id INTO v_contact_id;
+  END IF;
+  v_msg_subkey := CASE WHEN v_message ? 'imageMessage' THEN 'imageMessage' WHEN v_message ? 'videoMessage' THEN 'videoMessage' WHEN v_message ? 'audioMessage' THEN 'audioMessage' WHEN v_message ? 'documentMessage' THEN 'documentMessage' ELSE NULL END;
+  IF v_msg_subkey IS NOT NULL THEN
+    v_media_meta := jsonb_build_object('mediaKey', v_message->v_msg_subkey->>'mediaKey', 'directPath', v_message->v_msg_subkey->>'directPath', 'mimetype', v_message->v_msg_subkey->>'mimetype');
+    v_media_mime := v_message->v_msg_subkey->>'mimetype'; v_media_url := v_message->v_msg_subkey->>'url';
+    IF v_content = '' THEN v_content := COALESCE(v_message->v_msg_subkey->>'caption', ''); END IF;
+  END IF;
+  INSERT INTO zapp.evolution_whatsapp_status (instance_name, participant_jid, participant_name, contact_id, message_id, message_type, content, media_url, media_meta, media_mimetype, posted_at, expires_at)
+  VALUES (p_instance, v_participant, v_push_name, v_contact_id, v_message_id, v_msg_type, v_content, v_media_url, v_media_meta, v_media_mime, COALESCE(to_timestamp((p_payload->>'messageTimestamp')::bigint), now()), COALESCE(to_timestamp((p_payload->>'messageTimestamp')::bigint), now()) + INTERVAL '24 hours')
+  ON CONFLICT (message_id, instance_name) DO NOTHING RETURNING id INTO v_status_id;
+  RETURN jsonb_build_object('ok', true, 'handler', 'whatsapp_status', 'status_id', v_status_id, 'participant_jid', v_participant, 'participant_name', v_push_name, 'contact_id', v_contact_id, 'message_type', v_msg_type, 'has_media', v_media_meta IS NOT NULL);
+END; $function$
+
+=== zapp.fn_health_preflight() [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_health_preflight()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+DECLARE
+  v_val    boolean;
+  v_count  bigint;
+  v_checks jsonb := '{}'::jsonb;
+  v_total  int;
+  v_passed int;
+BEGIN
+  -- 1. vps_health_100
+  SELECT (evo.rpc_boundary_vps_health_score() = 100) INTO v_val;
+  v_checks := v_checks || jsonb_build_object('vps_health_100', COALESCE(v_val, false));
+
+  -- 2. system_health_above_99 (JSONB key "score")
+  SELECT ((zapp.fn_system_health_score_cached()->>'score')::numeric >= 99) INTO v_val;
+  v_checks := v_checks || jsonb_build_object('system_health_above_99', COALESCE(v_val, false));
+
+  -- 3. rls_enabled_100pct
+  SELECT (COUNT(*) = 0) INTO v_val
+  FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname IN ('evo','zapp','public','ops')
+    AND c.relkind = 'r' AND NOT c.relrowsecurity;
+  v_checks := v_checks || jsonb_build_object('rls_enabled_100pct', COALESCE(v_val, false));
+
+  -- 4. security_audit_clean
+  SELECT ((zapp.fn_security_surface_audit()->>'truly_dangerous') = 'false') INTO v_val;
+  v_checks := v_checks || jsonb_build_object('security_audit_clean', COALESCE(v_val, false));
+
+  -- 5. security_fn_v3_no_old_anon
+  SELECT (COUNT(*) = 0) INTO v_val
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE p.proname = 'fn_security_surface_audit' AND n.nspname = 'public'
+    AND p.prosrc ILIKE '%anon_execute > 0%';
+  v_checks := v_checks || jsonb_build_object('security_fn_v3_no_old_anon', COALESCE(v_val, false));
+
+  -- 6. guardrails_v2_saturday_fix
+  SELECT (COUNT(*) = 1) INTO v_val
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE p.proname = 'fn_guardrails_check' AND n.nspname = 'ops'
+    AND p.prosrc ILIKE '%BETWEEN 1 AND 5%';
+  v_checks := v_checks || jsonb_build_object('guardrails_v2_saturday_fix', COALESCE(v_val, false));
+
+  -- 7. halt_fn_dow_no_4h_bug
+  SELECT (COUNT(*) = 0) INTO v_val
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE p.proname = 'fn_alert_consumer_halt' AND n.nspname = 'ops'
+    AND p.prosrc ILIKE '%4 hours%';
+  v_checks := v_checks || jsonb_build_object('halt_fn_dow_no_4h_bug', COALESCE(v_val, false));
+
+  -- 8. probe_fn_weekend_1440_no_details_bug
+  SELECT (COUNT(*) = 0) INTO v_val
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE p.proname = 'fn_pipeline_health_probe' AND n.nspname = 'evo'
+    AND (p.prosrc NOT ILIKE '%1440%' OR p.prosrc ILIKE '%->%details%');
+  v_checks := v_checks || jsonb_build_object('probe_fn_weekend_1440_no_details_bug', COALESCE(v_val, false));
+
+  -- 9. vault_key_correct_md5 — ops.fn_evo_key() em vez de SELECT COUNT(*) FROM vault.secrets
+  SELECT (ops.fn_evo_key() IS NOT NULL) INTO v_val;
+  v_checks := v_checks || jsonb_build_object('vault_key_correct_md5', COALESCE(v_val, false));
+
+  -- 10. probe_cron_scheduled
+  SELECT (COUNT(*) >= 1) INTO v_val
+  FROM cron.job WHERE jobname = 'evolution-pipeline-probe-15min' AND active;
+  v_checks := v_checks || jsonb_build_object('probe_cron_scheduled', COALESCE(v_val, false));
+
+  -- 11. snapshot_cron_active
+  SELECT (COUNT(*) >= 1) INTO v_val
+  FROM cron.job
+  WHERE jobname = 'vps-performance-snapshot'
+    AND command ILIKE '%fn_system_health_score_cached%'
+    AND active;
+  v_checks := v_checks || jsonb_build_object('snapshot_cron_active', COALESCE(v_val, false));
+
+  -- 12. detect401_cron_evo_schema
+  SELECT (COUNT(*) >= 1) INTO v_val
+  FROM cron.job WHERE jobname = 'evo-detect-401-bursts' AND command ~* 'evo[.]' AND active;
+  v_checks := v_checks || jsonb_build_object('detect401_cron_evo_schema', COALESCE(v_val, false));
+
+  -- 13. v2_pipeline_score_10 (evo schema)
+  SELECT ((evo.rpc_boundary_pipeline_health_probe()->>'pipeline_status') = 'healthy'
+       OR (evo.rpc_boundary_pipeline_health_probe()->>'status') = 'ok') INTO v_val;
+  v_checks := v_checks || jsonb_build_object('v2_pipeline_score_10', COALESCE(v_val, false));
+
+  -- 14. no_open_unintended_alerts
+  SELECT (COUNT(*) = 0) INTO v_val
+  FROM zapp.warroom_alerts
+  WHERE alert_type = 'critical'
+    AND resolved_at IS NULL
+    AND created_at > now() - interval '4h'
+    AND source NOT IN ('fn_detect_401_bursts','test');
+  v_checks := v_checks || jsonb_build_object('no_open_unintended_alerts', COALESCE(v_val, false));
+
+  -- 15. dead_tuples_below_100
+  SELECT (COALESCE(MAX(n_dead_tup), 0) < 100000) INTO v_val
+  FROM pg_stat_user_tables WHERE schemaname IN ('evo','zapp','public','ops');
+  v_checks := v_checks || jsonb_build_object('dead_tuples_below_100', COALESCE(v_val, false));
+
+  -- 16. no_public_role_open_policies (polroles={0} = TO PUBLIC)
+  SELECT COUNT(*) INTO v_count
+  FROM pg_policy pol
+  JOIN pg_class c ON c.oid = pol.polrelid
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname IN ('evo','zapp','public','ops')
+    AND pol.polroles = '{0}'
+    AND pg_get_expr(pol.polqual, pol.polrelid) = 'true';
+  v_val := (v_count = 0);
+  v_checks := v_checks || jsonb_build_object(
+    'no_public_role_open_policies',     v_val,
+    'public_role_open_policy_count',    v_count
+  );
+
+  -- Metadata: authenticated USING(true) debt tracking
+  v_checks := v_checks || jsonb_build_object(
+    'open_authenticated_tables_evo',
+      (SELECT COUNT(*) FROM pg_policy pol2
+       JOIN pg_class c2 ON c2.oid = pol2.polrelid
+       JOIN pg_namespace n2 ON n2.oid = c2.relnamespace
+       WHERE n2.nspname = 'evo'
+         AND pol2.polroles @> ARRAY[16448::oid]
+         AND pg_get_expr(pol2.polqual, pol2.polrelid) = 'true'),
+    'open_authenticated_tables_zapp',
+      (SELECT COUNT(*) FROM pg_policy pol2
+       JOIN pg_class c2 ON c2.oid = pol2.polrelid
+       JOIN pg_namespace n2 ON n2.oid = c2.relnamespace
+       WHERE n2.nspname = 'zapp'
+         AND pol2.polroles @> ARRAY[16448::oid]
+         AND pg_get_expr(pol2.polqual, pol2.polrelid) = 'true'),
+    'open_authenticated_tables_public',
+      (SELECT COUNT(*) FROM pg_policy pol2
+       JOIN pg_class c2 ON c2.oid = pol2.polrelid
+       JOIN pg_namespace n2 ON n2.oid = c2.relnamespace
+       WHERE n2.nspname = 'public'
+         AND pol2.polroles @> ARRAY[16448::oid]
+         AND pg_get_expr(pol2.polqual, pol2.polrelid) = 'true'),
+    'note_authenticated_rls',
+      'USING(true) for authenticated = known architectural debt (single-org, RBAC in app layer). Incremental hardening per module.',
+    'version', 'v3b-check-patterns-corrected-2026-07-11'
+  );
+
+  -- Compute score (exclude metadata-only keys)
+  SELECT
+    COUNT(*) FILTER (WHERE key NOT IN (
+      'public_role_open_policy_count',
+      'open_authenticated_tables_evo',
+      'open_authenticated_tables_zapp',
+      'open_authenticated_tables_public',
+      'note_authenticated_rls',
+      'version'
+    )),
+    COUNT(*) FILTER (WHERE value = 'true' AND key NOT IN (
+      'public_role_open_policy_count',
+      'open_authenticated_tables_evo',
+      'open_authenticated_tables_zapp',
+      'open_authenticated_tables_public',
+      'note_authenticated_rls',
+      'version'
+    ))
+  INTO v_total, v_passed
+  FROM jsonb_each_text(v_checks);
+
+  RETURN jsonb_build_object(
+    'all_green',  (v_passed = v_total),
+    'score_pct',  ROUND((v_passed::numeric / NULLIF(v_total, 0)) * 100, 1),
+    'passed',     v_passed,
+    'total',      v_total,
+    'checks',     v_checks,
+    'ran_at',     now(),
+    'version',    'v3b-check-patterns-corrected-2026-07-11'
+  );
+END;
+$function$
+
+=== zapp.fn_kpi_conversas_ativas(p_instance_name text) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_kpi_conversas_ativas(p_instance_name text DEFAULT 'wpp2'::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'evo', 'public', 'pg_catalog'
+AS $function$
+DECLARE
+  v_ativas    int;
+  v_novas     int;
+  v_fechadas  int;
+BEGIN
+  SELECT
+    count(*) FILTER (WHERE status IN ('open', 'pending'))             INTO v_ativas
+  FROM evo.evolution_conversations
+  WHERE instance_name = p_instance_name;
+
+  SELECT
+    count(*) FILTER (WHERE created_at >= now() - interval '24 hours') INTO v_novas
+  FROM evo.evolution_conversations
+  WHERE instance_name = p_instance_name;
+
+  SELECT
+    count(*) FILTER (WHERE status = 'closed'
+                       AND updated_at >= now() - interval '24 hours') INTO v_fechadas
+  FROM evo.evolution_conversations
+  WHERE instance_name = p_instance_name;
+
+  RETURN jsonb_build_object(
+    'instance_name',         p_instance_name,
+    'conversas_ativas',      coalesce(v_ativas, 0),
+    'conversas_novas_24h',   coalesce(v_novas, 0),
+    'conversas_fechadas_24h',coalesce(v_fechadas, 0),
+    'calculado_em',          now()
+  );
+
+EXCEPTION WHEN OTHERS THEN
+  RETURN jsonb_build_object('ok', false, 'error', SQLERRM, 'calculado_em', now());
+END;
+$function$
+
+=== zapp.fn_kpi_mensagens_nao_respondidas(p_instance_name text, p_threshold_horas numeric) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_kpi_mensagens_nao_respondidas(p_instance_name text DEFAULT 'wpp2'::text, p_threshold_horas numeric DEFAULT 4.0)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'evo', 'public', 'pg_catalog'
+AS $function$
+DECLARE
+  v_backlog_ct   int;
+  v_open_alert   int;
+  v_result       jsonb;
+BEGIN
+  -- Conversas onde a última mensagem é inbound e tem >p_threshold_horas sem resposta
+  SELECT count(*)
+  INTO v_backlog_ct
+  FROM (
+    SELECT m.key_remote_jid
+    FROM evo.evolution_messages m
+    WHERE m.instance_name = p_instance_name
+      AND m.message_timestamp >= now() - interval '7 days'
+    GROUP BY m.key_remote_jid
+    HAVING
+      -- última mensagem é inbound
+      (array_agg(m.key_fromme ORDER BY m.message_timestamp DESC))[1] = false
+      -- e foi há mais de threshold_horas
+      AND max(m.message_timestamp) < now() - (p_threshold_horas || ' hours')::interval
+  ) backlog;
+
+  v_result := jsonb_build_object(
+    'instance_name',         p_instance_name,
+    'threshold_horas',       p_threshold_horas,
+    'conversas_sem_resposta', coalesce(v_backlog_ct, 0),
+    'calculado_em',          now()
+  );
+
+  -- Criar alerta se backlog >= 5 conversas
+  IF coalesce(v_backlog_ct, 0) >= 5 THEN
+    SELECT count(*) INTO v_open_alert
+    FROM zapp.evolution_alerts
+    WHERE alert_type = 'backlog_sem_resposta'
+      AND resolved_at IS NULL
+      AND instance_name = p_instance_name;
+
+    IF v_open_alert = 0 THEN
+      INSERT INTO zapp.evolution_alerts
+        (alert_type, severity, title, message, instance_name, payload)
+      VALUES (
+        'backlog_sem_resposta',
+        'high',
+        'Backlog de mensagens sem resposta — ' || p_instance_name,
+        v_backlog_ct::text || ' conversa(s) sem resposta há mais de ' || p_threshold_horas::text || 'h',
+        p_instance_name,
+        v_result
+      );
+    END IF;
+  ELSE
+    -- Auto-resolve se backlog zerou
+    UPDATE zapp.evolution_alerts
+       SET resolved_at = now(), resolved_by = 'fn_kpi_mensagens_nao_respondidas'
+     WHERE alert_type = 'backlog_sem_resposta'
+       AND instance_name = p_instance_name
+       AND resolved_at IS NULL;
+  END IF;
+
+  RETURN v_result;
+
+EXCEPTION WHEN OTHERS THEN
+  RETURN jsonb_build_object('ok', false, 'error', SQLERRM, 'calculado_em', now());
+END;
+$function$
+
+=== zapp.fn_kpi_tempo_primeira_resposta(p_instance_name text, p_janela_horas integer) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_kpi_tempo_primeira_resposta(p_instance_name text DEFAULT 'wpp2'::text, p_janela_horas integer DEFAULT 24)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'evo', 'public', 'pg_catalog'
+AS $function$
+DECLARE
+  v_result jsonb;
+BEGIN
+  SELECT jsonb_build_object(
+    'instance_name',   p_instance_name,
+    'janela_horas',    p_janela_horas,
+    'total_pares',     count(*),
+    'media_minutos',   round(avg(diff_min)::numeric, 1),
+    'p50_minutos',     round(percentile_cont(0.50) WITHIN GROUP (ORDER BY diff_min)::numeric, 1),
+    'p75_minutos',     round(percentile_cont(0.75) WITHIN GROUP (ORDER BY diff_min)::numeric, 1),
+    'p95_minutos',     round(percentile_cont(0.95) WITHIN GROUP (ORDER BY diff_min)::numeric, 1),
+    'calculado_em',    now()
+  )
+  INTO v_result
+  FROM (
+    SELECT
+      -- Para cada conversa: diferença em minutos entre 1ª mensagem inbound e 1ª resposta outbound
+      EXTRACT(EPOCH FROM (
+        min(CASE WHEN m.key_fromme = true THEN m.message_timestamp END) -
+        min(CASE WHEN m.key_fromme = false THEN m.message_timestamp END)
+      )) / 60.0 AS diff_min
+    FROM evo.evolution_messages m
+    WHERE m.instance_name = p_instance_name
+      AND m.message_timestamp >= now() - (p_janela_horas || ' hours')::interval
+      AND m.message_type NOT IN ('reactionMessage', 'protocolMessage')
+    GROUP BY m.key_remote_jid
+    HAVING
+      min(CASE WHEN m.key_fromme = false THEN m.message_timestamp END) IS NOT NULL
+      AND min(CASE WHEN m.key_fromme = true  THEN m.message_timestamp END) IS NOT NULL
+      AND min(CASE WHEN m.key_fromme = true  THEN m.message_timestamp END) >
+          min(CASE WHEN m.key_fromme = false THEN m.message_timestamp END)
+  ) sub
+  WHERE diff_min IS NOT NULL AND diff_min BETWEEN 0 AND 1440; -- limita a 24h p/ excluir outliers estranhos
+
+  RETURN coalesce(v_result, jsonb_build_object(
+    'instance_name', p_instance_name,
+    'janela_horas',  p_janela_horas,
+    'total_pares',   0,
+    'calculado_em',  now(),
+    'aviso',         'Sem dados suficientes na janela informada'
+  ));
+
+EXCEPTION WHEN OTHERS THEN
+  RETURN jsonb_build_object('ok', false, 'error', SQLERRM, 'calculado_em', now());
+END;
+$function$
+
+=== zapp.fn_last_evo_license_alert() [] SCALAR timestamp with time zone
+CREATE OR REPLACE FUNCTION zapp.fn_last_evo_license_alert()
+ RETURNS timestamp with time zone
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'evo,zapp'
+AS $function$ SELECT max(checked_at) FROM zapp.evolution_license_health_log WHERE alert_sent $function$
+
+=== zapp.fn_list_message_reactions(p_message_id text, p_instance text) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_list_message_reactions(p_message_id text, p_instance text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'auth', 'extensions'
+AS $function$
+DECLARE
+  v_reactions JSONB;
+  v_count INT;
+BEGIN
+  SELECT jsonb_agg(jsonb_build_object('emoji', r.emoji, 'remote_jid', r.remote_jid, 'push_name', r.push_name, 'from_me', r.from_me, 'reacted_at', r.reacted_at) ORDER BY r.reacted_at), COUNT(*)
+  INTO v_reactions, v_count
+  FROM evolution_reactions r
+  WHERE r.message_id = p_message_id AND (p_instance IS NULL OR r.instance_name = p_instance);
+  RETURN jsonb_build_object('ok', true, 'message_id', p_message_id, 'total', COALESCE(v_count, 0), 'reactions', COALESCE(v_reactions, '[]'::jsonb));
+END;
+$function$
+
+=== zapp.fn_list_shared_links(p_instance text, p_from_me boolean, p_search text, p_limit integer) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_list_shared_links(p_instance text DEFAULT NULL::text, p_from_me boolean DEFAULT NULL::boolean, p_search text DEFAULT NULL::text, p_limit integer DEFAULT 50)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'auth', 'extensions'
+AS $function$
+BEGIN
+  RETURN (
+    SELECT jsonb_build_object(
+      'ok', true,
+      'total', count(*),
+      'links', COALESCE(jsonb_agg(
+        jsonb_build_object(
+          'message_id', message_id,
+          'content', left(content, 200),
+          'url', link_preview->>'url',
+          'title', link_preview->>'title',
+          'description', link_preview->>'description',
+          'preview_type', link_preview->>'previewType',
+          'has_thumbnail', (link_preview->>'hasThumbnail')::boolean,
+          'instance', instance_name,
+          'from_me', from_me,
+          'created_at', created_at
+        ) ORDER BY created_at DESC
+      ), '[]'::jsonb)
+    )
+    FROM (
+      SELECT * FROM evolution_messages
+      WHERE link_preview IS NOT NULL
+        AND (p_instance IS NULL OR instance_name = p_instance)
+        AND (p_from_me IS NULL OR from_me = p_from_me)
+        AND (p_search IS NULL OR content ILIKE '%' || p_search || '%' OR link_preview->>'title' ILIKE '%' || p_search || '%')
+      ORDER BY created_at DESC
+      LIMIT p_limit
+    ) sub
+  );
+END;
+$function$
+
+=== zapp.fn_match_keyword_automation(p_content text, p_limit integer) [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.fn_match_keyword_automation(p_content text, p_limit integer DEFAULT 1)
+ RETURNS TABLE(automation_id uuid, response_text text, keyword character varying)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+  SELECT id, response_text, keyword
+  FROM evolution_keyword_automations
+  WHERE is_active = true
+    AND LOWER(p_content) LIKE '%' || LOWER(keyword) || '%'
+  ORDER BY priority DESC
+  LIMIT p_limit;
+$function$
+
+=== zapp.fn_media_queue_stalled_alert() [] SCALAR void
+CREATE OR REPLACE FUNCTION zapp.fn_media_queue_stalled_alert()
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'evo', 'public'
+AS $function$ DECLARE v_horas numeric; v_pend int; v_locks int; v_f24 int; v_t24 int; v_dispara boolean := false; v_motivos text[] := '{}'; BEGIN SELECT round(extract(epoch FROM (now() - max(created_at))) / 3600, 1), count(*) FILTER (WHERE status IN ('pending','processing')), count(*) FILTER (WHERE locked_at > now() - interval '30 minutes'), count(*) FILTER (WHERE status = 'failed' AND created_at >= now() - interval '24 hours'), count(*) FILTER (WHERE created_at >= now() - interval '24 hours') INTO v_horas, v_pend, v_locks, v_f24, v_t24 FROM evo.media_download_queue; IF v_pend > 0 AND (v_horas IS NULL OR v_horas > 2) THEN v_dispara := true; v_motivos := array_append(v_motivos, 'produtor_parado_' || coalesce(v_horas::text, 'fila_vazia') || 'h'); END IF; IF v_locks > 0 THEN v_dispara := true; v_motivos := array_append(v_motivos, 'lock_orfao_' || v_locks); END IF; IF v_t24 >= 20 AND v_f24::numeric / v_t24 > 0.10 THEN v_dispara := true; v_motivos := array_append(v_motivos, 'failed_rate_' || round(100.0 * v_f24 / v_t24, 1) || 'pct'); END IF; IF v_dispara AND NOT EXISTS (SELECT 1 FROM zapp.evolution_alerts WHERE alert_type = 'media_download_queue_stalled' AND resolved_at IS NULL AND created_at > now() - interval '6 hours') THEN INSERT INTO zapp.evolution_alerts (alert_type, severity, title, message, payload) VALUES ('media_download_queue_stalled', 'critical', 'Fila de download de midia travada/estagnada', 'media_download_queue parada: ' || array_to_string(v_motivos, ', '), jsonb_build_object( 'horas_sem_item_novo', v_horas, 'pendentes', v_pend, 'locks_ativos', v_locks, 'falhas_24h', v_f24, 'total_24h', v_t24)); END IF; END; $function$
+
+=== zapp.fn_message_rate_5min() [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.fn_message_rate_5min()
+ RETURNS TABLE(msgs_5min integer, msgs_per_min numeric, last_msg_at timestamp with time zone, age_seconds integer, pipeline_health text, hour_brt integer, is_business_hours boolean, generated_at timestamp with time zone)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+DECLARE
+  v_count int; v_last timestamptz; v_age int; v_hour int; v_business boolean; v_health text;
+BEGIN
+  SELECT count(*), max(created_at) INTO v_count, v_last
+    FROM zapp.evolution_messages
+    WHERE created_at > now() - interval '5 minutes';
+  v_age := COALESCE(EXTRACT(EPOCH FROM (now() - v_last))::int, 999999);
+  v_hour := EXTRACT(HOUR FROM (now() AT TIME ZONE 'America/Sao_Paulo'))::int;
+  v_business := v_hour BETWEEN 8 AND 20;
+  v_health := CASE
+    WHEN v_count >= 5                                    THEN 'healthy'
+    WHEN v_count BETWEEN 1 AND 4                         THEN 'low_volume'
+    WHEN v_count = 0 AND v_age > 600 AND v_business      THEN 'critical_business_hours'
+    WHEN v_count = 0 AND v_age > 600 AND NOT v_business  THEN 'expected_silence_offhours'
+    WHEN v_count = 0 AND v_age <= 600                    THEN 'recent_quiet'
+    ELSE 'unknown'
+  END;
+  RETURN QUERY SELECT v_count, ROUND(v_count::numeric/5,2), v_last, v_age, v_health, v_hour, v_business, now();
+END;
+$function$
+
+=== zapp.fn_normalize_send_jid(p_jid text, p_instance text) [] SCALAR text
+CREATE OR REPLACE FUNCTION zapp.fn_normalize_send_jid(p_jid text, p_instance text DEFAULT 'wpp2'::text)
+ RETURNS text
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'evo'
+AS $function$
+DECLARE
+  v_jid    text;
+  v_phone  text;
+  v_lid_local text;
+BEGIN
+  v_jid := btrim(coalesce(p_jid,''));
+  IF v_jid = '' THEN
+    RAISE EXCEPTION 'fn_normalize_send_jid: jid vazio/nulo' USING ERRCODE='22023';
+  END IF;
+
+  -- FIX s24a: strip leading + (simples, antes de qualquer outra transformação)
+  v_jid := ltrim(v_jid, '+');
+
+  -- FIX s24b: strip device suffix :N (5511999999999:42@s.whatsapp.net → 5511999999999@s.whatsapp.net)
+  IF v_jid ~ '^[0-9]+:[0-9]+@' THEN
+    v_jid := regexp_replace(v_jid, ':[0-9]+@', '@');
+  END IF;
+
+  -- Case 1: @lid — tentar resolver para PN real
+  IF lower(v_jid) ~ '^[0-9]+@lid$' THEN
+    v_lid_local := split_part(lower(v_jid), '@', 1);
+
+    -- 1a. Checar contact_identity (fonte de verdade pós-Evolution 2.4.x)
+    SELECT ci.phone_number INTO v_phone
+    FROM public.evo_contact_identity ci
+    WHERE ci.lid_jid = lower(v_jid)
+      AND ci.instance_name = p_instance
+      AND ci.phone_number IS NOT NULL
+      AND ci.phone_number <> v_lid_local
+      AND length(ci.phone_number) <= 15
+    LIMIT 1;
+
+    -- 1b. Fallback: lid_phone_map (mapeamentos de alta confiança acumulados)
+    IF v_phone IS NULL THEN
+      SELECT lm.phone_number INTO v_phone
+      FROM public.evo_lid_phone_map lm
+      WHERE lm.lid_jid = lower(v_jid)
+        AND lm.phone_number IS NOT NULL
+        AND lm.phone_number <> v_lid_local
+        AND lm.confidence IN ('high','medium')
+        AND length(lm.phone_number) <= 15
+      ORDER BY lm.confidence DESC, lm.updated_at DESC LIMIT 1;
+    END IF;
+
+    -- 1c. Fallback: evolution_contacts com phone REAL
+    IF v_phone IS NULL THEN
+      SELECT ec.phone_number INTO v_phone
+      FROM zapp.evolution_contacts ec
+      WHERE lower(ec.remote_jid) = lower(v_jid)
+        AND ec.instance_name = p_instance
+        AND ec.phone_number ~ '^[0-9]+$'
+        AND length(ec.phone_number) <= 13
+        AND ec.phone_number <> v_lid_local
+        AND ec.deleted_at IS NULL
+      ORDER BY ec.updated_at DESC LIMIT 1;
+    END IF;
+
+    IF v_phone IS NULL THEN
+      RAISE EXCEPTION
+        'fn_normalize_send_jid: JID @lid % sem phone_number real mapeado (instância %). Aguarda Evolution >=2.4.x para resolução automática. Use contact_identity após upgrade.',
+        v_jid, p_instance
+      USING ERRCODE='22023';
+    END IF;
+
+    RETURN v_phone || '@s.whatsapp.net';
+  END IF;
+
+  -- Case 2: JIDs válidos diretamente
+  IF v_jid ~ '^[0-9]+@(s\.whatsapp\.net|g\.us|c\.us)$' OR v_jid = 'status@broadcast' THEN
+    RETURN v_jid;
+  END IF;
+
+  RAISE EXCEPTION 'fn_normalize_send_jid: JID malformado: %', v_jid USING ERRCODE='22023';
+END $function$
+
+=== zapp.fn_outbound_dispatch(p_batch_size integer) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_outbound_dispatch(p_batch_size integer DEFAULT 10)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'public', 'pg_catalog'
+AS $function$
+DECLARE v_api_url text; v_api_key text; v_row record; v_conn record; v_endpoint text;
+        v_body jsonb; v_req_id bigint; v_sent int := 0; v_skipped int := 0; v_failed int := 0;
+        v_number text; v_local text;
+BEGIN
+  v_api_url := ops.fn_evo_url(); v_api_key := ops.fn_evo_key();
+  IF v_api_url IS NULL OR v_api_key IS NULL THEN
+    RAISE EXCEPTION '[fn_outbound_dispatch] vault secrets faltando';
+  END IF;
+  FOR v_row IN SELECT q.* FROM zapp.outbound_message_queue q
+    WHERE q.status = 'pending' AND coalesce(q.retry_count,0) < coalesce(q.max_retries,3)
+    ORDER BY q.created_at ASC LIMIT p_batch_size FOR UPDATE SKIP LOCKED
+  LOOP
+    SELECT status INTO v_conn FROM zapp.whatsapp_connections
+    WHERE instance_name = v_row.instance_name LIMIT 1;
+    IF v_conn IS NULL OR v_conn.status <> 'connected' THEN v_skipped := v_skipped + 1; CONTINUE; END IF;
+    BEGIN
+      v_local := split_part(v_row.remote_jid, '@', 1);
+      IF length(v_local) >= 14 AND v_local ~ '^[0-9]{14,}$' THEN
+        BEGIN
+          v_number := split_part(zapp.fn_normalize_send_jid(v_row.remote_jid, v_row.instance_name),'@',1);
+        EXCEPTION WHEN OTHERS THEN
+          UPDATE zapp.outbound_message_queue SET status='failed',
+            error_message='LID-as-phone sem mapeamento PN real: '||v_row.remote_jid||'. Aguarda Evolution >=2.4.x. [LID-FIX-01]',
+            failed_at=now(), updated_at=now() WHERE id=v_row.id;
+          v_failed := v_failed+1; CONTINUE;
+        END;
+      ELSE v_number := v_local; END IF;
+      IF (v_row.message_type='text' OR v_row.message_type IS NULL) AND v_row.content IS NULL THEN
+        RAISE EXCEPTION 'content nulo para mensagem de texto (id=%)', v_row.id; END IF;
+      IF v_row.message_type NOT IN ('text') AND v_row.message_type IS NOT NULL AND v_row.media_url IS NULL THEN
+        RAISE EXCEPTION 'media_url nulo para tipo % (id=%)', v_row.message_type, v_row.id; END IF;
+      IF v_row.message_type='text' OR v_row.message_type IS NULL THEN
+        v_endpoint := v_api_url||'/message/sendText/'||v_row.instance_name;
+        v_body := jsonb_build_object('number',v_number,'text',v_row.content);
+      ELSIF v_row.message_type='audio' THEN
+        v_endpoint := v_api_url||'/message/sendMedia/'||v_row.instance_name;
+        v_body := jsonb_build_object('number',v_number,'mediatype','audio','mimetype',coalesce(v_row.media_mime_type,'audio/ogg; codecs=opus'),'media',v_row.media_url,'ptt',coalesce(v_row.ptt,true));
+      ELSE
+        v_endpoint := v_api_url||'/message/sendMedia/'||v_row.instance_name;
+        v_body := jsonb_build_object('number',v_number,'mediatype',v_row.message_type,'mimetype',coalesce(v_row.media_mime_type,'application/octet-stream'),'media',v_row.media_url,'caption',v_row.caption,'fileName',coalesce((v_row.metadata->>'fileName')::text,'file'));
+      END IF;
+      v_req_id := net.http_post(url:=v_endpoint, body:=v_body,
+        headers:=jsonb_build_object('apikey',v_api_key,'Content-Type','application/json'),
+        params:='{}', timeout_milliseconds:=10000);
+      -- E86: egress log ADITIVO (falha de log NUNCA altera o dispatch)
+      BEGIN
+        PERFORM ops.log_pgnet_call(p_caller := 'fn_outbound_dispatch', p_url := v_endpoint,
+          p_method := 'POST', p_via_gateway := false, p_note := 'queue_id='||v_row.id::text);
+      EXCEPTION WHEN OTHERS THEN NULL; END;
+      UPDATE zapp.outbound_message_queue SET status='sending', external_id=v_req_id::text,
+        sent_at=now(), updated_at=now() WHERE id=v_row.id;
+      v_sent := v_sent+1;
+    EXCEPTION WHEN OTHERS THEN
+      UPDATE zapp.outbound_message_queue SET retry_count=coalesce(retry_count,0)+1,
+        error_message=left(SQLERRM,500),
+        failed_at=CASE WHEN coalesce(retry_count,0)+1>coalesce(max_retries,3) THEN now() ELSE NULL END,
+        status=CASE WHEN coalesce(retry_count,0)+1>coalesce(max_retries,3) THEN 'failed' ELSE 'pending' END,
+        updated_at=now() WHERE id=v_row.id;
+      v_failed := v_failed+1;
+    END;
+  END LOOP;
+  RETURN jsonb_build_object('dispatched_at',now(),'sent',v_sent,'skipped',v_skipped,'failed',v_failed,'provider','evolution');
+END;
+$function$
+
+=== zapp.fn_realtime_events_retention() [] SCALAR integer
+CREATE OR REPLACE FUNCTION zapp.fn_realtime_events_retention()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE v integer;
+BEGIN DELETE FROM evolution_realtime_events WHERE created_at<now()-interval '48 hours'; GET DIAGNOSTICS v=ROW_COUNT; RETURN v; EXCEPTION WHEN OTHERS THEN RETURN 0; END; $function$
+
+=== zapp.fn_resolve_contact_id_by_jid(p_jid text) [] SCALAR uuid
+CREATE OR REPLACE FUNCTION zapp.fn_resolve_contact_id_by_jid(p_jid text)
+ RETURNS uuid
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'pg_catalog', 'pg_temp'
+AS $function$
+  SELECT c.id
+    FROM zapp.evolution_contacts c
+   WHERE c.deleted_at IS NULL
+     AND (
+           -- 1. Match exato por remote_jid (índice unique)
+           lower(c.remote_jid) = lower(p_jid)
+        -- 2. Match EXATO por phone_number (índice) — p_jid "55...@s.whatsapp.net" ou "55..."
+        OR c.phone_number = split_part(p_jid, '@', 1)
+        -- 3. Fallback: phone com formatação arbitrária (guard LID-as-phone 14+ dígitos)
+        OR ( regexp_replace(lower(split_part(p_jid,'@',1)),'[^0-9]','','g') <> '' AND regexp_replace(lower(c.phone_number), '[^0-9]', '', 'g')
+               = regexp_replace(lower(split_part(p_jid, '@', 1)), '[^0-9]', '', 'g')
+           AND length(regexp_replace(c.phone_number, '[^0-9]', '', 'g')) <= 13
+           )
+     )
+   ORDER BY
+     CASE
+       WHEN lower(c.remote_jid) = lower(p_jid) THEN 1
+       WHEN c.phone_number = split_part(p_jid, '@', 1) THEN 2
+       ELSE 3
+     END,
+     c.updated_at DESC NULLS LAST
+   LIMIT 1
+$function$
+
+=== zapp.fn_send_alert_heartbeat() [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_send_alert_heartbeat()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'net', 'vault', 'public', 'pg_catalog'
+AS $function$ DECLARE v_service_key text; v_edge_url text := 'https://supabase.atomicabr.com.br/functions/v1/alert-email-notify'; v_open_count int; v_request_id bigint; BEGIN SELECT decrypted_secret INTO v_service_key FROM vault.decrypted_secrets WHERE name = 'supabase_service_role_key' LIMIT 1; IF v_service_key IS NULL THEN RAISE WARNING 'E063-heartbeat: supabase_service_role_key nao encontrada no vault'; RETURN jsonb_build_object('ok', false, 'error', 'vault_secret_missing'); END IF; SELECT count(*) INTO v_open_count FROM zapp.evolution_alerts WHERE resolved_at IS NULL; SELECT net.http_post(url := v_edge_url, headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || v_service_key), body := jsonb_build_object('alerts', jsonb_build_array(jsonb_build_object('id', gen_random_uuid()::text, 'alert_type', 'heartbeat', 'severity', 'medium', 'title', 'Sistema ZAPP operacional heartbeat semanal', 'message', 'Canal de notificacao de alertas ativo. Alertas abertos: ' || v_open_count::text, 'created_at', now()::text)))::text) INTO v_request_id; RAISE NOTICE 'E063-heartbeat: enviado (open_alerts=%) request_id=%', v_open_count, v_request_id; RETURN jsonb_build_object('ok', true, 'open_alerts', v_open_count, 'request_id', v_request_id); EXCEPTION WHEN OTHERS THEN RAISE WARNING 'E063-heartbeat: erro: %', SQLERRM; RETURN jsonb_build_object('ok', false, 'error', SQLERRM); END; $function$
+
+=== zapp.fn_send_bitrix_alert(p_alert_key text, p_severity text, p_title text, p_message text, p_payload jsonb, p_force_send boolean, p_cooldown_min integer) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_send_bitrix_alert(p_alert_key text, p_severity text, p_title text, p_message text, p_payload jsonb DEFAULT '{}'::jsonb, p_force_send boolean DEFAULT false, p_cooldown_min integer DEFAULT 30)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'evo', 'monitoring'
+AS $function$
+DECLARE
+  v_severity_rank   smallint;
+  v_cooldown_row    zapp.evolution_alert_cooldown%ROWTYPE;
+  v_webhook_url     text;
+  v_recipient_id    text;
+  v_dry_run         boolean := false;
+  v_skip_reason     text := NULL;
+  v_emoji           text;
+  v_formatted_msg   text;
+  v_request_id      bigint;
+  v_alert_id        uuid;
+  v_dispatch_status text;
+  v_result          jsonb;
+  v_now             timestamptz := now();
+  v_now_brt         text;
+BEGIN
+  -- Input validation
+  IF p_alert_key IS NULL OR p_alert_key = '' THEN
+    RAISE EXCEPTION 'alert_key is required';
+  END IF;
+  IF p_severity IS NULL OR p_severity = '' THEN
+    RAISE EXCEPTION 'severity is required';
+  END IF;
+
+  v_severity_rank := zapp.fn_severity_rank(p_severity);
+  v_now_brt := to_char(v_now AT TIME ZONE 'America/Sao_Paulo', 'DD/MM/YYYY HH24:MI:SS') || ' BRT';
+
+  -- Cooldown check (com escalation bypass)
+  SELECT * INTO v_cooldown_row
+  FROM zapp.evolution_alert_cooldown
+  WHERE alert_key = p_alert_key;
+
+  IF v_cooldown_row.alert_key IS NOT NULL AND NOT p_force_send THEN
+    -- Mesma severidade ou downgrade, dentro da janela de cooldown → skip
+    IF v_severity_rank <= v_cooldown_row.last_severity_rank
+       AND v_now - v_cooldown_row.last_sent_at < make_interval(mins => p_cooldown_min) THEN
+      v_skip_reason := format('cooldown_active: %s remaining',
+        make_interval(mins => p_cooldown_min) - (v_now - v_cooldown_row.last_sent_at));
+      RETURN jsonb_build_object(
+        'dispatched', false,
+        'skip_reason', v_skip_reason,
+        'alert_key', p_alert_key,
+        'severity', p_severity,
+        'cooldown_until', v_cooldown_row.last_sent_at + make_interval(mins => p_cooldown_min)
+      );
+    END IF;
+  END IF;
+
+  -- Lookup vault secrets (graceful: se faltar, vai pra DRY-RUN)
+  BEGIN
+    v_webhook_url := zapp.fn_get_vault_secret('bitrix24_webhook_alerts_url');
+  EXCEPTION WHEN OTHERS THEN
+    v_webhook_url := NULL;
+  END;
+  BEGIN
+    v_recipient_id := zapp.fn_get_vault_secret('bitrix24_alert_recipient_user_id');
+  EXCEPTION WHEN OTHERS THEN
+    v_recipient_id := NULL;
+  END;
+
+  IF v_webhook_url IS NULL OR v_webhook_url = '' OR v_recipient_id IS NULL OR v_recipient_id = '' THEN
+    v_dry_run := true;
+    v_dispatch_status := 'dry_run_no_secret';
+  END IF;
+
+  -- Format message (BB-code Bitrix24)
+  v_emoji := CASE
+    WHEN v_severity_rank >= 3 THEN '🚨'
+    WHEN v_severity_rank = 2 THEN '🟠'
+    WHEN v_severity_rank = 1 THEN '⚠️'
+    ELSE 'ℹ️'
+  END;
+
+  v_formatted_msg := format(
+    E'%s [B]%s[/B] · Pipeline ZAPP\n\n[B]📌 %s[/B]\n\n%s\n\n[I]🔑 alert_key:[/I] %s\n[I]🕐 %s[/I]\n[I]🌎 supabase.atomicabr.com.br[/I]',
+    v_emoji,
+    upper(p_severity),
+    coalesce(p_title, '(sem título)'),
+    coalesce(p_message, '(sem mensagem)'),
+    p_alert_key,
+    v_now_brt
+  );
+
+  -- Dispatch via pg_net se não for dry-run
+  IF NOT v_dry_run THEN
+    BEGIN
+      v_request_id := net.http_post(
+        url := rtrim(v_webhook_url, '/') || '/im.message.add.json',
+        body := jsonb_build_object(
+          'USER_ID', v_recipient_id,
+          'MESSAGE', v_formatted_msg
+        ),
+        headers := '{"Content-Type": "application/json"}'::jsonb,
+        timeout_milliseconds := 5000
+      );
+      v_dispatch_status := 'sent';
+    EXCEPTION WHEN OTHERS THEN
+      v_request_id := NULL;
+      v_dispatch_status := 'send_failed: ' || SQLERRM;
+    END;
+  END IF;
+
+  -- Always log in evolution_alerts
+  INSERT INTO zapp.evolution_alerts (alert_type, severity, title, message, payload)
+  VALUES (
+    'bitrix_dispatch',
+    p_severity,
+    p_title,
+    p_message,
+    p_payload
+      || jsonb_build_object(
+        'alert_key', p_alert_key,
+        'dispatch_status', v_dispatch_status,
+        'dry_run', v_dry_run,
+        'http_request_id', v_request_id,
+        'severity_rank', v_severity_rank,
+        'sent_at', v_now,
+        'formatted_msg', v_formatted_msg
+      )
+  )
+  RETURNING id INTO v_alert_id;
+
+  -- Upsert cooldown
+  INSERT INTO zapp.evolution_alert_cooldown
+    (alert_key, last_severity, last_severity_rank, consecutive_count, last_sent_at,
+     last_payload, cooldown_minutes, last_dispatch_status, updated_at)
+  VALUES
+    (p_alert_key, p_severity, v_severity_rank, 1, v_now,
+     p_payload, p_cooldown_min, v_dispatch_status, v_now)
+  ON CONFLICT (alert_key) DO UPDATE SET
+    last_severity = EXCLUDED.last_severity,
+    last_severity_rank = EXCLUDED.last_severity_rank,
+    consecutive_count = CASE
+      WHEN evolution_alert_cooldown.last_severity = EXCLUDED.last_severity
+      THEN evolution_alert_cooldown.consecutive_count + 1
+      ELSE 1
+    END,
+    last_sent_at = EXCLUDED.last_sent_at,
+    last_payload = EXCLUDED.last_payload,
+    last_dispatch_status = EXCLUDED.last_dispatch_status,
+    updated_at = EXCLUDED.updated_at;
+
+  v_result := jsonb_build_object(
+    'dispatched', NOT v_dry_run AND v_request_id IS NOT NULL,
+    'dry_run', v_dry_run,
+    'alert_id', v_alert_id,
+    'http_request_id', v_request_id,
+    'dispatch_status', v_dispatch_status,
+    'severity', p_severity,
+    'severity_rank', v_severity_rank,
+    'alert_key', p_alert_key,
+    'sent_at', v_now,
+    'formatted_msg_preview', left(v_formatted_msg, 200)
+  );
+
+  RETURN v_result;
+END;
+$function$
+
+=== zapp.fn_sentinel_fdw_down() [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_sentinel_fdw_down()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'public', 'pg_catalog'
+AS $function$
+DECLARE
+  v_result   jsonb;
+  v_open_ct  int;
+BEGIN
+  v_result := zapp.fn_check_fdw_connection();
+
+  IF (v_result->>'ok')::bool = false THEN
+    -- Verificar se já existe alerta aberto para não duplicar
+    SELECT count(*) INTO v_open_ct
+      FROM zapp.evolution_alerts
+     WHERE alert_type  = 'fdw_connection_down'
+       AND resolved_at IS NULL;
+
+    IF v_open_ct = 0 THEN
+      INSERT INTO zapp.evolution_alerts
+        (alert_type, severity, title, message, payload, instance_name)
+      VALUES (
+        'fdw_connection_down',
+        'critical',
+        'FDW: conexão com banco externo FALHOU',
+        'fn_check_fdw_connection() retornou erro: ' || coalesce(v_result->>'error', 'desconhecido'),
+        v_result,
+        'system'
+      );
+
+      RAISE WARNING 'E069: FDW connection failed — alerta criado. Erro: %', v_result->>'error';
+    END IF;
+
+    RETURN jsonb_build_object('ok', false, 'alert_created', v_open_ct = 0, 'error', v_result->>'error');
+  ELSE
+    -- FDW OK — fechar alertas abertos se houver
+    UPDATE zapp.evolution_alerts
+       SET resolved_at  = now(),
+           resolved_by  = 'e069_fn_sentinel_fdw_down_auto_resolve'
+     WHERE alert_type  = 'fdw_connection_down'
+       AND resolved_at IS NULL;
+
+    RETURN jsonb_build_object('ok', true, 'latency_ms', v_result->'latency_ms');
+  END IF;
+
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'E069: erro em fn_sentinel_fdw_down: %', SQLERRM;
+  RETURN jsonb_build_object('ok', false, 'error', SQLERRM);
+END;
+$function$
+
+=== zapp.fn_sentinel_partition_existence() [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_sentinel_partition_existence()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'evo', 'public', 'pg_catalog'
+AS $function$
+DECLARE
+  v_next_month    date    := date_trunc('month', now() + interval '1 month');
+  v_suffix        text    := to_char(v_next_month, 'YYYY_MM');
+  v_partition_name text;
+  v_exists        bool;
+  v_missing       text[]  := '{}';
+  v_open_ct       int;
+BEGIN
+  -- Verificar partição de webhook_events para o próximo mês
+  -- Padrão: evo.evolution_webhook_events_v2_YYYY_MM
+  v_partition_name := 'evolution_webhook_events_v2_' || v_suffix;
+
+  SELECT EXISTS (
+    SELECT 1
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+     WHERE n.nspname = 'evo'
+       AND c.relname  = v_partition_name
+       AND c.relkind  IN ('r', 'p')
+  ) INTO v_exists;
+
+  IF NOT v_exists THEN
+    v_missing := v_missing || ('evo.' || v_partition_name);
+  END IF;
+
+  -- Verificar se há alerta aberto para não duplicar
+  IF array_length(v_missing, 1) > 0 THEN
+    SELECT count(*) INTO v_open_ct
+      FROM zapp.evolution_alerts
+     WHERE alert_type  = 'partition_missing'
+       AND resolved_at IS NULL
+       AND payload->>'suffix' = v_suffix;
+
+    IF v_open_ct = 0 THEN
+      INSERT INTO zapp.evolution_alerts
+        (alert_type, severity, title, message, payload, instance_name)
+      VALUES (
+        'partition_missing',
+        'high',
+        'Partição do mês seguinte ausente: ' || v_suffix,
+        'As seguintes partições precisam ser criadas antes de ' || to_char(v_next_month, 'DD/MM/YYYY') || ': ' || array_to_string(v_missing, ', '),
+        jsonb_build_object('suffix', v_suffix, 'missing', to_jsonb(v_missing), 'checked_at', now()),
+        'system'
+      );
+
+      RAISE WARNING 'E069: Partições ausentes para % — %', v_suffix, array_to_string(v_missing, ', ');
+    END IF;
+
+    RETURN jsonb_build_object(
+      'ok',            false,
+      'missing',       to_jsonb(v_missing),
+      'next_month',    v_suffix,
+      'alert_created', v_open_ct = 0
+    );
+  ELSE
+    -- Tudo OK — fechar alertas para este sufixo
+    UPDATE zapp.evolution_alerts
+       SET resolved_at = now(),
+           resolved_by = 'e069_fn_sentinel_partition_existence_auto_resolve'
+     WHERE alert_type  = 'partition_missing'
+       AND resolved_at IS NULL
+       AND payload->>'suffix' = v_suffix;
+
+    RETURN jsonb_build_object(
+      'ok',         true,
+      'next_month', v_suffix,
+      'checked',    v_partition_name
+    );
+  END IF;
+
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'E069: erro em fn_sentinel_partition_existence: %', SQLERRM;
+  RETURN jsonb_build_object('ok', false, 'error', SQLERRM);
+END;
+$function$
+

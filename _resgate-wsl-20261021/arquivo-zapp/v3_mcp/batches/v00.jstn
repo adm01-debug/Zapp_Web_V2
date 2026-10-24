@@ -1,0 +1,800 @@
+❌ Erro: REPORT n=36
+=== public.fn_check_n8n_app_privileges_local() [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION public.fn_check_n8n_app_privileges_local()
+ RETURNS jsonb
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'evo', 'pg_catalog'
+AS $function$
+SELECT jsonb_object_agg(table_name, jsonb_build_object(
+  'sel', has_table_privilege('n8n_app',quote_ident(table_name),'SELECT'),
+  'ins', has_table_privilege('n8n_app',quote_ident(table_name),'INSERT'),
+  'upd', has_table_privilege('n8n_app',quote_ident(table_name),'UPDATE'),
+  'del', has_table_privilege('n8n_app',quote_ident(table_name),'DELETE')
+))
+FROM (VALUES ('Message'),('MessageUpdate'),('Contact')) t(table_name)
+$function$
+
+=== zapp.check_duplicate_request(p_request_id text, p_action text, p_user_id uuid) [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.check_duplicate_request(p_request_id text, p_action text, p_user_id uuid)
+ RETURNS TABLE(is_duplicate boolean, status_code integer, cached_result jsonb)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+DECLARE
+  v_rec zapp.processed_requests%ROWTYPE;
+BEGIN
+  SELECT * INTO v_rec
+  FROM   zapp.processed_requests
+  WHERE  request_id = p_request_id
+    AND  action     = p_action
+    AND  user_id    = p_user_id
+    AND  expires_at > now()
+  LIMIT 1;
+  IF FOUND THEN
+    RETURN QUERY SELECT TRUE, v_rec.result_status, v_rec.result_payload;
+  ELSE
+    RETURN QUERY SELECT FALSE, NULL::INTEGER, NULL::JSONB;
+  END IF;
+END;
+$function$
+
+=== zapp.cleanup_old_failed_messages() [] SCALAR void
+CREATE OR REPLACE FUNCTION zapp.cleanup_old_failed_messages()
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+BEGIN
+  DELETE FROM zapp.failed_messages
+   WHERE status IN ('succeeded', 'abandoned')
+     AND COALESCE(succeeded_at, last_attempt_at, created_at) < now() - interval '30 days';
+END;
+$function$
+
+=== zapp.decrypt_gmail_token(p_encrypted bytea) [] SCALAR text
+CREATE OR REPLACE FUNCTION zapp.decrypt_gmail_token(p_encrypted bytea)
+ RETURNS text
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+BEGIN
+  IF p_encrypted IS NULL THEN RETURN NULL; END IF;
+  RETURN pgp_sym_decrypt(p_encrypted, current_setting('app.encryption_key', true));
+END;
+$function$
+
+=== zapp.encrypt_gmail_token(p_token text) [] SCALAR bytea
+CREATE OR REPLACE FUNCTION zapp.encrypt_gmail_token(p_token text)
+ RETURNS bytea
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+BEGIN
+  IF p_token IS NULL THEN RETURN NULL; END IF;
+  RETURN pgp_sym_encrypt(p_token, current_setting('app.encryption_key', true));
+END;
+$function$
+
+=== zapp.fin_bulk_insert_parcelas(p_payload jsonb) [] SCALAR integer
+CREATE OR REPLACE FUNCTION zapp.fin_bulk_insert_parcelas(p_payload jsonb)
+ RETURNS integer
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'financeiro', 'zapp', 'monitoring'
+AS $function$ SELECT financeiro.bulk_insert_parcelas(p_payload); $function$
+
+=== zapp.fin_bulk_upsert_vendas(p_payload jsonb) [] SCALAR integer
+CREATE OR REPLACE FUNCTION zapp.fin_bulk_upsert_vendas(p_payload jsonb)
+ RETURNS integer
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'financeiro', 'zapp', 'monitoring'
+AS $function$ SELECT financeiro.bulk_upsert_vendas(p_payload); $function$
+
+=== zapp.fin_sync_parcelas_planilha(p_payload jsonb) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fin_sync_parcelas_planilha(p_payload jsonb)
+ RETURNS jsonb
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'financeiro', 'zapp', 'monitoring'
+ SET statement_timeout TO '120s'
+AS $function$
+  SELECT financeiro.bulk_sync_parcelas_planilha(p_payload);
+$function$
+
+=== zapp.fn_agent_metrics() [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_agent_metrics()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE result jsonb;
+BEGIN
+    SELECT jsonb_build_object(
+        'agentes', (SELECT jsonb_agg(jsonb_build_object('id',a.id,'nome',a.name,'status',a.status,'modelo',a.model,'skills',(SELECT COUNT(*) FROM agent_installed_skills WHERE agent_id=a.id))) FROM agents a WHERE a.status='production'),
+        'totais', jsonb_build_object('agentes_producao',(SELECT COUNT(*) FROM agents WHERE status='production'),'agentes_teste',(SELECT COUNT(*) FROM agents WHERE status IN ('testing','staging')),'skills_disponiveis',(SELECT COUNT(*) FROM skill_registry),'knowledge_bases',(SELECT COUNT(*) FROM knowledge_bases)),
+        'gerado_em', NOW()
+    ) INTO result;
+    RETURN result;
+END;
+$function$
+
+=== zapp.fn_insert_idempotency_failure_audit(p_event_id text, p_instance text, p_event_type text, p_error_code text, p_error_message text) [] SCALAR void
+CREATE OR REPLACE FUNCTION zapp.fn_insert_idempotency_failure_audit(p_event_id text, p_instance text DEFAULT NULL::text, p_event_type text DEFAULT NULL::text, p_error_code text DEFAULT NULL::text, p_error_message text DEFAULT NULL::text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp, pg_temp'
+AS $function$
+BEGIN
+  INSERT INTO zapp.audit_logs (action, entity_type, event_type, resource, status, details)
+  VALUES (
+    'idempotency_rollback_failure',
+    'webhook_event',
+    coalesce(p_event_type, 'unknown'),
+    'evolution-webhook',
+    'error',
+    jsonb_build_object(
+      'event_id', p_event_id,
+      'instance', p_instance,
+      'event_type', p_event_type,
+      'error_code', p_error_code,
+      'error_message', p_error_message
+    )
+  );
+EXCEPTION WHEN OTHERS THEN
+  BEGIN
+    INSERT INTO ops.maintenance_log (job, details, ran_at)
+    VALUES ('fn_insert_idempotency_failure_audit', jsonb_build_object('event_id', p_event_id, 'error', SQLERRM), now());
+  EXCEPTION WHEN OTHERS THEN
+    NULL;
+  END;
+END;
+$function$
+
+=== zapp.fn_log_reconnection_attempt(p_connection_id uuid, p_instance_name text, p_status text, p_error_message text, p_attempt_number integer, p_qr_generated boolean, p_metadata jsonb) [] SCALAR uuid
+CREATE OR REPLACE FUNCTION zapp.fn_log_reconnection_attempt(p_connection_id uuid DEFAULT NULL::uuid, p_instance_name text DEFAULT NULL::text, p_status text DEFAULT 'attempting'::text, p_error_message text DEFAULT NULL::text, p_attempt_number integer DEFAULT 1, p_qr_generated boolean DEFAULT false, p_metadata jsonb DEFAULT NULL::jsonb)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'auth', 'extensions'
+AS $function$
+DECLARE v_id uuid;
+BEGIN
+  -- CRITICAL FIX: inserir em zapp.reconnection_logs (BASE TABLE), não em
+  -- zapp.reconnection_logs que é uma VIEW sem INSTEAD OF trigger.
+  INSERT INTO zapp.reconnection_logs
+    (connection_id, instance_name, status, error_message,
+     attempt_number, qr_generated, metadata)
+  VALUES
+    (p_connection_id, p_instance_name, p_status, p_error_message,
+     p_attempt_number, p_qr_generated, p_metadata)
+  RETURNING id INTO v_id;
+  RETURN v_id;
+END;
+$function$
+
+=== zapp.fn_outbound_dispatch_apply(p_batch_size integer) [] SCALAR integer
+CREATE OR REPLACE FUNCTION zapp.fn_outbound_dispatch_apply(p_batch_size integer DEFAULT 50)
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'net'
+AS $function$
+DECLARE
+  v_row    record;
+  v_resp   record;
+  v_applied int := 0;
+BEGIN
+  -- BUG FIX v6.2.8a: coluna e 'content', nao 'body'; adicionar FOR UPDATE SKIP LOCKED
+  -- para evitar race condition com crons concorrentes
+  FOR v_row IN
+    SELECT q.id, q.external_id::bigint AS req_id
+    FROM zapp.outbound_message_queue q
+    WHERE q.status = 'sending'
+      AND q.sent_at < now() - interval '3 seconds'
+      AND q.external_id IS NOT NULL
+    LIMIT p_batch_size
+    FOR UPDATE SKIP LOCKED
+  LOOP
+    BEGIN
+      -- FIX: coluna chama-se 'content', nao 'body'
+      SELECT status_code, content AS body, timed_out, error_msg
+      INTO v_resp
+      FROM net._http_response
+      WHERE id = v_row.req_id;
+
+      IF FOUND THEN
+        -- Timeout de rede: tratar como falha
+        IF v_resp.timed_out IS TRUE THEN
+          UPDATE zapp.outbound_message_queue
+          SET
+            status        = CASE WHEN retry_count + 1 > max_retries THEN 'failed' ELSE 'pending' END,
+            retry_count   = retry_count + 1,
+            error_message = 'pg_net timeout: ' || coalesce(v_resp.error_msg, 'request timed out'),
+            failed_at     = CASE WHEN retry_count + 1 > max_retries THEN now() ELSE NULL END,
+            updated_at    = now()
+          WHERE id = v_row.id;
+        ELSIF v_resp.status_code BETWEEN 200 AND 299 THEN
+          UPDATE zapp.outbound_message_queue
+          SET status='sent', updated_at=now()
+          WHERE id=v_row.id;
+        ELSE
+          -- BUG FIX v6.2.8b: usar > em vez de >= para corrigir off-by-one no retry
+          UPDATE zapp.outbound_message_queue
+          SET
+            status        = CASE WHEN retry_count + 1 > max_retries THEN 'failed' ELSE 'pending' END,
+            retry_count   = retry_count + 1,
+            error_message = left(coalesce(v_resp.body::text, v_resp.error_msg, 'http_'||v_resp.status_code::text), 500),
+            failed_at     = CASE WHEN retry_count + 1 > max_retries THEN now() ELSE NULL END,
+            updated_at    = now()
+          WHERE id=v_row.id;
+        END IF;
+        v_applied := v_applied + 1;
+      END IF;
+      -- Se nao FOUND: request ainda em flight (< 3s), ignorar e tentar no proximo ciclo
+    EXCEPTION WHEN OTHERS THEN
+      -- Erro inesperado: logar no error_message sem travar o loop
+      UPDATE zapp.outbound_message_queue
+      SET error_message = left('apply_exception: '||SQLERRM, 500), updated_at=now()
+      WHERE id=v_row.id;
+    END;
+  END LOOP;
+  RETURN v_applied;
+END;
+$function$
+
+=== zapp.fn_outbound_sending_reaper() [] SCALAR integer
+CREATE OR REPLACE FUNCTION zapp.fn_outbound_sending_reaper()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+DECLARE v_reaped int;
+BEGIN
+  UPDATE zapp.outbound_message_queue
+  SET
+    status        = CASE WHEN retry_count + 1 > max_retries THEN 'failed' ELSE 'pending' END,
+    retry_count   = retry_count + 1,
+    error_message = 'reaper: sending stuck > 15min sem resposta pg_net',
+    failed_at     = CASE WHEN retry_count + 1 > max_retries THEN now() ELSE NULL END,
+    external_id   = NULL,
+    sent_at       = NULL,
+    updated_at    = now()
+  WHERE status = 'sending'
+    AND sent_at < now() - interval '15 minutes';
+  GET DIAGNOSTICS v_reaped = ROW_COUNT;
+  RETURN v_reaped;
+END;
+$function$
+
+=== zapp.fn_register_instance(p_instance_name character varying, p_display_name character varying, p_phone character varying, p_department character varying, p_responsible character varying) [] SCALAR uuid
+CREATE OR REPLACE FUNCTION zapp.fn_register_instance(p_instance_name character varying, p_display_name character varying, p_phone character varying, p_department character varying, p_responsible character varying DEFAULT NULL::character varying)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'pg_catalog'
+AS $function$
+DECLARE
+  v_id UUID;
+BEGIN
+  -- Registrar instância na tabela canônica zapp.instance_registry.
+  -- DB-03: o corpo antigo apontava para instance_registry no schema do provider
+  -- (inexistente), o que fazia a chamada falhar.
+  INSERT INTO zapp.instance_registry (instance_name, display_name, phone_number, department, responsible_name)
+  VALUES (p_instance_name, p_display_name, p_phone, p_department, p_responsible)
+  RETURNING id INTO v_id;
+
+  -- Provisionamento das partições, índices, RLS e policies do lado do provider
+  -- fica atrás do contrato (rpc_boundary_provision_instance_partitions).
+  PERFORM evo.rpc_boundary_provision_instance_partitions(p_instance_name::text);
+
+  RETURN v_id;
+END;
+$function$
+
+=== zapp.fn_send_audio_meme(p_remote_jid text, p_instance_name text, p_audio_meme_id uuid, p_created_by uuid) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_send_audio_meme(p_remote_jid text, p_instance_name text, p_audio_meme_id uuid, p_created_by uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'auth', 'extensions'
+AS $function$
+DECLARE
+  v_meme record;
+  v_queue_id uuid;
+BEGIN
+  SELECT * INTO v_meme FROM audio_memes WHERE id = p_audio_meme_id;
+  IF v_meme IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'audio_meme_id nao encontrado no catalogo');
+  END IF;
+  
+  INSERT INTO outbound_message_queue (
+    remote_jid, instance_name, message_type, content,
+    media_url, media_mime_type, ptt, audio_meme_id,
+    metadata, status, retry_count, max_retries, created_by
+  ) VALUES (
+    p_remote_jid, p_instance_name, 'audio', '',
+    v_meme.audio_url, 'audio/ogg; codecs=opus', true, p_audio_meme_id,
+    jsonb_build_object(
+      'meme_name', v_meme.name,
+      'meme_category', v_meme.category,
+      'duration_seconds', v_meme.duration_seconds
+    ),
+    'pending', 0, 3, p_created_by
+  ) RETURNING id INTO v_queue_id;
+  
+  UPDATE audio_memes SET use_count = use_count + 1 WHERE id = p_audio_meme_id;
+  
+  RETURN jsonb_build_object(
+    'ok', true,
+    'queue_id', v_queue_id,
+    'meme_name', v_meme.name,
+    'meme_category', v_meme.category,
+    'ptt', true,
+    'audio_url', v_meme.audio_url,
+    'remote_jid', p_remote_jid,
+    'instance_name', p_instance_name
+  );
+END;
+$function$
+
+=== zapp.fn_send_sticker(p_remote_jid text, p_instance_name text, p_sticker_id uuid, p_created_by uuid) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_send_sticker(p_remote_jid text, p_instance_name text, p_sticker_id uuid, p_created_by uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'auth', 'extensions'
+AS $function$
+DECLARE
+  v_sticker record;
+  v_queue_id uuid;
+BEGIN
+  -- 1. Buscar figurinha no catalogo
+  SELECT * INTO v_sticker FROM stickers WHERE id = p_sticker_id AND is_active = true;
+  IF v_sticker IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'sticker_id nao encontrado ou inativo');
+  END IF;
+  
+  -- 2. Inserir na fila de envio
+  INSERT INTO outbound_message_queue (
+    remote_jid, instance_name, message_type, content,
+    media_url, media_mime_type, sticker_id,
+    metadata, status, retry_count, max_retries, created_by
+  ) VALUES (
+    p_remote_jid, p_instance_name, 'sticker', '',
+    v_sticker.image_url, COALESCE(v_sticker.mime_type, 'image/webp'), p_sticker_id,
+    jsonb_build_object(
+      'sticker_name', v_sticker.name,
+      'sticker_category', v_sticker.category,
+      'is_animated', v_sticker.is_animated
+    ),
+    'pending', 0, 3, p_created_by
+  ) RETURNING id INTO v_queue_id;
+  
+  -- 3. Incrementar use_count
+  UPDATE stickers SET use_count = COALESCE(use_count, 0) + 1 WHERE id = p_sticker_id;
+  
+  RETURN jsonb_build_object(
+    'ok', true,
+    'queue_id', v_queue_id,
+    'sticker_name', v_sticker.name,
+    'sticker_category', v_sticker.category,
+    'is_animated', v_sticker.is_animated,
+    'image_url', v_sticker.image_url,
+    'remote_jid', p_remote_jid,
+    'instance_name', p_instance_name
+  );
+END;
+$function$
+
+=== zapp.fn_send_sticker_from_catalog(p_remote_jid text, p_instance_name text, p_sticker_id uuid, p_created_by uuid) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_send_sticker_from_catalog(p_remote_jid text, p_instance_name text, p_sticker_id uuid, p_created_by uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'auth', 'extensions'
+AS $function$
+DECLARE
+  v_sticker record;
+  v_queue_id uuid;
+BEGIN
+  SELECT * INTO v_sticker FROM stickers WHERE id = p_sticker_id AND is_active = true;
+  IF v_sticker IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'sticker_id nao encontrado ou inativo');
+  END IF;
+  
+  INSERT INTO outbound_message_queue (
+    remote_jid, instance_name, message_type, content,
+    media_url, media_mime_type, sticker_id,
+    metadata, status, retry_count, max_retries, created_by
+  ) VALUES (
+    p_remote_jid, p_instance_name, 'sticker', '',
+    v_sticker.image_url, COALESCE(v_sticker.mime_type, 'image/webp'), p_sticker_id,
+    jsonb_build_object(
+      'sticker_name', v_sticker.name,
+      'sticker_category', v_sticker.category,
+      'is_animated', v_sticker.is_animated
+    ),
+    'pending', 0, 3, p_created_by
+  ) RETURNING id INTO v_queue_id;
+  
+  -- Incrementar use_count
+  UPDATE stickers SET use_count = COALESCE(use_count, 0) + 1 WHERE id = p_sticker_id;
+  
+  RETURN jsonb_build_object(
+    'ok', true,
+    'queue_id', v_queue_id,
+    'sticker_name', v_sticker.name,
+    'sticker_category', v_sticker.category,
+    'is_animated', v_sticker.is_animated,
+    'image_url', v_sticker.image_url,
+    'remote_jid', p_remote_jid,
+    'instance_name', p_instance_name
+  );
+END;
+$function$
+
+=== zapp.fn_transfer_comment(p_transfer_id uuid, p_agent_id uuid, p_content text) [] SCALAR uuid
+CREATE OR REPLACE FUNCTION zapp.fn_transfer_comment(p_transfer_id uuid, p_agent_id uuid, p_content text)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+DECLARE
+    v_comment_id UUID;
+BEGIN
+    INSERT INTO zapp.transfer_comments (
+        transfer_id,
+        agent_id,
+        content
+    ) VALUES (
+        p_transfer_id,
+        p_agent_id,
+        p_content
+    ) RETURNING id INTO v_comment_id;
+    
+    RETURN v_comment_id;
+END;
+$function$
+
+=== zapp.fn_transfer_comment(p_transfer_id uuid, p_author text, p_instance text, p_content text) [] SCALAR uuid
+CREATE OR REPLACE FUNCTION zapp.fn_transfer_comment(p_transfer_id uuid, p_author text, p_instance text, p_content text)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+DECLARE v_id UUID;
+BEGIN
+    INSERT INTO zapp.transfer_comments (transfer_id, author_name, author_instance, content)
+    VALUES (p_transfer_id, p_author, p_instance, p_content) RETURNING id INTO v_id;
+    RETURN v_id;
+END;
+$function$
+
+=== zapp.get_reset_requests_safe() [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.get_reset_requests_safe()
+ RETURNS TABLE(id uuid, user_id uuid, email text, reason text, status text, reviewed_by text, reviewed_at timestamp with time zone, rejection_reason text, has_token boolean, token_expires_at timestamp with time zone, ip_address text, user_agent text, created_at timestamp with time zone, updated_at timestamp with time zone)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$ SELECT prr.id, prr.user_id, prr.email, prr.reason, prr.status, prr.reviewed_by, prr.reviewed_at, prr.rejection_reason, (prr.reset_token IS NOT NULL) AS has_token, prr.token_expires_at, prr.ip_address, prr.user_agent, prr.created_at, prr.updated_at FROM zapp.password_reset_requests prr; $function$
+
+=== zapp.reassign_overloaded_agents(p_max_conversations integer) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.reassign_overloaded_agents(p_max_conversations integer DEFAULT 10)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+BEGIN RETURN jsonb_build_object('reassigned', 0, 'message', 'No overloaded agents found'); END;
+$function$
+
+=== zapp.record_ai_metrics(p_function_name text, p_action text, p_duration_ms integer, p_status text, p_user_id uuid, p_error_message text, p_metadata jsonb) [] SCALAR void
+CREATE OR REPLACE FUNCTION zapp.record_ai_metrics(p_function_name text, p_action text, p_duration_ms integer, p_status text, p_user_id uuid, p_error_message text DEFAULT NULL::text, p_metadata jsonb DEFAULT NULL::jsonb)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+BEGIN
+  INSERT INTO zapp.ai_function_metrics (
+    function_name, action, duration_ms, status, user_id, error_message, metadata
+  ) VALUES (
+    p_function_name, p_action, p_duration_ms,
+    COALESCE(p_status, 'success'), p_user_id, p_error_message, p_metadata
+  );
+EXCEPTION WHEN OTHERS THEN
+  NULL;
+END;
+$function$
+
+=== zapp.record_processed_request(p_request_id text, p_action text, p_user_id uuid, p_status_code integer, p_result_payload jsonb) [] SCALAR void
+CREATE OR REPLACE FUNCTION zapp.record_processed_request(p_request_id text, p_action text, p_user_id uuid, p_status_code integer, p_result_payload jsonb DEFAULT NULL::jsonb)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+BEGIN
+  INSERT INTO zapp.processed_requests (
+    request_id, action, user_id, result_status, result_payload, expires_at
+  ) VALUES (
+    p_request_id, p_action, p_user_id,
+    p_status_code, p_result_payload, now() + INTERVAL '5 minutes'
+  )
+  ON CONFLICT (request_id, action) DO NOTHING;
+EXCEPTION WHEN OTHERS THEN
+  NULL;
+END;
+$function$
+
+=== zapp.record_voice_telemetry(p_queue_id uuid, p_duration_ms integer, p_status text, p_error_type text, p_error_detail text) [] SCALAR void
+CREATE OR REPLACE FUNCTION zapp.record_voice_telemetry(p_queue_id uuid, p_duration_ms integer, p_status text, p_error_type text DEFAULT NULL::text, p_error_detail text DEFAULT NULL::text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'auth', 'extensions'
+AS $function$
+BEGIN
+  UPDATE zapp.voice_conversion_queue
+  SET status = p_status, duration_ms = p_duration_ms,
+      error_message = COALESCE(p_error_detail, error_message),
+      error_code = p_error_type,
+      completed_at = CASE WHEN p_status IN ('completed','failed') THEN now() ELSE completed_at END,
+      updated_at = now()
+  WHERE id = p_queue_id;
+
+  IF p_status = 'failed' AND p_error_type IS NOT NULL THEN
+    INSERT INTO zapp.dev_diagnostic_logs (action, category, details)
+    VALUES ('voice_conversion_failed','Voice',
+      jsonb_build_object('queue_id',p_queue_id,'duration_ms',p_duration_ms,'error_type',p_error_type));
+  END IF;
+END;
+$function$
+
+=== zapp.rpc_email_archive_thread(p_thread_id uuid, p_archived boolean) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.rpc_email_archive_thread(p_thread_id uuid, p_archived boolean DEFAULT true)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+BEGIN
+  UPDATE email_app.email_threads
+  SET status = CASE WHEN COALESCE(p_archived, true) THEN 'archived' ELSE 'open' END, updated_at = now()
+  WHERE id = p_thread_id;
+
+  RETURN jsonb_build_object('archived', COALESCE(p_archived, true), 'thread_id', p_thread_id, 'archived_at', now());
+END;
+$function$
+
+=== zapp.rpc_email_assign_thread(p_thread_id uuid, p_assignee text, p_agent_id text) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.rpc_email_assign_thread(p_thread_id uuid, p_assignee text DEFAULT NULL::text, p_agent_id text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE v_assignee text;
+BEGIN
+  v_assignee := COALESCE(p_agent_id, p_assignee);
+
+  UPDATE email_app.email_threads SET assigned_to = v_assignee, updated_at = now() WHERE id = p_thread_id;
+
+  RETURN jsonb_build_object('updated', true, 'thread_id', p_thread_id, 'assigned_to', v_assignee);
+END;
+$function$
+
+=== zapp.rpc_email_mark_thread_read(p_thread_id uuid, p_read boolean, p_unread boolean, p_message_ids uuid[]) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.rpc_email_mark_thread_read(p_thread_id uuid, p_read boolean DEFAULT NULL::boolean, p_unread boolean DEFAULT NULL::boolean, p_message_ids uuid[] DEFAULT NULL::uuid[])
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE v_unread boolean;
+BEGIN
+  v_unread := CASE WHEN p_unread IS NOT NULL THEN p_unread
+                   WHEN p_read   IS NOT NULL THEN NOT p_read
+                   ELSE false END;
+
+  UPDATE email_app.email_threads SET is_unread = v_unread, updated_at = now() WHERE id = p_thread_id;
+
+  UPDATE email_app.email_messages SET is_read = NOT v_unread
+  WHERE thread_id = p_thread_id AND (p_message_ids IS NULL OR id = ANY(p_message_ids));
+
+  RETURN jsonb_build_object('updated', true, 'thread_id', p_thread_id, 'is_unread', v_unread);
+END;
+$function$
+
+=== zapp.rpc_email_star_thread(p_thread_id uuid, p_starred boolean) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.rpc_email_star_thread(p_thread_id uuid, p_starred boolean DEFAULT true)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+BEGIN
+  UPDATE zapp.email_threads
+  SET is_starred = p_starred
+  WHERE id = p_thread_id;
+
+  RETURN jsonb_build_object('updated', true, 'thread_id', p_thread_id, 'starred', p_starred);
+END;
+$function$
+
+=== zapp.rpc_get_contact_summary_batch(p_contact_ids uuid[]) [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.rpc_get_contact_summary_batch(p_contact_ids uuid[])
+ RETURNS TABLE(contact_id uuid, unread_whispers integer, pending_tasks integer)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+WITH unread_w AS (
+  SELECT contact_id, COUNT(*)::int AS cnt
+  FROM zapp.whisper_messages
+  WHERE contact_id = ANY(p_contact_ids) AND is_read = false
+  GROUP BY contact_id
+), pending_t AS (
+  SELECT contact_id, COUNT(*)::int AS cnt
+  FROM zapp.conversation_tasks
+  WHERE contact_id = ANY(p_contact_ids) AND status = 'pending'
+  GROUP BY contact_id
+)
+SELECT ids.id AS contact_id,
+       COALESCE(uw.cnt, 0) AS unread_whispers,
+       COALESCE(pt.cnt, 0) AS pending_tasks
+FROM (SELECT DISTINCT unnest(p_contact_ids) AS id) ids
+LEFT JOIN unread_w uw ON uw.contact_id = ids.id
+LEFT JOIN pending_t pt ON pt.contact_id = ids.id
+$function$
+
+=== zapp.rpc_get_email_health_summary() [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.rpc_get_email_health_summary()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE v_row zapp.email_health_summary;
+BEGIN
+  SELECT * INTO v_row FROM zapp.email_health_summary WHERE id = 'current';
+  RETURN row_to_json(v_row)::jsonb;
+END;
+$function$
+
+=== zapp.rpc_get_pipeline_health_v2(p_instance_name text) [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.rpc_get_pipeline_health_v2(p_instance_name text DEFAULT NULL::text)
+ RETURNS TABLE(checked_at timestamp with time zone, instance_name text, pending_messages bigint, stuck_messages_5m bigint, stuck_messages_30m bigint, failed_messages_24h bigint, oldest_pending_minutes double precision)
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'pg_catalog'
+AS $function$
+BEGIN
+  RETURN QUERY
+  SELECT
+    NOW()::TIMESTAMPTZ,
+    m.instance_name::TEXT,
+    COUNT(*) FILTER (WHERE m.status IN ('pending','queued'))::BIGINT,
+    COUNT(*) FILTER (WHERE m.status='pending' AND m.created_at < NOW()-INTERVAL '5 minutes')::BIGINT,
+    COUNT(*) FILTER (WHERE m.status='pending' AND m.created_at < NOW()-INTERVAL '30 minutes')::BIGINT,
+    COUNT(*) FILTER (WHERE m.status='failed'  AND m.created_at > NOW()-INTERVAL '24 hours')::BIGINT,
+    (EXTRACT(EPOCH FROM (NOW()-MIN(CASE WHEN m.status='pending' THEN m.created_at END)))/60)::DOUBLE PRECISION
+  FROM zapp.messages m
+  WHERE (p_instance_name IS NULL OR m.instance_name::TEXT = p_instance_name)
+  GROUP BY m.instance_name;
+END;
+$function$
+
+=== zapp.rpc_log_email_health(p_status text, p_operation text, p_resource text, p_request_id text, p_error_message text, p_metadata jsonb, p_is_failure boolean, p_account_id uuid) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.rpc_log_email_health(p_status text, p_operation text DEFAULT NULL::text, p_resource text DEFAULT NULL::text, p_request_id text DEFAULT NULL::text, p_error_message text DEFAULT NULL::text, p_metadata jsonb DEFAULT NULL::jsonb, p_is_failure boolean DEFAULT NULL::boolean, p_account_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE
+  v_failure_count integer := 0;
+  v_is_failure boolean := COALESCE(p_is_failure, p_status IN ('error','degraded'));
+  -- status para a coluna do summary respeita a CHECK; valores fora do dominio viram 'unknown'
+  v_summary_status text := CASE WHEN p_status IN ('healthy','degraded','error','unknown') THEN p_status
+                                WHEN p_status = 'ok' THEN 'healthy'
+                                ELSE 'unknown' END;
+BEGIN
+  -- log bruto preserva o p_status original (a tabela de logs nao tem CHECK)
+  INSERT INTO zapp.email_health_logs (account_id, status, operation, resource, request_id, error_message, metadata, is_failure)
+  VALUES (p_account_id, p_status, p_operation, p_resource, p_request_id, p_error_message, p_metadata, v_is_failure);
+
+  SELECT failure_count INTO v_failure_count FROM zapp.email_health_summary WHERE id = 'current';
+  IF v_is_failure THEN
+    v_failure_count := COALESCE(v_failure_count, 0) + 1;
+  ELSE
+    v_failure_count := 0;
+  END IF;
+
+  UPDATE zapp.email_health_summary
+  SET status = v_summary_status, failure_count = v_failure_count, last_checked_at = now(), updated_at = now()
+  WHERE id = 'current';
+
+  RETURN jsonb_build_object('logged', true, 'status', p_status, 'summary_status', v_summary_status, 'failure_count', v_failure_count);
+END;
+$function$
+
+=== zapp.search_knowledge_base(search_query text, max_results integer) [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.search_knowledge_base(search_query text, max_results integer DEFAULT 5)
+ RETURNS TABLE(id uuid, title text, content text, category text, tags text, rank real)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$ SELECT a.id, a.title, a.content, a.category, a.tags, CASE WHEN a.title ILIKE '%' || search_query || '%' THEN 1.0 WHEN a.content ILIKE '%' || search_query || '%' THEN 0.5 ELSE 0.0 END::real AS rank FROM zapp.knowledge_base_articles a WHERE a.is_published = true AND (a.title ILIKE '%' || search_query || '%' OR a.content ILIKE '%' || search_query || '%') ORDER BY rank DESC LIMIT max_results; $function$
+
+=== zapp.sicoob_outbox_claim(p_batch_size integer) [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.sicoob_outbox_claim(p_batch_size integer DEFAULT 10)
+ RETURNS TABLE(id uuid, payload jsonb, status text, attempt_count integer, next_attempt_at timestamp with time zone, created_at timestamp with time zone)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+BEGIN
+  RETURN QUERY
+  WITH claimed AS (
+    SELECT s.id
+    FROM   zapp.sicoob_reply_outbox s
+    WHERE  s.status = 'pending'
+      AND  (s.next_attempt_at IS NULL OR s.next_attempt_at <= now())
+    ORDER BY s.created_at ASC
+    LIMIT  p_batch_size
+    FOR UPDATE SKIP LOCKED
+  )
+  UPDATE zapp.sicoob_reply_outbox s
+  SET    status = 'processing',
+         attempt_count = attempt_count + 1,
+         next_attempt_at = now() + INTERVAL '1 minute'
+  FROM   claimed
+  WHERE  s.id = claimed.id
+  RETURNING s.id, s.payload, s.status, s.attempt_count, s.next_attempt_at, s.created_at;
+END;
+$function$
+
+=== zapp.store_reset_token(p_request_id uuid, p_token text, p_expires_at timestamp with time zone) [] SCALAR void
+CREATE OR REPLACE FUNCTION zapp.store_reset_token(p_request_id uuid, p_token text, p_expires_at timestamp with time zone)
+ RETURNS void
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$ INSERT INTO zapp.password_reset_tokens (request_id, token_hash, expires_at) VALUES (p_request_id, p_token, p_expires_at) $function$
+
+=== zapp.validate_reset_token(p_token text) [] SCALAR uuid
+CREATE OR REPLACE FUNCTION zapp.validate_reset_token(p_token text)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE
+  v_user_id uuid;
+  v_hashed text;
+BEGIN
+  v_hashed := encode(extensions.digest(p_token::bytea, 'sha256'), 'hex');
+  
+  SELECT user_id INTO v_user_id
+  FROM zapp.password_reset_requests
+  WHERE reset_token = v_hashed
+    AND status = 'pending'
+    AND token_expires_at > now()
+  LIMIT 1;
+  
+  RETURN v_user_id;
+END;
+$function$
+

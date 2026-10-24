@@ -1,0 +1,125 @@
+20/10 11:11:17 ======================================================================
+20/10 11:11:17 INICIO SIMULACAO (so leitura)
+20/10 11:11:17 autoteste OK: arvore recalculada aqui == git (7540 arquivos); hash de arquivo == git
+20/10 11:11:42 passo 1: soltos no repositorio: commits=4477 (uteis 4117, so repetem conteudo ja existente 360) blobs=324 arvores=36335
+20/10 11:12:00 commits preservados no repositorio: 51460
+20/10 11:12:01 Kanban: 796 cartoes abertos
+20/10 11:12:01 passo 2: clone n142 (~/hermes-workspaces/Zapp_Web_V2/n142-banco-leitura-reacoes-espelho-ci-26101418239f52) [memoria do script 63 MB]
+20/10 11:12:39    o clone sera importado mas NAO apagado: ['~/hermes-workspaces/Zapp_Web_V2/n142-banco-leitura-reacoes-espelho-ci-26101418239f52 (atividade nas ultimas 72 h)']
+20/10 11:12:39    refs a importar=1 stash=0 pontas soltas uteis=589 (repetidas 22) objetos soltos=121 indices de worktrees sumidas=0; pasta: 5811 do indice + 1560 do disco; worktrees proprias=0; repos desconhecidos dentro=0
+20/10 11:12:40 passo 2: clone retomar (~/hermes-workspaces/Zapp_Web_V2/retomar-automation-suggest-reply-t-e494c228) [memoria do script 139 MB]
+20/10 11:13:22    refs a importar=1 stash=0 pontas soltas uteis=589 (repetidas 22) objetos soltos=121 indices de worktrees sumidas=0; pasta: 4804 do indice + 1851 do disco; worktrees proprias=0; repos desconhecidos dentro=0
+20/10 11:13:22 passo 2: clone t_682cc676 (~/hermes-workspaces/Zapp_Web_V2/t_682cc676_v2) [memoria do script 141 MB]
+20/10 11:13:57    refs a importar=1 stash=0 pontas soltas uteis=886 (repetidas 39) objetos soltos=181 indices de worktrees sumidas=0; pasta: 4956 do indice + 3108 do disco; worktrees proprias=0; repos desconhecidos dentro=0
+20/10 11:13:57 passo 2: clone clone-ws (~/hermes-workspaces/Zapp_Web_V2) [memoria do script 154 MB]
+20/10 11:14:42    o clone sera importado mas NAO apagado: ['~/zapp-worktrees/teste-real (atividade nas ultimas 72 h)']
+20/10 11:14:42    refs a importar=2 stash=1 pontas soltas uteis=890 (repetidas 39) objetos soltos=197 indices de worktrees sumidas=0; pasta: 5806 do indice + 214147 do disco; worktrees proprias=1; repos desconhecidos dentro=0
+20/10 11:14:43 passo 2: clone r2a5 (~/hermes-workspaces/.verificacao/r2a5/repo) [memoria do script 253 MB]
+20/10 11:14:43    clone raso: os 1 pontos de corte ja estao no repositorio (o repositorio NAO vira raso)
+20/10 11:14:46    refs a importar=4 stash=0 pontas soltas uteis=332 (repetidas 18) objetos soltos=60 indices de worktrees sumidas=4; pasta: 3212 do indice + 1 do disco; worktrees proprias=0; repos desconhecidos dentro=0
+20/10 11:14:46 passo 2: clone chat-h353953 (~/hermes-workspaces/chat-h353953/repo) [memoria do script 232 MB]
+20/10 11:14:46    clone raso: os 2 pontos de corte ja estao no repositorio (o repositorio NAO vira raso)
+20/10 11:14:46    refs a importar=0 stash=0 pontas soltas uteis=0 (repetidas 0) objetos soltos=0 indices de worktrees sumidas=0; pasta: 1890 do indice + 0 do disco; worktrees proprias=0; repos desconhecidos dentro=0
+20/10 11:14:46 passo 2: clone mapa-zapp-v2 (~/projetos/Zapp_Web_V2-anexos/arquivo/mapa-zapp-v2) [memoria do script 153 MB]
+20/10 11:14:50    refs a importar=2 stash=1 pontas soltas uteis=884 (repetidas 39) objetos soltos=181 indices de worktrees sumidas=0; pasta: 4890 do indice + 0 do disco; worktrees proprias=0; repos desconhecidos dentro=0
+20/10 11:14:50 passo 2: clone qa4-ref (~/projetos/Zapp_Web_V2-anexos/arquivo/qa-fase0/qa4/ref) [memoria do script 190 MB]
+20/10 11:14:54    refs a importar=0 stash=0 pontas soltas uteis=883 (repetidas 39) objetos soltos=181 indices de worktrees sumidas=0; pasta: 4873 do indice + 0 do disco; worktrees proprias=0; repos desconhecidos dentro=0
+20/10 11:14:56 passo 3: bundle ~/backups/zapp-sync-20261019-200821/commits-locais-nao-publicados.bundle: 3785 refs; 0 com commit que ainda falta no repositorio
+20/10 11:15:14 passo 3: bundle ~/backups-sync-2026-10-17/bundles/retomar-automation-suggest-reply-t-e494c228.bundle: 7615 refs; 0 com commit que ainda falta no repositorio
+20/10 11:15:27 passo 3: bundle ~/backups-sync-2026-10-17/bundles/n142-banco-leitura-reacoes-espelho-ci-26101418239f52.bundle: 7612 refs; 0 com commit que ainda falta no repositorio
+20/10 11:15:45 passo 3: bundle ~/backups-sync-2026-10-17/bundles/t_682cc676_v2.bundle: 5029 refs; 0 com commit que ainda falta no repositorio
+20/10 11:16:01 passo 3: bundle ~/backups-sync-2026-10-17/bundles/Zapp_Web_V2.bundle: 5065 refs; 3 com commit que ainda falta no repositorio
+20/10 11:16:20 passo 3: bundle ~/backups-sync-2026-10-17/zapp-referencia.bundle: 8955 refs; 0 com commit que ainda falta no repositorio
+20/10 11:16:20 passo 3: bundle ~/projetos/_arquivo_zapp/consolidacao_v2_20261004/local_fase0-banco-local.bundle: 1 refs; 0 com commit que ainda falta no repositorio
+20/10 11:16:39 passo 3: bundle ~/projetos/_arquivo_zapp/consolidacao_v2_20261004/Zapp_Web_V2_all_refs.bundle: 478 refs; 0 com commit que ainda falta no repositorio
+20/10 11:16:55 passo 3: bundle ~/projetos/_arquivo_zapp/consolidacao_v2_20261004/zapp-web-v2-main_all_refs.bundle: 348 refs; 7 com commit que ainda falta no repositorio
+20/10 11:16:56 passo 3: bundle ~/projetos/_arquivo_zapp/v2_clones_pendentes/Zapp_Web_V2_inbox_resgate_20260922.bundle: 340 refs; 312 com commit que ainda falta no repositorio
+20/10 11:16:56 passo 3: bundle ~/projetos/_arquivo_zapp/v2_clones_pendentes/design_20260831.bundle: 80 refs; 7 com commit que ainda falta no repositorio
+20/10 11:16:56 passo 3: bundle ~/projetos/_arquivo_zapp/v2_clones_pendentes/postmerge_hotfix_clone_20260829.bundle: 5 refs; 0 com commit que ainda falta no repositorio
+20/10 11:16:56 passo 3: bundle ~/projetos/_arquivo_zapp/v2_clones_pendentes/catalog_fix_20260829.bundle: 121 refs; 33 com commit que ainda falta no repositorio
+20/10 11:16:56 passo 3: bundle ~/projetos/_arquivo_zapp/v2_all_refs_20260925.bundle: 19 refs; 10 com commit que ainda falta no repositorio
+20/10 11:16:57 passo 3: bundle ~/zapp-audit-backup/zapp-backup-20260916-0816.bundle: 386 refs; 29 com commit que ainda falta no repositorio
+20/10 11:17:07 passo 4: worktrees: 3090 saem, 213 ficam {'estado da fabrica (.integra)': 10, 'atividade nas ultimas 72 h': 46, 'cartao aberto no Kanban': 153, 'travada': 1, 'usada por servico': 3}
+20/10 11:17:13    simulado 40/3090
+20/10 11:17:19    simulado 80/3090
+20/10 11:17:24    simulado 120/3090
+20/10 11:17:28    simulado 160/3090
+20/10 11:17:32    simulado 200/3090
+20/10 11:17:37    simulado 240/3090
+20/10 11:17:41    simulado 280/3090
+20/10 11:17:46    simulado 320/3090
+20/10 11:17:53    simulado 360/3090
+20/10 11:17:58    simulado 400/3090
+20/10 11:18:02    simulado 440/3090
+20/10 11:18:06    simulado 480/3090
+20/10 11:18:12    simulado 520/3090
+20/10 11:18:17    simulado 560/3090
+20/10 11:18:22    simulado 600/3090
+20/10 11:18:26    simulado 640/3090
+20/10 11:18:30    simulado 680/3090
+20/10 11:18:35    simulado 720/3090
+20/10 11:18:39    simulado 760/3090
+20/10 11:18:43    simulado 800/3090
+20/10 11:18:47    simulado 840/3090
+20/10 11:18:52    simulado 880/3090
+20/10 11:18:56    simulado 920/3090
+20/10 11:19:00    simulado 960/3090
+20/10 11:19:07    simulado 1000/3090
+20/10 11:19:11    simulado 1040/3090
+20/10 11:19:15    simulado 1080/3090
+20/10 11:19:19    simulado 1120/3090
+20/10 11:19:24    simulado 1160/3090
+20/10 11:19:28    simulado 1200/3090
+20/10 11:19:33    simulado 1240/3090
+20/10 11:19:37    simulado 1280/3090
+20/10 11:19:42    simulado 1320/3090
+20/10 11:19:46    simulado 1360/3090
+20/10 11:19:51    simulado 1400/3090
+20/10 11:19:54    simulado 1440/3090
+20/10 11:19:58    simulado 1480/3090
+20/10 11:20:02    simulado 1520/3090
+20/10 11:20:06    simulado 1560/3090
+20/10 11:20:10    simulado 1600/3090
+20/10 11:20:13    simulado 1640/3090
+20/10 11:20:17    simulado 1680/3090
+20/10 11:20:21    simulado 1720/3090
+20/10 11:20:24    simulado 1760/3090
+20/10 11:20:28    simulado 1800/3090
+20/10 11:20:32    simulado 1840/3090
+20/10 11:20:36    simulado 1880/3090
+20/10 11:20:40    simulado 1920/3090
+20/10 11:20:43    simulado 1960/3090
+20/10 11:20:47    simulado 2000/3090
+20/10 11:20:51    simulado 2040/3090
+20/10 11:20:55    simulado 2080/3090
+20/10 11:20:58    simulado 2120/3090
+20/10 11:21:02    simulado 2160/3090
+20/10 11:21:06    simulado 2200/3090
+20/10 11:21:09    simulado 2240/3090
+20/10 11:21:13    simulado 2280/3090
+20/10 11:21:17    simulado 2320/3090
+20/10 11:21:21    simulado 2360/3090
+20/10 11:21:24    simulado 2400/3090
+20/10 11:21:28    simulado 2440/3090
+20/10 11:21:31    simulado 2480/3090
+20/10 11:21:35    simulado 2520/3090
+20/10 11:21:39    simulado 2560/3090
+20/10 11:21:42    simulado 2600/3090
+20/10 11:21:47    simulado 2640/3090
+20/10 11:21:51    simulado 2680/3090
+20/10 11:21:54    simulado 2720/3090
+20/10 11:21:58    simulado 2760/3090
+20/10 11:22:02    simulado 2800/3090
+20/10 11:22:06    simulado 2840/3090
+20/10 11:22:10    simulado 2880/3090
+20/10 11:22:14    simulado 2920/3090
+20/10 11:22:18    simulado 2960/3090
+20/10 11:22:23    simulado 3000/3090
+20/10 11:22:28    simulado 3040/3090
+20/10 11:22:32    simulado 3080/3090
+20/10 11:22:33    simulado 3090/3090
+20/10 11:22:33    copias de banco que nao entram (somem com as pastas): kb.db x20 1483 MB, kanban.db x20 1335 MB, board.db x11 588 MB, board2.db x2 214 MB, k.db x7 213 MB, kb2.db x2 170 MB, board_copy.db x2 114 MB, board3.db x1 99 MB, b.db x1 89 MB, board_copy2.db x1 82 MB, kanban-read.db x1 81 MB, kb_copy.db x1 36 MB
+20/10 11:22:38 passo 5: avulsos: 71 raizes (11 com .git emprestado), 144180 arquivos, 15 bundles (ja tratados no passo 3), 3 patches redundantes
+20/10 11:22:39 RESUMO: {"passo1: refs de commits soltos": 4117, "clones: arquivos lidos do disco": 220670, "clones: bytes lidos do disco": 6198791011, "clones: refs a criar": 5084, "clones: repos desconhecidos (clone fica)": 0, "bundles: refs a criar": 401, "worktrees: segredos locais (vao para ~/.secrets, nao para o git)": 6, "worktrees: commits extras (ORIG_HEAD/rebase/fetch) com ref propria": 0, "worktrees: pastas regeneraveis (nao entram)": 59242, "simulacao: conferencia byte a byte repetida OK": 12, "worktrees: capturadas": 3090, "worktrees: arquivos lidos do disco": 307165, "worktrees: bytes lidos do disco": 7260840773, "worktrees: com mudanca ou arquivo fora do git": 3087, "worktrees: ficaram por repositorio desconhecido dentro": 0, "avulsos: arquivos": 144180, "avulsos: bytes": 3599139979, "avulsos: segredos locais (nao entram)": 0}
+20/10 11:22:39 FIM_OK
+rc=0

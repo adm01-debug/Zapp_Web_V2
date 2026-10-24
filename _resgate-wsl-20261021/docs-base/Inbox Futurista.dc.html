@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Outfit', system-ui, sans-serif; background: #04050a; color: #e8eaf2; height: 100vh; overflow: hidden; }
+    .chat-col { min-width: 380px; }
+    a, a:hover { color: inherit; text-decoration: none; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(110,231,255,0.15); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(110,231,255,0.3); }
+    input::placeholder, textarea::placeholder { color: rgba(232,234,242,0.22); }
+    @keyframes aurora1 { 0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(80px,-40px) scale(1.15);}66%{transform:translate(-60px,50px) scale(0.92);} }
+    @keyframes aurora2 { 0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-90px,-60px) scale(1.2);} }
+    @keyframes aurora3 { 0%,100%{transform:translate(0,0) scale(1);}40%{transform:translate(50px,70px) scale(1.1);}80%{transform:translate(-40px,-30px) scale(0.95);} }
+    @keyframes pulse-ring { 0%{box-shadow:0 0 0 0 rgba(52,211,153,0.5);}70%{box-shadow:0 0 0 6px rgba(52,211,153,0);}100%{box-shadow:0 0 0 0 rgba(52,211,153,0);} }
+    @keyframes msg-in { from{opacity:0;transform:translateY(14px) scale(0.96);filter:blur(4px);}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0);} }
+    @keyframes typing-dot { 0%,80%,100%{transform:scale(0.55);opacity:0.25;}40%{transform:scale(1);opacity:1;} }
+    @keyframes wave { 0%,100%{transform:scaleY(0.35);}50%{transform:scaleY(1);} }
+    @keyframes border-flow { 0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;} }
+    @keyframes float-y { 0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);} }
+    @keyframes glow-pulse { 0%,100%{opacity:0.6;}50%{opacity:1;} }
+    @keyframes scan { 0%{transform:translateY(-100%);}100%{transform:translateY(500%);} }
+    @keyframes pop-in { from{opacity:0;transform:scale(0.88) translateY(8px);}to{opacity:1;transform:scale(1) translateY(0);} }
+    @keyframes call-ring { 0%{box-shadow:0 0 0 0 rgba(34,211,238,0.6);}100%{box-shadow:0 0 0 28px rgba(34,211,238,0);} }
+    @keyframes story-ring { 0%{background-position:0% 50%;}100%{background-position:200% 50%;} }
+    @keyframes reaction-pop { from{opacity:0;transform:scale(0.7) translateY(6px);}to{opacity:1;transform:scale(1) translateY(0);} }
+    @keyframes slide-up { from{opacity:0;transform:translateY(100%);}to{opacity:1;transform:translateY(0);} }
+  </style>
+</helmet>
+
+<div style="position:relative; display:flex; height:100vh; overflow-x:auto; background:#04050a; min-width:1100px;">
+
+  <!-- AURORA -->
+  <div style="position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0;">
+    <div style="position:absolute; top:-15%; left:15%; width:520px; height:520px; border-radius:50%; background:radial-gradient(circle,rgba(56,189,248,0.14),transparent 65%); filter:blur(60px); animation:aurora1 18s ease-in-out infinite;"></div>
+    <div style="position:absolute; bottom:-20%; right:5%; width:600px; height:600px; border-radius:50%; background:radial-gradient(circle,rgba(139,92,246,0.13),transparent 65%); filter:blur(70px); animation:aurora2 22s ease-in-out infinite;"></div>
+    <div style="position:absolute; top:35%; left:45%; width:420px; height:420px; border-radius:50%; background:radial-gradient(circle,rgba(34,211,238,0.08),transparent 60%); filter:blur(55px); animation:aurora3 26s ease-in-out infinite;"></div>
+    <div style="position:absolute; inset:0; background-image:linear-gradient(rgba(110,231,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(110,231,255,0.025) 1px,transparent 1px); background-size:48px 48px; mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,black 30%,transparent 75%);"></div>
+  </div>
+
+  <!-- NAV RAIL -->
+  <nav style="position:relative; z-index:5; width:68px; min-width:68px; height:100vh; display:flex; flex-direction:column; align-items:center; padding:18px 0; gap:6px; background:rgba(8,10,18,0.7); backdrop-filter:blur(24px); border-right:1px solid rgba(110,231,255,0.07);">
+    <div style="width:40px; height:40px; border-radius:13px; background:linear-gradient(135deg,#22d3ee,#8b5cf6); display:flex; align-items:center; justify-content:center; margin-bottom:18px; box-shadow:0 0 24px rgba(34,211,238,0.4),0 0 48px rgba(139,92,246,0.2); cursor:pointer; animation:float-y 4s ease-in-out infinite;">
+      <span style="color:#04050a; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:17px;">Z</span>
+    </div>
+    <sc-for list="{{ navItems }}" as="nav">
+      <div style="position:relative;">
+        <sc-if value="{{ nav.active }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; left:-13px; top:50%; transform:translateY(-50%); width:3px; height:22px; border-radius:2px; background:linear-gradient(180deg,#22d3ee,#8b5cf6); box-shadow:0 0 8px rgba(34,211,238,0.8);"></div>
+        </sc-if>
+        <button onClick="{{ nav.action }}" style="width:44px; height:44px; border-radius:13px; border:1px solid {{ nav.active ? 'rgba(34,211,238,0.25)' : 'transparent' }}; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; background:{{ nav.active ? 'rgba(34,211,238,0.1)' : 'transparent' }}; color:{{ nav.active ? '#6ee7ff' : 'rgba(232,234,242,0.35)' }};" style-hover="background:rgba(110,231,255,0.06); color:rgba(232,234,242,0.85); transform:translateY(-1px);" title="{{ nav.label }}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <sc-for list="{{ nav.paths }}" as="p"><path d="{{ p }}"></path></sc-for>
+          </svg>
+        </button>
+        <sc-if value="{{ nav.badge }}" hint-placeholder-val="{{ false }}">
+          <span style="position:absolute; top:2px; right:2px; min-width:16px; height:16px; border-radius:8px; background:linear-gradient(135deg,#f43f5e,#fb7185); color:#fff; font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; padding:0 3px; box-shadow:0 0 10px rgba(244,63,94,0.6);">{{ nav.badge }}</span>
+        </sc-if>
+      </div>
+    </sc-for>
+    <div style="flex:1;"></div>
+    <div style="width:38px; height:38px; border-radius:50%; padding:2px; background:linear-gradient(135deg,#22d3ee,#8b5cf6); cursor:pointer; animation:glow-pulse 3s ease-in-out infinite;">
+      <div style="width:100%; height:100%; border-radius:50%; background:#0a0c14; display:flex; align-items:center; justify-content:center; position:relative;">
+        <span style="color:#6ee7ff; font-size:11px; font-weight:700; font-family:'Space Grotesk',sans-serif;">JQ</span>
+        <span style="position:absolute; bottom:0; right:0; width:9px; height:9px; border-radius:50%; background:#34d399; border:2px solid #0a0c14; animation:pulse-ring 2.4s infinite;"></span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CONVERSATION LIST -->
+  <div style="position:relative; z-index:4; width:316px; min-width:316px; height:100vh; display:flex; flex-direction:column; background:rgba(10,12,20,0.6); backdrop-filter:blur(24px); border-right:1px solid rgba(110,231,255,0.06);">
+    <div style="padding:22px 18px 12px; flex-shrink:0;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+        <h1 style="font-family:'Space Grotesk',sans-serif; font-size:19px; font-weight:700; letter-spacing:-0.5px; background:linear-gradient(90deg,#e8eaf2,#6ee7ff); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">Mensagens</h1>
+        <button onClick="{{ openNewConv }}" style="width:34px; height:34px; border-radius:11px; border:1px solid rgba(34,211,238,0.25); cursor:pointer; background:rgba(34,211,238,0.08); color:#6ee7ff; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" style-hover="background:rgba(34,211,238,0.18); box-shadow:0 0 16px rgba(34,211,238,0.25);" title="Nova conversa">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+        </button>
+      </div>
+      <p style="font-size:11px; color:rgba(232,234,242,0.3); display:flex; align-items:center; gap:6px;">
+        <span style="width:6px; height:6px; border-radius:50%; background:#34d399; box-shadow:0 0 8px rgba(52,211,153,0.8);"></span>
+        {{ onlineCount }} online · {{ clock }}
+      </p>
+      <div style="margin-top:14px; border-radius:12px; padding:1px; background:{{ searchFocused ? 'linear-gradient(90deg,#22d3ee,#8b5cf6,#22d3ee)' : 'rgba(110,231,255,0.1)' }}; background-size:200% auto; animation:{{ searchFocused ? 'border-flow 3s linear infinite' : 'none' }}; transition:all 0.3s;">
+        <div style="position:relative; border-radius:11px; background:#0a0c16;">
+          <svg style="position:absolute; left:12px; top:50%; transform:translateY(-50%); pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(110,231,255,0.4)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+          <input type="text" placeholder="Buscar ou ⌘K..." onFocus="{{ onSearchFocus }}" onBlur="{{ onSearchBlur }}" style="width:100%; height:38px; border-radius:11px; border:none; background:transparent; color:#e8eaf2; font-family:'Outfit',sans-serif; font-size:12px; padding:0 12px 0 36px; outline:none;" />
+        </div>
+      </div>
+      <div style="display:flex; gap:6px; margin-top:12px; overflow-x:auto; padding-bottom:2px;">
+        <sc-for list="{{ tabs }}" as="tab">
+          <button onClick="{{ tab.action }}" style="height:26px; padding:0 12px; border-radius:13px; border:1px solid {{ tab.active ? 'rgba(34,211,238,0.4)' : 'rgba(255,255,255,0.07)' }}; cursor:pointer; font-family:'Outfit',sans-serif; font-size:11px; font-weight:{{ tab.active ? '600' : '400' }}; white-space:nowrap; transition:all 0.2s; background:{{ tab.active ? 'rgba(34,211,238,0.12)' : 'transparent' }}; color:{{ tab.active ? '#6ee7ff' : 'rgba(232,234,242,0.4)' }}; box-shadow:{{ tab.active ? '0 0 12px rgba(34,211,238,0.15)' : 'none' }};" style-hover="border-color:rgba(34,211,238,0.3); color:rgba(232,234,242,0.8);">{{ tab.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- ① STORIES STRIP -->
+    <div style="padding:0 14px 10px; flex-shrink:0; border-bottom:1px solid rgba(110,231,255,0.05);">
+      <div style="display:flex; gap:10px; overflow-x:auto; padding:2px 0 4px;">
+        <!-- Add story button -->
+        <div style="display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; flex-shrink:0;">
+          <div style="width:48px; height:48px; border-radius:16px; background:rgba(34,211,238,0.08); border:1.5px dashed rgba(34,211,238,0.3); display:flex; align-items:center; justify-content:center; transition:all 0.2s;" style-hover="background:rgba(34,211,238,0.15); border-color:rgba(34,211,238,0.6);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          </div>
+          <span style="font-size:9px; color:rgba(232,234,242,0.35); white-space:nowrap;">Novo</span>
+        </div>
+        <sc-for list="{{ stories }}" as="s">
+          <div onClick="{{ s.view }}" style="display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; flex-shrink:0;">
+            <div style="width:48px; height:48px; border-radius:16px; padding:2px; background:{{ s.seen ? 'rgba(255,255,255,0.07)' : 'linear-gradient(135deg,#22d3ee,#8b5cf6,#ec4899)' }}; background-size:200% auto; animation:{{ s.seen ? 'none' : 'story-ring 3s linear infinite' }}; box-shadow:{{ s.seen ? 'none' : '0 0 14px rgba(34,211,238,0.35)' }};">
+              <div style="width:100%; height:100%; border-radius:13px; background:{{ s.avatarBg }}; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; font-family:'Space Grotesk',sans-serif; border:2px solid #0a0c14;">{{ s.initials }}</div>
+            </div>
+            <span style="font-size:9px; color:{{ s.seen ? 'rgba(232,234,242,0.28)' : 'rgba(232,234,242,0.7)' }}; white-space:nowrap; max-width:52px; overflow:hidden; text-overflow:ellipsis;">{{ s.name }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- Conversations -->
+    <div style="flex:1; overflow-y:auto; overflow-x:hidden; padding:6px 10px 10px;">
+      <sc-for list="{{ conversations }}" as="conv" hint-placeholder-count="6">
+        <div onClick="{{ conv.select }}" style="position:relative; display:flex; align-items:center; gap:11px; padding:11px 11px; border-radius:15px; cursor:pointer; margin-bottom:3px; transition:all 0.2s; background:{{ conv.cardBg }}; border:1px solid {{ conv.cardBorder }}; box-shadow:{{ conv.cardShadow }};" style-hover="background:rgba(110,231,255,0.04); transform:translateX(2px);">
+          <div style="position:relative; flex-shrink:0;">
+            <div style="width:46px; height:46px; border-radius:15px; background:{{ conv.avatarBg }}; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600; color:#fff; font-family:'Space Grotesk',sans-serif; box-shadow:0 4px 14px rgba(0,0,0,0.4);">{{ conv.initials }}</div>
+            <sc-if value="{{ conv.online }}" hint-placeholder-val="{{ true }}">
+              <span style="position:absolute; bottom:-2px; right:-2px; width:13px; height:13px; border-radius:50%; background:#34d399; border:2.5px solid #0a0c14; box-shadow:0 0 8px rgba(52,211,153,0.7);"></span>
+            </sc-if>
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:3px;">
+              <span style="font-size:13px; font-weight:{{ conv.unread ? '600' : '500' }}; color:{{ conv.unread ? '#e8eaf2' : 'rgba(232,234,242,0.65)' }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px;">{{ conv.name }}</span>
+              <span style="font-size:10px; color:{{ conv.unread ? '#6ee7ff' : 'rgba(232,234,242,0.25)' }}; flex-shrink:0; font-family:'Space Grotesk',sans-serif;">{{ conv.time }}</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+              <span style="font-size:11px; color:rgba(232,234,242,0.35); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1;">{{ conv.lastMsg }}</span>
+              <sc-if value="{{ conv.unread }}" hint-placeholder-val="{{ false }}">
+                <span style="min-width:18px; height:18px; border-radius:9px; background:linear-gradient(135deg,#22d3ee,#8b5cf6); color:#04050a; font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; padding:0 4px; flex-shrink:0; box-shadow:0 0 10px rgba(34,211,238,0.5);">{{ conv.unread }}</span>
+              </sc-if>
+              <sc-if value="{{ conv.tag }}" hint-placeholder-val="{{ false }}">
+                <span style="font-size:8.5px; padding:2px 7px; border-radius:6px; font-weight:700; letter-spacing:0.04em; background:{{ conv.tagBg }}; color:{{ conv.tagColor }}; border:1px solid {{ conv.tagBorder }}; flex-shrink:0;">{{ conv.tag }}</span>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- CHAT AREA -->
+  <div class="chat-col" style="position:relative; z-index:3; flex:1; display:flex; flex-direction:column; min-width:0;">
+
+    <!-- Header -->
+    <div style="height:68px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; background:rgba(8,10,18,0.55); backdrop-filter:blur(24px); border-bottom:1px solid rgba(110,231,255,0.06); flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:13px;">
+        <div style="position:relative;">
+          <div style="width:42px; height:42px; border-radius:14px; background:linear-gradient(135deg,#6366f1,#a855f7); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600; color:#fff; font-family:'Space Grotesk',sans-serif; box-shadow:0 0 20px rgba(139,92,246,0.35);">MF</div>
+          <span style="position:absolute; bottom:-2px; right:-2px; width:12px; height:12px; border-radius:50%; background:#34d399; border:2.5px solid #080a12; animation:pulse-ring 2.4s infinite;"></span>
+        </div>
+        <div>
+          <h3 style="font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:600; color:#e8eaf2; letter-spacing:-0.2px;">Maria Fernanda</h3>
+          <div style="display:flex; align-items:center; gap:6px; margin-top:2px;">
+            <sc-if value="{{ isTyping }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:11px; color:#6ee7ff; display:flex; align-items:center; gap:4px;">digitando
+                <span style="display:inline-flex; gap:2px;">
+                  <span style="width:3px; height:3px; border-radius:50%; background:#6ee7ff; animation:typing-dot 1.2s infinite 0s;"></span>
+                  <span style="width:3px; height:3px; border-radius:50%; background:#6ee7ff; animation:typing-dot 1.2s infinite 0.15s;"></span>
+                  <span style="width:3px; height:3px; border-radius:50%; background:#6ee7ff; animation:typing-dot 1.2s infinite 0.3s;"></span>
+                </span>
+              </span>
+            </sc-if>
+            <sc-if value="{{ !isTyping }}" hint-placeholder-val="{{ true }}">
+              <span style="font-size:11px; color:rgba(232,234,242,0.35);">Online · WhatsApp</span>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <div style="padding:5px 12px; border-radius:10px; background:rgba(52,211,153,0.07); border:1px solid rgba(52,211,153,0.25); display:flex; align-items:center; gap:6px;">
+          <span style="width:5px; height:5px; border-radius:50%; background:#34d399; box-shadow:0 0 6px rgba(52,211,153,0.9);"></span>
+          <span style="font-size:10px; font-weight:700; color:#34d399; font-family:'Space Grotesk',sans-serif; letter-spacing:0.05em;">SLA {{ slaClock }}</span>
+        </div>
+        <sc-for list="{{ headerActions }}" as="act">
+          <button onClick="{{ act.action }}" style="width:36px; height:36px; border-radius:11px; border:1px solid {{ act.active ? 'rgba(34,211,238,0.4)' : 'transparent' }}; cursor:pointer; display:flex; align-items:center; justify-content:center; background:{{ act.active ? 'rgba(34,211,238,0.12)' : 'transparent' }}; color:{{ act.active ? '#6ee7ff' : 'rgba(232,234,242,0.35)' }}; transition:all 0.2s;" style-hover="background:rgba(110,231,255,0.07); color:#6ee7ff; border-color:rgba(34,211,238,0.2);" title="{{ act.label }}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <sc-for list="{{ act.paths }}" as="p"><path d="{{ p }}"></path></sc-for>
+            </svg>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- ④ PINNED MESSAGE BANNER -->
+    <div style="padding:0 22px; flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:10px; padding:8px 14px; background:rgba(251,191,36,0.06); border-bottom:1px solid rgba(251,191,36,0.15); cursor:pointer; transition:all 0.2s;" style-hover="background:rgba(251,191,36,0.1);">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round"><path d="M12 17v5M8 3h8l1 8H7zM7 11s-.5 3 5 3 5-3 5-3"></path></svg>
+        <div style="flex:1; min-width:0;">
+          <span style="font-size:9px; font-weight:700; color:#fbbf24; letter-spacing:0.1em; font-family:'Space Grotesk',sans-serif;">MENSAGEM FIXADA</span>
+          <p style="font-size:11px; color:rgba(232,234,242,0.55); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">O código de rastreio é BR-4921-8847-XZ. Acompanhe em tempo real pelo link.</p>
+        </div>
+        <button onClick="{{ dismissPin }}" style="border:none; background:transparent; cursor:pointer; color:rgba(232,234,242,0.2); flex-shrink:0;" style-hover="color:rgba(232,234,242,0.6);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ⑥ SELECT MODE TOOLBAR -->
+    <sc-if value="{{ selectMode }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:8px 22px; background:rgba(34,211,238,0.06); border-bottom:1px solid rgba(34,211,238,0.15); display:flex; align-items:center; gap:10px; flex-shrink:0; animation:slide-up 0.25s ease;">
+        <span style="font-size:11px; font-weight:600; color:#6ee7ff; font-family:'Space Grotesk',sans-serif;">{{ selectedCount }} selecionada{{ selectedCount !== 1 ? 's' : '' }}</span>
+        <div style="flex:1;"></div>
+        <sc-for list="{{ selectActions }}" as="sa">
+          <button onClick="{{ sa.action }}" style="height:30px; padding:0 12px; border-radius:9px; border:1px solid {{ sa.danger ? 'rgba(244,63,94,0.3)' : 'rgba(34,211,238,0.25)' }}; cursor:pointer; background:{{ sa.danger ? 'rgba(244,63,94,0.08)' : 'rgba(34,211,238,0.08)' }}; color:{{ sa.danger ? '#fb7185' : '#6ee7ff' }}; font-family:'Space Grotesk',sans-serif; font-size:11px; font-weight:600; transition:all 0.2s;" style-hover="background:{{ sa.danger ? 'rgba(244,63,94,0.18)' : 'rgba(34,211,238,0.18)' }};">{{ sa.label }}</button>
+        </sc-for>
+        <button onClick="{{ exitSelectMode }}" style="width:28px; height:28px; border:none; border-radius:8px; cursor:pointer; background:transparent; color:rgba(232,234,242,0.35);" style-hover="background:rgba(255,255,255,0.07); color:rgba(232,234,242,0.8);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+        </button>
+      </div>
+    </sc-if>
+
+    <!-- Messages -->
+    <div style="flex:1; overflow-y:auto; overflow-x:hidden; padding:18px 26px; display:flex; flex-direction:column; min-width:0;" onContextMenu="{{ onChatContextMenu }}">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px;">
+        <div style="flex:1; height:1px; background:linear-gradient(90deg,transparent,rgba(110,231,255,0.15));"></div>
+        <span style="font-size:10px; font-weight:600; color:rgba(110,231,255,0.5); font-family:'Space Grotesk',sans-serif; letter-spacing:0.15em;">HOJE · 31 AGO</span>
+        <div style="flex:1; height:1px; background:linear-gradient(90deg,rgba(110,231,255,0.15),transparent);"></div>
+      </div>
+
+      <sc-for list="{{ messages }}" as="msg" hint-placeholder-count="5">
+        <div onMouseEnter="{{ msg.onHover }}" onMouseLeave="{{ msg.onLeave }}" style="position:relative; display:flex; flex-direction:column; align-items:{{ msg.sent ? 'flex-end' : 'flex-start' }}; margin-bottom:{{ msg.gap ? '16px' : '3px' }}; animation:msg-in 0.35s cubic-bezier(0.2,0.9,0.3,1.2) both;">
+          <!-- ⑥ Select checkbox -->
+          <sc-if value="{{ selectMode }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute; {{ msg.sent ? 'right:-28px' : 'left:-28px' }}; top:50%; transform:translateY(-50%); z-index:2;">
+              <div onClick="{{ msg.toggleSelect }}" style="width:20px; height:20px; border-radius:6px; border:2px solid {{ msg.selected ? '#22d3ee' : 'rgba(110,231,255,0.3)' }}; background:{{ msg.selected ? 'rgba(34,211,238,0.2)' : 'transparent' }}; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s;">
+                <sc-if value="{{ msg.selected }}" hint-placeholder-val="{{ false }}">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="3" stroke-linecap="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="max-width:64%; min-width:0; position:relative;">
+            <div style="padding:11px 15px; font-size:13px; line-height:1.6; word-break:break-word; color:{{ msg.sent ? '#04070d' : 'rgba(232,234,242,0.88)' }}; background:{{ msg.sent ? 'linear-gradient(135deg,#67e8f9,#a78bfa)' : 'rgba(255,255,255,0.045)' }}; border:{{ msg.sent ? 'none' : '1px solid rgba(110,231,255,0.08)' }}; border-radius:{{ msg.sent ? '18px 6px 18px 18px' : '6px 18px 18px 18px' }}; backdrop-filter:{{ msg.sent ? 'none' : 'blur(12px)' }}; box-shadow:{{ msg.sent ? '0 6px 24px rgba(103,232,249,0.25)' : '0 4px 16px rgba(0,0,0,0.25)' }};">{{ msg.text }}</div>
+
+            <!-- ③ REACTION BAR on hover -->
+            <sc-if value="{{ msg.hovered }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute; {{ msg.sent ? 'right:0' : 'left:0' }}; top:-38px; display:flex; gap:3px; padding:5px 8px; border-radius:12px; background:rgba(12,14,24,0.95); border:1px solid rgba(110,231,255,0.15); backdrop-filter:blur(20px); box-shadow:0 8px 24px rgba(0,0,0,0.5); z-index:10; animation:reaction-pop 0.2s ease;">
+                <sc-for list="{{ reactionEmojis }}" as="em">
+                  <button onClick="{{ em.react }}" style="width:28px; height:28px; border:none; border-radius:8px; cursor:pointer; background:transparent; font-size:16px; display:flex; align-items:center; justify-content:center; transition:all 0.15s;" style-hover="background:rgba(110,231,255,0.1); transform:scale(1.3);">{{ em.emoji }}</button>
+                </sc-for>
+                <div style="width:1px; background:rgba(110,231,255,0.12); margin:4px 2px;"></div>
+                <button onClick="{{ msg.reply }}" style="width:28px; height:28px; border:none; border-radius:8px; cursor:pointer; background:transparent; display:flex; align-items:center; justify-content:center; color:rgba(232,234,242,0.4); transition:all 0.15s;" style-hover="background:rgba(110,231,255,0.1); color:#6ee7ff;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 17H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"></path><path d="m15 21 3-3-3-3M18 18H9"></path></svg>
+                </button>
+              </div>
+            </sc-if>
+
+            <!-- Reaction badges -->
+            <sc-if value="{{ msg.reactions }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; gap:3px; margin-top:4px; flex-wrap:wrap; justify-content:{{ msg.sent ? 'flex-end' : 'flex-start' }};">
+                <sc-for list="{{ msg.reactions }}" as="rxn">
+                  <span style="font-size:11px; padding:2px 7px; border-radius:10px; background:rgba(255,255,255,0.07); border:1px solid rgba(110,231,255,0.1); cursor:pointer; transition:all 0.15s;" style-hover="background:rgba(110,231,255,0.1);">{{ rxn }}</span>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <div style="display:flex; align-items:center; gap:4px; margin-top:4px; justify-content:{{ msg.sent ? 'flex-end' : 'flex-start' }};">
+              <span style="font-size:9.5px; color:rgba(232,234,242,0.25); font-family:'Space Grotesk',sans-serif;">{{ msg.time }}</span>
+              <sc-if value="{{ msg.sent }}" hint-placeholder-val="{{ false }}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="{{ msg.read ? '#67e8f9' : 'rgba(232,234,242,0.3)' }}"><path d="M18 7l-1.41-1.41-6.34 6.34-2.83-2.83-1.41 1.41 4.24 4.24zM3.5 12l-1.41 1.41 6.02 6.02L21.09 7l-1.41-1.41-11.07 11.07z"></path></svg>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+
+      <!-- Audio message -->
+      <div style="display:flex; flex-direction:column; align-items:flex-start; margin-bottom:16px; animation:msg-in 0.35s ease both;">
+        <div style="display:flex; align-items:center; gap:12px; padding:11px 16px; border-radius:6px 18px 18px 18px; background:rgba(255,255,255,0.045); border:1px solid rgba(110,231,255,0.08); backdrop-filter:blur(12px);">
+          <button onClick="{{ toggleAudio }}" style="width:34px; height:34px; border-radius:50%; border:none; cursor:pointer; background:linear-gradient(135deg,#22d3ee,#8b5cf6); display:flex; align-items:center; justify-content:center; box-shadow:0 0 14px rgba(34,211,238,0.4); flex-shrink:0; transition:transform 0.15s;" style-hover="transform:scale(1.08);">
+            <sc-if value="{{ audioPlaying }}" hint-placeholder-val="{{ false }}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#04050a"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>
+            </sc-if>
+            <sc-if value="{{ !audioPlaying }}" hint-placeholder-val="{{ true }}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#04050a"><path d="M8 5v14l11-7z"></path></svg>
+            </sc-if>
+          </button>
+          <div style="display:flex; align-items:center; gap:2.5px; height:26px;">
+            <sc-for list="{{ waveBars }}" as="bar">
+              <span style="width:3px; border-radius:2px; background:{{ bar.color }}; height:{{ bar.h }}px; transform-origin:center; animation:{{ bar.anim }};"></span>
+            </sc-for>
+          </div>
+          <span style="font-size:10px; color:rgba(232,234,242,0.35); font-family:'Space Grotesk',sans-serif;">0:12</span>
+        </div>
+        <span style="font-size:9.5px; color:rgba(232,234,242,0.25); margin-top:4px; font-family:'Space Grotesk',sans-serif;">14:27</span>
+      </div>
+
+      <sc-if value="{{ isTyping }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; align-items:center; gap:9px; animation:msg-in 0.3s ease both;">
+          <div style="padding:12px 16px; border-radius:6px 18px 18px 18px; background:rgba(255,255,255,0.045); border:1px solid rgba(110,231,255,0.08); display:flex; gap:5px; align-items:center;">
+            <span style="width:6px; height:6px; border-radius:50%; background:#6ee7ff; animation:typing-dot 1.3s infinite 0s;"></span>
+            <span style="width:6px; height:6px; border-radius:50%; background:#8b5cf6; animation:typing-dot 1.3s infinite 0.18s;"></span>
+            <span style="width:6px; height:6px; border-radius:50%; background:#6ee7ff; animation:typing-dot 1.3s infinite 0.36s;"></span>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- AI Copilot -->
+    <div style="padding:0 22px 10px; flex-shrink:0;">
+      <sc-if value="{{ showAI }}" hint-placeholder-val="{{ true }}">
+        <div style="position:relative; overflow:hidden; border-radius:14px; padding:1px; background:linear-gradient(90deg,rgba(139,92,246,0.5),rgba(34,211,238,0.5),rgba(139,92,246,0.5)); background-size:200% auto; animation:border-flow 4s linear infinite;">
+          <div style="border-radius:13px; background:rgba(10,12,22,0.92); backdrop-filter:blur(20px); padding:10px 14px; display:flex; align-items:center; gap:10px;">
+            <div style="width:28px; height:28px; border-radius:9px; background:linear-gradient(135deg,#8b5cf6,#22d3ee); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 0 14px rgba(139,92,246,0.5);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#04050a" stroke-width="2.2" stroke-linecap="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <p style="font-size:9px; font-weight:700; color:#a78bfa; letter-spacing:0.12em; font-family:'Space Grotesk',sans-serif;">COPILOT IA</p>
+              <p style="font-size:12px; color:rgba(232,234,242,0.75); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">"O código de rastreio é BR-4921-8847-XZ. Acompanhe em tempo real pelo link."</p>
+            </div>
+            <button onClick="{{ applyAI }}" style="padding:6px 14px; border-radius:9px; border:none; cursor:pointer; background:linear-gradient(135deg,#22d3ee,#8b5cf6); color:#04050a; font-size:11px; font-weight:700; font-family:'Space Grotesk',sans-serif; transition:all 0.2s; flex-shrink:0;" style-hover="box-shadow:0 0 22px rgba(34,211,238,0.5); transform:scale(1.04);">Usar</button>
+            <button onClick="{{ dismissAI }}" style="width:24px; height:24px; border:none; background:transparent; cursor:pointer; color:rgba(232,234,242,0.25); flex-shrink:0;" style-hover="color:rgba(232,234,242,0.7);">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+            </button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- Input area -->
+    <div style="padding:0 22px 18px; flex-shrink:0; position:relative;">
+      <div style="border-radius:17px; padding:1px; background:{{ inputFocused ? 'linear-gradient(90deg,#22d3ee,#8b5cf6,#22d3ee)' : 'rgba(110,231,255,0.12)' }}; background-size:200% auto; animation:{{ inputFocused ? 'border-flow 3s linear infinite' : 'none' }}; transition:all 0.3s; box-shadow:{{ inputFocused ? '0 0 30px rgba(34,211,238,0.12)' : 'none' }};">
+        <div style="display:flex; align-items:flex-end; gap:8px; background:rgba(8,10,18,0.95); border-radius:16px; padding:9px 9px 9px 14px;">
+          <div style="display:flex; align-items:center; gap:1px; margin-bottom:3px;">
+            <!-- Emoji -->
+            <button style="width:32px; height:32px; border-radius:10px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; background:transparent; color:rgba(232,234,242,0.28); transition:all 0.2s;" style-hover="background:rgba(110,231,255,0.08); color:#6ee7ff;" title="Emoji">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"></path></svg>
+            </button>
+            <!-- ② ATTACHMENT BUTTON -->
+            <button onClick="{{ toggleAttachPopup }}" style="width:32px; height:32px; border-radius:10px; border:1px solid {{ showAttachPopup ? 'rgba(34,211,238,0.4)' : 'transparent' }}; cursor:pointer; display:flex; align-items:center; justify-content:center; background:{{ showAttachPopup ? 'rgba(34,211,238,0.1)' : 'transparent' }}; color:{{ showAttachPopup ? '#6ee7ff' : 'rgba(232,234,242,0.28)' }}; transition:all 0.2s;" style-hover="background:rgba(110,231,255,0.08); color:#6ee7ff;" title="Anexar">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            </button>
+            <!-- Mic -->
+            <button style="width:32px; height:32px; border-radius:10px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; background:transparent; color:rgba(232,234,242,0.28); transition:all 0.2s;" style-hover="background:rgba(110,231,255,0.08); color:#6ee7ff;" title="Áudio">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v3"></path></svg>
+            </button>
+          </div>
+          <textarea placeholder="Escreva algo brilhante..." onFocus="{{ onInputFocus }}" onBlur="{{ onInputBlur }}" onInput="{{ onInputChange }}" onKeyDown="{{ onKeyDown }}" rows="1" style="flex:1; background:transparent; border:none; outline:none; color:#e8eaf2; font-family:'Outfit',sans-serif; font-size:13px; line-height:1.6; resize:none; min-height:24px; max-height:120px; padding-top:5px;">{{ inputValue }}</textarea>
+          <button onClick="{{ handleSend }}" style="width:38px; height:38px; border-radius:12px; border:none; cursor:pointer; background:linear-gradient(135deg,#22d3ee,#8b5cf6); display:flex; align-items:center; justify-content:center; transition:all 0.2s; box-shadow:0 0 18px rgba(34,211,238,0.35); flex-shrink:0;" style-hover="box-shadow:0 0 28px rgba(34,211,238,0.55); transform:scale(1.06) rotate(-4deg);" title="Enviar">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#04050a" stroke-width="2.4" stroke-linecap="round"><path d="m22 2-7 20-4-9-9-4z"></path><path d="M22 2 11 13"></path></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ② ATTACHMENT POPUP -->
+      <sc-if value="{{ showAttachPopup }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; bottom:80px; left:22px; z-index:20; animation:pop-in 0.22s cubic-bezier(0.2,0.9,0.3,1.2);">
+          <div style="background:rgba(10,12,22,0.97); backdrop-filter:blur(24px); border:1px solid rgba(110,231,255,0.15); border-radius:20px; padding:16px; box-shadow:0 20px 60px rgba(0,0,0,0.6); width:280px;">
+            <p style="font-size:9px; font-weight:700; letter-spacing:0.12em; color:rgba(232,234,242,0.3); font-family:'Space Grotesk',sans-serif; margin-bottom:12px;">ENVIAR</p>
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;">
+              <sc-for list="{{ attachTypes }}" as="at">
+                <button onClick="{{ at.action }}" style="display:flex; flex-direction:column; align-items:center; gap:7px; padding:14px 8px; border-radius:14px; border:1px solid rgba(110,231,255,0.06); cursor:pointer; background:rgba(255,255,255,0.03); transition:all 0.2s;" style-hover="background:{{ at.bgHover }}; border-color:{{ at.borderHover }}; transform:scale(1.04);">
+                  <div style="width:36px; height:36px; border-radius:12px; background:{{ at.bg }}; display:flex; align-items:center; justify-content:center; box-shadow:0 0 14px {{ at.glow }};">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{ at.color }}" stroke-width="1.8" stroke-linecap="round">
+                      <sc-for list="{{ at.paths }}" as="p"><path d="{{ p }}"></path></sc-for>
+                    </svg>
+                  </div>
+                  <span style="font-size:10px; font-weight:500; color:rgba(232,234,242,0.6); font-family:'Space Grotesk',sans-serif;">{{ at.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div style="position:relative; z-index:4; width:292px; min-width:292px; height:100vh; display:flex; flex-direction:column; background:rgba(10,12,20,0.6); backdrop-filter:blur(24px); border-left:1px solid rgba(110,231,255,0.06); overflow-y:auto; overflow-x:hidden;">
+    <div style="position:relative; margin:16px 14px 0; border-radius:20px; padding:1px; background:linear-gradient(160deg,rgba(34,211,238,0.4),rgba(139,92,246,0.3),transparent); overflow:hidden; flex-shrink:0;">
+      <div style="position:relative; border-radius:19px; background:rgba(8,10,18,0.92); padding:22px 16px 18px; text-align:center; overflow:hidden;">
+        <div style="position:absolute; top:0; left:0; right:0; height:60px; background:linear-gradient(180deg,rgba(34,211,238,0.06),transparent); pointer-events:none;"></div>
+        <div style="position:absolute; left:0; right:0; height:40px; background:linear-gradient(180deg,transparent,rgba(110,231,255,0.04),transparent); animation:scan 5s linear infinite; pointer-events:none;"></div>
+        <div style="width:68px; height:68px; border-radius:22px; margin:0 auto 12px; padding:2px; background:linear-gradient(135deg,#22d3ee,#8b5cf6); box-shadow:0 0 30px rgba(34,211,238,0.3);">
+          <div style="width:100%; height:100%; border-radius:20px; background:linear-gradient(135deg,#6366f1,#a855f7); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; color:#fff; font-family:'Space Grotesk',sans-serif;">MF</div>
+        </div>
+        <h3 style="font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:700; color:#e8eaf2; letter-spacing:-0.2px;">Maria Fernanda</h3>
+        <p style="font-size:11px; color:rgba(232,234,242,0.35); margin-top:3px; font-family:'Space Grotesk',sans-serif;">+55 11 99999-0000</p>
+        <div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-top:10px;">
+          <span style="padding:3px 10px; border-radius:8px; font-size:9px; font-weight:700; letter-spacing:0.08em; background:rgba(52,211,153,0.1); color:#34d399; border:1px solid rgba(52,211,153,0.3);">CLIENTE</span>
+          <span style="padding:3px 10px; border-radius:8px; font-size:9px; font-weight:700; letter-spacing:0.08em; background:linear-gradient(90deg,rgba(251,191,36,0.12),rgba(245,158,11,0.12)); color:#fbbf24; border:1px solid rgba(251,191,36,0.3); text-shadow:0 0 8px rgba(251,191,36,0.5);">★ VIP</span>
+        </div>
+      </div>
+    </div>
+    <div style="margin:14px 14px 0; padding:14px 16px; border-radius:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(110,231,255,0.07); display:flex; align-items:center; gap:14px; flex-shrink:0;">
+      {{ sentimentRing }}
+      <div>
+        <p style="font-size:9px; font-weight:700; letter-spacing:0.12em; color:rgba(232,234,242,0.3); font-family:'Space Grotesk',sans-serif;">SENTIMENTO IA</p>
+        <p style="font-size:14px; font-weight:600; color:#34d399; margin-top:2px;">Positivo</p>
+        <p style="font-size:10px; color:rgba(232,234,242,0.3); margin-top:1px;">Análise das últimas 20 msgs</p>
+      </div>
+    </div>
+    <div style="margin:14px 14px 0; display:grid; grid-template-columns:1fr 1fr; gap:8px; flex-shrink:0;">
+      <sc-for list="{{ metrics }}" as="m">
+        <div style="padding:12px 13px; border-radius:14px; background:rgba(255,255,255,0.03); border:1px solid rgba(110,231,255,0.07); transition:all 0.2s;" style-hover="border-color:rgba(34,211,238,0.25); background:rgba(34,211,238,0.04);">
+          <p style="font-size:9px; font-weight:700; letter-spacing:0.1em; color:rgba(232,234,242,0.3); font-family:'Space Grotesk',sans-serif;">{{ m.label }}</p>
+          <p style="font-size:17px; font-weight:700; margin-top:4px; font-family:'Space Grotesk',sans-serif; color:{{ m.color }}; text-shadow:0 0 12px {{ m.glow }};">{{ m.value }}</p>
+        </div>
+      </sc-for>
+    </div>
+    <div style="margin:16px 14px 0; flex:1 0 auto;">
+      <p style="font-size:9px; font-weight:700; letter-spacing:0.12em; color:rgba(232,234,242,0.3); font-family:'Space Grotesk',sans-serif; margin-bottom:10px;">TIMELINE DE COMPRAS</p>
+      <div style="position:relative; padding-left:16px;">
+        <div style="position:absolute; left:4px; top:6px; bottom:6px; width:1.5px; background:linear-gradient(180deg,#22d3ee,rgba(139,92,246,0.4),transparent);"></div>
+        <sc-for list="{{ purchases }}" as="item">
+          <div style="position:relative; margin-bottom:12px;">
+            <span style="position:absolute; left:-16px; top:5px; width:8px; height:8px; border-radius:50%; background:{{ item.dotColor }}; box-shadow:0 0 8px {{ item.dotGlow }}; border:1.5px solid #0a0c14;"></span>
+            <div style="padding:9px 12px; border-radius:12px; background:rgba(255,255,255,0.03); border:1px solid rgba(110,231,255,0.06); transition:all 0.2s;" style-hover="border-color:rgba(34,211,238,0.25); transform:translateX(2px);">
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <p style="font-size:11px; font-weight:500; color:rgba(232,234,242,0.75);">{{ item.name }}</p>
+                <span style="font-size:11px; font-weight:700; color:#34d399; font-family:'Space Grotesk',sans-serif;">{{ item.value }}</span>
+              </div>
+              <p style="font-size:9.5px; color:rgba(232,234,242,0.28); margin-top:2px; font-family:'Space Grotesk',sans-serif;">{{ item.date }}</p>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="margin:8px 14px 16px; display:flex; gap:8px; flex-shrink:0;">
+      <button style="flex:1; height:38px; border-radius:12px; border:1px solid rgba(34,211,238,0.3); cursor:pointer; background:rgba(34,211,238,0.07); color:#6ee7ff; font-family:'Space Grotesk',sans-serif; font-size:11px; font-weight:600; transition:all 0.2s;" style-hover="background:rgba(34,211,238,0.15); box-shadow:0 0 16px rgba(34,211,238,0.2);">CRM 360°</button>
+      <button style="flex:1; height:38px; border-radius:12px; border:1px solid rgba(139,92,246,0.3); cursor:pointer; background:rgba(139,92,246,0.07); color:#a78bfa; font-family:'Space Grotesk',sans-serif; font-size:11px; font-weight:600; transition:all 0.2s;" style-hover="background:rgba(139,92,246,0.15); box-shadow:0 0 16px rgba(139,92,246,0.2);">Transferir</button>
+    </div>
+  </div>
+
+  <!-- ⑤ CALL OVERLAY -->
+  <sc-if value="{{ callActive }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute; inset:0; z-index:50; background:rgba(4,5,10,0.92); backdrop-filter:blur(32px); display:flex; align-items:center; justify-content:center; animation:pop-in 0.3s ease;">
+      <!-- Ambient glow -->
+      <div style="position:absolute; top:30%; left:50%; transform:translate(-50%,-50%); width:500px; height:500px; border-radius:50%; background:radial-gradient(circle,rgba(34,211,238,0.12),transparent 60%); filter:blur(60px); pointer-events:none;"></div>
+      <div style="position:relative; text-align:center;">
+        <!-- Avatar with ring -->
+        <div style="position:relative; display:inline-block; margin-bottom:24px;">
+          <div style="position:absolute; inset:-16px; border-radius:50%; border:1.5px solid rgba(34,211,238,0.2); animation:call-ring 1.8s ease-out infinite;"></div>
+          <div style="position:absolute; inset:-32px; border-radius:50%; border:1px solid rgba(34,211,238,0.1); animation:call-ring 1.8s ease-out infinite 0.6s;"></div>
+          <div style="width:96px; height:96px; border-radius:28px; padding:3px; background:linear-gradient(135deg,#22d3ee,#8b5cf6); box-shadow:0 0 40px rgba(34,211,238,0.4);">
+            <div style="width:100%; height:100%; border-radius:24px; background:linear-gradient(135deg,#6366f1,#a855f7); display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; color:#fff; font-family:'Space Grotesk',sans-serif;">MF</div>
+          </div>
+        </div>
+        <h2 style="font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700; color:#e8eaf2; letter-spacing:-0.3px;">Maria Fernanda</h2>
+        <p style="font-size:12px; color:rgba(232,234,242,0.4); margin-top:6px; font-family:'Space Grotesk',sans-serif; letter-spacing:0.05em;">{{ callStatus }}</p>
+        <p style="font-size:28px; font-weight:700; color:#6ee7ff; margin-top:8px; font-family:'Space Grotesk',sans-serif; text-shadow:0 0 20px rgba(110,231,255,0.5); letter-spacing:0.1em;">{{ callTimer }}</p>
+        <!-- Call controls -->
+        <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-top:36px;">
+          <sc-for list="{{ callControls }}" as="cc">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+              <button onClick="{{ cc.action }}" style="width:56px; height:56px; border-radius:18px; border:1px solid {{ cc.active ? 'rgba(34,211,238,0.4)' : 'rgba(255,255,255,0.1)' }}; cursor:pointer; display:flex; align-items:center; justify-content:center; background:{{ cc.danger ? 'linear-gradient(135deg,#ef4444,#dc2626)' : cc.active ? 'rgba(34,211,238,0.15)' : 'rgba(255,255,255,0.06)' }}; color:{{ cc.danger ? '#fff' : cc.active ? '#6ee7ff' : 'rgba(232,234,242,0.7)' }}; transition:all 0.2s; box-shadow:{{ cc.danger ? '0 0 24px rgba(239,68,68,0.4)' : cc.active ? '0 0 16px rgba(34,211,238,0.2)' : 'none' }};" style-hover="transform:scale(1.08);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                  <sc-for list="{{ cc.paths }}" as="p"><path d="{{ p }}"></path></sc-for>
+                </svg>
+              </button>
+              <span style="font-size:10px; color:rgba(232,234,242,0.35); font-family:'Space Grotesk',sans-serif;">{{ cc.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ② BACKDROP close attach popup -->
+  <sc-if value="{{ showAttachPopup }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeAttachPopup }}" style="position:absolute; inset:0; z-index:19;"></div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: { &quot;width&quot;: 1440, &quot;height&quot;: 900 },
+  &quot;accentA&quot;: { &quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#22d3ee&quot;, &quot;options&quot;: [&quot;#22d3ee&quot;,&quot;#34d399&quot;,&quot;#f472b6&quot;,&quot;#818cf8&quot;], &quot;section&quot;: &quot;Neon&quot; },
+  &quot;accentB&quot;: { &quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#8b5cf6&quot;, &quot;options&quot;: [&quot;#8b5cf6&quot;,&quot;#6366f1&quot;,&quot;#ec4899&quot;,&quot;#0ea5e9&quot;], &quot;section&quot;: &quot;Neon&quot; },
+  &quot;showAurora&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;section&quot;: &quot;Efeitos&quot; },
+  &quot;showCopilot&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;section&quot;: &quot;Efeitos&quot; }
+}">
+class Component extends DCLogic {
+  state = {
+    activeNav: 'inbox', activeConv: 0, activeTab: 0, inputValue: '',
+    isTyping: false, showAI: true, searchFocused: false, inputFocused: false,
+    audioPlaying: false, clock: '', slaSeconds: 272,
+    showAttachPopup: false, callActive: false, callSeconds: 0, callMuted: false,
+    selectMode: false, selectedMsgs: new Set(),
+    hoveredMsgIdx: null, pinnedVisible: true,
+    messages: [
+      { text: 'Olá! Gostaria de saber quando chega meu pedido #PB-2024-1847.', sent: false, time: '14:22', gap: true, read: null, reactions: null },
+      { text: 'Estou aguardando há alguns dias e preciso para um evento importante!', sent: false, time: '14:23', gap: false, read: null, reactions: null },
+      { text: 'Olá Maria! Vou verificar agora mesmo o status do seu pedido. ✨', sent: true, time: '14:24', gap: true, read: true, reactions: ['👍 2'] },
+      { text: 'Encontrei: seu pedido saiu para entrega hoje às 08h. Previsão até as 18h.', sent: true, time: '14:24', gap: false, read: true, reactions: null },
+      { text: 'Ótimo!! Muito obrigada! Estava preocupada 😊', sent: false, time: '14:25', gap: true, read: null, reactions: ['❤️'] },
+      { text: 'Qual é o número de rastreio?', sent: false, time: '14:26', gap: false, read: null, reactions: null },
+    ],
+  };
+
+  componentDidMount() {
+    this._clockTimer = setInterval(() => {
+      const d = new Date();
+      this.setState(st => ({
+        clock: d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        slaSeconds: st.slaSeconds + 1,
+        callSeconds: st.callActive ? st.callSeconds + 1 : st.callSeconds,
+      }));
+    }, 1000);
+    this._typingTimer = setInterval(() => {
+      this.setState({ isTyping: true });
+      setTimeout(() => this.setState({ isTyping: false }), 3200);
+    }, 9000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this._clockTimer);
+    clearInterval(this._typingTimer);
+  }
+
+  renderVals() {
+    const s = this.state;
+
+    const icons = {
+      chat: ['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'],
+      team: ['M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2','M23 21v-2a4 4 0 0 0-3-3.87','M16 3.13a4 4 0 0 1 0 7.75','M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'],
+      contacts: ['M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2','M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'],
+      dash: ['M18 20V10','M12 20V4','M6 20v-6'],
+      pipe: ['M8 6h13','M8 12h13','M8 18h13','M3 6h.01','M3 12h.01','M3 18h.01'],
+      ai: ['m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z'],
+      gear: ['M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z','M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'],
+    };
+
+    const navItems = [
+      { id:'inbox', label:'Chat', paths:icons.chat, badge:6 },
+      { id:'team', label:'Teams', paths:icons.team, badge:null },
+      { id:'contacts', label:'Contatos', paths:icons.contacts, badge:null },
+      { id:'dash', label:'Dashboard', paths:icons.dash, badge:null },
+      { id:'pipe', label:'Pipeline', paths:icons.pipe, badge:null },
+      { id:'ai', label:'IA', paths:icons.ai, badge:null },
+      { id:'gear', label:'Configurações', paths:icons.gear, badge:null },
+    ].map(n => ({ ...n, active: s.activeNav===n.id, action: ()=>this.setState({activeNav:n.id}) }));
+
+    // ① Stories
+    const storiesData = [
+      { name:'Pedro', initials:'PA', avatarBg:'linear-gradient(135deg,#f59e0b,#ef4444)', seen:false },
+      { name:'OS #142', initials:'OS', avatarBg:'linear-gradient(135deg,#10b981,#0d9488)', seen:false },
+      { name:'Roberto', initials:'RS', avatarBg:'linear-gradient(135deg,#0ea5e9,#6366f1)', seen:true },
+      { name:'Ana', initials:'AC', avatarBg:'linear-gradient(135deg,#f97316,#fbbf24)', seen:true },
+      { name:'Marcos', initials:'ML', avatarBg:'linear-gradient(135deg,#14b8a6,#0ea5e9)', seen:false },
+    ];
+    const stories = storiesData.map(st => ({ ...st, view: () => {} }));
+
+    const allConvs = [
+      { name:'Maria Fernanda', lastMsg:'Qual é o número de rastreio?', time:'agora', unread:2, online:true, avatarBg:'linear-gradient(135deg,#6366f1,#a855f7)', initials:'MF', tag:null },
+      { name:'Pedro Alves', lastMsg:'Obrigado pelo atendimento!', time:'2min', unread:null, online:true, avatarBg:'linear-gradient(135deg,#f59e0b,#ef4444)', initials:'PA', tag:'VIP', tagBg:'rgba(251,191,36,0.1)', tagColor:'#fbbf24', tagBorder:'rgba(251,191,36,0.3)' },
+      { name:'Grupo OS #142', lastMsg:'✅ Aprovado pelo cliente', time:'5min', unread:1, online:false, avatarBg:'linear-gradient(135deg,#10b981,#0d9488)', initials:'OS', tag:'O.S.', tagBg:'rgba(52,211,153,0.1)', tagColor:'#34d399', tagBorder:'rgba(52,211,153,0.3)' },
+      { name:'Carla Mendes', lastMsg:'Preciso de orçamento urgente', time:'12min', unread:3, online:false, avatarBg:'linear-gradient(135deg,#ec4899,#8b5cf6)', initials:'CM', tag:'URGENTE', tagBg:'rgba(244,63,94,0.1)', tagColor:'#fb7185', tagBorder:'rgba(244,63,94,0.3)' },
+      { name:'Roberto Silva', lastMsg:'Qual o prazo de entrega?', time:'1h', unread:null, online:true, avatarBg:'linear-gradient(135deg,#0ea5e9,#6366f1)', initials:'RS', tag:null },
+      { name:'Ana Costa', lastMsg:'Recebi o produto! 😊', time:'2h', unread:null, online:false, avatarBg:'linear-gradient(135deg,#f97316,#fbbf24)', initials:'AC', tag:null },
+      { name:'Marcos Lima', lastMsg:'Podemos agendar uma visita?', time:'3h', unread:null, online:false, avatarBg:'linear-gradient(135deg,#14b8a6,#0ea5e9)', initials:'ML', tag:null },
+      { name:'Fernanda Rocha', lastMsg:'Aguardando retorno do setor', time:'5h', unread:null, online:false, avatarBg:'linear-gradient(135deg,#a855f7,#ec4899)', initials:'FR', tag:null },
+    ];
+
+    const conversations = allConvs.map((c, i) => {
+      const active = i === s.activeConv;
+      return {
+        ...c, tagBg:c.tagBg||null, tagColor:c.tagColor||null, tagBorder:c.tagBorder||null, active,
+        cardBg: active ? 'linear-gradient(120deg,rgba(34,211,238,0.1),rgba(139,92,246,0.08))' : 'transparent',
+        cardBorder: active ? 'rgba(34,211,238,0.2)' : 'transparent',
+        cardShadow: active ? '0 0 20px rgba(34,211,238,0.08),0 0 1px rgba(34,211,238,0.4) inset' : 'none',
+        select: () => this.setState({ activeConv: i }),
+      };
+    });
+
+    const tabs = ['Todos','Não lidos','Grupos','O.S.','Orçamentos'].map((label,i) => ({
+      label, active: s.activeTab===i, action: ()=>this.setState({activeTab:i}),
+    }));
+
+    // Header actions — call button wired
+    const headerActions = [
+      { label:'Buscar', paths:['m21 21-4.35-4.35','M11 19A8 8 0 1 0 11 3a8 8 0 0 0 0 16z'], active:false,
+        action: ()=>{} },
+      { label:'Chamada', paths:['M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.7 3.56 2 2 0 0 1 3.67 1.36h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l.72-.72a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.5 16.92z'], active: s.callActive,
+        action: ()=>this.setState(st=>({callActive:!st.callActive, callSeconds:0})) },
+      { label:'Resumo IA', paths:icons.ai, active:false, action:()=>{} },
+      { label:'Mais', paths:['M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z','M12 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z','M12 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2z'], active:false, action:()=>{} },
+    ];
+
+    // ③ Reaction emojis
+    const reactionEmojis = ['👍','❤️','😂','😮','🔥','⚡'].map(emoji => ({
+      emoji, react: () => {},
+    }));
+
+    // ⑥ Messages with hover + select
+    const messages = s.messages.map((msg, i) => ({
+      ...msg,
+      hovered: s.hoveredMsgIdx === i,
+      selected: s.selectedMsgs.has(i),
+      reactionEmojis,
+      onHover: () => this.setState({ hoveredMsgIdx: i }),
+      onLeave: () => this.setState(st => st.hoveredMsgIdx===i ? { hoveredMsgIdx:null } : null),
+      toggleSelect: (e) => { e.stopPropagation(); this.setState(st => { const next = new Set(st.selectedMsgs); next.has(i) ? next.delete(i) : next.add(i); return { selectedMsgs: next }; }); },
+      reply: () => {},
+    }));
+
+    const selectedCount = s.selectedMsgs.size;
+    const selectActions = [
+      { label:'Encaminhar', danger:false, action:()=>{} },
+      { label:'Copiar', danger:false, action:()=>{} },
+      { label:'Favoritar', danger:false, action:()=>{} },
+      { label:'Deletar', danger:true, action:()=>this.setState(st=>{ const msgs=st.messages.filter((_,i)=>!st.selectedMsgs.has(i)); return {messages:msgs,selectedMsgs:new Set(),selectMode:msgs.length>0}; }) },
+    ];
+
+    // ② Attachment types
+    const attachTypes = [
+      { label:'Imagem', paths:['M21 9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h10','M21 9l-6-6','M16 16l-4-4-4 4'], color:'#34d399', bg:'rgba(52,211,153,0.12)', glow:'rgba(52,211,153,0.3)', bgHover:'rgba(52,211,153,0.1)', borderHover:'rgba(52,211,153,0.3)', action:()=>this.setState({showAttachPopup:false}) },
+      { label:'Vídeo', paths:['M15 10l4.553-2.069A1 1 0 0 1 21 8.87v6.26a1 1 0 0 1-1.447.894L15 14v-4zM3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z'], color:'#f472b6', bg:'rgba(244,114,182,0.12)', glow:'rgba(244,114,182,0.3)', bgHover:'rgba(244,114,182,0.1)', borderHover:'rgba(244,114,182,0.3)', action:()=>this.setState({showAttachPopup:false}) },
+      { label:'Áudio', paths:['M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v3'], color:'#a78bfa', bg:'rgba(167,139,250,0.12)', glow:'rgba(167,139,250,0.3)', bgHover:'rgba(167,139,250,0.1)', borderHover:'rgba(167,139,250,0.3)', action:()=>this.setState({showAttachPopup:false}) },
+      { label:'Documento', paths:['M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z','M14 2v6h6'], color:'#6ee7ff', bg:'rgba(110,231,255,0.12)', glow:'rgba(110,231,255,0.3)', bgHover:'rgba(110,231,255,0.1)', borderHover:'rgba(110,231,255,0.3)', action:()=>this.setState({showAttachPopup:false}) },
+      { label:'Localização', paths:['M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z','M12 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z'], color:'#fbbf24', bg:'rgba(251,191,36,0.12)', glow:'rgba(251,191,36,0.3)', bgHover:'rgba(251,191,36,0.1)', borderHover:'rgba(251,191,36,0.3)', action:()=>this.setState({showAttachPopup:false}) },
+      { label:'Contato', paths:['M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2','M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'], color:'#fb923c', bg:'rgba(251,146,60,0.12)', glow:'rgba(251,146,60,0.3)', bgHover:'rgba(251,146,60,0.1)', borderHover:'rgba(251,146,60,0.3)', action:()=>this.setState({showAttachPopup:false}) },
+      { label:'Enquete', paths:['M18 20V10','M12 20V4','M6 20v-6'], color:'#34d399', bg:'rgba(52,211,153,0.12)', glow:'rgba(52,211,153,0.3)', bgHover:'rgba(52,211,153,0.1)', borderHover:'rgba(52,211,153,0.3)', action:()=>this.setState({showAttachPopup:false}) },
+      { label:'GIF', paths:['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'], color:'#f472b6', bg:'rgba(244,114,182,0.12)', glow:'rgba(244,114,182,0.3)', bgHover:'rgba(244,114,182,0.1)', borderHover:'rgba(244,114,182,0.3)', action:()=>this.setState({showAttachPopup:false}) },
+      { label:'Sticker', paths:['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01'], color:'#a78bfa', bg:'rgba(167,139,250,0.12)', glow:'rgba(167,139,250,0.3)', bgHover:'rgba(167,139,250,0.1)', borderHover:'rgba(167,139,250,0.3)', action:()=>this.setState({showAttachPopup:false}) },
+    ];
+
+    // Waveform bars
+    const heights = [8,14,20,11,24,17,9,22,15,26,12,18,8,21,14,10,19,7];
+    const waveBars = heights.map((h,i) => ({
+      h, color: i<7?'#67e8f9':'rgba(232,234,242,0.25)',
+      anim: s.audioPlaying ? `wave ${0.8+(i%5)*0.15}s ease-in-out infinite ${i*0.06}s` : 'none',
+    }));
+
+    // SLA
+    const mm=Math.floor(s.slaSeconds/60), ss=s.slaSeconds%60;
+    const slaClock=`${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+
+    // ⑤ Call timer
+    const cm=Math.floor(s.callSeconds/60), cs=s.callSeconds%60;
+    const callTimer=`${String(cm).padStart(2,'0')}:${String(cs).padStart(2,'0')}`;
+    const callControls = [
+      { label:'Mudo', paths:['M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v3'], active:s.callMuted, danger:false, action:()=>this.setState(st=>({callMuted:!st.callMuted})) },
+      { label:'Alto-falante', paths:['M11 5 6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14','M15.54 8.46a5 5 0 0 1 0 7.07'], active:false, danger:false, action:()=>{} },
+      { label:'Câmera', paths:['M23 7l-7 5 7 5V7z','M1 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5z'], active:false, danger:false, action:()=>{} },
+      { label:'Pausar', paths:['M10 9v6m4-6v6','M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z'], active:false, danger:false, action:()=>{} },
+      { label:'Encerrar', paths:['M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.7 3.56 2 2 0 0 1 3.67 1.36h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l.72-.72a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.5 16.92z'], active:false, danger:true, action:()=>this.setState({callActive:false,callSeconds:0}) },
+    ];
+
+    // Sentiment ring
+    const pct=0.78, r=24, c=2*Math.PI*r;
+    const sentimentRing = React.createElement('svg',{width:62,height:62,viewBox:'0 0 62 62'},
+      React.createElement('circle',{cx:31,cy:31,r,fill:'none',stroke:'rgba(255,255,255,0.06)',strokeWidth:5}),
+      React.createElement('circle',{cx:31,cy:31,r,fill:'none',stroke:'url(#sg)',strokeWidth:5,strokeLinecap:'round',strokeDasharray:c,strokeDashoffset:c*(1-pct),transform:'rotate(-90 31 31)',style:{transition:'stroke-dashoffset 1s ease',filter:'drop-shadow(0 0 6px rgba(52,211,153,0.5))'}}),
+      React.createElement('defs',null,React.createElement('linearGradient',{id:'sg',x1:'0',y1:'0',x2:'1',y2:'1'},
+        React.createElement('stop',{offset:'0%',stopColor:'#34d399'}),
+        React.createElement('stop',{offset:'100%',stopColor:'#22d3ee'}))),
+      React.createElement('text',{x:31,y:35,textAnchor:'middle',fill:'#34d399',fontSize:13,fontWeight:700,fontFamily:'Space Grotesk'},'78%'));
+
+    const metrics = [
+      { label:'TICKETS', value:'47', color:'#6ee7ff', glow:'rgba(110,231,255,0.4)' },
+      { label:'LTV', value:'R$ 7.1k', color:'#34d399', glow:'rgba(52,211,153,0.4)' },
+      { label:'RESP.', value:'1m 42s', color:'#a78bfa', glow:'rgba(167,139,250,0.4)' },
+      { label:'CSAT', value:'9.4', color:'#fbbf24', glow:'rgba(251,191,36,0.4)' },
+    ];
+
+    const purchases = [
+      { name:'Caneta personalizada × 500', date:'15 AGO 2026', value:'R$ 1.250', dotColor:'#22d3ee', dotGlow:'rgba(34,211,238,0.7)' },
+      { name:'Camiseta bordada × 100', date:'02 JUL 2026', value:'R$ 3.800', dotColor:'#8b5cf6', dotGlow:'rgba(139,92,246,0.7)' },
+      { name:'Squeeze alumínio × 200', date:'20 MAI 2026', value:'R$ 2.100', dotColor:'#34d399', dotGlow:'rgba(52,211,153,0.7)' },
+    ];
+
+    return {
+      navItems, stories, conversations, tabs, headerActions, messages, reactionEmojis,
+      attachTypes, callControls, waveBars, metrics, purchases, sentimentRing,
+      slaClock, callTimer, callStatus: s.callSeconds > 0 ? 'Em chamada' : 'Chamando...',
+      clock: s.clock || '—', onlineCount: 14,
+      isTyping: s.isTyping, showAI: s.showAI,
+      searchFocused: s.searchFocused, inputFocused: s.inputFocused,
+      audioPlaying: s.audioPlaying, inputValue: s.inputValue,
+      showAttachPopup: s.showAttachPopup, callActive: s.callActive,
+      selectMode: s.selectMode, selectedCount,
+      selectActions,
+      openNewConv: ()=>{},
+      toggleAudio: ()=>this.setState(st=>({audioPlaying:!st.audioPlaying})),
+      applyAI: ()=>this.setState({inputValue:'O código de rastreio é BR-4921-8847-XZ. Acompanhe em tempo real pelo link.',showAI:false}),
+      dismissAI: ()=>this.setState({showAI:false}),
+      dismissPin: ()=>this.setState({pinnedVisible:false}),
+      onSearchFocus: ()=>this.setState({searchFocused:true}),
+      onSearchBlur: ()=>this.setState({searchFocused:false}),
+      onInputFocus: ()=>this.setState({inputFocused:true}),
+      onInputBlur: ()=>this.setState({inputFocused:false}),
+      onInputChange: (e)=>this.setState({inputValue:e.target.value}),
+      onKeyDown: (e)=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();this._send();} },
+      handleSend: ()=>this._send(),
+      toggleAttachPopup: ()=>this.setState(st=>({showAttachPopup:!st.showAttachPopup})),
+      closeAttachPopup: ()=>this.setState({showAttachPopup:false}),
+      onChatContextMenu: (e)=>{ e.preventDefault(); this.setState({selectMode:true}); },
+      exitSelectMode: ()=>this.setState({selectMode:false,selectedMsgs:new Set()}),
+    };
+  }
+
+  _send() {
+    const text = this.state.inputValue.trim();
+    if(!text) return;
+    const d = new Date();
+    const time = d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    this.setState(st=>({
+      messages:[...st.messages,{text,sent:true,time,gap:true,read:false,reactions:null}],
+      inputValue:'',
+    }));
+  }
+}
+
+</script>
+</body>
+</html>

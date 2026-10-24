@@ -1,0 +1,13 @@
+GRAFO DO ZAPP WEB V2 — ALERTA: ATRASADO
+Conferido em: 16/10/2026 09:21:40
+Situação: main em 33df594cd, grafo em 1730cd2d4, atraso de 95 min
+Última reconstrução do grafo: 2026-10-16T07:27:14-03:00
+Última sincronização: 2026-10-16 09:14:39 OK em dia 1a5d38fd9f
+Camada de IA: 2026-10-16 09:18:40 [simular] BLOQUEADO b44540e35..1a5d38fd9: 186 arquivos (teto 40), estimativa US$1.7561; nada enviado. Decisão do Joaquim.
+
+Últimas linhas do registro:
+2026-10-16 07:16:49 GRAFO reconstruído em 91s
+2026-10-16 07:24:36 ATUALIZOU para 1730cd2d42
+2026-10-16 07:27:14 GRAFO reconstruído em 158s
+2026-10-16 07:44:38 ATUALIZOU para 1a5d38fd9f
+2026-10-16 09:19:52 ATUALIZOU para 6f2219a09f

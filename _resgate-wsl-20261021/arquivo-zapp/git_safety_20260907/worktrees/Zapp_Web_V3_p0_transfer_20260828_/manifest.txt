@@ -1,0 +1,6 @@
+worktree=/home/joaquim_ataides/projetos/Zapp_Web_V3_p0_transfer_20260828
+head=68b7d5a0dd6382ab737e008dcd8c939b48e9e511
+entries=3
+untracked=3
+unstaged_patch_bytes=0
+staged_patch_bytes=0

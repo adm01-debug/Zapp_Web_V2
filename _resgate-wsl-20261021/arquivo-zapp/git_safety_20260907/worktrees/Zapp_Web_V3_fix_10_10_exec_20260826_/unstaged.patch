@@ -1,0 +1,106 @@
+diff --git a/e2e/fixtures/auth.ts b/e2e/fixtures/auth.ts
+index 43806b9dceacda70f1cc8ef15f2897681b771c00..f1af2e7cd741abc66bef7b1f8e9c51cd96b345a5 100644
+--- a/e2e/fixtures/auth.ts
++++ b/e2e/fixtures/auth.ts
+@@ -7,8 +7,14 @@ import { E2E_USER_EMAIL, E2E_USER_PASSWORD } from './test-data';
+  */
+ const STORAGE_STATE = '.auth/user.json';
+ 
+-export async function loginViaUI(page: Page) {
+-  await page.goto('/auth');
++type LoginViaUIOptions = {
++  preserveCurrentUrl?: boolean;
++};
++
++export async function loginViaUI(page: Page, options: LoginViaUIOptions = {}) {
++  if (!options.preserveCurrentUrl) {
++    await page.goto('/auth');
++  }
+   await page.getByRole('textbox', { name: /e-?mail/i }).fill(E2E_USER_EMAIL);
+   await page.getByRole('textbox', { name: /senha|password/i }).fill(E2E_USER_PASSWORD);
+   await page.getByRole('button', { name: /entrar|login/i }).click();
+diff --git a/src/hooks/__tests__/useContactIntelligence.simulacao.test.ts b/src/hooks/__tests__/useContactIntelligence.simulacao.test.ts
+index 02513c94d813adbafa7b9bfc4a44480828a8c998..614f974f85aaf08a79588082c02cce6cfc6b47f2 100644
+--- a/src/hooks/__tests__/useContactIntelligence.simulacao.test.ts
++++ b/src/hooks/__tests__/useContactIntelligence.simulacao.test.ts
+@@ -667,11 +667,10 @@ describe('useContactIntelligence — simulação (fix 2026-07-31)', () => {
+       expect(logMock.warn).not.toHaveBeenCalled();
+     });
+ 
+-    it('GAP real: error.message "Supabase request timed out" (com espaço) no error-field → log.warn, não log.error', async () => {
+-      // O DOMException do boundedFetch do client.ts tem message 'Supabase
+-      // request timed out' — "timed out" com espaço NÃO casa /timeout/i do
+-      // error-field (só o isTimeoutError do catch pega 'timed ?out'). No
+-      // caminho error-field (postgrest-js nunca lança), isso vira warn.
++    it('error.message "Supabase request timed out" (com espaço) no error-field → log.error', async () => {
++      // O path `error-field` do postgrest-js também precisa classificar
++      // "timed out" com espaço como timeout real; antes isso caía em warn e
++      // mascarava o erro no Sentry/observabilidade.
+       sb.setResult('contact_intelligence', { data: null, error: null });
+       sb.setResult('evolution_messages', {
+         data: null,
+@@ -681,11 +680,11 @@ describe('useContactIntelligence — simulação (fix 2026-07-31)', () => {
+       const { result } = renderIntel(PHONE_13);
+       await waitFor(() => expect(result.current.loading).toBe(false));
+ 
+-      expect(logMock.warn).toHaveBeenCalledWith(
+-        'messages stats lookup failed:',
+-        'Supabase request timed out'
++      expect(logMock.error).toHaveBeenCalledWith(
++        'messages stats lookup timed out (evolution_messages scan):',
++        expect.objectContaining({ message: 'Supabase request timed out' })
+       );
+-      expect(logMock.error).not.toHaveBeenCalled();
++      expect(logMock.warn).not.toHaveBeenCalled();
+     });
+ 
+     it("fallback com error.message 'Failed to fetch' → log.error (regex aborted|fetch)", async () => {
+diff --git a/src/hooks/useContactIntelligence.ts b/src/hooks/useContactIntelligence.ts
+index f9a2d90eadb12e0dabfe5f07607617896c1eb534..7b4729746cbb35df8c8b19917df6ee1d927a1a1d 100644
+--- a/src/hooks/useContactIntelligence.ts
++++ b/src/hooks/useContactIntelligence.ts
+@@ -62,10 +62,11 @@ function resolveIdentifier(value?: string): ResolvedIdent | null {
+  */
+ function isTimeoutError(err: unknown, signal?: AbortSignal): boolean {
+   if (signal?.aborted && isAbortLikeError(err)) return false;
+-  if (!(err instanceof Error)) return false;
++  if (!err || typeof err !== 'object') return false;
++  const maybeError = err as { name?: unknown; message?: unknown };
+   return (
+-    err.name === 'TimeoutError' ||
+-    /timeout|timed ?out|ETIMEDOUT|aborted?/i.test(err.message)
++    String(maybeError.name ?? '') === 'TimeoutError' ||
++    /timeout|timed ?out|ETIMEDOUT|aborted?|fetch/i.test(String(maybeError.message ?? ''))
+   );
+ }
+ 
+@@ -380,7 +381,7 @@ export function useContactIntelligence(contactIdOrPhone?: string) {
+             const isOwnSignalAbort = signal?.aborted && isAbortLikeError(error);
+             if (isOwnSignalAbort) {
+               throw error;
+-            } else if (/timeout|aborted|fetch/i.test(error.message ?? '')) {
++            } else if (isTimeoutError(error, signal)) {
+               log.error('messages stats lookup timed out (evolution_messages scan):', error);
+             } else {
+               log.warn('messages stats lookup failed:', error.message);
+diff --git a/vite.config.ts b/vite.config.ts
+index 0ba5218f4a4a416459b49900acb1930d0d8b6c7f..0776d0b97d1c6bc2f6e8a745df3d5d9c410dba16 100644
+--- a/vite.config.ts
++++ b/vite.config.ts
+@@ -31,6 +31,7 @@ const resolvePublicEnv = (mode: string) => {
+ // so a running tab can detect that its bundle is older than what the CDN now
+ // serves and force a hard refresh.
+ const BUILD_ID = `${Date.now()}`;
++const COMMIT_SHA = process.env.VITE_GIT_SHA || null;
+ 
+ // Vite plugin: writes dist/version.json at the end of each production build.
+ // Inclui o nome REAL do entry JS (index-<hash>.js) — o buildVersion usa para o
+@@ -54,6 +55,8 @@ const emitVersionJsonPlugin = () => ({
+       source: JSON.stringify({
+         buildId: BUILD_ID,
+         builtAt: new Date().toISOString(),
++        commitSha: COMMIT_SHA,
++        commitShaShort: COMMIT_SHA?.slice(0, 12) ?? null,
+         entry: entry ?? null,
+       }),
+     });

@@ -1,0 +1,740 @@
+❌ Erro: REPORT n=20
+=== zapp.backup_campaign_contacts() [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.backup_campaign_contacts()
+ RETURNS TABLE(backed_up integer, deleted_old_partitions integer)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'pg_catalog', 'auth'
+AS $function$
+DECLARE
+  v_backed_up INT;
+  v_deleted INT := 0;
+BEGIN
+  -- Create today's partition if not exists
+  BEGIN
+    EXECUTE format(
+      'CREATE TABLE IF NOT EXISTS _backups.campaign_contacts_pre_dedup_%s '
+      'PARTITION OF _backups.campaign_contacts_pre_dedup '
+      'FOR VALUES FROM (%L) TO (%L)',
+      TO_CHAR(CURRENT_DATE, 'YYYY_MM_DD'),
+      CURRENT_DATE,
+      CURRENT_DATE + INTERVAL '1 day'
+    );
+  EXCEPTION WHEN OTHERS THEN
+    NULL;
+  END;
+  
+  -- Clear yesterday data
+  DELETE FROM _backups.campaign_contacts_pre_dedup
+  WHERE backup_date < CURRENT_DATE;
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+  
+  -- Insert today snapshot
+  INSERT INTO _backups.campaign_contacts_pre_dedup (id, campaign_id, contact_id, created_at, backup_date)
+  SELECT id, campaign_id, contact_id, created_at, CURRENT_DATE
+  FROM campaign_contacts;
+  GET DIAGNOSTICS v_backed_up = ROW_COUNT;
+  
+  -- Record metadata
+  INSERT INTO _backups.backup_metadata (table_name, backup_date, row_count)
+  VALUES ('campaign_contacts', CURRENT_DATE, v_backed_up)
+  ON CONFLICT (table_name, backup_date) DO UPDATE
+  SET row_count = v_backed_up;
+  
+  RETURN QUERY SELECT v_backed_up, v_deleted;
+END;
+$function$
+
+=== zapp.can_supervise_profile(_user_id uuid, _target_profile_id uuid) [] SCALAR boolean
+CREATE OR REPLACE FUNCTION zapp.can_supervise_profile(_user_id uuid, _target_profile_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$ SELECT zapp.is_manager_or_above(_user_id) OR ( zapp.has_role(_user_id, 'supervisor') AND zapp.get_user_department(_user_id) IS NOT NULL AND zapp.get_user_department(_user_id) = ( SELECT department_id FROM zapp.profiles WHERE id = _target_profile_id LIMIT 1 ) ) OR EXISTS ( SELECT 1 FROM zapp.profiles WHERE id = _target_profile_id AND user_id = _user_id ); $function$
+
+=== zapp.can_user_see_contact(_user_id uuid, _contact_id uuid) [] SCALAR boolean
+CREATE OR REPLACE FUNCTION zapp.can_user_see_contact(_user_id uuid, _contact_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$ SELECT zapp.is_manager_or_above(_user_id) OR ( zapp.has_role(_user_id, 'supervisor') AND zapp.get_user_department(_user_id) IS NOT NULL AND EXISTS ( SELECT 1 FROM zapp.contacts c JOIN zapp.profiles p ON p.id::text = c.assigned_to WHERE c.id = _contact_id AND p.department_id = zapp.get_user_department(_user_id) ) ) OR EXISTS ( SELECT 1 FROM zapp.contacts c JOIN zapp.profiles p ON p.id::text = c.assigned_to WHERE c.id = _contact_id AND p.user_id = _user_id ); $function$
+
+=== zapp.cleanup_evolution_fallback_events() [] SCALAR integer
+CREATE OR REPLACE FUNCTION zapp.cleanup_evolution_fallback_events()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE
+  v_deleted integer;
+BEGIN
+  DELETE FROM zapp.evolution_fallback_events
+   WHERE ts < now() - interval '30 days';
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+  RETURN v_deleted;
+END;
+$function$
+
+=== zapp.cleanup_evolution_send_idempotency() [] SCALAR integer
+CREATE OR REPLACE FUNCTION zapp.cleanup_evolution_send_idempotency()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'public', 'extensions'
+AS $function$
+DECLARE v_deleted integer;
+BEGIN
+  DELETE FROM evolution_send_idempotency WHERE expires_at < now();
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+  RETURN v_deleted;
+END; $function$
+
+=== zapp.cleanup_old_data() [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.cleanup_old_data()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE
+  deleted_errors int := 0;
+  deleted_webhooks int := 0;
+  deleted_dlq int := 0;
+  deleted_audit int := 0;
+BEGIN
+  -- 1. Cleanup error logs > 30 days
+  DELETE FROM zapp.app_error_logs WHERE created_at < now() - interval '30 days';
+  GET DIAGNOSTICS deleted_errors = ROW_COUNT;
+
+  -- 2. Cleanup webhook events > 14 days
+  DELETE FROM zapp.evolution_webhook_events WHERE created_at < now() - interval '14 days';
+  GET DIAGNOSTICS deleted_webhooks = ROW_COUNT;
+
+  -- 3. Cleanup dead letter queue > 30 days
+  DELETE FROM zapp.dead_letter_queue WHERE created_at < now() - interval '30 days';
+  GET DIAGNOSTICS deleted_dlq = ROW_COUNT;
+
+  -- 4. Cleanup audit log > 90 days
+  DELETE FROM zapp.audit_log WHERE created_at < now() - interval '90 days';
+  GET DIAGNOSTICS deleted_audit = ROW_COUNT;
+
+  RETURN jsonb_build_object(
+    'timestamp', now(),
+    'deleted_errors', deleted_errors,
+    'deleted_webhooks', deleted_webhooks,
+    'deleted_dlq', deleted_dlq,
+    'deleted_audit', deleted_audit
+  );
+END;
+$function$
+
+=== zapp.cleanup_old_evolution_retry_metrics() [] SCALAR void
+CREATE OR REPLACE FUNCTION zapp.cleanup_old_evolution_retry_metrics()
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+BEGIN
+  DELETE FROM zapp.evolution_retry_metrics
+  WHERE created_at < now() - interval '30 days';
+END;
+$function$
+
+=== zapp.clear_login_attempts(p_email text) [] SCALAR void
+CREATE OR REPLACE FUNCTION zapp.clear_login_attempts(p_email text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+BEGIN
+  -- Guard: apenas authenticated ou service_role pode limpar tentativas
+  -- anon nao tem mais EXECUTE, mas guard duplo por segurança
+  IF auth.role() NOT IN ('authenticated', 'service_role', 'postgres') THEN
+    RAISE EXCEPTION 'permission denied: apenas usuarios autenticados podem limpar tentativas de login'
+      USING ERRCODE = '42501';
+  END IF;
+  DELETE FROM zapp.login_attempts WHERE email = LOWER(p_email);
+END;
+$function$
+
+=== zapp.contacts_count_by_type() [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.contacts_count_by_type()
+ RETURNS TABLE(contact_type text, count bigint)
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+  -- v2 2026-07-02: coluna renomeada lead_status→contact_type + alinhado com view contacts.
+  -- Antes: UI lia coluna lead_status do RPC e comparava com contact_type da view
+  -- (hardcoded 'cliente') → contagens nunca casavam com filtros → tabs mostravam wrong counts.
+  SELECT COALESCE(lead_status, 'open')::text AS contact_type, count(*)::bigint
+  FROM zapp.evolution_contacts
+  WHERE deleted_at IS NULL
+  GROUP BY lead_status
+  ORDER BY 2 DESC;
+$function$
+
+=== zapp.deduplicate_campaign_contacts_atomically() [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.deduplicate_campaign_contacts_atomically()
+ RETURNS TABLE(duplicates_removed integer, rows_locked integer)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'pg_catalog', 'auth'
+AS $function$
+DECLARE
+  v_duplicates_removed INT := 0;
+  v_rows_locked INT := 0;
+  v_duplicate_ids UUID[];
+BEGIN
+  SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+  LOCK TABLE campaign_contacts IN SHARE ROW EXCLUSIVE MODE;
+  
+  SELECT ARRAY_AGG(id)
+  INTO v_duplicate_ids
+  FROM (
+    SELECT id, campaign_id, contact_id,
+           ROW_NUMBER() OVER (
+             PARTITION BY campaign_id, contact_id 
+             ORDER BY created_at DESC
+           ) AS rn
+    FROM campaign_contacts
+  ) t
+  WHERE rn > 1;
+
+  IF v_duplicate_ids IS NOT NULL THEN
+    SELECT COUNT(*)::INT INTO v_rows_locked
+    FROM campaign_contacts
+    WHERE id = ANY(v_duplicate_ids);
+
+    IF v_rows_locked = 0 THEN
+      RAISE EXCEPTION 'Snapshot inconsistency detected - retry duplicate removal' 
+        USING ERRCODE = '40001';
+    END IF;
+  END IF;
+  
+  IF v_duplicate_ids IS NOT NULL THEN
+    DELETE FROM campaign_contacts
+    WHERE id = ANY(v_duplicate_ids);
+    GET DIAGNOSTICS v_duplicates_removed = ROW_COUNT;
+  END IF;
+  
+  RETURN QUERY SELECT v_duplicates_removed, v_rows_locked;
+EXCEPTION WHEN serialization_failure THEN
+  RAISE NOTICE 'Serialization failure during deduplication - client should retry';
+  RETURN QUERY SELECT 0, 0;
+END;
+$function$
+
+=== zapp.fn_apply_connection_update(p_event jsonb) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_apply_connection_update(p_event jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+DECLARE
+  v_instance_name text;
+  v_evo_status    text;
+  v_evo_upper     text;
+  v_mapped_status text;
+  v_owner         text;
+  v_phone         text;
+  v_profile       text;
+  v_evo_id        text;
+  v_db_status     text;
+  v_disconnected_at timestamptz;
+  v_action        text;
+  v_debounced     boolean := false;
+BEGIN
+  v_instance_name := COALESCE(p_event->>'instance', p_event->>'name', p_event->'data'->>'instance');
+  v_evo_status    := COALESCE(p_event->'data'->>'state', p_event->>'state', p_event->>'connectionStatus');
+  v_owner         := COALESCE(p_event->'data'->>'wuid', p_event->>'ownerJid', p_event->'data'->>'ownerJid');
+  v_profile       := COALESCE(p_event->'data'->>'profileName', p_event->>'profileName');
+  v_evo_id        := COALESCE(p_event->>'instanceId', p_event->>'id', p_event->'data'->>'id');
+  v_phone         := split_part(COALESCE(v_owner, ''), '@', 1);
+  v_evo_upper     := UPPER(COALESCE(v_evo_status, ''));
+
+  IF v_instance_name IS NULL THEN
+    RETURN jsonb_build_object('action', 'rejected', 'reason', 'missing_instance_name');
+  END IF;
+
+  v_mapped_status := CASE
+    WHEN v_evo_upper LIKE 'OPEN%' OR v_evo_upper = 'CONNECTED'
+      THEN 'connected'
+    WHEN v_evo_upper LIKE 'CONNECTING%' OR v_evo_upper LIKE 'RECONNECTING%'
+      THEN 'connecting'
+    WHEN v_evo_upper IN ('CLOSE', 'DISCONNECTED')
+      THEN 'disconnected'
+    WHEN v_evo_upper IN ('QR_PENDING', 'QRCODE', 'QR_CODE')
+      THEN 'qr_pending'
+    WHEN v_evo_upper = 'BANNED'
+      THEN 'banned'
+    WHEN v_evo_upper IN ('TIMEOUT', 'CONFLICT', 'REPLACED', 'DEVICE_REMOVED', 'MULTIDEVICE_MISMATCH', 'STREAM_ERROR')
+      THEN 'disconnected'
+    ELSE 'disconnected'
+  END;
+
+  PERFORM set_config('app.reconcile_source', 'webhook_push', true);
+
+  SELECT wc.status, wc.disconnected_at INTO v_db_status, v_disconnected_at
+    FROM zapp.whatsapp_connections wc WHERE wc.instance_name = v_instance_name;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('action','skip_not_in_db','instance', v_instance_name, 'evo_status', v_evo_status);
+  END IF;
+
+  IF v_mapped_status = 'connected'
+     AND v_disconnected_at IS NOT NULL
+     AND v_disconnected_at > now() - interval '10 minutes' THEN
+    v_mapped_status := 'connecting';
+    v_debounced := true;
+  END IF;
+
+  IF v_db_status IS DISTINCT FROM v_mapped_status THEN
+    UPDATE zapp.whatsapp_connections wc
+      SET status        = v_mapped_status,
+          instance_id   = COALESCE(NULLIF(v_evo_id,''), wc.instance_id),
+          phone_number  = COALESCE(NULLIF(v_phone, ''), wc.phone_number),
+          owner_jid     = COALESCE(v_owner, wc.owner_jid),
+          health_status = CASE v_mapped_status
+                            WHEN 'connected'    THEN 'ok'
+                            WHEN 'connecting'   THEN 'degraded'
+                            WHEN 'disconnected' THEN 'down'
+                            WHEN 'qr_pending'   THEN 'degraded'
+                            WHEN 'banned'       THEN 'down'
+                            ELSE 'unknown' END,
+          health_reason = CASE
+                            WHEN v_debounced THEN format('webhook push: evo_state=%s debounced (disconnected_at=%s < 10min ago)', v_evo_status, v_disconnected_at)
+                            WHEN v_mapped_status = 'connected' THEN NULL
+                            ELSE format('webhook push: evo_state=%s mapped=%s', v_evo_status, v_mapped_status) END,
+          last_health_check = now(),
+          last_connected_at = CASE WHEN v_mapped_status = 'connected' THEN now() ELSE wc.last_connected_at END,
+          disconnected_at   = CASE WHEN v_mapped_status = 'disconnected' THEN now() ELSE wc.disconnected_at END,
+          updated_at        = now()
+    WHERE wc.instance_name = v_instance_name;
+    v_action := 'updated';
+  ELSE
+    UPDATE zapp.whatsapp_connections wc
+      SET last_health_check = now(),
+          instance_id = COALESCE(NULLIF(v_evo_id,''), wc.instance_id),
+          health_status = CASE WHEN v_mapped_status='connected' AND NOT v_debounced AND wc.health_status IS DISTINCT FROM 'ok' THEN 'ok' ELSE wc.health_status END,
+          health_reason = CASE WHEN v_mapped_status='connected' AND NOT v_debounced AND wc.health_status IS DISTINCT FROM 'ok' THEN NULL ELSE wc.health_reason END,
+          last_connected_at = CASE WHEN v_mapped_status = 'connected' AND NOT v_debounced THEN now() ELSE wc.last_connected_at END
+    WHERE wc.instance_name = v_instance_name;
+    v_action := 'no_change';
+  END IF;
+
+  RETURN jsonb_build_object(
+    'action', v_action,
+    'instance', v_instance_name,
+    'old_status', v_db_status,
+    'new_status', v_mapped_status,
+    'evo_state', v_evo_status,
+    'debounced', v_debounced,
+    'profile', v_profile
+  );
+END;
+$function$
+
+=== zapp.fn_archive_old_wpp2_messages(p_months_old integer, p_batch_size integer) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_archive_old_wpp2_messages(p_months_old integer DEFAULT 12, p_batch_size integer DEFAULT 1000)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+DECLARE
+  v_safe_months    INT := GREATEST(p_months_old, 12);
+  v_cutoff         TIMESTAMPTZ := date_trunc('month', now()) - (v_safe_months || ' months')::interval;
+  v_already_in_arc INT; v_newly_archived INT; v_deleted INT;
+BEGIN
+  SELECT count(*) INTO v_already_in_arc
+  FROM (SELECT id,instance_name FROM zapp.evolution_messages_wpp2 WHERE created_at < v_cutoff ORDER BY created_at ASC LIMIT p_batch_size) b
+  WHERE EXISTS(SELECT 1 FROM zapp.evolution_messages_wpp2_archive a WHERE a.id=b.id AND a.instance_name=b.instance_name);
+  WITH batch AS (SELECT * FROM zapp.evolution_messages_wpp2 WHERE created_at < v_cutoff ORDER BY created_at ASC LIMIT p_batch_size)
+  INSERT INTO zapp.evolution_messages_wpp2_archive
+    (id, message_id, remote_jid, from_me, message_type, content, media_url,
+     media_mimetype, quoted_message_id, is_starred, is_important, category,
+     sentiment, tags, notes, follow_up_at, follow_up_done, payload, created_at,
+     contact_id, conversation_id, direction, status, status_at, caption,
+     media_filename, media_size, sent_by_bot, template_name, instance_name,
+     push_name, media_type, raw_data, deleted_at, edited_at, updated_at,
+     media_meta, audio_meme_id, sticker_id, link_preview, is_read, reply_to_id,
+     media_bucket, media_path, media_sha256, media_status, transcription_status,
+     transcription)
+  SELECT id, message_id, remote_jid, from_me, message_type, content, media_url,
+     media_mimetype, quoted_message_id, is_starred, is_important, category,
+     sentiment, tags, notes, follow_up_at, follow_up_done, payload, created_at,
+     contact_id, conversation_id, direction, status, status_at, caption,
+     media_filename, media_size, sent_by_bot, template_name, instance_name,
+     push_name, media_type, raw_data, deleted_at, edited_at, updated_at,
+     media_meta, audio_meme_id, sticker_id, link_preview, is_read, reply_to_id,
+     media_bucket, media_path, media_sha256, media_status, transcription_status,
+     transcription
+  FROM batch
+  ON CONFLICT (id,instance_name) DO NOTHING;
+  GET DIAGNOSTICS v_newly_archived = ROW_COUNT;
+  WITH td AS (SELECT m.id,m.instance_name FROM zapp.evolution_messages_wpp2 m WHERE m.created_at < v_cutoff ORDER BY m.created_at ASC LIMIT p_batch_size)
+  DELETE FROM zapp.evolution_messages_wpp2 WHERE (id,instance_name) IN (
+    SELECT t.id,t.instance_name FROM td t WHERE EXISTS(SELECT 1 FROM zapp.evolution_messages_wpp2_archive a WHERE a.id=t.id AND a.instance_name=t.instance_name)
+  );
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+  RETURN jsonb_build_object(
+    'newly_archived',v_newly_archived,'already_in_archive',v_already_in_arc,
+    'total_moved',v_newly_archived+v_already_in_arc,'deleted_from_source',v_deleted,
+    'cutoff_date',v_cutoff,'months_old_requested',p_months_old,
+    'months_old_applied',v_safe_months,'batch_size',p_batch_size,'ts',now()
+  );
+END; $function$
+
+=== zapp.fn_attendance_report(p_start_date date, p_end_date date) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_attendance_report(p_start_date date DEFAULT (CURRENT_DATE - 7), p_end_date date DEFAULT CURRENT_DATE)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE result jsonb;
+BEGIN
+    SELECT jsonb_build_object(
+        'periodo', jsonb_build_object('inicio',p_start_date,'fim',p_end_date),
+        'mensagens', (SELECT jsonb_build_object('total',COUNT(*),'enviadas',COUNT(*) FILTER(WHERE from_me=true),'recebidas',COUNT(*) FILTER(WHERE from_me=false),'por_dia',ROUND(COUNT(*)::numeric/GREATEST(p_end_date-p_start_date,1),2)) FROM evolution_messages WHERE created_at::date BETWEEN p_start_date AND p_end_date),
+        'conversas', (SELECT jsonb_build_object('total',COUNT(*),'abertas',COUNT(*) FILTER(WHERE status IN ('aberta','open','active')),'resolvidas',COUNT(*) FILTER(WHERE status IN ('resolvida','resolved','closed'))) FROM evolution_conversations WHERE created_at::date BETWEEN p_start_date AND p_end_date),
+        'contatos', (SELECT jsonb_build_object('total',COUNT(*),'novos',COUNT(*) FILTER(WHERE created_at::date BETWEEN p_start_date AND p_end_date)) FROM evolution_contacts),
+        'gerado_em', NOW()
+    ) INTO result;
+    RETURN result;
+END;
+$function$
+
+=== zapp.fn_audit_storage_orphans(p_bucket text, p_days_old integer, p_limit integer) [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.fn_audit_storage_orphans(p_bucket text DEFAULT 'whatsapp-media'::text, p_days_old integer DEFAULT 30, p_limit integer DEFAULT 100)
+ RETURNS TABLE(bucket_id text, object_name text, object_size bigint, created_at timestamp with time zone, motivo text)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'storage', 'public'
+AS $function$
+BEGIN
+  RETURN QUERY
+  SELECT
+    o.bucket_id::text,
+    o.name::text,
+    (o.metadata->>'size')::bigint,
+    o.created_at,
+    'sem_referencia_db'::text
+  FROM storage.objects o
+  WHERE o.bucket_id = p_bucket
+    AND o.created_at < now() - (p_days_old || ' days')::interval
+    -- Não referenciado em evolution_media
+    AND NOT EXISTS (
+      SELECT 1 FROM zapp.evolution_media em
+      WHERE em.storage_path = o.name AND em.storage_bucket = o.bucket_id
+    )
+    -- Não referenciado em evolution_messages
+    AND NOT EXISTS (
+      SELECT 1 FROM zapp.evolution_messages m WHERE m.media_path = o.name
+    )
+    -- Não referenciado em stickers (adicionado)
+    AND NOT EXISTS (
+      SELECT 1 FROM zapp.stickers s
+      WHERE s.image_url LIKE '%' || o.name
+         OR s.image_url LIKE '%' || split_part(o.name, '/', 2)
+    )
+    -- Não referenciado em audio_memes (adicionado)
+    AND NOT EXISTS (
+      SELECT 1 FROM zapp.audio_memes am
+      WHERE am.audio_url LIKE '%' || o.name
+         OR am.audio_url LIKE '%' || split_part(o.name, '/', 2)
+    )
+  ORDER BY o.created_at
+  LIMIT p_limit;
+END $function$
+
+=== zapp.fn_baileys_logout_metrics(p_days integer) [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.fn_baileys_logout_metrics(p_days integer DEFAULT 7)
+ RETURNS TABLE(metric_name text, metric_value numeric, detail jsonb)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+BEGIN
+  RETURN QUERY SELECT 'logouts_total'::text, COUNT(*)::numeric, jsonb_build_object('period_days',p_days)
+  FROM evolution_webhook_events WHERE event_type IN ('CONNECTION_UPDATE','connection.update') AND payload->>'state'='close' AND created_at >= NOW()-(p_days||' days')::interval;
+  RETURN QUERY SELECT 'logouts_by_reason'::text, NULL::numeric, jsonb_object_agg(reason,cnt)
+  FROM (SELECT COALESCE(payload->>'statusReason','unknown') AS reason, COUNT(*) AS cnt FROM evolution_webhook_events WHERE event_type IN ('CONNECTION_UPDATE','connection.update') AND payload->>'state'='close' AND created_at >= NOW()-(p_days||' days')::interval GROUP BY 1) sub;
+END; $function$
+
+=== zapp.fn_bootstrap_coverage_hourly_check() [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_bootstrap_coverage_hourly_check()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'ops', 'pg_catalog'
+AS $function$
+DECLARE
+  v_coverage        numeric;
+  v_organic         bigint;
+  v_high_count      bigint;
+  v_covered         bigint;
+  v_lid_total       bigint;
+  v_phase           text;
+  v_alert_exists    boolean;
+BEGIN
+  -- Ler estado atual do monitor
+  SELECT coverage_pct, organic_phonejid_events, high_map_count, covered_count, lid_contacts_total, phase
+  INTO v_coverage, v_organic, v_high_count, v_covered, v_lid_total, v_phase
+  FROM public.evo_bootstrap_coverage_monitor LIMIT 1;
+
+  -- Registrar snapshot no upgrade_execution_log para histórico
+  INSERT INTO ops.upgrade_execution_log (step, status, details, executed_by)
+  VALUES ('bootstrap_coverage_snapshot', 'success',
+    jsonb_build_object(
+      'coverage_pct', v_coverage,
+      'covered', v_covered,
+      'lid_total', v_lid_total,
+      'high_map_count', v_high_count,
+      'organic_events', v_organic,
+      'phase', v_phase
+    ), 'fn_bootstrap_coverage_hourly_check');
+
+  -- Alerta se p10 (50%) atingido e alerta ainda nao existe
+  IF v_coverage >= 50 THEN
+    SELECT EXISTS(
+      SELECT 1 FROM zapp.evolution_alerts
+      WHERE alert_type='lid_p10_coverage_reached' AND resolved_at IS NULL
+    ) INTO v_alert_exists;
+    IF NOT v_alert_exists THEN
+      INSERT INTO zapp.evolution_alerts (severity, alert_type, title, message, payload)
+      VALUES ('medium', 'lid_p10_coverage_reached',
+        'LID Coverage atingiu 50% — p10 DESBLOQUEADO',
+        format('coverage=%.1f%% (%s/%s contacts mapeados). Cron 488 vai atualizar steps_done.', v_coverage, v_covered, v_lid_total),
+        jsonb_build_object('coverage_pct', v_coverage, 'covered', v_covered, 'lid_total', v_lid_total, 'organic_events', v_organic));
+    END IF;
+  END IF;
+
+  -- Alerta se p11 (90%) atingido e alerta ainda nao existe
+  IF v_coverage >= 90 THEN
+    SELECT EXISTS(
+      SELECT 1 FROM zapp.evolution_alerts
+      WHERE alert_type='lid_p11_coverage_reached' AND resolved_at IS NULL
+    ) INTO v_alert_exists;
+    IF NOT v_alert_exists THEN
+      INSERT INTO zapp.evolution_alerts (severity, alert_type, title, message, payload)
+      VALUES ('high', 'lid_p11_coverage_reached',
+        'LID Coverage atingiu 90% — p10+p11 DESBLOQUEADOS',
+        format('coverage=%.1f%%. Steps 49/50 e 50/50 agora ativos.', v_coverage),
+        jsonb_build_object('coverage_pct', v_coverage, 'covered', v_covered, 'lid_total', v_lid_total));
+    END IF;
+  END IF;
+
+  RETURN jsonb_build_object(
+    'ok', true,
+    'coverage_pct', v_coverage,
+    'covered', v_covered,
+    'lid_total', v_lid_total,
+    'organic_events', v_organic,
+    'phase', v_phase,
+    'checked_at', now()
+  );
+END;
+$function$
+
+=== zapp.fn_calculate_daily_kpis() [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.fn_calculate_daily_kpis()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'public', 'extensions'
+AS $function$
+DECLARE
+  v_day_start timestamptz := date_trunc('day', now());
+  v_new_contacts int; v_active_contacts int; v_total_contacts int;
+  v_msgs_received int; v_msgs_sent int; v_avg_response int;
+  v_convs_opened int; v_convs_resolved int; v_avg_resolution int;
+  v_deals_created int; v_deals_won int; v_deals_lost int;
+  v_revenue numeric; v_pipeline numeric;
+  v_automations int; v_followups int;
+  v_lead_to_deal numeric; v_deal_win numeric; v_avg_msgs_per_contact numeric;
+BEGIN
+  SELECT count(*) INTO v_new_contacts FROM evolution_contacts WHERE created_at >= v_day_start AND deleted_at IS NULL;
+  SELECT count(*) INTO v_active_contacts FROM evolution_contacts WHERE deleted_at IS NULL AND last_message_at >= v_day_start;
+  SELECT count(*) INTO v_total_contacts FROM evolution_contacts WHERE deleted_at IS NULL;
+  SELECT count(*) INTO v_msgs_received FROM evolution_messages WHERE direction = 'inbound' AND created_at >= v_day_start AND deleted_at IS NULL;
+  SELECT count(*) INTO v_msgs_sent FROM evolution_messages WHERE direction = 'outbound' AND created_at >= v_day_start AND deleted_at IS NULL;
+  SELECT COALESCE(avg(first_response_seconds), 0)::int INTO v_avg_response FROM evolution_conversations WHERE first_response_at >= v_day_start AND first_response_seconds IS NOT NULL;
+  SELECT count(*) INTO v_convs_opened FROM evolution_conversations WHERE created_at >= v_day_start;
+  SELECT count(*) INTO v_convs_resolved FROM evolution_conversations WHERE resolution_at >= v_day_start;
+  SELECT COALESCE(avg(resolution_seconds), 0)::int INTO v_avg_resolution FROM evolution_conversations WHERE resolution_at >= v_day_start AND resolution_seconds IS NOT NULL;
+  SELECT count(*) INTO v_deals_created FROM evolution_deals WHERE created_at >= v_day_start AND deleted_at IS NULL;
+  SELECT count(*) INTO v_deals_won FROM evolution_deals WHERE won = true AND closed_at >= v_day_start AND deleted_at IS NULL;
+  SELECT count(*) INTO v_deals_lost FROM evolution_deals WHERE lost = true AND closed_at >= v_day_start AND deleted_at IS NULL;
+  SELECT COALESCE(sum(value), 0) INTO v_revenue FROM evolution_deals WHERE won = true AND closed_at >= v_day_start AND deleted_at IS NULL;
+  SELECT COALESCE(sum(weighted_value), 0) INTO v_pipeline FROM evolution_deals WHERE won = false AND lost = false AND deleted_at IS NULL;
+  SELECT count(*) INTO v_automations FROM evolution_automation_logs WHERE executed_at >= v_day_start;
+  SELECT count(*) INTO v_followups FROM evolution_followups WHERE sent_at >= v_day_start;
+  v_lead_to_deal := CASE WHEN v_new_contacts > 0 THEN v_deals_created::numeric / v_new_contacts ELSE 0 END;
+  v_deal_win := CASE WHEN (v_deals_won + v_deals_lost) > 0 THEN v_deals_won::numeric / (v_deals_won + v_deals_lost) ELSE 0 END;
+  v_avg_msgs_per_contact := CASE WHEN v_total_contacts > 0 THEN (v_msgs_received + v_msgs_sent)::numeric / v_total_contacts ELSE 0 END;
+  RETURN jsonb_build_object(
+    'metric_date', current_date, 'new_contacts', v_new_contacts, 'active_contacts', v_active_contacts,
+    'total_contacts', v_total_contacts, 'messages_received', v_msgs_received, 'messages_sent', v_msgs_sent,
+    'avg_response_time_seconds', v_avg_response, 'conversations_opened', v_convs_opened,
+    'conversations_resolved', v_convs_resolved, 'avg_resolution_time_seconds', v_avg_resolution,
+    'deals_created', v_deals_created, 'deals_won', v_deals_won, 'deals_lost', v_deals_lost,
+    'revenue', v_revenue, 'pipeline_value', v_pipeline, 'lead_to_deal_rate', v_lead_to_deal,
+    'deal_win_rate', v_deal_win, 'avg_messages_per_contact', v_avg_msgs_per_contact,
+    'automations_triggered', v_automations, 'followups_sent', v_followups
+  );
+END; $function$
+
+=== zapp.fn_call_stats(p_days integer) [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.fn_call_stats(p_days integer DEFAULT 7)
+ RETURNS TABLE(total_calls bigint, missed_calls bigint, answered_calls bigint, callback_pending bigint, avg_duration_seconds numeric, busiest_hour integer)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$ BEGIN RETURN QUERY SELECT COUNT(*), COUNT(*) FILTER (WHERE call_status = 'missed'), COUNT(*) FILTER (WHERE call_status IN ('accepted','ended')), COUNT(*) FILTER (WHERE call_status = 'missed' AND missed_callback_sent = false), AVG(duration_seconds) FILTER (WHERE duration_seconds IS NOT NULL), (SELECT EXTRACT(HOUR FROM created_at)::INTEGER FROM evolution_calls WHERE created_at > NOW() - (p_days || ' days')::INTERVAL GROUP BY EXTRACT(HOUR FROM created_at) ORDER BY COUNT(*) DESC LIMIT 1) FROM evolution_calls WHERE created_at > NOW() - (p_days || ' days')::INTERVAL; END; $function$
+
+=== zapp.fn_capture_csat_replies(p_limit integer) [] SETOF integer
+CREATE OR REPLACE FUNCTION zapp.fn_capture_csat_replies(p_limit integer DEFAULT 50)
+ RETURNS TABLE(captured integer)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'public'
+AS $function$
+DECLARE
+  v_limit   integer := GREATEST(1, LEAST(COALESCE(p_limit, 50), 200));
+  v_captured integer := 0;
+  v_msg     record;
+  v_survey  record;
+  v_rating  integer;
+  v_rt_secs integer;
+BEGIN
+  FOR v_msg IN
+    SELECT m.message_id, m.remote_jid, m.content, m.created_at,
+           m.contact_id, m.conversation_id, m.instance_name
+      FROM zapp.evolution_messages m
+     WHERE m.from_me = false
+       AND m.content ~ '^[[:space:]]*[1-5][[:space:]]*$'
+       AND m.created_at >= now() - interval '72 hours'
+       AND NOT EXISTS (
+         SELECT 1 FROM zapp.csat_responses r
+          WHERE r.message_id = m.message_id
+       )
+     ORDER BY m.created_at DESC
+     LIMIT v_limit
+  LOOP
+    SELECT s.id, s.agent_id, s.conversation_id, s.send_at
+      INTO v_survey
+      FROM zapp.csat_surveys s
+     WHERE s.contact_id = v_msg.contact_id
+       AND s.status = 'sent'
+       AND s.rating IS NULL
+       AND s.responded_at IS NULL
+       AND v_msg.created_at BETWEEN s.send_at AND s.send_at + interval '72 hours'
+       AND (s.conversation_id IS NULL OR v_msg.conversation_id IS NULL
+            OR s.conversation_id = v_msg.conversation_id)
+     ORDER BY s.send_at DESC
+     LIMIT 1;
+
+    IF NOT FOUND THEN
+      CONTINUE;
+    END IF;
+
+    v_rating  := btrim(v_msg.content)::integer;
+    v_rt_secs := GREATEST(0, EXTRACT(EPOCH FROM (v_msg.created_at - v_survey.send_at))::integer);
+
+    UPDATE zapp.csat_surveys s
+       SET rating              = v_rating,
+           responded_at        = v_msg.created_at,
+           updated_at          = now()
+     WHERE s.id = v_survey.id
+       AND s.responded_at IS NULL
+       AND s.rating IS NULL;
+
+    IF FOUND THEN
+      INSERT INTO zapp.csat_responses
+        (contact_id, conversation_id, agent_id, instance_name,
+         rating, comment, response_time_seconds, message_id, created_at)
+      VALUES
+        (v_msg.contact_id, v_survey.conversation_id, v_survey.agent_id,
+         v_msg.instance_name, v_rating, NULL, v_rt_secs, v_msg.message_id,
+         v_msg.created_at)
+      ON CONFLICT DO NOTHING;
+
+      v_captured := v_captured + 1;
+    END IF;
+  END LOOP;
+
+  RETURN QUERY SELECT v_captured;
+END;
+$function$
+
+=== zapp.fn_check_real_invalid_signatures() [] SCALAR text
+CREATE OR REPLACE FUNCTION zapp.fn_check_real_invalid_signatures()
+ RETURNS text
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'public'
+AS $function$
+DECLARE
+  v_count   int;
+  v_open    int;
+  v_alert_id uuid;
+BEGIN
+  SELECT invalid_signature INTO v_count FROM zapp.v_kpi_webhook_saude;
+
+  IF v_count > 0 THEN
+    SELECT count(*) INTO v_open
+      FROM zapp.evolution_alerts
+     WHERE alert_type = 'invalid_webhook_signature'
+       AND resolved_at IS NULL;
+
+    IF v_open = 0 THEN
+      INSERT INTO zapp.evolution_alerts (
+        alert_type, severity, title, detail, instance_name, created_at
+      ) VALUES (
+        'invalid_webhook_signature',
+        'critical',
+        format('Webhook: %s requisições com assinatura inválida (últimas 24h)', v_count),
+        'Possível tentativa de acesso não autorizado ao endpoint de webhook. Investigar origem.',
+        'wpp2',
+        now()
+      ) RETURNING id INTO v_alert_id;
+
+      PERFORM net.http_post(
+        url     := 'https://n8n.atomicabr.com.br/webhook/warroom-alert',
+        headers := '{"Content-Type":"application/json"}'::jsonb,
+        body    := json_build_object(
+          'alert_type', 'invalid_webhook_signature',
+          'severity',   'critical',
+          'message',    format('🚨 SEGURANÇA: %s requests com assinatura inválida nas últimas 24h', v_count),
+          'alert_id',   v_alert_id,
+          'source',     'fn_check_real_invalid_signatures',
+          'ts',         now()
+        )::text::jsonb
+      );
+    END IF;
+
+    RETURN format('ALERTA: %s assinaturas inválidas reais (excluídas probes)', v_count);
+  ELSE
+    -- Auto-resolve se zerou
+    UPDATE zapp.evolution_alerts
+       SET resolved_at = now(),
+           resolved_by = 'fn_check_real_invalid_signatures_auto'
+     WHERE alert_type = 'invalid_webhook_signature'
+       AND resolved_at IS NULL;
+
+    RETURN format('OK: zero assinaturas inválidas reais');
+  END IF;
+END;
+$function$
+
+
+
+💡 Sugestão: Sem permissão. Verifique com supabase_db_list_roles.

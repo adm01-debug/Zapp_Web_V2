@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+"""zapp-db-ler — consulta SOMENTE LEITURA ao banco canônico do Zapp Web V2 (tnnnlkbymytvtqngbbqh).
+
+Criado pelo Claude em 04/10/2026 para a Fase M. Existe para que a regra de permissão do Claude Code
+possa liberar leitura do banco sem liberar escrita. Recusa (exit 2) tudo que não for leitura comprovada:
+- uma única instrução, começando por SELECT, WITH, SHOW ou EXPLAIN (sem ANALYZE);
+- nenhuma palavra de escrita/DDL/controle (INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, GRANT, SET, DO, CALL...);
+- nenhuma função fora da lista de funções nativas de leitura abaixo (função do projeto pode escrever).
+Uso: zapp-db-ler "select ..."   |   echo "select ..." | zapp-db-ler   |   zapp-db-ler --checar "sql" (só valida)
+"""
+import json, os, re, sys
+
+ESCRITA = r"""insert|update|delete|merge|upsert|create|alter|drop|truncate|grant|revoke|copy|call|do|vacuum|
+reindex|cluster|lock|refresh|comment|security|set|reset|notify|listen|unlisten|prepare|execute|perform|
+analyze|begin|commit|rollback|savepoint|discard|import|load|into|returning|nextval|setval""".replace("\n", "")
+
+FUNCOES_OK = set("""count sum avg min max coalesce nullif greatest least lower upper length char_length trim
+ltrim rtrim btrim substr substring left right position replace split_part concat concat_ws format md5
+to_char to_date to_timestamp to_number date_trunc date_part extract age now current_date current_timestamp
+make_interval round floor ceil abs mod cast array_agg string_agg json_agg jsonb_agg json_build_object
+jsonb_build_object json_object_agg jsonb_object_agg jsonb_array_length jsonb_typeof jsonb_object_keys
+jsonb_each jsonb_each_text json_each array_length unnest array_to_string string_to_array cardinality
+row_number rank dense_rank lag lead first_value last_value bool_and bool_or every count_if
+pg_size_pretty pg_total_relation_size pg_relation_size pg_table_size pg_indexes_size pg_database_size
+pg_get_functiondef pg_get_function_arguments pg_get_function_result pg_get_viewdef pg_get_triggerdef
+pg_get_indexdef pg_get_constraintdef pg_get_expr pg_get_userbyid obj_description col_description
+format_type has_table_privilege has_function_privilege has_schema_privilege has_column_privilege
+quote_ident quote_literal regexp_replace regexp_match regexp_matches regexp_like starts_with
+encode decode octet_length to_jsonb to_json row_to_json array_position array_remove generate_series
+exists any all in over filter within values not and or is case when then else end as on using
+interval timestamp timestamptz date numeric int bigint text varchar boolean jsonb json uuid
+tstzrange daterange lateral current_database current_schema current_user session_user version
+pg_postmaster_start_time""".split())
+
+
+def limpar(sql):
+    sql = re.sub(r"--[^\n]*", " ", sql)
+    sql = re.sub(r"/\*.*?\*/", " ", sql, flags=re.S)
+    return sql
+
+
+def validar(sql):
+    s = limpar(sql).strip()
+    sem_strings = re.sub(r"'(?:[^']|'')*'", "''", s)
+    if re.search(r"\$\w*\$", sem_strings):
+        return "dólar-quote não é permitido"
+    corpo = sem_strings.rstrip().rstrip(";")
+    if ";" in corpo:
+        return "só uma instrução por vez"
+    primeira = (corpo.split() or [""])[0].lower()
+    if primeira not in ("select", "with", "show", "explain"):
+        return f"instrução '{primeira}' não é leitura"
+    m = re.search(rf"\b({ESCRITA})\b", corpo, flags=re.I)
+    if m:
+        return f"palavra proibida: {m.group(1)}"
+    for nome in re.findall(r"([A-Za-z_][\w.]*)\s*\(", corpo):
+        base = nome.split(".")[-1].lower()
+        esquema = nome.split(".")[0].lower() if "." in nome else ""
+        if esquema and esquema not in ("pg_catalog",):
+            return f"função qualificada não permitida: {nome}"
+        if base not in FUNCOES_OK:
+            return f"função fora da lista de leitura: {nome}"
+    return None
+
+
+def main():
+    args = sys.argv[1:]
+    checar = bool(args) and args[0] == "--checar"
+    if checar:
+        args = args[1:]
+    sql = " ".join(args) if args else sys.stdin.read()
+    erro = validar(sql)
+    if erro:
+        print(f"RECUSADO (zapp-db-ler é só leitura): {erro}", file=sys.stderr)
+        sys.exit(2)
+    if checar:
+        print("OK: leitura válida")
+        return
+    sys.path.insert(0, os.path.expanduser("~/projetos/mcp-clone-bwwbey"))
+    import zapp_db
+    print(json.dumps(zapp_db.db_query(sql, max_rows=500), ensure_ascii=False, default=str, indent=1))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,6 @@
+worktree=/home/joaquim_ataides/projetos/Zapp_Web_V3_integration_sim_20260826
+head=e174e130501a2259dbf055d6da02f02cf6f1cee0
+entries=1
+untracked=0
+unstaged_patch_bytes=4157
+staged_patch_bytes=0

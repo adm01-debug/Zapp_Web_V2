@@ -1,0 +1,2 @@
+## test/integration-plan100-sim-20260826
+ M src/components/ui/registry.json

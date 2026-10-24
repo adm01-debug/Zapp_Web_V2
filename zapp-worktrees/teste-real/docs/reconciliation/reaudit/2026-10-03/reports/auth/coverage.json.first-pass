@@ -1,0 +1,5131 @@
+{
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "definition": {
+    "semantic": "Leitura humana do corpo completo e relação consumidor→efeito/contrato; não é teste E2E.",
+    "targeted": "Leitura humana apenas dos símbolos/faixas indicados.",
+    "structural": "Inventário/hash e, quando explicitado, busca de import/consumidor; não foi análise semântica."
+  },
+  "counts": {
+    "targeted": 17,
+    "semantic": 99,
+    "structural": 195
+  },
+  "files": [
+    {
+      "path": "docs/COMPLETE_SYSTEM_FEATURES.md",
+      "blob_sha": "13d9b928a05e8e6757e303f03c6a26dad5a16487",
+      "line_count": 844,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 50,
+          "end_line": 78
+        },
+        {
+          "start_line": 495,
+          "end_line": 505
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "claims1.1–1.23",
+        "security claims"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Demais trechos só inventariados; ranges extensos não implicam QA visual nem execução."
+      ]
+    },
+    {
+      "path": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+      "blob_sha": "24b469fe10429f1d29f0f63fd0e5908988c057a0",
+      "line_count": 221,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 221
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "docs/adr/ADR-006-login-lockout-server-side.md",
+      "blob_sha": "8e57df3373a358ef6a3ed81776fc277ec535b163",
+      "line_count": 93,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 93
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "distinção declarada"
+      ],
+      "finding_ids": [
+        "R2-AUTH-021"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "docs/audits/PLANO_BANCO_UNICO_200_ETAPAS_2026-09-24.md",
+      "blob_sha": "c745dd5fb678dcfd7567831a552be83a577635d1",
+      "line_count": 370,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 298,
+          "end_line": 309
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "tarefas149–151"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Demais trechos só inventariados; ranges extensos não implicam QA visual nem execução."
+      ]
+    },
+    {
+      "path": "docs/audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md",
+      "blob_sha": "090ba2593e6375882290a8a0c77897c305311df0",
+      "line_count": 207,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 160,
+          "end_line": 188
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "D5/legacy/sucessão"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Demais trechos só inventariados; ranges extensos não implicam QA visual nem execução."
+      ]
+    },
+    {
+      "path": "src/App.tsx",
+      "blob_sha": "4328fcf14cd3765f0cbda0a426a068a21ebc958a",
+      "line_count": 154,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 154
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/admin/AIUsageDashboard.tsx",
+      "blob_sha": "70d210e6b14eea8bebfe8dbc42c2c2580cab18c8",
+      "line_count": 138,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/AIUsageLogsTab.tsx",
+      "blob_sha": "93756bab6324c3ab2910362596fc26dec4ca6057",
+      "line_count": 80,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/AIUsageUsersTab.tsx",
+      "blob_sha": "54832560b89d2fd7bb97e0c3e1cb5ccf03eef400",
+      "line_count": 68,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/AdminAuditTable.tsx",
+      "blob_sha": "5c96c37f726018498df3791337c3f28abe09251a",
+      "line_count": 50,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/AdminCRMDashboard.tsx",
+      "blob_sha": "27ba29f00867475226eed6e2936f47e15cb90f46",
+      "line_count": 303,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/AdminUsersTable.tsx",
+      "blob_sha": "b0b64c6e3f23eeda62a9ccf0b679099e40245e4e",
+      "line_count": 115,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 115
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "seletor consumidor"
+      ],
+      "finding_ids": [
+        "R2-AUTH-008"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/admin/AdminView.tsx",
+      "blob_sha": "3e7e78463cbe8c8ab9d310a5f4a1988e2daafd7b",
+      "line_count": 287,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 110
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "wiring useAdminData/table"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Demais trechos só inventariados; ranges extensos não implicam QA visual nem execução."
+      ]
+    },
+    {
+      "path": "src/components/admin/CrisisRoom.tsx",
+      "blob_sha": "bdac65a1d88c0a8b0f16f789c9369b38cafb9d5f",
+      "line_count": 165,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/ForceLogoutButton.tsx",
+      "blob_sha": "d796604de197b3e648d4b17d96ca45ea218d41df",
+      "line_count": 78,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 78
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "handleForceLogout e promessa UI"
+      ],
+      "finding_ids": [
+        "R2-AUTH-004"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/admin/GmailWebhookMonitor.tsx",
+      "blob_sha": "bcb39f8173293518f05296e967cdd6373b222a02",
+      "line_count": 192,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/MediaMigrationTool.tsx",
+      "blob_sha": "f10c20cebac0aa240d7a90ed4589e855806c9a8d",
+      "line_count": 180,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/PlaybooksManager.tsx",
+      "blob_sha": "e561987afbf20f18bc51d00c51eda2a4e940f949",
+      "line_count": 283,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/PublicApiDashboard.tsx",
+      "blob_sha": "e237036e9136ed3259534eabc5b205a17ef44906",
+      "line_count": 37,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/SupervisorCopilot.tsx",
+      "blob_sha": "949c05efac105a8b1f5060d5835c76cdab9ed70b",
+      "line_count": 139,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/TrainingMode.tsx",
+      "blob_sha": "198205753719626442ddd81e7599c0864506420e",
+      "line_count": 266,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/VisibilityGrantsManager.tsx",
+      "blob_sha": "e721fdd9ae460b11e0a0258cd6138f081c07e26b",
+      "line_count": 289,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/__tests__/PublicApiDashboard.disabled.test.tsx",
+      "blob_sha": "2a9290f79a57ad74edb7f33e392634e7d4648eb6",
+      "line_count": 20,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/__tests__/adminDownloadPermission.test.ts",
+      "blob_sha": "97de049fe73709a9da7f048c51d8eac33c0735de",
+      "line_count": 148,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/telemetry/TelemetryCharts.tsx",
+      "blob_sha": "ac89b7d68efec2b9ebf1d529496046dfb123877c",
+      "line_count": 187,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/admin/useAdminData.ts",
+      "blob_sha": "9c74e75a5e998a94189ff292ffbdfc113973ef9d",
+      "line_count": 261,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 261
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "handleRoleChange",
+        "handleToggleActive",
+        "sucesso pelo HTTP"
+      ],
+      "finding_ids": [
+        "R2-AUTH-004",
+        "R2-AUTH-008",
+        "R2-AUTH-016"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/agents/AgentsView.tsx",
+      "blob_sha": "6708b347500a72eb23c4da5a96cc31e18c8ea715",
+      "line_count": 285,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 285
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "Filtrar",
+        "capacityPercent",
+        "exibição de chats ativos",
+        "menu agente"
+      ],
+      "finding_ids": [
+        "R2-AUTH-014",
+        "R2-AUTH-020"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/agents/ConfigurePermissionsDialog.tsx",
+      "blob_sha": "fb6aef3a1431dbe87f6e4a28eeea0bd5019eaf22",
+      "line_count": 144,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 144
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/agents/InviteAgentDialog.tsx",
+      "blob_sha": "c2ec05fe9f8be3135b56bad8e09ff7d954cd1ee2",
+      "line_count": 131,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 131
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "handleInvite",
+        "papéis selecionáveis"
+      ],
+      "finding_ids": [
+        "R2-AUTH-015"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/auth/HeroBenefits.tsx",
+      "blob_sha": "5aaaabc381c955208f9ea1d3181f92fa445efeaf",
+      "line_count": 105,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/auth/PasswordInput.tsx",
+      "blob_sha": "a2720c0196a39e7035cb8aa46e93a694ab0cb35f",
+      "line_count": 45,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/auth/PasswordStrengthMeter.tsx",
+      "blob_sha": "7b4b33691a370fd30791e6df12980b3bb1d2132d",
+      "line_count": 287,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/auth/ProtectedRoute.tsx",
+      "blob_sha": "c16a92880441adf86f2a408382c969fb215eaf75",
+      "line_count": 157,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 157
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "ProtectedRoute",
+        "guard de sessão"
+      ],
+      "finding_ids": [
+        "R2-AUTH-002",
+        "R2-AUTH-003"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/auth/ReauthDialog.tsx",
+      "blob_sha": "e793f74d55c8ccf6e2e49fdbbde9634084551164",
+      "line_count": 140,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/auth/SocialProof.tsx",
+      "blob_sha": "33007c05e41f4ab7e750e509c00e1ea6bd65c44d",
+      "line_count": 25,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/auth/__tests__/PasswordStrengthMeter.test.tsx",
+      "blob_sha": "984f85f67d040d9288e1d0d2dc4fcbda6050b3a7",
+      "line_count": 94,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/AdvancedCRMSearch.tsx",
+      "blob_sha": "d7e78f64254f37d22b09137d4217b38cc01e5701",
+      "line_count": 143,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 143
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/BulkActionsBar.tsx",
+      "blob_sha": "72312d4b962d491a06f99f1070308c900a3b5878",
+      "line_count": 277,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 277
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "contraste interno: delete contabiliza",
+        "tag/assign/type"
+      ],
+      "finding_ids": [
+        "R2-AUTH-013"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/CRMContactCard.tsx",
+      "blob_sha": "15b56a90eb4439641cb678efc53f10e1bd3e5652",
+      "line_count": 89,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/CRMFiltersPanel.tsx",
+      "blob_sha": "3b33f5a89404db81fe896c99cb5e45edf3f0c7fd",
+      "line_count": 101,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/CompanyLogo.tsx",
+      "blob_sha": "20fd6fb879f0b0f0060427d006240dc40226518f",
+      "line_count": 92,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactActivityTimeline.tsx",
+      "blob_sha": "b0fba5df6ff22e57c340a6862717d0140aa4f588",
+      "line_count": 218,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactAdvancedFilters.tsx",
+      "blob_sha": "df0fe2a8f117d2d5ed9310595397d638ea96a039",
+      "line_count": 196,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactAnalyticsDashboard.tsx",
+      "blob_sha": "df2c96b6afa676690314d46c19d315ecf24128ba",
+      "line_count": 206,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactBulkTagDialog.tsx",
+      "blob_sha": "386521b4886c48e6ea533072c2522255fca0206c",
+      "line_count": 216,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 216
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "handleApply"
+      ],
+      "finding_ids": [
+        "R2-AUTH-013"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactCRMDialog.tsx",
+      "blob_sha": "1c4187abdb488bea454162b2d2d56647211ddc15",
+      "line_count": 62,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 62
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactCard.tsx",
+      "blob_sha": "c8594c4c36fe288f67f739350cdf5a1a8818da34",
+      "line_count": 188,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactCompareDialog.tsx",
+      "blob_sha": "fbfc454ce43245d00828692831652d3a23d69e65",
+      "line_count": 151,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactContentArea.tsx",
+      "blob_sha": "84fa3cee69c7e14e8b4311041cf41e2fe4400150",
+      "line_count": 157,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactDetailPanel.tsx",
+      "blob_sha": "8211a8274c76126952c8f01dee30ce558e9df540",
+      "line_count": 347,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactDialogs.tsx",
+      "blob_sha": "58090d806f7bae4a01a77d70f2dc2011e31c2778",
+      "line_count": 195,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 195
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactEmptyState.tsx",
+      "blob_sha": "5f5d7a5d54a034a207dc6e2a592ee4401788f75a",
+      "line_count": 119,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactEngagementScore.tsx",
+      "blob_sha": "e697d1012301818b44fa8e506683eeb913c538e2",
+      "line_count": 136,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactForm.tsx",
+      "blob_sha": "7001d84ebda623d6bd8f2903b2afd73fcb730c18",
+      "line_count": 460,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactGroupedList.tsx",
+      "blob_sha": "d232f80a5c4b63a1b4a4daeafbafeb3d6314d604",
+      "line_count": 122,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactKanbanView.tsx",
+      "blob_sha": "1dee0b296a7c0d4b001f1cae4b9605de15f9aa96",
+      "line_count": 274,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactKpiCard.tsx",
+      "blob_sha": "1bb60e0ddfa0412f5191f85ed5056bd5a107faf4",
+      "line_count": 153,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactListItem.tsx",
+      "blob_sha": "be4353b671f2e02b84e9cae69a205c54dd93a4c1",
+      "line_count": 178,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactMapView.tsx",
+      "blob_sha": "3077b8584decaeecdfdcc1aeffebdcf14c700da7",
+      "line_count": 174,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactMergeDialog.tsx",
+      "blob_sha": "879ff2247921d791490ea6ba790c6a21057037f4",
+      "line_count": 112,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 112
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactNotes.tsx",
+      "blob_sha": "e40f098a2d660b2e8eb88ec405fa506c1651bf11",
+      "line_count": 228,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactPurchaseHistory.tsx",
+      "blob_sha": "fd45f799e1f9a864dbc8caa5045a43195891400b",
+      "line_count": 167,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactRegionMap.tsx",
+      "blob_sha": "5eab1972370062e84b2164a5f8a931b7e8c91d41",
+      "line_count": 239,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactResultsSummary.tsx",
+      "blob_sha": "b226464e6a93f4bac6c201276d04710686732688",
+      "line_count": 105,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactSearchWithSuggestions.tsx",
+      "blob_sha": "19f49a102f4a27d232bce8f5c89a0aa6375693f3",
+      "line_count": 194,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactStatsCards.tsx",
+      "blob_sha": "dd7eb6d83b3a0dbf39ee88c5a25b1c0e897924e5",
+      "line_count": 65,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactToolbar.tsx",
+      "blob_sha": "18d1634cffb434e9e692cb47ac66c031493ed4a3",
+      "line_count": 205,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactTypeTabs.tsx",
+      "blob_sha": "ef4621a12005e5479a726540df7ae321acf67a58",
+      "line_count": 80,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactViewSwitcher.tsx",
+      "blob_sha": "59a993f9d2ff3521afad2cf0f6e45c823ed7f740",
+      "line_count": 158,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactsSkeleton.tsx",
+      "blob_sha": "ee09a3c930cae7f5e066724750154249a2469b8e",
+      "line_count": 133,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactsTable.tsx",
+      "blob_sha": "d9d6dce4276ad6e8ae834c4cc9e10269c41f8dd2",
+      "line_count": 251,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/ContactsView.tsx",
+      "blob_sha": "805de473b266d4bb067c7bd9875eefeaa612f4dc",
+      "line_count": 252,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 252
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/FilterPresets.tsx",
+      "blob_sha": "40918206d3a6533cb837cc569350f69829a22594",
+      "line_count": 181,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/HighlightText.tsx",
+      "blob_sha": "f9c7e30705d993e42ca1772eed749027078dc163",
+      "line_count": 30,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/BulkActionsBar.test.tsx",
+      "blob_sha": "6169b5dea117e36293b4f31b909a7a54dc2a1f28",
+      "line_count": 132,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/BulkActionsBarPermissions.test.tsx",
+      "blob_sha": "6a590081665524692524076438055b59a5effd63",
+      "line_count": 23,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/BulkActionsBarTypeGate.test.tsx",
+      "blob_sha": "e78e70c24e5d6779103b1a9a36c75ea62588dab3",
+      "line_count": 75,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/CT51_52_sendProduct.test.tsx",
+      "blob_sha": "9aeeecda5771684a1ed52c1dab14ac25d6a3e530",
+      "line_count": 231,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/ContactCatalogSendHistory.test.tsx",
+      "blob_sha": "8c353069087c04e6fb7aede2563f8fb3a8666a90",
+      "line_count": 68,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/ContactDeleteEntryPoints.test.tsx",
+      "blob_sha": "ad9c146f2e0f44edab54c4124460b1a25885a543",
+      "line_count": 90,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/ContactDeletePermission.test.tsx",
+      "blob_sha": "27b9b6fb307c878dd3afc27173afaecdfb492992",
+      "line_count": 96,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/ContactEngagementScore.test.tsx",
+      "blob_sha": "82ec78cae9f0d2543833f853f9d66cc757401954",
+      "line_count": 154,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/ContactFormEndereco.integration.test.tsx",
+      "blob_sha": "06aeb4506cd390c78b249f805536d861f540a79f",
+      "line_count": 226,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/ContactFormEndereco.test.tsx",
+      "blob_sha": "2305cb0d2bf2fd3385e2463d064e768f17c3f275",
+      "line_count": 326,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/ContactKanbanAggregates.test.tsx",
+      "blob_sha": "24a56be79a4da9f3502f9e1e0244c08f3d263daa",
+      "line_count": 88,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/ContactMergePermission.test.tsx",
+      "blob_sha": "a8b966254ae4427514bf4016ee2b533c152d0edb",
+      "line_count": 114,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/ContactOpenChat.test.tsx",
+      "blob_sha": "5f72f32b4eb9dffa8f4266d7a92ae6183072f23e",
+      "line_count": 57,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/ContactRegionMap.test.tsx",
+      "blob_sha": "5b35ff1dc8dafd16c80d8c79eb515d6f41f0eab3",
+      "line_count": 175,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/ContactStatsCards.test.tsx",
+      "blob_sha": "cebc182213e2bb39f369188e9b4b426f7be514f3",
+      "line_count": 87,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/ContactToolbar.test.tsx",
+      "blob_sha": "35b3b7a0452dddd4f585c469e158b589be5702ea",
+      "line_count": 111,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/ContactTypeTabs.test.tsx",
+      "blob_sha": "e85318b62abf1e7a1ccd3bf9f83d79272c06e352",
+      "line_count": 37,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/ExternalDataIntegration.test.tsx",
+      "blob_sha": "104582fe6106f0b30216b2fa78838467405dde00",
+      "line_count": 309,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/FilterPresets.test.tsx",
+      "blob_sha": "9473bc2a2b1f3caae2d20c2408fbd8cdd6d4fa46",
+      "line_count": 64,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/contactDeleteFixtures.tsx",
+      "blob_sha": "4fd84cd760d2f58fa1a1d3033da74b82860d2b03",
+      "line_count": 42,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/contactTypeConfig.test.ts",
+      "blob_sha": "522bbd72600f8bd3293147cbdee216b40faaed17",
+      "line_count": 28,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/useContactFormValidation.test.ts",
+      "blob_sha": "a71caec19b0f5c81fc620c7543fd4ec9f43d287c",
+      "line_count": 348,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/useContactsCRUD.test.tsx",
+      "blob_sha": "7a21f2bee287ef1c636e56ed73c790a6c354db7e",
+      "line_count": 393,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/__tests__/useContactsViewState.test.tsx",
+      "blob_sha": "79cff7d9fa79ddd56a5c61850aaf21db8cff3d59",
+      "line_count": 122,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/contactPermissions.ts",
+      "blob_sha": "b11bb00971403eeff7ce744fdb41dba317cac3ad",
+      "line_count": 92,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 92
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/contactRegionGeo.ts",
+      "blob_sha": "ed5416cb5b0e4112421db880fe781bbf50af0d0a",
+      "line_count": 88,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/contactTypeConfig.tsx",
+      "blob_sha": "f213a6c80709d13d5a1fa7d4ce39d08542cbaf33",
+      "line_count": 95,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/contactTypeOrder.ts",
+      "blob_sha": "19ce433e109b422f4cc9882be2c679b6c1c21f2e",
+      "line_count": 9,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/getRegionFromPhone.ts",
+      "blob_sha": "8289362e0ade861400a457991e08c24e745ae3e7",
+      "line_count": 40,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/types.ts",
+      "blob_sha": "d72ab3447006e009d0022a4539c6b76f3800140b",
+      "line_count": 37,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/useContactFormValidation.ts",
+      "blob_sha": "6fa2ac93fcdcf0eb61df6fee6faa33ceae1f1bb0",
+      "line_count": 161,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/useContactsCRUD.ts",
+      "blob_sha": "8be3bec66e4631d55516b740125ceddcb240cf41",
+      "line_count": 331,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 331
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "handleEditContact"
+      ],
+      "finding_ids": [
+        "R2-AUTH-013"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/contacts/useContactsViewState.ts",
+      "blob_sha": "ebe3aca0562ec6f1867e285c5baf7c1c2b953cff",
+      "line_count": 82,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 82
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/crm360/CRM360ExplorerView.tsx",
+      "blob_sha": "19fc4cd0477ee41673a621c29f934dba325fcbe0",
+      "line_count": 132,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 132
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/crm360/CRM360StatsCards.tsx",
+      "blob_sha": "a95d9402c4cd344c5655998502fbb3619c3e6efb",
+      "line_count": 70,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/crm360/CompanyFormDialog.tsx",
+      "blob_sha": "e04475506eb435d2eaa09f00edeb4852feae4023",
+      "line_count": 231,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 231
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "handleSubmit"
+      ],
+      "finding_ids": [
+        "R2-AUTH-019"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/crm360/ContactFormDialog.tsx",
+      "blob_sha": "3902767351eb673a9412ce405055e8d34a539c21",
+      "line_count": 267,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 267
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "handleSubmit"
+      ],
+      "finding_ids": [
+        "R2-AUTH-019"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/crm360/DataExplorerTable.tsx",
+      "blob_sha": "0294ebdc16df94daf1db89839b9f0033c8010159",
+      "line_count": 165,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/crm360/crm360TabsConfig.ts",
+      "blob_sha": "94095cbb189a8ce175aa58c4519269787089a49d",
+      "line_count": 61,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/crm360/crm360TabsData.ts",
+      "blob_sha": "0492c0f1c8ac60fbe73e9814a1917efda7d57871",
+      "line_count": 351,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/ContactDetails.tsx",
+      "blob_sha": "eeffb3e8f1a69c737171f4dfb107d2485beec79a",
+      "line_count": 147,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 147
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "handleQuickAction",
+        "wiring consumidor"
+      ],
+      "finding_ids": [
+        "R2-AUTH-012"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/AIInsightsWidget.tsx",
+      "blob_sha": "4ff80714274e3658eb59f51ebb4d8f634f322be5",
+      "line_count": 45,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/AssignmentSection.tsx",
+      "blob_sha": "8d24a0a1f9dcf8c0476a066d2e4cee3ee797746c",
+      "line_count": 117,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/CompactContactHeader.tsx",
+      "blob_sha": "b5eb5437a4cf8d96e7c4272ba458b8e825078279",
+      "line_count": 38,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/Contact360Helpers.tsx",
+      "blob_sha": "c8bab7a78609d79f2631bb3ff4ff8c7f0a29a3dd",
+      "line_count": 305,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/ContactAccordionSections.tsx",
+      "blob_sha": "97f3a98d20dc468cb4b8c54fe79f1d3fa35f24ed",
+      "line_count": 193,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 193
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "Adicionar tag sem handler",
+        "TagsContent",
+        "painel alcançável"
+      ],
+      "finding_ids": [
+        "R2-AUTH-012",
+        "R2-AUTH-018"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/ContactActionButtons.tsx",
+      "blob_sha": "851aa7e03c6010ebbdd240bfdc5c52ddba94f55d",
+      "line_count": 209,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 209
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "menu alcançável"
+      ],
+      "finding_ids": [
+        "R2-AUTH-012"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/ContactHeaderSection.tsx",
+      "blob_sha": "e150d4976513971845879922d8746687e2fbc6c9",
+      "line_count": 222,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 222
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/ContactInfoSection.tsx",
+      "blob_sha": "ef545e34a0f5e4395bded6212635bf98064c0040",
+      "line_count": 156,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/ContactIntelligencePanel.tsx",
+      "blob_sha": "6dd3770e798201ec6d03ca246c97168cb3b07d96",
+      "line_count": 343,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 190
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "briefing/rapport/metrics"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Demais trechos só inventariados; ranges extensos não implicam QA visual nem execução."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/EditContactDialog.tsx",
+      "blob_sha": "0ff256fb90405e8daf4fa4b2d36791b96eec2ae1",
+      "line_count": 172,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/EvolutionContactProfileSection.tsx",
+      "blob_sha": "955cd89c9c418099baddc439365fb744fcf672b4",
+      "line_count": 167,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/ExternalContact360Panel.tsx",
+      "blob_sha": "c870ade2e7add55f099e58e56aa2ee174a8fb64f",
+      "line_count": 97,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 97
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/LastActivityWidget.tsx",
+      "blob_sha": "54cb1aee8cc7f7984fecefe79aba4a8b16dc8084",
+      "line_count": 30,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/SLAAndAITagsSection.tsx",
+      "blob_sha": "42b863f5fce9ca8be4d52d2739dee42923038744",
+      "line_count": 105,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/StoryViewer.tsx",
+      "blob_sha": "4efa68798a8dc086f3a42a64f459b80d9c6b081f",
+      "line_count": 213,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/WhatsAppStatusSection.tsx",
+      "blob_sha": "e1091b2e92073a3771f208350a2e63e1168fbe46",
+      "line_count": 97,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/__tests__/ContactActionButtons.test.tsx",
+      "blob_sha": "fd032f79256cc2265031d49dd388dcd22eedc8ed",
+      "line_count": 111,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/__tests__/ContactHeaderSection.test.tsx",
+      "blob_sha": "7d7414773bc55b04697e0df44f9f38d5de40f42e",
+      "line_count": 427,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/__tests__/ContactInfoSection.test.tsx",
+      "blob_sha": "947b34742ae70eb7c6e2b92d94a878a6351d8b35",
+      "line_count": 64,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/__tests__/EditContactDialog.test.tsx",
+      "blob_sha": "ed7aad67797007ea9d5f665a94794cb0cfa4fb3a",
+      "line_count": 493,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/__tests__/StoryViewer.test.tsx",
+      "blob_sha": "788bc6785adaa04c9c64986275924cd04129dabd",
+      "line_count": 136,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/__tests__/WhatsAppStatusSection.test.tsx",
+      "blob_sha": "6d6de59e4c129ec5cabbc5418e405fc0988e34f5",
+      "line_count": 284,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/__tests__/click-to-call-origens.test.ts",
+      "blob_sha": "447da741b5c30cb51faafdce78b620e100aed3f2",
+      "line_count": 76,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/__tests__/contactDetailSections.test.ts",
+      "blob_sha": "d1819da03413420c6fd3d262fe2248912f7f21e6",
+      "line_count": 26,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/__tests__/editContactShape.test.ts",
+      "blob_sha": "c9f516857e84ac279d9626d5b2d647861f1cade1",
+      "line_count": 93,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/contactDetailSections.ts",
+      "blob_sha": "fb9d7000347808119e9c9a7b884885baef26c106",
+      "line_count": 55,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/editContactShape.ts",
+      "blob_sha": "8c9c975cb8664897687438502a921dd8d583144d",
+      "line_count": 70,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/sidebar/__tests__/professionalFallback.test.ts",
+      "blob_sha": "8b12ccac1febc53c6587fbca083a36a5d967f322",
+      "line_count": 47,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/inbox/contact-details/sidebar/professionalFallback.ts",
+      "blob_sha": "87b63e837a7f5f6de443ac0bc72dbd342f07dd20",
+      "line_count": 36,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/layout/ProfileMenuContent.tsx",
+      "blob_sha": "2898001d173c1cf6fac7902de641399d9a38900e",
+      "line_count": 54,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 54
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/mfa/MFABackupCodes.tsx",
+      "blob_sha": "f8c2e8d7b998602a10ca78d024e5af538b93939b",
+      "line_count": 141,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 141
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/mfa/MFAEnroll.tsx",
+      "blob_sha": "690919561df9aef21b8a8aedddb95c45fac05bfd",
+      "line_count": 202,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/mfa/MFASettings.tsx",
+      "blob_sha": "2874304ddab31651243b63e775a5c4f38cf50ba1",
+      "line_count": 191,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/mfa/MFAVerify.tsx",
+      "blob_sha": "8f1e6178d572dde800570b3d46f3b9a40021abd9",
+      "line_count": 132,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 132
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/mfa/__tests__/MFABackupCodes.crypto.test.tsx",
+      "blob_sha": "e4cea6fd9335bcba6baeeb9e6e2b316f9a3a1e28",
+      "line_count": 67,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/mfa/__tests__/MFABackupCodes.test.tsx",
+      "blob_sha": "88132d3b58c63bdf18ae3f0c07083d90dde7f422",
+      "line_count": 219,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/permissions/PermissionMatrix.tsx",
+      "blob_sha": "9528e77ae5a584e286e70c2fb38a6a5f218e4d62",
+      "line_count": 176,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 176
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "handleToggle"
+      ],
+      "finding_ids": [
+        "R2-AUTH-009"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/security/AuditLogDashboard.tsx",
+      "blob_sha": "eeb1ec4850ef61f8c939d7dcf798e0556395db89",
+      "line_count": 271,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/BlockedIPDialogs.tsx",
+      "blob_sha": "3bc5df25101d664a10f651422cc496b322a92cad",
+      "line_count": 96,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/BlockedIPsPanel.tsx",
+      "blob_sha": "a4f196f0abadcc898c4a27234060c1ec3a184279",
+      "line_count": 85,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/DeviceCard.tsx",
+      "blob_sha": "601c61e38ff535781d954529bedbe7c98c5fe2f2",
+      "line_count": 109,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/DevicesPanel.tsx",
+      "blob_sha": "ea5f942a52446a215ccd1be0a403f9012396fdf0",
+      "line_count": 104,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/GeoBlockingPanel.tsx",
+      "blob_sha": "50a103a5fce56641642e7b424a1ec8a91d9898ea",
+      "line_count": 157,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/IPWhitelistPanel.tsx",
+      "blob_sha": "7f77b5bc2db1585fcfd14f0286ca7b737c8e1b96",
+      "line_count": 287,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/MfaAdminNudge.tsx",
+      "blob_sha": "cb6ef549d84b4a18b68d7d03965d8fc0d2b6ab80",
+      "line_count": 81,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/PasskeyDialogs.tsx",
+      "blob_sha": "6cb78fb37d0bc21684ba69dcc05b80bffa1b00bb",
+      "line_count": 85,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/PasskeysPanel.tsx",
+      "blob_sha": "f2d9df98a96e84ac1cc58c852d56e1c54b68059a",
+      "line_count": 166,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 166
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/security/PasswordResetRequestsPanel.tsx",
+      "blob_sha": "871a2b47f2eae46543fa00e15eb0d49ff95d0d06",
+      "line_count": 142,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 142
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "handleApprove"
+      ],
+      "finding_ids": [
+        "R2-AUTH-007"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/security/QuarantineBadge.tsx",
+      "blob_sha": "8e143c3f828671c554632ebadfe5c442fa067267",
+      "line_count": 53,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/QuarantinePanel.tsx",
+      "blob_sha": "d93d2082997ba1b22f0d8d1dd278ea18183b148c",
+      "line_count": 295,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/RateLimitConfigPanel.tsx",
+      "blob_sha": "d530018985f63fc004870100cbc0469e8112e215",
+      "line_count": 247,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/RateLimitRealtimeAlerts.tsx",
+      "blob_sha": "72d46db66919361b9def564ef2e2b1ef992e7b99",
+      "line_count": 174,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/RejectResetDialog.tsx",
+      "blob_sha": "82f31696533dc5ff9936c306f9205de30850461d",
+      "line_count": 45,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/SecurityNotificationsPanel.tsx",
+      "blob_sha": "f43313c18b408bd857176999b08dfe35ccee473b",
+      "line_count": 218,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/SecurityOverview.tsx",
+      "blob_sha": "10e091960ce708acde6c9c405c496cbb2bb60418",
+      "line_count": 321,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/SecurityPanels.tsx",
+      "blob_sha": "329857e0d1cb4843a65a662f713cf2b4c9323f2c",
+      "line_count": 133,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/SecuritySettingsPanel.tsx",
+      "blob_sha": "5a903d9cf20298cf2bc3e8ac553939103a16d7a8",
+      "line_count": 233,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 233
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/security/SecurityView.tsx",
+      "blob_sha": "f98bce6c4ae825ec3591cd58a346ba7390e6caa7",
+      "line_count": 207,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 140
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "tabs/gates/MFA mounting"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Demais trechos só inventariados; ranges extensos não implicam QA visual nem execução."
+      ]
+    },
+    {
+      "path": "src/components/security/__tests__/AuditLogDashboard.hoje-local.test.tsx",
+      "blob_sha": "2c8e97fd1db6562d0889928cc29116f3062acfe3",
+      "line_count": 90,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/__tests__/AuditLogDashboard.test.tsx",
+      "blob_sha": "defb4207acfb6d4b7e82a9e4f83e2972a1328d36",
+      "line_count": 160,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/__tests__/MfaAdminNudge.test.tsx",
+      "blob_sha": "e335d2d7fa65b1ec51df0d999c9c975e545fb5b6",
+      "line_count": 80,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/__tests__/RateLimitConfigPanel.test.tsx",
+      "blob_sha": "0fc1a20fb94ed55ee1c4038b6a6a7c39d39fa3af",
+      "line_count": 224,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/security/__tests__/rate-limit-alert-sound.test.ts",
+      "blob_sha": "77804baaacbaa7df0b5fbc449c0afc54873f3903",
+      "line_count": 52,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/settings/SettingsView.tsx",
+      "blob_sha": "c576115115689b975b3897df601519e09de34f53",
+      "line_count": 236,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 140
+        },
+        {
+          "start_line": 180,
+          "end_line": 236
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "settings personal/staff surfaces",
+        "staff gating"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Demais trechos só inventariados; ranges extensos não implicam QA visual nem execução."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/AddMembersDialog.tsx",
+      "blob_sha": "49852af20861baca0a9fc3f24156971fb3082017",
+      "line_count": 158,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/DepartmentManagementDialog.tsx",
+      "blob_sha": "effdfa9b4b70175e844fe4aaf9aa28b3fd7450f1",
+      "line_count": 76,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/GroupManagementDialog.tsx",
+      "blob_sha": "bab5c8d48183b3e1e5aa5e76d1632b52bde9a559",
+      "line_count": 263,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 263
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "ID dormente",
+        "shape dormente"
+      ],
+      "finding_ids": [
+        "R2-AUTH-017"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/NewConversationDialog.tsx",
+      "blob_sha": "5237a5b25f9417bdf38a41f3e2caf7d7528ae623",
+      "line_count": 258,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 61,
+          "end_line": 200
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "creation handlers and types"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Demais trechos só inventariados; ranges extensos não implicam QA visual nem execução."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/ParticipantStatsGraph.tsx",
+      "blob_sha": "2837d80138fe5eca0a2f64dca5344f9d1a4771fd",
+      "line_count": 59,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/TeamChatA11y.tsx",
+      "blob_sha": "d3433865d7f160c187a82fc0bbd9fe864a63ec6c",
+      "line_count": 78,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/TeamChatHeader.tsx",
+      "blob_sha": "d3b1b9675010694a6905b5d75461f68fc7b07307",
+      "line_count": 279,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/TeamChatInputArea.tsx",
+      "blob_sha": "80a9e48a13030193c4afdd4bc514e1d97ea8fd66",
+      "line_count": 192,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 192
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/TeamChatPanel.tsx",
+      "blob_sha": "66db8581e8565112211f289772b49255bd0c237f",
+      "line_count": 279,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 279
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "imports e props do header"
+      ],
+      "finding_ids": [
+        "R2-AUTH-017"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/TeamChatView.tsx",
+      "blob_sha": "8454231c59f5d39daef659d66756ecbe66ed4d2b",
+      "line_count": 106,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 106
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "painel sem key por conversa",
+        "props para lista e painel"
+      ],
+      "finding_ids": [
+        "R2-AUTH-010",
+        "R2-AUTH-017"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/TeamConversationList.tsx",
+      "blob_sha": "e30d98e5bf19abfc0177a395c0c5b0a70c9b7c4d",
+      "line_count": 221,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 185
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "filters/consumer/member display"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Demais trechos só inventariados; ranges extensos não implicam QA visual nem execução."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/TeamFileUploader.tsx",
+      "blob_sha": "1c012e397f30e76de48862f35df2b3ec7bffb3ce",
+      "line_count": 171,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/TeamMemberDetails.tsx",
+      "blob_sha": "2ae63d3cd4caf36eebf96650834a73d0a582c92f",
+      "line_count": 122,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 122
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "render detalhes e count"
+      ],
+      "finding_ids": [
+        "R2-AUTH-011"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/TeamMemberProfileHeader.tsx",
+      "blob_sha": "149ecee294d69c86f3ece90b88eeab617ab74b70",
+      "line_count": 115,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/TeamMessageItem.tsx",
+      "blob_sha": "f188c9d44a65adc78c0e859d3a2bb4adf388369e",
+      "line_count": 257,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/TeamMessageReactionsWrapper.tsx",
+      "blob_sha": "8ee5eebb49af4fc6a1e81eab5275c8c952ee1abd",
+      "line_count": 41,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/TeamPerformancePanel.tsx",
+      "blob_sha": "a9bc1bfb7269e27611a68d58fcdfc393441b2d13",
+      "line_count": 73,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/TransferConversationDialog.tsx",
+      "blob_sha": "3b916e74b0cd8601fea7fce12a58682a15551eff",
+      "line_count": 133,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 90
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "select members/transfer flow"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Demais trechos só inventariados; ranges extensos não implicam QA visual nem execução."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/__tests__/team-chat-comprehensive.test.ts",
+      "blob_sha": "c898d6cce8b89caa094347fb5007f3f830ee37ac",
+      "line_count": 1589,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+      "blob_sha": "0d2a8999cdcd7a7d5facbeadacd0181861a92a7f",
+      "line_count": 727,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/__tests__/team-chat-security-gaps.test.ts",
+      "blob_sha": "c6a6ee7578b7353ff1c2bf7ea906a0fb928eccd5",
+      "line_count": 390,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/department-management/DepartmentAuditView.tsx",
+      "blob_sha": "907484f84b01a3bce6472df6dc2f3401aa209960",
+      "line_count": 53,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/department-management/DepartmentInvitesView.tsx",
+      "blob_sha": "b4728e96f0413dd78446394f5a126364e29ba839",
+      "line_count": 92,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/department-management/DepartmentMembersView.tsx",
+      "blob_sha": "f609792d8f6adb60ce825d13a0ec5ef6d9c530ef",
+      "line_count": 134,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/department-management/DepartmentWhatsAppView.tsx",
+      "blob_sha": "e4d3101a0254a4749f3d03334eaec7e6da065ccf",
+      "line_count": 132,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/teamChatParts.tsx",
+      "blob_sha": "9b456be3ece626996a58e697a73557897b794d15",
+      "line_count": 127,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/components/team-chat/useTeamChatPanel.ts",
+      "blob_sha": "236c415ea7b224bb41b815097fb75ed4c37c9ce3",
+      "line_count": 362,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 362
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "estado de edição",
+        "estados de gestão",
+        "reset incompleto por conversationId",
+        "send atual"
+      ],
+      "finding_ids": [
+        "R2-AUTH-010",
+        "R2-AUTH-017"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/auth/__tests__/useAuthForm.email.test.tsx",
+      "blob_sha": "f6bea07e70b0a83ded5fd2d6ae4631dc18306c5b",
+      "line_count": 119,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/auth/__tests__/useAuthForm.senha.test.tsx",
+      "blob_sha": "4d77ac5c995089c65848b4e84845d339b6f04e5e",
+      "line_count": 113,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/auth/index.ts",
+      "blob_sha": "b02a84e578adf498186c0d81f5cee2b7806b9533",
+      "line_count": 9,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/auth/useAuth.tsx",
+      "blob_sha": "b6a2c01e872eb422a4c71cab6fff0e58b7f383a4",
+      "line_count": 197,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 197
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "fetchProfile",
+        "limpeza de logout",
+        "onAuthStateChange",
+        "refreshProfile/signOut"
+      ],
+      "finding_ids": [
+        "R2-AUTH-005",
+        "R2-AUTH-010"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/auth/useAuthForm.ts",
+      "blob_sha": "8425451add33bca558cd2e1a92c520e76041ecba",
+      "line_count": 237,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 237
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "handlePasskeyLogin",
+        "redirect após user"
+      ],
+      "finding_ids": [
+        "R2-AUTH-002",
+        "R2-AUTH-003"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/auth/useMFA.ts",
+      "blob_sha": "9bab653552014a797abf58dcd4fbe6dc915e2ecd",
+      "line_count": 163,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 163
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/auth/useReauthentication.ts",
+      "blob_sha": "782759ce9fd1075703702fcc42524a4243cd3a20",
+      "line_count": 110,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 110
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/auth/useSecureProfile.ts",
+      "blob_sha": "7fedd79ff2b25ccd87a3e8a28914de9834769953",
+      "line_count": 42,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 42
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/auth/useWebAuthn.ts",
+      "blob_sha": "9757ac438d96ce70bd030a5cb12ed4fccf870f99",
+      "line_count": 186,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 186
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "authenticateWithPasskey"
+      ],
+      "finding_ids": [
+        "R2-AUTH-002"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/chat/useTeamChatDraft.ts",
+      "blob_sha": "586bbd32e45e818ee4fac64e38a6e82df4d849dd",
+      "line_count": 100,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 100
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "chave/auto-save/restore"
+      ],
+      "finding_ids": [
+        "R2-AUTH-010"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/chat/useTeamChatNotifications.ts",
+      "blob_sha": "998c2784161b5d3291bfc970678ef25a0cc35744",
+      "line_count": 181,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 181
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/__tests__/contactsAggregates.test.ts",
+      "blob_sha": "7a492f66cf39734a5f13c02a79c2fe8d805bb264",
+      "line_count": 26,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/__tests__/contactsAggregatesRefetchOnMount.test.tsx",
+      "blob_sha": "a6408c10d265ae694488ba533c81d72f32af8f07",
+      "line_count": 89,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useAdvancedContactSearch.filters.test.ts",
+      "blob_sha": "9b3ca926f1009c9aa556d64512c5a6dab515b817",
+      "line_count": 15,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useAgentPresence.test.ts",
+      "blob_sha": "0ac32f80f40d55d3998e3dee6b93daf7f5b390db",
+      "line_count": 134,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useAgentsLite.test.tsx",
+      "blob_sha": "3ca6ffe162dfc417cf817d225b0c2cd9e69f75cb",
+      "line_count": 77,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactCrm360.test.ts",
+      "blob_sha": "485165fc617afbef1d88e56ea613d41ba0d424de",
+      "line_count": 89,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactEnrichedData.test.tsx",
+      "blob_sha": "e7a7aff78e654c3561eb68ccafb0c15e27d8bfa6",
+      "line_count": 168,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactSidebar.test.tsx",
+      "blob_sha": "69f852a1cb369d3d3bceef1ca467970fbfebd283",
+      "line_count": 76,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactsKpi.pagination.test.ts",
+      "blob_sha": "612d6ba061a716710ba64693ae38aae02fb14706",
+      "line_count": 62,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactsKpi.query.test.tsx",
+      "blob_sha": "8a0e6cf6472c0b233d788650fbd9d001c99f0255",
+      "line_count": 56,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useContactsKpi.test.ts",
+      "blob_sha": "0799ae0fc8f532e3ff039309651add57d4c6828c",
+      "line_count": 204,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/__tests__/useEmailContactContext.test.tsx",
+      "blob_sha": "dcfafb31b9f8e0c58730f6139cbaf76b7943c23b",
+      "line_count": 75,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/contactsAggregates.ts",
+      "blob_sha": "51d4eb27c0c74d93356a38de7db0dcf127e17bfd",
+      "line_count": 64,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/index.ts",
+      "blob_sha": "8c81e8522c2cc5c8c370420eb569a520fb8a3335",
+      "line_count": 19,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useAdvancedContactSearch.ts",
+      "blob_sha": "88053ab353d050ccc3c7f9bf61125e70852a223e",
+      "line_count": 123,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 123
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useAgentPresence.ts",
+      "blob_sha": "f1b83b15f9d40196505afc3f2c6176d9599eea9d",
+      "line_count": 178,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useAgentReassignment.ts",
+      "blob_sha": "07358eeaa3c5a37032fe0f9465e460f591f51a44",
+      "line_count": 50,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 50
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useAgents.ts",
+      "blob_sha": "9a87db8dcea3d8538a8009cc3986a26cd4dc96c9",
+      "line_count": 152,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 152
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "activeChats e stats"
+      ],
+      "finding_ids": [
+        "R2-AUTH-020"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useAgentsLite.ts",
+      "blob_sha": "783b96e3cf3bafd3b44f6c064cfbb4c746c218f4",
+      "line_count": 25,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useCRMAdminAccess.ts",
+      "blob_sha": "9a9a8531b3a0ddfe03452f9f1b68a38521812028",
+      "line_count": 19,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useContactAssignment.ts",
+      "blob_sha": "d6ed668e47235116caf4021a4defe424568f535b",
+      "line_count": 38,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 38
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useContactCrm360.ts",
+      "blob_sha": "bbe416017f458d6b0a547942b8bc05f01490f7ae",
+      "line_count": 258,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 258
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useContactCustomFields.ts",
+      "blob_sha": "5177c9faf254f3ca49c7d2acea977c9f39f0636e",
+      "line_count": 66,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 66
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useContactEnrichedData.ts",
+      "blob_sha": "02f7398107d5debbf70bbda0ce3a85bbcd2a4b5b",
+      "line_count": 121,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 121
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useContactIntelligence.ts",
+      "blob_sha": "18ab915b7c991b6358fcd9d58a8c7e3ef95c4d11",
+      "line_count": 110,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 110
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "contact_id e consumidor"
+      ],
+      "finding_ids": [
+        "R2-AUTH-018"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useContactNotes.ts",
+      "blob_sha": "e0d514eabe45c0c91b308b1beba975fa736dc154",
+      "line_count": 140,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 140
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useContactPurchases.ts",
+      "blob_sha": "4cffb83038fbbd5e1588a2583521a223823f28f3",
+      "line_count": 32,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useContactSidebar.ts",
+      "blob_sha": "541a255feafb4727547507faecd4cdf19b9dcd8e",
+      "line_count": 35,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 35
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useContactStats.ts",
+      "blob_sha": "ac26a97b7d758e55add9b7e29ba18d41d78a1777",
+      "line_count": 20,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useContactSummaryNote.ts",
+      "blob_sha": "553dbbb9d9736a7f3c4cd866e144fae5713acd9f",
+      "line_count": 30,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useContactsKpi.ts",
+      "blob_sha": "08c8131332c4864ebaa0b1fba0460b472136dc29",
+      "line_count": 106,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useContactsSearch.ts",
+      "blob_sha": "001291ef8b983e934fc3691fe92516168a7549f1",
+      "line_count": 248,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useEmailContactContext.ts",
+      "blob_sha": "7dd83570edd68ee9822a0d907231a0df87e3ff0a",
+      "line_count": 55,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 55
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useExternalCargos.ts",
+      "blob_sha": "7ca4f990aed1ccd8d15f781285a5a4998d5b61b0",
+      "line_count": 21,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useExternalContact360.ts",
+      "blob_sha": "6e329b01ac37251d784e6ba9035e6c5ac6d5946b",
+      "line_count": 24,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 24
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useExternalContact360Batch.ts",
+      "blob_sha": "5e41403905133958fc80e23753fb1bb7cf3dcdb7",
+      "line_count": 63,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 63
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useExternalEmpresas.ts",
+      "blob_sha": "24d427bdbb512a30483d42d5c01fb03f64371b43",
+      "line_count": 21,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useTeamProfiles.ts",
+      "blob_sha": "fb33eb361c21d30aca245ad165a01f04f33f896b",
+      "line_count": 19,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 19
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "projeção existente"
+      ],
+      "finding_ids": [
+        "R2-AUTH-011"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/crm/useVisibleAgents.ts",
+      "blob_sha": "c14f9fffc480e6a2e5a5b4709611137d9d045073",
+      "line_count": 25,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/integrations/useExternalDB.ts",
+      "blob_sha": "cc0d00e79513ce3b063106102f14879d20cb6a9a",
+      "line_count": 160,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 160
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "useExternalMutation"
+      ],
+      "finding_ids": [
+        "R2-AUTH-019"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/system/usePermissions.ts",
+      "blob_sha": "c8242e4421b19780f72aa36765883db807309f60",
+      "line_count": 169,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 169
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "mutations retornam boolean"
+      ],
+      "finding_ids": [
+        "R2-AUTH-009"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/system/useUserRole.ts",
+      "blob_sha": "bf443c59442e8913b9c65b4114a4e2704c21b313",
+      "line_count": 74,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 74
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "cache de papéis"
+      ],
+      "finding_ids": [
+        "R2-AUTH-009"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/departmentInviteCode.random.test.tsx",
+      "blob_sha": "d73c89213493e648fa7d693b9f88a36ab38283fb",
+      "line_count": 89,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/rls-contract.test.ts",
+      "blob_sha": "48a8e147aceb6053a60f4e0967e65dcebc15fffd",
+      "line_count": 75,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx",
+      "blob_sha": "aa245de8eaea57427ac3e7ae108a7cd20380d6af",
+      "line_count": 48,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/useTeamMessages.test.tsx",
+      "blob_sha": "29239f417bfd7a348aa64233cd7d3d1ea6e394ac",
+      "line_count": 65,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/__tests__/useTeamPerformance.test.ts",
+      "blob_sha": "e086ddb7ab3d40f6b01213c5d308d25dee50073f",
+      "line_count": 66,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/index.ts",
+      "blob_sha": "fe5eba410b5807c4a3c574b2dbe052fcc2273bfd",
+      "line_count": 5,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/teamChatTypes.ts",
+      "blob_sha": "032261cff4115df509162ba541488020024b4221",
+      "line_count": 52,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/teamMessageStatus.ts",
+      "blob_sha": "0e05b0c2b2900569c220d5e12749759c44f09759",
+      "line_count": 10,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/useActiveDepartments.ts",
+      "blob_sha": "2c7a9b3a84b2451d41c92aed293e1c7c73ca4ecc",
+      "line_count": 26,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 26
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/useDepartmentManagement.ts",
+      "blob_sha": "a45ac9d1dc17020b500051311debf05c2ec13820",
+      "line_count": 248,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 248
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/useParticipantStats.ts",
+      "blob_sha": "61591b259d16e2a7744e328b3c9ac4f4d5795642",
+      "line_count": 39,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/useTeamChatMembers.ts",
+      "blob_sha": "9212ddf1f9328161c92c68c961acd6c242c91876",
+      "line_count": 42,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 42
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/useTeamChatMutations.ts",
+      "blob_sha": "89d0e5a78fab335eeed84ac4c96aece9f7a1028b",
+      "line_count": 253,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 253
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/useTeamConversations.ts",
+      "blob_sha": "5cf706a571edcaea4d68de8e7ce3037d0d1c761a",
+      "line_count": 127,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 127
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "embed e displayName fallback"
+      ],
+      "finding_ids": [
+        "R2-AUTH-011"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/useTeamMemberDetails.ts",
+      "blob_sha": "0a3d5c862699b293f8f36e605906af925963b2cf",
+      "line_count": 72,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 72
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "consultas peer/group"
+      ],
+      "finding_ids": [
+        "R2-AUTH-011"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/useTeamMessageReactions.ts",
+      "blob_sha": "4209e89332190b80e147fe732d2fccde7f436424",
+      "line_count": 125,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 125
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/useTeamMessages.ts",
+      "blob_sha": "286e33599935a8ca3588dd665b3425de06a1974f",
+      "line_count": 78,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 78
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/useTeamPerformance.ts",
+      "blob_sha": "41bf6408ed6c9cad28fc2a91bc4423e413578227",
+      "line_count": 37,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/useTeamPresence.ts",
+      "blob_sha": "3c709133bd966ca33f2ec4f3783b528fcac20932",
+      "line_count": 37,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 37
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/useTeamTyping.ts",
+      "blob_sha": "06990b56e60c9aab5bb7ca52a8e47b22c7e380f4",
+      "line_count": 65,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 65
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/team-chat/useTeamUnreadCount.ts",
+      "blob_sha": "dce41ee50a1091b40bda17e6f30be0afaf9ee2b3",
+      "line_count": 36,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 36
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/hooks/ui/useDeviceDetection.ts",
+      "blob_sha": "512c3752014ac7a1494bce1ca8eda98e89a1fa28",
+      "line_count": 252,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 252
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "removeDevice/endSession/endAllOtherSessions"
+      ],
+      "finding_ids": [
+        "R2-AUTH-004"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/lib/crmIntegration.ts",
+      "blob_sha": "b510bc713af906e5359952d04ecf8ac6af24cbbf",
+      "line_count": 41,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 41
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/lib/queryClient.ts",
+      "blob_sha": "585ce9bf74ebeb3308234c672e6ae0fb98f10b64",
+      "line_count": 33,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 33
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "políticas globais de cache"
+      ],
+      "finding_ids": [
+        "R2-AUTH-009"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/lib/serverLogin.ts",
+      "blob_sha": "dd7d79a775127bbb18ee7a64b6e5f730032609aa",
+      "line_count": 121,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 121
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "interpretação de resposta"
+      ],
+      "finding_ids": [
+        "R2-AUTH-021"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/pages/ForgotPassword.tsx",
+      "blob_sha": "c4a8b964af4313dd0d0da2026c3224076ae34caf",
+      "line_count": 207,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 110
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "submission + success branch"
+      ],
+      "finding_ids": [
+        "R2-AUTH-006"
+      ],
+      "gaps": [
+        "Demais trechos só inventariados; ranges extensos não implicam QA visual nem execução."
+      ]
+    },
+    {
+      "path": "src/pages/ResetPassword.tsx",
+      "blob_sha": "e753267c38793665b3ace3b715488f7da3d6c177",
+      "line_count": 213,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 213
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/pages/SSOCallback.tsx",
+      "blob_sha": "0bda53e4766be04c2443366177d7668455edca50",
+      "line_count": 150,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 150
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/pages/TwoFactorAuth.tsx",
+      "blob_sha": "dccd7a3ba6c07a6dd7124a2e9cbc5dbfd7be2a03",
+      "line_count": 79,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 79
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "checkMFAStatus"
+      ],
+      "finding_ids": [
+        "R2-AUTH-003"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/pages/ViewRouter.tsx",
+      "blob_sha": "9964a4ea364a29ff6a59c5e49e199c2eeab22ec9",
+      "line_count": 258,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 258
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/pages/admin/RateLimitDashboard.tsx",
+      "blob_sha": "b53ec053667e05a0c72a0e03eccf4cc7ac069c38",
+      "line_count": 302,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/pages/admin/RolesPage.tsx",
+      "blob_sha": "2570d2624fff497e2a0b241a5578b10b1f26cc65",
+      "line_count": 184,
+      "review_level": "structural",
+      "reviewed_ranges": [],
+      "symbols_or_slices_reviewed": [
+        "inventário de caminho/tipo/hash; busca de consumidor quando indicado em rejeitados"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Corpo não revisado semanticamente nesta subárea; testes não executados. Não inferir cobertura funcional pela existência do arquivo."
+      ]
+    },
+    {
+      "path": "src/pages/admin/useRolesPageState.ts",
+      "blob_sha": "fbc2cdb99980e754bc1bb8641224a6a571fb5b4f",
+      "line_count": 95,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 95
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/providers/AppProviders.tsx",
+      "blob_sha": "f08c836c6e7a65cb484c30cd1df75028cf6f0d9b",
+      "line_count": 90,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 90
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/routes/AppRoutes.tsx",
+      "blob_sha": "005f7a1a35bfb4cb98161784c7047a4edbc9dc22",
+      "line_count": 120,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 120
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "rotas auth/2fa/admin"
+      ],
+      "finding_ids": [
+        "R2-AUTH-003"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/services/auth.service.ts",
+      "blob_sha": "370289c4cecfa7f4392831fac8ee94b1191ec45c",
+      "line_count": 133,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 133
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/services/contact.service.ts",
+      "blob_sha": "4b61093c59aeb3aa0700a98163614180b167253f",
+      "line_count": 269,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 269
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/services/crm/external-crm.service.ts",
+      "blob_sha": "c73239100affb4b7c026b7b8d6b5d1d62ff3de7f",
+      "line_count": 188,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 188
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "src/services/navigation.service.ts",
+      "blob_sha": "7b6e2f13acf78703e9e58e9117147563f93e95be",
+      "line_count": 206,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 206
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "supabase/functions/_shared/crm-integration-contract.ts",
+      "blob_sha": "cfbc3a02deeee3685973ee5e87eea47de4f643ae",
+      "line_count": 172,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 172
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "corpo do módulo, imports, hooks/handlers e retornos lidos integralmente"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "supabase/functions/_shared/schemas.ts",
+      "blob_sha": "57b706d77864be9c2c24f0eb57f0728335b0b2d0",
+      "line_count": 627,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 338,
+          "end_line": 345
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "WebAuthnActionSchema"
+      ],
+      "finding_ids": [
+        "R2-AUTH-001"
+      ],
+      "gaps": [
+        "Demais trechos só inventariados; ranges extensos não implicam QA visual nem execução."
+      ]
+    },
+    {
+      "path": "supabase/functions/approve-password-reset/index.ts",
+      "blob_sha": "06449dc84c8bc823cc9505555ba8ef77c8e3d6a2",
+      "line_count": 109,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 109
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "leitura/aprovação/generateLink"
+      ],
+      "finding_ids": [
+        "R2-AUTH-007"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "supabase/functions/auth-login/index.ts",
+      "blob_sha": "a4fe292c8b536d271ff3d65008b5ee8473babc99",
+      "line_count": 121,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 121
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "classificação de falha Auth",
+        "login sem is_active/session_invalidated_at"
+      ],
+      "finding_ids": [
+        "R2-AUTH-004",
+        "R2-AUTH-021"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "supabase/functions/create-user/index.ts",
+      "blob_sha": "c9f07ddae973e905dfee8d7180e82c3ef02d4eb8",
+      "line_count": 157,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 157
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "lookup single de papel",
+        "provisionamento parcial"
+      ],
+      "finding_ids": [
+        "R2-AUTH-016"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "supabase/functions/crm-integration/index.ts",
+      "blob_sha": "d51878b27773388bf87396cb82f9b62c8c818c7b",
+      "line_count": 763,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 763
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "contactLookup",
+        "contactLookupBatch",
+        "mutate"
+      ],
+      "finding_ids": [
+        "R2-AUTH-018",
+        "R2-AUTH-019"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "supabase/functions/detect-new-device/index.ts",
+      "blob_sha": "a94779b3b19fcb704eb9a9370cc62267b4e45a33",
+      "line_count": 172,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 172
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "registro de user_sessions"
+      ],
+      "finding_ids": [
+        "R2-AUTH-004"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "supabase/functions/webauthn/index.ts",
+      "blob_sha": "9e42845d17a6dead75e6deb95f12be00d9e7b340",
+      "line_count": 192,
+      "review_level": "semantic",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 192
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "authentication-options / verify-authentication",
+        "passkey challenge / identity response",
+        "verify-registration"
+      ],
+      "finding_ids": [
+        "R2-AUTH-001",
+        "R2-AUTH-002"
+      ],
+      "gaps": [
+        "Sem execução real de UI/serviços; não equivale a certificação de todos os estados do módulo."
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260315193759_ad5f45ba-4b9f-4b25-b483-7da8b548e8c7.sql",
+      "blob_sha": "566646ef7d4f844f87bf80f91030daf645fa965f",
+      "line_count": 61,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 33,
+          "end_line": 40
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "adiciona session_invalidated_at"
+      ],
+      "finding_ids": [
+        "R2-AUTH-004"
+      ],
+      "gaps": [
+        "Cadeia SQL e grants/RLS finais são responsabilidade do relatório database; esta área usa os resultados coordenados."
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260401000858_6225188d-2861-4f8e-b84b-fa68b542cbb5.sql",
+      "blob_sha": "a05f3685643ec445ce07862463a20db859b3faa3",
+      "line_count": 82,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 26
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "SELECT profiles próprio/admin/supervisor e política de equipe transitória"
+      ],
+      "finding_ids": [
+        "R2-AUTH-006",
+        "R2-AUTH-011"
+      ],
+      "gaps": [
+        "Cadeia SQL e grants/RLS finais são responsabilidade do relatório database; esta área usa os resultados coordenados."
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260401001655_509f6c72-b9c2-458c-9dc5-af298d512958.sql",
+      "blob_sha": "bcef82895cdad989af1c9809d1107b3483cc6b15",
+      "line_count": 17,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 5
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "remove política de equipe"
+      ],
+      "finding_ids": [
+        "R2-AUTH-006",
+        "R2-AUTH-011"
+      ],
+      "gaps": [
+        "Cadeia SQL e grants/RLS finais são responsabilidade do relatório database; esta área usa os resultados coordenados."
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260830080000_fn_is_admin_and_fix_permissions_rls.sql",
+      "blob_sha": "f1ea0afaa371f86c9b024d4d86719b3dc5ad796d",
+      "line_count": 71,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 25,
+          "end_line": 71
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "role_permissions políticas e RPC designada"
+      ],
+      "finding_ids": [],
+      "gaps": [
+        "Cadeia SQL e grants/RLS finais são responsabilidade do relatório database; esta área usa os resultados coordenados."
+      ]
+    },
+    {
+      "path": "supabase/migrations/20260909200000_harden_inbox_contact_authorization.sql",
+      "blob_sha": "a0c2e2f7484bfdd3808b3e30f2ca87cb4104428c",
+      "line_count": 216,
+      "review_level": "targeted",
+      "reviewed_ranges": [
+        {
+          "start_line": 1,
+          "end_line": 84
+        }
+      ],
+      "symbols_or_slices_reviewed": [
+        "predicado canônico de visibilidade"
+      ],
+      "finding_ids": [
+        "R2-AUTH-004"
+      ],
+      "gaps": [
+        "Cadeia SQL e grants/RLS finais são responsabilidade do relatório database; esta área usa os resultados coordenados."
+      ]
+    }
+  ],
+  "rejected_or_integration_pending_ids": [
+    "D-AUTH-01",
+    "D-AUTH-02",
+    "D-AUTH-03",
+    "D-AUTH-04",
+    "D-AUTH-05",
+    "D-AUTH-06",
+    "D-AUTH-07",
+    "D-AUTH-08",
+    "D-AUTH-09",
+    "D-AUTH-10"
+  ],
+  "remaining_microareas": [
+    "Corpos dos arquivos structural, incluindo apresentações secundárias, acessibilidade/responsividade, timers visuais e testes preexistentes.",
+    "MFA enrollment visual, gerenciamento visual de dispositivos/alertas, SSO OAuth real e entrega real de recuperação: nenhum E2E/browser externo foi executado.",
+    "Formulários externos: integridade do schema Singu efetivo e contratos RPC externos continuam dependentes de evidência externa autorizada.",
+    "SQL final/RLS/grants, storage e last-owner/department RPCs: relatório database coordenado.",
+    "Segurança provedores e proxy de envio; microárea TalkX sampleCustomFields foi informada ao coordenador.",
+    "Graph AST local confirma conectividade de módulo, não uso de export específico; casos dormentes classificados por busca de símbolo/imports."
+  ],
+  "probe_ids": [
+    "P-AUTH-01",
+    "P-AUTH-02",
+    "P-AUTH-03",
+    "P-AUTH-04",
+    "P-AUTH-05",
+    "P-AUTH-06",
+    "P-AUTH-07",
+    "P-AUTH-08"
+  ]
+}

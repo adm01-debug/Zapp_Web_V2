@@ -1,0 +1,165 @@
+{
+ "bucket_raw": "ERRO: HTTP 400 /storage/v1/bucket/undefined: {\"statusCode\":\"404\",\"error\":\"Bucket not found\",\"message\":\"Bucket not found\",\"code\":\"NoSuchBucket\"}",
+ "cdn": [
+  {
+   "name": "CS go - HeadShot Sound",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "7776",
+   "db_size": 7776,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "Braziska Portugaska - Allassadam",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "56990",
+   "db_size": 56990,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "AI MINHA B",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "34581",
+   "db_size": 34581,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "Dog whimper sad",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "99530",
+   "db_size": 99530,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "Coronel Jesuino - Vou cagar",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "296295",
+   "db_size": 296295,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "Cartoon string suspense",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "171208",
+   "db_size": 171208,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "Pop Corn - Bolsonaro falando inglês",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "192698",
+   "db_size": 192698,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "Happy child laughing",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "75577",
+   "db_size": 75577,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "Áudio posso te ligar agora ou tua mulher tá do teu lado?",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "50500",
+   "db_size": 50500,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "Glória a Deeeus Daciolo",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "33364",
+   "db_size": 33364,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "Slow sad trombone fail",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "190660",
+   "db_size": 190660,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "Gasping zombie",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "62217",
+   "db_size": 62217,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "CS - Olha a bomba",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "6086",
+   "db_size": 6086,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "Cantor desafinado (v2)",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "277348",
+   "db_size": 277348,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "O Fortuna - Carmina Burana",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "175062",
+   "db_size": 175062,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "Meme Perder",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "141268",
+   "db_size": 141268,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "Risadinha de Ladrão",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "28839",
+   "db_size": 28839,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "ELPEPERONE a vitória chegou",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "35457",
+   "db_size": 35457,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "Dog whimper really sad",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "64821",
+   "db_size": 64821,
+   "cache_control_hdr": "no-cache"
+  },
+  {
+   "name": "Vitória - Radio Sociedade",
+   "status": 200,
+   "content_type": "audio/mpeg",
+   "content_length": "26584",
+   "db_size": 26584,
+   "cache_control_hdr": "no-cache"
+  }
+ ]
+}

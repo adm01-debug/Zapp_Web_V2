@@ -1,0 +1,70 @@
+patch-not-proven-on-origin	002c65708a4fc9a6ab7b5c57b24b9b530afed847	9a937183c24f1d583392318525c55c73e6f0b1c7	docs(plan): add 100-step Zapp Web V3 improvement checklist 
+patch-equivalent-on-origin	0167f10df4c5056c329ae4389dce8ce2c07df1fe	2d1a7398ac4417c72ca17eebc932bdcc5d519383	fix(inbox): reduzir colisao de tickets de transferencia 
+patch-not-proven-on-origin	01e20d518df576e02a0f91d35ac22d84536f108c	5a79ad374d56fcdaf87c68a809149f85a3f280c5	test(inbox): await transfer dialog settlement 
+patch-not-proven-on-origin	0635a9bd86a6e86032012d7a740a1122afdc2102	4366a9fe6252a74f4cfd7efb1bd126903097d32f	docs(plan): register baseline and failure simulations 
+patch-not-proven-on-origin	09c169a12495a0099cb354a6d0c1a1e3f743596b	5e45ee6b8d785e4c8363e1f80204cfd979f54b01	fix(ci): fail closed on unverified supabase types 
+patch-equivalent-on-origin	156091cbc88c36da8d969a5cb1f6e8d757c16f05	452874a9df7cd2b21abadf563d912d178b12e1a8	fix(frontend): harden inbox keyboard and schedule timezone 
+patch-not-proven-on-origin	187d324f315264da9280262c0bfb2abf491fe112	16cf68ebf273fbd0a3dbfe63af8fd3ee553453b0	docs(db): add read-only audit query package 
+patch-equivalent-on-origin	1b047dde2799a1ada66e5298cbe7885b56a68f20	3fb9aeac5598749d808fee4e50d183d7f92a46bb	fix(inbox): remove unsafe virtualizer options cast 
+patch-not-proven-on-origin	1c455c80ea30c91acf3d50c48960a0d1a753a2c6	9fb218c695a573c4e2d398b2316abb2b958bd90a	fix(inbox): harden concurrent interaction flows 
+patch-not-proven-on-origin	1e219915b9b1f92d897f0d439cf0e7a5daad8d32	ba4da08785918a2ff58a22f9f2c970546b805545	fix(ci): make supabase types check portable 
+patch-equivalent-on-origin	2c3a430dd526ee56f75a210d23d2db36230f5774	b88439dc39ec4bc5c0aaf9b41b3d78ed15171f03	fix(frontend): align schedule handler boolean contract 
+patch-equivalent-on-origin	2dda3868c2a9e7c7b8c1c47ac00383e5f13d64f4	365d36e052f13850218b90b70533a33c74a286d0	fix(ci): mover quality gate hermético para runner hospedado 
+patch-not-proven-on-origin	307fdf571c750da6eb37b731d9a328c6ecf1aacc	29d44187f0e2188fd1711c7b27a85a8e6206008a	test(ci): restore env after types isolation check 
+patch-equivalent-on-origin	30b5daa339ba6ab006e41063735a0f598a6c6b01	d0508003e5192cf921f18970b65f490bb13f4c8b	fix(ci): make TypeScript gates fail closed 
+patch-not-proven-on-origin	342e1c7d71fc785bcc919a3af11e61d4de8ff0ec	5e45ee6b8d785e4c8363e1f80204cfd979f54b01	fix(ci): fail closed on unverified supabase types 
+merge-or-nonpatch	346545f0e7d7945c0931669071edd331dfdf2068		Merge remote-tracking branch 'origin/main' into fix/wave-ci-toolchain-20260826 
+patch-not-proven-on-origin	395bd9f93d4dc3da58729fc66fc42bc77eb3c00f	14168728fc8fd0e1488f7313f7a18d4f97012caf	fix(ci): pin bun and harden supabase types check 
+patch-not-proven-on-origin	3a4c02baa57ff15d13681e68b019fa75a55ca03d	b26face58aa8bfde7e060b5eee756581210140f4	fix(integrations): preserve isolated dispatch contracts 
+patch-equivalent-on-origin	3a7d7c25f3b5b7b3a4201a5748aae7adee195bcb	452874a9df7cd2b21abadf563d912d178b12e1a8	fix(frontend): harden inbox keyboard and schedule timezone 
+patch-not-proven-on-origin	3dff8d3429c5c29373a17e4bbe65d830e6ee860b	1e1d326c5ceda7020e17781f4b204fdf25116b01	docs: criar handoff de continuidade do Cline 
+patch-equivalent-on-origin	3ecd940292e332e0ca5381ef1f66393b18023258	49250ea4c9a295e2fabdc5d7fc376d464bc30a69	fix(ci): regen zapp schema snapshot (drift-gate, pós-migration 20260824120000) 
+patch-not-proven-on-origin	43ec419d1fcc367da2f6e353a4833f5e7a5c7882	05cdf6f0507646e9fb035f7de8eda98dd56d5852	docs(audit): classify E003-E004 status against approved waves 
+patch-equivalent-on-origin	4990d10fa74ca8aa352f56e32ee1067bdaa8d413	b71191cb3d68799e3fd1e23ce87734d76ed5c028	fix(types): harden auth and inbox data loaders 
+patch-not-proven-on-origin	4a75a8ddfcd7153b5f9286306f58b7f4bc991bb2	70328395fb9b75188daedc1bec24a82e0dc4bb9b	fix(evolution-api): fallback fetch-profile via instance snapshot 
+patch-not-proven-on-origin	5608ea2abea11d562e6e452e3023011f37f96ac4	cb5ea07450ad0bb6a5fa814cda1b8a58e80685b7	docs(plan): inventory cleanup candidates safely 
+patch-not-proven-on-origin	5dd6e5ac05a9f5acf83f873bccdb59a2b2cc34b3	e4f6ceb9ddaaaba848d4695bfc225811ce0bd7b8	fix(types): resolve initial UI typecheck blockers 
+patch-equivalent-on-origin	693e29997eb6900aeeff4d630564cd2e5b021fee	adc6468f7d8a0502646f56b7a5dba73df50e3237	fix(connections): keep unavailable delete action keyboard-reachable 
+patch-not-proven-on-origin	6ba7cde52800b5ea4b6838d526b9804696578cfd	29d44187f0e2188fd1711c7b27a85a8e6206008a	test(ci): restore env after types isolation check 
+patch-equivalent-on-origin	6c09f028b7380229ba0203e2b3d84af5519a96e3	a137c1300841121abb18b011a897be8a5b976f87	fix(auth): evitar redirect redundante no guard 
+patch-equivalent-on-origin	6fb441fdbc1d3e0d22ace42de54fd0efea2bc156	e78f4a7820513f0519325c2c904a6c27f8243895	test(deps): match unstable React Router RSC exports 
+patch-equivalent-on-origin	711fdfd060363e1882178a92409637e31bf29468	983606fcb96f6f2c6941c088d0e65ec279c11e75	fix(frontend): align schedule contract and signed-url failures 
+patch-equivalent-on-origin	71a3f2bdf4d6258abef102e55c79c7332d8e543f	af409c373ba1393c1e0c8493a7db99e1180183f2	fix(frontend): harden gmail thread keys and schedule contract 
+patch-not-proven-on-origin	71c06eab3d139c3cf5669ef1b805d30fd7aaa89f	4f95d6aaaa1e21e1a189daf531f65fc7a390f7b9	test(e2e): reforçar cold boot auth guard 
+patch-not-proven-on-origin	71d0299fbc53f10299c6356bed0f37b2983bfb05	5c4533d938de3a8776499392c70d9d70956a5ef5	test(inbox): guard concurrent lifecycle contracts 
+patch-equivalent-on-origin	7e10fa30e289342d89c7b49631bde0f96d1f1094	3fb9aeac5598749d808fee4e50d183d7f92a46bb	fix(inbox): remove unsafe virtualizer options cast 
+patch-not-proven-on-origin	84bda377259f852e9be2ae8b514dece09e144611	b26face58aa8bfde7e060b5eee756581210140f4	fix(integrations): preserve isolated dispatch contracts 
+patch-equivalent-on-origin	8ac3a9e3e1e0855c6b0223208604c715cc921a46	1369c97274f0dc88af19fff318e25d648fd667ac	docs(audit): auditoria exaustiva do sistema e plano de 100 etapas (#1428) 
+patch-not-proven-on-origin	8b0e047dec8e2f4805e81c6f4bd5f7d883284bab	9fb218c695a573c4e2d398b2316abb2b958bd90a	fix(inbox): harden concurrent interaction flows 
+patch-not-proven-on-origin	95a09ea12fb40dd809df5fc065b6fb6f7536b35b	1ab151a1cec3034fc933f892a6e412e474004ae4	test(e2e): alinhar redirect auth ao contrato real 
+patch-not-proven-on-origin	9714a3acd7706e4b81bf31de105d71b42d1c842f	14168728fc8fd0e1488f7313f7a18d4f97012caf	fix(ci): pin bun and harden supabase types check 
+patch-not-proven-on-origin	9c2e7737cf9eabc06ff17fc980bcaaf91d728e41	62db07632cb5f01897b7e78e6718bad2622f9888	test(types): cover quick_add reaction analytics contract 
+patch-not-proven-on-origin	a17279e37a196b53e7d649000d3f19dcaa6ea50e	6907b775a86f72714e6416e28a463e050a3d85b1	fix(db-docs): corrigir contratos reais dos RPCs parciais 
+patch-equivalent-on-origin	a73a2164f42294fee89cbd5fc93bf8ccd1e481a8	b71191cb3d68799e3fd1e23ce87734d76ed5c028	fix(types): harden auth and inbox data loaders 
+patch-not-proven-on-origin	a8f96f5fac22be491a36a002ced2381412db9abc	62b1f46beb1556d1f282c976248c1294a9fbb50c	docs(plan): record deployed baseline evidence 
+patch-not-proven-on-origin	ab1c4789618d422ddbdcb2a62d37ee1cc8cba570	cff3a5a3079dc407318daf398391da06a893e238	fix(inbox): preserve legacy conversation history sessions 
+patch-not-proven-on-origin	b03925453466342336ef3f0f3bb7a6408c6f3b41	92d45d8453d2f047a5fb68d2e2e5405fe3500836	fix(types): clear remaining inbox typecheck errors 
+patch-equivalent-on-origin	b0ba695f954d436600baf6548a0b88dd6a384e02	24f6ff598eb66f9a573d0af04be6a837617342c3	test(connections): type unavailable delete fixture 
+patch-not-proven-on-origin	b253427b13ef27e8a610b7dfbcd262b77359800b	70328395fb9b75188daedc1bec24a82e0dc4bb9b	fix(evolution-api): fallback fetch-profile via instance snapshot 
+patch-not-proven-on-origin	b3e131db2ad66d662903a7b9b000cf917a52d0da	92d45d8453d2f047a5fb68d2e2e5405fe3500836	fix(types): clear remaining inbox typecheck errors 
+patch-not-proven-on-origin	b74a67fae6a32772f5a713847da2c3d7f4a89c16	ed3e2f96e58be6c05b8132d7e82e7cf43c3f81d4	fix(inbox): await conversation transfer result 
+patch-equivalent-on-origin	b8dccfef0210970897e18615c57b8fb441f00a85	516a42dec0c9dd688538214cbbf41ba652aadb7c	fix(chat): align UI type contracts and reaction telemetry 
+patch-not-proven-on-origin	b9959aac7854d913ee0d013e32868ea59ebbb83e	5a79ad374d56fcdaf87c68a809149f85a3f280c5	test(inbox): await transfer dialog settlement 
+patch-not-proven-on-origin	c42a5b93b4fdc0babdaa15ac3c8e9415330c707e	5c4533d938de3a8776499392c70d9d70956a5ef5	test(inbox): guard concurrent lifecycle contracts 
+patch-not-proven-on-origin	c44c153dcfa1712b6bf74d0d9ad68498da33e4b8	c5d430db589a2929d692c8574ceda93ed22ee915	docs(plan): close findings revalidation and classification 
+patch-not-proven-on-origin	ccd840505b069ec3969c33e8fe2a62f713d30340	4f32ebb38530110f993ba69c921b5461bb7bd7d5	fix(inbox): await conversation transfer result 
+patch-not-proven-on-origin	d56c183fa52b887b5aa9e344182eefbc0a787508	9a937183c24f1d583392318525c55c73e6f0b1c7	docs(plan): add 100-step Zapp Web V3 improvement checklist 
+patch-equivalent-on-origin	d8d99b0952a34691cebf56d83c7476719a8d9667	983606fcb96f6f2c6941c088d0e65ec279c11e75	fix(frontend): align schedule contract and signed-url failures 
+patch-not-proven-on-origin	d9122fab4a3548c8963321ef25de6a6346949eb7	e4f6ceb9ddaaaba848d4695bfc225811ce0bd7b8	fix(types): resolve initial UI typecheck blockers 
+patch-not-proven-on-origin	dcb780381393078243aa000dc934a49bea97372e	ba4da08785918a2ff58a22f9f2c970546b805545	fix(ci): make supabase types check portable 
+merge-or-nonpatch	e1617f34f84413253b229bf184c8f1a244f01c0f		Merge commit 'da1fac0638c53f48f37ea9bfd890f78d502c6b71' into test/ts-integration-current-20260828 
+patch-not-proven-on-origin	e174e130501a2259dbf055d6da02f02cf6f1cee0	cff3a5a3079dc407318daf398391da06a893e238	fix(inbox): preserve legacy conversation history sessions 
+patch-equivalent-on-origin	e650e3c38cff42ee76bb6336f4e574af54c10246	516a42dec0c9dd688538214cbbf41ba652aadb7c	fix(chat): align UI type contracts and reaction telemetry 
+patch-equivalent-on-origin	e9650a53f393007387a6c5a1e34f6b5a0057bae7	8e2eb6361170130959e42239bb28786d1786c7fe	backup: preserva diff não-commitado do deno-contract-tests.yml (rascunho stale vs #1408) da sessão anterior 
+patch-equivalent-on-origin	ed3e1ebd765f630468d48068a397b4d15cf3890b	a47f13b1ff71adbd9ddb9e001ce3aa25f5d1e7e8	fix(connections): disable unavailable delete action 
+patch-not-proven-on-origin	ef8d88672a5aead08311c40e9f3ff2a4c295a348	e5f779c999edd2853526846b0531bfdd7d6a08ca	fix(functions): harden integration dispatch paths 
+patch-not-proven-on-origin	f55fc33c17761fa0e2a24795b3fdbdc1656cca17	62db07632cb5f01897b7e78e6718bad2622f9888	test(types): cover quick_add reaction analytics contract 
+patch-not-proven-on-origin	fa4cabec1725d2f9336bd1ce512642ae5f056907	815f2893eb867fd3add54a3001a03e2baf6a44b0	fix(types): reapply safe typecheck corrections 
+patch-not-proven-on-origin	fc49d8777e3ce1b8957ca54ae43476e891a15154	e5f779c999edd2853526846b0531bfdd7d6a08ca	fix(functions): harden integration dispatch paths 
+patch-equivalent-on-origin	fe081aa16dc55940137a5d1079443094d167ea0c	af409c373ba1393c1e0c8493a7db99e1180183f2	fix(frontend): harden gmail thread keys and schedule contract 
+patch-equivalent-on-origin	fe6ced3318f28bdc653f61971f7f936071687615	b88439dc39ec4bc5c0aaf9b41b3d78ed15171f03	fix(frontend): align schedule handler boolean contract 
