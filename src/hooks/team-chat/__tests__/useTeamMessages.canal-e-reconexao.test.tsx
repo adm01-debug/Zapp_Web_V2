@@ -46,7 +46,10 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 
-function render(conversationId = 'conv-1', queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
+function render(
+  conversationId = 'conv-1',
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+) {
   const wrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client: queryClient }, children);
   return { ...renderHook(() => useTeamMessages(conversationId), { wrapper }), queryClient };
@@ -60,16 +63,30 @@ beforeEach(() => {
   h.rpc.mockResolvedValue({ data: [], error: null });
 });
 
+/**
+ * `useTeamMessages` compõe `useTeamReadState`, que abre o PRÓPRIO canal
+ * (`team-read-state-<conversationId>`) — o mesmo mock de `supabase.channel`
+ * vê os dois. `h.nomes`/`h.subs` ficam no mesmo índice um do outro (cada
+ * canal chama `.channel(nome)` e `.subscribe(cb)` em sequência síncrona),
+ * então filtrar por prefixo em `h.nomes` dá o índice certo em `h.subs`.
+ */
+function canaisDeMensagens(): Array<{ nome: string; sub: (status: string) => void }> {
+  return h.nomes
+    .map((nome, i) => ({ nome, sub: h.subs[i] }))
+    .filter(({ nome }) => nome.startsWith('team-messages-'));
+}
+
 describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (PE-75)', () => {
   it('dá sufixo exclusivo ao canal da conversa em cada montagem', async () => {
     const a = render('conv-1');
     const b = render('conv-1');
 
-    await waitFor(() => expect(h.nomes.length).toBeGreaterThanOrEqual(2));
+    await waitFor(() => expect(canaisDeMensagens().length).toBeGreaterThanOrEqual(2));
 
-    expect(h.nomes[0].startsWith('team-messages-conv-1:')).toBe(true);
-    expect(h.nomes[1].startsWith('team-messages-conv-1:')).toBe(true);
-    expect(h.nomes[0]).not.toBe(h.nomes[1]);
+    const [m0, m1] = canaisDeMensagens();
+    expect(m0.nome.startsWith('team-messages-conv-1:')).toBe(true);
+    expect(m1.nome.startsWith('team-messages-conv-1:')).toBe(true);
+    expect(m0.nome).not.toBe(m1.nome);
 
     a.unmount();
     b.unmount();
@@ -79,12 +96,13 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const { queryClient } = render('conv-1');
     const invalidar = vi.spyOn(queryClient, 'invalidateQueries');
 
-    await waitFor(() => expect(h.subs.length).toBe(1));
+    await waitFor(() => expect(canaisDeMensagens().length).toBe(1));
+    const sub = canaisDeMensagens()[0].sub;
 
-    act(() => h.subs[0]('SUBSCRIBED'));
+    act(() => sub('SUBSCRIBED'));
     expect(invalidar).not.toHaveBeenCalled();
 
-    act(() => h.subs[0]('SUBSCRIBED'));
+    act(() => sub('SUBSCRIBED'));
     const chaves = invalidar.mock.calls.map((c) => c[0]?.queryKey);
     expect(chaves).toContainEqual(['team-messages', 'conv-1']);
     expect(invalidar).toHaveBeenCalledTimes(2);
@@ -94,11 +112,12 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const { queryClient } = render('conv-1');
     const invalidar = vi.spyOn(queryClient, 'invalidateQueries');
 
-    await waitFor(() => expect(h.subs.length).toBe(1));
+    await waitFor(() => expect(canaisDeMensagens().length).toBe(1));
+    const sub = canaisDeMensagens()[0].sub;
 
-    act(() => h.subs[0]('SUBSCRIBED'));
-    act(() => h.subs[0]('CHANNEL_ERROR'));
-    act(() => h.subs[0]('SUBSCRIBED'));
+    act(() => sub('SUBSCRIBED'));
+    act(() => sub('CHANNEL_ERROR'));
+    act(() => sub('SUBSCRIBED'));
 
     expect(invalidar).toHaveBeenCalled();
   });
