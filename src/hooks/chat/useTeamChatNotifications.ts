@@ -154,7 +154,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           .eq('profile_id', profile.id)
           .limit(1);
         if (membershipError) {
-          log.warn('Falha ao confirmar participacao na conversa; sem notificacao:', membershipError.message);
+          log.warn('Falha ao confirmar participação na conversa; sem notificação:', membershipError.message);
           return;
         }
         const membership = membershipRows?.[0] ?? null;
