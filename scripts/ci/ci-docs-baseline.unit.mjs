@@ -197,7 +197,7 @@ function evidenciasDaAbertura(tabela) {
 
 function violacoesTabelaAbertura(plano, esperadas = ABERTURA_ESPERADA) {
   const tabela = tabelaDeAbertura(plano);
-  if (tabela === null) return [`plano sem a secao "${SECAO_ABERTURA}"`];
+  if (tabela === null) return [`plano sem a secao "${SECAO_ABERTURA}"\`];
   const out = [];
   for (const [id, linha] of Object.entries(esperadas)) {
     const atual = tabela.find((l) => l.startsWith(`| **${id}**`));
@@ -354,19 +354,19 @@ test('E62/E76: os numeros citados conferem com o repositorio', async () => {
   assert.match(e62.linha, /guardas de DB|pós-apply/i);
 
   const lock = await readFile(BUN_LOCK, 'utf8');
-  assert.ok(/playwright@1\.63\.0/.test(lock));
-  assert.ok(/playwright-core@1\.63\.0/.test(lock));
-  assert.ok(/@playwright\/test@1\.63\.0/.test(lock));
+  assert.ok(/playwright@1\.64\.1/.test(lock));
+  assert.ok(/playwright-core@1\.64\.1/.test(lock));
+  assert.ok(/@playwright\/test@1\.64\.1/.test(lock));
 
   const tres = ['ci.yml', 'e2e-logado.yml', 'e2e-talkx.yml'];
   for (const f of tres) {
     const wf = await readFile(join(DIR_WF, f), 'utf8');
-    assert.ok(wf.includes('playwright@1.63.0'));
+    assert.ok(wf.includes('playwright@1.64.1'));
   }
   const e76 = rec.get('E76');
   assert.ok(e76);
   for (const f of tres) assert.ok(e76.linha.includes(f), `E76 deve citar ${f}`);
-  assert.match(e76.linha, /1\.63\.0/);
+  assert.match(e76.linha, /1\.64\.1/);
   assert.match(e76.linha, /não há mismatch/i);
 });
 
