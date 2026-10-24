@@ -4,10 +4,11 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**15 workflows.**
+**16 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
+| Auto Update PR Branches | [`auto-update-pr-branch.yml`](../../.github/workflows/auto-update-pr-branch.yml) | push na main, fim de CI/DB Guard em PR, agendado (a cada 30 min) e dispatch | fila de merge serial — so a proxima PR com auto-merge e atualizada; as demais esperam sem gastar CI | a fila para e as PRs com auto-merge ficam BEHIND ate o proximo evento | Job Summary com a fila (em voo, proxima, esperando, bloqueadas) | — | — |
 | Branch Hygiene Audit | [`branch-hygiene-audit.yml`](../../.github/workflows/branch-hygiene-audit.yml) | agendado (semanal) e dispatch | quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias | relatorio nao e publicado nem a issue e atualizada | issue `[branch-hygiene]` no repositorio | — | — |
 | CI/CD Pipeline | [`ci.yml`](../../.github/workflows/ci.yml) | pull_request, push na main e dispatch | tipos, testes de unidade, contratos Node/Edge, build, security e E2E publico | PR fica vermelho e o merge e bloqueado pelos required checks | autor do PR e revisor, via checks do GitHub | — | — |
 | CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | agendado (semanal) e dispatch | analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows | alerta aparece em Security -> Code scanning | aba Security | — | — |
@@ -25,6 +26,13 @@
 | V043-V065 Vercel Env Cleanup | [`vercel-env-cleanup.yml`](../../.github/workflows/vercel-env-cleanup.yml) | dispatch manual com dry-run por padrão | remove variáveis Vercel perigosas ou mortas conforme o inventário | o script aborta antes de alterar variáveis e informa a causa | operador que disparou o workflow | — | — |
 
 ## Detalhe
+
+### Auto Update PR Branches (`auto-update-pr-branch.yml`)
+
+- **Gatilho:** push na main, fim de CI/DB Guard em PR, agendado (a cada 30 min) e dispatch
+- **O que prova:** fila de merge serial — so a proxima PR com auto-merge e atualizada; as demais esperam sem gastar CI
+- **Quando falha:** a fila para e as PRs com auto-merge ficam BEHIND ate o proximo evento
+- **Quem é avisado:** Job Summary com a fila (em voo, proxima, esperando, bloqueadas)
 
 ### Branch Hygiene Audit (`branch-hygiene-audit.yml`)
 

@@ -75,9 +75,9 @@ os checkboxes deste plano não tinham relação explícita com entregas, alterna
 e o texto herdava a contagem antiga de workflows. Esta seção é a **camada de reconciliação**: o checkbox é só um
 marcador — a evidência de cada etapa é o que está aqui.
 
-**Inventário vigente (medido em 2026-10-20, não herdado do texto de 01/10):** **15** arquivos YAML em `.github/workflows/`, mais os
+**Inventário vigente (medido em 2026-10-20, não herdado do texto de 01/10):** **16** arquivos YAML em `.github/workflows/`, mais os
 **3** workflows dinâmicos sem arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) —
-**18** no total. A fonte operacional canônica é o arquivo **gerado** `docs/ci/README.md`
+**19** no total. A fonte operacional canônica é o arquivo **gerado** `docs/ci/README.md`
 (`scripts/ci/render-workflow-docs.mjs`, conferido por `--check`), não as listas manuais das seções antigas deste
 documento. Os números "14 arquivos" / "17 no total" das seções de 01/10 são do baseline `7d3117c` e ficam
 registrados como **históricos**, não como inventário vigente.

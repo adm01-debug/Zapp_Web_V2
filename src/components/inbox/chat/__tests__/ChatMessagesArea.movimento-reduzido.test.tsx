@@ -51,7 +51,7 @@ beforeAll(() => {
 
 vi.mock('../MessageBubble', () => ({
   MessageBubble: ({ message }: { message: { id: string } }) => (
-    <div data-testid="bubble" data-message-id={message.id} />
+    <div data-testid="bubble" data-message-id={message.id} style={{ height: 60 }} />
   ),
 }));
 

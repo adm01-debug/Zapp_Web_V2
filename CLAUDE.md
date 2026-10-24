@@ -274,7 +274,7 @@ que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Co
 total naquela data. A lista é histórica; a fonte canônica atual do inventário é o **gerado** `docs/ci/README.md`
 (`scripts/ci/render-workflow-docs.mjs --check`), não esta lista manual.
 
-**Inventário vigente (2026-10-20):** **15** arquivos YAML em `.github/workflows/` e 3 workflows dinâmicos — 18 no total.
+**Inventário vigente (2026-10-20):** **16** arquivos em `.github/workflows/` e 3 workflows dinâmicos — 19 no total.
 Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.
 
