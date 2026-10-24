@@ -2,22 +2,13 @@ import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
+import { usePushNotifications } from '@/hooks/system/usePushNotifications';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
 
 const log = getLogger('TeamChatNotifications');
 
-/**
- * TC-007 — estado global (por aba) da conversa de Team Chat em foco.
- *
- * O listener de notificações tem de viver no nível do app e não dentro de `TeamChatView`:
- * do contrário, quem está em outra tela (ex.: Contatos) não recebe alerta nenhum. Como o
- * listener é ÚNICO, a conversa em foco chega por este store — a view publica o id enquanto
- * está montada e o limpa ao sair (o alerta volta a tocar).
- *
- * `getSnapshot` devolve um primitivo estável, requisito do `useSyncExternalStore`.
- */
 type ActiveConversationListener = () => void;
 
 let activeConversationId: string | null = null;
@@ -40,7 +31,6 @@ export function setActiveTeamChatConversation(conversationId: string | null): vo
   activeConversationListeners.forEach((listener) => listener());
 }
 
-/** Publica (no mount/troca) e limpa (no unmount) a conversa que a view está exibindo. */
 export function useActiveTeamChatConversation(conversationId: string | null): void {
   useEffect(() => {
     setActiveTeamChatConversation(conversationId);
@@ -50,7 +40,6 @@ export function useActiveTeamChatConversation(conversationId: string | null): vo
   }, [conversationId]);
 }
 
-/** Lê a conversa em foco. Consumido só pelo listener global. */
 export function useActiveTeamChatConversationId(): string | null {
   return useSyncExternalStore(
     subscribeActiveTeamChatConversation,
@@ -65,18 +54,6 @@ const getCtx = () => {
   return audioCtx;
 };
 
-/**
- * Play a distinct notification sound for internal team chat.
- * Uses a unique chord-like pattern to differentiate from external chat beeps.
- *
- * O ganho obedece ao volume de alerta do painel (`settings.soundVolume`, 10-100): `volume/100`
- * multiplica os ganhos-base. Antes eram 0.2/0.15 cravados, ignorando o controle do usuário.
- *
- * ISENÇÃO DOCUMENTADA (exigida por `tests/contracts/media-volume-surfaces.contract.test.ts`):
- * alerta não é mídia de conversa — este som fica FORA do controle de volume de mídia
- * (`mediaVolumeStore`), porque o atendente não pode silenciar alerta sem querer ao mexer
- * no volume das conversas. O volume sai SEMPRE do painel (`settings.soundVolume`).
- */
 export function playTeamChatSound(volume: number = 70) {
   try {
     const ctx = getCtx();
@@ -85,7 +62,6 @@ export function playTeamChatSound(volume: number = 70) {
     const now = ctx.currentTime;
     const volumeMultiplier = volume / 100;
 
-    // Two-tone chord: C5 + E5 for a pleasant, distinct chime
     const frequencies = [523, 659];
     frequencies.forEach((freq, i) => {
       const osc = ctx.createOscillator();
@@ -100,11 +76,10 @@ export function playTeamChatSound(volume: number = 70) {
       gain.gain.linearRampToValueAtTime(0.2 * volumeMultiplier, now + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
 
-      osc.start(now + i * 0.05); // Slight stagger for richness
+      osc.start(now + i * 0.05);
       osc.stop(now + 0.4);
     });
 
-    // Third note (G5) after a brief pause for a recognizable pattern
     setTimeout(() => {
       try {
         const osc = ctx.createOscillator();
@@ -126,16 +101,25 @@ export function playTeamChatSound(volume: number = 70) {
 }
 
 /**
- * Hook that listens for new team chat messages and shows notifications.
- * Only triggers when:
- * - The message is from someone else
- * - The user is not currently viewing that conversation
- * - Notifications are enabled and not in quiet hours
+ * HZ5-09: canal identificado por team-chat-notifications:${profile.id} para
+ * garantir unicidade por instancia; effect so recria o canal quando profile muda.
+ * Preferencias de som/notificacao chegam por refs para nao entrar nas deps.
  */
 export function useTeamChatNotifications(activeConversationId: string | null) {
   const { profile } = useAuth();
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
+  const { showNotification, permission } = usePushNotifications();
   const activeIdRef = useRef(activeConversationId);
+
+  // Refs atualizados a cada render -- leitura fresca dentro do effect sem entrar nas deps
+  const notifSettingsRef = useRef(notifSettings);
+  notifSettingsRef.current = notifSettings;
+  const isQuietHoursRef = useRef(isQuietHours);
+  isQuietHoursRef.current = isQuietHours;
+  const showNotificationRef = useRef(showNotification);
+  showNotificationRef.current = showNotification;
+  const permissionRef = useRef(permission);
+  permissionRef.current = permission;
 
   useEffect(() => {
     activeIdRef.current = activeConversationId;
@@ -145,7 +129,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
     if (!profile) return;
 
     const channel = supabase
-      .channel('team-chat-notifications')
+      .channel(`team-chat-notifications:${profile.id}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -160,16 +144,9 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           created_at: string;
         };
 
-        // Don't notify for own messages
         if (msg.sender_id === profile.id) return;
-
-        // Don't notify if currently viewing this conversation
         if (!document.hidden && activeIdRef.current === msg.conversation_id) return;
 
-        // Check if user is a member of this conversation. limit(1) em vez de
-        // single(): o listener recebe todo INSERT em team_messages sem
-        // filtro por conversa, então "não é membro" é o caso comum, não uma
-        // exceção — single() geraria 406 na maioria dos eventos.
         const { data: membershipRows, error: membershipError } = await supabase
           .from('team_conversation_members')
           .select('id, is_muted')
@@ -177,7 +154,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           .eq('profile_id', profile.id)
           .limit(1);
         if (membershipError) {
-          log.warn('Falha ao confirmar participação na conversa; sem notificação:', membershipError.message);
+          log.warn('Falha ao confirmar participacao na conversa; sem notificacao:', membershipError.message);
           return;
         }
         const membership = membershipRows?.[0] ?? null;
@@ -191,19 +168,14 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           membership,
         })) return;
 
-        // Play sound if enabled — volume do painel (10-100), nunca fixo
-        if (notifSettings.soundEnabled && !isQuietHours()) {
-          playTeamChatSound(notifSettings.soundVolume);
+        const settings = notifSettingsRef.current;
+        const quietHours = isQuietHoursRef.current;
+
+        if (settings.soundEnabled && !quietHours()) {
+          playTeamChatSound(settings.soundVolume);
         }
 
-        // Show browser notification if enabled.
-        // Usa a Notification API diretamente (new Notification) para que os testes
-        // possam substituir window.Notification por um dublê e verificar o título e
-        // o handler de clique sem depender do service worker.
-        if ('Notification' in window && Notification.permission === 'granted' && notifSettings.browserNotifications && !isQuietHours()) {
-          // Nome do remetente por RPC segura: para o agente a leitura direta de
-          // `profiles` é barrada pela RLS (o título virava 'Colega').
-          // `get_team_profiles()` é SECURITY DEFINER e já mascara email/telefone.
+        if (permissionRef.current === 'granted' && settings.browserNotifications && !quietHours()) {
           let senderName = 'Colega';
           try {
             const { data, error: erroPerfis } = await supabase.rpc('get_team_profiles');
@@ -218,15 +190,11 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
 
-          const notificacao = new Notification(`💬 Teams: ${senderName}`, {
+          await showNotificationRef.current({
+            title: `\u{1F4AC} Teams: ${senderName}`,
             body,
             tag: `team-msg-${msg.conversation_id}`,
-            requireInteraction: false,
           });
-          notificacao.onclick = () => {
-            window.focus();
-            navigateToView('team-chat');
-          };
 
           log.debug('Team chat notification sent for message:', msg.id);
         }
@@ -236,14 +204,8 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile, notifSettings.soundEnabled, notifSettings.soundVolume, notifSettings.browserNotifications, isQuietHours]);
+  }, [profile]); // Apenas profile: troca de settings nao recria o canal (HZ5-09)
 
-  /**
-   * Clique na notificação do chat interno via service worker: o SW repassa o clique
-   * como `NOTIFICATION_CLICK` carregando o `data` dela (aqui, `type: 'team_chat'`
-   * e o `conversationId`). Foca a janela e abre o módulo de Chat Interno.
-   * A seleção da conversa específica é estado local da `TeamChatView`, fora deste hook.
-   */
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
 

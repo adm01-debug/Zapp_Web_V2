@@ -3,7 +3,7 @@ import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
- * TC-007 — prova por renderização: o app mantém exatamente um listener global e
+ * TC-007 -- prova por renderizacao: o app mantem exatamente um listener global e
  * montar a view do Team Chat apenas publica o foco, sem abrir outro listener.
  */
 const h = vi.hoisted(() => ({
@@ -17,8 +17,6 @@ vi.mock('@/lib/logger', () => ({
 }));
 vi.mock('@/components/ui/toaster', () => ({ Toaster: () => null }));
 vi.mock('@/components/ui/sonner', () => ({ Toaster: () => null }));
-// Overlay de gamificação: o assunto aqui é o listener do Team Chat, então o toast de
-// conquista é neutralizado como os outros overlays do App (Toaster, Sonner, LiveRegion).
 vi.mock('@/components/gamification/AchievementToast', () => ({
   AchievementCelebrationToaster: () => null,
 }));
@@ -78,12 +76,14 @@ vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
   },
+  useReducedMotion: vi.fn(() => false),
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 import App from '@/App';
 import { TeamChatView } from '@/components/team-chat/TeamChatView';
 
-describe('TC-007 — listener de notificações do Team Chat é único e global', () => {
+describe('TC-007 -- listener de notificacoes do Team Chat e unico e global', () => {
   beforeEach(() => {
     h.listener.mockClear();
     h.publishActiveConversation.mockClear();
