@@ -44,9 +44,15 @@ function PanelFallback() {
 }
 
 /** Wrapper comum: scroll próprio + padding + boundary por seção. */
-function Panel({ name, children }: { name: string; children: ReactNode }) {
+function Panel({ name, tab, children }: { name: string; tab: ConversationTab; children: ReactNode }) {
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto p-4">
+    <div
+      role="tabpanel"
+      id={`conversation-panel-${tab}`}
+      aria-labelledby={`conversation-tab-${tab}`}
+      tabIndex={0}
+      className="flex-1 min-h-0 overflow-y-auto p-4"
+    >
       <SectionErrorBoundary sectionName={name}>
         <Suspense fallback={<PanelFallback />}>{children}</Suspense>
       </SectionErrorBoundary>
@@ -120,7 +126,12 @@ export function ConversationTabContent({
         scroll, rascunho de mensagem, gravação de áudio e assinaturas realtime.
         As demais abas montam sob demanda (lazy) e desmontam ao sair.
       */}
-      <div className={activeTab === 'chat' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
+      <div
+        role="tabpanel"
+        id="conversation-panel-chat"
+        aria-labelledby="conversation-tab-chat"
+        className={activeTab === 'chat' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}
+      >
         {activeTab === 'chat' && (
           <div className="px-4 pt-3 empty:hidden">
             <TabBanner
@@ -138,7 +149,7 @@ export function ConversationTabContent({
       </div>
 
       {activeTab === 'ia' && (
-        <Panel name="Assistente IA">
+        <Panel name="Assistente IA" tab="ia">
           <AiTab
             conversation={conversation}
             messages={messages}
@@ -148,33 +159,33 @@ export function ConversationTabContent({
       )}
 
       {activeTab === 'crm' && (
-        <Panel name="CRM 360°">
+        <Panel name="CRM 360°" tab="crm">
           <Crm360Tab conversation={conversation} messages={messages} onTabChange={onTabChange} />
         </Panel>
       )}
 
       {activeTab === 'orders' && (
-        <Panel name="SalesView">
+        <Panel name="SalesView" tab="orders">
           {/* `onTabChange` é obrigatório aqui: sem ele o "Ver no CRM" do Resumo comercial fica inerte. */}
           <SalesViewTab contactId={contactId} profileId={profileId ?? null} onTabChange={onTabChange} />
         </Panel>
       )}
 
       {activeTab === 'tasks' && (
-        <Panel name="Tarefas">
+        <Panel name="Tarefas" tab="tasks">
           <TasksTab contactId={contactId} />
         </Panel>
       )}
 
       {activeTab === 'notes' && (
-        <Panel name="Notas">
+        <Panel name="Notas" tab="notes">
           {/* `onTabChange` é obrigatório aqui: sem ele o "Ver na aba Tarefas" fica inerte. */}
           <NotesTab contactId={contactId} onTabChange={onTabChange} />
         </Panel>
       )}
 
       {activeTab === 'files' && (
-        <Panel name="Arquivos">
+        <Panel name="Arquivos" tab="files">
           <FilesTab
             key={contactId}
             contactId={contactId}
@@ -185,7 +196,7 @@ export function ConversationTabContent({
       )}
 
       {activeTab === 'history' && (
-        <Panel name="Journey">
+        <Panel name="Journey" tab="history">
           <JourneyTab contactId={contactId} />
         </Panel>
       )}
