@@ -135,7 +135,7 @@ async function decisaoAtual(repo) {
     return decidir(prs, checksObrigatorios());
   } catch (err) {
     console.error('[fila-merge] falha ao consultar PRs:', err?.message ?? err);
-    return { acao: 'aguardar', motivo: 'erro ao consultar PRs via gh CLI', fila: [] };
+    return { acao: 'aguardar', motivo: 'erro ao consultar PRs via gh CLI', fila: [], bloqueadas: [] };
   }
 }
 
