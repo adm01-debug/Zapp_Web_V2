@@ -11093,7 +11093,7 @@ export type Database = {
         }[]
       }
       dashboard_kpi: {
-        Args: { p_agent?: string; p_queue?: string; p_since?: string }
+        Args: { p_agent?: string | null; p_from?: string | null; p_queue?: string | null; p_until?: string | null }
         Returns: Json
       }
       dashboard_leaderboard: {

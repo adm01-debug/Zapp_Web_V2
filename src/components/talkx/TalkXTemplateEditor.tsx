@@ -60,9 +60,10 @@ interface Props {
   onClose: () => void;
   /** X091 — clique do widget "Em andamento" abre o monitor da campanha. */
   onOpenMonitor?: (campaignId: string) => void;
+  onActiveTemplateChange?: (templateId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor, onActiveTemplateChange }: Props) {
   const {
     createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
     saveVariant, deleteVariant, countVariantRecipients,
@@ -123,6 +124,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
   const activateTemplate = (templateId: string) => {
     activeTemplateIdRef.current = templateId;
     setActiveTemplateId(templateId);
+    onActiveTemplateChange?.(templateId);
   };
 
   // Template ativo derivado de activeTemplateId (pode diferir de editing apos carga da biblioteca)

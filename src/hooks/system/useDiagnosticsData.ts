@@ -290,7 +290,7 @@ export function useDiagnosticsData() {
     if (messagesCountError) throw messagesCountError;
     const { count: connectionsCount, error: connectionsCountError } = await supabase
       .from('whatsapp_connections').select('id', { count: 'estimated', head: true });
-    if (connectionsCountError) throw connectionsCountError;
+    const effectiveDbError = connectionsCountError ?? dbError;
 
     const realtime = await probeRealtime();
 
@@ -313,7 +313,7 @@ export function useDiagnosticsData() {
     const lastHealthCheckAt = healthCheckLogs[0]?.checked_at ?? null;
 
     setHealth({
-      database: classifyHealth(dbError, dbLatency, 500, 2000),
+      database: classifyHealth(effectiveDbError, dbLatency, 500, 2000),
       storage: classifyHealth(storageError, storageLatency, 1000, 3000),
       realtime: realtime.status,
       edgeFunctions: classifyHeartbeat(heartbeatError, lastHealthCheckAt, Date.now()),
