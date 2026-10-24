@@ -6,7 +6,7 @@
  *  - 142 Botões "Concluir" (verde contorno), "Salvar alterações" (primary,
  *        desabilitado sem mudança) e menu ⋮ (reabrir, cancelar, copiar link).
  *  - 143 Proteção ao fechar: com alterações, "Descartar alterações?"; Esc e
- *        clique fora (no modo modal, etapa 145) respeitam a proteção.
+ *        clique fora respeitam a proteção.
  *  - 144 Foco e teclado: Esc fecha e devolve o foco ao item; no painel não
  *        modal o F6 alterna painel ↔ lista/quadro; tab lógica no rodapé.
  */
@@ -211,7 +211,7 @@ describe('WorkItemSheet — etapas 141–144 (estado de edição, rodapé, prote
     expect(p.onOpenChange).not.toHaveBeenCalledWith(false);
   });
 
-  it('143: "Descartar" fecha o painel; clique fora respeita a proteção', async () => {
+  it('143: "Descartar" fecha o painel; clique fora também respeita a proteção', async () => {
     const p = props();
     // Etapa 145: "clicar fora" só existe no modo modal (bottom sheet do celular).
     telaNarrow();

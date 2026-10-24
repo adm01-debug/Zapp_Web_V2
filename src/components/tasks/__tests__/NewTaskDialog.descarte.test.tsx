@@ -1,22 +1,17 @@
 /**
- * Etapa 170 (plano, linhas 126 e 450; imagem 04, seção 3.4; decisão D12) — a cor
- * da prioridade na prévia do modal e o descarte do rascunho.
+ * Etapa 170 (plano, linha 126 e 450; imagem 04, seção 3.4) — prévia fiel ao
+ * cartão, segmento de prioridade e descarte do rascunho.
  *
- * O defeito: na imagem 04 a pílula "Média" da prévia é AZUL, enquanto Lista e
- * Quadro usam âmbar. D12 manda a pílula usar SEMPRE a cor da prioridade
- * (`PriorityPill`/`PriorityChip`) e reservar o `primary` ao segmento ESCOLHIDO do
- * controle. Este arquivo prova:
+ * A decisão D12 (trocar a cor de "Média" para âmbar e a de "Alta" para vermelho)
+ * NÃO faz parte desta PR: aqui a cor das pílulas é a que a `main` já tem
+ * (`PriorityChip`). Este arquivo prova só o que independe dessa decisão:
  *
- *  - a prévia do modal (item 1) mostra a pílula da prioridade na cor da
- *    prioridade — âmbar em Média — e acompanha a escolha do controle;
+ *  - a prévia do modal desenha a pílula com a MESMA classe do `PriorityChip` real
+ *    (nenhuma cor própria da prévia) e acompanha a escolha do controle;
  *  - o segmento (item 2) pinta de `primary` só a opção escolhida; as demais ficam
- *    neutras, com o foco visível do sistema;
+ *    neutras, com o foco visível do sistema, e as setas andam entre as opções;
  *  - o descarte (item 3) pede confirmação com título digitado e fecha direto sem
  *    título — o título continua editável quando o usuário volta atrás.
- *
- * Nada aqui olha snapshot: a pílula é conferida pela CLASSE que o componente
- * escreve, e a classe só muda com a correção (o vermelho do defeito é o
- * `text-primary` de antes).
  */
 import { resetSupabaseMock, setWriteResult, supabaseMock } from '@/test/mocks/tarefas';
 
@@ -28,6 +23,7 @@ import { TasksUiProvider } from '@/components/tasks/shared/TasksUiContext';
 import { useTasksUi } from '@/components/tasks/shared/tasksUi';
 import { NewTaskDialog } from '@/components/tasks/shared/NewTaskDialog';
 import { PrioritySegment } from '@/components/tasks/shared/new-task/PrioritySegment';
+import { PriorityChip } from '@/components/tasks/shared/PriorityChip';
 
 const NOW = new Date(2026, 9, 14, 12, 0, 0, 0);
 
@@ -83,72 +79,33 @@ function pilulaDaPrevia(rotulo: string) {
   return pilula as HTMLElement;
 }
 
-describe('Etapa 170 — cor da prioridade na prévia do modal (D12)', () => {
-  it('a prévia mostra a pílula "Média" no ÂMBAR da prioridade, não no primary azul', () => {
+describe('Etapa 170 — a pílula da prévia é o PriorityChip real', () => {
+  it('para as 4 prioridades, a pílula da prévia tem a MESMA classe do PriorityChip (sem cor própria)', () => {
     montar();
 
-    const pilula = pilulaDaPrevia('Média');
+    const ROTULOS = [
+      ['low', 'Baixa'],
+      ['medium', 'Média'],
+      ['high', 'Alta'],
+      ['urgent', 'Urgente'],
+    ] as const;
 
-    // O par de cor de prioridade é o mesmo em toda a casa (tokens de TEXTO, E.3).
-    expect(pilula.className).toContain('text-[hsl(var(--warning-text))]');
-    expect(pilula.className).toContain('bg-warning/15');
-    expect(pilula.className).toContain('border-warning/40');
-    // O defeito era exatamente este: a prévia herdava o `primary` do segmento.
-    expect(pilula.className).not.toMatch(/(^|\s)text-primary(\s|$)/);
-    expect(pilula.className).not.toContain('bg-primary');
-  });
-
-  it('para as 4 prioridades, a pílula da prévia traz a classe da prioridade (nunca o primary)', () => {
-    montar();
-
-    for (const [rotulo, classe] of [
-      ['Baixa', 'bg-muted/60'],
-      ['Média', 'bg-warning/15'],
-      ['Alta', 'bg-destructive/15'],
-      ['Urgente', 'bg-destructive/20'],
-    ] as const) {
+    for (const [prioridade, rotulo] of ROTULOS) {
       fireEvent.click(screen.getByRole('radio', { name: rotulo }));
 
       const pilula = pilulaDaPrevia(rotulo);
-      expect(pilula.className, `prévia em "${rotulo}"`).toContain(classe);
+      // Referência: o chip compacto que o cartão da lista desenha na `main`.
+      const { container } = render(<PriorityChip priority={prioridade} compact />);
+      const referencia = container.firstElementChild as HTMLElement;
+
+      expect(pilula.className, `prévia em "${rotulo}"`).toBe(referencia.className);
       expect(pilula.title).toBe(`Prioridade: ${rotulo}`);
-      // O azul do `primary` não aparece em pílula nenhuma (D12).
-      expect(pilula.className).not.toContain('bg-primary');
-      expect(pilula.className).not.toContain('text-primary');
     }
-  });
-
-  it('a prévia acompanha o controle: escolher "Alta" troca a pílula para o vermelho', () => {
-    montar();
-
-    // O padrão do formulário é Média — âmbar.
-    expect(pilulaDaPrevia('Média').className).toContain('--warning-text');
-
-    fireEvent.click(screen.getByRole('radio', { name: 'Alta' }));
-
-    expect(pilulaDaPrevia('Alta').className).toContain('--destructive-text');
-    expect(pilulaDaPrevia('Alta').className).toContain('border-destructive/40');
-
-    fireEvent.click(screen.getByRole('radio', { name: 'Urgente' }));
-
-    // Urgente é a ponta da escada: tinta mais cheia (/20) e borda sólida.
-    const urgente = pilulaDaPrevia('Urgente');
-    expect(urgente.className).toContain('--destructive-text');
-    expect(urgente.className).toContain('bg-destructive/20');
-    expect(urgente.className).toContain('border-destructive');
   });
 });
 
 describe('Etapa 170 — segmento de prioridade: primary só na opção escolhida', () => {
-  /** O par de TEXTO de cada prioridade — o MESMO do PriorityPill/PriorityChip. */
-  const COR_DA_PRIORIDADE: Record<string, string> = {
-    Baixa: 'text-muted-foreground',
-    'Média': 'text-[hsl(var(--warning-text))]',
-    Alta: 'text-[hsl(var(--destructive-text))]',
-    Urgente: 'text-[hsl(var(--destructive-text))]',
-  };
-
-  it('marca a escolhida com primary e escreve as demais na cor da própria prioridade, com foco visível', () => {
+  it('marca a escolhida com primary, deixa as demais neutras e com foco visível', () => {
     render(<PrioritySegment value="medium" onChange={() => {}} />);
 
     const grupo = screen.getByRole('radiogroup', { name: 'Prioridade' });
@@ -168,16 +125,12 @@ describe('Etapa 170 — segmento de prioridade: primary só na opção escolhida
       if (escolhida) {
         expect(opcao.className).toContain('bg-primary');
         expect(opcao.className).toContain('text-primary-foreground');
-        // A escolhida é AZUL, não a cor da prioridade — "escolhido" e
-        // "prioridade" não podem ser a mesma cor (D12, plano linha 450).
-        expect(opcao.className).not.toContain('--warning-text');
       } else {
-        // O azul do `primary` é SÓ da opção escolhida (D12) ...
         expect(opcao.className).not.toContain('bg-primary');
-        expect(opcao.className).not.toContain('text-primary-foreground');
-        // ... e as demais usam a COR DA PRÓPRIA PRIORIDADE: âmbar na Média,
-        // vermelho na Alta/Urgente, cinza na Baixa.
-        expect(opcao.className).toContain(COR_DA_PRIORIDADE[opcao.textContent ?? '']);
+        expect(opcao.className).toContain('text-muted-foreground');
+        // Sem cor por prioridade no controle (D12 fora desta PR).
+        expect(opcao.className).not.toContain('--warning-text');
+        expect(opcao.className).not.toContain('--destructive-text');
       }
     }
   });
