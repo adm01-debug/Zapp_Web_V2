@@ -393,17 +393,27 @@ export function compareBaseline(baseline, report, root = process.cwd()) {
 
 // --no-renames: renomeacao aparece como remocao do caminho antigo + adicao do novo, que e
 // exatamente o par que o reconhecimento de renomeacao por hash do baseline precisa.
-function stagedPaths(root, diffFilter) {
-  const result = spawnSync(resolverExecutavel("git"), ["diff", "--cached", "--name-only", "--no-renames", `--diff-filter=${diffFilter}`, "-z"], {
+// Sem `base`: compara o staged (`git diff --cached`, usado pelo pre-commit via --staged). Com
+// `base`: compara o range `<base>...HEAD` (usado pelo --base, lint recortado por PR/CI).
+function changedPaths(root, diffFilter, { base } = {}) {
+  const args = base
+    ? ["diff", "--name-only", "--no-renames", `--diff-filter=${diffFilter}`, "-z", `${base}...HEAD`]
+    : ["diff", "--cached", "--name-only", "--no-renames", `--diff-filter=${diffFilter}`, "-z"];
+  const result = spawnSync(resolverExecutavel("git"), args, {
     cwd: root,
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
   });
   if (result.error) throw result.error;
   if (result.status !== 0) {
-    throw new Error(`git diff --cached falhou com exit ${result.status}: ${normalizeWhitespace(result.stderr)}`);
+    const label = base ? `git diff ${base}...HEAD` : "git diff --cached";
+    throw new Error(`${label} falhou com exit ${result.status}: ${normalizeWhitespace(result.stderr)}`);
   }
   return result.stdout.split("\0").filter((file) => file && STAGED_LINTABLE.test(file));
+}
+
+function stagedPaths(root, diffFilter) {
+  return changedPaths(root, diffFilter);
 }
 
 export function stagedLintableFiles(root = process.cwd()) {
@@ -412,6 +422,16 @@ export function stagedLintableFiles(root = process.cwd()) {
 
 export function stagedRemovedFiles(root = process.cwd()) {
   return stagedPaths(root, "D");
+}
+
+// Espelham stagedLintableFiles/stagedRemovedFiles, mas contra uma base (`--base <ref>`) em vez
+// do index staged — usado pelo CI para lintar so os arquivos que mudaram numa PR.
+export function changedLintableFiles(root = process.cwd(), base) {
+  return changedPaths(root, "ACMR", { base }).filter((file) => existsSync(path.join(root, file)));
+}
+
+export function changedRemovedFiles(root = process.cwd(), base) {
+  return changedPaths(root, "D", { base });
 }
 
 // No modo --staged o ESLint so viu os arquivos do commit: o baseline e recortado para os mesmos
@@ -436,13 +456,14 @@ function parseArguments(argv) {
     root: process.cwd(),
     updateBaseline: false,
     staged: false,
+    base: null,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
     if (argument === "--update-baseline") {
       options.updateBaseline = true;
-    } else if (argument === "--baseline" || argument === "--report" || argument === "--root") {
+    } else if (argument === "--baseline" || argument === "--report" || argument === "--root" || argument === "--base") {
       const value = argv[index + 1];
       if (!value) throw new Error(`Valor ausente para ${argument}.`);
       options[argument.slice(2).replace(/-([a-z])/gu, (_, letter) => letter.toUpperCase())] = value;
@@ -454,6 +475,13 @@ function parseArguments(argv) {
     } else {
       throw new Error(`Argumento desconhecido: ${argument}`);
     }
+  }
+
+  if (options.base && options.staged) {
+    throw new Error("--base nao combina com --staged.");
+  }
+  if (options.base && options.updateBaseline) {
+    throw new Error("--base nao combina com --update-baseline.");
   }
 
   options.root = path.resolve(options.root);
@@ -518,7 +546,8 @@ export function main(argv = process.argv.slice(2)) {
       console.log(`Uso:
   node scripts/ci/lint-ratchet.mjs
   node scripts/ci/lint-ratchet.mjs --update-baseline
-  node scripts/ci/lint-ratchet.mjs --staged     (so os arquivos staged; usado no pre-commit)
+  node scripts/ci/lint-ratchet.mjs --staged         (so os arquivos staged; usado no pre-commit)
+  node scripts/ci/lint-ratchet.mjs --base <ref>     (so os arquivos mudados desde <ref>; usado no CI)
 
 Opcoes de teste: --report <eslint.json> --baseline <arquivo> --root <diretorio>`);
       return 0;
@@ -527,7 +556,9 @@ Opcoes de teste: --report <eslint.json> --baseline <arquivo> --root <diretorio>`
     if (options.staged && options.updateBaseline) {
       throw new Error("--staged nao combina com --update-baseline.");
     }
-    let stagedTargets = null;
+    let scopedTargets = null;
+    let scopedRemoved = [];
+    let scopeLabel = null;
     if (options.staged) {
       const staged = stagedLintableFiles(options.root);
       if (staged.length === 0) {
@@ -537,11 +568,22 @@ Opcoes de teste: --report <eslint.json> --baseline <arquivo> --root <diretorio>`
       if (staged.length > MAX_STAGED_FILES) {
         console.log(`Lint ratchet (staged): ${staged.length} arquivos (> ${MAX_STAGED_FILES}), rodando o repositorio inteiro.`);
       } else {
-        stagedTargets = staged;
+        scopedTargets = staged;
+        scopedRemoved = stagedRemovedFiles(options.root);
+        scopeLabel = (count) => `Lint ratchet (staged, ${count} arquivo(s))`;
       }
+    } else if (options.base) {
+      const changed = changedLintableFiles(options.root, options.base);
+      if (changed.length === 0) {
+        console.log(`Lint ratchet (base ${options.base}): nenhum arquivo alterado.`);
+        return 0;
+      }
+      scopedTargets = changed;
+      scopedRemoved = changedRemovedFiles(options.root, options.base);
+      scopeLabel = (count) => `Lint ratchet (base ${options.base}, ${count} arquivo(s))`;
     }
 
-    const report = options.report ? readJson(options.report, "relatorio ESLint") : runEslint(options.root, stagedTargets);
+    const report = options.report ? readJson(options.report, "relatorio ESLint") : runEslint(options.root, scopedTargets);
     const current = createBaseline(report, options.root);
 
     if (options.updateBaseline) {
@@ -551,15 +593,15 @@ Opcoes de teste: --report <eslint.json> --baseline <arquivo> --root <diretorio>`
     }
 
     const fullBaseline = readJson(options.baseline, "baseline ESLint");
-    const baseline = stagedTargets
+    const baseline = scopedTargets
       ? scopeBaseline(
           fullBaseline,
           report.map((entry) => normalizeFilePath(entry.filePath, options.root)),
-          stagedRemovedFiles(options.root),
+          scopedRemoved,
         )
       : fullBaseline;
     const comparison = compareBaseline(baseline, report, options.root);
-    const label = stagedTargets ? `Lint ratchet (staged, ${stagedTargets.length} arquivo(s))` : "Lint ratchet";
+    const label = scopeLabel ? scopeLabel(scopedTargets.length) : "Lint ratchet";
     console.log(
       `${label}: baseline=${comparison.baselineCount}, atual=${comparison.currentCount}, ` +
         `mantidas=${comparison.matchedCount}, removidas=${comparison.removed.length}, novas=${comparison.added.length}`,
