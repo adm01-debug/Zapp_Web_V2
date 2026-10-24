@@ -43,6 +43,24 @@ const PERFIL_FAKE = {
   role: 'admin',
 };
 
+/** Matriz do boot (PK-20): `role_permissions` NÃO-vazia dispensa as N checagens
+ *  nomeadas de `useUserRole.ts` (`matrixPermissions !== null`). */
+const BOOT_FAKE = {
+  profile: { id: '00000000-0000-4000-8000-000000000001', name: 'Visual E2E' },
+  roles: ['admin'],
+  permissions: [{ id: 'perm-multiplix', name: 'multiplix.dispatch.create', description: null, category: 'geral' }],
+  role_permissions: [{
+    role: 'admin',
+    permission_id: 'perm-multiplix',
+    permission: { id: 'perm-multiplix', name: 'multiplix.dispatch.create', description: null, category: 'geral' },
+  }],
+  global_settings: [],
+  user_settings: null,
+  departments: [],
+  unread_notifications: 0,
+  fetched_at: '2026-09-15T12:00:00.000Z',
+};
+
 /** Fixture JSON de resposta da Mapbox (E68), sem `access_token`. */
 export function fixtureMapbox(nome: string): unknown {
   return JSON.parse(readFileSync(join(FIXTURES_MAPBOX, nome), 'utf8')) as unknown;
@@ -73,6 +91,11 @@ export async function mockAppShell(page: Page, registro: Registro): Promise<void
   await page.route(/\/rest\/v1\/rpc\/user_has_permission/, (route) => json(route, true));
   await page.route(/\/rest\/v1\/rpc\/count_searchbox_sessions_this_month/, (route) => json(route, 0));
   await page.route(/\/rest\/v1\/rpc\/(?!user_has_permission|count_searchbox_sessions_this_month)/, (route) => json(route, null));
+  // PK-20 (`src/hooks/system/useAppBootstrap.ts`): boot em UMA chamada; matriz
+  // não-vazia hidrata os caches via `seedAppBootstrapCaches` e tira o
+  // `ProtectedRoute` do 'Verificando permissões...'. Depois do catch-all genérico
+  // (última registrada vence).
+  await page.route(/\/rest\/v1\/rpc\/app_bootstrap/, (route) => json(route, BOOT_FAKE));
 
   // Edge functions: só o token do Mapbox importa; o resto é bloqueado.
   await page.route(/\/functions\/v1\/get-mapbox-token/, (route) => json(route, { token: 'pk.e2e-mapa' }));
@@ -83,6 +106,9 @@ export async function mockAppShell(page: Page, registro: Registro): Promise<void
   // tolera. Interceptado aqui com o MESMO status para a spec não tocar a internet (sem
   // mudar o que o app vê: continuava 401 quando a requisição escapava).
   await page.route(/\/auth\/v1\/user/, (route) => json(route, { code: 401, msg: 'invalid JWT' }, 401));
+  // Sonda `no-cors` (`useSupabaseConnectivity.ts`): resposta opaca 200 =
+  // alcançável; sem ela cai no `bloquearRedeReal` e suja `redeBarrada`.
+  await page.route(/\/auth\/v1\/health/, (route) => json(route, {}));
 
   // Catch-all das leituras do app shell não cobertas acima (usa negative lookahead para
   // nunca roubar `contacts`/`messages`, que cada spec registra por conta própria).
