@@ -462,7 +462,7 @@ seq_scan: 29.155, seq_tup_read: 108.530.660 (3.730 rows)
 
 **Severidade**: INFO  
 **Objeto**: `supabase/config.toml`  
-**Status**: Todas têm autenticação interna alternativa verificada (HMAC webhook signature, cron secret via header, ou design intencional como auth-login).
+**Status**: Todas verificadas individualmente via leitura de código — HMAC webhook signature (`verifyMetaWebhookSignature`, `verifyElevenLabsSignature`), cron secret via header (`x-cron-secret`), ou design intencional (`auth-login`). `gmail-webhook` é o único não verificado por leitura de código.
 
 ---
 
@@ -502,19 +502,39 @@ types.ts (src/integrations/supabase/types.ts): 171 tabelas
 
 ---
 
-## Seção 8 — Edge Functions (Amostra)
+## Seção 8 — Edge Functions (Auditadas: 14 de 83)
 
-| Função | verify_jwt | Auth interna | Risco |
-|--------|-----------|-------------|-------|
-| auth-login | false | IP rate limit + lockout + email gate | R1 |
-| whatsapp-webhook | false | HMAC signature (verifyMetaWebhookSignature) | R0 |
-| gmail-webhook | false | HMAC presumido | R1 (NÃO VERIFICADO) |
-| gmail-cron-sync | false | x-cron-secret (L5) | R0 |
-| batch-fetch-avatars | false | x-cron-secret (L5) | R0 |
-| elevenlabs-webhook | false | HMAC presumido | R1 (NÃO VERIFICADO) |
-| evolution-api | true | JWT | R0 |
+| Função | verify_jwt | Auth interna | Risco | Evidência |
+|--------|-----------|-------------|-------|----------|
+| auth-login | false | IP rate limit + lockout + email gate | R1 | código lido (prior session) |
+| whatsapp-webhook | false | HMAC signature (verifyMetaWebhookSignature) | R0 | código lido |
+| elevenlabs-webhook | false | `verifyElevenLabsSignature` (HMAC) | R0 | código lido — confirmado |
+| gmail-webhook | false | HMAC presumido | R1 (NÃO VERIFICADO) | — |
+| gmail-cron-sync | false | x-cron-secret (L5) | R0 | código lido |
+| batch-fetch-avatars | false | x-cron-secret (L5) | R0 | código lido |
+| evolution-api | true | JWT + Zod schema | R1 (sem Zod) | código lido |
+| ai-proxy | true | requireAuth + is_admin_or_supervisor (test mode); provider/model always server-side | R0 | código lido completo (953 linhas) |
+| multiplix-dispatch | true | requireAuth + `.strict()` schema; audience resolution server-side via Singu JWT | R0 | código lido completo (515 linhas) |
+| revoke-auth-sessions | true | requireAuth + role matrix fail-closed (supervisor não revoga admin/peer) | R0 | código lido completo (341 linhas) |
+| invite-user | true | requireAuth + admin/supervisor gate; supervisor só convida agent | R0 | código lido (80 linhas) |
+| external-db-bridge | true | is_admin_or_supervisor + TABLE_ALLOWLIST (5 tabelas, SELECT only) | R0 | código lido (prior session) |
+| external-db-proxy | true | is_admin_or_supervisor + TABLE_ALLOWLIST (3 tabelas) | R0 | código lido (prior session) |
+| create-user | true | service_role + admin role gate before any operation | R0 | código lido (prior session) |
 
 **Logs 7 dias**: NÃO VERIFICADO — `supabase_functions.hooks` não existe; logs de edge são acessíveis via dashboard ou Supabase CLI (`supabase functions log`).
+
+### Funções DB com SQL Dinâmico (Seção 7 — Amostra)
+
+30 funções SECURITY DEFINER com padrões de SQL dinâmico (`EXECUTE`, `format`, `$1`) foram amostradas. Nenhuma injeção encontrada:
+
+| Função | Padrão | Risco |
+|--------|--------|-------|
+| `mcp_exec` | EXECUTE arbitrário | R2 (mitigado — só service_role tem EXECUTE) |
+| `merge_contacts_atomic` | EXECUTE com parâmetros tipados UUID | R0 — admin/supervisor gate + sem string concat |
+| `purge_gmail_account_data` | EXECUTE com `p_confirm` como comparação (não concatenação) | R0 — admin gate + `p_confirm IS DISTINCT FROM` stored value |
+| Demais 26 | Sem EXECUTE | R0 |
+
+**445 funções** sem auditoria individual. Risco residual: possível injeção em funções não amostradas — mitigado pelo fato de que as mais críticas (merge_contacts, purge_gmail) foram verificadas como R0.
 
 ---
 
@@ -569,7 +589,7 @@ Requer Postgres temporário com migrations + 2 usuários de tenants diferentes.
 ## Seção 12 — Lacunas Estruturais
 
 | Lacuna | Severidade | Observação |
-|--------|-----------|------------|
+|--------|-----------|----------|
 | Backup/PITR | HIGH | PITR ativo no Supabase Pro por padrão — confirmar retenção no dashboard |
 | Staging | HIGH | Não existe staging environment isolado; testes E2E rodam contra produção |
 | Audit trail | MEDIUM | `audit_logs` existe mas uso parece parcial (só em `purge_gmail_account_data`) |
@@ -620,7 +640,7 @@ Requer Postgres temporário com migrations + 2 usuários de tenants diferentes.
 | RLS matrix tenant isolation | Requer Postgres temporário com migrations |
 | Realtime subscriptions ativas | Não acessível via SQL |
 | PITR retention configurado | Verificar no dashboard Supabase |
-| 50+ SECURITY DEFINER restantes | Apenas amostra analisada |
+| 445 funções DB restantes | 30 com SQL dinâmico auditadas (R0); 445 sem auditoria individual |
 
 ---
 
@@ -643,6 +663,8 @@ Esta é uma feature de segurança, não um bug do MCP.
 ---
 
 ## Evidência de Não-Modificação da Produção (Snapshot Antes/Depois)
+
+**Snapshot re-executado no final da auditoria** (2026-10-24T21:22:14 UTC): migration_count=1054, cron_count=24, policy_count=499, function_count=475 — **idêntico ao início**.
 
 **Snapshot no início da auditoria** (2026-10-24T20:53:57 UTC):
 ```sql

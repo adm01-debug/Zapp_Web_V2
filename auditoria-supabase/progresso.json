@@ -9,8 +9,8 @@
     "4_integridade": "CONCLUÍDO",
     "5_performance": "CONCLUÍDO",
     "6_crons": "CONCLUÍDO",
-    "7_funcoes_db": "PARCIAL — análise de amostra; 100% das funções NÃO VERIFICADO",
-    "8_edge_functions": "PARCIAL — auth patterns verificados; logs 7d inacessíveis via SQL",
+    "7_funcoes_db": "PARCIAL — 30 funções SECURITY DEFINER com SQL dinâmico auditadas (mcp_exec R2-mitigado, merge_contacts_atomic R0, purge_gmail_account_data R0); 445 funções sem auditoria individual",
+    "8_edge_functions": "CONCLUÍDO (amostra) — 14 funções com código lido: ai-proxy R0, multiplix-dispatch R0, revoke-auth-sessions R0, invite-user R0, elevenlabs-webhook R0, external-db-bridge R0, external-db-proxy R0, create-user R0; gmail-webhook NÃO VERIFICADO; logs 7d inacessíveis via SQL",
     "9_auth_storage_realtime": "CONCLUÍDO",
     "10_logs_7d": "NÃO VERIFICADO — supabase_functions.hooks não acessível via SQL",
     "11_rls": "PARCIAL — contagens em produção; matrix completa NÃO TESTADO (requer Postgres temporário)",
@@ -23,12 +23,14 @@
     "LOW": 5,
     "INFO": 4
   },
-  "last_updated": "2026-10-24T21:30:00Z",
+  "last_updated": "2026-10-24T21:22:14Z",
   "production_snapshot": {
     "snapshot_at": "2026-10-24T20:53:57Z",
     "migration_count": 1054,
     "cron_count": 24,
     "policy_count": 499,
-    "function_count": 475
+    "function_count": 475,
+    "snapshot_final_at": "2026-10-24T21:22:14Z",
+    "snapshot_final_identical": true
   }
 }
