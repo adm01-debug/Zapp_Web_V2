@@ -59,7 +59,7 @@ export function formatWorkItemDay(
   if (diff === 0) return 'Hoje';
   if (diff === -1) return 'Ontem';
   if (diff === 1) return 'Amanhã';
-  return `${pad2(d.getDate())} ${MES_CURTO_PT_BR[d.getMonth()]}`;
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
 }
 
 /** Hora local "HH:mm". */
