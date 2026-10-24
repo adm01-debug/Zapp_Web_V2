@@ -44,7 +44,11 @@ function toTeamMessage(row: TeamMessagePageRow): TeamMessage {
   };
 }
 
-export function useTeamMessages(conversationId: string | null) {
+type TeamMessageEvent =
+  | { type: 'update'; id: string; content: string; is_edited: boolean; updated_at: string }
+  | { type: 'delete'; id: string };
+
+export function useTeamMessages(conversationId: string | null, onEvent?: (event: TeamMessageEvent) => void) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const markedRef = useRef<string | null>(null);
@@ -108,7 +112,17 @@ export function useTeamMessages(conversationId: string | null) {
     let jaInscrito = false;
     const channel = supabase
       .channel(`team-messages-${conversationId}` + uniqueRealtimeTopic(''))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, revalidar)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
+        revalidar();
+        if (!onEvent) return;
+        if (payload.eventType === 'UPDATE') {
+          const rec = payload.new as { id: string; content: string; is_edited: boolean; updated_at: string };
+          onEvent({ type: 'update', id: rec.id, content: rec.content ?? '', is_edited: rec.is_edited ?? false, updated_at: rec.updated_at });
+        } else if (payload.eventType === 'DELETE') {
+          const rec = payload.old as { id: string };
+          if (rec.id) onEvent({ type: 'delete', id: rec.id });
+        }
+      })
       .subscribe((status) => {
         // A queda do canal não avisa: o que ficou em memória envelhece. Só na
         // RE-inscrição (depois da primeira) a página corrente é refeita.
@@ -166,5 +180,5 @@ export function useTeamMessages(conversationId: string | null) {
     return () => { cancelado = true; };
   }, [conversationId, profile, pagina]);
 
-  return { messages, isLoading: query.isLoading };
+  return { messages, isLoading: query.isLoading, isError: query.isError, refetch: query.refetch };
 }
