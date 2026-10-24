@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-20`. 84 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-20`. 91 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -25,8 +25,8 @@ partir do código e falha quando:
 | B | 1 |
 | C | 3 |
 | D | 6 |
-| E | 20 |
-| **total** | **84** |
+| E | 27 |
+| **total** | **91** |
 
 ## Tabela
 
@@ -37,9 +37,16 @@ partir do código e falha quando:
 | `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:146` |
 | `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:107` |
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:91` |
+| `ai-deadline-calculator` | E | — sem chamador no repositório — |
 | `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:62` · `src/components/inbox/chat/AIRewriteButton.tsx:50` |
 | `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
 | `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:126` · `src/hooks/integrations/useKnowledgeBase.ts:197` |
+| `ai-lead-temperature` | E | — sem chamador no repositório — |
+| `ai-loss-risk` | E | — sem chamador no repositório — |
+| `ai-multimodal-analysis` | E | — sem chamador no repositório — |
+| `ai-objection-handler` | E | — sem chamador no repositório — |
+| `ai-price-anchor` | E | — sem chamador no repositório — |
+| `ai-product-recommendation` | E | — sem chamador no repositório — |
 | `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:102` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1400` |
@@ -117,7 +124,7 @@ partir do código e falha quando:
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:79` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
-## Órfãs (20) — GATE B
+## Órfãs (27) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador em
@@ -127,6 +134,13 @@ As auditorias de migração de 2026-08 já apontavam parte destes nomes; a guard
 mantém a lista honesta.
 
 - `ai-auto-tag`
+- `ai-deadline-calculator`
+- `ai-lead-temperature`
+- `ai-loss-risk`
+- `ai-multimodal-analysis`
+- `ai-objection-handler`
+- `ai-price-anchor`
+- `ai-product-recommendation`
 - `ai-usage-outbox-drain`
 - `auto-close-conversations`
 - `cleanup-rate-limit-logs`
