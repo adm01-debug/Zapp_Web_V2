@@ -354,19 +354,25 @@ test('E62/E76: os numeros citados conferem com o repositorio', async () => {
   assert.match(e62.linha, /guardas de DB|pós-apply/i);
 
   const lock = await readFile(BUN_LOCK, 'utf8');
-  assert.ok(/playwright@1\.63\.0/.test(lock));
-  assert.ok(/playwright-core@1\.63\.0/.test(lock));
-  assert.ok(/@playwright\/test@1\.63\.0/.test(lock));
+  // W39: extrair versão do bun.lock em vez de pinar literalmente (ex.: playwright@1.63.0).
+  // Assim o bump do Playwright no Dependabot não exige editar este arquivo.
+  const pwMatch = lock.match(/playwright@(\d+\.\d+\.\d+)/);
+  assert.ok(pwMatch, 'playwright deve estar no bun.lock');
+  const pwVer = pwMatch[1];
+  const pwEsc = pwVer.replace(/\./g, '\\.');
+  assert.ok(new RegExp(`playwright-core@${pwEsc}`).test(lock), `playwright-core@${pwVer} deve estar no bun.lock`);
+  assert.ok(new RegExp(`@playwright/test@${pwEsc}`).test(lock), `@playwright/test@${pwVer} deve estar no bun.lock`);
 
   const tres = ['ci.yml', 'e2e-logado.yml', 'e2e-talkx.yml'];
   for (const f of tres) {
     const wf = await readFile(join(DIR_WF, f), 'utf8');
-    assert.ok(wf.includes('playwright@1.63.0'));
+    assert.ok(wf.includes(`playwright@${pwVer}`), `${f} deve usar playwright@${pwVer} (versao do bun.lock)`);
   }
   const e76 = rec.get('E76');
   assert.ok(e76);
   for (const f of tres) assert.ok(e76.linha.includes(f), `E76 deve citar ${f}`);
-  assert.match(e76.linha, /1\.63\.0/);
+  // Não verificar versão literal aqui: a linha do plano menciona a versão em texto livre,
+  // mas o contrato é que a paridade seja verdadeira (todos os três arquivos == bun.lock).
   assert.match(e76.linha, /não há mismatch/i);
 });
 
@@ -436,6 +442,27 @@ test('plano: tabela de abertura (E01/E13/E14/E16) preserva as evidencias medidas
     assert.ok(tabela.some((l) => l.startsWith(`| **${id}**`)), `${id} deve estar medido na tabela de abertura`);
   }
   assert.deepEqual(violacoesTabelaAbertura(plano), []);
+});
+
+// W39: garante que nenhum teste neste arquivo pina uma versão literal de dependência
+// (ex.: playwright@1.63.0) em chamadas de assert. Versão deve ser lida do bun.lock.
+test('meta: nenhum assert neste arquivo pina versao literal de dependencia (package@X.Y.Z)', async () => {
+  const src = await readFile(new URL(import.meta.url), 'utf8');
+  const linhas = src.split('\n');
+  // Pega linhas de assert que contenham @<dígitos>.<dígitos>.<dígitos> literal
+  // (exclui linhas que só têm o padrão regex \d+, pois \d não é dígito)
+  const violacoes = linhas.filter(
+    (l) =>
+      !/^\s*\/\//.test(l) &&          // exclui linhas de comentário
+      /assert\./.test(l) &&             // é uma chamada de assert
+      /@\d+\.\d+\.\d+/.test(l) &&   // contém @X.Y.Z literal
+      !l.includes('\\d+'),             // não é um padrão regex (\d+)
+  );
+  assert.deepEqual(
+    violacoes,
+    [],
+    `assert com versao literal de dependencia encontrado:\n${violacoes.join('\n')}`,
+  );
 });
 
 // W95: CONTRIBUTING.md deve referenciar o stack e o fluxo atuais
