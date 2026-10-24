@@ -1,14 +1,15 @@
- import { useState, useEffect, useCallback, useRef, createContext, useContext, ReactNode } from 'react';
- import { useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect, useCallback, useRef, createContext, useContext, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { clearOfflineCache } from '@/hooks/system/useOfflineCache';
- import { User, Session } from '@supabase/supabase-js';
- import { AuthService, type SignInResult } from '@/services/auth.service';
- import { notificarDispositivoNovo } from '@/lib/avisoDispositivo';
- import { Profile } from '@/types';
+import { User, Session } from '@supabase/supabase-js';
+import { AuthService, type SignInResult } from '@/services/auth.service';
+import { notificarDispositivoNovo } from '@/lib/avisoDispositivo';
+import { Profile } from '@/types';
 import { log } from '@/lib/logger';
 import { clearEmailDraftSessions } from '@/lib/emailDraftSession';
 import { clearInboxDraftSessions } from '@/lib/inboxDraftSession';
 import { clearTeamChatDraftSessions } from '@/lib/teamChatDraftSession';
+import { offlineSendQueue } from '@/lib/offlineQueue';
 
 interface AuthContextType {
   user: User | null;
@@ -23,7 +24,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
- export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -41,7 +42,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
   const queryClient = useQueryClient();
 
   /**
-   * Inicia/limpa a identidade vigente e invalida as buscas de perfil em voo.
+   * Inici/limpa a identidade vigente e invalida as buscas de perfil em voo.
    * Repete a mesma identidade (ex.: TOKEN_REFRESHED) nao mexe em nada.
    */
   const definirIdentidade = useCallback((userId: string | null) => {
@@ -58,24 +59,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
    * fetchingRef.current stuck at `true` (causing all subsequent fetches to
    * silently no-op, leaving profile as null indefinitely).
    */
-   const fetchProfile = useCallback(async (userId: string) => {
-     if (fetchingRef.current) return;
-     fetchingRef.current = true;
-     const geracao = ++geracaoPerfilRef.current;
-     try {
-       const data = await AuthService.fetchProfile(userId);
-       // Descarta resposta de geracao encerrada ou de identidade que mudou
-       // enquanto a consulta estava em voo (logout / troca de usuario).
-       const respostaVigente =
-         geracaoPerfilRef.current === geracao && identidadeRef.current === userId;
-       if (!respostaVigente) return;
-       if (data) setProfile(data);
-     } catch (err) {
-       log.error('[AuthProvider] Failed to fetch profile:', err);
-     } finally {
-       fetchingRef.current = false;
-     }
-   }, []);
+  const fetchProfile = useCallback(async (userId: string) => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
+    const geracao = ++geracaoPerfilRef.current;
+    try {
+      const data = await AuthService.fetchProfile(userId);
+      // Descarta resposta de geracao encerrada ou de identidade que mudou
+      // enquanto a consulta estava em voo (logout / troca de usuario).
+      const respostaVigente =
+        geracaoPerfilRef.current === geracao && identidadeRef.current === userId;
+      if (!respostaVigente) return;
+      if (data) setProfile(data);
+    } catch (err) {
+      log.error('[AuthProvider] Failed to fetch profile:', err);
+    } finally {
+      fetchingRef.current = false;
+    }
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -102,8 +103,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         if (session?.user) {
           definirIdentidade(session.user.id);
           void fetchProfile(session.user.id);
-          // Aviso de novo dispositivo (uma vez por sessão Auth): o e-mail tem de
-          // sair no login/boot, não só quando a vítima abre a tela de Segurança.
+          // Aviso de novo dispositivo (uma vez por sessao Auth): o e-mail tem de
+          // sair no login/boot, nao so quando a vitima abre a tela de Seguranca.
           void notificarDispositivoNovo(session.access_token);
         } else {
           definirIdentidade(null);
@@ -137,7 +138,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         // R2-AUTH-005: zera o perfil da identidade anterior antes de buscar a nova.
         definirIdentidade(session.user.id);
         void fetchProfile(session.user.id);
-        // Aviso de novo dispositivo no login (uma vez por sessão Auth).
+        // Aviso de novo dispositivo no login (uma vez por sessao Auth).
         if (event === 'SIGNED_IN') {
           void notificarDispositivoNovo(session.access_token);
         }
@@ -155,11 +156,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         queryClient.clear();
         clearOfflineCache();
         clearEmailDraftSessions();
-        // SEC-FRONTEND-03: o rascunho de conversa do Inbox também é do usuário que
-        // saiu — nenhum texto dele pode esperar o próximo login na mesma máquina.
+        // SEC-FRONTEND-03: o rascunho de conversa do Inbox tambem e do usuario que
+        // saiu - nenhum texto dele pode esperar o proximo login na mesma maquina.
         clearInboxDraftSessions();
         // HZ2-016: idem para o rascunho do Chat de Equipe (`zapp.teamchat.draft:<uid>:*`).
         clearTeamChatDraftSessions();
+        // SL-070: a fila de envio offline e do atendente que saiu - nenhuma mensagem
+        // pendente dele pode drenar como o proximo atendente que logar na mesma maquina.
+        void offlineSendQueue.clear();
       }
     });
 
@@ -198,48 +202,51 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
     }
   }, [user, fetchProfile]);
 
-   const signIn = async (email: string, password: string) => AuthService.signIn(email, password);
+  const signIn = async (email: string, password: string) => AuthService.signIn(email, password);
 
-   const signUp = async (email: string, password: string, name: string) => {
-     const { error } = await AuthService.signUp(email, password, name);
-     return { error };
-   };
+  const signUp = async (email: string, password: string, name: string) => {
+    const { error } = await AuthService.signUp(email, password, name);
+    return { error };
+  };
 
-   const signOut = async () => {
-     try {
-       await AuthService.signOut();
-     } catch (err) {
-       // BUG-F1 FIX: log but do not rethrow — ensure local state is always
-       // cleared so the UI never shows a stale profile after a sign-out
-       // attempt (e.g. network failure). The next onAuthStateChange will
-       // reconcile if the server-side sign-out actually succeeded.
-       log.error('[AuthProvider] signOut failed, clearing local state anyway:', err);
-     } finally {
-       // R2-AUTH-005: invalida consulta de perfil em voo para que a resposta
-       // atrasada nao reponha a identidade que acabou de sair.
-       definirIdentidade(null);
-       setProfile(null);
-       setSession(null);
-       setUser(null);
-       // Quando o sign-out do Supabase falha ele nao emite SIGNED_OUT, entao a
-       // limpeza do listener nunca roda — repetida aqui para que nenhum caminho
-       // deixe dados do usuario anterior para tras.
-       queryClient.clear();
-       clearOfflineCache();
-       clearEmailDraftSessions();
-       // SEC-FRONTEND-03: idem para o rascunho de conversa do Inbox (o sign-out do
-       // Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele).
-       clearInboxDraftSessions();
-       // HZ2-016: idem para o rascunho do Chat de Equipe.
-       clearTeamChatDraftSessions();
-     }
-   };
+  const signOut = async () => {
+    try {
+      await AuthService.signOut();
+    } catch (err) {
+      // BUG-F1 FIV: log but do not rethrow - ensure local state is always
+      // cleared so the UI never shows a stale profile after a sign-out
+      // attempt (e.g. network failure). The next onAuthStateChange will
+      // reconcile if the server-side sign-out actually succeeded.
+      log.error('[AuthProvider] signOut failed, clearing local state anyway:', err);
+    } finally {
+      // R2-AUTH-005: invalida consulta de perfil em voo para que a resposta
+      // atrasada nao reponha a identidade que acabou de sair.
+      definirIdentidade(null);
+      setProfile(null);
+      setSession(null);
+      setUser(null);
+      // Quando o sign-out do Supabase falha ele nao emite SIGNED_OUT, entao a
+      // limpeza do listener nunca roda - repetida aqui para que nenhum caminho
+      // deixe dados do usuario anterior para tras.
+      queryClient.clear();
+      clearOfflineCache();
+      clearEmailDraftSessions();
+      // SEC-FRONTEND-03: idem para o rascunho de conversa do Inbox (o sign-out do
+      // Supabase pode falhar e nao emitir SIGNED_OUT - a limpeza nao pode depender dele).
+      clearInboxDraftSessions();
+      // HZ2-016: idem para o rascunho do Chat de Equipe.
+      clearTeamChatDraftSessions();
+      // SL-070: idem para a fila de envio offline - garantia mesmo quando o Supabase
+      // nao emite SIGNED_OUT.
+      void offlineSendQueue.clear();
+    }
+  };
 
   return (
     <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
-  );
+    );
 }
 
 export function useAuth() {
