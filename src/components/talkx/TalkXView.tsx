@@ -26,8 +26,15 @@ import { TalkXAnalytics } from './TalkXAnalytics';
 import { TalkXSettings } from './TalkXSettings';
 import { TalkXCampaignScheduled } from './TalkXCampaignScheduled';
 import { TalkXCampaignRunning } from './TalkXCampaignRunning';
-import { parseTalkXWizardRoute, pushTalkXWizardRoute, replaceTalkXWizardRoute, type TalkXWizardRoute } from './talkxWizardRoute';
-import { goTab, readTab, readSub } from './talkxTabRoute';
+import {
+  goTab,
+  parseTalkXRoute,
+  pushTalkXWizardRoute,
+  replaceTalkXTabRoute,
+  replaceTalkXWizardRoute,
+  type TalkXTab,
+  type TalkXWizardRoute,
+} from './talkxRoute';
 import type { WizardStep } from './useCampaignEditor';
 
 export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running';
@@ -43,15 +50,15 @@ export default function TalkXView() {
   // estado não aparece (nunca um falso "desconectado" na tela).
   const { whatsapp: whatsappService } = useTalkXServiceStatus();
   const whatsappDisconnected = whatsappService.connected === false;
-  const [topView, setTopView] = useState<TalkXTopView>(() => parseTalkXWizardRoute(window.location.search).route ? 'wizard' : 'tabs');
-  const [activeTab, setActiveTab] = useState<string>(() => readTab(window.location.search));
-  const [activeSub, setActiveSub] = useState<string | undefined>(() => readSub(window.location.search));
+  const [topView, setTopView] = useState<TalkXTopView>(() => parseTalkXRoute(window.location.search).wizard.route ? 'wizard' : 'tabs');
+  const [activeTab, setActiveTab] = useState<TalkXTab>(() => parseTalkXRoute(window.location.search).tab);
+  const [activeSub, setActiveSub] = useState<string | undefined>(() => parseTalkXRoute(window.location.search).sub);
   const [editingCampaign, setEditingCampaign] = useState<TalkXCampaign | null>(null);
   const [monitorId, setMonitorId] = useState<string | null>(null);
   const [scheduledCampaignId, setScheduledCampaignId] = useState<string | null>(null);
   const [runningCampaignId, setRunningCampaignId] = useState<string | null>(null);
   const [wizardInitial, setWizardInitial] = useState<{ segmentId?: string; templateId?: string } | undefined>();
-  const [wizardRoute, setWizardRoute] = useState<TalkXWizardRoute | null>(() => parseTalkXWizardRoute(window.location.search).route);
+  const [wizardRoute, setWizardRoute] = useState<TalkXWizardRoute | null>(() => parseTalkXRoute(window.location.search).wizard.route);
   // X189: a Ajuda deixou de ser modal e virou tela com endereço próprio
   // (?screen=help&topic=&article=); o "?" do cabeçalho abre esta rota.
   const [helpRoute, setHelpRoute] = useState<TalkXHelpRoute | null>(() => parseTalkXHelpRoute(window.location.search).route);
@@ -71,35 +78,40 @@ export default function TalkXView() {
   }, []);
 
   const syncFromBrowserHistory = useCallback(() => {
-    const parsed = parseTalkXWizardRoute(window.location.search);
-    if (parsed.needsNormalization) replaceTalkXWizardRoute(parsed.route);
+    const parsedWizard = parseTalkXRoute(window.location.search).wizard;
+    if (parsedWizard.needsNormalization) replaceTalkXWizardRoute(parsedWizard.route);
 
     // The browser history event, rather than a render effect, is the source of
     // truth for back/forward. Resetting here also guarantees a draft from the
     // previous route cannot survive navigation to another campaign.
     setLocalDraftRouteId(null);
-    setWizardRoute(parsed.route);
+    setWizardRoute(parsedWizard.route);
     setWizardInitial(undefined);
 
-    if (!parsed.route) {
+    if (!parsedWizard.route) {
       setEditingCampaign(null);
       setTopView('tabs');
       return;
     }
-    if (parsed.route.campaignId === 'new') {
+    if (parsedWizard.route.campaignId === 'new') {
       setEditingCampaign(null);
       setTopView('wizard');
       return;
     }
 
-    const campaign = campaigns.find((candidate) => candidate.id === parsed.route?.campaignId);
+    const campaign = campaigns.find((candidate) => candidate.id === parsedWizard.route?.campaignId);
     setEditingCampaign(campaign && (campaign.status === 'draft' || campaign.status === 'scheduled') ? campaign : null);
     setTopView('wizard');
   }, [campaigns]);
 
   useEffect(() => {
-    const initial = parseTalkXWizardRoute(window.location.search);
-    if (initial.needsNormalization) replaceTalkXWizardRoute(initial.route);
+    const initialWizard = parseTalkXRoute(window.location.search).wizard;
+    if (initialWizard.needsNormalization) replaceTalkXWizardRoute(initialWizard.route);
+    // X052: o mesmo rigor vale para o endereço já aberto — aba duplicada ou
+    // desconhecida cai na Visão geral e o endereço é reescrito (replace, sem
+    // entrada nova no histórico) em vez de mostrar área vazia.
+    const initialTab = parseTalkXRoute(window.location.search);
+    if (initialTab.needsNormalization) replaceTalkXTabRoute({ tab: initialTab.tab, sub: initialTab.sub });
     window.addEventListener('popstate', syncFromBrowserHistory);
     return () => window.removeEventListener('popstate', syncFromBrowserHistory);
   }, [syncFromBrowserHistory]);
@@ -107,13 +119,14 @@ export default function TalkXView() {
   // Aba ativa vem da URL; popstate (inclusive o disparado por goTab) restaura tab/sub.
   useEffect(() => {
     const syncTab = () => {
-      const tab = readTab(window.location.search);
-      setActiveTab(tab);
-      setActiveSub(readSub(window.location.search));
+      const parsed = parseTalkXRoute(window.location.search);
+      if (parsed.needsNormalization) replaceTalkXTabRoute({ tab: parsed.tab, sub: parsed.sub });
+      setActiveTab(parsed.tab);
+      setActiveSub(parsed.sub);
       setHelpRoute(parseTalkXHelpRoute(window.location.search).route);
       // R2-MOD-039: o pedido de "novo template" não sobrevive à saída da aba de templates;
       // voltar pela Biblioteca mostra a lista, não o editor que ficou aberto.
-      if (tab !== 'templates') setTemplateStartNew(false);
+      if (parsed.tab !== 'templates') setTemplateStartNew(false);
     };
     window.addEventListener('popstate', syncTab);
     return () => window.removeEventListener('popstate', syncTab);
