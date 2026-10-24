@@ -13,7 +13,7 @@ interface Props {
 
 export function DepartmentInvitesView({ departmentId, currentUserName, isAdmin }: Props) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const { data: invites = [], isLoading } = useDepartmentInvites(departmentId);
+  const { data: invites = [], isLoading, isError } = useDepartmentInvites(departmentId);
   const createMutation = useCreateDepartmentInvite(departmentId);
   const deleteMutation = useDeleteDepartmentInvite(departmentId);
 
@@ -25,6 +25,18 @@ export function DepartmentInvitesView({ departmentId, currentUserName, isAdmin }
 
   if (isLoading) {
     return <div className="p-6 text-center text-sm text-muted-foreground">Carregando...</div>;
+  }
+
+  // Leitura que falhou não é "nenhum convite": sem isto o erro de RLS/RPC
+  // aparecia como lista vazia e o admin concluía que o convite sumiu.
+  if (isError) {
+    return (
+      <div className="p-6 text-center">
+        <p role="alert" className="text-sm text-destructive">
+          Não foi possível carregar os convites deste departamento.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -58,6 +70,13 @@ export function DepartmentInvitesView({ departmentId, currentUserName, isAdmin }
                 <p className="text-xs text-muted-foreground">
                   Expira {format(new Date(invite.expires_at), "dd 'de' MMM", { locale: ptBR })}
                 </p>
+                {/* F76: `department_invitations` controla uso e limite (`use_count`/`max_uses`);
+                    sem isso o convite esgotado parecia disponível. */}
+                {typeof invite.use_count === 'number' && typeof invite.max_uses === 'number' && (
+                  <p className="text-xs text-muted-foreground">
+                    {invite.use_count} de {invite.max_uses} {invite.max_uses === 1 ? 'uso' : 'usos'}
+                  </p>
+                )}
               </div>
               <Button
                 size="icon"
