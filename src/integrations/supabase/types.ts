@@ -11649,6 +11649,10 @@ export type Database = {
         Args: { p_profile_id: string }
         Returns: Json
       }
+      increment_custom_emoji_use: {
+        Args: { p_emoji_id: string }
+        Returns: number
+      }
       ingest_inbound_message: {
         Args: {
           p_connection_id: string
@@ -11956,6 +11960,16 @@ export type Database = {
         Returns: Json
       }
       reap_ai_jobs: { Args: never; Returns: number }
+      reopen_conversation: {
+        Args: { p_contact_id: string }
+        Returns: {
+          contact_id: string
+          conversation_status: string
+          conversation_status_changed_at: string
+          event_id: string | null
+          reopened: boolean
+        }[]
+      }
       reassign_absent_agents: {
         Args: { inactive_minutes?: number }
         Returns: number
@@ -12354,6 +12368,10 @@ export type Database = {
         Args: { p_contact_id: string; p_next: string; p_reason?: string }
         Returns: undefined
       }
+      set_default_whatsapp_connection: {
+        Args: { p_connection_id: string }
+        Returns: string
+      }
       set_department_whatsapp_config: {
         Args: {
           p_api_key?: string
@@ -12378,6 +12396,18 @@ export type Database = {
           p_profile_id: string
         }
         Returns: undefined
+      }
+      sentiment_trend: {
+        Args: { p_days?: number }
+        Returns: {
+          dia: string
+          total: number
+          positivos: number
+          neutros: number
+          negativos: number
+          media: number | null
+          indice: number | null
+        }[]
       }
       skill_based_assign: { Args: { p_queue_id: string }; Returns: string }
       snapshot_talkx_campaign_audience: {

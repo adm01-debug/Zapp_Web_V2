@@ -314,8 +314,7 @@ export function useConversationActions() {
   const reopenConversation = useCallback(async (
     contactId: string,
   ): Promise<{ status: string | null; reopened: boolean } | null> => {
-    // RPC nova (t_0d2e2dec), types.ts ainda não sincronizado.
-    const { data, error } = await (supabase as any).rpc('reopen_conversation', { p_contact_id: contactId }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (t_0d2e2dec), types.ts ainda não sincronizado
+    const { data, error } = await supabase.rpc('reopen_conversation', { p_contact_id: contactId });
     const linha = Array.isArray(data) ? data[0] : data;
     if (error || !linha) {
       toast.error('Erro ao reabrir conversa. Tente novamente.');
