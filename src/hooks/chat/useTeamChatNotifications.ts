@@ -212,7 +212,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         // silenciava quem concedeu a permissão e não assinou o push: ficava só com o
         // som. O liga/desliga de avisos do chat interno continua valendo por
         // `notifSettings.browserNotifications`.
-        if (Notification.permission === 'granted' && currentSettings.browserNotifications && !currentIsQuietHours()) {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && currentSettings.browserNotifications && !currentIsQuietHours()) {
           // Nome do remetente por RPC segura: para o agente a leitura direta de
           // `profiles` é barrada pela RLS (o título virava 'Colega').
           // `get_team_profiles()` é SECURITY DEFINER e já mascara email/telefone.

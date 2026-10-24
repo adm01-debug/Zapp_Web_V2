@@ -68,6 +68,14 @@ vi.mock('framer-motion', () => ({
     div: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
   },
 }));
+// DeferredProviders chama useAuth e useGlobalIncomingMessageAlerts diretamente;
+// AppProviders está mockado como passthrough, sem AuthProvider na árvore.
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: { id: 'test-user-id' } }),
+}));
+vi.mock('@/hooks/realtime/useGlobalIncomingMessageAlerts', () => ({
+  useGlobalIncomingMessageAlerts: vi.fn(),
+}));
 
 import App from '@/App';
 import { TeamChatView } from '@/components/team-chat/TeamChatView';
