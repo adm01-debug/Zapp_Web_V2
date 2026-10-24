@@ -3,6 +3,31 @@ import type { Message } from '@/types/chat';
 
 export type { Message };
 
+/** Extensão de arquivo por subtipo MIME de áudio (sem os parâmetros, ex.: `;codecs=opus`). */
+const AUDIO_EXTENSION_BY_SUBTYPE: Record<string, string> = {
+  webm: 'webm',
+  ogg: 'ogg',
+  mp4: 'm4a',
+  mpeg: 'mp3',
+  wav: 'wav',
+  'x-wav': 'wav',
+  aac: 'aac',
+};
+
+/**
+ * O gravador do navegador não grava sempre o mesmo contêiner (webm no Chrome,
+ * mp4/ogg em outros) — gravar como `.webm`/`audio/webm` fixo, ignorando o tipo
+ * real do Blob, corrompia o arquivo para quem abrisse fora do player da V2 (o
+ * nome mentia o formato). Sem tipo de áudio reconhecido (Blob não rotulado),
+ * cai para webm — o formato mais comum do gravador local.
+ */
+function resolveAudioFormat(mimeType: string): { ext: string; contentType: string } {
+  const base = mimeType.split(';')[0]?.trim().toLowerCase() ?? '';
+  if (!base.startsWith('audio/')) return { ext: 'webm', contentType: 'audio/webm' };
+  const subtype = base.slice('audio/'.length);
+  return { ext: AUDIO_EXTENSION_BY_SUBTYPE[subtype] ?? subtype, contentType: base };
+}
+
 export class ChatService {
   static async fetchMessages(contactId: string, page = 0, pageSize = 1000) {
     const from = page * pageSize;
@@ -33,13 +58,15 @@ export class ChatService {
   static async fetchMessagesBefore(
     contactId: string,
     before: { createdAt: string; id: string },
-    pageSize = 1000,
+    pageSize = 1000
   ) {
     const result = await supabase
       .from('messages')
       .select('*')
       .eq('contact_id', contactId)
-      .or(`created_at.lt.${before.createdAt},and(created_at.eq.${before.createdAt},id.lt.${before.id})`)
+      .or(
+        `created_at.lt.${before.createdAt},and(created_at.eq.${before.createdAt},id.lt.${before.id})`
+      )
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
       .limit(pageSize);
@@ -58,19 +85,18 @@ export class ChatService {
   }
 
   static async uploadAudio(contactId: string, blob: Blob) {
-    const fileName = `${contactId}/${Date.now()}.webm`;
+    const { ext, contentType } = resolveAudioFormat(blob.type);
+    const fileName = `${contactId}/${Date.now()}.${ext}`;
     const { error: uploadError } = await supabase.storage
       .from('audio-messages')
-      .upload(fileName, blob, { contentType: 'audio/webm' });
+      .upload(fileName, blob, { contentType });
 
     if (uploadError) throw uploadError;
 
     // Persist a stable object locator, never a short-lived signed URL. The
     // player and the Evolution proxy exchange it for a fresh signed URL only
     // when they need to read the private object.
-    const { data: publicUrlData } = supabase.storage
-      .from('audio-messages')
-      .getPublicUrl(fileName);
+    const { data: publicUrlData } = supabase.storage.from('audio-messages').getPublicUrl(fileName);
 
     if (!publicUrlData?.publicUrl) throw new Error('Failed to create audio object reference');
     return publicUrlData.publicUrl;
