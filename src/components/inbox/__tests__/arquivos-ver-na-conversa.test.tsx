@@ -34,18 +34,26 @@ vi.mock('@/integrations/supabase/client', () => {
   // Cadeia tolerante: qualquer encadeamento (`select().eq().order().limit()`) resolve vazio.
   // Sem isto, um consumidor fora do caminho sob prova (ex.: NextBestAction) deixa rejeição não
   // tratada e o run acusa erro que não é do cartão.
-  const consulta: unknown = new Proxy({}, {
-    get: (_alvo, prop) => {
-      if (prop === 'then') return (resolve: (v: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(resolve);
-      if (prop === 'maybeSingle' || prop === 'single') return async () => ({ data: null, error: null });
-      return () => consulta;
-    },
-  });
+  const consulta: unknown = new Proxy(
+    {},
+    {
+      get: (_alvo, prop) => {
+        if (prop === 'then')
+          return (resolve: (v: unknown) => unknown) =>
+            Promise.resolve({ data: [], error: null }).then(resolve);
+        if (prop === 'maybeSingle' || prop === 'single')
+          return async () => ({ data: null, error: null });
+        return () => consulta;
+      },
+    }
+  );
   return {
     supabase: {
       rpc: () => consulta,
       from: () => consulta,
-      storage: { from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: null }), remove: vi.fn() }) },
+      storage: {
+        from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: null }), remove: vi.fn() }),
+      },
     },
   };
 });
@@ -54,6 +62,9 @@ vi.mock('@/lib/logger', () => ({
   log: mocks.logStub,
   logger: mocks.logStub,
   getLogger: () => mocks.logStub,
+  // outbound-message.service.ts (via useChatMediaSending/ChatPanel) chama
+  // createLogger, não só getLogger.
+  createLogger: () => mocks.logStub,
   generateCorrelationId: () => 'corr-test',
   getSessionId: () => 'sessao-test',
   logPerformance: (_l: string, fn: () => void) => fn(),
@@ -66,28 +77,37 @@ vi.mock('@/hooks/ui/use-toast', () => ({ toast: mocks.toast }));
 
 // A URL de leitura do download não participa da ação em prova.
 vi.mock('@/hooks/storage/useResolvedStorageUrl', () => ({
-  useResolvedStorageUrl: () => ({ url: 'https://exemplo.invalido/arquivo.png', isLoading: false, error: null, refresh: vi.fn() }),
+  useResolvedStorageUrl: () => ({
+    url: 'https://exemplo.invalido/arquivo.png',
+    isLoading: false,
+    error: null,
+    refresh: vi.fn(),
+  }),
 }));
 
 // Peças visuais do cartão/painel sem relação com a ação: só o mínimo para renderizar.
 vi.mock('../tabs/FileThumb', () => ({ FileThumb: () => <div data-testid="thumb" /> }));
 vi.mock('../tabs/FileActionsMenu', () => ({ FileActionsMenu: () => null }));
-vi.mock('../tabs/SenderAvatar', () => ({ SenderAvatar: () => <span data-testid="sender-avatar" /> }));
+vi.mock('../tabs/SenderAvatar', () => ({
+  SenderAvatar: () => <span data-testid="sender-avatar" />,
+}));
 
 // Observador do caminho real: o ChatPanel chama `scrollToMessage` nesta ref e passa o destaque.
 vi.mock('../chat/ChatMessagesArea', async () => {
   const React = await import('react');
-  const ChatMessagesArea = React.forwardRef((props: { activeHighlightId?: string | null; highlightedMessageIds?: Set<string> }, ref) => {
-    React.useImperativeHandle(ref, () => ({
-      scrollToMessage: mocks.area.scrollToMessage,
-      scrollToBottom: mocks.area.scrollToBottom,
-    }));
-    return React.createElement('div', {
-      'data-testid': 'messages-area',
-      'data-active-highlight': props.activeHighlightId ?? '',
-      'data-highlighted': Array.from(props.highlightedMessageIds ?? []).join(','),
-    });
-  });
+  const ChatMessagesArea = React.forwardRef(
+    (props: { activeHighlightId?: string | null; highlightedMessageIds?: Set<string> }, ref) => {
+      React.useImperativeHandle(ref, () => ({
+        scrollToMessage: mocks.area.scrollToMessage,
+        scrollToBottom: mocks.area.scrollToBottom,
+      }));
+      return React.createElement('div', {
+        'data-testid': 'messages-area',
+        'data-active-highlight': props.activeHighlightId ?? '',
+        'data-highlighted': Array.from(props.highlightedMessageIds ?? []).join(','),
+      });
+    }
+  );
   return { ChatMessagesArea };
 });
 
@@ -95,42 +115,90 @@ vi.mock('../chat/ChatMessagesArea', async () => {
 vi.mock('../tabs/FilesTab', () => ({
   FilesTab: ({ onOpenInChat }: { onOpenInChat?: (messageId: string) => void }) => (
     <div data-testid="files-tab-mock">
-      <button type="button" data-testid="abrir-m1" onClick={() => onOpenInChat?.('m1')}>Ver na conversa m1</button>
-      <button type="button" data-testid="abrir-m2" onClick={() => onOpenInChat?.('m2')}>Ver na conversa m2</button>
+      <button type="button" data-testid="abrir-m1" onClick={() => onOpenInChat?.('m1')}>
+        Ver na conversa m1
+      </button>
+      <button type="button" data-testid="abrir-m2" onClick={() => onOpenInChat?.('m2')}>
+        Ver na conversa m2
+      </button>
     </div>
   ),
 }));
 
 // Dependências do ChatPanel fora do caminho sob prova (mesmo contrato do teste de atalhos).
 vi.mock('@/hooks/chat/useTypingPresence', () => ({
-  useTypingPresence: () => ({ isContactTyping: false, typingUsers: [], handleTypingStart: vi.fn(), handleTypingStop: vi.fn() }),
-}));
-vi.mock('@/hooks/integrations/useEvolutionApi', () => ({ useEvolutionApi: () => ({ editMessage: vi.fn() }) }));
-vi.mock('@/hooks/chat/useQuickReplies', () => ({ useQuickReplies: () => ({ quickReplies: [], incrementUseCount: vi.fn() }) }));
-vi.mock('@/hooks/communication/useTextToSpeech', () => ({
-  useTextToSpeech: () => ({
-    speak: vi.fn(), stop: vi.fn(), isLoading: false, isPlaying: false, currentMessageId: null,
-    voiceId: '', setVoiceId: vi.fn(), speed: 1, setSpeed: vi.fn(),
+  useTypingPresence: () => ({
+    isContactTyping: false,
+    typingUsers: [],
+    handleTypingStart: vi.fn(),
+    handleTypingStop: vi.fn(),
   }),
 }));
-vi.mock('@/hooks/system/useUserSettings', () => ({ useUserSettings: () => ({ settings: {}, updateSettings: vi.fn(), saveSettings: vi.fn() }) }));
+vi.mock('@/hooks/integrations/useEvolutionApi', () => ({
+  useEvolutionApi: () => ({ editMessage: vi.fn() }),
+}));
+vi.mock('@/hooks/chat/useQuickReplies', () => ({
+  useQuickReplies: () => ({ quickReplies: [], incrementUseCount: vi.fn() }),
+}));
+vi.mock('@/hooks/communication/useTextToSpeech', () => ({
+  useTextToSpeech: () => ({
+    speak: vi.fn(),
+    stop: vi.fn(),
+    isLoading: false,
+    isPlaying: false,
+    currentMessageId: null,
+    voiceId: '',
+    setVoiceId: vi.fn(),
+    speed: 1,
+    setSpeed: vi.fn(),
+  }),
+  // VoiceSelector (na árvore montada aqui) importa esta constante direto do módulo.
+  LOCAL_VOICE_ID: 'local',
+}));
+vi.mock('@/hooks/system/useUserSettings', () => ({
+  useUserSettings: () => ({ settings: {}, updateSettings: vi.fn(), saveSettings: vi.fn() }),
+}));
 vi.mock('@/hooks/chat/useScheduledMessages', () => ({
-  useScheduledMessages: () => ({ messages: [], isLoading: false, scheduleMessage: vi.fn(), cancelMessage: vi.fn(), isScheduling: false }),
+  useScheduledMessages: () => ({
+    messages: [],
+    isLoading: false,
+    scheduleMessage: vi.fn(),
+    cancelMessage: vi.fn(),
+    isScheduling: false,
+  }),
 }));
 vi.mock('@/hooks/chat/useMessageSignature', () => ({
-  useMessageSignature: () => ({ signatureEnabled: false, agentName: '', toggleSignature: vi.fn(), applySignature: (t: string) => t }),
+  useMessageSignature: () => ({
+    signatureEnabled: false,
+    agentName: '',
+    toggleSignature: vi.fn(),
+    applySignature: (t: string) => t,
+  }),
 }));
 vi.mock('../useChatMediaSending', () => ({
-  useChatMediaSending: () => ({ instanceName: '', initResolve: vi.fn(), handleSendSticker: vi.fn(), handleSendCustomEmoji: vi.fn(), handleSendAudioMeme: vi.fn() }),
+  useChatMediaSending: () => ({
+    instanceName: '',
+    initResolve: vi.fn(),
+    handleSendSticker: vi.fn(),
+    handleSendCustomEmoji: vi.fn(),
+    handleSendAudioMeme: vi.fn(),
+  }),
 }));
 vi.mock('@/hooks/chat/useConversationActions', () => ({
-  useConversationActions: () => ({ isFavorite: () => false, favoriteContact: vi.fn(), unfavoriteContact: vi.fn(), snoozeConversation: vi.fn() }),
+  useConversationActions: () => ({
+    isFavorite: () => false,
+    favoriteContact: vi.fn(),
+    unfavoriteContact: vi.fn(),
+    snoozeConversation: vi.fn(),
+  }),
 }));
 vi.mock('@/hooks/tasks/useMyWorkItems', () => ({
   useMyWorkItems: () => ({ createAndGetId: async () => null }),
   tomorrowAtNine: () => new Date(),
 }));
-vi.mock('@/hooks/ui/useAmbientColor', () => ({ useAmbientColor: () => ({ className: '', bgTint: undefined }) }));
+vi.mock('@/hooks/ui/useAmbientColor', () => ({
+  useAmbientColor: () => ({ className: '', bgTint: undefined }),
+}));
 vi.mock('@/lib/calls/events', () => ({ dispatchStartCall: vi.fn() }));
 
 vi.mock('../CRMAutoSync', () => ({ CRMAutoSync: () => null }));
@@ -219,10 +287,12 @@ describe('Ver na conversa — aba Arquivos leva à mensagem na aba Chat', () => 
 
     fireEvent.click(await screen.findByTestId('abrir-m1'));
 
-    await waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith(
-      'Mensagem não encontrada',
-      expect.objectContaining({ description: expect.any(String) }),
-    ));
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        'Mensagem não encontrada',
+        expect.objectContaining({ description: expect.any(String) })
+      )
+    );
     expect(mocks.area.scrollToMessage).not.toHaveBeenCalled();
     expect(screen.getByTestId('files-tab-mock')).toBeInTheDocument();
   });
@@ -241,7 +311,7 @@ describe('Ver na conversa — a ação existe no cartão da grade e no painel de
         onForward={vi.fn()}
         onRequestDelete={vi.fn()}
         onOpenInChat={onOpenInChat}
-      />,
+      />
     );
 
     fireEvent.click(screen.getByLabelText('Ver na conversa'));
@@ -259,7 +329,7 @@ describe('Ver na conversa — a ação existe no cartão da grade e no painel de
         onOpenInChat={onOpenInChat}
         onClose={vi.fn()}
         onRequestDelete={vi.fn()}
-      />,
+      />
     );
 
     fireEvent.click(screen.getByRole('button', { name: /Ver na conversa/ }));
