@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createElement } from 'react';
-import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CommandPalette } from '@/components/ui/command-palette';
 import type { CommandItem } from '@/components/ui/command-palette';
 
@@ -59,7 +59,7 @@ const itemTermoAntigo: CommandItem = {
   category: 'search',
 };
 
-const resultado = (titulo: string) => screen.queryByRole('option', { name: titulo });
+const resultado = (titulo: string) => screen.queryByRole('button', { name: titulo });
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -83,17 +83,18 @@ describe('CommandPalette — busca do catálogo não pode ser sobrescrita pela c
     fireEvent.change(input, { target: { value: 'zzb' } });
     await waitFor(() => expect(onSearch).toHaveBeenCalledWith('zzb'));
 
-    // A consulta ATUAL responde primeiro: o resultado dela está na tela.
-    await act(async () => {
-      buscaAtual.resolve([itemTermoAtual]);
-    });
-    expect(resultado('Caneca Térmica')).toBeInTheDocument();
+    // A consulta ATUAL responde primeiro: o resultado dela deve aparecer na tela.
+    // O callback do debounce foi iniciado por `setTimeout` fora de `act`, portanto
+    // `setSearchResults` chega de fora do boundary de act — `waitFor` (polling)
+    // é mais confiável do que `act` puro para capturar essas atualizações.
+    buscaAtual.resolve([itemTermoAtual]);
+    await waitFor(() => expect(resultado('Caneca Térmica')).toBeInTheDocument());
 
     // A consulta ANTIGA responde depois: não pode trocar o que está na tela.
-    await act(async () => {
-      buscaAntiga.resolve([itemTermoAntigo]);
+    buscaAntiga.resolve([itemTermoAntigo]);
+    await waitFor(() => {
+      expect(resultado('Garrafa Antiga')).not.toBeInTheDocument();
+      expect(resultado('Caneca Térmica')).toBeInTheDocument();
     });
-    expect(resultado('Garrafa Antiga')).not.toBeInTheDocument();
-    expect(resultado('Caneca Térmica')).toBeInTheDocument();
   });
 });
