@@ -2,29 +2,28 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 
 // Criação de usuário passa pela camada padrão de Edge (`invokeEdge`, de
-// src/lib/supabaseHelpers, como o PE-43), com refresh de sessão em 401, leitura
+// src/lib/invokeEdge, como o PE-43), com refresh de sessão em 401, leitura
 // guardada do corpo de erro e mensagem traduzida para o CAMPO do formulário. O
 // caminho antigo era `fetch` cru com `Bearer ${session?.access_token}` (podia
 // virar 'Bearer undefined'), `await response.json()` sem guarda e a mensagem
 // crua do servidor mostrada ao usuário.
-const { mockInvokeEdge, mockRefreshSession, mockFrom, mockUpload } = vi.hoisted(() => ({
+const { mockInvokeEdge, mockReadEdgeError, mockRefreshSession, mockFrom, mockUpload } = vi.hoisted(() => ({
   mockInvokeEdge: vi.fn(),
+  mockReadEdgeError: vi.fn(),
   mockRefreshSession: vi.fn(),
   mockFrom: vi.fn(),
   mockUpload: vi.fn(),
 }));
 
-vi.mock('@/lib/supabaseHelpers', () => ({
-  invokeEdge: mockInvokeEdge,
+vi.mock('@/lib/invokeEdge', () => ({
+  invokeEdge: (...args: unknown[]) => mockInvokeEdge(...args),
+  readEdgeError: (...args: unknown[]) => mockReadEdgeError(...args),
+}));
+
+vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    auth: { refreshSession: mockRefreshSession },
-    from: mockFrom.mockImplementation(() => ({
-      select: vi.fn(() =>
-        Object.assign(Promise.resolve({ data: [], error: null }), {
-          order: vi.fn().mockResolvedValue({ data: [], error: null }),
-        })
-      ),
-    })),
+    auth: { refreshSession: (...args: unknown[]) => mockRefreshSession(...args) },
+    from: (...args: unknown[]) => mockFrom(...args),
     storage: {
       from: vi.fn(() => ({
         upload: mockUpload,
@@ -32,6 +31,7 @@ vi.mock('@/lib/supabaseHelpers', () => ({
       })),
     },
   },
+  SUPABASE_URL: 'https://example.supabase.co',
 }));
 
 vi.mock('sonner', () => ({
@@ -53,11 +53,13 @@ const payload: Payload = {
 // Erro no formato do supabase-js: `FunctionsHttpError` com o `Response` cru em
 // `error.context` (é de onde sai a mensagem real da Edge). `invokeEdge` lança
 // esse erro em vez de devolvê-lo.
-function httpError(status: number, body: string, contentType = 'application/json') {
+function httpError(status: number, message: string) {
   return {
     name: 'FunctionsHttpError',
     message: 'Edge Function returned a non-2xx status code',
-    context: new Response(body, { status, headers: { 'Content-Type': contentType } }),
+    context: { status },
+    _parsedMessage: message,
+    _parsedStatus: status,
   };
 }
 
@@ -74,7 +76,18 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
     vi.clearAllMocks();
     mockUpload.mockResolvedValue({ error: null });
     mockRefreshSession.mockResolvedValue({ error: null });
-    mockInvokeEdge.mockResolvedValue({ success: true, user_id: 'u-1' });
+    mockInvokeEdge.mockResolvedValue({ data: { success: true, user_id: 'u-1' }, error: null });
+    mockReadEdgeError.mockImplementation(async (err: { _parsedStatus?: number; _parsedMessage?: string }) => ({
+      status: err?._parsedStatus ?? null,
+      message: err?._parsedMessage ?? 'Erro ao criar usuário',
+    }));
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn(() =>
+        Object.assign(Promise.resolve({ data: [], error: null }), {
+          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        })
+      ),
+    }));
   });
 
   it('usa invokeEdge (sem fetch cru) e manda o corpo para create-user', async () => {
@@ -88,7 +101,7 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
     expect(mockInvokeEdge).toHaveBeenCalledTimes(1);
     const [fnName, body] = mockInvokeEdge.mock.calls[0];
     expect(fnName).toBe('create-user');
-    expect(body).toMatchObject({
+    expect(body?.body).toMatchObject({
       name: 'Ana Souza',
       email: 'ana.souza@exemplo.com',
       role: 'agent',
@@ -99,9 +112,8 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
   });
 
   it('e-mail duplicado vira erro do campo email, em pt-BR, sem mostrar a mensagem crua', async () => {
-    mockInvokeEdge.mockRejectedValue(
-      httpError(422, JSON.stringify({ error: 'A user with this email address has already been registered' }))
-    );
+    const err = httpError(422, 'A user with this email address has already been registered');
+    mockInvokeEdge.mockRejectedValue(err);
     const { result } = renderHook(() => useAdminData('users'));
 
     const ok = await cria(result);
@@ -121,14 +133,11 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
   });
 
   it('papel inválido vira erro do campo role', async () => {
-    mockInvokeEdge.mockRejectedValue(
-      httpError(
-        400,
-        JSON.stringify({
-          error: "Invalid enum value. Expected 'admin' | 'supervisor' | 'agent' | 'special_agent', received 'chefe'",
-        })
-      )
+    const err = httpError(
+      400,
+      "Invalid enum value. Expected 'admin' | 'supervisor' | 'agent' | 'special_agent', received 'chefe'",
     );
+    mockInvokeEdge.mockRejectedValue(err);
     const { result } = renderHook(() => useAdminData('users'));
 
     const ok = await cria(result);
@@ -144,9 +153,10 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
   });
 
   it('em 401 renova a sessão uma vez e repete a criação, dando certo no retry', async () => {
+    const err401 = httpError(401, 'Não autorizado');
     mockInvokeEdge
-      .mockRejectedValueOnce(httpError(401, JSON.stringify({ error: 'Não autorizado' })))
-      .mockResolvedValueOnce({ success: true, user_id: 'u-2' });
+      .mockRejectedValueOnce(err401)
+      .mockResolvedValueOnce({ data: { success: true, user_id: 'u-2' }, error: null });
     const { result } = renderHook(() => useAdminData('users'));
 
     const ok = await cria(result);
@@ -158,7 +168,8 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
   });
 
   it('em 401 cujo refresh falha não repete a chamada e devolve erro geral', async () => {
-    mockInvokeEdge.mockRejectedValue(httpError(401, JSON.stringify({ error: 'Não autorizado' })));
+    const err401 = httpError(401, 'Não autorizado');
+    mockInvokeEdge.mockRejectedValue(err401);
     mockRefreshSession.mockResolvedValue({ error: { message: 'refresh_token_not_found' } });
     const { result } = renderHook(() => useAdminData('users'));
 
@@ -171,7 +182,12 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
   });
 
   it('corpo de erro não-JSON (HTML de proxy) não quebra e cai na mensagem geral', async () => {
-    mockInvokeEdge.mockRejectedValue(httpError(502, '<html>Bad gateway</html>', 'text/html'));
+    const errHtml = httpError(502, '');
+    mockReadEdgeError.mockImplementationOnce(async () => ({
+      status: 502,
+      message: 'Erro ao criar usuário',
+    }));
+    mockInvokeEdge.mockRejectedValue(errHtml);
     const { result } = renderHook(() => useAdminData('users'));
 
     const ok = await cria(result);
@@ -182,15 +198,14 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
   });
 
   it('a tentativa seguinte limpa o erro por campo da anterior', async () => {
-    mockInvokeEdge.mockRejectedValueOnce(
-      httpError(422, JSON.stringify({ error: 'User already registered' }))
-    );
+    const errDup = httpError(422, 'User already registered');
+    mockInvokeEdge.mockRejectedValueOnce(errDup);
     const { result } = renderHook(() => useAdminData('users'));
 
     await cria(result);
     await waitFor(() => expect(result.current.createUserError?.field).toBe('email'));
 
-    mockInvokeEdge.mockResolvedValueOnce({ success: true });
+    mockInvokeEdge.mockResolvedValueOnce({ data: { success: true }, error: null });
     const ok = await cria(result);
 
     expect(ok).toBe(true);
