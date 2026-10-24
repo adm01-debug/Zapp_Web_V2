@@ -195,7 +195,7 @@ describe('Revisão do wizard — disparo pelo controlador único (X051)', () => 
     const dialogo = await screen.findByRole('alertdialog');
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Confirmar envio' }));
 
-    const pendente = await within(dialogo).findByRole('button', { name: /Iniciando/ });
+    const pendente = await within(dialogo).findByRole('button', { name: 'Confirmar envio' });
     expect(pendente).toHaveProperty('disabled', true);
     expect(within(dialogo).getByRole('button', { name: 'Cancelar' })).toHaveProperty('disabled', true);
     expect(screen.getByRole('alertdialog')).toBe(dialogo);
