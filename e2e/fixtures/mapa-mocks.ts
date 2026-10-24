@@ -8,8 +8,8 @@ import type { Page, Route } from '@playwright/test';
  *
  * Contém:
  *  - `mockAppShell`: identidade (profiles/user_roles/user_settings), RPCs do shell
- *    (`user_has_permission`, `count_searchbox_sessions_this_month`), edge
- *    `get-mapbox-token` e o catch-all das demais leituras de `rest/v1`.
+ *    (`user_has_permission`, `count_searchbox_sessions_this_month`, `app_bootstrap`),
+ *    edge `get-mapbox-token` e o catch-all das demais leituras de `rest/v1`.
  *  - `mockMapboxSearchbox`: `**\/searchbox/v1/**` respondido com as fixtures de
  *    `src/lib/__fixtures__/mapbox/` (E68) — nenhuma chamada real à Mapbox.
  *  - `bloquearRedeReal`: rede de segurança registrada ANTES dos mocks específicos
@@ -70,9 +70,12 @@ export async function mockAppShell(page: Page, registro: Registro): Promise<void
     json(route, querObjetoUnico(route) ? null : []));
 
   // RPCs: permissão nomeada liberada; contagem do guarda de custo = 0 (autocomplete liberado).
+  // app_bootstrap: introduzido pelo PR #1986 (useAppBootstrap hook); sem mock explícito,
+  // ProtectedRoute trava em "Verificando permissões..." pois o catch-all devolvia null.
   await page.route(/\/rest\/v1\/rpc\/user_has_permission/, (route) => json(route, true));
   await page.route(/\/rest\/v1\/rpc\/count_searchbox_sessions_this_month/, (route) => json(route, 0));
-  await page.route(/\/rest\/v1\/rpc\/(?!user_has_permission|count_searchbox_sessions_this_month)/, (route) => json(route, null));
+  await page.route(/\/rest\/v1\/rpc\/app_bootstrap/, (route) => json(route, {}));
+  await page.route(/\/rest\/v1\/rpc\/(?!user_has_permission|count_searchbox_sessions_this_month|app_bootstrap)/, (route) => json(route, null));
 
   // Edge functions: só o token do Mapbox importa; o resto é bloqueado.
   await page.route(/\/functions\/v1\/get-mapbox-token/, (route) => json(route, { token: 'pk.e2e-mapa' }));
