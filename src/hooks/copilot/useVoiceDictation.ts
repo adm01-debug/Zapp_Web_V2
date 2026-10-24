@@ -1,0 +1,245 @@
+/**
+ * CV-070 — Ditado por voz para o RADAR.
+ *
+ * O vendedor fala uma instrução (ex.: "responde que o prazo é 15 dias úteis
+ * e pergunta a quantidade") e o RADAR monta a mensagem, reutilizando a
+ * transcrição existente (`ai-transcribe-audio`).
+ *
+ * Fluxo:
+ *   1. Vendedor pressiona o botão de voz no RADAR.
+ *   2. Grava via `MediaRecorder` (webm/ogg).
+ *   3. Faz upload do blob para `audio-messages/${userId}/dictation/...`.
+ *   4. Envia a URL pública para `ai-transcribe-audio` (sem messageId —
+ *      caminho de ditado autorizado por ownership do objeto no bucket).
+ *   5. A transcrição é processada pelo RADAR: envia para `ai-suggest-reply`
+ *      com o texto transcrito como instrução explícita.
+ *   6. A resposta gerada é colocada no rascunho (nunca enviada).
+ */
+import { useState, useRef, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { invokeEdge } from '@/lib/invokeEdge';
+import { createLogger } from '@/lib/logger';
+import { pickRecorderMime } from '@/hooks/communication/useAudioRecorder';
+
+const log = createLogger('useVoiceDictation');
+
+export type DictationState = 'idle' | 'recording' | 'transcribing' | 'generating' | 'error';
+
+export interface UseVoiceDictationOptions {
+  contactId: string;
+  contactName: string;
+  /** Mensagens recentes da conversa para contexto. */
+  messages: Array<{ content: string; sender: string }>;
+  /** Callback chamado quando o RADAR gerou a mensagem a partir do ditado. */
+  onResult: (text: string) => void;
+  /** Flag para desabilitar. */
+  enabled?: boolean;
+}
+
+export interface UseVoiceDictationReturn {
+  state: DictationState;
+  errorMessage: string | null;
+  startRecording: () => Promise<void>;
+  stopRecording: () => void;
+  cancelRecording: () => void;
+  /** Duração atual da gravação em segundos. */
+  durationSeconds: number;
+}
+
+export function useVoiceDictation({
+  contactId,
+  contactName,
+  messages,
+  onResult,
+  enabled = true,
+}: UseVoiceDictationOptions): UseVoiceDictationReturn {
+  const [state, setState] = useState<DictationState>('idle');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [durationSeconds, setDurationSeconds] = useState(0);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startTimeRef = useRef<number>(0);
+  // AbortController para cancelar processAudio em voo após cancelRecording()
+  const processAbortRef = useRef<AbortController | null>(null);
+
+  const cleanup = useCallback(() => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    mediaRecorderRef.current = null;
+    chunksRef.current = [];
+    setDurationSeconds(0);
+  }, []);
+
+  const cancelRecording = useCallback(() => {
+    // 1. Cancela processAudio em voo antes de qualquer outra coisa
+    processAbortRef.current?.abort();
+    // 2. Captura o recorder antes de cleanup() zerar a ref
+    const recorderToStop = mediaRecorderRef.current;
+    // 3. cleanup() seta mediaRecorderRef.current = null ANTES de stop()
+    //    — assim onstop vê a ref nula e retorna cedo (verificação de identidade)
+    cleanup();
+    recorderToStop?.stop();
+    setState('idle');
+    setErrorMessage(null);
+  }, [cleanup]);
+
+  /** Processa o blob gravado: transcreve e então gera a mensagem. */
+  const processAudio = useCallback(
+    async (blob: Blob) => {
+      // Cria AbortController por chamada; aborta chamada anterior se existir
+      processAbortRef.current?.abort();
+      const abortCtrl = new AbortController();
+      processAbortRef.current = abortCtrl;
+
+      setState('transcribing');
+
+      // Política INSERT do bucket exige que o primeiro segmento seja o userId
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData?.user?.id;
+      if (!userId) {
+        setState('error');
+        setErrorMessage('Usuário não autenticado.');
+        return;
+      }
+
+      // Path com userId como primeiro segmento — compatível com INSERT e DELETE
+      const tempPath = `${userId}/dictation/${Date.now()}.webm`;
+
+      try {
+        // 1. Upload do áudio para o bucket aprovado
+        const { error: uploadError } = await supabase.storage
+          .from('audio-messages')
+          .upload(tempPath, blob, { contentType: blob.type || 'audio/webm' });
+
+        if (uploadError) {
+          // Upload falhou — nada para limpar; verifica abort antes de lançar
+          if (abortCtrl.signal.aborted) return;
+          throw new Error(`Upload falhou: ${uploadError.message}`);
+        }
+
+        // Upload bem-sucedido — se já foi cancelado, limpar o arquivo e sair
+        if (abortCtrl.signal.aborted) {
+          void supabase.storage.from('audio-messages').remove([tempPath]);
+          return;
+        }
+
+        const { data: urlData } = supabase.storage.from('audio-messages').getPublicUrl(tempPath);
+        const audioUrl = urlData.publicUrl;
+
+        // 2. Transcrição via ai-transcribe-audio
+        //    Sem messageId = caminho de ditado; a edge verifica ownership pelo userId do JWT
+        const { data: transcribeData, error: transcribeError } = await invokeEdge<{
+          transcription?: string;
+        }>('ai-transcribe-audio', { body: { audioUrl } });
+
+        // Remove o arquivo temporário após a transcrição (fire-and-forget)
+        void supabase.storage.from('audio-messages').remove([tempPath]);
+
+        if (abortCtrl.signal.aborted) return;
+
+        if (transcribeError || !transcribeData?.transcription) {
+          throw new Error('Transcrição falhou ou retornou vazia.');
+        }
+        const instruction = transcribeData.transcription ?? '';
+        log.info('voz transcrita', { len: instruction.length });
+
+        // 3. Gera a mensagem com base na instrução transcrita.
+        setState('generating');
+        const recentMessages = messages.slice(-10).map((m) => ({
+          content: m.content,
+          sender: m.sender,
+        }));
+
+        const { data: genData, error: genError } = await invokeEdge<{
+          suggestions?: Array<{ text: string }>;
+        }>('ai-suggest-reply', {
+          body: {
+            messages: recentMessages,
+            contactName,
+            contactId,
+            context: `INSTRUÇÃO DO VENDEDOR (ditado por voz): "${instruction}".\n\nMonte a mensagem exata para enviar ao cliente seguindo essa instrução. A mensagem DEVE ser curta, direta e no tom adequado à conversa. Retorne APENAS a mensagem pronta, sem explicações.`,
+          },
+        });
+
+        if (abortCtrl.signal.aborted) return;
+
+        if (genError || !genData?.suggestions?.length) {
+          throw new Error('Geração da mensagem falhou.');
+        }
+
+        const generated = genData.suggestions[0].text ?? '';
+        if (generated) {
+          onResult(generated);
+        }
+        setState('idle');
+        setErrorMessage(null);
+      } catch (err) {
+        void supabase.storage.from('audio-messages').remove([tempPath]);
+        if (abortCtrl.signal.aborted) return;
+        const msg = err instanceof Error ? err.message : 'Erro desconhecido';
+        log.error('ditado por voz: falhou', { msg });
+        setState('error');
+        setErrorMessage(msg);
+      }
+    },
+    [messages, contactName, contactId, onResult],
+  );
+
+  const startRecording = useCallback(async () => {
+    if (!enabled) return;
+    if (state !== 'idle' && state !== 'error') return;
+    setErrorMessage(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      // Usa pickRecorderMime para compatibilidade com Safari/iOS (sem audio/ogg)
+      const mimeType = pickRecorderMime();
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+
+      mediaRecorderRef.current = recorder;
+      chunksRef.current = [];
+      startTimeRef.current = Date.now();
+
+      recorder.ondataavailable = (e) => {
+        // Verifica identidade: chunks de recorder cancelado não contaminam próxima gravação
+        if (mediaRecorderRef.current !== recorder) return;
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        // Verificação de identidade: se este recorder não é mais o atual,
+        // foi cancelado ou substituído — não processar o áudio.
+        if (mediaRecorderRef.current !== recorder) return;
+        const blob = new Blob(chunksRef.current, { type: mimeType ?? recorder.mimeType ?? 'audio/webm' });
+        cleanup();
+        void processAudio(blob);
+      };
+
+      recorder.start(200);
+      setState('recording');
+
+      timerRef.current = setInterval(() => {
+        setDurationSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
+      }, 500);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Microfone não disponível';
+      log.error('voz: falhou ao abrir microfone', { msg });
+      setState('error');
+      setErrorMessage('Microfone não disponível. Verifique as permissões do navegador.');
+    }
+  }, [enabled, state, cleanup, processAudio]);
+
+  const stopRecording = useCallback(() => {
+    if (state !== 'recording') return;
+    mediaRecorderRef.current?.stop();
+  }, [state]);
+
+  return { state, errorMessage, startRecording, stopRecording, cancelRecording, durationSeconds };
+}

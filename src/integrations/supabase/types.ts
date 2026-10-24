@@ -2969,6 +2969,59 @@ export type Database = {
           },
         ]
       }
+      copilot_feedback: {
+        Row: {
+          id: string
+          conversation_id: string
+          contact_id: string
+          feedback_type: string
+          edit_level: string | null
+          suggestion_text: string | null
+          sent_text: string | null
+          suggestion_id: string | null
+          rating: string | null
+          reason: string | null
+          created_at: string
+          created_by: string
+        }
+        Insert: {
+          id?: string
+          conversation_id: string
+          contact_id: string
+          feedback_type: string
+          edit_level?: string | null
+          suggestion_text?: string | null
+          sent_text?: string | null
+          suggestion_id?: string | null
+          rating?: string | null
+          reason?: string | null
+          created_at?: string
+          created_by?: string
+        }
+        Update: {
+          id?: string
+          conversation_id?: string
+          contact_id?: string
+          feedback_type?: string
+          edit_level?: string | null
+          suggestion_text?: string | null
+          sent_text?: string | null
+          suggestion_id?: string | null
+          rating?: string | null
+          reason?: string | null
+          created_at?: string
+          created_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "copilot_feedback_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crisis_room_alerts: {
         Row: {
           acknowledged_at: string | null
