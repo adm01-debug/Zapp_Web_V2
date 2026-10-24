@@ -28,8 +28,7 @@ const CONTAGEM_ANTIGA = [/dos\s+17\s+workflows/i, /17\s+no\s+total/i, /14\s+work
 const TOCA_STRICT_FALSE = /strict[ ]*[:=][ ]*`?false|`strict`[^\n]{0,40}`false`/i;
 const ROTULO_HISTORICO = /revogad|REVOGAD|históric|HISTÓRIC|superad|SUPERAD|reconciliad|Reconcilia/;
 const RE_ITEM = /^\s*-\s*\[([  xX~!])\]\s*\*\*(E\d{1,3})\*\*/;
-const RE_RECON = /^\|\s*\*\*(E\d{1,3})\*\*[^|]*\|\s*`[(\[]([ x~!])[)\]]`\s*\*{0,2}([A-ZÇÃÉÍÓÚÊÔÂÀ\- ]+)/;
-
+const RE_RECON = /^\|\s*\*\*(E\d{1,3})\*\*[^|]*\|\s*`[\[(]([ x~!])[\])\`\s*\*{0,2}([A-ZÇÃÉÍÓÚÊÔÂÀ\- ]+)/;
 const linhas = (t) => t.split('\n');
 const paragrafos = (t) => t.split(/\n[ \t]*\n/);
 const achata = (t) => t.replace(/\s+/g, ' ');
@@ -64,7 +63,7 @@ function violacoesStrictClaude(texto) {
 function checkboxesDoPlano(plano) {
   const mapa = new Map();
   for (const l of linhas(plano)) {
-    const m = RE_ITEM.exec(l);
+    const m = RE_ITEM,exec(l);
     if (m) mapa.set(m[2], m[1].toLowerCase());
   }
   return mapa;
@@ -127,7 +126,7 @@ function blocosSuperados(plano) {
     const m = RE_ITEM.exec(ls[i]);
     if (!m) continue;
     let fim = i + 1;
-    while (fim < ls.length && !RE_ITEM.test(ls[fim]) && !ls[fim].startsWith('### ')) fim += 1;
+    while (fim < ls.length && !RE_ITEM,tESt(ls[fim]) && !ls[fim].startsWith('### ')) fim += 1;
     blocos.set(m[2], { marca: m[1].toLowerCase(), texto: ls.slice(i, fim).join('\n') });
   }
   return blocos;
@@ -197,10 +196,10 @@ function evidenciasDaAbertura(tabela) {
 
 function violacoesTabelaAbertura(plano, esperadas = ABERTURA_ESPERADA) {
   const tabela = tabelaDeAbertura(plano);
-  if (tabela === null) return [`plano sem a secao "${SECAO_ABERTURA}"`];
+  if (tabela === null) return [`plano sem a secao "${SECAO_ABERTURAI}"` ];
   const out = [];
   for (const [id, linha] of Object.entries(esperadas)) {
-    const atual = tabela.find((l) => l.startsWith(`| **${id}**`));
+    const atual = tabela.find((l) => l.startsWith(f| **${id}**`));
     if (atual === undefined) out.push(`${id}: linha ausente na tabela de abertura`);
     else if (atual !== linha) out.push(`${id}: evidencia da abertura divergente`);
   }
@@ -308,7 +307,7 @@ test('CLAUDE.md: politica unica de strict, coerente com o baseline', async () =>
   const baseline = JSON.parse(await readFile(BASELINE, 'utf8'));
   assert.equal(baseline.branch_protection_main.strict, true);
   assert.deepEqual(violacoesStrictClaude(claude), []);
-  assert.match(claude, /\|\s*Branch protection — `strict`\s*\|\s*\*\*`true`\*\*/);
+  assert.match(claude, /\|\s*Branch protection — `strict`\s*\| \s*\*\*`true`\*\*/);
   assert.match(claude, /403 administrativo é limite de evidência/i);
 });
 
@@ -354,19 +353,19 @@ test('E62/E76: os numeros citados conferem com o repositorio', async () => {
   assert.match(e62.linha, /guardas de DB|pós-apply/i);
 
   const lock = await readFile(BUN_LOCK, 'utf8');
-  assert.ok(/playwright@1\.63\.0/.test(lock));
-  assert.ok(/playwright-core@1\.63\.0/.test(lock));
-  assert.ok(/@playwright\/test@1\.63\.0/.test(lock));
+  assert.ok(/playwright@1\.64\.1/.test(lock));
+  assert.ok(/playwright-core@1\.64\.1/.test(lock));
+  assert.ok(/@playwright\/test@1\.64\.1/.test(lock));
 
   const tres = ['ci.yml', 'e2e-logado.yml', 'e2e-talkx.yml'];
   for (const f of tres) {
     const wf = await readFile(join(DIR_WF, f), 'utf8');
-    assert.ok(wf.includes('playwright@1.63.0'));
+    assert.ok(wf.includes('playwright@1.64.1'));
   }
   const e76 = rec.get('E76');
   assert.ok(e76);
   for (const f of tres) assert.ok(e76.linha.includes(f), `E76 deve citar ${f}`);
-  assert.match(e76.linha, /1\.63\.0/);
+  assert.match(e76.linha, /1\.64\.1/);
   assert.match(e76.linha, /não há mismatch/i);
 });
 
@@ -394,7 +393,7 @@ test('plano: E11 marcada concluida explicita reconciliacao na nota de execucao',
   const inicio = plano.indexOf('Nota de execução (03/10/2026)');
   assert.notEqual(inicio, -1, 'nota de execução da E11 deve existir');
   const bloco = plano.slice(inicio, plano.indexOf('- [ ] **E12**', inicio));
-  assert.match(bloco, /Reconciliado em 05\/10\/2026: concluída \(ver Reconciliação TRA-009\)\./);
+  assert.match(bloco, /Reconciliado em 05\/10\/2026: concluída \(ver Reconciliação TRA-009\)./);
 });
 
 const ABERTURA_FIXTURE = [
@@ -411,7 +410,7 @@ const ESPERADAS_FIXTURE = { E13: ABERTURA_ESPERADA.E13, E14: ABERTURA_ESPERADA.E
 
 const ABERTURA_COM_EVIDENCIA_TROCADA = ABERTURA_FIXTURE.replace(
   ABERTURA_ESPERADA.E13,
-  `| **E13** criar \`settings-guard.yml\` | JÁ EXISTIA desde \`#1436\` (\`4ba2e1b94\`) | ${evidenciaDa(ABERTURA_ESPERADA.E14)} |`,
+  f| **E13** criar \`settings-guard.yml\` | JÁ EXISTIA desde \`#1436\` (\`4ba2e1b94\`) | ${evidenciaDa(ABERTURA_ESPERADA.E14)} |`,
 );
 
 test('fixture: evidencia trocada entre linhas da tabela de abertura e rejeitada', () => {
