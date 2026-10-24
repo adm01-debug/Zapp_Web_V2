@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from 'react'
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
-import { usePushNotifications } from '@/hooks/system/usePushNotifications';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
@@ -136,12 +135,9 @@ export function playTeamChatSound(volume: number = 70) {
 export function useTeamChatNotifications(activeConversationId: string | null) {
   const { profile } = useAuth();
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
-  const { showNotification, permission } = usePushNotifications();
   const activeIdRef = useRef(activeConversationId);
   const notifSettingsRef = useRef(notifSettings);
   const isQuietHoursRef = useRef(isQuietHours);
-  const permissionRef = useRef(permission);
-  const showNotificationRef = useRef(showNotification);
 
   // Sync refs after every render so the channel callback always reads latest
   // values without the channel being recreated on settings changes.
@@ -151,8 +147,6 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
     activeIdRef.current = activeConversationId;
     notifSettingsRef.current = notifSettings;
     isQuietHoursRef.current = isQuietHours;
-    permissionRef.current = permission;
-    showNotificationRef.current = showNotification;
   });
 
   useEffect(() => {
@@ -214,15 +208,11 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         }
 
         // Show browser notification if enabled
-        // HZ3-001: o aviso depende SÓ da permissão do navegador já concedida — o
-        // `showNotification` publica pela inscrição do service worker LOCAL
-        // (`registration.showNotification`), que não precisa da assinatura de push.
-        // Exigir `isSubscribed` do `usePushNotifications` (que significa "alertas do
-        // navegador ligados", `state.isActive`, e só fica ligado com assinatura push)
-        // silenciava quem concedeu a permissão e não assinou o push: ficava só com o
-        // som. O liga/desliga de avisos do chat interno continua valendo por
-        // `notifSettings.browserNotifications`.
-        if (permissionRef.current === 'granted' && settings.browserNotifications && !quietHours()) {
+        // HZ3-001: usa a Notification API direta (new Notification()) em vez de
+        // usePushNotifications.showNotification, que é silencioso quando
+        // SERVICE_WORKER_ENABLED=false. O onclick é configurado no objeto da
+        // notificação para navegar ao chat interno sem depender de service worker.
+        if ('Notification' in window && Notification.permission === 'granted' && settings.browserNotifications && !quietHours()) {
           // Nome do remetente por RPC segura: para o agente a leitura direta de
           // `profiles` é barrada pela RLS (o título virava 'Colega').
           // `get_team_profiles()` é SECURITY DEFINER e já mascara email/telefone.
@@ -240,8 +230,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
 
-          await showNotificationRef.current({
-            title: `💬 Teams: ${senderName}`,
+          const notif = new Notification(`💬 Teams: ${senderName}`, {
             body,
             tag: `team-msg-${msg.conversation_id}`,
             data: {
@@ -251,6 +240,10 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
             },
             requireInteraction: false,
           });
+          notif.onclick = () => {
+            window.focus();
+            navigateToView('team-chat');
+          };
 
           log.debug('Team chat notification sent for message:', msg.id);
         }

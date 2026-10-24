@@ -30,8 +30,9 @@ class Container {
   constructor(width: number) {
     this.largura = width;
     this.element = document.createElement('div');
-    this.element.getBoundingClientRect = () =>
-      ({
+    Object.defineProperty(this.element, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({
         width: this.largura,
         height: 0,
         top: 0,
@@ -41,7 +42,8 @@ class Container {
         x: 0,
         y: 0,
         toJSON: () => ({}),
-      }) as DOMRect;
+      }),
+    });
     document.body.appendChild(this.element);
   }
 
