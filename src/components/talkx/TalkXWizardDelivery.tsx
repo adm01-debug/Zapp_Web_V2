@@ -390,10 +390,7 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
         {error && <p className="text-xs text-dash-red">{error}</p>}
       </div>
 
-      {/* X136 — o disparo confirma pelo modal do kit (`TalkXConfirmDialog`):
-          as 3 caixas ficam DENTRO do modal e "Confirmar lançamento" só
-          habilita com as três marcadas. Antes era um `Dialog` próprio, com as
-          confirmações num cartão de fora repetidas dentro do modal como texto. */}
+      {/* X136 — o disparo confirma pelo modal do kit (`TalkXConfirmDialog`). */}
       <TalkXConfirmDialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
@@ -401,18 +398,16 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
         icon={Send}
         iconColor="blue"
         title="Confirmar disparo?"
-        description={ed.isScheduled && ed.scheduledAt
-          ? `A campanha ficará agendada para ${formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone)} e será enviada para ${fmtInt(ed.eligibleCount)} contatos. Esta ação não pode ser desfeita.`
-          : `A campanha será enviada para ${fmtInt(ed.eligibleCount)} contatos. Esta ação não pode ser desfeita.`}
+        description="As mensagens começam a ser enviadas para a audiência selecionada."
         details={[
           { label: 'Campanha', value: ed.name || '—' },
           { label: 'Público', value: ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—') : 'Contatos ZAPP' },
           { label: 'Destinatários', value: `${fmtInt(ed.eligibleCount)} contatos` },
           { label: 'Duração estimada', value: ed.estimatedTime ?? '—' },
           { label: 'Envio', value: ed.isScheduled && ed.scheduledAt ? 'Agendado' : 'Imediato' },
+          ...(ed.isScheduled && ed.scheduledAt ? [{ label: 'Agendado para', value: formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone) }] : []),
         ]}
-        checks={LAUNCH_CONFIRMATIONS}
-        confirmLabel={ed.isScheduled && ed.scheduledAt ? 'Confirmar agendamento' : 'Confirmar lançamento'}
+        confirmLabel="Confirmar envio"
         cancelLabel="Cancelar"
         loading={ed.saving}
       />
