@@ -27,7 +27,7 @@ export function QueueCard({ queue, alertCount, onAddMember, onRemoveMember, onSe
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${queue.color}15` }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `color-mix(in srgb, ${queue.color} 15%, transparent)` }}>
               <MessageSquare className="w-5 h-5" style={{ color: queue.color }} />
             </div>
             <div>
