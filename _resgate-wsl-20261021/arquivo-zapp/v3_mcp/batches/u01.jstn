@@ -1,0 +1,19 @@
+❌ Erro: REPORT n=1
+=== zapp.update_segment_counts() [] SCALAR void
+CREATE OR REPLACE FUNCTION zapp.update_segment_counts()
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE seg record; v_count int;
+BEGIN
+  FOR seg IN SELECT id, filters, instance_name FROM zapp.contact_segments LOOP
+    SELECT COUNT(*) INTO v_count FROM zapp.get_segment_contacts(seg.id, 100000, 0);
+    UPDATE zapp.contact_segments
+    SET contact_count = v_count, updated_at = now()
+    WHERE id = seg.id;
+  END LOOP;
+END;
+$function$
+

@@ -1,0 +1,110 @@
+#!/home/joaquim_ataides/.local/share/zapp-db-ler/venv/bin/python
+"""zapp-db-ler — consulta SOMENTE LEITURA ao banco canônico do Zapp Web V2 (tnnnlkbymytvtqngbbqh).
+
+v2 (04/10/2026, depois da revisão adversarial QA5): a validação usa o ANALISADOR DO PRÓPRIO POSTGRES (pglast/libpg_query),
+não expressões regulares (a v1 era burlada com '--' dentro de string e nome de função entre aspas).
+Regras: exatamente UMA instrução SELECT/WITH (sem EXPLAIN/SHOW); nenhuma instrução de escrita em lugar nenhum da árvore;
+sem FOR UPDATE/SHARE (locking) e sem SELECT INTO; toda chamada de função tem de estar na lista de funções nativas de
+leitura; schemas com segredo/dado pessoal proibidos (vault, pgsodium, auth). Depois de validada, a consulta é EMBRULHADA
+em `select * from (<consulta>) as q limit 500` — qualquer resto que escape vira erro de sintaxe no servidor.
+Limite que continua no servidor (fora do alcance deste cliente): o gateway executa como postgres; ver BACKLOG.
+Uso: zapp-db-ler "select ..."   |   echo "select ..." | zapp-db-ler   |   zapp-db-ler --checar "sql" (só valida)
+"""
+import json, os, sys
+# 06/10/2026 (R1, pedido do Joaquim depois do ESTOP das 22:45): agente NUNCA consulta a produção, nem só leitura.
+if os.environ.get("HERMES_AGENT") == "1":
+    sys.stderr.write("PROIBIDO a agentes: zapp-db-ler consulta o banco de PRODUÇÃO (regra R1). Não tente outro caminho (MCP, gateway, curl). "
+                     "Use o banco LOCAL do cartão (zapp-db-local / hermes-db-migrar) e, para saber a última migration, o arquivo mais recente em supabase/migrations.\n")
+    sys.exit(77)
+from pglast import parse_sql
+from pglast.ast import (Node, SelectStmt, FuncCall, RangeVar, InsertStmt, UpdateStmt, DeleteStmt, MergeStmt,
+                        IntoClause, LockingClause, CallStmt, DoStmt)
+
+FUNCOES_OK = set("""count sum avg min max coalesce nullif greatest least lower upper length char_length trim
+ltrim rtrim btrim substr substring left right position replace split_part concat concat_ws format md5
+to_char to_date to_timestamp to_number date_trunc date_part extract age now current_date current_timestamp
+make_interval round floor ceil abs mod cast array_agg string_agg json_agg jsonb_agg json_build_object
+jsonb_build_object json_object_agg jsonb_object_agg jsonb_array_length jsonb_typeof jsonb_object_keys
+jsonb_each jsonb_each_text json_each array_length unnest array_to_string string_to_array cardinality
+row_number rank dense_rank lag lead first_value last_value bool_and bool_or every count_if
+pg_size_pretty pg_total_relation_size pg_relation_size pg_table_size pg_indexes_size pg_database_size
+pg_get_functiondef pg_get_function_arguments pg_get_function_result pg_get_viewdef pg_get_triggerdef
+pg_get_indexdef pg_get_constraintdef pg_get_expr pg_get_userbyid obj_description col_description
+format_type has_table_privilege has_function_privilege has_schema_privilege has_column_privilege
+quote_ident quote_literal regexp_replace regexp_match regexp_matches regexp_like starts_with
+encode decode octet_length to_jsonb to_json row_to_json array_position array_remove generate_series
+exists any all in over filter within values not and or is case when then else end as on using
+interval timestamp timestamptz date numeric int bigint text varchar boolean jsonb json uuid
+tstzrange daterange lateral current_database current_schema current_user session_user version
+pg_postmaster_start_time""".split())
+SCHEMAS_PROIBIDOS = {"vault", "pgsodium", "auth"}
+ESCRITA = (InsertStmt, UpdateStmt, DeleteStmt, MergeStmt, CallStmt, DoStmt)
+
+
+def nos(raiz):
+    pilha = [raiz]
+    while pilha:
+        n = pilha.pop()
+        if isinstance(n, Node):
+            yield n
+            for nome in n:            # iterar um nó do pglast devolve os NOMES dos atributos
+                pilha.append(getattr(n, nome, None))
+        elif isinstance(n, (list, tuple)):
+            pilha.extend(n)
+
+
+def validar(sql):
+    try:
+        stmts = parse_sql(sql)
+    except Exception as e:
+        return f"SQL inválido: {str(e)[:120]}"
+    if len(stmts) != 1:
+        return "só uma instrução por vez"
+    raiz = stmts[0].stmt
+    if not isinstance(raiz, SelectStmt):
+        return f"só SELECT/WITH é permitido (veio {type(raiz).__name__})"
+    for n in nos(raiz):
+        if isinstance(n, ESCRITA):
+            return f"instrução de escrita dentro da consulta ({type(n).__name__})"
+        if isinstance(n, (IntoClause, LockingClause)):
+            return "SELECT INTO / FOR UPDATE / FOR SHARE não são permitidos"
+        if isinstance(n, SelectStmt) and (n.lockingClause or n.intoClause):
+            return "SELECT INTO / FOR UPDATE / FOR SHARE não são permitidos"
+        if isinstance(n, RangeVar) and (n.schemaname or "").lower() in SCHEMAS_PROIBIDOS:
+            return f"schema {n.schemaname} é proibido (segredos/dados pessoais)"
+        if isinstance(n, FuncCall):
+            nomes = [getattr(x, "sval", "") for x in n.funcname]
+            base = nomes[-1].lower()
+            esquema = nomes[0].lower() if len(nomes) > 1 else ""
+            if esquema and esquema != "pg_catalog":
+                return f"função qualificada não permitida: {'.'.join(nomes)}"
+            if base not in FUNCOES_OK:
+                return f"função fora da lista de leitura: {base}"
+    return None
+
+
+def main():
+    args = sys.argv[1:]
+    checar = bool(args) and args[0] == "--checar"
+    if checar:
+        args = args[1:]
+    sql = " ".join(args) if args else sys.stdin.read()
+    sql = sql.strip().rstrip(";").strip()
+    erro = validar(sql)
+    if erro:
+        print(f"RECUSADO (zapp-db-ler é só leitura): {erro}", file=sys.stderr)
+        sys.exit(2)
+    embrulhada = f"select * from ({sql}\n) as q limit 500"
+    if validar(embrulhada):  # a forma embrulhada também tem de passar pelo analisador
+        print("RECUSADO: a consulta não sobrevive ao embrulho de segurança", file=sys.stderr)
+        sys.exit(2)
+    if checar:
+        print("OK: leitura válida")
+        return
+    sys.path.insert(0, os.path.expanduser("~/projetos/mcp-clone-bwwbey"))
+    import zapp_db
+    print(json.dumps(zapp_db.db_query(embrulhada, max_rows=500), ensure_ascii=False, default=str, indent=1))
+
+
+if __name__ == "__main__":
+    main()

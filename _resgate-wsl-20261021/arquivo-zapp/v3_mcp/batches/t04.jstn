@@ -1,0 +1,363 @@
+❌ Erro: REPORT n=20
+=== zapp.get_sla_dashboard(p_instance_name text, p_days integer) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.get_sla_dashboard(p_instance_name text DEFAULT NULL::text, p_days integer DEFAULT 7)
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$ WITH v AS (SELECT * FROM zapp.sla_delivery_violations WHERE detected_at >= now() - make_interval(days => GREATEST(p_days,1))), conv AS (SELECT count(*) AS total FROM zapp.evolution_conversations WHERE created_at >= now() - make_interval(days => GREATEST(p_days,1))) SELECT jsonb_build_object('total_violations', (SELECT count(*) FROM v), 'unresolved_violations', (SELECT count(*) FROM v WHERE NOT is_resolved), 'first_response_violations', (SELECT count(*) FROM v WHERE threshold_type ILIKE '%first%' OR threshold_type ILIKE '%response%'), 'resolution_violations', (SELECT count(*) FROM v WHERE threshold_type ILIKE '%resol%'), 'breached_conversations', (SELECT count(DISTINCT contact_id) FROM v), 'compliance_rate_pct', (SELECT CASE WHEN c.total=0 THEN 100 ELSE round(100.0*GREATEST(c.total - (SELECT count(DISTINCT contact_id) FROM v),0)/c.total, 1) END FROM conv c), 'avg_overdue_minutes', (SELECT round(avg(EXTRACT(EPOCH FROM (COALESCE(resolved_at, now()) - detected_at))/60.0)::numeric,1) FROM v), 'period_days', p_days) $function$
+
+=== zapp.get_user_department(_user_id uuid) [] SCALAR uuid
+CREATE OR REPLACE FUNCTION zapp.get_user_department(_user_id uuid)
+ RETURNS uuid
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$ SELECT p.department_id FROM zapp.profiles p WHERE p.user_id = _user_id LIMIT 1; $function$
+
+=== zapp.is_account_locked(check_email text) [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.is_account_locked(check_email text)
+ RETURNS TABLE(is_locked boolean, locked_until timestamp with time zone, attempts integer)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE
+  v_attempt RECORD;
+BEGIN
+  SELECT la.attempt_count, la.locked_until, la.last_attempt_at
+  INTO v_attempt
+  FROM zapp.login_attempts la
+  WHERE la.email = LOWER(check_email);
+  
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT false, NULL::TIMESTAMP WITH TIME ZONE, 0;
+    RETURN;
+  END IF;
+  
+  -- Check if still locked
+  IF v_attempt.locked_until IS NOT NULL AND v_attempt.locked_until > now() THEN
+    RETURN QUERY SELECT true, v_attempt.locked_until, v_attempt.attempt_count;
+    RETURN;
+  END IF;
+  
+  -- Not locked
+  RETURN QUERY SELECT false, NULL::TIMESTAMP WITH TIME ZONE, v_attempt.attempt_count;
+END;
+$function$
+
+=== zapp.is_queue_member_of_contact(_contact_id uuid, _user_id uuid) [] SCALAR boolean
+CREATE OR REPLACE FUNCTION zapp.is_queue_member_of_contact(_contact_id uuid, _user_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+  SELECT EXISTS (
+    SELECT 1 FROM zapp.contacts c
+    JOIN zapp.queue_members qm ON qm.queue_id = c.queue_id
+    WHERE c.id = _contact_id AND qm.is_active = true
+      AND qm.profile_id = zapp.get_profile_id_for_user(_user_id)
+  );
+$function$
+
+=== zapp.is_team_conversation_member(_user_id uuid, _conversation_id uuid) [] SCALAR boolean
+CREATE OR REPLACE FUNCTION zapp.is_team_conversation_member(_user_id uuid, _conversation_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+  SELECT EXISTS (
+    SELECT 1 FROM zapp.team_conversation_members tcm
+    JOIN zapp.profiles p ON p.id = tcm.profile_id
+    WHERE tcm.conversation_id = _conversation_id
+      AND p.user_id = _user_id
+  );
+$function$
+
+=== zapp.populate_contact_intelligence_batch(p_batch_size integer, p_offset integer) [] SCALAR integer
+CREATE OR REPLACE FUNCTION zapp.populate_contact_intelligence_batch(p_batch_size integer DEFAULT 500, p_offset integer DEFAULT 0)
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+DECLARE
+  v_contact_id uuid;
+  v_count      int := 0;
+BEGIN
+  FOR v_contact_id IN
+    SELECT ec.id
+    FROM zapp.evolution_contacts ec
+    LEFT JOIN zapp.contact_intelligence ci ON ci.contact_id = ec.id
+    WHERE ec.deleted_at IS NULL
+      AND ci.contact_id IS NULL   -- ainda não tem registro de CI
+    ORDER BY ec.last_message_at DESC NULLS LAST
+    LIMIT p_batch_size
+    OFFSET p_offset
+  LOOP
+    PERFORM zapp.upsert_contact_intelligence(v_contact_id);
+    v_count := v_count + 1;
+  END LOOP;
+  RETURN v_count;
+END;
+$function$
+
+=== zapp.purge_old_deleted_contacts() [] SCALAR integer
+CREATE OR REPLACE FUNCTION zapp.purge_old_deleted_contacts()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE
+  v_count integer;
+BEGIN
+  -- Only purge contacts merged or deleted > 30 days ago
+  DELETE FROM zapp.contacts
+  WHERE deleted_at IS NOT NULL
+    AND deleted_at < now() - interval '30 days';
+
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+  RETURN v_count;
+END;
+$function$
+
+=== zapp.record_failed_login(p_email text, p_ip_address text, p_user_agent text) [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.record_failed_login(p_email text, p_ip_address text DEFAULT NULL::text, p_user_agent text DEFAULT NULL::text)
+ RETURNS TABLE(is_locked boolean, locked_until timestamp with time zone, attempts integer)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+DECLARE
+  v_attempt RECORD;
+  v_new_count INTEGER;
+  v_lock_duration INTERVAL;
+  v_locked_until TIMESTAMP WITH TIME ZONE;
+  v_max_attempts INTEGER := 5;
+BEGIN
+  -- Get existing attempts
+  SELECT la.attempt_count, la.locked_until, la.last_attempt_at
+  INTO v_attempt
+  FROM zapp.login_attempts la
+  WHERE la.email = LOWER(p_email);
+  
+  IF NOT FOUND THEN
+    -- First failed attempt
+    INSERT INTO zapp.login_attempts (email, ip_address, user_agent, attempt_count)
+    VALUES (LOWER(p_email), p_ip_address, p_user_agent, 1);
+    
+    RETURN QUERY SELECT false, NULL::TIMESTAMP WITH TIME ZONE, 1;
+    RETURN;
+  END IF;
+  
+  -- If previous lock expired, reset count
+  IF v_attempt.locked_until IS NOT NULL AND v_attempt.locked_until <= now() THEN
+    v_new_count := 1;
+  ELSE
+    v_new_count := v_attempt.attempt_count + 1;
+  END IF;
+  
+  -- Calculate lock duration with exponential backoff
+  IF v_new_count >= v_max_attempts THEN
+    -- Lock duration: 2^(attempts - max_attempts) minutes, starting at 1 minute
+    -- 5 attempts = 1 min, 6 = 2 min, 7 = 4 min, 8 = 8 min, etc.
+    v_lock_duration := (POWER(2, LEAST(v_new_count - v_max_attempts, 10)))::INTEGER * INTERVAL '1 minute';
+    v_locked_until := now() + v_lock_duration;
+  ELSE
+    v_locked_until := NULL;
+  END IF;
+  
+  -- Update attempt record
+  UPDATE zapp.login_attempts
+  SET 
+    attempt_count = v_new_count,
+    last_attempt_at = now(),
+    locked_until = v_locked_until,
+    ip_address = COALESCE(p_ip_address, login_attempts.ip_address),
+    user_agent = COALESCE(p_user_agent, login_attempts.user_agent),
+    updated_at = now()
+  WHERE email = LOWER(p_email);
+  
+  RETURN QUERY SELECT 
+    v_locked_until IS NOT NULL AND v_locked_until > now(),
+    v_locked_until,
+    v_new_count;
+END;
+$function$
+
+=== zapp.rpc_associate_label(p_label_id uuid, p_entity_type text, p_entity_id uuid, p_action text) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.rpc_associate_label(p_label_id uuid, p_entity_type text, p_entity_id uuid, p_action text DEFAULT 'add'::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$ DECLARE v_result jsonb; BEGIN IF p_action='add' THEN INSERT INTO evolution_label_associations(label_id,entity_type,entity_id) VALUES(p_label_id,p_entity_type,p_entity_id) ON CONFLICT(label_id,entity_type,entity_id) DO NOTHING; v_result := jsonb_build_object('success',true,'action','added'); ELSIF p_action='remove' THEN DELETE FROM evolution_label_associations WHERE label_id=p_label_id AND entity_type=p_entity_type AND entity_id=p_entity_id; v_result := jsonb_build_object('success',true,'action','removed'); ELSE v_result := jsonb_build_object('success',false,'error','Invalid action'); END IF; RETURN v_result; END; $function$
+
+=== zapp.rpc_boundary_register_media(p_message_id text, p_remote_jid text, p_media_type text, p_instance_name text, p_mimetype text, p_file_name text, p_storage_path text, p_storage_url text, p_storage_bucket text, p_media_status text, p_queue_id bigint) [] SCALAR void
+CREATE OR REPLACE FUNCTION zapp.rpc_boundary_register_media(p_message_id text, p_remote_jid text, p_media_type text, p_instance_name text, p_mimetype text, p_file_name text, p_storage_path text, p_storage_url text, p_storage_bucket text, p_media_status text, p_queue_id bigint)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'evo', 'public'
+AS $function$
+BEGIN
+  -- [100PLAN S18 FIX-v2 2026-08-20] p_message_id agora text (era uuid)
+  -- Fix anterior (S18): cast uuid→text. Fix atual: tipo correto para receber WhatsApp hex.
+  INSERT INTO zapp.evolution_media
+    (message_id, remote_jid, media_type, instance_name, mime_type, file_name,
+     storage_path, storage_url, storage_bucket, storage_path_clean, media_status, created_at)
+  SELECT
+    p_message_id,        -- já é text, sem cast necessário
+    p_remote_jid, p_media_type, p_instance_name, p_mimetype,
+    COALESCE(p_file_name, substring(p_storage_path FROM '[^/]+$')),
+    p_storage_path, p_storage_url, p_storage_bucket, p_storage_path, p_media_status, now()
+  WHERE NOT EXISTS (
+    SELECT 1 FROM zapp.evolution_media e
+    WHERE e.message_id = p_message_id
+  );
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO zapp.evolution_audit_log (action, entity_type, entity_id, new_values, metadata, performed_by, created_at)
+  VALUES ('media_register_failed', 'evolution_media', gen_random_uuid(),
+          jsonb_build_object('queue_id', p_queue_id, 'error', SQLERRM),
+          jsonb_build_object('storage_url', p_storage_url), 'rpc_complete_media_download', now());
+END $function$
+
+=== zapp.rpc_delete_followup_sequence(p_id text) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.rpc_delete_followup_sequence(p_id text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'public', 'pg_catalog'
+AS $function$ DECLARE v_count int; v_id uuid := p_id::uuid; BEGIN DELETE FROM zapp.evolution_followup_rules WHERE sequence_group=v_id OR (sequence_group IS NULL AND id=v_id); GET DIAGNOSTICS v_count = ROW_COUNT; RETURN jsonb_build_object('ok',true,'deleted',v_count); EXCEPTION WHEN OTHERS THEN RETURN jsonb_build_object('ok',false,'error',SQLERRM); END; $function$
+
+=== zapp.rpc_get_gmail_health_summary() [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.rpc_get_gmail_health_summary()
+ RETURNS jsonb
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+  SELECT jsonb_build_object('total_accounts', (SELECT count(*) FROM gmail_accounts), 'active', (SELECT count(*) FROM gmail_accounts WHERE is_active=true), 'error', (SELECT count(*) FROM gmail_accounts WHERE sync_status='error'));
+$function$
+
+=== zapp.rpc_get_reactions_batch(p_message_ids text[]) [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.rpc_get_reactions_batch(p_message_ids text[])
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'extensions', 'public'
+AS $function$
+DECLARE
+  v_result jsonb;
+BEGIN
+  SELECT jsonb_agg(
+    jsonb_build_object(
+      'id', mr.id,
+      'message_id', mr.message_id,
+      'user_id', mr.user_id,
+      'emoji', mr.emoji,
+      'created_at', mr.created_at,
+      'user_name', COALESCE(p.name, 'Agente')
+    )
+  )
+  INTO v_result
+  FROM zapp.message_reactions mr
+  LEFT JOIN zapp.profiles p ON p.id = mr.user_id
+  WHERE mr.message_id = ANY(p_message_ids::uuid[]);
+
+  RETURN COALESCE(v_result, '[]'::jsonb);
+END;
+$function$
+
+=== zapp.rpc_list_eligible_agents(p_queue_id uuid) [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.rpc_list_eligible_agents(p_queue_id uuid)
+ RETURNS TABLE(user_id uuid, display_name text, department_id uuid, max_chats integer, active_chats bigint, is_active boolean)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$ WITH q AS (SELECT department_id FROM zapp.queues WHERE id = p_queue_id) SELECT p.user_id, COALESCE(p.name, p.email), p.department_id, COALESCE(p.max_chats, 5), (SELECT COUNT(*) FROM zapp.contacts c WHERE c.assigned_to::uuid = p.user_id), COALESCE(p.is_active, true) FROM zapp.profiles p, q WHERE (q.department_id IS NULL OR p.department_id = q.department_id) AND COALESCE(p.is_active, true) = true AND p.role IN ('agent','supervisor','admin'); $function$
+
+=== zapp.rpc_list_labels(p_instance text, p_type text, p_search text, p_limit integer, p_offset integer) [] SETOF zapp.evolution_labels
+CREATE OR REPLACE FUNCTION zapp.rpc_list_labels(p_instance text DEFAULT NULL::text, p_type text DEFAULT NULL::text, p_search text DEFAULT NULL::text, p_limit integer DEFAULT 50, p_offset integer DEFAULT 0)
+ RETURNS SETOF zapp.evolution_labels
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+BEGIN
+  RETURN QUERY SELECT * FROM zapp.evolution_labels
+  WHERE (p_search IS NULL OR name ILIKE '%'||p_search||'%')
+  ORDER BY name LIMIT p_limit OFFSET p_offset;
+END; $function$
+
+=== zapp.rpc_list_message_templates(p_instance text, p_status text, p_category text, p_limit integer) [] SETOF zapp.evolution_message_templates
+CREATE OR REPLACE FUNCTION zapp.rpc_list_message_templates(p_instance text DEFAULT NULL::text, p_status text DEFAULT NULL::text, p_category text DEFAULT NULL::text, p_limit integer DEFAULT 100)
+ RETURNS SETOF zapp.evolution_message_templates
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'public', 'extensions'
+AS $function$
+BEGIN
+  RETURN QUERY
+  SELECT * FROM evolution_message_templates
+  WHERE (p_instance IS NULL OR instance_name   = p_instance)
+    AND (p_status   IS NULL OR approval_status  = p_status)
+    AND (p_category IS NULL OR category         = p_category)
+  ORDER BY usage_count DESC NULLS LAST, name
+  LIMIT p_limit;
+END; $function$
+
+=== zapp.rpc_list_quick_replies(p_instance text, p_category text, p_search text, p_limit integer) [] SETOF zapp.evolution_quick_replies
+CREATE OR REPLACE FUNCTION zapp.rpc_list_quick_replies(p_instance text DEFAULT NULL::text, p_category text DEFAULT NULL::text, p_search text DEFAULT NULL::text, p_limit integer DEFAULT 50)
+ RETURNS SETOF zapp.evolution_quick_replies
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+BEGIN
+  RETURN QUERY SELECT * FROM zapp.evolution_quick_replies
+  WHERE is_active=true
+    AND (p_category IS NULL OR category=p_category)
+    AND (p_search IS NULL OR title ILIKE '%'||p_search||'%')
+  ORDER BY use_count DESC NULLS LAST, title LIMIT p_limit;
+END; $function$
+
+=== zapp.rpc_list_tags(p_category text, p_search text, p_limit integer) [] SETOF zapp.evolution_tags
+CREATE OR REPLACE FUNCTION zapp.rpc_list_tags(p_category text DEFAULT NULL::text, p_search text DEFAULT NULL::text, p_limit integer DEFAULT 100)
+ RETURNS SETOF zapp.evolution_tags
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'public'
+AS $function$
+BEGIN
+  RETURN QUERY SELECT * FROM zapp.evolution_tags
+  WHERE (p_category IS NULL OR category=p_category)
+    AND (p_search IS NULL OR name ILIKE '%'||p_search||'%')
+  ORDER BY use_count DESC NULLS LAST, name LIMIT p_limit;
+END; $function$
+
+=== zapp.rpc_list_tags(p_instance text, p_category text, p_search text, p_limit integer) [] SETOF zapp.evolution_tags
+CREATE OR REPLACE FUNCTION zapp.rpc_list_tags(p_instance text DEFAULT NULL::text, p_category text DEFAULT NULL::text, p_search text DEFAULT NULL::text, p_limit integer DEFAULT 50)
+ RETURNS SETOF zapp.evolution_tags
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+BEGIN
+  RETURN QUERY SELECT * FROM zapp.evolution_tags
+  WHERE (p_category IS NULL OR category=p_category)
+    AND (p_search IS NULL OR name ILIKE '%'||p_search||'%')
+  ORDER BY use_count DESC NULLS LAST, name LIMIT p_limit;
+END; $function$
+
+=== zapp.rpc_list_tasks(p_assigned_to text, p_status text, p_contact_id uuid, p_deal_id uuid, p_due_from date, p_due_to date, p_limit integer, p_offset integer) [] SETOF zapp.evolution_tasks
+CREATE OR REPLACE FUNCTION zapp.rpc_list_tasks(p_assigned_to text DEFAULT NULL::text, p_status text DEFAULT NULL::text, p_contact_id uuid DEFAULT NULL::uuid, p_deal_id uuid DEFAULT NULL::uuid, p_due_from date DEFAULT NULL::date, p_due_to date DEFAULT NULL::date, p_limit integer DEFAULT 100, p_offset integer DEFAULT 0)
+ RETURNS SETOF zapp.evolution_tasks
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$ SELECT * FROM evolution_tasks WHERE (p_assigned_to IS NULL OR assigned_to=p_assigned_to) AND (p_status IS NULL OR status=p_status) AND (p_contact_id IS NULL OR contact_id=p_contact_id) AND (p_deal_id IS NULL OR deal_id=p_deal_id) AND (p_due_from IS NULL OR due_date>=p_due_from) AND (p_due_to IS NULL OR due_date<=p_due_to) ORDER BY CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END, due_date NULLS LAST LIMIT p_limit OFFSET p_offset; $function$
+

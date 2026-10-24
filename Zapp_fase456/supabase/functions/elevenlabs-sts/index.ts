@@ -1,0 +1,169 @@
+import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, requireAuth, enforceRateLimit } from "../_shared/validation.ts";
+import { logAiUsageDetached } from "../_shared/ai-usage.ts";
+import { aiCapabilityFlagKey, readCapabilityFlag } from "../_shared/ai-feature-flags.ts";
+import { resolveElevenLabsStsInputs } from "../_shared/schemas.ts";
+
+/**
+ * IA-122/IA-128 (Bloco 13 — Voz, transcrição, TTS e comandos).
+ *
+ * O que faltava: este handler repassava ao provedor PAGO
+ * (`POST /v1/speech-to-speech/{voiceId}`) qualquer upload do cliente. `req.formData()`
+ * materializava o corpo inteiro na memória sem teto, e o arquivo seguia sem nenhuma
+ * conferência de conteúdo — um blob que só DIZ ser áudio (ou um arquivo de centenas
+ * de MB) gastava memória e crédito do provedor antes de qualquer recusa.
+ *
+ * Aqui a recusa acontece em duas fronteiras:
+ *  1. no `content-length`, ANTES de `req.formData()` — o corpo abusivo nunca é lido;
+ *  2. no `size` real do `File` e na ASSINATURA do container (magic bytes) — o
+ *     `File.type` vem do cliente e pode mentir, então o tipo é provado nos bytes.
+ * Mesmo teto do STT (`ai-transcribe-audio`, 25 MiB).
+ */
+
+/** Teto do upload aceito, igual ao do caminho de STT. O validador de upload (teto +
+ * content-length + magic bytes) mora em `_shared/` desde o G3, para ser o MESMO
+ * código do `voice-changer`. Reexportado por este módulo para não mudar o caminho
+ * de import dos consumidores e testes existentes. */
+export {
+  announcedAudioTooLarge,
+  MAX_STS_AUDIO_BYTES,
+  sniffStsAudioFormat,
+  STS_SNIFF_BYTES,
+  validateStsUpload,
+} from "../_shared/sts-upload.ts";
+export type { StsAudioFormat, StsUploadRejection } from "../_shared/sts-upload.ts";
+
+import {
+  announcedAudioTooLarge,
+  MAX_STS_AUDIO_BYTES,
+  validateStsUpload,
+} from "../_shared/sts-upload.ts";
+
+export async function handleElevenLabsSts(req: Request): Promise<Response> {
+  const cors = handleCors(req);
+  if (cors) return cors;
+
+  const log = new Logger("elevenlabs-sts");
+
+  // JWT ja e validado pelo gateway (verify_jwt=true); aqui o usuario vira a
+  // chave do rate limit persistente — cota paga (ElevenLabs/Mapbox) por usuario.
+  const auth = await requireAuth(req);
+  if (auth instanceof Response) return auth;
+  const rl = await enforceRateLimit(`elevenlabs-sts:${auth.userId}`, 10, 60_000);
+  if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
+
+  try {
+    // IA-009 / SL-010b (decisão do cartão t_98090b40): kill switch de voz lido no
+    // SERVIDOR antes de tocar o provedor pago. A família de voz/áudio inteira
+    // responde à chave única `ai.capability.voice`; desligada (ou leitura não
+    // confiável) NEGA — nenhuma chamada à ElevenLabs. `jsonResponse` (nunca
+    // `errorResponse` em 5xx: acima de 500 o corpo vira "Internal server error" e
+    // o consumidor perderia o código).
+    const voiceEnabled = await readCapabilityFlag(aiCapabilityFlagKey("voice"));
+    if (voiceEnabled !== true) {
+      log.warn("IA de voz desativada por flag — provedor nao chamado");
+      return jsonResponse(
+        { error: { code: "AI_DISABLED", message: "IA de voz desativada por flag." } },
+        503,
+        req,
+      );
+    }
+
+    const ELEVENLABS_API_KEY = requireEnv('ELEVENLABS_API_KEY');
+
+    // Teto no cabeçalho ANTES de `req.formData()`: o corpo abusivo não chega a
+    // ser lido para a memória (o `content-length` pode mentir para baixo, e aí o
+    // `size` real do File decide no passo seguinte).
+    if (announcedAudioTooLarge(req, MAX_STS_AUDIO_BYTES)) {
+      return errorResponse(
+        `Arquivo de áudio grande demais (máximo ${MAX_STS_AUDIO_BYTES} bytes)`,
+        413,
+        req,
+      );
+    }
+
+    const formData = await req.formData();
+    const audioFile = formData.get('audio') as File | null;
+
+    if (!audioFile) return errorResponse('Audio file is required', 400, req);
+
+    const uploadRejection = await validateStsUpload(audioFile);
+    if (uploadRejection) {
+      log.info("Upload recusado antes do provedor", {
+        status: uploadRejection.status,
+        size: audioFile.size,
+      });
+      return errorResponse(uploadRejection.error, uploadRejection.status, req);
+    }
+
+    // SL-008 (achado B4) — a mesma lista fechada de `schemas.ts`: o cliente não
+    // escolhe voz fora do catálogo nem modelo. Antes `voiceId` era livre (≤100
+    // caracteres), então dava para acionar uma voz clonada da conta compartilhada.
+    const inputs = resolveElevenLabsStsInputs(formData.get('voiceId'), formData.get('modelId'));
+    if (!inputs.ok) return errorResponse(inputs.error, 400, req);
+    const { voiceId, modelId: selectedModel } = inputs;
+
+    log.info("Converting audio", { size: audioFile.size, voiceId, model: selectedModel });
+
+    const apiFormData = new FormData();
+    apiFormData.append('audio', audioFile);
+    apiFormData.append('model_id', selectedModel);
+
+    const iniciadoEm = Date.now();
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/speech-to-speech/${voiceId}?output_format=mp3_44100_128`,
+      {
+        method: 'POST',
+        headers: { 'xi-api-key': ELEVENLABS_API_KEY },
+        body: apiFormData,
+      }
+    );
+
+    // SL-013 / IA-003 B6 — conversão paga (speech-to-speech) sem linha no
+    // ledger é consumo invisível no relatório de custo. A unidade cobrada é o
+    // SEGUNDO de áudio; a duração não é medida aqui (o arquivo chega em bytes),
+    // então a linha declara `usage_unknown: true` — ausência declarada, nunca
+    // zero medido (IA-053).
+    await logAiUsageDetached({
+      functionName: "elevenlabs-sts",
+      userId: auth.userId,
+      model: selectedModel,
+      durationMs: Date.now() - iniciadoEm,
+      status: response.ok ? "success" : "error",
+      errorMessage: response.ok ? null : `ElevenLabs HTTP ${response.status}`,
+      usageUnknown: true,
+      metadata: {
+        provider: "elevenlabs",
+        endpoint: "/v1/speech-to-speech",
+        billing_unit: "second",
+        billing_quantity: null,
+        input_bytes: audioFile.size,
+        http_status: response.status,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      log.error("ElevenLabs STS error", { status: response.status, detail: errorText.substring(0, 300) });
+      if (response.status === 401) return errorResponse('Invalid ElevenLabs API key', 401, req);
+      if (response.status === 429) return errorResponse('Rate limit exceeded', 429, req);
+      throw new Error(`ElevenLabs STS error: ${response.status}`);
+    }
+
+    const audioBuffer = await response.arrayBuffer();
+    log.done(200, { outputSize: audioBuffer.byteLength });
+
+    return new Response(audioBuffer, {
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'audio/mpeg' },
+    });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    log.error("Unhandled error", { error: errorMessage });
+    return errorResponse(errorMessage, 500, req);
+  }
+}
+
+// `import.meta.main` (mesmo padrão de `elevenlabs-dialogue`): o handler pode ser
+// importado por teste sem subir o servidor.
+if (import.meta.main) {
+  Deno.serve(handleElevenLabsSts);
+}

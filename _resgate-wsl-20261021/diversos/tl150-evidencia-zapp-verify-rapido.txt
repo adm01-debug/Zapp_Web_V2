@@ -1,0 +1,5 @@
+FALHOU  dependencias    0s  (ver /home/joaquim_ataides/.local/state/zapp-verify/2334d6a6114e/dependencias.log)
+error: Bun could not find a package.json file to install from
+note: Run "bun init" to initialize a project
+VERIFY: VERMELHO em dependencias (0s)
+exit=1

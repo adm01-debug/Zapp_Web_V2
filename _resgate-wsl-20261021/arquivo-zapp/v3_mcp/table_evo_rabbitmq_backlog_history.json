@@ -1,0 +1,12 @@
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\n  \"id\": \"1767052\",\n  \"schema\": \"evo\",\n  \"name\": \"rabbitmq_backlog_history\",\n  \"rls_enabled\": true,\n  \"size\": \"19 MB\",\n  \"comment\": \"Backlog RabbitMQ via mgmt API 15672 — PLANO-100 etapa 57. Coletor a estender no watchdog w9-consumer-stats (stack ag6-watchdogs): curl :15672/api/queues a cada 60s + INSERT. Alimenta v_kpi_overview.rabbitmq_backlog_messages (hoje NULL).\",\n  \"columns\": [\n    {\n      \"attnum\": 1,\n      \"attname\": \"captured_at\",\n      \"type\": \"timestamp with time zone\",\n      \"nullable\": false,\n      \"default_value\": \"now()\"\n    },\n    {\n      \"attnum\": 2,\n      \"attname\": \"queue_name\",\n      \"type\": \"text\",\n      \"nullable\": false,\n      \"default_value\": null\n    },\n    {\n      \"attnum\": 3,\n      \"attname\": \"messages\",\n      \"type\": \"bigint\",\n      \"nullable\": true,\n      \"default_value\": null\n    },\n    {\n      \"attnum\": 4,\n      \"attname\": \"consumers\",\n      \"type\": \"integer\",\n      \"nullable\": true,\n      \"default_value\": null\n    },\n    {\n      \"attnum\": 5,\n      \"attname\": \"ready\",\n      \"type\": \"bigint\",\n      \"nullable\": true,\n      \"default_value\": null\n    },\n    {\n      \"attnum\": 6,\n      \"attname\": \"unacked\",\n      \"type\": \"bigint\",\n      \"nullable\": true,\n      \"default_value\": null\n    },\n    {\n      \"attnum\": 7,\n      \"attname\": \"source\",\n      \"type\": \"text\",\n      \"nullable\": true,\n      \"default_value\": \"'rabbitmq-mgmt-api'::text\"\n    }\n  ],\n  \"constraints\": [\n    {\n      \"conname\": \"rabbitmq_backlog_history_pkey\",\n      \"type\": \"PRIMARY KEY\",\n      \"definition\": \"PRIMARY KEY (captured_at, queue_name)\"\n    }\n  ],\n  \"indexes\": [\n    {\n      \"name\": \"idx_rabbitmq_backlog_hist_captured\",\n      \"definition\": \"CREATE INDEX idx_rabbitmq_backlog_hist_captured ON evo.rabbitmq_backlog_history USING btree (captured_at DESC)\",\n      \"is_unique\": false,\n      \"is_primary\": false\n    },\n    {\n      \"name\": \"rabbitmq_backlog_history_pkey\",\n      \"definition\": \"CREATE UNIQUE INDEX rabbitmq_backlog_history_pkey ON evo.rabbitmq_backlog_history USING btree (captured_at, queue_name)\",\n      \"is_unique\": true,\n      \"is_primary\": true\n    }\n  ]\n}"
+      }
+    ]
+  },
+  "jsonrpc": "2.0",
+  "id": 1
+}

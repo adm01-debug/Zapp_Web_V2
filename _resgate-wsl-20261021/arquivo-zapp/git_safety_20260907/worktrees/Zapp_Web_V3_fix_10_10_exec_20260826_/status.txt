@@ -1,0 +1,6 @@
+## fix/five-gaps-20260826...origin/main [behind 770]
+ M e2e/fixtures/auth.ts
+ M src/hooks/__tests__/useContactIntelligence.simulacao.test.ts
+ M src/hooks/useContactIntelligence.ts
+ M vite.config.ts
+?? e2e/auth-return-to-route.spec.ts

@@ -1,0 +1,273 @@
+{
+  "status": "PRODUCT_DECISION_REQUIRED",
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "candidates": [
+    {
+      "path": "docs/audits/PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+      "prefix": "F",
+      "commit": "5e6979f92638d86c0f230ccaeaae41d09e0a98a1",
+      "pr": 1171,
+      "committed_at": "2026-09-29T14:00:41Z",
+      "claimed_base": "e433589",
+      "claim": "Declares itself the only live ledger from then onward."
+    },
+    {
+      "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+      "prefix": "TC-",
+      "commit": "449b11573bb5d3b551c2f7cf809040958c29a1e7",
+      "pr": 1174,
+      "committed_at": "2026-09-29T14:02:35Z",
+      "claimed_base": "ac5d629",
+      "claim": "Supersedes three older E plans, but does not mention the F finalization plan."
+    }
+  ],
+  "timestamp_gap_seconds": 114,
+  "current_execution_authority": "NOT_AUTOMATICALLY_SELECTED",
+  "recommended_documentary_action": "Reconcile both lists by current evidence; ratify a single implementation ledger while retaining the other with explicit lineage.",
+  "conflicts": [
+    {
+      "id": "TC-AUTH-01",
+      "subject": "Exclusive authority",
+      "f": [
+        "F100"
+      ],
+      "tc": [
+        "TC-100"
+      ],
+      "description": "F se declara ledger vivo exclusivo; TC, publicado depois, não inclui F na lista de planos substituídos.",
+      "evidence": [
+        {
+          "path": "docs/audits/PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+          "line_start": 3,
+          "line_end": 8,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "**Status:** PLANEJADO — nada executado.\n**Origem:** `AUDITORIA_TEAM_CHAT_ESTADO_REAL_2026-09-29.md` (7 DONE · 16 PARCIAL · 3 REGRESSÃO · 74 AUSENTE sobre o plano de conclusão de 29/09; 18 migrations em produção sem arquivo em `main`; 3 regressões P0).\n**Sucede** `PLANO_TEAM_CHAT_CONCLUSAO_100_ETAPAS_2026-09-29.md` (branch da PR #1151), que sucedeu os de 28/09 e 27/09. **Não reabrir nenhum deles**; este arquivo é o único ledger vivo do módulo a partir de agora.\n**Base:** `main` @ `e433589` · ledger `max(version) = 20260928600000` · reservas pendentes do Team Chat: `20260929090000`, `100000` (órfãs), `160000`–`200000` (E26–E30 do plano anterior, sessão `confident-babbage`).\n\n> **Por que um plano novo em vez de continuar o de 29/09:** o de 29/09 diz \"nada executado\", mas 18 migrations dele foram aplicadas em produção **fora do fluxo** (direto da branch, em versões reservadas por outra sessão) com 3 regressões. Continuar a numeração antiga esconderia isso. Aqui, F01–F14 reconciliam o que já está no banco; o resto reaproveita o conteúdo técnico do plano de 29/09 corrigido pelo que foi medido."
+        },
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 3,
+          "line_end": 10,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "**Data:** 2026-09-29 · **Status:** PLANEJADO — nada executado\n**Origem:** `docs/team-chat/AUDITORIA_TEAM_CHAT_2026-09-29.md` (11 DONE · 33 PARCIAL · 56 AUSENTE sobre o plano de\n29/09 + 10 regressões R1–R10 introduzidas pelo apply de DDL a partir de branch aberto).\n**Sucede** `docs/audits/PLANO_TEAM_CHAT_CONCLUSAO_100_ETAPAS_2026-09-29.md` (branch #1151),\n`PLANO_TEAM_CHAT_REMEDIACAO_100_ETAPAS_2026-09-28.md` e `PLANO_TEAM_CHAT_V3_PARITY_100_ETAPAS_2026-09-27.md`.\nNenhum dos três deve ser reaberto; o que neles estava certo está aqui, renumerado com prefixo `TC-` para acabar\ncom a ambiguidade de \"E37\" (§6.1 da auditoria).\n**Base:** `main` @ `ac5d629`; ledger `max(version) = 20260929330000` (13:34 UTC, **em movimento**)."
+        }
+      ]
+    },
+    {
+      "id": "TC-AUTH-02",
+      "subject": "Reconciliation route",
+      "f": [
+        "F02",
+        "F05"
+      ],
+      "tc": [
+        "TC-04",
+        "TC-05"
+      ],
+      "description": "F propõe uma nova PR de reconciliação e depois fechar1151; TC propõe reaproveitar1151. O histórico efetivo registra recuperação pela1199 e1151fechada sem merge.",
+      "evidence": [
+        {
+          "path": "docs/audits/PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+          "line_start": 37,
+          "line_end": 40,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "- [ ] **F01** — Congelar a sessão paralela: comentário na PR #1151 e neste arquivo dizendo que as reservas `20260929160000`–`200000` **não** serão aplicadas até F14; as reservas órfãs `090000`/`100000` ficam registradas como consumidas por `450000`/`470000`. **Aceite:** comentário postado; nenhuma version nova `team_chat_*` no ledger entre F01 e F14.\n- [ ] **F02** — Espelhos em `main`: PR **nova** a partir de `main` com os 18 arquivos `20260928420000`–`600000` copiados **byte a byte** da branch `claude/confident-babbage-ivgmmn` @ `77cb72f` (não editar conteúdo: o ledger é a verdade; o guard \"Rejeitar edicao de migration ja existente\" só olha `main`). Completar o cabeçalho `-- Rollback` nos 3 arquivos que não têm (só comentário, não altera statements). **Aceite:** para cada version, `parseMigrationFile()` de `register-migration.mjs` produz `statements` idênticos aos do ledger (script de comparação commitado em `scripts/db-audit/team-chat-ledger-parity.mjs`; saída `18/18 iguais`).\n- [ ] **F03** — Mesma PR: esta auditoria + este plano + nota de 3 linhas no topo do `PLANO_TEAM_CHAT_CONCLUSAO…` (na branch #1151, se ela for mergeada) apontando para cá. Mergear. **Aceite:** PR mergeada; `ls supabase/migrations | grep team_chat | wc -l` = 20 (2 de 27/09 + 18).\n- [ ] **F04** — `types-sync` disparado após F03; PR automática mergeada; fechar #1168 (obsoleta, base `a935415`) **depois** de confirmar que o manifesto novo entrou. **Aceite:** `grep -c \"create_department_invite\\|set_department_whatsapp_config\\|get_department_whatsapp_api_key\" src/integrations/supabase/types.ts` = 3; `schema … [excerpt truncated; source retained]"
+        },
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 66,
+          "line_end": 68,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "- [ ] **TC-04** — Fechar a PR #1151 como reconciliação: título \"reconcile(team-chat): 36 migrations aplicadas em\n  29/09 + auditoria + plano\", corpo com a lista das 36 versions e o link da auditoria; adicionar os 8 arquivos de\n  TC-02 e o relatório de TC-03; remover o \"[NÃO MERGEAR]\". Não mudar nenhum SQL já aplicado. **Aceite:** CI verde"
+        }
+      ]
+    },
+    {
+      "id": "TC-AUTH-03",
+      "subject": "Safe WhatsApp RPC",
+      "f": [
+        "F10"
+      ],
+      "tc": [
+        "TC-13"
+      ],
+      "description": "F cria get_department_whatsapp_config e preserva a RPC privilegiada de credenciais. TC troca a assinatura de credentials e concede acesso a authenticated. A rotina atual retorna segredos e permanece service_role-only.",
+      "evidence": [
+        {
+          "path": "docs/audits/PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+          "line_start": 46,
+          "line_end": 48,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "- [ ] **F10** — DDL 5/6 — WhatsApp de departamento (R4): `get_department_whatsapp_config(p_department_id uuid) RETURNS TABLE (mode text, instance_id text, has_api_key boolean)` STABLE SECDEF, exige `is_admin_or_supervisor(auth.uid())`, `GRANT TO authenticated`; `set_department_whatsapp_config` ganha auditoria `whatsapp_updated` (sem chave); `REVOKE INSERT (whatsapp_api_key, whatsapp_instance_id) ON departments FROM authenticated`. `get_department_whatsapp_credentials`/`_api_key` ficam `service_role` (já estão). **Aceite:** admin recebe 1 linha/3 colunas; agente → `not_authorized`; `column_privileges` sem INSERT/UPDATE nas 2 colunas.\n- [ ] **F11** — DDL 6/6 — membership (R8, R10, R13): `REVOKE UPDATE (member_role) ON team_conversation_members FROM authenticated` (papel só por `set_team_member_role`); `tcm_insert_member` recriada `WITH CHECK (member_role = 'member' AND (is_team_conversation_member(auth.uid(), conversation_id) OR is_admin_or_supervisor(auth.uid()) OR NOT EXISTS (SELECT 1 FROM team_conversation_members x WHERE x.conversation_id = conversation_id)))`; `tcm_delete_own_or_admin` recriada com a regra do último owner; policy `tcm_select_admin` (`is_admin_or_supervisor`) e `tcm_update_admin`; `REVOKE UPDATE (direct_member_a, direct_member_b, created_at) ON team_conversations FROM authenticated`; `team_conversations_update_own` recriada `USING (created_by = current_profile_id() OR is_admin_or_supervisor(auth.uid()) OR EXISTS (membro owner/admin))`. **Aceite:** `PATCH member_role` → 42501; único owner tenta sair → 0 linhas; owner de grupo renomeia.\n- [ ] **F12** — Padr … [excerpt truncated; source retained]"
+        },
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 113,
+          "line_end": 115,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "- [ ] **TC-13** — R3: `get_department_whatsapp_credentials(p_department_id) RETURNS TABLE (mode text, instance_id\n  text, has_api_key boolean)` — `DROP FUNCTION` + `CREATE` (42P13), STABLE SECDEF, `IF NOT is_admin_or_supervisor\n  (auth.uid()) THEN RAISE 'not_authorized'`, `GRANT EXECUTE TO authenticated`, `REVOKE FROM PUBLIC, anon`."
+        },
+        {
+          "path": "supabase/migrations/20260928550000_team_chat_e19_department_whatsapp_cred_rpc.sql",
+          "line_start": 6,
+          "line_end": 18,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "DROP FUNCTION IF EXISTS public.get_department_whatsapp_credentials(uuid);\n\nCREATE FUNCTION public.get_department_whatsapp_credentials(p_department_id uuid) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$ DECLARE v_row public.departments%ROWTYPE; BEGIN IF current_setting('request.jwt.claims', true)::jsonb ->> 'role' <> 'service_role' THEN RAISE EXCEPTION 'access_denied'; END IF; SELECT * INTO v_row FROM public.departments WHERE id = p_department_id; IF NOT FOUND THEN RETURN NULL; END IF; RETURN jsonb_build_object('whatsapp_mode', v_row.whatsapp_mode, 'whatsapp_api_key', v_row.whatsapp_api_key, 'whatsapp_instance_id', v_row.whatsapp_instance_id); END; $f$;\n\nREVOKE EXECUTE ON FUNCTION public.get_department_whatsapp_credentials(uuid) FROM PUBLIC, anon, authenticated;\n\nGRANT EXECUTE ON FUNCTION public.get_department_whatsapp_credentials(uuid) TO service_role;\n\nCREATE OR REPLACE FUNCTION public.get_department_whatsapp_api_key(p_department_id uuid) RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$ DECLARE v_key text; BEGIN IF current_setting('request.jwt.claims', true)::jsonb ->> 'role' <> 'service_role' THEN RAISE EXCEPTION 'access_denied'; END IF; SELECT whatsapp_api_key INTO v_key FROM public.departments WHERE id = p_department_id; RETURN v_key; END; $f$;\n\nREVOKE EXECUTE ON FUNCTION public.get_department_whatsapp_api_key(uuid) FROM PUBLIC, anon, authenticated;\n\nGRANT EXECUTE ON FUNCTION public.get_department_whatsapp_api_key(uuid) TO service_role;"
+        }
+      ]
+    },
+    {
+      "id": "TC-AUTH-04",
+      "subject": "Reaction return contract",
+      "f": [
+        "F43"
+      ],
+      "tc": [
+        "TC-37"
+      ],
+      "description": "F requer boolean; TC requer JSON{reacted}; a RPC atual retorna JSON{action,emoji}. Nenhum dos retornos planejados corresponde ao contrato atual.",
+      "evidence": [
+        {
+          "path": "docs/audits/PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+          "line_start": 91,
+          "line_end": 93,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "- [ ] **F43** — `toggle_team_reaction(p_message_id, p_emoji) RETURNS boolean` INVOKER (`DELETE … RETURNING` → se 0, `INSERT`). **Aceite:** 2 chamadas voltam ao estado inicial.\n- [ ] **F44** — `set_team_member_pref(p_conversation_id, p_is_pinned DEFAULT NULL, p_is_muted DEFAULT NULL, p_is_archived DEFAULT NULL) RETURNS void` INVOKER (`coalesce(param, col)`). **Aceite:** só `p_is_muted` não toca `is_pinned`.\n- [ ] **F45** — `transfer_team_conversation_department(p_conversation_id, p_to_department_id) RETURNS jsonb` SECDEF admin-only, só `type='department'`, `metadata || {transferred_at, transferred_by, original_department_id}`, erro `department_channel_exists`, auditoria `department_transferred`. **Aceite:** agente → `not_authorized`; admin → metadata preenchido."
+        },
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 214,
+          "line_end": 216,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "- [ ] **TC-37** — `toggle_team_reaction` mantido (`jsonb` — decisão: o front consome `{reacted: boolean}`); conferir\n  `prosrc`: 1 DELETE `RETURNING` → INSERT se 0; `SECURITY INVOKER` (RLS TC-11 cobre). **Aceite:** 2 chamadas voltam ao\n  estado inicial; `prosecdef=false`."
+        },
+        {
+          "path": "supabase/migrations/20260930260000_team_reaction_membership_guard.sql",
+          "line_start": 63,
+          "line_end": 73,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "     WHERE message_id = p_message_id AND profile_id = v_profile_id AND emoji = p_emoji;\n    RETURN jsonb_build_object('action', 'removed', 'emoji', p_emoji);\n  ELSE\n    -- `conversation_id` é NOT NULL e sem default, e `team_message_reactions` (ao contrário de\n    -- `team_message_receipts`) não tem trigger que o preencha: sem esta coluna o caminho 'added'\n    -- da RPC sempre estourava (null value in column \"conversation_id\"). Vai o da mensagem.\n    INSERT INTO public.team_message_reactions(message_id, profile_id, emoji, conversation_id)\n    VALUES (p_message_id, v_profile_id, p_emoji, v_conversation_id)\n    ON CONFLICT DO NOTHING;\n    RETURN jsonb_build_object('action', 'added', 'emoji', p_emoji);\n  END IF;"
+        }
+      ]
+    },
+    {
+      "id": "TC-AUTH-05",
+      "subject": "DROP dependency points to presence",
+      "f": [
+        "F78"
+      ],
+      "tc": [
+        "TC-08",
+        "TC-19",
+        "TC-66",
+        "TC-69",
+        "TC-74"
+      ],
+      "description": "TC-08 e TC-19 mandam aguardar TC-66, mas essa etapa é presença. TC-69 e TC-74 identificam a migração efetiva dos hooks de departamento. Consumidores atuais impedem DROP.",
+      "evidence": [
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 132,
+          "line_end": 134,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "- [ ] **TC-19** — R4 (parte DDL, **executar só depois de TC-66 em `main` deployado**): `DROP TABLE department_invites`\n  (0 linhas confirmadas no turno). Migration fica no PR desta fase mas o apply é adiado e registrado na §11.\n  **Aceite:** `to_regclass` NULL; `grep -r department_invites src/` vazio antes do apply."
+        },
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 317,
+          "line_end": 319,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "- [ ] **TC-66** — Presença real: `useAgentPresenceMap()` em `TeamMemberDetails.tsx:77` e\n  `TeamMemberProfileHeader.tsx:74,81-82`; apagar `useTeamPresence.ts`. **Aceite:** `grep is_active\n  src/components/team-chat` vazio (fora de testes)."
+        },
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 329,
+          "line_end": 331,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "- [ ] **TC-69** — `useDepartmentManagement.ts`: convites via `create_department_invite`/`department_invitations`;\n  `profile_id`/`created_by` nunca recebem `user.id`; `enabled` por aba; erros com `toast.error`; membros via\n  `set_profile_department` (TC-40), não UPDATE em `profiles`. **Aceite:** criar convite como admin funciona; Network"
+        },
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 346,
+          "line_end": 348,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "- [ ] **TC-74** — Apply de TC-19 (`DROP TABLE department_invites`) após TC-69 em `main` deployado; `types-sync`;\n  `known-violations.json` sem a tabela. **Aceite:** `to_regclass` NULL; `db-live-guard` verde.\n- [ ] **TC-75** — Fechamento G: gates locais; PR mergeada. **Aceite:** CI verde."
+        }
+      ]
+    },
+    {
+      "id": "TC-AUTH-06",
+      "subject": "Publication stale explicit decision",
+      "f": [
+        "F49"
+      ],
+      "tc": [
+        "TC-07",
+        "TC-97"
+      ],
+      "description": "F exige quatro tabelas, excluindo team_conversations. TC pede verificação de publication sem a mesma exclusão. O baseline contém cinco tabelas do Team Chat.",
+      "evidence": [
+        {
+          "path": "docs/audits/PLANO_TEAM_CHAT_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+          "line_start": 100,
+          "line_end": 102,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "- [ ] **F49** — Decisão de publication registrada (seção 10): `team_messages`, `team_message_reactions`, `team_message_receipts`, `team_conversation_members`; `team_conversations` fora. Estado ao vivo já é este. `realtime-publication-baseline.json` e `runtime-config.test.sh` conferidos. **Aceite:** texto + `db-live-guard` verde.\n- [ ] **F50** — `src/hooks/team-chat/README.md` (novo): convenção de canais `team:messages:<cid>:<sfx>`, `team:reactions:<cid>:<sfx>`, `team:receipts:<cid>:<sfx>`, `team:inbox:<pid>:<sfx>`, `team:typing:<cid>` (broadcast), `team:presence`; `sfx = crypto.randomUUID().slice(0,8)`; tabela hook × RPC **real** (F37–F47); pasta de upload; vocabulário de auditoria. **Aceite:** nenhum nome no README sem correspondente em `types.ts`.\n- [ ] **F51** — `teamChatTypes.ts` derivado de `types.ts` regenerado: `TeamInboxRow`, `TeamMessagePageRow`, `member_role: 'owner'|'admin'|'member'`, `type: 'direct'|'group'|'department'`, `MessageUIStatus`, `DepartmentAuditAction` (8 valores). Zero `as any`/`as unknown as` novos. **Aceite:** `tsc -b --force` limpo."
+        },
+        {
+          "path": "scripts/db-audit/realtime-publication-baseline.json",
+          "line_start": 30,
+          "line_end": 34,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "    \"public.team_conversation_members\",\n    \"public.team_conversations\",\n    \"public.team_message_reactions\",\n    \"public.team_message_receipts\",\n    \"public.team_messages\","
+        }
+      ]
+    },
+    {
+      "id": "TC-AUTH-07",
+      "subject": "URL dependency reference",
+      "f": [
+        "F87"
+      ],
+      "tc": [
+        "TC-68",
+        "TC-79",
+        "TC-80"
+      ],
+      "description": "TC-68 diz que cid serve para TC-79, mas TC-79 é menções. A etapa de push com deep link é TC-80.",
+      "evidence": [
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 323,
+          "line_end": 325,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "- [ ] **TC-68** — Fechamento E/F: gates locais limpos; 2 PRs mergeadas; `TeamChatView` recebe `cid` da URL\n  (`?view=team-chat&cid=`) para TC-79. **Aceite:** CI verde.\n"
+        },
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 361,
+          "line_end": 363,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "- [ ] **TC-79** — Menções: `MentionAutocomplete` com `useTeamChatMembers`; ao enviar com `@`, `notify_team_mentions`\n  (TC-41). **Aceite:** mencionado recebe notificação in-app.\n- [ ] **TC-80** — Push → conversa: `notificationclick` no SW abre `/?view=team-chat&cid=<id>`; `TeamChatView` lê"
+        },
+        {
+          "path": "docs/team-chat/PLANO_IMPLEMENTACAO_TEAM_CHAT_100.md",
+          "line_start": 363,
+          "line_end": 365,
+          "ref": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+          "excerpt": "- [ ] **TC-80** — Push → conversa: `notificationclick` no SW abre `/?view=team-chat&cid=<id>`; `TeamChatView` lê\n  `cid` (TC-68). **Aceite:** clique abre a conversa certa.\n- [ ] **TC-81** — Realtime hardening: `removeChannel` em todos os cleanups (teste com mock), `channel.on('system')`"
+        }
+      ]
+    }
+  ],
+  "lookup_scope": [
+    "git log of both exact paths",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/team-chat tracked documents"
+  ],
+  "bridge_readme_found": false,
+  "notes": [
+    "No document was edited, deleted or unilaterally designated authoritative.",
+    "Historical exact ledger contents must not be confused with current function bodies; an update in a live body needs drift reconciliation, not blind editing of immutable migration history."
+  ]
+}

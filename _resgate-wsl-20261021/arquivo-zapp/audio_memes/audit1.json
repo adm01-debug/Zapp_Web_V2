@@ -1,0 +1,100 @@
+{
+ "count": [
+  {
+   "n": 542
+  }
+ ],
+ "pk_dupe_check": [
+  {
+   "total_ids": 542,
+   "distinct_ids": 542
+  }
+ ],
+ "dupe_ids": [],
+ "constraints": [
+  {
+   "def": "PRIMARY KEY (id)",
+   "conname": "audio_memes_pkey",
+   "contype": "p"
+  },
+  {
+   "def": "FOREIGN KEY (uploaded_by) REFERENCES auth.users(id) ON DELETE SET NULL",
+   "conname": "audio_memes_uploaded_by_fkey",
+   "contype": "f"
+  }
+ ],
+ "columns": [
+  {
+   "data_type": "uuid",
+   "column_name": "id",
+   "is_nullable": "NO",
+   "column_default": "gen_random_uuid()"
+  },
+  {
+   "data_type": "text",
+   "column_name": "name",
+   "is_nullable": "NO",
+   "column_default": null
+  },
+  {
+   "data_type": "text",
+   "column_name": "audio_url",
+   "is_nullable": "NO",
+   "column_default": null
+  },
+  {
+   "data_type": "text",
+   "column_name": "category",
+   "is_nullable": "NO",
+   "column_default": "'outros'::text"
+  },
+  {
+   "data_type": "numeric",
+   "column_name": "duration_seconds",
+   "is_nullable": "YES",
+   "column_default": null
+  },
+  {
+   "data_type": "boolean",
+   "column_name": "is_favorite",
+   "is_nullable": "NO",
+   "column_default": "false"
+  },
+  {
+   "data_type": "integer",
+   "column_name": "use_count",
+   "is_nullable": "NO",
+   "column_default": "0"
+  },
+  {
+   "data_type": "uuid",
+   "column_name": "uploaded_by",
+   "is_nullable": "YES",
+   "column_default": null
+  },
+  {
+   "data_type": "timestamp with time zone",
+   "column_name": "created_at",
+   "is_nullable": "NO",
+   "column_default": "now()"
+  }
+ ],
+ "fk_uploaded_by": [
+  {
+   "def": "FOREIGN KEY (uploaded_by) REFERENCES auth.users(id) ON DELETE SET NULL",
+   "conname": "audio_memes_uploaded_by_fkey",
+   "ref_table": "auth.users"
+  }
+ ],
+ "orphan_uploaded_by": [
+  {
+   "orphans": 0
+  }
+ ],
+ "uploaded_by_stats": [
+  {
+   "set": 0,
+   "nulls": 542
+  }
+ ]
+}

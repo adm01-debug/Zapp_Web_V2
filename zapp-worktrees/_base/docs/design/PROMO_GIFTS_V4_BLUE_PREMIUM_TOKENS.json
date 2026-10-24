@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "Promo Gifts V4 Blue Premium",
+  "version": "1.0.0",
+  "status": "visual-reference",
+  "notes": [
+    "Prefer existing semantic repository tokens.",
+    "Use brand-primary for new Blue Premium code where possible.",
+    "Do not paste literal colors into JSX unless the color represents user/content data."
+  ],
+  "colors": {
+    "background": {
+      "value": "#0A1118",
+      "role": "main application background"
+    },
+    "backgroundDeep": {
+      "value": "#081019",
+      "role": "deep shell background"
+    },
+    "surface1": {
+      "value": "#111A24",
+      "role": "cards and panels"
+    },
+    "surface2": {
+      "value": "#16212D",
+      "role": "nested controls and rows"
+    },
+    "surface3": {
+      "value": "#1B2937",
+      "role": "hover/elevated"
+    },
+    "elevated": {
+      "value": "#0D1722",
+      "role": "dialog/menu stage"
+    },
+    "text": {
+      "value": "#F5F8FC",
+      "role": "primary text"
+    },
+    "textSecondary": {
+      "value": "#BBC5D2",
+      "role": "secondary text"
+    },
+    "textMuted": {
+      "value": "#7F8B9B",
+      "role": "metadata"
+    },
+    "textDisabled": {
+      "value": "#566171",
+      "role": "disabled"
+    },
+    "accent": {
+      "value": "#0B6EFD",
+      "role": "primary interactive accent"
+    },
+    "accentHover": {
+      "value": "#2780FF",
+      "role": "hover accent"
+    },
+    "accentActive": {
+      "value": "#075CD6",
+      "role": "pressed accent"
+    },
+    "success": {
+      "value": "#20D895",
+      "role": "success/published"
+    },
+    "warning": {
+      "value": "#F5B83B",
+      "role": "warning"
+    },
+    "danger": {
+      "value": "#FF4D5E",
+      "role": "destructive/error"
+    },
+    "info": {
+      "value": "#45B8FF",
+      "role": "informational"
+    },
+    "border": {
+      "value": "rgba(154,180,210,0.15)",
+      "role": "default border"
+    },
+    "borderHover": {
+      "value": "rgba(154,180,210,0.28)",
+      "role": "hover border"
+    },
+    "divider": {
+      "value": "rgba(154,180,210,0.10)",
+      "role": "divider"
+    },
+    "accentSoft": {
+      "value": "rgba(11,110,253,0.12)",
+      "role": "selected background"
+    },
+    "accentBorder": {
+      "value": "rgba(11,110,253,0.45)",
+      "role": "selected border"
+    }
+  },
+  "typography": {
+    "sans": "var(--font-sans)",
+    "display": "var(--font-display)",
+    "pageTitle": {
+      "size": "28-32px",
+      "weight": 700,
+      "lineHeight": 1.12
+    },
+    "sectionTitle": {
+      "size": "18-20px",
+      "weight": 700,
+      "lineHeight": 1.25
+    },
+    "panelTitle": {
+      "size": "15-17px",
+      "weight": 700,
+      "lineHeight": 1.25
+    },
+    "cardTitle": {
+      "size": "14-16px",
+      "weight": 650,
+      "lineHeight": 1.25
+    },
+    "body": {
+      "size": "13-14px",
+      "weight": 450,
+      "lineHeight": 1.45
+    },
+    "label": {
+      "size": "12-13px",
+      "weight": 600,
+      "lineHeight": 1.25
+    },
+    "metadata": {
+      "size": "11-12px",
+      "weight": 450,
+      "lineHeight": 1.35
+    },
+    "micro": {
+      "size": "10-11px",
+      "weight": 500,
+      "lineHeight": 1.2
+    }
+  },
+  "radius": {
+    "chip": "6px",
+    "input": "9-10px",
+    "button": "9-10px",
+    "card": "12-14px",
+    "panel": "14-16px",
+    "dialog": "16-18px",
+    "full": "9999px"
+  },
+  "spacing": [
+    4,
+    6,
+    8,
+    10,
+    12,
+    16,
+    20,
+    24,
+    32,
+    40,
+    48
+  ],
+  "controlHeight": {
+    "small": "32-36px",
+    "default": "38-42px",
+    "primaryCTA": "40-44px",
+    "navItem": "34-38px"
+  },
+  "shadows": {
+    "card": "0 1px 2px rgba(0,0,0,0.18)",
+    "cardHover": "0 8px 22px rgba(0,0,0,0.22)",
+    "elevated": "0 12px 32px rgba(0,0,0,0.32)",
+    "dialog": "0 24px 70px rgba(0,0,0,0.52)",
+    "selected": "0 0 0 1px rgba(11,110,253,0.30), 0 0 22px rgba(11,110,253,0.12)"
+  },
+  "motion": {
+    "hover": "120-160ms",
+    "button": "140-180ms",
+    "dropdown": "160-200ms",
+    "card": "160-220ms",
+    "drawer": "200-260ms",
+    "dialog": "180-240ms",
+    "ease": "cubic-bezier(.2,.8,.2,1)"
+  },
+  "breakpoints": {
+    "wide": ">=1680",
+    "desktop": "1440-1679",
+    "desktopCompact": "1280-1439",
+    "tabletLandscape": "1024-1279",
+    "tablet": "768-1023",
+    "mobile": "<768"
+  }
+}

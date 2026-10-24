@@ -1,0 +1,216 @@
+20/10 13:28:10 ======================================================================
+20/10 13:28:10 INICIO SIMULACAO (so leitura)
+20/10 13:28:10 autoteste OK: arvore recalculada aqui == git (7540 arquivos); hash de arquivo == git
+20/10 13:28:44 commits preservados no repositorio: 57509
+20/10 13:28:45 Kanban: 796 cartoes abertos
+20/10 13:28:48 passo 4: worktrees: 3114 saem, 189 ficam {'estado da fabrica (.integra)': 10, 'atividade nas ultimas 72 h': 22, 'cartao aberto no Kanban': 153, 'travada': 1, 'usada por servico': 3}
+20/10 13:28:49    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/9-funcoes-definer-sem-pg-temp-que-quebra-2610170648ccfa
+20/10 13:28:50    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/a11y-nome-papel-6-pontos-26101406531182
+20/10 13:28:54    simulado 40/3114
+20/10 13:28:57    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/alertas-crise-globais-supervisao-2610151-26101614567373
+20/10 13:28:58    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/ampliar-full-sync-gmail-inbox-sent-2610170630ab9f
+20/10 13:28:58    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/analises-conversa-cache-query-t-fc794700-26101615025066
+20/10 13:29:00    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/aplicar-base-original-outbox-inbound-69-261011193393d1
+20/10 13:29:00    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/aplicar-messagedeleted-labeladded-labelr-2610170630a4d7
+20/10 13:29:01    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/arrastar-polido-quadro-teclado-rolagem-2610112015f508
+20/10 13:29:02    simulado 80/3114
+20/10 13:29:07    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/arvore-integracao-merge-simulado-2610171013b714
+20/10 13:29:07    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/assume-return-conversation-refazer2-26101114573d0f
+20/10 13:29:09    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/audio-memes-storage-realtime-2610151908f-26101614551169
+20/10 13:29:09    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/audio-player-a11y-2610152109114a-2610161508dc74
+20/10 13:29:09    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/audit-admin-changes-261013012225d2
+20/10 13:29:14    simulado 120/3114
+20/10 13:29:15    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/aviso-tipo-notificacao-som-recusado-2610161528a89e
+20/10 13:29:18    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/baseline-inbox-lista-sem-piscar-26101707524612
+20/10 13:29:20    simulado 160/3114
+20/10 13:29:27    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/cherry-pick-branch-anterior-26101706269006
+20/10 13:29:27    simulado 200/3114
+20/10 13:29:32    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/conexoes-cartao-responsivo-estados-2610130153259a
+20/10 13:29:34    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/conexoes-instancias-orfas-admin-2610161511c7f8
+20/10 13:29:35    simulado 240/3114
+20/10 13:29:36    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/consent-status-guard-lgpd-2610152203edb5-26101615138daa
+20/10 13:29:40    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/contatos-inbox-excluidos-telefone-duplic-261017065622dc
+20/10 13:29:41    simulado 280/3114
+20/10 13:29:45    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/corrigir-exclusoes-sync-incremental-manu-2610170630721e
+20/10 13:29:46    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/criar-migration-audit-admin-change-2610161458a6eb
+20/10 13:29:48    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/csat-erro-zero-paginacao-tendencia-26101-2610161458d029
+20/10 13:29:49    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/ct-088-remover-edicao-em-massa-2610161454e751
+20/10 13:29:49    simulado 320/3114
+20/10 13:29:56    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/e2e-logado-causa-raiz-browsers-2610170944667f
+20/10 13:29:57    simulado 360/3114
+20/10 13:29:58    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/efeitos-animados-reduzir-movimento-26101-2610161501b113
+20/10 13:30:03    simulado 400/3114
+20/10 13:30:04    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/estados-vazios-carregamento-5-telas-2610-2610132327f931
+20/10 13:30:05    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/evolution-api-sem-segredos-26101316216bd-261017073277eb
+20/10 13:30:06    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/evolution-breaker-ci-espelho-261017065608e5
+20/10 13:30:06    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/evolution-read-actions-controle-26101406530351
+20/10 13:30:07    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/exclusao-sem-confirmacao-automacao-26101-2610132244b1bb
+20/10 13:30:08    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/falha-papeis-acesso-negado-falso-2610140649f656
+20/10 13:30:09    simulado 440/3114
+20/10 13:30:13    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/finalizar-suite-inbox-relato-2610170837c13b
+20/10 13:30:15    simulado 480/3114
+20/10 13:30:16    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-chat-menu-status-admin-espelho-2610170645bd7d
+20/10 13:30:17    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-ci-corrigir-quebra-espelho-ci-no-sup-26101706552467
+20/10 13:30:17    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-contatos-destravar-teste-userealtime-2610170655f3ce
+20/10 13:30:21    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-ia-ultima-analise-erro-t-cf797f89-26101615040491
+20/10 13:30:21    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-incremental-limit-phantom-2610170752-26101708014b0d
+20/10 13:30:22    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/fix-lgpd-voice-agent-timeout-26101312395897
+20/10 13:30:23    simulado 520/3114
+20/10 13:30:24    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/fix-rotas-guardas-coerentes-install-admi-2610121901d51f
+20/10 13:30:24    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-seen-state-hydration-merge-26101708012995
+20/10 13:30:26    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-teams-corrigir-quebra-de-teste-do-te-26101707308c4f
+20/10 13:30:27    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/fix-teams-corrigir-quebra-de-teste-do-te-2610170732fa56
+20/10 13:30:31    simulado 560/3114
+20/10 13:30:33    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/grupos-batch-upsert-fixados-ordem-t-7f53-261016151084b6
+20/10 13:30:33    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/grupos-categoria-sem-like-erro-tratado-2-261016151237a9
+20/10 13:30:37    simulado 600/3114
+20/10 13:30:44    simulado 640/3114
+20/10 13:30:50    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/lista-tabela-estrutura-grupos-tarefa-con-26101308449243
+20/10 13:30:50    simulado 680/3114
+20/10 13:30:50    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/login-v3-seta-contraste-2610111302ded9
+20/10 13:30:56    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/mini-games-xp-real-limite-diario-267-26101120112f0c
+20/10 13:30:56    simulado 720/3114
+20/10 13:31:00    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/multiplix-drain-ci-espelho-261017064674b1
+20/10 13:31:01    simulado 760/3114
+20/10 13:31:02    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/n-011-storage-apagar-policies-duplicadas-2610101218fac0
+20/10 13:31:08    simulado 800/3114
+20/10 13:31:13    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/n094-talkx-atributos-rls-retomar-2610131057cf3a
+20/10 13:31:14    simulado 840/3114
+20/10 13:31:14    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/n097-talkx-banco-pre-checagem-retomada-26101707178adb
+20/10 13:31:20    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/n142-banco-leitura-reacoes-retomar-261013132915c2
+20/10 13:31:20    simulado 880/3114
+20/10 13:31:26    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/normalizar-telefone-ddi-2610130213e4d6
+20/10 13:31:28    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/notificacao-navegador-nao-derruba-aviso-2610161445ddf3
+20/10 13:31:29    simulado 920/3114
+20/10 13:31:31    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/pagamentos-remover-modulo-t-98dfa08e-26101118106c95
+20/10 13:31:33    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/painel-saude-conexao-credential-26101521-26101615109b69
+20/10 13:31:35    simulado 960/3114
+20/10 13:31:42    simulado 1000/3114
+20/10 13:31:43    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/preserva-read-at-backfill-recibos-261012111484e1
+20/10 13:31:50    simulado 1040/3114
+20/10 13:31:56    simulado 1080/3114
+20/10 13:32:02    simulado 1120/3114
+20/10 13:32:03    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/recover-message-media-26101113320dfd
+20/10 13:32:03    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/recuperacao-realtime-queda-refazer-t-0aa-26101115165e45
+20/10 13:32:06    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/refazer-admin-login-attempts-t-3f767083-26101121473241
+20/10 13:32:08    simulado 1160/3114
+20/10 13:32:10    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/refazer-ci-teste-documento-crm-t-838d94c-26101122317f8e
+20/10 13:32:13    simulado 1200/3114
+20/10 13:32:23    simulado 1240/3114
+20/10 13:32:25    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/refazer-member-role-rpcs-saida-31-26101706464fcd
+20/10 13:32:26    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/refazer-multiplix-graphify-update-force--26101118384408
+20/10 13:32:29    simulado 1280/3114
+20/10 13:32:36    simulado 1320/3114
+20/10 13:32:44    simulado 1360/3114
+20/10 13:32:47    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/remove-codigo-morto-chat-chatheader-2610-2610111241c0d9
+20/10 13:32:52    simulado 1400/3114
+20/10 13:32:57    simulado 1440/3114
+20/10 13:33:04    simulado 1480/3114
+20/10 13:33:10    simulado 1520/3114
+20/10 13:33:11    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/rolenames-cargo-do-contato-t-5b9f43b8-261016151858bb
+20/10 13:33:17    simulado 1560/3114
+20/10 13:33:18    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sec-y25-01-insert-alvo-t-0586a806-26101707511312
+20/10 13:33:24    simulado 1600/3114
+20/10 13:33:29    simulado 1640/3114
+20/10 13:33:35    simulado 1680/3114
+20/10 13:33:40    simulado 1720/3114
+20/10 13:33:46    simulado 1760/3114
+20/10 13:33:52    simulado 1800/3114
+20/10 13:33:53    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sla-resolve-applicable-t-81c550ae-2610170742c161
+20/10 13:34:00    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync-ag1-git-2610170855737f
+20/10 13:34:01    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync-ag2-front-26101708550eb1
+20/10 13:34:01    simulado 1840/3114
+20/10 13:34:01    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync-ag3-edge-26101708555409
+20/10 13:34:01    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync-ag4-banco-2610170855a3ad
+20/10 13:34:02    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync-ag4b-banco-canonico-ro-2610170938704d
+20/10 13:34:02    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync-ag5-qualidade-2610170855c187
+20/10 13:34:02    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-01-ci-causa-raiz-2610170944cf50
+20/10 13:34:02    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-03-db-guard-catalogo-stale-26101709440ca2
+20/10 13:34:02    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-05-components-lote-1-26101709579290
+20/10 13:34:03    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-06-resgate-hooks-lib-services-2610171004d83a
+20/10 13:34:03    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-07-front-pages-integrations-raiz-2610171005ebcb
+20/10 13:34:03    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-08-edge-resgate-3-funcoes-so-orig-261017095806bf
+20/10 13:34:04    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-09-banco-local-causa-raiz-2-migra-2610170949e1f1
+20/10 13:34:04    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-10-seguranca-banco-rls-26101709499002
+20/10 13:34:04    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-11-testes-contracts-e2e-origin-on-261017100048c5
+20/10 13:34:04    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-12-worktrees-26101710087fba
+20/10 13:34:05    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-13-limpeza-lotes-2610171043b6a1
+20/10 13:34:05    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-14-ci-workflows-2610170955ef2c
+20/10 13:34:05    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-15-docs-reconciliacao-registro-26101711145898
+20/10 13:34:05    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-16-mensageria-talkx-multiplix-2610171101300d
+20/10 13:34:06    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-17-ia-divergencias-2610171114c1fc
+20/10 13:34:06    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-18-ambientes-vercel-2610171114ce60
+20/10 13:34:06    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-20-performance-rituais-261017111784ba
+20/10 13:34:07    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-23-reconciliar-153-migrations-26101711229059
+20/10 13:34:07    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-25-runbook-lote1-2610171149c18f
+20/10 13:34:07    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-26-edge-lotes-deploy-smoke-rollba-2610171149f937
+20/10 13:34:08    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/sync20-27-plano-isolamento-preview-2610171149d0fe
+20/10 13:34:10    simulado 1880/3114
+20/10 13:34:17    simulado 1920/3114
+20/10 13:34:19    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-139a0959-26101319274a70
+20/10 13:34:22    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-1be848fa-2610131459a5be
+20/10 13:34:22    simulado 1960/3114
+20/10 13:34:28    simulado 2000/3114
+20/10 13:34:29    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-313f15cd-261013000804a1
+20/10 13:34:34    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/t-3f8cf71b-26101615180dda
+20/10 13:34:34    simulado 2040/3114
+20/10 13:34:38    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/t-4fa178e3-2610170647f2aa
+20/10 13:34:39    simulado 2080/3114
+20/10 13:34:45    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/t-5f3ab2b7-26101707317fa6
+20/10 13:34:45    simulado 2120/3114
+20/10 13:34:51    simulado 2160/3114
+20/10 13:34:51    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-6fab3edf-2610131613f552
+20/10 13:34:55    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-78c8ce80-26101216027f34
+20/10 13:34:56    simulado 2200/3114
+20/10 13:35:02    simulado 2240/3114
+20/10 13:35:04    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/t-94faf950-2610161519dbc6
+20/10 13:35:07    simulado 2280/3114
+20/10 13:35:14    simulado 2320/3114
+20/10 13:35:14    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-b129dfdc-2610120043782e
+20/10 13:35:20    simulado 2360/3114
+20/10 13:35:26    simulado 2400/3114
+20/10 13:35:29    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-d8fe8268-2610112017fc97
+20/10 13:35:32    simulado 2440/3114
+20/10 13:35:39    simulado 2480/3114
+20/10 13:35:44    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/t-f8a6790c-2610170755c344
+20/10 13:35:45    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/t-fe7f27a2-2610131345e18f
+20/10 13:35:45    simulado 2520/3114
+20/10 13:35:51    simulado 2560/3114
+20/10 13:35:56    simulado 2600/3114
+20/10 13:35:59    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/talkx-salvar-variantes-n110-261013104166e5
+20/10 13:36:01    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/talkx-snapshot-espelho-ci-2610170646ddf9
+20/10 13:36:02    simulado 2640/3114
+20/10 13:36:11    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/team-chat-realtime-canais-t-64581412-261017064405c0
+20/10 13:36:12    simulado 2680/3114
+20/10 13:36:13    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/teams-chat-settings-wiring-2610170726004a
+20/10 13:36:17    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/test-usebusinesshours-rpc-t-df995145-261017072003d4
+20/10 13:36:18    simulado 2720/3114
+20/10 13:36:18    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/testes-email-acoes-lixo-token-cron-26101-2610161512e8af
+20/10 13:36:19    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/testes-prova-auditoria-papeis-reais-26101615129c06
+20/10 13:36:19    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/testes-replyto-citada-ausente-otimista-26101615026c64
+20/10 13:36:25    simulado 2760/3114
+20/10 13:36:29    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/tl-054a-talkx-data-agendamento-26101006421abd
+20/10 13:36:33    simulado 2800/3114
+20/10 13:36:39    simulado 2840/3114
+20/10 13:36:46    simulado 2880/3114
+20/10 13:36:52    simulado 2920/3114
+20/10 13:36:58    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/types-sync-causa-raiz-26101709440412
+20/10 13:36:59    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/unsupported-message-bubble-refazer-2610111234928e
+20/10 13:37:01    simulado 2960/3114
+20/10 13:37:05    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/variacoes-ab-talkx-tl-126-2610122111d5fc
+20/10 13:37:05    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/verifica-inbox-live-path-26101708271e12
+20/10 13:37:06    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/verifica-replyto-n1-verify-t775e45ba-26101615107516
+20/10 13:37:19    simulado 3000/3114
+20/10 13:37:19    recapturar (o disco mudou desde a importacao): ~/hermes-workspaces/Zapp_Web_V2/verify-relato-fechar-auditoria-2610161520e528
+20/10 13:37:25    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/warroom-estados-zero-falso-261013002023ce
+20/10 13:37:26    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/warroom-rpcs-agentes-filas-26101219463e05
+20/10 13:37:26    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/warroom-rpcs-hook-261012202546f0
+20/10 13:37:27    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/webauthn-login-sem-email-desafio-unico-2610122306aad8
+20/10 13:37:27    simulado 3040/3114
+20/10 13:37:28    recapturar (o disco mudou desde a importacao: arquivo marcado assume-unchanged/skip-worktree): ~/hermes-workspaces/Zapp_Web_V2/whisper-audio-path-26101304547a65
+20/10 13:37:34    simulado 3080/3114
+20/10 13:37:39    recapturar (o disco mudou desde a importacao): ~/zapp-worktrees/sincronizacao-canonica-20261016
+20/10 13:37:40    simulado 3114/3114
+20/10 13:37:40    copias de banco que nao entram (somem com as pastas): kanban.db x3 350 MB, board.db x1 117 MB, kanban.db-shm x1 0 MB, kanban.db-wal x1 0 MB
+20/10 13:37:40 RESUMO: {"worktrees: recapturadas (disco mudou ou o git status nao conferia)": 129, "worktrees: segredos locais (vao para ~/.secrets, nao para o git)": 1, "worktrees: commits extras (ORIG_HEAD/rebase/fetch) com ref propria": 0, "worktrees: pastas regeneraveis (nao entram)": 2745, "simulacao: worktrees ja importadas, nada a refazer": 2971, "simulacao: conferencia byte a byte repetida OK": 12, "worktrees: capturadas": 143, "worktrees: arquivos lidos do disco": 48465, "worktrees: bytes lidos do disco": 1930647704, "worktrees: com mudanca ou arquivo fora do git": 143, "worktrees: ficaram por repositorio desconhecido dentro": 0}
+20/10 13:37:40 FIM_OK

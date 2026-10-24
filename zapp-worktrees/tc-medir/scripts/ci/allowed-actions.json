@@ -1,0 +1,16 @@
+{
+  "github_owned_allowed": true,
+  "patterns": [
+    "oven-sh/setup-bun",
+    "denoland/setup-deno",
+    "supabase/setup-cli",
+    "peter-evans/create-pull-request",
+    "gitleaks/gitleaks-action",
+    "actions/checkout",
+    "actions/github-script",
+    "actions/setup-go",
+    "actions/setup-node",
+    "actions/upload-artifact",
+    "github/codeql-action"
+  ]
+}

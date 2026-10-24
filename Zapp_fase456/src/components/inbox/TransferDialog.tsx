@@ -1,0 +1,298 @@
+import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { motion } from 'framer-motion';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { User, Users, Send, ArrowRight, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useAgents } from '@/hooks/crm/useAgents';
+import { useQueues } from '@/hooks/business/useQueues';
+
+/**
+ * Destinos suportados pelo backend da Inbox. `connection` foi removido
+ * (item 88 / R2-INB-009): não existe operação canônica de transferência de
+ * contato entre conexões, e mantê-la no contrato obrigava consumidores a
+ * casts que escondiam a incompatibilidade e podiam enviar connection_id
+ * como queue_id.
+ */
+export type TransferTargetType = 'agent' | 'queue';
+
+export interface TransferDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onTransfer: (type: TransferTargetType, targetId: string, message?: string) => void | Promise<void>;
+  /** contacts.queue_id do contato sendo transferido. null/undefined = sem fila. */
+  queueId?: string | null;
+  /**
+   * 'single' (padrão) — diálogo de UMA conversa: `queueId` é a fila DELA, então
+   *   contato sem fila só pode ser assumido por você mesmo
+   *   (trg_prevent_contact_assignee_hijack, decisão de produto de 2026-09-24).
+   * 'bulk' — transferência em LOTE: a fila muda de contato para contato e não
+   *   existe um `queueId` único. O seletor oferece todos os colegas ativos e
+   *   quem valida por conversa é o caminho canônico (RPC `transfer_conversation`,
+   *   uma por contato), que recusa as conversas sem fila com a mensagem do banco.
+   */
+  scope?: 'single' | 'bulk';
+}
+
+export function TransferDialog({ open, onOpenChange, onTransfer, queueId, scope = 'single' }: TransferDialogProps) {
+  const [transferType, setTransferType] = useState<TransferTargetType>('agent');
+  const [selectedTarget, setSelectedTarget] = useState<string>('');
+  const [message, setMessage] = useState('');
+
+  const { agents, isLoading: loadingAgents } = useAgents();
+  const { queues, loading: loadingQueues } = useQueues();
+
+  const [isTransferring, setIsTransferring] = useState(false);
+  const { user } = useAuth();
+
+  // Cada tentativa recebe um id; uma troca de conversa remonta o `ChatPanel`
+  // (key=conversation.id) e desmonta este diálogo com a requisição em voo. Sem
+  // invalidar a tentativa no desmonte, a continuação do `onTransfer` chama o
+  // `onOpenChange(false)` da instância antiga — que fecha o diálogo da conversa
+  // nova, já montada.
+  const transferAttemptRef = useRef(0);
+  useEffect(() => () => { transferAttemptRef.current += 1; }, []);
+
+  // trg_prevent_contact_assignee_hijack (20260924203300) só permite transferir
+  // um contato SEM fila para você mesmo — decisão de produto de 2026-09-24
+  // (self-claim only). Sem filtrar aqui, o picker mostrava todo mundo e a
+  // transferência para um colega falhava silenciosamente no banco.
+  // O filtro vale para UMA conversa (`scope='single'`): aí `queueId` é a fila
+  // dela. No lote (`scope='bulk'`) a fila muda de contato para contato e não há
+  // queueId único — o seletor oferece os colegas ativos e a RPC por contato
+  // (`transfer_conversation`) decide cada conversa, recusando as sem fila.
+  const restrictAgentsToSelf = scope === 'single' && !queueId;
+
+  const handleTransfer = async () => {
+    if (!selectedTarget || isTransferring) return;
+    const attemptId = ++transferAttemptRef.current;
+    setIsTransferring(true);
+    try {
+      await onTransfer(transferType, selectedTarget, message || undefined);
+      if (attemptId !== transferAttemptRef.current) return;
+      onOpenChange(false);
+      setSelectedTarget('');
+      setMessage('');
+    } catch {
+      // O callback canônico já exibe o erro e o diálogo permanece aberto.
+    } finally {
+      if (attemptId === transferAttemptRef.current) setIsTransferring(false);
+    }
+  };
+
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && isTransferring) return;
+    if (!nextOpen) {
+      setSelectedTarget('');
+      setMessage('');
+      setIsTransferring(false);
+    }
+    onOpenChange(nextOpen);
+  };
+
+  // Filter online/away agents (active ones); em uma conversa sem fila, só você mesmo (ver restrictAgentsToSelf acima)
+  const availableAgents = agents.filter((a) =>
+    (a.status === 'online' || a.status === 'away') && (!restrictAgentsToSelf || a.user_id === user?.id)
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
+      <DialogContent aria-describedby={undefined} className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ArrowRight className="w-5 h-5 text-whatsapp" />
+            Transferir Chat
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6 pt-4">
+          {/* Transfer Type */}
+            <RadioGroup
+              value={transferType}
+              onValueChange={(v) => {
+                setTransferType(v as TransferTargetType);
+                setSelectedTarget('');
+              }}
+              className="grid grid-cols-2 gap-3"
+            >
+            <Label
+              htmlFor="agent"
+              className={cn(
+                'flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all',
+                transferType === 'agent'
+                  ? 'border-whatsapp bg-whatsapp/5'
+                  : 'border-border hover:border-muted-foreground'
+              )}
+            >
+              <RadioGroupItem value="agent" id="agent" className="sr-only" />
+              <User className={cn(
+                'w-5 h-5',
+                transferType === 'agent' ? 'text-whatsapp' : 'text-muted-foreground'
+              )} />
+              <div>
+                <p className="font-medium">Usuário</p>
+                <p className="text-xs text-muted-foreground">Transferir para um atendente</p>
+              </div>
+            </Label>
+
+            <Label
+              htmlFor="queue"
+              className={cn(
+                'flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all',
+                transferType === 'queue'
+                  ? 'border-whatsapp bg-whatsapp/5'
+                  : 'border-border hover:border-muted-foreground'
+              )}
+            >
+              <RadioGroupItem value="queue" id="queue" className="sr-only" />
+              <Users className={cn(
+                'w-5 h-5',
+                transferType === 'queue' ? 'text-whatsapp' : 'text-muted-foreground'
+              )} />
+              <div>
+                <p className="font-medium">Departamento</p>
+                <p className="text-xs text-muted-foreground">Transferir para uma fila</p>
+              </div>
+            </Label>
+          </RadioGroup>
+
+          {/* Target Selection */}
+          {transferType === 'agent' && (
+            <div className="space-y-2">
+              <Label>Selecione um atendente</Label>
+              {restrictAgentsToSelf && (
+                <p className="text-xs text-muted-foreground">
+                  Contato sem fila: só é possível assumir para você mesmo. Para transferir a outro atendente, mova para um departamento primeiro.
+                </p>
+              )}
+              {scope === 'bulk' && (
+                <p className="text-xs text-muted-foreground">
+                  No lote, a fila de cada conversa decide o destino: as conversas sem fila só aceitam você mesmo — o banco recusa as demais e o resumo do lote conta quantas falharam.
+                </p>
+              )}
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {loadingAgents ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : availableAgents.length > 0 ? (
+                  availableAgents.map((agent) => (
+                    <motion.button
+                      key={agent.id}
+                      whileHover={{ x: 4 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setSelectedTarget(agent.id)}
+                      className={cn(
+                        'w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left',
+                        selectedTarget === agent.id
+                          ? 'border-whatsapp bg-whatsapp/5'
+                          : 'border-border hover:border-muted-foreground'
+                      )}
+                    >
+                      <div className="relative">
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={agent.avatar_url || undefined} alt={agent.name || 'Agente'} />
+                          <AvatarFallback>{agent.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <span className={cn(
+                          'absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background',
+                          agent.status === 'online' && 'bg-status-online',
+                          agent.status === 'away' && 'bg-status-away'
+                        )} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{agent.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {agent.activeChats}/{agent.max_chats || 5} chats ativos
+                        </p>
+                      </div>
+                    </motion.button>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Nenhum atendente disponível no momento
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {transferType === 'queue' && (
+            <div className="space-y-2">
+              <Label>Selecione um departamento</Label>
+              {loadingQueues ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <Select value={selectedTarget} onValueChange={setSelectedTarget}>
+                  <SelectTrigger aria-label="Departamento de destino">
+                    <SelectValue placeholder="Escolha um departamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {queues.map((queue) => (
+                      <SelectItem key={queue.id} value={queue.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: queue.color }}
+                          />
+                          <span>{queue.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
+
+          {/* Optional Message */}
+          <div className="space-y-2">
+            <Label>Mensagem (opcional)</Label>
+            <Textarea
+              placeholder="Deixe uma mensagem para o próximo atendente..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => handleDialogOpenChange(false)} disabled={isTransferring}>
+              Cancelar
+            </Button>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                onClick={handleTransfer}
+                disabled={!selectedTarget || isTransferring}
+                className="bg-whatsapp hover:bg-whatsapp-dark"
+              >
+                {isTransferring ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                {isTransferring ? 'Transferindo...' : 'Transferir'}
+              </Button>
+            </motion.div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

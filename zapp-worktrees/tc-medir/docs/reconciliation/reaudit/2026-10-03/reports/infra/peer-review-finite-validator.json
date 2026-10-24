@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "reviewer": "infra",
+  "review_kind": "STATIC_FULL_READING_WITH_SCHEMA_CROSSCHECK",
+  "read_revision_lines": 527,
+  "status": "ACCEPTED_AFTER_CORRECTIONS",
+  "execution": "No validator/probe/source/SQL/suite executed by peer reviewer",
+  "positive_controls": [
+    "Source4068 bytes/Git blob/HEAD are checked before and after validation.",
+    "Fixed test713/shell85 allocation, owner assignment, explicit full ranges and adjudication gate completion; pending top-level journals preserve PENDING.",
+    "Final mode rejects PENDING; allow-pending is explicitly provisional.",
+    "Matrix state is recomputed from source ranges and compared with stored containment.",
+    "Peer allocation is not recounted as another owner reading."
+  ],
+  "requested_corrections": [
+    {
+      "id": "FV-PEER-01",
+      "locus": "sql_ref",
+      "issue": "statement_sha256 is required but not checked against canonical statement text.",
+      "acceptance": "Reject mismatched statement digest using the same source lexer/text convention as the audited inventory; preserve full file digest checks.",
+      "status": "ACCEPTED_FIXED_STATIC_REVIEW"
+    },
+    {
+      "id": "FV-PEER-02",
+      "locus": "sql DDL units",
+      "issue": "DDL unit count is compared only with original_ddl_instruction_count in the same completion artifact.",
+      "acceptance": "Compare exact unit identities with original remaining_ddl_inventory pending_source_units2425; do not mix77 already-referenced units or historical context extras.",
+      "status": "ACCEPTED_FIXED_STATIC_REVIEW"
+    },
+    {
+      "id": "FV-PEER-03",
+      "locus": "DDL review_artifact",
+      "issue": "Non-empty reference text is accepted without existence/hash/content crosswalk.",
+      "acceptance": "Read/hash own ddl_review.json and peer routine-acl-review.json and verify each completion unit has corresponding semantic adjudication; keep historical context extras separate.",
+      "status": "ACCEPTED_FIXED_STATIC_REVIEW"
+    }
+  ],
+  "schema_notes": [
+    "candidate_effective_definition end_line6 can be accurate: accept_department_invite is physically one long source line.",
+    "SQL coverage remains instruction/function body, not whole migration file.",
+    "Malformed schema/exceptions must fail, not produce COMPLETE.",
+    "Peer reviewer identified risks by reading control flow, not by running artifact mutation tests."
+  ],
+  "final_revision": {
+    "path": "tools/validate_finite_review.py",
+    "sha256": "229348075509160281516d8e77502cf26e3034d2be7d098e9e8563a6a02b2c54",
+    "lines": 668,
+    "reviewed_ranges": [
+      [
+        1,
+        668
+      ]
+    ]
+  },
+  "final_assessment": "As três correções e o último delta foram conferidos por leitura integral da revisão final: splitter léxico+hash/faixa, crosswalk de 2425 identidades únicas, provenance own/peer com journal/batch e validação de path/pins/status/faixas da manual_adjudication embutida. A adaptação whole_file_read exige também limites explícitos e status completo. Não executei o validador, as simulações documentais ou código de produto.",
+  "line_references": {
+    "def lexical_sql_statements": 60,
+    "def sql(self)": 485,
+    "DDL_ALLOCATION_CROSSWALK": 505,
+    "DDL_MANUAL_INSTRUCTION_MISSING": 521,
+    "DDL_BATCH_ADJUDICATION": 524,
+    "def sql_ref": 557,
+    "SQL_STATEMENT_PIN": 569,
+    "PEER_ENTRY_STATUS": 354,
+    "PEER_ENTRY_RANGES": 358
+  },
+  "remaining_limits": [
+    "Parser é léxico e replica a convenção do inventário; não é compilador PostgreSQL nem análise de SQL dinâmico.",
+    "Texto de adjudicação significativo e spans documentam leitura; nenhum validador comprova sozinho a qualidade de cada juízo manual.",
+    "Source/head/file pins e ranges não atestam deployment, execução de suites ou comportamento integrado."
+  ],
+  "documentary_checker_review": {
+    "path": "tools/check_finite_validator.py",
+    "sha256": "5d2f11f4d8ef3dc9a0d6a8e2cd4bc54e4a835bc9c13be32b420fbf6af37b73f3",
+    "lines": 93,
+    "reviewed_ranges": [
+      [
+        1,
+        93
+      ]
+    ],
+    "assessment": "Onze mutações em cópias de dicionários exigem código de erro/pendência específico; a baseline exige zero erros e zero pendências. Não chama finish nem altera fonte/journals. Importa somente o validador documental. Execução PASS foi relatada pelo owner, não executada pelo peer."
+  }
+}

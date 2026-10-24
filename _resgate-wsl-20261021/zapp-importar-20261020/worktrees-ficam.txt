@@ -1,0 +1,181 @@
+/home/joaquim_ataides/hermes-workspaces/.integra/conflitos-banco	estado da fabrica (.integra)
+/home/joaquim_ataides/hermes-workspaces/.integra/conflitos-inbox	estado da fabrica (.integra)
+/home/joaquim_ataides/hermes-workspaces/.integra/conflitos-integracoes-admin	estado da fabrica (.integra)
+/home/joaquim_ataides/hermes-workspaces/.integra/conflitos-plataforma-talkx	estado da fabrica (.integra)
+/home/joaquim_ataides/hermes-workspaces/.integra/conflitos-resto	estado da fabrica (.integra)
+/home/joaquim_ataides/hermes-workspaces/.integra/dia-menores	estado da fabrica (.integra)
+/home/joaquim_ataides/hermes-workspaces/.integra/f0-ci-needs	estado da fabrica (.integra)
+/home/joaquim_ataides/hermes-workspaces/.integra/fase2	estado da fabrica (.integra)
+/home/joaquim_ataides/hermes-workspaces/.integra/laudo-mecanica	estado da fabrica (.integra)
+/home/joaquim_ataides/hermes-workspaces/.integra/lote-main	estado da fabrica (.integra)
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/.base-tc	atividade nas ultimas 72 h
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/admin-inbox-silence-2610130603b9c4	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/agenda-atrasadas-semana-dia-pontos-2610111800e726	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/ai-sentiment-summary-agregado-2610131830b360	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/alternador-agrupar-quadro-prazo-102-2610161132f05f	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/arquivar-grava-estado-arquivada-rebase-26101301191d6d	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/assume-return-conversation-26101109368c30	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/assumir-devolver-fila-hook-2610111001cf9-26101113142f9b	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditoria-500-revisao-2610191857cd40	atividade nas ultimas 72 h
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/auditoria-pr-2105-2610191950c637	atividade nas ultimas 72 h
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/barra-captura-disposicao-vazios-t-2a65fb-2610111718ff79	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/c06-gate-mock-logger-2610171529b0aa	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/caption-unknown-message-delivery-26101300408923	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/cherry-pick-commit-anterior-2610131157b98b	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/chips-status-pilula-badge-redondo-2610111821a57e	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/ci-db-guard-message-attempts-2610131909c7ad	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/csat-ciclo-69726cda-2610151801bd2c	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/csat-envio-automatico-atraso-2610151902d624	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/email-reconexao-busca-corpo-anexo-2610130517df8d	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/etapa-029-testes-kpis-tarefas-2610120833f975	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/evolution-observability-261011154264ed	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/fatia-contatos-tags-2610151458c077	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/fechamento-kpi-cards-imagem-01-26101207474161	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/fix-conexoes-realtime-canal-unico-261015171336d3	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/fix-conexoes-realtime-canal-unico-261016130822c9	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/fundir-ai-transcribe-audio-ai-feature-fl-26101714341311	atividade nas ultimas 72 h
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/fundir-testes-b02-sl4-26101714340f2c	atividade nas ultimas 72 h
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/fundir-webhooks-evolution-messages-api-p-26101714143161	atividade nas ultimas 72 h
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/fusao-sl2-auth-b02-2610171414c6ea	atividade nas ultimas 72 h
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/ga-plano-fase0-2610191950e6a2	atividade nas ultimas 72 h
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/gate-ancestralidade-sl-010-26101301148687	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/gate-higiene-branch-t-c305e5fa-26101222345a5f	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/hist-erros-envio-paridade-261015144513eb	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/hooks-fecho-dependencia-2610171328abed	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/implementar-teste-integracao-real-role-r-26101322126fcc	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/inbox-carregar-mais-lista-conversas-2610130356f049	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/inbox-carregar-mais-lista-conversas-2610160736b862	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/inbox-channel-permissions-26101523542544	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/inbox-paginacao-nao-lidas-2610130245ab6a	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/inbox-repassar-loadmore-userealtimeinbox-26101304274e82	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/inbox-topo-barra-prova-2610111840680c	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/indeterminate-optout-outbox-rollback-261011174827ce	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/ingest-inbound-reabre-conversa-2610111149a58e	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/ingest-inbound-reabre-conversa-2610161152e726	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/integracao-quadro-limite-motivo-arrastar-2610161132f2f6	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/kpi-barra-tarefas-testes-26101117547d5f	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/kpi-faixa-017-028-261012101713c3	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/kpi-strip-interativo-261011-2610111514033f	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/kpi-strip-interativo-refazer1-26101118538ed1	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/lista-tabela-grupos-recolhiveis-concluid-26101219459b09	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/mapas-calor-previsao-demanda-26101408584a11	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/mensagens-favoritar-fixar-reportar-lembr-2610111059cfdf	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/menu-mensagem-favoritar-fixar-responder-2610121735d552	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/merge-evolution-hooks-services-26101713557ee0	atividade nas ultimas 72 h
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/merge-hooks-b07-2610171448899f	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/merge-hooks-b08-2610171448f9ec	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/message-attempts-log-2610110930194b	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/message-delivery-attempts-261011100456c9	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/message-delivery-attempts-26101113152a2b	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/migrar-contact-quick-actions-tags-2610131403a663	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/modal-nova-tarefa-refazer2-26101407599924	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/modal-nova-tarefa-responsivo-169-2610140924c45d	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/n102-rollback-cadeia-real-2610160841aa04	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/n102-window-fixes-2610101535a1fe	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/n117-stalled-test-t-000299ec-26101215452131	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/n117-stalled-test-t-6816724e-2610160121d6cd	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/n131-talkx-recipients-pagination-2610101505c844	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/n132-talkx-tabs-dados-reais-26101008549be0	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/n132-talkx-tabs-dados-reais-2610101540ef1c	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/painel-e-modal-testes-26101319183834	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/painel-e-modal-testes-26101319183834-26101602039d51	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/painel-nao-modal-d14-26101119233507	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/painel-nao-modal-d14-2610121821707f	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/pre-requisito-190-outbox-inbound-2610120943e914	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/primitivos-compartilhados-tarefas-contex-2610111442cedd	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/prova-3-rodadas-modulos-2610121012519f	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/prova-verde-hooks-3560-tsc-2610171333210a	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/qa-integrar-5-pacotes-dia-2026-10-09-2610152340ed7a	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/query-telemetry-retencao-26101408586d38	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/quickadd-mais-opcoes-etapa-171-2610161143c3de	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/rd-012-origem-dados-singu-261013001060d0	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/rd-012-origem-dados-singu-261016003497dd	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/rd-083-comparar-contatos-2610130129ff56	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/reconcilia-main-dia-26101207452500	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/redesenhado-cartao-quadro-urgente-atrasa-2610111909ad9f	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/redesenhado-cartao-quadro-urgente-atrasa-2610122233d0b1	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/refazer-espelho-ci-hooks-favoritar-fixar-261011122420ba	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/refazer-outbox-inbound-69-ci-espelho-t-d-2610111927608e	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/refazer-rollback-outbox-inbound-69-manif-261007055768cc	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/regua-axe-teclado-talkx-2610120800ebbf	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/relato-final-suites-edge-2610130048381e	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/remover-tag-contato-hook-tipos-2610160909f3b5	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/remover-tag-contato-telas-bulk-2610160253dd8d	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/remover-tags-banco-2610130119031f	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/remover-tags-contatos-2610122200e6e6	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/reproduce-falha-cherry-pick-34640b42-2610170717ba2a	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/request-password-reset-edge-2610111442c581	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/request-password-reset-edge-t-fbc70223-26101306123fe4	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/resolve-src-conflitos-dia-26101607332f9d	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/retomar-alerta-mensal-custo-email-2610111406328d	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/retomar-amarra-medidas-varredura-261012110980e7	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/retomar-outbox-inbound-efeitos-duplicate-26101123427197	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/robustez-primitivos-ui-2610121626bec5	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/robustez-primitivos-ui-2610121626bec5-2610141859e423	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/rulevalueinput-isolamento-261013093620af	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/rulevalueinput-timeout-5s-261013004171a3	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/rulevalueinput-timeout-5s-261016025374f3	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sl-010-kill-switch-ia-2610081849a322	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sl-010b-1-kill-switch-tokens-elevenlabs-2610101253f106	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sl-069-hooks-convites-departamento-2610082338ae95	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sl-069-testes-pinos-convites-departament-26100823563e8b	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sl-069-testes-pinos-convites-departament-26101209202120	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sl-103-performance-initial-js-300kb-26100819357321	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sl-103a-framer-motion-caminho-inicial-2610090230c8ec	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sl-103d-initial-js-300kb-26100903251e6b	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sl-103d-initial-js-300kb-2610132202f98e	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sla-open-rows-sweep-261012230133f3	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sla-open-rows-sweep-261016021398f4	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sso-callback-porteiro-26101407357c3f	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/storage-buckets-publicos-sem-listagem-26-2610151832e83f	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sync20-46-merge-b04-misc-2610171355940c	atividade nas ultimas 72 h
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sync20-47-b10-components-2610171434c182	atividade nas ultimas 72 h
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sync20-48-merge-b05-misc-20-2610171434a052	atividade nas ultimas 72 h
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/sync20-49-merge-components-b11-2610171434fa91	atividade nas ultimas 72 h
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/t-0c04d5b6-n102-janela-envio-26101010515b65	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/t-12413a9a-2610101945c538	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/t-195e4bac-2610090422d998	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/t-1f93b947-2610060332b726	travada
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/t-320cd907-2610090022ce8e	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/t-34d2277d-26100706045588	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/t-7b91f7dc-26101607416edf	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/t-81d411b1-26101613060b8d	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/t-8a5fabd9-261009024197d5	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/t-c479c6e8-2610091852ae57	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/t-c828749e-26100923179dfd	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/t-ef683815-2610091734ab0c	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/tags-fatia-nucleo-26101515022087	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/talkx-fixture-08-recipients-2610121741f326	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/talkx-lista-grade-acoes-em-massa-26100906321372	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/talkx-ramo-uf-reais-2610101948100c	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/talkx-rpc-bind-261016-261016083763e7	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/talkx-teste-save-template-2610101027cf8b	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/telemetria-codigo-fixo-message-attempts-2610130044e96e	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/test-sla-hooks-contratos-261013001154e3	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/teste-save-talkx-template-261013113163c8	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/testes-barra-ferramentas-tarefas-26101208397609	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/testes-barra-ferramentas-tarefas-2610151409273b	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/testes-quickactions-vip-bloqueio-26101319357711	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/ticks-entregue-lido-team-chat-2610130622-26101518470b76	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/ticks-entregue-lido-team-chat-2610130622-26101613336fed	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/tl-122-editor-vazio-retomar-2610132238811b	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/tl-122-editor-vazio-retomar-26101602067d04	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/tl-122-talkx-acoes-template-261009024285-2610090736a362	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/tl-122-talkx-editor-vazio-2610101050afc4	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/tl-122-talkx-editor-vazio-2610132020148a	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/tl-135-biblioteca-segmentos-2610120853adc2	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/tl-165-talkx-supressao-2610091952cad0	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/tl-165-talkx-supressao-refazer-2610090850d8d3	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/tornar-rollback-executavel-2610130951b4b3	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/transfer-conversation-rpc-2610111055f10f	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/trazer-commits-entrega-anterior-261016021546a7	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/verifica-etapa169-gate-final-2610161406af8d	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/verificar-deno-final-b02-2610171445680f	atividade nas ultimas 72 h
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/verificar-entrega-testes-prova-2610122234d77b	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/verificar-entrega-zapp-verify-preview-2610161356a060	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/verify-talkx-real-sector-uf-2610121651d28d	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/webhook-health-alerts-limiares-261015234293b5	cartao aberto no Kanban
+/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2/y09-e2e-modulos-prova-3-rodadas-26101210207f7a	cartao aberto no Kanban
+/home/joaquim_ataides/zapp-worktrees/_base	usada por servico
+/home/joaquim_ataides/zapp-worktrees/preview	usada por servico
+/home/joaquim_ataides/zapp-worktrees/tc-medir	usada por servico

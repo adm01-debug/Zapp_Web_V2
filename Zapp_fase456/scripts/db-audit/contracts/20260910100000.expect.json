@@ -1,0 +1,17 @@
+{
+  "always": {
+    "relation_count": 1,
+    "rls_enabled": true,
+    "policy_count": 1,
+    "update_policy_count": 1,
+    "authenticated_policy_count": 1
+  },
+  "before": {
+    "legacy_permissive_count": 1,
+    "restricted_policy_count": 0
+  },
+  "after": {
+    "legacy_permissive_count": 0,
+    "restricted_policy_count": 1
+  }
+}

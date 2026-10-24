@@ -1,0 +1,26 @@
+-- Performance/integridade da matriz docs/ia/IA-004-matriz-autorizacao.md: remove o
+-- indice redundante idx_messages_external_id.
+--
+-- Evidencia medida no banco canonico (tnnnlkbymytvtqngbbqh) em 30/09/2026:
+--   * idx_messages_external_id -> btree(external_id) simples, 2736 kB, idx_scan = 0
+--   * messages_external_id_uq  -> UNIQUE btree(external_id) WHERE external_id IS NOT NULL
+--   * ux_messages_dedup        -> UNIQUE btree(whatsapp_connection_id, external_id, sender)
+--   * ux_messages_contact_client_message_id / idx_messages_delivery_claimable (external_id
+--     IS NULL) / messages_pkey -- todos seguem no lugar, nada mais e tocado.
+--
+-- O indice e redundante por cobertura:
+--   * toda busca por external_id NAO nulo e atendida pelo indice unico parcial, que tem a
+--     mesma coluna lider;
+--   * a varredura de entrega (external_id IS NULL) e atendida por
+--     idx_messages_delivery_claimable, cujo predicado inclui exatamente essa condicao;
+--   * a deduplicacao por (conexao, external_id, remetente) e garantida por ux_messages_dedup.
+-- Em troca, o btree a mais custa uma atualizacao de indice por linha inserida/atualizada em
+-- messages (a tabela mais quente do sistema) e 2,7 MB de disco.
+--
+-- idx_scan = 0 NAO foi usado sozinho como criterio de morte: os dois indices UNIQUE tambem
+-- aparecem com idx_scan = 0 porque o enforcement de constraint nao incrementa esse contador
+-- -- por isso eles ficam. O que autoriza o DROP e a redundancia de cobertura acima.
+--
+-- Forward-only e idempotente (IF EXISTS). Nao altera dados.
+
+DROP INDEX IF EXISTS public.idx_messages_external_id;

@@ -1,0 +1,12 @@
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\n  \"id\": \"547386\",\n  \"schema\": \"zapp\",\n  \"name\": \"pii_access_log\",\n  \"rls_enabled\": true,\n  \"size\": \"24 kB\",\n  \"comment\": \"Módulo inativo/vazio até 2026-08 (sprawl F-009); ver DICIONARIO\",\n  \"columns\": [\n    {\n      \"attnum\": 1,\n      \"attname\": \"id\",\n      \"type\": \"uuid\",\n      \"nullable\": false,\n      \"default_value\": \"gen_random_uuid()\"\n    },\n    {\n      \"attnum\": 2,\n      \"attname\": \"accessed_by\",\n      \"type\": \"uuid\",\n      \"nullable\": true,\n      \"default_value\": null\n    },\n    {\n      \"attnum\": 3,\n      \"attname\": \"contact_id\",\n      \"type\": \"uuid\",\n      \"nullable\": true,\n      \"default_value\": null\n    },\n    {\n      \"attnum\": 4,\n      \"attname\": \"field\",\n      \"type\": \"text\",\n      \"nullable\": false,\n      \"default_value\": null\n    },\n    {\n      \"attnum\": 5,\n      \"attname\": \"accessed_at\",\n      \"type\": \"timestamp with time zone\",\n      \"nullable\": false,\n      \"default_value\": \"now()\"\n    },\n    {\n      \"attnum\": 6,\n      \"attname\": \"source\",\n      \"type\": \"text\",\n      \"nullable\": true,\n      \"default_value\": null\n    }\n  ],\n  \"constraints\": [\n    {\n      \"conname\": \"pii_access_log_accessed_by_fkey\",\n      \"type\": \"FOREIGN KEY\",\n      \"definition\": \"FOREIGN KEY (accessed_by) REFERENCES auth.users(id)\"\n    },\n    {\n      \"conname\": \"pii_access_log_pkey\",\n      \"type\": \"PRIMARY KEY\",\n      \"definition\": \"PRIMARY KEY (id)\"\n    }\n  ],\n  \"indexes\": [\n    {\n      \"name\": \"idx_pii_access_log_user\",\n      \"definition\": \"CREATE INDEX idx_pii_access_log_user ON zapp.pii_access_log USING btree (accessed_by, accessed_at DESC)\",\n      \"is_unique\": false,\n      \"is_primary\": false\n    },\n    {\n      \"name\": \"pii_access_log_pkey\",\n      \"definition\": \"CREATE UNIQUE INDEX pii_access_log_pkey ON zapp.pii_access_log USING btree (id)\",\n      \"is_unique\": true,\n      \"is_primary\": true\n    }\n  ]\n}"
+      }
+    ]
+  },
+  "jsonrpc": "2.0",
+  "id": 1
+}

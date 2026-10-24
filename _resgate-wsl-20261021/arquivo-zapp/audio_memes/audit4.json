@@ -1,0 +1,16 @@
+{
+ "realtime_tables": {
+  "error": "Expecting value: line 1 column 1 (char 0)"
+ },
+ "pub_tables_all": [],
+ "pubs": [
+  {
+   "pubname": "supabase_realtime",
+   "puballtables": false
+  },
+  {
+   "pubname": "supabase_realtime_messages_publication",
+   "puballtables": false
+  }
+ ]
+}

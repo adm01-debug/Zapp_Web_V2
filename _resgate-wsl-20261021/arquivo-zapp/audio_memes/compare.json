@@ -1,0 +1,23 @@
+{
+ "only_man": [
+  {
+   "id": "a265b1c2-d633-46f1-86b5-3e1f3017fc58",
+   "name": "Teste PTT Waveform",
+   "url": "https://www.soundjay.com/buttons/beep-01a.mp3"
+  }
+ ],
+ "only_db": [],
+ "name_diff": [],
+ "cat_diff": [],
+ "dur_diff": [],
+ "fav_diff": [],
+ "uc_diff": [
+  [
+   "01c22e46-a336-4757-8e94-bcb1c8fc44de",
+   16,
+   17
+  ]
+ ],
+ "ts_diff": [],
+ "upl_diff": []
+}

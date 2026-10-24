@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "purpose": "Pins checked before importing compiler or evaluating isolated product functions",
+  "files": [
+    {
+      "path": "supabase/functions/_shared/ssrf.ts",
+      "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/functions/_shared/ssrf.ts",
+      "sha256": "9330ea91548aeea4fb241e9eae651e258169c2a2b7bb0a59b6715c75bc42f097"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-image-input.ts",
+      "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/functions/_shared/ai-image-input.ts",
+      "sha256": "a5ef80641783858fb58d8f79464cdab38afd35705bfcd8cbdfce1f7f954acc58"
+    },
+    {
+      "path": "supabase/functions/_shared/schemas.ts",
+      "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/functions/_shared/schemas.ts",
+      "sha256": "7fb6f10bf93306c84c7a4a84b68cb6e53f855e4aa04045dd1e8b96fead3c6cc7"
+    },
+    {
+      "path": "supabase/migrations/20260930110000_ai_block03_analysis_persistence.sql",
+      "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/migrations/20260930110000_ai_block03_analysis_persistence.sql",
+      "sha256": "348e3d8006109e4e3839c991fd6c5283d82ab4236ecea0c9dafd967f405cea05"
+    },
+    {
+      "path": "supabase/functions/ai-conversation-analysis/index.ts",
+      "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/functions/ai-conversation-analysis/index.ts",
+      "sha256": "e4731a289d2c7129b40e2281248529e3ab0b26136173323fdf237d4a5347de92"
+    },
+    {
+      "path": "supabase/functions/ai-conversation-summary/index.ts",
+      "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/functions/ai-conversation-summary/index.ts",
+      "sha256": "cded06fb6964859231886daab87aad3e0f91d85bba1645c3849888c37dcca969"
+    },
+    {
+      "path": "supabase/functions/classify-emoji/index.ts",
+      "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/functions/classify-emoji/index.ts",
+      "sha256": "17398afb5f1a1e4caf8c8e6ecbd3ef00dfb0230f260085a735978f5f60df0e88"
+    },
+    {
+      "path": "supabase/functions/classify-sticker/index.ts",
+      "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/functions/classify-sticker/index.ts",
+      "sha256": "62eedcddfd167537c4dbc7c9185f1dcaf3dcf09f58b356d8ab77a8530a5d162d"
+    },
+    {
+      "path": "supabase/functions/ai-suggest-reply/index.ts",
+      "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/supabase/functions/ai-suggest-reply/index.ts",
+      "sha256": "4c90f4ed62d870269d012d8ead3d77a2531fd03291579a8fd4678275925f8a9a"
+    },
+    {
+      "path": "src/components/inbox/AISuggestions.tsx",
+      "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/AISuggestions.tsx",
+      "sha256": "eee9de6283f635d6877e92efc5184a63701d638240e9860057d362061211135a"
+    },
+    {
+      "path": "src/components/inbox/chat/AIRewriteButton.tsx",
+      "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/AIRewriteButton.tsx",
+      "sha256": "e350755f36fe88aaf8f3c22c7f3ba7497f7d14c92a7577564a71e38141a7349c"
+    },
+    {
+      "path": "src/components/inbox/chat/AIEnhanceButton.tsx",
+      "absolute_path": "/workspace/scratch/f8f9b9cbce53/reaudit/source/src/components/inbox/chat/AIEnhanceButton.tsx",
+      "sha256": "5543da64064a3d9e5ad9068cca08c4878124038144074aff8df455a51d0a4d2e"
+    }
+  ],
+  "transpiler": {
+    "absolute_path": "/workspace/scratch/8b95153002da/audit/tools/ast/node_modules/typescript/lib/typescript.js",
+    "sha256": "3ae902c92cc44dace175c0e69e13a4b0899f6983c6121d76b9ab8dd5795e7675"
+  }
+}

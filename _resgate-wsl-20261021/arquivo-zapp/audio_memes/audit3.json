@@ -1,0 +1,194 @@
+{
+ "pg_policies": [
+  {
+   "cmd": "DELETE",
+   "qual": "((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "roles": [
+    "authenticated"
+   ],
+   "permissive": "PERMISSIVE",
+   "policyname": "Users can delete own audio memes",
+   "with_check": null
+  },
+  {
+   "cmd": "INSERT",
+   "qual": null,
+   "roles": [
+    "authenticated"
+   ],
+   "permissive": "PERMISSIVE",
+   "policyname": "Authenticated users can insert audio memes",
+   "with_check": "(uploaded_by = auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "qual": "true",
+   "roles": [
+    "authenticated"
+   ],
+   "permissive": "PERMISSIVE",
+   "policyname": "Authenticated users can read audio memes",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "qual": "((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "roles": [
+    "authenticated"
+   ],
+   "permissive": "PERMISSIVE",
+   "policyname": "Authenticated users can update audio memes",
+   "with_check": "((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))"
+  }
+ ],
+ "grants": [
+  {
+   "grantee": "anon",
+   "privilege_type": "DELETE"
+  },
+  {
+   "grantee": "anon",
+   "privilege_type": "INSERT"
+  },
+  {
+   "grantee": "anon",
+   "privilege_type": "REFERENCES"
+  },
+  {
+   "grantee": "anon",
+   "privilege_type": "SELECT"
+  },
+  {
+   "grantee": "anon",
+   "privilege_type": "TRIGGER"
+  },
+  {
+   "grantee": "anon",
+   "privilege_type": "TRUNCATE"
+  },
+  {
+   "grantee": "anon",
+   "privilege_type": "UPDATE"
+  },
+  {
+   "grantee": "authenticated",
+   "privilege_type": "DELETE"
+  },
+  {
+   "grantee": "authenticated",
+   "privilege_type": "INSERT"
+  },
+  {
+   "grantee": "authenticated",
+   "privilege_type": "REFERENCES"
+  },
+  {
+   "grantee": "authenticated",
+   "privilege_type": "SELECT"
+  },
+  {
+   "grantee": "authenticated",
+   "privilege_type": "TRIGGER"
+  },
+  {
+   "grantee": "authenticated",
+   "privilege_type": "TRUNCATE"
+  },
+  {
+   "grantee": "authenticated",
+   "privilege_type": "UPDATE"
+  },
+  {
+   "grantee": "postgres",
+   "privilege_type": "DELETE"
+  },
+  {
+   "grantee": "postgres",
+   "privilege_type": "INSERT"
+  },
+  {
+   "grantee": "postgres",
+   "privilege_type": "REFERENCES"
+  },
+  {
+   "grantee": "postgres",
+   "privilege_type": "SELECT"
+  },
+  {
+   "grantee": "postgres",
+   "privilege_type": "TRIGGER"
+  },
+  {
+   "grantee": "postgres",
+   "privilege_type": "TRUNCATE"
+  },
+  {
+   "grantee": "postgres",
+   "privilege_type": "UPDATE"
+  },
+  {
+   "grantee": "service_role",
+   "privilege_type": "DELETE"
+  },
+  {
+   "grantee": "service_role",
+   "privilege_type": "INSERT"
+  },
+  {
+   "grantee": "service_role",
+   "privilege_type": "REFERENCES"
+  },
+  {
+   "grantee": "service_role",
+   "privilege_type": "SELECT"
+  },
+  {
+   "grantee": "service_role",
+   "privilege_type": "TRIGGER"
+  },
+  {
+   "grantee": "service_role",
+   "privilege_type": "TRUNCATE"
+  },
+  {
+   "grantee": "service_role",
+   "privilege_type": "UPDATE"
+  }
+ ],
+ "rls": [
+  {
+   "relrowsecurity": true,
+   "relforcerowsecurity": false
+  }
+ ],
+ "pg_triggers": [],
+ "realtime_tables": {
+  "error": "Expecting value: line 1 column 1 (char 0)"
+ },
+ "realtime_sub": [
+  {
+   "n": 7
+  }
+ ],
+ "publications": [],
+ "indexes": [
+  {
+   "indexdef": "CREATE UNIQUE INDEX audio_memes_pkey ON public.audio_memes USING btree (id)",
+   "indexname": "audio_memes_pkey"
+  },
+  {
+   "indexdef": "CREATE INDEX idx_audio_memes_uploaded_by ON public.audio_memes USING btree (uploaded_by)",
+   "indexname": "idx_audio_memes_uploaded_by"
+  }
+ ],
+ "index_usage": [
+  {
+   "relname": "audio_memes",
+   "idx_scan": 5,
+   "seq_scan": 63
+  }
+ ],
+ "missing_idx_fk": {
+  "error": "Expecting value: line 1 column 1 (char 0)"
+ }
+}

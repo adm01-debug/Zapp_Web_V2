@@ -1,0 +1,139 @@
+{
+  "baseline": "2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6",
+  "mode": "OFFLINE_WORKER_WITH_REPO_MOCKS",
+  "limitations": "Provider send, database, clock delays and auth helper integrations are injected in memory. Does not establish deployed runtime or SQL behavior.",
+  "cases": [
+    {
+      "case": "distinct_block_content",
+      "expectedBlockText": "BLOCO CORRETO Empresa 1",
+      "actualSends": [
+        {
+          "item": {
+            "kind": "text",
+            "to": "5511999990001",
+            "instanceId": "instance-abc",
+            "text": "GLOBAL Empresa 1"
+          },
+          "instanceTokenPresent": false,
+          "flavor": "go"
+        }
+      ],
+      "httpStatus": 200,
+      "result": {
+        "success": true,
+        "sent": 1,
+        "failed": 0,
+        "total": 1,
+        "skipped": 0,
+        "outcome_unknown": 0,
+        "completed": true
+      },
+      "completionRpc": [
+        {
+          "name": "complete_multiplix_dispatch_if_drained",
+          "args": {
+            "p_dispatch_id": "00000000-0000-0000-0000-000000000001"
+          }
+        }
+      ],
+      "itemCompletions": [],
+      "rescheduleCalls": 0,
+      "personalization": {
+        "text": "GLOBAL Empresa 1",
+        "missing": [],
+        "unknown": []
+      }
+    },
+    {
+      "case": "missing_variable",
+      "expectedBlockText": "Ola ",
+      "actualSends": [
+        {
+          "item": {
+            "kind": "text",
+            "to": "5511999990001",
+            "instanceId": "instance-abc",
+            "text": "Ola "
+          },
+          "instanceTokenPresent": false,
+          "flavor": "go"
+        }
+      ],
+      "httpStatus": 200,
+      "result": {
+        "success": true,
+        "sent": 1,
+        "failed": 0,
+        "total": 1,
+        "skipped": 0,
+        "outcome_unknown": 0,
+        "completed": true
+      },
+      "completionRpc": [
+        {
+          "name": "complete_multiplix_dispatch_if_drained",
+          "args": {
+            "p_dispatch_id": "00000000-0000-0000-0000-000000000001"
+          }
+        }
+      ],
+      "itemCompletions": [],
+      "rescheduleCalls": 0,
+      "personalization": {
+        "text": "Ola ",
+        "missing": [
+          "empresa"
+        ],
+        "unknown": []
+      }
+    },
+    {
+      "case": "provider_429",
+      "expectedBlockText": "Teste Empresa 1",
+      "actualSends": [
+        {
+          "item": {
+            "kind": "text",
+            "to": "5511999990001",
+            "instanceId": "instance-abc",
+            "text": "Teste Empresa 1"
+          },
+          "instanceTokenPresent": false,
+          "flavor": "go"
+        }
+      ],
+      "httpStatus": 200,
+      "result": {
+        "success": true,
+        "sent": 0,
+        "failed": 1,
+        "total": 1,
+        "skipped": 0,
+        "outcome_unknown": 0,
+        "completed": true
+      },
+      "completionRpc": [
+        {
+          "name": "complete_multiplix_dispatch_if_drained",
+          "args": {
+            "p_dispatch_id": "00000000-0000-0000-0000-000000000001"
+          }
+        }
+      ],
+      "itemCompletions": [
+        {
+          "p_item_id": "item-recipient-1",
+          "p_claim_token": "claim-item-recipient-1",
+          "p_status": "failed",
+          "p_error_message": "Limite do provedor"
+        }
+      ],
+      "rescheduleCalls": 0,
+      "personalization": {
+        "text": "Teste Empresa 1",
+        "missing": [],
+        "unknown": []
+      }
+    }
+  ]
+}

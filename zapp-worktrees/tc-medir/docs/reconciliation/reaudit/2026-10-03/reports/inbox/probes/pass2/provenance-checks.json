@@ -1,0 +1,19 @@
+{
+  "checks": [
+    {
+      "case": "changed_source_file_with_same_git_head",
+      "rejected_before_execution": true,
+      "result_not_written": true,
+      "exit_code": 1,
+      "file": "src/components/inbox/MediaPreview.tsx"
+    },
+    {
+      "case": "wrong_expected_head",
+      "rejected_before_execution": true,
+      "result_not_written": true,
+      "exit_code": 1
+    }
+  ],
+  "source_unchanged": true,
+  "no_network": true
+}

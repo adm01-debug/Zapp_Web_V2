@@ -1,0 +1,13 @@
+{
+ "result": {
+  "content": [
+   {
+    "type": "text",
+    "text": "❌ Erro: REPORT n=1\n=== zapp.update_segment_counts() [] SCALAR void\nCREATE OR REPLACE FUNCTION zapp.update_segment_counts()\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'zapp', 'monitoring'\nAS $function$\nDECLARE seg record; v_count int;\nBEGIN\n  FOR seg IN SELECT id, filters, instance_name FROM zapp.contact_segments LOOP\n    SELECT COUNT(*) INTO v_count FROM zapp.get_segment_contacts(seg.id, 100000, 0);\n    UPDATE zapp.contact_segments\n    SET contact_count = v_count, updated_at = now()\n    WHERE id = seg.id;\n  END LOOP;\nEND;\n$function$\n\n"
+   }
+  ],
+  "isError": true
+ },
+ "jsonrpc": "2.0",
+ "id": 1
+}

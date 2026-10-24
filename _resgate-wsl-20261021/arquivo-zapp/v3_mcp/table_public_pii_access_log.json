@@ -1,0 +1,13 @@
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Error: Tabela 'public.pii_access_log' nao encontrada."
+      }
+    ],
+    "isError": true
+  },
+  "jsonrpc": "2.0",
+  "id": 1
+}

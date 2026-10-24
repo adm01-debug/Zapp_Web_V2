@@ -1,0 +1,523 @@
+❌ Erro: REPORT n=11
+=== zapp.rpc_pick_next_agent(p_queue_id uuid) [] SCALAR uuid
+CREATE OR REPLACE FUNCTION zapp.rpc_pick_next_agent(p_queue_id uuid)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE
+  v_algo text;
+  v_last uuid;
+  v_pick uuid;
+BEGIN
+  SELECT distribution_algorithm, last_assigned_user_id
+    INTO v_algo, v_last
+    FROM zapp.queues
+   WHERE id = p_queue_id AND status = 'active';
+
+  IF v_algo IS NULL OR v_algo = 'manual_pull' THEN
+    RETURN NULL;
+  END IF;
+
+  IF v_algo = 'round_robin' THEN
+    -- Próximo elegível depois do último atribuído (ordem determinística por user_id),
+    -- com fallback para o primeiro elegível se já passou do fim da lista.
+    WITH cand AS (
+      SELECT user_id, active_chats, max_chats
+        FROM zapp.rpc_list_eligible_agents(p_queue_id)
+       WHERE active_chats < max_chats
+       ORDER BY user_id
+    )
+    SELECT user_id INTO v_pick FROM cand
+     WHERE v_last IS NULL OR user_id > v_last
+     ORDER BY user_id
+     LIMIT 1;
+
+    IF v_pick IS NULL THEN
+      SELECT user_id INTO v_pick FROM (
+        SELECT user_id, active_chats, max_chats
+          FROM zapp.rpc_list_eligible_agents(p_queue_id)
+         WHERE active_chats < max_chats
+         ORDER BY user_id
+         LIMIT 1
+      ) s;
+    END IF;
+  ELSIF v_algo = 'longest_idle' THEN
+    SELECT a.user_id INTO v_pick
+      FROM zapp.rpc_list_eligible_agents(p_queue_id) a
+      LEFT JOIN zapp.profiles p ON p.user_id = a.user_id
+     WHERE a.active_chats < a.max_chats
+     ORDER BY p.last_active_at NULLS FIRST, a.active_chats ASC, random()
+     LIMIT 1;
+  ELSE
+    -- least_busy (default)
+    SELECT user_id INTO v_pick
+      FROM zapp.rpc_list_eligible_agents(p_queue_id)
+     WHERE active_chats < max_chats
+     ORDER BY active_chats ASC, random()
+     LIMIT 1;
+  END IF;
+
+  IF v_pick IS NOT NULL THEN
+    UPDATE zapp.queues
+       SET last_assigned_user_id = v_pick,
+           last_assigned_at = now()
+     WHERE id = p_queue_id;
+  END IF;
+
+  RETURN v_pick;
+END
+$function$
+
+=== zapp.rpc_queue_goal_metrics() [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.rpc_queue_goal_metrics()
+ RETURNS TABLE(queue_id uuid, waiting_contacts bigint, avg_wait_minutes numeric, assignment_rate numeric, messages_pending bigint, coverage text)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'evo', 'pg_catalog'
+AS $function$
+  WITH pos AS (
+    SELECT queue_id, count(*)::bigint AS waiting_contacts,
+           round(avg(EXTRACT(EPOCH FROM (now() - entered_at))/60)::numeric, 1) AS avg_wait_minutes
+    FROM zapp.queue_positions GROUP BY queue_id
+  ), sticky AS (
+    SELECT queue_id, count(*)::bigint AS assigned
+    FROM zapp.sticky_assignments
+    WHERE expires_at IS NULL OR expires_at > now() GROUP BY queue_id
+  ), unread AS (
+    SELECT ec.queue_id, sum(evc.unread_count)::bigint AS pending
+    FROM evo.evolution_conversations evc
+    JOIN evo.evolution_contacts ec ON ec.id = evc.contact_id
+    WHERE ec.queue_id IS NOT NULL AND ec.deleted_at IS NULL
+      AND evc.status NOT IN ('closed','resolved')
+    GROUP BY ec.queue_id
+  ), mapped AS (
+    SELECT queue_id, count(*)::bigint AS contacts
+    FROM evo.evolution_contacts
+    WHERE queue_id IS NOT NULL AND deleted_at IS NULL
+    GROUP BY queue_id
+  ), g_unread AS (
+    SELECT sum(unread_count)::bigint AS total
+    FROM evo.evolution_conversations
+    WHERE unread_count > 0 AND status NOT IN ('closed','resolved')
+  ), ev7 AS (
+    SELECT COALESCE(to_queue_id, from_queue_id) AS queue_id,
+           round(100.0 * count(*) FILTER (WHERE event_type = 'assign') /
+             NULLIF(count(*) FILTER (WHERE event_type IN ('assign','unassign')), 0), 1) AS rate
+    FROM zapp.conversation_events
+    WHERE created_at > now() - interval '7 days' AND event_type IN ('assign','unassign')
+    GROUP BY 1
+  )
+  SELECT q.id,
+         COALESCE(pos.waiting_contacts, 0),
+         COALESCE(pos.avg_wait_minutes, 0),
+         CASE WHEN COALESCE(sticky.assigned, 0) + COALESCE(pos.waiting_contacts, 0) = 0
+              THEN ev7.rate ELSE
+              round(100.0 * sticky.assigned / (sticky.assigned + pos.waiting_contacts), 1) END,
+         CASE WHEN mapped.queue_id IS NULL AND g_unread.total > 0
+              THEN NULL ELSE COALESCE(unread.pending, 0) END,
+         CASE WHEN pos.queue_id IS NULL THEN 'sem_posicoes'
+              WHEN sticky.queue_id IS NULL AND ev7.queue_id IS NULL THEN 'sem_atribuicao'
+              ELSE 'ok' END
+  FROM zapp.queues q
+  LEFT JOIN pos      ON pos.queue_id = q.id
+  LEFT JOIN sticky   ON sticky.queue_id = q.id
+  LEFT JOIN unread   ON unread.queue_id = q.id
+  LEFT JOIN mapped   ON mapped.queue_id = q.id
+  LEFT JOIN ev7      ON ev7.queue_id = q.id
+  CROSS JOIN g_unread
+  WHERE q.is_active;
+$function$
+
+=== zapp.rpc_webhook_health_monitor() [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.rpc_webhook_health_monitor()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE v_result jsonb;
+BEGIN
+  SELECT jsonb_build_object(
+    'status', 'healthy',
+    'events_last_hour', (SELECT count(*) FROM evolution_webhook_events WHERE created_at >= now()-interval '1 hour'),
+    'events_last_24h', (SELECT count(*) FROM evolution_webhook_events WHERE created_at >= now()-interval '24 hours'),
+    'last_event_at', (SELECT max(created_at) FROM evolution_webhook_events),
+    'events_by_instance', (SELECT jsonb_object_agg(instance_name, cnt) FROM (SELECT instance_name, count(*) cnt FROM evolution_webhook_events WHERE created_at >= now()-interval '1 hour' GROUP BY instance_name) t),
+    'events_by_type', (SELECT jsonb_object_agg(event_type, cnt) FROM (SELECT event_type, count(*) cnt FROM evolution_webhook_events WHERE created_at >= now()-interval '1 hour' GROUP BY event_type ORDER BY cnt DESC LIMIT 10) t)
+  ) INTO v_result;
+  RETURN v_result;
+END;
+$function$
+
+=== zapp.run_contact_purge() [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.run_contact_purge()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE v_count int;
+BEGIN
+  DELETE FROM zapp.evolution_contacts
+  WHERE deleted_at IS NOT NULL AND deleted_at < now() - interval '30 days';
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+  RETURN jsonb_build_object('purged_contacts', v_count, 'purged_at', now());
+END;
+$function$
+
+=== zapp.run_lgpd_purge() [] SCALAR jsonb
+CREATE OR REPLACE FUNCTION zapp.run_lgpd_purge()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE
+  v_count    integer;
+  v_job_id   uuid;
+  v_start    timestamptz := now();
+BEGIN
+  -- Log job start
+  INSERT INTO zapp.scheduled_job_log (job_name, status)
+  VALUES ('lgpd_purge', 'running')
+  RETURNING id INTO v_job_id;
+
+  -- Delete contacts deleted > 30 days ago
+  DELETE FROM zapp.contacts
+  WHERE deleted_at IS NOT NULL
+    AND deleted_at < now() - interval '30 days';
+
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+
+  -- Update log
+  UPDATE zapp.scheduled_job_log
+  SET
+    finished_at   = now(),
+    status        = 'success',
+    rows_affected = v_count
+  WHERE id = v_job_id;
+
+  RETURN jsonb_build_object(
+    'job_id',       v_job_id,
+    'rows_purged',  v_count,
+    'duration_ms',  EXTRACT(EPOCH FROM (now() - v_start)) * 1000
+  );
+EXCEPTION WHEN OTHERS THEN
+  UPDATE zapp.scheduled_job_log
+  SET finished_at = now(), status = 'error', error_msg = SQLERRM
+  WHERE id = v_job_id;
+  RAISE;
+END;
+$function$
+
+=== zapp.search_contacts(search_term text, contact_type_filter text, company_filter text, job_title_filter text, tag_filter text, date_from timestamp with time zone, sort_field text, sort_direction text, page_size integer, page_offset integer) [] SETOF record
+CREATE OR REPLACE FUNCTION zapp.search_contacts(search_term text DEFAULT ''::text, contact_type_filter text DEFAULT NULL::text, company_filter text DEFAULT NULL::text, job_title_filter text DEFAULT NULL::text, tag_filter text DEFAULT NULL::text, date_from timestamp with time zone DEFAULT NULL::timestamp with time zone, sort_field text DEFAULT 'name'::text, sort_direction text DEFAULT 'asc'::text, page_size integer DEFAULT 50, page_offset integer DEFAULT 0)
+ RETURNS TABLE(id uuid, name text, nickname text, surname text, job_title text, company text, phone text, email text, avatar_url text, tags text[], notes text, contact_type text, created_at timestamp with time zone, updated_at timestamp with time zone, total_count bigint)
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+DECLARE
+  v_total bigint;
+  v_search text;
+BEGIN
+  v_search := COALESCE(NULLIF(TRIM(search_term), ''), NULL);
+  
+  -- Get total count first
+  SELECT COUNT(*) INTO v_total
+  FROM zapp.contacts c
+  WHERE
+    (v_search IS NULL OR (
+      c.name ILIKE '%' || v_search || '%' OR
+      c.nickname ILIKE '%' || v_search || '%' OR
+      c.surname ILIKE '%' || v_search || '%' OR
+      c.phone ILIKE '%' || v_search || '%' OR
+      c.email ILIKE '%' || v_search || '%' OR
+      c.company ILIKE '%' || v_search || '%' OR
+      c.job_title ILIKE '%' || v_search || '%'
+    ))
+    AND (contact_type_filter IS NULL OR c.contact_type = contact_type_filter)
+    AND (company_filter IS NULL OR c.company = company_filter)
+    AND (job_title_filter IS NULL OR c.job_title = job_title_filter)
+    AND (tag_filter IS NULL OR tag_filter = ANY(c.tags))
+    AND (date_from IS NULL OR c.created_at >= date_from);
+
+  RETURN QUERY
+  SELECT
+    c.id, c.name::text, c.nickname::text, c.surname::text, c.job_title::text, c.company::text,
+    c.phone::text, c.email::text, c.avatar_url::text, c.tags, c.notes::text, c.contact_type::text,
+    c.created_at, c.updated_at,
+    v_total AS total_count
+  FROM zapp.contacts c
+  WHERE
+    (v_search IS NULL OR (
+      c.name ILIKE '%' || v_search || '%' OR
+      c.nickname ILIKE '%' || v_search || '%' OR
+      c.surname ILIKE '%' || v_search || '%' OR
+      c.phone ILIKE '%' || v_search || '%' OR
+      c.email ILIKE '%' || v_search || '%' OR
+      c.company ILIKE '%' || v_search || '%' OR
+      c.job_title ILIKE '%' || v_search || '%'
+    ))
+    AND (contact_type_filter IS NULL OR c.contact_type = contact_type_filter)
+    AND (company_filter IS NULL OR c.company = company_filter)
+    AND (job_title_filter IS NULL OR c.job_title = job_title_filter)
+    AND (tag_filter IS NULL OR tag_filter = ANY(c.tags))
+    AND (date_from IS NULL OR c.created_at >= date_from)
+  ORDER BY
+    CASE WHEN sort_field = 'name' AND sort_direction = 'asc' THEN c.name END ASC,
+    CASE WHEN sort_field = 'name' AND sort_direction = 'desc' THEN c.name END DESC,
+    CASE WHEN sort_field = 'created_at' AND sort_direction = 'asc' THEN c.created_at END ASC,
+    CASE WHEN sort_field = 'created_at' AND sort_direction = 'desc' THEN c.created_at END DESC,
+    CASE WHEN sort_field = 'updated_at' AND sort_direction = 'desc' THEN c.updated_at END DESC,
+    c.name ASC
+  LIMIT page_size
+  OFFSET page_offset;
+END;
+$function$
+
+=== zapp.skill_based_assign(p_queue_id uuid) [] SCALAR uuid
+CREATE OR REPLACE FUNCTION zapp.skill_based_assign(p_queue_id uuid)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE
+  v_agent_id UUID;
+BEGIN
+  SELECT qm.profile_id INTO v_agent_id
+  FROM zapp.queue_members qm
+  JOIN zapp.profiles p ON p.id = qm.profile_id
+  WHERE qm.queue_id = p_queue_id
+    AND qm.is_active = true
+    AND p.is_active = true
+    AND NOT EXISTS (
+      SELECT 1 FROM zapp.queue_skill_requirements qsr
+      WHERE qsr.queue_id = p_queue_id
+      AND NOT EXISTS (
+        SELECT 1 FROM zapp.agent_skills ags
+        WHERE ags.profile_id = qm.profile_id
+        AND ags.skill_name = qsr.skill_name
+        AND ags.skill_level >= qsr.min_level
+      )
+    )
+  ORDER BY (
+    SELECT COUNT(*) FROM zapp.contacts c 
+    WHERE c.assigned_to = qm.profile_id
+  ) ASC
+  LIMIT 1;
+  
+  IF v_agent_id IS NULL THEN
+    SELECT qm.profile_id INTO v_agent_id
+    FROM zapp.queue_members qm
+    JOIN zapp.profiles p ON p.id = qm.profile_id
+    WHERE qm.queue_id = p_queue_id
+      AND qm.is_active = true
+      AND p.is_active = true
+    ORDER BY (
+      SELECT COUNT(*) FROM zapp.contacts c 
+      WHERE c.assigned_to = qm.profile_id
+    ) ASC
+    LIMIT 1;
+  END IF;
+  
+  RETURN v_agent_id;
+END;
+$function$
+
+=== zapp.sync_tag_use_counts() [] SCALAR integer
+CREATE OR REPLACE FUNCTION zapp.sync_tag_use_counts()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'monitoring'
+AS $function$
+DECLARE v_updated int := 0; v_tag record;
+BEGIN
+  FOR v_tag IN SELECT name FROM zapp.evolution_tags LOOP
+    UPDATE zapp.evolution_tags t
+    SET use_count = (
+      SELECT COUNT(*) FROM zapp.evolution_contacts c
+      WHERE v_tag.name = ANY(c.tags) AND c.deleted_at IS NULL
+    )
+    WHERE t.name = v_tag.name;
+    v_updated := v_updated + 1;
+  END LOOP;
+  RETURN v_updated;
+END;
+$function$
+
+=== zapp.upsert_contact_intelligence(p_contact_id uuid) [] SCALAR void
+CREATE OR REPLACE FUNCTION zapp.upsert_contact_intelligence(p_contact_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp'
+AS $function$
+DECLARE
+  v_ec     zapp.evolution_contacts%ROWTYPE;
+  v_msgs   int := 0;
+  v_inb    int := 0;
+  v_out    int := 0;
+  v_last   timestamptz;
+  v_eng    numeric(5,2);
+  v_risk   text;
+  v_disc   text := 'C';
+  v_days   int;
+  v_ratio  numeric(5,2) := 0;
+  v_phone  text;
+BEGIN
+  SELECT * INTO v_ec FROM zapp.evolution_contacts WHERE id = p_contact_id LIMIT 1;
+  IF NOT FOUND THEN RETURN; END IF;
+
+  SELECT count(*), count(*) FILTER (WHERE NOT from_me), count(*) FILTER (WHERE from_me), max(created_at)
+  INTO v_msgs, v_inb, v_out, v_last
+  FROM zapp.evolution_messages_wpp2 m
+  WHERE m.deleted_at IS NULL AND m.contact_id = p_contact_id;
+
+  IF COALESCE(v_ec.total_messages, 0) > v_msgs THEN v_msgs := v_ec.total_messages; END IF;
+
+  v_days := CASE WHEN v_last IS NOT NULL THEN EXTRACT(DAY FROM (now() - v_last))::int
+    WHEN v_ec.last_message_at IS NOT NULL THEN EXTRACT(DAY FROM (now() - v_ec.last_message_at))::int
+    ELSE NULL END;
+
+  v_eng := LEAST(100, GREATEST(0,
+    COALESCE(v_ec.lead_score, 0)::numeric * 0.5
+    + LEAST(50, v_msgs * 0.5)
+    - COALESCE(v_days, 0) * 0.3));
+
+  v_risk := CASE
+    WHEN v_eng < 20 OR COALESCE(v_days, 999) > 60 THEN 'high'
+    WHEN v_eng < 50 OR COALESCE(v_days, 999) > 30 THEN 'medium'
+    ELSE 'low' END;
+
+  v_disc := CASE
+    WHEN v_ec.lead_score >= 70 THEN 'D'
+    WHEN v_inb > v_out AND v_msgs > 5 THEN 'I'
+    WHEN v_inb > v_out * 1.5 THEN 'S'
+    ELSE 'C' END;
+
+  IF v_msgs > 0 THEN
+    v_ratio := round((v_inb::numeric / v_msgs) * 100, 2);
+  END IF;
+
+  -- ════════════════════════════════════════════════════════════
+  -- LID-FIX-01 (2026-08-11): Guard anti-LID-as-phone no campo phone
+  -- phone_number NULL após limpeza → não usar split_part do remote_jid
+  -- split_part fallback só se o local part for telefone real (≤13 dígitos)
+  -- ════════════════════════════════════════════════════════════
+  v_phone := CASE
+    WHEN v_ec.phone_number IS NOT NULL
+         AND v_ec.phone_number ~ '^[0-9]+$'
+         AND length(v_ec.phone_number) <= 13
+    THEN v_ec.phone_number
+    WHEN length(split_part(v_ec.remote_jid::text, '@', 1)) <= 13
+         AND split_part(v_ec.remote_jid::text, '@', 1) ~ '^[0-9]+$'
+    THEN split_part(v_ec.remote_jid::text, '@', 1)
+    ELSE NULL   -- LID-only: sem telefone real disponível ainda
+  END;
+  -- ════════════════════════════════════════════════════════════
+
+  INSERT INTO zapp.contact_intelligence
+    (contact_id, sentiment, engagement_score, predicted_value, risk_level,
+     phone, contact_name, lead_status, total_messages, days_since_contact,
+     disc_profile, inbound_ratio, created_at, updated_at)
+  VALUES (
+    p_contact_id,
+    CASE WHEN v_inb > v_out * 2 THEN 'positive'
+         WHEN v_out > v_inb * 3 THEN 'negative'
+         ELSE 'neutral' END,
+    v_eng, COALESCE(v_ec.total_purchases, 0), v_risk,
+    v_phone,
+    COALESCE(v_ec.full_name, v_ec.push_name),
+    v_ec.lead_status, v_msgs, v_days, v_disc, v_ratio,
+    now(), now()
+  )
+  ON CONFLICT (contact_id) DO UPDATE SET
+    sentiment          = EXCLUDED.sentiment,
+    engagement_score   = EXCLUDED.engagement_score,
+    predicted_value    = EXCLUDED.predicted_value,
+    risk_level         = EXCLUDED.risk_level,
+    phone              = EXCLUDED.phone,
+    contact_name       = EXCLUDED.contact_name,
+    lead_status        = EXCLUDED.lead_status,
+    total_messages     = EXCLUDED.total_messages,
+    days_since_contact = EXCLUDED.days_since_contact,
+    disc_profile       = EXCLUDED.disc_profile,
+    inbound_ratio      = EXCLUDED.inbound_ratio,
+    updated_at         = now();
+END;
+$function$
+
+=== zapp.zapp_upsert_group_from_event(p_connection_id uuid, p_group_id text, p_name text, p_desc text, p_participants text[], p_instance text, p_phones text[]) [] SCALAR uuid
+CREATE OR REPLACE FUNCTION zapp.zapp_upsert_group_from_event(p_connection_id uuid, p_group_id text, p_name text DEFAULT NULL::text, p_desc text DEFAULT NULL::text, p_participants text[] DEFAULT NULL::text[], p_instance text DEFAULT 'wpp2'::text, p_phones text[] DEFAULT NULL::text[])
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'pg_catalog', 'pg_temp'
+AS $function$
+DECLARE v_group_uuid uuid;
+BEGIN
+  IF p_group_id IS NULL OR btrim(p_group_id) = '' THEN RETURN NULL; END IF;
+  INSERT INTO zapp.evolution_groups AS eg
+    (whatsapp_connection_id, group_id, name, description, participant_count, avatar_url, instance_name, updated_at)
+  VALUES
+    (p_connection_id, p_group_id, COALESCE(NULLIF(btrim(p_name),''), p_group_id),
+     NULLIF(btrim(COALESCE(p_desc,'')), ''), 0, NULL, COALESCE(NULLIF(btrim(p_instance),''), 'wpp2'), now())
+  ON CONFLICT (whatsapp_connection_id, group_id) DO UPDATE
+    SET name=COALESCE(NULLIF(btrim(EXCLUDED.name),''), eg.name),
+        description=COALESCE(EXCLUDED.description, eg.description),
+        instance_name=COALESCE(EXCLUDED.instance_name, eg.instance_name),
+        updated_at=now()
+  RETURNING id INTO v_group_uuid;
+  IF p_participants IS NOT NULL AND cardinality(p_participants) > 0 THEN
+    PERFORM zapp.zapp_upsert_group_participants(v_group_uuid, p_participants, 'add', p_instance, p_phones);
+  ELSE
+    UPDATE zapp.evolution_groups
+      SET participant_count=(SELECT count(*) FROM zapp.evolution_group_participants WHERE group_id=v_group_uuid AND is_active),
+          updated_at=now()
+    WHERE id=v_group_uuid;
+  END IF;
+  RETURN v_group_uuid;
+END; $function$
+
+=== zapp.zapp_upsert_group_participants(p_group_id uuid, p_participants text[], p_action text, p_instance text, p_phones text[]) [] SCALAR integer
+CREATE OR REPLACE FUNCTION zapp.zapp_upsert_group_participants(p_group_id uuid, p_participants text[], p_action text DEFAULT 'add'::text, p_instance text DEFAULT 'wpp2'::text, p_phones text[] DEFAULT NULL::text[])
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'zapp', 'pg_catalog', 'pg_temp'
+AS $function$
+DECLARE v_count integer := 0;
+BEGIN
+  IF p_group_id IS NULL OR p_participants IS NULL OR cardinality(p_participants) = 0 THEN RETURN 0; END IF;
+  IF p_action = 'add' THEN
+    INSERT INTO zapp.evolution_group_participants
+      (group_id, participant_jid, contact_id, phone_jid, role, joined_at, left_at, is_active)
+    SELECT p_group_id, t.jid,
+           COALESCE(zapp.fn_resolve_contact_id_by_jid(t.jid), CASE WHEN t.phone <> '' THEN zapp.fn_resolve_contact_id_by_jid(t.phone) END),
+           NULLIF(t.phone, ''), 'member', now(), NULL, true
+    FROM (SELECT p_participants[i] AS jid, COALESCE(p_phones[i], '') AS phone FROM generate_subscripts(p_participants, 1) AS i) t
+    WHERE btrim(t.jid) <> ''
+    ON CONFLICT (group_id, participant_jid) DO UPDATE
+      SET is_active=true, left_at=NULL,
+          phone_jid=COALESCE(EXCLUDED.phone_jid, zapp.evolution_group_participants.phone_jid),
+          contact_id=COALESCE(zapp.evolution_group_participants.contact_id, EXCLUDED.contact_id);
+    GET DIAGNOSTICS v_count = ROW_COUNT;
+  ELSIF p_action = 'remove' THEN
+    UPDATE zapp.evolution_group_participants SET left_at=now(), is_active=false WHERE group_id=p_group_id AND participant_jid=ANY(p_participants) AND is_active;
+    GET DIAGNOSTICS v_count = ROW_COUNT;
+  ELSIF p_action = 'promote' THEN
+    UPDATE zapp.evolution_group_participants SET role='admin' WHERE group_id=p_group_id AND participant_jid=ANY(p_participants);
+    GET DIAGNOSTICS v_count = ROW_COUNT;
+  ELSIF p_action = 'demote' THEN
+    UPDATE zapp.evolution_group_participants SET role='member' WHERE group_id=p_group_id AND participant_jid=ANY(p_participants);
+    GET DIAGNOSTICS v_count = ROW_COUNT;
+  END IF;
+  UPDATE zapp.evolution_groups SET participant_count=(SELECT count(*) FROM zapp.evolution_group_participants WHERE group_id=p_group_id AND is_active), updated_at=now() WHERE id=p_group_id;
+  RETURN v_count;
+END; $function$
+

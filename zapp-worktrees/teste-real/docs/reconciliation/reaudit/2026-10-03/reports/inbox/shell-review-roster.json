@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "source_head": "da307ba5626dce892f0b37cb6762463f55d14a96",
+  "owner": "inbox",
+  "state": "ALLOCATION_ONLY_NOT_REVIEW",
+  "files": [
+    {
+      "path": "docs/audits/onda3-260930/poc/team-chat-two-findings.test.sh",
+      "line_start": 1,
+      "line_end": 453,
+      "source_sha256": "7c4440be76f5fadb263f91964aab0045c83c201737573a82495d18ec8ec7bb46",
+      "git_blob_sha": "68fc99a8be853984f65e0997f11a61835ace9ca0"
+    },
+    {
+      "path": "scripts/db-audit/ai-read-policies-queue-scope.test.sh",
+      "line_start": 1,
+      "line_end": 309,
+      "source_sha256": "7d81862c8e29ae73585bc022be14fe52eec1fd406ef40edba637b911484855a9",
+      "git_blob_sha": "746d9e72e62770485024339465604119aa60d4c3"
+    },
+    {
+      "path": "scripts/db-audit/crm-sync-outbox-behavior.test.sh",
+      "line_start": 1,
+      "line_end": 318,
+      "source_sha256": "97e1e701614bf23edf13cc61a8bef77f473dcc5491b79ea8e0f08ac6ae90231d",
+      "git_blob_sha": "c78be19b5d0966a830b6caed11cdf778bf859c74"
+    },
+    {
+      "path": "scripts/db-audit/multiplix-rls.test.sh",
+      "line_start": 1,
+      "line_end": 695,
+      "source_sha256": "27597f3afc987d7b2a2ea55c76485ceec2fa6bff3d950a3503edcedc8b781e68",
+      "git_blob_sha": "ddeebeded076d066874cd0345ea58681df2a2d0b"
+    },
+    {
+      "path": "scripts/db-audit/scope-public-policies-authenticated.test.sh",
+      "line_start": 1,
+      "line_end": 132,
+      "source_sha256": "cf00f1e82853b6980a7fd816e583f1363c25f8aaf0d7fc859722a8895451684b",
+      "git_blob_sha": "f0294a2358480232f00ae7949d4a915da2d4d8c7"
+    },
+    {
+      "path": "scripts/db-audit/talkx-blacklist-policy-forward-only.test.sh",
+      "line_start": 1,
+      "line_end": 238,
+      "source_sha256": "6770cb635cc73ac37da5e97a76ad2aec9a4acc605d07399e7d0bf5bb780f6fbe",
+      "git_blob_sha": "94caa8ff95e19104deb27fbacf1d0a5ad01d8a2d"
+    },
+    {
+      "path": "scripts/db-audit/talkx-draft-recipients.test.sh",
+      "line_start": 1,
+      "line_end": 181,
+      "source_sha256": "959474881fda556cfa50c1fa9c9f186f2745f2400f6f61febbb47042b5802671",
+      "git_blob_sha": "02815987e189d04e8bcd8e69fd449441f5a3f8a7"
+    },
+    {
+      "path": "scripts/db-audit/talkx-history-saved-by-fk.test.sh",
+      "line_start": 1,
+      "line_end": 116,
+      "source_sha256": "876a29243435fc1d2139f0f307b2f881d6dc9742bce1ec034b8e485b9459eba8",
+      "git_blob_sha": "ea543bbc03d95f10ca9ff755d129a67cffdfdb6b"
+    },
+    {
+      "path": "scripts/db-audit/talkx-optout.test.sh",
+      "line_start": 1,
+      "line_end": 384,
+      "source_sha256": "0fecb95268625998a72071f3443b843c037e49ca594151cc2ec3560c9861c21a",
+      "git_blob_sha": "062c52d4fc0481675b446a9ac296fe6bf5ee2bb0"
+    },
+    {
+      "path": "scripts/db-audit/talkx-update-limits-send-window.test.sh",
+      "line_start": 1,
+      "line_end": 223,
+      "source_sha256": "f37ad0d49b06ab747b7b85b0f68c97f840e3294a31865af3f2470259f76bd6d1",
+      "git_blob_sha": "1300f64d0e4c4327012a2e64473d54c07b56a08d"
+    },
+    {
+      "path": "scripts/db-audit/talkx-v23-draft-step.test.sh",
+      "line_start": 1,
+      "line_end": 152,
+      "source_sha256": "dc9e34f4ab7848eec17fde57afd818eaf208c640e085e8e5c4e83119d8767322",
+      "git_blob_sha": "67509747cafab179ef1480b41e5fe87fd18b21c5"
+    },
+    {
+      "path": "scripts/db-audit/team-receipts-membership.test.sh",
+      "line_start": 1,
+      "line_end": 352,
+      "source_sha256": "972cba9b0f8cb9228910b78006fcbd85e7a63f7c5e505fc0d653efb55f927fa2",
+      "git_blob_sha": "a2ea5899cba525188a33608691b095bb8bbcbc35"
+    }
+  ]
+}

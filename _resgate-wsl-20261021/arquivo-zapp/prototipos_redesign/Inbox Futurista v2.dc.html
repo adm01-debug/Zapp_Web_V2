@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Outfit',system-ui,sans-serif;background:#04050a;color:#e8eaf2;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased;}
+    ::-webkit-scrollbar{width:4px;height:4px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    ::-webkit-scrollbar-thumb{background:rgba(110,231,255,0.15);border-radius:4px;}
+    input::placeholder,textarea::placeholder{color:rgba(232,234,242,0.22);}
+    @keyframes aurora1{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(80px,-40px) scale(1.15);}66%{transform:translate(-60px,50px) scale(0.92);}}
+    @keyframes aurora2{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-90px,-60px) scale(1.2);}}
+    @keyframes float-y{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+    @keyframes glow-pulse{0%,100%{opacity:.6;}50%{opacity:1;}}
+    @keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(52,211,153,.5);}70%{box-shadow:0 0 0 6px rgba(52,211,153,0);}100%{box-shadow:0 0 0 0 rgba(52,211,153,0);}}
+    @keyframes typing-dot{0%,80%,100%{transform:scale(.55);opacity:.25;}40%{transform:scale(1);opacity:1;}}
+    @keyframes msg-in{from{opacity:0;transform:translateY(12px) scale(.97);filter:blur(3px);}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}}
+    @keyframes border-flow{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+    @keyframes pop-in{from{opacity:0;transform:scale(.9) translateY(8px);}to{opacity:1;transform:scale(1) translateY(0);}}
+    @keyframes rx-pop{from{opacity:0;transform:scale(.75) translateY(5px);}to{opacity:1;transform:scale(1) translateY(0);}}
+    @keyframes slide-right{from{opacity:0;transform:translateX(24px);}to{opacity:1;transform:translateX(0);}}
+    @keyframes slide-screen{from{opacity:0;transform:translateX(12px);}to{opacity:1;transform:translateX(0);}}
+    @keyframes toast-in{from{opacity:0;transform:translateX(120%);}to{opacity:1;transform:translateX(0);}}
+    @keyframes toast-out{to{opacity:0;transform:translateX(120%);}}
+    @keyframes call-ring{0%{box-shadow:0 0 0 0 rgba(34,211,238,.6);}100%{box-shadow:0 0 0 22px rgba(34,211,238,0);}}
+    @keyframes wave{0%,100%{transform:scaleY(.35);}50%{transform:scaleY(1);}}
+    @keyframes scan{0%{transform:translateY(-100%);}100%{transform:translateY(500%);}}
+    @keyframes cmd-in{from{opacity:0;transform:scale(.95) translateY(-10px);}to{opacity:1;transform:scale(1) translateY(0);}}
+    @keyframes sparkline-draw{from{stroke-dashoffset:200;}to{stroke-dashoffset:0;}}
+    @keyframes kanban-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes story-ring{0%{background-position:0% 50%;}100%{background-position:200% 50%;}}
+    @keyframes nba-pulse{0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,.3);}50%{box-shadow:0 0 0 6px rgba(251,191,36,0);}}
+  </style>
+</helmet>
+
+<!-- Root -->
+<div style="position:relative;display:flex;height:100vh;overflow:hidden;background:#04050a;min-width:1100px;">
+
+  <!-- AURORA -->
+  <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;">
+    <div style="position:absolute;top:-15%;left:15%;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(56,189,248,{{ auroraOp1 }}),transparent 65%);filter:blur(60px);animation:aurora1 18s ease-in-out infinite;"></div>
+    <div style="position:absolute;bottom:-20%;right:5%;width:580px;height:580px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,{{ auroraOp2 }}),transparent 65%);filter:blur(70px);animation:aurora2 22s ease-in-out infinite;"></div>
+    <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(110,231,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(110,231,255,.02) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,black 30%,transparent 75%);"></div>
+  </div>
+
+  <!-- TOAST STACK (fixed) -->
+  <div style="position:fixed;bottom:24px;right:24px;z-index:200;display:flex;flex-direction:column;gap:8px;pointer-events:none;">
+    <sc-for list="{{ toasts }}" as="t">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:14px;background:rgba(12,14,24,0.97);border:1px solid rgba(110,231,255,0.2);backdrop-filter:blur(20px);box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:280px;max-width:340px;animation:toast-in .3s ease;pointer-events:auto;cursor:pointer;" onClick="{{ t.open }}">
+        <div style="width:36px;height:36px;border-radius:11px;background:{{ t.avatarBg }};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;font-family:'Space Grotesk',sans-serif;flex-shrink:0;">{{ t.initials }}</div>
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:12px;font-weight:600;color:#e8eaf2;">{{ t.name }}</p>
+          <p style="font-size:11px;color:rgba(232,234,242,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;">{{ t.preview }}</p>
+        </div>
+        <span style="font-size:9px;color:rgba(232,234,242,.25);flex-shrink:0;">agora</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- COMMAND PALETTE (⌘K) -->
+  <sc-if value="{{ cmdOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:150;display:flex;align-items:flex-start;justify-content:center;padding-top:14vh;background:rgba(4,5,10,.75);backdrop-filter:blur(12px);" onClick="{{ closeCmd }}">
+      <div style="width:580px;border-radius:18px;background:rgba(10,12,22,0.99);border:1px solid rgba(110,231,255,0.2);box-shadow:0 24px 64px rgba(0,0,0,.7);overflow:hidden;animation:cmd-in .2s ease;" onClick="{{ stopProp }}">
+        <!-- Search bar -->
+        <div style="display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid rgba(110,231,255,0.08);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(110,231,255,0.5)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input autoFocus type="text" placeholder="Buscar conversas, contatos, ações…" onInput="{{ onCmdInput }}" style="flex:1;background:transparent;border:none;outline:none;color:#e8eaf2;font-family:'Outfit',sans-serif;font-size:15px;"/>
+          <kbd style="padding:3px 8px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-size:10px;color:rgba(232,234,242,.4);font-family:monospace;">Esc</kbd>
+        </div>
+        <!-- Results -->
+        <div style="padding:8px;max-height:380px;overflow-y:auto;">
+          <sc-for list="{{ cmdGroups }}" as="grp">
+            <p style="font-size:9.5px;font-weight:700;color:rgba(232,234,242,.3);letter-spacing:.12em;text-transform:uppercase;padding:8px 10px 5px;">{{ grp.label }}</p>
+            <sc-for list="{{ grp.items }}" as="item">
+              <button onClick="{{ item.action }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:10px 10px;border-radius:10px;border:none;cursor:pointer;background:transparent;transition:all .15s;text-align:left;" style-hover="background:rgba(110,231,255,.06);">
+                <div style="width:30px;height:30px;border-radius:9px;background:{{ item.iconBg }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ item.iconColor }}" stroke-width="1.8" stroke-linecap="round"><sc-for list="{{ item.paths }}" as="p"><path d="{{ p }}"/></sc-for></svg>
+                </div>
+                <div style="flex:1;min-width:0;">
+                  <p style="font-size:13px;font-weight:500;color:#e8eaf2;">{{ item.label }}</p>
+                  <sc-if value="{{ item.sub }}" hint-placeholder-val="{{ false }}"><p style="font-size:11px;color:rgba(232,234,242,.38);margin-top:1px;">{{ item.sub }}</p></sc-if>
+                </div>
+                <sc-if value="{{ item.kbd }}" hint-placeholder-val="{{ false }}"><kbd style="padding:2px 7px;border-radius:5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);font-size:10px;color:rgba(232,234,242,.35);font-family:monospace;white-space:nowrap;">{{ item.kbd }}</kbd></sc-if>
+              </button>
+            </sc-for>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- NAV RAIL -->
+  <nav style="position:relative;z-index:5;width:{{ navW }};min-width:{{ navW }};height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px 0 16px;gap:3px;background:{{ zenMode ? 'rgba(8,10,18,0.2)' : 'rgba(8,10,18,0.75)' }};backdrop-filter:blur(24px);border-right:1px solid rgba(110,231,255,0.07);transition:all .3s;overflow:hidden;filter:{{ zenMode ? 'blur(2px)' : 'none' }};">
+    <div onClick="{{ () => setScreen('inbox') }}" style="width:38px;height:38px;border-radius:12px;background:{{ gradAB }};display:flex;align-items:center;justify-content:center;margin-bottom:14px;box-shadow:{{ logoShadow }};cursor:pointer;animation:float-y 4s ease-in-out infinite;flex-shrink:0;">
+      <span style="color:#04050a;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;">Z</span>
+    </div>
+    <sc-for list="{{ navItems }}" as="nav">
+      <div style="position:relative;width:100%;display:flex;justify-content:{{ navCollapsed ? 'center' : 'flex-start' }};padding:{{ navCollapsed ? '0' : '0 10px' }};">
+        <sc-if value="{{ nav.active }}" hint-placeholder-val="{{ false }}">
+          <span style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:22px;border-radius:0 2px 2px 0;background:linear-gradient(180deg,#22d3ee,#8b5cf6);box-shadow:0 0 8px rgba(34,211,238,.8);"></span>
+        </sc-if>
+        <button onClick="{{ nav.go }}" style="width:{{ navCollapsed ? '42px' : '100%' }};height:38px;border-radius:11px;border:1px solid {{ nav.active ? navActiveBorder : 'transparent' }};cursor:pointer;display:flex;align-items:center;gap:9px;padding:{{ navCollapsed ? '0' : '0 10px' }};justify-content:{{ navCollapsed ? 'center' : 'flex-start' }};transition:all .18s;background:{{ nav.active ? navActiveBg : 'transparent' }};color:{{ nav.active ? acA : 'rgba(232,234,242,.38)' }};" style-hover="background:rgba(110,231,255,.06);color:rgba(232,234,242,.8);" title="{{ nav.label }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="flex-shrink:0;"><sc-for list="{{ nav.paths }}" as="p"><path d="{{ p }}"/></sc-for></svg>
+          <sc-if value="{{ !navCollapsed }}" hint-placeholder-val="{{ false }}"><span style="font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ nav.label }}</span></sc-if>
+        </button>
+        <sc-if value="{{ nav.badge }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;{{ navCollapsed ? 'top:2px;right:2px' : 'top:50%;right:10px;transform:translateY(-50%)' }};min-width:16px;height:16px;border-radius:8px;background:linear-gradient(135deg,#f43f5e,#fb7185);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;box-shadow:0 0 8px rgba(244,63,94,.6);">{{ nav.badge }}</span></sc-if>
+      </div>
+    </sc-for>
+    <div style="flex:1;"></div>
+    <button onClick="{{ openCmd }}" style="width:{{ navCollapsed ? '38px' : '80%' }};height:32px;border-radius:10px;border:1px dashed rgba(110,231,255,.2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:{{ navCollapsed ? 'center' : 'flex-start' }};gap:7px;padding:{{ navCollapsed ? '0' : '0 10px' }};color:rgba(232,234,242,.3);transition:all .15s;margin-bottom:8px;flex-shrink:0;" style-hover="border-color:rgba(34,211,238,.4);color:#6ee7ff;" title="⌘K">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <sc-if value="{{ !navCollapsed }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;">⌘K</span></sc-if>
+    </button>
+    <button onClick="{{ toggleNav }}" style="width:30px;height:30px;border-radius:9px;border:1px solid rgba(110,231,255,.12);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(232,234,242,.28);transition:all .15s;margin-bottom:10px;flex-shrink:0;" style-hover="background:rgba(110,231,255,.07);color:#6ee7ff;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><sc-if value="{{ navCollapsed }}" hint-placeholder-val="{{ false }}"><path d="M9 18l6-6-6-6"/></sc-if><sc-if value="{{ !navCollapsed }}" hint-placeholder-val="{{ true }}"><path d="M15 18l-6-6 6-6"/></sc-if></svg>
+    </button>
+    <div style="width:34px;height:34px;border-radius:50%;padding:2px;background:linear-gradient(135deg,#22d3ee,#8b5cf6);cursor:pointer;animation:glow-pulse 3s ease-in-out infinite;flex-shrink:0;">
+      <div style="width:100%;height:100%;border-radius:50%;background:#0a0c14;display:flex;align-items:center;justify-content:center;position:relative;"><span style="color:#6ee7ff;font-size:10px;font-weight:700;font-family:'Space Grotesk',sans-serif;">JQ</span><span style="position:absolute;bottom:0;right:0;width:8px;height:8px;border-radius:50%;background:#34d399;border:2px solid #0a0c14;animation:pulse-ring 2.4s infinite;"></span></div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div style="position:relative;z-index:2;flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;">
+
+    <!-- ══ INBOX ══ -->
+    <sc-if value="{{ screen === 'inbox' }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;height:100vh;animation:slide-screen .22s ease both;">
+
+        <!-- Conv List -->
+        <div style="width:300px;min-width:300px;height:100vh;display:flex;flex-direction:column;background:rgba(10,12,20,.65);backdrop-filter:blur(24px);border-right:1px solid rgba(110,231,255,.06);filter:{{ zenMode ? 'blur(3px) opacity(0.3)' : 'none' }};transition:filter .3s;">
+          <div style="padding:18px 15px 10px;flex-shrink:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+              <h2 style="font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;background:linear-gradient(90deg,#e8eaf2,#6ee7ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.3px;">Mensagens</h2>
+              <div style="display:flex;gap:5px;">
+                <button onClick="{{ openCmd }}" style="width:30px;height:30px;border-radius:9px;border:1px solid rgba(110,231,255,.15);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(232,234,242,.35);transition:all .15s;" style-hover="background:rgba(110,231,255,.08);color:#6ee7ff;" title="⌘K"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button>
+                <button style="width:30px;height:30px;border-radius:9px;border:1px solid rgba(34,211,238,.25);background:rgba(34,211,238,.08);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6ee7ff;transition:all .15s;" style-hover="background:rgba(34,211,238,.18);" title="Nova conversa"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+              </div>
+            </div>
+            <p style="font-size:10.5px;color:rgba(232,234,242,.3);display:flex;align-items:center;gap:5px;margin-bottom:12px;"><span style="width:5px;height:5px;border-radius:50%;background:#34d399;box-shadow:0 0 6px rgba(52,211,153,.8);"></span>{{ onlineCount }} online · {{ clock }}</p>
+            <!-- Search -->
+            <div style="position:relative;margin-bottom:10px;">
+              <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(110,231,255,.4)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="text" placeholder="Buscar…  ⌘K" style="width:100%;height:34px;border-radius:10px;border:1px solid rgba(110,231,255,.1);background:rgba(255,255,255,.03);color:#e8eaf2;font-family:'Outfit',sans-serif;font-size:12px;padding:0 10px 0 32px;outline:none;transition:border-color .15s;cursor:pointer;" onClick="{{ openCmd }}" readonly/>
+            </div>
+            <!-- Tabs -->
+            <div style="display:flex;gap:4px;background:rgba(255,255,255,.04);border-radius:9px;padding:3px;margin-bottom:10px;">
+              <sc-for list="{{ convTabs }}" as="t"><button onClick="{{ t.action }}" style="flex:1;height:24px;border-radius:7px;border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:10.5px;font-weight:{{ t.active ? '600' : '400' }};transition:all .15s;background:{{ t.active ? 'rgba(34,211,238,.15)' : 'transparent' }};color:{{ t.active ? '#6ee7ff' : 'rgba(232,234,242,.38)' }};">{{ t.label }}</button></sc-for>
+            </div>
+            <!-- Sentiment filter -->
+            <div style="display:flex;gap:5px;overflow-x:auto;padding-bottom:2px;">
+              <sc-for list="{{ sentFilters }}" as="sf"><button onClick="{{ sf.action }}" style="height:24px;padding:0 10px;border-radius:12px;border:1px solid {{ sf.active ? sf.borderColor : 'rgba(255,255,255,.07)' }};cursor:pointer;font-size:11px;font-weight:{{ sf.active ? '600' : '400' }};white-space:nowrap;transition:all .15s;background:{{ sf.active ? sf.bgColor : 'transparent' }};color:{{ sf.active ? sf.textColor : 'rgba(232,234,242,.4)' }};" style-hover="opacity:.85;">{{ sf.label }}</button></sc-for>
+            </div>
+          </div>
+
+          <!-- Stories -->
+          <div style="padding:0 12px 8px;flex-shrink:0;border-bottom:1px solid rgba(110,231,255,.05);">
+            <div style="display:flex;gap:9px;overflow-x:auto;padding:2px 0 4px;">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex-shrink:0;"><div style="width:42px;height:42px;border-radius:13px;background:rgba(34,211,238,.07);border:1.5px dashed rgba(34,211,238,.3);display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(34,211,238,.14);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div><span style="font-size:8px;color:rgba(232,234,242,.3);">Novo</span></div>
+              <sc-for list="{{ stories }}" as="s"><div style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex-shrink:0;"><div style="width:42px;height:42px;border-radius:13px;padding:2px;background:{{ s.seen ? 'rgba(255,255,255,.06)' : 'linear-gradient(135deg,#22d3ee,#8b5cf6,#ec4899)' }};background-size:200%;animation:{{ s.seen ? 'none' : 'story-ring 3s linear infinite' }};"><div style="width:100%;height:100%;border-radius:10px;background:{{ s.bg }};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;border:2px solid #0a0c14;font-family:'Space Grotesk',sans-serif;">{{ s.init }}</div></div><span style="font-size:8px;color:{{ s.seen ? 'rgba(232,234,242,.25)' : 'rgba(232,234,242,.65)' }};white-space:nowrap;max-width:46px;overflow:hidden;text-overflow:ellipsis;">{{ s.name }}</span></div></sc-for>
+            </div>
+          </div>
+
+          <!-- AI sort toggle -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px 4px;flex-shrink:0;">
+            <span style="font-size:9.5px;color:rgba(232,234,242,.3);font-weight:600;letter-spacing:.08em;text-transform:uppercase;">CONVERSAS</span>
+            <button onClick="{{ toggleAISort }}" style="display:flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:8px;border:1px solid {{ aiSort ? 'rgba(167,139,250,.4)' : 'rgba(255,255,255,.08)' }};cursor:pointer;background:{{ aiSort ? 'rgba(167,139,250,.1)' : 'transparent' }};color:{{ aiSort ? '#a78bfa' : 'rgba(232,234,242,.35)' }};font-size:9.5px;font-weight:600;transition:all .15s;" style-hover="opacity:.8;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+              {{ aiSortLabel }}
+            </button>
+          </div>
+
+          <!-- Items -->
+          <div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:3px 8px 8px;" id="convList">
+            <sc-for list="{{ conversations }}" as="conv" hint-placeholder-count="5">
+              <div onClick="{{ conv.select }}" onMouseEnter="{{ conv.hover }}" onMouseLeave="{{ conv.unhover }}" style="position:relative;display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:13px;cursor:pointer;margin-bottom:2px;transition:all .18s;background:{{ conv.cardBg }};border:1px solid {{ conv.cardBorder }};" style-hover="background:rgba(110,231,255,.04);transform:translateX(2px);">
+                <div style="position:relative;flex-shrink:0;">
+                  <div style="width:{{ dnAvatar }};height:{{ dnAvatar }};border-radius:{{ dnAvatarR }};background:{{ conv.avatarBg }};display:flex;align-items:center;justify-content:center;font-size:{{ dnFontSize }};font-weight:700;color:#fff;font-family:'Space Grotesk',sans-serif;box-shadow:0 3px 10px rgba(0,0,0,.4);">{{ conv.initials }}</div>
+                  <sc-if value="{{ conv.online }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;bottom:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:#34d399;border:2px solid #0a0c14;box-shadow:0 0 6px rgba(52,211,153,.7);"></span></sc-if>
+                </div>
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+                    <span style="font-size:12.5px;font-weight:{{ conv.unread ? '600' : '500' }};color:{{ conv.unread ? '#e8eaf2' : 'rgba(232,234,242,.65)' }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:138px;">{{ conv.name }}</span>
+                    <span style="font-size:9.5px;color:{{ conv.unread ? '#6ee7ff' : 'rgba(232,234,242,.25)' }};flex-shrink:0;font-family:'Space Grotesk',sans-serif;">{{ conv.time }}</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:5px;">
+                    <span style="font-size:10.5px;color:rgba(232,234,242,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;"><sc-if value="{{ conv.typing }}" hint-placeholder-val="{{ false }}"><em style="color:#22d3ee;font-style:normal;">digitando…</em></sc-if><sc-if value="{{ !conv.typing }}" hint-placeholder-val="{{ true }}">{{ conv.lastMsg }}</sc-if></span>
+                    <sc-if value="{{ conv.unread }}" hint-placeholder-val="{{ false }}"><span style="min-width:17px;height:17px;border-radius:8px;background:{{ gradAB }};color:{{ textDark }};font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;flex-shrink:0;box-shadow:{{ glowA }};">{{ conv.unread }}</span></sc-if>
+                    <sc-if value="{{ conv.tag }}" hint-placeholder-val="{{ false }}"><span style="font-size:8px;padding:1.5px 6px;border-radius:5px;font-weight:700;letter-spacing:.04em;background:{{ conv.tagBg }};color:{{ conv.tagColor }};border:1px solid {{ conv.tagBorder }};flex-shrink:0;">{{ conv.tag }}</span></sc-if>
+                    <sc-if value="{{ conv.sentiment }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;">{{ conv.sentiment }}</span></sc-if>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- Chat column -->
+        <div style="flex:1;display:flex;flex-direction:column;min-width:0;background:#04050a;position:relative;">
+
+          <!-- Chat header -->
+          <div style="height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:rgba(8,10,18,.55);backdrop-filter:blur(24px);border-bottom:1px solid rgba(110,231,255,.06);flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:11px;">
+              <div style="position:relative;">
+                <div style="width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;font-family:'Space Grotesk',sans-serif;box-shadow:0 0 16px rgba(139,92,246,.3);">MF</div>
+                <span style="position:absolute;bottom:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:#34d399;border:2.5px solid #080a12;animation:pulse-ring 2.4s infinite;"></span>
+              </div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <h3 style="font-family:'Space Grotesk',sans-serif;font-size:14.5px;font-weight:600;color:#e8eaf2;letter-spacing:-.2px;cursor:pointer;" onClick="{{ toggleZen }}" title="Modo Foco">Maria Fernanda</h3>
+                  <sc-if value="{{ zenMode }}" hint-placeholder-val="{{ false }}"><span style="font-size:9px;padding:2px 7px;border-radius:5px;background:rgba(34,211,238,.12);color:#6ee7ff;border:1px solid rgba(34,211,238,.2);font-weight:600;letter-spacing:.06em;">FOCO</span></sc-if>
+                </div>
+                <div style="display:flex;align-items:center;gap:5px;margin-top:1px;">
+                  <sc-if value="{{ isTyping }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px;color:#6ee7ff;display:flex;align-items:center;gap:3px;">digitando<span style="display:inline-flex;gap:2px;"><span style="width:3px;height:3px;border-radius:50%;background:#6ee7ff;animation:typing-dot 1.2s infinite 0s;"></span><span style="width:3px;height:3px;border-radius:50%;background:#6ee7ff;animation:typing-dot 1.2s infinite .15s;"></span><span style="width:3px;height:3px;border-radius:50%;background:#6ee7ff;animation:typing-dot 1.2s infinite .3s;"></span></span></span></sc-if>
+                  <sc-if value="{{ !isTyping }}" hint-placeholder-val="{{ true }}"><span style="font-size:10.5px;color:rgba(232,234,242,.35);">Online · WhatsApp</span></sc-if>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <div style="padding:4px 10px;border-radius:9px;background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.25);display:flex;align-items:center;gap:5px;">
+                <span style="width:5px;height:5px;border-radius:50%;background:#34d399;box-shadow:0 0 5px rgba(52,211,153,.9);"></span>
+                <span style="font-size:9.5px;font-weight:700;color:#34d399;font-family:'Space Grotesk',sans-serif;">SLA {{ slaClock }}</span>
+              </div>
+              <sc-for list="{{ chatActions }}" as="ca">
+                <button onClick="{{ ca.action }}" style="width:34px;height:34px;border-radius:10px;border:1px solid {{ ca.active ? 'rgba(34,211,238,.4)' : 'transparent' }};cursor:pointer;display:flex;align-items:center;justify-content:center;background:{{ ca.active ? 'rgba(34,211,238,.12)' : 'transparent' }};color:{{ ca.active ? '#6ee7ff' : 'rgba(232,234,242,.35)' }};transition:all .18s;" style-hover="background:rgba(110,231,255,.07);color:#6ee7ff;" title="{{ ca.label }}">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><sc-for list="{{ ca.paths }}" as="p"><path d="{{ p }}"/></sc-for></svg>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- Pinned banner -->
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 20px;background:rgba(251,191,36,.04);border-bottom:1px solid rgba(251,191,36,.1);flex-shrink:0;cursor:pointer;" style-hover="background:rgba(251,191,36,.08);">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round" style="flex-shrink:0;"><path d="M12 17v5M8 3h8l1 8H7zM7 11s-.5 3 5 3 5-3 5-3"/></svg>
+            <p style="font-size:10.5px;color:rgba(232,234,242,.48);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><span style="color:#fbbf24;font-weight:500;">Fixado:</span> O código de rastreio é BR-4921-8847-XZ. Acompanhe em tempo real pelo link.</p>
+          </div>
+
+          <!-- Messages -->
+          <div id="msgArea" style="flex:1;overflow-y:auto;overflow-x:hidden;padding:18px 22px;display:flex;flex-direction:column;gap:1px;min-width:0;position:relative;" onContextMenu="{{ onRightClick }}">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+              <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(110,231,255,.12));"></div>
+              <span style="font-size:9.5px;font-weight:600;color:rgba(110,231,255,.4);font-family:'Space Grotesk',sans-serif;letter-spacing:.12em;">HOJE · 31 AGO</span>
+              <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(110,231,255,.12),transparent);"></div>
+            </div>
+
+            <sc-for list="{{ messages }}" as="msg" hint-placeholder-count="4">
+              <div onMouseEnter="{{ msg.hover }}" onMouseLeave="{{ msg.leave }}" style="position:relative;display:flex;flex-direction:column;align-items:{{ msg.sent ? 'flex-end' : 'flex-start' }};margin-bottom:{{ msg.gap ? '14px' : '2px' }};animation:msg-in .28s cubic-bezier(.2,.9,.3,1.2) both;">
+                <!-- Checkbox -->
+                <sc-if value="{{ selectMode }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute;{{ msg.sent ? 'right:-24px' : 'left:-24px' }};top:50%;transform:translateY(-50%);">
+                    <div onClick="{{ msg.toggleSel }}" style="width:17px;height:17px;border-radius:4px;border:1.5px solid {{ msg.selected ? '#22d3ee' : 'rgba(110,231,255,.3)' }};background:{{ msg.selected ? 'rgba(34,211,238,.2)' : 'transparent' }};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;">
+                      <sc-if value="{{ msg.selected }}" hint-placeholder-val="{{ false }}"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="3" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg></sc-if>
+                    </div>
+                  </div>
+                </sc-if>
+                <div style="max-width:62%;min-width:0;position:relative;">
+                  <!-- Reaction bar -->
+                  <sc-if value="{{ msg.hovered }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute;{{ msg.sent ? 'right:0' : 'left:0' }};top:-38px;display:flex;gap:2px;padding:4px 6px;border-radius:11px;background:rgba(10,12,22,.98);border:1px solid rgba(110,231,255,.15);backdrop-filter:blur(20px);z-index:10;animation:rx-pop .16s ease;">
+                      <sc-for list="{{ rxnEmojis }}" as="em"><button onClick="{{ em.react }}" style="width:27px;height:27px;border:none;border-radius:7px;cursor:pointer;background:transparent;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .12s;" style-hover="background:rgba(110,231,255,.1);transform:scale(1.3);">{{ em.emoji }}</button></sc-for>
+                      <div style="width:1px;height:15px;background:rgba(110,231,255,.12);margin:4px 2px;"></div>
+                      <button onClick="{{ msg.reply }}" style="width:27px;height:27px;border:none;border-radius:7px;cursor:pointer;background:transparent;color:rgba(232,234,242,.35);display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(110,231,255,.1);color:#6ee7ff;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 17H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><path d="m15 21 3-3-3-3M18 18H9"/></svg></button>
+                    </div>
+                  </sc-if>
+
+                  <!-- Product card message -->
+                  <sc-if value="{{ msg.product }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:12px;border-radius:{{ msg.sent ? '14px 4px 14px 14px' : '4px 14px 14px 14px' }};background:{{ msg.sent ? 'rgba(99,102,241,.15)' : 'rgba(255,255,255,.04)' }};border:1px solid {{ msg.sent ? 'rgba(99,102,241,.3)' : 'rgba(110,231,255,.1)' }};min-width:220px;">
+                      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                        <div style="width:44px;height:44px;border-radius:10px;background:rgba(139,92,246,.2);border:1px solid rgba(139,92,246,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
+                        </div>
+                        <div>
+                          <p style="font-size:12.5px;font-weight:600;color:#e8eaf2;">{{ msg.product.name }}</p>
+                          <p style="font-size:11px;color:rgba(232,234,242,.4);margin-top:1px;">{{ msg.product.qty }}</p>
+                        </div>
+                      </div>
+                      <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <div>
+                          <p style="font-size:9px;color:rgba(232,234,242,.3);text-transform:uppercase;letter-spacing:.08em;">Total</p>
+                          <p style="font-size:17px;font-weight:700;color:#34d399;font-family:'Space Grotesk',sans-serif;text-shadow:0 0 10px rgba(52,211,153,.4);">{{ msg.product.price }}</p>
+                        </div>
+                        <button style="padding:7px 14px;border-radius:9px;border:1px solid rgba(34,211,238,.3);background:rgba(34,211,238,.1);color:#6ee7ff;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;" style-hover="background:rgba(34,211,238,.2);">Enviar orçamento</button>
+                      </div>
+                    </div>
+                  </sc-if>
+
+                  <!-- Link preview card -->
+                  <sc-if value="{{ msg.link }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:10px;border-radius:{{ msg.sent ? '14px 4px 14px 14px' : '4px 14px 14px 14px' }};background:{{ msg.sent ? 'rgba(99,102,241,.12)' : 'rgba(255,255,255,.04)' }};border:1px solid rgba(110,231,255,.12);min-width:200px;">
+                      <div style="height:72px;border-radius:7px;background:linear-gradient(135deg,rgba(34,211,238,.08),rgba(139,92,246,.08));border:1px solid rgba(110,231,255,.1);margin-bottom:8px;display:flex;align-items:center;justify-content:center;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(110,231,255,.35)" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                      </div>
+                      <p style="font-size:11.5px;font-weight:600;color:#e8eaf2;">{{ msg.link.title }}</p>
+                      <p style="font-size:10px;color:rgba(232,234,242,.38);margin-top:2px;">{{ msg.link.url }}</p>
+                    </div>
+                  </sc-if>
+
+                  <!-- Standard bubble -->
+                  <sc-if value="{{ !msg.product && !msg.link }}" hint-placeholder-val="{{ true }}">
+                    <div style="padding:10px 14px;font-size:12.5px;line-height:1.58;word-break:break-word;border-radius:{{ msg.sent ? '15px 4px 15px 15px' : '4px 15px 15px 15px' }};background:{{ msg.optimistic ? 'linear-gradient(135deg,rgba(103,232,249,.6),rgba(167,139,250,.6))' : msg.sent ? 'linear-gradient(135deg,#67e8f9,#a78bfa)' : 'rgba(255,255,255,.045)' }};color:{{ msg.sent ? '#04070d' : 'rgba(232,234,242,.88)' }};border:{{ msg.sent ? 'none' : '1px solid rgba(110,231,255,.08)' }};backdrop-filter:{{ msg.sent ? 'none' : 'blur(12px)' }};box-shadow:{{ msg.sent ? '0 4px 18px rgba(103,232,249,.2)' : '0 3px 12px rgba(0,0,0,.2)' }};font-weight:{{ msg.sent ? '500' : '400' }};opacity:{{ msg.optimistic ? '.6' : '1' }};transition:opacity .3s;">{{ msg.text }}</div>
+                  </sc-if>
+
+                  <sc-if value="{{ msg.reactions }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;gap:3px;margin-top:3px;flex-wrap:wrap;justify-content:{{ msg.sent ? 'flex-end' : 'flex-start' }};"><sc-for list="{{ msg.reactions }}" as="r"><span style="font-size:10.5px;padding:2px 6px;border-radius:9px;background:rgba(255,255,255,.07);border:1px solid rgba(110,231,255,.1);cursor:pointer;" style-hover="background:rgba(110,231,255,.1);">{{ r }}</span></sc-for></div>
+                  </sc-if>
+                  <div style="display:flex;align-items:center;gap:3px;margin-top:3px;justify-content:{{ msg.sent ? 'flex-end' : 'flex-start' }};">
+                    <span style="font-size:9px;color:rgba(232,234,242,.2);font-family:'Space Grotesk',sans-serif;">{{ msg.time }}</span>
+                    <sc-if value="{{ msg.sent && !msg.optimistic }}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="{{ msg.read ? '#67e8f9' : 'rgba(232,234,242,.25)' }}"><path d="M18 7l-1.41-1.41-6.34 6.34-2.83-2.83-1.41 1.41 4.24 4.24zM3.5 12l-1.41 1.41 6.02 6.02L21.09 7l-1.41-1.41-11.07 11.07z"/></svg></sc-if>
+                    <sc-if value="{{ msg.sent && msg.optimistic }}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(232,234,242,.2)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg></sc-if>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+
+            <!-- Typing -->
+            <sc-if value="{{ isTyping }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;animation:msg-in .22s ease both;margin-bottom:12px;">
+                <div style="padding:11px 14px;border-radius:4px 15px 15px 15px;background:rgba(255,255,255,.045);border:1px solid rgba(110,231,255,.08);display:flex;gap:5px;align-items:center;">
+                  <span style="width:6px;height:6px;border-radius:50%;background:#6ee7ff;animation:typing-dot 1.3s infinite 0s;"></span>
+                  <span style="width:6px;height:6px;border-radius:50%;background:#8b5cf6;animation:typing-dot 1.3s infinite .18s;"></span>
+                  <span style="width:6px;height:6px;border-radius:50%;background:#6ee7ff;animation:typing-dot 1.3s infinite .36s;"></span>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- Scroll to bottom pill -->
+            <sc-if value="{{ showScrollBtn }}" hint-placeholder-val="{{ false }}">
+              <div onClick="{{ scrollBottom }}" style="position:sticky;bottom:10px;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border-radius:20px;background:rgba(10,12,22,.96);border:1px solid rgba(34,211,238,.25);cursor:pointer;animation:pop-in .2s ease;backdrop-filter:blur(20px);box-shadow:0 4px 20px rgba(0,0,0,.5);width:max-content;margin:0 auto;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6ee7ff" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                <span style="font-size:11px;font-weight:600;color:#6ee7ff;font-family:'Space Grotesk',sans-serif;">{{ newMsgCount }} nova{{ newMsgCount > 1 ? 's' : '' }}</span>
+              </div>
+            </sc-if>
+          </div>
+
+          <!-- AI Summary Panel (slide-in) -->
+          <sc-if value="{{ showSummary }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;top:64px;right:0;bottom:0;width:320px;background:rgba(10,12,22,.97);backdrop-filter:blur(24px);border-left:1px solid rgba(110,231,255,.12);padding:16px;overflow-y:auto;animation:slide-right .25s ease;z-index:20;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,#8b5cf6,#22d3ee);display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#04050a" stroke-width="2.2" stroke-linecap="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg></div>
+                  <h3 style="font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:#e8eaf2;">Resumo IA</h3>
+                </div>
+                <button onClick="{{ toggleSummary }}" style="width:24px;height:24px;border:none;background:transparent;cursor:pointer;color:rgba(232,234,242,.3);" style-hover="color:rgba(232,234,242,.7);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+              </div>
+              <div style="padding:12px;border-radius:12px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);margin-bottom:12px;">
+                <p style="font-size:9.5px;font-weight:700;color:#a78bfa;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px;">RESUMO DA CONVERSA</p>
+                <p style="font-size:12px;color:rgba(232,234,242,.75);line-height:1.65;">Cliente aguarda rastreio do pedido #PB-2024-1847. Pedido saiu para entrega, previsão até 18h. Cliente está satisfeita, sentimento positivo (78%).</p>
+              </div>
+              <div style="padding:12px;border-radius:12px;background:rgba(34,211,238,.05);border:1px solid rgba(34,211,238,.15);margin-bottom:12px;">
+                <p style="font-size:9.5px;font-weight:700;color:#6ee7ff;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px;">PONTOS-CHAVE</p>
+                <sc-for list="{{ summaryPoints }}" as="pt">
+                  <div style="display:flex;align-items:flex-start;gap:7px;margin-bottom:6px;">
+                    <span style="width:5px;height:5px;border-radius:50%;background:#22d3ee;margin-top:5px;flex-shrink:0;"></span>
+                    <p style="font-size:11.5px;color:rgba(232,234,242,.65);">{{ pt }}</p>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="padding:12px;border-radius:12px;background:rgba(251,191,36,.05);border:1px solid rgba(251,191,36,.2);">
+                <p style="font-size:9.5px;font-weight:700;color:#fbbf24;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">PRÓXIMA AÇÃO SUGERIDA</p>
+                <p style="font-size:11.5px;color:rgba(232,234,242,.65);">Enviar link de rastreio em tempo real e aguardar confirmação de entrega.</p>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- Select mode bar -->
+          <sc-if value="{{ selectMode }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 20px;background:rgba(34,211,238,.06);border-top:1px solid rgba(34,211,238,.15);flex-shrink:0;">
+              <span style="font-size:11px;font-weight:600;color:#6ee7ff;font-family:'Space Grotesk',sans-serif;">{{ selCount }} msg{{ selCount !== 1 ? 's' : '' }}</span>
+              <div style="flex:1;"></div>
+              <sc-for list="{{ selActions }}" as="sa"><button onClick="{{ sa.action }}" style="height:27px;padding:0 11px;border-radius:8px;border:1px solid {{ sa.danger ? 'rgba(244,63,94,.3)' : 'rgba(34,211,238,.25)' }};cursor:pointer;background:{{ sa.danger ? 'rgba(244,63,94,.08)' : 'rgba(34,211,238,.08)' }};color:{{ sa.danger ? '#fb7185' : '#6ee7ff' }};font-family:'Space Grotesk',sans-serif;font-size:10.5px;font-weight:600;transition:all .12s;" style-hover="opacity:.8;">{{ sa.label }}</button></sc-for>
+              <button onClick="{{ exitSel }}" style="width:24px;height:24px;border:none;border-radius:7px;cursor:pointer;background:transparent;color:rgba(232,234,242,.3);display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(255,255,255,.06);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            </div>
+          </sc-if>
+
+          <!-- Copilot IA -->
+          <sc-if value="{{ showAI }}" hint-placeholder-val="{{ true }}">
+            <div style="margin:0 20px 8px;border-radius:13px;padding:1px;background:linear-gradient(90deg,rgba(139,92,246,.5),rgba(34,211,238,.5),rgba(139,92,246,.5));background-size:200% auto;animation:border-flow 4s linear infinite;">
+              <div style="border-radius:12px;background:rgba(10,12,22,.95);backdrop-filter:blur(20px);padding:9px 12px;display:flex;align-items:center;gap:9px;">
+                <div style="width:25px;height:25px;border-radius:8px;background:linear-gradient(135deg,#8b5cf6,#22d3ee);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 12px rgba(139,92,246,.5);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#04050a" stroke-width="2.2" stroke-linecap="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg></div>
+                <div style="flex:1;min-width:0;"><p style="font-size:8.5px;font-weight:700;color:#a78bfa;letter-spacing:.12em;font-family:'Space Grotesk',sans-serif;">COPILOT IA</p><p style="font-size:11.5px;color:rgba(232,234,242,.72);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">"O código de rastreio é BR-4921-8847-XZ. Acompanhe em tempo real pelo link."</p></div>
+                <button onClick="{{ applyAI }}" style="padding:5px 12px;border-radius:8px;border:none;cursor:pointer;background:linear-gradient(135deg,#22d3ee,#8b5cf6);color:#04050a;font-size:10.5px;font-weight:700;font-family:'Space Grotesk',sans-serif;flex-shrink:0;" style-hover="opacity:.85;">Usar</button>
+                <button onClick="{{ dismissAI }}" style="width:21px;height:21px;border:none;background:transparent;cursor:pointer;color:rgba(232,234,242,.22);display:flex;align-items:center;justify-content:center;" style-hover="color:rgba(232,234,242,.6);"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- Input -->
+          <div style="padding:0 20px 16px;flex-shrink:0;position:relative;">
+            <div style="border-radius:16px;padding:1px;background:{{ inputFocusBg }};background-size:200% auto;animation:{{ inputFocused ? 'border-flow 3s linear infinite' : 'none' }};transition:all .3s;box-shadow:{{ inputShadow }};">
+              <div style="display:flex;align-items:flex-end;gap:7px;background:rgba(8,10,18,.97);border-radius:15px;padding:8px 8px 8px 12px;">
+                <div style="display:flex;align-items:center;gap:1px;margin-bottom:2px;">
+                  <button style="width:29px;height:29px;border-radius:9px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;background:transparent;color:rgba(232,234,242,.28);transition:all .15s;" style-hover="background:rgba(110,231,255,.07);color:#6ee7ff;" title="Emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg></button>
+                  <button onClick="{{ toggleAttach }}" style="width:29px;height:29px;border-radius:9px;border:1px solid {{ showAttach ? 'rgba(34,211,238,.4)' : 'transparent' }};cursor:pointer;display:flex;align-items:center;justify-content:center;background:{{ showAttach ? 'rgba(34,211,238,.1)' : 'transparent' }};color:{{ showAttach ? '#6ee7ff' : 'rgba(232,234,242,.28)' }};transition:all .15s;" style-hover="background:rgba(110,231,255,.07);color:#6ee7ff;" title="Anexar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button>
+                  <button style="width:29px;height:29px;border-radius:9px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;background:transparent;color:rgba(232,234,242,.28);transition:all .15s;" style-hover="background:rgba(110,231,255,.07);color:#6ee7ff;" title="Áudio"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg></button>
+                </div>
+                <textarea placeholder="Escreva algo brilhante…" onFocus="{{ onInputFocus }}" onBlur="{{ onInputBlur }}" onInput="{{ onInputChange }}" onKeyDown="{{ onKeyDown }}" rows="1" style="flex:1;background:transparent;border:none;outline:none;color:#e8eaf2;font-family:'Outfit',sans-serif;font-size:13px;line-height:1.58;resize:none;min-height:22px;max-height:110px;padding-top:4px;"></textarea>
+                <button onClick="{{ handleSend }}" style="width:35px;height:35px;border-radius:11px;border:none;cursor:pointer;background:{{ gradAB }};display:flex;align-items:center;justify-content:center;transition:all .18s;box-shadow:{{ glowA }};flex-shrink:0;" style-hover="transform:scale(1.06) rotate(-4deg);" title="Enviar">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#04050a" stroke-width="2.4" stroke-linecap="round"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>
+                </button>
+              </div>
+            </div>
+            <!-- Attach popup -->
+            <sc-if value="{{ showAttach }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;bottom:72px;left:20px;z-index:20;animation:pop-in .18s cubic-bezier(.2,.9,.3,1.2);">
+                <div style="background:rgba(10,12,22,.98);backdrop-filter:blur(24px);border:1px solid rgba(110,231,255,.15);border-radius:17px;padding:13px;box-shadow:0 18px 52px rgba(0,0,0,.6);width:260px;">
+                  <p style="font-size:8.5px;font-weight:700;color:rgba(232,234,242,.28);letter-spacing:.12em;text-transform:uppercase;margin-bottom:9px;">ENVIAR</p>
+                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+                    <sc-for list="{{ attachTypes }}" as="at">
+                      <button onClick="{{ at.action }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 5px;border-radius:11px;border:1px solid rgba(110,231,255,.06);cursor:pointer;background:rgba(255,255,255,.03);transition:all .15s;" style-hover="background:{{ at.bgHover }};border-color:{{ at.borderHover }};transform:scale(1.04);">
+                        <div style="width:30px;height:30px;border-radius:9px;background:{{ at.bg }};display:flex;align-items:center;justify-content:center;box-shadow:0 0 10px {{ at.glow }};"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ at.color }}" stroke-width="1.8" stroke-linecap="round"><sc-for list="{{ at.paths }}" as="p"><path d="{{ p }}"/></sc-for></svg></div>
+                        <span style="font-size:9.5px;font-weight:500;color:rgba(232,234,242,.5);font-family:'Space Grotesk',sans-serif;">{{ at.label }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+              <div onClick="{{ closeAttach }}" style="position:fixed;inset:0;z-index:19;"></div>
+            </sc-if>
+          </div>
+        </div>
+
+        <!-- Right panel -->
+        <div style="width:278px;min-width:278px;height:100vh;display:flex;flex-direction:column;background:rgba(10,12,20,.65);backdrop-filter:blur(24px);border-left:1px solid rgba(110,231,255,.06);overflow-y:auto;overflow-x:hidden;">
+          <!-- Holo card -->
+          <div style="position:relative;margin:14px 12px 0;border-radius:19px;padding:1px;background:linear-gradient(160deg,rgba(34,211,238,.4),rgba(139,92,246,.3),transparent);overflow:hidden;flex-shrink:0;">
+            <div style="position:relative;border-radius:18px;background:rgba(8,10,18,.94);padding:20px 14px 16px;text-align:center;overflow:hidden;">
+              <div style="position:absolute;left:0;right:0;height:34px;background:linear-gradient(180deg,transparent,rgba(110,231,255,.03),transparent);animation:scan 4s linear infinite;pointer-events:none;"></div>
+              <div style="width:60px;height:60px;border-radius:20px;margin:0 auto 10px;padding:2px;background:linear-gradient(135deg,#22d3ee,#8b5cf6);box-shadow:0 0 24px rgba(34,211,238,.28);">
+                <div style="width:100%;height:100%;border-radius:17px;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;font-family:'Space Grotesk',sans-serif;">MF</div>
+              </div>
+              <h3 style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#e8eaf2;letter-spacing:-.2px;">Maria Fernanda</h3>
+              <p style="font-size:10.5px;color:rgba(232,234,242,.35);margin-top:2px;">+55 11 99999-0000</p>
+              <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-top:9px;">
+                <span style="padding:2.5px 9px;border-radius:6px;font-size:8.5px;font-weight:700;background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.28);">CLIENTE</span>
+                <span style="padding:2.5px 9px;border-radius:6px;font-size:8.5px;font-weight:700;background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.28);">★ VIP</span>
+              </div>
+            </div>
+          </div>
+          <!-- Sentiment -->
+          <div style="margin:10px 12px 0;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(110,231,255,.07);display:flex;align-items:center;gap:12px;flex-shrink:0;">
+            {{ sentimentRing }}
+            <div><p style="font-size:8.5px;font-weight:700;letter-spacing:.1em;color:rgba(232,234,242,.28);font-family:'Space Grotesk',sans-serif;">SENTIMENTO IA</p><p style="font-size:13px;font-weight:600;color:#34d399;margin-top:1px;">Positivo</p><p style="font-size:9.5px;color:rgba(232,234,242,.28);margin-top:1px;">Últ. 20 msgs</p></div>
+          </div>
+          <!-- Metrics -->
+          <div style="margin:10px 12px 0;display:grid;grid-template-columns:1fr 1fr;gap:7px;flex-shrink:0;">
+            <sc-for list="{{ metrics }}" as="m">
+              <div style="padding:11px 11px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(110,231,255,.07);" style-hover="border-color:rgba(34,211,238,.22);background:rgba(34,211,238,.04);">
+                <p style="font-size:8.5px;font-weight:700;letter-spacing:.08em;color:rgba(232,234,242,.28);font-family:'Space Grotesk',sans-serif;">{{ m.label }}</p>
+                <p style="font-size:15px;font-weight:700;margin-top:3px;font-family:'Space Grotesk',sans-serif;color:{{ m.color }};text-shadow:0 0 10px {{ m.glow }};">{{ m.value }}</p>
+              </div>
+            </sc-for>
+          </div>
+
+          <!-- Activity sparkline -->
+          <div style="margin:10px 12px 0;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(110,231,255,.07);flex-shrink:0;">
+            <p style="font-size:8.5px;font-weight:700;letter-spacing:.1em;color:rgba(232,234,242,.28);font-family:'Space Grotesk',sans-serif;margin-bottom:10px;">ATIVIDADE (7 DIAS)</p>
+            {{ sparkline }}
+            <div style="display:flex;justify-content:space-between;margin-top:5px;">
+              <sc-for list="{{ sparkLabels }}" as="sl"><span style="font-size:8px;color:rgba(232,234,242,.2);font-family:'Space Grotesk',sans-serif;">{{ sl }}</span></sc-for>
+            </div>
+          </div>
+
+          <!-- Next Best Action -->
+          <div style="margin:10px 12px 0;border-radius:14px;padding:1px;background:linear-gradient(135deg,rgba(251,191,36,.4),rgba(245,158,11,.2));animation:nba-pulse 3s infinite;flex-shrink:0;">
+            <div style="border-radius:13px;background:rgba(8,10,18,.95);padding:12px 13px;">
+              <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;">
+                <div style="width:22px;height:22px;border-radius:7px;background:rgba(251,191,36,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                </div>
+                <p style="font-size:9px;font-weight:700;color:#fbbf24;letter-spacing:.1em;text-transform:uppercase;font-family:'Space Grotesk',sans-serif;">PRÓXIMA MELHOR AÇÃO</p>
+              </div>
+              <p style="font-size:11.5px;color:rgba(232,234,242,.7);line-height:1.55;margin-bottom:10px;">Enviar link de rastreio em tempo real — aumenta CSAT em ~15%.</p>
+              <button style="width:100%;height:30px;border-radius:9px;border:1px solid rgba(251,191,36,.3);background:rgba(251,191,36,.08);color:#fbbf24;font-size:11px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .15s;" style-hover="background:rgba(251,191,36,.16);">Aplicar sugestão</button>
+            </div>
+          </div>
+
+          <!-- Purchases -->
+          <div style="margin:10px 12px 0;flex:1 0 auto;">
+            <p style="font-size:8.5px;font-weight:700;letter-spacing:.1em;color:rgba(232,234,242,.28);font-family:'Space Grotesk',sans-serif;margin-bottom:9px;">TIMELINE DE COMPRAS</p>
+            <div style="position:relative;padding-left:13px;">
+              <div style="position:absolute;left:3px;top:5px;bottom:5px;width:1.5px;background:linear-gradient(180deg,#22d3ee,rgba(139,92,246,.4),transparent);"></div>
+              <sc-for list="{{ purchases }}" as="item">
+                <div style="position:relative;margin-bottom:9px;">
+                  <span style="position:absolute;left:-13px;top:5px;width:7px;height:7px;border-radius:50%;background:{{ item.dotColor }};box-shadow:0 0 7px {{ item.dotGlow }};border:1.5px solid #0a0c14;"></span>
+                  <div style="padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(110,231,255,.05);transition:all .15s;" style-hover="border-color:rgba(34,211,238,.22);transform:translateX(2px);">
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                      <p style="font-size:10px;font-weight:500;color:rgba(232,234,242,.72);">{{ item.name }}</p>
+                      <span style="font-size:10px;font-weight:700;color:#34d399;font-family:'Space Grotesk',sans-serif;">{{ item.value }}</span>
+                    </div>
+                    <p style="font-size:8.5px;color:rgba(232,234,242,.26);margin-top:1px;font-family:'Space Grotesk',sans-serif;">{{ item.date }}</p>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="margin:6px 12px 14px;display:flex;gap:7px;flex-shrink:0;">
+            <button style="flex:1;height:34px;border-radius:11px;border:1px solid rgba(34,211,238,.28);cursor:pointer;background:rgba(34,211,238,.07);color:#6ee7ff;font-family:'Space Grotesk',sans-serif;font-size:10.5px;font-weight:600;transition:all .2s;" style-hover="background:rgba(34,211,238,.14);">CRM 360°</button>
+            <button style="flex:1;height:34px;border-radius:11px;border:1px solid rgba(139,92,246,.28);cursor:pointer;background:rgba(139,92,246,.07);color:#a78bfa;font-family:'Space Grotesk',sans-serif;font-size:10.5px;font-weight:600;transition:all .2s;" style-hover="background:rgba(139,92,246,.14);">Transferir</button>
+          </div>
+        </div>
+
+        <!-- Call overlay -->
+        <sc-if value="{{ callActive }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;inset:0;z-index:50;background:rgba(4,5,10,.94);backdrop-filter:blur(32px);display:flex;align-items:center;justify-content:center;animation:pop-in .3s ease;">
+            <div style="position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);width:440px;height:440px;border-radius:50%;background:radial-gradient(circle,rgba(34,211,238,.09),transparent 60%);filter:blur(60px);pointer-events:none;"></div>
+            <div style="position:relative;text-align:center;">
+              <div style="position:relative;display:inline-block;margin-bottom:22px;">
+                <div style="position:absolute;inset:-14px;border-radius:50%;border:1.5px solid rgba(34,211,238,.18);animation:call-ring 1.8s ease-out infinite;"></div>
+                <div style="width:84px;height:84px;border-radius:25px;padding:3px;background:linear-gradient(135deg,#22d3ee,#8b5cf6);box-shadow:0 0 32px rgba(34,211,238,.38);">
+                  <div style="width:100%;height:100%;border-radius:21px;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;font-family:'Space Grotesk',sans-serif;">MF</div>
+                </div>
+              </div>
+              <h2 style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#e8eaf2;letter-spacing:-.3px;">Maria Fernanda</h2>
+              <p style="font-size:11.5px;color:rgba(232,234,242,.4);margin-top:5px;font-family:'Space Grotesk',sans-serif;">{{ callStatus }}</p>
+              <p style="font-size:26px;font-weight:700;color:#6ee7ff;margin-top:7px;font-family:'Space Grotesk',sans-serif;text-shadow:0 0 16px rgba(110,231,255,.5);letter-spacing:.08em;">{{ callTimer }}</p>
+              <div style="display:flex;align-items:center;justify-content:center;gap:13px;margin-top:30px;">
+                <sc-for list="{{ callControls }}" as="cc">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:7px;">
+                    <button onClick="{{ cc.action }}" style="width:50px;height:50px;border-radius:16px;border:1px solid {{ cc.danger ? 'rgba(239,68,68,.4)' : 'rgba(255,255,255,.1)' }};cursor:pointer;display:flex;align-items:center;justify-content:center;background:{{ cc.danger ? 'linear-gradient(135deg,#ef4444,#dc2626)' : 'rgba(255,255,255,.06)' }};color:{{ cc.danger ? '#fff' : 'rgba(232,234,242,.7)' }};transition:all .18s;box-shadow:{{ cc.danger ? '0 0 20px rgba(239,68,68,.4)' : 'none' }};" style-hover="transform:scale(1.08);">
+                      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><sc-for list="{{ cc.paths }}" as="p"><path d="{{ p }}"/></sc-for></svg>
+                    </button>
+                    <span style="font-size:9.5px;color:rgba(232,234,242,.3);font-family:'Space Grotesk',sans-serif;">{{ cc.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ══ PIPELINE ══ -->
+    <sc-if value="{{ screen === 'pipeline' }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100vh;display:flex;flex-direction:column;animation:slide-screen .22s ease both;">
+        <!-- Header -->
+        <div style="padding:20px 28px 0;flex-shrink:0;">
+          <h1 style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;background:linear-gradient(90deg,#e8eaf2,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.4px;margin-bottom:4px;">Pipeline de Vendas</h1>
+          <p style="font-size:11.5px;color:rgba(232,234,242,.35);">{{ pipelineStats }}</p>
+        </div>
+        <!-- Kanban board -->
+        <div style="flex:1;display:flex;gap:14px;padding:16px 28px 24px;overflow-x:auto;align-items:flex-start;">
+          <sc-for list="{{ kanbanCols }}" as="col">
+            <div style="min-width:242px;width:242px;display:flex;flex-direction:column;gap:8px;animation:kanban-in .3s ease both;" style="animation-delay:{{ col.delay }}s;">
+              <!-- Column header -->
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;">
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <span style="width:8px;height:8px;border-radius:50%;background:{{ col.color }};box-shadow:0 0 8px {{ col.color }};"></span>
+                  <span style="font-size:12px;font-weight:600;color:#e8eaf2;font-family:'Space Grotesk',sans-serif;">{{ col.label }}</span>
+                  <span style="min-width:18px;height:18px;border-radius:9px;background:rgba(255,255,255,.07);color:rgba(232,234,242,.5);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 5px;font-family:'Space Grotesk',sans-serif;">{{ col.count }}</span>
+                </div>
+                <button style="width:24px;height:24px;border-radius:7px;border:none;background:transparent;cursor:pointer;color:rgba(232,234,242,.28);display:flex;align-items:center;justify-content:center;" style-hover="background:rgba(255,255,255,.06);color:#6ee7ff;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+              </div>
+              <!-- Cards -->
+              <sc-for list="{{ col.cards }}" as="card">
+                <div style="padding:12px 13px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(110,231,255,.07);cursor:grab;transition:all .18s;" style-hover="border-color:rgba(110,231,255,.18);background:rgba(110,231,255,.04);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.25);">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px;">
+                    <div style="flex:1;min-width:0;">
+                      <p style="font-size:12.5px;font-weight:600;color:#e8eaf2;margin-bottom:2px;">{{ card.name }}</p>
+                      <p style="font-size:10.5px;color:rgba(232,234,242,.4);">{{ card.contact }}</p>
+                    </div>
+                    <span style="font-size:9px;padding:2px 7px;border-radius:5px;font-weight:700;background:{{ card.priorityBg }};color:{{ card.priorityColor }};border:1px solid {{ card.priorityBorder }};flex-shrink:0;margin-left:8px;letter-spacing:.04em;">{{ card.priority }}</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
+                    <span style="font-size:16px;font-weight:700;color:#34d399;font-family:'Space Grotesk',sans-serif;text-shadow:0 0 10px rgba(52,211,153,.4);">{{ card.value }}</span>
+                    <span style="font-size:10px;color:rgba(232,234,242,.28);">·</span>
+                    <span style="font-size:10.5px;color:rgba(232,234,242,.38);">{{ card.product }}</span>
+                  </div>
+                  <!-- Progress bar -->
+                  <div style="height:3px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden;margin-bottom:9px;">
+                    <div style="height:100%;border-radius:2px;background:{{ col.color }};width:{{ card.progress }}%;transition:width .4s ease;"></div>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:5px;">
+                      <div style="width:18px;height:18px;border-radius:6px;background:{{ card.agentBg }};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;font-family:'Space Grotesk',sans-serif;">{{ card.agentInit }}</div>
+                      <span style="font-size:10px;color:rgba(232,234,242,.4);">{{ card.agent }}</span>
+                    </div>
+                    <span style="font-size:9.5px;color:rgba(232,234,242,.28);font-family:'Space Grotesk',sans-serif;">{{ card.date }}</span>
+                  </div>
+                </div>
+              </sc-for>
+              <!-- Add card button -->
+              <button style="height:36px;border-radius:11px;border:1px dashed rgba(110,231,255,.15);background:transparent;cursor:pointer;color:rgba(232,234,242,.3);font-size:12px;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;" style-hover="border-color:rgba(34,211,238,.35);color:#6ee7ff;background:rgba(34,211,238,.04);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                Adicionar card
+              </button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ══ DASHBOARD ══ -->
+    <sc-if value="{{ screen === 'dashboard' }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100vh;overflow-y:auto;padding:24px 28px;animation:slide-screen .22s ease both;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;">
+          <div><h1 style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;background:linear-gradient(90deg,#e8eaf2,#6ee7ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.4px;">Dashboard</h1><p style="font-size:11px;color:rgba(232,234,242,.35);margin-top:3px;">31 de agosto de 2026 · {{ clock }}</p></div>
+          <div style="display:flex;gap:4px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:3px;">
+            <sc-for list="{{ dashPeriods }}" as="dp"><button onClick="{{ dp.go }}" style="height:27px;padding:0 13px;border-radius:7px;border:none;cursor:pointer;font-size:11.5px;font-weight:{{ dp.active ? '500' : '400' }};background:{{ dp.active ? 'rgba(255,255,255,.07)' : 'transparent' }};color:{{ dp.active ? '#f0f0fa' : 'rgba(232,234,242,.35)' }};transition:all .15s;">{{ dp.label }}</button></sc-for>
+          </div>
+        </div>
+        <!-- KPIs -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;">
+          <sc-for list="{{ kpis }}" as="k">
+            <div style="padding:16px;border-radius:13px;background:rgba(255,255,255,.03);border:1px solid rgba(110,231,255,.07);transition:all .15s;position:relative;overflow:hidden;" style-hover="border-color:rgba(110,231,255,.15);background:rgba(110,231,255,.03);">
+              <div style="position:absolute;top:-16px;right:-16px;width:64px;height:64px;border-radius:50%;background:{{ k.glow }};filter:blur(20px);pointer-events:none;"></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <div style="width:30px;height:30px;border-radius:9px;background:{{ k.bg }};display:flex;align-items:center;justify-content:center;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{ k.color }}" stroke-width="1.8" stroke-linecap="round"><sc-for list="{{ k.paths }}" as="p"><path d="{{ p }}"/></sc-for></svg>
+                </div>
+                <span style="font-size:10.5px;font-weight:700;color:{{ k.up ? '#34d399' : '#f87171' }};display:flex;align-items:center;gap:2px;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="{{ k.up ? 'M18 15l-6-6-6 6' : 'M6 9l6 6 6-6' }}"/></svg>{{ k.delta }}</span>
+              </div>
+              <p style="font-size:22px;font-weight:700;color:#f0f0fa;letter-spacing:-.5px;font-variant-numeric:tabular-nums;font-family:'Space Grotesk',sans-serif;">{{ k.value }}</p>
+              <p style="font-size:11px;color:rgba(232,234,242,.38);margin-top:4px;">{{ k.label }}</p>
+            </div>
+          </sc-for>
+        </div>
+        <!-- Charts -->
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:14px;">
+          <div style="padding:18px;border-radius:13px;background:rgba(255,255,255,.03);border:1px solid rgba(110,231,255,.07);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;"><p style="font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:#e8eaf2;">Conversas por hora</p><span style="font-size:10px;color:rgba(232,234,242,.28);font-weight:500;">HOJE</span></div>
+            <div style="display:flex;align-items:flex-end;gap:4px;height:76px;">
+              <sc-for list="{{ bars }}" as="b"><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="width:100%;border-radius:3px 3px 0 0;height:{{ b.h }}px;background:{{ b.peak ? 'linear-gradient(180deg,#22d3ee,#6366f1)' : 'rgba(255,255,255,.08)' }};transition:height .3s ease;box-shadow:{{ b.peak ? '0 0 8px rgba(34,211,238,.3)' : 'none' }};"></div><span style="font-size:7.5px;color:rgba(232,234,242,.2);">{{ b.label }}</span></div></sc-for>
+            </div>
+          </div>
+          <div style="padding:18px;border-radius:13px;background:rgba(255,255,255,.03);border:1px solid rgba(110,231,255,.07);">
+            <p style="font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:#e8eaf2;margin-bottom:12px;">Status</p>
+            <div style="display:flex;align-items:center;gap:12px;">{{ donut }}<div style="display:flex;flex-direction:column;gap:7px;"><sc-for list="{{ statusDist }}" as="sd"><div style="display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:{{ sd.color }};flex-shrink:0;box-shadow:0 0 5px {{ sd.color }};"></span><span style="font-size:10.5px;color:rgba(232,234,242,.5);flex:1;">{{ sd.label }}</span><span style="font-size:10.5px;font-weight:600;color:#e8eaf2;font-family:'Space Grotesk',sans-serif;">{{ sd.val }}</span></div></sc-for></div></div>
+          </div>
+        </div>
+        <!-- Leaderboard -->
+        <div style="padding:18px;border-radius:13px;background:rgba(255,255,255,.03);border:1px solid rgba(110,231,255,.07);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><p style="font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:#e8eaf2;">Ranking · Hoje</p><span style="font-size:11px;color:rgba(110,231,255,.5);cursor:pointer;" style-hover="color:#6ee7ff;">Ver todos →</span></div>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <sc-for list="{{ agents }}" as="ag">
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:9px;background:rgba(255,255,255,.02);border:1px solid {{ ag.rank <= 3 ? ag.bc : 'rgba(255,255,255,.04)' }};transition:all .15s;" style-hover="background:rgba(255,255,255,.04);">
+                <span style="font-size:13px;width:20px;text-align:center;flex-shrink:0;">{{ ag.medal }}</span>
+                <div style="width:30px;height:30px;border-radius:8px;background:{{ ag.bg }};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:'Space Grotesk',sans-serif;flex-shrink:0;">{{ ag.init }}</div>
+                <div style="flex:1;min-width:0;"><p style="font-size:12px;font-weight:500;color:#e8eaf2;">{{ ag.name }}</p><p style="font-size:10px;color:rgba(232,234,242,.35);">{{ ag.tickets }} tickets · CSAT {{ ag.csat }}</p></div>
+                <div style="text-align:right;flex-shrink:0;min-width:76px;"><p style="font-size:12.5px;font-weight:700;color:{{ ag.xc }};font-family:'Space Grotesk',sans-serif;">{{ ag.xp }}</p><div style="width:76px;height:3px;border-radius:2px;background:rgba(255,255,255,.07);margin-top:3px;overflow:hidden;"><div style="height:100%;border-radius:2px;background:{{ ag.xc }};width:{{ ag.pct }}%;transition:width .6s ease;"></div></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ══ CONEXÕES ══ -->
+    <sc-if value="{{ screen === 'connections' }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100vh;overflow-y:auto;padding:24px 28px;animation:slide-screen .22s ease both;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;">
+          <div>
+            <h1 style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;background:linear-gradient(90deg,#e8eaf2,{{ acA }});-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.4px;">Conexões WhatsApp</h1>
+            <p style="font-size:11.5px;color:rgba(232,234,242,.35);margin-top:3px;">Gerencie instâncias via Evolution API</p>
+          </div>
+          <button style="height:34px;padding:0 16px;border-radius:10px;border:none;cursor:pointer;background:{{ gradAB }};color:{{ textDark }};font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;box-shadow:{{ glowA }};transition:all .18s;" style-hover="transform:scale(1.03);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Nova Conexão
+          </button>
+        </div>
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px;">
+          <sc-for list="{{ connStats }}" as="cs">
+            <div style="padding:16px;border-radius:13px;background:rgba(255,255,255,.03);border:1px solid rgba(110,231,255,.07);position:relative;overflow:hidden;transition:all .15s;" style-hover="border-color:rgba(110,231,255,.15);">
+              <div style="position:absolute;top:-16px;right:-16px;width:60px;height:60px;border-radius:50%;background:{{ cs.glow }};filter:blur(20px);pointer-events:none;"></div>
+              <p style="font-size:11px;color:rgba(232,234,242,.4);">{{ cs.label }}</p>
+              <p style="font-size:26px;font-weight:700;color:{{ cs.color }};font-family:'Space Grotesk',sans-serif;margin-top:5px;letter-spacing:-.5px;">{{ cs.value }}</p>
+            </div>
+          </sc-for>
+        </div>
+        <!-- Connection cards -->
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <sc-for list="{{ connections2 }}" as="cn">
+            <div style="padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid {{ cn.borderColor }};transition:all .18s;" style-hover="border-color:rgba(110,231,255,.2);background:rgba(110,231,255,.03);transform:translateY(-1px);">
+              <div style="display:flex;align-items:center;gap:14px;">
+                <!-- Icon -->
+                <div style="width:46px;height:46px;border-radius:13px;background:{{ cn.iconBg }};display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;box-shadow:0 0 14px {{ cn.glow }};">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{ cn.iconColor }}" stroke-width="1.7" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+                  <span style="position:absolute;bottom:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:{{ cn.dotColor }};border:2.5px solid #04050a;{{ cn.connected ? 'animation:pulse-ring 2.4s infinite;' : '' }}"></span>
+                </div>
+                <!-- Info -->
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+                    <p style="font-size:14px;font-weight:600;color:#e8eaf2;font-family:'Space Grotesk',sans-serif;">{{ cn.name }}</p>
+                    <span style="font-size:8.5px;padding:2px 8px;border-radius:5px;font-weight:700;letter-spacing:.05em;background:{{ cn.statusBg }};color:{{ cn.statusColor }};border:1px solid {{ cn.statusBorder }};">{{ cn.status }}</span>
+                    <sc-if value="{{ cn.isDefault }}" hint-placeholder-val="{{ false }}"><span style="font-size:8.5px;padding:2px 8px;border-radius:5px;font-weight:700;background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.28);">★ PADRÃO</span></sc-if>
+                  </div>
+                  <p style="font-size:11.5px;color:rgba(232,234,242,.4);">{{ cn.phone }} · {{ cn.instance }}</p>
+                  <!-- Metrics row -->
+                  <div style="display:flex;gap:16px;margin-top:8px;">
+                    <sc-for list="{{ cn.metrics }}" as="cm">
+                      <div><p style="font-size:8.5px;color:rgba(232,234,242,.28);text-transform:uppercase;letter-spacing:.08em;font-family:'Space Grotesk',sans-serif;">{{ cm.label }}</p><p style="font-size:12.5px;font-weight:600;color:{{ cm.color }};font-family:'Space Grotesk',sans-serif;margin-top:1px;">{{ cm.value }}</p></div>
+                    </sc-for>
+                  </div>
+                </div>
+                <!-- Actions -->
+                <div style="display:flex;gap:5px;flex-shrink:0;">
+                  <sc-for list="{{ cn.actions }}" as="ca2">
+                    <button style="width:32px;height:32px;border-radius:9px;border:1px solid rgba(110,231,255,.1);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(232,234,242,.35);transition:all .15s;" style-hover="background:rgba(110,231,255,.08);color:{{ acA }};border-color:rgba(110,231,255,.25);" title="{{ ca2.label }}">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><sc-for list="{{ ca2.paths }}" as="p"><path d="{{ p }}"/></sc-for></svg>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+              <!-- Health bar -->
+              <div style="margin-top:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+                  <span style="font-size:9px;color:rgba(232,234,242,.28);text-transform:uppercase;letter-spacing:.08em;font-family:'Space Grotesk',sans-serif;">Reputação do número</span>
+                  <span style="font-size:10.5px;font-weight:700;color:{{ cn.healthColor }};font-family:'Space Grotesk',sans-serif;">{{ cn.health }}%</span>
+                </div>
+                <div style="height:4px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden;">
+                  <div style="height:100%;border-radius:2px;background:{{ cn.healthColor }};width:{{ cn.health }}%;box-shadow:0 0 6px {{ cn.healthColor }};transition:width .6s ease;"></div>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ══ CONTATOS ══ -->
+    <sc-if value="{{ screen === 'contacts' }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;height:100vh;animation:slide-screen .22s ease both;">
+        <!-- List -->
+        <div style="width:330px;min-width:330px;height:100vh;display:flex;flex-direction:column;background:rgba(10,12,20,.65);backdrop-filter:blur(24px);border-right:1px solid rgba(110,231,255,.06);">
+          <div style="padding:18px 16px 12px;flex-shrink:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+              <h2 style="font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;background:linear-gradient(90deg,#e8eaf2,{{ acB }});-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.3px;">Contatos</h2>
+              <button style="width:30px;height:30px;border-radius:9px;border:1px solid rgba(139,92,246,.25);background:rgba(139,92,246,.08);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#a78bfa;transition:all .15s;" style-hover="background:rgba(139,92,246,.18);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+            </div>
+            <p style="font-size:10.5px;color:rgba(232,234,242,.3);margin-bottom:12px;">{{ totalContacts }} contatos · {{ onlineCount }} online</p>
+            <div style="position:relative;margin-bottom:10px;">
+              <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,.45)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="text" placeholder="Buscar contato…" style="width:100%;height:34px;border-radius:10px;border:1px solid rgba(139,92,246,.12);background:rgba(255,255,255,.03);color:#e8eaf2;font-family:'Outfit',sans-serif;font-size:12px;padding:0 10px 0 32px;outline:none;transition:border-color .15s;"/>
+            </div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+              <sc-for list="{{ ctFilters }}" as="cf"><button onClick="{{ cf.go }}" style="height:23px;padding:0 10px;border-radius:11px;border:1px solid {{ cf.active ? 'rgba(139,92,246,.4)' : 'rgba(255,255,255,.07)' }};cursor:pointer;font-size:10.5px;font-weight:{{ cf.active ? '600' : '400' }};background:{{ cf.active ? 'rgba(139,92,246,.12)' : 'transparent' }};color:{{ cf.active ? '#a78bfa' : 'rgba(232,234,242,.4)' }};transition:all .15s;" style-hover="color:rgba(232,234,242,.75);">{{ cf.label }}</button></sc-for>
+            </div>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:0 8px 8px;">
+            <sc-for list="{{ contactList }}" as="ct">
+              <div onClick="{{ ct.select }}" style="display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:12px;cursor:pointer;margin-bottom:2px;transition:all .18s;background:{{ ct.active ? 'rgba(139,92,246,.1)' : 'transparent' }};border:1px solid {{ ct.active ? 'rgba(139,92,246,.22)' : 'transparent' }};" style-hover="background:rgba(139,92,246,.05);transform:translateX(2px);">
+                <div style="position:relative;flex-shrink:0;">
+                  <div style="width:{{ dnAvatar }};height:{{ dnAvatar }};border-radius:{{ dnAvatarR }};background:{{ ct.avatarBg }};display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:#fff;font-family:'Space Grotesk',sans-serif;">{{ ct.initials }}</div>
+                  <sc-if value="{{ ct.online }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;background:#34d399;border:2px solid #0a0c14;box-shadow:0 0 5px rgba(52,211,153,.7);"></span></sc-if>
+                </div>
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                    <span style="font-size:12.5px;font-weight:500;color:rgba(232,234,242,.82);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ ct.name }}</span>
+                    <span style="font-size:8px;padding:1.5px 6px;border-radius:4px;background:{{ ct.typeBg }};color:{{ ct.typeColor }};font-weight:700;white-space:nowrap;flex-shrink:0;letter-spacing:.04em;">{{ ct.type }}</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+                    <p style="font-size:10.5px;color:rgba(232,234,242,.32);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">{{ ct.phone }}</p>
+                    <sc-if value="{{ ct.ltv }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px;font-weight:700;color:#34d399;font-family:'Space Grotesk',sans-serif;flex-shrink:0;">{{ ct.ltv }}</span></sc-if>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <!-- Detail -->
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+          <div style="text-align:center;max-width:300px;">
+            <div style="width:64px;height:64px;border-radius:19px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.22);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;animation:float-y 4s ease-in-out infinite;box-shadow:0 0 24px rgba(139,92,246,.15);">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.7" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3 style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:#e8eaf2;margin-bottom:6px;letter-spacing:-.2px;">Selecione um contato</h3>
+            <p style="font-size:12px;color:rgba(232,234,242,.35);line-height:1.6;">Escolha um contato da lista para ver histórico completo, métricas e timeline de compras.</p>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ══ CAMPANHAS ══ -->
+    <sc-if value="{{ screen === 'campaigns' }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100vh;overflow-y:auto;padding:24px 28px;animation:slide-screen .22s ease both;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;">
+          <div>
+            <h1 style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;background:linear-gradient(90deg,#e8eaf2,{{ acA }});-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.4px;">Campanhas</h1>
+            <p style="font-size:11.5px;color:rgba(232,234,242,.35);margin-top:3px;">Disparo em massa via WhatsApp</p>
+          </div>
+          <button style="height:34px;padding:0 16px;border-radius:10px;border:none;cursor:pointer;background:{{ gradAB }};color:{{ textDark }};font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;box-shadow:{{ glowA }};transition:all .18s;" style-hover="transform:scale(1.03);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Nova Campanha
+          </button>
+        </div>
+        <!-- KPIs -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;">
+          <sc-for list="{{ campKpis }}" as="ck">
+            <div style="padding:16px;border-radius:13px;background:rgba(255,255,255,.03);border:1px solid rgba(110,231,255,.07);position:relative;overflow:hidden;transition:all .15s;" style-hover="border-color:rgba(110,231,255,.15);">
+              <div style="position:absolute;top:-16px;right:-16px;width:56px;height:56px;border-radius:50%;background:{{ ck.glow }};filter:blur(20px);pointer-events:none;"></div>
+              <div style="width:28px;height:28px;border-radius:8px;background:{{ ck.bg }};display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{ ck.color }}" stroke-width="1.8" stroke-linecap="round"><sc-for list="{{ ck.paths }}" as="p"><path d="{{ p }}"/></sc-for></svg>
+              </div>
+              <p style="font-size:21px;font-weight:700;color:#f0f0fa;font-family:'Space Grotesk',sans-serif;letter-spacing:-.5px;">{{ ck.value }}</p>
+              <p style="font-size:10.5px;color:rgba(232,234,242,.38);margin-top:3px;">{{ ck.label }}</p>
+            </div>
+          </sc-for>
+        </div>
+        <!-- Campaign list -->
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <sc-for list="{{ campaignList }}" as="cp">
+            <div style="padding:15px 17px;border-radius:13px;background:rgba(255,255,255,.03);border:1px solid rgba(110,231,255,.07);transition:all .18s;" style-hover="border-color:rgba(110,231,255,.18);background:rgba(110,231,255,.03);">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px;">
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+                    <p style="font-size:13.5px;font-weight:600;color:#e8eaf2;font-family:'Space Grotesk',sans-serif;">{{ cp.name }}</p>
+                    <span style="font-size:8.5px;padding:2px 8px;border-radius:5px;font-weight:700;letter-spacing:.05em;background:{{ cp.statusBg }};color:{{ cp.statusColor }};border:1px solid {{ cp.statusBorder }};">{{ cp.status }}</span>
+                  </div>
+                  <p style="font-size:11px;color:rgba(232,234,242,.38);">{{ cp.segment }} · {{ cp.scheduled }}</p>
+                </div>
+                <div style="display:flex;gap:5px;flex-shrink:0;">
+                  <button style="width:30px;height:30px;border-radius:8px;border:1px solid rgba(110,231,255,.1);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(232,234,242,.35);transition:all .15s;" style-hover="background:rgba(110,231,255,.08);color:{{ acA }};"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 1 1 3.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
+                  <button style="width:30px;height:30px;border-radius:8px;border:1px solid rgba(110,231,255,.1);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(232,234,242,.35);transition:all .15s;" style-hover="background:rgba(52,211,153,.1);color:#34d399;"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+              </div>
+              <!-- Progress metrics -->
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px;">
+                <sc-for list="{{ cp.stats }}" as="cst">
+                  <div>
+                    <p style="font-size:8.5px;color:rgba(232,234,242,.28);text-transform:uppercase;letter-spacing:.08em;font-family:'Space Grotesk',sans-serif;">{{ cst.label }}</p>
+                    <p style="font-size:14px;font-weight:700;color:{{ cst.color }};font-family:'Space Grotesk',sans-serif;margin-top:2px;">{{ cst.value }}</p>
+                  </div>
+                </sc-for>
+              </div>
+              <!-- Progress bar -->
+              <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;display:flex;">
+                <div style="height:100%;background:#34d399;width:{{ cp.pctDelivered }}%;transition:width .6s ease;box-shadow:0 0 6px rgba(52,211,153,.5);"></div>
+                <div style="height:100%;background:{{ acA }};width:{{ cp.pctRead }}%;transition:width .6s ease;"></div>
+                <div style="height:100%;background:rgba(244,63,94,.6);width:{{ cp.pctFailed }}%;transition:width .6s ease;"></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ══ CONFIGURAÇÕES ══ -->
+    <sc-if value="{{ screen === 'settings' }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100vh;display:flex;flex-direction:column;animation:slide-screen .22s ease both;">
+        <!-- Header -->
+        <div style="padding:24px 28px 0;flex-shrink:0;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;">
+            <div>
+              <h1 style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;background:linear-gradient(90deg,#e8eaf2,{{ acA }});-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.4px;">Configurações</h1>
+              <p style="font-size:11.5px;color:rgba(232,234,242,.35);margin-top:3px;">Configure o comportamento da plataforma</p>
+            </div>
+            <button style="height:34px;padding:0 16px;border-radius:10px;border:none;cursor:pointer;background:{{ gradAB }};color:{{ textDark }};font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;box-shadow:{{ glowA }};transition:all .18s;" style-hover="transform:scale(1.03);">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Salvar
+            </button>
+          </div>
+          <!-- Tab bar -->
+          <div style="display:flex;gap:5px;overflow-x:auto;padding-bottom:12px;border-bottom:1px solid rgba(110,231,255,.06);">
+            <sc-for list="{{ settingsTabs }}" as="st">
+              <button onClick="{{ st.go }}" style="height:32px;padding:0 13px;border-radius:9px;border:1px solid {{ st.active ? 'rgba(34,211,238,.35)' : 'transparent' }};cursor:pointer;font-family:'Outfit',sans-serif;font-size:11.5px;font-weight:{{ st.active ? '600' : '400' }};white-space:nowrap;display:flex;align-items:center;gap:6px;transition:all .18s;background:{{ st.active ? 'rgba(34,211,238,.1)' : 'transparent' }};color:{{ st.active ? acA : 'rgba(232,234,242,.4)' }};flex-shrink:0;" style-hover="background:rgba(110,231,255,.05);color:rgba(232,234,242,.8);">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><sc-for list="{{ st.paths }}" as="p"><path d="{{ p }}"/></sc-for></svg>
+                {{ st.label }}
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        <!-- Content -->
+        <div style="flex:1;overflow-y:auto;padding:20px 28px 28px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <sc-for list="{{ settingsCards }}" as="sc2">
+              <div style="padding:18px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(110,231,255,.07);transition:all .18s;" style-hover="border-color:rgba(110,231,255,.16);background:rgba(110,231,255,.02);">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                  <div style="width:30px;height:30px;border-radius:9px;background:{{ sc2.iconBg }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ sc2.iconColor }}" stroke-width="1.8" stroke-linecap="round"><sc-for list="{{ sc2.paths }}" as="p"><path d="{{ p }}"/></sc-for></svg>
+                  </div>
+                  <div>
+                    <p style="font-size:13px;font-weight:600;color:#e8eaf2;font-family:'Space Grotesk',sans-serif;">{{ sc2.title }}</p>
+                    <p style="font-size:10.5px;color:rgba(232,234,242,.32);margin-top:1px;">{{ sc2.subtitle }}</p>
+                  </div>
+                </div>
+                <!-- Rows -->
+                <sc-for list="{{ sc2.rows }}" as="row">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-top:1px solid rgba(255,255,255,.04);">
+                    <div style="flex:1;min-width:0;">
+                      <p style="font-size:12px;color:rgba(232,234,242,.7);">{{ row.label }}</p>
+                      <sc-if value="{{ row.hint }}" hint-placeholder-val="{{ false }}"><p style="font-size:10px;color:rgba(232,234,242,.28);margin-top:1px;">{{ row.hint }}</p></sc-if>
+                    </div>
+                    <!-- Toggle -->
+                    <sc-if value="{{ row.type === 'toggle' }}" hint-placeholder-val="{{ false }}">
+                      <div onClick="{{ row.toggle }}" style="width:38px;height:21px;border-radius:11px;background:{{ row.on ? acA : 'rgba(255,255,255,.08)' }};cursor:pointer;position:relative;transition:all .2s;flex-shrink:0;box-shadow:{{ row.on ? glowA : 'none' }};">
+                        <div style="position:absolute;top:2.5px;left:{{ row.on ? '19px' : '2.5px' }};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s cubic-bezier(.4,0,.2,1);box-shadow:0 1px 3px rgba(0,0,0,.3);"></div>
+                      </div>
+                    </sc-if>
+                    <!-- Value -->
+                    <sc-if value="{{ row.type === 'value' }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-size:11.5px;font-weight:600;color:{{ acA }};font-family:'Space Grotesk',sans-serif;flex-shrink:0;">{{ row.value }}</span>
+                    </sc-if>
+                    <!-- Select -->
+                    <sc-if value="{{ row.type === 'select' }}" hint-placeholder-val="{{ false }}">
+                      <button style="height:28px;padding:0 11px;border-radius:8px;border:1px solid rgba(110,231,255,.12);background:rgba(255,255,255,.03);cursor:pointer;font-size:11px;color:rgba(232,234,242,.65);font-family:'Outfit',sans-serif;display:flex;align-items:center;gap:6px;flex-shrink:0;transition:all .15s;" style-hover="border-color:rgba(110,231,255,.3);color:#e8eaf2;">
+                        {{ row.value }}<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+                      </button>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: {&quot;width&quot;:1440,&quot;height&quot;:900},
+  &quot;palette&quot;: {
+    &quot;editor&quot;: &quot;enum&quot;,
+    &quot;options&quot;: [&quot;Ciano · Violeta&quot;,&quot;Esmeralda · Índigo&quot;,&quot;Rosa · Âmbar&quot;,&quot;Branco · Slate&quot;],
+    &quot;default&quot;: &quot;Ciano · Violeta&quot;,
+    &quot;section&quot;: &quot;Identidade Visual&quot;
+  },
+  &quot;intensity&quot;: {
+    &quot;editor&quot;: &quot;range&quot;,
+    &quot;default&quot;: 80,
+    &quot;min&quot;: 20,
+    &quot;max&quot;: 100,
+    &quot;step&quot;: 5,
+    &quot;unit&quot;: &quot;%&quot;,
+    &quot;section&quot;: &quot;Identidade Visual&quot;
+  },
+  &quot;density&quot;: {
+    &quot;editor&quot;: &quot;enum&quot;,
+    &quot;options&quot;: [&quot;Compacta&quot;,&quot;Normal&quot;,&quot;Espaçosa&quot;],
+    &quot;default&quot;: &quot;Normal&quot;,
+    &quot;section&quot;: &quot;Layout&quot;
+  }
+}">
+class Component extends DCLogic {
+  state = {
+    screen: 'inbox', navCollapsed: true, zenMode: false,
+    activeConv: 0, tab: 0, sentFilter: 'all', aiSort: false,
+    isTyping: false, showAI: true, showAttach: false, showSummary: false,
+    callActive: false, callSecs: 0,
+    selectMode: false, selected: new Set(), hovered: null,
+    inputValue: '', sla: 272, clock: '',
+    cmdOpen: false, cmdQuery: '',
+    ctFilter: 0, activeContact: 0, settingsTab: 'horario',
+    toggles: { weekend:false, offHours:true, signature:true, readReceipt:true, linkPreview:true,
+      copilot:true, autoTag:true, sentiment:true, push:true, sound:true, privacy:false,
+      slaAlert:true, autoAssign:true, mfa:true, geoBlock:false },
+    showScrollBtn: false, newMsgCount: 0,
+    toasts: [],
+    dashPeriod: 0,
+    msgs: [
+      { text:'Olá! Gostaria de saber quando chega meu pedido #PB-2024-1847.', sent:false, time:'14:22', gap:true, read:null, reactions:null, opt:false, product:null, link:null },
+      { text:'Estou aguardando há alguns dias e preciso para um evento!', sent:false, time:'14:23', gap:false, read:null, reactions:null, opt:false, product:null, link:null },
+      { text:'Olá Maria! Vou verificar agora mesmo. ✨', sent:true, time:'14:24', gap:true, read:true, reactions:['👍 2'], opt:false, product:null, link:null },
+      { text:'Seu pedido saiu para entrega hoje às 08h. Previsão até as 18h.', sent:true, time:'14:24', gap:false, read:true, reactions:null, opt:false, product:null, link:null },
+      { text:'Ótimo!! Muito obrigada 😊', sent:false, time:'14:25', gap:true, read:null, reactions:['❤️'], opt:false, product:null, link:null },
+      { text:'Qual é o número de rastreio?', sent:false, time:'14:26', gap:false, read:null, reactions:null, opt:false, product:null, link:null },
+      { text:'', sent:true, time:'14:28', gap:true, read:true, reactions:null, opt:false, product:{ name:'Caneta Personalizada', qty:'500 unidades', price:'R$ 1.250' }, link:null },
+      { text:'', sent:false, time:'14:29', gap:false, read:null, reactions:null, opt:false, product:null, link:{ title:'Rastreio em Tempo Real', url:'correios.com.br/rastreio' } },
+    ],
+  };
+
+  componentDidMount() {
+    this._t = setInterval(() => {
+      const d = new Date();
+      this.setState(s => ({ clock: d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), sla: s.sla+1, callSecs: s.callActive ? s.callSecs+1 : s.callSecs }));
+    }, 1000);
+    this._ty = setInterval(() => { this.setState({isTyping:true}); setTimeout(()=>this.setState({isTyping:false}),3200); }, 12000);
+    // Simulate incoming toast after 3s
+    setTimeout(() => {
+      this.setState(s => ({ toasts:[{id:1,name:'Pedro Alves',initials:'PA',avatarBg:'linear-gradient(135deg,#f59e0b,#ef4444)',preview:'Obrigado! Quando sai outro pedido?',open:()=>this.setState({screen:'inbox'})}], newMsgCount: 1, showScrollBtn: true }));
+      setTimeout(() => this.setState({toasts:[]}), 5000);
+    }, 3000);
+    // ⌘K shortcut
+    this._kbd = (e) => { if ((e.metaKey||e.ctrlKey) && e.key==='k') { e.preventDefault(); this.setState(s=>({cmdOpen:!s.cmdOpen})); } if (e.key==='Escape') this.setState({cmdOpen:false}); };
+    window.addEventListener('keydown', this._kbd);
+  }
+  componentWillUnmount() { clearInterval(this._t); clearInterval(this._ty); window.removeEventListener('keydown', this._kbd); }
+  _sla(){const m=Math.floor(this.state.sla/60),s=this.state.sla%60;return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
+  _call(){const m=Math.floor(this.state.callSecs/60),s=this.state.callSecs%60;return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
+
+  renderVals() {
+    const s = this.state;
+    var go = (sc) => () => this.setState({screen:sc});
+
+    // ── TWEAKS ──
+    const pal = this.props.palette ?? 'Ciano · Violeta';
+    const intensity = (this.props.intensity ?? 80) / 100;
+    const density = this.props.density ?? 'Normal';
+
+    const PALETTES = {
+      'Ciano · Violeta':   { acA:'#22d3ee', acB:'#8b5cf6', acAr:'34,211,238',  acBr:'139,92,246', textDark:'#04070d' },
+      'Esmeralda · Índigo':{ acA:'#34d399', acB:'#6366f1', acAr:'52,211,153',  acBr:'99,102,241',  textDark:'#04070d' },
+      'Rosa · Âmbar':      { acA:'#f472b6', acB:'#f59e0b', acAr:'244,114,182', acBr:'245,158,11',  textDark:'#04070d' },
+      'Branco · Slate':    { acA:'#e8eaf2', acB:'#94a3b8', acAr:'232,234,242', acBr:'148,163,184', textDark:'#0a0c14' },
+    };
+    const {acA, acB, acAr, acBr, textDark} = PALETTES[pal] || PALETTES['Ciano · Violeta'];
+
+    const gradAB       = `linear-gradient(135deg,${acA},${acB})`;
+    const gradABVert   = `linear-gradient(180deg,${acA},${acB})`;
+    const gradABA      = `linear-gradient(90deg,${acA},${acB},${acA})`;
+    const glowA        = `0 0 ${Math.round(20*intensity)}px rgba(${acAr},${(0.4*intensity).toFixed(2)})`;
+    const logoShadow   = `0 0 ${Math.round(24*intensity)}px rgba(${acAr},${(0.4*intensity).toFixed(2)}), 0 0 ${Math.round(48*intensity)}px rgba(${acBr},${(0.2*intensity).toFixed(2)})`;
+    const activeBorder = `rgba(${acAr},${(0.2*intensity).toFixed(2)})`;
+    const activeCardBg = `linear-gradient(120deg,rgba(${acAr},${(0.1*intensity).toFixed(2)}),rgba(${acBr},${(0.08*intensity).toFixed(2)}))`;
+    const inputFocusBg = s.inputFocused ? gradABA : `rgba(${acAr},0.12)`;
+    const inputShadow  = s.inputFocused ? `0 0 22px rgba(${acAr},${(0.1*intensity).toFixed(2)})` : 'none';
+    const navActiveBg  = `rgba(${acAr},${(0.1*intensity).toFixed(2)})`;
+    const navActiveBorder = `rgba(${acAr},${(0.25*intensity).toFixed(2)})`;
+    const auroraOp1    = (0.13 * intensity).toFixed(2);
+    const auroraOp2    = (0.12 * intensity).toFixed(2);
+    const sentRingColor = acA;
+
+    // Density → spacing
+    const DENSITY = {
+      Compacta:  { pad:'7px 8px',  avatar:'36px', avatarR:'10px', gap:'7px', fontSize:'12px' },
+      Normal:    { pad:'10px 10px',avatar:'42px', avatarR:'13px', gap:'10px',fontSize:'12.5px' },
+      Espaçosa:  { pad:'13px 11px',avatar:'48px', avatarR:'16px', gap:'12px',fontSize:'13.5px' },
+    };
+    const dn = DENSITY[density] || DENSITY.Normal;
+
+    // Nav
+    var nv=(id,label,paths,badge=null)=>({id,label,paths,badge,active:s.screen===id,go:()=>this.setState({screen:id})});
+    const navItems=[
+      nv('inbox','Chat',['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'],6),
+      nv('dashboard','Dashboard',['M18 20V10','M12 20V4','M6 20v-6']),
+      nv('contacts','Contatos',['M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2','M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z']),
+      nv('pipeline','Pipeline',['M8 6h13','M8 12h13','M8 18h13','M3 6h.01','M3 12h.01','M3 18h.01']),
+      nv('campaigns','Campanhas',['M3 11l19-9-9 19-2-8-8-2z']),
+      nv('connections','Conexões',['M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71','M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71']),
+      nv('settings','Config',['M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z','M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z']),
+    ];
+
+    // Stories
+    const stories=[
+      {name:'Pedro',init:'PA',bg:'linear-gradient(135deg,#f59e0b,#ef4444)',seen:false},
+      {name:'OS #142',init:'OS',bg:'linear-gradient(135deg,#10b981,#0d9488)',seen:false},
+      {name:'Roberto',init:'RS',bg:'linear-gradient(135deg,#0ea5e9,#6366f1)',seen:true},
+      {name:'Ana',init:'AC',bg:'linear-gradient(135deg,#f97316,#fbbf24)',seen:true},
+      {name:'Marcos',init:'ML',bg:'linear-gradient(135deg,#14b8a6,#0ea5e9)',seen:false},
+    ].map(st=>({...st,view:()=>{}}));
+
+    // Sentiment filters
+    const sentFilters=[
+      {label:'Todos',value:'all',active:s.sentFilter==='all',borderColor:'rgba(34,211,238,.4)',bgColor:'rgba(34,211,238,.1)',textColor:'#6ee7ff',action:()=>this.setState({sentFilter:'all'})},
+      {label:'😊 Positivo',value:'pos',active:s.sentFilter==='pos',borderColor:'rgba(52,211,153,.4)',bgColor:'rgba(52,211,153,.1)',textColor:'#34d399',action:()=>this.setState({sentFilter:'pos'})},
+      {label:'😐 Neutro',value:'neu',active:s.sentFilter==='neu',borderColor:'rgba(245,158,11,.4)',bgColor:'rgba(245,158,11,.1)',textColor:'#f59e0b',action:()=>this.setState({sentFilter:'neu'})},
+      {label:'😡 Negativo',value:'neg',active:s.sentFilter==='neg',borderColor:'rgba(239,68,68,.4)',bgColor:'rgba(239,68,68,.1)',textColor:'#f87171',action:()=>this.setState({sentFilter:'neg'})},
+    ];
+
+    // Conversations
+    const rawC=[
+      {name:'Maria Fernanda',lastMsg:'Qual é o número de rastreio?',time:'agora',unread:2,online:true,typing:false,avatarBg:'linear-gradient(135deg,#6366f1,#a855f7)',initials:'MF',tag:null,sentiment:'😊',sentVal:'pos'},
+      {name:'Pedro Alves',lastMsg:'Obrigado pelo atendimento!',time:'2min',unread:null,online:true,typing:true,avatarBg:'linear-gradient(135deg,#f59e0b,#ef4444)',initials:'PA',tag:'VIP',tagBg:'rgba(251,191,36,.1)',tagColor:'#fbbf24',tagBorder:'rgba(251,191,36,.3)',sentiment:'😊',sentVal:'pos'},
+      {name:'Grupo OS #142',lastMsg:'✅ Aprovado pelo cliente',time:'5min',unread:1,online:false,typing:false,avatarBg:'linear-gradient(135deg,#10b981,#0d9488)',initials:'OS',tag:'O.S.',tagBg:'rgba(52,211,153,.1)',tagColor:'#34d399',tagBorder:'rgba(52,211,153,.3)',sentiment:'😐',sentVal:'neu'},
+      {name:'Carla Mendes',lastMsg:'Preciso de orçamento urgente',time:'12min',unread:3,online:false,typing:false,avatarBg:'linear-gradient(135deg,#ec4899,#8b5cf6)',initials:'CM',tag:'URGENTE',tagBg:'rgba(244,63,94,.1)',tagColor:'#fb7185',tagBorder:'rgba(244,63,94,.3)',sentiment:'😡',sentVal:'neg'},
+      {name:'Roberto Silva',lastMsg:'Qual o prazo de entrega?',time:'1h',unread:null,online:true,typing:false,avatarBg:'linear-gradient(135deg,#0ea5e9,#6366f1)',initials:'RS',tag:null,sentiment:'😊',sentVal:'pos'},
+      {name:'Ana Costa',lastMsg:'Recebi o produto! 😊',time:'2h',unread:null,online:false,typing:false,avatarBg:'linear-gradient(135deg,#f97316,#fbbf24)',initials:'AC',tag:null,sentiment:'😊',sentVal:'pos'},
+      {name:'Marcos Lima',lastMsg:'Podemos agendar uma visita?',time:'3h',unread:null,online:false,typing:false,avatarBg:'linear-gradient(135deg,#14b8a6,#0ea5e9)',initials:'ML',tag:null,sentiment:'😐',sentVal:'neu'},
+    ];
+    let filtered = s.sentFilter==='all' ? rawC : rawC.filter(c=>c.sentVal===s.sentFilter);
+    if (s.aiSort) filtered = [...filtered].sort((a,b) => (b.unread||0)-(a.unread||0));
+    const conversations=filtered.map((c,i)=>({
+      ...c,tagBg:c.tagBg||null,tagColor:c.tagColor||null,tagBorder:c.tagBorder||null,
+      active:i===s.activeConv,
+      cardBg:i===s.activeConv ? activeCardBg : 'transparent',
+      cardBorder:i===s.activeConv ? activeBorder : 'transparent',
+      select:()=>this.setState({activeConv:i}),
+      hover:()=>{},unhover:()=>{},
+    }));
+    const convTabs=['Todos','Não lidos','Grupos','O.S.'].map((label,i)=>({label,active:s.tab===i,action:()=>this.setState({tab:i})}));
+
+    // Messages
+    const rxnEmojis=['👍','❤️','😂','😮','🔥','⚡'].map(emoji=>({emoji,react:()=>{}}));
+    const messages=s.msgs.map((m,i)=>({
+      ...m,hovered:s.hovered===i,selected:s.selected.has(i),
+      hover:()=>this.setState({hovered:i}),leave:()=>this.setState(st=>st.hovered===i?{hovered:null}:null),
+      reply:()=>{},
+      toggleSel:(ev)=>{ev.stopPropagation();this.setState(st=>{const n=new Set(st.selected);n.has(i)?n.delete(i):n.add(i);return{selected:n};});},
+    }));
+    const selCount=s.selected.size;
+    const selActions=[
+      {label:'Encaminhar',danger:false,action:()=>{}},
+      {label:'Copiar',danger:false,action:()=>{}},
+      {label:'Deletar',danger:true,action:()=>this.setState(st=>{const msgs=st.msgs.filter((_,i)=>!st.selected.has(i));return{msgs,selected:new Set(),selectMode:msgs.length>0};})},
+    ];
+
+    // Chat actions
+    const chatActions=[
+      {label:'Buscar',paths:['m21 21-4.35-4.35','M11 19A8 8 0 1 0 11 3a8 8 0 0 0 0 16z'],active:false,action:()=>{}},
+      {label:'Chamada',paths:['M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.7 3.56 2 2 0 0 1 3.67 1.36h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l.72-.72a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.5 16.92z'],active:s.callActive,action:()=>this.setState(st=>({callActive:!st.callActive,callSecs:0}))},
+      {label:'Resumo IA',paths:['m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z'],active:s.showSummary,action:()=>this.setState(st=>({showSummary:!st.showSummary}))},
+      {label:'Modo Foco',paths:['M4 8V4m0 0h4M4 4l5 5M20 8V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5M20 16v4m0 0h-4m4 0l-5-5'],active:s.zenMode,action:()=>this.setState(st=>({zenMode:!st.zenMode}))},
+      {label:'Mais',paths:['M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z','M12 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z','M12 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2z'],active:false,action:()=>{}},
+    ];
+
+    // Attach types
+    const at=(label,paths,color,bg)=>({label,paths,color,bg,glow:bg.replace('.1)','.3)'),bgHover:bg.replace('.1)','.18)'),borderHover:color,action:()=>this.setState({showAttach:false})});
+    const attachTypes=[
+      at('Imagem',['M21 9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h10','M21 9l-6-6','M16 16l-4-4-4 4'],'#34d399','rgba(52,211,153,0.1)'),
+      at('Vídeo',['M15 10l4.553-2.069A1 1 0 0 1 21 8.87v6.26a1 1 0 0 1-1.447.894L15 14v-4z','M3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z'],'#f472b6','rgba(244,114,182,0.1)'),
+      at('Áudio',['M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z','M19 10v2a7 7 0 0 1-14 0v-2','M12 19v3'],'#a78bfa','rgba(167,139,250,0.1)'),
+      at('Documento',['M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z','M14 2v6h6'],'#6ee7ff','rgba(110,231,255,0.1)'),
+      at('Localização',['M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z','M12 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z'],'#fbbf24','rgba(251,191,36,0.1)'),
+      at('Contato',['M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2','M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'],'#fb923c','rgba(251,146,60,0.1)'),
+      at('Enquete',['M18 20V10','M12 20V4','M6 20v-6'],'#34d399','rgba(52,211,153,0.1)'),
+      at('GIF',['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'],'#f472b6','rgba(244,114,182,0.1)'),
+      at('Sticker',['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z','M8 14s1.5 2 4 2 4-2 4-2','M9 9h.01','M15 9h.01'],'#a78bfa','rgba(167,139,250,0.1)'),
+    ];
+
+    // Sentiment ring
+    const pct=0.78,r=22,c=2*Math.PI*r;
+    const sentimentRing=React.createElement('svg',{width:56,height:56,viewBox:'0 0 56 56'},
+      React.createElement('circle',{cx:28,cy:28,r,fill:'none',stroke:'rgba(255,255,255,.06)',strokeWidth:4}),
+      React.createElement('circle',{cx:28,cy:28,r,fill:'none',stroke:'url(#sg)',strokeWidth:4,strokeLinecap:'round',strokeDasharray:c,strokeDashoffset:c*(1-pct),transform:'rotate(-90 28 28)',style:{transition:'stroke-dashoffset 1s ease',filter:'drop-shadow(0 0 5px rgba(52,211,153,.5))'}}),
+      React.createElement('defs',null,React.createElement('linearGradient',{id:'sg',x1:'0',y1:'0',x2:'1',y2:'1'},
+        React.createElement('stop',{offset:'0%',stopColor:'#34d399'}),
+        React.createElement('stop',{offset:'100%',stopColor:'#22d3ee'}))),
+      React.createElement('text',{x:28,y:32,textAnchor:'middle',fill:'#34d399',fontSize:11,fontWeight:700,fontFamily:'Space Grotesk'},'78%'));
+
+    // Sparkline
+    const spData=[12,8,15,22,18,30,27];
+    const spMax=Math.max(...spData);
+    const spW=200,spH=36;
+    const pts=spData.map((v,i)=>({x:(i/(spData.length-1))*spW,y:spH-(v/spMax)*(spH-4)}));
+    const d='M '+pts.map(p=>`${p.x},${p.y}`).join(' L ');
+    const fillD=d+` L ${pts[pts.length-1].x},${spH} L ${pts[0].x},${spH} Z`;
+    const sparkline=React.createElement('svg',{width:spW,height:spH,viewBox:`0 0 ${spW} ${spH}`,style:{width:'100%'}},
+      React.createElement('defs',null,
+        React.createElement('linearGradient',{id:'spg',x1:'0',y1:'0',x2:'0',y2:'1'},
+          React.createElement('stop',{offset:'0%',stopColor:'rgba(34,211,238,0.25)'}),
+          React.createElement('stop',{offset:'100%',stopColor:'rgba(34,211,238,0)'}))),
+      React.createElement('path',{d:fillD,fill:'url(#spg)'}),
+      React.createElement('path',{d,fill:'none',stroke:'#22d3ee',strokeWidth:1.5,strokeLinecap:'round',strokeLinejoin:'round',style:{strokeDasharray:200,strokeDashoffset:0}}),
+      ...pts.map((p,i)=>i===pts.length-1?React.createElement('circle',{key:i,cx:p.x,cy:p.y,r:3,fill:'#22d3ee',style:{filter:'drop-shadow(0 0 4px rgba(34,211,238,.8))'}}):null));
+
+    const metrics=[
+      {label:'TICKETS',value:'47',color:'#6ee7ff',glow:'rgba(110,231,255,.4)'},
+      {label:'LTV',value:'R$7.1k',color:'#34d399',glow:'rgba(52,211,153,.4)'},
+      {label:'RESP.',value:'1m42s',color:'#a78bfa',glow:'rgba(167,139,250,.4)'},
+      {label:'CSAT',value:'9.4',color:'#fbbf24',glow:'rgba(251,191,36,.4)'},
+    ];
+    const purchases=[
+      {name:'Caneta personalizada ×500',date:'15 AGO 2026',value:'R$1.250',dotColor:'#22d3ee',dotGlow:'rgba(34,211,238,.7)'},
+      {name:'Camiseta bordada ×100',date:'02 JUL 2026',value:'R$3.800',dotColor:'#8b5cf6',dotGlow:'rgba(139,92,246,.7)'},
+      {name:'Squeeze alumínio ×200',date:'20 MAI 2026',value:'R$2.100',dotColor:'#34d399',dotGlow:'rgba(52,211,153,.7)'},
+    ];
+    const sparkLabels=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+    const summaryPoints=[
+      'Cliente aguardando rastreio do pedido #PB-2024-1847',
+      'Pedido saiu para entrega hoje às 08h, previsão às 18h',
+      'Sentimento positivo — cliente satisfeita com o atendimento',
+      'Ticket aberto há 2h, dentro do SLA (5h)',
+    ];
+
+    // Call controls
+    const callControls=[
+      {label:'Mudo',paths:['M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z','M19 10v2a7 7 0 0 1-14 0v-2','M12 19v3'],danger:false,action:()=>{}},
+      {label:'Speaker',paths:['M11 5 6 9H2v6h4l5 4V5z','M19.07 4.93a10 10 0 0 1 0 14.14','M15.54 8.46a5 5 0 0 1 0 7.07'],danger:false,action:()=>{}},
+      {label:'Câmera',paths:['M23 7l-7 5 7 5V7z','M1 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5z'],danger:false,action:()=>{}},
+      {label:'Encerrar',paths:['M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.7 3.56 2 2 0 0 1 3.67 1.36h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l.72-.72a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.5 16.92z'],danger:true,action:()=>this.setState({callActive:false,callSecs:0})},
+    ];
+
+    // Command palette
+    const cmdNavPaths={inbox:['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'],dash:['M18 20V10','M12 20V4','M6 20v-6'],contacts:['M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2','M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'],pipeline:['M8 6h13','M8 12h13','M8 18h13','M3 6h.01','M3 12h.01','M3 18h.01']};
+    const mkAction=(action)=>()=>{this.setState({cmdOpen:false});setTimeout(action,0);};
+    const cmdGroups=[
+      { label:'Navegar', items:[
+        {label:'Chat / Inbox',sub:'Ir para mensagens',paths:cmdNavPaths.inbox,iconBg:'rgba(34,211,238,.1)',iconColor:'#6ee7ff',kbd:'⌘1',action:mkAction(()=>this.setState({screen:'inbox'}))},
+        {label:'Dashboard',sub:'Métricas e KPIs',paths:cmdNavPaths.dash,iconBg:'rgba(52,211,153,.1)',iconColor:'#34d399',kbd:'⌘2',action:mkAction(()=>this.setState({screen:'dashboard'}))},
+        {label:'Contatos',sub:'Gestão de contatos',paths:cmdNavPaths.contacts,iconBg:'rgba(139,92,246,.1)',iconColor:'#a78bfa',kbd:'⌘3',action:mkAction(()=>this.setState({screen:'contacts'}))},
+        {label:'Pipeline',sub:'Kanban de vendas',paths:cmdNavPaths.pipeline,iconBg:'rgba(251,191,36,.1)',iconColor:'#fbbf24',kbd:'⌘4',action:mkAction(()=>this.setState({screen:'pipeline'}))},
+        {label:'Campanhas',sub:'Disparo em massa',paths:['M3 11l19-9-9 19-2-8-8-2z'],iconBg:'rgba(244,114,182,.1)',iconColor:'#f472b6',kbd:'⌘5',action:mkAction(()=>this.setState({screen:'campaigns'}))},
+        {label:'Conexões',sub:'Instâncias WhatsApp',paths:['M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71','M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'],iconBg:'rgba(52,211,153,.1)',iconColor:'#34d399',kbd:'⌘6',action:mkAction(()=>this.setState({screen:'connections'}))},
+        {label:'Configurações',sub:'Preferências do sistema',paths:['M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'],iconBg:'rgba(232,234,242,.07)',iconColor:'rgba(232,234,242,.6)',kbd:'⌘,',action:mkAction(()=>this.setState({screen:'settings'}))},
+      ]},
+      { label:'Ações rápidas', items:[
+        {label:'Nova conversa',sub:null,paths:['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z','M12 8v4M10 10h4'],iconBg:'rgba(34,211,238,.1)',iconColor:'#6ee7ff',kbd:null,action:mkAction(()=>{})},
+        {label:'Modo Foco (Zen)',sub:'Ocultar distrações',paths:['M4 8V4m0 0h4M4 4l5 5M20 8V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5M20 16v4m0 0h-4m4 0l-5-5'],iconBg:'rgba(167,139,250,.1)',iconColor:'#a78bfa',kbd:null,action:mkAction(()=>this.setState(st=>({zenMode:!st.zenMode})))},
+        {label:'Resumo IA da conversa',sub:'Gerar análise com IA',paths:['m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z'],iconBg:'rgba(139,92,246,.1)',iconColor:'#a78bfa',kbd:null,action:mkAction(()=>this.setState({showSummary:true,screen:'inbox'}))},
+      ]},
+    ];
+
+    // Pipeline
+    const mk=(name,contact,value,product,progress,priority,priorityBg,priorityColor,priorityBorder,agentInit,agentBg,agent,date)=>({name,contact,value,product,progress,priority,priorityBg,priorityColor,priorityBorder,agentInit,agentBg,agent,date});
+    const kanbanCols=[
+      {label:'Prospecção',color:'#6ee7ff',count:3,delay:.05,cards:[
+        mk('Canetas Personalizadas','Maria Fernanda','R$ 1.250','500 un.',40,'QUENTE','rgba(239,68,68,.1)','#f87171','rgba(239,68,68,.25)','JQ','#6366f1','Joaquim','31 AGO'),
+        mk('Squeeze Premium','Roberto Silva','R$ 3.200','200 un.',20,'MORNO','rgba(245,158,11,.1)','#fbbf24','rgba(245,158,11,.25)','MS','#ec4899','Maria S.','29 AGO'),
+      ]},
+      {label:'Qualificação',color:'#a78bfa',count:2,delay:.1,cards:[
+        mk('Camisetas Bordadas','Ana Costa','R$ 8.500','300 un.',60,'QUENTE','rgba(239,68,68,.1)','#f87171','rgba(239,68,68,.25)','PC','#f97316','Pedro C.','28 AGO'),
+        mk('Brindes Corporativos','Empresa XYZ','R$ 15.000','1000 un.',50,'FRIO','rgba(110,231,255,.08)','rgba(110,231,255,.5)','rgba(110,231,255,.2)','JQ','#6366f1','Joaquim','27 AGO'),
+      ]},
+      {label:'Proposta',color:'#fbbf24',count:2,delay:.15,cards:[
+        mk('Kit Premium 2026','Grupo OS #142','R$ 22.000','500 un.',75,'QUENTE','rgba(239,68,68,.1)','#f87171','rgba(239,68,68,.25)','AR','#10b981','Ana R.','25 AGO'),
+      ]},
+      {label:'Negociação',color:'#f472b6',count:1,delay:.2,cards:[
+        mk('Mochilas Personalizadas','Carla Mendes','R$ 45.000','800 un.',85,'URGENTE','rgba(139,92,246,.1)','#a78bfa','rgba(139,92,246,.25)','LM','#8b5cf6','Lucas M.','24 AGO'),
+      ]},
+      {label:'Fechado ✓',color:'#34d399',count:4,delay:.25,cards:[
+        mk('Canecas Sublimadas','Pedro Alves','R$ 2.100','300 un.',100,'PAGO','rgba(52,211,153,.1)','#34d399','rgba(52,211,153,.25)','JQ','#6366f1','Joaquim','20 AGO'),
+      ]},
+    ];
+    const pipelineTotal=kanbanCols.reduce((a,c)=>a+c.cards.reduce((b,k)=>b+(parseFloat(k.value.replace(/[^0-9]/g,''))||0),0),0);
+    const pipelineStats=`R$ ${pipelineTotal.toLocaleString('pt-BR')} em negociação · ${kanbanCols.reduce((a,c)=>a+c.count,0)} oportunidades`;
+
+    // Dashboard
+    const dashPeriods=['Hoje','7 dias','30 dias','Ano'].map((label,i)=>({label,active:s.dashPeriod===i,go:()=>this.setState({dashPeriod:i})}));
+    const kpis=[
+      {label:'Conversas hoje',value:'247',delta:'+12%',up:true,color:'#6ee7ff',bg:'rgba(110,231,255,.1)',glow:'rgba(110,231,255,.08)',paths:['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z']},
+      {label:'Tempo médio',value:'1m 42s',delta:'-8%',up:true,color:'#34d399',bg:'rgba(52,211,153,.1)',glow:'rgba(52,211,153,.08)',paths:['M12 2v10l4 2','M22 12A10 10 0 1 1 2 12a10 10 0 0 1 20 0z']},
+      {label:'CSAT médio',value:'9.4',delta:'+0.3',up:true,color:'#fbbf24',bg:'rgba(251,191,36,.1)',glow:'rgba(251,191,36,.08)',paths:['M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z']},
+      {label:'Agentes online',value:'14',delta:'+2',up:true,color:'#f472b6',bg:'rgba(244,114,182,.1)',glow:'rgba(244,114,182,.08)',paths:['M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2','M23 21v-2a4 4 0 0 0-3-3.87','M16 3.13a4 4 0 0 1 0 7.75','M9 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8z']},
+    ];
+    const rawB=[12,18,24,31,28,42,55,68,74,60,48,38,52,66,72,58,44,35,28,22,18,15,12,10];
+    const maxB=Math.max(...rawB);
+    const bars=rawB.map((v,i)=>({h:Math.round((v/maxB)*70),label:i%4===0?String(i).padStart(2,'0'):'',peak:i>=8&&i<=14}));
+    const statusDist=[{label:'Abertos',val:'142',color:'#6366f1'},{label:'Pendentes',val:'63',color:'#f59e0b'},{label:'Resolvidos',val:'189',color:'#34d399'},{label:'Aguardando',val:'28',color:'#6ee7ff'}];
+    const total=422,angles2=[0];[142,63,189,28].forEach(v=>angles2.push(angles2[angles2.length-1]+v/total*360));
+    const dc=['#6366f1','#f59e0b','#34d399','#6ee7ff'];
+    const dpaths=dc.map((col,i)=>{const a1=angles2[i]*Math.PI/180,a2=angles2[i+1]*Math.PI/180,R=40,ri=24,cx=50,cy=50;const x1=cx+R*Math.cos(a1),y1=cy+R*Math.sin(a1),x2=cx+R*Math.cos(a2),y2=cy+R*Math.sin(a2),x3=cx+ri*Math.cos(a2),y3=cy+ri*Math.sin(a2),x4=cx+ri*Math.cos(a1),y4=cy+ri*Math.sin(a1);const la=(angles2[i+1]-angles2[i])>180?1:0;return`M${x1},${y1}A${R},${R} 0 ${la},1 ${x2},${y2}L${x3},${y3}A${ri},${ri} 0 ${la},0 ${x4},${y4}Z`;});
+    const donut=React.createElement('svg',{width:100,height:100,viewBox:'0 0 100 100',style:{transform:'rotate(-90deg)',flexShrink:0}},
+      ...dc.map((col,i)=>React.createElement('path',{key:i,d:dpaths[i],fill:col,opacity:.88})));
+    const agents=[
+      {name:'Joaquim',init:'JQ',bg:'#6366f1',rank:1,medal:'🥇',tickets:47,csat:'9.8',xp:'+1.240',xc:'#fbbf24',pct:100,bc:'rgba(245,158,11,.2)'},
+      {name:'Maria S.',init:'MS',bg:'#ec4899',rank:2,medal:'🥈',tickets:41,csat:'9.5',xp:'+980',xc:'rgba(200,200,210,.8)',pct:79,bc:'rgba(200,200,210,.12)'},
+      {name:'Pedro C.',init:'PC',bg:'#f97316',rank:3,medal:'🥉',tickets:38,csat:'9.1',xp:'+820',xc:'rgba(205,127,50,.9)',pct:66,bc:'rgba(205,127,50,.15)'},
+      {name:'Ana R.',init:'AR',bg:'#10b981',rank:4,medal:'4',tickets:35,csat:'9.0',xp:'+710',xc:'rgba(232,234,242,.4)',pct:57,bc:'transparent'},
+      {name:'Lucas M.',init:'LM',bg:'#8b5cf6',rank:5,medal:'5',tickets:31,csat:'8.8',xp:'+620',xc:'rgba(232,234,242,.4)',pct:50,bc:'transparent'},
+    ];
+
+    // ══ CONEXÕES ══
+    const connStats=[
+      {label:'Total de Conexões',value:'4',color:acA,glow:`rgba(${acAr},.1)`},
+      {label:'Conectadas',value:'3',color:'#34d399',glow:'rgba(52,211,153,.1)'},
+      {label:'Desconectadas',value:'1',color:'#fb7185',glow:'rgba(244,63,94,.1)'},
+    ];
+    const connAct=(label,paths)=>({label,paths});
+    const mkConn=(name,phone,instance,connected,isDefault,health,msgs,contacts,uptime)=>({
+      name,phone,instance,connected,isDefault,health,
+      status:connected?'CONECTADO':'DESCONECTADO',
+      statusBg:connected?'rgba(52,211,153,.1)':'rgba(244,63,94,.1)',
+      statusColor:connected?'#34d399':'#fb7185',
+      statusBorder:connected?'rgba(52,211,153,.28)':'rgba(244,63,94,.28)',
+      dotColor:connected?'#34d399':'#fb7185',
+      borderColor:connected?'rgba(52,211,153,.14)':'rgba(244,63,94,.14)',
+      iconBg:connected?'rgba(52,211,153,.1)':'rgba(244,63,94,.08)',
+      iconColor:connected?'#34d399':'#fb7185',
+      glow:connected?'rgba(52,211,153,.25)':'rgba(244,63,94,.2)',
+      healthColor:health>=80?'#34d399':health>=50?'#fbbf24':'#fb7185',
+      metrics:[
+        {label:'MENSAGENS',value:msgs,color:acA},
+        {label:'CONTATOS',value:contacts,color:'#a78bfa'},
+        {label:'UPTIME',value:uptime,color:'#34d399'},
+      ],
+      actions:[
+        connAct('QR Code',['M3 3h6v6H3zM15 3h6v6h-6zM3 15h6v6H3z','M15 15h2v2h-2zM19 15h2v2h-2zM15 19h2v2h-2zM19 19h2v2h-2z']),
+        connAct('Filas',['M3 6h18M3 12h18M3 18h18']),
+        connAct('Horários',['M12 2v10l4 2','M22 12A10 10 0 1 1 2 12a10 10 0 0 1 20 0z']),
+        connAct('Sincronizar',['M23 4v6h-6M1 20v-6h6','M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15']),
+        connAct('Config',['M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z']),
+      ],
+    });
+    const connections2=[
+      mkConn('WhatsApp Vendas','+55 11 99999-0000','PRINCIPAL',true,true,94,'12.4k','2.847','99.8%'),
+      mkConn('WhatsApp Suporte','+55 11 98888-1111','SUPORTE',true,false,87,'8.1k','1.203','99.2%'),
+      mkConn('WhatsApp Orçamentos','+55 11 97777-2222','ORCAMENTOS',true,false,72,'4.7k','892','97.5%'),
+      mkConn('WhatsApp Teste','+55 11 96666-3333','TESTE',false,false,38,'340','67','82.1%'),
+    ];
+
+    // ══ CONTATOS ══
+    const rawCt=[
+      {name:'Maria Fernanda',phone:'+55 11 99999-0000',type:'CLIENTE',typeBg:'rgba(52,211,153,.1)',typeColor:'#34d399',initials:'MF',avatarBg:'linear-gradient(135deg,#6366f1,#a855f7)',online:true,ltv:'R$7.1k'},
+      {name:'Pedro Alves',phone:'+55 21 98765-4321',type:'VIP',typeBg:'rgba(251,191,36,.1)',typeColor:'#fbbf24',initials:'PA',avatarBg:'linear-gradient(135deg,#f59e0b,#ef4444)',online:true,ltv:'R$24k'},
+      {name:'Grupo OS #142',phone:'WhatsApp Grupo · 12 membros',type:'O.S.',typeBg:'rgba(52,211,153,.1)',typeColor:'#34d399',initials:'OS',avatarBg:'linear-gradient(135deg,#10b981,#0d9488)',online:false,ltv:null},
+      {name:'Carla Mendes',phone:'+55 31 97654-3210',type:'LEAD',typeBg:'rgba(244,114,182,.1)',typeColor:'#f472b6',initials:'CM',avatarBg:'linear-gradient(135deg,#ec4899,#8b5cf6)',online:false,ltv:null},
+      {name:'Roberto Silva',phone:'+55 11 91234-5678',type:'CLIENTE',typeBg:'rgba(52,211,153,.1)',typeColor:'#34d399',initials:'RS',avatarBg:'linear-gradient(135deg,#0ea5e9,#6366f1)',online:true,ltv:'R$3.4k'},
+      {name:'Ana Costa',phone:'+55 41 98888-7777',type:'CLIENTE',typeBg:'rgba(52,211,153,.1)',typeColor:'#34d399',initials:'AC',avatarBg:'linear-gradient(135deg,#f97316,#fbbf24)',online:false,ltv:'R$11k'},
+      {name:'Marcos Lima',phone:'+55 51 97777-6666',type:'FORNECEDOR',typeBg:'rgba(110,231,255,.1)',typeColor:'#6ee7ff',initials:'ML',avatarBg:'linear-gradient(135deg,#14b8a6,#0ea5e9)',online:false,ltv:null},
+      {name:'Fernanda Rocha',phone:'+55 61 96666-5555',type:'CLIENTE',typeBg:'rgba(52,211,153,.1)',typeColor:'#34d399',initials:'FR',avatarBg:'linear-gradient(135deg,#a855f7,#ec4899)',online:false,ltv:'R$5.8k'},
+    ];
+    const ctFilters=['Todos','Clientes','VIP','Leads','Grupos','Fornecedores'].map((label,i)=>({label,active:s.ctFilter===i,go:()=>this.setState({ctFilter:i})}));
+    const contactList=rawCt.map((c,i)=>({...c,active:i===s.activeContact,select:()=>this.setState({activeContact:i})}));
+
+    // ══ CAMPANHAS ══
+    const campKpis=[
+      {label:'Campanhas ativas',value:'7',color:acA,bg:`rgba(${acAr},.1)`,glow:`rgba(${acAr},.09)`,paths:['M3 11l19-9-9 19-2-8-8-2z']},
+      {label:'Mensagens enviadas',value:'48.2k',color:'#34d399',bg:'rgba(52,211,153,.1)',glow:'rgba(52,211,153,.09)',paths:['M22 2 11 13','m22 2-7 20-4-9-9-4z']},
+      {label:'Taxa de leitura',value:'87%',color:'#fbbf24',bg:'rgba(251,191,36,.1)',glow:'rgba(251,191,36,.09)',paths:['M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z','M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z']},
+      {label:'Conversões',value:'1.284',color:'#a78bfa',bg:'rgba(167,139,250,.1)',glow:'rgba(167,139,250,.09)',paths:['M22 12h-4l-3 9L9 3l-3 9H2']},
+    ];
+    const mkCamp=(name,segment,scheduled,status,sent,delivered,read,failed)=>{
+      const total=sent||1;
+      return {name,segment,scheduled,status,
+        statusBg:status==='ENVIANDO'?`rgba(${acAr},.1)`:status==='CONCLUÍDA'?'rgba(52,211,153,.1)':status==='AGENDADA'?'rgba(251,191,36,.1)':'rgba(255,255,255,.06)',
+        statusColor:status==='ENVIANDO'?acA:status==='CONCLUÍDA'?'#34d399':status==='AGENDADA'?'#fbbf24':'rgba(232,234,242,.5)',
+        statusBorder:status==='ENVIANDO'?`rgba(${acAr},.28)`:status==='CONCLUÍDA'?'rgba(52,211,153,.28)':status==='AGENDADA'?'rgba(251,191,36,.28)':'rgba(255,255,255,.1)',
+        stats:[
+          {label:'ENVIADAS',value:sent.toLocaleString('pt-BR'),color:'#e8eaf2'},
+          {label:'ENTREGUES',value:delivered.toLocaleString('pt-BR'),color:'#34d399'},
+          {label:'LIDAS',value:read.toLocaleString('pt-BR'),color:acA},
+          {label:'FALHAS',value:failed.toLocaleString('pt-BR'),color:'#fb7185'},
+        ],
+        pctDelivered:Math.round((delivered/total)*100*0.7),
+        pctRead:Math.round((read/total)*100*0.25),
+        pctFailed:Math.round((failed/total)*100*0.05),
+      };
+    };
+    const campaignList=[
+      mkCamp('Black Friday 2026','Clientes VIP · 2.847 contatos','Enviando agora','ENVIANDO',1842,1798,1204,44),
+      mkCamp('Lançamento Kit Premium','Todos os clientes · 8.120 contatos','Concluída em 28 AGO','CONCLUÍDA',8120,7982,6841,138),
+      mkCamp('Reativação de Leads','Leads inativos 90d · 1.203 contatos','Agenda: 02 SET às 09:00','AGENDADA',0,0,0,0),
+      mkCamp('Pesquisa NPS Trimestral','Clientes ativos · 4.500 contatos','Concluída em 15 AGO','CONCLUÍDA',4500,4402,3187,98),
+    ];
+
+    // ══ CONFIGURAÇÕES ══
+    const stab=(id,label,paths)=>({id,label,paths,active:s.settingsTab===id,go:()=>this.setState({settingsTab:id})});
+    const settingsTabs=[
+      stab('horario','Horário',['M12 2v10l4 2','M22 12A10 10 0 1 1 2 12a10 10 0 0 1 20 0z']),
+      stab('mensagens','Mensagens',['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z']),
+      stab('automacao','Automação',['M23 4v6h-6M1 20v-6h6','M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15']),
+      stab('notificacoes','Notificações',['M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9','M13.73 21a2 2 0 0 1-3.46 0']),
+      stab('aparencia','Aparência',['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z','M12 2a10 10 0 0 0 0 20']),
+      stab('ia','Gestão IA',['m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z']),
+      stab('sons','Sons',['M11 5 6 9H2v6h4l5 4V5z','M19.07 4.93a10 10 0 0 1 0 14.14','M15.54 8.46a5 5 0 0 1 0 7.07']),
+      stab('atalhos','Atalhos',['M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z','M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h8']),
+    ];
+    const tg=(key)=>()=>this.setState(st=>({toggles:{...st.toggles,[key]:!st.toggles[key]}}));
+    const T=s.toggles;
+    const settingsCards=[
+      { title:'Horário de Atendimento', subtitle:'Defina os dias e horários', iconBg:`rgba(${acAr},.1)`, iconColor:acA,
+        paths:['M12 2v10l4 2','M22 12A10 10 0 1 1 2 12a10 10 0 0 1 20 0z'],
+        rows:[
+          {type:'select',label:'Início do expediente',hint:null,value:'08:00'},
+          {type:'select',label:'Fim do expediente',hint:null,value:'18:00'},
+          {type:'toggle',label:'Atender fins de semana',hint:'Sábado e domingo',on:T.weekend,toggle:tg('weekend')},
+          {type:'toggle',label:'Mensagem fora do horário',hint:'Resposta automática',on:T.offHours,toggle:tg('offHours')},
+        ]},
+      { title:'Mensagens', subtitle:'Comportamento do chat', iconBg:'rgba(52,211,153,.1)', iconColor:'#34d399',
+        paths:['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'],
+        rows:[
+          {type:'toggle',label:'Assinatura automática',hint:'Adiciona nome do agente',on:T.signature,toggle:tg('signature')},
+          {type:'toggle',label:'Confirmação de leitura',hint:'Enviar ✓✓ ao cliente',on:T.readReceipt,toggle:tg('readReceipt')},
+          {type:'toggle',label:'Preview de links',hint:null,on:T.linkPreview,toggle:tg('linkPreview')},
+          {type:'value',label:'Respostas rápidas cadastradas',hint:null,value:'47'},
+        ]},
+      { title:'Automação & IA', subtitle:'Copilot e chatbot', iconBg:'rgba(167,139,250,.1)', iconColor:'#a78bfa',
+        paths:['m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z'],
+        rows:[
+          {type:'toggle',label:'Copilot IA no chat',hint:'Sugestões contextuais',on:T.copilot,toggle:tg('copilot')},
+          {type:'toggle',label:'Auto-tagging inteligente',hint:'Classifica conversas',on:T.autoTag,toggle:tg('autoTag')},
+          {type:'toggle',label:'Análise de sentimento',hint:'Detecta humor do cliente',on:T.sentiment,toggle:tg('sentiment')},
+          {type:'select',label:'Modelo de IA',hint:null,value:'Gemini 2.0'},
+        ]},
+      { title:'Notificações', subtitle:'Alertas e sons', iconBg:'rgba(251,191,36,.1)', iconColor:'#fbbf24',
+        paths:['M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9','M13.73 21a2 2 0 0 1-3.46 0'],
+        rows:[
+          {type:'toggle',label:'Notificações push',hint:'Desktop e mobile',on:T.push,toggle:tg('push')},
+          {type:'toggle',label:'Som de nova mensagem',hint:null,on:T.sound,toggle:tg('sound')},
+          {type:'toggle',label:'Proteção de tela',hint:'Oculta preview em público',on:T.privacy,toggle:tg('privacy')},
+          {type:'select',label:'Volume',hint:null,value:'70%'},
+        ]},
+      { title:'SLA & Filas', subtitle:'Metas de atendimento', iconBg:'rgba(244,114,182,.1)', iconColor:'#f472b6',
+        paths:['M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'],
+        rows:[
+          {type:'select',label:'SLA primeira resposta',hint:null,value:'5 min'},
+          {type:'select',label:'SLA resolução',hint:null,value:'60 min'},
+          {type:'toggle',label:'Alerta de SLA em risco',hint:'80% do tempo decorrido',on:T.slaAlert,toggle:tg('slaAlert')},
+          {type:'toggle',label:'Distribuição automática',hint:'Round-robin por skill',on:T.autoAssign,toggle:tg('autoAssign')},
+        ]},
+      { title:'Segurança', subtitle:'Acesso e proteção', iconBg:'rgba(239,68,68,.1)', iconColor:'#fb7185',
+        paths:['M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'],
+        rows:[
+          {type:'toggle',label:'Autenticação em 2 fatores',hint:'TOTP ou WebAuthn',on:T.mfa,toggle:tg('mfa')},
+          {type:'toggle',label:'Bloqueio geográfico',hint:'Restringir por país',on:T.geoBlock,toggle:tg('geoBlock')},
+          {type:'select',label:'Sessão expira em',hint:null,value:'8 horas'},
+          {type:'value',label:'Dispositivos conectados',hint:null,value:'3'},
+        ]},
+    ];
+
+    return {
+      connStats, connections2, ctFilters, contactList, totalContacts:rawCt.length,
+      campKpis, campaignList, settingsTabs, settingsCards,
+      navItems, stories, sentFilters, conversations, convTabs, messages, rxnEmojis, selCount, selActions,
+      chatActions, attachTypes, sentimentRing, sparkline, sparkLabels, metrics, purchases, summaryPoints, callControls,
+      cmdGroups, toasts:s.toasts, kanbanCols, pipelineStats, dashPeriods, kpis, bars, statusDist, donut, agents,
+      // Palette tokens
+      gradAB, gradABVert, gradABA, glowA, logoShadow, activeBorder, activeCardBg,
+      inputFocusBg, inputShadow, navActiveBg, navActiveBorder, textDark, acA, acB,
+      auroraOp1, auroraOp2,
+      // Density tokens
+      dnPad:dn.pad, dnAvatar:dn.avatar, dnAvatarR:dn.avatarR, dnGap:dn.gap, dnFontSize:dn.fontSize,
+      screen:s.screen, navCollapsed:s.navCollapsed, navW:s.navCollapsed?'66px':'204px',
+      zenMode:s.zenMode, isTyping:s.isTyping, showAI:s.showAI, showAttach:s.showAttach,
+      showSummary:s.showSummary, callActive:s.callActive, callSecs:s.callSecs, callTimer:this._call(), callStatus:s.callSecs>0?'Em chamada':'Chamando…',
+      selectMode:s.selectMode, inputValue:s.inputValue, slaClock:this._sla(),
+      clock:s.clock||'—', onlineCount:14, cmdOpen:s.cmdOpen, aiSort:s.aiSort, aiSortLabel:s.aiSort?'IA Priority':'Recente',
+      showScrollBtn:s.showScrollBtn, newMsgCount:s.newMsgCount,
+      setScreen: go,
+      toggleNav:()=>this.setState(st=>({navCollapsed:!st.navCollapsed})),
+      toggleZen:()=>this.setState(st=>({zenMode:!st.zenMode})),
+      toggleAISort:()=>this.setState(st=>({aiSort:!st.aiSort})),
+      openCmd:()=>this.setState({cmdOpen:true}),
+      closeCmd:()=>this.setState({cmdOpen:false}),
+      stopProp:(e)=>e.stopPropagation(),
+      onCmdInput:(e)=>this.setState({cmdQuery:e.target.value}),
+      toggleSummary:()=>this.setState(st=>({showSummary:!st.showSummary})),
+      applyAI:()=>this.setState({inputValue:'O código de rastreio é BR-4921-8847-XZ. Acompanhe em tempo real pelo link.',showAI:false}),
+      dismissAI:()=>this.setState({showAI:false}),
+      toggleAttach:()=>this.setState(st=>({showAttach:!st.showAttach})),
+      closeAttach:()=>this.setState({showAttach:false}),
+      scrollBottom:()=>this.setState({showScrollBtn:false,newMsgCount:0}),
+      onInputFocus:()=>this.setState({inputFocused:true}),
+      onInputBlur:()=>this.setState({inputFocused:false}),
+      onInputChange:(e)=>this.setState({inputValue:e.target.value}),
+      onKeyDown:(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();this._send();}},
+      handleSend:()=>this._send(),
+      onRightClick:(e)=>{e.preventDefault();this.setState({selectMode:true});},
+      exitSel:()=>this.setState({selectMode:false,selected:new Set()}),
+    };
+  }
+
+  _send() {
+    const t = this.state.inputValue.trim();
+    if (!t) return;
+    const time = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    this.setState(s=>({msgs:[...s.msgs,{text:t,sent:true,time,gap:true,read:false,reactions:null,opt:true,product:null,link:null}],inputValue:''}));
+    setTimeout(()=>this.setState(s=>{const m=[...s.msgs];const l=m.length-1;if(m[l]?.opt)m[l]={...m[l],opt:false};return{msgs:m};}),1200);
+  }
+}
+
+</script>
+</body>
+</html>

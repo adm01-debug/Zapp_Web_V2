@@ -1,0 +1,430 @@
+{
+ "count": [
+  {
+   "n": 542
+  }
+ ],
+ "pk_constraint": [
+  {
+   "def": "PRIMARY KEY (id)",
+   "conname": "audio_memes_pkey",
+   "contype": "p"
+  },
+  {
+   "def": "FOREIGN KEY (uploaded_by) REFERENCES auth.users(id) ON DELETE SET NULL",
+   "conname": "audio_memes_uploaded_by_fkey",
+   "contype": "f"
+  }
+ ],
+ "dup_ids": [],
+ "rls_enabled": [
+  {
+   "relname": "audio_memes",
+   "relrowsecurity": true,
+   "relforcerowsecurity": false
+  }
+ ],
+ "policies": [
+  {
+   "cmd": "INSERT",
+   "name": "Authenticated users can insert audio memes",
+   "roles": "{authenticated}",
+   "table": "audio_memes",
+   "using": null,
+   "permissive": "PERMISSIVE",
+   "with_check": "(uploaded_by = auth.uid())"
+  },
+  {
+   "cmd": "SELECT",
+   "name": "Authenticated users can read audio memes",
+   "roles": "{authenticated}",
+   "table": "audio_memes",
+   "using": "true",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  },
+  {
+   "cmd": "UPDATE",
+   "name": "Authenticated users can update audio memes",
+   "roles": "{authenticated}",
+   "table": "audio_memes",
+   "using": "((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": "((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))"
+  },
+  {
+   "cmd": "DELETE",
+   "name": "Users can delete own audio memes",
+   "roles": "{authenticated}",
+   "table": "audio_memes",
+   "using": "((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))",
+   "permissive": "PERMISSIVE",
+   "with_check": null
+  }
+ ],
+ "columns": [
+  {
+   "udt_name": "uuid",
+   "data_type": "uuid",
+   "column_name": "id",
+   "is_nullable": "NO",
+   "column_default": "gen_random_uuid()",
+   "character_maximum_length": null
+  },
+  {
+   "udt_name": "text",
+   "data_type": "text",
+   "column_name": "name",
+   "is_nullable": "NO",
+   "column_default": null,
+   "character_maximum_length": null
+  },
+  {
+   "udt_name": "text",
+   "data_type": "text",
+   "column_name": "audio_url",
+   "is_nullable": "NO",
+   "column_default": null,
+   "character_maximum_length": null
+  },
+  {
+   "udt_name": "text",
+   "data_type": "text",
+   "column_name": "category",
+   "is_nullable": "NO",
+   "column_default": "'outros'::text",
+   "character_maximum_length": null
+  },
+  {
+   "udt_name": "numeric",
+   "data_type": "numeric",
+   "column_name": "duration_seconds",
+   "is_nullable": "YES",
+   "column_default": null,
+   "character_maximum_length": null
+  },
+  {
+   "udt_name": "bool",
+   "data_type": "boolean",
+   "column_name": "is_favorite",
+   "is_nullable": "NO",
+   "column_default": "false",
+   "character_maximum_length": null
+  },
+  {
+   "udt_name": "int4",
+   "data_type": "integer",
+   "column_name": "use_count",
+   "is_nullable": "NO",
+   "column_default": "0",
+   "character_maximum_length": null
+  },
+  {
+   "udt_name": "uuid",
+   "data_type": "uuid",
+   "column_name": "uploaded_by",
+   "is_nullable": "YES",
+   "column_default": null,
+   "character_maximum_length": null
+  },
+  {
+   "udt_name": "timestamptz",
+   "data_type": "timestamp with time zone",
+   "column_name": "created_at",
+   "is_nullable": "NO",
+   "column_default": "now()",
+   "character_maximum_length": null
+  }
+ ],
+ "fks": [],
+ "null_uploaded_by": [
+  {
+   "n": 0
+  }
+ ],
+ "triggers": [],
+ "indexes": [
+  {
+   "indexdef": "CREATE UNIQUE INDEX audio_memes_pkey ON public.audio_memes USING btree (id)",
+   "indexname": "audio_memes_pkey"
+  },
+  {
+   "indexdef": "CREATE INDEX idx_audio_memes_uploaded_by ON public.audio_memes USING btree (uploaded_by)",
+   "indexname": "idx_audio_memes_uploaded_by"
+  }
+ ],
+ "url_pct_count": [
+  {
+   "n": 542
+  }
+ ],
+ "url_pct_samples": [
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_mixkit_2031.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_mm_mm_009_A_banquinha_do_atestado_j__est__funcionando__conv.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_mm_mm_013_A_galera_t__usando_muita_droga_hoje__conv.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_portal_portal_016_A_TI_Corporativa_Atualmente.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal3_77df944d8e_004.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/vitoria_5371e51820_034.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal_553c03e2d4_046.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_br_br_acabou-acabou-acabou-galvao-bueno.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal_f8d5f5b3ea_185.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal_de9f501e28_198.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_br_br_vcs-pensaram-q-eu-nao-ia-rebolar-minha-bunda-hoje-ne.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_mixkit_600.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_portal_portal_003_Adriano_t__me_ouvindo_-_P_nico.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/vitoria_09596240ca_011.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/vitoria_c9e19af926_041.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal2_ae523344ff_009.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal2_1ee98d1f41_007.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_portal_portal_sp_008_Agora_to_viajando_helic_ptero.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal_241453325e_161.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_portal_portal_023_Ai_meu_c___.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/vitoria_8e3e7f71b2_005.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal_9643353a9e_048.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal_391f0327c0_049.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_portal_portal_sp_003_Ain_Cigarrinho_-_M_sica.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal3_88be199a72_003.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal_b902c7ed3a_047.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_mm_mm_001_Alah_AKbar.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal_4927dbd3bb_132.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal_80472687cd_134.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal_0582a709ff_133.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal_e3fb93e34b_135.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_mm_mm2_008_Algu_m_pode_me_colocar_como_admininastro_do_grupo_.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal2_690e40b735_011.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_mm_mm2_004_Al__inspetor__como___que_t__por_a__papai__Hoje___s.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal_ca617601d6_184.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_gospel_amentothat_1.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_gospel_amen-crowd.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_gospel_ameno-2.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/meme_mm_mm2_021_Amigo__tenha_for_a_e_f_.mp3"
+  },
+  {
+   "audio_url": "https://tnnnlkbymytvtqngbbqh.supabase.co/storage/v1/object/public/audio-memes/portal_5bd5dd44e4_008.mp3"
+  }
+ ],
+ "url_prefix_check": [
+  {
+   "n": 0
+  }
+ ],
+ "field_diffs": [
+  {
+   "id": "01c22e46-a336-4757-8e94-bcb1c8fc44de",
+   "name": "Ayrton Senna do Brasil!",
+   "diffs": {
+    "use_count": {
+     "v1": "16",
+     "v2": "17"
+    }
+   }
+  }
+ ],
+ "only_in_manifest": [
+  {
+   "id": "a265b1c2-d633-46f1-86b5-3e1f3017fc58",
+   "name": "Teste PTT Waveform",
+   "url": "https://www.soundjay.com/buttons/beep-01a.mp3"
+  }
+ ],
+ "only_in_db": [],
+ "encoding_suspects": [
+  {
+   "id": "81abf981-4b9d-41ce-a58c-05e442c3fbfc",
+   "name": "Acharam que eu não ia rebolar?"
+  },
+  {
+   "id": "daa16cae-93d4-4885-9537-5dd30f1dee26",
+   "name": "Alguém pode me colocar como admininastro do grupo?"
+  },
+  {
+   "id": "6f551164-4c77-461d-9928-afb1bc313e36",
+   "name": "Alô inspetor, como é que tá por aí papai? Hoje é sexta-feira né?"
+  },
+  {
+   "id": "233bd95d-e340-4660-b989-cb6135ec724a",
+   "name": "Áudio posso te ligar agora ou tua mulher tá do teu lado?"
+  },
+  {
+   "id": "2db613a7-bc47-4e76-83ad-471a7d67715e",
+   "name": "Bolsonaro - E daí?"
+  },
+  {
+   "id": "e8feb272-8201-4589-9007-69e961133dd8",
+   "name": "Cadê as mina que gosta de iludir os homens?"
+  },
+  {
+   "id": "80fc3edf-fa1b-4007-84ce-3131cf796e0b",
+   "name": "Cê sabe quem sou eu? Natasha Caldeirão"
+  },
+  {
+   "id": "5d1004f4-0022-42ad-a41e-b5c985fdb390",
+   "name": "Como vivem os mudos do grupo?"
+  },
+  {
+   "id": "1d7c08f6-91e9-40b8-8cf5-6a0222e8d6db",
+   "name": "E o pix, nada ainda?"
+  },
+  {
+   "id": "2d6dcade-4321-4cbb-9e10-dd687ab9ba0b",
+   "name": "E o PIX? Nada Ainda?"
+  },
+  {
+   "id": "59b0e550-c668-4379-a90f-dc39ddfc0dbf",
+   "name": "João, cadê meu paumelone?"
+  },
+  {
+   "id": "49a3c2d1-fd64-4046-9ae5-7878dd129bad",
+   "name": "Meme Perder?"
+  },
+  {
+   "id": "f3aaa609-2f89-4e88-b3d1-aa9442f15857",
+   "name": "Natasha Caldeirão - E o quê que tá acontecendo?"
+  },
+  {
+   "id": "1a36757d-bca9-4e4f-89c7-f6decef4fb7f",
+   "name": "O quê?? - Vovô Anésio"
+  },
+  {
+   "id": "b1a67b3f-6175-42f2-a0f0-e9b91e8bfea7",
+   "name": "Oi amor, tá podendo falar ou sua mulher tá perto?"
+  },
+  {
+   "id": "c1d71ec1-569d-41c6-8736-04fc476db493",
+   "name": "Oi lindo, sua mulher tá perto?"
+  },
+  {
+   "id": "2b6ed0db-8199-40c9-a297-5c81e34d3351",
+   "name": "Oi Lindo, sua mulher tá perto?"
+  },
+  {
+   "id": "86a440c9-6bf9-44b4-b513-4f05ecb60ad2",
+   "name": "Oruan - An quem?"
+  },
+  {
+   "id": "20857f6c-dd58-4cb6-bd15-3663dfc514f7",
+   "name": "Pode isso Arnaldo?"
+  },
+  {
+   "id": "dd818739-df13-42d7-b473-68feacd46c56",
+   "name": "Por que tu não me responde? Tua mulher tá contigo por acaso?"
+  },
+  {
+   "id": "a162dbc7-78e6-4f39-95ff-b736c78961ee",
+   "name": "Por que você apagou a mensagem?"
+  },
+  {
+   "id": "a05bef8b-2d9b-4531-8c6d-2495fafb76de",
+   "name": "Qual o tamanho do bilau do Pedro Bial?"
+  },
+  {
+   "id": "b4b205af-3c69-4f83-92c0-843acfeb51da",
+   "name": "Que delícia, hein?"
+  },
+  {
+   "id": "2ab50d7e-a351-45c5-8af7-8b752d318089",
+   "name": "Que show da xuxa é esse?"
+  },
+  {
+   "id": "09370a10-58e4-47f8-a9b1-0be0de8c6199",
+   "name": "Tá chovendo aí?"
+  },
+  {
+   "id": "ae1930e6-6281-4443-945b-b6438c8c4ed1",
+   "name": "Tiringa - Foi uma muié que mandou isso?"
+  },
+  {
+   "id": "cca67792-f4f2-4646-af17-80ce2f506ffe",
+   "name": "Tu é gay mano?"
+  },
+  {
+   "id": "98d8a993-d241-44bd-9d06-1cf049ac1960",
+   "name": "Tu tá falando com quem?"
+  },
+  {
+   "id": "eec4baad-b574-4cbf-99be-d678f5cf0425",
+   "name": "Vai me ver hoje? Vai falar o que pra sua mulher?"
+  },
+  {
+   "id": "bfd0b7db-4ea0-4fa0-bdad-e5e84b573c61",
+   "name": "Vamos organizar a confafefizização do grupo, né?"
+  }
+ ]
+}

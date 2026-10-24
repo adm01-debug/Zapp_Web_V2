@@ -1,0 +1,38 @@
+{
+  "always": {
+    "base_table_count": 3,
+    "calls_table_count": 1,
+    "function_name_count": {"$eq_field": "function_signature_count"},
+    "function_definition_sha256": {"$regex": "^[a-f0-9]{64}$"}
+  },
+  "before": {
+    "provider_event_column_count": 0,
+    "constraint_count": 0,
+    "validated_constraint_count": 0,
+    "index_count": 0,
+    "valid_unique_partial_index_count": 0,
+    "function_signature_count": 0,
+    "security_definer_count": 0,
+    "safe_path_count": 0,
+    "trusted_owner_count": 0,
+    "public_execute_count": 0,
+    "anon_execute_count": 0,
+    "authenticated_execute_count": 0,
+    "service_execute_count": 0
+  },
+  "after": {
+    "provider_event_column_count": 1,
+    "constraint_count": 1,
+    "validated_constraint_count": 1,
+    "index_count": 1,
+    "valid_unique_partial_index_count": 1,
+    "function_signature_count": 2,
+    "security_definer_count": 2,
+    "safe_path_count": 2,
+    "trusted_owner_count": 2,
+    "public_execute_count": 0,
+    "anon_execute_count": 0,
+    "authenticated_execute_count": 0,
+    "service_execute_count": 2
+  }
+}
