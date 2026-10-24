@@ -35,7 +35,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       const canal: Record<string, unknown> = {};
       canal.on = () => canal;
       canal.subscribe = (cb: (status: string) => void) => {
-        h.subs.push(cb);
+        if (typeof cb === 'function') h.subs.push(cb);
         return canal;
       };
       return canal;
