@@ -100,7 +100,7 @@ function renderTab(items: ContactMediaItem[]) {
 }
 
 function mockWidth(width: number) {
-  return vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+  return vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
     width, height: 400, top: 0, left: 0, right: width, bottom: 400, x: 0, y: 0,
     toJSON: () => ({}),
   } as DOMRect);
