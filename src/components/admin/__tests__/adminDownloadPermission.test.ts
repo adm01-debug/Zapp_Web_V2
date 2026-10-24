@@ -28,7 +28,9 @@ vi.mock('@/integrations/supabase/client', () => ({
       from: vi.fn().mockReturnValue({
         upload: vi.fn().mockResolvedValue({ error: null }),
         getPublicUrl: vi.fn(),
-        createSignedUrl: vi.fn().mockResolvedValue({ data: { signedUrl: 'https://signed.example.com/avatar.jpg' } }),
+        createSignedUrl: vi
+          .fn()
+          .mockResolvedValue({ data: { signedUrl: 'https://signed.example.com/avatar.jpg' } }),
       }),
     },
     functions: {
@@ -77,9 +79,7 @@ describe('useAdminData - can_download no handleSaveUser', () => {
       await result.current.handleSaveUser(testUser, null);
     });
 
-    expect(mockUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ can_download: true })
-    );
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ can_download: true }));
   });
 
   it('envia can_download=false quando desabilitado', async () => {
@@ -108,9 +108,7 @@ describe('useAdminData - can_download no handleSaveUser', () => {
       await result.current.handleSaveUser(testUser, null);
     });
 
-    expect(mockUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ can_download: false })
-    );
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ can_download: false }));
   });
 });
 
@@ -141,10 +139,22 @@ describe('UserWithRole interface', () => {
 
   it('can_download é boolean (não aceita null em runtime)', () => {
     const user: UserWithRole = {
-      id: 'test', user_id: 'test', name: 'Test', email: null,
-      avatar_url: null, nickname: null, signature: null, role: 'admin',
-      job_title: null, department: null, phone: null, access_level: null,
-      max_chats: null, can_download: true, is_active: true, created_at: '',
+      id: 'test',
+      user_id: 'test',
+      name: 'Test',
+      email: null,
+      avatar_url: null,
+      nickname: null,
+      signature: null,
+      role: 'admin',
+      job_title: null,
+      department: null,
+      phone: null,
+      access_level: null,
+      max_chats: null,
+      can_download: true,
+      is_active: true,
+      created_at: '',
     };
 
     expect(typeof user.can_download).toBe('boolean');
@@ -178,16 +188,31 @@ describe('useAdminData — avatares no bucket privado', () => {
   };
 
   const buildUser = (avatar_url: string | null): UserWithRole => ({
-    id: 'user-1', user_id: 'auth-1', name: 'Test User', email: 'test@test.com',
-    avatar_url, nickname: null, signature: null, role: 'agent', job_title: null,
-    department: null, phone: null, access_level: 'basic', max_chats: 5,
-    can_download: true, is_active: true, created_at: new Date().toISOString(),
+    id: 'user-1',
+    user_id: 'auth-1',
+    name: 'Test User',
+    email: 'test@test.com',
+    avatar_url,
+    nickname: null,
+    signature: null,
+    role: 'agent',
+    job_title: null,
+    department: null,
+    phone: null,
+    access_level: 'basic',
+    max_chats: 5,
+    can_download: true,
+    is_active: true,
+    created_at: new Date().toISOString(),
   });
 
   beforeEach(() => {
     vi.clearAllMocks();
     lastUpdate = null;
-    createSignedUrl.mockResolvedValue({ data: { signedUrl: 'https://signed.example.com/avatar.png' }, error: null });
+    createSignedUrl.mockResolvedValue({
+      data: { signedUrl: 'https://signed.example.com/avatar.png' },
+      error: null,
+    });
     upload.mockResolvedValue({ error: null });
     storageFrom.mockReturnValue({ upload, getPublicUrl, createSignedUrl });
     tableFrom.mockImplementation((table: string) => ({
@@ -241,7 +266,8 @@ describe('useAdminData — avatares no bucket privado', () => {
 
   it('salvar sem trocar a foto persiste o caminho, não a URL assinada', async () => {
     const { result } = renderHook(() => useAdminData('users'));
-    const signed = 'https://proj.supabase.co/storage/v1/object/sign/avatars/auth-1/avatar.png?token=abc';
+    const signed =
+      'https://proj.supabase.co/storage/v1/object/sign/avatars/auth-1/avatar.png?token=abc';
 
     await act(async () => {
       await result.current.handleSaveUser(buildUser(signed), null);
@@ -269,7 +295,8 @@ describe('useAdminData — avatares no bucket privado', () => {
       select: () => {
         const legacyRow = {
           ...profileRow,
-          avatar_url: 'https://proj.supabase.co/storage/v1/object/public/avatars/auth-1/avatar.png?t=123',
+          avatar_url:
+            'https://proj.supabase.co/storage/v1/object/public/avatars/auth-1/avatar.png?t=123',
         };
         const result = {
           data: table === 'profiles' ? [legacyRow] : [{ user_id: 'auth-1', role: 'agent' }],
@@ -308,7 +335,8 @@ describe('useAdminData — avatares no bucket privado', () => {
       select: () => {
         const legacyRow = {
           ...profileRow,
-          avatar_url: 'https://proj.supabase.co/storage/v1/object/sign/avatars/auth-1/avatar.png?token=abc',
+          avatar_url:
+            'https://proj.supabase.co/storage/v1/object/sign/avatars/auth-1/avatar.png?token=abc',
         };
         const result = {
           data: table === 'profiles' ? [legacyRow] : [{ user_id: 'auth-1', role: 'agent' }],
@@ -364,7 +392,10 @@ describe('useAdminData — handleCreateUser com avatar (bucket privado)', () => 
   beforeEach(() => {
     vi.clearAllMocks();
     upload.mockResolvedValue({ error: null });
-    createSignedUrl.mockResolvedValue({ data: { signedUrl: 'https://signed.example.com/avatar.png' }, error: null });
+    createSignedUrl.mockResolvedValue({
+      data: { signedUrl: 'https://signed.example.com/avatar.png' },
+      error: null,
+    });
     storageFrom.mockReturnValue({ upload, getPublicUrl, createSignedUrl });
     // fetchData pós-criação não importa aqui: perfis vazios, sem assinar nada.
     tableFrom.mockReturnValue({
@@ -392,15 +423,23 @@ describe('useAdminData — handleCreateUser com avatar (bucket privado)', () => 
     let ok = false;
     await act(async () => {
       ok = await result.current.handleCreateUser({
-        name: 'Novo', email: 'novo@test.com', password: 'abcdef', role: 'agent', avatarFile: file,
+        // PE-43: 8+ caracteres (mesma régua de `mapCreateUserError`/Edge).
+        name: 'Novo',
+        email: 'novo@test.com',
+        password: 'abcdef12',
+        role: 'agent',
+        avatarFile: file,
       });
     });
 
     expect(ok).toBe(true);
     expect(upload).toHaveBeenCalled();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toContain('create-user');
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    // Camada padrão de Edge (PE-43): `invokeEdge` -> `supabase.functions.invoke`,
+    // não `fetch` cru (o corpo vai em `options.body`, não serializado em JSON).
+    const invoke = supabase.functions.invoke as unknown as ReturnType<typeof vi.fn>;
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(invoke.mock.calls[0][0]).toBe('create-user');
+    const body = (invoke.mock.calls[0][1] as { body: { avatar_url?: string } }).body;
     expect(body.avatar_url).toMatch(/^[0-9a-f-]{36}\.jpg$/);
     expect(getPublicUrl).not.toHaveBeenCalled();
   });
@@ -413,12 +452,16 @@ describe('useAdminData — handleCreateUser com avatar (bucket privado)', () => 
     let ok = true;
     await act(async () => {
       ok = await result.current.handleCreateUser({
-        name: 'Novo', email: 'novo@test.com', password: 'abcdef', role: 'agent', avatarFile: file,
+        name: 'Novo',
+        email: 'novo@test.com',
+        password: 'abcdef12',
+        role: 'agent',
+        avatarFile: file,
       });
     });
 
     expect(ok).toBe(false);
     expect(toast.error).toHaveBeenCalledWith('Erro ao fazer upload da foto');
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(supabase.functions.invoke).not.toHaveBeenCalled();
   });
 });
