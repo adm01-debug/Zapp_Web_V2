@@ -212,21 +212,13 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
           refetch();
         },
         undoAction: async () => {
-          // Agrupado por valor anterior: um update por status distinto, não um
-          // laço de um update por contato.
-          const groups = new Map<string, string[]>();
           for (const id of targetIds) {
             const status = previousStatus.get(id);
             if (status === undefined) continue;
-            const ids = groups.get(status) ?? [];
-            ids.push(id);
-            groups.set(status, ids);
-          }
-          for (const [status, ids] of groups) {
             const { error } = await supabase
               .from('contacts')
               .update({ conversation_status: status, updated_at: new Date().toISOString() })
-              .in('id', ids);
+              .eq('id', id);
             if (error) throw error;
           }
           refetch();

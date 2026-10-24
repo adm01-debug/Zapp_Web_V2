@@ -123,7 +123,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
       ...tabsForChip(chipTab),
       queueId: storedPrefs?.queueId ?? null,
       // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
-      contactType: (searchParams.get('type') && searchParams.get('type') !== 'all' ? searchParams.get('type') : null) ?? storedPrefs?.contactType ?? null,
+      contactType: normalizeContactType(searchParams.get('type')) ?? storedPrefs?.contactType ?? null,
     };
   }, [storedPrefs, searchParams]);
 

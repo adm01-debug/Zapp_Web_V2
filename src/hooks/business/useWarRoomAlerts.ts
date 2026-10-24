@@ -1,7 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { usePushNotifications } from '../system/usePushNotifications';
 import { useNotificationSettings } from '../system/useNotificationSettings';
 
 interface WarRoomAlert {
@@ -78,7 +77,6 @@ async function fetchBreachedConversationIds(): Promise<string[]> {
 
 export function useWarRoomAlerts(soundEnabled?: boolean) {
   const queryClient = useQueryClient();
-  const { showNotification, permission } = usePushNotifications();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // Segunda batida do alerta crítico (`setTimeout`), para cancelar no desmonte.
   const segundaBatida = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -147,9 +145,8 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
           }
 
           // Push notification
-          if (permission === 'granted') {
-            showNotification({
-              title: `⚠️ ${alert.title}`,
+          if (settings.browserNotifications && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            new window.Notification(`⚠️ ${alert.title}`, {
               body: alert.message,
               tag: `warroom-${alert.id}`,
               requireInteraction: alert.alert_type === 'critical',
@@ -162,7 +159,7 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient, playAlertSound, permission, showNotification]);
+  }, [queryClient, playAlertSound, settings.browserNotifications]);
 
   // A segunda batida tem vida própria: este efeito (realtime) se refaz a cada mudança
   // de identidade de `showNotification`/`playAlertSound`, e limpar o timer no cleanup

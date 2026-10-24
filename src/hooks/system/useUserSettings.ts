@@ -135,7 +135,10 @@ export function useUserSettings() {
         if (error && error.code !== 'PGRST116') {
           // PGRST116 = no rows returned
           log.error('Error fetching settings:', error);
-          if (ativo) setIsError(true);
+          if (ativo) {
+            setIsError(true);
+            toast({ title: 'Erro', description: 'Não foi possível carregar as configurações.', variant: 'destructive' });
+          }
           return;
         }
 

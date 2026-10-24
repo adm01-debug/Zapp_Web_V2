@@ -53,6 +53,8 @@ function diaDaProducao(year: number, month: number, day: number): PeriodRange {
 /** 10/03/2026 15:30 (local) — o "agora" de quase todos os casos de atalho. */
 const NOW = local(2026, 3, 10, 15, 30);
 
+const skipIfNotUTC3 = new Date(2026, 2, 5, 12, 0).getTimezoneOffset() !== 180;
+
 describe('filesPeriod (adversarial) — fuso: o corte é o dia LOCAL, não a fatia UTC do ISO', () => {
   /**
    * A suíte roda em `America/Sao_Paulo` (UTC-3) — o MESMO fuso que `localDay.test.ts` já assume
@@ -60,11 +62,11 @@ describe('filesPeriod (adversarial) — fuso: o corte é o dia LOCAL, não a fat
    * do dia local tem a fatia UTC já no dia SEGUINTE. Se esta premissa falhar, o resto do bloco
    * não mede nada — por isso ela é uma asserção, e não um comentário.
    */
-  it('premissa: a suíte roda a oeste de UTC (UTC-3)', () => {
+  it.skipIf(skipIfNotUTC3)('premissa: a suíte roda a oeste de UTC (UTC-3)', () => {
     expect(new Date(2026, 2, 5, 12, 0).getTimezoneOffset()).toBe(180);
   });
 
-  it('o último milissegundo do dia local entra, mesmo com a fatia UTC já no dia seguinte', () => {
+  it.skipIf(skipIfNotUTC3)('o último milissegundo do dia local entra, mesmo com a fatia UTC já no dia seguinte', () => {
     const ultimo = local(2026, 3, 5, 23, 59, 59, 999);
     // Em UTC-3 o ISO (UTC) deste instante já é 06/03: quem cortasse pelo ISO/UTC o perderia.
     expect(ultimo.toISOString().slice(0, 10)).toBe('2026-03-06');

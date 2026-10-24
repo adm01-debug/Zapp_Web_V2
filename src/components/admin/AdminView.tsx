@@ -24,6 +24,7 @@ import { AdminUsersTable } from './AdminUsersTable';
 import { AdminAuditTable } from './AdminAuditTable';
 import { VoipRamalField } from './VoipRamalField';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
+import { CronJobsTab } from './CronJobsTab';
 
 const roleIconMap = { admin: Crown, supervisor: UserCog, agent: User, special_agent: Eye } as const;
 const roleLabelMap = { admin: 'Administrador', supervisor: 'Supervisor', agent: 'Atendente', special_agent: 'Agente Especial' } as const;
@@ -43,7 +44,7 @@ function normalizarLimiteChats(valor: number): number {
 
 type GoogleServiceKey = 'google_sheets' | 'google_docs' | 'google_calendar' | 'google_drive';
 
-type AdminTab = 'users' | 'audit' | 'crm';
+type AdminTab = 'users' | 'audit' | 'crm' | 'cron';
 
 // SL-160/P2-3.4: a integração com Google Calendar não existe no produto (não há OAuth
 // nem sincronização em src/ ou supabase/functions — só a tela de demonstração, fora dos
@@ -96,6 +97,11 @@ export function AdminView() {
     if (!editAvatarPreview) return undefined;
     return () => URL.revokeObjectURL(editAvatarPreview);
   }, [editAvatarPreview]);
+
+  // Recarrega dados sempre que a aba de Usuários fica ativa (incluindo o primeiro
+  // render), mas não executa nas abas que não consomem esses dados.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (activeTab === 'users') fetchData(); }, [activeTab]);
 
   // Trocar o período volta para a primeira página: sem isso a página 3 de um
   // período novo poderia cair fora do intervalo e mostrar tabela vazia.
@@ -182,6 +188,7 @@ export function AdminView() {
     ['users', Users, `Usuários (${users.length})`],
     ['audit', History, 'Auditoria'],
     ['crm', Building, 'CRM 360°'],
+    ...(isAdmin ? [['cron', Shield, 'Tarefas agendadas'] as const] : []),
   ];
 
   const navegarNasAbas = (event: KeyboardEvent<HTMLButtonElement>, tab: AdminTab) => {
@@ -488,6 +495,8 @@ export function AdminView() {
         <SectionErrorBoundary key="crm" sectionName="CRM Admin">
           <AdminCRMDashboard />
         </SectionErrorBoundary>
+      ) : activeTab === 'cron' && isAdmin ? (
+        <CronJobsTab />
       ) : null}
       </div>
     </div>

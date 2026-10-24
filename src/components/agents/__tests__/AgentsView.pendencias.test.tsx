@@ -148,6 +148,11 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (table: string) => h.makeQuery(table),
     rpc: () => Promise.resolve({ data: [], error: null }),
+    channel: vi.fn().mockReturnValue({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn().mockReturnValue({}),
+    }),
+    removeChannel: vi.fn(),
   },
 }));
 
