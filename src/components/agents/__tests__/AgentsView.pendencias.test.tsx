@@ -36,19 +36,49 @@ const h = vi.hoisted(() => {
 
   const profiles = [
     {
-      id: 'p1', user_id: 'u1', name: 'Ana Souza', email: 'ana@exemplo.test', avatar_url: null,
-      role: 'agent', job_title: null, department: null, phone: null, is_active: true,
-      max_chats: 5, created_at: '', updated_at: '',
+      id: 'p1',
+      user_id: 'u1',
+      name: 'Ana Souza',
+      email: 'ana@exemplo.test',
+      avatar_url: null,
+      role: 'agent',
+      job_title: null,
+      department: null,
+      phone: null,
+      is_active: true,
+      max_chats: 5,
+      created_at: '',
+      updated_at: '',
     },
     {
-      id: 'p2', user_id: 'u2', name: 'Bruno Lima', email: 'bruno@exemplo.test', avatar_url: null,
-      role: 'agent', job_title: null, department: null, phone: null, is_active: true,
-      max_chats: 5, created_at: '', updated_at: '',
+      id: 'p2',
+      user_id: 'u2',
+      name: 'Bruno Lima',
+      email: 'bruno@exemplo.test',
+      avatar_url: null,
+      role: 'agent',
+      job_title: null,
+      department: null,
+      phone: null,
+      is_active: true,
+      max_chats: 5,
+      created_at: '',
+      updated_at: '',
     },
     {
-      id: 'p3', user_id: 'u3', name: 'Carla Dias', email: 'carla@exemplo.test', avatar_url: null,
-      role: 'agent', job_title: null, department: null, phone: null, is_active: true,
-      max_chats: 5, created_at: '', updated_at: '',
+      id: 'p3',
+      user_id: 'u3',
+      name: 'Carla Dias',
+      email: 'carla@exemplo.test',
+      avatar_url: null,
+      role: 'agent',
+      job_title: null,
+      department: null,
+      phone: null,
+      is_active: true,
+      max_chats: 5,
+      created_at: '',
+      updated_at: '',
     },
   ];
 
@@ -57,7 +87,12 @@ const h = vi.hoisted(() => {
     { id: 'c1', assigned_to: 'p1', conversation_status: 'waiting', deleted_at: null }, // conta p1
     { id: 'c2', assigned_to: 'p1', conversation_status: 'waiting', deleted_at: null }, // conta p1
     { id: 'c3', assigned_to: 'p1', conversation_status: 'open', deleted_at: null }, // em curso, não pendente
-    { id: 'c4', assigned_to: 'p1', conversation_status: 'waiting', deleted_at: '2026-01-02T00:00:00Z' }, // excluído
+    {
+      id: 'c4',
+      assigned_to: 'p1',
+      conversation_status: 'waiting',
+      deleted_at: '2026-01-02T00:00:00Z',
+    }, // excluído
     { id: 'c5', assigned_to: 'p3', conversation_status: 'waiting', deleted_at: null }, // conta p3
     { id: 'c6', assigned_to: 'p2', conversation_status: 'resolved', deleted_at: null }, // cadastro
     { id: 'c7', assigned_to: null, conversation_status: 'waiting', deleted_at: null }, // espera da fila
@@ -94,18 +129,19 @@ const h = vi.hoisted(() => {
         (c) =>
           (!pedeResponsavel || c.assigned_to !== null) &&
           (!status || c.conversation_status === status) &&
-          (!pedeNaoExcluido || c.deleted_at === null),
+          (!pedeNaoExcluido || c.deleted_at === null)
       );
     }
     if (table === 'messages') {
       const sender = eq('sender');
       const pedeDono = has('not', 'agent_id');
-      const depois = filters.find((f) => f[0] === 'gte' && f[1] === 'created_at')?.[2] as string | undefined;
+      const depois = filters.find((f) => f[0] === 'gte' && f[1] === 'created_at')?.[2] as
+        string | undefined;
       return messages.filter(
         (m) =>
           (!sender || m.sender === sender) &&
           (!pedeDono || m.agent_id !== null) &&
-          (!depois || m.created_at >= depois),
+          (!depois || m.created_at >= depois)
       );
     }
     return [];
@@ -117,21 +153,39 @@ const h = vi.hoisted(() => {
     let to: number | null = null;
     const q: Record<string, unknown> = {
       select: () => q,
-      eq: (...a: unknown[]) => { filters.push(['eq', ...a]); return q; },
-      not: (...a: unknown[]) => { filters.push(['not', ...a]); return q; },
-      is: (...a: unknown[]) => { filters.push(['is', ...a]); return q; },
-      in: (...a: unknown[]) => { filters.push(['in', ...a]); return q; },
+      eq: (...a: unknown[]) => {
+        filters.push(['eq', ...a]);
+        return q;
+      },
+      not: (...a: unknown[]) => {
+        filters.push(['not', ...a]);
+        return q;
+      },
+      is: (...a: unknown[]) => {
+        filters.push(['is', ...a]);
+        return q;
+      },
+      in: (...a: unknown[]) => {
+        filters.push(['in', ...a]);
+        return q;
+      },
       gte: (...a: unknown[]) => {
         filters.push(['gte', ...a]);
         if (table === 'messages' && a[0] === 'created_at') state.createdAfter = a[1] as string;
         return q;
       },
       order: () => q,
-      range: (f: number, t: number) => { from = f; to = t; return q; },
+      range: (f: number, t: number) => {
+        from = f;
+        to = t;
+        return q;
+      },
       then: (resolve: (v: unknown) => unknown) => {
         state.queries[table] = (state.queries[table] ?? 0) + 1;
         if (state.failTable === table) {
-          return Promise.resolve(resolve({ data: null, error: { message: 'indisponível no teste' } }));
+          return Promise.resolve(
+            resolve({ data: null, error: { message: 'indisponível no teste' } })
+          );
         }
         const all = resolveRows(table, filters);
         const data = from === null ? all.slice(0, 1000) : all.slice(from, (to ?? 0) + 1);
@@ -148,6 +202,10 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (table: string) => h.makeQuery(table),
     rpc: () => Promise.resolve({ data: [], error: null }),
+    // useConnectionsHealth (composto pela tela) assina `whatsapp_connections`
+    // via Realtime — sem isso, montar a tela quebra com "channel is not a function".
+    channel: () => ({ on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }) }),
+    removeChannel: () => {},
   },
 }));
 
@@ -169,7 +227,7 @@ function renderView() {
       <QueryClientProvider client={qc}>
         <AgentsView />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
@@ -214,10 +272,16 @@ describe('AgentsView — pendências e últimos envios por atendente (t_2939f5e5
 
     // Ana tem dois envios (5h e 2h atrás): vale o MAIS RECENTE. O `title` traz o
     // horário exato, então o teste prova qual data foi escolhida, não só que "há algo".
-    expect(within(ana).getByTitle(new Date(h.envios.p1Novo).toLocaleString('pt-BR'))).toBeInTheDocument();
-    expect(within(ana).queryByTitle(new Date(h.envios.p1Antigo).toLocaleString('pt-BR'))).toBeNull();
+    expect(
+      within(ana).getByTitle(new Date(h.envios.p1Novo).toLocaleString('pt-BR'))
+    ).toBeInTheDocument();
+    expect(
+      within(ana).queryByTitle(new Date(h.envios.p1Antigo).toLocaleString('pt-BR'))
+    ).toBeNull();
     // Carla idem: 3 dias atrás vence 10 dias atrás.
-    expect(within(carla).getByTitle(new Date(h.envios.p3Novo).toLocaleString('pt-BR'))).toBeInTheDocument();
+    expect(
+      within(carla).getByTitle(new Date(h.envios.p3Novo).toLocaleString('pt-BR'))
+    ).toBeInTheDocument();
     expect(within(carla).queryByText('Sem envio recente')).toBeNull();
     // Bruno só enviou 40 dias atrás, fora da janela: o rótulo é honesto, não uma data qualquer.
     expect(within(bruno).getByText('Sem envio recente')).toBeInTheDocument();
@@ -227,9 +291,7 @@ describe('AgentsView — pendências e últimos envios por atendente (t_2939f5e5
     renderView();
 
     await screen.findByText('Ana Souza');
-    const nomes = screen
-      .getAllByRole('heading', { level: 3 })
-      .map((titulo) => titulo.textContent);
+    const nomes = screen.getAllByRole('heading', { level: 3 }).map((titulo) => titulo.textContent);
 
     // Ana (2) > Carla (1) > Bruno (0) — ordem diferente da alfabética, para provar que a
     // pendência é o critério.
