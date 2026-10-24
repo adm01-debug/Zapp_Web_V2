@@ -1,22 +1,15 @@
 import {
-  Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   HelpCircle, Zap, GitBranch, Users, FileText, Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CAMPAIGN_STATUS, type PillTone } from './talkxShared';
-
-interface TalkXHelpProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
 
 const toneDot: Record<PillTone, string> = {
   success: 'bg-success', danger: 'bg-destructive', warning: 'bg-warning',
@@ -40,23 +33,42 @@ function HelpSection({ icon: Icon, title, children }: { icon: typeof Zap; title:
 const LIFECYCLE_ORDER = ['draft', 'scheduled', 'sending', 'completed'] as const;
 const LIFECYCLE_BRANCHES = ['paused', 'cancelled'] as const;
 
-export function TalkXHelp({ open, onOpenChange }: TalkXHelpProps) {
+/**
+ * Conteúdo do modal de Ajuda do Talk X.
+ *
+ * A raiz `<Dialog>` e o `<DialogTrigger>` ficam no `TalkXView`, com o botão "Ajuda" do
+ * cabeçalho do módulo: é o `DialogTrigger` que registra o elemento no `triggerRef` do
+ * Radix, e é para ele que o `DialogContentModal` devolve o foco ao fechar
+ * (`onCloseAutoFocus` -> `triggerRef.current.focus()`). Enquanto o gatilho era um
+ * `<button onClick>` fora da raiz do Dialog, o `triggerRef` ficava nulo e o foco caía no
+ * `<body>` ao fechar com Esc — defeito medido na régua de teclado do Talk X (tela 16).
+ */
+export function TalkXHelp() {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[85vh] overflow-hidden">
-        <DialogHeader className="pb-4 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary/10">
-              <HelpCircle className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <DialogTitle className="text-xl">Ajuda — Campanhas (Talk X)</DialogTitle>
-              <DialogDescription>Visão geral rápida de como o módulo funciona.</DialogDescription>
-            </div>
+    <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[85vh] overflow-hidden">
+      <DialogHeader className="pb-4 border-b border-border">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-primary/10">
+            <HelpCircle className="w-5 h-5 text-primary" />
           </div>
-        </DialogHeader>
+          <div>
+            <DialogTitle className="text-xl">Ajuda — Campanhas (Talk X)</DialogTitle>
+            <DialogDescription>Visão geral rápida de como o módulo funciona.</DialogDescription>
+          </div>
+        </div>
+      </DialogHeader>
 
-        <ScrollArea className="h-[60vh] pr-4">
+{/* A Ajuda é a única região rolável do Talk X sem conteúdo focável (é só
+            texto). O viewport do Radix ScrollArea não entra na ordem de foco e o
+            axe reprova `scrollable-region-focusable` [serious] por isso. Aqui a
+            própria região rolável é focável (tabIndex) e nomeada (role=region +
+            aria-label): é o padrão de teclado para região com rolagem. */}
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="Conteúdo da ajuda"
+          className="h-[60vh] pr-4 overflow-y-auto rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
           <div className="space-y-6 py-4">
             <HelpSection icon={Zap} title="Visão geral">
               <p>
@@ -122,8 +134,7 @@ export function TalkXHelp({ open, onOpenChange }: TalkXHelpProps) {
               </p>
             </HelpSection>
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
-    </Dialog>
   );
 }

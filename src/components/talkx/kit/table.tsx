@@ -25,7 +25,11 @@ export function TalkXPagination({ page, pageSize, total, onPage, onPageSize, nou
         ))}
         <button type="button" disabled={page >= pages} onClick={() => onPage(page + 1)} aria-label="Próxima página" className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center disabled:opacity-40 hover:bg-muted/50"><ChevronRight className="w-4 h-4" /></button>
         <Select value={String(pageSize)} onValueChange={(v) => onPageSize(Number(v))}>
-          <SelectTrigger className="h-8 rounded-lg bg-input/40 border-border/70 text-xs w-auto gap-1.5 ml-2"><SelectValue /></SelectTrigger>
+          {/* O gatilho do Select é um `button role="combobox"`: nesse papel a AccName NÃO tira
+              nome do conteúdo, então o texto "N por página" não nomeia o controle (axe
+              `button-name`, crítico, nos dois temas — medido na tela 01). O rótulo explícito é
+              o que o leitor de tela anuncia. */}
+          <SelectTrigger aria-label="Itens por página" className="h-8 rounded-lg bg-input/40 border-border/70 text-xs w-auto gap-1.5 ml-2"><SelectValue /></SelectTrigger>
           <SelectContent>{[8, 10, 20, 50].map((n) => <SelectItem key={n} value={String(n)}>{n} por página</SelectItem>)}</SelectContent>
         </Select>
       </div>
@@ -55,7 +59,7 @@ export function RowActionsMenu({ actions, label = 'Ações', busy = false }: { a
       <DropdownMenuContent align="end" className="min-w-[180px]">
         {actions.map((a, i) => (
           <DropdownMenuItem key={i} onClick={a.disabled ? undefined : a.onSelect} disabled={a.disabled}
-            className={cn(a.danger && !a.disabled && 'text-destructive focus:text-destructive focus:bg-destructive/10')}
+            className={cn(a.danger && !a.disabled && 'text-[hsl(var(--destructive-text))] focus:text-[hsl(var(--destructive-text))] focus:bg-destructive/10')}
           >
             {a.icon && <a.icon className="w-3.5 h-3.5 mr-2 opacity-70" />} {a.label}
           </DropdownMenuItem>

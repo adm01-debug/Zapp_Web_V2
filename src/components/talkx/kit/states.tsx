@@ -26,9 +26,9 @@ export function StateShell({
 }) {
   const ring = {
     muted: 'border-border/70 text-muted-foreground',
-    danger: 'border-dash-red/50 text-dash-red',
-    warning: 'border-dash-amber/50 text-dash-amber',
-    success: 'border-dash-green/50 text-dash-green',
+    danger: 'border-dash-red/50 text-[hsl(var(--destructive-text))]',
+    warning: 'border-dash-amber/50 text-[hsl(var(--warning-text))]',
+    success: 'border-dash-green/50 text-success',
   }[tone];
   const isError = tone === 'danger';
   return (

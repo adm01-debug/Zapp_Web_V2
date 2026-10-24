@@ -53,7 +53,7 @@ describe('TalkXMessageEditor — gramática de variáveis (R2-MOD-062)', () => {
       <TalkXMessageEditor value="Oi {{ nome | cliente }}" onChange={() => {}} knownVariables={['{{nome}}']} />,
     );
     const overlay = container.querySelector('pre') as HTMLElement;
-    expect(overlay.innerHTML).toContain('text-primary-glow');
+    expect(overlay.innerHTML).toContain('text-[hsl(var(--primary-text))]');
     expect(overlay.innerHTML).not.toContain('text-dash-amber');
   });
 

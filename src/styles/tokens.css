@@ -352,7 +352,15 @@
     --kpi-tile-yellow-fg: 38 92% 62%;
 
     /* Dashboard — Navy Operational (medido de docs/design/dashboard-reference.png) */
-    --foreground-secondary: 215 30% 78%;
+    /* TL-175B — texto secundário do tema CLARO. O valor medido do painel navy
+       (215 30% 78%) é um azul claro, feito para fundo escuro: no claro media 1,65:1
+       sobre --background e 1,77:1 sobre --card (axe `color-contrast` [serious] nos usos
+       de `text-foreground-secondary` do Talk X). Matiz e saturação do token continuam
+       os mesmos (215 30%) — só a luminosidade vai para 40%, o mesmo degrau que a folha
+       já usa no texto secundário do claro (`--muted-foreground` vale 221 10% 40%). Medido:
+       5,90:1 sobre --background e 6,34:1 sobre --card (pior caso 5,24:1 sobre --muted).
+       O valor navy passa a viver no tema escuro (.dark). */
+    --foreground-secondary: 215 30% 40%;
     --dash-tile-blue: 221 88% 29%;
     --dash-tile-red: 349 62% 30%;
     --dash-tile-green: 156 73% 18%;
@@ -421,6 +429,10 @@
     --secondary-foreground: 0 0% 100%;
     --muted: 240 4% 18%;
     --muted-foreground: 215 20% 75%;
+    /* TL-175B — no escuro o token continua o navy claro medido do painel (antes herdado
+       do `:root` por engano, o que o deixava ilegível no claro). Medido: 10,88:1 sobre
+       --background e 10,01:1 sobre --card. */
+    --foreground-secondary: 215 30% 78%;
     --accent: 240 5% 16%;
     --accent-foreground: 210 40% 98%;
     --destructive: 354 100% 68%;

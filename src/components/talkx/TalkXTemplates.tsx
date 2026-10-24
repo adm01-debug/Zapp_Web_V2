@@ -165,7 +165,7 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
           <p className="text-xs font-semibold text-foreground mb-2">Mais usados</p>
           {most.map((t, i) => (
             <button key={t.id} type="button" onClick={() => onUseTemplate(t.id)} className="w-full flex items-center gap-2.5 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/20 text-left rounded-xl px-1">
-              <span className="w-6 h-6 rounded-full bg-primary/15 text-primary-glow text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+              <span className="w-6 h-6 rounded-full bg-primary/15 text-[hsl(var(--primary-text))] text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
               <div className="min-w-0 flex-1"><p className="text-[13px] font-semibold text-foreground truncate">{t.name}</p><p className="text-2xs text-foreground-secondary">{fmtInt(t.use_count)} usos</p></div>
               <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
             </button>
@@ -194,12 +194,13 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled }: P
 
 function TemplateListRow({ t, selected, onClick, onEdit, onDuplicate, onDelete, onUse }: { t: TalkXTemplate; selected: boolean; onClick: () => void; onEdit: () => void; onDuplicate: () => void; onDelete: () => void; onUse: () => void }) {
   const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
+  // TL-175D (t_eedf548a): a linha da lista tambem deixa de ser `role="button"` pelo
+  // MESMO motivo do cartao da grade (`nested-interactive`, o outro componente deste
+  // arquivo): controle interativo dentro de controle. O clique por mouse continua e
+  // as acoes da linha seguem sendo `<button>` reais.
   return (
     <div
       onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick(); } }}
       className={cn('flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-muted/20', selected ? 'bg-primary/5' : '')}
     >
       <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -216,7 +217,7 @@ function TemplateListRow({ t, selected, onClick, onEdit, onDuplicate, onDelete, 
         <button type="button" onClick={(e) => { e.stopPropagation(); onUse(); }} className="h-7 px-2.5 rounded-lg bg-primary text-white text-xs font-semibold">Usar</button>
         <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-muted/50" aria-label="Editar"><Pencil className="w-3 h-3" /></button>
         <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-muted/50" aria-label="Duplicar"><Copy className="w-3 h-3" /></button>
-        <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-dash-red/10 hover:text-dash-red" aria-label="Excluir"><Trash2 className="w-3 h-3" /></button>
+        <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="hidden sm:flex h-7 w-7 rounded-lg border border-border/70 bg-input/40 items-center justify-center hover:bg-dash-red/10 hover:text-[hsl(var(--destructive-text))]" aria-label="Excluir"><Trash2 className="w-3 h-3" /></button>
       </div>
     </div>
   );
@@ -224,21 +225,24 @@ function TemplateListRow({ t, selected, onClick, onEdit, onDuplicate, onDelete, 
 
 function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onUse }: { t: TalkXTemplate; selected: boolean; onClick: () => void; onEdit: () => void; onDuplicate: () => void; onDelete: () => void; onUse: () => void }) {
   const sm = TEMPLATE_STATUS[t.status] ?? TEMPLATE_STATUS.draft;
+  // TL-175D (t_eedf548a): o cartao NAO e um controle. Era `role="button"` com os
+  // botoes de acao DENTRO dele — o axe reprovava `nested-interactive` nos 4 cartoes
+  // da grade (controle interativo dentro de controle: o leitor de tela anuncia mal e
+  // o Tab entra num controle que ja esta dentro de outro). O clique por mouse
+  // continua; quem seleciona o cartao nao tem papel de controle, e cada acao
+  // (Usar/Editar/Duplicar/Excluir) segue sendo um `<button>` real e alcancavel.
   return (
     <div
       onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onClick(); } }}
       className={cn('rounded-2xl border cursor-pointer transition-all hover:shadow-md', selected ? 'border-primary bg-primary/5' : 'border-border/70 bg-card hover:border-primary/40')}
     >
       {/* Bubble preview */}
       <div className="bg-muted/30 rounded-t-2xl p-3 border-b border-border/50">
         <div className="flex justify-end">
-          <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 px-3 py-2 text-xs text-foreground whitespace-pre-wrap leading-relaxed">
-            {t.media_url && <div className="rounded-lg mb-1.5 px-2 py-1 bg-black/20 text-3xs text-muted-foreground">📎 {t.media_type}</div>}
+          <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-[hsl(150_45%_16%)] border border-whatsapp/25 px-3 py-2 text-xs text-white whitespace-pre-wrap leading-relaxed">
+            {t.media_url && <div className="rounded-lg mb-1.5 px-2 py-1 bg-black/20 text-3xs text-white/70">📎 {t.media_type}</div>}
             {t.content.slice(0, 140)}{t.content.length > 140 ? '…' : ''}
-            <span className="block text-right text-[9px] text-muted-foreground mt-0.5">Agora ✓✓</span>
+            <span className="block text-right text-[9px] text-white/70 mt-0.5">Agora ✓✓</span>
           </div>
         </div>
       </div>
@@ -249,7 +253,7 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
               <Pill label={sm.label} tone={sm.tone} dot />
               <span className="text-3xs px-1.5 py-0.5 rounded bg-muted/50 border border-border/60 text-muted-foreground">{t.category}</span>
-              {t.tags.slice(0, 2).map((tag) => <span key={tag} className="text-3xs text-primary-glow">#{tag}</span>)}
+              {t.tags.slice(0, 2).map((tag) => <span key={tag} className="text-3xs text-[hsl(var(--primary-text))]">#{tag}</span>)}
             </div>
           </div>
         </div>
@@ -257,7 +261,7 @@ function TemplateCard({ t, selected, onClick, onEdit, onDuplicate, onDelete, onU
           <button type="button" onClick={(e) => { e.stopPropagation(); onUse(); }} className="h-8 px-3 rounded-lg bg-primary text-white text-xs font-semibold">Usar template</button>
           <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Editar"><Pencil className="w-3.5 h-3.5" /></button>
           <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50" aria-label="Duplicar"><Copy className="w-3.5 h-3.5" /></button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-dash-red/10 hover:text-dash-red ml-auto" aria-label="Excluir"><Trash2 className="w-3.5 h-3.5" /></button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 flex items-center justify-center hover:bg-dash-red/10 hover:text-[hsl(var(--destructive-text))] ml-auto" aria-label="Excluir"><Trash2 className="w-3.5 h-3.5" /></button>
           <span className="text-3xs text-muted-foreground">{fmtInt(t.use_count)} usos</span>
         </div>
       </div>

@@ -336,9 +336,9 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
                   <tr key={c.id} className="border-t border-border/40 hover:bg-muted/20">
                     <td className="px-3 py-2.5 text-xs text-muted-foreground">{i + 1}</td>
                     <td className="px-3 py-2.5"><button type="button" onClick={() => setSelectedCampaignId((prev) => prev === c.id ? null : c.id)} className="text-left hover:text-primary transition-colors"><p className="text-[13px] font-semibold text-foreground truncate max-w-[240px]">{c.name}</p></button></td>
-                    <td className="px-3 py-2.5"><span className="text-xs text-whatsapp">WhatsApp</span></td>
+                    <td className="px-3 py-2.5"><span className="text-xs text-success">WhatsApp</span></td>
                     <td className="px-3 py-2.5 text-[13px] font-semibold text-foreground">{fmtInt(c.sent_count)}</td>
-                    <td className="px-3 py-2.5 text-[13px] text-dash-green font-semibold">{c.sent_count > 0 ? fmtPct(c.delivered_count, c.sent_count) : '—'}</td>
+                    <td className="px-3 py-2.5 text-[13px] text-success font-semibold">{c.sent_count > 0 ? fmtPct(c.delivered_count, c.sent_count) : '—'}</td>
                     <td className="px-3 py-2.5 text-[13px] text-foreground-secondary">{c.failed_count > 0 ? fmtInt(c.failed_count) : '—'}</td>
                   </tr>
                 ))}
@@ -393,7 +393,7 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
           </div>
           {panelCampaign && (
             <div className="grid grid-cols-3 gap-3 mb-4">
-              {([['Enviadas', fmtInt(panelCampaign.sent_count), 'text-primary'], ['Entregues', fmtInt(panelCampaign.delivered_count), 'text-dash-green'], ['Falhas', fmtInt(panelCampaign.failed_count), 'text-dash-red']] as [string, string, string][]).map(([label, value, color]) => (
+              {([['Enviadas', fmtInt(panelCampaign.sent_count), 'text-primary'], ['Entregues', fmtInt(panelCampaign.delivered_count), 'text-success'], ['Falhas', fmtInt(panelCampaign.failed_count), 'text-[hsl(var(--destructive-text))]']] as [string, string, string][]).map(([label, value, color]) => (
                 <div key={label} className="rounded-xl border border-border/60 bg-input/20 p-3 text-center">
                   <p className={`text-2xl font-bold ${color}`}>{value}</p>
                   <p className="text-2xs text-foreground-secondary mt-0.5">{label}</p>
@@ -413,7 +413,7 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
                 </tr></thead>
                 <tbody>
                   {(panelRecipients ?? []).map((r, i) => {
-                    const tone = r.status === 'sent' ? 'text-dash-green' : r.status === 'failed' ? 'text-dash-red' : 'text-foreground-secondary';
+                    const tone = r.status === 'sent' ? 'text-success' : r.status === 'failed' ? 'text-[hsl(var(--destructive-text))]' : 'text-foreground-secondary';
                     return (
                       <tr key={i} className="border-t border-border/40 hover:bg-muted/10">
                         <td className="px-2 py-2 text-xs font-medium text-foreground truncate max-w-[180px]">{r.contacts?.name ?? '—'}</td>

@@ -288,3 +288,61 @@ describe('E62 — contraste do combobox de endereços nos temas', () => {
     expect(destaque).toMatch(/dark:bg-\[hsl\(var\(--warning\)\/0\.25\)\]/);
   });
 });
+
+/**
+ * TL-175B — `text-foreground-secondary` no Talk X: no tema CLARO o token media 1,65:1.
+ *
+ * O defeito: `--foreground-secondary: 215 30% 78%` é um valor medido de um painel NAVY
+ * (docs/design/dashboard-reference.png — um azul claro, pensado para fundo escuro) que ficou
+ * no bloco `:root` (claro). Como não havia contraparte em `.dark`, ele valia nos DOIS temas:
+ * no claro a razão cai para ~1,65:1 e o axe reprovou `color-contrast` [serious] nos usos de
+ * `text-foreground-secondary` do Talk X (Analytics, Suppression, LiveMonitor, kit/primitives).
+ *
+ * Diferente dos contratos acima — que não tocam em cor de tema — este é um defeito DE TOKEN:
+ * o valor do tema claro muda. A correção preserva matiz e saturação do próprio token
+ * (215 30%) e adota a luminosidade que a folha já usa no texto secundário do claro
+ * (`--muted-foreground: 221 10% 40%`); o valor navy passa a viver em `.dark`, onde sempre foi
+ * legível. Nenhuma cor nova entra no sistema e o tema escuro não se move.
+ *
+ * Números deste arquivo (token lido de `src/styles/tokens.css`, fórmula WCAG 2.1):
+ *   antes  — claro: 1,65:1 sobre --background (1,77:1 sobre --card)
+ *   depois — claro: 5,90:1 sobre --background, 6,34:1 sobre --card, 6,26:1 sobre --popover,
+ *                   5,24:1 sobre --muted, 5,37:1 sobre --input
+ *   escuro — sem regressão: continua 215 30% 78% (10,88:1 sobre --background)
+ */
+describe('TL-175B — foreground-secondary legível no tema claro', () => {
+  /** Fundos claros sobre os quais o Talk X pinta `text-foreground-secondary`. */
+  const FUNDOS_CLAROS = ['background', 'card', 'popover', 'muted', 'input'] as const;
+
+  it('no tema claro o token fecha 4,5:1 nos fundos medidos do Talk X', () => {
+    const texto = parede(CLARO, 'foreground-secondary');
+    expect(
+      razao(texto, parede(CLARO, 'background')),
+      'claro: foreground-secondary sobre --background (antes: 1,65:1)',
+    ).toBeGreaterThanOrEqual(LIMIAR_TEXTO);
+    for (const fundo of FUNDOS_CLAROS) {
+      expect(
+        razao(texto, parede(CLARO, fundo)),
+        `claro: foreground-secondary sobre --${fundo}`,
+      ).toBeGreaterThanOrEqual(LIMIAR_TEXTO);
+    }
+  });
+
+  it('no tema escuro o token não regride: segue o navy claro medido do painel', () => {
+    expect(parede(ESCURO, 'foreground-secondary'), 'escuro: valor navy preservado').toEqual(
+      hslParaRgb(215, 30, 78),
+    );
+    for (const fundo of ['background', 'card', 'popover'] as const) {
+      expect(
+        razao(parede(ESCURO, 'foreground-secondary'), parede(ESCURO, fundo)),
+        `escuro: foreground-secondary sobre --${fundo}`,
+      ).toBeGreaterThanOrEqual(LIMIAR_TEXTO);
+    }
+  });
+
+  it('o texto do tema claro é mais escuro que o do escuro (a causa do defeito era valerem o mesmo)', () => {
+    expect(luminancia(parede(CLARO, 'foreground-secondary'))).toBeLessThan(
+      luminancia(parede(ESCURO, 'foreground-secondary')),
+    );
+  });
+});
