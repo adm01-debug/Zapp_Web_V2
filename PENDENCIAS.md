@@ -53,12 +53,34 @@ Verificar se existe PR `automation/types-sync` aberta. Se sim, mergear após con
    Erro: `ERROR: function public.request_department_access(unknown) does not exist`
 
 **Confirmação de que NÃO é introduzido por este PR:**  
-Grep confirma: nenhum arquivo alterado nesta branch toca `department_audit_logs`, `department_audit_logs_action_check` ou `request_department_access`. A falha preexiste no estado do banco local de CI antes desta sessão.
+Grep de arquivos da branch: nenhum arquivo alterado nesta branch toca `department_audit_logs`, `department_audit_logs_action_check` ou `request_department_access`. A falha preexiste no estado do banco local de CI antes desta sessão.
+
+**Nota de rastreabilidade:** API `github_get_job_logs` com grep retornou vazio para o job 120883119029 (run 40097637001 da `main`, 16.305 linhas) — os logs do container de teste não são acessíveis via filtro de linha da API. As evidências acima (nomes de constraint e função) derivam da análise do run registrada na sessão anterior e serão confirmadas ou substituídas pelo resultado do `Contrato DB offline` no PR atual (job 120909387980, em andamento no momento desta escrita).
 
 **Ação necessária:**  
 1. Atualizar a migration de `department_audit_logs` para incluir `'whatsapp_updated'` e `'access_requested'` na constraint (ou remover a constraint e adotar ENUM/trigger).  
 2. Criar migration para a função `request_department_access` no banco local de CI.  
 Ambas requerem investigação de schema e arquivos de migration — fora do escopo desta sessão de correção de workflows gerais.
+
+---
+
+## 4. Talk X Visual — `e2e-talkx.yml`
+
+**Status:** BLOQUEIO TÉCNICO — componente "Ajuda do Talk X" ausente na UI  
+**Check afetado:** `🎭 Talk X visual/launch + smoke público Auth` (não é required check de PR)
+
+**Causa exata (run [40106552774](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40106552774)):**  
+16 de 25 testes de `e2e/talkx-visual.spec.ts` falham com "element(s) not found":
+- `getByRole('button', { name: 'Ajuda' })` — não encontrado (telas 01 e acessibilidade)
+- `getByRole('heading', { name: 'Ajuda do Talk X' })` — não encontrado (tela 16)
+
+Os testes esperam um botão/modal "Ajuda do Talk X" que não está implementado na UI atual.
+
+**Confirmação de que NÃO é introduzido por este PR:**  
+Nenhum arquivo alterado nesta branch toca `talkx-visual.spec.ts` nem componentes de UI Talk X relacionados à funcionalidade "Ajuda". A falha é em testes de feature não implementada.
+
+**Ação necessária:**  
+Implementar o componente/modal "Ajuda do Talk X" (`e2e/talkx-visual.spec.ts:186,197`) no módulo Talk X — fora do escopo desta sessão de correção de CI.
 
 ---
 
