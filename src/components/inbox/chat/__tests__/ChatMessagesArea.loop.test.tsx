@@ -52,6 +52,7 @@ beforeAll(() => {
     height: 600, width: 800, top: 0, left: 0, bottom: 600, right: 800, x: 0, y: 0,
     toJSON: () => ({}),
   } as DOMRect);
+  Object.defineProperty(Element.prototype, 'clientHeight', { get: () => 600, configurable: true });
 });
 
 // Mock pesado: o alvo é o virtualizer, não as bolhas.
