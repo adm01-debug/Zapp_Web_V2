@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTeamConversations } from '@/hooks/chat/useTeamChat';
 import { TeamConversationList } from './TeamConversationList';
 import { TeamChatPanel } from './TeamChatPanel';
@@ -10,11 +10,49 @@ import { useActiveTeamChatConversation } from '@/hooks/chat/useTeamChatNotificat
 import { Button } from '@/components/ui/button';
 import { ConversationEmptyState } from '@/components/shared/ConversationEmptyState';
 
+/**
+ * E90 (receptor): lê o `cid` de `?view=team-chat&cid=<conversationId>`.
+ * Devolve o id aparado ou null (ausente/vazio/URL inválida).
+ */
+function readTeamChatCidFromUrl(): string | null {
+  try {
+    const cid = new URLSearchParams(window.location.search).get('cid')?.trim();
+    return cid ? cid : null;
+  } catch {
+    return null;
+  }
+}
+
 export function TeamChatView() {
   const { data: conversations = [], isLoading: conversationsLoading } = useTeamConversations();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+
+  // E90 (receptor): o clique na notificação leva a `?view=team-chat&cid=<id>`.
+  // A seleção da conversa é estado local desta view (fora do hook de disparo),
+  // então o cid da URL é aplicado aqui — sem react-router de propósito:
+  // `window.location` mantém os testes existentes (sem provider) verdes.
+  // cid ausente/inválido é ignorado e nunca limpa a seleção manual.
+  useEffect(() => {
+    const applyCidFromUrl = () => {
+      const cid = readTeamChatCidFromUrl();
+      if (cid && conversations.some((c) => c.id === cid)) {
+        setSelectedId(cid);
+        setShowDetails(false);
+      }
+    };
+    applyCidFromUrl();
+    // pushState/replaceState (navigateToView) não dispara popstate; o app
+    // avisa via `zapp:navigate` — escuta os dois para reagir sem remontar
+    // (ex.: já estava em team-chat e clicou na notificação).
+    window.addEventListener('popstate', applyCidFromUrl);
+    window.addEventListener('zapp:navigate', applyCidFromUrl);
+    return () => {
+      window.removeEventListener('popstate', applyCidFromUrl);
+      window.removeEventListener('zapp:navigate', applyCidFromUrl);
+    };
+  }, [conversations]);
 
   // TC-007: o listener de notificações é ÚNICO e global (montado em App.tsx); aqui a view
   // só publica a conversa em foco para o listener suprimir o alerta dela — e limpa ao
