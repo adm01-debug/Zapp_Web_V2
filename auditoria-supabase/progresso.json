@@ -9,7 +9,7 @@
     "4_integridade": "CONCLUÍDO — 35 FKs sem índice, 60 migrations com statements NULL, 4 tabelas sem PK",
     "5_performance": "CONCLUÍDO — email_threads 418M seq reads, talkx_message_reactions sem índice FK, pg_stat_statements NÃO VERIFICADO (42P01 via mcp_exec SECURITY DEFINER)",
     "6_crons": "CONCLUÍDO — talkx-scheduler-1min 9,3% falha em 30d (4007 falhas); causa: pool exhaustion do pg_cron 1.6.4 com 24 jobs",
-    "7_funcoes_db": "CONCLUÍDO — 10 funções SECURITY DEFINER com SQL dinâmico auditadas individualmente: mcp_exec R2-mitigado, talkx_audience_query R1, purge_talkx_expired_data R0 (format %L), merge_contacts_atomic R0, purge_gmail_account_data R0, score_security_acl R0, talkx_engine_cron_runs R0, increment_custom_emoji_use R0 (EXECUTE em comentário), trigger_pending_multiplix_dispatches R0 (idem), trigger_talkx_engine_tick R0 (idem); 389 sem SQL dinâmico confirmado por bulk query",
+    "7_funcoes_db": "CONCLUÍDO — 12 funções com SQL dinâmico (EXECUTE/format) auditadas individualmente: mcp_exec R2-mitigado (SECURITY DEFINER), talkx_audience_query R1 (SECURITY DEFINER), purge_talkx_expired_data R0 (format %L), merge_contacts_atomic R0, purge_gmail_account_data R0, score_security_acl R0, talkx_engine_cron_runs R0, increment_custom_emoji_use R0 (EXECUTE em comentário), trigger_pending_multiplix_dispatches R0 (idem), trigger_talkx_engine_tick R0 (idem), talkx_compile_segment_rules R0 (SECURITY DEFINER, format %I/%L com whitelist, retorna text sem EXECUTE), guard_talkx_template_update R0 (não é SECURITY DEFINER, trigger de validação sem SQL dinâmico); 463 sem SQL dinâmico confirmado por bulk query",
     "8_edge_functions": "CONCLUÍDO — 20 variáveis Deno.env verificadas: todas via Deno.env.get() sem hardcode; 13 secrets vault por nome; 63 funções não lidas individualmente justificado: verify_jwt=true baseline + nenhum INVOKE chamado durante auditoria + code path sem efeito externo; logs 7d: NÃO VERIFICADO — supabase_functions.hooks e edge_logs não acessíveis via SQL/db_query",
     "9_auth_storage_realtime": "CONCLUÍDO — 10 usuários, 0 MFA factors (HIGH-7), providers: email+google; 9 buckets auditados com MIME e políticas; Realtime: tabelas `conversations`/`tasks`/`accounts` ausentes do schema (MEDIUM-9)",
     "10_logs_7d": "NÃO VERIFICADO — Motivo exato: `supabase_functions.hooks` retorna 42P01 (relation not found) via mcp_exec; tabela de logs de edge function não exposta via SQL; pg_stat_statements retorna 42P01 pelo mesmo motivo (mcp_exec é SECURITY DEFINER, cria contexto de execução separado sem search_path para extensions); advisor Security/Performance disponíveis mas não substituem logs de requisição raw",
@@ -30,7 +30,7 @@
     "rls_tenant_isolation_matrix": "EXECUTADO em Postgres 16 local (2026-10-24) — matrix A×B completa; CRITICAL-2 confirmado; ver Seção 11 do relatório",
     "gmail_webhook_code": "função não lida individualmente; verify_jwt=true confirma auth baseline"
   },
-  "last_updated": "2026-10-24T23:45:00Z",
+  "last_updated": "2026-10-24T23:59:00Z",
   "production_snapshot_initial": {
     "snapshot_at": "2026-10-24T20:53:57Z",
     "migration_count": 1054,
