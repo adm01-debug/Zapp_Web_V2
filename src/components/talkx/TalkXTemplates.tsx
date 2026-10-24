@@ -9,16 +9,13 @@ import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCa
 import { cn } from '@/lib/utils';
 import { useTalkXTemplates, type TalkXTemplate } from '@/hooks/integrations/useTalkXTemplates';
 import { useTalkXTemplateLibraryStats, pointsDelta } from '@/hooks/integrations/useTalkXTemplateStats';
+import { type TalkXTemplateConversionState, type TalkXTemplateConversion, SUGGESTION_MIN_SENT, EMPTY_CONVERSION } from '@/hooks/integrations/useTalkXTemplatesConversion';
 import { RailCard, RailAction, HeroCard, TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, extractVariables, fmtInt, fmtDateTime, fmtTime, TalkXConfirmDialog } from './talkxShared';
 import { useTalkXFilterState } from './kit/useFilterState';
 import { TalkXQueryBoundary } from './kit/states';
 import { KpiCard } from './kit/kpi';
 import { PRESETS_DO_PRODUTO } from './kit/dialogPresets';
 import { parseTalkXTemplateRoute, pushTalkXTemplateRoute, replaceTalkXTemplateRoute, type TalkXTemplateRoute } from './talkxTemplateRoute';
-import { SUGGESTION_MIN_SENT, type TalkXTemplateConversion, type TalkXTemplateConversionState } from '@/hooks/integrations/useTalkXTemplatesConversion';
-
-/** Estado do ranking quando o consumidor do hook não o fornece (ex.: mock de teste). */
-const EMPTY_CONVERSION: TalkXTemplateConversionState = { ranking: null, isLoading: false, isError: false, error: null };
 
 interface Props {
   onUseTemplate: (templateId: string) => void;
