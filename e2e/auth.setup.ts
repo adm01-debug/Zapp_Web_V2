@@ -76,9 +76,9 @@ setup('authenticate', async ({ page }) => {
       await page.goto('/auth', { timeout: 15_000 });
     }
 
-    // Mesmo fluxo exercitado (sem login) em e2e/auth.spec.ts: tab "Entrar",
-    // campo de e-mail, campo de senha, botao "Entrar".
-    await page.getByRole('tab', { name: /^entrar$/i }).click();
+    // Mesmo fluxo exercitado (sem login) em e2e/auth.spec.ts: a tela de acesso nao tem
+    // abas (auth.spec.ts afirma getByRole('tab') = 0); campo de e-mail, campo de senha,
+    // botao "Entrar".
     await page.getByRole('textbox', { name: /e-?mail/i }).fill(email);
     await page.locator('input[type="password"]').fill(password);
     await page.getByRole('button', { name: /^entrar$/i }).click();
