@@ -46,6 +46,7 @@ class ResizeObserverMock {
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
   (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = vi.fn();
+  Object.defineProperty(Element.prototype, 'clientHeight', { get: () => 600, configurable: true });
 });
 
 vi.mock('../MessageBubble', () => ({
