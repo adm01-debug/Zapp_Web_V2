@@ -34,6 +34,9 @@ on:
       # E18: negação evita que o merge do PR de sync (que só altera
       # grants-baseline.json) dispare uma nova execução desnecessária.
       - '!scripts/db-audit/grants-baseline.json'
+      # GA61: known-violations.json tambem e artefato gerado pelo proprio sync
+      # (o merge do sync redisparava o workflow a toa).
+      - '!scripts/db-audit/known-violations.json'
       - '.github/workflows/types-sync.yml'
   schedule:
     # 05:49 em vez de 06:00: o minuto 0 concentra a fila de agendamentos do
@@ -50,7 +53,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: types-sync-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'push' }}
+  # GA61: dispatch e schedule tem run proprio (antes o dispatch caia no grupo
+  # 'push' e era cancelado/fundido com o push da main).
+  group: types-sync-${{ github.ref }}-${{ github.event_name == 'push' && 'push' || github.run_id }}
   cancel-in-progress: false
 
 env:
@@ -115,6 +120,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment: banco-leitura
+    # GA63 (#42 TokenPermissions, dispensado com justificativa): o job abre e
+    # atualiza o PR de sync com o proprio GITHUB_TOKEN (contents/pull-requests/
+    # issues:write) e destrava os checks do PR com actions:write (politica
+    # anti-loop: PR aberto por Actions nasce com checks em action_required).
     permissions:  # zizmor: ignore[excessive-permissions]
       contents: write
       issues: write
@@ -715,7 +724,9 @@ jobs:
         run: gh pr merge --auto --squash "$PR_NUMBER" --repo "$GITHUB_REPOSITORY"
 
       - name: Job summary
-        if: always()
+        # GA61 (R5): cancelado nao pinta resumo/veredito — always() publicava
+        # summary ate de run cancelado.
+        if: ${{ !cancelled() }}
         run: |
           {
             echo "## types-sync — $(date -u '+%Y-%m-%d %H:%M UTC')"
