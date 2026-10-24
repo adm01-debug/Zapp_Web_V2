@@ -261,6 +261,13 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           <span className="text-border">›</span>
           <span className="text-foreground font-medium">Segmentos</span>
         </nav>
+        <nav aria-label="Abas superiores de segmentos" className="flex items-center gap-1 border-b border-border/50 pb-0.5">
+          <button type="button" aria-current="page" className="h-8 px-3 rounded-t-lg text-xs font-medium text-foreground border-b-2 border-primary">Segmentos</button>
+          <button type="button" disabled className="h-8 px-3 rounded-t-lg text-xs font-medium text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed">Regras Avançadas</button>
+          <button type="button" className="h-8 px-3 rounded-t-lg text-xs font-medium text-muted-foreground hover:text-foreground">Audiências</button>
+          <button type="button" className="h-8 px-3 rounded-t-lg text-xs font-medium text-muted-foreground hover:text-foreground">Modelos</button>
+          <button type="button" disabled className="h-8 px-3 rounded-t-lg text-xs font-medium text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed">Insights com IA</button>
+        </nav>
         {/* TL-134 (X099): SEM `key` de propósito — a troca de segmento repõe o
             rascunho pela ação `reset` do reducer, num `useEffect [initial]`. */}
         <TalkXSegmentBuilder
