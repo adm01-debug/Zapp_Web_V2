@@ -697,22 +697,194 @@ close_2="$(grep -E '^[0-9a-f-]{36}:[0-9a-f-]{36}$' "$concurrency_dir/close-2" | 
 [[ -n "$close_1" ]] && [ "$close_1" = "$close_2" ] \
   || fail 'close concorrente nao convergiu'
 
+# --- PD-79 (t_8c6419cf): carimbo do POST iniciado -> lease vencido nao reenvia ---
+# (0) Pre-condicao fail-closed: sem a 20261011155946 (envio para grupo) a migration
+# aborta ANTES de qualquer alteracao (senao o claim reescrito leria objetos que nao existem).
+post_started_migration="$repo_root/supabase/migrations/20261026210300_outbound_post_started.sql"
+claim_md5_before="$(psql_test -Atqc "SELECT md5(pg_get_functiondef(p.oid)) FROM pg_proc p WHERE p.proname='claim_outbound_message' AND p.pronamespace='public'::regnamespace;")"
+if precond_out="$(psql_test < "$post_started_migration" 2>&1)"; then
+  fail 'a migration PD-79 passou sem a 20261011155946 aplicada'
+fi
+grep -q 'outbound_post_started_requires_20261011155946' <<<"$precond_out" \
+  || fail "a migration PD-79 falhou por outro motivo: $precond_out"
+precond_after="$(psql_test -Atqc "SELECT (SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='messages' AND column_name='delivery_post_started_at') || '|' || (SELECT count(*) FROM pg_proc WHERE proname='mark_outbound_post_started') || '|' || (SELECT md5(pg_get_functiondef(p.oid)) FROM pg_proc p WHERE p.proname='claim_outbound_message' AND p.pronamespace='public'::regnamespace);")"
+[[ "$precond_after" = "0|0|$claim_md5_before" ]] \
+  || fail "a migration PD-79 abortada deixou rastro: $precond_after"
+
+# O harness monta um schema MINIMO. A migration abaixo reescreve claim_outbound_message
+# sobre a versao vigente na main (20261011155946, envio para GRUPO), que le
+# whatsapp_groups e messages.whatsapp_group_id; espelha-se aqui so o que o claim usa.
+psql_test >/dev/null <<'SQL'
+CREATE TABLE public.whatsapp_groups (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(), group_id text NOT NULL,
+  whatsapp_connection_id uuid REFERENCES public.whatsapp_connections(id)
+);
+ALTER TABLE public.messages ADD COLUMN whatsapp_group_id uuid
+  REFERENCES public.whatsapp_groups(id) ON DELETE SET NULL;
+GRANT ALL ON public.whatsapp_groups TO service_role;
+INSERT INTO public.whatsapp_groups(id,group_id,whatsapp_connection_id) VALUES
+ ('70000000-0000-0000-0000-000000000001','120363000000000000@g.us','40000000-0000-0000-0000-000000000001');
+SQL
+psql_test < "$post_started_migration" >/dev/null
+
+anon_role="BEGIN; SET LOCAL ROLE anon; SELECT set_config('request.jwt.claim.role','anon',true);"
+psql_sr() { psql_test -At -c "$service_role $1 COMMIT;" | grep -vx -e 'COMMIT' -e 'service_role' | tail -1; }
+uuid_line() { grep -E '^[0-9a-f-]{36}\|' <<<"$1" | tail -1; }
+
+# (1) coluna aditiva + ACL: so service_role marca; authenticated/anon negados.
+mark_acl_proof="$(psql_test -Atqc "SELECT (SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='messages' AND column_name='delivery_post_started_at' AND data_type='timestamp with time zone') || '|' || has_function_privilege('service_role','public.mark_outbound_post_started(uuid,uuid)','EXECUTE') || '|' || has_function_privilege('authenticated','public.mark_outbound_post_started(uuid,uuid)','EXECUTE') || '|' || has_function_privilege('anon','public.mark_outbound_post_started(uuid,uuid)','EXECUTE');")"
+[[ "$mark_acl_proof" = '1|true|false|false' ]] || fail "coluna/ACL do mark inesperada: $mark_acl_proof"
+expect_failure 'permission denied for function mark_outbound_post_started' "$agent_one SELECT public.mark_outbound_post_started('60000000-0000-0000-0000-0000000000d1',gen_random_uuid()); COMMIT;"
+expect_failure 'permission denied for function mark_outbound_post_started' "$anon_role SELECT public.mark_outbound_post_started('60000000-0000-0000-0000-0000000000d1',gen_random_uuid()); COMMIT;"
+
+# (2) lease vence ANTES do POST: marcar e recusado, o POST nao inicia, retomada permitida.
+mark_a_setup="$(psql_test -At <<'SQL'
+BEGIN;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.role','authenticated',true);
+SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true);
+SELECT public.enqueue_outbound_message('50000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-0000000000d1','pd79-a','text',NULL,NULL,NULL);
+COMMIT;
+BEGIN;
+SET LOCAL ROLE service_role;
+SELECT set_config('request.jwt.claim.role','service_role',true);
+CREATE TEMP TABLE a_lease AS SELECT * FROM public.claim_outbound_message(
+  (SELECT id FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d1'),
+  '10000000-0000-0000-0000-000000000001','edge-mark-a1',30
+);
+UPDATE public.messages
+SET delivery_claimed_at=statement_timestamp()-interval '60 seconds',
+    delivery_claim_expires_at=statement_timestamp()-interval '30 seconds'
+WHERE id=(SELECT message_id FROM a_lease);
+SELECT (SELECT message_id FROM a_lease) || '|' || (SELECT claim_token FROM a_lease);
+COMMIT;
+SQL
+)"
+mark_a="$(uuid_line "$mark_a_setup")"
+[[ "$mark_a" =~ ^([0-9a-f-]{36})\|([0-9a-f-]{36})$ ]] || fail "setup mark-A inesperado: $mark_a"
+mark_a_id="${BASH_REMATCH[1]}"; mark_a_token="${BASH_REMATCH[2]}"
+expect_failure 'delivery_claim_expired' "$service_role SELECT public.mark_outbound_post_started('$mark_a_id','$mark_a_token'); COMMIT;"
+mark_a_state="$(psql_sr "SELECT (SELECT count(*) FROM public.claim_outbound_message('$mark_a_id','10000000-0000-0000-0000-000000000001','edge-mark-a2',90)) || '|' || (SELECT delivery_post_started_at IS NULL FROM public.messages WHERE id='$mark_a_id');")"
+[[ "$mark_a_state" = '1|true' ]] || fail "retomada de lease vencido sem POST iniciado: $mark_a_state"
+
+# (3) lease vence DEPOIS do POST: o claim RECUSA reivindicar (resultado ambiguo).
+mark_b_setup="$(psql_test -At <<'SQL'
+BEGIN;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.role','authenticated',true);
+SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true);
+SELECT public.enqueue_outbound_message('50000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-0000000000d2','pd79-b','text',NULL,NULL,NULL);
+COMMIT;
+BEGIN;
+SET LOCAL ROLE service_role;
+SELECT set_config('request.jwt.claim.role','service_role',true);
+CREATE TEMP TABLE b_lease AS SELECT * FROM public.claim_outbound_message(
+  (SELECT id FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d2'),
+  '10000000-0000-0000-0000-000000000001','edge-mark-b1',90
+);
+CREATE TEMP TABLE b_mark AS SELECT * FROM public.mark_outbound_post_started(
+  (SELECT message_id FROM b_lease),(SELECT claim_token FROM b_lease)
+);
+SELECT (SELECT message_id FROM b_lease) || '|' || (SELECT claim_token FROM b_lease) || '|' ||
+  ((SELECT delivery_post_started_at FROM b_mark) IS NOT NULL)::text;
+COMMIT;
+SQL
+)"
+mark_b="$(uuid_line "$mark_b_setup")"
+[[ "$mark_b" =~ ^([0-9a-f-]{36})\|([0-9a-f-]{36})\|true$ ]] || fail "mark-B nao carimbou o POST iniciado: $mark_b"
+mark_b_state="$(psql_sr "UPDATE public.messages SET delivery_claimed_at=statement_timestamp()-interval '300 seconds', delivery_claim_expires_at=statement_timestamp()-interval '240 seconds' WHERE client_message_id='60000000-0000-0000-0000-0000000000d2'; SELECT (SELECT count(*) FROM public.claim_outbound_message((SELECT id FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d2'),'10000000-0000-0000-0000-000000000001','edge-mark-b2',90)) || '|' || (SELECT delivery_post_started_at IS NOT NULL FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d2') || '|' || (SELECT delivery_claim_token IS NOT NULL FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d2');")"
+[[ "$mark_b_state" = '0|true|true' ]] || fail "POST iniciado com lease vencido foi reivindicado de novo: $mark_b_state"
+mark_b_resolve="$(psql_sr "SELECT (public.fail_outbound_message((SELECT id FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d2'),(SELECT delivery_claim_token FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d2'),false)).status;")"
+[[ "$mark_b_resolve" = 'failed' ]] || fail "resolucao do ambiguo nao virou failed: $mark_b_resolve"
+mark_b_final="$(psql_sr "SELECT (SELECT status FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d2') || '|' || (SELECT count(*) FROM public.claim_outbound_message((SELECT id FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d2'),'10000000-0000-0000-0000-000000000001','edge-mark-b3',90));")"
+[[ "$mark_b_final" = 'failed|0' ]] || fail "ambiguo resolvido continua reivindicavel: $mark_b_final"
+
+# (4) fencing: token errado/nulo e recusado; repetir com o mesmo token e idempotente.
+mark_c_setup="$(psql_test -At <<'SQL'
+BEGIN;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.role','authenticated',true);
+SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true);
+SELECT public.enqueue_outbound_message('50000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-0000000000d3','pd79-c','text',NULL,NULL,NULL);
+COMMIT;
+BEGIN;
+SET LOCAL ROLE service_role;
+SELECT set_config('request.jwt.claim.role','service_role',true);
+CREATE TEMP TABLE c_lease AS SELECT * FROM public.claim_outbound_message(
+  (SELECT id FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d3'),
+  '10000000-0000-0000-0000-000000000001','edge-mark-c1',90
+);
+SELECT (SELECT message_id FROM c_lease) || '|' || (SELECT claim_token FROM c_lease);
+COMMIT;
+SQL
+)"
+mark_c="$(uuid_line "$mark_c_setup")"
+[[ "$mark_c" =~ ^([0-9a-f-]{36})\|([0-9a-f-]{36})$ ]] || fail "setup mark-C inesperado: $mark_c"
+mark_c_id="${BASH_REMATCH[1]}"; mark_c_token="${BASH_REMATCH[2]}"
+expect_failure 'outbound_delivery_claim_conflict' "$service_role SELECT public.mark_outbound_post_started('$mark_c_id',gen_random_uuid()); COMMIT;"
+expect_failure 'invalid_delivery_post_mark' "$service_role SELECT public.mark_outbound_post_started('$mark_c_id',NULL); COMMIT;"
+mark_c_idem="$(psql_sr "CREATE TEMP TABLE c_one AS SELECT * FROM public.mark_outbound_post_started('$mark_c_id','$mark_c_token'); CREATE TEMP TABLE c_two AS SELECT * FROM public.mark_outbound_post_started('$mark_c_id','$mark_c_token'); SELECT ((SELECT delivery_post_started_at FROM c_one) IS NOT NULL)::text || '|' || ((SELECT delivery_post_started_at FROM c_one)=(SELECT delivery_post_started_at FROM c_two))::text;")"
+[[ "$mark_c_idem" = 'true|true' ]] || fail "mark idempotente com o mesmo token: $mark_c_idem"
+expect_failure 'message_delivery_internal_fields_forbidden' "$agent_one UPDATE public.messages SET delivery_post_started_at=statement_timestamp() WHERE client_message_id='60000000-0000-0000-0000-0000000000d3'; COMMIT;"
+
+# (5) sem efeito colateral: marcar o POST nao impede o complete normal.
+mark_d_setup="$(psql_test -At <<'SQL'
+BEGIN;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.role','authenticated',true);
+SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true);
+SELECT public.enqueue_outbound_message('50000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-0000000000d4','pd79-d','text',NULL,NULL,NULL);
+COMMIT;
+BEGIN;
+SET LOCAL ROLE service_role;
+SELECT set_config('request.jwt.claim.role','service_role',true);
+CREATE TEMP TABLE d_lease AS SELECT * FROM public.claim_outbound_message(
+  (SELECT id FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d4'),
+  '10000000-0000-0000-0000-000000000001','edge-mark-d1',90
+);
+SELECT (public.mark_outbound_post_started((SELECT message_id FROM d_lease),(SELECT claim_token FROM d_lease))).delivery_post_started_at IS NOT NULL;
+CREATE TEMP TABLE d_done AS SELECT (public.complete_outbound_message((SELECT message_id FROM d_lease),(SELECT claim_token FROM d_lease),'pd79-ext-1','sent')).*;
+SELECT (SELECT status FROM d_done) || '|' || (SELECT external_id FROM d_done);
+COMMIT;
+SQL
+)"
+[[ "$(grep -E '^sent\|' <<<"$mark_d_setup" | tail -1)" = 'sent|pd79-ext-1' ]] || fail "complete apos mark: $mark_d_setup"
+
+# (6) envio para GRUPO (20261011155946) segue funcionando depois do CREATE OR REPLACE do
+# claim: destino = JID do grupo; com POST iniciado + lease vencido tambem NAO reenvia;
+# sem carimbo, lease vencido continua retomavel.
+psql_test >/dev/null <<'SQL'
+INSERT INTO public.messages(whatsapp_group_id,client_message_id,agent_id,sender,content,message_type,status) VALUES
+ ('70000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-0000000000d5','10000000-0000-0000-0000-000000000001','agent','pd79-grupo-a','text','sending'),
+ ('70000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-0000000000d6','10000000-0000-0000-0000-000000000001','agent','pd79-grupo-b','text','sending');
+SQL
+group_dest="$(psql_sr "SELECT contact_phone FROM public.claim_outbound_message((SELECT id FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d5'),'10000000-0000-0000-0000-000000000001','edge-grp-a1',90);")"
+[[ "$group_dest" = '120363000000000000@g.us' ]] || fail "claim de grupo perdeu o destino JID: $group_dest"
+group_mark="$(psql_sr "SELECT (public.mark_outbound_post_started(id,delivery_claim_token)).delivery_post_started_at IS NOT NULL FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d5';")"
+[[ "$group_mark" = 't' ]] || fail "mark de mensagem de grupo: $group_mark"
+group_ambiguous="$(psql_sr "UPDATE public.messages SET delivery_claimed_at=statement_timestamp()-interval '300 seconds', delivery_claim_expires_at=statement_timestamp()-interval '240 seconds' WHERE client_message_id='60000000-0000-0000-0000-0000000000d5'; SELECT count(*) FROM public.claim_outbound_message((SELECT id FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d5'),'10000000-0000-0000-0000-000000000001','edge-grp-a2',90);")"
+[[ "$group_ambiguous" = '0' ]] || fail "grupo com POST iniciado e lease vencido foi reivindicado de novo: $group_ambiguous"
+group_resume="$(psql_sr "SELECT count(*) FROM public.claim_outbound_message((SELECT id FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d6'),'10000000-0000-0000-0000-000000000001','edge-grp-b1',90);")"
+[[ "$group_resume" = '1' ]] || fail "primeiro claim de grupo sem carimbo: $group_resume"
+group_resume2="$(psql_sr "UPDATE public.messages SET delivery_claimed_at=statement_timestamp()-interval '300 seconds', delivery_claim_expires_at=statement_timestamp()-interval '240 seconds' WHERE client_message_id='60000000-0000-0000-0000-0000000000d6'; SELECT count(*) FROM public.claim_outbound_message((SELECT id FROM public.messages WHERE client_message_id='60000000-0000-0000-0000-0000000000d6'),'10000000-0000-0000-0000-000000000001','edge-grp-b2',90);")"
+[[ "$group_resume2" = '1' ]] || fail "grupo sem carimbo com lease vencido deixou de ser retomavel: $group_resume2"
+
 runtime_proof="$(psql_test -At < "$repo_root/scripts/db-audit/message-delivery-phase1-runtime.sql")"
 RUNTIME_PROOF="$runtime_proof" node --input-type=module <<'NODE'
 const proof = JSON.parse(process.env.RUNTIME_PROOF);
 const ok = proof.server_major === 17
   && proof.database === 'postgres'
-  && proof.message_column_count === 7
+  && proof.message_column_count === 8
   && proof.closure_column_count === 1
   && proof.event_column_count === 1
-  && proof.column_contract_count === 9
+  && proof.column_contract_count === 10
   && proof.validated_constraint_count === 4
   && proof.index_count === 4
-  && proof.function_count === 9
-  && proof.safe_api_function_count === 6
+  && proof.function_count === 10
+  && proof.safe_api_function_count === 7
   && proof.internal_guard_function_count === 3
   && proof.internal_guard_trigger_count === 3
-  && proof.trusted_owner_function_count === 9
+  && proof.trusted_owner_function_count === 10
   && proof.function_name_collision_count === 0
   && proof.trigger_name_collision_count === 0
   && proof.constraint_name_collision_count === 0
@@ -732,12 +904,14 @@ const ok = proof.server_major === 17
   && proof.authenticated_privileged_delivery === false
   && proof.authenticated_internal_guard_execute === false
   && proof.anon_any_execute === false
-  && proof.service_delivery_effective_count === 3
-  && proof.service_delivery_direct_count === 3
+  && proof.service_delivery_effective_count === 4
+  && proof.service_delivery_direct_count === 4
+  && proof.service_mark_effective === true
+  && proof.service_mark_direct === true
   && proof.service_internal_guard_execute === false
   && proof.service_internal_guard_direct_count === 0
   && proof.custom_guc_reference_count === 0
-  && proof.definition_sha256 === '46d8cea7dd5ece11089f79f8bd06552d0b6004e912aeaf4b28e3c4cdb43811ab'
+  && proof.definition_sha256 === 'f228a9d6121ca364cbebd4f8686d2ace733b3582e24964506aab8653feaddf73'
   && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
   && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
   && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
