@@ -39,4 +39,27 @@ Verificar se existe PR `automation/types-sync` aberta. Se sim, mergear após con
 
 ---
 
+## 3. DB Guard — `db-guard.yml`
+
+**Status:** BLOQUEIO TÉCNICO — falhas pré-existentes no banco local de CI  
+**Check afetado:** `Contrato DB offline` (required check)
+
+**Erros exatos observados no banco local de teste:**
+
+1. **Constraint `department_audit_logs_action_check`** — rejeita valores `'whatsapp_updated'` e `'access_requested'` que os testes tentam inserir. A constraint só aceita os valores definidos no enum original; esses dois valores foram adicionados ao uso mas não à constraint do banco local do CI.  
+   Erro: `ERROR: new row for relation "department_audit_logs" violates check constraint "department_audit_logs_action_check"`
+
+2. **Função `public.request_department_access` ausente** — o banco local de CI não tem a função `request_department_access` que os testes do módulo de departamentos invocam.  
+   Erro: `ERROR: function public.request_department_access(unknown) does not exist`
+
+**Confirmação de que NÃO é introduzido por este PR:**  
+Grep confirma: nenhum arquivo alterado nesta branch toca `department_audit_logs`, `department_audit_logs_action_check` ou `request_department_access`. A falha preexiste no estado do banco local de CI antes desta sessão.
+
+**Ação necessária:**  
+1. Atualizar a migration de `department_audit_logs` para incluir `'whatsapp_updated'` e `'access_requested'` na constraint (ou remover a constraint e adotar ENUM/trigger).  
+2. Criar migration para a função `request_department_access` no banco local de CI.  
+Ambas requerem investigação de schema e arquivos de migration — fora do escopo desta sessão de correção de workflows gerais.
+
+---
+
 *Pendências registradas pela sessão de correção de CI em 2026-10-24.*
