@@ -4,7 +4,11 @@ import { render, screen } from '@testing-library/react';
 import { VoiceChangerPicker } from '../VoiceChangerPicker';
 
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { storage: { from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }) }) } },
+  supabase: {
+    storage: {
+      from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }) }),
+    },
+  },
   SUPABASE_URL: 'http://localhost:54321',
   SUPABASE_ANON_KEY: 'anon',
 }));
@@ -33,6 +37,7 @@ vi.mock('framer-motion', () => {
   return {
     motion: { div: passthrough('div'), button: passthrough('button') },
     AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+    useReducedMotion: () => false,
   };
 });
 
