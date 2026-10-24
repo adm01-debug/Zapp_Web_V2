@@ -29,6 +29,21 @@ function toDate(value: string | Date | null | undefined): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+/**
+ * Quando o valor é uma string ISO com offset explícito (ex.: "2026-10-11T17:00:00-03:00"),
+ * extrai data e hora locais diretamente do texto — sem converter para UTC — para que
+ * o resultado seja idêntico em qualquer fuso do servidor/navegador.
+ */
+function extractLocalFromIsoOffset(value: string): { hours: number; minutes: number; localDate: Date } | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):\d{2}[+-]\d{2}:\d{2}$/.exec(value);
+  if (!match) return null;
+  return {
+    hours: Number(match[4]),
+    minutes: Number(match[5]),
+    localDate: new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])),
+  };
+}
+
 function pad2(n: number): string {
   return String(n).padStart(2, '0');
 }
@@ -53,7 +68,8 @@ export function formatWorkItemDay(
   value: string | Date | null | undefined,
   now: Date = new Date(),
 ): string | null {
-  const d = toDate(value);
+  const local = typeof value === 'string' ? extractLocalFromIsoOffset(value) : null;
+  const d = local ? local.localDate : toDate(value);
   if (!d) return null;
   const diff = diffEmDiasLocais(d, now);
   if (diff === 0) return 'Hoje';
@@ -64,6 +80,8 @@ export function formatWorkItemDay(
 
 /** Hora local "HH:mm". */
 export function formatWorkItemTime(value: string | Date | null | undefined): string | null {
+  const local = typeof value === 'string' ? extractLocalFromIsoOffset(value) : null;
+  if (local) return `${pad2(local.hours)}:${pad2(local.minutes)}`;
   const d = toDate(value);
   if (!d) return null;
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
