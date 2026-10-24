@@ -26,7 +26,7 @@
       "column": 29,
       "severity": "error",
       "code": "TS2339",
-      "message": "Property 'map' does not exist on type 'string | number | boolean | { [key: string]: Json | undefined; } | Json[] | { deleted_count: number; duration_ms: number; remaining_count: number; table_size_bytes: number; }[] | ... 9 more ... | { ...; }[]'. Property 'map' does not exist on type 'string'.",
+      "message": "Property 'map' does not exist on type 'string | number | boolean | { [key: string]: Json | undefined; } | Json[] | { connection_id: string; connection_name: string; connection_status: string; is_silent: boolean; ... 6 more ...; top_conversations: Json; }[] | ... 10 more ... | { ...; }[]'. Property 'map' does not exist on type 'string'.",
       "contextHash": "bfdaac66b2ace137e299692e2cd521f3ea454a1b84d16ee307b6265b1198f830"
     },
     {
@@ -35,7 +35,7 @@
       "column": 72,
       "severity": "error",
       "code": "TS2345",
-      "message": "Argument of type '\"admin_list_cron_jobs\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | \"ai_budget_release\" | ... 270 more ... | \"user_has_permission\"'.",
+      "message": "Argument of type '\"admin_list_cron_jobs\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_inbox_silence\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | ... 271 more ... | \"user_has_permission\"'.",
       "contextHash": "e8e3225087bbd72ea0f61ddeb50909ee48cf0c98f5f223949d4c965b8d810249"
     },
     {
@@ -44,26 +44,8 @@
       "column": 59,
       "severity": "error",
       "code": "TS2345",
-      "message": "Argument of type '\"admin_toggle_cron_job\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | \"ai_budget_release\" | ... 270 more ... | \"user_has_permission\"'.",
+      "message": "Argument of type '\"admin_toggle_cron_job\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_inbox_silence\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | ... 271 more ... | \"user_has_permission\"'.",
       "contextHash": "296f94686c01c0db03888e6b312e13e94d5eeec67fdb3fb2e24dc47735b3e969"
-    },
-    {
-      "file": "src/components/connections/ConnectionCard.tsx",
-      "line": 221,
-      "column": 23,
-      "severity": "error",
-      "code": "TS2304",
-      "message": "Cannot find name 'handleDisconnectDialogOpenChange'.",
-      "contextHash": "b47b870dc8914fa1c793b461e52b267cdfeb9c636a4a6cfbe0b6a6a98307e971"
-    },
-    {
-      "file": "src/components/connections/ConnectionsView.tsx",
-      "line": 220,
-      "column": 73,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type '(connection: WhatsAppConnection) => Promise<boolean>' is not assignable to type '(c: WhatsAppConnection) => void | Promise<void>'. Type 'Promise<boolean>' is not assignable to type 'void | Promise<void>'. Type 'Promise<boolean>' is not assignable to type 'Promise<void>'. Type 'boolean' is not assignable to type 'void'.",
-      "contextHash": "55af550c718334bf387e7ae2c2925f8030c40ad1084593d9a464e80586dee5a0"
     },
     {
       "file": "src/components/dashboard/SentimentAlertsDashboard.tsx",
@@ -192,15 +174,6 @@
       "contextHash": "e78c77ea45cd03af1ebd52df4298dcfff0aa4f7d1eb580769e9177706681f07f"
     },
     {
-      "file": "src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx",
-      "line": 146,
-      "column": 23,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type '{ counts: ChipCounts; chipTab: \"attending\"; onChipTabChange: () => void; }' is not assignable to type 'IntrinsicAttributes & StatusChipsProps'. Property 'counts' does not exist on type 'IntrinsicAttributes & StatusChipsProps'.",
-      "contextHash": "6a47962d89c8501b6dc920213335c5d2fe72b9998796f0b37176591b1bdc8803"
-    },
-    {
       "file": "src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts",
       "line": 375,
       "column": 19,
@@ -282,30 +255,12 @@
       "contextHash": "ecc8e64272360bff105e46ce88e577173804e2085864ba473248b2d14792d5a0"
     },
     {
-      "file": "src/components/inbox/chat/__tests__/MessageBubble.interactive-list-item.test.tsx",
-      "line": 90,
-      "column": 7,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type '{ message: Message; isFirstInGroup: true; isLastInGroup: true; ttsLoading: false; ttsPlaying: false; ttsMessageId: null; onSpeak: Mock<Procedure>; onStop: Mock<Procedure>; ... 7 more ...; registerRef: Mock<...>; }' is not assignable to type 'IntrinsicAttributes & MessageBubbleProps'. Property 'onInteractiveListItemClick' does not exist on type 'IntrinsicAttributes & MessageBubbleProps'. Did you mean 'onInteractiveButtonClick'?",
-      "contextHash": "0ac814e9e598545ffede5c59b7968fafecb7b39052c3fbd49b3cd294e00c3685"
-    },
-    {
-      "file": "src/components/inbox/chat/ChatMessagesArea.tsx",
-      "line": 452,
-      "column": 17,
-      "severity": "error",
-      "code": "TS2322",
-      "message": "Type '{ message: Message; isFirstInGroup: boolean; isLastInGroup: boolean; contactAvatar: string | undefined; instanceName: string | undefined; contactJid: string | undefined; ... 16 more ...; registerRef: (el: HTMLDivElement | null) => void; }' is not assignable to type 'IntrinsicAttributes & MessageBubbleProps'. Property 'onInteractiveListItemClick' does not exist on type 'IntrinsicAttributes & MessageBubbleProps'. Did you mean 'onInteractiveButtonClick'?",
-      "contextHash": "b267f4622d840372cc578fc17235da22c1bc35694178824a94d951adc04d63cf"
-    },
-    {
       "file": "src/components/inbox/ChatPanel.tsx",
       "line": 375,
       "column": 42,
       "severity": "error",
       "code": "TS2345",
-      "message": "Argument of type '\"transfer_conversation\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | \"ai_budget_release\" | ... 270 more ... | \"user_has_permission\"'.",
+      "message": "Argument of type '\"transfer_conversation\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_inbox_silence\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | ... 271 more ... | \"user_has_permission\"'.",
       "contextHash": "972d62e68fd72aff9473f146af3af09a034db82d1249e303b56149385d0bf07e"
     },
     {
@@ -319,7 +274,7 @@
     },
     {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 596,
+      "line": 645,
       "column": 15,
       "severity": "error",
       "code": "TS2322",
@@ -328,7 +283,7 @@
     },
     {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 363,
+      "line": 409,
       "column": 11,
       "severity": "error",
       "code": "TS2322",
@@ -341,12 +296,12 @@
       "column": 72,
       "severity": "error",
       "code": "TS2345",
-      "message": "Argument of type '\"transfer_conversation\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | \"ai_budget_release\" | ... 270 more ... | \"user_has_permission\"'.",
+      "message": "Argument of type '\"transfer_conversation\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_inbox_silence\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | ... 271 more ... | \"user_has_permission\"'.",
       "contextHash": "3b16ccc90c3e24882514e342ef93a193854c6284325f81575a8923839ab7ac1f"
     },
     {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
-      "line": 477,
+      "line": 529,
       "column": 15,
       "severity": "error",
       "code": "TS2322",
@@ -525,15 +480,6 @@
       "contextHash": "1e18824f3de458ea221fdc36e0dffdb8ab81cacf985940022bc58a86b20eb8d6"
     },
     {
-      "file": "src/hooks/business/__tests__/useWarRoomData.test.tsx",
-      "line": 72,
-      "column": 45,
-      "severity": "error",
-      "code": "TS2305",
-      "message": "Module '\"../useWarRoomData\"' has no exported member 'WARROOM_MAX_ROWS'.",
-      "contextHash": "571260a5986d89f8c07a17bac8253aa64afbd718c80af924c77a14e1d5324da9"
-    },
-    {
       "file": "src/hooks/business/useCSAT.ts",
       "line": 106,
       "column": 9,
@@ -544,20 +490,20 @@
     },
     {
       "file": "src/hooks/business/useWarRoomData.ts",
-      "line": 98,
+      "line": 101,
       "column": 22,
       "severity": "error",
       "code": "TS2345",
-      "message": "Argument of type '\"warroom_agent_today\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | \"ai_budget_release\" | ... 270 more ... | \"user_has_permission\"'.",
+      "message": "Argument of type '\"warroom_agent_today\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_inbox_silence\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | ... 271 more ... | \"user_has_permission\"'.",
       "contextHash": "2c2b0469a87254c0302f0e78a25fc82dc5e4ee9e19a90672757b4d9db83d84a2"
     },
     {
       "file": "src/hooks/business/useWarRoomData.ts",
-      "line": 144,
+      "line": 150,
       "column": 50,
       "severity": "error",
       "code": "TS2345",
-      "message": "Argument of type '\"warroom_queue_stats\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | \"ai_budget_release\" | ... 270 more ... | \"user_has_permission\"'.",
+      "message": "Argument of type '\"warroom_queue_stats\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_inbox_silence\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | ... 271 more ... | \"user_has_permission\"'.",
       "contextHash": "76136b593df91be3ee5386ce4fedf291992cada0e253825dcccfc49af5276e87"
     },
     {
@@ -566,7 +512,7 @@
       "column": 42,
       "severity": "error",
       "code": "TS2345",
-      "message": "Argument of type '\"transfer_conversation\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | \"ai_budget_release\" | ... 270 more ... | \"user_has_permission\"'.",
+      "message": "Argument of type '\"transfer_conversation\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_inbox_silence\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | ... 271 more ... | \"user_has_permission\"'.",
       "contextHash": "d9678bb6a826ca0c362d89b2557c7db932609a27cea346f1556f7142585517ca"
     },
     {
@@ -602,7 +548,7 @@
       "column": 52,
       "severity": "error",
       "code": "TS2345",
-      "message": "Argument of type '\"enqueue_group_outbound_message\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | \"ai_budget_release\" | ... 270 more ... | \"user_has_permission\"'.",
+      "message": "Argument of type '\"enqueue_group_outbound_message\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_inbox_silence\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | ... 271 more ... | \"user_has_permission\"'.",
       "contextHash": "5236fd788a4b3d45ec9e4dcf6a9fee568d65e9a4bd0821f05afa497d9e12e1f5"
     },
     {
@@ -624,21 +570,12 @@
       "contextHash": "2886f4a1a3d8f03498df7152ee766ae22ee5336829ca4de0cf665f018d478026"
     },
     {
-      "file": "src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx",
-      "line": 173,
-      "column": 50,
-      "severity": "error",
-      "code": "TS2554",
-      "message": "Expected 1 arguments, but got 2.",
-      "contextHash": "1a95e7db3b82516658ba38353dd932c2fa3efe1968836ac10106016eb2f6c999"
-    },
-    {
       "file": "src/hooks/inbox/useInboxBulkActions.ts",
       "line": 141,
       "column": 46,
       "severity": "error",
       "code": "TS2345",
-      "message": "Argument of type '\"transfer_conversation\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | \"ai_budget_release\" | ... 270 more ... | \"user_has_permission\"'.",
+      "message": "Argument of type '\"transfer_conversation\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_inbox_silence\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | ... 271 more ... | \"user_has_permission\"'.",
       "contextHash": "f9465ff2f17f95aa1964d23c2186e5a7caf2b25974d883d2859afc86d33fffa4"
     },
     {
@@ -647,7 +584,7 @@
       "column": 50,
       "severity": "error",
       "code": "TS2345",
-      "message": "Argument of type '\"inbox_unread_total\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | \"ai_budget_release\" | ... 270 more ... | \"user_has_permission\"'.",
+      "message": "Argument of type '\"inbox_unread_total\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_inbox_silence\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | ... 271 more ... | \"user_has_permission\"'.",
       "contextHash": "5d28157fe9ec3e13d563f4d34ee4081725d94ab134baf96cc29eb82c56505d9b"
     },
     {
@@ -678,30 +615,12 @@
       "contextHash": "c5773759595f9beee4be1c5c9dfc108ba86e4cd2c70996dac1f16c1c6ab0a170"
     },
     {
-      "file": "src/hooks/integrations/__tests__/useTalkXSuppression.test.ts",
-      "line": 35,
-      "column": 36,
-      "severity": "error",
-      "code": "TS2305",
-      "message": "Module '\"@/hooks/integrations/useTalkXSuppression\"' has no exported member 'BlacklistEntry'.",
-      "contextHash": "0cf221831f0beef56a246a5f81471198f5c06505ebe19ca844b438cb724362d3"
-    },
-    {
-      "file": "src/hooks/integrations/__tests__/useTalkXSuppression.test.ts",
-      "line": 35,
-      "column": 10,
-      "severity": "error",
-      "code": "TS2724",
-      "message": "'\"@/hooks/integrations/useTalkXSuppression\"' has no exported member named 'useTalkXSuppression'. Did you mean 'useTalkXSuppressionStats'?",
-      "contextHash": "0cf221831f0beef56a246a5f81471198f5c06505ebe19ca844b438cb724362d3"
-    },
-    {
       "file": "src/hooks/integrations/useGmail.ts",
       "line": 242,
       "column": 54,
       "severity": "error",
       "code": "TS2345",
-      "message": "Argument of type '\"search_email_threads\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | \"ai_budget_release\" | ... 270 more ... | \"user_has_permission\"'.",
+      "message": "Argument of type '\"search_email_threads\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_inbox_silence\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | ... 271 more ... | \"user_has_permission\"'.",
       "contextHash": "229770dbf46c82f6409b64cefd13047261d8c52ec0a4adea5434ca54fb5e9ed7"
     },
     {
@@ -715,7 +634,7 @@
     },
     {
       "file": "src/hooks/system/__tests__/configuracoes.leituraErro.test.tsx",
-      "line": 72,
+      "line": 73,
       "column": 47,
       "severity": "error",
       "code": "TS2339",
@@ -728,89 +647,8 @@
       "column": 46,
       "severity": "error",
       "code": "TS2345",
-      "message": "Argument of type '\"app_bootstrap\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | \"ai_budget_release\" | ... 270 more ... | \"user_has_permission\"'.",
+      "message": "Argument of type '\"app_bootstrap\"' is not assignable to parameter of type '\"is_admin\" | \"accept_department_invite\" | \"add_agent_xp\" | \"add_wa_tag_if_not_exists\" | \"admin_inbox_silence\" | \"admin_set_role\" | \"admin_unlock_login\" | \"ai_budget_reconcile\" | ... 271 more ... | \"user_has_permission\"'.",
       "contextHash": "183109a6f455279acb5084b759623aacb8578cf972097b72663d14ea6f523746"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 94,
-      "column": 27,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'all_read' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\"> | SelectQueryError<\"column 'message_id' does not exist on 'contacts'.\"> | ... 167 more ... | SelectQueryError<...>'. Property 'all_read' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\">'.",
-      "contextHash": "7dbd66f89f3071240c27f0cc5170c8477e334a5432e83f1d36aefef1052f2847"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 91,
-      "column": 34,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'conversation_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\"> | SelectQueryError<\"column 'message_id' does not exist on 'contacts'.\"> | ... 167 more ... | SelectQueryError<...>'. Property 'conversation_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\">'.",
-      "contextHash": "c92b99e72bc531e19d89e08dfb552af87f06337abe39bb877b3acdeed702e72c"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 92,
-      "column": 38,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'member_count' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\"> | SelectQueryError<\"column 'message_id' does not exist on 'contacts'.\"> | ... 167 more ... | SelectQueryError<...>'. Property 'member_count' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\">'.",
-      "contextHash": "2db3f6a31827402a76d51c9aa919756c3338503f2711f57941a2efec50537001"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 88,
-      "column": 21,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'message_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\"> | SelectQueryError<\"column 'message_id' does not exist on 'contacts'.\"> | ... 167 more ... | SelectQueryError<...>'. Property 'message_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\">'.",
-      "contextHash": "7279814c61e6f8f7212671d35872fe9b107cdedaf635fdc7fad0f66e769ed8f2"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 89,
-      "column": 20,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'message_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\"> | SelectQueryError<\"column 'message_id' does not exist on 'contacts'.\"> | ... 167 more ... | SelectQueryError<...>'. Property 'message_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\">'.",
-      "contextHash": "dbcc37224cc0457d8eeb8adaa7035de8b2bb79c74ec52aa32052d13aed38ced6"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 90,
-      "column": 29,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'message_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\"> | SelectQueryError<\"column 'message_id' does not exist on 'contacts'.\"> | ... 167 more ... | SelectQueryError<...>'. Property 'message_id' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\">'.",
-      "contextHash": "270acda5ac56b5feb8209c7f749a31b62193863a9b982e01662818ddf64fa9a3"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 93,
-      "column": 36,
-      "severity": "error",
-      "code": "TS2339",
-      "message": "Property 'read_count' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\"> | SelectQueryError<\"column 'message_id' does not exist on 'contacts'.\"> | ... 167 more ... | SelectQueryError<...>'. Property 'read_count' does not exist on type 'SelectQueryError<\"column 'message_id' does not exist on 'profiles'.\">'.",
-      "contextHash": "2a654d1085cdc96dd26b52cccfd77147fb7e02e71bc902994b49bcbc952677a4"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 79,
-      "column": 17,
-      "severity": "error",
-      "code": "TS2345",
-      "message": "Argument of type '\"conversation_id\"' is not assignable to parameter of type 'never'.",
-      "contextHash": "bf5e4a5018b942943323a3d4a529047dfe4588be34007b30a94b5875728aaa01"
-    },
-    {
-      "file": "src/hooks/team-chat/useTeamReadState.ts",
-      "line": 77,
-      "column": 19,
-      "severity": "error",
-      "code": "TS2769",
-      "message": "No overload matches this call. Overload 1 of 2, '(relation: \"profiles\" | \"contacts\" | \"ai_providers\" | \"audio_memes\" | \"whatsapp_connections\" | \"campaigns\" | \"channel_connections\" | \"queues\" | \"chatbot_flows\" | \"sales_deals\" | \"conversation_analyses\" | ... 158 more ... | \"whisper_messages\"): PostgrestQueryBuilder<...>', gave the following error. Argument of type '\"team_message_read_state\"' is not assignable to parameter of type '\"profiles\" | \"contacts\" | \"ai_providers\" | \"audio_memes\" | \"whatsapp_connections\" | \"campaigns\" | \"channel_connections\" | \"queues\" | \"chatbot_flows\" | \"sales_deals\" | \"conversation_analyses\" | ... 158 more ... | \"whisper_messages\"'. Overload 2 of 2, '(relation: \"profiles_public\" | \"whatsapp_connections_agent\" | \"whatsapp_connections_public\" | \"whatsapp_connections_safe\" | \"channel_connections_safe\" | \"gmail_accounts_safe\" | ... 5 more ... | \"talkx_engine_health\"): PostgrestQueryBuilder<...>', gave the following error. Argument of type '\"team_message_read_state\"' is not assignable to parameter of type '\"profiles_public\" | \"whatsapp_connections_agent\" | \"whatsapp_connections_public\" | \"whatsapp_connections_safe\" | \"channel_connections_safe\" | \"gmail_accounts_safe\" | \"talkx_campaign_metrics\" | ... 4 more ... | \"talkx_engine_health\"'.",
-      "contextHash": "037e0c89b17b2337dd6def20f60c8964b5e9344b20630490aa266090606e0609"
     },
     {
       "file": "src/hooks/ui/useOnboarding.ts",
