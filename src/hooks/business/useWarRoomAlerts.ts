@@ -1,8 +1,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { usePushNotifications } from '../system/usePushNotifications';
 import { useNotificationSettings } from '../system/useNotificationSettings';
+import { showBrowserNotification } from '@/utils/notificationSounds';
 
 interface WarRoomAlert {
   id: string;
@@ -78,7 +78,6 @@ async function fetchBreachedConversationIds(): Promise<string[]> {
 
 export function useWarRoomAlerts(soundEnabled?: boolean) {
   const queryClient = useQueryClient();
-  const { showNotification, permission } = usePushNotifications();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // Segunda batida do alerta crítico (`setTimeout`), para cancelar no desmonte.
   const segundaBatida = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -92,7 +91,9 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
   // fora do inbox) e não deve entrar no `mediaVolumeStore`. O volume dele é o volume de
   // alerta do painel (`user_settings.sound_volume`, 10-100) — não um valor fixo.
   useEffect(() => {
-    audioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgip6LbUg3WX2OgGtLPE51g3lgSkRHZXVzYFRDSWBwaV5WTFFcaGReW1haYmhkYl9eYGVpZ2VkZGRnamlnZmZnaGlpaGdnaGhpaWhoaGhpaWhoaGlpaGlpaGhpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaQ==');
+    audioRef.current = new Audio(
+      'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgip6LbUg3WX2OgGtLPE51g3lgSkRHZXVzYFRDSWBwaV5WTFFcaGReW1haYmhkYl9eYGVpZ2VkZGRnamlnZmZnaGlpaGdnaGhpaWhoaGhpaWhoaGlpaGlpaGhpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaQ=='
+    );
   }, []);
 
   // Volume do alerta = volume de alerta do painel (10-100 -> 0.1-1.0).
@@ -146,11 +147,14 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
             playAlertSound();
           }
 
-          // Push notification
-          if (permission === 'granted') {
-            showNotification({
-              title: `⚠️ ${alert.title}`,
-              body: alert.message,
+          // Aviso de desktop: `usePushNotifications.showNotification` exige
+          // Service Worker de aplicação (`SERVICE_WORKER_ENABLED=false` hoje)
+          // e devolvia `false` em silêncio — o operador só ouvia o som.
+          // `showBrowserNotification` usa a API `Notification` direta; o
+          // painel decide se avisa (mesmo "switch" que o Chat de Equipe
+          // respeita).
+          if (settings.browserNotifications) {
+            showBrowserNotification(`⚠️ ${alert.title}`, alert.message, {
               tag: `warroom-${alert.id}`,
               requireInteraction: alert.alert_type === 'critical',
             });
@@ -162,19 +166,28 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient, playAlertSound, permission, showNotification]);
+  }, [queryClient, playAlertSound, settings.browserNotifications]);
 
   // A segunda batida tem vida própria: este efeito (realtime) se refaz a cada mudança
-  // de identidade de `showNotification`/`playAlertSound`, e limpar o timer no cleanup
-  // dele engolia a segunda batida no meio do caminho.
-  useEffect(() => () => {
-    if (segundaBatida.current) { clearTimeout(segundaBatida.current); segundaBatida.current = null; }
-  }, []);
+  // de identidade de `playAlertSound`, e limpar o timer no cleanup dele engolia a
+  // segunda batida no meio do caminho.
+  useEffect(
+    () => () => {
+      if (segundaBatida.current) {
+        clearTimeout(segundaBatida.current);
+        segundaBatida.current = null;
+      }
+    },
+    []
+  );
 
   // Dismiss alert. Devolve o erro do banco: engolir aqui fazia a tela mostrar o
   // alerta como dispensado quando o UPDATE tinha falhado (RLS/rede).
   const dismissAlert = async (alertId: string): Promise<{ error: { message?: string } | null }> => {
-    const { error } = await supabase.from('warroom_alerts').update({ is_read: true }).eq('id', alertId);
+    const { error } = await supabase
+      .from('warroom_alerts')
+      .update({ is_read: true })
+      .eq('id', alertId);
     if (error) return { error };
     queryClient.invalidateQueries({ queryKey: ['warroom-alerts'] });
     return { error: null };
@@ -215,8 +228,13 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
     };
 
     void checkSLABreaches();
-    const interval = setInterval(() => { void checkSLABreaches(); }, 60000);
-    return () => { encerrado = true; clearInterval(interval); };
+    const interval = setInterval(() => {
+      void checkSLABreaches();
+    }, 60000);
+    return () => {
+      encerrado = true;
+      clearInterval(interval);
+    };
   }, []);
 
   return { alerts, dismissAlert };
