@@ -16,8 +16,8 @@
   "source_files": [
     {
       "path": "supabase/functions/_shared/ai-audio-authz.ts",
-      "bytes": 4007,
-      "sha256": "fff95328e31cf40c6b0776344a9432b78b4bfc8df16145835456d92e9cd5565a"
+      "bytes": 7475,
+      "sha256": "3171ca7e6dba15bc607cad8b3cc7f4b97ca78b5b34076bd8d5e123c845db3624"
     },
     {
       "path": "supabase/functions/_shared/ai-audio-input.ts",
@@ -446,8 +446,8 @@
     },
     {
       "path": "supabase/functions/ai-transcribe-audio/index.ts",
-      "bytes": 28209,
-      "sha256": "492f365e5fe147162363bbfaea716ab2378c9e0f8c225d43717de69bf1555993"
+      "bytes": 29419,
+      "sha256": "a855f8fff5630320909d7a091d9276c7466dbaca6d0b92c1c1d274847c8ef343"
     },
     {
       "path": "supabase/functions/ai-usage-outbox-drain/index.ts",
@@ -1119,7 +1119,7 @@
       "name": "ai-transcribe-audio",
       "entrypoint": "supabase/functions/ai-transcribe-audio/index.ts",
       "verify_jwt": true,
-      "source_sha256": "79958e919747f2efe826f60e984d74486017cb63f407286ad693f8b56828c055",
+      "source_sha256": "d705c4d930193bc59135b515a45090779835110b2fadd0adac9f420851e30324",
       "source_files": [
         "supabase/functions/_shared/ai-audio-authz.ts",
         "supabase/functions/_shared/ai-auth.ts",
@@ -2518,5 +2518,5 @@
       ]
     }
   ],
-  "manifest_sha256": "9be76d031f239d2b2aa622c1283d5d4e092169c95dba05cfae2efb0dd12e644c"
+  "manifest_sha256": "42fcdc0b3046b16ee740b3ec41ec6ff675087b215442e10d2ec4693011feca8f"
 }

@@ -91,11 +91,11 @@ jobs:
 
       - name: 🎭 Install Playwright (Chromium)
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.64.1 install --with-deps chromium
+        run: bunx playwright@1.63.0 install --with-deps chromium
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.64.1 install-deps chromium
+        run: bunx playwright@1.63.0 install-deps chromium
 
       - name: 🧪 Unit tests dos guardrails E2E (sem browser/rede)
         run: node --import tsx --test e2e/fixtures/e2e-talkx.unit.test.mjs

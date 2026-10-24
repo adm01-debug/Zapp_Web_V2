@@ -4,7 +4,7 @@
   "node": "24",
   "go": "1.24.x",
   "supabase-cli": "2.116.0",
-  "playwright": "1.64.1",
+  "playwright": "1.63.0",
   "postgres-image": "postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24",
   "actionlint": "1.7.7",
   "actionlint-sha256-linux-amd64": "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757",
