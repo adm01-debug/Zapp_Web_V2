@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
-  StickyNote, Plus, Send, Trash2, Loader2,
+  StickyNote, Plus, Send, Trash2, Loader2, Pencil, Pin, PinOff, Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
@@ -23,6 +23,12 @@ interface Note {
   created_at: string;
   author_id: string;
   author_name?: string;
+  /**
+   * Nota fixada (aparece no topo da lista). Opcional de propósito: notas antigas
+   * lidas antes da coluna existir chegam sem a marca e contam como NÃO fixadas.
+   * `is_pinned === true` é a única leitura que fixa — `undefined` não fixa.
+   */
+  is_pinned?: boolean;
 }
 
 interface ContactNotesProps {
@@ -33,11 +39,24 @@ interface ContactNotesProps {
 export function ContactNotes({ contactId, className }: ContactNotesProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { notes: rawNotes, isLoading, refetch, currentProfileId } = useContactNotes(contactId);
+  const { notes: rawNotes, isLoading, refetch, currentProfileId, editNote, togglePin } = useContactNotes(contactId);
   const [newNote, setNewNote] = useState('');
   const [adding, setAdding] = useState(false);
   const [showInput, setShowInput] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [pinBusyId, setPinBusyId] = useState<string | null>(null);
   const isMountedRef = useRef(true);
+  const editAreaRef = useRef<HTMLTextAreaElement | null>(null);
+  const editBtnRefs = useRef(new Map<string, HTMLButtonElement>());
+  /** Id da nota cujo botão "Editar nota" recebe o foco ao remontar: o editor
+   * desmonta ao salvar/cancelar/descartar e, sem isso, o foco caía no body. */
+  const pendingEditFocusRef = useRef<string | null>(null);
+  /** A confirmação de descarte acabou de abrir: o botão "Continuar editando"
+   * assume o foco ao montar. */
+  const confirmAbertaRef = useRef(false);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -53,6 +72,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
       created_at: n.created_at,
       author_id: n.author_id,
       author_name: n.author?.name || 'Agente',
+      is_pinned: n.is_pinned === true,
     })),
     [rawNotes],
   );
@@ -127,6 +147,93 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
     toast.success('Nota excluída');
   };
 
+  const iniciarEdicao = (note: Note) => {
+    setEditingId(note.id);
+    setEditDraft(note.content);
+    setConfirmDiscard(false);
+  };
+
+  /** Ref do botão "Editar nota" de cada cartão: guarda no mapa e, quando o
+   * editor acabou de fechar para esta nota, devolve o foco a ele. */
+  const refBotaoEditar = (noteId: string) => (el: HTMLButtonElement | null) => {
+    if (el) {
+      editBtnRefs.current.set(noteId, el);
+      if (pendingEditFocusRef.current === noteId) {
+        pendingEditFocusRef.current = null;
+        el.focus();
+      }
+    } else {
+      editBtnRefs.current.delete(noteId);
+    }
+  };
+
+  /** Fecha o editor devolvendo o foco ao "Editar nota" da mesma nota. */
+  const fecharEdicaoComFoco = (noteId: string) => {
+    pendingEditFocusRef.current = noteId;
+    setConfirmDiscard(false);
+    setEditingId(null);
+  };
+
+  /** Só pede confirmação quando há alteração não salva de verdade. */
+  const pedirDescartar = (note: Note) => {
+    if (editDraft.trim() !== note.content.trim()) {
+      confirmAbertaRef.current = true;
+      setConfirmDiscard(true);
+      return;
+    }
+    fecharEdicaoComFoco(note.id);
+  };
+
+  /** Ref do "Continuar editando": ao abrir a confirmação ele assume o foco. */
+  const refContinuarEditando = (el: HTMLButtonElement | null) => {
+    if (el && confirmAbertaRef.current) {
+      confirmAbertaRef.current = false;
+      el.focus();
+    }
+  };
+
+  /** "Continuar editando": fecha a confirmação e volta o foco à textarea. */
+  const continuarEditando = () => {
+    setConfirmDiscard(false);
+    editAreaRef.current?.focus();
+  };
+
+  const salvarEdicao = async (note: Note) => {
+    const content = editDraft.trim();
+    if (!content || savingEdit) return;
+    setSavingEdit(true);
+    try {
+      await editNote(note.id, content);
+      if (!isMountedRef.current) return;
+      fecharEdicaoComFoco(note.id);
+      toast.success('Nota atualizada');
+    } catch {
+      // O toast de erro vem do hook (`useContactNotes` → "Erro ao atualizar nota"); aqui só
+      // mantém o editor aberto com o rascunho para o autor tentar de novo e recarrega a lista.
+      if (!isMountedRef.current) return;
+      void refetch();
+    } finally {
+      if (isMountedRef.current) setSavingEdit(false);
+    }
+  };
+
+  const alternarFixar = async (note: Note) => {
+    if (pinBusyId) return;
+    const fixar = !(note.is_pinned === true);
+    setPinBusyId(note.id);
+    try {
+      await togglePin(note.id);
+      if (!isMountedRef.current) return;
+      toast.success(fixar ? 'Nota fixada' : 'Nota desafixada');
+    } catch {
+      // Toast de erro do hook; recarrega para a tela voltar ao que o banco tem.
+      if (!isMountedRef.current) return;
+      void refetch();
+    } finally {
+      if (isMountedRef.current) setPinBusyId(null);
+    }
+  };
+
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex items-center justify-between">
@@ -139,6 +246,8 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
           <Button
             variant="ghost" size="icon"
             className="w-6 h-6"
+            aria-label={showInput ? 'Fechar nova nota' : 'Nova nota'}
+            title={showInput ? 'Fechar nova nota' : 'Nova nota'}
             onClick={() => setShowInput(!showInput)}
           >
             <Plus className="w-3 h-3" />
@@ -160,6 +269,7 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
                 placeholder="Escreva uma nota..."
+                aria-label="Nova nota"
                 className="text-xs min-h-[60px] resize-none"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) void handleAdd();
@@ -197,13 +307,20 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
         <div className="space-y-2">
           {notes.map((note, i) => {
             const colors = getAvatarColor(note.author_name || '');
+            const minha = note.author_id === currentProfileId;
+            const editando = editingId === note.id;
+            const fixada = note.is_pinned === true;
             return (
               <motion.div
                 key={note.id}
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
-                className="p-3 rounded-lg bg-muted/20 border border-border/20 group relative"
+                data-pinned={fixada ? 'true' : undefined}
+                className={cn(
+                  'p-3 rounded-lg border group relative',
+                  fixada ? 'bg-primary/5 border-primary/30' : 'bg-muted/20 border-border/20',
+                )}
               >
                 <div className="flex items-center gap-2 mb-1.5">
                   <Avatar className="w-5 h-5">
@@ -212,24 +329,105 @@ export function ContactNotes({ contactId, className }: ContactNotesProps) {
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-xs font-medium text-foreground">{note.author_name}</span>
+                  {fixada && (
+                    <span className="inline-flex items-center gap-0.5 text-2xs font-medium text-primary" title="Nota fixada">
+                      <Pin className="w-2.5 h-2.5" aria-hidden="true" />
+                      Fixada
+                    </span>
+                  )}
                   <span className="text-caption ml-auto">
                     {formatDistanceToNow(new Date(note.created_at), { addSuffix: true, locale: ptBR })}
                   </span>
                 </div>
-                <p className="text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed">{note.content}</p>
-                {/* Capacidade de exclusão vem do dado real da nota: a policy de DELETE
-                    só alcança a nota do próprio autor. Sem perfil carregado, não
-                    oferece a ação (mesma regra da aba Notas do inbox). */}
-                {note.author_id === currentProfileId && (
-                  <Button
-                    variant="ghost" size="icon"
-                    aria-label="Excluir nota"
-                    title="Excluir nota"
-                    className="absolute top-2 right-2 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive/60 hover:text-destructive"
-                    onClick={() => handleDelete(note.id)}
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
+
+                {editando ? (
+                  <div className="space-y-1.5">
+                    <Textarea
+                      autoFocus
+                      ref={editAreaRef}
+                      value={editDraft}
+                      aria-label="Editar nota"
+                      className="text-xs min-h-[60px] resize-none"
+                      onChange={(e) => setEditDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        // `tecla` (e não `key`): é a tecla do teclado, não credencial — o nome
+                        // `key` dispara o falso positivo de `local/no-secret-compare`.
+                        const tecla = e.key;
+                        if (tecla === 'Escape') { e.preventDefault(); pedirDescartar(note); }
+                        if (tecla === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void salvarEdicao(note); }
+                      }}
+                    />
+                    {confirmDiscard ? (
+                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1.5">
+                        <span className="text-2xs text-foreground">Descartar as alterações não salvas?</span>
+                        <div className="flex gap-1.5">
+                          <Button ref={refContinuarEditando} variant="ghost" size="sm" className="h-6 text-2xs" onClick={continuarEditando}>
+                            Continuar editando
+                          </Button>
+                          <Button variant="destructive" size="sm" className="h-6 text-2xs" onClick={() => fecharEdicaoComFoco(note.id)}>
+                            Descartar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-end gap-1.5">
+                        <Button variant="ghost" size="sm" className="h-6 text-2xs" onClick={() => pedirDescartar(note)}>
+                          Cancelar
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="h-6 text-2xs gap-1"
+                          disabled={savingEdit || !editDraft.trim()}
+                          onClick={() => void salvarEdicao(note)}
+                        >
+                          {savingEdit ? <Loader2 className="w-3 h-3 motion-safe:animate-spin" /> : <Check className="w-3 h-3" />}
+                          Salvar
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed">{note.content}</p>
+                )}
+
+                {/* Editar/fixar/excluir só na própria nota: a policy de UPDATE/DELETE
+                    só alcança a nota do autor, e o dado real (author_id) é a mesma
+                    regra da tela. Sem perfil carregado, nenhuma ação é oferecida. */}
+                {minha && !editando && (
+                  <div className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost" size="icon"
+                      aria-label="Editar nota"
+                      title="Editar nota"
+                      className="w-6 h-6"
+                      ref={refBotaoEditar(note.id)}
+                      onClick={() => iniciarEdicao(note)}
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      variant="ghost" size="icon"
+                      aria-label={fixada ? 'Desafixar nota' : 'Fixar nota'}
+                      aria-pressed={fixada}
+                      title={fixada ? 'Desafixar nota' : 'Fixar nota'}
+                      className={cn('w-6 h-6', fixada && 'text-primary')}
+                      disabled={pinBusyId === note.id}
+                      onClick={() => void alternarFixar(note)}
+                    >
+                      {pinBusyId === note.id
+                        ? <Loader2 className="w-3 h-3 motion-safe:animate-spin" />
+                        : fixada ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
+                    </Button>
+                    <Button
+                      variant="ghost" size="icon"
+                      aria-label="Excluir nota"
+                      title="Excluir nota"
+                      className="w-6 h-6 text-destructive/60 hover:text-destructive"
+                      onClick={() => handleDelete(note.id)}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
                 )}
               </motion.div>
             );
