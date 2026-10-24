@@ -230,8 +230,7 @@ export function useCustomEmojis(open: boolean) {
     // PB-35: o UPDATE direto em `use_count` atinge 0 linhas quando o emoji é de OUTRO
     // dono (a policy de UPDATE é do dono/admin) — sem erro e sem contador. A RPC
     // `increment_custom_emoji_use` (SECURITY DEFINER) grava no lugar do atendente.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC nova (PB-35), types.ts ainda não sincronizado
-    const { error } = await (supabase as any).rpc('increment_custom_emoji_use', { p_emoji_id: emoji.id });
+    const { error } = await supabase.rpc('increment_custom_emoji_use', { p_emoji_id: emoji.id });
     if (error) toast.error('Não foi possível registrar o uso do emoji');
   }, []);
 

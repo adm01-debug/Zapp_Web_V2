@@ -98,10 +98,7 @@ export function useSentimentTrend(days: number): {
   const { data, error, isLoading } = useQuery({
     queryKey: ['sentiment-trend', days],
     queryFn: async () => {
-      // Cast local via 'any' até o types.ts (gerado, não sincronizado no
-      // self-hosted) conhecer a RPC — mesma prática de
-      // `dashboard_sentiment_alerts` em useSentimentData.ts.
-      const { data: rows, error: rpcError } = await (supabase as any).rpc('sentiment_trend', { p_days: days }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (HZ2-003), types.ts ainda não sincronizado
+      const { data: rows, error: rpcError } = await supabase.rpc('sentiment_trend', { p_days: days });
       if (rpcError) throw rpcError;
       return mapTrendRows((rows ?? []) as SentimentTrendRow[]);
     },
