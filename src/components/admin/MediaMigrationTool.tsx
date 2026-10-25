@@ -48,8 +48,8 @@ export function MediaMigrationTool() {
           .eq('action', 'media_migration')
           .order('created_at', { ascending: false }).limit(10);
         if (error || !data) return;
-        setLogs(data as LogEntry[]);
-        const userIds = (data as LogEntry[]).filter(l => l.user_id).map(l => l.user_id as string);
+        setLogs(data as unknown as LogEntry[]);
+        const userIds = (data as unknown as LogEntry[]).filter(l => l.user_id).map(l => l.user_id as string);
         if (userIds.length > 0) {
           const { data: profileData } = await supabase.from('profiles')
             .select('user_id, name').in('user_id', userIds);
