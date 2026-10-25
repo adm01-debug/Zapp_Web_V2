@@ -304,7 +304,7 @@ Cota de Copilot esgotada na conta `adm01-debug`. O reviewer automático tenta us
 **Commits locais prontos mas não empurrados** (remote branch ainda em `f042a4a`):
 
 | Commit | Descrição |
-|--------|-----------|
+|--------|----------|
 | `ca80a91` | fix(types): restaura types.ts correto (13045 linhas) com view team_message_read_state |
 | `a997734` | docs(pendencias): documenta bloqueio de git push por auto mode |
 | `a4dfd16` | fix(tests): adiciona mock getBoundingClientRect para @tanstack/react-virtual no jsdom |
@@ -332,3 +332,53 @@ git push -u origin claude/kind-gates-87mwoe
 
 *Documento atualizado em 2026-10-22 01:40 UTC.*
 *Correções aplicadas nesta sessão: ver RELATORIO_CI.md.*
+
+---
+
+## 9. `fix/ci-workflows` — Correções aplicadas e pendências remanescentes (2026-10-25)
+
+> Branch: `fix/ci-workflows` | Sessão: https://claude.ai/code/session_01XQg8vscDFaYdzdNS5632BA
+> Base: `origin/main` @ `2d97c44` ("fix(ci): ci-gate bloqueia merge quando unit tests falham")
+
+### Correções aplicadas nesta branch
+
+| Arquivo | Causa raiz | Verificação local |
+|---------|-----------|-------------------|
+| `scripts/ci/fila-merge.mjs` | `execFileSync` não tratava erros transitórios (`HTTP 504 Gateway Timeout`, `ECONNRESET`, `unexpected end of JSON input`) do `gh pr list --json` — o runner de CI é efemeramente desconectado da API do GitHub. Fix: `execComRetry` com 3 tentativas e backoff exponencial 5s/10s/20s. | Lógica verificada; `execComRetry` é chamado nos dois `execFileSync` de `decisaoAtual()`. |
+| `src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx` | Asserções usavam aria-labels obsoletos (`'Ouvir resumo'`, `'Ouvir pontos-chave'`). O componente `SummaryResult.tsx` foi atualizado para usar labels WCAG completos mas o teste não foi sincronizado. Fix: atualizado para `'Ouvir o resumo em voz alta'` e `'Ouvir os pontos-chave em voz alta'`. | `vitest run` local: 13/13 ✅ |
+| `src/components/inbox/chat/__tests__/ChatMessagesArea.pagination.test.tsx` | `@tanstack/react-virtual@3.14.x` (v3) usa `getBoundingClientRect()` internamente; jsdom retorna zeros → `getVirtualItems()` → array vazio → nenhum elemento renderizado. Fix: spies de `getBoundingClientRect`, `clientHeight` e `scrollTo` adicionados em `beforeAll`. | `vitest run` local: 4/4 ✅ |
+| `src/hooks/tasks/__tests__/workItemFormat.test.ts` | Teste "aceita o ISO com offset que o banco devolve" (linha 122) dependia de `process.env.TZ` local (UTC-3), ausente no runner de CI (UTC) — `'2026-10-11T17:00:00-03:00'` formatava como `'Hoje, 20:00'` em vez de `'Hoje, 17:00'`. Fix: envolvido com `withTimeZone('America/Sao_Paulo', ...)` (helper já existia no arquivo). | `vitest run` local: 13/13 ✅ |
+
+### Pendências remanescentes (pré-existentes em `origin/main`, não corrigíveis por agente)
+
+---
+
+#### 9a. `useTeamChatNotifications.canal-estavel.test.tsx` — nome de canal sem tópico único por instância
+
+**Workflow:** `ci.yml` — `🧪 Unit Tests` (shard que inclui `src/hooks/chat/__tests__/`)
+**Arquivo:** `src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx`
+
+**Erros exatos (confirmados com `vitest run` local em `origin/main` @ `2d97c44`):**
+
+```
+FAIL  useTeamChatNotifications — canal estável (HZ5-09) > assina um único canal com tópico exclusivo por instância
+AssertionError: expected 'team-chat-notifications' to match /^team-chat-notifications:/
+  ❯ src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx:131:39
+
+FAIL  useTeamChatNotifications — canal estável (HZ5-09) > mexer no volume não recria o canal
+AssertionError: expected [ 'team-chat-notifications', …(2) ] to have a length of 1 but got 3
+  ❯ src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx:143:28
+```
+
+**Causa raiz:** O hook `useTeamChatNotifications.ts` (linha 150) registra `.channel('team-chat-notifications')` sem sufixo de tópico. O teste espera `team-chat-notifications:<tópico-único>` (formato `canal:tópico` do Supabase Realtime). Adicionalmente, o hook cria 3 subscrições de canal em vez de 1 ao re-renderizar (teste na linha 143).
+
+**Por que agente não pode corrigir:** Mudar o nome do canal ou o número de subscrições altera o contrato com o backend Supabase Realtime — decisão de produto/arquitetura (HZ5-09).
+
+**O que o Joaquim precisa fazer:**
+1. Verificar se o nome do canal deve incluir tópico por instância (ex.: `team-chat-notifications:${orgId}`) ou se o teste está errado.
+2. Verificar por que 3 subscrições são criadas ao re-renderizar — esperado é 1 estável.
+3. Decidir a correção: ajustar o hook para usar nome com tópico, OU ajustar o teste para aceitar o nome sem tópico.
+
+---
+
+*Atualizado em 2026-10-25. Branch `fix/ci-workflows`. Correções aplicadas: ver §9 acima.*
