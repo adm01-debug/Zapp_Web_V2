@@ -13,7 +13,7 @@
 | `bun run lint` | ⚠️ 819 problems | 605 errors, 214 warnings — **todos pré-existentes na `main`** |
 | `bun run typecheck` | ⚠️ erros | drift de schema (ver item 2 de PENDENCIAS.md) — **pré-existentes na `main`** |
 | Unit tests (shard 1/3) | ⚠️ 4 falhas | `useTalkXSegments.test.ts:347,371,384,398` — pré-existentes (item 5) |
-| Unit tests (shard 2/3) | ⚠️ 3 falhas | `workItemFormat.test.ts:123` (timezone CI=UTC vs local UTC-3), `configuracoes.leituraErro.test.tsx:73`, `useDiagnosticsData.select.test.ts:79` — **pré-existentes na `main`** (item 10) |
+| Unit tests (shard 2/3) | ⚠️ 2 falhas | `workItemFormat.test.ts:123` (timezone CI=UTC vs local UTC-3), `configuracoes.leituraErro.test.tsx:73` — **pré-existentes na `main`** (item 10) |
 | Unit tests (shard 3/3) | ⚠️ 1 falha | `useCampaignRowActions.test.tsx` — pré-existente (item 6) |
 | `ChatMessagesArea.pagination.test.tsx` | ✅ 4/4 pass | **corrigido nesta sessão** (commit `9c1c058`) |
 
@@ -68,15 +68,33 @@ Os required checks são exercidos por `ci.yml`, `db-guard.yml` e `e2e-logado.yml
 **Causa:** `useInboxFilters.ts` usava `window.location.search` / `window.history.replaceState` diretamente, contornando o `MemoryRouter` do React Router nos testes. Resultado: 5/9 testes em `useInboxFilters.type-url.test.tsx` falhavam porque o hook não lia os params da URL do MemoryRouter.  
 **Fix:** Migrado para `useSearchParams` / `setSearchParams` do `react-router-dom`. Sentinel `undefined` vs `null` para distinguir "sem param na URL" de "param inválido/all" — garante que `contactTypeUrl !== undefined` cancela o fallback para prefs salvas quando há param na URL, mesmo inválido. 9/9 testes passam.
 
-**Nota sobre misatribuição no log do CI (shard 2/3, run 40211737149):** O CI reportou falha em `useInboxFilters.type-url.test.tsx:137` com `expected 'Hoje, 20:00' to be 'Hoje, 17:00'`. Investigado e confirmado: o arquivo `useInboxFilters.type-url.test.tsx` em `ee05fe0` **não tem assertion de data**. A falha real é `workItemFormat.test.ts:123` (timezone flake — ver item 10 de PENDENCIAS.md). Os 9 testes de PK-14 passam.
+**Nota sobre misatribuição no log do CI (shard 2/3, run 40211737149):** O CI reportou falha em `useInboxFilters.type-url.test.tsx:137` com `expected 'Hoje, 20:00' to be 'Hoje, 17:00'`. Investigado e confirmado: o arquivo `useInboxFilters.type-url.test.tsx` em `ee05fe0` **não tem assertion de data**. A falha real é `workItemFormat.test.ts:123` (timezone flake — ver §1–§5 de PENDENCIAS.md). Os 9 testes de PK-14 passam.
+
+### 4. TC-009 — versão de migration incorreta em `team-receipts-reactions-conversation-id.test.sh`
+
+**Commit:** `4adee58`  
+**Causa:** `scripts/db-audit/team-receipts-reactions-conversation-id.test.sh:32` referenciava `20261009193246_team_receipts_reactions_conversation_id_forced.sql` (inexistente nesta branch). O arquivo real é `20261006222024_team_receipts_reactions_conversation_id_forced.sql`.  
+**Fix:** Linha 32: `20261009193246` → `20261006222024`. TC-009 (`Contrato DB offline`) passa.
+
+### 5. `useDiagnosticsData.ts` — `throw` impedia `setHealth` de ser chamado
+
+**Commit:** `4adee58`  
+**Causa:** `src/hooks/system/useDiagnosticsData.ts:293` tinha `if (connectionsCountError) throw connectionsCountError` — o `throw` encerrava `fetchSystemHealth` antes de `setHealth` ser invocado com `dbError` setado, então `health?.database` ficava `undefined` em vez de `'down'`.  
+**Fix:** Linha 293: `throw connectionsCountError` → `dbError = dbError ?? connectionsCountError`. `useDiagnosticsData.select.test.ts:79` passa.
+
+### 6. `supabase/deployment-manifest.json` — manifesto stale
+
+**Commit:** `96b1aa6`  
+**Causa:** `deployment-manifest.json` apontava para versão antiga de `ai-audio-authz.ts` (4007→7475 bytes) e `ai-transcribe-audio/index.ts` (28209→29419 bytes). O `deploy-functions.yml` (run 40097636982) falhava com "Deployment manifest is stale".  
+**Fix:** Arquivo regenerado com hashes atuais. `manifest_sha256=42fcdc0b3046b16ee740b3ec41ec6ff675087b215442e10d2ec4693011feca8f`.
 
 ---
 
 ## Resumo
 
-- **Corrigidos nesta sessão:** 3 (`pagination.test.tsx`, `fila-merge.mjs`, `useInboxFilters.ts` PK-14)
-- **Pré-existentes na main, requerem decisão humana/DDL:** 10 (ver `PENDENCIAS.md` items 1–10)
-- **Sem regressão introduzida:** confirmado — todas as falhas de CI no PR #2246 (SHA `ee05fe0`) correspondem a pré-existências na `main` (run 40122006424, commit `2d97c44`)
-- **Bloqueador para merge:** required checks falham por causas pré-existentes (items 3–7, 10 de PENDENCIAS.md)
+- **Corrigidos nesta sessão:** 6 (`pagination.test.tsx`, `fila-merge.mjs`, `useInboxFilters.ts` PK-14, TC-009 versão migration, `useDiagnosticsData.ts` throw→dbError, `deployment-manifest.json` stale)
+- **Pré-existentes na main, requerem decisão humana/infra:** ver `PENDENCIAS.md` §1–§5
+- **Sem regressão introduzida:** confirmado — todas as falhas de CI no PR #2246 (SHA `96b1aa6`) correspondem a pré-existências na `main` (run 40122006424, commit `2d97c44`) ou a bloqueios de infra documentados
+- **Bloqueador para merge:** required checks falham por causas pré-existentes (§3 E2E geolocation de PENDENCIAS.md)
 
 *Este arquivo deve ser atualizado após cada ciclo de correção de CI.*
