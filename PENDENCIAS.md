@@ -185,4 +185,46 @@ Não é required check de PR e não bloqueia merge.
 
 ---
 
+## 8. CI Gate — `ci.yml` (job `ci-gate`)
+
+**Status:** BLOQUEIO TÉCNICO — falhas pré-existentes nos Unit Tests (§6)
+**Check afetado:** `✅ CI Gate` (required check de PR via CI Gate job)
+
+**Causa exata:**
+O job `ci-gate` em `ci.yml` tem `if: always()` e `needs: [typecheck, unit-tests, node-scripts, build, security]`. Quando `unit-tests` retorna `failure` (pré-existente, §6), o `ci-gate` detecta e falha com `exit 1`:
+
+```bash
+if [["${{ needs.unit-tests.result }}" == "failure"]]; then
+  echo "FALHA: unit-tests falhou" && exit 1
+fi
+```
+
+As mesmas falhas de Unit Tests que ocorrem nesta PR ocorrem também na `main` (run CI [40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) em `main`, SHA `2d97c44c`, 2026-10-24 — mesmos arquivos pré-existentes listados no §6). Nenhum arquivo alterado nesta branch é responsável pela falha.
+
+**Confirmação de não-introdução por este PR:**
+`git diff origin/main --name-only` não inclui nenhum dos arquivos com falha listados no §6. O CI Gate na `main` também falha pelo mesmo motivo (run 40122006424).
+
+**Ação necessária:** As mesmas correções listadas em §6 — fora do escopo desta sessão.
+
+---
+
+## 9. Build — `ci.yml` (job `build`)
+
+**Status:** BLOQUEIO TÉCNICO — skipped por dependência em `unit-tests` (§6)
+**Check afetado:** `🏗️ Build` (required check de PR)
+
+**Causa exata:**
+O job `build` em `ci.yml` tem `needs: [typecheck, unit-tests]`. Quando `unit-tests` falha, o GitHub não executa o `build` (resultado: `skipped`). O build em si **não tem erro de código**.
+
+Build local (baseline): `bun run build` — ✅ executado com sucesso (21.02s, 2026-10-25). O código da branch compila sem erros de build.
+
+O mesmo comportamento ocorre na `main` (CI run [40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424)) — build=skipped quando unit-tests=failure. Não é introduzido por este PR.
+
+**Confirmação de não-introdução por este PR:**
+`bun run build` local: ✅ success (21.02s). A falha de `skipped` no CI é consequência exclusiva do CI Gate (§8) que falha por Unit Tests pré-existentes (§6).
+
+**Ação necessária:** As mesmas correções de §6 — quando Unit Tests passarem, CI Gate passará e Build executará.
+
+---
+
 *Pendências registradas pela sessão de correção de CI em 2026-10-24/25.*
