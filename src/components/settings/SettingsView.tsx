@@ -71,7 +71,7 @@ const TAB_GROUPS: { id: string; label: string; icon: LucideIcon; tabs: string[] 
 ];
 
 export function SettingsView() {
-  const { settings, isLoading, updateSettings } = useUserSettings();
+  const { settings, isLoading, isSaving, updateSettings, saveSettings } = useUserSettings();
   const { resetOnboarding } = useOnboarding();
   const { isAdmin, isSupervisor } = useUserRole();
   // Agent/special_agent so vem as 4 abas pessoais — o resto configura a
@@ -222,7 +222,7 @@ export function SettingsView() {
         </TabsContent>
 
         <TabsContent value="appearance">
-          <AppearanceSettings settings={settings} updateSettings={updateSettings} onResetOnboarding={handleResetOnboarding} />
+          <AppearanceSettings settings={settings} updateSettings={updateSettings} onResetOnboarding={handleResetOnboarding} isSaving={isSaving} onSave={saveSettings} />
         </TabsContent>
 
         <TabsContent value="shortcuts">
