@@ -7,9 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+// eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { localDayKey } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
 
 interface AuditLog {
@@ -22,6 +22,13 @@ interface AuditLog {
   ip_address: string | null;
   user_agent: string | null;
   created_at: string;
+}
+
+interface Stats {
+  total: number | null;
+  today: number | null;
+  suspicious: number | null;
+  uniqueUsers: number | null;
 }
 
 // Contrato compartilhado de ações e entidades de papel: todo evento de papel em
@@ -75,9 +82,34 @@ export function AuditLogDashboard() {
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [entityFilter, setEntityFilter] = useState<string>('all');
-  const [stats, setStats] = useState({ total: 0, today: 0, suspicious: 0, uniqueUsers: 0 });
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const [profileNames, setProfileNames] = useState<Map<string, string>>(new Map());
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [truncated, setTruncated] = useState(false);
+
+  const fetchStats = useCallback(async () => {
+    const now = Date.now();
+    const ago24h = new Date(now - 24 * 3600000).toISOString();
+    const ago7d = new Date(now - 7 * 24 * 3600000).toISOString();
+    const [r1, r2, r3, r4] = await Promise.all([
+      supabase.from('audit_logs').select('*', { count: 'exact', head: true }),
+      supabase.from('audit_logs').select('*', { count: 'exact', head: true }).gte('created_at', ago24h),
+      supabase.from('audit_logs').select('*', { count: 'exact', head: true }).gte('created_at', ago24h).or('action.like.role_%,action.like.%delete%,action.like.%export%'),
+      supabase.from('audit_logs').select('user_id').gte('created_at', ago7d).not('user_id', 'is', null),
+    ]);
+    const err = r1.error || r2.error || r3.error || r4.error;
+    if (err) {
+      setStatsError(err.message);
+      setStats(null);
+      return;
+    }
+    const uniqueUsers = new Set(
+      (r4.data as Array<{ user_id: string | null }>).map(r => r.user_id).filter(Boolean)
+    ).size;
+    setStats({ total: r1.count ?? 0, today: r2.count ?? 0, suspicious: r3.count ?? 0, uniqueUsers });
+    setStatsError(null);
+  }, []);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -85,6 +117,7 @@ export function AuditLogDashboard() {
       .from('audit_logs')
       .select('id, action, entity_type, user_id, details, ip_address, created_at')
       .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
       .limit(LOGS_PAGE_LIMIT);
 
     if (actionFilter === ROLE_FILTER_VALUE) {
@@ -99,29 +132,46 @@ export function AuditLogDashboard() {
     const { data, error } = await query;
     if (!error && data) {
       setLogs(data as AuditLog[]);
-      // A consulta corta em LOGS_PAGE_LIMIT: com a página cheia o número exibido
-      // é "os N mais recentes", não o total — o aviso na tela deixa isso claro.
       setTruncated(data.length >= LOGS_PAGE_LIMIT);
-      
-      const today = localDayKey(new Date());
-      const todayLogs = data.filter(l => localDayKey(l.created_at) === today);
-      const uniqueUsers = new Set(data.map(l => l.user_id).filter(Boolean));
-      const suspicious = data.filter(l => isSensitiveAction(l.action));
-      
-      setStats({
-        total: data.length,
-        today: todayLogs.length,
-        suspicious: suspicious.length,
-        uniqueUsers: uniqueUsers.size,
-      });
+
+      const userIds = [...new Set(
+        (data as AuditLog[]).map(l => l.user_id).filter((id): id is string => id !== null)
+      )];
+      if (userIds.length > 0) {
+        const { data: profileData } = await supabase.from('profiles').select('id, name').in('id', userIds);
+        if (profileData) {
+          setProfileNames(new Map((profileData as Array<{ id: string; name: string }>).map(p => [p.id, p.name])));
+        } else {
+          setProfileNames(new Map());
+        }
+      } else {
+        setProfileNames(new Map());
+      }
     }
     setLoading(false);
   }, [actionFilter, entityFilter]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount, sem estado derivado de props para sincronizar.
+    void fetchStats();
+  }, [fetchStats]);
+
+  useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-filtro padrão, sem estado derivado de props para sincronizar.
-    fetchLogs();
+    void fetchLogs();
   }, [fetchLogs]);
+
+  useEffect(() => {
+    const canal = supabase
+      .channel('audit-logs-dashboard')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, () => {
+        void fetchStats();
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(canal);
+    };
+  }, [fetchStats]);
 
   const filteredLogs = logs.filter(log => {
     if (!search) return true;
@@ -148,15 +198,23 @@ export function AuditLogDashboard() {
     return Activity;
   };
 
+  const statValue = (v: number | null | undefined) => (stats === null ? '—' : String(v ?? 0));
+
   return (
     <div className="space-y-6 w-full min-w-0">
+      {statsError && (
+        <div role="alert" className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+          <p>{statsError}</p>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: truncated ? 'Últimos 200' : 'Total de Logs', value: stats.total, icon: FileText, color: 'text-primary' },
-          { label: 'Hoje', value: stats.today, icon: Calendar, color: 'text-success' },
-          { label: 'Ações Sensíveis', value: stats.suspicious, icon: AlertTriangle, color: 'text-destructive' },
-          { label: 'Usuários Únicos', value: stats.uniqueUsers, icon: User, color: 'text-info' },
+          { label: 'Total de Logs', value: statValue(stats?.total), icon: FileText, color: 'text-primary' },
+          { label: 'Hoje', value: statValue(stats?.today), icon: Calendar, color: 'text-success' },
+          { label: 'Ações Sensíveis', value: statValue(stats?.suspicious), icon: AlertTriangle, color: 'text-destructive' },
+          { label: 'Usuários Únicos', value: statValue(stats?.uniqueUsers), icon: User, color: 'text-info' },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="pt-4 pb-4">
@@ -274,6 +332,12 @@ export function AuditLogDashboard() {
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                             <span>{format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</span>
+                            {log.user_id && (
+                              <>
+                                <span>•</span>
+                                <span>{profileNames.get(log.user_id) ?? log.user_id}</span>
+                              </>
+                            )}
                             {log.ip_address && (
                               <>
                                 <span>•</span>
@@ -309,6 +373,10 @@ export function AuditLogDashboard() {
           </ScrollArea>
         </CardContent>
       </Card>
+
+      <div className="sr-only">
+        <Button onClick={() => { void fetchLogs(); void fetchStats(); }}>Recarregar</Button>
+      </div>
     </div>
   );
 }

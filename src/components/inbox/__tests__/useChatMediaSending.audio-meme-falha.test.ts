@@ -128,6 +128,8 @@ vi.mock('@/integrations/supabase/client', () => {
         getUser: async () => ({ data: { user: { id: 'u1' } } }),
       },
       storage: { from: () => ({ upload: estado.upload, createSignedUrl: estado.createSignedUrl, getPublicUrl: estado.getPublicUrl }) },
+      channel: () => { const ch: { on: (e: string, c: () => unknown) => typeof ch; subscribe: () => { unsubscribe: () => void } } = { on: () => ch, subscribe: () => ({ unsubscribe: () => {} }) }; return ch; },
+      removeChannel: () => Promise.resolve(),
     },
     SUPABASE_URL: 'http://localhost:54321',
     SUPABASE_ANON_KEY: 'anon-de-teste',
