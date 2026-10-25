@@ -1,4 +1,5 @@
 import { useMemo, useCallback, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useUrlFilters } from '@/hooks/system/useUrlFilters';
 import { InboxFiltersState } from '@/components/inbox/InboxFilters';
 import { FILTER_OPTIONS } from '@/components/inbox/ContactTypeFilter';
@@ -60,17 +61,6 @@ function tabsForChip(tab: ChipTab): { mainTab: MainTab; subTab: SubTab | null } 
   };
 }
 
-/** `?type=` é o valor de partida do deep-link; 'all' equivale a nenhum filtro. */
-function contactTypeFromUrl(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const value = new URLSearchParams(window.location.search).get('type');
-    return value && value !== 'all' ? value : null;
-  } catch {
-    return null;
-  }
-}
-
 /** Valor desconhecido (versão antiga, dado adulterado) não vira filtro. */
 function normalizeContactType(value: unknown): string | null {
   return typeof value === 'string' && value !== 'all' && FILTER_OPTIONS.some((o) => o.value === value)
@@ -107,6 +97,9 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   const storageKey = profileId ? inboxFiltersStorageKey(profileId) : null;
   const ownerKey = storageKey ?? NO_OWNER;
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  // `?type=` é o valor de partida do deep-link; valor desconhecido ou 'all' não filtra.
+  const urlContactType = normalizeContactType(searchParams.get('type'));
   // Preferência do dono lida do storage; muda quando a identidade aparece (o
   // perfil carrega assíncrono depois do primeiro render).
   const storedPrefs = useMemo(() => readStoredPrefs(storageKey), [storageKey]);
@@ -121,9 +114,9 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
       ...tabsForChip(chipTab),
       queueId: storedPrefs?.queueId ?? null,
       // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
-      contactType: contactTypeFromUrl() ?? storedPrefs?.contactType ?? null,
+      contactType: urlContactType ?? storedPrefs?.contactType ?? null,
     };
-  }, [storedPrefs]);
+  }, [storedPrefs, urlContactType]);
 
   const prefs = draft[ownerKey] ?? basePrefs;
   const { chipTab, mainTab, subTab, queueId: selectedQueueId, contactType: selectedContactType } = prefs;
@@ -165,14 +158,16 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
 
   const handleContactTypeChange = useCallback((value: string | null) => {
     applyPrefs({ contactType: value && value !== 'all' ? value : null });
-    const params = new URLSearchParams(window.location.search);
-    if (value && value !== 'all') {
-      params.set('type', value);
-    } else {
-      params.delete('type');
-    }
-    window.history.replaceState(null, '', params.toString() ? `?${params}` : window.location.pathname + window.location.hash);
-  }, [applyPrefs]);
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (value && value !== 'all') {
+        params.set('type', value);
+      } else {
+        params.delete('type');
+      }
+      return params;
+    }, { replace: true });
+  }, [applyPrefs, setSearchParams]);
 
   // Convert URL filters to InboxFiltersState
   const filters = useMemo<InboxFiltersState>(() => ({

@@ -77,6 +77,8 @@ const ids = (r: { current: ReturnType<typeof useInboxFilters> }) =>
 
 beforeEach(() => {
   routerSearchRef.current = '';
+  // As preferências do dono persistem no localStorage; sem limpar, o tipo de um teste vaza para o seguinte.
+  localStorage.clear();
 });
 
 describe('useInboxFilters — type pela URL (PK-14)', () => {
