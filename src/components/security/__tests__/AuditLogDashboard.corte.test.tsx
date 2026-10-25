@@ -12,22 +12,30 @@ const estado = vi.hoisted(() => ({ dados: [] as unknown[] }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        order: vi.fn(() => ({
-          limit: vi.fn(() => {
-            const resultado = Promise.resolve({ data: estado.dados, error: null });
-            const construtor = {
-              eq: () => construtor,
-              in: () => construtor,
-              like: () => construtor,
-              then: resultado.then.bind(resultado),
-            };
-            return construtor;
-          }),
-        })),
-      })),
-    })),
+    from: vi.fn(() => {
+      const result = Promise.resolve({ count: 0, data: estado.dados, error: null });
+      const b: Record<string, unknown> = {};
+      const chain = () => b;
+      b.select = chain;
+      b.order = chain;
+      b.gte = chain;
+      b.lte = chain;
+      b.not = chain;
+      b.or = chain;
+      b.like = chain;
+      b.eq = chain;
+      b.in = chain;
+      b.limit = chain;
+      (b as unknown as { then: typeof result.then }).then = result.then.bind(result);
+      return b;
+    }),
+    channel: () => {
+      const ch: Record<string, unknown> = {};
+      ch.on = () => ch;
+      ch.subscribe = () => ch;
+      return ch;
+    },
+    removeChannel: vi.fn(),
   },
 }));
 
@@ -51,7 +59,7 @@ describe('AuditLogDashboard — recorte de 200 registros', () => {
     estado.dados = Array.from({ length: 200 }, (_, i) => linha(String(i)));
     render(<AuditLogDashboard />);
 
-    await waitFor(() => expect(screen.getByText('Últimos 200')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Logs de Auditoria \(200\)/)).toBeInTheDocument());
     expect(screen.getByText(/pode haver registros mais antigos fora do recorte/)).toBeInTheDocument();
   });
 
@@ -60,7 +68,7 @@ describe('AuditLogDashboard — recorte de 200 registros', () => {
     render(<AuditLogDashboard />);
 
     await waitFor(() => expect(screen.getByText('Total de Logs')).toBeInTheDocument());
-    expect(screen.queryByText('Últimos 200')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Logs de Auditoria \(200\)/)).not.toBeInTheDocument();
     expect(screen.queryByText(/fora do recorte/)).not.toBeInTheDocument();
   });
 });

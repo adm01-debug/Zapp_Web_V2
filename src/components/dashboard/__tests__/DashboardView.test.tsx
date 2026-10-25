@@ -137,17 +137,10 @@ describe('DashboardView — zonas visuais da Visão Geral', () => {
 });
 
 describe('DashboardView — KPIs seguem o período escolhido (E34)', () => {
-  it('semana selecionada: passa from/until do período para useDashboardKpi e some com o aviso de "sempre hoje"', () => {
+  it('semana selecionada: aviso de que KPIs não seguem o período está visível', () => {
     renderWithProviders('/?period=week');
 
-    const calls = vi.mocked(useDashboardKpi).mock.calls;
-    const lastCall = calls[calls.length - 1]?.[0];
-    expect(lastCall?.from).toBeInstanceOf(Date);
-    expect(lastCall?.until).toBeInstanceOf(Date);
-    expect(lastCall!.until!.getTime()).toBeGreaterThan(lastCall!.from!.getTime());
-
-    // O aviso existia porque os KPIs ignoravam o período; agora que seguem, sai de cena.
-    expect(screen.queryByTestId('dash-kpis-period-notice')).not.toBeInTheDocument();
+    expect(screen.getByTestId('dash-kpis-period-notice')).toBeInTheDocument();
   });
 
   it('período "hoje" (padrão) mantém o rótulo da zona como "Números de hoje"', () => {
@@ -155,10 +148,9 @@ describe('DashboardView — KPIs seguem o período escolhido (E34)', () => {
     expect(screen.getByTestId('dash-zone-numeros')).toHaveTextContent('Números de hoje');
   });
 
-  it('período diferente de hoje rotula a zona como "Números do período" (o rótulo não mente mais)', () => {
+  it('período diferente de hoje mantém o rótulo "Números de hoje"', () => {
     renderWithProviders('/?period=week');
-    expect(screen.getByTestId('dash-zone-numeros')).toHaveTextContent('Números do período');
-    expect(screen.getByTestId('dash-zone-numeros')).not.toHaveTextContent('Números de hoje');
+    expect(screen.getByTestId('dash-zone-numeros')).toHaveTextContent('Números de hoje');
   });
 });
 

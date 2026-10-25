@@ -170,7 +170,7 @@ describe('ConnectionsView — diálogo de nova conexão (UI-07)', () => {
       </MemoryRouter>,
     );
     const trigger = await screen.findByRole('button', { name: 'Nova Conexão' });
-
+    await waitFor(() => expect(trigger).not.toBeDisabled());
     fireEvent.click(trigger);
 
     expect(h.clearAddConnectionError).toHaveBeenCalledTimes(1);

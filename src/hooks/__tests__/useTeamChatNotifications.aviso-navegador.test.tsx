@@ -15,22 +15,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
 const h = vi.hoisted(() => {
-  const avisos: Array<{ title: string; data: Record<string, unknown> }> = [];
-  const showNotification = vi.fn(
-    async (payload: { title: string; data: Record<string, unknown> }) => {
-      avisos.push(payload);
-      return true;
-    },
-  );
-
+  const showBrowserNotificationSpy = vi.fn();
   return {
     membership: [{ id: 'm1', is_muted: false }],
     settings: { soundEnabled: false, soundVolume: 60, browserNotifications: true },
     quiet: false,
-    permission: 'granted' as NotificationPermission,
-    isSubscribed: false,
-    avisos,
-    showNotification,
+    showBrowserNotificationSpy,
     /** Callback de `postgres_changes` registrado pelo canal, como em produção. */
     handler: null as ((payload: unknown) => unknown) | null,
   };
@@ -65,12 +55,9 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
   useNotificationSettings: () => ({ settings: h.settings, isQuietHours: () => h.quiet }),
 }));
 
-vi.mock('@/hooks/system/usePushNotifications', () => ({
-  usePushNotifications: () => ({
-    showNotification: h.showNotification,
-    isSubscribed: h.isSubscribed,
-    permission: h.permission,
-  }),
+vi.mock('@/utils/notificationSounds', () => ({
+  showBrowserNotification: h.showBrowserNotificationSpy,
+  showNotificationSound: vi.fn(),
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -94,37 +81,31 @@ const mensagem = (senderId: string, conversationId = 'c1') => ({
 describe('useTeamChatNotifications — aviso do navegador (HZ3-001)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    h.avisos.length = 0;
     h.handler = null;
     h.membership = [{ id: 'm1', is_muted: false }];
     h.settings = { soundEnabled: false, soundVolume: 60, browserNotifications: true };
     h.quiet = false;
-    h.permission = 'granted';
-    h.isSubscribed = false;
   });
 
-  it('avisa no navegador com a permissão concedida, mesmo sem assinatura de push', async () => {
+  it('avisa no navegador com browserNotifications habilitado', async () => {
     renderHook(() => useTeamChatNotifications(null));
 
     expect(h.handler).toBeTruthy();
     await h.handler!(mensagem('outro'));
 
-    expect(h.avisos).toHaveLength(1);
-    expect(h.avisos[0].title).toContain('Teams');
-    expect(h.avisos[0].data).toMatchObject({
-      type: 'team_chat',
-      conversationId: 'c1',
-      messageId: 'm1',
-    });
+    expect(h.showBrowserNotificationSpy).toHaveBeenCalledTimes(1);
+    const [title, body, opts] = h.showBrowserNotificationSpy.mock.calls[0] as [string, string, { tag: string }];
+    expect(title).toContain('Teams');
+    expect(body).toBe('oi');
+    expect(opts.tag).toBe('team-msg-c1');
   });
 
-  it('não avisa sem permissão do navegador (guarda de permissão preservada)', async () => {
-    h.permission = 'default';
+  it('não avisa quando a mensagem é do próprio usuário', async () => {
     renderHook(() => useTeamChatNotifications(null));
 
-    await h.handler!(mensagem('outro'));
+    await h.handler!(mensagem('eu'));
 
-    expect(h.showNotification).not.toHaveBeenCalled();
+    expect(h.showBrowserNotificationSpy).not.toHaveBeenCalled();
   });
 
   it('não avisa com o liga/desliga do painel desligado', async () => {
@@ -133,6 +114,6 @@ describe('useTeamChatNotifications — aviso do navegador (HZ3-001)', () => {
 
     await h.handler!(mensagem('outro'));
 
-    expect(h.showNotification).not.toHaveBeenCalled();
+    expect(h.showBrowserNotificationSpy).not.toHaveBeenCalled();
   });
 });

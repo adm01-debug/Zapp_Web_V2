@@ -57,6 +57,8 @@ vi.mock('@/hooks/integrations/useWhatsAppTemplates', () => ({
   }),
 }));
 
+vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isAdmin: true }) }));
+
 import { WhatsAppTemplatesManager } from '../WhatsAppTemplatesManager';
 
 beforeEach(() => vi.clearAllMocks());

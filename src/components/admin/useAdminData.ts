@@ -222,7 +222,17 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm', auditFilter?:
           role: (userRole?.role || 'agent') as AppRole,
         };
       });
-      setUsers(usersWithRoles);
+      const signedUsers = await Promise.all(
+        usersWithRoles.map(async (u) => {
+          const path = avatarObjectPath(u.avatar_url);
+          if (!path) return u;
+          const { data } = await supabase.storage
+            .from(AVATAR_BUCKET)
+            .createSignedUrl(path, AVATAR_SIGNED_URL_TTL_SECONDS);
+          return { ...u, avatar_url: data?.signedUrl ?? u.avatar_url };
+        })
+      );
+      setUsers(signedUsers);
     } else if (activeTab === 'audit') {
       const start = (auditPage - 1) * auditPageSize;
 
