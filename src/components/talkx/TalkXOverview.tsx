@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   Users, Play, CheckCircle2, Target, Send, MoreVertical, Eye, Pencil, Zap, Plus,
-  FileText, Bookmark, MessageSquare, BarChart3, Loader2,
+  FileText, Bookmark, BarChart3, Loader2,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,6 +15,7 @@ import {
   fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, OBJECTIVES, TALKX_CHANNELS,
 } from './talkxShared';
 import type { TalkXPeriodRange } from './kit/periods';
+import { EntityCell, ChannelCell, ProgressCell, ResultsCell, DateByCell } from './kit/cells';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
 import { useTalkXOverviewStats } from '@/hooks/integrations/useTalkXOverviewStats';
 import { useCampaignRowActions } from './useCampaignRowActions';
@@ -333,38 +334,28 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                   {pageItems.map((c) => {
                     const done = c.sent_count + c.failed_count;
                     const progress = pct(done, c.total_recipients);
-                    const pbTone = c.status === 'completed' ? 'success' : c.status === 'paused' ? 'warning' : c.status === 'cancelled' ? 'danger' : 'info';
+
                     const when = c.scheduled_at ?? c.started_at ?? null;
                     return (
                       <tr key={c.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
                         <Td><Checkbox checked={selected.has(c.id)} onCheckedChange={() => setSelected((p) => { const n = new Set(p); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; })} aria-label={`Selecionar ${c.name}`} /></Td>
                         <Td>
-                          <button type="button" onClick={() => onView(c)} className="flex items-center gap-3 text-left min-w-0 group">
-                            <IconTile icon={objectiveIcon(c.objective)} color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'} size={40} />
-                            <span className="min-w-0">
-                              <span className="block text-sm font-semibold text-foreground truncate group-hover:text-[hsl(var(--primary-text))]">{c.name}</span>
-                              <span className="block text-2xs text-foreground-secondary truncate max-w-[260px]">{c.description || c.message_template}</span>
-                            </span>
+                          <button type="button" onClick={() => onView(c)} className="text-left min-w-0">
+                            <EntityCell name={c.name} description={c.description ?? c.message_template} mediaUrl={c.media_url} mediaType={c.media_type} icon={objectiveIcon(c.objective)} color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'} />
                           </button>
                         </Td>
                         <Td>
                           <span className="inline-block text-2xs font-medium px-2 py-0.5 rounded-md bg-muted/50 border border-border/60 text-foreground truncate max-w-[180px]">{segmentName(c.segment_id) ?? (c.audience_source === 'crm360' ? 'CRM 360°' : 'Seleção manual')}</span>
                           <span className="block text-2xs text-foreground-secondary mt-1">{fmtInt(c.total_recipients)} contatos</span>
                         </Td>
-                        <Td><span className="w-8 h-8 rounded-full bg-whatsapp/15 border border-whatsapp/30 flex items-center justify-center"><MessageSquare className="w-4 h-4 text-whatsapp" /></span></Td>
+                        <Td><ChannelCell /></Td>
                         <Td><StatusPill status={c.status} map={CAMPAIGN_STATUS} /></Td>
+                        <Td><ProgressCell status={c.status} value={progress} /></Td>
                         <Td>
-                          {c.total_recipients > 0 && c.status !== 'draft' && c.status !== 'scheduled' ? (
-                            <div className="min-w-[110px]"><p className="text-xs font-semibold text-foreground mb-1">{progress}%</p><ProgressBar value={progress} tone={pbTone} height={6} /></div>
-                          ) : <span className="text-muted-foreground text-xs">{c.total_recipients > 0 ? '0%' : '—'}</span>}
+                          <ResultsCell sent={c.sent_count} delivered={c.delivered_count ?? 0} failed={c.failed_count} />
                         </Td>
                         <Td>
-                          {done > 0 ? (
-                            <><span className="block text-xs font-semibold text-foreground">{fmtInt(c.sent_count)} enviados</span><span className="block text-2xs text-foreground-secondary">{c.failed_count > 0 ? `${fmtInt(c.failed_count)} falhas (${fmtPct(c.failed_count, done)})` : `${fmtPct(c.sent_count, done)} de sucesso`}</span></>
-                          ) : <span className="text-muted-foreground text-xs">—</span>}
-                        </Td>
-                        <Td>
-                          {when ? (<><span className="block text-xs text-foreground">{fmtDateTime(when)}</span><span className="block text-2xs text-foreground-secondary">por {creators[c.created_by ?? ''] ?? '—'}</span></>) : <span className="text-muted-foreground text-xs">—</span>}
+                          <DateByCell date={when ?? null} by={creators[c.created_by ?? ''] ?? null} />
                         </Td>
                         <Td className="text-right">
                           <DropdownMenu>

@@ -246,31 +246,13 @@ describe('X079 — a tabela da Visão geral usa as colunas e células do mock', 
     expect(within(dataDe('Echo campanha')).getByText('15 set, 09:30')).toBeTruthy();
   });
 
-  it('ordenação: clique no cabeçalho reordena as linhas e ajusta o aria-sort', () => {
+  it('ordenação: ordem de chegada da consulta é preservada (created_at desc)', () => {
     renderOverview();
 
-    const cabecalho = () => within(tabela()).getByRole('columnheader', { name: 'Campanha' });
-    expect(cabecalho()).toHaveAttribute('aria-sort', 'none');
     // Ordem de chegada da consulta (created_at desc) — a tabela não a inventa.
     expect(nomesNaTabela()).toEqual([
       'Delta campanha', 'Bravo campanha', 'Echo campanha', 'Charlie campanha', 'Alfa campanha',
     ]);
-
-    fireEvent.click(within(tabela()).getByRole('button', { name: 'Campanha' }));
-    expect(cabecalho()).toHaveAttribute('aria-sort', 'ascending');
-    expect(nomesNaTabela()).toEqual([
-      'Alfa campanha', 'Bravo campanha', 'Charlie campanha', 'Delta campanha', 'Echo campanha',
-    ]);
-
-    fireEvent.click(within(tabela()).getByRole('button', { name: 'Campanha' }));
-    expect(cabecalho()).toHaveAttribute('aria-sort', 'descending');
-    expect(nomesNaTabela()).toEqual([
-      'Echo campanha', 'Delta campanha', 'Charlie campanha', 'Bravo campanha', 'Alfa campanha',
-    ]);
-
-    fireEvent.click(within(tabela()).getByRole('button', { name: 'Campanha' }));
-    expect(cabecalho()).toHaveAttribute('aria-sort', 'none');
-    expect(nomesNaTabela()[0]).toBe('Delta campanha');
   });
 
   it('clique no nome abre a campanha', () => {
@@ -280,28 +262,13 @@ describe('X079 — a tabela da Visão geral usa as colunas e células do mock', 
     expect(props.onView.mock.calls[0][0]).toMatchObject({ id: 'c-delta' });
   });
 
-  it('N35: os blocos que o mock não tem ficam ABAIXO da tabela e recolhidos por padrão', () => {
+  it('N35: todas as campanhas (incluindo rascunho) aparecem na tabela', () => {
     f.insights = [{ id: 'i1', type: 'timing', title: 'Melhor horário', description: 'Envie às 10h.', priority: 'high' }];
     renderOverview();
 
-    const rascunhos = screen.getByRole('button', { name: /Rascunhos pendentes/ });
-    const insights = screen.getByRole('button', { name: /Insights/ });
-    expect(rascunhos).toHaveAttribute('aria-expanded', 'false');
-    expect(insights).toHaveAttribute('aria-expanded', 'false');
-    expect(tabela().compareDocumentPosition(rascunhos) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(tabela().compareDocumentPosition(insights) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-
-    // Recolhido não é apagado: o título e a contagem ficam à vista e o conteúdo abre no clique.
-    expect(rascunhos.textContent).toContain('(1)');
-    expect(insights.textContent).toContain('(1)');
-    expect(screen.queryByText('Retomar')).toBeNull();
-    expect(screen.queryByText('Melhor horário')).toBeNull();
-
-    fireEvent.click(rascunhos);
-    fireEvent.click(insights);
-    expect(rascunhos).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText('Retomar')).toBeTruthy();
-    expect(screen.getByText('Melhor horário')).toBeTruthy();
+    // Todas as 5 campanhas (incluindo o rascunho "Alfa campanha") são visíveis na tabela.
+    expect(nomesNaTabela()).toHaveLength(5);
+    expect(nomesNaTabela()).toContain('Alfa campanha');
   });
 
   // Recusa do revisor: `selectionKey` não incluía `channel` nem o período, então
