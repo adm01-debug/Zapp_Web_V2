@@ -193,6 +193,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         if (permissionRef.current === 'granted' && notifSettingsRef.current.browserNotifications) {
           await showNotificationRef.current({
             title: `\u{1F4AC} Teams: ${senderName}`,
+            body: msg.content,
             data: { type: 'team_chat', conversationId: msg.conversation_id, messageId: msg.id },
           });
         }
