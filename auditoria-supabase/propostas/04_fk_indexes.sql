@@ -55,7 +55,17 @@ ORDER BY tc.table_name, kcu.column_name;
 
 -- ============================================================
 -- ROLLBACK — remover todos os índices criados por esta proposta
+-- (executar se algum índice causar regressão inesperada)
 -- ============================================================
+
+-- Identificar os índices criados por esta proposta (padrão idx_<table>_<column>):
+-- SELECT indexname FROM pg_indexes
+-- WHERE schemaname = 'public'
+--   AND indexname LIKE 'idx_%'
+--   AND indexdef NOT LIKE '%UNIQUE%'
+-- ORDER BY indexname;
+
+-- Remover todos de uma vez (ajustar lista após aplicar o CREATE):
 BEGIN;
 
 -- DROP INDEX IF EXISTS public.idx_<table1>_<coluna1>;

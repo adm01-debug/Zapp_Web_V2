@@ -58,7 +58,7 @@ Todas verificadas individualmente. Nenhuma sem mecanismo de autenticação alter
 | `migrate-media-storage` | R1 | requireAuth + is_admin RPC (403 para supervisor) |
 | `recover-corrupted-audios` | R1 | requireAuth + admin-only (403) |
 
-### Cron / worker (R1)
+### Cron / worker (R1 — timingSafeEqual confirmado exceto onde indicado)
 
 | Função | Risco | Controles confirmados |
 |--------|-------|-----------------------|
@@ -74,7 +74,7 @@ Todas verificadas individualmente. Nenhuma sem mecanismo de autenticação alter
 | `talkx-send` | R1 | timingSafeEqual cron-secret |
 | `talkx-storage-purge` | R1 | timingSafeEqual; cron-secret via get_talkx_cron_secret() (Vault) |
 
-### Multiplix / TalkX (R1)
+### Multiplix / TalkX — operações de campanha (R1)
 
 | Função | Risco | Controles confirmados |
 |--------|-------|-----------------------|
@@ -94,7 +94,7 @@ Todas verificadas individualmente. Nenhuma sem mecanismo de autenticação alter
 ### IA / LLM (R0/R1)
 
 | Função | Risco | Auth confirmada |
-|--------|-------|------------------|
+|--------|-------|----------------|
 | `ai-auto-tag` | R0 | requireAuth + sanitizeString + isValidUUID |
 | `ai-churn-analysis` | R0 | manual authHeader + getUser() |
 | `ai-classify-tickets` | R0 | manual authHeader + getUser() |
@@ -102,15 +102,15 @@ Todas verificadas individualmente. Nenhuma sem mecanismo de autenticação alter
 | `ai-conversation-summary` | R0 | requireAuth + createAuthedClient |
 | `ai-enhance-message` | R0 | requireAuth + sanitizeString |
 | `ai-kb-ingest` | R0 | requireAuth |
-| `ai-proxy` | R1 | requireAuth + enforceAiGuards + provider/model selecionados server-side |
+| `ai-proxy` | R1 | requireAuth + enforceAiGuards + provider/model selecionados server-side; campo `provider_id` no body → 400 |
 | `ai-suggest-reply` | R0 | requireAuth + createAuthedClient |
 | `ai-transcribe-audio` | R0 | requireAuth; service_role apenas para gravar resultado após validar JWT |
-| `chatbot-l1` | R1 | requireAuth OU HMAC webhook signature; rate limit; Zod ChatbotL1Schema |
+| `chatbot-l1` | R1 | requireAuth OU HMAC webhook signature (verifyHmacSignature); rate limit; Zod ChatbotL1Schema |
 
 ### ElevenLabs tokens e síntese (R0)
 
 | Função | Auth confirmada |
-|--------|------------------|
+|--------|----------------|
 | `elevenlabs-agent-token` | requireAuth + enforceRateLimit |
 | `elevenlabs-dialogue` | requireAuth + enforceRateLimit |
 | `elevenlabs-scribe-token` | requireAuth + enforceRateLimit |
@@ -123,9 +123,9 @@ Todas verificadas individualmente. Nenhuma sem mecanismo de autenticação alter
 ### Voz / IA de voz (R0)
 
 | Função | Auth confirmada |
-|--------|------------------|
+|--------|----------------|
 | `automation-suggest-reply` | requireAuth |
-| `classify-audio-meme` | requireAiIdentity |
+| `classify-audio-meme` | requireAiIdentity (_shared/ai-auth.ts) |
 | `classify-emoji` | requireAiIdentity |
 | `classify-sticker` | requireAiIdentity |
 | `voice-agent` | requireAiIdentity |
@@ -136,11 +136,11 @@ Todas verificadas individualmente. Nenhuma sem mecanismo de autenticação alter
 
 | Função | Risco | Auth / padrão |
 |--------|-------|---------------|
-| `bitrix-api` | R1 | requireAuth + Zod action enum (11 ações) + entityType enum |
+| `bitrix-api` | R1 | requireAuth + Zod action enum (lista fechada de 11 ações) + entityType enum |
 | `create-user` | R1 | rate limit por IP (5/60s); compensation deleteUser on failure |
 | `evolution-api` | R0 | verify_jwt=true; padrão standard |
-| `external-db-bridge` | R0 | TABLE_ALLOWLIST + RPC_ALLOWLIST hardcoded |
-| `external-db-proxy` | R0 | READ_TABLES allowlist; validIdentifier regex; JWT do caller passado ao canonical client (RLS aplica) |
+| `external-db-bridge` | R0 | TABLE_ALLOWLIST + RPC_ALLOWLIST hardcoded; service_role somente após check |
+| `external-db-proxy` | R0 | READ_TABLES allowlist; validIdentifier regex `/^[a-z_][a-z0-9_]*$/i`; FILTER_OPERATORS allowlist; JWT do caller passado ao canonical client (RLS aplica) |
 | `fetch-link-preview` | R0 | requireAuth |
 | `get-call-recording` | R0 | requireAuth + verificação de ownership |
 | `get-mapbox-token` | R0 | requireAuth + enforceRateLimit |
@@ -152,7 +152,7 @@ Todas verificadas individualmente. Nenhuma sem mecanismo de autenticação alter
 | `recover-message-media` | R0 | requireAuth + network policy |
 | `send-email` | R1 | requireAuth; service_role para envio |
 | `sentiment-alert` | R0 | requireAuth |
-| `status` | R0 | Público intencional: smoke endpoint; sem dado sensível |
+| `status` | R0 | Público intencional: smoke endpoint; sem dado sensível (só status/version/time) |
 | `webhook-diagnostic` | R1 | JWT check + admin/supervisor role |
 
 ---
@@ -160,11 +160,13 @@ Todas verificadas individualmente. Nenhuma sem mecanismo de autenticação alter
 ## Verificação de SQL dinâmico nas edge functions
 
 Grep executado: `EXECUTE\|format(\|execute(` em todos os index.ts — **0 ocorrências** confirmadas.
+Edge functions usam PostgREST SDK (`.from().select()`, `.rpc()`) ou fetch direto; SQL dinâmico
+não é padrão nesta camada.
 
 ## Verificação de hardcoded secrets
 
 Grep executado em todos os index.ts: `Deno.env.get` confirmado como padrão universal.
-Nenhuma string literal de token/key/secret encontrada no código.
+Nenhuma string literal de token/key/secret encontrada no código (verificado na Seção 8 da auditoria).
 
 ## Variáveis de ambiente confirmadas por Deno.env.get()
 
@@ -175,7 +177,7 @@ Verificadas no audit via bulk grep (Seção 8): 20 variáveis confirmadas via `D
 
 ## Achados da auditoria
 
-- **HIGH-8**: 14 funções com verify_jwt=false — mecanismos alternativos confirmados; risco residual documentado por função
+- **HIGH-8** (item 8 da seção 9): 14 funções com verify_jwt=false — mecanismos alternativos confirmados; risco residual documentado por função
 - Nenhuma função com SQL dinâmico injetável
 - Nenhum segredo hardcoded encontrado
 - `searchbox-budget-alert`: plain comparison `secret !== esperado` (LOW — timing attack impraticável via pg_cron; documentado)
