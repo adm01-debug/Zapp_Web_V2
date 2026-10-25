@@ -161,7 +161,7 @@ vi.mock('@/hooks/communication/useTextToSpeech', () => ({
 vi.mock('@/hooks/system/useUserSettings', () => ({
   useUserSettings: () => ({ settings: {}, updateSettings: vi.fn(), saveSettings: vi.fn() }),
 }));
-vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));
+vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn(), useToast: () => ({ toast: vi.fn() }) }));
 vi.mock('@/hooks/chat/useScheduledMessages', () => ({
   useScheduledMessages: () => ({ messages: [], isLoading: false, scheduleMessage: vi.fn(), cancelMessage: vi.fn(), isScheduling: false }),
 }));
