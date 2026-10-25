@@ -5,6 +5,7 @@ import { useNotificationSettings } from '@/hooks/system/useNotificationSettings'
 import { usePushNotifications } from '@/hooks/system/usePushNotifications';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
 
 const log = getLogger('TeamChatNotifications');
@@ -138,21 +139,29 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
   const { showNotification, permission } = usePushNotifications();
   const activeIdRef = useRef(activeConversationId);
+  // HZ5-09: preferências por ref — mexer em volume/permissão não pode recriar o canal.
+  const prefsRef = useRef({ notifSettings, isQuietHours, permission, showNotification });
+  const profileId = profile?.id;
 
   useEffect(() => {
     activeIdRef.current = activeConversationId;
   }, [activeConversationId]);
 
   useEffect(() => {
-    if (!profile) return;
+    prefsRef.current = { notifSettings, isQuietHours, permission, showNotification };
+  }, [notifSettings, isQuietHours, permission, showNotification]);
+
+  useEffect(() => {
+    if (!profileId) return;
 
     const channel = supabase
-      .channel('team-chat-notifications')
+      .channel(uniqueRealtimeTopic('team-chat-notifications'))
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'team_messages',
       }, async (payload) => {
+        const { notifSettings, isQuietHours, permission, showNotification } = prefsRef.current;
         const msg = payload.new as {
           id: string;
           conversation_id: string;
@@ -163,7 +172,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         };
 
         // Don't notify for own messages
-        if (msg.sender_id === profile.id) return;
+        if (msg.sender_id === profileId) return;
 
         // Don't notify if currently viewing this conversation
         if (!document.hidden && activeIdRef.current === msg.conversation_id) return;
@@ -176,7 +185,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           .from('team_conversation_members')
           .select('id, is_muted')
           .eq('conversation_id', msg.conversation_id)
-          .eq('profile_id', profile.id)
+          .eq('profile_id', profileId)
           .limit(1);
         if (membershipError) {
           log.warn('Falha ao confirmar participação na conversa; sem notificação:', membershipError.message);
@@ -186,7 +195,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
 
         if (!shouldNotifyTeamMessage({
           senderId: msg.sender_id,
-          profileId: profile.id,
+          profileId: profileId,
           documentHidden: document.hidden,
           activeConversationId: activeIdRef.current,
           conversationId: msg.conversation_id,
@@ -245,7 +254,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile, notifSettings.soundEnabled, notifSettings.soundVolume, notifSettings.browserNotifications, permission, isQuietHours, showNotification]);
+  }, [profileId]);
 
   /**
    * Clique na notificação do chat interno: o service worker repassa o clique da
