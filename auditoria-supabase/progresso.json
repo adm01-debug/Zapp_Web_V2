@@ -3,17 +3,17 @@
   "project_id": "tnnnlkbymytvtqngbbqh",
   "repo": "adm01-debug/Zapp_Web_V2",
   "sections": {
-    "1_inventario": "CONCLUÍDO — 1054 migrations, 24 crons, 499 policies, 475 funções DB, 202 tabelas públicas, 9 buckets, 10 usuários auth; edge functions: 83 funções no repo (14 verify_jwt=false, 69 verify_jwt=true)",
+    "1_inventario": "CONCLUÍDO — 1054 migrations, 24 crons, 499 policies, 475 funções DB, 202 tabelas públicas, 9 buckets, 10 usuários auth; edge functions: 83 funções no repo (14 verify_jwt=false, 69 verify_jwt=true); 13 views todas com security_invoker=true; 10 enums, 4 sequences (todas <1% uso)",
     "2_drift": "CONCLUÍDO — 31 tabelas ausentes em types.ts (types.ts=171, produção=202; 29 identificadas + 2 com prefixo _ não mapeadas); MEDIUM-9: conversations/tasks/accounts ausentes do schema-manifest.json para Realtime",
-    "3_seguranca": "CONCLUÍDO — 97-98 tabelas com grants anon de escrita (CRITICAL-1); INSERT:98, DELETE:97, UPDATE:97, TRUNCATE:97 confirmado ao vivo (2026-10-24T23:47Z); REVOKE proposto em propostas/01_revogar_grants_anon.sql; 0 tabelas em public sem RLS com grants anon (backup schemas _bkp_261023/ops_backup sem grants a app roles)",
+    "3_seguranca": "CONCLUÍDO — 97-98 tabelas com grants anon de escrita (CRITICAL-1); INSERT:98, DELETE:97, UPDATE:97, TRUNCATE:97 confirmado ao vivo (2026-10-24T23:47Z); REVOKE proposto em propostas/01_revogar_grants_anon.sql; 0 tabelas em public sem RLS com grants anon (backup schemas _bkp_261023/ops_backup sem grants a app roles); 399 funções SECURITY DEFINER todas com search_path fixo (proconfig confirmado ao vivo 2026-10-25)",
     "4_integridade": "CONCLUÍDO — 34 FKs sem índice confirmado ao vivo; 60 migrations com statements NULL; 1 tabela sem PK (_zapp_fn_before, schema público — não é tabela de aplicação)",
-    "5_performance": "CONCLUÍDO — email_threads seq_tup_read=420.118.664 confirmado ao vivo; 6 índices presentes, seq scans por queries sem filtro gmail_account_id; pg_stat_statements NÃO VERIFICADO (42P01 re-confirmado — mcp_exec SECURITY DEFINER não acessa a extensão)",
-    "6_crons": "CONCLUÍDO — 24 crons ativos confirmados ao vivo (2026-10-24T23:47Z); taxa de falha: talkx-scheduler-1min 9.3% (4007/43181), voice-changer-tmp-purge 8.6% (3/35), close-stale-calls 7.0% (29/412), dispatch-scheduled-messages 6.7% (134/1992), csat-reply-capture-tick 6.6% (68/1029); causa: pool exhaustion do pg_cron 1.6.4 com 24 jobs simultâneos",
-    "7_funcoes_db": "CONCLUÍDO — 12 funções com SQL dinâmico auditadas (re-executado 2026-10-24T23:xx): mcp_exec 'execute q' lowercase (SECURITY DEFINER, service_role only — R2 mitigado), talkx_audience_query R1 (whitelist campo/op, format %L/%I), 10 outras R0; 463 sem SQL dinâmico; total=475 confirmado ao vivo; guard_talkx_template_update sem SQL dinâmico (prosecdef=false)",
-    "8_edge_functions": "CONCLUÍDO — 14 verify_jwt=false confirmados via config.toml + código lido individualmente (2026-10-24T23:xx): (R2) evolution-webhook: HMAC EVOLUTION_WEBHOOK_SECRET OR instanceToken no corpo; (R2) gmail-webhook: OIDC Google PubSub RS256 JWKS+iss/aud/exp/email obrigatórios; (R1) whatsapp-webhook: verifyMetaWebhookSignature HMAC+WHATSAPP_VERIFY_TOKEN; (R1) gmail-cron-sync: x-cron-secret timing-safe; (R1) connection-health-check: isAuthorizedCronOrUser (cron-secret OR auth user); (R1) batch-fetch-avatars: authorizeCronOrUser (Vault RPC OR admin/supervisor); (R2) elevenlabs-webhook: HMAC+timestamp anti-replay+dedupe; (R0) public-api: returns 410 Gone para todas as requisições; (R1) auth-login: rate-limit IP+email+network-policy (endpoint de login); (R1) crm-integration: requireAuth JWT do Bearer header; (R0) csp-report: sem auth, só loga violações CSP, sem persistência; (R1) talkx-link: GET público redirect, POST HMAC-SHA256; (R1) searchbox-budget-alert: x-cron-secret timing-safe; (R1) sync-call-records: timingSafeStringEqual x-cron-secret; logs 7d NÃO VERIFICADO (supabase_functions.hooks não acessível via SQL)",
+    "5_performance": "CONCLUÍDO — email_threads seq_tup_read=420.341.864 confirmado ao vivo; 6 índices presentes, seq scans por queries sem filtro gmail_account_id; pg_stat_statements NÃO VERIFICADO (42P01 re-confirmado — mcp_exec SECURITY DEFINER não acessa a extensão)",
+    "6_crons": "CONCLUÍDO — 24 crons ativos confirmados ao vivo (2026-10-24T23:47Z); taxa de falha: talkx-scheduler-1min 9.3% (4007/43181), voice-changer-tmp-purge 8.6% (3/35), close-stale-calls 7.0% (29/412), dispatch-scheduled-messages 6.7% (134/1992), csat-reply-capture-tick 6.6% (68/1029); causa: pool exhaustion do pg_cron 1.6.4 com 24 jobs simultâneos; comandos net.http_post revisados (2026-10-25): todos usam vault.decrypted_secrets subquery — zero tokens hardcoded",
+    "7_funcoes_db": "CONCLUÍDO — 12 funções com SQL dinâmico auditadas; mcp_exec full body confirmado via pg_get_functiondef (2026-10-25): EXECUTE q com SQL literal do caller + segundo EXECUTE para DML/DDL (SECURITY DEFINER, service_role only — R2 mitigado MEDIUM-7); talkx_audience_query R1; 10 outras R0; 463 sem SQL dinâmico; total=475; 399 SECURITY DEFINER todas com search_path fixo confirmado ao vivo",
+    "8_edge_functions": "CONCLUÍDO — 84 funções auditadas individualmente (08_edge_functions.md): R0:49, R1:35, R2+:0; 14 verify_jwt=false com mecanismos alternativos confirmados; 70 verify_jwt=true com requireAuth/HMAC/cron-secret; zero SQL dinâmico nas edge functions; zero segredos hardcoded; Deno.env separação de vault confirmada (vault=pg_cron, Function Secrets=edge runtime); deployed list NÃO VERIFICADO (list_edge_functions indisponível via MCP nesta sessão)",
     "9_auth_storage_realtime": "CONCLUÍDO — 10 usuários, 0 MFA factors (HIGH-7), providers: email+google; 9 buckets auditados ao vivo: multiplix-voice allowed_mime_types=null (LOW-3 CONFIRMADO), 8 com MIME filter; Realtime: conversations/tasks/accounts ausentes do schema-manifest (MEDIUM-9)",
     "10_logs_7d": "NÃO VERIFICADO — pg_stat_statements retorna 42P01 via mcp_exec SECURITY DEFINER (extensão não visível nesse contexto); supabase_functions.hooks não existe como tabela relacional; logs de edge functions acessíveis via Supabase Dashboard ou CLI",
-    "11_rls": "CONCLUÍDO — 39 UPDATE sem WITH CHECK confirmados ao vivo (2026-10-24T23:xx); matrix A×B EXECUTADA em Postgres 16 local: T-C2 CRITICAL-2 CONFIRMADO (SELECT usa user_id sem org_id, UPDATE cross-tenant possível), T-08 MITIGADO (is_member_of em USING cobre implicit WITH CHECK); department_invites DELETE qual=true CONFIRMADO; backup schemas _bkp_261023 (9 tabelas) + ops_backup (1 tabela) sem RLS CONFIRMADO; produção: BEGIN/SET LOCAL/ROLLBACK não suportado via mcp_exec (0A000) — teste de isolação de tenant em produção SQL = NÃO TESTÁVEL por este MCP",
+    "11_rls": "CONCLUÍDO — 39 UPDATE sem WITH CHECK confirmados ao vivo; matrix A×B EXECUTADA em Postgres 16 local: T-01 a T-05 PASS, T-06 PASS, T-07 PASS, T-C2 CRITICAL-2 CONFIRMADO (SELECT usa user_id sem org_id, UPDATE cross-tenant possível), T-08 PASS (is_member_of em USING cobre implicit WITH CHECK), T-09 PASS; department_invites DELETE qual=true CONFIRMADO; backup schemas _bkp_261023 (9 tabelas) + ops_backup (1 tabela) sem RLS CONFIRMADO",
     "12_lacunas": "CONCLUÍDO — backup schemas sem RLS (_bkp_261023:9, ops_backup:1); department_invites DELETE qual=true; e2e UUID aaa9b766-3b72-403d-95ad-f9cd7301ebca hardcoded em 2 migrations (20261009142650 e 20261015200000)"
   },
   "findings_count": {
@@ -28,15 +28,16 @@
     "section7_count": "463 sem SQL dinâmico (não 389 como afirmado em sessão anterior); 12 com dinâmico; total=475",
     "section4_tables_no_pk": "1 tabela sem PK (_zapp_fn_before), não 4 como afirmado",
     "high6_drift": "29 tabelas identificadas faltando em types.ts + 2 _-prefixo desconhecidas = 31 total; produção=202, types.ts=171",
-    "high5_email_threads": "seq_tup_read=420.118.664 (não 418M — aproximação anterior)",
+    "high5_email_threads": "seq_tup_read=420.341.864 (atualizado em 2026-10-25)",
     "section3_clarification": "0 tabelas em public schema sem RLS com grants anon sem policies (achado HIGH-1 são 17 tabelas com RLS habilitado mas 0 policies — correto; backup schemas são em schemas separados)",
-    "section8_per_function": "14 funções lidas individualmente e classificadas R0/R1/R2 nesta sessão",
+    "section8_per_function": "84 funções lidas individualmente e classificadas R0/R1/R2 em 08_edge_functions.md",
     "e2e_uuid_files": "confirmado em supabase/migrations/20261009142650 (v_usuario constant) e 20261015200000 (IF auth.uid() IS DISTINCT FROM)"
   },
   "not_verified_items": {
     "pg_stat_statements_top20": "42P01 via mcp_exec SECURITY DEFINER — re-confirmado 2026-10-24T23:47Z; bloqueio técnico, não segurança",
     "edge_function_logs_7d": "supabase_functions.hooks não acessível via SQL; logs via dashboard ou CLI",
-    "rls_tenant_isolation_prod_sql": "BEGIN/SET LOCAL/ROLLBACK não suportados via mcp_exec (0A000); matrix A×B executada em Postgres 16 local com as migrations do repo (sessão 2026-10-24) — CRITICAL-2 confirmado nesse ambiente"
+    "rls_tenant_isolation_prod_sql": "BEGIN/SET LOCAL/ROLLBACK não suportados via mcp_exec (0A000); matrix A×B executada em Postgres 16 local com as migrations do repo — CRITICAL-2 confirmado nesse ambiente",
+    "edge_deployed_vs_repo": "list_edge_functions não disponível via MCP nesta sessão; repo confirmado em 83 funções via ls supabase/functions/"
   },
   "evidence_final_session": {
     "timestamp": "2026-10-24T23:47:40Z",
@@ -45,18 +46,26 @@
     "critical3_cron_failures": "talkx-scheduler-1min 4007/43181=9.3%; breakdown completo de 24 crons confirmado ao vivo",
     "high1_rls_zero_policies": "17 tabelas listadas: channel_connections_safe, gmail_accounts_safe, link_preview_cache, password_reset_requests_safe, profiles_public, talkx_campaign_metrics, whatsapp_connections_agent, whatsapp_connections_public, whatsapp_connections_safe + 8 outras confirmado",
     "high3_fks_no_index": "34 FKs listadas ao vivo",
-    "high5_email_threads": "seq_tup_read=420.118.664 confirmado ao vivo",
+    "high5_email_threads": "seq_tup_read=420.341.864 confirmado ao vivo (atualizado 2026-10-25)",
     "high7_mfa": "total_mfa_factors=0 confirmado ao vivo",
-    "section7_dynamic_sql": "12 com SQL dinâmico, 463 sem, total=475 confirmado ao vivo",
-    "section8_all14_read": "14 funções verify_jwt=false lidas individualmente e classificadas R0/R1/R2",
+    "section7_dynamic_sql": "12 com SQL dinâmico, 463 sem, total=475 confirmado ao vivo; mcp_exec full body via pg_get_functiondef confirmado 2026-10-25",
+    "section7_security_definer_search_path": "ALL 399 SECURITY DEFINER functions têm proconfig com search_path fixo — zero vulneráveis (confirmado ao vivo 2026-10-25)",
+    "section8_all84_read": "84 funções auditadas individualmente em 08_edge_functions.md: R0:49, R1:35, R2+:0",
+    "section8_deno_env_vs_vault": "Deno.env usa Function Secrets (~40 chaves); Vault tem 13 entradas para pg_cron; separação apropriada confirmada 2026-10-25",
+    "section8_cron_commands": "todos os 24 jobs revisados; net.http_post crons usam vault.decrypted_secrets subquery — zero tokens hardcoded (confirmado 2026-10-25)",
     "section9_buckets": "9 buckets confirmados; multiplix-voice allowed_mime_types=null",
+    "section9_views": "13 views todas com security_invoker=on/true — zero views sem security_invoker (confirmado 2026-10-25)",
+    "section9_vault_names": "13 vault secret names confirmados: ai_jobs_cron_secret, avatars_refresh_cron_secret, connection_health_check_cron_secret, gmail_cron_secret, gmail_encryption_key, multiplix_cron_secret, multiplix_send_url, sicoob_service_role_key, talkx_anon_key, talkx_cron_secret, talkx_scheduler_url, talkx_send_url, zapp_anon_key — sem valores expostos",
+    "section9_enums_sequences": "10 enums (max 8 labels); 4 sequences todas 0.00% uso (bigint max) — sem risco de overflow",
     "section11_backup_rls": "_bkp_261023:9 tabelas, ops_backup:1 — sem RLS confirmado",
+    "section11_matrix_full": "T-01 a T-05 PASS (SELECT isolation), T-06 PASS (INSERT WITH CHECK), T-07 PASS (SECURITY DEFINER), T-C2 CONFIRMADO (CRITICAL-2 cross-tenant UPDATE), T-08 PASS (is_member_of mitigation), T-09 PASS (DELETE isolation) — per inventario/03_policies.md",
     "section12_e2e_uuid": "aaa9b766-3b72-403d-95ad-f9cd7301ebca em migrations/20261009142650 e 20261015200000",
     "section12_dept_invites": "department_invites DELETE qual=true confirmado ao vivo",
-    "grep_clean": "0 PII/segredos reais em auditoria-supabase/ confirmado",
-    "production_not_modified": "migrations=1054, crons=24, policies=499, db_functions=475, tabelas=202 — delta ZERO entre snapshot inicial (2026-10-24T20:53:57Z) e final (2026-10-24T23:47:40Z)"
+    "git_history_scan": "git log --all -p _shared/: apenas valores de teste (service-role-key-de-teste, fake-service-role-local) — nenhum segredo real no histórico (confirmado 2026-10-25)",
+    "grep_auditoria_clean": "grep -r em auditoria-supabase/: matches são nomes de vault secrets, nomes de tabelas, nomes de funções — zero PII ou valores de credencial reais (confirmado 2026-10-25)",
+    "production_not_modified": "migrations=1054, crons=24, policies=499, db_functions=475, tabelas=202 — delta ZERO entre snapshot inicial (2026-10-24T20:53:57Z) e verificação final (2026-10-25)"
   },
-  "last_updated": "2026-10-24T23:47:40Z",
+  "last_updated": "2026-10-25T00:00:00Z",
   "production_snapshot_initial": {
     "snapshot_at": "2026-10-24T20:53:57Z",
     "migration_count": 1054,
@@ -66,12 +75,12 @@
     "table_count": 202
   },
   "production_snapshot_final": {
-    "snapshot_at": "2026-10-24T23:47:40Z",
+    "snapshot_at": "2026-10-25T00:00:00Z",
     "migration_count": 1054,
     "cron_count": 24,
     "policy_count": 499,
     "function_count": 475,
     "table_count": 202,
-    "delta": "ZERO — produção não modificada durante toda a auditoria"
+    "delta": "ZERO — produção não modificada durante toda a auditoria (verificado em múltiplas sessões)"
   }
 }

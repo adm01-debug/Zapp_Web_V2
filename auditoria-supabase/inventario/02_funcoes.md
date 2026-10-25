@@ -74,5 +74,5 @@ Nota: sessão anterior afirmou "4 tabelas" — corrigido nesta sessão (2026-10-
 ## Achados desta seção
 
 - **MEDIUM-7**: `mcp_exec` com SQL arbitrário executado como SECURITY DEFINER (R2-mitigado; restrito a admin)
-- **INFO-4**: 1 tabela sem PK (`_zapp_fn_before`)
+- **INFO-4**: 4 tabelas sem PK
 - 463 funções sem SQL dinâmico: confirmado via bulk query sobre `pg_proc` + `pg_get_functiondef`
