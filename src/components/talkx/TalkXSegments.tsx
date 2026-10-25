@@ -55,9 +55,14 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const [selected, setSelected] = useState<string | null>(null);
+  const [savedSegmentOverride, setSavedSegmentOverride] = useState<TalkXSegment | null>(null);
   const selectedSegment = useMemo(
-    () => (selected ? segments.find((s) => s.id === selected) ?? null : null),
-    [selected, segments],
+    () => {
+      if (!selected) return null;
+      if (savedSegmentOverride?.id === selected) return savedSegmentOverride;
+      return segments.find((s) => s.id === selected) ?? null;
+    },
+    [selected, segments, savedSegmentOverride],
   );
   const closeFocusTargetRef = useRef<HTMLElement | null>(null);
   const closeDetail = useCallback(() => {
@@ -206,6 +211,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
         // evita mostrar — e reabrir no construtor — a cópia que estava em tela
         // antes de salvar.
         const saved = await updateSegment.mutateAsync({ id: currentId, name: draft.name, description: draft.description || null, rules: draft.rules, estimated_count: count });
+        setSavedSegmentOverride(saved);
         setSelected(saved.id);
       } else {
         await createSegment.mutateAsync({ name: draft.name, description: draft.description || null, rules: draft.rules, estimated_count: count });
