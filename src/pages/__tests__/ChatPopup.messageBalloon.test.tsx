@@ -256,10 +256,20 @@ function medirLayout() {
       return this.getAttribute('role') === 'log' ? ALTURA_JANELA : ALTURA_ESTIMADA;
     },
   });
+  // virtual-core >= 3.19 mede o contêiner por `clientHeight` (antes: offsetHeight).
+  const originalClient = Object.getOwnPropertyDescriptor(proto, 'clientHeight');
+  Object.defineProperty(proto, 'clientHeight', {
+    configurable: true,
+    get(this: HTMLElement) {
+      return this.getAttribute('role') === 'log' ? ALTURA_JANELA : ALTURA_ESTIMADA;
+    },
+  });
   return {
     mockRestore() {
       if (original) Object.defineProperty(proto, 'offsetHeight', original);
       else delete (proto as unknown as Record<string, unknown>).offsetHeight;
+      if (originalClient) Object.defineProperty(proto, 'clientHeight', originalClient);
+      else delete (proto as unknown as Record<string, unknown>).clientHeight;
     },
   };
 }

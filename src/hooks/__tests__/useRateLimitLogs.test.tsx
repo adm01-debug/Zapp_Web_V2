@@ -24,22 +24,23 @@ const mockLogs = [
   { id: '3', ip_address: '1.2.3.4', endpoint: '/api/messages', user_id: null, request_count: 30, blocked: false, user_agent: 'Chrome', country: 'BR', city: 'SP', created_at: '2024-01-02' },
 ];
 
-function queryResult(data: typeof mockLogs | null, error: Error | null = null) {
-  const result = Promise.resolve({ data, error });
-  return Object.assign(result, { abortSignal: vi.fn(() => result) });
+// O hook faz duas consultas (listagem paginada com select+order+order+range e
+// janela de estatística com select+order+order+limit), ambas terminando em
+// abortSignal: o mock é um construtor encadeável que serve às duas.
+function tableMock(data: typeof mockLogs | null, error: Error | null = null) {
+  const builder: Record<string, unknown> = {};
+  for (const method of ['select', 'order', 'range', 'limit', 'ilike', 'eq']) {
+    builder[method] = vi.fn(() => builder);
+  }
+  builder.abortSignal = vi.fn(() => Promise.resolve({ data, count: data?.length ?? 0, error }));
+  return builder;
 }
 
 describe('useRateLimitLogs', () => {
   afterEach(() => vi.useRealTimers());
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockReturnValue(queryResult(mockLogs)),
-        }),
-      }),
-    });
+    mockFrom.mockImplementation(() => tableMock(mockLogs));
   });
 
   it('fetches logs on mount', async () => {
@@ -50,9 +51,8 @@ describe('useRateLimitLogs', () => {
 
   it('calculates stats correctly', async () => {
     const { result } = renderHook(() => useRateLimitLogs());
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.stats).not.toBeNull());
 
-    expect(result.current.stats).toBeDefined();
     expect(result.current.stats!.totalRequests).toBe(280); // 50+200+30
     expect(result.current.stats!.blockedRequests).toBe(1);
     expect(result.current.stats!.uniqueIPs).toBe(2);
@@ -60,50 +60,38 @@ describe('useRateLimitLogs', () => {
 
   it('calculates top endpoints', async () => {
     const { result } = renderHook(() => useRateLimitLogs());
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.stats).not.toBeNull());
 
     expect(result.current.stats!.topEndpoints.length).toBeGreaterThan(0);
   });
 
   it('calculates top IPs', async () => {
     const { result } = renderHook(() => useRateLimitLogs());
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.stats).not.toBeNull());
 
     expect(result.current.stats!.topIPs.length).toBe(2);
   });
 
   it('identifies blocked IPs correctly', async () => {
     const { result } = renderHook(() => useRateLimitLogs());
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.stats).not.toBeNull());
 
     const blockedIP = result.current.stats!.topIPs.find(ip => ip.blocked);
     expect(blockedIP?.ip).toBe('5.6.7.8');
   });
 
   it('handles empty logs', async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockReturnValue(queryResult([])),
-        }),
-      }),
-    });
+    mockFrom.mockImplementation(() => tableMock([]));
 
     const { result } = renderHook(() => useRateLimitLogs());
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.stats).not.toBeNull());
 
     expect(result.current.logs).toEqual([]);
     expect(result.current.stats?.totalRequests).toBe(0);
   });
 
   it('handles fetch error', async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue({
-          limit: vi.fn().mockReturnValue(queryResult(null, new Error('fail'))),
-        }),
-      }),
-    });
+    mockFrom.mockImplementation(() => tableMock(null, new Error('fail')));
 
     const { result } = renderHook(() => useRateLimitLogs());
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -114,9 +102,10 @@ describe('useRateLimitLogs', () => {
     const { result } = renderHook(() => useRateLimitLogs());
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(result.current.loading).toBe(false);
-    expect(mockFrom).toHaveBeenCalledTimes(1);
-    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    // cada ciclo faz 2 consultas: listagem paginada + janela de estatística
     expect(mockFrom).toHaveBeenCalledTimes(2);
+    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
+    expect(mockFrom).toHaveBeenCalledTimes(4);
     expect(mockChannel).not.toHaveBeenCalled();
   });
 
@@ -126,7 +115,7 @@ describe('useRateLimitLogs', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     unmount();
     await vi.advanceTimersByTimeAsync(60_000);
-    expect(mockFrom).toHaveBeenCalledTimes(1);
+    expect(mockFrom).toHaveBeenCalledTimes(2);
   });
 
   it('updates statistics together with refreshed rows', async () => {
@@ -134,7 +123,7 @@ describe('useRateLimitLogs', () => {
     const { result } = renderHook(() => useRateLimitLogs());
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     const updated = [{ ...mockLogs[0], request_count: 900, blocked: true }];
-    mockFrom.mockReturnValue({ select: vi.fn(() => ({ order: vi.fn(() => ({ limit: vi.fn(() => queryResult(updated)) })) })) });
+    mockFrom.mockImplementation(() => tableMock(updated));
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
     expect(result.current.logs).toEqual(updated);
     expect(result.current.stats?.totalRequests).toBe(900);
