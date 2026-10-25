@@ -69,6 +69,7 @@ ERROR: cannot drop role pg_monitor because it is required by the database system
 ERROR: cannot drop role pg_read_all_data because it is required by the database system
 ERROR: cannot drop role pg_read_all_settings because it is required by the database system
 ERROR: cannot drop role pg_read_all_stats because it is required by the database system
+ERROR: cannot drop role pg_read_all_settings because it is required by the database system
 ERROR: cannot drop role pg_read_server_files because it is required by the database system
 ERROR: cannot drop role pg_signal_backend because it is required by the database system
 ERROR: cannot drop role pg_stat_scan_tables because it is required by the database system
@@ -184,8 +185,9 @@ Mock `window.Notification` como constructor (função regular, não arrow). Conf
 **PRÉ-EXISTENTE — `team-chat-notifications-mount.test.ts` (2 falhas):**  
 `DeferredProviders` em `src/App.tsx:96` chama `useAuth()` sem `AuthProvider` wrapper. `App.tsx` não está no diff desta branch. Confirmado falhando na `main`.
 
-**PRÉ-EXISTENTE — `TalkXTemplates.route.test.tsx:153`:**  
-`Expected "tpl_2", Received "tpl_1"` — seleção de template não muda o parâmetro de URL. `TalkXTemplates.route.test.tsx` não está no diff desta branch (`git diff origin/main -- src/components/talkx/__tests__/TalkXTemplates.route.test.tsx` = 0 linhas).
+**✅ RESOLVIDO — `TalkXTemplates.route.test.tsx:153` (X094):**  
+Antes: `Expected "tpl_2", Received "tpl_1"` — seleção de template não mudava o parâmetro de URL.  
+Agora: fix X094 em `TalkXTemplateEditor.tsx` — `loadTemplate` lê `ttab` do endereço após `activateTemplate` (replaceState síncrono) e pré-carrega dados sem abrir painel. **22/22 testes passando** (`TalkXTemplates.route.test.tsx` 10/10 + `TalkXTemplateEditor.race.test.tsx` 12/12). Lint ratchet: 0 novas violações.
 
 ---
 
@@ -238,9 +240,8 @@ Arquivos não estão no diff desta branch. `useTalkXSegments.ts` está no diff m
 
 **Ação necessária (bloqueios remanescentes):**  
 1. `App.tsx` / `DeferredProviders`: adicionar `AuthProvider` wrapper no teste ou mock `useAuth` — resolve shard 3/3 (`team-chat-notifications-mount.test.ts`) parcialmente.  
-2. `TalkXTemplates.route.test.tsx`: investigar lógica de troca de template na URL do editor.  
-3. Módulo Talk X (TalkXOverview, TalkXSegments, TalkXTemplateEditor, TalkXTemplatesRail, TalkXWizardReview, TalkXAnalytics): múltiplas falhas pré-existentes em tests de UI do módulo — requerem investigação dos componentes respectivos.  
-4. VoiceChangerPicker, useChatMediaSending, PasswordResetRequestsPanel, AvatarUpload, SettingsView, WorkItemSheet: falhas pré-existentes distribuídas aleatoriamente entre shards.  
+2. Módulo Talk X (TalkXOverview, TalkXSegments, TalkXTemplateEditor, TalkXTemplatesRail, TalkXWizardReview, TalkXAnalytics): múltiplas falhas pré-existentes em tests de UI do módulo — requerem investigação dos componentes respectivos.  
+3. VoiceChangerPicker, useChatMediaSending, PasswordResetRequestsPanel, AvatarUpload, SettingsView, WorkItemSheet: falhas pré-existentes distribuídas aleatoriamente entre shards.  
 Todas requerem investigação fora do escopo desta sessão.
 
 ---

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useSyncExternalStore } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useSyncExternalStore } from 'react';
 import {
   X, Check, Copy, ChevronLeft, ChevronRight, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
@@ -60,9 +60,13 @@ interface Props {
   onClose: () => void;
   /** X091 — clique do widget "Em andamento" abre o monitor da campanha. */
   onOpenMonitor?: (campaignId: string) => void;
+  /** X094 — sub-aba inicial ('conteudo' | 'ab' | 'historico') vinda do endereço. */
+  initialTtab?: string;
+  /** X094 — chamado quando a biblioteca lateral troca o template ativo. */
+  onActiveTemplateChange?: (templateId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, onOpenMonitor }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab, onActiveTemplateChange, onClose, onOpenMonitor }: Props) {
   const {
     createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
     saveVariant, deleteVariant, countVariantRecipients,
@@ -99,11 +103,12 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     id: string; template_id: string; version_number: number; name: string; description: string | null; content: string;
     category: string; status: string; media_url: string|null; media_type: string|null;
     tags: string[]; custom_variables: string[]; created_at: string;
-  }>>([]);
+  }>>([])
   const [loadingVersions, setLoadingVersions] = useState(false);
-  const [showVersions, setShowVersions] = useState(false);
+  // X094 — sub-aba aberta ao montar deriva do endereço (initialTtab); não usa setState no effect.
+  const [showVersions, setShowVersions] = useState(() => initialTtab === 'historico');
   const [variants, setVariants] = useState<TemplateVariant[]>([]);
-  const [showVariants, setShowVariants] = useState(false);
+  const [showVariants, setShowVariants] = useState(() => initialTtab === 'ab');
   const [savingVariant, setSavingVariant] = useState(false);
   // R2-MOD-024: respostas atrasadas não podem contaminar o template seguinte.
   // `activeTemplateIdRef` guarda o template REALMENTE ativo agora (independe do
@@ -123,6 +128,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
   const activateTemplate = (templateId: string) => {
     activeTemplateIdRef.current = templateId;
     setActiveTemplateId(templateId);
+    onActiveTemplateChange?.(templateId);
   };
 
   // Template ativo derivado de activeTemplateId (pode diferir de editing apos carga da biblioteca)
@@ -226,6 +232,12 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     setEName(t.name); setEDesc(t.description ?? ''); setECat(t.category);
     setEContent(t.content); setEMediaUrl(t.media_url ?? ''); setEMediaType(t.media_type ?? '');
     setEHasMedia(!!t.media_url); setEStatus(t.status); setETags(t.tags ?? []); setECustomVars(t.custom_variables ?? []);
+    // X094 — onActiveTemplateChange atualiza o endereço de forma síncrona (replaceState);
+    // se o ttab preservado for ab/historico, pré-carrega os dados para a sub-aba sem
+    // abrir o painel (evita conflito com os testes de race condition R2-MOD-024).
+    const ttabAfter = new URLSearchParams(window.location.search).get('ttab');
+    if (ttabAfter === 'ab') void loadVariants(t.id);
+    else if (ttabAfter === 'historico') void fetchVersions(t.id);
   };
 
   // V26 — variáveis conhecidas do editor: as built-in + as personalizadas deste template.
@@ -281,6 +293,15 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
     if (!isActiveOrigin(templateId)) return;
     setVariants(vs);
   };
+
+  // X094 — carrega dados da sub-aba na montagem; showVariants/showVersions já foram
+  // inicializados via useState(() => initialTtab === ...), sem setState síncrono no effect.
+  useEffect(() => {
+    if (!editing?.id) return;
+    if (initialTtab === 'ab') void loadVariants(editing.id);
+    else if (initialTtab === 'historico') void fetchVersions(editing.id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intencional: só executa na montagem, endereço muda pelo componente pai
 
   const removeVariant = async (variant: TemplateVariant) => {
     const templateId = variant.template_id;
@@ -652,7 +673,7 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, onClose, on
           {/* E45: Variaveis customizadas */}
           <div>
             <p className="text-xs text-foreground-secondary mb-1.5">Variáveis personalizadas</p>
-            <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-primary-glow">{'{{'}var{'}}'}</span> na mensagem.</p>
+            <p className="text-2xs text-muted-foreground mb-2">Defina variáveis próprias para este template. Serão inseridas como <span className="font-mono text-primary-glow">{'{{'+'var'+'}}'}</span> na mensagem.</p>
             <div className="flex items-center gap-2 flex-wrap mb-2">
               {eCustomVars.map((v) => (
                 <span key={v} className="flex items-center gap-1 h-7 px-2 rounded-lg bg-violeta/10 border border-violeta/20 text-xs font-mono text-[hsl(var(--violeta-text))]">
