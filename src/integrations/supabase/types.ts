@@ -10540,6 +10540,17 @@ export type Database = {
         Args: { p_contact_id: string; p_prefix: string; p_tag: string }
         Returns: undefined
       }
+      admin_list_cron_jobs: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          active: boolean
+          jobname: string
+          last_return_message: string | null
+          last_run_at: string | null
+          last_status: string | null
+          schedule: string
+        }[]
+      }
       admin_set_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -10550,6 +10561,10 @@ export type Database = {
           out_old_role: Database["public"]["Enums"]["app_role"]
           out_user_id: string
         }[]
+      }
+      admin_toggle_cron_job: {
+        Args: { p_ativo: boolean; p_jobname: string }
+        Returns: Json
       }
       admin_unlock_login: { Args: { p_email: string }; Returns: undefined }
       ai_budget_reconcile: { Args: never; Returns: number }
@@ -10602,6 +10617,10 @@ export type Database = {
           p_top_users?: number
           p_until?: string
         }
+        Returns: Json
+      }
+      app_bootstrap: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
       apply_pg_cron_escalonamento: {
@@ -11158,6 +11177,64 @@ export type Database = {
         }
         Returns: string
       }
+      enqueue_group_outbound_message: {
+        Args: {
+          p_caption?: string
+          p_client_message_id: string
+          p_content: string
+          p_group_id: string
+          p_media_url?: string
+          p_message_type?: string
+          p_reply_to_id?: string
+          p_whatsapp_connection_id?: string
+        }
+        Returns: {
+          agent_id: string | null
+          audio_meme_id: string | null
+          caption: string | null
+          channel_connection_id: string | null
+          channel_type: string | null
+          client_message_id: string | null
+          contact_id: string | null
+          content: string
+          created_at: string
+          delivery_attempt_count: number
+          delivery_claim_expires_at: string | null
+          delivery_claim_token: string | null
+          delivery_claimed_at: string | null
+          delivery_claimed_by: string | null
+          delivery_last_claim_token: string | null
+          external_id: string | null
+          id: string
+          is_deleted: boolean | null
+          is_edited: boolean
+          is_read: boolean | null
+          link_preview: Json | null
+          media_filename: string | null
+          media_meta: Json | null
+          media_mimetype: string | null
+          media_size: number | null
+          media_type: string | null
+          media_url: string | null
+          message_type: string
+          ptt: boolean | null
+          reply_to_id: string | null
+          sender: string
+          status: string | null
+          status_updated_at: string | null
+          transcribed_at: string | null
+          transcription: string | null
+          transcription_status: string | null
+          updated_at: string
+          whatsapp_connection_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       enqueue_outbound_message: {
         Args: {
           p_caption?: string
@@ -11641,6 +11718,10 @@ export type Database = {
           p_lease_seconds?: number
         }
         Returns: boolean
+      }
+      inbox_unread_total: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       inbox_wait_summary: {
         Args: { p_queue_id?: string }
@@ -12289,6 +12370,20 @@ export type Database = {
           updated_at: string
         }[]
       }
+      search_email_threads: {
+        Args: {
+          p_account: string
+          p_after?: string
+          p_limit?: number
+          p_q: string
+        }
+        Returns: {
+          last_message_at: string
+          match_field: string
+          match_snippet: string
+          thread_id: string
+        }[]
+      }
       search_insights: {
         Args: { p_days?: number }
         Returns: {
@@ -12658,6 +12753,26 @@ export type Database = {
         Args: { p_emoji: string; p_message_id: string }
         Returns: Json
       }
+      transfer_conversation:
+        | {
+            Args: {
+              p_contact_id: string
+              p_note?: string
+              p_to_agent_id?: string
+              p_to_queue_id?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_contact_id: string
+              p_expected_agent_id?: string
+              p_note?: string
+              p_to_agent_id?: string
+              p_to_queue_id?: string
+            }
+            Returns: string
+          }
       transfer_team_conversation_department: {
         Args: { p_conversation_id: string; p_to_department_id: string }
         Returns: Json
@@ -12770,6 +12885,14 @@ export type Database = {
       user_has_permission: {
         Args: { _permission_name: string; _user_id: string }
         Returns: boolean
+      }
+      warroom_agent_today: {
+        Args: { p_date?: string }
+        Returns: Json
+      }
+      warroom_queue_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
     }
     Enums: {
