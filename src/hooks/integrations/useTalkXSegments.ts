@@ -258,7 +258,7 @@ export function rulesToPostgrest(rules: SegmentRules | null | undefined): string
     })
     .filter((g) => g.filters.length > 0);
   if (groups.length === 0) return null;
-  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})` ));
+  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`));
   return parts.length === 1 ? parts[0] : parts.join(',');
 }
 
