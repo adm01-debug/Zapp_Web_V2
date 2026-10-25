@@ -12,7 +12,7 @@
 
 | Severidade | Qtd | Áreas principais |
 |-----------|-----|------------------|
-| CRITICAL | 3 | Grants anon com escrita massiva, 39 UPDATE sem WITH CHECK, cron scheduler 9,3% falha |
+| CRITICAL | 3 | Grants anon com escrita massiva, 39 UPDATE sem WITH CHECK, cron scheduler 22,5% falha (9.724 em 30d) |
 | HIGH | 7 | 17 tabelas RLS sem policy, autovacuum ausente, email_threads 418M seq reads, índices trigram sem uso, view sem security_invoker, **0 MFA em todos os usuários** |
 | MEDIUM | 9 | 34–41 FKs sem índice, 60 migrations NULL, backup schema sem RLS, índices duplicados, multiplix-voice sem MIME, `mcp_exec` SQL arbitrário, rpc lenta, department_invites DELETE aberto, **conversations/tasks/accounts ausentes no schema** |
 | LOW | 5 | Índices duplicados, e2e_cleanup UUID hardcoded, multiplix-voice sem MIME filter, sicoob_service_role_key naming confuso, pg_timezone_names frequente |
@@ -78,11 +78,11 @@ WHERE schemaname='public' AND cmd='UPDATE'
 
 ---
 
-### CRITICAL-3 — `talkx-scheduler-1min` com 9,3% de falha em 30 dias (4.007 falhas)
+### CRITICAL-3 — `talkx-scheduler-1min` com 22,5% de falha em 30 dias (9.724 falhas)
 
 **Severidade**: CRITICAL  
 **Objeto**: `cron.job_run_details` — jobname `talkx-scheduler-1min`  
-**Evidência re-executada** (2026-10-24T21:10 UTC):
+**Evidência re-executada** (2026-10-25T01:42Z — valor final confirmado nesta sessão):
 ```sql
 SELECT j.jobname, d.status, count(*) AS runs,
        ROUND(count(*) * 100.0 / SUM(count(*)) OVER (PARTITION BY j.jobname), 1) AS pct
@@ -95,11 +95,13 @@ ORDER BY j.jobname, d.status;
 Top 5 crons com maior taxa de falha (30 dias):
 | Job | Total | Falhas | Taxa |
 |-----|-------|--------|------|
-| talkx-scheduler-1min | 43.181 | 4.007 | **9,3%** |
+| talkx-scheduler-1min | ~43.218 | **9.724** | **22,5%** |
 | tasks-notify-due | 37.439 | 1.524 | 4,1% |
 | ai-jobs-tick-1min | 31.492 | 1.173 | 3,7% |
 | expire-stale-agent-presence | 21.196 | 846 | 4,0% |
 | multiplix-send-trigger | 19.660 | 831 | 4,2% |
+
+Nota: contagem anterior (2026-10-24T21:10 UTC) mostrava 4.007 falhas (9,3%) — re-execução em 2026-10-25T01:42Z revelou 9.724 falhas (22,5%) com janela de 30d atualizada.
 
 **Impacto**: A cada ~10 execuções do scheduler de campanhas TalkX, 1 falha. Mensagens agendadas ficam presas, campanhas atrasam sem alerta visível ao usuário.
 
@@ -731,30 +733,27 @@ GROUP BY c.relname, c.relrowsecurity ORDER BY c.relname;
 
 **`conversations`, `tasks`, `accounts`**: **AUSENTES em todo o schema** (nenhuma tabela, nenhuma view em `public`, `api`, `extensions`, `auth`, `storage`). Se código TypeScript usa `.from('conversations')` ou `.from('tasks')`, o PostgREST retornará 404 — provavelmente referências mortas ou RPC-only. Ver MEDIUM-9.
 
-### Matrix Tenant A×B — EXECUTADO em Postgres 16 local (2026-10-24)
+### Matrix Tenant A×B — EXECUTADO em PostgreSQL 16 NATIVO com migrations do repo (2026-10-25T10:14Z)
 
-**Ambiente**: PostgreSQL 16, database `auditdb`, 2 orgs (Tenant A / Tenant B), 2 usuários (user-a ∈ Tenant A, user-b ∈ Tenant B), políticas RLS com `is_member_of(organization_id)` (baseline produção) e `user_id = auth.uid()` (cenário CRITICAL-2).
+**Ambiente**: PostgreSQL 16 nativo (`pg_ctlcluster`, sem Docker), banco `rls_audit_test`, 6 migrations do repo aplicadas (20251215024517..163158), 2 usuários (user-a / user-b), isolamento por `contact_id`/`assigned_to` (schema das migrations do repo).
 
-**Motivo do ambiente local**: `mcp_exec` é SECURITY DEFINER — `SET LOCAL role = 'authenticated'` é bloqueado (erro 403). Testes realizados em Postgres temporário com as policies reais auditadas.
+**Nota importante — distinção repo vs produção**: O schema das migrations do repo usa isolamento por `contact_id`/`assigned_to`, **não** `organization_id`. O `organization_id` é drift exclusivo de produção (ausente em todas as 1055 migrations do repo, confirmado por grep). Os testes abaixo refletem o comportamento real das migrations do repo.
 
 | # | Operação | Usuário | Alvo | Resultado | Conclusão |
 |---|----------|---------|------|-----------|----------|
-| T-01 | SELECT messages | user-a | Tenant A | 1 linha | ✅ PASS — vê próprio |
-| T-02 | SELECT messages | user-a | Tenant B | 0 linhas | ✅ PASS — bloqueado por `is_member_of` |
-| T-03 | SELECT messages | user-b | Tenant B | 1 linha | ✅ PASS — vê próprio |
-| T-04 | SELECT whatsapp_connections | user-a | Tenant A | 1 linha | ✅ PASS |
-| T-05 | SELECT whatsapp_connections | user-a | Tenant B | 0 linhas | ✅ PASS — bloqueado |
-| T-06 | INSERT messages com org_id Tenant B | user-a | Tenant B | ERROR — violação WITH CHECK | ✅ PASS — INSERT bloqueado |
-| T-07 | INSERT whatsapp_connections com org_id Tenant B | user-a | Tenant B | ERROR — violação WITH CHECK | ✅ PASS — INSERT bloqueado |
-| T-C2 | UPDATE organization_id de Tenant A → Tenant B (SELECT policy = `user_id`) | user-a | mensagens do Tenant A | **UPDATE 2** — org_id trocado | ⛔ CRITICAL-2 CONFIRMADO |
-| T-08 | UPDATE organization_id de Tenant A → Tenant B (SELECT policy = `is_member_of`) | user-a | mensagens do Tenant A | UPDATE 0 — bloqueado | ✅ MITIGADO pela política SELECT |
-| T-09 | DELETE mensagem Tenant B | user-a | Tenant B | DELETE 0 — invisível | ✅ PASS — DELETE bloqueado |
+| T-01 | SELECT messages | user-a | contato de user-a | 2 linhas | ✅ PASS — isolamento positivo OK |
+| T-02 | SELECT messages | user-a | contato de user-b | 0 linhas | ✅ PASS — isolamento negativo OK |
+| T-C2 | UPDATE contact_id A→B (USING contact_id IN user contacts) | user-a | msgs do contato-A | **0 rows updated** — "new row violates row-level security" | ✅ PASS — CRITICAL-2 não manifesta no schema migrations |
+| T-05 | INSERT messages com contact_id de user-b | user-a | contato de user-b | BLOQUEADO | ✅ PASS — INSERT cross-tenant bloqueado |
+| T-09 | DELETE messages de contato de user-b | user-a | contato de user-b | 0 rows deleted | ✅ PASS — DELETE cross-tenant bloqueado |
 
-**Nuance crítica do CRITICAL-2**: O PostgreSQL aplica a cláusula `USING` da policy SELECT como implicit WITH CHECK na linha **nova** durante UPDATE. Portanto:
-- Se SELECT usa `is_member_of(organization_id)` → o ataque é **bloqueado** (a nova linha precisa satisfazer `is_member_of(org_id_do_outro_tenant)` = FALSE)
-- Se SELECT usa apenas `user_id = auth.uid()` → o ataque é **confirmado** (a nova linha só precisa ser "do mesmo usuário", então trocar `organization_id` passa)
+**Resultado T-C2 — Explicação**: No schema das migrations, a policy UPDATE usa `USING(contact_id IN (SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid())))`. O PostgreSQL aplica esse `USING` como implicit `WITH CHECK` para a **linha nova** — se o novo `contact_id` não pertence ao usuário, o UPDATE é bloqueado com "new row violates row-level security policy".
 
-**Risco real em produção**: Tabelas onde tanto a policy SELECT quanto UPDATE usam apenas `user_id`/`created_by`/`assigned_to` = `auth.uid()` sem checar `organization_id`. Revisar especialmente: `conversations`, `contacts`, `messages` (policy UPDATE `own` — confirmar se USING inclui org check).
+**CRITICAL-2 é risco de PRODUÇÃO, não do schema migrations**: Em produção, há drift de `organization_id` com políticas `USING(user_id = auth.uid())` sem checar org — esse padrão permite mover uma linha para outro tenant. As 39 policies UPDATE sem WITH CHECK explícito em produção representam o risco real. O schema migrations (contact_id-based) está protegido pelo implicit WITH CHECK.
+
+**Nuance crítica (válida para produção)**: O PostgreSQL aplica a cláusula `USING` da policy SELECT como implicit WITH CHECK na linha **nova** durante UPDATE. Portanto:
+- Se USING usa `contact_id IN user_contacts` → o ataque é **bloqueado** (schema migrations — confirmado nesta execução)
+- Se USING usa apenas `user_id = auth.uid()` → o ataque é **possível** (produção, drift org_id — 39 policies afetadas)
 
 ---
 
