@@ -13,7 +13,7 @@
 | `bun run lint` | ⚠️ 819 problems | 605 errors, 214 warnings — **todos pré-existentes na `main`** |
 | `bun run typecheck` | ⚠️ erros | drift de schema (ver item 2 de PENDENCIAS.md) — **pré-existentes na `main`** |
 | Unit tests (shard 1/3) | ⚠️ 4 falhas | `useTalkXSegments.test.ts:347,371,384,398` — pré-existentes (item 5) |
-| Unit tests (shard 2/3) | ✅ pass | sem falhas introduzidas |
+| Unit tests (shard 2/3) | ⚠️ 3 falhas | `workItemFormat.test.ts:123` (timezone CI=UTC vs local UTC-3), `configuracoes.leituraErro.test.tsx:73`, `useDiagnosticsData.select.test.ts:79` — **pré-existentes na `main`** (item 10) |
 | Unit tests (shard 3/3) | ⚠️ 1 falha | `useCampaignRowActions.test.tsx` — pré-existente (item 6) |
 | `ChatMessagesArea.pagination.test.tsx` | ✅ 4/4 pass | **corrigido nesta sessão** (commit `9c1c058`) |
 
@@ -58,16 +58,25 @@ Os required checks são exercidos por `ci.yml`, `db-guard.yml` e `e2e-logado.yml
 
 ### 2. `fila-merge.mjs` — retry em JSON truncado do `gh pr list`
 
-**Commit:** este PR (pendente push)  
+**Commit:** `a6d68651` (via MCP push)  
 **Causa:** `gh pr list --json` retornou `"unexpected end of JSON input"` (resposta truncada da API do GitHub). O padrão de erros transitórios em `execComRetry` não incluía esse caso, então o erro era tratado como permanente e o workflow falhava sem retry.  
 **Fix:** adicionado `unexpected end of JSON` ao regex de erros transitórios em `scripts/ci/fila-merge.mjs:38`.
+
+### 3. `useInboxFilters.ts` — migração para `useSearchParams` (PK-14)
+
+**Commit:** `a6d68651` (via MCP push)  
+**Causa:** `useInboxFilters.ts` usava `window.location.search` / `window.history.replaceState` diretamente, contornando o `MemoryRouter` do React Router nos testes. Resultado: 5/9 testes em `useInboxFilters.type-url.test.tsx` falhavam porque o hook não lia os params da URL do MemoryRouter.  
+**Fix:** Migrado para `useSearchParams` / `setSearchParams` do `react-router-dom`. Sentinel `undefined` vs `null` para distinguir "sem param na URL" de "param inválido/all" — garante que `contactTypeUrl !== undefined` cancela o fallback para prefs salvas quando há param na URL, mesmo inválido. 9/9 testes passam.
+
+**Nota sobre misatribuição no log do CI (shard 2/3, run 40211737149):** O CI reportou falha em `useInboxFilters.type-url.test.tsx:137` com `expected 'Hoje, 20:00' to be 'Hoje, 17:00'`. Investigado e confirmado: o arquivo `useInboxFilters.type-url.test.tsx` em `ee05fe0` **não tem assertion de data**. A falha real é `workItemFormat.test.ts:123` (timezone flake — ver item 10 de PENDENCIAS.md). Os 9 testes de PK-14 passam.
 
 ---
 
 ## Resumo
 
-- **Corrigidos nesta sessão:** 2 (`pagination.test.tsx`, `fila-merge.mjs`)
-- **Pré-existentes na main, requerem decisão humana/DDL:** 7 (ver `PENDENCIAS.md` items 1–9)
-- **Sem regressão introduzida:** confirmado — lint, typecheck e falhas de teste estão na `main` antes desta branch
+- **Corrigidos nesta sessão:** 3 (`pagination.test.tsx`, `fila-merge.mjs`, `useInboxFilters.ts` PK-14)
+- **Pré-existentes na main, requerem decisão humana/DDL:** 10 (ver `PENDENCIAS.md` items 1–10)
+- **Sem regressão introduzida:** confirmado — todas as falhas de CI no PR #2246 (SHA `ee05fe0`) correspondem a pré-existências na `main` (run 40122006424, commit `2d97c44`)
+- **Bloqueador para merge:** required checks falham por causas pré-existentes (items 3–7, 10 de PENDENCIAS.md)
 
 *Este arquivo deve ser atualizado após cada ciclo de correção de CI.*
