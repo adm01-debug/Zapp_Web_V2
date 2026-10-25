@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { PasswordResetRequestsPanel } from '../PasswordResetRequestsPanel';
@@ -27,6 +28,11 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+
+vi.mock('framer-motion', () => ({
+  motion: { div: ({ children, ...p }: React.PropsWithChildren<Record<string, unknown>>) => React.createElement('div', p, children) },
+  AnimatePresence: ({ children }: React.PropsWithChildren) => React.createElement(React.Fragment, null, children),
+}));
 
 describe('PasswordResetRequestsPanel — abas de filtro', () => {
   it('tem um painel por aba; só o ativo é visível e o inativo fica oculto (hidden)', async () => {

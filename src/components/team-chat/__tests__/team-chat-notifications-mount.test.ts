@@ -80,6 +80,8 @@ vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+vi.mock('@/components/shared/ConversationEmptyState', () => ({ ConversationEmptyState: () => null }));
+
 import App from '@/App';
 import { TeamChatView } from '@/components/team-chat/TeamChatView';
 

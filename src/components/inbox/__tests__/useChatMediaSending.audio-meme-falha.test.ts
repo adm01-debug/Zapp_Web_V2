@@ -26,6 +26,7 @@ const estado = vi.hoisted(() => ({
   onOpenChangeRaiz: undefined as ((v: boolean) => void) | undefined,
   upload: vi.fn(),
   createSignedUrl: vi.fn(),
+  getPublicUrl: vi.fn(),
   contatoConnectionId: 'conn-1' as string | null,
   instanceId: 'inst-1' as string | null,
   rpcs: [] as string[],
@@ -48,7 +49,7 @@ vi.mock('framer-motion', () => ({
   useReducedMotion: () => false,
 }));
 
-// Radix Popover não abre de forma confiável sob jsdom: o pass-through guarda a
+// Radix Popover não abre de forma confk�vel sob jsdom: o pass-through guarda a
 // prop `open` para provar que o popover só fecha depois do sucesso do envio.
 vi.mock('@/components/ui/popover', () => ({
   Popover: ({
@@ -126,7 +127,7 @@ vi.mock('@/integrations/supabase/client', () => {
         getSession: async () => ({ data: { session: null } }),
         getUser: async () => ({ data: { user: { id: 'u1' } } }),
       },
-      storage: { from: () => ({ upload: estado.upload, createSignedUrl: estado.createSignedUrl }) },
+      storage: { from: () => ({ upload: estado.upload, createSignedUrl: estado.createSignedUrl, getPublicUrl: estado.getPublicUrl }) },
     },
     SUPABASE_URL: 'http://localhost:54321',
     SUPABASE_ANON_KEY: 'anon-de-teste',
@@ -398,9 +399,9 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     expect(estado.toastSonner.error).not.toHaveBeenCalled();
   });
 
-  // --------------------------------- o outro picker que recebe o mesmo hook
+  // ------------------------------------------ o outro picker que recebe o mesmo hook
 
-  it('AudioMemePicker ligado ao hook: falha no envio não deixa rejeição não tratada', async () => {
+  it('AudioMemePicker ligado ao hook: falha no envio não deixa rejek#�ão não tratada', async () => {
     estado.enviar.mockRejectedValueOnce(new Error('envio recusado pela API'));
     render(React.createElement(FluxoInboxMeme));
 
@@ -435,8 +436,8 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
  * PK-28 · paridade doc 06 — a citação junto da figurinha/emoji/áudio-meme.
  *
  * O servidor cita qualquer tipo (`message-delivery` · `providerPayload.quoted`);
- * o que faltava era o cliente mandar o id da resposta quando o compositor estava
- * respondendo e o envio saía por um destes pickers.
+ * o que faltava era o cliente mandar o id da resposta quando o compositor etava
+ * respondendo e o envio saría por um destes pickers.
  */
 describe('useChatMediaSending — PK-28: citação da resposta', () => {
   it('o áudio meme sai citando a mensagem respondida', async () => {
