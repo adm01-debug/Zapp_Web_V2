@@ -76,4 +76,32 @@ no momento da análise. Pode estar resolvido nas commits mais novas da PR.
 
 ---
 
+## 4. Contrato DB offline — TC-009 em execução (PR #2246)
+
+**Workflow:** `DB Guard (offline)`  
+**Branch:** `claude_05/festive-carson-ub43wu` (PR #2246)  
+**Step:** `Simular conversation_id derivado da mensagem em recibos e reacoes (TC-009)` — passo 147 de 188  
+**Run com falha histórica (SHA anterior):** 40184398774 (SHA `0eefb3ce6f`)  
+**Erro exato da falha histórica:** `ERROR:  function public.request_department_access(unknown) does not exist`  
+**Run atual:** 40190996529 (SHA `d3dc8a30`) — `in_progress` ao registrar este item; passos 1–101 todos `success`
+
+**Status:** O step TC-009 ainda não havia executado no run atual (40190996529) no momento deste
+registro. Os 101 passos anteriores passaram sem falha. A falha histórica em run anterior (SHA
+`0eefb3ce6f`) foi `function public.request_department_access(unknown) does not exist` — indica que
+o step tentou chamar uma função que não existe na assinatura esperada. Não há mudança de DDL nesta
+PR que pudesse ter corrigido ou agravado isso; o resultado do TC-009 no run atual é desconhecido.
+
+**Por que não foi corrigido automaticamente:**  
+A função `request_department_access` é DDL de banco — corrigir requer verificar a assinatura atual
+da função em produção, identificar o tipo esperado pelo teste e, se divergir, aplicar migration ou
+corrigir o teste. Isso envolve escrita em banco de produção (regra 8 do fluxo Git: DDL necessita
+aprovação humana).
+
+**Ação necessária:**  
+1. Verificar o resultado do run 40190996529 no step TC-009 após conclusão.
+2. Se falhar: `SELECT pg_get_functiondef(oid) FROM pg_proc WHERE proname = 'request_department_access'` no banco oficial para ver a assinatura real.
+3. Ajustar o teste ou criar migration que corrija a assinatura com aprovação do Joaquim.
+
+---
+
 *Este arquivo deve ser atualizado ou removido após cada item ser resolvido.*
