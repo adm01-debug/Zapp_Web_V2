@@ -148,6 +148,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (table: string) => h.makeQuery(table),
     rpc: () => Promise.resolve({ data: [], error: null }),
+    channel: () => { const ch: Record<string, unknown> = {}; ch.on = () => ch; ch.subscribe = () => ch; return ch; },
   },
 }));
 

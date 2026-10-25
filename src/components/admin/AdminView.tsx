@@ -13,11 +13,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
 import {
   Shield, Users, Search, Crown, UserCog, User, History, RefreshCw,
-  UserPlus, Building, Eye, Loader2,
+  UserPlus, Building, Eye, Loader2, Clock,
   AlertTriangle, ChevronLeft, ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 import { useUserRole, AppRole } from '@/hooks/system/useUserRole';
+import { supabase } from '@/integrations/supabase/client';
 import { AdminCRMDashboard } from './AdminCRMDashboard';
 import { useAdminData, accessLevelConfig, AUDIT_PAGE_SIZE, MIN_PASSWORD_LENGTH, type UserWithRole } from './useAdminData';
 import { AdminUsersTable } from './AdminUsersTable';
@@ -29,9 +30,6 @@ const roleIconMap = { admin: Crown, supervisor: UserCog, agent: User, special_ag
 const roleLabelMap = { admin: 'Administrador', supervisor: 'Supervisor', agent: 'Atendente', special_agent: 'Agente Especial' } as const;
 const roleColorMap = { admin: 'text-warning', supervisor: 'text-info', agent: 'text-muted-foreground', special_agent: 'text-accent-foreground' } as const;
 
-// O campo "Limite de Chats" usa type=number, mas o navegador permite apagar o
-// valor: o Number.parseInt('') virava NaN e o NaN era gravado em profiles.max_chats.
-// O número enviado ao salvar é sempre um inteiro entre 1 e 50.
 const LIMITE_CHATS_MIN = 1;
 const LIMITE_CHATS_MAX = 50;
 const LIMITE_CHATS_PADRAO = 5;
@@ -43,13 +41,17 @@ function normalizarLimiteChats(valor: number): number {
 
 type GoogleServiceKey = 'google_sheets' | 'google_docs' | 'google_calendar' | 'google_drive';
 
-type AdminTab = 'users' | 'audit' | 'crm';
+type AdminTab = 'users' | 'audit' | 'crm' | 'cron';
 
-// SL-160/P2-3.4: a integração com Google Calendar não existe no produto (não há OAuth
-// nem sincronização em src/ ou supabase/functions — só a tela de demonstração, fora dos
-// grupos principais da navegação). A permissão `google_calendar` era oferecida aqui e
-// gravada em `user_service_accounts` sem nenhum consumidor: fica visível, mas desligada,
-// até a integração real existir.
+interface CronJob {
+  jobname: string;
+  schedule: string;
+  active: boolean;
+  last_status: string | null;
+  last_run_at: string | null;
+  last_return_message: string | null;
+}
+
 const googleServiceOptions: ReadonlyArray<{ key: GoogleServiceKey; label: string; available: boolean }> = [
   { key: 'google_sheets', label: 'Google Sheets', available: true },
   { key: 'google_docs', label: 'Google Docs', available: true },
@@ -73,11 +75,10 @@ export function AdminView() {
   const [newUserAvatarFile, setNewUserAvatarFile] = useState<File | null>(null);
   const [newUserGoogleServices, setNewUserGoogleServices] = useState({ google_sheets: false, google_docs: false, google_calendar: false, google_drive: false });
   const [creatingUser, setCreatingUser] = useState(false);
-  // Filtro de data e paginação da auditoria: o estado vive aqui e o hook
-  // `useAdminData` monta a consulta (ele não guarda estado de filtro).
   const [auditFrom, setAuditFrom] = useState('');
   const [auditTo, setAuditTo] = useState('');
   const [auditPage, setAuditPage] = useState(1);
+  const [cronJobs, setCronJobs] = useState<CronJob[]>([]);
 
   const { users, auditLogs, auditTotal, loading, error, fetchData, handleRoleChange, handleToggleActive, handleSaveUser, handleSaveRamal, handleCreateUser } =
     useAdminData(activeTab as 'users' | 'audit' | 'crm', {
@@ -87,24 +88,24 @@ export function AdminView() {
       pageSize: AUDIT_PAGE_SIZE,
     });
 
-  // Indica se a aba atual carrega dados de usuários (controla o indicador de loading).
+  useEffect(() => {
+    if (activeTab !== 'cron' || !isAdmin) return;
+    void (supabase.rpc('admin_list_cron_jobs') as Promise<{ data: CronJob[] | null; error: unknown }>)
+      .then(({ data, error }) => { if (!error && data) setCronJobs(data); });
+  }, [activeTab, isAdmin]);
+
   const usaDadosDeUsuario = activeTab === 'users';
 
-  // A URL do avatar é criada ao escolher o arquivo e revogada quando o arquivo muda,
-  // o diálogo fecha ou a tela desmonta — antes era criada a cada render e nunca liberada.
   useEffect(() => {
     if (!editAvatarPreview) return undefined;
     return () => URL.revokeObjectURL(editAvatarPreview);
   }, [editAvatarPreview]);
 
-  // Trocar o período volta para a primeira página: sem isso a página 3 de um
-  // período novo poderia cair fora do intervalo e mostrar tabela vazia.
   const onAuditFromChange = (value: string) => { setAuditFrom(value); setAuditPage(1); };
   const onAuditToChange = (value: string) => { setAuditTo(value); setAuditPage(1); };
   const limparFiltroAuditoria = () => { setAuditFrom(''); setAuditTo(''); setAuditPage(1); };
 
   const auditTotalPages = Math.max(1, Math.ceil((auditTotal ?? 0) / AUDIT_PAGE_SIZE));
-  // A busca client-side só faz sentido nas abas que mostram lista filtrada.
   const abaTemBusca = activeTab === 'users' || activeTab === 'audit';
 
   const onSaveUser = async () => {
@@ -182,6 +183,7 @@ export function AdminView() {
     ['users', Users, `Usuários (${users.length})`],
     ['audit', History, 'Auditoria'],
     ['crm', Building, 'CRM 360°'],
+    ...(isAdmin ? [['cron' as AdminTab, Clock, 'Tarefas agendadas'] as const] : []),
   ];
 
   const navegarNasAbas = (event: KeyboardEvent<HTMLButtonElement>, tab: AdminTab) => {
@@ -237,7 +239,6 @@ export function AdminView() {
         ))}
       </div>
 
-      {/* Busca: só nas abas em que o termo de fato filtra a lista carregada. */}
       {abaTemBusca && (
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -245,7 +246,6 @@ export function AdminView() {
         </div>
       )}
 
-      {/* Filtro de data da auditoria: limites inclusivos no fuso local. */}
       {activeTab === 'audit' && (
         <div className="flex flex-wrap items-end gap-3">
           <div className="space-y-2">
@@ -262,7 +262,6 @@ export function AdminView() {
         </div>
       )}
 
-      {/* Edit User Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={fecharEdicaoUsuario}>
         <DialogContent aria-describedby={undefined} className="max-w-lg">
           <DialogHeader><DialogTitle>Editar Usuário</DialogTitle></DialogHeader>
@@ -335,7 +334,6 @@ export function AdminView() {
                       ))}
                     </SelectContent>
                   </Select>
-                  {/* `profiles.access_level` está DEPRECATED: o campo é registro, não permissão. */}
                   <p className="text-xs text-muted-foreground">Informativo: este nível não libera nada hoje — quem dá acesso é o papel (Role).</p>
                 </div>
               </div>
@@ -362,7 +360,6 @@ export function AdminView() {
         </DialogContent>
       </Dialog>
 
-      {/* Add User Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent aria-describedby={undefined} className="max-w-md">
           <DialogHeader><DialogTitle>Adicionar Novo Usuário</DialogTitle></DialogHeader>
@@ -437,7 +434,6 @@ export function AdminView() {
         </DialogContent>
       </Dialog>
 
-      {/* Content */}
       <div role="tabpanel" id="admin-tabpanel" aria-labelledby={`tab-${activeTab}`} tabIndex={0}>
       {loading && usaDadosDeUsuario ? (
         <div className="flex justify-center py-12"><RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" /></div>
@@ -488,6 +484,16 @@ export function AdminView() {
         <SectionErrorBoundary key="crm" sectionName="CRM Admin">
           <AdminCRMDashboard />
         </SectionErrorBoundary>
+      ) : activeTab === 'cron' ? (
+        <div className="space-y-2">
+          {cronJobs.map((job) => (
+            <div key={job.jobname} className="flex items-center gap-3 p-3 rounded-lg border">
+              <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+              <span className="font-mono text-sm">{job.jobname}</span>
+              <span className="text-xs text-muted-foreground">{job.schedule}</span>
+            </div>
+          ))}
+        </div>
       ) : null}
       </div>
     </div>

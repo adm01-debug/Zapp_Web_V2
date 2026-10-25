@@ -43,7 +43,7 @@ async function fetchGlobalSettings(): Promise<GlobalSetting[]> {
  * atualizado por um deles aparece imediatamente nos outros e uma instância que
  * monta depois já encontra o dado (não repassa o carregando).
  */
-export function useGlobalSettings() {
+export function useGlobalSettings(options?: { enabled?: boolean }) {
   const queryClient = useQueryClient();
 
   const { data: settings = SEM_CONFIGURACOES, isLoading } = useQuery({
@@ -51,6 +51,7 @@ export function useGlobalSettings() {
     queryFn: fetchGlobalSettings,
     staleTime: 5 * 60 * 1000, // 5 min — deduplica entre todos os consumidores
     gcTime: 10 * 60 * 1000,
+    enabled: options?.enabled ?? true,
   });
 
   const getSetting = useCallback((key: string): string | null => {

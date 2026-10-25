@@ -5,6 +5,7 @@ import { useNotificationSettings } from '@/hooks/system/useNotificationSettings'
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
+import { showBrowserNotification } from '@/utils/notificationSounds';
 
 const log = getLogger('TeamChatNotifications');
 
@@ -172,31 +173,24 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           playTeamChatSound(settings.soundVolume);
         }
 
-        if ('Notification' in window && Notification.permission === 'granted') {
-          let senderName = 'Colega';
-          try {
-            const { data, error: erroPerfis } = await supabase.rpc('get_team_profiles');
-            if (erroPerfis) {
-              log.error('Failed to resolve team chat sender name:', erroPerfis);
-            } else {
-              const perfis = (data ?? []) as Array<{ id: string; name: string | null }>;
-              const perfil = perfis.find((p) => p.id === msg.sender_id);
-              if (perfil?.name) senderName = perfil.name;
-            }
-          } catch (err) { log.error('Unexpected error in useTeamChatNotifications:', err); }
+        let senderName = 'Colega';
+        try {
+          const { data, error: erroPerfis } = await supabase.rpc('get_team_profiles');
+          if (erroPerfis) {
+            log.error('Failed to resolve team chat sender name:', erroPerfis);
+          } else {
+            const perfis = (data ?? []) as Array<{ id: string; name: string | null }>;
+            const perfil = perfis.find((p) => p.id === msg.sender_id);
+            if (perfil?.name) senderName = perfil.name;
+          }
+        } catch (err) { log.error('Unexpected error in useTeamChatNotifications:', err); }
 
-          const body = getTeamChatNotificationBody(msg.media_type, msg.content);
-          const notif = new Notification(`\u{1F4AC} Teams: ${senderName}`, {
-            body,
-            tag: `team-msg-${msg.conversation_id}`,
-            data: { type: 'team_chat', conversationId: msg.conversation_id, messageId: msg.id },
-          });
-          notif.onclick = () => {
-            window.focus();
-            navigateToView('team-chat');
-          };
-          log.debug('Team chat notification sent for message:', msg.id);
-        }
+        const body = getTeamChatNotificationBody(msg.media_type, msg.content);
+        showBrowserNotification(`\u{1F4AC} Teams: ${senderName}`, body, {
+          tag: `team-msg-${msg.conversation_id}`,
+          onClick: () => navigateToView('team-chat'),
+        });
+        log.debug('Team chat notification sent for message:', msg.id);
       })
       .subscribe();
 
