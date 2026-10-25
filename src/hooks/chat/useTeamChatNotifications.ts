@@ -2,7 +2,7 @@ import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
-import { usePushNotifications } from '@/hooks/system/usePushNotifications';
+import { showBrowserNotification } from '@/utils/notificationSounds';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
@@ -116,10 +116,6 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
   const isQuietHoursRef = useRef(isQuietHours);
   isQuietHoursRef.current = isQuietHours;
 
-  const { showNotification } = usePushNotifications();
-  const showNotificationRef = useRef(showNotification);
-  showNotificationRef.current = showNotification;
-
   useEffect(() => {
     activeIdRef.current = activeConversationId;
   }, [activeConversationId]);
@@ -188,11 +184,11 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           } catch (err) { log.error('Unexpected error in useTeamChatNotifications:', err); }
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
-          void showNotificationRef.current({
-            title: `\u{1F4AC} Teams: ${senderName}`,
+          showBrowserNotification(
+            `\u{1F4AC} Teams: ${senderName}`,
             body,
-            tag: `team-msg-${msg.conversation_id}`,
-          });
+            { tag: `team-msg-${msg.conversation_id}`, onClick: () => navigateToView('team-chat') },
+          );
           log.debug('Team chat notification sent for message:', msg.id);
         }
       })

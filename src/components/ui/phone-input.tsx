@@ -41,8 +41,8 @@ function formatPhone(digits: string): string {
   if (digits.length <= 2) return `+${digits}`;
   if (digits.length <= 4) return `+${digits.slice(0, 2)} ${digits.slice(2)}`;
 
-  // Internacional: 2 dígitos de código de país + resto.
-  return `+${digits.slice(0, 2)} ${digits.slice(2)}`;
+  // Internacional: passthrough E.164 sem reformatar (Ajuste UI-07).
+  return `+${digits}`;
 }
 
 /** Extrai apenas os dígitos de uma string. */
