@@ -4,8 +4,10 @@
  * registrada) ALÉM da permissão já concedida. Quem autorizou o navegador mas não
  * assinou o push ficava só com o som e sem aviso visual.
  *
- * O `showNotification` de produção publica pela inscrição do service worker LOCAL
- * (`registration.showNotification`), que exige apenas `permission === 'granted'`.
+ * O código de produção usa `new Notification(...)` diretamente (sem passar por
+ * `usePushNotifications().showNotification`). A condição é:
+ * `'Notification' in window && Notification.permission === 'granted'`
+ * + `settings.browserNotifications` + não estar em horário silencioso.
  *
  * Como é provado: com permissão concedida e `isSubscribed: false`, o alerta TEM de
  * sair; e as guardas que existem de verdade (sem permissão / liga-desliga do painel
@@ -15,13 +17,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
 const h = vi.hoisted(() => {
-  const avisos: Array<{ title: string; data: Record<string, unknown> }> = [];
-  const showNotification = vi.fn(
-    async (payload: { title: string; data: Record<string, unknown> }) => {
-      avisos.push(payload);
-      return true;
-    },
-  );
+  const avisos: Array<{ title: string; options: Record<string, unknown> }> = [];
 
   return {
     membership: [{ id: 'm1', is_muted: false }],
@@ -30,7 +26,6 @@ const h = vi.hoisted(() => {
     permission: 'granted' as NotificationPermission,
     isSubscribed: false,
     avisos,
-    showNotification,
     /** Callback de `postgres_changes` registrado pelo canal, como em produção. */
     handler: null as ((payload: unknown) => unknown) | null,
   };
@@ -66,11 +61,7 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
 }));
 
 vi.mock('@/hooks/system/usePushNotifications', () => ({
-  usePushNotifications: () => ({
-    showNotification: h.showNotification,
-    isSubscribed: h.isSubscribed,
-    permission: h.permission,
-  }),
+  usePushNotifications: () => ({ isSubscribed: h.isSubscribed }),
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -101,6 +92,16 @@ describe('useTeamChatNotifications — aviso do navegador (HZ3-001)', () => {
     h.quiet = false;
     h.permission = 'granted';
     h.isSubscribed = false;
+
+    // Monta window.Notification (ausente no jsdom por padrão) capturando instâncias em h.avisos.
+    // Usa function declaration (não arrow) porque arrow functions não são construtoras.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function MockNotif(this: any, title: string, options?: Record<string, unknown>) {
+      h.avisos.push({ title, options: options ?? {} });
+      this.onclick = null;
+    }
+    Object.defineProperty(MockNotif, 'permission', { get: () => h.permission, configurable: true });
+    Object.defineProperty(window, 'Notification', { value: MockNotif, writable: true, configurable: true });
   });
 
   it('avisa no navegador com a permissão concedida, mesmo sem assinatura de push', async () => {
@@ -111,7 +112,7 @@ describe('useTeamChatNotifications — aviso do navegador (HZ3-001)', () => {
 
     expect(h.avisos).toHaveLength(1);
     expect(h.avisos[0].title).toContain('Teams');
-    expect(h.avisos[0].data).toMatchObject({
+    expect(h.avisos[0].options.data).toMatchObject({
       type: 'team_chat',
       conversationId: 'c1',
       messageId: 'm1',
@@ -124,7 +125,7 @@ describe('useTeamChatNotifications — aviso do navegador (HZ3-001)', () => {
 
     await h.handler!(mensagem('outro'));
 
-    expect(h.showNotification).not.toHaveBeenCalled();
+    expect(h.avisos).toHaveLength(0);
   });
 
   it('não avisa com o liga/desliga do painel desligado', async () => {
@@ -133,6 +134,6 @@ describe('useTeamChatNotifications — aviso do navegador (HZ3-001)', () => {
 
     await h.handler!(mensagem('outro'));
 
-    expect(h.showNotification).not.toHaveBeenCalled();
+    expect(h.avisos).toHaveLength(0);
   });
 });

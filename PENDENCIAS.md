@@ -138,10 +138,10 @@ Ambas requerem investigação fora do escopo desta sessão.
 Passo "🚦 Escolher a proxima PR da fila" falhou com:  
 `HTTP 504: 504 Gateway Timeout (https://api.github.com/graphql)`
 
-O erro ocorreu na chamada à API GraphQL do GitHub pelo script `scripts/ci/fila-merge.mjs`.
-É uma falha transitória de disponibilidade da infraestrutura do GitHub — não há bug de código.
-`grep` por `exit 1` em `fila-merge.mjs` não retornou nenhuma ocorrência; o catch do script
-propaga o erro recebido da API, sem `exit 1` explícito.
+O script `scripts/ci/fila-merge.mjs` usa `gh pr list` (REST via `gh` CLI). O HTTP 504 foi emitido
+pelo `gh` CLI ao chamar a API GraphQL do GitHub internamente para resolver campos de PR (como
+`mergeStateStatus`). É uma falha transitória de disponibilidade da infraestrutura do GitHub — não
+há bug de código. O catch do script propaga o erro recebido, sem `exit 1` explícito.
 
 **Confirmação de que NÃO é introduzido por este PR:**  
 O workflow não toca nenhum arquivo alterado nesta branch. A falha é HTTP 504 (gateway timeout
