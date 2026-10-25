@@ -54,6 +54,8 @@ vi.mock('@/hooks/inbox/useConnectionsManager', async () => {
         setSyncingHistory: vi.fn(),
         evolutionLoading: false,
         handleAddConnection: h.handleAddConnection,
+        clearAddConnectionError: vi.fn(),
+        addConnectionError: null,
         handleShowQrCode: vi.fn(),
         handleRefreshQrCode: vi.fn(),
         handleCopyId: vi.fn(),

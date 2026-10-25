@@ -79,6 +79,7 @@ export function ConnectionsView() {
   // acontece, escondemos a ação em todos os cartões até a página recarregar.
   const [historyNotSupported, setHistoryNotSupported] = useState(false);
   const [checkingHealth, setCheckingHealth] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const handleSyncHistory = async (connection: { id: string; instance_id?: string | null }) => {
     if (!connection.instance_id) return;
@@ -118,6 +119,18 @@ export function ConnectionsView() {
     } finally { setCheckingHealth(null); }
   };
 
+  const handleAddWithValidation = () => {
+    clearAddConnectionError();
+    setPhoneError(null);
+    const digits = newConnection.phone_number.replace(/\D/g, '');
+    const valid = digits.length >= 10 && !(digits.startsWith('55') && digits.length < 12);
+    if (!valid) {
+      setPhoneError('Informe um número com DDI 55 (ex.: +55 11 99999-0000) ou E.164 válido com outro DDI.');
+      return;
+    }
+    void handleAddConnection();
+  };
+
   return (
     <div className="space-y-6 relative bg-background w-full min-w-0">
       {!reduzido && <AuroraBorealis />} {!reduzido && <FloatingParticles />}
@@ -139,11 +152,11 @@ export function ConnectionsView() {
               <DialogHeader><DialogTitle>Adicionar Nova Conexão</DialogTitle><DialogDescription>Crie uma nova instância para conectar ao WhatsApp</DialogDescription></DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => { clearAddConnectionError(); setNewConnection({ ...newConnection, name: e.target.value }); }} /></div>
-                <div className="space-y-2"><Label>Número do WhatsApp</Label><Input placeholder="+55 11 99999-0000" value={newConnection.phone_number} onChange={(e) => { clearAddConnectionError(); setNewConnection({ ...newConnection, phone_number: formatPhoneNumber(e.target.value) }); }} /></div>
-                {addConnectionError && <p role="alert" data-testid="add-connection-error" className="text-sm text-destructive">{addConnectionError}</p>}
+                <div className="space-y-2"><Label>Número do WhatsApp</Label><Input placeholder="+55 11 99999-0000" value={newConnection.phone_number} onChange={(e) => { clearAddConnectionError(); setPhoneError(null); setNewConnection({ ...newConnection, phone_number: formatPhoneNumber(e.target.value) }); }} /></div>
+                {(addConnectionError || phoneError) && <p role="alert" data-testid="add-connection-error" className="text-sm text-destructive">{addConnectionError || phoneError}</p>}
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={() => { clearAddConnectionError(); setIsAddDialogOpen(false); }} disabled={isCreating}>Cancelar</Button>
-                  <Button onClick={handleAddConnection} className="bg-whatsapp hover:bg-whatsapp-dark" disabled={isCreating}>
+                  <Button variant="outline" onClick={() => { clearAddConnectionError(); setPhoneError(null); setIsAddDialogOpen(false); }} disabled={isCreating}>Cancelar</Button>
+                  <Button onClick={handleAddWithValidation} className="bg-whatsapp hover:bg-whatsapp-dark" disabled={isCreating}>
                     {isCreating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Criando...</> : 'Adicionar'}
                   </Button>
                 </div>

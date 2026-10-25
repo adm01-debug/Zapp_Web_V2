@@ -5,8 +5,6 @@ import { useNotificationSettings } from '@/hooks/system/useNotificationSettings'
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
-import { usePushNotifications } from '@/hooks/system/usePushNotifications';
-
 const log = getLogger('TeamChatNotifications');
 
 type ActiveConversationListener = () => void;
@@ -108,20 +106,15 @@ export function playTeamChatSound(volume: number = 70) {
 export function useTeamChatNotifications(activeConversationId: string | null) {
   const { profile } = useAuth();
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
-  const { showNotification, permission } = usePushNotifications();
   const activeIdRef = useRef(activeConversationId);
 
   const notifSettingsRef = useRef(notifSettings);
   const isQuietHoursRef = useRef(isQuietHours);
-  const showNotificationRef = useRef(showNotification);
-  const permissionRef = useRef(permission);
 
   // Refs atualizados após cada render -- leitura fresca dentro do effect sem entrar nas deps
   useEffect(() => {
     notifSettingsRef.current = notifSettings;
     isQuietHoursRef.current = isQuietHours;
-    showNotificationRef.current = showNotification;
-    permissionRef.current = permission;
   });
 
   useEffect(() => {
@@ -190,12 +183,17 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           }
         } catch (err) { log.error('Unexpected error in useTeamChatNotifications:', err); }
 
-        if (permissionRef.current === 'granted' && notifSettingsRef.current.browserNotifications) {
-          await showNotificationRef.current({
-            title: `\u{1F4AC} Teams: ${senderName}`,
+        if ('Notification' in window &&
+            Notification.permission === 'granted' &&
+            notifSettingsRef.current.browserNotifications) {
+          const notif = new Notification(`\u{1F4AC} Teams: ${senderName}`, {
             body: msg.content,
-            data: { type: 'team_chat', conversationId: msg.conversation_id, messageId: msg.id },
+            tag: `team-msg-${msg.conversation_id}`,
           });
+          notif.onclick = () => {
+            window.focus();
+            navigateToView('team-chat');
+          };
         }
         log.debug('Team chat notification sent for message:', msg.id);
       })
