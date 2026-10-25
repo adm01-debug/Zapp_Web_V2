@@ -46,18 +46,23 @@ WHERE schemaname='public' AND cmd='UPDATE'
 
 Em PostgreSQL, UPDATE sem WITH CHECK explícito usa USING como implicit WITH CHECK — isso **protege** quando USING contém `is_member_of(organization_id)`, mas deixa exploração possível quando USING usa apenas `user_id = auth.uid()` sem verificar o org.
 
-### Matrix A×B — resultados (Postgres 16 local, 2026-10-24)
+### Matrix A×B — resultados (PostgreSQL 16 nativo, migrations do repo, 2026-10-25T10:14Z)
 
 | Teste | Condição | Resultado |
 |-------|----------|-----------|
-| T-01 a T-05 | SELECT isolation entre tenants | PASS — RLS isola corretamente |
-| T-06 | INSERT WITH CHECK presente | PASS |
-| T-07 | INSERT via SECURITY DEFINER | PASS |
-| T-C2 | UPDATE cross-tenant (CRITICAL-2) | **CONFIRMADO** — SELECT usa user_id, UPDATE sem WITH CHECK org → troca org_id |
-| T-08 | UPDATE bloqueado com is_member_of | PASS — is_member_of em USING cobre implicit WITH CHECK |
-| T-09 | DELETE cross-tenant | PASS |
+| T-01 | SELECT msgs do próprio contato | PASS — user-a vê 2 msgs |
+| T-02 | SELECT msgs de outro tenant | PASS — user-a vê 0 msgs de user-b |
+| T-C2 | UPDATE cross-tenant sem WITH CHECK | **PASS (0 rows)** — bloqueado por implicit WITH CHECK via USING(contact_id) |
+| T-05 | INSERT com contact_id de outro tenant | PASS — bloqueado |
+| T-09 | DELETE cross-tenant | PASS — 0 rows deleted |
 
-**Nuance crítica**: PostgreSQL aplica SELECT USING como implicit WITH CHECK na **linha nova**. Tabelas onde tanto SELECT quanto UPDATE usam `is_member_of(organization_id)` estão protegidas mesmo sem WITH CHECK explícito. O risco real é em tabelas onde SELECT e UPDATE usam `user_id = auth.uid()` sem org check.
+**Distinção crítica (schema migrations vs. produção)**:
+- **Schema do repo** (migrations): usa `contact_id`/`assigned_to` para isolamento. `organization_id` NÃO existe nas 1055 migrations — T-C2 PASS (bloqueado pelo implicit WITH CHECK via USING contact_id)
+- **Banco de produção** (drift): possui `organization_id` com policies `USING(user_id=auth.uid())` sem check de organização. 39 policies UPDATE sem WITH CHECK explícito — risco real confirmado ao vivo.
+
+**CRITICAL-2 se refere ao banco de PRODUÇÃO, não ao schema das migrations.**
+
+**Nuance**: PostgreSQL aplica SELECT USING como implicit WITH CHECK na **linha nova**. Quando USING usa `contact_id IN (user's contacts)`, uma tentativa de mover a linha para outro contact_id é bloqueada porque a nova linha não passa no WITH CHECK implícito.
 
 **Correção**: `propostas/02_rls_with_check.sql`
 
