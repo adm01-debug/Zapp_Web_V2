@@ -59,6 +59,24 @@ interface QueuedMessage {
   external_id?: string | null;
 }
 
+function readCurrentUserId(): string | null {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith('sb-') || !key.endsWith('-auth-token')) continue;
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw) as { access_token?: unknown; user?: { id?: unknown } } | null;
+      const userId = parsed?.user?.id;
+      if (typeof parsed?.access_token === 'string' && typeof userId === 'string' && userId) return userId;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 interface AtomicQueueRpc {
   rpc: (name: string, args: Record<string, unknown>) => Promise<{
     data: QueuedMessage | null;
@@ -334,6 +352,10 @@ async function enqueueAndDispatch(
 
 /** O que ficou na fila offline sai com a MESMA chave estável: sem duplicar (item 024). */
 async function deliverQueuedOfflineMessage(message: OfflineQueuedMessage): Promise<void> {
+  const currentUserId = readCurrentUserId();
+  if (message.userId && currentUserId && message.userId !== currentUserId) {
+    throw new Error('Offline queue: message belongs to a different user');
+  }
   // A drenagem obedece ao MESMO throttle do envio online: a volta da rede não
   // pode virar rajada de requests contra o servidor (item 026).
   await sendThrottle.wait();
@@ -397,6 +419,7 @@ async function enqueueOffline(
     caption: input.caption ?? null,
     replyToId: input.replyToId ?? null,
     whatsappConnectionId: input.whatsappConnectionId ?? null,
+    userId: readCurrentUserId() ?? undefined,
   });
   // `pending`: a bolha mostra "enviando" até a fila drenar — nada foi entregue ainda.
   return { id: queued.clientMessageId, status: 'pending', externalId: null, idempotent: false };

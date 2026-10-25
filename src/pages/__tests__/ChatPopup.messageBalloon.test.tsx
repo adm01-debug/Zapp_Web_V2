@@ -51,7 +51,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }), remove: vi.fn() }),
     },
     functions: { invoke: vi.fn(async () => ({ data: null, error: null })) },
-    channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
+    channel: () => { const ch: Record<string, unknown> = {}; ch.on = () => ch; ch.subscribe = () => ch; return ch; },
     removeChannel: vi.fn(),
   },
 }));

@@ -2,7 +2,7 @@ import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
-import { showBrowserNotification } from '@/utils/notificationSounds';
+import { usePushNotifications } from '@/hooks/system/usePushNotifications';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
@@ -110,11 +110,19 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
   const activeIdRef = useRef(activeConversationId);
 
-  // Refs atualizados a cada render -- leitura fresca dentro do effect sem entrar nas deps
   const notifSettingsRef = useRef(notifSettings);
-  notifSettingsRef.current = notifSettings;
   const isQuietHoursRef = useRef(isQuietHours);
-  isQuietHoursRef.current = isQuietHours;
+  const { showNotification, permission } = usePushNotifications();
+  const showNotificationRef = useRef(showNotification);
+  const permissionRef = useRef(permission);
+
+  // Refs atualizados após cada render -- leitura fresca dentro do effect sem entrar nas deps
+  useEffect(() => {
+    notifSettingsRef.current = notifSettings;
+    isQuietHoursRef.current = isQuietHours;
+    showNotificationRef.current = showNotification;
+    permissionRef.current = permission;
+  });
 
   useEffect(() => {
     activeIdRef.current = activeConversationId;
@@ -170,7 +178,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           playTeamChatSound(settings.soundVolume);
         }
 
-        if (settings.browserNotifications && !quietHours()) {
+        if (permissionRef.current === 'granted') {
           let senderName = 'Colega';
           try {
             const { data, error: erroPerfis } = await supabase.rpc('get_team_profiles');
@@ -184,11 +192,12 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           } catch (err) { log.error('Unexpected error in useTeamChatNotifications:', err); }
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
-          showBrowserNotification(
-            `\u{1F4AC} Teams: ${senderName}`,
+          void showNotificationRef.current({
+            title: `\u{1F4AC} Teams: ${senderName}`,
             body,
-            { tag: `team-msg-${msg.conversation_id}`, onClick: () => navigateToView('team-chat') },
-          );
+            tag: `team-msg-${msg.conversation_id}`,
+            data: { type: 'team_chat', conversationId: msg.conversation_id, messageId: msg.id },
+          });
           log.debug('Team chat notification sent for message:', msg.id);
         }
       })

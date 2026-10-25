@@ -105,6 +105,10 @@ vi.mock('@/hooks/crm/useAgentPresence', () => ({
   useAgentPresenceMap: () => ({}),
 }));
 
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: { id: 'user-1', name: 'Test', avatar_url: null }, user: { id: 'user-1' } }),
+}));
+
 import { AgentsView } from '@/components/agents/AgentsView';
 
 function renderView() {
