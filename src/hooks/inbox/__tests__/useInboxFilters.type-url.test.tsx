@@ -10,7 +10,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, type ReactNode } from 'react';
 
 vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: () => false }));
@@ -50,8 +50,14 @@ const CONVERSAS = [
 // os outros filtros usam e onde o `type` precisa aparecer. A escrita fica no
 // useEffect (e não no render), como pede a regra react-hooks/globals.
 const routerSearchRef: { current: string } = { current: '' };
+// Navegação externa ao hook (simula back/forward do histórico).
+let externalNavigate: (to: string) => void = () => {};
 function Probe() {
   const { search } = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    externalNavigate = (to) => navigate(to);
+  }, [navigate]);
   useEffect(() => {
     routerSearchRef.current = search;
   }, [search]);
@@ -143,6 +149,24 @@ describe('useInboxFilters — type pela URL (PK-14)', () => {
     expect(result.current.selectedContactType).toBeNull();
     expect(routerSearchRef.current).not.toContain('type=');
     expect(ids(result)).toEqual(['ana', 'grp']);
+  });
+});
+
+describe('useInboxFilters — back/forward do histórico (?type=)', () => {
+  it('depois de troca manual, a URL mudando por fora atualiza o filtro', () => {
+    const { result } = montar('/inbox?type=cliente');
+    act(() => result.current.handleContactTypeChange('grupo'));
+    expect(result.current.selectedContactType).toBe('grupo');
+
+    // "Voltar" no histórico: a URL passa a ter outro type, sem passar pelo handler.
+    act(() => externalNavigate('/inbox?type=cliente'));
+    expect(result.current.selectedContactType).toBe('cliente');
+
+    act(() => externalNavigate('/inbox'));
+    expect(result.current.selectedContactType).toBeNull();
+
+    act(() => externalNavigate('/inbox?type=grupo'));
+    expect(result.current.selectedContactType).toBe('grupo');
   });
 });
 

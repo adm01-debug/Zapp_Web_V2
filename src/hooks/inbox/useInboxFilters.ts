@@ -116,6 +116,22 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     };
   }, [storedPrefs, searchParams]);
 
+  // Back/forward do histórico (ou link) muda `?type=` por fora: o rascunho do dono
+  // precede o base, então sem isto o filtro ficaria preso no último clique manual.
+  // Quando o `type` da URL muda e diverge do rascunho, o tipo do rascunho acompanha
+  // a URL (a troca manual já escreve a URL junto, então nela nada diverge).
+  const urlType = normalizeContactType(searchParams.get('type'));
+  const [lastUrlType, setLastUrlType] = useState(urlType);
+  if (urlType !== lastUrlType) {
+    setLastUrlType(urlType);
+    setDraft((prev) => {
+      const atual = prev[ownerKey];
+      return atual && atual.contactType !== urlType
+        ? { ...prev, [ownerKey]: { ...atual, contactType: urlType } }
+        : prev;
+    });
+  }
+
   const prefs = draft[ownerKey] ?? basePrefs;
   const { chipTab, mainTab, subTab, queueId: selectedQueueId, contactType: selectedContactType } = prefs;
 
