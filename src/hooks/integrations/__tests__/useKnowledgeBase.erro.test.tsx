@@ -65,6 +65,19 @@ describe('useKnowledgeBase — leitura inicial', () => {
     expect(result.current.error).toBe('network error');
   });
 
+  it('rejeição de rede não deixa loading preso e preenche `error`', async () => {
+    mocks.from.mockImplementation(() => ({
+      select: () => ({ order: () => Promise.reject(new Error('Failed to fetch')) }),
+    }));
+
+    const { result } = renderHook(() => useKnowledgeBase());
+
+    await act(async () => { await result.current.fetchData(); });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBe('Failed to fetch');
+  });
+
   it('leitura boa não marca erro e mantém as listas', async () => {
     montarTabelas(
       { data: [{ id: 'a1', title: 'Manual', content: 'x', category: 'general', tags: null, is_published: true, embedding_status: 'completed', updated_at: '2026-10-10T10:00:00Z' }], error: null },

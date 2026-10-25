@@ -4,10 +4,8 @@
  * ── O que este teste prova ────────────────────────────────────────
  * A rota `wa-templates` é liberada para STAFF (admin + supervisor,
  * `src/services/navigation.service.ts`), mas as políticas de escrita de
- * `whatsapp_templates` são admin-only (`20260315123034` cria a tabela com
- * "Admins can manage templates"; `20260317222534` troca o insert por
- * "Admins can insert templates"). O supervisor que clicava em Novo/Editar/
- * Duplicar/Excluir recebia erro de RLS no toast.
+ * `whatsapp_templates` usam `is_admin_or_supervisor` (`20260315123034`,
+ * `20260317222534`): admin e supervisor escrevem; agente não.
  *
  * Aqui se prova, pelo DOM do componente REAL:
  *   (a) admin: vê Novo Template e as 3 ações de escrita de cada linha;
@@ -42,9 +40,10 @@ const template = vi.hoisted(() => ({
   updated_at: '2026-01-01T00:00:00Z',
 }));
 
-const role = vi.hoisted(() => ({ isAdmin: true }));
+// `isSupervisor` inclui admin (useUserRole); agente => false.
+const role = vi.hoisted(() => ({ isAdmin: true, isSupervisor: true }));
 vi.mock('@/hooks/system/useUserRole', () => ({
-  useUserRole: () => ({ isAdmin: role.isAdmin, loading: false }),
+  useUserRole: () => ({ isAdmin: role.isAdmin, isSupervisor: role.isSupervisor, loading: false }),
 }));
 
 const mockTemplates = vi.hoisted(() => vi.fn());
@@ -95,10 +94,11 @@ const renderManager = () => {
 
 beforeEach(() => {
   role.isAdmin = true;
+  role.isSupervisor = true;
   mockTemplates.mockReturnValue(baseReturn([template]));
 });
 
-describe('gate de escrita de modelos de WhatsApp (RLS admin-only)', () => {
+describe('gate de escrita de modelos de WhatsApp (RLS admin + supervisor)', () => {
   it('admin vê Novo Template e as ações de escrita da linha', () => {
     renderManager();
 
@@ -109,8 +109,21 @@ describe('gate de escrita de modelos de WhatsApp (RLS admin-only)', () => {
     expect(screen.getByRole('button', { name: 'Visualizar confirmacao_pedido' })).toBeInTheDocument();
   });
 
-  it('não-admin não vê nenhum controle de escrita, mas vê a lista e o Visualizar', () => {
+  it('supervisor (não admin) também vê os controles de escrita, como a RLS permite', () => {
     role.isAdmin = false;
+    role.isSupervisor = true;
+    renderManager();
+
+    expect(screen.getByRole('button', { name: /Novo Template/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Editar confirmacao_pedido' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Duplicar confirmacao_pedido' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Excluir confirmacao_pedido' })).toBeInTheDocument();
+    expect(screen.queryByText(/Somente administradores/)).not.toBeInTheDocument();
+  });
+
+  it('agente não vê nenhum controle de escrita, mas vê a lista e o Visualizar', () => {
+    role.isAdmin = false;
+    role.isSupervisor = false;
     renderManager();
 
     expect(screen.queryByRole('button', { name: /Novo Template/ })).not.toBeInTheDocument();
@@ -133,6 +146,7 @@ describe('gate de escrita de modelos de WhatsApp (RLS admin-only)', () => {
     unmount();
 
     role.isAdmin = false;
+    role.isSupervisor = false;
     renderManager();
     expect(screen.getByText('Nenhum template encontrado')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Criar primeiro template/ })).not.toBeInTheDocument();

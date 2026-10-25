@@ -35,7 +35,7 @@ export function WhatsAppTemplatesManager() {
   // A escrita em `whatsapp_templates` é admin-only na RLS (o supervisor que
   // clicava em Novo/Editar/Duplicar/Excluir recebia erro no toast): os
   // controles de escrita só montam para admin; a leitura segue para o staff.
-  const { isAdmin } = useUserRole();
+  const { isSupervisor: canWrite } = useUserRole();
 
   // CT-70 — com "reduzir movimento" ligado, as linhas aparecem sem fade.
   const prefersReducedMotion = useReducedMotion();
@@ -50,9 +50,9 @@ export function WhatsAppTemplatesManager() {
         <div>
           <h2 className="text-lg md:text-xl font-bold text-foreground">Templates WhatsApp</h2>
           <p className="text-xs md:text-sm text-muted-foreground">Gerencie templates oficiais aprovados pelo WhatsApp Business API</p>
-          {!isAdmin && <p className="text-xs text-muted-foreground mt-1">Somente administradores podem criar, editar ou excluir templates.</p>}
+          {!canWrite && <p className="text-xs text-muted-foreground mt-1">Somente administradores e supervisores podem criar, editar ou excluir templates.</p>}
         </div>
-        {isAdmin && <Button onClick={openNew} className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto"><Plus className="w-4 h-4" />Novo Template</Button>}
+        {canWrite && <Button onClick={openNew} className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto"><Plus className="w-4 h-4" />Novo Template</Button>}
       </div>
 
       <div className="flex gap-3 flex-wrap">
@@ -87,7 +87,7 @@ export function WhatsAppTemplatesManager() {
             <div className="p-8 text-center">
               <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
               <p className="text-muted-foreground">Nenhum template encontrado</p>
-              {isAdmin && <Button variant="outline" className="mt-4" onClick={openNew}><Plus className="w-4 h-4 mr-2" />Criar primeiro template</Button>}
+              {canWrite && <Button variant="outline" className="mt-4" onClick={openNew}><Plus className="w-4 h-4 mr-2" />Criar primeiro template</Button>}
             </div>
           ) : (
             <Table>
@@ -123,9 +123,9 @@ export function WhatsAppTemplatesManager() {
                         <TableCell className="text-right">
                           <div className="flex gap-1 justify-end">
                             <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Visualizar ${template.name}`} onClick={() => handlePreview(template)}><Eye className="w-4 h-4" /></Button>
-                            {isAdmin && <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Editar ${template.name}`} onClick={() => openEdit(template)}><Edit2 className="w-4 h-4" /></Button>}
-                            {isAdmin && <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Duplicar ${template.name}`} onClick={() => handleDuplicate(template)}><Copy className="w-4 h-4" /></Button>}
-                            {isAdmin && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" aria-label={`Excluir ${template.name}`} onClick={() => setPendingDelete(template)}><Trash2 className="w-4 h-4" /></Button>}
+                            {canWrite && <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Editar ${template.name}`} onClick={() => openEdit(template)}><Edit2 className="w-4 h-4" /></Button>}
+                            {canWrite && <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Duplicar ${template.name}`} onClick={() => handleDuplicate(template)}><Copy className="w-4 h-4" /></Button>}
+                            {canWrite && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" aria-label={`Excluir ${template.name}`} onClick={() => setPendingDelete(template)}><Trash2 className="w-4 h-4" /></Button>}
                           </div>
                         </TableCell>
                       </motion.tr>
