@@ -27,7 +27,7 @@ interface EditingSeed extends SegmentBuilderContent { id: string | null }
 
 export function TalkXSegments({ onUseCampaign }: Props) {
   const {
-    segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment,
+    segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment, refreshEstimates = { mutate: (_: unknown[]) => {} },
     libraryStats = null, libraryStatsLoading = false, libraryStatsError = null, refetchLibraryStats = () => {},
     // X114 — seleção/ações em massa. Defaults só para os mocks de tela que
     // injetam um hook mínimo: o hook real sempre devolve os seis.
@@ -263,6 +263,19 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           <span className="text-border">›</span>
           <span className="text-foreground font-medium">Segmentos</span>
         </nav>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-base font-semibold text-foreground">Segmentos</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">Crie, gerencie e utilize segmentos inteligentes para suas campanhas no Talk X.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => { void refetch(); refreshEstimates.mutate(segments); }}
+            className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 inline-flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bg-muted/50 shrink-0"
+          >
+            Atualizar
+          </button>
+        </div>
         <nav aria-label="Abas superiores de segmentos" className="flex items-center gap-1 border-b border-border/50 pb-0.5">
           <button type="button" aria-current="page" className="h-8 px-3 rounded-t-lg text-xs font-medium text-foreground border-b-2 border-primary">Segmentos</button>
           <button type="button" disabled className="h-8 px-3 rounded-t-lg text-xs font-medium text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed">Regras Avançadas</button>

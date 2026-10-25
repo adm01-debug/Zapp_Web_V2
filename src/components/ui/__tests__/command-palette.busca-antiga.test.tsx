@@ -59,7 +59,8 @@ const itemTermoAntigo: CommandItem = {
   category: 'search',
 };
 
-const resultado = (titulo: string) => screen.queryByRole('button', { name: titulo });
+// items in the search results list are rendered as <button role="option"> inside the listbox
+const resultado = (titulo: string) => screen.queryByRole('option', { name: titulo });
 
 afterEach(() => {
   vi.clearAllMocks();
