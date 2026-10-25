@@ -90,11 +90,29 @@ Os required checks são exercidos por `ci.yml`, `db-guard.yml` e `e2e-logado.yml
 
 ---
 
+## Validação pós-fix (local — 2026-10-25 ~22:05 UTC)
+
+Rodado localmente após todos os 6 commits de correção (último: `96b1aa6`):
+
+| Etapa | Resultado | Evidência |
+|---|---|---|
+| `bun run build` | ✅ success | `✓ built in 14.23s` — `dist/` gerado, zero erros |
+| `bun run typecheck` | ⚠️ mesmos erros do baseline | drift de schema pré-existente (`warroom_queue_stats`, `transfer_conversation`, etc.) — **sem novos erros introduzidos** |
+| `ChatMessagesArea.pagination.test.tsx` | ✅ 4/4 pass | `bun vitest run …pagination.test.tsx` — fix #1 confirmado |
+| `useDiagnosticsData.select.test.ts` | ✅ pass | incluído nos 15 testes abaixo — fix #5 confirmado |
+| `useInboxFilters.type-url.test.tsx` | ✅ 9/9 pass | incluído nos 15 testes abaixo — fix #3 confirmado |
+| **3 arquivos fixados juntos** | ✅ **15/15 pass** | `bun vitest run …pagination.test.tsx …useDiagnosticsData.select.test.ts …useInboxFilters.type-url.test.tsx` |
+
+**Conclusão:** `bun run build` ✅, 15/15 testes dos arquivos corrigidos passam. Sem regressão local.
+
+---
+
 ## Resumo
 
 - **Corrigidos nesta sessão:** 6 (`pagination.test.tsx`, `fila-merge.mjs`, `useInboxFilters.ts` PK-14, TC-009 versão migration, `useDiagnosticsData.ts` throw→dbError, `deployment-manifest.json` stale)
 - **Pré-existentes na main, requerem decisão humana/infra:** ver `PENDENCIAS.md` §1–§5
-- **Sem regressão introduzida:** confirmado — todas as falhas de CI no PR #2246 (SHA `96b1aa6`) correspondem a pré-existências na `main` (run 40122006424, commit `2d97c44`) ou a bloqueios de infra documentados
-- **Bloqueador para merge:** required checks falham por causas pré-existentes (§3 E2E geolocation de PENDENCIAS.md)
+- **Sem regressão introduzida:** confirmado local e por comparação com run `40122006424` (main, commit `2d97c44`)
+- **CI do PR #2246 (SHA `b309619`):** runs `40237086221` (CI/CD Pipeline) e `40237086219` (DB Guard) estão em `queued` aguardando runner — 14 runs de outros PRs na fila na mesma conta
+- **Bloqueador para merge:** `e2e-logado.yml` / `types-sync.yml` / `db-live-guard.yml` — bloqueios de infra documentados em §1–§3 de PENDENCIAS.md
 
 *Este arquivo deve ser atualizado após cada ciclo de correção de CI.*
