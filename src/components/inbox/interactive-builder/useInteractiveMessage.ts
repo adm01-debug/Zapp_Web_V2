@@ -25,6 +25,9 @@ export function useInteractiveMessage() {
   const [buttons, setButtons] = useState<InteractiveButton[]>([]);
   const [listButtonText, setListButtonText] = useState('Ver opções');
   const [sections, setSections] = useState<InteractiveListSection[]>([]);
+  // IDs de UI ficam separados do payload: são estáveis mesmo quando uma seção
+  // anterior é removida, e nunca são enviados ao WhatsApp.
+  const [sectionIds, setSectionIds] = useState<string[]>([]);
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
 
   const resetForm = useCallback(() => {
@@ -35,6 +38,7 @@ export function useInteractiveMessage() {
     setButtons([]);
     setListButtonText('Ver opções');
     setSections([]);
+    setSectionIds([]);
     setExpandedSections([]);
   }, []);
 
@@ -79,6 +83,7 @@ export function useInteractiveMessage() {
     }
     const newSectionId = `section_${createStorageObjectId()}`;
     setSections(prev => [...prev, { title: '', rows: [] }]);
+    setSectionIds(prev => [...prev, newSectionId]);
     setExpandedSections(prev => [...prev, newSectionId]);
   }, [sections.length]);
 
@@ -88,7 +93,12 @@ export function useInteractiveMessage() {
 
   const removeSection = useCallback((index: number) => {
     setSections(prev => prev.filter((_, i) => i !== index));
-  }, []);
+    const removedId = sectionIds[index];
+    setSectionIds(prev => prev.filter((_, i) => i !== index));
+    if (removedId) {
+      setExpandedSections(prev => prev.filter(id => id !== removedId));
+    }
+  }, [sectionIds]);
 
   const addRowToSection = useCallback((sectionIndex: number) => {
     setSections(prev => {
@@ -235,7 +245,7 @@ export function useInteractiveMessage() {
     footer, setFooter,
     headerText, setHeaderText,
     buttons, listButtonText, setListButtonText,
-    sections, expandedSections,
+    sections, sectionIds, expandedSections,
     resetForm, addButton, updateButton, removeButton,
     addSection, updateSection, removeSection,
     addRowToSection, updateRow, removeRow, moveRow, moveButtonToFirst,

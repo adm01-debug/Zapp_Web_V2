@@ -72,6 +72,31 @@ describe('useInteractiveMessage — edição de botões', () => {
   });
 });
 
+describe('useInteractiveMessage — identidade estável das seções', () => {
+  it('mantém IDs de expansão alinhados ao adicionar e remover seções', () => {
+    const { result } = renderHook(() => useInteractiveMessage());
+    act(() => { result.current.addSection(); result.current.addSection(); });
+
+    const [firstId, secondId] = result.current.sectionIds;
+    expect(firstId).toBeTruthy();
+    expect(secondId).toBeTruthy();
+    expect(secondId).not.toBe(firstId);
+    expect(result.current.expandedSections).toEqual([firstId, secondId]);
+
+    // Recolhe a primeira e a remove: a segunda mantém sua identidade e estado,
+    // apesar de passar para o índice zero na lista.
+    act(() => result.current.toggleSection(firstId));
+    act(() => result.current.removeSection(0));
+    expect(result.current.sectionIds).toEqual([secondId]);
+    expect(result.current.expandedSections).toEqual([secondId]);
+
+    act(() => result.current.addSection());
+    expect(result.current.sectionIds[0]).toBe(secondId);
+    expect(result.current.sectionIds[1]).not.toBe(secondId);
+    expect(result.current.expandedSections).toContain(result.current.sectionIds[1]);
+  });
+});
+
 describe('useInteractiveMessage — validação (botões)', () => {
   it('exige corpo da mensagem', () => {
     const { result } = renderHook(() => useInteractiveMessage());

@@ -262,7 +262,7 @@ function runTsc(root) {
 
   // -b/--build respeita "references" (o unico jeito correto de checar este
   // repo). --force ignora o cache incremental para nunca reportar falso-verde.
-  const result = spawnSync(process.execPath, [tscEntry, "-b", "--force"], {
+  const result = spawnSync(process.execPath, ["--max-old-space-size=4096", tscEntry, "-b", "--force"], {
     cwd: root,
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,

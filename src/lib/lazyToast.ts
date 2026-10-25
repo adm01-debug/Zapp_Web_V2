@@ -24,7 +24,12 @@ type Args = Parameters<Toast['error']>;
 
 let carregado: Toast | null = null;
 
-const carregando: Promise<Toast> = import('sonner').then((modulo) => {
+// O módulo que conhece o pacote fica atrás de uma segunda fronteira dinâmica.
+// Se `import('sonner')` mora neste arquivo, que é eager pela telefonia, o bundler
+// cria um chunk compartilhado e o pré-carrega no entry mesmo sendo uma dependência
+// dinâmica. Mantendo o import do pacote no loader lazy, o overlay continua fora do
+// grafo estático do first paint.
+const carregando: Promise<Toast> = import('./sonner-loader').then((modulo) => {
   carregado = modulo.toast;
   return modulo.toast;
 });
