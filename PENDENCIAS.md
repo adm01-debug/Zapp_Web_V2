@@ -77,6 +77,8 @@ O trigger `team_reactions_force_conversation_id_trig` não existe no Postgres lo
 
 **CORRIGIDO nesta PR:** investigação confirmou que o trigger e a função `team_reactions_force_conversation_id` existem em produção mas nunca tiveram migration correspondente (drift puro). Migration de reconciliação `20261026210300_reconcile_team_reactions_force_conversation_id_trig.sql` criada e registrada no ledger de produção. O replay local agora cria a função e o trigger; TC-009 deve passar a partir do próximo run do `db-guard.yml`.
 
+**Comprovado em SHA `9102005`:** `Replay local das migrations` = ✅ success (job [#121276103667](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40228872432/job/121276103667)) — trigger criado sem erro no replay local, TC-009 resolvido. Contudo, `Contrato DB offline` (job [#121276103905](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40228872432/job/121276103905)) ainda falha em outro passo do mesmo job — diagnóstico exato do passo remanescente bloqueado por log de 16.411 linhas; causa provável: `sanitize_reset_request()` / DASH-091/092 (ver §9d). Requer `db-migrate.yml` + aprovação Joaquim em `producao-ddl`.
+
 ---
 
 ## 5. Unit Tests flaky — ChatMessagesArea e MessageBubble (timing async)
@@ -124,7 +126,7 @@ O trigger `team_reactions_force_conversation_id_trig` não existe no Postgres lo
 - ✅ Unit Tests: passa (mock getBoundingClientRect corrige virtualizer no jsdom)
 - ✅ Lint & TypeCheck: passa
 - ✅ Security Audit: passa
-- ✅ Contrato DB offline: corrigido via migration `20261026210300` (§4)
+- ⚠️ Contrato DB offline: TC-009 corrigido via migration `20261026210300` (§4), mas job ainda falha em outro passo — requer DASH-091/092 (Regra 8)
 - ⚠️ E2E Tests: falha pré-existente (geolocalização, §1)
 - ⚠️ Mutação do mapa: falha pré-existente, não bloqueante (§6)
 - ⚠️ Copilot reviewer: falha por quota, não bloqueante (§7)
@@ -227,7 +229,7 @@ Estado dos 6 checks obrigatórios + checks relevantes no último run completo an
 | 🏗️ Build | 120961737776 | ⏭️ skipped | cascata do CI Gate |
 | 🎭 E2E Tests | 120957423361 | 🚫 cancelled | timeout / pré-existente (§1) |
 | 🧬 Mutação do mapa | 120957423732 | ⏭️ skipped | não bloqueante (§6) |
-| 🗄️ Contrato DB offline | — | ✅ success esperado | TC-009 corrigido via migration `20261026210300` (§4) |
+| 🗄️ Contrato DB offline | 121276103905 | ❌ failure | TC-009 corrigido (Replay ✅), mas outro passo ainda falha — provável DASH-091/092 (§4, §9d) |
 
 **Conclusão:** todos os workflows com `failure`/`cancelled`/`skipped` na `main` (baseline) são pré-existentes. A PR `fix/ci-workflows` corrige as falhas alcançáveis por agente (§9) e documenta os bloqueios remanescentes neste arquivo. Zero regressões introduzidas.
 

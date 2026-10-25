@@ -15,6 +15,7 @@ Executado no ambiente de CI remoto (container Ubuntu 24.04) na branch `fix/ci-wo
 | `bun run build` | ✅ exit 0, 18.94s | background task `bx6bgkvp7` — `✓ built in 18.94s`, `--- BUILD EXIT: 0` |
 | `bun run lint` | ❌ 819 problemas (605 erros, 214 avisos) | `bx6bgkvp7` — `✖ 819 problems (605 errors, 214 warnings)` — pré-existente em `origin/main` |
 | TypeCheck | ✅ | CI job `🔎 TypeCheck` [#121241225662](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40217337125/job/121241225662) `conclusion=success` |
+| `bun test` (suíte completa) | ❌ 133 arquivos falhando / 445 testes falhando | background task `bgzfn24kb` — `133 failed | 1685 passed | 5 skipped (1823)`, `445 failed | 14976 passed | 20 expected fail | 43 todo (15484)`, `Duration 2378.61s` — pré-existente em `origin/main`, ver §5b |
 
 **Lint é pré-existente em `origin/main`:** qualquer PR aberta contra `main` tem os mesmos 819 problemas antes das alterações desta branch.
 
@@ -109,6 +110,39 @@ Obtido via `github_list_runs_for_workflow` (branch=main, per_page=1) para cada a
 | ⚫ cancelled | E2E Tests | Cancelado após 20 min (timeout do runner ou cascata do CI Gate) | §5b de PENDENCIAS.md |
 
 **Conclusão: zero regressões introduzidas por esta PR.** Os checks que falham falhavam identicamente na `main` antes desta PR (confirmado em §5).
+
+---
+
+## 3c. Estado final dos checks — run #40228872412/40228872432 (SHA `9102005`) — 2026-10-25
+
+> Run do CI sobre o HEAD mais recente da branch `fix/ci-workflows` (SHA `9102005180039aa78cd6c31fe50dcdc3503aed05`).
+> `E2E Tests` ainda `in_progress`; `CI Gate` `queued` — tabela capturada em ~20:26Z.
+
+| Job | Job ID | conclusion | completed_at |
+|-----|--------|-----------|-------------|
+| `🔎 TypeCheck` | [121276540571](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40228872412/job/121276540571) | ✅ success | 20:21Z |
+| `🔒 Security Audit` | [121276540555](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40228872412/job/121276540555) | ✅ success | 20:16Z |
+| `🧩 Node CI Scripts` | [121276540627](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40228872412/job/121276540627) | ✅ success | 20:22Z |
+| `🧬 Mutação do mapa` | [121276540385](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40228872412/job/121276540385) | ✅ success | 20:15Z |
+| `Replay local das migrations` | [121276103667](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40228872432/job/121276103667) | ✅ success | 20:14Z |
+| `🧪 Unit Tests (1/3)` | [121276540640](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40228872412/job/121276540640) | ❌ failure | 20:26Z |
+| `🧪 Unit Tests (2/3)` | [121276540592](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40228872412/job/121276540592) | ❌ failure | 20:25Z |
+| `🧪 Unit Tests (3/3)` | [121276540498](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40228872412/job/121276540498) | ❌ failure | 20:22Z |
+| `🏗️ Build` | [121281775732](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40228872412/job/121281775732) | ⏭️ skipped | 20:26Z |
+| `🎭 E2E Tests (Playwright)` | [121276540521](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40228872412/job/121276540521) | in_progress | — |
+| `Contrato DB offline` | [121276103905](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40228872432/job/121276103905) | ❌ failure | 20:23Z |
+
+### Diagnóstico — run #40228872412/40228872432 (SHA `9102005`)
+
+| Status | Jobs | Motivo |
+|--------|------|--------|
+| ✅ success | TypeCheck, Security Audit, Node CI Scripts, Mutação do mapa, **Replay local das migrations** | Replay ✅ confirma que migration `20261026210300` (trigger TC-009) foi aplicada sem erro |
+| ❌ failure (pré-existente) | Unit Tests 1/3, 2/3, 3/3 | 11 arquivos pré-existentes (§5b) |
+| ❌ failure (bloqueado) | Contrato DB offline | `Replay local das migrations` = ✅ (trigger existe); falha remanescente em outro passo do job — provável `sanitize_reset_request()` / DASH-091/092 ou outro contrato offline. Requer `db-migrate.yml` + aprovação Joaquim (`producao-ddl`) |
+| ⏭️ skipped | Build | Gate bloqueado por Unit Tests |
+| in_progress | E2E Tests | Pré-existente (geolocalização) |
+
+**TC-009 comprovado corrigido** pelo `Replay local das migrations` = ✅ success. `Contrato DB offline` ainda falha por bloco(s) remanescente(s) coberto(s) em PENDENCIAS.md §4.
 
 ---
 
