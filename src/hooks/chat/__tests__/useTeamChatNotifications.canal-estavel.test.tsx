@@ -20,6 +20,7 @@ const h = vi.hoisted(() => ({
   logWarn: vi.fn(),
   rpc: vi.fn(),
   show: vi.fn(),
+  notificacoes: [] as unknown[],
 }));
 
 vi.mock('@/integrations/supabase/client', () => {
@@ -81,6 +82,20 @@ vi.mock('@/lib/logger', () => ({
 import { useTeamChatNotifications } from '@/hooks/chat/useTeamChatNotifications';
 import { queryKeys } from '@/hooks/team-chat/queryKeys';
 
+type NotificacaoFalsa = { title: string; options?: NotificationOptions; onclick: (() => void) | null };
+
+class FakeNotification {
+  static permission: NotificationPermission = 'granted';
+  static requestPermission = vi.fn(async () => 'granted' as NotificationPermission);
+  onclick: (() => void) | null = null;
+  close = vi.fn();
+  constructor(public title: string, public options?: NotificationOptions) {
+    (h.notificacoes as NotificacaoFalsa[]).push(this);
+  }
+}
+
+const notificadas = () => h.notificacoes as NotificacaoFalsa[];
+
 const mensagem = (senderId = 'outro') => ({
   new: {
     id: 'm1',
@@ -116,6 +131,9 @@ beforeEach(() => {
   h.rpc.mockReset();
   h.rpc.mockResolvedValue({ data: [{ id: 'outro', name: 'Ana' }], error: null });
   h.show.mockReset();
+  h.notificacoes = [];
+  FakeNotification.permission = 'granted';
+  Object.defineProperty(window, 'Notification', { configurable: true, value: FakeNotification });
 });
 
 afterEach(() => {
@@ -151,7 +169,7 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     await act(async () => { await h.handler!(mensagem()); });
 
     expect(h.fromTables).toContain('team_conversation_members');
-    expect(h.show).toHaveBeenCalledWith(expect.objectContaining({ title: '💬 Teams: Ana' }));
+    expect(notificadas().some(n => n.title === '💬 Teams: Ana')).toBe(true);
   });
 
   it('não notifica nem vai ao banco quando o cache diz que não é membro', async () => {
@@ -173,7 +191,7 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     await act(async () => { await h.handler!(mensagem()); });
 
     expect(h.fromTables).toContain('team_conversation_members');
-    expect(h.show).toHaveBeenCalled();
+    expect(h.notificacoes.length).toBeGreaterThan(0);
   });
 
   it('silencia conversa mutada ainda que esteja em cache', async () => {
