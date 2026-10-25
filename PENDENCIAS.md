@@ -103,22 +103,27 @@ Verificar o plano Copilot e a quota de PR reviews no GitHub Settings → Copilot
 **Status:** BLOQUEIO TÉCNICO — falhas pré-existentes nos testes unitários  
 **Checks afetados:** `🧪 Unit Tests (1/3)`, `🧪 Unit Tests (2/3)`, `🧪 Unit Tests (3/3)` (required checks via CI Gate)
 
-**Causa exata por shard (HEAD `998df22ae`):**
+**Causa exata por shard (HEAD `aaf3404ee`, CI run 40202208738):**
 
-**Shard 1/3 — `useTalkXSegments.test.ts` (4 testes: linhas 341, 371, 384, 398):**  
-Os testes esperam comportamento fail-closed para campos `real_sector`/`real_uf` — erro ao chamar `rulesToPostgrest`, `countAudience` e `resolveAudience` com esses campos. A validação não está implementada na fonte. A `main` tem 6 falhas no mesmo arquivo; esta branch tem 4 — **melhora de 2 testes** ao marcar `lead_origin` como `comingSoon: true`.
+**Shard 1/3 — `alvos-toque-44px.test.tsx:41,51`:**  
+`getByRole('button', { name: 'Close' })` — o botão de fechar do `Dialog`/`Sheet` usa `<span class="sr-only">Fechar</span>`, não "Close". **✅ CORRIGIDO neste PR** — `alvos-toque-44px.test.tsx` está no diff (linhas 41 e 51: `'Close'` → `'Fechar'`). Confirmado passando localmente (6/6 testes).
 
-**Shard 2/3:** `configuracoes.leituraErro.test.tsx`, `useDiagnosticsData.select.test.ts` — pré-existentes, confirmados por diff.
+**Shard 2/3 — `useInboxFilters.type-url.test.tsx` (5 falhas):**  
+`handleContactTypeChange(null)` não limpa o parâmetro `type` da URL — `routerSearchRef` continua com `?type=grupo` após o reset (linha 137: `expected '?type=grupo' not to contain 'type='`). Não está no diff desta branch (`git diff origin/main -- src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx` = 0 linhas). A fonte do bug é `useInboxFilters.ts` (não alterada por este PR). Confirmado falhando na `main`.
 
-**Shard 3/3:** `useTeamChatPanel.search-antigas.test.tsx` — pré-existente, confirmado por diff. (O fix do aria-label em `TalkXOverview.tsx:371` resolveu o teste anterior de shard 3/3; a redistribuição de shard expôs este pré-existente.)
+**Shard 2/3 — `workItemFormat.test.ts:123` (timezone):**  
+`formatWorkItemDate('2026-10-11T17:00:00-03:00')` exibe `'Hoje, 20:00'` em UTC (CI) em vez de `'Hoje, 17:00'` em UTC-3. **✅ CORRIGIDO neste PR** — envolvido em `withTimeZone('America/Sao_Paulo', ...)` (padrão já usado no mesmo arquivo). Não estava no diff da branch (bug de teste pré-existente na `main`). Confirmado passando localmente (13/13).
+
+**Shard 3/3 — `team-chat-notifications-mount.test.ts` (2 falhas):**  
+`DeferredProviders` em `src/App.tsx:96` chama `useAuth()` que lança `useAuth must be used within an AuthProvider` quando renderizado sem o provider wrapper. `App.tsx` não está no diff desta branch. Confirmado falhando na `main`.
 
 **Confirmação de que NÃO são introduzidas por este PR:**  
-`git diff origin/main..origin/claude_05/brave-mccarthy-zvzky4 --name-only` — nenhum dos arquivos de teste com falha aparece na lista. A `main` tem mais falhas nos mesmos arquivos do que esta branch.
+`git diff origin/main -- <arquivo_de_teste>` = 0 linhas para `useInboxFilters.type-url.test.tsx`, `workItemFormat.test.ts` (antes do fix do timezone), `team-chat-notifications-mount.test.ts`. Nenhum arquivo de produção relacionado (`useInboxFilters.ts`, `App.tsx`) está no diff desta branch.
 
-**Ação necessária:**  
-1. Implementar validação fail-closed para `real_sector`/`real_uf` em `useTalkXSegments.ts` (`ruleToFilter`, `countAudience`, `resolveAudience`) — resolve shard 1/3.  
-2. Investigar e corrigir falhas em `configuracoes.leituraErro.test.tsx`, `useDiagnosticsData.select.test.ts`, `useTeamChatPanel.search-antigas.test.tsx`.  
-Ambas fora do escopo desta sessão.
+**Ação necessária (bloqueios remanescentes):**  
+1. `useInboxFilters.ts`: corrigir `handleContactTypeChange(null)` para remover o parâmetro `type` da URL — resolve shard 2/3 parcialmente.  
+2. `App.tsx` / `DeferredProviders`: adicionar `AuthProvider` wrapper no teste ou mock `useAuth` — resolve shard 3/3.  
+Ambas requerem investigação fora do escopo desta sessão.
 
 ---
 

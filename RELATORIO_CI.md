@@ -71,6 +71,10 @@ Ponto de referência: HEAD `1c3369932` (commit inicial da sessão anterior, pré
 | 9 | `9167dc2` | Guard fail-closed para `real_sector`/`real_uf` em `useTalkXSegments.ts` | ✅ Corrigido |
 | 10 | `09d8eeaf` | RELATORIO_CI.md + baseline documentados | ✅ Atualizado |
 | 11 | — | Falhas pré-existentes da `main` (DB Guard, E2E logado, Talk X visual, copilot, Unit Tests 1-2) | 📋 PENDENCIAS.md |
+| 12 | este commit | `alvos-toque-44px.test.tsx:41,51` — botão "Close" → "Fechar" (shard 1/3) | ✅ Corrigido |
+| 13 | este commit | `workItemFormat.test.ts:123` — timezone CI (UTC vs UTC-3) com `withTimeZone` (shard 2/3) | ✅ Corrigido |
+| 14 | — | `useInboxFilters.type-url.test.tsx` — `handleContactTypeChange(null)` não limpa URL (shard 2/3) | 📋 PENDENCIAS.md §6 |
+| 15 | — | `team-chat-notifications-mount.test.ts` — `useAuth` sem AuthProvider (shard 3/3) | 📋 PENDENCIAS.md §6 |
 
 ---
 
@@ -114,7 +118,6 @@ Ponto de referência: HEAD `1c3369932` (commit inicial da sessão anterior, pré
 | `9167dc2` | fix: guard fail-closed para real_sector/real_uf em useTalkXSegments |
 | `09d8eeaf` | chore: RELATORIO_CI.md com inventário e baseline completos |
 | `71db2773f` | chore: RELATORIO_CI.md com inventário main e baseline completos |
-| `6608ea54` | chore: RELATORIO_CI.md com inventário main e baseline completos |
 
 ---
 
@@ -141,7 +144,7 @@ Ponto de referência: HEAD `1c3369932` (commit inicial da sessão anterior, pré
 | `🔎 TypeCheck` | [job/121191537366](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855963/job/121191537366) | ✅ success | Confirmado — 0 erros TS |
 | `🔒 Security Audit` | [job/121191537492](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855963/job/121191537492) | ✅ success | Confirmado |
 | `🧩 Node CI Scripts` | [job/121191537449](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855963/job/121191537449) | ✅ success | Confirmado |
-| `Replay local das migrations` | [job/121191537893](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855975/job/121191537893) | ✅ success | Confirmado — 24 provas aprovadas |
+| `Replay local das migrations` | [job/121191537893](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855963/job/121191537893) | ✅ success | Confirmado — 24 provas aprovadas |
 | `🏗️ Build` | [job/121193801484](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855963/job/121193801484) | ❌ cancelado | CI Gate (Unit Tests pré-existentes) falhou → job cancelado antes de executar qualquer step; build local ✅ 14.26s (seção 2) |
 | `🧪 Unit Tests (1/3)` | [job/121191537470](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855963/job/121191537470) | ❌ pré-existente | → PENDENCIAS.md §6 — confirmado em main antes deste PR |
 | `🧪 Unit Tests (2/3)` | [job/121191537518](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855963/job/121191537518) | ❌ pré-existente | → PENDENCIAS.md §6 — confirmado em main antes deste PR |
