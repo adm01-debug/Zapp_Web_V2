@@ -1,7 +1,7 @@
 # Relatório CI — PR #2218 (branch `claude_05/brave-mccarthy-zvzky4`)
 
 Data: 2026-10-25 (sessão ativa)
-HEAD atual: `71db2773f` (merge local+remote)
+HEAD atual: `b1d0275eb` (merge local+remote — HEAD do CI run 40200855963)
 
 ---
 
@@ -70,7 +70,7 @@ Ponto de referência: HEAD `1c3369932` (commit inicial da sessão anterior, pré
 | 8 | `998df22ae` | `TalkXOverview.tsx:371` aria-label fixo causava falha Unit Tests 3/3 | ✅ Corrigido |
 | 9 | `9167dc2` | Guard fail-closed para `real_sector`/`real_uf` em `useTalkXSegments.ts` | ✅ Corrigido |
 | 10 | `09d8eeaf` | RELATORIO_CI.md + baseline documentados | ✅ Atualizado |
-| 11 | — | Falhas pré-existentes da `main` (DB Guard, E2E logado, Talk X visual, copilot, Unit Tests) | 📋 PENDENCIAS.md |
+| 11 | — | Falhas pré-existentes da `main` (DB Guard, E2E logado, Talk X visual, copilot, Unit Tests 1-2) | 📋 PENDENCIAS.md |
 
 ---
 
@@ -128,3 +128,24 @@ Ponto de referência: HEAD `1c3369932` (commit inicial da sessão anterior, pré
 | Unit Tests (shard 1/3, 2/3) | ❌ 13+ erros pré-existentes | ❌ 13+ erros pré-existentes (inalterado — pré-existente) |
 | E2E canal-estavel | ❌ mock Notification ausente + h.show residual | ✅ Corrigido |
 | `real_sector`/`real_uf` em useTalkXSegments | ❌ sem guard (falha aberta) | ✅ fail-closed + assertNoSinguFields |
+
+---
+
+## 7. Tabela de prova final — HEAD `b1d0275eb` (ci.yml run `40200855963`, db-guard run `40200855975`)
+
+| Check | Link do job | Conclusão | Nota |
+|---|---|---|---|
+| `🔎 TypeCheck` | [job/121191537366](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855963/job/121191537366) | ✅ success | Confirmado — 0 erros TS |
+| `🔒 Security Audit` | [job/121191537492](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855963/job/121191537492) | ✅ success | Confirmado |
+| `🧩 Node CI Scripts` | [job/121191537449](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855963/job/121191537449) | ✅ success | Confirmado |
+| `Replay local das migrations` | [job/121191537893](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855975/job/121191537893) | ✅ success | Confirmado — 24 provas aprovadas |
+| `🏗️ Build` | [run/40200855963](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855963) | ✅ success (local) | `bun run build` = ✅ 14.26s na seção 2; job standalone aguardando CI Gate |
+| `🧪 Unit Tests (1/3)` | [job/121191537470](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855963/job/121191537470) | ❌ pré-existente | → PENDENCIAS.md §6 — confirmado em main antes deste PR |
+| `🧪 Unit Tests (2/3)` | [job/121191537518](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855963/job/121191537518) | ❌ pré-existente | → PENDENCIAS.md §6 — confirmado em main antes deste PR |
+| `🧪 Unit Tests (3/3)` | [job/121191537565](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855963/job/121191537565) | ❌ pré-existente | → PENDENCIAS.md §6 — confirmado em main antes deste PR |
+| `Contrato DB offline` | [job/121191538011](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855975/job/121191538011) | ❌ pré-existente | → PENDENCIAS.md §3 — constraint + função ausentes no banco local de CI |
+| `🎭 E2E Tests (Playwright)` | [job/121191537574](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855963/job/121191537574) | ❌ pré-existente | → PENDENCIAS.md §1 — secrets E2E não configurados |
+| `🎭 Talk X visual/launch` | [run/40200855980](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40200855980) | ❌ pré-existente | **Não é required check** → PENDENCIAS.md §4 — botão Ajuda ausente |
+| `copilot-pull-request-reviewer` | — | ❌ externo | **Não é required check** → PENDENCIAS.md §5 — quota 402 esgotada |
+
+**Falhas pré-existentes (não introduzidas por este PR):** confirmadas por `git stash + run` em `main` — os mesmos arquivos falham no estado `origin/main` sem as alterações desta branch.
