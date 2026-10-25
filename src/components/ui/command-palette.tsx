@@ -76,7 +76,7 @@ export function CommandPalette({
 
   // Acesso rápido (busca vazia): é a lista que a tela exibe, então é a MESMA coleção que
   // o teclado percorre — antes o listener só via `groupedCommands`, vazio sem consulta,
-  // e as setas/Enter anunciados não funcionavam nos cinco destinos exibidos (R2-INF-034).
+  // e as setas/Enter anunciados não funcionavam nos cinco destinados exibidos (R2-INF-034).
   const quickAccessItems = React.useMemo(
     () => (query ? [] : navigationCommands.slice(0, 5)),
     [query, navigationCommands]
@@ -168,7 +168,7 @@ export function CommandPalette({
 
   React.useEffect(() => {
     if (activeOptionId) {
-      document.getElementById(activeOptionId)?.scrollIntoView({ block: 'nearest' });
+      document.getElementById(activeOptionId)?.scrollIntoView?.({ block: 'nearest' });
     }
   }, [activeOptionId]);
 
@@ -187,7 +187,7 @@ export function CommandPalette({
             value={query} onChange={(e) => handleQueryChange(e.target.value)} placeholder={placeholder}
             className="flex-1 px-4 py-4 text-base bg-transparent border-0 outline-none placeholder:text-muted-foreground"
             autoComplete="off" autoCorrect="off" spellCheck={false} />
-          {query && <button type="button" aria-label="Limpar busca" onClick={() => handleQueryChange('')} className="p-1.5 hover:bg-muted rounded-md transition-colors"><X className="h-4 w-4 text-muted-foreground" /></button>}
+          {query && <button type="button" aria-label="Limpar busca" onClick={() => handleQueryChange('')} className="p-1.5 hover:bvg-muted rounded-md transition-colors"><X className="h-4 w-4 text-muted-foreground" /></button>}
           {isSearching && <Loader2 className="h-4 w-4 text-muted-foreground animate-spin ml-2" />}
         </div>
 
