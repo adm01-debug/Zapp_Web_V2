@@ -31,7 +31,7 @@
 - **Unit Tests baseline:** falhas pré-existentes documentadas por nome (ver `analise-prs/baseline/unit-tests.txt`)
 - **Critério de regressão:** PR regride se (1) adiciona erros TypeCheck a arquivo não no baseline, ou (2) adiciona falhas a testes que passam no baseline
 - **Análise de conteúdo:** diff 100% lido + test-merge local via git worktree para cada PR não-draft e não-workflow (99 PRs)
-- **Worktree de baseline:** removido após análise
+- **Worktree de baseline:** `/tmp/.../scratchpad/main-baseline` — removido após análise
 
 ---
 
@@ -47,9 +47,9 @@ Todas as 146 PRs estão em algum dos seguintes estados:
 
 1. **BEHIND (51 PRs não-draft):** Com `strict=true` na branch protection, qualquer PR que não esteja atualizada com o HEAD da `main` não pode ser mergeada. A `main` avança continuamente com commits de outras sessões, o que faz toda PR nova cair em BEHIND rapidamente.
 
-2. **DIRTY (35 PRs não-draft/não-workflow):** Conflitos reais de merge com `main`. Requerem rebase pelo autor da branch.
+2. **DIRTY (42 PRs não-draft):** Conflitos reais de merge com `main`. Requerem rebase pelo autor da branch.
 
-3. **BLOCKED (13 PRs):** CI Gate vermelho. Subgrupos: 3 DECISAO_HUMANA (migration/edge), 2 REGRESSÃO (TypeCheck novo), 8 NAO_APTA (CI pré-existente do main).
+3. **BLOCKED (13 PRs não-draft):** CI com falhas nos required checks (principalmente `🔍 Lint & TypeCheck` e `🧪 Unit Tests`).
 
 4. **DRAFT (40 PRs):** Marcadas como rascunho — DECISAO_HUMANA por definição.
 
@@ -106,9 +106,56 @@ CI Gate vermelho apenas por falhas do main (baseline). O conteúdo dessas PRs n�
 
 ---
 
+## Investigação pós-análise: por que 0 PRs puderam ser mergeadas
+
+**Data:** 2026-10-25 (continuação da sessão)
+
+### Descoberta central: nenhuma PR aberta atualiza `src/integrations/supabase/types.ts`
+
+Investigados individualmente os arquivos de TODAS as 146 PRs via GraphQL (todos os 51 BEHIND + 8 BLOCKED + 40 DRAFT) buscando qual PR atualiza `src/integrations/supabase/types.ts` — o arquivo que contém os tipos das RPCs Supabase e é responsável pelos 75 erros de TypeCheck no main@2d97c44cf.
+
+**Resultado:** nenhuma PR aberta toca esse arquivo.
+
+### Cadeia de bloqueio
+
+```
+main@2d97c44cf
+  → 75 erros de TypeCheck em 35 arquivos
+  → causa raiz: tipos de RPC ausentes em src/integrations/supabase/types.ts
+      (admin_list_cron_jobs, admin_toggle_cron_job, transfer_conversation,
+       warroom_agent_today, warroom_queue_stats, enqueue_group_outbound_message,
+       inbox_unread_total, search_email_threads, app_bootstrap)
+  → required check 🔎 TypeCheck falha
+  → ✅ CI Gate agrega e também falha
+  → GitHub recusa merge (required checks vermelhos)
+  → TODA PR baseada no main herda esses 75 erros
+  → 0 merges possíveis
+```
+
+### Required checks confirmados via API (2026-10-25)
+
+Apenas 3 (não 6 como documentado no CLAUDE.md):
+- `🏗️ Build`
+- `🔎 TypeCheck`
+- `✅ CI Gate (required check)`
+
+### PRs BEHIND que também tocam .github/workflows/ (reclassificação)
+
+Durante a varredura de arquivos identificou-se que 2 PRs listadas como BEHIND também são DECISÃO_HUMANA (Regra 8 — tocar workflows):
+- **PR #2046** (BEHIND): toca `.github/workflows/ci.yml` e `.github/workflows/db-guard.yml`
+- **PR #2197** (BEHIND): toca `.github/workflows/branch-hygiene-audit.yml`, `codeql.yml`, `types-sync.yml` e outros
+
+### Ação necessária (para o Joaquim)
+
+Para desbloquear as merges: executar `types-sync` workflow (`workflow_dispatch`) para regenerar `src/integrations/supabase/types.ts` a partir do schema atual do Supabase. Isso corrigirá os 75 erros de TypeCheck no main. Depois disso:
+- As 8 PRs BLOCKED "CI pré-existente" podem ser atualizadas + mergeadas
+- As ~40 PRs BEHIND sem regressão podem ser atualizadas + mergeadas (após CI verde confirmar 0 novos erros)
+
+---
+
 ## Outras escritas no GitHub realizadas por esta sessão
 
-**Nenhuma.** Zero merges, zero pushes fora desta branch, zero comentários, zero labels, zero deleções de branch.
+**Nenhuma.** Zero merges, zero pushes, zero comentários, zero labels, zero deleções de branch.
 
 ---
 
@@ -121,10 +168,6 @@ Todos em `analise-prs/dossies/PR-{N}.md` — 146 arquivos criados.
 - `analise-prs/RELATORIO_PRS.md` (este arquivo)
 - `analise-prs/progresso.json`
 - `analise-prs/prs.json`
+- `analise-prs/batch_C.json`
 - `analise-prs/regras-de-negocio.md`
-- `analise-prs/baseline/README.md`
-- `analise-prs/baseline/typecheck-raw.txt`
-- `analise-prs/baseline/typecheck-errors.txt`
-- `analise-prs/baseline/typecheck-error-files.txt`
-- `analise-prs/baseline/unit-tests.txt`
 - `analise-prs/dossies/PR-{N}.md` (146 arquivos)
