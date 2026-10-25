@@ -139,3 +139,24 @@ describe('CommandPalette — sem violações de axe', () => {
     expect(await axe(document.body)).toHaveNoViolations();
   });
 });
+
+describe('CommandPalette — ids únicos e estrutura do listbox', () => {
+  it('comando em "Recentes" e em "Acesso rápido" não duplica o id da option', () => {
+    localStorage.setItem('zapp-recent-modules', JSON.stringify(['chat']));
+    try {
+      renderPalette();
+      const options = screen.getAllByRole('option');
+      expect(options.filter((o) => o.textContent?.includes('Inbox'))).toHaveLength(2);
+      const ids = options.map((o) => o.id);
+      expect(new Set(ids).size).toBe(ids.length);
+    } finally {
+      localStorage.removeItem('zapp-recent-modules');
+    }
+  });
+
+  it('buscas recentes ficam fora do listbox', () => {
+    renderPalette({ recentSearches: ['caneca'] });
+    const listbox = screen.getByRole('listbox', { name: 'Acesso rápido' });
+    expect(listbox).not.toContainElement(screen.getByText('caneca'));
+  });
+});

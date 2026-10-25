@@ -166,8 +166,10 @@ export function CommandPalette({
   // a11y (combobox/listbox): o campo aponta para a lista e para o item realçado; cada item é
   // uma `option` com `aria-selected`. O item realçado é rolado para dentro da vista.
   const listboxId = 'cmd-palette-listbox';
-  const optionId = (id: string) => `cmd-opt-${id}`;
-  const activeOptionId = allItems[selectedIndex] ? optionId(allItems[selectedIndex].id) : undefined;
+  // O prefixo da seção evita ids duplicados quando o mesmo comando está em "Recentes" e em "Acesso rápido".
+  const optionId = (section: 'recent' | 'quick' | 'result', id: string) => `cmd-opt-${section}-${id}`;
+  const activeSection: 'recent' | 'quick' | 'result' = query ? 'result' : selectedIndex < recentCommands.length ? 'recent' : 'quick';
+  const activeOptionId = allItems[selectedIndex] ? optionId(activeSection, allItems[selectedIndex].id) : undefined;
 
   React.useEffect(() => {
     if (activeOptionId) {
@@ -208,9 +210,8 @@ export function CommandPalette({
         </div>
 
         <ScrollArea className="max-h-[400px]">
-          <div id={listboxId} role="listbox" aria-label="Acesso rápido">
-          {!query && (
-            <div className="p-2">
+          {!query && recentSearches.length > 0 && (
+            <div className="px-2 pt-2">
               {recentSearches.length > 0 && (
                 <div className="mb-2">
                   <div className="flex items-center justify-between px-2 py-1.5">
@@ -227,13 +228,18 @@ export function CommandPalette({
                   </div>
                 </div>
               )}
+            </div>
+          )}
+          <div id={listboxId} role="listbox" aria-label="Acesso rápido">
+          {!query && (
+            <div className={recentSearches.length > 0 ? 'px-2 pb-2' : 'p-2'}>
               <div>
                 {recentCommands.length > 0 && (
-                  <div className="mb-2">
+                  <div className="mb-2" role="group" aria-label="Recentes">
                     <div className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><Clock className="h-3 w-3" />Recentes</span></div>
                     <div className="space-y-0.5">
                       {recentCommands.map((cmd, idx) => (
-                        <button key={`recent-${cmd.id}`} role="option" id={optionId(cmd.id)} aria-selected={idx === selectedIndex} onClick={() => executeCommand(cmd)}
+                        <button key={`recent-${cmd.id}`} role="option" id={optionId('recent', cmd.id)} aria-selected={idx === selectedIndex} onClick={() => executeCommand(cmd)}
                           className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', idx === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50')}>
                           <div className="flex items-center gap-3">
                             <span className="text-muted-foreground group-hover:text-foreground transition-colors">{cmd.icon}</span>
@@ -244,10 +250,11 @@ export function CommandPalette({
                     </div>
                   </div>
                 )}
+                <div role="group" aria-label="Acesso rápido">
                 <div className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><Star className="h-3 w-3" />Acesso rápido</span></div>
                 <div className="space-y-0.5">
                   {quickAccessItems.map((cmd, idx) => (
-                    <button key={cmd.id} role="option" id={optionId(cmd.id)} aria-selected={recentCommands.length + idx === selectedIndex} onClick={() => executeCommand(cmd)}
+                    <button key={cmd.id} role="option" id={optionId('quick', cmd.id)} aria-selected={recentCommands.length + idx === selectedIndex} onClick={() => executeCommand(cmd)}
                       className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', recentCommands.length + idx === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50')}>
                       <div className="flex items-center gap-3">
                         <span className="text-muted-foreground group-hover:text-foreground transition-colors">{cmd.icon}</span>
@@ -256,6 +263,7 @@ export function CommandPalette({
                       {cmd.shortcut && <div className="flex gap-1">{cmd.shortcut.map((k, i) => <kbd key={i} className="px-1.5 py-0.5 bg-muted rounded text-3xs font-mono text-muted-foreground">{k}</kbd>)}</div>}
                     </button>
                   ))}
+                </div>
                 </div>
               </div>
             </div>
@@ -269,13 +277,13 @@ export function CommandPalette({
                 </div>
               )}
               {groupedCommands.map((group) => (
-                <div key={group.title} className="mb-2">
+                <div key={group.title} className="mb-2" role="group" aria-label={group.title}>
                   <div className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground">{group.title}</span></div>
                   <div className="space-y-0.5">
                     {group.items.map((item, idx) => {
                       const gi = groupedCommands.slice(0, groupedCommands.indexOf(group)).reduce((a, g) => a + g.items.length, 0) + idx;
                       return (
-                        <motion.button key={item.id} role="option" id={optionId(item.id)} aria-selected={gi === selectedIndex} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.02 }}
+                        <motion.button key={item.id} role="option" id={optionId('result', item.id)} aria-disabled={item.disabled || undefined} aria-selected={gi === selectedIndex} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.02 }}
                           onClick={() => executeCommand(item)} disabled={item.disabled}
                           className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', gi === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50', item.disabled && 'opacity-50 cursor-not-allowed')}>
                           <div className="flex items-center gap-3">
