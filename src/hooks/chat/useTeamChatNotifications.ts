@@ -1,4 +1,4 @@
-import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
@@ -141,12 +141,16 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
 
   // HZ5-09: refs para funções instáveis — a assinatura não precisa ser recriada
   // quando o volume/quiet-hours muda; o handler sempre lê o valor atual pelo ref.
+  // Atualização em useLayoutEffect (não durante render) para satisfazer react-hooks/refs.
+  // useLayoutEffect corre antes de useEffect, então os refs estão frescos quando o canal dispara.
   const notifSettingsRef = useRef(notifSettings);
-  notifSettingsRef.current = notifSettings;
   const isQuietHoursRef = useRef(isQuietHours);
-  isQuietHoursRef.current = isQuietHours;
   const showNotificationRef = useRef(showNotification);
-  showNotificationRef.current = showNotification;
+  useLayoutEffect(() => {
+    notifSettingsRef.current = notifSettings;
+    isQuietHoursRef.current = isQuietHours;
+    showNotificationRef.current = showNotification;
+  }, [notifSettings, isQuietHours, showNotification]);
 
   useEffect(() => {
     activeIdRef.current = activeConversationId;
@@ -235,7 +239,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
 
           await showNotificationRef.current({
-            title: `\u{1F4AC} Teams: ${senderName}`,
+            title: `💬 Teams: ${senderName}`,
             body,
             tag: `team-msg-${msg.conversation_id}`,
             data: {
