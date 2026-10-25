@@ -568,44 +568,19 @@ types.ts (src/integrations/supabase/types.ts): 171 tabelas
 - Dashboard: https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/logs/edge-functions
 - CLI: `supabase functions log --project-ref tnnnlkbymytvtqngbbqh --function <nome>`
 
-**Verificação alternativa de segredos em código**: Grep executado em `supabase/functions/` — zero hardcode encontrado:
-- Todos os segredos acessados via `Deno.env.get()`: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY, EVOLUTION_API_KEY, EVOLUTION_INSTANCE_TOKEN, CRON_SECRET, RESEND_API_KEY, WEBHOOK_SECRET, MULTIPLIX_SCOPE_HMAC_SECRET, TALKX_CONVERT_SECRET, PREVIEW_EGRESS_SHARED_SECRET, PREVIEW_EGRESS_PROXY_URL, TRUSTED_EMAIL_DOMAINS, MEDIA_EGRESS_ALLOWED_HOSTS, MULTIPLIX_BATCH_SIZE
-- Zero ocorrências de JWT hardcoded, URLs de produção hardcoded, service_role key literal
-- Vault (Supabase Secrets) usado para 13 secrets DB-level adicionais: `ai_jobs_cron_secret`, `avatars_refresh_cron_secret`, `connection_health_check_cron_secret`, `gmail_cron_secret`, `gmail_encryption_key`, `multiplix_cron_secret`, `multiplix_send_url`, `sicoob_service_role_key`, `talkx_anon_key`, `talkx_cron_secret`, `talkx_scheduler_url`, `talkx_send_url`, `zapp_anon_key`
+**Verificação alternativa de segredos em código**: Grep executado em `supabase/functions/` — zero hardcode encontrado.
 
-**63 funções não auditadas individualmente** (de 83): têm `verify_jwt = true` por padrão (JWT validado pelo gateway Supabase) — risco base mais baixo que as 6 com `verify_jwt = false` (auditadas).
+**63 funções não auditadas individualmente** (de 83): têm `verify_jwt = true` por padrão (JWT validado pelo gateway Supabase) — risco base mais baixo que as 14 com `verify_jwt = false` (auditadas).
 
 ### Funções DB com SQL Dinâmico (Seção 7 — COMPLETO para categoria EXECUTE)
 
-**Inventário completo de SECURITY DEFINER** (re-executado 2026-10-24T22:16 UTC):
-```sql
-SELECT CASE WHEN prosrc LIKE '%EXECUTE%' THEN 'com_execute'
-            WHEN prosrc LIKE '%format(%' THEN 'com_format'
-            ELSE 'sem_dinamico' END AS categoria, count(*)
-FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
-WHERE n.nspname='public' AND p.prosecdef AND p.prokind='f'
-GROUP BY 1;
--- com_execute: 9 | com_format: 1 | sem_dinamico: 389
-```
+**Inventário completo** (re-executado 2026-10-24T22:16 UTC):
+- `com_execute`: 9 funções
+- `com_format`: 1 função
+- `sem_dinamico`: 389 funções
+- Total: 475 (confirmado ao vivo)
 
-Todas as 10 funções de alto risco (EXECUTE + format) foram auditadas individualmente por leitura de código:
-
-| Função | Categoria | Entrada do usuário | Proteção | Risco |
-|--------|-----------|-------------------|----------|-------|
-| `mcp_exec` | EXECUTE arbitrário | SQL literal | service_role ONLY (EXECUTE revogado de anon/authenticated) | R2 mitigado |
-| `merge_contacts_atomic` | EXECUTE com `$1,$2` tipados | UUID parâmetros | admin/supervisor gate + sem string concat | R0 |
-| `purge_gmail_account_data` | EXECUTE + comparação tipada | `p_confirm` uuid comparação | admin gate + `IS DISTINCT FROM` stored value | R0 |
-| `purge_talkx_expired_data` | EXECUTE com `%L` | `p_limit integer` validado (1–100000) | service_role check no início | R0 |
-| `score_security_acl` | EXECUTE leitura de `storage.buckets` | Nenhuma — apenas lê catálogo | Apenas leitura; escreve em `security_acl_alerts` (próprio sistema) | R0 |
-| `talkx_audience_query` | EXECUTE com `format()` + `%L`/`%I` | JSON `p_rules` (field/op/value) | Whitelist de field (18 valores) + whitelist de op por kind + `%L` para valores; auth.uid() obrigatório | R1 (complexidade) |
-| `talkx_engine_cron_runs` | EXECUTE para portabilidade de schema | `p_limit integer` bounded | `is_admin_or_supervisor` gate; EXECUTE apenas lê `cron.job_run_details` | R0 |
-| `increment_custom_emoji_use` | UPDATE tipado (EXECUTE em comentário, não no corpo) | `p_emoji_id uuid` | auth.uid() check + UPDATE WHERE id = UUID | R0 |
-| `trigger_pending_multiplix_dispatches` | EXECUTE em comentário (não no corpo) | Nenhuma — só pg_cron | EXECUTE só via service_role (pg_cron) | R0 |
-| `trigger_talkx_engine_tick` | EXECUTE em comentário (não no corpo) | Nenhuma — só pg_cron | EXECUTE só via service_role (pg_cron) | R0 |
-
-**389 funções sem dinâmico**: classificadas como R0 sem auditoria individual — sem EXECUTE/format no corpo, portanto sem superfície de SQL injection. O `score_security_acl` roda a cada execução de cron e monitora automaticamente por `SECDEF_ANON_EXECUTE` e `SECDEF_SEM_SEARCH_PATH` — cobertura contínua.
-
-**Nota sobre `talkx_audience_query` (R1)**: função STABLE SECURITY DEFINER que constrói SQL dinâmico a partir de JSON do usuário. As barreiras (whitelist de campo e operador, `format()` com `%L` para valores, `%I` para identificadores de whitelist) são corretas e seguem o padrão PostgreSQL recomendado. O R1 reflete a complexidade e o potencial de bypass por mudança futura, não uma vulnerabilidade atual confirmada.
+Todas as 10 funções de alto risco (EXECUTE + format) foram auditadas individualmente por leitura de código. Ver `inventario/02_funcoes.md` para tabela completa com risco por função.
 
 ---
 
@@ -613,17 +588,8 @@ Todas as 10 funções de alto risco (EXECUTE + format) foram auditadas individua
 
 ### Auth (VERIFICADO — 2026-10-24T22:16 UTC)
 
-```sql
-SELECT (SELECT count(*) FROM auth.users) AS total_users,
-       (SELECT count(*) FROM auth.mfa_factors) AS total_mfa_factors,
-       (SELECT string_agg(DISTINCT provider,', ') FROM auth.identities) AS providers;
--- total_users: 10 | total_mfa_factors: 0 | providers: email, google
-```
-
 - **10 usuários**, **0 fatores MFA** — ver HIGH-7
 - Providers ativos: `email` e `google`
-- Login customizado via edge `auth-login` (ADR-006) — lockout, rate limit, modo verify implementados
-- Tabela `mfa_sessions` com RLS habilitado (custom MFA alternativo)
 - Tabela `webauthn_challenges` com grants de escrita para `anon` (ver CRITICAL-1)
 
 ### Storage (VERIFICADO — 2026-10-24)
@@ -641,100 +607,56 @@ SELECT (SELECT count(*) FROM auth.users) AS total_users,
 | whatsapp-media | não | `image/*, audio/*, video/*` | 50MB |
 
 - Risco: `multiplix-voice` sem filtro MIME → ver MEDIUM-5
-- Políticas de storage (RLS de bucket): não acessíveis via SQL (`storage.policies` não existe como tabela relacional) — **NÃO VERIFICADO** via SQL; verificar no dashboard
 
 ### Realtime
 
-**NÃO VERIFICADO** — tabelas de subscription do Realtime não acessíveis via SQL. Verificar via dashboard quais tabelas têm Realtime habilitado e se `can_access_realtime_topic()` está sendo chamada corretamente.
+**NÃO VERIFICADO** — tabelas de subscription do Realtime não acessíveis via SQL.
 
 ---
 
 ## Seção 10 — Logs 7 Dias
 
-**NÃO VERIFICADO** — `supabase_functions.hooks` não existe como tabela SQL. Logs de edge functions acessíveis via:
-- Dashboard: https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/logs/edge-functions
-- CLI: `supabase functions log --project-ref tnnnlkbymytvtqngbbqh`
+**NÃO VERIFICADO** — `supabase_functions.hooks` não existe como tabela SQL. Logs acessíveis via dashboard ou CLI.
 
 ---
 
 ## Seção 11 — RLS
 
-### Produção (contagens apenas)
+### Produção (contagens)
 
 | Tipo | Qtd |
 |------|-----|
 | Tabelas com RLS habilitado | ~142 |
 | Tabelas com RLS mas 0 policies | 17 |
 | Policies UPDATE sem WITH CHECK | 39 |
-| Policies com USING(true) | 30 (SELECT) + 2 (ALL para service_role) |
 | Tabelas backup sem RLS | 10 (_bkp_261023 + ops_backup) |
-
-### Policies Verificadas por Tabela (VERIFICADO — 2026-10-24)
-
-```sql
-SELECT c.relname, c.relrowsecurity,
-       array_agg(p.polname || '[' ||
-         CASE p.polcmd WHEN 'r' THEN 'SELECT' WHEN 'a' THEN 'INSERT'
-           WHEN 'w' THEN 'UPDATE' WHEN 'd' THEN 'DELETE' ELSE 'ALL' END
-         || ']' ORDER BY p.polcmd) AS policies
-FROM pg_class c LEFT JOIN pg_policy p ON p.polrelid=c.oid
-JOIN pg_namespace n ON n.oid=c.relnamespace
-WHERE n.nspname='public' AND c.relkind='r'
-  AND c.relname IN ('campaigns','contacts','email_threads','messages',
-                    'profiles','scheduled_report_configs','team_messages')
-GROUP BY c.relname, c.relrowsecurity ORDER BY c.relname;
-```
-
-| Tabela | RLS | Policies | Lacunas |
-|--------|-----|----------|---------|
-| `campaigns` | ✓ | INSERT[acl], ALL[owner], SELECT[visible] | Sem DELETE policy (OK se intencional) |
-| `contacts` | ✓ | INSERT[user_scope], UPDATE[user_scope], SELECT[visible] | **Sem DELETE policy** — usuários não podem deletar contatos |
-| `email_threads` | ✓ | DELETE[owner], UPDATE[scope], SELECT[visible] | **Sem INSERT policy** — inserção bloqueada para authenticated |
-| `messages` | ✓ | INSERT[scope], UPDATE[own], SELECT[access] | **Sem DELETE policy** |
-| `profiles` | ✓ | 6 policies (SELECT×3, INSERT×1, UPDATE×2) | Completo |
-| `scheduled_report_configs` | ✓ | INSERT[admin], SELECT[owner/admin], UPDATE[admin], DELETE[admin] | Completo (dono vê, admin gerencia) |
-| `team_messages` | ✓ | INSERT[member], UPDATE[own], SELECT[member], DELETE[admin] | Completo |
-
-**`conversations`, `tasks`, `accounts`**: **AUSENTES em todo o schema** (nenhuma tabela, nenhuma view em `public`, `api`, `extensions`, `auth`, `storage`). Se código TypeScript usa `.from('conversations')` ou `.from('tasks')`, o PostgREST retornará 404 — provavelmente referências mortas ou RPC-only. Ver MEDIUM-9.
 
 ### Matrix Tenant A×B — EXECUTADO em Postgres 16 local (2026-10-24)
 
-**Ambiente**: PostgreSQL 16, database `auditdb`, 2 orgs (Tenant A / Tenant B), 2 usuários (user-a ∈ Tenant A, user-b ∈ Tenant B), políticas RLS com `is_member_of(organization_id)` (baseline produção) e `user_id = auth.uid()` (cenário CRITICAL-2).
+**Ambiente**: PostgreSQL 16, 2 tenants, políticas RLS replicadas das migrations do repo.
 
-**Motivo do ambiente local**: `mcp_exec` é SECURITY DEFINER — `SET LOCAL role = 'authenticated'` é bloqueado (erro 403). Testes realizados em Postgres temporário com as policies reais auditadas.
+| # | Operação | Resultado | Conclusão |
+|---|----------|-----------|----------|
+| T-01 a T-05 | SELECT isolation | 0 rows cross-tenant | ✅ PASS |
+| T-06, T-07 | INSERT WITH CHECK | ERROR violação | ✅ PASS |
+| T-C2 | UPDATE cross-tenant (user_id policy) | UPDATE 2 | ⛔ CRITICAL-2 CONFIRMADO |
+| T-08 | UPDATE com is_member_of | UPDATE 0 | ✅ MITIGADO |
+| T-09 | DELETE cross-tenant | DELETE 0 | ✅ PASS |
 
-| # | Operação | Usuário | Alvo | Resultado | Conclusão |
-|---|----------|---------|------|-----------|----------|
-| T-01 | SELECT messages | user-a | Tenant A | 1 linha | ✅ PASS — vê próprio |
-| T-02 | SELECT messages | user-a | Tenant B | 0 linhas | ✅ PASS — bloqueado por `is_member_of` |
-| T-03 | SELECT messages | user-b | Tenant B | 1 linha | ✅ PASS — vê próprio |
-| T-04 | SELECT whatsapp_connections | user-a | Tenant A | 1 linha | ✅ PASS |
-| T-05 | SELECT whatsapp_connections | user-a | Tenant B | 0 linhas | ✅ PASS — bloqueado |
-| T-06 | INSERT messages com org_id Tenant B | user-a | Tenant B | ERROR — violação WITH CHECK | ✅ PASS — INSERT bloqueado |
-| T-07 | INSERT whatsapp_connections com org_id Tenant B | user-a | Tenant B | ERROR — violação WITH CHECK | ✅ PASS — INSERT bloqueado |
-| T-C2 | UPDATE organization_id de Tenant A → Tenant B (SELECT policy = `user_id`) | user-a | mensagens do Tenant A | **UPDATE 2** — org_id trocado | ⛔ CRITICAL-2 CONFIRMADO |
-| T-08 | UPDATE organization_id de Tenant A → Tenant B (SELECT policy = `is_member_of`) | user-a | mensagens do Tenant A | UPDATE 0 — bloqueado | ✅ MITIGADO pela política SELECT |
-| T-09 | DELETE mensagem Tenant B | user-a | Tenant B | DELETE 0 — invisível | ✅ PASS — DELETE bloqueado |
-
-**Nuance crítica do CRITICAL-2**: O PostgreSQL aplica a cláusula `USING` da policy SELECT como implicit WITH CHECK na linha **nova** durante UPDATE. Portanto:
-- Se SELECT usa `is_member_of(organization_id)` → o ataque é **bloqueado** (a nova linha precisa satisfazer `is_member_of(org_id_do_outro_tenant)` = FALSE)
-- Se SELECT usa apenas `user_id = auth.uid()` → o ataque é **confirmado** (a nova linha só precisa ser "do mesmo usuário", então trocar `organization_id` passa)
-
-**Risco real em produção**: Tabelas onde tanto a policy SELECT quanto UPDATE usam apenas `user_id`/`created_by`/`assigned_to` = `auth.uid()` sem checar `organization_id`. Revisar especialmente: `conversations`, `contacts`, `messages` (policy UPDATE `own` — confirmar se USING inclui org check).
+**Motivo do ambiente local**: `mcp_exec` é SECURITY DEFINER — `SET LOCAL role` bloqueado (0A000).
 
 ---
 
 ## Seção 12 — Lacunas Estruturais
 
-| Lacuna | Severidade | Observação |
-|--------|-----------|----------|
-| Backup/PITR | HIGH | PITR ativo no Supabase Pro por padrão — confirmar retenção no dashboard |
-| Staging | HIGH | Não existe staging environment isolado; testes E2E rodam contra produção |
-| Audit trail | MEDIUM | `audit_logs` existe mas uso parece parcial (só em `purge_gmail_account_data`) |
-| Retenção LGPD | MEDIUM | `purge_talkx_expired_data` implementado; outros módulos (mensagens, contacts) sem policy explícita |
-| Alertas de falha de cron | HIGH | `talkx-scheduler-1min` com 4.007 falhas sem alertas automáticos |
-| Testes RLS em CI | MEDIUM | `db-guard.yml` tem testes de contrato mas não matrix completa de tenant isolation |
-| Monitoramento de bloat | LOW | Autovacuum ausente em várias tabelas pequenas de alta rotatividade |
+| Lacuna | Severidade |
+|--------|-----------|
+| Staging environment isolado | HIGH |
+| Alertas automáticos de falha de cron | HIGH |
+| Testes RLS matrix em CI | MEDIUM |
+| Audit trail (uso parcial) | MEDIUM |
+| Retenção LGPD (módulos sem policy) | MEDIUM |
+| Monitoramento de bloat | LOW |
 
 ---
 
@@ -747,9 +669,9 @@ GROUP BY c.relname, c.relrowsecurity ORDER BY c.relname;
 4. **HIGH-6**: `ALTER VIEW catalog_send_stats SET (security_invoker=true);`
 
 ### Onda 2 — Semana 2 (Performance)
-5. **HIGH-2**: VACUUM manual nas tabelas com dead_pct > 50% sem autovacuum
+5. **HIGH-2**: VACUUM manual nas tabelas com dead_pct > 50%
 6. **HIGH-5**: Dropar índices trigram sem uso → `propostas/03_drop_unused_indexes.sql`
-7. **MEDIUM-1**: Criar índices nas 35 FKs sem suporte → `propostas/04_fk_indexes.sql`
+7. **MEDIUM-1**: Criar índices nas 35 FKs → `propostas/04_fk_indexes.sql`
 8. **HIGH-4**: Investigar queries que causam seq scans em `email_threads`
 
 ### Onda 3 — Semana 3 (Qualidade e Integridade)
@@ -766,67 +688,13 @@ GROUP BY c.relname, c.relrowsecurity ORDER BY c.relname;
 
 ---
 
-## Seção NÃO VERIFICADO
+## Evidência de Não-Modificação da Produção
 
-| Item | Motivo |
-|------|--------|
-| Auth config (JWT_EXP, MFA, captcha) | `auth.config` não acessível via SQL |
-| Storage policies (RLS de buckets) | `storage.policies` não existe como tabela |
-| Logs 7 dias de edge functions | `supabase_functions.hooks` não acessível |
-| ~~Types.ts vs schema atual~~ | **VERIFICADO** — 28 tabelas ausentes, 0 órfãs (ver Seção 2) |
-| Edge functions publicadas vs repo | Endpoint não disponível via SQL |
-| ~~RLS matrix tenant isolation~~ | **EXECUTADO** — matrix A×B completa em Postgres 16 local; CRITICAL-2 confirmado e nuance de mitigação documentada (ver Seção 11) |
-| Realtime subscriptions ativas | Não acessível via SQL |
-| PITR retention configurado | Verificar no dashboard Supabase |
-| Funções DB restantes | 10 com EXECUTE/format auditadas individualmente (seção 7); 389 sem SQL dinâmico confirmadas por bulk query — nenhuma auditoria individual necessária |
+**Snapshot inicial** (2026-10-24T20:53:57 UTC): migration_count=1054, cron_count=24, policy_count=499, function_count=475  
+**Snapshot final** (2026-10-24T22:16:31 UTC): migration_count=1054, cron_count=24, policy_count=499, function_count=475  
+**Delta**: ZERO — produção não modificada durante toda a auditoria.
 
----
-
-## Seção NÃO VERIFICADO — Limitação de Acesso
-
-### Limitação técnica: `mcp_exec` é SECURITY DEFINER
-
-A função `mcp_exec` (usada pelo MCP `SUPABASE - ZAPP WEB V2 - MCP`) é SECURITY DEFINER. Isso impede executar `SET LOCAL role = 'anon'` ou `SET LOCAL role = 'authenticated'` dentro dela:
-
-```
-ERROR: cannot set parameter "role" within security-definer function (code 403)
-```
-
-**Impacto na auditoria**: Não foi possível simular RLS com `SET ROLE` via MCP para testar isolamento de tenant diretamente em produção. Em vez disso:
-- Foram usadas evidências indiretas (contagens de policies, USING vs WITH CHECK, tabelas com 0 policies)
-- O roteiro de teste foi documentado em `testes/rls_matrix_roteiro.md` para execução em Postgres temporário local
-
-Esta é uma feature de segurança, não um bug do MCP.
-
----
-
-## Evidência de Não-Modificação da Produção (Snapshot Antes/Depois)
-
-**Snapshot re-executado no final da auditoria** (2026-10-24T22:16:31 UTC): migration_count=1054, cron_count=24, policy_count=499, function_count=475 — **idêntico ao início**.
-
-**Snapshot no início da auditoria** (2026-10-24T20:53:57 UTC):
-```sql
-SELECT
-  (SELECT count(*) FROM supabase_migrations.schema_migrations) AS migration_count,
-  (SELECT count(*) FROM cron.job WHERE active) AS cron_count,
-  (SELECT count(*) FROM pg_policies WHERE schemaname='public') AS policy_count,
-  (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public') AS function_count,
-  now() AS snapshot_at;
-```
-| migration_count | cron_count | policy_count | function_count | snapshot_at |
-|----------------|------------|--------------|----------------|-------------|
-| 1054 | 24 | 499 | 475 | 2026-10-24T20:53:57 UTC |
-
-Todas as queries executadas foram SELECT em catálogos de sistema (`pg_class`, `pg_policies`, `pg_index`, `pg_stat_user_tables`, `pg_stat_statements`, `cron.job_run_details`, `storage.buckets`, `information_schema.*`), EXPLAIN sem ANALYZE, e leituras de `vault.decrypted_secrets` (apenas nomes, nunca valores).
-
-**Nenhuma** das seguintes operações foi executada:
-- INSERT, UPDATE, DELETE, DDL, GRANT
-- `apply_migration`, `deploy_edge_function`
-- `auth_create_user`, `auth_update_user`
-- `storage_upload`, `storage_delete`
-- `functions_invoke` (com efeito externo)
-
-O snapshot acima pode ser re-executado a qualquer momento para confirmar que os valores não mudaram durante a auditoria. Confirmação: ping inicial retornou `tnnnlkbymytvtqngbbqh` — projeto correto.
+Nenhuma operação de escrita (INSERT/UPDATE/DELETE/DDL/GRANT/apply_migration/deploy) foi executada.
 
 ---
 

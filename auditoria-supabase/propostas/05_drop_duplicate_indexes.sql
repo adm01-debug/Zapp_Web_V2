@@ -53,9 +53,6 @@ LIMIT 20;
 
 -- ============================================================
 -- ROLLBACK — recriar os índices removidos como duplicatas
--- (executar somente se a remoção causar regressão inesperada;
---  duplicatas não oferecem ganho de performance, então
---  rollback aqui é improvável de ser necessário)
 -- ============================================================
 BEGIN;
 

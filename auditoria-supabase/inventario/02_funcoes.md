@@ -56,7 +56,7 @@ Nenhuma SECURITY DEFINER sem `search_path` fixo encontrada nas 12 auditadas indi
 
 ---
 
-## Tabelas sem Primary Key (4)
+## Tabelas sem Primary Key (1)
 
 ```sql
 SELECT relname FROM pg_class c
@@ -65,12 +65,14 @@ WHERE n.nspname='public' AND c.relkind='r'
   AND NOT EXISTS (SELECT 1 FROM pg_constraint pc WHERE pc.conrelid=c.oid AND pc.contype='p')
 ORDER BY relname;
 ```
-Resultado: **4 tabelas** (INFO-4) — não causa risco de segurança mas impede replication e CDC.
+Resultado: **1 tabela** (`_zapp_fn_before`) (INFO-4) — não é tabela de aplicação; não causa risco de segurança mas impede replication e CDC.
+
+Nota: sessão anterior afirmou "4 tabelas" — corrigido nesta sessão (2026-10-24) após re-executar a query ao vivo.
 
 ---
 
 ## Achados desta seção
 
 - **MEDIUM-7**: `mcp_exec` com SQL arbitrário executado como SECURITY DEFINER (R2-mitigado; restrito a admin)
-- **INFO-4**: 4 tabelas sem PK
+- **INFO-4**: 1 tabela sem PK (`_zapp_fn_before`)
 - 463 funções sem SQL dinâmico: confirmado via bulk query sobre `pg_proc` + `pg_get_functiondef`
