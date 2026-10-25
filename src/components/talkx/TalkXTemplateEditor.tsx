@@ -68,7 +68,7 @@ interface Props {
   onActiveTemplateChange?: (templateId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab, onClose, onOpenMonitor, onActiveTemplateChange }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, isError = false, error, onRetry, editing, initialTtab, onClose, onOpenMonitor, onActiveTemplateChange }: Props) {
   const {
     createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
     saveVariant, deleteVariant, countVariantRecipients,
@@ -500,9 +500,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab
           {/* Lista compacta — X047: carregando -> erro -> vazio -> conteúdo */}
           <div className="flex-1 overflow-y-auto space-y-1">
             <TalkXQueryBoundary
-              query={{ isLoading, isError: templatesIsError, error: templatesError }}
+              query={{ isLoading, isError, error }}
               entity="os templates"
-              onRetry={() => { void refetchTemplates(); }}
+              onRetry={onRetry ?? (() => { void refetchTemplates(); })}
               skeleton={<TalkXSkeletonRows rows={5} />}
               isEmpty={libFiltered.length === 0}
               empty={<p className="text-2xs text-muted-foreground text-center pt-4">Nenhum template</p>}

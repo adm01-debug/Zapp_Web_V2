@@ -107,7 +107,11 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
-        onClose();
+        if (search.query) {
+          search.setQuery('');
+        } else {
+          onClose();
+        }
         return;
       }
       if (!((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k')) return;
@@ -121,7 +125,7 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
     };
     window.addEventListener('keydown', handleShortcut, true);
     return () => window.removeEventListener('keydown', handleShortcut, true);
-  }, [focusSearch, onClose, onRouteChange, route.article, route.topic]);
+  }, [focusSearch, onClose, onRouteChange, route.article, route.topic, search]);
 
   // O campo é o primeiro alvo da tela: ao voltar do artigo, o foco volta para ele.
   useEffect(() => {
@@ -261,7 +265,7 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
               <h2 className="text-sm font-semibold text-foreground">Resultados</h2>
               {search.hasNoResults ? (
                 <p role="status" className="rounded-lg border border-border/60 bg-input/40 px-3 py-2 text-xs text-muted-foreground">
-                  Nenhum artigo encontrado para “{search.query}”. Tente outra palavra ou fale com o suporte.
+                  Nenhum artigo encontrado para "{search.query}". Tente outra palavra ou fale com o suporte.
                 </p>
               ) : (
                 <ul
