@@ -672,13 +672,13 @@ function StatTile({ icon, color, label, value, sub, subTone }: { icon: React.Ele
 
 function SegmentPreviewCard({ segment, estimatedCount }: { segment: { id: string; name: string; description?: string | null; rules: unknown; estimated_count: number; last_used_at?: string | null }; estimatedCount?: number }) {
   const { data: est, isFetching } = useAudienceEstimate(segment.rules as import('@/hooks/integrations/useTalkXSegments').SegmentRules, true);
-  const count = est?.count ?? estimatedCount ?? segment.estimated_count;
+  const count = est ? est.count : (estimatedCount ?? segment.estimated_count);
   return (
     <RailCard icon={Bookmark} color="violet" title={segment.name} subtitle={segment.description || 'Segmento salvo'}
       right={isFetching ? <RefreshCw className="w-3 h-3 animate-spin text-muted-foreground" /> : undefined}
     >
       <p className="text-2xs text-foreground-secondary">Público estimado</p>
-      <p className={cn('text-2xl font-bold tabular-nums', isFetching ? 'text-muted-foreground opacity-50' : 'text-foreground')}>{fmtInt(count)}<span className="text-xs font-normal text-muted-foreground ml-1">contatos</span></p>
+      <p className={cn('text-2xl font-bold tabular-nums', isFetching ? 'text-muted-foreground opacity-50' : 'text-foreground')}>{count === null ? '—' : fmtInt(count)}<span className="text-xs font-normal text-muted-foreground ml-1">contatos</span></p>
       {est?.sample && est.sample.length > 0 && (
         <div className="mt-2 space-y-1.5">
           <p className="text-2xs text-foreground-secondary">Amostra (5)</p>

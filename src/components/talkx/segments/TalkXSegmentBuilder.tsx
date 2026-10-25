@@ -286,7 +286,7 @@ export function TalkXSegmentBuilder({
       <div className="space-y-4 min-w-0">
         <RailCard icon={BarChart3} title="Resumo do segmento" right={<span className="flex items-center gap-1 text-2xs font-medium">{estFetching ? <><RefreshCw className="w-3 h-3 motion-safe:animate-spin" /><span className="text-muted-foreground">Calculando…</span></> : <><span className="w-2 h-2 rounded-full bg-success motion-safe:animate-pulse" /><span className="text-success">Ao vivo</span></>}</span>}>
           <p className="text-2xs text-foreground-secondary">Audiência estimada</p>
-          <p className={cn('text-4xl font-bold tabular-nums tracking-[-0.02em] transition-opacity', estFetching ? 'text-muted-foreground opacity-50' : 'text-foreground opacity-100')}>{fmtInt(est?.count ?? 0)}</p>
+          <p className={cn('text-4xl font-bold tabular-nums tracking-[-0.02em] transition-opacity', estFetching ? 'text-muted-foreground opacity-50' : 'text-foreground opacity-100')}>{est && est.count === null ? '—' : fmtInt(est?.count ?? 0)}</p>
           <p className="text-xs text-foreground-secondary">contatos</p>
           {incompleteCount > 0 && (
             <p className="text-2xs text-dash-amber mt-2">{incompleteCount} condição(ões) incompleta(s) fora da estimativa</p>

@@ -74,8 +74,8 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   // ramos/UFs vem da RPC do Singu, e uma constante local ofereceria valor que a
   // ponte pode recusar. Sem `category` nova: entram no grupo básico junto de
   // Empresa/Cidade/UF. company/city/state seguem intactos (segmentos salvos).
-  { value: 'real_sector', label: 'Setor de atividade (real)', kind: 'enum', category: 'basico' },
-  { value: 'real_uf', label: 'UF (real)', kind: 'enum', category: 'basico' },
+  { value: 'real_sector', label: 'Setor de atividade (real)', kind: 'enum', category: 'basico', comingSoon: true },
+  { value: 'real_uf', label: 'UF (real)', kind: 'enum', category: 'basico', comingSoon: true },
   // Valores canônicos dos grupos (mesma lista que classifica public.contacts.group_category),
   // para a regra nunca oferecer categoria que o banco não guarda.
   { value: 'group_category', label: 'Grupo', kind: 'enum', category: 'basico', options: GROUP_CATEGORIES.map((c) => c.value) },
@@ -349,12 +349,19 @@ export async function resolveAudience(rules: SegmentRules | null | undefined, li
   return rows;
 }
 
+function hasComingSoonRule(rules: SegmentRules | null | undefined): boolean {
+  return (rules?.groups ?? []).some((g) => g.rules.some((r) => RULE_FIELDS.find((f) => f.value === r.field)?.comingSoon));
+}
+
 export function useAudienceEstimate(rules: SegmentRules | null | undefined, enabled = true) {
   const key = JSON.stringify(rules ?? null);
   const { complete, incompleteCount } = splitRules(rules);
   return useQuery({
     queryKey: ['talkx-audience-estimate', key],
-    queryFn: async () => {
+    queryFn: async (): Promise<{ count: number | null; sample: AudienceContact[]; incompleteCount: number }> => {
+      // Todas as regras "em breve" (ex.: só lead_origin): `complete.groups` vazio o motor
+      // leria como base inteira. Sem estimativa honesta: contagem nula ("—" na tela).
+      if (complete.groups.length === 0 && hasComingSoonRule(rules)) return { count: null, sample: [], incompleteCount };
       const [count, sample] = await Promise.all([countAudience(complete), resolveAudience(complete, 5)]);
       return { count, sample, incompleteCount };
     },
@@ -617,12 +624,20 @@ export function useTalkXSegments() {
 
   const refreshEstimates = useMutation({
     mutationFn: async (segments: TalkXSegment[]) => {
-      await Promise.all(segments.map(async (s) => {
+      // allSettled: um segmento que falha (ex.: regra real_*) não derruba os demais.
+      const results = await Promise.allSettled(segments.map(async (s) => {
         const estimated_count = await countAudience(s.rules);
-        if (estimated_count !== s.estimated_count) await fromTable('talkx_segments').update({ estimated_count }).eq('id', s.id);
+        if (estimated_count !== s.estimated_count) {
+          const res = await fromTable('talkx_segments').update({ estimated_count }).eq('id', s.id);
+          if (res?.error) throw new Error(res.error.message);
+        }
       }));
+      return { failed: results.filter((r) => r.status === 'rejected').length, total: segments.length };
     },
-    onSuccess: () => invalidate(),
+    onSuccess: ({ failed, total }) => {
+      invalidate();
+      if (failed > 0) toast.error(`Não foi possível recalcular ${failed} de ${total} segmento(s); os demais foram atualizados.`);
+    },
   });
 
   // X114 — seleção em massa da biblioteca. Guardamos só os ids: "selecionar

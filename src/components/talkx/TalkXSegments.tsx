@@ -58,6 +58,15 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     if (!fromList) return selectedRow;
     return fromList.updated_at >= selectedRow.updated_at ? fromList : selectedRow;
   }, [selectedRow, segments]);
+  // Depois de excluir/arquivar em lote o segmento some da lista carregada: zera a seleção para
+  // não deixar um segmento fantasma no rail. Só quando ele JÁ esteve na lista (`seenInListRef`):
+  // o recém-criado, que a lista ainda não recarregou, permanece (ver `fromList` acima).
+  const seenInListRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selectedRow) { seenInListRef.current = null; return; }
+    if (segments.some((s) => s.id === selectedRow.id)) { seenInListRef.current = selectedRow.id; return; }
+    if (seenInListRef.current === selectedRow.id) { seenInListRef.current = null; setSelected(null); }
+  }, [selectedRow, segments]);
   const selectedIdRef = useRef<string | null>(null);
   useEffect(() => { selectedIdRef.current = selected?.id ?? null; }, [selected?.id]);
   // Linhas/cartões da biblioteca: o Esc do painel devolve o foco ao que o abriu.
@@ -814,7 +823,7 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
             : rules.map((r) => <span key={r.id} className="text-2xs px-2 py-0.5 rounded-md bg-primary/10 text-[hsl(var(--primary-text))] border border-primary/20">{ruleText(r)}</span>)}
         </div>
       </div>
-      <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{fmtInt(est?.count ?? s.estimated_count)} contatos</span>} />
+      <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{est && est.count === null ? '—' : fmtInt(est?.count ?? s.estimated_count)} contatos</span>} />
       <MetaRow label="Origem" value={ORIGIN_LONG[s.origin] ?? ORIGIN_LONG.custom} />
       <MetaRow label="Último uso" value={s.last_used_at ? fmtDateTime(s.last_used_at) : 'Nunca'} />
       <MetaRow label="Criado em" value={fmtDateTime(s.created_at)} />
