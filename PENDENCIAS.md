@@ -243,4 +243,29 @@ drift real, corrigir implica migration + registro no ledger, o que envolve decis
 
 ---
 
+## 10. Unit Tests Shard 2/3 — falhas de timezone/config no CI (pré-existentes)
+
+**Workflow:** `ci.yml` — `🧪 Unit Tests (2/3)`  
+**Branch:** `claude_05/festive-carson-ub43wu` (PR #2246) — e também na `main`  
+**Arquivo de teste 1:** `src/hooks/tasks/__tests__/workItemFormat.test.ts:123`  
+**Arquivo de teste 2:** `src/components/configuracoes/__tests__/configuracoes.leituraErro.test.tsx:73`  
+**Arquivo de teste 3:** `src/hooks/system/__tests__/useDiagnosticsData.select.test.ts:79`
+
+**Erros exatos (run 40211737149):**
+- `workItemFormat.test.ts:123` — `expected 'Hoje, 20:00' to be 'Hoje, 17:00'` — timezone: o CI roda em UTC; `2026-10-11T17:00:00-03:00` é 20:00 UTC. O teste usa horário local (UTC-3 Brazil) que passa na máquina do desenvolvedor.
+- `configuracoes.leituraErro.test.tsx:73` — `expected undefined to be true`
+- `useDiagnosticsData.select.test.ts:79` — `expected undefined to be 'down'`
+
+**Nota:** O CI log do shard 2/3 apresentou erro em `useInboxFilters.type-url.test.tsx:137` — isto é misatribuição. O arquivo `useInboxFilters.type-url.test.tsx` em `ee05fe0` não tem assertion de data ("Hoje"); a falha real é `workItemFormat.test.ts:123`. Os 9 testes de PK-14 em `useInboxFilters.type-url.test.tsx` passam.
+
+**Por que não foi corrigido automaticamente:**  
+- `workItemFormat.test.ts`: o teste usa `now: AGOR_A` (data fixa) mas formata o resultado com fuso local — corrigir requer passar `timeZone` explícito para a função de formatação ou mockar o fuso no teste. Envolve decisão sobre a API de `formatWorkItemDate` (aceitar `timeZone` ou não).
+- `configuracoes.leituraErro` e `useDiagnosticsData`: pré-existentes na `main`; causa não investigada nesta sessão (fora do escopo).
+
+**Ação necessária:**  
+1. Corrigir `workItemFormat.test.ts` para não depender do timezone do processo: usar `Intl.DateTimeFormat` com `timeZone: 'America/Sao_Paulo'` ou fixar o timezone no teste.
+2. Investigar `configuracoes.leituraErro.test.tsx:73` e `useDiagnosticsData.select.test.ts:79`.
+
+---
+
 *Este arquivo deve ser atualizado ou removido após cada item ser resolvido.*
