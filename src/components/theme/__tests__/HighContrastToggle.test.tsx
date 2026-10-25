@@ -71,11 +71,22 @@ describe('S27 — dica no botão de acessibilidade da sidebar', () => {
   });
 
   it('a dica sai à direita do botão (o lado que a sidebar recolhida deixa livre)', async () => {
+    // JSDOM não tem layout: com retângulos e viewport zerados o Radix enxerga colisão e vira o lado
+    // para a esquerda. Retângulos e viewport mínimos fazem a dica caber à direita, como no navegador.
+    const viewport = [
+      vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(1024),
+      vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(768),
+    ];
+    const rect = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockReturnValue({ x: 8, y: 100, left: 8, top: 100, right: 48, bottom: 140, width: 40, height: 40, toJSON: () => ({}) });
     montarBotao();
 
     fireEvent.pointerMove(acharBotao(), { pointerType: 'mouse' });
 
     expect(await screen.findByRole('tooltip')).toHaveAttribute('data-side', 'right');
+    rect.mockRestore();
+    viewport.forEach((spy) => spy.mockRestore());
   });
 
   it('o aria-label do botão continua "Configurações de acessibilidade"', () => {
