@@ -124,7 +124,7 @@ export const AUDIT_PAGE_SIZE = 50;
 /** Erro por campo devolvido por `mapCreateUserError`. */
 export interface CreateUserFieldError {
   /** Campo que originou o erro (`null` = erro geral, sem campo específico). */
-  field: 'email' | 'password' | 'name' | null;
+  field: 'email' | 'password' | 'name' | 'role' | null;
   /** Mensagem amigável sem expor detalhes internos do servidor. */
   message: string;
 }
