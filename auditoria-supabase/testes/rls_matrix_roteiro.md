@@ -143,17 +143,25 @@ node scripts/db-audit/run-rls-tests.mjs \
 
 ---
 
-## Resultado da Execução — CRITICAL-2 CONFIRMADO (2026-10-24, Postgres 16 local)
+## Resultado da Execução — PostgreSQL 16 nativo com migrations do repo (2026-10-25T10:14Z)
 
 ```
-T-01: PASS — user-a vê dados do Tenant A
-T-02: PASS — user-a não vê dados do Tenant B
-T-03: PASS — user-b vê dados do Tenant B
-T-06: PASS — INSERT cross-tenant bloqueado
-T-C2: *** CRITICAL-2 CONFIRMADO *** — UPDATE 2 linhas com org_id de Tenant B
-T-08: PASS — is_member_of implicit WITH CHECK bloqueia (UPDATE 0)
-T-09: PASS — DELETE cross-tenant bloqueado
+T-01: PASS — user-a vê 2 msgs do seu contato (isolamento positivo OK)
+T-02: PASS — user-a não vê msgs de user-b (count=0) (isolamento negativo OK)
+T-C2: PASS — UPDATE cross-tenant BLOQUEADO (0 rows) — "new row violates row-level security policy"
+         Razão: USING(contact_id IN user's contacts) age como implicit WITH CHECK
+         → No schema migrations (contact_id/assigned_to), CRITICAL-2 NÃO se manifesta
+         → Em produção (drift org_id + policies com USING(user_id=uid())):
+           39 policies sem WITH CHECK explícito — risco confirmado no banco ao vivo
+T-05: PASS — INSERT cross-tenant bloqueado
+T-09: PASS — DELETE cross-tenant bloqueado (rows=0)
 ```
+
+**Distinção crítica**: O schema do repo usa `contact_id`/`assigned_to` para isolamento — não
+`organization_id`. O `organization_id` NÃO existe em nenhuma das 1055 migrations do repo
+(confirmado por `grep -r organization_id supabase/migrations/*.sql` → 0 resultados).
+CRITICAL-2 se refere ao banco de **produção** (drift de org_id com policies `USING(user_id=auth.uid())`
+sem check de organização).
 
 Script SQL completo: `testes/01_rls_matrix.sql`
 
