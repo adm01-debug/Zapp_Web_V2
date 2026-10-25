@@ -89,7 +89,8 @@ describe('tela da Ajuda do Talk X (X189)', () => {
 
     fireEvent.change(input, { target: { value: 'assunto inexistente' } });
 
-    expect(await screen.findByText(/nenhum artigo encontrado para “assunto inexistente”/i)).toBeTruthy();
+    const noResultMsg = await screen.findByRole('status');
+    expect(noResultMsg).toHaveTextContent('assunto inexistente');
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 
