@@ -267,7 +267,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         | null;
       if (mensagem?.type !== 'NOTIFICATION_CLICK') return;
       if (mensagem.data?.type !== 'team_chat') return;
-      if (typeof mensagem.data.conversationId === 'string') return;
+      if (typeof mensagem.data.conversationId !== 'string') return;
       window.focus();
       navigateToView('team-chat');
     };
