@@ -134,7 +134,8 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
     // destinatário (sem sessão), então o limite é por-IP, não por-usuário.
     // Falha aberta com o fallback em memória se o limiter persistente cair —
     // nunca derruba o redirect real por causa disso.
-    const rate = await enforceRateLimit(`talkx-link:click:${clientIp}`, 60, 60_000);
+    const rate = await enforceRateLimit(`talkx-link:click:${clientIp}`, 60, 60_000)
+      .catch(() => ({ allowed: true, remaining: -1, persistent: false }));
     if (!rate.allowed) {
       return new Response("Too many requests", { status: 429 });
     }
@@ -182,7 +183,8 @@ export async function handleTalkxLink(req: Request, deps: TalkxLinkDeps): Promis
 
     // Mesmo limite do GET: webhook/pixel de conversão também é chamado sem
     // sessão, direto do site de destino do link.
-    const rate = await enforceRateLimit(`talkx-link:convert:${clientIp}`, 60, 60_000);
+    const rate = await enforceRateLimit(`talkx-link:convert:${clientIp}`, 60, 60_000)
+      .catch(() => ({ allowed: true, remaining: -1, persistent: false }));
     if (!rate.allowed) {
       return new Response("Too many requests", { status: 429 });
     }
