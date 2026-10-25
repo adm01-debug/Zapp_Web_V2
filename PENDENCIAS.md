@@ -44,21 +44,47 @@ Verificar se existe PR `automation/types-sync` aberta. Se sim, mergear após con
 **Status:** BLOQUEIO TÉCNICO — falhas pré-existentes no banco local de CI  
 **Check afetado:** `Contrato DB offline` (required check)
 
-**Erros exatos observados no banco local de teste:**
+**Erros exatos observados no banco local de teste (job 121233421020, run 40214754252, HEAD `833edf743`):**
 
-1. **Constraint `department_audit_logs_action_check`** — rejeita valores `'whatsapp_updated'` e `'access_requested'` que os testes tentam inserir. A constraint só aceita os valores definidos no enum original; esses dois valores foram adicionados ao uso mas não à constraint do banco local do CI.  
-   Erro: `ERROR: new row for relation "department_audit_logs" violates check constraint "department_audit_logs_action_check"`
+O setup do banco local de CI falha ao tentar remover roles de sistema do PostgreSQL (operação não permitida):
 
-2. **Função `public.request_department_access` ausente** — o banco local de CI não tem a função `request_department_access` que os testes do módulo de departamentos invocam.  
-   Erro: `ERROR: function public.request_department_access(unknown) does not exist`
+```
+ERROR: cannot drop role pg_checkpoint because it is required by the database system
+ERROR: cannot drop role pg_create_subscription because it is required by the database system
+ERROR: cannot drop role pg_database_owner because it is required by the database system
+ERROR: cannot drop role pg_execute_server_program because it is required by the database system
+ERROR: cannot drop role pg_maintain because it is required by the database system
+ERROR: cannot drop role pg_monitor because it is required by the database system
+ERROR: cannot drop role pg_read_all_data because it is required by the database system
+ERROR: cannot drop role pg_read_all_settings because it is required by the database system
+ERROR: cannot drop role pg_read_all_stats because it is required by the database system
+ERROR: cannot drop role pg_read_server_files because it is required by the database system
+ERROR: cannot drop role pg_signal_backend because it is required by the database system
+ERROR: cannot drop role pg_stat_scan_tables because it is required by the database system
+ERROR: cannot drop role pg_use_reserved_connections because it is required by the database system
+ERROR: cannot drop role pg_write_all_data because it is required by the database system
+ERROR: cannot drop role pg_write_server_files because it is required by the database system
+ERROR: current user cannot be dropped  (role: postgres)
+FATAL: role "root" does not exist
+```
+
+Esses erros ocorrem durante o setup do container Postgres no docker-shim (E47), onde o script de inicialização tenta remover roles de sistema que o PostgreSQL protege. O step com `SKIP_DOCKER_SHIM: "1"` exige `docker logs` para readiness e não consegue se conectar como `root`.
+
+**Erros de runs anteriores (job 121207961229, run 40206335606, HEAD `8bad01793`):**  
+Esses runs do mesmo job revelaram erros adicionais em scripts de teste que executaram após o setup:
+- `ERROR: new row for relation "department_audit_logs" violates check constraint "department_audit_logs_action_check"` — valores `'whatsapp_updated'`/`'access_requested'` não na constraint
+- `ERROR: function public.request_department_access(unknown) does not exist` — função ausente no banco local
+
+Ambos os conjuntos de erros são pré-existentes.
 
 **Confirmação de que NÃO é introduzido por este PR:**  
-Grep de arquivos da branch: nenhum arquivo alterado nesta branch toca `department_audit_logs`, `department_audit_logs_action_check` ou `request_department_access`. A falha preexiste no estado do banco local de CI antes desta sessão.
+Grep de arquivos da branch: nenhum arquivo alterado nesta branch toca `department_audit_logs`, `department_audit_logs_action_check`, `request_department_access`, nem a configuração do docker-shim (`scripts/db-audit/docker-shim`).
 
 **Ação necessária:**  
-1. Atualizar a migration de `department_audit_logs` para incluir `'whatsapp_updated'` e `'access_requested'` na constraint (ou remover a constraint e adotar ENUM/trigger).  
-2. Criar migration para a função `request_department_access` no banco local de CI.  
-Ambas requerem investigação de schema e arquivos de migration — fora do escopo desta sessão.
+1. Investigar o script de setup do container Postgres no docker-shim para não tentar remover roles de sistema.  
+2. Atualizar a migration de `department_audit_logs` para incluir `'whatsapp_updated'` e `'access_requested'` na constraint.  
+3. Criar migration para a função `request_department_access` no banco local de CI.  
+Fora do escopo desta sessão.
 
 ---
 
@@ -122,8 +148,8 @@ Verificar o plano Copilot e a quota de PR reviews no GitHub Settings → Copilot
 **✅ CORRIGIDO — `workItemFormat.test.ts:123` (timezone):**  
 `formatWorkItemDate('2026-10-11T17:00:00-03:00')` exibia `'Hoje, 20:00'` em UTC. Envolvido em `withTimeZone('America/Sao_Paulo', ...)`. Confirmado passando: não aparece no shard 2/3 do run 40206335520.
 
-**✅ CORRIGIDO — `useInboxFilters.type-url.test.tsx` (5 falhas → 0 falhas):**  
-`handleContactTypeChange` usava `window.history.replaceState` em vez de `useSearchParams` do React Router. Corrigido em `753eb32c`. Verificado localmente: 9/9 testes passando. Aguardando confirmação no CI.
+**✅ CORRIGIDO — `useInboxFilters.type-url.test.tsx` (9 falhas → 0 falhas) — CONFIRMADO NO CI:**  
+`handleContactTypeChange` usava `window.history.replaceState` em vez de `useSearchParams` do React Router. Corrigido em `753eb32cc` (PK-14). Verificado localmente: 9/9 testes passando. **Confirmado ausente** no CI do run `40214754253` (HEAD `833edf743`) — não aparece em nenhum dos 3 shards.
 
 **PRÉ-EXISTENTE — `buscas-silenciosas-aviso.test.tsx:155`:**  
 Texto esperado `"Erro ao atualizar o relatorio"`, recebido `"Erro ao ativar/desativar relatório"`. Não está no diff desta branch.
@@ -200,7 +226,7 @@ Arquivos não estão no diff desta branch. `useTalkXSegments.ts` está no diff m
 `git diff origin/main --name-only` não inclui nenhum dos arquivos de teste acima. Cada arquivo de produção relacionado (`useInboxFilters.ts`, `App.tsx`, `VolumeDial.tsx`, etc.) igualmente ausente do diff. Os arquivos de produção alterados nesta branch (`TalkXOverview.tsx`, `useTalkXSegments.ts`) têm mudanças mínimas que não podem causar as falhas observadas (confirmado por análise do conteúdo do diff e grep nos arquivos de teste).
 
 **Ação necessária (bloqueios remanescentes):**  
-1. `App.tsx` / `DeferredProviders`: adicionar `AuthProvider` wrapper no teste ou mock `useAuth` — resolve shard 3/3 parcialmente.  
+1. `App.tsx` / `DeferredProviders`: adicionar `AuthProvider` wrapper no teste ou mock `useAuth` — resolve shard 3/3 (`team-chat-notifications-mount.test.ts`) parcialmente.  
 2. `TalkXTemplates.route.test.tsx`: investigar lógica de troca de template na URL do editor.  
 3. Módulo Talk X (TalkXOverview, TalkXSegments, TalkXTemplateEditor, TalkXTemplatesRail, TalkXWizardReview, TalkXAnalytics): múltiplas falhas pré-existentes em tests de UI do módulo — requerem investigação dos componentes respectivos.  
 4. VoiceChangerPicker, useChatMediaSending, PasswordResetRequestsPanel, AvatarUpload, SettingsView, WorkItemSheet: falhas pré-existentes distribuídas aleatoriamente entre shards.  

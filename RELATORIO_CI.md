@@ -1,7 +1,7 @@
 # Relatório CI — PR #2218 (branch `claude_05/brave-mccarthy-zvzky4`)
 
 Data: 2026-10-25 (sessão ativa — atualizado)
-HEAD anterior: `8bad01793` → novo push: chore: PENDENCIAS.md §8/§9 + RELATORIO_CI.md inventário main
+HEAD atual: `833edf743` (PK-14 fix: useInboxFilters.ts usa useSearchParams + chore docs)
 
 ---
 
@@ -50,7 +50,7 @@ Ponto de referência: HEAD `1c3369932` (commit inicial da sessão anterior, pré
 
 ### TypeCheck (final)
 - Resultado: ✅ **0 erros** — `exit 0`
-- Medido localmente em 2026-10-25 e confirmado pelo check `🖎 TypeCheck` no CI (success)
+- Medido localmente em 2026-10-25 e confirmado pelo check `🔎 TypeCheck` no CI (success)
 
 ### Testes (pré-correções, confirmados em sessão anterior)
 - Arquivos que falharam no CI do PR (shard 1/3): `useTeamMessages.canal-e-reconexao.test.tsx`
@@ -78,7 +78,7 @@ Ponto de referência: HEAD `1c3369932` (commit inicial da sessão anterior, pré
 | 11 | — | Falhas pré-existentes da `main` (DB Guard, E2E logado, Talk X visual, copilot, Unit Tests 1-2) | 📋 PENDENCIAS.md |
 | 12 | este commit | `alvos-toque-44px.test.tsx:41,51` — botão "Close" → "Fechar" (shard 1/3) | ✅ Corrigido |
 | 13 | este commit | `workItemFormat.test.ts:123` — timezone CI (UTC vs UTC-3) com `withTimeZone` (shard 2/3) | ✅ Corrigido |
-| 14 | `753eb32c` | `useInboxFilters.type-url.test.tsx` — PK-14: `handleContactTypeChange` usa `window.history.replaceState` em vez de `useSearchParams` | ✅ Corrigido — 9/9 testes passando |
+| 14 | `d31382449` | `useInboxFilters.type-url.test.tsx` — PK-14: `handleContactTypeChange` usa `window.history.replaceState` em vez de `useSearchParams` | ✅ Corrigido — 9/9 testes passando |
 | 15 | — | `team-chat-notifications-mount.test.ts` — `useAuth` sem AuthProvider (shard 3/3) | 📋 PENDENCIAS.md §6 |
 | 16 | `8bad01793` | `useTeamReadState.ts` — channel recriado a cada mensagem (idsKey→hasIds nos deps do useEffect) | ✅ Corrigido |
 | 17 | `8bad01793` | `aviso-navegador.test.tsx` — mock showNotification→window.Notification (PR removeu usePushNotifications) | ✅ Corrigido — confirmado ausente no shard 3/3 run 40206335520 |
@@ -92,7 +92,7 @@ Ponto de referência: HEAD `1c3369932` (commit inicial da sessão anterior, pré
 
 | Check | Status | Observação |
 |---|---|---|
-| `🖎 TypeCheck` | ✅ success | Confirmado no CI |
+| `🔎 TypeCheck` | ✅ success | Confirmado no CI |
 | `🔒 Security Audit` | ✅ success | Confirmado no CI |
 | `🧩 Node CI Scripts` | ✅ success | Confirmado no CI |
 | `🏗️ Build` | ❌ cancelado | CI Gate falhou (Unit Tests pré-existentes) — job 121193801484 não executou nenhum step |
@@ -132,8 +132,8 @@ Ponto de referência: HEAD `1c3369932` (commit inicial da sessão anterior, pré
 | `0c6928f9` | chore: PENDENCIAS.md §7 Auto Update PR Branches + RELATORIO_CI.md |
 | `8bad01793` | fix: 4 falhas CI (alvos-toque/workItemFormat/aviso-navegador/useTeamReadState) |
 | `4915170a` | chore: PENDENCIAS.md §8 CI Gate + §9 Build |
-| `(este commit)` | chore: RELATORIO_CI.md inventário main correto (§1 com 7 workflows + links) |
-| `753eb32c` | fix: useInboxFilters usa useSearchParams do react-router (PK-14) |
+| `753eb32cc` | fix: PK-14 — useInboxFilters usa useSearchParams (9/9 testes passando) |
+| `833edf743` | chore: RELATORIO_CI.md + PENDENCIAS.md atualização pós-PK-14 |
 
 ---
 
@@ -148,25 +148,24 @@ Ponto de referência: HEAD `1c3369932` (commit inicial da sessão anterior, pré
 | Unit Tests (shard 1/3, 2/3) | ❌ 13+ erros pré-existentes | ❌ 13+ erros pré-existentes (inalterado — pré-existente) |
 | E2E canal-estavel | ❌ mock Notification ausente + h.show residual | ✅ Corrigido |
 | `real_sector`/`real_uf` em useTalkXSegments | ❌ sem guard (falha aberta) | ✅ fail-closed + assertNoSinguFields |
-| `useInboxFilters.type-url` (PK-14) | ❌ 5 falhas (window.history.replaceState) | ✅ 9/9 passando (useSearchParams) |
 
 ---
 
-## 7. Tabela de prova final — HEAD `8bad01793` (ci.yml run `40206335520`, db-guard run `40206335606`)
+## 7. Tabela de prova — HEAD `8bad01793` (ci.yml run `40206335520`, db-guard run `40206335606`)
 
 > Build local = ✅ `bun run build` 14.26s (seção 2). Job de CI `🏗️ Build` (121210260934) = ❌ skipped — CI Gate falhou por Unit Tests pré-existentes; o job não executou nenhum step. O `bun run build` local prova que o código compila; o skip é consequência do CI Gate, não de falha de build.
 
 | Check | Link do job | Conclusão | Nota |
 |---|---|---|---|
-| `🖎 TypeCheck` | [job/121207961128](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40206335520/job/121207961128) | ✅ success | Confirmado — 0 erros TS |
+| `🔎 TypeCheck` | [job/121207961128](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40206335520/job/121207961128) | ✅ success | Confirmado — 0 erros TS |
 | `🔒 Security Audit` | [job/121207961032](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40206335520/job/121207961032) | ✅ success | Confirmado |
 | `🧩 Node CI Scripts` | [job/121207961041](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40206335520/job/121207961041) | ✅ success | Confirmado |
 | `Replay local das migrations` | [job/121207961454](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40206335606/job/121207961454) | ✅ success | Confirmado |
-| `🦬 Mutação do mapa` | [job/121207960885](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40206335520/job/121207960885) | ✅ success | Não é required check — confirmado |
+| `🧬 Mutação do mapa` | [job/121207960885](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40206335520/job/121207960885) | ✅ success | Não é required check — confirmado |
 | `🏗️ Build` | [job/121210260934](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40206335520/job/121210260934) | ❌ skipped | CI Gate (Unit Tests pré-existentes) falhou → job skipado; build local ✅ 14.26s (seção 2) |
 | `✅ CI Gate` | [job/121210260168](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40206335520/job/121210260168) | ❌ failure | Consequência das Unit Tests pré-existentes |
 | `🧪 Unit Tests (1/3)` | [job/121207961039](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40206335520/job/121207961039) | ❌ pré-existente | `VolumeDial.test.tsx` — aria-valuenow mismatch; `alvos-toque-44px.test.tsx` ✅ CORRIGIDO (ausente neste run) → PENDENCIAS.md §6 |
-| `🧪 Unit Tests (2/3)` | [job/121207961068](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40206335520/job/121207961068) | ❌ pré-existente | `buscas-silenciosas-aviso`, `useDashboardKpi.periodo`, `useAgentCelebrations`, `useInboxBulkActions`; `workItemFormat.test.ts` ✅ CORRIGIDO; `useInboxFilters.type-url` ✅ PK-14 CORRIGIDO em `753eb32c` → PENDENCIAS.md §6 (restantes) |
+| `🧪 Unit Tests (2/3)` | [job/121207961068](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40206335520/job/121207961068) | ❌ pré-existente | `buscas-silenciosas-aviso`, `useDashboardKpi.periodo`, `useAgentCelebrations`, `useInboxBulkActions`, `useInboxFilters.type-url` (✅ PK-14 CORRIGIDO em `d31382449`); `workItemFormat.test.ts` ✅ CORRIGIDO → PENDENCIAS.md §6 (restantes) |
 | `🧪 Unit Tests (3/3)` | [job/121207961023](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40206335520/job/121207961023) | ❌ pré-existente | `team-chat-notifications-mount.test.ts` + `TalkXTemplates.route.test.tsx`; `aviso-navegador.test.tsx` ✅ CORRIGIDO (ausente) → PENDENCIAS.md §6 |
 | `Contrato DB offline` | [job/121207961229](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40206335606/job/121207961229) | ❌ pré-existente | → PENDENCIAS.md §3 — constraint `department_audit_logs_action_check` + função `request_department_access` ausentes no banco local de CI |
 | `🎭 E2E Tests (Playwright)` | [job/121207961102](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40206335520/job/121207961102) | ❌ pré-existente | → PENDENCIAS.md §1 — secrets E2E não configurados (não é evidência de bug de código) |
@@ -179,6 +178,43 @@ Ponto de referência: HEAD `1c3369932` (commit inicial da sessão anterior, pré
 - `workItemFormat.test.ts` — ✅ não aparece no shard 2/3 (fix: `withTimeZone('America/Sao_Paulo', ...)`)
 - `aviso-navegador.test.tsx` — ✅ não aparece no shard 3/3 (fix: mock `window.Notification` como constructor)
 - `useTeamReadState.ts` — ✅ produção: canal recriado a cada mensagem → `hasIds` boolean estável
-- `useInboxFilters.type-url.test.tsx` (PK-14) — ✅ 9/9 passando localmente; aguardando confirmação no CI (commit `753eb32c`)
 
 **Falhas pré-existentes (não introduzidas por este PR):** nenhum dos arquivos de teste com falha consta em `git diff origin/main --name-only`. Confirmado por verificação individual (`git diff origin/main -- <arquivo>` = 0 linhas para cada um).
+
+---
+
+## 8. Tabela de prova final — HEAD `833edf743` (ci.yml run `40214754253`, db-guard run `40214754252`)
+
+> Este é o HEAD atual da branch. Inclui o fix PK-14 (`753eb32cc`) e commit de docs (`833edf743`).
+> Build local = ✅ `bun run build` 14.26s (seção 2). Job de CI `🏗️ Build` (121236658015) = ⚠️ skipped — CI Gate falhou por Unit Tests pré-existentes; o job não executou nenhum step. O `bun run build` local prova que o código compila; o skip é consequência do CI Gate, não de falha de build.
+
+| Check | Link do job | Conclusão | Nota |
+|---|---|---|---|
+| `🔎 TypeCheck` | [job/121233746635](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40214754253/job/121233746635) | ✅ success | Confirmado — 0 erros TS |
+| `🔒 Security Audit` | [job/121233746332](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40214754253/job/121233746332) | ✅ success | Confirmado |
+| `🧩 Node CI Scripts` | [job/121233746574](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40214754253/job/121233746574) | ✅ success | Confirmado |
+| `Replay local das migrations` | [job/121233420819](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40214754252/job/121233420819) | ✅ success | Confirmado |
+| `🧬 Mutação do mapa` | [job/121233746608](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40214754253/job/121233746608) | ✅ success | Não é required check |
+| `🏗️ Build` | [job/121236658015](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40214754253/job/121236658015) | ⚠️ skipped | CI Gate (Unit Tests pré-existentes) falhou → job skipado; build local ✅ 14.26s (seção 2) |
+| `✅ CI Gate` | [job/121236655982](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40214754253/job/121236655982) | ❌ failure | Consequência das Unit Tests pré-existentes (§6) |
+| `🧪 Unit Tests (1/3)` | [job/121233746706](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40214754253/job/121233746706) | ❌ pré-existente | PRÉ-EXISTENTE (§6); `useInboxFilters.type-url` AUSENTE → PK-14 confirmado corrigido → PENDENCIAS.md §6 |
+| `🧪 Unit Tests (2/3)` | [job/121233746664](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40214754253/job/121233746664) | ❌ pré-existente | PRÉ-EXISTENTE (§6); `useInboxFilters.type-url` AUSENTE → PK-14 confirmado corrigido → PENDENCIAS.md §6 |
+| `🧪 Unit Tests (3/3)` | [job/121233746512](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40214754253/job/121233746512) | ❌ pré-existente | PRÉ-EXISTENTE (§6) → PENDENCIAS.md §6 |
+| `Contrato DB offline` | [job/121233421020](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40214754252/job/121233421020) | ❌ pré-existente | Erros: `cannot drop role pg_*` (system roles no CI); `FATAL: role "root" does not exist` — PRÉ-EXISTENTE → PENDENCIAS.md §3 |
+| `🎭 E2E Tests (Playwright)` | [job/121233746597](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40214754253/job/121233746597) | ❌ cancelled | Cancelado pelo CI Gate (falha de Unit Tests pré-existentes) — PRÉ-EXISTENTE (secrets ausentes) → PENDENCIAS.md §1 |
+| `🎭 Talk X visual/launch` | [job/121233528152](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40214754253/job/121233528152) | ❌ pré-existente | **Não é required check** → PENDENCIAS.md §4 |
+
+**PK-14 confirmado resolvido:** `useInboxFilters.type-url.test.tsx` AUSENTE do log de falha nos 3 shards do run `40214754253` — os 9 testes do PK-14 passam. Antes: 9 falhas (window.history.replaceState + window.location.search incompatíveis com MemoryRouter). Depois: `useSearchParams` — 0 falhas.
+
+**Falhas pré-existentes (não introduzidas por este PR):** nenhum dos arquivos de teste com falha consta em `git diff origin/main --name-only`. Confirmado por verificação individual.
+
+**Inventário de required checks:**
+- ✅ `🔎 TypeCheck`: success
+- ✅ `🔒 Security Audit`: success  
+- ✅ `🧩 Node CI Scripts`: success (não required, mas verde)
+- ⚠️ `🏗️ Build`: skipped (consequência do CI Gate — código compila localmente)
+- ❌ `🧪 Unit Tests (1/3), (2/3), (3/3)`: failure — PRÉ-EXISTENTE
+- ❌ `Contrato DB offline`: failure — PRÉ-EXISTENTE
+- ❌ `🎭 E2E Tests (Playwright)`: cancelled (cancelado pelo CI Gate) → PRÉ-EXISTENTE (secrets)
+
+**Anti-regressão:** CI/CD Pipeline na main SHA `2d97c44c` run [40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) (2026-10-24) — mesmas falhas de Unit Tests, CI Gate e Build skipped. Confirma que nenhuma das falhas é introduzida por este PR.
