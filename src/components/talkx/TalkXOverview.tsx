@@ -122,12 +122,12 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   const segmentName = (id?: string | null) => segments.find((s) => s.id === id)?.name;
 
   const filterValues = useMemo(() => ({ status, objective, channel, segment, creator }), [status, objective, channel, segment, creator]);
-  const handleFilter = (key: string, val: string) => {
-    if (key === 'status') { setStatus(val); setPage(1); setSelected(new Set()); }
-    else if (key === 'objective') { setObjective(val); setPage(1); setSelected(new Set()); }
-    else if (key === 'channel') { setChannel(val); setPage(1); setSelected(new Set()); }
-    else if (key === 'segment') { setSegment(val); setPage(1); setSelected(new Set()); }
-    else if (key === 'creator') { setCreator(val); setPage(1); setSelected(new Set()); }
+  const handleFilter = (filterKey: string, val: string) => {
+    if (filterKey === 'status') { setStatus(val); setPage(1); setSelected(new Set()); }
+    else if (filterKey === 'objective') { setObjective(val); setPage(1); setSelected(new Set()); }
+    else if (filterKey === 'channel') { setChannel(val); setPage(1); setSelected(new Set()); }
+    else if (filterKey === 'segment') { setSegment(val); setPage(1); setSelected(new Set()); }
+    else if (filterKey === 'creator') { setCreator(val); setPage(1); setSelected(new Set()); }
   };
   /**
    * X081 — o chip de período só aparece porque a Visão geral consome o recorte
