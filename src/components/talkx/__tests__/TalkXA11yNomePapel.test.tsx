@@ -120,7 +120,11 @@ vi.mock('@/integrations/supabase/client', () => {
   return {
     supabase: {
       from: (table: string) => makeChain(table),
-      channel: () => ({ on: () => ({ on: () => ({ subscribe: () => ({}) }) }) }),
+      channel: () => {
+        // `.on(...)` encadeia quantas vezes o código assinar (hoje 3); o `subscribe` fecha.
+        const canal: { on: () => typeof canal; subscribe: () => object } = { on: () => canal, subscribe: () => ({}) };
+        return canal;
+      },
       removeChannel: () => {},
     },
   };

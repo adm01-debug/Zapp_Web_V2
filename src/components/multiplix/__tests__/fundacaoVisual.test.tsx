@@ -84,7 +84,9 @@ function tokensInexistentes(classe: string): string[] {
 
 /** Classes com px arbitrário (`text-[13px]`, `min-w-[130px]`, `max-h-[480px]`). */
 function pxArbitrarioDe(el: Element): string[] {
-  return classesDe(el).filter((c) => /\[[0-9.]+px\]/.test(c));
+  // O alvo de toque de 44px (`[@media(pointer:coarse)]:min-h/w-[44px]`) vem do
+  // primitivo `ui/button` (WCAG 2.5.8), não de estilo da tela: não é px de protótipo.
+  return classesDe(el).filter((c) => /\[[0-9.]+px\]/.test(c) && !c.startsWith('[@media(pointer:coarse)]:min-'));
 }
 
 /** px arbitrário no bloco inteiro (o elemento e todos os descendentes). */

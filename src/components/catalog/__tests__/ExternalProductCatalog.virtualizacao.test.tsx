@@ -26,12 +26,16 @@ const TOTAL_PRODUCTS = 50;
 
 // Só o container de scroll do catálogo tem altura; o resto do DOM continua com
 // o 0 do jsdom (que é o default do offsetHeight).
-Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
-  configurable: true,
-  get(this: HTMLElement) {
-    return this.classList?.contains('overflow-y-auto') ? SCROLL_VIEWPORT_HEIGHT : 0;
-  },
-});
+// `@tanstack/virtual-core` >= 3.19 mede por `clientHeight` (antes `offsetHeight`);
+// os dois recebem a mesma altura para o teste valer em qualquer versão resolvida.
+for (const medida of ['offsetHeight', 'clientHeight'] as const) {
+  Object.defineProperty(HTMLElement.prototype, medida, {
+    configurable: true,
+    get(this: HTMLElement) {
+      return this.classList?.contains('overflow-y-auto') ? SCROLL_VIEWPORT_HEIGHT : 0;
+    },
+  });
+}
 
 // O ResizeObserver do teste chama o callback na hora da observação; sem isso o
 // virtualizador mede 0 de altura e não acha janela nenhuma.

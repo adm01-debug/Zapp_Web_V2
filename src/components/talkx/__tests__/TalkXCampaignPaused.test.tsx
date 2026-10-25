@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 /**
  * Tela 13 — "Campanha Pausada" (X156 · F11 Acompanhar campanha).
@@ -101,8 +102,13 @@ function setQueryState(over: Partial<QueryState>) {
   };
 }
 
+/** O painel X160 usa useQuery; o teste mocka só useTalkX. */
+const comQuery = (ui: React.ReactElement) => (
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{ui}</QueryClientProvider>
+);
+
 function view({ pausedByName }: { pausedByName?: string | null } = {}) {
-  return (
+  return comQuery(
     <TalkXCampaignPaused
       campaignId="camp-pausada-1"
       pausedByName={pausedByName}

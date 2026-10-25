@@ -13,6 +13,7 @@ process.env.TZ = 'America/Sao_Paulo';
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 /**
  * X138 (TL-150) — coluna central da tela 10.
@@ -100,8 +101,13 @@ const BASE_CAMPAIGN = {
   revision: 2,
 };
 
+/** A tela usa useQuery; o teste mocka só os hooks de dados. */
+const comQuery = (ui: React.ReactElement) => (
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{ui}</QueryClientProvider>
+);
+
 function view() {
-  return (
+  return comQuery(
     <TalkXCampaignScheduled
       campaignId="camp-agendada-x138"
       onBack={h.onBack}

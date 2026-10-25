@@ -114,16 +114,18 @@ describe('handleDisconnect', () => {
     expect(h.update).not.toHaveBeenCalled();
   });
 
-  it('quando a Evolution falha, avisa e NÃO marca a linha como desconectada', async () => {
+  it('quando a Evolution falha, devolve false e NÃO marca a linha como desconectada', async () => {
     h.disconnectInstance.mockRejectedValueOnce(new Error('GO recusou'));
     const r = await mount();
 
-    await act(async () => { await r.result.current.handleDisconnect(A); });
+    let desconectou = true;
+    await act(async () => { desconectou = await r.result.current.handleDisconnect(A); });
 
+    expect(desconectou).toBe(false);
     expect(h.update).not.toHaveBeenCalled();
-    expect(h.toast).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Erro ao desconectar', description: 'GO recusou', variant: 'destructive' }),
-    );
+    // t_cce2f0f7: a falha é anunciada por uma única origem (o sonner da Evolution);
+    // o hook só devolve `false` e não duplica o aviso com o `use-toast`.
+    expect(h.toast).not.toHaveBeenCalled();
   });
 });
 
@@ -181,7 +183,7 @@ describe('handleAddConnection', () => {
     h.createConnection.mockRejectedValueOnce(new Error('GO fora do ar'));
     const r = await mount();
 
-    await act(async () => { r.result.current.setNewConnection({ name: 'X', phone_number: '1' }); });
+    await act(async () => { r.result.current.setNewConnection({ name: 'X', phone_number: '5511900000009' }); });
     await act(async () => { await r.result.current.handleAddConnection(); });
 
     expect(r.result.current.isCreating).toBe(false);
