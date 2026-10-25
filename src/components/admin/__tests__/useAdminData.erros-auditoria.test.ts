@@ -28,11 +28,29 @@ const h = vi.hoisted(() => {
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (table: string) => h.makeChain(table),
-    auth: { getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'tok' } } }) },
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'tok' } } }),
+      refreshSession: vi.fn().mockResolvedValue({ error: null }),
+    },
     storage: {
       from: () => ({
         upload: vi.fn().mockResolvedValue({ error: null }),
         getPublicUrl: () => ({ data: { publicUrl: 'https://local.test/avatar.png' } }),
+      }),
+    },
+    functions: {
+      invoke: vi.fn(async (name: string, opts?: { body?: unknown; headers?: Record<string, string> }) => {
+        const resp = await fetch(`https://local.test/functions/v1/${name}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(opts?.headers ?? {}) },
+          body: JSON.stringify(opts?.body),
+        });
+        if (!resp.ok) {
+          const text = await resp.text().catch(() => '');
+          return { data: null, error: { message: text, name: 'FunctionsHttpError', context: { status: resp.status } } };
+        }
+        const data = await resp.json().catch(() => ({}));
+        return { data, error: null };
       }),
     },
     rpc: vi.fn(),
