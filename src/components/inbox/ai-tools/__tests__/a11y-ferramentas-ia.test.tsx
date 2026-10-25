@@ -185,7 +185,7 @@ describe('HistoryTab — não inventa valor ausente', () => {
 
     expect(screen.queryByText('%')).not.toBeInTheDocument();
     expect(screen.queryByText('msgs')).not.toBeInTheDocument();
-    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqualTo(2);
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2);
   });
 });
 
