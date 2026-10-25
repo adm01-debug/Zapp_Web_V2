@@ -57,7 +57,7 @@ interface Props {
   templates: TalkXTemplate[];
   isLoading: boolean;
   isError?: boolean;
-  error?: unknown;
+  error?: Error | null;
   onRetry?: () => void;
   editing: TalkXTemplate | null;
   /** X094 — sub-aba inicial: 'conteudo' | 'ab' | 'historico' (vindo do endereço). */
