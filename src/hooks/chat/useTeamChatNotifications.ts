@@ -5,6 +5,7 @@ import { useNotificationSettings } from '@/hooks/system/useNotificationSettings'
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
+import { showBrowserNotification } from '@/utils/notificationSounds';
 const log = getLogger('TeamChatNotifications');
 
 type ActiveConversationListener = () => void;
@@ -183,17 +184,11 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           }
         } catch (err) { log.error('Unexpected error in useTeamChatNotifications:', err); }
 
-        if ('Notification' in window &&
-            Notification.permission === 'granted' &&
-            notifSettingsRef.current.browserNotifications) {
-          const notif = new Notification(`\u{1F4AC} Teams: ${senderName}`, {
-            body: msg.content,
+        if (notifSettingsRef.current.browserNotifications) {
+          showBrowserNotification(`\u{1F4AC} Teams: ${senderName}`, msg.content, {
             tag: `team-msg-${msg.conversation_id}`,
+            onClick: () => navigateToView('team-chat'),
           });
-          notif.onclick = () => {
-            window.focus();
-            navigateToView('team-chat');
-          };
         }
         log.debug('Team chat notification sent for message:', msg.id);
       })
