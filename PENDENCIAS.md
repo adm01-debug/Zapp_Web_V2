@@ -57,22 +57,32 @@ Isso envolve decisão de produto/arquitetura sobre o schema.
 
 ---
 
-## 3. DB Guard TC-009 — estado inconclusivo
+## 3. DB Guard TC-009 — check constraint `department_audit_logs_action_check`
 
 **Workflow:** `DB Guard (offline)`  
-**Branch:** `claude/fix-unit-tests-pre-existentes-261024-1700` (PR #2219)  
+**Branch:** `main` (e também PR #2219, PR #2246)  
 **Step:** `Simular conversation_id derivado da mensagem em recibos e reacoes (TC-009)`  
-**Run com falha confirmada:** 40184398774 (SHA `0eefb3ce6f`)  
-**Runs mais recentes:** cancelado em `284f97c3e5` e `590862c32b`; `in_progress` em `c9279454`
+**Run confirmado na main:** 40122006482 (SHA `2d97c44`, 2026-10-24)  
+**Erro exato:**
+```
+ERROR:  new row for relation "department_audit_logs" violates check constraint "department_audit_logs_action_check"
+DETAIL:  Failing row contains (…, aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa, access_requested, null, {}, null, …).
+```
 
-**Status:** Inconclusivo. O TC-009 falhou no SHA mais antigo da branch, mas foi cancelado
-(não falhou) nos SHAs mais recentes. O run no HEAD atual (`c9279454`) estava em andamento
-no momento da análise. Pode estar resolvido nas commits mais novas da PR.
+**Causa:** A função `request_department_access` existe (erro anterior de "function does not exist"
+foi corrigido), mas ao tentar inserir em `department_audit_logs` com `action = 'access_requested'`,
+a constraint `department_audit_logs_action_check` rejeita esse valor — `access_requested` não está
+na lista de valores aceitos pelo `CHECK`.
 
-**Ação necessária (se TC-009 ainda falhar em `c9279454`):**  
-1. Verificar o log do step TC-009 no run mais recente da branch.
-2. O teste simula `conversation_id` derivado de mensagem em recibos/reações;
-   investigar se há mudança de constraint ou trigger no banco que quebrou a simulação.
+**Por que não foi corrigido automaticamente:**  
+Requer DDL: `ALTER TABLE department_audit_logs DROP CONSTRAINT department_audit_logs_action_check`
+seguido de `ADD CONSTRAINT` com os valores corretos. Envolve leitura do schema atual de produção e
+escrita em banco (regra 8 do fluxo Git: DDL necessita aprovação de Joaquim).
+
+**Ação necessária:**  
+1. `SELECT conname, pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'department_audit_logs_action_check'` no banco oficial para ver os valores aceitos atualmente.
+2. Criar migration que adicione `'access_requested'` ao CHECK ou corrija o valor que a função usa.
+3. Seguir o fluxo: arquivo em `supabase/migrations/` → PR → merge → apply com aprovação de Joaquim.
 
 ---
 
@@ -159,6 +169,77 @@ Envolve decisão de UX/produto sobre o nome correto do controle.
    real para identificar se o botão existe com nome diferente ou foi removido.
 2. Atualizar o teste para refletir o nome acessível real, ou corrigir o componente para ter
    `aria-label="Ações de Campanha pausada"`.
+
+---
+
+## 7. E2E logado — jobs Playwright falhando na main
+
+**Workflow:** `E2E Tests (Playwright — logado)`  
+**Branch:** `main`  
+**Run com falha:** [40122006547](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006547) (SHA `2d97c44`, 2026-10-24)  
+**Jobs falhando:** 3 jobs Playwright (chromium, firefox, webkit) — todos falham no step `Run Playwright E2E (login real)`
+
+**Causa:** Os testes E2E logados rodam contra a produção com credenciais reais. A falha não está
+nos scripts de CI (nenhuma mudança nesta branch os tocou), mas em comportamento do produto que
+os testes cobrem. Para identificar qual spec falha é necessário inspecionar os artefatos de
+`test-results` do run.
+
+**Por que não foi corrigido automaticamente:**  
+Determinar a causa exige inspecionar os artefatos Playwright do run (traces, screenshots, logs de
+falha de cada spec). Os specs E2E logados testam fluxos de UI contra dados reais de produção;
+corrigir requer reprodução local com `bun run test:e2e -- --project=chromium-authenticated` e
+revisão visual dos resultados.
+
+**Ação necessária:**  
+1. Baixar artefato `test-results` do run 40122006547 (ou disparar novo run e baixar desse).
+2. Identificar quais specs falham e com qual erro.
+3. Corrigir o spec ou o componente correspondente conforme a causa.
+
+---
+
+## 8. Deploy Functions — requer dispatch manual + aprovação humana
+
+**Workflow:** `Deploy Edge Functions`  
+**Branch:** `main`  
+**Último run:** [40097636982](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40097636982) (2026-10-24) — `failure`
+
+**Causa:** O workflow `deploy-functions.yml` é `workflow_dispatch` exclusivamente — não roda em
+push nem em merge. A falha no último run indica que o deploy das edge functions não foi concluído.
+Merge em `main` NÃO sobe edge functions automaticamente (ver CLAUDE.md, seção "Deploy e edge functions").
+
+**Por que não foi corrigido automaticamente:**  
+Deploy de edge functions requer `workflow_dispatch` manual + aprovação humana no environment
+`producao-edge-functions`. Não há trigger automático e o agente não pode aprovar environments.
+
+**Ação necessária:**  
+1. Verificar quais funções precisam ser (re)deployadas: comparar `supabase/functions/` com o
+   estado atual em `https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/functions`.
+2. Disparar `workflow_dispatch` do `deploy-functions.yml` na `main`.
+3. Aprovar o job no environment `producao-edge-functions` no GitHub Actions.
+
+---
+
+## 9. DB Live Guard — falha na main (run 2026-10-19)
+
+**Workflow:** `DB Live Guard`  
+**Branch:** `main` (roda em push e agendado diariamente)  
+**Último run:** [39212157834](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39212157834) (2026-10-19) — `failure`
+
+**Causa:** O `db-live-guard.yml` compara o schema ao vivo do banco com `schema-manifest.json`,
+verifica paridade migrations↔ledger, regenera catálogo e manifesto, e abre/comenta uma issue com
+label `db-live-guard` quando encontra divergência. O último run falhou — pode ser drift de schema
+(novo DDL aplicado fora do fluxo), paridade quebrada, ou falha de conectividade com o banco oficial.
+
+**Por que não foi corrigido automaticamente:**  
+O diagnóstico requer ver os logs do run ao vivo e comparar com o estado atual do banco. Se houver
+drift real, corrigir implica migration + registro no ledger, o que envolve decisão sobre o schema
+(regra 8 quando for DDL destrutivo ou em produção).
+
+**Ação necessária:**  
+1. Inspecionar os logs do run 39212157834 para identificar qual step falhou e a mensagem exata.
+2. Se for drift de schema: identificar a diferença entre `schema-manifest.json` e o banco ao vivo.
+3. Corrigir a divergência: arquivo em `supabase/migrations/` → PR → merge → apply.
+4. Disparar `workflow_dispatch` do `db-live-guard.yml` para confirmar green após a correção.
 
 ---
 

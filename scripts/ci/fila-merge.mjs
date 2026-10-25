@@ -35,7 +35,7 @@ function execComRetry(cmd, args, opts, { tentativas = 3, esperas = [5000, 10000,
       return execFileSync(cmd, args, opts);
     } catch (err) {
       const stderr = String(err.stderr ?? '');
-      const transitorio = /504|Gateway Timeout|timeout expired|ECONNRESET|ETIMEDOUT/i.test(stderr);
+      const transitorio = /504|Gateway Timeout|timeout expired|ECONNRESET|ETIMEDOUT|unexpected end of JSON/i.test(stderr);
       if (!transitorio || i >= tentativas - 1) throw err;
       const espera = esperas[i] ?? esperas.at(-1);
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, espera);
