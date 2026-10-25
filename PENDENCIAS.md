@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Workflows com falha irresolúvel por agente
 
-> Atualizado em 2026-10-22 01:40 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2182).
+> Atualizado em 2026-10-25. Branch de trabalho: `fix/ci-workflows` (PR #2261).
 > Todos os itens abaixo foram investigados; a causa raiz está identificada e documentada.
 > As correções cabíveis a agente foram aplicadas nesta sessão (ver RELATORIO_CI.md).
 > **§5 CORRIGIDO (2026-10-22 01:40 UTC):** mock `getBoundingClientRect` adicionado a `src/test/setup.ts` (commit `a4dfd16`). Causa raiz: `@tanstack/react-virtual` mede o contêiner por `getBoundingClientRect()` que retornava 0 no jsdom; agora retorna 600px.
@@ -414,6 +414,72 @@ AssertionError: expected undefined to be 'down'
 - `useDiagnosticsData.select`: diagnóstico de status retorna `undefined` em vez de `'down'`.
 
 **Por que agente não pode corrigir:** Falhas pré-existentes em `origin/main`, fora do escopo de `fix/ci-workflows`. Zero regressões introduzidas por esta PR (mesmo conjunto de falhas antes e depois). **BLOQUEADO — pré-existente não relacionado ao escopo desta PR.**
+
+---
+
+## §9c — `deploy-functions.yml` — BLOQUEADO — aprovação humana em `producao-edge-functions`
+
+**Workflow:** `deploy-functions.yml` — run [#40097636982](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40097636982) — 2026-10-24T13:19Z — SHA `e51662a9`
+
+**Erro exato (step "Validar gerador e manifesto de deployment"):**
+
+```
+No files were found with the provided path: /home/runner/work/_temp/edge-deployment-evidence-public/
+```
+
+**Causa raiz:** O step de deploy das edge functions pausa em `Waiting` no environment `producao-edge-functions` aguardando aprovação humana (gate de produção). O script `preparar-artifact-deploy.sh` não chega a gerar os arquivos de evidência porque o job Supabase nunca executa — o runner cancela o checkout de evidências antes de receber aprovação.
+
+**Por que agente não pode corrigir:** Requer `workflow_dispatch` manual por Joaquim + aprovação no environment `producao-edge-functions`. **BLOQUEADO — Regra 8: aprovação humana obrigatória.**
+
+---
+
+## §9d — `types-sync.yml` — BLOQUEADO — downstream de DASH-091/092
+
+**Workflow:** `types-sync.yml` — run [#40169860237](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40169860237) — 2026-10-25T06:39Z — SHA `2d97c44`
+
+**Erro exato (step "Falhar quando um gate rejeitar a proposta"):**
+
+```
+##[error]A sincronizacao foi bloqueada por um ou mais gates.
+```
+
+**Arquivos alterados detectados:** `types.ts`, `schema-catalog.json`, `schema-manifest.json`, `grants-baseline.json`.
+
+**Causa raiz:** `supabase-usage-guard.mjs` detectou novas violações de uso. A DDL `sanitize_reset_request()` referencia `NEW.reset_token` (coluna que não existe), fazendo o guard rejeitar o sync. Downstream direto de DASH-091/092.
+
+**Por que agente não pode corrigir:** Resolve-se automaticamente após o DDL DASH-091/092 ser aplicado em produção (Joaquim aprovar `producao-ddl`). **BLOQUEADO — downstream de DASH-091/092.**
+
+---
+
+## §9e — `db-live-guard.yml` — BLOQUEADO — drift no contrato vivo (leitura de produção necessária)
+
+**Workflow:** `db-live-guard.yml` — run [#39212157834](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39212157834) — 2026-10-19T06:49Z — SHA `ee294749`
+
+**Erro exato (step "Consolidar veredito do contrato vivo"):** Job falhou com saída não-zero; artifact `db-live-evidence-39212157834-1.zip` (163.307 bytes) gerado.
+
+**Causa raiz provável:** Drift entre o contrato do banco de produção e o manifesto commitado — provavelmente `sanitize_reset_request()` (DASH-091/092) já divergia em 2026-10-19 (6 dias antes desta PR). O diagnóstico exato requer leitura do artifact ou acesso `DESTINO_URL` (produção, read-only), que não está disponível no ambiente desta sessão.
+
+**Por que agente não pode corrigir:** Requer ou (a) aplicação do DDL DASH-091/092 para fechar o drift, ou (b) leitura do artifact de evidência pelo Joaquim para diagnóstico de qualquer drift adicional. **BLOQUEADO — requer acesso a produção e/ou Regra 8.**
+
+---
+
+## §9f — `auto-update-pr-branch.yml` — FIXADO PENDENTE MERGE da PR #2261
+
+**Workflow:** `auto-update-pr-branch.yml` — run [#40221119033](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40221119033) — 2026-10-25T18:24Z — SHA `2d97c44`
+
+**Erro exato (step "🚦 Escolher a proxima PR da fila"):**
+
+```
+HTTP 504: 504 Gateway Timeout (https://api.github.com/graphql)
+Error: Command failed: /usr/bin/gh pr list --repo adm01-debug/Zapp_Web_V2 ...
+    at decisaoAtual (scripts/ci/fila-merge.mjs:126:16)
+```
+
+**Causa raiz:** Mesma do §4.1 de RELATORIO_CI.md — `execFileSync` em `fila-merge.mjs` lança exceção em HTTP 504 transiente da API do GitHub, sem retry.
+
+**Fix aplicado:** `execComRetry` adicionado a `fila-merge.mjs` nesta PR (`fix/ci-workflows`, commit na branch). A fix ainda não está em `main` porque a PR #2261 aguarda merge.
+
+**Resolução:** Após merge da PR #2261 em `main`, `auto-update-pr-branch.yml` usará o `fila-merge.mjs` corrigido e o 504 não mais quebrará o job. **PENDENTE MERGE — não é bloqueio permanente.**
 
 ---
 
