@@ -264,6 +264,7 @@ export function MediaMigrationTool() {
                 role="progressbar"
                 aria-label="Progresso da migração de mídia"
                 aria-valuetext="Migrando mídias"
+                data-state="indeterminate"
                 className="h-2 w-full overflow-hidden rounded-full bg-secondary"
               >
                 <div className="h-full w-full rounded-full bg-primary/60 motion-safe:animate-pulse" />
@@ -315,7 +316,7 @@ export function MediaMigrationTool() {
             </div>
 
             {result.processed > 0 && (
-              <Progress value={progress} className="h-2" aria-label="Progresso da última migração" />
+              <Progress value={progress} className="h-2" aria-label="Progresso da migração" />
             )}
 
             {result.success && result.message && (
