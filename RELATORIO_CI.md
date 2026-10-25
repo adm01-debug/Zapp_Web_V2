@@ -1,25 +1,30 @@
 # Relatório CI — PR #2218 (branch `claude_05/brave-mccarthy-zvzky4`)
 
-Data: 2026-10-25 (sessão ativa)
-HEAD atual: `8bad01793` (último push desta sessão)
+Data: 2026-10-25 (sessão ativa — atualizado)
+HEAD anterior: `8bad01793` → novo push: chore: PENDENCIAS.md §8/§9 + RELATORIO_CI.md inventário main
 
 ---
 
 ## 1. Inventário de workflows com falha na `main` (última execução)
 
-Execuções da `main` verificadas via API às 2026-10-25 13:30 UTC (100 runs).
+Execuções da `main` verificadas via API às 2026-10-25 (varredura completa por workflow).
 
-| Workflow | Status | Causa provável |
-|---|---|---|
-| Auto Update PR Branches | ❌ failure | HTTP 504 Gateway Timeout — API GraphQL do GitHub indisponível (falha transitória de infra, não de código) → PENDENCIAS.md §7 |
-| CI/CD Pipeline | — sem runs recentes na main | Não houve push novo em main desde `2d97c44c` (base deste PR) |
-| DB Guard (offline) | — sem runs recentes na main | Idem |
-| DB Live Guard | — sem runs recentes na main | Roda agendado (semanal, segunda 06:13 UTC) e pós-merge; não visível nos 100 runs |
-| E2E Talk X | — sem runs recentes na main | Idem |
-| E2E Logado | — sem runs recentes na main | Idem |
-| types-sync | — sem runs recentes na main | Idem |
+| Workflow | Último run na main | Conclusão | Data | Event | SHA | PENDENCIAS |
+|---|---|---|---|---|---|---|
+| CI/CD Pipeline | [40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) | ❌ failure | 2026-10-24 | push | `2d97c44c` | §6 §8 §9 — Unit Tests/CI Gate/Build pré-existentes |
+| DB Guard (offline) | [40122006482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006482) | ❌ failure | 2026-10-24 | push | `2d97c44c` | §3 — constraint `department_audit_logs_action_check` + função `request_department_access` ausente |
+| E2E Logado | [40122006547](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006547) | ❌ failure | 2026-10-24 | push | `2d97c44c` | §1 — secrets `E2E_SUPABASE_URL`/`E2E_SUPABASE_PASSWORD` ausentes |
+| types-sync | [40169860237](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40169860237) | ❌ failure | 2026-10-25 | workflow_dispatch | — | §2 — banco fora de sincronia com `types.ts` |
+| DB Live Guard | [39212157834](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39212157834) | ❌ failure | 2026-10-19 | schedule | — | §3 — mesmas falhas pré-existentes |
+| Auto Update PR Branches | [40208686322](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40208686322) | in_progress | 2026-10-25 | workflow_run | — | §7 — HTTP 504 Gateway Timeout transitório |
+| E2E Talk X | — (0 runs em main) | — | — | — | — | §4 — roda em PR, não em push direto na main |
 
-**Conclusão:** Nenhum workflow obrigatório do projeto apresenta última execução com falha em `main` neste período. `Auto Update PR Branches` falhou por HTTP 504 (API GraphQL do GitHub indisponível — falha transitória de infra); não é required check. Documentado em PENDENCIAS.md §7.
+**Conclusão:** Todas as falhas da `main` (SHA `2d97c44c`) são pré-existentes e preexistem a este PR.
+- CI/CD Pipeline falha pelos mesmos Unit Tests pré-existentes (§6), que causam CI Gate (§8) e Build skipped (§9).
+- DB Guard falha pelas mesmas 2 falhas do banco local de CI (§3).
+- E2E Logado falha pelos mesmos secrets ausentes (§1).
+- types-sync e DB Live Guard: falhas de sincronização/banco sem relação com o diff deste PR.
+- Nenhum dos arquivos alterados nesta branch está presente no diff do SHA `2d97c44c`.
 
 ---
 
@@ -71,8 +76,8 @@ Ponto de referência: HEAD `1c3369932` (commit inicial da sessão anterior, pré
 | 9 | `9167dc2` | Guard fail-closed para `real_sector`/`real_uf` em `useTalkXSegments.ts` | ✅ Corrigido |
 | 10 | `09d8eeaf` | RELATORIO_CI.md + baseline documentados | ✅ Atualizado |
 | 11 | — | Falhas pré-existentes da `main` (DB Guard, E2E logado, Talk X visual, copilot, Unit Tests 1-2) | 📋 PENDENCIAS.md |
-| 12 | `8bad01793` | `alvos-toque-44px.test.tsx:41,51` — botão "Close" → "Fechar" (shard 1/3) | ✅ Corrigido |
-| 13 | `8bad01793` | `workItemFormat.test.ts:123` — timezone CI (UTC vs UTC-3) com `withTimeZone` (shard 2/3) | ✅ Corrigido |
+| 12 | este commit | `alvos-toque-44px.test.tsx:41,51` — botão "Close" → "Fechar" (shard 1/3) | ✅ Corrigido |
+| 13 | este commit | `workItemFormat.test.ts:123` — timezone CI (UTC vs UTC-3) com `withTimeZone` (shard 2/3) | ✅ Corrigido |
 | 14 | — | `useInboxFilters.type-url.test.tsx` — `handleContactTypeChange(null)` não limpa URL (shard 2/3) | 📋 PENDENCIAS.md §6 |
 | 15 | — | `team-chat-notifications-mount.test.ts` — `useAuth` sem AuthProvider (shard 3/3) | 📋 PENDENCIAS.md §6 |
 | 16 | `8bad01793` | `useTeamReadState.ts` — channel recriado a cada mensagem (idsKey→hasIds nos deps do useEffect) | ✅ Corrigido |
@@ -124,7 +129,10 @@ Ponto de referência: HEAD `1c3369932` (commit inicial da sessão anterior, pré
 | `09d8eeaf` | chore: RELATORIO_CI.md com inventário e baseline completos |
 | `71db2773f` | chore: RELATORIO_CI.md com inventário main e baseline completos |
 | `6608ea54` | chore: RELATORIO_CI.md com inventário main e baseline completos |
-| `8bad01793` | fix: alvos-toque-44px, workItemFormat timezone, aviso-navegador Notification, useTeamReadState hasIds |
+| `0c6928f9` | chore: PENDENCIAS.md §7 Auto Update PR Branches + RELATORIO_CI.md |
+| `8bad01793` | fix: 4 falhas CI (alvos-toque/workItemFormat/aviso-navegador/useTeamReadState) |
+| `4915170a` | chore: PENDENCIAS.md §8 CI Gate + §9 Build |
+| `(este commit)` | chore: RELATORIO_CI.md inventário main correto (§1 com 7 workflows + links) |
 
 ---
 
