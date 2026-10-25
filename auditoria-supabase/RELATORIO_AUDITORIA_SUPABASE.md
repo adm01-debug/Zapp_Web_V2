@@ -676,12 +676,18 @@ Logs de edge functions igualmente não acessíveis via SQL (`supabase_functions.
 - Dashboard: https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/logs/edge-functions
 - CLI: `supabase functions log --project-ref tnnnlkbymytvtqngbbqh`
 
-**Cobertura parcial disponível via `cron.job_run_details`** (re-executado 2026-10-25T00:34:52Z):
-- talkx-scheduler-1min: ok=39174, fail=4007, total=43181, pct_fail=9.3%
-- voice-changer-tmp-purge: ok=33, fail=3, total=36, pct_fail=8.3%
-- close-stale-calls: ok=395, fail=29, total=424, pct_fail=6.8%
-- dispatch-scheduled-messages: ok=1920, fail=134, total=2054, pct_fail=6.5%
-- csat-reply-capture-tick: ok=992, fail=68, total=1060, pct_fail=6.4%
+**Cron logs 7 dias — CONFIRMADO via `cron.job_run_details`** (confirmado 2026-10-25T01:12:28Z):
+
+| Job | OK | Falhas | Total | % Falha |
+|-----|-----|--------|-------|---------|
+| talkx-scheduler-1min | 9.941 | 135 | 10.076 | 1,3% |
+| dispatch-scheduled-messages | 1.961 | 134 | 2.095 | 6,4% |
+| close-stale-calls | 404 | 29 | 433 | 6,7% |
+| voice-changer-tmp-purge | 33 | 3 | 36 | 8,3% |
+| csat-reply-capture-tick | 1.013 | 68 | 1.081 | 6,3% |
+| 9 outros jobs | — | 0 | — | 0% |
+
+Nota: taxa do talkx-scheduler-1min em 7d (1,3%) é menor que o histórico 30d (9,3%) — possível melhora recente ou janela diferente. As demais taxas permanecem no mesmo nível do histórico 30d.
 
 ---
 
@@ -754,15 +760,16 @@ GROUP BY c.relname, c.relrowsecurity ORDER BY c.relname;
 
 ## Seção 12 — Lacunas Estruturais
 
-| Lacuna | Severidade | Observação |
-|--------|-----------|----------|
-| Backup/PITR | HIGH | PITR ativo no Supabase Pro por padrão — confirmar retenção no dashboard |
-| Staging | HIGH | Não existe staging environment isolado; testes E2E rodam contra produção |
-| Audit trail | MEDIUM | `audit_logs` existe mas uso parece parcial (só em `purge_gmail_account_data`) |
-| Retenção LGPD | MEDIUM | `purge_talkx_expired_data` implementado; outros módulos (mensagens, contacts) sem policy explícita |
-| Alertas de falha de cron | HIGH | `talkx-scheduler-1min` com 4.007 falhas sem alertas automáticos |
-| Testes RLS em CI | MEDIUM | `db-guard.yml` tem testes de contrato mas não matrix completa de tenant isolation |
-| Monitoramento de bloat | LOW | Autovacuum ausente em várias tabelas pequenas de alta rotatividade |
+| Lacuna | Severidade | Status | Observação |
+|--------|-----------|--------|----------|
+| Backup/PITR | INFO | **VERIFICADO** (2026-10-25T01:12:28Z) | `archive_mode=on`, `archive_command=/usr/bin/admin-mgr wal-push`, `wal_level=logical`, `max_wal_senders=5` — infraestrutura wal-g gerenciada pelo Supabase; PITR disponível via Dashboard |
+| Staging | MEDIUM | **VERIFICADO** (2026-10-25T01:12:28Z) | `Automatic branching` DESLIGADO (confirmado CLAUDE.md); nenhum branch Supabase de staging; testes E2E rodam contra produção com fixtures fixos (`e2e0e2e0-...`); gap real: sem isolamento pré-produção |
+| Audit trail | MEDIUM | NÃO VERIFICADO | `audit_logs` existe mas uso parece parcial (só em `purge_gmail_account_data`); `supabase_audit_log_entries` não acessível via mcp_exec |
+| Retenção LGPD | MEDIUM | **VERIFICADO** (2026-10-25T01:12:28Z) | **Lacuna confirmada**: `profiles` (email+phone+name) sem `deleted_at`; `login_attempts` e `password_reset_requests` acumulam email sem TTL; crons de retenção cobrem `reconnection_logs`(30d), `search_events`, `edge_rate_limits`(1h), `qr_attempts`, `user_sessions` — mas não emails de perfis ou tentativas de login |
+| Alertas de falha de cron | HIGH | **VERIFICADO** (2026-10-25T01:12:28Z) | 5 jobs com taxa > 1% de falha em 7d; sem alertas automáticos para operador; cron failures silenciosas |
+| Testes RLS em CI | MEDIUM | **VERIFICADO** (2026-10-25T01:12:28Z) | `db-guard.yml` tem `email-signatures-rls.test.sh`, `dashboard-rls-authorization.test.sh`, `multiplix-rls.test.sh`; **NENHUM** teste automatizado cobre CRITICAL-2 (UPDATE cross-tenant sem WITH CHECK); `testes/01_rls_matrix.sql` não é executado por nenhum workflow |
+| Monitoramento de bloat | LOW | NÃO VERIFICADO | Autovacuum ausente em várias tabelas pequenas de alta rotatividade; `pg_stat_user_tables.n_dead_tup` disponível mas sem threshold de alerta |
+| Backup schemas acessíveis | HIGH | **VERIFICADO** (2026-10-24T23:47Z) | `_bkp_261023` (9 tabelas) + `ops_backup` (1 tabela) sem RLS — qualquer role com acesso ao schema pode ler dados históricos |
 
 ---
 
@@ -830,7 +837,7 @@ Esta é uma feature de segurança, não um bug do MCP.
 
 ## Evidência de Não-Modificação da Produção (Snapshot Antes/Depois)
 
-**Snapshot re-executado nesta sessão** (2026-10-25T00:33:54 UTC): migrations=1054, crons=24, policies=499, functions=475, tables=202 — **idêntico ao início**.
+**Snapshot re-executado nesta sessão** (2026-10-25T01:12:28 UTC): migrations=1054, crons=24, policies=499, functions=475, tables=202 — **idêntico ao início**.
 
 ```sql
 SELECT
