@@ -525,11 +525,31 @@ export function RealtimeInboxView() {
                 />
               </div>
             )}
-            <InboxEmptyChat
-              waitingCount={inboxFilters.chipCounts?.waiting ?? 0}
-              unreadCount={inboxFilters.chipCounts?.unread ?? 0}
-              onNewConversation={() => inbox.setShowNewConversation(true)}
-            />
+            {inbox.selectedContactFallbackStatus === 'not-found' ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+                <p className="text-base font-medium">Conversa não encontrada</p>
+                <button
+                  type="button"
+                  onClick={() => inbox.setSelectedContactId(null)}
+                  className="text-sm text-primary underline-offset-4 hover:underline"
+                >
+                  Voltar à lista
+                </button>
+              </div>
+            ) : inbox.selectedContactFallbackStatus === 'error' ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+                <p className="text-base font-medium">Não foi possível abrir a conversa</p>
+                {inbox.selectedContactFallbackError && (
+                  <p className="text-sm text-muted-foreground">{inbox.selectedContactFallbackError}</p>
+                )}
+              </div>
+            ) : (
+              <InboxEmptyChat
+                waitingCount={inboxFilters.chipCounts?.waiting ?? 0}
+                unreadCount={inboxFilters.chipCounts?.unread ?? 0}
+                onNewConversation={() => inbox.setShowNewConversation(true)}
+              />
+            )}
           </div>
         )}
       </div>
