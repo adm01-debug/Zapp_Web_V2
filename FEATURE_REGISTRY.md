@@ -76,7 +76,7 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | `gmail` | `GmailInboxView` | `src/components/gmail/GmailInboxView.tsx` | Full | `src/hooks/integrations/useGmail.ts` |
 | `public-api` | `PublicApiDashboard` | `src/components/admin/PublicApiDashboard.tsx` | Partial | `src/components/admin/PublicApiDashboard.tsx` |
 | `gmail-webhook` | `GmailWebhookMonitor` | `src/components/admin/GmailWebhookMonitor.tsx` | Full | `src/components/admin/GmailWebhookMonitor.tsx` |
-| `media-migration` | `MediaMigrationTool` | `src/components/admin/MediaMigrationTool.tsx` | Full | `src/components/admin/MediaMigrationTool.tsx` |
+| `media-migration` | `MediaMigrationTool` | `src/components/admin/MediaMigrationTool.tsx` | Full | `src/hooks/admin/useMediaMigrationData.ts` |
 | `crm360` | `CRM360ExplorerView` | `src/components/crm360/CRM360ExplorerView.tsx` | Full | `src/hooks/system/useUserRole.ts` |
 | `ai-usage` | `AIUsageDashboard` | `src/components/admin/AIUsageDashboard.tsx` | Full | `src/hooks/analytics/useAIUsageDashboard.ts` |
 | `search-insights` | `SearchInsightsView` | `src/components/admin/SearchInsightsView.tsx` | Full | `src/hooks/admin/useSearchInsights.ts` |
