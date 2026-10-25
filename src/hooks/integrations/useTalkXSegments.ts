@@ -190,7 +190,7 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
 // como separador de filtros — escapa-la geraria uma barra invertida espuria
 // no valor buscado (achado do Codex na PR #896: "Acme, Inc" deixava de bater
 // porque o escape da virgula, ao passar por esta funcao, dobrava a barra).
-const quoted = (v: string) => `"${v.replace(/[\\"]/g, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
+const quoted = (v: string) => `"${v.replace(/[\\\"|]/g, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
 
 function ruleToFilter(r: SegmentRule): string | null {
   const def = RULE_FIELDS.find((f) => f.value === r.field);
@@ -258,7 +258,7 @@ export function rulesToPostgrest(rules: SegmentRules | null | undefined): string
     })
     .filter((g) => g.filters.length > 0);
   if (groups.length === 0) return null;
-  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`));
+  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`) );
   return parts.length === 1 ? parts[0] : parts.join(',');
 }
 
