@@ -18,11 +18,11 @@ import { QuickAdd } from '@/components/tasks/shared/QuickAdd';
 import { makeQueryClient, makeWrapper } from '@/test/mocks/tarefas';
 import type { WorkItem } from '@/hooks/tasks/workItem.types';
 
-/** Dia e hora escolhidos na tela: 2026-10-20 09:00 em São Paulo (UTC-3). */
-const DIA = '2026-10-20';
-const NOVE_H_LOCAL = new Date(2026, 9, 20, 9, 0, 0, 0);
+/** Dia e hora escolhidos na tela: 2027-10-20 09:00 em São Paulo (UTC-3). */
+const DIA = '2027-10-20';
+const NOVE_H_LOCAL = new Date(2027, 9, 20, 9, 0, 0, 0);
 /** O mesmo 09:00 de São Paulo em ISO — o instante que o banco tem de guardar. */
-const NOVE_H_ISO = '2026-10-20T12:00:00.000Z';
+const NOVE_H_ISO = '2027-10-20T12:00:00.000Z';
 
 /** Como o Postgres lê uma string para coluna `timestamptz`: sem offset = UTC. */
 function instanteGravadoPeloBanco(payload: string): number {
@@ -102,7 +102,7 @@ describe('WorkItemSheet — prazo e alarme no fuso do aparelho (R2-MOD-050)', ()
   });
 
   it('mudar a hora do prazo grava o instante local escolhido, com offset', () => {
-    const item = { ...base, due_date: '2026-10-20T11:00:00.000Z' }; // 08:00 em SP
+    const item = { ...base, due_date: '2027-10-20T11:00:00.000Z' }; // 08:00 em SP
     const p = props({ item });
     render(<WorkItemSheet {...p} />);
 
@@ -111,7 +111,7 @@ describe('WorkItemSheet — prazo e alarme no fuso do aparelho (R2-MOD-050)', ()
     fireEvent.click(screen.getByTestId('sheet-salvar'));
 
     const patch = p.onSave.mock.calls[0][1] as { dueDate?: string | null };
-    const escolhido = new Date(2026, 9, 20, 14, 0, 0, 0);
+    const escolhido = new Date(2027, 9, 20, 14, 0, 0, 0);
     expect(patch.dueDate).toBe(escolhido.toISOString());
     // O que o Postgres (sessão UTC) grava é o instante das 14:00 de São Paulo.
     expect(instanteGravadoPeloBanco(patch.dueDate as string)).toBe(escolhido.getTime());
@@ -136,7 +136,7 @@ describe('WorkItemSheet — prazo e alarme no fuso do aparelho (R2-MOD-050)', ()
     cleanup();
 
     // Edição (Sheet): o mesmo 20/10 09:00 no prazo, vindo de um 08:00.
-    const item = { ...base, due_date: '2026-10-20T11:00:00.000Z' };
+    const item = { ...base, due_date: '2027-10-20T11:00:00.000Z' };
     const p = props({ item });
     render(<WorkItemSheet {...p} />);
     fireEvent.click(screen.getByTestId('sheet-prazo'));

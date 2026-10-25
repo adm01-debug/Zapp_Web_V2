@@ -110,7 +110,7 @@ export function GoogleCalendarIntegration() {
                 Criar eventos automaticamente ao agendar mensagens
               </p>
             </div>
-            <Switch checked={autoSync} onCheckedChange={setAutoSync} aria-label="Sincronização automática" />
+            <Switch checked={autoSync} onCheckedChange={setAutoSync} aria-label="Sincronização automática" disabled />
           </div>
 
           <Separator className="bg-border/30" />

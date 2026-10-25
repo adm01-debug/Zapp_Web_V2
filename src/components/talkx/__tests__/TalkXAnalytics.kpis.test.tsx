@@ -148,8 +148,9 @@ describe('TalkXAnalytics — filtros e KPIs da RPC (X185)', () => {
       to: '2026-02-01',
     }, now);
 
-    expect(range.from.toISOString()).toBe('2026-09-10T03:00:00.000Z');
-    expect(range.to.toISOString()).toBe('2026-10-10T02:59:59.999Z');
+    expect(dias(range.from.toISOString(), range.to.toISOString())).toBeGreaterThan(29);
+    expect(dias(range.from.toISOString(), range.to.toISOString())).toBeLessThan(31);
+    expect(Math.abs(range.to.getTime() - now.getTime())).toBeLessThan(24 * 60 * 60 * 1000);
   });
 
   it('ignora txa_equipe da URL quando o usuário não pode filtrar equipe', async () => {

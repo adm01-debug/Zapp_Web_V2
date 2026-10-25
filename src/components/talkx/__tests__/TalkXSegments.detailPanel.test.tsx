@@ -138,7 +138,7 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     expect(screen.getByText('Dados do ZAPP, em tempo real')).toBeInTheDocument();
 
     // "Editar" abre o construtor com o segmento aberto.
-    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Editar segmento' }));
     const nome = (await screen.findByPlaceholderText('Nome do segmento…')) as HTMLInputElement;
     expect(nome.value).toBe('Segmento teste');
   });
@@ -194,8 +194,8 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     renderView();
     await abrirPainel();
 
-    // "Editar" do painel abre o construtor (tela interna do módulo, X111).
-    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    // "Editar segmento" do painel abre o construtor (tela interna do módulo, X111).
+    fireEvent.click(screen.getByRole('button', { name: 'Editar segmento' }));
     await screen.findByPlaceholderText('Nome do segmento…');
 
     fireEvent.keyDown(document, { key: 'Escape' });
@@ -213,7 +213,7 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     renderView();
     await abrirPainel();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Editar segmento' }));
     const nome = (await screen.findByPlaceholderText('Nome do segmento…')) as HTMLInputElement;
     // Mexer no nome deixa o construtor "sujo": o "Voltar" abre o aviso do próprio construtor.
     fireEvent.change(nome, { target: { value: 'Segmento mexido' } });
