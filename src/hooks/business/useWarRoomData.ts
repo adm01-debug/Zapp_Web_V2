@@ -105,6 +105,7 @@ export function useWarRoomData({ refetchInterval = 30000 }: WarRoomDataOptions =
       );
 
       try {
+        // @ts-expect-error — RPC ainda não está no types.ts gerado
         const today = await supabase.rpc('warroom_agent_today');
         if (today.error) throw today.error;
         const rows = (today.data ?? []) as unknown as WarRoomAgentRpcRow[];
@@ -163,6 +164,7 @@ export function useWarRoomData({ refetchInterval = 30000 }: WarRoomDataOptions =
       if (baseQueues.error) throw baseQueues.error;
 
       try {
+        // @ts-expect-error — RPC ainda não está no types.ts gerado
         const { data, error } = await supabase.rpc('warroom_queue_stats');
         if (error) throw error;
         const rows = (data ?? []) as unknown as WarRoomQueueRpcRow[];
