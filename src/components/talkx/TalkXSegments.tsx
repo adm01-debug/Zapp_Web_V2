@@ -458,7 +458,7 @@ function SegmentCard({ s, selected, selectedIds, segments, onSelect, onToggleSel
           <div className="flex items-center gap-1.5 flex-wrap">
             <p className="text-sm font-semibold text-foreground truncate">{s.name}</p>
             <Pill label={originLabel} tone={s.origin === 'crm360' ? 'violet' : 'info'} />
-            <Pill label={statusLabel} tone={s.status === 'active' ? 'green' : 'default'} />
+            <Pill label={statusLabel} tone={s.status === 'active' ? 'success' : 'muted'} />
           </div>
           <p className="text-2xs text-foreground-secondary mt-0.5 truncate">{s.description || 'Sem descrição'}</p>
           <div className="flex flex-wrap gap-1 mt-1">
