@@ -9,6 +9,7 @@ import { log } from '@/lib/logger';
 import { clearEmailDraftSessions } from '@/lib/emailDraftSession';
 import { clearInboxDraftSessions } from '@/lib/inboxDraftSession';
 import { clearTeamChatDraftSessions } from '@/lib/teamChatDraftSession';
+import { offlineSendQueue } from '@/lib/offlineQueue';
 
 interface AuthContextType {
   user: User | null;
@@ -154,6 +155,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         // anterior (contatos, mensagens, galeria) antes de qualquer consulta nova.
         queryClient.clear();
         clearOfflineCache();
+        void offlineSendQueue.clear();
         clearEmailDraftSessions();
         // SEC-FRONTEND-03: o rascunho de conversa do Inbox também é do usuário que
         // saiu — nenhum texto dele pode esperar o próximo login na mesma máquina.
@@ -226,6 +228,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
        // deixe dados do usuario anterior para tras.
        queryClient.clear();
        clearOfflineCache();
+       void offlineSendQueue.clear();
        clearEmailDraftSessions();
        // SEC-FRONTEND-03: idem para o rascunho de conversa do Inbox (o sign-out do
        // Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele).
