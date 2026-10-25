@@ -52,6 +52,10 @@ vi.mock('@/hooks/integrations/useTalkX', () => ({
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
+vi.mock('@/hooks/integrations/useTalkXConnectionStatus', () => ({
+  useTalkXConnectionStatus: () => ({ status: 'connected', label: 'Conectada', loading: false }),
+}));
+
 import { TalkXCampaignScheduled } from '../TalkXCampaignScheduled';
 
 // O gatilho do Select (Radix) chama `hasPointerCapture` no pointerdown que o abre

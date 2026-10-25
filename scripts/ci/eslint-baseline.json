@@ -913,10 +913,6 @@
       "sha256": "5ba969d76e8ed11c181fe144dcd779659a0ddca51978155e442089b158240dbb"
     },
     {
-      "path": "src/components/talkx/TalkXOverview.tsx",
-      "sha256": "ca2c8c7412caf8149393e56cdb95da60a29cb4c221f7944274d7d10fcc7adfda"
-    },
-    {
       "path": "src/components/talkx/TalkXSegments.tsx",
       "sha256": "7a9b4f1f06b9119d97eaacc5538e05262b6855d4a638f2e106e445eb9cef1977"
     },
@@ -8241,76 +8237,6 @@
       "spanHash": "19eb058381f5c4dd09d4f8ded6c7bbaac1c0f6aa3685c783ebafae750bbce469",
       "lineHash": "634a776d68ba5528afc5c883da8d22adfe7125bdd9a760749c79f1c315eb0e3c",
       "contextHash": "d81ccec7cb96ffff708162248707880b13c04f4c79fce480239381778ec6001b"
-    },
-    {
-      "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 126,
-      "column": 9,
-      "endLine": 126,
-      "endColumn": 25,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "acc7f0212c266fcaa2e48b1cae83e62d6caa22fe83fa617ef7b1e7f1855ac112",
-      "lineHash": "4fb4b003d591a383a50f00cb4b14dc95758328ae595ffd42db88de3f2fc9620a",
-      "contextHash": "ef6137adefd17cebad7f229c66267c941ed0fffbb93d1723cd5daedbf57cd1f5"
-    },
-    {
-      "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 127,
-      "column": 14,
-      "endLine": 127,
-      "endColumn": 33,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "aae2ed8deabbba40e5a4e9537bd53667ce6ed582af29db5b8aa09742294fc169",
-      "lineHash": "aa447d3492784968be351705f5ae9f700aa9ded9be3b25293b02663d6e513b7c",
-      "contextHash": "160c36a2192dc8e35f1999f48a5ac98d292564c896e608ba23e3fb17dc5babe5"
-    },
-    {
-      "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 128,
-      "column": 14,
-      "endLine": 128,
-      "endColumn": 31,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "26ffa891b4b2bddcb1ec7b4abc03036b48f9426a9a3aa319fea51c41fc95b3ac",
-      "lineHash": "1f082bb42e9654060cfeebc4bb8d41da445259557f837c62003e2901416664d0",
-      "contextHash": "4bbb8f3c5f9479c2cf5eb027b513b909735db9ef85f2bed13e26afe7468a7e94"
-    },
-    {
-      "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 129,
-      "column": 14,
-      "endLine": 129,
-      "endColumn": 31,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "e9e2aabbf80a3b504422fc2fe4e741911798ddcc5820234b6694f6e32bf46bd7",
-      "lineHash": "c119c3d2b7c7fce11d1500c296ec9966afb97031926996ea354d338cc2bded04",
-      "contextHash": "3f711baf84a3ee3893cc86cafe23f51172c9c18be7f72e0dc86e4d20b78cfd03"
-    },
-    {
-      "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 130,
-      "column": 14,
-      "endLine": 130,
-      "endColumn": 31,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "42f749ed35d06fb89d750355b5fbdd1e7d2dfa18e320cac5531c09e2b80d6c3c",
-      "lineHash": "faf192b441a9081f5477ec2ba0149e1b73ef51d91744cc9a27b25afca8dfb47a",
-      "contextHash": "894f9a18170ad6b818c7f836b658c56b938d63b2636028a3de631faa764bc63b"
     },
     {
       "file": "src/components/talkx/TalkXSegments.tsx",
