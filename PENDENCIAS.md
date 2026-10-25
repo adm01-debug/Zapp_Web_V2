@@ -11,8 +11,8 @@
 |---|---|---|---|---|---|
 | CI/CD Pipeline (`ci.yml`) | 279058466 | [40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) `failure` | Unit tests: TC-009 versão errada de migration | ✅ commit `4adee58` | Aguardando CI do PR |
 | DB Guard offline (`db-guard.yml`) | 344052670 | [40122006482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006482) `failure` | TC-009: `scripts/db-audit/team-receipts-reactions-conversation-id.test.sh` referenciava versão `20261009193246` inexistente | ✅ commit `4adee58` (versão corrigida para `20261006222024`) | Aguardando CI do PR |
-| Deploy Edge Functions (`deploy-functions.yml`) | 344691397 | [40097636982](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40097636982) `failure` | `supabase/deployment-manifest.json` stale | ✅ commit `chore: regenera deployment-manifest.json` (este push) | Aguardando re-run |
-| Auto Update PR Branches (`auto-update-pr-branch.yml`) | 366925501 | failure (HTTP 504) | Sem retry em `scripts/ci/fila-merge.mjs` para erros transitórios | ✅ commit anterior do PR #2246 (retry com backoff) | Aguardando CI |
+| Deploy Edge Functions (`deploy-functions.yml`) | 344691397 | [40097636982](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40097636982) `failure` | `supabase/deployment-manifest.json` stale | ✅ commit `chore: regenera deployment-manifest.json` (este push) | Ver §7 — trigger incompatível |
+| Auto Update PR Branches (`auto-update-pr-branch.yml`) | 366925501 | failure (HTTP 504) | Sem retry em `scripts/ci/fila-merge.mjs` para erros transitórios | ✅ commit anterior do PR #2246 (retry com backoff) | Ver §6 — trigger incompatível |
 | Talk X V4 placar (`talkx-status-regen.yml`) | 372647819 | [40122006445](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006445) `success` | — | Sem fix necessário | ✅ Já success |
 | Notifica falha na main (`notifica-falha-main.yml`) | 385680890 | [40170019860](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40170019860) `success` | — | Sem fix necessário | ✅ Já success |
 | CodeQL | 349267462 | [39232205552](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39232205552) `success` | — | Sem fix necessário | ✅ Já success |
@@ -85,7 +85,7 @@ Após isso, o `db-live-guard` passará automaticamente no próximo schedule (06:
 que não funciona no ambiente de CI:
 
 | Spec | Linha | Descrição |
-|------|-------|-----------|
+|------|-------|----------|
 | `location-picker.spec.ts` | 81 | Seletor de localização — ação primária |
 | `location-picker.spec.ts` | 148 | Seletor de localização — confirmação |
 | `contact-address.spec.ts` | 184 | Endereço do contato via mapa |
@@ -146,6 +146,74 @@ que o Joaquim decida reativá-lo com os dados corretos. A última falha real foi
 antes mesmo das correções desta sessão.
 
 **Sem fix de agente possível:** desarmado por decisão explícita de Joaquim (CLAUDE.md).
+
+---
+
+## §6. auto-update-pr-branch.yml — validação exige push na main (trigger incompatível)
+
+**Workflow:** `auto-update-pr-branch.yml`
+**Workflow ID:** 366925501
+**Última run com falha (baseline):** failure (HTTP 504 + `unexpected end of JSON input` no `gh pr list`)
+
+**Fix aplicado:** commit `a6d68651` — adicionado `execComRetry()` com 3 retries e backoff exponencial
+(5s→10s→20s) em `scripts/ci/fila-merge.mjs:38`; `unexpected end of JSON` adicionado ao regex de
+erros transitórios para cobrir JSON truncado de respostas da API do GitHub.
+
+**Por que não há `conclusion=success` comprovado em contexto de PR:**
+
+O workflow `auto-update-pr-branch.yml` tem trigger exclusivamente `on: push` para a branch `main`:
+
+```yaml
+on:
+  push:
+    branches: [main]
+```
+
+Ele **não é acionado por `pull_request`** — nunca produzirá um run associado a esta PR. A validação
+só é possível após merge em `main` (o próximo push à `main` dispara o workflow com o código corrigido).
+
+**Não é bloqueio de infra nem decisão de Joaquim.** É limitação arquitetural do trigger: o workflow
+não pode rodar no contexto de PR por design (seu propósito é reagir a pushs na `main` para atualizar
+PRs abertas atrás da `main` — não faria sentido rodar durante um PR).
+
+**Validação esperada pós-merge:** primeiro push à `main` após merge do PR #2246 produzirá run com o
+código corrigido. A ausência de `conclusion=success` em PR é estrutural, não indicador de falha no fix.
+
+---
+
+## §7. deploy-functions.yml — validação exige workflow_dispatch na main + aprovação humana (trigger incompatível)
+
+**Workflow:** `deploy-functions.yml`
+**Workflow ID:** 344691397
+**Última run com falha (baseline):** [40097636982](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40097636982) `failure` — "Deployment manifest is stale"
+
+**Fix aplicado:** commit `96b1aa6` — `supabase/deployment-manifest.json` regenerado com hashes atuais
+(84 funções, 168 arquivos fonte). Novo `manifest_sha256: 42fcdc0b3046b16ee740b3ec41ec6ff675087b215442e10d2ec4693011feca8f`.
+
+**Por que não há `conclusion=success` comprovado em contexto de PR:**
+
+O workflow `deploy-functions.yml` tem trigger exclusivamente `on: workflow_dispatch`:
+
+```yaml
+on:
+  workflow_dispatch:
+    inputs: ...
+```
+
+Ele **não é acionado por `pull_request`** — nunca produzirá um run associado a esta PR. Além disso,
+o job pausa em `Waiting` no environment `producao-edge-functions` que requer aprovação de Joaquim.
+
+**Conforme CLAUDE.md (seção "Decisões de 2026-09-26"):**
+> "Merge em `main` NÃO deploya edge function. As edge functions sobem **só** por `workflow_dispatch`
+> do `deploy-functions.yml` (é deliberado) [...] uma correção de edge function mergeada continua
+> **fora do ar** até alguém disparar o workflow E aprovar."
+
+**O que o Joaquim precisa fazer após merge:**
+
+1. Disparar `deploy-functions.yml` via `workflow_dispatch` na `main` (aba Actions → Deploy Functions).
+2. Aprovar o job no environment `producao-edge-functions`.
+
+**Sem `conclusion=success` possível por agente:** trigger incompatível com PR + aprovação humana obrigatória.
 
 ---
 
