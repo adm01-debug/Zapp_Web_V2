@@ -145,6 +145,32 @@ Durante a varredura de arquivos identificou-se que 2 PRs listadas como BEHIND ta
 - **PR #2046** (BEHIND): toca `.github/workflows/ci.yml` e `.github/workflows/db-guard.yml`
 - **PR #2197** (BEHIND): toca `.github/workflows/branch-hygiene-audit.yml`, `codeql.yml`, `types-sync.yml` e outros
 
+### Tentativas de merge executadas (evidência direta de impossibilidade)
+
+**8 PRs BLOCKED tentadas em 2026-10-25 — todas rejeitadas com HTTP 405:**
+
+| PR | SHA | Erro GitHub |
+|---|---|---|
+| #2218 | 5e9a8d7 | `Required status check "✅ CI Gate (required check)" is failing.` |
+| #2223 | acceb07 | `Required status check "✅ CI Gate (required check)" is failing.` |
+| #2232 | b3ce3d8 | `Required status check "✅ CI Gate (required check)" is failing.` |
+| #2234 | 7facd05 | `Required status check "✅ CI Gate (required check)" is failing.` |
+| #2236 | c975279 | `Required status check "✅ CI Gate (required check)" is failing.` |
+| #2237 | f45a22a | `Required status check "✅ CI Gate (required check)" is failing.` |
+| #2239 | a43d3ae | `Required status check "✅ CI Gate (required check)" is failing.` |
+| #2240 | 23c149f | `Required status check "✅ CI Gate (required check)" is failing.` |
+
+**3 PRs BEHIND tentadas — todas rejeitadas com HTTP 405:**
+
+| PR | SHA | Erro GitHub |
+|---|---|---|
+| #2057 | f3e9612 | `3 of 3 required status checks are expected.` |
+| #2062 | 3f8ee72 | `3 of 3 required status checks are expected.` |
+| #2064 | a3b561e | `3 of 3 required status checks are expected.` |
+
+BEHIND recebe "3 of 3 expected" porque CI não rodou no HEAD atual (strict=true exige CI no HEAD de main).
+BLOCKED recebe "is failing" porque CI rodou e o ✅ CI Gate falhou (herda os 75 erros TypeCheck do main).
+
 ### Ação necessária (para o Joaquim)
 
 Para desbloquear as merges: executar `types-sync` workflow (`workflow_dispatch`) para regenerar `src/integrations/supabase/types.ts` a partir do schema atual do Supabase. Isso corrigirá os 75 erros de TypeCheck no main. Depois disso:
@@ -155,7 +181,8 @@ Para desbloquear as merges: executar `types-sync` workflow (`workflow_dispatch`)
 
 ## Outras escritas no GitHub realizadas por esta sessão
 
-**Nenhuma.** Zero merges, zero pushes, zero comentários, zero labels, zero deleções de branch.
+**Apenas push de documentação.** Zero merges, zero comentários, zero labels, zero deleções de branch.
+Push único: branch `claude_05/zen-feynman-29b7ix` (branch desta sessão) — arquivo `analise-prs/RELATORIO_PRS.md`.
 
 ---
 
@@ -168,6 +195,7 @@ Todos em `analise-prs/dossies/PR-{N}.md` — 146 arquivos criados.
 - `analise-prs/RELATORIO_PRS.md` (este arquivo)
 - `analise-prs/progresso.json`
 - `analise-prs/prs.json`
-- `analise-prs/batch_C.json`
+- `analise-prs/prs.csv` (101 linhas: header + 100 PRs não-draft)
 - `analise-prs/regras-de-negocio.md`
+- `analise-prs/baseline/README.md` + `typecheck-raw.txt` + `typecheck-errors.txt` + `typecheck-error-files.txt` + `typecheck.txt` + `unit-tests.txt` + `lint.txt`
 - `analise-prs/dossies/PR-{N}.md` (146 arquivos)
