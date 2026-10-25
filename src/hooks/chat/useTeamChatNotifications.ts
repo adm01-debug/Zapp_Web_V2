@@ -2,8 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from 'react'
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
-import { usePushNotifications } from '@/hooks/system/usePushNotifications';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
+import { showBrowserNotification } from '@/utils/notificationSounds';
 import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
 
@@ -136,7 +136,6 @@ export function playTeamChatSound(volume: number = 70) {
 export function useTeamChatNotifications(activeConversationId: string | null) {
   const { profile } = useAuth();
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
-  const { showNotification, permission } = usePushNotifications();
   const activeIdRef = useRef(activeConversationId);
 
   // HZ5-09: refs para funções instáveis — a assinatura não precisa ser recriada
@@ -145,12 +144,10 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
   // useLayoutEffect corre antes de useEffect, então os refs estão frescos quando o canal dispara.
   const notifSettingsRef = useRef(notifSettings);
   const isQuietHoursRef = useRef(isQuietHours);
-  const showNotificationRef = useRef(showNotification);
   useLayoutEffect(() => {
     notifSettingsRef.current = notifSettings;
     isQuietHoursRef.current = isQuietHours;
-    showNotificationRef.current = showNotification;
-  }, [notifSettings, isQuietHours, showNotification]);
+  }, [notifSettings, isQuietHours]);
 
   useEffect(() => {
     activeIdRef.current = activeConversationId;
@@ -212,15 +209,10 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         }
 
         // Show browser notification if enabled
-        // HZ3-001: o aviso depende SÓ da permissão do navegador já concedida — o
-        // `showNotification` publica pela inscrição do service worker LOCAL
-        // (`registration.showNotification`), que não precisa da assinatura de push.
-        // Exigir `isSubscribed` do `usePushNotifications` (que significa "alertas do
-        // navegador ligados", `state.isActive`, e só fica ligado com assinatura push)
-        // silenciava quem concedeu a permissão e não assinou o push: ficava só com o
-        // som. O liga/desliga de avisos do chat interno continua valendo por
-        // `notifSettings.browserNotifications`.
-        if (permission === 'granted' && notifSettingsRef.current.browserNotifications && !isQuietHoursRef.current()) {
+        // HZ3-001: usa a Notification API diretamente — não depende de service worker
+        // nem de assinatura push. O liga/desliga de avisos do chat interno continua
+        // valendo por `notifSettings.browserNotifications`.
+        if (notifSettingsRef.current.browserNotifications && !isQuietHoursRef.current()) {
           // Nome do remetente por RPC segura: para o agente a leitura direta de
           // `profiles` é barrada pela RLS (o título virava 'Colega').
           // `get_team_profiles()` é SECURITY DEFINER e já mascara email/telefone.
@@ -238,16 +230,10 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
 
-          await showNotificationRef.current({
-            title: `💬 Teams: ${senderName}`,
-            body,
+          showBrowserNotification(`💬 Teams: ${senderName}`, body, {
             tag: `team-msg-${msg.conversation_id}`,
-            data: {
-              type: 'team_chat',
-              conversationId: msg.conversation_id,
-              messageId: msg.id,
-            },
             requireInteraction: false,
+            onClick: () => navigateToView('team-chat'),
           });
 
           log.debug('Team chat notification sent for message:', msg.id);
@@ -258,7 +244,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile, permission]);
+  }, [profile]);
 
   /**
    * Clique na notificação do chat interno: o service worker repassa o clique da
