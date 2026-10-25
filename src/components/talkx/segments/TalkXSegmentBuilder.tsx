@@ -91,6 +91,19 @@ export function TalkXSegmentBuilder({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
+  // Esc fecha o construtor (ou abre o aviso de alterações não salvas, se sujo).
+  // defaultPrevented = o Radix já tratou o Esc de um diálogo interno — não fechar.
+  const requestExitRef = React.useRef<() => void>(() => {});
+  React.useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => {
+      // eslint-disable-next-line local/no-secret-compare
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      requestExitRef.current();
+    };
+    document.addEventListener('keydown', onEsc);
+    return () => document.removeEventListener('keydown', onEsc);
+  }, []);
+
   const resolveGroupId = () => {
     if (state.activeGroupId && rules.groups.some((g) => g.id === state.activeGroupId)) return state.activeGroupId;
     return rules.groups[rules.groups.length - 1]?.id ?? null;
@@ -125,6 +138,8 @@ export function TalkXSegmentBuilder({
     }
   };
   const requestExit = () => requestProceed(onCancel);
+  // Mantém o ref sincronizado após cada render para o Esc handler sempre capturar o `dirty` atual.
+  React.useEffect(() => { requestExitRef.current = requestExit; });
   // Registra a guarda a cada render para o pai sempre chamar o `dirty` atual
   // (só atribui um ref no pai: não dispara nova renderização).
   React.useEffect(() => {

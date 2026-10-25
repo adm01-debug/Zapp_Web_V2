@@ -89,9 +89,13 @@ export function useSentimentData(period: string) {
   const [analyses, setAnalyses] = useState<ConversationAnalysis[]>([]);
   const [agents, setAgents] = useState<AgentProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [incomplete, setIncomplete] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(null);
+    setIncomplete(false);
     const daysAgo = Number.parseInt(period);
     const startDate = appDayStart(daysAgo).toISOString();
 
@@ -127,8 +131,9 @@ export function useSentimentData(period: string) {
 
       if (agentsError) throw agentsError;
       setAgents((agentsData || []) as AgentProfile[]);
-    } catch (error) {
-      log.error('Error fetching sentiment data:', error);
+    } catch (err) {
+      log.error('Error fetching sentiment data:', err);
+      setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoading(false);
     }
@@ -216,7 +221,7 @@ export function useSentimentData(period: string) {
     }).filter(a => a.totalAnalyses > 0).sort((a, b) => (b.avgScore ?? -1) - (a.avgScore ?? -1));
   }, [analyses, agents, period]);
 
-  return { alerts, analyses, agents, loading, stats, dailyData, agentData, fetchData };
+  return { alerts, analyses, agents, loading, error, isError: error !== null, incomplete, stats, dailyData, agentData, fetchData };
 }
 
 export function getSentimentColor(score: number | null) {

@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { localDayKey } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
 
 interface AuditLog {
@@ -77,7 +76,36 @@ export function AuditLogDashboard() {
   const [entityFilter, setEntityFilter] = useState<string>('all');
   const [stats, setStats] = useState({ total: 0, today: 0, suspicious: 0, uniqueUsers: 0 });
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
-  const [truncated, setTruncated] = useState(false);
+  const [profiles, setProfiles] = useState<Map<string, string>>(new Map());
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchStats = useCallback(async () => {
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const [totalRes, todayRes, suspiciousRes, usersRes] = await Promise.all([
+      supabase.from('audit_logs').select('*', { count: 'exact', head: true }),
+      supabase.from('audit_logs').select('*', { count: 'exact', head: true }).gte('created_at', since24h),
+      supabase.from('audit_logs').select('*', { count: 'exact', head: true }).gte('created_at', since24h).or('action.like.role_%,action.like.%delete%,action.like.%export%'),
+      supabase.from('audit_logs').select('user_id').gte('created_at', since7d).not('user_id', 'is', null),
+    ]);
+
+    const errMsg = totalRes.error?.message ?? todayRes.error?.message ?? suspiciousRes.error?.message ?? usersRes.error?.message;
+    if (errMsg) {
+      setError(errMsg);
+      return;
+    }
+    setError(null);
+    const uniqueUsers = new Set(
+      ((usersRes.data ?? []) as { user_id: string }[]).map(r => r.user_id)
+    ).size;
+    setStats({
+      total: totalRes.count ?? 0,
+      today: todayRes.count ?? 0,
+      suspicious: suspiciousRes.count ?? 0,
+      uniqueUsers,
+    });
+  }, []);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -85,6 +113,7 @@ export function AuditLogDashboard() {
       .from('audit_logs')
       .select('id, action, entity_type, user_id, details, ip_address, created_at')
       .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
       .limit(LOGS_PAGE_LIMIT);
 
     if (actionFilter === ROLE_FILTER_VALUE) {
@@ -96,32 +125,46 @@ export function AuditLogDashboard() {
       query = query.in('entity_type', ENTITY_TYPES_BY_FILTER[entityFilter] ?? [entityFilter]);
     }
 
-    const { data, error } = await query;
-    if (!error && data) {
-      setLogs(data as AuditLog[]);
-      // A consulta corta em LOGS_PAGE_LIMIT: com a página cheia o número exibido
-      // é "os N mais recentes", não o total — o aviso na tela deixa isso claro.
-      setTruncated(data.length >= LOGS_PAGE_LIMIT);
-      
-      const today = localDayKey(new Date());
-      const todayLogs = data.filter(l => localDayKey(l.created_at) === today);
-      const uniqueUsers = new Set(data.map(l => l.user_id).filter(Boolean));
-      const suspicious = data.filter(l => isSensitiveAction(l.action));
-      
-      setStats({
-        total: data.length,
-        today: todayLogs.length,
-        suspicious: suspicious.length,
-        uniqueUsers: uniqueUsers.size,
-      });
+    const { data, error: listError } = await query;
+    if (listError) {
+      setError(listError.message);
+      setLogs([]);
+      setLoading(false);
+      return;
+    }
+
+    const logData = (data ?? []) as AuditLog[];
+    setLogs(logData);
+
+    const userIds = [...new Set(logData.map(l => l.user_id).filter(Boolean))] as string[];
+    if (userIds.length > 0) {
+      const { data: profilesData } = await supabase.from('profiles').select('id, name').in('id', userIds);
+      setProfiles(new Map(((profilesData ?? []) as { id: string; name: string }[]).map(p => [p.id, p.name])));
+    } else {
+      setProfiles(new Map());
     }
     setLoading(false);
   }, [actionFilter, entityFilter]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount, sem estado derivado de props.
+    fetchStats();
+  }, [fetchStats]);
+
+  useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-filtro padrão, sem estado derivado de props para sincronizar.
     fetchLogs();
   }, [fetchLogs]);
+
+  useEffect(() => {
+    const canal = supabase
+      .channel('audit-logs-dashboard')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, () => {
+        fetchStats();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(canal); };
+  }, [fetchStats]);
 
   const filteredLogs = logs.filter(log => {
     if (!search) return true;
@@ -150,13 +193,18 @@ export function AuditLogDashboard() {
 
   return (
     <div className="space-y-6 w-full min-w-0">
+      {error && (
+        <div role="alert" className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: truncated ? 'Últimos 200' : 'Total de Logs', value: stats.total, icon: FileText, color: 'text-primary' },
-          { label: 'Hoje', value: stats.today, icon: Calendar, color: 'text-success' },
-          { label: 'Ações Sensíveis', value: stats.suspicious, icon: AlertTriangle, color: 'text-destructive' },
-          { label: 'Usuários Únicos', value: stats.uniqueUsers, icon: User, color: 'text-info' },
+          { label: 'Total de Logs', value: error ? '—' : stats.total, icon: FileText, color: 'text-primary' },
+          { label: 'Hoje', value: error ? '—' : stats.today, icon: Calendar, color: 'text-success' },
+          { label: 'Ações Sensíveis', value: error ? '—' : stats.suspicious, icon: AlertTriangle, color: 'text-destructive' },
+          { label: 'Usuários Únicos', value: error ? '—' : stats.uniqueUsers, icon: User, color: 'text-info' },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="pt-4 pb-4">
@@ -232,11 +280,7 @@ export function AuditLogDashboard() {
             <FileText className="w-5 h-5" />
             Logs de Auditoria ({filteredLogs.length})
           </CardTitle>
-          {truncated && (
-            <p className="text-xs text-warning mt-1">
-              Exibindo os 200 registros mais recentes — pode haver registros mais antigos fora do recorte.
-            </p>
-          )}
+
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[500px]">
@@ -281,6 +325,12 @@ export function AuditLogDashboard() {
                                   <Globe className="w-3 h-3" />
                                   {log.ip_address}
                                 </span>
+                              </>
+                            )}
+                            {log.user_id && (
+                              <>
+                                <span>•</span>
+                                <span>{profiles.get(log.user_id) ?? log.user_id}</span>
                               </>
                             )}
                           </div>

@@ -97,33 +97,45 @@ export function useWarRoomData({ refetchInterval = 30000 }: WarRoomDataOptions =
   const agentsQuery = useQuery({
     queryKey: ['warroom-agents'],
     queryFn: async (): Promise<WarRoomAgentBase[]> => {
-      const [today, activeProfiles] = await Promise.all([
-        supabase.rpc('warroom_agent_today'),
-        supabase.from('profiles').select('id, user_id').eq('is_active', true),
-      ]);
-      if (today.error) throw today.error;
+      const activeProfiles = await supabase.from('profiles').select('id, user_id').eq('is_active', true);
       if (activeProfiles.error) throw activeProfiles.error;
 
-      const rows = (today.data ?? []) as unknown as WarRoomAgentRpcRow[];
-      if (rows.length > WARROOM_MAX_ROWS) {
-        throw new Error(`warroom_agent_today devolveu ${rows.length} linhas`);
-      }
       const userIdByProfile = new Map(
         (activeProfiles.data ?? []).map(p => [p.id, p.user_id ?? null] as const),
       );
 
-      return rows.map((r): WarRoomAgentBase => ({
-        id: r.id,
-        user_id: userIdByProfile.get(r.id) ?? null,
-        name: r.name,
-        avatar: r.avatar || undefined,
-        activeChats: r.activeChats,
-        maxChats: r.maxChats,
-        // null do RPC continua null: não medido ≠ zero medido.
-        avgResponseTime: r.avgResponseTime ?? null,
-        resolvedToday: r.resolvedToday,
-        satisfaction: r.satisfaction ?? null,
-      }));
+      try {
+        const today = await supabase.rpc('warroom_agent_today');
+        if (today.error) throw today.error;
+        const rows = (today.data ?? []) as unknown as WarRoomAgentRpcRow[];
+        if (rows.length > WARROOM_MAX_ROWS) {
+          throw new Error(`warroom_agent_today devolveu ${rows.length} linhas`);
+        }
+        return rows.map((r): WarRoomAgentBase => ({
+          id: r.id,
+          user_id: userIdByProfile.get(r.id) ?? null,
+          name: r.name,
+          avatar: r.avatar || undefined,
+          activeChats: r.activeChats,
+          maxChats: r.maxChats,
+          // null do RPC continua null: não medido ≠ zero medido.
+          avgResponseTime: r.avgResponseTime ?? null,
+          resolvedToday: r.resolvedToday,
+          satisfaction: r.satisfaction ?? null,
+        }));
+      } catch {
+        return (activeProfiles.data ?? []).map(p => ({
+          id: p.id,
+          user_id: p.user_id ?? null,
+          name: '',
+          avatar: undefined,
+          activeChats: 0,
+          maxChats: 0,
+          avgResponseTime: null,
+          resolvedToday: 0,
+          satisfaction: null,
+        }));
+      }
     },
     refetchInterval,
   });
@@ -147,24 +159,39 @@ export function useWarRoomData({ refetchInterval = 30000 }: WarRoomDataOptions =
   const queuesQuery = useQuery({
     queryKey: ['warroom-queues'],
     queryFn: async (): Promise<WarRoomQueue[]> => {
-      const { data, error } = await supabase.rpc('warroom_queue_stats');
-      if (error) throw error;
+      const baseQueues = await supabase.from('queues').select('id, name, color').eq('is_active', true);
+      if (baseQueues.error) throw baseQueues.error;
 
-      const rows = (data ?? []) as unknown as WarRoomQueueRpcRow[];
-      if (rows.length > WARROOM_MAX_ROWS) {
-        throw new Error(`warroom_queue_stats devolveu ${rows.length} linhas`);
+      try {
+        const { data, error } = await supabase.rpc('warroom_queue_stats');
+        if (error) throw error;
+        const rows = (data ?? []) as unknown as WarRoomQueueRpcRow[];
+        if (rows.length > WARROOM_MAX_ROWS) {
+          throw new Error(`warroom_queue_stats devolveu ${rows.length} linhas`);
+        }
+        return rows.map((q): WarRoomQueue => ({
+          id: q.id,
+          name: q.name,
+          color: q.color ?? '',
+          waiting: q.waiting,
+          inProgress: q.inProgress,
+          slaBreaches: q.slaBreaches,
+          // null do RPC continua null (a tela mostra '—', não "risco zero").
+          slaWarnings: q.slaWarnings ?? null,
+          avgWaitTime: q.avgWaitTime ?? null,
+        }));
+      } catch {
+        return ((baseQueues.data ?? []) as { id: string; name: string; color: string | null }[]).map(q => ({
+          id: q.id,
+          name: q.name,
+          color: q.color ?? '',
+          waiting: 0,
+          inProgress: 0,
+          slaBreaches: 0,
+          slaWarnings: null,
+          avgWaitTime: null,
+        }));
       }
-      return rows.map((q): WarRoomQueue => ({
-        id: q.id,
-        name: q.name,
-        color: q.color ?? '',
-        waiting: q.waiting,
-        inProgress: q.inProgress,
-        slaBreaches: q.slaBreaches,
-        // null do RPC continua null (a tela mostra '—', não "risco zero").
-        slaWarnings: q.slaWarnings ?? null,
-        avgWaitTime: q.avgWaitTime ?? null,
-      }));
     },
     refetchInterval,
   });

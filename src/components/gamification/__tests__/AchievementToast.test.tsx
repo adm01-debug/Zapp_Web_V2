@@ -99,7 +99,7 @@ function conquista(overrides: Record<string, unknown> = {}): Record<string, unkn
 
 /** Espera o canal estar assinado e o baseline do banco ter sido lido. */
 async function pronto() {
-  await waitFor(() => expect(h.handlers.size).toBe(2));
+  await waitFor(() => expect(h.handlers.size).toBe(1));
   await waitFor(() => expect(h.consultas).toContain('agent_achievements'));
   await waitFor(() => expect(h.consultas).toContain('agent_stats'));
 }
@@ -110,11 +110,29 @@ async function entregar(tabela: string, payload: { new?: Record<string, unknown>
   });
 }
 
+/**
+ * Simula uma conquista nova chegando via Realtime.
+ * O hook atual não assina `agent_achievements` diretamente; a conquista chega
+ * pelo aumento de `agent_stats.achievements_count`, que dispara re-fetch.
+ */
+async function entregarConquista(c: Record<string, unknown>) {
+  const statsData = h.stats.data as Record<string, unknown>;
+  const atualCount = Number(statsData?.achievements_count ?? 0) + 1;
+  h.conquistas = {
+    data: [...(Array.isArray(h.conquistas.data) ? (h.conquistas.data as unknown[]) : []), c],
+    error: null,
+  } as Resposta;
+  h.stats = { data: { ...statsData, achievements_count: atualCount }, error: null } as Resposta;
+  await act(async () => {
+    h.handlers.get('agent_stats')?.({ new: { ...statsData, achievements_count: atualCount } });
+  });
+}
+
 describe('AchievementCelebrationToaster', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     prefersReduzido.valor = false;
-    h.stats = { data: { id: 's1', profile_id: 'p1', xp: 100, level: 3 }, error: null };
+    h.stats = { data: { id: 's1', profile_id: 'p1', xp: 100, level: 3, achievements_count: 0 }, error: null };
     h.conquistas = { data: [], error: null };
     h.handlers = new Map<string, Handler>();
     h.onChamadas = [];
@@ -134,7 +152,7 @@ describe('AchievementCelebrationToaster', () => {
     montar();
     await pronto();
 
-    await entregar('agent_achievements', { new: conquista() });
+    await entregarConquista(conquista());
 
     expect(await screen.findByText('Marco de 500 mensagens')).toBeInTheDocument();
     expect(screen.getByText('Você chegou a 500 mensagens')).toBeInTheDocument();
@@ -147,7 +165,7 @@ describe('AchievementCelebrationToaster', () => {
     montar();
     await pronto();
 
-    await entregar('agent_achievements', { new: conquista({ id: 'a1' }) });
+    await entregarConquista(conquista({ id: 'a1' }));
 
     expect(screen.getByRole('status')).toBeEmptyDOMElement();
   });
@@ -167,12 +185,8 @@ describe('AchievementCelebrationToaster', () => {
     montar();
     await pronto();
 
-    await entregar('agent_achievements', {
-      new: conquista({ id: 'a1', achievement_name: 'Primeira conquista' }),
-    });
-    await entregar('agent_achievements', {
-      new: conquista({ id: 'a2', achievement_name: 'Segunda conquista' }),
-    });
+    await entregarConquista(conquista({ id: 'a1', achievement_name: 'Primeira conquista' }));
+    await entregarConquista(conquista({ id: 'a2', achievement_name: 'Segunda conquista' }));
 
     expect(await screen.findByText('Primeira conquista')).toBeInTheDocument();
     expect(screen.queryByText('Segunda conquista')).not.toBeInTheDocument();
@@ -187,7 +201,7 @@ describe('AchievementCelebrationToaster', () => {
     montar({ duration: 300 });
     await pronto();
 
-    await entregar('agent_achievements', { new: conquista() });
+    await entregarConquista(conquista());
     expect(await screen.findByText('Marco de 500 mensagens')).toBeInTheDocument();
 
     await waitFor(
@@ -201,7 +215,7 @@ describe('AchievementCelebrationToaster', () => {
     montar();
     await pronto();
 
-    await entregar('agent_achievements', { new: conquista() });
+    await entregarConquista(conquista());
 
     expect(await screen.findByText('Marco de 500 mensagens')).toBeInTheDocument();
     expect(screen.queryByTestId('celebration-particles')).not.toBeInTheDocument();
@@ -211,7 +225,7 @@ describe('AchievementCelebrationToaster', () => {
     montar();
     await pronto();
 
-    await entregar('agent_achievements', { new: conquista() });
+    await entregarConquista(conquista());
 
     expect(await screen.findByText('Marco de 500 mensagens')).toBeInTheDocument();
     expect(screen.getByTestId('celebration-particles')).toBeInTheDocument();

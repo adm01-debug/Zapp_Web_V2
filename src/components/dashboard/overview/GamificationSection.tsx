@@ -1,5 +1,5 @@
 import { Gamepad2 } from 'lucide-react';
-import { useDashboardWidgets, DashboardWidget } from '@/hooks/analytics/useDashboardWidgets';
+import type { DashboardWidget } from '@/hooks/analytics/useDashboardWidgets';
 import { EnhancedProgressiveDisclosure } from '../ProgressiveDisclosureDashboard';
 import { DashboardWidgetRenderer, DashboardStats } from '../DashboardWidgetRenderer';
 import type { WidgetSection } from '../DashboardSectionHeader';
@@ -25,8 +25,7 @@ interface GamificationSectionProps {
  * desliga no painel "Personalizar" some daqui.
  */
 export function GamificationSection({ stats, isStaff = true, visibleWidgets }: GamificationSectionProps) {
-  const { visibleWidgets: configuradosPeloHook } = useDashboardWidgets();
-  const configurados = visibleWidgets ?? configuradosPeloHook;
+  const configurados = visibleWidgets ?? [];
 
   const combined: DashboardWidget[] = configurados
     .filter((w) => w.type === 'challenges' || w.level === 3)

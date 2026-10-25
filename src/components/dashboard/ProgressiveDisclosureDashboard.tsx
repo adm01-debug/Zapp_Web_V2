@@ -1,5 +1,5 @@
-import { useState, useMemo, useSyncExternalStore } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useState, useMemo, useSyncExternalStore, useContext } from 'react';
+import { QueryClientContext } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, Gamepad2, TrendingUp, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -34,7 +34,7 @@ interface EnhancedProps {
 }
 
 export function EnhancedProgressiveDisclosure({ sections, renderWidget, onRefresh, isLoading }: EnhancedProps) {
-  const queryClient = useQueryClient();
+  const queryClient = useContext(QueryClientContext);
   const [openSections, setOpenSections] = useState<Set<string>>(() => {
     const initial = new Set<string>();
     sections.forEach(s => { if (s.defaultOpen !== false) initial.add(s.id); });
@@ -46,18 +46,17 @@ export function EnhancedProgressiveDisclosure({ sections, renderWidget, onRefres
   // `dataUpdatedAt` mais recente do cache do React Query e acompanha o cache,
   // para o carimbo virar de verdade a cada resposta.
   const lastUpdatedMs = useSyncExternalStore(
-    (onCacheChange) => queryClient.getQueryCache().subscribe(onCacheChange),
+    (onCacheChange) => queryClient ? queryClient.getQueryCache().subscribe(onCacheChange) : () => {},
     () =>
       queryClient
-        .getQueryCache()
-        .getAll()
-        .reduce((maisRecente, q) => Math.max(maisRecente, q.state.dataUpdatedAt), 0),
+        ? queryClient.getQueryCache().getAll().reduce((maisRecente, q) => Math.max(maisRecente, q.state.dataUpdatedAt), 0)
+        : 0,
   );
   const lastUpdated = lastUpdatedMs > 0 ? new Date(lastUpdatedMs) : undefined;
 
   // L7: sem `onRefresh` do pai o botão "Atualizar" nem aparecia; o padrão
   // refaz as buscas ativas do dashboard.
-  const handleRefresh = onRefresh ?? (() => { void queryClient.refetchQueries(); });
+  const handleRefresh = onRefresh ?? (() => { if (queryClient) void queryClient.refetchQueries(); });
 
   const toggleSection = (id: string) => {
     setOpenSections(prev => {

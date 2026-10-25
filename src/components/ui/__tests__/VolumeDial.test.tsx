@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { useState } from 'react';
@@ -40,8 +40,31 @@ function espiaCaptura(el: HTMLElement) {
   return { capturar, soltar };
 }
 
+// jsdom não faz layout; fixa o centro do dial em (0,0) para que os eventos de ponteiro
+// usem coordenadas relativas à origem (topo=(0,-100), direita=(100,0), etc.).
+const mockRect: DOMRect = {
+  left: -48, top: -48, right: 48, bottom: 48,
+  width: 96, height: 96, x: -48, y: -48,
+  toJSON: () => ({}),
+};
+
 beforeEach(() => {
   estado.reduzido = false;
+  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+    configurable: true, writable: true,
+    value: () => mockRect,
+  });
+  Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
+    configurable: true, writable: true,
+    value: () => mockRect,
+  });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  // Remove o override; a próxima chamada sobe para Element.prototype nativo.
+  delete (Element.prototype as unknown as Record<string, unknown>)['getBoundingClientRect'];
+  delete (HTMLElement.prototype as unknown as Record<string, unknown>)['getBoundingClientRect'];
 });
 
 describe('VolumeDial — papel, nome e valores acessíveis', () => {

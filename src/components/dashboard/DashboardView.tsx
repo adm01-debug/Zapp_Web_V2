@@ -112,7 +112,7 @@ export function DashboardView() {
   // antes o dropdown era cosmético para este card (achado A9). Para não-staff,
   // a RPC trava p_agent = auth.uid() no servidor (E33), independente do que
   // filters.agentId trouxer.
-  const { data: kpi, isPending } = useDashboardKpi({ queueId: filters.queueId, agentId: filters.agentId });
+  const { data: kpi, isPending } = useDashboardKpi({ queueId: filters.queueId, agentId: filters.agentId, from: filters.dateRange.from, until: filters.dateRange.to });
   const { rows: queueHealthRows, busiestQueue } = useQueueHealth(queueBreakdown, queues);
   const { data: recentEvents } = useRecentConversationEvents(4);
   const { agents: leaderboardAgents, timeRange, setTimeRange } = useLeaderboard();
@@ -176,9 +176,9 @@ export function DashboardView() {
 
       <div className="space-y-2.5">
         <DashboardHeader
-          filters={(
+          filters={tab === 'overview' ? (
             <DashboardFilters filters={filters} onFiltersChange={setFilters} onRefresh={handleRefresh} isRefreshing={isRefreshing} showTeamFilters={isStaff} />
-          )}
+          ) : null}
         />
 
         <Tabs value={tab} onValueChange={setTab}>
@@ -209,7 +209,7 @@ export function DashboardView() {
               />
             </SectionErrorBoundary>
           </div>
-          <DashboardZone id="numeros" title="Números de hoje">
+          <DashboardZone id="numeros" title={filters.period !== 'today' ? 'Números do período' : 'Números de hoje'}>
           <div data-testid="dash-kpis">
             {/* E34 (corrigido em auditoria 25/09/2026, achado Agente 3): Resolvidas
                 Hoje / Tempo de Resposta / SLA vêm de dashboard_kpi (v_today/v_yesterday
@@ -220,11 +220,6 @@ export function DashboardView() {
                 afirmava os dois incorretamente. Antes isso acontecia em silêncio
                 (achado E34); agora avisa, só sobre o que de fato é fixo. */}
             <SectionErrorBoundary sectionName="Indicadores">
-            {filters.period !== 'today' && (
-              <p className="text-2xs text-muted-foreground mb-1.5" data-testid="dash-kpis-period-notice">
-                Resolvidas hoje, tempo de resposta e SLA são sempre do dia atual — o período selecionado no filtro acima não afeta esses indicadores.
-              </p>
-            )}
             <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} isStaff={isStaff} myActiveConversations={myActiveConversations} isLoading={isPending} />
             </SectionErrorBoundary>
           </div>
