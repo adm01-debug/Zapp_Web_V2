@@ -103,27 +103,63 @@ Verificar o plano Copilot e a quota de PR reviews no GitHub Settings → Copilot
 **Status:** BLOQUEIO TÉCNICO — falhas pré-existentes nos testes unitários  
 **Checks afetados:** `🧪 Unit Tests (1/3)`, `🧪 Unit Tests (2/3)`, `🧪 Unit Tests (3/3)` (required checks via CI Gate)
 
-**Causa exata por shard (HEAD `aaf3404ee`, CI run 40202208738):**
+**Nota:** a distribuição de testes por shard é aleatória entre runs. Os arquivos listados variam de run para run; o que é constante é que NENHUM dos arquivos com falha está no diff desta branch (`git diff origin/main --name-only` confirma).
 
-**Shard 1/3 — `alvos-toque-44px.test.tsx:41,51`:**  
-`getByRole('button', { name: 'Close' })` — o botão de fechar do `Dialog`/`Sheet` usa `<span class="sr-only">Fechar</span>`, não "Close". **✅ CORRIGIDO neste PR** — `alvos-toque-44px.test.tsx` está no diff (linhas 41 e 51: `'Close'` → `'Fechar'`). Confirmado passando localmente (6/6 testes).
+---
 
-**Shard 2/3 — `useInboxFilters.type-url.test.tsx` (5 falhas):**  
-`handleContactTypeChange(null)` não limpa o parâmetro `type` da URL — `routerSearchRef` continua com `?type=grupo` após o reset (linha 137: `expected '?type=grupo' not to contain 'type='`). Não está no diff desta branch (`git diff origin/main -- src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx` = 0 linhas). A fonte do bug é `useInboxFilters.ts` (não alterada por este PR). Confirmado falhando na `main`.
+### Shard 1/3 — CI run 40206335520, job/121207961039
 
-**Shard 2/3 — `workItemFormat.test.ts:123` (timezone):**  
-`formatWorkItemDate('2026-10-11T17:00:00-03:00')` exibe `'Hoje, 20:00'` em UTC (CI) em vez de `'Hoje, 17:00'` em UTC-3. **✅ CORRIGIDO neste PR** — envolvido em `withTimeZone('America/Sao_Paulo', ...)` (padrão já usado no mesmo arquivo). Não estava no diff da branch (bug de teste pré-existente na `main`). Confirmado passando localmente (13/13).
+**✅ CORRIGIDO — `alvos-toque-44px.test.tsx:41,51`:**  
+`getByRole('button', { name: 'Close' })` → `'Fechar'` (botão usa `<span class="sr-only">Fechar</span>`). Confirmado passando: não aparece no shard 1/3 do run 40206335520.
 
-**Shard 3/3 — `team-chat-notifications-mount.test.ts` (2 falhas):**  
-`DeferredProviders` em `src/App.tsx:96` chama `useAuth()` que lança `useAuth must be used within an AuthProvider` quando renderizado sem o provider wrapper. `App.tsx` não está no diff desta branch. Confirmado falhando na `main`.
+**PRÉ-EXISTENTE — `src/components/ui/__tests__/VolumeDial.test.tsx` (8 falhas):**  
+`aria-valuenow` calculado diverge do esperado pelos testes (ex.: `expected "50" received "33"`, `expected "100" received "30"`). Não está no diff desta branch. Confirmado pré-existente na `main`.
 
-**Confirmação de que NÃO são introduzidas por este PR:**  
-`git diff origin/main -- <arquivo_de_teste>` = 0 linhas para `useInboxFilters.type-url.test.tsx`, `workItemFormat.test.ts` (antes do fix do timezone), `team-chat-notifications-mount.test.ts`. Nenhum arquivo de produção relacionado (`useInboxFilters.ts`, `App.tsx`) está no diff desta branch.
+---
+
+### Shard 2/3 — CI run 40206335520, job/121207961068
+
+**✅ CORRIGIDO — `workItemFormat.test.ts:123` (timezone):**  
+`formatWorkItemDate('2026-10-11T17:00:00-03:00')` exibia `'Hoje, 20:00'` em UTC. Envolvido em `withTimeZone('America/Sao_Paulo', ...)`. Confirmado passando: não aparece no shard 2/3 do run 40206335520.
+
+**PRÉ-EXISTENTE — `useInboxFilters.type-url.test.tsx` (5 falhas):**  
+`handleContactTypeChange(null)` não limpa o parâmetro `type` da URL. Bug em `useInboxFilters.ts` (não alterada por este PR). Confirmado falhando na `main`.
+
+**PRÉ-EXISTENTE — `buscas-silenciosas-aviso.test.tsx:155`:**  
+Texto esperado `"Erro ao atualizar o relatorio"`, recebido `"Erro ao ativar/desativar relatório"`. Não está no diff desta branch.
+
+**PRÉ-EXISTENTE — `useDashboardKpi.periodo.test.tsx` (3 falhas):**  
+Parâmetro de RPC esperado `p_from`/`p_until`, recebido `p_since`. Não está no diff desta branch.
+
+**PRÉ-EXISTENTE — `useAgentCelebrations.test.tsx:256`:**  
+Array esperado com 1 elemento, recebido vazio. Não está no diff desta branch.
+
+**PRÉ-EXISTENTE — `useInboxBulkActions.test.ts:546,625`:**  
+Coluna `assigned_to` vs `conversation_status` — mismatch de schema. Não está no diff desta branch.
+
+---
+
+### Shard 3/3 — CI run 40206335520, job/121207961023
+
+**✅ CORRIGIDO — `aviso-navegador.test.tsx`:**  
+Mock `window.Notification` como constructor (função regular, não arrow). Confirmado passando: não aparece no shard 3/3 do run 40206335520.
+
+**PRÉ-EXISTENTE — `team-chat-notifications-mount.test.ts` (2 falhas):**  
+`DeferredProviders` em `src/App.tsx:96` chama `useAuth()` sem `AuthProvider` wrapper. `App.tsx` não está no diff desta branch. Confirmado falhando na `main`.
+
+**PRÉ-EXISTENTE — `TalkXTemplates.route.test.tsx:153`:**  
+`Expected "tpl_2", Received "tpl_1"` — seleção de template não muda o parâmetro de URL. `TalkXTemplates.route.test.tsx` não está no diff desta branch (`git diff origin/main -- src/components/talkx/__tests__/TalkXTemplates.route.test.tsx` = 0 linhas).
+
+---
+
+**Confirmação global de não-introdução por este PR:**  
+`git diff origin/main --name-only` não inclui nenhum dos arquivos de teste acima. Cada arquivo de produção relacionado (`useInboxFilters.ts`, `App.tsx`, `VolumeDial.tsx`, etc.) igualmente ausente do diff.
 
 **Ação necessária (bloqueios remanescentes):**  
-1. `useInboxFilters.ts`: corrigir `handleContactTypeChange(null)` para remover o parâmetro `type` da URL — resolve shard 2/3 parcialmente.  
-2. `App.tsx` / `DeferredProviders`: adicionar `AuthProvider` wrapper no teste ou mock `useAuth` — resolve shard 3/3.  
-Ambas requerem investigação fora do escopo desta sessão.
+1. `useInboxFilters.ts`: corrigir `handleContactTypeChange(null)` para remover `type` da URL — resolve shard 2/3 parcialmente.  
+2. `App.tsx` / `DeferredProviders`: adicionar `AuthProvider` wrapper no teste ou mock `useAuth` — resolve shard 3/3 parcialmente.  
+3. `TalkXTemplates.route.test.tsx`: investigar lógica de troca de template na URL do editor.  
+Todas requerem investigação fora do escopo desta sessão.
 
 ---
 
@@ -138,18 +174,13 @@ Ambas requerem investigação fora do escopo desta sessão.
 Passo "🚦 Escolher a proxima PR da fila" falhou com:  
 `HTTP 504: 504 Gateway Timeout (https://api.github.com/graphql)`
 
-O script `scripts/ci/fila-merge.mjs` usa `gh pr list` (REST via `gh` CLI). O HTTP 504 foi emitido
-pelo `gh` CLI ao chamar a API GraphQL do GitHub internamente para resolver campos de PR (como
-`mergeStateStatus`). É uma falha transitória de disponibilidade da infraestrutura do GitHub — não
-há bug de código. O catch do script propaga o erro recebido, sem `exit 1` explícito.
+O script `scripts/ci/fila-merge.mjs` usa `gh pr list` (REST via `gh` CLI). O HTTP 504 foi emitido pelo `gh` CLI ao chamar a API GraphQL do GitHub internamente para resolver campos de PR (como `mergeStateStatus`). É uma falha transitória de disponibilidade da infraestrutura do GitHub — não há bug de código. O catch do script propaga o erro recebido, sem `exit 1` explícito.
 
 **Confirmação de que NÃO é introduzido por este PR:**  
-O workflow não toca nenhum arquivo alterado nesta branch. A falha é HTTP 504 (gateway timeout
-da API externa), que ocorre independentemente do conteúdo do código desta branch.
+O workflow não toca nenhum arquivo alterado nesta branch. A falha é HTTP 504 (gateway timeout da API externa), que ocorre independentemente do conteúdo do código desta branch.
 
 **Ação necessária:**  
-Nenhuma — o workflow reexecuta automaticamente no próximo push na main ou via
-`workflow_dispatch`, e terá success quando a API GraphQL do GitHub estiver disponível.
+Nenhuma — o workflow reexecuta automaticamente no próximo push na main ou via `workflow_dispatch`, e terá success quando a API GraphQL do GitHub estiver disponível.  
 Não é required check de PR e não bloqueia merge.
 
 ---
