@@ -166,7 +166,7 @@ export interface AuditLogFilter {
   pageSize?: number;
 }
 
-export function useAdminData(activeTab: 'users' | 'audit' | 'crm', auditFilter?: AuditLogFilter) {
+export function useAdminData(activeTab: 'users' | 'audit' | 'crm' | 'cron', auditFilter?: AuditLogFilter) {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [auditTotal, setAuditTotal] = useState(0);
