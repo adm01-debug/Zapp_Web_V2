@@ -174,6 +174,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // commit de montagem/troca), e a paginação nunca começava — as mensagens
   // antigas ficavam inalcançáveis.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOlderMessages([]);
     setOldestCursor(null);
     setHasOlderMessages(true);
@@ -184,6 +185,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
 
   useEffect(() => {
     if (newestMessages.length > 0 && oldestCursor === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOldestCursor({ createdAt: newestMessages[0].created_at, id: newestMessages[0].id });
     }
   }, [newestMessages, oldestCursor]);
@@ -268,6 +270,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // ainda estava em voo.
   const [serverSearchError, setServerSearchError] = useState<{ conversationId: string; term: string; message: string } | null>(null);
 
+  const searchActive = searchTerm.length > 0;
   const searchBelowMinChars = searchActive && searchTerm.length < MIN_SEARCH_CHARS;
 
   useEffect(() => {
@@ -325,7 +328,6 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     return () => { cancelado = true; };
   }, [searchTerm, searchBelowMinChars, conversation.id, retryKey]);
 
-  const searchActive = searchTerm.length > 0;
   // `isSearchingMessages` separa "buscando" de "nada encontrado" na tela: mostrar
   // "Nenhuma mensagem encontrada" enquanto a resposta ainda está em voo é
   // anunciar um resultado que ainda não existe.

@@ -297,8 +297,8 @@ export function useUserSettings() {
   return {
     settings,
     isLoading,
-    isSaving,
     isError,
+    isSaving,
     updateSettings,
     saveSettings,
     resetSettings,

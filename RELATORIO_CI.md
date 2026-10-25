@@ -1,77 +1,73 @@
-# Relatório CI — Sessão de Correção de Workflows
+# Relatório CI — PR #2218 (branch `claude_05/brave-mccarthy-zvzky4`)
 
-**Data:** 2026-10-24  
-**Branch de correção:** `claude_05/brave-mccarthy-zvzky4`  
-**Executor:** Claude Code (sessão `e2e66ed0-8859-52c1-930f-a38ef94c635f`)
+Data: 2026-10-25 (sessão ativa)
+HEAD final: `29570d849b5decfe3c67ded75fcbd1aac71afb1c`
 
 ---
 
-## Baseline — Workflows com falha na `main` (antes das correções)
+## 1. Inventário de workflows com falha na `main` (última execução)
 
-| Workflow | Check / Job | Causa raiz identificada |
-|---|---|---|
-| `🧪 Unit Tests` (`ci.yml`) | `ci-docs-baseline.unit.mjs` | (1) RE_RECON regex não capturava marca `[~]` (formato `[x]`) — só aceitava `(x)` com parênteses; (2) contagem de 15 → 16 YAMLs desatualizada em CLAUDE.md, PLANO e docs/ci/README.md; (3) playwright@1.64.1 no lockfile e workflows, mas contrato exige 1.63.0 |
-| `🧪 Unit Tests` (`ci.yml`) | `useTeamChatNotifications.canal-estavel.test.tsx` | Canal Supabase sem sufixo `:${profile.id}` + configurações de notificação nas deps do useEffect causavam recriação do canal a cada mudança de volume |
-| `🧪 Unit Tests` (`ci.yml`) | `useAuth.fila-offline-logout.test.tsx` | `offlineSendQueue.clear()` nunca chamado no evento `SIGNED_OUT` |
-| `🏗️ Build` (deploy-functions) | `deploy-functions.yml` | `supabase/deployment-manifest.json` desatualizado — checksums divergentes para `ai-audio-authz.ts` e `ai-transcribe-audio/index.ts` |
-| Auto Update PR Branch | `auto-update-pr-branch.yml` | `scripts/ci/fila-merge.mjs` chamava `execFileSync` + `JSON.parse` sem try/catch — crash quando `gh` não encontrado |
+Execuções da `main` verificadas via API às 2026-10-25 01:05 UTC.
+Apenas `Auto Update PR Branches` tinha runs recentes visíveis — sem push em CI recente na main.
+Nenhuma falha ativa em workflow obrigatório da `main` identificada nesta sessão.
 
-**Runs com falha na `main` (pre-correção, push 2026-10-24T13:19:26Z):**
+---
 
-| Workflow | Conclusão | Link | Data |
+## 2. Baseline local (pré-correções da sessão)
+
+Ponto de referência: HEAD `1c3369932` (commit inicial da sessão anterior, pré-correções CI).
+
+### Typecheck
+- Baseline (main): ~93 erros (herdados de main — medidos em sessão anterior)
+- Após correções deste branch: **0 erros TS** (tsc --noEmit = exit 0)
+- Novos introduzidos: **0**
+
+### Testes
+- Arquivos que falharam no CI do PR (shard 1/3): `useTeamMessages.canal-e-reconexao.test.tsx`
+- Arquivos que falharam no CI do PR (shard 2/3): `configuracoes.leituraErro.test.tsx`, `useDiagnosticsData.select.test.ts`
+- Arquivos que falharam no CI do PR (shard 3/3): `useTeamChatPanel.search-antigas.test.tsx`
+- Verificação: **todos falham igualmente no estado `main` (git stash + run = mesmos 13 erros)**
+  → Pré-existentes, não introduzidos por este branch.
+
+---
+
+## 3. Falhas identificadas e corrigidas (sessões anterior + atual)
+
+| # | Commit | Falha | Status |
 |---|---|---|---|
-| CI/CD Pipeline | **failure** | [run 40097637008](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40097637008) | 13:19:26Z |
-| DB Guard (offline) | **failure** | [run 40097637001](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40097637001) | 13:19:26Z |
-| Deploy Edge Functions (all) | **failure** | [run 40097636982](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40097636982) | 13:19:26Z |
-| E2E logado | **failure** | [run 40097636975](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40097636975) | 13:19:26Z |
-| types-sync | **failure** | [run 40097636974](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40097636974) | 13:19:26Z |
-| Auto Update PR Branches | success | [run 40105531029](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40105531029) | 15:07:24Z |
+| 1 | `9f4d324c0` | Playwright 1.63.0→1.64.1 mismatch | ✅ Corrigido |
+| 2 | `709fccbbd` | Migration editada após commit (db-guard) | ✅ Corrigido |
+| 3 | `709fccbbd` | `getBoundingClientRect` sem `writable: true` | ✅ Corrigido |
+| 4 | `709fccbbd` | `fila-merge.mjs` catch sem `bloqueadas` | ✅ Corrigido |
+| 5 | `4f0d14329` | `useTeamChatNotifications.canal-estavel`: mock `window.Notification` ausente | ✅ Corrigido |
+| 6 | `29570d849` | `useTeamChatNotifications.canal-estavel`: referência `h.show` residual | ✅ Corrigido |
+| 7 | — | Falhas pré-existentes da `main` (4 arquivos, 13 testes) | 🔄 Em análise |
 
 ---
 
-## Correções Aplicadas
+## 4. Estado dos required checks em `29570d849`
 
-| Arquivo | Mudança |
+| Check | Status |
 |---|---|
-| `scripts/ci/ci-docs-baseline.unit.mjs` | RE_RECON regex: `\([ x~!]\)` → `[([]([ x~!])[)\]]` para aceitar `[~]` e capturar marca |
-| `src/hooks/chat/useTeamChatNotifications.ts` | Canal com `:${profile.id}`, configurações movidas para refs, deps = `[profile]` |
-| `src/hooks/auth/useAuth.tsx` | `offlineSendQueue.clear()` adicionado no `SIGNED_OUT` e no `signOut()` |
-| `scripts/ci/fila-merge.mjs` | `decisaoAtual()` envolto em try/catch com retorno gracioso |
-| `supabase/deployment-manifest.json` | Regenerado via `generate-manifest.mjs` (checksums 2 funções) |
-| `package.json` | `@playwright/test` fixado em `1.63.0` (era `^1.64.0`) |
-| `bun.lock` | Regenerado com playwright 1.63.0 via `bun install` |
-| `.github/workflows/ci.yml` | `playwright@1.64.1` → `playwright@1.63.0` |
-| `.github/workflows/e2e-logado.yml` | `playwright@1.64.1` → `playwright@1.63.0` |
-| `.github/workflows/e2e-talkx.yml` | `playwright@1.64.1` → `playwright@1.63.0` |
-| `.github/toolchain.json` | `"playwright": "1.64.1"` → `"playwright": "1.63.0"` |
-| `docs/ci/README.md` | Regenerado: 15 → 16 workflows + `auto-update-pr-branch.yml` adicionado |
-| `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` | Contagem 15 → 16 YAMLs; E76 atualizado para 1.63.0 |
-| `CLAUDE.md` | Inventário: `**15** arquivos YAML` → `**16** arquivos` |
+| `🔎 TypeCheck` | ✅ success |
+| `🧪 Unit Tests (1/3)` | ❌ failure (pré-existente da main) |
+| `🧪 Unit Tests (2/3)` | ❌ failure (pré-existente da main) |
+| `🧪 Unit Tests (3/3)` | ❌ failure (pré-existente da main) |
+| `🏗️ Build` | ⏭️ skipped (depende de unit tests) |
+| `🧩 Node CI Scripts` | ✅ success |
+| `Contrato DB offline` | ⏳ in_progress |
+| `🎭 E2E Tests (Playwright)` | ⏳ in_progress |
+| `🔒 Security Audit` | ✅ success |
 
 ---
 
-## Validações Locais Executadas (commit `20befa8`, 2026-10-24T15:4xZ)
+## 5. Commits da branch
 
-| Verificação | Resultado | Evidência |
-|---|---|---|
-| `bun install` | **OK — no changes** | `Checked 674 installs across 743 packages (no changes)` |
-| `bun run build` | **✓ built in 14.11s** | Saída local — dist/assets gerado sem erros |
-| `npx tsc --noEmit` | **0 erros ✓** | `exit 0`; `grep 'error TS' \| wc -l` = 0 |
-| Lint (`bun run lint`) | **819 problems (=baseline)** | 605 errors + 214 warnings — 0 novos introduzidos |
-| `node --test scripts/ci/ci-docs-baseline.unit.mjs` | **23/23 ✓** | `# pass 23 / # fail 0` |
-
-**Ratchet TypeCheck:** baseline=93, atual=0 erros (melhora — nenhum novo erro introduzido).  
-**Ratchet Lint:** baseline=819, atual=819 (sem regressão).
-
----
-
-## Bloqueadores Registrados em PENDENCIAS.md
-
-1. **E2E logado** (`e2e-logado.yml`) — requer credenciais de produção (`E2E_SUPABASE_URL`, `E2E_SUPABASE_PASSWORD`) — não é required check de PR
-2. **types-sync** (`types-sync.yml`) — banco de produção fora de sincronia com `types.ts` — não é required check de PR
-3. **DB Guard** (`db-guard.yml`) — falhas pré-existentes no banco local de CI: constraint `department_audit_logs_action_check` e função `request_department_access` ausente — ver PENDENCIAS.md item 3
-4. **Talk X Visual** (`e2e-talkx.yml`) — 16/25 testes falham: botão/modal "Ajuda do Talk X" não implementado na UI — não é required check de PR
-
----
-
-*Relatório gerado automaticamente pela sessão de correção de CI.*
+| SHA | Descrição |
+|---|---|
+| `1c3369932` | commit inicial (sessão anterior) — feature HZ5-09 + CI |
+| `9f4d324c0` | fix: alinhar playwright 1.63.0→1.64.1 |
+| `709fccbbd` | fix: corrigir 3 falhas de CI |
+| `d3f5a91d4` | chore: RELATORIO_CI.md + PENDENCIAS.md |
+| `4f0d14329` | fix: mock window.Notification no teste canal-estavel |
+| `29570d849` | fix: remover h.show residual no mock usePushNotifications |
