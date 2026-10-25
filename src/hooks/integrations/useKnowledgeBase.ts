@@ -62,6 +62,7 @@ export function useKnowledgeBase() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     const [articlesRes, filesRes] = await Promise.all([
       supabase.from('knowledge_base_articles').select('*').order('updated_at', { ascending: false }),
       supabase.from('knowledge_base_files').select('*').order('created_at', { ascending: false }),

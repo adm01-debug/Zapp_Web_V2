@@ -10,6 +10,7 @@ import {
   type OfflineQueuedMessage,
 } from '@/lib/offlineQueue';
 import { sendThrottle } from '@/lib/sendThrottle';
+import { readAuthenticatedUserId } from '@/lib/authenticatedUserId';
 
 export type OutboundMessageType = 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location';
 
@@ -369,6 +370,17 @@ function avisarFilaOffline(error: unknown, message?: OfflineQueuedMessage): void
 }
 
 /**
+ * A fila é do usuário que a compôs: o IndexedDB é da máquina, não da conta, então o
+ * texto de um atendente não pode sair pela sessão de outro que entrou depois. Item
+ * com dono só drena para o dono (sem sessão legível, fica parado); item sem dono é
+ * anterior a este campo e mantém o comportamento antigo.
+ */
+function pertenceAoUsuarioAtual(message: OfflineQueuedMessage): boolean {
+  if (!message.userId) return true;
+  return message.userId === readAuthenticatedUserId();
+}
+
+/**
  * Drenagem da fila offline na ABERTURA do app (item 025), chamada pelo efeito
  * de sessão autenticada (`useOfflineSendQueueDrain`). Cobre o cenário que o
  * evento `online` não alcança: compõe offline, fecha a aba, reabre já com rede.
@@ -376,12 +388,14 @@ function avisarFilaOffline(error: unknown, message?: OfflineQueuedMessage): void
 export function drainOfflineSendQueue(): Promise<OfflineQueueDrainResult | null> {
   return drainOfflineQueueOnOpen(offlineSendQueue, deliverQueuedOfflineMessage, {
     onError: avisarFilaOffline,
+    shouldDeliver: pertenceAoUsuarioAtual,
   });
 }
 
 // Reconciliação ao reconectar (item 025): a fila local drena no evento `online`.
 drainOfflineQueueOnReconnect(offlineSendQueue, deliverQueuedOfflineMessage, {
   onError: avisarFilaOffline,
+  shouldDeliver: pertenceAoUsuarioAtual,
 });
 
 async function enqueueOffline(
@@ -390,6 +404,7 @@ async function enqueueOffline(
 ): Promise<OutboundMessageDeliveryResult> {
   const queued = await offlineSendQueue.enqueue({
     clientMessageId,
+    userId: readAuthenticatedUserId() ?? undefined,
     contactId: input.contactId,
     content: input.content,
     messageType: input.messageType ?? 'text',
