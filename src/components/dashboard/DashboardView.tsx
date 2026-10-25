@@ -112,7 +112,12 @@ export function DashboardView() {
   // antes o dropdown era cosmético para este card (achado A9). Para não-staff,
   // a RPC trava p_agent = auth.uid() no servidor (E33), independente do que
   // filters.agentId trouxer.
-  const { data: kpi, isPending } = useDashboardKpi({ queueId: filters.queueId, agentId: filters.agentId });
+  // E34: o período escolhido no filtro do topo chega aos KPIs (`from` vira p_since). Em "hoje"
+  // não se manda janela: a RPC já parte do dia atual.
+  const kpiPeriodo = filters.period === 'today'
+    ? {}
+    : { from: filters.dateRange.from, until: filters.dateRange.to };
+  const { data: kpi, isPending } = useDashboardKpi({ queueId: filters.queueId, agentId: filters.agentId, ...kpiPeriodo });
   const { rows: queueHealthRows, busiestQueue } = useQueueHealth(queueBreakdown, queues);
   const { data: recentEvents } = useRecentConversationEvents(4);
   const { agents: leaderboardAgents, timeRange, setTimeRange } = useLeaderboard();
@@ -176,9 +181,9 @@ export function DashboardView() {
 
       <div className="space-y-2.5">
         <DashboardHeader
-          filters={(
+          filters={tab === OVERVIEW_TAB ? (
             <DashboardFilters filters={filters} onFiltersChange={setFilters} onRefresh={handleRefresh} isRefreshing={isRefreshing} showTeamFilters={isStaff} />
-          )}
+          ) : null}
         />
 
         <Tabs value={tab} onValueChange={setTab}>
@@ -209,20 +214,16 @@ export function DashboardView() {
               />
             </SectionErrorBoundary>
           </div>
-          <DashboardZone id="numeros" title="Números de hoje">
+          <DashboardZone id="numeros" title={filters.period === 'today' ? 'Números de hoje' : 'Números do período'}>
           <div data-testid="dash-kpis">
-            {/* E34 (corrigido em auditoria 25/09/2026, achado Agente 3): Resolvidas
-                Hoje / Tempo de Resposta / SLA vêm de dashboard_kpi (v_today/v_yesterday
-                fixos no servidor) — o período do filtro acima não afeta esses cards.
-                Isso NÃO se estende ao gráfico de volume (só recebe fila/agente, nunca
-                recebeu período) nem ao card "Conversas Abertas" (vem de
-                dashboard_contact_counts, que respeita p_since/p_until) — o texto antigo
-                afirmava os dois incorretamente. Antes isso acontecia em silêncio
-                (achado E34); agora avisa, só sobre o que de fato é fixo. */}
+            {/* E34: Resolvidas / Tempo de Resposta / SLA seguem o período do filtro (início do
+                período, via p_since). A RPC `dashboard_kpi` ainda NÃO recebe o fim (p_until):
+                num período que já terminou (ontem, intervalo passado) a contagem vai do início
+                até agora — o aviso diz isso em vez de deixar o rótulo sugerir o contrário. */}
             <SectionErrorBoundary sectionName="Indicadores">
-            {filters.period !== 'today' && (
+            {(filters.period === 'yesterday' || filters.period === 'custom') && (
               <p className="text-2xs text-muted-foreground mb-1.5" data-testid="dash-kpis-period-notice">
-                Resolvidas hoje, tempo de resposta e SLA são sempre do dia atual — o período selecionado no filtro acima não afeta esses indicadores.
+                Resolvidas, tempo de resposta e SLA contam do início do período selecionado até agora — o fim do período ainda não limita esses indicadores.
               </p>
             )}
             <DashboardKpiRow stats={stats} realtime={realtime} kpi={kpi} isStaff={isStaff} myActiveConversations={myActiveConversations} isLoading={isPending} />
