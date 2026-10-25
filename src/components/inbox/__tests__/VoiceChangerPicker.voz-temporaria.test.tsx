@@ -6,9 +6,14 @@ import type { ReactNode } from 'react';
 /**
  * PK-16/PK-17 — a voz transformada do atendente é dado pessoal: ela subia para o
  * bucket PÚBLICO `audio-memes` com a chave `voice-changer/<ts>_<uuid>.mp3` (sem pasta
- * do usuário). O destino correto é o bucket PRIVADO `voice-changer-tmp` (expurgo por
- * TTL de 24h), em `<auth.uid()>/`, e o envio usa URL assinada — `/object/public/` de
- * bucket privado devolve 400.
+ * do usuário).
+ *
+ * Contrato atual (substitui o upload do picker para `voice-changer-tmp/<uid>/`): o picker
+ * NÃO fala com o Storage. Ele entrega o áudio transformado como `Blob` ao
+ * `onSendAudioBlob`, e quem conhece a pasta do contato/conversa o envia pelo MESMO caminho
+ * do áudio gravado (bucket privado `audio-messages`/`team-chat-files`, locator assinado na
+ * leitura). O que se prova aqui: nenhum upload do picker (nem em `audio-memes`, nem em
+ * `voice-changer-tmp`), nenhuma URL pública, e o Blob transformado chega ao chamador.
  */
 const popoverState = vi.hoisted(() => ({
   onOpenChange: undefined as ((v: boolean) => void) | undefined,
@@ -99,7 +104,7 @@ function botaoPorTexto(texto: string): HTMLButtonElement {
   return btn as HTMLButtonElement;
 }
 
-describe('VoiceChangerPicker — voz transformada no bucket temporário do usuário (PK-17)', () => {
+describe('VoiceChangerPicker — voz transformada entregue como Blob, sem upload público (PK-17)', () => {
   beforeEach(() => {
     popoverState.onOpenChange = undefined;
     popoverState.open = undefined;
@@ -134,9 +139,9 @@ describe('VoiceChangerPicker — voz transformada no bucket temporário do usuá
     vi.clearAllMocks();
   });
 
-  it('grava em `voice-changer-tmp/<uid>/` e envia a URL assinada do objeto', async () => {
-    const onSendAudio = vi.fn();
-    render(<VoiceChangerPicker onSendAudio={onSendAudio} />);
+  it('entrega o áudio transformado como Blob ao chamador e não grava no Storage', async () => {
+    const onSendAudioBlob = vi.fn();
+    render(<VoiceChangerPicker onSendAudioBlob={onSendAudioBlob} />);
     act(() => {
       popoverState.onOpenChange?.(true);
     });
@@ -158,20 +163,22 @@ describe('VoiceChangerPicker — voz transformada no bucket temporário do usuá
       fireEvent.click(botaoPorTexto('Enviar'));
     });
 
-    expect(storageState.upload).toHaveBeenCalledTimes(1);
-    const [bucket, path] = storageState.upload.mock.calls[0] as [string, string];
-    expect(bucket).toBe('voice-changer-tmp');
-    expect(path).toMatch(new RegExp(`^${UID}/voice_\\d+_[0-9a-f-]+\\.mp3$`));
+    // O picker não escreve em bucket nenhum (nem o público `audio-memes`, nem o temporário).
+    expect(storageState.from).not.toHaveBeenCalled();
+    expect(storageState.upload).not.toHaveBeenCalled();
+    expect(storageState.createSignedUrl).not.toHaveBeenCalled();
 
-    // URL assinada do MESMO objeto (bucket privado não tem URL pública) e envio com ela.
-    expect(storageState.createSignedUrl).toHaveBeenCalledWith('voice-changer-tmp', path, 3600);
-    expect(onSendAudio).toHaveBeenCalledWith(SIGNED_URL);
+    // O Blob da voz transformada vai ao chamador, que o envia pelo caminho privado do áudio gravado.
+    expect(onSendAudioBlob).toHaveBeenCalledTimes(1);
+    const blob = onSendAudioBlob.mock.calls[0][0] as Blob;
+    expect(blob).toBeInstanceOf(Blob);
+    expect(blob.type).toBe('audio/mpeg');
   });
 
-  it('sem sessão não grava a voz fora da pasta do usuário', async () => {
+  it('sem sessão o picker segue sem gravar nada no Storage (a pasta é decisão do chamador)', async () => {
     authState.getUser.mockResolvedValue({ data: { user: null } });
-    const onSendAudio = vi.fn();
-    render(<VoiceChangerPicker onSendAudio={onSendAudio} />);
+    const onSendAudioBlob = vi.fn();
+    render(<VoiceChangerPicker onSendAudioBlob={onSendAudioBlob} />);
     act(() => {
       popoverState.onOpenChange?.(true);
     });
@@ -193,7 +200,6 @@ describe('VoiceChangerPicker — voz transformada no bucket temporário do usuá
     });
 
     expect(storageState.upload).not.toHaveBeenCalled();
-    expect(onSendAudio).not.toHaveBeenCalled();
-    expect(toastMock.error).toHaveBeenCalled();
+    expect(storageState.createSignedUrl).not.toHaveBeenCalled();
   });
 });

@@ -210,11 +210,17 @@ describe('StatusChips', () => {
       expect(chip.className).toContain('focus-visible:ring-primary/50');
     });
 
-    it('aria-pressed marca só o chip ativo', () => {
+    it('o estado ativo é anunciado só no chip ativo (aria-selected, sem aria-pressed)', () => {
+      // Os chips são `role="tab"` num tablist (cartão t_90dcdcc8, StatusChips.a11y.test.tsx):
+      // nesse papel o estado é `aria-selected`; `aria-pressed` não é permitido e o axe o
+      // reprova (aria-allowed-attr). Mesma garantia — só o ativo é marcado — pelo atributo válido.
       renderComAtivo();
-      expect(screen.getByTestId('status-chip-attending')).toHaveAttribute('aria-pressed', 'true');
-      expect(screen.getByTestId('status-chip-all')).toHaveAttribute('aria-pressed', 'false');
-      expect(screen.getByTestId('status-chip-resolved')).toHaveAttribute('aria-pressed', 'false');
+      expect(screen.getByTestId('status-chip-attending')).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByTestId('status-chip-all')).toHaveAttribute('aria-selected', 'false');
+      expect(screen.getByTestId('status-chip-resolved')).toHaveAttribute('aria-selected', 'false');
+      for (const id of ['attending', 'all', 'resolved']) {
+        expect(screen.getByTestId(`status-chip-${id}`)).not.toHaveAttribute('aria-pressed');
+      }
     });
 
     it('o ícone Archive vai em h-4 w-4 antes do texto', () => {

@@ -6,6 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useQuickReplies, QuickReplyTemplate, CreateTemplateInput } from '@/hooks/chat/useQuickReplies';
 import { cn } from '@/lib/utils';
 import { HOVER_REVEAL_TAP } from './hoverActions';
@@ -30,6 +34,8 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
   const [activeTab, setActiveTab] = useState('all');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<QuickReplyTemplate | null>(null);
+  // L13: a lixeira só pede a exclusão; quem exclui é o botão do diálogo de confirmação.
+  const [templateParaExcluir, setTemplateParaExcluir] = useState<QuickReplyTemplate | null>(null);
 
   const copyToClipboard = async (content: string): Promise<boolean> => {
     try {
@@ -141,7 +147,7 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
         <TabsContent value={activeTab} className="mt-4">
           <QuickReplyCardList templates={displayedTemplates} groupedByCategory={groupedByCategory} isLoading={isLoading} activeTab={activeTab} searchQuery={searchQuery}
             isFavorite={isFavorite} onSelect={handleSelect} onToggleFavorite={toggleFavorite} onCopy={handleCopy}
-            onEdit={(t) => setEditingTemplate(t)} onDelete={(id) => deleteTemplate(id)} onShowCreate={() => setShowCreateDialog(true)} />
+            onEdit={(t) => setEditingTemplate(t)} onDelete={(id) => setTemplateParaExcluir(templates?.find((t) => t.id === id) ?? null)} onShowCreate={() => setShowCreateDialog(true)} />
         </TabsContent>
       </Tabs>
 
@@ -153,6 +159,26 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
         onCreate={async (data) => { await createTemplate(data); }}
         onUpdate={async (id, data) => { await updateTemplate({ id, ...data }); }}
       />
+
+      <AlertDialog open={!!templateParaExcluir} onOpenChange={(aberto) => { if (!aberto) setTemplateParaExcluir(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir resposta rápida?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{templateParaExcluir?.title}" será excluída. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (templateParaExcluir) deleteTemplate(templateParaExcluir.id); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
