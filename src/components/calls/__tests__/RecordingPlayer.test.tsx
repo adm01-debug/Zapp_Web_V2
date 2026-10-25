@@ -69,7 +69,12 @@ const audioDoPlayer = (container: HTMLElement) => container.querySelector('audio
 const audioDaEdge = () => new Blob(['bytes-de-audio-mp3'], { type: 'audio/mpeg' });
 
 function respostaAudio(corpo = 'ID3-audio') {
-  return Promise.resolve(new Response(new Blob([corpo], { type: 'audio/mpeg' }), { status: 200 }));
+  // O `Blob` do jsdom não tem `.stream()`, então o `Response` do Node não aceita como corpo
+  // (`object.stream is not a function`). O corpo vai como texto e `blob()` devolve um Blob do
+  // jsdom - o mesmo `Blob` que o `expect.any(Blob)` abaixo compara.
+  const resposta = new Response(corpo, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } });
+  resposta.blob = async () => new Blob([corpo], { type: 'audio/mpeg' });
+  return Promise.resolve(resposta);
 }
 
 function prepararAmbiente() {

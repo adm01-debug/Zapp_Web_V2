@@ -73,9 +73,26 @@ describe('S27 — dica no botão de acessibilidade da sidebar', () => {
   it('a dica sai à direita do botão (o lado que a sidebar recolhida deixa livre)', async () => {
     montarBotao();
 
+    // O jsdom não tem layout: viewport de 0px e (pelo setup global) todo elemento com 800x600.
+    // Sem espaço à direita o Radix inverte o lado para `left`. Dá uma viewport de verdade e mede
+    // botão e dica como caixas de 40px junto à borda esquerda.
+    const clientWidth = vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(1280);
+    const clientHeight = vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(800);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      width: 40, height: 40, top: 0, left: 0, right: 40, bottom: 40, x: 0, y: 0, toJSON: () => ({}),
+    });
     fireEvent.pointerMove(acharBotao(), { pointerType: 'mouse' });
 
-    expect(await screen.findByRole('tooltip')).toHaveAttribute('data-side', 'right');
+    // No Radix atual `role="tooltip"` fica num span oculto DENTRO do conteúdo; o `data-side`
+    // mora no conteúdo posicionado (ancestral mais próximo que o carrega).
+    const dica = await screen.findByRole('tooltip');
+    try {
+      expect(dica.closest('[data-side]')).toHaveAttribute('data-side', 'right');
+    } finally {
+      clientWidth.mockRestore();
+      clientHeight.mockRestore();
+      vi.restoreAllMocks();
+    }
   });
 
   it('o aria-label do botão continua "Configurações de acessibilidade"', () => {

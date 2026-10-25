@@ -115,6 +115,8 @@ function setup(totalThreads = 1738): { records: Records; client: QueryClient } {
   const records: Records = { list: [], count: [], other: [] };
   const threads = Array.from({ length: totalThreads }, (_, index) => makeThread(index + 1));
   vi.mocked(callGmailFunction).mockResolvedValue({ accounts: [MOCK_ACCOUNT] });
+  // A busca consulta também a RPC `search_email_threads` (corpo/anexo); sem resposta o `.or` nunca sai.
+  vi.mocked(supabase.rpc).mockResolvedValue({ data: [], error: null } as never);
   vi.mocked(supabase.from).mockImplementation((table: string) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return makeRecordingChain(records, table, table === 'email_threads' ? threads : [], threads.length) as any;

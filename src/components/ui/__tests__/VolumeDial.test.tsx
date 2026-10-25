@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 import { useState } from 'react';
@@ -42,6 +42,15 @@ function espiaCaptura(el: HTMLElement) {
 
 beforeEach(() => {
   estado.reduzido = false;
+  // Os cálculos de ângulo usam o centro (0,0) do jsdom puro; o setup global devolve 800x600 para
+  // todo elemento, o que deslocaria o centro para (400,300). Zera a caixa neste arquivo.
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+    width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0, x: 0, y: 0, toJSON: () => ({}),
+  });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe('VolumeDial — papel, nome e valores acessíveis', () => {

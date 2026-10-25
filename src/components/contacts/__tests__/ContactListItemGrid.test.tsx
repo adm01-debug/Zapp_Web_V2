@@ -66,7 +66,9 @@ describe('ContactListItem · alinhamento por grid (não por min-w arbitrário)',
     const classes = root().getAttribute('class') || '';
 
     expect(classes.split(/\s+/)).toContain('grid');
-    expect(container.innerHTML).not.toMatch(/min-w-\[\d+px\]/);
+    // Só conta o `min-w-[Npx]` solto (coluna fixa em flexbox). O alvo de toque de 44px dos botões
+    // vem prefixado (`[@media(pointer:coarse)]:min-w-[44px]`) e não é alinhamento de coluna.
+    expect(container.innerHTML).not.toMatch(/[\s"']min-w-\[\d+px\]/);
   });
 
   it('as trilhas do template não usam pixels (só auto/fr) e o nº de colunas bate com as células visíveis', () => {
