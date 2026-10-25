@@ -130,7 +130,7 @@ export function getCorsHeaders(req?: Request): Record<string, string> {
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers':
       'authorization, x-client-info, apikey, content-type, x-app-name, x-app-version, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-hub-signature-256, x-signature, x-webhook-signature, x-evolution-signature, x-contract-version, x-request-id, x-correlation-id, traceparent',
-    'Access-Control-Expose-Headers': 'x-request-id, x-correlation-id, x-degraded',
+    'Access-Control-Expose-Headers': 'x-request-id, x-correlation-id, x-degraded, retry-after',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
     'X-Request-ID': requestId,
@@ -141,16 +141,22 @@ export function getCorsHeaders(req?: Request): Record<string, string> {
 export const corsHeaders = getCorsHeaders();
 
 /** Standard JSON error response (with origin-validated CORS). */
-export function errorResponse(message: string, status = 400, req?: Request) {
+export function errorResponse(message: string, status = 400, req?: Request, retryAfterSeconds?: number) {
   const headers = req ? getCorsHeaders(req) : corsHeaders;
   let body = message;
   if (status >= 500) {
     console.error(JSON.stringify({ level: 'error', source: 'edge', status, msg: message }));
     body = 'Internal server error';
   }
+  const responseHeaders: Record<string, string> = { ...headers, 'Content-Type': 'application/json' };
+  // Do not invent a retry window: rate limits, provider throttles and daily
+  // quotas have different reset times. A caller may pass a known duration.
+  if (status === 429 && Number.isFinite(retryAfterSeconds) && retryAfterSeconds! >= 0) {
+    responseHeaders['Retry-After'] = String(Math.ceil(retryAfterSeconds!));
+  }
   return new Response(
     JSON.stringify({ error: body }),
-    { status, headers: { ...headers, 'Content-Type': 'application/json' } }
+    { status, headers: responseHeaders }
   );
 }
 
@@ -359,7 +365,8 @@ function recordRateLimitDenialFor(
 export async function enforceRateLimit(
   key: string,
   maxRequests = 30,
-  windowMs = 60_000
+  windowMs = 60_000,
+  ctx: EnforceRateLimitContext = {}
 ): Promise<{ allowed: boolean; remaining: number; persistent: boolean; unavailable?: boolean }> {
   const local = checkRateLimit(key, maxRequests, windowMs);
   if (!local.allowed) {
@@ -381,6 +388,7 @@ export async function enforceRateLimit(
       // sem mudar o comportamento de quem aceita o fallback local.
       return { ...local, persistent: false, unavailable: true };
     }
+    if (!row.allowed) recordRateLimitDenialFor(key, maxRequests, ctx);
     return {
       allowed: row.allowed,
       remaining: typeof row.remaining === "number" ? row.remaining : 0,
@@ -468,6 +476,8 @@ export interface RequireAuthOptions {
   /** Leitura de `profiles.is_active` do usuário autenticado (R2-AUTH-004).
    *  Injectable p/ teste; ausente em produção = client service_role real. */
   getProfileActive?: ProfileActiveLookup;
+  /** Writer de negações de rate limit injetável p/ teste (padrão: `recordRateLimitDenial`). */
+  rateLimitLogWriter?: RateLimitLogWriter;
 }
 
 /**

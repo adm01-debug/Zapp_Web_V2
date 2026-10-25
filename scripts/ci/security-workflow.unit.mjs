@@ -1,3 +1,6 @@
+// CI minimo (16/10/2026): o job `security:` (gitleaks + bun audit) foi removido.
+// Os tres testes abaixo verificam as invariantes de seguranca que sobraram e
+// que continuam valendo no workflow simplificado.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -7,33 +10,32 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const workflow = readFileSync(path.join(root, ".github/workflows/ci.yml"), "utf8");
 
-test("security workflow uses a SHA-pinned fail-closed secret scanner", () => {
-  assert.match(
-    workflow,
-    /uses: gitleaks\/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3\.0\.0/u,
+// Todos os checkouts do CI devem ter persist-credentials: false para que o
+// token do Actions nao vaze nos subprocessos de build/test.
+test("all checkout steps disable credential persistence", () => {
+  const checkoutUses = workflow.match(/uses: actions\/checkout@[^\n]+/gu) ?? [];
+  assert.ok(checkoutUses.length > 0, "nenhum passo checkout encontrado em ci.yml");
+  const persists = workflow.match(/persist-credentials: false/gu) ?? [];
+  assert.equal(
+    persists.length,
+    checkoutUses.length,
+    `esperado ${checkoutUses.length} ocorrencias de persist-credentials:false, encontrado ${persists.length}`,
   );
-  assert.match(workflow, /GITLEAKS_ENABLE_COMMENTS: 'false'/u);
-  assert.match(workflow, /GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'/u);
-  assert.doesNotMatch(workflow, /! grep -rn/u);
 });
 
-test("security workflow fetches history without exposing privileged PR secrets", () => {
-  const securitySection = workflow.slice(workflow.indexOf("  security:"));
-  assert.match(securitySection, /fetch-depth: 0/u);
-  assert.match(securitySection, /GITHUB_TOKEN: \$\{\{ github\.token \}\}/u);
-  assert.doesNotMatch(securitySection, /secrets\.DESTINO_URL/u);
+// DESTINO_URL e a credencial mais sensivel do projeto; jamais pode aparecer em
+// ci.yml (workflow publico e de PR) -- nem no env, nem em secrets.
+test("DESTINO_URL never appears in the CI workflow", () => {
+  assert.doesNotMatch(workflow, /DESTINO_URL/u);
+  assert.doesNotMatch(workflow, /secrets\.DESTINO/u);
 });
 
-// R2-INF-009: `bun audit` sai com 1 tanto para advisory quanto para falha de
-// registry; neutralizar o status com `|| true` sem preserva-lo deixava o gate
-// decidir so pelo texto. O passo informativo guarda o codigo do coletor e o
-// gate bloqueante o consome (o relatorio continua sendo o que decide).
-test("security workflow preserves the dependency collector exit status", () => {
-  const securitySection = workflow.slice(workflow.indexOf("  security:"));
-  assert.match(securitySection, /bun audit --audit-level=low > audit-report\.txt 2>&1 \|\| status=\$\?/u);
-  assert.match(securitySection, /echo "\$status" > audit-status\.txt/u);
-  assert.match(
-    securitySection,
-    /audit-prod\.mjs --level high --input audit-report\.txt --status audit-status\.txt/u,
-  );
+// O unico par de secrets exposto no ci.yml deve ser o par de chaves publicaveis
+// do Supabase (usadas so no job build, nunca em contexts privilegiados).
+test("only publishable Supabase keys are exposed as secrets in CI", () => {
+  const secretRefs = [...workflow.matchAll(/secrets\.(\w+)/gu)].map((m) => m[1]);
+  const permitidos = new Set(["VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY"]);
+  for (const s of secretRefs) {
+    assert.ok(permitidos.has(s), `secret nao permitido em ci.yml: secrets.${s}`);
+  }
 });

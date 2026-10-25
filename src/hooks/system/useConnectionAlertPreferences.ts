@@ -57,7 +57,7 @@ export function useConnectionAlertPreferences() {
   const userId = user?.id ?? null;
   const queryKey = connectionAlertPreferencesKey(userId);
 
-  const { data: row, isLoading } = useQuery({
+  const { data: row, isLoading, isError } = useQuery({
     queryKey,
     enabled: !!userId,
     queryFn: async () => {
@@ -114,6 +114,7 @@ export function useConnectionAlertPreferences() {
   return {
     preferences,
     isLoading,
+    isError,
     isSaving: mutation.isPending,
     updatePreference: mutation.mutate,
     updatePreferenceAsync: mutation.mutateAsync,

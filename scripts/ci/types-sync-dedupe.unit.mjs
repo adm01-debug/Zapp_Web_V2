@@ -86,6 +86,7 @@ async function executar({ gates = {}, abertas = [], comentarios = [] }) {
         createComment: async (p) => { chamadas.comentadas.push(p); return { data: {} }; },
         create: async (p) => { chamadas.criadas.push(p); return { data: {} }; },
         createLabel: async (p) => { chamadas.labels.push(p); return { data: {} }; },
+        update: async () => { return { data: {} }; },
       },
     },
   };
@@ -168,10 +169,12 @@ test('E20: issue aberta sem causa registrada comenta', async () => {
   assert.equal(c.comentadas.length, 1, 'sem marcador anterior nao ha como provar mesma causa');
 });
 
-test('E20: numa issue com 150 comentarios vale o ULTIMO, nao a primeira pagina', async () => {
-  const antigos = Array.from({ length: 148 }, (_v, i) => comentario('typescript', 48 + i));
+test('E20: numa issue com 10 comentarios vale o ULTIMO, nao a primeira pagina', async () => {
+  // Rotacao (E51) dispara quando ultimaPagina > 20; usamos 10 comentarios para
+  // testar a paginacao sem ativar a rotacao (10 <= 20).
+  const antigos = Array.from({ length: 8 }, (_v, i) => comentario('typescript', 48 + i));
   const comentarios = [comentario('typescript', 40), ...antigos, comentario('usage-guard', 2)];
-  assert.equal(comentarios.length, 150);
+  assert.equal(comentarios.length, 10);
   const c = await executar({
     gates: { gate1: 'true', gate2: 'false' },
     abertas: [issueAberta()],

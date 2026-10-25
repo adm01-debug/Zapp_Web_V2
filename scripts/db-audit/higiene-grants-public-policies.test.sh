@@ -5,11 +5,9 @@
 #  2) policies DUPLICADAS de storage.objects (mesmo bucket+verbo) caem, ficando UMA
 #     por verbo/bucket nos quatro buckets citados.
 #
-# BLOCO A (antes): avatars tem 2 SELECT e 2 DELETE iguais; anon/authenticated
-#   podem executar a funcao de trigger.
-# BLOCO B (depois): 1 SELECT e 1 DELETE em avatars (a canonica de cada par);
-#   stickers/audio-memes/custom-emojis seguem com 1 SELECT cada; PUBLIC/anon/
-#   authenticated sem EXECUTE e service_role preservado. Reaplicar nao muda nada.
+# Estado inicial seguro: bucket privado, leitura apenas autenticada, duas DELETE
+# redundantes com o mesmo escopo do dono. Este teste verifica apenas forward SQL e
+# idempotencia; migrations já aplicadas são imutáveis e seus rollbacks não são executados.
 
 set -Eeuo pipefail
 
@@ -62,8 +60,18 @@ CREATE ROLE service_role NOLOGIN;
 
 -- storage.objects minimo (so o que as policies leem)
 CREATE SCHEMA storage;
+CREATE SCHEMA auth;
+CREATE TABLE storage.buckets (id text PRIMARY KEY, name text NOT NULL, public boolean NOT NULL);
+INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', false);
 CREATE TABLE storage.objects (id uuid PRIMARY KEY, bucket_id text, name text, owner uuid);
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
+  SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid
+$$;
+CREATE FUNCTION storage.foldername(text) RETURNS text[] LANGUAGE sql IMMUTABLE AS $$
+  SELECT string_to_array(trim($1, '/'), '/')
+$$;
+GRANT USAGE ON SCHEMA storage, auth TO anon, authenticated;
 
 -- funcao de TRIGGER, sem argumentos (identidade real). CREATE FUNCTION ja da
 -- EXECUTE a PUBLIC; o GRANT explicito a anon/authenticated/service_role imita os
@@ -86,7 +94,7 @@ CREATE TRIGGER trg_multiplix_audiences_validate_shared_roles
   BEFORE INSERT OR UPDATE ON public.multiplix_audiences
   FOR EACH ROW EXECUTE FUNCTION public.multiplix_audiences_validate_shared_roles();
 
--- Par duplicado em avatars (SELECT) + as canonicas dos outros buckets.
+-- Par de SELECT real da migration: a policy canonica fica, a redundante deve cair.
 CREATE POLICY "Anyone can view avatars" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars');
 CREATE POLICY "Avatar images are publicly accessible" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars');
 CREATE POLICY "Anyone can view stickers" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'stickers');
@@ -94,8 +102,11 @@ CREATE POLICY "Public read audio memes" ON storage.objects FOR SELECT TO authent
 CREATE POLICY "Public read for custom emojis" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'custom-emojis');
 
 -- Par duplicado em avatars (DELETE)
-CREATE POLICY "Users can delete their own avatar" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'avatars');
-CREATE POLICY "Users can delete their own avatars" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'avatars');
+CREATE POLICY "Users can delete their own avatar" ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Users can delete their own avatars" ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
+GRANT SELECT, DELETE ON storage.objects TO anon, authenticated;
 SQL
 
 psql_file "$tmp_dir/pre.sql"
@@ -107,7 +118,7 @@ sel_audio="SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND table
 sel_emoji="SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND cmd='SELECT' AND qual LIKE '%bucket_id = ''custom-emojis''%'"
 exec_role() { printf "SELECT has_function_privilege('%s','public.multiplix_audiences_validate_shared_roles()','EXECUTE')" "$1"; }
 
-echo '── BLOCO A: ANTES (defeito presente) ─────────────────────────────────────────────'
+echo '── BLOCO A: ANTES (bucket privado + DELETE redundante) ───────────────────────────'
 expect_value 'A1 avatars SELECT duplicado (2)' '2' "$sel_avatars"
 expect_value 'A2 avatars DELETE duplicado (2)' '2' "$del_avatars"
 expect_value 'A3 PUBLIC executa a funcao' 't' "$(exec_role anon)"
@@ -120,11 +131,13 @@ psql_file "$migration"
 echo
 echo '── BLOCO B: DEPOIS (higiene aplicada) ────────────────────────────────────────────'
 expect_value 'B1 avatars SELECT = 1 (so a canonica)' '1' "$sel_avatars"
-expect_value 'B2 a canonica mantida e "Anyone can view avatars"' 'Anyone can view avatars' \
+expect_value 'B2 SELECT canonica mantida e policy publica redundante removida' 'Anyone can view avatars' \
   "SELECT policyname FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND cmd='SELECT' AND qual LIKE '%bucket_id = ''avatars''%'"
 expect_value 'B3 avatars DELETE = 1 (so a canonica)' '1' "$del_avatars"
 expect_value 'B4 a canonica mantida e "Users can delete their own avatar"' 'Users can delete their own avatar' \
   "SELECT policyname FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND cmd='DELETE' AND qual LIKE '%bucket_id = ''avatars''%'"
+expect_value 'B4a DELETE canonica segue escopada ao dono' '1' \
+  "SELECT count(*) FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='Users can delete their own avatar' AND qual ILIKE '%foldername%' AND qual ILIKE '%auth.uid%'"
 expect_value 'B5 stickers SELECT = 1 (nada removido)' '1' "$sel_stickers"
 expect_value 'B6 audio-memes SELECT = 1 (nada removido)' '1' "$sel_audio"
 expect_value 'B7 custom-emojis SELECT = 1 (nada removido)' '1' "$sel_emoji"
@@ -148,4 +161,4 @@ expect_value 'C1 avatars SELECT segue 1' '1' "$sel_avatars"
 expect_value 'C2 avatars DELETE segue 1' '1' "$del_avatars"
 expect_value 'C3 anon segue sem EXECUTE' 'f' "$(exec_role anon)"
 
-printf '\n[OK] higiene de grants (EXECUTE + policies duplicadas) verificada\n'
+printf '\n[OK] higiene de grants e policies duplicadas verificada\n'

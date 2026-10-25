@@ -27,8 +27,8 @@ const NAO_CONCLUIDOS = new Set(['AGUARDA RUNTIME', 'PARCIAL', 'PRECISA REVALIDA�
 const CONTAGEM_ANTIGA = [/dos\s+17\s+workflows/i, /17\s+no\s+total/i, /14\s+workflows/i, /14\s+arquivos/i];
 const TOCA_STRICT_FALSE = /strict[ ]*[:=][ ]*`?false|`strict`[^\n]{0,40}`false`/i;
 const ROTULO_HISTORICO = /revogad|REVOGAD|históric|HISTÓRIC|superad|SUPERAD|reconciliad|Reconcilia/;
-const RE_ITEM = /^\s*-\s*\[([ xX~!])\]\s*\*\*(E\d{1,3})\*\*/;
-const RE_RECON = /^\|\s*\*\*(E\d{1,3})\*\*[^|]*\|\s*`\[([ x~!])\]`\s*\*{0,2}([A-ZÇÃÉÍÓÚÊÔÂÀ\- ]+)/;
+const RE_ITEM = /^\s*-\s*\[([  xX~!])\]\s*\*\*(E\d{1,3})\*\*/;
+const RE_RECON = /^\|\s*\*\*(E\d{1,3})\*\*[^|]*\|\s*`[\[(]([ x~!])[\])]`\s*\*{0,2}([A-ZÇÃÉÍÓÚÊÔÂÀ\- ]+)/;
 
 const linhas = (t) => t.split('\n');
 const paragrafos = (t) => t.split(/\n[ \t]*\n/);
@@ -197,7 +197,7 @@ function evidenciasDaAbertura(tabela) {
 
 function violacoesTabelaAbertura(plano, esperadas = ABERTURA_ESPERADA) {
   const tabela = tabelaDeAbertura(plano);
-  if (tabela === null) return [`plano sem a secao "${SECAO_ABERTURA}"`];
+  if (tabela === null) return [`plano sem a secao "${SECAO_ABERTURA}"` ];
   const out = [];
   for (const [id, linha] of Object.entries(esperadas)) {
     const atual = tabela.find((l) => l.startsWith(`| **${id}**`));
@@ -354,19 +354,19 @@ test('E62/E76: os numeros citados conferem com o repositorio', async () => {
   assert.match(e62.linha, /guardas de DB|pós-apply/i);
 
   const lock = await readFile(BUN_LOCK, 'utf8');
-  assert.ok(/playwright@1\.63\.0/.test(lock));
-  assert.ok(/playwright-core@1\.63\.0/.test(lock));
-  assert.ok(/@playwright\/test@1\.63\.0/.test(lock));
+  assert.ok(/playwright@1\.64\.1/.test(lock));
+  assert.ok(/playwright-core@1\.64\.1/.test(lock));
+  assert.ok(/@playwright\/test@1\.64\.1/.test(lock));
 
   const tres = ['ci.yml', 'e2e-logado.yml', 'e2e-talkx.yml'];
   for (const f of tres) {
     const wf = await readFile(join(DIR_WF, f), 'utf8');
-    assert.ok(wf.includes('playwright@1.63.0'));
+    assert.ok(wf.includes('playwright@1.64.1'));
   }
   const e76 = rec.get('E76');
   assert.ok(e76);
   for (const f of tres) assert.ok(e76.linha.includes(f), `E76 deve citar ${f}`);
-  assert.match(e76.linha, /1\.63\.0/);
+  assert.match(e76.linha, /1\.64\.1/);
   assert.match(e76.linha, /não há mismatch/i);
 });
 
@@ -436,4 +436,40 @@ test('plano: tabela de abertura (E01/E13/E14/E16) preserva as evidencias medidas
     assert.ok(tabela.some((l) => l.startsWith(`| **${id}**`)), `${id} deve estar medido na tabela de abertura`);
   }
   assert.deepEqual(violacoesTabelaAbertura(plano), []);
+});
+
+// W95: CONTRIBUTING.md deve referenciar o stack e o fluxo atuais
+const CONTRIBUTING = join(RAIZ, 'CONTRIBUTING.md');
+
+test('W95 CONTRIBUTING.md: usa bun (nao npm)', async () => {
+  const texto = await readFile(CONTRIBUTING, 'utf8');
+  assert.ok(!texto.includes('npm install'), 'nao deve conter "npm install"');
+  assert.ok(!texto.includes('npm run'), 'nao deve conter "npm run"');
+  assert.match(texto, /bun install/);
+});
+
+test('W95 CONTRIBUTING.md: nome correto do repositorio', async () => {
+  const texto = await readFile(CONTRIBUTING, 'utf8');
+  assert.ok(!texto.includes('zapp-web.git'), 'nao deve conter o nome antigo do repo');
+  assert.match(texto, /Zapp_Web_V2/);
+});
+
+test('W95 CONTRIBUTING.md: cita branch do lote dia/AAAA-MM-DD', async () => {
+  const texto = await readFile(CONTRIBUTING, 'utf8');
+  assert.match(texto, /dia\/AAAA-MM-DD/);
+});
+
+test('W95 CONTRIBUTING.md: lista os 6 required checks', async () => {
+  const texto = await readFile(CONTRIBUTING, 'utf8');
+  assert.match(texto, /Lint.*TypeCheck|Lint & TypeCheck/);
+  assert.match(texto, /Unit Tests/);
+  assert.match(texto, /Build/);
+  assert.match(texto, /Security Audit/);
+  assert.match(texto, /Contrato DB offline/);
+  assert.match(texto, /E2E Tests/);
+});
+
+test('W95 CONTRIBUTING.md: nao referencia branch develop', async () => {
+  const texto = await readFile(CONTRIBUTING, 'utf8');
+  assert.ok(!texto.includes('`develop`'), 'nao deve referenciar branch develop');
 });

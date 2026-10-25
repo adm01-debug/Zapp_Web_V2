@@ -172,7 +172,7 @@ jobs:
             }
 
       - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
 
@@ -208,7 +208,23 @@ jobs:
         run: node scripts/db-audit/check-realtime-subscriptions.mjs
 
       - name: Testar comparadores de catalogo, manifesto e migrations
-        run: node --test scripts/db-audit/*.test.mjs
+        run: |
+          testes_db=()
+          for teste_db in scripts/db-audit/*.test.mjs; do
+            [[ "$teste_db" == "scripts/db-audit/talkx-engine-window-contract.test.mjs" ]] && continue
+            testes_db+=("$teste_db")
+          done
+          node --test "${testes_db[@]}"
+
+      # O contrato Talk X sobe seu proprio PostgreSQL. Em paralelo com a suite
+      # acima, outros contratos tambem iniciam containers e podem derrubar o
+      # socket durante o bootstrap; rode-o isolado e repita somente falhas de
+      # bootstrap, nunca erros SQL/assertions.
+      - name: Provar contrato Talk X de janela de envio em PostgreSQL descartavel
+        env:
+          TALKX_WINDOW_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          POSTGREST_TEST_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh node --test scripts/db-audit/talkx-engine-window-contract.test.mjs
 
       # E47: instala o docker-shim no PATH antes do primeiro step que usa docker.
       # A partir daqui, `docker` aponta para o shim que roteia run/exec/rm para
@@ -1519,6 +1535,10 @@ jobs:
       # get_profile_id_for_user(auth.uid()) e os dois formatos de rollback executavel.
       # SKIP_DOCKER_SHIM=1 porque o teste cria roles globais anon/authenticated/service_role.
       - name: Provar leitura de reacoes pelo profile_id (N-142)
+        env:
+          N142_REACTIONS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/n142-message-reactions-select-user-id.test.sh
       # N-142 (P3 · seguranca): message_reactions.user_id guarda profiles.id, mas a
       # policy message_reactions_select_policy comparava com auth.uid() (auth user
       # uuid) — o autor nunca via a propria reacao. O teste aplica a migration real
@@ -1679,7 +1699,7 @@ jobs:
       # migration culpada sem baixar o repo (o upload so roda se o diff tocou migration).
       - name: Publicar o log e os erros do replay
         if: always() && steps.mudou.outputs.mudou == 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: replay-migrations
           path: |
@@ -1792,6 +1812,10 @@ jobs:
       # Inicia container proprio e roda CREATE ROLE anon/authenticated/service_role
       # (globais ao cluster) -> SKIP_DOCKER_SHIM="1", como os blocos vizinhos.
       - name: Provar o remetente de grupo em messages (t_35d5aa82)
+        env:
+          MESSAGES_GROUP_SENDER_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/messages-group-sender.test.sh
       - name: Provar o remetente de grupo em messages (t_313f15cd)
         env:
           MESSAGES_GROUP_SENDER_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
