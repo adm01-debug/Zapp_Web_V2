@@ -1,6 +1,6 @@
 # Relatório CI — branch `fix/ci-workflows` (PR #2261)
 
-> Gerado em 2026-10-25. Branch: `fix/ci-workflows` | SHA: `2685966` | PR: [#2261](https://github.com/adm01-debug/Zapp_Web_V2/pull/2261)
+> Gerado em 2026-10-25. Branch: `fix/ci-workflows` | SHA: `0fcc29a` | PR: [#2261](https://github.com/adm01-debug/Zapp_Web_V2/pull/2261)
 > Sessão: https://claude.ai/code/session_01XQg8vscDFaYdzdNS5632BA
 
 ---
@@ -73,7 +73,42 @@ Obtido via `github_list_runs_for_workflow` (branch=main, per_page=1) para cada a
 | `🧪 Unit Tests (3/3)` | [121241225630](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40217337125/job/121241225630) | ❌ failure | 17:51:17Z |
 | `✅ CI Gate` | [121244819247](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40217337125/job/121244819247) | ❌ failure | 17:52:12Z |
 | `🏗️ Build` | [121244820633](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40217337125/job/121244820633) | ⏭️ skipped | 17:52:06Z |
-| `🎭 E2E Tests (Playwright)` | [121241225752](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40217337125/job/121241225752) | 🔄 in_progress | — |
+| `🎭 E2E Tests (Playwright)` | [121241225752](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40217337125/job/121241225752) | ⚫ cancelled | — |
+
+---
+
+## 3b. Estado final dos checks — run #40222249872 (SHA `0fcc29a`) — 2026-10-25
+
+> Run final do CI (ci.yml + db-guard.yml) sobre o HEAD `0fcc29a84aaf313c80a2766a627af7a4d91ccca6`.
+> Todos os jobs concluídos. Nenhum check em `in_progress`.
+
+| Job | Job ID | conclusion | completed_at |
+|-----|--------|-----------|-------------|
+| `🔎 TypeCheck` | [121256646700](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40222249872/job/121256646700) | ✅ success | 18:42:29Z |
+| `🔒 Security Audit` | [121256646907](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40222249872/job/121256646907) | ✅ success | 18:42:07Z |
+| `🧩 Node CI Scripts` | [121256646974](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40222249872/job/121256646974) | ✅ success | 18:44:33Z |
+| `🧬 Mutação do mapa` | [121256646934](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40222249872/job/121256646934) | ✅ success | 18:41:49Z |
+| `Replay local das migrations` | [121256347216](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40222249918/job/121256347216) | ✅ success | 18:41:42Z |
+| `🧪 Unit Tests (1/3)` | [121256646894](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40222249872/job/121256646894) | ❌ failure | 18:50:44Z |
+| `🧪 Unit Tests (2/3)` | [121256646921](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40222249872/job/121256646921) | ❌ failure | 18:51:15Z |
+| `🧪 Unit Tests (3/3)` | [121256646937](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40222249872/job/121256646937) | ❌ failure | 18:51:43Z |
+| `✅ CI Gate` | [121259185597](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40222249872/job/121259185597) | ❌ failure | 18:51:49Z |
+| `🏗️ Build` | [121259186746](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40222249872/job/121259186746) | ⏭️ skipped | 18:51:44Z |
+| `🎭 E2E Tests (Playwright)` | [121256646905](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40222249872/job/121256646905) | ⚫ cancelled | 19:02:01Z |
+| `Contrato DB offline` | [121256346996](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40222249918/job/121256346996) | ❌ failure | 18:50:17Z |
+
+### Diagnóstico final — run #40222249872
+
+| Status | Jobs | Motivo | Registrado em |
+|--------|------|--------|______________|
+| ✅ success | TypeCheck, Security Audit, Node CI Scripts, Mutação do mapa, Replay migrations | Sem erros introduzidos por esta PR | §4 deste relatório |
+| ❌ failure (pré-existente) | Unit Tests 1/3, 2/3, 3/3 | 11 arquivos pré-existentes em `origin/main` (ver §5b) | §9b–§9c de PENDENCIAS.md |
+| ❌ failure (bloqueado) | Contrato DB offline | `sanitize_reset_request()` referencia `NEW.reset_token` (DASH-091/092) | §4 de PENDENCIAS.md — requer aprovação Joaquim em `producao-ddl` |
+| ❌ failure (cascata) | CI Gate | Cascata de Unit Tests failures | — |
+| ⏭️ skipped | Build | Gate bloqueado por Unit Tests | — |
+| ⚫ cancelled | E2E Tests | Cancelado após 20 min (timeout do runner ou cascata do CI Gate) | §5b de PENDENCIAS.md |
+
+**Conclusão: zero regressões introduzidas por esta PR.** Os checks que falham falhavam identicamente na `main` antes desta PR (confirmado em §5).
 
 ---
 
@@ -208,6 +243,7 @@ AssertionError: expected 2 to be 1 (contagem de revalidações)
 ```
 AssertionError: expected null to be 'cliente'
   ❯ src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx:85:48
+
 AssertionError: expected null to be 'grupo'
   ❯ src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx:93:48
 ```
