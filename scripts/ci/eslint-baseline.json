@@ -398,7 +398,7 @@
     },
     {
       "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
-      "sha256": "51109d10cfa2419d2d3cb7b262c72ab5a54b84a401cfa93c95ae936a520573d9"
+      "sha256": "59addfbfddbd1615559e4721fd3410b9a2d83838afdc1fc7cb0e18f536d1aedf"
     },
     {
       "path": "src/components/inbox/chat/ChatSearchBar.tsx",
@@ -422,7 +422,7 @@
     },
     {
       "path": "src/components/inbox/chat/MessageBubble.tsx",
-      "sha256": "b26c3697607a48af8aadd4bb9042f54df7ec9683290d9607261c05a779a0eabb"
+      "sha256": "06dd5b7a7b5ce40b1dd9c3c6e7a0d47a31e71d2aa0b3665c842433023c313963"
     },
     {
       "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
@@ -494,7 +494,7 @@
     },
     {
       "path": "src/components/inbox/ConversationListSidebar.tsx",
-      "sha256": "bb70fcc68409475597402f37d3a54ae6302cc2233e782d89d3dfc233f753e750"
+      "sha256": "f11f6513072539bacd2253bd880a28b750d039085f7fa9ef60c6835d4d183aa1"
     },
     {
       "path": "src/components/inbox/ConversationSummary.tsx",
@@ -546,7 +546,7 @@
     },
     {
       "path": "src/components/inbox/RealtimeInboxView.tsx",
-      "sha256": "4fdeee0cc67ed84642bfa54d39adb6c5c1c920eef19ab0856c11c5c4045aa038"
+      "sha256": "d2fc7229b9f24f6ffb5fbc8b1a5ed97af3b09e5b922ae5828ebfd9e4bc8fdc80"
     },
     {
       "path": "src/components/inbox/RealtimeTranscription.tsx",
@@ -822,7 +822,7 @@
     },
     {
       "path": "src/components/settings/AvatarUpload.tsx",
-      "sha256": "7ead96a2498d05509da253c1614ede5653975873499b297ac0093554a57adade"
+      "sha256": "da9e4a71aab3be6c0636015b5179986e659e89a79ed17157f2ec369216586c0f"
     },
     {
       "path": "src/components/settings/ChatbotL1Config.tsx",
@@ -898,7 +898,7 @@
     },
     {
       "path": "src/components/talkx/segments/SegmentSideList.tsx",
-      "sha256": "8b3a34b9af0fd7e908b535ae95a5ab75671a2432be62c51ef5217e67993ecfdb"
+      "sha256": "d1846bce1393d1b77a82aea7ce7ca2881c032991d0b11c7f3b96a405244aa352"
     },
     {
       "path": "src/components/talkx/TalkXAudienceFilters.tsx",
@@ -906,7 +906,7 @@
     },
     {
       "path": "src/components/talkx/TalkXCampaignRunning.tsx",
-      "sha256": "ae1e78e5dee5fa2fead8d9799ddc6317e10b6dcdeac78e62ad340041907b9f83"
+      "sha256": "e69607e0897845ceeeeaac09b3d17840d5945349271264bc18a183269bd2e1fd"
     },
     {
       "path": "src/components/talkx/TalkXCampaignWizard.tsx",
@@ -914,7 +914,11 @@
     },
     {
       "path": "src/components/talkx/TalkXOverview.tsx",
-      "sha256": "a5b6393a1d90ca932f8fc2e417560c9b7b5b729e609c4ccf6e4020d7dcebc04a"
+      "sha256": "ca2c8c7412caf8149393e56cdb95da60a29cb4c221f7944274d7d10fcc7adfda"
+    },
+    {
+      "path": "src/components/talkx/TalkXSegments.tsx",
+      "sha256": "7a9b4f1f06b9119d97eaacc5538e05262b6855d4a638f2e106e445eb9cef1977"
     },
     {
       "path": "src/components/talkx/TalkXSettings.tsx",
@@ -926,7 +930,7 @@
     },
     {
       "path": "src/components/talkx/TalkXTemplateEditor.tsx",
-      "sha256": "fea818547fcec4db1172eaae5a5faa8ecaa553951a87ed08219ac03504476509"
+      "sha256": "9fb74296a27ef73419c1fdc11d592b4d9eb64fefa288c3fa7f4b2f15afbd2772"
     },
     {
       "path": "src/components/talkx/useCampaignEditor.ts",
@@ -1030,7 +1034,7 @@
     },
     {
       "path": "src/components/ui/command-palette.tsx",
-      "sha256": "5172f967f2f6cf8fb802183fbd4b326e4d31287d85980c0d58a08362524c39c2"
+      "sha256": "b472a0910ee7cc9ac850f0d8ddc3ca8d2afe2f6f358ccecd235fb46f85117778"
     },
     {
       "path": "src/components/ui/dialog.tsx",
@@ -1134,7 +1138,7 @@
     },
     {
       "path": "src/hooks/auth/useAuth.tsx",
-      "sha256": "01a76cde569975629a919b3989248899ec94f3cdbfb1c4fd68e62501e04130e9"
+      "sha256": "4a349f34699c9b0dd8854cac5fc8d2497642973b89090868a0e4e2d9f653171d"
     },
     {
       "path": "src/hooks/auth/useAuthForm.ts",
@@ -1182,7 +1186,11 @@
     },
     {
       "path": "src/hooks/chat/useScheduledReports.ts",
-      "sha256": "b4a62dc6de1d9075d33d4eb473f70c9d258ad0a9acf8e1bc4b7997c1ed00842c"
+      "sha256": "3e374b338af3de2054635c01660f7c28da52efce98d5aa53c58ae28e007d6c02"
+    },
+    {
+      "path": "src/hooks/chat/useTeamChatNotifications.ts",
+      "sha256": "40cf07f57b8a82a8feaa745f9ad737bd220e450a59f297852becb5b4721f0954"
     },
     {
       "path": "src/hooks/chat/useTypingPresence.ts",
@@ -1218,7 +1226,7 @@
     },
     {
       "path": "src/hooks/gamification/useAgentCelebrations.ts",
-      "sha256": "4f98f75128cbbb5acc341139d18305630b8dbc78dafaf2f8fa07388b236f68e4"
+      "sha256": "e0140bc9d4179f2d389190784a31544555b962151673395c4b35b99e55334322"
     },
     {
       "path": "src/hooks/inbox/useConnectionQueues.ts",
@@ -1298,7 +1306,7 @@
     },
     {
       "path": "src/hooks/system/useUserSettings.ts",
-      "sha256": "61d29b48b67c16491c9800a9ef875f180c4d5e41ed4941172651b5cb56bba690"
+      "sha256": "7261c938862318ead47c0d7999f867502494876e9a7cb1690b37c291e0f0e7a6"
     },
     {
       "path": "src/hooks/team-chat/queryKeys.ts",
@@ -1306,7 +1314,7 @@
     },
     {
       "path": "src/hooks/team-chat/useTeamMessages.ts",
-      "sha256": "809569a7ebf87e257aa0a012fa68ac3a23a74dbc1853f29571e6cad7309dafe7"
+      "sha256": "17e3c29b526c1577723ef6b1006ef4d8abf539a058dfd4f171e14e371fbda188"
     },
     {
       "path": "src/hooks/ui/use-mobile.tsx",
@@ -8105,8 +8113,8 @@
       "messageId": "noSecretCompare",
       "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
       "spanHash": "74cf1d9447efc0811bbaf4ec4302bf99e9787c9797c2e6a764e809002d5272d3",
-      "lineHash": "b611ab14a010d8562f106fc80199fbbca3ccba00470f5997c00d634c150cb3c4",
-      "contextHash": "8092c11df666cc8120f6339538fffd419a0c1f5b7cc3cdf30564b704db538843"
+      "lineHash": "5f0b2ba4f2a485636ec96eb3f3aba1c1bd98cef9fc5b4db5706725d7b7cbe925",
+      "contextHash": "05f437dfb5aec43a4a2a610d5234e1aa796305e5b7d128fa0310786c85f36fd9"
     },
     {
       "file": "src/components/talkx/TalkXAudienceFilters.tsx",
@@ -8236,45 +8244,31 @@
     },
     {
       "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 125,
+      "line": 126,
       "column": 9,
-      "endLine": 125,
+      "endLine": 126,
       "endColumn": 25,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
       "messageId": "noSecretCompare",
       "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
       "spanHash": "acc7f0212c266fcaa2e48b1cae83e62d6caa22fe83fa617ef7b1e7f1855ac112",
-      "lineHash": "b8700935fc5d8a49bfe81f8357f55575dbbf9a5c939806575bc7ceb76c4fbfc5",
-      "contextHash": "d9ec913cdfd7002569491709b550498a7895f6724716b489ec27e52105038eba"
-    },
-    {
-      "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 126,
-      "column": 14,
-      "endLine": 126,
-      "endColumn": 33,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "aae2ed8deabbba40e5a4e9537bd53667ce6ed582af29db5b8aa09742294fc169",
-      "lineHash": "8095cffef405a2712bdbbb459611334b8375fe9cc6be908a15a9bd041f293d22",
-      "contextHash": "5d44c22bcaaf9824cf6aeab85f03dcbfc5431f387169a2f7a895dbc98e3f3b1e"
+      "lineHash": "4fb4b003d591a383a50f00cb4b14dc95758328ae595ffd42db88de3f2fc9620a",
+      "contextHash": "ef6137adefd17cebad7f229c66267c941ed0fffbb93d1723cd5daedbf57cd1f5"
     },
     {
       "file": "src/components/talkx/TalkXOverview.tsx",
       "line": 127,
       "column": 14,
       "endLine": 127,
-      "endColumn": 31,
+      "endColumn": 33,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
       "messageId": "noSecretCompare",
       "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "26ffa891b4b2bddcb1ec7b4abc03036b48f9426a9a3aa319fea51c41fc95b3ac",
-      "lineHash": "db32e1d9b79a2b9b73707d37169540485c5df6c28b4986a2e8abc80ec56b3b95",
-      "contextHash": "b309953b5642647f6f7eaa6ee16b0b5af7f7278028f4ac98331149754eeb4e8c"
+      "spanHash": "aae2ed8deabbba40e5a4e9537bd53667ce6ed582af29db5b8aa09742294fc169",
+      "lineHash": "aa447d3492784968be351705f5ae9f700aa9ded9be3b25293b02663d6e513b7c",
+      "contextHash": "160c36a2192dc8e35f1999f48a5ac98d292564c896e608ba23e3fb17dc5babe5"
     },
     {
       "file": "src/components/talkx/TalkXOverview.tsx",
@@ -8286,9 +8280,9 @@
       "ruleId": "local/no-secret-compare",
       "messageId": "noSecretCompare",
       "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "e9e2aabbf80a3b504422fc2fe4e741911798ddcc5820234b6694f6e32bf46bd7",
-      "lineHash": "77b22fcb6139e5d57414ad93f1e5dee431a09f2f7909dd4319b958326ce327b0",
-      "contextHash": "1ea9d568b3a5e43bccb750d041ef0cb20b1eb0686453ef1a2090c4377b6ebd9c"
+      "spanHash": "26ffa891b4b2bddcb1ec7b4abc03036b48f9426a9a3aa319fea51c41fc95b3ac",
+      "lineHash": "1f082bb42e9654060cfeebc4bb8d41da445259557f837c62003e2901416664d0",
+      "contextHash": "4bbb8f3c5f9479c2cf5eb027b513b909735db9ef85f2bed13e26afe7468a7e94"
     },
     {
       "file": "src/components/talkx/TalkXOverview.tsx",
@@ -8300,9 +8294,37 @@
       "ruleId": "local/no-secret-compare",
       "messageId": "noSecretCompare",
       "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
+      "spanHash": "e9e2aabbf80a3b504422fc2fe4e741911798ddcc5820234b6694f6e32bf46bd7",
+      "lineHash": "c119c3d2b7c7fce11d1500c296ec9966afb97031926996ea354d338cc2bded04",
+      "contextHash": "3f711baf84a3ee3893cc86cafe23f51172c9c18be7f72e0dc86e4d20b78cfd03"
+    },
+    {
+      "file": "src/components/talkx/TalkXOverview.tsx",
+      "line": 130,
+      "column": 14,
+      "endLine": 130,
+      "endColumn": 31,
+      "severity": 2,
+      "ruleId": "local/no-secret-compare",
+      "messageId": "noSecretCompare",
+      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
       "spanHash": "42f749ed35d06fb89d750355b5fbdd1e7d2dfa18e320cac5531c09e2b80d6c3c",
-      "lineHash": "1513da3b230879914be5a2b90ec757038bce3ef5721e64125b08c9eee25f2e28",
-      "contextHash": "0d2cc0b4e8f090c367b288de69248bb2cac7b929f50ccafb92d4a0429a11fe41"
+      "lineHash": "faf192b441a9081f5477ec2ba0149e1b73ef51d91744cc9a27b25afca8dfb47a",
+      "contextHash": "894f9a18170ad6b818c7f836b658c56b938d63b2636028a3de631faa764bc63b"
+    },
+    {
+      "file": "src/components/talkx/TalkXSegments.tsx",
+      "line": 708,
+      "column": 11,
+      "endLine": 708,
+      "endColumn": 29,
+      "severity": 2,
+      "ruleId": "local/no-secret-compare",
+      "messageId": "noSecretCompare",
+      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
+      "spanHash": "ebd63569508cf0687ce5c736173db686d16ea0280ad0f22e9f9c255b93f17851",
+      "lineHash": "be232994ed28bdc88cee03c64f236900979a2e526c735f75521069e52e75f43b",
+      "contextHash": "bf0d0d2d3183430f4a70f5e85e86ec0eb83d0775d733cb32e36870e174b800f4"
     },
     {
       "file": "src/components/talkx/TalkXSettings.tsx",
@@ -8362,9 +8384,23 @@
     },
     {
       "file": "src/components/talkx/TalkXTemplateEditor.tsx",
-      "line": 614,
+      "line": 303,
+      "column": 7,
+      "endLine": 303,
+      "endColumn": 22,
+      "severity": 2,
+      "ruleId": "react-hooks/set-state-in-effect",
+      "messageId": null,
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/talkx/TalkXTemplateEditor.tsx:303:7 301 | } 302 | if (initialTtab === 'historico' && editing?.id) { > 303 | setShowVersions(true); | ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 304 | void fetchVersions(editing.id); 305 | } 306 | // eslint-disable-next-line react-hooks/exhaustive-deps",
+      "spanHash": "90346a92766b3e2e3d3a1ebe0f91b8db44c84ba7716787716910e809dac6b094",
+      "lineHash": "602d7f60dad22ca252e11cdc261c4a4d449163e65eec8921b01160bc98ab734a",
+      "contextHash": "ce69069057f223b52c5d6b26cc9c8376336fa884d57244061dc47aca9771b74a"
+    },
+    {
+      "file": "src/components/talkx/TalkXTemplateEditor.tsx",
+      "line": 651,
       "column": 49,
-      "endLine": 614,
+      "endLine": 651,
       "endColumn": 62,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8376,9 +8412,9 @@
     },
     {
       "file": "src/components/talkx/TalkXTemplateEditor.tsx",
-      "line": 615,
+      "line": 652,
       "column": 49,
-      "endLine": 615,
+      "endLine": 652,
       "endColumn": 66,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8390,9 +8426,9 @@
     },
     {
       "file": "src/components/talkx/TalkXTemplateEditor.tsx",
-      "line": 669,
+      "line": 706,
       "column": 23,
-      "endLine": 669,
+      "endLine": 706,
       "endColumn": 40,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8404,9 +8440,9 @@
     },
     {
       "file": "src/components/talkx/TalkXTemplateEditor.tsx",
-      "line": 710,
+      "line": 747,
       "column": 23,
-      "endLine": 710,
+      "endLine": 747,
       "endColumn": 40,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -9384,9 +9420,9 @@
     },
     {
       "file": "src/components/ui/command-palette.tsx",
-      "line": 280,
+      "line": 301,
       "column": 17,
-      "endLine": 280,
+      "endLine": 301,
       "endColumn": 34,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -9398,9 +9434,9 @@
     },
     {
       "file": "src/components/ui/command-palette.tsx",
-      "line": 283,
+      "line": 304,
       "column": 71,
-      "endLine": 283,
+      "endLine": 304,
       "endColumn": 84,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -10182,9 +10218,9 @@
     },
     {
       "file": "src/hooks/auth/useAuth.tsx",
-      "line": 245,
+      "line": 247,
       "column": 17,
-      "endLine": 245,
+      "endLine": 247,
       "endColumn": 24,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -10405,6 +10441,34 @@
       "contextHash": "066d5d09f59e6971944340baeaca16519b0ed5db16f11f30412bfa93b342bd0f"
     },
     {
+      "file": "src/hooks/chat/useTeamChatNotifications.ts",
+      "line": 115,
+      "column": 3,
+      "endLine": 115,
+      "endColumn": 27,
+      "severity": 2,
+      "ruleId": "react-hooks/refs",
+      "messageId": null,
+      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/hooks/chat/useTeamChatNotifications.ts:115:3 113 | // Refs atualizados a cada render -- leitura fresca dentro do effect sem entrar nas deps 114 | const notifSettingsRef = useRef(notifSettings); > 115 | notifSettingsRef.current = notifSettings; | ^^^^^^^^^^^^^^^^^^^^^^^^ Cannot update ref during render 116 | const isQuietHoursRef = useRef(isQuietHours); 117 | isQuietHoursRef.current = isQuietHours; 118 |",
+      "spanHash": "44d668f8a8e5f4faa9a38ff810ba8b67a8e0571132f137f91e07b0326c7b1e17",
+      "lineHash": "57ffcf0791cb9d5620b0e727d97402d40a078816d3d947985bb058fcc94b0212",
+      "contextHash": "f76cd95d85d8f664e3438d245a8751bda78a1c56b8d63b1d910a191b95084f39"
+    },
+    {
+      "file": "src/hooks/chat/useTeamChatNotifications.ts",
+      "line": 117,
+      "column": 3,
+      "endLine": 117,
+      "endColumn": 26,
+      "severity": 2,
+      "ruleId": "react-hooks/refs",
+      "messageId": null,
+      "message": "Error: Cannot access refs during render React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef). <ROOT>/src/hooks/chat/useTeamChatNotifications.ts:117:3 115 | notifSettingsRef.current = notifSettings; 116 | const isQuietHoursRef = useRef(isQuietHours); > 117 | isQuietHoursRef.current = isQuietHours; | ^^^^^^^^^^^^^^^^^^^^^^^ Cannot update ref during render 118 | 119 | useEffect(() => { 120 | activeIdRef.current = activeConversationId;",
+      "spanHash": "a86784a23f356aed4402a530abb3c3a80cad403a454d0f41460d2e02363b3d79",
+      "lineHash": "1bb930d8f78f09265c17bbbf8288826bfe24dc915164c5d2936c2fb577b24702",
+      "contextHash": "41dc87abedad7b2bbaa4a79dcff65adbcf741fb11c26df00388af64a0b10eb32"
+    },
+    {
       "file": "src/hooks/chat/useTypingPresence.ts",
       "line": 171,
       "column": 13,
@@ -10560,9 +10624,9 @@
     },
     {
       "file": "src/hooks/gamification/useAgentCelebrations.ts",
-      "line": 266,
+      "line": 286,
       "column": 46,
-      "endLine": 266,
+      "endLine": 286,
       "endColumn": 59,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -10994,28 +11058,28 @@
     },
     {
       "file": "src/hooks/system/useUserSettings.ts",
-      "line": 114,
+      "line": 115,
       "column": 7,
-      "endLine": 114,
+      "endLine": 115,
       "endColumn": 19,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/system/useUserSettings.ts:114:7 112 | useEffect(() => { 113 | if (!user?.id) { > 114 | setIsLoading(false); | ^^^^^^^^^^^^ Avoid calling setState() directly within an effect 115 | return; 116 | } 117 |",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/system/useUserSettings.ts:115:7 113 | useEffect(() => { 114 | if (!user?.id) { > 115 | setIsLoading(false); | ^^^^^^^^^^^^ Avoid calling setState() directly within an effect 116 | return; 117 | } 118 |",
       "spanHash": "f4c53e9c2756b64e09a7b71ace5bcefcf30b9044da81f142b98fba03631870af",
       "lineHash": "ccc30b1e46ad22797a4f9e4f74e554fc8015ff82f9d540703ffaf80f8915caad",
       "contextHash": "5f57432804b0384216dd6fc25b4f66c89ff0514ee92aa3077f43e4f9c44a142d"
     },
     {
       "file": "src/hooks/system/useUserSettings.ts",
-      "line": 211,
+      "line": 218,
       "column": 36,
-      "endLine": 275,
+      "endLine": 282,
       "endColumn": 4,
       "severity": 2,
       "ruleId": "react-hooks/preserve-manual-memoization",
       "messageId": null,
-      "message": "Compilation Skipped: Existing memoization could not be preserved React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `user`, but the source dependencies were [user?.id, settings]. Inferred less specific property than source. <ROOT>/src/hooks/system/useUserSettings.ts:211:36 209 | 210 | // Save settings to DB > 211 | const saveSettings = useCallback(async () => { | ^^^^^^^^^^^^^ > 212 | if (!user?.id) { | ^^^^^^^^^^^^^^^^^^^^ > 213 | toast({ … | ^^^^^^^^^^^^^^^^^^^^ > 274 | } | ^^^^^^^^^^^^^^^^^^^^ > 275 | }, [user?.id, settings]); | ^^^^ Could not preserve existing manual memoization 276 | 277 | // Reset to defaults 278 | const resetSettings = useCallback(() => {",
+      "message": "Compilation Skipped: Existing memoization could not be preserved React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `user`, but the source dependencies were [user?.id, settings]. Inferred less specific property than source. <ROOT>/src/hooks/system/useUserSettings.ts:218:36 216 | 217 | // Save settings to DB > 218 | const saveSettings = useCallback(async () => { | ^^^^^^^^^^^^^ > 219 | if (!user?.id) { | ^^^^^^^^^^^^^^^^^^^^ > 220 | toast({ … | ^^^^^^^^^^^^^^^^^^^^ > 281 | } | ^^^^^^^^^^^^^^^^^^^^ > 282 | }, [user?.id, settings]); | ^^^^ Could not preserve existing manual memoization 283 | 284 | // Reset to defaults 285 | const resetSettings = useCallback(() => {",
       "spanHash": "7927460a9eab5a7fc91de5ece3fd046f2839d24685b0c384e5972be6eb7d37f7",
       "lineHash": "d5facd9427646de8f14236c254875960eecc2de811176b786d632131e8edb07b",
       "contextHash": "923463aab60d3280124d8fcba5b565b97af96547fa12ee33ed2123f944a22041"
@@ -11037,8 +11101,22 @@
     {
       "file": "src/hooks/team-chat/useTeamMessages.ts",
       "line": 134,
-      "column": 9,
+      "column": 6,
       "endLine": 134,
+      "endColumn": 35,
+      "severity": 1,
+      "ruleId": "react-hooks/exhaustive-deps",
+      "messageId": null,
+      "message": "React Hook useEffect has a missing dependency: 'onEvent'. Either include it or remove the dependency array. If 'onEvent' changes too often, find the parent component that defines it and wrap that definition in useCallback.",
+      "spanHash": "41adf00df8cde7226661d12b0615d117d789e56da861cb99168f7ad6e290741b",
+      "lineHash": "b222366130a0d602c5ba71e9c7848d2cae1b03c16becc6b84197dee3f4d75bb4",
+      "contextHash": "8a57709299eba93ce0682767e299c17a61c4c3e5bef561a26a2ac150333340cc"
+    },
+    {
+      "file": "src/hooks/team-chat/useTeamMessages.ts",
+      "line": 148,
+      "column": 9,
+      "endLine": 148,
       "endColumn": 39,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
