@@ -44,10 +44,17 @@ function toTeamMessage(row: TeamMessagePageRow): TeamMessage {
   };
 }
 
-export function useTeamMessages(conversationId: string | null) {
+export function useTeamMessages(
+  conversationId: string | null,
+  onEvent?: (event: { type: 'update' | 'delete'; id: string; content?: string; is_edited?: boolean; updated_at?: string }) => void,
+) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const markedRef = useRef<string | null>(null);
+  const onEventRef = useRef(onEvent);
+  useEffect(() => {
+    onEventRef.current = onEvent;
+  });
 
   const query = useQuery({
     queryKey: queryKeys.messages(conversationId),
@@ -105,10 +112,22 @@ export function useTeamMessages(conversationId: string | null) {
     // e, desde a realtime-js 2.101, um `.on()` em canal já inscrito derruba a
     // tela. O prefixo `team-messages-<conversationId>` é o contrato do módulo
     // (verificado por contratosModulo.test.ts), por isso o sufixo é concatenado.
+    const handleChange = (payload: { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) => {
+      revalidar();
+      const handler = onEventRef.current;
+      if (!handler) return;
+      if (payload.eventType === 'UPDATE') {
+        handler({ type: 'update', id: payload.new.id as string, content: payload.new.content as string, is_edited: payload.new.is_edited as boolean, updated_at: payload.new.updated_at as string });
+      } else if (payload.eventType === 'DELETE') {
+        const id = (payload.old?.id ?? payload.new?.id) as string | undefined;
+        if (id) handler({ type: 'delete', id });
+      }
+    };
+
     let jaInscrito = false;
     const channel = supabase
       .channel(`team-messages-${conversationId}` + uniqueRealtimeTopic(''))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, revalidar)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, handleChange)
       .subscribe((status) => {
         // A queda do canal não avisa: o que ficou em memória envelhece. Só na
         // RE-inscrição (depois da primeira) a página corrente é refeita.
@@ -166,5 +185,5 @@ export function useTeamMessages(conversationId: string | null) {
     return () => { cancelado = true; };
   }, [conversationId, profile, pagina]);
 
-  return { messages, isLoading: query.isLoading };
+  return { messages, isLoading: query.isLoading, isError: query.isError, refetch: query.refetch };
 }
