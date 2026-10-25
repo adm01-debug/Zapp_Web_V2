@@ -257,6 +257,17 @@ describe('useAgentCelebrations', () => {
     expect(result.current.celebrations[0]).toMatchObject({ kind: 'achievement', id: 'a-nova' });
   });
 
+  it('relógio do cliente levemente atrasado não transforma conquista antiga em festa', async () => {
+    // earned_at é do servidor; com o cliente ~1 s atrás, uma conquista de instantes
+    // antes do mount parece "posterior" ao marco. A tolerância de 2 s a suprime.
+    const quaseAgora = new Date(Date.now() + 1_000).toISOString();
+    janelaDeConquistas(conquista({ id: 'a-antiga-skew', earned_at: quaseAgora }));
+    const { result } = await montar();
+
+    await waitFor(() => expect(result.current.celebrations).toHaveLength(0));
+    expect(result.current.celebrations).toHaveLength(0);
+  });
+
   it('aumento de nível vira 1 evento; nível já conhecido não repete', async () => {
     const { result } = await montar();
     await waitFor(() => expect(result.current.celebrations).toHaveLength(0));

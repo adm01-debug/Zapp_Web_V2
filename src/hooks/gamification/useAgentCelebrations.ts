@@ -21,6 +21,8 @@ const log = getLogger('AgentCelebrations');
 const CANAL_BASE = 'agente-celebracoes';
 /** Janela olhada ao ressincronizar: só o que ainda pode virar festa na tela. */
 const JANELA_CONQUISTAS = 20;
+/** Folga entre o relógio do servidor (`earned_at`) e o do cliente (marco da montagem). */
+const TOLERANCIA_RELOGIO_MS = 2000;
 
 export interface AchievementCelebration {
   kind: 'achievement';
@@ -185,7 +187,10 @@ export function useAgentCelebrations(
       for (const linha of (conquistas.data ?? []) as Achievement[]) {
         if (!linha?.id) continue;
         // `earned_at` ausente ou ilegível (NaN) nunca é "posterior": fica suprimido.
-        if (Date.parse(String(linha.earned_at ?? '')) > marcoMontagem) {
+        // `earned_at` vem do relógio do servidor e o marco do relógio do cliente: com o
+        // cliente atrasado, uma conquista antiga pareceria posterior. A tolerância
+        // exige folga sobre o marco antes de tratar como festa.
+        if (Date.parse(String(linha.earned_at ?? '')) > marcoMontagem + TOLERANCIA_RELOGIO_MS) {
           celebrarConquista(linha);
         } else {
           conquistasConhecidas.current.add(String(linha.id));
