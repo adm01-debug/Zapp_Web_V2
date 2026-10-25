@@ -108,6 +108,8 @@ A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_tok
 
 **Pré-existente:** confirmado em 4 commits/runs desta PR (`b0585a58`, `7a8c74e6`, `cf895c6a`, `43dd7666`) e em todas as runs históricas do `db-guard`.
 
+**BLOQUEADO — agente não pode aplicar:** Esta correção exige DDL em produção (migration de `sanitize_reset_request()`) que só pode ser aplicada mediante aprovação de Joaquim no environment `producao-ddl` (Regra 8 do fluxo Git e seção 0 do CLAUDE.md). Registrado como DASH-091/092. Nenhuma ação adicional possível para agente.
+
 ### O que o Joaquim precisa fazer
 
 1. Verificar o estado atual da tabela em produção:
@@ -372,12 +374,46 @@ AssertionError: expected [ 'team-chat-notifications', …(2) ] to have a length 
 
 **Causa raiz:** O hook `useTeamChatNotifications.ts` (linha 150) registra `.channel('team-chat-notifications')` sem sufixo de tópico. O teste espera `team-chat-notifications:<tópico-único>` (formato `canal:tópico` do Supabase Realtime). Adicionalmente, o hook cria 3 subscrições de canal em vez de 1 ao re-renderizar (teste na linha 143).
 
-**Por que agente não pode corrigir:** Mudar o nome do canal ou o número de subscrições altera o contrato com o backend Supabase Realtime — decisão de produto/arquitetura (HZ5-09).
+**Por que agente não pode corrigir:** Mudar o nome do canal ou o número de subscrições altera o contrato com o backend Supabase Realtime — decisão de produto/arquitetura (HZ5-09). **BLOQUEADO — aguarda decisão do Joaquim (HZ5-09). Agente não pode modificar o contrato de canal do Supabase Realtime sem aprovação de produto/arquitetura. Regra 8 do fluxo Git.**
 
 **O que o Joaquim precisa fazer:**
 1. Verificar se o nome do canal deve incluir tópico por instância (ex.: `team-chat-notifications:${orgId}`) ou se o teste está errado.
 2. Verificar por que 3 subscrições são criadas ao re-renderizar — esperado é 1 estável.
 3. Decidir a correção: ajustar o hook para usar nome com tópico, OU ajustar o teste para aceitar o nome sem tópico.
+
+---
+
+#### 9b. Shard 2/3 — falhas pré-existentes (`useInboxFilters`, `configuracoes.leituraErro`, `useDiagnosticsData`)
+
+**Workflow:** `ci.yml` — `🧪 Unit Tests (2/3)`
+**Run de referência (PR #2261):** job [121241225795](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40217337125/job/121241225795) — `conclusion=failure`
+**Confirmado pré-existente em `origin/main`:** run [#40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) (SHA `2d97c44`) — shard 2/3 já falha antes desta PR.
+
+**Erros exatos (do log do job 121241225795):**
+
+```
+AssertionError: expected null to be 'cliente'
+  ❯ src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx:85:48
+
+AssertionError: expected null to be 'grupo'
+  ❯ src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx:93:48
+
+AssertionError: expected null to be 'cliente' (URLs 114, 125, 137 também)
+  ❯ src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx
+
+AssertionError: expected undefined to be true
+  ❯ src/hooks/system/__tests__/configuracoes.leituraErro.test.tsx:73:56
+
+AssertionError: expected undefined to be 'down'
+  ❯ src/hooks/system/__tests__/useDiagnosticsData.select.test.ts:79:47
+```
+
+**Causa raiz (não investigada — fora do escopo desta PR):**
+- `useInboxFilters.type-url`: parâmetro de tipo de inbox não está sendo lido/escrito corretamente na URL — `null` em vez do valor esperado.
+- `configuracoes.leituraErro`: campo de erro de configurações retorna `undefined` em vez de `true`.
+- `useDiagnosticsData.select`: diagnóstico de status retorna `undefined` em vez de `'down'`.
+
+**Por que agente não pode corrigir:** Falhas pré-existentes em `origin/main`, fora do escopo de `fix/ci-workflows`. Zero regressões introduzidas por esta PR (mesmo conjunto de falhas antes e depois). **BLOQUEADO — pré-existente não relacionado ao escopo desta PR.**
 
 ---
 
