@@ -760,7 +760,7 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment
             <p className="text-xs text-foreground-secondary">Segmento inativo: não pode ser usado em campanha.</p>
           )}
           <button type="button" onClick={onEdit} className="w-full h-9 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground flex items-center justify-center gap-2 hover:bg-muted/50">
-            Editar
+            Editar segmento
           </button>
         </div>
       </div>
