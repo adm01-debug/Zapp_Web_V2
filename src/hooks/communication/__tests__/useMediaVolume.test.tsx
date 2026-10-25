@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { SUPABASE_URL } from '@/config/supabase';
 import { useMediaVolume } from '@/hooks/communication/useMediaVolume';
 
 /**
@@ -14,7 +15,8 @@ import { useMediaVolume } from '@/hooks/communication/useMediaVolume';
  * bug B7 era justamente dois usuários no mesmo navegador dividindo o valor) e
  * que o formato do retorno não mudou.
  */
-const SESSAO = 'sb-testref-auth-token';
+// Chave do projeto configurado: é a única que `readAuthenticatedUserId` aceita.
+const SESSAO = `sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
 
 /** Sessão falsa no formato que o `supabase-js` grava (só o que o store lê). */
 const sessaoDe = (userId: string): void => {

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { SUPABASE_URL } from '@/config/supabase';
 import { FakeBroadcastChannel } from '@/test/fakeBroadcastChannel';
 
 /**
@@ -228,7 +229,7 @@ describe('mediaVolumeStore', () => {
    * `AuthProvider`) e o usuário deslogado funcionando como antes.
    */
   describe('volume por usuário no aparelho (S33–S35)', () => {
-    const SESSAO = 'sb-testref-auth-token';
+    const SESSAO = `sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
     const chaveVolumeDe = (userId: string) => `zapp.media.volume.${userId}`;
     const chaveMudoDe = (userId: string) => `zapp.media.muted.${userId}`;
 

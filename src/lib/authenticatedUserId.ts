@@ -9,21 +9,36 @@
 const SUPABASE_SESSION_KEY_PREFIX = 'sb-';
 const SUPABASE_SESSION_KEY_SUFFIX = '-auth-token';
 
+import { SUPABASE_URL } from '@/config/supabase';
+
 export function isSupabaseSessionKey(key: string | null): boolean {
   return Boolean(key && key.startsWith(SUPABASE_SESSION_KEY_PREFIX) && key.endsWith(SUPABASE_SESSION_KEY_SUFFIX));
 }
 
 /**
- * A varredura não presume o ref do projeto (o mesmo padrão já usado nos fixtures do
- * e2e). Tolerante (E02): storage bloqueado, JSON estranho ou sessão sem `user.id`
+ * Só vale a chave do projeto configurado (ref da URL do Supabase); sessão de outro
+ * projeto no mesmo origin não identifica o usuário. Tolerante (E02): storage bloqueado, JSON estranho ou sessão sem `user.id`
  * → `null` = "sem usuário".
  */
+/** Chave de sessão do projeto configurado (`sb-<ref>-auth-token`), ou null sem URL válida. */
+function configuredSessionKey(): string | null {
+  try {
+    const ref = new URL(SUPABASE_URL).hostname.split('.')[0];
+    return ref ? `${SUPABASE_SESSION_KEY_PREFIX}${ref}${SUPABASE_SESSION_KEY_SUFFIX}` : null;
+  } catch {
+    return null;
+  }
+}
+
 export function readAuthenticatedUserId(): string | null {
   try {
     if (typeof window === 'undefined' || !window.localStorage) return null;
     const storage = window.localStorage;
-    for (let index = 0; index < storage.length; index += 1) {
-      const key = storage.key(index);
+    const preferred = configuredSessionKey();
+    const keys: Array<string | null> = [];
+    if (preferred) keys.push(preferred);
+    else for (let index = 0; index < storage.length; index += 1) keys.push(storage.key(index));
+    for (const key of keys) {
       if (!isSupabaseSessionKey(key)) continue;
       const raw = storage.getItem(key as string);
       if (!raw) continue;

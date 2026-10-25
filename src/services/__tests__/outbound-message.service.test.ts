@@ -10,6 +10,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
+import { SUPABASE_URL } from '@/config/supabase';
 import { sendOutboundMessage, sendRichOutboundMessage } from '../outbound-message.service';
 import { crossTabSendDedupe } from '@/lib/crossTabSendDedupe';
 import { offlineSendQueue } from '@/lib/offlineQueue';
@@ -17,7 +18,7 @@ import { sendThrottle } from '@/lib/sendThrottle';
 
 /** Sessão persistida pelo supabase-js: é o que `readAuthenticatedUserId` lê. */
 function autenticarComo(userId: string): void {
-  localStorage.setItem('sb-teste-auth-token', JSON.stringify({ access_token: 'token-de-teste', user: { id: userId } }));
+  localStorage.setItem(`sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`, JSON.stringify({ access_token: 'token-de-teste', user: { id: userId } }));
 }
 
 describe('sendOutboundMessage', () => {
@@ -223,6 +224,32 @@ describe('sendOutboundMessage', () => {
       p_client_message_id: 'fila-do-a',
       p_content: 'texto do A',
     })));
+  });
+
+  it('sem sessão legível não enfileira offline: falha em vez de gravar item sem dono', async () => {
+    await offlineSendQueue.clear();
+    localStorage.clear();
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+    try {
+      await expect(sendOutboundMessage({ contactId: 'contato-fila', content: 'sem dono' })).rejects.toThrow(/Sessão expirada/);
+    } finally {
+      delete (navigator as unknown as Record<string, unknown>).onLine;
+    }
+    expect(await offlineSendQueue.list()).toEqual([]);
+  });
+
+  it('item legado sem userId nunca drena, mesmo com sessão ativa', async () => {
+    await offlineSendQueue.clear();
+    await offlineSendQueue.enqueue({
+      clientMessageId: 'legado-sem-dono', contactId: 'contato-fila', content: 'texto sem dono', messageType: 'text',
+      mediaUrl: null, caption: null, replyToId: null, whatsappConnectionId: null,
+    });
+    rpc.mockResolvedValue({ data: { id: 'srv', status: 'sending', external_id: null }, error: null });
+    window.dispatchEvent(new Event('online'));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(rpc).not.toHaveBeenCalled();
+    expect((await offlineSendQueue.list()).map((item) => item.clientMessageId)).toEqual(['legado-sem-dono']);
+    await offlineSendQueue.clear();
   });
 
   it('aba que perde a disputa de dedupe não dispara enqueue nem despacho (SL-070/026)', async () => {

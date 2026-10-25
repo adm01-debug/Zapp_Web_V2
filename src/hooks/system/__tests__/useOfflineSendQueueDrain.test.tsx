@@ -17,6 +17,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: { rpc: h.rpc, functions: { invoke: h.invoke } },
 }));
 
+import { SUPABASE_URL } from '@/config/supabase';
 import { useOfflineSendQueueDrain } from '../useOfflineSendQueueDrain';
 import { offlineSendQueue, type OfflineQueueInput } from '@/lib/offlineQueue';
 import { sendThrottle } from '@/lib/sendThrottle';
@@ -24,6 +25,8 @@ import { sendThrottle } from '@/lib/sendThrottle';
 function item(reposicao: number): OfflineQueueInput {
   return {
     clientMessageId: `0c5d8df5-430d-4f46-8c0a-764be03511${reposicao.toString().padStart(2, '0')}`,
+    // Item sem dono nunca drena: a fila é do usuário que a compôs.
+    userId: 'usuario-1',
     contactId: `contato-${reposicao}`,
     content: `mensagem ${reposicao}`,
     messageType: 'text',
@@ -43,6 +46,10 @@ describe('useOfflineSendQueueDrain', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     h.sessao = { user: { id: 'usuario-1' } };
+    localStorage.setItem(
+      `sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`,
+      JSON.stringify({ access_token: 'token-de-teste', user: { id: 'usuario-1' } }),
+    );
     delete (navigator as unknown as Record<string, unknown>).onLine;
     sendThrottle.reset();
     await offlineSendQueue.clear();
