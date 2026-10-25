@@ -122,4 +122,31 @@ Ambas fora do escopo desta sessão.
 
 ---
 
+## 7. Auto Update PR Branches — `auto-update-pr-branch.yml`
+
+**Status:** BLOQUEIO EXTERNO — falha transitória de infraestrutura GitHub  
+**Check afetado:** `Auto Update PR Branches` (não é required check de PR)  
+**Workflow:** `.github/workflows/auto-update-pr-branch.yml`  
+**Último run com falha:** [run/40201624889](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40201624889)
+
+**Causa exata (run 40201624889, job 121193828106):**  
+Passo "🚦 Escolher a proxima PR da fila" falhou com:  
+`HTTP 504: 504 Gateway Timeout (https://api.github.com/graphql)`
+
+O erro ocorreu na chamada à API GraphQL do GitHub pelo script `scripts/ci/fila-merge.mjs`.
+É uma falha transitória de disponibilidade da infraestrutura do GitHub — não há bug de código.
+`grep` por `exit 1` em `fila-merge.mjs` não retornou nenhuma ocorrência; o catch do script
+propaga o erro recebido da API, sem `exit 1` explícito.
+
+**Confirmação de que NÃO é introduzido por este PR:**  
+O workflow não toca nenhum arquivo alterado nesta branch. A falha é HTTP 504 (gateway timeout
+da API externa), que ocorre independentemente do conteúdo do código desta branch.
+
+**Ação necessária:**  
+Nenhuma — o workflow reexecuta automaticamente no próximo push na main ou via
+`workflow_dispatch`, e terá success quando a API GraphQL do GitHub estiver disponível.
+Não é required check de PR e não bloqueia merge.
+
+---
+
 *Pendências registradas pela sessão de correção de CI em 2026-10-24/25.*
