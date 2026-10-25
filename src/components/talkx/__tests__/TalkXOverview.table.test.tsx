@@ -19,6 +19,7 @@
  */
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const f = vi.hoisted(() => ({
   insights: [] as Array<Record<string, unknown>>,
@@ -132,7 +133,8 @@ function renderOverview() {
     onDelete: vi.fn(),
     onGoTab: vi.fn(),
   };
-  render(<TalkXOverview {...props} />);
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(<QueryClientProvider client={qc}><TalkXOverview {...props} /></QueryClientProvider>);
   return props;
 }
 
