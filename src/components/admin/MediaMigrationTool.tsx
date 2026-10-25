@@ -161,7 +161,8 @@ export function MediaMigrationTool() {
     setRunning(true);
     setResult(null);
 
-    const { data, error } = await invokeEdge<MigrationResult>('migrate-media-storage', { method: 'POST' });
+    const { data: bruto, error } = await invokeEdge('migrate-media-storage', { method: 'POST' });
+    const data = bruto as MigrationResult | null;
 
     if (error) {
       setResult({
