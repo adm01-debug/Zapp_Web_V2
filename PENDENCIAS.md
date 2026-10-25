@@ -122,8 +122,8 @@ Verificar o plano Copilot e a quota de PR reviews no GitHub Settings → Copilot
 **✅ CORRIGIDO — `workItemFormat.test.ts:123` (timezone):**  
 `formatWorkItemDate('2026-10-11T17:00:00-03:00')` exibia `'Hoje, 20:00'` em UTC. Envolvido em `withTimeZone('America/Sao_Paulo', ...)`. Confirmado passando: não aparece no shard 2/3 do run 40206335520.
 
-**PRÉ-EXISTENTE — `useInboxFilters.type-url.test.tsx` (5 falhas):**  
-`handleContactTypeChange(null)` não limpa o parâmetro `type` da URL. Bug em `useInboxFilters.ts` (não alterada por este PR). Confirmado falhando na `main`.
+**✅ CORRIGIDO — `useInboxFilters.type-url.test.tsx` (5 falhas → 0 falhas):**  
+`handleContactTypeChange` usava `window.history.replaceState` em vez de `useSearchParams` do React Router. Corrigido em `753eb32c`. Verificado localmente: 9/9 testes passando. Aguardando confirmação no CI.
 
 **PRÉ-EXISTENTE — `buscas-silenciosas-aviso.test.tsx:155`:**  
 Texto esperado `"Erro ao atualizar o relatorio"`, recebido `"Erro ao ativar/desativar relatório"`. Não está no diff desta branch.
@@ -200,11 +200,10 @@ Arquivos não estão no diff desta branch. `useTalkXSegments.ts` está no diff m
 `git diff origin/main --name-only` não inclui nenhum dos arquivos de teste acima. Cada arquivo de produção relacionado (`useInboxFilters.ts`, `App.tsx`, `VolumeDial.tsx`, etc.) igualmente ausente do diff. Os arquivos de produção alterados nesta branch (`TalkXOverview.tsx`, `useTalkXSegments.ts`) têm mudanças mínimas que não podem causar as falhas observadas (confirmado por análise do conteúdo do diff e grep nos arquivos de teste).
 
 **Ação necessária (bloqueios remanescentes):**  
-1. `useInboxFilters.ts`: corrigir `handleContactTypeChange(null)` para remover `type` da URL — resolve shard 2/3 parcialmente.  
-2. `App.tsx` / `DeferredProviders`: adicionar `AuthProvider` wrapper no teste ou mock `useAuth` — resolve shard 3/3 parcialmente.  
-3. `TalkXTemplates.route.test.tsx`: investigar lógica de troca de template na URL do editor.  
-4. Módulo Talk X (TalkXOverview, TalkXSegments, TalkXTemplateEditor, TalkXTemplatesRail, TalkXWizardReview, TalkXAnalytics): múltiplas falhas pré-existentes em tests de UI do módulo — requerem investigação dos componentes respectivos.  
-5. VoiceChangerPicker, useChatMediaSending, PasswordResetRequestsPanel, AvatarUpload, SettingsView, WorkItemSheet: falhas pré-existentes distribuídas aleatoriamente entre shards.  
+1. `App.tsx` / `DeferredProviders`: adicionar `AuthProvider` wrapper no teste ou mock `useAuth` — resolve shard 3/3 parcialmente.  
+2. `TalkXTemplates.route.test.tsx`: investigar lógica de troca de template na URL do editor.  
+3. Módulo Talk X (TalkXOverview, TalkXSegments, TalkXTemplateEditor, TalkXTemplatesRail, TalkXWizardReview, TalkXAnalytics): múltiplas falhas pré-existentes em tests de UI do módulo — requerem investigação dos componentes respectivos.  
+4. VoiceChangerPicker, useChatMediaSending, PasswordResetRequestsPanel, AvatarUpload, SettingsView, WorkItemSheet: falhas pré-existentes distribuídas aleatoriamente entre shards.  
 Todas requerem investigação fora do escopo desta sessão.
 
 ---
