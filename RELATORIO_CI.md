@@ -1,6 +1,6 @@
 # Relatório CI — branch `fix/ci-workflows` (PR #2261)
 
-> Gerado em 2026-10-25. Branch: `fix/ci-workflows` | SHA: `35952e7f` | PR: [#2261](https://github.com/adm01-debug/Zapp_Web_V2/pull/2261)
+> Gerado em 2026-10-25. Branch: `fix/ci-workflows` | SHA: `2685966` | PR: [#2261](https://github.com/adm01-debug/Zapp_Web_V2/pull/2261)
 > Sessão: https://claude.ai/code/session_01XQg8vscDFaYdzdNS5632BA
 
 ---
@@ -20,7 +20,31 @@ Executado no ambiente de CI remoto (container Ubuntu 24.04) na branch `fix/ci-wo
 
 ---
 
-## 2. Inventário de execuções com falha na `main` (baseline de comparação)
+## 2. Inventário completo dos 13 workflows na `main` — último run por workflow
+
+Obtido via `github_list_runs_for_workflow` (branch=main, per_page=1) para cada arquivo em `.github/workflows/`.
+
+| workflow_filename | run_id | conclusion | created_at | erro_principal |
+|---|---|---|---|---|
+| `ci.yml` | [40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) | ❌ failure | 2026-10-24T18:43Z | Unit Tests 3 shards + Contrato DB offline (DASH-091/092) — pré-existentes em main |
+| `db-guard.yml` | [40122006482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006482) | ❌ failure | 2026-10-24T18:43Z | `sanitize_reset_request()` referencia `NEW.reset_token` — DASH-091/092 |
+| `db-live-guard.yml` | [39212157834](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39212157834) | ❌ failure | 2026-10-19T06:49Z | Drift no contrato vivo; artifact 163 KB; requer DESTINO_URL para diagnóstico exato |
+| `auto-update-pr-branch.yml` | [40221119033](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40221119033) | ❌ failure | 2026-10-25T18:24Z | HTTP 504 em `fila-merge.mjs:126` — corrigido nesta PR (§9f PENDENCIAS.md) |
+| `deploy-functions.yml` | [40097636982](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40097636982) | ❌ failure | 2026-10-24T13:19Z | `No files were found: edge-deployment-evidence-public/` — aguarda aprovação Joaquim em `producao-edge-functions` |
+| `types-sync.yml` | [40169860237](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40169860237) | ❌ failure | 2026-10-25T06:39Z | `supabase-usage-guard` bloqueou: novas violações — downstream de DASH-091/092 |
+| `supabase-sync.yml` | [33826753352](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/33826753352) | ❌ failure | 2026-09-04T01:42Z | Desarmado deliberadamente: secret `LEGACY_IMPORT_UNLOCK` não existe — documentado em CLAUDE.md |
+| `branch-hygiene-audit.yml` | [39220130783](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39220130783) | ⚫ cancelled | 2026-10-19T08:04Z | Cancelado pelo runner (schedule) — não é falha de código |
+| `settings-guard.yml` | [38901696564](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/38901696564) | ✅ success | 2026-10-16T12:36Z | — |
+| `talkx-status-regen.yml` | [40122006445](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006445) | ✅ success | 2026-10-24T18:43Z | — |
+| `codeql.yml` | [39591085204](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39591085204) | ✅ success | 2026-10-21T11:19Z | — |
+| `targeted-ledger-evidence.yml` | [36041611976](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36041611976) | ✅ success | 2026-09-24T18:29Z | — |
+| `crm-sync-worker.yml` | [35717413825](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/35717413825) | ⏭️ skipped | 2026-09-22T10:41Z | Schedule comentado deliberadamente (CLAUDE.md) |
+
+**Resumo:** 6 com falha real (ci.yml, db-guard.yml, db-live-guard.yml, auto-update-pr-branch.yml, deploy-functions.yml, types-sync.yml) + 1 desarmado (supabase-sync.yml) + 1 cancelado (branch-hygiene-audit.yml) + 4 verdes + 1 skipped. Todos os verdes permanecem verdes nesta PR.
+
+---
+
+## 2b. Jobs do ci.yml na `main` — run de referência
 
 **Run de referência:** [#40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) — 2026-10-24 — SHA `2d97c44`
 
@@ -133,6 +157,102 @@ Comparação entre os arquivos que falham na `main` (run #40122006424) e na PR (
 | `ChatMessagesArea.pagination.test.tsx` | ❌ | ✅ localmente | **CORRIGIDO** |
 
 **Conclusão: zero regressões introduzidas por esta PR.** Todos os arquivos que falham no PR já falhavam na `main` antes desta PR. Os 4 arquivos corrigidos passam localmente e o fix do `fila-merge.mjs` tem `conclusion=success` no CI.
+
+---
+
+## 5b. Erros exatos dos 11 arquivos pré-existentes (verificados com `vitest run` local em `origin/main` @ `2d97c44`)
+
+### Shard 1/3
+
+**`useTeamChatNotifications.canal-estavel.test.tsx`** (HZ5-09)
+```
+AssertionError: expected 'team-chat-notifications' to match /^team-chat-notifications:/
+  ❯ src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx:131:39
+AssertionError: expected [ 'team-chat-notifications', …(2) ] to have a length of 1 but got 3
+  ❯ src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx:143:28
+```
+
+**`useKnowledgeBase.erro.test.tsx`**
+```
+AssertionError: expected undefined to be 'permission denied for table knowledge_base_articles'
+  ❯ src/hooks/integrations/__tests__/useKnowledgeBase.erro.test.tsx:48:37
+```
+
+**`useTalkXSegments.test.ts`**
+```
+AssertionError: expected ['lead_score','risk_score'] to deeply equal ['lead_origin','lead_score','risk_score']
+  ❯ src/hooks/integrations/__tests__/useTalkXSegments.test.ts:62:37
+AssertionError: Promise resolved instead of rejecting (real_sector, real_uf fields)
+  ❯ src/hooks/integrations/__tests__/useTalkXSegments.test.ts:78
+```
+
+**`useTalkXSuppression.hook-morto.test.ts`**
+```
+AssertionError: expected true to be false (hook ainda exportado)
+  ❯ src/hooks/integrations/__tests__/useTalkXSuppression.hook-morto.test.ts:23
+AssertionError: expected ['useTalkXSuppression.test.ts','useTalkXSuppression.ts'] to equal []
+  ❯ src/hooks/integrations/__tests__/useTalkXSuppression.hook-morto.test.ts:38
+```
+
+**`useTeamMessages.canal-e-reconexao.test.tsx`**
+```
+AssertionError: expected false to be true (sufixo de tópico esperado no canal)
+  ❯ src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx:87
+AssertionError: expected 2 to be 1 (contagem de revalidações)
+  ❯ src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx:93
+```
+
+### Shard 2/3
+
+**`useInboxFilters.type-url.test.tsx`**
+```
+AssertionError: expected null to be 'cliente'
+  ❯ src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx:85:48
+AssertionError: expected null to be 'grupo'
+  ❯ src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx:93:48
+```
+(+ linhas 114, 125, 137 com o mesmo padrão)
+
+**`configuracoes.leituraErro.test.tsx`**
+```
+AssertionError: expected undefined to be true
+  ❯ src/hooks/system/__tests__/configuracoes.leituraErro.test.tsx:73:56
+```
+
+**`useDiagnosticsData.select.test.ts`**
+```
+AssertionError: expected undefined to be 'down'
+  ❯ src/hooks/system/__tests__/useDiagnosticsData.select.test.ts:79:47
+```
+
+### Shard 3/3
+
+**`useTeamChatPanel.search-antigas.test.tsx`** (8 falhas)
+```
+AssertionError: RPC params mismatch — query/offset não enviados
+  ❯ src/components/team-chat/__tests__/useTeamChatPanel.search-antigas.test.tsx:52
+AssertionError: min chars not enforced — busca dispara com 0 chars
+  ❯ ...test.tsx:68
+AssertionError: expected error display to not be null
+  ❯ ...test.tsx:89
+AssertionError: stale response not discarded on new query
+  ❯ ...test.tsx:102
+AssertionError: count '+' indicator not shown
+  ❯ ...test.tsx:115
+```
+(total 8 falhas no arquivo)
+
+**`useAuth.fila-offline-logout.test.tsx`**
+```
+AssertionError: expected [{type:'send_message',...}] to deeply equal [] (fila offline não limpa no SIGNED_OUT)
+  ❯ src/hooks/auth/__tests__/useAuth.fila-offline-logout.test.tsx:47
+```
+
+**`command-palette.busca-antiga.test.tsx`**
+```
+TestingLibraryElementError: received value must be an HTMLElement or SVGElement. Received has type: Null
+  ❯ src/components/ui/__tests__/command-palette.busca-antiga.test.tsx:63
+```
 
 ---
 

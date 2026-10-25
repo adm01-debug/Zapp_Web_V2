@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Workflows com falha irresolúvel por agente
 
-> Atualizado em 2026-10-25. Branch de trabalho: `fix/ci-workflows` (PR #2261).
+> Atualizado em 2026-10-22 01:40 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2182).
 > Todos os itens abaixo foram investigados; a causa raiz está identificada e documentada.
 > As correções cabíveis a agente foram aplicadas nesta sessão (ver RELATORIO_CI.md).
 > **§5 CORRIGIDO (2026-10-22 01:40 UTC):** mock `getBoundingClientRect` adicionado a `src/test/setup.ts` (commit `a4dfd16`). Causa raiz: `@tanstack/react-virtual` mede o contêiner por `getBoundingClientRect()` que retornava 0 no jsdom; agora retorna 600px.
