@@ -6,11 +6,16 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useQuickReplies, QuickReplyTemplate, CreateTemplateInput } from '@/hooks/chat/useQuickReplies';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { QuickReplyCardList } from './quick-replies/QuickReplyCardList';
 import { QuickReplyDialog } from './quick-replies/QuickReplyDialog';
+import { HOVER_REVEAL_TAP } from './hoverActions';
 
 interface QuickRepliesManagerProps {
   onSelect?: (content: string) => void;
@@ -29,6 +34,8 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
   const [activeTab, setActiveTab] = useState('all');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<QuickReplyTemplate | null>(null);
+  // L13: a lixeira só pede a exclusão; quem exclui é o botão do diálogo de confirmação.
+  const [templateParaExcluir, setTemplateParaExcluir] = useState<QuickReplyTemplate | null>(null);
 
   const copyToClipboard = async (content: string): Promise<boolean> => {
     try {
@@ -87,16 +94,31 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
         </div>
         <ScrollArea className="h-[200px]">
           <div className="space-y-1">
-            {displayedTemplates.map((template) => (
-              <motion.button key={template.id} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} onClick={() => handleSelect(template)} className="w-full p-2 text-left rounded-lg hover:bg-muted/50 transition-colors group">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm truncate">{template.title}</span>
-                  <Star className={cn("w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity", isFavorite(template.id) && "opacity-100 fill-warning text-warning")}
-                    onClick={(e) => { e.stopPropagation(); toggleFavorite(template.id); }} />
+            {displayedTemplates.map((template) => {
+              const favorita = isFavorite(template.id);
+              return (
+                // L13: a estrela é um botão próprio ao lado do botão da linha — antes era um
+                // <svg onClick> aninhado dentro dele (alvo de toque inválido, mudo para leitor de tela).
+                <div key={template.id} className="relative group">
+                  <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} onClick={() => handleSelect(template)} className="w-full p-2 pr-10 text-left rounded-lg hover:bg-muted/50 transition-colors">
+                    <span className="block font-medium text-sm truncate">{template.title}</span>
+                    <p className="text-xs text-muted-foreground truncate">{template.content}</p>
+                  </motion.button>
+                  <button
+                    type="button"
+                    aria-label={favorita ? `Remover ${template.title} dos favoritos` : `Favoritar ${template.title}`}
+                    aria-pressed={favorita}
+                    onClick={() => toggleFavorite(template.id)}
+                    className={cn(
+                      'absolute right-1 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-md transition-opacity hover:bg-muted/70',
+                      favorita ? 'opacity-100' : HOVER_REVEAL_TAP,
+                    )}
+                  >
+                    <Star aria-hidden="true" className={cn('w-3.5 h-3.5', favorita && 'fill-warning text-warning')} />
+                  </button>
                 </div>
-                <p className="text-xs text-muted-foreground truncate">{template.content}</p>
-              </motion.button>
-            ))}
+              );
+            })}
           </div>
         </ScrollArea>
       </div>
@@ -129,7 +151,7 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
         <TabsContent value={activeTab} className="mt-4">
           <QuickReplyCardList templates={displayedTemplates} groupedByCategory={groupedByCategory} isLoading={isLoading} activeTab={activeTab} searchQuery={searchQuery}
             isFavorite={isFavorite} onSelect={handleSelect} onToggleFavorite={toggleFavorite} onCopy={handleCopy}
-            onEdit={(t) => setEditingTemplate(t)} onDelete={(id) => deleteTemplate(id)} onShowCreate={() => setShowCreateDialog(true)} />
+            onEdit={(t) => setEditingTemplate(t)} onDelete={(id) => setTemplateParaExcluir(templates?.find((t) => t.id === id) ?? null)} onShowCreate={() => setShowCreateDialog(true)} />
         </TabsContent>
       </Tabs>
 
@@ -141,6 +163,26 @@ export function QuickRepliesManager({ onSelect, compact = false }: QuickRepliesM
         onCreate={async (data) => { await createTemplate(data); }}
         onUpdate={async (id, data) => { await updateTemplate({ id, ...data }); }}
       />
+
+      <AlertDialog open={!!templateParaExcluir} onOpenChange={(aberto) => { if (!aberto) setTemplateParaExcluir(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir resposta rápida?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{templateParaExcluir?.title}" será excluída. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (templateParaExcluir) deleteTemplate(templateParaExcluir.id); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
