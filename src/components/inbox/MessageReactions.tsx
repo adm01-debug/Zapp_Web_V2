@@ -16,7 +16,7 @@ const EXTENDED_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏', '�
  * hora) e volta ao estado anterior se a gravação falhar (rollback).
  */
 function useReacaoUnica(
-  reactions: Array<{ id: string; user_id: string; emoji: string; user_name?: string | null }>,
+  reactions: Array<{ id: string; user_id: string | null; emoji: string; user_name?: string | null }>,
   currentProfileId: string | undefined,
   addReaction: (emoji: string) => Promise<unknown>,
   removeReaction: (emoji: string) => Promise<unknown>,
