@@ -3,7 +3,7 @@
 **Data:** 2026-10-25  
 **Branch de correção:** `claude_05/festive-carson-ub43wu`  
 **PR:** [#2246](https://github.com/adm01-debug/Zapp_Web_V2/pull/2246)  
-**Commit do fix:** `5b42dab0f05838803735262c7d027f7983586019`  
+**Commit do fix (TypeCheck TS1005):** `1426ac66a84c46626fb95b1d48bd84b1ae86d979`  
 **Sessão:** https://claude.ai/code/session_01XQg8vscDFaYdzdNS5632BA
 
 ---
@@ -70,7 +70,25 @@ Confirmado via saída do pré-push hook / script CI local (`scripts/ci/typecheck
 
 ---
 
-## 5. Pendências Humanas (PENDENCIAS.md)
+## 5. Fix 3 — TypeCheck TS1005: `useTalkXSegments.ts:193` (commit `1426ac66`)
+
+**Arquivo:** `src/hooks/integrations/useTalkXSegments.ts`
+
+**Causa raiz:** Commit `86c9f5c` introduziu regex `/[\\"]/ g` com espaço antes do flag `g`.
+O TypeScript interpreta o espaço como separador de expressão e emite `TS1005: ',' expected`
+na coluna 53 da linha 193, bloqueando toda a compilação.
+
+**Fix aplicado (linha 193):**
+```diff
+- const quoted = (v: string) => `"${v.replace(/[\\"]/ g, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
++ const quoted = (v: string) => `"${v.replace(/[\\"]/g, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
+```
+
+**Resultado:** `🔎 TypeCheck` → ✅ `success` confirmado no CI commit `1426ac66`.
+
+---
+
+## 6. Pendências Humanas (PENDENCIAS.md)
 
 | # | Bloqueador | Ação necessária |
 |---|---|---|
@@ -78,27 +96,32 @@ Confirmado via saída do pré-push hook / script CI local (`scripts/ci/typecheck
 | 2 | types-sync Gate 1 — drift de schema TS | Inspecionar erros do `types.ts` regenerado vs banco oficial, ajustar consumidores |
 | 3 | DB Guard TC-009 (PR #2219) | Verificar resultado do run mais recente daquele PR |
 | 4 | DB Guard TC-009 (PR #2246) — `function public.request_department_access(unknown) does not exist` | DDL — verificar assinatura da função em produção; requer aprovação do Joaquim |
+| 5 | Unit Tests shard 1/3 — `useTalkXSegments.test.ts:347,371,384,398` | Implementar bridge Singu (`p_contact_ids`) ou marcar `real_sector`/`real_uf` com `comingSoon: true` — decisão de produto |
+| 6 | Unit Tests shard 2/3 — `data-testid="bubble"` não encontrado em `ChatMessagesArea` | Adicionar testid ao elemento correto no componente ou atualizar seletores dos testes |
+| 7 | Unit Tests shard 3/3 — `useTeamChatNotifications.canal-estavel.test.tsx:154,176` | Verificar condição de disparo de notificação no canal estável; mock não chamado |
 
 ---
 
-## 6. Status CI no Commit do Fix (`5b42dab`)
+## 7. Status CI Final — Commit `1426ac66`
 
-Run: `40194095585` / `40194095501`
+Todos os checks verificados contra o commit `1426ac66a84c46626fb95b1d48bd84b1ae86d979` (HEAD do PR #2246).  
+**Pré-existência confirmada:** run `40122006424` na `main` (commit `2d97c44`, 2026-10-24) com falhas idênticas nos 3 shards.
 
-| Check required | Status |
-|---|---|
-| `🔍 Lint & TypeCheck` (inclui `🔎 TypeCheck`) | ✅ success |
-| `🔒 Security Audit` | ✅ success |
-| `🧩 Node CI Scripts` | ✅ success |
-| `🧬 Mutação do mapa` (não bloqueante) | ✅ success |
-| `Replay local das migrations` | ✅ success |
-| `🧪 Unit Tests (1/3)` | ⏳ in_progress (ao publicar este relatório) |
-| `🧪 Unit Tests (2/3)` | ⏳ in_progress (ao publicar este relatório) |
-| `🧪 Unit Tests (3/3)` | ⏳ in_progress (ao publicar este relatório) |
-| `🎭 E2E Tests (Playwright)` | ⏳ in_progress (ao publicar este relatório) |
-| `Contrato DB offline` | ⏳ in_progress (ao publicar este relatório) |
-
-*Este relatório será atualizado com o resultado final após conclusão do CI e merge.*
+| Check | Status | Observação |
+|---|---|---|
+| `🔎 TypeCheck` | ✅ **success** | Fix da sessão — regex TS1005 corrigido |
+| `🔒 Security Audit` | ✅ **success** | — |
+| `🧩 Node CI Scripts` | ✅ **success** | — |
+| `🧬 Mutação do mapa` | ✅ **success** | não bloqueante |
+| `Replay local das migrations` | ✅ **success** | — |
+| `🧪 Unit Tests (1/3)` | ❌ **failure** | pré-existente na `main` — `useTalkXSegments.test.ts:347,371,384,398` |
+| `🧪 Unit Tests (2/3)` | ❌ **failure** | pré-existente na `main` — `data-testid="bubble"` não encontrado |
+| `🧪 Unit Tests (3/3)` | ❌ **failure** | pré-existente na `main` — `canal-estavel.test.tsx:154,176` |
+| `🏗️ Build` | ⏭️ skipped | depende de Unit Tests |
+| `Contrato DB offline` | ❌ **failure** | DDL — requer aprovação Joaquim (`producao-ddl`) |
+| `🎭 E2E Tests (Playwright)` | ⏳ in_progress / desconhecido | — |
+| `🎭 Talk X visual` | ❌ **failure** | pré-existente — captura de tela faltando |
+| `✅ CI Gate` | ❌ **failure** | upstream failures acima |
 
 ---
 

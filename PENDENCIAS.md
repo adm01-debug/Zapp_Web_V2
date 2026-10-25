@@ -104,4 +104,94 @@ aprovação humana).
 
 ---
 
+## 5. Unit Tests Shard 1/3 — `useTalkXSegments.test.ts` (falha pré-existente)
+
+**Workflow:** `ci.yml` — `🧪 Unit Tests (1/3)`  
+**Branch:** `claude_05/festive-carson-ub43wu` (PR #2246) — e também na `main`  
+**Run confirmando pré-existência na `main`:** 40122006424 (commit `2d97c44`, 2026-10-24)  
+**Arquivo de teste:** `src/hooks/integrations/__tests__/useTalkXSegments.test.ts`  
+**Linhas falhando:** 347, 371, 384, 398
+
+**Erros exatos:**
+- `:347` — `expected [Function] to throw` — esperava exceção ao chamar `buildSegmentQuery` com `real_sector`, mas a função não lança
+- `:371` — `promise resolved "7"` — `buildRpcQuery` deveria rejeitar para `real_sector`, mas resolveu com `"7"`
+- `:384` — `promise resolved "[]"` — `buildRpcQuery` deveria rejeitar para `real_uf`, mas resolveu com `"[]"`
+- `:398` — `promise resolved "7"` — idem para `real_uf`
+
+**Causa:** Os testes esperam que `real_sector` e `real_uf` usem a bridge Singu (`p_contact_ids`),
+que deveria lançar/rejeitar quando não implementada. A implementação atual em
+`src/hooks/integrations/useTalkXSegments.ts` (linha ~77–78) não tem guard `comingSoon: true`
+nesses campos e processa como enum/eq normal — resolve em vez de lançar.
+
+**Por que não foi corrigido automaticamente:**  
+Adicionar `comingSoon: true` para `real_sector`/`real_uf` alteraria comportamento de produto
+(filtros de campanha passariam a ser bloqueados para esses campos). Implementar a bridge Singu
+(`p_contact_ids`) requer decisão de arquitetura sobre o endpoint correto. Ambas as opções
+envolvem decisão de produto.
+
+**Ação necessária:**  
+Escolher: (a) implementar a bridge Singu para `real_sector`/`real_uf` ou (b) marcar com
+`comingSoon: true` até a bridge estar pronta. Ambos requerem decisão de produto pelo Joaquim.
+
+---
+
+## 6. Unit Tests Shard 2/3 — `ChatMessagesArea` `data-testid="bubble"` (falha pré-existente)
+
+**Workflow:** `ci.yml` — `🧪 Unit Tests (2/3)`  
+**Branch:** `claude_05/festive-carson-ub43wu` (PR #2246) — e também na `main`  
+**Run confirmando pré-existência na `main`:** 40122006424 (commit `2d97c44`, 2026-10-24)  
+**Erro exato:** `TestingLibraryElementError: Unable to find an element by: [data-testid="bubble"]`
+
+**Arquivos com este testid nos testes:**
+- `src/components/inbox/chat/__tests__/ChatMessagesArea.pagination.test.tsx`
+- `src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx`
+- `src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx`
+- `src/components/inbox/chat/__tests__/ChatMessagesArea.loop.test.tsx`
+- `src/components/inbox/chat/__tests__/ChatPanel.entrega-conversa.test.tsx`
+- `src/components/inbox/chat/__tests__/ChatPanel.typing-presence.test.tsx`
+
+**Causa:** Os testes buscam `data-testid="bubble"` no DOM renderizado, mas o componente
+`ChatMessagesArea` (ou `ChatPanel`) não possui esse atributo no código-fonte atual.
+O testid foi removido ou nunca existiu na versão atual do componente.
+
+**Por que não foi corrigido automaticamente:**  
+Adicionar `data-testid="bubble"` ao componente real exigiria identificar o elemento correto
+na hierarquia do DOM — mudança de UI que deve ser revisada para não quebrar seletores E2E.
+Alternativamente, atualizar os testes para refletir a estrutura real do DOM exige conhecimento
+do comportamento esperado de cada test case.
+
+**Ação necessária:**  
+Adicionar `data-testid="bubble"` ao elemento de bolha de mensagem em `ChatMessagesArea` ou
+autalizar os seletores nos testes para usar o testid existente no componente real.
+
+---
+
+## 7. Unit Tests Shard 3/3 — `useTeamChatNotifications.canal-estavel.test.tsx` (falha pré-existente)
+
+**Workflow:** `ci.yml` — `🧪 Unit Tests (3/3)`  
+**Branch:** `claude_05/festive-carson-ub43wu` (PR #2246) — e também na `main`  
+**Run confirmando pré-existência na `main`:** 40122006424 (commit `2d97c44`, 2026-10-24)  
+**Arquivo de teste:** `src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx`  
+**Linhas falhando (na branch):** 154, 176
+
+**Erros exatos:**
+- `:154` — `vi.fn() not called with arguments` — mock de notificação não foi chamado com os parâmetros esperados
+- `:176` — `vi.fn() not called at least once` — mock de notificação nunca foi chamado
+
+**Causa:** O spec `canal-estavel` configura um canal do tipo "estável" e espera que o hook
+emita notificação browser sob certas condições. O mock de `showBrowserNotification` não está
+sendo chamado porque as condições de disparo no hook não batem com o estado simulado no teste
+(provavelmente `notifSettings`, `isQuietHours` ou configuração do canal difere do esperado).
+
+**Por que não foi corrigido automaticamente:**  
+A lógica de quando notificar em "canal estável" é comportamento de produto. Corrigir requer
+entender o contrato exato do spec e ajustar o hook ou o setup do teste sem quebrar outros specs.
+
+**Ação necessária:**  
+Comparar o setup do teste (linhas ~140–160) com a lógica de disparo no hook
+`useTeamChatNotifications.ts` para identificar qual condição não está sendo satisfeita.
+Pode ser um bug real ou um setup de mock desatualizado.
+
+---
+
 *Este arquivo deve ser atualizado ou removido após cada item ser resolvido.*
