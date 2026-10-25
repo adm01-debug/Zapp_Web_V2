@@ -141,8 +141,11 @@ function isSupabaseSessionKey(key: string | null): boolean {
  * `window.localStorage` — `@/integrations/supabase/client`). A varredura não presume
  * o ref do projeto (o mesmo padrão já usado nos fixtures do e2e). Tolerante (E02):
  * storage bloqueado, JSON estranho ou sessão sem `user.id` → `null` = "sem usuário".
+ *
+ * Exportada para uso em módulos puros que precisam do userId sem depender de React
+ * ou do AuthProvider (ex.: outbound-message.service, fila offline).
  */
-function readAuthenticatedUserId(): string | null {
+export function readAuthenticatedUserId(): string | null {
   try {
     if (typeof window === 'undefined' || !window.localStorage) return null;
     const storage = window.localStorage;

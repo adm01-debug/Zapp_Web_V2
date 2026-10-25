@@ -10,6 +10,7 @@ import {
   type OfflineQueuedMessage,
 } from '@/lib/offlineQueue';
 import { sendThrottle } from '@/lib/sendThrottle';
+import { readAuthenticatedUserId } from '@/lib/mediaVolumeStore';
 
 export type OutboundMessageType = 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location';
 
@@ -190,7 +191,7 @@ type ResultadoEnqueue =
  * e ADOTA o voo do dono em vez de gerar outro id. Reutilizar o id sem adotar o
  * voo não bastaria: cada chamada despacharia e seriam 2 WhatsApps.
  *
- * Sem chave (`key` nulo) ou no caminho offline não há rotação: a drenagem da
+ * Sem chave (`key` null) ou no caminho offline não há rotação: a drenagem da
  * fila e os ids explícitos mantêm o comportamento antigo.
  */
 async function enqueueOrResendAfterDefinitiveFailure(
@@ -334,6 +335,9 @@ async function enqueueAndDispatch(
 
 /** O que ficou na fila offline sai com a MESMA chave estável: sem duplicar (item 024). */
 async function deliverQueuedOfflineMessage(message: OfflineQueuedMessage): Promise<void> {
+  // Garante isolamento de fila por usuário: itens de outro atendente não são entregues.
+  const currentUserId = readAuthenticatedUserId();
+  if (message.userId && currentUserId && message.userId !== currentUserId) return;
   // A drenagem obedece ao MESMO throttle do envio online: a volta da rede não
   // pode virar rajada de requests contra o servidor (item 026).
   await sendThrottle.wait();
@@ -359,7 +363,7 @@ async function deliverQueuedOfflineMessage(message: OfflineQueuedMessage): Promi
 
 // A mensagem continua na fila e a próxima tentativa a reenvia; o aviso é o que
 // impede a espera virar falha silenciosa. `console.warn` (e não o logger do app)
-// mantém este módulo — caminho quente de todo envio — sem dependência nova de
+// mantêm este módulo — caminho quente de todo envio — sem dependência nova de
 // import, e é o MESMO aviso das duas drenagens (abertura e reconexão).
 function avisarFilaOffline(error: unknown, message?: OfflineQueuedMessage): void {
   console.warn('Fila offline: entrega adiada', {
@@ -397,6 +401,7 @@ async function enqueueOffline(
     caption: input.caption ?? null,
     replyToId: input.replyToId ?? null,
     whatsappConnectionId: input.whatsappConnectionId ?? null,
+    userId: readAuthenticatedUserId() ?? undefined,
   });
   // `pending`: a bolha mostra "enviando" até a fila drenar — nada foi entregue ainda.
   return { id: queued.clientMessageId, status: 'pending', externalId: null, idempotent: false };
@@ -422,7 +427,7 @@ export async function sendOutboundMessage(
     // A fila offline guarda o PRÓPRIO id no item enfileirado, então a chave da
     // ação não precisa sobreviver a este envio. Deixá-la viva era o defeito: o
     // mesmo texto mandado depois, já online, reaproveitava o id e a Edge o
-    // descartava como idempotente sem nenhum WhatsApp sair.
+    // descartaria como idempotente sem nenhum WhatsApp sair.
     const result = await enqueueOffline(input, clientMessageId);
     clearPendingAction(key, clientMessageId);
     return result;

@@ -14,7 +14,7 @@ const log = getLogger('TeamChatNotifications');
  *
  * O listener de notificações tem de viver no nível do app e não dentro de `TeamChatView`:
  * do contrário, quem está em outra tela (ex.: Contatos) não recebe alerta nenhum. Como o
- * listener é ÚNICO, a conversa em foco chega por este store — a view publica o id enquanto
+ * listener é æNICO, a conversa em foco chega por este store — a view publica o id enquanto
  * está montada e o limpa ao sair (o alerta volta a tocar).
  *
  * `getSnapshot` devolve um primitivo estável, requisito do `useSyncExternalStore`.
@@ -41,7 +41,8 @@ export function setActiveTeamChatConversation(conversationId: string | null): vo
   activeConversationListeners.forEach((listener) => listener());
 }
 
-/** Publica (no mount/troca) e limpa (no unmount) a conversa que a view está exibindo. */
+/** Publica (no mount/troca) e limpa (no
++unmount) a conversa que a view está exibindo. */
 export function useActiveTeamChatConversation(conversationId: string | null): void {
   useEffect(() => {
     setActiveTeamChatConversation(conversationId);
@@ -138,6 +139,9 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
   const { showNotification, permission } = usePushNotifications();
   const activeIdRef = useRef(activeConversationId);
+  // HZ5-09: sufixo unico por instancia do hook - o canal nunca e recriado por
+  // mudanca de preferencias (volume, browserNotifications), somente no mount.
+  const channelNameRef = useRef(`team-chat-notifications:${crypto.randomUUID()}`);
 
   useEffect(() => {
     activeIdRef.current = activeConversationId;
@@ -147,7 +151,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
     if (!profile) return;
 
     const channel = supabase
-      .channel('team-chat-notifications')
+      .channel(channelNameRef.current)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -199,10 +203,10 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
         }
 
         // Show browser notification if enabled
-        // HZ3-001: o aviso depende SÓ da permissão do navegador já concedida — o
+        // HZ3-001: o aviso depende SÌ o da permissão do navegador já concedida — o
         // `showNotification` publica pela inscrição do service worker LOCAL
         // (`registration.showNotification`), que não precisa da assinatura de push.
-        // Exigir `isSubscribed` do `usePushNotifications` (que significa "alertas do
+        // Exigir `isSubscribed` do `usePushNotifications` (fque significa "alertas do
         // navegador ligados", `state.isActive`, e só fica ligado com assinatura push)
         // silenciava quem concedeu a permissão e não assinou o push: ficava só com o
         // som. O liga/desliga de avisos do chat interno continua valendo por
@@ -226,7 +230,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
 
           await showNotification({
-            title: `💬 Teams: ${senderName}`,
+            title: `💷 Teams: ${senderName}`,
             body,
             tag: `team-msg-${msg.conversation_id}`,
             data: {
