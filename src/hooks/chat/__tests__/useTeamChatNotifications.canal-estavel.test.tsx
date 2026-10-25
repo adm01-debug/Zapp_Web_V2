@@ -19,7 +19,7 @@ const h = vi.hoisted(() => ({
   erro: null as string | null,
   logWarn: vi.fn(),
   rpc: vi.fn(),
-  show: vi.fn(),
+  notify: vi.fn(),
 }));
 
 vi.mock('@/integrations/supabase/client', () => {
@@ -115,7 +115,11 @@ beforeEach(() => {
   h.logWarn.mockReset();
   h.rpc.mockReset();
   h.rpc.mockResolvedValue({ data: [{ id: 'outro', name: 'Ana' }], error: null });
-  h.show.mockReset();
+  h.notify.mockReset();
+  // A implementação usa new Notification() diretamente; jsdom não define window.Notification.
+  const NotifCtor = function(this: unknown, title: unknown, opts: unknown) { h.notify(title, opts); return { onclick: null }; };
+  (NotifCtor as unknown as { permission: string }).permission = 'granted';
+  Object.defineProperty(window, 'Notification', { value: NotifCtor, writable: true, configurable: true });
 });
 
 afterEach(() => {
@@ -151,7 +155,7 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     await act(async () => { await h.handler!(mensagem()); });
 
     expect(h.fromTables).toContain('team_conversation_members');
-    expect(h.show).toHaveBeenCalledWith(expect.objectContaining({ title: '💬 Teams: Ana' }));
+    expect(h.notify).toHaveBeenCalledWith('💬 Teams: Ana', expect.objectContaining({ body: expect.any(String) }));
   });
 
   it('não notifica nem vai ao banco quando o cache diz que não é membro', async () => {
@@ -163,7 +167,7 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     await act(async () => { await h.handler!(mensagem()); });
 
     expect(h.fromTables).toContain('team_conversation_members');
-    expect(h.show).not.toHaveBeenCalled();
+    expect(h.notify).not.toHaveBeenCalled();
   });
 
   it('cai para o banco quando a conversa não está no cache', async () => {
@@ -173,7 +177,7 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     await act(async () => { await h.handler!(mensagem()); });
 
     expect(h.fromTables).toContain('team_conversation_members');
-    expect(h.show).toHaveBeenCalled();
+    expect(h.notify).toHaveBeenCalled();
   });
 
   it('silencia conversa mutada ainda que esteja em cache', async () => {
@@ -184,7 +188,7 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     renderHook(() => useTeamChatNotifications(null), { wrapper: wrapper(client) });
     await act(async () => { await h.handler!(mensagem()); });
 
-    expect(h.show).not.toHaveBeenCalled();
+    expect(h.notify).not.toHaveBeenCalled();
     expect(h.fromTables).toContain('team_conversation_members');
   });
 
@@ -196,7 +200,7 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     await act(async () => { await h.handler!(mensagem()); });
 
     expect(h.fromTables).toContain('team_conversation_members');
-    expect(h.show).not.toHaveBeenCalled();
+    expect(h.notify).not.toHaveBeenCalled();
     expect(h.logWarn).toHaveBeenCalledWith(
       'Falha ao confirmar participação na conversa; sem notificação:',
       'permission denied',
