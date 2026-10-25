@@ -116,6 +116,11 @@ describe('ResetPassword — 2º fator antes de gravar a senha (t_c3262e42)', () 
     expect(await screen.findByText('Confirme o 2º fator', {}, { timeout: 5000 })).toBeTruthy();
     expect(screen.queryByLabelText('Nova Senha')).toBeNull();
 
+    // O MFAVerify carrega os fatores de forma assíncrona e só verifica um fator já carregado:
+    // digitar antes disso (o runner do CI é mais lento que o notebook) cai em 'Nenhum fator MFA encontrado'.
+    await waitFor(() => expect(h.listFactors).toHaveBeenCalled());
+    await flush();
+
     // O código do autenticador destrava o formulário.
     fireEvent.change(screen.getByLabelText('Código de Verificação'), { target: { value: '123456' } });
 
