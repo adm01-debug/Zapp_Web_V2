@@ -64,6 +64,12 @@ export interface OfflineQueueDrainResult {
 export interface OfflineQueueDrainOptions {
   /** Chamado quando a drenagem falha (sem mensagem quando a leitura da fila falha). */
   onError?: OfflineQueueErrorHandler;
+  /**
+   * Quando fornecido, a drenagem só entrega itens cujo `userId` bata (ou itens sem
+   * `userId`, para compatibilidade com itens gravados antes do campo existir).
+   * `null` ou `undefined` = sem filtro (todos os itens são drenados).
+   */
+  currentUserId?: string | null;
 }
 
 /** Handler de erro da fila: recebe a mensagem quando a falha foi da entrega dela. */
@@ -226,7 +232,10 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
       let sent = 0;
       let pending: OfflineQueuedMessage[];
       try {
-        pending = await list();
+        const all = await list();
+        pending = drainOptions.currentUserId != null
+          ? all.filter((m) => !m.userId || m.userId === drainOptions.currentUserId)
+          : all;
       } catch (error) {
         drainOptions.onError?.(error);
         return { sent: 0, remaining: snapshot };
@@ -338,12 +347,20 @@ export type OnlineScope = Pick<Window, 'addEventListener' | 'removeEventListener
 export function drainOfflineQueueOnReconnect(
   queue: OfflineQueue,
   deliver: (message: OfflineQueuedMessage) => Promise<void>,
-  options: { scope?: OnlineScope | null; onError?: OfflineQueueErrorHandler } = {},
+  options: {
+    scope?: OnlineScope | null;
+    onError?: OfflineQueueErrorHandler;
+    /** Lida no momento do evento — não no registro — para pegar a sessão atual. */
+    getCurrentUserId?: () => string | null;
+  } = {},
 ): () => void {
   const scope = options.scope !== undefined ? options.scope : typeof window === 'undefined' ? null : window;
   if (!scope) return () => {};
   const handleOnline = () => {
-    void queue.drain(deliver, { onError: options.onError });
+    void queue.drain(deliver, {
+      onError: options.onError,
+      currentUserId: options.getCurrentUserId ? options.getCurrentUserId() : undefined,
+    });
   };
   scope.addEventListener('online', handleOnline);
   return () => scope.removeEventListener('online', handleOnline);

@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { invokeEdge } from '@/lib/invokeEdge';
 import { crossTabSendDedupe } from '@/lib/crossTabSendDedupe';
+import { readAuthenticatedUserId } from '@/lib/mediaVolumeStore';
 import {
   drainOfflineQueueOnOpen,
   drainOfflineQueueOnReconnect,
@@ -382,6 +383,7 @@ export function drainOfflineSendQueue(): Promise<OfflineQueueDrainResult | null>
 // Reconciliação ao reconectar (item 025): a fila local drena no evento `online`.
 drainOfflineQueueOnReconnect(offlineSendQueue, deliverQueuedOfflineMessage, {
   onError: avisarFilaOffline,
+  getCurrentUserId: readAuthenticatedUserId,
 });
 
 async function enqueueOffline(
@@ -397,6 +399,7 @@ async function enqueueOffline(
     caption: input.caption ?? null,
     replyToId: input.replyToId ?? null,
     whatsappConnectionId: input.whatsappConnectionId ?? null,
+    userId: readAuthenticatedUserId() ?? undefined,
   });
   // `pending`: a bolha mostra "enviando" até a fila drenar — nada foi entregue ainda.
   return { id: queued.clientMessageId, status: 'pending', externalId: null, idempotent: false };
