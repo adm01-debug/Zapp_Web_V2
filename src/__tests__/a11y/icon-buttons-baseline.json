@@ -84,27 +84,7 @@
       "tag": "Button",
       "snippet": "<Button variant=\"outline\" size=\"icon\" onClick={fetchData} disabled={loading}>"
     },
-    {
-      "file": "src/components/dashboard/WarRoomDashboard.tsx",
-      "line": 76,
-      "column": 44,
-      "tag": "Button",
-      "snippet": "<Button variant=\"ghost\" size=\"icon\" onClick={() => updateSettings({ soundEnabled: !settings.soundEnabled })}>"
-    },
-    {
-      "file": "src/components/dashboard/WarRoomDashboard.tsx",
-      "line": 77,
-      "column": 44,
-      "tag": "Button",
-      "snippet": "<Button variant=\"ghost\" size=\"icon\" onClick={() => setAutoRefresh(!autoRefresh)}>"
-    },
-    {
-      "file": "src/components/dashboard/WarRoomDashboard.tsx",
-      "line": 78,
-      "column": 44,
-      "tag": "Button",
-      "snippet": "<Button variant=\"ghost\" size=\"icon\" onClick={toggleFullscreen}>"
-    },
+
     {
       "file": "src/components/reports/ScheduledReportConfigs.tsx",
       "line": 142,
