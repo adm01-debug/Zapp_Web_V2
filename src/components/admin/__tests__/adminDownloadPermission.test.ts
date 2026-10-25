@@ -37,6 +37,12 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
+const mockInvokeEdge = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/invokeEdge', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/invokeEdge')>()),
+  invokeEdge: mockInvokeEdge,
+}));
+
 vi.mock('sonner', () => ({
   toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() },
 }));
@@ -377,8 +383,10 @@ describe('useAdminData — handleCreateUser com avatar (bucket privado)', () => 
     });
     getSession.mockResolvedValue({ data: { session: { access_token: 'tok' } } });
     Object.assign(supabase.auth, { getSession });
-    fetchMock.mockResolvedValue({ ok: true, json: async () => ({}) });
-    vi.stubGlobal('fetch', fetchMock);
+    // A criação passa por `invokeEdge` (não mais por `fetch` cru).
+    fetchMock.mockReset();
+    mockInvokeEdge.mockReset();
+    mockInvokeEdge.mockImplementation(async (...args: unknown[]) => { fetchMock(...args); return { success: true }; });
   });
 
   afterEach(() => {
@@ -392,15 +400,15 @@ describe('useAdminData — handleCreateUser com avatar (bucket privado)', () => 
     let ok = false;
     await act(async () => {
       ok = await result.current.handleCreateUser({
-        name: 'Novo', email: 'novo@test.com', password: 'abcdef', role: 'agent', avatarFile: file,
+        name: 'Novo', email: 'novo@test.com', password: 'abcdef12', role: 'agent', avatarFile: file,
       });
     });
 
     expect(ok).toBe(true);
     expect(upload).toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toContain('create-user');
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(fetchMock.mock.calls[0][0]).toBe('create-user');
+    const body = (fetchMock.mock.calls[0][1] as { body: { avatar_url: string } }).body;
     expect(body.avatar_url).toMatch(/^[0-9a-f-]{36}\.jpg$/);
     expect(getPublicUrl).not.toHaveBeenCalled();
   });
@@ -413,7 +421,7 @@ describe('useAdminData — handleCreateUser com avatar (bucket privado)', () => 
     let ok = true;
     await act(async () => {
       ok = await result.current.handleCreateUser({
-        name: 'Novo', email: 'novo@test.com', password: 'abcdef', role: 'agent', avatarFile: file,
+        name: 'Novo', email: 'novo@test.com', password: 'abcdef12', role: 'agent', avatarFile: file,
       });
     });
 

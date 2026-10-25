@@ -22,8 +22,14 @@ const h = vi.hoisted(() => {
       );
     return chain;
   };
-  return { toastError, calls, results, makeChain };
+  const invokeEdgeMock = vi.fn();
+  return { toastError, calls, results, makeChain, invokeEdgeMock };
 });
+
+vi.mock('@/lib/invokeEdge', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/invokeEdge')>()),
+  invokeEdge: h.invokeEdgeMock,
+}));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -205,8 +211,8 @@ describe('useAdminData — senha mínima alinhada à Edge create-user', () => {
   });
 
   it('aceita 8 caracteres e chama a Edge', async () => {
-    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
-    vi.stubGlobal('fetch', fetchSpy);
+    // A criação passa por `invokeEdge` (não mais por `fetch` cru).
+    const fetchSpy = h.invokeEdgeMock.mockResolvedValue({ success: true });
     const { result } = renderHook(() => useAdminData('users'));
 
     let ok = false;

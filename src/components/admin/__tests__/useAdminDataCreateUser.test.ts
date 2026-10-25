@@ -14,8 +14,13 @@ const { mockInvokeEdge, mockRefreshSession, mockFrom, mockUpload } = vi.hoisted(
   mockUpload: vi.fn(),
 }));
 
-vi.mock('@/lib/supabaseHelpers', () => ({
+vi.mock('@/lib/invokeEdge', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/invokeEdge')>()),
   invokeEdge: mockInvokeEdge,
+}));
+
+vi.mock('@/integrations/supabase/client', () => ({
+  SUPABASE_URL: 'https://exemplo.supabase.co',
   supabase: {
     auth: { refreshSession: mockRefreshSession },
     from: mockFrom.mockImplementation(() => ({
@@ -86,9 +91,9 @@ describe('useAdminData.handleCreateUser — camada de Edge padrão', () => {
     expect(ok).toBe(true);
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(mockInvokeEdge).toHaveBeenCalledTimes(1);
-    const [fnName, body] = mockInvokeEdge.mock.calls[0];
+    const [fnName, opcoes] = mockInvokeEdge.mock.calls[0];
     expect(fnName).toBe('create-user');
-    expect(body).toMatchObject({
+    expect(opcoes.body).toMatchObject({
       name: 'Ana Souza',
       email: 'ana.souza@exemplo.com',
       role: 'agent',

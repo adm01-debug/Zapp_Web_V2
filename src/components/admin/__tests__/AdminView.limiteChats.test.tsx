@@ -47,6 +47,8 @@ vi.mock('../useAdminData', () => ({
     handleSaveUser,
     handleCreateUser: vi.fn(),
   }),
+  AUDIT_PAGE_SIZE: 50,
+  MIN_PASSWORD_LENGTH: 8,
   accessLevelConfig: {
     basic: { label: 'Básico', description: '' },
     standard: { label: 'Padrão', description: '' },

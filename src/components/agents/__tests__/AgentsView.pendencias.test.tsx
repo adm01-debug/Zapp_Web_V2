@@ -156,6 +156,14 @@ vi.mock('@/hooks/crm/useAgentPresence', () => ({
 }));
 
 // t_227e36d1: o InviteAgentDialog (composto pela tela) lê o papel do usuário.
+// A tela compõe o cabeçalho de conexões (store global com realtime `channel`); aqui
+// só importa a capacidade/pendências, então a fonte de conexões fica neutra.
+vi.mock('@/hooks/connections/useConnectionsHealth', () => ({
+  useConnectionsHealth: () => ({
+    connections: [], loading: false, error: null, refetchConnections: vi.fn(), refresh: vi.fn(),
+  }),
+}));
+
 vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({ isAdmin: true, isSupervisor: true, loading: false }),
 }));

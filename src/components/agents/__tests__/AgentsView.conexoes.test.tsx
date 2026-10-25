@@ -105,6 +105,11 @@ vi.mock('@/hooks/crm/useAgentPresence', () => ({
   useAgentPresenceMap: () => ({}),
 }));
 
+// O InviteAgentDialog (composto pela tela) lê o papel do usuário.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, isSupervisor: true, loading: false }),
+}));
+
 import { AgentsView } from '@/components/agents/AgentsView';
 
 function renderView() {
