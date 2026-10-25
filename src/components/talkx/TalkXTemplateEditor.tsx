@@ -629,6 +629,11 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab
             </div>
           </div>
 
+          <div>
+            <Label htmlFor="tpl-desc" className="text-xs text-foreground-secondary">Descrição</Label>
+            <Input id="tpl-desc" value={eDesc} onChange={(e) => setEDesc(e.target.value)} placeholder="Breve descrição do template (opcional)" className="mt-1.5 h-10 bg-input/40 border-border/70" />
+          </div>
+
           {/* Mensagem (V26: mesmo editor do passo 2 do wizard) */}
           <div>
             <Label className="text-xs text-foreground-secondary">Mensagem</Label>

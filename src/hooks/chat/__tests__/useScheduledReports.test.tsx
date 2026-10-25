@@ -432,7 +432,7 @@ describe('useScheduledReports — gravação', () => {
 
     await act(async () => { await hook.result.current.toggleActive('rel-1', false); });
 
-    expect(toastError).toHaveBeenCalledWith('Erro ao ativar/desativar relatório');
+    expect(toastError).toHaveBeenCalledWith('Erro ao atualizar o relatorio');
     expect(logError).toHaveBeenCalled();
     expect(toastSuccess).not.toHaveBeenCalled();
   });
