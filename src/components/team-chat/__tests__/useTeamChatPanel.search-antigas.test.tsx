@@ -142,13 +142,13 @@ describe('useTeamChatPanel — busca server-side, erro com retry e antigas recon
     expect(f.state.rpcCalls[0][1]).toMatchObject({
       p_conversation_id: 'conv-a',
       p_query: 'segredo',
-      p_limit: 100,
+      p_limit: 50,
     });
 
     // A antiga NÃO está em `messages` (janela carregada) e mesmo assim aparece.
     expect(result.current.messages.map(m => m.id)).toEqual(['m-nova']);
     expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-antiga']);
-    expect(result.current.searchError).toBe(false);
+    expect(result.current.searchError).toBeFalsy();
     expect(result.current.isSearchingMessages).toBe(false);
   });
 
@@ -173,7 +173,7 @@ describe('useTeamChatPanel — busca server-side, erro com retry e antigas recon
     act(() => { result.current.setShowSearch(true); result.current.setSearchQuery('segredo'); });
     await avancar();
 
-    expect(result.current.searchError).toBe(true);
+    expect(result.current.searchError).toBeTruthy();
     expect(result.current.isSearchingMessages).toBe(false);
 
     f.state.rpcHandler = () => Promise.resolve({ data: [row('m-antiga', 'segredo antigo')], error: null });
@@ -181,7 +181,7 @@ describe('useTeamChatPanel — busca server-side, erro com retry e antigas recon
     await avancar(0);
 
     expect(f.state.rpcCalls).toHaveLength(2);
-    expect(result.current.searchError).toBe(false);
+    expect(result.current.searchError).toBeFalsy();
     expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-antiga']);
   });
 

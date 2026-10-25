@@ -283,7 +283,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       const { data, error } = await supabase.rpc('search_team_messages', {
         p_conversation_id: conversationId,
         p_query: searchTerm,
-        p_limit: 100,
+        p_limit: 50,
       });
       if (cancelado) return;
       if (error) {
@@ -339,13 +339,14 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   // busca dela ainda está pendente.
   const serverSearchMatches = serverSearch?.conversationId === conversation.id
     && serverSearch?.term === searchTerm;
-  const searchError = Boolean(
-    searchActive && !searchBelowMinChars
-    && serverSearchError?.conversationId === conversation.id
-    && serverSearchError?.term === searchTerm,
-  );
+  const searchError: string | null =
+    searchActive && !searchBelowMinChars && serverSearchError
+    && serverSearchError.conversationId === conversation.id
+    && serverSearchError.term === searchTerm
+      ? serverSearchError.message
+      : null;
   const isSearchingMessages = searchActive && !searchBelowMinChars && !searchError && !serverSearchMatches;
-  const searchIsCapped = Boolean(serverSearchMatches && serverSearch && (serverSearch.results.length ?? 0) >= 100);
+  const searchIsCapped = Boolean(serverSearchMatches && serverSearch && (serverSearch.results.length ?? 0) >= 50);
 
   const filteredMessages = useMemo(() => {
     if (!searchActive || searchBelowMinChars) return messages;
