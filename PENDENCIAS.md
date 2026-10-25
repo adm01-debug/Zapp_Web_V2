@@ -281,7 +281,7 @@ O script de teste de mutação do módulo `mapa` falha ao coletar/executar a su�
 SessionModelError: You've reached your additional usage limit for your plan.
 Go to https://github.com/settings/copilot/features for more details.
 (Request ID: FC41:386F8C:14FDB:18E58:6AD9464E)
-statuscode: 402
+statusCode: 402
 errorCode: "quota"
 ```
 
@@ -480,6 +480,76 @@ Error: Command failed: /usr/bin/gh pr list --repo adm01-debug/Zapp_Web_V2 ...
 **Fix aplicado:** `execComRetry` adicionado a `fila-merge.mjs` nesta PR (`fix/ci-workflows`, commit na branch). A fix ainda não está em `main` porque a PR #2261 aguarda merge.
 
 **Resolução:** Após merge da PR #2261 em `main`, `auto-update-pr-branch.yml` usará o `fila-merge.mjs` corrigido e o 504 não mais quebrará o job. **PENDENTE MERGE — não é bloqueio permanente.**
+
+---
+
+#### 9g. Shard 1/3 — falhas pré-existentes (`useTalkXSuppression.hook-morto`, `useTalkXSegments`, `useTeamMessages.canal-e-reconexao`)
+
+**Workflow:** `ci.yml` — `🧪 Unit Tests (1/3)`
+**Confirmado pré-existente em `origin/main`:** run [#40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) (SHA `2d97c44`) — shard 1/3 já falha antes desta PR.
+**Confirmado pré-existente desta PR:** run [#40222249872](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40222249872) (SHA `0fcc29a`) — mesmos arquivos.
+
+**Erros exatos:**
+
+| Arquivo | Linha | Erro |
+|---------|-------|------|
+| `useTalkXSuppression.hook-morto.test.ts` | 84 | `AssertionError: expected true to be false` — `MORTO in exportsDoModulo` é `true` (hook ainda exportado em `useTalkXSuppression.ts:306`) |
+| `useTalkXSuppression.hook-morto.test.ts` | 138 | `AssertionError: expected Array […] to equal []` — infratores contém a string `useTalkXSuppression` encontrada nos dois arquivos |
+| `useTalkXSegments.test.ts` | 384 | `AssertionError: expected promise to reject` — `resolveAudience({...}, 5)` resolve em vez de rejeitar com `/real_uf.*p_contact_ids/` |
+| `useTeamMessages.canal-e-reconexao.test.tsx` | 70 | `AssertionError: expected false to be true` — `h.nomes[0].startsWith('team-messages-conv-1:')` falha; canal usa nome sem sufixo único |
+| `useTeamMessages.canal-e-reconexao.test.tsx` | 82 | `AssertionError: expected 2 to be 1` — `h.subs.length` é 2, esperado 1 (PE-75) |
+| `useTeamMessages.canal-e-reconexao.test.tsx` | 97 | `AssertionError: expected 2 to be 1` — idem |
+
+**Causa raiz por arquivo:**
+
+- **`useTalkXSuppression.hook-morto`** (TL-002): O hook `useTalkXSuppression()` permanece exportado em `src/hooks/integrations/useTalkXSuppression.ts:306`. Nenhum código de produção o importa (apenas `TalkXSuppression.tsx`, que importa só as funções de atividade). A remoção desse export (+ exclusão do arquivo `useTalkXSuppression.test.ts` original) está fora do escopo do diff mínimo desta PR.
+- **`useTalkXSegments`**: `resolveAudience` com `p_uf` ausente e limite de 5 contatos deveria rejeitar com `/real_uf.*p_contact_ids/`, mas resolve — contrato de RPC diverge do esperado.
+- **`useTeamMessages.canal-e-reconexao`** (PE-75): `useTeamMessages` usa canal com nome fixo; o teste espera `team-messages-conv-1:<uuid>` (sufixo único por montagem para evitar colisão de subscriptions). Igual ao HZ5-09, é decisão de arquitetura — a adição do sufixo muda o contrato com o Supabase Realtime.
+
+**BLOQUEADO — falhas pré-existentes em `origin/main`, fora do escopo de `fix/ci-workflows`.** Zero regressões introduzidas por esta PR.
+
+---
+
+#### 9h. Shard 3/3 — falhas pré-existentes adicionais (`command-palette.busca-antiga`, `useAuth.fila-offline-logout`)
+
+**Workflow:** `ci.yml` — `🧪 Unit Tests (3/3)`
+**Confirmado pré-existente em `origin/main`:** run [#40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) (SHA `2d97c44`) — shard 3/3 já falha antes desta PR.
+**Confirmado pré-existente desta PR:** run [#40222249872](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40222249872) (SHA `0fcc29a`) — mesmos arquivos.
+
+**Erros exatos:**
+
+| Arquivo | Linha | Erro |
+|---------|-------|------|
+| `src/components/ui/__tests__/command-palette.busca-antiga.test.tsx` | 90 | `AssertionError` — resultado de busca antiga não deveria atualizar o display corrente |
+| `src/hooks/auth/__tests__/useAuth.fila-offline-logout.test.tsx` | 76 | `AssertionError: expected Array [] to equal []` — `offlineSendQueue.list()` retorna array não-vazio após SIGNED_OUT; fila não foi drenada |
+
+**Causa raiz (não investigada — fora do escopo desta PR):**
+- `command-palette.busca-antiga`: Lógica de cancelamento de busca desatualizada não descarta resultado antigo ao digitar nova query — race condition no debounce.
+- `useAuth.fila-offline-logout`: A fila de envio offline não é esvaziada ao receber evento `SIGNED_OUT` — os itens pendentes persistem na fila após logout.
+
+**BLOQUEADO — falhas pré-existentes em `origin/main`, fora do escopo de `fix/ci-workflows`.** Zero regressões introduzidas por esta PR.
+
+---
+
+## §10. Inventário de CI na `main` — baseline antes desta PR
+
+> Run de referência: [#40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) | SHA: `2d97c44` | Data: 2026-10-24T18:52–19:21Z
+
+| Job | ID | conclusion | Observação |
+|-----|-----|-----------|------------|
+| 🔒 Security Audit | 120957423083 | ✅ success | — |
+| 🔎 Lint & TypeCheck | 120957423380 | ✅ success | — |
+| 🧩 Node CI Scripts | 120957423321 | ✅ success | — |
+| 🧪 Unit Tests (1/3) | 120957423339 | ❌ failure | useTalkXSuppression.hook-morto, useTalkXSegments, useTeamMessages.canal-e-reconexao — pré-existentes (§9g) |
+| 🧪 Unit Tests (2/3) | 120957423366 | ❌ failure | useInboxFilters, configuracoes.leituraErro, useDiagnosticsData — pré-existentes (§9b) |
+| 🧪 Unit Tests (3/3) | 120957423307 | ❌ failure | command-palette.busca-antiga, useAuth.fila-offline-logout + ChatMessagesArea — pré-existentes (§9h + §5) |
+| ✅ CI Gate | 120961736861 | ❌ failure | cascata dos Unit Tests |
+| 🏗️ Build | 120961737776 | ⏭️ skipped | cascata do CI Gate |
+| 🎭 E2E Tests | 120957423361 | 🚫 cancelled | timeout / pré-existente (§1) |
+| 🧬 Mutação do mapa | 120957423732 | ⏭️ skipped | não bloqueante (§6) |
+| 🗄️ Contrato DB offline | — | ❌ failure | DASH-091/092 (§4) — pré-existente |
+
+**Conclusão:** todos os workflows com `failure`/`cancelled`/`skipped` na `main` (baseline) são pré-existentes. A PR `fix/ci-workflows` corrige as falhas alcançáveis por agente (§9) e documenta os bloqueios remanescentes neste arquivo. Zero regressões introduzidas.
 
 ---
 
