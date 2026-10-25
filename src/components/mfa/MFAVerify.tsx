@@ -69,10 +69,10 @@ export function MFAVerify({
   };
 
   useEffect(() => {
-    if (code.length === 6 && !verifying) {
+    if (code.length === 6 && !verifying && factors.length > 0) {
       void handleVerify();
     }
-  }, [code]);
+  }, [code, factors]);
 
   return (
     <Card className="w-full max-w-md mx-auto">
