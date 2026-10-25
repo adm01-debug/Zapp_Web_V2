@@ -721,7 +721,7 @@ function WizardRail({ ed }: { ed: WizardState }) {
   // X131 — o público do resumo vem do SERVIDOR (a mesma RPC que decide o disparo), nunca de
   // contagem local. Sem recorte consultável (origem sem filtro, segmento não escolhido, regras
   // incompletas) o resumo é "indisponível" e mostra "—", nunca um "0" que pareça contagem real.
-  const completeRules = useMemo(() => completedRules(ed.audienceRules), [ed.audienceRules]);
+  const completeRules = useMemo(() => completedRules(ed.audienceRules ?? { groups: [] }), [ed.audienceRules]);
   const hasRules = completeRules.groups.some((group) => group.rules.length > 0);
   const summarySegmentIds = ed.audienceSource === 'segment' ? ed.segmentIds : [];
   const hasSegments = summarySegmentIds.length > 0;

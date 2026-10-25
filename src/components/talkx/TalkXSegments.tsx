@@ -50,11 +50,14 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const [pageSize, setPageSize] = useState(8);
   const [selectedRow, setSelected] = useState<TalkXSegment | null>(null);
   // X116 — o painel lê o segmento pela id na lista em cache: favoritar/editar na tabela
-  // reflete sem novo clique. A cópia guardada só vale enquanto a lista não a devolve.
-  const selected = useMemo(
-    () => (selectedRow ? segments.find((s) => s.id === selectedRow.id) ?? selectedRow : null),
-    [selectedRow, segments],
-  );
+  // reflete sem novo clique. Vale a cópia MAIS NOVA (`updated_at`): a linha que o banco devolveu
+  // no Salvar (#408) não pode ser trocada por uma cópia velha da lista que ainda não recarregou.
+  const selected = useMemo(() => {
+    if (!selectedRow) return null;
+    const fromList = segments.find((s) => s.id === selectedRow.id);
+    if (!fromList) return selectedRow;
+    return fromList.updated_at >= selectedRow.updated_at ? fromList : selectedRow;
+  }, [selectedRow, segments]);
   const selectedIdRef = useRef<string | null>(null);
   useEffect(() => { selectedIdRef.current = selected?.id ?? null; }, [selected?.id]);
   // Linhas/cartões da biblioteca: o Esc do painel devolve o foco ao que o abriu.

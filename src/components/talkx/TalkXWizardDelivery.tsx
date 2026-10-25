@@ -93,7 +93,7 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
           <div><Label className="text-xs text-foreground-secondary">Início da janela</Label><Input type="time" value={ed.sendWindowStart} onChange={(e) => ed.setSendWindowStart(e.target.value)} className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
           <div><Label className="text-xs text-foreground-secondary">Fim da janela</Label><Input type="time" value={ed.sendWindowEnd} onChange={(e) => ed.setSendWindowEnd(e.target.value)} className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
           <div className="rounded-xl border border-primary/30 bg-primary/10 p-3 flex items-start gap-2.5">
-            <Clock className="w-4 h-4 text-primary-glow shrink-0 mt-0.5" />
+            <Clock className="w-4 h-4 text-[hsl(var(--primary-text))] shrink-0 mt-0.5" />
             <div><p className="text-xs font-semibold text-foreground">Envios apenas neste período</p><p className="text-2xs text-foreground-secondary">Fora da janela, o envio pausa e retoma automaticamente no próximo início ({ed.sendWindowStart}), no fuso {ed.scheduleTimezone}.</p></div>
           </div>
         </div>
@@ -126,7 +126,7 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
               <Slider value={ed.sendInterval} onValueChange={ed.setSendInterval} min={3} max={60} step={1} />
             </div>
             <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 flex items-start gap-2.5">
-              <Sliders className="w-4 h-4 text-primary-glow shrink-0 mt-0.5" />
+              <Sliders className="w-4 h-4 text-[hsl(var(--primary-text))] shrink-0 mt-0.5" />
               <div><p className="text-xs font-semibold text-foreground">Simulação humana ativa</p><p className="text-2xs text-foreground-secondary">~{ed.messagesPerMinute} mensagens/min · {ed.estimatedTime ? `duração estimada ${ed.estimatedTime}` : 'selecione o público para estimar a duração'}.</p></div>
             </div>
           </div>
