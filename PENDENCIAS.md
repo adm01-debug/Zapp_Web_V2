@@ -152,13 +152,59 @@ Mock `window.Notification` como constructor (função regular, não arrow). Conf
 
 ---
 
+### Shard 1/3 — CI run 40209433848 (run posterior, distribuição diferente de shards)
+
+**PRÉ-EXISTENTE — `TalkXOverview.table.test.tsx` (10 falhas):**  
+Arquivo não está no diff desta branch. O arquivo de produção `TalkXOverview.tsx` ESTÁ no diff, mas a única mudança é `aria-label="Ações"` → `` `Ações de ${c.name}` `` — o teste referencia "Ações" como texto de coluna, não como aria-label de botão (`grep -n "Ações" src/components/talkx/__tests__/TalkXOverview.table.test.tsx` retorna header de coluna, não seletor de botão). Falha pré-existente não relacionada ao diff.
+
+**PRÉ-EXISTENTE — `TalkXSegments.viewMode.test.tsx` (2 falhas):**  
+Arquivo não está no diff desta branch. `useTalkXSegments.ts` está no diff mas as alterações (guards `assertNoSinguFields`, retornos null em `ruleToFilter`) não afetam os testes de viewMode (modo de visualização de UI). Falha pré-existente.
+
+**PRÉ-EXISTENTE — `TalkXTemplateEditor.campos.test.tsx` (3 falhas):**  
+Arquivo não está no diff desta branch. Falha pré-existente.
+
+**PRÉ-EXISTENTE — `TalkXTemplatesRail.test.tsx` (1 falha):**  
+Arquivo não está no diff desta branch. Falha pré-existente.
+
+**PRÉ-EXISTENTE — `TalkXWizardReview.lifecycle.test.tsx` (6 falhas):**  
+Arquivo não está no diff desta branch. Falha pré-existente.
+
+---
+
+### Shard 3/3 — CI run 40209433848 (run posterior, distribuição diferente de shards)
+
+**PRÉ-EXISTENTE — `VoiceChangerPicker.aria.test.tsx` e `VoiceChangerPicker.voz-temporaria.test.tsx`:**  
+Arquivos não estão no diff desta branch. Falhas pré-existentes.
+
+**PRÉ-EXISTENTE — `useChatMediaSending.audio-meme-falha.test.ts`:**  
+Arquivo não está no diff desta branch. Falha pré-existente.
+
+**PRÉ-EXISTENTE — `PasswordResetRequestsPanel.acesso-negado.test.tsx`:**  
+Arquivo não está no diff desta branch. Falha pré-existente.
+
+**PRÉ-EXISTENTE — `AvatarUpload.invalidacao.test.tsx` e `SettingsView.test.tsx`:**  
+Arquivos não estão no diff desta branch. Falhas pré-existentes.
+
+**PRÉ-EXISTENTE — `WorkItemSheet.fuso.test.tsx`:**  
+Arquivo não está no diff desta branch. Falha pré-existente.
+
+**PRÉ-EXISTENTE — `TalkXAnalytics.kpis.test.tsx`:**  
+Arquivo não está no diff desta branch. Falha pré-existente.
+
+**PRÉ-EXISTENTE — `TalkXSegments.detailPanel.test.tsx` e `TalkXSegments.route.test.tsx`:**  
+Arquivos não estão no diff desta branch. `useTalkXSegments.ts` está no diff mas as alterações (guards `assertNoSinguFields`, `comingSoon: true`, retornos null em `ruleToFilter`) não são relacionadas à lógica de navegação de rota ou painel de detalhe testada nesses arquivos. Falhas pré-existentes.
+
+---
+
 **Confirmação global de não-introdução por este PR:**  
-`git diff origin/main --name-only` não inclui nenhum dos arquivos de teste acima. Cada arquivo de produção relacionado (`useInboxFilters.ts`, `App.tsx`, `VolumeDial.tsx`, etc.) igualmente ausente do diff.
+`git diff origin/main --name-only` não inclui nenhum dos arquivos de teste acima. Cada arquivo de produção relacionado (`useInboxFilters.ts`, `App.tsx`, `VolumeDial.tsx`, etc.) igualmente ausente do diff. Os arquivos de produção alterados nesta branch (`TalkXOverview.tsx`, `useTalkXSegments.ts`) têm mudanças mínimas que não podem causar as falhas observadas (confirmado por análise do conteúdo do diff e grep nos arquivos de teste).
 
 **Ação necessária (bloqueios remanescentes):**  
 1. `useInboxFilters.ts`: corrigir `handleContactTypeChange(null)` para remover `type` da URL — resolve shard 2/3 parcialmente.  
 2. `App.tsx` / `DeferredProviders`: adicionar `AuthProvider` wrapper no teste ou mock `useAuth` — resolve shard 3/3 parcialmente.  
 3. `TalkXTemplates.route.test.tsx`: investigar lógica de troca de template na URL do editor.  
+4. Módulo Talk X (TalkXOverview, TalkXSegments, TalkXTemplateEditor, TalkXTemplatesRail, TalkXWizardReview, TalkXAnalytics): múltiplas falhas pré-existentes em tests de UI do módulo — requerem investigação dos componentes respectivos.  
+5. VoiceChangerPicker, useChatMediaSending, PasswordResetRequestsPanel, AvatarUpload, SettingsView, WorkItemSheet: falhas pré-existentes distribuídas aleatoriamente entre shards.  
 Todas requerem investigação fora do escopo desta sessão.
 
 ---
@@ -194,7 +240,7 @@ Não é required check de PR e não bloqueia merge.
 O job `ci-gate` em `ci.yml` tem `if: always()` e `needs: [typecheck, unit-tests, node-scripts, build, security]`. Quando `unit-tests` retorna `failure` (pré-existente, §6), o `ci-gate` detecta e falha com `exit 1`:
 
 ```bash
-if [["${{ needs.unit-tests.result }}" == "failure"]]; then
+if [["${{ needs.unit-tests.result }}" == "failure" ]]; then
   echo "FALHA: unit-tests falhou" && exit 1
 fi
 ```
