@@ -47,6 +47,10 @@ vi.mock('@/components/effects/EasterEggs', () => ({
 vi.mock('@/components/team-chat/TeamChatNotificationsListener', () => ({
   TeamChatNotificationsListener: h.listener,
 }));
+// O App chama useAuth e o alerta global de mensagens em DeferredProviders; como AppProviders é
+// neutralizado aqui, o assunto (listener do Team Chat) não depende de nenhum dos dois.
+vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ profile: null }) }));
+vi.mock('@/hooks/realtime/useGlobalIncomingMessageAlerts', () => ({ useGlobalIncomingMessageAlerts: vi.fn() }));
 vi.mock('@/hooks/system/useServiceWorker', () => ({ useServiceWorker: vi.fn() }));
 vi.mock('@/hooks/ui/useScreenProtection', () => ({ useScreenProtection: vi.fn() }));
 
@@ -62,11 +66,18 @@ vi.mock('@/components/team-chat/NewConversationDialog', () => ({ NewConversation
 vi.mock('@/components/ui/button', () => ({
   Button: ({ children }: { children: React.ReactNode }) => React.createElement('button', null, children),
 }));
-vi.mock('lucide-react', () => ({ MessageSquare: () => null, Users: () => null, Plus: () => null }));
+vi.mock('lucide-react', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('lucide-react')>()),
+  MessageSquare: () => null,
+  Users: () => null,
+  Plus: () => null,
+}));
 vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
+    span: ({ children }: { children: React.ReactNode }) => React.createElement('span', null, children),
   },
+  useReducedMotion: () => false,
 }));
 
 import App from '@/App';
