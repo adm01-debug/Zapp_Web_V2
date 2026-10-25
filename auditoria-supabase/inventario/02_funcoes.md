@@ -17,7 +17,7 @@
 ## Funções com SQL Dinâmico (12 — lidas individualmente)
 
 | Função | Risco | Detalhes |
-|--------|-------|---------|
+|--------|-------|----------|
 | `mcp_exec` | R2-mitigado | SECURITY DEFINER; EXECUTE com SQL literal do caller; MIME check + require admin; risco residual documentado (MEDIUM-7) |
 | `talkx_audience_query` | R1 | SECURITY DEFINER; column names via `format(%I)` mas whitelist presente; input validado antes do EXECUTE |
 | `purge_talkx_expired_data` | R0 | `format(%L)` para literais — imune a injeção por design do format |

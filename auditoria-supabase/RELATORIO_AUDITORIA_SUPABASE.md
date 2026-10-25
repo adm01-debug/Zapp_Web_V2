@@ -740,7 +740,7 @@ GROUP BY c.relname, c.relrowsecurity ORDER BY c.relname;
 **Nota importante — distinção repo vs produção**: O schema das migrations do repo usa isolamento por `contact_id`/`assigned_to`, **não** `organization_id`. O `organization_id` é drift exclusivo de produção (ausente em todas as 1055 migrations do repo, confirmado por grep). Os testes abaixo refletem o comportamento real das migrations do repo.
 
 | # | Operação | Usuário | Alvo | Resultado | Conclusão |
-|---|----------|---------|------|-----------|-----------|
+|---|----------|---------|------|-----------|----------|
 | T-01 | SELECT messages | user-a | contato de user-a | 2 linhas | ✅ PASS — isolamento positivo OK |
 | T-02 | SELECT messages | user-a | contato de user-b | 0 linhas | ✅ PASS — isolamento negativo OK |
 | T-C2 | UPDATE contact_id A→B (USING contact_id IN user contacts) | user-a | msgs do contato-A | **0 rows updated** — "new row violates row-level security" | ✅ PASS — CRITICAL-2 não manifesta no schema migrations |

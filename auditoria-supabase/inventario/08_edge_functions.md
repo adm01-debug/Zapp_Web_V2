@@ -94,7 +94,7 @@ Todas verificadas individualmente. Nenhuma sem mecanismo de autenticação alter
 ### IA / LLM (R0/R1)
 
 | Função | Risco | Auth confirmada |
-|--------|-------|-----------------|
+|--------|-------|------------------|
 | `ai-auto-tag` | R0 | requireAuth + sanitizeString + isValidUUID |
 | `ai-churn-analysis` | R0 | manual authHeader + getUser() |
 | `ai-classify-tickets` | R0 | manual authHeader + getUser() |
@@ -110,7 +110,7 @@ Todas verificadas individualmente. Nenhuma sem mecanismo de autenticação alter
 ### ElevenLabs tokens e síntese (R0)
 
 | Função | Auth confirmada |
-|--------|-----------------|
+|--------|------------------|
 | `elevenlabs-agent-token` | requireAuth + enforceRateLimit |
 | `elevenlabs-dialogue` | requireAuth + enforceRateLimit |
 | `elevenlabs-scribe-token` | requireAuth + enforceRateLimit |
@@ -123,7 +123,7 @@ Todas verificadas individualmente. Nenhuma sem mecanismo de autenticação alter
 ### Voz / IA de voz (R0)
 
 | Função | Auth confirmada |
-|--------|-----------------|
+|--------|------------------|
 | `automation-suggest-reply` | requireAuth |
 | `classify-audio-meme` | requireAiIdentity (_shared/ai-auth.ts) |
 | `classify-emoji` | requireAiIdentity |
