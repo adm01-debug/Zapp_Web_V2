@@ -112,13 +112,14 @@ describe('ResetPassword — 2º fator antes de gravar a senha (t_c3262e42)', () 
 
     cenario();
 
-    expect(await screen.findByText('Confirme o 2º fator')).toBeTruthy();
+    // Prazo de 5 s (o padrão de 1 s estoura com o runner do CI carregado): só dá mais tempo, não relaxa nada.
+    expect(await screen.findByText('Confirme o 2º fator', {}, { timeout: 5000 })).toBeTruthy();
     expect(screen.queryByLabelText('Nova Senha')).toBeNull();
 
     // O código do autenticador destrava o formulário.
     fireEvent.change(screen.getByLabelText('Código de Verificação'), { target: { value: '123456' } });
 
-    expect(await screen.findByLabelText('Nova Senha')).toBeTruthy();
+    expect(await screen.findByLabelText('Nova Senha', {}, { timeout: 5000 })).toBeTruthy();
     expect(screen.queryByText('Confirme o 2º fator')).toBeNull();
     expect(h.verify).toHaveBeenCalledWith({ factorId: 'f1', challengeId: 'ch1', code: '123456' });
   });
