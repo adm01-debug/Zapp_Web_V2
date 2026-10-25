@@ -616,14 +616,14 @@ export function TalkXTemplateEditor({ templates, isLoading, isError = false, err
             <div>
               <Label className="text-xs text-foreground-secondary">Categoria</Label>
               <Select value={eCat} onValueChange={setECat}>
-                <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Categoria" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
                 <SelectContent>{TEMPLATE_CATEGORIES.map((c) => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
               <Label className="text-xs text-foreground-secondary">Status</Label>
               <Select value={eStatus} onValueChange={(v) => setEStatus(v as 'draft' | 'review' | 'approved')}>
-                <SelectTrigger className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Status" className="mt-1.5 h-10 bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(TEMPLATE_STATUS).map(([v, m]) => <SelectItem key={v} value={v}>{m.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>

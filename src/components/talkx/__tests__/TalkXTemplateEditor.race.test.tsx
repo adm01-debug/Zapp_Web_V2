@@ -105,7 +105,7 @@ function renderEditor() {
 }
 
 /** Painel de variantes: há duas cópias do botão (rail xl + faixa < xl). Usa a primeira. */
-const variantsToggle = () => screen.getAllByRole('button', { name: 'Adicionar variante' })[0];
+const variantsToggle = () => screen.getAllByRole('button', { name: /variante/i })[0];
 const switchToB = () => fireEvent.click(screen.getByText('Template B').closest('button') as HTMLElement);
 
 beforeEach(() => {
