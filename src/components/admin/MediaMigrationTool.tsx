@@ -2,16 +2,6 @@ import { useState } from 'react';
 import { useMediaMigrationData } from '@/hooks/admin/useMediaMigrationData';
 import { invokeEdge } from '@/lib/invokeEdge';
 import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 
 interface MigrationResult {
@@ -28,7 +18,6 @@ interface MigrationError {
 
 export function MediaMigrationTool() {
   const { pending, logs, profiles } = useMediaMigrationData();
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<MigrationResult | null>(null);
   const [migError, setMigError] = useState<MigrationError | null>(null);
@@ -62,28 +51,9 @@ export function MediaMigrationTool() {
         {pending.type === 'error' && 'Não foi possível contar as mídias pendentes'}
       </div>
 
-      <Button onClick={() => setDialogOpen(true)} disabled={running}>
+      <Button onClick={executeMigration} disabled={running}>
         Iniciar Migração
       </Button>
-
-      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Iniciar a migração de mídia?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {pending.type === 'ok'
-                ? `${pending.count} mídias aguardam migração`
-                : 'Mídias aguardam migração'}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={executeMigration}>
-              Iniciar migração
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {running && (
         <div>
@@ -98,6 +68,13 @@ export function MediaMigrationTool() {
 
       {result && !running && (
         <div>
+          <div
+            role="progressbar"
+            aria-label="Progresso da migração"
+            aria-valuenow={result.processed > 0 ? Math.round((result.migrated / result.processed) * 100) : 0}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          />
           <p>Processados</p>
           <p>{result.processed}</p>
           <p>{result.migrated} migrados</p>

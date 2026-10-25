@@ -6,7 +6,17 @@ import { supabase } from '@/integrations/supabase/client';
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: () => ({ select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }) }),
+    from: () => ({
+      select: () => ({
+        like: async () => ({ count: 0, error: null }),
+        eq: () => ({
+          order: () => ({
+            limit: async () => ({ data: [], error: null }),
+          }),
+        }),
+        in: async () => ({ data: [], error: null }),
+      }),
+    }),
     functions: { invoke: vi.fn() },
   },
 }));
