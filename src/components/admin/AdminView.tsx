@@ -90,7 +90,7 @@ export function AdminView() {
 
   useEffect(() => {
     if (activeTab !== 'cron' || !isAdmin) return;
-    void (supabase.rpc('admin_list_cron_jobs') as unknown as Promise<{ data: CronJob[] | null; error: unknown }>)
+    void (supabase.rpc as unknown as (name: string) => Promise<{ data: CronJob[] | null; error: unknown }>)('admin_list_cron_jobs')
       .then(({ data, error }) => { if (!error && data) setCronJobs(data); });
   }, [activeTab, isAdmin]);
 
