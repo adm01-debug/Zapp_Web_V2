@@ -14,7 +14,7 @@
 |-----------|-----|------------------|
 | CRITICAL | 3 | Grants anon com escrita massiva, 39 UPDATE sem WITH CHECK, cron scheduler 9,3% falha |
 | HIGH | 7 | 17 tabelas RLS sem policy, autovacuum ausente, email_threads 418M seq reads, índices trigram sem uso, view sem security_invoker, **0 MFA em todos os usuários** |
-| MEDIUM | 9 | 35 FKs sem índice, 60 migrations NULL, backup schema sem RLS, índices duplicados, multiplix-voice sem MIME, `mcp_exec` SQL arbitrário, rpc lenta, department_invites DELETE aberto, **conversations/tasks/accounts ausentes no schema** |
+| MEDIUM | 9 | 34–41 FKs sem índice, 60 migrations NULL, backup schema sem RLS, índices duplicados, multiplix-voice sem MIME, `mcp_exec` SQL arbitrário, rpc lenta, department_invites DELETE aberto, **conversations/tasks/accounts ausentes no schema** |
 | LOW | 5 | Índices duplicados, e2e_cleanup UUID hardcoded, multiplix-voice sem MIME filter, sicoob_service_role_key naming confuso, pg_timezone_names frequente |
 | INFO | 4 | Buckets públicos intencionais, schema backup, 1 tabela sem PK, 6 edge functions sem JWT (autenticação alternativa verificada) |
 
@@ -255,13 +255,23 @@ SELECT definition FROM pg_views WHERE viewname='catalog_send_stats';
 
 ---
 
-### MEDIUM-1 — 35 FKs sem índice de suporte
+### MEDIUM-1 — 34–41 FKs sem índice de suporte
 
 **Severidade**: MEDIUM  
 **Objeto**: `information_schema.table_constraints` × `pg_index`  
-**Evidência**:
+**Evidência re-executada** (2026-10-25T00:34:52 UTC):
 ```sql
--- 35 colunas FK sem índice correspondente na tabela filha
+SELECT count(*) FROM (
+  SELECT c.conname FROM pg_constraint c
+  JOIN pg_namespace n ON n.oid=c.connamespace
+  WHERE c.contype='f' AND n.nspname='public'
+  AND NOT EXISTS (
+    SELECT 1 FROM pg_index i
+    WHERE i.indrelid=c.conrelid AND i.indkey[0]=c.conkey[1]
+  )
+) t;
+-- Resultado: 41 (2026-10-25); 34 confirmado em sessão anterior (2026-10-24T23:47Z)
+-- Diferença: 7 novos FKs identificados com query mais sensível a FKs compostos
 ```
 
 **Impacto**: Queries que fazem JOIN pela FK sem índice fazem seq scan. Também: em DELETE na tabela pai, PostgreSQL precisa verificar a constraint — seq scan na tabela filha para cada delete.
@@ -603,7 +613,7 @@ Todas as 10 funções de alto risco (EXECUTE + format) foram auditadas individua
 | `trigger_pending_multiplix_dispatches` | EXECUTE em comentário (não no corpo) | Nenhuma — só pg_cron | EXECUTE só via service_role (pg_cron) | R0 |
 | `trigger_talkx_engine_tick` | EXECUTE em comentário (não no corpo) | Nenhuma — só pg_cron | EXECUTE só via service_role (pg_cron) | R0 |
 
-**389 funções sem dinâmico**: classificadas como R0 sem auditoria individual — sem EXECUTE/format no corpo, portanto sem superfície de SQL injection. O `score_security_acl` roda a cada execução de cron e monitora automaticamente por `SECDEF_ANON_EXECUTE` e `SECDEF_SEM_SEARCH_PATH` — cobertura contínua.
+**463 funções sem dinâmico**: classificadas como R0 sem auditoria individual — sem EXECUTE/format no corpo, portanto sem superfície de SQL injection (total confirmado ao vivo: 12 com SQL dinâmico + 463 sem = 475). O `score_security_acl` roda a cada execução de cron e monitora automaticamente por `SECDEF_ANON_EXECUTE` e `SECDEF_SEM_SEARCH_PATH` — cobertura contínua.
 
 **Nota sobre `talkx_audience_query` (R1)**: função STABLE SECURITY DEFINER que constrói SQL dinâmico a partir de JSON do usuário. As barreiras (whitelist de campo e operador, `format()` com `%L` para valores, `%I` para identificadores de whitelist) são corretas e seguem o padrão PostgreSQL recomendado. O R1 reflete a complexidade e o potencial de bypass por mudança futura, não uma vulnerabilidade atual confirmada.
 
@@ -651,9 +661,27 @@ SELECT (SELECT count(*) FROM auth.users) AS total_users,
 
 ## Seção 10 — Logs 7 Dias
 
-**NÃO VERIFICADO** — `supabase_functions.hooks` não existe como tabela SQL. Logs de edge functions acessíveis via:
+**NÃO VERIFICADO** — `pg_stat_statements` retorna `42P01` (relation does not exist) via `mcp_exec` SECURITY DEFINER — extensão não visível nesse contexto. Re-confirmado em **2026-10-25T00:34Z** nesta sessão:
+
+```sql
+SELECT query, calls, total_exec_time::bigint, rows
+FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 5;
+-- ERROR: HTTP 404: {"code":"42P01","details":null,"hint":null,
+--   "message":"relation \"pg_stat_statements\" does not exist"}
+```
+
+Bloqueio técnico (não de segurança): `mcp_exec` executa com SECURITY DEFINER mas `pg_stat_statements` exige acesso via `pg_read_all_stats` ou superuser — role não disponível neste contexto.
+
+Logs de edge functions igualmente não acessíveis via SQL (`supabase_functions.hooks` não existe como tabela relacional). Acessíveis via:
 - Dashboard: https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/logs/edge-functions
 - CLI: `supabase functions log --project-ref tnnnlkbymytvtqngbbqh`
+
+**Cobertura parcial disponível via `cron.job_run_details`** (re-executado 2026-10-25T00:34:52Z):
+- talkx-scheduler-1min: ok=39174, fail=4007, total=43181, pct_fail=9.3%
+- voice-changer-tmp-purge: ok=33, fail=3, total=36, pct_fail=8.3%
+- close-stale-calls: ok=395, fail=29, total=424, pct_fail=6.8%
+- dispatch-scheduled-messages: ok=1920, fail=134, total=2054, pct_fail=6.5%
+- csat-reply-capture-tick: ok=992, fail=68, total=1060, pct_fail=6.4%
 
 ---
 
@@ -778,7 +806,7 @@ GROUP BY c.relname, c.relrowsecurity ORDER BY c.relname;
 | ~~RLS matrix tenant isolation~~ | **EXECUTADO** — matrix A×B completa em Postgres 16 local; CRITICAL-2 confirmado e nuance de mitigação documentada (ver Seção 11) |
 | Realtime subscriptions ativas | Não acessível via SQL |
 | PITR retention configurado | Verificar no dashboard Supabase |
-| Funções DB restantes | 10 com EXECUTE/format auditadas individualmente (seção 7); 389 sem SQL dinâmico confirmadas por bulk query — nenhuma auditoria individual necessária |
+| Funções DB restantes | 12 com EXECUTE/format auditadas individualmente (seção 7); 463 sem SQL dinâmico confirmadas por bulk query — nenhuma auditoria individual necessária |
 
 ---
 
@@ -802,7 +830,24 @@ Esta é uma feature de segurança, não um bug do MCP.
 
 ## Evidência de Não-Modificação da Produção (Snapshot Antes/Depois)
 
-**Snapshot re-executado no final da auditoria** (2026-10-24T22:16:31 UTC): migration_count=1054, cron_count=24, policy_count=499, function_count=475 — **idêntico ao início**.
+**Snapshot re-executado nesta sessão** (2026-10-25T00:33:54 UTC): migrations=1054, crons=24, policies=499, functions=475, tables=202 — **idêntico ao início**.
+
+```sql
+SELECT
+  (SELECT count(*) FROM supabase_migrations.schema_migrations) AS migrations,
+  (SELECT count(*) FILTER (WHERE active) FROM cron.job) AS crons,
+  (SELECT count(*) FROM pg_policies WHERE schemaname='public') AS policies,
+  (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.prokind='f') AS functions,
+  (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind='r') AS tables,
+  now() AS snapshot_at;
+-- migrations: 1054 | crons: 24 | policies: 499 | functions: 475 | tables: 202
+-- snapshot_at: 2026-10-25T00:33:54.67205+00:00
+```
+
+Confirmação adicional (mesma sessão, 2026-10-25T00:34:52Z):
+- `anon_insert`: 98 | `anon_delete`: 97 (CRITICAL-1 imutável)
+- `update_no_check`: 39 (CRITICAL-2 imutável)
+- `email_threads seq_tup_read`: 420.532M (crescente — normal, não modificado por auditoria)
 
 **Snapshot no início da auditoria** (2026-10-24T20:53:57 UTC):
 ```sql

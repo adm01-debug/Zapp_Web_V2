@@ -25,7 +25,7 @@
     "TOTAL": 28
   },
   "corrections_this_session": {
-    "section7_count": "463 sem SQL dinâmico (não 389 como afirmado em sessão anterior); 12 com dinâmico; total=475",
+    "section7_count": "463 sem SQL dinâmico (não 389 como afirmado em sessão anterior); 12 com dinâmico; total=475 — corrigido no RELATORIO (linha 616) e na tabela NÃO VERIFICADO (linha 809) em 2026-10-25",
     "section4_tables_no_pk": "1 tabela sem PK (_zapp_fn_before), não 4 como afirmado",
     "high6_drift": "29 tabelas identificadas faltando em types.ts + 2 _-prefixo desconhecidas = 31 total; produção=202, types.ts=171",
     "high5_email_threads": "seq_tup_read=420.341.864 (atualizado em 2026-10-25)",
@@ -36,7 +36,7 @@
   "not_verified_items": {
     "pg_stat_statements_top20": "42P01 via mcp_exec SECURITY DEFINER — re-confirmado 2026-10-24T23:47Z; bloqueio técnico, não segurança",
     "edge_function_logs_7d": "supabase_functions.hooks não acessível via SQL; logs via dashboard ou CLI",
-    "rls_tenant_isolation_prod_sql": "BEGIN/SET LOCAL/ROLLBACK não suportados via mcp_exec (0A000); matrix A×B executada em Postgres 16 local com as migrations do repo — CRITICAL-2 confirmado nesse ambiente",
+    "rls_tenant_isolation_prod_sql": "BEGIN/SET LOCAL/ROLLBACK não suportados via mcp_exec (0A000); matrix A×B executada em Postgres 16 local com as migrations do repo — CRITICAL-2 confirmado; script SQL entregue em testes/01_rls_matrix.sql",
     "edge_deployed_vs_repo": "list_edge_functions não disponível via MCP nesta sessão; repo confirmado em 83 funções via ls supabase/functions/"
   },
   "evidence_final_session": {
@@ -58,14 +58,14 @@
     "section9_vault_names": "13 vault secret names confirmados: ai_jobs_cron_secret, avatars_refresh_cron_secret, connection_health_check_cron_secret, gmail_cron_secret, gmail_encryption_key, multiplix_cron_secret, multiplix_send_url, sicoob_service_role_key, talkx_anon_key, talkx_cron_secret, talkx_scheduler_url, talkx_send_url, zapp_anon_key — sem valores expostos",
     "section9_enums_sequences": "10 enums (max 8 labels); 4 sequences todas 0.00% uso (bigint max) — sem risco de overflow",
     "section11_backup_rls": "_bkp_261023:9 tabelas, ops_backup:1 — sem RLS confirmado",
-    "section11_matrix_full": "T-01 a T-05 PASS (SELECT isolation), T-06 PASS (INSERT WITH CHECK), T-07 PASS (SECURITY DEFINER), T-C2 CONFIRMADO (CRITICAL-2 cross-tenant UPDATE), T-08 PASS (is_member_of mitigation), T-09 PASS (DELETE isolation) — per inventario/03_policies.md",
+    "section11_matrix_full": "T-01 a T-05 PASS (SELECT isolation), T-06 PASS (INSERT WITH CHECK), T-07 PASS (SECURITY DEFINER), T-C2 CONFIRMADO (CRITICAL-2 cross-tenant UPDATE), T-08 PASS (is_member_of mitigation), T-09 PASS (DELETE isolation) — per inventario/03_policies.md; script SQL completo entregue em testes/01_rls_matrix.sql; roteiro atualizado em testes/rls_matrix_roteiro.md",
     "section12_e2e_uuid": "aaa9b766-3b72-403d-95ad-f9cd7301ebca em migrations/20261009142650 e 20261015200000",
     "section12_dept_invites": "department_invites DELETE qual=true confirmado ao vivo",
     "git_history_scan": "git log --all -p _shared/: apenas valores de teste (service-role-key-de-teste, fake-service-role-local) — nenhum segredo real no histórico (confirmado 2026-10-25)",
     "grep_auditoria_clean": "grep -r em auditoria-supabase/: matches são nomes de vault secrets, nomes de tabelas, nomes de funções — zero PII ou valores de credencial reais (confirmado 2026-10-25)",
     "production_not_modified": "migrations=1054, crons=24, policies=499, db_functions=475, tabelas=202 — delta ZERO entre snapshot inicial (2026-10-24T20:53:57Z) e verificação final (2026-10-25)"
   },
-  "last_updated": "2026-10-25T00:00:00Z",
+  "last_updated": "2026-10-25T01:00:00Z",
   "production_snapshot_initial": {
     "snapshot_at": "2026-10-24T20:53:57Z",
     "migration_count": 1054,

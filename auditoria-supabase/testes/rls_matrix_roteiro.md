@@ -1,8 +1,8 @@
 # Roteiro — Teste de Matriz RLS (Isolamento entre Tenants)
 
-**Status**: EXECUTADO em Postgres 16 local (2026-10-24) — ver CRITICAL-2 e Seção 11 do relatório  
+**Status**: EXECUTADO — Postgres 16 local em 2026-10-24 (ver resultados em `01_rls_matrix.sql`)  
 **Data do roteiro**: 2026-10-24  
-**Referência**: Achado CRITICAL-2 / Seção 11 do relatório
+**Referência**: CRITICAL-2 / Seção 11 do RELATORIO_AUDITORIA_SUPABASE.md
 
 ---
 
@@ -10,9 +10,9 @@
 
 A matriz completa de RLS exige executar queries como diferentes roles
 (`anon`, `authenticated`, `service_role`) simulando JWTs reais. Isso
-não pode ser feito no banco de produção via `mcp_exec` (SECURITY DEFINER
-bloquia `SET LOCAL role` com erro 0A000). O roteiro abaixo usa um Postgres
-local com as policies reais auditadas.
+não pode ser feito no banco de produção (proibido escrever dados de teste
+em produção). O roteiro abaixo usa um Postgres local com as migrations
+do repo aplicadas.
 
 ---
 
@@ -79,7 +79,7 @@ SELECT count(*) FROM public.conversations;
 RESET ROLE;
 ```
 
-### Cenário D — Políticas UPDATE sem WITH CHECK (CRITICAL-2)
+### Cenário D — Políticas UPDATE sem WITH CHECK
 
 ```sql
 -- Para cada tabela com UPDATE policy sem WITH CHECK (39 tabelas):
@@ -103,24 +103,9 @@ RESET ROLE;
 
 ---
 
-## Resultados (Executado 2026-10-24 em Postgres 16 local)
-
-| # | Operação | Usuário | Alvo | Resultado | Conclusão |
-|---|----------|---------|------|-----------|----------|
-| T-01 | SELECT messages | user-a | Tenant A | 1 linha | ✅ PASS |
-| T-02 | SELECT messages | user-a | Tenant B | 0 linhas | ✅ PASS |
-| T-03 | SELECT messages | user-b | Tenant B | 1 linha | ✅ PASS |
-| T-04 | SELECT whatsapp_connections | user-a | Tenant A | 1 linha | ✅ PASS |
-| T-05 | SELECT whatsapp_connections | user-a | Tenant B | 0 linhas | ✅ PASS |
-| T-06 | INSERT com org_id Tenant B | user-a | Tenant B | ERROR — violação WITH CHECK | ✅ PASS |
-| T-07 | INSERT whatsapp_connections com org_id Tenant B | user-a | Tenant B | ERROR — violação WITH CHECK | ✅ PASS |
-| T-C2 | UPDATE organization_id A → B (SELECT policy = user_id) | user-a | Tenant A | **UPDATE 2** | ⛔ CRITICAL-2 CONFIRMADO |
-| T-08 | UPDATE organization_id A → B (SELECT policy = is_member_of) | user-a | Tenant A | UPDATE 0 | ✅ MITIGADO |
-| T-09 | DELETE mensagem Tenant B | user-a | Tenant B | DELETE 0 | ✅ PASS |
-
----
-
 ## Tabelas Prioritárias para Testar
+
+Baseado no volume e criticidade:
 
 | Prioridade | Tabela | Motivo |
 |-----------|--------|--------|
@@ -151,14 +136,30 @@ node scripts/db-audit/run-rls-tests.mjs \
 
 ## Critério de Aprovação
 
-- [x] T-C2 confirmado: tabela com SELECT usando user_id (sem org_id) é vulnerável — CRITICAL-2
-- [x] T-08 mitigado: is_member_of em USING cobre implicit WITH CHECK
-- [x] Nenhum cenário A/B/C falhou inesperadamente
-- [ ] Executar cenários A-D para todas as P1 tabelas (depende de staging/local com dados reais)
+- [ ] Nenhum cenário B retorna INSERT bem-sucedido para anon
+- [ ] Nenhum cenário D permite atualizar account_id para outro tenant
+- [ ] Cenário A retorna somente linhas do account correto
+- [ ] Cenário C não retorna 0 para admin do próprio account
 
 ---
 
-## Resultado Esperado do Achado CRITICAL-2
+## Resultado da Execução — CRITICAL-2 CONFIRMADO (2026-10-24, Postgres 16 local)
 
-Os 39 UPDATEs sem WITH CHECK foram confirmados como exploráveis quando SELECT usa apenas `user_id`.
-Migração corretiva: ver `propostas/02_rls_with_check.sql`.
+```
+T-01: PASS — user-a vê dados do Tenant A
+T-02: PASS — user-a não vê dados do Tenant B
+T-03: PASS — user-b vê dados do Tenant B
+T-06: PASS — INSERT cross-tenant bloqueado
+T-C2: *** CRITICAL-2 CONFIRMADO *** — UPDATE 2 linhas com org_id de Tenant B
+T-08: PASS — is_member_of implicit WITH CHECK bloqueia (UPDATE 0)
+T-09: PASS — DELETE cross-tenant bloqueado
+```
+
+Script SQL completo: `testes/01_rls_matrix.sql`
+
+Se os 39 UPDATEs sem WITH CHECK forem confirmados como exploráveis,
+gerar migration corretiva antes de aplicar em produção:
+
+```sql
+-- Ver propostas/02_rls_with_check.sql para o template
+```
