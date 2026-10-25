@@ -13,7 +13,7 @@
  * como espiões. A medida de layout entra porque o jsdom não dá altura ao
  * contêiner de rolagem e o virtualizador não renderizaria linhas.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
@@ -276,6 +276,10 @@ beforeEach(() => {
 afterEach(() => {
   medir.mockRestore();
 });
+
+beforeAll(async () => {
+  await import('@/components/inbox/ChatPanel');
+}, 120_000);
 
 describe('ChatPopup — o balão real renderiza os campos do Message (R2-INB-023)', () => {
   it('mensagem apagada rende o placeholder, não o balão ativo', async () => {

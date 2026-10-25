@@ -28,6 +28,17 @@ import { useConnectionsManager } from '@/hooks/inbox/useConnectionsManager';
 /** E42 — texto único da trava de nova conexão (cabeçalho e estado vazio). */
 const MULTI_CONNECTION_LOCKED_MESSAGE = 'Múltiplas conexões ainda não estão habilitadas neste sistema';
 
+function formatPhoneNumber(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  const local = digits.startsWith('55') ? digits.slice(2) : digits;
+  if (local.length === 11) {
+    return `+55 ${local.slice(0, 2)} ${local.slice(2, 7)}-${local.slice(7)}`;
+  } else if (local.length === 10) {
+    return `+55 ${local.slice(0, 2)} ${local.slice(2, 6)}-${local.slice(6)}`;
+  }
+  return digits.length > 0 ? `+${digits}` : '';
+}
+
 export function ConnectionsView() {
   const reduzido = useReducedMotion() ?? false;
   const {
@@ -37,6 +48,7 @@ export function ConnectionsView() {
     syncingHistory, setSyncingHistory, evolutionLoading,
     handleAddConnection, handleShowQrCode, handleRefreshQrCode,
     handleCopyId, handleDisconnect, handleSetDefault, handleDelete, closeQrDialog,
+    addConnectionError, clearAddConnectionError,
   } = useConnectionsManager();
 
   // Trava a criação de conexão nova até o token por instância (Vault) estar
@@ -56,7 +68,7 @@ export function ConnectionsView() {
   // criava a conexão inoperante (token perdido, QR da PRINCIPAL) que a trava
   // existe para impedir.
   const openAddConnectionDialog = () => {
-    if (multiConnectionEnabled) setIsAddDialogOpen(true);
+    if (multiConnectionEnabled) { clearAddConnectionError(); setIsAddDialogOpen(true); }
   };
 
   const [businessHoursDialog, setBusinessHoursDialog] = useState({ open: false, connectionId: '', connectionName: '' });
@@ -113,7 +125,7 @@ export function ConnectionsView() {
       <PageHeader title="Conexões WhatsApp" subtitle="Gerencie múltiplas conexões WhatsApp via Evolution API"
         breadcrumbs={[{ label: 'Configurações' }, { label: 'Conexões' }]}
         actions={
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={(open) => { if (!open) clearAddConnectionError(); setIsAddDialogOpen(open); }}>
             <DialogTrigger asChild>
               <Button
                 className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"
@@ -126,10 +138,11 @@ export function ConnectionsView() {
             <DialogContent aria-describedby={undefined} className="sm:max-w-md">
               <DialogHeader><DialogTitle>Adicionar Nova Conexão</DialogTitle><DialogDescription>Crie uma nova instância para conectar ao WhatsApp</DialogDescription></DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => setNewConnection({ ...newConnection, name: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Número do WhatsApp</Label><Input placeholder="+55 11 99999-0000" value={newConnection.phone_number} onChange={(e) => setNewConnection({ ...newConnection, phone_number: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => { clearAddConnectionError(); setNewConnection({ ...newConnection, name: e.target.value }); }} /></div>
+                <div className="space-y-2"><Label>Número do WhatsApp</Label><Input placeholder="+55 11 99999-0000" value={newConnection.phone_number} onChange={(e) => { clearAddConnectionError(); setNewConnection({ ...newConnection, phone_number: formatPhoneNumber(e.target.value) }); }} /></div>
+                {addConnectionError && <p role="alert" data-testid="add-connection-error" className="text-sm text-destructive">{addConnectionError}</p>}
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isCreating}>Cancelar</Button>
+                  <Button variant="outline" onClick={() => { clearAddConnectionError(); setIsAddDialogOpen(false); }} disabled={isCreating}>Cancelar</Button>
                   <Button onClick={handleAddConnection} className="bg-whatsapp hover:bg-whatsapp-dark" disabled={isCreating}>
                     {isCreating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Criando...</> : 'Adicionar'}
                   </Button>

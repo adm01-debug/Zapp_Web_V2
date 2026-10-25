@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 
 const rootDir = fileURLToPath(new URL(".", import.meta.url));
 
+process.env.TZ = 'America/Sao_Paulo';
+
 export default defineConfig({
   plugins: [react()],
   test: {
