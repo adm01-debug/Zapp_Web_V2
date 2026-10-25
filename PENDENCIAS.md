@@ -1,6 +1,6 @@
 # Pendências de CI — Bloqueios Técnicos
 
-**Atualizado em:** 2026-10-24  
+**Atualizado em:** 2026-10-25  
 **Branch:** `claude_05/brave-mccarthy-zvzky4`
 
 ---
@@ -55,12 +55,10 @@ Verificar se existe PR `automation/types-sync` aberta. Se sim, mergear após con
 **Confirmação de que NÃO é introduzido por este PR:**  
 Grep de arquivos da branch: nenhum arquivo alterado nesta branch toca `department_audit_logs`, `department_audit_logs_action_check` ou `request_department_access`. A falha preexiste no estado do banco local de CI antes desta sessão.
 
-**Nota de rastreabilidade:** API `github_get_job_logs` com grep retornou vazio para o job 120883119029 (run 40097637001 da `main`, 16.305 linhas) — os logs do container de teste não são acessíveis via filtro de linha da API. As evidências acima (nomes de constraint e função) derivam da análise do run registrada na sessão anterior e serão confirmadas ou substituídas pelo resultado do `Contrato DB offline` no PR atual (job 120909387980, em andamento no momento desta escrita).
-
 **Ação necessária:**  
 1. Atualizar a migration de `department_audit_logs` para incluir `'whatsapp_updated'` e `'access_requested'` na constraint (ou remover a constraint e adotar ENUM/trigger).  
 2. Criar migration para a função `request_department_access` no banco local de CI.  
-Ambas requerem investigação de schema e arquivos de migration — fora do escopo desta sessão de correção de workflows gerais.
+Ambas requerem investigação de schema e arquivos de migration — fora do escopo desta sessão.
 
 ---
 
@@ -80,7 +78,7 @@ Os testes esperam um botão/modal "Ajuda do Talk X" que não está implementado 
 Nenhum arquivo alterado nesta branch toca `talkx-visual.spec.ts` nem componentes de UI Talk X relacionados à funcionalidade "Ajuda". A falha é em testes de feature não implementada.
 
 **Ação necessária:**  
-Implementar o componente/modal "Ajuda do Talk X" (`e2e/talkx-visual.spec.ts:186,197`) no módulo Talk X — fora do escopo desta sessão de correção de CI.
+Implementar o componente/modal "Ajuda do Talk X" (`e2e/talkx-visual.spec.ts:186,197`) no módulo Talk X — fora do escopo desta sessão.
 
 ---
 
@@ -97,6 +95,30 @@ Qualquer PR do repositório dispara o mesmo check; o erro é quota da conta, nã
 
 **Ação necessária (Joaquim):**  
 Verificar o plano Copilot e a quota de PR reviews no GitHub Settings → Copilot. O check falha enquanto a quota não for renovada. Não bloqueia merge (não é required check).
+
+---
+
+## 6. Unit Tests — Falhas Pré-existentes
+
+**Status:** BLOQUEIO TÉCNICO — falhas pré-existentes nos testes unitários  
+**Checks afetados:** `🧪 Unit Tests (1/3)`, `🧪 Unit Tests (2/3)`, `🧪 Unit Tests (3/3)` (required checks via CI Gate)
+
+**Causa exata por shard (HEAD `998df22ae`):**
+
+**Shard 1/3 — `useTalkXSegments.test.ts` (4 testes: linhas 341, 371, 384, 398):**  
+Os testes esperam comportamento fail-closed para campos `real_sector`/`real_uf` — erro ao chamar `rulesToPostgrest`, `countAudience` e `resolveAudience` com esses campos. A validação não está implementada na fonte. A `main` tem 6 falhas no mesmo arquivo; esta branch tem 4 — **melhora de 2 testes** ao marcar `lead_origin` como `comingSoon: true`.
+
+**Shard 2/3:** `configuracoes.leituraErro.test.tsx`, `useDiagnosticsData.select.test.ts` — pré-existentes, confirmados por diff.
+
+**Shard 3/3:** `useTeamChatPanel.search-antigas.test.tsx` — pré-existente, confirmado por diff. (O fix do aria-label em `TalkXOverview.tsx:371` resolveu o teste anterior de shard 3/3; a redistribuição de shard expôs este pré-existente.)
+
+**Confirmação de que NÃO são introduzidas por este PR:**  
+`git diff origin/main..origin/claude_05/brave-mccarthy-zvzky4 --name-only` — nenhum dos arquivos de teste com falha aparece na lista. A `main` tem mais falhas nos mesmos arquivos do que esta branch.
+
+**Ação necessária:**  
+1. Implementar validação fail-closed para `real_sector`/`real_uf` em `useTalkXSegments.ts` (`ruleToFilter`, `countAudience`, `resolveAudience`) — resolve shard 1/3.  
+2. Investigar e corrigir falhas em `configuracoes.leituraErro.test.tsx`, `useDiagnosticsData.select.test.ts`, `useTeamChatPanel.search-antigas.test.tsx`.  
+Ambas fora do escopo desta sessão.
 
 ---
 
