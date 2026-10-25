@@ -145,3 +145,48 @@ Comparação entre os arquivos que falham na `main` (run #40122006424) e na PR (
 | `🏗️ Build` | [40217337125](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40217337125) | Gate bloqueado por Unit Tests | Idem Unit Tests |
 
 *Atualizado em 2026-10-25.*
+
+---
+
+## 7. Inventário completo — todos os workflows do repositório
+
+Run de referência da `main` (baseline): [#40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) — 2026-10-24 — SHA `2d97c44`.
+
+| Workflow | Último run | Conclusão | Data | SHA | Erro principal | Bloqueio |
+|---|---|---|---|---|---|---|
+| `ci.yml` | [40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) | ❌ failure | 2026-10-24T18:43Z | `2d97c44` | Unit Tests (3 shards) pré-existentes + Contrato DB offline (DASH-091/092) | Pré-existente / Regra 8 |
+| `db-guard.yml` | [40122006482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006482) | ❌ failure | 2026-10-24T18:43Z | `2d97c44` | `sanitize_reset_request()` referencia `NEW.reset_token` (coluna inexistente) | DASH-091/092 → Regra 8 |
+| `db-live-guard.yml` | [39212157834](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39212157834) | ❌ failure | 2026-10-19T06:49Z | `ee294749` | Drift contrato vivo — artifact 163 KB; diagnóstico requer `DESTINO_URL` | Regra 8 + §9e |
+| `auto-update-pr-branch.yml` | [40221119033](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40221119033) | ❌ failure | 2026-10-25T18:24Z | `2d97c44` | HTTP 504 em `fila-merge.mjs:126` — fix em `fix/ci-workflows`, pendente merge | **FIXADO PENDENTE MERGE** |
+| `deploy-functions.yml` | [40097636982](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40097636982) | ❌ failure | 2026-10-24T13:19Z | `e51662a9` | `No files were found: /tmp/.../edge-deployment-evidence-public/` — job pausado aguardando aprovação | Regra 8 + §9c |
+| `types-sync.yml` | [40169860237](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40169860237) | ❌ failure | 2026-10-25T06:39Z | `2d97c44` | `supabase-usage-guard` bloqueou sync — novas violações downstream de DASH-091/092 | DASH-091/092 + §9d |
+| `supabase-sync.yml` | [33826753352](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/33826753352) | ❌ failure | 2026-09-04T01:42Z | — | Secret `LEGACY_IMPORT_UNLOCK` não existe — **desarmado deliberadamente** (CLAUDE.md) | Não é falha operacional |
+| `branch-hygiene-audit.yml` | [39220130783](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39220130783) | ⚫ cancelled | 2026-10-19T08:04Z | `ee294749` | Cancelado por schedule | Não é falha de código |
+| `settings-guard.yml` | [38901696564](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/38901696564) | ✅ success | 2026-10-16T12:36Z | — | — | — |
+| `talkx-status-regen.yml` | [40122006445](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006445) | ✅ success | 2026-10-24T18:43Z | `2d97c44` | — | — |
+| `codeql.yml` | [39591085204](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39591085204) | ✅ success | 2026-10-21T11:19Z | — | — | — |
+| `targeted-ledger-evidence.yml` | [36041611976](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/36041611976) | ✅ success | 2026-09-24T18:29Z | — | — | — |
+| `crm-sync-worker.yml` | [35717413825](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/35717413825) | ⏭️ skipped | 2026-09-22T10:41Z | — | Schedule comentado — deliberado (CLAUDE.md) | — |
+| `e2e-logado.yml` | (via ci.yml gate) | ⏭️ / ❌ | — | — | 4 testes de geolocalização pré-existentes (§1 PENDENCIAS.md) | Pré-existente |
+| `e2e-talkx.yml` | (via ci.yml gate) | ⏭️ | — | — | Rodando mas gate principal é `ci.yml` | — |
+
+**Workflows dinâmicos (sem arquivo próprio):**
+
+| Workflow | Origem | Estado |
+|---|---|---|
+| Dependabot Updates | GitHub gerenciado | Ativo (PRs automáticas de dependências) |
+| Dependency Graph | GitHub gerenciado | Ativo |
+| Copilot Reviewer | GitHub App | Ativo onde configurado |
+
+### Resumo por categoria
+
+| Categoria | Count | Workflows |
+|---|---|---|
+| ✅ Verdes (success/skipped deliberado) | 6 | settings-guard, talkx-status-regen, codeql, targeted-ledger-evidence, crm-sync-worker (skip intencional), supabase-sync (desarmado intencional) |
+| **FIXADO NESTA PR** | 1 | auto-update-pr-branch (fila-merge.mjs execComRetry — pendente merge) |
+| ❌ BLOQUEADO — Regra 8 / Joaquim | 4 | db-guard (DASH-091/092), db-live-guard (drift produção), deploy-functions (aprovação gate), types-sync (downstream DASH-091/092) |
+| ❌ BLOQUEADO — pré-existente em main | 2 | ci.yml Unit Tests (11 arquivos), e2e-logado (4 testes geolocalização) |
+| ❌ BLOQUEADO — produto/arquitetura | 1 | HZ5-09 (useTeamChatNotifications — §9a PENDENCIAS.md) |
+| ⚫ Cancelado/não-operacional | 1 | branch-hygiene-audit (cancelled por schedule) |
+
+*Atualizado em 2026-10-25.*
