@@ -43,7 +43,7 @@ vi.mock('../useAdminData', () => ({
     loading: false,
     auditTotal: 0,
     error: null,
-    fetchData: vi.fn(),
+    fetchData: fetchDataSpy,
     handleRoleChange: vi.fn(),
     handleToggleActive: vi.fn(),
     handleSaveUser: vi.fn(),
@@ -127,7 +127,7 @@ describe('AdminView — abas acessíveis e busca no lugar certo (N-064)', () => 
   it('expõe tablist nomeado, 8 abas (a de Tarefas agendadas entra só para admin) e painel rotulado pela aba ativa', () => {
     render(<AdminView />);
     expect(screen.getByRole('tablist', { name: 'Seções da administração' })).toBeInTheDocument();
-    expect(screen.getAllByRole('tab')).toHaveLength(3);
+    expect(screen.getAllByRole('tab')).toHaveLength(4);
     expect(screen.getByRole('tab', { name: /Usuários/ })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'tab-users');
   });

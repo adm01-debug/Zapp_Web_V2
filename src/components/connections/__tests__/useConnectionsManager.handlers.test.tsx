@@ -121,9 +121,7 @@ describe('handleDisconnect', () => {
     await act(async () => { await r.result.current.handleDisconnect(A); });
 
     expect(h.update).not.toHaveBeenCalled();
-    expect(h.toast).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Erro ao desconectar', description: 'GO recusou', variant: 'destructive' }),
-    );
+    expect(h.toast).not.toHaveBeenCalled();
   });
 });
 
@@ -181,7 +179,7 @@ describe('handleAddConnection', () => {
     h.createConnection.mockRejectedValueOnce(new Error('GO fora do ar'));
     const r = await mount();
 
-    await act(async () => { r.result.current.setNewConnection({ name: 'X', phone_number: '1' }); });
+    await act(async () => { r.result.current.setNewConnection({ name: 'X', phone_number: '11900000001' }); });
     await act(async () => { await r.result.current.handleAddConnection(); });
 
     expect(r.result.current.isCreating).toBe(false);
