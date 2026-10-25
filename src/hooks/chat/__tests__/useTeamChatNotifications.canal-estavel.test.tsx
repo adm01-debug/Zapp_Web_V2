@@ -60,7 +60,7 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
 
 vi.mock('@/hooks/system/usePushNotifications', () => ({
   usePushNotifications: () => ({
-    showNotification: (...args: unknown[]) => h.show(...args),
+    showNotification: (...args: unknown[]) => h.notify(...args),
     isSubscribed: true,
     permission: 'granted',
   }),
