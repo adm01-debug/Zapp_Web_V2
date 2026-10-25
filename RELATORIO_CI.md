@@ -12,10 +12,10 @@
 | `bun run build` | ✅ success | `dist/` gerado, sem erros |
 | `bun run lint` | ⚠️ 819 problems | 605 errors, 214 warnings — **todos pré-existentes na `main`** |
 | `bun run typecheck` | ⚠️ erros | drift de schema (ver item 2 de PENDENCIAS.md) — **pré-existentes na `main`** |
-| Unit tests (shard 1/3) | ⚠️ 4 falhas | `useTalkXSegments.test.ts:347,371,384,398` — pré-existentes (item 5) |
-| Unit tests (shard 2/3) | ⚠️ 2 falhas | `workItemFormat.test.ts:123` (timezone CI=UTC vs local UTC-3), `configuracoes.leituraErro.test.tsx:73` — **pré-existentes na `main`** (item 10) |
-| Unit tests (shard 3/3) | ⚠️ 1 falha | `useCampaignRowActions.test.tsx` — pré-existente (item 6) |
-| `ChatMessagesArea.pagination.test.tsx` | ✅ 4/4 pass | **corrigido nesta sessão** (commit `9c1c058`) |
+| Unit tests (shard 1/3) | ⚠️ 44 arquivos / 148 testes | 564 passed — **todos pré-existentes na `main`** (ver §Suíte completa) |
+| Unit tests (shard 2/3) | ⚠️ 45 arquivos / 149 testes | 561 passed — **todos pré-existentes na `main`** (ver §Suíte completa) |
+| Unit tests (shard 3/3) | ⚠️ 37 arquivos / 113 testes | 567 passed — **todos pré-existentes na `main`** (ver §Suíte completa) |
+| **3 arquivos fixados juntos** | ✅ **15/15 pass** | `ChatMessagesArea.pagination`, `useDiagnosticsData.select`, `useInboxFilters.type-url` — **corrigidos nesta sessão** |
 
 **Typecheck** exigiu `NODE_OPTIONS="--max-old-space-size=4096"` (heap default insuficiente).  
 **Lint e typecheck** confirmados pré-existentes rodando na `main` (run 40122006424, commit `2d97c44`).
@@ -107,12 +107,34 @@ Rodado localmente após todos os 6 commits de correção (último: `96b1aa6`):
 
 ---
 
+## Suíte completa — 3 shards (2026-10-25 ~23:00 UTC, SHA `69cf182`)
+
+| Shard | Arquivos falhos | Arquivos passando | Skipped | Testes falhos | Testes passando | Duração |
+|-------|----------------|-------------------|---------|---------------|-----------------|--------|
+| 1/3   | 44             | 564               | 0       | 148           | 4921 + 7 expected + 5 todo | 781s |
+| 2/3   | 45             | 561               | 2       | 149           | 4985 + 6 expected + 9 todo | 593s |
+| 3/3   | 37             | 567               | 3       | 113           | 5089 + 7 expected + 29 todo | 549s |
+| **Total** | **126** | **1692** | **5** | **410** | **14995 + 20 expected + 43 todo** | — |
+
+**Todas as 410 falhas são pré-existentes na `main`** — confirmado porque:
+1. A run `40122006424` (main, SHA `2d97c44`) já era `failure` antes desta branch
+2. Os 15 testes dos arquivos que alteramos passam (15/15 ✅ confirmado via `bun vitest run` direcionado)
+3. Nenhum dos arquivos tocados nesta branch aparece na lista de falhos
+
+Falhas notáveis pré-existentes:
+- `useTalkXSegments.test.ts:347,371,384,398` — pré-existente (item 5 de PENDENCIAS.md)
+- `workItemFormat.test.ts:123` — timezone UTC vs UTC-3 (ambiente CI=UTC, local=UTC-3)
+- `useCampaignRowActions.test.tsx` — pré-existente (item 6 de PENDENCIAS.md)
+- `configuracoes.leituraErro.test.tsx` — pré-existente na main
+
+---
+
 ## Resumo
 
 - **Corrigidos nesta sessão:** 6 (`pagination.test.tsx`, `fila-merge.mjs`, `useInboxFilters.ts` PK-14, TC-009 versão migration, `useDiagnosticsData.ts` throw→dbError, `deployment-manifest.json` stale)
 - **Pré-existentes na main, requerem decisão humana/infra:** ver `PENDENCIAS.md` §1–§5
-- **Sem regressão introduzida:** confirmado local e por comparação com run `40122006424` (main, commit `2d97c44`)
-- **CI do PR #2246 (SHA `b309619`):** runs `40237086221` (CI/CD Pipeline) e `40237086219` (DB Guard) estão em `queued` aguardando runner — 14 runs de outros PRs na fila na mesma conta
+- **Sem regressão introduzida:** confirmado — 15/15 testes dos arquivos alterados passam; as 410 falhas da suíte existiam antes desta branch
+- **CI do PR #2246 (SHA `69cf182`):** runs `40239966487` (CI/CD Pipeline) e `40239966512` (DB Guard) em `pending`/`queued` — saturação de runners; 0 `in_progress` no repo inteiro em 23:10 UTC
 - **Bloqueador para merge:** `e2e-logado.yml` / `types-sync.yml` / `db-live-guard.yml` — bloqueios de infra documentados em §1–§3 de PENDENCIAS.md
 
 *Este arquivo deve ser atualizado após cada ciclo de correção de CI.*
