@@ -3,7 +3,7 @@
  * grupo e o selo "Nova mensagem enviada" continuam aparecendo, mas NADA se
  * desloca — so a opacidade muda. O teste força `useReducedMotion` ligado.
  */
-import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
 import type { ComponentProps } from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -43,10 +43,22 @@ class ResizeObserverMock {
   disconnect() {}
 }
 
+let getBCRSpy: ReturnType<typeof vi.spyOn>;
+
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
   (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = vi.fn();
   Object.defineProperty(Element.prototype, 'clientHeight', { get: () => 600, configurable: true });
+  // TanStack Virtual v3 usa getBoundingClientRect() no elemento de scroll para calcular
+  // a altura do viewport; jsdom retorna 0 por padrão, impedindo a renderização de items.
+  getBCRSpy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+    height: 600, width: 800, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0,
+    toJSON: () => ({}),
+  } as DOMRect);
+});
+
+afterAll(() => {
+  getBCRSpy.mockRestore();
 });
 
 vi.mock('../MessageBubble', () => ({
