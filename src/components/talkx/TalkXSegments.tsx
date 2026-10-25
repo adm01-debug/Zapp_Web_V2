@@ -393,7 +393,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
            {filtered.length === 0 ? (<div className="p-4"><TalkXEmptyState icon={Search} title="Nenhum segmento encontrado" description="Ajuste os filtros ou tente outro termo." /></div>)
            : viewMode === 'list' ? (
             <div data-testid="segments-list" className="divide-y divide-border/40">
-              <table className="w-full"><thead><tr><Th className="pl-7">Segmento</Th><Th>Público relativo</Th><Th className="w-20 text-right pr-3">Ações</Th></tr></thead></table>
+              <table className="w-full"><thead><tr><Th className="pl-3"><div className="flex items-center gap-2"><input type="checkbox" aria-label="Selecionar todos os segmentos da página" checked={allPageSelected} onChange={toggleAllOnPage} className="w-3.5 h-3.5 accent-primary cursor-pointer" />Segmento</div></Th><Th>Público relativo</Th><Th className="w-20 text-right pr-3">Ações</Th></tr></thead></table>
               {paged.map((s) => <SegmentCard key={s.id} s={s} selected={selected?.id === s.id} selectedIds={selectedIds} segments={segments} onSelect={setSelected} onToggleSelect={toggleSelect} onToggleFav={toggleFav} onEdit={openEdit} onCampaign={onUseCampaign} onDelete={setDeleting} />)}
             </div>
           ) : (
