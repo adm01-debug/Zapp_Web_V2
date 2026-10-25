@@ -1,8 +1,8 @@
 # Roteiro — Teste de Matriz RLS (Isolamento entre Tenants)
 
-**Status**: NÃO TESTADO — requer Postgres temporário local com as migrations do repo  
+**Status**: EXECUTADO — Postgres 16 local em 2026-10-24 (ver resultados em `01_rls_matrix.sql`)  
 **Data do roteiro**: 2026-10-24  
-**Referência**: Achado HIGH-4 / Seção 11 do relatório
+**Referência**: CRITICAL-2 / Seção 11 do RELATORIO_AUDITORIA_SUPABASE.md
 
 ---
 
@@ -143,7 +143,27 @@ node scripts/db-audit/run-rls-tests.mjs \
 
 ---
 
-## Resultado Esperado do Achado HIGH-4
+## Resultado da Execução — PostgreSQL 16 nativo com migrations do repo (2026-10-25T10:14Z)
+
+```
+T-01: PASS — user-a vê 2 msgs do seu contato (isolamento positivo OK)
+T-02: PASS — user-a não vê msgs de user-b (count=0) (isolamento negativo OK)
+T-C2: PASS — UPDATE cross-tenant BLOQUEADO (0 rows) — "new row violates row-level security policy"
+         Razão: USING(contact_id IN user's contacts) age como implicit WITH CHECK
+         → No schema migrations (contact_id/assigned_to), CRITICAL-2 NÃO se manifesta
+         → Em produção (drift org_id + policies com USING(user_id=uid())):
+           39 policies sem WITH CHECK explícito — risco confirmado no banco ao vivo
+T-05: PASS — INSERT cross-tenant bloqueado
+T-09: PASS — DELETE cross-tenant bloqueado (rows=0)
+```
+
+**Distinção crítica**: O schema do repo usa `contact_id`/`assigned_to` para isolamento — não
+`organization_id`. O `organization_id` NÃO existe em nenhuma das 1055 migrations do repo
+(confirmado por `grep -r organization_id supabase/migrations/*.sql` → 0 resultados).
+CRITICAL-2 se refere ao banco de **produção** (drift de org_id com policies `USING(user_id=auth.uid())`
+sem check de organização).
+
+Script SQL completo: `testes/01_rls_matrix.sql`
 
 Se os 39 UPDATEs sem WITH CHECK forem confirmados como exploráveis,
 gerar migration corretiva antes de aplicar em produção:

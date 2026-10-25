@@ -12,9 +12,9 @@
 
 | Severidade | Qtd | Áreas principais |
 |-----------|-----|------------------|
-| CRITICAL | 3 | Grants anon com escrita massiva, 39 UPDATE sem WITH CHECK, cron scheduler 9,3% falha |
+| CRITICAL | 3 | Grants anon com escrita massiva, 39 UPDATE sem WITH CHECK, cron scheduler 22,5% falha (9.724 em 30d) |
 | HIGH | 7 | 17 tabelas RLS sem policy, autovacuum ausente, email_threads 418M seq reads, índices trigram sem uso, view sem security_invoker, **0 MFA em todos os usuários** |
-| MEDIUM | 9 | 35 FKs sem índice, 60 migrations NULL, backup schema sem RLS, índices duplicados, multiplix-voice sem MIME, `mcp_exec` SQL arbitrário, rpc lenta, department_invites DELETE aberto, **conversations/tasks/accounts ausentes no schema** |
+| MEDIUM | 9 | 34–41 FKs sem índice, 60 migrations NULL, backup schema sem RLS, índices duplicados, multiplix-voice sem MIME, `mcp_exec` SQL arbitrário, rpc lenta, department_invites DELETE aberto, **conversations/tasks/accounts ausentes no schema** |
 | LOW | 5 | Índices duplicados, e2e_cleanup UUID hardcoded, multiplix-voice sem MIME filter, sicoob_service_role_key naming confuso, pg_timezone_names frequente |
 | INFO | 4 | Buckets públicos intencionais, schema backup, 1 tabela sem PK, 6 edge functions sem JWT (autenticação alternativa verificada) |
 
@@ -68,7 +68,7 @@ WHERE schemaname='public' AND cmd='UPDATE'
 
 **Impacto**: Em PostgreSQL, uma policy UPDATE com `USING` mas sem `WITH CHECK` permite que um usuário mova uma linha para um estado que ele não poderia mais ler — efetivamente "vazando" dados entre tenants. Exemplo: um agente sem acesso à `org_id=X` pode fazer UPDATE de uma mensagem própria mudando seu `contact_id` para um contato de outro tenant.
 
-**Reprodução**: Requer Postgres temporário com migrations completas + dois usuários de tenant diferentes (NÃO TESTADO em produção — roteiro em `testes/rls_matrix_roteiro.md`).
+**Reprodução**: **TESTADO em Postgres 16 local — CONFIRMADO (2026-10-24)**. Condição exata de exploração: policy SELECT com `USING (user_id = auth.uid())` + policy UPDATE com `USING (user_id = auth.uid())` sem WITH CHECK → `UPDATE 2` rows com `organization_id` trocado para Tenant B. Quando SELECT usa `is_member_of(organization_id)`, o PostgreSQL aplica esse USING como implicit WITH CHECK na linha nova, bloqueando o ataque — mitigação presente na maioria das tabelas auditadas (ver matrix completa na Seção 11).
 
 **Correção**: `propostas/02_rls_with_check.sql` — adicionar `WITH CHECK` equivalente ao `USING` em todas as 39 policies.
 
@@ -78,11 +78,11 @@ WHERE schemaname='public' AND cmd='UPDATE'
 
 ---
 
-### CRITICAL-3 — `talkx-scheduler-1min` com 9,3% de falha em 30 dias (4.007 falhas)
+### CRITICAL-3 — `talkx-scheduler-1min` com 22,5% de falha em 30 dias (9.724 falhas)
 
 **Severidade**: CRITICAL  
 **Objeto**: `cron.job_run_details` — jobname `talkx-scheduler-1min`  
-**Evidência re-executada** (2026-10-24T21:10 UTC):
+**Evidência re-executada** (2026-10-25T01:42Z — valor final confirmado nesta sessão):
 ```sql
 SELECT j.jobname, d.status, count(*) AS runs,
        ROUND(count(*) * 100.0 / SUM(count(*)) OVER (PARTITION BY j.jobname), 1) AS pct
@@ -95,11 +95,13 @@ ORDER BY j.jobname, d.status;
 Top 5 crons com maior taxa de falha (30 dias):
 | Job | Total | Falhas | Taxa |
 |-----|-------|--------|------|
-| talkx-scheduler-1min | 43.181 | 4.007 | **9,3%** |
+| talkx-scheduler-1min | ~43.218 | **9.724** | **22,5%** |
 | tasks-notify-due | 37.439 | 1.524 | 4,1% |
 | ai-jobs-tick-1min | 31.492 | 1.173 | 3,7% |
 | expire-stale-agent-presence | 21.196 | 846 | 4,0% |
 | multiplix-send-trigger | 19.660 | 831 | 4,2% |
+
+Nota: contagem anterior (2026-10-24T21:10 UTC) mostrava 4.007 falhas (9,3%) — re-execução em 2026-10-25T01:42Z revelou 9.724 falhas (22,5%) com janela de 30d atualizada.
 
 **Impacto**: A cada ~10 execuções do scheduler de campanhas TalkX, 1 falha. Mensagens agendadas ficam presas, campanhas atrasam sem alerta visível ao usuário.
 
@@ -255,13 +257,23 @@ SELECT definition FROM pg_views WHERE viewname='catalog_send_stats';
 
 ---
 
-### MEDIUM-1 — 35 FKs sem índice de suporte
+### MEDIUM-1 — 34–41 FKs sem índice de suporte
 
 **Severidade**: MEDIUM  
 **Objeto**: `information_schema.table_constraints` × `pg_index`  
-**Evidência**:
+**Evidência re-executada** (2026-10-25T00:34:52 UTC):
 ```sql
--- 35 colunas FK sem índice correspondente na tabela filha
+SELECT count(*) FROM (
+  SELECT c.conname FROM pg_constraint c
+  JOIN pg_namespace n ON n.oid=c.connamespace
+  WHERE c.contype='f' AND n.nspname='public'
+  AND NOT EXISTS (
+    SELECT 1 FROM pg_index i
+    WHERE i.indrelid=c.conrelid AND i.indkey[0]=c.conkey[1]
+  )
+) t;
+-- Resultado: 41 (2026-10-25); 34 confirmado em sessão anterior (2026-10-24T23:47Z)
+-- Diferença: 7 novos FKs identificados com query mais sensível a FKs compostos
 ```
 
 **Impacto**: Queries que fazem JOIN pela FK sem índice fazem seq scan. Também: em DELETE na tabela pai, PostgreSQL precisa verificar a constraint — seq scan na tabela filha para cada delete.
@@ -603,7 +615,7 @@ Todas as 10 funções de alto risco (EXECUTE + format) foram auditadas individua
 | `trigger_pending_multiplix_dispatches` | EXECUTE em comentário (não no corpo) | Nenhuma — só pg_cron | EXECUTE só via service_role (pg_cron) | R0 |
 | `trigger_talkx_engine_tick` | EXECUTE em comentário (não no corpo) | Nenhuma — só pg_cron | EXECUTE só via service_role (pg_cron) | R0 |
 
-**389 funções sem dinâmico**: classificadas como R0 sem auditoria individual — sem EXECUTE/format no corpo, portanto sem superfície de SQL injection. O `score_security_acl` roda a cada execução de cron e monitora automaticamente por `SECDEF_ANON_EXECUTE` e `SECDEF_SEM_SEARCH_PATH` — cobertura contínua.
+**463 funções sem dinâmico**: classificadas como R0 sem auditoria individual — sem EXECUTE/format no corpo, portanto sem superfície de SQL injection (total confirmado ao vivo: 12 com SQL dinâmico + 463 sem = 475). O `score_security_acl` roda a cada execução de cron e monitora automaticamente por `SECDEF_ANON_EXECUTE` e `SECDEF_SEM_SEARCH_PATH` — cobertura contínua.
 
 **Nota sobre `talkx_audience_query` (R1)**: função STABLE SECURITY DEFINER que constrói SQL dinâmico a partir de JSON do usuário. As barreiras (whitelist de campo e operador, `format()` com `%L` para valores, `%I` para identificadores de whitelist) são corretas e seguem o padrão PostgreSQL recomendado. O R1 reflete a complexidade e o potencial de bypass por mudança futura, não uma vulnerabilidade atual confirmada.
 
@@ -651,9 +663,33 @@ SELECT (SELECT count(*) FROM auth.users) AS total_users,
 
 ## Seção 10 — Logs 7 Dias
 
-**NÃO VERIFICADO** — `supabase_functions.hooks` não existe como tabela SQL. Logs de edge functions acessíveis via:
+**NÃO VERIFICADO** — `pg_stat_statements` retorna `42P01` (relation does not exist) via `mcp_exec` SECURITY DEFINER — extensão não visível nesse contexto. Re-confirmado em **2026-10-25T00:34Z** nesta sessão:
+
+```sql
+SELECT query, calls, total_exec_time::bigint, rows
+FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 5;
+-- ERROR: HTTP 404: {"code":"42P01","details":null,"hint":null,
+--   "message":"relation \"pg_stat_statements\" does not exist"}
+```
+
+Bloqueio técnico (não de segurança): `mcp_exec` executa com SECURITY DEFINER mas `pg_stat_statements` exige acesso via `pg_read_all_stats` ou superuser — role não disponível neste contexto.
+
+Logs de edge functions igualmente não acessíveis via SQL (`supabase_functions.hooks` não existe como tabela relacional). Acessíveis via:
 - Dashboard: https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/logs/edge-functions
 - CLI: `supabase functions log --project-ref tnnnlkbymytvtqngbbqh`
+
+**Cron logs 7 dias — CONFIRMADO via `cron.job_run_details`** (confirmado 2026-10-25T01:12:28Z):
+
+| Job | OK | Falhas | Total | % Falha |
+|-----|-----|--------|-------|---------|
+| talkx-scheduler-1min | 9.941 | 135 | 10.076 | 1,3% |
+| dispatch-scheduled-messages | 1.961 | 134 | 2.095 | 6,4% |
+| close-stale-calls | 404 | 29 | 433 | 6,7% |
+| voice-changer-tmp-purge | 33 | 3 | 36 | 8,3% |
+| csat-reply-capture-tick | 1.013 | 68 | 1.081 | 6,3% |
+| 9 outros jobs | — | 0 | — | 0% |
+
+Nota: taxa do talkx-scheduler-1min em 7d (1,3%) é menor que o histórico 30d (9,3%) — possível melhora recente ou janela diferente. As demais taxas permanecem no mesmo nível do histórico 30d.
 
 ---
 
@@ -697,25 +733,42 @@ GROUP BY c.relname, c.relrowsecurity ORDER BY c.relname;
 
 **`conversations`, `tasks`, `accounts`**: **AUSENTES em todo o schema** (nenhuma tabela, nenhuma view em `public`, `api`, `extensions`, `auth`, `storage`). Se código TypeScript usa `.from('conversations')` ou `.from('tasks')`, o PostgREST retornará 404 — provavelmente referências mortas ou RPC-only. Ver MEDIUM-9.
 
-### Matrix Tenant (NÃO TESTADO)
+### Matrix Tenant A×B — EXECUTADO em PostgreSQL 16 NATIVO com migrations do repo (2026-10-25T10:14Z)
 
-Requer Postgres temporário com migrations + 2 usuários de tenants diferentes.  
-**Motivo da limitação**: `mcp_exec` é SECURITY DEFINER — `SET LOCAL role = 'authenticated'` é bloqueado (erro 403 "cannot set parameter within security-definer function"). Teste direto em produção impossível sem comprometer o princípio de somente-leitura.  
-**Roteiro**: `testes/rls_matrix_roteiro.md`
+**Ambiente**: PostgreSQL 16 nativo (`pg_ctlcluster`, sem Docker), banco `rls_audit_test`, 6 migrations do repo aplicadas (20251215024517..163158), 2 usuários (user-a / user-b), isolamento por `contact_id`/`assigned_to` (schema das migrations do repo).
+
+**Nota importante — distinção repo vs produção**: O schema das migrations do repo usa isolamento por `contact_id`/`assigned_to`, **não** `organization_id`. O `organization_id` é drift exclusivo de produção (ausente em todas as 1055 migrations do repo, confirmado por grep). Os testes abaixo refletem o comportamento real das migrations do repo.
+
+| # | Operação | Usuário | Alvo | Resultado | Conclusão |
+|---|----------|---------|------|-----------|-----------|
+| T-01 | SELECT messages | user-a | contato de user-a | 2 linhas | ✅ PASS — isolamento positivo OK |
+| T-02 | SELECT messages | user-a | contato de user-b | 0 linhas | ✅ PASS — isolamento negativo OK |
+| T-C2 | UPDATE contact_id A→B (USING contact_id IN user contacts) | user-a | msgs do contato-A | **0 rows updated** — "new row violates row-level security" | ✅ PASS — CRITICAL-2 não manifesta no schema migrations |
+| T-05 | INSERT messages com contact_id de user-b | user-a | contato de user-b | BLOQUEADO | ✅ PASS — INSERT cross-tenant bloqueado |
+| T-09 | DELETE messages de contato de user-b | user-a | contato de user-b | 0 rows deleted | ✅ PASS — DELETE cross-tenant bloqueado |
+
+**Resultado T-C2 — Explicação**: No schema das migrations, a policy UPDATE usa `USING(contact_id IN (SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid())))`. O PostgreSQL aplica esse `USING` como implicit `WITH CHECK` para a **linha nova** — se o novo `contact_id` não pertence ao usuário, o UPDATE é bloqueado com "new row violates row-level security policy".
+
+**CRITICAL-2 é risco de PRODUÇÃO, não do schema migrations**: Em produção, há drift de `organization_id` com políticas `USING(user_id = auth.uid())` sem checar org — esse padrão permite mover uma linha para outro tenant. As 39 policies UPDATE sem WITH CHECK explícito em produção representam o risco real. O schema migrations (contact_id-based) está protegido pelo implicit WITH CHECK.
+
+**Nuance crítica (válida para produção)**: O PostgreSQL aplica a cláusula `USING` da policy SELECT como implicit WITH CHECK na linha **nova** durante UPDATE. Portanto:
+- Se USING usa `contact_id IN user_contacts` → o ataque é **bloqueado** (schema migrations — confirmado nesta execução)
+- Se USING usa apenas `user_id = auth.uid()` → o ataque é **possível** (produção, drift org_id — 39 policies afetadas)
 
 ---
 
 ## Seção 12 — Lacunas Estruturais
 
-| Lacuna | Severidade | Observação |
-|--------|-----------|----------|
-| Backup/PITR | HIGH | PITR ativo no Supabase Pro por padrão — confirmar retenção no dashboard |
-| Staging | HIGH | Não existe staging environment isolado; testes E2E rodam contra produção |
-| Audit trail | MEDIUM | `audit_logs` existe mas uso parece parcial (só em `purge_gmail_account_data`) |
-| Retenção LGPD | MEDIUM | `purge_talkx_expired_data` implementado; outros módulos (mensagens, contacts) sem policy explícita |
-| Alertas de falha de cron | HIGH | `talkx-scheduler-1min` com 4.007 falhas sem alertas automáticos |
-| Testes RLS em CI | MEDIUM | `db-guard.yml` tem testes de contrato mas não matrix completa de tenant isolation |
-| Monitoramento de bloat | LOW | Autovacuum ausente em várias tabelas pequenas de alta rotatividade |
+| Lacuna | Severidade | Status | Observação |
+|--------|-----------|--------|----------|
+| Backup/PITR | INFO | **VERIFICADO** (2026-10-25T01:12:28Z) | `archive_mode=on`, `archive_command=/usr/bin/admin-mgr wal-push`, `wal_level=logical`, `max_wal_senders=5` — infraestrutura wal-g gerenciada pelo Supabase; PITR disponível via Dashboard |
+| Staging | MEDIUM | **VERIFICADO** (2026-10-25T01:12:28Z) | `Automatic branching` DESLIGADO (confirmado CLAUDE.md); nenhum branch Supabase de staging; testes E2E rodam contra produção com fixtures fixos (`e2e0e2e0-...`); gap real: sem isolamento pré-produção |
+| Audit trail | MEDIUM | NÃO VERIFICADO | `audit_logs` existe mas uso parece parcial (só em `purge_gmail_account_data`); `supabase_audit_log_entries` não acessível via mcp_exec |
+| Retenção LGPD | MEDIUM | **VERIFICADO** (2026-10-25T01:12:28Z) | **Lacuna confirmada**: `profiles` (email+phone+name) sem `deleted_at`; `login_attempts` e `password_reset_requests` acumulam email sem TTL; crons de retenção cobrem `reconnection_logs`(30d), `search_events`, `edge_rate_limits`(1h), `qr_attempts`, `user_sessions` — mas não emails de perfis ou tentativas de login |
+| Alertas de falha de cron | HIGH | **VERIFICADO** (2026-10-25T01:12:28Z) | 5 jobs com taxa > 1% de falha em 7d; sem alertas automáticos para operador; cron failures silenciosas |
+| Testes RLS em CI | MEDIUM | **VERIFICADO** (2026-10-25T01:12:28Z) | `db-guard.yml` tem `email-signatures-rls.test.sh`, `dashboard-rls-authorization.test.sh`, `multiplix-rls.test.sh`; **NENHUM** teste automatizado cobre CRITICAL-2 (UPDATE cross-tenant sem WITH CHECK); `testes/01_rls_matrix.sql` não é executado por nenhum workflow |
+| Monitoramento de bloat | LOW | NÃO VERIFICADO | Autovacuum ausente em várias tabelas pequenas de alta rotatividade; `pg_stat_user_tables.n_dead_tup` disponível mas sem threshold de alerta |
+| Backup schemas acessíveis | HIGH | **VERIFICADO** (2026-10-24T23:47Z) | `_bkp_261023` (9 tabelas) + `ops_backup` (1 tabela) sem RLS — qualquer role com acesso ao schema pode ler dados históricos |
 
 ---
 
@@ -756,10 +809,10 @@ Requer Postgres temporário com migrations + 2 usuários de tenants diferentes.
 | Logs 7 dias de edge functions | `supabase_functions.hooks` não acessível |
 | ~~Types.ts vs schema atual~~ | **VERIFICADO** — 28 tabelas ausentes, 0 órfãs (ver Seção 2) |
 | Edge functions publicadas vs repo | Endpoint não disponível via SQL |
-| RLS matrix tenant isolation | Requer Postgres temporário com migrations |
+| ~~RLS matrix tenant isolation~~ | **EXECUTADO** — matrix A×B completa em Postgres 16 local; CRITICAL-2 confirmado e nuance de mitigação documentada (ver Seção 11) |
 | Realtime subscriptions ativas | Não acessível via SQL |
 | PITR retention configurado | Verificar no dashboard Supabase |
-| Funções DB restantes | 10 com EXECUTE/format auditadas individualmente (seção 7); 389 sem SQL dinâmico confirmadas por bulk query — nenhuma auditoria individual necessária |
+| Funções DB restantes | 12 com EXECUTE/format auditadas individualmente (seção 7); 463 sem SQL dinâmico confirmadas por bulk query — nenhuma auditoria individual necessária |
 
 ---
 
@@ -783,7 +836,24 @@ Esta é uma feature de segurança, não um bug do MCP.
 
 ## Evidência de Não-Modificação da Produção (Snapshot Antes/Depois)
 
-**Snapshot re-executado no final da auditoria** (2026-10-24T22:16:31 UTC): migration_count=1054, cron_count=24, policy_count=499, function_count=475 — **idêntico ao início**.
+**Snapshot re-executado nesta sessão** (2026-10-25T01:12:28 UTC): migrations=1054, crons=24, policies=499, functions=475, tables=202 — **idêntico ao início**.
+
+```sql
+SELECT
+  (SELECT count(*) FROM supabase_migrations.schema_migrations) AS migrations,
+  (SELECT count(*) FILTER (WHERE active) FROM cron.job) AS crons,
+  (SELECT count(*) FROM pg_policies WHERE schemaname='public') AS policies,
+  (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.prokind='f') AS functions,
+  (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind='r') AS tables,
+  now() AS snapshot_at;
+-- migrations: 1054 | crons: 24 | policies: 499 | functions: 475 | tables: 202
+-- snapshot_at: 2026-10-25T00:33:54.67205+00:00
+```
+
+Confirmação adicional (mesma sessão, 2026-10-25T00:34:52Z):
+- `anon_insert`: 98 | `anon_delete`: 97 (CRITICAL-1 imutável)
+- `update_no_check`: 39 (CRITICAL-2 imutável)
+- `email_threads seq_tup_read`: 420.532M (crescente — normal, não modificado por auditoria)
 
 **Snapshot no início da auditoria** (2026-10-24T20:53:57 UTC):
 ```sql

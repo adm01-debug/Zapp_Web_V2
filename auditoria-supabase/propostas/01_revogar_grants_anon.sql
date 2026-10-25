@@ -45,6 +45,6 @@ COMMIT;
 -- ============================================================
 
 -- ROLLBACK:
--- BEGIN;
--- GRANT INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public TO anon;
--- COMMIT;
+BEGIN;
+GRANT INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public TO anon;
+COMMIT;

@@ -51,7 +51,25 @@ LIMIT 20;
 -- DROP INDEX IF EXISTS public.<index_name>;
 -- COMMIT;
 
--- Rollback template:
--- BEGIN;
+-- ============================================================
+-- ROLLBACK — recriar os índices removidos como duplicatas
+-- (executar somente se a remoção causar regressão inesperada;
+--  duplicatas não oferecem ganho de performance, então
+--  rollback aqui é improvável de ser necessário)
+-- ============================================================
+BEGIN;
+
+-- Recriar os índices que eram duplicatas exatas:
+-- (preencher com os nomes reais identificados pela query acima
+--  antes de executar o DROP)
 -- CREATE INDEX <index_name> ON public.<table_name>(<colunas>);
--- COMMIT;
+
+-- Verificação pós-rollback:
+-- SELECT indexname, tablename FROM pg_indexes
+-- WHERE schemaname = 'public'
+--   AND indexname IN ('<index_name>');
+
+COMMIT;
+
+-- Nota: identificar os índices duplicados exatos com a query SELECT
+-- no início deste arquivo antes de executar qualquer DROP.
