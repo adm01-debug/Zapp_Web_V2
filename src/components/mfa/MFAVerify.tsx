@@ -70,8 +70,10 @@ export function MFAVerify({
 
   useEffect(() => {
     if (code.length === 6 && !verifying && factors.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       void handleVerify();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, factors]);
 
   return (

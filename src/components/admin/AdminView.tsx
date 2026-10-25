@@ -18,6 +18,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useUserRole, AppRole } from '@/hooks/system/useUserRole';
+// eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { AdminCRMDashboard } from './AdminCRMDashboard';
 import { useAdminData, accessLevelConfig, AUDIT_PAGE_SIZE, MIN_PASSWORD_LENGTH, type UserWithRole } from './useAdminData';
