@@ -536,6 +536,7 @@ function SegmentCard({ s, selected, selectedIds, segments, viewMode, onSelect, o
       <tr
         ref={trRef}
         tabIndex={0}
+        data-testid="segment-card"
         data-segment-id={s.id}
         className={cn('cursor-pointer hover:bg-muted/20 transition-colors', selected && 'bg-primary/5')}
         onClick={() => trRef.current && onSelect(s, trRef.current)}

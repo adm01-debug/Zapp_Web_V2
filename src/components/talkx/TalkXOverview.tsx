@@ -122,11 +122,11 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
 
   const filterValues = useMemo(() => ({ status, objective, channel, segment, creator }), [status, objective, channel, segment, creator]);
   const handleFilter = (key: string, val: string) => {
-    if (key === 'status') { setStatus(val); setPage(1); }
-    else if (key === 'objective') { setObjective(val); setPage(1); }
-    else if (key === 'channel') { setChannel(val); setPage(1); }
-    else if (key === 'segment') { setSegment(val); setPage(1); }
-    else if (key === 'creator') { setCreator(val); setPage(1); }
+    if (key === 'status') { setStatus(val); setPage(1); setSelected(new Set()); }
+    else if (key === 'objective') { setObjective(val); setPage(1); setSelected(new Set()); }
+    else if (key === 'channel') { setChannel(val); setPage(1); setSelected(new Set()); }
+    else if (key === 'segment') { setSegment(val); setPage(1); setSelected(new Set()); }
+    else if (key === 'creator') { setCreator(val); setPage(1); setSelected(new Set()); }
   };
   /**
    * X081 — o chip de período só aparece porque a Visão geral consome o recorte
@@ -136,6 +136,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
     setPeriod(p);
     setPeriodRange(range ?? null);
     setPage(1);
+    setSelected(new Set());
   };
   /**
    * ⟳ da barra — refaz a consulta de campanhas (a mesma que alimenta lista e KPIs)
