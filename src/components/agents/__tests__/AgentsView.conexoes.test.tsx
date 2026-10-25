@@ -105,6 +105,11 @@ vi.mock('@/hooks/crm/useAgentPresence', () => ({
   useAgentPresenceMap: () => ({}),
 }));
 
+// A tela monta o convite de atendente, que lê o papel do usuário (e este exige AuthProvider).
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, isSupervisor: true, loading: false }),
+}));
+
 import { AgentsView } from '@/components/agents/AgentsView';
 
 function renderView() {
