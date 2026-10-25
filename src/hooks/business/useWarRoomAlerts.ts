@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationSettings } from '../system/useNotificationSettings';
+import { showBrowserNotification } from '@/utils/notificationSounds';
 
 interface WarRoomAlert {
   id: string;
@@ -147,9 +148,8 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
           // Aviso de desktop pela API `Notification` direta: o push exige Service Worker
           // de aplicação (desligado em `config/service_worker.ts`) e falhava em silêncio.
           // Respeita o "Alertas do navegador" do painel.
-          if (settings.browserNotifications && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-            new window.Notification(`⚠️ ${alert.title}`, {
-              body: alert.message,
+          if (settings.browserNotifications) {
+            showBrowserNotification(`⚠️ ${alert.title}`, alert.message, {
               tag: `warroom-${alert.id}`,
               requireInteraction: alert.alert_type === 'critical',
             });
