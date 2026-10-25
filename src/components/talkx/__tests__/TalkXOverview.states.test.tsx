@@ -206,7 +206,7 @@ describe('TalkXView — erro da consulta chega à Visão geral (X047)', () => {
  * 1. `button-name` (axe, crítico, claro e escuro): o gatilho do Select de "N por
  *    página" (`kit/table.tsx`) é um `button role="combobox"` — nesse papel a
  *    AccName não tira nome do conteúdo, então o texto "8 por página" NÃO nomeava o
- *    controle (era o ÚNICO nó da tela acusado pela regra). Agora o gatilho tem
+ *    controle (era o Único nó da tela acusado pela regra). Agora o gatilho tem
  *    rótulo explícito.
  * 2. `color-contrast` (axe, sério, no claro): a pílula "Retomar" do painel de
  *    rascunhos pintava o TEXTO com `--dash-amber` (âmbar de PREENCHIMENTO) sobre a
@@ -239,7 +239,7 @@ function tokensDoBloco(seletor: ':root {' | '.dark {'): Record<string, string> {
   }
   if (fim < 0) throw new Error(`bloco ${seletor} sem fechamento em tokens.css`);
   const vars: Record<string, string> = {};
-  for (const m of Array.from(TOKENS_CSS.slice(abre + 1, fim).matchAll(/--([\w-]+):\s*([^;]+);/g))) {
+  for (const m of Array.from(TOKENS_CSS.slice(abre + 1, fim).matchAll(/--(\w-]+):\s*([^;]+);/g))) {
     vars[m[1]] = m[2].trim().replace(/\s+/g, ' ');
   }
   return vars;
@@ -251,7 +251,7 @@ const TOKENS_ESCURO = { ...TOKENS_CLARO, ...tokensDoBloco('.dark {') };
 
 /** De uma classe utilitária ('dash-amber' | '[hsl(var(--warning-text))]') para o token do CSS. */
 function tokenDaClasse(util: string): string | null {
-  const literal = util.match(/^\[hsl\(var\(--([\w-]+)\)\)\]$/);
+  const literal = util.match(/^\[hsl\(var\(--(\w-]+)\)\)\]$/);
   if (literal) return literal[1];
   return util in TOKENS_CLARO ? util : null;
 }
@@ -319,9 +319,6 @@ describe('Visão geral — acessibilidade da tela 01 (TL-175A)', () => {
   it('a pílula "Retomar" fecha contraste AA nos dois temas usando só tokens do sistema', () => {
     const rascunho = { ...campaign, id: 'c-draft', name: 'Campanha rascunho', status: 'draft' } as unknown as TalkXCampaign;
     render(<TalkXOverview {...baseProps} campaigns={[rascunho]} />);
-
-    // TL-115: os rascunhos ficam recolhidos por padrao — expandir o bloco antes de medir.
-    fireEvent.click(screen.getByRole('button', { name: 'Rascunhos pendentes(1)' }));
 
     const pilula = screen.getByRole('button', { name: 'Retomar' });
     expect(pilula.className).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i);
