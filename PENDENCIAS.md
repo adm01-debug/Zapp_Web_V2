@@ -536,7 +536,7 @@ Error: Command failed: /usr/bin/gh pr list --repo adm01-debug/Zapp_Web_V2 ...
 > Run de referência: [#40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) | SHA: `2d97c44` | Data: 2026-10-24T18:52–19:21Z
 
 | Job | ID | conclusion | Observação |
-|-----|-----|-----------|------------|
+|-----|-----|-----------|__________|
 | 🔒 Security Audit | 120957423083 | ✅ success | — |
 | 🔎 Lint & TypeCheck | 120957423380 | ✅ success | — |
 | 🧩 Node CI Scripts | 120957423321 | ✅ success | — |
