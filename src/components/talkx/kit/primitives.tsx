@@ -87,8 +87,8 @@ export function MetaRow({ icon: Icon, label, value, valueClassName }: { icon?: L
   );
 }
 /** Cabeçalho de tabela padronizado. */
-export function Th({ children, className }: { children?: ReactNode; className?: string }) {
-  return <th className={cn('text-left text-2xs font-semibold text-foreground-secondary px-3 py-2.5 whitespace-nowrap', className)}>{children}</th>;
+export function Th({ children, className, ...rest }: { children?: ReactNode; className?: string } & React.ThHTMLAttributes<HTMLTableCellElement>) {
+  return <th {...rest} className={cn('text-left text-2xs font-semibold text-foreground-secondary px-3 py-2.5 whitespace-nowrap', className)}>{children}</th>;
 }
 export function Td({ children, className }: { children?: ReactNode; className?: string }) {
   return <td className={cn('px-3 py-3 text-xs text-foreground align-middle', className)}>{children}</td>;
