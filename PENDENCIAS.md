@@ -77,52 +77,49 @@ O dispatch foi feito com `TARGET_VERSION: 20261020190001`, mas esse valor está 
 
 ---
 
-## 4. Contrato DB offline — DASH-091/092 (`sanitize_reset_request()`)
+## 4. Contrato DB offline — TC-009 (`team_reactions_force_conversation_id_trig`)
 
 **Workflow:** `db-guard.yml` — job `Contrato DB offline`
-**Check runs com falha confirmados:**
-- SHA `b0585a58` — run [39683115745](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39683115745), job 119510528339
-- SHA `7a8c74e6` — run [39686676218](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39686676218), job 119522392829
-- SHA `cf895c6a` — run [39693077439](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077439), job 119543754154
-- SHA `43dd7666` — run [39695347420](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347420), job [119551245762](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347420/job/119551245762)
+**Check runs com falha confirmados (TC-009):**
+- SHA `2d97c44` — run [40122006482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006482) — passo 147 `❌ failure`
+- SHA `0fcc29a` — run PR #2261 — passo 147 `❌ failure`
+- SHA `7abeeec` — run PR #2261 — passo 147 `❌ failure`
+
+> **Nota:** o passo 41 **"Simular fronteira RLS das RPCs do Dashboard (DASH-091/092)"** passa com `✅ success` em TODOS os runs acima — DASH-091/092 não bloqueia o `db-guard.yml`. O impacto de DASH-091/092 está em `types-sync.yml` (ver §9d).
 
 ### Passo que falha
 
-Passo 41 — **"Simular fronteira RLS das RPCs do Dashboard (DASH-091/092)"**
+Passo 147 — **"Simular conversation_id derivado da mensagem em recibos e reacoes (TC-009)"**
 
 ### Erro exato
 
 ```
-ERROR:  record "new" has no field "reset_token"
-CONTEXT:  PL/pgSQL assignment "NEW.reset_token := NULL"
-          PL/pgSQL function sanitize_reset_request() line 4 at assignment
+NOTICE: trigger "team_reactions_force_conversation_id_trig" for relation "public.team_message_reactions" does not exist, skipping
+ERROR: null value in column "conversation_id" of relation "team_message_reactions" violates not-null constraint
 STATEMENT: SET ROLE authenticated;
-           SELECT set_config('request.jwt.claims', '{"sub":"...","role":"authenticated"}', false);
-           INSERT INTO public.password_reset_requests (user_id, email)
-           VALUES ('11111111-1111-1111-1111-111111111111','ti.existente@example.com');
+           SELECT set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', false);
+           INSERT INTO public.team_message_reactions (message_id, profile_id, emoji, conversation_id)
+           VALUES ('d0000000-0000-0000-0000-00000000000b', 'a0000000-0000-0000-0000-000000000001', 'alerta', 'e0000000-0000-0000-0000-00000000000b');
 ```
 
 ### Causa raiz
 
-A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_token` (linha 4), mas a tabela `password_reset_requests` não possui essa coluna. O passo 54 ("Simular recuperação autenticada sem coluna reset_token (R2-DB-023)") existe no mesmo job **especificamente** para cobrir o cenário sem a coluna, mas é pulado porque o passo 41 aborta antes. A função `sanitize_reset_request()` precisa ser corrigida para não referenciar `reset_token`, ou a coluna precisa ser adicionada à tabela.
+O trigger `team_reactions_force_conversation_id_trig` não existe no Postgres local do replay de migrations. Sem ele, o INSERT em `team_message_reactions` com `conversation_id` explícito falha porque a coluna tem constraint NOT NULL — o teste espera que o trigger derive `conversation_id` do `message_id` automaticamente, mas o trigger nunca foi criado no ambiente local.
 
-**Pré-existente:** confirmado em 4 commits/runs desta PR (`b0585a58`, `7a8c74e6`, `cf895c6a`, `43dd7666`) e em todas as runs históricas do `db-guard`.
+**Pré-existente:** confirmado na `main` (SHA `2d97c44`, run #40122006482, passo 147) antes desta PR. Presente em todos os runs históricos do `db-guard`.
 
-**BLOQUEADO — agente não pode aplicar:** Esta correção exige DDL em produção (migration de `sanitize_reset_request()`) que só pode ser aplicada mediante aprovação de Joaquim no environment `producao-ddl` (Regra 8 do fluxo Git e seção 0 do CLAUDE.md). Registrado como DASH-091/092. Nenhuma ação adicional possível para agente.
+**BLOQUEADO — agente não pode aplicar:** A criação do trigger `team_reactions_force_conversation_id_trig` requer migration DDL + arquitetura confirmada (Regra 8 do fluxo Git e seção 0 do CLAUDE.md). Nenhuma ação adicional possível para agente.
 
 ### O que o Joaquim precisa fazer
 
-1. Verificar o estado atual da tabela em produção:
+1. Verificar se o trigger existe em produção:
    ```sql
-   SELECT column_name FROM information_schema.columns
-   WHERE table_name = 'password_reset_requests';
+   SELECT trigger_name, event_manipulation, event_object_table
+   FROM information_schema.triggers
+   WHERE trigger_name = 'team_reactions_force_conversation_id_trig';
    ```
-2. Verificar o corpo real da função `sanitize_reset_request()` em produção:
-   ```sql
-   SELECT pg_get_functiondef(oid) FROM pg_proc WHERE proname = 'sanitize_reset_request';
-   ```
-3. Se a coluna `reset_token` nunca foi criada: corrigir a função removendo a atribuição `NEW.reset_token := NULL`, criar migration versionada com o fix, abrir PR.
-4. Se a coluna deveria existir mas foi dropada: recriar a coluna, criar migration versionada, abrir PR.
+2. Se não existir em produção: criar o trigger que popula `conversation_id` a partir de `message_id` na tabela `team_message_reactions`, criar migration versionada, abrir PR.
+3. Se existir em produção mas não no replay local: investigar por que a migration que o criou não está em `supabase/migrations/` ou tem falha no replay (`scripts/db-audit/replay-known-failures.json`).
 
 ---
 
@@ -281,7 +278,7 @@ O script de teste de mutação do módulo `mapa` falha ao coletar/executar a su�
 SessionModelError: You've reached your additional usage limit for your plan.
 Go to https://github.com/settings/copilot/features for more details.
 (Request ID: FC41:386F8C:14FDB:18E58:6AD9464E)
-statusCode: 402
+statuscode: 402
 errorCode: "quota"
 ```
 
@@ -325,7 +322,7 @@ git push -u origin claude/kind-gates-87mwoe
 - ✅ Unit Tests: passa (mock getBoundingClientRect corrige virtualizer no jsdom)
 - ✅ Lint & TypeCheck: passa
 - ✅ Security Audit: passa
-- ⚠️ Contrato DB offline: falha pré-existente (DASH-091/092, §4)
+- ⚠️ Contrato DB offline: falha pré-existente (TC-009, §4)
 - ⚠️ E2E Tests: falha pré-existente (geolocalização, §1)
 - ⚠️ Mutação do mapa: falha pré-existente, não bloqueante (§6)
 - ⚠️ Copilot reviewer: falha por quota, não bloqueante (§7)
@@ -447,6 +444,8 @@ No files were found with the provided path: /home/runner/work/_temp/edge-deploym
 
 **Causa raiz:** `supabase-usage-guard.mjs` detectou novas violações de uso. A DDL `sanitize_reset_request()` referencia `NEW.reset_token` (coluna que não existe), fazendo o guard rejeitar o sync. Downstream direto de DASH-091/092.
 
+> **Nota:** DASH-091/092 bloqueia `types-sync.yml`, mas **não** bloqueia `db-guard.yml` — o passo 41 do `db-guard.yml` ("Simular fronteira RLS das RPCs do Dashboard") passa com `✅ success`. São dois impactos distintos do mesmo drift de produção.
+
 **Por que agente não pode corrigir:** Resolve-se automaticamente após o DDL DASH-091/092 ser aplicado em produção (Joaquim aprovar `producao-ddl`). **BLOQUEADO — downstream de DASH-091/092.**
 
 ---
@@ -547,7 +546,7 @@ Error: Command failed: /usr/bin/gh pr list --repo adm01-debug/Zapp_Web_V2 ...
 | 🏗️ Build | 120961737776 | ⏭️ skipped | cascata do CI Gate |
 | 🎭 E2E Tests | 120957423361 | 🚫 cancelled | timeout / pré-existente (§1) |
 | 🧬 Mutação do mapa | 120957423732 | ⏭️ skipped | não bloqueante (§6) |
-| 🗄️ Contrato DB offline | — | ❌ failure | DASH-091/092 (§4) — pré-existente |
+| 🗄️ Contrato DB offline | — | ❌ failure | TC-009 (§4) — pré-existente; passo 41 DASH-091/092 passa ✅ |
 
 **Conclusão:** todos os workflows com `failure`/`cancelled`/`skipped` na `main` (baseline) são pré-existentes. A PR `fix/ci-workflows` corrige as falhas alcançáveis por agente (§9) e documenta os bloqueios remanescentes neste arquivo. Zero regressões introduzidas.
 
