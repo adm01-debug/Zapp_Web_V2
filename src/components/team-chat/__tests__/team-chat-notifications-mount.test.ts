@@ -47,6 +47,12 @@ vi.mock('@/components/effects/EasterEggs', () => ({
 vi.mock('@/components/team-chat/TeamChatNotificationsListener', () => ({
   TeamChatNotificationsListener: h.listener,
 }));
+// DeferredProviders chama useAuth e useGlobalIncomingMessageAlerts direto, e AppProviders está
+// mockado como passthrough (sem AuthProvider na árvore): o assunto aqui é o listener do Team Chat.
+vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ profile: { id: 'test-user-id' } }) }));
+vi.mock('@/hooks/realtime/useGlobalIncomingMessageAlerts', () => ({
+  useGlobalIncomingMessageAlerts: vi.fn(),
+}));
 vi.mock('@/hooks/system/useServiceWorker', () => ({ useServiceWorker: vi.fn() }));
 vi.mock('@/hooks/ui/useScreenProtection', () => ({ useScreenProtection: vi.fn() }));
 
@@ -68,6 +74,9 @@ vi.mock('framer-motion', () => ({
     div: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
   },
 }));
+// Estado vazio compartilhado (renderizado pela TeamChatView) usa framer-motion/ícones que este
+// teste não mocka por inteiro; o assunto aqui é o listener, não o visual do estado vazio.
+vi.mock('@/components/shared/ConversationEmptyState', () => ({ ConversationEmptyState: () => null }));
 
 import App from '@/App';
 import { TeamChatView } from '@/components/team-chat/TeamChatView';
