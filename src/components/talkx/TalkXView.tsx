@@ -36,351 +36,202 @@ import { lazyWithRetry } from '@/lib/lazyWithRetry';
 
 // X194 ‚Äî carregamento sob demanda: cada tela do m√≥dulo vira um chunk pr√≥prio e s√≥ √©
 // buscada quando a aba/vis√£o que a usa abre. Antes, TalkXView importava as onze telas
-// de uma vez, ent√£o a biblioteca de gr√°ficos (recharts, usada por Analytics, Monitor
-// ao vivo e Campanha em andamento) entrava no carregamento inicial do m√≥dulo.
-// lazyWithRetry √© o mesmo carregador da entrada do m√≥dulo (src/pages/lazyViews.ts):
-// repete a busca do chunk 3x com espera antes de desistir.
-const TalkXHelpCenter = lazyWithRetry(() => import('./help/TalkXHelpCenter').then((m) => ({ default: m.TalkXHelpCenter })));
-const TalkXCampaignWizard = lazyWithRetry(() => import('./TalkXCampaignWizard').then((m) => ({ default: m.TalkXCampaignWizard })));
-const TalkXLiveMonitor = lazyWithRetry(() => import('./TalkXLiveMonitor').then((m) => ({ default: m.TalkXLiveMonitor })));
+// diretamente (mesmo as n√£o usadas no render atual) e o bundle carregava todo codigo
+// de uma s√≥ vez, incluindo charts do Analytics e tabelas pesadas do Monitor.
 const TalkXSegments = lazyWithRetry(() => import('./TalkXSegments').then((m) => ({ default: m.TalkXSegments })));
 const TalkXTemplates = lazyWithRetry(() => import('./TalkXTemplates').then((m) => ({ default: m.TalkXTemplates })));
 const TalkXSuppression = lazyWithRetry(() => import('./TalkXSuppression').then((m) => ({ default: m.TalkXSuppression })));
 const TalkXAnalytics = lazyWithRetry(() => import('./TalkXAnalytics').then((m) => ({ default: m.TalkXAnalytics })));
-const TalkXSettings = lazyWithRetry(() => import('./TalkXSettings').then((m) => ({ default: m.TalkXSettings })));
+const TalkXCampaignWizard = lazyWithRetry(() => import('./TalkXCampaignWizard').then((m) => ({ default: m.TalkXCampaignWizard })));
+const TalkXLiveMonitor = lazyWithRetry(() => import('./TalkXLiveMonitor').then((m) => ({ default: m.TalkXLiveMonitor })));
 const TalkXCampaignScheduled = lazyWithRetry(() => import('./TalkXCampaignScheduled').then((m) => ({ default: m.TalkXCampaignScheduled })));
 const TalkXCampaignRunning = lazyWithRetry(() => import('./TalkXCampaignRunning').then((m) => ({ default: m.TalkXCampaignRunning })));
 const TalkXCampaignPaused = lazyWithRetry(() => import('./TalkXCampaignPaused').then((m) => ({ default: m.TalkXCampaignPaused })));
+const TalkXHelp = lazyWithRetry(() => import('./help/TalkXHelp').then((m) => ({ default: m.TalkXHelp })));
+const TalkXWizardDelivery = lazyWithRetry(() => import('./TalkXWizardDelivery').then((m) => ({ default: m.TalkXWizardDelivery })));
 
-/** X194 ‚Äî enquanto o chunk da tela chega, o m√≥dulo mostra a estrutura (esqueleto). */
 function TalkXScreenFallback() {
-  return (
-    <div className="p-4" role="status" aria-live="polite" aria-busy="true">
-      <TalkXSkeletonRows rows={4} />
-    </div>
-  );
+  return <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando...</div>;
 }
 
-export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running' | 'paused';
+const TABS: { value: TalkXTab; label: string; icon: React.ReactNode }[] = [
+  { value: 'overview', label: 'Vis√£o Geral', icon: <LayoutDashboard className="h-5 w-5" /> },
+  { value: 'segments', label: 'Segmentos', icon: <Zap className="h-5 w-5" /> },
+  { value: 'templates', label: 'Templates', icon: <FileText className="h-5 w-5" /> },
+  { value: 'suppression', label: 'Supress√£o', icon: <ShieldBan className="h-5 w-5" /> },
+  { value: 'analytics', label: 'Analitics', icon: <BarChart3 className="h-5 w-5" /> },
+];
 
-// X053: a trilha do cabe√ßalho sai da rota (?tab=/sub=). Os r√≥tulos s√£o os mesmos
-// que as abas e o menu de Analytics mostram ‚Äî a trilha n√£o inventa nome novo.
-const TAB_LABELS: Record<string, string> = {
-  overview: 'Vis√£o geral',
-  segments: 'Segmentos',
-  templates: 'Biblioteca',
-  suppression: 'Lista de supress√£o',
-  analytics: 'Comparativo',
-};
-
-function moduleTrail(tab: string, sub?: string): string[] {
-  const label = tab === 'analytics' && sub === 'configuracoes'
-    ? 'Configura√ß√µes'
-    : TAB_LABELS[tab] ?? 'Campanhas';
-  return ['Talk X', 'Campanhas', label];
+function useScreenRoute(): { id: string; screen: TalkXScreen } | null {
+  try {
+    return parseTalkXScreenRoute(location.hash);
+  } catch {
+    return null;
+  }
 }
 
-export default function TalkXView() {
-  const { campaigns, isLoading, isError, error: campaignsError, isLive, startCampaign, pauseCampaign, cancelCampaign, deleteCampaign, duplicateCampaign: duplicateCampaignMutation, refetchCampaigns } = useTalkX();
-  const { data: teamProfiles = [] } = useTeamProfiles();
-  const { segments } = useTalkXSegments();
-  const { templates } = useTalkXTemplates();
-  // X048 ‚Äî a Vis√£o geral aplica o estado "Conex√£o WhatsApp desconectada" acima
-  // da tabela quando N√ÉO existe conex√£o ativa (o bot√£o leva para a tela que
-  // resolve). `null` = ainda checando/consulta falhou: sem resposta confi√°vel o
-  // estado n√£o aparece (nunca um falso "desconectado" na tela).
-  const { whatsapp: whatsappService } = useTalkXServiceStatus();
-  const whatsappDisconnected = whatsappService.connected === false;
-  // TL-152: a mesma preced√™ncia do syncFromBrowserHistory (?campaign= com
-  // screen expl√≠cito vence o wizard) ‚Äî load e popstate abrem a mesma tela
-  // para o mesmo endere√ßo.
-  const [topView, setTopView] = useState<TalkXTopView>(() => {
-    const screenRoute = parseTalkXScreenRoute(window.location.search).route;
-    if (screenRoute?.screen) return screenRoute.screen;
-    const wizard = parseTalkXRoute(window.location.search).wizard.route;
-    if (wizard) return 'wizard';
-    return 'tabs';
-  });
-  const [activeTab, setActiveTab] = useState<TalkXTab>(() => parseTalkXRoute(window.location.search).tab);
-  const [activeSub, setActiveSub] = useState<string | undefined>(() => parseTalkXRoute(window.location.search).sub);
-  const [editingCampaign, setEditingCampaign] = useState<TalkXCampaign | null>(null);
-  const [monitorId, setMonitorId] = useState<string | null>(null);
+function writeScreenRoute(id: string, screen: TalkXScreen, push: boolean = false) {
+  if (push) {
+    pushTalkXWizardRoute(`,${id},screen:${screen}`);
+  } else {
+    replaceTalkXWizardRoute(`,${id},screen:${screen}`);
+  }
+}
+
+export function TalkXView() {
+  const [activeTab, setActiveTab] = useState<TalkXTab>('overview');
+  const [topView, setTopView] = useState<'list' | 'monitor' | 'scheduled' | 'running' | 'paused' | 'wizard' | 'help' | 'tabs'>('list');
+  const [wizardRoute, setWizardRoute] = useState<TalkXWizardRoute | null>(null);
+  const [monitorCampaignId, setMonitorCampaignId] = useState<string | null>(null);
   const [scheduledCampaignId, setScheduledCampaignId] = useState<string | null>(null);
   const [runningCampaignId, setRunningCampaignId] = useState<string | null>(null);
   const [pausedCampaignId, setPausedCampaignId] = useState<string | null>(null);
-  const [wizardInitial, setWizardInitial] = useState<{ segmentIds?: string[]; templateId?: string } | undefined>();
-  const [wizardRoute, setWizardRoute] = useState<TalkXWizardRoute | null>(() => parseTalkXRoute(window.location.search).wizard.route);
-  // TL-152: a rota de tela resolve os ids quando as campanhas chegam
-  // (primeira pintura); uma vez s√≥, para n√£o puxar a View de volta a
-  // cada recarregamento das campanhas.
-  const didInitialScreenSync = useRef(false);
-  // X189: a Ajuda deixou de ser modal e virou tela com endere√ßo pr√≥prio
-  // (?screen=help&topic=&article=); o "?" do cabe√ßalho abre esta rota.
-  const [helpRoute, setHelpRoute] = useState<TalkXHelpRoute | null>(() => parseTalkXHelpRoute(window.location.search).route);
-  // R2-MOD-039: o item "Novo template" do menu Templates navega para a aba de templates
-  // pedindo o editor VAZIO (antes chamava openNew, que √© o wizard de campanha). O pedido
-  // √© limpo quando a aba o atende, para n√£o reabrir o editor sozinho depois.
-  const [templateStartNew, setTemplateStartNew] = useState(false);
-  // A campaign just created locally may not have reached the campaigns query
-  // yet. It is safe to keep the current editor alive, but a reload must still
-  // resolve the ID from the canonical query before opening it.
-  const [localDraftRouteId, setLocalDraftRouteId] = useState<string | null>(null);
+  const helpRouteRef = useRef<TalkXHelpRoute | null>(null);
 
-  const writeWizardRoute = useCallback((route: TalkXWizardRoute | null, replace = false) => {
-    if (replace) replaceTalkXWizardRoute(route);
-    else pushTalkXWizardRoute(route);
-    setWizardRoute(route);
-  }, []);
-
-  const syncFromBrowserHistory = useCallback(() => {
-    const parsedWizard = parseTalkXRoute(window.location.search).wizard;
-    const parsedScreen = parseTalkXScreenRoute(window.location.search);
-
-    if (parsedWizard.needsNormalization) replaceTalkXWizardRoute(parsedWizard.route);
-    // TL-152: ?screen= inv√°lido (ex.: report, que n√£o tem tela) √© normalizado
-    // aqui tamb√©m ‚Äî o par√¢metro √© removido sem abrir outra tela no lugar.
-    if (parsedScreen.needsNormalization) replaceTalkXRoute(null);
-
-    // The browser history event, rather than a render effect, is the source of
-    // truth for back/forward. Resetting here also guarantees a draft from the
-    // previous route cannot survive navigation to another campaign.
-    setLocalDraftRouteId(null);
-    setWizardRoute(parsedWizard.route);
-    setWizardInitial(undefined);
-
-    // TL-152: screen routing takes priority over wizard routing when
-    // ?campaign= is present in the URL. Sem screen, a situa√ß√£o decide
-    // (screenForStatus); campanha inexistente cai na lista, como hoje.
-    if (parsedScreen.route) {
-      const campaignId = parsedScreen.route.campaignId;
-      const campaign = campaigns.find((candidate) => candidate.id === campaignId) ?? null;
-      const screen = parsedScreen.route.screen ?? (campaign ? screenForStatus(campaign.status) : undefined);
-      if (screen === 'wizard') {
-        setEditingCampaign(campaign && (campaign.status === 'draft' || campaign.status === 'scheduled') ? campaign : null);
-        setTopView('wizard');
-        return;
-      }
-      if (screen) {
-        setEditingCampaign(null);
-        setMonitorId(null);
-        setScheduledCampaignId(null);
-        setRunningCampaignId(null);
-        setPausedCampaignId(null);
-        switch (screen) {
-          case 'scheduled': setScheduledCampaignId(campaignId); break;
-          case 'running': setRunningCampaignId(campaignId); break;
-          case 'paused': setPausedCampaignId(campaignId); break;
-          default: setMonitorId(campaignId); break;
-        }
-        setTopView(screen === 'scheduled' || screen === 'running' || screen === 'paused' ? screen : 'monitor');
-        return;
-      }
-    }
-
-    if (!parsedWizard.route) {
-      setEditingCampaign(null);
-      setTopView('tabs');
-      return;
-    }
-    if (parsedWizard.route.campaignId === 'new') {
-      setEditingCampaign(null);
-      setTopView('wizard');
-      return;
-    }
-
-    const campaign = campaigns.find((candidate) => candidate.id === parsedWizard.route?.campaignId);
-    setEditingCampaign(campaign && (campaign.status === 'draft' || campaign.status === 'scheduled') ? campaign : null);
-    setTopView('wizard');
-  }, [campaigns]);
-
-  useEffect(() => {
-    const initialWizard = parseTalkXRoute(window.location.search).wizard;
-    if (initialWizard.needsNormalization) replaceTalkXWizardRoute(initialWizard.route);
-    // X052: o mesmo rigor vale para o endere√ßo j√° aberto ‚Äî aba duplicada ou
-    // desconhecida cai na Vis√£o geral e o endere√ßo √© reescrito (replace, sem
-    // entrada nova no hist√≥rico) em vez de mostrar √°rea vazia.
-    const initialTab = parseTalkXRoute(window.location.search);
-    if (initialTab.needsNormalization) replaceTalkXTabRoute({ tab: initialTab.tab, sub: initialTab.sub });
-    // TL-152: normaliza ?screen= desconhecido (remove o par√¢metro sem
-    // entrar no hist√≥rico, para n√£o criar entradas in√∫teis).
-    const initialScreen = parseTalkXScreenRoute(window.location.search);
-    if (initialScreen.needsNormalization) replaceTalkXRoute(null);
-    // TL-152: o init s√≥ define o topView ‚Äî os ids da tela roteada resolvem
-    // aqui, quando as campanhas chegam (primeira pintura, uma vez s√≥).
-    if (!didInitialScreenSync.current && !isLoading) {
-      didInitialScreenSync.current = true;
-      syncFromBrowserHistory();
-    }
-    window.addEventListener('popstate', syncFromBrowserHistory);
-    return () => window.removeEventListener('popstate', syncFromBrowserHistory);
-  }, [isLoading, syncFromBrowserHistory]);
-
-  // Aba ativa vem da URL; popstate (inclusive o disparado por goTab) restaura tab/sub.
-  useEffect(() => {
-    const syncTab = () => {
-      const parsed = parseTalkXRoute(window.location.search);
-      if (parsed.needsNormalization) replaceTalkXTabRoute({ tab: parsed.tab, sub: parsed.sub });
-      setActiveTab(parsed.tab);
-      setActiveSub(parsed.sub);
-      setHelpRoute(parseTalkXHelpRoute(window.location.search).route);
-      // R2-MOD-039: o pedido de "novo template" n√£o sobrevive √† sa√≠da da aba de templates;
-      // voltar pela Biblioteca mostra a lista, n√£o o editor que ficou aberto.
-      if (parsed.tab !== 'templates') setTemplateStartNew(false);
-    };
-    window.addEventListener('popstate', syncTab);
-    return () => window.removeEventListener('popstate', syncTab);
-  }, []);
-
-  const routedCampaign = wizardRoute?.campaignId && wizardRoute.campaignId !== 'new'
-    ? campaigns.find((candidate) => candidate.id === wizardRoute.campaignId) ?? null
-    : null;
-  const routedCampaignIsEditable = routedCampaign?.status === 'draft' || routedCampaign?.status === 'scheduled';
-  const wizardCampaign = editingCampaign?.id ? editingCampaign : routedCampaignIsEditable ? routedCampaign : editingCampaign;
-
-  useEffect(() => {
-    if (!wizardRoute || wizardRoute.campaignId === 'new' || isLoading) return;
-    if (localDraftRouteId === wizardRoute.campaignId && topView === 'wizard') return;
-    if (routedCampaignIsEditable) return;
-
-    toast.error(routedCampaign ? 'Somente rascunhos ou campanhas agendadas podem ser editados.' : 'Campanha n√£o encontrada ou sem acesso.');
-    replaceTalkXWizardRoute(null);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  }, [isLoading, localDraftRouteId, routedCampaign, routedCampaignIsEditable, topView, wizardRoute]);
-
-  const openNew = useCallback((initial?: { segmentIds?: string[]; templateId?: string }) => {
-    setLocalDraftRouteId(null);
-    setEditingCampaign(null); setWizardInitial(initial); setTopView('wizard');
-    writeWizardRoute({ campaignId: 'new', step: 1 });
-    replaceTalkXRoute(null);
-  }, [writeWizardRoute]);
-  const openEdit = useCallback((c: TalkXCampaign) => {
-    setLocalDraftRouteId(null);
-    setEditingCampaign(c); setWizardInitial(undefined); setTopView('wizard');
-    // V23: reabre no passo em que o rascunho foi deixado (antes sempre voltava ao 1).
-    const savedStep = Number(c.draft_step);
-    const step: WizardStep = savedStep >= 1 && savedStep <= 4 && Number.isInteger(savedStep)
-      ? (savedStep as WizardStep)
-      : 1;
-    writeWizardRoute({ campaignId: c.id, step });
-    replaceTalkXRoute(null);
-  }, [writeWizardRoute]);
-  // TL-152: cada tela de acompanhamento tem endere√ßo pr√≥prio (?campaign= e
-  // ?screen=). Abrir a tela grava a rota (push: voltar retorna √† lista) e
-  // limpa a rota do wizard ‚Äî um endere√ßo nunca aponta para duas telas.
-  // Transi√ß√µes reativas (mudan√ßa de status, p√≥s-lan√ßamento) usam replace.
-  const writeScreenRoute = useCallback((campaignId: string, screen: TalkXScreen, replace = false) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('campaign', campaignId);
-    url.searchParams.set('screen', screen);
-    url.searchParams.delete('wizard');
-    url.searchParams.delete('step');
-    const href = `${url.pathname}${url.search}${url.hash}`;
-    if (replace) window.history.replaceState(null, '', href);
-    else window.history.pushState(null, '', href);
-    setWizardRoute(null);
-  }, []);
-
-  const openMonitor = useCallback((c: TalkXCampaign) => { setMonitorId(c.id); setTopView('monitor'); writeScreenRoute(c.id, 'monitor'); }, [writeScreenRoute]);
-  const openScheduled = useCallback((c: TalkXCampaign) => { setScheduledCampaignId(c.id); setTopView('scheduled'); writeScreenRoute(c.id, 'scheduled'); }, [writeScreenRoute]);
-  const openRunning = useCallback((c: TalkXCampaign) => { setRunningCampaignId(c.id); setTopView('running'); writeScreenRoute(c.id, 'running'); }, [writeScreenRoute]);
-  const openPaused = useCallback((c: TalkXCampaign) => { setPausedCampaignId(c.id); setTopView('paused'); writeScreenRoute(c.id, 'paused'); }, [writeScreenRoute]);
-  const backToList = useCallback(() => {
-    setLocalDraftRouteId(null);
-    setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setPausedCampaignId(null); setWizardInitial(undefined);
-    writeWizardRoute(null, true);
-    replaceTalkXRoute(null);
-  }, [writeWizardRoute]);
-
-  // X189: a Ajuda √© uma tela do m√≥dulo com rota pr√≥pria; o endere√ßo vive na URL
-  // para o bot√£o voltar do navegador andar um passo por vez (lista ‚Üí artigo).
-  const changeHelpRoute = useCallback((next: TalkXHelpRoute) => {
-    pushTalkXHelpRoute(next);
-    setHelpRoute(next);
-  }, []);
-  const closeHelp = useCallback(() => {
-    pushTalkXHelpRoute(null);
-    setHelpRoute(null);
-  }, []);
-
-  // X192: quem sai da Ajuda (Esc, Voltar ao m√≥dulo ou voltar do navegador)
-  // volta para o gatilho, n√£o para o come√ßo da tela ‚Äî o foco n√£o se perde.
-  const helpTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const wasHelpOpen = useRef(false);
-  useEffect(() => {
-    if (wasHelpOpen.current && !helpRoute) helpTriggerRef.current?.focus();
-    wasHelpOpen.current = Boolean(helpRoute);
-  }, [helpRoute]);
+  const { campaigns, isLoading, isError } = useTalkX();
+  const { teamProfiles } = useTeamProfiles();
+  const { segments } = useTalkXSegments();
+  const { templates } = useTalkXTemplates();
+  const { serviceStatus } = useTalkXServiceStatus();
 
   const creators = useMemo(() => {
-    const m: Record<string, string> = {};
-    for (const rawProfile of teamProfiles) {
-      const profile = rawProfile as { id?: unknown; name?: unknown };
-      if (typeof profile.id === 'string' && typeof profile.name === 'string' && profile.name.trim()) {
-        m[profile.id] = profile.name.trim();
-      }
+    const map: Record<string, string> = {};
+    for (const p of teamProfiles ?? []) {
+      if (p.id) map[p.id] = p.full_name ?? p.email ?? p.id;
     }
-    return m;
+    return map;
   }, [teamProfiles]);
 
-  // X026: duplicar agora cria o rascunho no banco (RPC duplicate_talkx_campaign) e
-  // abre o editor sobre a linha devolvida ‚Äî n√£o √© mais um objeto s√≥ de cliente.
-  const duplicateCampaign = useCallback(async (c: TalkXCampaign) => {
-    setLocalDraftRouteId(null);
-    setWizardInitial(undefined);
-    try {
-      const created = await duplicateCampaignMutation.mutateAsync(c.id);
-      setEditingCampaign(created);
-      setLocalDraftRouteId(created.id);
-      setTopView('wizard');
-      writeWizardRoute({ campaignId: created.id, step: 1 });
-      replaceTalkXRoute(null);
-    } catch {
-      // A mutation j√° mostra o toast de erro.
+  useEffect(() => {
+    const route = parseTalkXRoute(location.hash);
+    if (route.tab) setActiveTab(route.tab);
+  }, []);
+
+  const backToList = useCallback(() => {
+    setTopView('list');
+    setMonitorCampaignId(null);
+    setScheduledCampaignId(null);
+    setRunningCampaignId(null);
+    setPausedCampaignId(null);
+    setWizardRoute(null);
+    replaceTalkXRoute(`#/talkx/tab:${activeTab}`);
+  }, [activeTab]);
+
+  const openMonitor = useCallback((c: { id: string }) => {
+    setMonitorCampaignId(c.id);
+    setTopView('monitor');
+    writeScreenRoute(c.id, 'monitor', true);
+  }, []);
+
+  const openScheduled = useCallback((c: { id: string }) => {
+    setScheduledCampaignId(c.id);
+    setTopView('scheduled');
+    writeScreenRoute(c.id, 'scheduled', true);
+  }, []);
+
+  const openRunning = useCallback((c: { id: string }) => {
+    setRunningCampaignId(c.id);
+    setTopView('running');
+    writeScreenRoute(c.id, 'running', true);
+  }, []);
+
+  const openPaused = useCallback((c: { id: string }) => {
+    setPausedCampaignId(c.id);
+    setTopView('paused');
+    writeScreenRoute(c.id, 'paused', true);
+  }, []);
+
+  const onViewRunning = useCallback((c: { id: string; status?: string }) => {
+    if (c.status === 'paused') {
+      openPaused(c);
+    } else {
+      openRunning(c);
     }
-  }, [duplicateCampaignMutation, writeWizardRoute]);
-
-  const onWizardStepChange = useCallback((step: WizardStep, replace = false, returnTo?: WizardStep) => {
-    if (!wizardRoute) return;
-    // O destino de volta √© expl√≠cito: qualquer navega√ß√£o que n√£o venha do
-    // "Editar" da revis√£o limpa o `return` da rota.
-    writeWizardRoute({ campaignId: wizardRoute.campaignId, step, returnTo }, replace);
-  }, [wizardRoute, writeWizardRoute]);
-
-  const onDraftIdentity = useCallback((campaignId: string) => {
-    setLocalDraftRouteId(campaignId);
-    if (wizardRoute?.campaignId === 'new') {
-      writeWizardRoute({ campaignId, step: wizardRoute.step }, true);
-    }
-  }, [wizardRoute, writeWizardRoute]);
-
-  // E72: routing por status
-  const onView = useCallback((c: TalkXCampaign) => {
-    if (c.status === 'scheduled') { openScheduled(c); return; }
-    if (c.status === 'paused') { openPaused(c); return; }
-    if (c.status === 'sending') { openRunning(c); return; }
-    openMonitor(c);
-  }, [openMonitor, openPaused, openScheduled, openRunning]);
-
-  // X156: campanhas pausadas v√£o para a tela pr√≥pria (TalkXCampaignPaused);
-  // em andamento continuam em TalkXCampaignRunning.
-  const onViewRunning = useCallback((c: TalkXCampaign) => {
-    if (c.status === 'paused') { openPaused(c); return; }
-    openRunning(c);
   }, [openPaused, openRunning]);
+
+  useEffect(() => {
+    const sr = useScreenRoute();
+    if (!sr || !campaigns.length) return;
+    const c = campaigns.find((x) => x.status === 'sending' || x.status === 'paused');
+    if (!c) return;
+    if (sr.screen === 'running' && c.status === 'sending') {
+      setRunningCampaignId(c.id);
+      setTopView('running');
+    } else if (sr.screen === 'paused' && c.status === 'paused') {
+      setPausedCampaignId(c.id);
+      setTopView('paused');
+    }
+  }, [campaigns]);
+
+  const onView = useCallback((c: TalkXCampaign) => {
+    if (c.status === 'sending' || c.status === 'paused') {
+      if (c.status === 'paused') {
+        openPaused(c);
+        return;
+      }
+      openRunning(c);
+      return;
+    }
+    if (c.status === 'scheduled') {
+      openScheduled(c);
+      return;
+    }
+    openMonitor(c);
+  }, [openRunning, openPaused, openScheduled, openMonitor]);
+
+  const onWizardStep = useCallback((step: WizardStep) => {
+    setWizardRoute((prev) => {
+      if (!prev) return null;
+      return { ...prev, step };
+    });
+    replaceTalkXWizardRoute(`,${wizardRoute?.id ?? ''},step:${step}`);
+  }, [wizardRoute?.id]);
+
+  if (topView === 'monitor' && monitorCampaignId) {
+    return (
+      <Suspense fallback={<TalkXScreenFallback />}>
+        <TalkXLiveMonitor
+          campaignId={monitorCampaignId}
+          onBack={backToList}
+          onViewRunning={onViewRunning}
+        />
+      </Suspense>
+    );
+  }
 
   if (topView === 'scheduled' && scheduledCampaignId) {
     return (
       <Suspense fallback={<TalkXScreenFallback />}>
         <TalkXCampaignScheduled
-          campaignId={scheduledCampaignId!}
+          campaignId={scheduledCampaignId}
           onBack={backToList}
-          onEdit={(c) => { setScheduledCampaignId(null); openEdit(c); }}
           onStatusChange={(campaign) => {
             setScheduledCampaignId(null);
             if (campaign.status === 'sending') {
-              setMonitorId(campaign.id);
-              setTopView('monitor');
-              writeScreenRoute(campaign.id, 'monitor', true);
+              setRunningCampaignId(campaign.id);
+              setTopView('running');
+              writeScreenRoute(campaign.id, 'running', true);
+              return;
+            }
+            backToList();
+          }}
+        />
+      </Suspense>
+    );
+  }
+
+  if (topView === 'running' && runningCampaignId) {
+    return (
+      <Suspense fallback={<TalkXScreenFallback />}>
+        <TalkXCampaignRunning
+          campaignId={runningCampaignId}
+          onBack={backToList}
+          onStatusChange={(campaign) => {
+            setRunningCampaignId(null);
+            if (campaign.status === 'paused') {
+              setPausedCampaignId(campaign.id);
+              setTopView('paused');
+              writeScreenRoute(campaign.id, 'paused', true);
               return;
             }
             backToList();
@@ -392,16 +243,11 @@ export default function TalkXView() {
 
 
   if (topView === 'paused' && pausedCampaignId) {
-    const pausedCampaign = campaigns.find((c) => c.id === pausedCampaignId);
-    const pausedByName = pausedCampaign?.paused_by
-      ? (creators[pausedCampaign.paused_by] ?? null)
-      : null;
     return (
       <Suspense fallback={<TalkXScreenFallback />}>
         <TalkXCampaignPaused
           campaignId={pausedCampaignId}
           onBack={backToList}
-          pausedByName={pausedByName}
           onStatusChange={(campaign) => {
             setPausedCampaignId(null);
             if (campaign.status === 'sending') {
@@ -417,218 +263,70 @@ export default function TalkXView() {
     );
   }
 
-  if (topView === 'running') {
+  if (topView === 'wizard' && wizardRoute) {
+    if (wizardRoute.step === 'delivery') {
+      return (
+        <Suspense fallback={<TalkXScreenFallback />}>
+          <TalkXWizardDelivery
+            campaignId={wizardRoute.id}
+            onBack={() => {
+              setWizardRoute((prev) => prev ? { ...prev, step: 'edit' } : null);
+              replaceTalkXWizardRoute(`,${wizardRoute.id},step:edit`);
+            }}
+            onConfirm={(campaign) => {
+              setWizardRoute(null);
+              if (campaign.status === 'sending') {
+                openRunning(campaign);
+              } else if (campaign.status === 'scheduled') {
+                openScheduled(campaign);
+              } else {
+                backToList();
+              }
+            }}
+          />
+        </Suspense>
+      );
+    }
     return (
       <Suspense fallback={<TalkXScreenFallback />}>
-        <TalkXCampaignRunning
-          initialCampaignId={runningCampaignId}
-          onBack={backToList}
-          onViewMonitor={(id) => { setRunningCampaignId(null); setMonitorId(id); setTopView('monitor'); writeScreenRoute(id, 'monitor', true); }}
+        <TalkXCampaignWizard
+          route={wizardRoute}
+          onStep={onWizardStep}
+          onCancel={backToList}
+          onDelivery={() => {
+            setWizardRoute((prev) => prev ? { ...prev, step: 'delivery' } : null);
+            replaceTalkXWizardRoute(`,${wizardRoute?.id ?? ''},step:delivery`);
+          }}
         />
       </Suspense>
     );
   }
 
-  if (topView === 'wizard') {
-    const awaitingRoutedCampaign = wizardRoute?.campaignId && wizardRoute.campaignId !== 'new'
-      && localDraftRouteId !== wizardRoute.campaignId
-      && isLoading;
-    if (awaitingRoutedCampaign) {
-      // X047 ‚Äî enquanto a campanha roteada resolve, esqueleto com aria-busy
-      // (antes: um texto solto, que parecia carga infinita ou tela vazia).
-      return (
-        <div
-          className="min-h-full w-full min-w-0 bg-background p-6"
-          role="status" aria-live="polite" aria-busy="true" data-talkx-query="loading"
-        >
-          <span className="sr-only">Carregando conte√∫do‚Ä¶</span>
-          <TalkXSkeletonRows rows={4} />
-        </div>
-      );
-    }
+  if (topView === 'help') {
     return (
-      <div className="min-h-full w-full min-w-0 bg-background">
-        <Suspense fallback={<TalkXScreenFallback />}>
-          <TalkXCampaignWizard
-            key={`talkx-wizard:${wizardCampaign?.id || 'new'}`}
-            campaign={wizardCampaign}
-            onClose={backToList}
-            onLaunched={(id, status) => {
-              writeWizardRoute(null, true);
-              if (status === 'scheduled') {
-                setScheduledCampaignId(id);
-                setTopView('scheduled');
-                writeScreenRoute(id, 'scheduled', true);
-                return;
-              }
-              setMonitorId(id);
-              setTopView('monitor');
-              writeScreenRoute(id, 'monitor', true);
-            }}
-            initial={{ ...wizardInitial, step: wizardRoute?.step }}
-            routeStep={wizardRoute?.step}
-            routeReturnTo={wizardRoute?.returnTo}
-            onRouteStepChange={onWizardStepChange}
-            onDraftIdentity={onDraftIdentity}
-          />
-        </Suspense>
-      </div>
-    );
-  }
-
-  if (topView === 'monitor' && monitorId) {
-    const monitorCampaign = campaigns.find((candidate) => candidate.id === monitorId);
-    return (
-      <div className="min-h-full w-full min-w-0 bg-background">
-        {/* X053: a trilha substitui o bot√£o solto do Monitor; o voltar continua
-            com o r√≥tulo e as classes que j√° entraram (h-9, hover:bg-muted/50). */}
-        <div className="flex items-center gap-3 mb-4 flex-wrap">
-          <ModuleBreadcrumb items={['Talk X', 'Campanhas', monitorCampaign?.name ?? 'Monitor']} />
-          <button type="button" onClick={backToList} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bg-muted/50 shrink-0 ml-auto">
-            <ArrowLeft className="w-4 h-4" />Voltar √† campanhas
-          </button>
-        </div>
-        <Suspense fallback={<TalkXScreenFallback />}>
-          <SectionErrorBoundary sectionName="Monitor ao vivo">
-            <TalkXLiveMonitor campaignId={monitorId} onBack={backToList} />
-          </SectionErrorBoundary>
-        </Suspense>
-      </div>
-    );
-  }
-
-  if (helpRoute) {
-    return (
-      <div className="min-h-full w-full min-w-0 bg-background">
-        <Suspense fallback={null}>
-          <TalkXHelpCenter route={helpRoute} onRouteChange={changeHelpRoute} onClose={closeHelp} />
-        </Suspense>
-      </div>
+      <Suspense fallback={<TalkXScreenFallback />}>
+        <TalkXHelp
+          initialRoute={helpRouteRef.current ?? {}}
+          onBack={backToList}
+        />
+      </Suspense>
     );
   }
 
   return (
-    <div className="min-h-full w-full min-w-0 bg-background space-y-5">
-      <ModuleHeader
-        icon={Zap}
-        breadcrumb={moduleTrail(activeTab, activeSub)}
-        title="Campanhas"
-        subtitle="Conecte. Engaje. Converta. Comunica√ß√£o em escala, com resultado real."
-        right={
-          <div className="flex items-center gap-3">
-            <ActiveCampaignIndicator
-              campaigns={campaigns}
-              live={isLive}
-              onOpen={(id) => {
-                const campaign = campaigns.find((candidate) => candidate.id === id);
-                if (campaign) onView(campaign);
-              }}
-            />
-            <button
-              type="button" ref={helpTriggerRef} onClick={() => changeHelpRoute({})}
-              className="talkx-glow-ring inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors text-xs font-medium"
-            >
-              <HelpCircle className="w-4 h-4" />Ajuda
-            </button>
-            <PrimaryButton icon={Plus} onClick={() => openNew()} className="shadow-[var(--shadow-glow-primary)]">Nova campanha</PrimaryButton>
-          </div>
-        }
-      />
-      <Tabs value={activeTab} onValueChange={(tab) => goTab(tab)} className="min-w-0">
-        <div className="overflow-x-auto">
-          <TabsList className="inline-flex gap-1.5 h-auto bg-transparent pb-0 px-0 w-full justify-start flex-wrap">
-            <TabsTrigger value="overview"
-              className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5
-                data-[state=active]:bg-primary/12 data-[state=active]:border-primary/40 data-[state=active]:text-foreground
-                data-[state=inactive]:bg-input/40 data-[state=inactive]:border-border/60 data-[state=inactive]:text-muted-foreground
-                hover:data-[state=inactive]:text-foreground hover:data-[state=inactive]:border-border"
-            >
-              <LayoutDashboard className="w-4 h-4 shrink-0" />Vis√£o geral
-            </TabsTrigger>
-            <TabsTrigger value="suppression"
-              className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5
-                data-[state=active]:bg-primary/12 data-[state=active]:border-primary/40 data-[state=active]:text-foreground
-                data-[state=inactive]:bg-input/40 data-[state=inactive]:border-border/60 data-[state=inactive]:text-muted-foreground
-                hover:data-[state=inactive]:text-foreground hover:data-[state=inactive]:border-border"
-            >
-              <ShieldBan className="w-4 h-4 shrink-0" />Lista de supress√£o
-            </TabsTrigger>
-          </TabsList>
-            <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button type="button" className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 bg-input/40 border-border/60 text-muted-foreground hover:text-foreground hover:border-border">
-                              <BarChart3 className="w-4 h-4 shrink-0" />Analytics <span className="text-2xs text-muted-foreground">‚ñæ</span>
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem onSelect={() => goTab('overview')}>Campanhas</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => goTab('segments')}>Segmentos</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => goTab('analytics')}>Comparativo</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => goTab('analytics', 'configuracoes')}>Configura√ß√µes</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-            <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button type="button" className="talkx-glow-ring h-10 px-4 rounded-lg border text-xs font-medium transition-all flex items-center gap-1.5 bg-input/40 border-border/60 text-muted-foreground hover:text-foreground hover:border-border">
-                              <FileText className="w-4 h-4 shrink-0" />Templates <span className="text-2xs text-muted-foreground">‚ñæ</span>
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem onSelect={() => goTab('templates')}>Biblioteca</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => { setTemplateStartNew(true); goTab('templates'); }}>Novo template</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-        </div>
-
-        <TabsContent value="overview" className="mt-4">
-          {whatsappDisconnected && (
-            <div className="mb-4" data-talkx-whatsapp-state="disconnected">
-              <TalkXWhatsAppDisconnectedState onConnect={() => navigateToView('connections')} />
-            </div>
-          )}
-          <TalkXOverview
-            campaigns={campaigns} segments={segments} creators={creators} isLoading={isLoading}
-            isError={isError} error={campaignsError} onRetry={() => refetchCampaigns()}
-            onNew={() => openNew()} onEdit={openEdit} onView={onView} onViewScheduled={openScheduled} onViewRunning={onViewRunning} onDuplicate={duplicateCampaign}
-            onStart={(id) => { void startCampaign(id); }}
-            onPause={async (id) => { try { await pauseCampaign(id); toast.info('Campanha pausada'); } catch { toast.error('Erro ao pausar'); } }}
-            onCancel={async (id) => { try { await cancelCampaign(id); toast.info('Campanha cancelada'); } catch { toast.error('Erro ao cancelar'); } }}
-            onDelete={(id) => deleteCampaign.mutate(id)}
-            onGoTab={(tab) => { if (tab === 'templates') goTab('templates'); else if (tab === 'segments') goTab('segments'); }}
+    <div className="flex flex-col h-full">
+      <ModuleHeader>
+        <ModuleBreadcrumb>
+          <span className="text-muted-foreground">Campanhas</span>
+        </ModuleBreadcrumb>
+        <div className="flex items-center gap-2">
+          <ActiveCampaignIndicator
+            campaigns={campaigns}
+            onView={onView}
           />
-        </TabsContent>
-        <TabsContent value="segments" className="mt-4">
-          <Suspense fallback={<TalkXScreenFallback />}>
-            <TalkXSegments onUseCampaign={(segmentIds) => openNew({ segmentIds })} />
-          </Suspense>
-        </TabsContent>
-        <TabsContent value="templates" className="mt-4">
-          <Suspense fallback={<TalkXScreenFallback />}>
-            <TalkXTemplates
-              onUseTemplate={(templateId) => openNew({ templateId })}
-              startNew={templateStartNew}
-              onStartNewHandled={() => setTemplateStartNew(false)}
-              onOpenMonitor={(id) => { const c = campaigns.find((x) => x.id === id); if (c) openMonitor(c); }}
-            />
-          </Suspense>
-        </TabsContent>
-        <TabsContent value="suppression" className="mt-4">
-          <Suspense fallback={<TalkXScreenFallback />}>
-            <TalkXSuppression />
-          </Suspense>
-        </TabsContent>
-        <TabsContent value="analytics" className="mt-4">
-          <Suspense fallback={<TalkXScreenFallback />}>
-            {activeSub === 'configuracoes'
-              ? <TalkXSettings />
-              : (
-                <SectionErrorBoundary sectionName="Analytics de campanhas">
-                  <TalkXAnalytics campaigns={campaigns} isLoading={isLoading} isError={isError} />
-                </SectionErrorBoundary>
-              )}
-          </Suspense>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <PrimaryButton
+                  icon={<Plus className="h-oHKMàœüBà€ê€X⁄œ^›[ôYö[ôYBàÇàõ›òHÿ[\[öBà‘ö[X\ûPù]€èÇà—õ‹›€ìY[ùUöYŸŸ\èÇàõ‹›€ìY[ùP€€ù[ù[Y€èHô[ôèÇàõ‹›€ìY[ùR][Bà€ê€X⁄œ^ 
+HOà¬à€€ú›ô]‘õ›]HH\⁄[÷⁄^ò\ôõ›]J	À›\ôY]	 N¬àŸ]⁄^ò\ôõ›]Jô]‘õ›]JN¬àŸ]‹öY] 	›⁄^ò\ô	 N¬à_BàÇà\»€\‹”ò[YOHö_FR—â2”R"Û‡¢Ê˜f6◊ÊÜ¢¬ÙG&˜F˜v‰÷VÁTóFV”‡¢¬ÙG&˜F˜v‰÷VÁT6ˆÁFVÁC‡¢¬ÙG&˜F˜v‰÷VÁS‡¢ƒñÊñÁEFñ∆P¢ñ6ˆ„◊≥ƒÜV«6ó&6∆R6∆74Ê÷S“&Ç”Br”B"ÛÁ–¢∆&V√“$ßVF ¢ˆ‰6∆ñ6≥◊≤Çí”‚∞¢ÜV«&˜WFU&VbÊ7W'&VÁB“'6UF∆µÑÜV«&˜WFRÜ∆ˆ6Fñˆ‚ÊÜ6Çì∞¢6WEF˜fñWrÇvÜV«rì∞¢W6ÖF∆µÑÜV«&˜WFRÜ∆ˆ6Fñˆ‚ÊÜ6Çì∞¢◊–¢Û‡¢¬ˆFóc‡¢¬ˆFóc‡¢¬Ù÷ˆGV∆TÜVFW#‡¢≈F'0¢f«VS◊∂7FófUF'–¢ˆÂf«VT6ÜÊvS◊≤ábí”‚∞¢6WD7FófUF"áb2F∆µÖF"ì∞¢&W∆6UF∆µÖF%&˜WFRábì∞¢◊–¢6∆74Ê÷S“&f∆WÇ”f∆WÇf∆WÇ÷6ˆ¬÷ñ‚÷Ç” ¢‡¢≈F'4∆ó7B6∆74Ê÷S“'Ç”bf∆WÇ◊6á&ñÊ≤”#‡¢µD%2Ê÷ÇáF"í”‚Ä¢≈F'5G&ñvvW"∂Wì◊∑F"Áf«VW“f«VS◊∑F"Áf«VW”‡¢∑F"Êñ6ˆÁ–¢∑F"Ê∆&V«–¢¬ıF'5G&ñvvW#‡¢íó–¢¬ıF'4∆ó7C‡¢≈F'46ˆÁFVÁBf«VS“&˜fW'fñWr"6∆74Ê÷S“&f∆WÇ”÷ñ‚÷Ç”˜fW&f∆˜r◊í÷WFÚ#‡¢≈6V7Fñˆ‰W'&˜$&˜VÊF'ì‡¢≈F∆µÑ˜fW'fñWp¢6◊ñvÁ3◊∂6◊ñvÁ7–¢ó4∆ˆFñÊs◊∂ó4∆ˆFñÊw–¢ó4W'&˜#◊∂ó4W'&˜'–¢7&VF˜'3◊∂7&VF˜'7–¢ˆÂfñWs◊∂ˆÂfñWw–¢ˆ‰ÊWs◊≤Çí”‚∞¢6ˆÁ7BÊWu&˜WFR“W6ÖF∆µÖvó¶&E&˜WFRÇr¬«7FW¶VFóBrì∞¢6WEvó¶&E&˜WFRÜÊWu&˜WFRì∞¢6WEF˜fñWrÇwvó¶&Brì∞¢◊–¢ˆ‰GW∆ñ6FS◊≤Çí”‚∞¢6ˆÁ7BÊWu&˜WFR“W6ÖF∆µÖvó¶&E&˜WFRÇr¬«7FW¶VFóBrì∞¢6WEvó¶&E&˜WFRÜÊWu&˜WFRì∞¢6WEF˜fñWrÇwvó¶&Brì∞¢◊–¢Û‡¢¬ı6V7Fñˆ‰W'&˜$&˜VÊF'ì‡¢¬ıF'46ˆÁFVÁC‡¢≈F'46ˆÁFVÁBf«VS“'6Vv÷VÁG2"6∆74Ê÷S“&f∆WÇ”÷ñ‚÷Ç”˜fW&f∆˜r◊í÷WFÚ#‡¢≈6V7Fñˆ‰W'&˜$&˜VÊF'ì‡¢≈F∆µÖ6Vv÷VÁG0¢6Vv÷VÁG3◊∑6Vv÷VÁG7–¢6◊ñvÁ3◊∂6◊ñvÁ7–¢7&VF˜'3◊∂7&VF˜'7–¢Û‡¢¬ı6V7Fñˆ‰W'&˜$&˜VÊF'ì‡¢¬ıF'46ˆÁFVÁC‡¢≈F'46ˆÁFVÁBf«VS“'FV◊∆FW2"6∆74Ê÷S“&f∆WÇ”÷ñ‚÷Ç”˜fW&f∆˜r◊í÷WFÚ#‡¢≈6V7Fñˆ‰W'&˜$&˜VÊF'ì‡¢≈F∆µÖFV◊∆FW0¢FV◊∆FW3◊∑FV◊∆FW7–¢Û‡¢¬ı6V7Fñˆ‰W'&˜$&˜VÊF'ì‡¢¬ıF'46ˆÁFVÁC‡¢≈F'46ˆÁFVÁBf«VS“'7W&W76ñˆ‚"6∆74Ê÷S“&f∆WÇ”÷ñ‚÷Ç”˜fW&f∆˜r◊í÷WFÚ#‡¢≈6V7Fñˆ‰W'&˜$&˜VÊF'ì‡¢≈F∆µÖ7W&W76ñˆ‚Û‡¢¬ı6V7Fñˆ‰W'&˜$&˜VÊF'ì‡¢¬ıF'46ˆÁFVÁC‡¢≈F'46ˆÁFVÁBf«VS“&Ê«óFñ72"6∆74Ê÷S“&f∆WÇ”÷ñ‚÷Ç”˜fW&f∆˜r◊í÷WFÚ#‡¢≈6V7Fñˆ‰W'&˜$&˜VÊF'ì‡¢≈F∆µÑÊ«óFñ72Û‡¢¬ı6V7Fñˆ‰W'&˜$&˜VÊF'ì‡¢¬ıF'46ˆÁFVÁC‡¢¬ıF'3‡¢¬ˆFóc‡¢ì∞ß–
