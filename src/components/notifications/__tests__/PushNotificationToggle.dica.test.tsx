@@ -13,7 +13,7 @@
  *
  * O `TooltipProvider` é montado no teste: em produção a sidebar já o fornece.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -49,9 +49,16 @@ function montar() {
 const acharBotao = () => screen.getByRole('button', { name: /Notificações:/ });
 
 beforeEach(() => {
+  // jsdom não tem layout: com a viewport em 0x0 o Radix acha que a dica não cabe à direita e inverte o lado.
+  vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(1024);
+  vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(768);
   fonte.settings.soundEnabled = true;
   fonte.settings.browserNotifications = true;
   fonte.updateSettings.mockClear();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe('Z03 — dica do sino no padrão "Nome: estado — ação"', () => {

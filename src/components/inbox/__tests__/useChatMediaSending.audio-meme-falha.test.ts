@@ -127,6 +127,14 @@ vi.mock('@/integrations/supabase/client', () => {
         getUser: async () => ({ data: { user: { id: 'u1' } } }),
       },
       storage: { from: () => ({ upload: estado.upload, createSignedUrl: estado.createSignedUrl }) },
+      // Canal realtime do catálogo de memes (efeito do useAudioMemes): encadeável, sem rede.
+      channel: () => {
+        const canal: Record<string, unknown> = {};
+        canal.on = () => canal;
+        canal.subscribe = () => canal;
+        return canal;
+      },
+      removeChannel: () => {},
     },
     SUPABASE_URL: 'http://localhost:54321',
     SUPABASE_ANON_KEY: 'anon-de-teste',
@@ -372,7 +380,7 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     // O upload do caminho privado (bucket + pasta do contato) é do áudio
     // gravado: o picker não sobe mais nada por conta própria.
     expect(estado.upload).not.toHaveBeenCalled();
-    expect(estado.getPublicUrl).not.toHaveBeenCalled();
+    expect(estado.createSignedUrl).not.toHaveBeenCalled();
     // A prévia da voz transformada sobrevive à falha...
     expect(estado.popoverAberto).toBe(true);
     expect(screen.getByText('Enviar')).toBeInTheDocument();

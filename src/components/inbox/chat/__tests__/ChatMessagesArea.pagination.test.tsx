@@ -54,6 +54,12 @@ class ResizeObserverMock {
 
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
+  // Viewport medida do virtualizador (mesma do ChatMessagesArea.loop.test.tsx): sem ela jsdom devolve 0 e nada é renderizado.
+  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+    height: 600, width: 800, top: 0, left: 0, bottom: 600, right: 800, x: 0, y: 0,
+    toJSON: () => ({}),
+  } as DOMRect);
+  Object.defineProperty(Element.prototype, 'clientHeight', { get: () => 600, configurable: true });
 });
 
 vi.mock('../MessageBubble', () => ({

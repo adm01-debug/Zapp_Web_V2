@@ -31,11 +31,13 @@ vi.mock('@/integrations/supabase/client', () => ({
     rpc: (...args: unknown[]) => h.rpc(...args),
     from: vi.fn(),
     channel: (nome: string) => {
-      h.nomes.push(nome);
+      // O hook também abre o canal de leitura (`team-read-state-*`); só o de mensagens é o assunto aqui.
+      const dasMensagens = nome.startsWith('team-messages-');
+      if (dasMensagens) h.nomes.push(nome);
       const canal: Record<string, unknown> = {};
       canal.on = () => canal;
       canal.subscribe = (cb: (status: string) => void) => {
-        h.subs.push(cb);
+        if (dasMensagens) h.subs.push(cb);
         return canal;
       };
       return canal;

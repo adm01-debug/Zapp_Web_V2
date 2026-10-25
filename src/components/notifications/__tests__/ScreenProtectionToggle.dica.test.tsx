@@ -8,7 +8,7 @@
  * 3. a dica sai à DIREITA;
  * 4. o clique continua alternando o localStorage — a dica não troca o comportamento.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -29,6 +29,13 @@ const acharBotao = () => screen.getByRole('button', { name: /Proteção de tela:
 
 beforeEach(() => {
   localStorage.clear();
+  // jsdom não tem layout: com a viewport em 0x0 o Radix acha que a dica não cabe à direita e inverte o lado.
+  vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(1024);
+  vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(768);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe('Z03 — dica do cadeado no padrão "Nome: estado — ação"', () => {
