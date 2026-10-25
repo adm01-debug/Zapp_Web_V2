@@ -349,7 +349,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                           <span className="block text-2xs text-foreground-secondary mt-1">{fmtInt(c.total_recipients)} contatos</span>
                         </Td>
                         <Td><ChannelCell /></Td>
-                        <Td><StatusPill status={c.status} map={CAMPAIGN_STATUS} /></Td>
+                        <Td><div className="flex items-center gap-1.5">{c.status === 'sending' && <span className="talkx-dot-pulse" aria-hidden />}<StatusPill status={c.status} map={CAMPAIGN_STATUS} /></div></Td>
                         <Td><ProgressCell status={c.status} value={progress} /></Td>
                         <Td>
                           <ResultsCell sent={c.sent_count} delivered={c.delivered_count ?? 0} failed={c.failed_count} />
