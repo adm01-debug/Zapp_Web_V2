@@ -13,7 +13,7 @@
  */
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { forwardRef, type ReactNode } from 'react';
+import { createElement, forwardRef, type ReactNode } from 'react';
 import type { EmailAttachment, EmailMessage, EmailThread } from '@/hooks/integrations/useGmail';
 
 const THREAD: EmailThread = {
@@ -60,7 +60,11 @@ const state = vi.hoisted(() => ({
   subscribeToThreads: vi.fn(() => () => {}),
 }));
 
-vi.mock('framer-motion', () => ({ AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</> }));
+vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
+  useReducedMotion: () => false,
+  motion: new Proxy({}, { get: (_t, tag: string) => ({ children }: { children?: ReactNode }) => createElement(tag, null, children) }),
+}));
 
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: () => ({

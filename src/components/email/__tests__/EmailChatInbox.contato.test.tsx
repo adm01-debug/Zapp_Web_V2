@@ -7,6 +7,7 @@
  *  - ?emailThread explícito tem prioridade sobre emailContact;
  *  - depois de consumir, remove emailContact/emailTo da URL (replaceState).
  */
+import { createElement } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EmailThread } from '@/hooks/integrations/useGmail';
@@ -34,7 +35,11 @@ const lookup = vi.hoisted(() => ({
   calls: [] as Array<string | null | undefined>,
 }));
 
-vi.mock('framer-motion', () => ({ AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
+vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useReducedMotion: () => false,
+  motion: new Proxy({}, { get: (_t, tag: string) => ({ children }: { children?: React.ReactNode }) => createElement(tag, null, children) }),
+}));
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: () => ({
     ...state,

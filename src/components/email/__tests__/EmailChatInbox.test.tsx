@@ -1,3 +1,4 @@
+import { createElement } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EmailThread } from '@/hooks/integrations/useGmail';
@@ -22,7 +23,11 @@ const state = vi.hoisted(() => ({
   listQueryCalls: [] as Array<{ page?: number; search?: string } | undefined>,
 }));
 
-vi.mock('framer-motion', () => ({ AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
+vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useReducedMotion: () => false,
+  motion: new Proxy({}, { get: (_t, tag: string) => ({ children }: { children?: React.ReactNode }) => createElement(tag, null, children) }),
+}));
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: (_accountId?: string, _threadId?: string | null, listQuery?: { page?: number; search?: string }) => {
     state.listQueryCalls.push(listQuery);
