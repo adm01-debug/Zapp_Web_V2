@@ -26,6 +26,23 @@ import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
 
 const RAIZ = new URL('../../', import.meta.url);
 
+// Executa um comando com retry automático para erros transitórios de rede
+// (HTTP 504, Gateway Timeout, ECONNRESET, ETIMEDOUT). Erros permanentes
+// (403, 404, 422, auth) propagam imediatamente sem nenhum retry.
+function execComRetry(cmd, args, opts, { tentativas = 3, esperas = [5000, 10000, 20000] } = {}) {
+  for (let i = 0; ; i++) {
+    try {
+      return execFileSync(cmd, args, opts);
+    } catch (err) {
+      const stderr = String(err.stderr ?? '');
+      const transitorio = /504|Gateway Timeout|timeout expired|ECONNRESET|ETIMEDOUT/i.test(stderr);
+      if (!transitorio || i >= tentativas - 1) throw err;
+      const espera = esperas[i] ?? esperas.at(-1);
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, espera);
+    }
+  }
+}
+
 export function checksObrigatorios() {
   const baseline = JSON.parse(readFileSync(new URL('scripts/ci/github-settings-baseline.json', RAIZ), 'utf8'));
   return baseline.branch_protection_main.required_status_checks;
@@ -123,11 +140,11 @@ export async function resolverDesconhecidos(prs, behindBy) {
 }
 
 async function decisaoAtual(repo) {
-  const json = execFileSync(resolverExecutavel('gh'), [
+  const json = execComRetry(resolverExecutavel('gh'), [
     'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
     '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
   ], { encoding: 'utf8' });
-  const behindBy = async (head) => Number(execFileSync(resolverExecutavel('gh'), [
+  const behindBy = async (head) => Number(execComRetry(resolverExecutavel('gh'), [
     'api', `repos/${repo}/compare/main...${head}`, '--jq', '.behind_by',
   ], { encoding: 'utf8' }).trim());
   const prs = await resolverDesconhecidos(JSON.parse(json), behindBy);
