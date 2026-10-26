@@ -1,4 +1,4 @@
-import { MotionConfig } from "framer-motion";
+import { LazyMotion, MotionConfig } from "framer-motion";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "@/hooks/auth/useAuth";
@@ -18,6 +18,9 @@ const log = getLogger('AppProviders');
 
 const MAX_RETRIES = 3;
 
+// Carrega as features de animacao de forma assincrona: o motor do framer-motion
+// (framer-motion/dom, ~38 KB gzip) nao entra no bundle inicial.
+const loadFeatures = () => import("framer-motion/dom").then((r) => r.default);
 
 /**
  * Tela minima de erro do nivel mais externo.
@@ -123,13 +126,13 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary resetKey={errorKey} onError={handleError} onReset={handleReset}>
       {/*
-        A11Y: configura o framer-motion do app inteiro de uma vez so. Com
-        `reducedMotion="user"`, quem pede `prefers-reduced-motion: reduce` no
-        sistema deixa de receber animacao de transform/layout em TODOS os
-        consumidores de `motion.*` (antes cada tela ligava seu proprio
-        MotionConfig ou nenhum). O caso de `pathLength` das ilustracoes, que o
-        reducedMotion nao cobre, tem portao proprio em empty-state-illustration-art.
+        A11Y: LazyMotion carrega o motor de animacao de forma assincrona (fora
+        do bundle inicial). MotionConfig aplica reducedMotion="user" para todo
+        o app: quem pede `prefers-reduced-motion: reduce` no SO deixa de
+        receber animacao de transform/layout em TODOS os consumidores de
+        `motion.*` (antes cada tela ligava seu proprio MotionConfig ou nenhum).
       */}
+      <LazyMotion features={loadFeatures}>
       <MotionConfig reducedMotion="user">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
@@ -149,6 +152,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         </AuthProvider>
       </QueryClientProvider>
       </MotionConfig>
+      </LazyMotion>
     </ErrorBoundary>
   );
 }
