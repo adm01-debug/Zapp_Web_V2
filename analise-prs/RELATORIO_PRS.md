@@ -12,9 +12,9 @@
 
 | Veredito | Quantidade |
 |---|---|
-| `BLOQUEADO_CI` | 23 |
-| `BLOQUEADO_CI_E_BEHIND` | 107 |
-| `DECISAO_HUMANA` | 2 |
+| `BLOQUEADO_CI` | 19 |
+| `BLOQUEADO_CI_E_BEHIND` | 106 |
+| `DECISAO_HUMANA` | 6 |
 | `COMPLETAR` | 1 |
 | `DRAFT_SKIP` | 35 |
 | **TOTAL não-draft** | **132** |

@@ -9,7 +9,7 @@
     "created_at": "2026-10-14T22:20:19Z",
     "updated_at": "2026-10-14T22:24:46Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1930",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 1975,
@@ -21,7 +21,7 @@
     "created_at": "2026-10-16T16:03:45Z",
     "updated_at": "2026-10-22T09:48:33Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1975",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 1979,
@@ -33,7 +33,7 @@
     "created_at": "2026-10-16T17:40:28Z",
     "updated_at": "2026-10-22T16:24:33Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1979",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 1991,
@@ -45,7 +45,7 @@
     "created_at": "2026-10-16T19:16:58Z",
     "updated_at": "2026-10-25T21:46:30Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1991",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 1997,
@@ -57,7 +57,7 @@
     "created_at": "2026-10-16T19:58:38Z",
     "updated_at": "2026-10-25T21:48:14Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1997",
-    "veredito": "PENDENTE"
+    "veredito": "DECISAO_HUMANA"
   },
   {
     "number": 1998,
@@ -69,7 +69,7 @@
     "created_at": "2026-10-16T20:20:49Z",
     "updated_at": "2026-10-25T21:46:55Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1998",
-    "veredito": "PENDENTE"
+    "veredito": "DECISAO_HUMANA"
   },
   {
     "number": 2000,
@@ -81,7 +81,7 @@
     "created_at": "2026-10-16T20:44:30Z",
     "updated_at": "2026-10-25T21:48:35Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2000",
-    "veredito": "PENDENTE"
+    "veredito": "DECISAO_HUMANA"
   },
   {
     "number": 2002,
@@ -93,7 +93,7 @@
     "created_at": "2026-10-16T20:59:38Z",
     "updated_at": "2026-10-25T21:48:45Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2002",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2003,
@@ -105,7 +105,7 @@
     "created_at": "2026-10-16T21:39:13Z",
     "updated_at": "2026-10-25T21:47:47Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2003",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2013,
@@ -117,7 +117,7 @@
     "created_at": "2026-10-16T22:08:27Z",
     "updated_at": "2026-10-25T21:51:29Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2013",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2022,
@@ -129,7 +129,7 @@
     "created_at": "2026-10-16T22:32:34Z",
     "updated_at": "2026-10-25T21:50:22Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2022",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2024,
@@ -141,7 +141,7 @@
     "created_at": "2026-10-16T22:43:59Z",
     "updated_at": "2026-10-25T21:52:22Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2024",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2025,
@@ -153,7 +153,7 @@
     "created_at": "2026-10-16T22:52:02Z",
     "updated_at": "2026-10-25T22:09:12Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2025",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2026,
@@ -165,7 +165,7 @@
     "created_at": "2026-10-16T23:02:01Z",
     "updated_at": "2026-10-25T22:09:49Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2026",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2029,
@@ -177,7 +177,7 @@
     "created_at": "2026-10-16T23:12:33Z",
     "updated_at": "2026-10-25T22:10:30Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2029",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2030,
@@ -189,7 +189,7 @@
     "created_at": "2026-10-16T23:16:34Z",
     "updated_at": "2026-10-25T22:10:40Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2030",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2032,
@@ -213,7 +213,7 @@
     "created_at": "2026-10-17T00:06:11Z",
     "updated_at": "2026-10-25T21:53:45Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2034",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2035,
@@ -225,7 +225,7 @@
     "created_at": "2026-10-17T00:07:37Z",
     "updated_at": "2026-10-25T21:53:41Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2035",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2036,
@@ -261,7 +261,7 @@
     "created_at": "2026-10-18T12:08:10Z",
     "updated_at": "2026-10-19T19:04:04Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2040",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2042,
@@ -273,7 +273,7 @@
     "created_at": "2026-10-18T12:13:48Z",
     "updated_at": "2026-10-18T15:57:39Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2042",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2044,
@@ -285,7 +285,7 @@
     "created_at": "2026-10-18T12:13:55Z",
     "updated_at": "2026-10-21T11:19:44Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2044",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2046,
@@ -297,7 +297,7 @@
     "created_at": "2026-10-18T12:14:09Z",
     "updated_at": "2026-10-18T12:44:53Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2046",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2051,
@@ -309,7 +309,7 @@
     "created_at": "2026-10-18T12:16:08Z",
     "updated_at": "2026-10-18T17:56:16Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2051",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2054,
@@ -333,7 +333,7 @@
     "created_at": "2026-10-18T14:12:54Z",
     "updated_at": "2026-10-18T15:16:44Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2056",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2057,
@@ -345,7 +345,7 @@
     "created_at": "2026-10-18T14:13:51Z",
     "updated_at": "2026-10-23T20:28:18Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2057",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2058,
@@ -357,7 +357,7 @@
     "created_at": "2026-10-18T14:25:31Z",
     "updated_at": "2026-10-18T14:26:31Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2058",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2059,
@@ -369,7 +369,7 @@
     "created_at": "2026-10-18T14:33:22Z",
     "updated_at": "2026-10-18T14:34:42Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2059",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2060,
@@ -381,7 +381,7 @@
     "created_at": "2026-10-18T14:34:45Z",
     "updated_at": "2026-10-18T14:35:56Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2060",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2062,
@@ -393,7 +393,7 @@
     "created_at": "2026-10-18T14:35:12Z",
     "updated_at": "2026-10-23T20:28:25Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2062",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2063,
@@ -405,7 +405,7 @@
     "created_at": "2026-10-18T14:38:27Z",
     "updated_at": "2026-10-18T14:39:41Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2063",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2064,
@@ -417,7 +417,7 @@
     "created_at": "2026-10-18T14:40:39Z",
     "updated_at": "2026-10-23T20:28:46Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2064",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2065,
@@ -429,7 +429,7 @@
     "created_at": "2026-10-18T14:44:33Z",
     "updated_at": "2026-10-23T20:30:18Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2065",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2066,
@@ -441,7 +441,7 @@
     "created_at": "2026-10-18T14:45:37Z",
     "updated_at": "2026-10-23T20:32:26Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2066",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2067,
@@ -453,7 +453,7 @@
     "created_at": "2026-10-18T14:46:14Z",
     "updated_at": "2026-10-23T20:33:29Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2067",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2068,
@@ -465,7 +465,7 @@
     "created_at": "2026-10-18T14:53:32Z",
     "updated_at": "2026-10-23T20:34:25Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2068",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2069,
@@ -477,7 +477,7 @@
     "created_at": "2026-10-18T15:07:34Z",
     "updated_at": "2026-10-23T20:34:40Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2069",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2070,
@@ -489,7 +489,7 @@
     "created_at": "2026-10-18T15:11:51Z",
     "updated_at": "2026-10-23T20:34:55Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2070",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2071,
@@ -501,7 +501,7 @@
     "created_at": "2026-10-18T15:15:55Z",
     "updated_at": "2026-10-18T15:17:13Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2071",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2072,
@@ -513,7 +513,7 @@
     "created_at": "2026-10-18T15:25:37Z",
     "updated_at": "2026-10-18T15:26:59Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2072",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2073,
@@ -525,7 +525,7 @@
     "created_at": "2026-10-18T15:30:05Z",
     "updated_at": "2026-10-23T20:36:50Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2073",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2074,
@@ -537,7 +537,7 @@
     "created_at": "2026-10-18T15:36:42Z",
     "updated_at": "2026-10-18T15:37:48Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2074",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2075,
@@ -549,7 +549,7 @@
     "created_at": "2026-10-18T15:37:35Z",
     "updated_at": "2026-10-23T20:35:51Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2075",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2076,
@@ -561,7 +561,7 @@
     "created_at": "2026-10-18T15:44:50Z",
     "updated_at": "2026-10-23T20:41:06Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2076",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2077,
@@ -573,7 +573,7 @@
     "created_at": "2026-10-18T15:46:11Z",
     "updated_at": "2026-10-23T20:42:33Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2077",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2078,
@@ -585,7 +585,7 @@
     "created_at": "2026-10-18T16:01:51Z",
     "updated_at": "2026-10-18T16:03:25Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2078",
-    "veredito": "PENDENTE"
+    "veredito": "DECISAO_HUMANA"
   },
   {
     "number": 2079,
@@ -597,7 +597,7 @@
     "created_at": "2026-10-18T16:02:32Z",
     "updated_at": "2026-10-23T20:56:35Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2079",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2080,
@@ -609,7 +609,7 @@
     "created_at": "2026-10-18T16:04:19Z",
     "updated_at": "2026-10-22T09:51:03Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2080",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2081,
@@ -621,7 +621,7 @@
     "created_at": "2026-10-18T16:08:44Z",
     "updated_at": "2026-10-23T20:41:59Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2081",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2082,
@@ -633,7 +633,7 @@
     "created_at": "2026-10-18T16:12:33Z",
     "updated_at": "2026-10-23T20:56:35Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2082",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2083,
@@ -645,7 +645,7 @@
     "created_at": "2026-10-18T16:17:18Z",
     "updated_at": "2026-10-23T20:56:36Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2083",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2084,
@@ -657,7 +657,7 @@
     "created_at": "2026-10-18T16:19:02Z",
     "updated_at": "2026-10-23T20:56:36Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2084",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2085,
@@ -669,7 +669,7 @@
     "created_at": "2026-10-18T16:24:19Z",
     "updated_at": "2026-10-23T20:56:36Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2085",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2086,
@@ -681,7 +681,7 @@
     "created_at": "2026-10-18T16:27:28Z",
     "updated_at": "2026-10-23T20:56:37Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2086",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2087,
@@ -693,7 +693,7 @@
     "created_at": "2026-10-18T16:30:24Z",
     "updated_at": "2026-10-23T20:56:38Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2087",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2088,
@@ -705,7 +705,7 @@
     "created_at": "2026-10-18T16:33:38Z",
     "updated_at": "2026-10-18T16:35:18Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2088",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2089,
@@ -717,7 +717,7 @@
     "created_at": "2026-10-18T16:35:46Z",
     "updated_at": "2026-10-23T20:43:39Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2089",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2090,
@@ -729,7 +729,7 @@
     "created_at": "2026-10-18T16:44:59Z",
     "updated_at": "2026-10-23T20:56:38Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2090",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2091,
@@ -741,7 +741,7 @@
     "created_at": "2026-10-18T18:50:03Z",
     "updated_at": "2026-10-19T12:13:04Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2091",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2092,
@@ -777,7 +777,7 @@
     "created_at": "2026-10-18T20:00:45Z",
     "updated_at": "2026-10-23T21:49:40Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2095",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2097,
@@ -789,7 +789,7 @@
     "created_at": "2026-10-19T10:08:18Z",
     "updated_at": "2026-10-23T20:56:39Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2097",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2098,
@@ -801,7 +801,7 @@
     "created_at": "2026-10-19T10:44:33Z",
     "updated_at": "2026-10-19T12:08:39Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2098",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2100,
@@ -825,7 +825,7 @@
     "created_at": "2026-10-19T12:17:16Z",
     "updated_at": "2026-10-19T13:18:39Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2104",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2105,
@@ -837,7 +837,7 @@
     "created_at": "2026-10-19T12:34:15Z",
     "updated_at": "2026-10-19T22:28:58Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2105",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2107,
@@ -849,7 +849,7 @@
     "created_at": "2026-10-19T12:56:06Z",
     "updated_at": "2026-10-23T20:56:39Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2107",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2108,
@@ -873,7 +873,7 @@
     "created_at": "2026-10-19T13:15:16Z",
     "updated_at": "2026-10-19T13:18:40Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2109",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2110,
@@ -885,7 +885,7 @@
     "created_at": "2026-10-19T13:25:05Z",
     "updated_at": "2026-10-19T13:45:11Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2110",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2111,
@@ -897,7 +897,7 @@
     "created_at": "2026-10-19T13:41:59Z",
     "updated_at": "2026-10-19T13:42:09Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2111",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2112,
@@ -909,7 +909,7 @@
     "created_at": "2026-10-19T14:47:09Z",
     "updated_at": "2026-10-19T14:52:24Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2112",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2113,
@@ -945,7 +945,7 @@
     "created_at": "2026-10-20T22:36:23Z",
     "updated_at": "2026-10-23T20:56:40Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2119",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2120,
@@ -957,7 +957,7 @@
     "created_at": "2026-10-20T22:36:37Z",
     "updated_at": "2026-10-23T20:56:40Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2120",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2121,
@@ -969,7 +969,7 @@
     "created_at": "2026-10-20T22:37:32Z",
     "updated_at": "2026-10-23T20:56:40Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2121",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2123,
@@ -981,7 +981,7 @@
     "created_at": "2026-10-20T22:50:48Z",
     "updated_at": "2026-10-21T11:31:28Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2123",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2124,
@@ -993,7 +993,7 @@
     "created_at": "2026-10-20T22:53:52Z",
     "updated_at": "2026-10-20T23:00:37Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2124",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2125,
@@ -1005,7 +1005,7 @@
     "created_at": "2026-10-20T22:53:55Z",
     "updated_at": "2026-10-20T22:55:15Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2125",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2126,
@@ -1017,7 +1017,7 @@
     "created_at": "2026-10-20T22:53:57Z",
     "updated_at": "2026-10-23T13:14:53Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2126",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2127,
@@ -1029,7 +1029,7 @@
     "created_at": "2026-10-20T22:56:09Z",
     "updated_at": "2026-10-23T20:56:41Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2127",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2128,
@@ -1041,7 +1041,7 @@
     "created_at": "2026-10-20T22:57:42Z",
     "updated_at": "2026-10-23T13:13:56Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2128",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2129,
@@ -1053,7 +1053,7 @@
     "created_at": "2026-10-20T22:57:44Z",
     "updated_at": "2026-10-20T23:04:19Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2129",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2135,
@@ -1065,7 +1065,7 @@
     "created_at": "2026-10-20T23:03:26Z",
     "updated_at": "2026-10-23T20:56:41Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2135",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2137,
@@ -1077,7 +1077,7 @@
     "created_at": "2026-10-20T23:13:03Z",
     "updated_at": "2026-10-23T20:56:42Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2137",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2138,
@@ -1101,7 +1101,7 @@
     "created_at": "2026-10-21T00:14:04Z",
     "updated_at": "2026-10-21T00:17:24Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2139",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2141,
@@ -1113,7 +1113,7 @@
     "created_at": "2026-10-21T10:40:33Z",
     "updated_at": "2026-10-23T20:56:42Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2141",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2142,
@@ -1125,7 +1125,7 @@
     "created_at": "2026-10-21T10:55:37Z",
     "updated_at": "2026-10-21T10:57:40Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2142",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2143,
@@ -1137,7 +1137,7 @@
     "created_at": "2026-10-21T10:55:40Z",
     "updated_at": "2026-10-21T10:59:34Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2143",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2144,
@@ -1149,7 +1149,7 @@
     "created_at": "2026-10-21T10:55:43Z",
     "updated_at": "2026-10-21T10:55:54Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2144",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2145,
@@ -1161,7 +1161,7 @@
     "created_at": "2026-10-21T10:55:45Z",
     "updated_at": "2026-10-21T10:57:33Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2145",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2146,
@@ -1173,7 +1173,7 @@
     "created_at": "2026-10-21T11:01:10Z",
     "updated_at": "2026-10-23T20:56:42Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2146",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2147,
@@ -1185,7 +1185,7 @@
     "created_at": "2026-10-21T11:01:25Z",
     "updated_at": "2026-10-21T11:02:50Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2147",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2148,
@@ -1197,7 +1197,7 @@
     "created_at": "2026-10-21T11:27:17Z",
     "updated_at": "2026-10-23T20:56:43Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2148",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2149,
@@ -1209,7 +1209,7 @@
     "created_at": "2026-10-21T11:28:09Z",
     "updated_at": "2026-10-23T20:56:43Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2149",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2151,
@@ -1221,7 +1221,7 @@
     "created_at": "2026-10-21T11:52:52Z",
     "updated_at": "2026-10-21T11:54:44Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2151",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2152,
@@ -1233,7 +1233,7 @@
     "created_at": "2026-10-21T11:55:45Z",
     "updated_at": "2026-10-23T20:56:44Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2152",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2155,
@@ -1245,7 +1245,7 @@
     "created_at": "2026-10-21T12:38:46Z",
     "updated_at": "2026-10-21T18:12:29Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2155",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2185,
@@ -1257,7 +1257,7 @@
     "created_at": "2026-10-22T02:10:20Z",
     "updated_at": "2026-10-22T23:42:59Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2185",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2186,
@@ -1269,7 +1269,7 @@
     "created_at": "2026-10-22T12:46:33Z",
     "updated_at": "2026-10-23T20:56:44Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2186",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2187,
@@ -1281,7 +1281,7 @@
     "created_at": "2026-10-22T23:16:46Z",
     "updated_at": "2026-10-23T20:56:44Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2187",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2190,
@@ -1293,7 +1293,7 @@
     "created_at": "2026-10-23T04:58:24Z",
     "updated_at": "2026-10-24T00:18:31Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2190",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2191,
@@ -1305,7 +1305,7 @@
     "created_at": "2026-10-23T10:45:10Z",
     "updated_at": "2026-10-23T20:56:45Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2191",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2195,
@@ -1317,7 +1317,7 @@
     "created_at": "2026-10-23T13:28:11Z",
     "updated_at": "2026-10-24T00:30:25Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2195",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2196,
@@ -1329,7 +1329,7 @@
     "created_at": "2026-10-23T14:06:06Z",
     "updated_at": "2026-10-23T20:56:45Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2196",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2197,
@@ -1341,7 +1341,7 @@
     "created_at": "2026-10-23T14:06:23Z",
     "updated_at": "2026-10-23T14:13:19Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2197",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2199,
@@ -1389,7 +1389,7 @@
     "created_at": "2026-10-23T22:31:22Z",
     "updated_at": "2026-10-23T22:49:34Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2208",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2209,
@@ -1401,7 +1401,7 @@
     "created_at": "2026-10-23T22:31:32Z",
     "updated_at": "2026-10-23T22:49:18Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2209",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2211,
@@ -1485,7 +1485,7 @@
     "created_at": "2026-10-24T15:08:42Z",
     "updated_at": "2026-10-25T19:36:45Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2218",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2219,
@@ -1533,7 +1533,7 @@
     "created_at": "2026-10-24T17:55:52Z",
     "updated_at": "2026-10-24T23:40:26Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2223",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2225,
@@ -1545,7 +1545,7 @@
     "created_at": "2026-10-24T18:32:24Z",
     "updated_at": "2026-10-24T18:36:25Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2225",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2226,
@@ -1557,7 +1557,7 @@
     "created_at": "2026-10-24T18:32:29Z",
     "updated_at": "2026-10-24T18:36:26Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2226",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2228,
@@ -1569,7 +1569,7 @@
     "created_at": "2026-10-24T18:34:22Z",
     "updated_at": "2026-10-24T18:39:40Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2228",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2229,
@@ -1581,7 +1581,7 @@
     "created_at": "2026-10-24T18:36:26Z",
     "updated_at": "2026-10-24T18:40:16Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2229",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2230,
@@ -1605,7 +1605,7 @@
     "created_at": "2026-10-24T18:44:35Z",
     "updated_at": "2026-10-24T23:19:56Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2231",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2232,
@@ -1617,7 +1617,7 @@
     "created_at": "2026-10-24T18:50:47Z",
     "updated_at": "2026-10-24T18:55:57Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2232",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2233,
@@ -1629,7 +1629,7 @@
     "created_at": "2026-10-24T19:34:43Z",
     "updated_at": "2026-10-25T01:40:40Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2233",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2234,
@@ -1641,7 +1641,7 @@
     "created_at": "2026-10-24T19:39:21Z",
     "updated_at": "2026-10-24T19:43:55Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2234",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2235,
@@ -1653,7 +1653,7 @@
     "created_at": "2026-10-24T19:46:58Z",
     "updated_at": "2026-10-24T19:54:11Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2235",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2236,
@@ -1665,7 +1665,7 @@
     "created_at": "2026-10-24T20:14:05Z",
     "updated_at": "2026-10-24T23:25:30Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2236",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2237,
@@ -1677,7 +1677,7 @@
     "created_at": "2026-10-24T20:18:05Z",
     "updated_at": "2026-10-24T20:24:27Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2237",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2238,
@@ -1701,7 +1701,7 @@
     "created_at": "2026-10-24T20:52:53Z",
     "updated_at": "2026-10-24T20:57:18Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2239",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2240,
@@ -1713,7 +1713,7 @@
     "created_at": "2026-10-24T21:09:29Z",
     "updated_at": "2026-10-24T21:13:28Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2240",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2241,
@@ -1749,7 +1749,7 @@
     "created_at": "2026-10-25T07:21:25Z",
     "updated_at": "2026-10-25T09:11:56Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2244",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2245,
@@ -1773,7 +1773,7 @@
     "created_at": "2026-10-25T11:01:38Z",
     "updated_at": "2026-10-25T23:21:12Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2246",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2247,
@@ -1785,7 +1785,7 @@
     "created_at": "2026-10-25T11:35:44Z",
     "updated_at": "2026-10-25T11:39:30Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2247",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2248,
@@ -1881,7 +1881,7 @@
     "created_at": "2026-10-25T21:16:04Z",
     "updated_at": "2026-10-25T21:52:21Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2266",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2267,
@@ -1893,7 +1893,7 @@
     "created_at": "2026-10-25T21:18:27Z",
     "updated_at": "2026-10-25T21:52:27Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2267",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2268,
@@ -1905,7 +1905,7 @@
     "created_at": "2026-10-25T21:20:12Z",
     "updated_at": "2026-10-25T21:51:53Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2268",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2269,
@@ -1917,7 +1917,7 @@
     "created_at": "2026-10-25T21:23:29Z",
     "updated_at": "2026-10-25T21:48:45Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2269",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI_E_BEHIND"
   },
   {
     "number": 2270,
@@ -1929,7 +1929,7 @@
     "created_at": "2026-10-26T12:10:32Z",
     "updated_at": "2026-10-26T12:10:40Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2270",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2271,
@@ -1941,7 +1941,7 @@
     "created_at": "2026-10-26T12:15:22Z",
     "updated_at": "2026-10-26T12:15:47Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2271",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2272,
@@ -1953,7 +1953,7 @@
     "created_at": "2026-10-26T12:16:30Z",
     "updated_at": "2026-10-26T12:16:39Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2272",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2273,
@@ -1965,7 +1965,7 @@
     "created_at": "2026-10-26T21:58:24Z",
     "updated_at": "2026-10-26T22:19:16Z",
     "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2273",
-    "veredito": "PENDENTE"
+    "veredito": "BLOQUEADO_CI"
   },
   {
     "number": 2274,

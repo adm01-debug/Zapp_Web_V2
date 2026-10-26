@@ -12,22 +12,27 @@
     ]
   },
   "vereditos": {
-    "BLOQUEADO_CI": 23,
-    "BLOQUEADO_CI_E_BEHIND": 107,
+    "BLOQUEADO_CI": 19,
+    "BLOQUEADO_CI_E_BEHIND": 106,
     "DRAFT_SKIP": 35,
-    "DECISAO_HUMANA": 2,
+    "DECISAO_HUMANA": 6,
     "COMPLETAR": 1,
     "total_nao_draft": 132,
     "total_prs": 167
   },
+  "nota_pr_1997": "DECISAO_HUMANA — feat: CV-010-020 Fase 2 RADAR copilot (migrations + feature flag)",
+  "nota_pr_1998": "DECISAO_HUMANA — feat: CV-021-030 Motor copilot-live (worker incremental)",
+  "nota_pr_2000": "DECISAO_HUMANA — feat: RADAR Fase 4 Inteligencia B.R.I.N.D.E (CV-031-040)",
+  "nota_pr_2078": "DECISAO_HUMANA — ci(F3): baseline strict=false — opcao A sem fila serial",
   "nota_pr_2230": "COMPLETAR — deleta src/hooks/integrations/useTalkXSuppression.ts sem atualizar TalkXSuppression.tsx:32 que importa 8 simbolos do modulo; PR #2248 ja inclui esta correcao",
   "nota_pr_2238": "DECISAO_HUMANA — feat(message-delivery) com possivel DDL ou mudanca de behavior",
   "nota_pr_2248": "DECISAO_HUMANA — DESBLOQUEADOR: reduz 136 para 1 arquivo vermelho no CI; requer aprovacao das 2 migrations via producao-ddl",
   "status": "ANALISE_COMPLETA_BLOQUEADO_SISTEMICO",
   "merges_realizados": 0,
   "outras_escritas_github": "nenhuma (apenas leituras via github_get_pr_diff, github_get_pull_request, github_list_check_runs, github_list_pull_requests)",
-  "dossies_completos": 132,
-  "dossies_com_nao_verificado": 93,
-  "nota_nao_verificado": "93 dossies tem as 4 perguntas individuais como NAO VERIFICADO: o veredito (BLOQUEADO_CI ou BLOQUEADO_CI_E_BEHIND) e determinado pelo bloqueio sistemico (evidencia: PR #2247 docs-only com CI Gate failure) + posicao do base SHA, nao pela analise individual do diff. Analise individual so muda o veredito se CI ficar verde.",
-  "nota_conclusao": "132 dossies com veredito definido e justificado. Veredito final: 0 merges possiveis enquanto PR #2248 nao for mergeada e as 2 migrations nao forem aplicadas em producao."
+  "dossies_completos": 174,
+  "dossies_nao_draft": 132,
+  "dossies_draft_skip": 35,
+  "dossies_fechadas_fora_do_escopo": 7,
+  "nota_conclusao": "167 PRs analisados (132 nao-draft + 35 draft). 0 merges possiveis enquanto PR #2248 nao for mergeada e as 2 migrations nao forem aplicadas em producao (environment producao-ddl). Toda PR nao-draft esta BLOQUEADA pelo CI Gate sistemico de main@2d97c44."
 }
