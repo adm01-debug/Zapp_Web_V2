@@ -182,7 +182,7 @@ PRs docs-only (`.claude/commands/`, `docs/`). Ex.: PR #2247. Bloqueadas pelo CI 
 
 ## 8. Limitação da Análise — Vereditos Sistêmicos vs. Individuais
 
-Os vereditos `BLOQUEADO_CI` (19 PRs) e `BLOQUEADO_CI_E_BEHIND` (106 PRs) foram determinados por análise sistêmica, não diff-por-diff em todos os casos. O fundamento é válido:
+Os vereditos `BLOQUEADO_CI` (19 PRs) e `BLOQUEADO_CI_E_BEHIND` (93 PRs) foram determinados por análise sistêmica, não diff-por-diff em todos os casos. O fundamento é válido:
 
 1. CI Gate falha em TODAS as PRs não-draft (evidência: PR #2247 docs-only com CI Gate failure; regra: `ci.yml:289` — `unit-tests.result == "failure"`)
 2. Posição do base SHA confirma se a branch está atrás ou no ponto exato de main@2d97c44
