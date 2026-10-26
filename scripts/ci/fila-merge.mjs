@@ -26,7 +26,7 @@ import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
 
 const RAIZ = new URL('../../', import.meta.url);
 
-async function execComRetry(cmd, args, opts, maxTentativas = 3) {
+async function execComRetry(cmd, args, opts, maxTentativas = 4) {
   const esperas = [5000, 10000, 20000];
   for (let i = 0; i < maxTentativas; i++) {
     try {
@@ -35,7 +35,7 @@ async function execComRetry(cmd, args, opts, maxTentativas = 3) {
       const stderr = String(err.stderr ?? err.stdout ?? err.message ?? '');
       const ehTransiente = /HTTP 5\d\d|ECONNRESET|ETIMEDOUT|EHOSTUNREACH|ENOTFOUND|unexpected end of JSON/.test(stderr);
       if (!ehTransiente || i === maxTentativas - 1) throw err;
-      await new Promise((r) => setTimeout(r, esperas[i]));
+      await new Promise((r) => setTimeout(r, esperas[Math.min(i, esperas.length - 1)]));
     }
   }
 }
