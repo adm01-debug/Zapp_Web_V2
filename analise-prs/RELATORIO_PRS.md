@@ -77,9 +77,33 @@ Head SHA: `7e2480f7e5f243053175b02396b77e0247f2ee9f`
 **mergeable_state: blocked** (CI Gate falha em Unit Tests 2/3 com rlsSchemaGuard)  
 **ESTA PR DEVE SER MERGEADA PRIMEIRO.**
 
+### PR #1997 — `feat: CV-010–020 Fase 2 RADAR copilot migrations` (DECISAO_HUMANA)
+
+9 arquivos, +324/-382 linhas. Cria 6 tabelas novas com RLS e um trigger em `messages` (Fase 2 do módulo RADAR/Copilot). Inclui migrations: `copilot_sessions`, `copilot_insights`, `copilot_feedback`, trigger `copilot_tick_trigger`, `copilot_presence`, `copilot_retention`, e feature flag `copilot_v1`. Migrations aditivas, mas o trigger em `messages` tem potencial impacto no write path em produção — requer revisão do Joaquim.
+
+Head SHA: `9b7213d2` | Base: main@2d97c44 | Conflito: NÃO
+
+### PR #1998 — `feat: CV-021–030 Motor copilot-live edge function` (DECISAO_HUMANA)
+
+4 arquivos, +1005/-3 linhas. Cria a edge function `copilot-live` (motor principal do RADAR copilot) + migration `20261016194000_copilot_live_helpers.sql`. Edge function nova requer deploy via `deploy-functions.yml` + aprovação em `producao-edge-functions`.
+
+Head SHA: `d6625dd1` | Base: main@2d97c44 | Conflito: NÃO
+
+### PR #2000 — `feat: RADAR Fase 4 Inteligência B·R·I·N·D·E CV-031–040` (DECISAO_HUMANA)
+
+16 arquivos, +1889/-1 linhas. Fase 4 do RADAR: 2 migrations (RPCs + 5 colunas novas em `copilot_sessions`), atualização da edge function `copilot-live`, ~8 novos componentes React. Depende de #1997 e #1998 para as tabelas e edge function existirem — deve ser mergeada após elas.
+
+Head SHA: `81adcfd8` | Base: main@2d97c44 | Conflito: NÃO
+
 ### PR #2238 — `feat(message-delivery)` (DECISAO_HUMANA)
 
 Possível DDL ou mudança de behavior com impacto em produção. Requer revisão do Joaquim antes de merge.
+
+### PR #2078 — `chore(ci): altera github-settings-baseline.json para strict=false` (DECISAO_HUMANA)
+
+1 arquivo. Reverte `required_status_checks.strict` para `false` no baseline do `settings-guard`. **Contradiz diretamente o CLAUDE.md** que define `strict=true` como política permanente (E15(b), 2026-10-02: "instrução de repetir `strict: false` está REVOGADA"). Se mergeada, o guard para de detectar a regressão mais recorrente do repositório. Somente o Joaquim pode autorizar.
+
+Base: `e322d379` (BEHIND main@2d97c44)
 
 ---
 
