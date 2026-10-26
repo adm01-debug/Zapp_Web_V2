@@ -247,4 +247,3 @@ describe('ChatMessagesArea — historico anterior (R2-INB-004)', () => {
     expect(itemStart(2) - scroll.scrollTop).toBeCloseTo(deslocamentoAntes, 0);
   });
 });
-
