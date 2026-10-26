@@ -2,22 +2,26 @@
 
 **Data da análise:** 2026-10-26  
 **main SHA auditado:** `2d97c44cfe7f2fa8a3ca572f8f5689118328e858`  
-**Total de PRs abertas:** 167 (132 não-draft + 35 drafts)
+**Total de PRs abertas:** 167 (130 não-draft + 37 drafts)  
+**Total de dossiês criados:** 174 (167 open PRs + 7 extras: 4 JÁ_MERGEADA, 1 NÃO_EXISTE, 2 fechadas durante análise)
 
 ---
 
 ## Resumo Executivo
 
-**NENHUMA PR foi mergeada.** Todas as 132 PRs não-draft estão bloqueadas pelo CI Gate sistêmico.
+**NENHUMA PR foi mergeada.** Todas as 130 PRs não-draft estão bloqueadas pelo CI Gate sistêmico.
 
-| Veredito | Quantidade |
-|---|---|
-| `BLOQUEADO_CI` | 19 |
-| `BLOQUEADO_CI_E_BEHIND` | 93 |
-| `DECISAO_HUMANA` | 19 |
-| `COMPLETAR` | 1 |
-| `DRAFT_SKIP` | 35 |
-| **TOTAL não-draft** | **132** |
+| Veredito | Quantidade | Notas |
+|---|---|---|
+| `BLOQUEADO_CI` | 30 | inclui 2 com +DECISAO_HUMANA embutido |
+| `BLOQUEADO_CI_E_BEHIND` | 94 | inclui 8 com +DECISAO_HUMANA ou +COMPLETAR embutido |
+| `DECISAO_HUMANA` (puro) | 7 | DDL, edge function nova, workflows |
+| `DECISAO_HUMANA` (total, incluindo embutidos) | 15 | — |
+| `COMPLETAR` | 2 | PR incompleta, requer trabalho adicional |
+| `DRAFT_SKIP` | 37 | drafts não analisados |
+| `JÁ_MERGEADA` | 4 | mergeadas durante análise |
+| `NÃO_EXISTE` | 1 | stub de PR não encontrada |
+| **TOTAL não-draft** | **130** | |
 
 ---
 
@@ -152,13 +156,13 @@ PRs docs-only (`.claude/commands/`, `docs/`). Ex.: PR #2247. Bloqueadas pelo CI 
 
 ## 7. Cobertura dos Dossiês
 
-**174 dossiês criados** cobrindo todas as 167 PRs:
+**174 dossiês criados** cobrindo todas as 167 PRs abertas (cobertura 100%):
 
 | Categoria | Quantidade |
 |---|---|
-| Dossiês não-draft com análise completa | 132 |
-| Dossiês draft (stub DRAFT_SKIP) | 35 |
-| Dossiês de PRs fechadas/mergeadas fora do escopo | 7 |
+| Dossiês não-draft com análise completa | 130 |
+| Dossiês draft (stub DRAFT_SKIP) | 37 |
+| Dossiês de PRs fechadas/mergeadas / não-existentes | 7 |
 | **TOTAL** | **174** |
 
 **Dossiês com as 4 perguntas respondidas com evidência real** (amostra representativa):
@@ -182,7 +186,7 @@ PRs docs-only (`.claude/commands/`, `docs/`). Ex.: PR #2247. Bloqueadas pelo CI 
 
 ## 8. Limitação da Análise — Vereditos Sistêmicos vs. Individuais
 
-Os vereditos `BLOQUEADO_CI` (19 PRs) e `BLOQUEADO_CI_E_BEHIND` (93 PRs) foram determinados por análise sistêmica, não diff-por-diff em todos os casos. O fundamento é válido:
+Os vereditos `BLOQUEADO_CI` (30 PRs) e `BLOQUEADO_CI_E_BEHIND` (94 PRs) foram determinados por análise sistêmica, não diff-por-diff em todos os casos. O fundamento é válido:
 
 1. CI Gate falha em TODAS as PRs não-draft (evidência: PR #2247 docs-only com CI Gate failure; regra: `ci.yml:289` — `unit-tests.result == "failure"`)
 2. Posição do base SHA confirma se a branch está atrás ou no ponto exato de main@2d97c44
