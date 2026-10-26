@@ -98,11 +98,14 @@ const CONTACT_ROW = {
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: () => ({
-      select: () => ({ eq: () => ({ single: async () => ({ data: CONTACT_ROW, error: null }) }) }),
+      select: () => ({ eq: () => ({ single: async () => ({ data: CONTACT_ROW, error: null }), maybeSingle: async () => ({ data: null, error: null }) }) }),
     }),
     storage: {
       from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }), remove: vi.fn() }),
     },
+    functions: { invoke: vi.fn(async () => ({ data: null, error: null })) },
+    channel: () => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() }),
+    removeChannel: vi.fn(),
   },
 }));
 

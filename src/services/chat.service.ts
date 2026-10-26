@@ -58,10 +58,19 @@ export class ChatService {
   }
 
   static async uploadAudio(contactId: string, blob: Blob) {
-    const fileName = `${contactId}/${Date.now()}.webm`;
+    const mimeType = blob.type.split(';')[0] || 'audio/webm';
+    const MIME_TO_EXT: Record<string, string> = {
+      'audio/ogg': 'ogg',
+      'audio/mp4': 'm4a',
+      'audio/webm': 'webm',
+      'audio/mpeg': 'mp3',
+      'audio/wav': 'wav',
+    };
+    const ext = MIME_TO_EXT[mimeType] ?? mimeType.split('/')[1] ?? 'webm';
+    const fileName = `${contactId}/${Date.now()}.${ext}`;
     const { error: uploadError } = await supabase.storage
       .from('audio-messages')
-      .upload(fileName, blob, { contentType: 'audio/webm' });
+      .upload(fileName, blob, { contentType: mimeType });
 
     if (uploadError) throw uploadError;
 

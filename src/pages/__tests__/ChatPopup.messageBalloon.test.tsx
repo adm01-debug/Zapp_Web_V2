@@ -13,7 +13,7 @@
  * como espiões. A medida de layout entra porque o jsdom não dá altura ao
  * contêiner de rolagem e o virtualizador não renderizaria linhas.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
@@ -45,14 +45,18 @@ const CONTACT_ROW = {
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: () => ({
-      select: () => ({ eq: () => ({ single: async () => ({ data: CONTACT_ROW, error: null }) }) }),
+      select: () => ({ eq: () => ({ single: async () => ({ data: CONTACT_ROW, error: null }), maybeSingle: async () => ({ data: null, error: null }) }) }),
     }),
     storage: {
       from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }), remove: vi.fn() }),
     },
     functions: { invoke: vi.fn(async () => ({ data: null, error: null })) },
-    channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
+    channel: () => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() }),
     removeChannel: vi.fn(),
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
+    },
   },
 }));
 
@@ -263,6 +267,10 @@ function medirLayout() {
     },
   };
 }
+
+beforeAll(async () => {
+  await import('@/components/inbox/ChatPanel');
+}, 120_000);
 
 let medir: { mockRestore: () => void };
 
