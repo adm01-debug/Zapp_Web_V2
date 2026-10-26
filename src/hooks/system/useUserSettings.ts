@@ -93,6 +93,7 @@ export function useUserSettings() {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   // Escolha feita na tela nesta sessão. Sem isso, um fetch que responde atrasado
   // (login lento, troca de usuário) aplica o valor do banco por cima do que o
@@ -120,6 +121,7 @@ export function useUserSettings() {
     escolhaLocalRef.current = false;
 
     const fetchSettings = async () => {
+      setIsError(false);
       setIsLoading(true);
       try {
         const { data, error } = await supabase
@@ -133,6 +135,8 @@ export function useUserSettings() {
         if (error && error.code !== 'PGRST116') {
           // PGRST116 = no rows returned
           log.error('Error fetching settings:', error);
+          setIsError(true);
+          toast({ variant: 'destructive', title: 'Erro ao carregar', description: 'Não foi possível carregar as configurações.' });
           return;
         }
 
@@ -293,6 +297,7 @@ export function useUserSettings() {
     settings,
     isLoading,
     isSaving,
+    isError,
     updateSettings,
     saveSettings,
     resetSettings,
