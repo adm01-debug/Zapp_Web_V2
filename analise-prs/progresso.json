@@ -13,9 +13,9 @@
   },
   "vereditos": {
     "BLOQUEADO_CI": 19,
-    "BLOQUEADO_CI_E_BEHIND": 106,
+    "BLOQUEADO_CI_E_BEHIND": 93,
     "DRAFT_SKIP": 35,
-    "DECISAO_HUMANA": 6,
+    "DECISAO_HUMANA": 19,
     "COMPLETAR": 1,
     "total_nao_draft": 132,
     "total_prs": 167
@@ -34,5 +34,6 @@
   "dossies_nao_draft": 132,
   "dossies_draft_skip": 35,
   "dossies_fechadas_fora_do_escopo": 7,
-  "nota_conclusao": "167 PRs analisados (132 nao-draft + 35 draft). 0 merges possiveis enquanto PR #2248 nao for mergeada e as 2 migrations nao forem aplicadas em producao (environment producao-ddl). Toda PR nao-draft esta BLOQUEADA pelo CI Gate sistemico de main@2d97c44."
+  "nota_conclusao": "167 PRs analisados (132 nao-draft + 35 draft). 0 merges possiveis enquanto PR #2248 nao for mergeada e as 2 migrations nao forem aplicadas em producao (environment producao-ddl). Toda PR nao-draft esta BLOQUEADA pelo CI Gate sistemico de main@2d97c44.",
+  "dossies_completos_count": 174
 }

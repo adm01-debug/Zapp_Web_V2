@@ -13,8 +13,8 @@
 | Veredito | Quantidade |
 |---|---|
 | `BLOQUEADO_CI` | 19 |
-| `BLOQUEADO_CI_E_BEHIND` | 106 |
-| `DECISAO_HUMANA` | 6 |
+| `BLOQUEADO_CI_E_BEHIND` | 93 |
+| `DECISAO_HUMANA` | 19 |
 | `COMPLETAR` | 1 |
 | `DRAFT_SKIP` | 35 |
 | **TOTAL não-draft** | **132** |
@@ -104,6 +104,30 @@ Possível DDL ou mudança de behavior com impacto em produção. Requer revisão
 1 arquivo. Reverte `required_status_checks.strict` para `false` no baseline do `settings-guard`. **Contradiz diretamente o CLAUDE.md** que define `strict=true` como política permanente (E15(b), 2026-10-02: "instrução de repetir `strict: false` está REVOGADA"). Se mergeada, o guard para de detectar a regressão mais recorrente do repositório. Somente o Joaquim pode autorizar.
 
 Base: `e322d379` (BEHIND main@2d97c44)
+
+### PRs tocando `.github/workflows/` (DECISAO_HUMANA — política CLAUDE.md seção 3)
+
+Conforme CLAUDE.md, qualquer mudança em `.github/workflows/` requer decisão do Joaquim. 13 PRs adicionais identificadas nesta análise:
+
+| PR | Título | Status |
+|---|---|---|
+| #1975 | ci: reativar 8 suites no job node-scripts | BLOQUEADO_CI_E_BEHIND |
+| #1979 | docs: plano de correções dos workflows em FAILURE | BLOQUEADO_CI_E_BEHIND |
+| #1991 | fix: corrige nomes de workflows no notificador | BLOQUEADO_CI_E_BEHIND |
+| #2003 | feat: CV-051–060 Fase 6 RADAR (toca workflow) | BLOQUEADO_CI_E_BEHIND |
+| #2013 | feat: CV-071–080 Fase 8 RADAR (toca workflow) | BLOQUEADO_CI_E_BEHIND |
+| #2034 | fix(ci): GA02+GA10 — guarda CLAUDE.md no CI + contratos | BLOQUEADO_CI_E_BEHIND |
+| #2035 | fix: mock global @/lib/logger (319 arquivos, scope enorme) | BLOQUEADO_CI |
+| #2040 | fix(e2e-logado): restaura W71 workflow_run | BLOQUEADO_CI_E_BEHIND |
+| #2042 | ci(W94+W32): concurrency talkx-status-regen | BLOQUEADO_CI_E_BEHIND |
+| #2044 | ci(W39/W49/W50): playwright dinâmico + comentários | BLOQUEADO_CI_E_BEHIND |
+| #2046 | ci: skip draft PRs nos required CI jobs | BLOQUEADO_CI |
+| #2051 | ci: Playwright 1.64.1 + Scorecard + Bun cache | BLOQUEADO_CI_E_BEHIND |
+| #2056 | fix(ci): auto-update-pr-branch rewrite + settings-guard | BLOQUEADO_CI_E_BEHIND |
+
+**Conflitos internos identificados:**
+- PR #2051 ↔ PR #2042: ambas removem bloco `concurrency` duplicado em `talkx-status-regen.yml`
+- PR #2051 ↔ PR #2044: ambas alteram `ci-docs-baseline.unit.mjs` para playwright dinâmico
 
 ---
 
