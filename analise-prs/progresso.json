@@ -12,13 +12,17 @@
     ]
   },
   "vereditos": {
-    "BLOQUEADO_CI": 19,
-    "BLOQUEADO_CI_E_BEHIND": 93,
-    "DRAFT_SKIP": 35,
-    "DECISAO_HUMANA": 19,
+    "BLOQUEADO_CI": 30,
+    "BLOQUEADO_CI_E_BEHIND": 94,
+    "DRAFT_SKIP": 37,
+    "DECISAO_HUMANA": 7,
     "COMPLETAR": 1,
-    "total_nao_draft": 132,
-    "total_prs": 167
+    "JA_MERGEADA": 4,
+    "NAO_EXISTE": 1,
+    "total_nao_draft": 130,
+    "total_prs": 167,
+    "total_dossies": 174,
+    "nota_contagem": "174 dossies = 167 open PRs (130 nao-draft + 37 draft) + 5 extras (4 ja-mergeadas + 1 nao-existe) + 2 fechadas-durante-analise. Counts derivados diretamente dos dossies."
   },
   "nota_pr_1997": "DECISAO_HUMANA — feat: CV-010-020 Fase 2 RADAR copilot (migrations + feature flag)",
   "nota_pr_1998": "DECISAO_HUMANA — feat: CV-021-030 Motor copilot-live (worker incremental)",
@@ -31,9 +35,9 @@
   "merges_realizados": 0,
   "outras_escritas_github": "nenhuma (apenas leituras via github_get_pr_diff, github_get_pull_request, github_list_check_runs, github_list_pull_requests)",
   "dossies_completos": 174,
-  "dossies_nao_draft": 132,
-  "dossies_draft_skip": 35,
+  "dossies_nao_draft": 130,
+  "dossies_draft_skip": 37,
   "dossies_fechadas_fora_do_escopo": 7,
-  "nota_conclusao": "167 PRs analisados (132 nao-draft + 35 draft). 0 merges possiveis enquanto PR #2248 nao for mergeada e as 2 migrations nao forem aplicadas em producao (environment producao-ddl). Toda PR nao-draft esta BLOQUEADA pelo CI Gate sistemico de main@2d97c44.",
+  "nota_conclusao": "174 dossies criados (167 open PRs = 130 nao-draft + 37 draft; + 5 extras: 4 ja-mergeadas + 1 nao-existe; + 2 fechadas-durante-analise). 0 merges possiveis enquanto PR #2248 nao for mergeada e as 2 migrations nao forem aplicadas em producao (environment producao-ddl). Toda PR nao-draft esta BLOQUEADA pelo CI Gate sistemico de main@2d97c44.",
   "dossies_completos_count": 174
 }
