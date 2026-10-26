@@ -33,7 +33,7 @@ async function execComRetry(cmd, args, opts, maxTentativas = 3) {
       return execFileSync(cmd, args, opts);
     } catch (err) {
       const stderr = String(err.stderr ?? err.stdout ?? err.message ?? '');
-      const ehTransiente = /HTTP 5\d\d|ECONNRESET|ETIMEDOUT|unexpected end of JSON/.test(stderr);
+      const ehTransiente = /HTTP 5\d\d|ECONNRESET|ETIMEDOUT|EHOSTUNREACH|ENOTFOUND|unexpected end of JSON/.test(stderr);
       if (!ehTransiente || i === maxTentativas - 1) throw err;
       await new Promise((r) => setTimeout(r, esperas[i]));
     }
