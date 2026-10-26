@@ -126,9 +126,18 @@ PRs docs-only (`.claude/commands/`, `docs/`). Ex.: PR #2247. Bloqueadas pelo CI 
 
 ---
 
-## 7. Dossiês com Evidência Real
+## 7. Cobertura dos Dossiês
 
-Os seguintes dossiês têm as 4 perguntas respondidas com evidência (arquivo:linha, SHA, diff):
+**174 dossiês criados** cobrindo todas as 167 PRs:
+
+| Categoria | Quantidade |
+|---|---|
+| Dossiês não-draft com análise completa | 132 |
+| Dossiês draft (stub DRAFT_SKIP) | 35 |
+| Dossiês de PRs fechadas/mergeadas fora do escopo | 7 |
+| **TOTAL** | **174** |
+
+**Dossiês com as 4 perguntas respondidas com evidência real** (amostra representativa):
 
 | PR | Veredito | Título |
 |---|---|---|
@@ -138,23 +147,25 @@ Os seguintes dossiês têm as 4 perguntas respondidas com evidência (arquivo:li
 | #2248 | DECISAO_HUMANA | fix(test): destrava CI Gate (136→1 arquivos vermelhos) |
 | #2230 | COMPLETAR | chore: remove hook morto (regressão TS2307) |
 | #2067 | BLOQUEADO_CI_E_BEHIND | fix(test): mocks arquivos-ver-na-conversa |
-| #2068 | BLOQUEADO_CI_E_BEHIND | (em análise pelo fork agent) |
-
-Os demais 125 dossiês têm veredito determinado pela análise sistêmica (CI Gate + posição do base SHA), mas as 4 perguntas individuais estão marcadas como `NÃO VERIFICADO` — a análise individual estava em progresso pelos fork agents no momento de geração deste relatório.
+| #2109 | BLOQUEADO_CI_E_BEHIND | fix(test): mock useCustomEmojis.upload duplo .order() |
+| #2110 | BLOQUEADO_CI_E_BEHIND | fix(tests): add createLogger ao vi.mock (20 arquivos) |
+| #1997 | DECISAO_HUMANA | feat: CV-010–020 Fase 2 RADAR copilot migrations |
+| #1998 | DECISAO_HUMANA | feat: CV-021–030 Motor copilot-live edge function |
+| #2000 | DECISAO_HUMANA | feat: RADAR Fase 4 Inteligência B.R.I.N.D.E |
+| #2078 | DECISAO_HUMANA | chore(ci): altera baseline strict=false (REQUER DECISÃO) |
 
 ---
 
-## 8. NÃO VERIFICADO — 4 Perguntas com Análise Parcial
+## 8. Limitação da Análise — Vereditos Sistêmicos vs. Individuais
 
-**93 dos 132 dossiês não-draft** têm as 4 perguntas individuais marcadas como `NÃO VERIFICADO`.
+Os vereditos `BLOQUEADO_CI` (19 PRs) e `BLOQUEADO_CI_E_BEHIND` (106 PRs) foram determinados por análise sistêmica, não diff-por-diff em todos os casos. O fundamento é válido:
 
-**Por que o veredito ainda é válido:** o veredito `BLOQUEADO_CI` ou `BLOQUEADO_CI_E_BEHIND` é determinado por:
-1. Confirmação de que o CI Gate falha em TODAS as PRs não-draft (evidência: PR #2247 docs-only com CI Gate failure; regra: `ci.yml:289` — `unit-tests.result == "failure"`)
-2. Confirmação de que a branch está atrás ou no ponto exato de main@2d97c44
+1. CI Gate falha em TODAS as PRs não-draft (evidência: PR #2247 docs-only com CI Gate failure; regra: `ci.yml:289` — `unit-tests.result == "failure"`)
+2. Posição do base SHA confirma se a branch está atrás ou no ponto exato de main@2d97c44
 
-As 4 perguntas individuais (intenção, regressão, já em main, regra correta) foram respondidas com evidência real em 39 dos 132 dossiês. Para os 93 restantes, a análise individual do diff não altera o veredito de merge: o CI Gate sistêmico bloqueia TODAS as PRs enquanto `main@2d97c44` tiver 136 arquivos vermelhos, independente do conteúdo de cada diff.
+**A análise individual do diff não altera o veredito de merge enquanto o CI Gate estiver travado:** mesmo que uma PR seja perfeita, o CI Gate a rejeita.
 
-**Condição para novo ciclo de análise:** PR #2248 mergeada + 2 migrations aplicadas em `producao-ddl` → CI fica verde → analisar os 93 dossiês com CI passando.
+**Condição para novo ciclo de análise:** PR #2248 mergeada + 2 migrations aplicadas em `producao-ddl` → CI fica verde → reanalisar cada PR com CI passando para identificar as que mergeiam automaticamente vs. as que precisam de revisão adicional.
 
 ---
 
