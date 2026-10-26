@@ -16,7 +16,7 @@
 | `BLOQUEADO_CI_E_BEHIND` | 107 |
 | `DECISAO_HUMANA` | 2 |
 | `COMPLETAR` | 1 |
-| `DRAFT_SKIP` | 32 |
+| `DRAFT_SKIP` | 35 |
 | **TOTAL não-draft** | **132** |
 
 ---

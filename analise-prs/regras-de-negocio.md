@@ -96,8 +96,8 @@ Fonte: `scripts/ci/github-settings-baseline.json:24-25` e `CLAUDE.md` "Perímetr
 - PR #2248 (fix CI Gate): documenta 136 arquivos vermelhos, reduz para 1 arquivo (`rlsSchemaGuard.test.ts`) que precisa de 2 migrations aplicadas em produção
 
 **Impacto:**
-- **164 PRs abertas** — nenhuma mergeável
-- 32 são drafts (fora do escopo de merge de qualquer forma)
+- **167 PRs abertas** — nenhuma mergeável
+- 35 são drafts (fora do escopo de merge de qualquer forma)
 - 132 são não-draft — todas bloqueadas pelo CI sistêmico
 
 **Caminho de desbloqueio:**
