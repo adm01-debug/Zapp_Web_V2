@@ -1,0 +1,33 @@
+# Unit Tests baseline — main@2d97c44
+# Fonte: PR #2248 body (head SHA 7e2480f7e5f243053175b02396b77e0247f2ee9f)
+# Data: 2026-10-26
+# Resultado: FALHA — 136 arquivos de teste vermelhos nos 3 shards do CI
+
+O commit 2d97c44 ("fix(ci): ci-gate bloqueia merge quando unit tests falham") fez o CI Gate
+passar a bloquear merge QUANDO unit tests falham. E unit tests estão falhando em 136 arquivos.
+
+Evidência direta (PR #2247, docs-only, 1 arquivo markdown):
+  🧪 Unit Tests (1/3) → failure
+  🧪 Unit Tests (2/3) → failure
+  🧪 Unit Tests (3/3) → failure
+  ✅ CI Gate        → failure
+  mergeable_state   → "blocked"
+
+A PR #2248 (body completo lido via API) documenta os 136 arquivos e os corrige a 1:
+  "A main está com o CI Gate vermelho porque os Unit Tests falham em 136 arquivos (medido
+   nos 3 shards do CI de 2d97c44cfe). O Gate só depende de typecheck, unit-tests,
+   node-scripts, build e security; só unit-tests falha. Esta PR leva esses 136 arquivos a
+   135 verdes. Resta 1 arquivo, que só fecha com um apply no banco."
+
+Arquivo que resta vermelho (após PR #2248):
+  src/__tests__/rlsSchemaGuard.test.ts
+  Causa: guard compara policies do schema-manifest.json com banco de produção;
+  2 migrations não aplicadas em produção:
+    - 20261015172527_security_alerts_self_select.sql (tabela security_alerts)
+    - 20261011003007_talkx_blacklist_audit_trilha_guarda.sql (tabela talkx_blacklist)
+
+NOTA: A lista exata de 136 arquivos não está publicada no body da PR #2248. A PR foi criada
+por outra sessão de agente e os 136 nomes individuais não foram expostos via API no body.
+O bloqueio sistêmico é confirmado pelos check runs da PR #2247 (mais simples: 1 arquivo MD).
+
+EXIT CODE do vitest em main@2d97c44: NÃO ZERO (falha confirmada por CI Gate em todas as PRs)

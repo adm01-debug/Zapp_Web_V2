@@ -1,0 +1,29 @@
+{
+  "main_sha": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858",
+  "data_analise": "2026-10-26",
+  "bloqueio_sistemico": {
+    "ativo": true,
+    "causa": "Unit Tests falhando em 136 arquivos em main@2d97c44 (commit 2026-10-24T18:43:20Z)",
+    "pr_desbloqueador": 2248,
+    "arquivo_restante_apos_2248": "src/__tests__/rlsSchemaGuard.test.ts",
+    "migrations_pendentes": [
+      "20261015172527_security_alerts_self_select.sql",
+      "20261011003007_talkx_blacklist_audit_trilha_guarda.sql"
+    ]
+  },
+  "vereditos": {
+    "BLOQUEADO_CI": 23,
+    "BLOQUEADO_CI_E_BEHIND": 107,
+    "DRAFT_SKIP": 32,
+    "DECISAO_HUMANA": 2,
+    "COMPLETAR": 1,
+    "total_nao_draft": 132
+  },
+  "prs_com_dossie_completo": [2247, 2244, 2248, 2240, 2239, 2238, 2237, 2236, 2235, 2234, 2233, 2232, 2231, 2230, 2223, 2218, 2002, 2000, 1998, 1997],
+  "prs_com_dossie_com_evidencia_real": [2230, 2237, 2244, 2247, 2248],
+  "nota_pr_2230": "COMPLETAR — deleta src/hooks/integrations/useTalkXSuppression.ts sem atualizar TalkXSuppression.tsx:32 que importa 8 simbolos do modulo; PR #2248 ja inclui esta correcao",
+  "nota_pr_2238": "DECISAO_HUMANA — feat(message-delivery) com possivel DDL ou mudanca de behavior",
+  "status": "BLOQUEADO_SISTEMICO",
+  "merges_realizados": 0,
+  "outras_escritas_github": "nenhuma (apenas leituras via github_get_pr_diff, github_get_pull_request, github_list_check_runs, github_list_pull_requests)"
+}
