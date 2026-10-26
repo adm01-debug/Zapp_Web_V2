@@ -1,163 +1,146 @@
-# Relatório de Análise de PRs — adm01-debug/Zapp_Web_V2
+# Relatório de PRs — adm01-debug/Zapp_Web_V2
 
-**Data:** 2026-10-26  
-**Analista:** Claude Code (sessão `session_01EDEgwWPwt8dGYSVZqozESg`)  
-**Main SHA auditado:** `2d97c44cfe7f2fa8a3ca572f8f5689118328e858`  
-**Total de PRs abertas:** 164  
-
----
-
-## Conclusão executiva
-
-**Nenhuma PR pode ser mergeada agora.** Há um bloqueio sistêmico no CI da `main`:
-
-> O commit `2d97c44` (2026-10-24 — "fix(ci): ci-gate bloqueia merge quando unit tests falham") faz com que o `✅ CI Gate` bloqueie merge sempre que `Unit Tests` falham. E os unit tests estão falhando em **136 arquivos** naquele commit.
-
-**Evidência direta:** PR #2247 (docs-only, 1 arquivo markdown — o caso mais simples possível):
-- `🧪 Unit Tests (1/3)` → `failure`
-- `🧪 Unit Tests (2/3)` → `failure`  
-- `🧪 Unit Tests (3/3)` → `failure`
-- `✅ CI Gate` → `failure`
-- `Contrato DB offline` → `failure`
-- `mergeable_state` → `"blocked"`
-
-O `Build` aparece como `skipped` porque o CI Gate aborta o workflow antes de chegar nele.
+**Data da análise:** 2026-10-26  
+**main SHA auditado:** `2d97c44cfe7f2fa8a3ca572f8f5689118328e858`  
+**Total de PRs abertas:** 167 (132 não-draft + 35 drafts)
 
 ---
 
-## Bloqueio sistêmico: detalhes técnicos
+## Resumo Executivo
 
-### Causa raiz
+**NENHUMA PR foi mergeada.** Todas as 132 PRs não-draft estão bloqueadas pelo CI Gate sistêmico.
 
-`main@2d97c44` tem 136 arquivos de teste falhando. Documentado na própria PR que criou o bloqueio e na PR de correção (#2248).
-
-### PR desbloqueadora: #2248
-
-**"fix(test): destrava o CI Gate da main (136 → 1 arquivo vermelho; falta migration)"**
-
-- Reduz 136 → 1 arquivo vermelho (`rlsSchemaGuard.test.ts`)
-- O arquivo restante falha porque o banco local não tem 2 migrations que existem só em produção
-- Essas 2 migrations precisam ser aplicadas via `producao-ddl` — gate de aprovação humana
-
-**Caminho de desbloqueio (ordem obrigatória):**
-1. Joaquim revisa PR #2248
-2. Approve as 2 migrations via environment `producao-ddl` no GitHub Actions
-3. CI fica verde
-4. `auto-update-pr-branch.yml` atualiza as PRs com auto-merge
-5. PRs com auto-merge mergeiam automaticamente quando o CI passa
-
----
-
-## Resumo por categoria
-
-| Categoria | Quantidade | Observação |
-|---|---|---|
-| **Draft** (fora do escopo de merge) | 32 | Não analisadas para merge |
-| **BLOQUEADO_CI** (base em main@2d97c44) | 24 | Sem conflito, bloqueadas pelo CI |
-| **BLOQUEADO_CI_E_BEHIND** (base em SHA anterior) | 107 | Desatualizadas + CI falho |
-| **DECISAO_HUMANA** | 1 | PR #2248 — requer aprovação das migrations |
-| **Total não-draft** | 132 | Todas bloqueadas |
-
----
-
-## PRs de maior prioridade (após desbloqueio)
-
-### 1. PR #2248 — DECISAO_HUMANA (desbloqueador)
-- Corrige 136 → 1 arquivo vermelho nos unit tests
-- É o pré-requisito para todos os outros merges
-
-### 2. PRs que ficam prontas após CI verde (exemplos validados)
-
-| PR | Título | Tipo | Observação |
-|---|---|---|---|
-| #2247 | cmd /resgate-validacao | docs | 1 arquivo; zero código de prod |
-| #2244 | 9 assinaturas RPC em types.ts | typecheck | types.ts apenas; fix puro |
-| #2237 | aria-busy Button (C297) | a11y | fix mínimo de acessibilidade |
-| #2239 | seletor período em Metas (C130) | front | UI only, sem migration |
-| #2240 | filtros TalkX (C011) | front | UI only, sem migration |
-| #2234 | chip sequência estado zero (C125) | front | UI only, sem migration |
-| #2230 | remove hook morto useTalkXSuppression | chore | limpeza, sem impacto |
-
-### 3. PRs que precisam de análise individual após CI verde
-
-PRs com base em SHA anterior (107 PRs) precisam ser:
-1. Atualizadas com main (via `auto-update-pr-branch.yml` ou rebase)
-2. Nova rodada de CI
-3. Análise individual dos dossies
-
----
-
-## Inventário completo de PRs não-draft
-
-### PRs com base em main@2d97c44 (bloqueadas só por CI)
-
-| PR | Título | Criado | Veredito |
-|---|---|---|---|
-| #2273 | fix: retry em HTTP 5xx no fila-merge.mjs | 2026-10-26 | BLOQUEADO_CI |
-| #2272 | ⬆️ docker: Bump golang | 2026-10-26 | BLOQUEADO_CI |
-| #2271 | ⬆️ deps: Bump deps-semanal (19 updates) | 2026-10-26 | BLOQUEADO_CI |
-| #2270 | ⬆️ ci: Bump codeql-action (2 updates) | 2026-10-26 | BLOQUEADO_CI |
-| #2248 | fix(test): destrava CI Gate da main | 2026-10-25 | DECISAO_HUMANA |
-| #2247 | chore: cmd /resgate-validacao | 2026-10-25 | BLOQUEADO_CI |
-| #2246 | fix: retry fila-merge.mjs HTTP 504 | 2026-10-25 | BLOQUEADO_CI |
-| #2244 | fix(types): 9 assinaturas RPC ausentes | 2026-10-25 | BLOQUEADO_CI |
-| #2240 | feat(talkx): filtros, paginação persistida | 2026-10-24 | BLOQUEADO_CI |
-| #2239 | feat(metas): seletor período Hoje/Semana/Mês | 2026-10-24 | BLOQUEADO_CI |
-| #2238 | feat(message-delivery): PD-79 + PD-80 | 2026-10-24 | DECISAO_HUMANA |
-| #2237 | fix(ui): aria-busy Button | 2026-10-24 | BLOQUEADO_CI |
-| #2236 | feat(monitoramento): painel "Entrada muda" | 2026-10-24 | BLOQUEADO_CI |
-| #2235 | feat(db): investigação incidentes pausa (C121) | 2026-10-24 | BLOQUEADO_CI |
-| #2234 | fix(dashboard): chip sequência estado zero | 2026-10-24 | BLOQUEADO_CI |
-| #2233 | fix: 3 falhas Vitest (SL-070, HZ5-09, a11y) | 2026-10-24 | BLOQUEADO_CI |
-| #2232 | test(inbox): seletor CSS TtsButton | 2026-10-24 | BLOQUEADO_CI |
-| #2231 | feat(notas): editar e fixar notas contato (C126) | 2026-10-24 | BLOQUEADO_CI |
-| #2230 | chore: remove hook morto useTalkXSuppression | 2026-10-24 | BLOQUEADO_CI |
-| #2223 | feat(tarefas): modal Nova tarefa redesenhado | 2026-10-24 | BLOQUEADO_CI |
-| #2218 | fix: corrigir CI — RE_RECON, Playwright, etc | 2026-10-24 | BLOQUEADO_CI |
-| #2002 | feat: RADAR CV-041–050 | 2026-10-16 | BLOQUEADO_CI |
-| #2000 | feat: RADAR Fase 4 CV-031–040 | 2026-10-16 | BLOQUEADO_CI |
-| #1998 | feat: CV-021–030 Motor copilot-live | 2026-10-16 | BLOQUEADO_CI |
-| #1997 | feat: CV-010–020 Fase 2 RADAR | 2026-10-16 | BLOQUEADO_CI |
-
-### PRs com base em SHA anterior (bloqueadas por CI + desatualizadas) — amostra
-
-(107 PRs total; dossies individuais em `analise-prs/dossies/PR-<n>.md`)
-
-Os grupos mais relevantes:
-
-| Grupo base | Qtd | Contexto |
-|---|---|---|
-| `bac62ba9` | 40 | Commits de correções de UI/testes (out/22-23) |
-| `e322d379` | 21 | Correções de CI/segurança (out/18) |
-| `d7af7a67` | 13 | Plano GA (GitHub Actions 100 etapas) |
-| `ee294749` | 8 | Correções de CI/types (out/19) |
-| `f66d7331` | 7 | Correções CI + RADAR copiloto |
-| Outros | 18 | PRs diversas |
-
----
-
-## Ação recomendada
-
-**Uma única ação desbloqueia tudo:**
-
-```
-PR #2248 → Aprovação das 2 migrations → CI verde → Merge em cascata
-```
-
-Após o desbloqueio, retomar esta análise com CI verde para classificar definitivamente cada PR.
-
----
-
-## Artefatos gerados
-
-| Arquivo | Descrição |
+| Veredito | Quantidade |
 |---|---|
-| `analise-prs/prs.json` | Inventário completo (164 PRs) em JSON |
-| `analise-prs/prs.csv` | Inventário completo em CSV |
-| `analise-prs/regras-de-negocio.md` | Critérios e regras de merge |
-| `analise-prs/dossies/PR-<n>.md` | 132 dossies (um por PR não-draft) |
-| `analise-prs/RELATORIO_PRS.md` | Este relatório |
+| `BLOQUEADO_CI` | 23 |
+| `BLOQUEADO_CI_E_BEHIND` | 107 |
+| `DECISAO_HUMANA` | 2 |
+| `COMPLETAR` | 1 |
+| `DRAFT_SKIP` | 32 |
+| **TOTAL não-draft** | **132** |
 
 ---
 
-*Gerado por Claude Code — sessão https://claude.ai/code/session_01EDEgwWPwt8dGYSVZqozESg*
+## 1. Merges Realizados
+
+**Nenhum.** `merges_realizados: 0`
+
+Causa: bloqueio sistêmico de CI impedindo todos os merges (ver seção 3).
+
+---
+
+## 2. PRs Prontas (não mergeadas e por quê)
+
+**Nenhuma PR está "pronta" para merge.** O CI Gate falha em todas porque `main@2d97c44` tem 136 arquivos de teste falhando.
+
+---
+
+## 3. Bloqueio Sistêmico (causa raiz de tudo)
+
+**Origem:** commit `2d97c44` (2026-10-24T18:43:20Z) — `"fix(ci): ci-gate bloqueia merge quando unit tests falham"` — introduziu comportamento em que o CI Gate recusa merge quando unit tests falham. E unit tests falham em **136 arquivos** naquele commit.
+
+**Evidência:**
+- PR #2247 (docs-only, 1 arquivo): `Unit Tests (1/3)` = failure, `Unit Tests (2/3)` = failure, `Unit Tests (3/3)` = failure, `CI Gate` = failure
+- PR #2248 documenta os 136 arquivos vermelhos, reduz para 1 arquivo restante (`rlsSchemaGuard.test.ts`)
+
+**Impacto:** todas as 132 PRs não-draft têm CI Gate falhando.
+
+### Caminho de desbloqueio
+
+1. **PR #2248** (`fix(test): destrava o CI Gate da main`) reduz 136 → 1 arquivo vermelho
+2. O arquivo restante (`rlsSchemaGuard.test.ts`) precisa de 2 migrations aplicadas em produção:
+   - `20261015172527_security_alerts_self_select.sql` — adiciona policy SELECT em `security_alerts` (aditiva)
+   - `20261011003007_talkx_blacklist_audit_trilha_guarda.sql` — colunas + triggers de auditoria em `talkx_blacklist` (aditiva)
+3. **Joaquim**: revisa PR #2248 → aprova as 2 migrations via environment `producao-ddl` → CI fica verde → PRs podem ser mergeadas
+
+**PR #2248 é o desbloqueador de todo o backlog.**
+
+---
+
+## 4. PRs para Fechar (COMPLETAR / requer ação antes de merge)
+
+### PR #2230 — `chore: remove hook morto useTalkXSuppression` (COMPLETAR)
+
+**Não mergear.** Regride o build: deleta `src/hooks/integrations/useTalkXSuppression.ts` sem atualizar `src/components/talkx/TalkXSuppression.tsx:32` que importa 8 símbolos → **TS2307** se mergeada.
+
+**Solução:** PR #2248 já inclui a correção completa (deleção do hook + atualização do componente). Quando #2248 mergear, #2230 fica obsoleta e deve ser fechada.
+
+---
+
+## 5. PRs Requerendo Decisão Humana (DECISAO_HUMANA)
+
+### PR #2248 — `fix(test): destrava o CI Gate da main` (DECISAO_HUMANA — **PRIORIDADE MÁXIMA**)
+
+155 arquivos, +3282/-1390 linhas. Reduz 136 → 1 arquivo de teste vermelho. Requer aprovação humana para 2 migrations aditivas em produção (`producao-ddl`).
+
+Head SHA: `7e2480f7e5f243053175b02396b77e0247f2ee9f`  
+**mergeable_state: blocked** (CI Gate falha em Unit Tests 2/3 com rlsSchemaGuard)  
+**ESTA PR DEVE SER MERGEADA PRIMEIRO.**
+
+### PR #2238 — `feat(message-delivery)` (DECISAO_HUMANA)
+
+Possível DDL ou mudança de behavior com impacto em produção. Requer revisão do Joaquim antes de merge.
+
+---
+
+## 6. Clusters Temáticos
+
+### Cluster: TalkX / Campanhas (PRs X001–X200 do plano V4)
+PRs relacionadas ao módulo Talk X — campanhas, segmentos, templates. Bloqueadas pelo CI sistêmico.
+
+### Cluster: Acessibilidade / A11y
+PRs com correções de `aria-*`, `motion-safe`, `aria-hidden` em componentes. Ex.: PR #2237. Bloqueadas pelo CI sistêmico.
+
+### Cluster: Testes / CI Infrastructure
+PRs corrigindo falhas de teste, mocks, shims. PR #2248 (desbloqueador principal). Bloqueadas pelo CI sistêmico.
+
+### Cluster: Tipos / Types.ts
+PRs sincronizando RPCs, types.ts, catálogo. Ex.: PR #2244. Bloqueadas pelo CI sistêmico.
+
+### Cluster: Documentação / Configuração
+PRs docs-only (`.claude/commands/`, `docs/`). Ex.: PR #2247. Bloqueadas pelo CI sistêmico.
+
+---
+
+## 7. Dossiês com Evidência Real
+
+Os seguintes dossiês têm as 4 perguntas respondidas com evidência (arquivo:linha, SHA, diff):
+
+| PR | Veredito | Título |
+|---|---|---|
+| #2247 | BLOQUEADO_CI | docs: resgate-validacao command |
+| #2244 | BLOQUEADO_CI | fix(types): 9 RPCs + offline queue + m4a |
+| #2237 | BLOQUEADO_CI | fix(a11y): aria-busy, motion-safe, aria-hidden |
+| #2248 | DECISAO_HUMANA | fix(test): destrava CI Gate (136→1 arquivos vermelhos) |
+| #2230 | COMPLETAR | chore: remove hook morto (regressão TS2307) |
+| #2067 | BLOQUEADO_CI_E_BEHIND | fix(test): mocks arquivos-ver-na-conversa |
+| #2068 | BLOQUEADO_CI_E_BEHIND | (em análise pelo fork agent) |
+
+Os demais 125 dossiês têm veredito determinado pela análise sistêmica (CI Gate + posição do base SHA), mas as 4 perguntas individuais estão marcadas como `NÃO VERIFICADO` — a análise individual estava em progresso pelos fork agents no momento de geração deste relatório.
+
+---
+
+## 8. NÃO VERIFICADO — Dossiês Pendentes de Análise Individual
+
+**125 dos 132 dossiês não-draft** têm as 4 perguntas individuais marcadas como `NÃO VERIFICADO`.
+
+**Por que o veredito ainda é válido:** o veredito `BLOQUEADO_CI` ou `BLOQUEADO_CI_E_BEHIND` é determinado por:
+1. Confirmação de que o CI Gate falha em TODAS as PRs não-draft (evidência: PR #2247 docs-only com CI Gate failure; regra: `ci.yml:289` — `unit-tests.result == "failure"`)
+2. Confirmação de que a branch está atrás ou no ponto exato de main@2d97c44
+
+As 4 perguntas individuais (intenção, regressão, já em main, regra correta) requerem análise do diff individual — os fork agents estavam realizando essa análise no momento de publicação deste relatório.
+
+**Ação:** aguardar conclusão da análise fork para cada PR. O veredito de merge final (0 merges) não muda: o CI Gate sistêmico bloqueia tudo enquanto `main@2d97c44` tiver os 136 arquivos vermelhos.
+
+---
+
+## 9. Próxima Ação
+
+1. **Joaquim revisa e mergia PR #2248** (link: https://github.com/adm01-debug/Zapp_Web_V2/pull/2248)
+2. Aprovar as 2 migrations via `producao-ddl`
+3. CI fica verde → `auto-update-pr-branch.yml` atualiza PRs com auto-merge habilitado
+4. PRs com CI verde e sem conflito mergeiam automaticamente
+
+---
+
+*Gerado em 2026-10-26 | Branch de análise: `claude_04/awesome-heisenberg-x1us57` | PR: https://github.com/adm01-debug/Zapp_Web_V2/pull/2276*

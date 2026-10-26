@@ -106,3 +106,62 @@ Fonte: `scripts/ci/github-settings-baseline.json:24-25` e `CLAUDE.md` "Perímetr
 3. Joaquim deve: revisar PR #2248 → aprovar as 2 migrations via `producao-ddl` → CI fica verde → PRs podem ser mergeadas
 
 **Prioridade:** PR #2248 é o desbloqueador de todos os outros trabalhos.
+
+---
+
+## 7. Cobertura adicional de regras
+
+### 7.1 Documentação e Configuração
+
+Fonte: `CLAUDE.md` seção 3 ("Repo e escrita"), task `/goal`.
+
+- PRs docs-only (apenas `docs/`, `.claude/commands/`, `README`) passam pelos mesmos 6 required checks
+- Sem exceção de CI para PRs de documentação pura (evidência: PR #2247, docs-only, tem CI Gate failure)
+- `.github/workflows/` — **NÃO TOCAR** (task `/goal`: "não tocar .github/workflows")
+
+### 7.2 Testes
+
+Fonte: `CLAUDE.md` seção 1 regra migration, `.github/workflows/ci.yml` (job `unit-tests:69`, matrix `shard: [1,2,3]`).
+
+- Nunca desativar, pular (skip) ou colocar em quarentena um teste para fazer CI verde (`CLAUDE.md` — "nunca skip, disable ou quarantine a test")
+- 136 arquivos de teste falhando em `main@2d97c44` — o PR que corrigir isso é o desbloqueador
+- PR com correção de teste deve reduzir a contagem de arquivos vermelhos, nunca aumentar
+- `src/__tests__/rlsSchemaGuard.test.ts` — arquivo que testa as 2 migrations pendentes; falha enquanto as migrations não estiverem aplicadas em produção
+
+### 7.3 Enums e Types
+
+Fonte: `src/integrations/supabase/types.ts` (gerado); `scripts/ci/db-guard.yml` (job `types-sync`).
+
+- `src/integrations/supabase/types.ts` é gerado automaticamente pelo `types-sync` workflow
+- PR que adiciona RPC/função no banco deve incluir o types.ts regenerado; sem isso o CI de typecheck falha
+- PR #2244 é exemplo: adiciona 9 RPCs em types.ts — necessário para que o typecheck passe
+
+### 7.4 Migrations / DDL
+
+Fonte: `CLAUDE.md` seção 1 regras 1–9; task `/goal` regras explícitas.
+
+- Apenas migrations **aditivas e não destrutivas** (sem DROP, RENAME, ALTER TYPE, DELETE/UPDATE em massa, REVOKE)
+- Idempotentes: aplicar duas vezes não produz resultado diferente
+- Toda migration em `supabase/migrations/` deve estar registrada no ledger (`supabase_migrations.schema_migrations`)
+- `statements` no ledger = SQL real e completo, nunca resumo em prosa
+- Ordem obrigatória: arquivo → PR → merge em `main` → deploy → apply (via `producao-ddl`)
+- `supabase_apply_migration` está bugado — usar `db_query` + INSERT manual no ledger
+- Migrations das PRs em análise: verificar que não há DROP/RENAME/ALTER TYPE antes de recomendar merge
+
+### 7.5 Políticas RLS / Permissões
+
+Fonte: `CLAUDE.md` seção 0 regra 3 ("RLS/permissões só se testes no Postgres temporário provarem..."); task `/goal`.
+
+- PR com nova política RLS: só aprovar se testes no Postgres temporário provarem que **nenhum acesso foi ampliado** além do intencional
+- PR que amplia SELECT em tabela existente (ex.: `security_alerts`) = aditiva mas requer aprovação humana
+- `WhatsAppTemplatesManager` — admin-only (RLS admin-only; evidência: PR #2248 body)
+- `SINGU` (`src/services/crm/singu-adapter.ts`) — **READ-ONLY**: PR que escreva nele não é mergeado (task `/goal`)
+
+### 7.6 UI / Front-end
+
+Fonte: `CLAUDE.md` seção "Lição de UI (2026-09-25)", task `/goal`.
+
+- Mudança de estilo deve funcionar em light mode E dark mode (token `--inbox-panel-bg` em vez de `bg-black`)
+- Acessibilidade WCAG AA: contraste mínimo 4.5:1 para texto principal
+- PR que quebra acessibilidade (aria, contraste, motion) = regressão
+- PR #2237: correções de `aria-busy`, `motion-safe`, `aria-hidden` em 13 SVGs — aditiva, sem regressão
