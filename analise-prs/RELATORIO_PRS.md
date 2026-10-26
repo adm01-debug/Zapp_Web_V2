@@ -47,7 +47,7 @@ Causa: bloqueio sistêmico de CI impedindo todos os merges (ver seção 3).
 - PR #2247 (docs-only, 1 arquivo): `Unit Tests (1/3)` = failure, `Unit Tests (2/3)` = failure, `Unit Tests (3/3)` = failure, `CI Gate` = failure
 - PR #2248 documenta os 136 arquivos vermelhos, reduz para 1 arquivo restante (`rlsSchemaGuard.test.ts`)
 
-**Impacto:** todas as 132 PRs não-draft têm CI Gate falhando.
+**Impacto:** todas as 130 PRs não-draft têm CI Gate falhando.
 
 ### Caminho de desbloqueio
 
