@@ -26,6 +26,20 @@ import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
 
 const RAIZ = new URL('../../', import.meta.url);
 
+async function execComRetry(cmd, args, opts, maxTentativas = 3) {
+  const esperas = [5000, 10000, 20000];
+  for (let i = 0; i < maxTentativas; i++) {
+    try {
+      return execFileSync(cmd, args, opts);
+    } catch (err) {
+      const stderr = String(err.stderr ?? err.stdout ?? err.message ?? '');
+      const ehTransiente = /HTTP 5\d\d|ECONNRESET|ETIMEDOUT|unexpected end of JSON/.test(stderr);
+      if (!ehTransiente || i === maxTentativas - 1) throw err;
+      await new Promise((r) => setTimeout(r, esperas[i]));
+    }
+  }
+}
+
 export function checksObrigatorios() {
   const baseline = JSON.parse(readFileSync(new URL('scripts/ci/github-settings-baseline.json', RAIZ), 'utf8'));
   return baseline.branch_protection_main.required_status_checks;
@@ -123,7 +137,7 @@ export async function resolverDesconhecidos(prs, behindBy) {
 }
 
 async function decisaoAtual(repo) {
-  const json = execFileSync(resolverExecutavel('gh'), [
+  const json = await execComRetry(resolverExecutavel('gh'), [
     'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
     '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
   ], { encoding: 'utf8' });
