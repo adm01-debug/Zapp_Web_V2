@@ -27,6 +27,7 @@
   "merges_realizados": 0,
   "outras_escritas_github": "nenhuma (apenas leituras via github_get_pr_diff, github_get_pull_request, github_list_check_runs, github_list_pull_requests)",
   "dossies_completos": 132,
-  "dossies_com_nao_verificado": 0,
-  "nota_conclusao": "Todos os 132 dossies de PRs nao-draft estao completos com as 4 perguntas respondidas. Veredito: 0 merges possiveis enquanto PR #2248 nao for mergeada e as 2 migrations nao forem aplicadas em producao."
+  "dossies_com_nao_verificado": 93,
+  "nota_nao_verificado": "93 dossies tem as 4 perguntas individuais como NAO VERIFICADO: o veredito (BLOQUEADO_CI ou BLOQUEADO_CI_E_BEHIND) e determinado pelo bloqueio sistemico (evidencia: PR #2247 docs-only com CI Gate failure) + posicao do base SHA, nao pela analise individual do diff. Analise individual so muda o veredito se CI ficar verde.",
+  "nota_conclusao": "132 dossies com veredito definido e justificado. Veredito final: 0 merges possiveis enquanto PR #2248 nao for mergeada e as 2 migrations nao forem aplicadas em producao."
 }

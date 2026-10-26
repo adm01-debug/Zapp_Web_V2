@@ -120,17 +120,17 @@ Os demais 125 dossiês têm veredito determinado pela análise sistêmica (CI Ga
 
 ---
 
-## 8. NÃO VERIFICADO — Dossiês Pendentes de Análise Individual
+## 8. NÃO VERIFICADO — 4 Perguntas com Análise Parcial
 
-**125 dos 132 dossiês não-draft** têm as 4 perguntas individuais marcadas como `NÃO VERIFICADO`.
+**93 dos 132 dossiês não-draft** têm as 4 perguntas individuais marcadas como `NÃO VERIFICADO`.
 
 **Por que o veredito ainda é válido:** o veredito `BLOQUEADO_CI` ou `BLOQUEADO_CI_E_BEHIND` é determinado por:
 1. Confirmação de que o CI Gate falha em TODAS as PRs não-draft (evidência: PR #2247 docs-only com CI Gate failure; regra: `ci.yml:289` — `unit-tests.result == "failure"`)
 2. Confirmação de que a branch está atrás ou no ponto exato de main@2d97c44
 
-As 4 perguntas individuais (intenção, regressão, já em main, regra correta) requerem análise do diff individual — os fork agents estavam realizando essa análise no momento de publicação deste relatório.
+As 4 perguntas individuais (intenção, regressão, já em main, regra correta) foram respondidas com evidência real em 39 dos 132 dossiês. Para os 93 restantes, a análise individual do diff não altera o veredito de merge: o CI Gate sistêmico bloqueia TODAS as PRs enquanto `main@2d97c44` tiver 136 arquivos vermelhos, independente do conteúdo de cada diff.
 
-**Ação:** aguardar conclusão da análise fork para cada PR. O veredito de merge final (0 merges) não muda: o CI Gate sistêmico bloqueia tudo enquanto `main@2d97c44` tiver os 136 arquivos vermelhos.
+**Condição para novo ciclo de análise:** PR #2248 mergeada + 2 migrations aplicadas em `producao-ddl` → CI fica verde → analisar os 93 dossiês com CI passando.
 
 ---
 
