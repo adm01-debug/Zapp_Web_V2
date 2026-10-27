@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { HOVER_REVEAL_TAP } from './hoverActions';
 import { getFileCategory, formatFileSize, getFileExtension, WHATSAPP_FILE_TYPES } from '@/utils/whatsappFileTypes';
 import { VideoFullscreen } from './VideoFullscreen';
 import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
@@ -227,7 +228,7 @@ export const VideoPreview = forwardRef<HTMLDivElement, VideoPreviewProps>(
                 </motion.div>
               )}
             </AnimatePresence>
-            {!loadFailed && <button onClick={(e) => { e.stopPropagation(); setShowFullscreen(true); }} className="absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-background/70" aria-label="Tela cheia">
+            {!loadFailed && <button onClick={(e) => { e.stopPropagation(); setShowFullscreen(true); }} className={`absolute top-2 right-2 p-1.5 rounded-full bg-background/50 text-primary-foreground ${HOVER_REVEAL_TAP} transition-opacity hover:bg-background/70`} aria-label="Tela cheia">
               <Maximize className="w-3.5 h-3.5" />
             </button>}
           </motion.div>

@@ -28,6 +28,27 @@ beforeEach(() => {
   if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {};
 });
 
+const matchMediaOriginal = window.matchMedia;
+
+/**
+ * Etapa 145: o painel só é modal (com overlay e "clicar fora") ABAIXO de `md` —
+ * é isso que o `useNarrowViewport` (max-width: 767px) responde. No desktop ele é
+ * não modal, e o clique fora não fecha; a prova disso está em
+ * `WorkItemSheet.naoModal.test.tsx`.
+ */
+function telaNarrow() {
+  window.matchMedia = ((query: string) => ({
+    matches: query.includes('max-width: 767px'),
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  })) as unknown as typeof window.matchMedia;
+}
+
 const base: WorkItem = {
   id: 't1',
   title: 'Ligar para o cliente',
@@ -95,7 +116,10 @@ function fingirMidia(matches: (consulta: string) => boolean) {
 
 describe('WorkItemSheet — etapas 141–144 (estado de edição, rodapé, proteção e foco)', () => {
   beforeEach(() => cleanup());
-  afterEach(() => cleanup());
+  afterEach(() => {
+    window.matchMedia = matchMediaOriginal;
+    cleanup();
+  });
 
   it('141: limpo mostra "Tudo salvo"; editando mostra o ponto âmbar, o aviso e a dica do Ctrl+Enter', () => {
     render(<WorkItemSheet {...props()} />);
@@ -189,6 +213,8 @@ describe('WorkItemSheet — etapas 141–144 (estado de edição, rodapé, prote
 
   it('143: "Descartar" fecha o painel; clique fora também respeita a proteção', async () => {
     const p = props();
+    // Etapa 145: "clicar fora" só existe no modo modal (bottom sheet do celular).
+    telaNarrow();
     render(<WorkItemSheet {...p} />);
     editarTitulo();
 

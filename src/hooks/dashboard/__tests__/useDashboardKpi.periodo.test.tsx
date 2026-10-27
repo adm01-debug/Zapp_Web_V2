@@ -53,7 +53,7 @@ describe('useDashboardKpi — período escolhido (E34)', () => {
     });
   });
 
-  it('sem período, manda p_from/p_until nulos (a RPC cai no dia atual em America/Sao_Paulo)', async () => {
+  it('sem período, manda p_from/p_until null (a RPC cai no dia atual em America/Sao_Paulo)', async () => {
     const { result } = renderHook(() => useDashboardKpi(), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));

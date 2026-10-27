@@ -12,10 +12,11 @@ import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
 import { sentimentLevel, type SentimentLevel } from '@/lib/sentiment-level';
 import { isToday, isYesterday } from 'date-fns';
 import { formatRelativeTime } from '@/lib/formatters';
-import { Pin, CheckCircle2, UserCheck, Star, AlarmClock, Archive, Instagram, Facebook, Send, Mail, Globe, Linkedin, Frown, AlertTriangle, type LucideIcon } from 'lucide-react';
+import { Pin, CheckCircle2, UserCheck, Star, AlarmClock, Archive, ArchiveRestore, RotateCcw, Instagram, Facebook, Send, Mail, Globe, Linkedin, Frown, AlertTriangle, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
 import { ConversationGroupHeader } from './conversation-list/ConversationGroupHeader';
+import { ConversationReopenDialog, type ReopenAction } from './conversation-list/ConversationReopenDialog';
 import { SLAIndicator } from './SLAIndicator';
 import { useApplicableSLA } from '@/hooks/sla/useApplicableSLA';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -78,6 +79,8 @@ interface VirtualizedRealtimeListProps {
   onFavorite?: (contactId: string) => void;
   favoriteIds?: Set<string>;
   onSnooze?: (contactId: string, duration: string) => void;
+  /** Reabre/desarquiva a conversa (rejeita quando a RPC falha). Sem ele a linha não oferece a ação. */
+  onReopen?: (contactId: string) => Promise<unknown> | void;
 }
 
 const HEADER_HEIGHT = 32;
@@ -107,6 +110,7 @@ export function VirtualizedRealtimeList({
   onFavorite,
   favoriteIds = EMPTY_SET,
   onSnooze,
+  onReopen,
 }: VirtualizedRealtimeListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   // R2-INB-056 (#349): o "sou eu?" da linha compara com public.profiles.id
@@ -252,6 +256,7 @@ export function VirtualizedRealtimeList({
               onFavorite={onFavorite}
               onSnooze={onSnooze}
               onArchive={onArchive}
+              onReopen={onReopen}
               currentProfileId={currentProfileId}
               agentsMap={agentsMap}
               density={density}
@@ -308,6 +313,7 @@ interface ConversationRowProps {
   onFavorite?: (contactId: string) => void;
   onSnooze?: (contactId: string, duration: string) => void;
   onArchive?: (contactId: string) => void;
+  onReopen?: (contactId: string) => Promise<unknown> | void;
   /** profiles.id do usuário logado (não o auth id) — ver R2-INB-056. */
   currentProfileId: string | null;
   agentsMap: Map<string, AgentLite>;
@@ -365,6 +371,7 @@ const ConversationRow = memo(({
   onFavorite,
   onSnooze,
   onArchive,
+  onReopen,
   currentProfileId,
   agentsMap,
   density,
@@ -398,6 +405,34 @@ const ConversationRow = memo(({
   const tags = conversation.contact.tags ?? [];
 
   const [snoozeOpen, setSnoozeOpen] = useState(false);
+
+  // Reabrir/desarquivar na linha: só resolvida/arquivada oferece, e só quando a lista
+  // recebeu o handler. A ação passa por confirmação leve; a espera trava o segundo
+  // clique e a falha fica dentro do diálogo (não fecha como se tivesse dado certo).
+  const reopenAction: ReopenAction | null = !onReopen
+    ? null
+    : conversation.contact.conversation_status === 'resolved'
+      ? 'reopen'
+      : conversation.contact.conversation_status === 'archived'
+        ? 'unarchive'
+        : null;
+  const [reopenOpen, setReopenOpen] = useState(false);
+  const [reopenPending, setReopenPending] = useState(false);
+  const [reopenError, setReopenError] = useState<string | null>(null);
+
+  const confirmReopen = async () => {
+    if (!onReopen || reopenPending) return;
+    setReopenPending(true);
+    setReopenError(null);
+    try {
+      await onReopen(contactId);
+      setReopenOpen(false);
+    } catch {
+      setReopenError('Não foi possível concluir. Tente novamente.');
+    } finally {
+      setReopenPending(false);
+    }
+  };
 
   // ConversationSLABadge chama useApplicableSLA (react-query) — sem um
   // QueryClient no contexto o useQuery lanca "No QueryClient set" e derruba
@@ -637,6 +672,22 @@ const ConversationRow = memo(({
         {/* Hover action buttons */}
         <div className="absolute bottom-2 left-0 right-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto transition-all duration-150 pl-[60px]">
           <TooltipProvider delayDuration={200}>
+            {reopenAction && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    aria-label={reopenAction === 'unarchive' ? 'Desarquivar conversa' : 'Reabrir conversa'}
+                    onClick={(e) => { e.stopPropagation(); setReopenError(null); setReopenOpen(true); }}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 active:scale-90 transition-all duration-150"
+                  >
+                    {reopenAction === 'unarchive' ? <ArchiveRestore className="w-3.5 h-3.5" /> : <RotateCcw className="w-3.5 h-3.5" />}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs font-medium">
+                  {reopenAction === 'unarchive' ? 'Desarquivar' : 'Reabrir'}
+                </TooltipContent>
+              </Tooltip>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -716,6 +767,22 @@ const ConversationRow = memo(({
             </Tooltip>
           </TooltipProvider>
         </div>
+
+        {reopenAction && (
+          // Os eventos do diálogo (portal) sobem pela árvore do React até a linha: sem este
+          // anteparo, clicar em "Reabrir"/"Cancelar" também selecionaria a conversa.
+          <div onClick={(e) => e.stopPropagation()}>
+            <ConversationReopenDialog
+              open={reopenOpen}
+              onOpenChange={(aberto) => { if (!reopenPending) { setReopenOpen(aberto); if (!aberto) setReopenError(null); } }}
+              action={reopenAction}
+              contactName={conversation.contact.nickname?.trim() || conversation.contact.name || undefined}
+              isPending={reopenPending}
+              error={reopenError}
+              onConfirm={() => { void confirmReopen(); }}
+            />
+          </div>
+        )}
       </div>
     </QuickPeek>
   );

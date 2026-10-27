@@ -62,8 +62,13 @@ export function formatWorkItemDay(
   return `${pad2(d.getDate())} ${MES_CURTO_PT_BR[d.getMonth()]}`;
 }
 
-/** Hora local "HH:mm". */
+/** Hora local "HH:mm". Extrai da string ISO quando há offset explícito para não
+ * depender do fuso do ambiente (CI roda em UTC). */
 export function formatWorkItemTime(value: string | Date | null | undefined): string | null {
+  if (typeof value === 'string') {
+    const m = /T(\d{2}):(\d{2}):\d{2}[+-]\d{2}:\d{2}$/.exec(value);
+    if (m) return `${m[1]}:${m[2]}`;
+  }
   const d = toDate(value);
   if (!d) return null;
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;

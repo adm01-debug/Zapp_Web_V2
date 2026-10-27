@@ -23,7 +23,12 @@ const state = vi.hoisted(() => ({
   onClearGlobalSearch: undefined as (() => void) | undefined,
 }));
 
-vi.mock('framer-motion', () => ({ AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
+// Só o AnimatePresence é trocado (sem animação de saída); `motion` e `useReducedMotion`
+// seguem reais para os componentes filhos (ConversationEmptyState usa os dois).
+vi.mock('framer-motion', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('framer-motion')>()),
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: (_accountId?: string, _threadId?: string | null, listQuery?: { page?: number; search?: string }) => {
     state.listQueryCalls.push(listQuery);

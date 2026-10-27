@@ -9,15 +9,21 @@
  * o aviso aparece dentro do diálogo, com o texto exato, sem nenhum controle de
  * escolha de destino (D10) e com o ícone decorativo (fora do nome acessível).
  */
+import { resetSupabaseMock } from '@/test/mocks/tarefas';
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { axe } from 'vitest-axe';
 
+import { TasksUiProvider } from '@/components/tasks/shared/TasksUiContext';
+import { useTasksUi } from '@/components/tasks/shared/tasksUi';
 import { NewTaskDialog } from '@/components/tasks/shared/NewTaskDialog';
 
 const TEXTO = 'A tarefa será criada na Caixa de entrada.';
 
 beforeEach(() => {
+  resetSupabaseMock();
   if (!Element.prototype.hasPointerCapture) {
     Element.prototype.hasPointerCapture = () => false;
     Element.prototype.setPointerCapture = () => {};
@@ -30,8 +36,28 @@ beforeEach(() => {
 
 afterEach(() => cleanup());
 
+/** Monta o modal pelo MESMO caminho do módulo: `modalOpen` no `TasksUiContext`. */
+function AbrirModal() {
+  const { modalOpen, openModal } = useTasksUi();
+  return (
+    <>
+      <button type="button" onClick={openModal}>abrir modal</button>
+      {modalOpen && <NewTaskDialog />}
+    </>
+  );
+}
+
 function renderDialog() {
-  return render(<NewTaskDialog open onOpenChange={vi.fn()} />);
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const utils = render(
+    <QueryClientProvider client={qc}>
+      <TasksUiProvider>
+        <AbrirModal />
+      </TasksUiProvider>
+    </QueryClientProvider>,
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'abrir modal' }));
+  return utils;
 }
 
 describe('NewTaskDialog — destino da tarefa (etapa 164)', () => {
