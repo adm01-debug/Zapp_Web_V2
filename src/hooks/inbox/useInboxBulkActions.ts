@@ -208,12 +208,21 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
           refetch();
         },
         undoAction: async () => {
+          // Agrupa por status original para emitir um UPDATE por grupo —
+          // restauração atômica por valor: uma falha não deixa o lote parcialmente
+          // revertido.
+          const byStatus = new Map<string | null, string[]>();
           for (const id of targetIds) {
-            const original = previousStatus.get(id);
+            const original = previousStatus.get(id) ?? null;
+            const group = byStatus.get(original) ?? [];
+            group.push(id);
+            byStatus.set(original, group);
+          }
+          for (const [status, ids] of byStatus) {
             const { error } = await supabase
               .from('contacts')
-              .update({ conversation_status: (original ?? null) as unknown as string })
-              .in('id', [id]);
+              .update({ conversation_status: status as unknown as string })
+              .in('id', ids);
             if (error) throw error;
           }
           refetch();
