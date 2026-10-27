@@ -75,11 +75,14 @@ vi.mock('lucide-react', () => ({ MessageSquare: () => null, Users: () => null, P
 // MotionConfig adicionado ao mock: LazyMotionConfig em App.tsx desestrutura MotionConfig
 // do framer-motion via import dinâmico; sem ele no mock o vitest lança erro e derruba
 // o render inteiro, impedindo TeamChatNotificationsListener de montar.
+// useReducedMotion: TeamChatView renderiza ConversationEmptyState (linha 35) que chama
+// useReducedMotion() — também precisa estar no mock ou o Vitest rejeita o render.
 vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
   },
   MotionConfig: ({ children }: { children: React.ReactNode }) => children,
+  useReducedMotion: () => false,
 }));
 
 import App from '@/App';
