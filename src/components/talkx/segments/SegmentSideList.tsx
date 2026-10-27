@@ -177,7 +177,7 @@ function SideListBody({
         <PopoverTrigger asChild>
           <button type="button" aria-label="Filtrar segmentos" aria-expanded={filterOpen}
             className={cn('h-9 px-3 rounded-lg text-xs font-medium border inline-flex items-center gap-1.5 transition-colors',
-              activeFilters ? 'border-primary/40 bg-primary/10 text-primary-glow' : 'border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50')}>
+              activeFilters ? 'border-primary/40 bg-primary/10 text-[hsl(var(--primary-text))]' : 'border-border/70 bg-input/40 text-foreground-secondary hover:bg-muted/50')}>
             <Filter className="w-3.5 h-3.5" />Filtros
           </button>
         </PopoverTrigger>
@@ -195,11 +195,11 @@ function SideListBody({
       </Popover>
 
       <div role="tablist" aria-label="Segmentos" className="grid grid-cols-3 gap-1 rounded-lg border border-border/60 bg-input/20 p-1">
-        {TAB_ORDER.map((key) => (
-          <button key={key} type="button" role="tab" aria-selected={tab === key} onClick={() => setTab(key)}
+        {TAB_ORDER.map((tabId) => (
+          <button key={tabId} type="button" role="tab" aria-selected={tab === tabId} onClick={() => setTab(tabId)}
             className={cn('h-7 rounded-md text-2xs font-semibold transition-colors',
-              tab === key ? 'bg-primary/15 text-primary-glow' : 'text-foreground-secondary hover:bg-muted/40')}>
-            {TAB_LABEL[key]} {counts[key]}
+              tab === tabId ? 'bg-primary/15 text-[hsl(var(--primary-text))]' : 'text-foreground-secondary hover:bg-muted/40')}>
+            {TAB_LABEL[tabId]} {counts[tabId]}
           </button>
         ))}
       </div>
@@ -247,7 +247,7 @@ function FilterGroup({ label, value, onChange, options }: {
         {options.map((o) => (
           <button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={o.value === value}
             className={cn('h-7 px-2 rounded-lg text-2xs border transition-colors',
-              o.value === value ? 'border-primary/50 bg-primary/15 text-primary-glow' : 'border-border/60 bg-input/30 text-foreground-secondary hover:bg-muted/40')}>
+              o.value === value ? 'border-primary/50 bg-primary/15 text-[hsl(var(--primary-text))]' : 'border-border/60 bg-input/30 text-foreground-secondary hover:bg-muted/40')}>
             {o.label}
           </button>
         ))}

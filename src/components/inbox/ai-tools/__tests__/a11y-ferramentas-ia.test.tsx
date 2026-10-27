@@ -153,8 +153,8 @@ describe('SummaryResult — botões de áudio com nome acessível', () => {
         buildFullNarrationText={() => 'texto completo'}
       />,
     );
-    expect(screen.getByRole('button', { name: 'Ouvir resumo' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Ouvir pontos-chave' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ouvir o resumo em voz alta' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ouvir os pontos-chave em voz alta' })).toBeInTheDocument();
   });
 });
 
