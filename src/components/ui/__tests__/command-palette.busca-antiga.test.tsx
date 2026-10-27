@@ -23,8 +23,8 @@ const ANIMATION_PROPS = new Set([
 ]);
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  // Preserva a TAG real (`motion.button` -> <button>) para o item continuar sendo um botão
-  // de verdade para quem usa (e para o `getByRole` do teste).
+  // Preserva a TAG real (`motion.button` -> <button>) e todos os props não-animação,
+  // incluindo role="option" que o componente define explicitamente nos itens da busca.
   motion: new Proxy(
     {},
     {
@@ -59,7 +59,7 @@ const itemTermoAntigo: CommandItem = {
   category: 'search',
 };
 
-const resultado = (titulo: string) => screen.queryByRole('button', { name: titulo });
+const resultado = (titulo: string) => screen.queryByRole('option', { name: titulo });
 
 afterEach(() => {
   vi.clearAllMocks();
