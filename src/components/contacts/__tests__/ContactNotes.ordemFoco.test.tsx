@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { ContactNotes } from '../ContactNotes';
+import { TestQueryWrapper } from '@/test/mocks/queryClient';
 
 /**
  * Refazer 1 do cartão de editar/fixar nota (ficha do contato): a recusa apontou
@@ -128,7 +129,7 @@ describe('ContactNotes · refazer 1: fixada antiga, foco gerenciado e desempate 
       is_pinned: true,
     });
 
-    render(<ContactNotes contactId="contato-1" />);
+    render(<ContactNotes contactId="contato-1" />, { wrapper: TestQueryWrapper });
     await screen.findByText('Nota fixada antiga');
 
     const primeiro = document.querySelectorAll<HTMLElement>('.group')[0];
@@ -151,7 +152,7 @@ describe('ContactNotes · refazer 1: fixada antiga, foco gerenciado e desempate 
       },
     ];
 
-    render(<ContactNotes contactId="contato-1" />);
+    render(<ContactNotes contactId="contato-1" />, { wrapper: TestQueryWrapper });
     await screen.findByText('Texto A');
 
     const cards = Array.from(document.querySelectorAll<HTMLElement>('.group'));
@@ -165,7 +166,7 @@ describe('ContactNotes · refazer 1: fixada antiga, foco gerenciado e desempate 
       id: 'nota-minha', content: 'Minha nota', created_at: '2026-10-06T12:00:00.000Z',
       author_id: 'profile-me', is_pinned: false,
     }];
-    render(<ContactNotes contactId="contato-1" />);
+    render(<ContactNotes contactId="contato-1" />, { wrapper: TestQueryWrapper });
     await screen.findByText('Minha nota');
 
     fireEvent.click(botaoEditarDoCartao('Minha nota'));
@@ -183,7 +184,7 @@ describe('ContactNotes · refazer 1: fixada antiga, foco gerenciado e desempate 
       id: 'nota-minha', content: 'Minha nota', created_at: '2026-10-06T12:00:00.000Z',
       author_id: 'profile-me', is_pinned: false,
     }];
-    render(<ContactNotes contactId="contato-1" />);
+    render(<ContactNotes contactId="contato-1" />, { wrapper: TestQueryWrapper });
     await screen.findByText('Minha nota');
 
     fireEvent.click(botaoEditarDoCartao('Minha nota'));
@@ -198,7 +199,7 @@ describe('ContactNotes · refazer 1: fixada antiga, foco gerenciado e desempate 
       id: 'nota-minha', content: 'Minha nota', created_at: '2026-10-06T12:00:00.000Z',
       author_id: 'profile-me', is_pinned: false,
     }];
-    render(<ContactNotes contactId="contato-1" />);
+    render(<ContactNotes contactId="contato-1" />, { wrapper: TestQueryWrapper });
     await screen.findByText('Minha nota');
 
     fireEvent.click(botaoEditarDoCartao('Minha nota'));

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { toast } from 'sonner';
 import { ContactNotes } from '../ContactNotes';
+import { TestQueryWrapper } from '@/test/mocks/queryClient';
 
 /**
  * CT-B (paridade V3 -> V2) — a ficha do contato (ContactDetailPanel → ContactNotes)
@@ -113,7 +114,7 @@ function cartoesEmOrdem(): HTMLElement[] {
 }
 
 async function abrir() {
-  render(<ContactNotes contactId="contato-1" />);
+  render(<ContactNotes contactId="contato-1" />, { wrapper: TestQueryWrapper });
   await screen.findByText('Minha nota');
 }
 
@@ -188,7 +189,7 @@ describe('ContactNotes · editar e fixar (ficha do contato)', () => {
     expect(screen.getByText('Descartar as alterações não salvas?')).toBeInTheDocument();
 
     // "Continuar editando" manté o rascunho e nada é gravado.
-    fireEvent.click(screen.getByText('Continuar editando'));
+    fireEvent.clich(screen.getByText('Continuar editando'));
     expect(screen.getByRole('textbox', { name: 'Editar nota' })).toHaveValue('rascunho');
     expect(h.updateCalls).toHaveLength(0);
 
