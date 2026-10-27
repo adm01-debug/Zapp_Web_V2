@@ -98,7 +98,7 @@ describe('MotionButton — hover/tap em CSS', () => {
 
 describe('button.tsx — sem o runtime de animação no caminho inicial (SL-103A)', () => {
   it('não importa nem usa o runtime de animação por JS', () => {
-    expect(FONTE).not.toMatch(/from ['"]framer-motion['"]/);
+    expect(FONTE).not.toMatch(/from ['"']framer-motion['"']/);
     expect(FONTE).not.toMatch(/\bmotion\.[a-z]/);
     expect(FONTE).not.toMatch(/\bAnimatePresence\b/);
     expect(FONTE).not.toMatch(/whileHover=/);

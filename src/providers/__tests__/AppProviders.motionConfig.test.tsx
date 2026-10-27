@@ -16,15 +16,21 @@ const ler = (rel: string) => readFileSync(resolve(__dirname, rel), 'utf8');
 describe('movimento reduzido na raiz (A11Y)', () => {
   it('1. App.tsx carrega MotionConfig em lazy e aplica reducedMotion="user"', () => {
     const appFonte = ler('../../App.tsx');
-    expect(appFonte).toMatch(/import\(['"](framer-motion)['"]\)/);
+
+    // LazyMotionConfig importa MotionConfig do framer-motion de forma lazy
+    expect(appFonte).toMatch(/import\(['"]framer-motion['"]\)/);
     expect(appFonte).toMatch(/MotionConfig/);
+    // reducedMotion="user" está presente exatamente uma vez
     expect(appFonte.match(/reducedMotion="user"/g) ?? []).toHaveLength(1);
+
+    // AppProviders não deve mais importar nem usar MotionConfig
     const providersFonte = ler('../AppProviders.tsx');
     expect(providersFonte).not.toMatch(/MotionConfig/);
   });
 
   it('2. ContactsView largou o MotionConfig próprio (e o import)', () => {
     const fonte = ler('../../components/contacts/ContactsView.tsx');
+
     expect(fonte).not.toMatch(/MotionConfig/);
   });
 });
