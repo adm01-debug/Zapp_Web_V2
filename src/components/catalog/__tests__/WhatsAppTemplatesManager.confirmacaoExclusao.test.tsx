@@ -9,6 +9,9 @@ import { render, screen, fireEvent } from '@testing-library/react';
 
 const mocks = vi.hoisted(() => ({ handleDelete: vi.fn() }));
 
+// A escrita de templates é admin-only (RLS): os controles só montam para admin.
+vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isAdmin: true }) }));
+
 vi.mock('@/hooks/integrations/useWhatsAppTemplates', () => ({
   TEMPLATE_CATEGORIES: [{ value: 'marketing', label: 'Marketing', color: '' }],
   TEMPLATE_LANGUAGES: [{ value: 'pt_BR', label: 'Português (BR)' }],
