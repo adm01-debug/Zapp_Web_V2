@@ -20,7 +20,7 @@
  * O teste renderiza o componente REAL disparando os eventos do usuário, não um mock: é o encaixe
  * do Tooltip no botão que está sob prova.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { AccessibilitySettings, HighContrastProvider } from '@/components/theme/HighContrastToggle';
 
@@ -50,6 +50,10 @@ beforeEach(() => {
   localStorage.clear();
 });
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe('S27 — dica no botão de acessibilidade da sidebar', () => {
   it('ao passar o mouse, a dica aparece com o texto combinado', async () => {
     montarBotao();
@@ -71,6 +75,13 @@ describe('S27 — dica no botão de acessibilidade da sidebar', () => {
   });
 
   it('a dica sai à direita do botão (o lado que a sidebar recolhida deixa livre)', async () => {
+    // O setup global devolve 800x600 para todo elemento; com isso o Radix enxerga colisão
+    // com a borda direita da janela e vira o lado para a esquerda. Retângulos zerados tiram
+    // a colisão da conta e deixam valer o lado PEDIDO (`side="right"`).
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0, x: 0, y: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
     montarBotao();
 
     fireEvent.pointerMove(acharBotao(), { pointerType: 'mouse' });

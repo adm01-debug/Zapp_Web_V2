@@ -61,6 +61,8 @@ vi.mock('@/hooks/inbox/useConnectionsManager', async () => {
         handleSetDefault: vi.fn(),
         handleDelete: vi.fn(),
         closeQrDialog: vi.fn(),
+        addConnectionError: null,
+        clearAddConnectionError: vi.fn(),
       };
     },
   };

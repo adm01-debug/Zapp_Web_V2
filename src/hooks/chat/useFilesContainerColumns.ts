@@ -75,14 +75,14 @@ export function useFilesContainerColumns(
     };
   }, [ref]);
 
-  // Re-medicao sincrona: garante que testes JSDOM (sem ResizeObserver ativo) leiam a
-  // largura do mock apos cada render em vez de ficarem na medida inicial do mount.
+  // Re-medição síncrona: garante que testes JSDOM (sem ResizeObserver ativo) leiam a
+  // largura do mock após cada render em vez de ficarem na medida inicial do mount.
   useLayoutEffect(() => {
     const element = ref.current;
     if (!element) return;
     const w = element.getBoundingClientRect().width;
     if (w > 0) setWidth(w);
-  });
+  }, [ref]);
 
   const capacity = width === null ? null : columnsCapacity(width);
 
