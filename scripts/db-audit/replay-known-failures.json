@@ -2,7 +2,7 @@
   "_comment": "Falhas ESPERADAS do replay local (scripts/db-audit/replay-local.sh). Cada entrada e uma migration que nao aplica em banco vazio por motivo JA investigado e medido no banco canonico. O replay fica VERDE quando nao ha falha fora desta lista - e isso o transforma em gate contra drift novo. NUNCA adicione entrada sem medir o objeto no canonico e/ou apontar a versao substituta: o valor deste arquivo e ser a fronteira entre 'esperado' e 'regressao'.",
   "_metodo": "Medir o objeto real no canonico antes de aceitar: pg_proc (funcao ou coluna), pg_policies, information_schema. Receita em docs/MIGRATIONS.md secao 7.",
   "_contexto": "docs/audits/REPLAY_LOCAL_MIGRATIONS_2026-10-03.md",
-  "_atualizado_em": "2026-10-23",
+  "_atualizado_em": "2026-10-27",
   "esperadas": {
     "20260906000001_e31_contacts_is_lid_legacy.sql": {
       "categoria": "ambiente",
@@ -60,10 +60,6 @@
       "categoria": "ordem-idempotencia",
       "motivo": "relation 'conversation_tasks' is already member of publication. Mesmo caso do anterior."
     },
-    "20260927570000_talkx_e27_realtime_campaign_events.sql": {
-      "categoria": "ordem-idempotencia",
-      "motivo": "relation 'talkx_campaign_events' is already member of publication. A migration irma duplicada 20260927500001 ja adicionou as 3 tabelas do E27 (talkx_campaign_events, talkx_segments, talkx_templates) a supabase_realtime; a segunda copia falha em 42710. Canonico: as 3 tabelas existem na publicacao. Causa real: irma duplicada, nao estado pre-existente da imagem. Medido em talkx-e27-replay-divergence.test.sh."
-    },
     "20260925153000_revoke_anon_execute_notify_due_reminders.sql": {
       "categoria": "cascata-objeto-existe-no-canonico",
       "motivo": "function public.notify_due_reminders() does not exist no replay. Canonico: a funcao existe. Ela e criada por migration que depende de objeto nao criado no banco vazio."
@@ -103,6 +99,14 @@
     "20261013230007_my_active_sessions.sql": {
       "categoria": "ambiente",
       "motivo": "relation 'auth.sessions' does not exist. O schema auth do Supabase nao esta presente na imagem efemera de replay. Canonico: aplicada. Medido em 23/10/2026."
+    },
+    "20261026220300_classificar_rls_sem_policy.sql": {
+      "categoria": "cascata-objeto-existe-no-canonico",
+      "motivo": "COMMENT ON TABLE public._zapp_fn_before falha no replay: tabela criada fora das migrations, existe apenas no canonico. Canonico: tabela existe com dados operacionais. Medido em 27/10/2026."
+    },
+    "20261026230300_decidir_schemas_backup.sql": {
+      "categoria": "cascata-objeto-existe-no-canonico",
+      "motivo": "DROP SCHEMA ops_backup falha no replay: schema criado manualmente como backup, nao existe no banco vazio. Canonico: schema existia ate ser dropado por esta migration. Medido em 27/10/2026."
     }
   }
 }
