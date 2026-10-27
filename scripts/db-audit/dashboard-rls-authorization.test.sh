@@ -99,7 +99,8 @@ for f in \
   20260930400000_dashboard_contact_counts_filter_deleted_at.sql \
   20261003272707_reconcile_local_replay_with_canonical.sql \
   20261006064630_dashboard_contact_counts_restaura_trava_e33.sql \
-  20261007013217_conversation_closures_reopen_same_day.sql; do
+  20261007013217_conversation_closures_reopen_same_day.sql \
+  20261026210000_dashboard_kpi_periodo_aditivo.sql; do
   [[ -f "$migrations_dir/$f" ]] || fail "migration nao encontrada: $f"
 done
 
@@ -162,7 +163,7 @@ assert_last_definer 'policy "Agents or admins can view closures"' \
 
 # RPCs do dashboard (lista fixa — a cadeia e aplicada mais abaixo):
 assert_last_definer 'RPC dashboard_kpi' \
-  '20261007013217_conversation_closures_reopen_same_day.sql' \
+  '20261026210000_dashboard_kpi_periodo_aditivo.sql' \
   '(CREATE( OR REPLACE)? FUNCTION public\.dashboard_kpi|ALTER FUNCTION[^;]*public\.dashboard_kpi|DROP FUNCTION[^;]*public\.dashboard_kpi)'
 assert_last_definer 'RPC dashboard_hourly_volume' \
   '20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql' \
@@ -447,6 +448,7 @@ psql_file "$tmp_dir/kpi_final.sql"
 # Harderning de ACL (migrations reais): tira EXECUTE de anon e de PUBLIC.
 psql_file "$migrations_dir/20260926100134_dashboard_revoke_anon_execute_rpcs.sql"
 psql_file "$migrations_dir/20260926100302_dashboard_revoke_public_execute_rpcs.sql"
+psql_file "$migrations_dir/20261026210000_dashboard_kpi_periodo_aditivo.sql" || fail "falha ao aplicar 20261026210000"
 
 # ── Fixtures determinísticas ──────────────────────────────────────────────────
 # ADMIN user 1111/profile a01 · AGENT_A user 2222/profile b01 (membro Q1)
