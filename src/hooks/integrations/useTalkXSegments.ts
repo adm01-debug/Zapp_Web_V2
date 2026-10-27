@@ -284,6 +284,10 @@ const AUDIENCE_RPC_PAGE_LIMIT = 1000;
  * PostgREST filtrando só `phone not null`, o que superestimava o público.
  */
 export async function countAudience(rules: SegmentRules | null | undefined, segmentIds?: string[]): Promise<number> {
+  const hasRealField = (rules?.groups ?? []).some((g) =>
+    g.rules.some((r) => r.field === 'real_uf' || r.field === 'real_sector'),
+  );
+  if (hasRealField) throw new Error('real_uf/real_sector requerem p_contact_ids — use resolveAudienceBySingu');
   const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const { data, error } = await rpc('talkx_resolve_audience', {
     p_rules: audienceRulesPayload(rules),
@@ -305,6 +309,10 @@ export interface AudienceContact { id: string; name: string; nickname: string | 
  * mascarado pelo servidor e a paginação percorre até `limit` (ou o fim da lista).
  */
 export async function resolveAudience(rules: SegmentRules | null | undefined, limit = 5000, segmentIds?: string[]): Promise<AudienceContact[]> {
+  const hasRealField = (rules?.groups ?? []).some((g) =>
+    g.rules.some((r) => r.field === 'real_uf' || r.field === 'real_sector'),
+  );
+  if (hasRealField) throw new Error('real_uf/real_sector requerem p_contact_ids — use resolveAudienceBySingu');
   const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const target = Math.max(0, Math.floor(limit));
   const rows: AudienceContact[] = [];
