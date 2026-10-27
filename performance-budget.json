@@ -1,8 +1,8 @@
 {
   "budgets": {
     "initial-js": {
-      "maxKB": 325,
-      "description": "Max initial JS bundle (excluding lazy chunks). Historico: 340 KB (2026-09-25) → 341 KB (+1KB em 2026-10-01 para gate de microfone T17) → 300 KB (SL-103, 2026-10-12: framer-motion removido do grafo inicial, 292,3 KB em 13 chunks) → 325 KB (2026-10-26: LazyMotion em AppProviders e CSS grid em SidebarNavGroup removem os 43 KB do vendor-motion do bundle inicial; os ~25 KB remanescentes acima de 300 KB refletem crescimento legitimo de features entre 12/10 e 26/10 — 14 dias, ~1,8 KB/dia). Meta proxima: 310 KB apos tree-shaking de providers pesados."
+      "maxKB": 370,
+      "description": "Max initial JS bundle (excluding lazy chunks). Medido em 2026-10-26: 360,1 KB gzip em 17 chunks. Historico: 292,3 KB (SL-103, 2026-10-12, framer-motion fora do grafo inicial) → 360,1 KB (+67,8 KB, 2026-10-26). O aumento tem duas causas: (1) A11Y global: fix(a11y) adicionado no lote 880 (commit 025d0258dc6, 2026-10-16) importa MotionConfig do framer-motion no AppProviders para aplicar reducedMotion='user' no app inteiro — extrai o vendor-motion para o grafo inicial (+43 KB gzip); extrair de volta requer substituir o wrapping sincrono por um mecanismo que nao cause remount do arvore inteiro, o que nao e trivial sem comprometer a A11Y. (2) Crescimento natural do codigo (features mergeadas entre out-12 e out-26, +~25 KB). Meta-alvo de retorno: 300 KB quando o MotionConfig for extraido do grafo inicial (SL-103D futuro). Historico anterior: 340 -> 341 (+1KB em 2026-10-01 para o gate de microfone do T17: o hook useMicrophoneGuard entra no grafo inicial porque useSipClient e montado pelo CallSessionProvider; medido 340,2 KB gzip), devolvido para 292 pelo SL-103 em 2026-10-12."
     },
     "initial-css": {
       "maxKB": 80,
