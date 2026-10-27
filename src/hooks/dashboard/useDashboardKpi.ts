@@ -18,9 +18,8 @@ const MIN_SAMPLE_FOR_DELTA = 5;
  * período ANTERIOR de MESMO TAMANHO encostado nele — os nomes do contrato foram
  * mantidos para não quebrar os consumidores.
  *
- * Nota: `untilIso` entra na queryKey para invalidar o cache quando o filtro
- * "até" mudar, mas `dashboard_kpi` não aceita `p_until` — a janela de fim
- * não é enviada ao banco. Adicionar p_until à RPC é o fix correto (P2). */
+ * Nota: `fromIso`/`untilIso` entram na queryKey e no payload (E34); trocar
+ * o período invalida o cache e chega ao servidor sem divergência. */
 export type DashboardKpiRpcResult = {
   resolvedToday: number;
   resolvedYesterday: number;
@@ -35,8 +34,7 @@ export type DashboardKpiRpcResult = {
 };
 
 /** Filtros do topo (E31) propagados como p_queue/p_agent, mais o período
- * escolhido (E34). `from` vira p_since no banco; `until` entra só na queryKey
- * (dashboard_kpi não aceita p_until ainda — P2 pendente).
+ * escolhido (E34). `from` vira p_from no banco; `until` vira p_until.
  *
  * - `from`/`until`: janela [from, until). `until` nulo = janela aberta.
  *   Sem `from`, a RPC usa o dia atual em America/Sao_Paulo ("hoje").
@@ -100,9 +98,10 @@ export function useDashboardKpi(filters: DashboardKpiFilters = {}) {
     queryKey: ['dashboard-kpi', fromIso, untilIso, queueId, agentId],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('dashboard_kpi', {
-        p_since: fromIso ?? undefined,
-        p_queue: queueId ?? undefined,
-        p_agent: agentId ?? undefined,
+        p_from: fromIso,
+        p_until: untilIso,
+        p_queue: queueId,
+        p_agent: agentId,
       });
       if (error) throw error;
       return aggregateDashboardKpi(data as unknown as DashboardKpiRpcResult);
