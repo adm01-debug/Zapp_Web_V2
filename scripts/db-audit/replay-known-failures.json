@@ -107,6 +107,10 @@
     "20261026230300_decidir_schemas_backup.sql": {
       "categoria": "cascata-objeto-existe-no-canonico",
       "motivo": "DROP SCHEMA ops_backup falha no replay: schema criado manualmente como backup, nao existe no banco vazio. Canonico: schema existia ate ser dropado por esta migration. Medido em 27/10/2026."
+    },
+    "20261026240300_drop_bkp_261023.sql": {
+      "categoria": "cascata-objeto-existe-no-canonico",
+      "motivo": "DROP SCHEMA _bkp_261023 CASCADE falha no replay: schema e snapshot de backup criado manualmente em 23/10/2026 antes de migrations criticas, nao existe no banco vazio. Canonico: schema existia ate ser dropado (migration reservada para apply apos 22/11/2026). Medido em 27/10/2026."
     }
   }
 }
