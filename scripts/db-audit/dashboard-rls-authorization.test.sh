@@ -656,9 +656,9 @@ expect_value 'D5 p90 reflete o outlier: p90ResponseToday=18075 (vai só pro tool
   "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::timestamptz, NULL::uuid, '$PERFIL_A') ->> 'p90ResponseToday');")"
 
 expect_value 'D6 virada de dia SP: closure às 23h30 de ontem-SP cai em resolvedYesterday' '1' \
-  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::timestamptz, NULL::uuid, '$PERFIL_A') ->> 'resolvedYesterday');")"
+  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::uuid, '$PERFIL_A'::uuid) ->> 'resolvedYesterday');")"
 expect_value 'D7 buckets resolvedHourly8 do dia SP: [0,0,0,2,1,0,0,0]' '[0, 0, 0, 2, 1, 0, 0, 0]' \
-  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::timestamptz, NULL::uuid, '$PERFIL_A') ->> 'resolvedHourly8')::jsonb::text;")"
+  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::uuid, '$PERFIL_A'::uuid) ->> 'resolvedHourly8')::jsonb::text;")"
 expect_value 'D8 slaBreachedToday conta o breach marcado' '1' \
   "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::timestamptz, NULL::uuid, '$PERFIL_A') ->> 'slaBreachedToday');")"
 
