@@ -256,10 +256,21 @@ function medirLayout() {
       return this.getAttribute('role') === 'log' ? ALTURA_JANELA : ALTURA_ESTIMADA;
     },
   });
+  // O virtual-core 3.19 mede o contêiner de rolagem por `clientHeight` (as versões
+  // anteriores liam `offsetHeight`); os itens continuam medidos por `offsetHeight`.
+  const originalClient = Object.getOwnPropertyDescriptor(proto, 'clientHeight');
+  Object.defineProperty(proto, 'clientHeight', {
+    configurable: true,
+    get(this: HTMLElement) {
+      return this.getAttribute('role') === 'log' ? ALTURA_JANELA : 0;
+    },
+  });
   return {
     mockRestore() {
       if (original) Object.defineProperty(proto, 'offsetHeight', original);
       else delete (proto as unknown as Record<string, unknown>).offsetHeight;
+      if (originalClient) Object.defineProperty(proto, 'clientHeight', originalClient);
+      else delete (proto as unknown as Record<string, unknown>).clientHeight;
     },
   };
 }

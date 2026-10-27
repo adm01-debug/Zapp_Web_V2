@@ -18,9 +18,9 @@ const MIN_SAMPLE_FOR_DELTA = 5;
  * período ANTERIOR de MESMO TAMANHO encostado nele — os nomes do contrato foram
  * mantidos para não quebrar os consumidores.
  *
- * Nota: `untilIso` entra na queryKey para invalidar o cache quando o filtro
- * "até" mudar, mas `dashboard_kpi` não aceita `p_until` — a janela de fim
- * não é enviada ao banco. Adicionar p_until à RPC é o fix correto (P2). */
+ * Nota: a assinatura nova dashboard_kpi(p_from, p_until, p_queue, p_agent) honra o
+ * fim da janela. Enquanto a migration 20261026210000 não for aplicada, o hook cai
+ * na antiga (só p_since) e a janela de fim não chega ao banco. */
 export type DashboardKpiRpcResult = {
   resolvedToday: number;
   resolvedYesterday: number;
@@ -87,6 +87,22 @@ export function aggregateDashboardKpi(r: DashboardKpiRpcResult) {
   };
 }
 
+type RpcErro = { code?: string; message?: string };
+type RpcResposta = { data: unknown; error: RpcErro | null };
+
+/** `types.ts` só conhece a assinatura antiga (p_since); a nova entra por este cast estreito
+ * até o `types-sync` regenerar o arquivo depois do apply da migration. Mantém o `this`. */
+function chamarDashboardKpi(args: Record<string, unknown>): PromiseLike<RpcResposta> {
+  return (supabase as unknown as {
+    rpc: (fn: string, a: Record<string, unknown>) => PromiseLike<RpcResposta>;
+  }).rpc('dashboard_kpi', args);
+}
+
+/** PGRST202 = função com esses argumentos não existe no schema cache; 42883 = undefined_function. */
+function assinaturaNovaAusente(erro: RpcErro): boolean {
+  return erro.code === 'PGRST202' || erro.code === '42883' || /Could not find the function/i.test(erro.message ?? '');
+}
+
 export function useDashboardKpi(filters: DashboardKpiFilters = {}) {
   const { queueId = null, agentId = null, from = null, until = null } = filters;
   // ISO uma vez: o mesmo valor entra na queryKey e no payload, então trocar o
@@ -99,13 +115,25 @@ export function useDashboardKpi(filters: DashboardKpiFilters = {}) {
     // este card, A9, e o período era ignorado, E34).
     queryKey: ['dashboard-kpi', fromIso, untilIso, queueId, agentId],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('dashboard_kpi', {
+      // Assinatura nova (E34): o período chega inteiro ao banco. Se a migration
+      // 20261026210000 ainda não foi aplicada, o PostgREST responde PGRST202 e o
+      // hook cai na assinatura antiga (só p_since), sem quebrar o card.
+      const novo = await chamarDashboardKpi({
+        p_from: fromIso,
+        p_until: untilIso,
+        p_queue: queueId,
+        p_agent: agentId,
+      });
+      if (!novo.error) return aggregateDashboardKpi(novo.data as DashboardKpiRpcResult);
+      if (!assinaturaNovaAusente(novo.error)) throw novo.error;
+
+      const antigo = await chamarDashboardKpi({
         p_since: fromIso ?? undefined,
         p_queue: queueId ?? undefined,
         p_agent: agentId ?? undefined,
       });
-      if (error) throw error;
-      return aggregateDashboardKpi(data as unknown as DashboardKpiRpcResult);
+      if (antigo.error) throw antigo.error;
+      return aggregateDashboardKpi(antigo.data as DashboardKpiRpcResult);
     },
     staleTime: 60_000,
   });

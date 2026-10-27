@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import React from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { createTestQueryClient } from '@/test/mocks/queryClient';
 
 /**
  * Tela 13 — "Campanha Pausada" (X156 · F11 Acompanhar campanha).
@@ -101,14 +103,17 @@ function setQueryState(over: Partial<QueryState>) {
   };
 }
 
+// Os painéis (X160) vêm de um `useQuery` próprio da tela: precisa de QueryClient na árvore.
 function view({ pausedByName }: { pausedByName?: string | null } = {}) {
   return (
-    <TalkXCampaignPaused
-      campaignId="camp-pausada-1"
-      pausedByName={pausedByName}
-      onBack={h.onBack}
-      onStatusChange={h.onStatusChange}
-    />
+    <QueryClientProvider client={createTestQueryClient()}>
+      <TalkXCampaignPaused
+        campaignId="camp-pausada-1"
+        pausedByName={pausedByName}
+        onBack={h.onBack}
+        onStatusChange={h.onStatusChange}
+      />
+    </QueryClientProvider>
   );
 }
 

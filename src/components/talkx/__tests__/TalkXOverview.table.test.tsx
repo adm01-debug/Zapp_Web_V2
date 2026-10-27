@@ -19,6 +19,8 @@
  */
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { createTestQueryClient } from '@/test/mocks/queryClient';
 
 const f = vi.hoisted(() => ({
   insights: [] as Array<Record<string, unknown>>,
@@ -132,7 +134,12 @@ function renderOverview() {
     onDelete: vi.fn(),
     onGoTab: vi.fn(),
   };
-  render(<TalkXOverview {...props} />);
+  // O ciclo de vida das linhas usa `useTalkX` (useQuery/useMutation): precisa de QueryClient.
+  render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      <TalkXOverview {...props} />
+    </QueryClientProvider>,
+  );
   return props;
 }
 
