@@ -4,7 +4,9 @@ import { fetchAllRows } from '@/lib/fetchAllRows';
 
 export type Contact = Database['public']['Tables']['contacts']['Row'];
 
-type ContactNoteRow = Database['public']['Tables']['contact_notes']['Row'];
+// Local extension: is_pinned is optional so this file compiles against both the
+// M2 types.ts (no is_pinned column) and the migrated types.ts (has is_pinned).
+type ContactNoteRow = Database['public']['Tables']['contact_notes']['Row'] & { is_pinned?: boolean | null };
 
 /**
  * Tamanho da página da leitura de notas (mesmo teto que o PostgREST aplica no
@@ -64,7 +66,7 @@ export class ContactService {
    * Usa a RPC get_last_message_dates (GROUP BY contact_id, MAX created_at)
    * para evitar truncação pelo limit padrão do PostgREST numa query plana.
    *
-   * A RPC retorna exatamente 1 row por contact_id — sem risco de dados
+   * A RPC retorna exatamente 1 row por contact_id – sem risco de dados
    * incompletos independente do volume de mensagens (hoje: 17.642).
    */
   static async getLastMessageDates(
@@ -109,13 +111,17 @@ export class ContactService {
     // Leitura PAGINADA: um `select()` sem `.range()` devolve só a primeira página
     // (teto do projeto, 1000 linhas) e as notas do fim da lista sumiam em silêncio.
     // A ordem `created_at desc` + `id desc` (chave única) é o que garante que a
-    // página seguinte continue de onde a anterior parou — sem duplicar nota nem
+    // página seguinte continue de onde a anterior parou – sem duplicar nota nem
     // pular a última linha de uma página empatada no mesmo instante.
     const { rows: data, error } = await fetchAllRows<ContactNoteRow>(
       (from, to) =>
         supabase
           .from('contact_notes')
-          .select(`id, contact_id, author_id, content, category, is_done, due_date, created_at, updated_at`)
+          // `select('*')` de propósito (compatibilidade de deploy): `is_pinned` só vem na
+          // linha quando a coluna existe no banco. Uma lista explícita de colunas com
+          // `is_pinned` quebraria a LEITURA inteira entre a publicação do front e o apply da
+          // migration `20261026200000_contact_notes_pinned.sql` (db-migrate é depois).
+          .select('*')
           .eq('contact_id', contactId)
           .order('created_at', { ascending: false })
           .order('id', { ascending: false })
@@ -141,7 +147,13 @@ export class ContactService {
     const authorsMap = new Map(authors.map(a => [a.id, a]));
     return (data || []).map(note => ({
       ...note,
-      author: authorsMap.get(note.author_id),
+      // Autor sempre definido: sem perfil correspondente, usa o mesmo placeholder
+      // da V3 ("Usuário removido") em vez de deixar `author` undefined na tela.
+      author: authorsMap.get(note.author_id) ?? {
+        id: note.author_id,
+        name: 'Usuário removido',
+        avatar_url: null,
+      },
     }));
   }
 
@@ -149,8 +161,8 @@ export class ContactService {
     contactId: string,
     authorId: string,
     content: string,
-    options?: { category?: string; dueDate?: string | null },
-  ) {
+    options?: { category?: string; dueDate?: string | null; isPinned?: boolean },
+   ) {
     const { data, error } = await supabase
       .from('contact_notes')
       .insert({
@@ -159,12 +171,16 @@ export class ContactService {
         content,
         category: options?.category ?? 'note',
         due_date: options?.dueDate ?? null,
+        // `is_pinned` só entra no payload quando for `true` (fixar já na criação). Nunca
+        // enviamos `is_pinned: false`: o `DEFAULT false` da coluna já cobre, e o campo
+        // ausente mantém o INSERT válido antes de a coluna existir em produção.
+        ...(options?.isPinned === true ? { is_pinned: true } : {}),
       })
       .select()
       .single();
 
     // O PostgREST responde `{ data, error }` e NÃO rejeita a promise: sem este
-    // `throw` a mutation de quem chama cairia em `onSuccess` com a nota não salva.
+    // `throw` a mutação de quem chama cairia em `onSuccess` com a nota não salva.
     if (error) throw error;
     return data;
   }
@@ -176,8 +192,8 @@ export class ContactService {
 
    static async updateNote(
      noteId: string,
-     updates: Partial<{ content: string; is_done: boolean; due_date: string | null }>,
-   ) {
+     updates: Partial<{ content: string; is_done: boolean; is_pinned: boolean; due_date: string | null }>,
+     ) {
      const { data, error } = await supabase.from('contact_notes').update(updates).eq('id', noteId).select().single();
      if (error) throw error;
      return data;
@@ -194,7 +210,7 @@ export class ContactService {
    static async upsertCustomField(payload: Database['public']['Tables']['contact_custom_fields']['Insert']) {
      // A tabela tem índice ÚNICO em (contact_id, field_name). Sem `onConflict` o PostgREST
      // resolve o conflito pela chave primária e reescrever um campo de mesmo nome devolve
-     // 23505 — o Salvar falhava justamente no campo que já existia.
+     // 23505 – o Salvar falhava justamente no campo que já existia.
      return supabase
        .from('contact_custom_fields')
        .upsert(payload, { onConflict: 'contact_id,field_name' });
@@ -211,7 +227,7 @@ export class ContactService {
        .from('contacts')
        // A4-D (onda 2): as 6 colunas de endereço entram aqui. Sem elas o painel abria o editor com
       // `address`/`city`/`postal_code` vazios e o Salvar gravava esse vazio por cima do endereço.
-      // Item 5 (onda 2): latitude/longitude entram pelo mesmo motivo — o editor precisa abrir com a
+      // Item 5 (onda 2): latitude/longitude entram pelo mesmo motivo – o editor precisa abrir com a
       // coordenada para poder preservá-la (o Salvar é por diferença; não tocar = não gravar).
       .select('company, job_title, nickname, surname, contact_type, ai_sentiment, ai_priority, channel_type, address, address_number, city, neighborhood, postal_code, state, latitude, longitude')
        .eq('id', contactId)
