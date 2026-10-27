@@ -33,9 +33,35 @@ Causa: bloqueio sistêmico de CI impedindo todos os merges (ver seção 3).
 
 ---
 
-## 2. PRs Prontas (não mergeadas e por quê)
+## 2. PRs Prontas para Merge (MERGEAR_SE_CI_VERDE)
 
-**Nenhuma PR está "pronta" para merge.** O CI Gate falha em todas porque `main@2d97c44` tem 136 arquivos de teste falhando.
+As PRs abaixo passaram nas 4 perguntas com evidência real de diff e estão bloqueadas **apenas** pelo CI Gate sistêmico. Assim que PR #2248 + 2 migrations em `producao-ddl` desbloquearem o CI, estas estão prontas:
+
+| PR | Título resumido | Destaque |
+|---|---|---|
+| #2085 | WhatsAppTemplatesManager + admin gate | UI só para admins |
+| #2086 | QueueCard 44px touch target | A11y mobile |
+| #2087 | GmailInboxView test mock channel | Fix de teste |
+| #2089 | `resolveAudioFormat()` exportada | Audio upload |
+| #2090 | `offlineSendQueue.clear()` no logout | Segurança |
+| #2218 | X094 TalkXTemplateEditor + PK-14 + guards SINGU | TalkX |
+| #2223 | NewTaskDialog lazy load + testes criação/descarte | Tasks |
+| #2231 | `contact_notes` `is_pinned` + RLS tests | Contatos |
+| #2232 | SummaryResult test selector fix | Fix de teste |
+| #2234 | GreetingBanner streak chip a11y | A11y |
+| #2235 | `instance_pauses` colunas de investigação | Monitoring |
+| #2236 | MonitoringInboxSilence + useInboxSilence | Monitoring |
+| #2239 | GoalsDashboard period selector | Goals |
+| #2240 | X115 TalkXSegments URL filter persistence | TalkX |
+| #2246 | TC-009 + ChatMessagesArea + fila-merge + PK-14 | Multi-fix CI |
+| #2270 | Dependabot codeql-action SHA bump | Infra |
+| #2271 | Dependabot bun.lock 15 pacotes | Deps |
+| #2272 | Dependabot golang Dockerfile SHA bump | Infra |
+| #2273 | fila-merge retry + mock fixes (conflito PR-2065/PR-2089) | CI/mocks |
+
+**Nota sobre PR #2273:** tem conflitos com PR-2065 (`AgentsView.pendencias.test.tsx`) e PR-2089 (`chat.service.ts`). Ordem de merge: PR-2065 → PR-2089 → PR-2273.
+
+**19 PRs com MERGEAR_SE_CI_VERDE** — todas bloqueadas apenas pelo CI Gate sistêmico.
 
 ---
 
@@ -177,6 +203,25 @@ PRs docs-only (`.claude/commands/`, `docs/`). Ex.: PR #2247. Bloqueadas pelo CI 
 | #2067 | BLOQUEADO_CI_E_BEHIND | fix(test): mocks arquivos-ver-na-conversa |
 | #2109 | BLOQUEADO_CI_E_BEHIND | fix(test): mock useCustomEmojis.upload duplo .order() |
 | #2110 | BLOQUEADO_CI_E_BEHIND | fix(tests): add createLogger ao vi.mock (20 arquivos) |
+| #2085 | MERGEAR_SE_CI_VERDE | feat: WhatsAppTemplatesManager + admin gate |
+| #2086 | MERGEAR_SE_CI_VERDE | fix: QueueCard 44px touch target |
+| #2087 | MERGEAR_SE_CI_VERDE | fix(test): GmailInboxView mock channel |
+| #2089 | MERGEAR_SE_CI_VERDE | feat: resolveAudioFormat() exportada |
+| #2090 | MERGEAR_SE_CI_VERDE | fix: offlineSendQueue.clear() no logout |
+| #2218 | MERGEAR_SE_CI_VERDE | fix(talkx+ci): X094 TalkXTemplateEditor + PK-14 |
+| #2223 | MERGEAR_SE_CI_VERDE | feat(tasks): NewTaskDialog lazy load + testes |
+| #2231 | MERGEAR_SE_CI_VERDE | feat(contacts): is_pinned + RLS tests |
+| #2232 | MERGEAR_SE_CI_VERDE | fix(test): SummaryResult selector |
+| #2234 | MERGEAR_SE_CI_VERDE | fix(a11y): GreetingBanner streak chip |
+| #2235 | MERGEAR_SE_CI_VERDE | feat: instance_pauses colunas investigação |
+| #2236 | MERGEAR_SE_CI_VERDE | feat: MonitoringInboxSilence hook |
+| #2239 | MERGEAR_SE_CI_VERDE | feat: GoalsDashboard period selector |
+| #2240 | MERGEAR_SE_CI_VERDE | feat(talkx): X115 filtros URL persistence |
+| #2246 | MERGEAR_SE_CI_VERDE | fix(ci+docs): TC-009 + ChatMessagesArea + PK-14 |
+| #2270 | MERGEAR_SE_CI_VERDE | chore(ci): codeql-action SHA bump |
+| #2271 | MERGEAR_SE_CI_VERDE | chore(deps): bun.lock 15 pacotes |
+| #2272 | MERGEAR_SE_CI_VERDE | chore(infra): golang Dockerfile SHA bump |
+| #2273 | MERGEAR_SE_CI_VERDE | fix(test+ci): fila-merge retry + mocks |
 | #1997 | DECISAO_HUMANA | feat: CV-010–020 Fase 2 RADAR copilot migrations |
 | #1998 | DECISAO_HUMANA | feat: CV-021–030 Motor copilot-live edge function |
 | #2000 | DECISAO_HUMANA | feat: RADAR Fase 4 Inteligência B.R.I.N.D.E |
@@ -206,4 +251,4 @@ Os vereditos `BLOQUEADO_CI` (30 PRs) e `BLOQUEADO_CI_E_BEHIND` (94 PRs) foram de
 
 ---
 
-*Gerado em 2026-10-26 | Branch de análise: `claude_04/awesome-heisenberg-x1us57` | PR: https://github.com/adm01-debug/Zapp_Web_V2/pull/2276*
+*Gerado em 2026-10-27 | Branch de análise: `claude_04/awesome-heisenberg-x1us57` | PR: https://github.com/adm01-debug/Zapp_Web_V2/pull/2276*
