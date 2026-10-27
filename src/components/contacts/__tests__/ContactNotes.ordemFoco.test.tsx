@@ -1,23 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { ContactNotes } from '../ContactNotes';
-import { TestQueryWrapper } from '@/test/mocks/queryClient';
 
 /**
  * Refazer 1 do cartão de editar/fixar nota (ficha do contato): a recusa apontou
- * três defeitos — fixada antiga sumia atrás do limite de 20, o foco só era tratado
- * ao abrir o editor (ao fechar caía no body) e faltava o desempate final por `id` desc.
+ * três defeitos que o próprio diff mostrava — a lista buscava as 20 mais
+ * recentes e só depois punha as fixadas no topo (fixada antiga sumia), o foco
+ * só era tratado ao abrir o editor (ao fechar caía no body) e o orderNotes do
+ * componente não tinha o desempate final por `id` desc do hook.
  *
- * Na `main` a ficha lê as notas pelo `useContactNotes` (leitura paginada COMPLETA, sem
- * limite de 20; fixadas primeiro e desempate por `id` desc no hook), então os testes de
- * ordem provam esse caminho. O mock honra `.order()` + `.range()` como o PostgREST.
+ * O mock abaixo HONRA `.order()` + `.limit()` como o PostgREST: ordena a cópia
+ * das notas pelas cláusulas registradas e só então corta no limite. Sem isso o
+ * teste do ponto 1 passaria antes e depois (o cliente reordenava tudo).
  */
 
 const h = vi.hoisted(() => ({
   myProfileId: 'profile-me' as string | null,
   notes: [] as Array<Record<string, unknown>>,
   profiles: [] as Array<Record<string, unknown>>,
-  updateAllowed: true,
+  updateRows: [{ id: 'x' }] as Array<{ id: string }>,
   updateCalls: [] as Array<{ id: string; patch: Record<string, unknown> }>,
 }));
 
@@ -35,7 +36,7 @@ vi.mock('@/integrations/supabase/client', () => {
       _filters: {} as Record<string, unknown>,
       _patch: null as Record<string, unknown> | null,
       _orders: [] as Array<{ col: string; asc: boolean }>,
-      _range: null as [number, number] | null,
+      _limit: null as number | null,
     };
     q.select = vi.fn(() => q);
     q.insert = vi.fn(() => q);
@@ -44,12 +45,13 @@ vi.mock('@/integrations/supabase/client', () => {
       return q;
     });
     q.in = vi.fn(() => q);
+    // PostgREST: ordena primeiro, corta no limite depois.
     q.order = vi.fn((col: string, opts?: { ascending?: boolean }) => {
       (q._orders as Array<{ col: string; asc: boolean }>).push({ col, asc: opts?.ascending ?? true });
       return q;
     });
-    q.range = vi.fn((from: number, to: number) => {
-      q._range = [from, to];
+    q.limit = vi.fn((n: number) => {
+      q._limit = n;
       return q;
     });
     q.single = vi.fn(() => q);
@@ -58,22 +60,11 @@ vi.mock('@/integrations/supabase/client', () => {
       q._patch = patch;
       return q;
     });
-    // A consulta é "thenable": o serviço faz `await supabase.from(...)....`.
     q.then = (onOk: (v: unknown) => unknown, onErr?: (e: unknown) => unknown) => {
       let result: unknown;
       if (q._op === 'update') {
-        const id = String((q._filters as Record<string, unknown>).id);
-        h.updateCalls.push({ id, patch: q._patch as Record<string, unknown> });
-        const row = h.notes.find((n) => n.id === id);
-        if (h.updateAllowed && row) {
-          // Não muta o objeto original (as constantes dos testes são compartilhadas).
-          const atualizada = { ...row, ...(q._patch as Record<string, unknown>) };
-          h.notes = h.notes.map((n) => (n.id === id ? atualizada : n));
-          result = { data: atualizada, error: null };
-        } else {
-          // RLS: UPDATE em nota de outro autor altera ZERO linhas; `.single()` vira PGRST116.
-          result = { data: null, error: { code: 'PGRST116', message: 'JSON object requested, multiple (or no) rows returned' } };
-        }
+        h.updateCalls.push({ id: String((q._filters as Record<string, unknown>).id), patch: q._patch as Record<string, unknown> });
+        result = { data: h.updateRows, error: null };
       } else if (table === 'contact_notes') {
         const orders = q._orders as Array<{ col: string; asc: boolean }>;
         const val = (row: Record<string, unknown>, col: string): number | string =>
@@ -86,8 +77,7 @@ vi.mock('@/integrations/supabase/client', () => {
           }
           return 0;
         });
-        const range = q._range as [number, number] | null;
-        result = { data: range ? rows.slice(range[0], range[1] + 1) : rows, error: null };
+        result = { data: q._limit != null ? rows.slice(0, q._limit as number) : rows, error: null };
       } else {
         result = { data: h.profiles, error: null };
       }
@@ -104,8 +94,6 @@ vi.mock('@/integrations/supabase/client', () => {
   };
 });
 
-vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn(), useToast: () => ({ toast: vi.fn() }) }));
-
 function cartao(texto: string): HTMLElement {
   return screen.getByText(texto).closest('.group') as HTMLElement;
 }
@@ -118,12 +106,12 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.myProfileId = 'profile-me';
   h.profiles = [{ id: 'profile-me', name: 'Eu' }];
-  h.updateAllowed = true;
+  h.updateRows = [{ id: 'x' }];
   h.updateCalls = [];
 });
 
 describe('ContactNotes · refazer 1: fixada antiga, foco gerenciado e desempate por id', () => {
-  it('fixada mais antiga que as 20 recentes segue visível no topo (leitura paginada completa + hook)', async () => {
+  it('fixada mais antiga que as 20 recentes segue visível no topo (ordem no servidor antes do limite)', async () => {
     // 21 recentes (12:00–12:20) + 1 fixada de setembro: 22 notas no banco.
     h.notes = Array.from({ length: 21 }, (_, i) => ({
       id: `nota-recente-${String(i).padStart(2, '0')}`,
@@ -140,7 +128,7 @@ describe('ContactNotes · refazer 1: fixada antiga, foco gerenciado e desempate 
       is_pinned: true,
     });
 
-    render(<ContactNotes contactId="contato-1" />, { wrapper: TestQueryWrapper });
+    render(<ContactNotes contactId="contato-1" />);
     await screen.findByText('Nota fixada antiga');
 
     const primeiro = document.querySelectorAll<HTMLElement>('.group')[0];
@@ -148,7 +136,7 @@ describe('ContactNotes · refazer 1: fixada antiga, foco gerenciado e desempate 
     expect(primeiro).toHaveAttribute('data-pinned', 'true');
   });
 
-  it('empate de created_at rende ordem determinística por id desc (serviço + hook)', async () => {
+  it('empate de created_at rende ordem determinística por id desc (servidor + orderNotes)', async () => {
     // Mesmo instante nas duas: sem desempate por id, a ordem herdada da
     // inserção ([A, B]) vazava para a tela e trocava a cada render.
     const instante = '2026-10-06T12:00:00.000Z';
@@ -163,7 +151,7 @@ describe('ContactNotes · refazer 1: fixada antiga, foco gerenciado e desempate 
       },
     ];
 
-    render(<ContactNotes contactId="contato-1" />, { wrapper: TestQueryWrapper });
+    render(<ContactNotes contactId="contato-1" />);
     await screen.findByText('Texto A');
 
     const cards = Array.from(document.querySelectorAll<HTMLElement>('.group'));
@@ -177,7 +165,7 @@ describe('ContactNotes · refazer 1: fixada antiga, foco gerenciado e desempate 
       id: 'nota-minha', content: 'Minha nota', created_at: '2026-10-06T12:00:00.000Z',
       author_id: 'profile-me', is_pinned: false,
     }];
-    render(<ContactNotes contactId="contato-1" />, { wrapper: TestQueryWrapper });
+    render(<ContactNotes contactId="contato-1" />);
     await screen.findByText('Minha nota');
 
     fireEvent.click(botaoEditarDoCartao('Minha nota'));
@@ -195,7 +183,7 @@ describe('ContactNotes · refazer 1: fixada antiga, foco gerenciado e desempate 
       id: 'nota-minha', content: 'Minha nota', created_at: '2026-10-06T12:00:00.000Z',
       author_id: 'profile-me', is_pinned: false,
     }];
-    render(<ContactNotes contactId="contato-1" />, { wrapper: TestQueryWrapper });
+    render(<ContactNotes contactId="contato-1" />);
     await screen.findByText('Minha nota');
 
     fireEvent.click(botaoEditarDoCartao('Minha nota'));
@@ -210,7 +198,7 @@ describe('ContactNotes · refazer 1: fixada antiga, foco gerenciado e desempate 
       id: 'nota-minha', content: 'Minha nota', created_at: '2026-10-06T12:00:00.000Z',
       author_id: 'profile-me', is_pinned: false,
     }];
-    render(<ContactNotes contactId="contato-1" />, { wrapper: TestQueryWrapper });
+    render(<ContactNotes contactId="contato-1" />);
     await screen.findByText('Minha nota');
 
     fireEvent.click(botaoEditarDoCartao('Minha nota'));
