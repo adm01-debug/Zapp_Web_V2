@@ -1,9 +1,9 @@
- import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
- import { toast } from '@/hooks/ui/use-toast';
- import { ContactService } from '@/services/contact.service';
- import { AuthService } from '@/services/auth.service';
- import { useAuth } from '@/hooks/auth/useAuth';
+import { toast } from '@/hooks/ui/use-toast';
+import { ContactService } from '@/services/contact.service';
+import { AuthService } from '@/services/auth.service';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { log } from '@/lib/logger';
 import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
 
@@ -16,6 +16,12 @@ export interface ContactNote {
   content: string;
   category: ContactNoteCategory;
   is_done: boolean;
+  /**
+   * Nota fixada (aparece no topo da lista do contato). Opcional de propósito:
+   * as notas antigas lidas antes da coluna existir chegam sem a marca e valem
+   * como NÃO fixadas (`is_pinned === true` é a única leitura que fixa).
+   */
+  is_pinned?: boolean;
   due_date: string | null;
   created_at: string;
   updated_at: string;
@@ -27,6 +33,22 @@ export interface ContactNote {
 }
 
 export const contactNotesKey = (contactId: string, userId?: string | null) => ['contact-notes', userId ?? null, contactId] as const;
+
+/**
+ * Ordem da lista: fixadas primeiro, depois `created_at` desc e, no empate exato
+ * de instante, `id` desc como desempate final — a MESMA ordem que o servidor usa
+ * na paginação (`created_at desc, id desc`). Sem isso, uma nota fixada podia cair
+ * no meio de duas notas do mesmo instante e a página seguinte parecia fora de ordem.
+ * O servidor NÃO ordena por `is_pinned` (o índice parcial é só de leitura barata);
+ * a verdade sobre a nota completa segue no select e aqui só reordenamos a cópia do cache.
+ */
+function compareContactNotes(a: ContactNote, b: ContactNote): number {
+  const pinnedDiff = Number(b.is_pinned === true) - Number(a.is_pinned === true);
+  if (pinnedDiff !== 0) return pinnedDiff;
+  if (a.created_at !== b.created_at) return a.created_at < b.created_at ? 1 : -1;
+  if (a.id !== b.id) return a.id < b.id ? 1 : -1;
+  return 0;
+}
 
 export function useContactNotes(contactId: string, options?: { category?: ContactNoteCategory }) {
   const { user } = useAuth();
@@ -40,10 +62,22 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
      enabled: !!contactId,
    });
 
+  // Cópia ordenada: fixadas primeiro. A ordenação roda sobre a página já lida
+  // (o hook não busca de novo); o desempate por `id` mantém a ordem determinística.
+  const sortedNotes = useMemo(() => [...allNotes].sort(compareContactNotes), [allNotes]);
+
+  // A coluna `is_pinned` pode ainda não existir em produção (o front é publicado antes do
+  // `db-migrate`). Só oferecemos fixar quando alguma nota carregada expõe a marca booleana
+  // (`select('*')` só devolve a chave se a coluna existe). Sem notas não há o que fixar.
+  const pinSupported = useMemo(
+    () => allNotes.some((n) => typeof n.is_pinned === 'boolean'),
+    [allNotes],
+  );
+
   const categoryFilter = options?.category;
   const notes = useMemo(
-    () => (categoryFilter ? allNotes.filter((n) => n.category === categoryFilter) : allNotes),
-    [allNotes, categoryFilter],
+    () => (categoryFilter ? sortedNotes.filter((n) => n.category === categoryFilter) : sortedNotes),
+    [sortedNotes, categoryFilter],
   );
 
   const invalidate = () => {
@@ -52,9 +86,9 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
   };
 
    const addNoteMutation = useMutation({
-     mutationFn: ({ content, category, dueDate }: { content: string; category?: ContactNoteCategory; dueDate?: string | null }) => {
+     mutationFn: ({ content, category, dueDate, isPinned }: { content: string; category?: ContactNoteCategory; dueDate?: string | null; isPinned?: boolean }) => {
        if (!profile?.id) throw new Error('Perfil não encontrado');
-       return ContactService.addNote(contactId, profile.id, content, { category, dueDate });
+       return ContactService.addNote(contactId, profile.id, content, { category, dueDate, isPinned });
      },
     onSuccess: () => {
       invalidate();
@@ -93,9 +127,30 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
   });
 
   const updateNoteMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<{ content: string; is_done: boolean; due_date: string | null }> }) =>
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<{ content: string; is_done: boolean; is_pinned: boolean; due_date: string | null }> }) =>
       ContactService.updateNote(id, updates),
-    onSuccess: () => invalidate(),
+    onSuccess: (updated) => {
+      // Aplica a linha confirmada pelo banco no cache já: a tela mostra o texto novo / a nota
+      // fixada sem esperar o refetch (que segue abaixo e é a verdade final).
+      if (updated?.id) {
+        queryClient.setQueryData<ContactNote[]>(
+          contactNotesKey(contactId, user?.id),
+          (prev) => prev?.map((n) => (n.id === updated.id
+            ? {
+              ...n,
+              content: updated.content,
+              is_done: updated.is_done,
+              // Só copia a marca se o banco a devolveu (coluna existe): evita criar a chave
+              // `is_pinned: undefined` e sinalizar suporte onde ele não há.
+              ...(typeof updated.is_pinned === 'boolean' ? { is_pinned: updated.is_pinned } : {}),
+              due_date: updated.due_date,
+              updated_at: updated.updated_at,
+            }
+            : n)),
+        );
+      }
+      invalidate();
+    },
     onError: (error) => {
       log.error('Error updating note:', error);
       toast({
@@ -106,15 +161,15 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
     },
   });
 
-  const addNote = useCallback((content: string, category?: ContactNoteCategory, dueDate?: string | null) => {
-    return addNoteMutation.mutateAsync({ content, category, dueDate });
+  const addNote = useCallback((content: string, category?: ContactNoteCategory, dueDate?: string | null, isPinned?: boolean) => {
+    return addNoteMutation.mutateAsync({ content, category, dueDate, isPinned });
   }, [addNoteMutation]);
 
   const deleteNote = useCallback((noteId: string) => {
     return deleteNoteMutation.mutateAsync(noteId);
   }, [deleteNoteMutation]);
 
-  const updateNote = useCallback((id: string, updates: Partial<{ content: string; is_done: boolean; due_date: string | null }>) => {
+  const updateNote = useCallback((id: string, updates: Partial<{ content: string; is_done: boolean; is_pinned: boolean; due_date: string | null }>) => {
     return updateNoteMutation.mutateAsync({ id, updates });
   }, [updateNoteMutation]);
 
@@ -122,16 +177,44 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
     return updateNoteMutation.mutateAsync({ id: note.id, updates: { is_done: !note.is_done } });
   }, [updateNoteMutation]);
 
+  /** Edita SÓ o texto da nota (conteúdo); o autor é quem manda a requisição e a RLS
+   * de UPDATE do banco é a barreira de quem pode editar. */
+  const editNote = useCallback((id: string, content: string) => {
+    return updateNoteMutation.mutateAsync({ id, updates: { content } });
+  }, [updateNoteMutation]);
+
+  /** Fixa/desfixa pelo id: o estado atual vem da lista já carregada. Nota fora da
+   * lista carregada NÃO é fixada às cegas — lança erro claro para o chamador. */
+  const togglePin = useCallback((id: string) => {
+    const note = sortedNotes.find((n) => n.id === id);
+    if (!note) throw new Error('Nota não encontrada na lista carregada');
+    if (!pinSupported) {
+      // Coluna `is_pinned` ausente (migration ainda não aplicada): não tenta gravar, avisa
+      // e rejeita sem tocar no cache nem no banco.
+      toast({
+        title: 'Fixar notas indisponível',
+        description: 'Este recurso ainda não está ativo neste ambiente.',
+        variant: 'destructive',
+      });
+      throw new Error('Fixar notas indisponível: coluna is_pinned ausente');
+    }
+    return updateNoteMutation.mutateAsync({ id, updates: { is_pinned: note.is_pinned !== true } });
+  }, [sortedNotes, pinSupported, updateNoteMutation]);
+
   return {
     notes,
-    allNotes,
+    allNotes: sortedNotes,
     isLoading,
     error,
     refetch,
     addNote,
     deleteNote,
     updateNote,
+    editNote,
     toggleNoteDone,
+    togglePin,
+    /** true quando as notas carregadas expõem `is_pinned` (coluna existe no banco). */
+    pinSupported,
     isAdding: addNoteMutation.isPending,
     isDeleting: deleteNoteMutation.isPending,
     isUpdating: updateNoteMutation.isPending,
