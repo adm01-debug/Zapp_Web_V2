@@ -7,6 +7,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { HOVER_REVEAL_TAP } from '../hoverActions';
 import { calendarDayKey, parseDayKey } from '@/lib/localDay';
 import { toast } from '@/hooks/ui/use-toast';
 import { useContactNotes, type ContactNote, type ContactNoteCategory } from '@/hooks/crm/useContactNotes';
@@ -133,7 +134,7 @@ function NoteCategoryCard({ icon, title, tone, notes, category, placeholder, wit
                         {format(new Date(note.created_at), "dd MMM yyyy · HH:mm", { locale: ptBR })} · Por: {note.author?.name ?? 'Você'}
                       </p>
                       {note.author_id === currentProfileId && (
-                        <button type="button" aria-label={deleteLabel} onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-destructive shrink-0">
+                        <button type="button" aria-label={deleteLabel} onClick={() => onDelete(note.id)} className={`${HOVER_REVEAL_TAP} text-destructive shrink-0`}>
                           <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
                       )}
@@ -162,7 +163,7 @@ function ObjectionItem({ note, onDelete, canDelete, deleteLabel }: { note: Conta
       <div className="flex items-center justify-between mt-1.5">
         <p className="text-xs text-muted-foreground">{format(new Date(note.created_at), "dd MMM yyyy · HH:mm", { locale: ptBR })}</p>
         {canDelete && (
-          <button type="button" aria-label={deleteLabel} onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-destructive shrink-0">
+          <button type="button" aria-label={deleteLabel} onClick={() => onDelete(note.id)} className={`${HOVER_REVEAL_TAP} text-destructive shrink-0`}>
             <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         )}
@@ -192,7 +193,7 @@ function PromiseItem({ note, onToggle, onDelete, canDelete, deleteLabel }: { not
             <p className="text-xs text-muted-foreground">{noteDueLabel(note.due_date)}</p>
           ) : <span />}
           {canDelete && (
-            <button type="button" aria-label={deleteLabel} onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-destructive shrink-0">
+            <button type="button" aria-label={deleteLabel} onClick={() => onDelete(note.id)} className={`${HOVER_REVEAL_TAP} text-destructive shrink-0`}>
               <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           )}

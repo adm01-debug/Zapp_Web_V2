@@ -97,7 +97,7 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
     expect(h.rpc).toHaveBeenCalledWith('search_team_messages', {
       p_conversation_id: 'conv-a',
       p_query: 'contrato',
-      p_limit: 50,
+      p_limit: 100,
     });
     // O termo não existe em nenhuma mensagem carregada: só o servidor podia achar.
     expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-antiga']);
@@ -140,8 +140,7 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
     await esperarDebounce();
 
     // O erro é exposto como estado próprio...
-    expect(result.current.searchError).toBeTruthy();
-    expect(result.current.searchError).toMatch(/não foi possível buscar/i);
+    expect(result.current.searchError).toBe(true);
     // ...e a resposta (com falha) NÃO deixa a tela presa em "buscando".
     expect(result.current.isSearching).toBe(false);
     // A lista vazia não é o veredito da busca: o aviso de erro é.
@@ -153,7 +152,7 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
     const { result } = renderHook(() => useTeamChatPanel(convA));
     act(() => { result.current.setSearchQuery('contrato'); });
     await esperarDebounce();
-    expect(result.current.searchError).toBeTruthy();
+    expect(result.current.searchError).toBe(true);
 
     h.rpc.mockResolvedValue({
       data: [{ id: 'm-antiga', sender_id: 'user-3', content: 'contrato assinado', created_at: '2026-01-05T09:00:00+00:00', sender_name: 'Ana' }],
@@ -162,7 +161,7 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
     act(() => { result.current.setSearchQuery('contrato renova'); });
     await esperarDebounce();
 
-    expect(result.current.searchError).toBeNull();
+    expect(result.current.searchError).toBe(false);
     expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-antiga']);
   });
 
@@ -178,7 +177,7 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
     );
     act(() => { result.current.setSearchQuery('contrato'); });
     await esperarDebounce();
-    expect(result.current.searchError).toBeTruthy();
+    expect(result.current.searchError).toBe(true);
     expect(result.current.filteredMessages).toEqual([]);
 
     // A busca de convB fica pendente: é o estado intermediário que separa a
@@ -191,9 +190,9 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
     expect(h.rpc).toHaveBeenLastCalledWith('search_team_messages', {
       p_conversation_id: 'conv-b',
       p_query: 'contrato',
-      p_limit: 50,
+      p_limit: 100,
     });
-    expect(result.current.searchError).toBeNull();
+    expect(result.current.searchError).toBe(false);
     expect(result.current.isSearching).toBe(true);
     expect(result.current.filteredMessages).toEqual([]);
 
@@ -204,7 +203,7 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
       });
     });
 
-    expect(result.current.searchError).toBeNull();
+    expect(result.current.searchError).toBe(false);
     expect(result.current.isSearching).toBe(false);
     expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-b']);
   });

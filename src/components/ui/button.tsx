@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  * `min-h`/`min-w` não brigam com `h-10`/`h-8` no `twMerge`, e em ponteiro fino nada muda.
  */
 export const ALVO_TOQUE_GROSSO =
-  "[@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]";
+  "[@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden",
