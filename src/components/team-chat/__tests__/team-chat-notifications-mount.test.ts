@@ -47,12 +47,6 @@ vi.mock('@/components/effects/EasterEggs', () => ({
 vi.mock('@/components/team-chat/TeamChatNotificationsListener', () => ({
   TeamChatNotificationsListener: h.listener,
 }));
-// DeferredProviders chama useAuth e useGlobalIncomingMessageAlerts direto, e AppProviders está
-// mockado como passthrough (sem AuthProvider na árvore): o assunto aqui é o listener do Team Chat.
-vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ profile: { id: 'test-user-id' } }) }));
-vi.mock('@/hooks/realtime/useGlobalIncomingMessageAlerts', () => ({
-  useGlobalIncomingMessageAlerts: vi.fn(),
-}));
 vi.mock('@/hooks/system/useServiceWorker', () => ({ useServiceWorker: vi.fn() }));
 vi.mock('@/hooks/ui/useScreenProtection', () => ({ useScreenProtection: vi.fn() }));
 
@@ -69,14 +63,15 @@ vi.mock('@/components/ui/button', () => ({
   Button: ({ children }: { children: React.ReactNode }) => React.createElement('button', null, children),
 }));
 vi.mock('lucide-react', () => ({ MessageSquare: () => null, Users: () => null, Plus: () => null }));
+// MotionConfig adicionado ao mock: LazyMotionConfig em App.tsx desestrutura MotionConfig
+// do framer-motion via import dinâmico; sem ele no mock o vitest lança erro e derruba
+// o render inteiro, impedindo TeamChatNotificationsListener de montar.
 vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
   },
+  MotionConfig: ({ children }: { children: React.ReactNode }) => children,
 }));
-// Estado vazio compartilhado (renderizado pela TeamChatView) usa framer-motion/ícones que este
-// teste não mocka por inteiro; o assunto aqui é o listener, não o visual do estado vazio.
-vi.mock('@/components/shared/ConversationEmptyState', () => ({ ConversationEmptyState: () => null }));
 
 import App from '@/App';
 import { TeamChatView } from '@/components/team-chat/TeamChatView';
