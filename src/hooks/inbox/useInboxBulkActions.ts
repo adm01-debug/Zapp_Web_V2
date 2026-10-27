@@ -178,21 +178,21 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
 
     try {
       // Retrato do estado ANTERIOR: o desfazer devolve cada contato ao
-      // `assigned_to` original. A leitura pode ser barrada pelo RLS —
+      // `conversation_status` original. A leitura pode ser barrada pelo RLS —
       // erro aqui aborta sem arquivar nada.
       const { data: originals, error: selectError } = await supabase
         .from('contacts')
-        .select('id, assigned_to')
+        .select('id, conversation_status')
         .in('id', contactIds);
       if (selectError) throw selectError;
 
-      const previousAssignedTo = new Map<string, string | null>();
+      const previousStatus = new Map<string, string | null>();
       for (const row of originals ?? []) {
-        previousAssignedTo.set(row.id, row.assigned_to ?? null);
+        previousStatus.set(row.id, row.conversation_status ?? null);
       }
       // Só arquiva quem foi LIDO. Zero linha lida (RLS filtrando) não é
       // sucesso — sem alvo, avisa em vez de arquivar às cegas.
-      const targetIds = contactIds.filter((id) => previousAssignedTo.has(id));
+      const targetIds = contactIds.filter((id) => previousStatus.has(id));
       if (targetIds.length === 0) throw new Error('nenhum contato lido');
 
       await executeUndoable({
@@ -201,7 +201,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
         action: async () => {
           const { error } = await supabase
             .from('contacts')
-            .update({ assigned_to: null })
+            .update({ conversation_status: 'archived' })
             .in('id', targetIds);
           if (error) throw error;
           clearSelection();
@@ -209,10 +209,10 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
         },
         undoAction: async () => {
           for (const id of targetIds) {
-            const original = previousAssignedTo.get(id);
+            const original = previousStatus.get(id);
             const { error } = await supabase
               .from('contacts')
-              .update({ assigned_to: original ?? null })
+              .update({ conversation_status: original ?? null })
               .eq('id', id);
             if (error) throw error;
           }
