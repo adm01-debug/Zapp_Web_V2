@@ -23,7 +23,7 @@ import { createQueryBuilder } from './supabase';
  *  import vem primeiro no arquivo de teste), então os `vi.mock` abaixo já
  *  encontram os espiões prontos quando o Vitest chama os factories. */
 export const supabaseMock = {
-  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), dismiss: vi.fn() },
+  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
   undoToast: vi.fn(),
   auth: vi.fn(),
   from: vi.fn(),

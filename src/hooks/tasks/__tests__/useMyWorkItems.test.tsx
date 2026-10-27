@@ -62,7 +62,7 @@ describe('useMyWorkItems — Fase B', () => {
       status: 'backlog',
       priority: 'medium',
     });
-    expect(h.toast.success).toHaveBeenCalledWith('Tarefa criada', { id: 'tarefa-criada' });
+    expect(h.toast.success).toHaveBeenCalledWith('Tarefa criada');
   });
 
   it('create recusa aviso no passado (remind_in_past) sem tocar no banco', async () => {

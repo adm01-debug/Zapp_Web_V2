@@ -67,13 +67,6 @@ export const DONE_WINDOW_DAYS = 30;
 /** Tolerancia para `remind_at` no passado (etapa 17). */
 export const REMIND_PAST_TOLERANCE_MS = 60_000;
 
-/**
- * Id estável do aviso simples "Tarefa criada" da criação ([refazer 1] ponto 2):
- * o modal Nova tarefa dispensa SÓ este toast (`toast.dismiss(id)`) antes de
- * pôr a versão com "Desfazer" — outro toast aberto na hora continua vivo.
- */
-export const TAREFA_CRIADA_TOAST_ID = 'tarefa-criada';
-
 // ---------------------------------------------------------------------------
 // Query keys
 // ---------------------------------------------------------------------------
@@ -355,7 +348,7 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
       return (data as { id: string } | null)?.id ?? null;
     },
     onSettled: () => invalidate(),
-    onSuccess: () => { toast.success('Tarefa criada', { id: TAREFA_CRIADA_TOAST_ID }); },
+    onSuccess: () => { toast.success('Tarefa criada'); },
     onError: (err: Error & { blocked?: string }) => {
       if (err.blocked === 'remind_in_past') toast.error('O horario do aviso ja passou');
       else toast.error('Erro ao criar tarefa');

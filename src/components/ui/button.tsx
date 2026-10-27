@@ -66,11 +66,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(buttonVariants({ variant, size, className }))} 
         ref={ref} 
         disabled={disabled || isLoading}
+        aria-busy={isLoading || undefined}
         {...props}
       >
         {isLoading ? (
           <>
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
             {loadingText || children}
           </>
         ) : (
@@ -105,11 +106,12 @@ const MotionButton = React.forwardRef<HTMLButtonElement, MotionButtonProps>(
         ref={ref}
         className={cn(buttonVariants({ variant, size }), motionButtonClasses, className)}
         disabled={disabled || isLoading}
+        aria-busy={isLoading || undefined}
         {...props}
       >
         {isLoading ? (
           <>
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
             {loadingText || children}
           </>
         ) : (
