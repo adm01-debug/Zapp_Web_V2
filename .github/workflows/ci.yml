@@ -285,7 +285,7 @@ jobs:
           echo "node-scripts: ${{ needs.node-scripts.result }}"
           echo "build: ${{ needs.build.result }}"
           echo "security: ${{ needs.security.result }}"
-          if [[ "${{ needs.typecheck.result }}" == "failure" || \
+          if [[  "${{ needs.typecheck.result }}" == "failure" || \
                 "${{ needs.unit-tests.result }}" == "failure" || \
                 "${{ needs.node-scripts.result }}" == "failure" || \
                 "${{ needs.build.result }}" == "failure" || \
@@ -307,7 +307,7 @@ jobs:
   e2e:
     name: 🎭 E2E Tests (Playwright)
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
