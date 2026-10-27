@@ -1,0 +1,101 @@
+numero,titulo,draft,head_sha,base_sha,mergeable_state,verdict
+2279,"fix(e2e): aumenta workers de 1→2 no CI para evitar timeout de 20 min",true,unknown,unknown,draft,SKIP_DRAFT
+2278,"fix(ci): atualiza guarda de vigilância dashboard_kpi para migration 20261026210000",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2277,"chore(db): GOAL backend — classifica 17 tabelas RLS + decide backups + prepara DROP _bkp_261023",true,unknown,unknown,draft,SKIP_DRAFT
+2276,"chore: auditoria completa de 164 PRs abertas — bloqueio sistêmico documentado",true,unknown,unknown,draft,SKIP_DRAFT
+2274,"fix: corrige workflows com falha — types.ts +9 RPCs, retry HTTP 502",false,unknown,unknown,blocked,AGUARDA_HUMANO
+2273,"fix: retry em HTTP 5xx no fila-merge.mjs",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2272,"⬆️ docker: Bump golang from f92b6ef to b8c9b82 in /infrastructure/preview-egress-proxy",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2270,"⬆️ ci: Bump the codeql-action group across 1 directory with 2 updates",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2269,"fix: Talk X segmentos sem estimativa enganosa, branch stacked em #2248",false,unknown,e1f2ee4d,dirty,SKIP_CONFLICT
+2268,"fix: supervisor volta a gerenciar templates do WhatsApp e Base de Conhecimento não trava em erro de rede",false,unknown,e1f2ee4d,dirty,SKIP_CONFLICT
+2267,"fix: fila de envio offline não entrega item sem dono e não ressuscita após logout",false,unknown,e1f2ee4d,dirty,SKIP_CONFLICT
+2266,"fix: paleta de comandos acessível, filtros do inbox com voltar/avançar e celebrações sem falso positivo",false,unknown,e1f2ee4d,dirty,SKIP_CONFLICT
+2265,"fix: revoga grants de escrita do anon em public (CRITICAL-1)",true,unknown,unknown,draft,SKIP_DRAFT
+2263,"fix: salvar preferências na Aparência (SettingsView passa onSave/isSaving)",true,unknown,unknown,draft,SKIP_DRAFT
+2261,"fix: corrigir falhas de CI em 4 suítes de teste e retry de rede no fila-merge",true,unknown,unknown,draft,SKIP_DRAFT
+2255,"chore: auditoria Supabase — relatório e progresso finais (2026-10-25)",true,unknown,unknown,draft,SKIP_DRAFT
+2250,"fix(types): adiciona 9 assinaturas de RPC ausentes em types.ts",true,unknown,unknown,draft,SKIP_DRAFT
+2249,"fix: 3 falhas de testes unitários (HighContrastToggle, mock de canal Talk X, nome dos selects do editor)",true,unknown,unknown,draft,SKIP_DRAFT
+2247,"chore: comando /resgate-validacao (validação exaustiva do resgate com 5 agentes)",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2246,"fix: retry automático em fila-merge.mjs para HTTP 504 transitório",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2245,"fix(talkx): corrige 4.007 falhas/30d do cron talkx-scheduler-1min",true,unknown,unknown,draft,SKIP_DRAFT
+2244,"fix(types): adiciona 9 assinaturas de RPC ausentes — desbloqueia CI de todas as PRs",false,unknown,unknown,blocked,AGUARDA_HUMANO
+2242,"chore: inventário de PRs abertas e regras de negócio para análise",true,unknown,unknown,draft,SKIP_DRAFT
+2241,"chore: auditoria exaustiva Supabase — 28 achados (CRITICAL×3 HIGH×7)",true,unknown,unknown,draft,SKIP_DRAFT
+2240,"feat(talkx): filtros, paginação persistida e URL sync da biblioteca de segmentos [C011]",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2239,"feat(metas): seletor Hoje/Semana/Mês na aba Metas, título por período e skeleton (C130)",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2238,"feat(message-delivery): carimbo do POST iniciado (PD-79) + codigo de erro estavel retryable/ambiguous (PD-80) [C110] [DECISAO HUMANA]",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2233,"fix: corrige 3 falhas de Vitest (SL-070, HZ5-09, a11y TTS)",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2232,"test(inbox): corrige seletor CSS do TtsButton — h-6.w-6 → h-8.w-8 [round2]",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2230,"chore: remove hook morto useTalkXSuppression",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2229,"test(inbox): corrige InboxEmptyChat.cta divergente após reescrita no PR #1986",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2228,"fix(tests): corrige falha mecânica de mock em useAdminDataCreateUser.test.ts",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2226,"fix(db-guard): corrige assertion B.0c no TC-009 — backfill não deve disparar trigger de update",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2225,"fix(e2e): mock do RPC app_bootstrap para corrigir travamento em ProtectedRoute",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2222,"fix(db): corrige TC-009 — aplica predecessora 20261006222024 antes da 20261009193246 no teste",true,unknown,unknown,draft,SKIP_DRAFT
+2221,"fix: corrige falhas pré-existentes nos Unit Tests de src/",true,unknown,unknown,draft,SKIP_DRAFT
+2219,"fix: corrige falhas de testes unitários pré-existentes em main",true,unknown,unknown,draft,SKIP_DRAFT
+2218,"fix: corrigir CI — RE_RECON, Playwright 1.63.0, useAuth, fila-merge, manifest",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2217,"feat: edge functions AI copiloto fases 8-15 (CV-071–CV-150)",true,unknown,unknown,draft,SKIP_DRAFT
+2216,"feat: 7 edge functions copiloto RADAR fases 8-15 (CV-071–CV-150)",true,unknown,unknown,draft,SKIP_DRAFT
+2215,"feat: 7 edge functions copilot fases 8-10 (CV-071–CV-100)",true,unknown,unknown,draft,SKIP_DRAFT
+2214,"feat: DDL 7 tabelas copiloto RADAR fases 13-15 (CV-121–CV-150)",true,unknown,unknown,draft,SKIP_DRAFT
+2213,"feat: RADAR Copilot Fases 8–15 — CV-071 a CV-150",true,unknown,unknown,draft,SKIP_DRAFT
+2211,"fix(ci+tests): corrige auto-update-pr-branch e falhas nos testes unitários",true,unknown,unknown,draft,SKIP_DRAFT
+2209,"fix(test): corrige mock de range/limit no customemojis upload test",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2208,"fix(types): named SuppressionReasonCode type export",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2206,"fix(ci): adiciona copilot_feedback a known-violations para desbloquear Contrato DB offline",true,unknown,unknown,draft,SKIP_DRAFT
+2200,"analise: dossiê branch hermes/telefonia-contrato-dados-26092615475e51",true,unknown,unknown,draft,SKIP_DRAFT
+2199,"fix: corrige 3 falhas de CI — unit tests virtualizer + DB Guard PG17 roles",true,unknown,unknown,draft,SKIP_DRAFT
+2197,"ci: lote GA49–GA64 — fila-merge, actions-kpi, types-sync, codeql e branch-hygiene",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2196,"feat: TalkX editor de templates e artefatos gerados (dia/2026-10-19)",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2195,"fix: crash cachedConversations undefined e this-binding perdido no rpc de metas de fila",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2190,"fix: corrige 9 falhas de CI que mantinham a main vermelha",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2187,"fix(tests): corrige falhas de testes no baseline main — mocks, lógica e código morto",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2186,"fix(security): auditoria Supabase 2026-10-22 — department_invites ownership + login_attempts TTL LGPD",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2185,"docs(pendencias): §8 RESOLVIDO + §9 inventário de workflows da main",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2155,"fix(ci): destrava workflows que falhavam antes de executar",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2152,"test(e2e): spec de toque 44px volta ao verde com seletores do app real",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2151,"fix(ci): destravar workflows que falhavam antes de executar",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2149,"docs(reconciliation): P053 registra regressão do cabeçalho (19/20/25) e superseded (16/28)",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2148,"test(e2e): destrava specs deslogados de Contatos com boot e health mockados",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2147,"fix(db-audit): guard n011 com teto dinamico por dominio e canonico atual",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2146,"feat(team-chat): TeamChatView seleciona conversa via ?cid= (receptor E90)",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2145,"fix(ci): Resto GA86 GA99 GA100 (sonar, contracts, adocao)",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2144,"fix(ci): Resto GA37 GA96-GA98 (docs deploy, regen, CODEOWNERS)",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2143,"fix(ci): Resto GA20-GA25 (Gate 3, DESTINO split, auto-merge grants)",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2142,"fix(ci): Resto GA13-GA17 (db-migrate 2 jobs, apply_all_missing, portao destrutivo)",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2141,"feat(E83): entrar por codigo - aceite desacoplado (somente arquivos novos)",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2139,"Codex/fix failed workflows 20261020",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2138,"fix(ci): desbloqueia a main - contratos de CI, Pin do Playwright/E2E, E88 e DB Guard offline",true,unknown,unknown,draft,SKIP_DRAFT
+2137,"fix(db): recria canonicamente as policies de receipt do team chat (replay)",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2135,"fix(contatos): restaura topo sem cabeçalho e devolve o toque ao FAB",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2129,"fix(ci): Fases 7+8 do plano GA75-GA95",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2128,"fix(ci): Fases 2+3 do plano GA27-GA47",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2126,"fix(ci): Fases 4+5+6 do plano GA49-GA74",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2125,"fix(ci): Fase 1 do plano GA18 GA19 + GA26 prepare",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2124,"fix(ci): Fase 0 do plano GA02-GA12",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2123,"fix(ci): restaura o parse dos contratos de workflow e corrige 8 violações",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2120,"fix(inbox): fecha a semântica de tablist das 8 abas da conversa (etapa 15 do plano de 20 etapas)",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2116,"feat: security headers V130-V133 — COOP, Reporting-Endpoints, report-to",true,unknown,unknown,draft,SKIP_DRAFT
+2113,"fix(evolution-api): remover set-presence, find-chats e find-status-messages (GO_GAPS D6)",true,unknown,unknown,draft,SKIP_DRAFT
+2112,"chore(inbox): remove órfão ConversationMemorySection + desbloqueia gates da main",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2111,"fix(types): narrowar reason_code em useTalkXSuppression para union type",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2110,"fix(tests): add createLogger to vi.mock('@/lib/logger') em 20 testes",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2109,"fix(test): mock useCustomEmojis.upload suporta duplo .order()",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2108,"fix(ci): GA20/GA21/GA22/GA23/GA27/GA38/GA39/GA55/GA72 + GA75–GA78/GA92 — auditoria GitHub Actions",true,unknown,unknown,draft,SKIP_DRAFT
+2107,"docs(g9): absorver planos de docs ausentes da main — E274",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2105,"docs: plano de integração de branches em 300 etapas (153 branches → só main)",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2104,"fix(ci): PGUSER postgres + GA75 endpoint + GA77 sem auto-restore + TS2322 + security-unit",false,unknown,unknown,prohibited,SKIP_PROHIBITED
+2100,"fix: GA09/GA62/GA75/GA92/GA98/GA100 — concurrency, codeql diário, endpoint, rate-limit, docs",true,unknown,unknown,draft,SKIP_DRAFT
+2098,"fix: corrigir falhas de CI — testes, a11y, bundle e motion (261019)",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2097,"fix: corrige falhas pré-existentes nos Unit Tests (useKnowledgeBase + useTalkXSegments)",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2095,"fix(security): Z018+Z020 — external-db-proxy code-leak em 502, catch via internalErrorResponse",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2093,"fix: migration-evidence expectedKeys, version collision, playwright unpin (Z022+Z023+Z024)",true,unknown,unknown,draft,SKIP_DRAFT
+2092,"fix(ci): types-sync job summary + gmail-cron-sync raw-500 (Z029+Z015p)",true,unknown,unknown,draft,SKIP_DRAFT
+2091,"fix: timing-safe comparison em searchbox-budget-alert e whatsapp-webhook (Z011-B/C)",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2090,"fix: fila de envio offline não era por usuário — trocar de atendente na mesma máquina drenava o texto alheio",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2089,"fix: ChatService.uploadAudio gravava sempre como .webm, ignorando o mime real do Blob",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2088,"fix: área segura mobile (safe-area-*) e rolagem sem barra (scrollbar-none) sem regra CSS",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
+2087,"fix(test): mock de supabase.rpc ausente ao buscar em GmailInboxView.paginacao",false,unknown,unknown,blocked,SKIP_BLOCKED_CI
