@@ -1227,6 +1227,9 @@ jobs:
       - name: Simular conversation_id derivado da mensagem em recibos e reacoes (TC-009)
         env:
           TEAM_CID_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # TC-009 cria os papeis anon/authenticated/service_role (globais no cluster)
+          # e inicia container proprio, incompativel com o shim do E47.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-receipts-reactions-conversation-id.test.sh
       # TC-004 (P1): leave_team_group/remove_team_member usavam a coluna inexistente
       # `tcm.role`; o contrato prova RED->GREEN nas duas RPCs e executa o rollback.
