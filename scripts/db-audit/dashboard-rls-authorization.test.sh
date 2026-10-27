@@ -69,7 +69,7 @@ expect_error() {
     -c '\set VERBOSITY verbose' -c "$sql" 2>&1)"; status=$?
   set -e
   (( status == 0 )) && { printf '%s\n' "$output" >&2; fail "$label: deveria falhar, mas passou"; }
-  [[ "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: esperava '$needle' no erro"; }
+  [[  "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: esperava '$needle' no erro"; }
   printf '[PASS] %s\n' "$label"
 }
 expect_value() {
@@ -99,7 +99,8 @@ for f in \
   20260930400000_dashboard_contact_counts_filter_deleted_at.sql \
   20261003272707_reconcile_local_replay_with_canonical.sql \
   20261006064630_dashboard_contact_counts_restaura_trava_e33.sql \
-  20261007013217_conversation_closures_reopen_same_day.sql; do
+  20261007013217_conversation_closures_reopen_same_day.sql \
+  20261026210000_dashboard_kpi_periodo_aditivo.sql; do
   [[ -f "$migrations_dir/$f" ]] || fail "migration nao encontrada: $f"
 done
 
@@ -162,7 +163,7 @@ assert_last_definer 'policy "Agents or admins can view closures"' \
 
 # RPCs do dashboard (lista fixa — a cadeia e aplicada mais abaixo):
 assert_last_definer 'RPC dashboard_kpi' \
-  '20261007013217_conversation_closures_reopen_same_day.sql' \
+  '20261026210000_dashboard_kpi_periodo_aditivo.sql' \
   '(CREATE( OR REPLACE)? FUNCTION public\.dashboard_kpi|ALTER FUNCTION[^;]*public\.dashboard_kpi|DROP FUNCTION[^;]*public\.dashboard_kpi)'
 assert_last_definer 'RPC dashboard_hourly_volume' \
   '20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql' \
@@ -447,6 +448,7 @@ psql_file "$tmp_dir/kpi_final.sql"
 # Harderning de ACL (migrations reais): tira EXECUTE de anon e de PUBLIC.
 psql_file "$migrations_dir/20260926100134_dashboard_revoke_anon_execute_rpcs.sql"
 psql_file "$migrations_dir/20260926100302_dashboard_revoke_public_execute_rpcs.sql"
+psql_file "$migrations_dir/20261026210000_dashboard_kpi_periodo_aditivo.sql" || fail "falha ao aplicar 20261026210000"
 
 # ── Fixtures determinísticas ──────────────────────────────────────────────────
 # ADMIN user 1111/profile a01 · AGENT_A user 2222/profile b01 (membro Q1)
@@ -573,7 +575,7 @@ echo '── BLOCO A: EXECUTE fechado para chamadas sem privilégio (DASH-092) �
 
 expect_error 'A1 anon não executa dashboard_kpi (REVOKE de anon vigente)' \
   'permission denied for function dashboard_kpi' \
-  "$(anon "SELECT public.dashboard_kpi(now() - interval '30 days', NULL, NULL);")"
+  "$(anon "SELECT public.dashboard_kpi(now() - interval '30 days', NULL::timestamptz, NULL::uuid, NULL::uuid);")"
 expect_error 'A2 anon não executa dashboard_contact_counts' \
   'permission denied for function dashboard_contact_counts' \
   "$(anon "SELECT public.dashboard_contact_counts(now() - interval '30 days', now(), NULL, NULL);")"
@@ -582,7 +584,7 @@ expect_error 'A3 anon não executa dashboard_hourly_volume' \
   "$(anon "SELECT count(*) FROM public.dashboard_hourly_volume(8, NULL, NULL);")"
 
 expect_value 'A4 authenticated sem JWT (auth.uid() NULL) falha fechado no kpi' '0' \
-  "SET ROLE authenticated; SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, NULL) ->> 'resolvedToday');"
+  "SET ROLE authenticated; SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::timestamptz, NULL::uuid, NULL::uuid) ->> 'resolvedToday');"
 expect_value 'A5 anon lê zero linhas de contacts mesmo com GRANT de tabela' '0' \
   "$(anon "SELECT count(*) FROM public.contacts;")"
 
@@ -606,11 +608,11 @@ echo
 echo '── BLOCO C: RPCs do dashboard sob JWT não privilegiado ───────────────────────'
 
 expect_value 'C1 kpi de agent conta só o próprio escopo (3 hoje; closure de B em contato compartilhado NÃO entra)' '3' \
-  "$(agent "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, NULL) ->> 'resolvedToday');")"
+  "$(agent "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::timestamptz, NULL::uuid, NULL::uuid) ->> 'resolvedToday');")"
 expect_value 'C2 trava E33 do kpi: spoof de p_agent devolve os dados do próprio chamador' 't' \
-  "$(agent "SELECT public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_B') = public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_A');")"
+  "$(agent "SELECT public.dashboard_kpi(now() - interval '30 days', NULL::timestamptz, NULL::uuid, '$PERFIL_B') = public.dashboard_kpi(now() - interval '30 days', NULL::timestamptz, NULL::uuid, '$PERFIL_A');")"
 expect_value 'C3 admin filtrando por p_agent=B vê o escopo de B (2 closures hoje)' '2' \
-  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_B') ->> 'resolvedToday');")"
+  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::timestamptz, NULL::uuid, '$PERFIL_B') ->> 'resolvedToday');")"
 
 expect_value 'C4 hourly de agent conta só mensagens dos próprios contatos (5 hoje + 3 ontem = 8)' '8' \
   "$(agent "SELECT coalesce(sum(message_count),0) FROM public.dashboard_hourly_volume(8, NULL, NULL);")"
@@ -642,22 +644,22 @@ echo
 echo '── BLOCO D: edge cases E44 contra o código real (DASH-091) ───────────────────'
 
 expect_value 'D1 kpi com janela vazia (futuro): resolvedToday=0 sem erro' '0' \
-  "$(admin "SELECT (public.dashboard_kpi(now() + interval '10 years', NULL, NULL) ->> 'resolvedToday');")"
+  "$(admin "SELECT (public.dashboard_kpi(now() + interval '10 years', NULL::timestamptz, NULL::uuid, NULL::uuid) ->> 'resolvedToday');")"
 expect_value 'D2 kpi com janela vazia: avgResponseToday é null (não divide por zero)' '' \
-  "$(admin "SELECT coalesce(public.dashboard_kpi(now() + interval '10 years', NULL, NULL) ->> 'avgResponseToday', '');")"
+  "$(admin "SELECT coalesce(public.dashboard_kpi(now() + interval '10 years', NULL::timestamptz, NULL::uuid, NULL::uuid) ->> 'avgResponseToday', '');")"
 expect_value 'D3 kpi com janela vazia: resolvedHourly8 vem zerado' '[0, 0, 0, 0, 0, 0, 0, 0]' \
-  "$(admin "SELECT (public.dashboard_kpi(now() + interval '10 years', NULL, NULL) ->> 'resolvedHourly8')::jsonb::text;")"
+  "$(admin "SELECT (public.dashboard_kpi(now() + interval '10 years', NULL::timestamptz, NULL::uuid, NULL::uuid) ->> 'resolvedHourly8')::jsonb::text;")"
 
 expect_value 'D4 mediana robusta a outlier: avgResponseToday=115 (p50, ignora outlier de 10h)' '115' \
-  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_A') ->> 'avgResponseToday');")"
+  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::timestamptz, NULL::uuid, '$PERFIL_A') ->> 'avgResponseToday');")"
 expect_value 'D5 p90 reflete o outlier: p90ResponseToday=18075 (vai só pro tooltip)' '18075' \
-  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_A') ->> 'p90ResponseToday');")"
+  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::timestamptz, NULL::uuid, '$PERFIL_A') ->> 'p90ResponseToday');")"
 
 expect_value 'D6 virada de dia SP: closure às 23h30 de ontem-SP cai em resolvedYesterday' '1' \
-  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_A') ->> 'resolvedYesterday');")"
+  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::uuid, '$PERFIL_A'::uuid) ->> 'resolvedYesterday');")"
 expect_value 'D7 buckets resolvedHourly8 do dia SP: [0,0,0,2,1,0,0,0]' '[0, 0, 0, 2, 1, 0, 0, 0]' \
-  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_A') ->> 'resolvedHourly8')::jsonb::text;")"
+  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::uuid, '$PERFIL_A'::uuid) ->> 'resolvedHourly8')::jsonb::text;")"
 expect_value 'D8 slaBreachedToday conta o breach marcado' '1' \
-  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, '$PERFIL_A') ->> 'slaBreachedToday');")"
+  "$(admin "SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::timestamptz, NULL::uuid, '$PERFIL_A') ->> 'slaBreachedToday');")"
 
 printf '\n[OK] fronteira de autorizacao das RPCs do dashboard verificada com JWT nao privilegiado\n'
