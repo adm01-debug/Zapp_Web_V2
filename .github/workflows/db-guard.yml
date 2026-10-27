@@ -1212,6 +1212,7 @@ jobs:
       - name: Simular pedido de acesso a departamento (N-071)
         env:
           REQUEST_DEPT_ACCESS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/request-department-access.test.sh
 
       # TC-009 / R2-DB-011 (item 164, P2): recibos e reacoes nao forcavam `conversation_id`
