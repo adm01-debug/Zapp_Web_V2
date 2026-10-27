@@ -58,12 +58,11 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
   useNotificationSettings: () => ({ settings: h.settings, isQuietHours: () => false }),
 }));
 
-vi.mock('@/hooks/system/usePushNotifications', () => ({
-  usePushNotifications: () => ({
-    showNotification: (...args: unknown[]) => h.show(...args),
-    isSubscribed: true,
-    permission: 'granted',
-  }),
+vi.mock('@/utils/notificationSounds', () => ({
+  showBrowserNotification: (...args: unknown[]) => h.show(...args),
+  playNotificationSound: vi.fn(),
+  previewSound: vi.fn(),
+  requestNotificationPermission: vi.fn(),
 }));
 
 vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: vi.fn() }));
@@ -151,7 +150,7 @@ describe('useTeamChatNotifications — canal estável (HZ5-09)', () => {
     await act(async () => { await h.handler!(mensagem()); });
 
     expect(h.fromTables).toContain('team_conversation_members');
-    expect(h.show).toHaveBeenCalledWith(expect.objectContaining({ title: '💬 Teams: Ana' }));
+    expect(h.show).toHaveBeenCalledWith('💬 Teams: Ana', expect.any(String), expect.objectContaining({ tag: 'team-msg-c1' }));
   });
 
   it('não notifica nem vai ao banco quando o cache diz que não é membro', async () => {

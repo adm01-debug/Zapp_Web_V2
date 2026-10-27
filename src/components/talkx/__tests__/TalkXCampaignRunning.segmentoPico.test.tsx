@@ -16,7 +16,9 @@ beforeAll(() => {
  *
  * Prova o que o cartão pede:
  * 1. Destinatários ganham a coluna "Segmento" (nome vindo de talkx_segments, '—' quando nulo);
- * 2. Destinatários filtram por nome/telefone e por status (padrão Select do produto);
+ * 2. Destinatários filtram por nome/telefone e por status (padrão Select do produto). A aba
+ *    lê a página pela RPC `talkx_campaign_recipients_page` (N-131): o filtro vai ao SERVIDOR
+ *    (`p_search`/`p_status`) e o dublê da RPC aplica o mesmo recorte que ela aplica;
  * 3. Logs em Tempo Real mostram o segmento e filtram por busca/status;
  * 4. Visão Geral mostra o InsightCard "Pico de respostas" com contagem e horário — e
  *    não mostra o cartão quando não há resposta nos últimos 20 min.
@@ -63,6 +65,9 @@ const { state, mockCampaign } = vi.hoisted(() => {
       // Resposta por `limit(n)`: 200 = destinatários, 50 = logs, 2000 = histórico,
       // -1 = consultas sem limit (mapa de segmentos).
       rows: {} as Record<number, { data: unknown; error: { message: string } | null }>,
+      // Destinatários (aba N-131): linhas que a RPC `talkx_campaign_recipients_page` filtra.
+      recipients: [] as Array<Record<string, unknown>>,
+      rpcCalls: [] as Array<{ fn: string; args: Record<string, unknown> }>,
     },
   };
 });
@@ -125,7 +130,26 @@ vi.mock('@/lib/supabaseHelpers', () => {
     fromTable: () => chain(-1),
     supabase: {
       from: () => chain(-1),
-      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+      // A RPC da aba Destinatários aplica `p_search`/`p_status` como o servidor; as demais seguem nulas.
+      rpc: vi.fn((fn: string, args: Record<string, unknown>) => {
+        state.rpcCalls.push({ fn, args });
+        if (fn !== 'talkx_campaign_recipients_page') return Promise.resolve({ data: null, error: null });
+        const busca = typeof args.p_search === 'string' ? args.p_search.toLowerCase() : null;
+        const status = typeof args.p_status === 'string' ? args.p_status : null;
+        const linhas = state.recipients.filter((r) => {
+          const contato = r.contacts as { name: string; phone: string };
+          const casaBusca = !busca || contato.name.toLowerCase().includes(busca) || contato.phone.includes(busca);
+          return casaBusca && (!status || r.status === status);
+        });
+        const count = (st: string) => linhas.filter((r) => r.status === st).length;
+        return Promise.resolve({
+          data: {
+            rows: linhas, next_cursor: null, total: linhas.length,
+            kpis: { total: linhas.length, sent: count('sent'), delivered: count('delivered'), failed: count('failed'), pending: count('pending'), outcome_unknown: 0 },
+          },
+          error: null,
+        });
+      }),
       channel: realtimeChannel,
       removeChannel: vi.fn(),
     },
@@ -146,8 +170,8 @@ function renderView() {
 
 const SEGMENTOS = { data: [{ id: 's1', name: 'Compradores VIP' }], error: null };
 
-const RECIP_ANA = { status: 'sent', segment_id: 's1', sent_at: '2026-10-10T12:00:00.000Z', delivered_at: null, error_message: null, contacts: { name: 'Ana Segmento', phone: '+5511999990001' } };
-const RECIP_BRUNO = { status: 'failed', segment_id: null, sent_at: '2026-10-10T12:01:00.000Z', delivered_at: null, error_message: 'falha', contacts: { name: 'Bruno SemSeg', phone: '+5511999990002' } };
+const RECIP_ANA = { id: 'r1', campaign_id: 'c1', contact_id: 'k1', status: 'sent', segment_id: 's1', sent_at: '2026-10-10T12:00:00.000Z', delivered_at: null, error_message: null, contacts: { name: 'Ana Segmento', phone: '+5511999990001' } };
+const RECIP_BRUNO = { id: 'r2', campaign_id: 'c1', contact_id: 'k2', status: 'failed', segment_id: null, sent_at: '2026-10-10T12:01:00.000Z', delivered_at: null, error_message: 'falha', contacts: { name: 'Bruno SemSeg', phone: '+5511999990002' } };
 
 const LOG_ANA = { id: 'l1', segment_id: 's1', status: 'sent', updated_at: '2026-10-10T12:00:00.000Z', error_message: null, contacts: { name: 'Ana Segmento', phone: '+5511999990001' } };
 const LOG_BRUNO = { id: 'l2', segment_id: null, status: 'failed', updated_at: '2026-10-10T12:01:00.000Z', error_message: 'falha', contacts: { name: 'Bruno SemSeg', phone: '+5511999990002' } };
@@ -165,9 +189,10 @@ describe('TalkXCampaignRunning · Segmento e Pico de Respostas', () => {
     state.rows = {
       '-1': SEGMENTOS,
       2000: { data: [], error: null },
-      200: { data: [RECIP_ANA, RECIP_BRUNO], error: null },
       50: { data: [LOG_ANA, LOG_BRUNO], error: null },
     };
+    state.recipients = [RECIP_ANA, RECIP_BRUNO];
+    state.rpcCalls = [];
   });
 
   it('Destinatários: coluna Segmento mostra o nome e "—" quando o destinatário não tem segmento', async () => {
@@ -177,8 +202,11 @@ describe('TalkXCampaignRunning · Segmento e Pico de Respostas', () => {
     expect(await screen.findByText('Ana Segmento')).toBeTruthy();
     expect(screen.getByRole('columnheader', { name: 'Segmento' })).toBeTruthy();
     expect(screen.getByText('Compradores VIP')).toBeTruthy();
-    // Bruno não tem segmento: a célula mostra '—' (a linha existe).
-    expect(screen.getByText('Bruno SemSeg')).toBeTruthy();
+    // Bruno não tem segmento: a célula da coluna Segmento mostra '—'.
+    const linhaBruno = screen.getByText('Bruno SemSeg').closest('tr') as HTMLElement;
+    expect(linhaBruno.querySelectorAll('td')[2].textContent).toBe('—');
+    const linhaAna = screen.getByText('Ana Segmento').closest('tr') as HTMLElement;
+    expect(linhaAna.querySelectorAll('td')[2].textContent).toBe('Compradores VIP');
   });
 
   it('Destinatários: busca por nome filtra a lista', async () => {
@@ -186,11 +214,13 @@ describe('TalkXCampaignRunning · Segmento e Pico de Respostas', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Destinatários' }));
     expect(await screen.findByText('Ana Segmento')).toBeTruthy();
 
-    fireEvent.change(screen.getByLabelText('Buscar por nome ou telefone'), { target: { value: 'bruno' } });
+    fireEvent.change(screen.getByLabelText('Buscar destinatário por nome ou telefone'), { target: { value: 'bruno' } });
 
     await waitFor(() => expect(screen.queryByText('Ana Segmento')).toBeNull());
     expect(screen.getByText('Bruno SemSeg')).toBeTruthy();
-    expect(screen.getByText('Mostrando 1 de 2')).toBeTruthy();
+    // O recorte vai ao servidor e o total da aba acompanha o filtro (1 de 2).
+    expect(state.rpcCalls.some((c) => c.fn === 'talkx_campaign_recipients_page' && c.args.p_search === 'bruno')).toBe(true);
+    expect(screen.getByText('1 destinatários')).toBeTruthy();
   });
 
   it('Destinatários: filtro de status deixa só as falhas', async () => {
@@ -202,6 +232,7 @@ describe('TalkXCampaignRunning · Segmento e Pico de Respostas', () => {
 
     await waitFor(() => expect(screen.queryByText('Ana Segmento')).toBeNull());
     expect(screen.getByText('Bruno SemSeg')).toBeTruthy();
+    expect(state.rpcCalls.some((c) => c.fn === 'talkx_campaign_recipients_page' && c.args.p_status === 'failed')).toBe(true);
   });
 
   it('Logs: mostram o segmento e filtram por busca', async () => {

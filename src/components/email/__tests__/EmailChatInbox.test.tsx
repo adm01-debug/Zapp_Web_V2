@@ -22,7 +22,17 @@ const state = vi.hoisted(() => ({
   listQueryCalls: [] as Array<{ page?: number; search?: string } | undefined>,
 }));
 
-vi.mock('framer-motion', () => ({ AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
+vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  // O estado vazio compartilhado (ConversationEmptyState) usa motion.* e useReducedMotion.
+  motion: new Proxy({}, {
+    get: (_t, tag: string) => ({ children, initial: _i, animate: _a, exit: _e, transition: _tr, layout: _l, ...props }: Record<string, unknown> & { children?: React.ReactNode }) => {
+      const Tag = tag as 'div';
+      return <Tag {...props}>{children}</Tag>;
+    },
+  }),
+  useReducedMotion: () => false,
+}));
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: (_accountId?: string, _threadId?: string | null, listQuery?: { page?: number; search?: string }) => {
     state.listQueryCalls.push(listQuery);

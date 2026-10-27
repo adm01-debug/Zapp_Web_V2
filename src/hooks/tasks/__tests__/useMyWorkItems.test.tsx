@@ -29,6 +29,7 @@ import {
   workItemsBadgeKey,
   tomorrowAtNine,
   DONE_WINDOW_DAYS,
+  TAREFA_CRIADA_TOAST_ID,
 } from '@/hooks/tasks/useMyWorkItems';
 import type { WorkItem } from '@/hooks/tasks/workItem.types';
 
@@ -62,7 +63,7 @@ describe('useMyWorkItems — Fase B', () => {
       status: 'backlog',
       priority: 'medium',
     });
-    expect(h.toast.success).toHaveBeenCalledWith('Tarefa criada');
+    expect(h.toast.success).toHaveBeenCalledWith('Tarefa criada', { id: TAREFA_CRIADA_TOAST_ID });
   });
 
   it('create recusa aviso no passado (remind_in_past) sem tocar no banco', async () => {
