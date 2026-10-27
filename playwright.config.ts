@@ -32,11 +32,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   // E81: deslogado nao repete (ver RETRIES_LOGADOS no topo do arquivo).
   retries: 0,
-  // W75: 1 worker no CI (estabilidade), 2 localmente (velocidade).
-  // The Email fixture boots a full Vite app and captures visual artifacts. A
-  // bounded local pool prevents cold-start starvation that made otherwise
-  // independent specs observe the module-loading fallback after five seconds.
-  workers: process.env.CI ? 1 : 2,
+  // W75 (atualizado): 2 workers no CI e localmente.
+  // Com 1 worker o CI atingia o timeout de 20 min com 129+ testes. 2 workers
+  // mantém o pool "bounded" que evita cold-start starvation do Email fixture
+  // e corta o tempo de execução para ~10 min, dentro do limite do runner.
+  workers: 2,
   reporter: 'html',
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173',
