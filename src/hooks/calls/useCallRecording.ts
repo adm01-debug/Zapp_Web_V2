@@ -76,7 +76,9 @@ export function useCallRecording(callId: string | null | undefined, recordingSta
       }
       if (!resposta.ok) throw new Error('Falha ao buscar a gravacao da chamada');
 
-      const blob = await resposta.blob();
+      const arrayBuffer = await resposta.arrayBuffer();
+      const contentType = resposta.headers.get('content-type') ?? '';
+      const blob = new Blob([arrayBuffer], { type: contentType });
       if (blob.size === 0) return { disponivel: false, blob: null };
       // JSON e o formato dos erros/respostas de controle da Edge, nunca o audio: se um 200 vier
       // assim, nao ha bytes de gravacao e nada e fabricado a partir dele (falha fechada).

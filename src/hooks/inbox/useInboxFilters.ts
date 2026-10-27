@@ -113,7 +113,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
       ...tabsForChip(chipTab),
       queueId: storedPrefs?.queueId ?? null,
       // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
-      contactType: (typeParam && typeParam !== 'all' ? typeParam : null) ?? storedPrefs?.contactType ?? null,
+      contactType: normalizeContactType(typeParam) ?? storedPrefs?.contactType ?? null,
     };
   }, [storedPrefs, searchParams]);
 
@@ -249,7 +249,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     // Filtros por cima do chip — busca, painel Filtros (status/atendente/
     // datas) e tipo de contato. A regra vive em passesExtraFilters, em
     // ./chipCounts: é a MESMA que o countByChip aplica, então o número do chip e
-    // o length da lista não têm mais como divergir.
+    // o length da lista não têm como divergir.
     result = result.filter((c) => passesExtraFilters(c, extraFilterContext));
 
     // Smart sorting
