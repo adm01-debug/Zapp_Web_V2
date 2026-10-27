@@ -61,6 +61,8 @@ export interface TalkXCampaign {
   business_hours_only?: boolean;
   speed_profile?: 'slow' | 'moderate' | 'fast';
   paused_at?: string | null;
+  /** profiles.id de quem pausou (coluna `paused_by` de talkx_campaigns). */
+  paused_by?: string | null;
   respect_suppression?: boolean;
   confirm_consent?: boolean;
   // V23 — passo do wizard persistido no rascunho (migration via hermes-db-migrar --nova).

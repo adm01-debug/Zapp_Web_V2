@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useAgents, type AgentWithStats } from '@/hooks/crm/useAgents';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Check, ChevronDown, EyeOff, Loader2, RotateCcw, Send, UserRound, X } from 'lucide-react';
+import { Check, ChevronDown, EyeOff, Loader2, Mic, RotateCcw, Send, Square, Trash2, UserRound, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,11 @@ import { cn } from '@/lib/utils';
 import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { zappMotion, zappTransition, zappPopoverVariants } from '@/lib/motion';
 import { log } from '@/lib/logger';
-import { notificarSussurroEnviado } from '@/hooks/chat/useWhisperCount';
+import { notificarSussurroEnviado, useWhisperCount, whisperCountKey } from '@/hooks/chat/useWhisperCount';
+import { useAudioRecorder } from '@/hooks/communication/useAudioRecorder';
+import { createStorageObjectId, removeStoredObjectBestEffort } from '@/lib/storage_object_upload';
+import { toast } from 'sonner';
+import { WhisperAudioPlayer } from './WhisperAudioPlayer';
 
 interface WhisperModeProps {
   contactId: string;
@@ -33,7 +37,12 @@ interface WhisperMessage {
   target_agent_id: string;
   is_read: boolean;
   created_at: string;
+  /** Nota por voz: caminho do objeto em `audio-messages` (`<uid>/<conversa>/<uuid>`); `content` fica vazio. */
+  audio_path?: string | null;
 }
+
+/** Bucket privado das notas de sussurro por voz (mesmo das mensagens de áudio da conversa). */
+const BUCKET_AUDIO = 'audio-messages';
 
 /** Mola curta (180–260 ms) para o painel do seletor de destinatário. */
 const MOLA_CURTA = { type: 'spring', stiffness: 420, damping: 32, mass: 0.7 } as const;
@@ -265,7 +274,7 @@ function SeletorDestino({ agents, carregando, valor, onSelecionar, reduzido }: S
 }
 
 export function WhisperMode({ contactId, targetAgentId, className }: WhisperModeProps) {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const queryClient = useQueryClient();
   const { agents, isLoading: carregandoAgentes } = useAgents();
   const reduzido = useReducedMotion() ?? false;
@@ -276,6 +285,12 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
   const [isSending, setIsSending] = useState(false);
   const [enviadoOk, setEnviadoOk] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  // Nota por voz já gravada, à espera do envio (a prévia fica até enviar ou descartar).
+  const [notaGravada, setNotaGravada] = useState<Blob | null>(null);
+  const [enviandoNota, setEnviandoNota] = useState(false);
+  // Dono do bucket: a pasta do objeto é o auth.uid() de quem grava.
+  const gravadorUid = user?.id ?? null;
+  const recorder = useAudioRecorder({ onRecordingComplete: (blob) => setNotaGravada(blob) });
 
   const isMountedRef = useRef(true);
   const enviadoTimerRef = useRef<number | null>(null);
@@ -300,7 +315,7 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
     queryFn: async () => {
       const { data } = await supabase
         .from('whisper_messages')
-        .select('id, content, sender_id, target_agent_id, is_read, created_at')
+        .select('id, content, sender_id, target_agent_id, is_read, created_at, audio_path')
         .eq('contact_id', contactId)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -342,15 +357,23 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
     return () => { supabase.removeChannel(channel); };
   }, [contactId, queryClient]);
 
+  // Selo do botão: o NÚMERO vem do banco (`useWhisperCount`: só o que é meu e não lido,
+  // sem as notas que eu mesmo enviei), não da lista do painel (capada em 20 linhas). Se a
+  // contagem falhar, o que o painel mostra de meu e não lido ainda acende o selo.
+  const meuPerfilId = profile?.id ?? null;
+  const contagemDoBanco = useWhisperCount(contactId);
+  const meusNaoLidosNaLista = whispers.filter(
+    w => !w.is_read && meuPerfilId !== null && w.target_agent_id === meuPerfilId && w.sender_id !== meuPerfilId,
+  ).length;
+  const unreadCount = Math.max(contagemDoBanco, meusNaoLidosNaLista);
+
   // Marca como lido só o sussurro destinado a MIM. A policy de UPDATE de
   // `whisper_messages` só permite mexer nas linhas endereçadas ao perfil atual:
   // sem esse filtro o banco devolve 0 linhas e o selo de quem recebe nunca zera;
   // e um supervisor não pode marcar como lidos os sussurros endereçados a outro.
+  const temNaoLidoMeu = unreadCount > 0;
   useEffect(() => {
-    const meuPerfilId = profile?.id ?? null;
-    if (!isExpanded || !meuPerfilId) return;
-    const meusNaoLidos = whispers.some(w => !w.is_read && w.target_agent_id === meuPerfilId);
-    if (!meusNaoLidos) return;
+    if (!isExpanded || !meuPerfilId || !temNaoLidoMeu) return;
 
     let cancelado = false;
     void (async () => {
@@ -363,20 +386,19 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
 
       if (cancelado) return;
       if (error) {
-        // Falha ao marcar: o selo continua aceso para o destinatário tentar de novo.
+        // Falha ao marcar: o selo continua aceso para o destinatário tentar de novo,
+        // e o aviso diz o que aconteceu (não some um aviso que ele ainda não leu).
         log.error('Failed to mark whispers as read:', error);
+        toast.error('Não foi possível marcar os sussurros como lidos.');
         return;
       }
       queryClient.invalidateQueries({ queryKey: ['whispers', contactId] });
+      queryClient.invalidateQueries({ queryKey: whisperCountKey(contactId, meuPerfilId) });
       notificarSussurroEnviado(contactId);
     })();
 
     return () => { cancelado = true; };
-  }, [isExpanded, whispers, contactId, profile?.id, queryClient]);
-
-  // Selo do botão: conta o não lido visível. O ajuste de "não contar os que EU
-  // enviei" é do cartão do contador/selo (WH1, `useWhisperCount`), não deste.
-  const unreadCount = whispers.filter(w => !w.is_read).length;
+  }, [isExpanded, temNaoLidoMeu, contactId, meuPerfilId, queryClient]);
 
   const podeEnviar = Boolean(message.trim()) && Boolean(destinoId) && !isSending;
 
@@ -411,6 +433,68 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
     queryClient.invalidateQueries({ queryKey: ['whispers', contactId] });
   };
 
+  /**
+   * Envia a nota por voz: sobe para `audio-messages/<uid>/<conversa>/<uuid>` e só então grava a
+   * linha (`content` vazio + `audio_path`). Linha recusada apaga o objeto órfão e mantém a
+   * prévia para tentar de novo; falha de upload nem chega a gravar a linha.
+   */
+  const sendVoiceWhisper = async () => {
+    if (!notaGravada || !profile?.id || !destinoId || enviandoNota) return;
+    if (!gravadorUid) {
+      setErro('Sessão expirada. Entre de novo para enviar o áudio.');
+      return;
+    }
+
+    setErro(null);
+    setEnviandoNota(true);
+    const caminho = `${gravadorUid}/${contactId}/${createStorageObjectId()}`;
+
+    try {
+      const { error: erroUpload } = await supabase.storage.from(BUCKET_AUDIO).upload(caminho, notaGravada, {
+        contentType: notaGravada.type || 'audio/webm',
+        metadata: { duration: Math.round(recorder.duration) },
+      });
+      if (erroUpload) throw erroUpload;
+
+      const { error: erroLinha } = await supabase.from('whisper_messages').insert({
+        contact_id: contactId,
+        sender_id: profile.id,
+        target_agent_id: destinoId,
+        content: '',
+        audio_path: caminho,
+      });
+      if (erroLinha) {
+        await removeStoredObjectBestEffort(BUCKET_AUDIO, caminho);
+        if (!isMountedRef.current) return;
+        setErro(traduzirErroWhisper(erroLinha));
+        return;
+      }
+    } catch (falha) {
+      log.error('Failed to upload whisper audio:', falha);
+      if (isMountedRef.current) setErro('Não foi possível enviar o áudio. Tente de novo.');
+      return;
+    } finally {
+      if (isMountedRef.current) setEnviandoNota(false);
+    }
+
+    if (!isMountedRef.current) return;
+    setNotaGravada(null);
+    recorder.cancelRecording();
+    setEnviadoOk(true);
+    if (enviadoTimerRef.current !== null) window.clearTimeout(enviadoTimerRef.current);
+    enviadoTimerRef.current = window.setTimeout(() => {
+      if (isMountedRef.current) setEnviadoOk(false);
+    }, 1500);
+    queryClient.invalidateQueries({ queryKey: ['whispers', contactId] });
+    notificarSussurroEnviado(contactId);
+  };
+
+  const descartarNota = () => {
+    setNotaGravada(null);
+    setErro(null);
+    recorder.cancelRecording();
+  };
+
   if (!isSupervisor && whispers.length === 0) return null;
 
   const conteudoPainel = (
@@ -433,7 +517,11 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
           whispers.slice().reverse().map(w => (
             <div key={w.id} className="text-xs p-1.5 rounded bg-muted/50">
               <span className="font-medium text-warning">{w.sender_name}:</span>{' '}
-              <span className="text-foreground">{w.content}</span>
+              {w.audio_path ? (
+                <WhisperAudioPlayer audioPath={w.audio_path} autor={w.sender_name} className="mt-1" />
+              ) : (
+                <span className="text-foreground">{w.content}</span>
+              )}
             </div>
           ))
         )}
@@ -457,8 +545,8 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
                 <span className="flex-1">{erro}</span>
                 <button
                   type="button"
-                  onClick={sendWhisper}
-                  disabled={isSending}
+                  onClick={notaGravada && !message.trim() ? sendVoiceWhisper : sendWhisper}
+                  disabled={isSending || enviandoNota}
                   className="inline-flex shrink-0 items-center gap-1 rounded font-medium underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
                 >
                   <RotateCcw className="h-3 w-3" />
@@ -520,6 +608,49 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
                 )}
               </Tooltip>
             </TooltipProvider>
+          </div>
+
+          {/* Nota por voz: gravar → prévia → enviar (ou descartar). */}
+          <div className="flex items-center gap-2" data-testid="sussurro-voz">
+            {recorder.isRecording ? (
+              <>
+                <span className="h-2 w-2 shrink-0 rounded-full bg-destructive motion-safe:animate-pulse" aria-hidden="true" />
+                <span role="timer" aria-label="Tempo de gravação do sussurro" className="text-xs tabular-nums text-foreground">
+                  {recorder.formatDuration(recorder.duration)}
+                </span>
+                <span className="flex-1" />
+                <Button type="button" size="icon" variant="ghost" className="h-10 w-10" onClick={recorder.stopRecording} aria-label="Parar gravação do sussurro">
+                  <Square className="h-4 w-4" aria-hidden="true" />
+                </Button>
+                <Button type="button" size="icon" variant="ghost" className="h-10 w-10" onClick={recorder.cancelRecording} aria-label="Cancelar gravação do sussurro">
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </>
+            ) : notaGravada ? (
+              <>
+                {recorder.audioUrl && (
+                  <audio src={recorder.audioUrl} controls preload="metadata" aria-label="Prévia da nota de sussurro por voz" className="h-9 min-w-0 flex-1" />
+                )}
+                <Button type="button" size="icon" variant="ghost" className="h-10 w-10" onClick={descartarNota} disabled={enviandoNota} aria-label="Descartar nota de sussurro por voz">
+                  <Trash2 className="h-4 w-4" aria-hidden="true" />
+                </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  className="h-10 w-10 shrink-0"
+                  onClick={sendVoiceWhisper}
+                  disabled={!destinoId || enviandoNota}
+                  aria-label="Enviar nota de sussurro por voz"
+                >
+                  {enviandoNota ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
+                </Button>
+              </>
+            ) : (
+              <Button type="button" size="sm" variant="ghost" className="h-10 gap-1.5 text-xs text-muted-foreground" onClick={recorder.startRecording} aria-label="Gravar nota de sussurro por voz">
+                <Mic className="h-4 w-4" aria-hidden="true" />
+                Gravar nota
+              </Button>
+            )}
           </div>
         </div>
       )}

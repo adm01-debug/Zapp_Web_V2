@@ -23,7 +23,7 @@ function LeaderboardSkeleton() {
 }
 
 export function Leaderboard() {
-  const { agents, isLoading, isRefreshing, timeRange, setTimeRange, handleRefresh } = useLeaderboard();
+  const { agents, isLoading, isRefreshing, error, timeRange, setTimeRange, handleRefresh } = useLeaderboard();
 
   return (
     <div className="rounded-2xl p-5 border border-border/30 bg-card relative overflow-hidden">
@@ -49,10 +49,17 @@ export function Leaderboard() {
         </div>
       </div>
 
-      {isLoading ? <LeaderboardSkeleton /> : agents.length > 0 ? (
+      {isLoading ? <LeaderboardSkeleton /> : error ? (
+        <div className="text-center py-8" data-leaderboard-state="error">
+          <p role="alert" className="text-muted-foreground">Não foi possível carregar o ranking</p>
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing} className="mt-3">
+            <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />Tentar de novo
+          </Button>
+        </div>
+      ) : agents.length > 0 ? (
         <div className="space-y-2">{agents.map((agent, index) => <LeaderboardRow key={agent.id} agent={agent} index={index} />)}</div>
       ) : (
-        <div className="text-center py-8">
+        <div className="text-center py-8" data-leaderboard-state="empty">
           <Trophy className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
           <p className="text-muted-foreground">Nenhum agente no ranking ainda</p>
           <p className="text-xs text-muted-foreground mt-1">Os agentes aparecerão aqui conforme ganham XP</p>
