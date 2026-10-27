@@ -10,25 +10,19 @@ const linha = (id: string) => ({
 
 const estado = vi.hoisted(() => ({ dados: [] as unknown[] }));
 
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        order: vi.fn(() => ({
-          limit: vi.fn(() => {
-            const resultado = Promise.resolve({ data: estado.dados, error: null });
-            const construtor = {
-              eq: () => construtor,
-              in: () => construtor,
-              like: () => construtor,
-              then: resultado.then.bind(resultado),
-            };
-            return construtor;
-          }),
-        })),
-      })),
-    })),
-  },
+// HZ1-08: os cartões vêm de contagem no servidor (hook); a lista traz só a página
+// de 200. Aqui o hook é substituído para provar só o comportamento do recorte.
+vi.mock('@/hooks/security/useAuditLogDashboard', () => ({
+  useAuditLogDashboard: () => ({
+    stats: {
+      total: 5000, ultimas24h: 10, sensiveis24h: 2, usuariosUnicos7d: 3, usuariosUnicosIncompleto: false,
+    },
+    logs: estado.dados,
+    nomesPorUsuario: {},
+    loading: false,
+    error: null,
+    recarregar: () => {},
+  }),
 }));
 
 vi.mock('@/components/ui/select', async () => {
@@ -47,11 +41,13 @@ vi.mock('@/components/ui/select', async () => {
 describe('AuditLogDashboard — recorte de 200 registros', () => {
   beforeEach(() => { vi.clearAllMocks(); });
 
-  it('com a página cheia (200) avisa o recorte e rotula "Últimos 200"', async () => {
+  it('com a página cheia (200) avisa o recorte da lista e mantém o total real do servidor', async () => {
     estado.dados = Array.from({ length: 200 }, (_, i) => linha(String(i)));
     render(<AuditLogDashboard />);
 
-    await waitFor(() => expect(screen.getByText('Últimos 200')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Total de Logs')).toBeInTheDocument());
+    expect(screen.getByText('5000')).toBeInTheDocument();
+    expect(screen.queryByText('Últimos 200')).not.toBeInTheDocument();
     expect(screen.getByText(/pode haver registros mais antigos fora do recorte/)).toBeInTheDocument();
   });
 

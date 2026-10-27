@@ -110,6 +110,13 @@ vi.mock('@/integrations/supabase/client', () => {
         subscribe: vi.fn(() => ({ unsubscribe: vi.fn() })),
       }),
       removeChannel: vi.fn(),
+      // O hook real agrega pelos RPCs `warroom_agent_today`/`warroom_queue_stats`:
+      // o fake precisa cobri-los, senão a chamada estoura antes de a leitura de
+      // `profiles` falhar — que é justamente o caminho que este teste exercita.
+      rpc: () => {
+        if (estado.modoLeitura === 'pendente') return new Promise(() => {});
+        return Promise.resolve({ data: [], error: null });
+      },
     },
   };
 });

@@ -81,7 +81,7 @@ export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'arr
   { value: 'group_category', label: 'Grupo', kind: 'enum', category: 'basico', options: GROUP_CATEGORIES.map((c) => c.value) },
   { value: 'email', label: 'E-mail', kind: 'text', category: 'basico' },
   { value: 'channel_type', label: 'Canal de origem', kind: 'text', category: 'basico' },
-  { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico' },
+  { value: 'lead_origin', label: 'Origem do lead', kind: 'text', category: 'basico', comingSoon: true },
   { value: 'assigned_to', label: 'Responsável', kind: 'uuid', category: 'comercial' },
   // Tipos de contato e status de conversa vem das fontes canonicas: uma regra de segmento
   // nunca pode oferecer valor que o banco rejeita (a lista local tinha 'lead'/'sicoob_gifts',
@@ -164,7 +164,7 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
   const groups = (rules?.groups ?? [])
     .map((group) => {
       const completeRules = group.rules.filter((rule) => {
-        // "Em breve" (lead_score/risk_score): a regra é completa e bem descrita
+        // "Em breve" (lead_score/risk_score/lead_origin): a regra é completa e bem descrita
         // (isRuleComplete/describeRule dizem a verdade), mas a coluna nunca é
         // calculada — então fica fora da estimativa/PostgREST e barra a
         // publicação via validateSegment, sem quebrar o catálogo v2.
@@ -192,12 +192,30 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
 // porque o escape da virgula, ao passar por esta funcao, dobrava a barra).
 const quoted = (v: string) => `"${v.replace(/[\\"]/g, (c) => (c === '\\' ? '\\\\' : '\\"'))}"`;
 
+const BRIDGE_FIELDS: readonly RuleField[] = ['real_sector', 'real_uf'];
+const isBridgeField = (field: RuleField): boolean => BRIDGE_FIELDS.includes(field);
+
+/**
+ * Enquanto o front não pré-resolve a ponte Singu, uma regra real_* FALHA FECHADA:
+ * mandar o payload sem ela devolveria mais contatos do que a audiência pedida
+ * (e um grupo só com real_* viraria `groups: []`, que o motor lê como base inteira).
+ */
+function assertNoBridgeFields(rules: SegmentRules | null | undefined): void {
+  for (const group of rules?.groups ?? []) {
+    const bridge = group.rules.find((rule) => isBridgeField(rule.field));
+    if (bridge) throw new Error(`${bridge.field} requer pré-resolução via p_contact_ids antes de chamar a RPC`);
+  }
+}
+
 function ruleToFilter(r: SegmentRule): string | null {
   const def = RULE_FIELDS.find((f) => f.value === r.field);
   if (!def) return null;
   // "Em breve" nunca gera filtro PostgREST: a coluna não é calculada e qualquer
   // filtro sobre ela seria morto (sempre 0/nulo). Falha fechada via rulesToPostgrest.
   if (def.comingSoon) return null;
+  // Campos da ponte Singu (real_sector/real_uf) chegam ao motor como contact_ids
+  // pré-resolvidos (p_contact_ids): nunca viram filtro PostgREST direto.
+  if (isBridgeField(r.field)) return null;
   const v = r.value.trim();
   switch (r.op) {
     case 'is_set': return `${r.field}.not.is.null`;
@@ -282,6 +300,7 @@ const AUDIENCE_RPC_PAGE_LIMIT = 1000;
  * PostgREST filtrando só `phone not null`, o que superestimava o público.
  */
 export async function countAudience(rules: SegmentRules | null | undefined, segmentIds?: string[]): Promise<number> {
+  assertNoBridgeFields(rules);
   const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const { data, error } = await rpc('talkx_resolve_audience', {
     p_rules: audienceRulesPayload(rules),
@@ -303,6 +322,7 @@ export interface AudienceContact { id: string; name: string; nickname: string | 
  * mascarado pelo servidor e a paginação percorre até `limit` (ou o fim da lista).
  */
 export async function resolveAudience(rules: SegmentRules | null | undefined, limit = 5000, segmentIds?: string[]): Promise<AudienceContact[]> {
+  assertNoBridgeFields(rules);
   const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
   const target = Math.max(0, Math.floor(limit));
   const rows: AudienceContact[] = [];
