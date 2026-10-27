@@ -30,11 +30,18 @@
 
 -- 1) Backfill: rows que já nasceram com cid divergente passam a apontar para a conversa da PRÓPRIA mensagem.
 --    (DML com WHERE; roda antes do trigger novo para não depender dele.)
+--    O trigger team_message_receipts_update_guard_trig preencheria read_at := now() para qualquer UPDATE
+--    em recibo com status='read', mesmo que só conversation_id mude — o que alteraria dados fora do escopo
+--    desta migration. Por isso o trigger é desabilitado durante o backfill e reabilitado logo após.
+ALTER TABLE public.team_message_receipts DISABLE TRIGGER team_message_receipts_update_guard_trig;
+
 UPDATE public.team_message_receipts r
    SET conversation_id = m.conversation_id
   FROM public.team_messages m
  WHERE m.id = r.message_id
    AND r.conversation_id IS DISTINCT FROM m.conversation_id;
+
+ALTER TABLE public.team_message_receipts ENABLE TRIGGER team_message_receipts_update_guard_trig;
 
 UPDATE public.team_message_reactions r
    SET conversation_id = m.conversation_id
