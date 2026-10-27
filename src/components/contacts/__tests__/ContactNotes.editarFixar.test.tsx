@@ -50,6 +50,7 @@ vi.mock('@/integrations/supabase/client', () => {
     q.in = vi.fn(() => q);
     q.order = vi.fn(() => q);
     q.limit = vi.fn(() => q);
+    q.range = vi.fn(() => q);
     q.single = vi.fn(() => q);
     q.update = vi.fn((patch: Record<string, unknown>) => {
       q._op = 'update';

@@ -47,6 +47,7 @@ vi.mock('@/integrations/supabase/client', () => {
       return q;
     });
     q.in = vi.fn(() => q);
+    q.range = vi.fn(() => q);
     // PostgREST: ordena primeiro, corta no limite depois.
     q.order = vi.fn((col: string, opts?: { ascending?: boolean }) => {
       (q._orders as Array<{ col: string; asc: boolean }>).push({ col, asc: opts?.ascending ?? true });
