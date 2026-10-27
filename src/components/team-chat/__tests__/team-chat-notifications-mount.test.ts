@@ -49,6 +49,15 @@ vi.mock('@/components/team-chat/TeamChatNotificationsListener', () => ({
 }));
 vi.mock('@/hooks/system/useServiceWorker', () => ({ useServiceWorker: vi.fn() }));
 vi.mock('@/hooks/ui/useScreenProtection', () => ({ useScreenProtection: vi.fn() }));
+// DeferredProviders em App.tsx chama useAuth() e useGlobalIncomingMessageAlerts().
+// AppProviders é mockado como passthrough (sem AuthProvider), então essas dependências
+// precisam ser neutralizadas para o render não lançar "useAuth must be used within AuthProvider".
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: null }),
+}));
+vi.mock('@/hooks/realtime/useGlobalIncomingMessageAlerts', () => ({
+  useGlobalIncomingMessageAlerts: vi.fn(),
+}));
 
 vi.mock('@/hooks/chat/useTeamChat', () => ({ useTeamConversations: () => ({ data: [] }) }));
 vi.mock('@/hooks/chat/useTeamChatNotifications', () => ({

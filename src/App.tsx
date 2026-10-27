@@ -80,7 +80,7 @@ const AchievementCelebrationToaster = lazy(() =>
 // SL-103 restore: MotionConfig carregado em chunk lazy para manter vendor-motion
 // (43 KB gzip) fora do bundle inicial. As rotas também são lazy — quando qualquer
 // motion.* renderizar de fato, o vendor-motion já estará resolvido em paralelo.
-// A11Y: reducedMotion="user" aplica prefers-reduced-motion do sistema a TODOS os
+// A11Y: reducedMotion=user aplica prefers-reduced-motion do sistema a TODOS os
 // consumidores de motion.* sem precisar de MotionConfig por tela.
 const LazyMotionConfig = lazy(() =>
   import('framer-motion').then(({ MotionConfig }) => ({
