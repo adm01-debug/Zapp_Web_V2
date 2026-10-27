@@ -6,8 +6,9 @@
  * inteiro, então a raiz precisa ter exatamente UM e as telas não podem manter
  * o delas.
  *
- * LazyMotion carrega o motor do framer-motion de forma assíncrona (fora do
- * bundle inicial) enquanto MotionConfig ainda aplica reducedMotion globalmente.
+ * AppProviders usa MotionConfig síncrono (sem LazyMotion): framer-motion já
+ * está no bundle inicial pelo uso de motion.* nas telas; a extração
+ * assíncrona não reduz o bundle e quebra o JSDOM (Vitest).
  */
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -16,15 +17,13 @@ import { resolve } from 'node:path';
 const ler = (rel: string) => readFileSync(resolve(__dirname, rel), 'utf8');
 
 describe('movimento reduzido na raiz (A11Y)', () => {
-  it('1. AppProviders tem LazyMotion + exatamente um MotionConfig reducedMotion="user"', () => {
+  it('1. AppProviders tem exatamente um MotionConfig reducedMotion="user"', () => {
     const fonte = ler('../AppProviders.tsx');
 
-    // LazyMotion carrega features de forma assíncrona
-    expect(fonte).toMatch(/\bLazyMotion\b/);
-    // MotionConfig ainda aplica reducedMotion globalmente
+    // MotionConfig aplica reducedMotion globalmente (síncrono, sem LazyMotion)
     expect(fonte.match(/<MotionConfig\s+reducedMotion="user">/g) ?? []).toHaveLength(1);
     expect(fonte.match(/<\/MotionConfig>/g) ?? []).toHaveLength(1);
-    // Ambos importados do framer-motion
+    // Importado do framer-motion
     expect(fonte).toMatch(/import \{[^}]*\bMotionConfig\b[^}]*\} from "framer-motion";/);
   });
 
