@@ -1226,6 +1226,7 @@ jobs:
       # aplica a migration e o bloco B prova a correcao.
       - name: Simular conversation_id derivado da mensagem em recibos e reacoes (TC-009)
         env:
+          SKIP_DOCKER_SHIM: "1"
           TEAM_CID_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-receipts-reactions-conversation-id.test.sh
       # TC-004 (P1): leave_team_group/remove_team_member usavam a coluna inexistente
