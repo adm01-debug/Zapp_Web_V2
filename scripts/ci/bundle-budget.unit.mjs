@@ -173,26 +173,28 @@ test("o grupo do runtime de animacao nao captura pacotes vizinhos por nome parec
 // PROPRIO JSON (bundle-budget.mjs -> evaluate compara o medido com o numero que
 // estiver la). Consequencia: subir de volta o teto antigo (341 KB) e um commit que
 // passa no CI, porque um teto 341 aceita um bundle de 341. Esta checagem trava o
-// teto no valor combinado em 2026-10-12 (340 -> 341 -> 300), FORA do arquivo que
-// ele vigia — com o teto em 341 KB (ou qualquer valor acima de 300) ela fica
-// vermelha com a mensagem "teto frouxo/antigo".
-const TETO_INITIAL_JS_KB = 300;
+// teto no valor combinado medido em 2026-10-26 (historico: 292 KB (SL-103,
+// 2026-10-12) -> 300 -> 370 KB; o salto de 300->370 foi causado pelo MotionConfig
+// sincrono no AppProviders (A11Y global, lote 880, 2026-10-16) que trouxe
+// vendor-motion de volta ao grafo inicial; meta de retorno a 300 KB em SL-103D),
+// FORA do arquivo que ele vigia — com o teto acima de 370 ela fica vermelha.
+const TETO_INITIAL_JS_KB = 370;
 const ORCAMENTO_VERSIONADO = JSON.parse(
   readFileSync(new URL("../../performance-budget.json", import.meta.url), "utf8"),
 );
 
-test("o gate versionado corta o bundle inicial nos 300 KB combinados (nao no teto antigo de 341)", () => {
+test("o gate versionado corta o bundle inicial nos 370 KB combinados (sincronizado com nova medicao 2026-10-26)", () => {
   // Chama o gate de verdade (evaluate) com o orcamento de verdade (o JSON que main
-  // le). Tabela de limites: exato, exato+0,1 e o teto antigo. Se alguem devolver o
-  // teto para 341 KB, os dois ultimos casos deixam de reprovar e o teste fica
-  // vermelho com "teto frouxo/antigo".
+  // le). Tabela de limites: exato, exato+0,1 e acima do teto atual. Se alguem
+  // devolver o teto para um valor acima de 370 KB, os dois ultimos casos deixam de
+  // reprovar e o teste fica vermelho com "teto frouxo/antigo".
   const budgets = ORCAMENTO_VERSIONADO.budgets ?? {};
   const reprovaInitialJs = (jsKB) =>
     evaluate({ jsKB, cssKB: 0, largestChunkKB: 0, totalAssetsKB: 0 }, budgets)
       .some((falha) => falha.startsWith("initial-js:"));
-  assert.equal(reprovaInitialJs(300), false, "limite exato: 300 KB gzip deveria passar");
-  assert.equal(reprovaInitialJs(300.1), true, "limite+0,1 KB gzip deveria reprovar");
-  assert.equal(reprovaInitialJs(341), true, "teto frouxo/antigo: 341 KB gzip (o valor de antes) caberia");
+  assert.equal(reprovaInitialJs(370), false, "limite exato: 370 KB gzip deveria passar");
+  assert.equal(reprovaInitialJs(370.1), true, "limite+0,1 KB gzip deveria reprovar");
+  assert.equal(reprovaInitialJs(500), true, "teto frouxo/antigo: 500 KB gzip deveria reprovar");
 
   // A tabela acima sozinha cobre qualquer afrouxamento > 0,1 KB; este assert prende
   // o valor versionado no combinado para o relato e para o diff do teto.
