@@ -100,7 +100,6 @@ export function useTeamReadState(
   });
 
   useEffect(() => {
-    const hasOwnMessages = ownMessageIds.length > 0;
     if (!conversationId || !hasOwnMessages) return;
     const channel = supabase
       .channel(`team-read-state-${conversationId}`)
