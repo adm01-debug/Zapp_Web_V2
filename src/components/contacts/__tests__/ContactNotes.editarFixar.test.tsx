@@ -189,7 +189,7 @@ describe('ContactNotes · editar e fixar (ficha do contato)', () => {
     expect(screen.getByText('Descartar as alterações não salvas?')).toBeInTheDocument();
 
     // "Continuar editando" manté o rascunho e nada é gravado.
-    fireEvent.clich(screen.getByText('Continuar editando'));
+    fireEvent.click(screen.getByText('Continuar editando'));
     expect(screen.getByRole('textbox', { name: 'Editar nota' })).toHaveValue('rascunho');
     expect(h.updateCalls).toHaveLength(0);
 
