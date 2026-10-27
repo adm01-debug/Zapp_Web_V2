@@ -12,6 +12,10 @@
  * linhas = não é dele. Além disso, quando o registro tem `media_url`, é essa a
  * URL usada no download — a URL enviada pelo cliente deixa de ser a fonte da
  * verdade do objeto.
+ *
+ * CV-070 — adicionado `assertDictationObjectOwnership`: caminho de ditado do
+ * vendedor (sem `messageId`). Verifica que o primeiro segmento do path no bucket
+ * `audio-messages` corresponde ao userId do JWT do chamador.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
@@ -103,4 +107,74 @@ export function resolveAuthorizedAudioUrl(
     return { ok: true, url: mediaUrl };
   }
   return { ok: false, status: 404, error: "Áudio não encontrado ou sem permissão" };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// CV-070 — Ditado por voz
+// ────────────────────────────────────────────────────────────────────────────
+
+export type DictationObjectAuthzResult =
+  | { ok: true }
+  | { ok: false; status: number; error: string };
+
+/**
+ * Verifica que o arquivo de ditado temporário pertence ao chamador.
+ *
+ * Regras:
+ * 1. A URL deve apontar para o bucket `audio-messages` do projeto.
+ * 2. O primeiro segmento do caminho deve ser igual ao userId do JWT.
+ *
+ * Isso espelha a política INSERT/DELETE do bucket, que só permite
+ * gravar/apagar em `${userId}/...`. Não exige `messageId` — o ditado
+ * é um objeto temporário próprio do vendedor, não uma mensagem recebida.
+ */
+export async function assertDictationObjectOwnership(
+  req: Request,
+  audioUrl: string,
+): Promise<DictationObjectAuthzResult> {
+  const authHeader = req.headers.get('authorization') ?? req.headers.get('Authorization') ?? '';
+  if (!authHeader.toLowerCase().startsWith('bearer ')) {
+    return { ok: false, status: 401, error: 'Missing Authorization bearer token' };
+  }
+
+  // Extrai o path do objeto a partir da URL pública do Storage.
+  // Formato esperado: https://<project>.supabase.co/storage/v1/object/public/audio-messages/<path>
+  let objectPath: string;
+  try {
+    const supabaseUrl = requireEnv('SUPABASE_URL');
+    const supabaseOrigin = new URL(supabaseUrl).origin;
+    const parsed = new URL(audioUrl);
+    const storagePrefix = '/storage/v1/object/public/audio-messages/';
+    if (parsed.origin !== supabaseOrigin || !parsed.pathname.startsWith(storagePrefix)) {
+      return { ok: false, status: 403, error: 'URL de áudio não pertence ao bucket de ditado' };
+    }
+    objectPath = decodeURIComponent(parsed.pathname.slice(storagePrefix.length));
+  } catch {
+    return { ok: false, status: 400, error: 'URL de áudio inválida' };
+  }
+
+  const firstFolder = objectPath.split('/')[0];
+  if (!firstFolder || !isValidUUID(firstFolder)) {
+    return { ok: false, status: 403, error: 'Caminho de áudio inválido para ditado' };
+  }
+
+  // Confirma que o userId do JWT bate com o primeiro segmento do path
+  const supabaseUrl = requireEnv('SUPABASE_URL');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ?? '';
+  try {
+    const callerClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
+    });
+    const { data: { user }, error } = await callerClient.auth.getUser();
+    if (error || !user?.id) {
+      return { ok: false, status: 401, error: 'Sessão inválida' };
+    }
+    if (firstFolder !== user.id) {
+      return { ok: false, status: 403, error: 'Áudio de ditado não pertence ao chamador' };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, status: 500, error: 'Falha ao verificar a sessão' };
+  }
 }

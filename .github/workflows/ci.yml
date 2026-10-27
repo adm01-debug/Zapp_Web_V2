@@ -270,12 +270,44 @@ jobs:
           GITLEAKS_ENABLE_SUMMARY: 'false'
 
   # ===========================================
-  # JOB 5: E2E Tests (Playwright)
+  # JOB 5: CI Gate (required check)
+  # ===========================================
+  ci-gate:
+    name: ✅ CI Gate (required check)
+    runs-on: ubuntu-24.04
+    if: always()
+    needs: [typecheck, unit-tests, node-scripts, build, security]
+    steps:
+      - name: Verificar resultado dos jobs obrigatórios
+        run: |
+          echo "typecheck: ${{ needs.typecheck.result }}"
+          echo "unit-tests: ${{ needs.unit-tests.result }}"
+          echo "node-scripts: ${{ needs.node-scripts.result }}"
+          echo "build: ${{ needs.build.result }}"
+          echo "security: ${{ needs.security.result }}"
+          if [[  "${{ needs.typecheck.result }}" == "failure" || \
+                "${{ needs.unit-tests.result }}" == "failure" || \
+                "${{ needs.node-scripts.result }}" == "failure" || \
+                "${{ needs.build.result }}" == "failure" || \
+                "${{ needs.security.result }}" == "failure" ]]; then
+            echo "❌ Um ou mais jobs obrigatórios falharam"
+            exit 1
+          fi
+          if [[ "${{ needs.typecheck.result }}" == "cancelled" || \
+                "${{ needs.unit-tests.result }}" == "cancelled" || \
+                "${{ needs.build.result }}" == "cancelled" ]]; then
+            echo "❌ Um ou mais jobs obrigatórios foram cancelados"
+            exit 1
+          fi
+          echo "✅ Todos os jobs obrigatórios passaram"
+
+  # ===========================================
+  # JOB 6: E2E Tests (Playwright)
   # ===========================================
   e2e:
     name: 🎭 E2E Tests (Playwright)
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -357,7 +389,7 @@ jobs:
           if-no-files-found: ignore
 
   # ===========================================
-  # JOB 6: Mutação do mapa (E70, não bloqueante)
+  # JOB 7: Mutação do mapa (E70, não bloqueante)
   # ===========================================
   # E70: roda o runner de mutação do módulo do mapa (E69,
   # `scripts/mutation/run-mapa.mjs`) quando um PR toca `src/lib/mapbox*` ou

@@ -366,7 +366,7 @@ export function AdvancedMessageMenu({ contactId, instanceName, recipientNumber, 
                 <div key={opt.id} className="flex gap-2">
                   <Input
                     value={opt.value}
-                    aria-label={`Opção ${i + 1}`}
+                    aria-label={`Opção ${i + 1} da enquete`}
                     onChange={(e) => updatePollOption(opt.id, e.target.value)}
                     placeholder={`Opção ${i + 1}`}
                   />
