@@ -1202,6 +1202,10 @@ jobs:
       - name: Simular contrato de seguranca do WhatsApp de departamento (TC-005)
         env:
           TC005_WHATSAPP_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # E47: SKIP_DOCKER_SHIM=1 — o Bloco C executa rollback que reverte
+          # department_audit_logs_action_check para excluir 'whatsapp_updated';
+          # no container compartilhado isso contamina TC-009 que roda logo depois.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-department-whatsapp-safe-config.test.sh
 
       # N-071: a RPC request_department_access cria notificacoes para admins/supervisores
