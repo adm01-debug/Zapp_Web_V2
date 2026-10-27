@@ -21,10 +21,12 @@ const MAX_RETRIES = 3;
 
 // Carrega as features de animacao de forma assincrona: o motor do framer-motion
 // (framer-motion/dom, ~38 KB gzip) nao entra no bundle inicial.
-// Cast necessario: framer-motion/dom exporta o feature set como default mas
-// os tipos declarados do pacote nao incluem 'renderer' diretamente.
+// Cast necessario: framer-motion/dom expoe domAnimation como named export,
+// mas os tipos declarados do pacote nao declaram essa propriedade diretamente.
 const loadFeatures = (): Promise<FeatureBundle> =>
-  import("framer-motion/dom").then((r) => r.default as unknown as FeatureBundle);
+  import("framer-motion/dom").then(
+    (r) => (r as unknown as { domAnimation: FeatureBundle }).domAnimation
+  );
 
 /**
  * Tela minima de erro do nivel mais externo.
