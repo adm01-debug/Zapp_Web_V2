@@ -69,7 +69,11 @@ const audioDoPlayer = (container: HTMLElement) => container.querySelector('audio
 const audioDaEdge = () => new Blob(['bytes-de-audio-mp3'], { type: 'audio/mpeg' });
 
 function respostaAudio(corpo = 'ID3-audio') {
-  return Promise.resolve(new Response(new Blob([corpo], { type: 'audio/mpeg' }), { status: 200 }));
+  // Corpo em BYTES (não em `Blob` do jsdom): conforme o runtime, `new Response(jsdomBlob)` vira o
+  // texto "[object Blob]" em vez dos bytes do áudio.
+  return Promise.resolve(
+    new Response(new TextEncoder().encode(corpo), { status: 200, headers: { 'Content-Type': 'audio/mpeg' } }),
+  );
 }
 
 function prepararAmbiente() {

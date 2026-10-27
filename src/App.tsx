@@ -77,6 +77,18 @@ const AchievementCelebrationToaster = lazy(() =>
   import("@/components/gamification/AchievementToast")
     .then(m => ({ default: m.AchievementCelebrationToaster }))
 );
+// SL-103 restore: MotionConfig carregado em chunk lazy para manter vendor-motion
+// (43 KB gzip) fora do bundle inicial. As rotas também são lazy — quando qualquer
+// motion.* renderizar de fato, o vendor-motion já estará resolvido em paralelo.
+// A11Y: reducedMotion=user aplica prefers-reduced-motion do sistema a TODOS os
+// consumidores de motion.* sem precisar de MotionConfig por tela.
+const LazyMotionConfig = lazy(() =>
+  import('framer-motion').then(({ MotionConfig }) => ({
+    default: ({ children }: { children: React.ReactNode }) => (
+      <MotionConfig reducedMotion="user">{children}</MotionConfig>
+    ),
+  }))
+);
 
 /**
  * Side-effect overlay providers — no children needed here.
@@ -191,7 +203,18 @@ function AppContent() {
             <DeferredHooks />
           </Suspense>
         </ErrorBoundary>
-        <AppRoutes />
+        {/*
+          SL-103 restore: LazyMotionConfig mantém vendor-motion fora do bundle
+          inicial. fallback={null} é seguro porque AppRoutes exibe seu próprio
+          skeleton de carregamento enquanto os chunks de rota resolvem — a janela
+          sem MotionConfig é imperceptível (< 100 ms) pois vendor-motion e os
+          chunks de rota resolvem em paralelo.
+        */}
+        <Suspense fallback={null}>
+          <LazyMotionConfig>
+            <AppRoutes />
+          </LazyMotionConfig>
+        </Suspense>
       </GlobalKeyboardProvider>
     </BrowserRouter>
   );
