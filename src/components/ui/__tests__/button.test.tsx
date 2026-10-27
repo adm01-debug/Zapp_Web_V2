@@ -105,3 +105,5 @@ describe('button.tsx — sem o runtime de animação no caminho inicial (SL-103A
     expect(FONTE).not.toMatch(/whileTap=/);
   });
 });
+
+// C297
