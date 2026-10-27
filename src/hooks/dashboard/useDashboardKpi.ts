@@ -34,7 +34,8 @@ export type DashboardKpiRpcResult = {
 };
 
 /** Filtros do topo (E31) propagados como p_queue/p_agent, mais o período
- * escolhido (E34). `from` vira p_from no banco; `until` vira p_until.
+ * escolhido (E34). `from` vira p_since no banco; `until` entra só na queryKey
+ * (dashboard_kpi não aceita p_until ainda — P2 pendente).
  *
  * - `from`/`until`: janela [from, until). `until` nulo = janela aberta.
  *   Sem `from`, a RPC usa o dia atual em America/Sao_Paulo ("hoje").
@@ -98,10 +99,10 @@ export function useDashboardKpi(filters: DashboardKpiFilters = {}) {
     queryKey: ['dashboard-kpi', fromIso, untilIso, queueId, agentId],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('dashboard_kpi', {
-        p_from: fromIso,
-        p_until: untilIso,
-        p_queue: queueId,
-        p_agent: agentId,
+        p_from: fromIso ?? undefined,
+        p_until: untilIso ?? undefined,
+        p_queue: queueId ?? undefined,
+        p_agent: agentId ?? undefined,
       });
       if (error) throw error;
       return aggregateDashboardKpi(data as unknown as DashboardKpiRpcResult);

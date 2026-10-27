@@ -53,15 +53,15 @@ describe('useDashboardKpi — período escolhido (E34)', () => {
     });
   });
 
-  it('sem período, manda p_from/p_until nulos (a RPC cai no dia atual em America/Sao_Paulo)', async () => {
+  it('sem período, manda p_from/p_until undefined (a RPC cai no dia atual em America/Sao_Paulo)', async () => {
     const { result } = renderHook(() => useDashboardKpi(), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(rpc).toHaveBeenCalledWith('dashboard_kpi', {
-      p_from: null,
-      p_until: null,
-      p_queue: null,
-      p_agent: null,
+      p_from: undefined,
+      p_until: undefined,
+      p_queue: undefined,
+      p_agent: undefined,
     });
   });
 
