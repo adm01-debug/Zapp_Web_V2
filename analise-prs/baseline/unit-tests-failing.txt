@@ -1,33 +1,172 @@
-# Unit Tests baseline — main@2d97c44
-# Fonte: PR #2248 body (head SHA 7e2480f7e5f243053175b02396b77e0247f2ee9f)
+# Unit Tests Failing — main@2d97c44cfe7f2fa8a3ca572f8f5689118328e858
+# CI Run ID: 40189526836
 # Data: 2026-10-26
-# Resultado: FALHA — 136 arquivos de teste vermelhos nos 3 shards do CI
+# Total arquivos falhando: 136
+# Motivo sistêmico: commit 2d97c44 (2026-10-24T18:43:20Z) fez CI Gate bloquear merge quando unit tests falham;
+#   e unit tests falham porque o mock global de @/lib/logger foi removido.
 
-O commit 2d97c44 ("fix(ci): ci-gate bloqueia merge quando unit tests falham") fez o CI Gate
-passar a bloquear merge QUANDO unit tests falham. E unit tests estão falhando em 136 arquivos.
+## SHARD 1/3 — Job ID: 121157354856
 
-Evidência direta (PR #2247, docs-only, 1 arquivo markdown):
-  🧪 Unit Tests (1/3) → failure
-  🧪 Unit Tests (2/3) → failure
-  🧪 Unit Tests (3/3) → failure
-  ✅ CI Gate        → failure
-  mergeable_state   → "blocked"
+src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx
+src/hooks/gamification/__tests__/mutations.test.tsx
+src/hooks/__tests__/useRateLimitLogs.test.tsx
+src/hooks/__tests__/useWarRoomAlerts.aviso-desktop.test.tsx
+src/services/__tests__/outbound-message.service.test.ts
+src/lib/__tests__/filesPeriod.adversarial.test.ts
+src/components/agents/__tests__/AgentsView.capacidade.test.tsx
+src/components/admin/__tests__/AdminView.avatarRevogaUrl.test.tsx
+src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx
+src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx
+src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts
+src/components/catalog/__tests__/WhatsAppTemplatesManager.adminGate.test.tsx
+src/components/connections/__tests__/ConnectionsView.erro-dialogo.test.tsx
+src/components/dashboard/__tests__/DashboardView.test.tsx
+src/components/dashboard/__tests__/GamificationSection.customizacao.test.tsx
+src/components/email/__tests__/EmailChatInbox.test.tsx
+src/components/gamification/__tests__/TrainingMiniGames.creditoXp.test.tsx
+src/components/gamification/__tests__/TrainingMiniGames.storage.test.tsx
+src/components/groups/__tests__/GroupsView.a11y.test.tsx
+src/components/integrations/__tests__/N8nIntegrationView.a11y.test.tsx
+src/components/knowledge/__tests__/KnowledgeBaseView.erro.test.tsx
+src/components/inbox/__tests__/VoiceChanger.aria.test.tsx
+src/components/inbox/__tests__/VoiceSelector.test.tsx
+src/components/inbox/__tests__/WhisperMode.contador.test.tsx
+src/components/nps/__tests__/NPSDashboard.erro.test.tsx
+src/components/notifications/__tests__/PushNotificationToggle.dica.test.tsx
+src/components/reports/__tests__/PeriodComparison.test.tsx
+src/components/queues/__tests__/QueueCard.a11y.test.tsx
+src/components/security/__tests__/AuditLogDashboard.hoje-janela24h.test.tsx
+src/components/security/__tests__/AuditLogDashboard.test.tsx
+src/components/settings/__tests__/AppearanceSettings.a11y.test.tsx
+src/components/settings/__tests__/IntegrationKeysSection.sem-consumidor.test.tsx
+src/components/talkx/__tests__/TalkXA11yNomePapel.test.tsx
+src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx
+src/components/talkx/__tests__/TalkXOverview.states.test.tsx
+src/components/talkx/__tests__/TalkXOverview.table.test.tsx
+src/components/talkx/__tests__/TalkXSegments.viewMode.test.tsx
+src/components/talkx/__tests__/TalkXTemplateEditor.campos.test.tsx
+src/components/talkx/__tests__/TalkXTemplatesRail.test.tsx
+src/components/talkx/__tests__/TalkXWizardReview.lifecycle.test.tsx
+src/components/ui/__tests__/VolumeDial.test.tsx
+src/components/ui/__tests__/alvos-toque-44px.test.tsx
+src/hooks/contacts/__tests__/useContainerColumns.test.ts
+src/hooks/integrations/__tests__/useKnowledgeBase.erro.test.tsx
+src/hooks/integrations/__tests__/useTalkXSegments.test.ts
+src/hooks/integrations/__tests__/useTalkXSuppression.hook-morto.test.ts
+src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx
+src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx
 
-A PR #2248 (body completo lido via API) documenta os 136 arquivos e os corrige a 1:
-  "A main está com o CI Gate vermelho porque os Unit Tests falham em 136 arquivos (medido
-   nos 3 shards do CI de 2d97c44cfe). O Gate só depende de typecheck, unit-tests,
-   node-scripts, build e security; só unit-tests falha. Esta PR leva esses 136 arquivos a
-   135 verdes. Resta 1 arquivo, que só fecha com um apply no banco."
+## SHARD 2/3 — Job ID: 121157354783
 
-Arquivo que resta vermelho (após PR #2248):
-  src/__tests__/rlsSchemaGuard.test.ts
-  Causa: guard compara policies do schema-manifest.json com banco de produção;
-  2 migrations não aplicadas em produção:
-    - 20261015172527_security_alerts_self_select.sql (tabela security_alerts)
-    - 20261011003007_talkx_blacklist_audit_trilha_guarda.sql (tabela talkx_blacklist)
+# NOTA: src/lib/__tests__/rlsSchemaGuard.test.ts é o ÚNICO arquivo que falha por razão diferente:
+# precisa das migrations 20261015172527_security_alerts_self_select.sql e
+# 20261011003007_talkx_blacklist_audit_trilha_guarda.sql aplicadas em producao-ddl.
+# Todos os outros falham por ausência do mock global de @/lib/logger.
 
-NOTA: A lista exata de 136 arquivos não está publicada no body da PR #2248. A PR foi criada
-por outra sessão de agente e os 136 nomes individuais não foram expostos via API no body.
-O bloqueio sistêmico é confirmado pelos check runs da PR #2247 (mais simples: 1 arquivo MD).
+src/lib/__tests__/rlsSchemaGuard.test.ts  ← MIGRATIONS PENDENTES (ver PR #2248)
+src/components/admin/__tests__/AdminView.a11y.test.tsx
+src/components/admin/__tests__/useAdminData.select.test.ts
+src/components/agents/__tests__/AgentsView.conexoes.test.tsx
+src/components/calls/__tests__/RecordingPlayer.test.tsx
+src/components/connections/__tests__/ConnectionsView.telefone-validacao.test.tsx
+src/components/connections/__tests__/useConnectionsManager.handlers.test.tsx
+src/components/email/__tests__/EmailChatInbox.buscaEstados.test.tsx
+src/components/email/__tests__/EmailChatInbox.contato.test.tsx
+src/components/gmail/__tests__/GmailInboxView.paginacao.test.tsx
+src/components/gamification/__tests__/AchievementToast.test.tsx
+src/components/knowledge/__tests__/KnowledgeBaseView.confirmacaoExclusao.test.tsx
+src/components/leaderboard/__tests__/Leaderboard.erro.test.tsx
+src/components/inbox/__tests__/CRMAutoSync.aria.test.tsx
+src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx
+src/components/inbox/__tests__/ConversationSummary.aria.test.tsx
+src/components/inbox/__tests__/MessageReactions.autoria-unica.test.tsx
+src/components/inbox/__tests__/StatusChips.test.tsx
+src/components/inbox/__tests__/VirtualizedRealtimeList.reabrir.test.tsx
+src/components/inbox/__tests__/WhisperMode.voz.test.tsx
+src/components/inbox/__tests__/hover-actions-a11y.test.tsx
+src/components/inbox/__tests__/inboxA11yLoteReacoes.test.tsx
+src/components/multiplix/__tests__/fundacaoVisual.test.tsx
+src/components/notifications/__tests__/ScreenProtectionToggle.dica.test.tsx
+src/components/theme/__tests__/HighContrastToggle.test.tsx
+src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx
+src/components/talkx/__tests__/TalkXCampaignRunning.segmentoPico.test.tsx
+src/components/talkx/__tests__/TalkXCampaignWizard.resumo-servidor.test.tsx
+src/components/talkx/__tests__/TalkXTemplateEditor.states.test.tsx
+src/components/talkx/__tests__/TalkXView.ajuda-teclado.test.tsx
+src/components/talkx/__tests__/TalkXView.routing.test.tsx
+src/components/talkx/__tests__/TalkXWizardDelivery.confirmacao.test.tsx
+src/components/talkx/__tests__/contrasteAA.test.tsx
+src/components/ui/__tests__/command-palette.a11y.test.tsx
+src/components/ui/__tests__/phone-input.internacional.test.tsx
+src/hooks/analytics/__tests__/useGoalsDashboard.test.tsx
+src/hooks/calls/__tests__/useCallRecording.test.tsx
+src/hooks/communication/__tests__/useAudioMemes.pasta-usuario.test.tsx
+src/hooks/chat/__tests__/buscas-silenciosas-aviso.test.tsx
+src/hooks/chat/__tests__/useFilesContainerColumns.test.tsx
+src/hooks/chat/__tests__/useTeamChatNotifications.nome-e-clique.test.tsx
+src/hooks/dashboard/__tests__/useDashboardKpi.periodo.test.tsx
+src/hooks/gamification/__tests__/useAgentCelebrations.test.tsx
+src/hooks/inbox/__tests__/useInboxBulkActions.test.ts
+src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx
+src/hooks/tasks/__tests__/workItemFormat.test.ts
+src/hooks/system/__tests__/configuracoes.leituraErro.test.tsx
+src/hooks/system/__tests__/useDiagnosticsData.select.test.ts
+src/components/inbox/chat/__tests__/ChatMessagesArea.pagination.test.tsx
 
-EXIT CODE do vitest em main@2d97c44: NÃO ZERO (falha confirmada por CI Gate em todas as PRs)
+## SHARD 3/3 — Job ID: 121157354678
+
+src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx
+src/pages/__tests__/ChatPopup.messageBalloon.test.tsx
+src/pages/__tests__/ChatPopup.pagination.test.tsx
+src/services/__tests__/chat.service.test.ts
+src/components/admin/__tests__/AdminView.limiteChats.test.tsx
+src/components/admin/__tests__/AdminView.ramalAdmin.test.tsx
+src/components/admin/__tests__/AdminView.tarefas-agendadas.test.tsx
+src/components/admin/__tests__/MediaMigrationTool.test.tsx
+src/components/admin/__tests__/adminDownloadPermission.test.ts
+src/components/admin/__tests__/useAdminDataCreateUser.test.ts
+src/components/agents/__tests__/AgentsView.pendencias.test.tsx
+src/components/catalog/__tests__/ExternalProductCatalog.virtualizacao.test.tsx
+src/components/contacts/__tests__/ContactListItemGrid.test.tsx
+src/components/dashboard/__tests__/SentimentAlertsDashboard.a11y.test.tsx
+src/components/dashboard/__tests__/WarRoomDashboard.estado-a11y.test.tsx
+src/components/email/__tests__/EmailChatInbox.contextoPainel.test.tsx
+src/components/integrations/__tests__/GoogleCalendarIntegration.test.tsx
+src/components/inbox/__tests__/InboxEmptyChat.cta.test.tsx
+src/components/inbox/__tests__/QuickRepliesManager.exclusao-confirmada.test.tsx
+src/components/inbox/__tests__/RealtimeInboxView.contato-fora-lista.test.tsx
+src/components/inbox/__tests__/RealtimeInboxView.empty-chat-nova-conversa.test.tsx
+src/components/inbox/__tests__/SummaryResult.test.tsx
+src/components/inbox/__tests__/VoiceChangerPicker.aria.test.tsx
+src/components/inbox/__tests__/VoiceChangerPicker.voz-temporaria.test.tsx
+src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts
+src/components/security/__tests__/PasswordResetRequestsPanel.acesso-negado.test.tsx
+src/components/settings/__tests__/AvatarUpload.invalidacao.test.tsx
+src/components/settings/__tests__/SettingsView.test.tsx
+src/components/tasks/__tests__/WorkItemSheet.fuso.test.tsx
+src/components/talkx/__tests__/TalkXAnalytics.kpis.test.tsx
+src/components/talkx/__tests__/TalkXSegments.detailPanel.test.tsx
+src/components/talkx/__tests__/TalkXSegments.route.test.tsx
+src/components/talkx/__tests__/TalkXTemplates.route.test.tsx
+src/components/talkx/__tests__/useCampaignRowActions.test.tsx
+src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts
+src/components/team-chat/__tests__/useTeamChatPanel.search-antigas.test.tsx
+src/components/ui/__tests__/command-palette.busca-antiga.test.tsx
+src/hooks/auth/__tests__/useAuth.fila-offline-logout.test.tsx
+src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx
+
+## RESUMO
+# Shard 1: 48 arquivos
+# Shard 2: 49 arquivos (inclui rlsSchemaGuard.test.ts — causa diferente)
+# Shard 3: 40 arquivos
+# TOTAL: 137 arquivos falhando (PR #2248 reduz para 1: rlsSchemaGuard.test.ts)
+#
+# CAUSA RAIZ dos outros 136: ausência do mock global de @/lib/logger
+# FIX: PR #2248 (fix(test): destrava o CI Gate da main)
+# DESBLOQUEIO COMPLETO: PR #2248 mergeada + 2 migrations via producao-ddl
+#   - 20261015172527_security_alerts_self_select.sql
+#   - 20261011003007_talkx_blacklist_audit_trilha_guarda.sql
+#
+# EVIDÊNCIA MERGE IMPOSSÍVEL:
+#   github_merge_pull_request(PR #2247) → HTTP 405
+#   "Required status check '✅ CI Gate (required check)' is failing."
