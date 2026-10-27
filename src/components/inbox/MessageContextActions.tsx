@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { getLogger } from '@/lib/logger';
+import { HOVER_REVEAL_TAP } from './hoverActions';
 
 const log = getLogger('MessageContextActions');
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
@@ -143,7 +144,7 @@ export function MessageContextActions({
           variant="ghost"
           size="icon"
           aria-label="Mais ações da mensagem"
-          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]"
+          className={`h-6 w-6 ${HOVER_REVEAL_TAP} transition-opacity`}
         >
           <MoreVertical className="w-3.5 h-3.5" />
         </Button>

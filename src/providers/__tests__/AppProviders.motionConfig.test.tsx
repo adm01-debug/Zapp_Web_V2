@@ -18,7 +18,7 @@ describe('movimento reduzido na raiz (A11Y)', () => {
     const appFonte = ler('../../App.tsx');
 
     // LazyMotionConfig importa MotionConfig do framer-motion de forma lazy
-    expect(appFonte).toMatch(/import\(['"](framer-motion)['"]\)/);
+    expect(appFonte).toMatch(/import\(['"]framer-motion['"]\)/);
     expect(appFonte).toMatch(/MotionConfig/);
     // reducedMotion="user" está presente exatamente uma vez
     expect(appFonte.match(/reducedMotion="user"/g) ?? []).toHaveLength(1);
