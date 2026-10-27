@@ -45,7 +45,16 @@ describe('CRMSyncButton — botão só de ícone com nome acessível (A11Y-13)',
 
     fireEvent.click(screen.getByRole('button', { name: 'Sincronizar com CRM externo' }));
 
-    const botao = await screen.findByRole('button', { name: 'Contato não encontrado no CRM' });
+    // Estado desabilitado = wrapper focável (role=button, aria-disabled, mesmo nome) que
+    // carrega o motivo por teclado + o <button> real desabilitado: dois "button" com o mesmo
+    // nome é o desenho (ver CRMSyncButton.crm-desligado.test.tsx), então o botão real sai pelo testid.
+    const botoes = await screen.findAllByRole('button', { name: 'Contato não encontrado no CRM' });
+    expect(botoes).toHaveLength(2);
+    const botao = screen.getByTestId('crm-sync-button');
+    expect(botoes).toContain(botao);
     expect(botao).toBeDisabled();
+    expect(botao).toHaveAccessibleName('Contato não encontrado no CRM');
+    const wrapper = botoes.find((b) => b !== botao)!;
+    expect(wrapper).toHaveAttribute('aria-disabled', 'true');
   });
 });

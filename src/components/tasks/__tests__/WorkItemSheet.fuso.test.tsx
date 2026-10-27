@@ -81,8 +81,18 @@ beforeEach(() => {
 });
 
 describe('WorkItemSheet — prazo e alarme no fuso do aparelho (R2-MOD-050)', () => {
-  beforeEach(() => cleanup());
-  afterEach(() => cleanup());
+  // O QuickAdd recusa alarme no passado e o teste usa 20/10/2026: congela só o `Date` num dia
+  // anterior (15/10/2026 12:00 em SP) para o resultado não depender do dia em que a suíte roda.
+  // Timers continuam reais (waitFor/Radix dependem deles).
+  beforeEach(() => {
+    cleanup();
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 9, 15, 12, 0, 0, 0));
+  });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
 
   it('editar só o título não mexe em prazo/alarme nem habilita o Salvar por formato', () => {
     const item = { ...base, due_date: NOVE_H_ISO, remind_at: NOVE_H_ISO };

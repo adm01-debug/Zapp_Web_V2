@@ -96,7 +96,7 @@ describe('paleta única do ⌘K (X054)', () => {
     await abrirPorEvento();
 
     expect(screen.getAllByRole('dialog')).toHaveLength(1);
-    expect(screen.getAllByRole('textbox')).toHaveLength(1);
+    expect(screen.getAllByRole('combobox')).toHaveLength(1);
   });
 
   it('Ctrl+K tem um dono só: abre e a segunda vez fecha', async () => {
