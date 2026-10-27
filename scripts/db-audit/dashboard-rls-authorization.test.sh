@@ -69,7 +69,7 @@ expect_error() {
     -c '\set VERBOSITY verbose' -c "$sql" 2>&1)"; status=$?
   set -e
   (( status == 0 )) && { printf '%s\n' "$output" >&2; fail "$label: deveria falhar, mas passou"; }
-  [[ "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: esperava '$needle' no erro"; }
+  [[  "$output" == *"$needle"* ]] || { printf '%s\n' "$output" >&2; fail "$label: esperava '$needle' no erro"; }
   printf '[PASS] %s\n' "$label"
 }
 expect_value() {
@@ -99,7 +99,8 @@ for f in \
   20260930400000_dashboard_contact_counts_filter_deleted_at.sql \
   20261003272707_reconcile_local_replay_with_canonical.sql \
   20261006064630_dashboard_contact_counts_restaura_trava_e33.sql \
-  20261007013217_conversation_closures_reopen_same_day.sql; do
+  20261007013217_conversation_closures_reopen_same_day.sql \
+  20261026210000_dashboard_kpi_periodo_aditivo.sql; do
   [[ -f "$migrations_dir/$f" ]] || fail "migration nao encontrada: $f"
 done
 
@@ -162,7 +163,7 @@ assert_last_definer 'policy "Agents or admins can view closures"' \
 
 # RPCs do dashboard (lista fixa — a cadeia e aplicada mais abaixo):
 assert_last_definer 'RPC dashboard_kpi' \
-  '20261007013217_conversation_closures_reopen_same_day.sql' \
+  '20261026210000_dashboard_kpi_periodo_aditivo.sql' \
   '(CREATE( OR REPLACE)? FUNCTION public\.dashboard_kpi|ALTER FUNCTION[^;]*public\.dashboard_kpi|DROP FUNCTION[^;]*public\.dashboard_kpi)'
 assert_last_definer 'RPC dashboard_hourly_volume' \
   '20260925221406_dashboard_fix_p_agent_uuid_perf_and_fanout.sql' \
@@ -432,9 +433,10 @@ grep -q '\$function\$;' "$tmp_dir/kpi_final.sql" \
   || fail 'extracao de dashboard_kpi de 20261003272707 nao fechou o corpo da funcao'
 psql_file "$tmp_dir/kpi_final.sql"
 
-# Definição FINAL de dashboard_kpi: 20261007013217 é o último arquivo a redefinir
-# a função (migration posterior que reconstruiu dashboard_kpi com a guarda de
-# ciclo de reabertura no mesmo dia). Extrai só o CREATE OR REPLACE dessa função.
+# Definição FINAL de dashboard_kpi (3 args): 20261007013217 reconstruiu
+# dashboard_kpi com a guarda de ciclo de reabertura no mesmo dia.
+# 20261026210000 adicionou overload de 4 args — a assinatura de 3 args
+# abaixo permanece inalterada e é a que os testes chamam.
 awk '/CREATE OR REPLACE FUNCTION public.dashboard_kpi/,/\$function\$;/' \
   "$migrations_dir/20261007013217_conversation_closures_reopen_same_day.sql" \
   > "$tmp_dir/kpi_final.sql"
