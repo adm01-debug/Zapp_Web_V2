@@ -40,9 +40,9 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas (`tables`) | 170 |
+| Tabelas (`tables`) | 171 |
 | Views (`views`) | 12 |
-| Colunas (`columns`) | 1987 |
+| Colunas (`columns`) | 1999 |
 | Funções (`functions`) | 279 |
 | Assinaturas de função (`function_signatures`) | 280 |
 | Funções de gatilho (`trigger_functions`) | 72 |
@@ -58,7 +58,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `agent_achievements` | Conquistas de gamificação do agente (tipo, nome e XP ganho) | ativo | `src/components/gamification/AchievementsSystem.tsx`, `src/components/gamification/__tests__/AchievementToast.test.tsx`, `src/components/gamification/__tests__/AchievementsSystem.test.tsx` … |
 | `agent_presence` | Presença do agente (status e carimbo de atualização) | ativo | `src/components/admin/CrisisRoom.tsx`, `src/components/admin/__tests__/CrisisRoom.metricas.test.tsx`, `src/components/agents/__tests__/AgentsView.capacidade.test.tsx` … |
 | `agent_skills` | Habilidades cadastradas por agente, base do roteamento por skill | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/settings/SkillBasedRoutingSettings.tsx`, `src/components/settings/__tests__/SkillBasedRoutingSettings.skills-assign.test.tsx` … |
-| `agent_stats` | Agregado de gamificação do agente (XP, nível, enviadas, conquistas) | ativo | `src/components/dashboard/AgentPerformancePanel.tsx`, `src/components/gamification/AchievementsStats.tsx`, `src/components/gamification/AchievementsSystem.tsx` … |
+| `agent_stats` | Agregado de gamificação do agente (XP, nível, enviadas, conquistas) | ativo | `src/components/dashboard/AgentPerformancePanel.tsx`, `src/components/gamification/AchievementsSystem.tsx`, `src/components/gamification/AchievementsStats.tsx` … |
 | `agent_visibility_grants` | Concessões de visibilidade de um agente sobre outro | ativo | `src/components/admin/VisibilityGrantsManager.tsx`, `src/components/admin/__tests__/VisibilityGrantsManager.a11y.test.tsx`, `scripts/db-audit/crm-sync-outbox-behavior.test.sh` … |
 | `ai_budget_reservations` | Reserva de tokens/orçamento por execução de função de IA | parcial | `scripts/qa/prova-orcamento-rate-limit.sh` |
 | `ai_conversation_tags` | Tags sugeridas pela IA em conversa/contato, com confiança e origem | ativo | `src/components/docs/__tests__/SystemFeaturesView.test.tsx`, `src/hooks/crm/__tests__/useContactEnrichedData.test.tsx`, `src/services/contact.service.ts` … |
@@ -97,6 +97,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `contact_notes` | Notas internas do contato, com autor | ativo | `src/components/contacts/ContactActivityTimeline.tsx`, `src/components/contacts/ContactNotes.tsx`, `src/components/contacts/__tests__/ContactActivityTimeline.eventos.test.tsx` … |
 | `contact_purchases` | Histórico de compras do contato (valor, moeda e status) | ativo | `src/components/contacts/ContactPurchaseHistory.tsx`, `src/components/inbox/ContactPurchasesPanel.tsx`, `src/hooks/crm/__tests__/useContactPurchases.criar.test.tsx` … |
 | `contacts` | Cadastro central de contatos (telefone, e-mail, dono e campos de CRM) | ativo | `src/App.tsx`, `src/__tests__/a11y/icon-buttons-baseline.json`, `src/__tests__/coverage-catalogo.test.ts` … |
+| `copilot_feedback` | Feedback do vendedor sobre sugestões do copilot (aceitou, editou, descartou; distância de edição) | ativo | `src/hooks/copilot/useCopilotFeedback.ts` |
 | `conversation_analyses` | Análises de IA da conversa (resumo, sentimento, pontos-chave e risco) | ativo | `src/components/dashboard/AIQuickAccess.tsx`, `src/components/dashboard/SentimentTrendChart.tsx`, `src/components/dashboard/__tests__/AIQuickAccess.test.tsx` … |
 | `conversation_closures` | Fechamentos de conversa (motivo, desfecho e classificação) | ativo | `src/components/inbox/CRMAutoSync.tsx`, `src/components/inbox/__tests__/CRMAutoSync.fsm.test.tsx`, `src/components/reports/PeriodComparison.tsx` … |
 | `conversation_events` | Eventos da conversa (transferência, mudança de estado e autor) | ativo | `src/components/contacts/ContactActivityTimeline.tsx`, `src/components/contacts/__tests__/ContactActivityTimeline.eventos.test.tsx`, `src/components/contacts/__tests__/ContactActivityTimeline.nota.test.tsx` … |
