@@ -20,7 +20,7 @@ const MAX_RETRIES = 3;
 
 // Carrega as features de animacao de forma assincrona: o motor do framer-motion
 // (framer-motion/dom, ~38 KB gzip) nao entra no bundle inicial.
-const loadFeatures = () => import("framer-motion/dom").then((r) => r.domAnimation);
+const loadFeatures = () => import("framer-motion/dom").then((r) => r.default);
 
 /**
  * Tela minima de erro do nivel mais externo.
