@@ -213,7 +213,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
             const { error } = await supabase
               .from('contacts')
               .update({ conversation_status: (original ?? null) as unknown as string })
-              .eq('id', id);
+              .in('id', [id]);
             if (error) throw error;
           }
           refetch();
