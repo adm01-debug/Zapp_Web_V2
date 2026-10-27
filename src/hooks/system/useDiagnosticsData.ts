@@ -290,7 +290,8 @@ export function useDiagnosticsData() {
     if (messagesCountError) throw messagesCountError;
     const { count: connectionsCount, error: connectionsCountError } = await supabase
       .from('whatsapp_connections').select('id', { count: 'estimated', head: true });
-    // connectionsCountError não é fatal: reflete em database:'down' abaixo.
+    // Erro na contagem não aborta o ciclo nem vira "0 conexões" saudável: entra na
+    // classificação do banco (abaixo), que passa a 'down'.
 
     const realtime = await probeRealtime();
 
@@ -313,7 +314,7 @@ export function useDiagnosticsData() {
     const lastHealthCheckAt = healthCheckLogs[0]?.checked_at ?? null;
 
     setHealth({
-      database: connectionsCountError ? 'down' : classifyHealth(dbError, dbLatency, 500, 2000),
+      database: classifyHealth(connectionsCountError ?? dbError, dbLatency, 500, 2000),
       storage: classifyHealth(storageError, storageLatency, 1000, 3000),
       realtime: realtime.status,
       edgeFunctions: classifyHeartbeat(heartbeatError, lastHealthCheckAt, Date.now()),

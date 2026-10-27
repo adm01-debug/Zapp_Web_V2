@@ -172,12 +172,8 @@ export async function fetchTalkXSuppressionActivity({
     .in('event_type', SUPPRESSION_ACTIVITY_EVENT_TYPES);
   if (eventType !== 'all') query = query.eq('event_type', eventType);
 
-  // A página é pedida como FATIA (`range`), depois da ordem determinística —
-  // nunca um `.limit()` solto, que devolveria um subconjunto arbitrário.
   const { data, error, count } = await query
     .order('created_at', { ascending: false })
-    // Desempate obrigatório: sem ele a fatia de uma página pode repetir item
-    // entre chamadas quando dois eventos caem no mesmo instante.
     .order('id', { ascending: false })
     .range(from, from + limit - 1);
   if (error) throw error;
@@ -194,7 +190,6 @@ export async function fetchTalkXSuppressionActivity({
       actorName: row.actor?.name ?? null,
       createdAt: row.created_at,
     })),
-    // Sem a contagem do servidor, o total é o que a página prova existir.
     total: typeof count === 'number' ? count : from + rows.length,
   };
 }
@@ -272,33 +267,4 @@ export function useTalkXSuppressionStats(days = 30) {
       return (data ?? null) as TalkXSuppressionStats | null;
     },
   });
-}
-
-/* -------------------------------------------------------------------------- */
-/* Z008 — useTalkXSuppression: lista, isSuppressed (fail-closed), mutações   */
-/* -------------------------------------------------------------------------- */
-
-export interface BlacklistEntry {
-  id: string;
-  contact_id: string | null;
-  phone: string | null;
-  reason: string | null;
-  reason_code: string | null;
-  origin: string | null;
-  campaign_id: string | null;
-  blocked_by: string | null;
-  expires_at: string | null;
-  source_message_id: string | null;
-  created_at: string;
-}
-
-export interface AddBlacklistEntryInput {
-  phone?: string;
-  contact_id?: string;
-  reason?: string;
-  reason_code?: 'opt_out' | 'invalid_number' | 'manual' | 'lgpd' | 'no_commercial_permission' | 'bounce';
-  origin?: string;
-  campaign_id?: string;
-  expires_at?: string;
-  source_message_id?: string;
 }

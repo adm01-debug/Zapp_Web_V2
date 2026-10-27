@@ -2,9 +2,11 @@ import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
+import { showBrowserNotification } from '@/utils/notificationSounds';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 
 const log = getLogger('TeamChatNotifications');
 
@@ -137,11 +139,14 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
   const activeIdRef = useRef(activeConversationId);
 
-  // HZ5-09: settings como refs para que mudanças neles não recriem o canal.
+  // HZ5-09: as preferências chegam ao listener por ref (leitura fresca a cada evento),
+  // sem entrar nas deps do efeito — mexer no volume não pode recriar o canal.
   const notifSettingsRef = useRef(notifSettings);
-  notifSettingsRef.current = notifSettings;
   const isQuietHoursRef = useRef(isQuietHours);
-  isQuietHoursRef.current = isQuietHours;
+  useEffect(() => {
+    notifSettingsRef.current = notifSettings;
+    isQuietHoursRef.current = isQuietHours;
+  }, [notifSettings, isQuietHours]);
 
   useEffect(() => {
     activeIdRef.current = activeConversationId;
@@ -150,10 +155,10 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
   useEffect(() => {
     if (!profile) return;
 
-    // HZ5-09: sufixo exclusivo por usuário impede colisão de canais entre abas/instâncias
-    // e garante que mudanças de configuração (volume, som, notificações) não recriem o canal.
     const channel = supabase
-      .channel(`team-chat-notifications:${profile.id}`)
+      // Tópico exclusivo por instância (`uniqueRealtimeTopic`): nome fixo devolveria o
+      // canal já inscrito e o `.on()` seguinte derrubaria a tela (HZ5-09).
+      .channel(uniqueRealtimeTopic('team-chat-notifications'))
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -199,21 +204,22 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           membership,
         })) return;
 
+        const settings = notifSettingsRef.current;
+        const quietHours = isQuietHoursRef.current;
+
         // Play sound if enabled — volume do painel (10-100), nunca fixo
-        if (notifSettingsRef.current.soundEnabled && !isQuietHoursRef.current()) {
-          playTeamChatSound(notifSettingsRef.current.soundVolume);
+        if (settings.soundEnabled && !quietHours()) {
+          playTeamChatSound(settings.soundVolume);
         }
 
         // Show browser notification if enabled
-        // HZ3-001: o aviso depende SÓ da permissão do navegador já concedida — o
-        // `showNotification` publica pela inscrição do service worker LOCAL
-        // (`registration.showNotification`), que não precisa da assinatura de push.
-        // Exigir `isSubscribed` do `usePushNotifications` (que significa "alertas do
-        // navegador ligados", `state.isActive`, e só fica ligado com assinatura push)
-        // silenciava quem concedeu a permissão e não assinou o push: ficava só com o
-        // som. O liga/desliga de avisos do chat interno continua valendo por
-        // `notifSettings.browserNotifications`.
-        if (Notification.permission === 'granted' && notifSettingsRef.current.browserNotifications && !isQuietHoursRef.current()) {
+        // HZ3-001: o aviso depende SÓ da permissão do navegador já concedida (checada
+        // por `showBrowserNotification`), nunca da assinatura de push. E sai pela API
+        // `Notification` direta: o caminho antigo (`usePushNotifications.showNotification`)
+        // exige Service Worker de aplicação, desligado em `config/service_worker.ts`,
+        // então devolvia `false` em silêncio e o chat de equipe só tocava o som. O
+        // liga/desliga de avisos do chat interno vale por `browserNotifications`.
+        if (settings.browserNotifications && !quietHours()) {
           // Nome do remetente por RPC segura: para o agente a leitura direta de
           // `profiles` é barrada pela RLS (o título virava 'Colega').
           // `get_team_profiles()` é SECURITY DEFINER e já mascara email/telefone.
@@ -231,19 +237,11 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
 
-          const notif = new Notification(`💬 Teams: ${senderName}`, {
+          showBrowserNotification(
+            `💬 Teams: ${senderName}`,
             body,
-            tag: `team-msg-${msg.conversation_id}`,
-            data: {
-              type: 'team_chat',
-              conversationId: msg.conversation_id,
-              messageId: msg.id,
-            },
-          });
-          notif.onclick = () => {
-            window.focus();
-            navigateToView('team-chat');
-          };
+            { tag: `team-msg-${msg.conversation_id}`, onClick: () => navigateToView('team-chat') },
+          );
 
           log.debug('Team chat notification sent for message:', msg.id);
         }
@@ -253,7 +251,7 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile]);
+  }, [profile]); // só `profile`: trocar preferência não recria o canal (HZ5-09)
 
   /**
    * Clique na notificação do chat interno: o service worker repassa o clique da

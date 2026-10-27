@@ -39,24 +39,24 @@ partir do código e falha quando:
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:91` |
 | `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:62` · `src/components/inbox/chat/AIRewriteButton.tsx:50` |
 | `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
-| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:134` · `src/hooks/integrations/useKnowledgeBase.ts:205` |
+| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:132` · `src/hooks/integrations/useKnowledgeBase.ts:203` |
 | `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:102` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1400` |
 | `ai-usage-outbox-drain` | E | — sem chamador no repositório — |
-| `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:31` · `src/components/security/PasswordResetRequestsPanel.tsx:43` · `src/hooks/security/usePasswordResetRequests.ts:51` · `src/hooks/security/usePasswordResetRequests.ts:72` |
+| `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:32` · `src/components/security/PasswordResetRequestsPanel.tsx:51` · `src/hooks/security/usePasswordResetRequests.ts:51` · `src/hooks/security/usePasswordResetRequests.ts:72` |
 | `auth-login` | A | `src/lib/serverLogin.ts:149` · `supabase/config.toml:39` |
 | `auto-close-conversations` | E | — sem chamador no repositório — |
 | `automation-suggest-reply` | A | `src/hooks/chat/useAutomationSuggestions.ts:192` |
-| `batch-fetch-avatars` | A | `src/hooks/chat/useNewConversation.ts:143` · `src/hooks/chat/useNewConversation.ts:151` · `src/hooks/inbox/useInboxBulkActions.ts:232` · `supabase/migrations/20260828200100_cron_avatars_refresh_hourly.sql:11` · `supabase/migrations/20260902000200_fix_cron_avatars_refresh_key.sql:10` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:74` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:130` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:161` · `supabase/config.toml:26` |
+| `batch-fetch-avatars` | A | `src/hooks/chat/useNewConversation.ts:143` · `src/hooks/chat/useNewConversation.ts:151` · `src/hooks/inbox/useInboxBulkActions.ts:245` · `supabase/migrations/20260828200100_cron_avatars_refresh_hourly.sql:11` · `supabase/migrations/20260902000200_fix_cron_avatars_refresh_key.sql:10` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:74` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:130` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:161` · `supabase/config.toml:26` |
 | `bitrix-api` | A | `src/components/integrations/BitrixIntegrationView.tsx:29` · `src/hooks/integrations/useBitrixApi.ts:33` |
 | `chatbot-l1` | A | `src/components/settings/ChatbotL1Config.tsx:235` · `supabase/functions/_shared/evolution-webhook-messages.ts:590` |
-| `classify-audio-meme` | A | `src/components/settings/media-library/AIGenerateDialog.tsx:59` · `src/hooks/communication/useAudioMemes.ts:243` |
+| `classify-audio-meme` | A | `src/components/settings/media-library/AIGenerateDialog.tsx:59` · `src/hooks/communication/useAudioMemes.ts:250` |
 | `classify-emoji` | A | `src/hooks/integrations/useCustomEmojis.ts:142` |
 | `classify-sticker` | A | `src/components/inbox/chat/MessageBubble.tsx:329` · `src/hooks/sticker-picker/useStickerPicker.ts:148` · `supabase/functions/_shared/evolution-webhook-messages.ts:1377` |
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
-| `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:101` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/components/monitoring/hooks/useMonitoringActions.ts:18` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
-| `create-user` | A | `src/components/admin/useAdminData.ts:448` · `src/components/admin/useAdminData.ts:455` |
+| `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:130` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/components/monitoring/hooks/useMonitoringActions.ts:18` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
+| `create-user` | A | `src/components/admin/useAdminData.ts:444` · `src/components/admin/useAdminData.ts:444` |
 | `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/migrations/20261016011302_crm_sync_outbox_cron.sql:34` · `supabase/config.toml:55` |
 | `csp-report` | D | `supabase/config.toml:58` |
 | `detect-new-device` | A | `src/lib/avisoDispositivo.ts:117` |
@@ -65,12 +65,12 @@ partir do código e falha quando:
 | `elevenlabs-scribe-token` | A | `src/components/inbox/RealtimeTranscription.tsx:88` · `src/hooks/communication/useVoiceAgent.ts:307` |
 | `elevenlabs-sfx` | A | `src/components/settings/media-library/AIGenerateDialog.tsx:31` |
 | `elevenlabs-sts` | A | `src/components/inbox/VoiceChanger.tsx:81` |
-| `elevenlabs-tts` | A | `src/components/inbox/TextToAudioButton.tsx:80` · `src/components/inbox/VoiceSelector.tsx:99` |
+| `elevenlabs-tts` | A | `src/components/inbox/TextToAudioButton.tsx:80` · `src/components/inbox/VoiceSelector.tsx:113` |
 | `elevenlabs-tts-stream` | A | `src/hooks/voice/playTtsAudio.ts:165` |
 | `elevenlabs-voice-design` | A | `src/components/voice/ElevenLabsVoiceDesign.tsx:32` |
 | `elevenlabs-webhook` | D | `supabase/config.toml:29` |
 | `evolution-api` | A | `src/components/monitoring/MonitoringConnectionsList.tsx:38` · `src/components/monitoring/MonitoringConnectionsList.tsx:54` · `src/hooks/groups/actions.ts:106` |
-| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:76` |
+| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:105` |
 | `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supabase/functions/_shared/evolution-go-routes.ts:221` · `supabase/functions/_shared/evolution-sync-actions.ts:227` · `supabase/functions/_shared/evolution-sync-actions.ts:300` · `supabase/functions/evolution-api/index.ts:493` · `supabase/functions/evolution-api/index.ts:559` · `supabase/functions/evolution-api/index.ts:720` · `supabase/functions/webhook-diagnostic/index.ts:96` · `supabase/functions/webhook-diagnostic/index.ts:169` · `supabase/functions/webhook-diagnostic/index.ts:304` · `supabase/functions/webhook-diagnostic/index.ts:314` · `supabase/config.toml:8` |
 | `external-db-bridge` | E | — sem chamador no repositório — |
 | `external-db-proxy` | A | `src/lib/externalProxy.ts:33` |
@@ -85,9 +85,9 @@ partir do código e falha quando:
 | `gmail-webhook` | A | `src/components/admin/GmailWebhookMonitor.tsx:230` · `supabase/config.toml:14` |
 | `health` | E | — sem chamador no repositório — |
 | `invite-user` | A | `src/components/agents/InviteAgentDialog.tsx:48` · `supabase/config.toml:89` |
-| `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:456` · `supabase/config.toml:49` |
+| `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:471` · `supabase/config.toml:49` |
 | `metrics` | E | — sem chamador no repositório — |
-| `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:28` |
+| `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:164` |
 | `multiplix-audience` | A | `src/hooks/integrations/useMultiplixAudience.ts:9` |
 | `multiplix-dispatch` | A | `src/hooks/integrations/useMultiplixDispatches.ts:132` |
 | `multiplix-send` | A | `src/hooks/integrations/useMultiplixDispatches.ts:408` · `supabase/migrations/20260927320000_multiplix_cron_scheduler.sql:63` · `supabase/migrations/20260929610000_multiplix_cron_window_and_limits.sql:149` |
@@ -108,7 +108,7 @@ partir do código e falha quando:
 | `talkx-link` | A | `src/hooks/integrations/useTalkXLinks.ts:56` · `supabase/functions/talkx-send/index.ts:128` · `supabase/config.toml:65` |
 | `talkx-report` | E | — sem chamador no repositório — |
 | `talkx-scheduler` | E | — sem chamador no repositório — |
-| `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:509` · `src/hooks/integrations/useTalkX.ts:525` · `src/hooks/integrations/useTalkX.ts:534` · `src/hooks/integrations/useTalkX.ts:543` · `src/hooks/integrations/useTalkXTemplates.ts:196` · `supabase/functions/talkx-scheduler/index.ts:341` · `supabase/migrations/20261001391230_talkx_engine_tick.sql:60` |
+| `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:511` · `src/hooks/integrations/useTalkX.ts:527` · `src/hooks/integrations/useTalkX.ts:536` · `src/hooks/integrations/useTalkX.ts:545` · `src/hooks/integrations/useTalkXTemplates.ts:196` · `supabase/functions/talkx-scheduler/index.ts:341` · `supabase/migrations/20261001391230_talkx_engine_tick.sql:60` |
 | `talkx-storage-purge` | E | — sem chamador no repositório — |
 | `voice-agent` | A | `src/hooks/voice/processTranscript.ts:12` |
 | `voice-changer` | A | `src/components/inbox/VoiceChangerPicker.tsx:246` |

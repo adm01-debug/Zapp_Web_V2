@@ -94,9 +94,9 @@ function readStoredPrefs(storageKey: string | null): Partial<InboxFilterPrefs> |
 }
 
 export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInboxFiltersProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const storageKey = profileId ? inboxFiltersStorageKey(profileId) : null;
   const ownerKey = storageKey ?? NO_OWNER;
-  const [searchParams, setSearchParams] = useSearchParams();
 
   // Preferência do dono lida do storage; muda quando a identidade aparece (o
   // perfil carrega assíncrono depois do primeiro render).
@@ -107,13 +107,12 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
 
   const basePrefs = useMemo<InboxFilterPrefs>(() => {
     const chipTab = storedPrefs?.chipTab ?? DEFAULT_CHIP;
-    const typeParam = searchParams.get('type');
     return {
       chipTab,
       ...tabsForChip(chipTab),
       queueId: storedPrefs?.queueId ?? null,
       // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
-      contactType: typeParam != null ? normalizeContactType(typeParam) : storedPrefs?.contactType ?? null,
+      contactType: normalizeContactType(searchParams.get('type')) ?? storedPrefs?.contactType ?? null,
     };
   }, [storedPrefs, searchParams]);
 
@@ -249,7 +248,7 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
     // Filtros por cima do chip — busca, painel Filtros (status/atendente/
     // datas) e tipo de contato. A regra vive em passesExtraFilters, em
     // ./chipCounts: é a MESMA que o countByChip aplica, então o número do chip e
-    // o length da lista não têm como divergir.
+    // o length da lista não têm mais como divergir.
     result = result.filter((c) => passesExtraFilters(c, extraFilterContext));
 
     // Smart sorting

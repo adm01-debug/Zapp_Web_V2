@@ -166,7 +166,10 @@ export function useAgentCelebrations(
     nivelConhecido.current = null;
     achievementsCountRef.current = null;
 
-    const montadoEm = new Date().toISOString();
+    // Marco da montagem: o SELECT inicial pode enxergar uma conquista gravada DEPOIS
+    // de montar (o insert comitou antes da resposta). Essa nasceu na nossa janela e
+    // vira festa; só o que já existia no marco é semente suprimida.
+    const marcoMontagem = Date.now();
     void (async () => {
       const [conquistas, stats] = await Promise.all([
         supabase
@@ -181,8 +184,8 @@ export function useAgentCelebrations(
       if (conquistas.error) log.warn('Falha ao carregar conquistas do perfil', conquistas.error);
       for (const linha of (conquistas.data ?? []) as Achievement[]) {
         if (!linha?.id) continue;
-        const earnedAt = linha.earned_at ? String(linha.earned_at) : '';
-        if (earnedAt > montadoEm) {
+        // `earned_at` ausente ou ilegível (NaN) nunca é "posterior": fica suprimido.
+        if (Date.parse(String(linha.earned_at ?? '')) > marcoMontagem) {
           celebrarConquista(linha);
         } else {
           conquistasConhecidas.current.add(String(linha.id));

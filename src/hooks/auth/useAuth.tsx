@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useRef, createContext, useContext, ReactNode } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+ import { useState, useEffect, useCallback, useRef, createContext, useContext, ReactNode } from 'react';
+ import { useQueryClient } from '@tanstack/react-query';
 import { clearOfflineCache } from '@/hooks/system/useOfflineCache';
-import { User, Session } from '@supabase/supabase-js';
-import { AuthService, type SignInResult } from '@/services/auth.service';
-import { notificarDispositivoNovo } from '@/lib/avisoDispositivo';
-import { Profile } from '@/types';
+ import { User, Session } from '@supabase/supabase-js';
+ import { AuthService, type SignInResult } from '@/services/auth.service';
+ import { notificarDispositivoNovo } from '@/lib/avisoDispositivo';
+ import { Profile } from '@/types';
 import { log } from '@/lib/logger';
 import { clearEmailDraftSessions } from '@/lib/emailDraftSession';
 import { clearInboxDraftSessions } from '@/lib/inboxDraftSession';
@@ -22,9 +22,18 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
 }
 
+/** Falha ao esvaziar a fila não pode quebrar o logout: só registra. */
+async function esvaziarFilaDeEnvioOffline(): Promise<void> {
+  try {
+    await offlineSendQueue.clear();
+  } catch (err) {
+    log.error('[AUTH] falha ao esvaziar a fila de envio offline no logout', err);
+  }
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -59,24 +68,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * fetchingRef.current stuck at `true` (causing all subsequent fetches to
    * silently no-op, leaving profile as null indefinitely).
    */
-  const fetchProfile = useCallback(async (userId: string) => {
-    if (fetchingRef.current) return;
-    fetchingRef.current = true;
-    const geracao = ++geracaoPerfilRef.current;
-    try {
-      const data = await AuthService.fetchProfile(userId);
-      // Descarta resposta de geracao encerrada ou de identidade que mudou
-      // enquanto a consulta estava em voo (logout / troca de usuario).
-      const respostaVigente =
-        geracaoPerfilRef.current === geracao && identidadeRef.current === userId;
-      if (!respostaVigente) return;
-      if (data) setProfile(data);
-    } catch (err) {
-      log.error('[AuthProvider] Failed to fetch profile:', err);
-    } finally {
-      fetchingRef.current = false;
-    }
-  }, []);
+   const fetchProfile = useCallback(async (userId: string) => {
+     if (fetchingRef.current) return;
+     fetchingRef.current = true;
+     const geracao = ++geracaoPerfilRef.current;
+     try {
+       const data = await AuthService.fetchProfile(userId);
+       // Descarta resposta de geracao encerrada ou de identidade que mudou
+       // enquanto a consulta estava em voo (logout / troca de usuario).
+       const respostaVigente =
+         geracaoPerfilRef.current === geracao && identidadeRef.current === userId;
+       if (!respostaVigente) return;
+       if (data) setProfile(data);
+     } catch (err) {
+       log.error('[AuthProvider] Failed to fetch profile:', err);
+     } finally {
+       fetchingRef.current = false;
+     }
+   }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -161,8 +170,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearInboxDraftSessions();
         // HZ2-016: idem para o rascunho do Chat de Equipe (`zapp.teamchat.draft:<uid>:*`).
         clearTeamChatDraftSessions();
-        // Mensagens enfileiradas offline pertencem ao usuário que saiu.
-        void offlineSendQueue.clear();
+        // SEC-FRONTEND-04: a fila de envio offline é do usuário que saiu — esvazia antes
+        // que o próximo atendente logue na mesma máquina e drene itens alheios.
+        void esvaziarFilaDeEnvioOffline();
       }
     });
 
@@ -201,43 +211,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, fetchProfile]);
 
-  const signIn = async (email: string, password: string) => AuthService.signIn(email, password);
+   const signIn = async (email: string, password: string) => AuthService.signIn(email, password);
 
-  const signUp = async (email: string, password: string, name: string) => {
-    const { error } = await AuthService.signUp(email, password, name);
-    return { error };
-  };
+   const signUp = async (email: string, password: string, name: string) => {
+     const { error } = await AuthService.signUp(email, password, name);
+     return { error };
+   };
 
-  const signOut = async () => {
-    try {
-      await AuthService.signOut();
-    } catch (err) {
-      // BUG-F1 FIX: log but do not rethrow — ensure local state is always
-      // cleared so the UI never shows a stale profile after a sign-out
-      // attempt (e.g. network failure). The next onAuthStateChange will
-      // reconcile if the server-side sign-out actually succeeded.
-      log.error('[AuthProvider] signOut failed, clearing local state anyway:', err);
-    } finally {
-      // R2-AUTH-005: invalida consulta de perfil em voo para que a resposta
-      // atrasada nao reponha a identidade que acabou de sair.
-      definirIdentidade(null);
-      setProfile(null);
-      setSession(null);
-      setUser(null);
-      // Quando o sign-out do Supabase falha ele nao emite SIGNED_OUT, entao a
-      // limpeza do listener nunca roda — repetida aqui para que nenhum caminho
-      // deixe dados do usuario anterior para tras.
-      queryClient.clear();
-      clearOfflineCache();
-      clearEmailDraftSessions();
-      // SEC-FRONTEND-03: idem para o rascunho de conversa do Inbox (o sign-out do
-      // Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele).
-      clearInboxDraftSessions();
-      // HZ2-016: idem para o rascunho do Chat de Equipe.
-      clearTeamChatDraftSessions();
-      void offlineSendQueue.clear();
-    }
-  };
+   const signOut = async () => {
+     try {
+       await AuthService.signOut();
+     } catch (err) {
+       // BUG-F1 FIX: log but do not rethrow — ensure local state is always
+       // cleared so the UI never shows a stale profile after a sign-out
+       // attempt (e.g. network failure). The next onAuthStateChange will
+       // reconcile if the server-side sign-out actually succeeded.
+       log.error('[AuthProvider] signOut failed, clearing local state anyway:', err);
+     } finally {
+       // R2-AUTH-005: invalida consulta de perfil em voo para que a resposta
+       // atrasada nao reponha a identidade que acabou de sair.
+       definirIdentidade(null);
+       setProfile(null);
+       setSession(null);
+       setUser(null);
+       // Quando o sign-out do Supabase falha ele nao emite SIGNED_OUT, entao a
+       // limpeza do listener nunca roda — repetida aqui para que nenhum caminho
+       // deixe dados do usuario anterior para tras.
+       queryClient.clear();
+       clearOfflineCache();
+       clearEmailDraftSessions();
+       // SEC-FRONTEND-03: idem para o rascunho de conversa do Inbox (o sign-out do
+       // Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele).
+       clearInboxDraftSessions();
+       // HZ2-016: idem para o rascunho do Chat de Equipe.
+       clearTeamChatDraftSessions();
+       // SEC-FRONTEND-04: idem para a fila de envio offline.
+       void esvaziarFilaDeEnvioOffline();
+     }
+   };
 
   return (
     <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, refreshProfile }}>
