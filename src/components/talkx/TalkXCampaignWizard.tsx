@@ -18,7 +18,8 @@ import { PrimaryButton, GhostButton, Pill } from '@/components/dashboard/overvie
 import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import { useAudienceEstimate } from '@/hooks/integrations/useTalkXSegments';
-import { useCampaignEditor, explainDraftSaveError, VARIABLES, MORE_VARIABLES, MESSAGE_LIMIT, MESSAGE_TEMPLATES, MEDIA_TYPES, CAMPAIGN_NAME_MIN_LENGTH, CAMPAIGN_NAME_MAX_LENGTH, type WizardStep } from './useCampaignEditor';
+import { useTalkXCampaignSummary } from '@/hooks/integrations/useTalkXCampaignSummary';
+import { useCampaignEditor, completedRules, explainDraftSaveError, VARIABLES, MORE_VARIABLES, MESSAGE_LIMIT, MESSAGE_TEMPLATES, MEDIA_TYPES, CAMPAIGN_NAME_MIN_LENGTH, CAMPAIGN_NAME_MAX_LENGTH, type WizardStep } from './useCampaignEditor';
 import { TalkXContactSelector } from './TalkXContactSelector';
 import { TalkXAudienceFilters } from './TalkXAudienceFilters';
 import { TalkXWizardDelivery, TalkXWizardReview } from './TalkXWizardDelivery';
@@ -716,13 +717,52 @@ function WizardRail({ ed }: { ed: WizardState }) {
     return values;
   }, [sampleCustomFields]);
   const start = ed.isScheduled && ed.scheduledAt ? fmtDateTime(new Date(ed.scheduledAt).toISOString()) : 'Imediato';
+
+  // X131 — o público do resumo vem do SERVIDOR (a mesma RPC que decide o disparo), nunca de
+  // contagem local. Sem recorte consultável (origem sem filtro, segmento não escolhido, regras
+  // incompletas) o resumo é "indisponível" e mostra "—", nunca um "0" que pareça contagem real.
+  const completeRules = useMemo(() => completedRules(ed.audienceRules ?? { groups: [] }), [ed.audienceRules]);
+  const hasRules = completeRules.groups.some((group) => group.rules.length > 0);
+  const summarySegmentIds = ed.audienceSource === 'segment' ? ed.segmentIds : [];
+  const hasSegments = summarySegmentIds.length > 0;
+  const summaryEnabled = (ed.audienceSource === 'contacts' && hasRules) || hasSegments;
+  const summary = useTalkXCampaignSummary({
+    rules: ed.audienceSource === 'contacts' ? completeRules : null,
+    segmentIds: hasSegments ? summarySegmentIds : null,
+    enabled: summaryEnabled,
+  });
+  const manualCount = ed.audienceSource === 'contacts' ? ed.selectedContacts.length : 0;
+  // Seleção manual + regras: o disparo manda `contact_ids` e o servidor conta só as regras, então o
+  // número dele não é o público desta campanha. Sem regras, o público é a própria seleção.
+  const manualNarrows = manualCount > 0 && hasRules;
+  const NO_VALUE = '—';
+  let totalValue = NO_VALUE;
+  let eligibleValue = NO_VALUE;
+  let blockedValue = NO_VALUE;
+  let eligibleSub: string | undefined;
+  let blockedSub: string | undefined;
+  if (manualNarrows) {
+    // fica tudo "—": nenhum número do servidor vale aqui
+  } else if (summaryEnabled) {
+    if (summary.isLoading) {
+      totalValue = '…'; eligibleValue = '…'; blockedValue = '…';
+    } else if (!summary.isError) {
+      totalValue = fmtInt(summary.total);
+      eligibleValue = fmtInt(summary.eligible);
+      blockedValue = fmtInt(summary.suppressed);
+      eligibleSub = summary.total > 0 ? fmtPct(summary.eligible, summary.total) : undefined;
+      blockedSub = summary.total > 0 ? fmtPct(summary.suppressed, summary.total) : undefined;
+    }
+  } else if (manualCount > 0) {
+    totalValue = fmtInt(manualCount);
+  }
   return (
     <div className="space-y-4 min-w-0">
       <RailCard icon={Zap} title="Resumo da campanha" subtitle="Confira os detalhes da sua campanha antes de continuar.">
         <div className="grid grid-cols-2 gap-2.5">
-          <StatTile icon={Users} color="blue" label="Público total (estimado)" value={fmtInt(ed.audienceTotal)} />
-          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={fmtInt(ed.eligibleCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.eligibleCount, ed.audienceTotal) : undefined} subTone="text-dash-green" />
-          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={fmtInt(ed.suppressedCount)} sub={ed.audienceTotal > 0 ? fmtPct(ed.suppressedCount, ed.audienceTotal) : undefined} subTone="text-dash-red" />
+          <StatTile icon={Users} color="blue" label="Público total (estimado)" value={totalValue} />
+          <StatTile icon={Check} color="green" label="Elegíveis para envio" value={eligibleValue} sub={eligibleSub} subTone="text-dash-green" />
+          <StatTile icon={Ban} color="red" label="Bloqueados por supressão" value={blockedValue} sub={blockedSub} subTone="text-dash-red" />
           <StatTile icon={CalendarDays} color="violet" label="Início" value={start === 'Imediato' ? 'Imediato' : start.split(',')[0]} sub={start === 'Imediato' ? 'ao lançar' : start.split(',')[1]?.trim()} />
           <StatTile icon={Clock} color="amber" label="Duração estimada" value={ed.estimatedTime ?? '—'} sub={`~${ed.messagesPerMinute} msg/min`} />
           <StatTile icon={MessageSquare} color="green" label="Canal" value="WhatsApp" sub={ed.hasMedia ? `Texto + ${ed.mediaType}` : 'Mensagem única'} />
