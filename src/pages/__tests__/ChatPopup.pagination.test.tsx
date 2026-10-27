@@ -31,17 +31,22 @@ const ALTURA_JANELA = 600;
 /** Mede o contêiner de rolagem como janela; as linhas ficam na estimativa. */
 function medirLayout() {
   const proto = HTMLElement.prototype;
-  const original = Object.getOwnPropertyDescriptor(proto, 'offsetHeight');
-  Object.defineProperty(proto, 'offsetHeight', {
-    configurable: true,
-    get(this: HTMLElement) {
-      return this.getAttribute('role') === 'log' ? ALTURA_JANELA : ALTURA_ESTIMADA;
-    },
-  });
+  const originalOffsetHeight = Object.getOwnPropertyDescriptor(proto, 'offsetHeight');
+  const originalClientHeight = Object.getOwnPropertyDescriptor(proto, 'clientHeight');
+  const heightGetter = function (this: HTMLElement) {
+    return this.getAttribute('role') === 'log' ? ALTURA_JANELA : ALTURA_ESTIMADA;
+  };
+  // virtual-core reads offsetHeight for item measurement and clientHeight for
+  // the scroll-container viewport (observeElementRect → getRect). Both need a
+  // non-zero value so the virtualizer renders visible rows in jsdom.
+  Object.defineProperty(proto, 'offsetHeight', { configurable: true, get: heightGetter });
+  Object.defineProperty(proto, 'clientHeight', { configurable: true, get: heightGetter });
   return {
     mockRestore() {
-      if (original) Object.defineProperty(proto, 'offsetHeight', original);
+      if (originalOffsetHeight) Object.defineProperty(proto, 'offsetHeight', originalOffsetHeight);
       else delete (proto as unknown as Record<string, unknown>).offsetHeight;
+      if (originalClientHeight) Object.defineProperty(proto, 'clientHeight', originalClientHeight);
+      else delete (proto as unknown as Record<string, unknown>).clientHeight;
     },
   };
 }

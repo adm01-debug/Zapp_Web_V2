@@ -54,6 +54,7 @@ vi.mock('../useAdminData', () => ({
     full: { label: 'Completo', description: '' },
   },
   AUDIT_PAGE_SIZE: 50,
+  MIN_PASSWORD_LENGTH: 8,
 }));
 
 import { AdminView } from '../AdminView';
