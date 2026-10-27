@@ -1,4 +1,5 @@
 import { LazyMotion, MotionConfig } from "framer-motion";
+import type { FeatureBundle } from "framer-motion";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "@/hooks/auth/useAuth";
@@ -20,7 +21,10 @@ const MAX_RETRIES = 3;
 
 // Carrega as features de animacao de forma assincrona: o motor do framer-motion
 // (framer-motion/dom, ~38 KB gzip) nao entra no bundle inicial.
-const loadFeatures = () => import("framer-motion/dom").then((r) => r.default);
+// Cast necessario: framer-motion/dom exporta o feature set como default mas
+// os tipos declarados do pacote nao incluem 'renderer' diretamente.
+const loadFeatures = (): Promise<FeatureBundle> =>
+  import("framer-motion/dom").then((r) => r.default as unknown as FeatureBundle);
 
 /**
  * Tela minima de erro do nivel mais externo.
