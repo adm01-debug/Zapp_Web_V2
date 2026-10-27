@@ -30,7 +30,10 @@ export interface OfflineQueuedMessage {
   caption: string | null;
   replyToId: string | null;
   whatsappConnectionId: string | null;
-  /** Atendente dono do item: a drenagem só processa mensagens do usuário atual. */
+  /**
+   * Atendente dono do item: a drenagem só processa mensagens do usuário atual. Item
+   * sem dono (gravado antes deste campo existir) segue o comportamento antigo e drena.
+   */
   userId?: string;
   /** Ordem de drenagem. Sempre único e crescente (a fila respeita a ordem de composição). */
   enqueuedAt: number;
@@ -64,6 +67,12 @@ export interface OfflineQueueDrainResult {
 export interface OfflineQueueDrainOptions {
   /** Chamado quando a drenagem falha (sem mensagem quando a leitura da fila falha). */
   onError?: OfflineQueueErrorHandler;
+  /**
+   * Filtro de entrega: mensagem que NÃO passa fica intocada na fila (sem tentativa,
+   * sem baixa, sem contar como enviada) e não interrompe as demais. É o que impede
+   * o texto de um atendente de sair pela sessão de outro na mesma máquina.
+   */
+  shouldDeliver?: (message: OfflineQueuedMessage) => boolean;
 }
 
 /** Handler de erro da fila: recebe a mensagem quando a falha foi da entrega dela. */
@@ -233,6 +242,7 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
       }
       commitSnapshot(pending.length);
       for (const message of pending) {
+        if (drainOptions.shouldDeliver && !drainOptions.shouldDeliver(message)) continue;
         try {
           await driver.put({ ...message, attempts: message.attempts + 1 });
           await deliver(message);
@@ -338,12 +348,16 @@ export type OnlineScope = Pick<Window, 'addEventListener' | 'removeEventListener
 export function drainOfflineQueueOnReconnect(
   queue: OfflineQueue,
   deliver: (message: OfflineQueuedMessage) => Promise<void>,
-  options: { scope?: OnlineScope | null; onError?: OfflineQueueErrorHandler } = {},
+  options: {
+    scope?: OnlineScope | null;
+    onError?: OfflineQueueErrorHandler;
+    shouldDeliver?: (message: OfflineQueuedMessage) => boolean;
+  } = {},
 ): () => void {
   const scope = options.scope !== undefined ? options.scope : typeof window === 'undefined' ? null : window;
   if (!scope) return () => {};
   const handleOnline = () => {
-    void queue.drain(deliver, { onError: options.onError });
+    void queue.drain(deliver, { onError: options.onError, shouldDeliver: options.shouldDeliver });
   };
   scope.addEventListener('online', handleOnline);
   return () => scope.removeEventListener('online', handleOnline);
@@ -364,9 +378,13 @@ export function drainOfflineQueueOnReconnect(
 export function drainOfflineQueueOnOpen(
   queue: OfflineQueue,
   deliver: (message: OfflineQueuedMessage) => Promise<void>,
-  options: { online?: boolean; onError?: OfflineQueueErrorHandler } = {},
+  options: {
+    online?: boolean;
+    onError?: OfflineQueueErrorHandler;
+    shouldDeliver?: (message: OfflineQueuedMessage) => boolean;
+  } = {},
 ): Promise<OfflineQueueDrainResult | null> {
   const online = options.online ?? (typeof navigator === 'undefined' ? true : navigator.onLine !== false);
   if (!online) return Promise.resolve(null);
-  return queue.drain(deliver, { onError: options.onError });
+  return queue.drain(deliver, { onError: options.onError, shouldDeliver: options.shouldDeliver });
 }

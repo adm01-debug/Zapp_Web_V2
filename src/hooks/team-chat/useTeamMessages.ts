@@ -44,10 +44,22 @@ function toTeamMessage(row: TeamMessagePageRow): TeamMessage {
   };
 }
 
-export function useTeamMessages(conversationId: string | null) {
+/**
+ * Evento de edição/exclusão vindo do realtime. Quem guarda mensagens FORA da página
+ * corrente (as "antigas" do painel) usa isto para reconciliar o que a invalidação da
+ * página não alcança.
+ */
+export type TeamMessageEvent =
+  | { type: 'update'; id: string; content: string; is_edited: boolean; updated_at: string }
+  | { type: 'delete'; id: string };
+
+export function useTeamMessages(conversationId: string | null, onEvent?: (event: TeamMessageEvent) => void) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const markedRef = useRef<string | null>(null);
+  // Ref para o canal realtime não reinscrever a cada render do chamador.
+  const onEventRef = useRef(onEvent);
+  useEffect(() => { onEventRef.current = onEvent; }, [onEvent]);
 
   const query = useQuery({
     queryKey: queryKeys.messages(conversationId),
@@ -108,7 +120,18 @@ export function useTeamMessages(conversationId: string | null) {
     let jaInscrito = false;
     const channel = supabase
       .channel(`team-messages-${conversationId}` + uniqueRealtimeTopic(''))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, revalidar)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
+        revalidar();
+        const aviso = onEventRef.current;
+        if (!aviso) return;
+        if (payload.eventType === 'UPDATE') {
+          const novo = payload.new as { id: string; content?: string | null; is_edited?: boolean | null; updated_at: string };
+          aviso({ type: 'update', id: novo.id, content: novo.content ?? '', is_edited: novo.is_edited ?? false, updated_at: novo.updated_at });
+        } else if (payload.eventType === 'DELETE') {
+          const antigo = payload.old as { id?: string };
+          if (antigo.id) aviso({ type: 'delete', id: antigo.id });
+        }
+      })
       .subscribe((status) => {
         // A queda do canal não avisa: o que ficou em memória envelhece. Só na
         // RE-inscrição (depois da primeira) a página corrente é refeita.
@@ -166,5 +189,5 @@ export function useTeamMessages(conversationId: string | null) {
     return () => { cancelado = true; };
   }, [conversationId, profile, pagina]);
 
-  return { messages, isLoading: query.isLoading };
+  return { messages, isLoading: query.isLoading, isError: query.isError, refetch: query.refetch };
 }
