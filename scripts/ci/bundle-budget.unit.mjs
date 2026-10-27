@@ -6,11 +6,6 @@ import path from "node:path";
 
 import { evaluate, extractInitialAssets, main, measure } from "./bundle-budget.mjs";
 
-// `node --test` roda este .mjs direto, sem transpilar TypeScript, entao nao da
-// para importar `src/lib/secureRandom.ts` (S2245 fora do src cai como
-// javascript:S2245). O `crypto` global (Web Crypto, Node 18+) entrega o mesmo
-// byte uniforme 0-255 que o sorteio pseudoaleatorio anterior produzia, so que sem
-// o gerador previsivel. Uma chamada por byte, mesma quantidade de sorteios.
 const randomByte = () => crypto.getRandomValues(new Uint8Array(1))[0];
 
 const html = [
@@ -37,7 +32,6 @@ function fixture(sizeKB) {
   const dir = mkdtempSync(path.join(tmpdir(), "bundle-budget-"));
   fixtureDirs.push(dir);
   mkdirSync(path.join(dir, "assets"));
-  // Conteudo aleatorio nao comprime: gzip ~= tamanho bruto.
   const noise = Buffer.from(Array.from({ length: sizeKB * 1024 }, () => randomByte()));
   const secondNoise = Buffer.from(Array.from({ length: sizeKB * 1024 }, () => randomByte()));
   writeFileSync(path.join(dir, "assets", "index-abc.js"), noise);
@@ -88,18 +82,8 @@ test("main retorna 2 sem dist", () => {
   assert.equal(main(["--dist", dir], dir), 2);
 });
 
-// ── Guarda da regra de chunking (SL-103B) ─────────────────────────────────────
-// O entry alcanca o grupo vendor-ui estaticamente (Radix), entao todo modulo que
-// cai nesse grupo vira peso de first paint mesmo sem uso inicial — foi assim que
-// o runtime de animacao (framer-motion) entrou no pacote inicial. Ele tem grupo
-// proprio (vendor-motion) e passa a seguir a alcancabilidade dos importadores.
-// A guarda le as regras REAIS de vite.config.ts e as aplica a ids de modulo, em
-// vez de procurar texto: com a regra antiga (framer-motion dentro do vendor-ui)
-// os casos abaixo ficam vermelhos.
-
 const VITE_CONFIG = new URL("../../vite.config.ts", import.meta.url);
 
-/** Le o bloco `codeSplitting.groups` de vite.config.ts como { name, priority, test }. */
 export function lerGruposDeChunking(fonte) {
   const abertura = fonte.indexOf("groups: [");
   if (abertura < 0) throw new Error("vite.config.ts: bloco codeSplitting.groups nao encontrado");
@@ -134,20 +118,12 @@ test("le as regras reais de chunking do vite.config.ts", () => {
 test("framer-motion fica em grupo proprio, fora do vendor-ui do Radix", () => {
   const framerMotion = idModulo("framer-motion/dist/es/index.mjs");
   const capturas = gruposQueCapturam(framerMotion);
-  assert.equal(
-    capturas.length,
-    1,
-    `framer-motion deveria ser reivindicado por exatamente 1 grupo; veio: ${capturas.map((grupo) => grupo.name).join(", ") || "nenhum"}`,
-  );
+  assert.equal(capturas.length, 1, `framer-motion deveria ser reivindicado por exatamente 1 grupo; veio: ${capturas.map((grupo) => grupo.name).join(", ") || "nenhum"}`);
   const nome = capturas[0].name;
   assert.notEqual(nome, "vendor-ui", "framer-motion voltou para o mesmo chunk do Radix (peso de first paint)");
-
-  // O vendor-ui continua dono do Radix e nao pode reivindicar o runtime de animacao.
   const vendorUi = gruposDeChunking.find((grupo) => grupo.name === "vendor-ui");
   assert.equal(vendorUi.test.test(framerMotion), false);
   assert.equal(vendorUi.test.test(idModulo("@radix-ui/react-dialog/dist/index.mjs")), true);
-
-  // As dependencias do runtime acompanham o mesmo grupo.
   for (const dependencia of ["motion-dom/dist/index.mjs", "motion-utils/dist/index.mjs"]) {
     const capturadas = gruposQueCapturam(idModulo(dependencia));
     assert.equal(capturadas.length, 1, `${dependencia}: ${capturadas.length} grupo(s)`);
@@ -160,49 +136,24 @@ test("o grupo do runtime de animacao nao captura pacotes vizinhos por nome parec
   const falsos = ["framer-motion-extra/index.mjs", "meu-framer-motion/index.mjs", "@framer-motion/x/index.mjs"];
   for (const falso of falsos) {
     const capturados = gruposQueCapturam(idModulo(falso)).map((grupo) => grupo.name);
-    assert.equal(
-      capturados.includes(nome),
-      false,
-      `${falso} nao pode ser capturado por ${nome} (veio: ${capturados.join(", ") || "nenhum"})`,
-    );
+    assert.equal(capturados.includes(nome), false, `${falso} nao pode ser capturado por ${nome} (veio: ${capturados.join(", ") || "nenhum"})`);
   }
 });
 
-// ── Ratchet do teto do bundle inicial (SL-103) ────────────────────────────────
-// O teto de `initial-js` mora em performance-budget.json e o gate le o teto DO
-// PROPRIO JSON (bundle-budget.mjs -> evaluate compara o medido com o numero que
-// estiver la). Consequencia: subir de volta o teto antigo (341 KB) e um commit que
-// passa no CI, porque um teto 341 aceita um bundle de 341. Esta checagem trava o
-// teto no valor combinado medido em 2026-10-26 (historico: 292 KB (SL-103,
-// 2026-10-12) -> 300 -> 370 KB; o salto de 300->370 foi causado pelo MotionConfig
-// sincrono no AppProviders (A11Y global, lote 880, 2026-10-16) que trouxe
-// vendor-motion de volta ao grafo inicial; meta de retorno a 300 KB em SL-103D),
-// FORA do arquivo que ele vigia — com o teto acima de 370 ela fica vermelha.
-const TETO_INITIAL_JS_KB = 370;
+const TETO_INITIAL_JS_KB = 325;
 const ORCAMENTO_VERSIONADO = JSON.parse(
   readFileSync(new URL("../../performance-budget.json", import.meta.url), "utf8"),
 );
 
-test("o gate versionado corta o bundle inicial nos 370 KB combinados (sincronizado com nova medicao 2026-10-26)", () => {
-  // Chama o gate de verdade (evaluate) com o orcamento de verdade (o JSON que main
-  // le). Tabela de limites: exato, exato+0,1 e acima do teto atual. Se alguem
-  // devolver o teto para um valor acima de 370 KB, os dois ultimos casos deixam de
-  // reprovar e o teste fica vermelho com "teto frouxo/antigo".
+test("o gate versionado corta o bundle inicial nos 325 KB (LazyMotion 26/10, nao no teto antigo de 341)", () => {
   const budgets = ORCAMENTO_VERSIONADO.budgets ?? {};
   const reprovaInitialJs = (jsKB) =>
     evaluate({ jsKB, cssKB: 0, largestChunkKB: 0, totalAssetsKB: 0 }, budgets)
       .some((falha) => falha.startsWith("initial-js:"));
-  assert.equal(reprovaInitialJs(370), false, "limite exato: 370 KB gzip deveria passar");
-  assert.equal(reprovaInitialJs(370.1), true, "limite+0,1 KB gzip deveria reprovar");
-  assert.equal(reprovaInitialJs(500), true, "teto frouxo/antigo: 500 KB gzip deveria reprovar");
-
-  // A tabela acima sozinha cobre qualquer afrouxamento > 0,1 KB; este assert prende
-  // o valor versionado no combinado para o relato e para o diff do teto.
+  assert.equal(reprovaInitialJs(325), false, "limite exato: 325 KB gzip deveria passar");
+  assert.equal(reprovaInitialJs(325.1), true, "limite+0,1 KB gzip deveria reprovar");
+  assert.equal(reprovaInitialJs(341), true, "teto frouxo/antigo: 341 KB gzip (o valor de antes) caberia");
   const teto = budgets["initial-js"]?.maxKB;
-  assert.equal(typeof teto, "number", "performance-budget.json precisa de budgets[\"initial-js\"].maxKB numerico");
-  assert.ok(
-    teto <= TETO_INITIAL_JS_KB,
-    `teto frouxo/antigo: initial-js.maxKB = ${teto} KB supera os ${TETO_INITIAL_JS_KB} KB combinados`
-      + " — o gate le este numero, entao subir o teto faz o CI passar sem o bundle caber; baixe o teto (ou prove nova medicao)",
-  );
+  assert.equal(typeof teto, "number", 'performance-budget.json precisa de budgets["initial-js"].maxKB numerico');
+  assert.ok(teto <= TETO_INITIAL_JS_KB, `teto frouxo/antigo: initial-js.maxKB = ${teto} KB supera os ${TETO_INITIAL_JS_KB} KB combinados — o gate le este numero, entao subir o teto faz o CI passar sem o bundle caber; baixe o teto (ou prove nova medicao)`);
 });
