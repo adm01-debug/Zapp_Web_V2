@@ -1202,6 +1202,10 @@ jobs:
       - name: Simular contrato de seguranca do WhatsApp de departamento (TC-005)
         env:
           TC005_WHATSAPP_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # E47: SKIP_DOCKER_SHIM=1 — o Bloco C executa rollback que reverte
+          # department_audit_logs_action_check para excluir 'whatsapp_updated';
+          # no container compartilhado isso contamina TC-009 que roda logo depois.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-department-whatsapp-safe-config.test.sh
 
       # N-071: a RPC request_department_access cria notificacoes para admins/supervisores
@@ -1212,6 +1216,7 @@ jobs:
       - name: Simular pedido de acesso a departamento (N-071)
         env:
           REQUEST_DEPT_ACCESS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/request-department-access.test.sh
 
       # TC-009 / R2-DB-011 (item 164, P2): recibos e reacoes nao forcavam `conversation_id`
@@ -1221,6 +1226,7 @@ jobs:
       # aplica a migration e o bloco B prova a correcao.
       - name: Simular conversation_id derivado da mensagem em recibos e reacoes (TC-009)
         env:
+          SKIP_DOCKER_SHIM: "1"
           TEAM_CID_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-receipts-reactions-conversation-id.test.sh
       # TC-004 (P1): leave_team_group/remove_team_member usavam a coluna inexistente
