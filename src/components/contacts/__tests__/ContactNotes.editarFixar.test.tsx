@@ -22,16 +22,18 @@ const h = vi.hoisted(() => ({
   myProfileId: 'profile-me' as string | null,
   notes: [] as Array<Record<string, unknown>>,
   profiles: [] as Array<Record<string, unknown>>,
-  /** Linhas devolvidas pelo UPDATE ... select('id') — vazio = nada foi alterado. */
+  /** Vazio = simula PGRST116 (zero linhas afetadas pelo .single()). */
   updateRows: [{ id: 'x' }] as Array<{ id: string }>,
   updateCalls: [] as Array<{ id: string; patch: Record<string, unknown> }>,
 }));
+const useToastSpy = vi.hoisted(() => vi.fn());
 
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: h.myProfileId ? { id: h.myProfileId } : null }),
 }));
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock('@/hooks/ui/use-toast', () => ({ toast: useToastSpy, useToast: () => ({ toast: useToastSpy }) }));
 
 vi.mock('@/integrations/supabase/client', () => {
   const buildQuery = (table: string) => {
@@ -61,8 +63,16 @@ vi.mock('@/integrations/supabase/client', () => {
     q.then = (onOk: (v: unknown) => unknown, onErr?: (e: unknown) => unknown) => {
       let result: unknown;
       if (q._op === 'update') {
-        h.updateCalls.push({ id: String((q._filters as Record<string, unknown>).id), patch: q._patch as Record<string, unknown> });
-        result = { data: h.updateRows, error: null };
+        const id = String((q._filters as Record<string, unknown>).id);
+        const patch = q._patch as Record<string, unknown>;
+        h.updateCalls.push({ id, patch });
+        if (h.updateRows.length === 0) {
+          // Simula .single() com 0 linhas afetadas (RLS bloqueou) → PGRST116
+          result = { data: null, error: { message: 'no rows returned', code: 'PGRST116' } };
+        } else {
+          h.notes = h.notes.map((n) => (n.id === id ? { ...n, ...patch } : n));
+          result = { data: h.notes.find((n) => n.id === id) ?? null, error: null };
+        }
       } else if (table === 'contact_notes') {
         result = { data: h.notes, error: null };
       } else {
@@ -250,7 +260,7 @@ describe('ContactNotes · editar e fixar (ficha do contato)', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Editar nota' }), { target: { value: 'Texto novo'} });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
-    await waitFor(() => expect(toastError).toHaveBeenCalled());
+    await waitFor(() => expect(useToastSpy).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' })));
     expect(toastSuccess).not.toHaveBeenCalled();
     expect(h.updateCalls).toEqual([{ id: 'nota-minha', patch: { content: 'Texto novo' } }]);
     // Nada mudou no estado: o editor segue aberto com o rascunho para o autor
