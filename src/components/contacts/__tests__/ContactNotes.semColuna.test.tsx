@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
 import { ContactNotes } from '../ContactNotes';
-import { TestQueryWrapper } from '@/test/mocks/queryClient';
 
 /**
  * Compatibilidade de deploy (C098): o front vai ao ar antes da migration que cria
@@ -89,8 +90,15 @@ const COM_COLUNA = () => [
 const cartao = (t: string) => screen.getByText(t).closest('.group') as HTMLElement;
 const ordem = () => Array.from(document.querySelectorAll<HTMLElement>('.group')).map((e) => e.textContent ?? '');
 
+function wrapper({ children }: { children: React.ReactNode }) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } },
+  });
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+
 async function abrir() {
-  render(<ContactNotes contactId="c1" />, { wrapper: TestQueryWrapper });
+  render(<ContactNotes contactId="c1" />, { wrapper });
   await screen.findByText('Nota nova');
 }
 
