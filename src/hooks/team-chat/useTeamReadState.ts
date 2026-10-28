@@ -100,7 +100,6 @@ export function useTeamReadState(
   });
 
   useEffect(() => {
-    const hasOwnMessages = ownMessageIds.length > 0;
     if (!conversationId || !hasOwnMessages) return;
     const channel = supabase
       .channel(`team-read-state-${conversationId}`)
@@ -115,7 +114,7 @@ export function useTeamReadState(
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [conversationId, ownMessageIds.length, queryClient]);
+  }, [conversationId, hasOwnMessages, queryClient]);
 
   return { readStates: query.data ?? SEM_LEITURA, isLoading: query.isLoading };
 }
