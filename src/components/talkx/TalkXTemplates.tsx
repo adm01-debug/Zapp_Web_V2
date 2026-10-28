@@ -354,7 +354,7 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
         <RailCard
           icon={TrendingUp}
           color="green"
-          title="Mais respondidos"
+          title="Mais convertidos"
           subtitle="Templates com melhor taxa de resposta."
           right={<button type="button" onClick={() => { setOrderByReply(true); setGalleryMode('list'); setPage(1); }} className="h-7 px-2 rounded-md text-2xs font-medium border border-border/60 bg-input/40 hover:bg-muted/50 shrink-0">Ver todos</button>}
         >
