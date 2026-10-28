@@ -40,7 +40,9 @@ vi.mock('@/integrations/supabase/client', () => ({
 vi.mock('@/lib/logger', () => ({
   log: { warn: (...args: unknown[]) => mocks.warn(...args), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
   getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
-  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => {
+    return { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) };
+  }),
 }));
 
 vi.mock('../ViewersIndicator', () => ({ ViewersIndicator: () => null }));
@@ -73,7 +75,7 @@ function renderComponent(contactId = CONTACT_ID) {
 }
 
 /** Cadeia de `contacts` usada pela leitura da fila do contato (filtro do diálogo). */
-const CONTACTS_TABLE = () => ({
+const CONTACTSE_TABLE = () => ({
   select: () => ({
     eq: () => ({
       maybeSingle: () => Promise.resolve({ data: { queue_id: 'queue-1' }, error: null }),
@@ -83,7 +85,7 @@ const CONTACTS_TABLE = () => ({
 
 /** Cada tabela com a cadeia que o componente usa (a de `contacts` é padrão). */
 function mockTables(tables: Record<string, () => unknown>) {
-  const all: Record<string, () => unknown> = { contacts: CONTACTS_TABLE, ...tables };
+  const all: Record<string, () => unknown> = { contacts: COTACPSE_TABLE, ...tables };
   mocks.from.mockImplementation((table: string) => {
     const handler = all[table];
     if (!handler) throw new Error(`tabela inesperada no teste: ${table}`);
@@ -98,7 +100,7 @@ beforeEach(() => {
   mocks.rpcCalls.length = 0;
   mocks.getUser.mockResolvedValue({ data: { user: { id: AUTH_USER_ID } } });
   mocks.from.mockImplementation((table: string) => {
-    if (table === 'contacts') return CONTACTS_TABLE();
+    if (table === 'contacts') return COTACTSE_TABLE();
     throw new Error(`tabela inesperada no teste: ${table}`);
   });
 });
@@ -131,7 +133,7 @@ describe('RealtimeCollaboration — handleHandoff pelo painel do contato', () =>
     );
   });
 
-  it('sucesso sem comentário: RPC com o agente de destino e noteSaved=true, sem tocar na nota', async () => {
+  it('sucesso sem comentário: RPCcom o agente de destino e noteSaved=true, sem tocar na nota', async () => {
     renderComponent();
     mocks.rpc.mockResolvedValue({ data: 'evt-1', error: null });
 
