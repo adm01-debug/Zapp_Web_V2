@@ -264,6 +264,8 @@ export function FilesContent({
       selectionMode={selection.mode}
       selectedIds={selection.selectedIds}
       containerWidth={containerWidth}
+      senderProfiles={senderProfiles}
+      currentUserId={currentUserId}
       onSelect={actions.onOpenDetails}
       onToggleSelection={selection.toggle}
       onPreview={actions.onPreview}
@@ -278,6 +280,8 @@ export function FilesContent({
       containerWidth={containerWidth}
       sort={sort}
       onSortChange={onSortChange}
+      senderProfiles={senderProfiles}
+      currentUserId={currentUserId}
       onSelect={actions.onOpenDetails}
       onToggleSelection={selection.toggle}
       onPreview={actions.onPreview}
@@ -297,6 +301,7 @@ export function FilesContent({
           downloadAllowed={downloadAllowed}
           senderProfiles={senderProfiles}
           currentUserId={currentUserId}
+          onOpenInChat={actions.onOpenInChat}
           onSelect={() => actions.onOpenDetails(item)}
           onToggleSelection={() => selection.toggle(item.id)}
           onPreview={() => actions.onPreview(item)}

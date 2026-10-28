@@ -65,14 +65,23 @@ export function FileCard({
   const acao = selectionMode ? onToggleSelection : undefined;
 
   const handleDownload = async () => {
-    const resp = await fetch(item.url ?? item.signedUrl ?? '');
-    const blob = await resp.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = objectUrl;
-    a.download = item.displayName;
-    a.click();
-    URL.revokeObjectURL(objectUrl);
+    const url = item.signedUrl ?? item.url ?? '';
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        toast.error('Não foi possível baixar o arquivo', { description: `Erro ${resp.status}` });
+        return;
+      }
+      const blob = await resp.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = item.filename || item.displayName;
+      a.click();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      toast.error('Não foi possível baixar o arquivo');
+    }
   };
 
   return (
