@@ -69,7 +69,7 @@ As 21 cópias somam **157.407 arquivos úteis**. A maioria é idêntica à `main
 | Item/grupo em B | Evidência de comparação | Funcionalidade | Decisão proposta | Prioridade |
 |---|---|---|---|---|
 | `Zapp_Web_V2-anexos/wip/telefonia-lacunas-files/` (3 testes e 1 script) | Script igual à `main`; testes com SHA diferente e a `main` maior: `calls-access` 14 vs 5 casos `it`, `CallEngine` 39 vs 12, `useSipClient` 54 vs 28 | Telefonia | `DESCARTAR` como versão anterior após checar se há asserção exclusiva | P2 |
-| `Zapp_Web_V2-anexos/wip/patch-notify-due-tasks/` (2 SQL e 1 teste) | Sem SHA igual à `main` no levantamento | Autorização de lembretes | `INTEGRAR` se o contrato atual ainda precisar da correção | P0 |
+| `Zapp_Web_V2-anexos/wip/patch-notify-due-tasks/` (2 SQL e 1 teste) | Sem SHA igual, mas equivalência funcional confirmada nas migrations dos PRs #1273/#1274 e em dois testes locais de Postgres descartável; originais arquivados com manifesto | Autorização de lembretes | `JÁ ESTÁ NA MAIN` | P0 |
 | `Zapp_Web_V2-anexos/wip/src/components/inbox/location-picker/__tests__/useAddressAutocomplete.e80-load.test.tsx` | Sem SHA igual à `main` | Localização no Inbox | `INTEGRAR` após rodar/verificar teste | P0 |
 | `Zapp_Web_V2-anexos/wip/recuperados/` (`useDiagnosticsData` stash e `EditQueueDialog.bak`) | Sem equivalente exato na `main` | Diagnóstico/filas | `TERMINAR` avaliação de recuperação | P1 |
 | `Zapp_Web_V2-anexos/wip/x006-wip/` | Dois arquivos com SHA já existente na `main` | Talk X | `JÁ ESTÁ NA MAIN` | P3 |
