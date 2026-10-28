@@ -43,6 +43,23 @@ const PERFIL_FAKE = {
   role: 'admin',
 };
 
+/** O boot atual exige uma matriz de permissões para liberar a rota protegida. */
+const BOOT_FAKE = {
+  profile: { id: PERFIL_FAKE.id, name: PERFIL_FAKE.name },
+  roles: ['admin'],
+  permissions: [{ id: 'perm-multiplix', name: 'multiplix.dispatch.create', description: null, category: 'geral' }],
+  role_permissions: [{
+    role: 'admin',
+    permission_id: 'perm-multiplix',
+    permission: { id: 'perm-multiplix', name: 'multiplix.dispatch.create', description: null, category: 'geral' },
+  }],
+  global_settings: [],
+  user_settings: null,
+  departments: [],
+  unread_notifications: 0,
+  fetched_at: '2026-10-15T12:00:00.000Z',
+};
+
 /** Fixture JSON de resposta da Mapbox (E68), sem `access_token`. */
 export function fixtureMapbox(nome: string): unknown {
   return JSON.parse(readFileSync(join(FIXTURES_MAPBOX, nome), 'utf8')) as unknown;
@@ -73,6 +90,8 @@ export async function mockAppShell(page: Page, registro: Registro): Promise<void
   await page.route(/\/rest\/v1\/rpc\/user_has_permission/, (route) => json(route, true));
   await page.route(/\/rest\/v1\/rpc\/count_searchbox_sessions_this_month/, (route) => json(route, 0));
   await page.route(/\/rest\/v1\/rpc\/(?!user_has_permission|count_searchbox_sessions_this_month)/, (route) => json(route, null));
+  // A última rota registrada vence: responder o bootstrap depois do catch-all.
+  await page.route(/\/rest\/v1\/rpc\/app_bootstrap/, (route) => json(route, BOOT_FAKE));
 
   // Edge functions: só o token do Mapbox importa; o resto é bloqueado.
   await page.route(/\/functions\/v1\/get-mapbox-token/, (route) => json(route, { token: 'pk.e2e-mapa' }));
@@ -83,6 +102,8 @@ export async function mockAppShell(page: Page, registro: Registro): Promise<void
   // tolera. Interceptado aqui com o MESMO status para a spec não tocar a internet (sem
   // mudar o que o app vê: continuava 401 quando a requisição escapava).
   await page.route(/\/auth\/v1\/user/, (route) => json(route, { code: 401, msg: 'invalid JWT' }, 401));
+  // A sonda de conectividade usa no-cors e deve ficar dentro da rede mockada.
+  await page.route(/\/auth\/v1\/health/, (route) => json(route, {}));
 
   // Catch-all das leituras do app shell não cobertas acima (usa negative lookahead para
   // nunca roubar `contacts`/`messages`, que cada spec registra por conta própria).
