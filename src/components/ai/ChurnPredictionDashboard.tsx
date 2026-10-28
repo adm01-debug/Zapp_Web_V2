@@ -8,8 +8,8 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format, differenceInDays, subDays } from 'date-fns';
-import { normalizeSentiment } from '@/lib/ai-vocabulary';
+import { format, subDays } from 'date-fns';
+import { computeChurnRisk } from './churnRisk';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
@@ -67,63 +67,7 @@ export function ChurnPredictionDashboard() {
       if (error) throw error;
 
       const now = new Date();
-      const churnRisks: ChurnRisk[] = (contacts || []).map(contact => {
-        const daysSinceUpdate = differenceInDays(now, new Date(contact.updated_at));
-        const daysSinceCreation = differenceInDays(now, new Date(contact.created_at));
-        
-        // Calculate risk score based on multiple factors
-        let score = 0;
-        const reasons: string[] = [];
-
-        // Inactivity factor (max 40 points)
-        if (daysSinceUpdate > 30) {
-          score += Math.min(40, (daysSinceUpdate - 30) * 2);
-          reasons.push(`${daysSinceUpdate} dias sem interação`);
-        }
-
-        // Sentiment factor (max 30 points)
-        // Sentimento canônico (pt-BR) com tradução do legado EN na leitura
-        // (antes: `=== 'negative'`, que nunca casava com 'negativo').
-        const sentimentValue = normalizeSentiment(contact.ai_sentiment).value;
-        if (sentimentValue === 'negativo') {
-          score += 30;
-          reasons.push('Sentimento negativo detectado');
-        } else if (sentimentValue === 'neutro') {
-          score += 10;
-        }
-
-        // New contact with no follow-up (max 20 points)
-        if (daysSinceCreation < 7 && daysSinceUpdate > 3) {
-          score += 20;
-          reasons.push('Novo contato sem follow-up');
-        }
-
-        // Long-term inactive (max 10 points)
-        if (daysSinceUpdate > 60) {
-          score += 10;
-          reasons.push('Inativo por mais de 60 dias');
-        }
-
-        score = Math.min(100, score);
-        let riskLevel: ChurnRisk['riskLevel'] = 'low';
-        if (score >= 80) riskLevel = 'critical';
-        else if (score >= 60) riskLevel = 'high';
-        else if (score >= 30) riskLevel = 'medium';
-
-        if (reasons.length === 0) reasons.push('Engajamento regular');
-
-        return {
-          contactId: contact.id,
-          contactName: contact.name,
-          phone: contact.phone,
-          riskScore: score,
-          riskLevel,
-          daysSinceLastMessage: daysSinceUpdate,
-          totalMessages: 0,
-          sentiment: contact.ai_sentiment,
-          reasons,
-        };
-      });
+      const churnRisks: ChurnRisk[] = (contacts || []).map((contact) => computeChurnRisk(contact, now));
 
       // Sort by risk score descending
       churnRisks.sort((a, b) => b.riskScore - a.riskScore);
