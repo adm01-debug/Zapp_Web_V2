@@ -127,7 +127,7 @@ beforeEach(() => {
   supa.state.error = null;
 });
 
-const painel = () => screen.getByText('Mais respondidos').closest('section') as HTMLElement;
+const painel = () => screen.getByText('Mais convertidos').closest('section') as HTMLElement;
 const galeria = () => screen.getByTestId('talkx-templates-gallery');
 const nomesDaGaleria = () =>
   within(galeria()).getAllByText(/^(Oferta VIP|Pós-venda|Boas-vindas)$/)
@@ -136,7 +136,7 @@ const nomesDaGaleria = () =>
     .map((el) => el.textContent);
 
 describe('X092 — painel lateral da tela 04 (Templates)', () => {
-  it('"Mais respondidos" ranqueia por taxa de resposta, não por usos', () => {
+  it('"Mais convertidos" ranqueia por taxa de resposta, não por usos', () => {
     renderComQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
 
     // Antes: "Mais usados" por `use_count` (Boas-vindas, 90 usos, em 1º).
@@ -148,7 +148,7 @@ describe('X092 — painel lateral da tela 04 (Templates)', () => {
     ]);
   });
 
-  it('o 1º de "Mais respondidos" usa o template de MAIOR taxa (e não o mais usado)', () => {
+  it('o 1º de "Mais convertidos" usa o template de MAIOR taxa (e não o mais usado)', () => {
     const onUseTemplate = vi.fn();
     renderComQc(<TalkXTemplates onUseTemplate={onUseTemplate} />);
 

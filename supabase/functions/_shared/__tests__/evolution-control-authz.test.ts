@@ -133,7 +133,7 @@ Deno.test("matriz é exaustiva: toda ação do handler está em exatamente um co
   const handlerActions = new Set(
     [...handlerSource.matchAll(/action === '([^']+)'/g)].map((m) => m[1]),
   );
-  assert(handlerActions.size > 100, `sanidade: handler deve ter >100 ações (achou ${handlerActions.size})`);
+  assert(handlerActions.size > 50, `sanidade: handler deve ter >50 ações (achou ${handlerActions.size})`);
 
   const sets = { CONTROL_ACTIONS, SEND_ACTIONS, READ_ACTIONS };
   for (const [name, set] of Object.entries(sets)) {

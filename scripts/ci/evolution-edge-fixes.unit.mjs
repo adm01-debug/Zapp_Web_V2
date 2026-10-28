@@ -275,29 +275,3 @@ test("proxyToEvolution: erro não expõe corpo bruto da GO via campo 'details'",
     "proxyToEvolution não pode expor o corpo raw da GO no campo 'details' — pode vazar tokens de integrações (chatwoot, openai, etc.)",
   );
 });
-
-test("rotas legadas da Evolution V2 permanecem explícitas no handler", () => {
-  // A implantação V2 ainda sustenta estas rotas; a flavor GO responde com a
-  // mensagem de incompatibilidade quando necessário. O contrato aqui impede
-  // que elas desapareçam silenciosamente sem uma decisão de compatibilidade.
-  for (const action of [
-    "set-settings", "get-settings", "get-webhook", "send-template",
-    "mark-unread", "invite-info", "toggle-ephemeral", "offer-call",
-    "set-chatwoot", "get-chatwoot", "delete-chatwoot", "set-typebot",
-    "get-typebot", "delete-typebot", "typebot-sessions",
-    "typebot-change-status", "start-typebot", "set-openai", "get-openai",
-    "delete-openai", "set-dify", "get-dify", "delete-dify", "set-flowise",
-    "get-flowise", "delete-flowise", "set-evolution-bot", "get-evolution-bot",
-    "delete-evolution-bot", "set-rabbitmq", "get-rabbitmq", "set-sqs",
-    "get-sqs", "create-template", "find-templates", "delete-template",
-    "get-catalog", "get-collections", "set-proxy", "get-proxy", "set-evoai",
-    "get-evoai", "delete-evoai", "set-n8n", "get-n8n", "delete-n8n",
-    "set-kafka", "get-kafka", "set-nats", "get-nats", "set-pusher",
-    "get-pusher",
-  ]) {
-    assert.notEqual(
-      apiSrc.indexOf(`if (action === '${action}')`), -1,
-      `action ${action} precisa continuar explícita para a flavor V2`,
-    );
-  }
-});

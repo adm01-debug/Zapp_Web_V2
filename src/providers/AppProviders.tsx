@@ -8,23 +8,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeInitializer } from "@/components/ThemeInitializer";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { getLogger } from "@/lib/logger";
-import { useRef, useState, lazy, Suspense, type ReactNode } from "react";
+import { useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { QuarantineMonitorProvider } from "@/providers/QuarantineMonitorProvider";
 import { CallSessionProvider } from "@/providers/CallSessionProvider";
 
 const log = getLogger('AppProviders');
-
-// A11Y: MotionConfig com reducedMotion="user" cobre todos os consumidores de
-// motion.* abaixo. Carregado lazy para manter o framer-motion fora do bundle
-// inicial — quem anima primeiro faz o fetch; enquanto isso, children ja renderizam.
-const LazyMotionConfig = lazy(() =>
-  import('framer-motion').then((mod) => ({
-    default: ({ children }: { children: ReactNode }) => (
-      <mod.MotionConfig reducedMotion="user">{children}</mod.MotionConfig>
-    ),
-  }))
-);
 
 const MAX_RETRIES = 3;
 
@@ -141,16 +130,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
                 <ThemeInitializer />
                 <QuarantineMonitorProvider>
                   <CallSessionProvider>
-                    {/*
-                      A11Y: MotionConfig lazy — framer-motion fora do bundle
-                      inicial. Children renderizam imediatamente via fallback;
-                      reducedMotion="user" entra assim que o chunk carrega.
-                    */}
-                    <Suspense fallback={<>{children}</>}>
-                      <LazyMotionConfig>
-                        {children}
-                      </LazyMotionConfig>
-                    </Suspense>
+                    {children}
                   </CallSessionProvider>
                 </QuarantineMonitorProvider>
               </TooltipProvider>
