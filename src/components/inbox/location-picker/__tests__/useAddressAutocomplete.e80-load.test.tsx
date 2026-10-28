@@ -41,7 +41,7 @@ vi.mock('@/lib/mapboxCostGuard', () => ({
 vi.mock('@/lib/audit', () => ({ logAudit: (...args: unknown[]) => h.logAudit(...args) }));
 
 import { useAddressAutocomplete } from '../useAddressAutocomplete';
-import { resetSearchSessionForTests } from '@/lib/mapboxSession';
+import { peekSearchSession, resetSearchSessionForTests } from '@/lib/mapboxSession';
 
 const suggestionA: GeoSuggestion = { id: 'a', name: 'Rua A', address: 'Rua A, São Paulo', kind: 'street' };
 
@@ -96,5 +96,9 @@ describe('E80 — carga leve do debounce (200 teclas em 5 s)', () => {
     expect(requests).toBeLessThanOrEqual(17); // 5000 / 300 = 16,66 -> teto 17
     expect(sessionsCreated).toBe(1);
     expect(tokens.size).toBe(1);
+    const [tokenEnviado] = tokens;
+    expect(tokenEnviado).toEqual(expect.any(String));
+    expect(tokenEnviado).not.toBe('');
+    expect(tokenEnviado).toBe(peekSearchSession());
   });
 });
