@@ -62,6 +62,8 @@ beforeAll(() => {
   // nesta versao o payload do observer e ignorado.
   Object.defineProperty(HTMLElement.prototype, "clientHeight", { configurable: true, get: () => 600 });
   Object.defineProperty(HTMLElement.prototype, "offsetHeight", { configurable: true, get: () => 120 });
+  // jsdom nao implementa Element.scrollTo; ChatMessagesArea.tsx chama el.scrollTo({ top: offset })
+  (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = vi.fn();
 });
 
 vi.mock('../MessageBubble', () => ({

@@ -15,7 +15,7 @@
  *   - e a guarda de regressão do contato (usuário final), que vem por broadcast.
  */
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { Conversation, Message } from '@/types/chat';
 
@@ -177,6 +177,23 @@ vi.mock('@/services/chat.service', () => ({
 }));
 
 import { ChatPanel } from '../ChatPanel';
+
+// jsdom nao implementa ResizeObserver nem Element.scrollTo;
+// ChatMessagesArea (renderizada como real neste suite) precisa dos dois.
+beforeAll(() => {
+  class ResizeObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  (window as unknown as { ResizeObserver: typeof ResizeObserverStub }).ResizeObserver = ResizeObserverStub;
+  (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = vi.fn();
+  Object.defineProperty(Element.prototype, 'clientHeight', { get: () => 600, configurable: true });
+  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+    value: () => ({ x: 0, y: 0, width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, toJSON: () => ({}) }),
+    configurable: true,
+  });
+});
 
 /** Quem está logado nesta aba. */
 const AGENT_ANA = { id: 'user-ana', name: 'Ana Souza' };
