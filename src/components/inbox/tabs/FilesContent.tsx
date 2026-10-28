@@ -5,8 +5,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
-import { useMediaSenderProfiles } from '@/hooks/chat/useMediaSenderProfiles';
-import { useAuth } from '@/hooks/auth/useAuth';
+import type { SenderProfileMap } from '@/lib/fileSenderIdentity';
 import type { FilesSort, FilesTypeFilter, FilesViewMode } from '@/hooks/chat/useFilesViewState';
 import { FileCard } from './FileCard';
 import { FilesListView } from './FilesListView';
@@ -78,6 +77,9 @@ interface FilesContentProps {
   /** Etapa 44: erro de consulta (com lista anterior preservada). */
   isError?: boolean;
   onRetry?: () => void;
+  /** Perfis de remetentes já resolvidos pelo pai (FilesTab); evita chamar useAuth dentro do componente. */
+  senderProfiles?: SenderProfileMap;
+  currentUserId?: string | null;
 }
 
 const SKELETON_ROWS = 6;
@@ -202,9 +204,9 @@ export function FilesContent({
   onClearFilter,
   isError = false,
   onRetry,
+  senderProfiles,
+  currentUserId,
 }: FilesContentProps) {
-  const { profile } = useAuth();
-  const { profiles: senderProfiles } = useMediaSenderProfiles(items.map((i) => i.agentId));
 
   // Etapa 44 — carregando inicial: skeleton do modo escolhido.
   if (loading) {
@@ -291,7 +293,7 @@ export function FilesContent({
           selectionChecked={selection.selectedIds.has(item.id)}
           effectiveColumns={effectiveColumns}
           senderProfiles={senderProfiles}
-          currentUserId={profile?.id}
+          currentUserId={currentUserId}
           onSelect={() => actions.onOpenDetails(item)}
           onToggleSelection={() => selection.toggle(item.id)}
           onPreview={() => actions.onPreview(item)}
