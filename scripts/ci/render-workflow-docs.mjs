@@ -91,6 +91,12 @@ function extrairNaoEBug(texto) {
       itens.push({ chave: m[1], descricao: m[2] });
       continue;
     }
+    // Uma linha mais indentada continua a descricao do item anterior (GA98).
+    const cont = /^#\s{5,}(\S.*?)\s*$/.exec(linha);
+    if (cont && itens.length > 0) {
+      itens[itens.length - 1].descricao += ' ' + cont[1];
+      continue;
+    }
     // Linha de comentário vazia continua; qualquer outra coisa (inclusive docs:) encerra.
     if (/^#\s*$/.test(linha)) continue;
     break;
@@ -105,6 +111,10 @@ function nomeDe(texto, arquivo) {
   return m ? m[1] : arquivo.replace(/\.yml$/, '');
 }
 
+export { extrairDocs, extrairNaoEBug };
+
+// O parser pode ser importado nos contratos sem regenerar arquivos.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
 // KPI: tenta carregar docs/ci/kpi.json; ignora silenciosamente se não existir.
 let kpi = {};
 try {
@@ -214,3 +224,4 @@ if (process.argv.includes('--check')) {
 await mkdir(dirname(README), { recursive: true });
 await writeFile(README, conteudo, 'utf8');
 console.log(`docs/ci/README.md gerado a partir de ${docs.length} workflows.`);
+}
