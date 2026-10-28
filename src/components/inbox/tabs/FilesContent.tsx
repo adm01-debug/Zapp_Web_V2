@@ -77,6 +77,7 @@ interface FilesContentProps {
   /** Etapa 44: erro de consulta (com lista anterior preservada). */
   isError?: boolean;
   onRetry?: () => void;
+  downloadAllowed?: boolean;
   /** Perfis de remetentes já resolvidos pelo pai (FilesTab); evita chamar useAuth dentro do componente. */
   senderProfiles?: SenderProfileMap;
   currentUserId?: string | null;
@@ -204,6 +205,7 @@ export function FilesContent({
   onClearFilter,
   isError = false,
   onRetry,
+  downloadAllowed,
   senderProfiles,
   currentUserId,
 }: FilesContentProps) {
@@ -292,6 +294,7 @@ export function FilesContent({
           selectionMode={selection.mode}
           selectionChecked={selection.selectedIds.has(item.id)}
           effectiveColumns={effectiveColumns}
+          downloadAllowed={downloadAllowed}
           senderProfiles={senderProfiles}
           currentUserId={currentUserId}
           onSelect={() => actions.onOpenDetails(item)}
