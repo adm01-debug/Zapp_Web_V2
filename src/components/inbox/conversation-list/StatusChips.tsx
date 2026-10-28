@@ -4,16 +4,19 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { ConversationWithMessages } from '@/hooks/chat/useRealtimeMessages';
+import type { ChipCounts } from '@/hooks/inbox/chipCounts';
 
 export type MainTab = 'open' | 'resolved' | 'search';
 export type SubTab = 'attending' | 'waiting';
 export type ChipTab = 'all' | 'unread' | 'attending' | 'waiting' | 'resolved' | 'archived';
 
-interface StatusChipsProps {
-  conversations: ConversationWithMessages[];
+type StatusChipsProps = {
   chipTab: ChipTab;
   onChipTabChange: (tab: ChipTab) => void;
-}
+} & (
+  | { counts: ChipCounts; conversations?: never }
+  | { conversations: ConversationWithMessages[]; counts?: never }
+);
 
 const COUNTER_TONE: Record<ChipTab, { active: string; inactive: string }> = {
   all: { active: 'bg-primary text-primary-foreground', inactive: 'bg-primary text-primary-foreground' },
@@ -24,18 +27,20 @@ const COUNTER_TONE: Record<ChipTab, { active: string; inactive: string }> = {
   archived: { active: 'bg-muted text-foreground', inactive: 'bg-muted text-foreground' },
 };
 
-export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusChipsProps) {
+export function StatusChips({ conversations, counts: providedCounts, chipTab, onChipTabChange }: StatusChipsProps) {
   // R2-INB-056 (#349): contacts.assigned_to é FK para public.profiles(id), que
   // é um id DIFERENTE do auth.users.id exposto em `user`. Comparar o
   // responsável com o auth id zerava "Em atendimento" (e divergia do filtro da
   // lista, que usa profileId em useInboxFilters).
   const { profile } = useAuth();
 
-  const counts = useMemo(() => {
+  const calculatedCounts = useMemo(() => {
+    if (providedCounts) return providedCounts;
+    const source = conversations ?? [];
     const profileId = profile?.id;
     // Arquivadas saem dos contadores de lista ativa: o status persiste em
     // contacts.conversation_status ('archived'), não no proxy "sem mensagens".
-    const openConversations = conversations.filter(
+    const openConversations = source.filter(
       c => c.messages.length > 0 && c.contact.conversation_status !== 'archived'
     );
 
@@ -45,8 +50,8 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
       const unreadMessages = (c.contact as unknown as { unread_messages?: number }).unread_messages ?? 0;
       return (c.unreadCount ?? 0) > 0 || unreadMessages > 0;
     });
-    const resolved = conversations.filter(c => c.messages.length === 0);
-    const archived = conversations.filter(c => c.contact.conversation_status === 'archived');
+    const resolved = source.filter(c => c.messages.length === 0);
+    const archived = source.filter(c => c.contact.conversation_status === 'archived');
 
     return {
       all: openConversations.length,
@@ -56,15 +61,15 @@ export function StatusChips({ conversations, chipTab, onChipTabChange }: StatusC
       resolved: resolved.length,
       archived: archived.length,
     };
-  }, [conversations, profile?.id]);
+  }, [conversations, providedCounts, profile?.id]);
 
   const chips: { id: ChipTab; label: string; count: number; icon?: LucideIcon }[] = [
-    { id: 'all', label: 'Todas', count: counts.all },
-    { id: 'unread', label: 'Não lidas', count: counts.unread },
-    { id: 'attending', label: 'Em atendimento', count: counts.attending },
-    { id: 'waiting', label: 'Aguardando', count: counts.waiting },
-    { id: 'resolved', label: 'Resolvidas', count: counts.resolved },
-    { id: 'archived', label: 'Arquivadas', count: counts.archived, icon: Archive },
+    { id: 'all', label: 'Todas', count: calculatedCounts.all },
+    { id: 'unread', label: 'Não lidas', count: calculatedCounts.unread },
+    { id: 'attending', label: 'Em atendimento', count: calculatedCounts.attending },
+    { id: 'waiting', label: 'Aguardando', count: calculatedCounts.waiting },
+    { id: 'resolved', label: 'Resolvidas', count: calculatedCounts.resolved },
+    { id: 'archived', label: 'Arquivadas', count: calculatedCounts.archived, icon: Archive },
   ];
 
   return (
