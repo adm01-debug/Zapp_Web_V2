@@ -257,7 +257,12 @@ export function rodarSuite({ comando = vitestBin(), argumentos = ["run", ...SUIT
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
   });
-  return { ...interpretarRodada(processo), saidaProcesso: processo?.status ?? null };
+  const resultado = interpretarRodada(processo);
+  return {
+    ...resultado,
+    saidaProcesso: processo?.status ?? null,
+    diagnostico: resultado.resumo ? null : `${processo?.stdout ?? ""}\n${processo?.stderr ?? ""}`.slice(-4000),
+  };
 }
 
 /**
@@ -451,6 +456,7 @@ function executar() {
   );
   if (baseline.estado !== ESTADOS.sobrevivente) {
     console.error("BASELINE INVÁLIDO: a suíte precisa passar SEM mutação. Nada foi medido.");
+    if (baseline.diagnostico) console.error(`Saída da suíte (últimos 4.000 caracteres):\n${baseline.diagnostico}`);
     process.exitCode = 2;
     return;
   }

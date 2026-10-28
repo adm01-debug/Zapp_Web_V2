@@ -109,9 +109,10 @@ test('INF-019.7 rodada verde (saída 0, nada vermelho) é SOBREVIVENTE', () => {
 });
 
 test('INF-019.8 spawn real: processo que sai 1 sem rodar teste não vira mutante morto', () => {
-  const r = rodarSuite({ comando: process.execPath, argumentos: ['-e', 'process.exit(1)'] });
+  const r = rodarSuite({ comando: process.execPath, argumentos: ['-e', "process.stderr.write('falha de inicialização'); process.exit(1)"] });
   assert.equal(r.estado, ESTADOS.infra);
   assert.notEqual(r.estado, ESTADOS.morto);
+  assert.match(r.diagnostico, /falha de inicialização/);
 });
 
 test('INF-019.9 spawn real: binário inexistente não vira mutante morto', () => {
