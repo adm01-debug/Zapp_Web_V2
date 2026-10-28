@@ -161,7 +161,7 @@ export function useSentimentTrend(days: number): {
     queryFn: async () => {
       const { data: rows, error: rpcError } = await supabase.rpc('sentiment_trend', { p_days: days * 2 });
       if (rpcError) throw rpcError;
-      return splitWindows((rows ?? []) as SentimentTrendRow[], days);
+      return splitWindows(rows ?? [], days);
     },
     staleTime: 5 * 60 * 1000,
   });
