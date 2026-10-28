@@ -14,7 +14,7 @@
  * `inbox.loadOlderMessages` — e que `hasOlderMessages=false` não oferece ação de
  * carga. Só o hook de dados é substituído; o caminho de componentes é o de produção.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -154,6 +154,19 @@ import { RealtimeInboxView } from '../RealtimeInboxView';
 // caminho de componentes segue o de produção (RealtimeInboxView -> ChatPanel ->
 // ChatMessagesArea), só o carregamento do módulo deixa de ser assíncrono.
 import '../ChatPanel';
+
+// jsdom nao implementa ResizeObserver nem Element.scrollTo;
+// ChatMessagesArea (renderizada como real neste suite) precisa dos dois.
+beforeAll(() => {
+  class ResizeObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  (window as unknown as { ResizeObserver: typeof ResizeObserverStub }).ResizeObserver = ResizeObserverStub;
+  (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = vi.fn();
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', { get: () => 600, configurable: true });
+});
 
 // Mantém espera local ao boundary lazy/Suspense para máquinas lentas, sem alterar
 // o timeout global da suíte nem afrouxar as asserções funcionais deste teste.
