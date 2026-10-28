@@ -8,8 +8,7 @@
  * contrariava a trilha append-only do módulo. O módulo continua aqui, com o
  * mesmo caminho, porque a atividade recente da lista é lida por ele.
  */
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
