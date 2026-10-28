@@ -307,7 +307,7 @@ jobs:
   e2e:
     name: 🎭 E2E Tests (Playwright)
     runs-on: ubuntu-24.04
-    timeout-minutes: 75
+    timeout-minutes: 45
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -429,16 +429,16 @@ jobs:
           fi
 
           # fetch-depth=2 traz o merge sintético e os pais diretos. Quando
-          # main avançou após o evento (strict=true), HEAD^2 é mais atual que
-          # BASE_SHA do evento, que não estará no clone raso. Preferimos HEAD^2
-          # nesses casos.
+          # main avançou após o evento (strict=true), BASE_SHA do evento pode
+          # não estar no clone raso; HEAD^1 é o pai base do merge sintético
+          # (HEAD^2 é o head do PR). Preferimos HEAD^1 nesses casos.
           effective_base="$BASE_SHA"
           if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
-            if git cat-file -e "HEAD^2^{commit}" 2>/dev/null; then
-              echo "::notice::BASE_SHA '${BASE_SHA}' não está no clone raso (main avançou); usando HEAD^2 como base."
-              effective_base="HEAD^2"
+            if git cat-file -e "HEAD^1^{commit}" 2>/dev/null; then
+              echo "::notice::BASE_SHA '${BASE_SHA}' não está no clone raso (main avançou); usando HEAD^1 como base."
+              effective_base="HEAD^1"
             else
-              echo "::error::Nem BASE_SHA '${BASE_SHA}' nem HEAD^2 estão acessíveis; filtro de caminhos inconclusivo."
+              echo "::error::Nem BASE_SHA '${BASE_SHA}' nem HEAD^1 estão acessíveis; filtro de caminhos inconclusivo."
               exit 1
             fi
           fi
