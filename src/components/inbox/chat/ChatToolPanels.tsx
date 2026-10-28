@@ -3,6 +3,7 @@ import { Radar, GraduationCap, FileText } from 'lucide-react';
 import { ToolPanel } from '../ai-tools/ToolPanel';
 import { VisionIcon } from '../ai-tools/VisionIcon';
 import { Message } from '@/types/chat';
+import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 
 const ConversationSummary = lazy(() => import('../ConversationSummary').then(m => ({ default: m.ConversationSummary })));
 const ObjectionDetector = lazy(() => import('../ObjectionDetector').then(m => ({ default: m.ObjectionDetector })));
@@ -37,22 +38,26 @@ export function ChatToolPanels({ activeTool, onSetActiveTool, messages, contactI
       )}
 
       {activeTool === 'objections' && (
-        <Suspense fallback={null}>
-          <ToolPanel isOpen onClose={() => onSetActiveTool('objections')} icon={<Radar className="w-4 h-4 text-warning" />} title="Monitoramento de Objeções" subtitle="Detecta resistências e sugere contra-argumentos">
-            <ObjectionDetector contactId={contactId} contactName={contactName}
-              lastMessages={messages.filter(m => m.sender === 'contact').slice(-5).map(m => m.content)}
-              allMessages={mappedMessages} onSelectSuggestion={onSelectSuggestion}
-            />
-          </ToolPanel>
-        </Suspense>
+        <SectionErrorBoundary sectionName="Detector de Objeções">
+          <Suspense fallback={null}>
+            <ToolPanel isOpen onClose={() => onSetActiveTool('objections')} icon={<Radar className="w-4 h-4 text-warning" />} title="Monitoramento de Objeções" subtitle="Detecta resistências e sugere contra-argumentos">
+              <ObjectionDetector contactId={contactId} contactName={contactName}
+                lastMessages={messages.filter(m => m.sender === 'contact').slice(-5).map(m => m.content)}
+                allMessages={mappedMessages} onSelectSuggestion={onSelectSuggestion}
+              />
+            </ToolPanel>
+          </Suspense>
+        </SectionErrorBoundary>
       )}
 
       {activeTool === 'university' && (
-        <Suspense fallback={null}>
-          <ToolPanel isOpen onClose={() => onSetActiveTool('university')} icon={<GraduationCap className="w-4 h-4 text-primary" />} title="Ajuda dos Universitários" subtitle="Gera respostas inteligentes a partir de mensagens">
-            <UniversityHelp contactId={contactId} contactName={contactName} messages={mappedMessages} onSelectSuggestion={onSelectSuggestion} />
-          </ToolPanel>
-        </Suspense>
+        <SectionErrorBoundary sectionName="Ajuda Universitários">
+          <Suspense fallback={null}>
+            <ToolPanel isOpen onClose={() => onSetActiveTool('university')} icon={<GraduationCap className="w-4 h-4 text-primary" />} title="Ajuda dos Universitários" subtitle="Gera respostas inteligentes a partir de mensagens">
+              <UniversityHelp contactId={contactId} contactName={contactName} messages={mappedMessages} onSelectSuggestion={onSelectSuggestion} />
+            </ToolPanel>
+          </Suspense>
+        </SectionErrorBoundary>
       )}
 
       {activeTool === 'summary' && (
