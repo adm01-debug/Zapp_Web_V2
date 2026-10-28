@@ -52,7 +52,6 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'delete-instance',
   'restart-instance',
   'disconnect',
-  'set-presence',
   'set-settings',
   'set-webhook',
   // perfil da conta
