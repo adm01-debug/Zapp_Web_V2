@@ -268,13 +268,13 @@ valer naquele retrato (confira antes de propor mudança de CI, para não refazer
 **Snapshot histórico de 05/10/2026 (auditoria exaustiva de GitHub Actions):** naquele retrato havia 16
 arquivos em `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
 `codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`, `db-migrate.yml`,
-`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `settings-guard.yml`, `supabase-sync.yml`,
-`talkx-status-regen.yml`, `targeted-ledger-evidence.yml`, `types-sync.yml`), mais 3 workflows dinâmicos
+`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `settings-guard.yml`, `talkx-status-regen.yml`,
+`targeted-ledger-evidence.yml`, `types-sync.yml`, `vercel-env-cleanup.yml`), mais 3 workflows dinâmicos
 que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — 19 no
-total naquela data. A lista é histórica; a fonte canônica atual do inventário é o **gerado** `docs/ci/README.md`
+total naquele retrato. A lista é histórica; a fonte canônica atual do inventário é o **gerado** `docs/ci/README.md`
 (`scripts/ci/render-workflow-docs.mjs --check`), não esta lista manual.
 
-**Inventário vigente (2026-10-20):** **16** arquivos em `.github/workflows/` e 3 workflows dinâmicos — 19 no total.
+**Inventário vigente (2026-10-20):** **17** arquivos em `.github/workflows/` e 3 workflows dinâmicos — 20 no total.
 Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.
 
