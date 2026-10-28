@@ -12430,6 +12430,10 @@ export type Database = {
         Args: { p_contact_id: string; p_next: string; p_reason?: string }
         Returns: undefined
       }
+      set_default_whatsapp_connection: {
+        Args: { p_connection_id: string }
+        Returns: string
+      }
       set_department_whatsapp_config: {
         Args: {
           p_api_key?: string
