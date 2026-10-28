@@ -926,18 +926,8 @@ jobs:
         if: inputs.apply == true && steps.preflight.outputs.needs_apply == 'true'
         env:
           TARGET_VERSION: ${{ inputs.migration_version }}
-        run: |
-          COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
-            -v target_version="$TARGET_VERSION" -At <<'SQL'
-            SELECT count(*)
-            FROM supabase_migrations.schema_migrations
-            WHERE version = :'target_version'
-              AND statements IS NOT NULL
-              AND array_length(statements, 1) > 0;
-          SQL
-          )
-          test "$COUNT" = "1"
-          echo "OK: pos-apply validado, version=$TARGET_VERSION presente no ledger com statements validos."
+          TARGET_NAME: ${{ steps.preflight.outputs.target_name }}
+        run: node scripts/db-audit/validate-post-apply.mjs
 
       - name: Validar registro no ledger
         if: inputs.apply == true || steps.preflight.outputs.needs_apply == 'false'
