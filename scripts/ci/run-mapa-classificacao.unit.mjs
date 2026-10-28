@@ -132,6 +132,17 @@ test('INF-019.10 spawn real: suíte verde é lida como SOBREVIVENTE (não como i
   assert.equal(r.estado, ESTADOS.sobrevivente);
 });
 
+test('resumo do Vitest com cores do GitHub Actions é reconhecido', () => {
+  const r = interpretarRodada({
+    status: 0,
+    signal: null,
+    stdout: '\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m99 passed\u001b[39m\u001b[22m (99)\n',
+    stderr: '',
+  });
+  assert.equal(r.estado, ESTADOS.sobrevivente);
+  assert.match(r.resumo, /Tests\s+99 passed/);
+});
+
 test('INF-019.11 baseline não verde invalida a medição (código 2)', () => {
   const v = veredito({
     baseline: { estado: ESTADOS.infra, motivo: 'vitest não iniciou' },

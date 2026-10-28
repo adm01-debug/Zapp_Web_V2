@@ -192,7 +192,9 @@ function testesVermelhos(saida) {
  * erro de execução/configuração NUNCA vira "mutante morto".
  */
 export function interpretarRodada(processo) {
-  const saida = `${processo?.stdout ?? ""}\n${processo?.stderr ?? ""}`;
+  // O GitHub Actions força cores no Vitest: os códigos ANSI podem aparecer antes
+  // de `Tests` e de `×`, mesmo com stdout capturado por spawnSync.
+  const saida = `${processo?.stdout ?? ""}\n${processo?.stderr ?? ""}`.replace(/\u001b\[[0-9;]*m/g, "");
   const resumo = resumoDeTestes(saida);
   const falhas = testesVermelhos(saida);
 
