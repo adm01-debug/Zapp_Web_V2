@@ -11715,6 +11715,10 @@ export type Database = {
         Args: { p_profile_id: string }
         Returns: Json
       }
+      increment_custom_emoji_use: {
+        Args: { p_emoji_id: string }
+        Returns: number
+      }
       ingest_inbound_message: {
         Args: {
           p_connection_id: string
