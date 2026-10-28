@@ -212,7 +212,7 @@ describe('FileCard â€” aÃ§Ãµes do cartÃ£o (R04, S32 / D06, D07)', () => {
     renderCard(ITEM, { downloadAllowed: true });
     fireEvent.click(screen.getByRole('button', { name: 'Baixar' }));
 
-    await waitFor(() => expect(fetchSpy).toHaveBeenCalledWith('https://x/planilha.png'));
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledWith('https://signed.test/planilha.png'));
     await waitFor(() => expect(anchors).toHaveLength(1));
     expect(anchors[0].download).toBe('planilha-total.png');
 
@@ -222,118 +222,148 @@ describe('FileCard â€” aÃ§Ãµes do cartÃ£o (R04, S32 / D06, D07)', () => {
 
   it('S32: em Ã¡udio, o play do A01 continua na linha de aÃ§Ãµes', () => {
     renderCard({ ...ITEM, id: 'a1', type: 'audio' });
-    // A06b: o rÃ³tulo cita o nome do arquivo do cartÃ£o â€” o seletor segue EXATO, sÃ³ deixa de
-    // ser o rÃ³tulo genÃ©rico; consultar "Tocar Ã¡udio" puro aqui acharia zero botÃµes.
-    expect(screen.getByRole('button', { name: 'Tocar Ã¡udio planilha-total.png' })).toBeInTheDocument();
-  });
+    // A06b: o rÃ³tulo cita o nome do arquivo do cartÃ£o â€” o seletor segue EXATOKðìÈZ^HBˆËÈÙ\ˆÈ¼ìÝ[ÈÙ[°ê\šXÛÎÈÛÛœÝ[\ˆ•ØØ\ˆ0è]Y[Èˆ\›È\]ZHXÚ\šXH™\›È›Ý0íY\Ë‚ˆ^XÝ
+ØÜ™Y[‹™Ù]žT›ÛJ	Ø]Û‰ËÈ˜[YNˆ	ÕØØ\ˆ0è]Y[È[š[K]Ý[œ™ÉÈJJKÐ™R[•QØÝ[Y[
 
-  it('S32/D07: Salvar na galeria nÃ£o existe em lugar nenhum do cartÃ£o', () => {
-    renderCard();
-    expect(screen.queryByText(/Salvar na galeria/i)).not.toBeInTheDocument();
-  });
-});
+NÂˆJNÂ‚ˆ]
+	ÔÌÌ‹ÑÎˆØ[˜\ˆ˜HØ[\šXH°èÛÈ^\ÝH[HYØ\ˆ™[š[HÈØ\0èÛÉË
 
-describe('FileCard â€” seleÃ§Ã£o e modo Selecionar (R04, S33, S34)', () => {
-  it('S33: o cartÃ£o marcado expÃµe o estado selecionado e a borda azul (primary)', () => {
-    const { unmount } = renderCard(ITEM, { selected: false });
-    expect(screen.getByTestId('files-item-m1')).toHaveAttribute('data-selected', 'false');
-    unmount();
+HOˆÂˆ™[™\Ø\™
 
-    renderCard(ITEM, { selected: true });
-    const card = screen.getByTestId('files-item-m1');
-    expect(card).toHaveAttribute('data-selected', 'true');
-    expect(card.className).toContain('border-primary');
-  });
+NÂˆ^XÝ
+ØÜ™Y[‹œ]Y\žPžU^
+ÔØ[˜\ˆ˜HØ[\šXKÚJJK››ÝÐ™R[•QØÝ[Y[
 
-  it('S34: no modo Selecionar o marcador do cartÃ£o continua alternando a seleÃ§Ã£o', () => {
-    const { props } = renderCard(ITEM, { selectionMode: true, selectionChecked: true });
-    const marcador = screen.getByRole('checkbox', { name: 'Selecionar planilha-total.png' });
-    expect(marcador).toBeChecked();
-    expect(screen.getByTestId('files-item-m1')).toHaveAttribute('data-selected', 'true');
+NÂˆJNÂŸJNÂ‚™\ØÜšX™J	Ñš[PØ\™8 %Ù[péðèÛÈH[ÙÈÙ[XÚ[Û˜\ˆ
+ŒÌÌËÌÍ
+IË
 
-    fireEvent.click(marcador);
-    expect(props.onToggleSelection).toHaveBeenCalledTimes(1);
-    expect(props.onPreview).not.toHaveBeenCalled();
-  });
-});
+HOˆÂˆ]
+	ÔÌÌÎˆÈØ\0èÛÈX\˜ØYÈ^0íYHÈ\ÝYÈÙ[XÚ[Û˜YÈHH›Ü™H^[
+š[X\žJIË
 
-describe('FileCard â€” comportamento preservado (etapas 17â€“20)', () => {
-  it('etapa 20: Ã© um <article> com files-item-<id>, prÃ©via e nome sÃ£o botÃµes', () => {
-    renderCard();
-    expect(screen.getByTestId('files-item-m1')).toBeInTheDocument();
+HOˆÂˆÛÛœÝÈ[›[Ý[HH™[™\Ø\™
+USKÈÙ[XÝYˆ˜[ÙHJNÂˆ^XÝ
+ØÜ™Y[‹™Ù]žU\ÝY
+	Ùš[\ËZ][K[LIÊJKÒ]™P]šX]J	Ù]K\Ù[XÝY	Ë	Ù˜[ÙIÊNÂˆ[›[Ý[
 
-    const previa = screen.getByRole('button', { name: 'Visualizar planilha-total.png' });
-    expect(previa.tagName).toBe('BUTTON');
+NÂ‚ˆ™[™\Ø\™
+USKÈÙ[XÝYˆYHJNÂˆÛÛœÝØ\™HØÜ™Y[‹™Ù]žU\ÝY
+	Ùš[\ËZ][K[LIÊNÂˆ^XÝ
+Ø\™
+KÒ]™P]šX]J	Ù]K\Ù[XÝY	Ë	ÝYIÊNÂˆ^XÝ
+Ø\™˜Û\ÜÓ˜[YJKÐÛÛZ[Š	Ø›Ü™\‹\š[X\žIÊNÂˆJNÂ‚ˆ]
+	ÔÌÍˆ›È[ÙÈÙ[XÚ[Û˜\ˆÈX\˜ØYÜˆÈØ\0èÛÈÛÛ[XH[\›˜[™ÈHÙ[péðèÛÉË
 
-    const nome = screen.getByRole('button', { name: 'planilha-total.png' });
-    expect(nome.tagName).toBe('BUTTON');
-    expect(nome).toHaveAttribute('title', 'planilha-total.png');
-  });
+HOˆÂˆÛÛœÝÈ›ÜÈHH™[™\Ø\™
+USKÈÙ[XÝ[Û“[ÙNˆYKÙ[XÝ[ÛÚXÚÙYˆYHJNÂˆÛÛœÝX\˜ØYÜˆHØÜ™Y[‹™Ù]žT›ÛJ	ØÚXÚØ›Þ	ËÈ˜[YNˆ	ÔÙ[XÚ[Û˜\ˆ[š[K]Ý[œ™ÉÈJNÂˆ^XÝ
+X\˜ØYÜŠKÐ™PÚXÚÙY
 
-  it('etapa 20: Enter/clique na prÃ©via abre o visualizador; no nome abre os detalhes', () => {
-    const { props } = renderCard();
-    fireEvent.click(screen.getByRole('button', { name: 'Visualizar planilha-total.png' }));
-    expect(props.onPreview).toHaveBeenCalledTimes(1);
-    expect(props.onSelect).not.toHaveBeenCalled();
+NÂˆ^XÝ
+ØÜ™Y[‹™Ù]žU\ÝY
+	Ùš[\ËZ][K[LIÊJKÒ]™P]šX]J	Ù]K\Ù[XÝY	Ë	ÝYIÊNÂ‚ˆš\™Q]™[˜ÛXÚÊX\˜ØYÜŠNÂˆ^XÝ
+›ÜË›Û•ÙÙÛTÙ[XÝ[ÛŠKÒ]™P™Y[Ø[Y[Y\ÊJNÂˆ^XÝ
+›ÜË›Û”™]šY]ÊK››ÝÒ]™P™Y[Ø[Y
 
-    fireEvent.click(screen.getByRole('button', { name: 'planilha-total.png' }));
-    expect(props.onSelect).toHaveBeenCalledTimes(1);
-  });
+NÂˆJNÂŸJNÂ‚™\ØÜšX™J	Ñš[PØ\™8 %ÛÛ\Ü[Y[È™\Ù\˜YÈ
+]\\ÈMø $ÌŒ
+IË
 
-  it('etapa 20: no modo seleÃ§Ã£o a prÃ©via alterna a seleÃ§Ã£o e nÃ£o abre nada', () => {
-    const { props } = renderCard(ITEM, { selectionMode: true });
+HOˆÂˆ]
+	Ù]\HŒˆ0êH[H\XÛOˆÛÛHš[\ËZ][KOY‹°ê]šXHH›ÛYHðèÛÈ›Ý0íY\ÉË
 
-    fireEvent.click(screen.getByRole('button', { name: 'Visualizar planilha-total.png' }));
-    expect(props.onToggleSelection).toHaveBeenCalledTimes(1);
-    expect(props.onPreview).not.toHaveBeenCalled();
-    expect(props.onSelect).not.toHaveBeenCalled();
-  });
+HOˆÂˆ™[™\Ø\™
 
-  it('etapa 20: Space no checkbox alterna sem abrir prÃ©via nem detalhes', () => {
-    const { props } = renderCard(ITEM, { selectionMode: true, selectionChecked: false });
-    const checkbox = screen.getByRole('checkbox', { name: 'Selecionar planilha-total.png' });
+NÂˆ^XÝ
+ØÜ™Y[‹™Ù]žU\ÝY
+	Ùš[\ËZ][K[LIÊJKÐ™R[•QØÝ[Y[
 
-    fireEvent.click(checkbox);
-    expect(props.onToggleSelection).toHaveBeenCalledTimes(1);
-    expect(props.onPreview).not.toHaveBeenCalled();
-    expect(props.onSelect).not.toHaveBeenCalled();
-  });
+NÂ‚ˆÛÛœÝ™]šXHHØÜ™Y[‹™Ù]žT›ÛJ	Ø]Û‰ËÈ˜[YNˆ	Õš\ÝX[^˜\ˆ[š[K]Ý[œ™ÉÈJNÂˆ^XÝ
+™]šXKYÓ˜[YJKÐ™J	Ð•UÓ‰ÊNÂ‚ˆÛÛœÝ›ÛYHHØÜ™Y[‹™Ù]žT›ÛJ	Ø]Û‰ËÈ˜[YNˆ	Ü[š[K]Ý[œ™ÉÈJNÂˆ^XÝ
+›ÛYKYÓ˜[YJKÐ™J	Ð•UÓ‰ÊNÂˆ^XÝ
+›ÛYJKÒ]™P]šX]J	Ý]IË	Ü[š[K]Ý[œ™ÉÊNÂˆJNÂ‚ˆ]
+	Ù]\HŒˆ[\‹ØÛ]YH˜H°ê]šXHXœ™HÈš\ÝX[^˜YÜŽÈ›È›ÛYHXœ™HÜÈ][\ÉË
 
-  it('etapa 19: o menu traz Baixar desabilitado com o motivo e Excluir sÃ³ do atendente', () => {
-    renderCard();
-    fireEvent.pointerDown(screen.getByRole('button', { name: 'Mais aÃ§Ãµes' }), { button: 0, ctrlKey: false });
+HOˆÂˆÛÛœÝÈ›ÜÈHH™[™\Ø\™
 
-    const baixar = screen.getByText(/Bloqueado pela polÃ­tica de seguranÃ§a/);
-    expect(baixar.closest('[data-disabled]')).not.toBeNull();
-    expect(screen.getByRole('menuitem', { name: /Baixar/ })).toHaveAttribute('data-disabled');
-    expect(screen.getByRole('menuitem', { name: /Excluir mensagem/ })).toBeInTheDocument();
-  });
+NÂˆš\™Q]™[˜ÛXÚÊØÜ™Y[‹™Ù]žT›ÛJ	Ø]Û‰ËÈ˜[YNˆ	Õš\ÝX[^˜\ˆ[š[K]Ý[œ™ÉÈJJNÂˆ^XÝ
+›ÜË›Û”™]šY]ÊKÒ]™P™Y[Ø[Y[Y\ÊJNÂˆ^XÝ
+›ÜË›Û”Ù[XÝ
+K››ÝÒ]™P™Y[Ø[Y
 
-  it('etapa 19: "Copiar link" nÃ£o existe mais e nada escreve na Ã¡rea de transferÃªncia', () => {
-    const writeText = vi.fn();
-    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+NÂ‚ˆš\™Q]™[˜ÛXÚÊØÜ™Y[‹™Ù]žT›ÛJ	Ø]Û‰ËÈ˜[YNˆ	Ü[š[K]Ý[œ™ÉÈJJNÂˆ^XÝ
+›ÜË›Û”Ù[XÝ
+KÒ]™P™Y[Ø[Y[Y\ÊJNÂˆJNÂ‚ˆ]
+	Ù]\HŒˆ›È[ÙÈÙ[péðèÛÈH°ê]šXH[\›˜HHÙ[péðèÛÈH°èÛÈXœ™H˜YIË
 
-    renderCard();
-    fireEvent.pointerDown(screen.getByRole('button', { name: 'Mais aÃ§Ãµes' }), { button: 0, ctrlKey: false });
-    expect(screen.queryByText(/Copiar link/)).not.toBeInTheDocument();
-    expect(writeText).not.toHaveBeenCalled();
-  });
+HOˆÂˆÛÛœÝÈ›ÜÈHH™[™\Ø\™
+USKÈÙ[XÝ[Û“[ÙNˆYHJNÂ‚ˆš\™Q]™[˜ÛXÚÊØÜ™Y[‹™Ù]žT›ÛJ	Ø]Û‰ËÈ˜[YNˆ	Õš\ÝX[^˜\ˆ[š[K]Ý[œ™ÉÈJJNÂˆ^XÝ
+›ÜË›Û•ÙÙÛTÙ[XÝ[ÛŠKÒ]™P™Y[Ø[Y[Y\ÊJNÂˆ^XÝ
+›ÜË›Û”™]šY]ÊK››ÝÒ]™P™Y[Ø[Y
 
-  it('etapa 19: sem download ativo â€” o item nÃ£o existe para contato', () => {
-    renderCard(DOC);
-    fireEvent.pointerDown(screen.getByRole('button', { name: 'Mais aÃ§Ãµes' }), { button: 0, ctrlKey: false });
-    expect(screen.queryByRole('menuitem', { name: /Excluir mensagem/ })).not.toBeInTheDocument();
-  });
+NÂˆ^XÝ
+›ÜË›Û”Ù[XÝ
+K››ÝÒ]™P™Y[Ø[Y
 
-  it('etapa 17: a imagem da prÃ©via usa object-contain (print de planilha nÃ£o Ã© cortado)', () => {
-    renderCard();
-    const img = within(screen.getByRole('button', { name: 'Visualizar planilha-total.png' })).getByRole('img');
-    expect(img.className).toContain('object-contain');
-    expect(img.className).not.toContain('object-cover');
-  });
-});
+NÂˆJNÂ‚ˆ]
+	Ù]\HŒˆÜXÙH›ÈÚXÚØ›Þ[\›˜HÙ[HXœš\ˆ°ê]šXH™[H][\ÉË
 
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-});
+HOˆÂˆÛÛœÝÈ›ÜÈHH™[™\Ø\™
+USKÈÙ[XÝ[Û“[ÙNˆYKÙ[XÝ[ÛÚXÚÙYˆ˜[ÙHJNÂˆÛÛœÝÚXÚØ›ÞHØÜ™Y[‹™Ù]žT›ÛJ	ØÚXÚØ›Þ	ËÈ˜[YNˆ	ÔÙ[XÚ[Û˜\ˆ[š[K]Ý[œ™ÉÈJNÂ‚ˆš\™Q]™[˜ÛXÚÊÚXÚØ›Þ
+NÂˆ^XÝ
+›ÜË›Û•ÙÙÛTÙ[XÝ[ÛŠKÒ]™P™Y[Ø[Y[Y\ÊJNÂˆ^XÝ
+›ÜË›Û”™]šY]ÊK››ÝÒ]™P™Y[Ø[Y
+
+NÂˆ^XÝ
+›ÜË›Û”Ù[XÝ
+K››ÝÒ]™P™Y[Ø[Y
+
+NÂˆJNÂ‚ˆ]
+	Ù]\HNNˆÈY[H˜^ˆ˜Z^\ˆ\ØXš[]YÈÛÛHÈ[Ý]›ÈH^ÛZ\ˆðìÈÈ][™[IË
+
+HOˆÂˆ™[™\Ø\™
+
+NÂˆš\™Q]™[œÚ[\‘ÝÛŠØÜ™Y[‹™Ù]žT›ÛJ	Ø]Û‰ËÈ˜[YNˆ	ÓXZ\ÈpéðíY\ÉÈJKÈ]ÛŽˆÝ›Ù^Nˆ˜[ÙHJNÂ‚ˆÛÛœÝ˜Z^\ˆHØÜ™Y[‹™Ù]žU^
+Ð›Ü]YXYÈ[HÛ0ë]XØHHÙYÝ\˜[°éØKÊNÂˆ^XÝ
+˜Z^\‹˜ÛÜÙ\Ý
+	ÖÙ]KY\ØX›YIÊJK››ÝÐ™S[
+
+NÂˆ^XÝ
+ØÜ™Y[‹™Ù]žT›ÛJ	ÛY[Z][IËÈ˜[YNˆÐ˜Z^\‹ÈJJKÒ]™P]šX]J	Ù]KY\ØX›Y	ÊNÂˆ^XÝ
+ØÜ™Y[‹™Ù]žT›ÛJ	ÛY[Z][IËÈ˜[YNˆÑ^ÛZ\ˆY[œØYÙ[KÈJJKÐ™R[•QØÝ[Y[
+
+NÂˆJNÂ‚ˆ]
+	Ù]\HNNˆÛÜX\ˆ[šÈˆ°èÛÈ^\ÝHXZ\ÈH˜YH\ØÜ™]™H˜H0è\™XHH˜[œÙ™\°ê›˜ÚXIË
+
+HOˆÂˆÛÛœÝÜš]U^HšK™›Š
+NÂˆØš™XÝ™Yš[™T›Ü\J˜]šYØ]Ü‹	ØÛ\›Ø\™	ËÈ˜[YNˆÈÜš]U^KÛÛ™šYÝ\˜X›NˆYHJNÂ‚ˆ™[™\Ø\™
+
+NÂˆš\™Q]™[œÚ[\‘ÝÛŠØÜ™Y[‹™Ù]žT›ÛJ	Ø]Û‰ËÈ˜[YNˆ	ÓXZ\ÈpéðíY\ÉÈJKÈ]ÛŽˆÝ›Ù^Nˆ˜[ÙHJNÂˆ^XÝ
+ØÜ™Y[‹œ]Y\žPžU^
+ÐÛÜX\ˆ[šËÊJK››ÝÐ™R[•QØÝ[Y[
+
+NÂˆ^XÝ
+Üš]U^
+K››ÝÒ]™P™Y[Ø[Y
+
+NÂˆJNÂ‚ˆ]
+	Ù]\HNNˆÙ[HÝÛ›ØY]]›È8 %È][H°èÛÈ^\ÝH\˜HÛÛ]ÉË
+
+HOˆÂˆ™[™\Ø\™
+ÐÊNÂˆš\™Q]™[œÚ[\‘ÝÛŠØÜ™Y[‹™Ù]žT›ÛJ	Ø]Û‰ËÈ˜[YNˆ	ÓXZ\ÈpéðíY\ÉÈJKÈ]ÛŽˆÝ›Ù^Nˆ˜[ÙHJNÂˆ^XÝ
+ØÜ™Y[‹œ]Y\žPžT›ÛJ	ÛY[Z][IËÈ˜[YNˆÑ^ÛZ\ˆY[œØYÙ[KÈJJK››ÝÐ™R[•QØÝ[Y[
+
+NÂˆJNÂ‚ˆ]
+	Ù]\HMÎˆH[XYÙ[HH°ê]šXH\ØHØš™XÝXÛÛZ[ˆ
+š[H[š[H°èÛÈ0êHÛÜYÊIË
+
+HOˆÂˆ™[™\Ø\™
+
+NÂˆÛÛœÝ[YÈHÚ][ŠØÜ™Y[‹™Ù]žT›ÛJ	Ø]Û‰ËÈ˜[YNˆ	Õš\ÝX[^˜\ˆ[š[K]Ý[œ™ÉÈJJK™Ù]žT›ÛJ	Ú[YÉÊNÂˆ^XÝ
+[YË˜Û\ÜÓ˜[YJKÐÛÛZ[Š	ÛØš™XÝXÛÛZ[‰ÊNÂˆ^XÝ
+[YË˜Û\ÜÓ˜[YJK››ÝÐÛÛZ[Š	ÛØš™XÝXÛÝ™\‰ÊNÂˆJNÂŸJNÂ‚˜Y\‘XXÚ
+
+
+HOˆÂˆšKœ™\ÝÜ™P[[ØÚÜÊ
+NÂˆšK[œÝX[ÛØ˜[Ê
+NÂŸJNÂ
