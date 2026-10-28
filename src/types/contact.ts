@@ -1,17 +1,22 @@
 import type { Database } from '@/integrations/supabase/types';
 
+type _BaseRow = Database['public']['Tables']['contacts']['Row'];
+
 /**
- * ContactRow estende a linha gerada com colunas recentes ainda não regeneradas
- * no snapshot de types.ts (blocked_at, blocked_by, is_vip).
- * Remover quando o próximo `generate-types` incluir essas colunas.
+ * ContactRow torna opcionais os campos que o snapshot de types.ts pode não ter
+ * ainda, ou que o banco adicionou recentemente. Assim, código que constrói
+ * objetos parciais não quebra quando types.ts é regenerado com novas colunas.
  */
-export type ContactRow = Database['public']['Tables']['contacts']['Row'] & {
-  /** Timestamp de bloqueio do contato (null = não bloqueado). */
+export type ContactRow = Omit<
+  _BaseRow,
+  'blocked_at' | 'blocked_by' | 'presence_status' | 'presence_updated_at' | 'last_seen_at'
+> & {
   blocked_at?: string | null;
-  /** Agente que realizou o bloqueio. */
   blocked_by?: string | null;
-  /** Marcador VIP do contato (default false no banco). */
   is_vip?: boolean;
+  presence_status?: string | null;
+  presence_updated_at?: string | null;
+  last_seen_at?: string | null;
 };
 export type ContactInsert = Database['public']['Tables']['contacts']['Insert'];
 export type ContactUpdate = Database['public']['Tables']['contacts']['Update'];
