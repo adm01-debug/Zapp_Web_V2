@@ -83,7 +83,7 @@ function stub(
 
   const actions = modo === 'tokenReal' ? SEM_ESCOPO : ACTIONS_OK;
   const envs =
-    "send({ environments: [{ name: 'banco-leitura' },{ name: 'db-ledger-evidence' },{ name: 'legacy-import-destrutivo' },{ name: 'perimetro-leitura' },{ name: 'producao-ddl' },{ name: 'producao-edge-functions' }] })";
+    "send({ environments: [{ name: 'copilot' },{ name: 'db-ledger-evidence' },{ name: 'legacy-import-destrutivo' },{ name: 'Preview' },{ name: 'producao-ddl' },{ name: 'producao-edge-functions' },{ name: 'Production' }] })";
 
   const criadoEm = new Date(Date.now() - idadeMs).toISOString();
   const totalComentarios = comentarioDepois ? 2 : 1;

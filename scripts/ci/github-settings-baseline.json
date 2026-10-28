@@ -63,15 +63,16 @@
     "step-security/harden-runner"
   ],
   "environments": [
-    "banco-leitura",
+    "copilot",
     "db-ledger-evidence",
     "legacy-import-destrutivo",
-    "perimetro-leitura",
+    "Preview",
     "producao-ddl",
-    "producao-edge-functions"
+    "producao-edge-functions",
+    "Production"
   ],
   "environments_para_apagar": {
-    "_comentario": "E94 concluido em 2026-10-16: copilot, Preview e Production apagados. Lista vazia.",
+    "_comentario": "Nenhum environment pendente de apagar.",
     "lista": []
   },
   "environments_vercel_managed": {
