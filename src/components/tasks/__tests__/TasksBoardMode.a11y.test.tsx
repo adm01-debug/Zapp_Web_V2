@@ -112,8 +112,11 @@ beforeEach(() => {
   usarModoQuadro();
 });
 
-afterEach(() => {
+afterEach(async () => {
   cleanup();
+  // O DnD remove o anúncio acessível em setTimeout(0) após desmontar.
+  // Aguarda essa remoção antes de o Vitest descartar o document do jsdom.
+  await new Promise<void>(resolve => setTimeout(resolve, 0));
   window.history.replaceState(null, '', '/');
 });
 

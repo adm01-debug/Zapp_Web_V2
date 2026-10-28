@@ -38,6 +38,17 @@ describe('StatusChips', () => {
     makeConversation({ id: 'c4', hasMessages: false }),
   ];
 
+  it('renderiza as contagens calculadas pelo filtro da Inbox, sem exigir a lista bruta', () => {
+    render(<StatusChips
+      counts={{ all: 7, unread: 3, attending: 2, waiting: 1, resolved: 4, archived: 5 }}
+      chipTab="all"
+      onChipTabChange={() => {}}
+    />);
+    expect(screen.getByTestId('status-chip-all')).toHaveTextContent('7');
+    expect(screen.getByTestId('status-chip-unread')).toHaveTextContent('3');
+    expect(screen.getByTestId('status-chip-archived')).toHaveTextContent('5');
+  });
+
   it('renders the 6 chips (no Spam — não existe no modelo)', () => {
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
     expect(screen.getByTestId('status-chip-all')).toBeInTheDocument();
