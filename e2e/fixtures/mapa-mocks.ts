@@ -54,7 +54,7 @@ const BOOT_FAKE = {
     permission: { id: 'perm-multiplix', name: 'multiplix.dispatch.create', description: null, category: 'geral' },
   }],
   global_settings: [],
-  user_settings: null,
+  user_settings: { onboarding_completed: true },
   departments: [],
   unread_notifications: 0,
   fetched_at: '2026-10-15T12:00:00.000Z',
@@ -84,7 +84,9 @@ export async function mockAppShell(page: Page, registro: Registro): Promise<void
   await page.route(/\/rest\/v1\/user_roles/, (route) =>
     json(route, querObjetoUnico(route) ? { role: 'admin' } : [{ role: 'admin' }]));
   await page.route(/\/rest\/v1\/user_settings/, (route) =>
-    json(route, querObjetoUnico(route) ? null : []));
+    json(route, querObjetoUnico(route)
+      ? { onboarding_completed: true }
+      : [{ onboarding_completed: true }]));
 
   // RPCs: permissão nomeada liberada; contagem do guarda de custo = 0 (autocomplete liberado).
   await page.route(/\/rest\/v1\/rpc\/user_has_permission/, (route) => json(route, true));
