@@ -83,7 +83,6 @@ function pinnedEvidence({
     reason,
     related_migration,
     justification: JUSTIFICATION,
-    'sql-sha256': null,
     ...overrides,
   };
 }
