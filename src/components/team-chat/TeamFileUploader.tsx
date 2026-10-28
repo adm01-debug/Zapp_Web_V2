@@ -7,7 +7,7 @@ import { uploadTeamMedia } from '@/hooks/team-chat/uploadTeamMedia';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Button } from '@/components/ui/button';
 import { Paperclip, Image as ImageIcon, FileText, X, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/lazyToast';
 import { cn } from '@/lib/utils';
 import { MAX_TEAM_CHAT_FILE_SIZE, getTeamChatFileSizeError } from '@/lib/teamChatRules';
 

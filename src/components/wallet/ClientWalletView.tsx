@@ -1,7 +1,7 @@
 import { EmptyState } from '@/components/ui/empty-state';
+import { useReducedMotion } from 'framer-motion';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { motion } from '@/components/ui/motion';
-import { useReducedMotion } from 'framer-motion';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,8 +17,8 @@ import { Wallet, Plus, Trash2, Users, Phone, ArrowUpDown, UserCheck } from 'luci
 import { useClientWallet } from '@/hooks/business/useClientWallet';
 
 export function ClientWalletView() {
-  const w = useClientWallet();
   const reduzido = useReducedMotion() ?? false;
+  const w = useClientWallet();
 
   return (
     <div className="space-y-6 relative bg-background w-full min-w-0">

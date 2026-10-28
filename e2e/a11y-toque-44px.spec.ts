@@ -97,7 +97,10 @@ async function caixa(alvo: Locator, nome: string) {
  * parte dele). Se a regra coarse sumir, os cantos caem em outro elemento e o teste falha.
  */
 async function areaToque44(alvo: Locator, nome: string): Promise<void> {
-  const cantos = await alvo.evaluate((el) => {
+  // O primeiro card fica abaixo da dobra em 390×844. elementFromPoint retorna
+  // null fora da viewport, mesmo que o controle esteja visível no DOM.
+  await alvo.scrollIntoViewIfNeeded();
+  const medida = await alvo.evaluate((el) => {
     const r = el.getBoundingClientRect();
     const cx = r.left + r.width / 2;
     const cy = r.top + r.height / 2;
@@ -109,12 +112,18 @@ async function areaToque44(alvo: Locator, nome: string): Promise<void> {
       [cx - d, cy + d],
       [cx + d, cy + d],
     ];
-    return pontos.map(([x, y]) => {
+    const cantos = pontos.map(([x, y]) => {
       const alvoPonto = document.elementFromPoint(x, y);
-      return !!alvoPonto && (alvoPonto === el || el.contains(alvoPonto));
+      return {
+        ok: !!alvoPonto && (alvoPonto === el || el.contains(alvoPonto)),
+        hit: alvoPonto?.tagName.toLowerCase() ?? 'null',
+        classe: alvoPonto?.getAttribute('class')?.slice(0, 80) ?? '',
+      };
     });
+    const pseudo = getComputedStyle(el, '::after');
+    return { cantos, pseudo: { content: pseudo.content, width: pseudo.width, height: pseudo.height, pointerEvents: pseudo.pointerEvents } };
   });
-  expect(cantos, `${nome}: os 4 cantos do alvo de 44x44 nao recebem o toque`).toEqual([
+  expect(medida.cantos.map((canto) => canto.ok), `${nome}: os 4 cantos do alvo de 44x44 nao recebem o toque: ${JSON.stringify(medida)}`).toEqual([
     true,
     true,
     true,
@@ -216,7 +225,7 @@ test.describe('alvos de toque 44px — celular (ponteiro grosso)', () => {
 
     // ── Botão fechar do dialog ──
     const dialogo = await abrirDialogo(page);
-    const fechar = dialogo.getByRole('button', { name: 'Close' });
+    const fechar = dialogo.getByRole('button', { name: 'Fechar' });
     await expect(fechar).toBeVisible();
     await esperarEntrada(page, dialogo);
 
@@ -267,12 +276,12 @@ test.describe('alvos de toque 44px — desktop (ponteiro fino)', () => {
 
     const dialogo = await abrirDialogo(page);
     await esperarEntrada(page, dialogo);
-    const f = await caixa(dialogo.getByRole('button', { name: 'Close' }), 'fechar do dialog');
+    const f = await caixa(dialogo.getByRole('button', { name: 'Fechar' }), 'fechar do dialog');
     expect(f.width, `largura do fechar no desktop: ${f.width}px`).toBeLessThanOrEqual(32);
     expect(f.height, `altura do fechar no desktop: ${f.height}px`).toBeLessThanOrEqual(32);
 
     // Ponteiro fino continua fechando no clique (o caminho do mouse).
-    await dialogo.getByRole('button', { name: 'Close' }).click();
+    await dialogo.getByRole('button', { name: 'Fechar' }).click();
     await expect(page.getByRole('dialog', { name: 'Adicionar Contato' })).toHaveCount(0);
   });
 });
