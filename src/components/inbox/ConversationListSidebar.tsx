@@ -275,29 +275,6 @@ export function ConversationListSidebar({
     contactSearchRef.current?.focus();
   }, [inboxFilters]);
 
-  // Opções com que a LISTA conta, para o contador do chip não divergir dela:
-  // adiamentos vigentes, "Mostrar todos", fila e filtros extras (busca, tipo de
-  // contato e painel Filtros) — os MESMOS insumos de useInboxFilters/chipCounts.
-  // Objeto estável para não refazer a varredura a cada render do painel.
-  const statusChipCountOpts = useMemo(
-    () => ({
-      snoozedIds: conversationActions?.snoozedIds ?? null,
-      showAll: inboxFilters.showAll ?? false,
-      selectedQueueId: inboxFilters.selectedQueueId ?? null,
-      search: inboxFilters.search ?? '',
-      selectedContactType: inboxFilters.selectedContactType ?? null,
-      filters: inboxFilters.filters ?? null,
-    }),
-    [
-      conversationActions?.snoozedIds,
-      inboxFilters.showAll,
-      inboxFilters.selectedQueueId,
-      inboxFilters.search,
-      inboxFilters.selectedContactType,
-      inboxFilters.filters,
-    ]
-  );
-
   // Menu "Filtros salvos": o filtro atual é o chip de status, o tipo de contato e a
   // fila (a busca digitada nunca entra no preset). Aplicar um preset passa pelos
   // mesmos setters do painel Filtros, então o storage do dono e a URL (?type=)
@@ -409,7 +386,6 @@ export function ConversationListSidebar({
           counts={inboxFilters.chipCounts}
           chipTab={inboxFilters.chipTab}
           onChipTabChange={inboxFilters.setChipTab}
-          countOpts={statusChipCountOpts}
         />
       </div>
 
