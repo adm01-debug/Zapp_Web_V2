@@ -22,8 +22,5 @@ jobs:
           git add docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md
           git rm .github/workflows/patch-plano.yml
           git diff --staged --quiet && echo "nothing to commit" && exit 0
-          git commit -m "chore: atualiza contagem 16->17 no PLANO; remove workflow temporario
-
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01Tn4bCxMB3LwMFBzh9FRDCk"
+          git commit -m "chore: atualiza contagem 16->17 no PLANO; remove workflow temporario"
           git push origin claude/sharp-faraday-qfortu
