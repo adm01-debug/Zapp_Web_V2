@@ -464,7 +464,13 @@ test('rascunho e referência de anexo permanecem isolados no ciclo conta A → B
 
 test('corpus extremo com texto sem quebra e muitos anexos não cria overflow global', async ({ page }) => {
   await abrirEmail(page);
-  await page.getByRole('textbox', { name: 'Busca global do Email' }).fill('Corpus extremo');
+  const resultadoBusca = page.waitForResponse(response =>
+    response.url().includes('/rest/v1/rpc/search_email_threads') &&
+    response.request().postDataJSON()?.p_q === 'Corpus extremo');
+  const campoBusca = page.getByRole('textbox', { name: 'Busca global do Email' });
+  await campoBusca.fill('Corpus extremo');
+  await resultadoBusca;
+  await expect(campoBusca).toHaveAttribute('aria-busy', 'false');
   await page.getByText('Corpus extremo', { exact: false }).first().click();
   const extremeMessage = page.getByRole('article', { name: /Mensagem de REMETENTESEMQUEBRA/ });
   await expect(extremeMessage).toBeVisible();
