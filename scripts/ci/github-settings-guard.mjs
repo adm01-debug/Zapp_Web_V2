@@ -196,7 +196,7 @@ async function checarBranchProtection() {
       campo: 'branch_protection_main.strict',
       esperado: esperado.strict,
       encontrado: checksDesligados ? 'required_status_checks desligado' : strict,
-      restauravel: false,
+      restauravel: !checksDesligados,
     });
   }
 
@@ -651,9 +651,28 @@ async function main() {
     `Timestamp: ${new Date().toISOString()}`,
   );
 
+  let restauracaoEfetiva = false;
+  const restauraveis = divergencias.filter((d) => d.restauravel);
+  if (restauraveis.length > 0) {
+    try {
+      await gh(
+        'PATCH',
+        `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection/required_status_checks`,
+        { strict: true },
+      );
+      for (const d of restauraveis) {
+        console.log(`Restaurado: ${semQuebra(d.campo)}`);
+      }
+      restauracaoEfetiva = true;
+    } catch (_e) {
+      // PATCH 403: sem escopo para restaurar
+    }
+  }
+
   await abrirOuAtualizarIssue(linhas.join('\n'), {
     assinatura,
     janelaMs: soCegos ? SETE_DIAS_MS : SEIS_HORAS_MS,
+    forcar: restauracaoEfetiva,
   });
 
   if (soCegos) {
