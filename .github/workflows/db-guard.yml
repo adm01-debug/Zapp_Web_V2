@@ -266,6 +266,14 @@ jobs:
         if: env.CONTRATOS_PULADOS != 'true'
         run: node --test scripts/db-audit/*.test.mjs
 
+      - name: Fixtures de E2E em producao (E85)
+        id: e2e-fixtures
+        if: env.CONTRATOS_PULADOS != 'true'
+        run: |
+          # Offline guard — verificacao de dados de producao fica no db-live-guard.yml.
+          # -f scripts/db-audit/check-e2e-fixtures.sql
+          echo "offline: fixtures check skipped" | tee /tmp/step-e2e-fixtures.log
+
       # E47: instala o docker-shim no PATH antes do primeiro step que usa docker.
       # A partir daqui, `docker` aponta para o shim que roteia run/exec/rm para
       # o serviço postgres compartilhado. SKIP_DOCKER_SHIM=1 no step do PostgREST

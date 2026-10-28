@@ -21,23 +21,22 @@ class ResizeObserverMock {
     this.cb = cb;
   }
   observe(target: Element) {
-    setTimeout(() => {
-      this.cb(
-        [
-          {
-            target,
-            contentRect: {
-              height: 120, width: 800, top: 0, left: 0,
-              bottom: 120, right: 800, x: 0, y: 0, toJSON: () => ({}),
-            } as DOMRectReadOnly,
-            borderBoxSize: [{ blockSize: 120, inlineSize: 800 }],
-            contentBoxSize: [{ blockSize: 120, inlineSize: 800 }],
-            devicePixelContentBoxSize: [],
-          },
-        ],
-        this,
-      );
-    }, 0);
+    const h = (target as HTMLElement).getAttribute?.('role') === 'log' ? 600 : 120;
+    this.cb(
+      [
+        {
+          target,
+          contentRect: {
+            height: h, width: 800, top: 0, left: 0,
+            bottom: h, right: 800, x: 0, y: 0, toJSON: () => ({}),
+          } as DOMRectReadOnly,
+          borderBoxSize: [{ blockSize: h, inlineSize: 800 }],
+          contentBoxSize: [{ blockSize: h, inlineSize: 800 }],
+          devicePixelContentBoxSize: [],
+        },
+      ],
+      this,
+    );
   }
   unobserve() {}
   disconnect() {}
