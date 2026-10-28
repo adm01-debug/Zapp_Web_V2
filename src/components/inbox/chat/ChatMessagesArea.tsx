@@ -161,7 +161,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
       const el = scrollContainerRef.current;
       if (!el) return;
       if (!isNearBottomRef.current && !forceScrollRef.current) return;
-      el.scrollTop = offset;
+      el.scrollTo({ top: offset });
     },
     [],
   );
