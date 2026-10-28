@@ -43,7 +43,7 @@ export function RemindChip({ remindAt, notifiedAt, onSnooze, onClearReminder, on
           type="button"
           data-testid="remind-chip"
           onClick={(e) => e.stopPropagation()}
-          className={`inline-flex items-center gap-1 text-xs font-medium ${due && !notifiedAt ? 'text-destructive' : 'text-muted-foreground'}`}
+          className={`inline-flex items-center gap-1 text-xs font-medium ${due && !notifiedAt ? 'text-[hsl(var(--destructive-text))]' : 'text-muted-foreground'}`}
           title={`Lembrete: ${day} ${time}`}
         >
           <Icon className="h-3 w-3" />
@@ -56,7 +56,7 @@ export function RemindChip({ remindAt, notifiedAt, onSnooze, onClearReminder, on
             key={o.label}
             type="button"
             onClick={() => acao(() => onSnooze?.(o.minutes))}
-            className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+            className="flex w-full min-h-10 items-center rounded-md px-2 py-1.5 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent"
           >
             {o.label}
           </button>
@@ -65,7 +65,7 @@ export function RemindChip({ remindAt, notifiedAt, onSnooze, onClearReminder, on
           <button
             type="button"
             onClick={() => acao(onClearReminder)}
-            className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-destructive hover:bg-accent"
+            className="flex w-full min-h-10 items-center rounded-md px-2 py-1.5 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-[hsl(var(--destructive-text))] hover:bg-accent"
           >
             Remover
           </button>
@@ -73,7 +73,7 @@ export function RemindChip({ remindAt, notifiedAt, onSnooze, onClearReminder, on
         <button
           type="button"
           onClick={() => acao(onOpenReminder)}
-          className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+          className="flex w-full min-h-10 items-center rounded-md px-2 py-1.5 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent"
         >
           Escolher…
         </button>
