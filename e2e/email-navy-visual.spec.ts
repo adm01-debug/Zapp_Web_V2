@@ -112,7 +112,7 @@ test.beforeEach(async ({ page }, testInfo) => {
 test('rota real renderiza lista, conversa e compositor com o tema do sistema sem chamadas externas mutáveis', async ({ page }) => {
   mkdirSync(output, { recursive: true });
   await abrirEmail(page);
-  await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
+  await expect(page.getByTestId('email-header').getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await expect(page.getByText('Preview deployment failed for departamento-pessoal-v3').first()).toBeVisible();
   await page.waitForTimeout(400);
   await clearTransientToasts(page);
@@ -141,7 +141,7 @@ test('rota real renderiza lista, conversa e compositor com o tema do sistema sem
 
 test('workspace do Email não introduz violações axe', async ({ page }) => {
   await abrirEmail(page);
-  await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
+  await expect(page.getByTestId('email-header').getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await freezeVisualTransitions(page);
   await page.waitForTimeout(400);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
@@ -419,7 +419,7 @@ test('reflow equivalente a zoom de 200% mantém ações essenciais acessíveis',
   // O zoom entra depois do boot: o tema do app também grava o atributo style do <html> durante
   // a montagem; aplicar antes poderia ser perdido e mascarar a medição de reflow.
   await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
-  await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
+  await expect(page.getByTestId('email-header').getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nova mensagem' }).first()).toBeVisible();
   const firstThreadButton = page.getByText('Preview deployment failed for departamento-pessoal-v3').first().locator('xpath=ancestor::button');
   await firstThreadButton.focus();
@@ -485,7 +485,7 @@ test('alto contraste e movimento reduzido mantêm o workspace acessível', async
     localStorage.setItem('reducedMotion', 'true');
   });
   await abrirEmail(page);
-  await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
+  await expect(page.getByTestId('email-header').getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await expect(page.locator('html')).toHaveClass(/high-contrast/);
   await expect(page.locator('html')).toHaveClass(/reduced-motion/);
   // As classes acima existem já no PRIMEIRO paint (script inline do index.html), então não provam
@@ -549,7 +549,7 @@ for (const viewport of [
   test(`matriz responsiva ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await abrirEmail(page);
-    await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
+    await expect(page.getByTestId('email-header').getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
     await expect(page.getByText('Preview deployment failed for departamento-pessoal-v3').first()).toBeVisible();
     await page.waitForTimeout(400);
     await clearTransientToasts(page);
