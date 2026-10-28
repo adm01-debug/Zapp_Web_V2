@@ -68,7 +68,8 @@ async function abrirTab(page: Page, tab: string) {
 
 // Clicar no nome de uma campanha (coluna "Campanha" da tabela) dispara o
 // `onView` do TalkXView, que roteia para agendada/andamento/monitor conforme o
-// status da campanha. Nomes vêm da fixture 01.
+// status da campanha. Cada tela usa sua própria fixture; o nome precisa vir
+// da campanha presente nela para a régua medir a tela pretendida.
 async function abrirCampanha(page: Page, nome: string) {
   await abrirTalkX(page);
   await page.getByText(nome, { exact: false }).first().click();
@@ -96,7 +97,7 @@ const TELAS: Tela[] = [
   { n: '07', nome: 'Analytics', existe: true, abrir: (p) => abrirTab(p, 'Analytics') },
   { n: '08', nome: 'Nova campanha', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=1'); await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible(); } },
   { n: '09', nome: 'Revisão final e confirmação', existe: true, abrir: async (p) => { await p.goto('/?view=talkx&wizard=new&step=4'); await expect(p.getByRole('heading', { name: /Nova campanha|Revisão Final/ })).toBeVisible(); } },
-  { n: '10', nome: 'Campanha agendada', existe: true, abrir: (p) => abrirCampanha(p, 'Black Friday - VIP') },
+  { n: '10', nome: 'Campanha agendada', existe: true, abrir: (p) => abrirCampanha(p, 'Promoção de Outubro') },
   { n: '11', nome: 'Monitor ao vivo', existe: true, abrir: (p) => abrirCampanha(p, 'Dia do Cliente') },
   { n: '12', nome: 'Campanha em andamento', existe: true, abrir: (p) => abrirCampanha(p, 'Lançamento Linha Office') },
   { n: '13', nome: 'Campanha pausada e retomada', existe: false },
