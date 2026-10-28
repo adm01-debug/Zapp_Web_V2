@@ -10,7 +10,7 @@ As tabelas abaixo dão o mapa por local. Os índices citados contêm uma linha p
 |---|---|---|---|---|---|---|---|
 | 7.832 arquivos rastreados pela revisão medida da `main` | Código/documentos | `projetos/Zapp_Web_V2` | Sim | Não | Todas | JÁ ESTÁ NA MAIN | Baixa |
 | Branch `dia/2026-10-23`: 3 commits próprios e 1 merge | Testes/contatos | Mesmo clone; branch também no remoto | Não por patch-id | Sim; 143 caminhos no diff da branch | Contatos e mocks de Framer Motion | INTEGRAR após revisão por funcionalidade | Alta |
-| 215 entradas no estado local: 195 de bytes iguais à main, 16 de bytes diferentes e 4 metadados/configurações locais | Arquivos de trabalho | Mesmo clone, índice e working tree | Parcial | Sim para 16 | Auth, gamificação, dashboard, Edge Functions e scripts | TERMINAR os 16; demais conforme índice | Alta |
+| 215 entradas no estado local: 195 de bytes iguais à main, 16 de bytes diferentes e 4 metadados/configurações locais | Arquivos de trabalho | Mesmo clone, índice e working tree | Parcial | Sim para 16 | Auth, gamificação, dashboard, Edge Functions e scripts | Dos 16 diferentes: 2 INTEGRAR, 4 TERMINAR, 10 DESCARTAR; demais conforme índice | Alta |
 | 4.266 branches locais e 13 stashes | Referências/trabalho guardado | `.git` do clone | 21 branches ancestrais da main; as demais não foram provadas por conteúdo | Potencial | Diversas | TERMINAR verificação antes de limpeza | Alta |
 
 Detalhes: [relatório A](_levantamento/A.md), [arquivos da main](_levantamento/A-main.tsv), [alterações locais](_levantamento/A-pendentes.tsv), [branches](_levantamento/A-branches.tsv), [stashes](_levantamento/A-stashes.tsv). A classificação de branches de 24/10 guardada em F é pista histórica, não confirmação atual.

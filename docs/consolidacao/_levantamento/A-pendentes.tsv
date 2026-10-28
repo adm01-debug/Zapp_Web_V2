@@ -48,7 +48,7 @@ docs/prompts/guia-exaustivo-promptops.md	documento/dados	A: dia/2026-10-23 (MM)	
 inventario/collect.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	inventario	JÁ ESTÁ NA MAIN	baixa
 inventario/collect2.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	inventario	JÁ ESTÁ NA MAIN	baixa
 inventario/conflict_check.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	inventario	JÁ ESTÁ NA MAIN	baixa
-performance-budget.json	documento/dados	A: dia/2026-10-23 ( M)	sim	conteúdo local diferente; comparar funcionalmente	performance-budget.json	TERMINAR	alta
+performance-budget.json	documento/dados	A: dia/2026-10-23 ( M)	sim	eleva limite do bundle de 325 para 370 KB; enfraquece orçamento	performance-budget.json	DESCARTAR	alta
 scripts/ci/github-settings-guard.mjs	código	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
 scripts/ci/implicit-any-ratchet.mjs	código	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
 scripts/ci/install-postgresql-client.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
@@ -86,7 +86,7 @@ scripts/db-audit/gmail-accounts-sync-backoff.test.sh	script/config	A: dia/2026-1
 scripts/db-audit/ia-usage-outbox-duravel.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
 scripts/db-audit/ia131-audio-stt-cadeia.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
 scripts/db-audit/ia131-audio-stt-openrouter.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
-scripts/db-audit/inbox-contact-authorization.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo local diferente; comparar funcionalmente	scripts	TERMINAR	alta
+scripts/db-audit/inbox-contact-authorization.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	remove 83 linhas de teste de notas fixadas	scripts	DESCARTAR	alta
 scripts/db-audit/interactive-buttons-list-behavior.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
 scripts/db-audit/login_gate_rpc.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
 scripts/db-audit/message-delivery-phase1-behavior.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
@@ -188,27 +188,27 @@ scripts/db-audit/wa-tag-and-status-authorization.test.sh	script/config	A: dia/20
 scripts/db-audit/whatsapp-default-connection-atomicity.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
 scripts/db-audit/whatsapp-media-select-scope.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
 scripts/db/seed-contatos-redesign-local.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
-scripts/eslint/no-secret-compare.js	código	A: dia/2026-10-23 (M )	sim	conteúdo local diferente; comparar funcionalmente	scripts	TERMINAR	alta
+scripts/eslint/no-secret-compare.js	código	A: dia/2026-10-23 (M )	sim	estreita regra de comparação de credenciais; não afrouxar lint	scripts	DESCARTAR	alta
 scripts/graphify/setup.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
 scripts/qa/medir-tipografia.cjs	código	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
 scripts/vercel/ignore-build.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
 src/assets/hero-worldmap.jpg	outro	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	src	JÁ ESTÁ NA MAIN	baixa
-src/components/auth/PasswordStrengthMeter.tsx	código	A: dia/2026-10-23 (M )	sim	conteúdo local diferente; comparar funcionalmente	src	TERMINAR	alta
-src/components/catalog/ProductDetailDialog.tsx	código	A: dia/2026-10-23 (M )	sim	conteúdo local diferente; comparar funcionalmente	src	TERMINAR	alta
-src/components/contacts/ContactKanbanView.tsx	código	A: dia/2026-10-23 (M )	sim	conteúdo local diferente; comparar funcionalmente	src	TERMINAR	alta
-src/components/dashboard/useSentimentData.ts	código	A: dia/2026-10-23 (M )	sim	conteúdo local diferente; comparar funcionalmente	src	TERMINAR	alta
-src/components/gamification/MiniGameDialogs.tsx	código	A: dia/2026-10-23 ( M)	sim	conteúdo local diferente; comparar funcionalmente	src	TERMINAR	alta
-src/components/gamification/miniGamesData.ts	código	A: dia/2026-10-23 ( M)	sim	conteúdo local diferente; comparar funcionalmente	src	TERMINAR	alta
-src/components/queues/QueueAlertsDisplay.tsx	código	A: dia/2026-10-23 (M )	sim	conteúdo local diferente; comparar funcionalmente	src	TERMINAR	alta
-src/components/settings/media-library/AIGenerateDialog.tsx	código	A: dia/2026-10-23 (M )	sim	conteúdo local diferente; comparar funcionalmente	src	TERMINAR	alta
-src/hooks/auth/useAuthForm.ts	código	A: dia/2026-10-23 (M )	sim	conteúdo local diferente; comparar funcionalmente	src	TERMINAR	alta
-src/hooks/gamification/useAgentGamification.ts	código	A: dia/2026-10-23 ( M)	sim	conteúdo local diferente; comparar funcionalmente	src	TERMINAR	alta
-src/pages/ResetPassword.tsx	código	A: dia/2026-10-23 (M )	sim	conteúdo local diferente; comparar funcionalmente	src	TERMINAR	alta
+src/components/auth/PasswordStrengthMeter.tsx	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
+src/components/catalog/ProductDetailDialog.tsx	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
+src/components/contacts/ContactKanbanView.tsx	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
+src/components/dashboard/useSentimentData.ts	código	A: dia/2026-10-23 (M )	sim	sinaliza leitura parcial de agentes; conferir contra #2301 e testar	src	TERMINAR	alta
+src/components/gamification/MiniGameDialogs.tsx	código	A: dia/2026-10-23 ( M)	sim	cálculo de XP da partida; integrar só com RPC e teste	src	TERMINAR	alta
+src/components/gamification/miniGamesData.ts	código	A: dia/2026-10-23 ( M)	sim	cálculo de XP da partida; integrar só com RPC e teste	src	TERMINAR	alta
+src/components/queues/QueueAlertsDisplay.tsx	código	A: dia/2026-10-23 (M )	sim	remove aria-label de botão; regressão de acessibilidade	src	DESCARTAR	alta
+src/components/settings/media-library/AIGenerateDialog.tsx	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
+src/hooks/auth/useAuthForm.ts	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
+src/hooks/gamification/useAgentGamification.ts	código	A: dia/2026-10-23 ( M)	sim	cliente da RPC de XP já versionada; falta validar tipos e permissão	src	TERMINAR	alta
+src/pages/ResetPassword.tsx	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
 supabase-export/POST_EXPORT_CHECKLIST.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase-export	JÁ ESTÁ NA MAIN	baixa
 supabase-export/import.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase-export	JÁ ESTÁ NA MAIN	baixa
 supabase-export/validate_destino.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase-export	JÁ ESTÁ NA MAIN	baixa
-supabase/functions/searchbox-budget-alert/index.ts	código	A: dia/2026-10-23 (M )	sim	conteúdo local diferente; comparar funcionalmente	supabase	TERMINAR	alta
-supabase/functions/whatsapp-webhook/index.ts	código	A: dia/2026-10-23 (M )	sim	conteúdo local diferente; comparar funcionalmente	supabase	TERMINAR	alta
+supabase/functions/searchbox-budget-alert/index.ts	código	A: dia/2026-10-23 (M )	sim	substitui comparação de secret por helper de tempo constante	supabase	INTEGRAR	alta
+supabase/functions/whatsapp-webhook/index.ts	código	A: dia/2026-10-23 (M )	sim	substitui comparação de token por helper de tempo constante	supabase	INTEGRAR	alta
 supabase/migrations/20261016120000_security_fixes_passkey_purge_gmail_search_events.sql	SQL/migration	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase	JÁ ESTÁ NA MAIN	baixa
 supabase/migrations/20261019000001_grant_multiplix_audiences_validate_shared_roles.sql	SQL/migration	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase	JÁ ESTÁ NA MAIN	baixa
 supabase/migrations/20261019010001_grant_multiplix_audiences_validate_shared_roles.sql	SQL/migration	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase	JÁ ESTÁ NA MAIN	baixa
