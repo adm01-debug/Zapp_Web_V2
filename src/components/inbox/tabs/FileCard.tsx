@@ -23,6 +23,10 @@ interface FileCardProps {
   senderProfiles?: SenderProfileMap;
   /** R01: `profile.id` do usuário logado para distinguir "Você" dos demais. */
   currentUserId?: string | null;
+  /** Permite ao usuário abrir o arquivo na conversa de origem. */
+  onOpenInChat?: (item: ContactMediaItem) => void;
+  /** Download liberado pela política de segurança da organização. */
+  downloadAllowed?: boolean;
   onSelect: () => void;
   onToggleSelection?: () => void;
   onPreview: () => void;

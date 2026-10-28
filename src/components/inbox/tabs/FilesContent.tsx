@@ -42,6 +42,8 @@ export interface FilesActions {
   onForward: (item: ContactMediaItem) => void;
   /** Etapa 35: pede a exclusao — quem abre o AlertDialog e chama o useFilesActions e o FilesTab. */
   onRequestDelete: (item: ContactMediaItem) => void;
+  /** Abre o arquivo na conversa de origem (exibido nos cartões quando disponível). */
+  onOpenInChat?: (item: ContactMediaItem) => void;
 }
 
 export interface FilesContentSelection {
