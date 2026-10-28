@@ -33,7 +33,7 @@ partir do código e falha quando:
 | Edge | Grupo | Âncora do chamador (arquivo:linha) |
 |---|---|---|
 | `ai-auto-tag` | E | — sem chamador no repositório — |
-| `ai-churn-analysis` | A | `src/components/ai/ChurnPredictionDashboard.tsx:182` |
+| `ai-churn-analysis` | A | `src/components/ai/ChurnPredictionDashboard.tsx:126` |
 | `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:146` |
 | `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:107` |
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:91` |
