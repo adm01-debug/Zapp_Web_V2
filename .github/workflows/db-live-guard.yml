@@ -227,6 +227,16 @@ jobs:
           node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
             -f scripts/db-audit/check-talkx-transition-contract.sql 2>&1 | tee /tmp/step-contract-talkx-transition.log
 
+      - name: Detectar DDL fora do fluxo (GA25)
+        id: ddl-fora-do-fluxo
+        if: steps.credencial.outcome == 'success'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -o pipefail
+          node scripts/db-audit/check-ddl-deployments.mjs 2>&1 | tee /tmp/step-ddl-fora-do-fluxo.log
+
       - name: Verificar invariantes gerais do banco vivo
         id: live-invariants
         if: steps.credencial.outcome == 'success'
@@ -548,6 +558,7 @@ jobs:
             /tmp/step-acl-talkx-metrics.log
             /tmp/step-e2e-fixtures.log
             /tmp/step-contract-talkx-transition.log
+            /tmp/step-ddl-fora-do-fluxo.log
             /tmp/step-live-invariants.log
             /tmp/step-catalog.log
             /tmp/step-manifest.log
