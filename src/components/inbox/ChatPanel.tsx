@@ -31,6 +31,7 @@ import { estadoDeEnvio, type EstadoDeEnvio } from './chat/messageSendTimeline';
 import { SendErrorBanner } from './chat/SendErrorBanner';
 import { useChatPanelHandlers } from './chat/useChatPanelHandlers';
 import type { TransferTargetType } from './TransferDialog';
+import { fillQuickReplyVariables } from './template-utils';
 
 const WhisperMode = lazy(() => import('./WhisperMode').then(m => ({ default: m.WhisperMode })));
 const NextBestActionEngine = lazy(() => import('./NextBestActionEngine').then(m => ({ default: m.NextBestActionEngine })));
@@ -363,7 +364,8 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   }, []);
 
   const handleQuickReply = (reply: { id: string; title: string; shortcut: string; content: string; category: string }) => {
-    handlers.setInputValue(reply.content); closeDialog('quickReplies'); incrementUseCount(reply.id);
+    // {{nome}}, {{empresa}}, {{atendente}}... saem preenchidos com os dados desta conversa.
+    handlers.setInputValue(fillQuickReplyVariables(reply.content, conversation.contact, loggedAgent?.name)); closeDialog('quickReplies'); incrementUseCount(reply.id);
   };
 
   // Contrato do TransferDialog (item 88 / R2-INB-009): só agent|queue; a nota
