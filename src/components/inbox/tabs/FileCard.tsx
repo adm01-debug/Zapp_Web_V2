@@ -4,7 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { resolveSenderIdentity, type SenderProfileMap } from '@/lib/fileSenderIdentity';
-import { formatMeta } from './fileDisplay';
+import { typeSizeLine, formatCardDate } from './fileDisplay';
 import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
 import { AudioPlayButton } from './AudioPlayButton';
@@ -52,8 +52,8 @@ export function FileCard({
   onRequestDelete,
 }: FileCardProps) {
   const mostraRemetente = effectiveColumns <= 4;
-  // Etapas 18/25: meta unica vinda do fileDisplay — nenhum renderer formata data ou tamanho.
-  const meta = formatMeta(item);
+  const metaTipoTamanho = typeSizeLine(item);
+  const metaData = formatCardDate(item.created_at);
   const sender = resolveSenderIdentity({
     item,
     currentUserId,
@@ -80,7 +80,7 @@ export function FileCard({
       data-selected={String(selected || selectionChecked)}
       className={cn(
         'rounded-xl border bg-card overflow-hidden flex flex-col',
-        selected || selectionChecked ? 'border-border ring-2 ring-primary' : 'border-border',
+        selected || selectionChecked ? 'border-primary ring-2 ring-primary' : 'border-border',
       )}
     >
       <div className="relative">
@@ -117,16 +117,15 @@ export function FileCard({
         >
           {item.displayName}
         </button>
-        <p className="text-xs text-muted-foreground truncate">{meta}</p>
-        {mostraRemetente && (
-          <SenderAvatar
-            name={sender.name}
-            avatarUrl={sender.avatarUrl}
-            colorKey={item.agentId ?? undefined}
-            size="sm"
-            showName
-          />
-        )}
+        <p className="text-xs text-muted-foreground truncate">{metaTipoTamanho}</p>
+        <p className="text-xs text-muted-foreground truncate">{metaData}</p>
+        <SenderAvatar
+          name={sender.name}
+          avatarUrl={sender.avatarUrl}
+          colorKey={item.agentId ?? undefined}
+          size="sm"
+          showName={mostraRemetente}
+        />
       </div>
 
       {/* Etapa 19: Visualizar, Encaminhar (desabilitado até a Fase 7) e Mais ações.
