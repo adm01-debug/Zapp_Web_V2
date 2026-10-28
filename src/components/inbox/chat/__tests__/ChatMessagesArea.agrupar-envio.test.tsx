@@ -52,6 +52,7 @@ beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
   (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = scrollToSpy;
   // @tanstack/react-virtual v3.13+ returns [] when containerSize=0 (jsdom default).
+  Object.defineProperty(Element.prototype, 'clientHeight', { get: () => 600, configurable: true });
   const _origGetBCR = Element.prototype.getBoundingClientRect;
   Element.prototype.getBoundingClientRect = function (this: Element) {
     if ((this as HTMLElement).getAttribute?.('role') === 'log') {

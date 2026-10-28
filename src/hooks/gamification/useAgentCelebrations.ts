@@ -98,6 +98,8 @@ export function useAgentCelebrations(
   const nivelConhecido = useRef<number | null>(null);
   // Último estado de conexão do canal, para detectar a reconexão.
   const estadoCanal = useRef<string | null>(null);
+  // Contador de conquistas conhecido: aumento detectado via agent_stats.achievements_count.
+  const achievementsCountRef = useRef<number | null>(null);
 
   const onCelebrationRef = useRef(options.onCelebration);
   useEffect(() => {
@@ -162,7 +164,12 @@ export function useAgentCelebrations(
     let vivo = true;
     conquistasConhecidas.current = new Set();
     nivelConhecido.current = null;
+    achievementsCountRef.current = null;
 
+    // Marco da montagem: o SELECT inicial pode enxergar uma conquista gravada DEPOIS
+    // de montar (o insert comitou antes da resposta). Essa nasceu na nossa janela e
+    // vira festa; só o que já existia no marco é semente suprimida.
+    const marcoMontagem = Date.now();
     void (async () => {
       const [conquistas, stats] = await Promise.all([
         supabase
@@ -176,17 +183,24 @@ export function useAgentCelebrations(
       if (!vivo) return;
       if (conquistas.error) log.warn('Falha ao carregar conquistas do perfil', conquistas.error);
       for (const linha of (conquistas.data ?? []) as Achievement[]) {
-        if (linha?.id) conquistasConhecidas.current.add(String(linha.id));
+        if (!linha?.id) continue;
+        // `earned_at` ausente ou ilegível (NaN) nunca é "posterior": fica suprimido.
+        if (Date.parse(String(linha.earned_at ?? '')) > marcoMontagem) {
+          celebrarConquista(linha);
+        } else {
+          conquistasConhecidas.current.add(String(linha.id));
+        }
       }
       if (stats.error) log.warn('Falha ao carregar stats do perfil', stats.error);
       const statsLinha = stats.data as AgentStats | null;
       if (statsLinha) nivelConhecido.current = Number(statsLinha.level);
+      if (statsLinha) achievementsCountRef.current = Number((statsLinha as unknown as Record<string, unknown>).achievements_count ?? 0);
     })();
 
     return () => {
       vivo = false;
     };
-  }, [enabled, profileId]);
+  }, [enabled, profileId, celebrarConquista]);
 
   // Ressincronização: o que chegou durante a queda volta pelo banco — e o que já
   // foi celebrado cai no mesmo filtro de ids, então não repete.
@@ -223,16 +237,6 @@ export function useAgentCelebrations(
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'agent_achievements',
-          filter: `profile_id=eq.${profileId}`,
-        },
-        (payload) => celebrarConquista(payload.new as unknown as Achievement),
-      )
-      .on(
-        'postgres_changes',
-        {
           event: '*',
           schema: 'public',
           table: 'agent_stats',
@@ -240,7 +244,24 @@ export function useAgentCelebrations(
         },
         (payload) => {
           const linha = payload.new as unknown as AgentStats | null;
-          if (linha) celebrarNivel(linha.level, linha.xp);
+          if (!linha) return;
+          celebrarNivel(linha.level, linha.xp);
+          const novoCount = Number(
+            (linha as unknown as Record<string, unknown>).achievements_count ?? 0,
+          );
+          if (achievementsCountRef.current !== null && novoCount > achievementsCountRef.current) {
+            void supabase
+              .from('agent_achievements')
+              .select('*')
+              .eq('profile_id', profileId)
+              .order('earned_at', { ascending: false })
+              .limit(JANELA_CONQUISTAS)
+              .then(({ data: conquistas, error }) => {
+                if (error) { log.warn('Falha ao recarregar conquistas', error); return; }
+                for (const c of (conquistas ?? []) as Achievement[]) celebrarConquista(c);
+              });
+          }
+          achievementsCountRef.current = novoCount;
         },
       )
       .subscribe((status) => {

@@ -23,6 +23,7 @@ describe('volume de mídia — toda superfície de conversa passa pelo controle 
     // status/stories saiu de cena com a remoção dos órfãos do accordion (PR F —
     // o StoryViewer só era usado pela WhatsAppStatusSection morta). Se a
     // superfície voltar, re-entra aqui no mesmo commit.
+    ['status/stories', 'src/components/inbox/contact-details/StoryViewer.tsx'],
 
     // Mesma lição da gravação de chamada (VOL-02): a superfície é o arquivo que RENDERIZA o
     // `<audio>`, não o shell. Depois da partição do chat interno em partes (TC-006,

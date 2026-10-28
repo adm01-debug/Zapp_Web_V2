@@ -4,10 +4,14 @@
 #   falha: PR fica vermelho com o artefato do Playwright
 #   avisa: autor do PR
 # ==========================================================================
-# ZAPP-WEB · E2E Talk X em PR (Playwright, deslogado, NÃO required)
+# ZAPP-WEB · Talk X visual/launch + smoke público de Auth (NÃO required)
 # ==========================================================================
-# Roda o spec do Talk X em Chromium quando um PR toca arquivos do Talk X —
-# antes do merge, sem secrets de autenticação.
+# Roda as suítes visual e de lançamento do Talk X e um smoke público da tela Auth
+# quando um PR toca arquivos exercitados por essas suítes — sem secrets. O projeto
+# `chromium` contém APENAS `auth.spec.ts`; o fluxo autenticado de campanhas
+# (`talkx.spec.ts`) não roda neste check sem secrets/dados de teste isolados e,
+# portanto, não dispara este workflow. Mudanças em Edge `talkx-*` são verificadas
+# pelos testes Deno do CI principal, não por estas suítes com API mockada.
 #
 # E27 (auditoria GitHub Actions 2026-10-01): gatilho original era `push`
 # branches-ignore:main para contornar check-pr-workflow-secrets.mjs que proíbe
@@ -17,7 +21,7 @@
 # NÃO é required no branch protection — é informativo.
 # ==========================================================================
 
-name: E2E Talk X
+name: E2E Talk X (visual/launch + Auth smoke)
 
 on:
   pull_request:
@@ -25,8 +29,7 @@ on:
     paths:
       - 'src/components/talkx/**'
       - 'src/hooks/integrations/useTalkX*'
-      - 'supabase/functions/talkx-*'
-      - 'e2e/talkx.spec.ts'
+      - 'e2e/fixtures/e2e-talkx.unit.test.mjs'
       - 'e2e/talkx-visual.spec.ts'
       - 'e2e/talkx-launch.spec.ts'
       - 'e2e/fixtures/talkx-demo.ts'
@@ -53,7 +56,7 @@ concurrency:
 
 jobs:
   e2e-talkx:
-    name: 🎭 E2E Talk X (Chromium, deslogado)
+    name: 🎭 Talk X visual/launch + smoke público Auth (sem campanha autenticada)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -79,11 +82,9 @@ jobs:
       # E68: cache dos browsers (ver ci.yml para o racional completo). Aqui só o
       # Chromium entra, então a chave usa o conjunto `c` -- ela não pode herdar um
       # cache `cfw` nem ser usada por quem precisa dos três engines.
-      # GA89: restore em todos os eventos; save só em push na main para não
-      # acumular entradas presas em refs/pull/N/merge.
-      - name: 💾 Restaurar cache dos browsers Playwright
+      - name: 💾 Cache dos browsers Playwright
         id: pw-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: pw-c-${{ hashFiles('bun.lock') }}-${{ runner.os }}
@@ -96,14 +97,17 @@ jobs:
         if: steps.pw-cache.outputs.cache-hit == 'true'
         run: bunx playwright@1.64.1 install-deps chromium
 
-      - name: 💾 Salvar cache dos browsers Playwright
-        if: steps.pw-cache.outputs.cache-hit != 'true' && github.event_name == 'push'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/ms-playwright
-          key: pw-c-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+      - name: 🧪 Unit tests dos guardrails E2E (sem browser/rede)
+        run: node --import tsx --test e2e/fixtures/e2e-talkx.unit.test.mjs
 
-      - name: 📐 Run Playwright E2E Talk X (Chromium, deslogado)
+      - name: '📋 Conferir coleção: Auth smoke + Talk X visual/launch'
+        run: >-
+          bun run test:e2e -- --list
+          --project=chromium
+          --project=chromium-talkx-visual
+          --project=chromium-talkx-launch
+
+      - name: 🔐 Smoke público da tela Auth (projeto chromium; Auth-only)
         run: bun run test:e2e -- --project=chromium
         env:
           CI: true
@@ -126,5 +130,11 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: regua-visual-talkx
-          path: .tmp/regua/
+          path: |
+            playwright-report/
+            .tmp/regua/
+            !playwright-report/**/error-context.md
+            !playwright-report/**/*.zip
+            !test-results/**/error-context.md
           retention-days: 3
+          if-no-files-found: ignore

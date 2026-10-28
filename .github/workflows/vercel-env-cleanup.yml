@@ -1,9 +1,14 @@
 # docs:
-#   gatilho: workflow_dispatch com dry_run=1 (listagem) ou dry_run=0 (aplicar)
-#   prova: remove vars perigosas/mortas do projeto Vercel (V043-V065)
-#   falha: nenhuma var e removida; o operador ve o log de erro
-#   avisa: operador que disparou
+#   gatilho: dispatch manual com dry-run por padrão
+#   prova: remove variáveis Vercel perigosas ou mortas conforme o inventário
+#   falha: o script aborta antes de alterar variáveis e informa a causa
+#   avisa: operador que disparou o workflow
+
 name: V043-V065 Vercel Env Cleanup
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 
 on:
   workflow_dispatch:
@@ -15,17 +20,12 @@ on:
         type: choice
         options: ['1', '0']
 
-defaults:
-  run:
-    shell: bash --noprofile --norc -euo pipefail {0}
-
-permissions:
-  contents: read
-
 jobs:
   cleanup:
     name: Remove vars perigosas/mortas do Vercel
-    runs-on: ubuntu-24.04
+    # Só executa código da main quando o secret de Vercel está no ambiente.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

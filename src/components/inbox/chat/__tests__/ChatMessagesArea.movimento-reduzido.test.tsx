@@ -46,6 +46,7 @@ beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
   (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = vi.fn();
   // @tanstack/react-virtual v3.13+ returns [] when containerSize=0 (jsdom default).
+  Object.defineProperty(Element.prototype, 'clientHeight', { get: () => 600, configurable: true });
   const _origGetBCR = Element.prototype.getBoundingClientRect;
   Element.prototype.getBoundingClientRect = function (this: Element) {
     if ((this as HTMLElement).getAttribute?.('role') === 'log') {
@@ -57,7 +58,7 @@ beforeAll(() => {
 
 vi.mock('../MessageBubble', () => ({
   MessageBubble: ({ message }: { message: { id: string } }) => (
-    <div data-testid="bubble" data-message-id={message.id} />
+    <div data-testid="bubble" data-message-id={message.id} style={{ height: 60 }} />
   ),
 }));
 

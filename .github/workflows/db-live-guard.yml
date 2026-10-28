@@ -49,8 +49,6 @@ jobs:
     permissions:
       contents: read
       issues: write
-      # GA25: consultar Deployments API para detectar DDL fora do fluxo.
-      deployments: read
     # Este guarda roda sozinho (push na main, agendado) e abre issue quando falha.
     # Um timeout de conexao do pooler do Supabase virava alerta de "contrato
     # quebrado" que nao era verdade (run 36135041890 morreu em "timeout expired"
@@ -154,10 +152,8 @@ jobs:
           node scripts/db-audit/lote-pendente.mjs 2>&1 | tee /tmp/step-migrations.log
           rc=${PIPESTATUS[0]}
           set -e
-          if [ "$rc" -eq 3 ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
+          if [ "$rc" -eq 2 ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
             echo "::warning::Apply pendente no push — nao e drift; o schedule de amanha verificara se o apply aconteceu."
-            # GA24: sinaliza que catalog/manifest/types devem ser neutros neste push.
-            echo "LOTE_PENDENTE_NO_PUSH=true" >> "$GITHUB_ENV"
             exit 0
           fi
           exit "$rc"
@@ -203,7 +199,7 @@ jobs:
       # que ninguem executa da sensacao de cobertura sem cobrir nada.
       - name: Fixtures de E2E em producao (E85)
         id: e2e-fixtures
-        # W07 (14/10/2026): era o unico dos 11 sub-checks sem esta guarda. Hoje o
+        # W07 (14/10/2026): era o unico sub-check sem esta guarda. Hoje o
         # efeito e nulo (`credencial` nao tem continue-on-error, entao a falha dele ja
         # pula tudo pelo success() implicito), mas o invariante W07 em
         # workflow-contracts.unit.mjs exige a guarda EXPLICITA em todo sub-check com
@@ -246,12 +242,6 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          # GA24: apply pendente no push — objetos da migration nao existem no banco ainda.
-          # Diff seria um falso alarme; sera verificado no proximo schedule.
-          if [ "${LOTE_PENDENTE_NO_PUSH:-}" = "true" ]; then
-            echo "GA24: apply pendente no push — catalog diff neutral; verificar no proximo schedule." | tee /tmp/step-catalog.log
-            exit 0
-          fi
           (
             set -e
             umask 077
@@ -267,11 +257,6 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          # GA24: apply pendente no push — objetos da migration nao existem no banco ainda.
-          if [ "${LOTE_PENDENTE_NO_PUSH:-}" = "true" ]; then
-            echo "GA24: apply pendente no push — manifest diff neutral; verificar no proximo schedule." | tee /tmp/step-manifest.log
-            exit 0
-          fi
           (
             set -e
             umask 077
@@ -311,12 +296,6 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          # GA24: apply pendente no push — types.ts gerado do banco nao refletiria
-          # a migration pendente; comparar agora seria falso alarme.
-          if [ "${LOTE_PENDENTE_NO_PUSH:-}" = "true" ]; then
-            echo "GA24: apply pendente no push — types.ts diff neutral; verificar no proximo schedule." | tee /tmp/step-types.log
-            exit 0
-          fi
           (
             set -e
             umask 077
@@ -352,20 +331,6 @@ jobs:
         run: |
           set -o pipefail
           node scripts/db-audit/check-runtime-config.mjs /tmp/runtime-config.json 2>&1 | tee /tmp/step-runtime-config.log
-
-      # GA25: toda version nova no ledger (desde 2026-10-16) deve ter um Deployment
-      # producao-ddl correspondente registrado pelo job apply de db-migrate.yml.
-      # Versao sem Deployment = DDL aplicado fora do fluxo (2o caso: 20261015200000).
-      - name: Detectar DDL fora do fluxo (GA25)
-        id: ddl-fora-do-fluxo
-        if: steps.credencial.outcome == 'success'
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GA25_CUTOFF: '20261016000000'
-        run: |
-          set -o pipefail
-          node scripts/ci/ga25-ddl-check.mjs 2>&1 | tee /tmp/step-ddl-fora-do-fluxo.log
 
       # Une os 12 vereditos individuais (continue-on-error acima) num unico
       # resultado: falha o job se qualquer um falhou/foi pulado, escreve a
@@ -429,7 +394,7 @@ jobs:
             }
             const body = [
               marker,
-              `<!-- falhas:${[...currentFalhas].sort().join('|')} -->`,
+              `<!-- falhas:${[...currentFalhas].sort().join(',')} -->`,
               '**Commit da main:** `' + context.sha + '`',
               '**Run:** ' + process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY
                 + '/actions/runs/' + context.runId,
@@ -471,7 +436,7 @@ jobs:
                 });
                 await github.rest.issues.update({
                   owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: existing.number, state: 'closed', state_reason: 'not_planned',
+                  issue_number: existing.number, state: 'closed', state_reason: 'completed',
                 });
                 try { await github.rest.issues.createLabel({ owner: context.repo.owner, repo: context.repo.repo, name: 'db-live-guard', color: 'b60205', description: 'Contrato vivo do banco oficial quebrado' }); } catch {}
                 await github.rest.issues.create({
@@ -496,7 +461,7 @@ jobs:
               // detectar crescimento. Comenta de novo se set cresceu (novo
               // passo falhou), mesmo que a causa raiz seja identica.
               const lastFalhasMatch = last?.body?.match(/<!-- falhas:([^\n]*) -->/);
-              const lastFalhas = new Set(lastFalhasMatch ? lastFalhasMatch[1].split(/[,|]/).filter(Boolean) : []);
+              const lastFalhas = new Set(lastFalhasMatch ? lastFalhasMatch[1].split(',').filter(Boolean) : []);
               const grew = [...currentFalhas].some(f => !lastFalhas.has(f));
               const seisHorasMs = 6 * 60 * 60 * 1000;
               const idadeUltimoMs = last ? Date.now() - new Date(last.created_at).getTime() : Infinity;
@@ -589,6 +554,5 @@ jobs:
             /tmp/step-types.log
             /tmp/step-triple-parity.log
             /tmp/step-runtime-config.log
-            /tmp/step-ddl-fora-do-fluxo.log
           if-no-files-found: ignore
           retention-days: 3

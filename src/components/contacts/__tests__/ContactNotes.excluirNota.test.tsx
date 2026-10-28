@@ -90,12 +90,16 @@ const NOTA_MINHA = {
   content: 'Minha nota',
   created_at: '2026-10-06T12:00:00.000Z',
   author_id: 'profile-me',
+  // Banco COM a coluna (depois da migration): os controles de fixar aparecem. O caso sem a
+  // coluna está em ContactNotes.semColuna.test.tsx.
+  is_pinned: false,
 };
 const NOTA_COLEGA = {
   id: 'nota-colega',
   content: 'Nota do colega',
   created_at: '2026-10-06T11:00:00.000Z',
   author_id: 'profile-colega',
+  is_pinned: false,
 };
 
 /** Cartão da nota na lista (o motion.div que envolve autor + conteúdo + botão). */
@@ -130,8 +134,9 @@ describe('ContactNotes · excluir nota (R2-AUTH-026)', () => {
 
     // Capacidade vem do autor real da nota (mesmo dado que a policy usa).
     expect(within(cartaoDoColega).queryAllByRole('button')).toHaveLength(0);
-    expect(within(meuCartao).queryAllByRole('button')).toHaveLength(1);
-    expect(within(meuCartao).getByRole('button')).toHaveAttribute('aria-label', 'Excluir nota');
+    // Nota própria: editar + fixar + excluir (as três ações do autor).
+    expect(within(meuCartao).queryAllByRole('button')).toHaveLength(3);
+    expect(within(meuCartao).getByRole('button', { name: 'Excluir nota' })).toBeInTheDocument();
   });
 
   it('não oferece excluir enquanto o autor logado ainda não é conhecido', async () => {
@@ -146,7 +151,7 @@ describe('ContactNotes · excluir nota (R2-AUTH-026)', () => {
     h.deleteRows = [{ id: 'nota-minha' }];
     await abrir();
 
-    fireEvent.click(within(cartao('Minha nota')).getByRole('button'));
+    fireEvent.click(within(cartao('Minha nota')).getByRole('button', { name: 'Excluir nota' }));
 
     await waitFor(() => expect(screen.queryByText('Minha nota')).not.toBeInTheDocument());
     expect(h.deleteCalls).toEqual(['nota-minha']);
@@ -161,7 +166,7 @@ describe('ContactNotes · excluir nota (R2-AUTH-026)', () => {
     h.deleteRows = [];
     await abrir();
 
-    fireEvent.click(within(cartao('Minha nota')).getByRole('button'));
+    fireEvent.click(within(cartao('Minha nota')).getByRole('button', { name: 'Excluir nota' }));
 
     await waitFor(() => expect(toastError).toHaveBeenCalled());
     expect(toastSuccess).not.toHaveBeenCalled();
@@ -178,7 +183,7 @@ describe('ContactNotes · excluir nota (R2-AUTH-026)', () => {
     };
     await abrir();
 
-    fireEvent.click(within(cartao('Minha nota')).getByRole('button'));
+    fireEvent.click(within(cartao('Minha nota')).getByRole('button', { name: 'Excluir nota' }));
 
     await waitFor(() => expect(screen.queryByText('Minha nota')).not.toBeInTheDocument());
     expect(toastError).toHaveBeenCalled();

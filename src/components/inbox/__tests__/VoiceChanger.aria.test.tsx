@@ -31,6 +31,8 @@ vi.mock('framer-motion', () => {
   return {
     motion: { div: passthrough('div'), button: passthrough('button') },
     AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+    // O componente respeita o movimento reduzido do sistema.
+    useReducedMotion: () => false,
   };
 });
 
@@ -48,7 +50,9 @@ describe('VoiceChanger — botão de prévia com nome acessível (A11Y-13)', () 
 
     fireEvent.click(screen.getByRole('button', { name: /Voz Teste/ }));
 
-    const botao = await screen.findByRole('button', { name: /prévia da voz/ });
+    // O rótulo acompanha o estado ('Ouvir prévia' / 'Pausar prévia' / 'Carregando prévia' —
+    // ver VoiceChanger.falhas.test.tsx); a regra A11Y-13 é o botão só de ícone TER nome.
+    const botao = await screen.findByRole('button', { name: /^(Ouvir|Pausar|Carregando) prévia$/ });
     expect(botao).toBeInTheDocument();
   });
 });

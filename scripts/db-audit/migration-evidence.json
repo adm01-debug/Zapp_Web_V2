@@ -821,13 +821,36 @@
       "sql-sha256": "0339f3bb6985b34476b06fc1f05c32e00c1867e7ce4e07de8ea916987d5f1641"
     },
     {
+      "version": "20261009193246",
+      "filename": "20261009193246_team_receipts_reactions_conversation_id_forced.sql",
+      "file_sha256": "8d01e6fbd56a161652fd88e72e188b138736d3967c71f7fc1baa0b24eb013bdf",
+      "file_sql_sha256": "f6237d5c8cb0f6e7badcdec5497200738b959b2a599c976c7db6632cf3514acf",
+      "ledger_name": "team_receipts_reactions_conversation_id_forced",
+      "ledger_statements_sha256": "28ea765d4a187f64ef942b954e86fb2495e8662a03d8b1d5aecc239d4b0c82a1",
+      "ledger_sql_sha256": "fd3a72ec5c075660f63ef6195bb2e5b7bfd4c46de72a0751638aedd6370ade55",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "O arquivo foi corrigido para desligar o trigger team_message_receipts_update_guard_trig durante o backfill de conversation_id (esse trigger preencheria read_at=now() para recibos com status='read', mas a correcao funcional desta migration e so reconciliar conversation_id legado). A migration ja foi aplicada em producao sem o DISABLE/ENABLE (10 statements no ledger); o arquivo passa a ter 12 statements com a protecao. O arquivo corrigido corresponde a versao de referencia 20261006222024 que ja tinha o mesmo padrao. Hashes medidos em 27/10/2026.",
+      "sql-sha256": "28ea765d4a187f64ef942b954e86fb2495e8662a03d8b1d5aecc239d4b0c82a1"
+    },
+    {
+      "version": "20261016120000",
+      "filename": "20261016120000_security_fixes_passkey_purge_gmail_search_events.sql",
+      "file_sha256": "00fe9a89d69b868ae08c5b047536c30eaa998c607dfba2d7cad00767c00ae6ca",
+      "ledger_name": "security_fixes_passkey_purge_gmail_search_events",
+      "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
+      "kind": "ledger-only/comment-only",
+      "justification": "DDL aplicado diretamente em 16/10/2026 e revertido em 20261016130000; o stub fecha a paridade sem reintroduzir a regressao (PR #2014)."
+    },
+    {
       "version": "20261016240000",
       "filename": "20261016240000_search_events_rls_decision.sql",
       "file_sha256": "65d54fca860da5150347b97c28c27d1865ece494baef8e3be6b48288181cf472",
-      "kind": "ledger-only/comment-only",
       "ledger_name": "search_events_rls_decision",
       "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
-      "justification": "A ausência de SELECT policy em search_events é intencional (auditoria 16/10/2026): leituras de analytics são exclusivamente via RPC admin SECURITY DEFINER. Este arquivo existe apenas como documentação no ledger de migrações — nenhuma DDL é executada."
+      "kind": "ledger-only/comment-only",
+      "justification": "Arquivo de documentacao arquitetural: a ausencia de SELECT policy em search_events e intencional (decisao D-SearchRLS, 16/10/2026). Nenhuma DDL e executada; o registro no ledger preserva a decisao sem alterar o schema."
     }
   ]
 }

@@ -5,7 +5,7 @@ Registro das views roteadas pelo `ViewRouter` (`src/pages/ViewRouter.tsx`): para
 **classificação** do estado atual. É o par do `ESTADO.md`: lá, quem chama as edges;
 aqui, o que cada view entrega hoje.
 
-Base: `dia/2026-10-09`. 55 views (`VIEW_MAP` + `SPECIAL_VIEWS`).
+Base: `dia/2026-10-20`. 56 views (`VIEW_MAP` + `SPECIAL_VIEWS`).
 
 ## Classificação
 
@@ -24,9 +24,9 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | Estado | Views |
 |---|---|
 | Full | 44 |
-| Partial | 11 |
+| Partial | 12 |
 | Suggested | 0 |
-| **total** | **55** |
+| **total** | **56** |
 
 ## Tabela
 
@@ -45,7 +45,7 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | `admin` | `AdminView` | `src/components/admin/AdminView.tsx` | Full | `src/hooks/system/useUserRole.ts` |
 | `sentiment` | `SentimentAlertsDashboard` | `src/components/dashboard/SentimentAlertsDashboard.tsx` | Partial | `src/components/dashboard/SentimentAlertsDashboard.tsx` |
 | `reports` | `AdvancedReportsView` | `src/components/reports/AdvancedReportsView.tsx` | Partial | `src/components/reports/AdvancedReportsView.tsx` |
-| `security` | `SecurityView` | `src/components/security/SecurityView.tsx` | Full | `src/hooks/system/useSecurityPushNotifications.ts` |
+| `security` | `SecurityView` | `src/components/security/SecurityView.tsx` | Full | `src/hooks/system/useUserRole.ts` |
 | `settings` | `SettingsView` | `src/components/settings/SettingsView.tsx` | Full | `src/components/settings/SettingsView.tsx` |
 | `docs` | `SystemFeaturesView` | `src/components/docs/SystemFeaturesView.tsx` | Partial | `src/components/docs/SystemFeaturesView.tsx` |
 | `chatbot` | `ChatbotFlowsView` | `src/components/chatbot/ChatbotFlowsView.tsx` | Full | `src/hooks/integrations/useChatbotFlows.ts` |
@@ -61,7 +61,7 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | `google-calendar` | `GoogleCalendarIntegration` | `src/components/integrations/GoogleCalendarIntegration.tsx` | Partial | `src/components/integrations/GoogleCalendarIntegration.tsx` |
 | `themes` | `ThemeCustomizer` | `src/components/settings/ThemeCustomizer.tsx` | Partial | `src/components/settings/ThemeCustomizer.tsx` |
 | `schedule` | `ScheduleCalendarView` | `src/components/schedule/ScheduleCalendarView.tsx` | Full | `src/components/schedule/ScheduleCalendarView.tsx` |
-| `warroom` | `WarRoomDashboard` | `src/components/dashboard/WarRoomDashboard.tsx` | Full | `src/hooks/business/useWarRoomAlerts.ts` |
+| `warroom` | `WarRoomDashboard` | `src/components/dashboard/WarRoomDashboard.tsx` | Full | `src/components/dashboard/WarRoomDashboard.tsx` |
 | `wa-templates` | `WhatsAppTemplatesManager` | `src/components/catalog/WhatsAppTemplatesManager.tsx` | Full | `src/hooks/integrations/useWhatsAppTemplates.ts` |
 | `omnichannel` | `OmnichannelManager` | `src/components/omnichannel/OmnichannelManager.tsx` | Full | `src/components/omnichannel/OmnichannelManager.tsx` |
 | `churn` | `ChurnPredictionDashboard` | `src/components/ai/ChurnPredictionDashboard.tsx` | Full | `src/components/ai/ChurnPredictionDashboard.tsx` |
@@ -77,13 +77,13 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | `public-api` | `PublicApiDashboard` | `src/components/admin/PublicApiDashboard.tsx` | Partial | `src/components/admin/PublicApiDashboard.tsx` |
 | `gmail-webhook` | `GmailWebhookMonitor` | `src/components/admin/GmailWebhookMonitor.tsx` | Full | `src/components/admin/GmailWebhookMonitor.tsx` |
 | `media-migration` | `MediaMigrationTool` | `src/components/admin/MediaMigrationTool.tsx` | Full | `src/components/admin/MediaMigrationTool.tsx` |
-| `crm360` | `CRM360ExplorerView` | `src/components/crm360/CRM360ExplorerView.tsx` | Partial | `src/components/crm360/CRM360ExplorerView.tsx` |
+| `crm360` | `CRM360ExplorerView` | `src/components/crm360/CRM360ExplorerView.tsx` | Full | `src/hooks/system/useUserRole.ts` |
 | `ai-usage` | `AIUsageDashboard` | `src/components/admin/AIUsageDashboard.tsx` | Full | `src/hooks/analytics/useAIUsageDashboard.ts` |
+| `search-insights` | `SearchInsightsView` | `src/components/admin/SearchInsightsView.tsx` | Full | `src/hooks/admin/useSearchInsights.ts` |
+| `supervisao` | `SupervisaoView` | `src/components/admin/SupervisaoView.tsx` | Full | `src/hooks/system/useUserRole.ts` |
 | `sla` | `SLADashboardView` | `src/components/queues/SLADashboard.tsx` | Full | `src/hooks/sla/useSLAMetrics.ts` |
 | `talkx` | `TalkXView` | `src/components/talkx/TalkXView.tsx` | Full | `src/hooks/integrations/useTalkX.ts` |
+| `talkx-kit` | `TalkXKitView` | `src/components/talkx/__dev__/TalkXKit.tsx` | Partial | `src/components/talkx/__dev__/TalkXKit.tsx` |
 | `multiplix` | `MultiplixView` | `src/components/multiplix/MultiplixView.tsx` | Full | `src/components/multiplix/MultiplixView.tsx` |
 | `evolution-monitor` | `EvolutionMonitoringDashboard` | `src/components/monitoring/EvolutionMonitoringDashboard.tsx` | Partial | `src/components/monitoring/EvolutionMonitoringDashboard.tsx` |
 | `achievements` | `AchievementsSystemLazy` | `src/components/gamification/AchievementsSystem.tsx` | Full | `src/hooks/gamification/useAgentGamification.ts` |
-| `search-insights` | `SearchInsightsView` | `src/components/admin/SearchInsightsView.tsx` | Full | `src/hooks/admin/useSearchInsights.ts` |
-| `supervisao` | `SupervisaoView` | `src/components/admin/SupervisaoView.tsx` | Full | `src/hooks/system/useUserRole.ts` |
-| `talkx-kit` | `TalkXKitView` | `src/components/talkx/__dev__/TalkXKit.tsx` | Partial | `src/components/talkx/__dev__/TalkXKit.tsx` |

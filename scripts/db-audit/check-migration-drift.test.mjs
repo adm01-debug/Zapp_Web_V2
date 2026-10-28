@@ -667,6 +667,26 @@ test('aceita pinned-replay somente quando todas as dimensoes estao fixadas', () 
   assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
 });
 
+test('pinned-replay exige o campo nullable sql-sha256 no contrato versionado', () => {
+  const statements = [OTHER_SQL.trim()];
+  const evidence = pinnedEvidence({ statements });
+  assert.equal(evidence['sql-sha256'], null);
+  const valid = runGuard({
+    ledger: [ledgerRecord({ statements })],
+    evidence: [evidence],
+  });
+  assert.equal(valid.status, 0, valid.stderr);
+
+  const missingField = { ...evidence };
+  delete missingField['sql-sha256'];
+  const invalid = runGuard({
+    ledger: [ledgerRecord({ statements })],
+    evidence: [missingField],
+  });
+  assert.equal(invalid.status, 1);
+  assert.match(invalid.stderr, /campos ausentes ou desconhecidos/);
+});
+
 test('pinned-replay falha para adulteracao independente de arquivo e SQL local', () => {
   const statements = [OTHER_SQL.trim()];
   const changedBytes = runGuard({

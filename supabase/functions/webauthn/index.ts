@@ -133,6 +133,28 @@ function isBanned(account: WebAuthnAccount, nowMs: number): boolean {
 }
 
 /**
+ * Claims a single challenge with a conditional DELETE. A prior SELECT is not a
+ * claim: two edge isolates can both read it. Matching the selected row id,
+ * challenge value and unexpired deadline makes exactly one DELETE return it.
+ */
+async function consumeChallengeOnce(
+  admin: WebAuthnAdminClient,
+  challenge: { id: string; userId: string; type: 'registration' | 'authentication'; value: string },
+  nowMs: number,
+): Promise<{ consumed: boolean; error: unknown }> {
+  const { data, error } = await admin.from('webauthn_challenges')
+    .delete()
+    .eq('id', challenge.id)
+    .eq('user_id', challenge.userId)
+    .eq('type', challenge.type)
+    .eq('challenge', challenge.value)
+    .gt('expires_at', new Date(nowMs).toISOString())
+    .select('id')
+    .maybeSingle();
+  return { consumed: typeof data?.id === 'string', error };
+}
+
+/**
  * Mesma trava de lockout do auth-login: uma recusa de credencial registra a
  * tentativa no e-mail da conta e devolve o estado do bloqueio. Sem e-mail
  * conhecido, nada é registrado e o envelope sai zerado (não vaza existência).
@@ -195,6 +217,7 @@ export async function handleWebAuthn(req: Request, deps: WebAuthnDeps = {}): Pro
     const origin = req.headers.get('origin') || 'https://localhost';
     const rpId = getRpId(origin);
     const rpName = 'ZAPP Web';
+    const nowMs = deps.now ? deps.now() : Date.now();
 
     // Verify caller identity for actions that require authentication
     const authHeader = req.headers.get('Authorization');
@@ -250,10 +273,13 @@ export async function handleWebAuthn(req: Request, deps: WebAuthnDeps = {}): Pro
         }
 
         const { data: challengeData, error: challengeError } = await admin
-          .from('webauthn_challenges').select('challenge').eq('user_id', userId).eq('type', 'registration')
+          .from('webauthn_challenges').select('id, challenge, expires_at').eq('user_id', userId).eq('type', 'registration')
           .order('created_at', { ascending: false }).limit(1).single();
 
         if (challengeError || !challengeData) return errorResponse('Challenge not found or expired', 400, req);
+        if (new Date(challengeData.expires_at).getTime() <= nowMs) {
+          return errorResponse('Challenge not found or expired', 400, req);
+        }
 
         const { id, response: credResponse, type, authenticatorAttachment } = credential as Record<string, unknown>;
         if (type !== 'public-key') return errorResponse('Invalid credential type', 400, req);
@@ -273,15 +299,27 @@ export async function handleWebAuthn(req: Request, deps: WebAuthnDeps = {}): Pro
           return errorResponse('Invalid attestation object', 400, req);
         }
 
+        const challengeClaim = await consumeChallengeOnce(admin, {
+          id: challengeData.id,
+          userId,
+          type: 'registration',
+          value: challengeData.challenge,
+        }, nowMs);
+        if (challengeClaim.error) {
+          log.error('registration challenge consume failed', { code: rpcErrorCode(challengeClaim.error) });
+          return errorResponse('Internal error', 500, req);
+        }
+        if (!challengeClaim.consumed) return errorResponse('Challenge not found or expired', 400, req);
+
+        const algorithm = cr.publicKeyAlgorithm;
         const { error: insertError } = await admin.from('passkey_credentials').insert({
           user_id: userId, credential_id: id, public_key: publicKeyB64,
           counter: 0, device_type: authenticatorAttachment || 'platform',
-          backed_up: cr.publicKeyAlgorithm === '-7', transports: (credential as Record<string, unknown>).transports || ['internal'],
+          backed_up: algorithm === '-7', transports: (credential as Record<string, unknown>).transports || ['internal'],
           friendly_name: friendlyName || 'Passkey',
         });
 
         if (insertError) return errorResponse('Failed to store credential', 500, req);
-        await admin.from('webauthn_challenges').delete().eq('user_id', userId).eq('type', 'registration');
 
         log.done(200, { action });
         return jsonResponse({ success: true, credentialId: id }, 200, req);
@@ -291,7 +329,7 @@ export async function handleWebAuthn(req: Request, deps: WebAuthnDeps = {}): Pro
         // Ação PÚBLICA (roda antes do login, sem sessão): rate limit por IP ANTES de
         // qualquer consulta. O oráculo de enumeração de conta só é útil repetido e a
         // anon key é pública — não pode virar oráculo de graça.
-        const rl = await enforceRateLimit(`webauthn:auth-options:${getClientIP(req)}`, 10, 60_000);
+        const rl = await rateLimit(`webauthn:auth-options:${getClientIP(req)}`, 10, 60_000);
         if (!rl.allowed) return errorResponse('Rate limit exceeded', 429, req);
 
         const challenge = generateChallenge();
@@ -334,8 +372,6 @@ export async function handleWebAuthn(req: Request, deps: WebAuthnDeps = {}): Pro
         // AAL: a sessão emitida é `aal1`, EXATAMENTE como a do login por senha; quem
         // tem TOTP verificado continua devendo o segundo fator no gate de rota
         // (`ProtectedRoute`, R2-AUTH-003). A passkey não rebaixa nem fura esse gate.
-        const nowMs = deps.now ? deps.now() : Date.now();
-
         const ip = getClientIP(req);
         const ipRl = await rateLimit(
           `webauthn:${ip}`,
@@ -362,7 +398,7 @@ export async function handleWebAuthn(req: Request, deps: WebAuthnDeps = {}): Pro
         }
 
         const { data: challengeData } = await admin.from('webauthn_challenges')
-          .select('challenge, expires_at').eq('user_id', storedCred.user_id).eq('type', 'authentication')
+          .select('id, challenge, expires_at').eq('user_id', storedCred.user_id).eq('type', 'authentication')
           .order('created_at', { ascending: false }).limit(1).single();
 
         const cr = credResponse as Record<string, string>;
@@ -412,10 +448,26 @@ export async function handleWebAuthn(req: Request, deps: WebAuthnDeps = {}): Pro
           return jsonResponse({ error: 'Account locked', ...lockPayload(lockRow) }, 423, req);
         }
 
+        // A valid signature alone does not claim the challenge. This exact-row
+        // conditional DELETE is the single-use boundary shared by all isolates.
+        const challengeClaim = await consumeChallengeOnce(admin, {
+          id: challengeData!.id,
+          userId: storedCred.user_id,
+          type: 'authentication',
+          value: challengeData!.challenge,
+        }, nowMs);
+        if (challengeClaim.error) {
+          log.error('authentication challenge consume failed', { code: rpcErrorCode(challengeClaim.error) });
+          return errorResponse('Internal error', 500, req);
+        }
+        if (!challengeClaim.consumed) {
+          log.warn('WebAuthn authentication rejected', { reason: 'challenge already consumed or expired' });
+          return credentialRefusalResponse(req, lockPayload(null));
+        }
+
         await admin.from('passkey_credentials')
           .update({ last_used_at: new Date(nowMs).toISOString(), counter: assertion.newCounter })
           .eq('id', storedCred.id);
-        await admin.from('webauthn_challenges').delete().eq('user_id', storedCred.user_id).eq('type', 'authentication');
 
         const { error: clearError } = await admin.rpc('clear_login_attempts', { p_email: account.email });
         if (clearError) log.error('clear_login_attempts failed', { code: rpcErrorCode(clearError) });

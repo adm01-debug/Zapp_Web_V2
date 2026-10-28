@@ -114,9 +114,12 @@ function renderView(ctrl = controller(), onAccepted = vi.fn(async () => undefine
 
 describe('TalkMeView', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
     HTMLElement.prototype.scrollTo = vi.fn();
     HTMLElement.prototype.scrollBy = vi.fn();
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
   });
 
   it('mostra os dados reais e mantém o atendimento mais antigo selecionado', () => {
@@ -179,6 +182,86 @@ describe('TalkMeView', () => {
     renderView(ctrl);
     fireEvent.change(screen.getByLabelText('Buscar na fila TALK ME'), { target: { value: 'Acme' } });
     expect(ctrl.setSearch).toHaveBeenCalledWith('Acme');
+    expect(screen.getByLabelText('Buscar na fila TALK ME')).toHaveAttribute('maxlength', '80');
+  });
+
+  it('renderiza imagem acessível no cartão sem autoplay', () => {
+    const imageItem: TalkMeWaitingContact = {
+      ...first,
+      lastMessageContent: '',
+      lastMessageType: 'image',
+      lastMessageMediaUrl: 'https://cdn.example.com/foto.jpg',
+    };
+    renderView(controller({ items: [imageItem], totalCount: 1 }));
+
+    const openImage = screen.getByRole('button', { name: 'Abrir imagem de Ana Compras' });
+    const image = within(openImage).getByRole('img', { name: 'Imagem de Ana Compras' });
+    expect(image).toHaveAttribute('loading', 'lazy');
+    expect(image).toHaveAttribute('decoding', 'async');
+    expect(image).not.toHaveAttribute('autoplay');
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+  });
+
+  it('só reproduz áudio após clique e pausa ao trocar de contato', async () => {
+    const audioItem: TalkMeWaitingContact = {
+      ...first,
+      lastMessageContent: '',
+      lastMessageType: 'audio',
+      lastMessageMediaUrl: 'https://cdn.example.com/audio.ogg',
+    };
+    renderView(controller({ items: [audioItem, second] }));
+
+    expect(screen.queryByRole('audio')).not.toBeInTheDocument();
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Reproduzir áudio de Ana Compras' }));
+
+    await waitFor(() => expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1));
+    expect(screen.getByLabelText('Áudio de Ana Compras')).toHaveAttribute('preload', 'none');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Próximo atendimento' }));
+    await waitFor(() => expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled());
+  });
+
+  it('pausa o áudio ao fechar a tela', async () => {
+    const audioItem: TalkMeWaitingContact = {
+      ...first,
+      lastMessageContent: '',
+      lastMessageType: 'audio',
+      lastMessageMediaUrl: 'https://cdn.example.com/audio.ogg',
+    };
+    const ctrl = controller({ items: [audioItem], totalCount: 1 });
+    const { rerender } = render(
+      <TooltipProvider>
+        <TalkMeView open onOpenChange={vi.fn()} controller={ctrl} onAccepted={vi.fn()} />
+      </TooltipProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Reproduzir áudio de Ana Compras' }));
+    await waitFor(() => expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1));
+
+    rerender(
+      <TooltipProvider>
+        <TalkMeView open={false} onOpenChange={vi.fn()} controller={ctrl} onAccepted={vi.fn()} />
+      </TooltipProvider>,
+    );
+
+    await waitFor(() => expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled());
+  });
+
+  it('mantém a área da mídia e mostra o texto de fallback quando a URL falha', async () => {
+    const imageItem: TalkMeWaitingContact = {
+      ...first,
+      lastMessageContent: '',
+      lastMessageType: 'image',
+      lastMessageMediaUrl: 'https://cdn.example.com/expirada.jpg',
+    };
+    renderView(controller({ items: [imageItem], totalCount: 1 }));
+
+    fireEvent.error(screen.getByRole('img', { name: 'Imagem de Ana Compras' }));
+
+    const fallback = await screen.findByTestId('talk-me-media-fallback');
+    expect(fallback).toHaveTextContent('Imagem recebida');
+    expect(fallback.closest('.talk-me-media')).toHaveClass('min-w-0', 'max-w-full', 'overflow-hidden');
+    expect(fallback).toHaveClass('min-h-16');
   });
 
   it('move a seleção e o foco juntos ao navegar pelo cartão com o teclado', async () => {
@@ -366,7 +449,7 @@ describe('TalkMeView', () => {
     const mixed: TalkMePendingMessage[] = [
       { ...pendingMessages[0], messageId: 'campaign-1', sender: 'agent', content: 'Campanha de reativação enviada' },
       pendingMessages[0],
-      { ...pendingMessages[0], messageId: 'note-1', sender: 'system', content: 'Nota interna durante a espera' },
+      { ...pendingMessages[0], messageId: 'note-1', sender: 'system', messageType: 'internal_note', content: 'Nota interna durante a espera' },
       pendingMessages[1],
     ];
     const ctrl = controller({ fetchPendingMessages: vi.fn(async () => mixed) });
@@ -379,9 +462,42 @@ describe('TalkMeView', () => {
     expect(within(items[0]).getByText('Saída')).toBeInTheDocument();
     expect(within(items[0]).getByText('Campanha de reativação enviada')).toBeInTheDocument();
     expect(within(items[1]).getByText('Cliente')).toBeInTheDocument();
-    expect(within(items[2]).getByText('Sistema')).toBeInTheDocument();
+    expect(within(items[2]).getByText('Nota interna')).toBeInTheDocument();
     expect(within(items[2]).getByText('Nota interna durante a espera')).toBeInTheDocument();
     expect(within(items[3]).getByText('Cliente')).toBeInTheDocument();
+  });
+
+  it('renderiza mídia também no histórico pendente', async () => {
+    const withImage: TalkMePendingMessage[] = [
+      {
+        ...pendingMessages[0],
+        messageId: 'history-image',
+        content: '',
+        messageType: 'image',
+        mediaUrl: 'https://cdn.example.com/historico.jpg',
+      },
+    ];
+    renderView(controller({ fetchPendingMessages: vi.fn(async () => withImage) }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver histórico (2 mensagens pendentes)' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Histórico antes do aceite' });
+    expect(await within(dialog).findByRole('img', { name: 'Imagem de Cliente' })).toBeInTheDocument();
+  });
+
+  it('Escape fecha apenas o histórico e devolve o foco ao acionador', async () => {
+    renderView();
+    const trigger = screen.getByRole('button', { name: 'Ver histórico (2 mensagens pendentes)' });
+    trigger.focus();
+    fireEvent.click(trigger);
+
+    const history = await screen.findByRole('dialog', { name: 'Histórico antes do aceite' });
+    expect(history).toHaveFocus();
+    fireEvent.keyDown(history, { key: 'Escape' });
+
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Histórico antes do aceite' })).not.toBeInTheDocument());
+    expect(screen.getByRole('dialog', { name: /TALK ME/ })).toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 
   it('oferece nova tentativa quando o histórico falha', async () => {

@@ -108,7 +108,7 @@ export function TalkXLinksManager({ campaignId, campaignName = '', canEdit, onIn
     <section className="rounded-xl border border-border/70 bg-input/30">
       <header className="flex items-start justify-between gap-3 p-3 border-b border-border/60">
         <div className="flex items-start gap-2 min-w-0">
-          <Link2 className="w-4 h-4 text-primary-glow shrink-0 mt-0.5" />
+          <Link2 className="w-4 h-4 text-[hsl(var(--primary-text))] shrink-0 mt-0.5" />
           <div className="min-w-0">
             <p className="text-xs font-semibold text-foreground">Links rastreáveis</p>
             <p className="text-2xs text-muted-foreground">Crie o link medido, insira na mensagem e acompanhe os cliques.</p>
@@ -157,7 +157,7 @@ export function TalkXLinksManager({ campaignId, campaignName = '', canEdit, onIn
                     type="button"
                     aria-expanded={showUtm}
                     onClick={() => setShowUtm((value) => !value)}
-                    className="text-2xs text-primary-glow hover:underline"
+                    className="text-2xs text-[hsl(var(--primary-text))] hover:underline"
                   >
                     {showUtm ? 'Ocultar UTM' : 'Medir origem (UTM)'}
                   </button>
@@ -211,7 +211,7 @@ export function TalkXLinksManager({ campaignId, campaignName = '', canEdit, onIn
               <div key={link.id} className="rounded-lg border border-border/70 bg-input/20 p-2.5 space-y-1.5">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2 min-w-0">
-                    <code className="text-2xs font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary-glow">{buildTalkxLinkPlaceholder(link.label)}</code>
+                    <code className="text-2xs font-mono px-1.5 py-0.5 rounded bg-primary/10 text-[hsl(var(--primary-text))]">{buildTalkxLinkPlaceholder(link.label)}</code>
                     <span className="text-2xs text-muted-foreground flex items-center gap-1">
                       <MousePointerClick className="w-3 h-3" />{clicks[link.id] ?? 0} clique{(clicks[link.id] ?? 0) === 1 ? '' : 's'}
                     </span>

@@ -29,9 +29,6 @@ name: Talk X V4 placar regen (push + semanal)
 on:
   push:
     branches: [main]
-    paths:
-      - 'docs/talkx/**'
-      - 'scripts/talkx/**'
   schedule:
     # W92: regen semanal — seg 07:45 UTC (agendamento sem colisão com branch-hygiene
     # 07:56 e types-sync 05:49; jitter de 15 min antes das 08:00).
@@ -39,10 +36,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  # W94: cancela run anterior se um novo push/schedule chegar antes do fim.
-  # cancel-in-progress=false em push para main: cancelar um run de main pode
-  # interromper o placar de uma etapa já mergeada (bug W94/GA99).
-  group: talkx-regen-${{ github.ref }}
+  group: talkx-status-regen
   cancel-in-progress: false
 
 defaults:
@@ -54,8 +48,9 @@ permissions:
 
 jobs:
   regen:
+    # O dispatch não deve executar código de uma ref arbitrária com token de escrita.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
     permissions:  # zizmor: ignore[excessive-permissions]
       contents: write
       # Obrigatorio para o create-pull-request criar o PR: sem esta permissao o
@@ -71,7 +66,7 @@ jobs:
       - name: Checkout (histórico completo)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Regenera STATUS.md
@@ -100,7 +95,7 @@ jobs:
             - main de origem: `${{ github.sha }}`
             - arquivo: `docs/talkx/v4/STATUS.md`
 
-            Merge automático habilitado — entra em main assim que os checks passarem.
+            Revisão humana e checks da PR continuam obrigatórios.
           add-paths: |
             docs/talkx/v4/STATUS.md
 

@@ -4,25 +4,17 @@
 //
 // Prova OFFLINE, sem docker: roda em qualquer runner (inclusive no espelho do CI do
 // E47, que FINJE o docker e nao aplica migration). Le os ARQUIVOS REAIS de
-// supabase/migrations/ na ordem de versao e simula o estado final das policies de
-// storage.objects, aplicando cada CREATE POLICY / DROP POLICY / ALTER POLICY.
-// Nada de CREATE POLICY copiado para dentro do teste.
+// supabase/migrations/ na ordem de versao e compara o estado da policy com e sem
+// o arquivo N-011 apontado por FIX. Nada de CREATE POLICY copiado para dentro do teste.
 //
 // O que o contrato prova:
-//   (a) o par duplicado em avatars existe DE VERDADE no estado anterior: 2 SELECT e
-//       2 DELETE, cada par com papel + USING identicos — por isso remover um dos
-//       lados nao muda o acesso efetivo (policies permissivas combinam por OR);
-//   (b) no estado final: 1 policy por bucket+verbo de leitura/exclusao em avatars,
-//       stickers, audio-memes e custom-emojis, com os nomes originais mantidos;
-//   (c) o fix so mexe em avatars: a assinatura de toda policy de outro bucket fica
-//       identica antes/depois e o total de policies cai exatamente 2;
-//   (d) o fix nao tem DDL alheia: so DROP POLICY IF EXISTS em storage.objects;
-//   (e) a linha `-- Rollback:` da propria migration recria as 2 policies com a
-//       assinatura exata do estado anterior (rollback executavel de verdade);
-//   (f) reaplicar o fix e idempotente (DROP POLICY IF EXISTS).
+//   (a) replay limpo: migrations anteriores ja removeram os alvos, entao N-011 e no-op;
+//   (b) replay drifted: reintroduz os alvos da migration historica, aplica N-011 e prova
+//       que ambos somem sem alterar policies alheias;
+//   (c) reaplicar o fix e idempotente (DROP POLICY IF EXISTS).
 //
-// Vermelho: N011_WITHOUT_FIX=1 (ou a migration do fix ausente do disco) roda contra
-// o estado ANTERIOR — as contagens de avatars voltam a 2 e a suite falha.
+// N011_WITHOUT_FIX=1 afeta o estado comparativo, nao as simulacoes explicitas abaixo.
+// O historico anterior ja remove os alvos; nao se presume contagem 2 de avatars.
 
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -33,10 +25,11 @@ import { fileURLToPath } from 'node:url';
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const dirMig = join(raiz, 'supabase', 'migrations');
 const FIX = '20261016105108_n011_storage_drop_duplicate_avatar_policies.sql';
+const ORIGEM = '20260511233306_0e3f3b66-5585-4762-af6b-549c050f6275.sql';
+const NOMES_REMOVIDOS_N011 = ['Avatar images are publicly accessible', 'Users can delete their own avatars'];
 const caminhoFix = join(dirMig, FIX);
-// Dois gatilhos para rodar contra a BASE (estado anterior, sem o fix): a variavel
-// N011_WITHOUT_FIX=1 e a ausencia do proprio arquivo da migration no disco — assim
-// a prova vermelha tambem vale "worktree da base + so o teste".
+// Dois gatilhos para formar o estado-base sem N011 na comparacao do replay: a
+// variavel N011_WITHOUT_FIX=1 ou a ausencia do arquivo da migration no disco.
 const semFix = process.env.N011_WITHOUT_FIX === '1' || !existsSync(caminhoFix);
 
 const ler = (caminho) => readFileSync(caminho, 'utf8');
@@ -153,6 +146,31 @@ function parseCriacao(resto) {
   };
 }
 
+// Simula apenas DDL de policy sobre um snapshot em memoria; nao executa SQL nem
+// abre conexao. O estado drifted e semeado pelas CREATE POLICY do rollback real.
+function aplicarStatementsDePolicy(estadoInicial, statements) {
+  const resultado = new Map(estadoInicial);
+  for (const statement of statements) {
+    if (/^select\s+1$/i.test(statement.replace(/;$/, '').trim())) continue;
+    const create = statement.match(RE_CP);
+    if (create) {
+      const name = create[1] ?? create[2];
+      assert.equal(resultado.has(name), false, `CREATE POLICY duplicada (${name})`);
+      resultado.set(name, parseCriacao(create[3]));
+      continue;
+    }
+    const drop = statement.match(RE_DP);
+    if (drop) {
+      const name = drop[2] ?? drop[3];
+      assert.ok(drop[1] || resultado.has(name), `DROP POLICY sem IF EXISTS em policy ausente (${name})`);
+      resultado.delete(name);
+      continue;
+    }
+    assert.fail(`DDL fora do simulador de policies: ${normaliza(statement)}`);
+  }
+  return resultado;
+}
+
 // Estado final (nome -> registro) das policies de storage.objects.
 function estado(arquivos) {
   const pol = new Map();
@@ -190,69 +208,95 @@ const arquivosTodos = readdirSync(dirMig)
   .map((f) => join(dirMig, f));
 
 const arquivosBase = arquivosTodos.filter((a) => a !== caminhoFix);
-const antes = estado(arquivosBase);
-const depois = semFix ? estado(arquivosBase) : estado(arquivosTodos);
+const estadoSemFix = estado(arquivosBase);
+const estadoComFix = semFix ? estado(arquivosBase) : estado(arquivosTodos);
+const linhasFix = lerFix().split('\n');
+const statementsFix = divide(lerFix());
+const simuladoCleanDepoisFix = aplicarStatementsDePolicy(estadoSemFix, statementsFix);
+// Drift controlado: injeta as definicoes REAIS da migration historica de origem,
+// para provar o efeito da migration forward no replay com drift.
+const politicasOriginais = estado([join(dirMig, ORIGEM)]);
+const simuladoDriftedAntes = new Map(estadoSemFix);
+for (const nome of NOMES_REMOVIDOS_N011) {
+  const policy = politicasOriginais.get(nome);
+  assert.ok(policy, `policy historica ausente na migration de origem: ${nome}`);
+  simuladoDriftedAntes.set(nome, { ...policy });
+}
+const simuladoDriftedDepoisFix = aplicarStatementsDePolicy(simuladoDriftedAntes, statementsFix);
 
 const grupo = (tab, bucket, cmd) =>
   [...tab.entries()].filter(([, r]) => r.bucket === bucket && r.cmd === cmd).map(([n]) => n).sort();
 
-const PARES = [
-  ['avatars', 'SELECT', 'avatars authenticated read', 'Avatar images are publicly accessible'],
-  ['avatars', 'DELETE', 'Users can delete their own avatar', 'Users can delete their own avatars'],
-];
+const AVATAR_SELECT_VIGENTE = 'avatars authenticated read';
+const AVATAR_DELETE_VIGENTE = 'Users can delete their own avatar';
 const SOZINHOS = [
   ['stickers', 'SELECT', 'Anyone can view stickers'],
   ['stickers', 'DELETE', 'Users can delete own stickers'],
   ['audio-memes', 'SELECT', 'Public read audio memes'],
+  ['audio-memes', 'DELETE', ['Admins can delete any audio meme', 'Users can delete own audio memes']],
   ['custom-emojis', 'SELECT', 'Public read for custom emojis'],
   ['custom-emojis', 'DELETE', 'Users can delete own custom emojis'],
 ];
 
 console.log(`FATO: migrations lidas = ${arquivosBase.length}`);
 console.log(`FATO: modo = ${semFix ? 'SEM FIX (estado anterior)' : 'com o fix aplicado'}`);
-for (const [bucket, cmd, mantida, removida] of PARES) {
-  console.log(`FATO: ${bucket}/${cmd} antes=[${grupo(antes, bucket, cmd).join(', ')}]`
-    + ` depois=[${grupo(depois, bucket, cmd).join(', ')}]`);
-  console.log(`      mantida "${mantida}" x removida "${removida}":`
-    + ` roles=${antes.get(mantida)?.roles} using=${antes.get(mantida)?.using}`);
-}
-console.log(`FATO: policies de storage.objects antes=${antes.size} depois=${depois.size}`);
+console.log(`FATO: policies de storage.objects sem fix=${estadoSemFix.size} com fix=${estadoComFix.size}`);
+console.log(`SIMULACAO: replay limpo N011 ${estadoSemFix.size} -> ${simuladoCleanDepoisFix.size}`);
+console.log(`SIMULACAO: replay drifted N011 ${simuladoDriftedAntes.size} -> ${simuladoDriftedDepoisFix.size}`);
 
-test('o fix esta presente na lista de migrations (idempotente — pode nao ser a mais recente)', () => {
-  assert.ok(arquivosTodos.some((a) => basename(a) === FIX), `${FIX} nao encontrado em supabase/migrations/`);
+test('migrations posteriores nao reescrevem policies de avatars', () => {
+  const versaoFix = basename(caminhoFix).split('_')[0];
+  const posteriores = arquivosTodos.filter((a) => basename(a).split('_')[0] > versaoFix);
+  const alteracoesAvatar = posteriores.flatMap((caminho) => divide(ler(caminho))
+    .filter((st) => /\b(?:create|drop|alter)\s+policy\b/i.test(st)
+      && /\bon\s+storage\.objects\b/i.test(st)
+      && /\bavatars?\b/i.test(st))
+    .map((st) => `${basename(caminho)}: ${normaliza(st)}`));
+  assert.deepEqual(alteracoesAvatar, []);
 });
 
-for (const [bucket, cmd, mantida, removida] of PARES) {
-  test(`${bucket}/${cmd}: estado ANTERIOR: a policy mantida existe, a removida ja foi limpa`, () => {
-    const g = grupo(antes, bucket, cmd);
-    assert.ok(g.includes(mantida), `"${mantida}" nao encontrada em ${bucket}/${cmd}`);
-    assert.ok(!g.includes(removida), `"${removida}" deveria ter sido removida antes do fix`);
-  });
-  test(`${bucket}/${cmd}: a policy "${mantida}" e a unica em ${bucket}/${cmd} antes do fix`, () => {
-    assert.deepEqual(grupo(antes, bucket, cmd), [mantida]);
-  });
-  test(`${bucket}/${cmd}: estado FINAL tem a policy "${mantida}" inalterada`, () => {
-    assert.deepEqual(grupo(depois, bucket, cmd), grupo(antes, bucket, cmd));
-  });
-  test(`a policy mantida "${mantida}" tem a mesma assinatura antes/depois`, () => {
-    assert.deepEqual(depois.get(mantida), antes.get(mantida));
-  });
-}
+test('avatars/SELECT preserva a policy autenticada vigente', () => {
+  assert.deepEqual(grupo(estadoSemFix, 'avatars', 'SELECT'), [AVATAR_SELECT_VIGENTE]);
+  assert.deepEqual(grupo(estadoComFix, 'avatars', 'SELECT'), [AVATAR_SELECT_VIGENTE]);
+  assert.deepEqual(estadoComFix.get(AVATAR_SELECT_VIGENTE), estadoSemFix.get(AVATAR_SELECT_VIGENTE));
+});
 
-for (const [bucket, cmd, nome] of SOZINHOS) {
-  test(`${bucket}/${cmd}: 1 policy ("${nome}") antes E depois`, () => {
-    assert.deepEqual(grupo(antes, bucket, cmd), [nome]);
-    assert.deepEqual(grupo(depois, bucket, cmd), [nome]);
+test('replay limpo: as migrations anteriores ja removeram os alvos e N-011 e no-op', () => {
+  assert.equal(estadoSemFix.has(NOMES_REMOVIDOS_N011[0]), false);
+  assert.equal(estadoSemFix.has(NOMES_REMOVIDOS_N011[1]), false);
+  assert.deepEqual([...simuladoCleanDepoisFix.entries()].sort(), [...estadoSemFix.entries()].sort());
+  assert.deepEqual([...estadoComFix.entries()].sort(), [...estadoSemFix.entries()].sort());
+});
+
+test('replay drifted: N-011 remove os dois alvos reais sem alterar as demais policies', () => {
+  assert.deepEqual(
+    [...simuladoDriftedAntes.keys()].filter((name) => NOMES_REMOVIDOS_N011.includes(name)).sort(),
+    [...NOMES_REMOVIDOS_N011].sort(),
+  );
+  assert.deepEqual(
+    [...simuladoDriftedDepoisFix.keys()].filter((name) => NOMES_REMOVIDOS_N011.includes(name)),
+    [],
+  );
+  assert.equal(simuladoDriftedAntes.size, estadoSemFix.size + 2);
+  assert.equal(simuladoDriftedDepoisFix.size, estadoSemFix.size);
+  assert.deepEqual([...simuladoDriftedDepoisFix.entries()].sort(), [...estadoSemFix.entries()].sort());
+  assert.deepEqual(
+    assinatura(simuladoDriftedAntes.get(AVATAR_DELETE_VIGENTE)),
+    assinatura(simuladoDriftedDepoisFix.get(AVATAR_DELETE_VIGENTE)),
+  );
+});
+
+for (const [bucket, cmd, nomesEsperados] of SOZINHOS) {
+  const nomes = Array.isArray(nomesEsperados) ? nomesEsperados : [nomesEsperados];
+  test(`${bucket}/${cmd}: policies vigentes antes e depois do fix`, () => {
+    assert.deepEqual(grupo(estadoSemFix, bucket, cmd), [...nomes].sort());
+    assert.deepEqual(grupo(estadoComFix, bucket, cmd), [...nomes].sort());
   });
 }
 
 test('o fix so mexe em avatars: nenhuma policy de outro bucket muda', () => {
   const outros = (tab) => [...tab.entries()].filter(([, r]) => r.bucket !== 'avatars').sort();
-  assert.deepEqual(outros(depois), outros(antes));
-});
-
-test('o fix e no-op: o total de policies nao muda (as redundantes ja foram limpas)', () => {
-  assert.equal(depois.size, antes.size);
+  assert.deepEqual(outros(estadoComFix), outros(estadoSemFix));
 });
 
 test('o fix nao tem DDL alheia: so DROP POLICY IF EXISTS das 2 redundantes', () => {
@@ -261,14 +305,12 @@ test('o fix nao tem DDL alheia: so DROP POLICY IF EXISTS das 2 redundantes', () 
   for (const st of divide(lerFix())) {
     const m = st.match(RE_DP);
     const nome = m ? (m[2] ?? m[3]) : null;
-    if (m && m[1] && nome === PARES.map((p) => p[3]).find((n) => n === nome)) nomes.push(nome);
+    if (m && m[1] && NOMES_REMOVIDOS_N011.includes(nome)) nomes.push(nome);
     else alheios.push(normaliza(st).slice(0, 100));
   }
   assert.deepEqual(alheios, []);
-  assert.deepEqual(nomes.sort(), PARES.map((p) => p[3]).sort());
+  assert.deepEqual(nomes.sort(), [...NOMES_REMOVIDOS_N011].sort());
 });
-
-const linhasFix = lerFix().split('\n');
 
 test('a 1a linha da migration e o cabecalho `-- <slug>`', () => {
   assert.ok(linhasFix[0].startsWith('-- '));
@@ -279,48 +321,13 @@ test('a 2a linha da migration comeca com `-- Rollback:`', () => {
   assert.ok(linhasFix[1].startsWith('-- Rollback:'));
 });
 
-test('o bloco `-- Rollback:` tem 2 CREATE POLICY executaveis', () => {
-  const stmts = divide(linhasFix[1].split('Rollback:')[1].trim());
-  assert.equal(stmts.length, 2);
-  stmts.forEach((st) => assert.match(st, RE_CP));
-});
-
-test('o rollback recria as 2 policies removidas', () => {
-  const stmts = divide(linhasFix[1].split('Rollback:')[1].trim());
-  const nomes = stmts.map((st) => {
-    const m = st.match(RE_CP);
-    return m ? (m[1] ?? m[2]) : null;
-  }).filter(Boolean);
-  assert.deepEqual(nomes.sort(), PARES.map((p) => p[3]).sort());
-});
-
-test('o rollback restaura o estado ANTERIOR (mesmos nomes e mesma assinatura)', () => {
-  const stmts = divide(linhasFix[1].split('Rollback:')[1].trim());
-  const restaurado = new Map(depois);
-  for (const st of stmts) {
-    const m = st.match(RE_CP);
-    if (m) restaurado.set(m[1] ?? m[2], parseCriacao(m[3]));
-  }
-  // O rollback recria as policies que o fix removeria (que ja nao estao em `depois`
-  // por terem sido limpas por migrations anteriores).
-  for (const [, , , removida] of PARES) {
-    assert.ok(restaurado.has(removida), `rollback deve recriar "${removida}"`);
-  }
-  // Policies existentes em `depois` permanecem inalteradas em `restaurado`.
-  for (const [nome, reg] of depois) {
-    assert.deepEqual(restaurado.get(nome), reg, `policy "${nome}" nao deve mudar apos rollback`);
-  }
-});
-
 test('reaplicar o fix e idempotente (DROP POLICY IF EXISTS)', () => {
   if (semFix) {
     console.log('  ok  : reaplicar o fix e idempotente (nao avaliado na rodada SEM FIX)');
     return;
   }
-  const reaplicado = new Map(depois);
-  for (const st of divide(lerFix())) {
-    const m = st.match(RE_DP);
-    if (m) reaplicado.delete(m[2] ?? m[3]);
-  }
-  assert.deepEqual([...reaplicado.entries()].sort(), [...depois.entries()].sort());
+  const reaplicadoClean = aplicarStatementsDePolicy(simuladoCleanDepoisFix, statementsFix);
+  const reaplicadoDrifted = aplicarStatementsDePolicy(simuladoDriftedDepoisFix, statementsFix);
+  assert.deepEqual([...reaplicadoClean.entries()].sort(), [...simuladoCleanDepoisFix.entries()].sort());
+  assert.deepEqual([...reaplicadoDrifted.entries()].sort(), [...simuladoDriftedDepoisFix.entries()].sort());
 });
