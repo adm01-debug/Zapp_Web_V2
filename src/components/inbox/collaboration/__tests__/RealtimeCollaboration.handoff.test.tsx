@@ -75,7 +75,7 @@ function renderComponent(contactId = CONTACT_ID) {
 }
 
 /** Cadeia de `contacts` usada pela leitura da fila do contato (filtro do diálogo). */
-const CONTACTSE_TABLE = () => ({
+const CONTACTS_TABLE = () => ({
   select: () => ({
     eq: () => ({
       maybeSingle: () => Promise.resolve({ data: { queue_id: 'queue-1' }, error: null }),
@@ -85,7 +85,7 @@ const CONTACTSE_TABLE = () => ({
 
 /** Cada tabela com a cadeia que o componente usa (a de `contacts` é padrão). */
 function mockTables(tables: Record<string, () => unknown>) {
-  const all: Record<string, () => unknown> = { contacts: COTACPSE_TABLE, ...tables };
+  const all: Record<string, () => unknown> = { contacts: CONTACTS_TABLE, ...tables };
   mocks.from.mockImplementation((table: string) => {
     const handler = all[table];
     if (!handler) throw new Error(`tabela inesperada no teste: ${table}`);
@@ -100,7 +100,7 @@ beforeEach(() => {
   mocks.rpcCalls.length = 0;
   mocks.getUser.mockResolvedValue({ data: { user: { id: AUTH_USER_ID } } });
   mocks.from.mockImplementation((table: string) => {
-    if (table === 'contacts') return COTACTSE_TABLE();
+    if (table === 'contacts') return CONTACTS_TABLE();
     throw new Error(`tabela inesperada no teste: ${table}`);
   });
 });
