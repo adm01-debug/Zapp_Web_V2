@@ -19,11 +19,10 @@ Deno.test("classifyEvolutionAction - ações de controle exigem papel (RED→GRE
   for (const action of ["set-webhook", "disconnect", "restart-instance", "update-privacy"]) {
     assertEquals(classifyEvolutionAction(action), "control", `${action} deve ser control`);
   }
-  // Alterações de perfil/grupos e integrações também são controle.
+  // Alterações de perfil/grupos também são controle.
   for (const action of [
     "update-profile-name", "update-profile-picture", "remove-profile-picture",
-    "create-group", "update-participants", "leave-group", "toggle-ephemeral",
-    "set-settings", "set-presence", "set-chatwoot", "delete-openai", "set-proxy",
+    "create-group", "update-participants", "leave-group",
   ]) {
     assertEquals(classifyEvolutionAction(action), "control", `${action} deve ser control`);
   }
@@ -49,14 +48,14 @@ Deno.test("classifyEvolutionAction - ação desconhecida cai em control (deny by
 
 Deno.test("classifyEvolutionAction - envios diretos e mutações de conversa são send", () => {
   for (const action of [
-    "send-text", "send-media", "send-audio", "send-template", "send-ptv",
-    "send-reaction", "send-chat-presence", "offer-call",
-    "mark-read", "mark-unread", "archive-chat",
+    "send-text", "send-media", "send-audio", "send-ptv",
+    "send-reaction", "send-chat-presence",
+    "mark-read", "archive-chat",
   ]) {
     assertEquals(classifyEvolutionAction(action), "send", `${action} deve ser send`);
   }
   assert(SEND_ACTIONS.has("send-text"));
-  assert(SEND_ACTIONS.has("offer-call"));
+  assert(SEND_ACTIONS.has("send-ptv"));
 });
 
 Deno.test("R2EXT-STATUS: send-status é controle (não tem contato-alvo para gate por visibilidade)", () => {
@@ -72,7 +71,7 @@ Deno.test("classifyEvolutionAction - leituras não sensíveis seguem liberadas a
   for (const action of [
     "status", "list-instances", "instance-info",
     "check-numbers",
-    "list-groups", "group-info", "group-participants", "group-invite-code", "invite-info",
+    "list-groups", "group-info", "group-participants", "group-invite-code",
   ]) {
     assertEquals(classifyEvolutionAction(action), "read", `${action} deve ser read`);
     assert(READ_ACTIONS.has(action), `${action} deve estar em READ_ACTIONS`);
@@ -80,20 +79,15 @@ Deno.test("classifyEvolutionAction - leituras não sensíveis seguem liberadas a
 });
 
 Deno.test("R2EXT-AGENDA: leitura instance-wide e configuração do provedor exigem control", () => {
-  // find-chats/find-contacts/find-messages devolvem a instância inteira (sem
-  // alvo de conversa para gate por visibilidade) e as demais expõem configuração
-  // ou credencial do provedor: todas restritas a admin/supervisor.
+  // find-contacts/find-messages devolvem a instância inteira (sem alvo de
+  // conversa para gate por visibilidade) e as demais expõem configuração ou
+  // credencial do provedor: todas restritas a admin/supervisor.
+  // (SL-075 removeu integrações e rotas legadas do handler.)
   const movedToControl = [
-    "find-chats", "find-contacts", "find-messages", "find-status-messages",
+    "find-contacts", "find-messages",
     "get-media-base64",
-    "get-settings", "get-webhook",
     "fetch-profile", "fetch-profile-picture", "fetch-business-profile",
-    "find-labels", "find-templates",
-    "get-chatwoot", "get-typebot", "typebot-sessions",
-    "get-openai", "get-dify", "get-flowise", "get-evolution-bot",
-    "get-rabbitmq", "get-sqs", "get-proxy", "get-evoai", "get-n8n",
-    "get-kafka", "get-nats", "get-pusher",
-    "get-catalog", "get-collections",
+    "find-labels",
   ];
   for (const action of movedToControl) {
     assertEquals(classifyEvolutionAction(action), "control", `${action} deve ser control`);
