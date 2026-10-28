@@ -1,4 +1,4 @@
-import { handleConnectionHealthCheck, evaluateOpenConnectionHealth, parseOwnerJid, parseSilenceMinutes, inboxSilenceDedupeKey } from './index.ts';
+import { handleConnectionHealthCheck, evaluateOpenConnectionHealth, parseOwnerJid, parseSilenceMinutes, inboxSilenceDedupeKey, buildConnectionAlertPrefs } from './index.ts';
 
 // ---------------------------------------------------------------------------
 // SL-053 / F3 E23-E29 do plano multi-conexão (E24/E25/E26/E28).
@@ -748,4 +748,40 @@ Deno.test('CA2: checagem SEM transição não grava linha de trilha', async () =
 
   assert(res.status === 200, `esperado 200, veio ${res.status}`);
   assert(fake.auditLogs.length === 0, `sem mudança de status não pode haver trilha, veio ${fake.auditLogs.length}`);
+});
+
+// ---------------------------------------------------------------------------
+// Decisão 1C (2026-10-28): quem recebe o aviso de queda. Todo usuário com papel
+// recebe por padrão; só não recebe quem desligou no cartão "Alertas de Conexão".
+// ---------------------------------------------------------------------------
+
+Deno.test('1C: usuário sem preferência salva recebe queda e degradação por push e e-mail', () => {
+  const prefs = buildConnectionAlertPrefs(['u1'], []);
+  const chaves = prefs.map((p) => `${p.user_id}:${p.channel}:${p.alert_type}`).sort();
+  if (JSON.stringify(chaves) !== JSON.stringify(['u1:email:degraded', 'u1:email:disconnected', 'u1:push:degraded', 'u1:push:disconnected'])) {
+    throw new Error(`esperado os 4 avisos padrão, veio ${JSON.stringify(chaves)}`);
+  }
+});
+
+Deno.test('1C: quem desligou e-mail e degradação recebe só a queda por push', () => {
+  const prefs = buildConnectionAlertPrefs(['u1'], [
+    { user_id: 'u1', push_enabled: true, email_enabled: false, alert_on_degraded: false, alert_on_disconnected: true },
+  ]);
+  const chaves = prefs.map((p) => `${p.channel}:${p.alert_type}`);
+  if (JSON.stringify(chaves) !== JSON.stringify(['push:disconnected'])) {
+    throw new Error(`esperado só push:disconnected, veio ${JSON.stringify(chaves)}`);
+  }
+});
+
+Deno.test('1C: quem desligou a queda não recebe nada de queda', () => {
+  const prefs = buildConnectionAlertPrefs(['u1'], [
+    { user_id: 'u1', push_enabled: true, email_enabled: true, alert_on_degraded: false, alert_on_disconnected: false },
+  ]);
+  if (prefs.length !== 0) throw new Error(`esperado nenhum aviso, veio ${prefs.length}`);
+});
+
+Deno.test('1C: usuário com dois papéis recebe uma vez só', () => {
+  const prefs = buildConnectionAlertPrefs(['u1', 'u1', 'u2'], []);
+  const pushQueda = prefs.filter((p) => p.channel === 'push' && p.alert_type === 'disconnected');
+  if (pushQueda.length !== 2) throw new Error(`esperado 2 destinatários, veio ${pushQueda.length}`);
 });

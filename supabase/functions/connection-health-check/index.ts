@@ -162,6 +162,64 @@ function prefMatchesKind(pref: Record<string, unknown>, kind: 'disconnected' | '
   return t === 'all' || t === kind;
 }
 
+/** Linha de connection_alert_preferences (os 4 interruptores do cartão "Alertas de Conexão"). */
+export type ConnectionAlertPrefRow = {
+  user_id: string;
+  push_enabled: boolean | null;
+  email_enabled: boolean | null;
+  alert_on_degraded: boolean | null;
+  alert_on_disconnected: boolean | null;
+};
+
+/**
+ * Decisão do Joaquim (2026-10-28, "1C"): todo usuário com papel recebe o aviso de
+ * queda por padrão; só deixa de receber quem desligar no cartão. Sem linha na
+ * tabela = os mesmos padrões que o cartão mostra (CONNECTION_ALERT_DEFAULTS, tudo
+ * ligado). Devolve uma entrada por usuário × canal × tipo, no formato que
+ * notifyOptedIn/prefMatchesKind já consomem.
+ */
+export function buildConnectionAlertPrefs(
+  userIds: string[],
+  rows: ConnectionAlertPrefRow[],
+): Array<Record<string, unknown>> {
+  const byUser = new Map(rows.map((r) => [r.user_id, r]));
+  const out: Array<Record<string, unknown>> = [];
+  for (const userId of new Set(userIds)) {
+    const r = byUser.get(userId);
+    const on = (v: boolean | null | undefined) => v !== false;
+    const kinds: Array<'disconnected' | 'degraded'> = [];
+    if (on(r?.alert_on_disconnected)) kinds.push('disconnected');
+    if (on(r?.alert_on_degraded)) kinds.push('degraded');
+    const channels: Array<'push' | 'email'> = [];
+    if (on(r?.push_enabled)) channels.push('push');
+    if (on(r?.email_enabled)) channels.push('email');
+    for (const alert_type of kinds) {
+      for (const channel of channels) out.push({ user_id: userId, channel, alert_type });
+    }
+  }
+  return out;
+}
+
+/** Lê destinatários (usuários com papel) e preferências; erro na leitura de usuários = ninguém. */
+async function loadConnectionAlertPrefs(
+  supabase: SupabaseClient,
+  log: Logger,
+): Promise<Array<Record<string, unknown>>> {
+  const { data: roles, error: rolesError } = await supabase.from('user_roles').select('user_id');
+  if (rolesError) {
+    log.warn('Falha ao ler destinatários do alerta de conexão', { error: rolesError.message });
+    return [];
+  }
+  const { data: rows, error: prefsError } = await supabase
+    .from('connection_alert_preferences')
+    .select('user_id, push_enabled, email_enabled, alert_on_degraded, alert_on_disconnected');
+  if (prefsError) {
+    log.warn('Falha ao ler connection_alert_preferences; usando os padrões', { error: prefsError.message });
+  }
+  const userIds = (roles ?? []).map((r) => (r as { user_id?: unknown }).user_id).filter((u): u is string => typeof u === 'string' && u !== '');
+  return buildConnectionAlertPrefs(userIds, (rows ?? []) as ConnectionAlertPrefRow[]);
+}
+
 /**
  * Camada 2 no provedor: dono atual da instância. Sem token próprio, NÃO consulta
  * (a rota de instância com a credencial global violaria o isolamento E24) e a
@@ -736,13 +794,9 @@ export async function handleConnectionHealthCheck(
     }
 
     // warroom_alerts só aparece para quem está com o painel aberto. O alerta tem
-    // que sair do app: push (notifications) e e-mail (Resend) SÓ para quem optou.
-    // A tabela de preferências (connection_alert_preferences) ainda NÃO existe no
-    // banco do V2 (não está no schema-catalog nem nas migrations) — referenciá-la
-    // aqui quebra o guard de espelho do CI. Até o cartão de SQL criá-la, a lista de
-    // opt-ins é vazia e a notificação falha fechada: o episódio fica registrado no
-    // warroom, mas nenhum push/e-mail dispara. Nunca volta a mandar para todos.
-    const prefs: Array<Record<string, unknown>> = [];
+    // que sair do app: push (notifications) e e-mail (Resend) para todo usuário com
+    // papel, exceto quem desligou no cartão "Alertas de Conexão" (decisão 1C).
+    const prefs = newAlerts.length > 0 ? await loadConnectionAlertPrefs(supabase, log) : [];
     const resendKey = Deno.env.get('RESEND_API_KEY');
     for (const alert of newAlerts) {
       await notifyOptedIn(supabase, log, { alert, prefs, resendKey });
