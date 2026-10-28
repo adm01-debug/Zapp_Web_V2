@@ -35,9 +35,6 @@ export function useEvolutionInstance(
   const deleteInstance = useCallback((instanceName: string) =>
     withToast('delete-instance', { instanceName }, 'Instância excluída', 'Erro ao excluir instância', 'DELETE'), [withToast]);
 
-  const setPresence = useCallback((instanceName: string, presence: 'available' | 'unavailable' | 'composing' | 'recording' | 'paused') =>
-    callApi('set-presence', { instanceName, presence }), [callApi]);
-
   const setSettings = useCallback((config: SettingsConfig) =>
     withToast('set-settings', config, 'Configurações salvas', 'Erro ao salvar configurações'), [withToast]);
 
@@ -52,7 +49,7 @@ export function useEvolutionInstance(
 
   return {
     createInstance, createConnection, listInstances, connectInstance, getInstanceStatus, getInstanceInfo,
-    restartInstance, disconnectInstance, deleteInstance, setPresence,
+    restartInstance, disconnectInstance, deleteInstance,
     setSettings, getSettings, setWebhook, getWebhook,
   };
 }
