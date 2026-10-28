@@ -1,4 +1,5 @@
-import { Eye, Share2 } from 'lucide-react';
+import { Download, Eye, Lock, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
@@ -43,6 +44,7 @@ export function FileCard({
   effectiveColumns = 4,
   senderProfiles,
   currentUserId,
+  downloadAllowed,
   onSelect,
   onToggleSelection,
   onPreview,
@@ -61,9 +63,21 @@ export function FileCard({
 
   const acao = selectionMode ? onToggleSelection : undefined;
 
+  const handleDownload = async () => {
+    const resp = await fetch(item.url ?? item.signedUrl ?? '');
+    const blob = await resp.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = item.displayName;
+    a.click();
+    URL.revokeObjectURL(objectUrl);
+  };
+
   return (
     <article
       data-testid={`files-item-${item.id}`}
+      data-selected={String(selected || selectionChecked)}
       className={cn(
         'rounded-xl border bg-card overflow-hidden flex flex-col',
         selected || selectionChecked ? 'border-border ring-2 ring-primary' : 'border-border',
@@ -128,6 +142,28 @@ export function FileCard({
         >
           <Eye className="w-3.5 h-3.5" />
         </button>
+        {downloadAllowed === false ? (
+          <button
+            type="button"
+            aria-label="Download bloqueado por política de segurança"
+            title="Download bloqueado por política de segurança"
+            className={FILE_ACTION_BUTTON}
+            onClick={() => toast.error('🔒 Download bloqueado por política de segurança', {
+              description: 'Entre em contato com o administrador para solicitar acesso.',
+            })}
+          >
+            <Lock className="w-3.5 h-3.5" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            aria-label="Baixar"
+            className={FILE_ACTION_BUTTON}
+            onClick={handleDownload}
+          >
+            <Download className="w-3.5 h-3.5" />
+          </button>
+        )}
         <button
           type="button"
           aria-label="Encaminhar"
