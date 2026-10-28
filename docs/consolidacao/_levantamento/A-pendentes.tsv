@@ -197,12 +197,12 @@ src/components/auth/PasswordStrengthMeter.tsx	código	A: dia/2026-10-23 (M )	sim
 src/components/catalog/ProductDetailDialog.tsx	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
 src/components/contacts/ContactKanbanView.tsx	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
 src/components/dashboard/useSentimentData.ts	código	A: dia/2026-10-23 (M )	sim	sinaliza leitura parcial de agentes; conferir contra #2301 e testar	src	TERMINAR	alta
-src/components/gamification/MiniGameDialogs.tsx	código	A: dia/2026-10-23 ( M)	sim	cálculo de XP da partida; integrar só com RPC e teste	src	TERMINAR	alta
-src/components/gamification/miniGamesData.ts	código	A: dia/2026-10-23 ( M)	sim	cálculo de XP da partida; integrar só com RPC e teste	src	TERMINAR	alta
+src/components/gamification/MiniGameDialogs.tsx	código	A: dia/2026-10-23 ( M)	sim	cálculo de XP da partida contraria contrato PB-18/D4 e testes da main	src	DESCARTAR	alta
+src/components/gamification/miniGamesData.ts	código	A: dia/2026-10-23 ( M)	sim	xpReward e cálculo por partida contrariam contrato PB-18/D4 e testes da main	src	DESCARTAR	alta
 src/components/queues/QueueAlertsDisplay.tsx	código	A: dia/2026-10-23 (M )	sim	remove aria-label de botão; regressão de acessibilidade	src	DESCARTAR	alta
 src/components/settings/media-library/AIGenerateDialog.tsx	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
 src/hooks/auth/useAuthForm.ts	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
-src/hooks/gamification/useAgentGamification.ts	código	A: dia/2026-10-23 ( M)	sim	cliente da RPC de XP já versionada; falta validar tipos e permissão	src	TERMINAR	alta
+src/hooks/gamification/useAgentGamification.ts	código	A: dia/2026-10-23 ( M)	sim	cliente de RPC sem uso na tela e contrário ao contrato PB-18/D4 atual	src	DESCARTAR	alta
 src/pages/ResetPassword.tsx	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
 supabase-export/POST_EXPORT_CHECKLIST.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase-export	JÁ ESTÁ NA MAIN	baixa
 supabase-export/import.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase-export	JÁ ESTÁ NA MAIN	baixa
