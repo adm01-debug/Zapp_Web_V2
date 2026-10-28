@@ -768,10 +768,10 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [ ] **E70** · B · G-15 · Dividir `lint-and-typecheck` em 2 jobs: `🔍 Lint & TypeCheck` (ratchets + guards de
   workflow, nome **preservado** por ser required) e `🦕 Edge contracts` (Deno check + Deno tests + Go), este último não
   required por 1 semana e depois adicionado aos required (E100). Verificação: `Lint & TypeCheck` < 90 s.
-- [ ] **E71** · B · G-31 · `if: github.event.pull_request.draft == false || github.event_name != 'pull_request'` nos
+- [x] **E71** · B · G-31 · `if: github.event.pull_request.draft == false || github.event_name != 'pull_request'` nos
   jobs pesados (`test`, `build`, `e2e`, `security`) do `ci.yml`, `db-guard` e `codeql`; `lint` continua em draft para
-  feedback rápido. Como os required checks precisam existir, o job pesado em draft termina com `exit 0` e resumo
-  "pulado: draft" (não `skipped`). Verificação: PR draft roda só lint; `ready_for_review` roda tudo.
+  feedback rápido. GitHub trata `skipped` como passagem nos required checks (desde 2020); ci-gate tem `always()` e
+  só falha em `failure`/`cancelled`. Implementado em PR claude/feat-e71-skip-draft-prs-281026-0250.
 - [ ] **E72** · B · G-32 · Artifacts: `dist` só em `workflow_dispatch` (Vercel builda sozinho); `coverage-report` só
   na `main` (push) com 7 dias e publicado no Job Summary (`vitest --reporter=json-summary` → tabela); `playwright-report`
   só `if: failure()`. Verificação: PR verde cria 0 artifacts.

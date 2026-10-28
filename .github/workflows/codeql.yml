@@ -37,6 +37,7 @@ concurrency:
 jobs:
   analyze:
     name: 🔬 CodeQL (javascript-typescript)
+    if: github.event.pull_request.draft == false || github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -69,6 +70,7 @@ jobs:
   # e permissoes excessivas — 3,5k linhas de YAML que nenhum guard do repo le.
   analyze-actions:
     name: 🔬 CodeQL (actions)
+    if: github.event.pull_request.draft == false || github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
