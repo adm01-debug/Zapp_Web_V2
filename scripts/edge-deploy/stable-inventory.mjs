@@ -99,6 +99,7 @@ export async function collectStableAttestation({
       }
       const acceptedByDigest = [];
       const acceptedWithoutVersionBaseline = [];
+      const acceptedByTimestamp = [];
       for (const name of selected) {
         const old = pre.get(name);
         if (!old) continue;
@@ -135,6 +136,15 @@ export async function collectStableAttestation({
           contradicao.permanent = true;
           throw contradicao;
         }
+        // E09 (run 36601680272, 2026-09-29): Management API nao incrementa version
+        // de forma confiavel em deploys via CLI. updated_at mais recente que o
+        // baseline e evidencia suficiente de que o deploy foi registrado.
+        const timestampBumped = old.updated_at !== null && current.updated_at !== null
+          && current.updated_at > old.updated_at;
+        if (timestampBumped) {
+          acceptedByTimestamp.push(name);
+          continue;
+        }
         throw new Error(`Selected deployment not yet observed: ${name}`);
       }
       const digest = createHash('sha256').update(JSON.stringify(snapshot.functions)).digest('hex');
@@ -161,6 +171,10 @@ export async function collectStableAttestation({
             // remoto bateu com o pre-deploy. Fica explicito porque a atestacao
             // nao confirma que o deploy desta rodada alterou essas funcoes.
             accepted_without_version_baseline: acceptedWithoutVersionBaseline,
+            // Funcoes aceitas por updated_at mais recente que o baseline (E09):
+            // a Management API nao incrementou version mas o timestamp prova que
+            // o deploy foi registrado.
+            accepted_by_timestamp_bump: acceptedByTimestamp,
             source_to_bundle_equivalence_proven: false,
             limitation: 'Stable metadata associates source inputs and observed deployment versions; acceptance without a version bump requires the deploy step no-op proof; it does not reproduce remote bundle bytes or prove business E2E.',
           },
