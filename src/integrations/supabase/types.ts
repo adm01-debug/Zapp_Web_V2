@@ -11715,6 +11715,10 @@ export type Database = {
         Args: { p_profile_id: string }
         Returns: Json
       }
+      increment_custom_emoji_use: {
+        Args: { p_emoji_id: string }
+        Returns: number
+      }
       ingest_inbound_message: {
         Args: {
           p_connection_id: string
@@ -12022,6 +12026,16 @@ export type Database = {
         Returns: Json
       }
       reap_ai_jobs: { Args: never; Returns: number }
+      reopen_conversation: {
+        Args: { p_contact_id: string }
+        Returns: {
+          contact_id: string
+          conversation_status: string | null
+          conversation_status_changed_at: string | null
+          event_id: string | null
+          reopened: boolean
+        }[]
+      }
       reassign_absent_agents: {
         Args: { inactive_minutes?: number }
         Returns: number
@@ -12419,6 +12433,10 @@ export type Database = {
       set_conversation_status: {
         Args: { p_contact_id: string; p_next: string; p_reason?: string }
         Returns: undefined
+      }
+      set_default_whatsapp_connection: {
+        Args: { p_connection_id: string }
+        Returns: string
       }
       set_department_whatsapp_config: {
         Args: {
