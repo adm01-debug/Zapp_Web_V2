@@ -12022,6 +12022,16 @@ export type Database = {
         Returns: Json
       }
       reap_ai_jobs: { Args: never; Returns: number }
+      reopen_conversation: {
+        Args: { p_contact_id: string }
+        Returns: {
+          contact_id: string
+          conversation_status: string | null
+          conversation_status_changed_at: string | null
+          event_id: string | null
+          reopened: boolean
+        }[]
+      }
       reassign_absent_agents: {
         Args: { inactive_minutes?: number }
         Returns: number
