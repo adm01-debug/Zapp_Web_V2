@@ -65,6 +65,7 @@ jobs:
           --health-retries 10
     env:
       POSTGREST_TEST_IMAGE: public.ecr.aws/supabase/postgrest:v14.5@sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b
+      POSTGRES_TEST_IMAGE: ${{ env.POSTGRES_IMAGE }}
       # E47: coordenadas do serviço compartilhado, lidas pelo docker-shim.
       POSTGRES_SERVICE_HOST: localhost
       POSTGRES_SERVICE_PORT: "5432"

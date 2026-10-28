@@ -165,7 +165,13 @@ export function findToolchainDrift(source, file = "workflow.yml", toolchain = {}
       continue;
     }
 
-    for (const pin of line.matchAll(PLAYWRIGHT_PIN)) { report("playwright", pin[1]); }
+    for (const pin of line.matchAll(PLAYWRIGHT_PIN)) {
+      const val = pin[1];
+      // playwright@<version> em run: é obrigatoriamente literal (playwright-version-lock.unit.mjs
+      // valida que o literal bate com bun.lock); permitir quando corresponde ao toolchain.
+      if (val === toolchain["playwright"]) continue;
+      report("playwright", val);
+    }
 
     // W88: binários baixados via curl (actionlint) e pip (zizmor)
     const actionlintVer = line.match(ACTIONLINT_VERSION_LINE);
