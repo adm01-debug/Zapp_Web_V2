@@ -106,10 +106,13 @@ jobs:
       - name: Provar checkout imutavel
         run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
 
+      - name: 📦 Carregar toolchain
+        run: jq -r 'to_entries[] | "\(.key | ascii_upcase | gsub("-";"_"))=\(.value)"' .github/toolchain.json >> "$GITHUB_ENV"
+
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: ${{ env.NODE }}
 
       - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
         uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1

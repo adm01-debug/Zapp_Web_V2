@@ -130,10 +130,12 @@ export function findToolchainDrift(source, file = "workflow.yml", toolchain = {}
       inSupabaseCliStep = true;
     }
 
-    const report = (tool, value) => {
-      if (value === null) return;
-      const expected = Object.hasOwn(toolchain, tool) ? toolchain[tool] : null;
-      if (value !== expected) violations.push({ file, line: lineNumber, tool, value, expected });
+    // E75: qualquer literal é violação — o YAML deve usar ${{ env.* }} lido do toolchain.
+    // Exceção: imagem do serviço postgres em `services:` — avaliada antes dos steps, não aceita env var de step.
+    const report = (tool, value, skipLiteral = false) => {
+      if (value === null) return; // já é expressão ${{ }}
+      if (skipLiteral) return;    // E75: exceção explícita (ex.: services.image)
+      violations.push({ file, line: lineNumber, tool, value, expected: null });
     };
 
     const cliEnv = line.match(SUPABASE_CLI_ENV);
@@ -148,7 +150,12 @@ export function findToolchainDrift(source, file = "workflow.yml", toolchain = {}
     if (versionInput) { report(versionInput[1], scalarValue(versionInput[2])); continue; }
 
     const image = line.match(IMAGE_LINE);
-    if (image && image[1].trim().startsWith("postgres")) { report("postgres-image", scalarValue(image[1])); continue; }
+    if (image && image[1].trim().startsWith("postgres")) {
+      // E75: imagem de service não aceita env var de step — indentação mínima de 4 espaços
+      const isService = /^\s{4,}image\s*:/u.test(line);
+      report("postgres-image", scalarValue(image[1]), isService);
+      continue;
+    }
 
     for (const pin of line.matchAll(PLAYWRIGHT_PIN)) { report("playwright", pin[1]); }
 
@@ -230,11 +237,11 @@ export function main(root = process.cwd()) {
   }
 
   if (driftViolations.length) {
-    console.error(`FALHA: versão de toolchain divergente da fonte única ${TOOLCHAIN_PATH}:`);
+    console.error(`FALHA: versão de toolchain literal no workflow (E75: use ${{ env.* }} carregado de ${TOOLCHAIN_PATH}):`);
     for (const violation of driftViolations) {
-      console.error(`  ${violation.file}:${violation.line} ${violation.tool}: ${violation.value} (fonte: ${violation.expected ?? "chave ausente"})`);
+      console.error(`  ${violation.file}:${violation.line} ${violation.tool}: ${violation.value}`);
     }
-    console.error(`Mude a versão em ${TOOLCHAIN_PATH} e propague para os workflows; nenhum valor fora da fonte é aceito.`);
+    console.error(`Substitua cada literal por ${{ env.TOOL }} e adicione o passo "📦 Carregar toolchain" ao job.`);
     exitCode = 1;
   }
 

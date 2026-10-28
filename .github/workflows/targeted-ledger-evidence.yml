@@ -50,10 +50,13 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: 📦 Carregar toolchain
+        run: jq -r 'to_entries[] | "\(.key | ascii_upcase | gsub("-";"_"))=\(.value)"' .github/toolchain.json >> "$GITHUB_ENV"
+
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: ${{ env.NODE }}
 
       - name: Instalar cliente PostgreSQL
         run: bash scripts/ci/install-postgresql-client.sh

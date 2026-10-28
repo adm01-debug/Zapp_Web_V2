@@ -204,10 +204,13 @@ jobs:
           fi
           echo "DEPLOYED_GIT_SHA=$DEPLOYED_GIT_SHA" >> "$GITHUB_ENV"
 
+      - name: 📦 Carregar toolchain
+        run: jq -r 'to_entries[] | "\(.key | ascii_upcase | gsub("-";"_"))=\(.value)"' .github/toolchain.json >> "$GITHUB_ENV"
+
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: ${{ env.NODE }}
 
       - name: Fixar coletor confiavel mesmo durante rollback
         run: |
@@ -448,7 +451,7 @@ jobs:
       - name: Setup Deno
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
-          deno-version: '2.9.5'
+          deno-version: ${{ env.DENO }}
 
       - name: Typecheck das edge functions (deno check)
         run: deno check supabase/functions/**/index.ts

@@ -41,15 +41,19 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: 📦 Carregar toolchain
+        run: |
+          jq -r 'to_entries[] | "\(.key | ascii_upcase | gsub("-";"_"))=\(.value)"' .github/toolchain.json >> "$GITHUB_ENV"
+
       - name: 🟩 Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: ${{ env.NODE }}
 
       - name: 🧄 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: '1.4.0'
+          bun-version: ${{ env.BUN }}
 
       - name: 💾 Cache de dependências Bun
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -80,10 +84,14 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: 📦 Carregar toolchain
+        run: |
+          jq -r 'to_entries[] | "\(.key | ascii_upcase | gsub("-";"_"))=\(.value)"' .github/toolchain.json >> "$GITHUB_ENV"
+
       - name: 🧄 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: '1.4.0'
+          bun-version: ${{ env.BUN }}
 
       - name: 💾 Cache de dependências Bun
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -110,20 +118,24 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: 📦 Carregar toolchain
+        run: |
+          jq -r 'to_entries[] | "\(.key | ascii_upcase | gsub("-";"_"))=\(.value)"' .github/toolchain.json >> "$GITHUB_ENV"
+
       - name: 🟩 Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: ${{ env.NODE }}
 
       - name: 🦕 Setup Deno
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
-          deno-version: '2.9.5'
+          deno-version: ${{ env.DENO }}
 
       - name: 🧄 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: '1.4.0'
+          bun-version: ${{ env.BUN }}
 
       - name: 💾 Cache de dependências Bun
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -160,10 +172,14 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: 📦 Carregar toolchain
+        run: |
+          jq -r 'to_entries[] | "\(.key | ascii_upcase | gsub("-";"_"))=\(.value)"' .github/toolchain.json >> "$GITHUB_ENV"
+
       - name: 🧄 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: '1.4.0'
+          bun-version: ${{ env.BUN }}
 
       - name: 💾 Cache de dependências Bun
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -227,10 +243,14 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
+      - name: 📦 Carregar toolchain
+        run: |
+          jq -r 'to_entries[] | "\(.key | ascii_upcase | gsub("-";"_"))=\(.value)"' .github/toolchain.json >> "$GITHUB_ENV"
+
       - name: 🧄 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: '1.4.0'
+          bun-version: ${{ env.BUN }}
 
       - name: 💾 Cache de dependências Bun
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -314,10 +334,14 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: 📦 Carregar toolchain
+        run: |
+          jq -r 'to_entries[] | "\(.key | ascii_upcase | gsub("-";"_"))=\(.value)"' .github/toolchain.json >> "$GITHUB_ENV"
+
       - name: 🧄 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: '1.4.0'
+          bun-version: ${{ env.BUN }}
 
       - name: 💾 Cache de dependências Bun
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -348,13 +372,13 @@ jobs:
         # githubactions:S8543: `bunx playwright` sem versao puxaria um release
         # nao verificado).
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit
+        run: bunx playwright@${{ env.PLAYWRIGHT }} install --with-deps chromium firefox webkit
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         # O cache guarda os browsers, não os pacotes do apt: com o cache quente
         # as bibliotecas do sistema ainda precisam ser instaladas.
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.64.1 install-deps chromium firefox webkit
+        run: bunx playwright@${{ env.PLAYWRIGHT }} install-deps chromium firefox webkit
 
       # O projeto "chromium" exercita auth.spec.ts deslogado. Workflows de PR não
       # recebem E2E_TEST_EMAIL/E2E_TEST_PASSWORD; o cross-browser de login roda em
@@ -446,11 +470,15 @@ jobs:
             echo "map_changed=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: 📦 Carregar toolchain
+        run: |
+          jq -r 'to_entries[] | "\(.key | ascii_upcase | gsub("-";"_"))=\(.value)"' .github/toolchain.json >> "$GITHUB_ENV"
+
       - name: 🧄 Setup Bun
         if: steps.paths.outputs.map_changed == 'true'
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: '1.4.0'
+          bun-version: ${{ env.BUN }}
 
       - name: 💾 Cache de dependências Bun
         if: steps.paths.outputs.map_changed == 'true'
