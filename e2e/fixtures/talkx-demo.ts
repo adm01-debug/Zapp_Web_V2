@@ -253,19 +253,9 @@ export async function mockTalkXAuth(page: Page) {
     if (route.request().method() !== 'POST') return writeBlocked(route);
     return route.fulfill({ status: 200, contentType: 'application/json', body: 'true' });
   });
-}
 
-/**
- * Sessão falsa + identidade + dados do Talk X. As demais tabelas do app shell
- * (notificações, contadores, etc.) respondem vazias — o spec visual nunca toca
- * o banco de produção.
- */
-export async function mockTalkXVisual(page: Page, tela: string) {
-  await installFakeSession(page);
-  await mockTalkXAuth(page);
-  await mockTalkXBackend(page, tela);
-
-  // O shell atual exige app_bootstrap antes de liberar rotas protegidas.
+  // O shell exige o bootstrap antes de liberar rotas protegidas. As duas
+  // fixtures que usam esta identidade (Talk X e Email) compartilham a resposta.
   await page.route(/\/rest\/v1\/rpc\/app_bootstrap/, (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
@@ -281,15 +271,25 @@ export async function mockTalkXVisual(page: Page, tela: string) {
       fetched_at: '2026-10-01T12:00:00.000Z',
     }),
   }));
-
-  // Catch-all para as leituras do app shell não interceptadas acima.
-  await page.route(/\/rest\/v1\/(?!talkx_|rpc|profiles|user_roles|contacts)[a-z_]+/, (route) =>
-    isRead(route.request().method()) ? emptyJson(route) : writeBlocked(route),
-  );
-  // Registre após o catch-all: o Playwright aplica a última rota primeiro.
   await page.route(/\/rest\/v1\/user_settings/, (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
     body: JSON.stringify([{ onboarding_completed: true }]),
   }));
+}
+
+/**
+ * Sessão falsa + identidade + dados do Talk X. As demais tabelas do app shell
+ * (notificações, contadores, etc.) respondem vazias — o spec visual nunca toca
+ * o banco de produção.
+ */
+export async function mockTalkXVisual(page: Page, tela: string) {
+  await installFakeSession(page);
+  await mockTalkXAuth(page);
+  await mockTalkXBackend(page, tela);
+
+  // Catch-all para as leituras do app shell não interceptadas acima.
+  await page.route(/\/rest\/v1\/(?!talkx_|rpc|profiles|user_roles|contacts|user_settings)[a-z_]+/, (route) =>
+    isRead(route.request().method()) ? emptyJson(route) : writeBlocked(route),
+  );
 }

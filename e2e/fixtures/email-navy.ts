@@ -156,7 +156,7 @@ export async function mockEmailNavy(page: Page, options: { includeExtreme?: bool
   await installFakeSession(page);
   await mockTalkXAuth(page);
 
-  await page.route(/\/rest\/v1\/(?!rpc|profiles|user_roles|email_threads|email_messages|email_labels|email_attachments)[a-z_]+/, route =>
+  await page.route(/\/rest\/v1\/(?!rpc|profiles|user_roles|user_settings|email_threads|email_messages|email_labels|email_attachments)[a-z_]+/, route =>
     isRead(route.request().method()) ? json(route, []) : json(route, { message: 'escrita externa bloqueada no E2E' }, 403),
   );
   await page.route(/\/functions\/v1\/(?!gmail-oauth|gmail-sync|gmail-send)[a-z-]+/, route => json(route, { message: 'função externa bloqueada no E2E' }, 403));
