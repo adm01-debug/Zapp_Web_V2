@@ -9,6 +9,19 @@ export interface SentimentData {
   negative: number;
   avg_score: number;
   alerts_count: number;
+  /** Análises do dia (denominador real dos percentuais). */
+  total: number;
+  /** Positivos do dia, em contagem. */
+  positives: number;
+}
+
+/** Resumo de uma janela inteira, ponderado pelo total real de cada dia. */
+export interface SentimentWindow {
+  total: number;
+  positivePct: number;
+  negativePct: number;
+  /** Score médio em [-1,1], ponderado pelo número de análises de cada dia. */
+  avgScore: number;
 }
 
 /** Uma linha da RPC `sentiment_trend`: um dia de calendário em America/Sao_Paulo. */
@@ -74,8 +87,54 @@ export function mapTrendRows(rows: SentimentTrendRow[]): SentimentData[] {
         negative: Math.round((negativos / total) * 100),
         avg_score: avgScore(row),
         alerts_count: negativos,
+        total,
+        positives: positivos,
       };
     });
+}
+
+/**
+ * Resume a janela: percentuais = Σcontagem / Σtotal e score ponderado pelo total
+ * de cada dia. Um dia com 1 análise não pesa o mesmo que um dia com 500.
+ * `null` quando a janela não tem nenhuma análise (não há base).
+ */
+export function summarizeWindow(series: SentimentData[] | null): SentimentWindow | null {
+  if (!series) return null;
+  let total = 0;
+  let positives = 0;
+  let negatives = 0;
+  let scoreSum = 0;
+  for (const d of series) {
+    total += d.total;
+    positives += d.positives;
+    negatives += d.alerts_count;
+    scoreSum += d.avg_score * d.total;
+  }
+  if (total === 0) return null;
+  return {
+    total,
+    positivePct: (positives / total) * 100,
+    negativePct: (negatives / total) * 100,
+    avgScore: scoreSum / total,
+  };
+}
+
+/** Variação % do score da janela atual sobre a anterior; `null` sem base. */
+export function sentimentDeltaPct(current: SentimentWindow | null, previous: SentimentWindow | null): number | null {
+  if (!current || !previous || previous.avgScore === 0) return null;
+  return Math.round(((current.avgScore - previous.avgScore) / Math.abs(previous.avgScore)) * 100);
+}
+
+/**
+ * Separa a resposta da RPC (pedida com `2 × days`) em período atual (os
+ * `days` dias mais recentes) e período anterior de mesmo tamanho. A RPC devolve
+ * um balde por dia de calendário, inclusive os vazios (`generate_series`),
+ * então o corte por posição coincide com o corte por data.
+ */
+export function splitWindows(rows: SentimentTrendRow[], days: number): { current: SentimentData[]; previous: SentimentData[] } {
+  const sorted = rows.slice().sort((a, b) => a.dia.localeCompare(b.dia));
+  const cut = Math.max(0, sorted.length - days);
+  return { current: mapTrendRows(sorted.slice(cut)), previous: mapTrendRows(sorted.slice(0, cut)) };
 }
 
 /**
@@ -92,23 +151,30 @@ export function mapTrendRows(rows: SentimentTrendRow[]): SentimentData[] {
  */
 export function useSentimentTrend(days: number): {
   data: SentimentData[] | null;
+  /** Série do período anterior de mesmo tamanho (base da variação). */
+  previous: SentimentData[] | null;
   error: Error | null;
   isLoading: boolean;
 } {
   const { data, error, isLoading } = useQuery({
-    queryKey: ['sentiment-trend', days],
+    queryKey: ['sentiment-trend', days, 'com-periodo-anterior'],
     queryFn: async () => {
       // Cast local via 'any' até o types.ts (gerado, não sincronizado no
       // self-hosted) conhecer a RPC — mesma prática de
       // `dashboard_sentiment_alerts` em useSentimentData.ts.
-      const { data: rows, error: rpcError } = await (supabase as any).rpc('sentiment_trend', { p_days: days }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (HZ2-003), types.ts ainda não sincronizado
+      const { data: rows, error: rpcError } = await (supabase as any).rpc('sentiment_trend', { p_days: days * 2 }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (HZ2-003), types.ts ainda não sincronizado
       if (rpcError) throw rpcError;
-      return mapTrendRows((rows ?? []) as SentimentTrendRow[]);
+      return splitWindows((rows ?? []) as SentimentTrendRow[], days);
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  return { data: data ?? null, error: (error as Error | null) ?? null, isLoading };
+  return {
+    data: data?.current ?? null,
+    previous: data?.previous ?? null,
+    error: (error as Error | null) ?? null,
+    isLoading,
+  };
 }
 
 /**
