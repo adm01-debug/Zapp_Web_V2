@@ -19,3 +19,9 @@
 -- Rollback: GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon;
 
 REVOKE INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM anon;
+
+-- Restaurar INSERT de anon em password_reset_requests:
+-- O fluxo de "esqueci minha senha" faz INSERT nesta tabela sem usuário autenticado.
+-- A policy RLS "Allow anon to insert password reset requests" controla quais linhas
+-- são aceitas — o grant de tabela é necessário para chegar até ela.
+GRANT INSERT ON public.password_reset_requests TO anon;
