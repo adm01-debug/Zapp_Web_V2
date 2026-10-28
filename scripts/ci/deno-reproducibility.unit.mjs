@@ -32,6 +32,6 @@ test('Edge Functions usam o mesmo runtime pinado e o mesmo lock frozen da CI', (
   const resolvedLock = path.resolve(edgeDir, edgeConfig.lock.path);
   assert.equal(resolvedLock, path.resolve(fileURLToPath(new URL('./deno.lock', import.meta.url))));
   assert.ok(fs.existsSync(resolvedLock), `lock do edge inexistente: ${resolvedLock}`);
-  // Uma unica versao de runtime no repositorio: o db-guard fixa a MESMA do ci.yml.
-  assert.match(read('../../.github/workflows/db-guard.yml'), /deno-version: '2\.9\.5'/);
+  // Uma unica versao de runtime no repositorio: o db-guard fixa a MESMA versão via toolchain.json (E75).
+  assert.match(read('../../.github/workflows/db-guard.yml'), /deno-version: \$\{\{ env\.DENO \}\}/);
 });
