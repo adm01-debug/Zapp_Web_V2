@@ -142,7 +142,7 @@ export function useContactNotes(contactId: string, options?: { category?: Contac
               is_done: updated.is_done,
               // Só copia a marca se o banco a devolveu (coluna existe): evita criar a chave
               // `is_pinned: undefined` e sinalizar suporte onde ele não há.
-              ...(typeof updated.is_pinned === 'boolean' ? { is_pinned: updated.is_pinned } : {}),
+              ...(typeof (updated as { is_pinned?: boolean }).is_pinned === 'boolean' ? { is_pinned: (updated as { is_pinned?: boolean }).is_pinned as boolean } : {}),
               due_date: updated.due_date,
               updated_at: updated.updated_at,
             }

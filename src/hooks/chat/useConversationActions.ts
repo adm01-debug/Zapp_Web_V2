@@ -345,9 +345,9 @@ export function useConversationActions() {
     const trimmedNote = note?.trim();
     const { error } = await supabase.rpc('transfer_conversation', {
       p_contact_id: contactId,
-      p_to_agent_id: type === 'agent' ? targetId : null,
-      p_to_queue_id: type === 'queue' ? targetId : null,
-      p_note: trimmedNote || null,
+      p_to_agent_id: type === 'agent' ? targetId : undefined,
+      p_to_queue_id: type === 'queue' ? targetId : undefined,
+      p_note: trimmedNote || undefined,
     });
 
     // Rejeita (não só toast): quem chamou precisa saber que falhou — a sidebar
