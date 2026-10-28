@@ -16,8 +16,8 @@
   "source_files": [
     {
       "path": "supabase/functions/_shared/ai-audio-authz.ts",
-      "bytes": 4007,
-      "sha256": "fff95328e31cf40c6b0776344a9432b78b4bfc8df16145835456d92e9cd5565a"
+      "bytes": 7475,
+      "sha256": "3171ca7e6dba15bc607cad8b3cc7f4b97ca78b5b34076bd8d5e123c845db3624"
     },
     {
       "path": "supabase/functions/_shared/ai-audio-input.ts",
@@ -446,8 +446,8 @@
     },
     {
       "path": "supabase/functions/ai-transcribe-audio/index.ts",
-      "bytes": 28209,
-      "sha256": "492f365e5fe147162363bbfaea716ab2378c9e0f8c225d43717de69bf1555993"
+      "bytes": 29419,
+      "sha256": "a855f8fff5630320909d7a091d9276c7466dbaca6d0b92c1c1d274847c8ef343"
     },
     {
       "path": "supabase/functions/ai-usage-outbox-drain/index.ts",
@@ -666,8 +666,8 @@
     },
     {
       "path": "supabase/functions/message-delivery/index.ts",
-      "bytes": 20957,
-      "sha256": "c2ed250ddfb29fcf807d989cf33b020887b8d3fbd65de88a291e09cb5355403f"
+      "bytes": 33930,
+      "sha256": "1c03ad8929ce4a4bb099278fb158c4180282079568aa875b0cfd3603a072045b"
     },
     {
       "path": "supabase/functions/metrics/index.ts",
@@ -1119,7 +1119,7 @@
       "name": "ai-transcribe-audio",
       "entrypoint": "supabase/functions/ai-transcribe-audio/index.ts",
       "verify_jwt": true,
-      "source_sha256": "79958e919747f2efe826f60e984d74486017cb63f407286ad693f8b56828c055",
+      "source_sha256": "d705c4d930193bc59135b515a45090779835110b2fadd0adac9f420851e30324",
       "source_files": [
         "supabase/functions/_shared/ai-audio-authz.ts",
         "supabase/functions/_shared/ai-auth.ts",
@@ -1933,17 +1933,20 @@
       "name": "message-delivery",
       "entrypoint": "supabase/functions/message-delivery/index.ts",
       "verify_jwt": true,
-      "source_sha256": "dbfca7f84d1f36885265dde299fe8b6cd4d743a597a908e3416be3d20776faa3",
+      "source_sha256": "61410a7cb3b0bbf422e4dffec7fe6b1e60c850305bee5b66ede42b9df77810a4",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/effect-reconcile.ts",
         "supabase/functions/_shared/evolution-api-proxy.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
+        "supabase/functions/_shared/evolution-helpers.ts",
         "supabase/functions/_shared/evolution-instance-token.ts",
         "supabase/functions/_shared/evolution-send.ts",
+        "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/media-egress.ts",
+        "supabase/functions/_shared/messaging/errors.ts",
         "supabase/functions/_shared/rate-limit-log.ts",
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/ssrf.ts",
@@ -2518,5 +2521,5 @@
       ]
     }
   ],
-  "manifest_sha256": "9be76d031f239d2b2aa622c1283d5d4e092169c95dba05cfae2efb0dd12e644c"
+  "manifest_sha256": "9fd779d9d512d16bb42f42db8587646a997dbeeea27e38b50432cb1692f80087"
 }
