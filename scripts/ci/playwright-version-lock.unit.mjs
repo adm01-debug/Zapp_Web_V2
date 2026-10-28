@@ -1,15 +1,15 @@
-// N-022 / E76: a versão do Playwright que os workflows instalam tem de ser a
-// mesma que o `bun install` resolve — ou seja, a do bun.lock (linha 345,
-// `@playwright/test@<versão>`, e linha 1159, `playwright@<versão>`).
-//
-// O pin literal nos workflows CONTINUA. Duas guardas existentes dependem dele:
-//   - workflow-contracts.unit.mjs (E68) só valida o cache dos browsers nos
-//     workflows cujo passo casa com `playwright@<versão> install`;
-//   - ci-docs-baseline.unit.mjs (E62/E76) exige o literal nos três workflows.
-// Remover o literal desligaria essas guardas em silêncio. O que faltava era o
-// vínculo com o lockfile: é este teste que falha se o pin divergir do bun.lock.
-//
-// Divergiu (workflow pina `1.62.0` e o lock resolve `1.63.0`)? O CI falha.
+# N-022 / E76: a versão do Playwright que os workflows instalam tem de ser a
+# mesma que o `bun install` resolve — ou seja, a do bun.lock (linha 345,
+# `@playwright/test@<versão>`, e linha 1159, `playwright@<versão>`).
+#
+# O pin literal nos workflows CONTINUA. Duas guardas existentes dependem dele:
+#   - workflow-contracts.unit.mjs (E68) só valida o cache dos browsers nos
+#     workflows cujo passo casa com `playwright@<versão> install`;
+#   - ci-docs-baseline.unit.mjs (E62/E76) exige o literal nos três workflows.
+# Remover o literal desligaria essas guardas em silêncio. O que faltava era o
+# vínculo com o lockfile: é este teste que falha se o pin divergir do bun.lock.
+#
+# Divergiu (workflow pina `1.62.0` e o lock resolve `1.63.0`)? O CI falha.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -61,19 +61,12 @@ test('N-022: o pin do Playwright nos workflows é a versão do bun.lock', async 
 
   const workflows = (await readdir(DIR_WF)).filter((f) => f.endsWith('.yml')).sort();
   const divergencias = [];
-  let pinados = 0;
 
   for (const nome of workflows) {
     const texto = await readFile(new URL(nome, DIR_WF), 'utf8');
-    pinados += [...texto.matchAll(new RegExp(WF_PIN.source, 'gu'))].length;
     divergencias.push(...pinsDivergentes(texto, nome, lock));
   }
 
-  assert.equal(
-    pinados,
-    0,
-    'workflows não devem mais pinar playwright@<versão> — versão gerenciada pelo bun.lock',
-  );
   assert.deepEqual(
     divergencias,
     [],
