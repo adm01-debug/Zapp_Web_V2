@@ -5,6 +5,8 @@ import { QuickReactionBar } from '../MessageReactions';
 
 vi.mock('@/hooks/chat/useMessageReactions', () => ({
   useMessageReactions: () => ({
+    // QuickReactionBar deriva "já reagi" da lista de reações (uma reação por autor).
+    reactions: [],
     addReaction: vi.fn(),
     removeReaction: vi.fn(),
     hasReacted: () => false,

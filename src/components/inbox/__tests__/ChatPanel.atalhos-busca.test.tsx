@@ -45,7 +45,7 @@ vi.mock('@/lib/logger', () => ({
   getSessionId: () => 'sessao-test',
   logPerformance: (_l: string, fn: () => void) => fn(),
   logAsyncPerformance: async (_l: string, fn: () => Promise<unknown>) => fn(),
-  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: mocks.toast }));
@@ -59,6 +59,8 @@ vi.mock('@/hooks/integrations/useEvolutionApi', () => ({ useEvolutionApi: () => 
 vi.mock('@/hooks/chat/useQuickReplies', () => ({ useQuickReplies: () => ({ quickReplies: [], incrementUseCount: vi.fn() }) }));
 
 vi.mock('@/hooks/communication/useTextToSpeech', () => ({
+  // VoiceSelector (montado pelo painel) lê a constante da voz do dispositivo.
+  LOCAL_VOICE_ID: 'local',
   useTextToSpeech: () => ({
     speak: vi.fn(), stop: vi.fn(), isLoading: false, isPlaying: false, currentMessageId: null,
     voiceId: '', setVoiceId: vi.fn(), speed: 1, setSpeed: vi.fn(),

@@ -1,14 +1,12 @@
-import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
-import { usePushNotifications } from '@/hooks/system/usePushNotifications';
+import { showBrowserNotification } from '@/utils/notificationSounds';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { getLogger } from '@/lib/logger';
-import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { getTeamChatNotificationBody, shouldNotifyTeamMessage } from '@/lib/teamChatRules';
-import { queryKeys } from '@/hooks/team-chat/queryKeys';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 
 const log = getLogger('TeamChatNotifications');
 
@@ -139,30 +137,27 @@ export function playTeamChatSound(volume: number = 70) {
 export function useTeamChatNotifications(activeConversationId: string | null) {
   const { profile } = useAuth();
   const { settings: notifSettings, isQuietHours } = useNotificationSettings();
-  const { showNotification, permission } = usePushNotifications();
-  const queryClient = useQueryClient();
-
   const activeIdRef = useRef(activeConversationId);
+
+  // HZ5-09: as preferências chegam ao listener por ref (leitura fresca a cada evento),
+  // sem entrar nas deps do efeito — mexer no volume não pode recriar o canal.
   const notifSettingsRef = useRef(notifSettings);
   const isQuietHoursRef = useRef(isQuietHours);
-  const permissionRef = useRef(permission);
-  const showNotificationRef = useRef(showNotification);
-
-  // Keep refs current before effects fire — channel effect stays stable.
-  // useLayoutEffect runs synchronously after DOM mutations, before the browser
-  // paints, so refs are always fresh when the realtime callback fires.
-  useLayoutEffect(() => {
-    activeIdRef.current = activeConversationId;
+  useEffect(() => {
     notifSettingsRef.current = notifSettings;
     isQuietHoursRef.current = isQuietHours;
-    permissionRef.current = permission;
-    showNotificationRef.current = showNotification;
-  });
+  }, [notifSettings, isQuietHours]);
+
+  useEffect(() => {
+    activeIdRef.current = activeConversationId;
+  }, [activeConversationId]);
 
   useEffect(() => {
     if (!profile) return;
 
-    const canal = supabase
+    const channel = supabase
+      // Tópico exclusivo por instância (`uniqueRealtimeTopic`): nome fixo devolveria o
+      // canal já inscrito e o `.on()` seguinte derrubaria a tela (HZ5-09).
       .channel(uniqueRealtimeTopic('team-chat-notifications'))
       .on('postgres_changes', {
         event: 'INSERT',
@@ -178,41 +173,27 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           created_at: string;
         };
 
+        // Don't notify for own messages
         if (msg.sender_id === profile.id) return;
+
+        // Don't notify if currently viewing this conversation
         if (!document.hidden && activeIdRef.current === msg.conversation_id) return;
 
-        // Cache-first: verificar participação e mute no cache do inbox antes de
-        // consultar o banco — a maioria dos eventos é de conversas já em cache.
-        type InboxConv = { id: string; members: Array<{ profile_id: string; is_muted: boolean }> };
-        const cached = queryClient.getQueryData<InboxConv[]>(queryKeys.inbox(profile.id));
-        let membership: { is_muted: boolean | null } | null = null;
-        let fromCache = false;
-
-        if (cached !== undefined) {
-          const conv = cached.find((c) => c.id === msg.conversation_id);
-          if (conv !== undefined) {
-            fromCache = true;
-            const member = conv.members.find((m) => m.profile_id === profile.id);
-            membership = member ?? null;
-          }
+        // Check if user is a member of this conversation. limit(1) em vez de
+        // single(): o listener recebe todo INSERT em team_messages sem
+        // filtro por conversa, então "não é membro" é o caso comum, não uma
+        // exceção — single() geraria 406 na maioria dos eventos.
+        const { data: membershipRows, error: membershipError } = await supabase
+          .from('team_conversation_members')
+          .select('id, is_muted')
+          .eq('conversation_id', msg.conversation_id)
+          .eq('profile_id', profile.id)
+          .limit(1);
+        if (membershipError) {
+          log.warn('Falha ao confirmar participação na conversa; sem notificação:', membershipError.message);
+          return;
         }
-
-        if (!fromCache) {
-          // limit(1) em vez de single(): o listener recebe todo INSERT em
-          // team_messages sem filtro por conversa; "não é membro" é o caso
-          // comum — single() geraria 406 na maioria dos eventos.
-          const { data: membershipRows, error } = await supabase
-            .from('team_conversation_members')
-            .select('id, is_muted')
-            .eq('conversation_id', msg.conversation_id)
-            .eq('profile_id', profile.id)
-            .limit(1);
-          if (error) {
-            log.warn('Falha ao confirmar participação na conversa; sem notificação:', error.message);
-            return;
-          }
-          membership = membershipRows?.[0] ?? null;
-        }
+        const membership = membershipRows?.[0] ?? null;
 
         if (!shouldNotifyTeamMessage({
           senderId: msg.sender_id,
@@ -223,18 +204,25 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           membership,
         })) return;
 
-        if (notifSettingsRef.current.soundEnabled && !isQuietHoursRef.current()) {
-          playTeamChatSound(notifSettingsRef.current.soundVolume);
+        const settings = notifSettingsRef.current;
+        const quietHours = isQuietHoursRef.current;
+
+        // Play sound if enabled — volume do painel (10-100), nunca fixo
+        if (settings.soundEnabled && !quietHours()) {
+          playTeamChatSound(settings.soundVolume);
         }
 
-        // HZ3-001: o aviso depende SÓ da permissão do navegador já concedida.
-        // Dois caminhos: (1) service worker via `showNotification` quando o push
-        // está disponível; (2) `new Notification` direto quando a permissão foi
-        // concedida mas o push não está subscrito.
-        if (notifSettingsRef.current.browserNotifications && !isQuietHoursRef.current()) {
-          // Nome do remetente por RPC segura: leitura direta de `profiles`
-          // é barrada pela RLS para o agente — `get_team_profiles()` é SECURITY
-          // DEFINER e já mascara email/telefone.
+        // Show browser notification if enabled
+        // HZ3-001: o aviso depende SÓ da permissão do navegador já concedida (checada
+        // por `showBrowserNotification`), nunca da assinatura de push. E sai pela API
+        // `Notification` direta: o caminho antigo (`usePushNotifications.showNotification`)
+        // exige Service Worker de aplicação, desligado em `config/service_worker.ts`,
+        // então devolvia `false` em silêncio e o chat de equipe só tocava o som. O
+        // liga/desliga de avisos do chat interno vale por `browserNotifications`.
+        if (settings.browserNotifications && !quietHours()) {
+          // Nome do remetente por RPC segura: para o agente a leitura direta de
+          // `profiles` é barrada pela RLS (o título virava 'Colega').
+          // `get_team_profiles()` é SECURITY DEFINER e já mascara email/telefone.
           let senderName = 'Colega';
           try {
             const { data, error: erroPerfis } = await supabase.rpc('get_team_profiles');
@@ -248,37 +236,22 @@ export function useTeamChatNotifications(activeConversationId: string | null) {
           } catch (err) { log.error('Unexpected error in useTeamChatNotifications:', err); }
 
           const body = getTeamChatNotificationBody(msg.media_type, msg.content);
-          const title = `💬 Teams: ${senderName}`;
-          const notifOptions = {
-            body,
-            tag: `team-msg-${msg.conversation_id}`,
-            data: {
-              type: 'team_chat',
-              conversationId: msg.conversation_id,
-              messageId: msg.id,
-            },
-            requireInteraction: false,
-          };
 
-          if (permissionRef.current === 'granted') {
-            await showNotificationRef.current({ title, ...notifOptions });
-            log.debug('Team chat notification sent for message:', msg.id);
-          } else if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-            const notif = new Notification(title, notifOptions);
-            notif.onclick = () => {
-              window.focus();
-              navigateToView('team-chat');
-            };
-            log.debug('Team chat notification sent for message:', msg.id);
-          }
+          showBrowserNotification(
+            `💬 Teams: ${senderName}`,
+            body,
+            { tag: `team-msg-${msg.conversation_id}`, onClick: () => navigateToView('team-chat') },
+          );
+
+          log.debug('Team chat notification sent for message:', msg.id);
         }
       })
       .subscribe();
 
     return () => {
-      supabase.removeChannel(canal);
+      supabase.removeChannel(channel);
     };
-  }, [profile, queryClient]);
+  }, [profile]); // só `profile`: trocar preferência não recria o canal (HZ5-09)
 
   /**
    * Clique na notificação do chat interno: o service worker repassa o clique da

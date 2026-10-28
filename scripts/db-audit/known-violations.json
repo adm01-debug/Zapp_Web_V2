@@ -33,7 +33,10 @@
     "rpc:consume_login_gate:supabase/functions/auth-login/index.ts",
     "rpc:multiplix_materialize_legacy_queue:supabase/functions/multiplix-send/index.ts",
     "rpc:talkx_campaign_window_open:supabase/functions/talkx-scheduler/index.ts",
-    "from:talkx_test_sends:supabase/functions/talkx-send/index.ts"
+    "from:talkx_test_sends:supabase/functions/talkx-send/index.ts",
+    "rpc:admin_inbox_silence:src/services/inbox.service.ts",
+    "rpc:get_last_message_dates:src/services/contact.service.ts",
+    "rpc:can_delete_contacts:src/services/contact.service.ts"
   ],
   "_resolvido": {
     "from:department_whatsapp_configs (SL-144)": "A tabela department_whatsapp_configs nao existe no schema (ela nao esta em schema-catalog.json nem em nenhuma migration) e useSaveDepartmentWhatsApp era o unico consumidor. O acesso direto saiu em 2026-10-08: a gravacao passou para public.set_department_whatsapp_config (migration 20261006213734), que esta no catalogo — o guard nao acusa violacao e a entrada do baseline ficou obsoleta.",

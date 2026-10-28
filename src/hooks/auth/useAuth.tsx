@@ -22,6 +22,15 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
 }
 
+/** Falha ao esvaziar a fila não pode quebrar o logout: só registra. */
+async function esvaziarFilaDeEnvioOffline(): Promise<void> {
+  try {
+    await offlineSendQueue.clear();
+  } catch (err) {
+    log.error('[AUTH] falha ao esvaziar a fila de envio offline no logout', err);
+  }
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
  export function AuthProvider({ children }: { children: ReactNode }) {
@@ -161,7 +170,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
         clearInboxDraftSessions();
         // HZ2-016: idem para o rascunho do Chat de Equipe (`zapp.teamchat.draft:<uid>:*`).
         clearTeamChatDraftSessions();
-        void offlineSendQueue.clear();
+        // SEC-FRONTEND-04: a fila de envio offline é do usuário que saiu — esvazia antes
+        // que o próximo atendente logue na mesma máquina e drene itens alheios.
+        void esvaziarFilaDeEnvioOffline();
       }
     });
 
@@ -234,6 +245,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
        clearInboxDraftSessions();
        // HZ2-016: idem para o rascunho do Chat de Equipe.
        clearTeamChatDraftSessions();
+       // SEC-FRONTEND-04: idem para a fila de envio offline.
+       void esvaziarFilaDeEnvioOffline();
      }
    };
 

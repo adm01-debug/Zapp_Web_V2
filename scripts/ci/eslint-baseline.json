@@ -13,10 +13,6 @@
       "sha256": "a8ca2720cda7a8ef1f8fe63d88ae85361b1ba805ee4c81ed617fc7065e965044"
     },
     {
-      "path": "scripts/ci/marcador-specs.mjs",
-      "sha256": "6c4e59158fd69c59974ef6275d4935219cc05e0c9f216fee3ede3b9215e8f1d3"
-    },
-    {
       "path": "src/components/a11y/a11yComponents.tsx",
       "sha256": "5c62ff9a53a7ff42dc67ac1ffe65c64a7144574bdb2f13519b5e964f60e6fa4a"
     },
@@ -27,6 +23,10 @@
     {
       "path": "src/components/a11y/KeyboardNavigation.tsx",
       "sha256": "095864bfdb189d63bc8da7dd7db20c496637327e36dafe6272d69bd8e0446349"
+    },
+    {
+      "path": "src/components/admin/AdminView.tsx",
+      "sha256": "2049ff126809e894f0c05c7d6f9540c47ee8ba3b81ca995b32f3d8251b677cb2"
     },
     {
       "path": "src/components/admin/AIUsageDashboard.tsx",
@@ -174,11 +174,11 @@
     },
     {
       "path": "src/components/connections/ConnectionCard.tsx",
-      "sha256": "d910e2e2680d13ec918516dfa4f084a925ff26272ba592db9c7eaa23469e75de"
+      "sha256": "d7af082e834d340da6825a8012487325de7360c30a6c29db10ffcd11d8ba40f9"
     },
     {
       "path": "src/components/connections/ConnectionsView.tsx",
-      "sha256": "14ae8c31ebff63af5014906af385f499d22f085b7e937ff3509cdc2e28303227"
+      "sha256": "78784086313aff123ee2b3db4076732a4ed8987659e0cfaf590bb0a3e63a75d9"
     },
     {
       "path": "src/components/connections/NumberReputationMonitor.tsx",
@@ -458,7 +458,7 @@
     },
     {
       "path": "src/components/inbox/collaboration/InternalNotesPanel.tsx",
-      "sha256": "e5080bc5a24cc70092271eb405793af87cfcaa9305a816893e7dd735748e1c30"
+      "sha256": "82c901209e676665bc8daec829e1892e7a29c4c4c956b62e7e4e442f365a363b"
     },
     {
       "path": "src/components/inbox/collaboration/MentionInput.tsx",
@@ -494,7 +494,7 @@
     },
     {
       "path": "src/components/inbox/ConversationListSidebar.tsx",
-      "sha256": "11a9e7d774b45f5747cd75c9276984fc518bb08eaadbfeb816411be42b089f19"
+      "sha256": "bb70fcc68409475597402f37d3a54ae6302cc2233e782d89d3dfc233f753e750"
     },
     {
       "path": "src/components/inbox/ConversationSummary.tsx",
@@ -546,7 +546,7 @@
     },
     {
       "path": "src/components/inbox/RealtimeInboxView.tsx",
-      "sha256": "75cd7502863a287d64f7351b528bf083cda2953a242f5824940e9afba178c1f1"
+      "sha256": "4fdeee0cc67ed84642bfa54d39adb6c5c1c920eef19ab0856c11c5c4045aa038"
     },
     {
       "path": "src/components/inbox/RealtimeTranscription.tsx",
@@ -1125,10 +1125,6 @@
       "sha256": "c5bd24720c1b7ee3acbdf0c507ca5fcf2e75a685d0c937aedc9d35ba2a2636c8"
     },
     {
-      "path": "src/features/talk-me/TalkMeView.tsx",
-      "sha256": "ecadc53900f13a22755a010cb5013b7aea4211591e542a1acdf22767bfa3fdeb"
-    },
-    {
       "path": "src/hooks/analytics/usePerformanceOptimizations.ts",
       "sha256": "c1b3f6454720beb7402079ef00f54db84be4e8b1a438ca2215c724f14d4eade5"
     },
@@ -1346,7 +1342,7 @@
     },
     {
       "path": "src/hooks/ui/useScreenProtection.ts",
-      "sha256": "36215d927d77b07a77e4789668a7a7e1c3a8b25d9adc900b1fa2f7eedaf5fba4"
+      "sha256": "9f5e65f6b29678466b0ccab920d2e5c5a644c410271772f86224578ed3e5d4c6"
     },
     {
       "path": "src/hooks/ui/useSidebarCollapse.ts",
@@ -1490,7 +1486,7 @@
     },
     {
       "path": "supabase/functions/_shared/cron-secret-auth.ts",
-      "sha256": "e78ced5e21d29c760b28d42697ad196194406abe8335bf7809badf5269c65dcc"
+      "sha256": "321fff7bca46941938d6b64158aab12ab8508bfc82a53ffc887b7a903563dd9a"
     },
     {
       "path": "supabase/functions/_shared/evolution-control-authz.ts",
@@ -1533,20 +1529,16 @@
       "sha256": "9e9b98547188aad72d52fcdbda91beb89b00b69aebaffc8736632adfa084f4ed"
     },
     {
-      "path": "supabase/functions/connection-health-check/index.ts",
-      "sha256": "e27547f7ed7ea17a2b10a6e3415e6255dcdffb3b04f975edc292353c14b4ee75"
-    },
-    {
       "path": "supabase/functions/evolution-api/index.ts",
-      "sha256": "2825e7f39012c2632312c6007c62fc2ed6e459cd0a625e41f897a00be025c90f"
+      "sha256": "9d0b0c073889f35d5359ebaef9b05c1a9e92596674628bc7c7eaa978b611ba69"
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
-      "sha256": "5a9762286c7ab3209c66b87c20df81925d1ce51ad0be3a3755e037ecc253882b"
+      "sha256": "2e71f9f8a5e85772898aeae028fab886096a35c2d8d0fd1eedb7088bbd72aded"
     },
     {
       "path": "supabase/functions/get-sip-password/index.ts",
-      "sha256": "f5d69b0eee1536b3803b6019866baf14f2344166f8295d969d385d4a0102c371"
+      "sha256": "5cebe4c27155f7df43360a0c855f96a3f6ee8e4ef410b80f8379ad9699ce60e5"
     },
     {
       "path": "supabase/functions/gmail-oauth/index.ts",
@@ -1566,7 +1558,7 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "sha256": "bcb0281aa97149ba02ac5a00385bbe297c8a5c3f7bc78cacf995cb7e26015403"
+      "sha256": "894b5d3743f3516abac35a73ed58c1380ecb599a042e98fb94a4ae6684f40503"
     },
     {
       "path": "supabase/functions/searchbox-budget-alert/index.ts",
@@ -1599,10 +1591,6 @@
     {
       "path": "supabase/functions/talkx-storage-purge/index.ts",
       "sha256": "ce848c35af9d2700184892233b207f8a3db7dddf9827d601e3871db433108332"
-    },
-    {
-      "path": "supabase/functions/webauthn/index.ts",
-      "sha256": "0507f0be1b377cff3e3290dacb4d8d660001fbefe66d91c33a66be39ec84ee85"
     },
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
@@ -1651,20 +1639,6 @@
       "spanHash": "c1950508e1ed562149bbee99e70b1c8b798d07f0ce9ba32408398b24f6043dc1",
       "lineHash": "b52bfe1ae16bebf023cc6a2917eb05a5630782c5874c103826ed0a2bf80d8883",
       "contextHash": "79737b8d10081dfbc1e94173078573a45acb260d07ec6f41f80c6c3df47fdf39"
-    },
-    {
-      "file": "scripts/ci/marcador-specs.mjs",
-      "line": 99,
-      "column": 17,
-      "endLine": 0,
-      "endColumn": 0,
-      "severity": 2,
-      "ruleId": null,
-      "messageId": null,
-      "message": "Parsing error: Identifier 'tituloDe' has already been declared",
-      "spanHash": null,
-      "lineHash": "d818a03fba070a6d80db05c1781c332665bf30a3b36645b5606756a0bfde7fab",
-      "contextHash": "5d9f9c5feda4f7ae369d3d06db245120f4aecc66ad29c259211dae4599898fb6"
     },
     {
       "file": "src/components/a11y/a11yComponents.tsx",
@@ -1819,6 +1793,62 @@
       "spanHash": "6f20a65598b6b2478ae38989a751aaeb5aa715887a1b99276410a7d5659ea10d",
       "lineHash": "b95b0ba95ef6d8c7d819838ec6ff015fe21589009f3d44892d693be07e72f16d",
       "contextHash": "953abc2b450e5a488781d32ead138bb37db34c96ed417192974b2f70b5e7a968"
+    },
+    {
+      "file": "src/components/admin/AdminView.tsx",
+      "line": 191,
+      "column": 9,
+      "endLine": 191,
+      "endColumn": 35,
+      "severity": 2,
+      "ruleId": "local/no-secret-compare",
+      "messageId": "noSecretCompare",
+      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
+      "spanHash": "ccc144aeb23466cb489a72074d2e796f024838a483b51fe1d9e8d5ce537eee09",
+      "lineHash": "2ffd2d833a45c0851e5ce20d4b7dd8ded9e5361e1d185bc7e836cc6ff47ec32f",
+      "contextHash": "d71b366a1932e63885b1e392a1832c90bd1aa1f8f8ac86348adc547731a665e0"
+    },
+    {
+      "file": "src/components/admin/AdminView.tsx",
+      "line": 192,
+      "column": 14,
+      "endLine": 192,
+      "endColumn": 39,
+      "severity": 2,
+      "ruleId": "local/no-secret-compare",
+      "messageId": "noSecretCompare",
+      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
+      "spanHash": "160cf4bdf7e5a6b28754c5fc307bd32b2c4eb3e338e1eb3d08b9f715730ece69",
+      "lineHash": "be44eb871777386f5e3eca04c08c2c22867279ca299f63ed5e6319aa5526f95a",
+      "contextHash": "e5081b8f1cecf07e90924ff356da5359bd1bf418249d630863649edc82f33ed1"
+    },
+    {
+      "file": "src/components/admin/AdminView.tsx",
+      "line": 193,
+      "column": 14,
+      "endLine": 193,
+      "endColumn": 34,
+      "severity": 2,
+      "ruleId": "local/no-secret-compare",
+      "messageId": "noSecretCompare",
+      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
+      "spanHash": "8b5f788a95f5e03ded33ecc17e7bb3425d180c2362057e3a1e09de772d8527ea",
+      "lineHash": "9bc37ca95124d66bd6742c91fa365fdccc6156e26caac428ff118c0051ae713c",
+      "contextHash": "4068ac512f4e9c5b26d12e28b28bfe0f9b88d7a9c28f9ab8a06faa012e2ec79f"
+    },
+    {
+      "file": "src/components/admin/AdminView.tsx",
+      "line": 194,
+      "column": 14,
+      "endLine": 194,
+      "endColumn": 33,
+      "severity": 2,
+      "ruleId": "local/no-secret-compare",
+      "messageId": "noSecretCompare",
+      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
+      "spanHash": "5c76ea36fdc635305acae54bf0655fbaf22e14ef43c6568360867fa9d4aba040",
+      "lineHash": "3045b6e6104baffc5af8659051c1a66d4f2ae8eb464a23a227b239bca91a16ae",
+      "contextHash": "ffc267f1f2fdd7475ba0fcc86c41118adc9a7a13aedafb079d6710facf23a742"
     },
     {
       "file": "src/components/admin/AIUsageDashboard.tsx",
@@ -2816,9 +2846,9 @@
     },
     {
       "file": "src/components/connections/ConnectionsView.tsx",
-      "line": 18,
+      "line": 19,
       "column": 1,
-      "endLine": 18,
+      "endLine": 19,
       "endColumn": 59,
       "severity": 1,
       "ruleId": "no-restricted-imports",
@@ -5126,9 +5156,9 @@
     },
     {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 177,
+      "line": 188,
       "column": 11,
-      "endLine": 177,
+      "endLine": 188,
       "endColumn": 36,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5140,9 +5170,9 @@
     },
     {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 180,
+      "line": 191,
       "column": 18,
-      "endLine": 180,
+      "endLine": 191,
       "endColumn": 44,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5154,9 +5184,9 @@
     },
     {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 183,
+      "line": 194,
       "column": 18,
-      "endLine": 183,
+      "endLine": 194,
       "endColumn": 38,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5168,9 +5198,9 @@
     },
     {
       "file": "src/components/inbox/ConversationListSidebar.tsx",
-      "line": 186,
+      "line": 197,
       "column": 18,
-      "endLine": 186,
+      "endLine": 197,
       "endColumn": 37,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5546,9 +5576,9 @@
     },
     {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
-      "line": 235,
+      "line": 284,
       "column": 39,
-      "endLine": 235,
+      "endLine": 284,
       "endColumn": 50,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5560,9 +5590,9 @@
     },
     {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
-      "line": 239,
+      "line": 288,
       "column": 12,
-      "endLine": 239,
+      "endLine": 288,
       "endColumn": 30,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5574,9 +5604,9 @@
     },
     {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
-      "line": 239,
+      "line": 288,
       "column": 34,
-      "endLine": 239,
+      "endLine": 288,
       "endColumn": 55,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5588,9 +5618,9 @@
     },
     {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
-      "line": 240,
+      "line": 289,
       "column": 11,
-      "endLine": 240,
+      "endLine": 289,
       "endColumn": 29,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5602,9 +5632,9 @@
     },
     {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
-      "line": 241,
+      "line": 290,
       "column": 11,
-      "endLine": 241,
+      "endLine": 290,
       "endColumn": 22,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -10067,76 +10097,6 @@
       "contextHash": "7349e37f1e009a57721653286d77e40bbdf16547c8821cf717fdb1b7515030b3"
     },
     {
-      "file": "src/features/talk-me/TalkMeView.tsx",
-      "line": 109,
-      "column": 13,
-      "endLine": 109,
-      "endColumn": 38,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "160cf4bdf7e5a6b28754c5fc307bd32b2c4eb3e338e1eb3d08b9f715730ece69",
-      "lineHash": "e997be0fc3f38be1dbcb6e642656d86ace0890fe4cc96fac3fee9e6983c7f7c4",
-      "contextHash": "03cf9b1c6af18dbc9074c02d89f603cc9e19234817384f61fc19628790bded0b"
-    },
-    {
-      "file": "src/features/talk-me/TalkMeView.tsx",
-      "line": 110,
-      "column": 13,
-      "endLine": 110,
-      "endColumn": 39,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "ccc144aeb23466cb489a72074d2e796f024838a483b51fe1d9e8d5ce537eee09",
-      "lineHash": "1f637d7d345d3396bb1a8cb115562c4f03947369799eec426ac1f33d2c74758e",
-      "contextHash": "06d052d19a603af415a97e5330dbd9204209f9e009115243be324055fb0440cf"
-    },
-    {
-      "file": "src/features/talk-me/TalkMeView.tsx",
-      "line": 195,
-      "column": 13,
-      "endLine": 195,
-      "endColumn": 38,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "160cf4bdf7e5a6b28754c5fc307bd32b2c4eb3e338e1eb3d08b9f715730ece69",
-      "lineHash": "0131c9ea417a56aae0fbcd5979df55d1e1a9a4d6c62547548954387329277207",
-      "contextHash": "087ea94ee06cd50f48442f142536df9df22443592f4fe4c0f02f364166c7f266"
-    },
-    {
-      "file": "src/features/talk-me/TalkMeView.tsx",
-      "line": 196,
-      "column": 13,
-      "endLine": 196,
-      "endColumn": 39,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "ccc144aeb23466cb489a72074d2e796f024838a483b51fe1d9e8d5ce537eee09",
-      "lineHash": "b0695fb1bbde5e1aff2a0b095ba17f0d8c2882e8422eecf205bc4400c0f0f0d7",
-      "contextHash": "aa31d702bff4efe9c49d22284d5a8a392d3ca5cb7e54a7829ceb0171c155e371"
-    },
-    {
-      "file": "src/features/talk-me/TalkMeView.tsx",
-      "line": 290,
-      "column": 29,
-      "endLine": 290,
-      "endColumn": 61,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"scopeKey\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "86f7ec7454df93de871c2152fbcd42d66de409995eeab9d3606cbd41b0eb0ca5",
-      "lineHash": "72e2376e7569138dd26b98d1b81a6248a8b9558df0c60d285b08483f2bfad5d4",
-      "contextHash": "f340798703ad4a02e74a68e3105b4cf2e3c4d6ffbd40353368aed901e39b82a2"
-    },
-    {
       "file": "src/hooks/analytics/usePerformanceOptimizations.ts",
       "line": 103,
       "column": 5,
@@ -12294,9 +12254,9 @@
     },
     {
       "file": "supabase/functions/_shared/cron-secret-auth.ts",
-      "line": 92,
+      "line": 87,
       "column": 9,
-      "endLine": 92,
+      "endLine": 87,
       "endColumn": 29,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12308,9 +12268,9 @@
     },
     {
       "file": "supabase/functions/_shared/cron-secret-auth.ts",
-      "line": 98,
+      "line": 93,
       "column": 7,
-      "endLine": 98,
+      "endLine": 93,
       "endColumn": 29,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12615,94 +12575,10 @@
       "contextHash": "5ab38cea52e597259a4db4bb0f484eb5586824e7f459dc8ce3489831800017b1"
     },
     {
-      "file": "supabase/functions/connection-health-check/index.ts",
-      "line": 336,
-      "column": 11,
-      "endLine": 336,
-      "endColumn": 40,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"cronSecretCache\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "8567fae6b6a28b4913b4a79f874fa7aa388609d70618a5ced14189614fd3ff73",
-      "lineHash": "5d3996db52cb1c7ac069b12a34de111b711706641effa2495719c118cd96d95e",
-      "contextHash": "96920707ad9305e68f271fefb3690fd8e29c54f84530d74f9821811608b48d5f"
-    },
-    {
-      "file": "supabase/functions/connection-health-check/index.ts",
-      "line": 355,
-      "column": 25,
-      "endLine": 355,
-      "endColumn": 44,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"cronSecret\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "bf683975982dfcb7368438bf4a885d01165bf9c8c863fa753ae6ab13f9826c5b",
-      "lineHash": "0a2269870892d1b4fdc155b101ba9e7d7bdc1ae05a3249430776c23c19380dbd",
-      "contextHash": "48967457276b4e9f097c6771204357a8711c0b53597b9ae254587376efa3492c"
-    },
-    {
-      "file": "supabase/functions/connection-health-check/index.ts",
-      "line": 356,
-      "column": 24,
-      "endLine": 356,
-      "endColumn": 43,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"cronSecret\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "bf683975982dfcb7368438bf4a885d01165bf9c8c863fa753ae6ab13f9826c5b",
-      "lineHash": "6670a1790aad036ab2f21e91e658adb777fcd0b917ba872800016b5f0e8a296b",
-      "contextHash": "d2bf5493fc8144e09faca3715baea0da66f9c9ac68d54b3486a40d5bebd72379"
-    },
-    {
-      "file": "supabase/functions/connection-health-check/index.ts",
-      "line": 356,
-      "column": 47,
-      "endLine": 356,
-      "endColumn": 67,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"vaultSecret\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "aef2c133756e9ab40b9400a8944b6380ed490616435c728281b4d365a22944d2",
-      "lineHash": "6670a1790aad036ab2f21e91e658adb777fcd0b917ba872800016b5f0e8a296b",
-      "contextHash": "d2bf5493fc8144e09faca3715baea0da66f9c9ac68d54b3486a40d5bebd72379"
-    },
-    {
-      "file": "supabase/functions/connection-health-check/index.ts",
-      "line": 362,
-      "column": 32,
-      "endLine": 362,
-      "endColumn": 49,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"serviceKey\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "98666be57a2ec2cdcabdc2f989dab9243971001ca61fe6ea46df8792710fe98a",
-      "lineHash": "4c385f4deb0d5c9d899e226259ce386346d5f8cd774b15ff1aca3dc1c4d0f7d0",
-      "contextHash": "a0680437fd1fe61f360cf715a51d3784e14a7f86cb6358431f5b0a5a75405598"
-    },
-    {
-      "file": "supabase/functions/connection-health-check/index.ts",
-      "line": 509,
-      "column": 82,
-      "endLine": 509,
-      "endColumn": 100,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"tokenLegado\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "6b9bfcd41508f79810f723fc4cb0ef95a3c7e1fa53c11907b8e2d197d46e7b66",
-      "lineHash": "c43443df3822a5112d56da28d36c03cd64f9504a7d5c6c08809d40a38598b082",
-      "contextHash": "53621d90d0ba8f0f60e2bfb52aa372df21d5d1ecb2e735635052aeba10df84ba"
-    },
-    {
       "file": "supabase/functions/evolution-api/index.ts",
-      "line": 248,
+      "line": 255,
       "column": 13,
-      "endLine": 248,
+      "endLine": 255,
       "endColumn": 37,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12728,9 +12604,9 @@
     },
     {
       "file": "supabase/functions/get-sip-password/index.ts",
-      "line": 75,
+      "line": 86,
       "column": 22,
-      "endLine": 75,
+      "endLine": 86,
       "endColumn": 46,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12924,9 +12800,9 @@
     },
     {
       "file": "supabase/functions/multiplix-send/index.ts",
-      "line": 106,
+      "line": 114,
       "column": 7,
-      "endLine": 106,
+      "endLine": 114,
       "endColumn": 36,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -13173,20 +13049,6 @@
       "spanHash": "41b5195cca6abc1e2492ab17a6c53784d6d7d75c3cd9a6a7024dc9401f9a3776",
       "lineHash": "4bb750b78eef0e52f09b93ce61ce78cd7b2d94d0e4569c640b00df6147583cca",
       "contextHash": "7c84deea5c2890b97ebdde82d4c79f0904c200d004fecce56cc858d83e09c332"
-    },
-    {
-      "file": "supabase/functions/webauthn/index.ts",
-      "line": 279,
-      "column": 22,
-      "endLine": 279,
-      "endColumn": 52,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"publicKeyAlgorithm\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "092e3118f85f58d9d6da29ec4e7d8605e563c326f82f347b11cf207d3a96e93e",
-      "lineHash": "e5355f19769892927f7b6960120709d54d03cb554e979135f3279bb24456330a",
-      "contextHash": "6194d5594b7471f37825b90bbf1db693a69babab008b7dbbf59c56da0d248e62"
     },
     {
       "file": "supabase/functions/whatsapp-webhook/index.ts",

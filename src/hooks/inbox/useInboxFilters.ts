@@ -107,14 +107,12 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
 
   const basePrefs = useMemo<InboxFilterPrefs>(() => {
     const chipTab = storedPrefs?.chipTab ?? DEFAULT_CHIP;
-    // Param explícito na URL (mesmo inválido) não cai no fallback do storage.
-    // Sem param nenhum (`null`), vale o que o dono guardou.
-    const urlTypeParam = searchParams.get('type');
     return {
       chipTab,
       ...tabsForChip(chipTab),
       queueId: storedPrefs?.queueId ?? null,
-      contactType: urlTypeParam != null ? normalizeContactType(urlTypeParam) : (storedPrefs?.contactType ?? null),
+      // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
+      contactType: normalizeContactType(searchParams.get('type')) ?? storedPrefs?.contactType ?? null,
     };
   }, [storedPrefs, searchParams]);
 
@@ -157,12 +155,15 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   const setSelectedQueueId = useCallback((id: string | null) => applyPrefs({ queueId: id }), [applyPrefs]);
 
   const handleContactTypeChange = useCallback((value: string | null) => {
-    const tipo = normalizeContactType(value);
-    applyPrefs({ contactType: tipo });
+    applyPrefs({ contactType: value && value !== 'all' ? value : null });
     setSearchParams((prev) => {
-      const params = new URLSearchParams(prev);
-      if (tipo) { params.set('type', tipo); } else { params.delete('type'); }
-      return params;
+      const next = new URLSearchParams(prev);
+      if (value && value !== 'all') {
+        next.set('type', value);
+      } else {
+        next.delete('type');
+      }
+      return next;
     }, { replace: true });
   }, [applyPrefs, setSearchParams]);
 

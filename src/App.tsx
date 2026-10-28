@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
 import { getLogger } from "@/lib/logger";
-import { Toaster } from "@/components/ui/toaster";
 import { BrowserRouter } from "react-router-dom";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { SkipLinks } from "@/components/ui/skip-link";
@@ -64,12 +63,31 @@ const Sonner = lazy(() =>
   import("@/components/ui/sonner")
     .then(m => ({ default: m.Toaster }))
 );
+// API legada de `@/hooks/ui/use-toast` tem store independente do Sonner. O host
+// segue montado globalmente para não perder esses avisos, mas fica em chunk lazy
+// para manter seus componentes Radix fora do bundle inicial.
+const LegacyToaster = lazy(() =>
+  import("@/components/ui/toaster")
+    .then(m => ({ default: m.Toaster }))
+);
 // Gamificação: host do toast de conquista/subida de nível. É overlay (renderiza o
 // próprio aviso e não envolve as rotas), então vive no mesmo bloco lazy do Sonner —
 // nada dele existe na primeira pintura.
 const AchievementCelebrationToaster = lazy(() =>
   import("@/components/gamification/AchievementToast")
     .then(m => ({ default: m.AchievementCelebrationToaster }))
+);
+// SL-103 restore: MotionConfig carregado em chunk lazy para manter vendor-motion
+// (43 KB gzip) fora do bundle inicial. As rotas também são lazy — quando qualquer
+// motion.* renderizar de fato, o vendor-motion já estará resolvido em paralelo.
+// A11Y: reducedMotion=user aplica prefers-reduced-motion do sistema a TODOS os
+// consumidores de motion.* sem precisar de MotionConfig por tela.
+const LazyMotionConfig = lazy(() =>
+  import('framer-motion').then(({ MotionConfig }) => ({
+    default: ({ children }: { children: React.ReactNode }) => (
+      <MotionConfig reducedMotion="user">{children}</MotionConfig>
+    ),
+  }))
 );
 
 /**
@@ -102,6 +120,7 @@ function DeferredProviders() {
       {/* EasterEggsProvider is purely a keyboard/shake listener. No children needed. */}
       <EasterEggsProvider>{null}</EasterEggsProvider>
       <Sonner />
+      <LegacyToaster />
       <AchievementCelebrationToaster />
     </Suspense>
   );
@@ -184,8 +203,18 @@ function AppContent() {
             <DeferredHooks />
           </Suspense>
         </ErrorBoundary>
-        <Toaster />
-        <AppRoutes />
+        {/*
+          SL-103 restore: LazyMotionConfig mantém vendor-motion fora do bundle
+          inicial. fallback={null} é seguro porque AppRoutes exibe seu próprio
+          skeleton de carregamento enquanto os chunks de rota resolvem — a janela
+          sem MotionConfig é imperceptível (< 100 ms) pois vendor-motion e os
+          chunks de rota resolvem em paralelo.
+        */}
+        <Suspense fallback={null}>
+          <LazyMotionConfig>
+            <AppRoutes />
+          </LazyMotionConfig>
+        </Suspense>
       </GlobalKeyboardProvider>
     </BrowserRouter>
   );

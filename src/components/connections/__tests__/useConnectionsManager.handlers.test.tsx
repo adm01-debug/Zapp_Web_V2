@@ -37,11 +37,9 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: (...a: unknown[]) => h.toast(...a) }));
-vi.mock('@/lib/logger', () => ({
-  log: h.log,
-  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
-  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
-}));
+vi.mock('@/lib/logger', () => ({ log: h.log,
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),}));
 vi.mock('@/lib/clipboard', () => ({ avisarCopia: vi.fn(), copiarTexto: vi.fn() }));
 vi.mock('@/hooks/integrations/useEvolutionApi', () => ({
   useEvolutionApi: () => ({
@@ -116,16 +114,20 @@ describe('handleDisconnect', () => {
     expect(h.update).not.toHaveBeenCalled();
   });
 
-  it('quando a Evolution falha, avisa e NÃO marca a linha como desconectada', async () => {
+  it('quando a Evolution falha, devolve false, NÃO marca a linha como desconectada e não duplica o aviso', async () => {
     h.disconnectInstance.mockRejectedValueOnce(new Error('GO recusou'));
     const r = await mount();
 
-    await act(async () => { await r.result.current.handleDisconnect(A); });
+    let resultado: boolean | undefined;
+    await act(async () => { resultado = await r.result.current.handleDisconnect(A); });
 
+    // `false` é o sinal que o ConnectionCard usa para manter o diálogo aberto com o motivo.
+    expect(resultado).toBe(false);
     expect(h.update).not.toHaveBeenCalled();
-    expect(h.toast).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Erro ao desconectar', description: 'GO recusou', variant: 'destructive' }),
-    );
+    // O aviso (com o motivo) vem de UMA origem: o sonner do `withToast` dentro do
+    // `disconnectInstance` real. O hook não anuncia de novo (t_cce2f0f7: a falha era
+    // anunciada duas vezes).
+    expect(h.toast).not.toHaveBeenCalled();
   });
 });
 
@@ -183,7 +185,7 @@ describe('handleAddConnection', () => {
     h.createConnection.mockRejectedValueOnce(new Error('GO fora do ar'));
     const r = await mount();
 
-    await act(async () => { r.result.current.setNewConnection({ name: 'X', phone_number: '1' }); });
+    await act(async () => { r.result.current.setNewConnection({ name: 'X', phone_number: '+55 11 98765-4321' }); });
     await act(async () => { await r.result.current.handleAddConnection(); });
 
     expect(r.result.current.isCreating).toBe(false);

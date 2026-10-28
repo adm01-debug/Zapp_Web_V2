@@ -74,7 +74,7 @@ interface WarRoomAgentBase extends Omit<WarRoomAgent, 'status'> {
   user_id: string | null;
 }
 
-/** Teto de linhas por RPC — acima disso é subtotal silencioso, não total real. */
+/** Limite de segurança: nenhum RPC do War Room deve devolver mais do que este número de linhas. */
 export const WARROOM_MAX_ROWS = 200;
 
 /**
@@ -105,7 +105,9 @@ export function useWarRoomData({ refetchInterval = 30000 }: WarRoomDataOptions =
       if (activeProfiles.error) throw activeProfiles.error;
 
       const rows = (today.data ?? []) as unknown as WarRoomAgentRpcRow[];
-      if (rows.length > WARROOM_MAX_ROWS) throw new Error(`warroom_agent_today devolveu ${rows.length} linhas`);
+      if (rows.length > WARROOM_MAX_ROWS) {
+        throw new Error(`warroom_agent_today devolveu ${rows.length} linhas`);
+      }
       const userIdByProfile = new Map(
         (activeProfiles.data ?? []).map(p => [p.id, p.user_id ?? null] as const),
       );
@@ -149,7 +151,9 @@ export function useWarRoomData({ refetchInterval = 30000 }: WarRoomDataOptions =
       if (error) throw error;
 
       const rows = (data ?? []) as unknown as WarRoomQueueRpcRow[];
-      if (rows.length > WARROOM_MAX_ROWS) throw new Error(`warroom_queue_stats devolveu ${rows.length} linhas`);
+      if (rows.length > WARROOM_MAX_ROWS) {
+        throw new Error(`warroom_queue_stats devolveu ${rows.length} linhas`);
+      }
       return rows.map((q): WarRoomQueue => ({
         id: q.id,
         name: q.name,

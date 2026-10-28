@@ -76,11 +76,11 @@ beforeEach(() => {
   mocks.invoke.mockResolvedValue({ data: { category: 'produto' }, error: null });
   mocks.tableFrom.mockImplementation(() => ({
     select: () => {
-      const chain: Record<string, unknown> = {};
-      chain.order = () => chain;
-      chain.range = () => Promise.resolve({ data: [emoji()], error: null });
-      chain.limit = () => Promise.resolve({ data: [emoji()], error: null });
-      return chain;
+      const query = {
+        order: () => query,
+        range: () => Promise.resolve({ data: [emoji()], error: null }),
+      };
+      return query;
     },
     insert: (payload: Record<string, unknown>) => {
       inserted.push(payload);

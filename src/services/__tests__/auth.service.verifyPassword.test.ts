@@ -7,11 +7,9 @@ const { authMocks, serverLoginMock } = vi.hoisted(() => ({
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { auth: authMocks, from: vi.fn() },
 }));
-vi.mock('@/lib/logger', () => ({
-  log: { warn: vi.fn(), error: vi.fn() },
-  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
-  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
-}));
+vi.mock('@/lib/logger', () => ({ log: { warn: vi.fn(), error: vi.fn() },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),}));
 vi.mock('@/lib/serverLogin', () => ({
   serverLogin: (...a: unknown[]) => serverLoginMock(...a),
 }));

@@ -122,6 +122,7 @@ export function useUserSettings() {
 
     const fetchSettings = async () => {
       setIsLoading(true);
+      setIsError(false);
       try {
         const { data, error } = await supabase
           .from('user_settings')
@@ -134,8 +135,10 @@ export function useUserSettings() {
         if (error && error.code !== 'PGRST116') {
           // PGRST116 = no rows returned
           log.error('Error fetching settings:', error);
-          setIsError(true);
-          toast({ variant: 'destructive', title: 'Erro ao carregar', description: 'Não foi possível carregar as configurações.' });
+          if (ativo) {
+            setIsError(true);
+            toast({ title: 'Erro', description: 'Não foi possível carregar as configurações.', variant: 'destructive' });
+          }
           return;
         }
 

@@ -55,6 +55,9 @@ export function useKnowledgeBase() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [files, setFiles] = useState<KBFile[]>([]);
   const [loading, setLoading] = useState(true);
+  // t_1944d290: erro de leitura (rede/RLS) nao pode virar "base vazia" - a tela
+  // anunciava "Nenhum arquivo enviado" com a leitura quebrada. O erro sobe para
+  // o consumidor em vez de ser descartado.
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -64,15 +67,9 @@ export function useKnowledgeBase() {
       supabase.from('knowledge_base_articles').select('*').order('updated_at', { ascending: false }),
       supabase.from('knowledge_base_files').select('*').order('created_at', { ascending: false }),
     ]);
-    const fetchError = articlesRes.error?.message ?? filesRes.error?.message ?? null;
-    setError(fetchError);
-    if (!fetchError) {
-      setArticles((articlesRes.data ?? []).map((a) => ({ ...a, tags: a.tags || [] })) as Article[]);
-      setFiles((filesRes.data ?? []) as KBFile[]);
-    } else {
-      setArticles([]);
-      setFiles([]);
-    }
+    if (articlesRes.data) setArticles(articlesRes.data.map((a) => ({ ...a, tags: a.tags || [] })) as Article[]);
+    if (filesRes.data) setFiles(filesRes.data as KBFile[]);
+    setError(articlesRes.error?.message ?? filesRes.error?.message ?? null);
     setLoading(false);
   }, []);
 

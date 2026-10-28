@@ -53,7 +53,6 @@ export function marcadorDe(nomes) {
   return `${PREFIXO}${hash} -->`;
 }
 
-
 /** Lista legivel para o corpo da issue. */
 export function corpoDe(nomes) {
   const lista = normalizar(nomes);

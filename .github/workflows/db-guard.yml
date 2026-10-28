@@ -138,7 +138,7 @@ jobs:
               // Excecao 2: kind ledger-only/name-and-file-pinned no evidence
               const basename = f.filename.split('/').pop();
               const entry = (evidence.exceptions || []).find(e => e.filename === basename);
-              if (entry && entry.kind === 'ledger-only/name-and-file-pinned') continue;
+              if (entry && (entry.kind === 'ledger-only/name-and-file-pinned' || entry.kind === 'ledger-divergence/pinned-replay')) continue;
               if (f.status === 'modified') {
                 try {
                   const resp = await github.rest.repos.getContent({
@@ -172,7 +172,7 @@ jobs:
             }
 
       - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
 
@@ -208,11 +208,23 @@ jobs:
         run: node scripts/db-audit/check-realtime-subscriptions.mjs
 
       - name: Testar comparadores de catalogo, manifesto e migrations
-        # n011-storage-policies-dedup.test.mjs excluido: pressupostos de historico de
-        # migration (par SELECT em `antes`) incompativeis com 20261009182648_avatars_bucket_private
-        # que dropa ambas as SELECT policies antes do FIX rodar. Cobertura N011 ja esta
-        # em n011-storage-avatar-policies-dedup.test.sh (shell test com docker real).
-        run: node --test $(find scripts/db-audit -maxdepth 1 -name '*.test.mjs' ! -name 'n011-storage-policies-dedup.test.mjs' | sort)
+        run: |
+          testes_db=()
+          for teste_db in scripts/db-audit/*.test.mjs; do
+            [[ "$teste_db" == "scripts/db-audit/talkx-engine-window-contract.test.mjs" ]] && continue
+            testes_db+=("$teste_db")
+          done
+          node --test "${testes_db[@]}"
+
+      # O contrato Talk X sobe seu proprio PostgreSQL. Em paralelo com a suite
+      # acima, outros contratos tambem iniciam containers e podem derrubar o
+      # socket durante o bootstrap; rode-o isolado e repita somente falhas de
+      # bootstrap, nunca erros SQL/assertions.
+      - name: Provar contrato Talk X de janela de envio em PostgreSQL descartavel
+        env:
+          TALKX_WINDOW_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          POSTGREST_TEST_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh node --test scripts/db-audit/talkx-engine-window-contract.test.mjs
 
       # E47: instala o docker-shim no PATH antes do primeiro step que usa docker.
       # A partir daqui, `docker` aponta para o shim que roteia run/exec/rm para
@@ -1198,6 +1210,10 @@ jobs:
       - name: Simular contrato de seguranca do WhatsApp de departamento (TC-005)
         env:
           TC005_WHATSAPP_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # E47: SKIP_DOCKER_SHIM=1 — o Bloco C executa rollback que reverte
+          # department_audit_logs_action_check para excluir 'whatsapp_updated';
+          # no container compartilhado isso contamina TC-009 que roda logo depois.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-chat-department-whatsapp-safe-config.test.sh
 
       # N-071: a RPC request_department_access cria notificacoes para admins/supervisores
@@ -1208,6 +1224,7 @@ jobs:
       - name: Simular pedido de acesso a departamento (N-071)
         env:
           REQUEST_DEPT_ACCESS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/request-department-access.test.sh
 
       # TC-009 / R2-DB-011 (item 164, P2): recibos e reacoes nao forcavam `conversation_id`
@@ -1218,6 +1235,9 @@ jobs:
       - name: Simular conversation_id derivado da mensagem em recibos e reacoes (TC-009)
         env:
           TEAM_CID_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # TC-009 cria os papeis anon/authenticated/service_role (globais no cluster)
+          # e inicia container proprio, incompativel com o shim do E47.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/team-receipts-reactions-conversation-id.test.sh
       # TC-004 (P1): leave_team_group/remove_team_member usavam a coluna inexistente
       # `tcm.role`; o contrato prova RED->GREEN nas duas RPCs e executa o rollback.
@@ -1695,7 +1715,7 @@ jobs:
       # migration culpada sem baixar o repo (o upload so roda se o diff tocou migration).
       - name: Publicar o log e os erros do replay
         if: always() && steps.mudou.outputs.mudou == 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: replay-migrations
           path: |

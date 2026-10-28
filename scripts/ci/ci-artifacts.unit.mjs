@@ -2,11 +2,11 @@
  * E72 (auditoria de GitHub Actions de 2026-10-01, achado G-32) — politica dos
  * artifacts publicados pelo `ci.yml`.
  *
- * O que o plano pede (docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md,
- * item E72; docs/plans/PLANO_SEGUNDA_LEVA_CARTOES_2026-10-08.md, SL-100):
+ * Contrato atual:
  *   - `dist`              -> so em `workflow_dispatch` (a Vercel builda sozinha);
- *   - `coverage-report`   -> so na main (push), com 7 dias de retencao;
- *   - `playwright-report` -> so `if: failure()`.
+ *   - `playwright-report` -> so `if: failure()`;
+ *   - coverage nao e anexada: os testes rodam em shards sem cobertura e o job
+ *     de build nao recebe os arquivos dos shards; o upload anterior era no-op.
  * E a verificacao que o plano escreve: "PR verde cria 0 artifacts".
  * Motivo medido: 2.333 artifacts acumulados em 01/10/2026 porque TODO PR
  * publicava os tres uploads (nenhum deles e consumido num PR).
@@ -197,6 +197,11 @@ test('E72: `dist` so sai em workflow_dispatch', () => {
   assert.equal(retencao(bloco), 3);
 });
 
+test('E72: nao tenta anexar coverage que os shards nao geram nem agregam', () => {
+  assert.doesNotMatch(ci, /name:\s*.*coverage-report/u);
+  assert.doesNotMatch(ci, /path:\s*coverage\//u);
+  assert.doesNotMatch(ci, /vitest run[^\n]*--coverage/u);
+});
 
 test('E72: `playwright-report` so quando o E2E falha', () => {
   const { expr, rodaEm, bloco } = upload('Upload Playwright report');
@@ -211,7 +216,7 @@ test('E72: `playwright-report` so quando o E2E falha', () => {
 
 test('E72: PR verde cria 0 artifacts (a verificacao escrita no plano)', () => {
   const uploads = todosOsUploads();
-  assert.ok(uploads.length >= 2, `esperava os 2 uploads do ci.yml, achei ${uploads.length}`);
+  assert.equal(uploads.length, 2, `dist manual e relatorio Playwright sao os unicos uploads, achei ${uploads.length}`);
   const ligados = uploads.filter(({ expr }) => avaliar(expr, CENARIOS.prVerde));
   assert.deepEqual(
     ligados.map(({ nome }) => nome),

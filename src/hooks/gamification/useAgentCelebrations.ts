@@ -96,10 +96,10 @@ export function useAgentCelebrations(
   const conquistasConhecidas = useRef<Set<string>>(new Set());
   // Nível conhecido do perfil: só aumento vira celebração.
   const nivelConhecido = useRef<number | null>(null);
-  // Contador de conquistas do último stats lido: aumento detecta nova conquista.
-  const contagemConquistasConhecida = useRef<number>(0);
   // Último estado de conexão do canal, para detectar a reconexão.
   const estadoCanal = useRef<string | null>(null);
+  // Contador de conquistas conhecido: aumento detectado via agent_stats.achievements_count.
+  const achievementsCountRef = useRef<number | null>(null);
 
   const onCelebrationRef = useRef(options.onCelebration);
   useEffect(() => {
@@ -157,16 +157,19 @@ export function useAgentCelebrations(
     onCelebrationRef.current?.(evento);
   }, [profileId]);
 
-  // Baseline: o que já existia quando o hook montou NÃO vira festa (só semente).
-  // Conquistas com earned_at DEPOIS do mount (chegaram durante a sessão) celebram.
+  // Baseline: o que já existe quando o hook monta NÃO vira festa (só semente),
+  // senão cada refresh/abertura de tela celebraria conquistas antigas.
   useEffect(() => {
     if (!enabled || !profileId) return;
     let vivo = true;
     conquistasConhecidas.current = new Set();
     nivelConhecido.current = null;
-    contagemConquistasConhecida.current = 0;
-    const t0 = new Date().toISOString();
+    achievementsCountRef.current = null;
 
+    // Marco da montagem: o SELECT inicial pode enxergar uma conquista gravada DEPOIS
+    // de montar (o insert comitou antes da resposta). Essa nasceu na nossa janela e
+    // vira festa; só o que já existia no marco é semente suprimida.
+    const marcoMontagem = Date.now();
     void (async () => {
       const [conquistas, stats] = await Promise.all([
         supabase
@@ -181,7 +184,8 @@ export function useAgentCelebrations(
       if (conquistas.error) log.warn('Falha ao carregar conquistas do perfil', conquistas.error);
       for (const linha of (conquistas.data ?? []) as Achievement[]) {
         if (!linha?.id) continue;
-        if (linha.earned_at > t0) {
+        // `earned_at` ausente ou ilegível (NaN) nunca é "posterior": fica suprimido.
+        if (Date.parse(String(linha.earned_at ?? '')) > marcoMontagem) {
           celebrarConquista(linha);
         } else {
           conquistasConhecidas.current.add(String(linha.id));
@@ -189,10 +193,8 @@ export function useAgentCelebrations(
       }
       if (stats.error) log.warn('Falha ao carregar stats do perfil', stats.error);
       const statsLinha = stats.data as AgentStats | null;
-      if (statsLinha) {
-        nivelConhecido.current = Number(statsLinha.level);
-        contagemConquistasConhecida.current = Number(statsLinha.achievements_count ?? 0);
-      }
+      if (statsLinha) nivelConhecido.current = Number(statsLinha.level);
+      if (statsLinha) achievementsCountRef.current = Number((statsLinha as unknown as Record<string, unknown>).achievements_count ?? 0);
     })();
 
     return () => {
@@ -218,13 +220,7 @@ export function useAgentCelebrations(
         for (const linha of (conquistas.data ?? []) as Achievement[]) celebrarConquista(linha);
         if (stats.error) log.warn('Falha ao ressincronizar stats', stats.error);
         const statsLinha = stats.data as AgentStats | null;
-        if (statsLinha) {
-          celebrarNivel(statsLinha.level, statsLinha.xp);
-          contagemConquistasConhecida.current = Math.max(
-            contagemConquistasConhecida.current,
-            Number(statsLinha.achievements_count ?? 0),
-          );
-        }
+        if (statsLinha) celebrarNivel(statsLinha.level, statsLinha.xp);
       } catch (erro) {
         log.warn('Ressincronização de celebrações falhou', erro);
       }
@@ -250,11 +246,22 @@ export function useAgentCelebrations(
           const linha = payload.new as unknown as AgentStats | null;
           if (!linha) return;
           celebrarNivel(linha.level, linha.xp);
-          const novaContagem = Number(linha.achievements_count ?? 0);
-          if (novaContagem > contagemConquistasConhecida.current) {
-            contagemConquistasConhecida.current = novaContagem;
-            void ressincronizar(profileId);
+          const novoCount = Number(
+            (linha as unknown as Record<string, unknown>).achievements_count ?? 0,
+          );
+          if (achievementsCountRef.current !== null && novoCount > achievementsCountRef.current) {
+            void supabase
+              .from('agent_achievements')
+              .select('*')
+              .eq('profile_id', profileId)
+              .order('earned_at', { ascending: false })
+              .limit(JANELA_CONQUISTAS)
+              .then(({ data: conquistas, error }) => {
+                if (error) { log.warn('Falha ao recarregar conquistas', error); return; }
+                for (const c of (conquistas ?? []) as Achievement[]) celebrarConquista(c);
+              });
           }
+          achievementsCountRef.current = novoCount;
         },
       )
       .subscribe((status) => {

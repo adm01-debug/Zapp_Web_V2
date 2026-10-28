@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare, Send, Loader2, AlertCircle } from 'lucide-react';
@@ -15,8 +15,13 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { contactNotesKey } from '@/hooks/crm/useContactNotes';
 import { conversationTabCountsKey } from '@/hooks/chat/useConversationTabCounts';
-import { MentionInput } from './MentionInput';
 import { useMentionableProfileNames } from '@/hooks/inbox/useMentionableProfiles';
+import { cn } from '@/lib/utils';
+import { MentionInput } from './MentionInput';
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 export function InternalNotesPanel({ contactId }: { contactId: string }) {
   const [newNote, setNewNote] = useState('');
@@ -61,18 +66,23 @@ export function InternalNotesPanel({ contactId }: { contactId: string }) {
     onError: () => toast.error('Erro ao adicionar nota'),
   });
 
+  const namesPattern = [...new Set((mentionableNames ?? []).map((name) => name.trim()).filter(Boolean))]
+    .sort((a, b) => b.length - a.length)
+    .map(escapeRegExp);
+  const mentionPattern = new RegExp(
+    `(@(?:${namesPattern.length ? `${namesPattern.join('|')}|` : ''}[\\p{L}\\p{N}_]+))(?=$|[^\\p{L}\\p{N}_])`,
+    'giu',
+  );
+
   const renderNoteContent = (content: string) => {
-    const sortedNames = mentionableNames
-      ? [...mentionableNames].sort((a, b) => b.length - a.length)
-      : undefined;
-    const mentionPattern =
-      sortedNames && sortedNames.length > 0
-        ? `(@(?:${sortedNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})|@\\w+)`
-        : `(@\\w+)`;
-    const parts = content.split(new RegExp(mentionPattern, 'g'));
+    const parts = content.split(mentionPattern);
     return parts.map((part, i) => {
       if (part.startsWith('@')) {
-        return <Badge key={i} variant="secondary" className="text-xs mx-0.5">{part}</Badge>;
+        return (
+          <span key={i} className={cn(badgeVariants({ variant: 'secondary' }), 'text-xs mx-0.5')}>
+            {part}
+          </span>
+        );
       }
       return <span key={i}>{part}</span>;
     });

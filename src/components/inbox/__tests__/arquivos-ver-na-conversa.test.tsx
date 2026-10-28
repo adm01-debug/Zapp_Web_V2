@@ -58,7 +58,7 @@ vi.mock('@/lib/logger', () => ({
   getSessionId: () => 'sessao-test',
   logPerformance: (_l: string, fn: () => void) => fn(),
   logAsyncPerformance: async (_l: string, fn: () => Promise<unknown>) => fn(),
-  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 vi.mock('sonner', () => ({ toast: { error: mocks.toastError, success: vi.fn() } }));
@@ -107,7 +107,9 @@ vi.mock('@/hooks/chat/useTypingPresence', () => ({
 }));
 vi.mock('@/hooks/integrations/useEvolutionApi', () => ({ useEvolutionApi: () => ({ editMessage: vi.fn() }) }));
 vi.mock('@/hooks/chat/useQuickReplies', () => ({ useQuickReplies: () => ({ quickReplies: [], incrementUseCount: vi.fn() }) }));
-vi.mock('@/hooks/communication/useTextToSpeech', () => ({
+vi.mock('@/hooks/communication/useTextToSpeech', async (importOriginal) => ({
+  // Mantém as constantes reais (LOCAL_VOICE_ID é lida pelo VoiceSelector na importação).
+  ...(await importOriginal<typeof import('@/hooks/communication/useTextToSpeech')>()),
   useTextToSpeech: () => ({
     speak: vi.fn(), stop: vi.fn(), isLoading: false, isPlaying: false, currentMessageId: null,
     voiceId: '', setVoiceId: vi.fn(), speed: 1, setSpeed: vi.fn(),

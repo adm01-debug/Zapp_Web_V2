@@ -23,15 +23,7 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
-  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
-}));
-
-// useTeamReadState cria canal 'team-read-state-*' em seu próprio useEffect, o
-// que deslocaria h.nomes[0] e dobraria h.subs. Mocado para isolar o teste
-// exclusivamente ao canal 'team-messages-*'.
-vi.mock('@/hooks/team-chat/useTeamReadState', () => ({
-  useTeamReadState: () => ({ readStates: {}, isLoading: false }),
-  deriveOwnMessageStatus: () => 'sent',
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -52,6 +44,11 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
+vi.mock('@/hooks/team-chat/useTeamReadState', () => ({
+  useTeamReadState: () => ({ readStates: {}, isLoading: false }),
+  deriveOwnMessageStatus: () => 'sent',
+}));
+
 import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 
 function render(conversationId = 'conv-1', queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
@@ -66,10 +63,6 @@ beforeEach(() => {
   h.nomes = [];
   h.subs = [];
   h.rpc.mockResolvedValue({ data: [], error: null });
-  // React Strict Mode invoca o efeito duas vezes (mount → cleanup → mount).
-  // O removeChannel do cleanup precisa retirar a subscrição para que ao final
-  // haja exatamente 1 inscrito (o da segunda montagem).
-  h.removeChannel.mockImplementation(() => { h.subs.pop(); });
 });
 
 describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (PE-75)', () => {
@@ -77,11 +70,15 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const a = render('conv-1');
     const b = render('conv-1');
 
-    await waitFor(() => expect(h.nomes.length).toBeGreaterThanOrEqual(2));
+    // useTeamReadState também cria canal próprio; filtra só os do useTeamMessages
+    await waitFor(() =>
+      expect(h.nomes.filter(n => n.startsWith('team-messages-')).length).toBeGreaterThanOrEqual(2),
+    );
 
-    expect(h.nomes[0].startsWith('team-messages-conv-1:')).toBe(true);
-    expect(h.nomes[1].startsWith('team-messages-conv-1:')).toBe(true);
-    expect(h.nomes[0]).not.toBe(h.nomes[1]);
+    const msgNomes = h.nomes.filter(n => n.startsWith('team-messages-'));
+    expect(msgNomes[0].startsWith('team-messages-conv-1:')).toBe(true);
+    expect(msgNomes[1].startsWith('team-messages-conv-1:')).toBe(true);
+    expect(msgNomes[0]).not.toBe(msgNomes[1]);
 
     a.unmount();
     b.unmount();
@@ -91,12 +88,16 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const { queryClient } = render('conv-1');
     const invalidar = vi.spyOn(queryClient, 'invalidateQueries');
 
-    await waitFor(() => expect(h.subs.length).toBe(1));
+    // useTeamReadState chama .subscribe() sem callback; filtra só callbacks reais
+    await waitFor(() =>
+      expect(h.subs.filter((s): s is (status: string) => void => typeof s === 'function').length).toBe(1),
+    );
 
-    act(() => h.subs[0]('SUBSCRIBED'));
+    const msgSubs = h.subs.filter((s): s is (status: string) => void => typeof s === 'function');
+    act(() => msgSubs[0]('SUBSCRIBED'));
     expect(invalidar).not.toHaveBeenCalled();
 
-    act(() => h.subs[0]('SUBSCRIBED'));
+    act(() => msgSubs[0]('SUBSCRIBED'));
     const chaves = invalidar.mock.calls.map((c) => c[0]?.queryKey);
     expect(chaves).toContainEqual(['team-messages', 'conv-1']);
     expect(invalidar).toHaveBeenCalledTimes(2);
@@ -106,11 +107,14 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const { queryClient } = render('conv-1');
     const invalidar = vi.spyOn(queryClient, 'invalidateQueries');
 
-    await waitFor(() => expect(h.subs.length).toBe(1));
+    await waitFor(() =>
+      expect(h.subs.filter((s): s is (status: string) => void => typeof s === 'function').length).toBe(1),
+    );
 
-    act(() => h.subs[0]('SUBSCRIBED'));
-    act(() => h.subs[0]('CHANNEL_ERROR'));
-    act(() => h.subs[0]('SUBSCRIBED'));
+    const msgSubs = h.subs.filter((s): s is (status: string) => void => typeof s === 'function');
+    act(() => msgSubs[0]('SUBSCRIBED'));
+    act(() => msgSubs[0]('CHANNEL_ERROR'));
+    act(() => msgSubs[0]('SUBSCRIBED'));
 
     expect(invalidar).toHaveBeenCalled();
   });

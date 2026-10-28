@@ -166,7 +166,7 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 p-2 rounded-lg bg-warning/10 border border-warning/30 text-warning text-xs">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" /><span className="flex-1">Áudio bloqueado pelo navegador</span>
           <Button variant="ghost" size="sm" className="h-6 px-2 text-3xs gap-1" onClick={tts.handleRetryAutoplay}><RefreshCcw className="h-3 w-3" /> Tentar</Button>
-          <Button variant="ghost" size="icon" aria-label="Dispensar aviso de áudio" className="h-6 w-6" onClick={tts.handleDismissAutoplayWarning}><X className="h-3 w-3" aria-hidden="true" /></Button>
+          <Button variant="ghost" size="icon" aria-label="Dispensar aviso de áudio bloqueado" className="h-6 w-6" onClick={tts.handleDismissAutoplayWarning}><X className="h-3 w-3" aria-hidden="true" /></Button>
         </motion.div>
       )}
 

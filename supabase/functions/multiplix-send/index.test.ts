@@ -617,6 +617,10 @@ function stubProviderComMidia(id = "WAMID-TESTE-1") {
   const urls: string[] = [];
   const posts: { url: string; body: Record<string, unknown> }[] = [];
   const original = globalThis.fetch;
+  const mediaHostsAnterior = Deno.env.get("MEDIA_EGRESS_ALLOWED_HOSTS");
+  const mediaHosts = new Set((mediaHostsAnterior ?? "").split(",").map((host) => host.trim()).filter(Boolean));
+  mediaHosts.add("exemplo.test");
+  Deno.env.set("MEDIA_EGRESS_ALLOWED_HOSTS", [...mediaHosts].join(","));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   globalThis.fetch = ((input: any, initArg?: { body?: string }) => {
     const url = typeof input === "string" ? input : String(input?.url ?? input);
@@ -652,7 +656,15 @@ function stubProviderComMidia(id = "WAMID-TESTE-1") {
       json: () => Promise.resolve({ key: { id } }),
     });
   }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  return { urls, posts, restore: () => { globalThis.fetch = original; } };
+  return {
+    urls,
+    posts,
+    restore: () => {
+      globalThis.fetch = original;
+      if (mediaHostsAnterior === undefined) Deno.env.delete("MEDIA_EGRESS_ALLOWED_HOSTS");
+      else Deno.env.set("MEDIA_EGRESS_ALLOWED_HOSTS", mediaHostsAnterior);
+    },
+  };
 }
 
 function stubProviderSuccess(id = "WAMID-TESTE-1") {

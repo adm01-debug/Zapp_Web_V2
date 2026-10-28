@@ -39,7 +39,7 @@ Deno.test("edge-boot: makeClient NÃO é chamado quando supabase é injetado", (
 Deno.test("edge-boot: headers de CORS usam origin da allowlist quando permitido", () => {
   const req = new Request("http://localhost:8000/functions/v1/test", {
     method: "GET",
-    headers: { Origin: "http://localhost:3000" },
+    headers: { Origin: "https://zappweb.app.br" },
   });
 
   const result = bootEdge(req, {
@@ -48,7 +48,7 @@ Deno.test("edge-boot: headers de CORS usam origin da allowlist quando permitido"
   });
 
   assertExists(result.headers["Access-Control-Allow-Origin"]);
-  assertEquals(result.headers["Access-Control-Allow-Origin"], "http://localhost:3000");
+  assertEquals(result.headers["Access-Control-Allow-Origin"], "https://zappweb.app.br");
 });
 
 Deno.test("edge-boot: headers de CORS usam fallback quando origin nao esta na allowlist", () => {
