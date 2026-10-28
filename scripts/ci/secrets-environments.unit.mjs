@@ -74,10 +74,10 @@ function consumidores(nomeSecret) {
 // O supabase-sync.yml foi removido em 15/10 e deixou de consumir.
 const DESTINO_URL_POR_JOB = {
   'db-live-guard.yml:live-contract': 'banco-leitura',
-  // GA13: preflight le do nivel repo (sem gate de environment) por design —
-  // o operador precisa ver o output do dry-run ANTES de aprovar o apply.
-  // O apply rele o DSN endurecido de needs.preflight.outputs, nao do secret.
-  'db-migrate.yml:preflight': null,
+  // GA13 → GA97 (2026-10-28): job renomeado de preflight para migrate quando o
+  // environment producao-ddl passou a envolver todo o job (dry-run + apply).
+  // O DSN endurecido sai de needs.preflight.outputs; o environment protege o secret.
+  'db-migrate.yml:migrate': 'producao-ddl',
   'targeted-ledger-evidence.yml:export-encrypted-evidence': 'db-ledger-evidence',
   'types-sync.yml:ler-banco': 'banco-leitura',
 };
