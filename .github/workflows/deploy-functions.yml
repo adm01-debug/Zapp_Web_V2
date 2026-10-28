@@ -91,9 +91,6 @@ concurrency:
   group: deploy-edge-functions-${{ inputs.function_name || 'all' }}
   cancel-in-progress: false
 
-env:
-  SUPABASE_CLI_VERSION: '2.116.0'
-
 jobs:
   deploy:
     name: Deploy Edge Functions

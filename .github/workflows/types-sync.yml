@@ -53,9 +53,6 @@ concurrency:
   group: types-sync-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'push' }}
   cancel-in-progress: false
 
-env:
-  SUPABASE_CLI_VERSION: '2.116.0'
-
 jobs:
   # E17: debounce — se existe PR de sync cujo head tem < 20 min, pular o run
   # para não forçar novo commit a cada push consecutivo na main.

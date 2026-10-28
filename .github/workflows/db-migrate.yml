@@ -64,7 +64,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  SUPABASE_CLI_VERSION: '2.116.0'
   OFFICIAL_PROJECT_REF: 'tnnnlkbymytvtqngbbqh'
 
 jobs:

@@ -131,10 +131,10 @@ export function findToolchainDrift(source, file = "workflow.yml", toolchain = {}
     }
 
     // E75: qualquer literal é violação — o YAML deve usar ${{ env.* }} lido do toolchain.
-    // Exceção: imagem do serviço postgres em `services:` — avaliada antes dos steps, não aceita env var de step.
-    const report = (tool, value, skipLiteral = false) => {
+    // Exceção: imagem do serviço postgres em `services:` — avaliada antes dos steps, não aceita env var de step;
+    // nesse caso compara o valor literal contra toolchain["postgres-image"] e só acusa se divergir.
+    const report = (tool, value) => {
       if (value === null) return; // já é expressão ${{ }}
-      if (skipLiteral) return;    // E75: exceção explícita (ex.: services.image)
       violations.push({ file, line: lineNumber, tool, value, expected: null });
     };
 
@@ -151,9 +151,17 @@ export function findToolchainDrift(source, file = "workflow.yml", toolchain = {}
 
     const image = line.match(IMAGE_LINE);
     if (image && image[1].trim().startsWith("postgres")) {
-      // E75: imagem de service não aceita env var de step — indentação mínima de 4 espaços
       const isService = /^\s{4,}image\s*:/u.test(line);
-      report("postgres-image", scalarValue(image[1]), isService);
+      if (isService) {
+        // Services são avaliados antes dos steps — env var de step não funciona aqui.
+        // Compara diretamente contra o toolchain: igual = OK, diferente = violação.
+        const val = scalarValue(image[1]);
+        if (val !== null && val !== toolchain["postgres-image"]) {
+          violations.push({ file, line: lineNumber, tool: "postgres-image", value: val, expected: null });
+        }
+      } else {
+        report("postgres-image", scalarValue(image[1]));
+      }
       continue;
     }
 
@@ -237,11 +245,11 @@ export function main(root = process.cwd()) {
   }
 
   if (driftViolations.length) {
-    console.error(`FALHA: versão de toolchain literal no workflow (E75: use ${{ env.* }} carregado de ${TOOLCHAIN_PATH}):`);
+    console.error(`FALHA: versão de toolchain literal no workflow (E75: use \${{ env.* }} carregado de ${TOOLCHAIN_PATH}):`);
     for (const violation of driftViolations) {
       console.error(`  ${violation.file}:${violation.line} ${violation.tool}: ${violation.value}`);
     }
-    console.error(`Substitua cada literal por ${{ env.TOOL }} e adicione o passo "📦 Carregar toolchain" ao job.`);
+    console.error(`Substitua cada literal por \${{ env.TOOL }} e adicione o passo "📦 Carregar toolchain" ao job.`);
     exitCode = 1;
   }
 

@@ -35,9 +35,6 @@ concurrency:
   # o schedule enfileira, nao cancela.
   cancel-in-progress: false
 
-env:
-  SUPABASE_CLI_VERSION: '2.116.0'
-
 jobs:
   live-contract:
     name: Contrato DB vivo

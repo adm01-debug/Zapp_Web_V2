@@ -97,16 +97,16 @@ test("rejeita valor quoted quebrado e aceita chave uses entre aspas", () => {
 
 // --- fonte única de versões (.github/toolchain.json) — E75 / SL-116 ---
 
-test("aceita workflow cujas versões de toolchain batem com a fonte única", () => {
+test("aceita expressões env para versões de toolchain", () => {
   const source = [
     "      - name: Setup Bun",
     "        uses: oven-sh/setup-bun@00",
     "        with:",
-    "          bun-version: '1.4.0'",
-    "          node-version: '24'",
-    "          deno-version: '2.9.5'",
-    "          go-version: '1.24.x'",
-    "      - run: bunx playwright@1.64.1 install --with-deps chromium",
+    "          bun-version: ${{ env.BUN_VERSION }}",
+    "          node-version: ${{ env.NODE_VERSION }}",
+    "          deno-version: ${{ env.DENO_VERSION }}",
+    "          go-version: ${{ env.GO_VERSION }}",
+    "      - run: bunx playwright@${{ env.PLAYWRIGHT_VERSION }} install --with-deps chromium",
     "      postgres:",
     "        image: " + FONTE["postgres-image"],
   ].join("\n");
@@ -116,7 +116,7 @@ test("aceita workflow cujas versões de toolchain batem com a fonte única", () 
 test("rejeita bun-version divergente da fonte única", () => {
   const source = "        with:\n          bun-version: '1.3.0'\n";
   assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), [
-    { file: "ci.yml", line: 2, tool: "bun", value: "1.3.0", expected: "1.4.0" },
+    { file: "ci.yml", line: 2, tool: "bun", value: "1.3.0", expected: null },
   ]);
 });
 
@@ -129,9 +129,9 @@ test("rejeita node, deno e go divergentes da fonte única", () => {
   assert.deepEqual(
     findToolchainDrift(source, "db-guard.yml", FONTE).map(({ line, tool, value, expected }) => ({ line, tool, value, expected })),
     [
-      { line: 1, tool: "node", value: "22", expected: "24" },
-      { line: 2, tool: "deno", value: "2.0.0", expected: "2.9.5" },
-      { line: 3, tool: "go", value: "1.23.x", expected: "1.24.x" },
+      { line: 1, tool: "node", value: "22", expected: null },
+      { line: 2, tool: "deno", value: "2.0.0", expected: null },
+      { line: 3, tool: "go", value: "1.23.x", expected: null },
     ],
   );
 });
@@ -139,7 +139,7 @@ test("rejeita node, deno e go divergentes da fonte única", () => {
 test("rejeita SUPABASE_CLI_VERSION divergente da fonte única", () => {
   const source = "env:\n  SUPABASE_CLI_VERSION: '2.100.0'\n";
   assert.deepEqual(findToolchainDrift(source, "db-migrate.yml", FONTE), [
-    { file: "db-migrate.yml", line: 2, tool: "supabase-cli", value: "2.100.0", expected: "2.116.0" },
+    { file: "db-migrate.yml", line: 2, tool: "supabase-cli", value: "2.100.0", expected: null },
   ]);
 });
 
@@ -161,18 +161,18 @@ test("rejeita version literal dentro do passo supabase/setup-cli", () => {
     "          version: '2.999.0'",
   ].join("\n");
   assert.deepEqual(findToolchainDrift(source, "types-sync.yml", FONTE), [
-    { file: "types-sync.yml", line: 4, tool: "supabase-cli", value: "2.999.0", expected: "2.116.0" },
+    { file: "types-sync.yml", line: 4, tool: "supabase-cli", value: "2.999.0", expected: null },
   ]);
 });
 
-test("rejeita playwright@ fora da fonte única e aceita a versão da fonte", () => {
+test("rejeita playwright@ literal mesmo quando bate com a fonte única", () => {
   assert.deepEqual(
     findToolchainDrift("        run: bunx playwright@1.64.1 install --with-deps chromium\n", "ci.yml", FONTE),
-    [],
+    [{ file: "ci.yml", line: 1, tool: "playwright", value: "1.64.1", expected: null }],
   );
   assert.deepEqual(
     findToolchainDrift("        run: bunx playwright@1.62.0 install --with-deps chromium\n", "e2e-talkx.yml", FONTE),
-    [{ file: "e2e-talkx.yml", line: 1, tool: "playwright", value: "1.62.0", expected: "1.64.1" }],
+    [{ file: "e2e-talkx.yml", line: 1, tool: "playwright", value: "1.62.0", expected: null }],
   );
 });
 
@@ -238,39 +238,39 @@ test("fonte única ausente falha apontando .github/toolchain.json", () => {
 });
 
 // W88: binários baixados via curl (actionlint) e pip (zizmor)
-test("W88 aceita actionlint_version igual à fonte única", () => {
-  const source = '        actionlint_version="1.7.7"\n';
+test("W88 aceita actionlint_version como expressão env", () => {
+  const source = '        actionlint_version="${{ env.ACTIONLINT_VERSION }}"\n';
   assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), []);
 });
 
 test("W88 rejeita actionlint_version divergente da fonte única", () => {
   const source = '        actionlint_version="1.6.0"\n';
   assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), [
-    { file: "ci.yml", line: 1, tool: "actionlint", value: "1.6.0", expected: "1.7.7" },
+    { file: "ci.yml", line: 1, tool: "actionlint", value: "1.6.0", expected: null },
   ]);
 });
 
-test("W88 aceita actionlint_sha256 igual à fonte única", () => {
-  const source = `        actionlint_sha256="${"0".repeat(64)}"\n`;
+test("W88 aceita actionlint_sha256 como expressão env", () => {
+  const source = '        actionlint_sha256="${{ env.ACTIONLINT_SHA256 }}"\n';
   assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), []);
 });
 
 test("W88 rejeita actionlint_sha256 divergente da fonte única", () => {
   const source = `        actionlint_sha256="${"f".repeat(64)}"\n`;
   assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), [
-    { file: "ci.yml", line: 1, tool: "actionlint-sha256-linux-amd64", value: "f".repeat(64), expected: "0".repeat(64) },
+    { file: "ci.yml", line: 1, tool: "actionlint-sha256-linux-amd64", value: "f".repeat(64), expected: null },
   ]);
 });
 
-test("W88 aceita zizmor pip pin igual à fonte única", () => {
-  const source = "        python3 -m pip install --quiet --break-system-packages --only-binary :all: zizmor==0.9.0\n";
+test("W88 aceita zizmor pip pin como expressão env", () => {
+  const source = "        python3 -m pip install --quiet --break-system-packages --only-binary :all: zizmor==${{ env.ZIZMOR_VERSION }}\n";
   assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), []);
 });
 
 test("W88 rejeita zizmor pip pin divergente da fonte única", () => {
   const source = "        python3 -m pip install --quiet --break-system-packages --only-binary :all: zizmor==0.8.0\n";
   assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), [
-    { file: "ci.yml", line: 1, tool: "zizmor", value: "0.8.0", expected: "0.9.0" },
+    { file: "ci.yml", line: 1, tool: "zizmor", value: "0.8.0", expected: null },
   ]);
 });
 
