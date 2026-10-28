@@ -45,7 +45,7 @@ const DOC: ContactMediaItem = {
   agentId: null,
 };
 
-/** Arquivo do WhatsApp: o nome exibido é genérico e o hex técnico só aparece na dica (D09). */
+/** Arquivo do WhatsApp: o nome exibido e generico e o hex tecnico so aparece na dica (D09). */
 const TECNICO: ContactMediaItem = {
   ...ITEM,
   id: 'm3',
@@ -77,7 +77,7 @@ beforeEach(() => {
 });
 
 describe('FileCard — layout do mockup (R04, S28–S31)', () => {
-  it('S28: a linha 1 é o nome; o nome completo/técnico fica na dica', () => {
+  it('S28: a linha 1 e o nome; o nome completo/tecnico fica na dica', () => {
     const { unmount } = renderCard();
     const nome = screen.getByRole('button', { name: 'planilha-total.png' });
     expect(nome).toHaveAttribute('title', 'planilha-total.png');
@@ -86,17 +86,17 @@ describe('FileCard — layout do mockup (R04, S28–S31)', () => {
     renderCard(TECNICO);
     const tecnico = screen.getByRole('button', { name: 'Imagem · 25/09 09:40' });
     expect(tecnico).toHaveAttribute('title', '3EB0E6947FC0A0ECAED14D_1790283276022.png');
-    // O hex não aparece na tela: só na dica.
+    // O hex nao aparece na tela: so na dica.
     expect(screen.queryByText('3EB0E6947FC0A0ECAED14D_1790283276022.png')).not.toBeInTheDocument();
   });
 
-  it('S29: a linha 2 é só tipo · tamanho, com vírgula no decimal', () => {
+  it('S29: a linha 2 e so tipo · tamanho, com virgula no decimal', () => {
     renderCard();
     const meta = screen.getByText('Imagem · 1,1 MB');
     expect(meta.tagName).toBe('P');
   });
 
-  it('S30: a linha 3 é a data curta do cartão', () => {
+  it('S30: a linha 3 e a data curta do cartao', () => {
     renderCard({ ...ITEM, created_at: new Date().toISOString() });
     expect(screen.getByText(/^Hoje, \d{2}:\d{2}$/)).toBeInTheDocument();
   });
@@ -114,7 +114,7 @@ describe('FileCard — layout do mockup (R04, S28–S31)', () => {
     expect(screen.getByTestId('sender-avatar')).toBeInTheDocument();
     unmount();
 
-    // Sem tamanho, a linha 2 continua no lugar (só o tipo) — nada some da altura do cartão.
+    // Sem tamanho, a linha 2 continua no lugar (so o tipo) — nada some da altura do cartao.
     renderCard(DOC);
     expect(screen.getByRole('button', { name: 'contrato.pdf' })).toBeInTheDocument();
     expect(screen.getByText('Documento')).toBeInTheDocument();
@@ -124,7 +124,7 @@ describe('FileCard — layout do mockup (R04, S28–S31)', () => {
 });
 
 describe('FileCard — quem enviou (R04, S31 / D01–D03)', () => {
-  it('S31: arquivo do próprio usuário logado vira "Você" com a foto dele', () => {
+  it('S31: arquivo do proprio usuario logado vira "Você" com a foto dele', () => {
     renderCard(ITEM, {
       currentUserId: 'p-1',
       senderProfiles: { 'p-1': { id: 'p-1', name: 'Joaquim', avatar_url: FOTO } },
@@ -144,7 +144,7 @@ describe('FileCard — quem enviou (R04, S31 / D01–D03)', () => {
     expect(screen.getByTestId('sender-avatar-photo')).toHaveAttribute('src', FOTO);
   });
 
-  it('S31: atendente sem agent_id (celular/automação) vira "Equipe", sem foto', () => {
+  it('S31: atendente sem agent_id (celular/automacao) vira "Equipe", sem foto', () => {
     renderCard({ ...ITEM, agentId: null }, { senderProfiles: {} });
 
     expect(screen.getByTestId('sender-avatar-name')).toHaveTextContent('Equipe');
@@ -156,7 +156,7 @@ describe('FileCard — quem enviou (R04, S31 / D01–D03)', () => {
     expect(screen.getByTestId('sender-avatar-name')).toHaveTextContent('Ana Cliente');
   });
 
-  it('S31/D03: em 5 colunas fica só a foto, com o nome na dica (aria-label)', () => {
+  it('S31/D03: em 5 colunas fica so a foto, com o nome na dica (aria-label)', () => {
     const { unmount } = renderCard(ITEM, { effectiveColumns: 4 });
     expect(screen.getByTestId('sender-avatar-name')).toBeInTheDocument();
     unmount();
@@ -167,12 +167,12 @@ describe('FileCard — quem enviou (R04, S31 / D01–D03)', () => {
   });
 });
 
-describe('FileCard — ações do cartão (R04, S32 / D06, D07)', () => {
-  it('S32: as ações são olho, baixar/cadeado, encaminhar (em breve) e ⋮ — sem Copiar link', () => {
+describe('FileCard — acoes do cartao (R04, S32 / D06, D07)', () => {
+  it('S32: as acoes sao olho, baixar/cadeado, encaminhar (em breve) e ⋮ — sem Copiar link', () => {
     renderCard();
     expect(screen.getByRole('button', { name: 'Visualizar' })).toBeEnabled();
     expect(screen.getByRole('button', { name: /Baixar/ })).toBeInTheDocument();
-    // O encaminhamento do cartão segue desabilitado ("em breve"), como nas outras vistas.
+    // O encaminhamento do cartao segue desabilitado ("em breve"), como nas outras vistas.
     const encaminhar = screen.getByRole('button', { name: 'Encaminhar' });
     expect(encaminhar).toBeDisabled();
     expect(encaminhar).toHaveAttribute('title', 'Disponível em breve');
@@ -180,7 +180,7 @@ describe('FileCard — ações do cartão (R04, S32 / D06, D07)', () => {
     expect(screen.queryByText(/Copiar link/)).not.toBeInTheDocument();
   });
 
-  it('S32: sem permissão o botão é o cadeado com a explicação e não baixa nada', () => {
+  it('S32: sem permissao o botao e o cadeado com a explicacao e nao baixa nada', () => {
     vi.stubGlobal('fetch', vi.fn());
     renderCard(ITEM, { downloadAllowed: false });
 
@@ -196,7 +196,7 @@ describe('FileCard — ações do cartão (R04, S32 / D06, D07)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('S32: com permissão baixa pelo caminho existente (fetch + anchor com o nome do arquivo)', async () => {
+  it('S32: com permissao baixa pelo caminho existente (fetch + anchor com o nome do arquivo)', async () => {
     const fetchSpy = vi.fn().mockResolvedValue({ ok: true, blob: async () => new Blob(['x']) });
     vi.stubGlobal('fetch', fetchSpy);
     URL.createObjectURL = vi.fn(() => 'blob:mock');
@@ -212,7 +212,7 @@ describe('FileCard — ações do cartão (R04, S32 / D06, D07)', () => {
     renderCard(ITEM, { downloadAllowed: true });
     fireEvent.click(screen.getByRole('button', { name: 'Baixar' }));
 
-    await waitFor(() => expect(fetchSpy).toHaveBeenCalledWith('https://x/planilha.png'));
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledWith('https://signed.test/planilha.png'));
     await waitFor(() => expect(anchors).toHaveLength(1));
     expect(anchors[0].download).toBe('planilha-total.png');
 
@@ -220,21 +220,21 @@ describe('FileCard — ações do cartão (R04, S32 / D06, D07)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('S32: em áudio, o play do A01 continua na linha de ações', () => {
+  it('S32: em audio, o play do A01 continua na linha de acoes', () => {
     renderCard({ ...ITEM, id: 'a1', type: 'audio' });
-    // A06b: o rótulo cita o nome do arquivo do cartão — o seletor segue EXATO, só deixa de
-    // ser o rótulo genérico; consultar "Tocar áudio" puro aqui acharia zero botões.
+    // A06b: o rotulo cita o nome do arquivo do cartao — o seletor segue EXATAMENTE o
+    // displayName; consultar "Tocar audio" puro aqui acharia zero botoes.
     expect(screen.getByRole('button', { name: 'Tocar áudio planilha-total.png' })).toBeInTheDocument();
   });
 
-  it('S32/D07: Salvar na galeria não existe em lugar nenhum do cartão', () => {
+  it('S32/D07: Salvar na galeria nao existe em lugar nenhum do cartao', () => {
     renderCard();
     expect(screen.queryByText(/Salvar na galeria/i)).not.toBeInTheDocument();
   });
 });
 
-describe('FileCard — seleção e modo Selecionar (R04, S33, S34)', () => {
-  it('S33: o cartão marcado expõe o estado selecionado e a borda azul (primary)', () => {
+describe('FileCard — selecao e modo Selecionar (R04, S33, S34)', () => {
+  it('S33: o cartao marcado expoe o estado selecionado e a borda azul (primary)', () => {
     const { unmount } = renderCard(ITEM, { selected: false });
     expect(screen.getByTestId('files-item-m1')).toHaveAttribute('data-selected', 'false');
     unmount();
@@ -245,7 +245,7 @@ describe('FileCard — seleção e modo Selecionar (R04, S33, S34)', () => {
     expect(card.className).toContain('border-primary');
   });
 
-  it('S34: no modo Selecionar o marcador do cartão continua alternando a seleção', () => {
+  it('S34: no modo Selecionar o marcador do cartao continua alternando a selecao', () => {
     const { props } = renderCard(ITEM, { selectionMode: true, selectionChecked: true });
     const marcador = screen.getByRole('checkbox', { name: 'Selecionar planilha-total.png' });
     expect(marcador).toBeChecked();
@@ -258,7 +258,7 @@ describe('FileCard — seleção e modo Selecionar (R04, S33, S34)', () => {
 });
 
 describe('FileCard — comportamento preservado (etapas 17–20)', () => {
-  it('etapa 20: é um <article> com files-item-<id>, prévia e nome são botões', () => {
+  it('etapa 20: e um <article> com files-item-<id>, previa e nome sao botoes', () => {
     renderCard();
     expect(screen.getByTestId('files-item-m1')).toBeInTheDocument();
 
@@ -270,7 +270,7 @@ describe('FileCard — comportamento preservado (etapas 17–20)', () => {
     expect(nome).toHaveAttribute('title', 'planilha-total.png');
   });
 
-  it('etapa 20: Enter/clique na prévia abre o visualizador; no nome abre os detalhes', () => {
+  it('etapa 20: Enter/clique na previa abre o visualizador; no nome abre os detalhes', () => {
     const { props } = renderCard();
     fireEvent.click(screen.getByRole('button', { name: 'Visualizar planilha-total.png' }));
     expect(props.onPreview).toHaveBeenCalledTimes(1);
@@ -280,7 +280,7 @@ describe('FileCard — comportamento preservado (etapas 17–20)', () => {
     expect(props.onSelect).toHaveBeenCalledTimes(1);
   });
 
-  it('etapa 20: no modo seleção a prévia alterna a seleção e não abre nada', () => {
+  it('etapa 20: no modo selecao a previa alterna a selecao e nao abre nada', () => {
     const { props } = renderCard(ITEM, { selectionMode: true });
 
     fireEvent.click(screen.getByRole('button', { name: 'Visualizar planilha-total.png' }));
@@ -289,7 +289,7 @@ describe('FileCard — comportamento preservado (etapas 17–20)', () => {
     expect(props.onSelect).not.toHaveBeenCalled();
   });
 
-  it('etapa 20: Space no checkbox alterna sem abrir prévia nem detalhes', () => {
+  it('etapa 20: Space no checkbox alterna sem abrir previa nem detalhes', () => {
     const { props } = renderCard(ITEM, { selectionMode: true, selectionChecked: false });
     const checkbox = screen.getByRole('checkbox', { name: 'Selecionar planilha-total.png' });
 
@@ -299,7 +299,7 @@ describe('FileCard — comportamento preservado (etapas 17–20)', () => {
     expect(props.onSelect).not.toHaveBeenCalled();
   });
 
-  it('etapa 19: o menu traz Baixar desabilitado com o motivo e Excluir só do atendente', () => {
+  it('etapa 19: o menu traz Baixar desabilitado com o motivo e Excluir so do atendente', () => {
     renderCard();
     fireEvent.pointerDown(screen.getByRole('button', { name: 'Mais ações' }), { button: 0, ctrlKey: false });
 
@@ -309,7 +309,7 @@ describe('FileCard — comportamento preservado (etapas 17–20)', () => {
     expect(screen.getByRole('menuitem', { name: /Excluir mensagem/ })).toBeInTheDocument();
   });
 
-  it('etapa 19: "Copiar link" não existe mais e nada escreve na área de transferência', () => {
+  it('etapa 19: "Copiar link" nao existe mais e nada escreve na area de transferencia', () => {
     const writeText = vi.fn();
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
 
@@ -319,13 +319,13 @@ describe('FileCard — comportamento preservado (etapas 17–20)', () => {
     expect(writeText).not.toHaveBeenCalled();
   });
 
-  it('etapa 19: sem download ativo — o item não existe para contato', () => {
+  it('etapa 19: sem download ativo — o item nao existe para contato', () => {
     renderCard(DOC);
     fireEvent.pointerDown(screen.getByRole('button', { name: 'Mais ações' }), { button: 0, ctrlKey: false });
     expect(screen.queryByRole('menuitem', { name: /Excluir mensagem/ })).not.toBeInTheDocument();
   });
 
-  it('etapa 17: a imagem da prévia usa object-contain (print de planilha não é cortado)', () => {
+  it('etapa 17: a imagem da previa usa object-contain (print de planilha nao e cortado)', () => {
     renderCard();
     const img = within(screen.getByRole('button', { name: 'Visualizar planilha-total.png' })).getByRole('img');
     expect(img.className).toContain('object-contain');
