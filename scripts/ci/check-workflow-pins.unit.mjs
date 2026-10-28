@@ -165,10 +165,10 @@ test("rejeita version literal dentro do passo supabase/setup-cli", () => {
   ]);
 });
 
-test("rejeita playwright@ literal mesmo quando bate com a fonte única", () => {
+test("aceita playwright@ literal que bate com a fonte única, rejeita divergente", () => {
   assert.deepEqual(
     findToolchainDrift("        run: bunx playwright@1.64.1 install --with-deps chromium\n", "ci.yml", FONTE),
-    [{ file: "ci.yml", line: 1, tool: "playwright", value: "1.64.1", expected: null }],
+    [],
   );
   assert.deepEqual(
     findToolchainDrift("        run: bunx playwright@1.62.0 install --with-deps chromium\n", "e2e-talkx.yml", FONTE),
