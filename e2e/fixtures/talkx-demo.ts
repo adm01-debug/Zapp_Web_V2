@@ -265,8 +265,31 @@ export async function mockTalkXVisual(page: Page, tela: string) {
   await mockTalkXAuth(page);
   await mockTalkXBackend(page, tela);
 
+  // O shell atual exige app_bootstrap antes de liberar rotas protegidas.
+  await page.route(/\/rest\/v1\/rpc\/app_bootstrap/, (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      profile: { id: FAKE_USER_ID, name: 'Visual Talk X' },
+      roles: ['admin'],
+      permissions: [],
+      role_permissions: [],
+      global_settings: [],
+      user_settings: { onboarding_completed: true },
+      departments: [],
+      unread_notifications: 0,
+      fetched_at: '2026-10-01T12:00:00.000Z',
+    }),
+  }));
+
   // Catch-all para as leituras do app shell não interceptadas acima.
   await page.route(/\/rest\/v1\/(?!talkx_|rpc|profiles|user_roles|contacts)[a-z_]+/, (route) =>
     isRead(route.request().method()) ? emptyJson(route) : writeBlocked(route),
   );
+  // Registre após o catch-all: o Playwright aplica a última rota primeiro.
+  await page.route(/\/rest\/v1\/user_settings/, (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify([{ onboarding_completed: true }]),
+  }));
 }

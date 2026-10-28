@@ -13,7 +13,7 @@
  */
 import { test, expect, type Page } from '@playwright/test';
 import { createRequire } from 'node:module';
-import { mockAppShell, json, bloquearRedeReal, type Registro } from './fixtures/mapa-mocks';
+import { mockAppShell, json, bloquearRedeReal, querObjetoUnico, type Registro } from './fixtures/mapa-mocks';
 import { installFakeSession } from './fixtures/talkx-demo';
 
 const require = createRequire(import.meta.url);
@@ -82,7 +82,10 @@ async function semViolacao(
 }
 
 async function mockConfigVazio(page: Page): Promise<void> {
-  await page.route(/\/rest\/v1\/user_settings/, (route) => json(route, []));
+  await page.route(/\/rest\/v1\/user_settings/, (route) => json(
+    route,
+    querObjetoUnico(route) ? { onboarding_completed: true } : [{ onboarding_completed: true }],
+  ));
   await page.route(/\/rest\/v1\/rpc\/(save_user_settings|get_user_settings)/, (route) => json(route, []));
 }
 
