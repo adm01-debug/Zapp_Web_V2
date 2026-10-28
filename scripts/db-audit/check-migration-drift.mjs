@@ -558,6 +558,7 @@ function compare(migrations, records, exceptionsByVersion) {
   for (const record of records) {
     if (typeof record.name === 'string'
         && (record.name !== record.name.trim() || /[\0-\x1f\x7f]/u.test(record.name))) {
+      errors.push(divergenceLine(record.version, null, record.name, 'name malformado no ledger'));
       errors.push(`name malformado no ledger para ${record.version}`);
     }
   }
@@ -826,14 +827,17 @@ function main() {
     return 2;
   }
 
-  console.log(`arquivos validos em ${DIR}: ${local.migrations.length}`);
+  // E53: buffer status lines so divergence summary is first on stdout on drift path
+  const pendingStatus = [`arquivos validos em ${DIR}: ${local.migrations.length}`];
   if (evidence.errors.length || local.errors.length) {
+    for (const line of pendingStatus) console.log(line);
     console.error('\nFALHA: migrations locais invalidas:');
     printErrors([...evidence.errors, ...local.errors].map((error) => `  ${error}`));
     return 1;
   }
 
   if (!url) {
+    for (const line of pendingStatus) console.log(line);
     console.log('DESTINO_URL ausente - estrutura local validada; comparacao com ledger pulada.');
     return 0;
   }
@@ -846,8 +850,9 @@ function main() {
     return 2;
   }
 
-  console.log(`registros em schema_migrations: ${parsed.records.length}`);
+  pendingStatus.push(`registros em schema_migrations: ${parsed.records.length}`);
   if (parsed.errors.length) {
+    for (const line of pendingStatus) console.log(line);
     console.error('\nFALHA: ledger invalido:');
     printErrors(parsed.errors.map((error) => `  ${error}`));
     return 1;
@@ -855,12 +860,18 @@ function main() {
 
   const result = compare(local.migrations, parsed.records, local.exceptionsByVersion);
   if (result.errors.length) {
+    // E53 (G-03): resumo de 1 linha por divergencia como primeira coisa no stdout,
+    // no formato "version | disco | ledger | motivo", para filtrar com `grep '^[0-9]'`.
+    const summaryLines = result.errors.filter((e) => DIVERGENCE_LINE_RE.test(e));
+    for (const line of summaryLines) console.log(line);
+    for (const line of pendingStatus) console.log(line);
     console.error('\nFALHA: drift de migrations detectado:');
     printDriftErrors(result.errors);
     console.error('\nVer docs/MIGRATIONS.md para o procedimento de reconciliacao.');
     return 1;
   }
 
+  for (const line of pendingStatus) console.log(line);
   if (result.warnings.length) {
     console.warn(
       `ATENCAO: ${result.warnings.length} migration(s) legada(s) sem hash/SQL verificavel no ledger; `
