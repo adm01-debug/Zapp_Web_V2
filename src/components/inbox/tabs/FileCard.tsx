@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Download, Eye, Lock, MessageSquare, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -64,7 +65,11 @@ export function FileCard({
 
   const acao = selectionMode ? onToggleSelection : undefined;
 
+  const [isDownloading, setIsDownloading] = useState(false);
+
   const handleDownload = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
     const url = item.signedUrl ?? item.url ?? '';
     try {
       const resp = await fetch(url);
@@ -81,6 +86,8 @@ export function FileCard({
       URL.revokeObjectURL(objectUrl);
     } catch {
       toast.error('Não foi possível baixar o arquivo');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
