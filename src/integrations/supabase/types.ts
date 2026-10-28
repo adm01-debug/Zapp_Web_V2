@@ -12445,6 +12445,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      sentiment_trend: {
+        Args: { p_days?: number }
+        Returns: {
+          dia: string
+          total: number
+          positivos: number
+          neutros: number
+          negativos: number
+          media: number | null
+          indice: number | null
+        }[]
+      }
       skill_based_assign: { Args: { p_queue_id: string }; Returns: string }
       snapshot_talkx_campaign_audience: {
         Args: { p_campaign_id: string; p_expected_revision: number }
