@@ -29,15 +29,20 @@ export interface UserLookupClient {
   };
 }
 
-/** Comparação em tempo constante (não vaza o prefixo comum pelo tempo de resposta). */
+/**
+ * Comparação em tempo constante (não vaza prefixo nem comprimento pelo tempo de resposta).
+ * O loop sempre percorre max(len_a, len_b) iterações — sem early-return por tamanho —
+ * eliminando o canal lateral de comprimento que o `if (ab.length !== bb.length) return false`
+ * anterior introduzia (Z011).
+ */
 export function timingSafeStringEqual(a: string, b: string): boolean {
   const enc = new TextEncoder();
   const ab = enc.encode(a);
   const bb = enc.encode(b);
-  if (ab.length !== bb.length) return false;
+  const maxLen = Math.max(ab.length, bb.length);
   let diff = 0;
-  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
-  return diff === 0;
+  for (let i = 0; i < maxLen; i++) diff |= (ab[i] ?? 0) ^ (bb[i] ?? 0);
+  return diff === 0 && ab.length === bb.length;
 }
 
 export interface CronOrUserAuthOptions {

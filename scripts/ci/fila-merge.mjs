@@ -130,7 +130,9 @@ async function decisaoAtual(repo) {
   const behindBy = async (head) => Number(execFileSync(resolverExecutavel('gh'), [
     'api', `repos/${repo}/compare/main...${head}`, '--jq', '.behind_by',
   ], { encoding: 'utf8' }).trim());
-  const prs = await resolverDesconhecidos(JSON.parse(json), behindBy);
+  let parsedPrs;
+  try { parsedPrs = JSON.parse(json); } catch { return decidir([], checksObrigatorios()); }
+  const prs = await resolverDesconhecidos(parsedPrs, behindBy);
   return decidir(prs, checksObrigatorios());
 }
 
