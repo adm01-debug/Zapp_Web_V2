@@ -1,4 +1,4 @@
-import { Download, Eye, Lock, Share2 } from 'lucide-react';
+import { Download, Eye, Lock, MessageSquare, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
@@ -45,6 +45,7 @@ export function FileCard({
   senderProfiles,
   currentUserId,
   downloadAllowed,
+  onOpenInChat,
   onSelect,
   onToggleSelection,
   onPreview,
@@ -172,6 +173,16 @@ export function FileCard({
         >
           <Share2 className="w-3.5 h-3.5" />
         </button>
+        {onOpenInChat && (
+          <button
+            type="button"
+            aria-label="Ver na conversa"
+            className={FILE_ACTION_BUTTON}
+            onClick={() => onOpenInChat(item)}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+          </button>
+        )}
         <FileActionsMenu item={item} onRequestDelete={onRequestDelete} />
       </div>
     </article>
