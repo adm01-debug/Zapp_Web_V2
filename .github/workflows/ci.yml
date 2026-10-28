@@ -428,17 +428,25 @@ jobs:
             exit 1
           fi
 
-          # fetch-depth=2 traz o merge sintético e os pais diretos. A história
-          # anterior ao SHA base não participa deste filtro.
+          # fetch-depth=2 traz o merge sintético e os pais diretos. Quando
+          # main avançou após o evento (strict=true), HEAD^2 é mais atual que
+          # BASE_SHA do evento, que não estará no clone raso. Preferimos HEAD^2
+          # nesses casos.
+          effective_base="$BASE_SHA"
           if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
-            echo "::error::O SHA base '${BASE_SHA}' não está entre os pais do merge sintético."
-            exit 1
+            if git cat-file -e "HEAD^2^{commit}" 2>/dev/null; then
+              echo "::notice::BASE_SHA '${BASE_SHA}' não está no clone raso (main avançou); usando HEAD^2 como base."
+              effective_base="HEAD^2"
+            else
+              echo "::error::Nem BASE_SHA '${BASE_SHA}' nem HEAD^2 estão acessíveis; filtro de caminhos inconclusivo."
+              exit 1
+            fi
           fi
 
           # Em pull_request, actions/checkout usa o merge sintético do GitHub
-          # como HEAD. Comparar sua árvore com o SHA base do evento evita buscar
-          # todos os ancestrais apenas para descobrir os caminhos tocados.
-          changed="$(git diff --name-only "$BASE_SHA" HEAD)"
+          # como HEAD. Comparar sua árvore com o SHA base evita buscar todos os
+          # ancestrais apenas para descobrir os caminhos tocados.
+          changed="$(git diff --name-only "$effective_base" HEAD)"
           printf 'Arquivos alterados no PR:\n%s\n' "$changed"
           if printf '%s\n' "$changed" | grep -Eq '^(src/lib/mapbox|src/components/inbox/location-picker/)'; then
             echo "map_changed=true" >> "$GITHUB_OUTPUT"
