@@ -9,8 +9,8 @@ import { describe, expect, it } from 'vitest';
  * (nenhum <header>, h1 sr-only, indicadores antes das abas). Este arquivo
  * cobre o que não aparece na árvore renderizada e regrediu sem quebrar teste:
  *
- * - o `MotionConfig reducedMotion="user"` que governa os descendentes Framer
- *   Motion do módulo foi removido no lote 880 (025d0258dc) junto do cabeçalho;
+ * - a configuração de movimento reduzido deve governar Contatos pela raiz,
+ *   sem depender de um provedor local que possa divergir do resto do app;
  * - o `PageHeader` voltou por import direto, então a fonte é o ponto mais
  *   barato de barrar o retorno dele antes de qualquer render.
  */
@@ -19,9 +19,12 @@ describe('ContactsView — contrato de fonte', () => {
     resolve(process.cwd(), 'src/components/contacts/ContactsView.tsx'),
     'utf8',
   );
+  const appFonte = readFileSync(resolve(process.cwd(), 'src/App.tsx'), 'utf8');
 
-  it('mantém o MotionConfig reducedMotion="user" no módulo', () => {
-    expect(fonte).toContain('<MotionConfig reducedMotion="user">');
+  it('herda movimento reduzido da raiz sem provedor local', () => {
+    expect(appFonte).toContain('<MotionConfig reducedMotion="user">');
+    expect(appFonte).toMatch(/<LazyMotionConfig>\s*<AppRoutes\s*\/>\s*<\/LazyMotionConfig>/);
+    expect(fonte).not.toContain('MotionConfig');
   });
 
   it('não importa nem renderiza PageHeader', () => {
