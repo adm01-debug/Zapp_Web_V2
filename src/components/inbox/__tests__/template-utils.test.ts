@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   AVAILABLE_VARIABLES,
   replaceVariables,
+  fillQuickReplyVariables,
   extractVariables,
 } from '../template-utils';
 
@@ -172,5 +173,29 @@ describe('extractVariables', () => {
   it('detecta {{atendente}} e {{protocolo}} pendentes no texto', () => {
     expect(extractVariables('{{atendente}} — {{protocolo}}'))
       .toEqual(['atendente', 'protocolo']);
+  });
+});
+
+describe('fillQuickReplyVariables — resposta rápida inserida no chat', () => {
+  it('troca as variáveis pelos dados do contato e do atendente', () => {
+    const texto = fillQuickReplyVariables(
+      'Olá {{primeiro_nome}}, da {{empresa}} ({{cargo}}). Aqui é {{atendente}}.',
+      { name: 'Maria Souza', company: 'Acme', job_title: 'Compras' },
+      'Joaquim',
+    );
+    expect(texto).toBe('Olá Maria, da Acme (Compras). Aqui é Joaquim.');
+  });
+
+  it('e-mail não vira nome do atendente: {{atendente}} fica pendente', () => {
+    expect(fillQuickReplyVariables('Sou {{atendente}}', { name: 'Ana' }, 'x@y.com')).toBe('Sou {{atendente}}');
+    expect(fillQuickReplyVariables('Sou {{atendente}}', { name: 'Ana' }, null)).toBe('Sou {{atendente}}');
+  });
+
+  it('campos nulos do contato não viram "null" no texto', () => {
+    expect(fillQuickReplyVariables('[{{empresa}}]', { name: 'Ana', company: null, job_title: null }, 'Bia')).toBe('[]');
+  });
+
+  it('texto sem variável sai igual', () => {
+    expect(fillQuickReplyVariables('Obrigado!', { name: 'Ana' }, 'Bia')).toBe('Obrigado!');
   });
 });
