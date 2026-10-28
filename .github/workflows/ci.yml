@@ -307,7 +307,7 @@ jobs:
   e2e:
     name: 🎭 E2E Tests (Playwright)
     runs-on: ubuntu-24.04
-    timeout-minutes: 75
+    timeout-minutes: 45
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -348,7 +348,7 @@ jobs:
         # githubactions:S8543: `bunx playwright` sem versao puxaria um release
         # nao verificado).
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright install --with-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         # O cache guarda os browsers, não os pacotes do apt: com o cache quente
