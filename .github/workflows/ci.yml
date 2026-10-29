@@ -135,6 +135,12 @@ jobs:
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
+      - name: 📦 Validar pacote de reconciliação
+        run: python3 docs/reconciliation/reproduce/validate_package.py
+
+      - name: 📖 Verificar README gerado dos workflows
+        run: node scripts/ci/render-workflow-docs.mjs --check
+
       - name: 🧩 Run Node CI scripts tests
         run: >-
           node --test scripts/ci/*.unit.mjs
