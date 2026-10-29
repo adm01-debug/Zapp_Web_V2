@@ -1,5 +1,7 @@
 # Levantamento D/E — Hermes / Zapp
 
+**Atualização read-only de 29/10/2026:** rechecagem pontual dos worktrees V2 confirmou que o diretório pai `/home/joaquim_ataides/hermes-workspaces/Zapp_Web_V2` não é checkout Git; `.base-tc` é o worktree destacável identificado em `3024ca92` (4 à frente/67 atrás da referência local `a1340faa`). Em `.integra/fase2` há 6 entradas staged e 7 unstaged (incluindo `.merge_file_*` ausentes da árvore e alteração do deployment manifest). `.integra/lote-main` está limpo, mas seu branch tem 1 commit à frente/107 atrás e cinco caminhos de hooks/tipos ainda diferem da main. Arquivos de handoff foram preservados; `.env.production` foi identificado apenas pelo nome e não foi aberto. Os números e tabelas seguintes são snapshots de 28/10; revalidar cada item antes de qualquer integração/arquivo. Nenhuma origem foi modificada.
+
 Data da leitura: 2026-10-28T09:06:19-03:00. Escopo: somente `/home/joaquim_ataides/hermes-workspaces` e worktrees vinculados aos repositórios Zapp. Nenhum `fetch`, alteração de fonte ou GitHub.
 
 `main` V2 local: `351ccb2a651f0394b5e78fd660695c09b4f799cf`; `origin/main` V2 local: `7cacbe2f39845ca600c2dd18a4d30f70f03c217e`. Este último é a melhor referência oficial disponível nesta leitura; pode mudar no servidor.
