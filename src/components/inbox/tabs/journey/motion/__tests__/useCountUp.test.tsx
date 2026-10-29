@@ -24,7 +24,7 @@ const reduce = vi.hoisted(() => ({ value: false }));
 vi.mock('framer-motion', async (importOriginal) => ({
   ...(await importOriginal<typeof import('framer-motion')>()),
   useReducedMotion: () => reduce.value,
-}));
+});;
 
 const FAKE = ['requestAnimationFrame', 'cancelAnimationFrame', 'performance', 'Date'] as const;
 

@@ -10,16 +10,21 @@ vi.mock('@/hooks/system/usePermissions', () => ({
   usePermissions: () => mockUsePermissions(),
 }));
 
-vi.mock('framer-motion', () => {
-  const ANIMATION_PROPS = new Set(['initial', 'animate', 'exit', 'whileHover', 'whileTap', 'variants', 'transition', 'layout']);
+vi.mock('framer-motion', () async (importOriginal) => {
+  const actual = await importOriginal();
   return {
-    motion: {
-      div: ({ children, ...props }: { children?: ReactNode } & Record<string, unknown>) => {
-        const safe = Object.fromEntries(Object.entries(props).filter(([k]) => !ANIMATION_PROPS.has(k)));
-        return <div {...safe}>{children}</div>;
-      },
-    },
-    AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+    ...actual,
+    const ANIMATION_PROPS = new Set(['initial', 'animate', 'exit', 'whileHover', 'whileTap', 'variants', 'transition', 'layout']);
+      return {
+        motion: {
+          div: ({ children, ...props }: { children?: ReactNode } & Record<string, unknown>) => {
+            const safe = Object.fromEntries(Object.entries(props).filter(([k]) => !ANIMATION_PROPS.has(k)));
+            return <div {...safe}>{children}</div>;
+          },
+        },
+        AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+      };
+      useReducedMotion: vi.fn(() => null),,
   };
 });
 

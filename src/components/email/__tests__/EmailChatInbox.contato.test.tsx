@@ -34,7 +34,7 @@ const lookup = vi.hoisted(() => ({
   calls: [] as Array<string | null | undefined>,
 }));
 
-vi.mock('framer-motion', () => ({ AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
+vi.mock('framer-motion', () => ({ AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>  useReducedMotion: vi.fn(() => null), }));
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: () => ({
     ...state,

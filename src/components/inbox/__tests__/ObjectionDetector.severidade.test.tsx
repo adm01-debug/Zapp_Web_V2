@@ -17,16 +17,21 @@ vi.mock('sonner', () => ({
 // framer-motion em jsdom: passthrough (mesmo padrão de AISuggestions.ia048.test.tsx).
 type AnyProps = Record<string, unknown> & { children?: ReactNode };
 
-vi.mock('framer-motion', () => {
-  const passthrough = (tag: 'div' | 'span' | 'button') =>
-    ({ children, ...props }: AnyProps) => {
-      const Tag = tag;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return <Tag {...(props as any)}>{children}</Tag>;
-    };
+vi.mock('framer-motion', () async (importOriginal) => {
+  const actual = await importOriginal();
   return {
-    motion: { div: passthrough('div'), span: passthrough('span'), button: passthrough('button') },
-    AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+    ...actual,
+    const passthrough = (tag: 'div' | 'span' | 'button') =>
+        ({ children, ...props }: AnyProps) => {
+          const Tag = tag;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return <Tag {...(props as any)}>{children}</Tag>;
+        };
+      return {
+        motion: { div: passthrough('div'), span: passthrough('span'), button: passthrough('button') },
+        AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+      };
+      useReducedMotion: vi.fn(() => null),,
   };
 });
 

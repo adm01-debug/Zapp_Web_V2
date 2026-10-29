@@ -17,7 +17,7 @@ const instrumentacao = vi.hoisted(() => ({ reduzido: false }));
 vi.mock('framer-motion', async (importOriginal) => ({
   ...(await importOriginal<typeof import('framer-motion')>()),
   useReducedMotion: () => instrumentacao.reduzido,
-}));
+});;
 
 const gatilho = <span>7 mensagens recebidas</span>;
 
