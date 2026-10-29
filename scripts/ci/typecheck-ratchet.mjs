@@ -143,7 +143,12 @@ function parseTscOutput(output, root) {
 // erro conhecido mesmo que outra edicao no arquivo desloque a linha. Se o
 // numero de ocorrencias iguais mudar (multiset), conta como novo/removido.
 function issueKey(issue) {
-  return JSON.stringify([issue.file, issue.severity, issue.code, issue.message]);
+  // O TypeScript resume uniões longas com "... N more ...". Acrescentar uma
+  // assinatura de RPC ao catálogo altera N em erros antigos, embora a chamada
+  // inválida, o código TS e o contexto da fonte permaneçam iguais. O número
+  // é apenas formatação do diagnóstico; mantemos todo o restante da mensagem.
+  const message = issue.message.replace(/\.\.\. \d+ more \.\.\./gu, "... <count> more ...");
+  return JSON.stringify([issue.file, issue.severity, issue.code, message]);
 }
 
 function matchPhase(baselineIssues, currentIssues, baselineMatched, currentMatched, keyFor) {

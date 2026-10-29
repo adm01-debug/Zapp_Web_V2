@@ -30,6 +30,11 @@ vi.mock('framer-motion', async () => {
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: { id: 'me-auth-id' } }),
 }));
+// O menu avançado lê o papel do usuário (useUserRole → useAppBootstrap → react-query).
+// Aqui o papel vem direto, como no teste irmão AdvancedMessageMenu.menu-avancado.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isSupervisor: false, loading: false }),
+}));
 vi.mock('@/hooks/business/useQueues', () => ({
   useQueues: () => ({ queues: [], loading: false }),
 }));
