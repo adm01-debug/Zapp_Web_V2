@@ -239,6 +239,20 @@ Investigar os logs do passo `🧪 Run Playwright E2E` do job [119551484580](http
 
 ---
 
+## 5d. E2E — contraste no tema de alto contraste do Email
+
+**Workflow:** `ci.yml` — job `🎭 E2E Tests (Playwright)`
+
+**Run:** [40862034884](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40862034884), job [123407422165](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40862034884/job/123407422165).
+
+**Falha:** `e2e/email-navy-visual.spec.ts:482`, teste “alto contraste e movimento reduzido mantêm o workspace acessível”. O axe encontrou no WebKit o horário `span[title="02/10/2026, 17:35:00"]` com texto `#2d2d2d` sobre fundo `#000000`: contraste 1,52:1, abaixo dos 4,5:1 exigidos. No mesmo run, 130 testes passaram e 1 falhou.
+
+**Relação com a PR #2338:** o diff altera somente `docs/consolidacao/_plano/B-grupos.md`; nenhum componente, estilo ou teste E2E foi modificado. O mesmo E2E passou no run [40860092186](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40860092186) da PR #2337, que tinha o mesmo código de produto. A falha é intermitente e não foi causada pela triagem documental.
+
+**Próximo passo:** repetir o E2E. Se voltar a falhar, corrigir a cor do horário no tema de alto contraste em uma PR separada e manter a asserção de acessibilidade. Não pular nem enfraquecer o teste. Enquanto o check estiver vermelho, não mergear a PR #2338.
+
+---
+
 ## 6. `🧬 Mutação do mapa (não bloqueante)` — baseline inválido
 
 **Workflow:** `ci.yml` — job `🧬 Mutação do mapa (não bloqueante)`
