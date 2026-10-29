@@ -117,6 +117,7 @@ export function useAuthForm() {
       email: formData.email.trim() || ((fd.get("email") as string | null) ?? "").trim(),
       password: (fd.get("password") as string | null) || formData.password,
     };
+    // eslint-disable-next-line local/no-secret-compare -- confere se o formulário mudou desde a última tentativa, só UI.
     if (credentials.email !== formData.email || credentials.password !== formData.password) {
       setFormData(credentials);
     }

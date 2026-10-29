@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
-import type { AgentStats, Achievement } from './types';
+import type { AgentStats, Achievement, MiniGameXpCreditResult } from './types';
 
 // Re-export types and utilities for external consumers
 export type { AgentStats, Achievement, MiniGameXpCreditResult } from './types';
@@ -17,9 +17,21 @@ export { calculateLevel, xpForNextLevel, levelProgress } from './levelUtils';
 export const ACHIEVEMENTS_PAGE_SIZE = 20;
 
 /**
+ * `credit_agent_mini_game_xp` (migration 20261007034219) ainda não consta em `types.ts`, que só é
+ * regenerado depois que o lote chega à produção. Acesso isolado e tipado até lá, para não espalhar cast.
+ */
+type MiniGameXpRpc = {
+  rpc: (
+    fn: 'credit_agent_mini_game_xp',
+    args: { p_profile_id: string; p_game_id: string; p_xp: number },
+  ) => PromiseLike<{ data: unknown; error: Error | null }>;
+};
+
+/**
  * Leitura da gamificação do agente: XP, nível, sequência, mensagens, resoluções
- * e conquistas. A escrita é do servidor (gatilhos SECURITY DEFINER); o cliente
- * não chama RPC de escrita — as RPCs de gamificação são só de `service_role`.
+ * e conquistas. A escrita de XP por conquista/mensagem é do servidor (gatilhos
+ * SECURITY DEFINER). A única escrita do cliente é `creditMiniGameXp`: RPC com
+ * limite de 5 créditos por dia por agente e mini-game imposto no servidor.
  *
  * A lista de conquistas é paginada: antes vinha com `.limit(20)` fixo e as telas
  * mostravam `achievements.length`, então um agente com 25 conquistas via "20".
@@ -28,6 +40,7 @@ export const ACHIEVEMENTS_PAGE_SIZE = 20;
  */
 export const useAgentGamification = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const profileQuery = useQuery({
     queryKey: ['user-profile', user?.id],
@@ -128,6 +141,24 @@ export const useAgentGamification = () => {
       .finally(() => { buscandoProximaPagina.current = false; });
   }, [hasNextPage, fetchNextPage]);
 
+  const creditMiniGameXp = useCallback(
+    async ({ gameId, xp }: { gameId: string; xp: number }): Promise<MiniGameXpCreditResult> => {
+      if (!profileId) throw new Error('Perfil do agente indisponível: XP do mini-game não creditado.');
+      const { data, error } = await (supabase as unknown as MiniGameXpRpc).rpc('credit_agent_mini_game_xp', {
+        p_profile_id: profileId,
+        p_game_id: gameId,
+        p_xp: xp,
+      });
+      if (error) throw error;
+      const resultado = data as MiniGameXpCreditResult;
+      if (resultado.credited) {
+        void queryClient.invalidateQueries({ queryKey: ['agent-stats', profileId] });
+      }
+      return resultado;
+    },
+    [profileId, queryClient],
+  );
+
   return {
     stats: statsQuery.data,
     achievements,
@@ -136,6 +167,7 @@ export const useAgentGamification = () => {
     isLoadingMore: achievementsQuery.isFetchingNextPage,
     isErrorForMore: hasMore && achievementsQuery.isError,
     loadMore,
+    creditMiniGameXp,
     isLoading: profileQuery.isLoading || statsQuery.isLoading || achievementsQuery.isLoading,
     // R2-AUTH-042 (#266): quem exibe o resultado precisa distinguir "erro" de
     // "conta sem conquistas". Sem isError os dois casos chegam como lista vazia

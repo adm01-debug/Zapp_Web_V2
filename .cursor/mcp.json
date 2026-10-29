@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "supabase-zapp-web-v2": {
+      "url": "https://supabase-zapp-web-v2-mcp.adm01.workers.dev/6c4c2b1fdfdc0465c29b56622970fa96a06192f2/mcp"
+    },
+    "github-mcp-server": {
+      "url": "https://github-mcp-server.adm01.workers.dev/mcp"
+    }
+  }
+}
