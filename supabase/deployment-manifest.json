@@ -511,8 +511,8 @@
     },
     {
       "path": "supabase/functions/connection-health-check/index.ts",
-      "bytes": 38257,
-      "sha256": "1cc16e674b1a47e3d3720461c0d5a6d361c22def2962cc2a8e89476cd859b36d"
+      "bytes": 40551,
+      "sha256": "de237cf20a502f7dea47a9de51d7a1254a43eff9061d9484af8e7d35b48910ff"
     },
     {
       "path": "supabase/functions/create-user/index.ts",
@@ -751,8 +751,8 @@
     },
     {
       "path": "supabase/functions/searchbox-budget-alert/index.ts",
-      "bytes": 3536,
-      "sha256": "058a54232ba25efe76dd83a2a526431f758fbaf4d75e87d714753c790d64267b"
+      "bytes": 3580,
+      "sha256": "bc577dbac26ea1e709f6e56c7d9dc89e4b6c7c22a08285a0cf673588cbad22cc"
     },
     {
       "path": "supabase/functions/send-email/index.ts",
@@ -851,8 +851,8 @@
     },
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
-      "bytes": 11465,
-      "sha256": "5d4c2305b9eee8afd4e3b716ee04288d69c239b19d5988704c754502491821dc"
+      "bytes": 11566,
+      "sha256": "5f8461f36594befd0942bce043719d87a9aab6f6779ef6e628f9c542a200b08f"
     }
   ],
   "functions": [
@@ -1397,7 +1397,7 @@
       "name": "connection-health-check",
       "entrypoint": "supabase/functions/connection-health-check/index.ts",
       "verify_jwt": false,
-      "source_sha256": "de3ccf96dec31765e2b1f3de3c0ca103d4ffe9054af74b2c84207f81b6e750be",
+      "source_sha256": "a47d6398c88233c661ebe1324216f471f9630d466648fb862e92c94f9db9698d",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/cron-secret-auth.ts",
@@ -2177,7 +2177,7 @@
       "name": "searchbox-budget-alert",
       "entrypoint": "supabase/functions/searchbox-budget-alert/index.ts",
       "verify_jwt": false,
-      "source_sha256": "4a3190a6a0168b30139b56bd00cf6c4e8321847c1cc8efdaff18366f19c1f859",
+      "source_sha256": "e01c265e1226b11d112ff4b0803fd6e41662eef33144c4e329aa12b5a592db4e",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/cron-secret-auth.ts",
@@ -2501,9 +2501,10 @@
       "name": "whatsapp-webhook",
       "entrypoint": "supabase/functions/whatsapp-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "b83f0f694ea5d0dbd6ec75de616b28abc655cd7355725f6bcf886be1c8f33fec",
+      "source_sha256": "1171d26f1693e09dfe601301f287ec1570da3746e23174483a40fa3510c9ecd1",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
+        "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/evolution-go-routes.ts",
         "supabase/functions/_shared/evolution-helpers.ts",
         "supabase/functions/_shared/evolution-send.ts",
@@ -2518,5 +2519,5 @@
       ]
     }
   ],
-  "manifest_sha256": "42fcdc0b3046b16ee740b3ec41ec6ff675087b215442e10d2ec4693011feca8f"
+  "manifest_sha256": "f8d1140e0f7c2028b9351764283822b6b6f882a5a0afbe8bd4a04f4959998114"
 }
