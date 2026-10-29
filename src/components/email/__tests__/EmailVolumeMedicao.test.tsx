@@ -33,6 +33,13 @@ import { EmailFullViewDialog } from '../EmailFullViewDialog';
 import { EmailAttachmentPreviewDialog } from '../EmailAttachmentPreviewDialog';
 import type { EmailAttachment, EmailThread, GmailAccount } from '@/hooks/integrations/useGmail';
 
+
+// Y29 — o useGmail lê `profiles.can_download` (useDownloadPermission); aqui a
+// permissão é concedida para o teste observar o caminho de sempre.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 vi.mock('framer-motion', () => ({
   motion: new Proxy({}, {
     get: (_t: unknown, prop: string) => {

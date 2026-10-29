@@ -11,10 +11,11 @@
 # E, na segunda metade (F89), a INTEGRACAO da fila contra o banco:
 #   6. o confirm materializa um item por (destinatario APTO x bloco) e nao duplica no 2o clique;
 #   7. a drenagem com fila aberta NAO conclui o disparo;
-#   8/9. a drenagem ate a conclusao ficam reservadas ao limite conhecido t_1ecff9cb;
-#   10. o ACK reconcilia o item que estava em outcome_unknown.
-# A drenagem que CONCLUI o disparo segue BLOQUEADA por defeito de producao aberto (42804 na
-# RPC de drenagem), registrado no cartao t_1ecff9cb; este harness ainda nao fecha esse criterio.
+#   8. a drenagem CONCLUI o disparo quando a fila inteira fica terminal ('completed', sent_count=4);
+#   9. com um item em outcome_unknown o disparo sai 'completed_with_failures' (parcial nunca "Concluido");
+#  8b. a MESMA conclusao pela fila por DESTINATARIO (complete_multiplix_dispatch_if_drained):
+#      recipients terminais -> 'completed'; com contador de falha -> 'completed_with_failures';
+#  10. o ACK reconcilia o item que estava em outcome_unknown.
 #
 # Herda o harness e o fixture de infraestrutura do multiplix-rls.test.sh (mesma infra
 # Supabase: auth, vault, cron, pg_net) e acrescenta as migrations do modelo v2
@@ -325,6 +326,9 @@ migration "20261002621230_f55_claimable_items_por_bloco.sql"
 # estava na cadeia deste harness — sem ela a trilha nao existiria e o teste provaria nada.
 migration "20261002671230_f60_conexao_capacidades_e_risco.sql"
 migration "20261003092707_f62b_leitura_janela_jsonb.sql"
+# F89/TL-048: cast explicito do ENUM no UPDATE de conclusao das DUAS RPCs de drenagem. Sem ela
+# os casos (8)/(9) deste arquivo falham com 42804 no passo em que a drenagem CONCLUI o disparo.
+migration "20261009011641_multiplix_drain_enum_cast.sql"
 
 
 # ── F57: fila POR ITEM (multiplix_delivery_items) ──────────────────────────────
@@ -513,6 +517,87 @@ depois="$(psql_test -Atqc "SELECT extract(epoch FROM lease_until)::int FROM publ
 intruso="$(psql_test -Atqc "$service_session SELECT public.heartbeat_multiplix_item('$o3','00000000-0000-0000-0000-0000000000ff'::uuid,180);" 2>&1 || true)"
 [[ "$intruso" == 'f' ]] \
   || fail "F55.1: heartbeat com claim_token de OUTRO dono foi aceito (veio: $intruso)"
+
+# ══ F56 · ORDEM POR DESTINATARIO com DOIS destinatarios x TRES blocos ══════════
+# O bloco acima prova a ordem com UM destinatario. A reconciliacao de 04/10 pede o
+# cenario de 2 contatos x 3 blocos: aqui cada destinatario tem a PROPRIA cadeia de
+# blocos, e o que se prova e que (a) as cadeias NAO se cruzam (a fase de um
+# destinatario nao trava nem libera o outro), (b) a fronteira de cada um avanca
+# sozinha e (c) nenhum item entra na fila duas vezes. Uma regra que ordenasse pelo
+# bloco GLOBAL — ou que esquecesse o `prev.recipient_id = item.recipient_id` — passaria
+# no caso de um destinatario so e falharia AQUI; e este caso que a denuncia.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id)
+VALUES ('30000000-0000-0000-0000-000000000050', 'Ordem 2x3', 'Oi', 'sending',
+        '10000000-0000-0000-0000-00000000000a', 2, '70000000-0000-0000-0000-000000000001');
+INSERT INTO public.multiplix_blocks (id, dispatch_id, block_order, block_type, template_text) VALUES
+  ('60000000-0000-0000-0000-000000000051', '30000000-0000-0000-0000-000000000050', 0, 'text', 'bloco 0'),
+  ('60000000-0000-0000-0000-000000000052', '30000000-0000-0000-0000-000000000050', 1, 'text', 'bloco 1'),
+  ('60000000-0000-0000-0000-000000000053', '30000000-0000-0000-0000-000000000050', 2, 'text', 'bloco 2');
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, destino_e164, status, created_at)
+VALUES
+  ('40000000-0000-0000-0000-000000000051', '30000000-0000-0000-0000-000000000050', '50000000-0000-0000-0000-000000000051', '+551****0041', 'pending', statement_timestamp()),
+  ('40000000-0000-0000-0000-000000000052', '30000000-0000-0000-0000-000000000050', '50000000-0000-0000-0000-000000000052', '+551****0042', 'pending', statement_timestamp());
+-- A = itens 41/43/45 (blocos de ordem 0/1/2); B = itens 42/44/46 (os MESMOS blocos, mas
+-- item e destinatario PROPRIOS: e assim que o bloco "distinto" de cada um fica amarrado).
+INSERT INTO public.multiplix_delivery_items (id, dispatch_id, recipient_id, block_id, dispatch_version, status, external_id) VALUES
+  ('80000000-0000-0000-0000-000000000051', '30000000-0000-0000-0000-000000000050', '40000000-0000-0000-0000-000000000051', '60000000-0000-0000-0000-000000000051', 1, 'pending', 'x-a0'),
+  ('80000000-0000-0000-0000-000000000052', '30000000-0000-0000-0000-000000000050', '40000000-0000-0000-0000-000000000052', '60000000-0000-0000-0000-000000000051', 1, 'pending', 'x-b0'),
+  ('80000000-0000-0000-0000-000000000053', '30000000-0000-0000-0000-000000000050', '40000000-0000-0000-0000-000000000051', '60000000-0000-0000-0000-000000000052', 1, 'pending', 'x-a1'),
+  ('80000000-0000-0000-0000-000000000054', '30000000-0000-0000-0000-000000000050', '40000000-0000-0000-0000-000000000052', '60000000-0000-0000-0000-000000000052', 1, 'pending', 'x-b1'),
+  ('80000000-0000-0000-0000-000000000055', '30000000-0000-0000-0000-000000000050', '40000000-0000-0000-0000-000000000051', '60000000-0000-0000-0000-000000000053', 1, 'pending', 'x-a2'),
+  ('80000000-0000-0000-0000-000000000056', '30000000-0000-0000-0000-000000000050', '40000000-0000-0000-0000-000000000052', '60000000-0000-0000-0000-000000000053', 1, 'pending', 'x-b2');
+SQL
+
+disp_2x3='30000000-0000-0000-0000-000000000050'
+# A fila visivel AGORA, com o par (bloco, item) de cada destinatario na ordem de trabalho.
+fila2x3() { psql_test -Atqc "$service_session SELECT coalesce(string_agg(block_order || ':' || item_id::text, ',' ORDER BY block_order, item_id), 'VAZIO') FROM public.list_multiplix_claimable_items('$disp_2x3', 10);" 2>&1 || true; }
+# Conclui UM item como o worker faz: claim -> marcou envio ao provedor -> sent.
+concluir() {
+  local token
+  token="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_item('$disp_2x3','$1','worker-2x3',90);" 2>&1 || true)"
+  [[ "$token" =~ $is_uuid ]] || fail "F56.2x3: nao consegui reivindicar o item $1 (veio: $token)"
+  psql_test >/dev/null <<SQL
+$service_session
+SELECT public.mark_multiplix_item_dispatch_started('$1','$token'::uuid);
+SELECT public.record_multiplix_item_sent('$1','$token'::uuid,'ext-$1');
+SQL
+}
+
+# (F56.4) Na 1a passada, so a fronteira (bloco 0) dos DOIS destinatarios — nada de bloco 1/2.
+esperado="0:80000000-0000-0000-0000-000000000051,0:80000000-0000-0000-0000-000000000052"
+[[ "$(fila2x3)" == "$esperado" ]] \
+  || fail "F56.4: a 1a passada nao ofereceu so o bloco 0 dos DOIS destinatarios (esperado: $esperado, veio: $(fila2x3))"
+concluir '80000000-0000-0000-0000-000000000051'   # A concluiu o bloco 0
+# (F56.5) A avancou para o bloco 1 enquanto B segue no bloco 0: cadeia de um NAO trava a do outro.
+esperado="0:80000000-0000-0000-0000-000000000052,1:80000000-0000-0000-0000-000000000053"
+[[ "$(fila2x3)" == "$esperado" ]] \
+  || fail "F56.5: com A no bloco 0, esperava B(bloco 0) + A(bloco 1) (esperado: $esperado, veio: $(fila2x3))"
+concluir '80000000-0000-0000-0000-000000000052'   # B concluiu o bloco 0
+esperado="1:80000000-0000-0000-0000-000000000053,1:80000000-0000-0000-0000-000000000054"
+[[ "$(fila2x3)" == "$esperado" ]] \
+  || fail "F56.6: com A e B no bloco 1, esperava os dois itens do bloco 1 (esperado: $esperado, veio: $(fila2x3))"
+concluir '80000000-0000-0000-0000-000000000053'   # A concluiu o bloco 1
+esperado="1:80000000-0000-0000-0000-000000000054,2:80000000-0000-0000-0000-000000000055"
+[[ "$(fila2x3)" == "$esperado" ]] \
+  || fail "F56.7: com B ainda no bloco 1, esperava B(bloco 1) + A(bloco 2) (esperado: $esperado, veio: $(fila2x3))"
+concluir '80000000-0000-0000-0000-000000000054'   # B concluiu o bloco 1
+esperado="2:80000000-0000-0000-0000-000000000055,2:80000000-0000-0000-0000-000000000056"
+[[ "$(fila2x3)" == "$esperado" ]] \
+  || fail "F56.8: o ultimo par (bloco 2 dos dois) nao saiu (esperado: $esperado, veio: $(fila2x3))"
+concluir '80000000-0000-0000-0000-000000000055'   # A concluiu o bloco 2
+concluir '80000000-0000-0000-0000-000000000056'   # B concluiu o bloco 2
+# (F56.9) Cadeia inteira consumida: a fila fica VAZIA — nada repetido, nada sobrando.
+[[ "$(fila2x3)" == "VAZIO" ]] \
+  || fail "F56.9: a fila nao esvaziou ao fim das duas cadeias (veio: $(fila2x3))"
+# (F56.10) NENHUMA DUPLICACAO: os 6 itens (2 x 3) saem 'sent' exatamente UMA vez cada.
+enviados="$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$disp_2x3' AND status='sent';" 2>&1 | tail -1 || true)"
+[[ "$enviados" == "6" ]] \
+  || fail "F56.10: esperava 6 itens 'sent' (2 destinatarios x 3 blocos), veio $enviados"
+total="$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$disp_2x3';" 2>&1 | tail -1 || true)"
+[[ "$total" == "6" ]] \
+  || fail "F56.10: a fila criou/duplicou itens — esperava 6 no total, veio $total"
 
 # ══════════════════════════════════════════════════════════════════════════════
 # F59: dead letter consultavel (admin), recalculo de elegibilidade no disparo
@@ -770,12 +855,11 @@ r6="$(psql_test -Atqc "$service_session SELECT public.attribute_multiplix_item_r
 #   (6) confirma   -> revalida (F49), avanca a versao e materializa UM item por (apto x
 #                     bloco); o 2o clique NAO duplica a fila (idempotencia por dispatch_version);
 #   (7) drena      -> com item pendente o disparo NAO pode ser dado como drenado;
-#   (8) drenagem completa com sucesso -> reservado ao limite conhecido t_1ecff9cb;
-#   (9) drenagem completa com falha parcial -> reservado ao limite conhecido t_1ecff9cb;
-#   (10) reconcilia -> o ACK casa o external_id e fecha o item que estava em outcome_unknown.
-# As duas drenagens que CONCLUEM o disparo (fila inteira terminal -> 'completed'; com um item
-# em outcome_unknown -> 'completed_with_failures') estao BLOQUEADAS por defeito de producao
-# aberto — ver a nota logo depois do caso (7).
+#   (8) conclui    -> com a fila inteira terminal a drenagem FECHA o disparo ('completed');
+#   (9) parcial    -> um item terminal em outcome_unknown -> 'completed_with_failures';
+#  (8b) destinatario-> a drenagem por DESTINATARIO (if_drained) conclui igual: recipients
+#                      terminais -> 'completed'; contador de falha -> 'completed_with_failures';
+#  (10) reconcilia -> o ACK casa o external_id e fecha o item que estava em outcome_unknown.
 #
 # Fixture: o dispatch nasce em 'scheduled' (estado que o F31 grava no draft.create e que o
 # confirm aceita — passo 2 da RPC) e SEM `scheduled_at`: nao ha nada a agendar, entao ele
@@ -866,31 +950,142 @@ drena_aberta="$(psql_test -Atqc "$service_session SELECT public.complete_multipl
 [[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_conf';")" == 'sending' ]] \
   || fail 'F89.7: a drenagem recusada mexeu no status do disparo'
 
-# (8)/(9) DRENA ATE A CONCLUSAO — BLOQUEADOS por DEFEITO DE PRODUCAO aberto:
-#   ERROR: column "status" is of type multiplix_dispatch_status but expression is of type text
-# `complete_multiplix_dispatch_if_items_drained` (f32b, 20261001231230) — e a gemea antiga
-# `complete_multiplix_dispatch_if_drained`, que o worker ainda chama — montam o novo status
-# num CASE de literais `text` e o ATRIBUEM a coluna ENUM:
-#   `SET status = CASE WHEN failed_count + outcome_unknown_count > 0
-#                      THEN 'completed_with_failures' ELSE 'completed' END`
-# O PostgreSQL resolve esse CASE para `text` e recusa a atribuicao (42804) SEMPRE. Isto e:
-# toda vez que a drenagem chega ao UPDATE — exatamente o passo em que ela CONCLUI o disparo
-# — a RPC levanta erro. A fila esvazia e o disparo NUNCA conclui; e a "integracao da
-# confirmacao ate dreno esta quebrada" que o inventario do F89 aponta. Mesma classe que o F59
-# ja consertou em `transition_multiplix_dispatch`
-# (`v_next_status::public.multiplix_dispatch_status`, 20261002521230) — aquele caso tinha
-# teste; o dreno nao tinha, por isso sobreviveu ate aqui.
-# O CONSERTO E DDL (migration) e este cartao proibe DDL: a correcao foi para o cartao
-# t_1ecff9cb (fix do cast em complete_multiplix_dispatch_if_*_drained).
-#
-# Limite conhecido t_1ecff9cb: com o cast no lugar, religar AQUI dois casos de drenagem
-# ate a conclusao —
-#   (8) fila inteira terminal -> drena_fecha='true', disparo 'completed', sent_count=4 (itens
-#       fechados pela rota real: claim_multiplix_item -> mark_multiplix_item_dispatch_started
-#       -> record_multiplix_item_sent, na ORDEM POR BLOCO);
-#   (9) um item em outcome_unknown (terminal) -> drena='true' e disparo
-#       'completed_with_failures' (parcial NUNCA aparece como "Concluido", F13).
-# Esses dois casos ficam FORA da execucao (nao fingem passar) enquanto o defeito existir.
+# (8) DRENA ATE A CONCLUSAO — a fila inteira fica terminal e o disparo CONCLUI ('completed').
+# Os 4 itens vao a terminal pela ROTA REAL do worker (claim_multiplix_item ->
+# mark_multiplix_item_dispatch_started -> record_multiplix_item_sent), na ORDEM POR BLOCO do
+# F56 (bloco k so depois do k-1 'sent' do MESMO destinatario).
+# Era AQUI que a drenagem morria: as duas RPCs de drenagem montavam o status novo num CASE de
+# literais `text` e o atribuiam a coluna ENUM (`SET status = CASE ... END`), o que o PostgreSQL
+# recusa (42804: column "status" is of type multiplix_dispatch_status but expression is of type
+# text) em TODA chamada que chegava ao UPDATE — o passo em que a RPC CONCLUI o disparo. A fila
+# esvaziava e o disparo ficava 'sending' para sempre, com o cron reinvocando. Conserto:
+# 20261009011641_multiplix_drain_enum_cast.sql (cast explicito nas DUAS funcoes, o mesmo padrao
+# que o F59 usou em transition_multiplix_dispatch). Sem essa migration os casos (8) e (9)
+# falham com o 42804.
+# A migration troca so o CORPO por CREATE OR REPLACE: a ACL nao pode ter mudado. service_role
+# executa as DUAS drenagens; anon e authenticated seguem sem EXECUTE (o REVOKE e anterior a esta
+# migration). Sem esta checagem, um "create or replace" que tivesse reaberto as funcoes passaria
+# desapercebido.
+[[ "$(psql_test -Atqc "SELECT bool_and(
+    has_function_privilege('service_role','public.complete_multiplix_dispatch_if_drained(uuid)','EXECUTE')
+    AND NOT has_function_privilege('anon','public.complete_multiplix_dispatch_if_drained(uuid)','EXECUTE')
+    AND NOT has_function_privilege('authenticated','public.complete_multiplix_dispatch_if_drained(uuid)','EXECUTE')
+    AND has_function_privilege('service_role','public.complete_multiplix_dispatch_if_items_drained(uuid)','EXECUTE')
+    AND NOT has_function_privilege('anon','public.complete_multiplix_dispatch_if_items_drained(uuid)','EXECUTE')
+    AND NOT has_function_privilege('authenticated','public.complete_multiplix_dispatch_if_items_drained(uuid)','EXECUTE'))")" == 't' ]] \
+  || fail 'F89.8: a ACL das drenagens mudou (o CREATE OR REPLACE nao pode abrir nem fechar EXECUTE)'
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$disp_conf' AND status='pending';")" == '4' ]] \
+  || fail 'F89.8: controle positivo — a fila do disparo confirmado devia ter 4 itens pendentes antes de drenar'
+itens_conf="$(psql_test -Atqc "SELECT id FROM public.multiplix_delivery_items WHERE dispatch_id='$disp_conf' ORDER BY (SELECT b.block_order FROM public.multiplix_blocks b WHERE b.id = block_id), recipient_id;" 2>&1 || true)"
+n_conf=0
+for it in $itens_conf; do
+  n_conf=$((n_conf + 1))
+  tok_conf="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_item('$disp_conf','$it','worker-f89',90);" 2>&1 || true)"
+  [[ "$tok_conf" =~ $is_uuid ]] \
+    || fail "F89.8: nao consegui reivindicar o item $n_conf da fila (veio: $tok_conf)"
+  psql_test >/dev/null <<SQL
+$service_session
+SELECT public.mark_multiplix_item_dispatch_started('$it','$tok_conf'::uuid);
+SELECT public.record_multiplix_item_sent('$it','$tok_conf'::uuid,'ext-f89-dreno-$n_conf');
+SQL
+done
+[[ "$n_conf" == '4' ]] || fail "F89.8: a fila tinha de fechar 4 itens pela rota real (fechei $n_conf)"
+[[ "$(psql_test -Atqc "SELECT count(*) FROM public.multiplix_delivery_items WHERE dispatch_id='$disp_conf' AND status IN ('pending','sending','failed_transient');")" == '0' ]] \
+  || fail 'F89.8: a fila nao ficou inteira terminal, mas o caso vai pedir a conclusao do disparo'
+drena_fecha="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('$disp_conf')::text;" 2>&1 || true)"
+[[ "$drena_fecha" == 'true' ]] \
+  || fail "F89.8: com a fila inteira terminal a drenagem tinha de concluir o disparo (veio: $drena_fecha)"
+status_fecha="$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_conf';" 2>&1 || true)"
+[[ "$status_fecha" == 'completed' ]] \
+  || fail "F89.8: o disparo nao concluiu como 'completed' (veio: $status_fecha)"
+[[ "$(psql_test -Atqc "SELECT sent_count FROM public.multiplix_dispatches WHERE id='$disp_conf';")" == '4' ]] \
+  || fail 'F89.8: sent_count devia ser 4 (um por item enviado)'
+[[ "$(psql_test -Atqc "SELECT completed_at IS NOT NULL FROM public.multiplix_dispatches WHERE id='$disp_conf';")" == 't' ]] \
+  || fail 'F89.8: a conclusao nao carimbou completed_at'
+# Drenar de novo um disparo JA concluido nao "reconclui" nem volta o status atras.
+drena_de_novo="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('$disp_conf')::text;" 2>&1 || true)"
+[[ "$drena_de_novo" == 'false' ]] \
+  || fail "F89.8: drenar um disparo ja concluido devia devolver false (veio: $drena_de_novo)"
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_conf';")" == 'completed' ]] \
+  || fail 'F89.8: a segunda drenagem mexeu no disparo ja concluido'
+
+# (9) DRENA COM PARCIAL — um item terminal em outcome_unknown e o disparo sai
+# 'completed_with_failures'. Parcial NUNCA pode aparecer como "Concluido" (F13): seria sucesso
+# na tela onde houve envio sem confirmacao do provedor.
+it_parc="$(psql_test -Atqc "SELECT id FROM public.multiplix_delivery_items WHERE dispatch_id='$disp_parc';" 2>&1 || true)"
+tok_parc="$(psql_test -Atqc "$service_session SELECT claim_token FROM public.claim_multiplix_item('$disp_parc','$it_parc','worker-f89',90);" 2>&1 || true)"
+[[ "$tok_parc" =~ $is_uuid ]] \
+  || fail "F89.9: nao consegui reivindicar o unico item do disparo parcial (veio: $tok_parc)"
+psql_test >/dev/null <<SQL
+$service_session
+SELECT public.mark_multiplix_item_dispatch_started('$it_parc','$tok_parc'::uuid);
+SELECT public.complete_multiplix_item('$it_parc','$tok_parc'::uuid,'outcome_unknown','sem confirmacao do provedor');
+SQL
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_delivery_items WHERE id='$it_parc';")" == 'outcome_unknown' ]] \
+  || fail 'F89.9: controle positivo — o item do disparo parcial nao ficou em outcome_unknown'
+[[ "$(psql_test -Atqc "SELECT outcome_unknown_count FROM public.multiplix_dispatches WHERE id='$disp_parc';")" == '1' ]] \
+  || fail 'F89.9: controle positivo — o contador de nao-confirmados do disparo nao subiu'
+drena_parc="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('$disp_parc')::text;" 2>&1 || true)"
+[[ "$drena_parc" == 'true' ]] \
+  || fail "F89.9: com a fila terminal a drenagem tinha de concluir o disparo parcial (veio: $drena_parc)"
+status_parc="$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_parc';" 2>&1 || true)"
+[[ "$status_parc" == 'completed_with_failures' ]] \
+  || fail "F89.9: disparo com envio NAO confirmado saiu como '$status_parc' (parcial tem de virar completed_with_failures, nunca 'completed')"
+[[ "$(psql_test -Atqc "SELECT sent_count FROM public.multiplix_dispatches WHERE id='$disp_parc';")" == '0' ]] \
+  || fail 'F89.9: sent_count do disparo parcial devia ser 0 (nenhum item confirmado)'
+
+# (8b)/(9b) A MESMA conclusao pela drenagem por DESTINATARIO
+# (complete_multiplix_dispatch_if_drained — a que o worker chama hoje,
+# supabase/functions/multiplix-send/index.ts). A guarda dela e a fila de
+# multiplix_recipients: enquanto houver recipient em ('pending','sending') devolve false; com
+# todos terminais CONCLUI, e um contador de falha/nao-confirmado leva o disparo a
+# 'completed_with_failures' (nunca 'completed'). Mesmo defeito de cast: sem a migration
+# 20261009011641 o UPDATE de conclusao levanta o 42804 tambem nesta rota.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id)
+VALUES ('30000000-0000-0000-0000-000000000070', 'Dreno por destinatario F89', 'Oi {{empresa}}', 'sending',
+        '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001'),
+       ('30000000-0000-0000-0000-000000000071', 'Dreno por destinatario parcial F89', 'Oi {{empresa}}', 'sending',
+        '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001'),
+       ('30000000-0000-0000-0000-000000000072', 'Dreno por destinatario aberto F89', 'Oi {{empresa}}', 'sending',
+        '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001');
+-- Dois disparos com o UNICO recipient JA terminal (um 'sent') e um com ele ainda 'pending'.
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, company_name_snapshot, destino_e164, status) VALUES
+  ('40000000-0000-0000-0000-000000000071', '30000000-0000-0000-0000-000000000070', '50000000-0000-0000-0000-000000000071', 'Empresa 71', '+551****0071', 'sent'),
+  ('40000000-0000-0000-0000-000000000072', '30000000-0000-0000-0000-000000000071', '50000000-0000-0000-0000-000000000072', 'Empresa 72', '+551****0072', 'sent'),
+  ('40000000-0000-0000-0000-000000000073', '30000000-0000-0000-0000-000000000072', '50000000-0000-0000-0000-000000000073', 'Empresa 73', '+551****0073', 'pending');
+SQL
+disp_r='30000000-0000-0000-0000-000000000070'
+disp_rp='30000000-0000-0000-0000-000000000071'
+disp_ra='30000000-0000-0000-0000-000000000072'
+# Negativo: um recipient ainda 'pending' NAO deixa a rota concluir.
+drena_aberto_r="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_drained('$disp_ra')::text;" 2>&1 || true)"
+[[ "$drena_aberto_r" == 'false' ]] \
+  || fail "F89.8b: drenagem por destinatario com recipient pendente devia devolver false (veio: $drena_aberto_r)"
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_ra';")" == 'sending' ]] \
+  || fail 'F89.8b: a drenagem por destinatario recusada mexeu no status do disparo'
+# (8b) todos os recipients terminais -> true e 'completed'.
+drena_r="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_drained('$disp_r')::text;" 2>&1 || true)"
+[[ "$drena_r" == 'true' ]] \
+  || fail "F89.8b: com a fila de destinatarios inteira terminal a drenagem tinha de concluir (veio: $drena_r)"
+status_r="$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_r';" 2>&1 || true)"
+[[ "$status_r" == 'completed' ]] || fail "F89.8b: o disparo nao concluiu como 'completed' (veio: $status_r)"
+[[ "$(psql_test -Atqc "SELECT completed_at IS NOT NULL FROM public.multiplix_dispatches WHERE id='$disp_r';")" == 't' ]] \
+  || fail 'F89.8b: a conclusao por destinatario nao carimbou completed_at'
+[[ "$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_drained('$disp_r')::text;" 2>&1 || true)" == 'false' ]] \
+  || fail 'F89.8b: drenar de novo um disparo ja concluido devia devolver false'
+# (9b) um contador de falha > 0 -> 'completed_with_failures' (nunca 'completed').
+psql_test >/dev/null <<SQL
+$service_session
+UPDATE public.multiplix_dispatches SET failed_count=1 WHERE id='$disp_rp';
+SQL
+drena_rp="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_drained('$disp_rp')::text;" 2>&1 || true)"
+[[ "$drena_rp" == 'true' ]] \
+  || fail "F89.9b: com contador de falha a drenagem por destinatario tinha de concluir (veio: $drena_rp)"
+status_rp="$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_rp';" 2>&1 || true)"
+[[ "$status_rp" == 'completed_with_failures' ]] \
+  || fail "F89.9b: disparo com falha saiu como '$status_rp' (tem de ser completed_with_failures, nunca 'completed')"
 
 # (10) RECONCILIA (outcome_unknown -> ack): o WAMID ja era conhecido quando o timeout
 # aconteceu, entao o ACK de entrega tem de casar por external_id e fechar o item. Fixture
@@ -929,6 +1124,78 @@ ack_nao="$(psql_test -Atqc "$service_session SELECT public.record_multiplix_item
   || fail 'F89.10: o ACK desconhecido mexeu no item ja reconciliado'
 
 
-printf 'PASS: fila por item — dois workers nao pegam o mesmo item, lease vencido nao completa e devolve o item a fila (renovando o token), pausa nao entrega pending novo sem interromper o que esta em voo, cancel encerra pendentes sem tocar no que foi ao provedor, e timeout vira outcome_unknown sem reenvio (F57). Escolha do proximo item respeita a ORDEM POR BLOCO do destinatario (bloco k so depois do k-1 sent, tres blocos) e o heartbeat de lease renova so para o dono do claim (F55/F56). E a INTEGRACAO da fila contra o banco: o confirm revalida e materializa um item por (apto x bloco) sem duplicar no 2o clique (nem enfileirar quem nao tem pessoa), a drenagem com fila aberta NAO conclui o disparo e o ACK reconcilia o item que estava em outcome_unknown (F89; a drenagem ATE a conclusao segue bloqueada por defeito 42804 da RPC — ver limite conhecido t_1ecff9cb neste arquivo)\n'
+# ══ BLOCO ROLLBACK · a linha "-- Rollback:" do arquivo executa e devolve o estado ══
+# Ultimo bloco de proposito: desfazer aqui nao afeta nenhuma prova acima. A linha e EXTRAIDA
+# do proprio arquivo da migration (nao reescrita) e executada no banco de teste. A prova de
+# que o rollback devolveu o corpo anterior e COMPORTAMENTAL, nao texto de deparse: com o
+# corpo antigo a drenagem volta a levantar o 42804 e nenhum disparo conclui. Reaplicar a
+# migration devolve o conserto (idempotencia).
+migration_f89="$migrations_dir/20261009011641_multiplix_drain_enum_cast.sql"
+[[ -f "$migration_f89" ]] || fail 'BLOCO ROLLBACK: arquivo da migration ausente'
+rb_sql="${TMPDIR:-$repo_root/.tmp}/rollback-f89.sql"
+mkdir -p "$(dirname "$rb_sql")"
+# O bloco vem do PROPRIO arquivo: as linhas entre o marcador "-- Rollback (SQL executavel, na
+# ordem):" e o "--" que o fecha, sem o prefixo "--   " (mesmo molde da
+# 20261006141643_ai_jobs_efeito_externo_lease.sql, linhas 1-11).
+sed -n '/^-- Rollback (SQL executavel, na ordem):/,/^--$/p' "$migration_f89" | sed '1d;$d' | sed 's/^--   //' > "$rb_sql"
+grep -q 'CREATE OR REPLACE FUNCTION public.complete_multiplix_dispatch_if_items_drained' "$rb_sql" \
+  || fail 'BLOCO ROLLBACK: a linha -- Rollback: nao traz a recriacao de complete_multiplix_dispatch_if_items_drained'
+grep -q 'CREATE OR REPLACE FUNCTION public.complete_multiplix_dispatch_if_drained(' "$rb_sql" \
+  || fail 'BLOCO ROLLBACK: a linha -- Rollback: nao traz a recriacao de complete_multiplix_dispatch_if_drained'
+# Fixture: disparo em 'sending' com as DUAS filas JA terminais (um item 'sent' E o recipient
+# 'sent'), pronto para drenar por QUALQUER das duas rotas.
+psql_test >/dev/null <<'SQL'
+SET request.jwt.claim.role='service_role';
+INSERT INTO public.multiplix_dispatches (id, name, message_template, status, created_by, total_recipients, whatsapp_connection_id)
+VALUES ('30000000-0000-0000-0000-000000000060', 'Rollback F89', 'Oi {{empresa}}', 'sending',
+        '10000000-0000-0000-0000-00000000000a', 1, '70000000-0000-0000-0000-000000000001');
+INSERT INTO public.multiplix_blocks (id, dispatch_id, block_order, block_type, template_text) VALUES
+  ('60000000-0000-0000-0000-000000000061', '30000000-0000-0000-0000-000000000060', 0, 'text', 'bloco do rollback');
+INSERT INTO public.multiplix_recipients (id, dispatch_id, company_id, company_name_snapshot, destino_e164, status) VALUES
+  ('40000000-0000-0000-0000-000000000061', '30000000-0000-0000-0000-000000000060', '50000000-0000-0000-0000-000000000061', 'Empresa 61', '+551****0061', 'sent');
+INSERT INTO public.multiplix_delivery_items (id, dispatch_id, recipient_id, block_id, dispatch_version, status, external_id, sent_at) VALUES
+  ('80000000-0000-0000-0000-000000000061', '30000000-0000-0000-0000-000000000060', '40000000-0000-0000-0000-000000000061', '60000000-0000-0000-0000-000000000061', 1, 'sent', 'ext-f89-rb', statement_timestamp());
+SQL
+disp_rb='30000000-0000-0000-0000-000000000060'
+volta_sending() {
+  psql_test >/dev/null <<SQL
+$service_session
+UPDATE public.multiplix_dispatches SET status='sending', completed_at=NULL WHERE id='$disp_rb';
+SQL
+}
+# Controle positivo (as DUAS rotas, com o conserto aplicado): a fixture drena pelas duas —
+# sem isso um vermelho abaixo passaria por fixture errada e nao provaria nada sobre o corpo
+# que o rollback restaurou.
+[[ "$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('$disp_rb')::text;" 2>&1 || true)" == 'true' ]] \
+  || fail 'BLOCO ROLLBACK: controle positivo — a fixture nao drena pela fila por item nem com o conserto aplicado'
+volta_sending
+[[ "$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_drained('$disp_rb')::text;" 2>&1 || true)" == 'true' ]] \
+  || fail 'BLOCO ROLLBACK: controle positivo — a fixture nao drena pela fila por destinatario nem com o conserto aplicado'
+volta_sending
+psql_test < "$rb_sql" >/dev/null || fail 'BLOCO ROLLBACK: a linha -- Rollback: nao executou no PostgreSQL'
+# As DUAS drenagens voltam ao corpo sem cast: cada uma levanta o 42804 e deixa o disparo em 'sending'.
+traz_de_volta="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('$disp_rb')::text;" 2>&1 || true)"
+[[ "$traz_de_volta" == *'multiplix_dispatch_status but expression is of type text'* ]] \
+  || fail "BLOCO ROLLBACK: depois do rollback a drenagem por item tinha de voltar a levantar o 42804 (veio: $traz_de_volta)"
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_rb';")" == 'sending' ]] \
+  || fail 'BLOCO ROLLBACK: o disparo concluiu com o corpo ANTIGO no lugar (o rollback nao restaurou a drenagem por item)'
+traz_de_volta_r="$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_drained('$disp_rb')::text;" 2>&1 || true)"
+[[ "$traz_de_volta_r" == *'multiplix_dispatch_status but expression is of type text'* ]] \
+  || fail "BLOCO ROLLBACK: depois do rollback a drenagem por destinatario tinha de voltar a levantar o 42804 (veio: $traz_de_volta_r)"
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_rb';")" == 'sending' ]] \
+  || fail 'BLOCO ROLLBACK: o disparo concluiu com o corpo ANTIGO no lugar (o rollback nao restaurou a drenagem por destinatario)'
+migration "20261009011641_multiplix_drain_enum_cast.sql"
+[[ "$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_items_drained('$disp_rb')::text;" 2>&1 || true)" == 'true' ]] \
+  || fail 'BLOCO ROLLBACK: reaplicar a migration nao devolveu o conserto (fila por item)'
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_rb';")" == 'completed' ]] \
+  || fail 'BLOCO ROLLBACK: com a migration reaplicada o disparo nao concluiu (fila por item)'
+volta_sending
+[[ "$(psql_test -Atqc "$service_session SELECT public.complete_multiplix_dispatch_if_drained('$disp_rb')::text;" 2>&1 || true)" == 'true' ]] \
+  || fail 'BLOCO ROLLBACK: reaplicar a migration nao devolveu o conserto (fila por destinatario)'
+[[ "$(psql_test -Atqc "SELECT status FROM public.multiplix_dispatches WHERE id='$disp_rb';")" == 'completed' ]] \
+  || fail 'BLOCO ROLLBACK: com a migration reaplicada o disparo nao concluiu (fila por destinatario)'
+printf '  · BLOCO ROLLBACK: a linha -- Rollback: devolveu o corpo anterior das DUAS drenagens (42804 de novo) e reaplicar a migration devolve o conserto\n' >&2
 
+
+printf 'PASS: fila por item — dois workers nao pegam o mesmo item, lease vencido nao completa e devolve o item a fila (renovando o token), pausa nao entrega pending novo sem interromper o que esta em voo, cancel encerra pendentes sem tocar no que foi ao provedor, e timeout vira outcome_unknown sem reenvio (F57). Escolha do proximo item respeita a ORDEM POR BLOCO do destinatario (bloco k so depois do k-1 sent, tres blocos) e o heartbeat de lease renova so para o dono do claim (F55/F56) — e com DOIS destinatarios x tres blocos as duas cadeias nao se cruzam (a fronteira de cada um avanca sozinha) e nenhum item entra na fila duas vezes. E a INTEGRACAO da fila contra o banco: o confirm revalida e materializa um item por (apto x bloco) sem duplicar no 2o clique (nem enfileirar quem nao tem pessoa), a drenagem com fila aberta NAO conclui o disparo, a drenagem com a fila inteira terminal CONCLUI o disparo (completed, sent_count=4), com um item em outcome_unknown o disparo sai completed_with_failures (parcial nunca aparece como "Concluido") e o ACK reconcilia o item que estava em outcome_unknown (F89)\n'
 

@@ -92,7 +92,7 @@ let inFlight: Promise<void> | null = null;
 
 async function refresh(): Promise<void> {
   try {
-    const { data, error } = await (supabase as any).rpc('count_searchbox_sessions_this_month'); // eslint-disable-line @typescript-eslint/no-explicit-any -- cast temporário até sync de types
+    const { data, error } = await supabase.rpc('count_searchbox_sessions_this_month');
     if (error) return;
     const count = typeof data === 'number' ? data : Number(data);
     if (Number.isNaN(count)) return;

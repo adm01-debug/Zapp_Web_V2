@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import * as S from '../../supabase/functions/_shared/schemas.ts';
 
 // Harness dual (mesmo padrão dos contratos multiplix-*): este arquivo roda nos
@@ -57,6 +58,12 @@ function expect<T>(actual: T) {
     toBeGreaterThan(expected: number) {
       assert(typeof actual === 'number' && actual > expected, `Expected ${actual} to be greater than ${expected}`);
     },
+    toContain(expected: unknown) {
+      assert(
+        Array.isArray(actual) && actual.some((item) => Object.is(item, expected)),
+        `esperado array contendo ${JSON.stringify(expected)}, recebido ${JSON.stringify(actual)}`,
+      );
+    },
   };
 }
 
@@ -93,13 +100,16 @@ const suites: Record<string, Suite> = {
     { payload: {}, hint: 'ausente' }, { payload: { contactIds: [] }, hint: 'vazio' }, { payload: { contactIds: ['x'] }, hint: 'uuid' }] },
   AiClassifyTicketsSchema: { schema: S.AiClassifyTicketsSchema, valid: [{}, { limit: 10 }], invalid: [
     { payload: { limit: 'x' }, hint: 'tipo' }, { payload: { limit: 0 }, hint: 'faixa' }] },
-  ElevenLabsTTSSchema: { schema: S.ElevenLabsTTSSchema, valid: [{ text: 'a' }], invalid: [
-    { payload: {}, hint: 'ausente' }, { payload: { text: '' }, hint: 'vazio' }, { payload: { text: 1 }, hint: 'tipo' }] },
+  ElevenLabsTTSSchema: { schema: S.ElevenLabsTTSSchema, valid: [{ text: 'a' }, { text: 'a', voiceId: 'EXAVITQu4vr4xnSDxMaL', modelId: 'eleven_v3' }], invalid: [
+    { payload: {}, hint: 'ausente' }, { payload: { text: '' }, hint: 'vazio' }, { payload: { text: 1 }, hint: 'tipo' },
+    { payload: { text: 'a', voiceId: 'NAOEXISTEnaLISTA00000' }, hint: 'voiceId fora da lista' },
+    { payload: { text: 'a', modelId: 'eleven_monolingual_v1' }, hint: 'modelId fora da lista' }] },
   ElevenLabsSFXSchema: { schema: S.ElevenLabsSFXSchema, valid: [{ prompt: 'a' }], invalid: [
     { payload: {}, hint: 'ausente' }, { payload: { prompt: '' }, hint: 'vazio' }, { payload: { prompt: 'a', mode: 'x' }, hint: 'enum' }] },
-  ElevenLabsDialogueSchema: { schema: S.ElevenLabsDialogueSchema, valid: [{ script: [{ voice_id: 'v', text: 't' }] }], invalid: [
+  ElevenLabsDialogueSchema: { schema: S.ElevenLabsDialogueSchema, valid: [{ script: [{ voice_id: 'TY3h8ANhQUsJaa0Bga5F', text: 't' }] }], invalid: [
     { payload: {}, hint: 'ausente' }, { payload: { script: [] }, hint: 'vazio' },
-    { payload: { script: [{ voice_id: 'v' }] }, hint: 'nested ausente' }, { payload: { script: [{ voice_id: 'v', text: '' }] }, hint: 'nested vazio' }] },
+    { payload: { script: [{ voice_id: 'TY3h8ANhQUsJaa0Bga5F' }] }, hint: 'nested ausente' }, { payload: { script: [{ voice_id: 'TY3h8ANhQUsJaa0Bga5F', text: '' }] }, hint: 'nested vazio' },
+    { payload: { script: [{ voice_id: 'NAOEXISTEnaLISTA00000', text: 't' }] }, hint: 'voice_id fora da lista' }] },
   ElevenLabsVoiceDesignPreviewSchema: { schema: S.ElevenLabsVoiceDesignPreviewSchema, valid: [{ description: 'd' }], invalid: [
     { payload: {}, hint: 'ausente' }, { payload: { description: '' }, hint: 'vazio' }, { payload: { action: 'x', description: 'd' }, hint: 'literal' }] },
   ElevenLabsVoiceDesignCreateSchema: { schema: S.ElevenLabsVoiceDesignCreateSchema, valid: [{ action: 'create', voice_name: 'n', generated_voice_id: 'g' }], invalid: [
@@ -215,5 +225,70 @@ describe('cobertura de contrato por schema', () => {
     const s = S.SafeStringSchema(10);
     expect(s.parse('a\u0000b')).toBe('ab');
     expect(s.safeParse('x'.repeat(11)).success).toBe(false);
+  });
+});
+
+// ─── B4/SL-008: lista fechada de vozes e modelos de TTS/STS ──────────────────
+// Antes o cliente escolhia `voiceId`/`modelId`/`voice_id` livremente (qualquer
+// texto de até 100 caracteres), então dava para acionar uma voz clonada da conta
+// compartilhada e um modelo mais caro. O contrato abaixo prova a recusa na
+// validação — antes de qualquer POST ao provedor — e que o catálogo que a
+// interface oferece cabe inteiro na lista aceita.
+describe('SL-008 — lista fechada de vozes/modelos de TTS/STS (B4)', () => {
+  const FORA_DA_LISTA = 'VozClonadaForaDaLista';
+
+  it('catálogo da interface está inteiro na lista aceita', () => {
+    const arquivos = [
+      'src/components/inbox/VoiceSelector.tsx',
+      'src/components/voice/ElevenLabsDialogue.tsx',
+    ];
+    const doCatalogo = new Set<string>();
+    for (const arquivo of arquivos) {
+      const conteudo = readFileSync(new URL(`../../${arquivo}`, import.meta.url), 'utf8');
+      for (const achado of conteudo.matchAll(/id:\s*'([A-Za-z0-9]{20})'/g)) doCatalogo.add(achado[1]);
+    }
+    expect(doCatalogo.size).toBeGreaterThan(0);
+    expect([...doCatalogo].filter((id) => !S.isAllowedElevenLabsVoiceId(id))).toEqual([]);
+  });
+
+  it('TTS aceita cada voz do catálogo e recusa voz de fora da lista', () => {
+    for (const voiceId of S.ELEVENLABS_VOICE_IDS) {
+      expect(S.ElevenLabsTTSSchema.safeParse({ text: 'a', voiceId }).success).toBe(true);
+    }
+    expect(S.ElevenLabsTTSSchema.safeParse({ text: 'a', voiceId: FORA_DA_LISTA }).success).toBe(false);
+  });
+
+  it('TTS recusa modelo de fora da lista e aceita os modelos do produto', () => {
+    expect(S.ElevenLabsTTSSchema.safeParse({ text: 'a', modelId: 'eleven_multilingual_v1' }).success).toBe(false);
+    for (const modelId of S.ELEVENLABS_TTS_MODEL_IDS) {
+      expect(S.ElevenLabsTTSSchema.safeParse({ text: 'a', modelId }).success).toBe(true);
+    }
+  });
+
+  it('diálogo recusa voice_id de fora da lista e aceita o do catálogo', () => {
+    expect(S.ElevenLabsDialogueSchema.safeParse({ script: [{ voice_id: FORA_DA_LISTA, text: 't' }] }).success).toBe(false);
+    expect(S.ElevenLabsDialogueSchema.safeParse({ script: [{ voice_id: S.ELEVENLABS_VOICE_IDS[0], text: 't' }] }).success).toBe(true);
+  });
+
+  it('STS recusa voz de fora e cai no modelo do produto quando ele não é enviado', () => {
+    expect(S.resolveElevenLabsStsInputs(FORA_DA_LISTA, undefined).ok).toBe(false);
+    expect(S.resolveElevenLabsStsInputs('EXAVITQu4vr4xnSDxMaL', null)).toEqual({
+      ok: true,
+      voiceId: 'EXAVITQu4vr4xnSDxMaL',
+      modelId: 'eleven_multilingual_sts_v2',
+    });
+    expect(S.resolveElevenLabsStsInputs('EXAVITQu4vr4xnSDxMaL', 'eleven_multilingual_sts_v2')).toEqual({
+      ok: true,
+      voiceId: 'EXAVITQu4vr4xnSDxMaL',
+      modelId: 'eleven_multilingual_sts_v2',
+    });
+    expect(S.resolveElevenLabsStsInputs('EXAVITQu4vr4xnSDxMaL', 'eleven_v3').ok).toBe(false);
+  });
+
+  it('defaults que o produto usa por conta própria estão na lista', () => {
+    expect(S.isAllowedElevenLabsVoiceId('TY3h8ANhQUsJaa0Bga5F')).toBe(true);
+    expect(S.ELEVENLABS_TTS_MODEL_IDS).toContain('eleven_v3');
+    expect(S.ELEVENLABS_TTS_MODEL_IDS).toContain('eleven_flash_v2_5');
+    expect(S.ELEVENLABS_STS_MODEL_IDS).toContain('eleven_multilingual_sts_v2');
   });
 });

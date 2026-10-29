@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * E96: gera `docs/ci/README.md` a partir do bloco `# docs:` do topo de cada workflow.
+ * W96: gera `docs/ci/README.md` a partir dos blocos `# docs:` e `# nao-e-bug:` de cada workflow.
  *
  * Por que existe: um workflow de 900 linhas só conta o que faz e a quem avisa se
  * alguém escrever isso. Comentário solto no meio do arquivo não é lido, e um
@@ -14,8 +14,17 @@
  *   #   falha:   <o que acontece quando falha>
  *   #   avisa:   <quem é avisado>
  *
- * e o README é a projeção desses blocos. `--check` falha se divergir — é o que
+ * e opcionalmente:
+ *
+ *   # nao-e-bug:
+ *   #   - <chave>: <descricao>
+ *
+ * O README é a projeção desses blocos. `--check` falha se divergir — é o que
  * trava a regressão no CI (a etapa pede `--check` verde).
+ *
+ * KPI opcional: se `docs/ci/kpi.json` existir, as colunas "custo/semana (min)"
+ * e "taxa de falha (7 d)" são lidas de lá (chaves: `custo_semana_min` e
+ * `taxa_falha_7d`, indexadas pelo nome do arquivo YAML). Sem o arquivo, "—".
  *
  * Uso:
  *   node scripts/ci/render-workflow-docs.mjs           # escreve o README
@@ -30,6 +39,7 @@ const AQUI = dirname(fileURLToPath(import.meta.url));
 const RAIZ = join(AQUI, '..', '..');
 const DIR_WF = join(RAIZ, '.github', 'workflows');
 const README = join(RAIZ, 'docs', 'ci', 'README.md');
+const KPI_PATH = join(RAIZ, 'docs', 'ci', 'kpi.json');
 
 const CAMPOS = ['gatilho', 'prova', 'falha', 'avisa'];
 
@@ -59,16 +69,56 @@ function extrairDocs(texto) {
   return Object.keys(saida).length ? saida : null;
 }
 
+/**
+ * Extrai entradas do bloco `# nao-e-bug:` do topo do arquivo.
+ * Cada item é uma linha `#   - <chave>: <descricao>`.
+ * Devolve array de { chave, descricao } ou [] se não houver bloco.
+ */
+function extrairNaoEBug(texto) {
+  const linhas = texto.split('\n');
+  const itens = [];
+  let dentro = false;
+
+  for (const linha of linhas) {
+    if (/^#\s*nao-e-bug:\s*$/.test(linha)) {
+      dentro = true;
+      continue;
+    }
+    if (!dentro) continue;
+
+    const m = /^#\s+-\s+(.+?):\s*(.+?)\s*$/.exec(linha);
+    if (m) {
+      itens.push({ chave: m[1], descricao: m[2] });
+      continue;
+    }
+    // Linha de comentário vazia continua; qualquer outra coisa (inclusive docs:) encerra.
+    if (/^#\s*$/.test(linha)) continue;
+    break;
+  }
+
+  return itens;
+}
+
 /** Nome amigável: `name:` do workflow, senão o nome do arquivo. */
 function nomeDe(texto, arquivo) {
   const m = /^name:\s*(.+?)\s*$/m.exec(texto);
   return m ? m[1] : arquivo.replace(/\.yml$/, '');
 }
 
+// KPI: tenta carregar docs/ci/kpi.json; ignora silenciosamente se não existir.
+let kpi = {};
+try {
+  kpi = JSON.parse(await readFile(KPI_PATH, 'utf8'));
+} catch {
+  // sem KPI → colunas ficam "—"
+}
+
 const arquivos = (await readdir(DIR_WF)).filter((f) => f.endsWith('.yml')).sort();
 
 const docs = [];
 const semBloco = [];
+const naoEBugGlobal = [];
+
 for (const arquivo of arquivos) {
   const texto = await readFile(join(DIR_WF, arquivo), 'utf8');
   const bloco = extrairDocs(texto);
@@ -81,7 +131,12 @@ for (const arquivo of arquivos) {
     console.error(`ERRO: ${arquivo} tem bloco # docs: sem ${faltando.join(', ')}`);
     process.exit(1);
   }
-  docs.push({ arquivo, nome: nomeDe(texto, arquivo), ...bloco });
+  const nome = nomeDe(texto, arquivo);
+  const naoEBug = extrairNaoEBug(texto);
+  for (const item of naoEBug) {
+    naoEBugGlobal.push({ workflow: nome, arquivo, ...item });
+  }
+  docs.push({ arquivo, nome, ...bloco });
 }
 
 if (semBloco.length) {
@@ -99,12 +154,13 @@ const linhas = [
   '',
   `**${docs.length} workflows.**`,
   '',
-  '| Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado |',
-  '|---|---|---|---|---|---|',
-  ...docs.map(
-    (d) =>
-      `| ${d.nome} | [\`${d.arquivo}\`](../../.github/workflows/${d.arquivo}) | ${d.gatilho} | ${d.prova} | ${d.falha} | ${d.avisa} |`,
-  ),
+  '| Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |',
+  '|---|---|---|---|---|---|---|---|',
+  ...docs.map((d) => {
+    const custo = kpi[d.arquivo]?.custo_semana_min ?? '—';
+    const falha7d = kpi[d.arquivo]?.taxa_falha_7d ?? '—';
+    return `| ${d.nome} | [\`${d.arquivo}\`](../../.github/workflows/${d.arquivo}) | ${d.gatilho} | ${d.prova} | ${d.falha} | ${d.avisa} | ${custo} | ${falha7d} |`;
+  }),
   '',
   '## Detalhe',
   '',
@@ -118,6 +174,23 @@ const linhas = [
     '',
   ]),
 ];
+
+if (naoEBugGlobal.length > 0) {
+  linhas.push(
+    '## O que NÃO é bug',
+    '',
+    '> Comportamentos que parecem erros mas são design intencional.',
+    '> Cada item vem do bloco `# nao-e-bug:` do YAML do workflow.',
+    '',
+    '| Workflow | Situação | Por quê não é bug |',
+    '|---|---|---|',
+    ...naoEBugGlobal.map(
+      (i) =>
+        `| [\`${i.arquivo}\`](../../.github/workflows/${i.arquivo}) | **${i.chave}** | ${i.descricao} |`,
+    ),
+    '',
+  );
+}
 
 const conteudo = linhas.join('\n');
 

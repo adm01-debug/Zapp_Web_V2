@@ -12,8 +12,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const h = vi.hoisted(() => {
   const state: { handler: null | ((p: { new: unknown }) => void) } = { handler: null };
   const channelObj: Record<string, unknown> = {};
-  channelObj.on = vi.fn((_e: string, _f: unknown, cb: (p: { new: unknown }) => void) => {
-    state.handler = cb;
+  channelObj.on = vi.fn((_tipo: string, filtro: { event?: string }, cb: (p: { new: unknown }) => void) => {
+    // O canal tem dois handlers (INSERT e UPDATE); só o INSERT toca/push.
+    if (filtro?.event === 'INSERT') state.handler = cb;
     return channelObj;
   });
   channelObj.subscribe = vi.fn(() => ({ unsubscribe: vi.fn() }));
@@ -36,6 +37,9 @@ let quiet = false;
 
 vi.mock('@/hooks/system/useNotificationSettings', () => ({
   useNotificationSettings: () => ({ settings: settingsState, isQuietHours: () => quiet }),
+}));
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'user-1' }, profile: { id: 'prof-1' } }),
 }));
 vi.mock('@/hooks/system/usePushNotifications', () => ({
   usePushNotifications: () => ({ showNotification: vi.fn(), permission: 'denied' }),
@@ -112,5 +116,29 @@ describe('useWarRoomAlerts — mudo do painel e horário de silêncio', () => {
     await new Promise((r) => setTimeout(r, 20));
 
     expect(tocou()).toBe(false);
+  });
+
+  it('crítico toca em DUAS batidas separadas (a segunda 250 ms depois da primeira)', async () => {
+    renderHook(() => useWarRoomAlerts(), { wrapper: wrapper() });
+    await waitFor(() => expect(h.state.handler).toBeTruthy());
+
+    act(() => { h.state.handler!(alertaCritico); });
+
+    // A dupla batida saía no mesmo tique: `play()` reinicia `currentTime`, então o
+    // operador ouvia UMA batida só. A primeira sai agora e a segunda 250 ms depois.
+    expect(audios[0].play).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(audios[0].play).toHaveBeenCalledTimes(2), { timeout: 1500 });
+  });
+
+  it('alerta que não é crítico toca UMA vez só', async () => {
+    renderHook(() => useWarRoomAlerts(), { wrapper: wrapper() });
+    await waitFor(() => expect(h.state.handler).toBeTruthy());
+
+    act(() => {
+      h.state.handler!({ new: { ...alertaCritico.new, id: 'x2', alert_type: 'sla_warning' } });
+    });
+    await new Promise((r) => setTimeout(r, 400));
+
+    expect(audios[0].play).toHaveBeenCalledTimes(1);
   });
 });

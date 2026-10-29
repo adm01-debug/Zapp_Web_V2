@@ -6,6 +6,7 @@ import {
   filtersFromSearch,
   isFilterActive,
   searchWithFilters,
+  type DueFilter,
   type TasksFilters,
 } from './workItemFilters';
 
@@ -25,6 +26,14 @@ type Action =
   | { type: 'contact'; value: string | null }
   | { type: 'toggleAlarm' }
   | { type: 'toggleDone' }
+  /**
+   * Etapa 023 (cartão T13): o recorte de PRAZO ganha escritor. A etapa 024
+   * entregou o estado, o parse/serialize da URL e o recorte (`applyFilters`),
+   * mas nenhum setter — e o clique do KPI "Atrasadas"/"Para hoje" não tem como
+   * escrever no reducer sem ele. Nada de novo aqui além de expor o que já
+   * existia: o estado continua sendo o da URL e o recorte, o do `applyFilters`.
+   */
+  | { type: 'due'; value: DueFilter }
   | { type: 'hydrate'; value: TasksFilters }
   | { type: 'clear' };
 
@@ -37,6 +46,7 @@ function reducer(state: TasksFilters, action: Action): TasksFilters {
     case 'contact':     return { ...state, contact: action.value };
     case 'toggleAlarm': return { ...state, alarm: !state.alarm };
     case 'toggleDone':  return { ...state, done: !state.done };
+    case 'due':         return { ...state, due: action.value };
     case 'hydrate':     return action.value;
     case 'clear':       return DEFAULT_FILTERS;
   }
@@ -107,6 +117,8 @@ export function useTasksFilters() {
     setSearch,
     setPrio:        (value: Priority | 'all') => dispatch({ type: 'prio', value }),
     setContact:     (value: string | null) => dispatch({ type: 'contact', value }),
+    /** Etapa 023: recorte de prazo (Atrasadas / Para hoje) — `'all'` limpa. */
+    setDue:         (value: DueFilter) => dispatch({ type: 'due', value }),
     toggleAlarm:    () => dispatch({ type: 'toggleAlarm' }),
     toggleDone:     () => dispatch({ type: 'toggleDone' }),
     // "Limpar" zera o texto JUNTO com o filtro — e CANCELA o debounce pendente,

@@ -50,6 +50,8 @@ export interface WhatsAppPresenceInfo {
 export interface WhatsAppStatusData {
   statusMessages: WhatsAppStatusMessage[];
   presence: WhatsAppPresenceInfo;
+  /** Instância resolvida do contato — necessária para buscar a mídia privada no viewer. */
+  instanceName: string | null;
   loading: boolean;
   error: string | null;
   refresh: () => void;
@@ -126,6 +128,7 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
   const [presence, setPresence] = useState<WhatsAppPresenceInfo>({ isOnline: false, lastSeen: null, loading: true });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [instanceName, setInstanceName] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -189,15 +192,21 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
   }, []);
 
   const fetchData = useCallback(async () => {
-    if (!phone) return;
+    if (!phone) {
+      setInstanceName(null);
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     try {
-      const { instanceName, contactName } = await getConnectionInfo(phone);
+      const { instanceName: resolvedInstance, contactName } = await getConnectionInfo(phone);
 
-      if (!instanceName) {
+      if (!mountedRef.current) return;
+      setInstanceName(resolvedInstance);
+
+      if (!resolvedInstance) {
         setError('Sem conexão WhatsApp disponível');
         return;
       }
@@ -205,11 +214,11 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
       const [statusResult] = await Promise.allSettled([
         supabase.functions.invoke('evolution-api/find-status-messages', {
           method: 'POST',
-          body: { instanceName, page: 1, offset: 200 },
+          body: { instanceName: resolvedInstance, page: 1, offset: 200 },
         }),
         supabase.functions.invoke('evolution-api/send-chat-presence', {
           method: 'POST',
-          body: { instanceName, number: phone, presence: 'paused', delay: 0 },
+          body: { instanceName: resolvedInstance, number: phone, presence: 'paused', delay: 0 },
         }),
       ]);
 
@@ -277,6 +286,7 @@ export function useWhatsAppStatus(phone: string | undefined): WhatsAppStatusData
   return {
     statusMessages,
     presence,
+    instanceName,
     loading,
     error,
     refresh: fetchData,

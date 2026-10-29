@@ -87,7 +87,14 @@ describe('smoke: conversation creation (send message)', () => {
     const res = await sendMessageToContact('c1', 'hi');
     expect(res.id).toBe('msg-1');
     expect(rpcMock).toHaveBeenCalledWith('enqueue_outbound_message', expect.objectContaining({ p_contact_id: 'c1', p_content: 'hi' }));
-    expect(invokeMock).toHaveBeenCalledWith('message-delivery', { body: { messageId: 'msg-1' } });
+    expect(invokeMock).toHaveBeenCalledWith('message-delivery', expect.objectContaining({
+      body: { messageId: 'msg-1' },
+      // PE-16: o despacho carrega o id de correlação que o log do cliente mostra.
+      headers: expect.objectContaining({
+        'x-request-id': expect.any(String),
+        'x-correlation-id': expect.any(String),
+      }),
+    }));
   });
 });
 

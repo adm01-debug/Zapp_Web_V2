@@ -20,7 +20,6 @@ export * from './useLoadingState';
 export * from './useOnboarding';
 export * from './useOnboardingChecklist';
 export * from './useParallax';
-export * from './usePrefetchOnHover';
 export * from './usePullToRefresh';
 export * from './useScreenProtection';
 export * from './useSidebarCollapse';

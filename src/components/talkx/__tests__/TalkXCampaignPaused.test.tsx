@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import React from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { createTestQueryClient } from '@/test/mocks/queryClient';
 
 /**
  * Tela 13 — "Campanha Pausada" (X156 · F11 Acompanhar campanha).
@@ -101,13 +103,17 @@ function setQueryState(over: Partial<QueryState>) {
   };
 }
 
-function view() {
+// Os painéis (X160) vêm de um `useQuery` próprio da tela: precisa de QueryClient na árvore.
+function view({ pausedByName }: { pausedByName?: string | null } = {}) {
   return (
-    <TalkXCampaignPaused
-      campaignId="camp-pausada-1"
-      onBack={h.onBack}
-      onStatusChange={h.onStatusChange}
-    />
+    <QueryClientProvider client={createTestQueryClient()}>
+      <TalkXCampaignPaused
+        campaignId="camp-pausada-1"
+        pausedByName={pausedByName}
+        onBack={h.onBack}
+        onStatusChange={h.onStatusChange}
+      />
+    </QueryClientProvider>
   );
 }
 
@@ -131,6 +137,13 @@ describe('TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)', () =>
     expect(screen.getByText(/Pausada em 06 set 2026/)).toBeTruthy();
     // a campanha está pausada: nada de avisar o pai para navegar
     expect(h.onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it('quem pausou é nomeado quando o contêiner resolve paused_by', () => {
+    setQueryState({ campaigns: [PAUSED_CAMPAIGN] });
+    render(view({ pausedByName: 'Ana Souza' }));
+
+    expect(screen.getByText(/Pausada por Ana Souza em 06 set 2026/)).toBeTruthy();
   });
 
   it('retomar: o modal não fecha antes de o servidor confirmar', async () => {

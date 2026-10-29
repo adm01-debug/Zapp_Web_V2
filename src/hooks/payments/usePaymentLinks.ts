@@ -1,85 +1,54 @@
-import { useCallback, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+/**
+ * TODO: hook de links de pagamento — não implementado.
+ *
+ * Este arquivo é um stub mínimo criado para que `PaymentLinksView` e seus
+ * testes compilem. A implementação real deve integrar com o provider de
+ * pagamentos escolhido (Stripe, Asaas, etc.) e acessar a tabela correspondente
+ * no Supabase.
+ */
 
 export interface PaymentLink {
   id: string;
   title: string;
-  description: string | null;
+  status: 'active' | 'paid' | 'expired' | 'cancelled';
   amount: number;
-  currency: string;
-  status: string;
   payment_method: string;
-  payment_url: string | null;
-  contact_id: string | null;
-  paid_at: string | null;
-  expires_at: string | null;
   created_at: string;
+  payment_url?: string;
+  description?: string | null;
+  expires_at?: string | null;
 }
 
-interface CreatePaymentLinkInput {
+export interface CreatePaymentLinkInput {
   title: string;
-  description: string | null;
+  description?: string | null;
   amount: number;
   paymentMethod: string;
   paymentUrl: string;
 }
 
-const QUERY_KEY = ['payment-links'] as const;
+export interface UsePaymentLinksResult {
+  links: PaymentLink[] | undefined;
+  isLoading: boolean;
+  isError: boolean;
+  createLink: (input: CreatePaymentLinkInput) => Promise<void>;
+  deleteLink: (id: string) => Promise<void>;
+}
 
-export function usePaymentLinks() {
-  const queryClient = useQueryClient();
-  const query = useQuery({
-    queryKey: QUERY_KEY,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('payment_links')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data as PaymentLink[];
-    },
-    // O canal realtime existe apenas enquanto a tela está montada. Revalidar
-    // no retorno fecha a janela em que mudanças externas poderiam ficar em cache.
-    refetchOnMount: 'always',
-  });
-
-  useEffect(() => {
-    const channel = supabase
-      .channel('payment-links-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_links' }, () => {
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      })
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
-
-  const createLink = useCallback(async (input: CreatePaymentLinkInput) => {
-    const { error } = await supabase.from('payment_links').insert({
-      title: input.title,
-      description: input.description,
-      amount: input.amount,
-      payment_method: input.paymentMethod,
-      payment_url: input.paymentUrl,
-    });
-    if (error) throw error;
-    await queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-  }, [queryClient]);
-
-  const deleteLink = useCallback(async (id: string) => {
-    const { error } = await supabase.from('payment_links').delete().eq('id', id);
-    if (error) throw error;
-    await queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-  }, [queryClient]);
-
+/**
+ * Hook stub — sempre retorna lista vazia e lança ao tentar criar/excluir.
+ * Substitua pela implementação real quando o módulo de pagamentos for criado.
+ */
+export function usePaymentLinks(): UsePaymentLinksResult {
   return {
-    ...query,
-    links: query.data ?? [],
-    createLink,
-    deleteLink,
+    links: [],
+    isLoading: false,
+    isError: false,
+    createLink: async (_input: CreatePaymentLinkInput) => {
+      throw new Error('usePaymentLinks: não implementado');
+    },
+    deleteLink: async (_id: string) => {
+      throw new Error('usePaymentLinks: não implementado');
+    },
   };
 }

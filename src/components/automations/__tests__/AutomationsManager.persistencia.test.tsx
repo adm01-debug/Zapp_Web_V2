@@ -58,6 +58,8 @@ vi.mock('framer-motion', () => ({
       <div {...(props as any)}>{children as ReactNode}</div>,
   },
   AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
+  // CT-70 — AutomationCard lê useReducedMotion; aqui só o stub para o mock.
+  useReducedMotion: () => false,
 }));
 
 vi.mock('@/components/ui/card', () => ({

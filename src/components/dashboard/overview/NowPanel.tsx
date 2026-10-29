@@ -24,7 +24,7 @@ export function NowPanel({ realtime, pendingConversations, slaBreachedToday, bus
     },
     {
       testid: 'now-row',
-      tile: 'bg-dash-tile-violet',
+      tile: 'bg-violeta',
       icon: Users,
       value: busiestQueue ? `${busiestQueue.name} (${busiestQueue.waiting + busiestQueue.inService})` : '—',
       label: 'Fila com maior volume',
@@ -44,7 +44,7 @@ export function NowPanel({ realtime, pendingConversations, slaBreachedToday, bus
         {rows.map((row, i) => (
           <div key={i} data-testid={row.testid} className="h-11 flex items-center gap-2.5">
             <div className={`w-9 h-9 rounded-lg ${row.tile} flex items-center justify-center shrink-0`}>
-              <row.icon className="w-4 h-4 text-white/90" />
+              <row.icon className={`w-4 h-4 ${row.tile === 'bg-violeta' ? 'text-violeta-foreground' : 'text-white/90'}`} />
             </div>
             <div className="min-w-0">
               <p className={`text-lg font-bold leading-none ${row.tone ?? 'text-foreground'}`}>{row.value}</p>

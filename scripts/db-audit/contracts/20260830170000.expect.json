@@ -1,0 +1,9 @@
+{
+  "always": {
+    "function_count": 1,
+    "security_definer": true,
+    "stable": true,
+    "search_path_fixed": true,
+    "filters_active": true
+  }
+}

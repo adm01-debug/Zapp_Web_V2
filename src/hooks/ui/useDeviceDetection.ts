@@ -2,19 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { useAuth } from '../auth/useAuth';
+import { notificarDispositivoNovo } from '@/lib/avisoDispositivo';
 import { log } from '@/lib/logger';
 
 interface UserDevice {
   id: string;
-  device_fingerprint: string;
   device_name: string | null;
   browser: string | null;
   os: string | null;
   ip_address: string | null;
-  city: string | null;
-  country: string | null;
   is_trusted: boolean | null;
-  first_seen_at: string;
   last_seen_at: string;
 }
 
@@ -46,90 +43,24 @@ export function useDeviceDetection() {
   const [loading, setLoading] = useState(true);
   const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
 
-  // Generate device fingerprint
-  const generateFingerprint = useCallback(() => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.textBaseline = 'top';
-      ctx.font = '14px Arial';
-      ctx.fillText('fingerprint', 2, 2);
-    }
-    
-    const components = [
-      navigator.userAgent,
-      navigator.language,
-      screen.colorDepth,
-      `${screen.width}x${screen.height}`,
-      new Date().getTimezoneOffset(),
-      navigator.hardwareConcurrency || 'unknown',
-      canvas.toDataURL(),
-    ];
-
-    // Simple hash function
-    const hash = components.join('|').split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0);
-      return a & a;
-    }, 0);
-
-    return Math.abs(hash).toString(36);
-  }, []);
-
-  // Get browser info
-  const getBrowserInfo = useCallback(() => {
-    const ua = navigator.userAgent;
-    let browser = 'Unknown';
-    let os = 'Unknown';
-
-    // Browser detection
-    if (ua.includes('Chrome')) browser = 'Chrome';
-    else if (ua.includes('Firefox')) browser = 'Firefox';
-    else if (ua.includes('Safari')) browser = 'Safari';
-    else if (ua.includes('Edge')) browser = 'Edge';
-    else if (ua.includes('Opera')) browser = 'Opera';
-
-    // OS detection
-    if (ua.includes('Windows')) os = 'Windows';
-    else if (ua.includes('Mac')) os = 'macOS';
-    else if (ua.includes('Linux')) os = 'Linux';
-    else if (ua.includes('Android')) os = 'Android';
-    else if (ua.includes('iOS') || ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
-
-    // Device name
-    const isMobile = /Mobile|Android|iPhone|iPad/.test(ua);
-    const deviceName = isMobile ? 'Dispositivo Móvel' : 'Desktop';
-
-    return { browser, os, deviceName };
-  }, []);
-
-  // Check device on login
+  // Check device on login — reusa o aviso único por sessão Auth disparado no
+  // provider de autenticação (não existe uma segunda chamada na mesma sessão).
   const checkDevice = useCallback(async () => {
     if (!user) return;
 
     try {
-      const fingerprint = generateFingerprint();
-      const { browser, os, deviceName } = getBrowserInfo();
-
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) return;
 
-      const response = await supabase.functions.invoke('detect-new-device', {
-        body: {
-          device_fingerprint: fingerprint,
-          browser,
-          os,
-          device_name: deviceName,
-        },
-      });
-
-      if (response.data) {
-        setCurrentDeviceId(response.data.device_id);
-        log.debug('Device check result:', response.data);
+      const deviceId = await notificarDispositivoNovo(session.access_token);
+      if (deviceId) {
+        setCurrentDeviceId(deviceId);
+        log.debug('Device check result:', { device_id: deviceId });
       }
     } catch (error) {
       log.error('Error checking device:', error);
     }
-  }, [user, generateFingerprint, getBrowserInfo]);
+  }, [user]);
 
   // Fetch user devices
   const fetchDevices = useCallback(async () => {
@@ -138,11 +69,11 @@ export function useDeviceDetection() {
     try {
       const { data, error } = await supabase
         .from('user_devices')
-        .select('*')
+        .select('id, device_name, browser, os, ip_address, is_trusted, last_seen_at')
         .order('last_seen_at', { ascending: false });
 
       if (error) throw error;
-      setDevices(data || []);
+      setDevices((data ?? []) as UserDevice[]);
     } catch (error) {
       log.error('Error fetching devices:', error);
     }
@@ -154,7 +85,7 @@ export function useDeviceDetection() {
 
     try {
       const { data, error } = await fromTable('user_sessions')
-        .select('*')
+        .select('id, device_id, ip_address, started_at, auth_session_id')
         .eq('is_active', true)
         .order('last_activity_at', { ascending: false });
 

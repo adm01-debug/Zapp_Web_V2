@@ -290,4 +290,106 @@ describe('useChatSearch', () => {
     const ids = result.current.results.map((r) => r.id).sort();
     expect(ids).toEqual(['n1', 'n2']);
   });
+
+  // A busca jogava a URL crua da mídia no texto pesquisável: procurar o host ou um trecho
+  // do caminho (ex.: "supabase") devolvia toda foto/vídeo. Agora só o nome do arquivo/legenda.
+  it('não casa a URL crua da mídia (host/caminho) — só o nome do arquivo', () => {
+    const messages: Message[] = [
+      makeMockMessage({
+        id: 'img1',
+        content: 'foto do produto',
+        type: 'image',
+        mediaUrl: 'https://exemplo.supabase.co/storage/v1/object/public/media/2026/foto-produto.jpg',
+      }),
+    ];
+    const { result } = renderHook(() => useChatSearch({ ...defaultOpts, messages }));
+
+    act(() => result.current.setQuery('supabase'));
+    act(() => vi.advanceTimersByTime(250));
+    expect(result.current.results).toHaveLength(0);
+
+    act(() => result.current.setQuery('foto-produto'));
+    act(() => vi.advanceTimersByTime(250));
+    expect(result.current.results.map((r) => r.id)).toEqual(['img1']);
+  });
+
+  it('busca pelo nome do arquivo (media_filename) e pela legenda', () => {
+    const messages: Message[] = [
+      makeMockMessage({
+        id: 'doc1',
+        content: '',
+        type: 'document',
+        media_filename: 'contrato-assinado.pdf',
+        caption: 'documento do cliente',
+        mediaUrl: 'https://cdn.exemplo.com/a/b/xyz.pdf',
+      }),
+    ];
+    const { result } = renderHook(() => useChatSearch({ ...defaultOpts, messages }));
+
+    act(() => result.current.setQuery('contrato-assinado'));
+    act(() => vi.advanceTimersByTime(250));
+    expect(result.current.results.map((r) => r.id)).toEqual(['doc1']);
+
+    act(() => result.current.setQuery('documento do cliente'));
+    act(() => vi.advanceTimersByTime(250));
+    expect(result.current.results.map((r) => r.id)).toEqual(['doc1']);
+  });
+
+  // O filtro 'custom' sem data escolhida marcava hasDateFilter=true e devolvia TODAS as mensagens.
+  it("preset 'custom' sem data não devolve todas as mensagens", () => {
+    const { result } = renderHook(() => useChatSearch(defaultOpts));
+
+    act(() => result.current.setDatePreset('custom'));
+
+    expect(result.current.hasDateFilter).toBe(false);
+    expect(result.current.results).toEqual([]);
+  });
+
+  it("preset 'custom' com data aplica o recorte normalmente", () => {
+    const messages: Message[] = [
+      makeMockMessage({ id: 'old', content: 'antiga', timestamp: new Date('2026-04-01T10:00:00') }),
+      makeMockMessage({ id: 'new', content: 'nova', timestamp: new Date('2026-04-08T10:00:00') }),
+    ];
+    const { result } = renderHook(() => useChatSearch({ ...defaultOpts, messages }));
+
+    act(() => {
+      result.current.setDatePreset('custom');
+      result.current.setCustomDateFrom(new Date('2026-04-05T00:00:00'));
+    });
+
+    expect(result.current.hasDateFilter).toBe(true);
+    expect(result.current.results.map((r) => r.id)).toEqual(['new']);
+  });
+
+  // O efeito de debounce guardava o onSearchQueryChange da renderização em que o texto mudou:
+  // se o pai re-renderizasse nesses 200ms, o callback VELHO é que era chamado.
+  it('chama o onSearchQueryChange mais recente quando o pai re-renderiza durante o debounce', () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const { result, rerender } = renderHook(
+      (props) => useChatSearch(props),
+      { initialProps: { ...defaultOpts, onSearchQueryChange: first } }
+    );
+
+    act(() => result.current.setQuery('bolsa'));
+    rerender({ ...defaultOpts, onSearchQueryChange: second });
+    act(() => vi.advanceTimersByTime(250));
+
+    expect(second).toHaveBeenCalledWith('bolsa');
+    expect(first).not.toHaveBeenCalled();
+  });
+
+  // O filtro 'link' só reconhecia http(s)://, deixando "www.loja.com.br" de fora.
+  it("filtro 'link' reconhece endereço sem protocolo (www.)", () => {
+    const messages: Message[] = [
+      makeMockMessage({ id: 'w1', content: 'Visite www.loja.com.br agora', type: 'text' }),
+      makeMockMessage({ id: 'w2', content: 'sem link aqui', type: 'text' }),
+    ];
+    const { result } = renderHook(() => useChatSearch({ ...defaultOpts, messages }));
+
+    act(() => result.current.setFilter('link'));
+
+    expect(result.current.results.map((r) => r.id)).toEqual(['w1']);
+    expect(result.current.filterCounts.link).toBe(1);
+  });
 });

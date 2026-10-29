@@ -17,6 +17,7 @@
  *      defensiva de valor corrompido.
  */
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 
 // O jsdom não implementa captura de ponteiro; o gatilho do Select (Radix) chama
@@ -51,6 +52,11 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
 
 import { TalkXTemplates } from '../TalkXTemplates';
 import { fmtTime } from '../kit/format';
+
+function renderWithQc(ui: React.ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+}
 
 const T_ANTIGO = '2026-09-01T09:05:00.000Z';
 const T_RECENTE = '2026-10-08T14:35:00.000Z';
@@ -111,7 +117,7 @@ describe('X089 — galeria de templates (mock 04)', () => {
       updated_at: T_RECENTE,
     })];
 
-    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    renderWithQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
 
     // O nome do template também aparece no rail "Mais usados": tudo que é do cartão é
     // conferido DENTRO do cartão.
@@ -137,7 +143,7 @@ describe('X089 — galeria de templates (mock 04)', () => {
       tpl({ id: 'tpl-2', name: 'Recente', updated_at: T_RECENTE }),
     ];
 
-    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    renderWithQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
 
     expect(screen.queryByText('Agora ✓✓')).toBeNull();
     expect(screen.getByText(`${fmtTime(T_ANTIGO)} ✓✓`)).toBeTruthy();
@@ -150,7 +156,7 @@ describe('X089 — galeria de templates (mock 04)', () => {
       tpl({ id: 'tpl-doc', name: 'Com documento', media_url: 'https://cdn.exemplo/y.pdf', media_type: 'document' }),
     ];
 
-    const { container } = render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    const { container } = renderWithQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
 
     const imagens = container.querySelectorAll('img');
     expect(imagens).toHaveLength(1);
@@ -165,7 +171,7 @@ describe('X089 — galeria de templates (mock 04)', () => {
       tpl({ id: 'tpl-aprovado', name: 'Aprovado', status: 'approved' }),
     ];
 
-    const { container } = render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    const { container } = renderWithQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
 
     const rascunho = container.querySelector('[data-talkx-template-card="tpl-rascunho"]') as HTMLElement;
     const botaoRascunho = within(rascunho).getByRole('button', { name: 'Usar template' });
@@ -180,7 +186,7 @@ describe('X089 — galeria de templates (mock 04)', () => {
   it('paginação: 12 por página é o padrão e as opções são 12/24/48', () => {
     dados.templates = muitos(30);
 
-    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    renderWithQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
 
     expect(screen.getByText('Mostrando 1 a 12 de 30 templates')).toBeTruthy();
 
@@ -199,7 +205,7 @@ describe('X089 — galeria de templates (mock 04)', () => {
       ...Array.from({ length: 5 }, (_, i) => tpl({ id: `draft-${i + 1}`, name: `Rascunho ${i + 1}`, status: 'draft' })),
     ];
 
-    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    renderWithQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
 
     expect(screen.getByText('Mostrando 1 a 12 de 30 templates')).toBeTruthy();
 
@@ -218,7 +224,7 @@ describe('X089 — galeria de templates (mock 04)', () => {
     dados.templates = [tpl({ id: 'tpl-1', name: 'Boas-vindas', tags: ['boasvindas'] })];
     localStorage.setItem(CHAVE_PREFERENCIA, 'list');
 
-    const { container } = render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    const { container } = renderWithQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
 
     expect(container.querySelector('[data-talkx-view="list"]')).toBeTruthy();
     expect(screen.getByText('Descrição do template')).toBeTruthy();
@@ -234,7 +240,7 @@ describe('X089 — galeria de templates (mock 04)', () => {
     dados.templates = [tpl({ id: 'tpl-1' })];
     localStorage.setItem(CHAVE_PREFERENCIA, '{"nao":"e-json-valido"');
 
-    const { container } = render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    const { container } = renderWithQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
 
     expect(container.querySelector('[data-talkx-view="grid"]')).toBeTruthy();
     const card = container.querySelector('[data-talkx-template-card="tpl-1"]') as HTMLElement;

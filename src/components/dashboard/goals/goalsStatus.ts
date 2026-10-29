@@ -38,7 +38,7 @@ export function getPriorityLabel(priority: string): string {
 const GOAL_TILE_CLASS: Record<string, string> = {
   'messages-sent': 'bg-dash-tile-blue',
   'contacts-handled': 'bg-dash-tile-green',
-  'resolution-rate': 'bg-dash-tile-violet',
+  'resolution-rate': 'bg-violeta',
 };
 
 export function getGoalTileClass(goalId: string): string {

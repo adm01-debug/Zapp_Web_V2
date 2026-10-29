@@ -81,6 +81,82 @@ inferida a partir do banco canônico.
 5. Rotacionar a anon key externa se o projeto permitir e registrar a mudança
    no inventário de segredos.
 
+## Estado operacional do worker (W93, medido em 2026-10-15)
+
+Medição feita na produção (`tnnnlkbymytvtqngbbqh`) **somente com `SELECT`**, e
+no GitHub somente por leitura. Nada foi religado nem alterado.
+
+### Quem drena o `crm_sync_outbox` hoje
+
+**Ninguém, de forma automática.**
+
+| Caminho | Estado medido |
+|---|---|
+| `pg_cron` | 13 jobs ativos em `cron.job`; nenhum chama `crm-integration`, `processOutbox` ou `claim_crm_sync_outbox`. Nenhuma função do banco cita o worker. Nenhuma migration agenda o worker. |
+| `.github/workflows/crm-sync-worker.yml` | `schedule` comentado desde o E02 (2026-09-20). Rodou por `workflow_dispatch` uma única vez (2026-09-09, verde, antes de o outbox ter linhas). Último run agendado: 2026-09-22 (`skipped`). |
+| `vars.CRM_SYNC_WORKER_ENABLED` | não existe (lista de variáveis do repositório vazia). |
+| Edge `crm-integration`, ação `enqueueSync` | **único consumidor ativo.** Quando alguém clica em sincronizar no CRM 360, a Edge enfileira e processa **só o item daquele contato** (`claim_crm_sync_outbox_by_id`). Não drena o resto da fila. |
+
+### Tamanho e idade do outbox
+
+| Status | Linhas | Mais antiga | Mais recente | Erro |
+|---|---:|---|---|---|
+| `pending` | 474 | 2026-09-26 17:03 UTC | 2026-10-05 18:26 UTC | — (0 tentativas) |
+| `failed` | 6 | 2026-10-06 | 2026-10-07 | `CRM_NOT_SYNCED` (1 tentativa cada) |
+| `dead_letter` | 1 | 2026-09-27 | — | `CRM_NOT_SYNCED` (8 tentativas) |
+
+- Total de 481 linhas, todas criadas nos últimos 30 dias. **Nenhuma** foi
+  concluída (`completed_at` sempre nulo). `crm_contact_links` tem 0 linhas.
+- Idade da entrega pronta mais antiga: cerca de **19 dias** (1.641.893 s). O SLO
+  abaixo diz incidente a partir de 60 minutos.
+- A fila **não cresce** desde 2026-10-07: 0 linhas criadas nos últimos 7 dias.
+  Ela está parada, não acumulando.
+- 464 das 481 linhas têm chave `closure:<uuid>` mas `closure_id` nulo, ou seja,
+  o encerramento de origem foi apagado depois do enfileiramento (`ON DELETE SET
+  NULL`). Elas ainda guardam `contact_id`, então o worker as processaria.
+- O kill switch `feature_flags.crm.integration` está `true` e o trigger
+  `trg_enqueue_crm_sync_from_closure` está habilitado.
+- As 7 tentativas reais (failed e dead_letter) falharam todas com
+  `CRM_NOT_SYNCED`. Antes de drenar 474 itens, entender esse erro: se ele se
+  repetir, o worker empurra a fila inteira para `dead_letter` em 8 rodadas.
+
+### O workflow é operação manual
+
+Até o dono decidir, `crm-sync-worker.yml` serve só para disparo manual (lote de
+1 a 10). Não existe drenagem automática para alguém supor que está rodando.
+
+### Como religar o schedule, se o dono decidir
+
+A decisão é do Joaquim. Nenhum agente religa por conta própria.
+
+1. **Antes de religar:** entender o `CRM_NOT_SYNCED` das 7 tentativas e
+   cumprir o passo 6 da Fase 2 (reconciliar o acumulado, com a unicidade externa
+   por `p_zapp_conversation_id` provada).
+2. Disparar o `CRM Sync Worker` manualmente com `batch_size=1` e aprovar no
+   environment `producao-edge-functions`. O run precisa sair verde com
+   `CRM health: external=ok, queue=ok` e `CRM outbox: processados=1, falhas=0`.
+3. Criar a variável de repositório `CRM_SYNC_WORKER_ENABLED=true`
+   (Settings → Secrets and variables → Actions → Variables).
+4. No YAML, descomentar o bloco `schedule:` com uma cadência compatível com a
+   fila e fora do minuto 0, por exemplo `2-57/5 * * * *`. Com lote de até 10
+   por run e 474 pendentes, a cada 5 minutos a fila esvazia em cerca de 4 horas. Atualizar o bloco `# docs:` (o `gatilho`)
+   e rodar `node scripts/ci/render-workflow-docs.mjs`.
+5. **Atenção ao environment:** o job usa `environment: producao-edge-functions`.
+   Se esse environment tiver revisor obrigatório, todo run agendado vai pausar
+   em `Waiting`. Antes de religar, ou o environment fica sem revisor, ou o
+   worker passa para um job do `pg_cron` que chame a Edge, no padrão do
+   `multiplix-send-trigger`. Isso exige migration nova, que segue o fluxo da
+   seção 0 do `CLAUDE.md`.
+6. **Como verificar:** nas 24 horas seguintes, o `get_crm_sync_health()`
+   precisa mostrar `pending` caindo, `oldest_ready_age_seconds` abaixo de 900,
+   `dead_letter` e `succeeded_without_link` iguais a 0. Para conferir só com
+   leitura:
+
+   ```sql
+   SELECT status, count(*), min(created_at)
+   FROM public.crm_sync_outbox GROUP BY status;
+   ```
+
 ## SLO e resposta a incidentes
 
 - Disponibilidade mensal do gateway: 99,9%.

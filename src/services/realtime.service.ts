@@ -15,6 +15,7 @@ import {
   buildConversation,
   ContactConversationSummary
 } from '@/hooks/realtime/realtimeUtils';
+import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { getLogger } from '@/lib/logger';
 
 const log = getLogger('RealtimeService');
@@ -191,7 +192,10 @@ export class RealtimeService {
     return buildConversations([...seededContactRows, ...messageContacts], normalizedMessages, summaries);
   }
 
-  static subscribeToReactions(messageId: string, onChange: (payload: any) => void) {
+  static subscribeToReactions(
+    messageId: string,
+    onChange: (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => void,
+  ) {
     return supabase
       .channel(`chat-reactions:${messageId}`)
       .on('postgres_changes', {
@@ -202,7 +206,7 @@ export class RealtimeService {
       .subscribe();
   }
 
-  static removeChannel(channel: any) {
+  static removeChannel(channel: RealtimeChannel) {
     return supabase.removeChannel(channel);
   }
 

@@ -1,0 +1,16 @@
+{
+  "before": {
+    "table_count": 0,
+    "rls_count": 0,
+    "function_count": 0,
+    "safe_function_count": 0,
+    "trigger_count": 0
+  },
+  "after": {
+    "table_count": 2,
+    "rls_count": 2,
+    "function_count": 6,
+    "safe_function_count": 6,
+    "trigger_count": 1
+  }
+}

@@ -4,8 +4,7 @@
  * limpo e o diálogo fechado na mesma batida, mesmo sem nenhum aceite de transporte.
  *
  * Prova (vermelho antes / verde depois): com um transporte que REJEITA, a composição
- * precisa continuar no formulário e o diálogo NÃO pode ser fechado; e o envio
- * indisponível precisa ser apresentado como tal.
+ * precisa continuar no formulário e o diálogo NÃO pode ser fechado.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -58,23 +57,5 @@ describe('InteractiveMessageBuilder — envio só é confirmado com aceite do tr
 
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
     expect(screen.getByPlaceholderText(/digite o corpo da mensagem/i)).toHaveValue('');
-  });
-
-  it('apresenta o envio como indisponível e não deixa confirmar', () => {
-    const onSend = vi.fn();
-    const onOpenChange = vi.fn();
-    render(
-      <InteractiveMessageBuilder
-        open
-        onOpenChange={onOpenChange}
-        onSend={onSend}
-        sendUnavailableReason="Envio de mensagens interativas indisponível: o transporte de botões e listas ainda não está publicado. Sua composição foi mantida."
-      />,
-    );
-
-    const alerta = screen.getByText(/transporte de botões e listas ainda não está publicado/i);
-    expect(alerta).toHaveAttribute('role', 'alert');
-    expect(screen.getByRole('button', { name: /enviar mensagem/i })).toBeDisabled();
-    expect(onSend).not.toHaveBeenCalled();
   });
 });

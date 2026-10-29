@@ -1,0 +1,17 @@
+{
+  "always": {
+    "table_count": 2,
+    "constraint_count": 5,
+    "flag_enabled": false
+  },
+  "before": {
+    "function_count": 0,
+    "flag_count": 0
+  },
+  "after": {
+    "validated_constraint_count": 5,
+    "function_count": 3,
+    "safe_function_count": 3,
+    "flag_count": 1
+  }
+}

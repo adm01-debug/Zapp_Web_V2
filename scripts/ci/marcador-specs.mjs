@@ -68,3 +68,24 @@ export function corpoDe(nomes) {
     '_Alerta do `e2e-logado.yml`. Fecha sozinho quando a suite voltar a passar na main._',
   ].join('\n');
 }
+
+/**
+ * W80: detecta se a falha foi exclusivamente no setup de autenticacao.
+ * Quando todos os diretorios começam com "auth.setup.ts-" ou "setup-auth",
+ * a causa é "login falhou", não "spec quebrado" — dono e ação distintos.
+ */
+export function eLoginFalhou(nomes) {
+  const lista = normalizar(nomes);
+  if (lista.length === 0) return false;
+  return lista.every((n) => n.startsWith('auth.setup.ts-') || n.startsWith('setup-auth'));
+}
+
+/**
+ * Título da issue de acordo com a causa detectada.
+ * Prefixo "[e2e-logado]" é mantido para que o workflow de fechamento ache a issue pelo título.
+ */
+export function tituloDe(nomes) {
+  if (eLoginFalhou(nomes)) return '[e2e-logado] login E2E falhou';
+  return '[e2e-logado] Suíte logada quebrada na main';
+}
+

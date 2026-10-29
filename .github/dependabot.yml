@@ -99,3 +99,22 @@ updates:
       - "go"
     commit-message:
       prefix: "⬆️ go:"
+
+  # Auditoria 2026-10-15 (Scorecard PinnedDependenciesID): o Dockerfile deste
+  # mesmo diretorio tem 2 imagens base (golang, distroless) sem nenhum
+  # ecosystem do Dependabot cobrindo-as. Pinar por digest sem isto faria a
+  # imagem travar para sempre em vez de receber bump rastreavel.
+  - package-ecosystem: "docker"
+    directory: "/infrastructure/preview-egress-proxy"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    assignees:
+      - "adm01-debug"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "⬆️ docker:"

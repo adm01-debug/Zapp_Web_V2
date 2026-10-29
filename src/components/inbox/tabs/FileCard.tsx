@@ -1,12 +1,16 @@
-import { Eye, Share2 } from 'lucide-react';
+import { useState } from 'react';
+import { Download, Eye, Lock, MessageSquare, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
-import { formatMeta } from './fileDisplay';
+import { resolveSenderIdentity, type SenderProfileMap } from '@/lib/fileSenderIdentity';
+import { typeSizeLine, formatCardDate } from './fileDisplay';
 import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
 import { AudioPlayButton } from './AudioPlayButton';
 import { FILE_ACTION_BUTTON, FILE_ACTION_BUTTON_DISABLED } from './fileActionButton';
+import { SenderAvatar } from './SenderAvatar';
 
 interface FileCardProps {
   item: ContactMediaItem;
@@ -17,6 +21,14 @@ interface FileCardProps {
   selectionChecked?: boolean;
   /** Etapa 18: a linha do remetente só cabe em até 4 colunas; acima disso fica nos detalhes. */
   effectiveColumns?: number;
+  /** R01: perfis dos atendentes (carregados em lote por FilesContent). */
+  senderProfiles?: SenderProfileMap;
+  /** R01: `profile.id` do usuário logado para distinguir "Você" dos demais. */
+  currentUserId?: string | null;
+  /** Permite ao usuário abrir o arquivo na conversa de origem. */
+  onOpenInChat?: (item: ContactMediaItem) => void;
+  /** Download liberado pela política de segurança da organização. */
+  downloadAllowed?: boolean;
   onSelect: () => void;
   onToggleSelection?: () => void;
   onPreview: () => void;
@@ -31,6 +43,10 @@ export function FileCard({
   selectionMode = false,
   selectionChecked = false,
   effectiveColumns = 4,
+  senderProfiles,
+  currentUserId,
+  downloadAllowed,
+  onOpenInChat,
   onSelect,
   onToggleSelection,
   onPreview,
@@ -38,17 +54,50 @@ export function FileCard({
   onRequestDelete,
 }: FileCardProps) {
   const mostraRemetente = effectiveColumns <= 4;
-  // Etapas 18/25: meta unica vinda do fileDisplay — nenhum renderer formata data ou tamanho.
-  const meta = formatMeta(item);
+  const metaTipoTamanho = typeSizeLine(item);
+  const metaData = formatCardDate(item.created_at);
+  const sender = resolveSenderIdentity({
+    item,
+    currentUserId,
+    contact: { name: contactName },
+    profiles: senderProfiles,
+  });
 
   const acao = selectionMode ? onToggleSelection : undefined;
+
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    const url = item.signedUrl ?? item.url ?? '';
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        toast.error('Não foi possível baixar o arquivo', { description: `Erro ${resp.status}` });
+        return;
+      }
+      const blob = await resp.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = item.filename || item.displayName;
+      a.click();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      toast.error('Não foi possível baixar o arquivo');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <article
       data-testid={`files-item-${item.id}`}
+      data-selected={String(selected || selectionChecked)}
       className={cn(
         'rounded-xl border bg-card overflow-hidden flex flex-col',
-        selected || selectionChecked ? 'border-border ring-2 ring-primary' : 'border-border',
+        selected || selectionChecked ? 'border-primary ring-2 ring-primary' : 'border-border',
       )}
     >
       <div className="relative">
@@ -85,15 +134,15 @@ export function FileCard({
         >
           {item.displayName}
         </button>
-        <p className="text-xs text-muted-foreground truncate">{meta}</p>
-        {mostraRemetente && (
-          <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
-            <span className="w-4 h-4 shrink-0 rounded-full bg-muted-foreground/20 inline-flex items-center justify-center text-[9px] font-semibold">
-              {item.senderLabel === 'Atendente' ? 'V' : (contactName[0] ?? '?').toUpperCase()}
-            </span>
-            {item.senderLabel ?? contactName}
-          </p>
-        )}
+        <p className="text-xs text-muted-foreground truncate">{metaTipoTamanho}</p>
+        <p className="text-xs text-muted-foreground truncate">{metaData}</p>
+        <SenderAvatar
+          name={sender.name}
+          avatarUrl={sender.avatarUrl}
+          colorKey={item.agentId ?? undefined}
+          size="sm"
+          showName={mostraRemetente}
+        />
       </div>
 
       {/* Etapa 19: Visualizar, Encaminhar (desabilitado até a Fase 7) e Mais ações.
@@ -109,6 +158,28 @@ export function FileCard({
         >
           <Eye className="w-3.5 h-3.5" />
         </button>
+        {downloadAllowed === false ? (
+          <button
+            type="button"
+            aria-label="Download bloqueado por política de segurança"
+            title="Download bloqueado por política de segurança"
+            className={FILE_ACTION_BUTTON}
+            onClick={() => toast.error('🔒 Download bloqueado por política de segurança', {
+              description: 'Entre em contato com o administrador para solicitar acesso.',
+            })}
+          >
+            <Lock className="w-3.5 h-3.5" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            aria-label="Baixar"
+            className={FILE_ACTION_BUTTON}
+            onClick={handleDownload}
+          >
+            <Download className="w-3.5 h-3.5" />
+          </button>
+        )}
         <button
           type="button"
           aria-label="Encaminhar"
@@ -118,6 +189,16 @@ export function FileCard({
         >
           <Share2 className="w-3.5 h-3.5" />
         </button>
+        {onOpenInChat && (
+          <button
+            type="button"
+            aria-label="Ver na conversa"
+            className={FILE_ACTION_BUTTON}
+            onClick={() => onOpenInChat(item)}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+          </button>
+        )}
         <FileActionsMenu item={item} onRequestDelete={onRequestDelete} />
       </div>
     </article>

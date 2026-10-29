@@ -14,6 +14,14 @@
  * check-migration-drift.mjs), com resultado PARCIAL, nunca sucesso global.
  * --require-live exige as tres pernas (CI viva). Qualquer divergencia => exit 1.
  *
+ * --sem-migrations delega a perna A ao check-migration-drift.mjs (passo "Comparar
+ * migrations" do db-live-guard), que compara versao a versao, nos dois sentidos e
+ * com conteudo, e separa "apply pendente" de drift. A perna A aqui so conta e faz
+ * hash: refazia a mesma prova de forma mais fraca e transformava o estado esperado
+ * do lote (arquivo mergeado aguardando o db-migrate) em alerta falso (run
+ * 38767166343, 15/10/2026: 816 arquivos x 815 no ledger). Delegada nao conta como
+ * pulada: o --require-live continua exigindo as pernas B e C.
+ *
  * Variaveis para testes offline:
  *   MIGRATIONS_DIR, FUNCTIONS_DIR, MANIFEST_PATH, GRANTS_SQL_PATH,
  *   GRANTS_BASELINE_PATH, PSQL_BIN (nunca passa por shell)
@@ -33,6 +41,8 @@ const PSQL_BIN = process.env.PSQL_BIN || 'psql';
 const url = process.env.DESTINO_URL?.trim();
 const args = process.argv.slice(2);
 const requireLive = args.includes('--require-live');
+const semMigrations = args.includes('--sem-migrations');
+const ARGS_VALIDOS = new Set(['--require-live', '--sem-migrations']);
 
 const FILE_NAME_RE = /^(\d{14})_[a-z0-9][a-z0-9_-]*\.sql$/;
 let failures = 0;
@@ -164,9 +174,13 @@ function checkGrants() {
 
 // Erros inesperados (psql, JSON invalido) viram falha CONTROLADA da perna —
 // o gate continua fail-closed, sem stack trace nem credencial no output.
-if (args.some((arg) => arg !== '--require-live')) fail('argumento desconhecido');
+if (args.some((arg) => !ARGS_VALIDOS.has(arg))) fail('argumento desconhecido');
 if (requireLive && !url) fail('--require-live exige DESTINO_URL; verificacao viva indisponivel');
 for (const [nome, fn] of [['migrations', checkMigrations], ['edges', checkEdges], ['grants', checkGrants]]) {
+  if (nome === 'migrations' && semMigrations) {
+    console.log('[migrations] delegada ao check-migration-drift.mjs --classificar (passo "Comparar migrations")');
+    continue;
+  }
   try {
     fn();
   } catch (err) {

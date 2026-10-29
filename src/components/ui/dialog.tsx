@@ -52,13 +52,23 @@ interface DialogContentProps
   extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>,
     VariantProps<typeof dialogContentVariants> {
   showCloseButton?: boolean;
+  /**
+   * Contêiner do portal. Sem ele o Radix monta o conteúdo em DUAS etapas
+   * (`@radix-ui/react-portal`: `useState(false)` + `useLayoutEffect(() => setMounted(true))`
+   * e `container = containerProp || (mounted && document.body)`): o portal nasce no primeiro
+   * commit, mas o conteúdo só no segundo — e esse commit não re-renderiza o componente que
+   * montou o diálogo. Um efeito de layout que leia a ref de um elemento do conteúdo (ex.: o
+   * volume global das mídias no `MediaPreviewDialog`, t_fe46ce81) roda uma vez com a ref nula
+   * e não volta. Com o contêiner explícito o portal monta o conteúdo no PRIMEIRO commit.
+   */
+  container?: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Portal>["container"];
 }
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, size, showCloseButton = true, ...props }, ref) => (
-  <DialogPortal>
+>(({ className, children, size, showCloseButton = true, container, ...props }, ref) => (
+  <DialogPortal container={container}>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
@@ -67,9 +77,9 @@ const DialogContent = React.forwardRef<
     >
       {children}
       {showCloseButton && (
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+        <DialogPrimitive.Close className="absolute right-4 top-4 z-10 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none alvo-toque-44">
           <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
+          <span className="sr-only">Fechar</span>
         </DialogPrimitive.Close>
       )}
     </DialogPrimitive.Content>

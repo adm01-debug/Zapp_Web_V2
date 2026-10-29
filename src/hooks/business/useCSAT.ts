@@ -8,10 +8,20 @@ export interface CSATSurvey {
   id: string;
   contact_id: string;
   agent_id: string | null;
+  /** Nunca nulo nas leituras deste hook: convite sem nota fica fora (rating IS NOT NULL). */
   rating: number;
   feedback: string | null;
   conversation_resolved_at: string | null;
   created_at: string;
+}
+
+/**
+ * Convite da pesquisa tem rating nulo ate o contato responder (o ciclo
+ * scheduled -> sent -> responded tornou a coluna anulavel). Contar essa linha
+ * divide a media por quem nunca respondeu e joga nota nula na distribuicao.
+ */
+function isRatedSurvey<T extends { rating: number | null }>(row: T): row is T & { rating: number } {
+  return row.rating !== null;
 }
 
 export interface CSATStats {
@@ -48,11 +58,15 @@ export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
       const { data, error } = await supabase
         .from('csat_surveys')
         .select('*')
+        // Convite pendente (rating nulo) nao conta como avaliacao na lista nem nas estatisticas.
+        .not('rating', 'is', null)
         .gte('created_at', getDateFilter())
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as CSATSurvey[];
+      // Defesa em profundidade: se o filtro do servidor nao se aplicar, a linha
+      // sem nota continua fora da media, do total e da distribuicao.
+      return ((data || []) as CSATSurvey[]).filter(isRatedSurvey);
     },
   });
 
@@ -88,8 +102,8 @@ export function useCSAT(period: 'today' | 'week' | 'month' = 'month') {
     mutationFn: async (data) => {
       const { error } = await supabase.from('csat_surveys').insert({
         contact_id: data.contact_id,
-        // agent_id is nullable in DB but Supabase generated type wrongly marks it as required
-        agent_id: (data.agent_id ?? null) as unknown as string,
+        // agent_id e anulavel no banco (convite sem agente definido): sem cast.
+        agent_id: data.agent_id ?? null,
         rating: data.rating,
         feedback: data.feedback || null,
         conversation_resolved_at: new Date().toISOString(),
@@ -152,7 +166,8 @@ export interface SatisfactionBreakdown {
 interface CSATBreakdownRow {
   id: string;
   agent_id: string | null;
-  rating: number;
+  /** Nulo enquanto o convite nao foi respondido; a leitura filtra essas linhas fora. */
+  rating: number | null;
   created_at: string;
   agent: { name: string } | null;
   contact: { queue_id: string | null } | null;
@@ -160,6 +175,9 @@ interface CSATBreakdownRow {
 
 const CSAT_PAGE_SIZE = 1000;
 const CSAT_MAX_PAGES = 50;
+
+/** Linha ja filtrada: so pesquisa respondida entra (rating nunca nulo). */
+type RatedCSATBreakdownRow = CSATBreakdownRow & { rating: number };
 
 /**
  * PostgREST corta a resposta no teto de linhas do projeto (db-max-rows). Sem
@@ -172,8 +190,8 @@ const CSAT_MAX_PAGES = 50;
  * created_at. O cursor avanca pela ultima linha lida e o loop para quando a
  * pagina volta vazia, qualquer que seja o teto real.
  */
-async function fetchSurveysSince(start: Date): Promise<CSATBreakdownRow[]> {
-  const rows: CSATBreakdownRow[] = [];
+async function fetchSurveysSince(start: Date): Promise<RatedCSATBreakdownRow[]> {
+  const rows: RatedCSATBreakdownRow[] = [];
   let cursor: { createdAt: string; id: string } | null = null;
 
   // <= e nao <: com exatamente CSAT_MAX_PAGES paginas cheias, a iteracao extra
@@ -185,6 +203,8 @@ async function fetchSurveysSince(start: Date): Promise<CSATBreakdownRow[]> {
       .select(
         'id, agent_id, rating, created_at, agent:profiles!csat_surveys_agent_id_fkey(name), contact:contacts!csat_surveys_contact_id_fkey(queue_id)'
       )
+      // Mesma regra do hook de lista: a janela so contabiliza pesquisa respondida.
+      .not('rating', 'is', null)
       .gte('created_at', start.toISOString())
       .order('created_at', { ascending: true })
       .order('id', { ascending: true })
@@ -200,7 +220,8 @@ async function fetchSurveysSince(start: Date): Promise<CSATBreakdownRow[]> {
     const { data, error } = await query;
     if (error) throw error;
 
-    const batch = (data || []) as unknown as CSATBreakdownRow[];
+    // Defesa em profundidade: o servidor ja filtrou, mas linha sem nota nao conta.
+    const batch = ((data || []) as unknown as CSATBreakdownRow[]).filter(isRatedSurvey);
     if (batch.length === 0) return rows;
 
     rows.push(...batch);

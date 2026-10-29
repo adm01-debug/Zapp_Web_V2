@@ -13,9 +13,15 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ info: vi.fn(), error: vi.fn() }),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 vi.mock('@/components/ui/toaster', () => ({ Toaster: () => null }));
 vi.mock('@/components/ui/sonner', () => ({ Toaster: () => null }));
+// Overlay de gamificação: o assunto aqui é o listener do Team Chat, então o toast de
+// conquista é neutralizado como os outros overlays do App (Toaster, Sonner, LiveRegion).
+vi.mock('@/components/gamification/AchievementToast', () => ({
+  AchievementCelebrationToaster: () => null,
+}));
 vi.mock('@/components/errors/ErrorBoundary', () => ({
   ErrorBoundary: ({ children }: { children: React.ReactNode }) => children,
 }));
@@ -38,14 +44,20 @@ vi.mock('@/components/calls/IncomingCallAlert', () => ({ IncomingCallAlert: () =
 vi.mock('@/components/effects/EasterEggs', () => ({
   EasterEggsProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
-vi.mock('@/components/mobile/InAppNotificationProvider', () => ({
-  InAppNotificationProvider: ({ children }: { children: React.ReactNode }) => children,
-}));
 vi.mock('@/components/team-chat/TeamChatNotificationsListener', () => ({
   TeamChatNotificationsListener: h.listener,
 }));
 vi.mock('@/hooks/system/useServiceWorker', () => ({ useServiceWorker: vi.fn() }));
 vi.mock('@/hooks/ui/useScreenProtection', () => ({ useScreenProtection: vi.fn() }));
+// DeferredProviders em App.tsx chama useAuth() e useGlobalIncomingMessageAlerts().
+// AppProviders é mockado como passthrough (sem AuthProvider), então essas dependências
+// precisam ser neutralizadas para o render não lançar "useAuth must be used within AuthProvider".
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: null }),
+}));
+vi.mock('@/hooks/realtime/useGlobalIncomingMessageAlerts', () => ({
+  useGlobalIncomingMessageAlerts: vi.fn(),
+}));
 
 vi.mock('@/hooks/chat/useTeamChat', () => ({ useTeamConversations: () => ({ data: [] }) }));
 vi.mock('@/hooks/chat/useTeamChatNotifications', () => ({
@@ -60,10 +72,18 @@ vi.mock('@/components/ui/button', () => ({
   Button: ({ children }: { children: React.ReactNode }) => React.createElement('button', null, children),
 }));
 vi.mock('lucide-react', () => ({ MessageSquare: () => null, Users: () => null, Plus: () => null }));
+// MotionConfig + useReducedMotion: necessários para LazyMotionConfig em App.tsx e para
+// ConversationEmptyState (linha 35) que chama useReducedMotion().
+// motion.div e motion.span: ConversationEmptyState renderiza motion.div (contêiner) e
+// motion.span (pontos decorativos). Sem motion.span no mock o React lança
+// "Element type is invalid: got undefined" e derruba o render do TeamChatView.
 vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
+    span: ({ children }: { children?: React.ReactNode }) => React.createElement('span', null, children ?? null),
   },
+  MotionConfig: ({ children }: { children: React.ReactNode }) => children,
+  useReducedMotion: () => false,
 }));
 
 import App from '@/App';

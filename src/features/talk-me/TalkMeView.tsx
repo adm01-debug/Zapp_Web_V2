@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { formatDistanceToNowStrict } from 'date-fns';
+import { format, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  History,
   Inbox,
   Loader2,
   MessageCircleMore,
@@ -15,6 +16,7 @@ import {
   Search,
   UserRoundCheck,
   Volume2,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -40,9 +42,11 @@ import {
   TalkMeConflictError,
   TalkMeOfflineError,
   TalkMeOutcomeUnknownError,
+  type TalkMePendingMessage,
   type TalkMeWaitingContact,
 } from './types';
 import type { TalkMeQueueController } from './useTalkMeQueue';
+import { TalkMeMedia } from './TalkMeMedia';
 import './talk-me-layout.css';
 
 interface TalkMeViewProps {
@@ -56,16 +60,31 @@ function waitingLabel(iso: string) {
   return formatDistanceToNowStrict(new Date(iso), { addSuffix: false, locale: ptBR });
 }
 
-function messagePreview(item: TalkMeWaitingContact) {
-  const text = item.lastMessageCaption?.trim() || item.lastMessageContent?.trim();
+function describeMessageText(content: string | null, caption: string | null, messageType: string) {
+  const text = caption?.trim() || content?.trim();
   if (text) return text;
-  const type = item.lastMessageType.toLowerCase();
+  const type = messageType.toLowerCase();
   if (type.includes('audio')) return 'Mensagem de áudio';
   if (type.includes('image')) return 'Imagem recebida';
   if (type.includes('video')) return 'Vídeo recebido';
   if (type.includes('document') || type.includes('file')) return 'Arquivo recebido';
   return 'Nova mensagem recebida';
 }
+
+function messagePreview(item: TalkMeWaitingContact) {
+  return describeMessageText(item.lastMessageContent, item.lastMessageCaption, item.lastMessageType);
+}
+
+function pendingSenderLabel(message: TalkMePendingMessage) {
+  if (message.messageType.toLowerCase() === 'internal_note') return 'Nota interna';
+  if (message.sender === 'contact') return 'Cliente';
+  if (message.sender === 'agent') return 'Saída';
+  return 'Sistema';
+}
+
+type PendingHistoryState =
+  | { contactId: string; status: 'loading' | 'error' }
+  | { contactId: string; status: 'ready'; messages: TalkMePendingMessage[] };
 
 function TalkMeCard({ item, active, onSelect, onFocus, buttonRef, onMove }: {
   item: TalkMeWaitingContact;
@@ -76,6 +95,7 @@ function TalkMeCard({ item, active, onSelect, onFocus, buttonRef, onMove }: {
   onMove?: (direction: -1 | 1) => void;
 }) {
   const isAudio = item.lastMessageType.toLowerCase().includes('audio');
+  const hasActiveMedia = active && Boolean(item.lastMessageMediaUrl);
 
   const nameId = `talk-me-main-name-${item.contactId}`;
   const companyId = `talk-me-main-company-${item.contactId}`;
@@ -90,7 +110,9 @@ function TalkMeCard({ item, active, onSelect, onFocus, buttonRef, onMove }: {
       onFocus={onFocus}
       onKeyDown={(event) => {
         if (event.target !== event.currentTarget) return;
+        // eslint-disable-next-line local/no-secret-compare -- KeyboardEvent.key não é credencial.
         if (event.key === 'ArrowLeft') { event.preventDefault(); onMove?.(-1); }
+        // eslint-disable-next-line local/no-secret-compare -- KeyboardEvent.key não é credencial.
         if (event.key === 'ArrowRight') { event.preventDefault(); onMove?.(1); }
       }}
       tabIndex={active ? 0 : -1}
@@ -140,9 +162,10 @@ function TalkMeCard({ item, active, onSelect, onFocus, buttonRef, onMove }: {
             {isAudio ? <Volume2 className="h-3.5 w-3.5" /> : <MessageCircleMore className="h-3.5 w-3.5" />}
             Última mensagem
           </div>
-          <p className="line-clamp-2 whitespace-pre-wrap break-words text-xs leading-5 text-foreground">
+          <p className={cn('line-clamp-2 whitespace-pre-wrap break-words text-xs leading-5 text-foreground', hasActiveMedia && 'sr-only')}>
             {messagePreview(item)}
           </p>
+          {hasActiveMedia && <div aria-hidden="true" className="h-20" />}
           {item.pendingMessageCount > 1 && (
             <p className="mt-1 text-xs font-semibold text-foreground">
               {item.pendingMessageCount} mensagens aguardando resposta
@@ -176,7 +199,9 @@ function TalkMeQueueCard({ item, active, disabled, onSelect, onFocus, onMove, bu
       onFocus={onFocus}
       onKeyDown={(event) => {
         if (event.target !== event.currentTarget) return;
+        // eslint-disable-next-line local/no-secret-compare -- KeyboardEvent.key não é credencial.
         if (event.key === 'ArrowLeft') { event.preventDefault(); onMove(-1); }
+        // eslint-disable-next-line local/no-secret-compare -- KeyboardEvent.key não é credencial.
         if (event.key === 'ArrowRight') { event.preventDefault(); onMove(1); }
       }}
       disabled={disabled}
@@ -251,6 +276,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
     loadMore,
     refresh,
     claim,
+    fetchPendingMessages,
   } = controller;
   const reduceMotion = useReducedMotion() ?? false;
   const scopeKey = `${selectedQueueId ?? 'none'}:${search}`;
@@ -270,13 +296,14 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
   const pendingForwardRef = useRef<{ contactId: string; moveFocus: boolean } | null>(null);
   const focusRequestRef = useRef<{ contactId: string; surface: 'main' | 'queue' } | null>(null);
   const lastCardFocusRef = useRef<{ contactId: string; surface: 'main' | 'queue' } | null>(null);
+  // eslint-disable-next-line local/no-secret-compare -- scopeKey identifica apenas fila e busca da UI.
   const selectedContactId = selection?.scopeKey === scopeKey ? selection.contactId : null;
   const notifiedMissingRef = useRef<string | null>(null);
   // TM-01 (#170): leitura integral da última mensagem sem assumir o atendimento.
-  // As mensagens anteriores não são expostas porque talk_me_list_waiting devolve apenas a
-  // última mensagem e não existe caminho autorizado de histórico antes do aceite; o
-  // subrequisito fica registrado como recorte de escopo no relato do cartão.
   const [fullMessageContactId, setFullMessageContactId] = useState<string | null>(null);
+  const [pendingHistory, setPendingHistory] = useState<PendingHistoryState | null>(null);
+  const historyRequestRef = useRef(0);
+  const historyDialogRef = useRef<HTMLDivElement>(null);
 
   const activeIndex = useMemo(
     () => items.findIndex((item) => item.contactId === selectedContactId),
@@ -385,6 +412,41 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
     }
   }, [activeItem, reduceMotion]);
 
+  const openPendingHistory = useCallback(async (contactId: string) => {
+    const requestId = historyRequestRef.current + 1;
+    historyRequestRef.current = requestId;
+    setPendingHistory({ contactId, status: 'loading' });
+    try {
+      const messages = await fetchPendingMessages(contactId);
+      if (historyRequestRef.current !== requestId) return;
+      setPendingHistory({ contactId, status: 'ready', messages });
+    } catch {
+      if (historyRequestRef.current !== requestId) return;
+      setPendingHistory({ contactId, status: 'error' });
+    }
+  }, [fetchPendingMessages]);
+
+  const closePendingHistory = useCallback(() => {
+    historyRequestRef.current += 1;
+    setPendingHistory(null);
+  }, []);
+
+  const historyContactId = pendingHistory?.contactId ?? null;
+
+  useLayoutEffect(() => {
+    if (!historyContactId) return;
+    const returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    historyDialogRef.current?.focus();
+    return () => {
+      if (returnFocus?.isConnected) returnFocus.focus();
+    };
+  }, [historyContactId]);
+
+  const handleViewOpenChange = useCallback((nextOpen: boolean) => {
+    if (!nextOpen) closePendingHistory();
+    onOpenChange(nextOpen);
+  }, [closePendingHistory, onOpenChange]);
+
   const [recoverableClaim, setRecoverableClaim] = useState<string | null>(null);
 
   const nameOf = useCallback(
@@ -397,7 +459,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
       await claim(contactId);
       setRecoverableClaim(null);
       toast.success(`Atendimento de ${nameOf(contactId)} assumido.`);
-      onOpenChange(false);
+      handleViewOpenChange(false);
     } catch (error) {
       if (error instanceof TalkMeConflictError) {
         setRecoverableClaim(null);
@@ -424,7 +486,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
     } catch {
       toast.error('Atendimento assumido, mas a conversa não abriu. Atualize o Inbox.');
     }
-  }, [claim, nameOf, onAccepted, onOpenChange, refresh]);
+  }, [claim, handleViewOpenChange, nameOf, onAccepted, refresh]);
 
   const handleClaim = useCallback(() => {
     if (!activeItem) return Promise.resolve();
@@ -447,11 +509,14 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
   }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleViewOpenChange}>
       <DialogContent
         size="full"
         showCloseButton={false}
         aria-describedby="talk-me-description"
+        onEscapeKeyDown={(event) => {
+          if (pendingHistory) event.preventDefault();
+        }}
         className="talk-me-view h-[calc(100dvh-16px)] max-h-none w-[calc(100vw-16px)] max-w-none overflow-hidden rounded-2xl border-border/70 bg-background/96 p-0 sm:h-[calc(100dvh-32px)] sm:w-[calc(100vw-32px)] sm:rounded-[28px]"
       >
         <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
@@ -462,7 +527,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
 
           <header className="relative z-20 flex shrink-0 flex-col gap-2 border-b border-border/70 bg-background/70 px-4 py-2 backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between lg:px-5 lg:py-1">
             <div className="flex min-w-0 items-center gap-3">
-              <Button variant="outline" size="icon" onClick={() => onOpenChange(false)} className="h-8 w-8 shrink-0 rounded-full" aria-label="Voltar para o Inbox">
+              <Button variant="outline" size="icon" onClick={() => handleViewOpenChange(false)} className="h-8 w-8 shrink-0 rounded-full" aria-label="Voltar para o Inbox">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="min-w-0">
@@ -494,12 +559,13 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Buscar nome, empresa ou mensagem…"
+                  maxLength={80}
                   aria-label="Buscar na fila TALK ME"
                   className="h-8 rounded-xl bg-background/80 pl-9 text-xs"
                 />
               </div>
               <Button variant="outline" size="icon" onClick={() => void refresh()} disabled={showInitialLoading} className="col-start-2 row-start-1 h-8 w-8 shrink-0 rounded-xl sm:col-auto sm:row-auto" aria-label="Atualizar fila">
-                <RefreshCw className={cn('h-4 w-4', showInitialLoading && 'animate-spin motion-reduce:animate-none')} />
+                <RefreshCw className={cn('h-4 w-4', showInitialLoading && 'motion-safe:animate-spin motion-reduce:animate-none')} />
               </Button>
             </div>
           </header>
@@ -586,6 +652,19 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                                 else cardRefs.current.delete(item.contactId);
                               }}
                             />
+                            {active && item.lastMessageMediaUrl && (
+                              <TalkMeMedia
+                                mediaUrl={item.lastMessageMediaUrl}
+                                messageType={item.lastMessageType}
+                                caption={item.lastMessageCaption}
+                                senderName={item.name || 'contato sem nome'}
+                                fallbackText={messagePreview(item)}
+                                className={cn(
+                                  'talk-me-main-media absolute left-3 right-3 z-30',
+                                  item.pendingMessageCount > 1 ? 'bottom-9' : 'bottom-3',
+                                )}
+                              />
+                            )}
                           </motion.div>
                         );
                     })}
@@ -594,7 +673,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                       <ChevronLeft className="h-5 w-5" />
                     </Button>
                     <Button variant="outline" size="icon" onClick={() => move(1)} disabled={(safeIndex >= items.length - 1 && !hasMore) || !!claimingContactId || reconciling} className="absolute right-1 top-[42%] z-30 h-11 w-11 rounded-full border-white/15 bg-black/90 text-white hover:bg-zinc-900 sm:right-8" aria-label="Próximo atendimento">
-                      {loadingMore ? <Loader2 className="h-5 w-5 animate-spin motion-reduce:animate-none" /> : <ChevronRight className="h-5 w-5" />}
+                      {loadingMore ? <Loader2 className="h-5 w-5 motion-safe:animate-spin motion-reduce:animate-none" /> : <ChevronRight className="h-5 w-5" />}
                     </Button>
                   </div>
 
@@ -628,6 +707,18 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                         )}
                       </div>
                     )}
+                    {activeItem && activeItem.pendingMessageCount > 1 && (
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={() => void openPendingHistory(activeItem.contactId)}
+                        disabled={!!claimingContactId || reconciling}
+                        className="h-9 w-full rounded-full border-white/15 bg-black/60 px-5 text-xs font-semibold text-zinc-100 hover:bg-zinc-900"
+                      >
+                        <History className="mr-2 h-4 w-4" />
+                        Ver histórico ({activeItem.pendingMessageCount} mensagens pendentes)
+                      </Button>
+                    )}
                   </div>
 
                   <div className="mx-auto mt-1.5 flex w-full max-w-[360px] flex-col items-center gap-2 px-3">
@@ -644,7 +735,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                           className="mt-2 h-8 rounded-full border-white/20 bg-transparent text-white"
                         >
                           {isRecovering
-                            ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin motion-reduce:animate-none" />
+                            ? <Loader2 className="mr-1.5 h-4 w-4 motion-safe:animate-spin motion-reduce:animate-none" />
                             : <RefreshCw className="mr-1.5 h-4 w-4" />}
                           Conferir aceite
                         </Button>
@@ -661,7 +752,7 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                       disabled={!activeItem || !!claimingContactId || itemsLoading || searchPending || reconciling || isOffline}
                       className="h-10 w-full rounded-full px-5 text-xs font-bold shadow-lg shadow-primary/20"
                     >
-                      {isClaiming ? <Loader2 className="mr-2 h-5 w-5 animate-spin motion-reduce:animate-none" /> : <MessageCircleMore className="mr-2 h-5 w-5" />}
+                      {isClaiming ? <Loader2 className="mr-2 h-5 w-5 motion-safe:animate-spin motion-reduce:animate-none" /> : <MessageCircleMore className="mr-2 h-5 w-5" />}
                       {isClaiming ? 'Assumindo…' : 'Aceitar e conversar'}
                     </Button>
                   </div>
@@ -755,12 +846,12 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
                       ))}
                       {loadingMore && (
                         <div role="status" aria-label="Carregando mais atendimentos" className="talk-me-queue-card flex w-24 shrink-0 items-center justify-center text-zinc-400">
-                          <Loader2 className="h-6 w-6 animate-spin motion-reduce:animate-none" />
+                          <Loader2 className="h-6 w-6 motion-safe:animate-spin motion-reduce:animate-none" />
                         </div>
                       )}
                     </div>
                     <Button variant="outline" size="icon" onClick={() => moveQueueViewport(1)} disabled={items.length <= 1 || !!claimingContactId || reconciling} className="h-11 w-11 shrink-0 rounded-full border-white/15 bg-black text-white hover:bg-zinc-900" aria-label="Ver próximos contatos na fila">
-                      {loadingMore ? <Loader2 className="h-5 w-5 animate-spin motion-reduce:animate-none" /> : <ChevronRight className="h-5 w-5" />}
+                      {loadingMore ? <Loader2 className="h-5 w-5 motion-safe:animate-spin motion-reduce:animate-none" /> : <ChevronRight className="h-5 w-5" />}
                     </Button>
                   </div>
                   {loadMoreError && (
@@ -775,6 +866,92 @@ export function TalkMeView({ open, onOpenChange, controller, onAccepted }: TalkM
               </div>
             )}
           </main>
+          {pendingHistory && (
+            <div className="absolute inset-0 z-40 flex items-center justify-center bg-background/70 p-4 backdrop-blur-sm">
+              <div
+                ref={historyDialogRef}
+                role="dialog"
+                aria-modal={false}
+                aria-labelledby="talk-me-history-title"
+                aria-describedby="talk-me-history-description"
+                tabIndex={-1}
+                onKeyDown={(event) => {
+                  // eslint-disable-next-line local/no-secret-compare -- KeyboardEvent.key não é credencial.
+                  if (event.key !== 'Escape') return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  closePendingHistory();
+                }}
+                className="relative flex max-h-[80dvh] w-full max-w-lg flex-col gap-3 overflow-hidden rounded-2xl border border-border/60 bg-background p-6 shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <button
+                  type="button"
+                  onClick={closePendingHistory}
+                  aria-label="Fechar histórico"
+                  className="absolute right-4 top-4 rounded-lg p-1 opacity-70 transition-all hover:bg-muted hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <h2 id="talk-me-history-title" className="pr-8 text-lg font-black tracking-tight">Histórico antes do aceite</h2>
+                <p id="talk-me-history-description" className="text-xs text-muted-foreground">
+                  Saídas, mensagens do cliente e notas internas do bloco pendente. A leitura não assume o atendimento nem marca mensagens como lidas.
+                </p>
+
+                {pendingHistory.status === 'loading' && (
+                  <div role="status" aria-label="Carregando mensagens" className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 motion-safe:animate-spin text-muted-foreground motion-reduce:animate-none" />
+                  </div>
+                )}
+
+                {pendingHistory.status === 'error' && (
+                  <div role="alert" className="flex flex-col items-center gap-3 py-6 text-center">
+                    <p className="text-sm text-muted-foreground">Não foi possível carregar as mensagens.</p>
+                    <Button variant="outline" size="sm" onClick={() => void openPendingHistory(pendingHistory.contactId)}>
+                      Tentar novamente
+                    </Button>
+                  </div>
+                )}
+
+                {pendingHistory.status === 'ready' && (
+                  pendingHistory.messages.length === 0 ? (
+                    <p className="py-6 text-center text-sm text-muted-foreground">
+                      Não há mensagens pendentes para este atendimento.
+                    </p>
+                  ) : (
+                    <ol aria-label="Histórico do bloco pendente" className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
+                      {pendingHistory.messages.map((message) => {
+                        const senderLabel = pendingSenderLabel(message);
+                        const fallbackText = describeMessageText(message.content, message.caption, message.messageType);
+                        return (
+                          <li key={message.messageId} className="min-w-0 rounded-xl border border-border/60 bg-muted/35 p-3">
+                            <div className="mb-1 flex items-center justify-between gap-2 text-2xs font-bold uppercase tracking-wider text-muted-foreground">
+                              <span>{senderLabel}</span>
+                              <time dateTime={message.createdAt}>
+                                {format(new Date(message.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                              </time>
+                            </div>
+                            {message.mediaUrl ? (
+                              <TalkMeMedia
+                                mediaUrl={message.mediaUrl}
+                                messageType={message.messageType}
+                                caption={message.caption}
+                                senderName={senderLabel}
+                                fallbackText={fallbackText}
+                              />
+                            ) : (
+                              <p className="whitespace-pre-wrap break-words text-sm leading-5 text-foreground">
+                                {fallbackText}
+                              </p>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  )
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

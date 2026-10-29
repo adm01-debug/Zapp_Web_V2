@@ -1,8 +1,7 @@
 // Barrel export for hooks/inbox
 // Import from this file instead of individual modules:
-//   import { useRealtimeInbox, useBulkActions, useInboxFilters } from '@/hooks/inbox'
+//   import { useRealtimeInbox, useInboxFilters } from '@/hooks/inbox'
 export * from './useAutoCloseConversations';
-export * from './useBulkActions';
 export * from './useConnectionQueues';
 export * from './useConnectionsManager';
 export * from './useInboxBulkActions';

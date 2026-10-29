@@ -29,6 +29,7 @@ import {
   workItemsBadgeKey,
   tomorrowAtNine,
   DONE_WINDOW_DAYS,
+  TAREFA_CRIADA_TOAST_ID,
 } from '@/hooks/tasks/useMyWorkItems';
 import type { WorkItem } from '@/hooks/tasks/workItem.types';
 
@@ -62,7 +63,7 @@ describe('useMyWorkItems — Fase B', () => {
       status: 'backlog',
       priority: 'medium',
     });
-    expect(h.toast.success).toHaveBeenCalledWith('Tarefa criada');
+    expect(h.toast.success).toHaveBeenCalledWith('Tarefa criada', { id: TAREFA_CRIADA_TOAST_ID });
   });
 
   it('create recusa aviso no passado (remind_in_past) sem tocar no banco', async () => {
@@ -313,6 +314,32 @@ describe('useMyWorkItems — Fase B', () => {
     expect(result.current.items[0].contact?.phone).toBe('+5511999999999');
     // a query pede o join por FK explicita (uma unica ida ao banco)
     expect(String(h.select.mock.calls[0][0])).toContain('contact:contacts!conversation_tasks_contact_id_fkey');
+  });
+
+  it('mapeia o tipo do contato embutido no join (contact_type)', async () => {
+    const row = dbRow({
+      contact_id: 'c1',
+      contact: { id: 'c1', name: 'Maria Souza', phone: '+551****9999', avatar_url: null, contact_type: 'fornecedor' },
+    });
+    const { result } = setup([row]);
+    await ready({ result });
+
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+    expect(result.current.items[0].contact?.contact_type).toBe('fornecedor');
+    // a leitura pede a coluna dentro do embed do contato (nao so id/name/phone/avatar_url).
+    expect(String(h.select.mock.calls[0][0])).toContain('contact_type');
+  });
+
+  it('mantem contact_type nulo quando o contato nao tem tipo', async () => {
+    const row = dbRow({
+      contact_id: 'c2',
+      contact: { id: 'c2', name: 'Sem Tipo', phone: null, avatar_url: null, contact_type: null },
+    });
+    const { result } = setup([row]);
+    await ready({ result });
+
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+    expect(result.current.items[0].contact?.contact_type).toBeNull();
   });
 
   it('update persiste e reflete o contato escolhido (contactId -> contact_id, #R2-MOD-049)', async () => {

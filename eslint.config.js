@@ -3,6 +3,7 @@ import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
+import noSecretCompare from "./scripts/eslint/no-secret-compare.js";
 
 export default tseslint.config(
   // .claude/worktrees/: checkouts efêmeros do Agent tool (isolation: worktree) — são
@@ -60,5 +61,13 @@ export default tseslint.config(
     // src/ (nenhum console.log solto em producao: ver lint-ratchet).
     files: ["src/lib/logger.ts", "supabase/functions/**/*.ts"],
     rules: { "no-console": "off" },
+  },
+  {
+    // Z012 — timing-safe: === / !== direto em variável de credencial é bug de segurança.
+    // Aplica em todo o TS do projeto (front + edge functions).
+    files: ["**/*.{ts,tsx}", "supabase/functions/**/*.ts"],
+    ignores: ["**/*.test.{ts,tsx}", "**/__tests__/**"],
+    plugins: { local: { rules: { "no-secret-compare": noSecretCompare } } },
+    rules: { "local/no-secret-compare": "error" },
   },
 );

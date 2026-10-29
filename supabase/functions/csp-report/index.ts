@@ -95,7 +95,8 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return errorResponse("Method not allowed", 405, req);
 
   const ip = getClientIP(req);
-  const rl = await enforceRateLimit(`csp-report:${ip}`, 30, 60_000);
+  const rl = await enforceRateLimit(`csp-report:${ip}`, 30, 60_000)
+    .catch(() => ({ allowed: true, remaining: -1, persistent: false }));
   if (!rl.allowed) return new Response(null, { status: 429 });
 
   const raw = await readBounded(req);

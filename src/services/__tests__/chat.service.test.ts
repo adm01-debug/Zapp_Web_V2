@@ -14,6 +14,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn() }),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 import { ChatService } from '@/services/chat.service';
@@ -49,6 +50,34 @@ describe('ChatService.uploadAudio', () => {
     expect(storageMocks.getPublicUrl).toHaveBeenCalledWith('contact-1/1234567890.webm');
     expect(result).toContain('/storage/v1/object/public/audio-messages/');
     expect(result).not.toContain('token=');
+  });
+
+  it('uses the blob mime type for name and content type, not a fixed .webm', async () => {
+    const ogg = new Blob(['audio'], { type: 'audio/ogg;codecs=opus' });
+    await ChatService.uploadAudio('contact-1', ogg);
+    expect(storageMocks.upload).toHaveBeenLastCalledWith(
+      'contact-1/1234567890.ogg',
+      ogg,
+      { contentType: 'audio/ogg' }
+    );
+
+    const mp4 = new Blob(['audio'], { type: 'audio/mp4' });
+    await ChatService.uploadAudio('contact-1', mp4);
+    expect(storageMocks.upload).toHaveBeenLastCalledWith(
+      'contact-1/1234567890.m4a',
+      mp4,
+      { contentType: 'audio/mp4' }
+    );
+  });
+
+  it('falls back to webm when the blob has no audio type', async () => {
+    const untagged = new Blob(['audio']);
+    await ChatService.uploadAudio('contact-1', untagged);
+    expect(storageMocks.upload).toHaveBeenLastCalledWith(
+      'contact-1/1234567890.webm',
+      untagged,
+      { contentType: 'audio/webm' }
+    );
   });
 
   it('does not create a locator when upload fails', async () => {

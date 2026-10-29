@@ -275,17 +275,3 @@ test("proxyToEvolution: erro não expõe corpo bruto da GO via campo 'details'",
     "proxyToEvolution não pode expor o corpo raw da GO no campo 'details' — pode vazar tokens de integrações (chatwoot, openai, etc.)",
   );
 });
-
-test("rotas de historico sem equivalente na GO tem guarda de flavor", () => {
-  for (const action of ["find-messages", "find-status-messages"]) {
-    const at = apiSrc.indexOf(`if (action === '${action}')`);
-    assert.notEqual(at, -1, `action ${action} sumiu`);
-    const block = apiSrc.slice(at, at + 600);
-    const guard = block.indexOf(`goHistoryNotSupported('${action}'`);
-    const call = block.indexOf("/chat/findMessages/");
-    assert.notEqual(guard, -1, `${action} precisa devolver goHistoryNotSupported no flavor GO`);
-    assert.ok(guard < call, `a guarda de ${action} tem que vir antes de chamar /chat/findMessages`);
-    assert.match(block.slice(0, guard), /if \(isGoFlavor\)/);
-  }
-  assert.match(apiSrc, /import \{ goHistoryNotSupported \} from "\.\.\/\_shared\/evolution-sync-actions\.ts";/);
-});

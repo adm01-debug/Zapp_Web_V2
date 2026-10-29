@@ -275,9 +275,37 @@ describe('CatalogKpiStrip', () => {
     expect(onSelect).toHaveBeenCalledWith('featured');
   });
 
-  it('sem onSelect, os cards não são clicáveis (botão desabilitado)', () => {
+  it('sem onSelect, os KPIs acionáveis ficam desabilitados', () => {
     render(<CatalogKpiStrip stats={mockStats()} />);
-    expect(screen.getByText('Produtos no total').closest('button')).toBeDisabled();
+    expect(screen.getByText('Em destaque').closest('button')).toBeDisabled();
+  });
+
+  it('E33: KPIs sem filtro real não são botões (sem affordance de clique)', () => {
+    render(<CatalogKpiStrip stats={mockStats()} onSelect={vi.fn()} />);
+    // Antes os 6 eram botão; Total/Categorias/Fornecedores abriam um clique que
+    // não filtrava nada. Agora são texto estático.
+    expect(screen.getByText('Produtos no total').closest('button')).toBeNull();
+    expect(screen.getByText('Categorias').closest('button')).toBeNull();
+    expect(screen.getByText('Fornecedores').closest('button')).toBeNull();
+  });
+
+  it('E33: os KPIs com filtro real continuam botões', () => {
+    render(<CatalogKpiStrip stats={mockStats()} onSelect={vi.fn()} />);
+    expect(screen.getByText('Em estoque').closest('button')).not.toBeNull();
+    expect(screen.getByText('Em destaque').closest('button')).not.toBeNull();
+    expect(screen.getByText('Novidades').closest('button')).not.toBeNull();
+  });
+
+  it('os 6 KPIs usam cores distintas (nenhuma cor mais de 2x)', () => {
+    const { container } = render(<CatalogKpiStrip stats={mockStats()} />);
+    const cores = [...container.querySelectorAll<HTMLElement>('[data-testid="kpi-card"] .talkx-tile')]
+      .map((el) => (el.className.match(/talkx-tile--([a-z]+)/) ?? [])[1]);
+    expect(cores).toHaveLength(6);
+    const contagem = new Map<string, number>();
+    for (const cor of cores) contagem.set(cor, (contagem.get(cor) ?? 0) + 1);
+    expect(Math.max(...contagem.values())).toBeLessThanOrEqual(2);
+    // O bug eram três KPIs azuis; agora o azul fica com no máximo 2.
+    expect(contagem.get('blue')).toBe(2);
   });
 });
 

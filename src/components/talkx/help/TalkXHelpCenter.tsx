@@ -91,6 +91,8 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
     [onRouteChange, route.topic],
   );
 
+  const { query: searchQuery, setQuery: setSearchQuery } = search;
+
   const focusSearch = useCallback(() => {
     searchRef.current?.focus();
   }, []);
@@ -99,8 +101,23 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
   // abrir a paleta global. O listener é de captura e para a propagação, então o
   // atalho global (que escuta na fase de borbulha) não chega a disparar; fora
   // da Ajuda este efeito não existe e o atalho segue intacto.
+  // T16-ESC: a Ajuda agora é uma tela roteada, não um Dialog. Mesmo assim, Esc
+  // mantém a mesma saída de teclado do modal antigo: fecha a Ajuda e deixa o pai
+  // restaurar o foco no botão que abriu a tela.
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        // Com a busca escrita o primeiro Esc só limpa a busca (a Ajuda segue aberta), como
+        // no próprio campo; o Esc seguinte, com a busca vazia, fecha a Ajuda.
+        if (searchQuery) {
+          setSearchQuery('');
+          return;
+        }
+        onClose();
+        return;
+      }
       if (!((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k')) return;
       event.preventDefault();
       event.stopPropagation();
@@ -112,7 +129,7 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
     };
     window.addEventListener('keydown', handleShortcut, true);
     return () => window.removeEventListener('keydown', handleShortcut, true);
-  }, [focusSearch, onRouteChange, route.article, route.topic]);
+  }, [focusSearch, onClose, onRouteChange, route.article, route.topic, searchQuery, setSearchQuery]);
 
   // O campo é o primeiro alvo da tela: ao voltar do artigo, o foco volta para ele.
   useEffect(() => {

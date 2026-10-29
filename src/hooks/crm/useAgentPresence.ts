@@ -19,6 +19,16 @@ const EMPTY: Record<string, PresenceStatus> = {};
 const storageKey = (userId: string) => `zapp-presence-status:${userId}`;
 const isStatus = (v: unknown): v is PresenceStatus => v === 'online' || v === 'away' || v === 'offline';
 
+// Comparação rasa de dois mapas de status (mesmas chaves, mesmos valores).
+function sameStatuses(
+  a: Record<string, PresenceStatus>,
+  b: Record<string, PresenceStatus>,
+): boolean {
+  const aKeys = Object.keys(a);
+  if (aKeys.length !== Object.keys(b).length) return false;
+  return aKeys.every((k) => a[k] === b[k]);
+}
+
 // Estado compartilhado por toda a aba (store simples + useSyncExternalStore),
 // mesmo padrão do módulo anterior -- só a fonte dos dados muda de Realtime
 // Presence (client-driven) para a tabela agent_presence (server-authoritative).
@@ -54,6 +64,11 @@ function recompute() {
     const stale = now - Date.parse(row.updated_at) > STALE_MS;
     next[userId] = stale ? 'offline' : row.status;
   }
+  // Batimento de cada agente (~25s) e o timer de expiração chamam isto o tempo
+  // todo sem que o status mude. Comparação rasa: se nada mudou, mantemos o
+  // MESMO objeto e não emitimos -- senão cada evento re-renderizava
+  // useDashboardData, useWarRoomData, useAgents e CrisisRoom à toa.
+  if (sameStatuses(next, byUser)) return;
   byUser = next;
   emit();
 }

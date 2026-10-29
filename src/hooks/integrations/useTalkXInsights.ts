@@ -3,6 +3,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { appHour } from '@/lib/localDay';
 
+/**
+ * Destino do botão de uma recomendação. O hook declara PARA ONDE a regra leva
+ * (a partir dos parâmetros dela); quem navega é a tela dona do cartão — por isso
+ * não há `window` nem `history` aqui dentro.
+ * - `new-campaign`: abre o assistente de nova campanha;
+ * - `templates`: leva à biblioteca de mensagens;
+ * - `campaigns`: leva à lista de campanhas.
+ */
+export type TalkXInsightAction = 'new-campaign' | 'templates' | 'campaigns';
+
 /** Estrutura de um insight heurístico */
 export interface TalkXInsight {
   id: string;
@@ -10,8 +20,12 @@ export interface TalkXInsight {
   title: string;
   description: string;
   priority: 'high' | 'medium' | 'low';
+  /** Mantido para os consumidores que já passavam `insight.apply` (Visão geral). */
   apply?: () => void;
+  /** Texto do botão. Só aparece na tela quando a recomendação traz `action`. */
   applyLabel?: string;
+  /** Ação que o botão executa; sem ela o cartão não exibe botão. */
+  action?: TalkXInsightAction;
   meta?: Record<string, unknown>;
 }
 
@@ -32,6 +46,12 @@ export interface InsightRaw {
   lowClickCampaigns: number;
   finishedCampaigns: number;
   avgClickRate: number;
+  /**
+   * Taxa de resposta média da amostra de envios recentes (mesma janela e mesmo teto
+   * do insight de horário). É a referência contra a qual o Resumo mede o ganho
+   * estimado das recomendações — sem ela, o Resumo não publica percentual.
+   */
+  avgReplyRate: number;
   /**
    * A leitura de cliques por campanha bateu no teto defensivo (`CLICK_SAMPLE_LIMIT`):
    * o conjunto é uma AMOSTRA dos cliques mais recentes, não o total. Enquanto for
@@ -194,12 +214,12 @@ function must<T>(res: { data: T | null; error: unknown }, label: string): T {
 /** Linha do join de cliques → campanha. */
 type ClickRow = { link_id?: string | null; talkx_links?: { campaign_id?: string | null } | null };
 
-export async function fetchInsightData(): Promise<InsightRaw> {
+export async function fetchInsightData(windowDays: number = INSIGHTS_WINDOW_DAYS): Promise<InsightRaw> {
   const now = new Date();
-  const since90 = new Date(now.getTime() - INSIGHTS_WINDOW_DAYS * 86_400_000).toISOString();
+  const sinceWindow = new Date(now.getTime() - windowDays * 86_400_000).toISOString();
   const since180 = new Date(now.getTime() - 180 * 86_400_000).toISOString();
 
-  // 1. Melhor janela de hora (replies nos últimos 90 dias).
+  // 1. Melhor janela de hora (replies na janela da tela).
   // Amostra = HOUR_SAMPLE_LIMIT envios MAIS RECENTES (ordem decrescente): com ordem
   // crescente o teto congelava a série numa fase antiga da campanha, e a hora era
   // lida no fuso do dispositivo.
@@ -208,12 +228,15 @@ export async function fetchInsightData(): Promise<InsightRaw> {
       .from('talkx_recipients')
       .select('sent_at, replied_at')
       .not('sent_at', 'is', null)
-      .gte('sent_at', since90)
+      .gte('sent_at', sinceWindow)
       .order('sent_at', { ascending: false })
       .limit(HOUR_SAMPLE_LIMIT),
     'envios recentes (janela de horário)',
   );
   const bestHour = pickBestHour(hourRows);
+  // Referência da estimativa do Resumo: taxa de resposta média da MESMA amostra de
+  // envios recentes que alimenta o insight de horário (mesma janela, mesmo teto).
+  const avgReplyRate = hourRows.length > 0 ? hourRows.filter((r) => r.replied_at).length / hourRows.length : 0;
 
   // 2. Template campeão por TAXA de resposta (com denominador mínimo), não por
   // número absoluto de respostas.
@@ -248,10 +271,10 @@ export async function fetchInsightData(): Promise<InsightRaw> {
 
   // 4. Taxa de cliques canônica: cliques / envios no período.
   const clickCountRes = await supabase
-    .from('talkx_link_clicks').select('id', { count: 'exact', head: true }).gte('clicked_at', since90);
+    .from('talkx_link_clicks').select('id', { count: 'exact', head: true }).gte('clicked_at', sinceWindow);
   if (clickCountRes.error) throw new Error('talkx-insights: falha ao contar cliques');
   const sentCountRes = await supabase
-    .from('talkx_recipients').select('id', { count: 'exact', head: true }).not('sent_at', 'is', null).gte('sent_at', since90);
+    .from('talkx_recipients').select('id', { count: 'exact', head: true }).not('sent_at', 'is', null).gte('sent_at', sinceWindow);
   if (sentCountRes.error) throw new Error('talkx-insights: falha ao contar envios');
   const clickCount = clickCountRes.count;
   const sentCount = sentCountRes.count;
@@ -267,7 +290,7 @@ export async function fetchInsightData(): Promise<InsightRaw> {
   // TRUNCADO — não o total —, então a conclusão de baixo clique é abandonada.
   const clickRes: { data: ClickRow[] | null; error: unknown } = await fromTable('talkx_link_clicks')
     .select('link_id, talkx_links!inner(campaign_id)')
-    .gte('clicked_at', since90)
+    .gte('clicked_at', sinceWindow)
     .order('clicked_at', { ascending: false })
     .limit(CLICK_SAMPLE_LIMIT);
   const clickError = Boolean(clickRes.error);
@@ -284,17 +307,44 @@ export async function fetchInsightData(): Promise<InsightRaw> {
   // CHECK de talkx_campaigns, então a contagem anterior era sempre zero.
   const finishedRows = must<Array<{ id?: string | null; sent_count?: number | null }>>(
     await supabase
-      .from('talkx_campaigns').select('id, sent_count').eq('status', TALKX_COMPLETED_STATUS).gte('created_at', since90).limit(CAMPAIGN_SAMPLE_LIMIT),
+      .from('talkx_campaigns').select('id, sent_count').eq('status', TALKX_COMPLETED_STATUS).gte('created_at', sinceWindow).limit(CAMPAIGN_SAMPLE_LIMIT),
     'campanhas concluídas',
   );
   const finishedCampaigns = finishedRows.length;
   const campaignsTruncated = finishedRows.length >= CAMPAIGN_SAMPLE_LIMIT;
   const lowClickCampaigns = clickError ? 0 : countLowClickCampaigns(finishedRows, clicksByCampaign);
 
-  return { bestHour, bestTemplate, inactiveContactPct, lowClickCampaigns, finishedCampaigns, avgClickRate, clicksTruncated, clickError, campaignsTruncated };
+  return { bestHour, bestTemplate, inactiveContactPct, lowClickCampaigns, finishedCampaigns, avgClickRate, avgReplyRate, clicksTruncated, clickError, campaignsTruncated };
 }
 
-export function buildInsights(raw: InsightRaw): TalkXInsight[] {
+/**
+ * Piso de campanhas concluídas na janela para o Resumo publicar percentual: abaixo
+ * disso não há histórico que sustente uma estimativa (o Resumo mostra só a contagem).
+ */
+export const LIFT_MIN_FINISHED_CAMPAIGNS = 10;
+/** Teto da estimativa de ganho: o ganho medido não vira promessa acima disso. */
+export const LIFT_MAX = 0.5;
+
+/**
+ * Ganho estimado das recomendações, em fração (0–`LIFT_MAX`).
+ *
+ * Condicionado: só existe com `LIFT_MIN_FINISHED_CAMPAIGNS` campanhas concluídas na
+ * janela, uma taxa de resposta média medida na amostra de envios e pelo menos uma
+ * recomendação acima dessa média. Caso contrário é `null` e a tela não exibe nenhum
+ * percentual (o valor é uma ESTIMATIVA medida, nunca um resultado garantido).
+ */
+export function estimateLiftPct(raw: InsightRaw): number | null {
+  if (raw.finishedCampaigns < LIFT_MIN_FINISHED_CAMPAIGNS) return null;
+  if (!(raw.avgReplyRate > 0)) return null;
+  const gains = [raw.bestHour?.replyRate, raw.bestTemplate?.replyRate]
+    .filter((rate): rate is number => typeof rate === 'number')
+    .map((rate) => (rate - raw.avgReplyRate) / raw.avgReplyRate)
+    .filter((gain) => gain > 0);
+  if (gains.length === 0) return null;
+  return Math.min(Math.max(...gains), LIFT_MAX);
+}
+
+export function buildInsights(raw: InsightRaw, windowDays: number = INSIGHTS_WINDOW_DAYS): TalkXInsight[] {
   const out: TalkXInsight[] = [];
 
   if (raw.bestHour && raw.bestHour.replyRate >= 0.05) {
@@ -305,10 +355,11 @@ export function buildInsights(raw: InsightRaw): TalkXInsight[] {
       id: 'best-hour', type: 'timing', priority: 'high',
       title: 'Janela de horário com mais respostas',
       description:
-        'Nos últimos ' + INSIGHTS_WINDOW_DAYS + ' dias, envios entre ' + fmt(h) + ' e ' + fmt(hEnd) +
+        'Nos últimos ' + windowDays + ' dias, envios entre ' + fmt(h) + ' e ' + fmt(hEnd) +
         ' responderam ' + (raw.bestHour.replyRate * 100).toFixed(1) + '% (amostra: ' + raw.bestHour.sample +
         ' envios). É correlação histórica, não garantia de resultado.',
-      applyLabel: 'Configurar horário',
+      applyLabel: 'Aplicar sugestão',
+      action: 'new-campaign',
       meta: { hour: h, sample: raw.bestHour.sample },
     });
   }
@@ -320,6 +371,8 @@ export function buildInsights(raw: InsightRaw): TalkXInsight[] {
       description:
         'A campanha "' + raw.bestTemplate.name + '" respondeu ' + (raw.bestTemplate.replyRate * 100).toFixed(1) +
         '% (' + raw.bestTemplate.replied + ' de ' + raw.bestTemplate.sent + ' envios). Reutilize o tom nas próximas.',
+      applyLabel: 'Ver templates',
+      action: 'templates',
       meta: { campaignId: raw.bestTemplate.campaignId, sent: raw.bestTemplate.sent, replied: raw.bestTemplate.replied },
     });
   }
@@ -331,6 +384,7 @@ export function buildInsights(raw: InsightRaw): TalkXInsight[] {
       title: 'Base com muitos contatos inativos',
       description: (raw.inactiveContactPct * 100).toFixed(0) + '% dos contatos não foram atualizados nos últimos 6 meses. Uma campanha de reativação melhora as métricas.',
       applyLabel: 'Criar campanha de reativação',
+      action: 'new-campaign',
     });
   }
 
@@ -341,27 +395,49 @@ export function buildInsights(raw: InsightRaw): TalkXInsight[] {
       id: 'low-clicks', type: 'links', priority: 'low',
       title: 'Taxa de cliques abaixo do esperado',
       description:
-        'Nas ' + raw.finishedCampaigns + ' campanhas concluídas nos últimos ' + INSIGHTS_WINDOW_DAYS + ' dias, ' +
+        'Nas ' + raw.finishedCampaigns + ' campanhas concluídas nos últimos ' + windowDays + ' dias, ' +
         raw.lowClickCampaigns + ' ficaram abaixo de ' + (LOW_CLICK_MAX_RATE * 100).toFixed(0) +
         '% de cliques (média geral: ' + (raw.avgClickRate * 100).toFixed(1) + '%). Experimente posicionar o link antes do corpo da mensagem.',
+      applyLabel: 'Ver campanhas',
+      action: 'campaigns',
     });
   }
 
   return out;
 }
 
+/** O que o hook entrega: as recomendações e o Resumo (ganho estimado, condicionado). */
+export interface TalkXInsightsReport {
+  insights: TalkXInsight[];
+  estimatedLiftPct: number | null;
+}
+
 /**
  * E92: hook com insights heurísticos sobre campanhas Talk X.
  * Cache de 1 h. Sem chamada a IA externa — cálculo local sobre dados reais.
+ *
+ * `windowDays` é o período da tela (7/30/90): entra na janela das consultas, no
+ * texto das recomendações e na chave do cache (períodos diferentes não compartilham
+ * resultado).
  */
-export function useTalkXInsights() {
-  return useQuery({
-    queryKey: ['talkx-insights'],
-    queryFn: async (): Promise<TalkXInsight[]> => buildInsights(await fetchInsightData()),
+export function useTalkXInsights(windowDays: number = INSIGHTS_WINDOW_DAYS) {
+  const query = useQuery({
+    queryKey: ['talkx-insights', windowDays],
+    queryFn: async (): Promise<TalkXInsightsReport> => {
+      const raw = await fetchInsightData(windowDays);
+      return { insights: buildInsights(raw, windowDays), estimatedLiftPct: estimateLiftPct(raw) };
+    },
     staleTime: 60 * 60 * 1000,
     gcTime:    60 * 60 * 1000,
     retry: 1,
   });
+  return {
+    ...query,
+    // `data` continua sendo a lista: a Visão geral (cartão de outra área) consome
+    // essa mesma forma e não muda por causa do Resumo.
+    data: query.data?.insights,
+    estimatedLiftPct: query.data?.estimatedLiftPct ?? null,
+  };
 }
 
 // `fetchInsightData` e `buildInsights` já saem exportados nas próprias declarações:

@@ -1,6 +1,16 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: { rpc: vi.fn().mockResolvedValue({ data: null, error: null }) },
+}));
+
+/** O editor aberto pelo atalho consome o widget "Em andamento": mock vazio. */
+vi.mock('@/hooks/integrations/useTalkX', () => ({
+  useTalkX: () => ({ campaigns: [], isLoading: false, isError: false, error: null, isLive: false, refetchCampaigns: vi.fn() }),
+}));
 
 /**
  * R2-MOD-061 (#427, P2) — "Atalho Duplicar template abre o editor do original".
@@ -63,17 +73,27 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-/** Seleciona o template "Boas-vindas" (o SEGUNDO da lista) clicando no cartão. */
+/**
+ * Seleciona o template "Boas-vindas" (o SEGUNDO da lista) clicando no cartão. O cartão
+ * é achado pelo `data-talkx-template-card`: desde o TL-175D ele não tem mais
+ * `role="button"` (os botões de ação vivem dentro dele — `nested-interactive`).
+ */
 const selecionarBoasVindas = () =>
-  fireEvent.click(screen.getByText('Olá {{nome}}').closest('[role="button"]') as HTMLElement);
+  fireEvent.click(screen.getByText('Olá {{nome}}').closest('[data-talkx-template-card]') as HTMLElement);
 
 /** Atalho "Duplicar template" do RailCard "Ações rápidas". */
 const clicarNoAtalhoDuplicar = () =>
   fireEvent.click(screen.getByText('Duplicar template').closest('button') as HTMLElement);
 
+const renderTemplates = () => render(
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <TalkXTemplates onUseTemplate={vi.fn()} />
+  </QueryClientProvider>,
+);
+
 describe('R2-MOD-061 — atalho Duplicar template (rail)', () => {
   it('com template selecionado: duplica O SELECIONADO e NÃO abre o editor do original', () => {
-    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    renderTemplates();
 
     selecionarBoasVindas();
     clicarNoAtalhoDuplicar();
@@ -86,7 +106,7 @@ describe('R2-MOD-061 — atalho Duplicar template (rail)', () => {
   });
 
   it('sem seleção: abre o fluxo de template novo, sem duplicar nada', () => {
-    render(<TalkXTemplates onUseTemplate={vi.fn()} />);
+    renderTemplates();
 
     clicarNoAtalhoDuplicar();
 

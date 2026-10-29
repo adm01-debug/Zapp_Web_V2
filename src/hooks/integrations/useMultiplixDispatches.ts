@@ -8,7 +8,10 @@ import { supabase } from '@/integrations/supabase/client';
 // O erro de teto de destinatarios (F17) continua sendo a MESMA classe que o
 // `MultiplixComposerDialog` captura por `instanceof`; por isso ela e importada
 // (e nao duplicada aqui), para o `instanceof` do composer seguir valendo.
-import { MultiplixOverLimitError } from './useMultiplixAudience';
+// `createMultiplixDraft` NAO entra: a criacao usa `invokeMultiplixDispatch`
+// (abaixo, F44) — o import morto do cartao original foi removido no rebase.
+import { MultiplixOverLimitError, type MultiplixResolvedRecipient, type MultiplixSearchFilters } from './useMultiplixAudience';
+import { EDGE_ERROR_NETWORK, EDGE_ERROR_UNKNOWN, parseEdgeError } from '@/lib/invokeEdge';
 
 export interface MultiplixDispatch {
   id: string;
@@ -41,6 +44,10 @@ export interface MultiplixRecipientRow {
   sent_at: string | null;
   error_message: string | null;
   personalized_message: string | null;
+  /** Tentativas de envio ja gastas neste destinatario (`recipients.list`). */
+  attempt_count: number | null;
+  /** Id da mensagem no provedor, quando o envio foi aceito (`recipients.list`). */
+  external_id: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -87,27 +94,25 @@ export class MultiplixDispatchEdgeError extends Error {
 }
 
 async function toMultiplixDispatchError(error: unknown): Promise<Error> {
-  const fallback = (error as { message?: string })?.message ?? 'Falha ao chamar multiplix-dispatch';
-  const context = (error as { context?: Response })?.context;
-  if (!context || typeof context.clone !== 'function') return new Error(fallback);
-  try {
-    const body = await context.clone().json() as {
-      error?: string; message?: string; count?: number; limit?: number;
-    };
-    // F17: `draft.create` responde o teto de destinatarios como erro NOMEADO com
-    // o numero real (`{error, count, limit}`). Traduzir para o erro que o
-    // composer ja captura mantem a confirmacao explicita funcionando — sem este
-    // ramo, o usuario veria so "Disparo acima do teto..." sem o valor real nem o
-    // botao de confirmar.
-    if (body?.error === 'multiplix_over_recipient_limit') {
-      return new MultiplixOverLimitError(body.count ?? 0, body.limit ?? null, body.message);
-    }
-    const code = body?.error ?? body?.message;
-    if (code) return new MultiplixDispatchEdgeError(code, body?.message ?? code);
-  } catch {
-    // corpo sem JSON (timeout/proxy): fica a mensagem padrao
+  // A leitura do corpo de `error.context` e a extracao de codigo/mensagem sao
+  // centralizadas em `parseEdgeError` (@/lib/invokeEdge) — era o mesmo parser
+  // copiado em 4 arquivos. Aqui fica so a traducao para os erros de dominio.
+  const parsed = await parseEdgeError(error, 'Falha ao chamar multiplix-dispatch');
+  const raw = (parsed.raw && typeof parsed.raw === 'object' ? parsed.raw : {}) as {
+    count?: number; limit?: number; message?: string;
+  };
+  // F17: `draft.create` responde o teto de destinatarios como erro NOMEADO com
+  // o numero real (`{error, count, limit}`). Traduzir para o erro que o
+  // composer ja captura mantem a confirmacao explicita funcionando — sem este
+  // ramo, o usuario veria so "Disparo acima do teto..." sem o valor real nem o
+  // botao de confirmar.
+  if (parsed.code === 'multiplix_over_recipient_limit') {
+    return new MultiplixOverLimitError(raw.count ?? 0, raw.limit ?? null, raw.message);
   }
-  return new Error(fallback);
+  if (parsed.code !== EDGE_ERROR_UNKNOWN && parsed.code !== EDGE_ERROR_NETWORK) {
+    return new MultiplixDispatchEdgeError(parsed.code, parsed.message);
+  }
+  return new Error(parsed.message);
 }
 
 /**
@@ -186,16 +191,28 @@ const RECIPIENT_COUNT_PAGE_LIMIT = 1000;
  */
 const RECIPIENT_MAX_PAGES = 20;
 
+/**
+ * Uma pagina do historico de disparos (`dispatch.list`).
+ *
+ * O `offset` e o numero de linhas JA carregadas: a lista usa o MESMO limite em
+ * toda pagina, entao a continuacao pede a fatia seguinte — o historico nao e
+ * carregado inteiro para depois esconder o resto. Junto das linhas vem o
+ * `total` EXATO do servidor (`meta.total`, `count: 'exact'` no handler), que e
+ * o que permite rotular o caso parcial em vez de vender a pagina como lista
+ * completa.
+ */
+export async function fetchMultiplixDispatchesPage(offset = 0): Promise<MultiplixListPayload<MultiplixDispatch>> {
+  const data = await invokeMultiplixDispatch('dispatch.list', {
+    limit: DISPATCH_LIST_LIMIT,
+    offset,
+  });
+  return readMultiplixList<MultiplixDispatch>(data);
+}
+
 export function useMultiplixDispatchesList() {
   return useQuery({
     queryKey: ['multiplix-dispatches-list'],
-    queryFn: async () => {
-      const data = await invokeMultiplixDispatch('dispatch.list', {
-        limit: DISPATCH_LIST_LIMIT,
-        offset: 0,
-      });
-      return readMultiplixList<MultiplixDispatch>(data).rows;
-    },
+    queryFn: () => fetchMultiplixDispatchesPage(0),
     refetchInterval: 10_000,
   });
 }
@@ -294,6 +311,83 @@ export async function fetchMultiplixRecipientsTotal(dispatchId: string, status: 
     'multiplix_recipients_list_sem_total',
     'recipients.list nao devolveu total e a pagina veio cheia: contagem exata indisponivel',
   );
+}
+
+/**
+ * Estimativa do disparo devolvida pela acao `estimate` da edge
+ * `multiplix-dispatch`: os numeros sao do SERVIDOR (o front so mostra).
+ */
+export interface MultiplixEstimate {
+  /** Mensagens a enviar: destinatarios aptos x blocos. */
+  messages: number;
+  /** Versoes DISTINTAS dos roteiros finais (ja renderizados). */
+  script_versions: number;
+  /** Consumo de voz: caracteres a sintetizar e renderizacoes de TTS. */
+  voice: { characters: number; renderings: number };
+  /** Destinatarios aptos (o primeiro fator de `messages`). */
+  eligible_recipients: number;
+  /** Blocos que compoem a mensagem (o segundo fator de `messages`). */
+  blocks: number;
+}
+
+function estimateNumber(source: Record<string, unknown>, field: string, where: string): number {
+  const value = source[field];
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new MultiplixDispatchEdgeError(
+      'multiplix_estimate_shape',
+      `estimate: ${where} sem ${field}`,
+    );
+  }
+  return value;
+}
+
+/**
+ * Desembrulha a estimativa do envelope da edge (`{ data: <EstimateResult> }`).
+ *
+ * Campo ausente ou nao numerico vira erro nomeado de proposito: na tela, ZERO
+ * significa "nada a enviar" — se a resposta vier incompleta, mostrar zero
+ * esconderia uma estimativa que nunca chegou.
+ */
+export function readMultiplixEstimate(data: unknown): MultiplixEstimate {
+  const payload = data && typeof data === 'object' && 'data' in (data as Record<string, unknown>)
+    ? (data as Record<string, unknown>).data
+    : data;
+  if (!payload || typeof payload !== 'object') {
+    throw new MultiplixDispatchEdgeError('multiplix_estimate_shape', 'estimate: resposta em formato inesperado');
+  }
+  const obj = payload as Record<string, unknown>;
+  const voice = obj.voice;
+  if (!voice || typeof voice !== 'object') {
+    throw new MultiplixDispatchEdgeError('multiplix_estimate_shape', 'estimate: resposta sem voice');
+  }
+  return {
+    messages: estimateNumber(obj, 'messages', 'estimate'),
+    script_versions: estimateNumber(obj, 'script_versions', 'estimate'),
+    voice: {
+      characters: estimateNumber(voice as Record<string, unknown>, 'characters', 'estimate.voice'),
+      renderings: estimateNumber(voice as Record<string, unknown>, 'renderings', 'estimate.voice'),
+    },
+    eligible_recipients: estimateNumber(obj, 'eligible_recipients', 'estimate'),
+    blocks: estimateNumber(obj, 'blocks', 'estimate'),
+  };
+}
+
+/**
+ * F50: mensagens (aptos x blocos), versoes de roteiro e consumo de voz do
+ * disparo. O `dispatch_id` viaja no MESMO payload do recorte de dono que
+ * `dispatch.list` usa, entao a estimativa de um disparo fora do escopo do
+ * usuario nao volta numero nenhum. Releitura periodica porque os aptos e os
+ * blocos mudam com o disparo em andamento (o numero na tela nao pode envelhecer).
+ */
+export function useMultiplixEstimate(dispatchId: string | null) {
+  return useQuery({
+    queryKey: ['multiplix-estimate', dispatchId],
+    queryFn: async () => readMultiplixEstimate(
+      await invokeMultiplixDispatch('estimate', { dispatch_id: dispatchId }),
+    ),
+    enabled: !!dispatchId,
+    refetchInterval: 10_000,
+  });
 }
 
 export interface CreateMultiplixDispatchInput {
@@ -517,5 +611,290 @@ export function useMultiplixDispatchAction() {
   return useMutation({
     mutationFn: ({ dispatchId, action }: { dispatchId: string; action: 'start' | 'pause' | 'cancel' }) =>
       invokeMultiplixSend(dispatchId, action),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// F46/F47/F75 — PUBLICO do disparo: selecionar, salvar e aplicar.
+//
+// O front manda so a INTENCAO (selecao manual, publicos aplicados, filtros,
+// exclusoes, "contato principal por empresa" e "selecionar todos os N") e a edge
+// `multiplix-dispatch` (TL-041A) monta o conjunto no SERVIDOR:
+//
+//     (manual u publicos) INTERSECAO filtros - exclusoes
+//
+// Nada e resolvido no navegador: publico salvo viaja por REFERENCIA
+// (`audience_id`) e "todos os N" por `select_all`, nunca como lista pronta. O
+// retorno entrega as contagens e os avisos que a tela mostra (`eligible_count`,
+// `dropped_out_of_filter`, `excluded_removed`, `signals`).
+// ---------------------------------------------------------------------------
+
+/**
+ * Filtros do publico — o MESMO conjunto de campos (`roles`/`ramo`/`uf`/`search`)
+ * das duas edges do Multiplix, por isso o tipo vem de `useMultiplixAudience` em
+ * vez de uma copia paralela que poderia divergir.
+ */
+export type MultiplixAudienceFilters = MultiplixSearchFilters;
+
+/** Conjunto de ids (`company_id`/`contact_id` do Singu) do contrato da edge. */
+export interface MultiplixAudienceIdSet {
+  companyIds?: string[];
+  contactIds?: string[];
+}
+
+/**
+ * Um publico que entra na selecao: a REFERENCIA (`audienceId`) de um publico
+ * salvo, ids ja informados pelo operador, ou filtros que o SERVIDOR materializa.
+ * Nos tres casos a expansao e server-side.
+ */
+export interface MultiplixAudiencePublic extends MultiplixAudienceIdSet {
+  filters?: MultiplixAudienceFilters;
+  audienceId?: string;
+}
+
+/** Intencao de selecao (payload de `audience.select`). */
+export interface MultiplixAudienceSelectInput {
+  manual?: MultiplixAudienceIdSet;
+  publics?: MultiplixAudiencePublic[];
+  filters?: MultiplixAudienceFilters;
+  exclude?: MultiplixAudienceIdSet;
+  /** F46: no maximo 1 destinatario por empresa. */
+  primaryPerCompany?: boolean;
+  /** F47: "selecionar todos os N" — exige `filters` (a edge recusa sem eles). */
+  selectAll?: boolean;
+}
+
+/** Destinatario resolvido pela ponte Singu (mesma forma da edge irma). */
+export type MultiplixAudienceRecipient = MultiplixResolvedRecipient;
+
+/** Aviso do servidor (ex.: primazia do contato por empresa nao determinavel). */
+export interface MultiplixAudienceSignal {
+  code: string;
+  company_id: string;
+  candidates: number;
+  detail: string;
+}
+
+/**
+ * Retorno de `audience.select`/`audience.apply`.
+ *
+ * As contagens sao as do SERVIDOR e nunca recalculadas aqui sobre a lista
+ * devolvida (que pode vir filtrada): `null` quando a resposta nao trouxe o
+ * numero, para a tela nao exibir "0 excluidos" sobre um dado ausente.
+ */
+export interface MultiplixAudienceSelectionResult<T = MultiplixAudienceRecipient> {
+  recipients: T[];
+  total: number | null;
+  /** Destinatarios elegiveis depois dos filtros e das exclusoes. */
+  eligible_count: number | null;
+  /** N do servidor ANTES de resolver (pode ser maior que `recipients.length`). */
+  count: number | null;
+  policy_limit: number | null;
+  primary_per_company: boolean;
+  select_all: boolean;
+  signals: MultiplixAudienceSignal[];
+  /** Quantos candidatos o filtro descartou depois do resolve. */
+  dropped_out_of_filter: number | null;
+  /** Quantos destinatarios as exclusoes removeram. */
+  excluded_removed: number | null;
+  /** Presente so no `audience.apply`: o publico salvo que foi aplicado. */
+  audience_id?: string;
+}
+
+/** Payload de `audience.save` (a edge recusa chave fora deste contrato). */
+export interface MultiplixAudienceSaveInput {
+  name: string;
+  kind: 'rule' | 'static_list';
+  /** So em `rule`: os filtros da regra. */
+  definition?: MultiplixAudienceFilters;
+  /** So em `static_list`: os membros do publico. */
+  members?: MultiplixAudienceIdSet;
+}
+
+export interface MultiplixAudienceSaveResult {
+  id: string;
+  name: string;
+  kind: 'rule' | 'static_list';
+  /** Membros gravados; `null` quando a resposta nao informou. */
+  member_count: number | null;
+}
+
+/** Payload de `audience.apply` — o publico salvo entra por REFERENCIA. */
+export interface MultiplixAudienceApplyInput {
+  audienceId: string;
+  manual?: MultiplixAudienceIdSet;
+  filters?: MultiplixAudienceFilters;
+  exclude?: MultiplixAudienceIdSet;
+  primaryPerCompany?: boolean;
+  selectAll?: boolean;
+}
+
+function toAudienceIdSet(set: MultiplixAudienceIdSet): Record<string, unknown> {
+  return { company_ids: set.companyIds ?? [], contact_ids: set.contactIds ?? [] };
+}
+
+/**
+ * Payload de `audience.select`: manda so o que o operador informou (a edge
+ * aplica os defaults) e NAO expande nada — publico salvo sai como `audience_id`,
+ * "todos os N" como `select_all`.
+ */
+export function buildMultiplixAudienceSelectPayload(
+  input: MultiplixAudienceSelectInput = {},
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+  if (input.manual) payload.manual = toAudienceIdSet(input.manual);
+  if (input.publics?.length) {
+    payload.publics = input.publics.map((pub) => ({
+      ...toAudienceIdSet(pub),
+      ...(pub.filters ? { filters: pub.filters } : {}),
+      ...(pub.audienceId ? { audience_id: pub.audienceId } : {}),
+    }));
+  }
+  if (input.filters) payload.filters = input.filters;
+  if (input.exclude) payload.exclude = toAudienceIdSet(input.exclude);
+  if (input.primaryPerCompany !== undefined) payload.primary_per_company = input.primaryPerCompany;
+  if (input.selectAll !== undefined) payload.select_all = input.selectAll;
+  return payload;
+}
+
+/** Payload de `audience.apply` — mesmo contrato da edge, com a referencia dentro. */
+export function buildMultiplixAudienceApplyPayload(
+  input: MultiplixAudienceApplyInput,
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = { audience_id: input.audienceId };
+  if (input.manual) payload.manual = toAudienceIdSet(input.manual);
+  if (input.filters) payload.filters = input.filters;
+  if (input.exclude) payload.exclude = toAudienceIdSet(input.exclude);
+  if (input.primaryPerCompany !== undefined) payload.primary_per_company = input.primaryPerCompany;
+  if (input.selectAll !== undefined) payload.select_all = input.selectAll;
+  return payload;
+}
+
+/**
+ * Payload de `audience.save`. `definition` e so de `rule` e `members` e so de
+ * `static_list`: a edge recusa os dois juntos, entao o hook nao manda campo
+ * exclusivo do outro modo.
+ */
+export function buildMultiplixAudienceSavePayload(
+  input: MultiplixAudienceSaveInput,
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = { name: input.name, kind: input.kind };
+  if (input.definition) payload.definition = input.definition;
+  if (input.members) payload.members = toAudienceIdSet(input.members);
+  return payload;
+}
+
+/**
+ * Desembrulha o `{ data: ... }` da edge e exige um objeto. Forma inesperada
+ * falha NOMEADO (`multiplix_audience_shape`) em vez de virar tela vazia.
+ */
+function readMultiplixAudienceData(data: unknown): Record<string, unknown> {
+  const envelope = data as Record<string, unknown> | null;
+  if (!envelope || typeof envelope !== 'object' || Array.isArray(envelope)) {
+    throw new MultiplixDispatchEdgeError(
+      'multiplix_audience_shape',
+      'multiplix-dispatch: resposta de publico em formato inesperado',
+    );
+  }
+  const inner = envelope.data;
+  return (inner && typeof inner === 'object' && !Array.isArray(inner))
+    ? inner as Record<string, unknown>
+    : envelope;
+}
+
+function numberOrNull(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+/**
+ * Normaliza `audience.select`/`audience.apply`. A lista de destinatarios e
+ * obrigatoria; as contagens sao lidas so quando sao numero de fato.
+ */
+export function readMultiplixAudienceSelection<T = MultiplixAudienceRecipient>(
+  data: unknown,
+): MultiplixAudienceSelectionResult<T> {
+  const payload = readMultiplixAudienceData(data);
+  if (!Array.isArray(payload.recipients)) {
+    throw new MultiplixDispatchEdgeError(
+      'multiplix_audience_shape',
+      'multiplix-dispatch: resposta de publico sem a lista de destinatarios',
+    );
+  }
+  return {
+    recipients: payload.recipients as T[],
+    total: numberOrNull(payload.total),
+    eligible_count: numberOrNull(payload.eligible_count),
+    count: numberOrNull(payload.count),
+    policy_limit: numberOrNull(payload.policy_limit),
+    primary_per_company: payload.primary_per_company === true,
+    select_all: payload.select_all === true,
+    signals: Array.isArray(payload.signals) ? payload.signals as MultiplixAudienceSignal[] : [],
+    dropped_out_of_filter: numberOrNull(payload.dropped_out_of_filter),
+    excluded_removed: numberOrNull(payload.excluded_removed),
+    ...(typeof payload.audience_id === 'string' ? { audience_id: payload.audience_id } : {}),
+  };
+}
+
+/**
+ * Normaliza `audience.save`. O id e obrigatorio (a tela o usa para aplicar o
+ * publico depois) e o `kind` tem de ser um dos dois do contrato — qualquer outra
+ * coisa falha nomeado em vez de mostrar um publico de tipo errado.
+ */
+export function readMultiplixAudienceSaved(data: unknown): MultiplixAudienceSaveResult {
+  const payload = readMultiplixAudienceData(data);
+  const kind = payload.kind === 'static_list' || payload.kind === 'rule' ? payload.kind : null;
+  if (typeof payload.id !== 'string' || payload.id === '' || kind === null) {
+    throw new MultiplixDispatchEdgeError(
+      'multiplix_audience_shape',
+      'multiplix-dispatch: audience.save nao devolveu o publico salvo (id/kind)',
+    );
+  }
+  return {
+    id: payload.id,
+    name: typeof payload.name === 'string' ? payload.name : '',
+    kind,
+    member_count: numberOrNull(payload.member_count),
+  };
+}
+
+/** F46/F47: monta o publico no servidor e devolve elegiveis + contagens + avisos. */
+export async function selectMultiplixAudience(
+  input: MultiplixAudienceSelectInput = {},
+): Promise<MultiplixAudienceSelectionResult> {
+  const data = await invokeMultiplixDispatch('audience.select', buildMultiplixAudienceSelectPayload(input));
+  return readMultiplixAudienceSelection(data);
+}
+
+/** F75: grava o publico (`rule` ou `static_list`) no servidor. */
+export async function saveMultiplixAudience(
+  input: MultiplixAudienceSaveInput,
+): Promise<MultiplixAudienceSaveResult> {
+  const data = await invokeMultiplixDispatch('audience.save', buildMultiplixAudienceSavePayload(input));
+  return readMultiplixAudienceSaved(data);
+}
+
+/** F75: aplica um publico salvo por referencia (`audience_id`). */
+export async function applyMultiplixAudience(
+  input: MultiplixAudienceApplyInput,
+): Promise<MultiplixAudienceSelectionResult> {
+  const data = await invokeMultiplixDispatch('audience.apply', buildMultiplixAudienceApplyPayload(input));
+  return readMultiplixAudienceSelection(data);
+}
+
+export function useMultiplixAudienceSelect() {
+  return useMutation({
+    mutationFn: (input: MultiplixAudienceSelectInput) => selectMultiplixAudience(input),
+  });
+}
+
+export function useMultiplixAudienceSave() {
+  return useMutation({
+    mutationFn: (input: MultiplixAudienceSaveInput) => saveMultiplixAudience(input),
+  });
+}
+
+export function useMultiplixAudienceApply() {
+  return useMutation({
+    mutationFn: (input: MultiplixAudienceApplyInput) => applyMultiplixAudience(input),
   });
 }

@@ -24,7 +24,7 @@ interface AchievementsSystemProps {
 }
 
 export const AchievementsSystem = ({ showCompact = false }: AchievementsSystemProps) => {
-  const { achievements, stats, isLoading, isError } = useAgentGamification();
+  const { achievements, achievementsTotal, stats, isLoading, isError } = useAgentGamification();
 
   if (isLoading) {
     return <Card><CardContent className="flex items-center justify-center h-64"><div className="animate-pulse text-muted-foreground">Carregando conquistas...</div></CardContent></Card>;
@@ -53,7 +53,7 @@ export const AchievementsSystem = ({ showCompact = false }: AchievementsSystemPr
             <div className="flex items-center gap-2"><Trophy className="h-5 w-5 text-warning" /><h1 className="text-lg font-semibold leading-none tracking-tight">Conquistas</h1></div>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="gap-1"><Crown className="h-3 w-3" />Nível {level}</Badge>
-              <Badge variant="secondary">{achievements.length} conquistas</Badge>
+              <Badge variant="secondary">{achievementsTotal} conquistas</Badge>
             </div>
           </div>
         </CardHeader>

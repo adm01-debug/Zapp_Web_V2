@@ -84,7 +84,7 @@ const HEALTH_ITEMS: Array<{ key: keyof Pick<SystemHealth, 'database' | 'storage'
   { key: 'database', label: 'Banco de Dados', icon: Database, getDetail: (h) => failureDetail(h.database, h.dbLatency, 'banco') ?? `Latência: ${h.dbLatency}ms · ${h.contactsCount} contatos · ${h.messagesCount} mensagens` },
   { key: 'storage', label: 'Armazenamento', icon: HardDrive, getDetail: (h) => failureDetail(h.storage, h.storageLatency, 'Storage') ?? `Latência: ${h.storageLatency}ms` },
   { key: 'realtime', label: 'Realtime', icon: Zap, getDetail: (h) => h.realtime === 'healthy' ? `Assinatura confirmada${h.realtimeCheckedAt ? ` às ${format(new Date(h.realtimeCheckedAt), 'HH:mm:ss', { locale: ptBR })}` : ''}` : (h.realtime === 'down' ? 'Falha ao assinar o canal' : 'Não medido') },
-  { key: 'edgeFunctions', label: 'Backend Functions', icon: Server, getDetail: (h) => `${h.connectionsCount} conexão(ões) configurada(s)` },
+  { key: 'edgeFunctions', label: 'Backend Functions', icon: Server, getDetail: (h) => h.lastHealthCheckAt ? `Último health check automático ${formatDistanceToNow(new Date(h.lastHealthCheckAt), { addSuffix: true, locale: ptBR })} · ${h.healthCheckLogs.length} check(s) recentes` : 'Nenhum health check automático registrado' },
 ];
 
 // ─── Main ───
@@ -177,6 +177,12 @@ export function DiagnosticsView() {
                       <div>
                         <p className="font-semibold text-foreground">{conn.instance_id}</p>
                         <p className="text-xs text-muted-foreground">{conn.phone_number || 'Sem número vinculado'} · Criada {formatDistanceToNow(new Date(conn.created_at), { addSuffix: true, locale: ptBR })}</p>
+                        {conn.last_health_check && (
+                          <p className="text-3xs text-muted-foreground">
+                            Última verificação automática {formatDistanceToNow(new Date(conn.last_health_check), { addSuffix: true, locale: ptBR })}
+                            {conn.health_response_ms != null ? ` · ${conn.health_response_ms}ms` : ''}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -235,8 +241,8 @@ export function DiagnosticsView() {
                       {messageDiag.recentFailures.map(f => (
                         <div key={f.id} className="flex items-center justify-between p-3 rounded-lg bg-destructive/5 border border-destructive/10">
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">{f.contact_name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{f.content.slice(0, 60)}</p>
+                            <p className="text-sm font-medium text-foreground truncate">Mensagem {f.id}</p>
+                            <p className="text-xs text-muted-foreground truncate">Motivo: {f.motivo}</p>
                           </div>
                           <span className="text-xs text-muted-foreground whitespace-nowrap ml-3">
                             {formatDistanceToNow(new Date(f.created_at), { addSuffix: true, locale: ptBR })}

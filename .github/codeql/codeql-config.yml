@@ -1,0 +1,10 @@
+# W82: configuração do CodeQL para javascript-typescript.
+# Exclui caminhos de teste para que alertas de produção não sejam poluídos
+# por padrões aceitáveis em suites de teste (ex.: eval, dangling promises).
+paths-ignore:
+  - '**/*.test.ts'
+  - '**/*.test.js'
+  - '**/__tests__/**'
+  - 'tests/contracts/**'
+  - 'scripts/**/*.unit.mjs'
+  - 'e2e/**'

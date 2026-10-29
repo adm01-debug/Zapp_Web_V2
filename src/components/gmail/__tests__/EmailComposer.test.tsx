@@ -333,3 +333,98 @@ describe('EmailComposer — inicialização e comportamento de envio', () => {
     expect(saveDraftMutateAsync).toHaveBeenNthCalledWith(2, expect.objectContaining({ draft_id: 'draft-1', subject: 'Versão 2' }));
   });
 });
+
+describe('EmailComposer — acessibilidade do diálogo flutuante', () => {
+  it('tem role="dialog" e aria-labelledby apontando para o título', () => {
+    render(<EmailComposer mode="new" onClose={vi.fn()} />);
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog).toBeInTheDocument();
+    const titleId = dialog?.getAttribute('aria-labelledby');
+    expect(titleId).toBeTruthy();
+    expect(document.getElementById(titleId!)).toBeInTheDocument();
+  });
+
+  it('gera id de título único por instância e sem aria-modal (diálogo não modal)', () => {
+    render(<EmailComposer mode="new" onClose={vi.fn()} />);
+    const { unmount } = render(<EmailComposer mode="reply" replyTo={makeMessage()} onClose={vi.fn()} />);
+    const dialogs = document.querySelectorAll('[role="dialog"]');
+    expect(dialogs).toHaveLength(2);
+    const ids = Array.from(dialogs).map((d) => d.getAttribute('aria-labelledby'));
+    expect(ids[0]).toBeTruthy();
+    expect(ids[1]).toBeTruthy();
+    expect(ids[0]).not.toBe(ids[1]);
+    for (const dialog of Array.from(dialogs)) {
+      expect(dialog).not.toHaveAttribute('aria-modal');
+    }
+    unmount();
+  });
+
+  it('foca o campo Para quando o compositor abre', () => {
+    vi.useFakeTimers();
+    render(<EmailComposer mode="new" onClose={vi.fn()} />);
+    const toInput = screen.getByLabelText('Destinatários') as HTMLInputElement;
+    vi.advanceTimersByTime(0);
+    expect(document.activeElement).toBe(toInput);
+    vi.useRealTimers();
+  });
+
+  it('devolve o foco ao elemento trigger ao fechar', () => {
+    vi.useFakeTimers();
+    let triggerElement: HTMLButtonElement | null = null;
+    function Trigger() {
+      return <button ref={(el: HTMLButtonElement | null) => { triggerElement = el; }} onClick={() => {}}>Abrir compositor</button>;
+    }
+
+    // Renderiza o trigger e foca antes de montar o compositor
+    const { unmount: unmountTrigger } = render(<Trigger />);
+    (triggerElement as HTMLButtonElement | null)?.focus();
+    expect(document.activeElement).toBe(triggerElement);
+
+    // Monta o compositor (salva o foco atual = trigger)
+    const { unmount: unmountComposer } = render(<EmailComposer mode="new" onClose={() => unmountComposer()} />);
+
+    // O foco sai do trigger para o campo Para — prova que houve roubo real,
+    // não que o foco simplesmente nunca saiu do lugar
+    vi.advanceTimersByTime(0);
+    expect(document.activeElement).toBe(screen.getByLabelText('Destinatários'));
+
+    // Desmonta o compositor — foco deve voltar ao trigger
+    unmountComposer();
+    expect(document.activeElement).toBe(triggerElement);
+
+    unmountTrigger();
+    vi.useRealTimers();
+  });
+
+  it('não rouba o foco quando há rascunho restaurado', () => {
+    vi.useFakeTimers();
+    const key = emailDraftSessionKey({ accountId: 'acc-nofocus', mode: 'new' });
+    writeEmailDraftSession(key, {
+      draftId: 'draft-remote', to: 'cliente@example.com', cc: '', bcc: '', subject: 'Rascunho',
+      body: 'Conteúdo', isUsingHtml: false, attachmentNames: [], updatedAt: new Date().toISOString(),
+    });
+    render(<EmailComposer accountId="acc-nofocus" mode="new" onClose={vi.fn()} />);
+    const toInput = screen.getByLabelText('Destinatários');
+    vi.advanceTimersByTime(0);
+    expect(document.activeElement).not.toBe(toInput);
+    vi.useRealTimers();
+  });
+
+  it('não devolve o foco se o trigger saiu do DOM', () => {
+    let triggerElement: HTMLButtonElement | null = null;
+    function Trigger() {
+      return <button ref={(el: HTMLButtonElement | null) => { triggerElement = el; }}>Abrir compositor</button>;
+    }
+    const { unmount: unmountTrigger } = render(<Trigger />);
+    expect(triggerElement).not.toBeNull();
+    const trigger = triggerElement!;
+    trigger.focus();
+    const focusSpy = vi.spyOn(trigger, 'focus');
+    const { unmount: unmountComposer } = render(<EmailComposer mode="new" onClose={vi.fn()} />);
+    unmountTrigger();
+    expect(document.contains(trigger)).toBe(false);
+    unmountComposer();
+    expect(focusSpy).not.toHaveBeenCalled();
+    focusSpy.mockRestore();
+  });
+});

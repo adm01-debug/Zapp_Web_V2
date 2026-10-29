@@ -126,6 +126,17 @@ export const FILTER_OPTIONS: FilterOption[] = [
     iconColor: 'text-info',
     match: (c) => !isGroup(c.contact.phone) && c.contact.contact_type === 'transportadora',
   },
+  {
+    // `parceiro` é um dos 6 valores aceitos pelo CHECK de contacts.contact_type
+    // (20260928180000_add_contact_type_check_constraint.sql) e existe na UI de
+    // Contatos (contactTypeConfig.tsx). Sem esta opção, contato parceiro não
+    // casava nenhum filtro de tipo — e as categorias deixavam de ser partição.
+    value: 'parceiro',
+    label: 'Parceiros',
+    icon: Handshake,
+    iconColor: 'text-secondary',
+    match: (c) => !isGroup(c.contact.phone) && c.contact.contact_type === 'parceiro',
+  },
 ];
 
 // Separators go AFTER these values
@@ -179,7 +190,7 @@ export const ContactTypeFilter = React.forwardRef<HTMLDivElement, ContactTypeFil
       value={value || 'all'}
       onValueChange={(v) => onChange(v === 'all' ? null : v)}
     >
-      <SelectTrigger className="h-7 text-2xs bg-muted/40 border-0 rounded-md focus:ring-1 focus:ring-primary/30 px-2 gap-1">
+      <SelectTrigger className="h-7 text-2xs bg-muted/40 border-0 rounded-md focus:ring-1 focus:ring-primary/30 px-2 gap-1" aria-label="Tipo de contato">
         <div className="flex items-center gap-1 truncate">
           <TriggerIcon className={cn('w-3 h-3 shrink-0', activeOption?.iconColor || 'text-muted-foreground')} />
           <span className="truncate">{activeOption?.label || 'Todos'}</span>

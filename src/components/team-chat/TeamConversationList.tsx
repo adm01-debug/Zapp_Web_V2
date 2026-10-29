@@ -10,6 +10,15 @@ import { useActiveDepartments, ActiveDepartment } from '@/hooks/team-chat/useAct
 import { DepartmentManagementDialog } from './DepartmentManagementDialog';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { motion } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Mesmo padrão de carregamento da lista do Inbox (ConversationListSidebar).
+const SKELETON_WIDTHS = [
+  { name: 68, msg: 55 }, { name: 82, msg: 70 }, { name: 74, msg: 62 },
+  { name: 91, msg: 80 }, { name: 65, msg: 48 }, { name: 78, msg: 65 },
+  { name: 88, msg: 73 },
+];
 
 type FilterType = 'all' | 'direct' | 'group' | 'department';
 
@@ -28,6 +37,7 @@ interface Props {
   currentUserId?: string;
   canManageDepartments?: boolean;
   currentUserName?: string;
+  loading?: boolean;
 }
 
 export function TeamConversationList({
@@ -38,6 +48,7 @@ export function TeamConversationList({
   currentUserId,
   canManageDepartments,
   currentUserName,
+  loading = false,
 }: Props) {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
@@ -89,6 +100,7 @@ export function TeamConversationList({
               variant="ghost"
               className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
               onClick={() => setSearch('')}
+              aria-label="Limpar busca"
             >
               <X className="w-3 h-3" />
             </Button>
@@ -120,14 +132,39 @@ export function TeamConversationList({
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto" role="listbox" aria-label="Conversas">
-        {filtered.length === 0 ? (
+      {loading ? (
+        <div className="flex-1 overflow-y-auto" role="status" aria-label="Carregando conversas">
+          <div className="p-3 space-y-1">
+            {SKELETON_WIDTHS.map(({ name, msg }, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.06, duration: 0.3, ease: 'easeOut' }}
+                className="flex items-center gap-3 p-2.5 rounded-xl"
+              >
+                <Skeleton className="w-9 h-9 rounded-full shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-3.5 rounded-md" style={{ width: `${name}%` }} />
+                    <Skeleton className="h-3 w-10 rounded-md" />
+                  </div>
+                  <Skeleton className="h-3 rounded-md" style={{ width: `${msg}%` }} />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex-1 overflow-y-auto">
           <div className="flex flex-col items-center justify-center h-32 text-sm text-muted-foreground gap-2">
             <MessageSquare className="w-6 h-6 opacity-40" />
             <span>Nenhuma conversa</span>
           </div>
-        ) : (
-          filtered.map((conv, idx) => {
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto" role="list" aria-label="Conversas">
+          {filtered.map((conv, idx) => {
             const isSelected = conv.id === selectedId;
             const dept = conv.department_id
               ? departments.find(d => d.id === conv.department_id)
@@ -137,8 +174,8 @@ export function TeamConversationList({
               <div
                 key={conv.id}
                 ref={el => { itemRefs.current[idx] = el; }}
-                role="option"
-                aria-selected={isSelected}
+                role="listitem"
+                aria-current={isSelected ? 'true' : undefined}
                 tabIndex={0}
                 onClick={() => onSelect(conv.id)}
                 onKeyDown={e => handleKeyDown(e, idx)}
@@ -152,9 +189,9 @@ export function TeamConversationList({
                     <AvatarImage src={conv.avatar_url ?? undefined} />
                     <AvatarFallback className={cn(
                       'text-xs font-semibold',
-                      conv.type === 'direct' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
-                      conv.department_id ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
-                      'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                      conv.type === 'direct' ? 'bg-primary/15 text-[hsl(var(--primary-text))]' :
+                      conv.department_id ? 'bg-violeta/15 text-[hsl(var(--violeta-text))] dark:bg-violeta/10 dark:text-[hsl(var(--violeta-text))]' :
+                      'bg-success/15 text-success'
                     )}>
                       {conv.type === 'direct'
                         ? <MessageSquare className="w-4 h-4" />
@@ -186,7 +223,7 @@ export function TeamConversationList({
                   </div>
                   <div className="flex items-center gap-1 justify-between">
                     <p className="text-xs text-muted-foreground truncate">
-                      {conv.last_message?.content ?? (dept ? dept.description ?? dept.name : '')}
+                      {conv.last_message?.content ?? (dept ? dept.name : '')}
                     </p>
                     {conv.department_id && canManageDepartments && dept && (
                       <Button
@@ -203,9 +240,9 @@ export function TeamConversationList({
                 </div>
               </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       {managingDept && (
         <DepartmentManagementDialog

@@ -286,12 +286,21 @@ describe('SkillBasedRoutingSettings — atribuição por habilidade (SL-192)', (
         { table: 'contacts', op: 'escrita', method: 'eq', column: 'queue_id', value: 'q1' },
         { table: 'contacts', op: 'escrita', method: 'is', column: 'assigned_to', value: null },
         { table: 'contacts', op: 'escrita', method: 'is', column: 'deleted_at', value: null },
+        {
+          table: 'contacts',
+          op: 'escrita',
+          method: 'not',
+          column: 'conversation_status',
+          operator: 'in',
+          value: '(resolved,archived)',
+        },
       ]),
     );
   });
 
   it('não anuncia sucesso quando o UPDATE não altera linha (contato atribuído por outro fluxo)', async () => {
     h.updatedRows = [];
+    const invalidacao = vi.spyOn(queryClient, 'invalidateQueries');
     await selecionarFila();
 
     fireEvent.click(botaoAtribuir());
@@ -301,6 +310,10 @@ describe('SkillBasedRoutingSettings — atribuição por habilidade (SL-192)', (
     const titulos = h.toasts.map(t => t.title);
     expect(titulos).not.toContain('Contato atribuído ao agente da fila');
     expect(titulos).toContain('Este contato já foi atribuído por outro fluxo');
+    expect(invalidacao).not.toHaveBeenCalledWith({ queryKey: ['contacts-kpi'] });
+    expect(invalidacao).not.toHaveBeenCalledWith({ queryKey: ['contacts-type-counts'] });
+    expect(invalidacao).not.toHaveBeenCalledWith({ queryKey: ['contacts-search'] });
+    expect(invalidacao).not.toHaveBeenCalledWith({ queryKey: ['dashboard-contact-counts'] });
   });
 
   it('depois de atribuir de verdade, invalida a lista de contatos e a contagem da fila', async () => {

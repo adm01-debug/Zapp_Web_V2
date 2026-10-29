@@ -35,7 +35,7 @@ export function buildRateByMinute(data: { sent_at: string | null; delivered_at: 
     .map(([label, { sent, delivered }]) => ({ label, Enviadas: sent, Entregues: delivered }));
 }
 
-export function useTalkXMonitor(campaignId: string | null, statusFilter = 'all') {
+export function useTalkXMonitor(campaignId: string | null, statusFilter = 'all', refetchInterval?: number | false) {
   const query = useQuery({
     queryKey: ['talkx-monitor-recipients', campaignId, statusFilter],
     queryFn: async () => {
@@ -50,7 +50,7 @@ export function useTalkXMonitor(campaignId: string | null, statusFilter = 'all')
       return (data ?? []) as MonitorRecipient[];
     },
     enabled: !!campaignId,
-    refetchInterval: 5_000,
+    refetchInterval: refetchInterval ?? 5_000,
   });
 
   return {

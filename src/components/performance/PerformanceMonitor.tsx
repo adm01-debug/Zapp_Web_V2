@@ -170,7 +170,7 @@ export function PerformanceMonitor() {
         </div>
         <div className="flex items-center gap-2">
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-[130px] h-8 text-xs">
+            <SelectTrigger aria-label="Período" className="w-[130px] h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

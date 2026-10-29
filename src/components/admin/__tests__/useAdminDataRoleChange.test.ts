@@ -91,6 +91,28 @@ describe('useAdminData.handleRoleChange — RPC atômica admin_set_role', () => 
     );
   });
 
+  it('em erro de RLS (42501) mostra a mensagem fixa, sem vazar a tabela/policy', async () => {
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: {
+        code: '42501',
+        message: 'new row violates row-level security policy for table "user_roles"',
+      },
+    });
+
+    const { result } = renderHook(() => useAdminData('users'));
+    await act(async () => {
+      await result.current.handleRoleChange('auth-1', 'agent');
+    });
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
+    const msg = vi.mocked(toast.error).mock.calls[0][0] as string;
+    expect(msg).toContain('Acesso negado');
+    expect(msg).not.toContain('user_roles');
+    expect(msg).not.toContain('row-level security');
+    expect(msg).not.toContain('42501');
+  });
+
   it('em sucesso anuncia o novo papel e refaz o fetch', async () => {
     const { result } = renderHook(() => useAdminData('users'));
     await act(async () => {

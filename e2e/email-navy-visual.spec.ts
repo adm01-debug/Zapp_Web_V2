@@ -112,7 +112,7 @@ test.beforeEach(async ({ page }, testInfo) => {
 test('rota real renderiza lista, conversa e compositor com o tema do sistema sem chamadas externas mutáveis', async ({ page }) => {
   mkdirSync(output, { recursive: true });
   await abrirEmail(page);
-  await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
+  await expect(page.getByTestId('email-header').getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await expect(page.getByText('Preview deployment failed for departamento-pessoal-v3').first()).toBeVisible();
   await page.waitForTimeout(400);
   await clearTransientToasts(page);
@@ -141,7 +141,7 @@ test('rota real renderiza lista, conversa e compositor com o tema do sistema sem
 
 test('workspace do Email não introduz violações axe', async ({ page }) => {
   await abrirEmail(page);
-  await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
+  await expect(page.getByTestId('email-header').getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await freezeVisualTransitions(page);
   await page.waitForTimeout(400);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
@@ -313,16 +313,13 @@ test('painel CRM completo preserva ações, acessibilidade e fechamento em 320 p
   await expect(drawer.getByRole('link', { name: /abrir site da empresa/i })).toHaveAttribute('href', 'https://empresa.example.test/catalogo?origem=email#sobre');
   await expect(drawer.getByRole('link', { name: /abrir linkedin da empresa/i })).toBeVisible();
   await expect(drawer.getByRole('link', { name: /abrir instagram da empresa/i })).toBeVisible();
-  // A gaveta desliza da direita ao abrir: medir o botão durante a animação o pega fora dos 320 px (falhava no runner do CI,
-  // mais lento). Desliga as animações ANTES de medir e espera a posição assentar; a asserção em si é a mesma.
+  // A gaveta entra deslizando por animação CSS (Sheet data-[state=open]:slide-in-from-right,
+  // 500 ms). Medir o botão antes do fim/freeze da animação lia uma posição intermediária
+  // (x + largura > 320) e derrubava o teste de forma intermitente. Congelar as transições ANTES
+  // da medição fixa a posição final da gaveta; o congelamento segue valendo para a aferição do axe.
   await freezeVisualTransitions(page);
-  const closeButton = drawer.getByRole('button', { name: 'Fechar detalhes' });
-  await expect
-    .poll(async () => {
-      const close = await closeButton.boundingBox();
-      return Boolean(close && close.x >= 0 && close.x + close.width <= 320);
-    }, { message: 'o botão Fechar detalhes precisa caber nos 320 px', timeout: 5000 })
-    .toBe(true);
+  const close = await drawer.getByRole('button', { name: 'Fechar detalhes' }).boundingBox();
+  expect(close && close.x >= 0 && close.x + close.width <= 320).toBeTruthy();
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => {
     const axe = (window as unknown as Window & {
@@ -419,8 +416,10 @@ test('editor WYSIWYG aplica formatação, link e histórico de desfazer sem exec
 test('reflow equivalente a zoom de 200% mantém ações essenciais acessíveis', async ({ page }) => {
   await page.setViewportSize({ width: 640, height: 720 });
   await abrirEmail(page);
+  // O zoom entra depois do boot: o tema do app também grava o atributo style do <html> durante
+  // a montagem; aplicar antes poderia ser perdido e mascarar a medição de reflow.
   await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
-  await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
+  await expect(page.getByTestId('email-header').getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nova mensagem' }).first()).toBeVisible();
   const firstThreadButton = page.getByText('Preview deployment failed for departamento-pessoal-v3').first().locator('xpath=ancestor::button');
   await firstThreadButton.focus();
@@ -465,7 +464,13 @@ test('rascunho e referência de anexo permanecem isolados no ciclo conta A → B
 
 test('corpus extremo com texto sem quebra e muitos anexos não cria overflow global', async ({ page }) => {
   await abrirEmail(page);
-  await page.getByRole('textbox', { name: 'Busca global do Email' }).fill('Corpus extremo');
+  const resultadoBusca = page.waitForResponse(response =>
+    response.url().includes('/rest/v1/rpc/search_email_threads') &&
+    response.request().postDataJSON()?.p_q === 'Corpus extremo');
+  const campoBusca = page.getByRole('textbox', { name: 'Busca global do Email' });
+  await campoBusca.fill('Corpus extremo');
+  await resultadoBusca;
+  await expect(campoBusca).toHaveAttribute('aria-busy', 'false');
   await page.getByText('Corpus extremo', { exact: false }).first().click();
   const extremeMessage = page.getByRole('article', { name: /Mensagem de REMETENTESEMQUEBRA/ });
   await expect(extremeMessage).toBeVisible();
@@ -480,7 +485,7 @@ test('alto contraste e movimento reduzido mantêm o workspace acessível', async
     localStorage.setItem('reducedMotion', 'true');
   });
   await abrirEmail(page);
-  await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
+  await expect(page.getByTestId('email-header').getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await expect(page.locator('html')).toHaveClass(/high-contrast/);
   await expect(page.locator('html')).toHaveClass(/reduced-motion/);
   // As classes acima existem já no PRIMEIRO paint (script inline do index.html), então não provam
@@ -544,7 +549,7 @@ for (const viewport of [
   test(`matriz responsiva ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await abrirEmail(page);
-    await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
+    await expect(page.getByTestId('email-header').getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
     await expect(page.getByText('Preview deployment failed for departamento-pessoal-v3').first()).toBeVisible();
     await page.waitForTimeout(400);
     await clearTransientToasts(page);

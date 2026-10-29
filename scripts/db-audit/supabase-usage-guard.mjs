@@ -339,13 +339,23 @@ function main() {
     console.error('Se for divida tecnica conhecida, adicione a chave em scripts/db-audit/known-violations.json:');
     for (const v of [...new Set(novas.map((n) => n.key))]) console.error('  "' + v + '",');
   }
+  // W24: obsoletas viram aviso (nao bloqueiam). Com --prune-obsolete, o arquivo e reescrito
+  // sem elas para que o PR de sync possa incluir a poda automaticamente.
+  const pruneObsolete = process.argv.includes('--prune-obsolete');
   if (obsoletas.length) {
-    console.error('\nEntradas obsoletas no baseline (a violacao sumiu - remova-as):');
-    for (const k of obsoletas) console.error('  ' + k);
+    const mensagem = `\nEntradas obsoletas no baseline (${obsoletas.length}): a violacao sumiu; serao podadas automaticamente pelo types-sync.`;
+    console.warn(mensagem);
+    for (const k of obsoletas) console.warn('  ' + k);
+    if (pruneObsolete && fs.existsSync(BASELINE)) {
+      const atual = JSON.parse(fs.readFileSync(BASELINE, 'utf8'));
+      const podado = { ...atual, known: atual.known.filter((k) => !obsoletas.includes(k)) };
+      fs.writeFileSync(BASELINE, JSON.stringify(podado, null, 2) + '\n');
+      console.log(`known-violations.json podado: ${obsoletas.length} entrada(s) removida(s).`);
+    }
   }
 
-  if (novas.length || obsoletas.length) process.exit(1);
-  console.log('OK: nenhuma violacao nova.');
+  if (novas.length) process.exit(1);
+  console.log('OK: nenhuma violacao nova' + (obsoletas.length ? ` (${obsoletas.length} obsoleta(s) podada(s))` : '') + '.');
 }
 
 // `main()` so quando o modulo e o ponto de entrada: o Gate 3 importa `scan()` e

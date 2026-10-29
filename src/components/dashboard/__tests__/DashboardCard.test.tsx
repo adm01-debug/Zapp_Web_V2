@@ -2,8 +2,9 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { render, screen, fireEvent, within, cleanup } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { Target } from 'lucide-react';
-import { DashboardCard, SectionHeader, VerTodasButton, StatusChip, Pill } from '../overview/DashboardCard';
+import { DashboardCard, SectionHeader, VerTodasButton, StatusChip, Pill, CardSelect } from '../overview/DashboardCard';
 
 describe('DashboardCard', () => {
   it('renderiza os filhos dentro do card', () => {
@@ -32,6 +33,52 @@ describe('VerTodasButton', () => {
     render(<VerTodasButton onClick={onClick} />);
     fireEvent.click(screen.getByTestId('ver-todas'));
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('CardSelect', () => {
+  it('aplica aria-label quando name é fornecido', () => {
+    render(
+      <CardSelect
+        value="week"
+        onValueChange={vi.fn()}
+        options={[{ value: 'week', label: 'Esta semana' }]}
+        name="Período CSAT"
+      />
+    );
+    expect(screen.getByRole('combobox')).toHaveAttribute('aria-label', 'Período CSAT');
+  });
+
+  it('aplica rótulos distintos em seletores diferentes', () => {
+    render(
+      <CardSelect
+        value="30"
+        onValueChange={vi.fn()}
+        options={[{ value: '30', label: 'Últimos 30 dias' }]}
+        name="Período da evolução da satisfação"
+      />
+    );
+    expect(screen.getByRole('combobox')).toHaveAttribute('aria-label', 'Período da evolução da satisfação');
+  });
+
+  it('axe não acusa combobox sem nome acessível (button-name)', async () => {
+    const { container } = render(
+      <CardSelect
+        value="week"
+        onValueChange={vi.fn()}
+        options={[{ value: 'week', label: 'Esta semana' }]}
+        name="Período CSAT"
+      />
+    );
+    const results = await axe(container, {
+      rules: { 'color-contrast': { enabled: false } },
+    });
+    const semNome = results.violations.filter((v) =>
+      ['button-name', 'aria-input-field-name', 'aria-toggle-field-name', 'aria-command-name', 'select-name'].includes(
+        v.id,
+      ),
+    );
+    expect(semNome).toEqual([]);
   });
 });
 
@@ -132,8 +179,7 @@ const TOKEN_DA_CLASSE: Record<string, string> = {
   'dash-green': 'dash-green',
   'dash-red': 'dash-red',
   'dash-amber': 'dash-amber',
-  'dash-violet': 'dash-violet',
-  'dash-tile-violet': 'dash-tile-violet',
+  'violeta': 'violeta',
 };
 const TAMANHOS_DE_TEXTO = new Set([
   '2xs', '3xs', 'xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl',
@@ -177,7 +223,7 @@ const TONS = [
   { tom: 'success', rotulo: 'Concluída', claro: 'success', escuro: 'success' },
   { tom: 'danger', rotulo: 'Cancelada', claro: 'destructive-text', escuro: 'destructive-text' },
   { tom: 'warning', rotulo: 'Pausada', claro: 'warning-text', escuro: 'warning-text' },
-  { tom: 'violet', rotulo: 'Agendada', claro: 'dash-tile-violet', escuro: 'dash-violet' },
+  { tom: 'violet', rotulo: 'Agendada', claro: 'violeta-text', escuro: 'violeta-text' },
   { tom: 'muted', rotulo: 'Rascunho', claro: 'muted-foreground', escuro: 'muted-foreground' },
 ] as const;
 

@@ -1,0 +1,14 @@
+item	sha	data	assunto	decisão proposta	prioridade
+stash@{0}	04314b3319604f6bcec2bdc4178a9b240ec020b5	2026-10-23	On dia/2026-10-23: pre-2190: e2e-talkx + setup writable	TERMINAR	alta
+stash@{1}	c817c9d2a0bc9ae1e32856977d5e9fbcb31569f4	2026-10-23	On claude/dia-2026-10-19-ct011-hmac-talkx-artefatos-231023: fork-temp: cambio de branch durante cherry-pick	TERMINAR	média
+stash@{2}	6d8023658208fa35ec428a1d98c2f34cc37def39	2026-10-23	On claude/fix-ga-fase23-edge-e2e-261020-2200: uncommitted-antes-merge-main-2026-10-23	TERMINAR	média
+stash@{3}	ea8235426a4e25cfdf1ee5c43edbc1bbbd6533fd	2026-10-18	WIP on (no branch): d85d6db447 setup cenario 2b: arquivo decoy para provar colisao do parser de rename	TERMINAR	média
+stash@{4}	4d10ed4f109e8d33b8bc161aacaa14785fef553a	2026-10-18	WIP on fix/f1a-lote-b-main: 10d843f921 fix(test): mock de @/lib/logger sem createLogger — 9 arquivos (lote F1a)	TERMINAR	média
+stash@{5}	c759b1be56b071731f9a28b5b21025d756d55aa5	2026-10-16	On main: preservacao antes de sincronizar main canonica 2026-10-16	TERMINAR	média
+stash@{6}	b473042c3876d12e94ffac92fd0cd5bf398b23fd	2026-10-11	On v2/contagem-chips-countbychip-2610111154b7aa: worktree devolvido: stash de OUTRO agente (queues) restaurado pelo pop acidental de 11/10 12:00	TERMINAR	média
+stash@{7}	7fcb4967ff55c4b457e06b2b648ff78da405f84f	2026-10-09	WIP on v2/n154-chaves-integracao-nome-olho-2610092334fc0a: 2f310f0ba fix(integration-keys): add aria-label and aria-pressed to eye toggle button	TERMINAR	média
+stash@{8}	06e6f69c93cf5c9a2d013f1d8d840707e8edc94b	2026-10-09	WIP on v2/n214-mapbox-token-log-2610092240454b: ae1840866 fix(mapbox-token): sanitize access_token from detail before logging	TERMINAR	média
+stash@{9}	0a9b556c68735eb7459b93d3023edc3b28dc225f	2026-10-09	WIP on v2/n-175-conexoes-colunas-whatsapp-261009200210a4: 753bd275a fix(n-175): remove connectionsCount error handling, keep select('id') swap only	TERMINAR	média
+stash@{10}	acdb69e32261fd24686c35d191e1f76a921a0e2e	2026-10-09	On v2/t-c479c6e8-2610091852ae57: trabalho-pendente-anterior	TERMINAR	média
+stash@{11}	4798730d1863b1b053682d7828fbc0adf573d499	2026-10-09	On v2/tl-175d-talkx-e2e-acessibilidade-26100908528115: 175d-correcoes-dos-cartoes-pais-aplicadas-para-medir	TERMINAR	média
+stash@{12}	6d7cd91aee8880a76880f067e445065619348c55	2026-10-09	On v2/r04-cartao-arquivo-mockup-2610090951b10b: worktree r04 (t_30e8e544): stash de OUTRO agente restaurado pelo pop acidental de 09/10 10:08 (team-chat SL-069 F76/F77/F79)	TERMINAR	média

@@ -13,9 +13,9 @@ import { supabase } from '@/integrations/supabase/client';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 /**
- * Linha da view `whatsapp_connections_safe`. A view nao esta no types.ts gerado
- * (depende do types-sync), entao o contrato fica declarado aqui; o `.from(... as any)`
- * continua sendo o contorno do tipo faltante, nao um atalho de leitura.
+ * Linha da view `whatsapp_connections_safe`. A view está no types.ts desde
+ * a sincronização — o contrato fica declarado aqui para o cast `as unknown`
+ * no retorno conservar o shape esperado.
  */
 interface SafeConnectionRow {
   id: string;
@@ -72,9 +72,9 @@ export async function getEvolutionInstances(): Promise<EvolutionInstance[]> {
   // A view whatsapp_connections_safe não tem instance_display_name — ordena
   // pela coluna real `name`.
   const { data, error } = await supabase
-    .from('whatsapp_connections_safe' as any)
+    .from('whatsapp_connections_safe')
     .select('*')
-    .order('name' as any, { ascending: true });
+    .order('name', { ascending: true });
 
   if (error) throw error;
   return ((data ?? []) as unknown as SafeConnectionRow[]).map((item) => ({
@@ -91,7 +91,7 @@ export async function getEvolutionInstanceById(
   id: string,
 ): Promise<EvolutionInstance | null> {
   const { data, error } = await supabase
-    .from('whatsapp_connections_safe' as any)
+    .from('whatsapp_connections_safe')
     .select('*')
     .eq('id', id)
     .single();
@@ -112,7 +112,7 @@ export async function getEvolutionInstanceByName(
   instanceName: string,
 ): Promise<EvolutionInstance | null> {
   const { data, error } = await supabase
-    .from('whatsapp_connections_safe' as any)
+    .from('whatsapp_connections_safe')
     .select('*')
     .eq('name', instanceName)
     .single();
@@ -132,7 +132,7 @@ export async function getEvolutionInstanceByName(
  */
 export async function getConnectedEvolutionInstances(): Promise<EvolutionInstance[]> {
   const { data, error } = await supabase
-    .from('whatsapp_connections_safe' as any)
+    .from('whatsapp_connections_safe')
     .select('*')
     .in('status', ['connected', 'open']);
 

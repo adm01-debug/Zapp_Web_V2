@@ -96,7 +96,7 @@ describe('VoiceChangerPicker — ciclo de vida da captura (R2-INB-057)', () => {
   it('para o MediaRecorder e os tracks ao DESMONTAR durante a gravação', async () => {
     const { stream, track } = makeStream();
     getUserMedia.mockResolvedValue(stream);
-    const { unmount } = render(<VoiceChangerPicker onSendAudio={vi.fn()} />);
+    const { unmount } = render(<VoiceChangerPicker onSendAudioBlob={vi.fn()} />);
     act(() => {
       popoverState.onOpenChange?.(true);
     });
@@ -116,7 +116,7 @@ describe('VoiceChangerPicker — ciclo de vida da captura (R2-INB-057)', () => {
   it('para o MediaRecorder e os tracks ao FECHAR o popover durante a gravação', async () => {
     const { stream, track } = makeStream();
     getUserMedia.mockResolvedValue(stream);
-    render(<VoiceChangerPicker onSendAudio={vi.fn()} />);
+    render(<VoiceChangerPicker onSendAudioBlob={vi.fn()} />);
     act(() => {
       popoverState.onOpenChange?.(true);
     });
@@ -138,7 +138,7 @@ describe('VoiceChangerPicker — ciclo de vida da captura (R2-INB-057)', () => {
   it('desanexa o onstop do recorder ao fechar (onstop tardio não ressuscita o blob)', async () => {
     const { stream } = makeStream();
     getUserMedia.mockResolvedValue(stream);
-    render(<VoiceChangerPicker onSendAudio={vi.fn()} />);
+    render(<VoiceChangerPicker onSendAudioBlob={vi.fn()} />);
     act(() => {
       popoverState.onOpenChange?.(true);
     });
@@ -168,7 +168,7 @@ describe('VoiceChangerPicker — ciclo de vida da captura (R2-INB-057)', () => {
   it('NÃO inicia captura quando o popover fecha com o getUserMedia pendente', async () => {
     let resolveGum: (s: unknown) => void = () => {};
     getUserMedia.mockReturnValue(new Promise((r) => { resolveGum = r; }));
-    render(<VoiceChangerPicker onSendAudio={vi.fn()} />);
+    render(<VoiceChangerPicker onSendAudioBlob={vi.fn()} />);
     act(() => {
       popoverState.onOpenChange?.(true);
     });
@@ -191,7 +191,7 @@ describe('VoiceChangerPicker — ciclo de vida da captura (R2-INB-057)', () => {
   it('NÃO inicia captura quando o componente desmonta com o getUserMedia pendente', async () => {
     let resolveGum: (s: unknown) => void = () => {};
     getUserMedia.mockReturnValue(new Promise((r) => { resolveGum = r; }));
-    const { unmount } = render(<VoiceChangerPicker onSendAudio={vi.fn()} />);
+    const { unmount } = render(<VoiceChangerPicker onSendAudioBlob={vi.fn()} />);
     act(() => {
       popoverState.onOpenChange?.(true);
     });

@@ -50,7 +50,7 @@ export function AIProviderHealthPanel() {
 
   // R2-API-043: a consulta NAO filtra por `function_name = 'ai-proxy'`. O
   // roteador central (`generateWithRouting`) grava o nome da FUNCAO CHAMADORA
-  // em `ai_usage_logs.function_name` (voice-agent, ai-auto-tag, classify-*,
+  // em `ai_usage_logs.function_name` (voice-agent, classify-*,
   // chatbot-l1, ...); filtrar so por `ai-proxy` escondia a atividade real das
   // funcoes modernas e fazia o painel declarar "nenhuma chamada observada".
   // Painel "Saude dos Provedores": cobre TODAS as funcoes de IA do ledger.

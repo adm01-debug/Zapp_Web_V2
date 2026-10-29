@@ -91,6 +91,7 @@ export function GlobalSettingsSection() {
               </div>
             </div>
             <Switch
+              aria-label={label}
               checked={getSetting(key) === 'enabled'}
               onCheckedChange={() => handleToggle(key, getSetting(key))}
             />
@@ -106,6 +107,7 @@ export function GlobalSettingsSection() {
             Horas registradas; nenhuma rotina aplica este valor
           </p>
           <Input
+            aria-label="Reabertura Automática em horas"
             type="number"
             min={0}
             max={72}

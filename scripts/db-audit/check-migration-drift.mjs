@@ -128,6 +128,18 @@ function hasExactKeys(value, expectedKeys) {
   return JSON.stringify(Object.keys(value).sort((a, b) => a.localeCompare(b))) === JSON.stringify([...expectedKeys].sort((a, b) => a.localeCompare(b)));
 }
 
+// As colunas de disco/ledger saem sempre saneadas: toda divergencia usa o
+// formato unico "versao | disco | ledger | motivo" e um nome nunca pode
+// injetar uma coluna extra (separador '|') nem quebrar a linha (controles/aspas).
+function safeDivergenceName(name) {
+  if (name === null || name === undefined) return '(nenhum)';
+  return JSON.stringify(name).slice(1, -1).replace(/\|/g, '\\|');
+}
+
+function divergenceLine(version, disk, ledger, reason) {
+  return `${version} | ${safeDivergenceName(disk)} | ${safeDivergenceName(ledger)} | ${reason}`;
+}
+
 function loadEvidence(filePath) {
   const document = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   const errors = [];
@@ -336,7 +348,7 @@ function loadMigrations(dir, evidence) {
     const rawHash = sha256(buffer);
     const hasCode = hasSqlCode(content);
     const blank = content.replace(/^﻿/, '').trim() === '';
-    const commentOnly = !hasCode && !blank && /--|\/\*/u.test(content);
+    const commentOnly = !hasCode && !blank && /--|\/*\*/u.test(content);
     if (buffer.includes(0)) errors.push(`arquivo contem byte NUL: ${entry.name}`);
     if (!hasCode && !commentOnly) errors.push(`arquivo vazio ou sem SQL: ${entry.name}`);
 
@@ -551,28 +563,45 @@ function compare(migrations, records, exceptionsByVersion, { duplicateVersions =
   for (const record of records) {
     if (typeof record.name === 'string'
         && (record.name !== record.name.trim() || /[\0-\x1f\x7f]/u.test(record.name))) {
+      errors.push(divergenceLine(record.version, null, record.name, 'name malformado no ledger'));
       errors.push(`name malformado no ledger para ${record.version}`);
+      // W21: o name e' conteudo do ledger; sem esta linha o erro nao aparecia
+      // em nenhuma classe e --classificar saia com exit 0.
+      classifications.push({
+        version: record.version,
+        disco: byFileVersion.get(record.version)?.fileName ?? '-',
+        ledger: JSON.stringify(record.name),
+        classe: 'conteudo-divergente',
+      });
     }
   }
 
+  // Erros de "arquivo sem registro" sao a classe apply-pendente, a unica que
+  // --classificar trata como nao fatal. Guardamos o intervalo para separar.
+  const applyPendenteStart = errors.length;
   if (withoutRecord.length) {
     errors.push('Arquivo no repo sem registro no banco (db push tentaria aplicar):');
-    errors.push(...withoutRecord.map(({ version, fileName }) => `  ${version}  ${fileName}`));
+    for (const { version, fileName } of withoutRecord) {
+      errors.push(divergenceLine(version, fileName, null, 'arquivo sem registro no banco'));
+      errors.push(`  ${version}  ${fileName}`);
+    }
   }
+  const applyPendenteEnd = errors.length;
   if (withoutFile.length) {
     errors.push('Registro no banco sem arquivo no repo (DDL fora do Git):');
-    errors.push(...withoutFile.map((record) => {
+    for (const record of withoutFile) {
       const normalizedName = record.name
         ? normalizeLedgerName(record.version, record.name)
         : null;
-      return [
+      errors.push(divergenceLine(record.version, null, normalizedName ?? record.name, 'registro no banco sem arquivo no repo'));
+      errors.push([
         `  version=${record.version}`,
         `ledger_name=${JSON.stringify(record.name)}`,
         `normalized_name=${JSON.stringify(normalizedName)}`,
         `ledger_statements_sha256=${ledgerStatementsSha256(record.statements)}`,
         `ledger_sql_sha256=${sha256(canonicalStatements(record.statements))}`,
-      ].join(' ');
-    }));
+      ].join(' '));
+    }
   }
 
   // W21: classificar cada version para --classificar / --json
@@ -595,6 +624,20 @@ function compare(migrations, records, exceptionsByVersion, { duplicateVersions =
     const ledgerName = record.name
       ? normalizeLedgerName(record.version, record.name)
       : null;
+    // W21: qualquer erro novo desta version vira conteudo-divergente. Precisa
+    // rodar antes de cada `continue` dos ramos de excecao (comment-only,
+    // name-only, pinned-replay); antes so o fim do laco classificava e esses
+    // ramos escapavam com exit 0 em --classificar.
+    const classifyIfDiverged = () => {
+      if (errors.length > errorsBeforeMigration) {
+        classifications.push({
+          version: migration.version,
+          disco: migration.fileName,
+          ledger: ledgerName ?? '-',
+          classe: 'conteudo-divergente',
+        });
+      }
+    };
 
     const sourceReferences = new Set();
     const sourceRe = /(?:source|fonte|file|arquivo)[^\n]{0,80}\b(\d{14}_[a-z0-9][a-z0-9_-]*\.sql)\b/giu;
@@ -647,6 +690,7 @@ function compare(migrations, records, exceptionsByVersion, { duplicateVersions =
         }
       }
       if (errors.length === errorsBeforeMigration) verifiedEvidence += 1;
+      classifyIfDiverged();
       continue;
     }
 
@@ -671,6 +715,7 @@ function compare(migrations, records, exceptionsByVersion, { duplicateVersions =
         }
       }
       if (errors.length === errorsBeforeMigration) pinnedWithoutHistoricalContent += 1;
+      classifyIfDiverged();
       continue;
     }
 
@@ -706,11 +751,15 @@ function compare(migrations, records, exceptionsByVersion, { duplicateVersions =
       // historicas de source e markers validos nao precisam apontar para o replay.
       // Markers malformados/conflitantes continuam falhando acima.
       if (errors.length === errorsBeforeMigration) verifiedEvidence += 1;
+      classifyIfDiverged();
       continue;
     }
 
     const namesMatch = ledgerName !== null && ledgerName === migration.name;
     if (record.name && !namesMatch) {
+      errors.push(
+        divergenceLine(migration.version, migration.fileName, ledgerName ?? record.name, 'nome divergente'),
+      );
       errors.push(
         `nome divergente em ${migration.version}: arquivo=${JSON.stringify(migration.name)}; `
         + `ledger=${JSON.stringify(record.name)}`,
@@ -735,6 +784,7 @@ function compare(migrations, records, exceptionsByVersion, { duplicateVersions =
     if (!strongEvidenceAndName) {
       for (const source of sourceReferences) {
         if (source !== migration.fileName) {
+          errors.push(divergenceLine(migration.version, migration.fileName, source, 'fonte divergente'));
           errors.push(`fonte divergente em ${migration.version}: arquivo=${migration.fileName}; ledger=${source}`);
         }
       }
@@ -744,18 +794,21 @@ function compare(migrations, records, exceptionsByVersion, { duplicateVersions =
     if (fileHashes.length === 1) {
       hasEvidence = true;
       if (fileHashes[0] !== migration.rawHash) {
+        errors.push(divergenceLine(migration.version, migration.fileName, ledgerName ?? record.name, 'hash de arquivo divergente'));
         errors.push(`hash de arquivo divergente em ${migration.version}`);
       }
     }
     if (sqlHashes.length === 1) {
       hasEvidence = true;
       if (sqlHashes[0] !== migration.sqlHash) {
+        errors.push(divergenceLine(migration.version, migration.fileName, ledgerName ?? record.name, 'hash SQL divergente'));
         errors.push(`hash SQL divergente em ${migration.version}`);
       }
     }
     if (ledgerSql) {
       hasEvidence = true;
       if (ledgerSql !== fileSql) {
+        errors.push(divergenceLine(migration.version, migration.fileName, ledgerName ?? record.name, 'conteudo SQL divergente'));
         errors.push(
           `conteudo SQL divergente em ${migration.version} `
           + `(arquivo=${sha256(fileSql)}, ledger=${ledgerSqlHash}) `
@@ -777,6 +830,9 @@ function compare(migrations, records, exceptionsByVersion, { duplicateVersions =
         // ramo de warnings abaixo — migracao legacy sem conteudo gravado e diferente
         // de migracao com prosa no lugar do SQL.
         errors.push(
+          divergenceLine(migration.version, migration.fileName, ledgerName ?? record.name, 'statements no ledger sao prosa pura sem hash verificavel'),
+        );
+        errors.push(
           `${migration.version} (${migration.fileName}): statements no ledger sao prosa pura `
           + '(sem hash SHA-256, sem SQL canonico) e nao ha excecao no manifesto — '
           + 'regra 7 da secao 1 do CLAUDE.md (statements devem ser o SQL real e completo). '
@@ -787,18 +843,45 @@ function compare(migrations, records, exceptionsByVersion, { duplicateVersions =
       }
     }
 
-    // W21: se novos erros foram adicionados para esta version, e' conteudo divergente
-    if (errors.length > errorsBeforeMigration) {
-      const lname = record.name ? normalizeLedgerName(migration.version, record.name) : '-';
-      classifications.push({ version: migration.version, disco: migration.fileName, ledger: lname, classe: 'conteudo-divergente' });
-    }
+    classifyIfDiverged();
   }
 
-  return { errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent, classifications };
+  // Uma version pode ter caido em conteudo-divergente por dois caminhos (name
+  // malformado + laco por migration); a tabela mostra uma linha por par.
+  const seenClass = new Set();
+  const uniqueClassifications = classifications.filter((c) => {
+    const key = `${c.version}\0${c.classe}`;
+    if (seenClass.has(key)) return false;
+    seenClass.add(key);
+    return true;
+  });
+  // Tudo que nao e' apply-pendente e' drift: --classificar falha com qualquer um
+  // destes, mesmo que (por um ramo futuro) ele nao tenha ganho classe.
+  const driftErrors = errors.filter((_, index) => index < applyPendenteStart || index >= applyPendenteEnd);
+
+  return {
+    errors,
+    driftErrors,
+    warnings,
+    verifiedEvidence,
+    pinnedWithoutHistoricalContent,
+    classifications: uniqueClassifications,
+  };
 }
 
 function printErrors(errors) {
   for (const error of errors) console.error(error);
+}
+
+// Linhas de resumo de divergencia ("versao | disco | ledger | motivo") saem na
+// coluna 0 para o operador filtrar o log com `grep '^[0-9]'`; as mensagens
+// antigas e os cabecalhos de secao continuam recuados como sempre.
+const DIVERGENCE_LINE_RE = /^\d{14} \| /;
+
+function printDriftErrors(errors) {
+  for (const error of errors) {
+    console.error(DIVERGENCE_LINE_RE.test(error) ? error : `  ${error}`);
+  }
 }
 
 function main() {
@@ -816,14 +899,22 @@ function main() {
     return 2;
   }
 
-  if (!jsonOutput) console.log(`arquivos validos em ${DIR}: ${local.migrations.length}`);
+  // E53: buffer status lines so divergence summary is first on stdout on drift path.
+  // W21: com --json o stdout e' so o JSON, entao as linhas de status nao saem.
+  const pendingStatus = [`arquivos validos em ${DIR}: ${local.migrations.length}`];
+  const flushStatus = () => {
+    if (!jsonOutput) for (const line of pendingStatus) console.log(line);
+    pendingStatus.length = 0;
+  };
   if (evidence.errors.length || local.errors.length) {
+    flushStatus();
     console.error('\nFALHA: migrations locais invalidas:');
     printErrors([...evidence.errors, ...local.errors].map((error) => `  ${error}`));
     return 1;
   }
 
   if (!url) {
+    flushStatus();
     console.log('DESTINO_URL ausente - estrutura local validada; comparacao com ledger pulada.');
     return 0;
   }
@@ -836,12 +927,14 @@ function main() {
     return 2;
   }
 
-  if (!jsonOutput) console.log(`registros em schema_migrations: ${parsed.records.length}`);
-  // --classificar: erros de versao duplicada sao classificados, nao fatais
+  pendingStatus.push(`registros em schema_migrations: ${parsed.records.length}`);
+  // --classificar: erros de versao duplicada viram a classe version-duplicada
+  // (e continuam fatais pelo exit code da classificacao), nao abortam aqui.
   const parsedErrorsFiltrados = classificar
     ? parsed.errors.filter((e) => !e.startsWith('versao duplicada no ledger: '))
     : parsed.errors;
   if (parsedErrorsFiltrados.length) {
+    flushStatus();
     console.error('\nFALHA: ledger invalido:');
     printErrors(parsedErrorsFiltrados.map((error) => `  ${error}`));
     return 1;
@@ -851,6 +944,7 @@ function main() {
 
   // W21: --classificar imprime tabela de classes antes dos detalhes de erro
   if (classificar) {
+    flushStatus();
     const drift = result.classifications.filter((c) => c.classe !== 'apply-pendente');
     if (jsonOutput) {
       const pendente = result.classifications.filter((c) => c.classe === 'apply-pendente');
@@ -862,6 +956,7 @@ function main() {
           'conteudo-divergente': drift.filter((c) => c.classe === 'conteudo-divergente').length,
           'version-duplicada': drift.filter((c) => c.classe === 'version-duplicada').length,
         },
+        erros: result.driftErrors,
       }, null, 2));
     } else {
       const rows = result.classifications.sort((a, b) => a.version.localeCompare(b.version));
@@ -873,9 +968,15 @@ function main() {
         }
       }
     }
-    if (drift.length > 0) {
+    // Fail-closed: o exit code olha as classes E os erros. Um erro de drift sem
+    // classe (ramo novo que esqueceu de classificar) tambem reprova.
+    if (drift.length > 0 || result.driftErrors.length > 0) {
       if (!jsonOutput) {
         console.error(`\nFALHA (classificar): ${drift.length} item(ns) de drift real detectado(s)`);
+        if (result.driftErrors.length) {
+          console.error(`${result.driftErrors.length} erro(s) de drift:`);
+          printDriftErrors(result.driftErrors);
+        }
       }
       return 1;
     }
@@ -883,12 +984,18 @@ function main() {
   }
 
   if (result.errors.length) {
+    // E53 (G-03): resumo de 1 linha por divergencia como primeira coisa no stdout,
+    // no formato "version | disco | ledger | motivo", para filtrar com `grep '^[0-9]'`.
+    const summaryLines = result.errors.filter((e) => DIVERGENCE_LINE_RE.test(e));
+    for (const line of summaryLines) console.log(line);
+    flushStatus();
     console.error('\nFALHA: drift de migrations detectado:');
-    printErrors(result.errors.map((error) => `  ${error}`));
+    printDriftErrors(result.errors);
     console.error('\nVer docs/MIGRATIONS.md para o procedimento de reconciliacao.');
     return 1;
   }
 
+  flushStatus();
   if (result.warnings.length) {
     console.warn(
       `ATENCAO: ${result.warnings.length} migration(s) legada(s) sem hash/SQL verificavel no ledger; `

@@ -11,6 +11,7 @@ import { useUserRole } from '@/hooks/system/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { SecurityAlertsPanel, SecurityDevicesPanel } from './SecurityPanels';
 import type { Device } from './SecurityPanels';
+import { countUnresolvedSecurityAlerts } from '@/lib/securityAlerts';
 
 interface SecurityAlert {
   id: string;
@@ -81,6 +82,9 @@ export function SecurityOverview() {
   const [securityAlerts, setSecurityAlerts] = useState<SecurityAlert[]>([]);
   const [loadingAlerts, setLoadingAlerts] = useState(true);
   const [alertsError, setAlertsError] = useState(false);
+  // Contagem no servidor: a lista carrega só 5 e o contador não pode depender dela.
+  const [unresolvedCount, setUnresolvedCount] = useState<number | null>(null);
+  const [alertsCountError, setAlertsCountError] = useState(false);
 
   // Fetch security alerts
   useEffect(() => {
@@ -109,7 +113,23 @@ export function SecurityOverview() {
       }
     }
 
+    async function fetchUnresolvedCount() {
+      if (!user) return;
+
+      // Contagem no servidor (head + count): alerta antigo fora dos 5 carregados
+      // continua aparecendo no contador.
+      const { count, error } = await countUnresolvedSecurityAlerts(user.id);
+      if (error) {
+        // Falha de contagem não é "zero alertas": o card fica indisponível.
+        setAlertsCountError(true);
+        return;
+      }
+      setAlertsCountError(false);
+      setUnresolvedCount(count);
+    }
+
     void fetchAlerts();
+    void fetchUnresolvedCount();
   }, [user]);
 
   const factors = mfaQuery.data ?? [];
@@ -119,7 +139,9 @@ export function SecurityOverview() {
   const verifiedFactors = factors.filter(f => f.status === 'verified');
   const isMFAEnabled = verifiedFactors.length > 0;
   const trustedDevices = devices.filter(d => d.is_trusted).length;
-  const unresolvedAlerts = securityAlerts.filter(a => !a.is_resolved).length;
+  // O contador vem do servidor (`unresolvedCount`), não dos 5 alertas carregados.
+  const alertsCountUnavailable =
+    loadingAlerts || alertsError || alertsCountError || unresolvedCount === null;
 
   const securityItems: SecurityItem[] = [
     {
@@ -209,7 +231,7 @@ export function SecurityOverview() {
           <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold mb-1">Pontuação de Segurança</h3>
+                <h2 className="text-lg font-semibold mb-1">Pontuação de Segurança</h2>
                 <p className="text-sm text-muted-foreground">
                   {totalScore === null
                     ? 'Só entra na conta o que esta tela consegue medir'
@@ -314,12 +336,12 @@ export function SecurityOverview() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${loadingAlerts || alertsError ? 'bg-muted' : unresolvedAlerts > 0 ? 'bg-destructive/10' : 'bg-success/10'}`}>
-                  <AlertTriangle className={`w-5 h-5 ${loadingAlerts || alertsError ? 'text-muted-foreground' : unresolvedAlerts > 0 ? 'text-destructive' : 'text-success'}`} />
+                <div className={`p-2 rounded-lg ${alertsCountUnavailable ? 'bg-muted' : (unresolvedCount ?? 0) > 0 ? 'bg-destructive/10' : 'bg-success/10'}`}>
+                  <AlertTriangle className={`w-5 h-5 ${alertsCountUnavailable ? 'text-muted-foreground' : (unresolvedCount ?? 0) > 0 ? 'text-destructive' : 'text-success'}`} />
                 </div>
                 <div>
                   <div className="text-2xl font-bold">
-                    {loadingAlerts || alertsError ? '—' : unresolvedAlerts}
+                    {alertsCountUnavailable ? '—' : unresolvedCount}
                   </div>
                   <div className="text-xs text-muted-foreground">Alertas</div>
                 </div>

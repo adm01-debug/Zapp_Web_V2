@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Play, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { passosDoTourDisponiveis } from './defaultTourSteps';
 
 interface WelcomeModalProps {
   isOpen: boolean;
@@ -14,6 +15,11 @@ interface WelcomeModalProps {
 export const WelcomeModal = forwardRef<HTMLDivElement, WelcomeModalProps>(
   function WelcomeModal({ isOpen, onClose, onStartTour, userName }, ref) {
   const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  // SHELL-05: o tour só faz sentido onde existe alvo `[data-tour]` — o casco do
+  // celular não monta o Sidebar do desktop, então oferecer "Iniciar Tour Guiado"
+  // ali levava a um overlay sem passo nenhum.
+  const temPassosDeTour = passosDoTourDisponiveis().length > 0;
 
   return (
     <DialogPrimitive.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -145,13 +151,15 @@ export const WelcomeModal = forwardRef<HTMLDivElement, WelcomeModalProps>(
               >
                 Pular tour
               </Button>
-              <Button
-                className="flex-1 gap-2"
-                onClick={onStartTour}
-              >
-                <Play className="w-4 h-4" />
-                Iniciar Tour Guiado
-              </Button>
+              {temPassosDeTour && (
+                <Button
+                  className="flex-1 gap-2"
+                  onClick={onStartTour}
+                >
+                  <Play className="w-4 h-4" />
+                  Iniciar Tour Guiado
+                </Button>
+              )}
             </motion.div>
 
             {/* Skip hint */}

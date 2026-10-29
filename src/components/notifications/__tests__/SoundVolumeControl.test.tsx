@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 
 // Mocks comuns aos testes de controle de volume (toast/logger/framer-motion/ResizeObserver).
 import '@/test/volumeControlMocks';
@@ -278,8 +279,8 @@ describe('SoundVolumeControl — sobe e desce o volume dos alertas', () => {
     expect(screen.queryByTestId('sound-volume-saving')).not.toBeInTheDocument();
 
     expect(await screen.findByTestId('sound-volume-saving')).toBeInTheDocument();
-    // O aviso é do indicador, não um bloqueio: o slider continua utilizável.
-    expect(slider).not.toHaveAttribute('data-disabled');
+    // O aviso é do indicador, não um bloqueio: o dial continua utilizável.
+    expect(slider).not.toHaveAttribute('aria-disabled', 'true');
 
     await act(async () => {
       liberar?.();
@@ -341,5 +342,24 @@ describe('SoundVolumeControl — sobe e desce o volume dos alertas', () => {
     expect(h.updateSettings).not.toHaveBeenCalledWith(
       expect.objectContaining({ soundEnabled: expect.any(Boolean) }),
     );
+  });
+
+  it('D07: o painel do dial fica em w-40 (30% mais estreito que o slider antigo)', async () => {
+    renderControl();
+    abrirPainel();
+
+    const painel = await screen.findByRole('dialog', { name: 'Volume dos alertas' });
+    const caixa = painel.closest('.w-40, .w-56') as HTMLElement | null;
+    expect(caixa).not.toBeNull();
+    expect(caixa?.className).toContain('w-40');
+    expect(caixa?.className).not.toContain('w-56');
+  });
+
+  it('S31/D07: o painel do dial não tem violação de acessibilidade', async () => {
+    renderControl();
+    abrirPainel();
+
+    const painel = await screen.findByRole('dialog', { name: 'Volume dos alertas' });
+    expect(await axe(painel)).toHaveNoViolations();
   });
 });

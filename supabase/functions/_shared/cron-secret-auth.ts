@@ -29,15 +29,20 @@ export interface UserLookupClient {
   };
 }
 
-/** Comparação em tempo constante (não vaza o prefixo comum pelo tempo de resposta). */
+/**
+ * Comparação em tempo constante (não vaza prefixo nem comprimento pelo tempo de resposta).
+ * O loop sempre percorre max(len_a, len_b) iterações — sem early-return por tamanho —
+ * eliminando o canal lateral de comprimento que o `if (ab.length !== bb.length) return false`
+ * anterior introduzia (Z011).
+ */
 export function timingSafeStringEqual(a: string, b: string): boolean {
   const enc = new TextEncoder();
   const ab = enc.encode(a);
   const bb = enc.encode(b);
-  if (ab.length !== bb.length) return false;
+  const maxLen = Math.max(ab.length, bb.length);
   let diff = 0;
-  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
-  return diff === 0;
+  for (let i = 0; i < maxLen; i++) diff |= (ab[i] ?? 0) ^ (bb[i] ?? 0);
+  return diff === 0 && ab.length === bb.length;
 }
 
 export interface CronOrUserAuthOptions {
@@ -54,31 +59,79 @@ export interface CronOrUserAuthOptions {
   readVaultSecret: () => Promise<string | null>;
 }
 
+export interface PrivilegedCronOrUserAuthOptions extends CronOrUserAuthOptions {
+  /**
+   * Resolve o papel do usuário autenticado (admin/supervisor). Quando presente, o
+   * caminho de Bearer de USUÁRIO (não-cron, não-service-key) só libera se devolver
+   * `true`; caso contrário o resultado é 403 (autenticado, sem o papel) — nunca 200.
+   * O cron (x-cron-secret) e a service key NÃO passam por esta checagem: seguem
+   * inalterados. O literal da RPC de papel fica no CHAMADOR, pelo mesmo motivo do
+   * readVaultSecret. Ausente (ex.: ai-jobs-worker) = comportamento anterior.
+   */
+  isUserPrivileged?: (userId: string) => Promise<boolean>;
+}
+
+/** Resultado do guard: `ok` libera; quando não, `status` é 401 (não autenticado) ou 403 (sem papel). */
+export interface CronOrUserAuthz {
+  ok: boolean;
+  status?: 401 | 403;
+}
+
+/**
+ * Guarda com papel: `true`/cron libera; usuário autenticado só libera se
+ * `isUserPrivileged` (quando informado) confirmar admin/supervisor.
+ */
+export async function authorizeCronOrUser(
+  req: Request,
+  client: UserLookupClient,
+  opts: PrivilegedCronOrUserAuthOptions,
+): Promise<CronOrUserAuthz> {
+  const cronSecret = req.headers.get('x-cron-secret');
+  if (cronSecret) {
+    const vaultSecret = await opts.readVaultSecret();
+    if (vaultSecret !== null && timingSafeStringEqual(cronSecret, vaultSecret)) return { ok: true };
+  }
+
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) return { ok: false, status: 401 };
+  const token = authHeader.slice(7);
+  if (opts.serviceKey !== '' && timingSafeStringEqual(token, opts.serviceKey)) return { ok: true };
+
+  const { data: { user }, error } = await client.auth.getUser(token);
+  if (error || user === null) return { ok: false, status: 401 };
+
+  if (opts.isUserPrivileged) {
+    let privileged = false;
+    try {
+      privileged = await opts.isUserPrivileged(user.id);
+    } catch {
+      // Falha ao ler o papel NÃO libera nada (fail-closed → 403).
+      privileged = false;
+    }
+    if (!privileged) return { ok: false, status: 403 };
+  }
+  return { ok: true };
+}
+
 /**
  * `true` quando a requisição vem do cron (x-cron-secret do job) ou de um usuário
- * autenticado. `false` = o chamador deve responder 401.
+ * autenticado, SEM exigência de papel. Mantido para o consumidor que não passa
+ * `isUserPrivileged` (ai-jobs-worker): delega à `authorizeCronOrUser`.
  */
 export async function isAuthorizedCronOrUser(
   req: Request,
   client: UserLookupClient,
   opts: CronOrUserAuthOptions,
 ): Promise<boolean> {
-  const cronSecret = req.headers.get('x-cron-secret');
-  if (cronSecret) {
-    const vaultSecret = await opts.readVaultSecret();
-    if (vaultSecret !== null && timingSafeStringEqual(cronSecret, vaultSecret)) return true;
-  }
-
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) return false;
-  const token = authHeader.slice(7);
-  if (opts.serviceKey !== '' && timingSafeStringEqual(token, opts.serviceKey)) return true;
-
-  const { data: { user }, error } = await client.auth.getUser(token);
-  return !error && user !== null;
+  return (await authorizeCronOrUser(req, client, opts)).ok;
 }
 
-/** Resposta única de não-autorizado das duas edges (mesmo corpo, mesma forma). */
+/** Resposta única de não-autorizado das edges (mesmo corpo, mesma forma). */
 export function unauthorizedResponse(headers: HeadersInit): Response {
   return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+}
+
+/** Resposta de usuário autenticado SEM o papel exigido (admin/supervisor). */
+export function forbiddenResponse(headers: HeadersInit): Response {
+  return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers });
 }

@@ -18,6 +18,8 @@ vi.mock('@/hooks/ui/use-toast', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn() },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 import { useCSAT } from '@/hooks/business/useCSAT';
@@ -35,16 +37,25 @@ const mockSurveys = [
   { id: 's3', contact_id: 'c3', agent_id: 'a2', rating: 1, feedback: 'Bad', created_at: '2024-01-03' },
 ];
 
+/**
+ * Cadeia da leitura da lista: select -> not('rating','is',null) -> gte -> order.
+ * O `not` entrou com o filtro de convite sem nota: sem ele na cadeia o hook nao
+ * chega ao `order` e a leitura cai em erro.
+ */
+function listBuilder(result: unknown) {
+  const order = vi.fn().mockImplementation(() => result);
+  return {
+    order,
+    gte: vi.fn().mockReturnValue({ order }),
+    not: vi.fn().mockReturnValue({ gte: vi.fn().mockReturnValue({ order }) }),
+  };
+}
+
 describe('useCSAT', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue({ data: mockSurveys, error: null }),
-        gte: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: mockSurveys, error: null }),
-        }),
-      }),
+      select: vi.fn().mockReturnValue(listBuilder(Promise.resolve({ data: mockSurveys, error: null }))),
       insert: vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({ data: mockSurveys[0], error: null }),
@@ -65,12 +76,7 @@ describe('useCSAT', () => {
 
   it('handles loading state', () => {
     mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockReturnValue(new Promise(() => {})),
-        gte: vi.fn().mockReturnValue({
-          order: vi.fn().mockReturnValue(new Promise(() => {})),
-        }),
-      }),
+      select: vi.fn().mockReturnValue(listBuilder(new Promise(() => {}))),
     });
 
     const { result } = renderHook(() => useCSAT(), { wrapper: createWrapper() });
@@ -79,12 +85,7 @@ describe('useCSAT', () => {
 
   it('handles empty surveys', async () => {
     mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
-        gte: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: [], error: null }),
-        }),
-      }),
+      select: vi.fn().mockReturnValue(listBuilder(Promise.resolve({ data: [], error: null }))),
     });
 
     const { result } = renderHook(() => useCSAT(), { wrapper: createWrapper() });
@@ -121,7 +122,7 @@ describe('useCSAT', () => {
     ];
 
     mockFrom.mockImplementation(() => ({
-      select: () => ({ gte: () => ({ order: () => pending.shift()! }) }),
+      select: () => ({ not: () => ({ gte: () => ({ order: () => pending.shift()! }) }) }),
       insert: () => Promise.resolve({ error: null }),
     }));
 

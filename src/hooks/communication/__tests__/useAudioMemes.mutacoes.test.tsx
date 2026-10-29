@@ -40,7 +40,12 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { from: h.from, rpc: h.rpc, storage: { from: h.storageFrom } },
+  supabase: {
+    from: h.from, rpc: h.rpc, storage: { from: h.storageFrom },
+    // R2-INB-044 — o hook abre canal de realtime com o picker aberto.
+    channel: vi.fn(() => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() })),
+    removeChannel: vi.fn(),
+  },
 }));
 
 vi.mock('sonner', () => ({

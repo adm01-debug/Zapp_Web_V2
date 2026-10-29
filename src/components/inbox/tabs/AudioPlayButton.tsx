@@ -5,6 +5,7 @@ import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
 import { useExclusiveAudio, getPlayingAudioId } from '@/hooks/chat/useExclusiveAudio';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { attachMediaVolume } from '@/lib/mediaVolumeElement';
+import { truncate } from '@/lib/formatters';
 import { formatDuration } from './fileDisplay';
 import { FILE_ACTION_BUTTON } from './fileActionButton';
 
@@ -25,6 +26,9 @@ import { FILE_ACTION_BUTTON } from './fileActionButton';
  * (`tests/contracts/media-volume-surfaces.contract.test.ts`) exige que um player novo entre
  * no controle ÚNICO de volume — fora dele o áudio tocaria no volume cheio e o slider mentiria.
  */
+
+/** A06b — quanto do nome do arquivo entra no rótulo acessível. */
+const NAME_MAX = 60;
 
 interface AudioPlayButtonProps {
   /** Item de ÁUDIO (`ContactMediaItem.type === 'audio'`). Ninguém renderiza este botão fora disso. */
@@ -203,13 +207,24 @@ export function AudioPlayButton({ item }: AudioPlayButtonProps) {
   const percent = duration > 0 ? Math.min(100, Math.max(0, (elapsed / duration) * 100)) : 0;
   const active = playing || elapsed > 0;
 
+  /**
+   * A06b — o rótulo acessível cita o nome do arquivo: com vários áudios na tela, "Tocar áudio"
+   * sozinho não diz ao leitor de tela QUAL deles é. O nome é o `displayName` — o mesmo texto que
+   * o cartão mostra e que os botões vizinhos citam ("Visualizar <nome>") — porque o `filename`
+   * cru pode ser o identificador técnico do WhatsApp (um hash), que só atrapalharia a leitura.
+   * Item sem nome fica com o rótulo genérico de antes; nome longo é truncado no mesmo limite
+   * (~60) para o rótulo não virar um parágrafo.
+   */
+  const itemName = item.displayName?.trim();
+  const labeled = (label: string) => (itemName ? `${label} ${truncate(itemName, NAME_MAX)}` : label);
+
   return (
     <span className="inline-flex flex-col items-center gap-0.5">
       {/* Mesma ação dos outros botões da linha (olho, compartilhar, ⋮) nas três vistas:
           a classe vem de `fileActionButton`, com a área de toque do celular. */}
       <button
         type="button"
-        aria-label={playing ? 'Pausar áudio' : 'Tocar áudio'}
+        aria-label={labeled(playing ? 'Pausar áudio' : 'Tocar áudio')}
         className={FILE_ACTION_BUTTON}
         onClick={(event) => {
           // D05: clicar no play/pause não abre a janela de visualização nem marca o cartão.
@@ -231,7 +246,7 @@ export function AudioPlayButton({ item }: AudioPlayButtonProps) {
           )}
           <span
             role="progressbar"
-            aria-label="Progresso do áudio"
+            aria-label={labeled('Progresso do áudio')}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(percent)}

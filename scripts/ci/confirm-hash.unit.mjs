@@ -14,6 +14,8 @@ const RUNTIME = 'a'.repeat(64);
 const ARQUIVO = 'b'.repeat(64);
 const COMMIT = 'c'.repeat(40);
 const workflow = await readFile(new URL('../../.github/workflows/db-migrate.yml', import.meta.url), 'utf8');
+// W28: a composicao foi extraida do heredoc inline do db-migrate.yml para validate-runtime-proof.mjs.
+const preflight = await readFile(new URL('../../scripts/db-audit/validate-runtime-proof.mjs', import.meta.url), 'utf8');
 
 test('E64: a confirmacao muda quando qualquer um dos tres componentes muda', () => {
   const base = comporHashConfirmacao({ runtimeSha256: RUNTIME, arquivoSha256: ARQUIVO, commitSha: COMMIT });
@@ -70,14 +72,16 @@ test('E64: sha256DeTexto e a primitiva esperada', () => {
 });
 
 test('E64: o workflow compara o hash COMPOSTO, nao o runtime cru (pin do F-11)', () => {
-  assert.match(workflow, /comporHashConfirmacao|descreverConfirmacao/, 'o preflight precisa usar a composicao');
+  // W28: a composicao vive em validate-runtime-proof.mjs; o workflow invoca o script externo.
+  assert.match(workflow, /validate-runtime-proof\.mjs/, 'o workflow precisa invocar o script de validacao externo');
+  assert.match(preflight, /comporHashConfirmacao|descreverConfirmacao/, 'o preflight precisa usar a composicao');
   assert.doesNotMatch(
     workflow,
     /proof\.runtime_sha256 !== process\.env\.CONFIRM_RUNTIME_SHA256/,
     'a comparacao crua do runtime era exatamente o defeito F-11',
   );
   assert.match(
-    workflow,
+    preflight,
     /commitSha: process\.env\.GITHUB_SHA/,
     'o commit (github.sha) tem de ser componente da confirmacao, nao so o runtime',
   );

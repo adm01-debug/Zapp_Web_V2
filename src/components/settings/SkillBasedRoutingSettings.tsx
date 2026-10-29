@@ -156,6 +156,7 @@ export function SkillBasedRoutingSettings() {
         .eq('queue_id', queueId)
         .is('assigned_to', null)
         .is('deleted_at', null)
+        .not('conversation_status', 'in', '(resolved,archived)')
         .select('id');
       if (assignError) throw assignError;
 
@@ -170,15 +171,15 @@ export function SkillBasedRoutingSettings() {
         toast({ title: 'Nenhum contato aguardando nesta fila' });
         return;
       }
+      if (!assigned) {
+        toast({ title: 'Este contato já foi atribuído por outro fluxo' });
+        return;
+      }
       // O contato mudou de mão (por nós ou por outro fluxo): o helper canônico
       // revalida lista e agregados de Contatos (todas as páginas, por prefixo);
       // a segunda linha revalida a contagem de contatos por fila do dashboard.
       invalidateContactsAggregates(queryClient);
       queryClient.invalidateQueries({ queryKey: ['dashboard-contact-counts'] });
-      if (!assigned) {
-        toast({ title: 'Este contato já foi atribuído por outro fluxo' });
-        return;
-      }
       toast({ title: 'Contato atribuído ao agente da fila' });
     },
     onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),

@@ -56,14 +56,48 @@ export interface AgentSentimentData {
   trend: number | null;
 }
 
+/**
+ * Lê TODAS as análises da janela do período.
+ *
+ * HZ2-003: o PostgREST corta toda resposta em 1000 linhas e o select do painel
+ * não paginava — uma janela com mais de 1000 análises alimentava as médias, o
+ * gráfico diário e o ranking de agentes com apenas uma fatia. Agora a leitura
+ * página até a última linha. A ordem ganhou `id` como desempate para nenhuma
+ * linha empatada em `created_at` cair entre duas páginas.
+ */
+async function fetchAllAnalyses(startDate: string): Promise<ConversationAnalysis[]> {
+  const PAGE = 1000;
+  const todas: ConversationAnalysis[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from('conversation_analyses')
+      .select('id, contact_id, sentiment, sentiment_score, created_at, analyzed_by')
+      .gte('created_at', startDate)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(from, from + PAGE - 1);
+
+    if (error) throw error;
+    const pagina = (data ?? []) as ConversationAnalysis[];
+    todas.push(...pagina);
+    if (pagina.length < PAGE) return todas;
+  }
+}
+
 export function useSentimentData(period: string) {
   const [alerts, setAlerts] = useState<SentimentAlert[]>([]);
   const [analyses, setAnalyses] = useState<ConversationAnalysis[]>([]);
   const [agents, setAgents] = useState<AgentProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<Error | null>(null);
+  const [incomplete, setIncomplete] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    // Nova tentativa parte sem o erro anterior; quem consome decide pelo
+    // `fetchError` atual se mostra o erro ou o conteúdo.
+    setFetchError(null);
+    setIncomplete(false);
     const daysAgo = Number.parseInt(period);
     const startDate = appDayStart(daysAgo).toISOString();
 
@@ -76,7 +110,7 @@ export function useSentimentData(period: string) {
       // mesmo shape (id/entity_id/created_at/details), escopada só a
       // action='sentiment_alert'. Cast local via 'any' até o types.ts
       // (gerado, não sincronizado no self-hosted) conhecer essa RPC.
-      const { data: alertData, error: alertError } = await (supabase as any).rpc('dashboard_sentiment_alerts', { p_since: startDate }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (E39), types.ts ainda não sincronizado
+      const { data: alertData, error: alertError } = await supabase.rpc('dashboard_sentiment_alerts', { p_since: startDate });
 
       if (alertError) throw alertError;
 
@@ -89,24 +123,27 @@ export function useSentimentData(period: string) {
 
       setAlerts(formattedAlerts);
 
-      const { data: analysisData, error: analysisError } = await supabase
-        .from('conversation_analyses')
-        .select('id, contact_id, sentiment, sentiment_score, created_at, analyzed_by')
-        .gte('created_at', startDate)
-        .order('created_at', { ascending: false });
-
-      if (analysisError) throw analysisError;
-      setAnalyses((analysisData || []) as ConversationAnalysis[]);
+      const analysisData = await fetchAllAnalyses(startDate);
+      setAnalyses(analysisData);
 
       const { data: agentsData, error: agentsError } = await supabase
         .from('profiles')
         .select('id, name, avatar_url')
         .eq('is_active', true);
 
-      if (agentsError) throw agentsError;
-      setAgents((agentsData || []) as AgentProfile[]);
+      if (agentsError) {
+        log.error('Error fetching sentiment agents:', agentsError);
+        setAgents([]);
+        setIncomplete(true);
+      } else {
+        setAgents((agentsData || []) as AgentProfile[]);
+      }
     } catch (error) {
       log.error('Error fetching sentiment data:', error);
+      // Sem este sinal a tela não distingue "a leitura falhou" de "sem dados":
+      // o catch antigo só registrava no log e o painel seguia como se o período
+      // estivesse vazio. Agora a falha vira estado (`error`/`isError`).
+      setFetchError(error instanceof Error ? error : new Error('Falha ao carregar os dados de sentimento'));
     } finally {
       setLoading(false);
     }
@@ -194,7 +231,7 @@ export function useSentimentData(period: string) {
     }).filter(a => a.totalAnalyses > 0).sort((a, b) => (b.avgScore ?? -1) - (a.avgScore ?? -1));
   }, [analyses, agents, period]);
 
-  return { alerts, analyses, agents, loading, stats, dailyData, agentData, fetchData };
+  return { alerts, analyses, agents, loading, error: fetchError, isError: fetchError !== null, incomplete, stats, dailyData, agentData, fetchData };
 }
 
 export function getSentimentColor(score: number | null) {

@@ -46,7 +46,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration_v3="${TALKX_MIGRATION_FILE:-$repo_root/supabase/migrations/20261001381230_talkx_current_version_backfill_fix.sql}"
-migration_v2="${TALKX_V2_MIGRATION_FILE:-$repo_root/supabase/migrations/20261001371230_talkx_templates_current_version_v2.sql}"
+migration_v2="${TALKX_V2_MIGRATION_FILE:-$repo_root/supabase/migrations/_superseded/20261001371230_talkx_templates_current_version_v2.sql}"
 postgres_image="${TALKX_CTV_POSTGRES_IMAGE:-postgres:17-alpine}"
 tmp_dir="${TALKX_CTV_TMPDIR:-${TMPDIR:-$repo_root/.tmp}}"
 

@@ -12,7 +12,7 @@ interface HistoryItem {
   key_points: string[];
   next_steps: string[];
   sentiment: string;
-  sentiment_score: number;
+  sentiment_score: number | null;
   topics: string[];
   urgency: string | null;
   customer_satisfaction: number | null;
@@ -70,7 +70,7 @@ export function HistoryTab({ analyses, historyLoading, onLoadHistory }: HistoryT
               keyPoints: item.key_points,
               nextSteps: item.next_steps,
               sentiment: item.sentiment,
-              sentimentScore: item.sentiment_score,
+              sentimentScore: item.sentiment_score ?? undefined,
               topics: item.topics,
               urgency: item.urgency ?? undefined,
               customerSatisfaction: item.customer_satisfaction ?? undefined,
@@ -93,12 +93,12 @@ export function HistoryTab({ analyses, historyLoading, onLoadHistory }: HistoryT
               )}
             </div>
             <Badge variant="outline" className={`text-3xs ${sentimentConfig[item.sentiment]?.color || ''}`}>
-              {item.sentiment_score}%
+              {item.sentiment_score == null ? '—' : `${item.sentiment_score}%`}
             </Badge>
           </div>
           <p className="line-clamp-2 text-xs leading-relaxed">{item.summary}</p>
           <div className="mt-2 flex items-center gap-1.5">
-            <Badge variant="secondary" className="text-3xs">{item.message_count} msgs</Badge>
+            <Badge variant="secondary" className="text-3xs">{item.message_count == null ? '—' : `${item.message_count} msgs`}</Badge>
             {statusConfig[item.status] && (
               <Badge variant="outline" className={`text-3xs ${statusConfig[item.status].className}`}>
                 {statusConfig[item.status].label}

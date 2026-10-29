@@ -63,4 +63,20 @@ describe('formato único de erro de validação (422)', () => {
     if (r.success) throw new Error('esperava falha');
     expect(toFieldErrors(r.error)[0].path).toBe('(root)');
   });
+
+  it('o 422 devolve ao navegador a origem oficial (senão o CORS esconde os erros de campo)', () => {
+    const campos = [{ path: 'message', message: 'obrigatório', code: 'too_small' }];
+    const doRequest = (origin?: string) =>
+      validationErrorResponse(
+        campos,
+        new Request('https://edge.invalid/x', origin ? { headers: { origin } } : undefined),
+      ).headers.get('access-control-allow-origin');
+    expect(doRequest('https://zappweb.app.br')).toBe('https://zappweb.app.br');
+    expect(doRequest('https://zapp-web-v2.vercel.app')).toBe('https://zapp-web-v2.vercel.app');
+    expect(doRequest('https://evil.example')).toBe('https://zapp-web-v2.vercel.app');
+    expect(doRequest()).toBe('https://zapp-web-v2.vercel.app');
+    // Sem req (chamadas antigas): continua no canônico.
+    expect(validationErrorResponse(campos).headers.get('access-control-allow-origin'))
+      .toBe('https://zapp-web-v2.vercel.app');
+  });
 });

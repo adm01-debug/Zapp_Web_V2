@@ -1,5 +1,6 @@
 import { CommandPalette } from '@/components/ui/command-palette';
 import { useCatalogQuickSearch } from '@/hooks/integrations/useCatalogQuickSearch';
+import { useModuleCommandItems } from '@/hooks/integrations/useModuleCommandItems';
 import { useTalkXCommandItems } from '@/hooks/integrations/useTalkXCommandItems';
 
 interface CommandPaletteHostProps {
@@ -15,6 +16,7 @@ interface CommandPaletteHostProps {
  */
 export function CommandPaletteHost({ open, onOpenChange, onNavigate }: CommandPaletteHostProps) {
   const searchCatalogProducts = useCatalogQuickSearch();
+  const moduleCommands = useModuleCommandItems(onNavigate);
   const talkxCommands = useTalkXCommandItems(onNavigate);
 
   return (
@@ -23,6 +25,7 @@ export function CommandPaletteHost({ open, onOpenChange, onNavigate }: CommandPa
       onOpenChange={onOpenChange}
       onNavigate={onNavigate}
       onSearch={searchCatalogProducts}
+      navigationCommands={moduleCommands}
       customCommands={talkxCommands}
       placeholder="Buscar ou digitar comando... (⌘K)"
     />

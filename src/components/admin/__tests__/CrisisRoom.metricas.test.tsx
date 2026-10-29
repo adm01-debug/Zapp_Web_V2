@@ -35,6 +35,20 @@ vi.mock('@/hooks/crm/useAgentPresence', () => ({
   useAgentPresenceMap: () => PRESENCE,
 }));
 
+// Store global dos canais de WhatsApp (PJ-06): aqui só interessa que ele NÃO abra
+// assinatura própria neste cenário — sem conexão cadastrada o cartão de canais sai
+// "não medido" e nenhuma métrica de rede entra no diagnóstico deste teste.
+vi.mock('@/hooks/connections/useConnectionsHealth', () => ({
+  useConnectionsHealth: () => ({
+    connections: [],
+    loading: false,
+    error: null,
+    history: [],
+    reconnecting: null,
+    reconnectingAll: false,
+  }),
+}));
+
 import { CrisisRoom } from '@/components/admin/CrisisRoom';
 
 const MINUTE = 60_000;

@@ -1,9 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
-import { FilesToolbar } from '../FilesToolbar';
+import { FilesToolbar, type SenderFilterOption } from '../FilesToolbar';
 import type { ColumnOption } from '@/hooks/chat/useFilesContainerColumns';
 
 const OPCOES: ColumnOption[] = ([3, 4, 5, 6, 8] as const).map((n) => ({ n, fits: true }));
+
+const REMETENTES: SenderFilterOption[] = [
+  { key: 'self', label: 'Você', count: 3 },
+  { key: 'contact', label: 'Ana Cliente', count: 2 },
+  { key: 'agent:p-2', label: 'Ana Atendente', count: 1 },
+  { key: 'team', label: 'Equipe', count: 1 },
+];
 
 function renderToolbar(overrides: Partial<React.ComponentProps<typeof FilesToolbar>> = {}) {
   const props: React.ComponentProps<typeof FilesToolbar> = {
@@ -20,6 +27,9 @@ function renderToolbar(overrides: Partial<React.ComponentProps<typeof FilesToolb
     onClearCustom: vi.fn(),
     filteredCount: 2,
     totalCount: 2,
+    senderOptions: [],
+    selectedSenders: [],
+    onToggleSender: vi.fn(),
     viewMode: 'grid',
     onViewModeChange: vi.fn(),
     columns: 4,
@@ -33,8 +43,18 @@ function renderToolbar(overrides: Partial<React.ComponentProps<typeof FilesToolb
   return { ...render(<FilesToolbar {...props} />), props };
 }
 
-/** Gatilho do filtro por data dentro da barra (o seletor e o mesmo da aba IA). */
+/** R08: o painel do funil guarda o período e o remetente. Idempotente — depois de escolher um
+ * atalho o painel do funil continua aberto (só o popover interno do seletor fecha). */
+function abrirFunil() {
+  if (!screen.queryByTestId('files-filter-panel')) {
+    fireEvent.click(screen.getByTestId('files-filter-trigger'));
+  }
+  return screen.getByTestId('files-filter-panel');
+}
+
+/** Gatilho do filtro por data (o seletor e o mesmo da aba IA, agora dentro do funil). */
 function gatilhoPeriodo() {
+  abrirFunil();
   // O X de limpar tambem e `role="button"` dentro do wrapper; o gatilho e o primeiro na DOM.
   return within(screen.getByTestId('files-period-filter')).getAllByRole('button')[0];
 }
@@ -45,12 +65,13 @@ function abrirPeriodo() {
 }
 
 describe('FilesToolbar (etapa 11)', () => {
-  it('expõe busca, ordenação, Selecionar e Layout na ordem do plano', () => {
+  it('expõe busca, ordenação, o funil, Selecionar e Layout na ordem do plano', () => {
     renderToolbar();
     const barra = screen.getByTestId('files-toolbar');
     expect(barra).toBeInTheDocument();
     expect(screen.getByLabelText('Buscar arquivos')).toBeInTheDocument();
     expect(screen.getByLabelText('Ordenar arquivos')).toBeInTheDocument();
+    expect(screen.getByTestId('files-filter-trigger')).toBeInTheDocument();
     expect(screen.getByTestId('files-select-toggle')).toBeInTheDocument();
     expect(screen.getByTestId('files-layout-trigger')).toBeInTheDocument();
   });
@@ -60,11 +81,11 @@ describe('FilesToolbar (etapa 11)', () => {
     expect(screen.getByTestId('files-toolbar').className).toContain('flex-wrap');
     const campo = screen.getByLabelText('Buscar arquivos');
     expect(campo.parentElement?.className).toContain('min-w-[220px]');
-    // F04: o seletor de data também não estoura a barra — largura mínima bem abaixo dos 390px do
-    // celular e `flex-1` para o rótulo longo ("05/03/26 — 07/03/26") caber quando há espaço.
-    const periodo = screen.getByTestId('files-period-filter').className;
-    expect(periodo).toContain('min-w-[180px]');
-    expect(periodo).toContain('flex-1');
+    // R08: o seletor de data (F04) saiu da barra e passou a morar no painel do funil, que tem
+    // largura fixa — a barra nao estoura mais por causa dele (antes eram 180px de minimo + flex-1).
+    const painel = abrirFunil();
+    expect(painel.className).toContain('w-72');
+    expect(screen.getByTestId('files-period-filter')).toBeInTheDocument();
   });
 
   it('digitar na busca avisa o hook', () => {
@@ -102,9 +123,10 @@ describe('FilesToolbar (etapa 11)', () => {
 });
 
 describe('FilesToolbar — filtro por data (F04)', () => {
-  it('traz o seletor de período ao lado da ordenação e NÃO oferece "Última interação"', () => {
+  it('traz o seletor de período dentro do funil e NÃO oferece "Última interação"', () => {
     renderToolbar();
-    expect(screen.getByTestId('files-period-filter')).toBeInTheDocument();
+    // Antes de abrir o funil o seletor nao esta na barra: ele mora no painel.
+    expect(screen.queryByTestId('files-period-filter')).not.toBeInTheDocument();
 
     abrirPeriodo();
     expect(screen.getByText('Atalhos')).toBeInTheDocument();
@@ -150,5 +172,69 @@ describe('FilesToolbar — filtro por data (F04)', () => {
   it('período personalizado mostra o intervalo De — Até no gatilho', () => {
     renderToolbar({ period: 'custom', customFrom: new Date(2026, 2, 5), customTo: new Date(2026, 2, 7) });
     expect(gatilhoPeriodo()).toHaveTextContent('05/03/26 — 07/03/26');
+  });
+});
+
+/**
+ * R08 (S55/S56) — funil: o painel junta o período (F04, que mudou de lugar) e o remetente
+ * (seleção múltipla com contagem). Nenhum marcado = todos; a ordem padrão segue "Mais recentes".
+ */
+describe('FilesToolbar — funil: período e remetente (R08)', () => {
+  it('abre um painel com as duas seções, cada uma com o seu controle', () => {
+    renderToolbar({ senderOptions: REMETENTES });
+
+    expect(screen.queryByTestId('files-filter-panel')).not.toBeInTheDocument();
+    const painel = abrirFunil();
+
+    expect(within(painel).getByText('Período')).toBeInTheDocument();
+    expect(within(painel).getByText('Remetente')).toBeInTheDocument();
+    // O período é o MESMO seletor do F04 (com o mesmo estado vindo do hook).
+    expect(within(painel).getByTestId('files-period-filter')).toBeInTheDocument();
+    expect(within(painel).getByTestId('files-sender-options')).toBeInTheDocument();
+  });
+
+  it('lista Você, o contato, os atendentes e Equipe com a contagem, todos desmarcados', () => {
+    renderToolbar({ senderOptions: REMETENTES });
+    const painel = abrirFunil();
+
+    expect(within(painel).getByText('Nenhum marcado = todos')).toBeInTheDocument();
+    for (const opcao of REMETENTES) {
+      const linha = within(painel).getByTestId(`files-sender-${opcao.key}`);
+      expect(within(linha).getByRole('checkbox', { name: opcao.label })).not.toBeChecked();
+      expect(within(linha).getByText(opcao.label)).toBeInTheDocument();
+      expect(linha).toHaveTextContent(String(opcao.count));
+    }
+  });
+
+  it('marcar um remetente avisa o hook com a chave e o gatilho conta os filtros ativos', () => {
+    const onToggleSender = vi.fn();
+    renderToolbar({ senderOptions: REMETENTES, selectedSenders: ['self'], period: '7d', onToggleSender });
+
+    // Período ativo (1) + remetente marcado (1) = 2 recortes ligados.
+    expect(screen.getByTestId('files-filter-trigger').textContent).toBe('Filtros2');
+
+    abrirFunil();
+    expect(within(screen.getByTestId('files-sender-self')).getByRole('checkbox', { name: 'Você' })).toBeChecked();
+    fireEvent.click(within(screen.getByTestId('files-sender-team')).getByRole('checkbox', { name: 'Equipe' }));
+    expect(onToggleSender).toHaveBeenCalledWith('team');
+  });
+
+  it('sem remetente marcado nem período o gatilho não mostra contador (todos)', () => {
+    renderToolbar({ senderOptions: REMETENTES });
+    expect(screen.getByTestId('files-filter-trigger').textContent).toBe('Filtros');
+  });
+
+  it('sem remetentes no recorte avisa no lugar da lista', () => {
+    renderToolbar({ senderOptions: [] });
+    const painel = abrirFunil();
+    expect(within(painel).getByTestId('files-sender-empty')).toBeInTheDocument();
+    expect(within(painel).queryByTestId('files-sender-options')).not.toBeInTheDocument();
+  });
+
+  it('a ordem padrão continua "Mais recentes", com ou sem o funil aberto', () => {
+    renderToolbar();
+    expect(screen.getByLabelText('Ordenar arquivos')).toHaveTextContent('Mais recentes');
+    abrirFunil();
+    expect(screen.getByLabelText('Ordenar arquivos')).toHaveTextContent('Mais recentes');
   });
 });

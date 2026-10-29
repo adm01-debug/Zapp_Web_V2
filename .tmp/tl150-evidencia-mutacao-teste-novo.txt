@@ -1,0 +1,9 @@
+== baseline == exit=0 ['Test Files  1 passed (1)', 'Tests  2 passed (2)']
+== A14-campo-min-em-UTC (como antes da correcao) == exit=1
+    × A14: o min do campo de data é hoje na parede da CAMPANHA, não a do navegador 567ms
+    ['Test Files  1 failed (1)', 'Tests  1 failed | 1 passed (2)']
+    mordeu=SIM
+== A12-sem-marco-de-espera (fallback removido) == exit=1
+    × A12: sem data gravada, sem edição e sem público, a linha do tempo não fica vazia 186ms
+    ['Test Files  1 failed (1)', 'Tests  1 failed | 1 passed (2)']
+    mordeu=SIM

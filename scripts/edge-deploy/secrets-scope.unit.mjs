@@ -58,10 +58,12 @@ test('E58: rotate_secrets=true reescreve por decisao do operador', () => {
   assert.match(r.motivo, /rotate_secrets/);
 });
 
-test('E58: leitura do remoto falhando cai no comportamento anterior (reescrever), nunca em silencio', () => {
+// W59: fail-closed — leitura falhando nao deve reescrever (comportamento anterior era fail-open).
+test('W59/E58: leitura do remoto falhando e fail-closed: nao reescreve e sinaliza erro fatal', () => {
   const r = decidirReescrita({ nomesRemotos: null, nomesEsperados: nomesDeSecretsParaEscopo('') });
-  assert.equal(r.reescrever, true);
+  assert.equal(r.reescrever, false, 'fail-closed: sem listagem nao reescreve');
   assert.match(r.motivo, /nao foi possivel ler/);
+  assert.equal(r.erroFatal, true, 'erroFatal deve ser true para o CLI emitir ::error:: e sair com codigo 1');
 });
 
 test('E58: extrai nomes das formas plausiveis e devolve null no que nao reconhece', () => {

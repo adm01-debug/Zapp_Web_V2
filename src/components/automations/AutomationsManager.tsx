@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Zap, Plus } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAutomations, type AutomationRow } from './useAutomations';
 import { AutomationCard } from './AutomationCard';
@@ -17,6 +18,9 @@ export function AutomationsManager() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingAutomation, setEditingAutomation] = useState<AutomationRow | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  // Exclusão é irreversível: um clique só NÃO apaga — abre a confirmação e a
+  // mutation só dispara no "Excluir" do diálogo (cancelar não remove nada).
+  const [pendingDelete, setPendingDelete] = useState<AutomationRow | null>(null);
 
   const filteredAutomations = useMemo(() => {
     return automations.filter(a => {
@@ -98,7 +102,7 @@ export function AutomationsManager() {
                   key={automation.id} automation={automation}
                   onToggle={() => handleToggle(automation)}
                   onEdit={() => { setEditingAutomation(automation); setEditorOpen(true); }}
-                  onDelete={() => deleteMutation.mutate(automation.id)}
+                  onDelete={() => setPendingDelete(automation)}
                   onDuplicate={() => handleDuplicate(automation)}
                 />
               ))}
@@ -114,6 +118,25 @@ export function AutomationsManager() {
         </ScrollArea>
       </CardContent>
       <AutomationEditorDialog open={editorOpen} onOpenChange={setEditorOpen} automation={editingAutomation} onSave={handleSave} />
+
+      <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => { if (!open) setPendingDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir automação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete ? <>A automação <span className="font-semibold text-foreground">&quot;{pendingDelete.name}&quot;</span> será removida. </> : null}
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (pendingDelete) deleteMutation.mutate(pendingDelete.id); setPendingDelete(null); }}
+            >Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

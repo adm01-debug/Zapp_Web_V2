@@ -6,7 +6,7 @@
 # Contrato num PostgreSQL 17 descartavel, no mesmo formato dos testes irmaos
 # (scripts/db-audit/talkx-role-gates.test.sh, scripts/db-audit/talkx-campaign-worker-lease.test.sh).
 #
-# Prova, contra a MIGRATION REAL do repo (20261002391230), sobre um schema minimo com as
+# Prova, contra as MIGRATIONS REAIS do repo (20261002391230 + 20261011003026), sobre um schema minimo com as
 # colunas que as RPCs tocam e uma fixture de 12 contatos:
 #   (a) count: matched=12, eligible=6, suppressed=2, invalid_phone=1, legacy_or_deleted=3;
 #   (b) page com limite 4 percorre os 6 elegiveis em 2 paginas, sem repeticao;
@@ -15,12 +15,16 @@
 #       lt, lte, in_last_days, not_in_last_days) + casos extras de uuid eq e number eq;
 #   (d) operador/campo fora da whitelist -> 22023; modo invalido -> 22023;
 #   (e) agente (authenticated sem papel) -> 42501; anon sem EXECUTE;
-#   (f) a funcao interna respeita p_respect_suppression e a uniao por p_segment_ids.
+#   (f) a funcao interna respeita p_respect_suppression e a uniao por p_segment_ids;
+#   (g) p_contact_ids (atividade real ramo/UF pre-resolvida fora do banco): retrocompativel
+#       (NULL/omitido), restringe aos ids, nao fura elegibilidade/supressao, array vazio = 0
+#       e intersecta as regras.
 
 set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 migration="$repo_root/supabase/migrations/20261002391230_talkx_audience_rpc.sql"
+migration_contact_ids="$repo_root/supabase/migrations/20261011003026_talkx_audience_contact_ids_pre_resolvidos.sql"
 postgres_image="${TALKX_AUDIENCE_RPC_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="talkx-audience-rpc-test-$$"
 test_password="talkx_audience_rpc_test_only"
@@ -89,6 +93,18 @@ c11='30000000-0000-0000-0000-000000000011'
 c12='30000000-0000-0000-0000-000000000012'
 seg_acme='40000000-0000-0000-0000-0000000000c1'
 seg_beta='40000000-0000-0000-0000-0000000000c2'
+seg_texto='40000000-0000-0000-0000-0000000000c3'
+# Ponte Singu (fixture): empresas com setor/UF REAIS e os contatos que sobraram
+# do fixture de 12 contatos (c07/c09/c10/c11/c12 existem na tabela, sem variavel).
+e01='50000000-0000-0000-0000-000000000001'
+e02='50000000-0000-0000-0000-000000000002'
+e03='50000000-0000-0000-0000-000000000003'
+e04='50000000-0000-0000-0000-000000000004'
+e05='50000000-0000-0000-0000-000000000005'
+e06='50000000-0000-0000-0000-000000000006'
+c07='30000000-0000-0000-0000-000000000007'
+c09='30000000-0000-0000-0000-000000000009'
+c10='30000000-0000-0000-0000-000000000010'
 
 psql_test >/dev/null <<'SQL'
 CREATE SCHEMA auth;
@@ -127,6 +143,7 @@ CREATE TABLE public.contacts (
   nickname text,
   phone text NOT NULL,
   company text,
+  company_id uuid,
   city text,
   state text,
   email text,
@@ -261,6 +278,97 @@ INSERT INTO public.talkx_segments (id, name, rules, created_by) VALUES
    '{"groups":[{"match":"and","rules":[{"field":"company","op":"eq","value":"Beta"}]}]}'::jsonb,
    '10000000-0000-0000-0000-000000000001');
 
+-- ---------------------------------------------------------------------------
+-- (i) PONTE SINGU — mock do CONTRATO da ponte (o real vive no banco do Singu,
+-- em multiplix_search_audience): setor de atividade REAL em
+-- companies.ramo_atividade e UF REAL em company_addresses.estado com
+-- is_primary = true. O vinculo contato -> empresa (contacts.company_id) tambem
+-- e do Singu; aqui ele entra no fixture para a resolucao poder ser provada.
+-- A regra de ramo/UF reproduzida e a real: igualdade exata no ramo
+-- ('Não informado' cobre nulo/vazio), LEFT JOIN no endereco e filtro de UF
+-- SOMENTE pelo endereco primario. As duas funcoes abaixo sao SECURITY DEFINER
+-- porque rodam com a credencial da ponte (o papel authenticated nao enxerga as
+-- tabelas do Singu) e devolvem SEMPRE um
+-- array (vazio quando nada casa) — a ponte nunca devolve NULL, que para a RPC
+-- significaria "sem restricao".
+-- ---------------------------------------------------------------------------
+CREATE TABLE public.companies (
+  id uuid PRIMARY KEY,
+  name text,
+  nome_crm text,
+  ramo_atividade text
+);
+CREATE TABLE public.company_addresses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id uuid NOT NULL,
+  estado text,
+  is_primary boolean NOT NULL DEFAULT false
+);
+
+CREATE FUNCTION public.talkx_bridge_company_ids(p_ramo text, p_uf text) RETURNS uuid[]
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT COALESCE(array_agg(co.id ORDER BY co.id), ARRAY[]::uuid[])
+  FROM public.companies co
+  LEFT JOIN public.company_addresses ad ON ad.company_id = co.id AND ad.is_primary = true
+  WHERE (p_ramo IS NULL
+         OR co.ramo_atividade = p_ramo
+         OR (p_ramo = 'Não informado' AND (co.ramo_atividade IS NULL OR btrim(co.ramo_atividade) = '')))
+    AND (p_uf IS NULL OR ad.estado = p_uf)
+$$;
+
+CREATE FUNCTION public.talkx_bridge_contact_ids(p_ramo text, p_uf text) RETURNS uuid[]
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT COALESCE(array_agg(ct.id ORDER BY ct.id), ARRAY[]::uuid[])
+  FROM public.companies co
+  LEFT JOIN public.company_addresses ad ON ad.company_id = co.id AND ad.is_primary = true
+  JOIN public.contacts ct ON ct.company_id = co.id
+  WHERE (p_ramo IS NULL
+         OR co.ramo_atividade = p_ramo
+         OR (p_ramo = 'Não informado' AND (co.ramo_atividade IS NULL OR btrim(co.ramo_atividade) = '')))
+    AND (p_uf IS NULL OR ad.estado = p_uf)
+$$;
+
+-- Acme: Metalurgia/SP (as empresas de fora: Beta Varejo/RJ, Gamma Metalurgia/BA,
+-- Delta Varejo/SP, Omega Metalurgia com RJ primario e SP apenas secundario, e
+-- Epsilon sem ramo e sem endereco primario).
+INSERT INTO public.companies (id, name, nome_crm, ramo_atividade) VALUES
+  ('50000000-0000-0000-0000-000000000001', 'Acme',    'Acme',    'Metalurgia'),
+  ('50000000-0000-0000-0000-000000000002', 'Beta',    'Beta',    'Varejo'),
+  ('50000000-0000-0000-0000-000000000003', 'Gamma',   'Gamma',   'Metalurgia'),
+  ('50000000-0000-0000-0000-000000000004', 'Delta',   'Delta',   'Varejo'),
+  ('50000000-0000-0000-0000-000000000005', 'Epsilon', 'Epsilon', NULL),
+  ('50000000-0000-0000-0000-000000000006', 'Omega',   'Omega',   'Metalurgia');
+
+INSERT INTO public.company_addresses (company_id, estado, is_primary) VALUES
+  ('50000000-0000-0000-0000-000000000001', 'SP', true),
+  ('50000000-0000-0000-0000-000000000002', 'RJ', true),
+  ('50000000-0000-0000-0000-000000000003', 'BA', true),
+  ('50000000-0000-0000-0000-000000000004', 'SP', true),
+  -- Epsilon nao tem endereco nenhum: setor e UF reais nunca foram informados.
+  ('50000000-0000-0000-0000-000000000006', 'RJ', true),
+  ('50000000-0000-0000-0000-000000000006', 'SP', false);
+
+UPDATE public.contacts SET company_id = '50000000-0000-0000-0000-000000000001'
+  WHERE id IN ('30000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000003',
+               '30000000-0000-0000-0000-000000000007', '30000000-0000-0000-0000-000000000009',
+               '30000000-0000-0000-0000-000000000010', '30000000-0000-0000-0000-000000000011',
+               '30000000-0000-0000-0000-000000000012');
+UPDATE public.contacts SET company_id = '50000000-0000-0000-0000-000000000002'
+  WHERE id IN ('30000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000008');
+UPDATE public.contacts SET company_id = '50000000-0000-0000-0000-000000000003'
+  WHERE id = '30000000-0000-0000-0000-000000000004';
+UPDATE public.contacts SET company_id = '50000000-0000-0000-0000-000000000004'
+  WHERE id = '30000000-0000-0000-0000-000000000005';
+UPDATE public.contacts SET company_id = '50000000-0000-0000-0000-000000000005'
+  WHERE id = '30000000-0000-0000-0000-000000000006';
+
+-- Segmento ANTIGO (campos de texto livre company/city/state), salvo antes desta
+-- tarefa: serve de regressao — tem de resolver exatamente como resolvia.
+INSERT INTO public.talkx_segments (id, name, rules, created_by) VALUES
+  ('40000000-0000-0000-0000-0000000000c3', 'Antigo Acme SP',
+   '{"groups":[{"match":"and","rules":[{"field":"company","op":"eq","value":"Acme"},{"field":"city","op":"contains","value":"Paulo"},{"field":"state","op":"eq","value":"SP"}]}]}'::jsonb,
+   '10000000-0000-0000-0000-000000000001');
+
 GRANT USAGE ON SCHEMA public, auth TO anon, authenticated, service_role;
 GRANT SELECT ON public.contacts TO authenticated, service_role;
 GRANT SELECT ON public.talkx_segments TO authenticated, service_role;
@@ -272,6 +380,13 @@ psql_test < "$migration" >/dev/null
 psql_test < "$migration" >/dev/null
 pass 'migration X016 aplica e e replayavel'
 
+# A migration nova troca a RPC de 5 por 6 argumentos (ganha p_contact_ids): aplica e
+# garante que o replay (re-execucao) tambem passa.
+[[ -f "$migration_contact_ids" ]] || fail "migration ausente: $migration_contact_ids"
+psql_test < "$migration_contact_ids" >/dev/null
+psql_test < "$migration_contact_ids" >/dev/null
+pass 'migration p_contact_ids aplica e e replayavel'
+
 admin_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='$admin_uid';"
 supervisor_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='$supervisor_uid';"
 agent_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated'; SET request.jwt.claim.sub='$agent_uid';"
@@ -280,8 +395,9 @@ agent_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated
 # ACL: anon sem EXECUTE na RPC; authenticated com EXECUTE; a funcao interna e
 # interna (nem authenticated pode chamar direto).
 # ---------------------------------------------------------------------------
-[[ "$(psql_q "SELECT has_function_privilege('anon', 'public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid)', 'EXECUTE')")" == 'f' ]] || fail 'anon com EXECUTE em talkx_resolve_audience'
-[[ "$(psql_q "SELECT has_function_privilege('authenticated', 'public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid)', 'EXECUTE')")" == 't' ]] || fail 'authenticated sem EXECUTE em talkx_resolve_audience'
+[[ "$(psql_q "SELECT has_function_privilege('anon', 'public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid,uuid[])', 'EXECUTE')")" == 'f' ]] || fail 'anon com EXECUTE em talkx_resolve_audience'
+[[ "$(psql_q "SELECT has_function_privilege('authenticated', 'public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid,uuid[])', 'EXECUTE')")" == 't' ]] || fail 'authenticated sem EXECUTE em talkx_resolve_audience'
+[[ "$(psql_q "SELECT has_function_privilege('service_role', 'public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid,uuid[])', 'EXECUTE')")" == 't' ]] || fail 'service_role sem EXECUTE em talkx_resolve_audience'
 [[ "$(psql_q "SELECT has_function_privilege('authenticated', 'public.talkx_audience_query(jsonb,uuid[],boolean)', 'EXECUTE')")" == 'f' ]] || fail 'authenticated com EXECUTE na funcao interna talkx_audience_query'
 pass 'ACL: anon sem EXECUTE, authenticated com EXECUTE na RPC e sem EXECUTE na funcao interna'
 
@@ -410,4 +526,130 @@ segment_union="$(psql_q "$admin_session SELECT string_agg(r->>'id', ',' ORDER BY
 [[ "$segment_union" == "$c01,$c02,$c03,$c06" ]] || fail "(f) uniao por segmentos inesperada [obtido: $segment_union]"
 pass '(f) p_segment_ids une as regras dos segmentos salvos (Acme + Beta -> c01,c02,c03,c06)'
 
-printf 'PASS: X016 audience RPC — elegibilidade, supressao, paginacao keyset, whitelist de regras e gate de papel\n'
+# ---------------------------------------------------------------------------
+# (g) p_contact_ids: a atividade real (ramo/UF) e resolvida FORA do banco (ponte Singu) e
+#     chega como lista de contatos. O parametro e opcional: sem ele o comportamento e o de
+#     antes; array vazio zera a audiencia (fail-closed, nunca "sem restricao").
+# ---------------------------------------------------------------------------
+# (g.1) assinatura: a RPC agora tem 6 argumentos (o 5-arg saiu, para o PostgREST nao ficar ambiguo).
+[[ "$(psql_q "SELECT to_regprocedure('public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid,uuid[])') IS NOT NULL")" == 't' ]] || fail '(g) RPC de 6 argumentos ausente'
+[[ "$(psql_q "SELECT to_regprocedure('public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid)') IS NULL")" == 't' ]] || fail '(g) overload antigo de 5 argumentos ainda existe'
+pass '(g) assinatura: RPC de 6 argumentos presente e o overload de 5 saiu'
+
+# (g.2) retrocompatibilidade: 5 args (omitido) e p_contact_ids NULL dao a mesma contagem de antes.
+compat_omit="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL) ->> 'eligible';")"
+[[ "$compat_omit" == '6' ]] || fail "(g) chamada antiga (5 args) mudou: eligible=$compat_omit [esperado 6]"
+compat_null="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL, NULL) ->> 'eligible';")"
+[[ "$compat_null" == '6' ]] || fail "(g) p_contact_ids NULL deveria equivaler a omitido: eligible=$compat_null"
+pass '(g) retrocompativel: 5 args e p_contact_ids NULL -> eligible=6'
+
+# (g.3) restricao por contact_ids: so os ids resolvidos entram.
+subset="$(psql_q "$admin_session SELECT COALESCE(string_agg(r->>'id', ',' ORDER BY r->>'id'), '') FROM (SELECT jsonb_array_elements(public.talkx_resolve_audience(NULL, NULL, 'page', 100, NULL, ARRAY['$c01'::uuid, '$c03'::uuid, '$c05'::uuid]) -> 'rows') AS r) x;")"
+[[ "$subset" == "$c01,$c03,$c05" ]] || fail "(g) p_contact_ids nao restringiu [obtido: $subset | esperado: $c01,$c03,$c05]"
+subset_count="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL, ARRAY['$c01'::uuid, '$c03'::uuid, '$c05'::uuid]) ->> 'eligible';")"
+[[ "$subset_count" == '3' ]] || fail "(g) count com p_contact_ids deveria ser 3 [obtido: $subset_count]"
+pass '(g) p_contact_ids restringe a audiencia aos ids resolvidos (c01,c03,c05; eligible=3)'
+
+# (g.4) p_contact_ids nao fura elegibilidade/supressao: c09 e LID legado, c11 esta suprimido.
+c09='30000000-0000-0000-0000-000000000009'
+guarded="$(psql_q "$admin_session SELECT COALESCE(string_agg(r->>'id', ',' ORDER BY r->>'id'), '') FROM (SELECT jsonb_array_elements(public.talkx_resolve_audience(NULL, NULL, 'page', 100, NULL, ARRAY['$c09'::uuid, '$c11'::uuid]) -> 'rows') AS r) x;")"
+[[ "$guarded" == '' ]] || fail "(g) inelegivel/suprimido vazou por p_contact_ids [obtido: $guarded]"
+pass '(g) p_contact_ids respeita elegibilidade/supressao (c09 LID e c11 suprimido ficam fora)'
+
+# (g.5) array vazio = nenhum contato (fail-closed, e nao "sem restricao").
+empty_count="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL, ARRAY[]::uuid[]) ->> 'eligible';")"
+[[ "$empty_count" == '0' ]] || fail "(g) array vazio deveria zerar a audiencia [obtido: $empty_count]"
+pass '(g) p_contact_ids vazio zera a audiencia (fail-closed)'
+
+# (g.6) p_contact_ids intersecta as regras: Acme ∩ {c01,c02} = c01.
+intersect="$(psql_q "$admin_session SELECT COALESCE(string_agg(r->>'id', ',' ORDER BY r->>'id'), '') FROM (SELECT jsonb_array_elements(public.talkx_resolve_audience('{\"groups\":[{\"match\":\"and\",\"rules\":[{\"field\":\"company\",\"op\":\"eq\",\"value\":\"Acme\"}]}]}'::jsonb, NULL, 'page', 100, NULL, ARRAY['$c01'::uuid, '$c02'::uuid]) -> 'rows') AS r) x;")"
+[[ "$intersect" == "$c01" ]] || fail "(g) p_contact_ids deve intersectar as regras [obtido: $intersect | esperado: $c01]"
+pass '(g) p_contact_ids intersecta as regras (company eq Acme ∩ {c01,c02} = c01)'
+
+# ---------------------------------------------------------------------------
+# (i) Ponte Singu: setor/UF REAIS resolvem as empresas (e seus contatos) FORA do
+#     banco; a RPC recebe so os contact_ids (p_contact_ids). Prova o item 1 do
+#     cartao: a resolucao inclui so as empresas do ramo/UF pedidos.
+# ---------------------------------------------------------------------------
+bridge_companies() { psql_q "SELECT COALESCE(string_agg(x::text, ',' ORDER BY x::text), '') FROM unnest(public.talkx_bridge_company_ids($1, $2)) AS x;"; }
+bridge_contacts() { psql_q "SELECT COALESCE(string_agg(x::text, ',' ORDER BY x::text), '') FROM unnest(public.talkx_bridge_contact_ids($1, $2)) AS x;"; }
+bridge_page() {
+  psql_q "$admin_session SELECT COALESCE(string_agg(r->>'id', ',' ORDER BY r->>'id'), '') FROM (SELECT jsonb_array_elements(public.talkx_resolve_audience(NULL, NULL, 'page', 100, NULL, public.talkx_bridge_contact_ids($1, $2)) -> 'rows') AS r) x;"
+}
+
+metal_sp_companies="$(bridge_companies "'Metalurgia'" "'SP'")"
+[[ "$metal_sp_companies" == "$e01" ]] || fail "(i) ramo Metalurgia + UF SP deveria resolver so o Acme [$e01 | obtido: $metal_sp_companies]"
+pass '(i) ponte Singu: ramo Metalurgia + UF SP -> so a empresa do ramo/UF pedidos (Beta Varejo/RJ, Gamma Metalurgia/BA, Delta Varejo/SP, Omega Metalurgia/RJ-com-SP-secundario e Epsilon sem setor/UF ficam fora)'
+
+metal_sp_contacts="$(bridge_contacts "'Metalurgia'" "'SP'")"
+[[ "$metal_sp_contacts" == "$c01,$c03,$c07,$c09,$c10,$c11,$c12" ]] || fail "(i) contatos do ramo/UF inesperados [obtido: $metal_sp_contacts]"
+pass '(i) ponte Singu: os contatos do ramo/UF pedidos sao os 7 da empresa (deleted/LID/telefone invalido/suprimidos entram aqui e o motor decide)'
+
+metal_sp_page="$(bridge_page "'Metalurgia'" "'SP'")"
+[[ "$metal_sp_page" == "$c01,$c03" ]] || fail "(i) audiencia do ramo/UF inesperada [obtido: $metal_sp_page | esperado: $c01,$c03]"
+pass '(i) audiencia real (ramo Metalurgia + UF SP): c01,c03 — so os contatos elegiveis das empresas pedidas'
+
+real_count="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL, public.talkx_bridge_contact_ids('Metalurgia', 'SP'))::text;")"
+for pair in 'matched=7' 'eligible=2' 'suppressed=2' 'invalid_phone=1' 'legacy_or_deleted=2'; do
+  key="${pair%%=*}"; want="${pair##*=}"
+  got="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL, public.talkx_bridge_contact_ids('Metalurgia', 'SP')) ->> '$key';")"
+  [[ "$got" == "$want" ]] || fail "(i) count.$key deveria ser $want [obtido: $got | $real_count]"
+done
+pass '(i) count real: matched=7, eligible=2 (elegibilidade/supressao continuam valendo dentro do ramo/UF)'
+
+varejo_sp_page="$(bridge_page "'Varejo'" "'SP'")"
+[[ "$varejo_sp_page" == "$c05" ]] || fail "(i) Varejo + SP deveria ser so o c05 [obtido: $varejo_sp_page]"
+pass '(i) outra combinacao (ramo Varejo + UF SP): c05 — o filtro e ramo E UF, nao so um deles'
+
+# ---------------------------------------------------------------------------
+# (j) Empresa sem setor/UF reais: fica fora das regras de setor/UF pedidos e so
+#     aparece quando o operador pede exatamente "setor nao informado"; e a ponte
+#     devolve lista VAZIA (nunca NULL) quando nada casa, o que zera a audiencia
+#     em vez de liberar a base inteira. Prova o item 3 do cartao.
+# ---------------------------------------------------------------------------
+nao_informado="$(bridge_companies "'Não informado'" "NULL")"
+[[ "$nao_informado" == "$e05" ]] || fail "(j) 'setor nao informado' deveria trazer so a Epsilon [obtido: $nao_informado]"
+nao_informado_page="$(bridge_page "'Não informado'" "NULL")"
+[[ "$nao_informado_page" == "$c06" ]] || fail "(j) contato da empresa sem setor inesperado [obtido: $nao_informado_page | esperado: $c06]"
+pass '(j) empresa sem setor/UF reais: fora das regras de setor/UF; entra so em "setor nao informado" (c06)'
+
+sem_uf="$(bridge_companies "'Não informado'" "'SP'")"
+[[ "$sem_uf" == '' ]] || fail "(j) empresa sem endereco primario nao pode entrar por UF [obtido: $sem_uf]"
+sem_setor_sp="$(bridge_companies "'Metalurgia'" "'SP'")"
+[[ "$sem_setor_sp" != *"$e05"* ]] || fail '(j) empresa sem setor real entrou na regra de setor pedido'
+pass '(j) empresa sem setor/UF reais nao entra por igualdade de setor nem por UF primaria'
+
+nada="$(bridge_contacts "'Inexistente'" "NULL")"
+[[ "$nada" == '' ]] || fail "(j) nenhuma empresa casando deveria dar lista vazia [obtido: $nada]"
+nada_count="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL, public.talkx_bridge_contact_ids('Inexistente', NULL)) ->> 'eligible';")"
+[[ "$nada_count" == '0' ]] || fail "(j) lista vazia da ponte deveria zerar a audiencia [obtido: $nada_count]"
+base_count="$(psql_q "$admin_session SELECT public.talkx_resolve_audience(NULL, NULL, 'count', NULL, NULL) ->> 'eligible';")"
+[[ "$base_count" == '6' ]] || fail "(j) controle: sem p_contact_ids a audiencia continua a base inteira [obtido: $base_count]"
+pass '(j) ponte sem resultado -> lista vazia -> audiencia 0 (nunca a base inteira de 6)'
+
+# ---------------------------------------------------------------------------
+# (k) Regressao (item 2 do cartao): segmento salvo com os campos ANTIGOS de texto
+#     livre (company/city/state) resolve exatamente como antes.
+# ---------------------------------------------------------------------------
+antigo_ids="$(psql_q "$admin_session SELECT COALESCE(string_agg(r->>'id', ',' ORDER BY r->>'id'), '') FROM (SELECT jsonb_array_elements(public.talkx_resolve_audience(NULL, ARRAY['$seg_texto'::uuid], 'page', 100, NULL) -> 'rows') AS r) x;")"
+[[ "$antigo_ids" == "$c01,$c03" ]] || fail "(k) segmento antigo mudou [obtido: $antigo_ids | esperado: $c01,$c03]"
+inline_ids="$(page_ids '{"groups":[{"match":"and","rules":[{"field":"company","op":"eq","value":"Acme"},{"field":"city","op":"contains","value":"Paulo"},{"field":"state","op":"eq","value":"SP"}]}]}')"
+[[ "$inline_ids" == "$c01,$c03" ]] || fail "(k) mesma regra inline inesperada [obtido: $inline_ids]"
+pass '(k) regressao: segmento antigo (company/city/state) resolve igual (c01,c03) e igual a mesma regra inline'
+
+antigo_real="$(psql_q "$admin_session SELECT COALESCE(string_agg(r->>'id', ',' ORDER BY r->>'id'), '') FROM (SELECT jsonb_array_elements(public.talkx_resolve_audience(NULL, ARRAY['$seg_texto'::uuid], 'page', 100, NULL, public.talkx_bridge_contact_ids('Metalurgia', 'SP')) -> 'rows') AS r) x;")"
+[[ "$antigo_real" == "$c01,$c03" ]] || fail "(k) segmento antigo com o setor/UF reais mudou [obtido: $antigo_real]"
+pass '(k) segmento antigo continua intersectando a resolucao real do ramo/UF'
+
+# ---------------------------------------------------------------------------
+# (h) rollback de verdade: as linhas executaveis do cabecalho da migration, rodadas na
+#     ordem, restauram a RPC de 5 argumentos e removem a de 6 (nada de rollback de fachada).
+# ---------------------------------------------------------------------------
+rollback_sql="$(sed -n 's/^--   //p' "$migration_contact_ids")"
+[[ -n "$rollback_sql" ]] || fail '(h) cabecalho da migration sem linhas de rollback executaveis'
+printf '%s\n' "$rollback_sql" | psql_test >/dev/null
+[[ "$(psql_q "SELECT to_regprocedure('public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid)') IS NOT NULL")" == 't' ]] || fail '(h) rollback nao restaurou a RPC de 5 argumentos'
+[[ "$(psql_q "SELECT to_regprocedure('public.talkx_resolve_audience(jsonb,uuid[],text,integer,uuid,uuid[])') IS NULL")" == 't' ]] || fail '(h) rollback nao removeu a RPC de 6 argumentos'
+pass '(h) rollback executavel do cabecalho restaura a RPC de 5 e remove a de 6'
+
+printf 'PASS: X016 audience RPC — elegibilidade, supressao, paginacao keyset, whitelist de regras, gate de papel e p_contact_ids (atividade real pre-resolvida) reutilizando a funcao interna\n'

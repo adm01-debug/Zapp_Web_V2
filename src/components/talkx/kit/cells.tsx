@@ -13,7 +13,7 @@ import { fmtInt, fmtPct, fmtRelativeDay } from './format';
 /** Cor da barra de progresso por status da campanha. */
 const PROGRESS_COLOR: Record<string, string> = {
   draft: 'bg-muted-foreground/40',
-  scheduled: 'bg-dash-violet',
+  scheduled: 'bg-violeta',
   sending: 'bg-primary',
   paused: 'bg-dash-amber',
   completed: 'bg-success',

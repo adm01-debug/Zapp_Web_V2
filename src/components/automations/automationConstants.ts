@@ -32,6 +32,94 @@ const ACTION_CONFIG_OWNERS: Record<string, string[]> = {
 // campo cuja chave já é declarada válida para o tipo escolhido.
 export const MESSAGE_ACTION_TYPES: string[] = ACTION_CONFIG_OWNERS.message;
 
+// Campos que cada tipo de GATILHO exige no `trigger_config` (jsonb). Só os tipos
+// que realmente têm condição declaram campo: `new_message` e `business_hours`
+// disparam por si (mensagem nova / fora do expediente) e não ganham campo
+// inventado. O formato das chaves segue o que o card de persistência
+// (R2-MOD-002) já validou para `keyword` (`keywords`).
+export type TriggerConfigInput = 'keywords' | 'number' | 'text';
+
+export interface TriggerConfigField {
+  key: string;
+  label: string;
+  placeholder: string;
+  input: TriggerConfigInput;
+  /** Mensagem de erro quando o campo obrigatório está vazio. */
+  required: string;
+}
+
+export const TRIGGER_CONFIG_FIELDS: Record<string, TriggerConfigField[]> = {
+  new_message: [],
+  keyword: [
+    {
+      key: 'keywords',
+      label: 'Palavras-chave (separadas por vírgula)',
+      placeholder: 'Ex: oi, preço, orçamento',
+      input: 'keywords',
+      required: 'Informe ao menos uma palavra-chave',
+    },
+  ],
+  time_inactive: [
+    {
+      key: 'minutes',
+      label: 'Minutos sem resposta',
+      placeholder: '30',
+      input: 'number',
+      required: 'Informe os minutos de inatividade',
+    },
+  ],
+  tag_added: [
+    {
+      key: 'tag_id',
+      label: 'Tag',
+      placeholder: 'Ex: lead-quente',
+      input: 'text',
+      required: 'Informe a tag que dispara a automação',
+    },
+  ],
+  business_hours: [],
+};
+
+// Chaves conhecidas como pertencentes a um tipo de gatilho. Mesmo critério do
+// `ACTION_CONFIG_OWNERS`: só sai da configuração a chave comprovadamente
+// exclusiva de outro gatilho; chave sem dono (parâmetro que o executor possa
+// usar, como `match`) é preservada na troca.
+const TRIGGER_CONFIG_OWNERS: Record<string, string[]> = {
+  keywords: ['keyword'],
+  minutes: ['time_inactive'],
+  tag_id: ['tag_added'],
+};
+
+export function triggerConfigFields(triggerType: string): TriggerConfigField[] {
+  return TRIGGER_CONFIG_FIELDS[triggerType] ?? [];
+}
+
+export function filterTriggerConfig(triggerType: string, config: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(config).filter(([configKey]) => {
+      const owners = TRIGGER_CONFIG_OWNERS[configKey];
+      return owners === undefined || owners.includes(triggerType);
+    })
+  );
+}
+
+/** Devolve a mensagem de erro do primeiro campo obrigatório vazio, ou null. */
+export function validateTriggerConfig(triggerType: string, config: Record<string, unknown>): string | null {
+  for (const field of triggerConfigFields(triggerType)) {
+    const value = config[field.key];
+    if (field.input === 'keywords') {
+      if (!Array.isArray(value) || value.length === 0) return field.required;
+      continue;
+    }
+    if (field.input === 'number') {
+      if (typeof value !== 'number' || !Number.isInteger(value) || value < 1) return field.required;
+      continue;
+    }
+    if (typeof value !== 'string' || value.trim() === '') return field.required;
+  }
+  return null;
+}
+
 export function filterActionConfig(actionType: string, config: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(config).filter(([configKey]) => {

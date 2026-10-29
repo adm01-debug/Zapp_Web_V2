@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Trophy, Star, Flame, Zap, Crown, Award, ArrowUp, ArrowDown } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { MiniSparkline } from './MiniSparkline';
+import { MiniSparkline } from './metrics/MiniSparkline';
 
 // ── AnimatedBadge ──
 interface AnimatedBadgeProps {
@@ -95,7 +95,13 @@ export function StatCardWithGamification({ title, value, change, changeType, inv
             </motion.div>
             <span className="text-xs text-muted-foreground">vs ontem</span>
           </div>
-          {sparklineData && sparklineData.length > 1 && <MiniSparkline data={sparklineData} isPositive={isPositiveTrend} delay={index * 0.1 + 0.5} />}
+          {sparklineData && sparklineData.length > 1 && (
+            <MiniSparkline
+              data={sparklineData}
+              color={isPositiveTrend ? 'hsl(var(--success))' : 'hsl(var(--destructive))'}
+              height={20}
+            />
+          )}
         </motion.div>
 
         {achievement?.unlocked && (

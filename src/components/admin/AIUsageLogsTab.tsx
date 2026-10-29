@@ -16,10 +16,15 @@ interface AIUsageLogsTabProps {
   logsTotal: number;
   logsPage: number;
   setLogsPage: (fn: (p: number) => number) => void;
+  /** A lista ainda está sendo buscada? (sem isto, "carregando" e "vazio" são iguais) */
+  isLoading?: boolean;
+  /** A busca da lista falhou? (sem isto, "falhou" e "vazio" são iguais) */
+  logsError?: boolean;
+  onRetry?: () => void;
   profileMap: Map<string, { name?: string; email?: string }>;
 }
 
-export function AIUsageLogsTab({ logs, logsTotal, logsPage, setLogsPage, profileMap }: AIUsageLogsTabProps) {
+export function AIUsageLogsTab({ logs, logsTotal, logsPage, setLogsPage, isLoading = false, logsError = false, onRetry, profileMap }: AIUsageLogsTabProps) {
   return (
     <Card>
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -30,20 +35,27 @@ export function AIUsageLogsTab({ logs, logsTotal, logsPage, setLogsPage, profile
       </CardHeader>
       <CardContent>
         <div className="border rounded-lg overflow-auto max-h-[500px]">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm" aria-label="Registros de uso de IA">
             <thead className="sticky top-0 bg-background">
               <tr className="border-b bg-muted/50">
-                <th className="text-left px-3 py-2 font-medium text-muted-foreground">Data</th>
-                <th className="text-left px-3 py-2 font-medium text-muted-foreground">Usuário</th>
-                <th className="text-left px-3 py-2 font-medium text-muted-foreground">Função</th>
-                <th className="text-left px-3 py-2 font-medium text-muted-foreground">Modelo</th>
-                <th className="text-right px-3 py-2 font-medium text-muted-foreground">Tokens</th>
-                <th className="text-right px-3 py-2 font-medium text-muted-foreground">Duração</th>
-                <th className="text-center px-3 py-2 font-medium text-muted-foreground">Status</th>
+                <th scope="col" className="text-left px-3 py-2 font-medium text-muted-foreground">Data</th>
+                <th scope="col" className="text-left px-3 py-2 font-medium text-muted-foreground">Usuário</th>
+                <th scope="col" className="text-left px-3 py-2 font-medium text-muted-foreground">Função</th>
+                <th scope="col" className="text-left px-3 py-2 font-medium text-muted-foreground">Modelo</th>
+                <th scope="col" className="text-right px-3 py-2 font-medium text-muted-foreground">Tokens</th>
+                <th scope="col" className="text-right px-3 py-2 font-medium text-muted-foreground">Duração</th>
+                <th scope="col" className="text-center px-3 py-2 font-medium text-muted-foreground">Status</th>
               </tr>
             </thead>
             <tbody>
-              {logs.map(l => {
+              {isLoading && <tr><td colSpan={7} className="px-3 py-12 text-center text-muted-foreground">Carregando registros…</td></tr>}
+              {!isLoading && logsError && (
+                <tr><td colSpan={7} className="px-3 py-12 text-center text-muted-foreground">
+                  Não foi possível buscar os logs.
+                  {onRetry && <div className="mt-2"><Button variant="outline" size="sm" onClick={onRetry}>Tentar de novo</Button></div>}
+                </td></tr>
+              )}
+              {!isLoading && !logsError && logs.map(l => {
                 const profile = l.user_id ? profileMap.get(l.user_id) : null;
                 return (
                   <tr key={l.id} className="border-b last:border-0 hover:bg-muted/30">
@@ -58,12 +70,15 @@ export function AIUsageLogsTab({ logs, logsTotal, logsPage, setLogsPage, profile
                     <td className="px-3 py-2 text-right font-mono text-foreground">{l.total_tokens.toLocaleString()}</td>
                     <td className="px-3 py-2 text-right text-muted-foreground">{l.duration_ms ? `${l.duration_ms}ms` : '-'}</td>
                     <td className="px-3 py-2 text-center">
-                      <Badge variant={l.status === 'success' ? 'default' : 'destructive'} className="text-3xs">{l.status === 'success' ? '✓' : '✗'}</Badge>
+                      <Badge variant={l.status === 'success' ? 'default' : 'destructive'} className="text-3xs">
+                        <span aria-hidden="true">{l.status === 'success' ? '✓' : '✗'}</span>
+                        <span className="sr-only">{l.status === 'success' ? 'Sucesso' : 'Falha'}</span>
+                      </Badge>
                     </td>
                   </tr>
                 );
               })}
-              {logs.length === 0 && <tr><td colSpan={7} className="px-3 py-12 text-center text-muted-foreground">{logsTotal > 0 ? `Página vazia — há ${logsTotal.toLocaleString()} registros nas páginas anteriores` : 'Nenhum log encontrado'}</td></tr>}
+              {!isLoading && !logsError && logs.length === 0 && <tr><td colSpan={7} className="px-3 py-12 text-center text-muted-foreground">{logsTotal > 0 ? `Página vazia — há ${logsTotal.toLocaleString()} registros nas páginas anteriores` : 'Nenhum log encontrado'}</td></tr>}
             </tbody>
           </table>
         </div>

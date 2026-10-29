@@ -68,7 +68,7 @@ vi.mock('@/integrations/supabase/client', () => {
         if (!jaExiste) mocks.rows.push({ ...payload });
         const chain: Record<string, unknown> = {};
         chain.select = () => chain;
-        chain.single = () => Promise.resolve({ data: payload, error: null });
+        chain.maybeSingle = () => Promise.resolve({ data: payload, error: null });
         return chain;
       },
       delete: () => {
@@ -105,6 +105,8 @@ vi.mock('@/hooks/ui/use-toast', () => ({ toast: mocks.toast }));
 
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 import { useReactionMutations } from '../useReactionMutations';

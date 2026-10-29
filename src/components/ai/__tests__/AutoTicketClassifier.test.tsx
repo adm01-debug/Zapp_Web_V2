@@ -4,43 +4,23 @@ import { AutoTicketClassifier } from '../AutoTicketClassifier';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const mockTags = [
-  { id: 't1', contact_id: 'c1', tag_name: 'suporte técnico', confidence: 0.9, source: 'ai', created_at: new Date().toISOString(), contacts: { name: 'Maria', phone: '+5511999' } },
-  { id: 't2', contact_id: 'c2', tag_name: 'venda consultiva', confidence: 0.85, source: 'ai', created_at: new Date().toISOString(), contacts: { name: 'João', phone: '+5511888' } },
-  { id: 't3', contact_id: 'c3', tag_name: 'reclamação', confidence: 0.95, source: 'ai', created_at: new Date().toISOString(), contacts: { name: 'Ana', phone: '+5511777' } },
-  { id: 't4', contact_id: 'c4', tag_name: 'pagamento boleto', confidence: 0.7, source: 'ai', created_at: new Date().toISOString(), contacts: { name: 'Pedro', phone: '+5511666' } },
-  { id: 't5', contact_id: 'c5', tag_name: 'agendamento horário', confidence: 0.6, source: 'ai', created_at: new Date().toISOString(), contacts: { name: 'Lucas', phone: '+5511555' } },
-  { id: 't6', contact_id: 'c6', tag_name: 'info geral', confidence: 0.5, source: 'ai', created_at: new Date().toISOString(), contacts: { name: 'Carla', phone: '+5511444' } },
-];
-
 vi.mock('sonner', () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
+// Ordem de 12/10/2026: a última fonte de tickets classificados (as etiquetas
+// automáticas de IA) saiu do sistema. Qualquer consulta a tabela agora é defeito:
+// o `from` lança para o teste de ausência reprovar caso a leitura volte.
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        order: vi.fn(() => ({
-          limit: vi.fn().mockResolvedValue({ data: mockTags, error: null }),
-        })),
-      })),
-    })),
+    from: vi.fn(() => {
+      throw new Error('AutoTicketClassifier não deve consultar tabela alguma');
+    }),
     functions: {
       invoke: vi.fn().mockResolvedValue({ data: null, error: { message: 'not found' } }),
     },
   },
 }));
-
-const mockTagsResponseOnce = (data: unknown, error: unknown = null) => {
-  vi.mocked(supabase.from).mockReturnValueOnce({
-    select: vi.fn(() => ({
-      order: vi.fn(() => ({
-        limit: vi.fn().mockResolvedValue({ data, error }),
-      })),
-    })),
-  } as never);
-};
 
 describe('AutoTicketClassifier', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -201,150 +181,55 @@ describe('AutoTicketClassifier', () => {
       expect(confidence).toBe(70);
     });
 
-    it('handles empty tags list', async () => {
-      vi.mocked(vi.fn()).mockResolvedValueOnce({ data: [], error: null });
+    it('mostra o estado vazio sem etiquetas (nenhum texto de etiqueta ao usuário)', async () => {
       render(<AutoTicketClassifier />);
-      expect(screen.getByText(/Classificação Automática/)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Nenhum ticket classificado ainda')).toBeInTheDocument();
+      });
+      expect(screen.getByText('Tickets Classificados (0)')).toBeInTheDocument();
+      expect(screen.queryByText(/etiqueta/i)).not.toBeInTheDocument();
     });
   });
 
-  // ===== IA-114: categoria/prioridade exibidas são as do servidor =====
-  describe('Resultado de ai-classify-tickets aplicado (IA-114)', () => {
+  // ===== ESTADO SEM ETIQUETAS =====
+  // Recorte da ordem de 12/10/2026: a classificação automática alimentada pelas
+  // etiquetas de IA saiu do sistema. Contrato novo do componente: não consulta mais
+  // nenhuma tabela para montar a lista e permanece no estado vazio.
+  describe('Estado sem etiquetas (sem fonte de classificação)', () => {
     beforeEach(() => {
       vi.mocked(supabase.functions.invoke).mockReset();
       vi.mocked(supabase.functions.invoke).mockResolvedValue({ data: null, error: { message: 'not found' } });
     });
 
-    it('troca categoria, prioridade e confiança locais pelas do servidor', async () => {
-      // O servidor diz "Suporte Técnico" com prioridade alta e confiança 42%; a
-      // heurística local diria "Reclamação" / "Urgente" / 95% — é essa diferença
-      // que o teste mede.
+    it('não consulta nenhuma tabela (em especial a das etiquetas automáticas)', async () => {
+      render(<AutoTicketClassifier />);
+      await waitFor(() => {
+        expect(screen.getByText(/Tickets Classificados/)).toBeInTheDocument();
+      });
+      expect(vi.mocked(supabase.from)).not.toHaveBeenCalled();
+    });
+
+    it('não anuncia sucesso ao classificar sem tickets carregados', async () => {
       vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
         data: {
           classified: 1,
           results: [
-            { tagId: 't3', contactId: 'c3', tagName: 'reclamação', category: 'Suporte Técnico', priority: 'high', confidence: 0.42 },
-            { tagId: 'fora', contactId: 'contato-fora-da-lista', tagName: 'fora', category: 'Financeiro', priority: 'urgent', confidence: 0.99 },
+            { tagId: 't1', contactId: 'c1', tagName: 'x', category: 'Suporte Técnico', priority: 'high', confidence: 0.42 },
           ],
         },
         error: null,
       });
 
       render(<AutoTicketClassifier />);
-      await waitFor(() => expect(screen.getByText('Ana')).toBeInTheDocument());
-      // Antes do clique os valores exibidos são os locais.
-      expect(screen.getByText('Urgente')).toBeInTheDocument();
-      expect(screen.queryByText('Alta')).not.toBeInTheDocument();
-
-      fireEvent.click(screen.getByText('Classificar em Lote'));
-
-      await screen.findByText('Alta');
-      expect(screen.getByText('42%')).toBeInTheDocument();
-      expect(screen.queryByText('Urgente')).not.toBeInTheDocument();
-      expect(screen.queryByText('95%')).not.toBeInTheDocument();
-      expect(toast.success).toHaveBeenCalledWith('Classificação do servidor aplicada a 1 ticket(s).');
-    });
-
-    it('normaliza confiança inválida do servidor em vez de exibir NaN%', async () => {
-      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
-        data: {
-          classified: 1,
-          results: [
-            { tagId: 't3', contactId: 'c3', tagName: 'reclamação', category: 'Suporte Técnico', priority: 'high' },
-          ],
-        },
-        error: null,
+      await waitFor(() => {
+        expect(screen.getByText('Nenhum ticket classificado ainda')).toBeInTheDocument();
       });
 
-      render(<AutoTicketClassifier />);
-      await waitFor(() => expect(screen.getByText('Ana')).toBeInTheDocument());
-
       fireEvent.click(screen.getByText('Classificar em Lote'));
 
-      await screen.findByText('Alta');
-      expect(screen.queryByText('NaN%')).not.toBeInTheDocument();
-      expect(screen.queryByText('95%')).not.toBeInTheDocument();
-      expect(toast.success).toHaveBeenCalledWith('Classificação do servidor aplicada a 1 ticket(s).');
-    });
-
-    it('mantém os valores locais quando o backend falha', async () => {
-      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
-        data: null,
-        error: { message: 'boom' },
-      });
-
-      render(<AutoTicketClassifier />);
-      await waitFor(() => expect(screen.getByText('Ana')).toBeInTheDocument());
-
-      fireEvent.click(screen.getByText('Classificar em Lote'));
-
-      await waitFor(() => expect(supabase.functions.invoke).toHaveBeenCalledTimes(1));
-      expect(screen.queryByText('Alta')).not.toBeInTheDocument();
-      expect(screen.getByText('Urgente')).toBeInTheDocument();
-      expect(screen.getByText('95%')).toBeInTheDocument();
-      expect(toast.error).toHaveBeenCalledWith('A classificação do servidor não pôde ser aplicada; os valores locais foram mantidos.');
-      expect(toast.success).not.toHaveBeenCalled();
-    });
-
-    it('mantém os valores locais quando o backend devolve results vazio (sem dizer que deu certo)', async () => {
-      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
-        data: { classified: 0, results: [] },
-        error: null,
-      });
-
-      render(<AutoTicketClassifier />);
-      await waitFor(() => expect(screen.getByText('Ana')).toBeInTheDocument());
-
-      fireEvent.click(screen.getByText('Classificar em Lote'));
-
-      await waitFor(() => expect(supabase.functions.invoke).toHaveBeenCalledTimes(1));
-      expect(screen.queryByText('Alta')).not.toBeInTheDocument();
-      expect(screen.getByText('Urgente')).toBeInTheDocument();
-      expect(toast.error).toHaveBeenCalledWith('O servidor não devolveu classificações; os valores locais foram mantidos.');
-      expect(toast.success).not.toHaveBeenCalled();
-    });
-
-    it('separa lista legitimamente vazia de falha de recarga', async () => {
-      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
-        data: {
-          classified: 1,
-          results: [
-            { tagId: 't3', contactId: 'c3', tagName: 'reclamação', category: 'Suporte Técnico', priority: 'high', confidence: 0.42 },
-          ],
-        },
-        error: null,
-      });
-      mockTagsResponseOnce(mockTags);
-      mockTagsResponseOnce([]);
-
-      render(<AutoTicketClassifier />);
-      await waitFor(() => expect(screen.getByText('Ana')).toBeInTheDocument());
-
-      fireEvent.click(screen.getByText('Classificar em Lote'));
-
-      await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Nenhum ticket carregado para aplicar as classificações do servidor.'));
-      expect(toast.error).not.toHaveBeenCalledWith(expect.stringContaining('recarregar'));
-      expect(toast.success).not.toHaveBeenCalled();
-    });
-
-    it('não anuncia aplicação quando nenhuma classificação pertence aos tickets carregados', async () => {
-      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
-        data: {
-          classified: 1,
-          results: [
-            { tagId: 'fora', contactId: 'contato-fora-da-lista', tagName: 'fora', category: 'Financeiro', priority: 'urgent', confidence: 0.99 },
-          ],
-        },
-        error: null,
-      });
-
-      render(<AutoTicketClassifier />);
-      await waitFor(() => expect(screen.getByText('Ana')).toBeInTheDocument());
-
-      fireEvent.click(screen.getByText('Classificar em Lote'));
-
-      await waitFor(() => expect(toast.error).toHaveBeenCalledWith('O servidor não devolveu classificações para os tickets carregados; os valores locais foram mantidos.'));
-      expect(screen.getByText('Urgente')).toBeInTheDocument();
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith('Nenhum ticket carregado para aplicar as classificações do servidor.'),
+      );
       expect(toast.success).not.toHaveBeenCalled();
     });
   });

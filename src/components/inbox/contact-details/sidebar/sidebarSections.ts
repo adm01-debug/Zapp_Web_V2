@@ -4,13 +4,23 @@
  *
  * O estado do accordion migra da chave antiga `contact-details-accordion-state`
  * (seções antigas: info, tags, timeline...) para a chave nova
- * `contact-sidebar-accordion-state@v2`: só os valores que existem nas 3
- * seções novas sobrevivem; sobra vazia → default (as 3 abertas).
+ * `contact-sidebar-accordion-state@v2`: só os valores que existem nas seções
+ * atuais sobrevivem; sobra vazia → default (todas abertas).
+ *
+ * `intelligence` (Inteligência comercial/CRM) entrou em 2026-10-12. Ela é
+ * apenas mais um valor conhecido: a chave de storage NÃO muda, então a
+ * preferência já salva do usuário é preservada intacta (nenhuma seção é
+ * aberta ou fechada à força) — quem nunca gravou preferência recebe o default
+ * com as seções abertas, e quem abrir a nova seção tem a escolha persistida.
+ *
+ * `delivery` (Entrega de mensagens: enviadas/entregues/lidas por hora) entrou em
+ * 2026-10-16 e segue a MESMA regra de `intelligence`: valor conhecido a mais,
+ * chave de storage intacta, preferência já salva preservada.
  */
-export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu'] as const;
+export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'intelligence', 'delivery'] as const;
 export type SidebarSectionValue = (typeof SIDEBAR_SECTIONS)[number];
 
-export const DEFAULT_OPEN_SECTIONS: SidebarSectionValue[] = ['professional', 'personal', 'singu'];
+export const DEFAULT_OPEN_SECTIONS: SidebarSectionValue[] = ['professional', 'personal', 'singu', 'intelligence', 'delivery'];
 
 const STORAGE_KEY = 'contact-sidebar-accordion-state@v2';
 const LEGACY_STORAGE_KEY = 'contact-details-accordion-state';

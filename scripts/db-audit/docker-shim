@@ -6,6 +6,7 @@
 #   run --name N ...   -> CREATE DATABASE shim_N; snapshot roles; return fake ID
 #   logs N             -> fake "PostgreSQL ready" output (wait_for_postgres)
 #   exec N psql ...    -> psql directly against the service's isolated DB
+#   exec N pg_isready  -> pg_isready against the shared service (W51)
 #   rm [-f] N          -> DROP DB + DROP new roles since snapshot
 #   pull               -> no-op (service image is already running)
 #   tag                -> no-op
@@ -100,6 +101,11 @@ case "${1:-}" in
     db="$(< "$STATE/$cname.db")"
     exec_cmd="${1:-}"
     shift 2>/dev/null || true
+    if [[ "$exec_cmd" == "pg_isready" ]]; then
+      # W51: route pg_isready to the shared service; ignore any -d/-h/-p/-U args from caller.
+      PGPASSWORD="$PG_PASS" pg_isready -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER"
+      exit $?
+    fi
     if [[ "$exec_cmd" != "psql" ]]; then
       printf 'docker-shim: exec "%s" unsupported on shim container\n' "$exec_cmd" >&2
       exit 1

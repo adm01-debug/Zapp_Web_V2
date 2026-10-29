@@ -56,6 +56,82 @@ const CLASSIFICATIONS = [
   { value: 'feedback', label: 'Feedback' },
 ];
 
+// `contacts.conversation_status` é a fonte da FSM. Só ela define quais ações
+// este diálogo pode oferecer; transições permitidas:
+//   open     -> waiting | resolved | archived
+//   waiting  -> open | resolved
+//   resolved -> open | archived
+//   archived -> open
+type ConversationStatus = 'open' | 'waiting' | 'resolved' | 'archived';
+
+const CONVERSATION_STATUS_LABEL: Record<ConversationStatus, string> = {
+  open: 'Aberto',
+  waiting: 'Aguardando',
+  resolved: 'Resolvido',
+  archived: 'Arquivado',
+};
+
+const isConversationStatus = (value: unknown): value is ConversationStatus =>
+  value === 'open' || value === 'waiting' || value === 'resolved' || value === 'archived';
+
+// Erros distintos de `close_conversation_atomic`/`set_conversation_status`:
+// 23514 invalid_transition · 42501 contact_not_authorized ·
+// 22023 invalid_conversation_closure · 23505 closure_request_id_reused...
+type ClosureErrorKind =
+  | 'invalid_transition'
+  | 'forbidden'
+  | 'invalid_payload'
+  | 'payload_mismatch'
+  | 'unknown';
+
+const ERROR_MESSAGES: Record<Exclude<ClosureErrorKind, 'unknown'>, string> = {
+  invalid_transition: 'Esta conversa já foi encerrada ou mudou de estado. A lista foi atualizada.',
+  forbidden: 'Você não tem permissão para alterar esta conversa.',
+  invalid_payload:
+    'Os dados informados são inválidos. Revise motivo, resultado e classificação.',
+  payload_mismatch:
+    'Este encerramento já foi registrado com outros dados. Reabra o diálogo e tente novamente.',
+};
+
+// O PostgREST devolve `code` canônico, mas `set_conversation_status` levanta
+// transição inválida sem ERRCODE (P0001) — por isso também casamos a mensagem.
+function classifyClosureError(error: unknown): ClosureErrorKind {
+  const code = String((error as { code?: unknown } | null)?.code ?? '');
+  const message = (error instanceof Error ? error.message : String(error ?? '')).toLowerCase();
+  if (code === '23514' || message.includes('invalid_transition') || message.includes('invalid transition')) {
+    return 'invalid_transition';
+  }
+  if (
+    code === '42501' ||
+    message.includes('contact_not_authorized') ||
+    message.includes('active_profile_not_found') ||
+    message.includes('authentication_required')
+  ) {
+    return 'forbidden';
+  }
+  if (code === '22023' || message.includes('invalid_conversation_closure')) {
+    return 'invalid_payload';
+  }
+  if (code === '23505' || message.includes('closure_request_id_reused')) {
+    return 'payload_mismatch';
+  }
+  return 'unknown';
+}
+
+// `invalid_transition open -> resolved` / `invalid transition waiting -> open`.
+function statusFromTransitionError(error: unknown): ConversationStatus | null {
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  const match = /invalid[_ ]transition\s+([a-z_]+)\s*->/i.exec(message);
+  const found = match?.[1]?.toLowerCase();
+  return isConversationStatus(found) ? found : null;
+}
+
+interface StatusLoad {
+  contactId: string;
+  status: ConversationStatus | null;
+  failed: boolean;
+}
+
 export function CloseConversationDialog({
   open,
   onOpenChange,
@@ -68,6 +144,9 @@ export function CloseConversationDialog({
   const [classification, setClassification] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [confirmingArchive, setConfirmingArchive] = useState(false);
+  const [statusLoad, setStatusLoad] = useState<StatusLoad | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const clientRequestIdRef = useRef<string | null>(null);
   const isMountedRef = useRef(true);
 
@@ -82,8 +161,69 @@ export function CloseConversationDialog({
     if (open) clientRequestIdRef.current = null;
   }, [open, contactId]);
 
+  // Só o estado real do contato decide as ações: sem ele, nenhuma escrita é
+  // oferecida (evita 'Reabrir' numa conversa aberta e 'Arquivar' repetido).
+  useEffect(() => {
+    if (!open || !contactId) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('contacts')
+          .select('conversation_status')
+          .eq('id', contactId)
+          .maybeSingle();
+        if (cancelled) return;
+        const raw = (data as { conversation_status?: string } | null)?.conversation_status;
+        setStatusLoad({
+          contactId,
+          status: isConversationStatus(raw) ? raw : null,
+          failed: Boolean(error),
+        });
+      } catch (error) {
+        if (cancelled) return;
+        console.warn('[CloseConversationDialog] Falha ao ler o estado da conversa:', error);
+        setStatusLoad({ contactId, status: null, failed: true });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open, contactId, reloadKey]);
+
+  const loaded = statusLoad?.contactId === contactId ? statusLoad : null;
+  const loadingStatus = loaded === null;
+  const conversationStatus = loaded?.status ?? null;
+  const statusUnavailable = !loadingStatus && conversationStatus === null;
+
+  const canClose = conversationStatus === 'open' || conversationStatus === 'waiting';
+  const canArchive = conversationStatus === 'open' || conversationStatus === 'resolved';
+  const canReopen =
+    conversationStatus === 'waiting' ||
+    conversationStatus === 'resolved' ||
+    conversationStatus === 'archived';
+
+  // Traduz o erro real do servidor e, quando a transição é inválida, recarrega
+  // a lista (o dono já não é o estado que este diálogo mostrou).
+  const reportFailure = (error: unknown, fallback: string) => {
+    const kind = classifyClosureError(error);
+    if (kind === 'invalid_transition') {
+      const current = statusFromTransitionError(error);
+      if (current) {
+        window.dispatchEvent(
+          new CustomEvent('zapp:contact-status-changed', {
+            detail: { contactId, status: current },
+          })
+        );
+      }
+      toast.error(ERROR_MESSAGES.invalid_transition);
+      // O pai liga onClosed ao refetch da lista do inbox.
+      onClosed?.();
+      return;
+    }
+    toast.error(kind === 'unknown' ? fallback : ERROR_MESSAGES[kind]);
+  };
 
   const handleClose = async () => {
+    if (!canClose) return;
     if (!reason || saving) {
       if (!reason) {
         toast.error('Selecione o motivo de encerramento');
@@ -125,7 +265,48 @@ export function CloseConversationDialog({
       onClosed?.();
     } catch (error) {
       console.warn('[CloseConversationDialog] Falha no encerramento atômico:', error);
-      toast.error('Não foi possível encerrar a conversa. Nenhuma alteração parcial foi salva.');
+      reportFailure(
+        error,
+        'Não foi possível encerrar a conversa. Nenhuma alteração parcial foi salva.',
+      );
+    } finally {
+      if (isMountedRef.current) setSaving(false);
+    }
+  };
+
+  // Arquivar/desarquivar usam a RPC set_conversation_status (a mesma da FSM de
+  // contatos). O `motivo` do formulário é o motivo do ENCERRAMENTO: a FSM só o
+  // grava quando o destino é 'resolved' e ele é ignorado em archived/open, então
+  // não o enviamos aqui (evita registrar um motivo de encerramento numa ação de
+  // arquivamento/reapertura).
+  const handleStatusChange = async (next: 'archived' | 'open') => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase.rpc('set_conversation_status', {
+        p_contact_id: contactId,
+        p_next: next,
+      });
+      if (error) throw error;
+
+      window.dispatchEvent(
+        new CustomEvent('zapp:contact-status-changed', {
+          detail: { contactId, status: next },
+        })
+      );
+
+      toast.success(next === 'archived' ? 'Conversa arquivada' : 'Conversa reaberta');
+      onOpenChange(false);
+      if (isMountedRef.current) setReason('');
+      onClosed?.();
+    } catch (error) {
+      console.warn('[CloseConversationDialog] Falha ao alterar status da conversa:', error);
+      reportFailure(
+        error,
+        next === 'archived'
+          ? 'Não foi possível arquivar a conversa.'
+          : 'Não foi possível reabrir a conversa.',
+      );
     } finally {
       if (isMountedRef.current) setSaving(false);
     }
@@ -142,10 +323,16 @@ export function CloseConversationDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          {conversationStatus && (
+            <p className="text-xs text-muted-foreground">
+              Estado atual: {CONVERSATION_STATUS_LABEL[conversationStatus]}
+            </p>
+          )}
+
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Motivo do encerramento *</Label>
+            <Label htmlFor="close-reason" className="text-sm font-medium">Motivo do encerramento *</Label>
             <Select value={reason} onValueChange={setReason}>
-              <SelectTrigger>
+              <SelectTrigger id="close-reason" aria-label="Motivo do encerramento">
                 <SelectValue placeholder="Selecione o motivo" />
               </SelectTrigger>
               <SelectContent>
@@ -157,9 +344,9 @@ export function CloseConversationDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Resultado</Label>
+            <Label htmlFor="close-outcome" className="text-sm font-medium">Resultado</Label>
             <Select value={outcome} onValueChange={setOutcome}>
-              <SelectTrigger>
+              <SelectTrigger id="close-outcome" aria-label="Resultado">
                 <SelectValue placeholder="Resultado do atendimento" />
               </SelectTrigger>
               <SelectContent>
@@ -171,9 +358,9 @@ export function CloseConversationDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Classificação</Label>
+            <Label htmlFor="close-classification" className="text-sm font-medium">Classificação</Label>
             <Select value={classification} onValueChange={setClassification}>
-              <SelectTrigger>
+              <SelectTrigger id="close-classification" aria-label="Classificação (destino)">
                 <SelectValue placeholder="Tipo de atendimento" />
               </SelectTrigger>
               <SelectContent>
@@ -185,21 +372,83 @@ export function CloseConversationDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Observações</Label>
+            <Label htmlFor="close-notes" className="text-sm font-medium">Observações</Label>
             <Textarea
+              id="close-notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Anotações sobre o atendimento..."
               rows={3}
             />
           </div>
+
+          {confirmingArchive && (
+            <div
+              role="group"
+              aria-label="Confirmação de arquivamento"
+              className="space-y-2 rounded-md border border-border bg-muted/50 p-3"
+            >
+              <p className="text-sm">
+                Arquivar esta conversa? Ela sai da caixa de entrada e pode ser reaberta depois.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={() => setConfirmingArchive(false)}>
+                  Voltar
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setConfirmingArchive(false);
+                    void handleStatusChange('archived');
+                  }}
+                  disabled={saving}
+                >
+                  Confirmar arquivamento
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-wrap gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleClose} disabled={saving || !reason}>
-            {saving ? 'Salvando...' : 'Encerrar'}
-          </Button>
+
+          {loadingStatus && (
+            <span className="text-xs text-muted-foreground">Verificando o estado da conversa…</span>
+          )}
+
+          {statusUnavailable && (
+            <>
+              <span role="alert" className="text-xs text-destructive">
+                Não foi possível verificar o estado da conversa.
+              </span>
+              <Button variant="outline" onClick={() => setReloadKey((key) => key + 1)}>
+                Tentar novamente
+              </Button>
+            </>
+          )}
+
+          {canReopen && (
+            <Button variant="outline" onClick={() => handleStatusChange('open')} disabled={saving}>
+              Desarquivar / Reabrir
+            </Button>
+          )}
+
+          {canArchive && (
+            <Button
+              variant="outline"
+              onClick={() => setConfirmingArchive(true)}
+              disabled={saving || confirmingArchive}
+            >
+              Arquivar
+            </Button>
+          )}
+
+          {canClose && (
+            <Button onClick={handleClose} disabled={saving || !reason}>
+              {saving ? 'Salvando...' : 'Encerrar'}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

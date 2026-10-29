@@ -28,12 +28,12 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { isValidIpOrCidr, normalizeIpInput } from '@/lib/ipValidation';
 
 interface WhitelistedIP {
   id: string;
   ip_address: string;
   description: string | null;
-  added_by: string | null;
   created_at: string;
 }
 
@@ -41,6 +41,9 @@ export function IPWhitelistPanel() {
   const { user } = useAuth();
   const [whitelistedIPs, setWhitelistedIPs] = useState<WhitelistedIP[]>([]);
   const [loading, setLoading] = useState(true);
+  // Falha de consulta ≠ lista vazia: sem este estado a tela afirmava
+  // "Nenhum IP na whitelist" quando o select tinha falhado.
+  const [erro, setErro] = useState(false);
   const [search, setSearch] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [ipToRemove, setIpToRemove] = useState<WhitelistedIP | null>(null);
@@ -52,12 +55,15 @@ export function IPWhitelistPanel() {
 
   const fetchWhitelistedIPs = async () => {
     setLoading(true);
+    setErro(false);
     const { data, error } = await supabase
       .from('ip_whitelist')
-      .select('*')
+      .select('id, ip_address, description, created_at')
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
+    if (error) {
+      setErro(true);
+    } else if (data) {
       setWhitelistedIPs(data);
     }
     setLoading(false);
@@ -74,9 +80,8 @@ export function IPWhitelistPanel() {
     }
 
     // Validate IP format (also allow CIDR notation)
-    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
-    if (!ipRegex.test(newIP)) {
-      toast.error('Formato de IP inválido');
+    if (!isValidIpOrCidr(newIP)) {
+      toast.error('Endereço IP inválido');
       return;
     }
 
@@ -84,7 +89,7 @@ export function IPWhitelistPanel() {
     const { error } = await supabase
       .from('ip_whitelist')
       .insert({
-        ip_address: newIP,
+        ip_address: normalizeIpInput(newIP),
         description: description || null,
         added_by: user?.id
       });
@@ -171,6 +176,17 @@ export function IPWhitelistPanel() {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
+          ) : erro ? (
+            <div
+              role="alert"
+              data-testid="whitelist-erro"
+              className="rounded-xl border border-destructive/25 bg-destructive/10 p-3 text-xs text-[hsl(var(--destructive-text))]"
+            >
+              <p>Não foi possível carregar a whitelist de IPs.</p>
+              <Button variant="outline" size="sm" className="mt-2 h-8" onClick={() => void fetchWhitelistedIPs()}>
+                Tentar de novo
+              </Button>
+            </div>
           ) : filteredIPs.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Globe className="w-12 h-12 mx-auto mb-2 opacity-20" />
@@ -204,6 +220,7 @@ export function IPWhitelistPanel() {
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`Remover IP ${ip.ip_address} da whitelist`}
                       onClick={() => setIpToRemove(ip)}
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     >

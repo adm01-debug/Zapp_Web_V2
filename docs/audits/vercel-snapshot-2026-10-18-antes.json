@@ -1,0 +1,113 @@
+{
+  "_meta": {
+    "capturado_em": "2026-10-18",
+    "executor": "claude_juca/practical-rubin-8xnw0u",
+    "nota": "Apenas chaves, targets, gitBranch, type e flags de segurança — sem valores. Ver plano V003."
+  },
+  "project": {
+    "id": "prj_J4wb8egzz8iL1CJnSOXJDtqnbvRp",
+    "name": "zapp_web_v2",
+    "teamId": "team_QyN41X0q8hrqhW80AwokbFLv",
+    "teamSlug": "juca1",
+    "framework": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "installCommand": "bun install --frozen-lockfile --ignore-scripts",
+    "ignoreCommand": null,
+    "nodeVersion": "24.x",
+    "regions": ["iad1"],
+    "plan": "pro"
+  },
+  "domains": [
+    {
+      "name": "zappweb.app.br",
+      "verified": true,
+      "redirect": "www.zappweb.app.br",
+      "redirectStatusCode": 308,
+      "gitBranch": null
+    },
+    {
+      "name": "www.zappweb.app.br",
+      "verified": true,
+      "redirect": null,
+      "gitBranch": null
+    },
+    {
+      "name": "zapp-web-v2.vercel.app",
+      "verified": true,
+      "redirect": null,
+      "gitBranch": null
+    }
+  ],
+  "envVars": {
+    "_nota": "Valores omitidos. Apenas key, target, type, gitBranch e securityIssues.",
+    "integracaoMorta": {
+      "_aviso": "17 vars da integração icfg_l6F3AhnOcvXqyj1eMSD7Jpxb (branch morta claude/fix-promogifts-offset-503-260925-1420, target=preview). Remover — ver V043-V051.",
+      "vars": [
+        {"key": "POSTGRES_URL", "target": ["preview"], "type": "sensitive", "securityIssues": ["readable-secret"]},
+        {"key": "POSTGRES_PRISMA_URL", "target": ["preview"], "type": "sensitive", "securityIssues": ["readable-secret"]},
+        {"key": "POSTGRES_URL_NO_SSL", "target": ["preview"], "type": "sensitive", "securityIssues": ["readable-secret"]},
+        {"key": "POSTGRES_URL_NON_POOLING", "target": ["preview"], "type": "sensitive", "securityIssues": ["readable-secret"]},
+        {"key": "POSTGRES_USER", "target": ["preview"], "type": "encrypted"},
+        {"key": "POSTGRES_HOST", "target": ["preview"], "type": "encrypted"},
+        {"key": "POSTGRES_PASSWORD", "target": ["preview"], "type": "sensitive", "securityIssues": ["readable-secret"]},
+        {"key": "POSTGRES_DATABASE", "target": ["preview"], "type": "encrypted"},
+        {"key": "SUPABASE_URL", "target": ["preview"], "type": "encrypted"},
+        {"key": "SUPABASE_SERVICE_ROLE_KEY", "target": ["preview"], "type": "sensitive", "securityIssues": ["readable-secret"]},
+        {"key": "SUPABASE_JWT_SECRET", "target": ["preview"], "type": "sensitive", "securityIssues": ["readable-secret"]},
+        {"key": "SUPABASE_ANON_KEY", "target": ["preview"], "type": "sensitive", "securityIssues": ["readable-secret"]},
+        {"key": "SUPABASE_SECRET_KEY", "target": ["preview"], "type": "sensitive", "securityIssues": ["readable-secret"]},
+        {"key": "NX_DAEMON", "target": ["preview"], "type": "plain"},
+        {"key": "TURBO_TEAM", "target": ["preview"], "type": "plain"},
+        {"key": "TURBO_REMOTE_ONLY", "target": ["preview"], "type": "plain"},
+        {"key": "TURBO_TOKEN", "target": ["preview"], "type": "sensitive", "securityIssues": ["readable-secret"]}
+      ]
+    },
+    "chavesServidor": {
+      "_aviso": "Chaves de servidor em projeto sem serverless. Remover — ver V053-V061.",
+      "vars": [
+        {"key": "OPENAI_API_KEY", "target": ["production", "preview", "development"], "type": "sensitive", "securityIssues": ["readable-secret"]},
+        {"key": "ANTHROPIC_API_KEY", "target": ["production", "preview", "development"], "type": "sensitive", "securityIssues": ["readable-secret"]},
+        {"key": "GROQ_API_KEY", "target": ["production", "preview", "development"], "type": "sensitive", "securityIssues": ["readable-secret"]},
+        {"key": "EVOLUTION_API_KEY", "target": ["production", "preview", "development"], "type": "sensitive", "securityIssues": ["readable-secret"]},
+        {"key": "EVOLUTION_API_URL", "target": ["production", "preview", "development"], "type": "sensitive", "securityIssues": ["readable-secret"]}
+      ]
+    },
+    "viteLidasNoSrc": {
+      "_nota": "Vars VITE_* confirmadas lidas em src/ por grep. Manter.",
+      "vars": [
+        {"key": "VITE_APP_VERSION", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_CRM_INTEGRATION_ENABLED", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_RECEIVED", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_SEARCHBOX_MONTHLY_SESSION_LIMIT", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_TALKX_KIT", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_ZAPP_LOCAL_SUPABASE_URL", "target": ["development"], "type": "plain"},
+        {"key": "VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY", "target": ["development"], "type": "plain"}
+      ]
+    },
+    "viteNaoLidasNoSrc": {
+      "_aviso": "VITE_* configuradas no Vercel mas não lidas em src/. Avaliar remoção — ver V062-V065.",
+      "vars": [
+        {"key": "VITE_SUPABASE_URL", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_SUPABASE_ANON_KEY", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_APP_NAME", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_APP_ENV", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_ENABLE_ANALYTICS", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_ENABLE_DEBUG", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_ENABLE_GAMIFICATION", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_ENABLE_GMAIL_INTEGRATION", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_SENTRY_DSN", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_SENTRY_ENVIRONMENT", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_CLIENTES_SUPABASE_URL", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_CLIENTES_SUPABASE_ANON_KEY", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_EVOLUTION_API_URL", "target": ["production", "preview", "development"], "type": "plain"},
+        {"key": "VITE_LOG_LEVEL", "target": ["production", "preview", "development"], "type": "plain"}
+      ]
+    }
+  },
+  "legacyProject": {
+    "id": "prj_OsErjUqsrMbwwC7S1LVfawmNgEce",
+    "name": "zapp-web",
+    "acao": "Pausar (V175) e deletar (V176) — ver Apêndice A do plano"
+  }
+}

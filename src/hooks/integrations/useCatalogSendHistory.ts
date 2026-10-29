@@ -19,7 +19,6 @@
  * hint o PostgREST não tem como escolher.
  */
 import { useQuery } from '@tanstack/react-query';
-import { CATALOG_EXPORT_BOM, esc } from '@/components/catalog/catalogExport';
 import { fetchAllRows, type PageResult } from '@/lib/fetchAllRows';
 import { supabase } from '@/integrations/supabase/client';
 import { CATALOG_SEND_EVENTS_KEY } from './useCatalogRecentSends';
@@ -71,7 +70,7 @@ export interface UseCatalogSendHistoryOptions {
   contactId?: string | null;
 }
 
-/** Normaliza uma linha crua do PostgREST para o formato da tabela/CSV. */
+/** Normaliza uma linha crua do PostgREST para o formato da tabela. */
 function toRow(r: Record<string, unknown>): CatalogSendHistoryRow {
   return {
     id: String(r.id),
@@ -139,61 +138,3 @@ export function useCatalogSendHistory(options: UseCatalogSendHistoryOptions = {}
   };
 }
 
-// ─── CT-57 — export CSV da aba "Enviados" ──────────────────────
-// Builder NOVO: o do CT-20 (`buildCatalogCsv`) monta linha de PRODUTO do
-// PromoGifts e não tem produto/contato/agente/status. O que é genérico —
-// `esc` e o BOM UTF-8 — é reusado de catalogExport.
-
-export const SEND_HISTORY_COLUMNS = [
-  'Produto',
-  'SKU',
-  'Contato',
-  'Agente',
-  'Modelo',
-  'Fotos',
-  'Status',
-  'Data',
-] as const;
-
-const TEMPLATE_CSV_LABEL: Record<string, string> = {
-  formal: 'Formal',
-  informal: 'Informal',
-  promo: 'Promoção',
-  custom: 'Personalizada',
-};
-
-const STATUS_CSV_LABEL: Record<string, string> = {
-  sent: 'Enviado',
-  partial: 'Parcial',
-  failed: 'Falhou',
-};
-
-/** CSV completo: BOM + cabeçalho + uma linha por envio (mesmo formato do
- * export de produtos: separador vírgula, aspas duplicadas, BOM UTF-8). */
-export function buildSendHistoryCsv(rows: CatalogSendHistoryRow[]): string {
-  const lines = [
-    SEND_HISTORY_COLUMNS.map(esc).join(','),
-    ...rows.map((r) =>
-      [
-        r.product_name,
-        r.product_sku,
-        r.contact_name,
-        r.agent_name,
-        r.template ? (TEMPLATE_CSV_LABEL[r.template] ?? r.template) : '',
-        r.images_count,
-        r.status ? (STATUS_CSV_LABEL[r.status] ?? r.status) : '',
-        new Date(r.created_at).toLocaleString('pt-BR'),
-      ]
-        .map(esc)
-        .join(','),
-    ),
-  ];
-  return `${CATALOG_EXPORT_BOM}${lines.join('\n')}`;
-}
-
-/** `catalogo_enviados_<yyyymmdd>.csv` — data local (mesma convenção do CT-20). */
-export function sendHistoryFilename(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const stamp = `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}`;
-  return `catalogo_enviados_${stamp}.csv`;
-}

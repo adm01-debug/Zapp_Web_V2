@@ -1,22 +1,24 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Users, Play, CheckCircle2, Target, Send, MoreVertical, Eye, Pencil, Zap, Plus,
-  FileText, Bookmark, MessageSquare, BarChart3, Loader2,
+  Users, Play, CheckCircle2, Target, Send, Eye, Pencil, Zap, Plus,
+  FileText, Bookmark, BarChart3, ChevronDown, ChevronRight,
 } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Checkbox } from '@/components/ui/checkbox';
 import { ProgressBar, VerTodasButton } from '@/components/dashboard/overview/DashboardCard';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
 import {
-  CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile,
+  CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, TalkXTable, StatusPill, RailCard, RailAction, IconTile,
+  EntityCell, ChannelCell, ProgressCell, ResultsCell, DateByCell,
   TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard,
   InsightCard, TalkXQueryBoundary,
-  fmtInt, fmtPct, pct, fmtDateTime, fmtAgo, barsByDay, OBJECTIVES, TALKX_CHANNELS,
+  fmtInt, pct, fmtAgo, OBJECTIVES, TALKX_CHANNELS,
 } from './talkxShared';
+import type { TalkXColumn, TalkXSort, RowAction } from './talkxShared';
 import type { TalkXPeriodRange } from './kit/periods';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
+import { useTalkXOverviewStats } from '@/hooks/integrations/useTalkXOverviewStats';
 import { useCampaignRowActions } from './useCampaignRowActions';
+import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';
 
 const STORAGE_KEY = 'talkx.overview.filters';
 const LAYOUT_KEY = 'talkx.overview.layout';
@@ -55,19 +57,26 @@ interface Props {
   onViewScheduled?: (c: TalkXCampaign) => void;
   onViewRunning?: (c: TalkXCampaign) => void;
   onDuplicate: (c: TalkXCampaign) => void;
-  onStart: (id: string) => void;
-  /** O motivo é obrigatório na pausa e vai junto com a ação para o servidor. */
-  onPause: (id: string, reason: string) => void;
-  onCancel: (id: string) => void;
+  /**
+   * X051 — iniciar/pausar/retomar/cancelar NÃO passam mais por aqui: a tela
+   * resolve o ciclo de vida pelo controlador único (`useTalkXLifecycle`). As
+   * props seguem opcionais só para mocks/chamadores antigos.
+   */
+  onStart?: (id: string) => void;
+  onPause?: (id: string, reason: string) => void;
+  onCancel?: (id: string) => void;
   onDelete: (id: string) => void;
   onGoTab: (tab: string) => void;
 }
 
 const OBJ_COLOR: Record<string, 'blue' | 'green' | 'red' | 'violet' | 'amber'> = { vendas: 'green', engajamento: 'blue', reativacao: 'amber', relacionamento: 'violet', pesquisa: 'blue', institucional: 'red' };
 
-export function TalkXOverview({ campaigns, segments, creators, isLoading, isError, error, onRetry, onNew, onEdit, onView, onViewScheduled, onViewRunning, onDuplicate, onStart, onPause, onCancel, onDelete, onGoTab }: Props) {
+export function TalkXOverview({ campaigns, segments, creators, isLoading, isError, error, onRetry, onNew, onEdit, onView, onViewScheduled, onViewRunning, onDuplicate, onDelete, onGoTab }: Props) {
   const saved = useMemo(() => loadFilters(), []);
   const { data: insights } = useTalkXInsights();
+  // X051 — UM controlador para iniciar/pausar/retomar/cancelar: a Visão geral
+  // usa a matriz de ações atual, mas delega ciclo de vida ao hook único.
+  const lifecycle = useTalkXLifecycle();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>(() => saved?.status ?? 'all');
   const [objective, setObjective] = useState<string>(() => saved?.objective ?? 'all');
@@ -81,12 +90,28 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   const [layout, setLayout] = useState<'list' | 'grid'>(loadLayout);
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // Ordenação por coluna (cliente). `null` = ordem de chegada da consulta (created_at desc).
+  const [sort, setSort] = useState<TalkXSort | null>(null);
+  // N35 — os blocos que o mock não tem ficam abaixo da tabela e recolhidos por padrão.
+  const [draftsOpen, setDraftsOpen] = useState(false);
+  const [insightsOpen, setInsightsOpen] = useState(false);
 
   // X080 — as ações de linha (matriz por status + confirmação das ações que
   // mudam o estado da campanha) ficam em um lugar só e servem a tabela, a grade
   // e as "Últimas campanhas".
   const rowActions = useCampaignRowActions({
-    onView, onViewScheduled, onViewRunning, onEdit, onStart, onPause, onCancel, onDelete, onDuplicate,
+    onView,
+    onViewScheduled,
+    onViewRunning,
+    onEdit,
+    // Compatibilidade interna do hook de ações: a Visão geral nunca chama estas
+    // props para ciclo de vida quando `onLifecycle` está presente.
+    onStart: () => undefined,
+    onPause: () => undefined,
+    onCancel: () => undefined,
+    onDelete,
+    onDuplicate,
+    onLifecycle: (kind, campaign) => lifecycle.request({ kind, target: campaign }),
   });
 
   React.useEffect(() => {
@@ -168,28 +193,102 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
     return r;
   }, [noPeriodo, status, objective, channel, segment, creator, search]);
 
-  const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
-
-  const totals = useMemo(() => {
-    const sent = noPeriodo.reduce((a, c) => a + c.sent_count, 0);
-    const failed = noPeriodo.reduce((a, c) => a + c.failed_count, 0);
-    return {
-      total: noPeriodo.length,
-      active: noPeriodo.filter((c) => c.status === 'sending' || c.status === 'paused').length,
-      completed: noPeriodo.filter((c) => c.status === 'completed').length,
-      successRate: sent + failed > 0 ? Math.round((sent / (sent + failed)) * 1000) / 10 : null,
-      reached: sent,
-      bars: barsByDay(noPeriodo.map((c) => c.created_at)),
-      barsCompleted: barsByDay(noPeriodo.filter((c) => c.status === 'completed').map((c) => c.completed_at)),
+  const sorted = useMemo(() => {
+    if (!sort) return filtered;
+    const valor = (c: TalkXCampaign): string | number => {
+      switch (sort.key) {
+        case 'name': return c.name.toLocaleLowerCase('pt-BR');
+        case 'segment': return (segments.find((sg) => sg.id === c.segment_id)?.name ?? (c.audience_source === 'crm360' ? 'CRM 360°' : 'Seleção manual')).toLocaleLowerCase('pt-BR');
+        case 'status': return CAMPAIGN_STATUS[c.status]?.label ?? c.status;
+        case 'progress': return pct(c.sent_count + c.failed_count, c.total_recipients);
+        case 'results': return c.sent_count;
+        case 'date': return new Date(c.scheduled_at ?? c.started_at ?? c.created_at).getTime();
+        default: return 0;
+      }
     };
-  }, [noPeriodo]);
+    const dir = sort.dir === 'asc' ? 1 : -1;
+    // `sort` do Array é estável: empates mantêm a ordem de chegada.
+    return [...filtered].sort((a, b) => {
+      const va = valor(a); const vb = valor(b);
+      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+      return String(va).localeCompare(String(vb), 'pt-BR') * dir;
+    });
+  }, [filtered, sort, segments]);
+
+  const pageItems = sorted.slice((page - 1) * pageSize, page * pageSize);
+  // Mudou o recorte (filtro, período, busca, página, ordenação) → a seleção é zerada.
+  const selectionKey = [status, objective, channel, segment, creator, period ?? '', search.trim(), page, pageSize, sort?.key ?? '', sort?.dir ?? ''].join('|');
+
+  // X077 — os cinco números do topo saem da RPC `talkx_overview_stats` para o período da
+  // barra (padrão: 30 dias); nenhum KPI é calculado aqui. Campo ausente = "Sem dados ainda".
+  const { data: stats } = useTalkXOverviewStats(period, periodRange);
+  const cur = stats?.current;
+  const prev = stats?.previous ?? null;
+  const rate = cur?.deliveryRatePct ?? null;
+  const rateLabel = rate === null ? null : `${rate.toLocaleString('pt-BR')}%`;
+  // Comparativo da taxa só com base: o período anterior precisa de pelo menos 50 enviados.
+  const prevRate = prev && (prev.sent ?? 0) >= 50 ? prev.deliveryRatePct : null;
 
   // X081 — o recorte de data vale para a lista, para os KPIs e para o rail
   // ("Últimas campanhas"): um filtro que só vale em uma parte da tela mostra
   // campanha fora do período escolhido.
   const latest = useMemo(() => [...noPeriodo].sort((a, b) => (b.started_at ?? b.updated_at).localeCompare(a.started_at ?? a.updated_at)).slice(0, 4), [noPeriodo]);
 
-  const toggleAll = () => setSelected((prev) => prev.size === pageItems.length ? new Set() : new Set(pageItems.map((c) => c.id)));
+  const drafts = useMemo(() => campaigns.filter((c) => c.status === 'draft'), [campaigns]);
+
+  // Colunas do mock da tela 01 (X079), sobre o `TalkXTable` do kit e as células do kit.
+  const columns: TalkXColumn<TalkXCampaign>[] = [
+    {
+      key: 'name', header: 'Campanha', sortKey: 'name',
+      render: (c) => (
+        <button type="button" onClick={() => onView(c)} className="text-left min-w-0">
+          <EntityCell
+            name={c.name} description={c.description || c.message_template}
+            mediaUrl={c.media_url} mediaType={c.media_type}
+            icon={objectiveIcon(c.objective)} color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'}
+          />
+        </button>
+      ),
+    },
+    {
+      key: 'segment', header: 'Segmento / Público', sortKey: 'segment',
+      render: (c) => (
+        <>
+          <span className="inline-block text-2xs font-medium px-2 py-0.5 rounded-md bg-muted/50 border border-border/60 text-foreground truncate max-w-[180px]">{segmentName(c.segment_id) ?? (c.audience_source === 'crm360' ? 'CRM 360°' : 'Seleção manual')}</span>
+          <span className="block text-2xs text-foreground-secondary mt-1">{fmtInt(c.total_recipients)} contatos</span>
+        </>
+      ),
+    },
+    { key: 'channel', header: 'Canal', render: () => <ChannelCell /> },
+    {
+      key: 'status', header: 'Status', sortKey: 'status',
+      render: (c) => (
+        <div className="flex items-center gap-1.5">
+          {c.status === 'sending' && <span className="talkx-dot-pulse" aria-hidden />}
+          <StatusPill status={c.status} map={CAMPAIGN_STATUS} />
+        </div>
+      ),
+    },
+    {
+      key: 'progress', header: 'Progresso', sortKey: 'progress', width: 150,
+      render: (c) => <ProgressCell status={c.status} value={pct(c.sent_count + c.failed_count, c.total_recipients)} />,
+    },
+    {
+      key: 'results', header: 'Resultados', sortKey: 'results',
+      render: (c) => <ResultsCell sent={c.sent_count} delivered={c.delivered_count ?? 0} failed={c.failed_count} />,
+    },
+    {
+      key: 'date', header: 'Agendada em', sortKey: 'date',
+      render: (c) => <DateByCell date={c.scheduled_at ?? c.started_at ?? null} by={creators[c.created_by ?? ''] ?? null} />,
+    },
+  ];
+
+  // Menu ⋮ da linha: a matriz por status e a confirmação saem do hook único (X080).
+  const rowActionsFor = (c: TalkXCampaign): RowAction[] =>
+    rowActions.actionsFor(c).map((action) => ({
+      label: action.label, icon: action.icon, danger: action.destructive,
+      onSelect: () => rowActions.run(action.id, c),
+    }));
 
   // X047 — a Visão geral passa pelo boundary de consulta: carregando -> erro ->
   // vazio -> conteúdo. Com a consulta em erro a tela mostra o erro com retry
@@ -216,11 +315,11 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
       <div className="min-w-0 space-y-4">
         {/* KPIs */}
           <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4">
-            <KpiCard icon={Users}         color="blue"   index={0} label="Total de campanhas"   value={fmtInt(totals.total)}    bars={totals.bars} />
-            <KpiCard icon={Play}          color="blue"   index={1} label="Em andamento"          value={fmtInt(totals.active)} />
-            <KpiCard icon={CheckCircle2}  color="green"  index={2} label="Concluídas"            value={fmtInt(totals.completed)} bars={totals.barsCompleted} />
-            <KpiCard icon={Target}        color="green"  index={3} label="Taxa de sucesso"       value={totals.successRate===null?'—':`${totals.successRate}%`} />
-            <KpiCard icon={Send}          color="violet" index={4} label="Contatos alcançados"   value={fmtInt(totals.reached)} />
+            <KpiCard icon={Users}         color="blue"   index={0} label="Total de campanhas"   value={cur?.campaignsSent} comparison={{ previous: prev?.campaignsSent, kind: 'relative' }} />
+            <KpiCard icon={Play}          color="blue"   index={1} label="Em andamento"          value={stats?.active} />
+            <KpiCard icon={CheckCircle2}  color="green"  index={2} label="Concluídas"            value={cur?.completed} comparison={{ previous: prev?.completed, kind: 'relative' }} />
+            <KpiCard icon={Target}        color="green"  index={3} label="Taxa de sucesso"       value={rate} suffix="%" comparison={{ previous: prevRate, kind: 'points' }} />
+            <KpiCard icon={Send}          color="violet" index={4} label="Contatos alcançados"   value={cur?.contactsReached} comparison={{ previous: prev?.contactsReached, kind: 'relative' }} bars={stats?.dailySent} />
           </div>
 
         {/* Filtros */}
@@ -233,20 +332,53 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
           view={layout} onView={setLayout}
         />
 
-        {/* E68: Rascunhos pendentes */}
-        {(() => {
-          const drafts = campaigns.filter((c) => c.status === 'draft');
-          if (drafts.length === 0) return null;
-          return (
-            <section className="rounded-2xl bg-card border border-dash-amber/30 overflow-hidden">
-              <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-dash-amber" />
-                  <p className="text-[13px] font-semibold text-foreground">Rascunhos pendentes</p>
-                  <span className="text-2xs text-muted-foreground">({drafts.length})</span>
-                </div>
-              </div>
-              <div className="divide-y divide-border/50">
+        {/* Tabela */}
+        <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
+          {filtered.length === 0 ? (
+            <div className="p-4"><TalkXFilteredEmptyState onClearFilters={clear} /></div>
+          ) : layout === 'grid' ? (
+            <div className="p-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
+              {pageItems.map((c) => <CampaignGridCard key={c.id} c={c} segmentName={segmentName(c.segment_id)} onView={() => onView(c)} onEdit={() => onEdit(c)} />)}
+            </div>
+          ) : (
+            <TalkXTable<TalkXCampaign>
+              columns={columns}
+              rows={pageItems}
+              getId={(c) => c.id}
+              selectable
+              selected={selected}
+              onSelectionChange={setSelected}
+              selectionResetKey={selectionKey}
+              sort={sort}
+              onSortChange={(next) => { setSort(next); setPage(1); }}
+              rowLabel={(c) => c.name}
+              rowBusy={(c) => rowActions.pendingId === c.id}
+              rowActions={rowActionsFor}
+              className="min-w-0"
+            />
+          )}
+          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={(n) => { setPageSize(n); setPage(1); }} noun="campanhas" /></div>}
+        </section>
+
+        {/* E68: Rascunhos pendentes — abaixo da tabela e recolhido por padrão (N35 / TL-115). */}
+        {drafts.length > 0 && (
+          <section className="rounded-2xl bg-card border border-dash-amber/30 overflow-hidden">
+            <button
+              type="button"
+              aria-expanded={draftsOpen}
+              aria-controls="talkx-overview-drafts"
+              onClick={() => setDraftsOpen((v) => !v)}
+              className="w-full px-4 py-3 flex items-center justify-between gap-2 text-left hover:bg-muted/10 transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-dash-amber" aria-hidden />
+                <span className="text-[13px] font-semibold text-foreground">Rascunhos pendentes</span>
+                <span className="text-2xs text-muted-foreground">({drafts.length})</span>
+              </span>
+              {draftsOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" aria-hidden /> : <ChevronRight className="w-4 h-4 text-muted-foreground" aria-hidden />}
+            </button>
+            {draftsOpen && (
+              <div id="talkx-overview-drafts" className="divide-y divide-border/50 border-t border-border/50">
                 {drafts.slice(0, 5).map((c) => (
                   <div key={c.id} className="px-4 py-3 flex items-center justify-between gap-4 hover:bg-muted/10 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
@@ -258,123 +390,51 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
                         <p className="text-2xs text-muted-foreground">{fmtAgo(c.updated_at)}</p>
                       </div>
                     </div>
-                    <button type="button" onClick={() => onEdit(c)} className="h-8 px-3 rounded-lg text-xs font-medium border border-dash-amber/40 bg-dash-amber/10 text-dash-amber hover:bg-dash-amber/20 shrink-0 flex items-center gap-1.5">
+                    {/* TL-175A: âmbar de PREENCHIMENTO como TEXTO sobre a própria tinta media
+                        1,67:1 no tema claro (axe color-contrast, sério). O par de texto do
+                        sistema — o mesmo que o PriorityChip usa no "alta" — fecha 5,09:1 no
+                        claro e 8,21:1 no escuro sobre `bg-dash-amber/10`. */}
+                    <button type="button" onClick={() => onEdit(c)} className="h-8 px-3 rounded-lg text-xs font-medium border border-dash-amber/40 bg-dash-amber/10 text-[hsl(var(--warning-text))] hover:bg-dash-amber/20 shrink-0 flex items-center gap-1.5">
                       <Pencil className="w-3.5 h-3.5" />Retomar
                     </button>
                   </div>
                 ))}
               </div>
-            </section>
-          );
-        })()}
-
-        {/* E94: Insights heurísticos */}
-        {insights && insights.length > 0 && (
-          <section className="space-y-3">
-            <div className="flex items-center gap-2 px-1">
-              <span className="text-sm font-semibold text-foreground">Insights</span>
-              <span className="text-xs text-muted-foreground">({insights.length})</span>
-            </div>
-            <div className="space-y-2">
-              {insights.map((insight) => (
-                <InsightCard
-                  key={insight.id}
-                  type={insight.type}
-                  title={insight.title}
-                  description={insight.description}
-                  priority={insight.priority}
-                  applyLabel={insight.applyLabel}
-                  onApply={insight.apply}
-                />
-              ))}
-            </div>
+            )}
           </section>
         )}
 
-        {/* Tabela */}
-        <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
-          {filtered.length === 0 ? (
-            <div className="p-4"><TalkXFilteredEmptyState onClearFilters={clear} /></div>
-          ) : layout === 'grid' ? (
-            <div className="p-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
-              {pageItems.map((c) => <CampaignGridCard key={c.id} c={c} segmentName={segmentName(c.segment_id)} onView={() => onView(c)} onEdit={() => onEdit(c)} />)}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[980px] border-collapse">
-                <thead className="bg-muted/20 border-b border-border/60">
-                  <tr>
-                    <Th className="w-10"><Checkbox checked={pageItems.length > 0 && selected.size === pageItems.length} onCheckedChange={toggleAll} aria-label="Selecionar todas" /></Th>
-                    <Th>Campanha</Th><Th>Segmento / Público</Th><Th>Canal</Th><Th>Status</Th><Th className="w-[150px]">Progresso</Th><Th>Resultados</Th><Th>Agendada em</Th><Th className="text-right">Ações</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pageItems.map((c) => {
-                    const done = c.sent_count + c.failed_count;
-                    const progress = pct(done, c.total_recipients);
-                    const pbTone = c.status === 'completed' ? 'success' : c.status === 'paused' ? 'warning' : c.status === 'cancelled' ? 'danger' : 'info';
-                    const when = c.scheduled_at ?? c.started_at ?? null;
-                    return (
-                      <tr key={c.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
-                        <Td><Checkbox checked={selected.has(c.id)} onCheckedChange={() => setSelected((p) => { const n = new Set(p); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; })} aria-label={`Selecionar ${c.name}`} /></Td>
-                        <Td>
-                          <button type="button" onClick={() => onView(c)} className="flex items-center gap-3 text-left min-w-0 group">
-                            <IconTile icon={objectiveIcon(c.objective)} color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'} size={40} />
-                            <span className="min-w-0">
-                              <span className="block text-sm font-semibold text-foreground truncate group-hover:text-primary-glow">{c.name}</span>
-                              <span className="block text-2xs text-foreground-secondary truncate max-w-[260px]">{c.description || c.message_template}</span>
-                            </span>
-                          </button>
-                        </Td>
-                        <Td>
-                          <span className="inline-block text-2xs font-medium px-2 py-0.5 rounded-md bg-muted/50 border border-border/60 text-foreground truncate max-w-[180px]">{segmentName(c.segment_id) ?? (c.audience_source === 'crm360' ? 'CRM 360°' : 'Seleção manual')}</span>
-                          <span className="block text-2xs text-foreground-secondary mt-1">{fmtInt(c.total_recipients)} contatos</span>
-                        </Td>
-                        <Td><span className="w-8 h-8 rounded-full bg-whatsapp/15 border border-whatsapp/30 flex items-center justify-center"><MessageSquare className="w-4 h-4 text-whatsapp" /></span></Td>
-                        <Td><StatusPill status={c.status} map={CAMPAIGN_STATUS} /></Td>
-                        <Td>
-                          {c.total_recipients > 0 && c.status !== 'draft' && c.status !== 'scheduled' ? (
-                            <div className="min-w-[110px]"><p className="text-xs font-semibold text-foreground mb-1">{progress}%</p><ProgressBar value={progress} tone={pbTone} height={6} /></div>
-                          ) : <span className="text-muted-foreground text-xs">{c.total_recipients > 0 ? '0%' : '—'}</span>}
-                        </Td>
-                        <Td>
-                          {done > 0 ? (
-                            <><span className="block text-xs font-semibold text-foreground">{fmtInt(c.sent_count)} enviados</span><span className="block text-2xs text-foreground-secondary">{c.failed_count > 0 ? `${fmtInt(c.failed_count)} falhas (${fmtPct(c.failed_count, done)})` : `${fmtPct(c.sent_count, done)} de sucesso`}</span></>
-                          ) : <span className="text-muted-foreground text-xs">—</span>}
-                        </Td>
-                        <Td>
-                          {when ? (<><span className="block text-xs text-foreground">{fmtDateTime(when)}</span><span className="block text-2xs text-foreground-secondary">por {creators[c.created_by ?? ''] ?? '—'}</span></>) : <span className="text-muted-foreground text-xs">—</span>}
-                        </Td>
-                        <Td className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button type="button" disabled={rowActions.pendingId === c.id} aria-busy={rowActions.pendingId === c.id} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50 disabled:opacity-70" aria-label="Ações">
-                                {rowActions.pendingId === c.id
-                                  ? <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
-                                  : <MoreVertical className="w-4 h-4" />}
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              {rowActions.actionsFor(c).map((action, i) => (
-                                <React.Fragment key={action.id}>
-                                  {action.destructive && i > 0 && <DropdownMenuSeparator />}
-                                  <DropdownMenuItem className={action.destructive ? 'text-dash-red' : undefined} onClick={() => rowActions.run(action.id, c)}>
-                                    <action.icon className="w-4 h-4 mr-2" />{action.label}
-                                  </DropdownMenuItem>
-                                </React.Fragment>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </Td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={(n) => { setPageSize(n); setPage(1); }} noun="campanhas" /></div>}
-        </section>
+        {/* E94: Insights heurísticos — também abaixo da tabela e recolhido por padrão. */}
+        {insights && insights.length > 0 && (
+          <section className="space-y-3">
+            <button
+              type="button"
+              aria-expanded={insightsOpen}
+              aria-controls="talkx-overview-insights"
+              onClick={() => setInsightsOpen((v) => !v)}
+              className="flex items-center gap-2 px-1 text-left"
+            >
+              {insightsOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" aria-hidden /> : <ChevronRight className="w-4 h-4 text-muted-foreground" aria-hidden />}
+              <span className="text-sm font-semibold text-foreground">Insights</span>
+              <span className="text-xs text-muted-foreground">({insights.length})</span>
+            </button>
+            {insightsOpen && (
+              <div id="talkx-overview-insights" className="space-y-2">
+                {insights.map((insight) => (
+                  <InsightCard
+                    key={insight.id}
+                    type={insight.type}
+                    title={insight.title}
+                    description={insight.description}
+                    priority={insight.priority}
+                    applyLabel={insight.applyLabel}
+                    onApply={insight.apply}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </div>
 
       {/* Rail */}
@@ -383,8 +443,8 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
           icon={Zap} title="Talk X"
           subtitle="Campanhas que geram conversas e resultados."
           metrics={[
-            { label: 'Mensagens enviadas', value: fmtInt(totals.reached) },
-            { label: 'Taxa de sucesso', value: totals.successRate === null ? '—' : `${totals.successRate}%` },
+            { label: 'Mensagens enviadas', value: cur?.sent == null ? '—' : fmtInt(cur.sent) },
+            { label: 'Taxa de sucesso', value: rateLabel ?? '—' },
             { label: 'Segmentos salvos', value: fmtInt(segments.length) },
           ]}
         />
@@ -406,8 +466,9 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
         <TipCard tip="Segmentar por ramo ajuda a direcionar a mensagem ao público certo." />
       </div>
 
-      {/* X080 — modais de confirmação das ações de linha (um lugar só) */}
+      {/* X080 — duplicar/excluir seguem nas confirmações de linha; X051 — ciclo de vida usa um diálogo único. */}
       {rowActions.dialogs}
+      <TalkXLifecycleDialog controller={lifecycle} />
     </div>
     </TalkXQueryBoundary>
   );

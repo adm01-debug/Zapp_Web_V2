@@ -8,6 +8,7 @@ import {
 } from "../_shared/validation.ts";
 import { isServiceRoleRequest } from "../_shared/ai-auth.ts";
 import { fetchPreviewViaSecureEgress } from "../_shared/secure-egress.ts";
+import { isBlockedIpAddress } from "../_shared/ssrf.ts";
 
 interface PreviewData {
   url: string;
@@ -19,6 +20,11 @@ interface PreviewData {
 
 const MAX_BYTES = 512 * 1024; // 512KB cap
 const FETCH_TIMEOUT_MS = 6000;
+
+// Teto do corpo da imagem embutida na prévia. Mesmo teto que o proxy de egresso
+// aplica ao HTML; acima disso a imagem é descartada (uma data URL cortada
+// deixaria a imagem quebrada no cliente).
+const IMAGE_MAX_BYTES = 512 * 1024;
 
 // SEC-EDGE_FUNCTIONS-03: `verify_jwt = true` no gateway não é autenticação de
 // usuário (a anon key pública é um JWT válido do projeto). Sem guarda própria a
@@ -156,6 +162,95 @@ function absolutize(
   }
 }
 
+/** Literal de IP (IPv4 "a.b.c.d" ou IPv6 com ":"), não um nome de host. */
+function isIpLiteral(host: string): boolean {
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(":");
+}
+
+/**
+ * A imagem da prévia sai como `data:` URL (ver `proxyImage`), mas antes ela é
+ * buscada pelo proxy de egresso. Loopback, rede interna, metadados e nomes
+ * internos nunca podem ser buscados, e a prévia só embute imagem por `https:`
+ * (host que o cliente escolheu não fala http com o atendente).
+ */
+function isBlockedImageHost(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (host.length === 0) return true;
+  if (
+    host === "localhost" || host.endsWith(".localhost") ||
+    host.endsWith(".local") || host.endsWith(".internal") ||
+    host.endsWith(".localdomain")
+  ) {
+    return true;
+  }
+  // `isBlockedIpAddress` só entende IP: aplicá-lo a um nome ("fcdn.com" começa
+  // com "fc") daria falso positivo.
+  return isIpLiteral(host) ? isBlockedIpAddress(host) : false;
+}
+
+/** Base64 de um Uint8Array em blocos (espalhar 512 KiB em argumentos estoura a pilha). */
+function bytesToBase64(bytes: Uint8Array): string {
+  const CHUNK = 0x8000;
+  const parts: string[] = [];
+  for (let index = 0; index < bytes.length; index += CHUNK) {
+    const chunk = bytes.subarray(index, index + CHUNK);
+    parts.push(String.fromCharCode.apply(null, chunk as unknown as number[]));
+  }
+  return btoa(parts.join(""));
+}
+
+/**
+ * SEC: a prévia embutia o `og:image` cru e o navegador do atendente conectava
+ * no host escolhido pelo cliente (vazamento de IP). Aqui a imagem é buscada
+ * pelo proxy de egresso (IP fixado, redirect revalidado) e devolvida como
+ * `data:` URL — o atendente nunca fala com o host do link. Recusa fora de
+ * `https:`, host interno/metadados, tipo que não é `image/*` e corpo acima do
+ * teto. Qualquer falha vira "sem imagem", nunca erro para o cliente.
+ */
+async function proxyImage(rawImageUrl: string): Promise<string | undefined> {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawImageUrl);
+  } catch {
+    return undefined;
+  }
+  if (parsed.protocol !== "https:") return undefined;
+  if (isBlockedImageHost(parsed.hostname)) return undefined;
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  let result: { url: URL; response: Response } | null = null;
+  try {
+    result = await fetchPreviewViaSecureEgress(rawImageUrl, undefined, {
+      signal: ctrl.signal,
+    });
+  } catch {
+    result = null;
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!result) return undefined;
+
+  const { response } = result;
+  if (!response.ok) return undefined;
+  const contentType = (response.headers.get("content-type") || "")
+    .split(";")[0]
+    .trim()
+    .toLowerCase();
+  if (!contentType.startsWith("image/")) return undefined;
+
+  let bytes: Uint8Array;
+  try {
+    bytes = new Uint8Array(await response.arrayBuffer());
+  } catch {
+    return undefined;
+  }
+  if (bytes.byteLength === 0 || bytes.byteLength > IMAGE_MAX_BYTES) {
+    return undefined;
+  }
+  return `data:${contentType};base64,${bytesToBase64(bytes)}`;
+}
+
 async function fetchPreview(rawUrl: string): Promise<PreviewData | null> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
@@ -202,10 +297,15 @@ async function fetchPreview(rawUrl: string): Promise<PreviewData | null> {
     "twitter:description",
     "description",
   ]);
-  const image = absolutize(
+  // `absolutize` só resolve o valor contra a URL final da página: NÃO valida
+  // esquema nem host (um `og:image` absoluto em `http:`/host interno passava
+  // intacto e ia para o `<img>` do cliente). A validação e a busca pelo proxy
+  // ficam em `proxyImage`.
+  const imageCandidate = absolutize(
     extractMeta(html, ["og:image", "og:image:url", "twitter:image"]),
     url,
   );
+  const image = imageCandidate ? await proxyImage(imageCandidate) : undefined;
   const siteName = extractMeta(html, ["og:site_name", "application-name"]);
 
   if (!title && !description && !image) return null;

@@ -53,12 +53,6 @@ vi.mock('@/hooks/integrations/useExternalCatalog', async () => {
   };
 });
 
-const exportCatalogCsvMock = vi.hoisted(() => vi.fn());
-vi.mock('../catalogExport', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../catalogExport')>();
-  return { ...actual, exportCatalogCsv: exportCatalogCsvMock };
-});
-
 const mockProduct = (o: Partial<ExternalProduct> = {}): ExternalProduct => ({
   id: 'p1', name: 'Caneta Bambu', description: null, short_description: null,
   sku: 'CB-001', sale_price: 12.5, suggested_price: null, stock_quantity: 100,
@@ -102,7 +96,6 @@ const baseHookReturn = () => ({
 
 beforeEach(() => {
   mobile.value = false;
-  exportCatalogCsvMock.mockReset();
   mockUseAuth.mockReset();
   mockUseAuth.mockReturnValue({ profile: { id: 'profile-1' } });
   mockUseExternalCatalog.mockReset();

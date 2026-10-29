@@ -9,12 +9,15 @@
  * contador de não lidas e as 3 ações do alarme de tarefa (`reminder_due`) são
  * os mesmos nas duas superfícies.
  */
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NotificationItem } from '@/components/notifications/NotificationItem';
 import type { Notification } from '@/hooks/system/useNotifications';
+
+/** Id do título que nomeia o diálogo (`aria-labelledby`). */
+const TITULO_ID = 'mobile-notifications-title';
 
 interface NotificationsPanelProps {
   isOpen: boolean;
@@ -33,6 +36,7 @@ export function NotificationsPanel({
   onMarkRead,
 }: NotificationsPanelProps) {
   const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const painelRef = useRef<HTMLDivElement>(null);
 
   // Close on Escape
   useEffect(() => {
@@ -43,6 +47,17 @@ export function NotificationsPanel({
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [isOpen, onClose]);
+
+  // SHELL-08: o painel é um diálogo modal (por cima do backdrop) — o foco precisa
+  // entrar nele ao abrir e voltar ao controle anterior ao fechar (WCAG 2.4.3).
+  useEffect(() => {
+    if (!isOpen) return;
+    const anterior = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    painelRef.current?.focus();
+    return () => {
+      if (anterior?.isConnected) anterior.focus();
+    };
+  }, [isOpen]);
 
   return (
     <AnimatePresence>
@@ -59,17 +74,22 @@ export function NotificationsPanel({
 
           {/* Panel */}
           <motion.div
+            ref={painelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={TITULO_ID}
+            tabIndex={-1}
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-            className="fixed top-14 right-2 left-2 md:left-auto md:right-4 md:w-[380px] z-[91] max-h-[70vh] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden safe-area-top"
+            className="fixed top-14 right-2 left-2 md:left-auto md:right-4 md:w-[380px] z-[91] max-h-[70vh] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden safe-area-top focus:outline-none"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
               <div className="flex items-center gap-2">
                 <Bell className="w-4 h-4 text-primary" />
-                <h3 className="font-semibold text-sm text-foreground">Notificações</h3>
+                <h2 id={TITULO_ID} className="font-semibold text-sm text-foreground">Notificações</h2>
                 {unreadCount > 0 && (
                   <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-3xs font-bold">
                     {unreadCount}

@@ -1,12 +1,19 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, fireEvent, act, screen } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import React from 'react';
 import type { ReactNode } from 'react';
 
 // Regressão #350: o VoiceChangerPicker fechava o popover e limpava a prévia da
 // voz transformada ANTES de saber o resultado do envio da mensagem. Quando o
-// `onSendAudio` (síncrono ou assíncrono) rejeitava/lançava, o usuário perdia a
-// prévia e não conseguia tentar enviar de novo.
+// `onSendAudioBlob` (síncrono ou assíncrono) rejeitava/lançava/devolvia `false`,
+// o usuário perdia a prévia e não conseguia tentar enviar de novo.
+//
+// Voz do contato é dado de cliente: o picker entrega o Blob para o caminho do
+// áudio gravado (bucket privado, pasta do contato) e NÃO sobe mais nada em
+// `audio-memes/voice-changer/...` (bucket público, cache de um ano) — o upload
+// antigo ainda era recusado pela policy de INSERT para atendente comum.
 
 const popoverState = vi.hoisted(() => ({
   onOpenChange: undefined as ((v: boolean) => void) | undefined,
@@ -33,6 +40,7 @@ vi.mock('framer-motion', () => ({
     }),
   },
   AnimatePresence: ({ children }: { children: ReactNode }) => children,
+  useReducedMotion: () => false,
 }));
 
 // Pass-through do Radix Popover (não abre de forma confiável sob jsdom). Além de
@@ -79,7 +87,8 @@ vi.mock('@/integrations/supabase/client', () => ({
 import { VoiceChangerPicker } from '../VoiceChangerPicker';
 
 const TRANSFORMED_URL = 'blob:mock-voz-transformada';
-const PUBLIC_URL = 'https://cdn.test/voz-transformada.mp3';
+
+type HandlerEnvio = (blob: Blob) => void | boolean | Promise<void | boolean>;
 
 class MockMediaRecorder {
   static instances: MockMediaRecorder[] = [];
@@ -130,7 +139,7 @@ describe('VoiceChangerPicker — prévia preservada quando o envio falha (#350)'
     popoverState.onOpenChange = undefined;
     popoverState.open = undefined;
     storageState.upload.mockReset().mockResolvedValue({ error: null });
-    storageState.getPublicUrl.mockReset().mockReturnValue({ data: { publicUrl: PUBLIC_URL } });
+    storageState.getPublicUrl.mockReset().mockReturnValue({ data: { publicUrl: 'https://cdn.test/nao-usado.mp3' } });
     toastMock.error.mockReset();
     toastMock.success.mockReset();
     getUserMedia.mockReset();
@@ -167,8 +176,8 @@ describe('VoiceChangerPicker — prévia preservada quando o envio falha (#350)'
 
   // Percorre o caminho REAL do componente: renderiza -> abre -> grava -> para ->
   // transforma a voz, parando com a prévia transformada na tela.
-  async function prepararComPrevia(onSendAudio: (url: string) => void | Promise<void>) {
-    render(<VoiceChangerPicker onSendAudio={onSendAudio} />);
+  async function prepararComPrevia(onSendAudioBlob: HandlerEnvio) {
+    render(<VoiceChangerPicker onSendAudioBlob={onSendAudioBlob} />);
     act(() => {
       popoverState.onOpenChange?.(true);
     });
@@ -197,15 +206,34 @@ describe('VoiceChangerPicker — prévia preservada quando o envio falha (#350)'
     return botaoPorTexto('Enviar');
   }
 
-  it('mantém popover aberto, toast de erro e prévia para retry quando onSendAudio rejeita', async () => {
-    const onSendAudio = vi.fn().mockRejectedValue(new Error('falha no envio da mensagem'));
-    const enviar = await prepararComPrevia(onSendAudio);
+  it('entrega o áudio transformado como Blob e não toca em bucket nenhum', async () => {
+    const onSendAudioBlob = vi.fn();
+    const enviar = await prepararComPrevia(onSendAudioBlob);
 
     await act(async () => {
       fireEvent.click(enviar);
     });
 
-    expect(onSendAudio).toHaveBeenCalledWith(PUBLIC_URL);
+    expect(onSendAudioBlob).toHaveBeenCalledTimes(1);
+    const blob = onSendAudioBlob.mock.calls[0][0] as Blob;
+    expect(blob).toBeInstanceOf(Blob);
+    expect(blob.type).toBe('audio/mpeg');
+    expect(blob.size).toBeGreaterThan(0);
+    // O upload é do caminho do áudio gravado, feito por quem conhece a pasta do
+    // contato: o picker não sobe nada (antes subia em audio-memes/voice-changer).
+    expect(storageState.upload).not.toHaveBeenCalled();
+    expect(storageState.getPublicUrl).not.toHaveBeenCalled();
+  });
+
+  it('mantém popover aberto, toast de erro e prévia para retry quando onSendAudioBlob rejeita', async () => {
+    const onSendAudioBlob = vi.fn().mockRejectedValue(new Error('falha no envio da mensagem'));
+    const enviar = await prepararComPrevia(onSendAudioBlob);
+
+    await act(async () => {
+      fireEvent.click(enviar);
+    });
+
+    expect(onSendAudioBlob).toHaveBeenCalledWith(expect.any(Blob));
     // O popover continua aberto...
     expect(popoverState.open).toBe(true);
     // ...e a prévia transformada continua na tela, pronta para novo envio.
@@ -216,11 +244,27 @@ describe('VoiceChangerPicker — prévia preservada quando o envio falha (#350)'
     expect(botaoPorTexto('Enviar')).not.toBeDisabled();
   });
 
-  it('trata onSendAudio que LANÇA erro síncrono como falha (não fecha nem limpa)', async () => {
-    const onSendAudio = vi.fn(() => {
+  it('trata devolver `false` (contrato do caminho do áudio gravado) como falha', async () => {
+    const onSendAudioBlob = vi.fn().mockResolvedValue(false);
+    const enviar = await prepararComPrevia(onSendAudioBlob);
+
+    await act(async () => {
+      fireEvent.click(enviar);
+    });
+
+    expect(onSendAudioBlob).toHaveBeenCalledWith(expect.any(Blob));
+    expect(popoverState.open).toBe(true);
+    expect(screen.getByText('Enviar')).toBeInTheDocument();
+    expect(toastMock.error).toHaveBeenCalled();
+    expect(toastMock.success).not.toHaveBeenCalledWith('Áudio enviado! 🎤');
+    expect(botaoPorTexto('Enviar')).not.toBeDisabled();
+  });
+
+  it('trata onSendAudioBlob que LANÇA erro síncrono como falha (não fecha nem limpa)', async () => {
+    const onSendAudioBlob = vi.fn(() => {
       throw new Error('lançou na hora');
     });
-    const enviar = await prepararComPrevia(onSendAudio);
+    const enviar = await prepararComPrevia(onSendAudioBlob);
 
     await act(async () => {
       fireEvent.click(enviar);
@@ -234,20 +278,20 @@ describe('VoiceChangerPicker — prévia preservada quando o envio falha (#350)'
 
   it('só fecha o popover e limpa a prévia DEPOIS de o envio assíncrono resolver', async () => {
     let resolver: () => void = () => {};
-    const onSendAudio = vi.fn(
+    const onSendAudioBlob = vi.fn(
       () =>
         new Promise<void>((resolve) => {
           resolver = resolve;
         }),
     );
-    const enviar = await prepararComPrevia(onSendAudio);
+    const enviar = await prepararComPrevia(onSendAudioBlob);
 
     await act(async () => {
       fireEvent.click(enviar);
     });
 
     // Envio pendente: nada foi fechado nem limpo ainda.
-    expect(onSendAudio).toHaveBeenCalledWith(PUBLIC_URL);
+    expect(onSendAudioBlob).toHaveBeenCalledWith(expect.any(Blob));
     expect(popoverState.open).toBe(true);
     expect(screen.getByText('Enviar')).toBeInTheDocument();
 
@@ -261,17 +305,49 @@ describe('VoiceChangerPicker — prévia preservada quando o envio falha (#350)'
     expect(toastMock.success).toHaveBeenCalled();
   });
 
-  it('aceita onSendAudio síncrono (void) e fecha o popover no sucesso', async () => {
-    const onSendAudio = vi.fn();
-    const enviar = await prepararComPrevia(onSendAudio);
+  it('aceita onSendAudioBlob síncrono (void) e fecha o popover no sucesso', async () => {
+    const onSendAudioBlob = vi.fn();
+    const enviar = await prepararComPrevia(onSendAudioBlob);
 
     await act(async () => {
       fireEvent.click(enviar);
     });
 
-    expect(onSendAudio).toHaveBeenCalledWith(PUBLIC_URL);
+    expect(onSendAudioBlob).toHaveBeenCalledWith(expect.any(Blob));
     expect(popoverState.open).toBe(false);
     expect(screen.queryByText('Enviar')).not.toBeInTheDocument();
     expect(toastMock.error).not.toHaveBeenCalled();
+  });
+});
+
+// A prova de que o áudio sai pelo caminho PRIVADO não vive só no mock: a fiação
+// de cada painel tem de entregar o Blob ao caminho do áudio gravado
+// (`onAudioSend` → bucket privado, pasta do contato/conversa) e o meme continua
+// com o `onSendAudioMeme`. O guard varre o fonte para que a regressão (voltar a
+// `audio-memes/voice-changer/...`) quebre o teste.
+describe('VoiceChangerPicker — fiação do envio privado e guard do caminho antigo', () => {
+  const ler = (rel: string) => readFileSync(resolve(process.cwd(), rel), 'utf8');
+
+  it.each([
+    ['inbox', 'src/components/inbox/chat/ChatInputToolbars.tsx'],
+    ['chat interno', 'src/components/team-chat/TeamChatInputArea.tsx'],
+  ])('%s: VoiceChangerPicker recebe o caminho do áudio gravado (onAudioSend)', (_rotulo, arquivo) => {
+    const fonte = ler(arquivo);
+    expect(fonte).toMatch(/<VoiceChangerPicker onSendAudioBlob=\{onAudioSend\} \/>/);
+    // O meme continua no handler dele — o áudio do cliente não volta para lá.
+    expect(fonte).toMatch(/<AudioMemePicker onSendAudio=\{onSendAudioMeme\} \/>/);
+  });
+
+  it('nenhum arquivo de src sobe a voz do cliente em audio-memes/voice-changer', () => {
+    for (const arquivo of [
+      'src/components/inbox/VoiceChangerPicker.tsx',
+      'src/components/inbox/chat/ChatInputToolbars.tsx',
+      'src/components/team-chat/TeamChatInputArea.tsx',
+    ]) {
+      const fonte = ler(arquivo);
+      expect(fonte).not.toMatch(/getPublicUrl\(/);
+      expect(fonte).not.toMatch(/from\('audio-memes'\)/);
+      expect(fonte).not.toMatch(/['"`]voice-changer\//);
+    }
   });
 });

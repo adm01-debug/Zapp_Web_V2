@@ -39,6 +39,18 @@ const DAYS_TAREFAS: TimelineDay[] = [
   },
 ];
 
+// Nota escrita na transferência (`conversation_events.metadata.note`): o cartão do evento mostra a
+// versão cortada em 120 na linha e o texto completo no `title`. Sem nota, nenhuma linha "Nota:".
+const DAYS_NOTA: TimelineDay[] = [
+  {
+    date: '2026-09-08',
+    events: [
+      { id: 'tr-1', at: '2026-09-08T12:00:00.000Z', kind: 'transfer', title: 'Transferido', subtitle: 'De: Ana · Para: Bruno', note: `${'a'.repeat(120)}…`, noteFull: 'a'.repeat(200) },
+      { id: 'tr-2', at: '2026-09-08T13:00:00.000Z', kind: 'transfer', title: 'Transferido', subtitle: 'De: Ana · Para: Carlos' },
+    ],
+  },
+];
+
 const STATS: ContactStats = {
   totalMessages: 150,
   avgResponseTimeMinutes: 90,
@@ -84,6 +96,19 @@ describe('JourneyTab', () => {
     const pendente = screen.getByText('Tarefa criada: Ligar').closest('[data-testid="timeline-event"]') as HTMLElement;
     expect(within(pendente).getByText('Pendente')).toBeInTheDocument();
     expect(within(pendente).queryByText('Concluída')).not.toBeInTheDocument();
+  });
+
+  it('mostra a nota da transferência: cortada em 120 na linha e completa no detalhe (title)', () => {
+    renderTab({ days: DAYS_NOTA });
+
+    const comNota = screen.getByText(`Nota: ${'a'.repeat(120)}…`);
+    expect(comNota).toBeInTheDocument();
+    // o detalhe (hover) guarda a nota inteira, sem o corte da linha
+    expect(comNota).toHaveAttribute('title', 'a'.repeat(200));
+
+    // evento sem nota continua exatamente como antes: nenhuma linha "Nota:"
+    const semNota = screen.getByText('De: Ana · Para: Carlos').closest('[data-testid="timeline-event"]') as HTMLElement;
+    expect(within(semNota).queryByText(/^Nota:/)).not.toBeInTheDocument();
   });
 
   it('mostra os KPIs vindos do hook', () => {
@@ -146,5 +171,38 @@ describe('JourneyTab', () => {
     renderTab();
     expect(screen.getAllByTestId('timeline-event')).toHaveLength(2);
     expect(screen.getByTestId('contact-stats-strip')).toBeInTheDocument();
+  });
+
+  // K05: o chip de saúde do relacionamento é o primeiro item do bloco de estatísticas do contato.
+  it('mostra o chip de saúde do relacionamento no topo do bloco de estatísticas', () => {
+    const doisDiasAtras = new Date(Date.now() - 2 * 86_400_000).toISOString();
+    const umDiaAtras = new Date(Date.now() - 1 * 86_400_000).toISOString();
+    const diasRecentes: TimelineDay[] = [
+      {
+        date: new Date(Date.now() - 1 * 86_400_000).toISOString().slice(0, 10),
+        events: [
+          { id: 'msg-r1', at: umDiaAtras, kind: 'message_in', title: 'Mensagem recente' },
+          { id: 'msg-r2', at: doisDiasAtras, kind: 'message_out', title: 'Resposta recente' },
+        ],
+      },
+    ];
+    renderTab({ days: diasRecentes, metrics: { ...METRICS, lastContactAt: doisDiasAtras } });
+
+    const chip = screen.getByTestId('journey-health-chip');
+    expect(chip).toHaveTextContent('Ativo: 2 dias sem contato');
+    // a frequência recente sai da timeline carregada, sem consulta nova
+    expect(chip.getAttribute('title') ?? '').toContain('2 interações nos últimos 30 dias');
+    expect(chip.getAttribute('title') ?? '').toContain('Regra:');
+
+    // dentro do MESMO card das estatísticas do contato (o chip vem antes da faixa dos números)
+    const card = screen.getByTestId('contact-stats-strip').closest('section') as HTMLElement;
+    expect(within(card).getByTestId('journey-health-chip')).toBeInTheDocument();
+  });
+
+  it('sem contato registrado o chip não inventa número', () => {
+    renderTab({ metrics: { ...METRICS, lastContactAt: null }, days: [] });
+    const chip = screen.getByTestId('journey-health-chip');
+    expect(chip).toHaveTextContent('Sem contato registrado');
+    expect(chip).toHaveAttribute('data-level', 'inactive');
   });
 });

@@ -40,7 +40,7 @@ export async function runGenerateManifest({ repoRoot, output, check }) {
 
   if (check) {
     if (committed !== serialized) {
-      throw new Error(`Deployment manifest is stale: ${output}. Run generate-manifest.mjs.`);
+      throw new Error(`Deployment manifest is stale: ${output}. Run: node scripts/edge-deploy/generate-manifest.mjs && git add ${output} && git commit -m 'chore: regenerate edge-deploy manifest'`);
     }
     return manifest;
   }
@@ -60,7 +60,8 @@ async function main() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   main().catch((error) => {
-    console.error(error.message);
+    // W41: ::error:: torna a mensagem uma anotacao visivel no log do GitHub Actions.
+    console.error(`::error::${error.message}`);
     process.exitCode = 1;
   });
 }

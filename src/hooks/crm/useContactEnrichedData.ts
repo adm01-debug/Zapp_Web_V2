@@ -28,26 +28,12 @@ export interface EnrichedContactData {
   longitude?: number | null;
 }
 
-export interface AIConversationTag {
-  id: string;
-  tag_name: string;
-  confidence: number | null;
-  source: string | null;
-}
-
-export interface SLAInfo {
-  first_response_breached: boolean | null;
-  resolution_breached: boolean | null;
-  first_response_at: string | null;
-  resolved_at: string | null;
-}
-
 /**
- * Só a query do dado enriquecido (endereço, apelido, cargo...), sem o canal Realtime nem as
- * queries de tags/SLA. Para quem precisa do dado mas não é o painel de detalhes: usar o
- * `useContactEnrichedData` completo em outro componente montado junto abriria um segundo canal
- * `contact-enriched:<id>` com o mesmo nome. A chave de cache é a mesma — o react-query deduplica
- * a busca e as invalidações do painel/Realtime valem aqui também.
+ * Só a query do dado enriquecido (endereço, apelido, cargo...), sem o canal Realtime.
+ * O painel de detalhes usa `useContactEnrichedData` (abaixo), que acrescenta o Realtime;
+ * quem só precisa do dado evita abrir um segundo canal `contact-enriched:<id>` com o
+ * mesmo nome. A chave de cache é a mesma — o react-query deduplica a busca e as
+ * invalidações do painel/Realtime valem aqui também.
  */
 export function useContactEnrichedQuery(contactId: string) {
   return useQuery({
@@ -74,32 +60,6 @@ export function useContactEnrichedData(contactId: string) {
 
   const { data: enrichedData } = useContactEnrichedQuery(contactId);
 
-  const { data: aiTags = [] } = useQuery({
-    queryKey: ['contact-ai-tags', contactId],
-    queryFn: async () => {
-      const { data, error } = await ContactService.fetchAITags(contactId);
-      if (error) {
-        log.error('Error fetching AI tags:', error);
-        throw error;
-      }
-      return data as AIConversationTag[];
-    },
-    enabled: !!contactId,
-  });
-
-  const { data: slaInfo } = useQuery({
-    queryKey: ['contact-sla', contactId],
-    queryFn: async () => {
-      const { data, error } = await ContactService.fetchSLA(contactId);
-      if (error) {
-        log.error('Error fetching SLA info:', error);
-        throw error;
-      }
-      return data as SLAInfo | null;
-    },
-    enabled: !!contactId,
-  });
-
   // EditContactDialog (o form deste próprio painel) já invalida este cache
   // manualmente ao salvar. Mas apelido/cargo/empresa também são editáveis
   // pela tela de Contatos, por merge de contatos e por import — nenhum
@@ -117,5 +77,5 @@ export function useContactEnrichedData(contactId: string) {
     },
   });
 
-  return { enrichedData, aiTags, slaInfo };
+  return { enrichedData };
 }

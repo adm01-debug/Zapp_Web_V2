@@ -2,6 +2,14 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { GmailSendActionSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { buildGmailMimeMessage, encodeBase64Url } from "../_shared/gmail-mime.ts";
+import {
+  ensureValidToken,
+  GMAIL_REAUTH_HTTP_STATUS,
+  gmailReauthErrorPayload,
+  isGmailReauthError,
+  persistGmailMessageLabels,
+  recordGmailAccountFailure,
+} from "../_shared/gmail-helpers.ts";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
@@ -20,56 +28,15 @@ function getMetadataHeader(message: GmailMetadataResponse, headerName: string): 
   return value && !/[\r\n]/.test(value) ? value : undefined;
 }
 
-async function getTokens(supabase: SupabaseClient, accountId: string): Promise<{ access_token: string; refresh_token: string }> {
-  const { data, error } = await supabase.rpc("get_gmail_tokens", { p_account_id: accountId });
-  if (error || !data?.length) throw new Error("Failed to retrieve tokens");
-  return data[0];
-}
-
-async function storeTokens(supabase: SupabaseClient, accountId: string, accessToken: string, refreshToken?: string | null) {
-  await supabase.rpc("store_gmail_tokens", {
-    p_account_id: accountId,
-    p_access_token: accessToken,
-    p_refresh_token: refreshToken ?? null,
-  });
-}
-
-async function ensureValidToken(supabase: SupabaseClient, account: GmailAccount): Promise<string> {
-  const now = new Date();
-  const expiresAt = new Date(account.token_expires_at);
-  
-  const storedTokens = await getTokens(supabase, account.id);
-  
-  if (now < new Date(expiresAt.getTime() - 5 * 60 * 1000)) return storedTokens.access_token;
-
-  const GOOGLE_CLIENT_ID = requireEnv("GOOGLE_CLIENT_ID");
-  const GOOGLE_CLIENT_SECRET = requireEnv("GOOGLE_CLIENT_SECRET");
-
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      refresh_token: storedTokens.refresh_token, client_id: GOOGLE_CLIENT_ID,
-      client_secret: GOOGLE_CLIENT_SECRET, grant_type: "refresh_token",
-    }),
-  });
-  if (!response.ok) throw new Error("Failed to refresh token");
-  const tokens = await response.json();
-
-  await storeTokens(supabase, account.id, tokens.access_token, tokens.refresh_token || null);
-  await supabase.from("gmail_accounts").update({
-    token_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
-  }).eq("id", account.id);
-
-  return tokens.access_token;
-}
-
 async function threadBelongsToAccount(supabase: SupabaseClient, accountId: string, gmailThreadId: string): Promise<boolean> {
   const result = await supabase.from("email_threads").select("id").eq("gmail_account_id", accountId).eq("gmail_thread_id", gmailThreadId).maybeSingle();
   return Boolean(result.data?.id);
 }
 
-Deno.serve(async (req) => {
+// Handler exportado (padrão de gmail-webhook/gmail-cron-sync): permite testar a
+// rota real — em especial a recusa de token revogado, que tem de virar 409
+// `reauth_required` e não um 500 genérico de envio.
+export async function handleGmailSend(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -100,7 +67,18 @@ Deno.serve(async (req) => {
 
     if (!account) return errorResponse("Gmail account not found or inactive", 404, req);
 
-    const accessToken = await ensureValidToken(supabase, account);
+    let accessToken: string;
+    try {
+      accessToken = await ensureValidToken(supabase, account, log);
+    } catch (tokenError) {
+      if (!isGmailReauthError(tokenError)) throw tokenError;
+      // Token revogado/expirado: marca a conta (sync_status='reauth_required')
+      // e devolve 409 com code reauth_required — o app abre a reconexão em vez
+      // de mostrar um erro genérico de envio.
+      await recordGmailAccountFailure(supabase, account.id, tokenError, 1);
+      log.done(GMAIL_REAUTH_HTTP_STATUS, { action });
+      return jsonResponse(gmailReauthErrorPayload(), GMAIL_REAUTH_HTTP_STATUS, req);
+    }
 
     switch (action) {
       case "send": {
@@ -282,16 +260,37 @@ Deno.serve(async (req) => {
         const ownedIds = new Set((ownedMessages.data || []).map((message: { gmail_message_id: string }) => message.gmail_message_id));
         if (message_ids.some(messageId => !ownedIds.has(messageId))) return errorResponse("One or more messages were not found for this account", 404, req);
 
-        const updatedIds: string[] = [];
-        const failedIds: string[] = [];
-        for (const msgId of message_ids) {
-          const response = await fetch(`${GMAIL_API}/messages/${msgId}/modify`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ removeLabelIds: ["UNREAD"] }),
-          });
-          if (response.ok) updatedIds.push(msgId);
-          else failedIds.push(msgId);
+        // Uma única chamada para a thread inteira: o Gmail aceita
+        // messages/batchModify (até 1.000 ids) e remove o label UNREAD de todas
+        // de uma vez, em vez de uma chamada por mensagem em série. A resposta
+        // 204 não traz labelIds; o estado local vira is_read = true para os ids
+        // que o Gmail aceitou.
+        const batchResponse = await fetch(`${GMAIL_API}/messages/batchModify`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: message_ids, removeLabelIds: ["UNREAD"] }),
+        });
+
+        let updatedIds: string[];
+        let failedIds: string[];
+        if (batchResponse.ok) {
+          updatedIds = message_ids;
+          failedIds = [];
+        } else {
+          // batchModify é tudo-ou-nada: um id recusado derruba o lote inteiro.
+          // Neste ramo de erro, mantém o tratamento POR mensagem de antes, para
+          // as que o Gmail aceita não se perderem e `failed_ids` seguir fiel.
+          updatedIds = [];
+          failedIds = [];
+          for (const msgId of message_ids) {
+            const response = await fetch(`${GMAIL_API}/messages/${msgId}/modify`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ removeLabelIds: ["UNREAD"] }),
+            });
+            if (response.ok) updatedIds.push(msgId);
+            else failedIds.push(msgId);
+          }
         }
         if (updatedIds.length > 0) {
           await supabase.from("email_messages").update({ is_read: true }).eq("gmail_account_id", account.id).in("gmail_message_id", updatedIds);
@@ -307,13 +306,21 @@ Deno.serve(async (req) => {
       case "trash": {
         const { message_id: trashMsgId } = body;
         if (!trashMsgId) return errorResponse("Missing message_id", 400, req);
-        const ownedMessage = await supabase.from("email_messages").select("id").eq("gmail_message_id", trashMsgId).eq("gmail_account_id", account.id).maybeSingle();
+        const ownedMessage = await supabase.from("email_messages").select("id, thread_id").eq("gmail_message_id", trashMsgId).eq("gmail_account_id", account.id).maybeSingle();
         if (!ownedMessage.data) return errorResponse("Message not found for this account", 404, req);
 
         const response = await fetch(`${GMAIL_API}/messages/${trashMsgId}/trash`, {
           method: "POST", headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (!response.ok) throw new Error("Failed to trash message");
+        // O Gmail devolve a mensagem já com os labelIds novos (sem INBOX, com
+        // TRASH). Persiste no banco local e recalcula a thread dona, senão a
+        // mensagem continua aparecendo na caixa de entrada após o descarte.
+        const trashed = await response.json().catch(() => null) as { labelIds?: unknown } | null;
+        const trashedLabels = Array.isArray(trashed?.labelIds) ? trashed.labelIds as string[] : null;
+        if (!trashedLabels) return jsonResponse({ success: true, warning: "local_persistence_failed" }, 200, req);
+        const persisted = await persistGmailMessageLabels(supabase, account.id, trashMsgId, trashedLabels, ownedMessage.data.thread_id ?? null);
+        if (!persisted) return jsonResponse({ success: true, warning: "local_persistence_failed" }, 200, req);
         log.done(200, { action });
         return jsonResponse({ success: true }, 200, req);
       }
@@ -335,8 +342,16 @@ Deno.serve(async (req) => {
         return errorResponse(`Unknown action: ${action}`, 400, req);
     }
   } catch (error) {
+    if (isGmailReauthError(error)) {
+      log.done(GMAIL_REAUTH_HTTP_STATUS);
+      return jsonResponse(gmailReauthErrorPayload(), GMAIL_REAUTH_HTTP_STATUS, req);
+    }
     const msg = error instanceof Error ? error.message : "Unknown error";
     log.error("Unhandled error", { error: msg });
     return errorResponse(msg, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleGmailSend);
+}

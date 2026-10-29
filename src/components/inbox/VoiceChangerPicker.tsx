@@ -3,11 +3,18 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, Loader2, Play, Pause, Send, X, Wand2 } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { Mic, MicOff, Loader2, Play, Pause, Send, X, Wand2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supabase/client';
 import { attachMediaVolume } from '@/lib/mediaVolumeElement';
+import { zappTransition } from '@/lib/motion';
+
+/** Aviso único quando o navegador recusa a reprodução por gesto/autoplay. */
+const PLAYBACK_BLOCKED = 'O navegador bloqueou a reprodução. Toque no botão de novo.';
+
+/** Teto da gravação: a Edge `voice-changer` recusa áudio acima de ~10 MB (≈60 s de webm). */
+const MAX_RECORDING_MS = 60_000;
 
 const VOICE_PRESETS = [
   // Masculinas
@@ -39,14 +46,30 @@ const VOICE_PRESETS = [
   { id: 'reindeer', emoji: '🦌', label: 'Rena', cat: 'theme' },
 ] as const;
 
+/** Resultado do envio: `false` (ou rejeição) conta como falha e preserva a prévia. */
+type ResultadoEnvioVoz = void | boolean;
+
 interface VoiceChangerPickerProps {
-  /** Pode ser síncrono ou assíncrono: o popover só fecha depois que o envio da
-      mensagem confirma o sucesso. */
-  onSendAudio: (audioUrl: string) => void | Promise<void>;
+  /**
+   * Entrega o áudio JÁ transformado como `Blob` para o MESMO caminho do áudio
+   * gravado — bucket privado (`audio-messages` no inbox, `team-chat-files` no
+   * chat interno) na pasta do contato/conversa, com locator assinado na
+   * leitura.
+   *
+   * Antes o picker subia o mp3 em `audio-memes/voice-changer/<ts>_<uuid>.mp3`
+   * (bucket público, cache de um ano): a policy de INSERT de `audio-memes` só
+   * aceita a pasta `auth.uid()` ou admin/supervisor, então atendente comum
+   * levava "Erro ao enviar áudio", e quando passava o áudio do cliente ficava
+   * com URL pública permanente.
+   *
+   * Pode ser síncrono ou assíncrono; devolver `false` ou rejeitar conta como
+   * falha e preserva a prévia (regressão #350).
+   */
+  onSendAudioBlob: (blob: Blob) => ResultadoEnvioVoz | Promise<ResultadoEnvioVoz>;
   disabled?: boolean;
 }
 
-export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPickerProps) {
+export function VoiceChangerPicker({ onSendAudioBlob, disabled }: VoiceChangerPickerProps) {
   const [open, setOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState('grave');
@@ -54,7 +77,28 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
   const [transformedUrl, setTransformedUrl] = useState<string | null>(null);
   const [isTransforming, setIsTransforming] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlayLoading, setIsPlayLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [transformError, setTransformError] = useState<string | null>(null);
+
+  const reduceMotion = useReducedMotion() ?? false;
+
+  // Com movimento reduzido nada se desloca: a entrada só muda opacidade. Sem
+  // redução, entra com deslocamento curto.
+  const entrada = (deslocamento: number) =>
+    reduceMotion
+      ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
+      : { initial: { opacity: 0, y: deslocamento }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: deslocamento } };
+
+  // Erro inline: mola curta (180–260 ms); com redução, só um fade.
+  const entradaErro = reduceMotion
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: zappTransition.fast }
+    : {
+        initial: { opacity: 0, y: -6 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: -6 },
+        transition: { type: 'spring' as const, duration: 0.22, bounce: 0.2 },
+      };
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -62,8 +106,20 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
   const streamRef = useRef<MediaStream | null>(null);
   const mountedRef = useRef(true);
   const openRef = useRef(false);
+  /** Timer do teto de gravação (60 s). */
+  const recordingTimerRef = useRef<number | null>(null);
+  /** Aborto da transformação em voo: disparado ao fechar o popover/desmontar. */
+  const transformAbortRef = useRef<AbortController | null>(null);
+
+  const limparTimerGravacao = useCallback(() => {
+    if (recordingTimerRef.current !== null) {
+      window.clearTimeout(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+  }, []);
 
   const releaseCapture = useCallback(() => {
+    limparTimerGravacao();
     const recorder = mediaRecorderRef.current;
     if (recorder) {
       recorder.ondataavailable = null;
@@ -75,18 +131,23 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
       streamRef.current.getTracks().forEach(t => t.stop());
       streamRef.current = null;
     }
-  }, []);
+  }, [limparTimerGravacao]);
 
   const cleanup = useCallback(() => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    // Fechar o popover cancela uma transformação em voo: a resposta tardia não
+    // pode reaparecer depois que o usuário saiu da tela.
+    transformAbortRef.current?.abort();
     releaseCapture();
     if (transformedUrl) URL.revokeObjectURL(transformedUrl);
     setRecordedBlob(null);
     setTransformedUrl(null);
     setIsRecording(false);
     setIsPlaying(false);
+    setIsPlayLoading(false);
     setIsTransforming(false);
     setIsSending(false);
+    setTransformError(null);
     chunksRef.current = [];
   }, [transformedUrl, releaseCapture]);
 
@@ -94,6 +155,7 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      transformAbortRef.current?.abort();
       releaseCapture();
     };
   }, [releaseCapture]);
@@ -101,6 +163,14 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
   useEffect(() => {
     openRef.current = open;
   }, [open]);
+
+  const stopRecording = useCallback(() => {
+    limparTimerGravacao();
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+  }, [limparTimerGravacao]);
 
   const startRecording = useCallback(async () => {
     try {
@@ -130,22 +200,40 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
       mediaRecorderRef.current = recorder;
       setIsRecording(true);
       setTransformedUrl(null);
-    } catch {
-      toast.error('Não foi possível acessar o microfone');
+      // Teto de 60 s: sem corte, uma gravação esquecida só falharia no upload
+      // (a Edge recusa acima de ~10 MB). Encerra a gravação e avisa.
+      recordingTimerRef.current = window.setTimeout(() => {
+        recordingTimerRef.current = null;
+        toast.warning('Gravação limitada a 60 segundos');
+        stopRecording();
+      }, MAX_RECORDING_MS);
+    } catch (err) {
+      // O motivo real muda a ação do usuário: permissão negada, microfone
+      // ausente e formato não suportado pedem coisas diferentes.
+      const nome = err instanceof DOMException ? err.name : '';
+      if (nome === 'NotAllowedError' || nome === 'SecurityError') {
+        toast.error('Permissão de microfone negada. Libere o acesso no navegador.');
+      } else if (nome === 'NotFoundError') {
+        toast.error('Nenhum microfone encontrado neste dispositivo.');
+      } else if (nome === 'NotSupportedError') {
+        toast.error('Este navegador não grava áudio neste formato.');
+      } else {
+        toast.error('Não foi possível acessar o microfone');
+      }
     }
-  }, []);
-
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current?.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
-    setIsRecording(false);
-  }, []);
+  }, [stopRecording]);
 
   const transformVoice = useCallback(async () => {
     if (!recordedBlob) return;
     setIsTransforming(true);
+    setTransformError(null);
     if (transformedUrl) { URL.revokeObjectURL(transformedUrl); setTransformedUrl(null); }
+
+    // Uma transformação por vez: se o usuário pedir outra voz, a anterior é
+    // abortada em vez de competir para pintar a prévia.
+    transformAbortRef.current?.abort();
+    const controller = new AbortController();
+    transformAbortRef.current = controller;
 
     try {
       const formData = new FormData();
@@ -163,6 +251,7 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
             'apikey': SUPABASE_ANON_KEY,
           },
           body: formData,
+          signal: controller.signal,
         }
       );
 
@@ -172,31 +261,53 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
       }
 
       const audioBlob = await response.blob();
+      // O popover pode ter fechado (ou o componente desmontado) enquanto a Edge
+      // respondia: o blob tardio não vira prévia nem cria URL órfã.
+      if (controller.signal.aborted || !mountedRef.current || !openRef.current) return;
       const url = URL.createObjectURL(audioBlob);
       setTransformedUrl(url);
       toast.success('Voz transformada! 🎭');
     } catch (err) {
-      toast.error(`Erro ao transformar voz: ${err instanceof Error ? err.message : 'desconhecido'}`);
+      // Cancelamento não é erro do usuário: sai sem toast nem aviso inline.
+      if (controller.signal.aborted) return;
+      const msg = err instanceof Error ? err.message : 'desconhecido';
+      // Aviso inline (com "Tentar de novo") além do toast: o usuário não perde
+      // a gravação e recupera o fluxo sem regravar.
+      setTransformError(msg);
+      toast.error(`Erro ao transformar voz: ${msg}`);
     } finally {
-      setIsTransforming(false);
+      if (transformAbortRef.current === controller) transformAbortRef.current = null;
+      if (mountedRef.current) setIsTransforming(false);
     }
   }, [recordedBlob, selectedVoice, transformedUrl]);
 
-  const togglePlay = useCallback(() => {
-    if (!transformedUrl) return;
+  const togglePlay = useCallback(async () => {
+    if (!transformedUrl || isPlayLoading) return;
     if (isPlaying && audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
       return;
     }
+    setIsPlayLoading(true);
     const audio = new Audio(transformedUrl);
     // E36 — prévia de voice changer é mídia de conversa: respeita o volume global.
     const detachMediaVolume = attachMediaVolume(audio);
     audio.onended = () => { detachMediaVolume(); setIsPlaying(false); };
-    void audio.play();
     audioRef.current = audio;
-    setIsPlaying(true);
-  }, [transformedUrl, isPlaying]);
+    try {
+      await audio.play();
+      if (!mountedRef.current) return;
+      setIsPlaying(true);
+    } catch {
+      // Reprodução recusada: não deixa o botão preso em "Pausar".
+      detachMediaVolume();
+      audioRef.current = null;
+      if (mountedRef.current) setIsPlaying(false);
+      toast.error(PLAYBACK_BLOCKED);
+    } finally {
+      if (mountedRef.current) setIsPlayLoading(false);
+    }
+  }, [transformedUrl, isPlaying, isPlayLoading]);
 
   const handleSend = useCallback(async () => {
     if (!transformedUrl || isSending) return;
@@ -204,17 +315,14 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
     try {
       const response = await fetch(transformedUrl);
       const blob = await response.blob();
-      const path = `voice-changer/${Date.now()}_${crypto.randomUUID()}.mp3`;
-      const { error: uploadError } = await supabase.storage
-        .from('audio-memes')
-        .upload(path, blob, { contentType: 'audio/mpeg', cacheControl: '31536000' });
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage.from('audio-memes').getPublicUrl(path);
-      // O envio da mensagem pode ser síncrono ou assíncrono e pode falhar. Só
-      // fecha o popover e limpa a prévia DEPOIS da confirmação de sucesso —
-      // assim uma falha preserva `transformedUrl` para o usuário tentar de novo.
-      await onSendAudio(urlData.publicUrl);
+      // O upload é do caminho do áudio gravado (bucket privado, pasta do
+      // contato/conversa) e fica com quem conhece essa pasta — o picker só
+      // entrega o Blob. O envio da mensagem pode ser síncrono ou assíncrono e
+      // pode falhar (`false` ou rejeição). Só fecha o popover e limpa a prévia
+      // DEPOIS da confirmação de sucesso — assim uma falha preserva
+      // `transformedUrl` para o usuário tentar de novo (#350).
+      const resultado = await onSendAudioBlob(blob);
+      if (resultado === false) throw new Error('Envio de áudio não confirmado');
       setOpen(false);
       cleanup();
       toast.success('Áudio enviado! 🎤');
@@ -223,7 +331,7 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
     } finally {
       setIsSending(false);
     }
-  }, [transformedUrl, isSending, onSendAudio, cleanup]);
+  }, [transformedUrl, isSending, onSendAudioBlob, cleanup]);
 
   return (
     <Tooltip>
@@ -274,11 +382,12 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
             <div className="flex flex-col items-center gap-2 py-2">
               <AnimatePresence mode="wait">
                 {!recordedBlob && !isRecording && (
-                  <motion.div key="idle" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
+                  <motion.div key="idle" {...entrada(6)}>
                     <Button
                       onClick={startRecording}
                       size="lg"
-                      className="rounded-full w-16 h-16 bg-primary hover:bg-primary/90"
+                      aria-label="Gravar áudio"
+                      className="rounded-full w-16 h-16 bg-primary hover:bg-primary/90 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]"
                     >
                       <Mic className="w-7 h-7" />
                     </Button>
@@ -287,48 +396,96 @@ export function VoiceChangerPicker({ onSendAudio, disabled }: VoiceChangerPicker
                 )}
 
                 {isRecording && (
-                  <motion.div key="recording" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="flex flex-col items-center">
-                    <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 1.2 }}>
+                  <motion.div key="recording" {...entrada(6)} className="flex flex-col items-center">
+                    <motion.div
+                      animate={reduceMotion ? undefined : { scale: [1, 1.1, 1] }}
+                      transition={reduceMotion ? undefined : { repeat: Infinity, duration: 1.2 }}
+                    >
                       <Button
                         onClick={stopRecording}
                         size="lg"
                         variant="destructive"
-                        className="rounded-full w-16 h-16"
+                        aria-label="Parar gravação"
+                        className="rounded-full w-16 h-16 [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]"
                       >
                         <MicOff className="w-7 h-7" />
                       </Button>
                     </motion.div>
                     <div className="flex items-center gap-1.5 mt-2">
-                      <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1 }} className="w-2 h-2 rounded-full bg-destructive" />
+                      <motion.div
+                        animate={reduceMotion ? undefined : { opacity: [0.4, 1, 0.4] }}
+                        transition={reduceMotion ? undefined : { repeat: Infinity, duration: 1 }}
+                        className="w-2 h-2 rounded-full bg-destructive"
+                      />
                       <span className="text-xs text-destructive font-medium">Gravando...</span>
                     </div>
                   </motion.div>
                 )}
 
                 {recordedBlob && !isRecording && (
-                  <motion.div key="recorded" initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="w-full space-y-2">
+                  <motion.div key="recorded" {...entrada(10)} className="w-full space-y-2">
                     <div className="flex items-center justify-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => { setRecordedBlob(null); setTransformedUrl(null); }}>
+                      <Button variant="outline" size="sm" className="h-10" onClick={() => { setRecordedBlob(null); setTransformedUrl(null); setTransformError(null); }}>
                         <X className="w-3.5 h-3.5 mr-1" />Regravar
                       </Button>
                       <Button
                         size="sm"
-                        onClick={transformVoice}
+                        onClick={() => void transformVoice()}
                         disabled={isTransforming}
-                        className="bg-primary"
+                        className="bg-primary h-10"
                       >
                         {isTransforming ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Wand2 className="w-3.5 h-3.5 mr-1" />}
                         {isTransforming ? 'Transformando...' : 'Transformar voz'}
                       </Button>
                     </div>
 
+                    {/* Erro de transformação inline: aviso curto + motivo detalhado no tooltip */}
+                    <AnimatePresence initial={false}>
+                      {transformError && (
+                        <motion.div
+                          key="transform-error"
+                          data-testid="voz-erro-transformacao"
+                          role="alert"
+                          {...entradaErro}
+                          className="flex items-center gap-2 px-1"
+                        >
+                          <AlertCircle className="w-4 h-4 text-destructive shrink-0" aria-hidden="true" />
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="text-xs text-destructive flex-1 cursor-help truncate">
+                                Falha ao transformar a voz
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" variant="error">{transformError}</TooltipContent>
+                          </Tooltip>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-10 text-xs border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => void transformVoice()}
+                            disabled={isTransforming}
+                          >
+                            Tentar de novo
+                          </Button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     {transformedUrl && (
-                      <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-2 pt-1">
-                        <Button variant="outline" size="sm" onClick={togglePlay}>
-                          {isPlaying ? <Pause className="w-3.5 h-3.5 mr-1" /> : <Play className="w-3.5 h-3.5 mr-1" />}
-                          {isPlaying ? 'Pausar' : 'Ouvir'}
+                      <motion.div {...entrada(5)} className="flex items-center justify-center gap-2 pt-1">
+                        {/* Largura fixa: alternar play/pausa/carregando não muda o layout */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-10 w-28 justify-center"
+                          aria-label={isPlayLoading ? 'Carregando prévia' : isPlaying ? 'Pausar prévia' : 'Ouvir prévia'}
+                          onClick={() => void togglePlay()}
+                          disabled={isPlayLoading}
+                        >
+                          {isPlayLoading ? <Loader2 className="w-3.5 h-3.5 mr-1 motion-safe:animate-spin" /> : isPlaying ? <Pause className="w-3.5 h-3.5 mr-1" /> : <Play className="w-3.5 h-3.5 mr-1" />}
+                          {isPlayLoading ? 'Carregando' : isPlaying ? 'Pausar' : 'Ouvir'}
                         </Button>
-                        <Button size="sm" onClick={handleSend} disabled={isSending} className="bg-primary hover:bg-primary/90">
+                        <Button size="sm" onClick={() => void handleSend()} disabled={isSending} className="bg-primary hover:bg-primary/90 h-10">
                           {isSending ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Send className="w-3.5 h-3.5 mr-1" />}
                           Enviar
                         </Button>

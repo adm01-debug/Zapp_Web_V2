@@ -1,0 +1,9 @@
+{
+  "always": {
+    "source_count": 4,
+    "legacy_signed_url_count": {"$min": 0}
+  },
+  "after": {
+    "legacy_signed_url_count": 0
+  }
+}

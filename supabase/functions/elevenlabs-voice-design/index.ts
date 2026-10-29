@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger, requireAuth, createAuthedClient, enforceRateLimit, isValidUUID } from "../_shared/validation.ts";
 import { ElevenLabsVoiceDesignPreviewSchema, ElevenLabsVoiceDesignCreateSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
+import { enforceAiCapability } from "../_shared/ai-feature-flags.ts";
 
 export async function handleVoiceDesignRequest(req: Request): Promise<Response> {
   const cors = handleCors(req);
@@ -13,6 +14,15 @@ export async function handleVoiceDesignRequest(req: Request): Promise<Response> 
   // chave do rate limit persistente — cota paga (ElevenLabs/Mapbox) por usuario.
   const auth = await requireAuth(req);
   if (auth instanceof Response) return auth;
+
+  // IA-009 / SL-010b — kill switch por capacidade, lido no SERVIDOR e ANTES de
+  // reservar limite e de tocar o provedor pago. A família de voz/áudio da
+  // ElevenLabs responde à chave única `ai.capability.voice` (decisão SL-010b).
+  // Capacidade desligada → 503 e NÃO consome rate limit; leitura não confiável
+  // fecha (fail-closed) — mesmo mecanismo já usado pelos outros caminhos de IA.
+  const capability = await enforceAiCapability({ functionName: "elevenlabs-voice-design", req });
+  if (capability) return capability;
+
   const rl = await enforceRateLimit(`elevenlabs-voice-design:${auth.userId}`, 5, 60_000);
   if (!rl.allowed) return errorResponse("Rate limit exceeded", 429, req);
 

@@ -1,28 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Search, Filter, Calendar, User, Globe, AlertTriangle, Shield, Activity } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { localDayKey } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
-
-interface AuditLog {
-  id: string;
-  action: string;
-  entity_type: string | null;
-  entity_id: string | null;
-  user_id: string | null;
-  details: Record<string, unknown> | null;
-  ip_address: string | null;
-  user_agent: string | null;
-  created_at: string;
-}
+import { useAuditLogDashboard, type AuditLogRow } from '@/hooks/security/useAuditLogDashboard';
 
 // Contrato compartilhado de ações e entidades de papel: todo evento de papel em
 // public.audit_logs começa com `role_` (audit_role_changes grava role_granted /
@@ -55,6 +41,8 @@ const ACTION_COLORS: Record<string, string> = {
   role_change: 'bg-accent/10 text-accent-foreground',
 };
 
+const LOGS_PAGE_LIMIT = 200;
+
 const ACTION_ICONS: Record<string, typeof Shield> = {
   login: User,
   logout: User,
@@ -68,62 +56,32 @@ const ACTION_ICONS: Record<string, typeof Shield> = {
 };
 
 export function AuditLogDashboard() {
-  const [logs, setLogs] = useState<AuditLog[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [entityFilter, setEntityFilter] = useState<string>('all');
-  const [stats, setStats] = useState({ total: 0, today: 0, suspicious: 0, uniqueUsers: 0 });
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
-  const fetchLogs = useCallback(async () => {
-    setLoading(true);
-    let query = supabase
-      .from('audit_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(200);
+  // HZ1-08: os totais vêm de contagem no servidor e a lista traz só as 200 mais
+  // recentes; aqui os filtros da tela viram coluna/valor para o hook.
+  const actionLike = actionFilter === ROLE_FILTER_VALUE ? ROLE_ACTION_PREFIX + '%' : null;
+  const actionEq = actionFilter !== 'all' && actionFilter !== ROLE_FILTER_VALUE ? actionFilter : null;
+  const entityTypes = entityFilter === 'all' ? null : (ENTITY_TYPES_BY_FILTER[entityFilter] ?? [entityFilter]);
 
-    if (actionFilter === ROLE_FILTER_VALUE) {
-      query = query.like('action', ROLE_ACTION_PREFIX + '%');
-    } else if (actionFilter !== 'all') {
-      query = query.eq('action', actionFilter);
-    }
-    if (entityFilter !== 'all') {
-      query = query.in('entity_type', ENTITY_TYPES_BY_FILTER[entityFilter] ?? [entityFilter]);
-    }
+  const { stats, logs, nomesPorUsuario, loading, error } = useAuditLogDashboard({ actionLike, actionEq, entityTypes });
 
-    const { data, error } = await query;
-    if (!error && data) {
-      setLogs(data as AuditLog[]);
-      
-      const today = localDayKey(new Date());
-      const todayLogs = data.filter(l => localDayKey(l.created_at) === today);
-      const uniqueUsers = new Set(data.map(l => l.user_id).filter(Boolean));
-      const suspicious = data.filter(l => isSensitiveAction(l.action));
-      
-      setStats({
-        total: data.length,
-        today: todayLogs.length,
-        suspicious: suspicious.length,
-        uniqueUsers: uniqueUsers.size,
-      });
-    }
-    setLoading(false);
-  }, [actionFilter, entityFilter]);
+  // A lista corta em LOGS_PAGE_LIMIT: com a página cheia ela mostra "as N mais recentes".
+  const truncated = !loading && !error && logs.length >= LOGS_PAGE_LIMIT;
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-filtro padrão, sem estado derivado de props para sincronizar.
-    fetchLogs();
-  }, [fetchLogs]);
-
-  const filteredLogs = logs.filter(log => {
+  const filteredLogs = logs.filter((log: AuditLogRow) => {
     if (!search) return true;
     const s = search.toLowerCase();
+    const nome = log.user_id ? (nomesPorUsuario[log.user_id] ?? '') : '';
     return (
       log.action.toLowerCase().includes(s) ||
-      log.entity_type?.toLowerCase().includes(s) ||
-      log.ip_address?.includes(s) ||
-      log.user_id?.includes(s)
+      (log.entity_type ?? '').toLowerCase().includes(s) ||
+      (log.ip_address ?? '').includes(s) ||
+      (log.user_id ?? '').includes(s) ||
+      nome.toLowerCase().includes(s)
     );
   });
 
@@ -143,13 +101,18 @@ export function AuditLogDashboard() {
 
   return (
     <div className="space-y-6 w-full min-w-0">
-      {/* Stats */}
+      {error && (
+        <div role="alert" className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          Falha ao carregar auditoria: {error}
+        </div>
+      )}
+      {/* Stats: com a leitura falha o número vira "—" (nunca um zero inventado). */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total de Logs', value: stats.total, icon: FileText, color: 'text-primary' },
-          { label: 'Hoje', value: stats.today, icon: Calendar, color: 'text-success' },
-          { label: 'Ações Sensíveis', value: stats.suspicious, icon: AlertTriangle, color: 'text-destructive' },
-          { label: 'Usuários Únicos', value: stats.uniqueUsers, icon: User, color: 'text-info' },
+          { label: 'Total de Logs', value: (error || !stats) ? '—' : stats.total, icon: FileText, color: 'text-primary' },
+          { label: 'Hoje', value: (error || !stats) ? '—' : stats.ultimas24h, icon: Calendar, color: 'text-success', hint: 'últimas 24 h' },
+          { label: 'Ações Sensíveis', value: (error || !stats) ? '—' : stats.sensiveis24h, icon: AlertTriangle, color: 'text-destructive', hint: 'últimas 24 h' },
+          { label: 'Usuários Únicos', value: (error || !stats) ? '—' : stats.usuariosUnicos7d, icon: User, color: 'text-info' },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="pt-4 pb-4">
@@ -158,6 +121,9 @@ export function AuditLogDashboard() {
                 <div>
                   <p className="text-2xl font-bold">{stat.value}</p>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  {'hint' in stat && stat.hint ? (
+                    <p className="text-[11px] text-muted-foreground/80">{stat.hint}</p>
+                  ) : null}
                 </div>
               </div>
             </CardContent>
@@ -225,6 +191,11 @@ export function AuditLogDashboard() {
             <FileText className="w-5 h-5" />
             Logs de Auditoria ({filteredLogs.length})
           </CardTitle>
+          {truncated && (
+            <p className="text-xs text-warning mt-1">
+              Exibindo os 200 registros mais recentes — pode haver registros mais antigos fora do recorte.
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[500px]">
@@ -238,44 +209,63 @@ export function AuditLogDashboard() {
                   Nenhum log encontrado
                 </p>
               ) : (
-                filteredLogs.map((log) => {
+                filteredLogs.map((log: AuditLogRow) => {
                   const Icon = getActionIcon(log.action);
+                  const autor = log.user_id ? (nomesPorUsuario[log.user_id] ?? log.user_id) : null;
                   return (
                     <motion.div
                       key={log.id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                      className="rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
-                      <div className={`p-2 rounded-lg ${getActionColor(log.action)}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">{log.action}</span>
-                          {log.entity_type && (
-                            <Badge variant="outline" className="text-xs">
-                              {log.entity_type}
-                            </Badge>
-                          )}
+                      <div className="flex items-center gap-3 p-3">
+                        <div className={`p-2 rounded-lg ${getActionColor(log.action)}`}>
+                          <Icon className="w-4 h-4" />
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                          <span>{format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</span>
-                          {log.ip_address && (
-                            <>
-                              <span>•</span>
-                              <span className="flex items-center gap-1">
-                                <Globe className="w-3 h-3" />
-                                {log.ip_address}
-                              </span>
-                            </>
-                          )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">{log.action}</span>
+                            {log.entity_type && (
+                              <Badge variant="outline" className="text-xs">
+                                {log.entity_type}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                            <span>{format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</span>
+                            {autor && (
+                              <>
+                                <span>•</span>
+                                <span>{autor}</span>
+                              </>
+                            )}
+                            {log.ip_address && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                  <Globe className="w-3 h-3" />
+                                  {log.ip_address}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
+                        {log.details && (
+                          <button
+                            type="button"
+                            onClick={() => setExpandedLogId((prev) => (prev === log.id ? null : log.id))}
+                            aria-expanded={expandedLogId === log.id}
+                            className="shrink-0 rounded-md border border-border bg-secondary/50 px-2 py-0.5 text-xs font-medium text-secondary-foreground transition-colors hover:bg-secondary/70"
+                          >
+                            {expandedLogId === log.id ? '−detalhes' : '+detalhes'}
+                          </button>
+                        )}
                       </div>
-                      {log.details && (
-                        <Badge variant="secondary" className="text-xs shrink-0">
-                          +detalhes
-                        </Badge>
+                      {expandedLogId === log.id && log.details && (
+                        <pre className="mx-3 mb-3 max-h-48 overflow-auto rounded-md bg-background/60 p-2 text-xs text-foreground/80">
+                          {JSON.stringify(log.details, null, 2)}
+                        </pre>
                       )}
                     </motion.div>
                   );

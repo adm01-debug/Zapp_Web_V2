@@ -199,9 +199,11 @@ export async function publicarIssue({ repo, token, marca, corpo }) {
   const abertas = await pedir(`/repos/${repo}/issues?state=open&labels=kpi-actions&per_page=10`, token);
   const existente = (abertas ?? []).find((i) => !i.pull_request && String(i.title).startsWith('[kpi-actions]'));
   if (existente) {
+    // W92: atualiza o titulo tambem para refletir a semana corrente
+    // (sem isso o titulo fica preso na semana em que a issue foi criada).
     await pedir(`/repos/${repo}/issues/${existente.number}`, token, {
       metodo: 'PATCH',
-      corpo: { body: corpo },
+      corpo: { title: marca, body: corpo },
     });
     return { acao: 'atualizada', numero: existente.number };
   }

@@ -23,6 +23,8 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 // O hook avisa quando a gravação falha; aqui só interessa SE avisou.
@@ -495,6 +497,45 @@ describe('useNotificationSettings', () => {
       expect(ok).toBe(true);
       expect(upsert.mock.calls[0][0]).toMatchObject({ user_id: 'u1', sound_volume: 70 });
       await waitFor(() => expect(result.current.settings.soundVolume).toBe(70));
+    });
+  });
+
+  // ========== PADRAO DO ALERTA DE SENTIMENTO (tela == Edge == banco) ==========
+  // A tela usava 3, enquanto a Edge `sentiment-alert` e o default da coluna
+  // (`20251222172655_...sql`) usam 2: quem nunca salvou via "3x" no painel e era
+  // alertado a partir de 2 analises negativas. Aqui o default da tela fica preso em 2.
+  describe('padrao de analises consecutivas de sentimento', () => {
+    const carregar = async () => {
+      const { result } = renderHook(() => useNotificationSettings(), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      return result;
+    };
+
+    it('sem usuario, o padrao e 2 (igual ao default do banco e a Edge)', async () => {
+      mockUseAuth.mockReturnValue({ user: null });
+      const result = await carregar();
+
+      expect(result.current.settings.sentimentConsecutiveCount).toBe(2);
+    });
+
+    it('coluna nula cai no padrao 2', async () => {
+      mockFrom.mockReturnValue(montarCadeia({ sound_enabled: true, sentiment_consecutive_count: null }));
+      const result = await carregar();
+
+      expect(result.current.settings.sentimentConsecutiveCount).toBe(2);
+    });
+
+    it('valor salvo continua sendo respeitado', async () => {
+      mockFrom.mockReturnValue(montarCadeia({ sound_enabled: true, sentiment_consecutive_count: 5 }));
+      const result = await carregar();
+
+      expect(result.current.settings.sentimentConsecutiveCount).toBe(5);
+    });
+
+    it('o campo morto desktopAlerts nao existe mais', async () => {
+      const result = await carregar();
+
+      expect(result.current.settings).not.toHaveProperty('desktopAlerts');
     });
   });
 });

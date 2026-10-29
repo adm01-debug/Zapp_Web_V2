@@ -32,9 +32,6 @@ export function DepartmentManagementDialog({ open, onOpenChange, department, cur
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
           <DialogTitle className="text-lg">{department.name}</DialogTitle>
-          {department.description && (
-            <p className="text-sm text-muted-foreground mt-0.5">{department.description}</p>
-          )}
         </DialogHeader>
 
         <div className="flex gap-1 px-6 py-3 border-b border-border" role="tablist" aria-label="Seções do departamento">

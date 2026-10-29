@@ -1,4 +1,4 @@
-// Barrel export for hooks/chat (22 hooks)
+// Barrel export for hooks/chat (21 hooks)
 export * from './useChatKeyboardNavigation';
 export * from './useChatSearch';
 export * from './useConversationActions';
@@ -8,7 +8,6 @@ export * from './useGroupsManager';
 export * from './useLatestAnalysis';
 export * from './useMessageReactions';
 export * from './useMessageSignature';
-export * from './useMessageStatus';
 export * from './useMessageTemplates';
 export * from './useMessages';
 export * from './useNewConversation';

@@ -20,6 +20,8 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
@@ -135,6 +137,25 @@ describe('useSupabaseRealtime', () => {
     two.unmount();
     act(() => vi.advanceTimersByTime(250));
     expect(realtimeMocks.removeChannel).toHaveBeenCalledTimes(1);
+  });
+
+  it('um ouvinte que lanca nao impede os demais de receber', () => {
+    const quebrado = vi.fn(() => {
+      throw new Error('falha do ouvinte');
+    });
+    const sadio = vi.fn();
+    renderHook(() => useSupabaseRealtime({
+      channelName: 'queues-isolado', table: 'queues', onAll: quebrado,
+    }));
+    renderHook(() => useSupabaseRealtime({
+      channelName: 'queues-isolado', table: 'queues', onAll: sadio,
+    }));
+
+    act(() => realtimeMocks.payloadCallback?.({ eventType: 'UPDATE', new: { id: 'q1' } }));
+
+    expect(quebrado).toHaveBeenCalledTimes(1);
+    expect(sadio).toHaveBeenCalledTimes(1);
+    expect(realtimeMocks.removeChannel).not.toHaveBeenCalled();
   });
 
   it('cancels deferred removal when StrictMode-style remount happens', () => {

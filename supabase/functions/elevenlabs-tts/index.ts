@@ -1,8 +1,11 @@
 import { handleCors, errorResponse, jsonResponse, requireEnv, Logger, getCorsHeaders, enforceRateLimit, requireAuth } from "../_shared/validation.ts";
 import { ElevenLabsTTSSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
+import { aiCapabilityFlagKey, readCapabilityFlag } from "../_shared/ai-feature-flags.ts";
 
-Deno.serve(async (req) => {
+// `import.meta.main` (mesmo padrão de `elevenlabs-sts`/`elevenlabs-dialogue`): o
+// handler pode ser importado por teste sem subir o servidor.
+export async function handleElevenLabsTts(req: Request): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
 
@@ -19,6 +22,23 @@ Deno.serve(async (req) => {
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
     const { text, voiceId, modelId, languageCode, applyTextNormalization } = parsed.data;
+
+    // IA-009 / SL-010b (decisão do cartão t_98090b40): kill switch de voz lido no
+    // SERVIDOR antes de tocar o provedor pago. A família de voz/áudio inteira
+    // responde à chave única `ai.capability.voice`; desligada (ou leitura não
+    // confiável) NEGA — nenhuma chamada à ElevenLabs. `jsonResponse` (nunca
+    // `errorResponse` em 5xx: acima de 500 o corpo vira "Internal server error" e
+    // o consumidor perderia o código).
+    const voiceEnabled = await readCapabilityFlag(aiCapabilityFlagKey("voice"));
+    if (voiceEnabled !== true) {
+      log.warn("IA de voz desativada por flag — provedor nao chamado");
+      return jsonResponse(
+        { error: { code: "AI_DISABLED", message: "IA de voz desativada por flag." } },
+        503,
+        req,
+      );
+    }
+
     const ELEVENLABS_API_KEY = requireEnv("ELEVENLABS_API_KEY");
 
     const selectedVoiceId = voiceId || 'TY3h8ANhQUsJaa0Bga5F';
@@ -92,4 +112,8 @@ Deno.serve(async (req) => {
     log.error("Unhandled error", { error: errorMessage });
     return errorResponse(errorMessage, 500, req);
   }
-});
+}
+
+if (import.meta.main) {
+  Deno.serve(handleElevenLabsTts);
+}

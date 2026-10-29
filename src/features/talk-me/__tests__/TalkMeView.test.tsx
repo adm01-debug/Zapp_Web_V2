@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { TalkMeQueueController } from '../useTalkMeQueue';
-import { TalkMeOutcomeUnknownError, type TalkMeWaitingContact } from '../types';
+import { TalkMeOutcomeUnknownError, type TalkMePendingMessage, type TalkMeWaitingContact } from '../types';
 
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }));
 vi.mock('sonner', () => ({ toast }));
@@ -46,6 +46,27 @@ const second: TalkMeWaitingContact = {
   position: 2,
 };
 
+const pendingMessages: TalkMePendingMessage[] = [
+  {
+    messageId: 'message-0',
+    sender: 'contact',
+    content: 'Bom dia, ainda estou aguardando retorno',
+    messageType: 'text',
+    mediaUrl: null,
+    caption: null,
+    createdAt: '2026-09-30T12:00:00.000Z',
+  },
+  {
+    messageId: 'message-1',
+    sender: 'contact',
+    content: 'Preciso de cem caixas',
+    messageType: 'text',
+    mediaUrl: null,
+    caption: null,
+    createdAt: '2026-09-30T12:05:00.000Z',
+  },
+];
+
 function controller(overrides: Partial<TalkMeQueueController> = {}): TalkMeQueueController {
   return {
     queues: [{ queueId: 'queue-1', name: 'Comercial', color: '#2563eb', waitingCount: 2, oldestWaitingAt: first.waitingSince }],
@@ -76,6 +97,7 @@ function controller(overrides: Partial<TalkMeQueueController> = {}): TalkMeQueue
       conversationStatus: 'open',
       claimedAt: '2026-09-30T12:20:00.000Z',
     })),
+    fetchPendingMessages: vi.fn(async () => pendingMessages),
     ...overrides,
   };
 }
@@ -92,9 +114,12 @@ function renderView(ctrl = controller(), onAccepted = vi.fn(async () => undefine
 
 describe('TalkMeView', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
     HTMLElement.prototype.scrollTo = vi.fn();
     HTMLElement.prototype.scrollBy = vi.fn();
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
   });
 
   it('mostra os dados reais e mantém o atendimento mais antigo selecionado', () => {
@@ -157,6 +182,86 @@ describe('TalkMeView', () => {
     renderView(ctrl);
     fireEvent.change(screen.getByLabelText('Buscar na fila TALK ME'), { target: { value: 'Acme' } });
     expect(ctrl.setSearch).toHaveBeenCalledWith('Acme');
+    expect(screen.getByLabelText('Buscar na fila TALK ME')).toHaveAttribute('maxlength', '80');
+  });
+
+  it('renderiza imagem acessível no cartão sem autoplay', () => {
+    const imageItem: TalkMeWaitingContact = {
+      ...first,
+      lastMessageContent: '',
+      lastMessageType: 'image',
+      lastMessageMediaUrl: 'https://cdn.example.com/foto.jpg',
+    };
+    renderView(controller({ items: [imageItem], totalCount: 1 }));
+
+    const openImage = screen.getByRole('button', { name: 'Abrir imagem de Ana Compras' });
+    const image = within(openImage).getByRole('img', { name: 'Imagem de Ana Compras' });
+    expect(image).toHaveAttribute('loading', 'lazy');
+    expect(image).toHaveAttribute('decoding', 'async');
+    expect(image).not.toHaveAttribute('autoplay');
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+  });
+
+  it('só reproduz áudio após clique e pausa ao trocar de contato', async () => {
+    const audioItem: TalkMeWaitingContact = {
+      ...first,
+      lastMessageContent: '',
+      lastMessageType: 'audio',
+      lastMessageMediaUrl: 'https://cdn.example.com/audio.ogg',
+    };
+    renderView(controller({ items: [audioItem, second] }));
+
+    expect(screen.queryByRole('audio')).not.toBeInTheDocument();
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Reproduzir áudio de Ana Compras' }));
+
+    await waitFor(() => expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1));
+    expect(screen.getByLabelText('Áudio de Ana Compras')).toHaveAttribute('preload', 'none');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Próximo atendimento' }));
+    await waitFor(() => expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled());
+  });
+
+  it('pausa o áudio ao fechar a tela', async () => {
+    const audioItem: TalkMeWaitingContact = {
+      ...first,
+      lastMessageContent: '',
+      lastMessageType: 'audio',
+      lastMessageMediaUrl: 'https://cdn.example.com/audio.ogg',
+    };
+    const ctrl = controller({ items: [audioItem], totalCount: 1 });
+    const { rerender } = render(
+      <TooltipProvider>
+        <TalkMeView open onOpenChange={vi.fn()} controller={ctrl} onAccepted={vi.fn()} />
+      </TooltipProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Reproduzir áudio de Ana Compras' }));
+    await waitFor(() => expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1));
+
+    rerender(
+      <TooltipProvider>
+        <TalkMeView open={false} onOpenChange={vi.fn()} controller={ctrl} onAccepted={vi.fn()} />
+      </TooltipProvider>,
+    );
+
+    await waitFor(() => expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled());
+  });
+
+  it('mantém a área da mídia e mostra o texto de fallback quando a URL falha', async () => {
+    const imageItem: TalkMeWaitingContact = {
+      ...first,
+      lastMessageContent: '',
+      lastMessageType: 'image',
+      lastMessageMediaUrl: 'https://cdn.example.com/expirada.jpg',
+    };
+    renderView(controller({ items: [imageItem], totalCount: 1 }));
+
+    fireEvent.error(screen.getByRole('img', { name: 'Imagem de Ana Compras' }));
+
+    const fallback = await screen.findByTestId('talk-me-media-fallback');
+    expect(fallback).toHaveTextContent('Imagem recebida');
+    expect(fallback.closest('.talk-me-media')).toHaveClass('min-w-0', 'max-w-full', 'overflow-hidden');
+    expect(fallback).toHaveClass('min-h-16');
   });
 
   it('move a seleção e o foco juntos ao navegar pelo cartão com o teclado', async () => {
@@ -321,6 +426,103 @@ describe('TalkMeView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Próximo atendimento' }));
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Bruno Financeiro' })).toHaveAttribute('aria-current', 'true'));
+  });
+
+  it('abre o histórico pendente sob demanda sem aceitar o atendimento', async () => {
+    const ctrl = controller();
+    renderView(ctrl);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver histórico (2 mensagens pendentes)' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Histórico antes do aceite' });
+    await waitFor(() => expect(within(dialog).getByText('Bom dia, ainda estou aguardando retorno')).toBeInTheDocument());
+    expect(ctrl.fetchPendingMessages).toHaveBeenCalledWith('contact-1');
+    expect(ctrl.claim).not.toHaveBeenCalled();
+    const items = within(dialog).getAllByRole('listitem');
+    expect(items).toHaveLength(2);
+    expect(within(items[0]).getByText('Cliente')).toBeInTheDocument();
+    expect(within(items[0]).queryByText('Preciso de cem caixas')).not.toBeInTheDocument();
+    expect(within(items[1]).getByText('Preciso de cem caixas')).toBeInTheDocument();
+  });
+
+  it('distingue campanha de saída, mensagens do cliente e nota interna no histórico', async () => {
+    const mixed: TalkMePendingMessage[] = [
+      { ...pendingMessages[0], messageId: 'campaign-1', sender: 'agent', content: 'Campanha de reativação enviada' },
+      pendingMessages[0],
+      { ...pendingMessages[0], messageId: 'note-1', sender: 'system', messageType: 'internal_note', content: 'Nota interna durante a espera' },
+      pendingMessages[1],
+    ];
+    const ctrl = controller({ fetchPendingMessages: vi.fn(async () => mixed) });
+    renderView(ctrl);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver histórico (2 mensagens pendentes)' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Histórico antes do aceite' });
+    const items = await within(dialog).findAllByRole('listitem');
+    expect(within(items[0]).getByText('Saída')).toBeInTheDocument();
+    expect(within(items[0]).getByText('Campanha de reativação enviada')).toBeInTheDocument();
+    expect(within(items[1]).getByText('Cliente')).toBeInTheDocument();
+    expect(within(items[2]).getByText('Nota interna')).toBeInTheDocument();
+    expect(within(items[2]).getByText('Nota interna durante a espera')).toBeInTheDocument();
+    expect(within(items[3]).getByText('Cliente')).toBeInTheDocument();
+  });
+
+  it('renderiza mídia também no histórico pendente', async () => {
+    const withImage: TalkMePendingMessage[] = [
+      {
+        ...pendingMessages[0],
+        messageId: 'history-image',
+        content: '',
+        messageType: 'image',
+        mediaUrl: 'https://cdn.example.com/historico.jpg',
+      },
+    ];
+    renderView(controller({ fetchPendingMessages: vi.fn(async () => withImage) }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver histórico (2 mensagens pendentes)' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Histórico antes do aceite' });
+    expect(await within(dialog).findByRole('img', { name: 'Imagem de Cliente' })).toBeInTheDocument();
+  });
+
+  it('Escape fecha apenas o histórico e devolve o foco ao acionador', async () => {
+    renderView();
+    const trigger = screen.getByRole('button', { name: 'Ver histórico (2 mensagens pendentes)' });
+    trigger.focus();
+    fireEvent.click(trigger);
+
+    const history = await screen.findByRole('dialog', { name: 'Histórico antes do aceite' });
+    expect(history).toHaveFocus();
+    fireEvent.keyDown(history, { key: 'Escape' });
+
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Histórico antes do aceite' })).not.toBeInTheDocument());
+    expect(screen.getByRole('dialog', { name: /TALK ME/ })).toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  it('oferece nova tentativa quando o histórico falha', async () => {
+    const fetchPendingMessages = vi.fn()
+      .mockRejectedValueOnce(new Error('falha de rede'))
+      .mockResolvedValueOnce(pendingMessages);
+    const ctrl = controller({ fetchPendingMessages });
+    renderView(ctrl);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver histórico (2 mensagens pendentes)' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Histórico antes do aceite' });
+    await waitFor(() => expect(within(dialog).getByRole('alert')).toHaveTextContent('Não foi possível carregar as mensagens.'));
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Tentar novamente' }));
+    await waitFor(() => expect(within(dialog).getByText('Bom dia, ainda estou aguardando retorno')).toBeInTheDocument());
+    expect(fetchPendingMessages).toHaveBeenCalledTimes(2);
+    expect(ctrl.claim).not.toHaveBeenCalled();
+  });
+
+  it('não oferece histórico quando só a última mensagem está pendente', () => {
+    renderView(controller({ items: [second], totalCount: 1 }));
+
+    expect(screen.queryByRole('button', { name: /Ver histórico \(\d+ mensagens pendentes\)/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Aceitar e conversar' })).toBeInTheDocument();
   });
 
   it('mantém a fila visível e permite repetir quando apenas a próxima página falha', () => {

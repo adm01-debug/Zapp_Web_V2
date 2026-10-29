@@ -768,6 +768,37 @@
       "reason": "safer-replay",
       "related_migration": null,
       "justification": "O arquivo declara a funcao com CREATE FUNCTION sem OR REPLACE e aborta com 42723 onde ela ja existe (desde a 20261001351230_f51a). Na aplicacao pos-merge de 02/10/2026 rodou a versao equivalente COM OR REPLACE — unica diferenca de conteudo —, e e essa que o ledger preserva. O arquivo nao pode ser reescrito (migration registrada e imutavel, regra 7 do CLAUDE.md). A substituta canonica e a 20261002461230_f51c, que repete CHECK, ACL e triggers; a f51a cobre funcao, colunas e indice, entao o arquivo nao carrega objeto exclusivo. Ele fica no lugar com o replay fixado por hash proprio; mover para _superseded criaria 'registro no banco sem arquivo no repo'. Medido em 02/10/2026: sha256 dos bytes (edeb3b2d) e do SQL canonico (7cec99db) do arquivo; os hashes do ledger (0339f3bb, ba9faefd) calculados com o lexer do guard e o splitStatements do register-migration.mjs, conferidos contra o Postgres."
+    },
+    {
+      "version": "20261009193246",
+      "filename": "20261009193246_team_receipts_reactions_conversation_id_forced.sql",
+      "file_sha256": "8d01e6fbd56a161652fd88e72e188b138736d3967c71f7fc1baa0b24eb013bdf",
+      "file_sql_sha256": "f6237d5c8cb0f6e7badcdec5497200738b959b2a599c976c7db6632cf3514acf",
+      "ledger_name": "team_receipts_reactions_conversation_id_forced",
+      "ledger_statements_sha256": "28ea765d4a187f64ef942b954e86fb2495e8662a03d8b1d5aecc239d4b0c82a1",
+      "ledger_sql_sha256": "fd3a72ec5c075660f63ef6195bb2e5b7bfd4c46de72a0751638aedd6370ade55",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "safer-replay",
+      "related_migration": null,
+      "justification": "O arquivo foi corrigido para desligar o trigger team_message_receipts_update_guard_trig durante o backfill de conversation_id (esse trigger preencheria read_at=now() para recibos com status='read', mas a correcao funcional desta migration e so reconciliar conversation_id legado). A migration ja foi aplicada em producao sem o DISABLE/ENABLE (10 statements no ledger); o arquivo passa a ter 12 statements com a protecao. O arquivo corrigido corresponde a versao de referencia 20261006222024 que ja tinha o mesmo padrao. Hashes medidos em 27/10/2026."
+    },
+    {
+      "version": "20261016120000",
+      "filename": "20261016120000_security_fixes_passkey_purge_gmail_search_events.sql",
+      "file_sha256": "00fe9a89d69b868ae08c5b047536c30eaa998c607dfba2d7cad00767c00ae6ca",
+      "ledger_name": "security_fixes_passkey_purge_gmail_search_events",
+      "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
+      "kind": "ledger-only/comment-only",
+      "justification": "DDL aplicado diretamente em 16/10/2026 e revertido em 20261016130000; o stub fecha a paridade sem reintroduzir a regressao (PR #2014)."
+    },
+    {
+      "version": "20261016240000",
+      "filename": "20261016240000_search_events_rls_decision.sql",
+      "file_sha256": "65d54fca860da5150347b97c28c27d1865ece494baef8e3be6b48288181cf472",
+      "ledger_name": "search_events_rls_decision",
+      "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
+      "kind": "ledger-only/comment-only",
+      "justification": "Arquivo de documentacao arquitetural: a ausencia de SELECT policy em search_events e intencional (decisao D-SearchRLS, 16/10/2026). Nenhuma DDL e executada; o registro no ledger preserva a decisao sem alterar o schema."
     }
   ]
 }

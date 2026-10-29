@@ -3,13 +3,14 @@
  *
  * Ao remover a porta de entrada "Quadro" (id `pipeline`), ids que morreram ficam
  * gravados no `localStorage` de quem já usava o app antes da fusão — em
- * `sidebar-favorites`, `zapp-recent-modules` e `mobile-drawer-recents`. Nenhum dos
- * três é migrado (plano, seção 1.4): cada um resolve o id contra a lista de módulos
- * viva e descarta o que não existe mais.
+ * `sidebar-favorites`, `mobile-drawer-recents` e (desde a paleta única, X054)
+ * `zapp-recent-modules`. Nenhum dos três é migrado (plano,
+ * seção 1.4): cada um resolve o id contra a lista de módulos viva e descarta o que
+ * não existe mais.
  *
  *   - Sidebar            → `favoriteItems` (allNavItems.find + filter(Boolean))
- *   - CommandPalette     → `recentItems`   (allItems.find + filter(Boolean))
  *   - MobileDrawerMenu   → `recentItems`   (allItems.find + filter(Boolean))
+ *   - Paleta única (X054)→ `recentCommands` (navigationCommands.find + filter(Boolean))
  *
  * Este teste trava esse comportamento nos TRÊS lugares, com um id morto de verdade
  * (`quadro-legado`, que nunca existiu no menu) e um módulo vivo (`chatbot`): o id
@@ -18,7 +19,7 @@
  * Os componentes são renderizados de verdade (nada de replicar o filtro no teste).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -34,6 +35,15 @@ vi.mock('@/hooks/ui/useTheme', () => ({
 vi.mock('@/hooks/ui/useSidebarCollapse', () => ({
   useSidebarCollapse: () => ({ collapsed: false, toggle: vi.fn() }),
 }));
+
+// HZ2-007/HZ5-19: os favoritos passaram a ser do usuário — o hook real só enxerga a
+// chave dele. Sem o mock de auth, não haveria dono e a lista viria vazia.
+const authState = vi.hoisted(() => ({ userId: 'e17-atendente' as string | null }));
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: authState.userId ? { id: authState.userId } : null }),
+}));
+/** Chave de favoritos do dono logado (HZ2-007/HZ5-19: passou a ter o id do usuário). */
+const SIDEBAR_FAVORITES_KEY = `zapp.sidebar.favorites:${authState.userId}`;
 
 vi.mock('@/hooks/system/useUserRole', () => ({
   useUserRole: () => ({
@@ -65,10 +75,11 @@ vi.mock('@/components/theme/HighContrastToggle', async (importOriginal) => ({
 }));
 
 // `useSidebarFavorites` NÃO é mockado de propósito: o ponto do cartão é justamente
-// o hook real lendo `sidebar-favorites` do localStorage.
+// o hook real lendo a chave do usuário em `localStorage`.
 import { Sidebar } from '@/components/layout/Sidebar';
-import { CommandPalette } from '@/components/CommandPalette';
 import { MobileDrawerMenu } from '@/components/mobile/MobileDrawerMenu';
+import { CommandPalette } from '@/components/ui/command-palette';
+import { useModuleCommandItems } from '@/hooks/integrations/useModuleCommandItems';
 
 function renderSidebar() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -79,21 +90,6 @@ function renderSidebar() {
       </TooltipProvider>
     </QueryClientProvider>,
   );
-}
-
-/** Abre a paleta pelo atalho real (Ctrl+K) e devolve o grupo "Recentes" renderizado. */
-function grupoDeRecentesDaPaleta(): HTMLElement | null {
-  const heading = Array.from(document.querySelectorAll('[cmdk-group-heading]')).find(
-    (h) => h.textContent?.trim() === 'Recentes',
-  );
-  return heading ? (heading.closest('[cmdk-group]') as HTMLElement) : null;
-}
-
-async function renderPaleta() {
-  render(<CommandPalette onNavigate={vi.fn()} />);
-  fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
-  // O CommandDialog renderiza em portal: a espera é no documento, não no `container`.
-  return screen.findByPlaceholderText(/Buscar módulo/);
 }
 
 /** O bloco "Recentes" do menu mobile (o `<div>` que envolve o rótulo). */
@@ -123,7 +119,7 @@ beforeEach(() => {
 
 describe('E17 — Sidebar: favoritos gravados (sidebar-favorites) ignoram id morto', () => {
   it('mostra só o módulo vivo quando o id morto está favoritado junto', () => {
-    localStorage.setItem('sidebar-favorites', JSON.stringify([ID_MORTO, ID_VIVO]));
+    localStorage.setItem(SIDEBAR_FAVORITES_KEY, JSON.stringify([ID_MORTO, ID_VIVO]));
 
     renderSidebar();
 
@@ -137,37 +133,12 @@ describe('E17 — Sidebar: favoritos gravados (sidebar-favorites) ignoram id mor
   });
 
   it('não renderiza a seção Favoritos (e não lança) quando só o id morto está gravado', () => {
-    localStorage.setItem('sidebar-favorites', JSON.stringify([ID_MORTO]));
+    localStorage.setItem(SIDEBAR_FAVORITES_KEY, JSON.stringify([ID_MORTO]));
 
     expect(() => renderSidebar()).not.toThrow();
 
     expect(screen.queryByText('Favoritos')).toBeNull();
     expect(screen.queryByRole('navigation', { name: 'Favoritos' })).toBeNull();
-  });
-});
-
-describe('E17 — Paleta de comandos: recentes gravados (zapp-recent-modules) ignoram id morto', () => {
-  it('mostra só o módulo vivo na lista de Recentes', async () => {
-    localStorage.setItem('zapp-recent-modules', JSON.stringify([ID_MORTO, ID_VIVO]));
-
-    await renderPaleta();
-
-    const grupo = grupoDeRecentesDaPaleta();
-    expect(grupo).not.toBeNull();
-    const itens = Array.from(grupo!.querySelectorAll('[cmdk-item]')).map((i) => i.textContent);
-    expect(itens).toHaveLength(1);
-    expect(itens[0]).toContain('Chatbot');
-    expect(grupo!.textContent).not.toContain(ID_MORTO);
-  });
-
-  it('não renderiza o grupo Recentes (e não lança) quando só o id morto está gravado', async () => {
-    localStorage.setItem('zapp-recent-modules', JSON.stringify([ID_MORTO]));
-
-    await renderPaleta();
-
-    expect(grupoDeRecentesDaPaleta()).toBeNull();
-    expect(screen.queryByText('Recentes')).toBeNull();
-    expect(document.body.textContent).not.toContain(ID_MORTO);
   });
 });
 
@@ -190,6 +161,48 @@ describe('E17 — Menu mobile: recentes gravados (mobile-drawer-recents) ignoram
     expect(() => renderDrawer()).not.toThrow();
 
     expect(blocoDeRecentesDoDrawer()).toBeNull();
+    expect(screen.queryByText('Recentes')).toBeNull();
+  });
+});
+
+/**
+ * Paleta única (X054): o grupo "Recentes" (`zapp-recent-modules`, gravado ao
+ * escolher um módulo) resolve cada id contra a lista viva de comandos de
+ * navegação — id morto cai no `find` + `filter(Boolean)`, sem estourar. Hook e
+ * paleta rodam de verdade, com o papel mockado (supervisor) da suíte.
+ */
+function PaletaUnicaE17() {
+  const navigationCommands = useModuleCommandItems(() => {});
+  return <CommandPalette open onOpenChange={() => {}} navigationCommands={navigationCommands} />;
+}
+
+function renderPaletaUnica() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={client}>
+      <PaletaUnicaE17 />
+    </QueryClientProvider>,
+  );
+}
+
+describe('E17 — Paleta única: recentes gravados (zapp-recent-modules) ignoram id morto', () => {
+  it('mostra só o módulo vivo no grupo Recentes da paleta única', () => {
+    localStorage.setItem('zapp-recent-modules', JSON.stringify([ID_MORTO, ID_VIVO]));
+
+    renderPaletaUnica();
+
+    const rotulo = screen.getByText('Recentes');
+    const grupo = rotulo.closest('div')?.parentElement as HTMLElement;
+    expect(grupo.querySelectorAll('button')).toHaveLength(1);
+    expect(grupo.textContent).toContain('Chatbot');
+    expect(grupo.textContent).not.toContain(ID_MORTO);
+  });
+
+  it('não renderiza o grupo Recentes (e não lança) quando só o id morto está gravado', () => {
+    localStorage.setItem('zapp-recent-modules', JSON.stringify([ID_MORTO]));
+
+    expect(() => renderPaletaUnica()).not.toThrow();
+
     expect(screen.queryByText('Recentes')).toBeNull();
   });
 });

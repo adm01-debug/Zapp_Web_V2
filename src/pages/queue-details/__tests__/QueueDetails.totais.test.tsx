@@ -95,7 +95,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockFrom.mockImplementation((tabela: string) => {
     if (tabela === 'queues') {
-      return { select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: QUEUE, error: null }) }) }) };
+      return { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: QUEUE, error: null }) }) }) };
     }
     if (tabela === 'queue_members') {
       return { select: () => ({ eq: () => Promise.resolve({ data: MEMBERS, error: null }) }) };
@@ -110,19 +110,15 @@ beforeEach(() => {
       };
     }
     if (tabela === 'messages') {
+      // R2-QUE-004: o enriquecimento e agregado — uma leitura por `in('contact_id', ids)`.
       return {
-        select: (_colunas?: string, opts?: { count?: string; head?: boolean }) =>
-          opts?.head
-            ? { eq: () => thenable({ data: null, count: 3, error: null }) }
-            : {
-                eq: () => ({
-                  order: () => ({ limit: () => ({ maybeSingle: () => Promise.resolve({ data: { created_at: '2026-10-05T11:00:00Z' } }) }) }),
-                }),
-              },
+        select: () => ({
+          in: () => ({ order: () => ({ range: () => Promise.resolve({ data: [], error: null }) }) }),
+        }),
       };
     }
     if (tabela === 'profiles') {
-      return { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { name: 'Ana', avatar_url: null } }) }) }) };
+      return { select: () => ({ in: () => Promise.resolve({ data: [{ id: 'p-1', name: 'Ana', avatar_url: null }], error: null }) }) };
     }
     if (tabela === 'conversation_sla') {
       // R2-QUE-001: a fila inteira e lida por `contacts.queue_id`, paginando com `.range`.

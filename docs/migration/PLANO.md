@@ -80,9 +80,9 @@ Status por etapa: ver seção 10 de `zapp-web-v2-migration-handoff.md`. Convenç
 71. `docker/nginx.conf`: + `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`; sem CSP nesta fase.
 72. `.nvmrc` → 20.19.0; `ci.yml`: job `audit-report` para dentro de `jobs:`, `npm ci` → `bun install --frozen-lockfile`.
 73. `docker-compose.yml` + `.dockerignore` (validados na VPS) entram no repo.
-74. Testes (2463/2496, 1 timeout) e `tsc` (3 erros) registrados como pré-existentes; sem correção não pedida.
-75. `graphify update` e commit do `GRAPH_REPORT.md`.
-76. PR único com checklist; review por agente (diff mínimo, zero segredo, zero churn).
+74. Testes (2463/2496, 1 timeout) e `tsc` (3 erros) registrados como pré-existentes; sem correção não pedida. VERIFICADO 08/10/2026 — superado: os 3 erros de `tsc` foram zerados (`scripts/ci/typecheck-baseline.json` com `issues: []`) e o que restar de tipos/lint é travado no CI por ratchet (`typecheck-ratchet.mjs` e `lint-ratchet.mjs` — novas=0, medido hoje); cada suíte é inventariada por `check-test-inventory.mjs` e a instabilidade de E2E tem registro com prazo em `e2e/quarantine.json` (0 itens).
+75. `graphify update` e commit do `GRAPH_REPORT.md`. VERIFICADO 08/10/2026 — superado: decisão registrada no `CLAUDE.md` (§graphify) — `graphify-out/` fica fora do git (`.gitignore:116`) e o grafo é regenerado por clone com `bun run graph:setup` / `bun run graph:update`; não há `GRAPH_REPORT.md` versionado por desenho.
+76. PR único com checklist; review por agente (diff mínimo, zero segredo, zero churn). VERIFICADO 08/10/2026 — cumprido: `.github/PULL_REQUEST_TEMPLATE.md` traz o checklist (migration/ledger, Edge/deploy-functions e os itens de teste) travado por `scripts/ci/issue-templates.unit.mjs` (E92) no job de lint do `ci.yml`; no modo V2 não existe PR por tarefa (trabalho local; PR só quando o dono pede).
 77. GATE — merge em `main`.
 78. Tag `v2.0.0-hostinger` + release notes. [GitHub MCP]
 

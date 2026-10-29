@@ -124,8 +124,8 @@ export function PasskeysPanel() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => { setSelectedPasskey(passkey.id); setNewName(passkey.friendly_name || ''); setShowRenameDialog(true); }}><Pencil className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => { setSelectedPasskey(passkey.id); setShowDeleteDialog(true); }}><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" aria-label="Renomear passkey" onClick={() => { setSelectedPasskey(passkey.id); setNewName(passkey.friendly_name || ''); setShowRenameDialog(true); }}><Pencil className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" aria-label="Excluir passkey" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => { setSelectedPasskey(passkey.id); setShowDeleteDialog(true); }}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </motion.div>
                 ))}

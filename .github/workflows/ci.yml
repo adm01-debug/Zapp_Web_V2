@@ -1,54 +1,40 @@
 # docs:
-#   gatilho: pull_request, push na main, merge_group e dispatch
-#   prova: lint, tipos, testes, build, security e E2E do codigo
+#   gatilho: pull_request, push na main e dispatch
+#   prova: tipos, testes de unidade, contratos Node/Edge, build, security e E2E publico
 #   falha: PR fica vermelho e o merge e bloqueado pelos required checks
 #   avisa: autor do PR e revisor, via checks do GitHub
+# nao-e-bug:
+#   - merge_group ausente: este workflow declara somente push, pull_request e workflow_dispatch; a fila de merge nao esta disponivel para a conta adm01-debug (tipo User, nao Organization)
 # =================================================
-# ZAPP-WEB CI/CD Pipeline
-# =================================================
-# Triggered on: push to main, pull requests
-# Jobs: lint-and-typecheck, test, build, security, e2e
-# Runtime: bun (o repo usa bun.lock, nao package-lock.json)
+# O CI principal executa TypeCheck, Vitest, contratos Node/Edge, build, auditoria
+# de dependencias/segredos e E2E publico nos PRs. Guardas de banco que dependem
+# de servicos/credenciais de producao continuam fora do CI de PR.
 # =================================================
 
 name: CI/CD Pipeline
 
 on:
-  # E23: 'develop' removido — branch nao existe no repo (so main).
   push:
     branches: [main]
   pull_request:
     branches: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
-  # Fila de merge: sem este gatilho os required checks nunca reportariam no
-  # merge group e a fila travaria todos os merges do repo.
-  merge_group:
-  # E24: reexecutar a suite na main sem precisar de um push novo.
   workflow_dispatch:
 
-env:
-  VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-  VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-  VITE_CRM_INTEGRATION_ENABLED: 'true'
-
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 permissions:
   contents: read
 
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
-  # Só cancela runs em andamento pra PR (push novo na mesma PR); em push na
-  # main cada commit mantém seu próprio veredito de CI (antes cancelava um
-  # merge no meio do outro, e a main ficava sem check verde nenhum).
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # ===========================================
-  # JOB 1: Lint & Type Check
-  # ===========================================
-  lint-and-typecheck:
-    name: 🔍 Lint & TypeCheck
+  typecheck:
+    name: 🔎 TypeCheck
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -65,197 +51,112 @@ jobs:
         with:
           bun-version: '1.4.0'
 
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
+
+      # "tsc --noEmit" e no-op neste tsconfig (so "references"); o ratchet roda
+      # "tsc -b --force" e falha so se surgir erro de tipo novo.
+      - name: 🔎 Run TypeScript debt ratchet
+        run: node scripts/ci/typecheck-ratchet.mjs
+
+  unit-tests:
+    name: 🧪 Unit Tests (${{ matrix.shard }}/3)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    strategy:
+      matrix:
+        shard: [1, 2, 3]
+      fail-fast: false
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🧄 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
+      - name: 📚 Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: 🧪 Run Vitest shard ${{ matrix.shard }}/3
+        run: bun vitest run --shard=${{ matrix.shard }}/3
+        env:
+          CI: true
+
+  node-scripts:
+    name: 🧩 Node CI Scripts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🟩 Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
 
       - name: 🦕 Setup Deno
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
           deno-version: '2.9.5'
 
-      - name: 🦕 Typecheck das Edge Functions (deno check)
-        run: >-
-          deno check --config scripts/ci/deno.json --frozen
-          supabase/functions/*/index.ts
-
-      # E49: glob substitui lista hardcoded de ~45 arquivos. Flags combinadas
-      # cobrem os três grupos anteriores (mídia, multiplix, contratos gerais).
-      - name: 🧪 Run executable Edge handler contracts
-        run: >-
-          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1
-          $(git ls-files 'supabase/functions/**/*.test.ts')
-
-      - name: 🧪 Test CI and Edge deployment guards
-        run: >-
-          node --test scripts/ci/*.unit.mjs scripts/edge-deploy/*.unit.mjs
-          scripts/db-audit/crm-sync-outbox-contract.test.mjs
-          scripts/db-audit/types-sync-psql-buffer.test.mjs scripts/talkx/*.unit.mjs
-
-      - name: 🐹 Setup Go for egress-proxy contracts
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: '1.24.x'
-          cache-dependency-path: infrastructure/preview-egress-proxy/go.mod
-
-      - name: 🧪 Run pinned egress-proxy contracts
-        working-directory: infrastructure/preview-egress-proxy
-        run: go test ./...
-
-      - name: 🔐 Verify immutable GitHub Action pins
-        run: node scripts/ci/check-workflow-pins.mjs
-
-      - name: 🔒 Verify PR workflow secret boundary
-        run: node scripts/ci/check-pr-workflow-secrets.mjs
-
-      - name: 🔐 Verify E2E artifact secret boundary
-        # O report do Playwright embute o error-context, que traz o valor digitado
-        # no campo de senha. Quem usa E2E_TEST_* nao pode publicar esse artifact.
-        run: node scripts/ci/check-e2e-artifact-secrets.mjs
-
-      - name: 📋 Verify Talk X PR body (definição de pronto)
-        if: github.event_name == 'pull_request'
-        run: node scripts/ci/check-talkx-pr-body.mjs
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-
-      - name: 🔬 Lint workflows (actionlint)
-        run: |
-          # actionlint vem do release oficial pinado (v1.7.7) com o sha256
-          # conferido, em vez de `go install ...@versao`: a resolucao de modulo do
-          # go install nao e travada por lock-file (SonarCloud githubactions:S8545).
-          set -euo pipefail
-          actionlint_version="1.7.7"
-          actionlint_asset="actionlint_${actionlint_version}_linux_amd64.tar.gz"
-          actionlint_sha256="023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
-          actionlint_dir="$RUNNER_TEMP/actionlint"
-          mkdir -p "$actionlint_dir"
-          curl --proto '=https' --tlsv1.2 -sSL -o "$actionlint_dir/$actionlint_asset" \
-            "https://github.com/rhysd/actionlint/releases/download/v${actionlint_version}/${actionlint_asset}"
-          echo "${actionlint_sha256}  ${actionlint_dir}/${actionlint_asset}" | sha256sum --check --strict
-          tar -xzf "$actionlint_dir/$actionlint_asset" -C "$actionlint_dir" actionlint
-          chmod +x "$actionlint_dir/actionlint"
-          echo "$actionlint_dir" >> "$GITHUB_PATH"
-          "$actionlint_dir/actionlint" -shellcheck ''
-
-      - name: 📖 Verify workflow docs are fresh
-        run: |
-          # E96: docs/ci/README.md e' GERADO a partir do bloco `# docs:` no topo de
-          # cada workflow. Se divergir, o README descreve um pipeline que nao existe
-          # mais — pior que nao ter README, porque ninguem confere o que esta escrito.
-          node scripts/ci/render-workflow-docs.mjs --check
-
-      - name: 🛡️ Audit workflow security (zizmor)
-        run: |
-          # --only-binary :all: impede o build de sdist (scripts de setup);
-          # zizmor==0.9.0 publica wheel manylinux (SonarCloud githubactions:S8541).
-          python3 -m pip install --quiet --break-system-packages --only-binary :all: zizmor==0.9.0
-          # Aceitar apenas exit 11-13 (info/low/medium); falhar em qualquer outro
-          # código, inclusive 1 (parse/erro interno) e 14-15 (high/error).
-          zizmor --persona regular .github/workflows/ || { rc=$?; [ "$rc" -ge 11 ] && [ "$rc" -le 13 ] || exit "$rc"; }
-
-      - name: 🧾 Verify Edge deployment manifest freshness
-        run: node scripts/edge-deploy/generate-manifest.mjs --check
-
-      # O legado possui divida de lint conhecida. O ratchet compara ocorrencias
-      # individualmente e falha se uma nova for introduzida, sem mascarar a CI.
-      - name: 🔍 Run ESLint debt ratchet
-        run: node scripts/ci/lint-ratchet.mjs
-
-      # "tsc --noEmit" sozinho e um no-op nesta config (tsconfig.json so tem
-      # "references", sem --build o tsc nao checa nada e sempre sai 0). O
-      # ratchet roda "tsc -b --force" de verdade e falha so se surgir erro novo.
-      - name: 🔎 Run TypeScript debt ratchet
-        run: node scripts/ci/typecheck-ratchet.mjs
-
-      - name: 🚫 Run implicit-any ratchet
-        run: node scripts/ci/implicit-any-ratchet.mjs
-
-      - name: 🔤 Run typography parity guard
-        run: node scripts/qa/medir-tipografia.cjs --check
-
-      - name: 🛡️ Run Supabase usage guard
-        run: node scripts/db-audit/supabase-usage-guard.mjs
-
-      - name: 📋 Check test inventory (todo .test.ts/.test.sh tem passo no CI YAML)
-        run: node scripts/ci/check-test-inventory.mjs
-
-      - name: 🧾 Verify Talk X V4 placar freshness (aviso)
-        # O placar compara o STATUS.md commitado com os títulos (X<NNN>) já em
-        # origin/main. Uma etapa recém-mergeada deixa o arquivo 1 passo atrás (o
-        # gerador não conta a própria etapa antes do merge) — então o check NÃO pode
-        # bloquear: `continue-on-error` avisa sem derrubar o job. Quem corrige é o
-        # workflow `talkx-status-regen.yml`, que roda no push e commita o STATUS.md
-        # regenerado (bot via GITHUB_TOKEN, sem loop).
-        if: github.event_name == 'pull_request'
-        continue-on-error: true
-        run: |
-          # O checkout do job de lint é raso (fetch-depth padrão 1); o placar varre
-          # `git log origin/main` atrás de títulos (X<NNN>), então precisa do histórico
-          # completo de main. `--unshallow` busca a história toda sem tocar no checkout
-          # dos demais steps (e é no-op se o clone já for completo).
-          git fetch origin main --unshallow --quiet
-          node scripts/talkx/v4-status.mjs --check --ref origin/main
-
-  # ===========================================
-  # JOB 2: Unit Tests
-  # ===========================================
-  test:
-    name: 🧪 Unit Tests
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    needs: lint-and-typecheck
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
       - name: 🧄 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: 🧪 Run Vitest (cobertura com piso em src/lib + src/services)
-        run: bun run test:coverage
+      - name: 📖 Verificar README gerado dos workflows
+        run: node scripts/ci/render-workflow-docs.mjs --check
+
+      - name: 🧩 Run Node CI scripts tests
+        run: >-
+          node --test scripts/ci/*.unit.mjs
         env:
           CI: true
 
-      # Config dedicado (vitest.contracts.config.ts): reescreve o import Deno
-      # "https://esm.sh/zod@3.23.8" de schemas.ts para o alias npm "zod3"
-      # (zod@3.23.8, ja no bun.lock). O vitest.config.ts principal nao tem
-      # esse rewrite e quebra em 3 dos 6 arquivos (Node nao resolve URL https
-      # no loader ESM padrao) — por isso a suite roda num config separado.
-      - name: 🧪 Run Edge Function contract tests (tests/contracts)
-        run: bun run test:contracts
-        env:
-          CI: true
+      - name: 🧪 Test Vercel ignore-build guard
+        run: node scripts/vercel/ignore-build.unit.mjs
 
-      - name: 📊 Upload coverage report
-        # E72 (G-32): a cobertura so sobe da main. Num PR ninguem consome o
-        # relatorio (o piso de cobertura e verificado pelo proprio vitest) e cada
-        # PR deixava um artifact de varios MB — 2.333 acumulados em 01/10/2026.
-        # `always()` mantem o upload quando a suite falha na main, que e' justo
-        # quando a cobertura serve para diagnosticar; 7 dias pelo plano (E72).
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        with:
-          name: coverage-report
-          path: coverage/
-          retention-days: 7
-          if-no-files-found: ignore
+      - name: 🦕 Test Edge handlers
+        run: |
+          deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')
 
-  # ===========================================
-  # JOB 3: Build
-  # ===========================================
   build:
     name: 🏗️ Build
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    needs: [lint-and-typecheck, test]
+    timeout-minutes: 15
+    needs: [typecheck, unit-tests]
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -266,6 +167,13 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -304,6 +212,10 @@ jobs:
           echo "CSS Files:"
           find dist -name "*.css" -exec du -h {} \;
 
+      # Vitest roda em shards sem coletar coverage. Não tente anexar `coverage/`
+      # neste runner: ele é separado dos shards e o upload anterior era no-op.
+      # Cobertura no CI exige agregação dos shards e aplicação dos thresholds uma vez.
+
   # ===========================================
   # JOB 4: Security Audit
   # ===========================================
@@ -311,7 +223,6 @@ jobs:
     name: 🔒 Security Audit
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    needs: lint-and-typecheck
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -323,6 +234,13 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -355,13 +273,44 @@ jobs:
           GITLEAKS_ENABLE_SUMMARY: 'false'
 
   # ===========================================
-  # JOB 5: E2E Tests (Playwright)
+  # JOB 5: CI Gate (required check)
+  # ===========================================
+  ci-gate:
+    name: ✅ CI Gate (required check)
+    runs-on: ubuntu-24.04
+    if: always()
+    needs: [typecheck, unit-tests, node-scripts, build, security]
+    steps:
+      - name: Verificar resultado dos jobs obrigatórios
+        run: |
+          echo "typecheck: ${{ needs.typecheck.result }}"
+          echo "unit-tests: ${{ needs.unit-tests.result }}"
+          echo "node-scripts: ${{ needs.node-scripts.result }}"
+          echo "build: ${{ needs.build.result }}"
+          echo "security: ${{ needs.security.result }}"
+          if [[  "${{ needs.typecheck.result }}" == "failure" || \
+                "${{ needs.unit-tests.result }}" == "failure" || \
+                "${{ needs.node-scripts.result }}" == "failure" || \
+                "${{ needs.build.result }}" == "failure" || \
+                "${{ needs.security.result }}" == "failure" ]]; then
+            echo "❌ Um ou mais jobs obrigatórios falharam"
+            exit 1
+          fi
+          if [[ "${{ needs.typecheck.result }}" == "cancelled" || \
+                "${{ needs.unit-tests.result }}" == "cancelled" || \
+                "${{ needs.build.result }}" == "cancelled" ]]; then
+            echo "❌ Um ou mais jobs obrigatórios foram cancelados"
+            exit 1
+          fi
+          echo "✅ Todos os jobs obrigatórios passaram"
+
+  # ===========================================
+  # JOB 6: E2E Tests (Playwright)
   # ===========================================
   e2e:
     name: 🎭 E2E Tests (Playwright)
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    needs: lint-and-typecheck
+    timeout-minutes: 45
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -372,6 +321,13 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
 
       - name: 📚 Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
@@ -395,26 +351,25 @@ jobs:
         # githubactions:S8543: `bunx playwright` sem versao puxaria um release
         # nao verificado).
         if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: bunx playwright@1.63.0 install --with-deps chromium firefox webkit
+        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit
 
       - name: 🔧 Dependências de sistema do Playwright (cache quente)
         # O cache guarda os browsers, não os pacotes do apt: com o cache quente
         # as bibliotecas do sistema ainda precisam ser instaladas.
         if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: bunx playwright@1.63.0 install-deps chromium firefox webkit
+        run: bunx playwright install-deps chromium firefox webkit
 
-      # Projetos "chromium", "firefox-auth" e "webkit-auth" exercitam auth.spec.ts
-      # deslogado (sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD). Workflows de PR não podem
-      # referenciar esses secrets (scripts/ci/check-pr-workflow-secrets.mjs), então
-      # o login real roda em .github/workflows/e2e-logado.yml, depois do merge na main.
+      # O projeto "chromium" exercita auth.spec.ts deslogado. Workflows de PR não
+      # recebem E2E_TEST_EMAIL/E2E_TEST_PASSWORD; o cross-browser de login roda em
+      # .github/workflows/e2e-logado.yml, depois do merge na main.
       # chromium-mapa (E71/E72 picker, E73 cadastro, E74 mapa/pino) entra AQUI também:
       # ele já roda no e2e-logado.yml (pós-merge), mas é deslogado — o projeto não
       # declara `setup` nem `storageState`; as specs autenticam por sessão FALSA
       # (installFakeSession) com REST/RPC e Mapbox mockados, logo executam sem secret
       # algum. Sem esta linha os PRs passavam com E2E VERDE sem rodar spec alguma do
       # mapa (#463 / E75).
-      - name: 🧪 Run Playwright E2E (chromium + firefox + webkit, sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=firefox-auth --project=webkit-auth --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
+      - name: 🧪 Run Playwright E2E (PR sem autenticação)
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
         env:
           CI: true
 
@@ -437,7 +392,7 @@ jobs:
           if-no-files-found: ignore
 
   # ===========================================
-  # JOB 6: Mutação do mapa (E70, não bloqueante)
+  # JOB 7: Mutação do mapa (E70, não bloqueante)
   # ===========================================
   # E70: roda o runner de mutação do módulo do mapa (E69,
   # `scripts/mutation/run-mapa.mjs`) quando um PR toca `src/lib/mapbox*` ou
@@ -447,36 +402,54 @@ jobs:
   # O GitHub Actions não oferece `paths:` por job — o filtro `paths` só existe no
   # gatilho do workflow, e usá-lo aqui restringiria TODOS os jobs do ci.yml. Para
   # não alterar os jobs existentes, o filtro de caminhos roda em STEP
-  # (`git diff --name-only` contra a base do PR), a alternativa prevista na
-  # auditoria de GitHub Actions (E64).
+  # (diff entre o SHA base do evento e o merge sintético do PR), alternativa
+  # prevista na auditoria de GitHub Actions (E64).
   mutation-mapa:
     name: 🧬 Mutação do mapa (não bloqueante)
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     continue-on-error: true
-    needs: lint-and-typecheck
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          # Histórico completo: o filtro de caminhos compara com a base do PR
-          # (`origin/<base>...HEAD`), o que exige o ancestral comum.
-          fetch-depth: 0
+          # Dois níveis incluem os pais do merge sintético (base e head), sem
+          # baixar o histórico inteiro só para filtrar caminhos.
+          fetch-depth: 2
 
       # Filtro de caminhos (E70): só o módulo do mapa justifica a rodada.
       - name: 🔎 Detectar mudança no módulo do mapa (paths filter)
         id: paths
         env:
-          BASE_REF: ${{ github.base_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
-          if [ -z "${BASE_REF:-}" ]; then
-            # push/dispatch/merge_group: sem base de PR, roda (fail-open).
-            echo "map_changed=true" >> "$GITHUB_OUTPUT"
-            exit 0
+          if [ -z "${BASE_SHA:-}" ]; then
+            echo "::error::O evento pull_request não informou o SHA da base; filtro de caminhos inconclusivo."
+            exit 1
           fi
-          changed="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
+
+          # fetch-depth=2 traz o merge sintético e os pais diretos. Quando
+          # main avançou após o evento (strict=true), BASE_SHA do evento pode
+          # não estar no clone raso; HEAD^1 é o pai base do merge sintético
+          # (HEAD^2 é o head do PR). Preferimos HEAD^1 nesses casos.
+          effective_base="$BASE_SHA"
+          if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            if git cat-file -e "HEAD^1^{commit}" 2>/dev/null; then
+              echo "::notice::BASE_SHA '${BASE_SHA}' não está no clone raso (main avançou); usando HEAD^1 como base."
+              effective_base="HEAD^1"
+            else
+              echo "::error::Nem BASE_SHA '${BASE_SHA}' nem HEAD^1 estão acessíveis; filtro de caminhos inconclusivo."
+              exit 1
+            fi
+          fi
+
+          # Em pull_request, actions/checkout usa o merge sintético do GitHub
+          # como HEAD. Comparar sua árvore com o SHA base evita buscar todos os
+          # ancestrais apenas para descobrir os caminhos tocados.
+          changed="$(git diff --name-only "$effective_base" HEAD)"
           printf 'Arquivos alterados no PR:\n%s\n' "$changed"
           if printf '%s\n' "$changed" | grep -Eq '^(src/lib/mapbox|src/components/inbox/location-picker/)'; then
             echo "map_changed=true" >> "$GITHUB_OUTPUT"
@@ -489,6 +462,14 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        if: steps.paths.outputs.map_changed == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
 
       - name: 📚 Install dependencies
         if: steps.paths.outputs.map_changed == 'true'

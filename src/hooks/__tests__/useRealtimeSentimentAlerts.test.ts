@@ -36,6 +36,8 @@ vi.mock('@/utils/notificationSounds', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: vi.fn(() => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })),
+  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
 const { useRealtimeSentimentAlerts } = await import('@/hooks/inbox/useRealtimeSentimentAlerts');

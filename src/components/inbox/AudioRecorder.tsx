@@ -26,10 +26,13 @@ const ALTURAS_WAVEFORM = [
 export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [voiceChanged, setVoiceChanged] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [playbackProgress, setPlaybackProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // URL do blob criado ao trocar a voz. Fica guardada para ser revogada antes de
+  // criar a próxima e quando o gravador sai de cena (senão cada troca de voz
+  // deixa uma URL viva até o fim da aba).
+  const voiceUrlRef = useRef<string | null>(null);
   // E36 — a prévia do áudio gravado é "áudio enviado" (mídia de conversa).
   useMediaElementVolume(audioRef);
   const isMobile = useIsMobile();
@@ -58,6 +61,16 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
     startRecording();
     return () => cancelRecording();
   }, [startRecording, cancelRecording]);
+
+  // A URL de blob da voz trocada é revogada quando o gravador sai de cena.
+  useEffect(() => {
+    return () => {
+      if (voiceUrlRef.current) {
+        URL.revokeObjectURL(voiceUrlRef.current);
+        voiceUrlRef.current = null;
+      }
+    };
+  }, []);
 
   // Playback progress tracking
   useEffect(() => {
@@ -91,20 +104,31 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
   };
 
   const handleCancel = () => {
+    setIsLocked(false);
     cancelRecording();
     onCancel();
   };
 
+  const handleStop = () => {
+    setIsLocked(false);
+    stopRecording();
+  };
+
   const handleVoiceChanged = (newBlob: Blob) => {
     setAudioBlob(newBlob);
-    setVoiceChanged(true);
+    // A prévia anterior (blob:) não é mais usada: revoga antes de criar a nova.
+    if (voiceUrlRef.current) {
+      URL.revokeObjectURL(voiceUrlRef.current);
+    }
+    const url = URL.createObjectURL(newBlob);
+    voiceUrlRef.current = url;
     if (audioRef.current) {
-      const url = URL.createObjectURL(newBlob);
       audioRef.current.src = url;
     }
   };
 
-  // Lock recording (stop holding, keep recording)
+  // Travar mantém a gravação: só desliga o arrastar-para-cancelar enquanto
+  // durar. O botão de parar continua encerrando a gravação normalmente.
   const handleLock = useCallback(() => {
     setIsLocked(true);
   }, []);
@@ -116,7 +140,7 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!swipeRef.current.isSwiping || !isRecording) return;
+    if (!swipeRef.current.isSwiping || !isRecording || isLocked) return;
     const delta = e.touches[0].clientX - swipeRef.current.startX;
     if (delta < 0) {
       swipeX.set(delta);
@@ -124,7 +148,7 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
   };
 
   const handleTouchEnd = () => {
-    if (swipeX.get() < -100) {
+    if (!isLocked && swipeX.get() < -100) {
       handleCancel();
     }
     swipeX.set(0);
@@ -137,12 +161,12 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 10 }}
       className="flex items-center gap-3 p-3 bg-inbox-panel border border-border rounded-xl relative overflow-hidden"
-      onTouchStart={isRecording && isMobile ? handleTouchStart : undefined}
-      onTouchMove={isRecording && isMobile ? handleTouchMove : undefined}
-      onTouchEnd={isRecording && isMobile ? handleTouchEnd : undefined}
+      onTouchStart={isRecording && isMobile && !isLocked ? handleTouchStart : undefined}
+      onTouchMove={isRecording && isMobile && !isLocked ? handleTouchMove : undefined}
+      onTouchEnd={isRecording && isMobile && !isLocked ? handleTouchEnd : undefined}
     >
       {/* Swipe-to-cancel overlay (mobile only) */}
-      {isRecording && isMobile && (
+      {isRecording && isMobile && !isLocked && (
         <motion.div
           style={{ opacity: cancelOpacity }}
           className="absolute inset-0 flex items-center justify-center bg-destructive/10 pointer-events-none z-10"
@@ -199,6 +223,11 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
                 {formatDuration(duration)}
               </span>
             </div>
+            {isLocked && (
+              <span role="status" aria-live="polite" className="text-2xs font-medium text-destructive shrink-0">
+                Gravação travada
+              </span>
+            )}
           </>
         ) : audioUrl ? (
           <>
@@ -256,7 +285,7 @@ export function AudioRecorder({ onSend, onCancel }: AudioRecorderProps) {
           <Button
             size="icon"
             className="bg-destructive hover:bg-destructive/90"
-            onClick={stopRecording}
+            onClick={handleStop}
             aria-label="Parar gravação"
           >
             <Square className="w-4 h-4" />

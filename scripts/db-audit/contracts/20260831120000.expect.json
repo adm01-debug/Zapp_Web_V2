@@ -1,0 +1,21 @@
+{
+  "always": {
+    "table_count": 1,
+    "rls_enabled": true,
+    "policy_count": 1,
+    "service_role_crud": true
+  },
+  "before": {
+    "public_policy_count": 1,
+    "service_role_policy_count": 0,
+    "anon_acl": true,
+    "authenticated_acl": true
+  },
+  "after": {
+    "public_policy_count": 0,
+    "service_role_policy_count": 1,
+    "anon_acl": false,
+    "authenticated_acl": false,
+    "service_role_extra": false
+  }
+}

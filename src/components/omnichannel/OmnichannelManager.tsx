@@ -24,12 +24,13 @@ import {
 const ChannelRoutingRules = lazy(() => import('./ChannelRoutingRules').then(m => ({ default: m.ChannelRoutingRules })));
 
 const channelConfig = {
+  // Tonalidades distintas por canal: sem três ícones caindo na mesma matiz azulada.
   whatsapp: { label: 'WhatsApp', icon: MessageSquare, color: 'text-success', bg: 'bg-success/10' },
-  instagram: { label: 'Instagram', icon: Instagram, color: 'text-accent', bg: 'bg-accent/10' },
+  instagram: { label: 'Instagram', icon: Instagram, color: 'text-[hsl(var(--violeta-text))]', bg: 'bg-violeta/10' },
   telegram: { label: 'Telegram', icon: Send, color: 'text-info', bg: 'bg-info/10' },
-  messenger: { label: 'Messenger', icon: MessagesSquare, color: 'text-primary', bg: 'bg-primary/10' },
+  messenger: { label: 'Messenger', icon: MessagesSquare, color: 'text-streak', bg: 'bg-streak/10' },
   webchat: { label: 'Web Chat', icon: Globe, color: 'text-warning', bg: 'bg-warning/10' },
-  email: { label: 'Gmail', icon: MessageSquare, color: 'text-destructive', bg: 'bg-destructive/10' },
+  email: { label: 'Gmail', icon: MessageSquare, color: 'text-muted-foreground', bg: 'bg-muted' },
 };
 
 type ChannelType = keyof typeof channelConfig;
@@ -138,7 +139,8 @@ export function OmnichannelManager() {
     switch (status) {
       case 'connected': return <Badge className="bg-success/10 text-success border-success/30">Conectado</Badge>;
       case 'pending_setup': return <Badge variant="secondary">Pendente</Badge>;
-      default: return <Badge variant="destructive">Desconectado</Badge>;
+      // "Não conectado" igual nas 3 telas: mesmo par status-offline de ConnectionCard/GmailIntegrationCard.
+      default: return <Badge variant="outline" className="border-status-offline text-status-offline">Desconectado</Badge>;
     }
   };
 
@@ -179,7 +181,7 @@ export function OmnichannelManager() {
                       value={newChannel.channel_type}
                       onValueChange={(v) => setNewChannel(prev => ({ ...prev, channel_type: v as ChannelType }))}
                     >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger aria-label="Tipo de canal"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {Object.entries(channelConfig).filter(([k]) => k !== 'whatsapp').map(([key, cfg]) => (
                           <SelectItem key={key} value={key}>

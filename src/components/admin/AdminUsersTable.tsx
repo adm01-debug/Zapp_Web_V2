@@ -12,6 +12,7 @@ import {
 import { ForceLogoutButton } from './ForceLogoutButton';
 import { accessLevelConfig, type UserWithRole } from './useAdminData';
 import type { AppRole } from '@/hooks/system/useUserRole';
+import { isAppRole } from '@/lib/appRole';
 
 const roleIconMap = { admin: Crown, supervisor: UserCog, agent: User, special_agent: Eye } as const;
 const roleLabelMap = { admin: 'Administrador', supervisor: 'Supervisor', agent: 'Atendente', special_agent: 'Agente Especial' } as const;
@@ -23,12 +24,14 @@ interface AdminUsersTableProps {
   onRoleChange: (userId: string, role: AppRole) => void;
   onToggleActive: (user: UserWithRole) => void;
   onEditUser: (user: UserWithRole) => void;
+  /** Texto do estado vazio (nenhum usuário após busca/consulta). */
+  emptyMessage?: string;
 }
 
-export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, onEditUser }: AdminUsersTableProps) {
+export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, onEditUser, emptyMessage = 'Nenhum usuário cadastrado.' }: AdminUsersTableProps) {
   return (
     <Card className="border border-secondary/20 bg-card">
-      <CardHeader><CardTitle className="text-lg">Usuários</CardTitle></CardHeader>
+      <CardHeader><h2 className="text-lg font-semibold leading-none tracking-tight">Usuários</h2></CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
@@ -36,12 +39,21 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
               <TableHead>Usuário</TableHead>
               <TableHead>Cargo/Depto</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead>Acesso</TableHead>
+              {/* `profiles.access_level` está DEPRECATED e nada no sistema o impõe:
+                  a coluna mostra o dado, mas não pode parecer que concede acesso. */}
+              <TableHead>Acesso (informativo)</TableHead>
               <TableHead>Status</TableHead>
               {isAdmin && <TableHead>Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
+            {users.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={isAdmin ? 6 : 5} className="py-8 text-center text-muted-foreground">
+                  {emptyMessage}
+                </TableCell>
+              </TableRow>
+            )}
             {users.map((user) => {
               const RoleIcon = roleIconMap[user.role];
               const accessInfo = accessLevelConfig[user.access_level || 'basic'];
@@ -72,12 +84,16 @@ export function AdminUsersTable({ users, isAdmin, onRoleChange, onToggleActive, 
                   </TableCell>
                   <TableCell>
                     {isAdmin ? (
-                      <Select value={user.role} onValueChange={(v) => onRoleChange(user.user_id, v as AppRole)}>
+                      <Select value={user.role} onValueChange={(v) => { if (isAppRole(v)) onRoleChange(user.user_id, v); }}>
                         <SelectTrigger className="w-32" aria-label={`Alterar role de ${nome}`}><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="supervisor">Supervisor</SelectItem>
                           <SelectItem value="agent">Atendente</SelectItem>
+                          {/* A role `special_agent` existe no enum `app_role` e é usada
+                              pelo VisibilityGrantsManager; sem esta opção o seletor
+                              ficava vazio e não havia como promover ninguém. */}
+                          <SelectItem value="special_agent">Agente Especial</SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (

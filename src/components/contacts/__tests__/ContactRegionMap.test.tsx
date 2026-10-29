@@ -5,7 +5,9 @@ const h = vi.hoisted(() => ({ invoke: vi.fn(), loadMapbox: vi.fn(), reportClient
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { functions: { invoke: (...a: unknown[]) => h.invoke(...a) } } }));
 vi.mock('@/lib/errorReporter', () => ({ reportClientError: (...a: unknown[]) => h.reportClientError(...a) }));
-vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
+vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),}));
 vi.mock('@/lib/mapboxLoader', () => ({ loadMapbox: () => h.loadMapbox() }));
 
 import { ContactRegionMap } from '../ContactRegionMap';
@@ -81,6 +83,25 @@ describe('ContactRegionMap', () => {
     expect(FakeMarker.instances[0].lngLat).toEqual(REGION_COORDINATES['São Paulo - SP']);
     expect(FakeMarker.instances[0].getElement().textContent).toBe('40');
     expect(FakeMarker.instances[1].getElement().textContent).toBe('10');
+  });
+
+  it('o rótulo da bolha usa o plural certo (1 contato / N contatos)', async () => {
+    render(
+      <ContactRegionMap
+        regions={[
+          { region: 'São Paulo - SP', count: 1 },
+          { region: 'Curitiba - PR', count: 12 },
+        ]}
+        selectedRegion={null}
+        onSelectRegion={vi.fn()}
+      />,
+    );
+    await waitFor(() => expect(FakeMap.instances).toHaveLength(1));
+    act(() => FakeMap.instances[0].emit('load'));
+
+    const titulos = FakeMarker.instances.map((m) => m.getElement().getAttribute('aria-label'));
+    expect(titulos).toContain('São Paulo - SP · 1 contato');
+    expect(titulos).toContain('Curitiba - PR · 12 contatos');
   });
 
   it('a região com mais contatos tem a bolha maior', async () => {
@@ -171,5 +192,17 @@ describe('ContactRegionMap', () => {
     }
     // DDD inexistente não inventa ponto.
     expect(regionCoordinates(getRegionFromPhone('5510999999999'))).toBeNull();
+  });
+
+  // RD-086: sem bolha plotável e sem endereço confirmado, o mapa não fica mudo.
+  it('sem regiões plotáveis nem endereço confirmado mostra "Sem coordenadas"', () => {
+    render(<ContactRegionMap regions={[]} selectedRegion={null} onSelectRegion={vi.fn()} />);
+    expect(screen.getByTestId('contact-regiao-empty')).toBeInTheDocument();
+    expect(screen.getByText('Sem coordenadas')).toBeInTheDocument();
+  });
+
+  it('com região plotável o aviso de vazio não aparece', () => {
+    render(<ContactRegionMap regions={regions} selectedRegion={null} onSelectRegion={vi.fn()} />);
+    expect(screen.queryByTestId('contact-regiao-empty')).not.toBeInTheDocument();
   });
 });

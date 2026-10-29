@@ -66,9 +66,12 @@ export function decidirReescrita({ rotateSecrets = false, emRollback = false, em
     return { reescrever: true, motivo: 'rotate_secrets=true: reescrevendo os secrets do escopo' };
   }
   if (nomesRemotos === null) {
+    // W59: fail-closed — nao reescrever quando a listagem de secrets nao esta disponivel.
+    // Para forcar a reescrita mesmo sem confirmacao, use rotate_secrets=true.
     return {
-      reescrever: true,
-      motivo: 'nao foi possivel ler os secrets do projeto: mantendo o comportamento anterior (reescrever)',
+      reescrever: false,
+      motivo: 'nao foi possivel ler os secrets do projeto: use rotate_secrets=true para forcar a reescrita',
+      erroFatal: true,
     };
   }
   const remotos = new Set(nomesRemotos);
@@ -137,6 +140,11 @@ if (process.argv[1]?.endsWith('secrets-scope.mjs')) {
   // A saida consumida pelo workflow e' uma linha so', sem log junto.
   if (process.env.GITHUB_OUTPUT) {
     appendFileSync(process.env.GITHUB_OUTPUT, `reescrever=${decisao.reescrever}\nmotivo=${decisao.motivo}\n`);
+  }
+  // W59: fail-closed — aborta o passo para impedir deploy com secrets em estado incerto.
+  if (decisao.erroFatal) {
+    console.error(`::error::${decisao.motivo}`);
+    process.exit(1);
   }
   process.exit(0);
 }

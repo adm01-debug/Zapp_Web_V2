@@ -11,6 +11,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme={resolvedTheme}
       className="toaster group"
       position="bottom-right"
+      // No celular (<=600px) o sonner alinha o aviso por `--mobile-offset-*` e o
+      // padrão dele (16px) deixava o aviso em cima da BottomNavigation e do
+      // MobileFAB. A barra ocupa 61px (borda + h-[60px]) e o topo do FAB fica a
+      // 132px do rodapé (bottom-[76px] + h-14); 140px = FAB + 8px de folga, mais
+      // a mesma área segura que a barra usa (`.safe-area-bottom`). No desktop
+      // nada muda: mobileOffset só vale em `max-width: 600px` (§ sonner 2.0.8).
+      mobileOffset={{ bottom: 'calc(140px + env(safe-area-inset-bottom, 0px))' }}
       expand={false}
       richColors
       closeButton

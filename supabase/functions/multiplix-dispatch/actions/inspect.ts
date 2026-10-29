@@ -194,13 +194,170 @@ async function loadBlocks(ctx: ActionContext, dispatchId: string): Promise<Block
   return Array.isArray(data) ? data : [];
 }
 
-async function loadRecipients(ctx: ActionContext, dispatchId: string): Promise<RecipientRow[]> {
-  const { data, error } = await ctx.supabase
+// ---------------------------------------------------------------------------
+// R2-API-030 — leitura COMPLETA do publico (resumo/estimativa).
+//
+// O PostgREST corta a RESPOSTA no teto de linhas configurado (medido: 1.000 no
+// projeto — o mesmo teto que a `multiplix-audience` trata com
+// `RESOLVE_RPC_MAX_ROWS`) e devolve 200 com o resto descartado, SEM erro. Um
+// SELECT unico sem `range` lia so a primeira pagina, e o resumo (F49) e a
+// estimativa (F50) tratavam esse subconjunto como o publico inteiro: total,
+// baldes, mensagens e consumo de voz saiam subestimados, e as classes de
+// elegibilidade / roteiros que viviam fora da primeira pagina nunca apareciam.
+//
+// Defesa (mesma filosofia do `multiplix_resolve_truncated` do F27):
+//   1. paginar em `range()` DETERMINISTICO (`ORDER BY id`) ate esgotar o publico;
+//   2. pedir `count: 'exact'` e comparar o conjunto lido com a contagem
+//      autoritativa — leitura que nao fecha vira erro NOMEADO, nunca um total
+//      parcial apresentado como final;
+//   3. exigir a MESMA contagem em todas as paginas: se o publico mudar no meio
+//      da leitura (alguem entra/sai), erro NOMEADO em vez de um numero misto.
+// ---------------------------------------------------------------------------
+
+/** Linhas do PostgREST por chamada (teto medido do projeto; ver F27). */
+export const RECIPIENTS_PAGE_SIZE = 1_000;
+
+/** Teto de paginas: acima disso a leitura nao converge e vira erro nomeado. */
+export const RECIPIENTS_MAX_PAGES = 1_000;
+
+/** A leitura do publico nao fechou com a contagem autoritativa. */
+export const MULTIPLIX_RECIPIENTS_INCOMPLETE = 'multiplix_recipients_incomplete';
+
+/** O publico mudou durante a leitura (contagem divergiu entre paginas). */
+export const MULTIPLIX_RECIPIENTS_UNSTABLE = 'multiplix_recipients_unstable';
+
+/** Colunas lidas de `multiplix_recipients` pelas acoes de revisao. */
+const RECIPIENT_COLUMNS =
+  'id, company_id, company_name_snapshot, destino_e164, singu_contact_id, eligibility, ' +
+  'eligibility_reason, inclusion_reason, status, variables_snapshot';
+
+interface RecipientsPageResult {
+  data: RecipientRow[] | null;
+  error: { message?: string } | null;
+  /** Total autoritativo do filtro naquela pagina (`Prefer: count=exact`). */
+  count?: number | null;
+}
+
+async function loadRecipientsPage(
+  ctx: ActionContext,
+  dispatchId: string,
+  from: number,
+  to: number,
+): Promise<{ rows: RecipientRow[]; count: number | null }> {
+  const { data, error, count } = await ctx.supabase
     .from('multiplix_recipients')
-    .select('id, company_id, company_name_snapshot, destino_e164, singu_contact_id, eligibility, eligibility_reason, inclusion_reason, status, variables_snapshot')
-    .eq('dispatch_id', dispatchId) as Result<RecipientRow[] | null>;
+    .select(RECIPIENT_COLUMNS, { count: 'exact' })
+    .eq('dispatch_id', dispatchId)
+    .order('id')
+    .range(from, to) as RecipientsPageResult;
   if (error) throw new DispatchError('MULTIPLIX_RECIPIENTS_LOOKUP', error.message ?? 'recipients lookup failed', 502);
-  return Array.isArray(data) ? data : [];
+  return {
+    rows: Array.isArray(data) ? data : [],
+    count: typeof count === 'number' ? count : null,
+  };
+}
+
+/**
+ * Carrega o publico INTEIRO do disparo, pagina a pagina, com deteccao explicita
+ * de leitura incompleta e de publico instavel (R2-API-030). Substitui o SELECT
+ * unico que devolvia so a primeira pagina como se fosse o publico completo.
+ */
+async function loadRecipients(ctx: ActionContext, dispatchId: string): Promise<RecipientRow[]> {
+  const rows: RecipientRow[] = [];
+  let expected: number | null = null;
+
+  for (let page = 0; page < RECIPIENTS_MAX_PAGES; page += 1) {
+    const from = rows.length;
+    const { rows: pageRows, count } = await loadRecipientsPage(
+      ctx, dispatchId, from, from + RECIPIENTS_PAGE_SIZE - 1,
+    );
+
+    if (count !== null) {
+      if (expected === null) expected = count;
+      else if (count !== expected) {
+        throw new DispatchError(
+          MULTIPLIX_RECIPIENTS_UNSTABLE,
+          `publico mudou durante a leitura: total ${expected} -> ${count}`,
+          502,
+        );
+      }
+    }
+
+    rows.push(...pageRows);
+
+    // Pagina curta = fim do publico OU corte silencioso do PostgREST; a
+    // comparacao com `expected` no fim do laco separa os dois casos.
+    if (pageRows.length < RECIPIENTS_PAGE_SIZE) break;
+    // Total multiplo exato da pagina (1.000, 2.000...): a ultima pagina vem
+    // CHEIA, entao a regra acima nao dispara. Sem esta saida a proxima
+    // iteracao pede o range com offset == count, ao qual o PostgREST com
+    // count=exact responde 416 — que virava MULTIPLIX_RECIPIENTS_LOOKUP 502.
+    if (expected !== null && rows.length >= expected) break;
+  }
+
+  if (expected === null) {
+    // Sem contagem autoritativa nao ha como provar que a leitura fechou: recusa
+    // nomeada em vez de apresentar o que veio como se fosse o publico inteiro.
+    throw new DispatchError(
+      MULTIPLIX_RECIPIENTS_INCOMPLETE,
+      `leitura sem contagem autoritativa: ${rows.length} lidas, total desconhecido`,
+      502,
+    );
+  }
+  if (rows.length !== expected) {
+    throw new DispatchError(
+      MULTIPLIX_RECIPIENTS_INCOMPLETE,
+      `leitura nao fechou: ${rows.length} lidas para total ${expected}`,
+      502,
+    );
+  }
+  return rows;
+}
+
+/**
+ * Resposta NOMEADA para leitura de publico que nao fechou (R2-API-030).
+ *
+ * `errorResponse` mascara QUALQUER 5xx como "Internal server error" — o mesmo
+ * caso que o F27 resolveu devolvendo o corpo nomeado com `jsonResponse` direto
+ * (`multiplix_resolve_truncated`). Sem isso o operador veria so um 500 generico
+ * e nao saberia que o publico nao fechou.
+ */
+function recipientsReadNamedResponse(error: unknown, req: Request): Response | null {
+  if (
+    error instanceof DispatchError &&
+    (error.code === MULTIPLIX_RECIPIENTS_INCOMPLETE || error.code === MULTIPLIX_RECIPIENTS_UNSTABLE)
+  ) {
+    // SEM log proprio aqui: a resposta ja e logada de forma centralizada no
+    // `index.ts` (`console.warn(JSON.stringify({ event, action, user_id,
+    // correlation_id, duration_ms, status, ip, ok }))`), e o precedente F27
+    // (`MULTIPLIX_RESOLVE_TRUNCATED`, em `actions/audience.ts`) devolve o corpo
+    // nomeado sem log proprio. `error.cause`, `error.message` etc. NAO entram
+    // em log nem em resposta HTTP (payload/segredo — contrato F54 exige 0 logs
+    // diretos neste arquivo e a guarda de exposure barra detalhe interno em 5xx).
+    const message = error.code === MULTIPLIX_RECIPIENTS_UNSTABLE
+      ? 'Publico mudou durante a leitura; tente novamente.'
+      : 'Nao foi possivel confirmar a leitura completa do publico.';
+    return jsonResponse({ error: error.code, message }, 502, req);
+  }
+  return null;
+}
+
+/**
+ * `loadRecipients` que devolve a resposta nomeada (em vez de estourar) quando a
+ * leitura do publico nao fecha. Os handlers conferem `instanceof Response` antes
+ * de usar as linhas — mesma convencao do `requireAuth`.
+ */
+async function loadRecipientsOrNamedError(
+  ctx: ActionContext,
+  dispatchId: string,
+): Promise<RecipientRow[] | Response> {
+  try {
+    return await loadRecipients(ctx, dispatchId);
+  } catch (error) {
+    const named = recipientsReadNamedResponse(error, ctx.req);
+    if (named) return named;
+    throw error;
+  }
 }
 
 /**
@@ -496,7 +653,8 @@ export async function handleValidate(ctx: ActionContext): Promise<Response> {
   const { dispatch_id, recipient_id } = parsed.data;
 
   const dispatch = await loadOwnedDispatch(ctx, dispatch_id);
-  const recipients = await loadRecipients(ctx, dispatch_id);
+  const recipients = await loadRecipientsOrNamedError(ctx, dispatch_id);
+  if (recipients instanceof Response) return recipients;
   const sample = recipient_id
     ? await loadRecipientForDispatch(ctx, dispatch_id, recipient_id)
     : (recipients[0] ?? null);
@@ -764,7 +922,8 @@ export async function handleEligibilitySummary(ctx: ActionContext): Promise<Resp
   const { dispatch_id, audience } = parsed.data;
 
   await loadOwnedDispatch(ctx, dispatch_id);
-  const recipients = await loadRecipients(ctx, dispatch_id);
+  const recipients = await loadRecipientsOrNamedError(ctx, dispatch_id);
+  if (recipients instanceof Response) return recipients;
   const summary = summarize(recipients, audience);
 
   // Invariante do F49: os numeros TEM de somar o total. Se nao somarem, e bug de
@@ -869,7 +1028,8 @@ export async function handleEstimate(ctx: ActionContext): Promise<Response> {
   const { dispatch_id } = parsed.data;
 
   const dispatch = await loadOwnedDispatch(ctx, dispatch_id);
-  const recipients = await loadRecipients(ctx, dispatch_id);
+  const recipients = await loadRecipientsOrNamedError(ctx, dispatch_id);
+  if (recipients instanceof Response) return recipients;
   const blocks = blocksForReview(await loadBlocks(ctx, dispatch_id), dispatch);
 
   const eligibleRecipients = recipients.filter((row) => bucketForRecipient(row) === 'eligible');

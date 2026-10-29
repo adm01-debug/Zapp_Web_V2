@@ -10,13 +10,32 @@ interface UseSpeechToTextOptions {
   onEnd?: () => void;
 }
 
+/** Códigos de erro do Web Speech API já traduzidos para o vocabulário do app. */
+export type SpeechErrorCode = 'permission' | 'no-speech' | 'network' | 'device' | 'unknown';
+
+const SPEECH_ERROR_CODES: Record<string, SpeechErrorCode> = {
+  'not-allowed': 'permission',
+  'service-not-allowed': 'permission',
+  'audio-capture': 'device',
+  'no-speech': 'no-speech',
+  network: 'network',
+};
+
+/** Traduz o `event.error` do navegador para um código conhecido (desconhecido vira `unknown`). */
+export function mapSpeechErrorCode(rawCode: string): SpeechErrorCode {
+  return SPEECH_ERROR_CODES[rawCode] ?? 'unknown';
+}
+
 interface SpeechToTextReturn {
   isListening: boolean;
   isSupported: boolean;
   transcript: string;
+  /** Último erro da sessão vigente (permissão negada, sem microfone, sem fala, rede). */
+  error: SpeechErrorCode | null;
   startListening: () => void;
   stopListening: () => void;
   toggleListening: () => void;
+  clearError: () => void;
 }
 
 interface SpeechRecognitionAlternativeLike {
@@ -66,6 +85,7 @@ export function useSpeechToText(options: UseSpeechToTextOptions = {}): SpeechToT
   const { language = 'pt-BR', continuous = true, onResult, onEnd } = options;
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
+  const [error, setError] = useState<SpeechErrorCode | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const onResultRef = useRef(onResult);
   const onEndRef = useRef(onEnd);
@@ -119,6 +139,9 @@ export function useSpeechToText(options: UseSpeechToTextOptions = {}): SpeechToT
     recognition.onerror = (event: any) => {
       if (recognitionRef.current !== recognition) return;
       log.warn('Speech recognition error:', event.error);
+      // A falha precisa chegar ao operador (permissão negada, sem microfone, sem fala, rede):
+      // só o `log.warn` deixava o botão parar de escutar sem nenhuma explicação.
+      setError(mapSpeechErrorCode(String(event.error)));
       setIsListening(false);
     };
 
@@ -126,6 +149,8 @@ export function useSpeechToText(options: UseSpeechToTextOptions = {}): SpeechToT
     recognition.start();
     setIsListening(true);
     setTranscript('');
+    // Nova sessão: o aviso da anterior não vale mais; o próximo erro é que avisa.
+    setError(null);
 
     if (navigator.vibrate) navigator.vibrate(15);
   }, [language, continuous]);
@@ -146,6 +171,10 @@ export function useSpeechToText(options: UseSpeechToTextOptions = {}): SpeechToT
     }
   }, [isListening, startListening, stopListening]);
 
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
@@ -158,8 +187,10 @@ export function useSpeechToText(options: UseSpeechToTextOptions = {}): SpeechToT
     isListening,
     isSupported,
     transcript,
+    error,
     startListening,
     stopListening,
     toggleListening,
+    clearError,
   };
 }

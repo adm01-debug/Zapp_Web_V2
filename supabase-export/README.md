@@ -12,8 +12,9 @@
 > Em 2026-08-28 as URLs de banco **antigo** embutidas em funções
 > (`notify_sicoob_on_reply` em `BLOCO_01/04/10/15`) foram corrigidas para o
 > banco oficial, mas o conteúdo continua defasado. O workflow
-> `.github/workflows/supabase-sync.yml` passou a ser **somente manual**
-> (`workflow_dispatch`) para impedir aplicação automática deste snapshot.
+> `.github/workflows/supabase-sync.yml`, que aplicava este snapshot, passou a ser
+> somente manual em 2026-08-28, foi desarmado em 2026-09-25 e **removido em
+> 2026-10-15** — não há mais caminho de CI que aplique esta pasta em banco nenhum.
 > Detalhes: `docs/audits/AUDITORIA_REFERENCIAS_DB_2026-08-28.md`.
 
 Pasta **única e oficial** para todos os artefatos de exportação/migração do banco.

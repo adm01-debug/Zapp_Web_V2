@@ -85,4 +85,8 @@
     border-top: 0;
     border-left: 1px solid hsl(var(--border) / 0.7);
   }
+
+  .talk-me-view .talk-me-main-media {
+    left: calc(45% + 12px);
+  }
 }

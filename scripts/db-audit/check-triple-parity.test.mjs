@@ -297,3 +297,22 @@ test('consulta o ledger com sha256, nunca md5 (S4790)', () => {
   assert.doesNotMatch(sqlDoLedger, /\bmd5\s*\(/i, 'md5 nao pode voltar na paridade');
   assert.match(res.stdout, /sha256_local=[a-f0-9]{64}/, 'o digest local exposto deve ter 64 hex (sha256)');
 });
+
+test('--sem-migrations delega a perna A: apply pendente não vira falha, edges e grants seguem exigidos', () => {
+  const base = {
+    versoes: ['20260901000000', '20260902000000'],
+    dirs: ['fn-a'],
+    manifestNames: ['fn-a'],
+    ledger: ['20260901000000'],
+  };
+  const ok = run(makeFixture({ ...base, grantsFresco: { r: 1 }, grantsCommitado: { r: 1 } }), { args: ['--require-live', '--sem-migrations'] });
+  assert.equal(ok.status, 0, ok.stderr + ok.stdout);
+  assert.match(ok.stdout, /\[migrations\] delegada ao check-migration-drift/);
+  assert.match(ok.stdout, /OK: paridade tripla verificada/);
+
+  const grantsQuebrado = run(makeFixture({ ...base, grantsFresco: { r: 2 }, grantsCommitado: { r: 1 } }), { args: ['--require-live', '--sem-migrations'] });
+  assert.equal(grantsQuebrado.status, 1, 'grants divergente continua reprovando');
+
+  const edgeQuebrado = run(makeFixture({ ...base, dirs: ['fn-a', 'fn-b'], grantsFresco: { r: 1 }, grantsCommitado: { r: 1 } }), { args: ['--require-live', '--sem-migrations'] });
+  assert.equal(edgeQuebrado.status, 1, 'edge fora do manifesto continua reprovando');
+});

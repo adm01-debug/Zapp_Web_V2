@@ -165,9 +165,10 @@ export function makeDispatchDeps(opts: {
 
 export function makeTestActionDeps(
   connection: Record<string, unknown> | null,
-  opts: { storage?: unknown } = {},
+  opts: { storage?: unknown; settings?: unknown; testSendsCount?: number } = {},
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any {
+  const testSendsCount = opts.testSendsCount ?? 0;
   return {
     serviceKey: TEST_SERVICE_KEY,
     supabase: {
@@ -178,6 +179,19 @@ export function makeTestActionDeps(
       ...(opts.storage ? { storage: opts.storage } : {}),
       from(table: string) {
         if (table === "whatsapp_connections") return thenableQB({ data: connection, error: null });
+        if (table === "talkx_settings") {
+          const settings = (opts.settings ?? []) as Record<string, unknown>[];
+          const qb = thenableQB({ data: settings, error: null });
+          qb.maybeSingle = () => Promise.resolve({ data: settings[0] ?? null, error: null });
+          return qb;
+        }
+        if (table === "talkx_test_sends") {
+          const count = opts.testSendsCount ?? 0;
+          const qb = thenableQB({ data: null, count, error: null } as { data: unknown; error: unknown; count: number });
+          qb.maybeSingle = () => Promise.resolve({ data: null, error: null });
+          qb.insert = () => thenableQB({ data: null, error: null });
+          return qb;
+        }
         return thenableQB({ data: null, error: null });
       },
     },

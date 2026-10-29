@@ -24,6 +24,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { applyThemePreset, loadThemeConfig } from '@/components/settings/theme/presets';
+import { safeGetItem, safeSetItem } from '@/lib/safeStorage';
 
 interface HighContrastContextType {
   isHighContrast: boolean;
@@ -56,16 +57,18 @@ function preferenciaDoSistemaPorMaisContraste(): boolean {
 
 export function HighContrastProvider({ children }: { children: React.ReactNode }) {
   const [isHighContrast, setIsHighContrast] = useState(() => 
-    localStorage.getItem('highContrast') === 'true'
+    safeGetItem('highContrast') === 'true'
   );
-  const [contrastLevel, setContrastLevel] = useState(() =>
-    Number.parseInt(localStorage.getItem('contrastLevel') || '100')
-  );
+  const [contrastLevel, setContrastLevel] = useState(() => {
+    // Valor inválido no storage (ausente, texto, "NaN") cai no padrão 100.
+    const stored = Number.parseInt(safeGetItem('contrastLevel') ?? '', 10);
+    return Number.isFinite(stored) ? stored : 100;
+  });
   const [reducedMotion, setReducedMotion] = useState(() =>
-    localStorage.getItem('reducedMotion') === 'true'
+    safeGetItem('reducedMotion') === 'true'
   );
   const [largeText, setLargeText] = useState(() =>
-    localStorage.getItem('largeText') === 'true'
+    safeGetItem('largeText') === 'true'
   );
 
   /**
@@ -91,7 +94,7 @@ export function HighContrastProvider({ children }: { children: React.ReactNode }
     } else {
       root.classList.remove('high-contrast');
     }
-    localStorage.setItem('highContrast', String(isHighContrast));
+    safeSetItem('highContrast', String(isHighContrast));
 
     // Reaplica a skin depois de mexer na classe: ligar o alto contraste precisa LIMPAR as
     // vars de cor que o preset deixou inline no `<html>` (senão elas vencem a classe
@@ -116,7 +119,7 @@ export function HighContrastProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     document.documentElement.style.setProperty('--contrast-multiplier', String(contrastLevel / 100));
-    localStorage.setItem('contrastLevel', String(contrastLevel));
+    safeSetItem('contrastLevel', String(contrastLevel));
   }, [contrastLevel]);
 
   useEffect(() => {
@@ -125,7 +128,7 @@ export function HighContrastProvider({ children }: { children: React.ReactNode }
     } else {
       document.documentElement.classList.remove('reduced-motion');
     }
-    localStorage.setItem('reducedMotion', String(reducedMotion));
+    safeSetItem('reducedMotion', String(reducedMotion));
   }, [reducedMotion]);
 
   useEffect(() => {
@@ -134,7 +137,7 @@ export function HighContrastProvider({ children }: { children: React.ReactNode }
     } else {
       document.documentElement.classList.remove('large-text');
     }
-    localStorage.setItem('largeText', String(largeText));
+    safeSetItem('largeText', String(largeText));
   }, [largeText]);
 
   const toggleHighContrast = () => setIsHighContrast(prev => !prev);
