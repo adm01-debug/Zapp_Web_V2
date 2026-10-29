@@ -1,5 +1,7 @@
 # Levantamento C — worktrees do Zapp
 
+**Atualização read-only de 29/10/2026:** além do worktree temporário desta auditoria, foram consultados 30 worktrees de origem em `/home/joaquim_ataides/zapp-worktrees`: 29 limpos e `preview` com 3 arquivos rastreados modificados, sem untracked. O `preview` continua com metadado `.git` apontando para `preview1` ausente; o registro válido está em `.git/worktrees/preview`. O snapshot e os TSVs abaixo são da coleta de 28/10, quando só `preview` foi inventariado, e não representam as outras árvores atuais. Não houve correção, prune, checkout ou exclusão.
+
 Data: 2026-10-28T12:05:17+00:00. Escopo: apenas `/home/joaquim_ataides/zapp-worktrees`, excluída da varredura a árvore ativa `consolidacao-baseline-20261028`. O clone principal foi consultado somente como referência Git; `origin/main` foi atualizado com `git fetch origin main`, sem checkout nem alteração de arquivos. Nenhuma operação foi feita no GitHub.
 
 ## Contagem e referência
