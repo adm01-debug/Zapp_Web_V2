@@ -18,8 +18,12 @@ test('GA37: DEPLOYMENT.md acompanha o gatilho automático de Edge Functions', ()
   assert.match(push, /branches:\s*\[main\]/, 'deploy de Edge precisa estar limitado à main');
   assert.match(push, /supabase\/functions\/\*\*/, 'gatilho deve cobrir as Edge Functions');
   assert.match(push, /supabase\/config\.toml/, 'gatilho deve cobrir config.toml');
+  assert.match(push, /!supabase\/functions\/\*\*\/\*\.test\.ts/, 'testes não devem disparar deploy');
+  assert.match(push, /!supabase\/functions\/\*\*\/\*\.md/, 'documentação não deve disparar deploy');
+  assert.match(push, /!supabase\/functions\/\*\*\/fixtures\/\*\*/, 'fixtures não devem disparar deploy');
   assert.match(deployment, /publicadas automaticamente/i);
   assert.match(deployment, /workflow_dispatch.*rollback/is);
+  assert.match(deployment, /`\*\.test\.ts`.*`\.md`.*`fixtures\//s);
   assert.doesNotMatch(deployment, /Edge Functions NÃO sobem automaticamente/i);
   assert.doesNotMatch(deployment, /deployadas \*\*somente\*\* via `workflow_dispatch`/i);
 });
@@ -34,7 +38,7 @@ test('GA37: CLAUDE.md distingue a regra atual do registro histórico', () => {
 });
 
 test('GA37: template de PR orienta a confirmar o deploy automático', () => {
-  assert.match(template, /confirmar o deploy automático em `deploy-functions`/);
+  assert.match(template, /confirmar `deploy-functions`/);
   assert.doesNotMatch(template, /disparar `deploy-functions` após o merge/);
 });
 

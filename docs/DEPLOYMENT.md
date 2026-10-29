@@ -53,7 +53,7 @@ O deploy do **frontend** é automático via Vercel (projeto `zapp_web_v2`, team 
 1. **Merge de PR na `main`** → Rebuild automático (push direto na `main` é proibido)
 2. **Assets** → CDN global
 
-> **Edge Functions são publicadas automaticamente** quando um push na `main` altera `supabase/functions/**` ou `supabase/config.toml`. O dispatch manual continua disponível para rollback e operações direcionadas.
+> **Edge Functions são publicadas automaticamente** quando um push na `main` altera código implantável em `supabase/functions/` ou `supabase/config.toml`. Testes (`*.test.ts`), arquivos `.md` e `fixtures/` não disparam deploy. O dispatch manual continua disponível para rollback e operações direcionadas.
 
 ### Tempo médio de deploy
 - Build Vercel: ~2–3 minutos
@@ -80,8 +80,9 @@ bun run preview
 
 ### 2. Deploy de Edge Functions (automático no push; manual para rollback)
 
-Desde 07/10/2026, um push na `main` que altera `supabase/functions/**` ou
-`supabase/config.toml` dispara `deploy-functions.yml`. O workflow publica somente
+Desde 07/10/2026, um push na `main` que altera código implantável em
+`supabase/functions/` ou `supabase/config.toml` dispara `deploy-functions.yml`.
+Arquivos `*.test.ts`, `.md` e `fixtures/` são excluídos do gatilho. O workflow publica somente
 funções cujo bundle divergiu do publicado. O `workflow_dispatch` manual continua
 disponível para rollback (`source_ref`), função única (`function_name`), dry-run e
 rotação de secrets.
@@ -143,8 +144,9 @@ db-migrate.yml (apply=false, dry-run) → aprovação em producao-ddl → apply=
 
 ### Deploy (automático no push; manual para rollback)
 
-O push na `main` com alterações em `supabase/functions/**` ou `supabase/config.toml`
-dispara o deploy automaticamente. O dispatch manual serve para rollback, função única,
+O push na `main` com alterações em código implantável de `supabase/functions/` ou
+em `supabase/config.toml` dispara o deploy automaticamente. Arquivos `*.test.ts`, `.md`
+e `fixtures/` não disparam deploy. O dispatch manual serve para rollback, função única,
 dry-run e rotação de secrets. O environment `producao-edge-functions` limita a branch
 permitida; não exige aprovação humana adicional.
 

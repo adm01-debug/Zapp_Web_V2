@@ -495,7 +495,8 @@ Aplicado assim hoje: `20260926120600` (`DROP INDEX idx_talkx_template_versions_t
 antes do drop). O arquivo estava em `main` desde a manhã sem nunca ter sido aplicado.
 
 **Retificação de 2026-10-07 — Edge Functions:** o parágrafo histórico sobre deploy manual foi
-superado. Hoje, um push na `main` que altera `supabase/functions/**` ou `supabase/config.toml`
+superado. Hoje, um push na `main` que altera código implantável em `supabase/functions/`
+ou `supabase/config.toml` (exceto `*.test.ts`, `.md` e `fixtures/`)
 dispara `deploy-functions.yml` automaticamente. O environment `producao-edge-functions` restringe
 a branch confiável e não exige aprovação humana adicional. O dispatch manual permanece para
 rollback (`source_ref`), função única, dry-run e rotação de secrets. Confirme o run após o merge;
@@ -613,7 +614,7 @@ Referência: issue #888 (`[types-sync]`, 89 comentários), fechada em 2026-10-01
 ### Deploy e edge functions
 
 - **Front (Vercel):** automático na `main` — merge em `main` = deploy em produção.
-- **Edge functions:** deploy automático quando o push na `main` altera `supabase/functions/**` ou `supabase/config.toml`; `workflow_dispatch` é para rollback e operações direcionadas. O environment `producao-edge-functions` restringe a branch e não exige aprovação humana adicional.
+- **Edge functions:** deploy automático quando o push na `main` altera código implantável em `supabase/functions/` ou `supabase/config.toml` (exceto `*.test.ts`, `.md` e `fixtures/`); `workflow_dispatch` é para rollback e operações direcionadas. O environment `producao-edge-functions` restringe a branch e não exige aprovação humana adicional.
 - `FALLBACK_ORIGIN` atual: `https://zapp-web-v2.vercel.app`. Mudar para `https://zappweb.app.br` 7 dias após DNS estabilizar (V185).
 
 ### Regras de env vars no Vercel
@@ -628,7 +629,7 @@ Referência: issue #888 (`[types-sync]`, 89 comentários), fechada em 2026-10-01
 ### Ações pendentes do Joaquim (pós-auditoria 2026-10-18)
 
 1. **V017** — Inverter redirect: apex canônico, `www` → apex (Dashboard Vercel → Domains).
-2. **V023 (retificada em 2026-10-07)** — Após merge que altera Edge Functions, confirmar o run automático de `deploy-functions.yml`; dispatch manual fica para rollback e operações direcionadas.
+2. **V023 (retificada em 2026-10-07)** — Após merge que altera código implantável de Edge Functions, confirmar o run automático de `deploy-functions.yml`; dispatch manual fica para rollback e operações direcionadas.
 3. **V043–V065** — Remover 17 vars de integração morta + 5 chaves servidor + VITE_* não lidas.
 4. **V175/V176** — Pausar e deletar projeto legado `zapp-web` (`prj_OsErjUqsrMbwwC7S1LVfawmNgEce`).
 
