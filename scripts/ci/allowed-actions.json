@@ -12,6 +12,7 @@
     "actions/setup-go",
     "actions/setup-node",
     "actions/upload-artifact",
+    "actions/download-artifact",
     "github/codeql-action",
     "actions/dependency-review-action",
     "ossf/scorecard-action",
