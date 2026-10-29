@@ -100,6 +100,11 @@ create schema if not exists supabase_migrations;
 create table if not exists supabase_migrations.schema_migrations(
   version text primary key, statements text[], name text);
 
+-- Snapshots operacionais preexistentes no banco canonico, fora do historico versionado.
+-- O replay precisa reproduzir somente a existencia para validar os COMMENTs; sem dados.
+create table if not exists public._zapp_fn_before (id integer);
+create table if not exists public._zapp_mig133_log (id integer);
+
 -- Estado manual preexistente no banco canonico, criado fora das migrations:
 -- 20261026230300 remove ops_backup e documenta o snapshot _bkp_261023. O replay
 -- descartavel precisa reproduzir esses objetos vazios para exercitar a migration real;

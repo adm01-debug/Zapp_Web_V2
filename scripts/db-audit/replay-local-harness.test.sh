@@ -123,6 +123,7 @@ nao_contem "A: NAO remove o container alheio de nome fixo" "hermes-e24-replay" "
 contem "A: remove o proprio container" "^$NOME_A$" "$CA/log/rm.log"
 contem "A: bootstrap reproduz o schema de backup preexistente para o replay" "create schema if not exists ops_backup" "$CA/log/bootstrap-sql.log"
 contem "A: bootstrap cria os alvos de COMMENT da migration de snapshot" "create table if not exists _bkp_261023.agent_stats" "$CA/log/bootstrap-sql.log"
+contem "A: bootstrap reproduz snapshots operacionais preexistentes" "create table if not exists public._zapp_fn_before" "$CA/log/bootstrap-sql.log"
 
 # ===========================================================================
 # Caso B: bootstrap falha. Deve sair com status 2 (setup indisponivel),
