@@ -36,12 +36,14 @@ vi.mock('framer-motion', async (importOriginal) => {
 
     motion: { div: passthrough('div'), button: passthrough('button') },
     AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+    // O componente respeita o movimento reduzido do sistema.
+    useReducedMotion: () => false,
   };
 });
 
 describe('VoiceChangerPicker — botões de gravação com nome acessível (A11Y-13)', () => {
   it('nomeia o botão de gravar áudio', () => {
-    render(<VoiceChangerPicker onSendAudio={vi.fn()} />);
+    render(<VoiceChangerPicker onSendAudioBlob={vi.fn()} />);
     expect(screen.getByRole('button', { name: 'Gravar áudio' })).toBeInTheDocument();
   });
 });

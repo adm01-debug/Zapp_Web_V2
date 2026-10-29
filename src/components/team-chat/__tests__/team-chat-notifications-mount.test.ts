@@ -49,6 +49,15 @@ vi.mock('@/components/team-chat/TeamChatNotificationsListener', () => ({
 }));
 vi.mock('@/hooks/system/useServiceWorker', () => ({ useServiceWorker: vi.fn() }));
 vi.mock('@/hooks/ui/useScreenProtection', () => ({ useScreenProtection: vi.fn() }));
+// DeferredProviders em App.tsx chama useAuth() e useGlobalIncomingMessageAlerts().
+// AppProviders é mockado como passthrough (sem AuthProvider), então essas dependências
+// precisam ser neutralizadas para o render não lançar "useAuth must be used within AuthProvider".
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ profile: null }),
+}));
+vi.mock('@/hooks/realtime/useGlobalIncomingMessageAlerts', () => ({
+  useGlobalIncomingMessageAlerts: vi.fn(),
+}));
 
 vi.mock('@/hooks/chat/useTeamChat', () => ({ useTeamConversations: () => ({ data: [] }) }));
 vi.mock('@/hooks/chat/useTeamChatNotifications', () => ({
@@ -63,16 +72,19 @@ vi.mock('@/components/ui/button', () => ({
   Button: ({ children }: { children: React.ReactNode }) => React.createElement('button', null, children),
 }));
 vi.mock('lucide-react', () => ({ MessageSquare: () => null, Users: () => null, Plus: () => null }));
-vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('framer-motion')>();
-  return {
-    ...actual,
-    motion: {
-        div: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
-      },
-      useReducedMotion: vi.fn(() => null),
-  };
-});
+// MotionConfig + useReducedMotion: necessários para LazyMotionConfig em App.tsx e para
+// ConversationEmptyState (linha 35) que chama useReducedMotion().
+// motion.div e motion.span: ConversationEmptyState renderiza motion.div (contêiner) e
+// motion.span (pontos decorativos). Sem motion.span no mock o React lança
+// "Element type is invalid: got undefined" e derruba o render do TeamChatView.
+vi.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),
+    span: ({ children }: { children?: React.ReactNode }) => React.createElement('span', null, children ?? null),
+  },
+  MotionConfig: ({ children }: { children: React.ReactNode }) => children,
+  useReducedMotion: () => false,
+}));
 
 import App from '@/App';
 import { TeamChatView } from '@/components/team-chat/TeamChatView';

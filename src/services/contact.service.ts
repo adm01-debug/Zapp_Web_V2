@@ -115,7 +115,11 @@ export class ContactService {
       (from, to) =>
         supabase
           .from('contact_notes')
-          .select(`id, contact_id, author_id, content, category, is_done, due_date, created_at, updated_at`)
+          // `select('*')` de propósito (compatibilidade de deploy): `is_pinned` só vem na
+          // linha quando a coluna existe no banco. Uma lista explícita de colunas com
+          // `is_pinned` quebraria a LEITURA inteira entre a publicação do front e o apply da
+          // migration `20261026200000_contact_notes_pinned.sql` (db-migrate é depois).
+          .select('*')
           .eq('contact_id', contactId)
           .order('created_at', { ascending: false })
           .order('id', { ascending: false })
@@ -141,7 +145,13 @@ export class ContactService {
     const authorsMap = new Map(authors.map(a => [a.id, a]));
     return (data || []).map(note => ({
       ...note,
-      author: authorsMap.get(note.author_id),
+      // Autor sempre definido: sem perfil correspondente, usa o mesmo placeholder
+      // da V3 ("Usuário removido") em vez de deixar `author` undefined na tela.
+      author: authorsMap.get(note.author_id) ?? {
+        id: note.author_id,
+        name: 'Usuário removido',
+        avatar_url: null,
+      },
     }));
   }
 
@@ -149,7 +159,7 @@ export class ContactService {
     contactId: string,
     authorId: string,
     content: string,
-    options?: { category?: string; dueDate?: string | null },
+    options?: { category?: string; dueDate?: string | null; isPinned?: boolean },
   ) {
     const { data, error } = await supabase
       .from('contact_notes')
@@ -159,6 +169,10 @@ export class ContactService {
         content,
         category: options?.category ?? 'note',
         due_date: options?.dueDate ?? null,
+        // `is_pinned` só entra no payload quando for `true` (fixar já na criação). Nunca
+        // enviamos `is_pinned: false`: o `DEFAULT false` da coluna já cobre, e o campo
+        // ausente mantém o INSERT válido antes de a coluna existir em produção.
+        ...(options?.isPinned === true ? { is_pinned: true } : {}),
       })
       .select()
       .single();
@@ -176,8 +190,8 @@ export class ContactService {
 
    static async updateNote(
      noteId: string,
-     updates: Partial<{ content: string; is_done: boolean; due_date: string | null }>,
-   ) {
+     updates: Partial<{ content: string; is_done: boolean; is_pinned: boolean; due_date: string | null }>,
+     ) {
      const { data, error } = await supabase.from('contact_notes').update(updates).eq('id', noteId).select().single();
      if (error) throw error;
      return data;

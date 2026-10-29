@@ -366,6 +366,28 @@ describe('useContactsSearch — ordenação e períodos', () => {
     act(() => result.current.setFilterDateRange('month'));
     await waitFor(() => expect(ultimoArgs(SEARCH).date_from).toBe('2026-02-28T12:00:00.000Z'));
   });
+
+  it('"Trimestre" a partir de 31/05 termina em 28/02, sem transbordar', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-05-31T12:00:00.000Z'));
+    h.results[SEARCH] = { data: [contato('c1')], error: null };
+
+    const { result } = setup();
+    await esperaBusca();
+    act(() => result.current.setFilterDateRange('quarter'));
+    await waitFor(() => expect(ultimoArgs(SEARCH).date_from).toBe('2026-02-28T12:00:00.000Z'));
+  });
+
+  it('"Ano" a partir de 29/02 bissexto termina em 28/02', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2024-02-29T12:00:00.000Z'));
+    h.results[SEARCH] = { data: [contato('c1')], error: null };
+
+    const { result } = setup();
+    await esperaBusca();
+    act(() => result.current.setFilterDateRange('year'));
+    await waitFor(() => expect(ultimoArgs(SEARCH).date_from).toBe('2023-02-28T12:00:00.000Z'));
+  });
 });
 
 describe('useContactsSearch — filtros, busca e limpeza', () => {

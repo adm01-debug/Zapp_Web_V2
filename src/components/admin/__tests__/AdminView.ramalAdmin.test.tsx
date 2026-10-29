@@ -58,8 +58,8 @@ vi.mock('../useAdminData', () => ({
     advanced: { label: 'Avançado', description: '' },
     full: { label: 'Completo', description: '' },
   },
-  AUDIT_PAGE_SIZE: 50,
   MIN_PASSWORD_LENGTH: 8,
+  AUDIT_PAGE_SIZE: 50,
 }));
 
 import { AdminView } from '../AdminView';

@@ -51,7 +51,7 @@ function urlDaFuncao(): string {
  * Transporte: POST com `{ callId }` no corpo (nunca na query string) e o JWT da sessao; 403/404
  * sao resposta esperada e viram `{ disponivel: false }`; qualquer outra falha (rede, 5xx, sem
  * sessao) PROPAGA - nada aqui engole erro. Blob de tamanho 0, ou resposta JSON, nao e gravacao valida. A resposta e
- * lida como `Response.blob()`, entao o audio chega inteiro seja qual for a `Content-Type`
+ * lida como bytes (`arrayBuffer()`) e remontada em Blob, entao o audio chega inteiro seja qual for a `Content-Type`
  * (`audio/mpeg` incluso).
  */
 export function useCallRecording(callId: string | null | undefined, recordingStatus: string | null | undefined) {
@@ -76,7 +76,11 @@ export function useCallRecording(callId: string | null | undefined, recordingSta
       }
       if (!resposta.ok) throw new Error('Falha ao buscar a gravacao da chamada');
 
-      const blob = await resposta.blob();
+      // O Blob é montado a partir dos bytes NO CONTEXTO DA PÁGINA: `Response.blob()` devolve o Blob
+      // do runtime (undici), que em alguns runtimes não é o `Blob` global do navegador/jsdom
+      // (`instanceof Blob` falso) e o player não o reconheceria.
+      const bytes = await resposta.arrayBuffer();
+      const blob = new Blob([bytes], { type: resposta.headers.get('content-type') ?? '' });
       if (blob.size === 0) return { disponivel: false, blob: null };
       // JSON e o formato dos erros/respostas de controle da Edge, nunca o audio: se um 200 vier
       // assim, nao ha bytes de gravacao e nada e fabricado a partir dele (falha fechada).
