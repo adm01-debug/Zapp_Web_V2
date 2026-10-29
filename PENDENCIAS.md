@@ -72,4 +72,28 @@ se reaparecer.
 
 ---
 
+## 3. `settings-guard` — merge do PR #2354 bloqueado pela Regra 8
+
+**Workflow:** `.github/workflows/settings-guard.yml`
+**Último run com falha na main:** `40834848216` (2026-10-29 07:20 UTC)
+**Causa raiz:** `scripts/ci/github-settings-baseline.json` divergia em 3 campos do estado real do GitHub:
+- `required_status_checks`: baseline tinha 6 checks antigos; realidade tem 3 (`✅ CI Gate`, `🏗️ Build`, `🔎 TypeCheck`).
+- `default_workflow_permissions`: baseline="read"; realidade="write".
+- `environments`: faltavam `copilot`, `Preview`, `Production`.
+
+**Fix pronto:** `scripts/ci/github-settings-baseline.json` atualizado no PR #2354
+(https://github.com/adm01-debug/Zapp_Web_V2/pull/2354).
+
+**Motivo do bloqueio:** O PR #2354 também altera `db-guard.yml` (arquivo de workflow).
+A **Regra 8 do CLAUDE.md** proíbe o agente de mergear PR que toque em `CI/workflows`.
+O agente não pode mergear — depende do Joaquim.
+
+**O que o Joaquim precisa fazer:**
+1. Abrir https://github.com/adm01-debug/Zapp_Web_V2/pull/2354
+2. Converter de draft para "Ready for review"
+3. Squash-merge (CI verde na branch SHA `d251f5a` — DB Guard `success` run `40965340063`)
+4. Após merge, aguardar a próxima execução agendada do `settings-guard` (a cada 6h às `:15`) para confirmar `success` na main.
+
+---
+
 *Atualizado em 2026-10-29. Remover item ao concluir a ação correspondente.*
