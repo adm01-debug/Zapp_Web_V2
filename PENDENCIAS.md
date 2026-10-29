@@ -71,49 +71,61 @@ se reaparecer.
 
 ---
 
-## 3. `settings-guard` — merge do PR #2354 bloqueado pela Regra 8
+## 3. `settings-guard` — fix no PR #2355 (aguarda CI)
 
 **Workflow:** `.github/workflows/settings-guard.yml`
-**Último run com falha:** `40834848216` (SHA `0b77f8641`, 2026-10-29 07:20 UTC)
+**Último run com falha na main:** `40834848216` (SHA `0b77f8641`, 2026-10-29 07:20 UTC)
 **Causa raiz:** `scripts/ci/github-settings-baseline.json` divergia em 3 campos do estado real do GitHub:
 - `required_status_checks`: baseline tinha 6 checks antigos; realidade tem 3.
 - `default_workflow_permissions`: baseline="read"; realidade="write".
 - `environments`: faltavam `copilot`, `Preview`, `Production`.
 
-**Fix pronto:** `scripts/ci/github-settings-baseline.json` atualizado no PR #2354
-(https://github.com/adm01-debug/Zapp_Web_V2/pull/2354).
-
-**Motivo do bloqueio:** O PR #2354 também altera `db-guard.yml` (arquivo de workflow).
-A **Regra 8 do CLAUDE.md** proíbe o agente de mergear PR que toque em `CI/workflows`.
-O agente não pode mergear — depende do Joaquim.
-
-**O que o Joaquim precisa fazer:**
-1. Abrir https://github.com/adm01-debug/Zapp_Web_V2/pull/2354
-2. Converter de draft para "Ready for review"
-3. Squash-merge (CI verde na branch SHA `d251f5a` — DB Guard `success` run `40965340063`)
-4. Após merge, aguardar a próxima execução agendada do `settings-guard` (a cada 6h às `:15`) para confirmar `success` na main.
+**Fix aplicado:** PR #2355 (https://github.com/adm01-debug/Zapp_Web_V2/pull/2355)
+branch `claude/fix-settings-guard-baseline-261029` — altera SOMENTE
+`scripts/ci/github-settings-baseline.json`, sem arquivos de workflow.
+Aguarda CI verde para merge automático pelo agente.
 
 ---
 
-## 4. `db-live-guard` — falha no contrato DB vivo (drift de catálogo ou manifesto)
+## 4. `db-live-guard` — todos os 7 checks do contrato DB vivo falharam
 
 **Workflow:** `.github/workflows/db-live-guard.yml`
 **Último run na main:** `40282111471` (SHA `2d97c44c`, 2026-10-26 06:49 UTC) — **failure**
-**Job:** `db-live-guard`
-**Step com falha:** "Consolidar veredito do contrato vivo" (step 23 do job)
+**Job:** `db-live-guard` — step 23 "Consolidar veredito do contrato vivo"
+**Código de causa:** `c2908c3a1ea3a8199242ee74b66dee834b3cef41d4064424c0b83e72341df07e`
 
-**Causa raiz provável:** Drift entre `supabase/schema-manifest.json` commitado e o estado
-real do banco de produção, ou paridade arquivos↔ledger quebrada. O `db-live-guard` compara
-migrations, regenera catálogo e manifesto contra o que está commitado. Qualquer DDL aplicado
-diretamente pelo MCP sem arquivo em `supabase/migrations/` produz esse erro.
+**Erro exato** (variável `FALHAS_LISTA` do step de consolidação, log do job `121437489432`):
+```
+Comparar migrations com schema_migrations
+Verificar ACL e contrato de mcp_exec
+Regenevar catalogo e comparar com o commitado
+Regenevar manifesto e comparar com o commitado
+Verificar frescor do types.ts
+Paridade tripla (migrations, edges, grants)
+Auditar configuracao runtime sem dados de clientes
+```
+**Todos os 7 passos falharam** — drift abrangente entre o banco de produção e o que está commitado.
+
+**Causa raiz:** DDL aplicado diretamente via MCP sem arquivo correspondente em
+`supabase/migrations/`, ou schema-manifest.json desatualizado. O `db-live-guard` compara
+migrations vs ledger, regenera catálogo e manifesto e verifica paridade tripla — qualquer
+divergência falha todos os passos dependentes.
 
 **O que precisa ser feito:**
 1. Verificar a issue de alerta aberta pelo `db-live-guard` no repositório (label `db-live-guard`).
-2. Rodar `node scripts/db-audit/supabase-usage-guard.mjs` localmente para identificar o drift.
-3. Reconciliar: criar o(s) arquivo(s) de migration ausente(s) em `supabase/migrations/`, registrar
-   no ledger via `node scripts/db-audit/register-migration.mjs <arquivo.sql>`, e abrir PR.
+2. Identificar as versions órfãs no ledger:
+   ```sql
+   SELECT version, name FROM supabase_migrations.schema_migrations ORDER BY version DESC LIMIT 20;
+   ```
+   e comparar com `ls supabase/migrations/*.sql | xargs -I{} basename {} .sql | sort | tail -20`.
+3. Para cada version sem arquivo local: criar o arquivo SQL com o DDL real do banco
+   (`pg_get_functiondef`, `pg_indexes`, etc.) e registrar via
+   `node scripts/db-audit/register-migration.mjs <arquivo.sql>`.
+4. Abrir PR com os arquivos reconciliados.
 
-**Ação imediata necessária:** verificar a issue de alerta gerada pelo workflow no repo GitHub.
+**Ação imediata necessária:** verificar a issue de alerta gerada pelo `db-live-guard` no repo GitHub
+e reconciliar as versions órfãs (relacionado também ao `PENDENCIAS.md §6` — `db-migrate` bloqueado
+por `remote_only_count=3`).
 
 ---
 
