@@ -475,7 +475,7 @@ e pasta mudaram. Quem for renomear id precisa de `TAB_REDIRECTS` em `useInboxUIS
 (precedente `reminders → tasks`). Estatísticas do contato não têm série histórica — não
 reintroduzir % de variação sem query real. Plano: `docs/design/PLANO_SALESVIEW_JOURNEY_50_ETAPAS_2026-10-02.md`.
 
-## Decisões de 2026-09-26 — como DDL entra em produção, e por que merge ≠ deploy
+## Decisões de 2026-09-26 — como DDL entra em produção
 
 **DDL em produção vai por MCP (`db_query`) + registro no ledger no mesmo turno, não pelo
 `db-migrate.yml`.** O workflow existe, funciona e é mais seguro no papel (dry-run + hash), mas
@@ -494,12 +494,12 @@ Aplicado assim hoje: `20260926120600` (`DROP INDEX idx_talkx_template_versions_t
 índice duplicado da unique `(template_id, version_number)`; 0 linhas e 0 `idx_scan` na tabela
 antes do drop). O arquivo estava em `main` desde a manhã sem nunca ter sido aplicado.
 
-**Merge em `main` NÃO deploya edge function.** O front é Vercel e sobe sozinho; as edge functions
-sobem **só** por `workflow_dispatch` do `deploy-functions.yml` (é deliberado — ver cabeçalho do
-workflow), e o job ainda pausa em `Waiting` no environment `producao-edge-functions`. Ou seja:
-uma correção de edge function mergeada continua **fora do ar** até alguém disparar o workflow E
-aprovar. Quem mergear fix de edge function e disser "está em produção" sem esse par de passos está
-reportando errado — aconteceu nesta sessão com o fix do `trash-thread` do Gmail (PR #840).
+**Retificação de 2026-10-07 — Edge Functions:** o parágrafo histórico sobre deploy manual foi
+superado. Hoje, um push na `main` que altera `supabase/functions/**` ou `supabase/config.toml`
+dispara `deploy-functions.yml` automaticamente. O environment `producao-edge-functions` restringe
+a branch confiável e não exige aprovação humana adicional. O dispatch manual permanece para
+rollback (`source_ref`), função única, dry-run e rotação de secrets. Confirme o run após o merge;
+não execute `supabase functions deploy` diretamente em produção.
 
 ## Alocação de versão de migration (2026-09-28) — evita colisão entre sessões paralelas
 
@@ -613,7 +613,7 @@ Referência: issue #888 (`[types-sync]`, 89 comentários), fechada em 2026-10-01
 ### Deploy e edge functions
 
 - **Front (Vercel):** automático na `main` — merge em `main` = deploy em produção.
-- **Edge functions:** NÃO sobem com o front. Requerem `workflow_dispatch` do `deploy-functions.yml` + aprovação de Joaquim em `producao-edge-functions`.
+- **Edge functions:** deploy automático quando o push na `main` altera `supabase/functions/**` ou `supabase/config.toml`; `workflow_dispatch` é para rollback e operações direcionadas. O environment `producao-edge-functions` restringe a branch e não exige aprovação humana adicional.
 - `FALLBACK_ORIGIN` atual: `https://zapp-web-v2.vercel.app`. Mudar para `https://zappweb.app.br` 7 dias após DNS estabilizar (V185).
 
 ### Regras de env vars no Vercel
@@ -628,7 +628,7 @@ Referência: issue #888 (`[types-sync]`, 89 comentários), fechada em 2026-10-01
 ### Ações pendentes do Joaquim (pós-auditoria 2026-10-18)
 
 1. **V017** — Inverter redirect: apex canônico, `www` → apex (Dashboard Vercel → Domains).
-2. **V023** — Deploy edge functions após merge (dispatch + aprovar `producao-edge-functions`).
+2. **V023 (retificada em 2026-10-07)** — Após merge que altera Edge Functions, confirmar o run automático de `deploy-functions.yml`; dispatch manual fica para rollback e operações direcionadas.
 3. **V043–V065** — Remover 17 vars de integração morta + 5 chaves servidor + VITE_* não lidas.
 4. **V175/V176** — Pausar e deletar projeto legado `zapp-web` (`prj_OsErjUqsrMbwwC7S1LVfawmNgEce`).
 
