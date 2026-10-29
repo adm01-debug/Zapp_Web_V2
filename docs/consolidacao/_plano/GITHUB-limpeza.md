@@ -1,6 +1,6 @@
 # Fase 2 — plano de PRs e branches do GitHub
 
-Data: 28/10/2026. Escopo: GitHub do `adm01-debug/Zapp_Web_V2`. Este documento é um plano; **nenhum PR foi fechado, nenhuma branch foi apagada e nenhum merge foi feito**. Ele integra o commit conjunto da Fase 2.
+Plano iniciado em 28/10/2026. Escopo: GitHub do `adm01-debug/Zapp_Web_V2`. **Nenhum PR foi fechado nem branch foi apagada para fins de limpeza.** Os merges recentes de PRs de consolidação estão registrados abaixo; eles não executam as propostas de limpeza deste documento.
 
 **Retrato revalidado em 29/10/2026 às 20:03:44 UTC:** `main` em `a1340faa6daa6cda1f71537f10e88205a2568fff`, 156 PRs abertas, 25 issues abertas e 222 branches remotas. A PR #2348 foi merged às 20:02:40 UTC após todos os checks listados passarem; revisão Devin reportou pass, mas a revisão completa foi ignorada por falta de créditos. Também estão integradas #2339, #2340, #2341, #2342, #2344 e #2345. A PR #2302 foi merged em `df360e3563e60faec3edcd805726800481962ffd`; #2347 permanece aberta e `BEHIND`; #2305 é posterior à captura anterior e continua aberta. Estes dados são snapshots; reconferir antes de qualquer ação.
 

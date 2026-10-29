@@ -2,6 +2,8 @@
 
 Data: 28/10/2026. Escopo: somente os levantamentos `C*` e `DE*` em `docs/consolidacao/_levantamento/`, seus itens prioritários e comparação pontual, somente leitura, com as árvores locais. Referência do levantamento: `origin/main` local `7cacbe2f`; o baseline de testes foi medido antes, em `653f3d33`. Revalidar a ponta de `main` antes de cada PR. Este é um plano de candidatos, não uma decisão de merge em lote.
 
+**Revalidação read-only de 29/10/2026 contra `main` `a1340faa6daa`:** C contém 30 worktrees de origem (29 limpos e `preview` com 3 arquivos alterados); o worktree da atualização do inventário foi excluído dessa contagem. D/E: o pai `hermes-workspaces/Zapp_Web_V2` não é checkout Git; `.base-tc` é o worktree identificável. `.integra/fase2` tem 6 staged e 7 unstaged; `.integra/lote-main` está limpo, porém 1 commit à frente/107 atrás, com cinco caminhos versionados divergentes da main. O snapshot de 28/10 dizia 12 alterações locais em dois worktrees e não descreve mais o estado atual. Não reparar metadados, limpar ou mover nada nesta etapa; conferir cada diferença funcionalmente antes de qualquer integração.
+
 ## Ordem e decisões imediatas
 
 1. **Preservar as 15 alterações não commitadas antes de limpar worktrees.** No `preview`, as 3 mudanças desfazem a correção de período e a proteção temporal do teste; **DESCARTAR da integração** após preservar a evidência. No Hermes, as 12 entradas se dividem em 6 arquivos temporários de merge ausentes do disco, 1 manifesto de deploy e 5 alterações em hooks/tipos. Nenhuma deve ser copiada por diretório inteiro.
