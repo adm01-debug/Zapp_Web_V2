@@ -15,8 +15,12 @@ const TITULO = '[settings-guard] perimeter regression detected';
 
 const CONTEXTS_OK =
   "['🔎 TypeCheck','🧪 Unit Tests (1/3)','🧪 Unit Tests (2/3)','🧪 Unit Tests (3/3)','🏗️ Build','🧩 Node CI Scripts']";
-const PROT_OK = `send({ required_status_checks: { strict: true, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
-const PROT_REGRESSAO = `send({ required_status_checks: { strict: false, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
+// F3 (18/10, decisão do Joaquim): baseline passou a exigir strict=false (opção A —
+// sem fila serial). PROT_OK agora reflete strict=false; a regressão que o guard
+// existe para pegar é a main voltar a ter strict=true "por fora" (ver histórico em
+// CLAUDE.md — já aconteceu 3x antes, sempre reativando o O(N²) que motivou o corte).
+const PROT_OK = `send({ required_status_checks: { strict: false, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
+const PROT_REGRESSAO = `send({ required_status_checks: { strict: true, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
 const REPO_OK =
   "send({ allow_auto_merge: true, allow_squash_merge: true, allow_merge_commit: false, allow_rebase_merge: false, delete_branch_on_merge: true, squash_merge_commit_message: 'PR_BODY', squash_merge_commit_title: 'PR_TITLE', security_and_analysis: { secret_scanning: { status: 'enabled' }, secret_scanning_push_protection: { status: 'enabled' } } })";
 const ACTIONS_OK = "send({ enabled: true, allowed_actions: 'selected', sha_pinning_required: true })";
@@ -28,7 +32,7 @@ const SEM_ESCOPO = "send({ message: 'Resource not accessible by integration' }, 
 /**
  * Stub de `fetch` no mesmo formato do baseline real. `modo` escolhe a resposta:
  *   ok         — tudo conforme o baseline
- *   regressao  — strict=false (a regressão que o guard existe para pegar)
+ *   regressao  — strict=true (a regressão que o guard existe para pegar; baseline F3 de 18/10 é strict=false)
  *   semChecks  — `required_status_checks: null` (os 6 checks obrigatorios apagados;
  *                e assim que a API DESLIGA os checks — achado do Codex na PR #1920)
  *   semEscopo  — a branch protection responde 403
@@ -157,8 +161,8 @@ const CEGOS_TOKEN_REAL = [
   { nome: 'workflow permissions', campos: ['403'] },
 ];
 const MARCADOR_TOKEN_REAL = `<!-- causa:${assinaturaDe([], CEGOS_TOKEN_REAL)} -->`;
-// Assinatura do caso `regressao`: strict=false lido, nada cego.
-const MARCADOR_REGRESSAO = `<!-- causa:${assinaturaDe([{ campo: 'branch_protection_main.strict', encontrado: false }], [])} -->`;
+// Assinatura do caso `regressao`: strict=true lido, nada cego.
+const MARCADOR_REGRESSAO = `<!-- causa:${assinaturaDe([{ campo: 'branch_protection_main.strict', encontrado: true }], [])} -->`;
 
 describe('settings-guard: perimetro conforme o baseline', () => {
   it('perimetro OK: nao acusa divergencia e sai 0', () => {
@@ -168,7 +172,7 @@ describe('settings-guard: perimetro conforme o baseline', () => {
     assert.ok(!r.out.includes('::warning::'), `avisou sem motivo:\n${r.out}`);
   });
 
-  it('strict=false e detectado como divergencia (a regressao que o guard existe para pegar)', () => {
+  it('strict=true e detectado como divergencia (a regressao que o guard existe para pegar)', () => {
     const r = rodarGuard('regressao');
     assert.equal(r.code, 1, `esperava exit 1, veio ${r.code}:\n${r.out}`);
     assert.ok(

@@ -4,7 +4,7 @@
  * (`github-settings-baseline.json`) e restaura o que sabe restaurar.
  *
  * Política esperada (baseline):
- *   - branch protection da main: strict=true, enforce_admins=true
+ *   - branch protection da main: strict=false (F3, 18/10 — decisão do Joaquim, opção A: sem fila serial), enforce_admins=true
  *   - repo: allow_auto_merge=true, squash-only, delete_branch_on_merge
  *   - actions: allowed_actions=selected, sha_pinning_required=true
  *
@@ -334,13 +334,17 @@ async function checarEnvironments() {
 
 async function restaurar(campo) {
   if (campo === 'branch_protection_main.strict') {
+    // Le o valor-alvo do baseline (nao hardcoda `true`): F3 (18/10) decidiu strict=false,
+    // e o baseline pode mudar de novo no futuro. Hardcoded aqui faria o guard "restaurar"
+    // para o valor ERRADO sempre que o baseline nao for strict=true.
+    const alvo = baseline.branch_protection_main.strict;
     const protection = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection`);
     const contexts = protection?.required_status_checks?.contexts ?? [];
     await gh('PATCH', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection/required_status_checks`, {
-      strict: true,
+      strict: alvo,
       contexts,
     });
-    return '`branch_protection_main.strict` restaurado para `true`';
+    return `\`branch_protection_main.strict\` restaurado para \`${alvo}\``;
   }
   if (campo === 'merge.allow_auto_merge') {
     await gh('PATCH', `/repos/${OWNER}/${REPO_NAME}`, { allow_auto_merge: true });
