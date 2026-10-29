@@ -100,6 +100,21 @@ Functions cold start). Sem código errado. Detalhes em `PENDENCIAS.md` §2.
 
 ---
 
+## Baseline local (medido em 2026-10-29 no commit `d251f5a`)
+
+| Verificação | Baseline (`main`) | Branch fix | Variação |
+|---|---|---|---|
+| Build (`bun run build`) | ✅ sucesso | ✅ sucesso | sem mudança |
+| TypeCheck — erros TS | 21 erros (pré-existentes) | 21 erros (pré-existentes) | **zero novos** |
+| Lint — erros ESLint | 601 erros (pré-existentes) | 601 erros (pré-existentes) | **zero novos** |
+| Testes unitários | em execução | em execução | — |
+
+Nenhum dos arquivos alterados por este fix (`fila-merge.mjs`, `db-guard.yml`,
+`github-settings-baseline.json`, `PENDENCIAS.md`, `RELATORIO_CI.md`) aparece
+no output do TypeCheck ou do ESLint — todos os erros são pré-existentes na `main`.
+
+---
+
 ## Regressões: nenhuma
 
 Todos os 3 fixes são cirúrgicos:
@@ -110,6 +125,18 @@ Todos os 3 fixes são cirúrgicos:
 - `db-guard.yml`: mesma imagem, mesmo SHA, registro diferente (sem rate limit).
 
 Nenhum teste foi pulado, afrouxado ou removido. Nenhum `continue-on-error` introduzido.
+
+---
+
+## PR e estado do CI no GitHub
+
+| PR | Link |
+|---|---|
+| PR #2354 (draft) | https://github.com/adm01-debug/Zapp_Web_V2/pull/2354 |
+
+**Workflows que falharão na branch (pré-existentes na `main`, não causados por este fix):**
+- `types-sync` — erro TS em `contact.service.ts` (`is_pinned`) — registrado em `PENDENCIAS.md §1`
+- `e2e-logado` — 504 na `auth-login` (infra) — registrado em `PENDENCIAS.md §2`
 
 ---
 
