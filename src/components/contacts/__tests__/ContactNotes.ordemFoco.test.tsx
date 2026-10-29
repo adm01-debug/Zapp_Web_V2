@@ -20,7 +20,6 @@ const h = vi.hoisted(() => ({
   myProfileId: 'profile-me' as string | null,
   notes: [] as Array<Record<string, unknown>>,
   profiles: [] as Array<Record<string, unknown>>,
-  updateRows: [{ id: 'x' }] as Array<{ id: string }>,
   updateCalls: [] as Array<{ id: string; patch: Record<string, unknown> }>,
 }));
 
@@ -66,8 +65,11 @@ vi.mock('@/integrations/supabase/client', () => {
     q.then = (onOk: (v: unknown) => unknown, onErr?: (e: unknown) => unknown) => {
       let result: unknown;
       if (q._op === 'update') {
-        h.updateCalls.push({ id: String((q._filters as Record<string, unknown>).id), patch: q._patch as Record<string, unknown> });
-        result = { data: h.updateRows, error: null };
+        const id = String((q._filters as Record<string, unknown>).id);
+        const patch = q._patch as Record<string, unknown>;
+        h.updateCalls.push({ id, patch });
+        h.notes = h.notes.map((n) => (n.id === id ? { ...n, ...patch } : n));
+        result = { data: h.notes.find((n) => n.id === id) ?? null, error: null };
       } else if (table === 'contact_notes') {
         const orders = q._orders as Array<{ col: string; asc: boolean }>;
         const val = (row: Record<string, unknown>, col: string): number | string =>
@@ -116,7 +118,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.myProfileId = 'profile-me';
   h.profiles = [{ id: 'profile-me', name: 'Eu' }];
-  h.updateRows = [{ id: 'x' }];
   h.updateCalls = [];
 });
 
