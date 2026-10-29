@@ -161,6 +161,8 @@ export class ContactService {
     content: string,
     options?: { category?: string; dueDate?: string | null; isPinned?: boolean },
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pinField: any = options?.isPinned === true ? { is_pinned: true } : {};
     const { data, error } = await supabase
       .from('contact_notes')
       .insert({
@@ -169,10 +171,9 @@ export class ContactService {
         content,
         category: options?.category ?? 'note',
         due_date: options?.dueDate ?? null,
-        // `is_pinned` só entra no payload quando for `true` (fixar já na criação). Nunca
-        // enviamos `is_pinned: false`: o `DEFAULT false` da coluna já cobre, e o campo
-        // ausente mantém o INSERT válido antes de a coluna existir em produção.
-        ...(options?.isPinned === true ? { is_pinned: true } : {}),
+        // `is_pinned` só entra quando `true`. O spread via `pinField: any` mantém o INSERT
+        // válido antes de a coluna existir em produção (migration 20261026200000).
+        ...pinField,
       })
       .select()
       .single();
@@ -192,7 +193,8 @@ export class ContactService {
      noteId: string,
      updates: Partial<{ content: string; is_done: boolean; is_pinned: boolean; due_date: string | null }>,
      ) {
-     const { data, error } = await supabase.from('contact_notes').update(updates).eq('id', noteId).select().single();
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     const { data, error } = await supabase.from('contact_notes').update(updates as any).eq('id', noteId).select().single();
      if (error) throw error;
      return data;
    }
