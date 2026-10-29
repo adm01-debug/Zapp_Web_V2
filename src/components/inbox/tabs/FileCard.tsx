@@ -5,13 +5,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import type { ContactMediaItem } from '@/hooks/chat/useContactMedia';
 import { resolveSenderIdentity, type SenderProfileMap } from '@/lib/fileSenderIdentity';
-import { useResolvedStorageUrl } from '@/hooks/storage/useResolvedStorageUrl';
-import { cardName, formatCardDate, typeSizeLine } from './fileDisplay';
+import { typeSizeLine, formatCardDate } from './fileDisplay';
 import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
 import { AudioPlayButton } from './AudioPlayButton';
-import { SenderAvatar } from './SenderAvatar';
 import { FILE_ACTION_BUTTON, FILE_ACTION_BUTTON_DISABLED } from './fileActionButton';
+import { SenderAvatar } from './SenderAvatar';
 
 interface FileCardProps {
   item: ContactMediaItem;
@@ -20,27 +19,21 @@ interface FileCardProps {
   /** Etapa 20: no modo seleção o cartão alterna a seleção em vez de abrir detalhes/prévia. */
   selectionMode?: boolean;
   selectionChecked?: boolean;
-  /** Etapa 18 / D03: nome do remetente só cabe em até 4 colunas; em 5 colunas fica só a foto. */
+  /** Etapa 18: a linha do remetente só cabe em até 4 colunas; acima disso fica nos detalhes. */
   effectiveColumns?: number;
-  /**
-   * R04 / D04: perfis dos atendentes resolvidos em LOTE uma única vez no `FilesTab`
-   * (`useMediaSenderProfiles`) e repassados por props — o cartão nunca consulta por conta própria.
-   */
+  /** R01: perfis dos atendentes (carregados em lote por FilesContent). */
   senderProfiles?: SenderProfileMap;
-  /** R04 / D01: `profiles.id` do usuário logado — decide o rótulo "Você". */
+  /** R01: `profile.id` do usuário logado para distinguir "Você" dos demais. */
   currentUserId?: string | null;
-  /** R04 / D06: `useDownloadPermission` resolvido uma vez no `FilesTab` (baixar x cadeado). */
+  /** Permite ao usuário abrir o arquivo na conversa de origem. */
+  onOpenInChat?: (item: ContactMediaItem) => void;
+  /** Download liberado pela política de segurança da organização. */
   downloadAllowed?: boolean;
   onSelect: () => void;
   onToggleSelection?: () => void;
   onPreview: () => void;
   onForward: () => void;
   onRequestDelete: (item: ContactMediaItem) => void;
-  /**
-   * "Ver na conversa": leva o operador até a mensagem deste arquivo na aba Chat. Opcional —
-   * sem ela o botão não é renderizado (nenhum botão morto).
-   */
-  onOpenInChat?: () => void;
 }
 
 export function FileCard({
@@ -51,76 +44,57 @@ export function FileCard({
   selectionChecked = false,
   effectiveColumns = 4,
   senderProfiles,
-  currentUserId = null,
-  downloadAllowed = false,
+  currentUserId,
+  downloadAllowed,
+  onOpenInChat,
   onSelect,
   onToggleSelection,
   onPreview,
   onForward,
-  onOpenInChat,
   onRequestDelete,
 }: FileCardProps) {
-  const [baixando, setBaixando] = useState(false);
-  // D03: em ≤ 4 colunas foto + nome; em 5 colunas só a foto (o nome fica na dica do avatar).
-  const mostraNomeRemetente = effectiveColumns <= 4;
-  // S28/S29/S30: as três linhas de texto saem só do `fileDisplay` (nome, tipo·tamanho, data) —
-  // nenhum renderer formata por conta própria (etapas 22–25).
-  const nome = cardName(item);
-  const nomeCompleto = item.filename?.trim() || nome.text;
-  const meta = typeSizeLine(item);
-  const data = formatCardDate(item.created_at);
-  // S31/D01: quem enviou — "Você", contato, o atendente do arquivo ou "Equipe" (sem `agent_id`).
-  const remetente = resolveSenderIdentity({
+  const mostraRemetente = effectiveColumns <= 4;
+  const metaTipoTamanho = typeSizeLine(item);
+  const metaData = formatCardDate(item.created_at);
+  const sender = resolveSenderIdentity({
     item,
     currentUserId,
     contact: { name: contactName },
     profiles: senderProfiles,
   });
-  // A URL de leitura do download vem do mesmo resolver da miniatura (assinatura em lote como
-  // semente); a permissão decide entre baixar e o cadeado.
-  const { url: urlDownload } = useResolvedStorageUrl(item.url, undefined, {
-    signedUrl: item.signedUrl,
-    signedUrlExpiresAt: item.expiresAt,
-  });
 
   const acao = selectionMode ? onToggleSelection : undefined;
 
+  const [isDownloading, setIsDownloading] = useState(false);
+
   const handleDownload = async () => {
-    if (!downloadAllowed) {
-      // D06: bloqueado pela política de segurança — o motivo aparece antes de frustrar.
-      toast.error('🔒 Download bloqueado por política de segurança', {
-        description: 'O download de arquivos está desabilitado para proteção de dados. Solicite permissão ao administrador.',
-      });
-      return;
-    }
-    const origem = urlDownload || item.signedUrl || item.url;
-    if (baixando || !origem) return;
-    setBaixando(true);
+    if (isDownloading) return;
+    setIsDownloading(true);
+    const url = item.signedUrl ?? item.url ?? '';
     try {
-      const response = await fetch(origem);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const blob = await response.blob();
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        toast.error('Não foi possível baixar o arquivo', { description: `Erro ${resp.status}` });
+        return;
+      }
+      const blob = await resp.blob();
       const objectUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = objectUrl;
-      anchor.download = item.filename || nome.text;
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = item.filename || item.displayName;
+      a.click();
       URL.revokeObjectURL(objectUrl);
     } catch {
-      toast.error('Erro ao baixar arquivo', {
-        description: 'Não foi possível baixar o arquivo. Tente novamente.',
-      });
+      toast.error('Não foi possível baixar o arquivo');
     } finally {
-      setBaixando(false);
+      setIsDownloading(false);
     }
   };
 
   return (
     <article
       data-testid={`files-item-${item.id}`}
-      data-selected={selected || selectionChecked ? 'true' : 'false'}
+      data-selected={String(selected || selectionChecked)}
       className={cn(
         'rounded-xl border bg-card overflow-hidden flex flex-col',
         selected || selectionChecked ? 'border-primary ring-2 ring-primary' : 'border-border',
@@ -149,49 +123,33 @@ export function FileCard({
         </button>
       </div>
 
-      {/* R04 (S28–S31): quatro linhas fixas — nome, tipo·tamanho, data e remetente — para a
-          altura do cartão ser a mesma em 3, 4 e 5 colunas (S36). */}
+      {/* Etapa 18: nome legível (com o técnico no title), meta num só parágrafo e, até 4
+          colunas, o remetente. */}
       <div className="p-2.5 flex flex-col gap-1">
         <button
           type="button"
-          title={nomeCompleto}
+          title={item.filename}
           onClick={acao ?? onSelect}
           className="rounded text-left text-[13px] font-semibold leading-tight truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          {nome.text}
+          {item.displayName}
         </button>
-        <p className="text-xs text-muted-foreground truncate">{meta}</p>
-        <p className="text-xs text-muted-foreground truncate">{data}</p>
-        <div className="flex min-w-0 items-center">
-          <SenderAvatar
-            name={remetente.name}
-            avatarUrl={remetente.avatarUrl}
-            colorKey={item.agentId ?? undefined}
-            showName={mostraNomeRemetente}
-          />
-        </div>
+        <p className="text-xs text-muted-foreground truncate">{metaTipoTamanho}</p>
+        <p className="text-xs text-muted-foreground truncate">{metaData}</p>
+        <SenderAvatar
+          name={sender.name}
+          avatarUrl={sender.avatarUrl}
+          colorKey={item.agentId ?? undefined}
+          size="sm"
+          showName={mostraRemetente}
+        />
       </div>
 
-      {/* R04 (S32): olho, baixar (D06), encaminhar e ⋮ — sem "Copiar link" nem "Salvar na
-          galeria" (D07). Em áudio, o play do A01 abre a linha. O "Encaminhar" continua o
-          mesmo botão "em breve" das outras vistas (o plano habilita o encaminhamento na
-          etapa do painel), agora vindo da classe compartilhada. */}
+      {/* Etapa 19: Visualizar, Encaminhar (desabilitado até a Fase 7) e Mais ações.
+          Sem "Copiar link"; "Baixar" vive no menu, desabilitado e com o motivo à vista. */}
       <div className="mt-auto flex items-center justify-end gap-1 px-2 pb-2">
         {/* A02: play/pause do áudio direto no cartão, só para itens de áudio. */}
         {item.type === 'audio' && <AudioPlayButton item={item} />}
-        {/* "Ver na conversa": leva à mensagem deste arquivo na aba Chat (só quando o pai
-            oferece a ação). */}
-        {onOpenInChat && (
-          <button
-            type="button"
-            aria-label="Ver na conversa"
-            title="Ver na conversa"
-            className={FILE_ACTION_BUTTON}
-            onClick={onOpenInChat}
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-          </button>
-        )}
         <button
           type="button"
           aria-label="Visualizar"
@@ -200,16 +158,28 @@ export function FileCard({
         >
           <Eye className="w-3.5 h-3.5" />
         </button>
-        <button
-          type="button"
-          aria-label={downloadAllowed ? 'Baixar' : 'Baixar · bloqueado por política de segurança'}
-          title={downloadAllowed ? 'Baixar' : 'Download bloqueado por política de segurança'}
-          disabled={baixando}
-          className={FILE_ACTION_BUTTON}
-          onClick={() => { void handleDownload(); }}
-        >
-          {downloadAllowed ? <Download className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-        </button>
+        {downloadAllowed === false ? (
+          <button
+            type="button"
+            aria-label="Download bloqueado por política de segurança"
+            title="Download bloqueado por política de segurança"
+            className={FILE_ACTION_BUTTON}
+            onClick={() => toast.error('🔒 Download bloqueado por política de segurança', {
+              description: 'Entre em contato com o administrador para solicitar acesso.',
+            })}
+          >
+            <Lock className="w-3.5 h-3.5" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            aria-label="Baixar"
+            className={FILE_ACTION_BUTTON}
+            onClick={handleDownload}
+          >
+            <Download className="w-3.5 h-3.5" />
+          </button>
+        )}
         <button
           type="button"
           aria-label="Encaminhar"
@@ -219,6 +189,16 @@ export function FileCard({
         >
           <Share2 className="w-3.5 h-3.5" />
         </button>
+        {onOpenInChat && (
+          <button
+            type="button"
+            aria-label="Ver na conversa"
+            className={FILE_ACTION_BUTTON}
+            onClick={() => onOpenInChat(item)}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+          </button>
+        )}
         <FileActionsMenu item={item} onRequestDelete={onRequestDelete} />
       </div>
     </article>

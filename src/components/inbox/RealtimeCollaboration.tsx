@@ -60,8 +60,8 @@ export function RealtimeCollaboration({ contactId, className }: RealtimeCollabor
     const { data: eventId, error: transferError } = await supabase.rpc('transfer_conversation', {
       p_contact_id: contactId,
       p_to_agent_id: agentId,
-      p_to_queue_id: null,
-      p_note: trimmedComment || null,
+      p_to_queue_id: undefined,
+      p_note: trimmedComment || undefined,
     });
     if (transferError) throw transferError;
     if (!eventId) {
