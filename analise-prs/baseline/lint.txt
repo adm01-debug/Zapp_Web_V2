@@ -1,32 +1,29 @@
-=== LINT ===
-  40:41  error  Comparação direta de credencial "key": use timingSafeStringEqual(_shared/cron-secret-auth.ts)  local/no-secret-compare
-  405:15  error  Comparação direta de credencial "key": use timingSafeStringEqual(_shared/cron-secret-auth.ts)  local/no-secret-compare
-  660:13  error  Comparação direta de credencial "key": use timingSafeStringEqual(_shared/cron-secret-auth.ts)  local/no-secret-compare
-  67:11  error  Comparação direta de credencial "key": use timingSafeStringEqual(_shared/cron-secret-auth.ts)  local/no-secret-compare
-  12:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
-  39:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
-  27:11  error  Comparação direta de credencial "key": use timingSafeStringEqual(_shared/cron-secret-auth.ts)  local/no-secret-compare
-  2:10  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
-  2:29  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
-  2:46  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
-  2:64  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
-  2:78  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
-  149:9  error  Comparação direta de credencial "key": use timingSafeStringEqual(_shared/cron-secret-auth.ts)  local/no-secret-compare
-   36:14  error    Comparação direta de credencial "key": use timingSafeStringEqual(_shared/cron-secret-auth.ts)                                                                        local/no-secret-compare
-   37:14  error    Comparação direta de credencial "key": use timingSafeStringEqual(_shared/cron-secret-auth.ts)                                                                        local/no-secret-compare
-   38:14  error    Comparação direta de credencial "key": use timingSafeStringEqual(_shared/cron-secret-auth.ts)                                                                        local/no-secret-compare
-   38:35  error    Comparação direta de credencial "key": use timingSafeStringEqual(_shared/cron-secret-auth.ts)                                                                        local/no-secret-compare
-  118:10  warning  Fast refresh only works when a file only exports components. Move your component(s) to a separate file. If all exports are HOCs, add them to the `extraHOCs` option  react-refresh/only-export-components
-  136:275  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  33:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  202:9   error  Comparação direta de credencial "key": use timingSafeStringEqual(_shared/cron-secret-auth.ts)  local/no-secret-compare
-  203:14  error  Comparação direta de credencial "key": use timingSafeStringEqual(_shared/cron-secret-auth.ts)  local/no-secret-compare
-  204:14  error  Comparação direta de credencial "key": use timingSafeStringEqual(_shared/cron-secret-auth.ts)  local/no-secret-compare
-  205:14  error  Comparação direta de credencial "key": use timingSafeStringEqual(_shared/cron-secret-auth.ts)  local/no-secret-compare
-  2:1  warning  '@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services  no-restricted-imports
-  4:1  warning  '@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services  no-restricted-imports
-   9:1   warning  '@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            no-restricted-imports
-  77:21  error    Error: Calling setState synchronously within an effect can trigger cascading renders
-  92:18  error    Error: Cannot call impure function during render
-  7:1  warning  '@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services  no-restricted-imports
-EXIT: 0
+# Baseline Lint — main@ac97c0ea (2026-10-29)
+
+## Comando
+bun run lint 2>&1  (exec em /home/user/Zapp_Web_V2)
+
+## Exit code
+1 (falha — pré-existente em main)
+
+## Resumo
+✖ 814 problems (601 errors, 213 warnings)
+  0 errors and 1 warning potentially fixable with --fix
+
+## Categoria dos erros (pré-existentes)
+- local/no-secret-compare: ≥14 ocorrências em supabase/functions/_shared/cron-secret-auth.ts
+  e outros arquivos de edge functions (comparação direta de credencial sem timingSafeStringEqual)
+- @typescript-eslint/no-explicit-any: ocorrências em src/
+- react-hooks (setState-in-effect, impure-in-render): em src/
+- react-refresh/only-export-components: em src/ (warnings)
+- no-restricted-imports: em src/ (warnings)
+
+## Arquivos com erros confirmados
+- supabase/functions/talkx-send/_test-utils.ts:16 (local/no-secret-compare)
+- supabase/functions/_shared/cron-secret-auth.ts:93, :96, :84, :86, :89 (local/no-secret-compare)
+- supabase/functions/*.ts (múltiplos — local/no-secret-compare)
+
+## Nota
+A sessão anterior registrou "Exit code: 0" incorretamente (possivelmente rodou lint só em src/).
+O baseline correto é exit code 1 com 814 problemas todos pré-existentes em main.
+Qualquer PR que não toque supabase/functions/ não deve introduzir erros novos de lint.
