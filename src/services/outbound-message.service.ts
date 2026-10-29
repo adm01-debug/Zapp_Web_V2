@@ -10,6 +10,7 @@ import {
   type OfflineQueuedMessage,
 } from '@/lib/offlineQueue';
 import { sendThrottle } from '@/lib/sendThrottle';
+import { readAuthenticatedUserId } from '@/lib/authenticatedUserId';
 
 export type OutboundMessageType = 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location';
 
@@ -369,6 +370,17 @@ function avisarFilaOffline(error: unknown, message?: OfflineQueuedMessage): void
 }
 
 /**
+ * A fila é do usuário que a compôs: o IndexedDB é da máquina, não da conta, então o
+ * texto de um atendente não pode sair pela sessão de outro que entrou depois. Item
+ * com dono só drena para o dono (sem sessão legível, fica parado); item sem dono
+ * nunca drena (não dá para provar de quem é o texto).
+ */
+function pertenceAoUsuarioAtual(message: OfflineQueuedMessage): boolean {
+  if (!message.userId) return false;
+  return message.userId === readAuthenticatedUserId();
+}
+
+/**
  * Drenagem da fila offline na ABERTURA do app (item 025), chamada pelo efeito
  * de sessão autenticada (`useOfflineSendQueueDrain`). Cobre o cenário que o
  * evento `online` não alcança: compõe offline, fecha a aba, reabre já com rede.
@@ -376,20 +388,28 @@ function avisarFilaOffline(error: unknown, message?: OfflineQueuedMessage): void
 export function drainOfflineSendQueue(): Promise<OfflineQueueDrainResult | null> {
   return drainOfflineQueueOnOpen(offlineSendQueue, deliverQueuedOfflineMessage, {
     onError: avisarFilaOffline,
+    shouldDeliver: pertenceAoUsuarioAtual,
   });
 }
 
 // Reconciliação ao reconectar (item 025): a fila local drena no evento `online`.
 drainOfflineQueueOnReconnect(offlineSendQueue, deliverQueuedOfflineMessage, {
   onError: avisarFilaOffline,
+  shouldDeliver: pertenceAoUsuarioAtual,
 });
 
 async function enqueueOffline(
   input: SendOutboundMessageInput,
   clientMessageId: string,
 ): Promise<OutboundMessageDeliveryResult> {
+  const userId = readAuthenticatedUserId();
+  if (!userId) {
+    // Sem sessão legível não há dono para o item, e item sem dono nunca drena.
+    throw new Error('Sessão expirada. Entre novamente para enviar mensagens.');
+  }
   const queued = await offlineSendQueue.enqueue({
     clientMessageId,
+    userId,
     contactId: input.contactId,
     content: input.content,
     messageType: input.messageType ?? 'text',

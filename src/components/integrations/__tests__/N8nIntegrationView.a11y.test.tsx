@@ -1,18 +1,18 @@
 /**
- * N-195 — botões "Testar/Remover fluxo" e interruptores de workflow sem nome acessível.
+ * N-195 (atualizado) — a tela do n8n virou placeholder declarado: sem servidor
+ * n8n, webhook real, persistência ou validação de URL, ela não oferece conectar
+ * nem testar e declara explicitamente que a integração não está disponível
+ * (decisão documentada no cabeçalho de N8nIntegrationView.tsx e travada pelo
+ * ACTIVE_REGRESSION N8nIntegrationView.test.tsx: zero botões na tela).
  *
- * Prova que, quando os controles de workflow estão visíveis (isConnected=true),
- * cada botão icon e o Switch possuem aria-label e o axe não aponta violações
- * de nome acessível (button-name, aria-toggle-field-name).
- *
- * O teste falha SEM a correção (sem aria-label nos botões e switch) porque
- * getByRole('button', {name:'...'}) e getByRole('switch', {name:'...'})
- * lançam erro quando o elemento não tem nome acessível.
+ * A prova de acessibilidade acompanha a decisão: a tela anuncia o título e a
+ * indisponibilidade, não expõe nenhum controle sem nome acessível (na prática,
+ * nenhum botão/switch) e o axe não aponta violações de nome acessível
+ * (button-name, aria-toggle-field-name).
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { axe } from 'vitest-axe';
-import { TooltipProvider } from '@/components/ui/tooltip';
 
 vi.mock('framer-motion', () => ({
   motion: {
@@ -20,112 +20,25 @@ vi.mock('framer-motion', () => ({
   },
 }));
 
-vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
-
-const MOCK_WORKFLOWS = [
-  {
-    id: 'wf-1',
-    name: 'Webhook Recebido',
-    webhookUrl: 'https://n8n.example.com/webhook/abc',
-    isActive: true,
-    triggerEvent: 'message.received',
-  },
-  {
-    id: 'wf-2',
-    name: 'API Call',
-    webhookUrl: 'https://n8n.example.com/webhook/def',
-    isActive: true,
-    triggerEvent: 'message.received',
-  },
-];
-
-/**
- * Simula a tela conectada (isConnected=true + 2 workflows) sem clicar na UI:
- * o botão Conectar é sempre `disabled` (a integração real ainda não existe),
- * então o estado interno é semeado pelo valor inicial do useState.
- *
- * Por que pelo formato do valor inicial (e não pela ordem de chamada): o mock
- * anterior contava chamadas (2ª e 3ª) e substituía o useState de TODOS os
- * componentes — qualquer useState do Radix (Tooltip, Switch) deslocava a
- * contagem e quebrava o teste ou os filhos. Aqui só a 1ª ocorrência de cada
- * formato é interceptada e o resto delega ao useState real, então os
- * componentes Radix continuam funcionando.
- *
- * Dependência assumida (documentada): os hooks do componente pai rodam antes
- * dos filhos no React, e o TooltipProvider (único ancestral) usa no Radix
- * useState(null/undefined) — nunca `false` nem `[]`. Por isso a 1ª ocorrência
- * de `false` é o isConnected e a 1ª de `[]` é workflows, ambos do
- * N8nIntegrationView (o 1º useState é string '', o 4º é objeto, o 5º é o 2º
- * `false` e continua real). Se a ordem dos useStates do componente mudar,
- * este mock precisa acompanhar.
- */
-const mockState = { connected: false, workflows: false };
-
-vi.mock('react', async () => {
-  const actual = await vi.importActual<typeof import('react')>('react');
-  return {
-    ...actual,
-    useState: (initial: unknown) => {
-      if (initial === false && !mockState.connected) {
-        mockState.connected = true;
-        return [true, vi.fn()];
-      }
-      if (Array.isArray(initial) && initial.length === 0 && !mockState.workflows) {
-        mockState.workflows = true;
-        return [MOCK_WORKFLOWS, vi.fn()];
-      }
-      return actual.useState(initial as never);
-    },
-  };
-});
-
 import { N8nIntegrationView } from '../N8nIntegrationView';
 
-/**
- * Renderiza o componente com o estado mockado acima (isConnected=true e dois
- * workflows ativos), tornando os controles de workflow visíveis no DOM.
- * Único helper de render deste arquivo.
- */
-function renderComWorkflowsVisiveis() {
-  mockState.connected = false;
-  mockState.workflows = false;
-  return render(
-    <TooltipProvider>
-      <N8nIntegrationView />
-    </TooltipProvider>,
-  );
-}
+describe('a11y: N8nIntegrationView — placeholder sem controles sem nome (N-195)', () => {
+  it('anuncia o título e a indisponibilidade da integração', () => {
+    render(<N8nIntegrationView />);
 
-describe('a11y: N8nIntegrationView — nomes acessíveis em botões e switches (N-195)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockState.connected = false;
-    mockState.workflows = false;
+    expect(screen.getByRole('heading', { name: 'Integração n8n' })).toBeInTheDocument();
+    expect(screen.getByText('Integração não disponível nesta versão')).toBeInTheDocument();
   });
 
-  it('o botão Conectar tem nome acessível visível no DOM', () => {
-    renderComWorkflowsVisiveis();
-    expect(screen.getByRole('button', { name: /conectar/i })).toBeInTheDocument();
-  });
+  it('não expõe botão nem switch sem nome acessível', () => {
+    render(<N8nIntegrationView />);
 
-  it('os botões Testar e Remover têm nome acessível quando workflows estão visíveis', () => {
-    renderComWorkflowsVisiveis();
-
-    expect(screen.getByRole('button', { name: 'Testar Webhook Recebido' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Remover Webhook Recebido' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Testar API Call' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Remover API Call' })).toBeInTheDocument();
-  });
-
-  it('o Switch de workflow tem nome acessível', () => {
-    renderComWorkflowsVisiveis();
-
-    expect(screen.getByRole('switch', { name: 'Ativar Webhook Recebido' })).toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: 'Ativar API Call' })).toBeInTheDocument();
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+    expect(screen.queryAllByRole('switch')).toHaveLength(0);
   });
 
   it('axe não acusa controles sem nome (button-name, aria-toggle-field-name)', async () => {
-    const { baseElement } = renderComWorkflowsVisiveis();
+    const { baseElement } = render(<N8nIntegrationView />);
 
     const results = await axe(baseElement, {
       rules: { 'color-contrast': { enabled: false } },
