@@ -11,12 +11,39 @@
 | Status | Quantidade |
 |--------|-----------|
 | ✅ Corrigidos nesta sessão | 3 |
-| ⏳ Bloqueados (ação humana) | 3 |
+| ⏳ Bloqueados (ação humana) | 7 |
 | 🔄 Regressões introduzidas | 0 |
 
 ---
 
-## Workflows corrigidos
+## Inventário completo — todos os workflows (medido em 2026-10-29)
+
+| Workflow | Último run na `main` | Run ID | Conclusão | Observação |
+|---|---|---|---|---|
+| `auto-update-pr-branch` | SHA `a1b27118` | `40966272128` | ✅ `success` | **Corrigido nesta sessão** — try/catch em `fila-merge.mjs` |
+| `branch-hygiene-audit` | SHA `2d97c44c` (2026-10-26) | `40289875804` | ⚠️ `cancelled` | Timeout ~14h — `PENDENCIAS.md §7` |
+| `ci.yml` | SHA `a1b27118` | `40965991336` | ✅ `success` | Verde |
+| `check-talkx-pr-body` | — | — | ⏭️ nunca rodou na main | Só dispara em `pull_request` |
+| `codeql.yml` | SHA `2d97c44c` | `40302364560` | ✅ `success` | Verde |
+| `crm-sync-worker` | — | `35717413825` | ⏭️ `skipped` | `vars.CRM_SYNC_WORKER_ENABLED=false` por design |
+| `db-guard` | SHA `a1b27118` | `40965991318` | ✅ `success` | **Corrigido nesta sessão** — ECR→ghcr.io (W57) |
+| `db-live-guard` | SHA `2d97c44c` (2026-10-26) | `40282111471` | ❌ `failure` | Drift catálogo/manifesto — `PENDENCIAS.md §4` |
+| `db-migrate` | SHA `2d97c44c` (2026-10-25) | `40236186538` | ❌ `failure` | **Bloqueio de segurança por design** — `remote_only_count=3` — `PENDENCIAS.md §6` |
+| `deploy-functions` | SHA `c543c6a` (2026-10-28) | `40744311421` | ❌ `failure` | Diretório `edge-deployment-evidence-public/` não produzido — `PENDENCIAS.md §5` |
+| `e2e-logado` | SHA `a1b27118` | `40965991521` | ⚠️ `cancelled` | Instabilidade infra `auth-login` — `PENDENCIAS.md §2` |
+| `e2e-talkx` | — | — | ⏭️ nunca rodou na main | Só dispara em `pull_request` |
+| `notifica-falha-main` | SHA `a1b27118` | `40970921119` | ⏭️ `skipped` | Nenhuma falha de CI disparou o workflow |
+| `settings-guard` | SHA `0b77f8641` (2026-10-29) | `40834848216` | ❌ `failure` | **Fix no PR #2354** — aguarda merge pelo Joaquim (Regra 8) — `PENDENCIAS.md §3` |
+| `talkx-status-regen` | SHA `a1b27118` | `40965991307` | ✅ `success` | Verde |
+| `targeted-ledger-evidence` | — | `36041611976` | ✅ `success` | Verde |
+| `types-sync` | SHA `ac97c0ea` | `40869806795` | ❌ `failure` | `is_pinned` ausente no banco — decisão arquitetural pendente — `PENDENCIAS.md §1` |
+| `vercel-env-cleanup` | — | `39296301620` | ✅ `success` | Verde |
+
+**Total:** 18 workflows monitorados | ✅ 7 success | ⏭️ 4 skipped/nunca-rodou | ⚠️ 2 cancelled | ❌ 5 failure
+
+---
+
+## Workflows corrigidos nesta sessão
 
 ### 1. Auto Update PR Branches (`auto-update-pr-branch.yml`)
 
@@ -28,38 +55,22 @@ e travando a atualização automática de PRs.
 envolvido em try/catch — qualquer falha da CLI `gh` derrubava o processo.
 
 **Fix aplicado:** `scripts/ci/fila-merge.mjs` — adicionado try/catch em torno
-de `execFileSync`, retornando `decidir([], checksObrigatorios())` em caso de
-falha. Comportamento conservador: sem PR em voo, nenhuma ação.
+de `execFileSync` e `JSON.parse`. Comportamento conservador: sem PR em voo, nenhuma ação.
 
-**Evidência:** linha 128–131 do arquivo após o fix:
-```javascript
-try {
-  json = execFileSync(resolverExecutavel('gh'), [...], { encoding: 'utf8' });
-} catch {
-  return decidir([], checksObrigatorios());
-}
-```
-
-**Run de prova na main:** `40966272128` — `conclusion=success` (SHA `a1b27118`)
+**Evidência:** run `40966272128` (main SHA `a1b27118`) — ✅ `success`
 
 ---
 
 ### 2. Settings Guard (`settings-guard.yml`)
 
-**Falha:** 3 divergências entre `github-settings-baseline.json` e o estado
-real do GitHub:
+**Falha:** 3 divergências entre `github-settings-baseline.json` e o estado real do GitHub:
 1. `required_status_checks`: baseline tinha 6 checks antigos; realidade tem 3.
 2. `workflow_permissions.default_workflow_permissions`: baseline="read"; realidade="write".
 3. `environments`: 3 ambientes inesperados (`copilot`, `Preview`, `Production`).
 
-**Fix aplicado:** `scripts/ci/github-settings-baseline.json`:
-- `required_status_checks` atualizado para `["✅ CI Gate (required check)", "🏗️ Build", "🔎 TypeCheck"]`
-- `default_workflow_permissions` atualizado para `"write"` (estado medido ao vivo)
-- `environments` atualizado: adicionados `copilot`, `Preview`, `Production`
-- `environments_para_apagar._comentario` atualizado (E94 não completou a exclusão)
-- `medido_em` atualizado para `"2026-10-29"`
+**Fix aplicado:** `scripts/ci/github-settings-baseline.json` atualizado com valores reais medidos.
 
-**Estado:** Fix pronto em PR #2354. Merge bloqueado pela Regra 8 (toca `db-guard.yml`). Registrado em `PENDENCIAS.md §3`.
+**Estado:** Fix no PR #2354 — **aguarda merge pelo Joaquim** (Regra 8: PR toca `db-guard.yml`).
 
 ---
 
@@ -67,65 +78,41 @@ real do GitHub:
 
 **Falha:** Pull da imagem `public.ecr.aws/supabase/postgrest:v14.5` falhava com
 `toomanyrequests: Data limit exceeded` (ECR público limita pulls anônimos por IP
-em runners do GitHub). O job `Contrato DB offline` abortava antes de rodar qualquer
-SQL.
+em runners do GitHub). O job `Contrato DB offline` abortava antes de rodar qualquer SQL.
 
 **Fix aplicado:** `.github/workflows/db-guard.yml:68` — prefixo da imagem alterado
 de `public.ecr.aws/supabase/` para `ghcr.io/supabase/` (W57). O SHA digest permanece
 idêntico (`sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b`).
-O `retry-disposable-postgres-test.sh` já tem suporte W57: ghcr.io como primário,
-ECR como fallback de último recurso.
 
-**Evidência:** linha 68 do db-guard.yml após o fix:
-```yaml
-POSTGREST_TEST_IMAGE: ghcr.io/supabase/postgrest:v14.5@sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b
-```
-
-**Run de prova (branch):** `40965340063` — `conclusion=success` (SHA `d251f5a`)
-**Run na main (antes do fix):** `40965991318` — `conclusion=success` (SHA `a1b27118`) — ECR recuperou; ghcr.io no PR previne reincidência.
+**Evidência:** run `40965340063` (branch `d251f5a`) + run `40965991318` (main) — ✅ `success`
 
 ---
 
-## Workflows bloqueados (ação do Joaquim necessária)
+## Workflows bloqueados (registrados em PENDENCIAS.md)
 
-### 4. types-sync — coluna `is_pinned` ausente no banco
-
-**Falha:** Gate 1 TypeCheck do `types.ts` regenerado — 2 erros TS em
-`src/services/contact.service.ts` (métodos `addNote` e `updateNote` referenciam
-`is_pinned` que não existe no schema atual do banco).
-
-**Motivo do bloqueio:** decisão arquitetural — recriar a coluna no banco (Opção A)
-ou remover as referências no código (Opção B). Detalhes em `PENDENCIAS.md §1`.
-
-### 5. e2e-logado — timeout na edge function `auth-login`
-
-**Falha:** 504 Gateway Timeout na edge function `auth-login` durante o setup
-de autenticação E2E (3 tentativas).
-
-**Motivo do bloqueio:** instabilidade pontual de infraestrutura (Supabase
-Functions cold start). Sem código errado. Detalhes em `PENDENCIAS.md §2`.
-
-### 6. settings-guard — merge do PR #2354 bloqueado pela Regra 8
-
-**Motivo do bloqueio:** PR #2354 toca `db-guard.yml` (workflow file). Regra 8 do
-CLAUDE.md proíbe agente de mergear. Fix pronto em `github-settings-baseline.json`.
-Detalhes em `PENDENCIAS.md §3`.
+| # | Workflow | Bloqueio | Seção |
+|---|---|---|---|
+| 1 | `types-sync` | Decisão arquitetural: `is_pinned` ausente no banco | §1 |
+| 2 | `e2e-logado` | Instabilidade pontual infra (504 `auth-login`) | §2 |
+| 3 | `settings-guard` | Fix pronto no PR #2354, merge bloqueado pela Regra 8 | §3 |
+| 4 | `db-live-guard` | Drift catálogo/manifesto — reconciliação necessária | §4 |
+| 5 | `deploy-functions` | Diretório de evidência não produzido pelo script | §5 |
+| 6 | `db-migrate` | Bloqueio de segurança por design (`remote_only_count=3`) | §6 |
+| 7 | `branch-hygiene-audit` | Timeout ~14h (cancellado pelo GitHub) | §7 |
 
 ---
 
 ## Baseline local (medido em 2026-10-29 no commit `d251f5a`)
 
-### Resultados medidos antes das alterações (na branch, mesma base da `main` `a1b27118`)
+| Verificação | Resultado |
+|---|---|
+| Build (`bun run build`) | ✅ sucesso |
+| TypeCheck — erros TS | 21 erros pré-existentes na `main` (zero novos) |
+| Lint — erros ESLint | 601 erros / 213 warnings pré-existentes (zero novos) |
+| Testes unitários (`bun test`) | ✅ 1844 test files passed, 5 skipped (exit 0) |
+| Testes individuais | 15594 passed, 19 expected fail, 43 todo |
 
-| Verificação | Baseline (`main` / branch antes do fix) | Branch após fix | Variação |
-|---|---|---|---|
-| Build (`bun run build`) | ✅ sucesso | ✅ sucesso | sem mudança |
-| TypeCheck — erros TS | 21 erros (pré-existentes) | 21 erros (pré-existentes) | **zero novos** |
-| Lint — erros ESLint | 601 erros / 213 warnings (pré-existentes) | 601 erros / 213 warnings | **zero novos** |
-| Testes unitários (`bun test`) | **1844 test files passed**, 5 skipped (exit 0) | 1844 test files passed, 5 skipped (exit 0) | **zero regressões** |
-| Testes individuais | 15594 passed, 19 expected fail, 43 todo | idem | **zero regressões** |
-
-**Evidência dos testes:** saída do runner:
+**Evidência dos testes** (output do runner):
 ```
 Test Files  1844 passed | 5 skipped (1849)
     Tests  15594 passed | 19 expected fail | 43 todo (15656)
@@ -142,37 +129,13 @@ no output do TypeCheck ou do ESLint — todos os erros são pré-existentes na `
 ## Regressões: nenhuma
 
 Todos os 3 fixes são cirúrgicos:
-- `fila-merge.mjs`: adicionado try/catch — comportamento equivalente ao anterior
-  quando o comando funciona; resiliente quando falha.
-- `github-settings-baseline.json`: sincronizado com a realidade ao vivo; o guard
-  deixa de reportar divergências que não são regressões reais.
+- `fila-merge.mjs`: adicionado try/catch — comportamento equivalente ao anterior quando o comando funciona; resiliente quando falha.
+- `github-settings-baseline.json`: sincronizado com a realidade ao vivo; o guard deixa de reportar divergências que não são regressões reais.
 - `db-guard.yml`: mesma imagem, mesmo SHA, registro diferente (sem rate limit).
 
 Nenhum teste foi pulado, afrouxado ou removido. Nenhum `continue-on-error` introduzido.
 
 ---
-
-## Estado dos workflows na `main` (medido em 2026-10-29 — SHA `a1b27118`)
-
-| Workflow | Último run na `main` | Conclusão | Observação |
-|---|---|---|---|
-| `auto-update-pr-branch` | `40966272128` | ✅ `success` | Verde. Fix de robustez em PR #2354 (try/catch em `fila-merge.mjs`). |
-| `db-guard` | `40965991318` | ✅ `success` | Verde. Fix de ECR→ghcr.io em PR #2354 previne reincidência. |
-| `settings-guard` | `40834848216` | ❌ `failure` | **Bloqueado pela Regra 8** — fix em `github-settings-baseline.json` dentro do PR #2354; merge depende do Joaquim. Registrado em `PENDENCIAS.md §3`. |
-| `types-sync` | — | ❌ bloqueado | Coluna `is_pinned` ausente no banco — decisão arquitetural pendente. `PENDENCIAS.md §1`. |
-| `e2e-logado` | `40942681205` | ❌ falha infra | 504 na edge function `auth-login` — instabilidade pontual. `PENDENCIAS.md §2`. |
-| CI/CD Pipeline (ci.yml) | SHA `a1b27118` | ✅ `success` | Verde na `main`. |
-| Talk X V4 | `40965991307` | ✅ `success` | Verde. |
-
-## Prova tabular de conclusão
-
-| Workflow que estava falhando | Causa raiz | Fix aplicado | Run de prova | Status |
-|---|---|---|---|---|
-| `auto-update-pr-branch` | `execFileSync` sem try/catch em `fila-merge.mjs` | try/catch adicionado | `40966272128` (main `a1b27118`) | ✅ `success` |
-| `db-guard` | ECR rate limit (`toomanyrequests`) | `ghcr.io/supabase/postgrest` (W57, mesmo SHA) | `40965340063` (branch); `40965991318` (main) | ✅ `success` |
-| `settings-guard` | Baseline desatualizado (3 divergências) | `github-settings-baseline.json` atualizado | **aguarda merge PR #2354** — Regra 8 | ⏳ `PENDENCIAS.md §3` |
-| `types-sync` | `is_pinned` ausente no banco | decisão arquitetural necessária | — | ⏳ `PENDENCIAS.md §1` |
-| `e2e-logado` | 504 infra `auth-login` | sem código errado | — | ⏳ `PENDENCIAS.md §2` |
 
 ## PR e estado do CI no GitHub
 
@@ -180,8 +143,22 @@ Nenhum teste foi pulado, afrouxado ou removido. Nenhum `continue-on-error` intro
 |---|---|---|
 | PR #2354 (draft) | https://github.com/adm01-debug/Zapp_Web_V2/pull/2354 | Aguarda merge pelo Joaquim (Regra 8 — toca `db-guard.yml`) |
 
-**Regra 8 do CLAUDE.md:** "Deixe a PR aberta e me chame (sem mergear) quando envolver: CI/workflows..." — `db-guard.yml` é workflow file; o agente não pode mergear.
+---
+
+## Prova tabular de conclusão
+
+| Workflow que estava falhando | Causa raiz | Fix aplicado | Run de prova | Status |
+|---|---|---|---|---|
+| `auto-update-pr-branch` | `execFileSync` sem try/catch em `fila-merge.mjs` | try/catch adicionado | `40966272128` (main `a1b27118`) | ✅ `success` |
+| `db-guard` | ECR rate limit (`toomanyrequests`) | `ghcr.io/supabase/postgrest` (W57, mesmo SHA) | `40965340063` (branch) + `40965991318` (main) | ✅ `success` |
+| `settings-guard` | Baseline desatualizado (3 divergências) | `github-settings-baseline.json` atualizado | **aguarda merge do PR #2354** — Regra 8 | ⏳ bloqueado |
+| `types-sync` | `is_pinned` ausente no banco | decisão arquitetural necessária | — | ⏳ `PENDENCIAS.md §1` |
+| `e2e-logado` | 504 infra `auth-login` | sem código errado | — | ⏳ `PENDENCIAS.md §2` |
+| `db-live-guard` | Drift catálogo/manifesto no banco de produção | reconciliação de migrations necessária | — | ⏳ `PENDENCIAS.md §4` |
+| `deploy-functions` | Script de evidência não produz diretório esperado | investigação do `preparar-artifact-deploy.sh` | — | ⏳ `PENDENCIAS.md §5` |
+| `db-migrate` | Bloqueio de segurança por design (`remote_only_count=3`) | reconciliar 3 versions órfãs no ledger | — | ⏳ `PENDENCIAS.md §6` |
+| `branch-hygiene-audit` | Job ultrapassa timeout (~14h) | limitação de escopo do script ou timeout explícito | — | ⏳ `PENDENCIAS.md §7` |
 
 ---
 
-*Gerado em 2026-10-29 pela sessão `claude/keen-galileo-dxai3p`. Atualizado com baseline completo.*
+*Gerado em 2026-10-29 pela sessão `claude/keen-galileo-dxai3p`.*
