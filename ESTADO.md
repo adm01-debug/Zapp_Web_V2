@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-20`. 84 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-20`. 85 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -25,8 +25,8 @@ partir do código e falha quando:
 | B | 1 |
 | C | 3 |
 | D | 6 |
-| E | 20 |
-| **total** | **84** |
+| E | 21 |
+| **total** | **85** |
 
 ## Tabela
 
@@ -56,6 +56,7 @@ partir do código e falha quando:
 | `classify-sticker` | A | `src/components/inbox/chat/MessageBubble.tsx:329` · `src/hooks/sticker-picker/useStickerPicker.ts:148` · `supabase/functions/_shared/evolution-webhook-messages.ts:1377` |
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
 | `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:130` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/components/monitoring/hooks/useMonitoringActions.ts:18` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
+| `copilot-live` | E | — sem chamador no repositório — |
 | `create-user` | A | `src/components/admin/useAdminData.ts:444` · `src/components/admin/useAdminData.ts:444` |
 | `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/migrations/20261016011302_crm_sync_outbox_cron.sql:34` · `supabase/config.toml:55` |
 | `csp-report` | D | `supabase/config.toml:58` |
@@ -117,7 +118,7 @@ partir do código e falha quando:
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:79` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
-## Órfós (20) — GATE B
+## Órfós (21) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador ext de
@@ -130,6 +131,7 @@ mantém a lista honesta.
 - `ai-usage-outbox-drain`
 - `auto-close-conversations`
 - `cleanup-rate-limit-logs`
+- `copilot-live`
 - `elevenlabs-agent-token`
 - `external-db-bridge`
 - `gmail-send`
