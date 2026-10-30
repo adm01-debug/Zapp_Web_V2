@@ -31,7 +31,7 @@
 | `db-guard` | SHA `a1b27118` | [`40965991318`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991318) | ✅ `success` | Run passou com ECR acessível; fix permanente (ghcr.io) em [PR #2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) aguarda Joaquim (Regra 8) — `PENDENCIAS.md §1` |
 | `db-live-guard` | SHA `2d97c44c` (2026-10-26) | [`40282111471`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40282111471) | ❌ `failure` | Drift catálogo/manifesto — `PENDENCIAS.md §6` |
 | `db-migrate` | SHA `2d97c44c` (2026-10-25) | [`40236186538`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40236186538) | ❌ `failure` | **Bloqueio de segurança por design** — `remote_only_count=3` — `PENDENCIAS.md §3` |
-| `deploy-functions` | SHA `ca89064` (2026-10-30) | [`40988248151`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40988248151) | ❌ `failure` | **Fix identificado** — `preparar-artifact-deploy.sh` não deposita arquivos quando sem push real em `supabase/functions/` — `PENDENCIAS.md §8` |
+| `deploy-functions` | SHA `bcb11c84` (2026-10-30) | [`41138661310`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41138661310) | ❌ `failure` | **Fix aplicado nesta sessão** — `@types/node` não encontrado no `deno check` (root cause: `nodeModulesDir: "auto"` → `"none"` em `supabase/functions/deno.json`) — `PENDENCIAS.md §8` |
 | `e2e-logado` | SHA `a1b27118` | [`40965991521`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991521) | ⚠️ `cancelled` | Instabilidade infra `auth-login` — `PENDENCIAS.md §4` |
 | `e2e-talkx` | — | — | ⏯️ nunca rodou na main | Só dispara em `pull_request` |
 | `notifica-falha-main` | SHA `a1b27118` | [`40970921119`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40970921119) | ⏯️ `skipped` | Nenhuma falha de CI disparou o workflow |
@@ -68,7 +68,7 @@
 | `auto-update-pr-branch` | ✅ success — run [`40966272128`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40966272128) |
 | `settings-guard` | ✅ success — run [`40986380985`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40986380985) |
 | `types-sync` | ✅ success — run [`40987628915`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40987628915) |
-| `deploy-functions` | ⏳ Fix em PR — aguardando merge e run de confirmação |
+| `deploy-functions` | ⏳ Fix aplicado (`nodeModulesDir: "none"`) — aguardando merge e run de confirmação |
 | `e2e-logado` | ⚠️ cancelled — instabilidade pontual de infra (sem código errado) |
 | `branch-hygiene-audit` | ⚠️ cancelled — timeout por volume de branches (sem código errado) |
 | `db-live-guard` | ❌ failure — drift de migrations, exige reconciliação pelo Joaquim |
@@ -100,7 +100,7 @@ Test Files  1844 passed | 5 skipped (1849)
 | `auto-update-pr-branch` | `execFileSync` sem try/catch em `fila-merge.mjs` | try/catch adicionado | [`40966272128`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40966272128) (main `a1b27118`) | ✅ `success` |
 | `settings-guard` | Baseline desatualizado (3 divergências) | PR #2355 mergeado em `ca89064` | [`40986380985`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40986380985) (SHA `ca89064`) | ✅ `success` em 2026-10-30T01:42:39Z |
 | `types-sync` | `is_pinned` → coluna JÁ EXISTE no banco; `bunx tsc` = 0 erros | Nenhum code change necessário | [`40987628915`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40987628915) (SHA `ca89064`) | ✅ `success` |
-| `deploy-functions` | `preparar-artifact-deploy.sh` não depositava arquivos quando sem deploy real — diretório vazio causava falha do `upload-artifact` | Adicionado bloco que grava `sem-deploy.json` se `$DESTINO` estiver vazio | Aguardando run após merge do PR | ⏳ PR em aberto |
+| `deploy-functions` | `supabase/functions/deno.json` com `nodeModulesDir: "auto"` — Deno 2.9.5 cria `node_modules/` mas lock só tem `tslib`; `@types/node` ausente causa falha no `deno check` | `nodeModulesDir: "auto"` → `"none"` em `supabase/functions/deno.json` (combinado com `skipLibCheck: true` já presente) | Aguardando run após merge do PR | ⏳ PR em aberto |
 | `db-guard` | ECR rate limit (`toomanyrequests`) | Fix em [PR #2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) — `ghcr.io/supabase/postgrest` (mesmo SHA) | [`40965991318`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991318) success (ECR acessível); PR aguarda Joaquim | ⏳ `PENDENCIAS.md §1` |
 | `e2e-logado` | 504 infra `auth-login` (instabilidade pontual) | Sem código errado | — | ⏳ `PENDENCIAS.md §4` |
 | `db-live-guard` | Drift catálogo/manifesto no banco de produção | Reconciliação de migrations necessária | — | ⏳ `PENDENCIAS.md §6` |
@@ -246,7 +246,7 @@ Medido em 2026-10-30T22:00 UTC no container cloud (Ubuntu Linux, bun 1.x):
 | Required check | Status (22:00 UTC) |
 |---|---|
 | `Replay local das migrations` (DB Guard) | ✅ `success` (21:55:48Z) |
-| `🔎 TypeCheck` / `🔍 Lint & TypeCheck` | ✅ `success` (21:59:41Z) |
+| `🖎 TypeCheck` / `🔍 Lint & TypeCheck` | ✅ `success` (21:59:41Z) |
 | `Contrato DB offline` | ⏳ `in_progress` (desde 21:57:38Z) |
 | `🎭 E2E Tests (Playwright)` | ⏳ `in_progress` (desde 21:56:56Z) |
 | `🧪 Unit Tests (1/3)`, `(2/3)`, `(3/3)` | ⏳ `queued` |
@@ -321,7 +321,7 @@ Os runs estão em fila/em andamento — disparados pelo merge. O fix do `deno.lo
 |---|---|
 | `🧩 Node CI Scripts` | ✅ `completed success` — fix `deno.lock` (tslib@2.8.1) CONFIRMADO |
 | `🔒 Security Audit` | ✅ `completed success` |
-| `🔎 TypeCheck` | ✅ `completed success` |
+| `🖎 TypeCheck` | ✅ `completed success` |
 | `🧪 Unit Tests (2/3)` | ✅ `completed success` |
 | `🎭 E2E logado (deslogado-principal)` | ✅ `completed success` |
 | `🎭 E2E logado (deslogado-secundario)` | ✅ `completed success` |
@@ -341,3 +341,24 @@ Os runs estão em fila/em andamento — disparados pelo merge. O fix do `deno.lo
 - Nenhum workflow desativado
 
 *Atualizado em 2026-10-30T22:40 UTC pela sessão `claude/focused-hopper-qhavw1`.*
+
+---
+
+## Atualização — Sessão 2026-10-30T23 (continuação de `claude/focused-hopper-qhavw1`)
+
+### deploy-functions — novo root cause identificado e corrigido
+
+Após o merge do PR #2394 (`bcb11c84`), o `deploy-functions` disparou automaticamente (run [41138661310](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41138661310)) e falhou no passo "Typecheck das edge functions (deno check)":
+
+```
+error: Error: Could not find "@types/node" in a node_modules folder.
+Deno expects the node_modules/ directory to be up to date.
+```
+
+**Root cause:** `supabase/functions/deno.json` tinha `"nodeModulesDir": "auto"`. Com `"auto"`, o Deno 2.9.5 cria `node_modules/` ao encontrar dependências npm, mas o lockfile (`scripts/ci/deno.lock`) só contém `npm:tslib@2.8.1`. Ao processar `@supabase/realtime-js` → `ws`, o Deno encontra `/// <reference types="node" />` em `.d.ts` transitivos e falha porque `@types/node` não está em `node_modules/`.
+
+**Fix aplicado:** `supabase/functions/deno.json` — `"nodeModulesDir": "auto"` → `"nodeModulesDir": "none"`. Com `"none"`, o Deno não usa `node_modules/`; as referências transitivas em `.d.ts` são ignoradas pelo `skipLibCheck: true` já presente.
+
+**Status:** fix em PR — aguardando merge. Após o merge, o push em `supabase/functions/deno.json` disparará `deploy-functions.yml` automaticamente. Confirmar `conclusion: success` no run gerado.
+
+*Atualizado em 2026-10-30T23 UTC pela sessão `claude/focused-hopper-qhavw1`.*
