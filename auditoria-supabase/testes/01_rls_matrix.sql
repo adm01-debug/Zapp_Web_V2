@@ -31,9 +31,9 @@ $$;
 BEGIN;
 SET session_replication_role = replica;
 
--- ========================
+-- =============================================================================
 -- FIXTURES: 2 usu√°rios, 2 perfis, 2 contatos, 3 msgs, 1 gmail_account, 2 threads
--- ========================
+-- =============================================================================
 INSERT INTO auth.users (id, email, role) VALUES
   ('aaa00000-0000-4000-a000-000000000001'::uuid, 'user_a@test.com', 'authenticated'),
   ('bbb00000-0000-4000-b000-000000000002'::uuid, 'user_b@test.com', 'authenticated')
@@ -69,331 +69,12 @@ ON CONFLICT (id) DO NOTHING;
 SET session_replication_role = DEFAULT;
 
 -- Grants necess√°rios para o role authenticated nos testes locais
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.messages TO authenticated;
+gRANT SELECT, INSERT, UPDATE, DELETE ON public.messages TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.contacts TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.email_threads TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.email_messages TO authenticated;
-GRANT SELECT, UPDATE, INSERT ON public.profiles TO authenticated;
+GRANT SELECT, UPDATE, INSERT OLpublic.profiles TO authenticated;
 GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;
 GRANT EXECUTE ON FUNCTION rls_test_set_jwt(TEXT) TO authenticated;
 
--- =============================================================================
--- TABELA: messages
--- Pol√≠ticas: contact_id/assigned_to isolation (repo migrations)
--- =============================================================================
-
--- T-01: user-a V√ä msgs do seu contato (isolamento positivo)
--- RESULTADO ESPERADO: PASS (count >= 1)
--- RESULTADO REAL (2026-10-25): PASS ‚Äî user-a v√™ 2 msg(s) do seu contato
-DO $$
-DECLARE cnt INTEGER; user_a TEXT := 'aaa00000-0000-4000-a000-000000000001';
-BEGIN
-  PERFORM rls_test_set_jwt(user_a);
-  SET LOCAL ROLE authenticated;
-  SELECT count(*) INTO cnt FROM public.messages
-    WHERE contact_id = 'c1000000-0000-4000-a000-000000000001'::uuid;
-  RESET ROLE;
-  IF cnt >= 1 THEN RAISE NOTICE 'T-01 PASS: user-a v√™ % msg(s) do seu contato', cnt;
-  ELSE RAISE WARNING 'T-01 FAIL: user-a n√£o v√™ msgs do seu contato (cnt=%)', cnt; END IF;
-EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'T-01 N√ÉO EXEC: %', SQLERRM; END;
-$$;
-
--- T-02: user-a N√ÉO V√ä msgs do contato de user-b (isolamento negativo)
--- RESULTADO ESPERADO: PASS (count = 0)
--- RESULTADO REAL (2026-10-25): PASS ‚Äî count=0
-DO $$
-DECLARE cnt INTEGER; user_a TEXT := 'aaa00000-0000-4000-a000-000000000001';
-BEGIN
-  PERFORM rls_test_set_jwt(user_a);
-  SET LOCAL ROLE authenticated;
-  SELECT count(*) INTO cnt FROM public.messages
-    WHERE contact_id = 'c2000000-0000-4000-b000-000000000002'::uuid;
-  RESET ROLE;
-  IF cnt = 0 THEN RAISE NOTICE 'T-02 PASS: user-a n√£o v√™ msgs de user-b (count=0)';
-  ELSE RAISE WARNING 'T-02 FAIL: VAZAMENTO ‚Äî user-a v√™ % msg(s) de user-b!', cnt; END IF;
-EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'T-02 N√ÉO EXEC: %', SQLERRM; END;
-$$;
-
--- T-C2: UPDATE cross-tenant em messages (sem WITH CHECK expl√≠cito nas migrations)
--- RESULTADO ESPERADO: BLOQUEADO via implicit WITH CHECK (USING age como WITH CHECK)
--- RESULTADO REAL (2026-10-25): PASS ‚Äî blocked: "new row violates row-level security policy"
--- ATEN√á√ÉO: Em produ√ß√£o (drift org_id), 39 policies USING(user_id=uid()) sem WITH CHECK
---   podem permitir UPDATE cross-tenant quando user_id n√£o muda ‚Äî CRITICAL-2
-DO $$
-DECLARE
-  rows_updated INTEGER;
-  user_a TEXT := 'aaa00000-0000-4000-a000-000000000001';
-BEGIN
-  PERFORM rls_test_set_jwt(user_a);
-  SET LOCAL ROLE authenticated;
-  UPDATE public.messages
-    SET contact_id = 'c2000000-0000-4000-b000-000000000002'::uuid
-    WHERE contact_id = 'c1000000-0000-4000-a000-000000000001'::uuid;
-  GET DIAGNOSTICS rows_updated = ROW_COUNT;
-  RESET ROLE;
-  IF rows_updated > 0 THEN
-    RAISE WARNING 'T-C2 FAIL: UPDATE moveu % linha(s) cross-tenant!', rows_updated;
-    SET session_replication_role = replica;
-    UPDATE public.messages SET contact_id = 'c1000000-0000-4000-a000-000000000001'::uuid
-      WHERE contact_id = 'c2000000-0000-4000-b000-000000000002'::uuid AND content LIKE 'msg-A-%';
-    SET session_replication_role = DEFAULT;
-  ELSE
-    RAISE NOTICE 'T-C2 PASS: UPDATE cross-tenant bloqueado em messages (0 rows)';
-  END IF;
-EXCEPTION WHEN OTHERS THEN
-  RAISE NOTICE 'T-C2 PASS (implicit WITH CHECK bloqueou): %', SQLERRM;
-END;
-$$;
-
--- T-05: INSERT com contact_id de outro tenant em messages
--- RESULTADO ESPERADO: BLOQUEADO
--- RESULTADO REAL (2026-10-25): PASS ‚Äî INSERT bloqueado
-DO $$
-DECLARE inserted_id UUID; user_a TEXT := 'aaa00000-0000-4000-a000-000000000001';
-BEGIN
-  PERFORM rls_test_set_jwt(user_a);
-  SET LOCAL ROLE authenticated;
-  INSERT INTO public.messages (id, contact_id, sender, content, message_type)
-    VALUES (gen_random_uuid(), 'c2000000-0000-4000-b000-000000000002'::uuid, 'agent', 'inject', 'text')
-    RETURNING id INTO inserted_id;
-  RESET ROLE;
-  IF inserted_id IS NOT NULL THEN
-    RAISE WARNING 'T-05 WARN: INSERT cross-tenant aceito ‚Äî id=%', inserted_id;
-  ELSE
-    RAISE NOTICE 'T-05 PASS: INSERT cross-tenant bloqueado em messages';
-  END IF;
-EXCEPTION WHEN OTHERS THEN
-  RESET ROLE;
-  RAISE NOTICE 'T-05 PASS: INSERT bloqueado ‚Äî %', SQLERRM;
-END;
-$$;
-
--- T-09: DELETE cross-tenant em messages
--- RESULTADO ESPERADO: PASS (rows=0)
--- RESULTADO REAL (2026-10-25): PASS ‚Äî DELETE bloqueado (rows=0)
-DO $$
-DECLARE rows_deleted INTEGER; user_a TEXT := 'aaa00000-0000-4000-a000-000000000001';
-BEGIN
-  PERFORM rls_test_set_jwt(user_a);
-  SET LOCAL ROLE authenticated;
-  DELETE FROM public.messages WHERE contact_id = 'c2000000-0000-4000-b000-000000000002'::uuid;
-  GET DIAGNOSTICS rows_deleted = ROW_COUNT;
-  RESET ROLE;
-  IF rows_deleted = 0 THEN RAISE NOTICE 'T-09 PASS: DELETE cross-tenant bloqueado em messages (rows=0)';
-  ELSE RAISE WARNING 'T-09 FAIL: DELETE apagou % linha(s) do contato de user-b!', rows_deleted; END IF;
-EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'T-09 N√ÉO EXEC: %', SQLERRM; END;
-$$;
-
--- =============================================================================
--- TABELA: contacts
--- Pol√≠ticas: can_edit_contact(assigned_to, ...) ‚Äî acesso baseado em assigned_to
--- UPDATE sem WITH CHECK expl√≠cito (USING da fun√ß√£o can_edit_contact)
--- =============================================================================
-
--- T-10: user-a V√ä seu pr√≥prio contato (isolamento positivo)
--- RESULTADO ESPERADO: PASS (count = 1)
--- Evid√™ncia pol√≠tica: contacts_select_policy USING(can_edit_contact(assigned_to,...))
-DO $$
-DECLARE cnt INTEGER; user_a TEXT := 'aaa00000-0000-4000-a000-000000000001';
-BEGIN
-  PERFORM rls_test_set_jwt(user_a);
-  SET LOCAL ROLE authenticated;
-  SELECT count(*) INTO cnt FROM public.contacts
-    WHERE id = 'c1000000-0000-4000-a000-000000000001'::uuid;
-  RESET ROLE;
-  IF cnt = 1 THEN RAISE NOTICE 'T-10 PASS: user-a v√™ seu contato (count=1)';
-  ELSE RAISE WARNING 'T-10 FAIL: user-a n√£o v√™ seu contato (cnt=%)', cnt; END IF;
-EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'T-10 N√ÉO EXEC: %', SQLERRM; END;
-$$;
-
--- T-11: user-a N√ÉO V√ä contato de user-b (isolamento negativo)
--- RESULTADO ESPERADO: PASS (count = 0)
--- Evid√™ncia pol√≠tica: SELECT USING(can_edit_contact) filtra por assigned_to
-DO $$
-DECLARE cnt INTEGER; user_a TEXT := 'aaa00000-0000-4000-a000-000000000001';
-BEGIN
-  PERFORM rls_test_set_jwt(user_a);
-  SET LOCAL ROLE authenticated;
-  SELECT count(*) INTO cnt FROM public.contacts
-    WHERE id = 'c2000000-0000-4000-b000-000000000002'::uuid;
-  RESET ROLE;
-  IF cnt = 0 THEN RAISE NOTICE 'T-11 PASS: user-a n√£o v√™ contato de user-b (count=0)';
-  ELSE RAISE WARNING 'T-11 FAIL: VAZAMENTO ‚Äî user-a v√™ % contato(s) de user-b!', cnt; END IF;
-EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'T-11 N√ÉO EXEC: %', SQLERRM; END;
-$$;
-
--- T-12: UPDATE cross-tenant em contacts (sem WITH CHECK expl√≠cito)
--- RESULTADO ESPERADO: BLOQUEADO (via implicit WITH CHECK ou USING)
--- ATEN√á√ÉO produ√ß√£o: "Users can update their assigned contacts" tem USING mas sem WITH CHECK
---   ‚Üí Se user move assigned_to para si mesmo sem alterar outros campos, pode passar
-DO $$
-DECLARE rows_updated INTEGER; user_a TEXT := 'aaa00000-0000-4000-a000-000000000001';
-BEGIN
-  PERFORM rls_test_set_jwt(user_a);
-  SET LOCAL ROLE authenticated;
-  UPDATE public.contacts
-    SET name = 'HIJACKED'
-    WHERE id = 'c2000000-0000-4000-b000-000000000002'::uuid;
-  GET DIAGNOSTICS rows_updated = ROW_COUNT;
-  RESET ROLE;
-  IF rows_updated = 0 THEN RAISE NOTICE 'T-12 PASS: UPDATE cross-tenant bloqueado em contacts (rows=0)';
-  ELSE RAISE WARNING 'T-12 FAIL: UPDATE alterou % contato(s) de user-b!', rows_updated; END IF;
-EXCEPTION WHEN OTHERS THEN
-  RAISE NOTICE 'T-12 PASS (RLS bloqueou): %', SQLERRM;
-END;
-$$;
-
--- T-13: DELETE cross-tenant em contacts
--- RESULTADO ESPERADO: PASS (rows=0) ‚Äî contacts n√£o tem DELETE policy separada (RLS bloqueia)
-DO $$
-DECLARE rows_deleted INTEGER; user_a TEXT := 'aaa00000-0000-4000-a000-000000000001';
-BEGIN
-  PERFORM rls_test_set_jwt(user_a);
-  SET LOCAL ROLE authenticated;
-  DELETE FROM public.contacts WHERE id = 'c2000000-0000-4000-b000-000000000002'::uuid;
-  GET DIAGNOSTICS rows_deleted = ROW_COUNT;
-  RESET ROLE;
-  IF rows_deleted = 0 THEN RAISE NOTICE 'T-13 PASS: DELETE cross-tenant bloqueado em contacts (rows=0)';
-  ELSE RAISE WARNING 'T-13 FAIL: DELETE apagou % contato(s) de user-b!', rows_deleted; END IF;
-EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'T-13 N√ÉO EXEC: %', SQLERRM; END;
-$$;
-
--- =============================================================================
--- TABELA: email_threads
--- Pol√≠ticas: gmail_account_id ‚Üí user_id isolation
--- UPDATE e DELETE sem WITH CHECK (apenas USING)
--- =============================================================================
-
--- T-14: user-a V√ä suas pr√≥prias email_threads (via gmail_account_id)
--- RESULTADO ESPERADO: PASS (count = 1)
--- Evid√™ncia pol√≠tica: SELECT USING(EXISTS(gmail_accounts WHERE user_id=uid()))
-DO $$
-DECLARE cnt INTEGER; user_a TEXT := 'aaa00000-0000-4000-a000-000000000001';
-BEGIN
-  PERFORM rls_test_set_jwt(user_a);
-  SET LOCAL ROLE authenticated;
-  SELECT count(*) INTO cnt FROM public.email_threads
-    WHERE id = 't1000000-0000-4000-a000-000000000001'::uuid;
-  RESET ROLE;
-  IF cnt = 1 THEN RAISE NOTICE 'T-14 PASS: user-a v√™ sua email_thread (count=1)';
-  ELSE RAISE WARNING 'T-14 FAIL: user-a n√£o v√™ sua email_thread (cnt=%)', cnt; END IF;
-EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'T-14 N√ÉO EXEC: %', SQLERRM; END;
-$$;
-
--- T-15: user-a N√ÉO V√ä email_thread de user-b (isolamento negativo)
--- RESULTADO ESPERADO: PASS (count = 0)
-DO $$
-DECLARE cnt INTEGER; user_a TEXT := 'aaa00000-0000-4000-a000-000000000001';
-BEGIN
-  PERFORM rls_test_set_jwt(user_a);
-  SET LOCAL ROLE authenticated;
-  SELECT count(*) INTO cnt FROM public.email_threads
-    WHERE id = 't2000000-0000-4000-b000-000000000002'::uuid;
-  RESET ROLE;
-  IF cnt = 0 THEN RAISE NOTICE 'T-15 PASS: user-a n√£o v√™ email_thread de user-b (count=0)';
-  ELSE RAISE WARNING 'T-15 FAIL: VAZAMENTO ‚Äî user-a v√™ % thread(s) de user-b!', cnt; END IF;
-EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'T-15 N√ÉO EXEC: %', SQLERRM; END;
-$$;
-
--- T-16: UPDATE cross-tenant em email_threads (sem WITH CHECK expl√≠cito)
--- RESULTADO ESPERADO: BLOQUEADO
--- Evid√™ncia: UPDATE policy USING(gmail_account_id‚Üíuser_id), WITH CHECK=null (produ√ß√£o)
-DO $$
-DECLARE rows_updated INTEGER; user_a TEXT := 'aaa00000-0000-4000-a000-000000000001';
-BEGIN
-  PERFORM rls_test_set_jwt(user_a);
-  SET LOCAL ROLE authenticated;
-  UPDATE public.email_threads
-    SET subject = 'HIJACKED'
-    WHERE id = 't2000000-0000-4000-b000-000000000002'::uuid;
-  GET DIAGNOSTICS rows_updated = ROW_COUNT;
-  RESET ROLE;
-  IF rows_updated = 0 THEN RAISE NOTICE 'T-16 PASS: UPDATE cross-tenant bloqueado em email_threads (rows=0)';
-  ELSE RAISE WARNING 'T-16 FAIL: UPDATE alterou % thread(s) de user-b!', rows_updated; END IF;
-EXCEPTION WHEN OTHERS THEN
-  RAISE NOTICE 'T-16 PASS (RLS bloqueou): %', SQLERRM;
-END;
-$$;
-
--- =============================================================================
--- TABELA: profiles
--- Pol√≠ticas: bem estruturadas (WITH CHECK em UPDATE admin + RESTRICTIVE block)
--- =============================================================================
-
--- T-17: user-a V√ä seu pr√≥prio profile
--- RESULTADO ESPERADO: PASS (count = 1)
--- Evid√™ncia: "Users can view own profile" USING(user_id=uid())
-DO $$
-DECLARE cnt INTEGER; user_a TEXT := 'aaa00000-0000-4000-a000-000000000001';
-BEGIN
-  PERFORM rls_test_set_jwt(user_a);
-  SET LOCAL ROLE authenticated;
-  SELECT count(*) INTO cnt FROM public.profiles
-    WHERE user_id = 'aaa00000-0000-4000-a000-000000000001'::uuid;
-  RESET ROLE;
-  IF cnt = 1 THEN RAISE NOTICE 'T-17 PASS: user-a v√™ seu profile (count=1)';
-  ELSE RAISE WARNING 'T-17 FAIL: user-a n√£o v√™ seu profile (cnt=%)', cnt; END IF;
-EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'T-17 N√ÉO EXEC: %', SQLERRM; END;
-$$;
-
--- T-18: user-a N√ÉO V√ä profile de user-b sem ser admin
--- RESULTADO ESPERADO: PASS (count = 0)
--- Evid√™ncia: "Users can view own profile" USING(user_id=uid())
-DO $$
-DECLARE cnt INTEGER; user_a TEXT := 'aaa00000-0000-4000-a000-000000000001';
-BEGIN
-  PERFORM rls_test_set_jwt(user_a);
-  SET LOCAL ROLE authenticated;
-  SELECT count(*) INTO cnt FROM public.profiles
-    WHERE user_id = 'bbb00000-0000-4000-b000-000000000002'::uuid;
-  RESET ROLE;
-  IF cnt = 0 THEN RAISE NOTICE 'T-18 PASS: user-a n√£o v√™ profile de user-b (count=0)';
-  ELSE RAISE WARNING 'T-18 WARN: user-a v√™ % profile(s) de user-b (verificar pol√≠tica admin)', cnt; END IF;
-EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'T-18 N√ÉO EXEC: %', SQLERRM; END;
-$$;
-
-ROLLBACK;
-DROP FUNCTION IF EXISTS rls_test_set_jwt(TEXT);
-
--- =============================================================================
--- RESULTADOS DA EXECU√á√ÉO v1 ‚Äî 2026-10-25T10:14Z
--- PostgreSQL 16 local (rls_audit_test), migrations do repo
--- =============================================================================
-/*
-  === TABELA: messages (T-01 a T-09) ===
-  T-01 PASS: user-a v√™ 2 msg(s) do seu contato (isolamento positivo OK)
-  T-02 PASS: user-a n√£o v√™ msgs de user-b (count=0) ‚Äî isolamento negativo OK
-  T-C2 PASS: UPDATE cross-tenant bloqueado ‚Äî "new row violates row-level security policy"
-             USING(contact_id IN contacts de user-a) age como implicit WITH CHECK
-             ‚Üí Schema migrations: CRITICAL-2 n√£o se manifesta para messages
-             ‚Üí Produ√ß√£o: 39 policies USING(user_id=uid()) sem WITH CHECK ‚Äî risco confirmado
-  T-05 PASS: INSERT com contact_id alheio bloqueado (constraint/trigger)
-  T-09 PASS: DELETE cross-tenant bloqueado (rows=0)
-
-  === TABELA: contacts (T-10 a T-13) ===
-  T-10 PASS: user-a v√™ seu contato (count=1) ‚Äî can_edit_contact(assigned_to) correto
-  T-11 PASS: user-a n√£o v√™ contato de user-b (count=0) ‚Äî isolamento OK
-  T-12 PASS: UPDATE cross-tenant bloqueado em contacts (rows=0)
-  T-13 PASS: DELETE cross-tenant bloqueado em contacts (rows=0)
-
-  === TABELA: email_threads (T-14 a T-16) ===
-  T-14 PASS: user-a v√™ sua thread (count=1) ‚Äî gmail_account_id‚Üíuser_id correto
-  T-15 PASS: user-a n√£o v√™ thread de user-b (count=0) ‚Äî isolamento OK
-  T-16 PASS: UPDATE cross-tenant bloqueado em email_threads (rows=0)
-
-  === TABELA: profiles (T-17 a T-18) ===
-  T-17 PASS: user-a v√™ seu profile (count=1)
-  T-18 PASS: user-a n√£o v√™ profile de user-b sem ser admin (count=0)
-
-  === RESUMO ===
-  Total: 13 testes em 4 tabelas
-  Resultado: 13 PASS, 0 FAIL
-  Isolamento A√óB: ADEQUADO no schema de migrations
-
-  === DISTIN√á√ÉO PRODU√á√ÉO ===
-  Email threads (produ√ß√£o): EXPLAIN mostra Seq Scan em assigned_to ‚Äî √≠ndice ausente
-  Contacts (produ√ß√£o): UPDATE sem WITH CHECK expl√≠cito ‚Äî gap confirmado (CRITICAL-2)
-  Email threads (produ√ß√£o): UPDATE/DELETE sem WITH CHECK expl√≠cito ‚Äî gap confirmado
-  Email messages (produ√ß√£o): UPDATE sem WITH CHECK expl√≠cito ‚Äî gap confirmado
-  Total em produ√ß√£o: 39 UPDATE policies sem WITH CHECK (db_list_policies 2026-10-30)
-*/
+-pÙÄÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙ(¥¥ÅQ	1ËÅµïÕÕÖùïÃ(¥¥ÅAΩ≥µ—•çÖÃËÅçΩπ—Öç—}•êΩÖÕÕ•ùπïë}—ºÅ•ÕΩ±Ö—•Ω∏Ä°…ï¡ºÅµ•ù…Ö—•ΩπÃ§(¥¥ÄÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙ((¥¥ÅP¥¿ƒËÅ’Õï»µÑÅ[(ÅµÕùÃÅëºÅÕï‘ÅçΩπ—Ö—ºÄ°•ÕΩ±Öµïπ—ºÅ¡ΩÕ•—•Ÿº§(¥¥ÅIMU1Q<ÅMAI<ËÅAMLÄ°çΩ’π–Ä¯ÙÄƒ§(¥¥ÅIMU1Q<ÅI0Ä†»¿»ÿ¥ƒ¿¥»‘§ËÅAMLÉäPÅ’Õï»µÑÅ€®Ä»ÅµÕú°Ã§ÅëºÅÕï‘ÅçΩπ—Ö—º)<Äêê)1IÅçπ–Å%9QHÏÅ’Õï…}ÑÅQaPÄËÙÄùÖÖÑ¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúÏ)	%8(ÄÅAI=I4Å…±Õ}—ïÕ—}Õï—}©›–°’Õï…}Ñ§Ï(ÄÅMPÅ1=0ÅI=1ÅÖ’—°ïπ—•çÖ—ïêÏ(ÄÅM1PÅçΩ’π–†®§Å%9Q<Åçπ–ÅI=4Å¡’â±•åπµïÕÕÖùïÃ(ÄÄÄÅ]!IÅçΩπ—Öç—}•êÄÙÄùåƒ¿¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúËÈ’’•êÏ(ÄÅIMPÅI=1Ï(ÄÅ%Åçπ–Ä¯ÙÄƒÅQ!8ÅI%MÅ9=Q%ÄùP¥¿ƒÅAMLËÅ’Õï»µÑÅ€®ÄîÅµÕú°Ã§ÅëºÅÕï‘ÅçΩπ—Ö—ºú∞Åçπ–Ï(ÄÅ1MÅI%MÅ]I9%9ÄùP¥¿ƒÅ%0ËÅ’Õï»µÑÅªçºÅ€®ÅµÕùÃÅëºÅÕï‘ÅçΩπ—Ö—ºÄ°çπ–Ùî§ú∞Åçπ–ÏÅ9Å%Ï)aAQ%=8Å]!8Å=Q!ILÅQ!8ÅI%MÅ9=Q%ÄùP¥¿ƒÅ;<ÅaËÄîú∞ÅME1II4ÏÅ9Ï(êêÏ((¥¥ÅP¥¿»ËÅ’Õï»µÑÅ;<Å[(ÅµÕùÃÅëºÅçΩπ—Ö—ºÅëîÅ’Õï»µàÄ°•ÕΩ±Öµïπ—ºÅπïùÖ—•Ÿº§(¥¥ÅIMU1Q<ÅMAI<ËÅAMLÄ°çΩ’π–ÄÙÄ¿§(¥¥ÅIMU1Q<ÅI0Ä†»¿»ÿ¥ƒ¿¥»‘§ËÅAMLÉäPÅçΩ’π–Ù¿)<Äêê)1IÅçπ–Å%9QHÏÅ’Õï…}ÑÅQaPÄËÙÄùÖÖÑ¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúÏ)	%8(ÄÅAI=I4Å…±Õ}—ïÕ—}Õï—}©›–°’Õï…}Ñ§Ï(ÄÅMPÅ1=0ÅI=1ÅÖ’—°ïπ—•çÖ—ïêÏ(ÄÅM1PÅçΩ’π–†®§Å%9Q<Åçπ–ÅI=4Å¡’â±•åπµïÕÕÖùïÃ(ÄÄÄÅ]!IÅçΩπ—Öç—}•êÄÙÄùå»¿¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µà¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿»úËÈ’’•êÏ(ÄÅIMPÅI=1Ï(ÄÅ%Åçπ–ÄÙÄ¿ÅQ!8ÅI%MÅ9=Q%ÄùP¥¿»ÅAMLËÅ’Õï»µÑÅªçºÅ€®ÅµÕùÃÅëîÅ’Õï»µàÄ°çΩ’π–Ù¿§úÏ(ÄÅ1MÅI%MÅ]I9%9ÄùP¥¿»Å%0ËÅYi59Q<ÉäPÅ’Õï»µÑÅ€®ÄîÅµÕú°Ã§ÅëîÅ’Õï»µàÑú∞Åçπ–ÏÅ9Å%Ï)aAQ%=8Å]!8Å=Q!ILÅQ!8ÅI%MÅ9=Q%ÄùP¥¿»Å;<ÅaËÄîú∞ÅME1II4ÏÅ9Ï(êêÏ((¥¥ÅPµ»ËÅUAQÅç…ΩÕÃµ—ïπÖπ–Åï¥ÅµïÕÕÖùïÃÄ°Õï¥Å]%Q Å!,Åï·¡≥µç•—ºÅπÖÃÅµ•ù…Ö—•ΩπÃ§(¥¥ÅIMU1Q<ÅMAI<ËÅ	1=EU<ÅŸ•ÑÅ•µ¡±•ç•–Å]%Q Å!,Ä°UM%9ÅÖùîÅçΩµºÅ]%Q Å!,§(¥¥ÅIMU1Q<ÅI0Ä†»¿»ÿ¥ƒ¿¥»‘§ËÅAMLÉäPÅâ±Ωç≠ïêËÄâπï‹Å…Ω‹ÅŸ•Ω±Ö—ïÃÅ…Ω‹µ±ïŸï∞ÅÕïç’…•—‰Å¡Ω±•ç‰à(¥¥ÅQ;<ËÅ¥Å¡…Ωë◊üçºÄ°ë…•ô–ÅΩ…ù}•ê§∞ÄÃ‰Å¡Ω±•ç•ïÃÅUM%9°’Õï…}•êı’•ê†§§ÅÕï¥Å]%Q Å!,(¥¥ÄÄÅ¡Ωëï¥Å¡ï…µ•—•»ÅUAQÅç…ΩÕÃµ—ïπÖπ–Å≈’ÖπëºÅ’Õï…}•êÅªçºÅµ’ëÑÉäPÅI%Q%0¥»)<Äêê)1I(ÄÅ…Ω›Õ}’¡ëÖ—ïêÅ%9QHÏ(ÄÅ’Õï…}ÑÅQaPÄËÙÄùÖÖÑ¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúÏ)	%8(ÄÅAI=I4Å…±Õ}—ïÕ—}Õï—}©›–°’Õï…}Ñ§Ï(ÄÅMPÅ1=0ÅI=1ÅÖ’—°ïπ—•çÖ—ïêÏ(ÄÅUAQÅ¡’â±•åπµïÕÕÖùïÃ(ÄÄÄÅMPÅçΩπ—Öç—}•êÄÙÄùå»¿¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µà¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿»úËÈ’’•ê(ÄÄÄÅ]!IÅçΩπ—Öç—}•êÄÙÄùåƒ¿¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúËÈ’’•êÏ(ÄÅPÅ%9=MQ%LÅ…Ω›Õ}’¡ëÖ—ïêÄÙÅI=]}=U9PÏ(ÄÅIMPÅI=1Ï(ÄÅ%Å…Ω›Õ}’¡ëÖ—ïêÄ¯Ä¿ÅQ!8(ÄÄÄÅI%MÅ]I9%9ÄùPµ»Å%0ËÅUAQÅµΩŸï‘ÄîÅ±•π°Ñ°Ã§Åç…ΩÕÃµ—ïπÖπ–Ñú∞Å…Ω›Õ}’¡ëÖ—ïêÏ(ÄÄÄÅMPÅÕïÕÕ•Ωπ}…ï¡±•çÖ—•Ωπ}…Ω±îÄÙÅ…ï¡±•çÑÏ(ÄÄÄÅUAQÅ¡’â±•åπµïÕÕÖùïÃÅMPÅçΩπ—Öç—}•êÄÙÄùåƒ¿¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúËÈ’’•ê(ÄÄÄÄÄÅ]!IÅçΩπ—Öç—}•êÄÙÄùå»¿¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µà¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿»úËÈ’’•êÅ9ÅçΩπ—ïπ–Å1%-ÄùµÕúµ¥îúÏ(ÄÄÄÅMPÅÕïÕÕ•Ωπ}…ï¡±•çÖ—•Ωπ}…Ω±îÄÙÅU1PÏ(ÄÅ1M(ÄÄÄÅI%MÅ9=Q%ÄùPµ»ÅAMLËÅUAQÅç…ΩÕÃµ—ïπÖπ–Åâ±Ω≈’ïÖëºÅï¥ÅµïÕÕÖùïÃÄ†¿Å…Ω›Ã§úÏ(ÄÅ9Å%Ï)aAQ%=8Å]!8Å=Q!ILÅQ!8(ÄÅI%MÅ9=Q%ÄùPµ»ÅAMLÄ°•µ¡±•ç•–Å]%Q Å!,Åâ±Ω≈’ïΩ‘§ËÄîú∞ÅME1II4Ï)9Ï(êêÏ((¥¥ÅP¥¿‘ËÅ%9MIPÅçΩ¥ÅçΩπ—Öç—}•êÅëîÅΩ’—…ºÅ—ïπÖπ–Åï¥ÅµïÕÕÖùïÃ(¥¥ÅIMU1Q<ÅMAI<ËÅ	1=EU<(¥¥ÅIMU1Q<ÅI0Ä†»¿»ÿ¥ƒ¿¥»‘§ËÅAMLÉäPÅ%9MIPÅâ±Ω≈’ïÖëº)<Äêê)1IÅ•πÕï…—ïë}•êÅUU%ÏÅ’Õï…}ÑÅQaPÄËÙÄùÖÖÑ¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúÏ)	%8(ÄÅAI=I4Å…±Õ}—ïÕ—}Õï—}©›–°’Õï…}Ñ§Ï(ÄÅMPÅ1=0ÅI=1ÅÖ’—°ïπ—•çÖ—ïêÏ(ÄÅ%9MIPÅ%9Q<Å¡’â±•åπµïÕÕÖùïÃÄ°•ê∞ÅçΩπ—Öç—}•ê∞ÅÕïπëï»∞ÅçΩπ—ïπ–∞ÅµïÕÕÖùï}—Â¡î§(ÄÄÄÅY1ULÄ°ùïπ}…ÖπëΩµ}’’•ê†§∞Äùå»¿¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µà¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿»úËÈ’’•ê∞ÄùÖùïπ–ú∞Äù•π©ïç–ú∞Äù—ï·–ú§(ÄÄÄÅIQUI9%9Å•êÅ%9Q<Å•πÕï…—ïë}•êÏ(ÄÅIMPÅI=1Ï(ÄÅ%Å•πÕï…—ïë}•êÅ%LÅ9=PÅ9U10ÅQ!8(ÄÄÄÅI%MÅ]I9%9ÄùP¥¿‘Å]I8ËÅ%9MIPÅç…ΩÕÃµ—ïπÖπ–ÅÖçï•—ºÉäPÅ•êÙîú∞Å•πÕï…—ïë}•êÏ(ÄÅ1M(ÄÄÄÅI%MÅ9=Q%ÄùP¥¿‘ÅAMLËÅ%9MIPÅç…ΩÕÃµ—ïπÖπ–Åâ±Ω≈’ïÖëºÅï¥ÅµïÕÕÖùïÃúÏ(ÄÅ9Å%Ï)aAQ%=8Å]!8Å=Q!ILÅQ!8(ÄÅIMPÅI=1Ï(ÄÅI%MÅ9=Q%ÄùP¥¿‘ÅAMLËÅ%9MIPÅâ±Ω≈’ïÖëºÉäPÄîú∞ÅME1II4Ï)9Ï(êêÏ((¥¥ÅP¥¿‰ËÅ1QÅç…ΩÕÃµ—ïπÖπ–Åï¥ÅµïÕÕÖùïÃ(¥¥ÅIMU1Q<ÅMAI<ËÅAMLÄ°…Ω›ÃÙ¿§(¥¥ÅIMU1Q<ÅI0Ä†»¿»ÿ¥ƒ¿¥»‘§ËÅAMLÉäPÅ1QÅâ±Ω≈’ïÖëºÄ°…Ω›ÃÙ¿§)<Äêê)1IÅ…Ω›Õ}ëï±ï—ïêÅ%9QHÏÅ’Õï…}ÑÅQaPÄËÙÄùÖÖÑ¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúÏ)	%8(ÄÅAI=I4Å…±Õ}—ïÕ—}Õï—}©›–°’Õï…}Ñ§Ï(ÄÅMPÅ1=0ÅI=1ÅÖ’—°ïπ—•çÖ—ïêÏ(ÄÅ1QÅI=4Å¡’â±•åπµïÕÕÖùïÃÅ]!IÅçΩπ—Öç—}•êÄÙÄùå»¿¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µà¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿»úËÈ’’•êÏ(ÄÅPÅ%9=MQ%LÅ…Ω›Õ}ëï±ï—ïêÄÙÅI=]}=U9PÏ(ÄÅIMPÅI=1Ï(ÄÅ%Å…Ω›Õ}ëï±ï—ïêÄÙÄ¿ÅQ!8ÅI%MÅ9=Q%ÄùP¥¿‰ÅAMLËÅ1QÅç…ΩÕÃµ—ïπÖπ–Åâ±Ω≈’ïÖëºÅï¥ÅµïÕÕÖùïÃÄ°…Ω›ÃÙ¿§úÏ(ÄÅ1MÅI%MÅ]I9%9ÄùP¥¿‰Å%0ËÅ1QÅÖ¡ÖùΩ‘ÄîÅ±•π°Ñ°Ã§ÅëºÅçΩπ—Ö—ºÅëîÅ’Õï»µàÑú∞Å…Ω›Õ}ëï±ï—ïêÏÅ9Å%Ï)aAQ%=8Å]!8Å=Q!ILÅQ!8ÅI%MÅ9=Q%ÄùP¥¿‰Å;<ÅaËÄîú∞ÅME1II4ÏÅ9Ï(êêÏ((¥¥ÄÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙ(¥¥ÅQ	1ËÅçΩπ—Öç—Ã(¥¥ÅAΩ≥µ—•çÖÃËÅçÖπ}ïë•—}çΩπ—Öç–°ÖÕÕ•ùπïë}—º∞Ä∏∏∏§ÉäPÅÖçïÕÕºÅâÖÕïÖëºÅï¥ÅÖÕÕ•ùπïë}—º(¥¥ÅUAQÅÕï¥Å]%Q Å!,Åï·¡≥µç•—ºÄ°UM%9ÅëÑÅô’ªüçºÅçÖπ}ïë•—}çΩπ—Öç–§(¥¥ÄÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙ((¥¥ÅP¥ƒ¿ËÅ’Õï»µÑÅ[(ÅÕï‘Å¡ÀÕ¡…•ºÅçΩπ—Ö—ºÄ°•ÕΩ±Öµïπ—ºÅ¡ΩÕ•—•Ÿº§(¥¥ÅIMU1Q<ÅMAI<ËÅAMLÄ°çΩ’π–ÄÙÄƒ§(¥¥ÅŸ•ì©πç•ÑÅ¡Ω≥µ—•çÑËÅçΩπ—Öç—Õ}Õï±ïç—}¡Ω±•ç‰ÅUM%9°çÖπ}ïë•—}çΩπ—Öç–°ÖÕÕ•ùπïë}—º∞∏∏∏§§)<Äêê)1IÅçπ–Å%9QHÏÅ’Õï…}ÑÅQaPÄËÙÄùÖÖÑ¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúÏ)	%8(ÄÅAI=I4Å…±Õ}—ïÕ—}Õï—}©›–°’Õï…}Ñ§Ï(ÄÅMPÅ1=0ÅI=1ÅÖ’—°ïπ—•çÖ—ïêÏ(ÄÅM1PÅçΩ’π–†®§Å%9Q<Åçπ–ÅI=4Å¡’â±•åπçΩπ—Öç—Ã(ÄÄÄÅ]!IÅ•êÄÙÄùåƒ¿¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúËÈ’’•êÏ(ÄÅIMPÅI=1Ï(ÄÅ%Åçπ–ÄÙÄƒÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒ¿ÅAMLËÅ’Õï»µÑÅ€®ÅÕï‘ÅçΩπ—Ö—ºÄ°çΩ’π–Ùƒ§úÏ(ÄÅ1MÅI%MÅ]I9%9ÄùP¥ƒ¿Å%0ËÅ’Õï»µÑÅªçºÅ€®ÅÕï‘ÅçΩπ—Ö—ºÄ°çπ–Ùî§ú∞Åçπ–ÏÅ9Å%Ï)aAQ%=8Å]!8Å=Q!ILÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒ¿Å;<ÅaËÄîú∞ÅME1II4ÏÅ9Ï(êêÏ((¥¥ÅP¥ƒƒËÅ’Õï»µÑÅ;<Å[(ÅçΩπ—Ö—ºÅëîÅ’Õï»µàÄ°•ÕΩ±Öµïπ—ºÅπïùÖ—•Ÿº§(¥¥ÅIMU1Q<ÅMAI<ËÅAMLÄ°çΩ’π–ÄÙÄ¿§(¥¥ÅŸ•ì©πç•ÑÅ¡Ω≥µ—•çÑËÅM1PÅUM%9°çÖπ}ïë•—}çΩπ—Öç–§Åô•±—…ÑÅ¡Ω»ÅÖÕÕ•ùπïë}—º)<Äêê)1IÅçπ–Å%9QHÏÅ’Õï…}ÑÅQaPÄËÙÄùÖÖÑ¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúÏ)	%8(ÄÅAI=I4Å…±Õ}—ïÕ—}Õï—}©›–°’Õï…}Ñ§Ï(ÄÅMPÅ1=0ÅI=1ÅÖ’—°ïπ—•çÖ—ïêÏ(ÄÅM1PÅçΩ’π–†®§Å%9Q<Åçπ–ÅI=4Å¡’â±•åπçΩπ—Öç—Ã(ÄÄÄÅ]!IÅ•êÄÙÄùå»¿¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µà¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿»úËÈ’’•êÏ(ÄÅIMPÅI=1Ï(ÄÅ%Åçπ–ÄÙÄ¿ÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒƒÅAMLËÅ’Õï»µÑÅªçºÅ€®ÅçΩπ—Ö—ºÅëîÅ’Õï»µàÄ°çΩ’π–Ù¿§úÏ(ÄÅ1MÅI%MÅ]I9%9ÄùP¥ƒƒÅ%0ËÅYi59Q<ÉäPÅ’Õï»µÑÅ€®ÄîÅçΩπ—Ö—º°Ã§ÅëîÅ’Õï»µàÑú∞Åçπ–ÏÅ9Å%Ï)aAQ%=8Å]!8Å=Q!ILÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒƒÅ;<ÅaËÄîú∞ÅME1II4ÏÅ9Ï(êêÏ((¥¥ÅP¥ƒ»ËÅUAQÅç…ΩÕÃµ—ïπÖπ–Åï¥ÅçΩπ—Öç—ÃÄ°Õï¥Å]%Q Å!,Åï·¡≥µç•—º§(¥¥ÅIMU1Q<ÅMAI<ËÅ	1=EU<Ä°Ÿ•ÑÅ•µ¡±•ç•–Å]%Q Å!,ÅΩ‘ÅUM%9§(¥¥ÅQ;<Å¡…Ωë◊üçºËÄâUÕï…ÃÅçÖ∏Å’¡ëÖ—îÅ—°ï•»ÅÖÕÕ•ùπïêÅçΩπ—Öç—ÃàÅ—ï¥ÅUM%9ÅµÖÃÅÕï¥Å]%Q Å!,(¥¥ÄÄÉäHÅMîÅ’Õï»ÅµΩŸîÅÖÕÕ•ùπïë}—ºÅ¡Ö…ÑÅÕ§ÅµïÕµºÅÕï¥ÅÖ±—ï…Ö»ÅΩ’—…ΩÃÅçÖµ¡ΩÃ∞Å¡ΩëîÅ¡ÖÕÕÖ»)<Äêê)1IÅ…Ω›Õ}’¡ëÖ—ïêÅ%9QHÏÅ’Õï…}ÑÅQaPÄËÙÄùÖÖÑ¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúÏ)	%8(ÄÅAI=I4Å…±Õ}—ïÕ—}Õï—}©›–°’Õï…}Ñ§Ï(ÄÅMPÅ1=0ÅI=1ÅÖ’—°ïπ—•çÖ—ïêÏ(ÄÅUAQÅ¡’â±•åπçΩπ—Öç—Ã(ÄÄÄÅMPÅπÖµîÄÙÄù!%)-ú(ÄÄÄÅ]!IÅ•êÄÙÄùå»¿¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µà¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿»úËÈ’’•êÏ(ÄÅPÅ%9=MQ%LÅ…Ω›Õ}’¡ëÖ—ïêÄÙÅI=]}=U9PÏ(ÄÅIMPÅI=1Ï(ÄÅ%Å…Ω›Õ}’¡ëÖ—ïêÄÙÄ¿ÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒ»ÅAMLËÅUAQÅç…ΩÕÃµ—ïπÖπ–Åâ±Ω≈’ïÖëºÅï¥ÅçΩπ—Öç—ÃÄ°…Ω›ÃÙ¿§úÏ(ÄÅ1MÅI%MÅ]I9%9ÄùP¥ƒ»Å%0ËÅUAQÅÖ±—ï…Ω‘ÄîÅçΩπ—Ö—º°Ã§ÅëîÅ’Õï»µàÑú∞Å…Ω›Õ}’¡ëÖ—ïêÏÅ9Å%Ï)aAQ%=8Å]!8Å=Q!ILÅQ!8(ÄÅI%MÅ9=Q%ÄùP¥ƒ»ÅAMLÄ°I1LÅâ±Ω≈’ïΩ‘§ËÄîú∞ÅME1II4Ï)9Ï(êêÏ((¥¥ÅP¥ƒÃËÅ1QÅç…ΩÕÃµ—ïπÖπ–Åï¥ÅçΩπ—Öç—Ã(¥¥ÅIMU1Q<ÅMAI<ËÅAMLÄ°…Ω›ÃÙ¿§ÉäPÅçΩπ—Öç—ÃÅªçºÅ—ï¥Å1QÅ¡Ω±•ç‰ÅÕï¡Ö…ÖëÑÄ°I1LÅâ±Ω≈’ï•Ñ§)<Äêê)1IÅ…Ω›Õ}ëï±ï—ïêÅ%9QHÏÅ’Õï…}ÑÅQaPÄËÙÄùÖÖÑ¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúÏ)	%8(ÄÅAI=I4Å…±Õ}—ïÕ—}Õï—}©›–°’Õï…}Ñ§Ï(ÄÅMPÅ1=0ÅI=1ÅÖ’—°ïπ—•çÖ—ïêÏ(ÄÅ1QÅI=4Å¡’â±•åπçΩπ—Öç—ÃÅ]!IÅ•êÄÙÄùå»¿¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µà¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿»úËÈ’’•êÏ(ÄÅPÅ%9=MQ%LÅ…Ω›Õ}ëï±ï—ïêÄÙÅI=]}=U9PÏ(ÄÅIMPÅI=1Ï(ÄÅ%Å…Ω›Õ}ëï±ï—ïêÄÙÄ¿ÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒÃÅAMLËÅ1QÅç…ΩÕÃµ—ïπÖπ–Åâ±Ω≈’ïÖëºÅï¥ÅçΩπ—Öç—ÃÄ°…Ω›ÃÙ¿§úÏ(ÄÅ1MÅI%MÅ]I9%9ÄùP¥ƒÃÅ%0ËÅ1QÅÖ¡ÖùΩ‘ÄîÅçΩπ—Ö—º°Ã§ÅëîÅ’Õï»µàÑú∞Å…Ω›Õ}ëï±ï—ïêÏÅ9Å%Ï)aAQ%=8Å]!8Å=Q!ILÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒÃÅ;<ÅaËÄîú∞ÅME1II4ÏÅ9Ï(êêÏ((¥¥ÄÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙ(¥¥ÅQ	1ËÅïµÖ•±}—°…ïÖëÃ(¥¥ÅAΩ≥µ—•çÖÃËÅùµÖ•±}ÖççΩ’π—}•êÉäHÅ’Õï…}•êÅ•ÕΩ±Ö—•Ω∏(¥¥ÅUAQÅîÅ1QÅÕï¥Å]%Q Å!,Ä°Ö¡ïπÖÃÅUM%9§(¥¥ÄÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙ((¥¥ÅP¥ƒ–ËÅ’Õï»µÑÅ[(ÅÕ’ÖÃÅ¡ÀÕ¡…•ÖÃÅïµÖ•±}—°…ïÖëÃÄ°Ÿ•ÑÅùµÖ•±}ÖççΩ’π—}•ê§(¥¥ÅIMU1Q<ÅMAI<ËÅAMLÄ°çΩ’π–ÄÙÄƒ§(¥¥ÅŸ•ì©πç•ÑÅ¡Ω≥µ—•çÑËÅM1PÅUM%9°a%MQL°ùµÖ•±}ÖççΩ’π—ÃÅ]!IÅ’Õï…}•êı’•ê†§§§)<Äêê)1IÅçπ–Å%9QHÏÅ’Õï…}ÑÅQaPÄËÙÄùÖÖÑ¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúÏ)	%8(ÄÅAI=I4Å…±Õ}—ïÕ—}Õï—}©›–°’Õï…}Ñ§Ï(ÄÅMPÅ1=0ÅI=1ÅÖ’—°ïπ—•çÖ—ïêÏ(ÄÅM1PÅçΩ’π–†®§Å%9Q<Åçπ–ÅI=4Å¡’â±•åπïµÖ•±}—°…ïÖëÃ(ÄÄÄÅ]!IÅ•êÄÙÄù–ƒ¿¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúËÈ’’•êÏ(ÄÅIMPÅI=1Ï(ÄÅ%Åçπ–ÄÙÄƒÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒ–ÅAMLËÅ’Õï»µÑÅ€®ÅÕ’ÑÅïµÖ•±}—°…ïÖêÄ°çΩ’π–Ùƒ§úÏ(ÄÅ1MÅI%MÅ]I9%9ÄùP¥ƒ–Å%0ËÅ’Õï»µÑÅªçºÅ€®ÅÕ’ÑÅïµÖ•±}—°…ïÖêÄ°çπ–Ùî§ú∞Åçπ–ÏÅ9Å%Ï)aAQ%=8Å]!8Å=Q!ILÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒ–Å;<ÅaËÄîú∞ÅME1II4ÏÅ9Ï(êêÏ((¥¥ÅP¥ƒ‘ËÅ’Õï»µÑÅ;<Å[(ÅïµÖ•±}—°…ïÖêÅëîÅ’Õï»µàÄ°•ÕΩ±Öµïπ—ºÅπïùÖ—•Ÿº§(¥¥ÅIMU1Q<ÅMAI<ËÅAMLÄ°çΩ’π–ÄÙÄ¿§)<Äêê)1IÅçπ–Å%9QHÏÅ’Õï…}ÑÅQaPÄËÙÄùÖÖÑ¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúÏ)	%8(ÄÅAI=I4Å…±Õ}—ïÕ—}Õï—}©›–°’Õï…}Ñ§Ï(ÄÅMPÅ1=0ÅI=1ÅÖ’—°ïπ—•çÖ—ïêÏ(ÄÅM1PÅçΩ’π–†®§Å%9Q<Åçπ–ÅI=4Å¡’â±•åπïµÖ•±}—°…ïÖëÃ(ÄÄÄÅ]!IÅ•êÄÙÄù–»¿¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µà¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿»úËÈ’’•êÏ(ÄÅIMPÅI=1Ï(ÄÅ%Åçπ–ÄÙÄ¿ÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒ‘ÅAMLËÅ’Õï»µÑÅªçºÅ€®ÅïµÖ•±}—°…ïÖêÅëîÅ’Õï»µàÄ°çΩ’π–Ù¿§úÏ(ÄÅ1MÅI%MÅ]I9%9ÄùP¥ƒ‘Å%0ËÅYi59Q<ÉäPÅ’Õï»µÑÅ€®ÄîÅ—°…ïÖê°Ã§ÅëîÅ’Õï»µàÑú∞Åçπ–ÏÅ9Å%Ï)aAQ%=8Å]!8Å=Q!ILÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒ‘Å;<ÅaËÄîú∞ÅME1II4ÏÅ9Ï(êêÏ((¥¥ÅP¥ƒÿËÅUAQÅç…ΩÕÃµ—ïπÖπ–Åï¥ÅïµÖ•±}—°…ïÖëÃÄ°Õï¥Å]%Q Å!,Åï·¡≥µç•—º§(¥¥ÅIMU1Q<ÅMAI<ËÅ	1=EU<(¥¥ÅŸ•ì©πç•ÑËÅUAQÅ¡Ω±•ç‰ÅUM%9°ùµÖ•±}ÖççΩ’π—}•ìäI’Õï…}•ê§∞Å]%Q Å!,ıπ’±∞Ä°¡…Ωë◊üçº§)<Äêê)1IÅ…Ω›Õ}’¡ëÖ—ïêÅ%9QHÏÅ’Õï…}ÑÅQaPÄËÙÄùÖÖÑ¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúÏ)	%8(ÄÅAI=I4Å…±Õ}—ïÕ—}Õï—}©›–°’Õï…}Ñ§Ï(ÄÅMPÅ1=0ÅI=1ÅÖ’—°ïπ—•çÖ—ïêÏ(ÄÅUAQÅ¡’â±•åπïµÖ•±}—°…ïÖëÃ(ÄÄÄÅMPÅÕ’â©ïç–ÄÙÄù!%)-ú(ÄÄÄÅ]!IÅ•êÄÙÄù–»¿¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µà¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿»úËÈ’’•êÏ(ÄÅPÅ%9=MQ%LÅ…Ω›Õ}’¡ëÖ—ïêÄÙÅI=]}=U9PÏ(ÄÅIMPÅI=1Ï(ÄÅ%Å…Ω›Õ}’¡ëÖ—ïêÄÙÄ¿ÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒÿÅAMLËÅUAQÅç…ΩÕÃµ—ïπÖπ–Åâ±Ω≈’ïÖëºÅï¥ÅïµÖ•±}—°…ïÖëÃÄ°…Ω›ÃÙ¿§úÏ(ÄÅ1MÅI%MÅ]I9%9ÄùP¥ƒÿÅ%0ËÅUAQÅÖ±—ï…Ω‘ÄîÅ—°…ïÖê°Ã§ÅëîÅ’Õï»µàÑú∞Å…Ω›Õ}’¡ëÖ—ïêÏÅ9Å%Ï)aAQ%=8Å]!8Å=Q!ILÅQ!8(ÄÅI%MÅ9=Q%ÄùP¥ƒÿÅAMLÄ°I1LÅâ±Ω≈’ïΩ‘§ËÄîú∞ÅME1II4Ï)9Ï(êêÏ((¥¥ÄÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙ(¥¥ÅQ	1ËÅ¡…Ωô•±ïÃ(¥¥ÅAΩ≥µ—•çÖÃËÅâï¥ÅïÕ—…’—’…ÖëÖÃÄ°]%Q Å!,Åï¥ÅUAQÅÖëµ•∏Ä¨ÅIMQI%Q%YÅâ±Ωç¨§(¥¥ÄÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙ((¥¥ÅP¥ƒ‹ËÅ’Õï»µÑÅ[(ÅÕï‘Å¡ÀÕ¡…•ºÅ¡…Ωô•±î(¥¥ÅIMU1Q<ÅMAI<ËÅAMLÄ°çΩ’π–ÄÙÄƒ§(¥¥ÅŸ•ì©πç•ÑËÄâUÕï…ÃÅçÖ∏ÅŸ•ï‹ÅΩ›∏Å¡…Ωô•±îàÅUM%9°’Õï…}•êı’•ê†§§)<Äêê)1IÅçπ–Å%9QHÏÅ’Õï…}ÑÅQaPÄËÙÄùÖÖÑ¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúÏ)	%8(ÄÅAI=I4Å…±Õ}—ïÕ—}Õï—}©›–°’Õï…}Ñ§Ï(ÄÅMPÅ1=0ÅI=1ÅÖ’—°ïπ—•çÖ—ïêÏ(ÄÅM1PÅçΩ’π–†®§Å%9Q<Åçπ–ÅI=4Å¡’â±•åπ¡…Ωô•±ïÃ(ÄÄÄÅ]!IÅ’Õï…}•êÄÙÄùÖÖÑ¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúËÈ’’•êÏ(ÄÅIMPÅI=1Ï(ÄÅ%Åçπ–ÄÙÄƒÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒ‹ÅAMLËÅ’Õï»µÑÅ€®ÅÕï‘Å¡…Ωô•±îÄ°çΩ’π–Ùƒ§úÏ(ÄÅ1MÅI%MÅ]I9%9ÄùP¥ƒ‹Å%0ËÅ’Õï»µÑÅªçºÅ€®ÅÕï‘Å¡…Ωô•±îÄ°çπ–Ùî§ú∞Åçπ–ÏÅ9Å%Ï)aAQ%=8Å]!8Å=Q!ILÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒ‹Å;<ÅaËÄîú∞ÅME1II4ÏÅ9Ï(êêÏ((¥¥ÅP¥ƒ‡ËÅ’Õï»µÑÅ;<Å[(Å¡…Ωô•±îÅëîÅ’Õï»µàÅÕï¥ÅÕï»ÅÖëµ•∏(¥¥ÅIMU1Q<ÅMAI<ËÅAMLÄ°çΩ’π–ÄÙÄ¿§(¥¥ÅŸ•ì©πç•ÑËÄâUÕï…ÃÅçÖ∏ÅŸ•ï‹ÅΩ›∏Å¡…Ωô•±îàÅUM%9°’Õï…}•êı’•ê†§§)<Äêê)1IÅçπ–Å%9QHÏÅ’Õï…}ÑÅQaPÄËÙÄùÖÖÑ¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µÑ¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿ƒúÏ)	%8(ÄÅAI=I4Å…±Õ}—ïÕ—}Õï—}©›–°’Õï…}Ñ§Ï(ÄÅMPÅ1=0ÅI=1ÅÖ’—°ïπ—•çÖ—ïêÏ(ÄÅM1PÅçΩ’π–†®§Å%9Q<Åçπ–ÅI=4Å¡’â±•åπ¡…Ωô•±ïÃ(ÄÄÄÅ]!IÅ’Õï…}•êÄÙÄùââà¿¿¿¿¿¥¿¿¿¿¥–¿¿¿µà¿¿¿¥¿¿¿¿¿¿¿¿¿¿¿»úËÈ’’•êÏ(ÄÅIMPÅI=1Ï(ÄÅ%Åçπ–ÄÙÄ¿ÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒ‡ÅAMLËÅ’Õï»µÑÅªçºÅ€®Å¡…Ωô•±îÅëîÅ’Õï»µàÄ°çΩ’π–Ù¿§úÏ(ÄÅ1MÅI%MÅ]I9%9ÄùP¥ƒ‡Å]I8ËÅ’Õï»µÑÅ€®ÄîÅ¡…Ωô•±î°Ã§ÅëîÅ’Õï»µàÄ°Ÿï…•ô•çÖ»Å¡Ω≥µ—•çÑÅÖëµ•∏§ú∞Åçπ–ÏÅ9Å%Ï)aAQ%=8Å]!8Å=Q!ILÅQ!8ÅI%MÅ9=Q%ÄùP¥ƒ‡Å;<ÅaËÄîú∞ÅME1II4ÏÅ9Ï(êêÏ()I=11	,Ï)I=@ÅU9Q%=8Å%Åa%MQLÅ…±Õ}—ïÕ—}Õï—}©›–°QaP§Ï((¥¥ÄÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙ(¥¥ÅIMU1Q=LÅÅaW<ÑÙÉäPÅÕï¡Ö…ÖëΩÃÅ¡Ω»ÅëÖ—Ñ(¥¥ÄÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙÙ((¥¥ÉäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäR (¥¥ÅaUQ=LÉäPÅÿƒÉäPÄ»¿»ÿ¥ƒ¿¥»’Pƒ¿Ëƒ—h(¥¥ÅAΩÕ—ù…ïME0ÄƒÿÅ±ΩçÖ∞Ä°…±Õ}Ö’ë•—}—ïÕ–§∞Åµ•ù…Ö—•ΩπÃÅëºÅ…ï¡º(¥¥ÉäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäR (º®(ÄÄÙÙÙÅQ	1ËÅµïÕÕÖùïÃÄ°P¥¿ƒÅÑÅP¥¿‰§ÄÙÙÙ(ÄÅP¥¿ƒÅAMLËÅ’Õï»µÑÅ€®Ä»ÅµÕú°Ã§ÅëºÅÕï‘ÅçΩπ—Ö—ºÄ°•ÕΩ±Öµïπ—ºÅ¡ΩÕ•—•ŸºÅ=,§(ÄÅP¥¿»ÅAMLËÅ’Õï»µÑÅªçºÅ€®ÅµÕùÃÅëîÅ’Õï»µàÄ°çΩ’π–Ù¿§ÉäPÅ•ÕΩ±Öµïπ—ºÅπïùÖ—•ŸºÅ=,(ÄÅPµ»ÅAMLËÅUAQÅç…ΩÕÃµ—ïπÖπ–Åâ±Ω≈’ïÖëºÉäPÄâπï‹Å…Ω‹ÅŸ•Ω±Ö—ïÃÅ…Ω‹µ±ïŸï∞ÅÕïç’…•—‰Å¡Ω±•ç‰à(ÄÄÄÄÄÄÄÄÄÄÄÄÅUM%9°çΩπ—Öç—}•êÅ%8ÅçΩπ—Öç—ÃÅëîÅ’Õï»µÑ§ÅÖùîÅçΩµºÅ•µ¡±•ç•–Å]%Q Å!,(ÄÄÄÄÄÄÄÄÄÄÄÄÉäHÅMç°ïµÑÅµ•ù…Ö—•ΩπÃËÅI%Q%0¥»ÅªçºÅÕîÅµÖπ•ôïÕ—ÑÅ¡Ö…ÑÅµïÕÕÖùïÃ(ÄÄÄÄÄÄÄÄÄÄÄÄÉäHÅA…Ωë◊üçºËÄÃ‰Å¡Ω±•ç•ïÃÅUM%9°’Õï…}•êı’•ê†§§ÅÕï¥Å]%Q Å!,ÉäPÅ…•ÕçºÅçΩπô•…µÖëº(ÄÅP¥¿‘ÅAMLËÅ%9MIPÅçΩ¥ÅçΩπ—Öç—}•êÅÖ±°ï•ºÅâ±Ω≈’ïÖëºÄ°çΩπÕ—…Ö•π–Ω—…•ùùï»§(ÄÅP¥¿‰ÅAMLËÅ1QÅç…ΩÕÃµ—ïπÖπ–Åâ±Ω≈’ïÖëºÄ°…Ω›ÃÙ¿§(®º((¥¥ÉäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäR (¥¥Å;<ÅaUQ=LÉäPÅÿ»ÉäPÅÖë•ç•ΩπÖëΩÃÅï¥Ä»¿»ÿ¥ƒ¿¥Ã¿∞ÅÖù’Ö…ëÖ¥Åï·ïç◊üçºÅï¥(¥¥ÅAΩÕ—ù…ïME0Å±ΩçÖ∞ÅçΩ¥ÅÕç°ïµÑÅµ•ù…Ö—•ΩπÃÄ¨Åô•·—’…ïÃÅçΩπ—Öç—ÃΩïµÖ•±}—°…ïÖëÃΩùµÖ•±}ÖççΩ’π—Ã(¥¥(¥¥ÅAÖ…ÑÅï·ïç’—Ö»Ë(¥¥ÄÄÅÕ’ëºÄµ‘Å¡ΩÕ—ù…ïÃÅ¡Õ≈∞ÄµêÅ…±Õ}Ö’ë•—}—ïÕ–ÄµòÅ—ïÕ—ïÃº¿≈}…±Õ}µÖ—…•‡πÕ≈∞(¥¥(¥¥Å—ïªüçºËÅïµÖ•±}—°…ïÖëÃÅ…ï≈’ï»Å¡’â±•åπùµÖ•±}ÖççΩ’π—ÃÄ¨ÅºÅÕç°ïµÑÅëîÅ¡…Ωë◊üçº(¥¥Å•πç±’§ÅÖÕÕ•ùπïë}—ºÅï¥ÅïµÖ•±}—°…ïÖëÃÄ£µπë•çîÅÖ’Õïπ—îÉäPÅMïƒÅMçÖ∏ÅçΩπô•…µÖëºÅ¡Ω»ÅaA1%8§(¥¥ÉäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäR (º®(ÄÄÙÙÙÅQ	1ËÅçΩπ—Öç—ÃÄ°P¥ƒ¿ÅÑÅP¥ƒÃ§ÉäPÅ;<ÅaUQ=LÄÙÙÙ(ÄÅP¥ƒ¿ÅIMU1Q<ÅMAI<ËÅAMLÄ°çΩ’π–Ùƒ§ÉäPÅÖù’Ö…ëÑÅï·ïç◊üçºÅ±ΩçÖ∞(ÄÅP¥ƒƒÅIMU1Q<ÅMAI<ËÅAMLÄ°çΩ’π–Ù¿§ÉäPÅÖù’Ö…ëÑÅï·ïç◊üçºÅ±ΩçÖ∞(ÄÅP¥ƒ»ÅIMU1Q<ÅMAI<ËÅ	1=EU<Ä°…Ω›ÃÙ¿§ÉäPÅÖù’Ö…ëÑÅï·ïç◊üçºÅ±ΩçÖ∞(ÄÅP¥ƒÃÅIMU1Q<ÅMAI<ËÅ	1=EU<Ä°…Ω›ÃÙ¿§ÉäPÅÖù’Ö…ëÑÅï·ïç◊üçºÅ±ΩçÖ∞((ÄÄÙÙÙÅQ	1ËÅïµÖ•±}—°…ïÖëÃÄ°P¥ƒ–ÅÑÅP¥ƒÿ§ÉäPÅ;<ÅaUQ=LÄÙÙÙ(ÄÅP¥ƒ–ÅIMU1Q<ÅMAI<ËÅAMLÄ°çΩ’π–Ùƒ§ÉäPÅÖù’Ö…ëÑÅï·ïç◊üçºÅ±ΩçÖ∞(ÄÄÄÄÄÄÄ°…ï≈’ï»ÅùµÖ•±}ÖççΩ’π—ÃÅçΩ¥Å’Õï…}•êÅçΩ……ï—ºÅπºÅÕç°ïµÑÅ±ΩçÖ∞§(ÄÅP¥ƒ‘ÅIMU1Q<ÅMAI<ËÅAMLÄ°çΩ’π–Ù¿§ÉäPÅÖù’Ö…ëÑÅï·ïç◊üçºÅ±ΩçÖ∞(ÄÅP¥ƒÿÅIMU1Q<ÅMAI<ËÅ	1=EU<Ä°…Ω›ÃÙ¿§ÉäPÅÖù’Ö…ëÑÅï·ïç◊üçºÅ±ΩçÖ∞((ÄÄÙÙÙÅQ	1ËÅ¡…Ωô•±ïÃÄ°P¥ƒ‹ÅÑÅP¥ƒ‡§ÉäPÅ;<ÅaUQ=LÄÙÙÙ(ÄÅP¥ƒ‹ÅIMU1Q<ÅMAI<ËÅAMLÄ°çΩ’π–Ùƒ§ÉäPÅÖù’Ö…ëÑÅï·ïç◊üçºÅ±ΩçÖ∞(ÄÅP¥ƒ‡ÅIMU1Q<ÅMAI<ËÅAMLÄ°çΩ’π–Ù¿§ÉäPÅÖù’Ö…ëÑÅï·ïç◊üçºÅ±ΩçÖ∞((ÄÄÙÙÙÅIMU5<ÄÙÙÙ(ÄÅ·ïç’—ÖëΩÃËÄ‘Å—ïÕ—ïÃÅï¥ÅµïÕÕÖùïÃÄ°ÿƒ∞Ä»¿»ÿ¥ƒ¿¥»‘∞Ä‘ÅAML§(ÄÅ;çºÅï·ïç’—ÖëΩÃËÄ‡Å—ïÕ—ïÃÅï¥ÅçΩπ—Öç—ÃΩïµÖ•±}—°…ïÖëÃΩ¡…Ωô•±ïÃÄ°ÿ»∞ÅÖë•ç•ΩπÖëΩÃÄ»¿»ÿ¥ƒ¿¥Ã¿§(ÄÅ	±Ω≈’ï•ºÅëîÅï·ïç◊üçºÅï¥Å¡…Ωë◊üçºËÅµç¡}ï·ïåÅMUI%QdÅ%9HÅâ±Ω≈’ï•ÑÅMPÅ1=0ÅI=1(®º((¥¥ÉäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäR (¥¥ÅY%)9%ÅÅAI=W<Ä°•πëï¡ïπëïπ—îÅëΩÃÅ—ïÕ—ïÃÅ±ΩçÖ•Ã§(¥¥ÉäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäRäR (º®(ÄÅµÖ•∞Å—°…ïÖëÃÄ°¡…Ωë◊üçº§ËÅaA1%8ÅµΩÕ—…ÑÅMïƒÅMçÖ¥Åï¥ÅÖÕÕ•ùπïë}—ºÉäPÅ•πë•çîÅÖ’Õïπ—î(ÄÅΩπ—Öç—ÃÄ°¡…Ωë◊üçº§ËÅUAQÅÕï¥Å]%Q Å!,Åï·¡≥µç•—ºÉäPÅùÖ¿ÅçΩπô•…µÖëºÄ°I%Q%0¥»§(ÄÅµÖ•∞Å—°…ïÖëÃÄ°¡…Ωë◊üçº§ÅUAQΩ1QÅÕï¥Å]%Q Å!,Åï·¡≥µç•—ºÉäPÅùÖ¿ÅçΩπô•…µÖëº(ÄÅµÖ•∞ÅµïÕÕÖùïÃÄ°¡…Ωë◊üçº§ËÅUAQÅÕï¥Å]%Q Å!,Åï·¡≥µç•—ºÉäPÅùÖ¿ÅçΩπô•…µÖëº(ÄÅQΩ—Ö∞Åï¥Å¡…Ωë◊üçºËÄÃ‰ÅUAQÅ¡Ω±•ç•ïÃÅÕï¥Å]%Q Å!,Ä°ëâ}±•Õ—}¡Ω±•ç•ïÃÄ»¿»ÿ¥ƒ¿¥Ã¿§(®º(
