@@ -28,8 +28,12 @@ CREATE TABLE public.messages(id int) WITH (autovacuum_vacuum_scale_factor=0.05, 
 CREATE TABLE public.contacts(LIKE public.messages INCLUDING ALL) WITH (autovacuum_vacuum_scale_factor=0.05, autovacuum_analyze_scale_factor=0.05);
 CREATE TABLE public.email_messages(LIKE public.messages INCLUDING ALL) WITH (autovacuum_vacuum_scale_factor=0.05, autovacuum_analyze_scale_factor=0.05);
 CREATE TABLE public.email_threads(LIKE public.messages INCLUDING ALL) WITH (autovacuum_vacuum_scale_factor=0.05, autovacuum_analyze_scale_factor=0.05);
+CREATE TABLE public.agent_achievements(id int);
 CREATE TABLE public.agent_presence(id int);
 CREATE TABLE public.agent_stats(id int);
+CREATE TABLE public.audio_meme_favorites(id int);
+CREATE TABLE public.audio_memes(id int);
+CREATE TABLE public.audit_logs(id int);
 CREATE TABLE public.calls(id int);
 CREATE TABLE public.conversation_sla(id int);
 CREATE TABLE public.conversation_tasks(id int);
@@ -42,6 +46,7 @@ CREATE TABLE public.queue_goals(id int);
 CREATE TABLE public.queue_members(id int);
 CREATE TABLE public.queues(id int);
 CREATE TABLE public.sales_deals(id int);
+CREATE TABLE public.talkx_blacklist(id int);
 CREATE TABLE public.talkx_campaign_events(id int);
 CREATE TABLE public.talkx_campaign_segments(id int);
 CREATE TABLE public.talkx_campaigns(id int);
@@ -57,17 +62,33 @@ CREATE TABLE public.warroom_alerts(id int);
 CREATE TABLE public.whatsapp_connections(id int);
 CREATE TABLE public.whisper_messages(id int);
 CREATE PUBLICATION supabase_realtime FOR TABLE
-  public.agent_presence, public.agent_stats, public.calls, public.contacts, public.conversation_sla,
+  public.agent_presence, public.agent_stats, public.audio_meme_favorites, public.audio_memes, public.audit_logs,
+  public.calls, public.contacts, public.conversation_sla,
   public.conversation_tasks,
   public.email_messages, public.email_threads, public.message_reactions,
   public.messages, public.multiplix_dispatches, public.multiplix_recipients,
   public.notifications, public.payment_links,
   public.queue_goals, public.queue_members, public.queues, public.sales_deals,
-  public.talkx_campaign_events, public.talkx_campaign_segments, public.talkx_campaigns, public.talkx_recipients,
+  public.talkx_blacklist, public.talkx_campaign_events, public.talkx_campaign_segments, public.talkx_campaigns, public.talkx_recipients,
   public.talkx_segments, public.talkx_templates,
   public.team_conversation_members, public.team_conversations, public.team_message_reactions, public.team_message_receipts, public.team_messages, public.warroom_alerts,
   public.whatsapp_connections, public.whisper_messages;
 SQL
+# Replay da migration REAL que publica public.agent_achievements: a publicacao do
+# fixture NAO a inclui de proposito, entao a unica origem dessa linha e a migration
+# do cartao. Se ela deixar de publicar a tabela, a publicacao do banco diverge da
+# baseline (realtime) e este teste falha.
+db < "$repo_root/supabase/migrations/20261016115413_realtime_publication_agent_achievements.sql" >/dev/null
+# Prova do rollback: o bloco 'Rollback (SQL executavel, na ordem):' do proprio arquivo e
+# executado no fixture e a publicacao tem de voltar ao estado anterior (sem
+# agent_achievements). Depois a migration e reaplicada, para o resto do teste seguir
+# do estado pos-migration.
+rollback_sql="$(awk 'f && /^--   /{sub(/^--   /,"");print;next} f{exit} /^-- Rollback \(SQL executavel/{f=1}' "$repo_root/supabase/migrations/20261016115413_realtime_publication_agent_achievements.sql" | tr '\n' ' ')"
+[[ "$rollback_sql" == *"drop table public.agent_achievements"* ]] || { echo 'FAIL: migration sem SQL de rollback executavel comentado no cabecalho'; exit 1; }
+db -c "$rollback_sql" >/dev/null
+[[ "$(db -c "SELECT count(*) FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'agent_achievements'" )" == 0 ]] \
+  || { echo 'FAIL: rollback nao tirou public.agent_achievements da publicacao'; exit 1; }
+db < "$repo_root/supabase/migrations/20261016115413_realtime_publication_agent_achievements.sql" >/dev/null
 db < "$repo_root/scripts/db-audit/runtime-config.sql" > "$test_dir/absent.jsonl"
 db <<'SQL'
 CREATE SCHEMA cron;

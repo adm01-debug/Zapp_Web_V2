@@ -49,6 +49,19 @@ vi.mock('@/hooks/system/usePushNotifications', () => ({
   }),
 }));
 
+// O cartão "Alertas de Conexão" (PD-38) usa o hook que depende do AuthProvider;
+// a tela é renderizada sem provider, então o hook entra falso.
+vi.mock('@/hooks/system/useConnectionAlertPreferences', () => ({
+  useConnectionAlertPreferences: () => ({
+    preferences: { push_enabled: true, email_enabled: true, alert_on_degraded: true, alert_on_disconnected: true },
+    isLoading: false,
+    isSaving: false,
+    updatePreference: vi.fn(),
+    updatePreferenceAsync: vi.fn(),
+    shouldNotify: () => true,
+  }),
+}));
+
 import { NotificationSettingsPanel } from '../NotificationSettingsPanel';
 
 const restaurar = () => screen.getByRole('button', { name: /Restaurar Configurações Padrão/i });

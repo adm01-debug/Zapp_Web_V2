@@ -55,6 +55,16 @@ Object.defineProperty(window, 'ResizeObserver', {
   value: ImmediateResizeObserver,
 });
 
+// O @tanstack/react-virtual mede o conteiner de rolagem pelo `clientHeight`
+// (nao pelo `offsetHeight`); sem esta medida o virtualizador nao devolve item
+// nenhum (mesmo padrao de ChatPopup.pagination.test.tsx).
+Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+  configurable: true,
+  get(this: HTMLElement) {
+    return this.classList?.contains('overflow-y-auto') ? SCROLL_VIEWPORT_HEIGHT : 0;
+  },
+});
+
 // jsdom não implementa scrollIntoView; o Radix Select chama no item ativo ao
 // abrir (é o que o clique em "50 por página" dispara).
 if (!Element.prototype.scrollIntoView) {
@@ -62,6 +72,13 @@ if (!Element.prototype.scrollIntoView) {
 }
 
 const toastError = vi.hoisted(() => vi.fn());
+
+// Y29 — o componente lê `profiles.can_download` (useDownloadPermission); aqui a
+// permissão é concedida para o teste observar o caminho de sempre.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 vi.mock('sonner', () => ({
   toast: Object.assign(vi.fn(), { error: toastError, success: vi.fn() }),
 }));

@@ -5,9 +5,24 @@ import { useNotificationSettings } from '@/hooks/system/useNotificationSettings'
 // Alerta de conexão perdida: WebAudio fora do `mediaVolumeStore` (é ALERTA, não mídia de
 // conversa). O volume vem do painel (`user_settings.sound_volume`, 10-100) — nunca de um
 // ganho fixo cravado no código.
-function playAlertSound(volume: number) {
+// O contexto é ÚNICO e reaproveitado: um `new AudioContext()` por alerta estoura o limite
+// de contextos simultâneos do navegador e derruba o som do painel depois de N alertas.
+let alertCtx: AudioContext | null = null;
+
+function getAlertContext(): AudioContext | null {
   try {
-    const ctx = new AudioContext();
+    if (alertCtx && alertCtx.state !== 'closed') return alertCtx;
+    alertCtx = new AudioContext();
+    return alertCtx;
+  } catch { return null; }
+}
+
+function playAlertSound(volume: number) {
+  const ctx = getAlertContext();
+  if (!ctx) return;
+  try {
+    // Contexto suspenso (aba sem interação) toca MUDO: retoma antes de agendar.
+    if (ctx.state === 'suspended') void ctx.resume();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);

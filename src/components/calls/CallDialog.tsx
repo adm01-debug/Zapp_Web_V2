@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Dialog,
@@ -12,8 +12,10 @@ import {
   PhoneOff,
   Mic,
   MicOff,
+  Volume2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { REMOTE_AUDIO_ID } from '@/lib/calls/adapters/SipCallAdapter';
 import { useCallSession } from '@/providers/CallSessionProvider';
 import type { CallSessionStatus } from '@/lib/calls/session';
 import { logAudit } from '@/lib/audit';
@@ -79,6 +81,42 @@ function visualStatus(status: CallSessionStatus, initial?: 'ringing' | 'answered
   }
 }
 
+/**
+ * SL-246 — o navegador sabe trocar a SAÍDA de áudio (`setSinkId`)?
+ *
+ * A função está na lib do TypeScript, mas não existe em todo navegador (Firefox
+ * e Safari não implementam): sem ela, o controle de saída não é renderizado —
+ * era exatamente o combinado do T21, que removeu o botão de alto-falante
+ * cosmético e o condicionou à existência da troca real de sink.
+ */
+function suportaTrocaDeSaida(): boolean {
+  return typeof HTMLMediaElement !== 'undefined'
+    && typeof (HTMLMediaElement.prototype as Partial<HTMLMediaElement>).setSinkId === 'function';
+}
+
+/** Uma saída de áudio do sistema, como o navegador a enxerga. */
+interface SaidaDeAudio {
+  deviceId: string;
+  label: string;
+}
+
+/**
+ * Saídas de áudio da máquina. O rótulo vem vazio enquanto o usuário não deu
+ * permissão de microfone à página (comportamento do navegador, não bug): nesse
+ * caso numeramos a lista para o atendente ainda poder escolher.
+ */
+async function listarSaidasDeAudio(): Promise<SaidaDeAudio[]> {
+  const midia = navigator.mediaDevices;
+  if (!midia?.enumerateDevices) return [];
+  const dispositivos = await midia.enumerateDevices();
+  return dispositivos
+    .filter((dispositivo) => dispositivo.kind === 'audiooutput')
+    .map((dispositivo, indice) => ({
+      deviceId: dispositivo.deviceId,
+      label: dispositivo.label || `Saída de áudio ${indice + 1}`,
+    }));
+}
+
 export function CallDialog({
   open,
   onOpenChange,
@@ -131,6 +169,68 @@ export function CallDialog({
     });
   }, [open, existingCallId, direction, contact.phone, dial, onEnd, onOpenChange]);
 
+  /**
+   * SL-246 — saída de áudio da chamada.
+   *
+   * `setSinkId` é do navegador, não do nosso estado: a lista é lida na hora do
+   * clique (nunca em efeito) e a troca é aplicada ao elemento de áudio remoto do
+   * SIP (`REMOTE_AUDIO_ID`), que é quem toca o áudio do outro lado. A saída só é
+   * marcada como atual DEPOIS de o `setSinkId` resolver — anunciar sucesso antes
+   * da confirmação é o que o revisor recusa.
+   */
+  const sinkSuportado = suportaTrocaDeSaida();
+  const [painelSaida, setPainelSaida] = useState(false);
+  const [carregandoSaidas, setCarregandoSaidas] = useState(false);
+  const [saidas, setSaidas] = useState<SaidaDeAudio[]>([]);
+  const [saidaAtual, setSaidaAtual] = useState<string | null>(null);
+  const [erroSaida, setErroSaida] = useState<string | null>(null);
+
+  const fecharSeletorSaida = () => {
+    setPainelSaida(false);
+    setCarregandoSaidas(false);
+    setSaidas([]);
+    setErroSaida(null);
+  };
+
+  const alternarSeletorSaida = async () => {
+    if (painelSaida) {
+      fecharSeletorSaida();
+      return;
+    }
+    // O painel abre JÁ, com o estado de carregamento: enumerar dispositivos pode
+    // demorar (o navegador pergunta a permissão) e um clique sem resposta na
+    // tela é o que o atendente lê como "não funciona".
+    setPainelSaida(true);
+    setErroSaida(null);
+    setCarregandoSaidas(true);
+    try {
+      setSaidas(await listarSaidasDeAudio());
+    } catch {
+      setSaidas([]);
+      setErroSaida('Não foi possível listar as saídas de áudio.');
+    } finally {
+      setCarregandoSaidas(false);
+    }
+  };
+
+  const escolherSaida = async (deviceId: string) => {
+    const audio = document.getElementById(REMOTE_AUDIO_ID) as HTMLMediaElement | null;
+    if (!audio || typeof audio.setSinkId !== 'function') {
+      setErroSaida('O áudio da chamada não está disponível nesta página.');
+      return;
+    }
+    try {
+      await audio.setSinkId(deviceId);
+      setSaidaAtual(deviceId);
+      setErroSaida(null);
+      setPainelSaida(false);
+    } catch {
+      // O navegador recusou (saída desconectada, sem permissão): o motivo fica na
+      // tela e a saída atual NÃO muda.
+      setErroSaida('Não foi possível trocar a saída de áudio.');
+    }
+  };
+
   const handleAnswer = async () => {
     // A máquina decide: `accept()` despacha ACCEPT (ringing_in → connecting) e
     // deixa o ESTABLISHED do motor marcar `answeredAt`.
@@ -157,6 +257,9 @@ export function CallDialog({
     });
     onEnd();
     onOpenChange(false);
+    // O seletor de saída não sobrevive à chamada: a próxima abertura começa com
+    // a lista fechada e sem erro de áudio antigo na tela.
+    fecharSeletorSaida();
   };
 
   const formatDuration = (seconds: number) => {
@@ -166,7 +269,15 @@ export function CallDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(proximo) => {
+        // Fechar por X/ESC/clique fora também fecha o seletor de saída, para a
+        // próxima chamada não abrir com a lista (e o erro) da anterior na tela.
+        if (!proximo) fecharSeletorSaida();
+        onOpenChange(proximo);
+      }}
+    >
       <DialogContent aria-describedby={undefined} className="sm:max-w-md p-0 overflow-hidden bg-gradient-to-b from-card to-background border-0">
         <DialogTitle className="sr-only">Chamada em andamento</DialogTitle>
         <div className="p-8 flex flex-col items-center">
@@ -245,10 +356,29 @@ export function CallDialog({
                   </Button>
                 </motion.div>
 
-                {/* Sem botão de Alto-falante: ele só teria efeito se
-                    `setSinkId` existisse para trocar a saída de áudio, e hoje
-                    não existe em lugar nenhum de src/ — o botão antigo só
-                    alternava um ícone. Volta quando houver troca real de sink. */}
+                {/* SL-246 — alto-falante de verdade: troca a saída de áudio do
+                    navegador (`setSinkId`) no elemento de áudio remoto da
+                    chamada. Onde o navegador não tem a função, o controle não
+                    existe — era o combinado do T21: nada de botão cosmético. */}
+                {sinkSuportado && (
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className={cn(
+                        'w-12 h-12 rounded-full',
+                        painelSaida && 'bg-primary/10 border-primary text-primary'
+                      )}
+                      aria-label="Saída de áudio"
+                      aria-haspopup="listbox"
+                      aria-expanded={painelSaida}
+                      data-testid="call-output-device-trigger"
+                      onClick={() => void alternarSeletorSaida()}
+                    >
+                      <Volume2 className="w-5 h-5" />
+                    </Button>
+                  </motion.div>
+                )}
               </>
             )}
 
@@ -274,6 +404,51 @@ export function CallDialog({
               </Button>
             </motion.div>
           </div>
+
+          {/* SL-246 — saídas de áudio da máquina. Só com a chamada ATENDIDA e com
+              `setSinkId` no navegador: em toque/chamada encerrada não há saída a
+              trocar. */}
+          {status === 'answered' && sinkSuportado && painelSaida && (
+            <div
+              data-testid="call-output-device-panel"
+              className="mt-4 w-full rounded-xl border border-border/60 bg-popover p-3 text-popover-foreground"
+            >
+              <p className="text-xs font-medium">Saída de áudio</p>
+              {carregandoSaidas && (
+                <p className="mt-1 text-xs text-muted-foreground">Carregando saídas de áudio…</p>
+              )}
+              {!carregandoSaidas && erroSaida && (
+                <p role="alert" className="mt-1 text-xs text-destructive">
+                  {erroSaida}
+                </p>
+              )}
+              {!carregandoSaidas && !erroSaida && saidas.length === 0 && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Nenhuma saída de áudio encontrada.
+                </p>
+              )}
+              {!carregandoSaidas && saidas.length > 0 && (
+                <ul role="listbox" aria-label="Saída de áudio" className="mt-2 flex flex-col gap-1">
+                  {saidas.map((saida) => (
+                    <li key={saida.deviceId}>
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={saida.deviceId === saidaAtual}
+                        className={cn(
+                          'w-full rounded-lg px-2 py-1.5 text-left text-xs transition-colors hover:bg-muted',
+                          saida.deviceId === saidaAtual ? 'bg-primary/10 text-primary' : 'text-foreground',
+                        )}
+                        onClick={() => void escolherSaida(saida.deviceId)}
+                      >
+                        {saida.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
           {/* Info text */}
           <p className="mt-6 text-xs text-muted-foreground text-center max-w-xs">

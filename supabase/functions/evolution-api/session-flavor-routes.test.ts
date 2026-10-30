@@ -8,6 +8,7 @@ import {
   type EvolutionFlavor,
   type SessionAction,
 } from "../_shared/evolution-session-routes.ts";
+import { resetInstanceTokenCache } from "../_shared/evolution-instance-token.ts";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- mocks estruturais dos
    clients Supabase (SupabaseClient é genérico e não é importável no teste). */
@@ -76,7 +77,13 @@ function json(body: unknown, status = 200): Response {
 
 /** Registro das escritas no banco (service client) — encadeia e grava no await. */
 type Write = { table: string; patch: Record<string, unknown> };
-function makeServiceClient(writes: Write[]): any {
+function makeServiceClient(
+  writes: Write[],
+  // TRA-002/#18: o handler resolve o token DA conexão no Vault (get_instance_token).
+  // O default devolve um token (estado real de conexão já criada); o caso NEGADO
+  // passa `null` para provar que sem token não se empresta a credencial da padrão.
+  instanceToken: string | null = INSTANCE_TOKEN,
+): any {
   const query = (table: string): any => {
     let patch: Record<string, unknown> | null = null;
     const q: any = {
@@ -99,7 +106,7 @@ function makeServiceClient(writes: Write[]): any {
     };
     return q;
   };
-  return { from: (table: string) => query(table), rpc: () => Promise.resolve({ data: null, error: null }) };
+  return { from: (table: string) => query(table), rpc: (fn: string) => fn === "get_instance_token" ? Promise.resolve({ data: instanceToken, error: null }) : Promise.resolve({ data: null, error: null }) };
 }
 
 function makeCallerClient(): any {
@@ -121,24 +128,50 @@ function sessionRequest(action: string, body: Record<string, unknown> = {}): Req
   });
 }
 
+let runActionTail: Promise<void> = Promise.resolve();
+
 /** Roda o handler com flavor/URL controlados e devolve a resposta + o que foi observado. */
 async function runAction(
   flavor: EvolutionFlavor,
   action: SessionAction,
   route: ProviderRoute,
+  actionBody: Record<string, unknown> = {},
 ): Promise<{ status: number; body: any; calls: ProviderCall[]; writes: Write[] }> {
-  const fake = startFakeProvider(route);
+  // Os testes Deno podem executar em paralelo; o handler lê config pelo env
+  // global. Serializamos esse seam para que cada cenário use seu próprio flavor,
+  // URL e chaves, sem interferência entre providers locais.
+  const previousRun = runActionTail;
+  let releaseRun!: () => void;
+  runActionTail = new Promise<void>((resolve) => { releaseRun = resolve; });
+  await previousRun;
+
   const writes: Write[] = [];
-  const previousFlavor = Deno.env.get("EVOLUTION_API_FLAVOR");
-  const previousUrl = Deno.env.get("EVOLUTION_API_URL");
-  const previousKey = Deno.env.get("EVOLUTION_API_KEY");
-  const previousToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
-  Deno.env.set("EVOLUTION_API_FLAVOR", flavor);
-  Deno.env.set("EVOLUTION_API_URL", fake.url);
-  Deno.env.set("EVOLUTION_API_KEY", GLOBAL_KEY);
-  Deno.env.set("EVOLUTION_INSTANCE_TOKEN", INSTANCE_TOKEN);
+  let previousFlavor: string | undefined;
+  let previousUrl: string | undefined;
+  let previousKey: string | undefined;
+  let previousToken: string | undefined;
+  let previousName: string | undefined;
+  let environmentCaptured = false;
+  let fake: ReturnType<typeof startFakeProvider> | null = null;
   try {
-    const res = await handleEvolutionApi(sessionRequest(action), {
+    previousFlavor = Deno.env.get("EVOLUTION_API_FLAVOR");
+    previousUrl = Deno.env.get("EVOLUTION_API_URL");
+    previousKey = Deno.env.get("EVOLUTION_API_KEY");
+    previousToken = Deno.env.get("EVOLUTION_INSTANCE_TOKEN");
+    previousName = Deno.env.get("EVOLUTION_INSTANCE_NAME");
+    environmentCaptured = true;
+    fake = startFakeProvider(route);
+    Deno.env.set("EVOLUTION_API_FLAVOR", flavor);
+    Deno.env.set("EVOLUTION_API_URL", fake.url);
+    Deno.env.set("EVOLUTION_API_KEY", GLOBAL_KEY);
+    Deno.env.set("EVOLUTION_INSTANCE_TOKEN", INSTANCE_TOKEN);
+    // TRA-002/#18: `EVOLUTION_INSTANCE_TOKEN` é a credencial da instância PADRÃO;
+    // declaramos a fixture como padrão para que o ciclo de sessão GO use o token
+    // de instância (e não a key global). Sem esta declaração a rota GO falha
+    // fechada, como manda o contrato (prova: o caso negativo abaixo).
+    Deno.env.set("EVOLUTION_INSTANCE_NAME", INSTANCE);
+    resetInstanceTokenCache();
+    const res = await handleEvolutionApi(sessionRequest(action, actionBody), {
       callerClient: makeCallerClient(),
       supabase: makeServiceClient(writes),
     });
@@ -147,15 +180,22 @@ async function runAction(
     try { body = text ? JSON.parse(text) : null; } catch { body = { raw: text }; }
     return { status: res.status, body, calls: [...fake.calls], writes };
   } finally {
-    const restore = (key: string, value: string | undefined) => {
-      if (value === undefined) Deno.env.delete(key);
-      else Deno.env.set(key, value);
-    };
-    restore("EVOLUTION_API_FLAVOR", previousFlavor);
-    restore("EVOLUTION_API_URL", previousUrl);
-    restore("EVOLUTION_API_KEY", previousKey);
-    restore("EVOLUTION_INSTANCE_TOKEN", previousToken);
-    await fake.stop();
+    try {
+      if (environmentCaptured) {
+        const restore = (key: string, value: string | undefined) => {
+          if (value === undefined) Deno.env.delete(key);
+          else Deno.env.set(key, value);
+        };
+        restore("EVOLUTION_API_FLAVOR", previousFlavor);
+        restore("EVOLUTION_API_URL", previousUrl);
+        restore("EVOLUTION_API_KEY", previousKey);
+        restore("EVOLUTION_INSTANCE_TOKEN", previousToken);
+        restore("EVOLUTION_INSTANCE_NAME", previousName);
+      }
+      if (fake) await fake.stop();
+    } finally {
+      releaseRun();
+    }
   }
 }
 
@@ -349,7 +389,6 @@ Deno.test("R2-API-015 disconnect GO: DELETE /instance/logout (sem instância no 
   assertEquals(body.error, undefined);
   assertEquals(writes.find((w) => w.table === "whatsapp_connections")?.patch, { status: "disconnected" });
 });
-
 Deno.test("R2-API-015 disconnect v2: DELETE /instance/logout/{instância} com a chave global", async () => {
   const { body, calls, writes } = await runAction("v2", "disconnect", (req, url) =>
     req.method === "DELETE" && url.pathname === `/instance/logout/${INSTANCE}`

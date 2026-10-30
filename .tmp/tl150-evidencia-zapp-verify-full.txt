@@ -1,0 +1,5 @@
+OK      db_guard        0s
+OK      tipos         244s
+OK      lint          269s
+OK      migrations      1s
+AVISO   banco_local  NÃO VERIFICADO: sem nome de conjunto (passe o nome como terceiro argumento)

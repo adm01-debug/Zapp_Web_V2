@@ -1,7 +1,10 @@
 # Talk X / Campanhas — Guia de Operação (v1.0)
 
-> **Atualizado:** 2026-09-27 · **Versão:** `talkx-v1.0.0`  
-> Referência: `docs/talkx/_arquivo/PLANO_IMPLEMENTACAO_TALKX_100.md` (fases F0–F1 concluídas; plano substituído, no arquivo).
+> **Atualizado:** 2026-10-08 · **Versão:** `talkx-v1.1.0`  
+> Referência histórica: `docs/talkx/_arquivo/PLANO_IMPLEMENTACAO_TALKX_100.md` (E01–E100; plano
+> substituído, no arquivo). A auditoria de 2026-09-29 mediu 6/100 etapas completas — as duas
+> primeiras fases (saneamento e design system) **não** estão concluídas (ver
+> `docs/talkx/_arquivo/AUDITORIA_PLANO_TALKX_2026-09-29.md` §3).
 
 ---
 
@@ -65,9 +68,9 @@ RLS ativa em todas as tabelas. Acesso depende do `profile.role` do usuário aute
 | Função | Trigger | Responsabilidade |
 |---|---|---|
 | `talkx-send` | Manual / agendado | Disparo de mensagens via Evolution GO |
-| `talkx-scheduler` | Cron | Agenda e controla o ciclo de vida de campanhas |
+| `talkx-scheduler` | Cron (1 min) | Inicia as campanhas agendadas vencidas e retoma as pausadas elegíveis; **não** conclui nem cancela campanha (isso é do tick e do `talkx-send`) |
 | `talkx-report` | Manual / UI | Consolida métricas de entrega por campanha |
-| `talkx-link` | Webhook | Rastreia cliques em links das mensagens enviadas |
+| `talkx-link` | GET (redirect) / POST (conversão) | `GET /talkx-link` registra o clique e redireciona (302); `POST /talkx-link` registra a conversão autenticada por HMAC-SHA256 |
 
 Deploy via: **Actions → `deploy-functions.yml` → `workflow_dispatch`** (requer
 aprovação no environment `producao-edge-functions`).
@@ -91,11 +94,16 @@ aprovação no environment `producao-edge-functions`).
 `e2e/talkx.spec.ts` roda no job **E2E logado** (`e2e-logado.yml`), que dispara
 após cada merge em `main` e via `workflow_dispatch`.
 
-Cobertura atual (4 testes):
-1. Overview do módulo renderiza corretamente.
-2. Wizard de nova campanha abre ao clicar no botão.
-3. Modal de ajuda abre e fecha.
-4. Tabs de Segmentos e Templates são visíveis e navegáveis.
+Cobertura atual (9 testes):
+1. `campaigns overview renders after navigating from the sidebar` — Overview do módulo renderiza ao navegar pela barra lateral.
+2. `new campaign wizard opens on the audience step` — o wizard de nova campanha abre no passo de audiência.
+3. `help screen opens, searches, reads an article and goes back` — a tela de Ajuda (X189) abre, busca, abre um artigo e volta.
+4. `Cmd/Ctrl+K inside the help focuses the search and does not open the palette` — dentro da Ajuda, Cmd/Ctrl+K foca a busca e NÃO abre a paleta de comandos.
+5. `Cmd/Ctrl+K outside the help still opens the command palette` — fora da Ajuda, Cmd/Ctrl+K continua abrindo a paleta de comandos.
+6. `segments and templates render via deep links` — Segmentos e Templates renderizam por deep link.
+7. `wizard step 1 shows audience fields and stepper` — o passo 1 mostra os campos de audiência e o stepper.
+8. `wizard stepper shows all four steps and continuar is initially disabled` — o stepper mostra os quatro passos e "Continuar" começa desabilitado.
+9. `wizard advances to step 2 (Mensagem) after filling step 1` — avança para o passo 2 (Mensagem) após preencher o passo 1.
 
 O usuário de teste (`E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD`) tem perfil
 **supervisor** e enxerga "Campanhas".
@@ -108,7 +116,9 @@ export E2E_TEST_PASSWORD="<sua-senha-de-teste>"
 bunx playwright test --project=setup --project=chromium-e2e-core
 ```
 
-> Isso roda os 3 specs do `chromium-e2e-core` (conversation, messaging e talkx).
+> Isso roda os 2 specs do `chromium-e2e-core` (conversation e messaging).
+> O `talkx.spec.ts` roda nos projetos próprios: `chromium-talkx` (no `e2e-talkx.yml`,
+> por PR) e `firefox-talkx`/`webkit-talkx` (no `e2e-logado.yml`, após merge em `main`).
 > Não passe path de arquivo junto de `--project`: o filtro se aplica a todos os
 > projetos, incluindo `setup`, zerando seus testes e impedindo a geração de
 > `e2e/.auth/user.json`.
@@ -359,7 +369,7 @@ Procedimento:
 
 | Versão | Data | Escopo |
 |---|---|---|
-| `talkx-v1.0.0` | 2026-09-27 | F0 (saneamento E01–E10) + F1 (design system E11–E20) concluídos. Templates: CRUD, toggle grade/lista (E41). E2E incluído no CI (E99). |
+| `talkx-v1.0.0` | 2026-09-27 | Escopo declarado na tag: F0 (saneamento E01–E10) + F1 (design system E11–E20) — a auditoria de 29/09 mediu as duas fases parciais (ver `docs/talkx/_arquivo/AUDITORIA_PLANO_TALKX_2026-09-29.md` §3). Templates: CRUD, toggle grade/lista (E41). E2E incluído no CI (E99). |
 | `talkx-v1.1.0` | 2026-10-03 | X023: preflight de paridade de deploy (`talkx-preflight.mjs`) + regras de operação (§10). |
 
 ---

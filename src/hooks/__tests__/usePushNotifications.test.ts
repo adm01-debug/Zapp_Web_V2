@@ -7,6 +7,8 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 import { usePushNotifications } from '@/hooks/system/usePushNotifications';
@@ -86,7 +88,7 @@ describe('usePushNotifications', () => {
 
     await act(async () => {
       await expect(result.current.requestPermission()).resolves.toBe(false);
-      await expect(result.current.subscribe()).resolves.toBeNull();
+      await expect(result.current.subscribe()).resolves.toBe(false);
       await expect(result.current.unsubscribe()).resolves.toBe(false);
       await expect(result.current.showNotification({ title: 'test', body: 'test' }))
         .resolves.toBe(false);

@@ -28,6 +28,69 @@ export const SUMMARY_BUCKET = 'hour';
 
 const HOUR_MS = 3_600_000;
 
+/**
+ * Um balde de hora do painel (`talkx_campaign_report(p_campaign)` → `hourly_series`).
+ * O painel agrega no servidor (sem teto de amostra); a janela (6/12/24 h) é aplicada
+ * aqui porque a RPC não recebe `p_window_minutes` (a trilha de banco é separada).
+ */
+export interface TalkXReportHourBucket {
+  hour: string;
+  sent?: number | null;
+  delivered?: number | null;
+}
+
+function toCount(v: unknown): number {
+  const n = typeof v === 'number' ? v : Number(v);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+
+function hourStart(iso: string): number {
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return NaN;
+  return Math.floor(t / HOUR_MS) * HOUR_MS;
+}
+
+/**
+ * Monta os pontos do "Resumo de enviados" (T13-050…T13-057): série horária do painel
+ * (enviados + entregues) com as respostas por hora unidas pelo balde, já filtrada pela
+ * janela escolhida. Horas só com resposta (resposta após a pausa) entram com zero nos
+ * outros canais; balde inválido do painel é descartado, nunca inventado.
+ */
+export function buildSentSummaryPoints(
+  hourly: TalkXReportHourBucket[] | null | undefined,
+  replyTimestamps: Array<string | null | undefined> | null | undefined,
+  windowMinutes: number,
+  nowMs: number = Date.now(),
+): TalkXSentSummaryPoint[] {
+  const windowStart = nowMs - windowMinutes * 60_000;
+  const inWindow = (start: number) => start + HOUR_MS > windowStart && start <= nowMs;
+  const byBucket: Record<string, TalkXSentSummaryPoint> = {};
+  const slot = (start: number): TalkXSentSummaryPoint => {
+    const key = new Date(start).toISOString();
+    return (byBucket[key] ??= { bucket: key, sent: 0, delivered: 0, replied: 0 });
+  };
+
+  for (const b of hourly ?? []) {
+    const start = hourStart(b?.hour);
+    if (Number.isNaN(start) || !inWindow(start)) continue;
+    const cur = slot(start);
+    cur.sent += toCount(b?.sent);
+    cur.delivered += toCount(b?.delivered);
+  }
+
+  for (const ts of replyTimestamps ?? []) {
+    if (typeof ts !== 'string' || ts.length === 0) continue;
+    const start = hourStart(ts);
+    if (Number.isNaN(start) || !inWindow(start)) continue;
+    slot(start).replied += 1;
+  }
+
+  // ISO ordena lexicamente na ordem cronológica.
+  return Object.keys(byBucket)
+    .sort()
+    .map((k) => byBucket[k]);
+}
+
 function hhmm(d: Date): string {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }

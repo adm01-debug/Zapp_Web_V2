@@ -8,16 +8,19 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
-import { normalizeOperationalPriority, normalizeSentiment, type Sentiment } from '@/lib/ai-vocabulary';
-import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Pin, CheckCircle2, UserCheck, Star, AlarmClock, Archive, Instagram, Facebook, Send, Mail, Globe, Linkedin, type LucideIcon } from 'lucide-react';
+import { normalizeOperationalPriority } from '@/lib/ai-vocabulary';
+import { sentimentLevel, type SentimentLevel } from '@/lib/sentiment-level';
+import { isToday, isYesterday } from 'date-fns';
+import { formatRelativeTime } from '@/lib/formatters';
+import { Pin, CheckCircle2, UserCheck, Star, AlarmClock, Archive, ArchiveRestore, RotateCcw, Instagram, Facebook, Send, Mail, Globe, Linkedin, Frown, AlertTriangle, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { CONTACT_TYPE_CONFIG } from '@/components/contacts/contactTypeConfig';
 import { ConversationGroupHeader } from './conversation-list/ConversationGroupHeader';
+import { ConversationReopenDialog, type ReopenAction } from './conversation-list/ConversationReopenDialog';
 import { SLAIndicator } from './SLAIndicator';
 import { useApplicableSLA } from '@/hooks/sla/useApplicableSLA';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { QuickPeek } from '@/components/ui/quick-peek';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAgentsLite, type AgentLite } from '@/hooks/crm/useAgentsLite';
 import { useDensity, type DensityMode } from '@/hooks/ui/useDensity';
@@ -51,13 +54,14 @@ const SNOOZE_OPTIONS: { value: string; label: string }[] = [
   { value: 'nextweek', label: 'Próxima semana' },
 ];
 
+// Cores de canal: só tokens do sistema (U6), mantendo matizes distintas.
 const CHANNEL_BADGE_CONFIG: Record<string, { Icon: LucideIcon; bg: string }> = {
-  instagram: { Icon: Instagram, bg: 'bg-[hsl(330,80%,55%)]' },
-  messenger: { Icon: Facebook, bg: 'bg-[hsl(220,70%,55%)]' },
-  telegram: { Icon: Send, bg: 'bg-[hsl(200,70%,50%)]' },
-  webchat: { Icon: Globe, bg: 'bg-[hsl(215,15%,45%)]' },
-  email: { Icon: Mail, bg: 'bg-[hsl(220,70%,55%)]' },
-  linkedin: { Icon: Linkedin, bg: 'bg-[hsl(201,100%,35%)]' },
+  instagram: { Icon: Instagram, bg: 'bg-violeta' },
+  messenger: { Icon: Facebook, bg: 'bg-info' },
+  telegram: { Icon: Send, bg: 'bg-teal' },
+  webchat: { Icon: Globe, bg: 'bg-muted-foreground' },
+  email: { Icon: Mail, bg: 'bg-rosa' },
+  linkedin: { Icon: Linkedin, bg: 'bg-kpi-blue' },
 };
 
 interface VirtualizedRealtimeListProps {
@@ -75,6 +79,8 @@ interface VirtualizedRealtimeListProps {
   onFavorite?: (contactId: string) => void;
   favoriteIds?: Set<string>;
   onSnooze?: (contactId: string, duration: string) => void;
+  /** Reabre/desarquiva a conversa (rejeita quando a RPC falha). Sem ele a linha não oferece a ação. */
+  onReopen?: (contactId: string) => Promise<unknown> | void;
 }
 
 const HEADER_HEIGHT = 32;
@@ -104,6 +110,7 @@ export function VirtualizedRealtimeList({
   onFavorite,
   favoriteIds = EMPTY_SET,
   onSnooze,
+  onReopen,
 }: VirtualizedRealtimeListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   // R2-INB-056 (#349): o "sou eu?" da linha compara com public.profiles.id
@@ -162,7 +169,6 @@ export function VirtualizedRealtimeList({
 
   // TanStack Virtual retorna funcoes nao memoizaveis pelo React Compiler — mesma
   // limitacao ja aceita na baseline do ratchet para este mesmo hook.
-  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: flatRows.length,
     getScrollElement,
@@ -250,6 +256,7 @@ export function VirtualizedRealtimeList({
               onFavorite={onFavorite}
               onSnooze={onSnooze}
               onArchive={onArchive}
+              onReopen={onReopen}
               currentProfileId={currentProfileId}
               agentsMap={agentsMap}
               density={density}
@@ -261,17 +268,34 @@ export function VirtualizedRealtimeList({
   );
 }
 
-// Rótulos do sentimento canônico (pt-BR). Não existe chave em inglês: o valor
-// cru passa por normalizeSentiment, que traduz o legado EN e devolve
-// `value: null` para desconhecido — aí o rótulo é 'sem análise', nunca um
-// positivo/negativo inventado.
-const SENTIMENT_LABEL: Record<Sentiment, string> = {
-  positivo: 'positivo',
-  neutro: 'neutro',
-  negativo: 'negativo',
-  critico: 'crítico',
+// Selo de sentimento da linha (item L3 da paridade V3 -> V2): só o que pede
+// atenção vira selo — negativo e crítico. Neutro, positivo e desconhecido NÃO
+// poluem a lista. O valor CRU do banco (pt-BR canônico ou legado EN) passa pelo
+// mapeador único `sentimentLevel`; desconhecido/ausente devolve `null` e nenhum
+// selo aparece (nada inventado). O selo tem nome acessível pt-BR (role="img" +
+// aria-label): nunca emoji/cor como único sinal.
+const SENTIMENT_SEAL: Partial<Record<SentimentLevel, { Icon: LucideIcon; label: string; className: string }>> = {
+  negative: {
+    Icon: Frown,
+    label: 'Cliente insatisfeito',
+    className: 'bg-warning text-warning-foreground',
+  },
+  critical: {
+    Icon: AlertTriangle,
+    label: 'Cliente muito insatisfeito',
+    className: 'bg-destructive text-destructive-foreground',
+  },
 };
-const SEM_ANALISE = 'sem análise';
+
+// Estado da conversa (contacts.conversation_status) em pt-BR, para a
+// pré-visualização. Valor desconhecido NÃO vira rótulo inventado (mesma regra
+// do sentimento acima): a pré-visualização só omite o estado.
+const CONVERSATION_STATUS_LABEL: Record<string, string> = {
+  open: 'Aberto',
+  waiting: 'Aguardando',
+  resolved: 'Resolvido',
+  archived: 'Arquivado',
+};
 
 interface ConversationRowProps {
   conversation: ConversationWithMessages;
@@ -289,6 +313,7 @@ interface ConversationRowProps {
   onFavorite?: (contactId: string) => void;
   onSnooze?: (contactId: string, duration: string) => void;
   onArchive?: (contactId: string) => void;
+  onReopen?: (contactId: string) => Promise<unknown> | void;
   /** profiles.id do usuário logado (não o auth id) — ver R2-INB-056. */
   currentProfileId: string | null;
   agentsMap: Map<string, AgentLite>;
@@ -346,6 +371,7 @@ const ConversationRow = memo(({
   onFavorite,
   onSnooze,
   onArchive,
+  onReopen,
   currentProfileId,
   agentsMap,
   density,
@@ -356,7 +382,8 @@ const ConversationRow = memo(({
   // Prioridade operacional canônica (EN) ou legado pt-BR ('alta'→'high');
   // ausente/desconhecido devolve `value: null` e nunca vira prioridade alta.
   const priority = normalizeOperationalPriority(conversation.contact.ai_priority);
-  const sentiment = normalizeSentiment(conversation.contact.ai_sentiment);
+  const sentimentLevelValue = sentimentLevel(conversation.contact.ai_sentiment);
+  const sentimentSeal = sentimentLevelValue ? SENTIMENT_SEAL[sentimentLevelValue] : undefined;
   const isHighPriority = priority.value === 'high' || priority.value === 'urgent';
   const channelType = conversation.contact.channel_type;
   const channelBadge = channelType && channelType !== 'whatsapp' ? CHANNEL_BADGE_CONFIG[channelType] : null;
@@ -379,6 +406,34 @@ const ConversationRow = memo(({
 
   const [snoozeOpen, setSnoozeOpen] = useState(false);
 
+  // Reabrir/desarquivar na linha: só resolvida/arquivada oferece, e só quando a lista
+  // recebeu o handler. A ação passa por confirmação leve; a espera trava o segundo
+  // clique e a falha fica dentro do diálogo (não fecha como se tivesse dado certo).
+  const reopenAction: ReopenAction | null = !onReopen
+    ? null
+    : conversation.contact.conversation_status === 'resolved'
+      ? 'reopen'
+      : conversation.contact.conversation_status === 'archived'
+        ? 'unarchive'
+        : null;
+  const [reopenOpen, setReopenOpen] = useState(false);
+  const [reopenPending, setReopenPending] = useState(false);
+  const [reopenError, setReopenError] = useState<string | null>(null);
+
+  const confirmReopen = async () => {
+    if (!onReopen || reopenPending) return;
+    setReopenPending(true);
+    setReopenError(null);
+    try {
+      await onReopen(contactId);
+      setReopenOpen(false);
+    } catch {
+      setReopenError('Não foi possível concluir. Tente novamente.');
+    } finally {
+      setReopenPending(false);
+    }
+  };
+
   // ConversationSLABadge chama useApplicableSLA (react-query) — sem um
   // QueryClient no contexto o useQuery lanca "No QueryClient set" e derruba
   // a linha inteira. A lista pode ser montada sem provider (arvores de
@@ -393,8 +448,29 @@ const ConversationRow = memo(({
     else toast.info(`${label}: em breve`);
   };
 
+  // Pré-visualização por hover (QuickPeek): só dados JÁ carregados na linha
+  // (nome, última mensagem, não lidas e estado) — nenhuma consulta nova e
+  // nenhum campo fora do que a própria linha já recebe.
+  const conversationStatusLabel = CONVERSATION_STATUS_LABEL[conversation.contact.conversation_status];
+  const peekPreview = (
+    <div className="space-y-1.5">
+      <p className="text-xs font-medium text-foreground">
+        {conversation.contact.nickname?.trim() || conversation.contact.name || 'Contato'}
+      </p>
+      {conversation.lastMessage?.content && (
+        <p className="text-xs leading-relaxed text-muted-foreground line-clamp-4">
+          {conversation.lastMessage.content}
+        </p>
+      )}
+      <div className="flex items-center gap-2 border-t border-border/30 pt-1 text-2xs text-muted-foreground">
+        <span>{conversation.unreadCount > 0 ? `${conversation.unreadCount} não lidas` : 'Sem novas'}</span>
+        {conversationStatusLabel && <span>• {conversationStatusLabel}</span>}
+      </div>
+    </div>
+  );
+
   return (
-    <div
+    <QuickPeek
       style={{
         position: 'absolute',
         top: 0,
@@ -416,6 +492,11 @@ const ConversationRow = memo(({
       // container.
       className="px-3 overflow-clip"
       data-testid="conversation-item"
+      preview={peekPreview}
+      // Desligado na conversa ABERTA (o balão repetiria a tela que o usuário
+      // já está vendo) e, dentro do QuickPeek, em telas de toque.
+      enabled={selectedContactId !== contactId}
+      delay={500}
     >
       <div
         className={cn(
@@ -490,22 +571,18 @@ const ConversationRow = memo(({
                 </Tooltip>
               </TooltipProvider>
             )}
-            {conversation.contact.ai_sentiment && (
+            {sentimentSeal && (
               <span
                 role="img"
-                aria-label={`Sentimento: ${sentiment.value ? SENTIMENT_LABEL[sentiment.value] : SEM_ANALISE}`}
+                aria-label={sentimentSeal.label}
+                title={sentimentSeal.label}
                 className={cn(
-                  'absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card',
-                  sentiment.value === 'positivo' && 'bg-[hsl(var(--success))]',
-                  sentiment.value === 'negativo' && 'bg-destructive',
-                  sentiment.value === 'neutro' && 'bg-[hsl(var(--warning))]',
-                  sentiment.value === 'critico' && 'bg-destructive',
-                  // sem rótulo canônico (legado inventado/vazio) → cinza, não
-                  // inventa positivo/negativo
-                  sentiment.value === null && 'bg-muted'
+                  'absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card flex items-center justify-center',
+                  sentimentSeal.className
                 )}
-                title={`Sentimento: ${sentiment.value ? SENTIMENT_LABEL[sentiment.value] : SEM_ANALISE}`}
-              />
+              >
+                <sentimentSeal.Icon className="w-2 h-2" aria-hidden="true" />
+              </span>
             )}
           </div>
 
@@ -524,9 +601,8 @@ const ConversationRow = memo(({
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {conversation.lastMessage && (
                   <span className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(conversation.lastMessage.created_at), {
+                    {formatRelativeTime(conversation.lastMessage.created_at, {
                       addSuffix: false,
-                      locale: ptBR,
                     })}
                   </span>
                 )}
@@ -596,12 +672,28 @@ const ConversationRow = memo(({
         {/* Hover action buttons */}
         <div className="absolute bottom-2 left-0 right-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto transition-all duration-150 pl-[60px]">
           <TooltipProvider delayDuration={200}>
+            {reopenAction && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    aria-label={reopenAction === 'unarchive' ? 'Desarquivar conversa' : 'Reabrir conversa'}
+                    onClick={(e) => { e.stopPropagation(); setReopenError(null); setReopenOpen(true); }}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 active:scale-90 transition-all duration-150"
+                  >
+                    {reopenAction === 'unarchive' ? <ArchiveRestore className="w-3.5 h-3.5" /> : <RotateCcw className="w-3.5 h-3.5" />}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs font-medium">
+                  {reopenAction === 'unarchive' ? 'Desarquivar' : 'Reabrir'}
+                </TooltipContent>
+              </Tooltip>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   aria-label="Resolver conversa"
                   onClick={(e) => handleAction(e, onResolve, 'Resolver')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 active:scale-90 transition-all duration-150"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-success hover:bg-success/10 active:scale-90 transition-all duration-150"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                 </button>
@@ -625,7 +717,7 @@ const ConversationRow = memo(({
                 <button
                   aria-label="Fixar conversa"
                   onClick={(e) => handleAction(e, onPin, 'Fixar')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 active:scale-90 transition-all duration-150"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-warning hover:bg-warning/10 active:scale-90 transition-all duration-150"
                 >
                   <Pin className="w-3.5 h-3.5" />
                 </button>
@@ -639,7 +731,7 @@ const ConversationRow = memo(({
                     <button
                       aria-label="Adiar conversa"
                       onClick={(e) => { e.stopPropagation(); if (!onSnooze) { toast.info('Adiar: em breve'); setSnoozeOpen(false); } }}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-sky-500 hover:bg-sky-500/10 active:scale-90 transition-all duration-150"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-info hover:bg-info/10 active:scale-90 transition-all duration-150"
                     >
                       <AlarmClock className="w-3.5 h-3.5" />
                     </button>
@@ -675,7 +767,23 @@ const ConversationRow = memo(({
             </Tooltip>
           </TooltipProvider>
         </div>
+
+        {reopenAction && (
+          // Os eventos do diálogo (portal) sobem pela árvore do React até a linha: sem este
+          // anteparo, clicar em "Reabrir"/"Cancelar" também selecionaria a conversa.
+          <div onClick={(e) => e.stopPropagation()}>
+            <ConversationReopenDialog
+              open={reopenOpen}
+              onOpenChange={(aberto) => { if (!reopenPending) { setReopenOpen(aberto); if (!aberto) setReopenError(null); } }}
+              action={reopenAction}
+              contactName={conversation.contact.nickname?.trim() || conversation.contact.name || undefined}
+              isPending={reopenPending}
+              error={reopenError}
+              onConfirm={() => { void confirmReopen(); }}
+            />
+          </div>
+        )}
       </div>
-    </div>
+    </QuickPeek>
   );
 });

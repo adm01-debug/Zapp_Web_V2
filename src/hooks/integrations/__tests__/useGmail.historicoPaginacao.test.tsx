@@ -123,6 +123,13 @@ const sb = vi.hoisted(() => {
   return { estado, supabase };
 });
 
+
+// Y29 — o useGmail lê `profiles.can_download` (useDownloadPermission); aqui a
+// permissão é concedida para o teste observar o caminho de sempre.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 vi.mock('@/integrations/supabase/client', () => ({ supabase: sb.supabase }));
 vi.mock('@/hooks/gmail/gmailApi', () => ({ callGmailFunction: vi.fn() }));
 

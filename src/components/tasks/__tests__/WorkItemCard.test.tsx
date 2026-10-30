@@ -6,11 +6,14 @@
  * Concluir/Cancelar/Lembrar-me (`cardAcoes`), e o contraste/altura por classe
  * (`movimentoEContraste`). Aqui ficam os buracos: os ESTADOS (concluído, em
  * espera e Agenda), as TECLAS do próprio card, as AÇÕES que param no card
- * (checkbox, contato) e o caminho LIBERADO do kebab (Abrir, mover com vaga,
- * remover alarme).
+ * (checkbox, contato), o caminho LIBERADO do kebab (Abrir, mover com vaga,
+ * remover alarme) e o cartão do Quadro (N-180: sem botão-dentro-de-botão e
+ * toque de 44 px no "Abrir conversa").
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { axe } from 'vitest-axe';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import type { HTMLAttributes } from 'react';
 
 // Importa o harness ANTES do módulo sob teste (registra os `vi.mock`).
 import { makeTaskRow } from '@/test/mocks/tarefas';
@@ -211,5 +214,72 @@ describe('WorkItemCard — estados, ações, teclado e kebab', () => {
     abrirSubmenu(/Lembrar-me/);
     await screen.findByRole('menuitem', { name: '15 min' });
     expect(screen.queryByRole('menuitem', { name: 'Remover alarme' })).toBeNull();
+  });
+
+  /**
+   * N-180: no Quadro o spread do `dragHandleProps` da lib de DnD traz
+   * `role="button"`. Antes da correção ele vinha DEPOIS do `role="article"` e
+   * sobrepunha o role, então o card inteiro (que já tem checkbox, kebab e
+   * "Abrir conversa" dentro) virava um botão com botões dentro: o leitor de
+   * tela anunciava um widget e o axe acusava nested-interactive e
+   * aria-allowed-role (role="button" não é permitido no elemento <article>).
+   * Com o spread ANTES do role, o card continua article e a alça segue focável.
+   */
+  it('o elemento com dragHandleProps preserva o role article (sem botão-dentro-de-botão)', async () => {
+    const { container } = render(
+      <WorkItemCard
+        item={item({ contact: { id: 'c1', name: 'Ana Souza', phone: null, avatar_url: null } })}
+        mode="board"
+        onOpenContact={vi.fn()}
+        dragHandleProps={
+          {
+            role: 'button',
+            tabIndex: 0,
+            'aria-describedby': 'dnd-desc',
+            'data-rbd-drag-handle-draggable-id': 't1',
+          } as unknown as HTMLAttributes<HTMLElement>
+        }
+      />
+    );
+
+    // A alça de arrasto NÃO é um widget com controles dentro: o role do card
+    // continua article (a lib não o converte em "button") e o foco se mantém.
+    const alca = card();
+    expect(alca.getAttribute('role')).toBe('article');
+    expect(alca.getAttribute('role')).not.toBe('button');
+    expect(alca.getAttribute('tabindex')).toBe('0');
+
+    const resultado = await axe(container, {
+      runOnly: { type: 'rule', values: ['nested-interactive', 'aria-allowed-role'] },
+    });
+    expect(resultado.violations.map((v) => v.id)).toEqual([]);
+  });
+
+  it('"Abrir conversa" tem área de toque de 44 px no Quadro (WCAG 2.5.5)', () => {
+    render(
+      <WorkItemCard
+        item={item({ contact: { id: 'c1', name: 'Ana Souza', phone: null, avatar_url: null } })}
+        mode="board"
+        onOpenContact={vi.fn()}
+      />
+    );
+
+    const btn = screen.getByRole('button', { name: 'Abrir conversa' }) as HTMLElement;
+    const classes = btn.className.split(/\s+/);
+    // Antes da correção o botão era h-6 w-6 (24 px).
+    expect(classes).toContain('min-h-[44px]');
+    expect(classes).toContain('min-w-[44px]');
+
+    // N-180.6: sem ponteiro com hover (celular/tablet) `group-hover` nunca
+    // dispara, então `opacity-0` + `pointer-events-none` deixavam o botão
+    // escondido e morto ao toque. As classes da variante [@media(hover:none)]
+    // são o único caminho que o torna alcançável ali: elas precisam estar
+    // presentes E o CSS do Tailwind precisa emiti-las depois das utilities
+    // base (mesma especificidade, a última vence) — medido com
+    // `npx tailwindcss` e conferido no relato.
+    expect(classes).toContain('pointer-events-none');
+    expect(classes).toContain('opacity-0');
+    expect(classes).toContain('[@media(hover:none)]:pointer-events-auto');
+    expect(classes).toContain('[@media(hover:none)]:opacity-100');
   });
 });

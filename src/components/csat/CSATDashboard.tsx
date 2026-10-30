@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Progress } from '@/components/ui/progress';
 import { Star, TrendingUp, MessageSquareHeart, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -44,13 +44,11 @@ export function CSATDashboard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Tabs value={period} onValueChange={(v) => setPeriod(v as typeof period)}>
-          <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="today">Hoje</TabsTrigger>
-            <TabsTrigger value="week">Semana</TabsTrigger>
-            <TabsTrigger value="month">Mês</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <ToggleGroup type="single" value={period} onValueChange={(v) => { if (v) setPeriod(v as typeof period); }} className="grid grid-cols-3 w-full">
+          <ToggleGroupItem value="today">Hoje</ToggleGroupItem>
+          <ToggleGroupItem value="week">Semana</ToggleGroupItem>
+          <ToggleGroupItem value="month">Mês</ToggleGroupItem>
+        </ToggleGroup>
 
         {/* Score Overview */}
         <div className="flex items-center gap-6">
@@ -84,7 +82,7 @@ export function CSATDashboard() {
                   <span className="w-4 text-muted-foreground">{rating}</span>
                   <Star className="w-3 h-3 fill-warning text-warning" />
                   <div className="flex-1">
-                    <Progress value={percentage} className={cn('h-2', `[&>div]:${ratingColors[rating]}`)} />
+                    <Progress value={percentage} className={cn('h-2', `[&>div]:${ratingColors[rating]}`)} aria-label={`${rating} estrelas - ${percentage.toFixed(0)}%`} />
                   </div>
                   <span className="w-8 text-right text-xs text-muted-foreground">{count}</span>
                 </div>

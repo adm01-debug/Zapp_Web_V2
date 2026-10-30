@@ -39,6 +39,8 @@ import {
 import { handleBlocksDelete, handleBlocksReorder, handleBlocksUpsert } from './actions/blocks.ts';
 import {
   buildExternalAudienceSource,
+  handleAudienceApply,
+  handleAudienceSave,
   handleAudienceSelect,
   MULTIPLIX_AUDIENCE_CONFIG_INVALID,
   resolveAudienceScope,
@@ -412,6 +414,9 @@ const HANDLERS: Record<string, Handler> = {
   'blocks.reorder': handleBlocksReorder,
   // F46/F47
   'audience.select': handleAudienceSelect,
+  // F75 (parte de edge do TL-041): publicos salvos (`rule`/`static_list`).
+  'audience.save': handleAudienceSave,
+  'audience.apply': handleAudienceApply,
   // F48/F49/F50
   'preview': handlePreview,
   'validate': handleValidate,

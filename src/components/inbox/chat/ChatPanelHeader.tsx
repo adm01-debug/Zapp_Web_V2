@@ -1,10 +1,12 @@
 import { cn } from '@/lib/utils';
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Conversation } from '@/types/chat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TypingIndicatorCompact } from '../TypingIndicator';
+import { ContactPresenceIndicator } from './ContactPresenceIndicator';
+import type { ContactPresenceFields } from './contactPresence';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { SLAIndicator } from '../SLAIndicator';
 import { useApplicableSLA } from '@/hooks/sla/useApplicableSLA';
@@ -14,9 +16,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  MoreVertical, Archive, CheckCircle, Clock, ArrowRight, ArrowLeft, ExternalLink, XCircle,
+  MoreVertical, Archive, ArchiveRestore, RotateCcw, CheckCircle, Clock, ArrowRight, ArrowLeft, ExternalLink, XCircle,
   Star, Search, Radar, GraduationCap, FileText, Info, Loader2,
 } from 'lucide-react';
+import { ConversationReopenDialog } from '../conversation-list/ConversationReopenDialog';
 import { VisionIcon } from '../ai-tools/VisionIcon';
 import { openChatPopup } from '@/lib/popupManager';
 import { PinnedConversationsStack, PinnedChatItem } from './PinnedConversationsStack';
@@ -39,7 +42,6 @@ interface ChatPanelHeaderProps {
   speed: number;
   onToggleAIAssistant: () => void;
   onToggleDetails?: () => void;
-  onStartCall: () => void;
   onOpenSearch: () => void;
   onOpenTransfer: () => void;
   onOpenSchedule: () => void;
@@ -51,6 +53,8 @@ interface ChatPanelHeaderProps {
   canGenerateSummary?: boolean;
   onCloseConversation?: () => void;
   onArchive?: () => void;
+  /** Reabre (resolvida) / desarquiva (arquivada) a conversa pela RPC reopen_conversation. */
+  onReopenConversation?: (contactId: string) => void | Promise<void>;
   lastMessages?: string[];
   allMessages?: ChatMessage[];
   onSelectSuggestion?: (text: string) => void;
@@ -64,9 +68,12 @@ interface ChatPanelHeaderProps {
 function ChatPanelHeaderBase({
   conversation, isContactTyping, showAIAssistant, showDetails, showSummaryPanel,
   onToggleAIAssistant, onToggleDetails, onOpenSearch, onOpenTransfer, onOpenSchedule,
-  onBack, onGenerateSummary, isSummaryLoading, onCloseConversation, onArchive, activeTool, onSetActiveTool,
+  onBack, onGenerateSummary, isSummaryLoading, onCloseConversation, onArchive, onReopenConversation, activeTool, onSetActiveTool,
   isFavorite, onToggleFavorite, pinnedConversations, onSelectPinned,
 }: ChatPanelHeaderProps) {
+  const [reopenOpen, setReopenOpen] = useState(false);
+  const [reopening, setReopening] = useState(false);
+  const [reopenError, setReopenError] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { data: applicableSla } = useApplicableSLA({
     contactId: conversation.contact.id,
@@ -78,10 +85,32 @@ function ChatPanelHeaderBase({
   });
   const firstResponseMinutes = applicableSla?.firstResponseMinutes ?? DEFAULT_FIRST_RESPONSE_MINUTES;
   const typeConfig = conversation.contact.contact_type ? CONTACT_TYPE_CONFIG[conversation.contact.contact_type] : null;
-  const isVip = (conversation.tags ?? []).some(t => t.toLowerCase() === 'vip');
   const isHighPriority = conversation.priority === 'high';
   const showPinnedStack = !showDetails && !isMobile
     && !!pinnedConversations && pinnedConversations.length > 0 && !!onSelectPinned;
+
+  // Estado persistido do contato (ADR-005) — os mesmos literais que chipCounts usa
+  // para os chips Resolvidas/Arquivadas, então o item de menu aparece exatamente
+  // quando a conversa está fora do fluxo ativo.
+  const statusConversa = conversation.contact.conversation_status ?? null;
+  const conversaArquivada = statusConversa === 'archived';
+  const conversaResolvida = statusConversa === 'resolved';
+  const podeReabrir = !!onReopenConversation && (conversaArquivada || conversaResolvida);
+  const rotuloReabrir = conversaArquivada ? 'Desarquivar conversa' : 'Reabrir conversa';
+
+  const confirmarReabertura = async () => {
+    if (!onReopenConversation) return;
+    setReopening(true);
+    setReopenError(null);
+    try {
+      await onReopenConversation(conversation.contact.id);
+      setReopenOpen(false);
+    } catch {
+      setReopenError('Não foi possível reabrir a conversa. Tente novamente.');
+    } finally {
+      setReopening(false);
+    }
+  };
 
   return (
     <div className="flex items-center justify-between px-3 md:px-5 h-[72px] border-b border-border bg-inbox-panel shrink-0">
@@ -101,7 +130,7 @@ function ChatPanelHeaderBase({
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
-            <h3 className="text-lg font-bold text-foreground truncate">{conversation.contact.name}</h3>
+            <h2 className="text-lg font-bold text-foreground truncate" title={conversation.contact.name}>{conversation.contact.name}</h2>
             {onToggleFavorite && (
               <button
                 aria-label={isFavorite ? 'Remover favorito' : 'Favoritar conversa'}
@@ -126,18 +155,14 @@ function ChatPanelHeaderBase({
             )}
           </div>
           <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground flex-wrap">
-            {/* R2-INB-030: não estar digitando NÃO é sinal de presença online. Sem um
-                sinal de presença do contato, o cabeçalho mostra o estado neutro
-                (desconhecido) em vez de afirmar "Online"; o indicador de digitação
-                continua sendo o único sinal real exibido aqui. */}
+            {/* R2-INB-030: não estar digitando NÃO é sinal de presença online.
+                "Digitando…" tem prioridade; sem ele, a presença exibida vem do
+                sinal REAL do contato (presence_status/presence_updated_at/
+                last_seen_at) — "Online" só com sinal online recente (até 2 min),
+                "Visto por último há X" com last_seen_at, e o estado neutro
+                (desconhecido) quando não há sinal nenhum. */}
             {isContactTyping ? <TypingIndicatorCompact isVisible={true} /> : (
-              <span
-                data-testid="contact-presence"
-                role="img"
-                aria-label="Presença do contato não informada"
-                title="Presença do contato não informada"
-                className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40"
-              />
+              <ContactPresenceIndicator contact={conversation.contact as ContactPresenceFields} />
             )}
             {typeConfig && (
               <>
@@ -145,7 +170,6 @@ function ChatPanelHeaderBase({
                 <span className="text-muted-foreground">{typeConfig.label}</span>
               </>
             )}
-            {isVip && <Badge variant="outline" className="h-5 px-2 rounded-full text-2xs font-semibold bg-warning/15 text-warning border-warning/40">VIP</Badge>}
             {isHighPriority && <Badge variant="outline" className="h-5 px-2 rounded-full text-2xs font-semibold bg-destructive/15 text-destructive border-destructive/40">Alta prioridade</Badge>}
             <SLAIndicator
               firstMessageAt={conversation.createdAt}
@@ -191,6 +215,18 @@ function ChatPanelHeaderBase({
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onCloseConversation}><CheckCircle className="w-4 h-4 mr-2" />Marcar como resolvido</DropdownMenuItem>
             <DropdownMenuItem onClick={onArchive}><Archive className="w-4 h-4 mr-2" />Arquivar</DropdownMenuItem>
+            {/* Reabrir/Desarquivar: só para conversa resolvida/arquivada e pela RPC
+                reopen_conversation (mesma que o gatilho do contato usa). */}
+            {podeReabrir && (
+              <DropdownMenuItem
+                onClick={() => { setReopenError(null); setReopenOpen(true); }}
+                disabled={reopening}
+                aria-label={rotuloReabrir}
+              >
+                {conversaArquivada ? <ArchiveRestore className="w-4 h-4 mr-2" /> : <RotateCcw className="w-4 h-4 mr-2" />}
+                {conversaArquivada ? 'Desarquivar conversa' : 'Reabrir conversa'}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onCloseConversation} className="text-destructive focus:text-destructive">
               <XCircle className="w-4 h-4 mr-2" />Encerrar Conversa
@@ -208,6 +244,16 @@ function ChatPanelHeaderBase({
           />
         </div>
       )}
+
+      <ConversationReopenDialog
+        open={reopenOpen}
+        onOpenChange={(open) => { if (!reopening) { setReopenOpen(open); if (!open) setReopenError(null); } }}
+        action={conversaArquivada ? 'unarchive' : 'reopen'}
+        contactName={conversation.contact.name ?? undefined}
+        isPending={reopening}
+        error={reopenError}
+        onConfirm={confirmarReabertura}
+      />
     </div>
   );
 }

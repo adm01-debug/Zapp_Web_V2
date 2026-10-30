@@ -3,7 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { createRequire } from 'node:module';
 import { contactCards, gotoContacts } from './fixtures/contacts-page';
 import { bloquearRedeReal, json, mockAppShell, type Registro } from './fixtures/mapa-mocks';
-import { installFakeSession } from './fixtures/talkx-demo';
+import { installFakeSession, mockTalkXVisual } from './fixtures/talkx-demo';
 import { filtrarViolacoesBloqueantes } from './support/a11y-impactos';
 
 const require = createRequire(import.meta.url);
@@ -188,5 +188,75 @@ test.describe('E98 - a11y: contraste e nome acessível na tela de contatos', () 
         `nenhuma violação SERIOUS ou CRITICAL\n${JSON.stringify(v, null, 2)}`,
       ).toHaveLength(0);
     });
+  });
+});
+
+/**
+ * TL-175B — contraste de `text-foreground-secondary` no Talk X, tema CLARO, no navegador real.
+ *
+ * O defeito era de TOKEN (`src/styles/tokens.css`): o valor medido do painel navy
+ * (`215 30% 78%` — um azul claro, para fundo escuro) ficava no bloco `:root`, que é o do tema
+ * claro, e media ~1,65:1 sobre o fundo. O axe reprova isso como `color-contrast` [serious].
+ *
+ * Aqui a medição é do que a TELA realmente pinta: o gate roda o axe no Talk X renderizado (sessão
+ * falsa + fixture 01, o padrão da régua `chromium-talkx-visual`) e olha só os nós que aplicam a
+ * classe `text-foreground-secondary`. É a ponte que o jsdom não dá — sem ela, "o token fecha AA no
+ * papel" não prova que a tela ficou legível. Fica vermelho se o token do tema claro voltar ao valor
+ * navy (medido: 3 nós de `text-foreground-secondary` reprovados, a 1,65:1).
+ */
+test.describe('TL-175B — Talk X: texto secundário legível no tema claro', () => {
+  test('nenhum uso de text-foreground-secondary reprova o color-contrast', async ({ page }) => {
+    await mockTalkXVisual(page, '01-campanhas-visao-geral');
+    // `mockTalkXVisual` grava `theme: dark` no localStorage (é a régua visual, que é escura).
+    // O alvo deste cartão é o tema CLARO, então este script — registrado DEPOIS — grava 'light'.
+    await page.addInitScript(() => window.localStorage.setItem('theme', 'light'));
+    await page.clock.install({ time: new Date('2026-10-01T12:00:00Z') });
+
+    await page.goto('/?view=talkx&tab=overview');
+    await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible({ timeout: 30_000 });
+
+    expect(
+      await page.evaluate(() => document.documentElement.classList.contains('dark')),
+      'esta medição é a do tema claro',
+    ).toBe(false);
+
+    // Anti-vacuidade: sem nós com a classe, o gate abaixo passaria sem medir nada.
+    const pintados = await page.locator('.text-foreground-secondary').count();
+    expect(pintados, 'a tela mediu 0 elementos com text-foreground-secondary').toBeGreaterThan(0);
+
+    const v = await violacoes(page, 'body', ['color-contrast']);
+    const doToken = v.flatMap((x) => x.alvos).filter((a) => a.html.includes('text-foreground-secondary'));
+
+    expect(
+      doToken,
+      `${pintados} nó(s) com text-foreground-secondary medido(s); reprovados:\n${JSON.stringify(doToken, null, 2)}`,
+    ).toEqual([]);
+  });
+
+  // Espelho do caso acima no tema ESCURO: o cartão exige "sem regressão no mesmo token". Aqui a
+  // sessão falsa fica no padrão dela (`theme: dark`), que é o tema da régua visual. Ele já era
+  // verde antes da correção — este caso é guarda de regressão, não a prova do defeito.
+  test('o mesmo token continua sem violação no tema escuro', async ({ page }) => {
+    await mockTalkXVisual(page, '01-campanhas-visao-geral');
+    await page.clock.install({ time: new Date('2026-10-01T12:00:00Z') });
+
+    await page.goto('/?view=talkx&tab=overview');
+    await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible({ timeout: 30_000 });
+
+    expect(
+      await page.evaluate(() => document.documentElement.classList.contains('dark')),
+      'esta medição é a do tema escuro',
+    ).toBe(true);
+
+    const pintados = await page.locator('.text-foreground-secondary').count();
+    expect(pintados, 'a tela mediu 0 elementos com text-foreground-secondary').toBeGreaterThan(0);
+
+    const v = await violacoes(page, 'body', ['color-contrast']);
+    const doToken = v.flatMap((x) => x.alvos).filter((a) => a.html.includes('text-foreground-secondary'));
+
+    expect(
+      doToken,
+      `${pintados} nó(s) com text-foreground-secondary no escuro; reprovados:\n${JSON.stringify(doToken, null, 2)}`,
+    ).toEqual([]);
   });
 });

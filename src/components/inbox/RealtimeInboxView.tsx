@@ -1,18 +1,20 @@
-import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef, lazy, Suspense, type MouseEventHandler } from 'react';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
 import { usePullToRefresh } from '@/hooks/ui/usePullToRefresh';
 import { MiniChatPiP } from '@/components/mobile/MiniChatPiP';
 import { resolverAbaAtiva, type TabState } from '@/components/inbox/resolveActiveTab';
 import { NewMessageIndicator } from './NewMessageIndicator';
 import { InboxEmptyChat } from './InboxEmptyChat';
+import { ConversationEmptyState } from '@/components/shared/ConversationEmptyState';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 import { ConversationListSidebar } from './ConversationListSidebar';
+import { chipDoStatusReaberto } from './conversation-list/reopenChip';
 import { useGlobalSearchShortcut } from '@/hooks/ui/useGlobalSearchShortcut';
 import { useInboxBulkActions } from '@/hooks/inbox/useInboxBulkActions';
 import { useInboxFilters } from '@/hooks/inbox/useInboxFilters';
 import { useRealtimeInbox } from '@/hooks/inbox/useRealtimeInbox';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
-import { WifiOff, RefreshCw, Loader2, MessageSquarePlus } from 'lucide-react';
+import { WifiOff, RefreshCw, Loader2, MessageSquarePlus, AlertCircle, SearchX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -20,6 +22,8 @@ import { ConversationTabs, type ConversationTab } from './chat/ConversationTabs'
 import { ConversationTabContent } from './chat/ConversationTabContent';
 import { useConversationTabCounts } from '@/hooks/chat/useConversationTabCounts';
 import { useContactCrm360 } from '@/hooks/crm/useContactCrm360';
+import { useContactUnreadEmails } from '@/hooks/gmail/useContactUnreadEmails';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { useTalkMeQueue } from '@/features/talk-me/useTalkMeQueue';
 import { TalkMeView } from '@/features/talk-me/TalkMeView';
 import { LiquidMetalButton } from '@/components/ui/liquid-metal-button';
@@ -54,27 +58,53 @@ interface SearchResult {
 interface TalkMeHeaderButtonProps {
   testId: string;
   count: number | null;
+  countUnavailable: boolean;
   loading: boolean;
   queueName?: string;
-  onClick: () => void;
+  onClick: MouseEventHandler<HTMLButtonElement>;
 }
 
-function TalkMeHeaderButton({ testId, count, loading, queueName, onClick }: TalkMeHeaderButtonProps) {
+function TalkMeHeaderButton({ testId, count, countUnavailable, loading, queueName, onClick }: TalkMeHeaderButtonProps) {
   const queueSuffix = queueName ? ` em ${queueName}` : '';
-  const countLabel = count === null ? '' : `: ${count} atendimentos aguardando`;
+  const waitingLabel = count === null
+    ? ''
+    : `${count} ${count === 1 ? 'atendimento aguardando' : 'atendimentos aguardando'}`;
+  const statusLabel = countUnavailable ? 'contagem de atendimentos indisponível' : waitingLabel;
+  const accessibleStatus = statusLabel ? `: ${statusLabel}` : '';
+  const titleStatus = statusLabel ? ` — ${statusLabel}` : '';
 
   return (
     <LiquidMetalButton
       data-testid={testId}
+      data-talkme-trigger="1"
       label="TALK ME"
       count={count}
       loading={loading}
       compact
-      aria-label={`TALK ME${countLabel}${queueSuffix}`}
-      title={`Abrir atendimentos aguardando${queueSuffix}`}
+      aria-label={`TALK ME${accessibleStatus}${queueSuffix}`}
+      title={`Abrir TALK ME${titleStatus}${queueSuffix}`}
       onClick={onClick}
     />
   );
+}
+
+function isVisibleTalkMeTrigger(element: HTMLButtonElement): boolean {
+  if (!element.isConnected || element.disabled) return false;
+
+  let current: HTMLElement | null = element;
+  while (current) {
+    const style = window.getComputedStyle(current);
+    if (
+      current.hidden
+      || current.getAttribute('aria-hidden') === 'true'
+      || current.classList.contains('hidden')
+      || style.display === 'none'
+      || style.visibility === 'hidden'
+    ) return false;
+    current = current.parentElement;
+  }
+
+  return true;
 }
 
 /**
@@ -86,6 +116,25 @@ function focarQuickAdd(tentativas = 20): void {
   const campo = document.querySelector<HTMLInputElement>('[data-testid="quick-add-input"]');
   if (campo) { campo.focus(); return; }
   if (tentativas > 0) window.requestAnimationFrame(() => focarQuickAdd(tentativas - 1));
+}
+
+/**
+ * Diálogo ou menu flutuante aberto (padrão Radix usado no projeto).
+ * Enquanto houver overlay, quem é dono do teclado é o overlay — os atalhos do
+ * lote não podem agir por baixo dele (mesma checagem de `useKeyboardNavigation`).
+ */
+function overlayAberto(): boolean {
+  return !!document.querySelector(
+    '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"], [role="menu"][data-state="open"]',
+  );
+}
+
+/** Campo de edição de texto: o navegador é dono das teclas (Ctrl+A, Delete, r…). */
+function focoEmCampoDeTexto(): boolean {
+  const active = document.activeElement as HTMLElement | null;
+  if (!active) return false;
+  return active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable ||
+    active.getAttribute('contenteditable') === 'true';
 }
 
 export function RealtimeInboxView() {
@@ -101,9 +150,32 @@ export function RealtimeInboxView() {
   });
   const bulkActions = useInboxBulkActions({ refetch: inbox.refetch, filteredConversations: inboxFilters.filteredConversations });
   const [talkMeOpen, setTalkMeOpen] = useState(false);
+  const talkMeTriggerRef = useRef<HTMLButtonElement | null>(null);
   const talkMeEnabled = useFeatureFlag('inbox.talk-me', false);
   const talkMe = useTalkMeQueue(talkMeOpen, talkMeEnabled);
   const talkMeCount = talkMe.queuesError ? null : (talkMe.selectedQueue?.waitingCount ?? null);
+  const handleOpenTalkMe = useCallback<MouseEventHandler<HTMLButtonElement>>((event) => {
+    talkMeTriggerRef.current = event.currentTarget;
+    setTalkMeOpen(true);
+  }, []);
+  const handleTalkMeOpenChange = useCallback((open: boolean) => {
+    setTalkMeOpen(open);
+    if (open) return;
+
+    const openingTrigger = talkMeTriggerRef.current;
+    window.requestAnimationFrame(() => {
+      const firstAvailableTrigger = document.querySelector<HTMLButtonElement>(
+        '[data-talkme-trigger]:not([disabled])',
+      );
+      const availableTriggers = document.querySelectorAll<HTMLButtonElement>(
+        '[data-talkme-trigger]:not([disabled])',
+      );
+      const trigger = [openingTrigger, firstAvailableTrigger, ...availableTriggers]
+        .find((candidate): candidate is HTMLButtonElement =>
+          candidate !== null && isVisibleTalkMeTrigger(candidate));
+      trigger?.focus();
+    });
+  }, []);
   // Rostos das conversas fixadas exibidos no header do chat (ocupam o espaço
   // livre quando o painel de detalhes está fechado).
   const pinnedConversations = useMemo(
@@ -146,6 +218,34 @@ export function RealtimeInboxView() {
   const tabExtraCounts = {
     orders: (crm360ForOrdersBadge?.purchases.length ?? 0) + (crm360ForOrdersBadge?.openDeals.length ?? 0),
   };
+  // U03 — e-mails não lidos do contato (client-side, hook U02). O chip da barra de
+  // abas só aparece com count > 0; o clique abre o módulo E-mail na conversa do
+  // contato, pelo MESMO link do C03 (`emailContact`/`emailTo`). Erro de consulta
+  // vira count 0 no hook → nenhum chip (sem alerta falso).
+  const { count: unreadEmails } = useContactUnreadEmails(inbox.selectedContactId);
+  const abrirEmailDoContato = useCallback(() => {
+    const contato = inbox.legacyConversation?.contact;
+    if (!contato) return;
+    navigateToView('email-chat', { emailContact: contato.id, emailTo: contato.email ?? '' });
+  }, [inbox.legacyConversation]);
+
+  // L6 (paridade V3→V2, doc 11): a soma das não lidas da lista vira anúncio em
+  // região `aria-live` quando SOBE. `null` marca a carga inicial: abrir a Inbox
+  // já com conversas não lidas não é mensagem nova e não pode ser anunciado.
+  const totalNaoLidas = useMemo(
+    () => inbox.cachedConversations.reduce((total, c) => total + (c.unreadCount ?? 0), 0),
+    [inbox.cachedConversations],
+  );
+  const totalNaoLidasAnteriorRef = useRef<number | null>(null);
+  const anuncioNovasMensagensRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const anterior = totalNaoLidasAnteriorRef.current;
+    totalNaoLidasAnteriorRef.current = totalNaoLidas;
+    if (anterior === null || totalNaoLidas <= anterior) return;
+    const novas = totalNaoLidas - anterior;
+    const regiao = anuncioNovasMensagensRef.current;
+    if (regiao) regiao.textContent = novas === 1 ? 'Nova mensagem recebida' : `${novas} novas mensagens`;
+  }, [totalNaoLidas]);
 
   // "Usar resposta" (aba IA) — leva o texto sugerido para o input do Chat e troca de aba.
   const [pendingDraft, setPendingDraft] = useState<string | null>(null);
@@ -175,13 +275,20 @@ export function RealtimeInboxView() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const active = document.activeElement;
-      const isInput = active?.tagName === 'INPUT' || active?.tagName === 'TEXTAREA' || active?.getAttribute('contenteditable') === 'true';
-      if (isInput) return;
-      if ((e.ctrlKey || e.metaKey) && e.key === 'a') { e.preventDefault(); bulkActions.selectAll(); }
+      // Overlay aberto (diálogo/menu Radix): o teclado é dele.
+      if (overlayAberto()) return;
+      // Campo de texto: o navegador é dono (Ctrl+A seleciona o texto, Delete apaga…).
+      if (focoEmCampoDeTexto()) return;
+      const key = e.key.toLowerCase();
+      // Ctrl+A só seleciona o lote DENTRO do modo de seleção (iniciado pela lista);
+      // fora dele, Ctrl+A continua sendo a seleção de texto do navegador.
+      if ((e.ctrlKey || e.metaKey) && key === 'a') {
+        if (!bulkActions.selectionMode) return;
+        e.preventDefault(); bulkActions.selectAll(); return;
+      }
       if ((e.key === 'Delete' || e.key === 'Backspace') && bulkActions.selectionMode && bulkActions.selectedIds.size > 0) { e.preventDefault(); bulkActions.bulkArchive(); }
       if (e.key === 'Escape' && bulkActions.selectionMode) { e.preventDefault(); bulkActions.clearSelection(); }
-      if (e.key === 'r' && bulkActions.selectionMode && bulkActions.selectedIds.size > 0 && !e.ctrlKey && !e.metaKey) { e.preventDefault(); bulkActions.bulkMarkAsRead(); }
+      if (key === 'r' && bulkActions.selectionMode && bulkActions.selectedIds.size > 0 && !e.ctrlKey && !e.metaKey) { e.preventDefault(); bulkActions.bulkMarkAsRead(); }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -220,6 +327,17 @@ export function RealtimeInboxView() {
 
   return (
     <div className="flex h-full min-h-0 w-full relative bg-background overflow-hidden">
+      {/* L6: região viva só da Inbox. `role="status"` + `aria-live="polite"` e
+          texto escrito por efeito (sem estado) — id próprio para não colidir com
+          a região de rotas do `useAriaAnnouncer`. */}
+      <div
+        ref={anuncioNovasMensagensRef}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        data-testid="inbox-novas-mensagens"
+        className="sr-only"
+      />
       {inbox.globalSearchOpen && (
         <Suspense fallback={null}>
           <GlobalSearch
@@ -244,7 +362,7 @@ export function RealtimeInboxView() {
       {talkMeEnabled && (
         <TalkMeView
           open={talkMeOpen}
-          onOpenChange={setTalkMeOpen}
+          onOpenChange={handleTalkMeOpenChange}
           controller={talkMe}
           onAccepted={async (contactId) => {
             await inbox.refetch();
@@ -253,16 +371,19 @@ export function RealtimeInboxView() {
         />
       )}
 
-      {!isMobile && (
+      {!(isMobile && inbox.selectedContactId) && (
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
             <button
               type="button"
               onClick={() => inbox.setShowNewConversation(true)}
-              className="fixed bottom-24 right-6 z-50 flex h-[54px] w-[54px] items-center justify-center rounded-full border border-primary/20 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground shadow-xl shadow-primary/20 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-95"
+              className={cn(
+                "fixed bottom-24 right-6 z-50 flex items-center justify-center rounded-full border border-primary/20 bg-gradient-to-br from-primary via-primary to-secondary text-primary-foreground shadow-xl shadow-primary/20 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-95",
+                isMobile ? "h-[44px] w-[44px]" : "h-[54px] w-[54px]",
+              )}
               aria-label="Nova conversa"
             >
-              <MessageSquarePlus className="h-6 w-6" />
+              <MessageSquarePlus className={cn("h-6 w-6", isMobile && "h-5 w-5")} />
             </button>
           </TooltipTrigger>
           <TooltipContent side="left" sideOffset={8}>
@@ -277,8 +398,9 @@ export function RealtimeInboxView() {
         bulkActions={bulkActions}
         pullToRefresh={pullToRefresh}
         conversationActions={conversationActions}
-        onOpenTalkMe={() => setTalkMeOpen(true)}
+        onOpenTalkMe={handleOpenTalkMe}
         talkMeCount={talkMe.queuesError ? null : (talkMe.selectedQueue?.waitingCount ?? null)}
+        talkMeCountUnavailable={Boolean(talkMe.queuesError)}
         talkMeLoading={talkMe.queuesLoading}
         talkMeQueueName={talkMe.selectedQueue?.name}
         talkMeEnabled={talkMeEnabled}
@@ -294,13 +416,15 @@ export function RealtimeInboxView() {
                   onTabChange={setActiveTab}
                   counts={tabCounts}
                   extraCounts={tabExtraCounts}
+                  emailUnread={{ count: unreadEmails, onOpen: abrirEmailDoContato }}
                   trailingAction={talkMeEnabled ? (
                     <TalkMeHeaderButton
                       testId="talk-me-button"
                       count={talkMeCount}
+                      countUnavailable={Boolean(talkMe.queuesError)}
                       loading={talkMe.queuesLoading}
                       queueName={talkMe.selectedQueue?.name}
-                      onClick={() => setTalkMeOpen(true)}
+                      onClick={handleOpenTalkMe}
                     />
                   ) : null}
                 />
@@ -354,6 +478,15 @@ export function RealtimeInboxView() {
                         if (!inbox.legacyConversation) return;
                         conversationActions.archiveContact(inbox.legacyConversation.contact.id);
                       }}
+                      onReopenConversation={async () => {
+                        if (!inbox.legacyConversation) return;
+                        const resultado = await conversationActions.reopenConversation(inbox.legacyConversation.contact.id);
+                        if (!resultado) throw new Error('Falha ao reabrir conversa');
+                        // Mesmo retorno de filtro da lista: a conversa sai do chip
+                        // Resolvidas/Arquivadas e vai para onde ela agora aparece.
+                        inboxFilters.setChipTab(chipDoStatusReaberto(resultado.status));
+                        inbox.refetch();
+                      }}
                       pinnedConversations={pinnedConversations}
                       onSelectPinned={inbox.handleSelectConversation}
                       hasOlderMessages={inbox.hasOlderMessages}
@@ -386,13 +519,32 @@ export function RealtimeInboxView() {
                 <TalkMeHeaderButton
                   testId="talk-me-button-empty"
                   count={talkMeCount}
+                  countUnavailable={Boolean(talkMe.queuesError)}
                   loading={talkMe.queuesLoading}
                   queueName={talkMe.selectedQueue?.name}
-                  onClick={() => setTalkMeOpen(true)}
+                  onClick={handleOpenTalkMe}
                 />
               </div>
             )}
-            <InboxEmptyChat />
+            {/* Contato fora da lista (notificação, busca, link) que não abriu: mostra o
+                motivo em vez do vazio genérico, que se confundiria com "nada escolhido". */}
+            {inbox.selectedContactId && (inbox.selectedContactFallbackStatus === 'not-found' || inbox.selectedContactFallbackStatus === 'error') ? (
+              <ConversationEmptyState
+                icon={inbox.selectedContactFallbackStatus === 'error' ? AlertCircle : SearchX}
+                title={inbox.selectedContactFallbackStatus === 'error' ? 'Não foi possível abrir a conversa' : 'Conversa não encontrada'}
+                description={inbox.selectedContactFallbackStatus === 'error'
+                  ? (inbox.selectedContactFallbackError || 'Tente novamente em instantes.')
+                  : 'Este contato não está na lista de conversas ou não existe mais.'}
+                className="bg-inbox-panel overflow-hidden"
+                action={<Button variant="outline" onClick={() => inbox.setSelectedContactId(null)}>Voltar à lista</Button>}
+              />
+            ) : (
+              <InboxEmptyChat
+                waitingCount={inboxFilters.chipCounts?.waiting ?? 0}
+                unreadCount={inboxFilters.chipCounts?.unread ?? 0}
+                onNewConversation={() => inbox.setShowNewConversation(true)}
+              />
+            )}
           </div>
         )}
       </div>

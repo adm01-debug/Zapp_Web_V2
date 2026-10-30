@@ -1,10 +1,13 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 import { secureRandomFloat } from '../../lib/secureRandom';
 
 export function StatsCardsSkeleton() {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" role="status" aria-label="Carregando estatísticas">
+    <SkeletonRegion
+      className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
+      label="Carregando estatísticas"
+    >
       {Array.from({ length: 5 }).map((_, i) => (
         <Card key={i} className="border-border/60">
           <CardContent className="pt-4 pb-3 px-4 space-y-3">
@@ -18,14 +21,14 @@ export function StatsCardsSkeleton() {
           </CardContent>
         </Card>
       ))}
-      <span className="sr-only">Carregando estatísticas do monitoramento...</span>
-    </div>
+    </SkeletonRegion>
   );
 }
 
 export function ChartSkeleton() {
   return (
-    <Card role="status" aria-label="Carregando gráfico">
+    <Card>
+      <SkeletonRegion label="Carregando gráfico">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <Skeleton className="h-5 w-48" />
@@ -43,13 +46,15 @@ export function ChartSkeleton() {
           ))}
         </div>
       </CardContent>
+      </SkeletonRegion>
     </Card>
   );
 }
 
 export function TimelineSkeleton() {
   return (
-    <Card role="status" aria-label="Carregando atividade recente">
+    <Card>
+      <SkeletonRegion label="Carregando atividade recente">
       <CardHeader className="pb-2">
         <Skeleton className="h-5 w-36" />
         <Skeleton className="h-3 w-24 mt-1" />
@@ -65,6 +70,7 @@ export function TimelineSkeleton() {
           </div>
         ))}
       </CardContent>
+      </SkeletonRegion>
     </Card>
   );
 }

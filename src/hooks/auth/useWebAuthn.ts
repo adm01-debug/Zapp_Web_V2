@@ -138,8 +138,10 @@ export function useWebAuthn() {
       });
       if (verifyError || !verifyData?.success) throw new Error(verifyError?.message || 'Falha ao verificar autenticação');
 
-      toast.success('Autenticado com passkey!');
-      return { success: true, userId: verifyData.userId, userEmail: verifyData.userEmail };
+      // A asserção já foi validada pela Edge. Quem CRIA a sessão é o token
+      // devolvido (`token_hash`), trocado no `useAuthForm`. Nada de anunciar
+      // "autenticado" aqui: sem a sessão trocada, isso é promessa falsa (#71).
+      return { success: true, token_hash: verifyData.token_hash };
     } catch (error) {
       log.error('Passkey authentication error:', error);
       if (error instanceof Error && error.name === 'NotAllowedError') toast.error('Autenticação cancelada pelo usuário');

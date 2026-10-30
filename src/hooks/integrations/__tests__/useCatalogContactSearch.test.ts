@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
+  CONTACT_SEARCH_ERROR_MESSAGE,
   CONTACT_SEARCH_MIN_CHARS,
   buildContactSearchFilter,
   contactSearchDigits,
+  fetchCatalogContactResults,
   logCatalogSendEvent,
   type CatalogSendEventInput,
 } from '../useCatalogContactSearch';
@@ -160,5 +162,53 @@ describe('buildContactSearchFilter — CT-43 (busca de contato)', () => {
   it('escapa o termo para não quebrar a gramática do or()', () => {
     expect(buildContactSearchFilter('a,b')).toBe('name.ilike."%a,b%"');
     expect(buildContactSearchFilter('a"b')).toBe('name.ilike."%a\\"b%"');
+  });
+});
+
+/**
+ * A busca de contato do catálogo é um `select` no PostgREST: um erro de
+ * permissão/rede antes passava despercebido (o `error` era descartado) e o
+ * chamador recebia `[]` — indistinguível de "não achei ninguém". Agora a
+ * consulta rejeitada loga a causa e LANÇA, e o chamador mostra erro com retry.
+ */
+describe('fetchCatalogContactResults — falha ≠ lista vazia', () => {
+  const makeBuilder = (result: { data: unknown; error: unknown }) => {
+    const builder: Record<string, unknown> = {};
+    ['select', 'or', 'order', 'limit'].forEach((m) => { builder[m] = vi.fn(() => builder); });
+    builder.then = (onFulfilled: (value: unknown) => unknown) => Promise.resolve(result).then(onFulfilled);
+    return builder;
+  };
+
+  beforeEach(() => {
+    mockFrom.mockReset();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('erro de consulta lança (depois de logar) em vez de devolver lista vazia', async () => {
+    mockFrom.mockReturnValue(makeBuilder({ data: null, error: { message: 'permission denied for table contacts' } }));
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(fetchCatalogContactResults('tom')).rejects.toThrow(CONTACT_SEARCH_ERROR_MESSAGE);
+
+    expect(mockFrom).toHaveBeenCalledWith('contacts');
+    const logged = errorSpy.mock.calls.map((args) => args.join(' ')).join('\n');
+    expect(logged).toContain('Falha ao buscar contatos do catálogo:');
+    expect(logged).toContain('permission denied for table contacts');
+  });
+
+  it('consulta vazia devolve [] sem lançar (estado distinto do erro)', async () => {
+    mockFrom.mockReturnValue(makeBuilder({ data: [], error: null }));
+
+    await expect(fetchCatalogContactResults('zzz')).resolves.toEqual([]);
+  });
+
+  it('consulta com sucesso devolve os contatos', async () => {
+    const rows = [{ id: 'c1', name: 'Tomaz', phone: '5511949600474', avatar_url: null, company: null }];
+    mockFrom.mockReturnValue(makeBuilder({ data: rows, error: null }));
+
+    await expect(fetchCatalogContactResults('tom')).resolves.toEqual(rows);
   });
 });

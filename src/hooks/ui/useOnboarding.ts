@@ -1,99 +1,104 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '../auth/useAuth';
 import { log } from '@/lib/logger';
 
-const ONBOARDING_KEY = 'onboarding_completed';
+/**
+ * Chave do status do tour no cache do react-query.
+ *
+ * `user_settings.onboarding_completed` é a fonte da verdade (coluna adicionada na
+ * migration 20261013044344). Antes a checagem inferia "já completou" da EXISTÊNCIA
+ * de qualquer linha em `user_settings` — então salvar uma preferência "concluía" o
+ * tour. Como o cache do react-query é compartilhado por todas as instâncias do
+ * hook, gravar aqui reinicia (ou conclui) o tour na hora, sem recarregar a página.
+ */
+export const onboardingStatusQueryKey = (userId: string | undefined) =>
+  ['user-settings', 'onboarding-completed', userId] as const;
+
+/** Lê a coluna do usuário. Sem linha = nunca concluiu (default da coluna é false). */
+async function fetchOnboardingCompleted(userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('user_settings')
+    .select('onboarding_completed')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.onboarding_completed === true;
+}
 
 /**
- * Persiste a conclusão do tour no banco.
- *
- * A checagem abaixo decide "já completou" pela existência de linha em
- * `user_settings`, então gravar apenas no localStorage fazia o tour reaparecer em
- * todo navegador/sessão nova — e, aberto, ele cobre o app inteiro com
- * `z-[9999]`, interceptando os cliques. `ignoreDuplicates` vira
- * "on conflict do nothing": não sobrescreve preferências já salvas pelo usuário.
+ * Grava o status do tour no banco. Concluir usa upsert (o usuário que nunca mexeu
+ * em preferências não tem linha em `user_settings` e a conclusão precisa criá-la);
+ * reiniciar usa update (sem linha o valor já é o default `false`, não há o que
+ * gravar). Só a coluna `onboarding_completed` é tocada — nenhuma preferência do
+ * usuário é sobrescrita.
  */
-async function persistOnboardingCompletion(userId: string) {
+async function persistOnboardingCompletion(userId: string, completed: boolean) {
   try {
-    const { error } = await supabase
-      .from('user_settings')
-      .upsert({ user_id: userId }, { onConflict: 'user_id', ignoreDuplicates: true });
-    if (error) log.error('Error persisting onboarding completion:', error);
+    const { error } = completed
+      ? await supabase
+          .from('user_settings')
+          .upsert({ user_id: userId, onboarding_completed: true }, { onConflict: 'user_id' })
+      : await supabase
+          .from('user_settings')
+          .update({ onboarding_completed: false })
+          .eq('user_id', userId);
+
+    if (error) log.error('Error persisting onboarding status:', error);
   } catch (error) {
-    log.error('Error persisting onboarding completion:', error);
+    log.error('Error persisting onboarding status:', error);
   }
 }
 
 export function useOnboarding() {
   const { user } = useAuth();
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
+  const userId = user?.id;
+  const queryClient = useQueryClient();
+  // useMemo: mantém a chave estável entre renderizações (o react-query compara
+  // por valor, mas a identidade estável evita recriar os callbacks abaixo).
+  const queryKey = useMemo(() => onboardingStatusQueryKey(userId), [userId]);
 
-  useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+  const query = useQuery({
+    queryKey,
+    enabled: !!userId,
+    queryFn: () => fetchOnboardingCompleted(userId as string),
+  });
 
-    // Check localStorage first for quick response
-    let localCompleted: string | null = null;
-    try { 
-      localCompleted = localStorage.getItem(`${ONBOARDING_KEY}_${user.id}`); 
-    } catch { /* storage unavailable */ }
-    
-    if (localCompleted === 'true') {
-      setHasCompletedOnboarding(true);
-      setLoading(false);
-      return;
-    }
+  const loading = !!userId && query.isPending;
 
-    // Check user_settings in database
-    let isSubscribed = true;
-    const checkOnboarding = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('user_settings')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle();
+  // Sem usuário não há tour a decidir (null). Erro cai no comportamento antigo:
+  // uma falha de rede não cobre a tela do usuário com o tour.
+  const hasCompletedOnboarding: boolean | null = !userId
+    ? null
+    : query.isError
+      ? true
+      : query.isPending
+        ? null
+        : Boolean(query.data);
 
-        if (!isSubscribed) return;
+  const setCompleted = useCallback(
+    (value: boolean) => {
+      if (!userId) return;
+      // setQueryData atinge TODAS as instâncias do hook — é o que faz o overlay do
+      // tour reaparecer (Index) logo depois de "Reiniciar Tour" (Configurações).
+      queryClient.setQueryData(queryKey, value);
+    },
+    [queryClient, userId, queryKey],
+  );
 
-        // If user has settings, they've been here before
-        if (data) {
-          setHasCompletedOnboarding(true);
-          try { localStorage.setItem(`${ONBOARDING_KEY}_${user.id}`, 'true'); } catch { /* storage unavailable */ }
-        } else {
-          setHasCompletedOnboarding(false);
-        }
-      } catch (error) {
-        if (!isSubscribed) return;
-        log.error('Error checking onboarding status:', error);
-        setHasCompletedOnboarding(true); // Default to completed on error
-      } finally {
-        if (isSubscribed) setLoading(false);
-      }
-    };
+  const completeOnboarding = useCallback(() => {
+    if (!userId) return;
+    setCompleted(true);
+    void persistOnboardingCompletion(userId, true);
+  }, [userId, setCompleted]);
 
-    void checkOnboarding();
-    return () => { isSubscribed = false; };
-  }, [user]);
-
-  const completeOnboarding = () => {
-    if (user) {
-      try { localStorage.setItem(`${ONBOARDING_KEY}_${user.id}`, 'true'); } catch { /* storage unavailable */ }
-      setHasCompletedOnboarding(true);
-      void persistOnboardingCompletion(user.id);
-    }
-  };
-
-  const resetOnboarding = () => {
-    if (user) {
-      try { localStorage.removeItem(`${ONBOARDING_KEY}_${user.id}`); } catch { /* storage unavailable */ }
-      setHasCompletedOnboarding(false);
-    }
-  };
+  const resetOnboarding = useCallback(() => {
+    if (!userId) return;
+    setCompleted(false);
+    void persistOnboardingCompletion(userId, false);
+  }, [userId, setCompleted]);
 
   return {
     hasCompletedOnboarding,

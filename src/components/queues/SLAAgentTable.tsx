@@ -12,10 +12,24 @@ const getRateColor = (rate: number) => {
   return 'text-destructive';
 };
 
+/**
+ * Y17-5 — selo de taxa por agente.
+ *
+ * O defeito (auditoria a11y de 07/10, achado 04): o selo pintava a tinta do
+ * estado com alfa (`bg-success/20`) e o TEXTO com o mesmo token de
+ * PREENCHIMENTO (`text-success`/`text-warning`/`text-destructive`). Sobre a
+ * linha `bg-muted/30` o par media 4,04:1 no verde e ~3,3:1 no vermelho (o axe
+ * registrou `.bg-success/20` = 4,00-4,04:1) — abaixo dos 4,5:1 de texto normal.
+ *
+ * A correção usa só tokens que já existem: o par de TEXTO do sistema
+ * (`--warning-text` / `--destructive-text`, definidos em `tokens.css` para os
+ * dois temas) e o verde, que já é o próprio par de texto (`--success` L27).
+ * A tinta desce a `/10` porque a alfa do fundo também aproxima as duas cores.
+ */
 const getRateBadge = (rate: number) => {
-  if (rate >= 90) return 'bg-success/20 text-success dark:text-success';
-  if (rate >= 70) return 'bg-warning/20 text-warning dark:text-warning';
-  return 'bg-destructive/20 text-destructive dark:text-destructive';
+  if (rate >= 90) return 'bg-success/10 text-success';
+  if (rate >= 70) return 'bg-warning/10 text-[hsl(var(--warning-text))]';
+  return 'bg-destructive/10 text-[hsl(var(--destructive-text))]';
 };
 
 interface AgentData {

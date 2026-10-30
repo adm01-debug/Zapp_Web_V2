@@ -71,6 +71,7 @@ const h = vi.hoisted(() => {
       not: (...a: unknown[]) => { filters.push(['not', ...a]); return q; },
       is: (...a: unknown[]) => { filters.push(['is', ...a]); return q; },
       in: (...a: unknown[]) => { filters.push(['in', ...a]); return q; },
+      gte: (...a: unknown[]) => { filters.push(['gte', ...a]); return q; },
       order: () => q,
       range: (f: number, t: number) => { from = f; to = t; return q; },
       then: (resolve: (v: unknown) => unknown) => {
@@ -89,6 +90,8 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (table: string) => h.makeQuery(table),
     rpc: () => Promise.resolve({ data: [], error: null }),
+    channel: () => { const ch: Record<string, unknown> = {}; ch.on = () => ch; ch.subscribe = () => ch; return ch; },
+    removeChannel: () => {},
   },
 }));
 
@@ -96,6 +99,11 @@ vi.mock('@/integrations/supabase/client', () => ({
 // para o card "Chats Ativos" ser o único lugar da tela que mostra o total de 2.
 vi.mock('@/hooks/crm/useAgentPresence', () => ({
   useAgentPresenceMap: () => h.state.presence,
+}));
+
+// t_227e36d1: o InviteAgentDialog (composto pela tela) lê o papel do usuário.
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isAdmin: true, isSupervisor: true, loading: false }),
 }));
 
 import { AgentsView } from '@/components/agents/AgentsView';

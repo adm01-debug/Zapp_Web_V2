@@ -14,8 +14,9 @@
  * Casos de borda: janela de 24 h, base vazia (taxas 0 sem divisão por zero),
  * erro rápido (não pode virar "saudável"), erro de autorização (401/403/42501/
  * PGRST301 e mensagem), limites de latência (healthy/degraded/down), realtime
- * sem ack (unknown), edge function que falha ou lança, dado malformado
- * (contato ausente, content nulo) e reordenação dos logs.
+ * sem ack (unknown), rastro do cron fresco/velho/ausente (a Edge NÃO é invocada
+ * nem há escrita em connection_health_logs), política de conteúdo (nenhum
+ * trecho de mensagem nem nome de contato sai no painel) e reordenação dos logs.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
@@ -28,6 +29,7 @@ type Consulta = {
   count: string | null;
   filters: Filtro[];
   order: { column: string; ascending: boolean } | null;
+  orders: Array<{ column: string; ascending: boolean }>;
   limit: number | null;
 };
 
@@ -47,8 +49,8 @@ const mocks = vi.hoisted(() => ({
   storageChamadas: [] as Array<{ bucket: string; path: string; limit: unknown }>,
   erroStorage: null as unknown,
   throwStorage: null as unknown,
-  fnResultado: { data: { ok: true }, error: null } as { data: unknown; error: unknown },
-  fnLanca: false,
+  invoke: vi.fn((..._args: unknown[]) => Promise.resolve({ data: { ok: true }, error: null })),
+  escritas: [] as Array<{ table: string; rows: unknown }>,
   canalComportamento: 'subscribed' as 'subscribed' | 'error' | 'timedout' | 'closed' | 'silent' | 'throw',
   canaisRemovidos: [] as unknown[],
   toastInfo: vi.fn(),
@@ -69,10 +71,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       }),
     },
     functions: {
-      invoke: (nome: string) => {
-        if (mocks.fnLanca) return Promise.reject(new Error(`falha ao invocar ${nome}`));
-        return Promise.resolve(mocks.fnResultado);
-      },
+      invoke: (nome: string, opts?: unknown) => mocks.invoke(nome, opts),
     },
     channel: (nome: string) => {
       if (mocks.canalComportamento === 'throw') throw new Error('realtime indisponível');
@@ -112,17 +111,13 @@ const AGORA = '2026-10-07T12:00:00.000Z';
 const minutosAtras = (m: number) => new Date(Date.parse(AGORA) - m * 60_000).toISOString();
 const isoMenos = (ms: number) => new Date(Date.parse(AGORA) - ms).toISOString();
 
-/** Consultas com `head: true` e sem filtro: as contagens "de tabela inteira". */
-function ehContagemSemFiltro(c: Consulta) {
-  return c.head && c.count === 'exact' && c.filters.length === 0;
+/** A sonda de latência é `contacts` com `select id limit 1` e sem filtro. */
+function ehProbeDb(c: Consulta) {
+  return c.table === 'contacts' && c.filters.length === 0 && c.limit === 1;
 }
 
 function consultasDe(table: string): Consulta[] {
   return mocks.consultas.filter((c) => c.table === table);
-}
-
-function ehProbeDb(c: Consulta) {
-  return c.table === 'contacts' && ehContagemSemFiltro(c);
 }
 
 function rodar(consulta: Consulta) {
@@ -145,15 +140,31 @@ function rodar(consulta: Consulta) {
     else if (op === 'gte') rows = rows.filter((r) => String(r[col]) >= String(val));
     else if (op === 'lt') rows = rows.filter((r) => String(r[col]) < String(val));
     else if (op === 'is') rows = rows.filter((r) => (r[col] ?? null) === val);
+    else if (op === 'or') {
+      // Só a expressão usada pelo hook: `col.is.null,col.eq.false`.
+      const partes = String(col).split(',').map((p) => p.trim());
+      rows = rows.filter((r) =>
+        partes.some((p) => {
+          const [c, m, v] = p.split('.');
+          if (m === 'is' && v === 'null') return (r[c] ?? null) === null;
+          if (m === 'eq') return (r[c] ?? null) === (v === 'true' ? true : v === 'false' ? false : v);
+          return false;
+        }),
+      );
+    }
     else if (op === 'in') rows = rows.filter((r) => (val as unknown[]).includes(r[col]));
   }
   const total = rows.length;
 
-  if (consulta.order) {
-    const { column, ascending } = consulta.order;
+  // A ordenação aplicada é a do PostgREST: todas as chamadas de `order`, na
+  // sequência, com desempate pela seguinte — igual ao `order=col.desc,id.desc`.
+  if (consulta.orders.length > 0) {
     rows = rows.slice().sort((a, b) => {
-      if (String(a[column]) === String(b[column])) return 0;
-      return (String(a[column]) < String(b[column]) ? -1 : 1) * (ascending ? 1 : -1);
+      for (const { column, ascending } of consulta.orders) {
+        if (String(a[column]) === String(b[column])) continue;
+        return (String(a[column]) < String(b[column]) ? -1 : 1) * (ascending ? 1 : -1);
+      }
+      return 0;
     });
   }
   if (consulta.limit !== null) rows = rows.slice(0, consulta.limit);
@@ -178,8 +189,8 @@ beforeEach(() => {
   mocks.storageChamadas = [];
   mocks.erroStorage = null;
   mocks.throwStorage = null;
-  mocks.fnResultado = { data: { ok: true }, error: null };
-  mocks.fnLanca = false;
+  mocks.invoke.mockClear();
+  mocks.escritas = [];
   mocks.canalComportamento = 'subscribed';
   mocks.canaisRemovidos = [];
 
@@ -192,6 +203,9 @@ beforeEach(() => {
         phone_number: '5511999999999',
         created_at: minutosAtras(600),
         updated_at: minutosAtras(30),
+        health_status: 'healthy',
+        last_health_check: minutosAtras(3),
+        health_response_ms: 120,
       },
       {
         id: 'cn-2',
@@ -200,6 +214,31 @@ beforeEach(() => {
         phone_number: null,
         created_at: minutosAtras(300),
         updated_at: minutosAtras(20),
+        health_status: 'unhealthy',
+        last_health_check: minutosAtras(20),
+        health_response_ms: null,
+      },
+    ],
+    // Rastro deixado pelo cron `connection-health-check` (roda a cada 5 min):
+    // é esse registro que diz se o backend está vivo — o navegador não sonda.
+    connection_health_logs: [
+      {
+        id: 'hl-2',
+        connection_id: 'cn-1',
+        instance_id: 'inst-online',
+        status: 'healthy',
+        response_time_ms: 120,
+        error_message: null,
+        checked_at: minutosAtras(2),
+      },
+      {
+        id: 'hl-1',
+        connection_id: 'cn-2',
+        instance_id: 'inst-caida',
+        status: 'error',
+        response_time_ms: null,
+        error_message: 'sem resposta',
+        checked_at: minutosAtras(9),
       },
     ],
     messages: [
@@ -228,6 +267,7 @@ beforeEach(() => {
       count: null,
       filters: [],
       order: null,
+      orders: [],
       limit: null,
     };
     mocks.consultas.push(consulta);
@@ -259,16 +299,32 @@ beforeEach(() => {
       consulta.filters.push(['is', col, val]);
       return builder;
     });
+    builder.or = vi.fn((expr: string) => {
+      consulta.filters.push(['or', expr, null]);
+      return builder;
+    });
     builder.in = vi.fn((col: string, vals: unknown[]) => {
       consulta.filters.push(['in', col, vals]);
       return builder;
     });
     builder.order = vi.fn((col: string, opts?: { ascending?: boolean }) => {
-      consulta.order = { column: col, ascending: opts?.ascending !== false };
+      const ordenacao = { column: col, ascending: opts?.ascending !== false };
+      consulta.order = ordenacao;
+      consulta.orders.push(ordenacao);
       return builder;
     });
     builder.limit = vi.fn((n: number) => {
       consulta.limit = n;
+      return builder;
+    });
+    // Qualquer escrita (insert/update/upsert) fica registrada: o Diagnóstico não
+    // pode gravar em connection_health_logs nem em nenhuma outra tabela.
+    builder.insert = vi.fn((rows: unknown) => {
+      mocks.escritas.push({ table, rows });
+      return builder;
+    });
+    builder.upsert = vi.fn((rows: unknown) => {
+      mocks.escritas.push({ table, rows });
       return builder;
     });
     builder.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
@@ -281,6 +337,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
 });
 
 async function montar() {
@@ -308,9 +365,9 @@ describe('useDiagnosticsData — mensagens da janela de 24 h', () => {
       deliveryRate: 33,
       failureRate: 33,
       recentFailures: [
-        { id: 'm4', content: 'Tentativa 1', status: 'failed', created_at: minutosAtras(4), contact_name: 'Desconhecido' },
-        { id: 'm5', content: null, status: 'failed', created_at: minutosAtras(6), contact_name: 'Desconhecido' },
-        { id: 'm8', content: 'Falha de ontem', status: 'failed', created_at: minutosAtras(25 * 60), contact_name: 'Ana' },
+        { id: 'm4', created_at: minutosAtras(4), motivo: 'failed' },
+        { id: 'm5', created_at: minutosAtras(6), motivo: 'failed' },
+        { id: 'm8', created_at: minutosAtras(25 * 60), motivo: 'failed' },
       ],
     });
 
@@ -319,19 +376,21 @@ describe('useDiagnosticsData — mensagens da janela de 24 h', () => {
     expect(janela).toEqual(['gte', 'created_at', isoMenos(24 * 60 * 60 * 1000)]);
   });
 
-  it('busca o nome só dos contatos citados e sem repetir (dedup + filtro de nulo)', async () => {
+  it('as falhas recentes trazem só id, horário e motivo — sem nome nem conteúdo', async () => {
     const { result } = await montar();
 
-    const buscaContatos = consultasDe('contacts').find((c) =>
-      c.filters.some((f) => f[0] === 'in'),
+    // Nenhuma consulta de contatos por lista de ids: a lista de falhas não usa contato.
+    expect(consultasDe('contacts').some((c) => c.filters.some((f) => f[0] === 'in'))).toBe(false);
+    for (const falha of result.current.messageDiag?.recentFailures ?? []) {
+      expect(Object.keys(falha).sort()).toEqual(['created_at', 'id', 'motivo']);
+    }
+    // A leitura das falhas também não pede conteúdo nem contact_id.
+    const falhas = consultasDe('messages').find(
+      (c) =>
+        c.select?.includes('created_at') &&
+        c.filters.some((f) => f[0] === 'eq' && f[1] === 'status' && f[2] === 'failed'),
     );
-    // m5 não tem contato e m8 repete c1 — o `in` leva cada id uma vez.
-    expect(buscaContatos?.filters).toEqual([['in', 'id', ['c-sem-nome', 'c1']]]);
-    expect(result.current.messageDiag?.recentFailures.map((f) => f.contact_name)).toEqual([
-      'Desconhecido',
-      'Desconhecido',
-      'Ana',
-    ]);
+    expect(falhas?.select).toBe('id, status, created_at');
   });
 
   it('base vazia: taxas 0 (sem divisão por zero) e nenhuma busca de contato', async () => {
@@ -524,17 +583,93 @@ describe('useDiagnosticsData — realtime (ack do canal)', () => {
   });
 });
 
-describe('useDiagnosticsData — edge functions', () => {
-  it('invoke que responde com erro degrada as edge functions', async () => {
-    mocks.fnResultado = { data: null, error: { message: 'sem resposta' } };
+describe('useDiagnosticsData — backend vivo pelo rastro do cron (sem invocar a Edge)', () => {
+  it('abrir o Diagnóstico não invoca connection-health-check nem grava em nenhuma tabela', async () => {
     const { result } = await montar();
-    expect(result.current.health?.edgeFunctions).toBe('degraded');
+    expect(result.current.loading).toBe(false);
+
+    // CRITÉRIO 1: abrir a tela não dispara a sonda nem escreve no banco.
+    expect(mocks.invoke).not.toHaveBeenCalled();
+    expect(mocks.escritas).toEqual([]);
+
+    // A saúde do backend sai de uma LEITURA do rastro do cron, com ordem estável.
+    const rastro = consultasDe('connection_health_logs');
+    expect(rastro).toHaveLength(1);
+    expect(rastro[0].select).toBe(
+      'id, instance_id, status, response_time_ms, error_message, checked_at',
+    );
+    expect(rastro[0].limit).toBe(20);
+    expect(rastro[0].orders).toEqual([
+      { column: 'checked_at', ascending: false },
+      { column: 'id', ascending: false },
+    ]);
   });
 
-  it('invoke que lança também degrada, sem derrubar o resto da coleta', async () => {
-    mocks.fnLanca = true;
+  it('rastro fresco é saudável e expõe o instante e as linhas do último check', async () => {
     const { result } = await montar();
-    expect(result.current.health).toMatchObject({ edgeFunctions: 'degraded', database: 'healthy' });
+
+    expect(result.current.health?.edgeFunctions).toBe('healthy');
+    expect(result.current.health?.lastHealthCheckAt).toBe(minutosAtras(2));
+    // hl-2 (2 min) vem antes de hl-1 (9 min) — a leitura respeita o horário.
+    expect(result.current.health?.healthCheckLogs.map((l) => l.id)).toEqual(['hl-2', 'hl-1']);
+  });
+
+  it('rastro parado há 20 min degrada; há 2 h fica fora do ar', async () => {
+    const linha = {
+      id: 'hl-x',
+      connection_id: 'cn-1',
+      instance_id: 'inst-online',
+      status: 'healthy',
+      response_time_ms: 90,
+      error_message: null,
+      checked_at: minutosAtras(20),
+    };
+    mocks.tabelas.connection_health_logs = [linha];
+    const parado = await montar();
+    expect(parado.result.current.health).toMatchObject({
+      edgeFunctions: 'degraded',
+      lastHealthCheckAt: minutosAtras(20),
+    });
+
+    mocks.tabelas.connection_health_logs = [{ ...linha, checked_at: minutosAtras(120) }];
+    const velho = await montar();
+    expect(velho.result.current.health?.edgeFunctions).toBe('down');
+  });
+
+  it('sem nenhum registro o backend fica "unknown" (não medido), nunca saudável', async () => {
+    mocks.tabelas.connection_health_logs = [];
+    const { result } = await montar();
+
+    expect(result.current.health).toMatchObject({
+      edgeFunctions: 'unknown',
+      lastHealthCheckAt: null,
+      healthCheckLogs: [],
+    });
+  });
+
+  it('leitura do rastro negada por RLS vira "unauthorized"', async () => {
+    mocks.errosTabela = [
+      {
+        table: 'connection_health_logs',
+        error: { code: '42501', message: 'permission denied for table connection_health_logs' },
+      },
+    ];
+    const { result } = await montar();
+
+    expect(result.current.health?.edgeFunctions).toBe('unauthorized');
+    expect(result.current.health?.lastHealthCheckAt).toBeNull();
+  });
+
+  it('consulta do rastro que lança vira "down" sem derrubar o resto da coleta', async () => {
+    mocks.errosTabela = [{ table: 'connection_health_logs', throw: new Error('Failed to fetch') }];
+    const { result } = await montar();
+
+    expect(result.current.health).toMatchObject({
+      edgeFunctions: 'down',
+      database: 'healthy',
+      storage: 'healthy',
+      realtime: 'healthy',
+    });
   });
 });
 
@@ -544,8 +679,30 @@ describe('useDiagnosticsData — conexões e logs de erro', () => {
 
     expect(result.current.connections.map((c) => c.id)).toEqual(['cn-2', 'cn-1']);
     expect(result.current.connectedCount).toBe(1);
+    // A saúde lida do banco chega crua no estado (a tela não mede por conta própria).
+    expect(result.current.connections[0]).toMatchObject({
+      health_status: 'unhealthy',
+      last_health_check: minutosAtras(20),
+      health_response_ms: null,
+    });
+    expect(result.current.connections[1]).toMatchObject({
+      health_status: 'healthy',
+      health_response_ms: 120,
+    });
     const conexoes = consultasDe('whatsapp_connections')[0];
     expect(conexoes.order).toEqual({ column: 'created_at', ascending: false });
+  });
+
+  it('usa lista explícita de colunas em vez de select("*") e exclui qr_code e instance_token_secret_id', async () => {
+    await montar();
+    const conexoes = consultasDe('whatsapp_connections')[0];
+    expect(conexoes.select).not.toBe('*');
+    expect(conexoes.select).not.toContain('qr_code');
+    expect(conexoes.select).not.toContain('instance_token_secret_id');
+    // CRITÉRIO 1: a saúde vem da coluna gravada pelo cron, não de nova sondagem.
+    expect(conexoes.select).toContain('health_status');
+    expect(conexoes.select).toContain('last_health_check');
+    expect(conexoes.select).toContain('health_response_ms');
   });
 
   it('monta os quatro tipos de log e ordena do mais novo para o mais antigo', async () => {
@@ -588,23 +745,28 @@ describe('useDiagnosticsData — conexões e logs de erro', () => {
     expect(result.current.warningCount).toBe(2);
   });
 
-  it('conteúdo nulo na mensagem falha não quebra o detalhe do log', async () => {
+  it('o log da mensagem falha traz só id, horário e motivo — sem conteúdo', async () => {
     const { result } = await montar();
     const semConteudo = result.current.errorLogs.find((l) => l.id === 'msg-m5');
 
-    expect(semConteudo?.details).toBe('Mensagem "undefined..." falhou ao enviar');
-    expect(semConteudo?.message).toBe('Falha no envio de mensagem');
+    expect(semConteudo?.message).toBe('Falha no envio da mensagem m5');
+    expect(semConteudo?.details).toBe('Motivo informado pelo provedor: failed');
   });
 
-  it('trunca o conteúdo do log em 50 caracteres', async () => {
-    const longo = 'x'.repeat(80);
+  it('nenhum log carrega trecho do conteúdo da mensagem', async () => {
     mocks.tabelas.messages = [
-      { id: 'm9', sender: 'agent', status: 'failed', created_at: minutosAtras(1), content: longo, contact_id: 'c1' },
+      { id: 'm9', sender: 'agent', status: 'failed', created_at: minutosAtras(1), content: 'SEGREDO-DO-CLIENTE', contact_id: 'c1' },
     ];
     const { result } = await montar();
-    const semConteudo = result.current.errorLogs.find((l) => l.id === 'msg-m9');
 
-    expect(semConteudo?.details).toBe(`Mensagem "${'x'.repeat(50)}..." falhou ao enviar`);
+    expect(result.current.errorLogs.some((l) => l.id === 'msg-m9')).toBe(true);
+    expect(JSON.stringify(result.current.errorLogs)).not.toContain('SEGREDO-DO-CLIENTE');
+    const falhas = consultasDe('messages').find(
+      (c) =>
+        c.select?.includes('created_at') &&
+        c.filters.some((f) => f[0] === 'eq' && f[1] === 'status' && f[2] === 'failed'),
+    );
+    expect(falhas?.select).toBe('id, status, created_at');
   });
 
   it('sem nenhum problema não gera log e a contagem de conexões fica 0', async () => {
@@ -630,7 +792,7 @@ describe('useDiagnosticsData — conexões e logs de erro', () => {
     expect(result.current.connectedCount).toBe(1);
   });
 
-  it('a consulta de travadas usa a marca de 5 minutos', async () => {
+  it('a consulta de travadas usa a marca de 5 minutos e ignora a mensagem apagada', async () => {
     const { result } = await montar();
 
     const travadas = consultasDe('messages').find((c) =>
@@ -639,6 +801,7 @@ describe('useDiagnosticsData — conexões e logs de erro', () => {
     expect(travadas?.filters).toEqual([
       ['eq', 'status', 'sending'],
       ['lt', 'created_at', isoMenos(5 * 60 * 1000)],
+      ['or', 'is_deleted.is.null,is_deleted.eq.false', null],
     ]);
     expect(result.current.errorLogs.some((l) => l.id === 'stuck-messages')).toBe(true);
   });
@@ -693,13 +856,8 @@ describe('useDiagnosticsData — atualização', () => {
   });
 });
 
-describe('useDiagnosticsData — defeitos encontrados (não corrigidos neste cartão)', () => {
-  // BUG: as contagens de `messages` ignoram o `error` da resposta. Uma leitura
-  // barrada por RLS devolve `error` (não exceção) e `count` indefinido, então
-  // o hook publica zeros: "0 mensagens, 0% de falha" — o operador lê o painel
-  // como sistema saudável justamente quando a coleta foi negada (o mesmo
-  // arquivo trata autorização direitinho na saúde do banco).
-  it.fails('leitura de messages negada por RLS não deveria virar zeros silenciosos', async () => {
+describe('useDiagnosticsData — leitura negada não vira zero silencioso', () => {
+  it('leitura de messages negada por RLS deixa o agregado nulo e a falha visível', async () => {
     mocks.errosTabela = [
       {
         table: 'messages',
@@ -709,7 +867,71 @@ describe('useDiagnosticsData — defeitos encontrados (não corrigidos neste car
     ];
     const { result } = await montar();
 
-    // Comportamento correto: não publicar um agregado que finge sucesso.
+    // Não publica um agregado que finge sucesso.
     expect(result.current.messageDiag).toBeNull();
+    // A falha da coleta fica VISÍVEL no painel, com o código do erro.
+    expect(result.current.errorLogs[0]).toMatchObject({
+      id: 'collect-error',
+      severity: 'error',
+      message: 'Falha ao coletar os diagnósticos',
+    });
+    expect(result.current.collectionError).toContain('42501');
+    expect(result.current.errorCount).toBeGreaterThan(0);
+  });
+
+  it('erro na contagem estimada de messages também não passa em branco', async () => {
+    mocks.errosTabela = [
+      {
+        table: 'messages',
+        filtro: (c) => c.head && c.filters.length === 0,
+        error: { code: '57014', message: 'query cancelada' },
+      },
+    ];
+    const { result } = await montar();
+
+    expect(result.current.collectionError).not.toBeNull();
+    expect(result.current.errorLogs.some((l) => l.id === 'collect-error')).toBe(true);
+  });
+});
+
+describe('useDiagnosticsData — sonda leve, totais estimados e polling com aba visível', () => {
+  it('mede a latência por sonda leve (`select id limit 1`) e pede totais estimados', async () => {
+    await montar();
+
+    const sonda = consultasDe('contacts').find((c) => c.filters.length === 0);
+    expect(sonda?.select).toBe('id');
+    expect(sonda?.limit).toBe(1);
+    expect(sonda?.count).toBe('estimated');
+
+    // CRITÉRIO 2: nenhuma COUNT `exact` de tabela inteira em loop.
+    const exatasSemFiltro = mocks.consultas.filter(
+      (c) => c.count === 'exact' && c.head && c.filters.length === 0,
+    );
+    expect(exatasSemFiltro).toEqual([]);
+
+    // Os totais de tabela inteira são estimados.
+    const estimadas = mocks.consultas.filter(
+      (c) => c.count === 'estimated' && c.head,
+    );
+    expect(estimadas.map((c) => c.table).sort()).toEqual(['messages', 'whatsapp_connections']);
+  });
+
+  it('não atualiza sozinho com a aba oculta e volta quando ela fica visível', async () => {
+    const { result } = await montar();
+    const antes = mocks.consultas.length;
+
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+    expect(mocks.consultas.length).toBe(antes);
+
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(mocks.consultas.length).toBeGreaterThan(antes);
+    expect(result.current.loading).toBe(false);
   });
 });

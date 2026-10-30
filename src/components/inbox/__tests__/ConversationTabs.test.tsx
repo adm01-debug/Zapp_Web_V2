@@ -32,6 +32,16 @@ vi.mock('@/components/inbox/tabs/NotesTab', () => ({
   ),
 }));
 
+// Mesmo encanamento do NotesTab: o "Ver no CRM" do Resumo comercial (aba
+// SalesView) fica INERTE se `onTabChange` não for repassado por ConversationTabContent.
+vi.mock('@/components/inbox/tabs/SalesViewTab', () => ({
+  SalesViewTab: ({ contactId, onTabChange }: { contactId: string; onTabChange?: (tab: string) => void }) => (
+    <button data-testid="salesview-ver-crm" onClick={() => onTabChange?.('crm')}>
+      Ver no CRM → ({contactId})
+    </button>
+  ),
+}));
+
 const ABAS = ['chat', 'files', 'ia', 'crm', 'orders', 'history', 'tasks', 'notes'] as const;
 
 const COUNTS: ConversationTabCounts = {
@@ -185,6 +195,75 @@ describe('ConversationTabContent — repassa onTabChange às abas', () => {
     fireEvent.click(await screen.findByTestId('notes-ver-tarefas'));
 
     expect(onTabChange).toHaveBeenCalledWith('tasks');
+  });
+
+  it('o link "Ver no CRM" do Resumo comercial (SalesView) troca para a aba CRM 360°', async () => {
+    const onTabChange = vi.fn();
+    const conversation = { contact: { id: 'c1', name: 'Ana' } } as unknown as Conversation;
+
+    render(
+      <ConversationTabContent
+        activeTab="orders"
+        onTabChange={onTabChange}
+        conversation={conversation}
+        messages={[]}
+      >
+        {null}
+      </ConversationTabContent>,
+    );
+
+    fireEvent.click(await screen.findByTestId('salesview-ver-crm'));
+
+    expect(onTabChange).toHaveBeenCalledWith('crm');
+  });
+});
+
+/**
+ * RES-1/SL-207 — "Composer só aparece na aba Chat".
+ *
+ * Não é defeito: é decisão registrada no plano do Inbox 360
+ * (`docs/design/PLANO_INBOX_360_CONVERSA.md:66`): "Chat sempre montado... Composer de
+ * mensagem só existe na aba Chat — decisão registrada (as imagens 3/4/6 mostram composer
+ * em outras abas; não replicar)". O composer de mensagem (`ChatInputArea`) tem um único
+ * ponto de render em produção, dentro do `ChatPanel` (`ChatPanel.tsx:401`), que é montado
+ * como `children` aqui.
+ *
+ * Este teste é a prova executável da decisão: o painel do Chat NUNCA desmonta ao trocar de
+ * aba (senão perderia rascunho, scroll, gravação e assinaturas realtime) e fica apenas
+ * escondido fora da aba Chat — por isso o composer não aparece nas demais abas. Se alguém
+ * remover o `hidden` (ou o painel passar a desmontar), este teste fica vermelho e força uma
+ * troca consciente da decisão.
+ */
+describe('ConversationTabContent — composer de mensagem só na aba Chat (decisão do plano Inbox 360 §13)', () => {
+  const conversation = { contact: { id: 'c1', name: 'Ana' } } as unknown as Conversation;
+
+  function renderPainelDoChat(activeTab: ConversationTab) {
+    return render(
+      <ConversationTabContent
+        activeTab={activeTab}
+        onTabChange={vi.fn()}
+        conversation={conversation}
+        messages={[]}
+      >
+        <div data-testid="painel-do-chat" />
+      </ConversationTabContent>,
+    );
+  }
+
+  it('mantém o painel do Chat visível na aba Chat', () => {
+    const { getByTestId } = renderPainelDoChat('chat');
+
+    expect(getByTestId('painel-do-chat').closest('.hidden')).toBeNull();
+  });
+
+  it('fora da aba Chat, mantém o painel do Chat montado e apenas escondido', () => {
+    const { getByTestId } = renderPainelDoChat('notes');
+
+    const painelDoChat = getByTestId('painel-do-chat');
+    // Continua no documento: a aba Chat é escondida, nunca desmontada.
+    expect(document.body.contains(painelDoChat)).toBe(true);
+    // E escondido: o composer de mensagem não aparece nas demais abas.
+    expect(painelDoChat.closest('.hidden')).not.toBeNull();
   });
 });
 

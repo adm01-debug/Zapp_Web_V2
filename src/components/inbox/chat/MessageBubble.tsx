@@ -7,14 +7,14 @@ import { SwipeableMessage } from '@/components/mobile/SwipeableMessage';
 import { DeletedMessagePlaceholder } from '../DeletedMessagePlaceholder';
 import { HighlightedText } from './HighlightedText';
 import { Message, InteractiveButton } from '@/types/chat';
-import { TypingIndicator } from '../TypingIndicator';
 import { MessageReactions, QuickReactionBar } from '../MessageReactions';
 import { MessageHoverToolbar } from './MessageHoverToolbar';
 import { MessageImage } from '../ImagePreview';
 import { DocumentPreview, VideoPreview } from '../MediaPreview';
 import { AudioMessagePlayer } from '../AudioMessagePlayer';
-import { InteractiveMessageDisplay, ButtonResponseBadge } from '../InteractiveMessage';
+import { InteractiveMessageDisplay, ButtonResponseBadge, ListResponseBadge } from '../InteractiveMessage';
 import { QuotedMessage } from '../ReplyQuote';
+import { MessageBubbleUnsupported } from './MessageBubbleUnsupported';
 const LocationMessageDisplay = lazy(() =>
   import('../LocationMessage').then(m => ({ default: m.LocationMessageDisplay }))
 );
@@ -138,6 +138,7 @@ interface MessageBubbleProps {
   onCopy: (content: string) => void;
   onScrollToMessage: (messageId: string) => void;
   onInteractiveButtonClick: (button: InteractiveButton) => void;
+  onInteractiveListItemClick?: (sectionTitle: string, rowId: string, rowTitle: string) => void;
   onEditStart?: (message: Message) => void;
   onMessageDeleted: (messageId: string) => void;
   registerRef: (el: HTMLDivElement | null) => void;
@@ -149,11 +150,14 @@ export const MessageBubble = memo(function MessageBubble({
   message, isFirstInGroup, isLastInGroup, contactAvatar, instanceName, contactJid,
   ttsLoading, ttsPlaying, ttsMessageId, highlightedMessageIds, activeHighlightId, searchQuery,
   onSpeak, onStop, onReply, onForward, onCopy, onScrollToMessage, onInteractiveButtonClick,
-  onEditStart, onMessageDeleted, registerRef,
+  onInteractiveListItemClick, onEditStart, onMessageDeleted, registerRef,
 }: MessageBubbleProps) {
   const { toast } = useToast();
   const { profile } = useAuth();
   const isSent = message.sender === 'agent';
+  // Resposta do cliente a botão/lista: o `content` traz só o id tocado (vindo do canal),
+  // então quem fala é o badge — o id cru não pode aparecer no balão.
+  const respostaInterativa = !!(message.buttonResponse || message.listResponse);
   const tentativas = tentativasDeEnvio(message);
   const senderName = isSent ? 'Você' : message.senderName || 'Contato';
   const agentInitials = profile?.name ? profile.name.slice(0, 2).toUpperCase() : 'EU';
@@ -249,7 +253,8 @@ export const MessageBubble = memo(function MessageBubble({
               >
                 {message.replyTo && <QuotedMessage replyTo={message.replyTo} isSent={isSent} onClick={() => onScrollToMessage(message.replyTo!.messageId)} />}
                 {message.buttonResponse && <ButtonResponseBadge buttonTitle={message.buttonResponse.buttonTitle} isSent={isSent} />}
-                {message.type === 'interactive' && message.interactive && <InteractiveMessageDisplay interactive={message.interactive} isSent={isSent} onButtonClick={onInteractiveButtonClick} />}
+                {message.listResponse && <ListResponseBadge sectionTitle={message.listResponse.sectionTitle} itemTitle={message.listResponse.itemTitle} isSent={isSent} />}
+                {message.type === 'interactive' && message.interactive && <InteractiveMessageDisplay interactive={message.interactive} isSent={isSent} onButtonClick={onInteractiveButtonClick} onListItemClick={onInteractiveListItemClick} />}
 
                 {message.type === 'image' && message.mediaUrl && (
                   <div className={cn("overflow-hidden relative", message.content ? "mb-1.5 -mx-1 -mt-0.5 rounded-xl" : "w-full")}>
@@ -286,6 +291,13 @@ export const MessageBubble = memo(function MessageBubble({
                 )}
 
                 {message.type === 'location' && message.location && <Suspense fallback={<div className="w-full h-32 bg-muted animate-pulse rounded-lg" />}><LocationMessageDisplay location={message.location} isSent={isSent} /></Suspense>}
+
+                {message.type === 'unsupported' && (
+                  <MessageBubbleUnsupported
+                    kind={message.unsupportedKind ?? 'other'}
+                    content={message.content || undefined}
+                  />
+                )}
 
                 {message.type === 'sticker' && message.mediaUrl && (
                   <div className="mb-1 group/sticker relative">
@@ -349,12 +361,12 @@ export const MessageBubble = memo(function MessageBubble({
                   </div>
                 )}
 
-                {message.content && message.type !== 'audio' && message.type !== 'location' && message.type !== 'video' && message.type !== 'document' && message.type !== 'sticker' && (
+                {message.content && !respostaInterativa && message.type !== 'audio' && message.type !== 'location' && message.type !== 'video' && message.type !== 'document' && message.type !== 'sticker' && message.type !== 'unsupported' && (
                   <>
                   {message.link_preview && (
                     <LinkPreviewCard preview={message.link_preview} isSent={isSent} />
                   )}
-                  <p className="text-sm whitespace-pre-wrap leading-[1.45]">
+                  <p className="chat-message-text whitespace-pre-wrap leading-[1.45]">
                     {searchQuery && highlightedMessageIds?.has(message.id) ? <HighlightedText text={message.content} query={searchQuery} /> : message.content}
                   </p>
                   </>

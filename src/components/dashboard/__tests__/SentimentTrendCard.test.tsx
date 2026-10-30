@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { SentimentTrendCard } from '../overview/SentimentTrendCard';
 
 const mockUseRealSentimentData = vi.fn();
-vi.mock('../SentimentHelpers', () => ({
+vi.mock('@/hooks/dashboard/useSentimentTrend', () => ({
   useRealSentimentData: (...args: unknown[]) => mockUseRealSentimentData(...args),
 }));
 
@@ -21,6 +21,8 @@ describe('SentimentTrendCard', () => {
     ]);
     render(<SentimentTrendCard />);
     expect(screen.getByTestId('sentiment-plot')).toBeInTheDocument();
+    // Gráfico exposto ao leitor de tela como imagem com resumo.
+    expect(screen.getByRole('img', { name: 'Tendência de sentimento: 2 dias, com as linhas de positivo, neutro e negativo' })).toBeInTheDocument();
     expect(screen.getByText('Positivo')).toBeInTheDocument();
     expect(screen.getByText('Neutro')).toBeInTheDocument();
     expect(screen.getByText('Negativo')).toBeInTheDocument();

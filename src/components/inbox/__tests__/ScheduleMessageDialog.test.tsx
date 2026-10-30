@@ -166,3 +166,50 @@ describe('ScheduleMessageDialog — R2-INB-010: fecha e limpa o rascunho só ap�
     expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({ title: 'Mensagem agendada!' }));
   });
 });
+
+/**
+ * DK-25 — data inválida não pode virar agendamento silencioso no diálogo.
+ *
+ * O `<input type="date">` do diálogo devolve `yyyy-MM-dd` e o próprio navegador (aqui, o jsdom)
+ * descarta uma chave que não é dia de calendário — `value` volta vazio. Ou seja, o diálogo nunca
+ * recebe o `2026-09-31` cru: ele recebe `''`, que em `parseDayKey` também é `null`. Nos dois casos
+ * o `handleSchedule` cai no aviso "Data inválida" (ScheduleMessageDialog.tsx:48) e `onSchedule`
+ * não é chamado — nada é agendado num dia que o usuário não escolheu.
+ * A rejeição do dia inexistente em si é provada em `localDay.localInstantFromDayAndTime.test.ts`.
+ */
+describe('ScheduleMessageDialog — data inválida não agenda (DK-25)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 8, 30, 22, 30, 0));
+    toastMock.mockClear();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('campo de data vazio mostra "Data inválida" e não chama o envio', () => {
+    const { onSchedule } = abrirDialogo();
+    definir('date', '');
+    definir('time', '09:00');
+
+    fireEvent.click(screen.getByRole('button', { name: /^agendar$/i }));
+
+    expect(onSchedule).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({ title: 'Data inválida' }));
+    expect(toastMock).not.toHaveBeenCalledWith(expect.objectContaining({ title: 'Mensagem agendada!' }));
+  });
+
+  it('dia inexistente digitado (31/09) não entra no campo e não agenda', () => {
+    const { onSchedule } = abrirDialogo();
+    definir('date', '2026-09-31');
+    definir('time', '09:00');
+
+    // O campo já descarta a chave inexistente (não sobra um dia que o Date rolaria para 01/10).
+    expect((document.getElementById('date') as HTMLInputElement).value).toBe('');
+
+    fireEvent.click(screen.getByRole('button', { name: /^agendar$/i }));
+
+    expect(onSchedule).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({ title: 'Data inválida' }));
+  });
+});

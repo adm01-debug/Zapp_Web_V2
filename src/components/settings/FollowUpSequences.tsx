@@ -157,7 +157,7 @@ export function FollowUpSequences() {
                   <div className="flex items-center justify-between">
                     <Badge variant="outline">Passo {step.step_order}</Badge>
                     {newSteps.length > 1 && (
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeStep(i)}>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" aria-label={`Remover passo ${step.step_order}`} onClick={() => removeStep(i)}>
                         <Trash2 className="w-3 h-3 text-destructive" />
                       </Button>
                     )}
@@ -214,6 +214,7 @@ export function FollowUpSequences() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Switch
+                      aria-label={`Ativar ${seq.name}`}
                       checked={seq.is_active ?? undefined}
                       onCheckedChange={checked => toggleMutation.mutate({ id: seq.id, isActive: checked })}
                     />
@@ -228,7 +229,7 @@ export function FollowUpSequences() {
                     <Badge variant={seq.is_active ? 'default' : 'secondary'}>
                       {seq.is_active ? 'Ativo' : 'Inativo'}
                     </Badge>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteMutation.mutate(seq.id)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Excluir sequência ${seq.name}`} onClick={() => deleteMutation.mutate(seq.id)}>
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   </div>

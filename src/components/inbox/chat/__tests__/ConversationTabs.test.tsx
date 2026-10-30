@@ -92,12 +92,41 @@ describe('ConversationTabs', () => {
     expect(within(screen.getByTestId('conversation-tab-history')).getByText('Journey')).toBeInTheDocument();
   });
 
-  it('mantém a ação do canto direito fora da semântica de abas', () => {
-    const action = <button type="button">TALK ME</button>;
-    render(<ConversationTabs activeTab="chat" onTabChange={vi.fn()} counts={ZERO} trailingAction={action} />);
+  it('cada aba tem nome acessível igual ao rótulo abaixo de 1536px (rótulo visual oculto)', () => {
+    // jsdom não carrega o Tailwind: simula `hidden` sem o `2xl:inline`, como em telas < 1536px.
+    const style = document.createElement('style');
+    style.textContent = '.hidden { display: none; }';
+    document.head.appendChild(style);
+    try {
+      setup({ tasksOpen: 2, notesTotal: 1, filesTotal: 5 });
+      ['Chat', 'Arquivos', 'IA', 'CRM 360°', 'SalesView', 'Journey', 'Tarefas', 'Notas'].forEach((nome) => {
+        expect(screen.getByRole('tab', { name: nome })).toBeInTheDocument();
+      });
+    } finally {
+      style.remove();
+    }
+  });
 
-    expect(screen.getByRole('button', { name: 'TALK ME' })).toBeInTheDocument();
-    expect(within(screen.getByRole('tablist')).queryByRole('button', { name: 'TALK ME' })).not.toBeInTheDocument();
+  it('mantém a ação no extremo direito sem deslocar abas nem contadores', () => {
+    const action = <button type="button">TALK ME</button>;
+    render(
+      <ConversationTabs
+        activeTab="chat"
+        onTabChange={vi.fn()}
+        counts={{ ...ZERO, tasksOpen: 7 }}
+        trailingAction={action}
+      />,
+    );
+
+    const barra = screen.getByTestId('conversation-tabs');
+    const tablist = screen.getByRole('tablist');
+    const trailing = screen.getByTestId('conversation-tabs-trailing-action');
+    expect(trailing).toContainElement(screen.getByRole('button', { name: 'TALK ME' }));
+    expect(barra.lastElementChild).toBe(trailing);
+    expect(trailing).toHaveClass('shrink-0');
+    expect(tablist).toHaveClass('min-w-0', 'flex-1', 'overflow-x-auto');
+    expect(within(tablist).queryByRole('button', { name: 'TALK ME' })).not.toBeInTheDocument();
+    expect(within(tablist).getByTestId('conversation-tab-count-tasks')).toHaveTextContent('7');
     expect(screen.getAllByRole('tab')).toHaveLength(8);
   });
 });

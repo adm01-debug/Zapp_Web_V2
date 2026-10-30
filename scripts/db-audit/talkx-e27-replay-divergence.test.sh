@@ -45,9 +45,8 @@ docker info >/dev/null 2>&1 || fail 'Docker daemon nao acessivel'
 
 duplicada="$repo_root/supabase/migrations/20260927500001_talkx_e27_realtime_campaign_events.sql"
 segunda="$repo_root/supabase/migrations/20260927570000_talkx_e27_realtime_campaign_events.sql"
-[[ -f "$segunda" ]] || segunda="$repo_root/supabase/migrations/_superseded/20260927570000_talkx_e27_realtime_campaign_events.sql"
 [[ -f "$duplicada" ]] || fail 'migration 20260927500001 (irma duplicada) nao existe'
-[[ -f "$segunda" ]] || fail 'migration 20260927570000 nao existe (nem em migrations/ nem em _superseded/)'
+[[ -f "$segunda" ]] || fail 'migration 20260927570000 nao existe'
 allowlist="$repo_root/scripts/db-audit/replay-known-failures.json"
 [[ -f "$allowlist" ]] || fail 'replay-known-failures.json nao existe'
 
@@ -133,4 +132,4 @@ fi
 grep -q 'REPLAY=VERMELHO' "$tmpdir/novos.out" \
   || fail "D: falha inesperada nao saiu como VERMELHO: $(cat "$tmpdir/novos.out")"
 
-printf '[OK] Talk X E27 (#464): divergencia medida e registrada \342\200\224 20260927570000 falha em 42710 por causa da irma duplicada 20260927500001; a publicacao termina com as 3 tabelas do E27 e nenhuma migration nova e necessaria.\n'
+printf '[OK] Talk X E27 (#464): divergencia medida e registrada — 20260927570000 falha em 42710 por causa da irma duplicada 20260927500001; a publicacao termina com as 3 tabelas do E27 e nenhuma migration nova e necessaria.\n'

@@ -36,17 +36,73 @@ vi.mock('@/components/talkx/useCampaignEditor', async () => {
     MESSAGE_TEMPLATES: [],
     MEDIA_TYPES: [],
     DEFAULT_SCHEDULE_TIMEZONE: 'America/Sao_Paulo',
+    CAMPAIGN_NAME_MIN_LENGTH: 3,
+    CAMPAIGN_NAME_MAX_LENGTH: 200,
+    MESSAGE_LIMIT: 4096,
+    MORE_VARIABLES: [],
+    // X123 — a tela traduz o código da RPC pelo helper do hook; no dublê, sem
+    // código reconhecível, o aviso continua sendo o texto cru.
+    explainDraftSaveError: (message: string | null | undefined) => message ?? null,
+    // X131 — o wizard agora lê `completedRules` do hook para decidir se o
+    // resumo está habilitado; o mock do layout precisa exportar a função.
+    completedRules: (rules: { groups: unknown[] }) => rules,
   };
 });
 
 vi.mock('@/hooks/crm/useContactCustomFields', () => ({
   useContactCustomFields: () => ({ fields: [] }),
 }));
+// T09 — a revisão consome `useTalkXInsights` (recomendações reais); aqui o
+// motor fica sem dados, como antes da mudança (só o mock da dependência nova,
+// nenhuma asserção alterada).
+vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
+  useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
+}));
+// X051: a revisão do wizard resolve o disparo pelo controlador único
+// (`useTalkXLifecycle` → `useTalkX`, que usa react-query). Sem a porta mockada o
+// passo 4 cairia em "No QueryClient set"; este teste anda pelos quatro passos e
+// não exercita as operações do ciclo de vida.
+vi.mock('@/hooks/integrations/useTalkX', () => ({
+  useTalkX: () => ({
+    startCampaign: vi.fn(), pauseCampaign: vi.fn(), cancelCampaign: vi.fn(),
+    updateCampaign: { mutateAsync: vi.fn() },
+  }),
+}));
 vi.mock('@/hooks/integrations/useTalkXSegments', () => ({
   useAudienceEstimate: () => ({ data: undefined, isFetching: false }),
   RULE_FIELDS: [{ value: 'company', label: 'Empresa', kind: 'text' }],
   RULE_OPS: { text: [{ value: 'eq', label: 'é' }] },
 }));
+// X131 (TL-143) — o rail do wizard passou a ler o resumo pelo servidor
+// (react-query). Sem este dublê, qualquer teste que monte o wizard de verdade
+// precisaria de um QueryClientProvider só por causa do rail (sempre visível,
+// em qualquer passo) — o teste aqui prova a navegação/pendência, não o resumo.
+vi.mock('@/hooks/integrations/useTalkXCampaignSummary', () => ({
+  useTalkXCampaignSummary: () => ({
+    total: 0, eligible: 0, suppressed: 0, isLoading: false, isError: false, error: null, refetch: vi.fn(),
+  }),
+}));
+
+// X118 (TL-072) — o passo "Mensagem" passou a montar o gerenciador de links
+// rastreáveis: ele lê a permissão (`useCRMAdminAccess`, que exige `AuthProvider`)
+// e a lista de links (`useTalkXLinks`, que exige `QueryClient`). Este teste prova
+// o encaixe do wizard no shell e não monta o provider de autenticação — as duas
+// consultas ficam dubladas, como já se faz com `useContactCustomFields` acima.
+// `importOriginal` mantém os helpers puros do módulo (`buildTalkxLinkPlaceholder`),
+// que o wizard usa para montar as variáveis conhecidas do editor.
+vi.mock('@/hooks/crm/useCRMAdminAccess', () => ({ useCRMAdminAccess: () => false }));
+vi.mock('@/hooks/integrations/useTalkXLinks', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/hooks/integrations/useTalkXLinks')>();
+  return {
+    ...actual,
+    useTalkXLinks: () => ({
+      links: [], clicks: {}, isLoading: false, isError: false, error: null,
+      refetch: vi.fn(),
+      upsertLink: { mutate: vi.fn(), isPending: false },
+      deleteLink: { mutate: vi.fn(), isPending: false },
+    }),
+  };
+});
 
 import { TalkXCampaignWizard } from '@/components/talkx/TalkXCampaignWizard';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -64,14 +120,14 @@ function editorState() {
     description: '', setDescription: vi.fn(),
     objective: 'sales', setObjective: vi.fn(),
     audienceSource: 'segment', setAudienceSource: vi.fn(),
-    segments: [], segmentId: '', setSegmentId: vi.fn(),
-    selectedSegment: null, segmentEstimate: undefined,
+    segments: [], segmentIds: [], setSegmentIds: vi.fn(), segmentSearch: '', setSegmentSearch: vi.fn(), toggleSegmentId: vi.fn(),
+    selectedSegments: [], segmentEstimates: {},
     audienceCount: 10,
     audienceRules: { groups: [{ id: 'g1', match: 'and', rules: [] }] },
     addAudienceRule: vi.fn(), updateAudienceRule: vi.fn(), removeAudienceRule: vi.fn(), setGroupMatch: vi.fn(),
     contactSearch: '', setContactSearch: vi.fn(),
-    companyFilter: 'all', setCompanyFilter: vi.fn(), tagFilter: 'all', setTagFilter: vi.fn(),
-    companies: [], tags: [], filteredContacts: [], toggleContact: vi.fn(), selectAll: vi.fn(), clearFilters: vi.fn(),
+    companyFilter: 'all', setCompanyFilter: vi.fn(),
+    companies: [], filteredContacts: [], toggleContact: vi.fn(), selectAll: vi.fn(), clearFilters: vi.fn(),
     templates: [], templateId: '', applyTemplate: vi.fn(), selectedTemplate: null,
     messageTemplate: '', setMessageTemplate: vi.fn(), insertVariable: vi.fn(),
     mediaUrl: '', setMediaUrl: vi.fn(), mediaType: '', setMediaType: vi.fn(), hasMedia: false, toggleMedia: vi.fn(),

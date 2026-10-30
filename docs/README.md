@@ -20,6 +20,7 @@
 | [FUNCTIONALITIES_INVENTORY.md](./FUNCTIONALITIES_INVENTORY.md) | Inventário de funcionalidades |
 | [architecture/](./architecture/) | Diagramas de arquitetura |
 | [catalogo/](./catalogo/README.md) | Módulo Catálogo — plano de 100 etapas, estado inicial, paridade com os mocks |
+| [multiplix/CHANGELOG_MULTIPLIX.md](./multiplix/CHANGELOG_MULTIPLIX.md) | Módulo Multiplix — registro de execução do módulo (disparos por departamento, público, fila) |
 | [design/PLANO_REDESIGN_ARQUIVOS_CHAT_PANEL_50_ETAPAS_2026-10-01.md](./design/PLANO_REDESIGN_ARQUIVOS_CHAT_PANEL_50_ETAPAS_2026-10-01.md) | Aba Arquivos do chat — plano de 50 etapas (Layout Grid/Lista/Tabela + Selecionar, padrão Promo Gifts V4) |
 
 ### 🔌 Integrações
@@ -93,4 +94,4 @@
 
 ---
 
-**Última atualização:** 2026-10-01
+**Última atualização:** 2026-10-08

@@ -25,6 +25,7 @@ export function ThemeCustomizer() {
 
   return (
     <div className="space-y-6 w-full min-w-0">
+      <h1 className="sr-only">Aparência</h1>
       {/* Back + Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -32,6 +33,7 @@ export function ThemeCustomizer() {
             variant="ghost"
             size="icon"
             className="h-8 w-8 rounded-lg"
+            aria-label="Voltar"
             onClick={() => window.history.back()}
           >
             <ChevronLeft className="w-4 h-4" />
@@ -40,7 +42,7 @@ export function ThemeCustomizer() {
             <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
               <Palette className="w-5 h-5 text-primary" />
               Skins
-              <span className="rounded-md border border-primary/30 bg-primary/15 px-2 py-0.5 text-2xs font-medium text-primary">
+              <span className="rounded-md border border-primary/30 bg-primary/15 px-2 py-0.5 text-2xs font-medium text-[hsl(var(--primary-text))]">
                 ✓ {activeName}
               </span>
             </h3>
@@ -51,7 +53,7 @@ export function ThemeCustomizer() {
           <Button variant="default" size="sm" data-testid="theme-save" className="relative" onClick={handleSave}>
             <Save className="w-4 h-4 mr-1" /> Salvar
             {hasUnsavedChanges && (
-              <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full bg-destructive" />
+              <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full bg-warning" />
             )}
           </Button>
           <ThemeResetDialog onConfirm={handleReset} />
@@ -130,7 +132,7 @@ export function ThemeCustomizer() {
       <motion.div initial={motionInitial} animate="visible" variants={fadeUp} custom={1}>
         <h4 className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Gamepad2 className="h-4 w-4" /> Skins Opera GX <span>({gxPresets.length})</span>
-          <span className="rounded-md border border-primary/30 bg-primary/15 text-3xs font-bold uppercase tracking-wide text-primary px-1.5 py-0.5">
+          <span className="rounded-md border border-primary/30 bg-primary/15 text-3xs font-bold uppercase tracking-wide text-[hsl(var(--primary-text))] px-1.5 py-0.5">
             GAMER
           </span>
         </h4>

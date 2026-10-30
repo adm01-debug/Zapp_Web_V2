@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Loader2, FileText, Volume2, RefreshCw, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { toast } from '@/hooks/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { log } from '@/lib/logger';
@@ -42,7 +43,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
   // Realtime subscription for transcription updates
   useEffect(() => {
     const channel = supabase
-      .channel(`transcription-${messageId}`)
+      .channel(uniqueRealtimeTopic(`transcription-${messageId}`))
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `id=eq.${messageId}` },
         (payload) => {
           const newData = payload.new as { transcription_status?: string; transcription?: string };
@@ -58,24 +59,32 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
     setIsTranscribing(true); setTranscriptionStatus('processing'); setShowTranscription(true);
     try {
       const freshUrl = await resolveAudioUrl(audioUrl);
+      // PE-55/PD-64: o servidor é a ÚNICA fonte. A Edge `ai-transcribe-audio` grava
+      // `transcription`/`transcription_status` com service_role (processing →
+      // completed/failed) e reusa o texto em re-execução; o cliente só INVOCA e LÊ
+      // (a linha da mensagem chega pelo realtime acima) — daqui não sai escrita.
       const { data, error } = await supabase.functions.invoke('ai-transcribe-audio', { body: { audioUrl: freshUrl, messageId } });
       if (error) throw error;
+      if (!isMountedRef.current) return;
       if (data?.fallback) {
-        if (!isMountedRef.current) return;
         setTranscriptionStatus('failed');
         toast({ title: 'Áudio não suportado', description: data.errorMessage || 'Não foi possível transcrever.', variant: 'destructive' });
         return;
       }
-      if (data?.transcription) {
-        if (isMountedRef.current) { setTranscription(data.transcription); setTranscriptionStatus('completed'); }
-        await supabase.from('messages').update({ transcription: data.transcription, transcription_status: 'completed' }).eq('id', messageId);
+      const text = typeof data?.transcription === 'string' ? data.transcription.trim() : '';
+      if (text) {
+        setTranscription(text);
+        setTranscriptionStatus('completed');
+      } else {
+        // Resposta sem erro e sem texto não é sucesso silencioso: sem isto o player
+        // ficaria preso em "Transcrevendo..." para sempre. Falha visível.
+        setTranscriptionStatus('failed');
+        toast({ title: 'Erro na transcrição', description: 'Não foi possível transcrever o áudio.', variant: 'destructive' });
       }
     } catch (error) {
       log.error('Transcription error:', error);
-      if (isMountedRef.current) {
-        setTranscriptionStatus('failed');
-        setTranscription(null);
-      }
+      // Uma nova falha não apaga a transcrição já conhecida (estado verdadeiro).
+      if (isMountedRef.current) setTranscriptionStatus('failed');
       toast({ title: 'Erro na transcrição', description: 'Não foi possível transcrever o áudio.', variant: 'destructive' });
     } finally { if (isMountedRef.current) setIsTranscribing(false); }
   };
@@ -86,21 +95,23 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
     switch (transcriptionStatus) {
       case 'processing':
         return (
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1.5 px-2 py-1 rounded-full text-3xs font-medium', isSent ? 'border border-primary/40 text-primary' : 'bg-primary/10 text-primary')}>
+          <motion.div role="status" aria-live="polite" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1.5 px-2 py-1 rounded-full text-3xs font-medium', isSent ? 'border border-primary/40 text-primary' : 'bg-primary/10 text-primary')}>
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}><Sparkles className="w-3 h-3" /></motion.div>
             <span>Transcrevendo...</span>
           </motion.div>
         );
       case 'completed':
         return transcription ? (
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1 px-2 py-1 rounded-full text-3xs font-medium', isSent ? 'bg-success/20 text-success' : 'bg-success/10 text-success')}>
+          <motion.div role="status" aria-live="polite" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1 px-2 py-1 rounded-full text-3xs font-medium', isSent ? 'bg-success/20 text-success' : 'bg-success/10 text-success')}>
             <CheckCircle2 className="w-3 h-3" /><span>Transcrito</span>
           </motion.div>
         ) : null;
       case 'failed':
         return (
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className={cn('flex items-center gap-1 px-2 py-1 rounded-full text-3xs font-medium cursor-pointer', isSent ? 'bg-destructive/20 text-destructive' : 'bg-destructive/10 text-destructive')} onClick={handleTranscribe}>
-            <AlertCircle className="w-3 h-3" /><span>Falhou - Tentar novamente</span>
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}>
+            <button type="button" aria-label="Tentar transcrever novamente" onClick={handleTranscribe} className={cn('flex items-center gap-1 px-2 py-1 rounded-full text-3xs font-medium cursor-pointer', isSent ? 'bg-destructive/20 text-destructive' : 'bg-destructive/10 text-destructive')}>
+              <AlertCircle className="w-3 h-3" /><span>Falhou - Tentar novamente</span>
+            </button>
           </motion.div>
         );
       default: return null;
@@ -112,7 +123,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
       <audio ref={audioRef} src={resolvedUrl || undefined} preload="metadata" crossOrigin="anonymous" />
       <div className={cn('flex items-center gap-3 p-2 rounded-lg min-w-[200px]', isSent ? 'bg-primary-foreground' : 'bg-muted/50')}>
         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-          <Button variant="ghost" size="icon" className={cn('w-10 h-10 rounded-full', hasError ? 'bg-destructive/10 hover:bg-destructive/20 text-destructive' : 'bg-primary/10 hover:bg-primary/20 text-primary')} onClick={togglePlay} disabled={isLoading}>
+          <Button variant="ghost" size="icon" aria-label={hasError ? 'Reproduzir áudio novamente' : isLoading ? 'Carregando áudio' : isPlaying ? 'Pausar áudio' : 'Reproduzir áudio'} className={cn('w-10 h-10 rounded-full [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:min-h-[44px]', hasError ? 'bg-destructive/10 hover:bg-destructive/20 text-destructive' : 'bg-primary/10 hover:bg-primary/20 text-primary')} onClick={togglePlay} disabled={isLoading}>
             {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : hasError ? <RefreshCw className="w-5 h-5" /> : isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
           </Button>
         </motion.div>
@@ -148,6 +159,8 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
         </motion.div>
         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
           <Button variant="ghost" size="icon" className={cn('w-8 h-8 relative', showTranscription && transcription ? 'text-primary' : (isSent ? 'text-primary' : 'text-muted-foreground'))}
+            aria-label={transcription ? 'Mostrar/ocultar transcrição' : 'Transcrever áudio'}
+            aria-expanded={transcription ? showTranscription : undefined}
             onClick={() => { if (!transcription && !isProcessing) void handleTranscribe(); else setShowTranscription(!showTranscription); }} disabled={isProcessing} title={transcription ? 'Mostrar/ocultar transcrição' : 'Transcrever áudio'}>
             {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
             {transcription && !showTranscription && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-success" />}
@@ -156,7 +169,7 @@ export function AudioMessagePlayer({ audioUrl, messageId, isSent, existingTransc
       </div>
 
       <AnimatePresence>
-        {(transcriptionStatus === 'processing' || transcriptionStatus === 'failed') && (
+        {(transcriptionStatus === 'processing' || transcriptionStatus === 'failed' || transcriptionStatus === 'completed') && (
           <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }}>{getStatusIndicator()}</motion.div>
         )}
       </AnimatePresence>

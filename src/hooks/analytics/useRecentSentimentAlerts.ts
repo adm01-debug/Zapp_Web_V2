@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { subDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { normalizeSentiment, type Sentiment } from '@/lib/ai-vocabulary';
+import { fetchAllRows } from '@/lib/fetchAllRows';
+import { appDayStart } from '@/lib/localDay';
 
 /**
  * Sentimento canônico que vira alerta: negativos em qualquer intensidade
@@ -43,18 +44,28 @@ export function useRecentSentimentAlerts(days: number, limit = 6) {
   return useQuery({
     queryKey: ['sentiment-recent-alerts', days, limit],
     queryFn: async () => {
-      const since = subDays(new Date(), days).toISOString();
-      const { data, error } = await supabase
-        .from('conversation_analyses')
-        .select('id, contact_id, department, sentiment, summary, created_at, contacts(name)')
-        .gte('created_at', since)
-        .order('created_at', { ascending: false })
-        .limit(400);
-      if (error) throw error;
-      const rows = (data ?? []) as Array<{
-        id: string; contact_id: string; department: string | null; sentiment: string; summary: string; created_at: string;
+      // Janela em DIA DE CALENDÁRIO do app, igual à do gráfico.
+      const since = appDayStart(days - 1).toISOString();
+      // Leitura PAGINADA de toda a janela — sem `.limit(400)`. O limite cortava a
+      // amostra e os totais por departamento (e o "Ver todos (N)") saíam de 400
+      // linhas em vez do período inteiro (achado P1-D). Ordena por `created_at`
+      // desc com desempate por `id` (chave única) para a paginação não repetir
+      // nem pular linhas e para os alertas já virem do mais novo ao mais antigo.
+      const { rows, incomplete, error } = await fetchAllRows<{
+        id: string; contact_id: string; department: string | null; sentiment: string | null; summary: string; created_at: string;
         contacts: { name: string | null } | { name: string | null }[] | null;
-      }>;
+      }>((from, to) =>
+        supabase
+          .from('conversation_analyses')
+          .select('id, contact_id, department, sentiment, summary, created_at, contacts(name)')
+          .gte('created_at', since)
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(from, to),
+      );
+      if (error) throw new Error(error.message);
+      if (incomplete) throw new Error('Leitura dos alertas de sentimento ficou incompleta');
+
       const nameOf = (c: typeof rows[number]['contacts']) => (Array.isArray(c) ? c[0]?.name : c?.name) ?? 'Contato';
 
       const alerts: RecentSentimentAlert[] = rows

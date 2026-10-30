@@ -19,6 +19,13 @@ import { ContactDetailPanel } from '../ContactDetailPanel';
 import type { ExternalProduct } from '@/hooks/integrations/useExternalCatalog';
 import type { ContactResult } from '@/components/catalog/useSendProduct';
 
+
+// Y29 — ExternalProductCatalog lê `profiles.can_download` (useDownloadPermission);
+// aqui a permissão é concedida para o teste observar o caminho de sempre.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 vi.mock('sonner', () => ({
   toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
 }));

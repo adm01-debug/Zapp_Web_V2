@@ -16,15 +16,20 @@ vi.mock('sonner', () => ({
 }));
 
 // Mock framer-motion (same pattern as ImagePreviewDownload.test.tsx)
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef(({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>, ref: React.Ref<HTMLDivElement>) =>
-      React.createElement('div', { ...filterDomProps(props), ref }, children)),
-    img: React.forwardRef((props: Record<string, unknown>, ref: React.Ref<HTMLImageElement>) =>
-      React.createElement('img', { ...filterDomProps(props), ref })),
-  },
-  AnimatePresence: ({ children }: React.PropsWithChildren) => React.createElement(React.Fragment, null, children),
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    motion: {
+        div: React.forwardRef(({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>, ref: React.Ref<HTMLDivElement>) =>
+          React.createElement('div', { ...filterDomProps(props), ref }, children)),
+        img: React.forwardRef((props: Record<string, unknown>, ref: React.Ref<HTMLImageElement>) =>
+          React.createElement('img', { ...filterDomProps(props), ref })),
+      },
+      AnimatePresence: ({ children }: React.PropsWithChildren) => React.createElement(React.Fragment, null, children),
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 function filterDomProps(props: Record<string, unknown>) {
   const { whileHover, whileTap, initial, animate, exit, transition, ...rest } = props;
@@ -82,7 +87,8 @@ describe('ImagePreview - tamanho do modal (PR #818, 35% de redução)', () => {
     const onClose = vi.fn();
     render(<ImagePreview src="https://example.com/img.jpg" alt="Foto" onClose={onClose} />);
 
-    fireEvent.keyDown(window, { key: 'Escape' });
+    // Esc é tratado NO diálogo (não em listener de `window`).
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -90,8 +96,8 @@ describe('ImagePreview - tamanho do modal (PR #818, 35% de redução)', () => {
     const onClose = vi.fn();
     render(<ImagePreview src="https://example.com/img.jpg" alt="Foto" onClose={onClose} />);
 
-    fireEvent.keyDown(window, { key: 'Enter' });
-    fireEvent.keyDown(window, { key: 'a' });
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Enter' });
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'a' });
     expect(onClose).not.toHaveBeenCalled();
   });
 

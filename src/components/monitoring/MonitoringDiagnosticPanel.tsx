@@ -2,10 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Stethoscope, CheckCircle2, XCircle, AlertTriangle, Loader2, Wrench, Clock, TrendingUp, Radio, Download, FileText } from 'lucide-react';
+import { Stethoscope, CheckCircle2, XCircle, AlertTriangle, Loader2, Wrench, Clock, TrendingUp, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
 import type { DiagnosticResult } from './hooks/useEvolutionMonitoring';
 
 interface Props {
@@ -33,7 +32,7 @@ function ScoreGauge({ score }: { score: number }) {
       </motion.div>
       <div className="flex-1 space-y-1.5">
         <div className="flex justify-between text-xs text-muted-foreground"><span>Saúde</span><span>{score}/100</span></div>
-        <Progress value={score} className={cn('h-2.5 rounded-full', pc)} />
+        <Progress value={score} className={cn('h-2.5 rounded-full', pc)} aria-label="Saúde" />
         <div className="flex items-center gap-1 text-2xs text-muted-foreground">
           <TrendingUp className="w-3 h-3" />
           <span>{score >= 80 ? 'Sistema saudável' : score >= 50 ? 'Necessita atenção' : 'Ação imediata'}</span>
@@ -41,72 +40,6 @@ function ScoreGauge({ score }: { score: number }) {
       </div>
     </div>
   );
-}
-
-function exportReportTxt(d: DiagnosticResult) {
-  const lines = [
-    `=== RELATÓRIO DIAGNÓSTICO EVOLUTION API ===`,
-    `Data: ${new Date(d.timestamp).toLocaleString('pt-BR')}`,
-    `Score: ${d.overallHealth.score}/100 (${d.overallHealth.status})`, '',
-  ];
-  d.diagnostics.forEach(x => {
-    lines.push(`--- ${x.instance} ---`, `  Conexão: ${x.connectionState}`, `  Webhook: ${x.webhookSeverity}${x.webhookIssue ? ` — ${x.webhookIssue}` : ''}`);
-    if (x.webhook) { lines.push(`  URL: ${x.webhook.url}`, `  Eventos: ${x.webhook.eventsCount}`); if (x.webhook.missingCritical?.length) lines.push(`  Ausentes: ${x.webhook.missingCritical.join(', ')}`); }
-    if (x.messageFlow) lines.push(`  Fluxo: ↓${x.messageFlow.lastHour.incoming} ↑${x.messageFlow.lastHour.outgoing} (${x.messageFlow.flowHealth})`);
-    if (x.autoFix) lines.push(`  Auto-fix: ${x.autoFix.applied ? 'Aplicado' : 'Falhou'}`);
-    lines.push('');
-  });
-  const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `diagnostico-${new Date().toISOString().slice(0, 10)}.txt`; a.click();
-  URL.revokeObjectURL(url);
-}
-
-async function exportReportPdf(d: DiagnosticResult) {
-  try {
-    const { jsPDF } = await import('jspdf');
-    const doc = new jsPDF();
-    const date = new Date(d.timestamp).toLocaleString('pt-BR');
-    let y = 20;
-
-    doc.setFontSize(18);
-    doc.text('Relatório Diagnóstico', 14, y);
-    y += 8;
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Evolution API — ${date}`, 14, y);
-    y += 12;
-
-    // Score
-    doc.setFontSize(14);
-    doc.setTextColor(d.overallHealth.score >= 80 ? 34 : d.overallHealth.score >= 50 ? 180 : 220, d.overallHealth.score >= 80 ? 139 : d.overallHealth.score >= 50 ? 130 : 50, d.overallHealth.score >= 80 ? 34 : d.overallHealth.score >= 50 ? 0 : 50);
-    doc.text(`Score: ${d.overallHealth.score}/100 (${d.overallHealth.status})`, 14, y);
-    y += 12;
-
-    doc.setTextColor(0);
-    d.diagnostics.forEach(x => {
-      if (y > 260) { doc.addPage(); y = 20; }
-      doc.setFontSize(12);
-      doc.text(`${x.instance}`, 14, y);
-      y += 7;
-      doc.setFontSize(10);
-      doc.text(`Conexão: ${x.connectionState}`, 20, y); y += 6;
-      doc.text(`Webhook: ${x.webhookSeverity}${x.webhookIssue ? ` — ${x.webhookIssue}` : ''}`, 20, y); y += 6;
-      if (x.webhook) {
-        doc.text(`URL: ${x.webhook.url}`, 20, y); y += 6;
-        doc.text(`Eventos configurados: ${x.webhook.eventsCount}`, 20, y); y += 6;
-        if (x.webhook.missingCritical?.length) { doc.text(`Ausentes: ${x.webhook.missingCritical.join(', ')}`, 20, y); y += 6; }
-      }
-      if (x.messageFlow) { doc.text(`Fluxo: Recebidas ${x.messageFlow.lastHour.incoming} | Enviadas ${x.messageFlow.lastHour.outgoing} (${x.messageFlow.flowHealth})`, 20, y); y += 6; }
-      if (x.autoFix) { doc.text(`Auto-fix: ${x.autoFix.applied ? 'Aplicado com sucesso' : 'Falhou'}`, 20, y); y += 6; }
-      y += 6;
-    });
-
-    doc.save(`diagnostico-evolution-${new Date().toISOString().slice(0, 10)}.pdf`);
-    toast.success('PDF exportado com sucesso!');
-  } catch {
-    toast.error('Erro ao gerar PDF');
-  }
 }
 
 interface CheckItem { label: string; status: 'ok' | 'warning' | 'error'; detail: string; action?: { label: string; onClick: () => void }; }
@@ -144,12 +77,6 @@ export function MonitoringDiagnosticPanel({ diagnostic, diagnosing, onRunDiagnos
         </Button>
         {diagnostic && (
           <div className="flex items-center gap-2 ml-auto flex-wrap">
-            <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => exportReportTxt(diagnostic)}>
-              <Download className="w-3.5 h-3.5 mr-1" />TXT
-            </Button>
-            <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => exportReportPdf(diagnostic)}>
-              <FileText className="w-3.5 h-3.5 mr-1" />PDF
-            </Button>
             <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{new Date(diagnostic.timestamp).toLocaleString('pt-BR')}</span>
           </div>
         )}

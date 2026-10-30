@@ -44,3 +44,27 @@ export const DEFAULT_ONBOARDING_STEPS: TourStep[] = [
     position: 'right',
   },
 ];
+
+/**
+ * O alvo do passo existe no DOM agora?
+ *
+ * Os alvos do tour são `[data-tour=...]`, atributos que só o `Sidebar` do desktop
+ * produz (`SidebarNavItem`, sino de notificações e botão de tema). O casco do
+ * celular monta `MobileShell` e não tem nenhum deles, então lá o tour não tem por
+ * onde passar (SHELL-05).
+ */
+export function alvoDeTourNoDom(seletor: string): boolean {
+  return typeof document !== 'undefined' && document.querySelector(seletor) !== null;
+}
+
+/**
+ * Passos do tour cujo alvo existe no DOM agora (SHELL-05).
+ *
+ * Com a lista vazia não há o que mostrar: o overlay não abre e o `WelcomeModal`
+ * esconde o botão "Iniciar Tour Guiado" — nunca um cartão de passo vazio.
+ */
+export function passosDoTourDisponiveis(
+  steps: TourStep[] = DEFAULT_ONBOARDING_STEPS,
+): TourStep[] {
+  return steps.filter((passo) => alvoDeTourNoDom(passo.target));
+}

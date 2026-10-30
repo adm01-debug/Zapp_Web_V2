@@ -2,11 +2,11 @@
  * E72 (auditoria de GitHub Actions de 2026-10-01, achado G-32) — politica dos
  * artifacts publicados pelo `ci.yml`.
  *
- * O que o plano pede (docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md,
- * item E72; docs/plans/PLANO_SEGUNDA_LEVA_CARTOES_2026-10-08.md, SL-100):
+ * Contrato atual:
  *   - `dist`              -> so em `workflow_dispatch` (a Vercel builda sozinha);
- *   - `coverage-report`   -> so na main (push), com 7 dias de retencao;
- *   - `playwright-report` -> so `if: failure()`.
+ *   - `playwright-report` -> so `if: failure()`;
+ *   - coverage nao e anexada: os testes rodam em shards sem cobertura e o job
+ *     de build nao recebe os arquivos dos shards; o upload anterior era no-op.
  * E a verificacao que o plano escreve: "PR verde cria 0 artifacts".
  * Motivo medido: 2.333 artifacts acumulados em 01/10/2026 porque TODO PR
  * publicava os tres uploads (nenhum deles e consumido num PR).
@@ -188,7 +188,7 @@ const esperados = [
   ['push na main (deploy e da Vercel)', CENARIOS.pushMain, false],
 ];
 
-test.skip('E72: `dist` so sai em workflow_dispatch', () => {
+test('E72: `dist` so sai em workflow_dispatch', () => {
   const { expr, rodaEm, bloco } = upload('Upload build artifacts');
   for (const [nome, ctx, esperado] of esperados) {
     assert.equal(rodaEm(ctx), esperado, `${nome} nao pode publicar dist (if: ${expr})`);
@@ -197,27 +197,13 @@ test.skip('E72: `dist` so sai em workflow_dispatch', () => {
   assert.equal(retencao(bloco), 3);
 });
 
-test.skip('E72 + R3: `coverage-report` so quando o piso falha, com 7 dias', () => {
-  // R3 (docs/ci/ARQUITETURA_SEM_DESPERDICIO.md): a cobertura agora e calculada no PR,
-  // juntando os blobs dos shards; o relatorio so tem uso quando o piso reprova.
-  const { expr, rodaEm, bloco } = upload('Upload coverage report');
-  assert.equal(rodaEm(CENARIOS.prVerde), false, `PR verde nao publica cobertura (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.pushMain), false, `main verde nao publica cobertura (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.prVermelho), true, `piso reprovado no PR publica o relatorio (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.pushMainVermelho), true, `piso reprovado na main publica o relatorio (if: ${expr})`);
-  assert.equal(rodaEm(CENARIOS.cancelado), false, `run cancelado nao publica (if: ${expr})`);
-  assert.equal(retencao(bloco), 7);
+test('E72: nao tenta anexar coverage que os shards nao geram nem agregam', () => {
+  assert.doesNotMatch(ci, /name:\s*.*coverage-report/u);
+  assert.doesNotMatch(ci, /path:\s*coverage\//u);
+  assert.doesNotMatch(ci, /vitest run[^\n]*--coverage/u);
 });
 
-test.skip('R3: blob de shard e transferencia entre jobs do mesmo run — 1 dia, nunca diagnostico', () => {
-  const { bloco } = { bloco: blocoStep('Entregar o blob do shard ao agregador') };
-  assert.match(bloco, /uses:\s*actions\/upload-artifact@/u);
-  assert.match(bloco, /name:\s*vitest-blob-\$\{\{\s*matrix\.shard\s*\}\}/u);
-  assert.equal(retencao(bloco), 1, 'blob de transferencia nao pode viver mais de 1 dia');
-  assert.match(ci, /gh run download "\$RUN_ID"[^\n]*--pattern 'vitest-blob-\*'/u, 'o agregador tem de consumir os blobs');
-});
-
-test.skip('E72: `playwright-report` so quando o E2E falha', () => {
+test('E72: `playwright-report` so quando o E2E falha', () => {
   const { expr, rodaEm, bloco } = upload('Upload Playwright report');
   for (const [nome, ctx] of [['PR verde', CENARIOS.prVerde], ['push na main verde', CENARIOS.pushMain]]) {
     assert.equal(rodaEm(ctx), false, `${nome} nao pode publicar o report (if: ${expr})`);
@@ -228,12 +214,9 @@ test.skip('E72: `playwright-report` so quando o E2E falha', () => {
   assert.equal(retencao(bloco), 3);
 });
 
-// Transferencia entre jobs do mesmo run (R3): consumida no proprio run e expira em 1 dia.
-const TRANSFERENCIA = /^📦 Entregar o blob do shard ao agregador$/u;
-
-test.skip('E72: PR verde cria 0 artifacts de diagnostico (a verificacao escrita no plano)', () => {
-  const uploads = todosOsUploads().filter(({ nome }) => !TRANSFERENCIA.test(nome));
-  assert.ok(uploads.length >= 3, `esperava os 3 uploads do ci.yml, achei ${uploads.length}`);
+test('E72: PR verde cria 0 artifacts (a verificacao escrita no plano)', () => {
+  const uploads = todosOsUploads();
+  assert.equal(uploads.length, 2, `dist manual e relatorio Playwright sao os unicos uploads, achei ${uploads.length}`);
   const ligados = uploads.filter(({ expr }) => avaliar(expr, CENARIOS.prVerde));
   assert.deepEqual(
     ligados.map(({ nome }) => nome),

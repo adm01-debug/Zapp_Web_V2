@@ -24,7 +24,7 @@
 import { test, expect, type Page, type Route } from '@playwright/test';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { installFakeSession } from './fixtures/talkx-demo';
+import { installFakeSession, mockTalkXAuth } from './fixtures/talkx-demo';
 
 const FIXTURES_DIR = join(import.meta.dirname, 'fixtures', 'talkx-launch');
 const STUB_HEADER = 'x-talkx-launch-stub';
@@ -85,6 +85,7 @@ async function prepararTalkXLaunch(page: Page): Promise<TalkXLaunchHarness> {
   let marcados = 0;
 
   await installFakeSession(page);
+  await mockTalkXAuth(page);
 
   // Guarda de escape: qualquer resposta de talkx-send sem o cabeçalho do stub
   // só pode ter vindo de fora do stub (produção) — é falha.
@@ -99,6 +100,12 @@ async function prepararTalkXLaunch(page: Page): Promise<TalkXLaunchHarness> {
     const url = new URL(route.request().url());
     const metodo = route.request().method();
     const caminho = url.pathname.replace(/^.*\/rest\/v1\/?/, '');
+
+    // O shell consulta estes contratos antes de montar a tela de campanhas.
+    // A fixture de identidade compartilhada fornece as respostas completas.
+    if (caminho === 'rpc/app_bootstrap' || caminho === 'user_settings') {
+      return route.fallback();
+    }
 
     if (caminho.startsWith('rpc/')) {
       const rpc = caminho.slice('rpc/'.length);
@@ -160,18 +167,18 @@ test.describe('Talk X · lançamento com provedor falso', () => {
     await page.goto('/?view=talkx');
     await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible();
     await expect(page.getByText(CAMPAIGN_NAME).first()).toBeVisible();
+    await page.getByRole('button', { name: 'Ver todas' }).click();
 
-    // O rótulo do botão do menu é exatamente "Ações" (sem `exact` o seletor casa
-    // "Notificações", que também contém "ações").
-    const menuAcoes = () => page.getByRole('button', { name: 'Ações', exact: true }).first();
+    const menuAcoes = () => page.getByRole('button', { name: `Ações de ${CAMPAIGN_NAME}` });
 
     // 1) LANÇAR — menu "Ações" da linha → "Iniciar agora" → confirmar.
     await menuAcoes().click();
     await page.getByRole('menuitem', { name: 'Iniciar agora', exact: true }).click();
-    // O TalkXConfirmDialog é um `alertdialog`.
+    // O TalkXLifecycleDialog (X051) é um `alertdialog`; o rótulo de confirmar
+    // do hook é "Confirmar envio".
     const confirmarInicio = page.getByRole('alertdialog');
     await expect(confirmarInicio).toBeVisible();
-    await confirmarInicio.getByRole('button', { name: 'Iniciar envio', exact: true }).click();
+    await confirmarInicio.getByRole('button', { name: 'Confirmar envio', exact: true }).click();
 
     await expect.poll(() => harness.envios.length, { timeout: 10_000 }).toBe(1);
     expect(harness.envios[0]).toEqual({ campaignId: CAMPAIGN_ID, action: 'start' });
@@ -207,6 +214,8 @@ test.describe('Talk X · lançamento com provedor falso', () => {
     await page.getByRole('button', { name: 'Cancelar campanha', exact: true }).click();
     const dialogoCancelar = page.getByRole('alertdialog');
     await expect(dialogoCancelar).toBeVisible();
+    // Este diálogo é o LOCAL do monitor (TalkXCampaignRunning), não o do hook —
+    // o rótulo do confirmar segue o de sempre.
     await dialogoCancelar.getByRole('button', { name: 'Confirmar cancelamento', exact: true }).click();
 
     await expect.poll(() => harness.envios.length, { timeout: 10_000 }).toBe(4);

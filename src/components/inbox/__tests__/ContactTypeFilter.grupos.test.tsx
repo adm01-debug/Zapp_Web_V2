@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import {
   ContactTypeFilter,
   filterByContactType,
@@ -56,5 +57,22 @@ describe('ContactTypeFilter — classificação de grupo (R2-INB-055)', () => {
     render(<ContactTypeFilter value={null} onChange={() => {}} conversations={conversas} />);
     fireEvent.keyDown(screen.getByRole('combobox'), { key: 'ArrowDown' });
     expect(screen.getByRole('option', { name: /Todos os Grupos/ })).toHaveTextContent('1');
+  });
+
+  it('o combobox tem aria-label acessível', () => {
+    render(<ContactTypeFilter value={null} onChange={() => {}} conversations={conversas} />);
+    expect(screen.getByRole('combobox', { name: 'Tipo de contato' })).toBeInTheDocument();
+  });
+
+  it('o axe não acusa `button-name` na barra de tipo de contato', async () => {
+    const { container } = render(
+      <ContactTypeFilter value={null} onChange={() => {}} conversations={conversas} />,
+    );
+
+    const results = await axe(container, {
+      runOnly: { type: 'rule', values: ['button-name'] },
+    });
+
+    expect(results.violations.map((v) => v.id)).toEqual([]);
   });
 });

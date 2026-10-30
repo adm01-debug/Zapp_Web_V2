@@ -1,32 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
-import type { Message, MessageInsert } from '@/types/chat';
-import { getLogger } from '@/lib/logger';
-import { sendOutboundMessage, type OutboundMessageType } from './outbound-message.service';
+import type { Message } from '@/types/chat';
 
-const log = getLogger('ChatService');
-
-// Extract first http(s) URL from message content
-const URL_REGEX = /https?:\/\/[^\s<>"'`]+/i;
-
-async function enrichLinkPreview(messageId: string, content: string): Promise<void> {
-  const match = content.match(URL_REGEX);
-  if (!match) return;
-  const url = match[0].replace(/[).,;!?]+$/, '');
-  try {
-    const { data, error } = await supabase.functions.invoke('fetch-link-preview', {
-      body: { url },
-    });
-    if (error || !data?.preview) return;
-    await supabase
-      .from('messages')
-      .update({ link_preview: data.preview })
-      .eq('id', messageId);
-  } catch (err) {
-    log.error('Failed to enrich link preview', err);
-  }
-}
-
-export type { Message, MessageInsert };
+export type { Message };
 
 export class ChatService {
   static async fetchMessages(contactId: string, page = 0, pageSize = 1000) {
@@ -75,32 +50,6 @@ export class ChatService {
     };
   }
 
-  static async sendMessage(payload: MessageInsert) {
-    if (payload.sender !== 'agent' || !payload.contact_id || !payload.content) {
-      throw new Error('ChatService.sendMessage aceita apenas mensagens de agente com contato e conteúdo.');
-    }
-    const messageType = payload.message_type as OutboundMessageType;
-    if (!['text', 'image', 'audio', 'video', 'document', 'sticker', 'location'].includes(messageType)) {
-      throw new Error(`Tipo de mensagem não suportado pelo envio seguro: ${payload.message_type}`);
-    }
-    const result = await sendOutboundMessage({
-      contactId: payload.contact_id,
-      content: payload.content,
-      messageType,
-      mediaUrl: payload.media_url,
-      replyToId: payload.reply_to_id,
-      whatsappConnectionId: payload.whatsapp_connection_id,
-    });
-    if (messageType === 'text' && payload.content.length > 0 && !payload.link_preview) {
-      void enrichLinkPreview(result.id, payload.content);
-    }
-    return result;
-  }
-
-  static async markAsRead(messageId: string) {
-    return supabase.from('messages').update({ is_read: true }).eq('id', messageId);
-  }
-
   static async deleteMessage(messageId: string) {
     return supabase
       .from('messages')
@@ -109,10 +58,20 @@ export class ChatService {
   }
 
   static async uploadAudio(contactId: string, blob: Blob) {
-    const fileName = `${contactId}/${Date.now()}.webm`;
+    // O navegador grava no formato que suporta (Chrome/Firefox: webm/ogg; Safari: mp4).
+    // Nome e contentType seguem o tipo REAL do blob — rotular tudo como webm esconde o
+    // formato de quem lê o objeto. Sem tipo de áudio no blob, o padrão continua webm.
+    const mimeType = blob.type.split(';')[0].trim() || 'audio/webm';
+    const extByMime: Record<string, string> = {
+      'audio/webm': 'webm',
+      'audio/ogg': 'ogg',
+      'audio/mp4': 'm4a',
+      'audio/mpeg': 'mp3',
+    };
+    const fileName = `${contactId}/${Date.now()}.${extByMime[mimeType] ?? 'webm'}`;
     const { error: uploadError } = await supabase.storage
       .from('audio-messages')
-      .upload(fileName, blob, { contentType: 'audio/webm' });
+      .upload(fileName, blob, { contentType: mimeType });
 
     if (uploadError) throw uploadError;
 

@@ -131,6 +131,11 @@ describe('TalkXSegments · detalhe do segmento depois de salvar (#408)', () => {
     f.update.mockReset();
   });
 
+  // X111: o construtor aberto vive no endereço; cada teste começa na biblioteca.
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+  });
+
   it('o detalhe passa a mostrar a cópia salva, não a que estava em tela', async () => {
     const nome = await abrirEditorPeloDetalhe();
     expect(nome.value).toBe('Segmento antigo');

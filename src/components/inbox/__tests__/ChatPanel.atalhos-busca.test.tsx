@@ -45,6 +45,7 @@ vi.mock('@/lib/logger', () => ({
   getSessionId: () => 'sessao-test',
   logPerformance: (_l: string, fn: () => void) => fn(),
   logAsyncPerformance: async (_l: string, fn: () => Promise<unknown>) => fn(),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: mocks.toast }));
@@ -58,6 +59,8 @@ vi.mock('@/hooks/integrations/useEvolutionApi', () => ({ useEvolutionApi: () => 
 vi.mock('@/hooks/chat/useQuickReplies', () => ({ useQuickReplies: () => ({ quickReplies: [], incrementUseCount: vi.fn() }) }));
 
 vi.mock('@/hooks/communication/useTextToSpeech', () => ({
+  // VoiceSelector (montado pelo painel) lê a constante da voz do dispositivo.
+  LOCAL_VOICE_ID: 'local',
   useTextToSpeech: () => ({
     speak: vi.fn(), stop: vi.fn(), isLoading: false, isPlaying: false, currentMessageId: null,
     voiceId: '', setVoiceId: vi.fn(), speed: 1, setSpeed: vi.fn(),
@@ -194,5 +197,36 @@ describe('ChatPanel — atalhos de busca do composer (R2-INB-017)', () => {
     });
 
     expect(await screen.findByPlaceholderText('Buscar na conversa...')).toBeInTheDocument();
+  });
+
+  // t_15c578b9 — o atalho compare por `e.key.toLowerCase()` (Caps Lock devolve 'F')
+  // e não age por baixo de um diálogo/menu Radix aberto.
+  it('Ctrl+F com Caps Lock (e.key "F") abre a busca da conversa', async () => {
+    renderPainel();
+
+    act(() => {
+      fireEvent.keyDown(document.body, { key: 'F', ctrlKey: true });
+    });
+
+    expect(await screen.findByPlaceholderText('Buscar na conversa...')).toBeInTheDocument();
+  });
+
+  it('com diálogo aberto o Ctrl+F não abre a busca da conversa', async () => {
+    renderPainel();
+
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('data-state', 'open');
+    document.body.appendChild(dialog);
+
+    try {
+      act(() => {
+        fireEvent.keyDown(document.body, { key: 'f', ctrlKey: true });
+      });
+
+      expect(screen.queryByPlaceholderText('Buscar na conversa...')).not.toBeInTheDocument();
+    } finally {
+      dialog.remove();
+    }
   });
 });

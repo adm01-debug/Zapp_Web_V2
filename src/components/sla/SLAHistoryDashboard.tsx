@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Minus, AlertTriangle, Target, Clock, Calendar } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, AlertTriangle, RefreshCw, Target, Clock, Calendar } from 'lucide-react';
 import { useSLAHistory, HistoryPeriod } from '@/hooks/sla/useSLAHistory';
 import { cn } from '@/lib/utils';
 import { SLARateChart, SLAViolationsChart, SLABestWorstDays } from './SLACharts';
@@ -33,6 +35,7 @@ const TrendIndicator = ({ trend, inverse = false, label }: { trend: { direction:
 export const SLAHistoryDashboard = () => {
   const [period, setPeriod] = useState<HistoryPeriod>('30d');
   const { data, loading } = useSLAHistory(period);
+  const queryClient = useQueryClient();
 
   if (loading) {
     return (
@@ -44,14 +47,27 @@ export const SLAHistoryDashboard = () => {
     );
   }
 
+  // Erro de consulta: `data` só é null depois do carregamento; o hook devolve sempre um objeto.
   if (!data) {
     return (
-      <Card className="p-8 text-center">
-        <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-        <p className="text-muted-foreground">Nenhum dado de histórico disponível</p>
+      <Card data-testid="sla-history-erro" className="p-8 text-center">
+        <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-destructive" />
+        <h3 className="text-lg font-semibold text-foreground mb-1">Não foi possível carregar o histórico de SLA</h3>
+        <p className="text-sm text-muted-foreground">A consulta falhou — isto não é ausência de dado.</p>
+        <Button
+          variant="outline"
+          className="mt-6 gap-2 rounded-xl"
+          onClick={() => queryClient.invalidateQueries({ queryKey: ['sla-history'] })}
+        >
+          <RefreshCw className="w-4 h-4" />
+          Tentar de novo
+        </Button>
       </Card>
     );
   }
+
+  // Sem 1ª resposta avaliada a taxa não existe: nada de 0%/100% no resumo nem nos gráficos.
+  const semAmostra = !data.totals.hasSample;
 
   const summaryCards = [
     { icon: Target, color: 'primary', label: 'Taxa SLA Geral', value: `${data.totals.overallSLARate.toFixed(1)}%`, extra: <TrendIndicator trend={data.trends.overall} label="vs período anterior" /> },
@@ -63,7 +79,7 @@ export const SLAHistoryDashboard = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Histórico de Violações SLA</h2>
+          <h1 className="text-2xl font-bold">Histórico de Violações SLA</h1>
           <p className="text-muted-foreground">Análise de tendências e padrões de violações</p>
         </div>
         <div className="flex items-center gap-3">
@@ -75,6 +91,16 @@ export const SLAHistoryDashboard = () => {
         </div>
       </div>
 
+      {semAmostra ? (
+        <Card data-testid="sla-history-sem-dados" className="p-8 text-center">
+          <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-semibold text-foreground mb-1">Sem dados de SLA no período</h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Nenhuma conversa teve a 1ª resposta avaliada — a taxa de SLA só existe depois do desfecho da 1ª resposta.
+          </p>
+        </Card>
+      ) : (
+      <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {summaryCards.map((card, i) => (
           <motion.div key={card.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (i + 1) * 0.1 }}>
@@ -97,6 +123,8 @@ export const SLAHistoryDashboard = () => {
       <SLARateChart dailyData={data.dailyData} />
       <SLAViolationsChart dailyData={data.dailyData} />
       <SLABestWorstDays worstDays={data.worstDays} bestDays={data.bestDays} />
+      </>
+      )}
     </div>
   );
 };

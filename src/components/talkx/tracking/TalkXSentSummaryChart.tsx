@@ -23,7 +23,7 @@ import {
 const CHANNELS = [
   { key: 'sent', label: 'Enviados', tone: 'info', color: 'hsl(var(--primary))' },
   { key: 'delivered', label: 'Entregues', tone: 'success', color: 'hsl(var(--dash-green))' },
-  { key: 'replied', label: 'Respostas', tone: 'violet', color: 'hsl(var(--dash-violet))' },
+  { key: 'replied', label: 'Respostas', tone: 'violet', color: 'hsl(var(--violeta))' },
 ] as const;
 
 function horaLabel(iso: string): string {
@@ -133,7 +133,7 @@ export function TalkXSentSummaryChart({
               )}
               <Line type="monotone" dataKey="Enviados" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="Entregues" stroke="hsl(var(--dash-green))" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="Respostas" stroke="hsl(var(--dash-violet))" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="Respostas" stroke="hsl(var(--violeta))" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>

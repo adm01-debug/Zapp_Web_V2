@@ -157,8 +157,23 @@ cut -f2 "$ERROS" | sed 's/ERROR:  //' | sort | uniq -c | sort -rn | head -14 >> 
 
 # Classifica contra o allowlist: falha esperada (ja investigada e medida no canonico) x INESPERADA
 # (drift novo). So a inesperada derruba o replay - e o que faz deste script um gate.
-python3 "$(dirname "$0")/replay-classify.py" "$ERROS" "$(dirname "$0")/replay-known-failures.json" | tee -a "$LOG"
-RC=${PIPESTATUS[0]}
+CLASSIFICACAO=$(python3 "$(dirname "$0")/replay-classify.py" "$ERROS" "$(dirname "$0")/replay-known-failures.json")
+RC=$?
+printf '%s\n' "$CLASSIFICACAO" | tee -a "$LOG"
+
+# Falha clara (pedido do cartao): quando ha drift novo, nomeia CADA migration culpada com o erro
+# que ela mediu, ANTES de sair. Sem isso o revisor so ve "REPLAY=VERMELHO" e precisa cruzar o TSV
+# a mao para achar o arquivo do PR. A lista sai do proprio classificador - mesma fonte da decisao.
+if [ "$RC" -eq 1 ]; then
+  echo "--- MIGRATION(S) CULPADA(S): falha fora do allowlist ---" | tee -a "$LOG"
+  printf '%s\n' "$CLASSIFICACAO" \
+    | sed -n 's/^[[:space:]]*INESPERADA (drift novo, investigar): //p' \
+    | while IFS= read -r arq; do
+        [ -n "$arq" ] || continue
+        erro=$(awk -F'\t' -v a="$arq" '$1==a {print $2; exit}' "$ERROS")
+        printf 'MIGRATION CULPADA: %s -> %s\n' "$arq" "${erro:-sem linha ERROR}"
+      done | tee -a "$LOG"
+fi
 
 remover_nosso
 echo "container removido" >> "$LOG"

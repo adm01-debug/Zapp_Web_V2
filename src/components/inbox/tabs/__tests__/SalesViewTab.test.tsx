@@ -66,11 +66,13 @@ const PURCHASE = (id: string, title: string) => ({
 
 function renderTab(profileId: string | null = 'profile-1') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  const onTabChange = vi.fn();
+  render(
     <QueryClientProvider client={qc}>
-      <SalesViewTab contactId="c1" profileId={profileId} />
+      <SalesViewTab contactId="c1" profileId={profileId} onTabChange={onTabChange} />
     </QueryClientProvider>,
   );
+  return { onTabChange };
 }
 
 describe('SalesViewTab', () => {
@@ -146,5 +148,14 @@ describe('SalesViewTab', () => {
     const aviso = screen.getByRole('note');
     expect(aviso).toHaveTextContent(/Compras e Ticket médio/i);
     expect(aviso).toHaveTextContent(/somente compras concluídas ou aprovadas/i);
+  });
+
+  it('"Ver no CRM →" no Resumo comercial troca para a aba CRM 360°', async () => {
+    mockUseContactCrm360.mockReturnValue({ data: EMPTY_CRM360 });
+    const { onTabChange } = renderTab();
+
+    fireEvent.click(await screen.findByText('Ver no CRM →'));
+
+    expect(onTabChange).toHaveBeenCalledWith('crm');
   });
 });

@@ -86,7 +86,7 @@ export const sections: FeatureSection[] = [
     items: [
       "CRUD de contatos", "Campos estendidos (nome, apelido, sobrenome, cargo, empresa)",
       "Avatar de contato", "Atribuição de contato a agente", "Atribuição a fila",
-      "Tags/etiquetas em contatos", "Notas privadas por contato", "Tipo de contato",
+      "Notas privadas por contato", "Tipo de contato",
       "Mesclagem de contatos duplicados",
       "Busca e filtros avançados", "Filtros salvos", "Scroll infinito na lista",
       "Ações em bulk", "Versionamento de registros"
@@ -336,7 +336,7 @@ export const sections: FeatureSection[] = [
     id: 33, title: "Banco de Dados", icon: Database, color: "text-info",
     items: [
       "profiles", "user_roles", "user_settings", "user_sessions", "user_devices",
-      "contacts", "contacts.tags (array — modelo único de etiqueta)", "ai_conversation_tags",
+      "contacts",
       "contact_notes", "messages", "message_reactions",
       "message_templates", "scheduled_messages", "whatsapp_connections", "whatsapp_groups",
       "whatsapp_templates", "business_hours", "away_messages", "queues", "queue_members",

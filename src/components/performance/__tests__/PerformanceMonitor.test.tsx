@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { PerformanceMonitor } from '../PerformanceMonitor';
 
 // Mock performance API
@@ -316,5 +317,16 @@ describe('PerformanceMonitor', () => {
       expect(clearIntervalSpy).toHaveBeenCalled();
       clearIntervalSpy.mockRestore();
     });
+  });
+
+  it('combobox de período tem nome acessível e axe zerado', async () => {
+    render(<PerformanceMonitor />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: 'Período' })).toBeInTheDocument();
+    });
+
+    const semRuidoDePagina = { rules: { region: { enabled: false } } };
+    expect(await axe(document.body, semRuidoDePagina)).toHaveNoViolations();
   });
 });

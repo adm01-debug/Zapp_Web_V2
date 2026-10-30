@@ -33,6 +33,15 @@ vi.mock('recharts', () => {
 
 vi.mock('@/hooks/integrations/useTalkXSegments', () => ({ useTalkXSegments: () => ({ segments: [] }) }));
 
+// X185: a tela consulta a RPC de resumo e o papel do usuário; aqui eles entram
+// stubados para o teste olhar só a ordem dos hooks.
+vi.mock('@/hooks/crm/useCRMAdminAccess', () => ({ useCRMAdminAccess: () => false }));
+vi.mock('@/hooks/team-chat/useActiveDepartments', () => ({ useActiveDepartments: () => ({ data: [] }) }));
+vi.mock('@/hooks/integrations/useTalkXAnalytics', async (orig) => {
+  const actual = await orig<typeof import('@/hooks/integrations/useTalkXAnalytics')>();
+  return { ...actual, useTalkXAnalytics: () => ({ data: undefined, isPending: true }) };
+});
+
 // useTalkXInsights é mockado chamando um hook REAL (useMemo) para reproduzir a regressão:
 // se a chamada ficar atrás de um return antecipado, o React lança "Rendered more hooks"
 // quando a lista passa de 0 para 1 campanha.

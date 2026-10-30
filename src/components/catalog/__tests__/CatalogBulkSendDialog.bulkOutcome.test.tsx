@@ -33,6 +33,7 @@ vi.mock('@/services/outbound-message.service', () => ({
 const mockLogCatalogSendEvent = vi.hoisted(() => vi.fn());
 vi.mock('@/hooks/integrations/useCatalogContactSearch', () => ({
   logCatalogSendEvent: (...args: unknown[]) => mockLogCatalogSendEvent(...args),
+  CONTACT_SEARCH_ERROR_MESSAGE: 'Não foi possível buscar contatos. Tente de novo.',
 }));
 
 // O contato já está escolhido: o teste foca no laço de envio.

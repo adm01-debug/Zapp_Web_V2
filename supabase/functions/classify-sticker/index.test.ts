@@ -41,6 +41,7 @@ const JWT_INVALIDO = "jwt-que-nao-existe";
 const ANON_KEY = "anon-key-de-teste";
 const SERVICE_ROLE = "service-role-de-teste";
 const USER_ID = "30000000-0000-0000-0000-00000000000b";
+const RUN_ID = "9f4c1e2a-1b3d-4c5e-8a7b-0d1e2f3a4b5c";
 const ENDPOINT_VISAO = "https://provedor-visao.teste/v1/chat/completions";
 
 const ENV_OK = {
@@ -133,9 +134,21 @@ function instalarEspiao(): Espiao {
       return json({ message: "invalid JWT" }, 401);
     }
     if (alvo.pathname === "/rest/v1/ai_providers") return json(PROVEDOR_VISAO);
+    // R2-AUTH-004: `requireAuth` lê `profiles.is_active` por `user_id` (igualdade
+    // exata) antes de liberar o handler; o stub responde "ativo" no caminho feliz.
+    if (url.includes("/rest/v1/profiles") && url.includes("select=is_active")) {
+      return json({ is_active: true });
+    }
     if (alvo.pathname === "/rest/v1/profiles") return json([]);
     if (alvo.pathname === "/rest/v1/ai_usage_logs") {
       return method === "POST" ? json([], 201) : json([]);
+    }
+    // R2-AUTH-022: `requireAuth` consulta a política de rede (RPC service_role)
+    // antes de liberar o handler; o stub responde "allow" no caminho feliz.
+    if (alvo.pathname === "/rest/v1/rpc/resolve_network_policy") {
+      return json([
+        { allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 },
+      ]);
     }
     if (alvo.pathname === "/rest/v1/rpc/ai_rate_limit_hit") return json(1);
     if (alvo.pathname === "/rest/v1/rpc/ai_budget_reserve") {
@@ -160,6 +173,17 @@ const downloads = (e: Espiao) =>
 const provedorCalls = (e: Espiao) => e.chamadas.filter((c) => c.url.startsWith(ENDPOINT_VISAO));
 const logsDeUso = (e: Espiao) =>
   e.chamadas.filter((c) => c.url === `${BASE}/rest/v1/ai_usage_logs` && c.method === "POST");
+
+
+function linhaDeConsumo(e: Espiao): Record<string, unknown> {
+  const linhas = logsDeUso(e)
+    .map((c) => c.body as Record<string, unknown> | Record<string, unknown>[])
+    .map((body) => Array.isArray(body) ? body[0] : body)
+    .filter((body): body is Record<string, unknown> => typeof body === "object" && body !== null);
+  const linha = linhas.find((l) => l.function_name === "classify-sticker");
+  assert(linha, "deve existir linha de consumo do classify-sticker em ai_usage_logs");
+  return linha;
+}
 
 function comEnv(fn: () => Promise<void>): Promise<void> {
   const salvo = ENV_KEYS.map((k) => [k, Deno.env.get(k)] as const);
@@ -196,9 +220,10 @@ function carregarModulo() {
   return moduloPromise;
 }
 
-function pedido(bearer: string | null, corpo: unknown = { image_url: IMAGEM_PRIVADA }): Request {
+function pedido(bearer: string | null, corpo: unknown = { image_url: IMAGEM_PRIVADA }, requestId?: string): Request {
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (bearer !== null) headers["authorization"] = `Bearer ${bearer}`;
+  if (requestId !== undefined) headers["x-ai-request-id"] = requestId;
   return new Request("https://funcao.teste/classify-sticker", {
     method: "POST",
     headers,
@@ -333,6 +358,69 @@ Deno.test("t_6c69be32: bearer inválido → 401, nenhum download de mídia e nen
       assertEq(res.status, 401, "token inválido deve ser 401");
       assertEq(downloads(espiao).length, 0, "identidade inválida não pode baixar mídia");
       assertEq(provedorCalls(espiao).length, 0, "identidade inválida não pode gastar provedor");
+    } finally {
+      espiao.restore();
+    }
+  });
+});
+
+// ── (6) correlação x-ai-request-id para a prova de orçamento/rate limit ──────
+Deno.test("t_883f4fbd: header x-ai-request-id válido chega a ai_usage_logs.request_id", async () => {
+  await comEnv(async () => {
+    const espiao = instalarEspiao();
+    try {
+      const { handler } = await carregarModulo();
+      const res = await handler(pedido(JWT_USUARIO, { image_url: IMAGEM_PRIVADA }, RUN_ID));
+      assertEq(res.status, 200, "usuário autorizado deve receber 200");
+      assertEq((await res.json() as { category: string }).category, "riso", "categoria veio do provedor");
+      assertEq(linhaDeConsumo(espiao).request_id, RUN_ID, "o id do run deve atravessar handler → roteador → registrador");
+    } finally {
+      espiao.restore();
+    }
+  });
+});
+
+Deno.test("t_883f4fbd: sem o header, request_id grava NULL — nunca um id inventado", async () => {
+  await comEnv(async () => {
+    const espiao = instalarEspiao();
+    try {
+      const { handler } = await carregarModulo();
+      const res = await handler(pedido(JWT_USUARIO));
+      assertEq(res.status, 200, "usuário autorizado deve receber 200");
+      const linha = linhaDeConsumo(espiao);
+      assert("request_id" in linha, "a linha deve declarar request_id null");
+      assertEq(linha.request_id, null, "sem header não há correlação — nada pode ser inventado");
+    } finally {
+      espiao.restore();
+    }
+  });
+});
+
+Deno.test("t_883f4fbd: header que não é uuid grava NULL — valor livre não atravessa", async () => {
+  await comEnv(async () => {
+    const espiao = instalarEspiao();
+    try {
+      const { handler } = await carregarModulo();
+      const res = await handler(pedido(JWT_USUARIO, { image_url: IMAGEM_PRIVADA }, "nao-e-uuid"));
+      assertEq(res.status, 200, "usuário autorizado deve receber 200");
+      assertEq(linhaDeConsumo(espiao).request_id, null, "valor livre não pode virar request_id");
+    } finally {
+      espiao.restore();
+    }
+  });
+});
+
+Deno.test("t_883f4fbd: a degradação por image_url ausente também sai correlacionada ao run", async () => {
+  await comEnv(async () => {
+    const espiao = instalarEspiao();
+    try {
+      const { handler } = await carregarModulo();
+      const res = await handler(pedido(JWT_USUARIO, {}, RUN_ID));
+      assertEq(res.status, 200, "entrada sem imagem degrada para 200");
+      assertEq((await res.json() as { category: string }).category, "outros", "sem imagem degrada para outros");
+      const linha = linhaDeConsumo(espiao);
+      assertEq(linha.status, "error", "a degradação deve deixar linha de erro");
+      assertEq(linha.request_id, RUN_ID, "linha de degradação também precisa correlacionar com o run");
     } finally {
       espiao.restore();
     }

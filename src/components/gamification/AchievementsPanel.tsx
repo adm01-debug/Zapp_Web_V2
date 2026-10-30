@@ -16,7 +16,7 @@ type SortOption = 'recent' | 'xp' | 'type';
 type FilterOption = 'all' | 'today' | 'week' | 'month';
 
 export function AchievementsPanel() {
-  const { achievements, stats, isLoading } = useAgentGamification();
+  const { achievements, achievementsTotal, stats, isLoading, hasMore, isLoadingMore, isErrorForMore, loadMore } = useAgentGamification();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('recent');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
@@ -55,13 +55,13 @@ export function AchievementsPanel() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-warning to-warning flex items-center justify-center shadow-lg shadow-warning/30"><Trophy className="w-5 h-5 text-primary-foreground" /></div>
-            <div><CardTitle className="text-xl">Minhas Conquistas</CardTitle><p className="text-sm text-muted-foreground">{achievements.length} conquistas desbloqueadas</p></div>
+            <div><CardTitle className="text-xl">Minhas Conquistas</CardTitle><p className="text-sm text-muted-foreground">{achievementsTotal} conquistas desbloqueadas</p></div>
           </div>
           {stats && <AchievementsHeaderBadges stats={stats} />}
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {stats && <AchievementsStatsHeader achievements={achievements} stats={stats} />}
+        {stats && <AchievementsStatsHeader achievements={achievements} total={achievementsTotal} stats={stats} />}
 
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Buscar conquistas..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" /></div>
@@ -73,7 +73,7 @@ export function AchievementsPanel() {
 
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
           <TabsList className="w-full flex-wrap h-auto p-1">
-            <TabsTrigger value="all" className="flex-1">Todas ({achievements.length})</TabsTrigger>
+            <TabsTrigger value="all" className="flex-1">Todas ({achievementsTotal})</TabsTrigger>
             {uniqueTypes.slice(0, 5).map(type => <TabsTrigger key={type} value={type} className="flex-1">{type.replace(/_/g, ' ')} ({achievementsByType[type]?.length || 0})</TabsTrigger>)}
           </TabsList>
           <TabsContent value={selectedTab} className="mt-4">
@@ -94,6 +94,21 @@ export function AchievementsPanel() {
                 )}
               </AnimatePresence>
             </ScrollArea>
+            {(hasMore || isErrorForMore) && (
+              // A lista chega em páginas: o cabeçalho mostra o total do servidor e
+              // aqui o usuário carrega o resto sob demanda.
+              <div className="mt-4 flex flex-col items-center gap-2">
+                <p className="text-xs text-muted-foreground">Mostrando {achievements.length} de {achievementsTotal}</p>
+                {hasMore && (
+                  <Button variant="outline" size="sm" onClick={loadMore} disabled={isLoadingMore} className="gap-2">
+                    {isLoadingMore ? 'Carregando...' : 'Ver mais conquistas'}
+                  </Button>
+                )}
+                {isErrorForMore && (
+                  <p className="text-sm text-destructive">Não foi possível carregar o resto das conquistas. Tente de novo.</p>
+                )}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </CardContent>

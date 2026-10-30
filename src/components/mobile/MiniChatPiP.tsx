@@ -72,36 +72,43 @@ export function MiniChatPiP({
           style={{ touchAction: 'none' }}
         >
           {/* Header — always visible */}
-          <div
-            className="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer bg-card hover:bg-muted/50 transition-colors"
-            onClick={() => {
-              if (!isExpanded) {
-                onExpand();
-              } else {
-                setIsExpanded(false);
-              }
-            }}
-          >
-            <div className="relative">
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={contactAvatar} alt="Avatar do contato" />
-                <AvatarFallback className="bg-primary/15 text-primary text-3xs font-semibold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[hsl(var(--success))] rounded-full border-2 border-card" />
-            </div>
+          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-card hover:bg-muted/50 transition-colors">
+            {/* N-043: o controle de expandir/restaurar da versão minimizada era uma
+                div com onClick — não focável e sem nome acessível. Vira button real,
+                com o mesmo comportamento (abre a conversa / recolhe) e o mesmo layout. */}
+            <button
+              type="button"
+              aria-label={isExpanded ? 'Recolher conversa' : 'Expandir conversa'}
+              onClick={() => {
+                if (!isExpanded) {
+                  onExpand();
+                } else {
+                  setIsExpanded(false);
+                }
+              }}
+              className="flex items-center gap-2.5 flex-1 min-w-0 text-left cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span className="relative block">
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={contactAvatar} alt="Avatar do contato" />
+                  <AvatarFallback className="bg-primary/15 text-primary text-3xs font-semibold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[hsl(var(--success))] rounded-full border-2 border-card" />
+              </span>
 
-            {isExpanded ? (
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-foreground truncate">{contactName}</p>
-                <p className="text-3xs text-muted-foreground truncate">{lastMessage}</p>
-              </div>
-            ) : (
-              <div className="flex-1 min-w-0 max-w-[140px]">
-                <p className="text-xs font-medium text-foreground truncate">{contactName}</p>
-              </div>
-            )}
+              {isExpanded ? (
+                <span className="flex-1 min-w-0 block">
+                  <span className="block text-xs font-medium text-foreground truncate">{contactName}</span>
+                  <span className="block text-3xs text-muted-foreground truncate">{lastMessage}</span>
+                </span>
+              ) : (
+                <span className="flex-1 min-w-0 max-w-[140px] block">
+                  <span className="block text-xs font-medium text-foreground truncate">{contactName}</span>
+                </span>
+              )}
+            </button>
 
             <div className="flex items-center gap-1">
               {isExpanded && (
@@ -109,6 +116,7 @@ export function MiniChatPiP({
                   variant="ghost"
                   size="icon"
                   className="w-6 h-6"
+                  aria-label="Recolher"
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsExpanded(false);
@@ -121,6 +129,7 @@ export function MiniChatPiP({
                 variant="ghost"
                 size="icon"
                 className="w-6 h-6 text-muted-foreground hover:text-foreground"
+                aria-label="Fechar"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDismiss();
@@ -163,6 +172,7 @@ export function MiniChatPiP({
                       variant="ghost"
                       size="icon"
                       className="w-8 h-8 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 flex-shrink-0"
+                      aria-label="Enviar"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSendReply();
@@ -176,6 +186,7 @@ export function MiniChatPiP({
 
                 {/* Open full chat */}
                 <button
+                  aria-label="Abrir conversa"
                   onClick={(e) => {
                     e.stopPropagation();
                     onExpand();

@@ -52,6 +52,7 @@ export function DraggableWidgetContainer({
         setIsEditMode={setIsEditMode}
         onToggleVisibility={onToggleVisibility}
         onUpdateSize={onUpdateSize}
+        onReorder={onReorder}
         onReset={onReset}
       />
 

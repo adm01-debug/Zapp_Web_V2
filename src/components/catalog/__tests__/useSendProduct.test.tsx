@@ -20,6 +20,7 @@ vi.mock('@/hooks/integrations/useCatalogContactSearch', () => ({
   // CT-43 — useSendProduct importa esta constante do módulo real: sem ela no
   // mock o gate de 2 caracteres vira `length >= undefined` (sempre falso).
   CONTACT_SEARCH_MIN_CHARS: 2,
+  CONTACT_SEARCH_ERROR_MESSAGE: 'Não foi possível buscar contatos. Tente de novo.',
 }));
 
 // CT-06 — o módulo usa `sonner` (não o hook antigo de toast) depois desta etapa.
@@ -265,6 +266,59 @@ describe('useContactSearch — CT-43: mínimo de 2 caracteres e debounce de 300 
   });
 });
 
+/**
+ * Falha de consulta ≠ lista vazia. `fetchCatalogContactResults` antes engolia o
+ * `error` do PostgREST e devolvia `[]`: a tela dizia "Nenhum contato encontrado"
+ * para quem na verdade não conseguiu buscar. Agora o hook marca
+ * `contactSearchError` e oferece `retryContactSearch`.
+ */
+describe('useContactSearch — falha de consulta tem estado próprio e retry', () => {
+  beforeEach(() => {
+    resetSendMocks();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('consulta rejeitada marca contactSearchError, sem resultados e sem loading preso', async () => {
+    mockFetchCatalogContacts.mockRejectedValue(new Error('rede fora'));
+    const { result } = renderHook(() => useContactSearch('selectContact'), { wrapper });
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+    expect(result.current.contactSearchError).toBe(true);
+    expect(result.current.contactResults).toEqual([]);
+    expect(result.current.searchingContacts).toBe(false);
+  });
+
+  it('retryContactSearch refaz a consulta e limpa o erro quando volta a responder', async () => {
+    mockFetchCatalogContacts.mockRejectedValueOnce(new Error('rede fora'));
+    const { result } = renderHook(() => useContactSearch('selectContact'), { wrapper });
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(result.current.contactSearchError).toBe(true);
+
+    mockFetchCatalogContacts.mockResolvedValue([CONTACT]);
+    await act(async () => { result.current.retryContactSearch(); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+    expect(result.current.contactSearchError).toBe(false);
+    expect(result.current.contactResults).toEqual([CONTACT]);
+    expect(result.current.searchingContacts).toBe(false);
+  });
+
+  it('busca que responde não marca erro', async () => {
+    mockFetchCatalogContacts.mockResolvedValue([]);
+    const { result } = renderHook(() => useContactSearch('selectContact'), { wrapper });
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+    expect(result.current.contactSearchError).toBe(false);
+    expect(result.current.contactResults).toEqual([]);
+  });
+});
+
 describe('useSendToContact — CT-06/CT-07: toast de sucesso e cache do rail', () => {
   beforeEach(resetSendMocks);
 
@@ -377,6 +431,37 @@ describe('useSendToContact — CT-06/CT-07: toast de sucesso e cache do rail', (
     expect(recebidos).toEqual(['c9']);
 
     delete (window as Window & { __pendingOpenContactId?: string }).__pendingOpenContactId;
+  });
+
+  // SL-101 — a cadeia de retry tem de PARAR quando a entrega acontece e o
+  // timer agendado tem de ser limpo: sem isso ela redisparava o evento até 15
+  // vezes mesmo com o contato já aberto e deixava timer pendente atravessando
+  // o teardown do jsdom.
+  it('openContactChat limpa o timer de retry quando a inbox consome o contato', async () => {
+    vi.useFakeTimers();
+    const recebidos: string[] = [];
+    // Mesmo efeito do handler de `useRealtimeInbox`: recebe o evento e limpa
+    // `__pendingOpenContactId` (é assim que o app confirma que o contato foi
+    // consumido).
+    const listener = (event: Event) => {
+      recebidos.push((event as CustomEvent<{ contactId: string }>).detail.contactId);
+      delete (window as Window & { __pendingOpenContactId?: string }).__pendingOpenContactId;
+    };
+    window.addEventListener('open-contact-chat', listener);
+
+    openContactChat('c9');
+    await act(async () => { await vi.advanceTimersByTimeAsync(150); });
+
+    // Primeira tentativa entregou o evento…
+    expect(recebidos).toEqual(['c9']);
+    // …e nenhum timer de retry fica agendado depois da entrega confirmada.
+    expect(vi.getTimerCount()).toBe(0);
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+    window.removeEventListener('open-contact-chat', listener);
+
+    expect(recebidos).toEqual(['c9']);
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
 

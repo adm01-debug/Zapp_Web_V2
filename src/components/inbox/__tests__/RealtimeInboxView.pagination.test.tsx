@@ -50,6 +50,8 @@ vi.mock('@/hooks/chat/useConversationActions', () => ({
 }));
 vi.mock('@/hooks/chat/useConversationTabCounts', () => ({ useConversationTabCounts: () => ({ counts: {} }) }));
 vi.mock('@/hooks/crm/useContactCrm360', () => ({ useContactCrm360: () => ({ data: null }) }));
+// U03: o chip de e-mails não lidos (hook próprio) não é o alvo da paginação — sem contagem.
+vi.mock('@/hooks/gmail/useContactUnreadEmails', () => ({ useContactUnreadEmails: () => ({ count: 0, status: 'ok' }) }));
 vi.mock('@/hooks/system/useFeatureFlag', () => ({ useFeatureFlag: () => false }));
 vi.mock('@/features/talk-me/useTalkMeQueue', () => ({
   useTalkMeQueue: () => ({ queuesError: false, selectedQueue: null, queuesLoading: false }),
@@ -77,6 +79,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
   getLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn(), info: vi.fn() }),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 vi.mock('@/hooks/chat/useTypingPresence', () => ({
   useTypingPresence: () => ({ isContactTyping: false, typingUsers: [], handleTypingStart: vi.fn(), handleTypingStop: vi.fn() }),
@@ -88,6 +91,7 @@ vi.mock('@/hooks/communication/useTextToSpeech', () => ({
     speak: vi.fn(), stop: vi.fn(), isLoading: false, isPlaying: false,
     currentMessageId: null, voiceId: '', setVoiceId: vi.fn(), speed: 1, setSpeed: vi.fn(),
   }),
+  LOCAL_VOICE_ID: 'local',
 }));
 vi.mock('@/hooks/system/useUserSettings', () => ({
   useUserSettings: () => ({ settings: {}, updateSettings: vi.fn(), saveSettings: vi.fn() }),

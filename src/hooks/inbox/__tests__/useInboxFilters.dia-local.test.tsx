@@ -68,7 +68,6 @@ describe('useInboxFilters — janela de data no fuso do navegador', () => {
     act(() => {
       result.current.setFilters({
         status: [],
-        tags: [],
         agentId: null,
         dateRange: { from: startOfDay(parseDayKey(DIA) as Date), to: endOfDay(parseDayKey(DIA) as Date) },
       });
@@ -89,7 +88,6 @@ describe('useInboxFilters — janela de data no fuso do navegador', () => {
     act(() => {
       result.current.setFilters({
         status: [],
-        tags: [],
         agentId: null,
         dateRange: { from: startOfDay(hoje), to: endOfDay(hoje) },
       });
@@ -106,7 +104,6 @@ describe('useInboxFilters — janela de data no fuso do navegador', () => {
     act(() => {
       result.current.setFilters({
         status: [],
-        tags: [],
         agentId: null,
         dateRange: {
           from: startOfDay(parseDayKey('2026-09-28') as Date),
@@ -125,11 +122,46 @@ describe('useInboxFilters — janela de data no fuso do navegador', () => {
     const { result } = montar();
 
     act(() => {
-      result.current.setFilters({ status: [], tags: [], agentId: null, dateRange: { from: null, to: null } });
+      result.current.setFilters({ status: [], agentId: null, dateRange: { from: null, to: null } });
     });
 
     expect(result.current.filters.dateRange.from).toBeNull();
     expect(result.current.filters.dateRange.to).toBeNull();
+    expect(result.current.filteredConversations.map((c) => c.contact.id).sort()).toEqual(['dentro', 'fora']);
+  });
+
+  it('só "até" recorta até o fim daquele dia, sem trazer o que vem depois', () => {
+    const { result } = montar();
+
+    act(() => {
+      result.current.setFilters({
+        status: [],
+        agentId: null,
+        dateRange: { from: null, to: endOfDay(parseDayKey(DIA) as Date) },
+      });
+    });
+
+    // o "até" sozinho sobrevive ao round-trip pela URL
+    expect(result.current.filters.dateRange.from).toBeNull();
+    expect(localDayKey(result.current.filters.dateRange.to)).toBe(DIA);
+    // e recorta: 30/09 12:00 fica, 01/10 10:00 sai
+    expect(result.current.filteredConversations.map((c) => c.contact.id)).toEqual(['dentro']);
+  });
+
+  it('só "de" continua recortando do início daquele dia em diante', () => {
+    const { result } = montar();
+
+    act(() => {
+      result.current.setFilters({
+        status: [],
+        agentId: null,
+        dateRange: { from: startOfDay(parseDayKey(DIA) as Date), to: null },
+      });
+    });
+
+    expect(localDayKey(result.current.filters.dateRange.from)).toBe(DIA);
+    expect(result.current.filters.dateRange.to).toBeNull();
+    // ninguém é cortado por cima: 30/09 e 01/10 estão ambos depois do "de"
     expect(result.current.filteredConversations.map((c) => c.contact.id).sort()).toEqual(['dentro', 'fora']);
   });
 });

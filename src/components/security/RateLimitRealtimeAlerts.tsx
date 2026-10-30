@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Shield, Ban, Clock, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';
+import { toast } from 'sonner';
+import { useVisiblePolling } from '@/hooks/realtime/useVisiblePolling';
 import { playAlertSound } from '@/utils/securityAlertSound';
+import { resolveSecurityAlert } from '@/lib/securityAlerts';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -33,94 +36,125 @@ const SEVERITY_COLORS: Record<string, string> = {
   critical: 'border-l-red-500'
 };
 
+// Acima disso o painel mostra o contador '+N' em vez de listar tudo de uma vez.
+const VISIBLE_LIMIT = 3;
+
+const fallbackSettings = { soundVolume: 70, soundEnabled: true };
+
 export function RateLimitRealtimeAlerts() {
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const { settings, isQuietHours } = useNotificationSettings();
-  // O polling roda uma vez (deps []): as refs evitam ler volume/mudo/horário velhos na detecção.
-  const soundVolumeRef = useRef(settings.soundVolume);
-  const soundEnabledRef = useRef(settings.soundEnabled);
+  // O polling roda fora do corpo do componente: as refs evitam ler volume/mudo/horário velhos na detecção.
+  const soundVolumeRef = useRef(settings?.soundVolume ?? fallbackSettings.soundVolume);
+  const soundEnabledRef = useRef(settings?.soundEnabled ?? fallbackSettings.soundEnabled);
   const isQuietHoursRef = useRef(isQuietHours);
+  // Ids do snapshot anterior: populate no primeiro fetch e atualizado a cada rodada.
+  const lastKnownIdsRef = useRef<Set<string>>(new Set());
+  const initializedRef = useRef(false);
   useEffect(() => {
-    soundVolumeRef.current = settings.soundVolume;
-    soundEnabledRef.current = settings.soundEnabled;
+    soundVolumeRef.current = settings?.soundVolume ?? fallbackSettings.soundVolume;
+    soundEnabledRef.current = settings?.soundEnabled ?? fallbackSettings.soundEnabled;
     isQuietHoursRef.current = isQuietHours;
-  }, [settings.soundVolume, settings.soundEnabled, isQuietHours]);
+  }, [settings?.soundVolume, settings?.soundEnabled, isQuietHours]);
 
-  useEffect(() => {
-    // Fetch recent unresolved alerts
-    const fetchAlerts = async () => {
-      const { data, error } = await supabase
-        .from('security_alerts')
-        .select('*')
-        .eq('is_resolved', false)
-        .order('created_at', { ascending: false })
-        .limit(10);
+  const fetchAlerts = useCallback(async (signal: AbortSignal) => {
+    const { data, error } = await supabase
+      .from('security_alerts')
+      .select('*')
+      .eq('is_resolved', false)
+      .order('created_at', { ascending: false })
+      .limit(10);
 
-      if (error) {
-        console.warn('[RateLimitRealtimeAlerts] Failed to fetch alerts:', error);
-        return;
+    if (signal.aborted) return;
+    if (error) {
+      // Sem log do corpo da resposta: só o alerta de que a leitura falhou.
+      setLoadError(true);
+      return;
+    }
+    setLoadError(false);
+
+    const fresh = (data ?? []) as SecurityAlert[];
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      lastKnownIdsRef.current = new Set(fresh.map((a) => a.id));
+      setAlerts(fresh);
+      return;
+    }
+
+    const newAlerts = fresh.filter((a) => !lastKnownIdsRef.current.has(a.id));
+    if (newAlerts.length === 0) return;
+
+    setAlerts(fresh);
+    newAlerts.forEach((a) => {
+      // Mudo do painel e horário de silêncio valem para o alerta de segurança também.
+      const severo = a.severity === 'critical' || a.severity === 'high';
+      if (severo && soundEnabledRef.current && !isQuietHoursRef.current()) {
+        playAlertSound(soundVolumeRef.current);
       }
-      if (data) {
-        setAlerts(data);
-        return data;
-      }
-      return null;
-    };
-
-// E62: setTimeout(0) move o fetch inicial fora do body síncrono (set-state-in-effect).
-    // lastKnownIds inicia vazio e é populado após o primeiro fetch.
-    let lastKnownIds = new Set<string>();
-    const timer = setTimeout(() => void fetchAlerts().then(initial => {
-      if (initial) lastKnownIds = new Set(initial.map((a: SecurityAlert) => a.id));
-    }), 0);
-
-    // E62: Polling de 15s detecta novos alertas comparando com o snapshot anterior.
-    const interval = setInterval(async () => {
-      const { data: fresh } = await supabase
-        .from('security_alerts')
-        .select('*')
-        .eq('is_resolved', false)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      if (!fresh) return;
-      const newAlerts = (fresh as SecurityAlert[]).filter(a => !lastKnownIds.has(a.id));
-      if (newAlerts.length > 0) {
-        setAlerts(fresh as SecurityAlert[]);
-        newAlerts.forEach(a => {
-          // Mudo do painel e horário de silêncio valem para o alerta de segurança também.
-          const severo = a.severity === 'critical' || a.severity === 'high';
-          if (severo && soundEnabledRef.current && !isQuietHoursRef.current()) {
-            playAlertSound(soundVolumeRef.current);
-          }
-        });
-        lastKnownIds = new Set((fresh as SecurityAlert[]).map(a => a.id));
-      }
-    }, 15_000);
-
-    return () => { clearTimeout(timer); clearInterval(interval); };
+    });
+    lastKnownIdsRef.current = new Set(fresh.map((a) => a.id));
   }, []);
 
+  // Somente enquanto a aba está visível e online, uma requisição por vez (useVisiblePolling).
+  const refresh = useVisiblePolling(fetchAlerts, 15_000);
+
   const handleDismiss = async (alertId: string) => {
-    setDismissed(prev => new Set([...prev, alertId]));
-    
-    // Mark as resolved in database
-    await supabase
-      .from('security_alerts')
-      .update({ is_resolved: true, resolved_at: new Date().toISOString() })
-      .eq('id', alertId);
+    // O card só some quando o update confirma; senão o usuário pensa que resolveu
+    // e o alerta volta no polling. O `resolved_by` fica gravado com quem dispensou.
+    const { error } = await resolveSecurityAlert(alertId);
+
+    if (error) {
+      toast.error('Não foi possível dispensar o alerta. Tente novamente.');
+      return;
+    }
+    setDismissed((prev) => new Set([...prev, alertId]));
   };
 
-  const visibleAlerts = alerts.filter(a => !dismissed.has(a.id));
+  const visibleAlerts = alerts.filter((a) => !dismissed.has(a.id));
+
+  if (loadError && visibleAlerts.length === 0) {
+    return (
+      <div
+        role="alert"
+        aria-live="polite"
+        className="fixed bottom-4 right-4 z-50 space-y-2 max-w-sm"
+      >
+        <div className="bg-card border rounded-lg shadow-lg p-3 flex items-center gap-2">
+          <p className="flex-1 text-sm text-muted-foreground">Não foi possível carregar os alertas de segurança.</p>
+          <Button variant="outline" size="sm" onClick={() => void refresh()}>
+            Tentar de novo
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (visibleAlerts.length === 0) {
     return null;
   }
 
+  const ocultos = visibleAlerts.length - VISIBLE_LIMIT;
+  const exibidos = expanded ? visibleAlerts : visibleAlerts.slice(0, VISIBLE_LIMIT);
+
   return (
-    <div className="fixed bottom-4 right-4 z-50 space-y-2 max-w-sm">
+    <div
+      role="alert"
+      aria-live="polite"
+      className="fixed bottom-4 right-4 z-50 space-y-2 max-w-sm"
+    >
+      {loadError && (
+        <div className="bg-card border rounded-lg shadow-lg p-3 flex items-center gap-2">
+          <p className="flex-1 text-sm text-muted-foreground">Falha ao atualizar os alertas.</p>
+          <Button variant="outline" size="sm" onClick={() => void refresh()}>
+            Tentar de novo
+          </Button>
+        </div>
+      )}
       <AnimatePresence mode="popLayout">
-        {visibleAlerts.slice(0, 3).map((alert) => {
+        {exibidos.map((alert) => {
           const config = ALERT_CONFIG[alert.alert_type] || ALERT_CONFIG.default;
           const Icon = config.icon;
 
@@ -143,7 +177,8 @@ export function RateLimitRealtimeAlerts() {
                       variant="ghost"
                       size="sm"
                       className="h-6 w-6 p-0"
-                      onClick={() => handleDismiss(alert.id)}
+                      aria-label={`Dispensar alerta: ${alert.title}`}
+                      onClick={() => void handleDismiss(alert.id)}
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -155,11 +190,11 @@ export function RateLimitRealtimeAlerts() {
                     {alert.ip_address && (
                       <code className="font-mono">{alert.ip_address}</code>
                     )}
-                    <span>•</span>
+                    <span aria-hidden="true">•</span>
                     <span>
-                      {formatDistanceToNow(new Date(alert.created_at), { 
-                        addSuffix: true, 
-                        locale: ptBR 
+                      {formatDistanceToNow(new Date(alert.created_at), {
+                        addSuffix: true,
+                        locale: ptBR
                       })}
                     </span>
                   </div>
@@ -169,6 +204,17 @@ export function RateLimitRealtimeAlerts() {
           );
         })}
       </AnimatePresence>
+      {ocultos > 0 && (
+        <Button
+          variant="secondary"
+          size="sm"
+          className="w-full"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((prev) => !prev)}
+        >
+          {expanded ? 'Mostrar menos' : `+${ocultos} ${ocultos === 1 ? 'alerta' : 'alertas'}`}
+        </Button>
+      )}
     </div>
   );
 }

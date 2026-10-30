@@ -70,7 +70,7 @@ export function useTodayHourlyVolume(filters: HourlyVolumeFilters = {}) {
     // invalidar o cache do gráfico (antes o VolumeChart era cego a eles, A9).
     queryKey: ['today-hourly-volume', queueId, agentId],
     queryFn: async () => {
-      const rpc = supabase.rpc as unknown as DashboardHourlyVolumeRpc;
+      const rpc = supabase.rpc.bind(supabase) as unknown as DashboardHourlyVolumeRpc;
       const { data, error } = await rpc('dashboard_hourly_volume', { p_days: 8, p_queue: queueId, p_agent: agentId });
       if (error) throw error;
       return aggregateHourlyVolume((data ?? []) as HourlyBucket[]);

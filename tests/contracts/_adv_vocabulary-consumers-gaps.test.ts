@@ -75,11 +75,6 @@ const DEFEITOS: readonly Finding[] = [
     what: 'CSAT ausente vira 0 em meta/notificação',
   },
   {
-    file: 'src/hooks/business/useWarRoomData.ts',
-    pattern: /Number\(agentStats\?\.customer_satisfaction_score\) \|\| 0/,
-    what: 'CSAT ausente vira 0 no war room',
-  },
-  {
     file: 'src/components/inbox/ai-tools/SentimentTab.tsx',
     pattern: /Math\.max\(item\.sentiment_score, 5\)/,
     what: 'nota NULL vira barra de 5% na evolução (ausência desenhada como dado)',
@@ -119,16 +114,6 @@ const CHAVE_EN: readonly Finding[] = [
     what: 'enum do tool call em EN (descreve filtro de sentimento do usuário)',
   },
   {
-    file: 'src/components/inbox/contact-details/Contact360Helpers.tsx',
-    pattern: /sentimentEmoji: Record<string, string> = \{ positive:/,
-    what: 'emoji de sentimento das interações do CRM externo chaveado EN',
-  },
-  {
-    file: 'src/components/inbox/chat/ChatHeader.tsx',
-    pattern: /briefing\?\.sentiment === 'positive'/,
-    what: 'badge do briefing do CRM externo compara EN sem normalizador',
-  },
-  {
     file: 'src/components/dashboard/AIStatsWidget.tsx',
     pattern: /type SentimentType = 'positive' \| 'negative' \| 'neutral';/,
     what: 'tipo/dataKey EN (consistente com useAIStats, mas herda o contador morto)',
@@ -159,7 +144,6 @@ describe('ADVERSARIAL — o guard de contrato do bloco não cobre estes arquivos
 
   const AUSENTES_DO_GUARD = [
     'src/hooks/analytics/useAIStats.ts',
-    'src/components/inbox/chat/ChatHeader.tsx',
     'src/hooks/ui/useAmbientColor.ts',
     'src/components/inbox/CRMAutoSync.tsx',
     'src/hooks/chat/useConversationAnalyses.ts',
@@ -230,5 +214,19 @@ describe('PR-1 — defeitos corrigidos (o padrão defeituoso não pode voltar)',
     const sql = read('supabase/migrations/20260930500000_ai_block03_pr1_drop_defaults_sentiment.sql');
     expect(sql).toMatch(/create or replace function public\.enqueue_crm_sync_from_closure/);
     expect(sql).not.toMatch(/COALESCE\(v_contact\.ai_sentiment, 'neutral'\)/);
+  });
+});
+
+/**
+ * War Room pelos RPCs (12/10): a leitura dos agentes passou para o RPC `warroom_agent_today` e o
+ * defeito `Number(agentStats?.customer_satisfaction_score) || 0` saiu do inventário de pendências.
+ * Agora é ratchet INVERSO: o `|| 0` não pode voltar e o `null` do RPC (ausência de avaliação no dia)
+ * tem de permanecer `null`, para a tela desenhar '—' em vez de "0 de satisfação".
+ */
+describe('War Room pelos RPCs — ausência de CSAT não vira 0', () => {
+  it('useWarRoomData preserva o null do RPC em vez de coagir para 0', () => {
+    const src = stripComments(read('src/hooks/business/useWarRoomData.ts'));
+    expect(src).not.toMatch(/customer_satisfaction_score\)\s*\|\|\s*0/);
+    expect(src).toMatch(/satisfaction:\s*r\.satisfaction\s*\?\?\s*null/);
   });
 });

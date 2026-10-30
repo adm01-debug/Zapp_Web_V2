@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { MultiplixEligibility } from '@/lib/multiplix-eligibility';
+import { parseEdgeError } from '@/lib/invokeEdge';
 
 async function invokeMultiplixAudience<T>(action: string, params?: object): Promise<T> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -29,21 +30,15 @@ export class MultiplixOverLimitError extends Error {
 }
 
 // O corpo da resposta de erro fica em error.context (Response) — sem ler isso o
-// usuario so veria "Edge Function returned a non-2xx status code".
+// usuario so veria "Edge Function returned a non-2xx status code". A leitura do
+// corpo e centralizada em parseEdgeError; aqui so se traduz para o erro de dominio.
 async function toMultiplixError(error: unknown): Promise<Error> {
-  const fallback = (error as { message?: string })?.message ?? 'Falha ao chamar multiplix-audience';
-  const context = (error as { context?: Response })?.context;
-  if (!context || typeof context.clone !== 'function') return new Error(fallback);
-  try {
-    const body = await context.clone().json() as { error?: string; count?: number; limit?: number; message?: string };
-    if (body?.error === 'multiplix_over_recipient_limit') {
-      return new MultiplixOverLimitError(body.count ?? 0, body.limit ?? null, body.message);
-    }
-    if (body?.error) return new Error(body.error);
-  } catch {
-    // corpo sem JSON (timeout/proxy): fica a mensagem padrao
+  const { code, message, raw } = await parseEdgeError(error, 'Falha ao chamar multiplix-audience');
+  if (code === 'multiplix_over_recipient_limit') {
+    const body = (raw && typeof raw === 'object' ? raw : {}) as { count?: number; limit?: number; message?: string };
+    return new MultiplixOverLimitError(body.count ?? 0, body.limit ?? null, body.message);
   }
-  return new Error(fallback);
+  return new Error(message);
 }
 
 export interface MultiplixRamo { ramo_atividade: string; total: number }

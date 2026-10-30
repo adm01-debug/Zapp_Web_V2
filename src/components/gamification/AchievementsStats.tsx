@@ -9,6 +9,8 @@ import { levelProgress, xpForNextLevel } from '@/hooks/gamification/useAgentGami
 
 interface AchievementsStatsProps {
   achievements: Achievement[];
+  /** Total real da conta (`agent_stats.achievements_count`), não o tamanho da página carregada. */
+  total: number;
   stats: { level: number; xp: number } | null;
 }
 
@@ -16,7 +18,7 @@ export function isNewAchievement(earnedAt: string): boolean {
   return new Date(earnedAt) > new Date(Date.now() - 60 * 60 * 1000);
 }
 
-export function AchievementsStatsHeader({ achievements, stats }: AchievementsStatsProps) {
+export function AchievementsStatsHeader({ achievements, total, stats }: AchievementsStatsProps) {
   const totalXp = useMemo(() => achievements.reduce((sum, a) => sum + a.xp_earned, 0), [achievements]);
   const uniqueTypes = useMemo(() => Array.from(new Set(achievements.map(a => a.achievement_type))), [achievements]);
 
@@ -37,7 +39,7 @@ export function AchievementsStatsHeader({ achievements, stats }: AchievementsSta
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { icon: Award, color: 'text-primary', label: 'Total', value: achievements.length, delay: 0.1 },
+          { icon: Award, color: 'text-primary', label: 'Total', value: total, delay: 0.1 },
           { icon: Zap, color: 'text-xp', label: 'XP Ganho', value: totalXp.toLocaleString(), delay: 0.15 },
           { icon: BarChart3, color: 'text-info', label: 'Tipos', value: uniqueTypes.length, delay: 0.2 },
           { icon: Sparkles, color: 'text-warning', label: 'Recentes', value: achievements.filter(a => isNewAchievement(a.earned_at)).length, delay: 0.25 },

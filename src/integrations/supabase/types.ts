@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.17"
+  }
   public: {
     Tables: {
       agent_achievements: {
@@ -1880,6 +1885,39 @@ export type Database = {
           },
         ]
       }
+      connection_alert_preferences: {
+        Row: {
+          alert_on_degraded: boolean
+          alert_on_disconnected: boolean
+          created_at: string
+          email_enabled: boolean
+          id: string
+          push_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_on_degraded?: boolean
+          alert_on_disconnected?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          push_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_on_degraded?: boolean
+          alert_on_disconnected?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          push_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       connection_health_logs: {
         Row: {
           checked_at: string
@@ -2047,6 +2085,7 @@ export type Database = {
           due_date: string | null
           id: string
           is_done: boolean
+          is_pinned: boolean
           updated_at: string
         }
         Insert: {
@@ -2058,6 +2097,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           is_done?: boolean
+          is_pinned?: boolean
           updated_at?: string
         }
         Update: {
@@ -2069,6 +2109,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           is_done?: boolean
+          is_pinned?: boolean
           updated_at?: string
         }
         Relationships: [
@@ -2927,6 +2968,59 @@ export type Database = {
             columns: ["migrated_from_reminder_id"]
             isOneToOne: false
             referencedRelation: "reminders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      copilot_feedback: {
+        Row: {
+          id: string
+          conversation_id: string
+          contact_id: string
+          feedback_type: string
+          edit_level: string | null
+          suggestion_text: string | null
+          sent_text: string | null
+          suggestion_id: string | null
+          rating: string | null
+          reason: string | null
+          created_at: string
+          created_by: string
+        }
+        Insert: {
+          id?: string
+          conversation_id: string
+          contact_id: string
+          feedback_type: string
+          edit_level?: string | null
+          suggestion_text?: string | null
+          sent_text?: string | null
+          suggestion_id?: string | null
+          rating?: string | null
+          reason?: string | null
+          created_at?: string
+          created_by?: string
+        }
+        Update: {
+          id?: string
+          conversation_id?: string
+          contact_id?: string
+          feedback_type?: string
+          edit_level?: string | null
+          suggestion_text?: string | null
+          sent_text?: string | null
+          suggestion_id?: string | null
+          rating?: string | null
+          reason?: string | null
+          created_at?: string
+          created_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "copilot_feedback_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -4640,6 +4734,7 @@ export type Database = {
           sender: string
           status: string | null
           status_updated_at: string | null
+          transcribed_at: string | null
           transcription: string | null
           transcription_status: string | null
           updated_at: string
@@ -4679,6 +4774,7 @@ export type Database = {
           sender: string
           status?: string | null
           status_updated_at?: string | null
+          transcribed_at?: string | null
           transcription?: string | null
           transcription_status?: string | null
           updated_at?: string
@@ -4718,6 +4814,7 @@ export type Database = {
           sender?: string
           status?: string | null
           status_updated_at?: string | null
+          transcribed_at?: string | null
           transcription?: string | null
           transcription_status?: string | null
           updated_at?: string
@@ -6965,6 +7062,36 @@ export type Database = {
           recipients?: string[]
           report_type?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      search_events: {
+        Row: {
+          clicked: boolean
+          created_at: string
+          had_results: boolean
+          id: string
+          result_kind: string | null
+          term_length: number
+          user_id: string
+        }
+        Insert: {
+          clicked?: boolean
+          created_at?: string
+          had_results: boolean
+          id?: string
+          result_kind?: string | null
+          term_length: number
+          user_id: string
+        }
+        Update: {
+          clicked?: boolean
+          created_at?: string
+          had_results?: boolean
+          id?: string
+          result_kind?: string | null
+          term_length?: number
+          user_id?: string
         }
         Relationships: []
       }
@@ -9905,6 +10032,7 @@ export type Database = {
       }
       whisper_messages: {
         Row: {
+          audio_path: string | null
           contact_id: string
           content: string
           created_at: string | null
@@ -9914,6 +10042,7 @@ export type Database = {
           target_agent_id: string
         }
         Insert: {
+          audio_path?: string | null
           contact_id: string
           content: string
           created_at?: string | null
@@ -9923,6 +10052,7 @@ export type Database = {
           target_agent_id: string
         }
         Update: {
+          audio_path?: string | null
           contact_id?: string
           content?: string
           created_at?: string | null
@@ -10319,6 +10449,16 @@ export type Database = {
         }
         Relationships: []
       }
+      team_message_read_state: {
+        Row: {
+          all_read: boolean | null
+          conversation_id: string | null
+          member_count: number | null
+          message_id: string | null
+          read_count: number | null
+        }
+        Relationships: []
+      }
       whatsapp_connections_agent: {
         Row: {
           id: string | null
@@ -10467,6 +10607,7 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      admin_unlock_login: { Args: { p_email: string }; Returns: undefined }
       ai_budget_reconcile: { Args: never; Returns: number }
       ai_budget_release: {
         Args: { p_id: string; p_reason: string }
@@ -10866,6 +11007,7 @@ export type Database = {
           sender: string
           status: string | null
           status_updated_at: string | null
+          transcribed_at: string | null
           transcription: string | null
           transcription_status: string | null
           updated_at: string
@@ -10934,6 +11076,7 @@ export type Database = {
         }
         Returns: string
       }
+      crm_sync_outbox_cron_enabled: { Args: never; Returns: boolean }
       current_profile_id: { Args: never; Returns: string }
       dashboard_contact_counts: {
         Args: {
@@ -10975,6 +11118,10 @@ export type Database = {
       delete_talkx_campaign: {
         Args: { p_campaign_id: string }
         Returns: string
+      }
+      delivery_stats: {
+        Args: { p_contact_id: string; p_hours?: number }
+        Returns: Json
       }
       duplicate_talkx_campaign: {
         Args: { p_campaign_id: string }
@@ -11112,6 +11259,7 @@ export type Database = {
           sender: string
           status: string | null
           status_updated_at: string | null
+          transcribed_at: string | null
           transcription: string | null
           transcription_status: string | null
           updated_at: string
@@ -11168,6 +11316,7 @@ export type Database = {
           sender: string
           status: string | null
           status_updated_at: string | null
+          transcribed_at: string | null
           transcription: string | null
           transcription_status: string | null
           updated_at: string
@@ -11225,6 +11374,7 @@ export type Database = {
           sender: string
           status: string | null
           status_updated_at: string | null
+          transcribed_at: string | null
           transcription: string | null
           transcription_status: string | null
           updated_at: string
@@ -11425,6 +11575,14 @@ export type Database = {
       }
       get_talkx_cron_secret: { Args: never; Returns: string }
       get_talkx_send_url: { Args: never; Returns: string }
+      get_team_birthdays: {
+        Args: never
+        Returns: {
+          birthday_day: number
+          birthday_month: number
+          id: string
+        }[]
+      }
       get_team_conversation_previews: {
         Args: never
         Returns: {
@@ -11540,6 +11698,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      inbox_wait_summary: {
+        Args: { p_queue_id?: string }
+        Returns: {
+          avg_open_seconds: number
+          max_wait_seconds: number
+          queue_id: string
+          waiting_count: number
+        }[]
+      }
       increment_agent_messages: {
         Args: { p_profile_id: string; p_type: string }
         Returns: Json
@@ -11547,6 +11714,10 @@ export type Database = {
       increment_agent_resolutions: {
         Args: { p_profile_id: string }
         Returns: Json
+      }
+      increment_custom_emoji_use: {
+        Args: { p_emoji_id: string }
+        Returns: number
       }
       ingest_inbound_message: {
         Args: {
@@ -11772,6 +11943,13 @@ export type Database = {
           total: number
         }[]
       }
+      my_network_status: {
+        Args: never
+        Returns: {
+          country: string
+          ip_seen: string
+        }[]
+      }
       notify_due_reminders: { Args: never; Returns: number }
       notify_due_tasks: { Args: never; Returns: number }
       notify_searchbox_budget: { Args: never; Returns: number }
@@ -11837,8 +12015,27 @@ export type Database = {
         }[]
       }
       phone_variants: { Args: { p_phone: string }; Returns: string[] }
+      purge_gmail_account_data: {
+        Args: { p_account_id: string; p_confirm: string }
+        Returns: Json
+      }
+      purge_old_search_events: { Args: never; Returns: number }
       purge_talkx_expired_data: { Args: { p_limit?: number }; Returns: Json }
+      purge_voice_command_logs: {
+        Args: { p_limit?: number; p_retention_days?: number }
+        Returns: Json
+      }
       reap_ai_jobs: { Args: never; Returns: number }
+      reopen_conversation: {
+        Args: { p_contact_id: string }
+        Returns: {
+          contact_id: string
+          conversation_status: string | null
+          conversation_status_changed_at: string | null
+          event_id: string | null
+          reopened: boolean
+        }[]
+      }
       reassign_absent_agents: {
         Args: { inactive_minutes?: number }
         Returns: number
@@ -12086,6 +12283,29 @@ export type Database = {
         }
         Returns: number
       }
+      rpc_queue_goal_metrics: {
+        Args: never
+        Returns: {
+          assigned_contacts: number
+          assignment_rate: number
+          avg_wait_minutes: number
+          contacts_open: number
+          coverage: string
+          messages_pending: number
+          queue_id: string
+          queue_name: string
+          received_contacts: number
+          waiting_contacts: number
+        }[]
+      }
+      run_crm_sync_outbox_cleanup: {
+        Args: {
+          p_dead_letter_days?: number
+          p_limit?: number
+          p_succeeded_days?: number
+        }
+        Returns: number
+      }
       save_talkx_campaign_draft: {
         Args: {
           p_campaign_id: string
@@ -12137,6 +12357,16 @@ export type Database = {
           tags: string[]
           total_count: number
           updated_at: string
+        }[]
+      }
+      search_insights: {
+        Args: { p_days?: number }
+        Returns: {
+          average_term_length: number
+          searches_by_kind: Json
+          searches_with_click: number
+          searches_without_results: number
+          total_searches: number
         }[]
       }
       search_knowledge_base: {
@@ -12204,6 +12434,10 @@ export type Database = {
         Args: { p_contact_id: string; p_next: string; p_reason?: string }
         Returns: undefined
       }
+      set_default_whatsapp_connection: {
+        Args: { p_connection_id: string }
+        Returns: string
+      }
       set_department_whatsapp_config: {
         Args: {
           p_api_key?: string
@@ -12228,6 +12462,18 @@ export type Database = {
           p_profile_id: string
         }
         Returns: undefined
+      }
+      sentiment_trend: {
+        Args: { p_days?: number }
+        Returns: {
+          dia: string
+          total: number
+          positivos: number
+          neutros: number
+          negativos: number
+          media: number | null
+          indice: number | null
+        }[]
       }
       skill_based_assign: { Args: { p_queue_id: string }; Returns: string }
       snapshot_talkx_campaign_audience: {
@@ -12281,6 +12527,18 @@ export type Database = {
           pending_message_count: number
           queue_id: string
           waiting_since: string
+        }[]
+      }
+      talk_me_list_pending_messages: {
+        Args: { p_contact_id: string; p_limit?: number }
+        Returns: {
+          caption: string
+          content: string
+          created_at: string
+          media_url: string
+          message_id: string
+          message_type: string
+          sender: string
         }[]
       }
       talk_me_list_queues: {
@@ -12520,6 +12778,7 @@ export type Database = {
         }[]
       }
       trigger_ai_jobs_tick: { Args: never; Returns: undefined }
+      trigger_crm_sync_outbox: { Args: never; Returns: number }
       trigger_pending_multiplix_dispatches: { Args: never; Returns: undefined }
       trigger_talkx_engine_tick: { Args: never; Returns: undefined }
       update_agent_streak: {
@@ -12681,12 +12940,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -12710,11 +12969,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -12735,11 +12994,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -12760,11 +13019,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -12777,11 +13036,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

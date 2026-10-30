@@ -7,7 +7,7 @@ import { uploadTeamMedia } from '@/hooks/team-chat/uploadTeamMedia';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { Button } from '@/components/ui/button';
 import { Paperclip, Image as ImageIcon, FileText, X, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/lazyToast';
 import { cn } from '@/lib/utils';
 import { MAX_TEAM_CHAT_FILE_SIZE, getTeamChatFileSizeError } from '@/lib/teamChatRules';
 
@@ -118,6 +118,7 @@ export function TeamFileUploader({ conversationId, onFileSent, disabled }: TeamF
         className="h-8 w-8 shrink-0"
         onClick={() => inputRef.current?.click()}
         disabled={disabled}
+        aria-label="Enviar arquivo"
         title="Enviar arquivo"
       >
         <Paperclip className="w-4 h-4" />
@@ -129,7 +130,7 @@ export function TeamFileUploader({ conversationId, onFileSent, disabled }: TeamF
           <div className="bg-card rounded-xl p-4 max-w-sm w-full mx-4 space-y-3 shadow-xl border border-border" role="dialog" aria-label="Preview do arquivo">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold text-foreground">Enviar arquivo</h4>
-              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={handleCancel}>
+              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={handleCancel} aria-label="Fechar preview">
                 <X className="w-4 h-4" />
               </Button>
             </div>

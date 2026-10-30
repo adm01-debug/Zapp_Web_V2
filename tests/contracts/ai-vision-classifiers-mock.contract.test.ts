@@ -40,13 +40,38 @@
  *      leva `apikey` = anon key e `Authorization` = Bearer <JWT do chamador> —
  *      NUNCA a service role; no fluxo de SERVIÇO (webhook) a service role é
  *      usada de forma EXPLÍCITA.
+ *
+ * Aceites do IA-132 provados aqui (seções 10 e 11):
+ *   7. `classify-emoji` e `classify-sticker` devolvem, ao lado de `category`, o
+ *      ESTADO (`state`) e o motivo técnico (`error_code`): 'ok' (categoria
+ *      válida — inclusive quando o MODELO responde 'outros'), 'unknown' (sem
+ *      entrada), 'input_error' (imagem recusada na preparação), 'low_confidence'
+ *      (resposta sem categoria da lista OU resposta VAZIA — corpo 200 sem
+ *      conteúdo utilizável, com `error_code: 'EMPTY_RESPONSE'`) e 'provider_error'
+ *      (falha de provedor/roteamento). Sem a correção todos estes caminhos
+ *      devolviam SOMENTE `{ category: 'outros' }` e eram indistinguíveis;
+ *   8. no front (`useMediaLibrary.ts`, reclassificação em lote) a gravação da
+ *      categoria fica atrás da checagem de estado: indisponibilidade do modelo
+ *      não altera o arquivo para 'outros' como se fosse conclusão.
  */
 
+import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   generateWithRouting,
   type GenerateParams,
 } from '../../supabase/functions/_shared/ai-generate.ts';
+
+/**
+ * Fonte SEM comentários: o que é garantia não mora em comentário (padrão dos
+ * contratos que leem arquivo de app — o runner de contratos é Node e não resolve
+ * os imports `@/…` do front).
+ */
+function semComentarios(codigo: string): string {
+  return codigo
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+}
 
 // ---------------------------------------------------------------------------
 // Constantes do cenário (espelham o desenho congelado do PR-4)
@@ -125,6 +150,14 @@ const H = vi.hoisted(() => ({
   imageMode: 'ok' as ImageMode,
   /** Conteúdo que o provedor devolve (categoria); `null` usa o 200 padrão. */
   providerContent: 'riso' as string | null,
+  /**
+   * FORMA da resposta 200 do provedor (IA-132 — resposta vazia):
+   *   - 'normal':         `choices[0].message.content` traz `providerContent`;
+   *   - 'emptyChoices':   `choices: []`;
+   *   - 'missingChoices': corpo SEM a chave `choices`;
+   *   - 'noContent':      `choices[0].message` existe mas SEM `content`.
+   */
+  providerShape: 'normal' as 'normal' | 'emptyChoices' | 'missingChoices' | 'noContent',
   /**
    * Identidade que `requireAiIdentityOrService` devolve (R2-INF-022): 'user' é
    * o fluxo de usuário; 'service' é o fluxo interno do webhook do WhatsApp.
@@ -255,6 +288,7 @@ beforeEach(() => {
   H.fetchMode = 'ok';
   H.imageMode = 'ok';
   H.providerContent = 'riso';
+  H.providerShape = 'normal';
   H.identityKind = 'user';
   logSpy.mockClear();
 
@@ -281,14 +315,25 @@ beforeEach(() => {
           headers: { 'content-type': 'application/json' },
         });
       }
-      return new Response(
-        JSON.stringify({
-          model: MODELO_VISAO,
-          choices: [{ message: { content: H.providerContent } }],
-          usage: { prompt_tokens: 7, completion_tokens: 2 },
-        }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      );
+      const payload: Record<string, unknown> = {
+        model: MODELO_VISAO,
+        usage: { prompt_tokens: 7, completion_tokens: 2 },
+      };
+      // IA-132 — a FORMA da resposta 200 é controlada por `providerShape`: o caso
+      // de resposta VAZIA (sem conteúdo utilizável) sai de um destes ramos.
+      if (H.providerShape === 'emptyChoices') {
+        payload.choices = [];
+      } else if (H.providerShape === 'missingChoices') {
+        // Corpo 200 SEM a chave `choices`.
+      } else if (H.providerShape === 'noContent') {
+        payload.choices = [{ message: {} }];
+      } else {
+        payload.choices = [{ message: { content: H.providerContent } }];
+      }
+      return new Response(JSON.stringify(payload), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
     }),
   );
 });
@@ -458,7 +503,7 @@ describe('(1) visão: imagem embutida em DATA URL, download autenticado e modelo
     const res = await emoji(pedidoEmoji());
 
     expect(res.status).toBe(200);
-    expect(await corpo(res)).toEqual({ category: 'riso' });
+    expect(await corpo(res)).toEqual({ category: 'riso', state: 'ok' });
 
     // O download aconteceu no SERVIDOR, no endpoint AUTENTICADO do Storage — e
     // NUNCA na URL pública crua (`/object/public/`).
@@ -500,7 +545,7 @@ describe('(1) visão: imagem embutida em DATA URL, download autenticado e modelo
     const res = await sticker(pedidoSticker());
 
     expect(res.status).toBe(200);
-    expect(await corpo(res)).toEqual({ category: 'riso' });
+    expect(await corpo(res)).toEqual({ category: 'riso', state: 'ok' });
 
     const downloads = chamadasDeImagem();
     expect(downloads).toHaveLength(1);
@@ -547,7 +592,7 @@ describe('(2) consumo: logAiUsage cobre sucesso, HTTP 500 e exceção', () => {
     const res = await emoji(pedidoEmoji());
 
     expect(res.status).toBe(200);
-    expect(await corpo(res)).toEqual({ category: 'riso' });
+    expect(await corpo(res)).toEqual({ category: 'riso', state: 'ok' });
     expect(logSpy).toHaveBeenCalledTimes(1);
 
     const entrada = logSpy.mock.calls[0][0] as LogEntry;
@@ -630,7 +675,7 @@ describe('(3) erro HTTP do provedor de visão: degradação para `outros` (não 
 
     expect(lancou, 'a degradação não pode propagar exceção').toBe(false);
     expect(res.status).toBe(200);
-    expect(await corpo(res)).toEqual({ category: 'outros' });
+    expect(await corpo(res)).toEqual({ category: 'outros', state: 'provider_error', error_code: 'PROVIDER_ERROR' });
     // A tentativa foi ao provedor de VISÃO — e nunca ao de texto.
     expect(chamadasDeProvedor().some((call) => call.url === ENDPOINT_VISAO)).toBe(true);
     expect(chamadasDeProvedor().every((call) => call.url !== ENDPOINT_TEXTO_PADRAO)).toBe(true);
@@ -644,7 +689,7 @@ describe('(3) erro HTTP do provedor de visão: degradação para `outros` (não 
     const res = await sticker(pedidoSticker());
 
     expect(res.status).toBe(200);
-    expect(await corpo(res)).toEqual({ category: 'outros' });
+    expect(await corpo(res)).toEqual({ category: 'outros', state: 'provider_error', error_code: 'PROVIDER_ERROR' });
     expect(chamadasDeProvedor().every((call) => call.url !== ENDPOINT_TEXTO_PADRAO)).toBe(true);
   });
 });
@@ -661,7 +706,7 @@ describe('(4) visão sem candidato: NO_PROVIDER e nada enviado ao provedor de te
     const res = await emoji(pedidoEmoji());
 
     expect(res.status).toBe(200);
-    expect(await corpo(res)).toEqual({ category: 'outros' });
+    expect(await corpo(res)).toEqual({ category: 'outros', state: 'provider_error', error_code: 'NO_PROVIDER' });
     // NENHUMA chamada ao PROVEDOR (o download da imagem ainda pode ocorrer antes).
     expect(chamadasDeProvedor()).toHaveLength(0);
     expect(chamadasDeProvedor().every((call) => call.url !== ENDPOINT_TEXTO_PADRAO)).toBe(true);
@@ -692,7 +737,7 @@ describe('(5) imagem acima do teto (4 MiB): 200 {outros} e registro do motivo', 
     const res = await emoji(pedidoEmoji());
 
     expect(res.status).toBe(200);
-    expect(await corpo(res)).toEqual({ category: 'outros' });
+    expect(await corpo(res)).toEqual({ category: 'outros', state: 'input_error', error_code: 'IMAGE_TOO_LARGE' });
 
     // A imagem é recusada ANTES de virar payload: nenhuma chamada ao provedor.
     expect(chamadasDeProvedor()).toHaveLength(0);
@@ -716,7 +761,7 @@ describe('(5) imagem acima do teto (4 MiB): 200 {outros} e registro do motivo', 
     const res = await sticker(pedidoSticker());
 
     expect(res.status).toBe(200);
-    expect(await corpo(res)).toEqual({ category: 'outros' });
+    expect(await corpo(res)).toEqual({ category: 'outros', state: 'input_error', error_code: 'IMAGE_TOO_LARGE' });
     expect(chamadasDeProvedor()).toHaveLength(0);
 
     expect(logSpy).toHaveBeenCalledTimes(1);
@@ -741,7 +786,7 @@ describe('(6) falha do Storage (404/403): 200 {outros} e registro do motivo', ()
       const res = await sticker(pedidoSticker());
 
       expect(res.status).toBe(200);
-      expect(await corpo(res)).toEqual({ category: 'outros' });
+      expect(await corpo(res)).toEqual({ category: 'outros', state: 'input_error', error_code: 'IMAGE_DOWNLOAD_FAILED' });
 
       // Houve a TENTATIVA de baixar (GET) e nenhuma chamada ao provedor.
       expect(chamadasDeImagem()).toHaveLength(1);
@@ -764,7 +809,7 @@ describe('(6) falha do Storage (404/403): 200 {outros} e registro do motivo', ()
     const res = await emoji(pedidoEmoji());
 
     expect(res.status).toBe(200);
-    expect(await corpo(res)).toEqual({ category: 'outros' });
+    expect(await corpo(res)).toEqual({ category: 'outros', state: 'input_error', error_code: 'IMAGE_DOWNLOAD_FAILED' });
     expect(logSpy).toHaveBeenCalledTimes(1);
     expect((logSpy.mock.calls[0][0] as LogEntry).metadata?.image_error_code).toBe('IMAGE_DOWNLOAD_FAILED');
   });
@@ -777,7 +822,7 @@ describe('(6) falha do Storage (404/403): 200 {outros} e registro do motivo', ()
     const res = await emoji(pedidoEmoji());
 
     expect(res.status).toBe(200);
-    expect(await corpo(res)).toEqual({ category: 'outros' });
+    expect(await corpo(res)).toEqual({ category: 'outros', state: 'input_error', error_code: 'IMAGE_TYPE_INVALID' });
     expect(logSpy).toHaveBeenCalledTimes(1);
     expect((logSpy.mock.calls[0][0] as LogEntry).metadata?.image_error_code).toBe('IMAGE_TYPE_INVALID');
   });
@@ -796,46 +841,75 @@ describe('(7) central: NENHUM caminho que devolva `outros` termina sem registro 
     nome: string;
     preparar: () => void;
     chamar: () => Promise<Response>;
+    /** IA-132 — o ESTADO que aquele caminho precisa declarar. */
+    estado: string;
+    /** IA-132 — o motivo técnico que acompanha o estado. */
+    codigo: string;
   }> = [
     {
-      nome: "sticker sem image_url (entrada vazia)",
+      nome: "sticker sem image_url (entrada vazia)", estado: 'unknown', codigo: 'MISSING_INPUT',
       preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; },
       chamar: async () => (await handlers()).sticker(pedidoStickerSemImagem()),
     },
     {
-      nome: "emoji sem image_url e sem file_name (entrada vazia)",
+      nome: "emoji sem image_url e sem file_name (entrada vazia)", estado: 'unknown', codigo: 'MISSING_INPUT',
       preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; },
       chamar: async () => (await handlers()).emoji(pedidoEmojiSemEntrada()),
     },
     {
-      nome: 'imagem grande demais (> 4 MiB)',
+      nome: 'imagem grande demais (> 4 MiB)', estado: 'input_error', codigo: 'IMAGE_TOO_LARGE',
       preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.imageMode = 'tooLarge'; },
       chamar: async () => (await handlers()).sticker(pedidoSticker()),
     },
     {
-      nome: 'Storage responde 403',
+      nome: 'Storage responde 403', estado: 'input_error', codigo: 'IMAGE_DOWNLOAD_FAILED',
       preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.imageMode = 'http403'; },
       chamar: async () => (await handlers()).emoji(pedidoEmoji()),
     },
     {
-      nome: 'provedor de visão responde HTTP 500',
+      nome: 'provedor de visão responde HTTP 500', estado: 'provider_error', codigo: 'PROVIDER_ERROR',
       preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.fetchMode = 'http500'; },
       chamar: async () => (await handlers()).emoji(pedidoEmoji()),
     },
     {
-      nome: 'provedor LANÇA na rede',
+      nome: 'provedor LANÇA na rede', estado: 'provider_error', codigo: 'PROVIDER_ERROR',
       preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.fetchMode = 'throw'; },
       chamar: async () => (await handlers()).sticker(pedidoSticker()),
     },
     {
-      nome: 'nenhum provedor declara visão (NO_PROVIDER)',
+      nome: 'nenhum provedor declara visão (NO_PROVIDER)', estado: 'provider_error', codigo: 'NO_PROVIDER',
       preparar: () => { H.rows = [deepseekTexto()]; },
       chamar: async () => (await handlers()).emoji(pedidoEmoji()),
     },
     {
-      nome: 'provedor devolve categoria fora da lista',
+      nome: 'provedor devolve categoria fora da lista', estado: 'low_confidence', codigo: 'INVALID_CATEGORY',
       preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = 'categoria-inventada'; },
       chamar: async () => (await handlers()).emoji(pedidoEmoji()),
+    },
+    {
+      nome: 'provedor responde conteudo VAZIO - sticker', estado: 'low_confidence', codigo: 'EMPTY_RESPONSE',
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = ''; },
+      chamar: async () => (await handlers()).sticker(pedidoSticker()),
+    },
+    {
+      nome: 'provedor responde conteudo VAZIO - emoji (so espacos)', estado: 'low_confidence', codigo: 'EMPTY_RESPONSE',
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = '   '; },
+      chamar: async () => (await handlers()).emoji(pedidoEmoji()),
+    },
+    {
+      nome: 'provedor responde choices vazio', estado: 'low_confidence', codigo: 'EMPTY_RESPONSE',
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerShape = 'emptyChoices'; },
+      chamar: async () => (await handlers()).sticker(pedidoSticker()),
+    },
+    {
+      nome: 'provedor responde sem choices', estado: 'low_confidence', codigo: 'EMPTY_RESPONSE',
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerShape = 'missingChoices'; },
+      chamar: async () => (await handlers()).emoji(pedidoEmoji()),
+    },
+    {
+      nome: 'provedor responde item sem message.content', estado: 'low_confidence', codigo: 'EMPTY_RESPONSE',
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerShape = 'noContent'; },
+      chamar: async () => (await handlers()).sticker(pedidoSticker()),
     },
   ];
 
@@ -846,12 +920,19 @@ describe('(7) central: NENHUM caminho que devolva `outros` termina sem registro 
       H.fetchMode = 'ok';
       H.imageMode = 'ok';
       H.providerContent = 'riso';
+      H.providerShape = 'normal';
       cenario.preparar();
 
       const res = await cenario.chamar();
 
       expect(res.status).toBe(200);
-      expect(await corpo(res)).toEqual({ category: 'outros' });
+      // IA-132: o MESMO `category: 'outros'` sai com o estado do caminho — antes
+      // da correção todos estes cenários devolviam só `{ category: 'outros' }`.
+      expect(await corpo(res)).toEqual({
+        category: 'outros',
+        state: cenario.estado,
+        error_code: cenario.codigo,
+      });
       expect(
         logSpy.mock.calls.length,
         'devolver `outros` sem linha em ai_usage_logs é o fallback silencioso que a decisão proíbe',
@@ -865,7 +946,7 @@ describe('(7) central: NENHUM caminho que devolva `outros` termina sem registro 
 
     const res = await emoji(pedidoEmoji());
 
-    expect(await corpo(res)).toEqual({ category: 'riso' });
+    expect(await corpo(res)).toEqual({ category: 'riso', state: 'ok' });
     expect(logSpy).toHaveBeenCalledTimes(1);
     expect((logSpy.mock.calls[0][0] as LogEntry).status).toBe('success');
   });
@@ -943,5 +1024,187 @@ describe('(9) identidade do download: usuário → anon key + JWT; serviço → 
     // apikey seria a anon key e esta asserção falharia.
     expect(headers['apikey']).toBe(SERVICE_ROLE_FICTICIA);
     expect(headers['authorization']).toBe(`Bearer ${SERVICE_ROLE_FICTICIA}`);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// (10) IA-132: categoria e falha técnica são ESTADOS distintos
+// ---------------------------------------------------------------------------
+
+describe('(10) IA-132: o estado separa conclusão, desconhecido, baixa confiança e falha técnica', () => {
+  /**
+   * Roda um caso com o estado do mock ZERADO (nenhum vazamento do caso anterior)
+   * e devolve o corpo JSON que o consumidor REAL respondeu.
+   */
+  async function desfecho(caso: {
+    preparar: () => void;
+    chamar: (h: {
+      emoji: (r: Request) => Promise<Response>;
+      sticker: (r: Request) => Promise<Response>;
+    }) => Promise<Response>;
+  }): Promise<Record<string, unknown>> {
+    logSpy.mockClear();
+    H.fetchCalls = [];
+    H.fetchMode = 'ok';
+    H.imageMode = 'ok';
+    H.providerContent = 'riso';
+    H.providerShape = 'normal';
+    H.identityKind = 'user';
+    caso.preparar();
+    const h = await handlers();
+    return await corpo(await caso.chamar(h));
+  }
+
+  it('entrada ausente → `unknown` (não é falha de provedor)', async () => {
+    const sticker = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; },
+      chamar: (h) => h.sticker(pedidoStickerSemImagem()),
+    });
+    expect(sticker).toEqual({ category: 'outros', state: 'unknown', error_code: 'MISSING_INPUT' });
+
+    const emoji = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; },
+      chamar: (h) => h.emoji(pedidoEmojiSemEntrada()),
+    });
+    expect(emoji).toEqual({ category: 'outros', state: 'unknown', error_code: 'MISSING_INPUT' });
+  });
+
+  it('imagem recusada na preparação → `input_error` com o código TIPADO do motivo', async () => {
+    const grande = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.imageMode = 'tooLarge'; },
+      chamar: (h) => h.sticker(pedidoSticker()),
+    });
+    expect(grande).toEqual({ category: 'outros', state: 'input_error', error_code: 'IMAGE_TOO_LARGE' });
+
+    const negada = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.imageMode = 'http403'; },
+      chamar: (h) => h.emoji(pedidoEmoji()),
+    });
+    expect(negada).toEqual({ category: 'outros', state: 'input_error', error_code: 'IMAGE_DOWNLOAD_FAILED' });
+
+    const tipoRuim = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.imageMode = 'badType'; },
+      chamar: (h) => h.sticker(pedidoSticker()),
+    });
+    expect(tipoRuim).toEqual({ category: 'outros', state: 'input_error', error_code: 'IMAGE_TYPE_INVALID' });
+  });
+
+  it('provedor/roteamento → `provider_error` (HTTP 500, rede e NO_PROVIDER)', async () => {
+    const http500 = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.fetchMode = 'http500'; },
+      chamar: (h) => h.sticker(pedidoSticker()),
+    });
+    expect(http500).toEqual({ category: 'outros', state: 'provider_error', error_code: 'PROVIDER_ERROR' });
+
+    const rede = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.fetchMode = 'throw'; },
+      chamar: (h) => h.emoji(pedidoEmoji()),
+    });
+    expect(rede).toEqual({ category: 'outros', state: 'provider_error', error_code: 'PROVIDER_ERROR' });
+
+    const semCandidato = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto()]; },
+      chamar: (h) => h.sticker(pedidoSticker()),
+    });
+    expect(semCandidato).toEqual({ category: 'outros', state: 'provider_error', error_code: 'NO_PROVIDER' });
+  });
+
+  it('resposta sem categoria da lista → `low_confidence` (não é o `outros` concluído)', async () => {
+    const inventada = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = 'categoria-inventada'; },
+      chamar: (h) => h.emoji(pedidoEmoji()),
+    });
+    expect(inventada).toEqual({ category: 'outros', state: 'low_confidence', error_code: 'INVALID_CATEGORY' });
+  });
+
+  it('resposta VAZIA do provedor → `low_confidence`/EMPTY_RESPONSE (nunca `outros` concluido)', async () => {
+    // CENTRAL: provedor 200 sem conteudo utilizavel NAO pode virar `{ outros, ok }`.
+    // Se o codigo voltar a `(content || 'outros')`, estes casos ficam VERMELHOS
+    // (sairia `{ category: 'outros', state: 'ok' }`).
+    const vazioSticker = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = ''; },
+      chamar: (h) => h.sticker(pedidoSticker()),
+    });
+    expect(vazioSticker).toEqual({ category: 'outros', state: 'low_confidence', error_code: 'EMPTY_RESPONSE' });
+
+    const brancoEmoji = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = '  \n  '; },
+      chamar: (h) => h.emoji(pedidoEmoji()),
+    });
+    expect(brancoEmoji).toEqual({ category: 'outros', state: 'low_confidence', error_code: 'EMPTY_RESPONSE' });
+
+    const semContent = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerShape = 'noContent'; },
+      chamar: (h) => h.sticker(pedidoSticker()),
+    });
+    expect(semContent).toEqual({ category: 'outros', state: 'low_confidence', error_code: 'EMPTY_RESPONSE' });
+
+    const choicesVazio = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerShape = 'emptyChoices'; },
+      chamar: (h) => h.emoji(pedidoEmoji()),
+    });
+    expect(choicesVazio).toEqual({ category: 'outros', state: 'low_confidence', error_code: 'EMPTY_RESPONSE' });
+
+    const semChoices = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerShape = 'missingChoices'; },
+      chamar: (h) => h.sticker(pedidoSticker()),
+    });
+    expect(semChoices).toEqual({ category: 'outros', state: 'low_confidence', error_code: 'EMPTY_RESPONSE' });
+  });
+
+  it('`outros` EXPLICITO do modelo continua sendo conclusao valida (`ok`) - controle', async () => {
+    const explicitoSticker = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = 'outros'; },
+      chamar: (h) => h.sticker(pedidoSticker()),
+    });
+    expect(explicitoSticker).toEqual({ category: 'outros', state: 'ok' });
+
+    const explicitoEmoji = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = 'outros'; },
+      chamar: (h) => h.emoji(pedidoEmoji()),
+    });
+    expect(explicitoEmoji).toEqual({ category: 'outros', state: 'ok' });
+  });
+
+  it("ACEITE IA-132: indisponibilidade do modelo não é 'outros' como conclusão", async () => {
+    // O modelo RESPONDENDO 'outros' é conclusão válida…
+    const concluido = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.providerContent = 'outros'; },
+      chamar: (h) => h.emoji(pedidoEmoji()),
+    });
+    expect(concluido).toEqual({ category: 'outros', state: 'ok' });
+
+    // …e o modelo INDISPONÍVEL é falha técnica: MESMA categoria, estado diferente.
+    const indisponivel = await desfecho({
+      preparar: () => { H.rows = [deepseekTexto(), geminiVisao()]; H.fetchMode = 'http500'; },
+      chamar: (h) => h.emoji(pedidoEmoji()),
+    });
+    expect(indisponivel.category).toBe('outros');
+    expect(indisponivel.state).toBe('provider_error');
+    expect(indisponivel.state).not.toBe(concluido.state);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// (11) IA-132 no FRONT: reclassificação em lote só grava conclusão válida
+// ---------------------------------------------------------------------------
+
+describe('(11) IA-132 no front: `useMediaLibrary` não grava `outros` de falha técnica', () => {
+  /**
+   * O runner de contratos roda em Node e não resolve os imports de app (`@/…`),
+   * então o hook não pode ser importado aqui; a garantia é conferida no FONTE
+   * real — o mesmo padrão de `notification-sound-persistence.contract.test.ts`.
+   */
+  const CAMINHO_FRONT = 'src/components/settings/media-library/useMediaLibrary.ts';
+
+  it('a checagem de estado vem ANTES da gravação e o caminho antigo não voltou', () => {
+    const fonte = semComentarios(readFileSync(CAMINHO_FRONT, 'utf8'));
+    const iChecaEstado = fonte.indexOf("resposta.state !== 'ok'");
+    const iGrava = fonte.indexOf('await supabase.from(type).update({ category: categoria })');
+    expect(iChecaEstado, 'o hook precisa checar o `state` da resposta do classificador').toBeGreaterThan(-1);
+    expect(iGrava, 'o hook precisa continuar gravando a categoria válida').toBeGreaterThan(-1);
+    expect(iChecaEstado, 'a checagem de estado precisa vir antes da gravação').toBeLessThan(iGrava);
+    // O caminho antigo (gravar `data.category` sem olhar o estado) NÃO pode voltar.
+    expect(fonte).not.toContain('data.category');
   });
 });

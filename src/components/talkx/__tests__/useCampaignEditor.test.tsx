@@ -1,4 +1,4 @@
-import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
+import { act, fireEvent, render, renderHook, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -15,18 +15,22 @@ const f = vi.hoisted(() => ({
   // Histórico de versões: consumido pelo TalkXTemplateEditor (renderizado nesta
   // suíte). O wizard NÃO o usa: resolve a versão por current_version_id.
   fetchVersionHistory: vi.fn(async (_templateId: string) => [] as { id: string; version_number: number }[]),
-  contacts: [{ id: 'contact-1', name: 'Ana Silva', nickname: null, phone: '5511999999999', company: 'Acme', avatar_url: null, tags: ['VIP'] }],
+  contacts: [{ id: 'contact-1', name: 'Ana Silva', nickname: null, phone: '5511999999999', company: 'Acme', avatar_url: null }],
   connections: [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }],
   persistedRecipientIds: [] as { contact_id: string }[] | undefined,
   templates: [] as { id: string; content: string; media_url: string | null; media_type?: string | null; use_count: number; current_version_id?: string | null }[],
   // V25 — usuário logado (profiles.id) e segmentos do passo 1.
   profile: { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' } as { id: string; name: string; email: string } | null,
   segments: [] as { id: string; name: string; description: string; status: string; estimated_count: number }[],
+  // X124 — perfis devolvidos pela consulta de responsáveis (admin/supervisor ativos).
+  owners: [] as { id: string; name: string | null; email: string | null }[],
   queryCalls: [] as CapturedQuery[],
 }));
 
 vi.mock('@/hooks/integrations/useTalkX', () => ({
   useTalkX: () => ({
+    // X091 — o editor de template lê as campanhas para o widget "Em andamento".
+    campaigns: [],
     createCampaign: { mutateAsync: f.create },
     updateCampaign: { mutateAsync: f.update },
     saveDraftCampaign: {
@@ -91,8 +95,9 @@ vi.mock('@tanstack/react-query', () => ({
     const data = key === 'wa-connections-talkx' ? f.connections
       : key === 'talkx-audience-contacts' ? f.contacts
         : key === 'talkx-audience-count' ? f.contacts.length
-          : key === 'talkx-draft-recipient-ids' ? f.persistedRecipientIds?.map((recipient) => recipient.contact_id)
-            : undefined;
+          : key === 'talkx-owner-profiles' ? f.owners
+            : key === 'talkx-draft-recipient-ids' ? f.persistedRecipientIds?.map((recipient) => recipient.contact_id)
+              : undefined;
     return { data, isFetching: false };
   },
   useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
@@ -106,7 +111,18 @@ import { OBJECTIVES, personalizePreview } from '@/components/talkx/talkxShared';
 import { rulesToPostgrest, type SegmentRules } from '@/hooks/integrations/useTalkXSegments';
 // X017 — spy do cliente Supabase: prova que o persist não faz consulta solta.
 import { supabase } from '@/integrations/supabase/client';
+// X123 — prova que o autosave não marca uso do segmento.
+import { fromTable } from '@/lib/supabaseHelpers';
 import { TooltipProvider } from '@/components/ui/tooltip';
+
+// O jsdom não implementa captura de ponteiro; o gatilho do Select (Radix) chama
+// `hasPointerCapture` no pointerdown que o abre (mesmo ajuste dos testes de
+// paginação do Talk X).
+beforeAll(() => {
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.setPointerCapture = () => {};
+  Element.prototype.releasePointerCapture = () => {};
+});
 
 /** Última consulta registrada com a chave informada (o mock empilha por render). */
 function capturedQuery(key: string): CapturedQuery | undefined {
@@ -179,11 +195,11 @@ describe('useCampaignEditor — draft integrity', () => {
   it('oferece os filtros do passo 1 pelo catálogo de regras e consulta o motor (V24)', () => {
     render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
 
-    // X126: a trilha "Filtros de audiência" passou a ser o componente dos 7
+    // X126: a trilha "Filtros de audiência" passou a ser o componente dos
     // controles do mock (antes, o editor genérico de regras com "Adicionar
     // filtro"). O que o caso protege continua igual: os filtros vêm do catálogo
-    // de regras e a lista/contagem saem do motor.
-    expect(screen.getByRole('group', { name: 'Tags' })).toBeInTheDocument();
+    // de regras e a lista/contagem saem do motor. Sem o controle de Tag (12/10).
+    expect(screen.queryByRole('group', { name: 'Tags' })).toBeNull();
     expect(screen.getByRole('group', { name: 'Localização' })).toBeInTheDocument();
     // A lista e a contagem do passo 1 saem do motor (não mais do SELECT morto).
     expect(capturedQuery('talkx-audience-contacts')).toBeDefined();
@@ -405,7 +421,7 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(lastSavedFilter()).toBeNull();
   });
 
-  it('converte o snapshot solto do V23 em regras e descarta os filtros mortos (V24)', async () => {
+  it('converte o snapshot solto do V23 em regras e descarta os filtros mortos e o de tag (V24)', async () => {
     const campaign = {
       id: 'draft-1', name: 'Rascunho', status: 'draft', audience_source: 'contacts',
       audience_filters: { company: 'Acme', tag: 'VIP', city: 'Recife', state: 'PE', status: 'open', group: 'Grupo A', inactive: true, birthday: 'this_month', search: 'ana' },
@@ -413,13 +429,15 @@ describe('useCampaignEditor — draft integrity', () => {
     const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
     await act(async () => {});
 
+    // O filtro de tag do snapshot NÃO entra: a função de tags não existe mais.
     expect(rulesToPostgrest(result.current.audienceRules))
-      .toBe('and(company.eq."Acme",tags.cs.{"VIP"},city.eq."Recife",state.eq."PE",conversation_status.eq."open")');
+      .toBe('and(company.eq."Acme",city.eq."Recife",state.eq."PE",conversation_status.eq."open")');
     expect(result.current.companyFilter).toBe('Acme');
-    expect(result.current.tagFilter).toBe('VIP');
     expect(result.current.contactSearch).toBe('ana');
     // group/inactive/birthday eram filtros mortos: não são convertidos nem expostos.
     expect(result.current).not.toHaveProperty('cityFilter');
+    expect(result.current).not.toHaveProperty('tagFilter');
+    expect(result.current).not.toHaveProperty('setTagFilter');
     expect(result.current).not.toHaveProperty('groupFilter');
     expect(result.current).not.toHaveProperty('inactiveFilter');
     expect(result.current).not.toHaveProperty('birthdayFilter');
@@ -428,7 +446,7 @@ describe('useCampaignEditor — draft integrity', () => {
   it('o rascunho salvo com regras reabre com as mesmas regras (V24)', async () => {
     const first = renderHook(() => useCampaignEditor({ id: 'draft-1', name: 'Rascunho', status: 'draft', audience_source: 'contacts' } as never, vi.fn()));
     await act(async () => {});
-    act(() => { first.result.current.setCompanyFilter('Acme'); first.result.current.setTagFilter('VIP'); });
+    act(() => { first.result.current.setCompanyFilter('Acme'); });
     act(() => first.result.current.addAudienceRule('city'));
     const cityRule = first.result.current.audienceRules.groups[0].rules.find((rule) => rule.field === 'city');
     if (!cityRule) throw new Error('a regra de cidade deveria existir');
@@ -439,7 +457,6 @@ describe('useCampaignEditor — draft integrity', () => {
     const saved = calls[calls.length - 1]?.[0] as { audience_filters?: SegmentRules } | undefined;
     const savedFilter = rulesToPostgrest(saved?.audience_filters) ?? '';
     expect(savedFilter).toContain('company.eq."Acme"');
-    expect(savedFilter).toContain('tags.cs.{"VIP"}');
     expect(savedFilter).toContain('city.eq."Recife"');
     first.unmount();
 
@@ -451,8 +468,25 @@ describe('useCampaignEditor — draft integrity', () => {
 
     expect(second.result.current.audienceRules).toEqual({ groups: saved?.audience_filters?.groups });
     expect(second.result.current.companyFilter).toBe('Acme');
-    expect(second.result.current.tagFilter).toBe('VIP');
     expect(second.result.current.contactSearch).toBe('ana');
+  });
+
+  it('regra de tag do rascunho salvo não volta para o motor nem filtra em silêncio (12/10)', async () => {
+    const campaign = {
+      id: 'draft-1', name: 'Rascunho', status: 'draft', audience_source: 'contacts',
+      audience_filters: {
+        groups: [{
+          id: 'g1', match: 'and', rules: [
+            { id: 'r1', field: 'tags', op: 'contains', value: 'VIP' },
+            { id: 'r2', field: 'city', op: 'eq', value: 'Recife' },
+          ],
+        }],
+      },
+    };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+
+    expect(rulesToPostgrest(result.current.audienceRules)).toBe('city.eq."Recife"');
   });
 
   it('marcar um filtro de cidade consulta o motor com a regra correspondente (V24)', async () => {
@@ -845,6 +879,85 @@ describe('useCampaignEditor — V25 (responsável, nome mínimo, segmentos ativo
     expect(OBJECTIVES).toHaveLength(6);
     for (const objective of OBJECTIVES) expect(objective.icon).toBeDefined();
   });
+
+  /* ---------------- X124 — nome 3–200, objetivo com descrição, responsável --- */
+
+  it('exige nome com no máximo 200 caracteres para liberar o passo 1 (X124)', async () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    await act(async () => {});
+    // Público e conexão válidos: só o comprimento do nome separa os casos.
+    act(() => { result.current.setName('a'.repeat(200)); result.current.toggleContact('contact-1'); });
+    expect(result.current.canProceed[1]).toBe(true);
+
+    act(() => result.current.setName('a'.repeat(201)));
+    expect(result.current.canProceed[1]).toBe(false);
+
+    act(() => result.current.setName('a'.repeat(500)));
+    expect(result.current.canProceed[1]).toBe(false);
+  });
+
+  it('mostra o erro do nome longo abaixo do campo e liga aria-invalid (X124)', () => {
+    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+    const input = screen.getByPlaceholderText(/Lançamento Linha Office/i);
+
+    fireEvent.change(input, { target: { value: 'a'.repeat(201) } });
+    expect(screen.getByText(/no máximo 200 caracteres/i)).toBeInTheDocument();
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+
+    fireEvent.change(input, { target: { value: 'a'.repeat(200) } });
+    expect(screen.queryByText(/no máximo 200 caracteres/i)).not.toBeInTheDocument();
+    expect(input).toHaveAttribute('aria-invalid', 'false');
+  });
+
+  it('todo objetivo tem descrição curta para o select e para a revisão (X124)', () => {
+    expect(OBJECTIVES.find((o) => o.value === 'vendas')?.description).toBe('Gerar mais vendas e conversões');
+    for (const objective of OBJECTIVES) expect(objective.description.trim().length).toBeGreaterThan(0);
+  });
+
+  it('o select de objetivo mostra a descrição de cada opção (X124)', () => {
+    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+
+    fireEvent.pointerDown(screen.getByRole('combobox', { name: 'Objetivo' }), { button: 0, ctrlKey: false, pointerType: 'mouse' });
+
+    expect(screen.getByRole('option', { name: /Vendas/ })).toHaveTextContent('Gerar mais vendas e conversões');
+    expect(screen.getByRole('option', { name: /Reativação/ })).toHaveTextContent('Trazer de volta clientes inativos');
+  });
+
+  it('a consulta de responsáveis pede só perfis ativos admin/supervisor (X124)', async () => {
+    const builder = {
+      select: vi.fn(() => builder),
+      eq: vi.fn(() => builder),
+      in: vi.fn(() => builder),
+      order: vi.fn(() => builder),
+    };
+    const fromSpy = supabase.from as unknown as ReturnType<typeof vi.fn>;
+    fromSpy.mockReturnValueOnce(builder);
+
+    renderHook(() => useCampaignEditor(null, vi.fn()));
+    const query = capturedQuery('talkx-owner-profiles');
+    expect(query).toBeDefined();
+    await act(async () => { await query!.queryFn!({ signal: new AbortController().signal }); });
+
+    expect(fromSpy).toHaveBeenCalledWith('profiles');
+    expect(builder.eq).toHaveBeenCalledWith('is_active', true);
+    expect(builder.in).toHaveBeenCalledWith('role', ['admin', 'supervisor']);
+  });
+
+  it('o select Responsável lista avatar e nome dos perfis ativos devolvidos (X124)', () => {
+    f.owners = [
+      { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' },
+      { id: 'profile-2', name: null, email: 'chefe@example.com' },
+    ];
+    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+
+    fireEvent.pointerDown(screen.getByRole('combobox', { name: 'Responsável' }), { button: 0, ctrlKey: false, pointerType: 'mouse' });
+
+    const option = screen.getByRole('option', { name: /Ana Silva/ });
+    // O avatar é o InitialsAvatar do perfil (iniciais derivadas do nome).
+    expect(within(option).getByLabelText('Ana Silva')).toHaveTextContent('AS');
+    // Sem nome cadastrado, o e-mail continua identificando o perfil.
+    expect(screen.getByRole('option', { name: /chefe@example\.com/ })).toBeInTheDocument();
+  });
 });
 
 /* ------------------------------------------------------------------ */
@@ -901,6 +1014,54 @@ describe('useCampaignEditor — V26 (editor de mensagem, só-mídia e versão do
     expect(screen.getByTitle('Link (https://)')).toBeInTheDocument();
     expect(screen.getByTitle('Inserir variável')).toBeInTheDocument();
     expect(screen.getByText('0/4096')).toBeInTheDocument();
+  });
+
+  it('X128 — o chip de variável insere NA POSIÇÃO DO CURSOR (não anexa ao fim do texto)', () => {
+    window.history.replaceState(null, '', '/?view=talkx&wizard=new&step=2');
+    render(<TooltipProvider><TalkXCampaignWizard campaign={null} onClose={vi.fn()} /></TooltipProvider>);
+
+    const textarea = screen.getByPlaceholderText(/saudacao/) as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: 'Olá !' } });
+    // Cursor entre "Olá " e "!" — o chip tem de entrar AQUI.
+    textarea.setSelectionRange(4, 4);
+
+    fireEvent.click(screen.getByRole('button', { name: '{{empresa}}' }));
+
+    expect(textarea.value).toBe('Olá {{empresa}}!');
+  });
+
+  it('X128 — mensagem acima do teto do provedor (4.096) bloqueia o Continuar do passo 2', () => {
+    window.history.replaceState(null, '', '/?view=talkx&wizard=new&step=2');
+    render(<TooltipProvider><TalkXCampaignWizard campaign={null} onClose={vi.fn()} /></TooltipProvider>);
+
+    const textarea = screen.getByPlaceholderText(/saudacao/) as HTMLTextAreaElement;
+    const continuar = () => screen.getByRole('button', { name: /continuar/i });
+
+    fireEvent.change(textarea, { target: { value: 'a'.repeat(4096) } });
+    expect(continuar()).toBeEnabled();
+
+    fireEvent.change(textarea, { target: { value: 'a'.repeat(4097) } });
+    expect(continuar()).toBeDisabled();
+    expect(screen.getByText('4097/4096 · 1 acima do limite')).toBeInTheDocument();
+  });
+
+  it('X128 — chips de variável na ordem do mock 08 e as demais em "Mais variáveis"', () => {
+    window.history.replaceState(null, '', '/?view=talkx&wizard=new&step=2');
+    render(<TooltipProvider><TalkXCampaignWizard campaign={null} onClose={vi.fn()} /></TooltipProvider>);
+
+    const naOrdemDoMock = ['{{nome}}', '{{empresa}}', '{{saudacao}}', '{{vendedor}}', '{{data_atual}}', '{{link}}'];
+    const chips = naOrdemDoMock.map((key) => screen.getByRole('button', { name: key }));
+    for (let i = 1; i < chips.length; i += 1) {
+      expect(chips[i - 1].compareDocumentPosition(chips[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+
+    // As demais NÃO ocupam o painel: ficam no menu do botão.
+    expect(screen.queryByRole('button', { name: '{{nome_completo}}' })).not.toBeInTheDocument();
+    const mais = screen.getByRole('button', { name: /mais variáveis/i });
+    fireEvent.pointerDown(mais, { button: 0, ctrlKey: false });
+    fireEvent.click(mais);
+    expect(screen.getByText('{{nome_completo}}')).toBeInTheDocument();
+    expect(screen.getByText('{{apelido}}')).toBeInTheDocument();
   });
 
   it('texto vazio + mídia passa do passo 2; sem mídia não passa', async () => {
@@ -985,7 +1146,7 @@ describe('useCampaignEditor — V26 (editor de mensagem, só-mídia e versão do
 
   it('mesma entrada produz a mesma prévia no wizard e no editor de template', () => {
     const MSG = 'Olá {{nome}} da {{empresa}}';
-    const contact = { id: 'contact-1', name: 'João Silva', nickname: null, company: 'Sua Empresa', phone: '5511999999999', avatar_url: null, tags: [] };
+    const contact = { id: 'contact-1', name: 'João Silva', nickname: null, company: 'Sua Empresa', phone: '5511999999999', avatar_url: null };
     f.contacts = [contact];
     const template = makeTemplate({ content: MSG });
     f.templates = [template];
@@ -1023,18 +1184,31 @@ describe('useCampaignEditor — V26 (editor de mensagem, só-mídia e versão do
     confirmSpy.mockRestore();
   });
 
-  it('alterar só a mídia já marca alteração ao sair', () => {
+  it('alterar só a mídia já marca alteração ao sair', async () => {
     const template = makeTemplate();
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
     const onClose = vi.fn();
     render(<TalkXTemplateEditor templates={[template] as never} isLoading={false} editing={template as never} onClose={onClose} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Imagem' }));
     fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
 
-    expect(confirmSpy).toHaveBeenCalledWith('Descartar alterações?');
+    // X050: a confirmação deixou de ser a caixinha do navegador e virou o preset
+    // `descartarAlteracoes` do kit — o editor só sai depois da resposta.
+    const modal = screen.getByRole('alertdialog');
+    expect(within(modal).getByText('Descartar Alterações')).toBeTruthy();
+    expect(within(modal).getByText('Tem alterações não salvas. Descartar?')).toBeTruthy();
     expect(onClose).not.toHaveBeenCalled();
-    confirmSpy.mockRestore();
+
+    // "Continuar editando" mantém o editor aberto.
+    fireEvent.click(within(modal).getByRole('button', { name: 'Continuar editando' }));
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+
+    // "Descartar" aí sim fecha o editor.
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Descartar' }));
+    await act(async () => { await Promise.resolve(); });
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -1149,5 +1323,152 @@ describe('useCampaignEditor — E73 (saída do wizard antes do autosave)', () =>
     const dirty = new Event('beforeunload', { cancelable: true });
     window.dispatchEvent(dirty);
     expect(dirty.defaultPrevented).toBe(true);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* X123 — salvar sozinho desde o passo 1, uso do segmento e erro da RPC */
+/* ------------------------------------------------------------------ */
+
+/** Nome digitado no passo 1 do wizard real. */
+const X123_NAME_INPUT = /Lançamento Linha Office/i;
+
+describe('useCampaignEditor — X123 (autosave desde o passo 1, uso do segmento e erro da RPC)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    f.create.mockResolvedValue({ id: 'draft-1' });
+    f.update.mockResolvedValue({});
+    f.saveDraft.mockClear();
+    f.replace.mockResolvedValue(1);
+    f.snapshot.mockResolvedValue({ eligible: 1, suppressed: 0, skipped_invalid: 0 });
+    f.start.mockResolvedValue(true);
+    f.log.mockResolvedValue({});
+    f.persistedRecipientIds = [];
+    f.templates = [];
+    f.profile = { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' };
+    f.segments = [];
+    f.connections = [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }];
+    f.queryCalls.length = 0;
+    f.resolveAudience.mockResolvedValue(f.contacts);
+    f.countAudience.mockResolvedValue(f.contacts.length);
+    window.sessionStorage.clear();
+    window.history.replaceState(null, '', '/');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    // A implementação da cadeia do fromTable vale só para o teste que a define.
+    (fromTable as unknown as ReturnType<typeof vi.fn>).mockReset();
+  });
+
+  it('salva sozinho uma campanha nova que só tem nome, sem mensagem (X123)', async () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => result.current.setName('Campanha só com nome'));
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+
+    expect(f.create).toHaveBeenCalledTimes(1);
+    expect(f.create).toHaveBeenCalledWith(expect.objectContaining({ name: 'Campanha só com nome' }));
+    expect(f.snapshot).toHaveBeenCalledWith({ campaignId: 'draft-1', expectedRevision: 1 });
+  });
+
+  it('hidrata filtros, passo, responsável e supressão e envia o draft_step no payload (X123)', async () => {
+    const savedFilters: SegmentRules & { search?: string; contact_ids?: string[] } = {
+      groups: [{
+        id: 'group-1', match: 'and',
+        rules: [{ id: 'rule-1', field: 'city', op: 'eq', value: 'Recife' }],
+      }],
+      search: 'ana',
+      contact_ids: ['contact-1'],
+    };
+    f.persistedRecipientIds = [{ contact_id: 'contact-1' }];
+    const campaign = {
+      id: 'draft-1', name: 'Rascunho completo', status: 'draft',
+      audience_source: 'contacts', audience_filters: savedFilters, draft_step: 3,
+      owner: 'owner-2', respect_suppression: false, whatsapp_connection_id: 'connection-1',
+    };
+
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+
+    expect(result.current.step).toBe(3);
+    expect(result.current.owner).toBe('owner-2');
+    expect(result.current.respectSuppression).toBe(false);
+    expect(result.current.contactSearch).toBe('ana');
+    expect(result.current.selectedContacts).toEqual(['contact-1']);
+    expect(rulesToPostgrest(result.current.audienceRules)).toBe('city.eq."Recife"');
+
+    await act(async () => { await result.current.handleSave('draft'); });
+
+    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'draft-1',
+      draft_step: 3,
+      owner: 'owner-2',
+      respect_suppression: false,
+      audience_filters: expect.objectContaining({
+        groups: savedFilters.groups,
+        search: 'ana',
+        contact_ids: ['contact-1'],
+      }),
+    }));
+  });
+
+  it('não marca segmentos como usados no autosave; o salvamento explícito marca todos os selecionados (X123)', async () => {
+    f.segments = [
+      { id: 'seg-1', name: 'Compradores', description: '', status: 'active', estimated_count: 10 },
+      { id: 'seg-2', name: 'Recorrentes', description: '', status: 'active', estimated_count: 7 },
+    ];
+    const fromSpy = fromTable as unknown as ReturnType<typeof vi.fn>;
+    const inSpy = vi.fn(() => Promise.resolve({ error: null }));
+    fromSpy.mockReturnValue({ update: () => ({ in: inSpy }) });
+    const campaign = {
+      id: 'draft-1',
+      name: 'Rascunho',
+      status: 'draft',
+      audience_source: 'segment',
+      segment_id: 'seg-1',
+      segment_ids: ['seg-1', 'seg-2'],
+    };
+    const { result } = renderHook(() => useCampaignEditor(campaign as never, vi.fn()));
+    await act(async () => {});
+    fromSpy.mockClear();
+    inSpy.mockClear();
+
+    // Autosave: o rascunho é gravado, mas o uso dos segmentos não é reescrito.
+    act(() => result.current.setName('Rascunho do segmento'));
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+    expect(f.update).toHaveBeenCalled();
+    expect(fromSpy).not.toHaveBeenCalled();
+    expect(inSpy).not.toHaveBeenCalled();
+    expect(f.log).not.toHaveBeenCalled();
+
+    // Salvamento explícito: aí sim todos os segmentos selecionados contam como usados.
+    await act(async () => { await result.current.handleSave('draft'); });
+    expect(fromSpy).toHaveBeenCalledWith('talkx_segments');
+    expect(inSpy).toHaveBeenCalledWith('id', ['seg-1', 'seg-2']);
+    // Eventos de ciclo de vida continuam no servidor (X025), não no cliente.
+    expect(f.log).not.toHaveBeenCalled();
+  });
+
+  it('mostra "Rascunho salvo há X" no rodapé depois do autosave confirmado (X123)', async () => {
+    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+    fireEvent.change(screen.getByPlaceholderText(X123_NAME_INPUT), { target: { value: 'Campanha salva' } });
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+
+    expect(screen.getByText(/Rascunho salvo há/)).toBeInTheDocument();
+  });
+
+  it('traduz o código da RPC no aviso de salvamento, sem mostrar o código cru (X123)', async () => {
+    f.create.mockRejectedValueOnce(new Error('save_talkx_campaign_draft: talkx_campaign_stale_revision'));
+    render(<TalkXCampaignWizard campaign={null} onClose={vi.fn()} />);
+    fireEvent.change(screen.getByPlaceholderText(X123_NAME_INPUT), { target: { value: 'Campanha conflitante' } });
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(3100); });
+
+    const aviso = screen.getByRole('button', { name: /Outra sessão alterou esta campanha/ });
+    expect(aviso.getAttribute('title')).toContain('Outra sessão alterou esta campanha');
+    expect(document.body.textContent).not.toContain('talkx_campaign_stale_revision');
   });
 });

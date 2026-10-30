@@ -73,3 +73,24 @@ describe('SidebarBackButton', () => {
     expect(screen.getAllByRole('button', { name: 'Voltar à tela anterior' })).toHaveLength(1);
   });
 });
+
+/**
+ * U12 — o botão "Voltar" no modo expandido tinha 28 px de área clicável,
+ * abaixo do mínimo de 44 px para ponteiro grosso (pointer: coarse).
+ * O botão visível continua com 28 px e só sob ponteiro de toque cresce
+ * para 44 px ([@media(pointer:coarse)]:min-w/min-h) — com mouse nada muda.
+ */
+describe('SidebarBackButton — área clicável ≥ 44 px só sob toque (pointer: coarse)', () => {
+  it('no modo expandido mantém 28 px no desktop e cresce só sob (pointer: coarse)', () => {
+    const onGoBack = vi.fn();
+    renderButton({ canGoBack: true, onGoBack, collapsed: false });
+    const btn = screen.getByRole('button', { name: 'Voltar à tela anterior' });
+    const tokens = btn.className.split(/\s+/);
+    expect(tokens).toContain('w-[28px]');
+    expect(tokens).toContain('h-[28px]');
+    expect(tokens).toContain('[@media(pointer:coarse)]:min-w-[44px]');
+    expect(tokens).toContain('[@media(pointer:coarse)]:min-h-[44px]');
+    expect(tokens).not.toContain('min-w-[44px]');
+    expect(tokens).not.toContain('min-h-[44px]');
+  });
+});

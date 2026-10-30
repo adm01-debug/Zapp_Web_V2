@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogTitle } from './dialog';
 import { Badge } from './badge';
 import { ScrollArea } from './scroll-area';
 import { useDebounce } from '@/hooks/system/useDebounce';
+import { getRecentModuleIds } from '@/hooks/integrations/useModuleCommandItems';
 import { log } from '@/lib/logger';
 import {
   CommandItem, CommandGroup, CommandCategory,
@@ -23,13 +24,15 @@ interface CommandPaletteProps {
   onRecentSearchSelect?: (query: string) => void;
   onClearRecent?: () => void;
   customCommands?: CommandItem[];
+  /** Substitui a lista fixa de navegação (ex.: módulos já filtrados pelo papel do usuário). */
+  navigationCommands?: CommandItem[];
 }
 
 export function CommandPalette({
   open, onOpenChange, onNavigate, onSearch,
   placeholder = 'Buscar ou digitar comando...',
   recentSearches = [], onRecentSearchSelect, onClearRecent,
-  customCommands = [],
+  customCommands = [], navigationCommands = defaultNavigationCommands,
 }: CommandPaletteProps) {
   const [query, setQuery] = React.useState('');
   const [isSearching, setIsSearching] = React.useState(false);
@@ -37,7 +40,19 @@ export function CommandPalette({
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const allCommands = React.useMemo(() => [...defaultNavigationCommands, ...defaultActionCommands, ...customCommands], [customCommands]);
+  const allCommands = React.useMemo(() => [...navigationCommands, ...defaultActionCommands, ...customCommands], [navigationCommands, customCommands]);
+
+  // Recentes de módulos (zapp-recent-modules): lidos na renderização com a paleta
+  // aberta (leitura pura do localStorage, sempre fresca) e resolvidos contra a
+  // lista viva — id morto (ex.: módulo removido) não tem comando e cai no
+  // filter, sem estourar (E17).
+  const recentCommands = React.useMemo((): CommandItem[] => {
+    if (!open) return [];
+    return getRecentModuleIds()
+      .map((id) => navigationCommands.find((cmd) => cmd.id === `module-${id}` || cmd.keywords?.includes(id)))
+      .filter((cmd): cmd is CommandItem => Boolean(cmd))
+      .slice(0, 5);
+  }, [open, navigationCommands]);
 
   const filteredCommands = React.useMemo(() => {
     if (!query) return [];
@@ -63,13 +78,13 @@ export function CommandPalette({
   // o teclado percorre — antes o listener só via `groupedCommands`, vazio sem consulta,
   // e as setas/Enter anunciados não funcionavam nos cinco destinos exibidos (R2-INF-034).
   const quickAccessItems = React.useMemo(
-    () => (query ? [] : defaultNavigationCommands.slice(0, 5)),
-    [query]
+    () => (query ? [] : navigationCommands.slice(0, 5)),
+    [query, navigationCommands]
   );
 
   const allItems = React.useMemo(
-    () => (query ? groupedCommands.flatMap(g => g.items) : quickAccessItems),
-    [query, groupedCommands, quickAccessItems]
+    () => (query ? groupedCommands.flatMap(g => g.items) : [...recentCommands, ...quickAccessItems]),
+    [query, groupedCommands, quickAccessItems, recentCommands]
   );
 
   // R2-INF-032 (#377): cada digitação é um TERMO novo. A resposta de um termo anterior que ainda
@@ -104,13 +119,16 @@ export function CommandPalette({
     setQuery(v); setSelectedIndex(0); debouncedSearch(v);
   };
 
-  const executeCommand = (item: CommandItem) => {
+  // Sem `useCallback` o handler do teclado capturava a versão antiga de `executeCommand`
+  // (fechamento velho de `onNavigate`/`onOpenChange`) — era o aviso de
+  // `react-hooks/exhaustive-deps` no efeito abaixo.
+  const executeCommand = React.useCallback((item: CommandItem) => {
     if (item.disabled) return;
     if (item.action) item.action();
     else if (item.href) window.location.href = item.href;
     else if (item.id.startsWith('nav-')) onNavigate?.(item.id.replace('nav-', ''));
     onOpenChange(false); setQuery('');
-  };
+  }, [onNavigate, onOpenChange]);
 
   React.useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -121,11 +139,22 @@ export function CommandPalette({
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [open, allItems, selectedIndex]);
+  }, [open, allItems, selectedIndex, executeCommand]);
+
+  // Os dois ajustes abaixo são entregues no próximo tick para não mudar estado durante o
+  // render. Cada id fica guardado em ref e o retorno do efeito limpa o que estiver pendente —
+  // sem isso a paleta aberta e fechada em sequência rápida (ou desmontada) deixava o `setTimeout`
+  // vivo, mexendo em estado de componente desmontado.
+  const resetTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const focusTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   React.useEffect(() => {
-    if (!open) { setTimeout(() => { setQuery(''); setSearchResults([]); setSelectedIndex(0); }, 0); }
-    else setTimeout(() => inputRef.current?.focus(), 0);
+    if (!open) { resetTimerRef.current = setTimeout(() => { setQuery(''); setSearchResults([]); setSelectedIndex(0); }, 0); }
+    else focusTimerRef.current = setTimeout(() => inputRef.current?.focus(), 0);
+    return () => {
+      if (resetTimerRef.current) { clearTimeout(resetTimerRef.current); resetTimerRef.current = null; }
+      if (focusTimerRef.current) { clearTimeout(focusTimerRef.current); focusTimerRef.current = null; }
+    };
   }, [open]);
 
   const categoryIcons: Record<CommandCategory, React.ReactNode> = {
@@ -134,16 +163,34 @@ export function CommandPalette({
     talkx: <Megaphone className="h-3 w-3" />,
   };
 
+  // a11y (combobox/listbox): o campo aponta para a lista e para o item realçado; cada item é
+  // uma `option` com `aria-selected`. O item realçado é rolado para dentro da vista.
+  const listboxId = 'cmd-palette-listbox';
+  const optionId = (id: string) => `cmd-opt-${id}`;
+  const activeOptionId = allItems[selectedIndex] ? optionId(allItems[selectedIndex].id) : undefined;
+
+  React.useEffect(() => {
+    if (activeOptionId) {
+      document.getElementById(activeOptionId)?.scrollIntoView?.({ block: 'nearest' });
+    }
+  }, [activeOptionId]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby={undefined} className="max-w-2xl p-0 overflow-hidden gap-0">
         <DialogTitle className="sr-only">Paleta de comandos</DialogTitle>
         <div className="flex items-center border-b border-border px-4">
           <Search className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-          <input ref={inputRef} value={query} onChange={(e) => handleQueryChange(e.target.value)} placeholder={placeholder}
+          <input ref={inputRef}
+            role="combobox"
+            aria-label="Buscar comandos"
+            aria-expanded="true"
+            aria-controls={listboxId}
+            aria-activedescendant={activeOptionId}
+            value={query} onChange={(e) => handleQueryChange(e.target.value)} placeholder={placeholder}
             className="flex-1 px-4 py-4 text-base bg-transparent border-0 outline-none placeholder:text-muted-foreground"
             autoComplete="off" autoCorrect="off" spellCheck={false} />
-          {query && <button onClick={() => handleQueryChange('')} className="p-1.5 hover:bg-muted rounded-md transition-colors"><X className="h-4 w-4 text-muted-foreground" /></button>}
+          {query && <button type="button" aria-label="Limpar busca" onClick={() => handleQueryChange('')} className="p-1.5 hover:bg-muted rounded-md transition-colors"><X className="h-4 w-4 text-muted-foreground" /></button>}
           {isSearching && <Loader2 className="h-4 w-4 text-muted-foreground animate-spin ml-2" />}
         </div>
 
@@ -156,7 +203,12 @@ export function CommandPalette({
           <div className="flex items-center gap-1"><Command className="h-3 w-3" /><kbd className="px-1.5 py-0.5 bg-muted rounded font-mono">K</kbd></div>
         </div>
 
+        <div role="status" aria-live="polite" className="sr-only">
+          {query ? `${allItems.length} resultado${allItems.length === 1 ? '' : 's'}` : ''}
+        </div>
+
         <ScrollArea className="max-h-[400px]">
+          <div id={listboxId} role="listbox" aria-label="Acesso rápido">
           {!query && (
             <div className="p-2">
               {recentSearches.length > 0 && (
@@ -176,11 +228,27 @@ export function CommandPalette({
                 </div>
               )}
               <div>
+                {recentCommands.length > 0 && (
+                  <div className="mb-2">
+                    <div className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><Clock className="h-3 w-3" />Recentes</span></div>
+                    <div className="space-y-0.5">
+                      {recentCommands.map((cmd, idx) => (
+                        <button key={`recent-${cmd.id}`} role="option" id={optionId(cmd.id)} aria-selected={idx === selectedIndex} onClick={() => executeCommand(cmd)}
+                          className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', idx === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50')}>
+                          <div className="flex items-center gap-3">
+                            <span className="text-muted-foreground group-hover:text-foreground transition-colors">{cmd.icon}</span>
+                            <div><span className="text-sm font-medium">{cmd.title}</span>{cmd.description && <p className="text-xs text-muted-foreground">{cmd.description}</p>}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="px-2 py-1.5"><span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><Star className="h-3 w-3" />Acesso rápido</span></div>
                 <div className="space-y-0.5">
                   {quickAccessItems.map((cmd, idx) => (
-                    <button key={cmd.id} onClick={() => executeCommand(cmd)}
-                      className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', idx === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50')}>
+                    <button key={cmd.id} role="option" id={optionId(cmd.id)} aria-selected={recentCommands.length + idx === selectedIndex} onClick={() => executeCommand(cmd)}
+                      className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', recentCommands.length + idx === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50')}>
                       <div className="flex items-center gap-3">
                         <span className="text-muted-foreground group-hover:text-foreground transition-colors">{cmd.icon}</span>
                         <div><span className="text-sm font-medium">{cmd.title}</span>{cmd.description && <p className="text-xs text-muted-foreground">{cmd.description}</p>}</div>
@@ -207,7 +275,7 @@ export function CommandPalette({
                     {group.items.map((item, idx) => {
                       const gi = groupedCommands.slice(0, groupedCommands.indexOf(group)).reduce((a, g) => a + g.items.length, 0) + idx;
                       return (
-                        <motion.button key={item.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.02 }}
+                        <motion.button key={item.id} role="option" id={optionId(item.id)} aria-selected={gi === selectedIndex} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.02 }}
                           onClick={() => executeCommand(item)} disabled={item.disabled}
                           className={cn('w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-left group', gi === selectedIndex ? 'bg-muted' : 'hover:bg-muted/50', item.disabled && 'opacity-50 cursor-not-allowed')}>
                           <div className="flex items-center gap-3">
@@ -226,6 +294,7 @@ export function CommandPalette({
               ))}
             </div>
           )}
+          </div>
         </ScrollArea>
       </DialogContent>
     </Dialog>

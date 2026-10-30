@@ -1,6 +1,11 @@
 import { useMemo, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Message } from '@/types/chat';
+// CV-061 — ghost text overlay (texto fantasma)
+import { GhostTextOverlay, GhostTextHint } from '@/components/copilot/GhostTextOverlay';
+// CV-063..070 — painel RADAR da Fase 7 (respostas sugeridas, ditado, sugestão de anexo)
+import { RadarPhase7Panel } from '@/components/copilot/RadarPhase7Panel';
+import type { QuickReplyTemplate } from '@/hooks/chat/useQuickReplies';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -77,6 +82,11 @@ interface ChatInputAreaProps {
   fileUploaderRef: React.RefObject<FileUploaderRef | null>;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
   onOpenTransfer?: () => void;
+  // CV-061 / CV-062 — ghost text (texto fantasma)
+  ghostSuffix?: string;
+  onGhostKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => boolean;
+  /** CV-066: id da conversa para o feedback do copiloto. */
+  conversationId?: string;
 }
 
 export function ChatInputArea(props: ChatInputAreaProps) {
@@ -91,7 +101,25 @@ export function ChatInputArea(props: ChatInputAreaProps) {
     onSendCustomEmoji, onOpenCatalog, onSelectSuggestion, onSelectTemplate,
     onPasteFiles, signatureEnabled, signatureName, onToggleSignature,
     fileUploaderRef, inputRef, onOpenTransfer,
+    // CV-061 / CV-062
+    ghostSuffix = '', onGhostKeyDown,
+    conversationId = '',
   } = props;
+
+  // CV-063..070 — entradas do painel RADAR Fase 7
+  const radarMessages = useMemo(
+    () => messages.slice(-20).map((m) => ({ content: m.content ?? '', sender: m.sender })),
+    [messages],
+  );
+  const radarTemplates = useMemo<QuickReplyTemplate[]>(
+    () => quickReplies.map((q) => ({
+      id: q.id, title: q.title, content: q.content, shortcut: q.shortcut ?? null,
+      category: q.category ?? null, is_global: null, use_count: null,
+      user_id: '', created_at: '', updated_at: '',
+    })),
+    [quickReplies],
+  );
+  const lastClientMessage = radarMessages.filter((m) => m.sender === 'contact').slice(-1)[0]?.content;
 
   const logic = useChatInputLogic({
     inputValue, contactId, editingMessage, inputRef, fileUploaderRef, onSend, onPasteFiles,
@@ -163,6 +191,20 @@ export function ChatInputArea(props: ChatInputAreaProps) {
         />
       )}
 
+      {!logic.isMobile && !editingMessage && (
+        <RadarPhase7Panel
+          className="px-4 pt-2"
+          inputValue={inputValue}
+          conversationId={conversationId}
+          contactId={contactId}
+          contactName={contactName}
+          messages={radarMessages}
+          saleContext={{ contactName, lastClientMessage }}
+          quickReplyTemplates={radarTemplates}
+          onDraftText={(text) => setNativeValue(inputRef, text)}
+        />
+      )}
+
       <div className={cn("px-4 py-3 border-t border-border bg-inbox-panel", logic.isMobile && "px-2.5 py-2 safe-area-bottom")}>
         <AnimatePresence>
           {isRecordingAudio && (
@@ -189,16 +231,27 @@ export function ChatInputArea(props: ChatInputAreaProps) {
                 )}
               </AnimatePresence>
 
+              {/* CV-061 — ghost text overlay posicionado atrás do textarea */}
+              <GhostTextOverlay
+                inputValue={inputValue}
+                ghostSuffix={ghostSuffix}
+                hidden={!ghostSuffix}
+              />
               <textarea ref={inputRef} value={inputValue}
                 onChange={(e) => { onInputChange(e); checkForMention(e.target.value, e.target.selectionStart ?? 0); }}
-                onKeyDown={onKeyDown} onBlur={onBlur} onPaste={logic.handlePaste}
+                onKeyDown={(e) => {
+                  // CV-061 — intercepta Tab/Esc para o ghost text antes de repassar
+                  if (onGhostKeyDown?.(e as React.KeyboardEvent<HTMLTextAreaElement>)) return;
+                  onKeyDown(e);
+                }}
+                onBlur={onBlur} onPaste={logic.handlePaste}
                 onClick={(e) => { const t = e.target as HTMLTextAreaElement; checkForMention(t.value, t.selectionStart ?? 0); }}
                 placeholder={editingMessage ? "Editar mensagem..." : replyToMessage ? "Digite sua resposta..." : "Digite uma mensagem… (/ para comandos, @ para mencionar)"}
                 rows={1}
                 className={cn(
                   "w-full bg-transparent border-0 outline-none text-sm text-foreground",
                   "placeholder:text-muted-foreground resize-none transition-all",
-                  "focus:ring-0",
+                  "focus:ring-0 relative z-10",
                   logic.isMobile ? "px-1 py-2.5 text-base min-h-[42px] max-h-[200px]" : "py-3.5 min-h-[52px] max-h-[200px]",
                 )}
                 aria-label={editingMessage ? "Editar mensagem" : replyToMessage ? "Responder mensagem" : "Digite sua mensagem"}
@@ -210,12 +263,18 @@ export function ChatInputArea(props: ChatInputAreaProps) {
                   {logic.charCount}/{logic.CHAR_LIMIT}
                 </span>
               )}
+              {/* CV-061 — dica de atalho do ghost text */}
+              <GhostTextHint
+                visible={!!ghostSuffix}
+                className="absolute bottom-1 left-0 pointer-events-none"
+              />
             </div>
 
             <div className="flex items-center gap-0.5 shrink-0 pb-1.5">
               <CustomEmojiPicker onSendEmoji={onSendCustomEmoji} />
               <FileUploader ref={fileUploaderRef} instanceName={instanceName || ''} recipientNumber={contactPhone}
                 contactId={contactId} connectionId={undefined}
+                replyToId={replyToMessage?.id ?? null}
                 onFileSelect={(file, category) => toast({ title: 'Arquivo selecionado', description: `${file.name} (${category}) será enviado.` })}
                 onFileSent={() => toast({ title: 'Arquivo enviado!', description: 'O arquivo foi enviado com sucesso.' })}
               />

@@ -91,7 +91,7 @@ test.describe('E74 · mapa de contatos com pino verde', () => {
     await gotoContacts(page);
     await page.getByTitle('Mais visualizações').click();
     await page.getByRole('menuitem', { name: 'Mapa' }).click();
-    await expect(page.getByText('contatos mapeados')).toBeVisible();
+    await expect(page.getByTestId('map-count')).toContainText('1 contatos carregados');
 
     // 1. A legenda distingue a fonte "endereço confirmado" com a contagem (passo da etapa).
     await expect(page.getByText('Endereço confirmado (1)')).toBeVisible();

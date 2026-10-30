@@ -18,7 +18,13 @@ vi.mock('@/integrations/supabase/client', () => ({
     rpc: (...args: unknown[]) => h.rpc(...args),
     from: (table: string) => {
       if (table === 'conversation_analyses') {
-        return { select: () => ({ gte: () => ({ order: () => h.analyses() }) }) };
+        // HZ2-003: a leitura agora pagina (`.range`), então o mock precisa
+        // ser um construtor encadeável que responde por página.
+        const chain: Record<string, unknown> = {};
+        chain.gte = () => chain;
+        chain.order = () => chain;
+        chain.range = (from: number, to: number) => h.analyses(from, to);
+        return { select: () => chain };
       }
       if (table === 'profiles') {
         return { select: () => ({ eq: () => h.profiles() }) };
@@ -27,7 +33,9 @@ vi.mock('@/integrations/supabase/client', () => ({
     },
   },
 }));
-vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
+vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),}));
 
 import { useSentimentData } from '../useSentimentData';
 
@@ -55,6 +63,28 @@ describe('useSentimentData', () => {
     const { result } = renderHook(() => useSentimentData('7'));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.alerts).toEqual([]);
+    expect(result.current.isError).toBe(true);
+    expect(result.current.error?.message).toBe('rpc indisponível');
+    expect(result.current.incomplete).toBe(false);
+  });
+
+  it('falha na leitura secundária de agentes mantém os dados principais e sinaliza leitura incompleta', async () => {
+    h.rpc.mockResolvedValue({
+      data: [{ id: 'a1', entity_id: 'contact-1', created_at: '2026-09-25T00:00:00.000Z', details: { sentiment_score: 12 } }],
+      error: null,
+    });
+    h.profiles.mockResolvedValue({ data: null, error: new Error('perfis indisponíveis') });
+    const { result } = renderHook(() => useSentimentData('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.stats.totalAlerts).toBe(1);
+    expect(result.current.isError).toBe(false);
+    expect(result.current.incomplete).toBe(true);
+    expect(result.current.agentData).toEqual([]);
+
+    h.profiles.mockResolvedValue({ data: [{ id: 'ag1', name: 'Ana', avatar_url: null }], error: null });
+    await result.current.fetchData();
+    await waitFor(() => expect(result.current.incomplete).toBe(false));
+    expect(result.current.agents).toHaveLength(1);
   });
 
   it('mapeia os alertas da RPC (id/entity_id/created_at/details) para o shape do hook', async () => {
@@ -184,5 +214,53 @@ describe('useSentimentData — zero e ausência (IA-023)', () => {
     const { result } = renderHook(() => useSentimentData('7'));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.agentData[0].avgScore).toBeNull();
+  });
+});
+
+// HZ2-003: o cutoff de 1000 linhas do PostgREST não pode mais definir o que o
+// painel enxerga — a janela do período é lida até a última linha.
+describe('useSentimentData — janela maior que o corte de 1000 linhas (HZ2-003)', () => {
+  const daysAgo = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
+  const analise = (id: string) => ({
+    id, contact_id: 'c1', sentiment: 'positivo', sentiment_score: 80,
+    created_at: daysAgo(1), analyzed_by: null,
+  });
+
+  beforeEach(() => {
+    h.rpc.mockReset();
+    h.analyses.mockReset();
+    h.profiles.mockReset();
+    h.rpc.mockResolvedValue({ data: [], error: null });
+    h.profiles.mockResolvedValue({ data: [], error: null });
+  });
+
+  it('lê todas as páginas: 1000 + 1 análise na janela contam 1001 (não 1000)', async () => {
+    const paginaCheia = Array.from({ length: 1000 }, (_, i) => analise(`a-${i}`));
+    const ultima = [analise('a-1000')];
+    const faixas: unknown[] = [];
+    h.analyses.mockImplementation((from: number) => {
+      faixas.push(from);
+      return Promise.resolve({ data: from === 0 ? paginaCheia : ultima, error: null });
+    });
+
+    const { result } = renderHook(() => useSentimentData('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 15000 });
+
+    // Segunda leitura começa onde a primeira parou (1000), não repete a página 1.
+    expect(faixas).toEqual([0, 1000]);
+    expect(result.current.analyses).toHaveLength(1001);
+    expect(result.current.stats.totalAnalyses).toBe(1001);
+    expect(result.current.stats.positiveAnalyses).toBe(1001);
+  });
+
+  it('erro na página seguinte derruba o fetch e volta o loading (não finge janela completa)', async () => {
+    const paginaCheia = Array.from({ length: 1000 }, (_, i) => analise(`a-${i}`));
+    h.analyses.mockImplementation((from: number) =>
+      Promise.resolve(from === 0 ? { data: paginaCheia, error: null } : { data: null, error: new Error('pagina 2 falhou') }));
+
+    const { result } = renderHook(() => useSentimentData('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 15000 });
+
+    expect(result.current.analyses).toEqual([]);
   });
 });

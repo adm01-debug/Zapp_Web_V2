@@ -129,8 +129,30 @@ export function resetMapboxTokenForTests(): void {
   inflight = null;
 }
 
+// O objeto cru do mapbox-gl carrega a URL da requisição com o `access_token` do mapa
+// (erro AJAX do estilo/tiles). Ele nunca vai para o log: reduzimos à taxonomia
+// (status) e à mensagem, com qualquer `access_token=` redigido antes.
+const ACCESS_TOKEN_RE = /(access_token=)[^&\s]+/g;
+
+function redactAccessToken(text: string): string {
+  return text.replace(ACCESS_TOKEN_RE, '$1[REDACTED]');
+}
+
+/** Resume o `detail` num objeto seguro: só escalares de taxonomia e a mensagem redigida. */
+function summarizeMapboxDetail(detail: unknown): { status?: number; stage?: string; message?: string } | undefined {
+  if (!detail || typeof detail !== 'object') return undefined;
+  const source = detail as { status?: unknown; stage?: unknown; message?: unknown };
+  const summary: { status?: number; stage?: string; message?: string } = {};
+  if (typeof source.status === 'number') summary.status = source.status;
+  if (typeof source.stage === 'string') summary.stage = redactAccessToken(source.stage);
+  if (typeof source.message === 'string') summary.message = redactAccessToken(source.message);
+  return Object.keys(summary).length > 0 ? summary : undefined;
+}
+
 /** Log local + linha em audit_logs (client_error), com dedupe/limite do errorReporter. */
 export function reportMapboxFailure(kind: MapboxFailureKind, where: 'picker' | 'bubble' | 'suggest' | 'retrieve', detail?: unknown): void {
-  log.error(`Mapbox falhou (${where}/${kind})`, detail);
+  const summary = summarizeMapboxDetail(detail);
+  if (summary) log.error(`Mapbox falhou (${where}/${kind})`, summary);
+  else log.error(`Mapbox falhou (${where}/${kind})`);
   reportClientError(new Error(`mapbox_${kind}`), { source: `mapbox_${where}`, kind });
 }

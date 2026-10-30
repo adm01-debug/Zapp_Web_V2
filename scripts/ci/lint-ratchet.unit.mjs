@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
 import {
+  changedLintableFiles,
+  changedRemovedFiles,
   compareBaseline,
   createBaseline,
   eslintCommandArguments,
@@ -553,6 +555,133 @@ test("--staged nao combina com --update-baseline", (t) => {
   }
 });
 
+test("changedLintableFiles/changedRemovedFiles listam alterado, removido e renomeado desde a base", () => {
+  const { root, git, cleanup } = gitFixture();
+  try {
+    write(root, "src/a.ts", "a();\n");
+    write(root, "src/removed.ts", "r();\n");
+    write(root, "src/old.ts", "old();\n");
+    write(root, "README.md", "# x\n");
+    git("add", ".");
+    git("commit", "-q", "-m", "base");
+    git("branch", "-q", "base-ref");
+
+    write(root, "src/a.ts", "a();\nb();\n");
+    write(root, "src/b.tsx", "b();\n");
+    git("rm", "-q", "src/removed.ts");
+    git("mv", "src/old.ts", "src/new.ts");
+    git("add", ".");
+    git("commit", "-q", "-m", "mudancas");
+
+    assert.deepEqual(changedLintableFiles(root, "base-ref").sort(), ["src/a.ts", "src/b.tsx", "src/new.ts"]);
+    // --no-renames: a renomeacao aparece como remocao do caminho antigo, igual ao --staged.
+    assert.deepEqual(changedRemovedFiles(root, "base-ref").sort(), ["src/old.ts", "src/removed.ts"]);
+  } finally {
+    cleanup();
+  }
+});
+
+test("--base ignora divida antiga fora do diff e acusa divida nova no arquivo mudado", (t) => {
+  silenced(t);
+  const { root, git, cleanup } = gitFixture();
+  try {
+    write(root, "src/a.ts", "missing();\nother();\n");
+    write(root, "src/legacy.ts", "missing();\n");
+    git("add", ".");
+    git("commit", "-q", "-m", "base");
+    git("branch", "-q", "base-ref");
+
+    const baselinePath = path.join(root, "baseline.json");
+    writeFileSync(
+      baselinePath,
+      JSON.stringify(
+        createBaseline(
+          [result(root, "src/a.ts", "missing();\nother();\n"), result(root, "src/legacy.ts", "missing();\n")],
+          root,
+        ),
+      ),
+    );
+
+    // Um commit depois da base que so toca src/a.ts; src/legacy.ts fica fora do diff.
+    write(root, "src/a.ts", "missing();\nother();\n// alterado\n");
+    git("add", "src/a.ts");
+    git("commit", "-q", "-m", "altera a.ts");
+
+    const reportPath = path.join(root, "report.json");
+    const args = ["--base", "base-ref", "--root", root, "--baseline", baselinePath, "--report", reportPath];
+
+    // legacy.ts tem divida no baseline mas nao esta no diff: nao pode contar como nova nem como removida.
+    writeFileSync(reportPath, JSON.stringify([result(root, "src/a.ts", "missing();\nother();\n")]));
+    assert.equal(main(args), 0);
+
+    const extra = message({ line: 2, endLine: 2, message: "'other' is not defined." });
+    writeFileSync(reportPath, JSON.stringify([result(root, "src/a.ts", "missing();\nother();\n", [message(), extra])]));
+    assert.equal(main(args), 1);
+  } finally {
+    cleanup();
+  }
+});
+
+test("--base reconhece arquivo renomeado pelo hash em vez de contar divida nova", (t) => {
+  silenced(t);
+  const { root, git, cleanup } = gitFixture();
+  try {
+    write(root, "src/old.ts", "missing();\n");
+    git("add", "src/old.ts");
+    git("commit", "-q", "-m", "base");
+    git("branch", "-q", "base-ref");
+
+    const baselinePath = path.join(root, "baseline.json");
+    writeFileSync(baselinePath, JSON.stringify(createBaseline([result(root, "src/old.ts", "missing();\n")], root)));
+
+    git("mv", "src/old.ts", "src/new.ts");
+    git("commit", "-q", "-m", "renomeia");
+
+    const reportPath = path.join(root, "report.json");
+    writeFileSync(reportPath, JSON.stringify([result(root, "src/new.ts", "missing();\n")]));
+    assert.equal(
+      main(["--base", "base-ref", "--root", root, "--baseline", baselinePath, "--report", reportPath]),
+      0,
+    );
+  } finally {
+    cleanup();
+  }
+});
+
+test("--base sem arquivo alterado desde a ref sai com sucesso sem rodar o ESLint", (t) => {
+  silenced(t);
+  const { root, git, cleanup } = gitFixture();
+  try {
+    write(root, "README.md", "# x\n");
+    git("add", ".");
+    git("commit", "-q", "-m", "base");
+    git("branch", "-q", "base-ref");
+    assert.equal(main(["--base", "base-ref", "--root", root]), 0);
+  } finally {
+    cleanup();
+  }
+});
+
+test("--base nao combina com --staged", (t) => {
+  silenced(t);
+  const { root, cleanup } = gitFixture();
+  try {
+    assert.equal(main(["--base", "main", "--staged", "--root", root]), 2);
+  } finally {
+    cleanup();
+  }
+});
+
+test("--base nao combina com --update-baseline", (t) => {
+  silenced(t);
+  const { root, cleanup } = gitFixture();
+  try {
+    assert.equal(main(["--base", "main", "--update-baseline", "--root", root]), 2);
+  } finally {
+    cleanup();
+  }
+});
+
 function capturaSaida(t) {
   const linhas = [];
   t.mock.method(console, "log", (...args) => {
@@ -598,4 +727,52 @@ test("nao avisa quando o baseline bate com a varredura", (t) => {
   } finally {
     cleanup();
   }
+});
+
+// E39 parte 1: em 16/10 o baseline ainda contava 105 ocorrencias ja pagas (152.956 caracteres de diff,
+// acima do teto de 90.000 do fechar, porque as 79 do Inbox sao 75% do total). Esta parte tira do
+// registro as 26 obsoletas de FORA do Inbox; as do Inbox ficam para os proximos cartoes.
+const BASELINE_LINT = path.join(import.meta.dirname, "eslint-baseline.json");
+
+const PAGAS_FORA_DO_INBOX = [
+  "src/components/admin/SupervisorCopilot.tsx|41|39|react-hooks/purity",
+  "src/components/admin/useAdminData.ts|2|1|no-restricted-imports",
+  "src/components/dashboard/TrendIndicator.tsx|40|17|react-refresh/only-export-components",
+  "src/components/gamification/GamificationProvider.tsx|193|6|react-hooks/exhaustive-deps",
+  "src/components/gamification/GamificationProvider.tsx|220|17|react-refresh/only-export-components",
+  "src/components/mobile/InAppNotificationProvider.tsx|12|17|react-refresh/only-export-components",
+  "src/components/mobile/MobileNavigation.tsx|63|14|react-refresh/only-export-components",
+  "src/components/mobile/SwipeGestures.tsx|6|10|react-refresh/only-export-components",
+  "src/components/mobile/SwipeGestures.tsx|6|19|react-refresh/only-export-components",
+  "src/hooks/chat/useChatSearch.ts|113|6|react-hooks/exhaustive-deps",
+  "src/hooks/chat/useChatSearch.ts|123|6|react-hooks/exhaustive-deps",
+  "src/hooks/chat/useChatSearch.ts|70|3|react-hooks/refs",
+  "src/hooks/chat/useChatSearch.ts|71|3|react-hooks/refs",
+  "src/hooks/evolution/useEvolutionIntegrations.ts|10|127|@typescript-eslint/no-explicit-any",
+  "src/hooks/evolution/useEvolutionIntegrations.ts|9|76|@typescript-eslint/no-explicit-any",
+  "src/hooks/integrations/useCustomEmojis.ts|47|15|react-hooks/set-state-in-effect",
+  "src/hooks/integrations/usePersonalStickers.ts|33|36|react-hooks/preserve-manual-memoization",
+  "src/hooks/reactions/useBatchReactions.ts|53|6|react-hooks/exhaustive-deps",
+  "src/hooks/reactions/useBatchReactions.ts|53|7|react-hooks/exhaustive-deps",
+  "src/hooks/system/useNotifications.ts|63|5|react-hooks/set-state-in-effect",
+  "src/hooks/system/useSearchHistory.ts|19|9|react-hooks/set-state-in-effect",
+  "src/pages/QueueDetails.tsx|3|1|no-restricted-imports",
+  "supabase/functions/migrate-media-storage/index.ts|124|13|@typescript-eslint/no-explicit-any",
+  "supabase/functions/migrate-media-storage/index.ts|155|13|@typescript-eslint/no-explicit-any",
+  "supabase/functions/migrate-media-storage/index.ts|211|13|@typescript-eslint/no-explicit-any",
+  "supabase/functions/migrate-media-storage/index.ts|237|13|@typescript-eslint/no-explicit-any",
+];
+
+test("baseline: divida ja paga fora do Inbox saiu do registro e nao volta (E39 parte 1)", () => {
+  const baseline = JSON.parse(readFileSync(BASELINE_LINT, "utf8"));
+  const registro = new Set(
+    baseline.issues.map((issue) => `${issue.file}|${issue.line}|${issue.column}|${issue.ruleId ?? "parser"}`),
+  );
+  for (const paga of PAGAS_FORA_DO_INBOX) {
+    assert.equal(registro.has(paga), false, `ocorrencia ja paga voltou ao baseline: ${paga}`);
+  }
+  assert.ok(
+    baseline.issues.some((issue) => issue.file.startsWith("src/components/inbox/")),
+    "as ocorrencias vivas do Inbox tinham de continuar registradas (a parte 1 nao toca nelas)",
+  );
 });

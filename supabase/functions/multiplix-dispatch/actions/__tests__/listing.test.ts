@@ -95,7 +95,7 @@ function makeState(overrides: Partial<FakeState> = {}): FakeState {
     recipients: [
       { id: R1, dispatch_id: D1, company_id: 'c1', company_name_snapshot: 'Alfa', destino_e164: '5511900000001', singu_contact_id: null, eligibility: 'eligible', eligibility_reason: null, inclusion_reason: null, status: 'sent', sent_at: null, delivered_at: null, created_at: '2026-10-01T10:00:01Z' },
       { id: R2, dispatch_id: D1, company_id: 'c2', company_name_snapshot: 'Beta', destino_e164: '5511900000002', singu_contact_id: null, eligibility: 'eligible', eligibility_reason: null, inclusion_reason: null, status: 'delivered', sent_at: null, delivered_at: null, created_at: '2026-10-01T10:00:02Z' },
-      { id: R3, dispatch_id: D1, company_id: 'c3', company_name_snapshot: 'Gama', destino_e164: '5511900000003', singu_contact_id: null, eligibility: 'eligible', eligibility_reason: null, inclusion_reason: null, status: 'failed', sent_at: null, delivered_at: null, created_at: '2026-10-01T10:00:03Z' },
+      { id: R3, dispatch_id: D1, company_id: 'c3', company_name_snapshot: 'Gama', destino_e164: '5511900000003', singu_contact_id: null, eligibility: 'eligible', eligibility_reason: null, inclusion_reason: null, status: 'failed', sent_at: null, delivered_at: null, created_at: '2026-10-01T10:00:03Z', attempt_count: 3, external_id: 'wamid.R3', error_message: 'numero invalido' },
       { id: R4, dispatch_id: D1, company_id: 'c4', company_name_snapshot: 'Delta', destino_e164: '5511900000004', singu_contact_id: null, eligibility: 'eligible', eligibility_reason: null, inclusion_reason: null, status: 'pending', sent_at: null, delivered_at: null, created_at: '2026-10-01T10:00:04Z' },
       { id: R5, dispatch_id: D1, company_id: 'c5', company_name_snapshot: 'Epsilon', destino_e164: '5511900000005', singu_contact_id: null, eligibility: 'eligible', eligibility_reason: null, inclusion_reason: null, status: 'failed', sent_at: null, delivered_at: null, created_at: '2026-10-01T10:00:05Z' },
       { id: RX, dispatch_id: D4, company_id: 'cx', company_name_snapshot: 'Outro', destino_e164: '5511900000099', singu_contact_id: null, eligibility: 'eligible', eligibility_reason: null, inclusion_reason: null, status: 'sent', sent_at: null, delivered_at: null, created_at: '2026-10-01T13:00:01Z' },
@@ -123,6 +123,7 @@ function makeSupabase(state: FakeState) {
     let orderAsc = true;
     let range: [number, number] | null = null;
     let limitN: number | null = null;
+    let selectedCols: string[] | null = null;
 
     const matching = () => tableRows(table).filter((r) => eqs.every(([c, v]) => r[c] === v));
 
@@ -136,13 +137,24 @@ function makeSupabase(state: FakeState) {
       const count = rows.length;
       if (range) rows = rows.slice(range[0], range[1] + 1);
       else if (limitN !== null) rows = rows.slice(0, limitN);
+      // O PostgREST real so devolve as colunas do `select`: sem projetar, um campo
+      // esquecido na lista passaria despercebido porque o duble devolveria a linha toda.
+      if (table === 'multiplix_recipients' && selectedCols) {
+        const cols = selectedCols;
+        rows = rows.map((r) => Object.fromEntries(cols.map((c) => [c, r[c] ?? null])));
+      }
       return { data: rows, error: null, count };
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const api: Record<string, any> = {};
     const chain = () => api;
-    api.select = chain;
+    api.select = (cols?: string) => {
+      if (table === 'multiplix_recipients' && typeof cols === 'string') {
+        selectedCols = cols.split(',').map((c) => c.trim());
+      }
+      return api;
+    };
     api.order = (c: string, o?: { ascending?: boolean }) => {
       orderCol = c;
       orderAsc = o?.ascending !== false;
@@ -432,6 +444,19 @@ Deno.test('recipients.list paginacao: limit/offset recortam por created_at asc c
     JSON.stringify((json.data as Row[]).map((r) => r.id)) === JSON.stringify([R2, R3]),
     `recorte fora do contrato: ${JSON.stringify((json.data as Row[]).map((r) => r.id))}`,
   );
+});
+
+Deno.test('recipients.list: devolve attempt_count, external_id e error_message por destinatario', async () => {
+  const state = makeState();
+  const res = await handleRecipientsList(makeCtx(state, { dispatch_id: D1, status: 'failed' }, 'recipients.list'));
+
+  assert(res.status === 200, `esperava 200, veio ${res.status}`);
+  const rows = (await body(res)).data as Row[];
+  const r3 = rows.find((r) => r.id === R3);
+  assert(r3 !== undefined, 'R3 deveria estar na lista');
+  assert(r3.attempt_count === 3, `attempt_count ausente/errado: ${JSON.stringify(r3)}`);
+  assert(r3.external_id === 'wamid.R3', `external_id ausente/errado: ${JSON.stringify(r3)}`);
+  assert(r3.error_message === 'numero invalido', `error_message ausente/errado: ${JSON.stringify(r3)}`);
 });
 
 Deno.test('recipients.list: limit default e 500 e o filtro de status entra no WHERE', async () => {

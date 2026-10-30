@@ -44,6 +44,7 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 vi.mock('@/components/inbox/TextToSpeechButton', () => ({
@@ -61,7 +62,6 @@ vi.mock('@/components/inbox/SpeedSelector', () => ({ SpeedSelector: () => null }
 vi.mock('@/components/inbox/RealtimeCollaboration', () => ({ RealtimeCollaboration: () => null }));
 vi.mock('@/components/inbox/contact-details/AnalysisBadges', () => ({ AnalysisBadges: () => null }));
 vi.mock('@/components/inbox/contact-details/BusinessHoursBadge', () => ({ BusinessHoursBadge: () => null }));
-vi.mock('@/components/inbox/contact-details/QueuePositionNotifier', () => ({ QueuePositionNotifier: () => null }));
 
 // Radix DropdownMenu não abre de forma confiável sob jsdom+fireEvent — mock
 // simples que renderiza o conteúdo sempre "aberto" (mesmo padrão de

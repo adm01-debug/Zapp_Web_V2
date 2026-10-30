@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { MotionConfig } from 'framer-motion';
 import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
 import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
@@ -118,15 +117,14 @@ export function ContactsView() {
   const canMerge = canMergeContacts(adminAccess);
 
   return (
-    <MotionConfig reducedMotion="user">
     <div className="relative bg-background w-full min-w-0" data-contacts-v2={areasV2Ligadas.join(' ')}>
       <ScrollToTopButton
         scrollRef={layoutScrollRef}
         className="bottom-[calc(228px+env(safe-area-inset-bottom,0px))] md:bottom-[168px] md:right-8"
       />
 
-      {/* Identificação semântica da página (o cabeçalho visual foi removido;
-          o documento continua anunciando "Contatos" para leitores de tela). */}
+      {/* Identificação semântica: o cabeçalho visual foi removido (contrato do
+          plano de 50 etapas) e o documento continua anunciando Contatos. */}
       <h1 className="sr-only">Contatos</h1>
 
       {/* ContactDialogs vive fora de qualquer condição de lista vazia/carregamento:
@@ -198,7 +196,7 @@ export function ContactsView() {
       />
       </div>
 
-      <div className="space-y-3 mt-3">
+      <div className="space-y-3 mt-3 pb-[calc(160px+env(safe-area-inset-bottom,0px))]">
       {!loading && (
         <ContactResultsSummary
           totalCount={totalCount}
@@ -236,6 +234,7 @@ export function ContactsView() {
         onClearSearch={search ? clearSearch : undefined}
         onClearFilters={activeFiltersCount > 0 ? clearFilters : undefined}
         getCRMData={getCRMData}
+        totalCount={totalCount}
       />
       </div>
 
@@ -269,6 +268,5 @@ export function ContactsView() {
         canChangeTypeSelection={canChangeTypeSelection}
       />
     </div>
-    </MotionConfig>
   );
 }

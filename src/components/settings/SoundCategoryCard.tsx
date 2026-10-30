@@ -39,14 +39,14 @@ export function SoundCategoryCard({ categoryKey, label, description, icon: Icon,
             </div>
             <div className="flex items-center gap-2">
               <Select value={currentSound} onValueChange={(value) => onSoundChange(categoryKey, value)}>
-                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-36" aria-label={`Som de ${label}`}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {sounds.map((sound) => (
                     <SelectItem key={sound.id} value={sound.id}>{sound.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Button variant="ghost" size="icon" disabled={currentSound === 'none'} onClick={() => onPlayPreview(categoryKey, currentSound)} className="shrink-0">
+              <Button variant="ghost" size="icon" disabled={currentSound === 'none'} onClick={() => onPlayPreview(categoryKey, currentSound)} className="shrink-0" aria-label={`Ouvir prévia de ${label}`}>
                 {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               </Button>
             </div>

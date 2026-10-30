@@ -1,9 +1,24 @@
-import { lazy, Suspense, type ReactNode } from 'react';
+import {
+  lazy,
+  startTransition,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 import type { Conversation, Message } from '@/types/chat';
 import type { ConversationTab } from './ConversationTabs';
 import { TabBanner } from '../tabs/TabBanner';
+import {
+  ChatMessageNavigationContext,
+  type ChatMessageNavigation,
+} from './chatMessageNavigation';
 
 const AiTab = lazy(() =>
   import('../tabs/AiTab').then((m) => ({ default: m.AiTab })));
@@ -29,9 +44,15 @@ function PanelFallback() {
 }
 
 /** Wrapper comum: scroll próprio + padding + boundary por seção. */
-function Panel({ name, children }: { name: string; children: ReactNode }) {
+function Panel({ name, tab, children }: { name: string; tab: ConversationTab; children: ReactNode }) {
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto p-4">
+    <div
+      role="tabpanel"
+      id={`conversation-panel-${tab}`}
+      aria-labelledby={`conversation-tab-${tab}`}
+      tabIndex={0}
+      className="flex-1 min-h-0 overflow-y-auto p-4"
+    >
       <SectionErrorBoundary sectionName={name}>
         <Suspense fallback={<PanelFallback />}>{children}</Suspense>
       </SectionErrorBoundary>
@@ -57,14 +78,60 @@ export function ConversationTabContent({
 }: ConversationTabContentProps) {
   const contactId = conversation.contact.id;
 
+  // Ponte com o Chat: o painel registra o "rolar até a mensagem" (é ele quem conhece o
+  // virtualizador) e a aba Arquivos pede a abertura por aqui.
+  const scrollToMessageRef = useRef<((messageId: string) => void) | null>(null);
+  const navigation = useMemo<ChatMessageNavigation>(
+    () => ({
+      registerScrollToMessage: (handler) => {
+        scrollToMessageRef.current = handler;
+      },
+    }),
+    [],
+  );
+
+  const [pendingOpenId, setPendingOpenId] = useState<string | null>(null);
+
+  // "Ver na conversa" (aba Arquivos): valida a mensagem, troca para a aba Chat e guarda o
+  // alvo. A rolagem acontece DEPOIS que a aba Chat fica visível (o painel fica escondido nas
+  // demais abas), no efeito abaixo. Arquivo cuja mensagem não está mais carregada (apagada ou
+  // fora da janela) mostra aviso, em vez de trocar de aba e não fazer nada.
+  const handleOpenInChat = useCallback(
+    (messageId: string) => {
+      if (!messages.some((message) => message.id === messageId)) {
+        toast.error('Mensagem não encontrada', {
+          description: 'Este arquivo não está mais disponível na conversa.',
+        });
+        return;
+      }
+      setPendingOpenId(messageId);
+      onTabChange('chat');
+    },
+    [messages, onTabChange],
+  );
+
+  useEffect(() => {
+    if (activeTab !== 'chat' || !pendingOpenId) return;
+    const scrollToMessage = scrollToMessageRef.current;
+    if (!scrollToMessage) return;
+    startTransition(() => setPendingOpenId(null));
+    scrollToMessage(pendingOpenId);
+  }, [activeTab, pendingOpenId]);
+
   return (
-    <div className="flex-1 flex flex-col min-h-0">
+    <ChatMessageNavigationContext.Provider value={navigation}>
+      <div className="flex-1 flex flex-col min-h-0">
       {/*
         A aba Chat fica sempre montada e só é escondida — desmontar perderia
         scroll, rascunho de mensagem, gravação de áudio e assinaturas realtime.
         As demais abas montam sob demanda (lazy) e desmontam ao sair.
       */}
-      <div className={activeTab === 'chat' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
+      <div
+        role="tabpanel"
+        id="conversation-panel-chat"
+        aria-labelledby="conversation-tab-chat"
+        className={activeTab === 'chat' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}
+      >
         {activeTab === 'chat' && (
           <div className="px-4 pt-3 empty:hidden">
             <TabBanner
@@ -82,7 +149,7 @@ export function ConversationTabContent({
       </div>
 
       {activeTab === 'ia' && (
-        <Panel name="Assistente IA">
+        <Panel name="Assistente IA" tab="ia">
           <AiTab
             conversation={conversation}
             messages={messages}
@@ -92,41 +159,48 @@ export function ConversationTabContent({
       )}
 
       {activeTab === 'crm' && (
-        <Panel name="CRM 360°">
+        <Panel name="CRM 360°" tab="crm">
           <Crm360Tab conversation={conversation} messages={messages} onTabChange={onTabChange} />
         </Panel>
       )}
 
       {activeTab === 'orders' && (
-        <Panel name="SalesView">
-          <SalesViewTab contactId={contactId} profileId={profileId ?? null} />
+        <Panel name="SalesView" tab="orders">
+          {/* `onTabChange` é obrigatório aqui: sem ele o "Ver no CRM" do Resumo comercial fica inerte. */}
+          <SalesViewTab contactId={contactId} profileId={profileId ?? null} onTabChange={onTabChange} />
         </Panel>
       )}
 
       {activeTab === 'tasks' && (
-        <Panel name="Tarefas">
+        <Panel name="Tarefas" tab="tasks">
           <TasksTab contactId={contactId} />
         </Panel>
       )}
 
       {activeTab === 'notes' && (
-        <Panel name="Notas">
+        <Panel name="Notas" tab="notes">
           {/* `onTabChange` é obrigatório aqui: sem ele o "Ver na aba Tarefas" fica inerte. */}
           <NotesTab contactId={contactId} onTabChange={onTabChange} />
         </Panel>
       )}
 
       {activeTab === 'files' && (
-        <Panel name="Arquivos">
-          <FilesTab key={contactId} contactId={contactId} contactName={conversation.contact.name} />
+        <Panel name="Arquivos" tab="files">
+          <FilesTab
+            key={contactId}
+            contactId={contactId}
+            contactName={conversation.contact.name}
+            onOpenInChat={handleOpenInChat}
+          />
         </Panel>
       )}
 
       {activeTab === 'history' && (
-        <Panel name="Journey">
+        <Panel name="Journey" tab="history">
           <JourneyTab contactId={contactId} />
         </Panel>
       )}
-    </div>
+      </div>
+    </ChatMessageNavigationContext.Provider>
   );
 }

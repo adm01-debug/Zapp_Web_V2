@@ -5,3 +5,4 @@ export * from './logVoiceCommand';
 export * from './playTtsAudio';
 export * from './processTranscript';
 export * from './useVoiceAgent';
+export * from './voiceSessionLimits';

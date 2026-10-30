@@ -3,6 +3,9 @@ import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/integrations/supaba
 import { getLogger } from '@/lib/logger';
 const log = getLogger('logVoiceCommand');
 
+/** Mesmo teto do `processTranscript`: telemetria pendurada não fica aberta para sempre. */
+const LOG_TIMEOUT_MS = 15_000;
+
 interface VoiceCommandLogParams {
   transcript: string;
   action: string;
@@ -25,7 +28,7 @@ export function logVoiceCommand(params: VoiceCommandLogParams) {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token || key;
 
-      await fetch(url, {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -42,7 +45,16 @@ export function logVoiceCommand(params: VoiceCommandLogParams) {
           duration_ms: params.durationMs,
           success: params.success ?? true,
         }),
+        // Sem teto, um fetch pendurado ficava vivo para sempre segurando a aba e o
+        // socket; 15 s é o mesmo teto usado no processamento do comando.
+        signal: AbortSignal.timeout(LOG_TIMEOUT_MS),
       });
+
+      if (!response.ok) {
+        // O log é telemetria: uma resposta não-ok fica no log técnico e NÃO vira
+        // exceção — nada na tela do operador depende deste envio.
+        log.warn(`logVoiceCommand: resposta não-ok (${response.status})`);
+      }
     } catch (err) { log.error('Unexpected error in logVoiceCommand:', err); }
   })();
 }

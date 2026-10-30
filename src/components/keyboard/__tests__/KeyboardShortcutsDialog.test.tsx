@@ -63,7 +63,8 @@ describe('etapa 84 — painel de ajuda exibe os rótulos de Tarefas', () => {
   it('não afeta os atalhos globais, que continuam com o texto inline', () => {
     abrirPainel();
 
-    expect(screen.getByText('Enviar mensagem')).toBeInTheDocument();
+    // t_3d996237: `send-message` não tem executor — fora da ajuda.
+    expect(screen.queryByText('Enviar mensagem')).not.toBeInTheDocument();
     // "Busca global" aparece duas vezes: como atalho (`global-search`) e na
     // lista de dicas globais do rodapé.
     expect(screen.getAllByText('Busca global').length).toBeGreaterThanOrEqual(1);

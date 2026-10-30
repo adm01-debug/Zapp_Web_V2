@@ -433,7 +433,7 @@ describe('ProductDetailDialog — R2-MOD-046 reabrir o cartão volta ao produto 
     expect(within(painel).getByText('Segundo')).toBeInTheDocument();
 
     // fecha o painel (mesmo caminho do botão fechar do Sheet)
-    fireEvent.click(within(painel).getByRole('button', { name: 'Close' }));
+    fireEvent.click(within(painel).getByRole('button', { name: 'Fechar' }));
     await waitFor(() => expect(screen.queryByTestId('product-detail-sheet')).not.toBeInTheDocument());
 
     // reabre o MESMO cartão A

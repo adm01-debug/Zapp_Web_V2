@@ -82,20 +82,20 @@ export function ElevenLabsVoiceDesign() {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label className="text-xs">Nome da voz</Label>
-            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Atendente Virtual" className="mt-1" />
+            <Label className="text-xs" htmlFor="voice-design-name">Nome da voz</Label>
+            <Input id="voice-design-name" value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Atendente Virtual" className="mt-1" />
           </div>
           <div>
-            <Label className="text-xs">Descrição</Label>
-            <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Voz suave e profissional" className="mt-1" />
+            <Label className="text-xs" htmlFor="voice-design-desc">Descrição</Label>
+            <Input id="voice-design-desc" value={description} onChange={e => setDescription(e.target.value)} placeholder="Voz suave e profissional" className="mt-1" />
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <Label className="text-xs">Gênero</Label>
+            <Label className="text-xs" htmlFor="voice-design-gender">Gênero</Label>
             <Select value={gender} onValueChange={setGender}>
-              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectTrigger id="voice-design-gender" className="mt-1" aria-label="Gênero"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="female">Feminino</SelectItem>
                 <SelectItem value="male">Masculino</SelectItem>
@@ -103,9 +103,9 @@ export function ElevenLabsVoiceDesign() {
             </Select>
           </div>
           <div>
-            <Label className="text-xs">Idade</Label>
+            <Label className="text-xs" htmlFor="voice-design-age">Idade</Label>
             <Select value={age} onValueChange={setAge}>
-              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectTrigger id="voice-design-age" className="mt-1" aria-label="Idade"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="young">Jovem</SelectItem>
                 <SelectItem value="middle_aged">Meia-idade</SelectItem>
@@ -114,9 +114,9 @@ export function ElevenLabsVoiceDesign() {
             </Select>
           </div>
           <div>
-            <Label className="text-xs">Sotaque</Label>
+            <Label className="text-xs" htmlFor="voice-design-accent">Sotaque</Label>
             <Select value={accent} onValueChange={setAccent}>
-              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectTrigger id="voice-design-accent" className="mt-1" aria-label="Sotaque"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="brazilian">Brasileiro</SelectItem>
                 <SelectItem value="american">Americano</SelectItem>
@@ -127,8 +127,9 @@ export function ElevenLabsVoiceDesign() {
         </div>
 
         <div>
-          <Label className="text-xs">Texto de preview</Label>
+          <Label className="text-xs" htmlFor="voice-design-preview">Texto de preview</Label>
           <Textarea
+            id="voice-design-preview"
             value={previewText}
             onChange={e => setPreviewText(e.target.value)}
             rows={2}

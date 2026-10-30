@@ -59,7 +59,7 @@ export function GenericEmptyState({
         <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
           <Icon className="w-8 h-8 text-primary" />
         </div>
-        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent animate-pulse" />
+        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent motion-safe:animate-pulse" />
       </motion.div>
 
       <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>

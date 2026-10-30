@@ -2,8 +2,6 @@ import { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useTeamPerformance } from '@/hooks/team-chat/useTeamPerformance';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
 
 interface Props { conversationId: string; }
 
@@ -19,28 +17,13 @@ export function TeamPerformancePanel({ conversationId }: Props) {
     ];
   }, [data]);
 
-  const handleExport = () => {
-    if (!data) return;
-    const json = JSON.stringify({ conversationId, ...data, exportedAt: new Date().toISOString() }, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `team-performance-${conversationId.slice(0, 8)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   if (isLoading) return <div className="p-4 text-sm text-muted-foreground">Carregando métricas...</div>;
   if (!data) return null;
 
   return (
     <Card className="m-3">
-      <CardHeader className="pb-2 flex flex-row items-center justify-between">
+      <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold">Performance (últimos 30 min)</CardTitle>
-        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={handleExport} title="Exportar JSON">
-          <Download className="w-3.5 h-3.5" />
-        </Button>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid grid-cols-3 gap-2 text-center">

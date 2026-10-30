@@ -8,7 +8,7 @@ import { AlertCard, IconTile, MetaRow, RailCard } from '@/components/talkx/talkx
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { formatPhoneBR } from '@/lib/calls/phone';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
-import { CONTACT_SEARCH_MIN_CHARS } from '@/hooks/integrations/useCatalogContactSearch';
+import { CONTACT_SEARCH_ERROR_MESSAGE, CONTACT_SEARCH_MIN_CHARS } from '@/hooks/integrations/useCatalogContactSearch';
 import { useCatalogRecentSends } from '@/hooks/integrations/useCatalogRecentSends';
 import { cn } from '@/lib/utils';
 import type { ContactResult, SendProgress } from './useSendProduct';
@@ -28,6 +28,13 @@ interface ContactSelectionStepProps {
   onContactSearchChange: (v: string) => void;
   contactResults: ContactResult[];
   searchingContacts: boolean;
+  /**
+   * A consulta de contatos falhou (rede/RLS). Estado distinto de "nenhum
+   * resultado": a tela pede "Tentar de novo" em vez de afirmar lista vazia.
+   */
+  contactSearchError?: boolean;
+  /** Repete a última busca de contatos (usado com `contactSearchError`). */
+  onRetryContactSearch?: (() => void) | null;
   selectedContact: ContactResult | null;
   onSelectContact: (c: ContactResult) => void;
   isSending: boolean;
@@ -99,6 +106,7 @@ export function ContactSelectionStep({
   template, variantLabel, templateLabels,
   contactSearch, onContactSearchChange,
   contactResults, searchingContacts,
+  contactSearchError = false, onRetryContactSearch = null,
   selectedContact, onSelectContact,
   isSending, onBack, onSend,
   sendBlockedReason = null, checkingSendReadiness = false,
@@ -186,6 +194,18 @@ export function ContactSelectionStep({
           <ScrollArea className="max-h-[45vh]">
             {searchingContacts ? (
               <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+            ) : contactSearchError ? (
+              <div className="py-6">
+                {/* Falha de consulta ≠ lista vazia: o texto não promete que a
+                    busca rodou, e o botão repete a MESMA consulta. */}
+                <AlertCard
+                  tone="warning"
+                  actionLabel={onRetryContactSearch ? 'Tentar de novo' : undefined}
+                  onAction={onRetryContactSearch ?? undefined}
+                >
+                  {CONTACT_SEARCH_ERROR_MESSAGE}
+                </AlertCard>
+              </div>
             ) : isEmpty ? (
               <div className="text-center py-8 text-muted-foreground">
                 <User className="w-10 h-10 mx-auto mb-2 opacity-40" />

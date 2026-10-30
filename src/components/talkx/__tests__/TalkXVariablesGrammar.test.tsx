@@ -5,6 +5,24 @@ vi.mock('@/hooks/crm/useContactCustomFields', () => ({
   useContactCustomFields: () => ({ fields: [] }),
 }));
 
+// T09 — a revisão consome `useTalkXInsights` (recomendações reais); aqui o
+// motor fica sem dados, como antes da mudança (só o mock da dependência nova,
+// nenhuma asserção alterada).
+vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
+  useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
+}));
+
+// X051: a revisão do wizard passou a resolver o disparo pelo controlador único
+// (`useTalkXLifecycle` → `useTalkX`, que usa react-query). Sem a porta mockada
+// este teste cairia em "No QueryClient set"; as operações não são exercitadas
+// nem asseridas aqui.
+vi.mock('@/hooks/integrations/useTalkX', () => ({
+  useTalkX: () => ({
+    startCampaign: vi.fn(), pauseCampaign: vi.fn(), cancelCampaign: vi.fn(),
+    updateCampaign: { mutateAsync: vi.fn() },
+  }),
+}));
+
 import { TalkXMessageEditor } from '../TalkXMessageEditor';
 import { TalkXWizardReview } from '../TalkXWizardDelivery';
 import { personalizePreview } from '../talkxShared';
@@ -24,7 +42,7 @@ import type { WizardState } from '../TalkXCampaignWizard';
 function reviewEd(overrides: Record<string, unknown> = {}) {
   return {
     name: 'Campanha', description: '', objective: 'sales',
-    audienceSource: 'contacts', selectedSegment: null,
+    audienceSource: 'contacts', selectedSegments: [],
     selectedContacts: [], eligibleCount: 10, audienceTotal: 12,
     respectSuppression: true, suppressedCount: 2,
     selectedTemplate: null, messageTemplate: 'Oi {{nome}}',
@@ -53,7 +71,7 @@ describe('TalkXMessageEditor — gramática de variáveis (R2-MOD-062)', () => {
       <TalkXMessageEditor value="Oi {{ nome | cliente }}" onChange={() => {}} knownVariables={['{{nome}}']} />,
     );
     const overlay = container.querySelector('pre') as HTMLElement;
-    expect(overlay.innerHTML).toContain('text-primary-glow');
+    expect(overlay.innerHTML).toContain('text-[hsl(var(--primary-text))]');
     expect(overlay.innerHTML).not.toContain('text-dash-amber');
   });
 
@@ -71,6 +89,20 @@ describe('TalkXMessageEditor — gramática de variáveis (R2-MOD-062)', () => {
 });
 
 describe('Resumo da campanha — variáveis de personalização (R2-MOD-062)', () => {
+  it('a linha "Objetivo" mostra a descrição do objetivo e mantém a da campanha (X124/T09-012)', () => {
+    render(
+      <TalkXWizardReview
+        ed={reviewEd({ objective: 'vendas', description: 'Produtos em destaque para escritórios' })}
+        campaign={null}
+        onLaunched={() => {}}
+      />,
+    );
+
+    expect(screen.getByText(/Gerar mais vendas e conversões/)).toBeInTheDocument();
+    // A descrição livre da campanha não pode sumir do resumo ao ganhar a do objetivo.
+    expect(screen.getByText(/Produtos em destaque para escritórios/)).toBeInTheDocument();
+  });
+
   it('lista {{nome}} e {{custom_1}} do texto com fallback, em vez de "Nenhuma"', () => {
     render(
       <TalkXWizardReview

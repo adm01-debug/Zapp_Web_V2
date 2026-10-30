@@ -39,13 +39,19 @@ vi.mock('@/hooks/ui/useDeviceDetection', () => ({ useDeviceDetection: () => devi
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ hasRole: () => false }) }));
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: () => ({
-      select: () => ({
-        eq: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) }),
-      }),
+      select: () =>
+        Object.assign(Promise.resolve({ count: 0, error: null }), {
+          eq: () => ({
+            order: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }),
+            eq: () => Promise.resolve({ count: 0, error: null }),
+          }),
+        }),
     }),
   },
 }));

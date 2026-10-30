@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
 import { getLogger } from "@/lib/logger";
-import { Toaster } from "@/components/ui/toaster";
 import { BrowserRouter } from "react-router-dom";
 import { ErrorBoundary } from "@/components/errors/ErrorBoundary";
 import { SkipLinks } from "@/components/ui/skip-link";
@@ -8,6 +7,8 @@ import { LiveRegion } from "@/components/ui/visually-hidden";
 import { GlobalKeyboardProvider } from "@/components/keyboard/GlobalKeyboardProvider";
 import { AppProviders } from "@/providers/AppProviders";
 import { AppRoutes } from "@/routes/AppRoutes";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { useGlobalIncomingMessageAlerts } from "@/hooks/realtime/useGlobalIncomingMessageAlerts";
 
 const log = getLogger('App');
 
@@ -40,15 +41,19 @@ const EasterEggsProvider = lazy(() =>
   import("@/components/effects/EasterEggs")
     .then(m => ({ default: m.EasterEggsProvider }))
 );
-const InAppNotificationProvider = lazy(() =>
-  import("@/components/mobile/InAppNotificationProvider")
-    .then(m => ({ default: m.InAppNotificationProvider }))
-);
 // TC-007: listener ÚNICO de notificações do Team Chat, montado no nível do app. É um
 // provedor de efeito (renderiza null) e fica no chunk lazy para não pesar o bundle inicial.
 const TeamChatNotificationsListener = lazy(() =>
   import("@/components/team-chat/TeamChatNotificationsListener")
     .then(m => ({ default: m.TeamChatNotificationsListener }))
+);
+// HZ1-10: aviso de alerta de segurança no app inteiro (antes só dentro da
+// Central de Segurança). Mesmo slot e mesmo motivo do listener do Team Chat:
+// overlay de efeito, no chunk lazy, para o `sonner` que ele alcança não voltar
+// ao grafo estático do entry.
+const SecurityPushNotificationsListener = lazy(() =>
+  import("@/components/notifications/SecurityPushNotificationsListener")
+    .then(m => ({ default: m.SecurityPushNotificationsListener }))
 );
 // O viewport de toasts do sonner é overlay: nenhum toast existe no first paint e
 // o `toast()` bufferiza chamadas feitas antes do mount (Observer do pacote), então
@@ -57,6 +62,32 @@ const TeamChatNotificationsListener = lazy(() =>
 const Sonner = lazy(() =>
   import("@/components/ui/sonner")
     .then(m => ({ default: m.Toaster }))
+);
+// API legada de `@/hooks/ui/use-toast` tem store independente do Sonner. O host
+// segue montado globalmente para não perder esses avisos, mas fica em chunk lazy
+// para manter seus componentes Radix fora do bundle inicial.
+const LegacyToaster = lazy(() =>
+  import("@/components/ui/toaster")
+    .then(m => ({ default: m.Toaster }))
+);
+// Gamificação: host do toast de conquista/subida de nível. É overlay (renderiza o
+// próprio aviso e não envolve as rotas), então vive no mesmo bloco lazy do Sonner —
+// nada dele existe na primeira pintura.
+const AchievementCelebrationToaster = lazy(() =>
+  import("@/components/gamification/AchievementToast")
+    .then(m => ({ default: m.AchievementCelebrationToaster }))
+);
+// SL-103 restore: MotionConfig carregado em chunk lazy para manter vendor-motion
+// (43 KB gzip) fora do bundle inicial. As rotas também são lazy — quando qualquer
+// motion.* renderizar de fato, o vendor-motion já estará resolvido em paralelo.
+// A11Y: reducedMotion=user aplica prefers-reduced-motion do sistema a TODOS os
+// consumidores de motion.* sem precisar de MotionConfig por tela.
+const LazyMotionConfig = lazy(() =>
+  import('framer-motion').then(({ MotionConfig }) => ({
+    default: ({ children }: { children: React.ReactNode }) => (
+      <MotionConfig reducedMotion="user">{children}</MotionConfig>
+    ),
+  }))
 );
 
 /**
@@ -69,6 +100,14 @@ const Sonner = lazy(() =>
  * AppProviders (src/providers/AppProviders.tsx), not here.
  */
 function DeferredProviders() {
+  // Aviso de mensagem nova em QUALQUER tela (aba oculta ou view fora da inbox).
+  // Vive aqui como os outros listeners globais (TeamChatNotificationsListener):
+  // é side-effect, self-render (toast) e precisa de AuthProvider + QueryClient,
+  // que estão acima (AppProviders). `profile.id` é o valor de
+  // `contacts.assigned_to` — nunca o auth user id.
+  const { profile } = useAuth();
+  useGlobalIncomingMessageAlerts({ myProfileId: profile?.id ?? null });
+
   return (
     // ARCH-3 FIX: fallback={null} is intentional for side-effect providers —
     // the app must remain usable even if a non-critical overlay fails to load.
@@ -77,11 +116,12 @@ function DeferredProviders() {
       <IncomingCallAlert />
       <OutboundCallDialog />
       <TeamChatNotificationsListener />
-      <InAppNotificationProvider>
-        {/* EasterEggsProvider is purely a keyboard/shake listener. No children needed. */}
-        <EasterEggsProvider>{null}</EasterEggsProvider>
-      </InAppNotificationProvider>
+      <SecurityPushNotificationsListener />
+      {/* EasterEggsProvider is purely a keyboard/shake listener. No children needed. */}
+      <EasterEggsProvider>{null}</EasterEggsProvider>
       <Sonner />
+      <LegacyToaster />
+      <AchievementCelebrationToaster />
     </Suspense>
   );
 }
@@ -95,10 +135,14 @@ const DeferredHooks = lazy(() =>
   Promise.all([
     import('@/hooks/system/useServiceWorker'),
     import('@/hooks/ui/useScreenProtection'),
-  ]).then(([swMod, spMod]) => ({
+    // Item 025: a fila offline drena também na ABERTURA (sob sessão autenticada),
+    // não só no evento `online` — ver lib/offlineQueue.ts.
+    import('@/hooks/system/useOfflineSendQueueDrain'),
+  ]).then(([swMod, spMod, offlineMod]) => ({
     default: function DeferredHooksRunner() {
       swMod.useServiceWorker();
       spMod.useScreenProtection();
+      offlineMod.useOfflineSendQueueDrain();
       return null;
     },
   }))
@@ -159,8 +203,18 @@ function AppContent() {
             <DeferredHooks />
           </Suspense>
         </ErrorBoundary>
-        <Toaster />
-        <AppRoutes />
+        {/*
+          SL-103 restore: LazyMotionConfig mantém vendor-motion fora do bundle
+          inicial. fallback={null} é seguro porque AppRoutes exibe seu próprio
+          skeleton de carregamento enquanto os chunks de rota resolvem — a janela
+          sem MotionConfig é imperceptível (< 100 ms) pois vendor-motion e os
+          chunks de rota resolvem em paralelo.
+        */}
+        <Suspense fallback={null}>
+          <LazyMotionConfig>
+            <AppRoutes />
+          </LazyMotionConfig>
+        </Suspense>
       </GlobalKeyboardProvider>
     </BrowserRouter>
   );

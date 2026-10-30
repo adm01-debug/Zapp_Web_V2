@@ -84,10 +84,16 @@ export function MediaPreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
+      {/* t_fe46ce81 — contêiner explícito no portal. Sem ele o Radix monta o conteúdo do diálogo
+          só no SEGUNDO commit (`@radix-ui/react-portal`), e o `useMediaElementVolume` (efeito de
+          layout sem dependências, que lê a ref) rodava uma vez com a ref nula e não voltava. Com
+          URL pública — o caso do arquivo legado, que não assina e não re-renderiza o componente —
+          o vídeo/áudio abria em 100% do sistema e sem listener de `play`/`loadedmetadata`. */}
       {/* V01: janela do arquivo 40% mais estreita (896 -> 538px) e 20% mais baixa (80vh -> 64vh).
           O `_-_` vira espaço no CSS: `calc(100vw-2rem)` sem os espaços é descartado pelo navegador
           (a largura cairia de volta ao `max-w-lg` da base). `min(...)` segura o teto no celular. */}
       <DialogContent
+        container={document.body}
         className="max-w-[min(538px,calc(100vw_-_2rem))] max-h-[64vh] p-0 overflow-hidden"
         onOpenAutoFocus={() => {
           triggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;

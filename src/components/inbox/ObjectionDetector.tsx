@@ -82,12 +82,12 @@ const ActionBar = memo(function ActionBar({ text, idx, copiedIdx, isRewriting, r
     <div className="flex items-center justify-between pt-2">
       <div className="flex items-center gap-0.5">
         <Tooltip><TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/30" onClick={() => onCopy(text, idx)} disabled={rewritingAny}>
+          <Button variant="ghost" size="icon" aria-label={copiedIdx === idx ? 'Copiado!' : 'Copiar'} className="h-8 w-8 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/30" onClick={() => onCopy(text, idx)} disabled={rewritingAny}>
             {copiedIdx === idx ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
           </Button>
         </TooltipTrigger><TooltipContent side="bottom" className="text-3xs">{copiedIdx === idx ? 'Copiado!' : 'Copiar'}</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/30" onClick={() => onRewrite(idx)} disabled={rewritingAny}>
+          <Button variant="ghost" size="icon" aria-label="Reescrever" className="h-8 w-8 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/30" onClick={() => onRewrite(idx)} disabled={rewritingAny}>
             <RefreshCw className={cn('w-4 h-4', isRewriting && 'animate-spin')} />
           </Button>
         </TooltipTrigger><TooltipContent side="bottom" className="text-3xs">Reescrever</TooltipContent></Tooltip>
@@ -189,7 +189,7 @@ export function ObjectionDetector({ contactId, contactName, lastMessages, allMes
   /* ── Loading ── */
   if (detector.loading && detector.objections.length === 0) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4" role="status" aria-live="polite">
         <div className="flex items-center gap-3 px-1">
           <Loader2 className="w-5 h-5 text-primary animate-spin" />
           <div><p className="text-xs font-semibold text-foreground">Analisando mensagens...</p><p className="text-3xs text-muted-foreground">{detector.clientMessages.length} mensagens em análise</p></div>
@@ -211,7 +211,7 @@ export function ObjectionDetector({ contactId, contactName, lastMessages, allMes
     return (
       <div className="space-y-4">
         {detector.error ? (
-          <div className="flex items-start gap-3 p-4 rounded-2xl bg-destructive/8 border border-destructive/15">
+          <div role="alert" className="flex items-start gap-3 p-4 rounded-2xl bg-destructive/8 border border-destructive/15">
             <AlertTriangle className="w-5 h-5 text-destructive shrink-0" />
             <div className="min-w-0"><p className="text-xs text-destructive font-semibold mb-1">Erro na análise</p><p className="text-2xs text-destructive/80 leading-relaxed">{detector.error}</p></div>
           </div>
@@ -239,7 +239,7 @@ export function ObjectionDetector({ contactId, contactName, lastMessages, allMes
           <div><p className="text-[13px] font-bold text-foreground leading-none">{detector.objections.length === 1 ? 'Objeção detectada' : 'Objeções detectadas'}</p><p className="text-2xs text-muted-foreground mt-0.5">Contra-argumentos prontos</p></div>
         </div>
         <Tooltip><TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-muted/30" onClick={() => detector.analyze()} disabled={detector.loading}>
+          <Button variant="ghost" size="icon" aria-label="Reanalisar" className="h-9 w-9 rounded-xl hover:bg-muted/30" onClick={() => detector.analyze()} disabled={detector.loading}>
             <motion.div animate={detector.loading ? { rotate: 360 } : {}} transition={{ duration: 1, repeat: detector.loading ? Infinity : 0, ease: 'linear' }}><RefreshCw className="w-4 h-4" /></motion.div>
           </Button>
         </TooltipTrigger><TooltipContent side="left" className="text-3xs">Reanalisar</TooltipContent></Tooltip>

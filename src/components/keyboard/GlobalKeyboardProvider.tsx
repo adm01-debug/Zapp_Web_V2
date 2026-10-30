@@ -62,9 +62,14 @@ export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboa
     if (showCommandPalette) setPaletteMounted(true);
   }, [showCommandPalette]);
 
-  // Initialize global shortcuts
+  // Initialize global shortcuts. O registry dispara `global-search` no Ctrl+K (captura,
+  // antes do listener abaixo): o provider é o dono único do atalho e alterna a paleta.
   useGlobalKeyboardShortcuts([
     ...(customActions || []),
+    {
+      id: 'global-search',
+      action: () => setShowCommandPalette((prev) => !prev),
+    },
     {
       id: 'show-shortcuts-help',
       action: () => setShowHelp(true),
@@ -82,9 +87,12 @@ export function GlobalKeyboardProvider({ children, customActions }: GlobalKeyboa
     
     document.addEventListener('show-shortcuts-help', handleShowHelp);
     document.addEventListener('open-command-palette', handleOpenPalette);
+    // Sidebar e MobileShell pedem a busca por este evento: é a mesma paleta única.
+    document.addEventListener('open-global-search', handleOpenPalette);
     return () => {
       document.removeEventListener('show-shortcuts-help', handleShowHelp);
       document.removeEventListener('open-command-palette', handleOpenPalette);
+      document.removeEventListener('open-global-search', handleOpenPalette);
     };
   }, []);
 

@@ -156,7 +156,32 @@ export async function mockEmailNavy(page: Page, options: { includeExtreme?: bool
   await installFakeSession(page);
   await mockTalkXAuth(page);
 
-  await page.route(/\/rest\/v1\/(?!rpc|profiles|user_roles|email_threads|email_messages|email_labels|email_attachments)[a-z_]+/, route =>
+  // A busca atual consulta primeiro a RPC por assunto, remetente, corpo e anexo;
+  // sem este mock o backend falso devolvia erro antes da leitura da lista.
+  await page.route(/\/rest\/v1\/rpc\/search_email_threads/, route => {
+    if (route.request().method() !== 'POST') return json(route, { message: 'método não previsto' }, 403);
+    const args = route.request().postDataJSON() as {
+      p_account?: string; p_q?: string; p_limit?: number; p_after?: string;
+    };
+    const termo = (args.p_q ?? '').trim().toLowerCase();
+    if (!termo) return json(route, []);
+    const base = options.includeExtreme ? threads : threads.filter(thread => thread.id !== EXTREME_THREAD_ID);
+    const matches = base
+      .filter(thread => thread.gmail_account_id === args.p_account)
+      .filter(thread => !args.p_after || thread.last_message_at < args.p_after)
+      .filter(thread => [thread.subject, thread.snippet, thread.last_from_name, thread.last_from_address]
+        .some(value => String(value ?? '').toLowerCase().includes(termo)))
+      .slice(0, Math.min(args.p_limit ?? 50, 50))
+      .map(thread => ({
+        thread_id: thread.id,
+        match_field: 'subject',
+        match_snippet: thread.subject,
+        last_message_at: thread.last_message_at,
+      }));
+    return json(route, matches);
+  });
+
+  await page.route(/\/rest\/v1\/(?!rpc|profiles|user_roles|user_settings|email_threads|email_messages|email_labels|email_attachments)[a-z_]+/, route =>
     isRead(route.request().method()) ? json(route, []) : json(route, { message: 'escrita externa bloqueada no E2E' }, 403),
   );
   await page.route(/\/functions\/v1\/(?!gmail-oauth|gmail-sync|gmail-send)[a-z-]+/, route => json(route, { message: 'função externa bloqueada no E2E' }, 403));

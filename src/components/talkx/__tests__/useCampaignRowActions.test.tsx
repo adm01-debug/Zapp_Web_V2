@@ -2,6 +2,17 @@ import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const talkxMocks = vi.hoisted(() => ({
+  startCampaign: vi.fn(),
+  pauseCampaign: vi.fn(),
+  cancelCampaign: vi.fn(),
+  updateCampaign: { mutateAsync: vi.fn() },
+}));
+
+vi.mock('@/hooks/integrations/useTalkX', () => ({
+  useTalkX: () => talkxMocks,
+}));
+
 /**
  * X080 — ações de linha persistidas: duplicar, excluir com regra, pausar,
  * retomar e cancelar.
@@ -25,6 +36,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
   useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
+}));
+
+// X077 — os KPIs vêm da RPC; este teste não exercita essa consulta.
+vi.mock('@/hooks/integrations/useTalkXOverviewStats', () => ({
+  useTalkXOverviewStats: () => ({ data: undefined }),
 }));
 
 import { campaignRowActions, useCampaignRowActions } from '../useCampaignRowActions';
@@ -261,10 +277,11 @@ describe('TalkXOverview — o menu da linha sai do hook (X080)', () => {
     sessionStorage.clear();
   });
 
-  it('mostra as ações do status e confirma "Retomar" pelo modal', async () => {
+  it('mostra as ações do status e abre ciclo de vida pelo hook único', async () => {
     render(<TalkXOverview {...props} />);
 
-    fireEvent.pointerDown(screen.getByRole('button', { name: 'Ações' }));
+    // TL-115: a TalkXTable nomeia o gatilho com a linha (RowActionsMenu + rowLabel).
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Ações de Campanha pausada' }));
     expect(await screen.findByRole('menuitem', { name: 'Retomar' })).toBeTruthy();
     expect(screen.getByRole('menuitem', { name: 'Duplicar' })).toBeTruthy();
     // "Excluir" não vale para campanha pausada (a regra do banco só aceita
@@ -274,9 +291,8 @@ describe('TalkXOverview — o menu da linha sai do hook (X080)', () => {
     await act(async () => {
       fireEvent.click(screen.getByRole('menuitem', { name: 'Retomar' }));
     });
-    await clicar('Retomar');
 
-    expect(props.onStart).toHaveBeenCalledTimes(1);
-    expect(props.onStart).toHaveBeenCalledWith('c-paused');
+    expect(await screen.findByRole('alertdialog')).toHaveTextContent('Retomar campanha?');
+    expect(props.onStart).not.toHaveBeenCalled();
   });
 });

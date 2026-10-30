@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { getFileExtensionWithDefault } from '@/utils/fileExtensions';
 import { convertAudioToMp3 } from '@/utils/audioToMp3';
 import { attachMediaVolume } from '@/lib/mediaVolumeElement';
+import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 
 const log = getLogger('useAudioMemes');
 
@@ -34,6 +35,7 @@ export function useAudioMemes(open: boolean) {
   const [uploading, setUploading] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [pendingUpload, setPendingUpload] = useState<PendingUpload | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -117,6 +119,40 @@ export function useAudioMemes(open: boolean) {
     };
   }, [open, fetchMemes, releasePreview, discardUnconfirmedUpload]);
 
+  /**
+   * R2-INB-044 — catálogo e favoritos ao vivo. Antes só existia o `fetchMemes` da
+   * abertura: meme criado por outro atendente (ou favorito alternado em outra aba)
+   * só aparecia reabrindo o picker. Um ÚNICO canal cobre as duas tabelas; o nome sai
+   * do `uniqueRealtimeTopic` (padrão RT2 — canal com nome fixo montado em dois
+   * componentes derruba a tela) e é removido ao fechar, sem vazar assinatura. A falha
+   * de assinatura vira `syncError` em vez de silêncio.
+   */
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    const channel = supabase
+      .channel(uniqueRealtimeTopic('audio-memes-realtime'))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audio_memes' }, () => {
+        if (active) void fetchMemes();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audio_meme_favorites' }, () => {
+        if (active) void fetchMemes();
+      })
+      .subscribe((status) => {
+        if (!active) return;
+        if (status === 'SUBSCRIBED') {
+          setSyncError(null);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          log.error('[AudioMeme] Falha ao assinar o canal em tempo real:', status);
+          setSyncError('Não foi possível sincronizar o catálogo de áudios');
+        }
+      });
+    return () => {
+      active = false;
+      supabase.removeChannel(channel);
+    };
+  }, [open, fetchMemes]);
+
   const handlePreview = useCallback((meme: AudioMemeItem) => {
     if (playingId === meme.id) {
       stopPreview();
@@ -164,7 +200,14 @@ export function useAudioMemes(open: boolean) {
       const payload: File | Blob = converted.ok ? converted.blob : file;
       const contentType = converted.ok ? 'audio/mpeg' : (file.type || 'audio/mpeg');
       const ext = converted.ok ? 'mp3' : getFileExtensionWithDefault(file.name, 'mp3');
-      const storagePath = `meme_${Date.now()}_${crypto.randomUUID()}.${ext}`;
+      // A policy do bucket `audio-memes` é por pasta: o atendente comum só grava em
+      // `<auth.uid()>/` (PK-16). Chave solta era recusada pelo Storage (42501).
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Sessão expirada: entre novamente para enviar o áudio');
+        return;
+      }
+      const storagePath = `${user.id}/meme_${Date.now()}_${crypto.randomUUID()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('audio-memes')
@@ -365,7 +408,7 @@ export function useAudioMemes(open: boolean) {
   }, [stopPreview, discardUnconfirmedUpload]);
 
   return {
-    memes, loading, uploading, playingId, pendingUpload,
+    memes, loading, uploading, playingId, pendingUpload, syncError,
     audioRef, fileInputRef,
     handlePreview, handleFileSelect, handleConfirmUpload,
     handleCancelUpload, handleSend, toggleFavorite,

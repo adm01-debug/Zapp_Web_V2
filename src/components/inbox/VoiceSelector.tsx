@@ -15,6 +15,8 @@ import { Volume2, Check, Play, Square, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { attachMediaVolume } from '@/lib/mediaVolumeElement';
+import { LOCAL_VOICE_ID } from '@/hooks/communication/useTextToSpeech';
+import { guardarPreviaDeVoz, lerPreviaDeVoz } from '@/lib/voicePreviewCache';
 
 export interface ElevenLabsVoice {
   id: string;
@@ -40,6 +42,17 @@ export const ELEVENLABS_VOICES: ElevenLabsVoice[] = [
   { id: 'cgSgspJ2msm6clMCkdW9', name: 'Jessica', description: 'Expressiva e dinâmica', gender: 'female', accent: 'Americano', sampleText: 'Olá! Eu sou a Jessica, uma voz expressiva e dinâmica.' },
 ];
 
+/**
+ * HZ3-004-A — opção local (Web Speech do navegador). Fica FORA de `ELEVENLABS_VOICES`:
+ * aquele array alimenta telas que geram áudio na Edge, e `local` não é voz do provedor.
+ */
+const LOCAL_VOICE_OPTION: ElevenLabsVoice = {
+  id: LOCAL_VOICE_ID,
+  name: 'Voz do dispositivo',
+  description: 'Lê no navegador, sem enviar o texto',
+  gender: 'female',
+};
+
 interface VoiceSelectorProps {
   selectedVoiceId: string;
   onVoiceChange: (voiceId: string) => void;
@@ -47,11 +60,21 @@ interface VoiceSelectorProps {
 }
 
 export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: VoiceSelectorProps) {
-  const selectedVoice = ELEVENLABS_VOICES.find(v => v.id === selectedVoiceId) || ELEVENLABS_VOICES[0];
+  const selectedVoice =
+    selectedVoiceId === LOCAL_VOICE_ID
+      ? LOCAL_VOICE_OPTION
+      : ELEVENLABS_VOICES.find(v => v.id === selectedVoiceId) || ELEVENLABS_VOICES[0];
   const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
   const [loadingVoiceId, setLoadingVoiceId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
+  // G6: a geração em andamento pode ser cancelada (menu fechado / outra voz).
+  const geracaoRef = useRef<AbortController | null>(null);
+
+  const cancelarGeracao = () => {
+    geracaoRef.current?.abort();
+    geracaoRef.current = null;
+  };
 
   const stopPreview = () => {
     if (audioRef.current) {
@@ -74,32 +97,44 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
       return;
     }
 
-    // Stop any current preview
+    // Stop any current preview (e a geração anterior, que não pode tocar por baixo desta)
+    cancelarGeracao();
     stopPreview();
-    
+
+    const controle = new AbortController();
+    geracaoRef.current = controle;
     setLoadingVoiceId(voice.id);
 
     try {
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/elevenlabs-tts`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(await edgeAuthHeaders()),
-          },
-          body: JSON.stringify({ 
-            text: voice.sampleText || `Olá! Eu sou ${voice.name}.`,
-            voiceId: voice.id
-          }),
+      // G6: o texto de amostra é fixo, então a MESMA voz só paga a síntese uma vez por sessão.
+      let audioBlob = lerPreviaDeVoz(voice.id);
+      if (!audioBlob) {
+        const response = await fetch(
+          `${SUPABASE_URL}/functions/v1/elevenlabs-tts`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(await edgeAuthHeaders()),
+            },
+            body: JSON.stringify({
+              text: voice.sampleText || `Olá! Eu sou ${voice.name}.`,
+              voiceId: voice.id
+            }),
+            signal: controle.signal,
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Erro ao gerar preview');
         }
-      );
 
-      if (!response.ok) {
-        throw new Error('Erro ao gerar preview');
+        audioBlob = await response.blob();
+        // Menu fechado (ou outra voz pedida) durante a geração: a resposta atrasada não toca.
+        if (controle.signal.aborted) return;
+        guardarPreviaDeVoz(voice.id, audioBlob);
       }
-
-      const audioBlob = await response.blob();
+      if (controle.signal.aborted) return;
       const audioUrl = URL.createObjectURL(audioBlob);
       audioUrlRef.current = audioUrl;
 
@@ -125,15 +160,18 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
 
       await audio.play();
     } catch (error) {
+      // Cancelar a geração é decisão do usuário, não erro: nada de toast.
+      if (controle.signal.aborted) return;
       log.error('Preview error:', error);
       toast.error('Erro ao carregar preview da voz');
     } finally {
-      setLoadingVoiceId(null);
+      if (geracaoRef.current === controle) geracaoRef.current = null;
+      setLoadingVoiceId((atual) => (atual === voice.id ? null : atual));
     }
   };
 
   return (
-    <DropdownMenu onOpenChange={(open) => { if (!open) stopPreview(); }}>
+    <DropdownMenu onOpenChange={(open) => { if (!open) { cancelarGeracao(); stopPreview(); setLoadingVoiceId(null); } }}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
@@ -145,11 +183,30 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
-        <DropdownMenuLabel className="text-xs text-muted-foreground flex items-center justify-between">
-          <span>Vozes ElevenLabs</span>
-          <span className="text-3xs font-normal">Clique ▶ para ouvir</span>
+        <DropdownMenuLabel className="text-xs text-muted-foreground">
+          Voz da leitura
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => onVoiceChange(LOCAL_VOICE_ID)}
+          className="flex items-center justify-between cursor-pointer py-2.5"
+        >
+          <div className="flex flex-col min-w-0">
+            <span className="font-medium text-sm">{LOCAL_VOICE_OPTION.name}</span>
+            <span className="text-xs text-muted-foreground truncate">{LOCAL_VOICE_OPTION.description}</span>
+          </div>
+          {selectedVoiceId === LOCAL_VOICE_ID && (
+            <Check className="w-4 h-4 text-primary flex-shrink-0 ml-2" />
+          )}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-xs text-muted-foreground flex items-center justify-between">
+          <span>Vozes premium</span>
+          <span className="text-3xs font-normal">Clique ▶ para ouvir</span>
+        </DropdownMenuLabel>
+        <p className="px-2 pb-2 text-3xs text-muted-foreground">
+          Voz premium: o texto é enviado ao provedor de voz
+        </p>
         <div className="max-h-[350px] overflow-y-auto">
           {ELEVENLABS_VOICES.map((voice) => {
             const isLoading = loadingVoiceId === voice.id;
@@ -164,6 +221,8 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   {/* Preview button */}
                   <button
+                    type="button"
+                    aria-label={isPlaying ? `Parar prévia da voz ${voice.name}` : `Ouvir prévia da voz ${voice.name}`}
                     onClick={(e) => playPreview(voice, e)}
                     className={cn(
                       "flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors",

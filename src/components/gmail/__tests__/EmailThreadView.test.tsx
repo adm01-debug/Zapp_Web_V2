@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createElement } from 'react';
 import type { ReactNode } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { axe } from 'vitest-axe';
 import { EmailThreadView } from '../EmailThreadView';
 import { toast } from 'sonner';
 import type { EmailThread, EmailMessage } from '@/hooks/integrations/useGmail';
@@ -13,10 +14,15 @@ function makeMotionEl(tag: string) {
     return createElement(tag, safe, children as React.ReactNode);
   };
 }
-vi.mock('framer-motion', () => ({
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  motion: new Proxy({}, { get: (_t, prop: string) => makeMotionEl(prop === 'button' ? 'button' : 'div') }),
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+      motion: new Proxy({}, { get: (_t, prop: string) => makeMotionEl(prop === 'button' ? 'button' : 'div') }),
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 vi.mock('@/components/ui/scroll-area', () => ({
   ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -254,17 +260,25 @@ describe('EmailThreadView', () => {
     });
   });
 
-  it('botão Voltar chama onBack', () => {
+  it('botão Voltar chama onBack', async () => {
     const onBack = vi.fn();
     render(<EmailThreadView thread={makeThread()} onBack={onBack} />);
-    fireEvent.click(screen.getByTestId('icon-arrow-left').closest('button')!);
+    const btn = screen.getByRole('button', { name: 'Voltar à caixa' });
+    // Nome acessível vem do conteúdo (sr-only).
+    expect(btn.querySelector('.sr-only')).toHaveTextContent('Voltar à caixa');
+    expect((await axe(btn, { rules: { 'color-contrast': { enabled: false } } })).violations).toEqual([]);
+    fireEvent.click(btn);
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
-  it('botão Lixeira chama trashMessage.mutate com gmail_message_id da última mensagem', () => {
+  it('botão Lixeira chama trashMessage.mutate com gmail_message_id da última mensagem', async () => {
     config.threadMessages = [makeMessage({ gmail_message_id: 'gm-trash' })];
     render(<EmailThreadView thread={makeThread()} onBack={vi.fn()} />);
-    fireEvent.click(screen.getByTestId('icon-trash').closest('button')!);
+    const btn = screen.getByRole('button', { name: 'Mover para a lixeira' });
+    // Nome acessível vem do conteúdo (sr-only).
+    expect(btn.querySelector('.sr-only')).toHaveTextContent('Mover para a lixeira');
+    expect((await axe(btn, { rules: { 'color-contrast': { enabled: false } } })).violations).toEqual([]);
+    fireEvent.click(btn);
     expect(trashMessageMutate).toHaveBeenCalledWith('gm-trash');
   });
 

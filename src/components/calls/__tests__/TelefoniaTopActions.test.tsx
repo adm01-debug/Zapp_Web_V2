@@ -41,4 +41,15 @@ describe('TelefoniaTopActions (T35)', () => {
     expect(valores).toEqual(['hoje', 'ontem', '7d', '30d', 'mes', 'mes_passado']);
     expect(screen.getByLabelText('Período').textContent).toContain('7 dias');
   });
+
+  it('o container e o select de periodo tem altura responsiva: 44px no celular, 40px no desktop', () => {
+    cenario({ canDial: true, canReceive: true }, { canReceive: true });
+    render(<TelefoniaTopActions period="7d" onPeriodChange={vi.fn()} />);
+    const container = screen.getByTestId('tel-top-actions');
+    expect(container.className).toContain('h-11');
+    expect(container.className).toContain('md:h-10');
+    const select = screen.getByLabelText('Período');
+    expect(select.className).toContain('h-11');
+    expect(select.className).toContain('md:h-10');
+  });
 });

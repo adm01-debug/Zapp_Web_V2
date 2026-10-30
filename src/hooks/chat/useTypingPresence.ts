@@ -61,6 +61,11 @@ export function useTypingPresence({
   const channelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const contactTypingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // HZ3-008: o provedor descarta um `track` anterior ao `SUBSCRIBED`. Guardamos o
+  // último estado pedido e o último publicado, e limpamos a presença no unmount.
+  const subscribedRef = useRef(false);
+  const pendingTypingRef = useRef<boolean | null>(null);
+  const lastSentTypingRef = useRef<boolean | null>(null);
   // Escopo desta aba, estável por montagem (inicializador preguiçoso: nada de
   // ler ref durante a renderização).
   const [clientScope] = useState(createClientScope);
@@ -76,15 +81,24 @@ export function useTypingPresence({
 
   // Track current user typing
   const setTyping = useCallback(async (isTyping: boolean) => {
-    if (!channelRef.current) return;
+    const channel = channelRef.current;
+    if (!channel) return;
+
+    // HZ3-008: antes do `SUBSCRIBED` o `track` é descartado (erro silencioso) —
+    // guarda o último estado para reenviar assim que o canal assinar.
+    if (!subscribedRef.current) {
+      pendingTypingRef.current = isTyping;
+      return;
+    }
 
     try {
-      await channelRef.current.track({
+      await channel.track({
         oderId: ownUserId,
         name: currentUserName,
         isTyping,
         lastTyped: new Date().toISOString()
       });
+      lastSentTypingRef.current = isTyping;
     } catch (error) {
       log.error('Error tracking typing status:', error);
     }
@@ -113,6 +127,14 @@ export function useTypingPresence({
     setTyping(false);
   }, [setTyping]);
 
+  // HZ3-008: `setTyping` é a única forma de publicar presença, mas ele muda de
+  // identidade com o nome do agente. Guardá-lo num ref evita reassinar o canal (e
+  // perder o estado) só porque o nome mudou; o assinar lê sempre o mais recente.
+  const setTypingRef = useRef(setTyping);
+  useEffect(() => {
+    setTypingRef.current = setTyping;
+  }, [setTyping]);
+
   useEffect(() => {
     if (!conversationId) return;
 
@@ -126,6 +148,7 @@ export function useTypingPresence({
     });
 
     channelRef.current = channel;
+    subscribedRef.current = false;
 
     // Handle presence sync (agent-to-agent typing). Exclui SÓ a própria
     // identidade (inclusive as outras abas dela) e mantém os colegas; colega
@@ -196,10 +219,23 @@ export function useTypingPresence({
     });
 
     // Subscribe to channel
-    channel.subscribe(async (status) => {
+    channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
+        subscribedRef.current = true;
         log.debug('Subscribed to typing presence for conversation:', conversationId);
+
+        // HZ3-008: reenvia o último estado pedido antes da assinatura — sem isso o
+        // primeiro "digitando" de quem abriu o painel some sem deixar rastro.
+        const pending = pendingTypingRef.current;
+        pendingTypingRef.current = null;
+        if (pending !== null) void setTypingRef.current(pending);
+        return;
       }
+
+      // A partir daqui o canal não está assinando (erro, timeout, fechado): nada de
+      // `track`, e o próximo estado pedido fica guardado para a reconexão.
+      subscribedRef.current = false;
+      log.warn('Typing presence channel not subscribed:', status);
     });
 
     return () => {
@@ -209,6 +245,16 @@ export function useTypingPresence({
       if (contactTypingTimeoutRef.current) {
         clearTimeout(contactTypingTimeoutRef.current);
       }
+      subscribedRef.current = false;
+      pendingTypingRef.current = null;
+      // HZ3-008: sai da presença antes de derrubar o canal. Sem o `untrack`, quem
+      // enviou "digitando" e fechou a aba deixa o colega vendo o aviso até o
+      // servidor expirar a presença (alguns segundos).
+      if (lastSentTypingRef.current !== null) {
+        lastSentTypingRef.current = null;
+        void channel.untrack().catch(() => undefined);
+      }
+      channelRef.current = null;
       channel.unsubscribe();
       supabase.removeChannel(channel);
     };

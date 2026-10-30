@@ -5,7 +5,7 @@ import { useTextToSpeech } from '@/hooks/communication/useTextToSpeech';
 import { useUserSettings } from '@/hooks/system/useUserSettings';
 import { useSendTeamMessage, useDeleteTeamMessage, useEditTeamMessage, useToggleMuteConversation, TeamMessage, TeamConversation } from '@/hooks/chat/useTeamChat';
 import { useRenameConversation, useRemoveConversationMember, useLeaveConversation, useDeleteConversation } from '@/hooks/team-chat/useTeamChatMutations';
-import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
+import { useTeamMessages, type TeamMessageEvent } from '@/hooks/team-chat/useTeamMessages';
 import { useTeamMessageReactions } from '@/hooks/team-chat/useTeamMessageReactions';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +13,10 @@ import { uploadTeamMedia, TEAM_CHAT_FILES_BUCKET } from '@/hooks/team-chat/uploa
 import { toast } from 'sonner';
 
 const log = getLogger('TeamChatPanel');
+
+/** Mínimo de caracteres para a busca ir ao servidor, e teto de linhas que a RPC devolve. */
+const MIN_SEARCH_CHARS = 2;
+const SEARCH_LIMIT = 100;
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState<T>(value);
@@ -65,6 +69,9 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const [oldestCursor, setOldestCursor] = useState<{ createdAt: string; id: string } | null>(null);
   const [hasOlderMessages, setHasOlderMessages] = useState(true);
   const [isFetchingOlder, setIsFetchingOlder] = useState(false);
+  // A falha ao carregar as antigas NÃO é "acabaram as mensagens": o botão continua e a
+  // tela pode oferecer tentar de novo.
+  const [olderError, setOlderError] = useState(false);
 
   // Rascunho e resposta são da conversa: o painel não remonta ao trocar de
   // conversa, então o reset acontece no render (mesmo padrão de
@@ -82,7 +89,23 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const isNearBottomRef = useRef(true);
   const savedScrollFromBottomRef = useRef<number | null>(null);
 
-  const { messages: newestMessages, isLoading } = useTeamMessages(conversation.id);
+  // Edição/exclusão vindas do realtime também valem para as mensagens antigas guardadas aqui
+  // (a invalidação do realtime só refaz o trecho mais novo).
+  const onOlderMessageEvent = useCallback((event: TeamMessageEvent) => {
+    setOlderMessages(prev => {
+      if (event.type === 'delete') return prev.filter(m => m.id !== event.id);
+      return prev.map(m => (m.id === event.id
+        ? { ...m, content: event.content, is_edited: event.is_edited, updated_at: event.updated_at }
+        : m));
+    });
+  }, []);
+
+  const {
+    messages: newestMessages,
+    isLoading,
+    isError: messagesError,
+    refetch: refetchMessages,
+  } = useTeamMessages(conversation.id, onOlderMessageEvent);
   const sendMutation = useSendTeamMessage();
   const deleteMutation = useDeleteTeamMessage();
   const editMutation = useEditTeamMessage();
@@ -106,6 +129,15 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     const r = (profile as { role?: string } | null)?.role;
     return r === 'admin' || r === 'supervisor';
   }, [profile]);
+
+  // Cartão "transferir conversa de departamento": o vínculo da conversa é o
+  // próprio departamento, então só faz sentido oferecer o seletor para quem já
+  // pode transferir (`canTransfer`, a única regra de papel) E numa conversa de
+  // departamento. A tela de componentes lê este flag para montar o seletor.
+  const canTransferDepartment = useMemo(
+    () => canTransfer && conversation.type === 'department',
+    [canTransfer, conversation.type],
+  );
 
   const isGroupCreator = useMemo(() => {
     return !!(profile?.id && conversation.created_by === profile.id);
@@ -203,6 +235,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
         .limit(60);
       if (error) throw error;
       const older = ((data || []) as TeamMessage[]).reverse();
+      setOlderError(false);
       if (older.length === 0) {
         setHasOlderMessages(false);
       } else {
@@ -214,6 +247,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
       }
     } catch (err) {
       log.error('Erro ao carregar mensagens anteriores', err);
+      setOlderError(true);
     } finally {
       setIsFetchingOlder(false);
     }
@@ -221,11 +255,117 @@ export function useTeamChatPanel(conversation: TeamConversation) {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 400);
 
+  // SL-082 (F69) — a busca filtrava SÓ o que já estava carregado (as mensagens
+  // mais novas + as páginas abertas): um termo que existia numa mensagem antiga
+  // nunca era achado, e o contador contava só o subconjunto local. Agora o termo
+  // vai ao servidor pela RPC `search_team_messages` (que varre a conversa
+  // inteira) e a lista exibida durante a busca é o resultado dela.
+  const searchTerm = debouncedSearchQuery.trim();
+  // O recorte salvo carrega a CONVERSA a que pertence, não só o termo: o painel é
+  // o MESMO componente quando o atendente troca de conversa (não tem `key`) e o
+  // termo digitado continua, então um registro só vale para a tela se a conversa
+  // e o termo atuais forem os que o produziram.
+  const [serverSearch, setServerSearch] = useState<{ conversationId: string; term: string; results: TeamMessage[] } | null>(null);
+  // SL-082 (refazer) — a falha da RPC ficava guardada como `results: []`, ou seja,
+  // o mesmo estado de "a busca não achou nada": a tela anunciava "Nenhuma
+  // mensagem encontrada" quando na verdade o servidor falhou. O erro é um estado
+  // SEPARADO (e preso ao termo que o produziu), para a tela poder dizer a verdade.
+  // A falha também é presa à conversa que a produziu: com o mesmo termo digitado,
+  // a falha da conversa A não pode aparecer na conversa B enquanto a busca de B
+  // ainda estava em voo.
+  const [serverSearchError, setServerSearchError] = useState<{ conversationId: string; term: string; message: string } | null>(null);
+
+  // Tentar de novo: refaz a consulta do MESMO termo.
+  const [retryCount, setRetryCount] = useState(0);
+
+  useEffect(() => {
+    if (!searchTerm || searchTerm.length < MIN_SEARCH_CHARS) return;
+    // A conversa da requisição é lida aqui, ao disparar: é ela, junto com o termo,
+    // que diz se a resposta ainda interessa ao que está na tela.
+    const conversationId = conversation.id;
+    let cancelado = false;
+    void (async () => {
+      const { data, error } = await supabase.rpc('search_team_messages', {
+        p_conversation_id: conversationId,
+        p_query: searchTerm,
+        p_limit: SEARCH_LIMIT,
+      });
+      if (cancelado) return;
+      if (error) {
+        log.error('Erro ao buscar mensagens no servidor', error);
+        // Nada de `results: []` aqui: lista vazia é resultado de busca legítimo,
+        // falha do servidor não. Limpar o resultado anterior evita que ele seja
+        // exibido como se fosse a resposta deste termo.
+        setServerSearch(null);
+        setServerSearchError({ conversationId, term: searchTerm, message: 'Não foi possível buscar as mensagens. Tente novamente.' });
+        return;
+      }
+      // Busca que deu certo limpa o erro anterior: o painel é o MESMO componente
+      // quando o atendente troca de conversa (o termo digitado continua), então o
+      // aviso de falha não pode ficar na tela por cima do resultado que chegou.
+      setServerSearchError(null);
+      // A RPC devolve o recorte de busca (id, remetente, conteúdo, data): o
+      // TeamMessageItem compõe a linha a partir daqui, sem mídia/recibo — a
+      // mensagem de resultado é texto puro.
+      const rows = (data ?? []) as {
+        id: string; sender_id: string; content: string; created_at: string; sender_name: string | null;
+      }[];
+      setServerSearch({
+        conversationId,
+        term: searchTerm,
+        results: rows.map(row => ({
+          id: row.id,
+          conversation_id: conversationId,
+          sender_id: row.sender_id,
+          content: row.content,
+          message_type: 'text',
+          media_url: null,
+          media_type: null,
+          reply_to_id: null,
+          is_edited: false,
+          status: null,
+          created_at: row.created_at,
+          updated_at: row.created_at,
+          sender: { id: row.sender_id, name: row.sender_name ?? 'Usuário', avatar_url: null },
+        })),
+      });
+    })();
+    return () => { cancelado = true; };
+  }, [searchTerm, conversation.id, retryCount]);
+
+  const retrySearch = useCallback(() => {
+    setServerSearch(null);
+    setServerSearchError(null);
+    setRetryCount(c => c + 1);
+  }, []);
+
+  const searchActive = searchTerm.length > 0;
+  // Abaixo do mínimo o servidor não é consultado e a lista carregada continua na tela.
+  const searchBelowMinChars = searchActive && searchTerm.length < MIN_SEARCH_CHARS;
+  // `isSearching` separa "buscando" de "nada encontrado" na tela: mostrar
+  // "Nenhuma mensagem encontrada" enquanto a resposta ainda está em voo é
+  // anunciar um resultado que ainda não existe.
+  // A falha do servidor tem precedência: com erro não se está mais "buscando" (a
+  // resposta chegou) e o que a tela mostra é a falha, não um resultado.
+  // Registro de OUTRA conversa (ou de outro termo) não vale para o que está na
+  // tela: com o mesmo termo digitado, o aviso e os resultados que a busca da
+  // conversa anterior deixou não podem aparecer na conversa atual enquanto a
+  // busca dela ainda está pendente.
+  const serverSearchMatches = serverSearch?.conversationId === conversation.id
+    && serverSearch?.term === searchTerm;
+  const searchError = searchActive
+    && !searchBelowMinChars
+    && serverSearchError?.conversationId === conversation.id
+    && serverSearchError.term === searchTerm;
+  const isSearching = searchActive && !searchBelowMinChars && !searchError && !serverSearchMatches;
+  // O servidor devolveu o teto da RPC: há mais do que isto, e o contador diz "100+".
+  const searchIsCapped = serverSearchMatches && (serverSearch?.results.length ?? 0) >= SEARCH_LIMIT;
+
   const filteredMessages = useMemo(() => {
-    if (!debouncedSearchQuery.trim()) return messages;
-    const q = debouncedSearchQuery.toLowerCase();
-    return messages.filter(m => m.content?.toLowerCase().includes(q));
-  }, [messages, debouncedSearchQuery]);
+    if (!searchActive || searchBelowMinChars) return messages;
+    if (!serverSearchMatches || !serverSearch) return [];
+    return serverSearch.results;
+  }, [messages, searchActive, searchBelowMinChars, serverSearchMatches, serverSearch]);
 
   const checkNearBottom = useCallback(() => {
     const el = scrollRef.current;
@@ -382,9 +522,19 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     profile,
     messages,
     filteredMessages,
+    isSearching,
+    isSearchingMessages: isSearching,
+    searchError,
+    searchBelowMinChars,
+    searchIsCapped,
+    retrySearch,
+    messagesError,
+    refetchMessages,
+    olderError,
     isLoading,
     isMuted,
     canTransfer,
+    canTransferDepartment,
     isGroupCreator,
     isFetchingOlder,
     hasOlderMessages,
