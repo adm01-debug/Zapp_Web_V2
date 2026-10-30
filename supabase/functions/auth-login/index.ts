@@ -64,7 +64,7 @@ function lockPayload(row: LockRow | null | undefined) {
 
 // ── Seams de injeção (R2-AUTH-022 / 27.4) ──────────────────────────────────
 // O login é público e não passa por requireAuth, então o handler recebe as
-// dependências que fazem efeito (RPC service_role, signIn anônimo e rate limit)
+// dependências que fazem efeito (RPC service_role e signIn anônimo)
 // para que o teste prove, sem tocar banco, que a negação da política acontece
 // ANTES de ler credenciais, consultar usuário, registrar tentativa ou autenticar.
 
@@ -85,6 +85,14 @@ export interface LoginAnonClient {
   };
 }
 
+type LoginAdminClient = NetworkPolicyRpcClient & {
+  auth: {
+    admin: {
+      signOut: (jwt: string, scope: "local") => PromiseLike<{ error: unknown }>;
+    };
+  };
+};
+
 // Leitura do perfil do usuário autenticado (service_role), por `user_id`:
 // igualdade EXATA num índice UNIQUE (`profiles.user_id` é UNIQUE NOT NULL, FK
 // para `auth.users`), nunca por `profiles.email` (nullable, sem UNIQUE
@@ -98,11 +106,6 @@ export type ProfileLookup = (
 export interface AuthLoginDeps {
   admin: LoginAdminClient;
   anon: LoginAnonClient;
-  enforceRateLimit: (
-    key: string,
-    maxRequests: number,
-    windowMs: number,
-  ) => PromiseLike<{ allowed: boolean }>;
   // Injetável para o teste; o default de produção é `profileLookupFrom(admin)`.
   getProfileActive?: ProfileLookup;
 }
@@ -245,12 +248,13 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
     }
     const rec = (body ?? {}) as Record<string, unknown>;
 
-    // `mode` inválido é recusa fechada antes de qualquer efeito (não há como
-    // decidir o fluxo); o resto do corpo inválido segue o padrão deste handler:
-    // acumula em `invalidBody` e só responde 400 DEPOIS do gate, para que o
-    // corpo inválido conte apenas o teto por IP (p_email=null).
-    const mode = parseLoginMode(rec.mode);
-    if (mode === null) return errorResponse("invalid mode", 400, req);
+    // Um `mode` inválido não escolhe um fluxo, mas ainda precisa atravessar o
+    // gate por IP: responder antes da RPC permitia repetir payloads inválidos
+    // sem consumir o rate limit. Como nos demais corpos inválidos, só o IP
+    // conta (p_email=null) e a resposta 400 vem DEPOIS da decisão do gate.
+    const parsedMode = parseLoginMode(rec.mode);
+    const mode: LoginMode = parsedMode ?? "login";
+    if (parsedMode === null) invalidBody ??= "invalid mode";
 
     let email: string | null = null;
     if (!invalidBody) {
@@ -278,24 +282,6 @@ export async function handleLogin(req: Request, deps: AuthLoginDeps): Promise<Re
       return errorResponse("Internal error", 500, req);
     }
 
-    const emailRl = await deps.enforceRateLimit(`auth-login-email:${email}`, EMAIL_LIMIT_MAX, EMAIL_LIMIT_WINDOW_MS);
-    // Fail-CLOSED na guarda por conta: se o contador persistente nao respondeu
-    // (RPC fora do ar ou contrato invalido), o limite por e-mail passaria apenas com
-    // o contador em memoria, que zera a cada cold start. Num login isso e a guarda de
-    // forca bruta por conta — na duvida, nega com indisponibilidade (503) em vez de
-    // aceitar. O login legitimo segue normal quando o banco responde.
-    if (emailRl.unavailable) {
-      log.error("rate limit persistente indisponivel; negando login por e-mail");
-      log.done(503, { reason: "rate_limit_unavailable" });
-      return errorResponse("Serviço de autenticação indisponível", 503, req);
-    }
-    if (!emailRl.allowed) return errorResponse("Rate limit exceeded", 429, req);
-
-    const { data: lockData, error: lockError } = await deps.admin.rpc("is_account_locked", { check_email: email });
-    if (lockError) {
-      log.error("is_account_locked failed", { code: rpcErrorCode(lockError) });
-      return errorResponse("Internal error", 500, req);
-    }
     const gateRow = (Array.isArray(gateData) ? gateData[0] : gateData) as GateRow | null;
     if (!gateRow || typeof gateRow.allowed !== "boolean") {
       log.error("consume_login_gate returned no row");

@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useCallback, useSyncExternalStore } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { TeamConversation } from './teamChatTypes';
 
@@ -11,18 +12,28 @@ export const teamUnreadTotalQueryKey = (profileId: string | undefined) =>
  *
  * Soma o `unread_count` da lista de conversas que JÁ está em cache na chave do
  * inbox (`['team-conversations', profileId]`, a mesma de `useTeamConversations`).
- * A query entra desabilitada: o hook só LÊ o cache e acompanha as mudanças dele
- * (refetch de 30 s, invalidação e realtime do inbox atualizam o badge sozinhos),
- * sem abrir canal, sem disparar consulta nova e sem `localStorage` — ao
- * contrário do `useTeamUnreadCount` (localStorage), que esta etapa substitui.
+ * Observa o cache do inbox diretamente. Uma query desabilitada sem queryFn
+ * criava uma entrada vazia; quando a chave era atualizada fora do módulo,
+ * React Query emitia "No queryFn was passed" repetidamente. O cache continua
+ * sendo a única fonte: sem canal, consulta nova ou `localStorage`.
  */
 export function useTeamUnreadTotal(): number {
   const { profile } = useAuth();
+  const queryClient = useQueryClient();
+  const profileId = profile?.id;
 
-  const { data } = useQuery<TeamConversation[]>({
-    queryKey: teamUnreadTotalQueryKey(profile?.id),
-    enabled: false,
-  });
+  const subscribe = useCallback((onStoreChange: () => void) =>
+    queryClient.getQueryCache().subscribe((event) => {
+      if (event.query?.queryKey[0] === 'team-conversations' && event.query.queryKey[1] === profileId) {
+        onStoreChange();
+      }
+    }), [queryClient, profileId]);
 
-  return (data ?? []).reduce((total, conversation) => total + (conversation.unread_count ?? 0), 0);
+  const getSnapshot = useCallback(() => {
+    if (!profileId) return 0;
+    const data = queryClient.getQueryData<TeamConversation[]>(teamUnreadTotalQueryKey(profileId));
+    return (data ?? []).reduce((total, conversation) => total + (conversation.unread_count ?? 0), 0);
+  }, [queryClient, profileId]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, () => 0);
 }

@@ -38,6 +38,7 @@ Deno.test("preflight (OPTIONS) responde 204-ish com os cabecalhos de correlacao"
   assertEquals(res!.headers.get("Access-Control-Allow-Methods")?.includes("POST"), true);
   // o cliente precisa poder LER o id que a Edge ecoa, para casar com o log
   assertEquals(res!.headers.get("Access-Control-Expose-Headers")?.includes("x-correlation-id"), true);
+  assertEquals(res!.headers.get("Access-Control-Expose-Headers")?.includes("retry-after"), true);
 });
 
 Deno.test("nao-preflight segue sem resposta de CORS (nenhuma regressao para POST)", () => {

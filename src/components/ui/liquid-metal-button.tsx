@@ -1,9 +1,10 @@
-import { forwardRef, useEffect, useRef, useState, type ButtonHTMLAttributes } from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState, type ButtonHTMLAttributes } from 'react';
 import type { ShaderMount as ShaderMountInstance } from '@paper-design/shaders';
 import { Loader2 } from 'lucide-react';
 import { useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { getLogger } from '@/lib/logger';
+import { emitTalkMeTelemetry } from '@/lib/talkme/telemetry';
 
 const log = getLogger('LiquidMetalButton');
 
@@ -18,17 +19,40 @@ export const LiquidMetalButton = forwardRef<HTMLButtonElement, LiquidMetalButton
   ({ label = 'TALK ME', count, loading = false, compact = false, className, disabled, 'aria-label': ariaLabel, ...props }, ref) => {
     const shaderContainerRef = useRef<HTMLDivElement>(null);
     const shaderMountRef = useRef<ShaderMountInstance | null>(null);
+    const shaderSpeedRef = useRef(0.35);
     const [shaderReady, setShaderReady] = useState(false);
     const reduceMotion = useReducedMotion() ?? false;
+    const applyShaderSpeed = useCallback((speed: number) => {
+      try {
+        shaderMountRef.current?.setSpeed(speed);
+      } catch (error: unknown) {
+        log.warn('Falha ao ajustar velocidade do shader metálico', error);
+        emitTalkMeTelemetry('erro_shader', { tipo_erro: 'velocidade' });
+      }
+    }, []);
 
     useEffect(() => {
       let cancelled = false;
+      let disposed = false;
+      const disposeShader = () => {
+        if (disposed) return;
+        disposed = true;
+        const mount = shaderMountRef.current;
+        shaderMountRef.current = null;
+        if (!mount) return;
+        try {
+          mount.dispose();
+        } catch (error: unknown) {
+          log.warn('Falha ao liberar shader metálico', error);
+          emitTalkMeTelemetry('erro_shader', { tipo_erro: 'dispose' });
+        }
+      };
       if (
         reduceMotion
         || !shaderContainerRef.current
         || typeof window === 'undefined'
         || !('WebGL2RenderingContext' in window)
-      ) return;
+      ) return disposeShader;
 
       void import('@paper-design/shaders')
         .then(({ ShaderMount, liquidMetalFragmentShader }) => {
@@ -64,21 +88,33 @@ export const LiquidMetalButton = forwardRef<HTMLButtonElement, LiquidMetalButton
             borderRadius: '9999px',
           });
           shaderMountRef.current = mount;
+          applyShaderSpeed(document.hidden ? 0 : shaderSpeedRef.current);
           setShaderReady(true);
         })
         .catch((error: unknown) => {
           log.warn('Shader indisponível; usando acabamento metálico estático', error);
+          emitTalkMeTelemetry('erro_shader', { tipo_erro: 'inicializacao' });
           setShaderReady(false);
         });
 
       return () => {
         cancelled = true;
-        shaderMountRef.current?.dispose();
-        shaderMountRef.current = null;
+        disposeShader();
       };
-    }, [reduceMotion]);
+    }, [applyShaderSpeed, reduceMotion]);
 
-    const setShaderSpeed = (speed: number) => shaderMountRef.current?.setSpeed(speed);
+    useEffect(() => {
+      const handleVisibilityChange = () => {
+        applyShaderSpeed(document.hidden ? 0 : shaderSpeedRef.current);
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [applyShaderSpeed]);
+
+    const setShaderSpeed = (speed: number) => {
+      shaderSpeedRef.current = speed;
+      applyShaderSpeed(document.hidden ? 0 : speed);
+    };
     const visibleCount = typeof count === 'number' ? Math.max(0, count) : null;
 
     return (

@@ -100,6 +100,7 @@ vi.mock('@/integrations/supabase/client', () => {
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
   getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 // ---- dependências internas do ChatPanel (precedente: ChatPanel.scheduled-media) ----
@@ -144,6 +145,7 @@ vi.mock('@/hooks/communication/useTextToSpeech', () => ({
     speak: vi.fn(), stop: vi.fn(), isLoading: false, isPlaying: false,
     currentMessageId: null, voiceId: '', setVoiceId: vi.fn(), speed: 1, setSpeed: vi.fn(),
   }),
+  LOCAL_VOICE_ID: 'local',
 }));
 vi.mock('@/hooks/system/useUserSettings', () => ({
   useUserSettings: () => ({ settings: {}, updateSettings: vi.fn(), saveSettings: vi.fn() }),

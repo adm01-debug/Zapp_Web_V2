@@ -32,18 +32,25 @@ vi.mock('@/hooks/ui/use-toast', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      return React.createElement('div', { ...rest, ref });
-    }),
-    circle: React.forwardRef((props: Record<string, unknown>, ref: unknown) => React.createElement('circle', { ref, ...props })),
-  },
-  AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => children,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    motion: {
+        div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+          const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
+          return React.createElement('div', { ...rest, ref });
+        }),
+        circle: React.forwardRef((props: Record<string, unknown>, ref: unknown) => React.createElement('circle', { ref, ...props })),
+      },
+      AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => children,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 import { AudioMessagePlayer } from '../AudioMessagePlayer';
 

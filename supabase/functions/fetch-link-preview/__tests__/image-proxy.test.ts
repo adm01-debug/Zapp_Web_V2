@@ -141,6 +141,10 @@ const ROTA_EGRESS: Route = {
 function rotaAuth(userId: string): Route {
   return { match: "/auth/v1/user", make: () => jsonResp({ id: userId, aud: "authenticated" }) };
 }
+function rotaPerfil(): Route {
+  // requireAuth consulta o perfil após validar bearer e política de rede.
+  return { match: "/rest/v1/profiles", make: () => jsonResp({ is_active: true }) };
+}
 function rotaRate(allowed: boolean): Route {
   return {
     match: "/rest/v1/rpc/consume_rate_limit",
@@ -173,6 +177,7 @@ async function preview(
 ) {
   const stub = withFetch([
     rotaAuth(UID),
+    rotaPerfil(),
     rotaRate(opts.rateAllowed ?? true),
     ROTA_EGRESS,
   ]);
