@@ -4,7 +4,7 @@ Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está l
 de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`
 (que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.
 
-Base: `dia/2026-10-20`. 84 edges com `index.ts` em `supabase/functions/`.
+Base: `dia/2026-10-20`. 85 edges com `index.ts` em `supabase/functions/`.
 
 ## Como manter
 
@@ -25,21 +25,21 @@ partir do código e falha quando:
 | B | 1 |
 | C | 3 |
 | D | 6 |
-| E | 20 |
-| **total** | **84** |
+| E | 21 |
+| **total** | **85** |
 
 ## Tabela
 
 | Edge | Grupo | Âncora do chamador (arquivo:linha) |
 |---|---|---|
 | `ai-auto-tag` | E | — sem chamador no repositório — |
-| `ai-churn-analysis` | A | `src/components/ai/ChurnPredictionDashboard.tsx:182` |
+| `ai-churn-analysis` | A | `src/components/ai/ChurnPredictionDashboard.tsx:126` |
 | `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:146` |
 | `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:107` |
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:91` |
 | `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:62` · `src/components/inbox/chat/AIRewriteButton.tsx:50` |
 | `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
-| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:132` · `src/hooks/integrations/useKnowledgeBase.ts:203` |
+| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:137` · `src/hooks/integrations/useKnowledgeBase.ts:208` |
 | `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:102` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1400` |
@@ -56,6 +56,7 @@ partir do código e falha quando:
 | `classify-sticker` | A | `src/components/inbox/chat/MessageBubble.tsx:329` · `src/hooks/sticker-picker/useStickerPicker.ts:148` · `supabase/functions/_shared/evolution-webhook-messages.ts:1377` |
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
 | `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:130` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/components/monitoring/hooks/useMonitoringActions.ts:18` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
+| `copilot-live` | E | — sem chamador no repositório — |
 | `create-user` | A | `src/components/admin/useAdminData.ts:444` · `src/components/admin/useAdminData.ts:444` |
 | `crm-integration` | A | `src/lib/crmIntegration.ts:20` · `supabase/migrations/20261016011302_crm_sync_outbox_cron.sql:34` · `supabase/config.toml:55` |
 | `csp-report` | D | `supabase/config.toml:58` |
@@ -85,7 +86,7 @@ partir do código e falha quando:
 | `gmail-webhook` | A | `src/components/admin/GmailWebhookMonitor.tsx:230` · `supabase/config.toml:14` |
 | `health` | E | — sem chamador no repositório — |
 | `invite-user` | A | `src/components/agents/InviteAgentDialog.tsx:48` · `supabase/config.toml:89` |
-| `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:471` · `supabase/config.toml:49` |
+| `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:476` · `supabase/config.toml:49` |
 | `metrics` | E | — sem chamador no repositório — |
 | `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:164` |
 | `multiplix-audience` | A | `src/hooks/integrations/useMultiplixAudience.ts:9` |
@@ -117,7 +118,7 @@ partir do código e falha quando:
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:79` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
-## Órfós (20) — GATE B
+## Órfós (21) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador ext de
@@ -130,6 +131,7 @@ mantém a lista honesta.
 - `ai-usage-outbox-drain`
 - `auto-close-conversations`
 - `cleanup-rate-limit-logs`
+- `copilot-live`
 - `elevenlabs-agent-token`
 - `external-db-bridge`
 - `gmail-send`

@@ -14,11 +14,16 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { axe } from 'vitest-axe';
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+      },
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 import { N8nIntegrationView } from '../N8nIntegrationView';
 

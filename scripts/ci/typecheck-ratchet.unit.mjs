@@ -77,6 +77,19 @@ test("compareBaseline distingue duas ocorrencias iguais de uma so (multiset real
   assert.equal(comparison.added.length, 1, "a segunda ocorrencia identica deve contar como nova (multiset)");
 });
 
+test("compareBaseline ignora só a contagem resumida de união, mantendo nome da RPC e tipo do erro", () => {
+  const antigo = 'src/chat.ts(4,10): error TS2345: Argument of type \'"transfer_conversation"\' is not assignable to parameter of type \'"is_admin" | ... 270 more ... | "user_has_permission"\'.';
+  const baseline = createBaseline(antigo, ROOT);
+  const mesmoErro = antigo.replace('270 more', '271 more');
+  assert.equal(compareBaseline(baseline, mesmoErro, ROOT).added.length, 0);
+  assert.equal(compareBaseline(baseline, mesmoErro, ROOT).removed.length, 0);
+
+  const novaRpcInvalida = mesmoErro.replace('transfer_conversation', 'outra_rpc');
+  assert.equal(compareBaseline(baseline, novaRpcInvalida, ROOT).added.length, 1);
+  const outroTipo = mesmoErro.replace('TS2345', 'TS2322');
+  assert.equal(compareBaseline(baseline, outroTipo, ROOT).added.length, 1);
+});
+
 test("compareBaseline detecta troca real (uma ocorrencia corrigida + outra identica nova) quando o contexto de codigo esta disponivel", () => {
   const { root, cleanup } = fixture();
   try {

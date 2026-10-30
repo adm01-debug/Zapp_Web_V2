@@ -343,7 +343,7 @@ export function useConnectionsManager() {
   // troca pela metade. Erro (ou ausência de confirmação) revalida o estado real,
   // como em handleDelete — nunca sucesso mudo.
   const handleSetDefault = async (id: string) => {
-    const { data, error } = await (supabase as any).rpc('set_default_whatsapp_connection', { p_connection_id: id }); // eslint-disable-line @typescript-eslint/no-explicit-any -- RPC nova (t_ae0a55a6), types.ts ainda não sincronizado
+    const { data, error } = await supabase.rpc('set_default_whatsapp_connection', { p_connection_id: id });
     if (error || !data) {
       toast({
         title: 'Erro ao definir conexão padrão',
