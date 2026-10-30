@@ -1,0 +1,26 @@
+{
+  "secao": "3_seguranca",
+  "gerado_em": "2026-10-30",
+  "buckets": [
+    {"nome": "audio-memes", "publico": true, "limite_mb": 5, "tipos": "audio/*", "nota": "Público — qualquer um pode ler. Apropriado para áudios de meme compartilhados."},
+    {"nome": "audio-messages", "publico": false, "limite_mb": 25, "nota": "Privado ✓"},
+    {"nome": "avatars", "publico": false, "limite_mb": 5, "nota": "Privado ✓"},
+    {"nome": "custom-emojis", "publico": true, "limite_mb": 0.5, "nota": "Público — emojis customizados compartilhados. Appropriado mas confirmar que não há PII."},
+    {"nome": "multiplix-voice", "publico": false, "limite_mb": 50, "allowed_mime_types": null, "nota": "MEDIO — sem restrição de tipo MIME. Qualquer tipo de arquivo aceito."},
+    {"nome": "stickers", "publico": true, "limite_mb": 5, "nota": "Público — stickers compartilhados."},
+    {"nome": "team-chat-files", "publico": false, "limite_mb": 10, "nota": "Privado ✓"},
+    {"nome": "voice-changer-tmp", "publico": false, "limite_mb": 25, "nota": "Privado ✓"},
+    {"nome": "whatsapp-media", "publico": false, "limite_mb": 25, "nota": "Privado ✓"}
+  ],
+  "achados": [
+    {"id": "S03-BUCKET-01", "severidade": "MEDIO", "objeto": "bucket/multiplix-voice", "descricao": "Bucket multiplix-voice sem restrição de MIME type (allowed_mime_types=null)", "impacto": "Upload de tipos arbitrários de arquivo, incluindo executáveis", "correcao": "Definir allowed_mime_types para audio/* apenas"}
+  ],
+  "crons_secrets_check": {
+    "jobs_com_secret_no_comando": 0,
+    "nota": "Todos os 24 cron jobs verificados. Nenhum tem token/secret/key hardcoded no campo command. Jobs que chamam edge functions via pg_net usam jsonb_build_object para montar headers — os secrets do vault são injetados pela edge function, não pelo cron."
+  },
+  "anon_grants": {
+    "tabelas_com_write_anon": ["password_reset_requests (INSERT)"],
+    "nota": "Apenas 1 tabela com escrita anon. A policy tem WITH CHECK que impede abuso (user_id NOT NULL, status=pending, reviewed_by NULL, token_expires_at NULL). Aceitável para fluxo de reset de senha."
+  }
+}

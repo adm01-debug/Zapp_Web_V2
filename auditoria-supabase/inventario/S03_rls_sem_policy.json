@@ -1,0 +1,25 @@
+{
+  "secao": "3_seguranca",
+  "gerado_em": "2026-10-30",
+  "tabelas_rls_desligada": [],
+  "tabelas_rls_ligada_sem_policy": [
+    "_rb_message_reactions_contato_20261007001008",
+    "_zapp_fn_before",
+    "_zapp_mig133_log",
+    "agent_mini_game_xp_daily",
+    "ai_budget_reservations",
+    "ai_jobs",
+    "catalog_rate_limit_hits",
+    "catalog_rate_limits",
+    "edge_rate_limits",
+    "gmail_oauth_states",
+    "link_preview_cache",
+    "searchbox_budget_alert_cron",
+    "searchbox_budget_alert_emails",
+    "talkx_storage_purge_queue",
+    "talkx_test_send_claims",
+    "team_chat_media_acl_r2_db_020_rb",
+    "voip_profile_credentials"
+  ],
+  "nota": "RLS ON + sem policy = acesso bloqueado para anon/authenticated; service_role ignora RLS. Estas tabelas só são acessíveis via service_role ou SECURITY DEFINER functions. Algumas são tabelas internas (_rb_, _zapp_) ou de worker-only. CRÍTICO: voip_profile_credentials e gmail_oauth_states contêm credenciais sensíveis e exigem review para confirmar que nenhum path de authenticated chega via RPC."
+}
