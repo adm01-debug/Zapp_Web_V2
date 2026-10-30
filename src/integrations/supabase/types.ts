@@ -3025,6 +3025,162 @@ export type Database = {
           },
         ]
       }
+      copilot_insights: {
+        Row: {
+          content: string
+          created_at: string
+          data: Json | null
+          dismissed_at: string | null
+          id: string
+          insight_type: string
+          latency_ms: number | null
+          model_version: string | null
+          profile_id: string
+          session_id: string
+          shown_at: string | null
+          source: string
+          state_version: number
+          tier: number | null
+          used_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          data?: Json | null
+          dismissed_at?: string | null
+          id?: string
+          insight_type: string
+          latency_ms?: number | null
+          model_version?: string | null
+          profile_id: string
+          session_id: string
+          shown_at?: string | null
+          source?: string
+          state_version?: number
+          tier?: number | null
+          used_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          data?: Json | null
+          dismissed_at?: string | null
+          id?: string
+          insight_type?: string
+          latency_ms?: number | null
+          model_version?: string | null
+          profile_id?: string
+          session_id?: string
+          shown_at?: string | null
+          source?: string
+          state_version?: number
+          tier?: number | null
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "copilot_insights_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "copilot_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      copilot_sessions: {
+        Row: {
+          brinde_budget: string | null
+          brinde_deadline: string | null
+          brinde_delivery: string | null
+          brinde_evidence: Json
+          brinde_intention: string | null
+          brinde_meter: number
+          brinde_quantity: number | null
+          brinde_responsible: string | null
+          closed_at: string | null
+          comm_style: string | null
+          contact_id: string
+          conversation_id: string
+          created_at: string
+          decision_role: string | null
+          id: string
+          intent: string | null
+          last_contact_message_at: string | null
+          last_processed_message_at: string | null
+          last_tick_at: string | null
+          occasion: string | null
+          profile_id: string
+          sale_stage: string
+          sentiment: string | null
+          stakeholders: Json
+          started_at: string
+          state_version: number
+          temperature: number
+          updated_at: string
+        }
+        Insert: {
+          brinde_budget?: string | null
+          brinde_deadline?: string | null
+          brinde_delivery?: string | null
+          brinde_evidence?: Json
+          brinde_intention?: string | null
+          brinde_meter?: number
+          brinde_quantity?: number | null
+          brinde_responsible?: string | null
+          closed_at?: string | null
+          comm_style?: string | null
+          contact_id: string
+          conversation_id: string
+          created_at?: string
+          decision_role?: string | null
+          id?: string
+          intent?: string | null
+          last_contact_message_at?: string | null
+          last_processed_message_at?: string | null
+          last_tick_at?: string | null
+          occasion?: string | null
+          profile_id: string
+          sale_stage?: string
+          sentiment?: string | null
+          stakeholders?: Json
+          started_at?: string
+          state_version?: number
+          temperature?: number
+          updated_at?: string
+        }
+        Update: {
+          brinde_budget?: string | null
+          brinde_deadline?: string | null
+          brinde_delivery?: string | null
+          brinde_evidence?: Json
+          brinde_intention?: string | null
+          brinde_meter?: number
+          brinde_quantity?: number | null
+          brinde_responsible?: string | null
+          closed_at?: string | null
+          comm_style?: string | null
+          contact_id?: string
+          conversation_id?: string
+          created_at?: string
+          decision_role?: string | null
+          id?: string
+          intent?: string | null
+          last_contact_message_at?: string | null
+          last_processed_message_at?: string | null
+          last_tick_at?: string | null
+          occasion?: string | null
+          profile_id?: string
+          sale_stage?: string
+          sentiment?: string | null
+          stakeholders?: Json
+          started_at?: string
+          state_version?: number
+          temperature?: number
+          updated_at?: string
+        }
+        Relationships: [
+        ]
+      }
       crisis_room_alerts: {
         Row: {
           acknowledged_at: string | null
