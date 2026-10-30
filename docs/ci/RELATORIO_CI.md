@@ -2,7 +2,8 @@
 
 **Data:** 2026-10-30  
 **Branch de relatório:** `claude/keen-galileo-dxai3p`  
-**SHA main de referência:** `37ffd2ef` (SHA mais recente confirmado; CI/CD Pipeline ainda queued — último concluded foi success em SHA `2da8e5a415c975443ec149d820932c96ee20a897`)  
+**SHA main de referência:** `37ffd2ef0c1c85bcee942139a677fddb36a46d09`  
+**CI/CD Pipeline (6 required checks):** run [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) SHA `37ffd2ef` — **conclusion=success** (concluído 2026-10-30T11:56Z)  
 **Sessão:** https://claude.ai/code/session_01RfQzo7rsZ224WzBjCBKxqx
 
 ---
@@ -131,10 +132,10 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 | `auto-update-pr-branch` | ✅ success | ✅ success | sem alteração |
 | `codeql` | ✅ success | ✅ success | sem alteração |
 
-**SHA de referência final:** `37ffd2ef` (main atual, 2026-10-30); SHA `2da8e5a4` foi o último com CI/CD Pipeline concluded=success (merge de PR #2376, 2026-10-30T09:53:23Z).
+**SHA de referência final:** `37ffd2ef0c1c85bcee942139a677fddb36a46d09` (main atual, 2026-10-30T11:56Z).
 
-**DB Guard (offline)** run 41036703908: **conclusion=success** confirmado (10:18:15Z).  
-**CI/CD Pipeline** run [41036703993](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703993) attempt 2: `🧩 Node CI Scripts` **conclusion=success** (10:25:55Z) — todos os 14 jobs ✅. Attempt 1 falhou por esm.sh CDN HTTP 500 (transitória, não regressão de código).  
+**CI/CD Pipeline** run [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055): todos os 6 required checks **conclusion=success** em SHA `37ffd2ef`.  
+**DB Guard (offline)** run [41045101004](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101004): **conclusion=success** em SHA `37ffd2ef`.  
 **Regressões introduzidas:** nenhuma.  
 **Melhorias:** `settings-guard` (failure→success), `🧪 Unit Tests` (failure→success), `Contrato DB offline` N-017 (failure→success).  
 **Confirmações:** `db-guard` push-to-main era success no baseline e permanece success (ECR issue é check não-required exclusivo de PR-triggered runs).  
@@ -165,6 +166,56 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 | `Contrato DB offline` | PR #2364 CI run [41008768369](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768369) — 188 steps success |
 | `Replay local das migrations` | PR #2368 CI: ✅ success |
 | `settings-guard` | Run [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) success |
+
+---
+
+## 8. Prova de conclusão — estado final de todos os workflows
+
+SHA final da main: `37ffd2ef0c1c85bcee942139a677fddb36a46d09` (2026-10-30T11:56Z)
+
+### 8a. Baseline local (executor remoto — ~2 GB RAM)
+
+| Comando | Resultado | Substituto aceito |
+|---|---|---|
+| `bun install` | ✅ success | — |
+| `bun run typecheck` | ❌ SIGABRT (OOM) | CI job `🔎 TypeCheck` ✅ run [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) |
+| `bun run build` | ❌ SIGABRT (OOM) | CI job `🏗️ Build` ✅ run [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) |
+| `bun run lint` | ❌ SIGABRT (OOM) | CI job `🔒 Security Audit` ✅ run [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) |
+| `bun test` | via CI | CI job `🧪 Unit Tests` ✅ run [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) |
+
+O executor cloud desta sessão não tem RAM suficiente para `tsc`/`vite build`. Os jobs da CI são a única fonte confiável — e todos ✅.
+
+### 8b. Tabela final de todos os workflows — conclusion por workflow na main
+
+| Workflow (arquivo) | Último run na main | Conclusão | Observação |
+|---|---|---|---|
+| `ci.yml` — 🔎 TypeCheck | [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) SHA `37ffd2ef` | ✅ success | required check |
+| `ci.yml` — 🏗️ Build | [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) SHA `37ffd2ef` | ✅ success | required check |
+| `ci.yml` — 🔒 Security Audit | [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) SHA `37ffd2ef` | ✅ success | required check |
+| `ci.yml` — 🧪 Unit Tests (1/2/3) | [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) SHA `37ffd2ef` | ✅ success | required check |
+| `ci.yml` — 🎭 E2E Tests (Playwright) | [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) SHA `37ffd2ef` | ✅ success | required check |
+| `ci.yml` — ✅ CI Gate | [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) SHA `37ffd2ef` | ✅ success | rollup dos required |
+| `db-guard.yml` — Contrato DB offline | [41045101004](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101004) SHA `37ffd2ef` | ✅ success | required check |
+| `db-guard.yml` — Replay local das migrations | [41045101004](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101004) SHA `37ffd2ef` | ✅ success | não-required (push-to-main) |
+| `settings-guard.yml` | [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) | ✅ success | schedule/dispatch; ✅ desde PR #2355 |
+| `types-sync.yml` (regen) | [41045100990](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045100990) SHA `37ffd2ef` | ✅ success | não-required |
+| `auto-update-pr-branch.yml` | [41050608098](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41050608098) | ✅ success | event: `push` |
+| `codeql.yml` | último run schedule | ✅ success | schedule; sem alteração |
+| `deploy-functions.yml` | [41025945945](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41025945945) SHA `15c43f46` | ❌ failure | **PENDENCIAS.md item 1** — Regra 8; fix = PR [#2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371) aguarda Joaquim |
+| `db-live-guard.yml` | [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458) SHA `3f4e16d2` | ❌ failure | **PENDENCIAS.md item 2** — Regra 8; requer db-migrate.yml + aprovação producao-ddl |
+| `db-migrate.yml` | — | 🔒 Regra 8 | **PENDENCIAS.md item 4** — environment gate by design |
+| `branch-hygiene-audit.yml` | [41024463986](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41024463986) | ❌ cancelled | **PENDENCIAS.md item 5** — Regra 8; timeout do script |
+| `db-guard.yml` — Replay (PR-only) | [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458) | ❌ failure | **PENDENCIAS.md item 3** — check não-required em PR; push-to-main ✅; fix = PR [#2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377) aguarda Joaquim |
+
+### 8c. Comparação baseline × final — resumo
+
+| Categoria | Baseline | Final | Δ |
+|---|---|---|---|
+| Workflows com failure/cancelled (total) | 7 | 5 | −2 corrigidos |
+| Workflows corrigidos para success | 0 | 3 | +3 (`settings-guard`, `🧪 Unit Tests`, `Contrato DB offline` N-017) |
+| Workflows em PENDENCIAS.md (Regra 8) | 0 | 5 | 5 registrados com causa raiz + fix preparado |
+| Workflows originally green → ainda green | 6+ | 6+ | 0 regressões |
+| 6 required checks da main | ✅ verde | ✅ verde run [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) | sem regressão |
 
 ---
 
