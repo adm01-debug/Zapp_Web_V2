@@ -15,7 +15,14 @@ ALTER TABLE public.copilot_presence ENABLE ROW LEVEL SECURITY;
 CREATE POLICY copilot_presence_own ON public.copilot_presence
   FOR ALL TO authenticated
   USING (profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid()))
-  WITH CHECK (profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid()));
+  WITH CHECK (
+    profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid())
+    AND session_id IN (
+      SELECT id FROM public.copilot_sessions
+      WHERE profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid())
+    )
+    AND expires_at <= now() + interval '5 minutes'
+  );
 
 CREATE POLICY copilot_presence_service ON public.copilot_presence
   FOR ALL TO service_role USING (true) WITH CHECK (true);
