@@ -18,7 +18,7 @@ Error response from daemon: toomanyrequests: Data limit exceeded
 **Causa raiz:** ECR Public Gallery impõe limite de data transfer para IPs sem autenticação (~1 GB/dia por IP de runner). Os runners do GitHub Actions atingem o limite quando vários runs puxam a imagem no mesmo período.  
 **Impacto:** Job não é required check — não bloqueia merge. Mas acusa failure no histórico do db-guard.  
 **Remediação:** Mesma do item 2 abaixo (migrar para `ghcr.io/supabase/postgres`). PR #2354 cobre ambos.  
-**Bloqueio:** Regra 8 — altera `.github/workflows/db-guard.yml`.
+**Bloqueio:** Regra 8 — altera `.github/workflows/db-guard.yml`.  
 
 ---
 
@@ -56,17 +56,10 @@ toomanyrequests: Data limit exceeded
 
 ---
 
-## 5. `DB Migrate (production)` — verificação pendente pós-PR #2359
+## 5. `db-migrate` — environment gate `producao-ddl`
 
 **Workflow:** `.github/workflows/db-migrate.yml`  
-**Último run (run #40236186538, dispatch 2026-10-25, SHA `2d97c44c`):** ❌ failure  
-**Erro exato:**
-```
-##[error]O ledger remoto possui versions sem arquivo local; db push foi bloqueado antes do CLI.
-remote_only_count=3
-```
-**Step que falhou:** `Exigir alvo único ou bundle atômico conhecido` (run com `APPLY: false`)  
-**Causa raiz:** 3 versions existiam no ledger de produção (`supabase_migrations.schema_migrations`) sem arquivo `.sql` correspondente no repo: `20261026210300`, `20261026220300`, `20261026230300`.  
-**Fix aplicado:** PR #2359 (mergeada ✅ em 2026-10-30) adicionou os 3 arquivos `.sql` com o DDL exato já em produção (reconciliação pura — nenhum DDL novo).  
-**Status atual:** Causa raiz corrigida. Um novo dispatch com `apply=false` (dry-run) confirmaria o sucesso, mas conecta ao banco de produção para leitura do ledger.  
-**Ação necessária do Joaquim:** Disparar `db-migrate.yml` com `apply=false` (dry-run) e `target_version` igual à última migration do repo para confirmar que `remote_only_count=0` após a PR #2359 (Regra 8: workflow que conecta ao banco de produção).
+**Erro:** Workflow pausa em `Waiting` no environment `producao-ddl`.  
+**Causa raiz:** Por design — exige aprovação humana antes de aplicar DDL em produção.  
+**Impacto:** Não é required check de PR. Não executável por agente.  
+**Ação necessária do Joaquim:** Após o merge da PR #2359 (3 migrations reconciliadas), rodar `db-migrate.yml` com `apply=false` (dry-run), verificar o hash SHA-256 no sumário, e depois rodar com `apply=true` + `confirm_runtime_sha256` do dry-run. Aprovar manualmente no environment `producao-ddl` no GitHub Actions.

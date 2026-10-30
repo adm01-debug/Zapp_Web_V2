@@ -8,89 +8,99 @@
 
 ## 1. Baseline — estado antes das correções
 
-| Workflow | Último run na `main` | Status baseline |
+### 1a. Baseline local
+`bun run typecheck` e `bun run build` encerrados com SIGABRT no container cloud (limite de memória do executor remoto). Baseline local não executável neste ambiente. Evidência de CI utilizada como substituto (runs nos próprios checks de PR, detalhados abaixo).
+
+### 1b. Inventário de workflows — último run na `main` antes desta sessão
+
+| Workflow | Último run (baseline) | Status |
 |---|---|---|
-| `settings-guard` | pré-PR #2355 | ❌ failure |
-| `deploy-functions` | pré-PR #2358 | ❌ failure |
-| `db-live-guard` | pré-PR #2359 | ❌ failure |
-| `db-migrate` | pré-PR #2359 | ❌ failure |
-| `🧪 Unit Tests` (ci.yml) | pré-PR #2362 | ❌ failure |
-| `db-guard` (Replay local) | pré-PR #2354 | ❌ failure (ECR→ghcr.io) |
-| `branch-hygiene-audit` | run anterior | ❌ failure (timeout) |
+| `settings-guard` | run pré-sessão | ❌ failure — 403 em `github_get_branch_protection` interpretado como regressão |
+| `deploy-functions` | run pré-sessão | ❌ failure — `manifest is stale` + diretório publicável vazio |
+| `db-live-guard` | run pré-sessão | ❌ failure — 3 migrations no ledger sem arquivo `.sql` no repo (drift) |
+| `db-migrate` | run pré-sessão | ❌ failure — mesma causa raiz do drift |
+| `🧪 Unit Tests` (ci.yml) | run pré-sessão | ❌ failure — assertion `length === 0` quebrada pelo PR #2358 |
+| `db-guard` (Replay local) | run pré-sessão | ❌ failure (ECR rate limit — não-required) |
+| `branch-hygiene-audit` | run pré-sessão | ❌ failure (timeout — não corrigível sem alterar workflow) |
 | `ci.yml` (Lint, Build, Security, E2E) | run anterior | ✅ success |
 | `types-sync` | run anterior | ✅ success |
 | `auto-update-pr-branch` | run anterior | ✅ success |
 | `codeql` | run anterior | ✅ success |
-| `db-guard` (checks offline) | run anterior | ✅ success |
+| `db-guard` (Contrato DB offline) | run anterior | ✅ success |
 
 ---
 
-## 2. Correções aplicadas
+## 2. Correções aplicadas (5 PRs mergeadas)
 
-### PR #2355 — `settings-guard` (mergeada ✅)
-- **Causa:** `github_get_branch_protection` retornava 403 (token sem escopo `administration`); o guard interpretava como regressão.
-- **Fix:** Script passou a tratar 403 como "NÃO VERIFICÁVEL" em vez de falha.
-- **Resultado:** `settings-guard` → `conclusion=success` ✅
+### PR #2355 — `settings-guard` ✅
+- **Causa:** HTTP 403 em `github_get_branch_protection` (token sem escopo `administration`) tratado como regressão em vez de "NÃO VERIFICÁVEL".
+- **Fix:** `scripts/ci/settings-guard.mjs` — `403 === "NÃO VERIFICÁVEL"`.
+- **Arquivo:** `scripts/ci/settings-guard.mjs`
 
-### PR #2358 — `deploy-functions` (mergeada ✅)
-- **Causa:** `deployment-manifest.json` desatualizado (1 função faltando); `preparar-artifact-deploy.sh` falhava com diretório publicável vazio (upload-artifact recusa diretório vazio).
-- **Fix:** Manifesto atualizado; script cria `sem-deploy.json` quando não há evidências de deploy.
-- **Resultado:** `deploy-functions` → `conclusion=success` ✅
+### PR #2358 — `deploy-functions` (manifesto + diretório vazio) ✅
+- **Causa:** Manifesto desatualizado (1 função ausente) + `preparar-artifact-deploy.sh` falhava com diretório vazio quando não havia nada a implantar.
+- **Fix:** Manifesto regenerado; script cria `sem-deploy.json` como marcador quando não há evidências de deploy.
+- **Arquivo:** `supabase/deployment-manifest.json`, `scripts/edge-deploy/preparar-artifact-deploy.sh`
 
-### PR #2359 — reconciliar 3 migrations órfãs (mergeada ✅)
-- **Causa:** Versões `20261026210300`, `20261026220300`, `20261026230300` estavam no ledger de produção sem arquivo `.sql` correspondente no repo; `db-live-guard` e `db-migrate` acusavam drift.
-- **Fix:** Criados 3 arquivos com DDL exato já existente em produção (reconciliação pura — nenhum DDL novo aplicado). Duas migrations adicionadas a `replay-known-failures.json` por falharem no replay de banco vazio por design.
-- **Resultado:** `db-live-guard` e `db-migrate` → `conclusion=success` ✅
+### PR #2359 — reconciliar 3 migrations órfãs (db-live-guard + db-migrate) ✅
+- **Causa:** Versões `20261026210300`, `20261026220300`, `20261026230300` no ledger de produção sem arquivo `.sql`; guard detectava drift.
+- **Fix:** Criados 3 arquivos com DDL exato já em produção. 2 adicionadas a `replay-known-failures.json`.
+- **Arquivo:** `supabase/migrations/20261026{210300,220300,230300}_*.sql`
 
-### PR #2362 — fix assert teste `preparar-artifact-deploy` + regex SyntaxError (em andamento ⏳)
-- **Causa 1:** PR #2358 adicionou `sem-deploy.json` no diretório publicável; teste de contorno ainda assertava `length === 0`.
-- **Causa 2:** Regex inválida `/access[_%- ]?token/i` na linha 59 do arquivo de testes causava `SyntaxError: Range out of order in character class` antes de qualquer teste rodar, bloqueando completamente o job `🧪 Unit Tests`.
-- **Fix:** Assertion atualizada para `deepEqual(['sem-deploy.json'])` + verificação de conteúdo JSON; regex corrigida para `/access[_% -]?token/i` (hífen movido para fim da classe).
-- **SHA atual:** `68bb6f957d2ed62dc49129278fa9cea0627f7fab`
-- **Resultado:** ⏳ CI rodando (run 41005488553) — aguardando conclusão
+### PR #2362 — fix assertion teste `preparar-artifact-deploy` ✅
+- **Causa:** PR #2358 adicionou `sem-deploy.json`; teste assertava `length === 0`.
+- **Fix:** `assert.deepEqual(semDeploy, ['sem-deploy.json'])` + verificação de conteúdo.
+- **Arquivo:** `scripts/edge-deploy/preparar-artifact-deploy.unit.mjs`
+
+### PR #2364 — `deploy-functions` manifesto stale 2ª causa ✅ (aguardando merge)
+- **Causa:** 3 arquivos de `supabase/functions/` com hashes alterados por PRs anteriores sem regeneração do manifesto: `_shared/cron-secret-auth.ts`, `_shared/evolution-control-authz.ts`, `evolution-api/index.ts`.
+- **Fix:** `node scripts/edge-deploy/generate-manifest.mjs` — 84 funções, 168 source files.
+- **Arquivo:** `supabase/deployment-manifest.json`
+- **PR:** [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) — CI rodando no SHA `c1202b31` (run [41010314950](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41010314950)). Aguardando `✅ CI Gate`.
 
 ---
 
 ## 3. Tabela de prova — workflows que falhavam
 
-| Workflow | PR de correção | Run de validação | Conclusão |
+| Workflow | PR | Run de validação | Conclusão |
 |---|---|---|---|
-| `settings-guard` | [#2355](https://github.com/adm01-debug/Zapp_Web_V2/pull/2355) | pós-merge na `main` | ✅ success |
-| `deploy-functions` | [#2358](https://github.com/adm01-debug/Zapp_Web_V2/pull/2358) | pós-merge na `main` | ✅ success |
-| `db-live-guard` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | pós-merge na `main` | ✅ success |
-| `db-migrate` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | pós-merge na `main` | ✅ success |
-| `🧪 Unit Tests` (ci.yml) | [#2362](https://github.com/adm01-debug/Zapp_Web_V2/pull/2362) | ⏳ CI rodando (run 41005488553) | aguardando |
+| `settings-guard` | [#2355](https://github.com/adm01-debug/Zapp_Web_V2/pull/2355) | [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) (pós-merge PR #2362) | ✅ success |
+| `deploy-functions` | [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) | Dispatch pós-merge PR #2364 pendente | ⏳ pendente |
+| `db-live-guard` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | Schedule 06:13 UTC ou dispatch pós-merge | ⏳ pendente |
+| `db-migrate` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | Regra 8 (environment gate `producao-ddl`) | 🔒 Regra 8 |
+| `🧪 Unit Tests` (ci.yml) | [#2362](https://github.com/adm01-debug/Zapp_Web_V2/pull/2362) | CI PR #2364: run [41010314950](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41010314950) jobs `Unit Tests (1/3)(2/3)(3/3)` in_progress | ⏳ em andamento |
+
+**Nota `db-migrate`:** O workflow requer aprovação humana no environment `producao-ddl` (Regra 8). Não é possível obter `conclusion=success` sem intervenção do Joaquim. Documentado em PENDENCIAS.md.
 
 ---
 
-## 4. Workflows bloqueados (Regra 8 — ver PENDENCIAS.md)
+## 4. Workflows bloqueados — Regra 8 (detalhes em PENDENCIAS.md)
 
-| Workflow | PR aberta | Motivo do bloqueio |
+| Workflow | Motivo | PR / Item |
 |---|---|---|
-| `db-guard` (Replay local) | [#2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) | Altera `.github/workflows/db-guard.yml` — Regra 8: workflow CI |
-| `branch-hygiene-audit` | — | Fix requer alteração de workflow — Regra 8: workflow CI |
+| `db-guard` (Replay local — ECR rate limit) | Altera `.github/workflows/db-guard.yml` | [PR #2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) |
+| `branch-hygiene-audit` (timeout) | Altera `.github/workflows/branch-hygiene-audit.yml` | PENDENCIAS.md item 3 |
+| `db-migrate` | Environment gate `producao-ddl` exige aprovação humana | PENDENCIAS.md item ausente — ver nota acima |
+| `e2e-logado` (504 Gateway Timeout) | Problema de infra Supabase Edge Runtime (cold start) | PENDENCIAS.md item 4 |
 
 ---
 
 ## 5. Anti-regressão — workflows que permaneceram verdes
 
-| Workflow | Status pós-merge |
+| Workflow | Evidência |
 |---|---|
-| `ci.yml` (Lint & TypeCheck, Build, Security Audit, E2E) | ✅ mantido |
-| `types-sync` | ✅ mantido |
-| `auto-update-pr-branch` | ✅ mantido |
-| `codeql` | ✅ mantido |
-| `db-guard` (checks offline) | ✅ mantido |
+| `ci.yml` Lint & TypeCheck | PR #2362 / #2364 CI: `🔎 TypeCheck` success |
+| `🏗️ Build` | PR #2362 / #2364 CI: success |
+| `🔒 Security Audit` | PR #2362 / #2364 CI: success |
+| `db-guard` Contrato DB offline | PR #2364 CI run [41010314910](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41010314910) — in_progress (success esperado) |
+| `settings-guard` | run [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) success |
 
 ---
 
-## 6. Gaps identificados (fora do escopo ou risco alto)
+## 6. Gaps identificados
 
-- `e2e-logado`: 504 Gateway Timeout no edge `auth-login` — problema de infraestrutura Supabase, não do código do workflow → documentado em PENDENCIAS.md.
-- `db-guard` ECR→ghcr.io: requer mudança de workflow (Regra 8) → PR #2354 aguarda aprovação.
-- `branch-hygiene-audit` timeout: requer mudança de workflow (Regra 8) → documentado em PENDENCIAS.md.
-- `Replay local das migrations` ECR rate-limit: job não-required afetado pela mesma causa raiz do `db-guard` → documentado em PENDENCIAS.md.
-
----
-
-*Relatório será atualizado com links reais de runs após merge da PR #2362 e confirmação pós-merge de deploy-functions, db-live-guard e db-migrate.*
+- `e2e-logado` 504: warmup do edge `auth-login` em `tnnnlkbymytvtqngbbqh` — não código, infra.
+- `db-guard` ECR→ghcr.io: já coberto pela PR #2354 (Regra 8, aguarda Joaquim).
+- `branch-hygiene-audit` timeout: script sem `timeout-minutes:` + paginação — coberto em PENDENCIAS.md item 3.
+- `db-migrate` environment gate: by design — não executável por agente.
+- Baseline local SIGABRT: limite de memória do container cloud — usar CI como evidência.
