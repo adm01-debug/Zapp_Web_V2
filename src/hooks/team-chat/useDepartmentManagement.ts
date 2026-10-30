@@ -146,7 +146,9 @@ export function useCreateDepartmentInvite(departmentId: string) {
         department_id: departmentId,
         action: 'create_invite',
         profile_id: user?.id ?? null,
-        details: { code, profile_name: actorName },
+        // O código é uma credencial de entrada. Ele já fica em department_invites;
+        // não o copie para a trilha de auditoria, visível a mais perfis.
+        details: { profile_name: actorName },
       });
     },
     onSuccess: () => {
