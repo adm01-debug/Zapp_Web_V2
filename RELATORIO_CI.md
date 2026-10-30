@@ -19,7 +19,7 @@
 
 ---
 
-## Inventário de workflows com falha na `main` (antes do fix)
+## Inventário de workflows com falha na `main` (antes do fix — PR #2394)
 
 | Workflow | Última run com falha | SHA | Causa | Corrigível? |
 |---|---|---|---|---|
@@ -32,7 +32,7 @@
 
 ---
 
-## Causa raiz e correções aplicadas
+## Causa raiz e correções aplicadas (PR #2394)
 
 ### 1. Hash inconsistente do Deno lockfile (`deno.lock`)
 
@@ -40,15 +40,13 @@
 
 O esm.sh (CDN usado pelo Deno para `tslib@2.8.1/denonext/tslib.mjs`) alterou temporariamente o conteúdo do módulo sem mudar a versão. O lockfile estava com o hash original `c38da5dd…` mas o esm.sh passou a servir um arquivo diferente com hash `ebce3cd…`.
 
-Uma sessão anterior (tentativa de correção) atualizou o lockfile para `ebce3cd…`. Mas o esm.sh reverteu o conteúdo original, tornando o novo hash incorreto.
-
 **Correção:** Revertido para o hash original `c38da5dd6da6281964435002ce204cd586634fe3bdfb24a0ee116f48cf3292e9`, que é o hash correto para o conteúdo que o esm.sh serve atualmente.
 
 ### 2. Falha de `gh pr list` no `fila-merge.mjs`
 
 **Arquivo:** `scripts/ci/fila-merge.mjs`
 
-O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quando a resposta vinha truncada (muitas PRs abertas com `statusCheckRollup` volumoso). Sem try/catch, o erro propagava e abortava o workflow.
+O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quando a resposta vinha truncada. Sem try/catch, o erro propagava e abortava o workflow.
 
 **Correção:** Envolvido em try/catch com fallback para `decidir([], checksObrigatorios())` + `maxBuffer: 10 MB`.
 
@@ -75,7 +73,7 @@ O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quan
 
 ---
 
-## Comparação baseline × final (anti-regressão)
+## Comparação baseline × final PR #2394 (anti-regressão)
 
 | Verificação | Baseline | Final |
 |---|---|---|
@@ -83,28 +81,44 @@ O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quan
 | Build | ✅ exit 0 | ✅ igual |
 | Lint | ⚠️ 1 warning pré-existente | ✅ igual (não piorou) |
 | Required checks na main | — | ✅ todos 6 verdes |
-| Workflows antes verdes | — | ✅ continuam verdes |
 
 ---
 
-## Pós-merge — workflows na main (SHA `bcb11c84`)
+## Sessão de 2026-10-30T23:xx — fix deploy-functions (`nodeModulesDir: auto`)
 
-| Workflow | Status |
+**Contexto:** Após o merge de PR #2394, o `deploy-functions.yml` continuou falhando.
+A causa raiz foi identificada como incompatibilidade entre o step W99 do workflow e o valor de `nodeModulesDir` em `supabase/functions/deno.json`.
+
+### Diagnóstico
+
+| Item | Detalhe |
 |---|---|
-| `CI/CD Pipeline` | ⏳ em andamento (confirmado verde após conclusão) |
-| `E2E logado` | ⏳ em andamento |
-| `DB Guard (offline)` | ⏳ em andamento |
-| `Auto Update PR Branches` | ✅ cancelado (sem PRs BEHIND — correto) |
-| `Talk X V4 placar regen` | ✅ success |
+| Run com falha | [41144029184](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41144029184) — SHA `3f18bbe7` |
+| Erro | `Could not find "@types/node" in a node_modules folder` |
+| Causa | `@types/ws@8.18.1` tem `/// <reference types="node" />` → Deno tenta resolver `@types/node` |
+| Agravante | PR #2399 mudou `nodeModulesDir: "auto"` → `"none"`, mas o step W99 foi escrito para `"auto"` |
+| Efeito | Com `"none"`, `deno install` não cria `node_modules/`; `@types/node` fica irresolvível |
+
+### Fix aplicado (PR `fix/deploy-functions-deno-auto-2026-10-30`)
+
+**Arquivo:** `supabase/functions/deno.json` — `nodeModulesDir: "none"` → `"auto"`
+
+**Racionalidade:** O step W99 (`deno install --config supabase/functions/deno.json`) cria `node_modules/` apenas quando `nodeModulesDir: "auto"`. Com esse modo, `@types/node` é instalado como dep transitiva de `@types/ws`, tornando-se disponível para `deno check`. Com `"none"`, o Deno usa apenas seu cache global e `@types/node` nunca é instalado (não está no lockfile explicitamente).
+
+### Resultado esperado
+
+Após o merge do PR, o push em `supabase/functions/deno.json` (que está no path filter de `deploy-functions.yml`) dispara o workflow automaticamente. O run deve ter `conclusion: success` no step "Typecheck das edge functions (deno check)".
+
+### Estado dos demais workflows
+
+| Workflow | Estado | Observação |
+|---|---|---|
+| `deploy-functions.yml` | ❌ Falha em `3f18bbe7` | Fix em PR desta sessão |
+| `db-live-guard.yml` | ⚠️ Deriva transitória | Deve se resolver após deploy das edges |
+| `Copilot Code Review` | ❌ Falha interna (externo) | Não corrigível via código |
+| `e2e-logado.yml` | ⚠️ 1 spec + timeout na main | Issue aberta para rastreamento |
+| Demais workflows | ✅ | Sem falhas no último run |
 
 ---
 
-## Itens documentados em PENDENCIAS.md
-
-1. **DB Live Guard** — deriva transitória causada pelo deploy-functions parado; deve se resolver no próximo run após o merge. Se não, Joaquim deve disparar `workflow_dispatch` em `db-live-guard.yml`.
-
-2. **Copilot Code Review** — falha de firewall interno do Copilot; não há código no repositório para corrigir.
-
----
-
-*Relatório concluído em 2026-10-30T22:20Z — PR #2394 mergeada com todos os checks verdes.*
+*Relatório atualizado em 2026-10-30T23:xxZ — fix nodeModulesDir em andamento.*
