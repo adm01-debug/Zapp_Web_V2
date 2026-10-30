@@ -12,7 +12,6 @@ DECLARE
   v_phone          text;
   v_flag_enabled   boolean;
   v_profile_id     uuid;
-  v_ikey           text;
   v_state_version  bigint;
 BEGIN
   IF NEW.sender <> 'contact' THEN RETURN NEW; END IF;
@@ -49,29 +48,44 @@ BEGIN
         updated_at = now()
   RETURNING state_version INTO v_state_version;
 
-  v_ikey := 'copilot_tick:'
-    || NEW.contact_id::text || ':'
-    || NEW.whatsapp_connection_id::text || ':'
-    || floor(extract(epoch FROM now()) / 4)::bigint::text;
+  -- Debounce: se há job queued para esta conversa, estender o prazo.
+  -- Se o job anterior já está running ou terminou, criar job novo.
+  -- Usa gen_random_uuid() na chave para garantir unicidade sem bucket fixo.
+  UPDATE public.ai_jobs
+     SET available_at = now() + interval '4 seconds',
+         payload = jsonb_build_object(
+           'contact_id',             NEW.contact_id,
+           'whatsapp_connection_id', NEW.whatsapp_connection_id,
+           'trigger_message_id',     NEW.id,
+           'profile_id',             v_profile_id,
+           'state_version',          v_state_version
+         )
+   WHERE kind = 'copilot_tick'
+     AND status = 'queued'
+     AND payload->>'contact_id' = NEW.contact_id::text
+     AND payload->>'whatsapp_connection_id' = NEW.whatsapp_connection_id::text;
 
-  INSERT INTO public.ai_jobs
-    (idempotency_key, kind, function_name, user_id, payload,
-     priority, available_at, max_attempts, status)
-  VALUES
-    (v_ikey, 'copilot_tick', 'copilot-live', v_profile_id,
-     jsonb_build_object(
-       'contact_id',             NEW.contact_id,
-       'whatsapp_connection_id', NEW.whatsapp_connection_id,
-       'trigger_message_id',     NEW.id,
-       'profile_id',             v_profile_id,
-       'state_version',          v_state_version
-     ),
-     200,
-     now() + interval '4 seconds',
-     3, 'queued')
-  ON CONFLICT (idempotency_key) DO UPDATE
-    SET available_at = now() + interval '4 seconds',
-        payload = EXCLUDED.payload;
+  IF NOT FOUND THEN
+    INSERT INTO public.ai_jobs
+      (idempotency_key, kind, function_name, user_id, payload,
+       priority, available_at, max_attempts, status)
+    VALUES
+      ('copilot_tick:'
+         || NEW.contact_id::text || ':'
+         || NEW.whatsapp_connection_id::text || ':'
+         || gen_random_uuid()::text,
+       'copilot_tick', 'copilot-live', v_profile_id,
+       jsonb_build_object(
+         'contact_id',             NEW.contact_id,
+         'whatsapp_connection_id', NEW.whatsapp_connection_id,
+         'trigger_message_id',     NEW.id,
+         'profile_id',             v_profile_id,
+         'state_version',          v_state_version
+       ),
+       200,
+       now() + interval '4 seconds',
+       3, 'queued');
+  END IF;
 
   RETURN NEW;
 END;
