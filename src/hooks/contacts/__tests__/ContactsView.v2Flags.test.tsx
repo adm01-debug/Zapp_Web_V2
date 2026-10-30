@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import type { Mock } from 'vitest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -256,6 +256,9 @@ async function montarModulo(container: HTMLElement, publicadas: string[]) {
 beforeEach(() => {
   h.rows = linhas();
   marcarAreas();
+  // marcarAreas() instala a implementação; as chamadas de um teste não podem
+  // contaminar a contagem do seguinte (o contrato abaixo conta a instância única).
+  for (const spy of Object.values(h.areas)) spy.mockClear();
 });
 
 describe('ContactsView — chave contacts.v2 desligada', () => {
@@ -282,5 +285,63 @@ describe('ContactsView — chave contacts.v2 com áreas ligadas', () => {
 
     await montarModulo(container, ['cards']);
     expect(areasNaTela(container)).toEqual(TELA_ATUAL);
+  });
+});
+
+/**
+ * Contrato do plano de 50 etapas (docs/plans/PLANO_CONTATOS_CABECALHO_BOTAO_VERDE_50_ETAPAS_2026-09-30):
+ * o topo do módulo Contatos NAO tem cabeçalho visual — a tela começa pelos
+ * indicadores. O lote 880 (025d0258dc) reintroduziu um PageHeader e este bloco
+ * existe para que qualquer retorno do cabeçalho quebre a CI em vez de passar
+ * despercebido pelos snapshots.
+ *
+ * PageHeader renderiza um elemento <header>; nenhum outro bloco deste módulo
+ * (com as áreas trocadas por marcadores) produz um.
+ */
+describe('ContactsView — contrato do cabeçalho removido', () => {
+  it('não renderiza cabeçalho visual e mantém o título acessível', async () => {
+    const { container } = render(<ContactsView />, { wrapper: createWrapper() });
+    await montarModulo(container, []);
+
+    expect(container.querySelector('header')).toBeNull();
+
+    // Um único anúncio de "Contatos", nível 1 e fora do fluxo visual.
+    const titulos = screen.getAllByRole('heading', { name: 'Contatos' });
+    expect(titulos).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 1, name: 'Contatos' }).className).toContain('sr-only');
+  });
+
+  it('os indicadores vêm antes de categorias e toolbar', async () => {
+    const { container } = render(<ContactsView />, { wrapper: createWrapper() });
+    await montarModulo(container, []);
+
+    const areas = areasNaTela(container);
+    expect(areas[0]).toBe('area-dialogs');
+    expect(areas[1]).toBe('area-merge');
+    // Bloco contíguo: nada entra entre indicadores e categorias, e a ordem
+    // categorias→toolbar é fixa.
+    const i = areas.indexOf('area-stats');
+    expect(areas.slice(i, i + 3)).toEqual(['area-stats', 'area-tabs', 'area-toolbar']);
+  });
+
+  it('mantém uma única instância dos diálogos com os callbacks do CRUD', async () => {
+    const { container } = render(<ContactsView />, { wrapper: createWrapper() });
+
+    await waitFor(() => expect(h.areas.dialogs).toHaveBeenCalledTimes(1));
+    // Conta o DOM, não só o mock: duplicação por outro módulo não o chama.
+    expect(container.querySelectorAll('[data-testid="area-dialogs"]')).toHaveLength(1);
+    expect(h.areas.dialogs).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isAddDialogOpen: false,
+        handleAddContact: expect.any(Function),
+        handleDeleteContact: expect.any(Function),
+      }),
+    );
+  });
+
+  it('não puxa o PageHeader por nenhum caminho de import direto', async () => {
+    const { container } = render(<ContactsView />, { wrapper: createWrapper() });
+    await montarModulo(container, []);
+    expect(container.querySelector('[data-testid="guarda-pageheader"]')).toBeNull();
   });
 });

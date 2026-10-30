@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => {
       // sourcemap: 'hidden' → source maps are generated but NOT linked in the
       // output HTML/JS. This allows Sentry to process them without exposing
       // the original source to end users. Use 'false' if Sentry is not set up.
-      sourcemap: isProd ? "hidden" : true,
+      sourcemap: isProd ? false : true,
       // Skip gzip size reporting to speed up production builds by ~15-25%.
       reportCompressedSize: false,
       rolldownOptions: {

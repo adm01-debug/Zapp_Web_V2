@@ -88,7 +88,7 @@ export function useTalkXCampaignSummary({
     enabled,
     staleTime: 15_000,
     queryFn: async () => {
-      const rpc = supabase.rpc as unknown as TalkXAudienceRpc;
+      const rpc = supabase.rpc.bind(supabase) as unknown as TalkXAudienceRpc;
       const { data, error } = await rpc('talkx_resolve_audience', {
         p_rules: { groups: rules?.groups ?? [] },
         p_segment_ids: segmentIds && segmentIds.length > 0 ? segmentIds : null,

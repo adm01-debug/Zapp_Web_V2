@@ -19,8 +19,10 @@
 #       mantidos), stickers/audio-memes/custom-emojis SELECT/DELETE = 1;
 #   (b) comportamento com papel real: dono apaga o proprio avatar, outro usuario
 #       autenticado nao apaga o alheio, anonimo nao le nem apaga;
-#   (c) rollback: o bloco extraido da linha `-- Rollback:` da propria migration
-#       restaura as 2 policies, e reaplicar o fix volta a 1 (idempotencia).
+#   (c) reaplicacao do fix e idempotente.
+#
+# Migrations já aplicadas são imutáveis; este teste não executa os rollbacks
+# documentados no cabeçalho.
 #
 # N011_WITHOUT_FIX=1 pula o fix para reproduzir o estado ANTERIOR (vermelho):
 # as contagens de avatars voltam a 2 e o teste falha.
@@ -194,16 +196,7 @@ pass "anonimo nao le avatares"
 expect_error_as "anonimo nao apaga avatar" "anon" "" "permission denied" \
   "DELETE FROM storage.objects WHERE bucket_id = 'avatars' RETURNING name"
 
-# (c) Rollback: extrai o bloco da propria migration e prova que restaura.
-rollback_sql="$(sed -n 's/^-- Rollback: //p' "$fix_migration")"
-[[ -n "$rollback_sql" ]] || fail "migration sem linha -- Rollback: executavel"
-psql_test -v ON_ERROR_STOP=1 -c "$rollback_sql" >/dev/null
-got="$(psql_q "SELECT count(*) FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects' AND cmd = 'DELETE' AND qual LIKE '%avatars%'")"
-[[ "$got" == "2" ]] || fail "rollback restaura DELETE: esperado 2, obtido [$got]"
-got="$(psql_q "SELECT count(*) FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects' AND cmd = 'SELECT' AND qual LIKE '%avatars%'")"
-[[ "$got" == "2" ]] || fail "rollback restaura SELECT: esperado 2, obtido [$got]"
-pass "rollback restaura as 2 policies"
 psql_test < "$fix_migration" >/dev/null
-check_count "fix reaplicado apos rollback" "avatars" "DELETE" "Users can delete their own avatar"
+check_count "fix reaplicado (idempotente)" "avatars" "DELETE" "Users can delete their own avatar"
 
 pass "N-011 dedup de policies de avatar provado"

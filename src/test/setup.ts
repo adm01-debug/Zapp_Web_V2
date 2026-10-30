@@ -128,6 +128,24 @@ globalThis.fetch = ((input: unknown, init?: unknown) => {
 }) as typeof fetch;
 
 // ==========================================================================
+// MOCK getBoundingClientRect — @tanstack/react-virtual no jsdom.
+//
+// O virtualizador mede a altura do contêiner por getBoundingClientRect() antes
+// de calcular quais itens são visíveis. O jsdom retorna zeros por padrão, então
+// getVirtualItems() retorna [] e nenhum item é renderizado (nem data-testid).
+// Retornar uma dimensão não-nula faz o virtualizador funcionar nos testes.
+// Testes que precisam de valores específicos usam vi.spyOn e sobrescrevem isso.
+// ==========================================================================
+Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
+  configurable: true,
+  // Sem `writable`, `elemento.getBoundingClientRect = ...` falha em modo estrito.
+  writable: true,
+  value: function () {
+    return { width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) };
+  },
+});
+
+// ==========================================================================
 // TETO DE ESPERA DAS CONSULTAS ASSINCRONAS — determinismo sob carga.
 //
 // `findBy*`/`waitFor` do Testing Library esperam por condicao, mas com um teto

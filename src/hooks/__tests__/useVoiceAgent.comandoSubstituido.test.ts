@@ -16,7 +16,7 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/lib/logger', () => {
   const logger = { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() };
-  return { log: logger, getLogger: () => logger };
+  return { log: logger, getLogger: () => logger, createLogger: () => logger };
 });
 
 const h = vi.hoisted(() => ({
@@ -26,6 +26,8 @@ const h = vi.hoisted(() => ({
   scribe: { connect: vi.fn(async () => {}), disconnect: vi.fn(), isConnected: false },
   transcripts: new Map<string, { resolve: (value: VoiceAgentAction) => void }>(),
   tts: [] as Array<{ text: string; resolve: () => void; stop: ReturnType<typeof vi.fn> }>,
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 vi.mock('@elevenlabs/react', () => ({

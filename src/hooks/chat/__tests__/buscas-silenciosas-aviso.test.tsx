@@ -59,6 +59,8 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 vi.mock('@/lib/forward-limits', () => ({
@@ -150,6 +152,6 @@ describe('useScheduledReports — falha silenciosa de toggle avisa', () => {
       await result.current.toggleActive('relatorio-1', true);
     });
 
-    expect(mocks.sonnerError).toHaveBeenCalledWith('Erro ao atualizar o relatorio');
+    expect(mocks.sonnerError).toHaveBeenCalledWith('Erro ao ativar/desativar relatório');
   });
 });

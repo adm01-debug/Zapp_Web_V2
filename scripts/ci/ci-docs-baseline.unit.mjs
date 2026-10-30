@@ -27,8 +27,8 @@ const NAO_CONCLUIDOS = new Set(['AGUARDA RUNTIME', 'PARCIAL', 'PRECISA REVALIDA�
 const CONTAGEM_ANTIGA = [/dos\s+17\s+workflows/i, /17\s+no\s+total/i, /14\s+workflows/i, /14\s+arquivos/i];
 const TOCA_STRICT_FALSE = /strict[ ]*[:=][ ]*`?false|`strict`[^\n]{0,40}`false`/i;
 const ROTULO_HISTORICO = /revogad|REVOGAD|históric|HISTÓRIC|superad|SUPERAD|reconciliad|Reconcilia/;
-const RE_ITEM = /^\s*-\s*\[([ xX~!])\]\s*\*\*(E\d{1,3})\*\*/;
-const RE_RECON = /^\|\s*\*\*(E\d{1,3})\*\*[^|]*\|\s*`\[([ x~!])\]`\s*\*{0,2}([A-ZÇÃÉÍÓÚÊÔÂÀ\- ]+)/;
+const RE_ITEM = /^\s*-\s*\[([  xX~!])\]\s*\*\*(E\d{1,3})\*\*/;
+const RE_RECON = /^\|\s*\*\*(E\d{1,3})\*\*[^|]*\|\s*`[\[(]([ x~!])[\])]`\s*\*{0,2}([A-ZÇÃÉÍÓÚÊÔÂÀ\- ]+)/;
 
 const linhas = (t) => t.split('\n');
 const paragrafos = (t) => t.split(/\n[ \t]*\n/);
@@ -197,7 +197,7 @@ function evidenciasDaAbertura(tabela) {
 
 function violacoesTabelaAbertura(plano, esperadas = ABERTURA_ESPERADA) {
   const tabela = tabelaDeAbertura(plano);
-  if (tabela === null) return [`plano sem a secao "${SECAO_ABERTURA}"`];
+  if (tabela === null) return [`plano sem a secao "${SECAO_ABERTURA}"` ];
   const out = [];
   for (const [id, linha] of Object.entries(esperadas)) {
     const atual = tabela.find((l) => l.startsWith(`| **${id}**`));
@@ -219,7 +219,7 @@ const CLAUDE_ANTES = [
 ].join('\n\n');
 
 const CLAUDE_DEPOIS = [
-  '**Plano vigente:** auditoria exaustiva dos **16** arquivos em `.github/workflows/` (+3 dinâmicos).',
+  '**Plano vigente:** auditoria exaustiva dos **17** arquivos em `.github/workflows/` (+3 dinâmicos).',
   'A fonte canônica do inventário é o gerado `docs/ci/README.md`.',
   '**Correção de 2026-10-01 — HISTÓRICA, SUPERADA por E15(b):** repetir `strict: false` está REVOGADO.',
 ].join('\n\n');
@@ -265,7 +265,7 @@ test('fixture: CLAUDE.md com contagem antiga e strict=false solto e rejeitado', 
 });
 
 test('fixture: CLAUDE.md corrigido passa (16 arquivos, fonte gerada, strict=false rotulado)', () => {
-  assert.deepEqual(violacoesContagemClaude(CLAUDE_DEPOIS, 16), []);
+  assert.deepEqual(violacoesContagemClaude(CLAUDE_DEPOIS, 17), []);
   assert.deepEqual(violacoesStrictClaude(CLAUDE_DEPOIS), []);
 });
 
@@ -293,14 +293,14 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
 
 test('inventario: 16 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
-  assert.equal(arquivos.length, 16);
+  assert.equal(arquivos.length, 17);
   const readme = await readFile(README_CI, 'utf8');
-  assert.match(readme, /\*\*16 workflows\.\*\*/);
+  assert.match(readme, /\*\*17 workflows\.\*\*/);
   for (const f of arquivos) assert.ok(readme.includes(f));
 });
 
 test('CLAUDE.md: contagem atual e fonte canonica (sem 14/17)', async () => {
-  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 16), []);
+  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 17), []);
 });
 
 test('CLAUDE.md: politica unica de strict, coerente com o baseline', async () => {
@@ -335,7 +335,7 @@ test('plano: nenhuma etapa superada pede reexecucao', async () => {
 test('plano: inventario atual e 16 YAML com fonte gerada', async () => {
   const plano = await readFile(PLANO, 'utf8');
   const chato = achata(plano);
-  assert.match(chato, /\*\*16\*\* arquivos YAML em `\.github\/workflows\/`/);
+  assert.match(chato, /\*\*17\*\* arquivos YAML em `\.github\/workflows\/`/);
   assert.ok(plano.includes('docs/ci/README.md'));
   assert.ok(plano.includes('render-workflow-docs.mjs'));
   assert.match(chato, /403[^.]*limite de evidência/i);
@@ -446,23 +446,34 @@ test('plano: tabela de abertura (E01/E13/E14/E16) preserva as evidencias medidas
 
 // W39: garante que nenhum teste neste arquivo pina uma versão literal de dependência
 // (ex.: playwright@1.63.0) em chamadas de assert. Versão deve ser lida do bun.lock.
-test('meta: nenhum assert neste arquivo pina versao literal de dependencia (package@X.Y.Z)', async () => {
-  const src = await readFile(new URL(import.meta.url), 'utf8');
-  const linhas = src.split('\n');
-  // Pega linhas de assert que contenham @<dígitos>.<dígitos>.<dígitos> literal
-  // (exclui linhas que só têm o padrão regex \d+, pois \d não é dígito)
-  const violacoes = linhas.filter(
+// Pega linhas de assert com @X.Y.Z literal, inclusive escrito como regex (@1\.64\.1);
+// exclui comentarios e padroes genericos (\d+), que nao pinam versao.
+function assertsComVersaoPinada(src) {
+  return src.split('\n').filter(
     (l) =>
-      !/^\s*\/\//.test(l) &&          // exclui linhas de comentário
-      /assert\./.test(l) &&             // é uma chamada de assert
-      /@\d+\.\d+\.\d+/.test(l) &&   // contém @X.Y.Z literal
-      !l.includes('\\d+'),             // não é um padrão regex (\d+)
+      !/^\s*\/\//.test(l) &&
+      /assert\./.test(l) &&
+      /@\d+(?:\.|\\\.)\d+(?:\.|\\\.)\d+/.test(l) &&
+      !l.includes('\\d+'),
   );
+}
+
+test('meta: nenhum assert neste arquivo pina versao literal de dependencia (package@X.Y.Z)', async () => {
+  const violacoes = assertsComVersaoPinada(await readFile(new URL(import.meta.url), 'utf8'));
   assert.deepEqual(
     violacoes,
     [],
     `assert com versao literal de dependencia encontrado:\n${violacoes.join('\n')}`,
   );
+});
+
+test('meta: fixture — pino literal e pino em regex sao pegos; padrao generico nao', () => {
+  const PONTO = '.';
+  const BARRA = '\\';
+  const literal = `  assert.ok(wf.includes('playwright@1${PONTO}64${PONTO}1'));`;
+  const emRegex = `  assert.ok(/playwright@1${BARRA}.64${BARRA}.1/.test(lock));`;
+  const generico = `  assert.ok(/playwright@(${BARRA}d+${BARRA}.${BARRA}d+)/.test(lock));`;
+  assert.deepEqual(assertsComVersaoPinada([literal, emRegex, generico].join('\n')), [literal, emRegex]);
 });
 
 // W95: CONTRIBUTING.md deve referenciar o stack e o fluxo atuais

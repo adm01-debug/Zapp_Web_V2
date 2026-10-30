@@ -72,7 +72,10 @@ vi.mock('@/hooks/business/useQueues', () => ({
     deleteQueue: vi.fn(), addMember: vi.fn(), removeMember: vi.fn(),
   }),
 }));
-vi.mock('@/hooks/business/useQueueGoals', () => ({ useQueueGoals: () => ({ goals: {} }) }));
+vi.mock('@/hooks/business/useQueueGoals', () => ({
+  useQueueGoals: () => ({ goals: {} }),
+  useQueueGoalMetrics: () => ({ metrics: {} }),
+}));
 vi.mock('@/components/queues/CreateQueueDialog', () => ({ CreateQueueDialog: () => null }));
 vi.mock('@/components/queues/EditQueueDialog', () => ({ EditQueueDialog: () => null }));
 vi.mock('@/components/queues/AddMemberDialog', () => ({ AddMemberDialog: () => null }));
