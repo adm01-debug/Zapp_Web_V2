@@ -90,12 +90,8 @@ if ! docker run -d --rm --name "$container_name" \
   "$postgres_image" >/dev/null; then
   fail 'PostgreSQL de teste nao iniciou'
 fi
-ready=0
-for _ in $(seq 1 30); do
-  if docker exec "$container_name" pg_isready -U postgres >/dev/null 2>&1; then ready=1; break; fi
-  sleep 1
-done
-[[ "$ready" == "1" ]] || fail 'PostgreSQL de teste nao iniciou'
+bash "$repo_root/scripts/db-audit/wait-postgres-final-start.sh" "$container_name" 30 \
+  || fail 'PostgreSQL de teste nao iniciou'
 
 # Infraestrutura real do Supabase: o schema storage e a tabela buckets existem
 # no servidor e nenhuma migration os cria. O teste declara a tabela no formato

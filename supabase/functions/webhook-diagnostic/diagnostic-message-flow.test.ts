@@ -145,6 +145,7 @@ Deno.test("R2-API-037: trafego so em A nao aumenta a contagem nem a saude de B",
   const messagesQueries: QueryState[] = [];
   try {
     const res = await handleWebhookDiagnostic(diagnosticRequest({ action: "full-diagnostic" }), {
+      requireAuthFn: async () => ({ userId: 'admin-1' }),
       callerClient: makeCallerClient(true),
       supabase: makeServiceClient({
         connections: CONNECTIONS,
@@ -184,6 +185,7 @@ Deno.test("R2-API-037: conexao desconhecida fica indeterminada e nao consulta me
     const res = await handleWebhookDiagnostic(
       diagnosticRequest({ action: "full-diagnostic", instanceName: "ghost" }),
       {
+        requireAuthFn: async () => ({ userId: 'admin-1' }),
         callerClient: makeCallerClient(true),
         supabase: makeServiceClient({
           connections: CONNECTIONS,
@@ -213,6 +215,7 @@ Deno.test("R2-API-037: falha de contagem no banco nao vira 'sem trafego'", async
   const restoreFetch = stubEvolution(WEBHOOK_RECORDS);
   try {
     const res = await handleWebhookDiagnostic(diagnosticRequest({ action: "full-diagnostic" }), {
+      requireAuthFn: async () => ({ userId: 'admin-1' }),
       callerClient: makeCallerClient(true),
       supabase: makeServiceClient({
         connections: [CONNECTIONS[0]],
