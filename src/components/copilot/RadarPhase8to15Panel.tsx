@@ -66,7 +66,7 @@ export function RadarPhase8to15Panel({
   const quoteDraft = useQuoteDraft({
     clientName,
     items: quoteDraftItems,
-    deliveryDays: deadline.productionDays,
+    deliveryDays: eventDate ? deadline.productionDays : undefined,
     paymentTerms: '',
   });
   const upsell = useUpsellSuggestion({ productMentioned: productType || null });

@@ -41,7 +41,7 @@ export function RadarPhase8Panel({
   const lossRisk = useLossRiskDetector({ clientText: lastClientMessage });
 
   const hasContent =
-    (!objectionDismissed && objection) ||
+    (!objectionDismissed && objection.detected) ||
     battleCard?.detected ||
     discountWarning?.detected ||
     (!stallDismissed && stall) ||
@@ -91,7 +91,7 @@ export function RadarPhase8Panel({
       )}
 
       {/* Objeção detectada */}
-      {!objectionDismissed && objection && (
+      {!objectionDismissed && objection.detected && (
         <ObjectionCard
           objection={objection}
           onUseDraft={onDraftText}

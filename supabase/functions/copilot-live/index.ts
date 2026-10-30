@@ -76,6 +76,15 @@ serve(async (req) => {
       });
     }
 
+    // Resolve o contact_id real a partir da conversa; fallback para user.id se a
+    // conversa não existir ou não tiver contact_id (não deve ocorrer em produção).
+    const { data: conversation } = await supabase
+      .from('conversations')
+      .select('contact_id')
+      .eq('id', payload.conversation_id)
+      .maybeSingle();
+    const contactId = conversation?.contact_id ?? user.id;
+
     // Upsert copilot session
     const { data: session, error: sessionError } = await supabase
       .from('copilot_sessions')
@@ -83,9 +92,9 @@ serve(async (req) => {
         {
           conversation_id: payload.conversation_id,
           profile_id: user.id,
-          contact_id: user.id, // placeholder — enriched by future tick
+          contact_id: contactId,
           ...(payload.sale_stage && { sale_stage: payload.sale_stage }),
-          ...(payload.brinde_meter !== undefined && { brinde_meter: payload.brinde_meter }),
+          ...(payload.brinde_meter != null && { brinde_meter: payload.brinde_meter }),
           last_tick_at: new Date().toISOString(),
         },
         { onConflict: 'conversation_id', ignoreDuplicates: false }
