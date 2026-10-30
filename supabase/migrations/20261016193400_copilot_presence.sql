@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS public.copilot_presence (
   PRIMARY KEY (session_id, profile_id)
 );
 
-CREATE INDEX copilot_presence_session ON public.copilot_presence (session_id) WHERE expires_at > now();
+CREATE INDEX copilot_presence_session ON public.copilot_presence (session_id);
 
 ALTER TABLE public.copilot_presence ENABLE ROW LEVEL SECURITY;
 
