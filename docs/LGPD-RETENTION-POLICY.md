@@ -96,7 +96,7 @@ Estabelecer as diretrizes de retenção, arquivamento e exclusão de dados pesso
 ### 4.5 Mídias (Storage)
 
 | Bucket | Tipo | Retenção | Ação |
-|--------|------|----------|---------|
+|--------|------|----------|------|
 | `avatars` | Imagem perfil | 5 anos* | Excluir |
 | `audio-messages` | Áudio WhatsApp | 2 anos | Excluir |
 | `whatsapp-media` | Mídia geral | 2 anos | Excluir |
@@ -104,12 +104,12 @@ Estabelecer as diretrizes de retenção, arquivamento e exclusão de dados pesso
 ### 4.6 Dados do Copiloto RADAR (CV-019) — adicionado em 2026-10-16
 
 | Dado | Tabela | Prazo | Ação após Prazo |
-|------|--------|-------|-----------------|
+|------|--------|-------|------------------|
 | Insights gerados pelo RADAR | `copilot_insights` | 90 dias | Excluir |
-| Texto final enviado pelo vendedor | `copilot_feedback.final_text` | 30 dias | Anonimizar |
-| Hash do texto final | `copilot_feedback.final_text_hash` | indefinido | Manter |
-| Contagens agregadas anônimas | `copilot_retention_aggregates` | indefinido | Manter |
-| Metadados de sessão (etapa, B·R·I·N·D·E, temperatura) | `copilot_sessions` | enquanto ativa | Excluir ao encerrar |
+| Texto final enviado pelo vendedor | `copilot_insight_feedback.final_text` | 30 dias | Anonimizar (NULL) |
+| Hash do texto final | `copilot_insight_feedback.final_text_hash` | indefinido | Manter |
+| Contagens por perfil (pseudonímicas) | `copilot_retention_aggregates` | indefinido | Manter |
+| Metadados de sessão (etapa, B·R·I·N·D·E, temperatura) | `copilot_sessions` | enquanto contato existe | Excluído em cascata com o contato (ON DELETE CASCADE) |
 
 **Mecanismo:** função `public.run_copilot_retention()` + `pg_cron` diário às 02:35 UTC (migration CV-019).  
 **Prazo D5** é decisão aberta — ver `docs/adr/CV-009-decisoes-D1-D5.md`.
@@ -270,7 +270,7 @@ export async function exportUserData(phone: string) {
 ### 7.1 Eventos a Registrar
 
 | Evento | Tabela de Log | Retenção |
-|--------|---------------|----------|
+|--------|---------------|-----------|
 | Criação de contato | audit_logs | 5 anos |
 | Edição de dados pessoais | audit_logs | 5 anos |
 | Exclusão de contato | audit_logs | 5 anos |
@@ -405,6 +405,7 @@ Deno.serve(async () => {
 |--------|------|-------|------------|
 | 1.0 | 2026-04-11 | Claude AI | Versão inicial |
 | 1.1 | 2026-10-16 | Claude AI | Adição seção 4.6 — Copiloto RADAR (CV-019) |
+| 1.2 | 2026-10-30 | Claude AI | Seção 4.6: corrige nomes de tabela (copilot_insight_feedback) e lifecycle de copilot_sessions |
 
 ---
 

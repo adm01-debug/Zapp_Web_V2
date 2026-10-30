@@ -15,11 +15,11 @@
 
 CREATE TABLE IF NOT EXISTS public.copilot_retention_aggregates (
   period_start    date        NOT NULL,
-  session_id      uuid        NOT NULL,
+  profile_id      uuid        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   insight_type    text        NOT NULL DEFAULT '',
   feedback_action text        NOT NULL DEFAULT '',
   count           integer     NOT NULL DEFAULT 0,
-  PRIMARY KEY (period_start, session_id, insight_type, feedback_action)
+  PRIMARY KEY (period_start, profile_id, insight_type, feedback_action)
 );
 
 ALTER TABLE public.copilot_retention_aggregates ENABLE ROW LEVEL SECURITY;
@@ -36,31 +36,32 @@ CREATE OR REPLACE FUNCTION public.run_copilot_retention()
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER
 SET search_path TO 'public','pg_temp' AS $$
 BEGIN
-  -- 1. Agrega insights expirados antes de apagarlos
+  -- 1. Agrega insights expirados antes de apagarlos.
+  --    copilot_insights só tem session_id; JOIN copilot_sessions para obter profile_id.
   INSERT INTO public.copilot_retention_aggregates
-    (period_start, session_id, insight_type, feedback_action, count)
-  SELECT date_trunc('day', i.created_at)::date, i.session_id, i.type, '', count(*)
+    (period_start, profile_id, insight_type, feedback_action, count)
+  SELECT date_trunc('day', i.created_at)::date, cs.profile_id, i.type, '', count(*)
   FROM public.copilot_insights i
+  JOIN public.copilot_sessions cs ON cs.id = i.session_id
   WHERE i.created_at < now() - interval '90 days'
   GROUP BY 1,2,3,4
-  ON CONFLICT (period_start, session_id, insight_type, feedback_action)
+  ON CONFLICT (period_start, profile_id, insight_type, feedback_action)
     DO UPDATE SET count = copilot_retention_aggregates.count + EXCLUDED.count;
 
   -- 2. Apaga insights expirados; copilot_insight_feedback.insight_id vira NULL via ON DELETE SET NULL
   DELETE FROM public.copilot_insights
   WHERE created_at < now() - interval '90 days';
 
-  -- 3. Agrega todos os feedbacks expirados ainda não retidos
-  --    (retained_at IS NULL cobre todos os actions, incluindo discarded/marked_wrong
-  --     que nunca tiveram final_text)
+  -- 3. Agrega todos os feedbacks expirados ainda não retidos.
+  --    copilot_insight_feedback já tem profile_id direto; sem necessidade de JOIN.
   INSERT INTO public.copilot_retention_aggregates
-    (period_start, session_id, insight_type, feedback_action, count)
-  SELECT date_trunc('day', f.created_at)::date, f.session_id, '', f.action, count(*)
+    (period_start, profile_id, insight_type, feedback_action, count)
+  SELECT date_trunc('day', f.created_at)::date, f.profile_id, '', f.action, count(*)
   FROM public.copilot_insight_feedback f
   WHERE f.created_at < now() - interval '30 days'
     AND f.retained_at IS NULL
   GROUP BY 1,2,3,4
-  ON CONFLICT (period_start, session_id, insight_type, feedback_action)
+  ON CONFLICT (period_start, profile_id, insight_type, feedback_action)
     DO UPDATE SET count = copilot_retention_aggregates.count + EXCLUDED.count;
 
   -- 4. Marcar feedbacks como retidos e redigir texto
