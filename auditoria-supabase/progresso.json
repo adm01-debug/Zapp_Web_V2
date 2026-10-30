@@ -1,0 +1,115 @@
+{
+  "audit_date": "2026-10-25",
+  "project_id": "tnnnlkbymytvtqngbbqh",
+  "repo": "adm01-debug/Zapp_Web_V2",
+  "session_id": "a706020b-37bc-56b5-b7ef-e1ef6d69d689",
+  "last_updated": "2026-10-25T15:00Z",
+  "secoes": {
+    "S01_grants_anon": {
+      "status": "CONCLUIDO",
+      "ts": "2026-10-25T09:00Z",
+      "resumo": "98 tabelas com GRANT INSERT para anon — CRITICAL-1",
+      "finding": "CRITICAL-1",
+      "proposta": "auditoria-supabase/propostas/01_revogar_grants_anon.sql"
+    },
+    "S02_drift_repo_ledger": {
+      "status": "CONCLUIDO",
+      "ts": "2026-10-25T11:40Z",
+      "resumo": "1056 arquivos no repo, 1054 no ledger. Drift: 2 migrations (20261026190300 + 20261026200300) ainda nao registradas. types.ts: 184 tabelas (Row types), 13098 linhas. Anon key em .env.production e migration 20260829 — role=anon, intencional (VITE_*, publico). Service_role: NAO encontrado em git. Deno.env: 37 keys unicas. 84 edge functions no repo. 14 com verify_jwt=false (webhooks + auth-login + public-api).",
+      "finding": "MEDIUM — 2 migrations sem ledger"
+    },
+    "S03_rls_policies": {
+      "status": "CONCLUIDO",
+      "ts": "2026-10-25T09:30Z",
+      "resumo": "39 UPDATE policies com with_check IS NULL — CRITICAL-2 (recontado 2026-10-25T14:00Z: with_check_null=39, with_check_true=0). 35 FKs sem indice (pg_constraint). 4 tabelas sem RLS ativado.",
+      "finding": "CRITICAL-2 (39 policies), HIGH-3, HIGH-4"
+    },
+    "S04_cron_failures": {
+      "status": "CONCLUIDO",
+      "ts": "2026-10-25T09:00Z",
+      "resumo": "talkx-scheduler-1min: 4007 falhas / 43180 runs / 9.3% (30 dias). Causa: startup timeout. CRITICAL-3.",
+      "inconsistencia_resolvida": "9724 era todos os 24 jobs sem filtro; filtrado = 4007 (match com sessao anterior)",
+      "finding": "CRITICAL-3",
+      "proposta": "supabase/migrations/20261026200300_fix-talkx-cron-startup-timeout.sql"
+    },
+    "S05_slow_queries": {
+      "status": "CONCLUIDO",
+      "ts": "2026-10-25T14:00Z",
+      "resumo": "Top 20 queries via extensions.pg_stat_statements (schema correto — pg_stat_statements sem qualificador falha com 42P01). trigger_talkx_engine_tick: max=16107ms (CRITICAL-3). rpc_queue_goal_metrics: mean=1208ms. pg_timezone_names: mean=883ms (cachear no app).",
+      "finding": "MEDIUM — rpc_queue_goal_metrics e pg_timezone_names candidates para otimizacao"
+    },
+    "S06_indexes": {
+      "status": "CONCLUIDO",
+      "ts": "2026-10-25T09:30Z",
+      "resumo": "35 FKs sem indice covering. cron.job_run_details sem indice (jobid, start_time) — causa C1 do CRITICAL-3. Indices duplicados encontrados (idx_talkx_template_versions_template_version vs unique constraint).",
+      "finding": "HIGH-3 (35 FKs)"
+    },
+    "S07_functions": {
+      "status": "CONCLUIDO",
+      "ts": "2026-10-25T11:35Z",
+      "resumo": "399 funcoes SECURITY DEFINER — todas com search_path configurado (sem risco de injection). 9 funcoes com EXECUTE para roles: todas safe (service_role ou is_admin check). 5 com WHEN OTHERS: trigger_talkx_engine_tick sem WHEN query_canceled (corrigido em migration 200300).",
+      "finding": "LOW — tudo safe exceto WHEN query_canceled (ja corrigido)"
+    },
+    "S08_realtime": {
+      "status": "CONCLUIDO",
+      "ts": "2026-10-25T11:33Z",
+      "resumo": "36 tabelas em supabase_realtime publication. Nenhuma tem rowfilter. Isolamento depende 100% de RLS. Com CRITICAL-2 (WITH CHECK ausente), UPDATE via realtime pode nao ser validado em producao. VERIFICADO via pg_publication_tables (2026-10-25T14:00Z).",
+      "finding": "MEDIUM — realtime sem rowfilter; HIGH se CRITICAL-2 nao for corrigido"
+    },
+    "S09_auth_storage": {
+      "status": "CONCLUIDO",
+      "ts": "2026-10-25T11:33Z",
+      "resumo": "auth.users: 10 usuarios, todos confirmados, 1 banido. 9 buckets de storage. multiplix-voice: 0 policies (HIGH — sem restricao de acesso via RLS policy). 34 policies de storage via pg_policies WHERE schemaname='storage'. Todos outros buckets com RLS. Auth config (JWT/MFA/captcha): NAO VERIFICADO — auth.config nao existe como relacao SQL (42P01), auth.instances retorna 0 linhas.",
+      "inconsistencia_resolvida": "Storage policies verificado via pg_policies (schemaname='storage') — metodo correto. multiplix-voice tem 0 policies = HIGH finding adicionado."
+    },
+    "S10_logs": {
+      "status": "CONCLUIDO",
+      "ts": "2026-10-25T11:35Z",
+      "resumo": "7 dias: net._http_response: 1224 requests, 0 errors, 72 pending. Cron failures: todos 'job startup timeout' afetando 15 jobs distintos. Sem HTTP errors 5xx."
+    },
+    "S11_rls_matrix": {
+      "status": "CONCLUIDO",
+      "ts": "2026-10-25T12:00Z",
+      "resumo": "Matriz local (repo migrations): T-01 PASS (user-a ve 2 msgs do proprio contato), T-02 PASS (user-a nao ve msgs user-b, count=0), T-C2 PASS (UPDATE cross-tenant bloqueado por implicit WITH CHECK), T-05 PASS (INSERT cross-tenant bloqueado), T-09 PASS (DELETE cross-tenant bloqueado). Executado em rls_audit_test (PostgreSQL 16, migrations do repo).",
+      "producao_rls_matrix": "NAO_VERIFICADO — MCP bloqueia SET LOCAL role (SECURITY DEFINER wrapper, HTTP 403). Verificar manualmente: PSQL direto no dashboard SQL Editor com SET LOCAL ROLE authenticated e jwt claims.",
+      "evidencia": "auditoria-supabase/testes/01_rls_matrix.sql (re-executado 2026-10-25T12:00Z nesta sessao)"
+    },
+    "S12_lacunas": {
+      "status": "CONCLUIDO",
+      "ts": "2026-10-25T11:38Z",
+      "resumo": "PITR: archive_mode=on, wal-push ativo (Supabase gerenciado). Trilha de auditoria: 19 tabelas audit/log. LGPD: 11 funcoes purge_*. CI RLS: 20 migrations RLS no ledger + scripts db-guard. Sem staging dedicado (banco local por worktree, ver CLAUDE.md S0). Alertas: talkx_alerts table ativa."
+    },
+    "S_INTEGRIDADE_ADICIONAL": {
+      "status": "CONCLUIDO",
+      "ts": "2026-10-25T12:30Z",
+      "resumo": "Inventario em inventario/09_integridade.md: 8 extensoes, 10 enums, 4 sequences (todas bigint, 0% limite), 215 triggers (todos legitimos), pg_net (1224 respostas 7d, 0 erros), 294 FKs (CASCADE 137, SET NULL 98, NO ACTION 55, RESTRICT 4), bloat max 6.5% (email_threads, autovacuum ativo), RLS cara (email_threads 2836 seq scans), integridade contacts.phone CLEAN (0 duplicatas, 3110 ativos), profiles x auth.users CLEAN (10/10, 0 orfaos), varredura git CLEAN (sem service_role hardcoded).",
+      "finding": "INFO"
+    }
+  },
+  "findings_count": {
+    "CRITICAL": 3,
+    "HIGH": 4,
+    "MEDIUM": 3,
+    "LOW": 2
+  },
+  "corrections_this_session": [
+    {
+      "id": "CRITICAL-3",
+      "arquivo": "supabase/migrations/20261026200300_fix-talkx-cron-startup-timeout.sql",
+      "pr": "#2245",
+      "status": "PR aberta — aguardando Joaquim (regra 8 CLAUDE.md: workflows/CI)"
+    }
+  ],
+  "drift_summary": {
+    "migrations_repo": 1056,
+    "migrations_ledger": 1054,
+    "pendentes": ["20261026190300_saved_filters_inbox_limites.sql", "20261026200300_fix-talkx-cron-startup-timeout.sql"],
+    "types_ts_linhas": 13098,
+    "types_ts_row_types": 184,
+    "edge_functions_repo": 84,
+    "edge_functions_verify_jwt_false": 14,
+    "deno_env_keys": 37,
+    "anon_key_em_git": "SIM — intencional (.env.production VITE_* publico, role=anon confirmado)",
+    "service_role_em_git": "NAO encontrado"
+  }
+}
