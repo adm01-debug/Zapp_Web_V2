@@ -23,16 +23,16 @@
 | Workflow | Último run concluído na `main` | Run ID | Conclusão | Observação |
 |---|---|---|---|---|
 | `auto-update-pr-branch` | SHA `a1b27118` | [`40966272128`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40966272128) | ✅ `success` | **Corrigido** — try/catch em `fila-merge.mjs` |
-| `branch-hygiene-audit` | SHA `2d97c44c` (2026-10-26) | [`40289875804`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40289875804) | ⚠️ `cancelled` | Timeout ~14h — `PENDENCIAS.md §7` |
+| `branch-hygiene-audit` | SHA `2d97c44c` (2026-10-26) | [`40289875804`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40289875804) | ⚠️ `cancelled` | Timeout ~14h — `PENDENCIAS.md §2` |
 | `ci.yml` | SHA `a1b27118` | [`40965991336`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991336) | ✅ `success` | Verde |
 | `check-talkx-pr-body` | — | — | ⏯️ nunca rodou na main | Só dispara em `pull_request` |
 | `codeql.yml` | SHA `2d97c44c` | [`40302364560`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40302364560) | ✅ `success` | Verde |
 | `crm-sync-worker` | — | `35717413825` | ⏯️ `skipped` | `vars.CRM_SYNC_WORKER_ENABLED=false` por design |
-| `db-guard` | SHA `a1b27118` | [`40965991318`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991318) | ✅ `success` | Run passou com ECR acessível; fix permanente (ghcr.io) em [PR #2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) aguarda Joaquim (Regra 8) — `PENDENCIAS.md §8` |
-| `db-live-guard` | SHA `2d97c44c` (2026-10-26) | [`40282111471`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40282111471) | ❌ `failure` | Drift catálogo/manifesto — `PENDENCIAS.md §4` |
-| `db-migrate` | SHA `2d97c44c` (2026-10-25) | [`40236186538`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40236186538) | ❌ `failure` | **Bloqueio de segurança por design** — `remote_only_count=3` — `PENDENCIAS.md §6` |
-| `deploy-functions` | SHA `ca89064` (2026-10-30) | [`40988248151`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40988248151) | ❌ `failure` | **Fix aplicado em PR** — `preparar-artifact-deploy.sh` agora grava `sem-deploy.json` quando diretório está vazio — `PENDENCIAS.md §5` |
-| `e2e-logado` | SHA `a1b27118` | [`40965991521`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991521) | ⚠️ `cancelled` | Instabilidade infra `auth-login` — `PENDENCIAS.md §2` |
+| `db-guard` | SHA `a1b27118` | [`40965991318`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991318) | ✅ `success` | Run passou com ECR acessível; fix permanente (ghcr.io) em [PR #2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) aguarda Joaquim (Regra 8) — `PENDENCIAS.md §1` |
+| `db-live-guard` | SHA `2d97c44c` (2026-10-26) | [`40282111471`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40282111471) | ❌ `failure` | Drift catálogo/manifesto — `PENDENCIAS.md §6` |
+| `db-migrate` | SHA `2d97c44c` (2026-10-25) | [`40236186538`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40236186538) | ❌ `failure` | **Bloqueio de segurança por design** — `remote_only_count=3` — `PENDENCIAS.md §3` |
+| `deploy-functions` | SHA `ca89064` (2026-10-30) | [`40988248151`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40988248151) | ❌ `failure` | **Fix identificado** — `preparar-artifact-deploy.sh` não deposita arquivos quando sem push real em `supabase/functions/` — `PENDENCIAS.md §8` |
+| `e2e-logado` | SHA `a1b27118` | [`40965991521`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991521) | ⚠️ `cancelled` | Instabilidade infra `auth-login` — `PENDENCIAS.md §4` |
 | `e2e-talkx` | — | — | ⏯️ nunca rodou na main | Só dispara em `pull_request` |
 | `notifica-falha-main` | SHA `a1b27118` | [`40970921119`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40970921119) | ⏯️ `skipped` | Nenhuma falha de CI disparou o workflow |
 | `settings-guard` | SHA `ca89064` | [`40986380985`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40986380985) | ✅ `success` | **Corrigido** — PR #2355 mergeado |
@@ -101,11 +101,11 @@ Test Files  1844 passed | 5 skipped (1849)
 | `settings-guard` | Baseline desatualizado (3 divergências) | PR #2355 mergeado em `ca89064` | [`40986380985`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40986380985) (SHA `ca89064`) | ✅ `success` em 2026-10-30T01:42:39Z |
 | `types-sync` | `is_pinned` → coluna JÁ EXISTE no banco; `bunx tsc` = 0 erros | Nenhum code change necessário | [`40987628915`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40987628915) (SHA `ca89064`) | ✅ `success` |
 | `deploy-functions` | `preparar-artifact-deploy.sh` não depositava arquivos quando sem deploy real — diretório vazio causava falha do `upload-artifact` | Adicionado bloco que grava `sem-deploy.json` se `$DESTINO` estiver vazio | Aguardando run após merge do PR | ⏳ PR em aberto |
-| `db-guard` | ECR rate limit (`toomanyrequests`) | Fix em [PR #2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) — `ghcr.io/supabase/postgrest` (mesmo SHA) | [`40965991318`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991318) success (ECR acessível); PR aguarda Joaquim | ⏳ `PENDENCIAS.md §8` |
-| `e2e-logado` | 504 infra `auth-login` (instabilidade pontual) | Sem código errado | — | ⏳ `PENDENCIAS.md §2` |
-| `db-live-guard` | Drift catálogo/manifesto no banco de produção | Reconciliação de migrations necessária | — | ⏳ `PENDENCIAS.md §4` |
-| `db-migrate` | Bloqueio de segurança por design (`remote_only_count=3`) | Reconciliar 3 versions órfãs no ledger | [`40236186538`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40236186538) | 🔒 `PENDENCIAS.md §6` |
-| `branch-hygiene-audit` | Job ultrapassa timeout (~14h) | Timeout explícito ou paginação | [`40289875804`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40289875804) | ⏳ `PENDENCIAS.md §7` |
+| `db-guard` | ECR rate limit (`toomanyrequests`) | Fix em [PR #2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) — `ghcr.io/supabase/postgrest` (mesmo SHA) | [`40965991318`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991318) success (ECR acessível); PR aguarda Joaquim | ⏳ `PENDENCIAS.md §1` |
+| `e2e-logado` | 504 infra `auth-login` (instabilidade pontual) | Sem código errado | — | ⏳ `PENDENCIAS.md §4` |
+| `db-live-guard` | Drift catálogo/manifesto no banco de produção | Reconciliação de migrations necessária | — | ⏳ `PENDENCIAS.md §6` |
+| `db-migrate` | Bloqueio de segurança por design (`remote_only_count=3`) | Reconciliar 3 versions órfãs no ledger | [`40236186538`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40236186538) | 🔒 `PENDENCIAS.md §3` |
+| `branch-hygiene-audit` | Job ultrapassa timeout (~14h) | Timeout explícito ou paginação | [`40289875804`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40289875804) | ⏳ `PENDENCIAS.md §2` |
 
 ---
 
@@ -299,21 +299,37 @@ O CI usa `bun run test` com 3 shards paralelos. Os 3 shards passaram com ✅ `su
 
 | Workflow com falha | Fix aplicado | Run de prova | Conclusão |
 |---|---|---|---|
-| `CI/CD Pipeline` (Deno integrity) | Hash `tslib@2.8.1` corrigido em `deno.lock` (PR #2394) | [41136621195](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41136621195) pós-merge `bcb11c84` — queued/in_progress | ⏳ em andamento |
+| `CI/CD Pipeline` (Deno integrity) | Hash `tslib@2.8.1` corrigido em `deno.lock` (PR #2394) | [41136611959](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41136611959) pós-merge `bcb11c84` | ✅ `🧩 Node CI Scripts` = completed success |
 | `auto-update-pr-branch` (fila-merge) | try/catch em `execFileSync` com `maxBuffer: 10MB` (PR #2394) | Merge `bcb11c84` entrou sem travar a fila | ✅ fix confirmado |
-| `deploy-functions` (Deno integrity) | Mesmo fix do `deno.lock` | [41136621195](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41136621195) | ⏳ em andamento |
-| `db-live-guard` (drift pós-janela sem deploy) | Fix Deno resolve a causa raiz | Aguardar run das 06:13 UTC | ⏳ `PENDENCIAS.md §6` |
+| `deploy-functions` (Deno integrity) | Mesmo fix do `deno.lock` | [41136611974](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41136611974) pós-merge `bcb11c84` | ✅ `🧩 Node CI Scripts` = completed success |
+| `db-live-guard` (drift pós-janela sem deploy) | Fix Deno resolve causa Deno; drift de banco exige reconciliação | Aguardar run das 06:13 UTC | ⏳ `PENDENCIAS.md §6` |
 | `Copilot Code Review` | Falha interna GitHub Copilot — sem código para corrigir | — | ⏳ `PENDENCIAS.md §7` |
 
 ### Runs pós-merge na main `bcb11c84` (22:12 UTC)
 
 | Run ID | Workflow | Status (22:18 UTC) |
 |---|---|---|
-| [41136621195](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41136621195) | `CI/CD Pipeline` | ⏳ queued |
-| [41136621171](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41136621171) | `DB Guard (offline)` | ⏳ in_progress |
+| [41136611959](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41136611959) | `CI/CD Pipeline` | ⏳ queued |
+| [41136611974](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41136611974) | `DB Guard (offline)` | ⏳ in_progress |
 | [41137139218](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41137139218) | `DB Live Guard` | ⏳ queued |
 
 Os runs estão em fila/em andamento — disparados pelo merge. O fix do `deno.lock` resolve a causa raiz das falhas de Deno (CI/CD Pipeline e deploy-functions).
+
+### Check_runs confirmados no commit `bcb11c84` (verificados pós-merge)
+
+| Check | Resultado |
+|---|---|
+| `🧩 Node CI Scripts` | ✅ `completed success` — fix `deno.lock` (tslib@2.8.1) CONFIRMADO |
+| `🔒 Security Audit` | ✅ `completed success` |
+| `🔎 TypeCheck` | ✅ `completed success` |
+| `🧪 Unit Tests (2/3)` | ✅ `completed success` |
+| `🎭 E2E logado (deslogado-principal)` | ✅ `completed success` |
+| `🎭 E2E logado (deslogado-secundario)` | ✅ `completed success` |
+| `🧪 Unit Tests (1/3)` e `(3/3)` | ⏳ `in_progress` no momento da verificação |
+| `🎭 E2E Tests (Playwright)` (authenticated) | ⏳ `in_progress` no momento da verificação |
+| `Contrato DB offline` | ⏳ `in_progress` no momento da verificação |
+| `Contrato DB vivo` (db-live-guard) | ❌ `completed failure` — drift real no banco → `PENDENCIAS.md §6` |
+| `copilot-pull-request-reviewer` | ❌ `completed failure` — serviço externo → `PENDENCIAS.md §7` |
 
 ### Confirmação de zero regressão
 
@@ -324,4 +340,4 @@ Os runs estão em fila/em andamento — disparados pelo merge. O fix do `deno.lo
 - Nenhum `continue-on-error` introduzido
 - Nenhum workflow desativado
 
-*Atualizado em 2026-10-30T22:20 UTC pela sessão `claude/focused-hopper-qhavw1`.*
+*Atualizado em 2026-10-30T22:40 UTC pela sessão `claude/focused-hopper-qhavw1`.*

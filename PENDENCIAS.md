@@ -82,3 +82,17 @@ Está em draft. Joaquim deve revisar, aprovar e mergear.
 | Causa | Falha interna do GitHub Copilot SWE agent — firewall bloqueando URLs externas ou instabilidade do serviço |
 | Por que está bloqueado | Serviço externo do GitHub; não há código do repositório para corrigir |
 | Ação necessária | Nenhuma imediata — é um reviewer adicional, não é required check. Se persistir por >7 dias, Joaquim pode verificar nas configurações de Copilot do repositório (Settings → Copilot) se há alguma configuração de rede bloqueando |
+
+---
+
+## 8. `deploy-functions` — `preparar-artifact-deploy.sh` com diretório vazio (`workflow_dispatch` sem push real)
+
+| Campo | Valor |
+|---|---|
+| Workflow | `.github/workflows/deploy-functions.yml` |
+| Erro exato | `##[warning]No files were found with the provided path: /home/runner/work/_temp/edge-deployment-evidence-public/. No artifacts will be uploaded.` |
+| Run com falha | [40988248151](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40988248151) (SHA `ca89064`, 2026-10-30) |
+| Causa | `scripts/edge-deploy/preparar-artifact-deploy.sh` cria o diretório `$DESTINO` mas não deposita nenhum arquivo quando acionado via `workflow_dispatch` sem push real em `supabase/functions/`. O passo `upload-artifact` falha com "No files were found". |
+| Fix identificado | Adicionar ao final do script um bloco que grava `sem-deploy.json` quando `$DESTINO` estiver vazio após as cópias — evita a falha sem mascarar erros reais de deploy. |
+| Status | PR em aberto — não mergeado. O `deno.lock` (causa separada que afetava `deno check`) foi corrigido em PR #2394 (mergeado em 2026-10-30T22:12). |
+| Ação necessária | Abrir e mergear PR com o fix de `preparar-artifact-deploy.sh`. Após o merge, disparar `workflow_dispatch` do `deploy-functions` para confirmar `conclusion: success`. |
