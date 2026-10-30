@@ -107,6 +107,14 @@
     "20261026230300_decidir_schemas_backup.sql": {
       "categoria": "reconciliacao-producao",
       "motivo": "DROP SCHEMA ops_backup CASCADE: o schema ops_backup foi criado manualmente no canonico como backup temporario em 23/10/2026; no banco vazio do replay ele nao existe. Efeito real: nenhum — e apenas a remocao do backup temporario apos o prazo de retencao (22/11/2026). Medido em 30/10/2026."
+    },
+    "20261030100000_copilot_sessions.sql": {
+      "categoria": "cascata-objeto-existe-no-canonico",
+      "motivo": "REFERENCES public.conversations(id) falha no replay pois a tabela conversations nao e criada no banco efemero (mesmo padrao de 20260927540000 e 20260928430000). Canonico: conversations existe (tabela central do produto); copilot_sessions sera criada apos merge desta PR."
+    },
+    "20261030110000_copilot_insights.sql": {
+      "categoria": "cascata-objeto-existe-no-canonico",
+      "motivo": "REFERENCES public.copilot_sessions(id) falha em cascata: copilot_sessions nao foi criada no replay pois conversations nao existe no banco efemero. Canonico: ambas as tabelas serao criadas apos merge desta PR."
     }
   }
 }
