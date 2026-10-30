@@ -1,0 +1,9 @@
+# Typecheck baseline — main@2d97c44
+# Comando: npx tsc --noEmit --skipLibCheck
+# Data: 2026-10-26
+# Resultado: CLEAN — exit 0 (zero erros)
+
+$ npx tsc --noEmit --skipLibCheck
+(sem output)
+
+EXIT CODE: 0

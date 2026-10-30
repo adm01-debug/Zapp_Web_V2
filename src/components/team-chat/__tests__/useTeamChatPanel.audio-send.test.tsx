@@ -24,6 +24,7 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 
 vi.mock('@/hooks/communication/useTextToSpeech', () => ({
   useTextToSpeech: () => ({ setVoiceId: vi.fn(), setSpeed: vi.fn() }),
+  LOCAL_VOICE_ID: 'local',
 }));
 
 vi.mock('@/hooks/system/useUserSettings', () => ({

@@ -2,15 +2,20 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 
-vi.mock('framer-motion', () => ({
-  motion: new Proxy({}, {
-    get: (_t, tag: string) => (props: Record<string, unknown>) => {
-      const { children, initial, animate, exit, transition, layout, ...rest } = props;
-      return React.createElement(tag, rest as Record<string, unknown>, children as React.ReactNode);
-    },
-  }),
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    motion: new Proxy({}, {
+        get: (_t, tag: string) => (props: Record<string, unknown>) => {
+          const { children, initial, animate, exit, transition, layout, ...rest } = props;
+          return React.createElement(tag, rest as Record<string, unknown>, children as React.ReactNode);
+        },
+      }),
+      AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 import { SummaryResult } from '../summary/SummaryResult';
 
@@ -31,7 +36,8 @@ function setup(over: Partial<React.ComponentProps<typeof SummaryResult>> = {}) {
     ...over,
   };
   const utils = render(<SummaryResult {...props} />);
-  const iconButtons = () => Array.from(utils.container.querySelectorAll('button.h-6.w-6')) as HTMLElement[];
+  // Botões de ícone do TtsButton (h-8 w-8, alvo de toque ampliado; antes h-6 w-6).
+  const iconButtons = () => Array.from(utils.container.querySelectorAll('button.h-8.w-8')) as HTMLElement[];
   return { ...utils, props, iconButtons };
 }
 

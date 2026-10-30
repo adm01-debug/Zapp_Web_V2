@@ -161,7 +161,8 @@ test('E70: filtro do mapa usa checkout raso + SHA base, inclusive em PR antigo',
   const script = workflowRunBody(step);
   assert.match(step, /^\s+BASE_SHA: \$\{\{ github\.event\.pull_request\.base\.sha \}\}$/mu);
   assert.doesNotMatch(script, /git fetch/u, 'o filtro não deve depender de credenciais de fetch persistidas');
-  assert.match(script, /git diff --name-only "\$BASE_SHA" HEAD/u);
+  assert.match(script, /git diff --name-only "\$effective_base" HEAD/u);
+  assert.match(script, /HEAD\^1/u, 'o fallback usa HEAD^1 (pai base do merge sintético, não o head do PR)');
   assert.doesNotMatch(script, /git merge-base|\.\.\.HEAD/u, 'o filtro não pode depender do histórico ancestral');
 
   const root = mkdtempSync(join(tmpdir(), 'mutation-tree-diff-'));
@@ -209,7 +210,10 @@ test('E70: filtro do mapa usa checkout raso + SHA base, inclusive em PR antigo',
     assert.match(readFileSync(outputPath, 'utf8'), /map_changed=true/u);
 
     const missingBase = runMutationFilter(script, shallowMergeCheckout, 'deadbeef', outputPath);
-    assert.equal(missingBase.status, 1, 'base indisponível falha fechado sem tentar buscar histórico');
+    // BASE_SHA inválido: fallback para HEAD^1 (pai base do merge sintético).
+    // O PR mudou src/lib/mapbox.ts, então map_changed=true mesmo pelo fallback.
+    assert.equal(missingBase.status, 0, `fallback HEAD^1 deve detectar mudança no mapa: ${missingBase.stderr}`);
+    assert.match(readFileSync(outputPath, 'utf8'), /map_changed=true/u, 'fallback HEAD^1 deve detectar mudança no mapa');
 
     // O diff direto de árvores não precisa do merge-base, mesmo que a PR tenha
     // começado há 75 commits e o checkout local tenha apenas o merge sintético.

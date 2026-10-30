@@ -135,6 +135,10 @@ export type NormalizedRealtimeMessage = RealtimeMessage & {
   unsupportedKind?: UnsupportedMessageKind;
   /** Grupo de WhatsApp ao qual a mensagem pertence (null para mensagens 1:1). */
   whatsapp_group_id?: string | null;
+  /** JID do participante remetente (mensagens de grupo). */
+  sender_participant_jid?: string | null;
+  /** Nome de exibição do remetente (mensagens de grupo). */
+  sender_display_name?: string | null;
 };
 
 export function normalizeMessage(message: RealtimeMessage): NormalizedRealtimeMessage {
