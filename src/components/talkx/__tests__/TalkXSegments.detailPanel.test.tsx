@@ -171,7 +171,7 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
 
     // O botão Favoritar da linha: a lista volta com a cópia nova (updated_at mais
     // novo) e o painel, que lê o segmento pela id no cache, reflete sem novo clique.
-    fireEvent.click(screen.getByRole('button', { name: 'Favoritar' }));
+    fireEvent.click(within(linhaDoSegmento()).getByRole('button', { name: 'Favoritar' }));
     state.segments = [{ ...segmento, is_favorite: true, updated_at: '2026-10-09T12:00:00.000Z' }];
     // Re-render equivalente ao da invalidação da query (o hook está mockado).
     fireEvent.change(screen.getByPlaceholderText('Buscar segmentos…'), { target: { value: 'Segmento' } });
