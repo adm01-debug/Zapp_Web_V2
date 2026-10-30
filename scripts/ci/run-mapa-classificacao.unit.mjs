@@ -109,9 +109,10 @@ test('INF-019.7 rodada verde (saída 0, nada vermelho) é SOBREVIVENTE', () => {
 });
 
 test('INF-019.8 spawn real: processo que sai 1 sem rodar teste não vira mutante morto', () => {
-  const r = rodarSuite({ comando: process.execPath, argumentos: ['-e', 'process.exit(1)'] });
+  const r = rodarSuite({ comando: process.execPath, argumentos: ['-e', "process.stderr.write('falha de inicialização'); process.exit(1)"] });
   assert.equal(r.estado, ESTADOS.infra);
   assert.notEqual(r.estado, ESTADOS.morto);
+  assert.match(r.diagnostico, /falha de inicialização/);
 });
 
 test('INF-019.9 spawn real: binário inexistente não vira mutante morto', () => {
@@ -129,6 +130,17 @@ test('INF-019.10 spawn real: suíte verde é lida como SOBREVIVENTE (não como i
     ],
   });
   assert.equal(r.estado, ESTADOS.sobrevivente);
+});
+
+test('resumo do Vitest com cores do GitHub Actions é reconhecido', () => {
+  const r = interpretarRodada({
+    status: 0,
+    signal: null,
+    stdout: '\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m99 passed\u001b[39m\u001b[22m (99)\n',
+    stderr: '',
+  });
+  assert.equal(r.estado, ESTADOS.sobrevivente);
+  assert.match(r.resumo, /Tests\s+99 passed/);
 });
 
 test('INF-019.11 baseline não verde invalida a medição (código 2)', () => {
