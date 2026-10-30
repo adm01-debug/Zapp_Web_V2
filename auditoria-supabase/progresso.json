@@ -1,9 +1,27 @@
 {
   "projeto": "tnnnlkbymytvtqngbbqh",
   "iniciado_em": "2026-10-30",
-  "concluido_em": "2026-10-30",
   "postgres_version": "17.6",
   "total_migrations": 1064,
+  "baseline_capturado_em": "2026-10-30T22:28:26Z",
+  "baseline": {
+    "migrations": 1064,
+    "latest_version": "20261030110000",
+    "cron_jobs": 24,
+    "policies": 544,
+    "tables": 204,
+    "buckets": 9
+  },
+  "after_state_capturado_em": "2026-10-30T22:36:12Z",
+  "after_state": {
+    "migrations": 1064,
+    "latest_version": "20261030110000",
+    "active_crons": 24,
+    "policies": 544,
+    "tables": 204,
+    "buckets": 9,
+    "delta": "ZERO — produção inalterada"
+  },
   "secoes": {
     "1_inventario": "concluido",
     "2_drift": "concluido",
@@ -25,9 +43,19 @@
     "INFO": 13
   },
   "total_achados": 34,
-  "correcoes": [
-    "S04-001: FK profiles->auth.users EXISTE (pg_constraint confirma); reclassificado INFO",
-    "S03-001: roles=[public] é design; with_check bloqueia anon; reclassificado MÉDIO",
-    "S09-005: _bkp_261023 tem 9 tabelas sem RLS (não 3)"
-  ]
+  "nao_verificado": [
+    "advisors_supabase (requer dashboard ou API Management)",
+    "edge_function_logs_7d (requer Supabase Logs/Logflare)",
+    "pitr_retencao_dias (requer dashboard → Backups)",
+    "types_ts_completo_vs_schema (requer supabase gen types + diff)",
+    "from_rpc_codigo_vs_banco (coberto por supabase-usage-guard no CI)",
+    "edge_functions_publicadas_vs_repo (requer supabase functions list CLI)",
+    "rls_matrix_testes_jwt_producao (BEGIN/SET LOCAL/ROLLBACK nao suportado via MCP — roteiro em testes/rls_matrix_roteiro.md)"
+  ],
+  "incidente_ativo": {
+    "descricao": "15/24 cron jobs com job startup timeout",
+    "desde": "~2026-10-30T20:08:00Z",
+    "hipotese_causal": "recursao RLS em user_roles (S05-001) saturando connection pool",
+    "acao_imediata": "verificar pg_cron worker no painel Supabase e suporte Supabase"
+  }
 }
