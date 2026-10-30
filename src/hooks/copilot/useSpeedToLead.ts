@@ -36,7 +36,7 @@ export function useSpeedToLead({
     if (!firstClientMessageAt) return null;
 
     const firstMsgTime = new Date(firstClientMessageAt).getTime();
-    const currentTime = now ?? 0;
+    const currentTime = now ?? Date.now();
 
     if (lastAgentMessageAt) {
       const lastAgentTime = new Date(lastAgentMessageAt).getTime();

@@ -38,7 +38,7 @@ export function useQuoteDraft({
   items,
   deliveryDays = 10,
   paymentTerms = '50% na aprovação + 50% na entrega',
-  now = 0,
+  now,
 }: UseQuoteDraftOptions): QuoteDraft {
   return useMemo(() => {
     const ready = !!(clientName && items.length > 0 && items.every((i) => i.quantity > 0 && i.unitPrice > 0));
@@ -46,11 +46,12 @@ export function useQuoteDraft({
       return { ready: false, clientName, items: [], totalValue: 0, validity: 0, paymentTerms: '', deliveryDate: '', observations: [], textSummary: '' };
     }
 
+    const ts = now ?? Date.now();
     const lineItems: QuoteLineItem[] = items.map((i) => ({ ...i, total: i.quantity * i.unitPrice }));
     const totalValue = lineItems.reduce((s, i) => s + i.total, 0);
     const VALIDITY_DAYS = 5;
-    const deliveryDate = new Date(now + deliveryDays * 86_400_000).toLocaleDateString('pt-BR');
-    const validityDate = new Date(now + VALIDITY_DAYS * 86_400_000).toLocaleDateString('pt-BR');
+    const deliveryDate = new Date(ts + deliveryDays * 86_400_000).toLocaleDateString('pt-BR');
+    const validityDate = new Date(ts + VALIDITY_DAYS * 86_400_000).toLocaleDateString('pt-BR');
 
     const textSummary = [
       `Proposta para ${clientName}`,

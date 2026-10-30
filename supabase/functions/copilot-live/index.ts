@@ -60,6 +60,22 @@ serve(async (req) => {
       });
     }
 
+    // Guard: verifica ownership de sessão existente antes do upsert.
+    // Sem isso, qualquer autenticado pode sobrescrever profile_id de outro vendedor
+    // passando o conversation_id da vítima (o conflict target é só conversation_id).
+    const { data: existingSession } = await supabase
+      .from('copilot_sessions')
+      .select('profile_id')
+      .eq('conversation_id', payload.conversation_id)
+      .maybeSingle();
+
+    if (existingSession && existingSession.profile_id !== user.id) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403,
+        headers: { ...CORS, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Upsert copilot session
     const { data: session, error: sessionError } = await supabase
       .from('copilot_sessions')
