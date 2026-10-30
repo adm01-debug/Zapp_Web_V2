@@ -64,6 +64,7 @@ O executor `postgres` não pode mudar defaults pertencentes a `supabase_admin`; 
 ## Validação realizada neste branch
 
 - `bash scripts/db-audit/check-live-invariants.test.sh`: **48 cenários aprovados**, incluindo concessões diretas e defaults inseguros para `TRUNCATE`, `REFERENCES` e `TRIGGER`.
+- `bash scripts/db-audit/check-mcp-exec-acl.test.sh`: **31 cenários aprovados**; agora aceita `pg_temp` somente ao final do `search_path` e continua bloqueando ordem insegura e ausência de configuração.
 - `bash scripts/db-audit/replay-local.sh`: **1.041/1.065 migrations aplicadas; 24 falhas classificadas como conhecidas; 0 drift inesperado; `REPLAY=verde`**. Replay descartável, sem acesso ao banco canônico.
 - PR #2353 está integrada em `fb57b4a5`; não é mais uma pendência.
 - PR #2383 contém a correção de ACL e este relatório; aguarda checks do GitHub.
