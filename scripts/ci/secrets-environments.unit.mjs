@@ -76,7 +76,7 @@ const DESTINO_URL_POR_JOB = {
   'db-live-guard.yml:live-contract': 'banco-leitura',
   'db-migrate.yml:migrate': 'producao-ddl',
   'targeted-ledger-evidence.yml:export-encrypted-evidence': 'db-ledger-evidence',
-  'types-sync.yml:sync': 'banco-leitura',
+  'types-sync.yml:ler-banco': 'banco-leitura',
 };
 
 // W62: segredos de deploy. Todos vivem (ou vao viver) so em producao-edge-functions.
@@ -164,24 +164,6 @@ test('W62: crm-sync-worker le CRON_SECRET pelo environment producao-edge-functio
     job: 'drain',
     environment: 'producao-edge-functions',
   });
-});
-
-test.skip('W12: SETTINGS_GUARD_TOKEN so e lido pelo settings-guard, no environment perimetro-leitura', () => {
-  assert.deepEqual(consumidores('SETTINGS_GUARD_TOKEN'), [
-    { arquivo: 'settings-guard.yml', job: 'guard', environment: 'perimetro-leitura' },
-  ]);
-});
-
-test.skip('W12: settings-guard le com o token administrativo e cai no github.token sem ele', () => {
-  // Linha a linha (trim), sem regex multilinha (Sonar S5852).
-  const linhas = wf['settings-guard.yml'].split('\n').map((l) => l.trim());
-  assert.ok(
-    linhas.includes('ADMIN_READ_TOKEN: ${{ secrets.SETTINGS_GUARD_TOKEN || github.token }}'),
-    'sem o fallback, apagar/expirar o PAT faz o guard mandar "Bearer " vazio',
-  );
-  // As escritas (issue, PATCH de restauracao) continuam com o token do workflow, que
-  // comenta como github-actions[bot] — o dedupe do guard depende desse autor.
-  assert.ok(linhas.includes('GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}'));
 });
 
 test('environments usados por segredo existem no baseline do perimetro', () => {

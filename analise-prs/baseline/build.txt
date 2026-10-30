@@ -1,0 +1,24 @@
+# Build baseline — main@2d97c44
+# Comando: bun run build
+# Data: 2026-10-26
+# Resultado: CLEAN — exit 0
+
+$ bun run build
+dist/assets/SettingsView-DMhJoJ5i.js           190.81 kB
+dist/assets/vendor-voip-zxcsBpGh.js            221.66 kB
+dist/assets/ChatPanel-LlWiO0Qh.js              228.36 kB
+dist/assets/vendor-ui-DSUlqBOa.js              228.58 kB
+dist/assets/vendor-data-BebC7jg3.js            247.72 kB
+dist/assets/vendor-core-2qgj1EO4.js            259.40 kB
+dist/assets/DashboardView-B22NA951.js           271.40 kB
+dist/assets/index-DCw8yPuo.js                   288.56 kB
+dist/assets/pdf-KrtMnU6K.js                     430.26 kB
+dist/assets/EmailComposer-Do8m_XYs.js           445.55 kB
+dist/assets/vendor-charts-CQ2qO4mv.js           458.43 kB
+dist/assets/vendor-voice-DMSGNzKt.js            534.40 kB
+dist/assets/vendor-maps-BXm1CjOb.js           1,870.45 kB
+
+(!) Some chunks are larger than 1200 kB after minification. (warning, não erro)
+✓ built in 14.24s
+
+EXIT CODE: 0

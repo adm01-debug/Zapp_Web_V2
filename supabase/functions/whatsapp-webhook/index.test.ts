@@ -27,6 +27,24 @@
 import { assert, assertEquals, assertNotEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { handleWhatsappWebhook } from "./index.ts";
 
+Deno.test("verificação GET da Meta aceita só o token correto e devolve o challenge", async () => {
+  await withEnv({ WHATSAPP_VERIFY_TOKEN: "token-de-teste" }, async () => {
+    for (const [token, status] of [
+      ["token-de-teste", 200],
+      ["token-incorreto", 403],
+      [null, 403],
+    ] as const) {
+      const url = new URL("http://localhost/functions/v1/whatsapp-webhook");
+      url.searchParams.set("hub.mode", "subscribe");
+      url.searchParams.set("hub.challenge", "desafio-de-teste");
+      if (token !== null) url.searchParams.set("hub.verify_token", token);
+      const res = await handleWhatsappWebhook(new Request(url));
+      assertEquals(res.status, status);
+      if (status === 200) assertEquals(await res.text(), "desafio-de-teste");
+    }
+  });
+});
+
 // ---------------------------------------------------------------------------
 // helpers (withEnv/metaSign copiados de _shared/__tests__/webhook-auth-gates.test.ts)
 // ---------------------------------------------------------------------------

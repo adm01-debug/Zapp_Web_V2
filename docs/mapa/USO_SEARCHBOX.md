@@ -189,6 +189,46 @@ setembro **não existe e não é recuperável** — o que existe é a medição 
 Não há como reconstruir as seleções de setembro (o evento não existia). Qualquer número de "conversão"
 de setembro seria inventado — e é exatamente o tipo de número bonito que a auditoria de 29/09 pegou.
 
+## Segundo mês medido — outubro/2026 fechado (medido em 2026-10-28)
+
+Medido em **2026-10-28** contra produção: view `searchbox_usage_daily`, `audit_logs`, **somente
+`select`**. Nenhum número aqui é estimado. **Outubro é o primeiro mês com o funil completo
+instrumentado** (`searchbox_selected` e `location_sent` existem desde 2026-10-01).
+
+| Métrica | out/2026 (1–28/out, fechado) |
+|---|---|
+| Sessões de busca | **6** |
+| Seleções (`searchbox_selected`) | **5** |
+| Envios (`location_sent`) | **1** |
+| Taxa sessão → seleção | **83%** (5 de 6) |
+| Taxa seleção → envio | **20%** (1 de 5) |
+| Aviso de orçamento | **0** |
+| Degradações do guarda | **0** |
+| Custo | **US$ 0,00** (6 de 500 grátis — 1,2% do teto) |
+
+| Dia | Sessões |
+|---|---|
+| 01/10 | 1 |
+| 02/10 | 3 |
+| 03/10 | 1 |
+| 11/10 | 1 |
+| 12/10–28/10 | 0 |
+
+| Origem | Sessões em outubro |
+|---|---|
+| `picker` | 6 |
+| `contact-form` | 0 |
+
+**Leitura:** outubro rodou **muito abaixo do teto** — 1,2% dos 500 grátis, guarda nunca atuou, aviso
+de orçamento nunca disparou. A taxa de conversão sessão → seleção de **83%** (5 de 6 buscas viraram
+escolha) é o primeiro dado real de funil desde o rollout; a taxa seleção → envio de **20%** (1 de 5
+escolhas virou localização enviada no chat) indica que o operador busca endereço mas nem sempre o usa
+para enviar localização no chat. Nenhuma sessão veio de `contact-form` em outubro — as 7 sessões
+dessa origem estão todas em setembro.
+
+**Limitação:** `location_sent` conta envios de localização no chat; gravações de endereço no cadastro
+de contato passam pelo `contact_address_changed` de auditoria, não por esse evento.
+
 ## C1 — perda de endereço no cadastro de contato (Fase 1 / E07)
 
 **Medido em 2026-09-29, antes do deploy da Fase 1** (`select count(*) from public.contacts`):
