@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Workflows Bloqueados por Regra 8
 
-**Última atualização:** 2026-10-30T12:35Z  
+**Última atualização:** 2026-10-30T13:00Z  
 **Branch de origem:** `claude/keen-galileo-dxai3p`  
 **SHA main de referência:** `fec9d78ee8b7f05761f8e6178743907bb5d1b912` (main atual, 2026-10-30)
 
@@ -44,7 +44,7 @@ Mudança: step `deno install --config supabase/functions/deno.json` inserido ent
 
 **Bloqueio Regra 8:** Altera `.github/workflows/deploy-functions.yml` — CI/workflow.
 
-**Estado CI do PR #2371** (head `0989c375`, base `fec9d78e`, atualizado 12:35Z):
+**Estado CI do PR #2371** (head `0989c375`, base `fec9d78e`, atualizado 13:00Z):
 - ✅ `🔎 TypeCheck` (success)
 - ✅ `🔒 Security Audit` (success)
 - ✅ `🧩 Node CI Scripts` (success)
@@ -56,13 +56,12 @@ Mudança: step `deno install --config supabase/functions/deno.json` inserido ent
 - ✅ `🧪 Unit Tests (3/3)` (success)
 - ✅ `🎭 E2E Tests (Playwright)` (success)
 - ✅ `🏗️ Build` (success)
-- ⏳ `✅ CI Gate (required check)` (queued — gate final que agrega os 6 required checks)
+- ✅ `✅ CI Gate (required check)` (success)
 
-**11/12 checks verdes — CI Gate queued, deve completar em breve.**
+**12/12 checks verdes — CI totalmente verde. PRONTO PARA MERGE.**
 
 **O que o Joaquim precisa fazer:**  
-1. Aguardar `✅ CI Gate (required check)` completar (todos os constituintes já verdes) — [PR #2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371)
-2. Mergear (squash)
+1. Mergear (squash) — [PR #2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371)
 
 ---
 
@@ -148,26 +147,24 @@ O SHA digest `bb289d00...` é mantido idêntico — imagem idêntica, registro d
 
 **Impacto atual:** `db-guard.yml` em `main` está verde (push-to-main success). Este item é melhoria do check de PR não-required.
 
-**Estado CI do PR #2377** (head `1b627700`, base `fec9d78e`, atualizado 12:35Z):
-- ✅ `Replay local das migrations` (success, 12:06Z)
-- ✅ `🧬 Mutação do mapa` (success, 12:07Z)
-- ✅ `🔎 TypeCheck` (success, 12:10Z)
-- ✅ `🧩 Node CI Scripts` (success, 12:12Z)
-- ✅ `🔒 Security Audit` (success, 12:18Z)
-- ✅ `🧪 Unit Tests (1/3)` (success, 12:16Z)
-- ✅ `🧪 Unit Tests (2/3)` (success, 12:25Z)
-- 🔄 `🧪 Unit Tests (3/3)` (in_progress, 12:22Z)
-- ✅ `🎭 E2E Tests (Playwright)` (success, 12:27Z)
-- ✅ `Contrato DB offline` (success, 12:23Z)
+**Estado CI do PR #2377** (head `1b627700`, base `fec9d78e`, atualizado 13:00Z):
+- ✅ `Replay local das migrations` (success)
+- ✅ `🧬 Mutação do mapa` (success)
+- ✅ `🔎 TypeCheck` (success)
+- ✅ `🧩 Node CI Scripts` (success)
+- ✅ `🔒 Security Audit` (success)
+- ✅ `🧪 Unit Tests (1/3)` (success)
+- ✅ `🧪 Unit Tests (2/3)` (success)
+- ✅ `🧪 Unit Tests (3/3)` (success)
+- ✅ `🎭 E2E Tests (Playwright)` (success)
+- ✅ `Contrato DB offline` (success)
+- ✅ `🏗️ Build` (success)
+- ✅ `✅ CI Gate (required check)` (success)
 
-⚠️ `🏗️ Build` não aparece nos checks desta PR (PR toca apenas `.github/workflows/db-guard.yml`; CI pode omiti-lo por path filter).
-
-**12/13 checks verdes — aguardando apenas `🧪 Unit Tests (3/3)` (in_progress desde 12:22Z).**
+**12/12 checks verdes — CI totalmente verde. PRONTO PARA MERGE.**
 
 **O que o Joaquim precisa fazer:**  
-1. Aguardar `🧪 Unit Tests (3/3)` completar — [PR #2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377)
-2. Verificar se `🏗️ Build` é exigido pelo branch protection para esta PR (se necessário, re-verificar `required_status_checks`)
-3. Mergear (squash)
+1. Mergear (squash) — [PR #2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377)
 
 ---
 
