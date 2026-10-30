@@ -47,6 +47,9 @@ import { bucketByDue, bucketByStatus, isOverdue, kpis } from './workItemAggregat
 import type { WorkItem, WorkItemStatus, Priority, WorkItemContact } from './workItem.types';
 
 export type { WorkItemContact };
+
+export const TAREFA_CRIADA_TOAST_ID = 'tarefa-criada';
+
 import type { Database } from '@/integrations/supabase/types';
 
 // Tipos gerados do banco: as colunas de conversation_tasks vivem em
@@ -348,7 +351,7 @@ export function useMyWorkItems(opts: UseMyWorkItemsOpts = {}) {
       return (data as { id: string } | null)?.id ?? null;
     },
     onSettled: () => invalidate(),
-    onSuccess: () => { toast.success('Tarefa criada'); },
+    onSuccess: () => { toast.success('Tarefa criada', { id: TAREFA_CRIADA_TOAST_ID }); },
     onError: (err: Error & { blocked?: string }) => {
       if (err.blocked === 'remind_in_past') toast.error('O horario do aviso ja passou');
       else toast.error('Erro ao criar tarefa');

@@ -38,7 +38,7 @@ describe('alvo de toque 44px — contrato da classe no primitivo (desenho intact
         </DialogContent>
       </Dialog>,
     );
-    expect(screen.getByRole('button', { name: 'Close' })).toHaveClass(CLASSE);
+    expect(screen.getByRole('button', { name: 'Fechar' })).toHaveClass(CLASSE);
     cleanup();
 
     render(
@@ -48,7 +48,7 @@ describe('alvo de toque 44px — contrato da classe no primitivo (desenho intact
         </SheetContent>
       </Sheet>,
     );
-    expect(screen.getByRole('button', { name: 'Close' })).toHaveClass(CLASSE);
+    expect(screen.getByRole('button', { name: 'Fechar' })).toHaveClass(CLASSE);
   });
 
   it('checkbox e radio carregam alvo-toque-44 e são posicionados (relative)', () => {

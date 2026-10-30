@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
 import { evoFetch, extractConnectionState } from '../_shared/evolution-send.ts';
-import { getCorsHeaders, handleCors, internalErrorResponse } from '../_shared/validation.ts';
+import { getCorsHeaders, handleCors, internalErrorResponse, requireAuth } from '../_shared/validation.ts';
 import { decideControlAuthz } from '../_shared/evolution-control-authz.ts';
 import { resolveInstanceToken } from '../_shared/evolution-instance-token.ts';
 
@@ -34,6 +34,7 @@ export interface WebhookDiagnosticDeps {
   callerClient?: SupabaseClient;
   serviceKey?: string;
   anonKey?: string;
+  requireAuthFn?: (req: Request) => Promise<{ userId: string } | Response>;
 }
 
 export async function handleWebhookDiagnostic(req: Request, _injected?: WebhookDiagnosticDeps): Promise<Response> {
@@ -56,11 +57,10 @@ export async function handleWebhookDiagnostic(req: Request, _injected?: WebhookD
     // TODAS as conexões) e o auto-fix (POST de configuração do webhook na GO)
     // deixam de ser abertos a qualquer JWT válido — o reparo NÃO é exceção ao
     // gate. Exigem papel admin/supervisor (mesma matriz das ações de controle).
-    const { data: { user }, error: authError } = await callerClient.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Não autenticado.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-    const { data: isAdmin } = await callerClient.rpc('is_admin_or_supervisor', { _user_id: user.id });
+    // Z017: gate de 3 camadas (JWT + network policy + is_active) via requireAuth injetável.
+    const _auth = await (_injected?.requireAuthFn ?? requireAuth)(req);
+    if (_auth instanceof Response) return _auth;
+    const { data: isAdmin } = await callerClient.rpc('is_admin_or_supervisor', { _user_id: _auth.userId });
     const decision = decideControlAuthz(!!isAdmin);
     if (!decision.allowed) {
       return new Response(JSON.stringify({ error: decision.message }), { status: decision.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

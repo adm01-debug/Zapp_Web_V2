@@ -59,6 +59,8 @@ vi.mock('@/hooks/integrations/useEvolutionApi', () => ({ useEvolutionApi: () => 
 vi.mock('@/hooks/chat/useQuickReplies', () => ({ useQuickReplies: () => ({ quickReplies: [], incrementUseCount: vi.fn() }) }));
 
 vi.mock('@/hooks/communication/useTextToSpeech', () => ({
+  // VoiceSelector (montado pelo painel) lê a constante da voz do dispositivo.
+  LOCAL_VOICE_ID: 'local',
   useTextToSpeech: () => ({
     speak: vi.fn(), stop: vi.fn(), isLoading: false, isPlaying: false, currentMessageId: null,
     voiceId: '', setVoiceId: vi.fn(), speed: 1, setSpeed: vi.fn(),

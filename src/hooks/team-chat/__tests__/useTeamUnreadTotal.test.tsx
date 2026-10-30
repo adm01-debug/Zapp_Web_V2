@@ -73,11 +73,14 @@ describe('useTeamUnreadTotal (badge Teams)', () => {
   });
 
   it('cache vazio vira 0 (módulo fechado, nada a somar)', async () => {
-    const { wrapper } = createWrapper();
+    const { queryClient, wrapper } = createWrapper();
 
     const { result } = renderHook(() => useTeamUnreadTotal(), { wrapper });
 
     await waitFor(() => expect(result.current).toBe(0));
+    // O badge não deve criar uma query sem queryFn: isso emitia erros repetidos
+    // quando outros componentes invalidavam o inbox antes de ele abrir.
+    expect(queryClient.getQueryState(teamUnreadTotalQueryKey('profile-1'))).toBeUndefined();
   });
 
   it('acompanha o cache: marcar como lida zera o badge', async () => {

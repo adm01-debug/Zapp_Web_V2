@@ -29,7 +29,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
-import { useSentimentTrend, mapTrendRows } from '@/hooks/dashboard/useSentimentTrend';
+import { useSentimentTrend, mapTrendRows, splitWindows, summarizeWindow, sentimentDeltaPct } from '@/hooks/dashboard/useSentimentTrend';
 
 const wrapper = ({ children }: { children: React.ReactNode }) =>
   React.createElement(
@@ -58,11 +58,11 @@ describe('useSentimentTrend — série agregada no servidor (HZ2-003)', () => {
     linhas = [linha()];
   });
 
-  it('pede a série à RPC `sentiment_trend` com p_days, sem select de linhas cruas', async () => {
+  it('pede a série à RPC `sentiment_trend` com o dobro do período (atual + anterior), sem select de linhas cruas', async () => {
     const { result } = renderHook(() => useSentimentTrend(14), { wrapper });
     await waitFor(() => expect(result.current.data).not.toBeNull());
 
-    expect(chamadas).toEqual([{ nome: 'sentiment_trend', args: { p_days: 14 } }]);
+    expect(chamadas).toEqual([{ nome: 'sentiment_trend', args: { p_days: 28 } }]);
   });
 
   it('transporta a contagem canônica da RPC sem reinventar percentual (crítico já é negativo)', async () => {
@@ -148,5 +148,48 @@ describe('useSentimentTrend — série agregada no servidor (HZ2-003)', () => {
     expect(serie[0].avg_score).toBeCloseTo(-0.8, 4);
     // media '80.50' => 80.5/50 - 1 = 0.61.
     expect(serie[1].avg_score).toBeCloseTo(0.61, 4);
+  });
+});
+
+describe('variação do sentimento — período atual × anterior, ponderado', () => {
+  const r = (d: string, total: number, positivos: number, negativos: number, media: number | null) =>
+    ({ dia: d, total, positivos, neutros: total - positivos - negativos, negativos, media, indice: null });
+
+  it('separa os dias mais recentes como período atual e o resto como anterior', () => {
+    const { current, previous } = splitWindows([
+      r('2026-10-04', 2, 1, 0, 60), r('2026-10-01', 4, 1, 1, 50),
+      r('2026-10-03', 0, 0, 0, null), r('2026-10-02', 5, 2, 1, 55),
+    ], 2);
+    expect(current.map((d) => d.date)).toEqual(['2026-10-04']);
+    expect(previous.map((d) => d.date)).toEqual(['2026-10-01', '2026-10-02']);
+  });
+
+  it('percentual e score da janela pesam pelo total real de cada dia', () => {
+    const janela = summarizeWindow(mapTrendRows([
+      r('2026-10-01', 1, 1, 0, 100),
+      r('2026-10-02', 99, 0, 99, 0),
+    ]))!;
+    // Média simples dos dias daria 50% positivo e score 0; o peso real é 1 em 100.
+    expect(janela.total).toBe(100);
+    expect(janela.positivePct).toBeCloseTo(1, 6);
+    expect(janela.negativePct).toBeCloseTo(99, 6);
+    expect(janela.avgScore).toBeCloseTo((1 * 1 + -1 * 99) / 100, 6);
+  });
+
+  it('variação compara com o período anterior e é null sem base', () => {
+    const atual = { total: 10, positivePct: 0, negativePct: 0, avgScore: 0.6 };
+    const anterior = { total: 10, positivePct: 0, negativePct: 0, avgScore: 0.4 };
+    expect(sentimentDeltaPct(atual, anterior)).toBe(50);
+    expect(sentimentDeltaPct(atual, null)).toBeNull();
+    expect(sentimentDeltaPct(atual, { ...anterior, avgScore: 0 })).toBeNull();
+    expect(summarizeWindow([])).toBeNull();
+  });
+
+  it('o hook devolve o período anterior separado da série exibida', async () => {
+    linhas = [linha({ dia: dia(3), total: 10, positivos: 2 }), linha({ dia: dia(2) }), linha({ dia: dia(1) }), linha({ dia: dia(0) })];
+    const { result } = renderHook(() => useSentimentTrend(2), { wrapper });
+    await waitFor(() => expect(result.current.data).not.toBeNull());
+    expect(result.current.data!.map((d) => d.date)).toEqual([dia(1), dia(0)]);
+    expect(result.current.previous!.map((d) => d.date)).toEqual([dia(3), dia(2)]);
   });
 });
