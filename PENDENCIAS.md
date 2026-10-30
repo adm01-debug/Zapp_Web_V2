@@ -1,65 +1,60 @@
 # PENDÊNCIAS CI — Zapp Web V2
 
-**Data:** 2026-10-30  
-**Sessão:** https://claude.ai/code/session_01RfQzo7rsZ224WzBjCBKxqx
+> Itens que não podem ser resolvidos automaticamente: dependem de aprovação humana, acesso administrativo ou envolvem infra transiente.
+> Atualizado em 2026-10-30.
 
 ---
 
-## 1. `db-guard` — job "Replay local das migrations" (ECR rate limit)
+## 1. `db-guard` — ECR rate limit no PostgREST (Regra 8)
 
-**Workflow:** `.github/workflows/db-guard.yml`  
-**Job:** `Replay local das migrations`  
-**Status no último run (run 41000590444):** ❌ failure  
-**Erro exato:**
-```
-Error response from daemon: toomanyrequests: Data limit exceeded
-```
-**Imagem afetada:** `public.ecr.aws/supabase/postgres:17.6.1.159@sha256:86a2e078779e5bdccda1f6f6c5063aa9779a322d1fface5fb408d051909b230f`  
-**Causa raiz:** ECR Public Gallery impõe limite de data transfer para IPs sem autenticação (~1 GB/dia por IP de runner). Os runners do GitHub Actions atingem o limite quando vários runs puxam a imagem no mesmo período.  
-**Impacto:** Job não é required check — não bloqueia merge. Mas acusa failure no histórico do db-guard.  
-**Remediação:** Mesma do item 2 abaixo (migrar para `ghcr.io/supabase/postgres`). PR #2354 cobre ambos.  
-**Bloqueio:** Regra 8 — altera `.github/workflows/db-guard.yml`.  
+| Campo | Valor |
+|---|---|
+| Workflow | `.github/workflows/db-guard.yml` |
+| Erro exato | `toomanyrequests: Data limit exceeded` (pull do `public.ecr.aws/supabase/postgrest:v14.5`) |
+| Causa | ECR público limita pulls anônimos por IP nos runners do GitHub |
+| PR de correção | [#2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) — troca `public.ecr.aws/supabase/` → `ghcr.io/supabase/` (W57) |
+| Por que está bloqueado | Altera `.github/workflows/db-guard.yml` — **Regra 8** |
+| Ação necessária | Joaquim revisar e aprovar a [PR #2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) |
 
 ---
 
-## 2. `db-guard` — imagem `public.ecr.aws/supabase/postgres` → `ghcr.io`
+## 2. `branch-hygiene-audit` — timeout (Regra 8)
 
-**Workflow:** `.github/workflows/db-guard.yml`  
-**PR aberta:** [#2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) (`claude/fix-db-guard-ecr-261030`)  
-**Erro exato no baseline:**
-```
-toomanyrequests: Data limit exceeded
-```
-**Causa raiz:** ECR Public Gallery removeu acesso anônimo irrestrito; pull da imagem `public.ecr.aws/supabase/postgres:17.6.1.159` falha por rate limit nos runners do GitHub Actions.  
-**Fix proposto:** Substituir todas as referências de `public.ecr.aws/supabase/postgres` por `ghcr.io/supabase/postgres` no workflow, que oferece acesso autenticado com o `GITHUB_TOKEN` já disponível.  
-**Ação necessária do Joaquim:** Revisar e aprovar PR #2354 (toca `.github/workflows/db-guard.yml` — Regra 8).
+| Campo | Valor |
+|---|---|
+| Workflow | `.github/workflows/branch-hygiene-audit.yml` |
+| Erro exato | Job encerra por timeout sem `timeout-minutes:` configurado; script percorre todos os branches sem paginação |
+| Causa | Sem `timeout-minutes:` no job + sem paginação no script de auditoria |
+| Por que está bloqueado | Fix envolve alterar `.github/workflows/branch-hygiene-audit.yml` — **Regra 8** |
+| Ação necessária | Joaquim autorizar PR com: (a) `timeout-minutes: 20` no job; (b) paginação no script |
 
 ---
 
-## 3. `branch-hygiene-audit` — timeout no step de auditoria
+## 3. `db-migrate` — environment gate `producao-ddl` (by design)
 
-**Workflow:** `.github/workflows/branch-hygiene-audit.yml`  
-**Erro exato:** Timeout excedido no step de auditoria de branches (run termina sem conclusão, workflow marcado como failure/timed out).  
-**Causa raiz:** O step de auditoria não tem timeout explícito; com muitas branches no repositório, o loop de listagem de refs ultrapassa o timeout padrão do job.  
-**Fix necessário:** Adicionar `timeout-minutes:` ao step ou ao job, e/ou implementar paginação no script de auditoria.  
-**Ação necessária do Joaquim:** Autorizar mudança em `.github/workflows/branch-hygiene-audit.yml` (Regra 8: workflow CI).
-
----
-
-## 4. `e2e-logado` — 504 Gateway Timeout no edge `auth-login`
-
-**Workflow:** `.github/workflows/e2e-logado.yml`  
-**Erro exato:** `504 Gateway Timeout` ao chamar edge function `auth-login` durante os testes E2E autenticados.  
-**Causa raiz:** Problema de infraestrutura Supabase (cold start ou timeout do Supabase Edge Runtime), não do código do workflow nem dos testes. O erro é intermitente e coincide com picos de carga no projeto.  
-**Impacto:** `🎭 E2E Tests (Playwright)` é required check — quando `e2e-logado` falha por este timeout, o required check falha e bloqueia merge.  
-**Ação necessária do Joaquim:** Investigar configuração de warmup da edge function `auth-login` no projeto Supabase `tnnnlkbymytvtqngbbqh`; considerar retry no workflow ou keep-alive periódico da função.
+| Campo | Valor |
+|---|---|
+| Workflow | `.github/workflows/db-migrate.yml` |
+| Comportamento | Para em `Waiting` no environment `producao-ddl` aguardando aprovação humana |
+| Causa | By design — aprovação obrigatória antes de aplicar DDL em produção |
+| Por que está bloqueado | Exige intervenção humana de Joaquim na aba Actions |
+| Ação necessária | Joaquim aprovar o environment gate `producao-ddl` quando uma migration estiver pendente |
 
 ---
 
-## 5. `db-migrate` — environment gate `producao-ddl`
+## 4. `e2e-logado` — 504 Gateway Timeout no cold start (infra)
 
-**Workflow:** `.github/workflows/db-migrate.yml`  
-**Erro:** Workflow pausa em `Waiting` no environment `producao-ddl`.  
-**Causa raiz:** Por design — exige aprovação humana antes de aplicar DDL em produção.  
-**Impacto:** Não é required check de PR. Não executável por agente.  
-**Ação necessária do Joaquim:** Após o merge da PR #2359 (3 migrations reconciliadas), rodar `db-migrate.yml` com `apply=false` (dry-run), verificar o hash SHA-256 no sumário, e depois rodar com `apply=true` + `confirm_runtime_sha256` do dry-run. Aprovar manualmente no environment `producao-ddl` no GitHub Actions.
+| Campo | Valor |
+|---|---|
+| Workflow | `.github/workflows/e2e-logado.yml` |
+| Erro exato | `504 Gateway Timeout` na edge function `auth-login` em `tnnnlkbymytvtqngbbqh` |
+| Causa | Cold start do Supabase Edge Runtime — falha transiente de infraestrutura, não é código |
+| Por que está bloqueado | Não é bug de código; depende de warmup da infra Supabase |
+| Ação necessária | Nenhuma imediata. Se recorrente: implementar retry no E2E test ou endpoint de warmup |
+
+---
+
+## 5. PR #2354 — `db-guard` (aguardando revisão)
+
+PR [#2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) contém o fix do ECR (item 1 acima).
+Está em draft. Joaquim deve revisar, aprovar e mergear.

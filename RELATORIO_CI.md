@@ -1,7 +1,7 @@
 # RELATÓRIO CI — Zapp Web V2
 
 **Data:** 2026-10-30  
-**Branch de relatório:** `claude/keen-galileo-dxai3p`  
+**Branch de relatório:** `claude/keen-galileo-dxai3p` / `claude/fix-deno-skiplibcheck-261030-0623`  
 **Sessão:** https://claude.ai/code/session_01RfQzo7rsZ224WzBjCBKxqx
 
 ---
@@ -30,33 +30,39 @@
 
 ---
 
-## 2. Correções aplicadas (5 PRs mergeadas)
+## 2. Correções aplicadas (6 PRs)
 
-### PR #2355 — `settings-guard` ✅
+### PR #2355 — `settings-guard` ✅ mergeada
 - **Causa:** HTTP 403 em `github_get_branch_protection` (token sem escopo `administration`) tratado como regressão em vez de "NÃO VERIFICÁVEL".
 - **Fix:** `scripts/ci/settings-guard.mjs` — `403 === "NÃO VERIFICÁVEL"`.
 - **Arquivo:** `scripts/ci/settings-guard.mjs`
 
-### PR #2358 — `deploy-functions` (manifesto + diretório vazio) ✅
+### PR #2358 — `deploy-functions` (manifesto + diretório vazio) ✅ mergeada
 - **Causa:** Manifesto desatualizado (1 função ausente) + `preparar-artifact-deploy.sh` falhava com diretório vazio quando não havia nada a implantar.
 - **Fix:** Manifesto regenerado; script cria `sem-deploy.json` como marcador quando não há evidências de deploy.
 - **Arquivo:** `supabase/deployment-manifest.json`, `scripts/edge-deploy/preparar-artifact-deploy.sh`
 
-### PR #2359 — reconciliar 3 migrations órfãs (db-live-guard + db-migrate) ✅
+### PR #2359 — reconciliar 3 migrations órfãs (db-live-guard + db-migrate) ✅ mergeada
 - **Causa:** Versões `20261026210300`, `20261026220300`, `20261026230300` no ledger de produção sem arquivo `.sql`; guard detectava drift.
 - **Fix:** Criados 3 arquivos com DDL exato já em produção. 2 adicionadas a `replay-known-failures.json`.
 - **Arquivo:** `supabase/migrations/20261026{210300,220300,230300}_*.sql`
 
-### PR #2362 — fix assertion teste `preparar-artifact-deploy` ✅
+### PR #2362 — fix assertion teste `preparar-artifact-deploy` ✅ mergeada
 - **Causa:** PR #2358 adicionou `sem-deploy.json`; teste assertava `length === 0`.
 - **Fix:** `assert.deepEqual(semDeploy, ['sem-deploy.json'])` + verificação de conteúdo.
 - **Arquivo:** `scripts/edge-deploy/preparar-artifact-deploy.unit.mjs`
 
-### PR #2364 — `deploy-functions` manifesto stale 2ª causa ✅ (mergeada)
+### PR #2364 — `deploy-functions` manifesto stale 2ª causa ✅ mergeada
 - **Causa:** 3 arquivos de `supabase/functions/` com hashes alterados por PRs anteriores sem regeneração do manifesto: `_shared/cron-secret-auth.ts`, `_shared/evolution-control-authz.ts`, `evolution-api/index.ts`.
 - **Fix:** `node scripts/edge-deploy/generate-manifest.mjs` — 84 funções, 168 source files.
 - **Arquivo:** `supabase/deployment-manifest.json`
 - **PR:** [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) — `✅ CI Gate` success (run [41010314950](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41010314950), SHA `c1202b31`, 05:56Z). Squash-merge em `3af255603e` às 05:59Z.
+
+### PR #2367 — `deploy-functions` @types/node no deno check ⏳ CI in_progress
+- **Causa:** `@types/ws@8.18.1` (no `scripts/ci/deno.lock`) tem `/// <reference types="node" />` internamente. Com `nodeModulesDir: "none"`, Deno 2.9.5 falha ao resolver `@types/node` via `node_modules/` (inexistente). Introduzido pelo PR #2054 (commit `c543c6a`, mergeado 2026-10-28).
+- **Fix:** `compilerOptions.skipLibCheck: true` em `supabase/functions/deno.json`.
+- **Arquivo:** `supabase/functions/deno.json`
+- **PR:** [#2367](https://github.com/adm01-debug/Zapp_Web_V2/pull/2367) — CI run [41013681395](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41013681395) in_progress (06:22Z)
 
 ---
 
@@ -64,13 +70,15 @@
 
 | Workflow | PR | Run de validação | Conclusão |
 |---|---|---|---|
-| `settings-guard` | [#2355](https://github.com/adm01-debug/Zapp_Web_V2/pull/2355) | [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) (pós-merge PR #2362) | ✅ success |
-| `deploy-functions` | [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) | Dispatch pós-merge: run [41011471495](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41011471495) attempt 1 ❌ HTTP 522; attempt 2 in_progress (SHA `3af25560`) | ⏳ aguardando attempt 2 |
-| `db-live-guard` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | Novo dispatch: run [41011954292](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41011954292) (SHA `3af25560`, 06:04Z) | ⏳ in_progress |
-| `db-migrate` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | Regra 8 (environment gate `producao-ddl`) | 🔒 Regra 8 |
+| `settings-guard` | [#2355](https://github.com/adm01-debug/Zapp_Web_V2/pull/2355) | [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) | ✅ success |
+| `deploy-functions` | [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) + [#2367](https://github.com/adm01-debug/Zapp_Web_V2/pull/2367) | Run pós-merge PR #2367 (pendente — CI in_progress) | ⏳ aguardando merge + dispatch automático |
+| `db-live-guard` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | Dispatch pós-merge PR #2367 (pendente) | ⏳ aguardando deploy-functions verde |
+| `db-migrate` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | Regra 8 (environment gate `producao-ddl`) | 🔒 Regra 8 — ver PENDENCIAS.md item 3 |
 | `🧪 Unit Tests` (ci.yml) | [#2362](https://github.com/adm01-debug/Zapp_Web_V2/pull/2362) | CI PR #2364: run [41008768305](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768305) jobs `Unit Tests (1/3)(2/3)(3/3)` success | ✅ success |
 
-**Nota `db-migrate`:** O workflow requer aprovação humana no environment `producao-ddl` (Regra 8). Não é possível obter `conclusion=success` sem intervenção do Joaquim. Documentado em PENDENCIAS.md.
+**Nota `deploy-functions` + `db-live-guard`:** A PR #2367 (fix `skipLibCheck`) está com CI in_progress (run 41013681395, iniciado 06:22Z). Após merge automático quando CI ficar verde, o `deploy-functions.yml` dispara automaticamente na `main` (toca `supabase/functions/deno.json`). O `db-live-guard` será redispatchado em seguida.
+
+**Nota `db-migrate`:** O workflow requer aprovação humana no environment `producao-ddl` (Regra 8). Não é possível obter `conclusion=success` sem intervenção do Joaquim. Documentado em PENDENCIAS.md item 3.
 
 ---
 
@@ -79,8 +87,8 @@
 | Workflow | Motivo | PR / Item |
 |---|---|---|
 | `db-guard` (Replay local — ECR rate limit) | Altera `.github/workflows/db-guard.yml` | [PR #2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) |
-| `branch-hygiene-audit` (timeout) | Altera `.github/workflows/branch-hygiene-audit.yml` | PENDENCIAS.md item 3 |
-| `db-migrate` | Environment gate `producao-ddl` exige aprovação humana | PENDENCIAS.md item ausente — ver nota acima |
+| `branch-hygiene-audit` (timeout) | Altera `.github/workflows/branch-hygiene-audit.yml` | PENDENCIAS.md item 2 |
+| `db-migrate` | Environment gate `producao-ddl` exige aprovação humana | PENDENCIAS.md item 3 |
 | `e2e-logado` (504 Gateway Timeout) | Problema de infra Supabase Edge Runtime (cold start) | PENDENCIAS.md item 4 |
 
 ---
@@ -100,9 +108,9 @@
 
 ## 6. Gaps identificados
 
-- `deploy-functions` HTTP 522 (attempt 1): Cloudflare connection timeout ao `EXTERNAL_SUPABASE_URL` (catálogo externo) no step "Configurar secrets nas edges". Infra transiente — não é código. Re-run attempt 2 disparado (run [41011471495](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41011471495) attempt 2).
+- `deploy-functions` `@types/node` error: `@types/ws@8.18.1` no lockfile (redirects) tem referência transitiva a `@types/node`. Fix: `skipLibCheck: true` em `supabase/functions/deno.json` (PR #2367, CI in_progress).
 - `e2e-logado` 504: warmup do edge `auth-login` em `tnnnlkbymytvtqngbbqh` — não é código, infra.
 - `db-guard` ECR→ghcr.io: já coberto pela PR #2354 (Regra 8, aguarda Joaquim).
-- `branch-hygiene-audit` timeout: script sem `timeout-minutes:` + paginação — coberto em PENDENCIAS.md item 3.
+- `branch-hygiene-audit` timeout: script sem `timeout-minutes:` + paginação — coberto em PENDENCIAS.md item 2.
 - `db-migrate` environment gate: by design — não executável por agente.
 - Baseline local SIGABRT: limite de memória do container cloud — usar CI como evidência.
