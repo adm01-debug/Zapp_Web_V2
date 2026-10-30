@@ -56,7 +56,7 @@ test('R2-INF-002: com a redacao OK, o diretorio publicavel tem o log redigido e 
   // (b) o log publicado nao tem o valor nem a chave do token
   const publicado = lerSe(join(destino, 'deploy-output.log'));
   assert.equal(publicado.includes(SEGREDO), false, 'o valor do segredo nao pode ir para o artifact');
-  assert.doesNotMatch(publicado, /access[_%- ]?token/i, 'a chave access_token nao pode sobrar no artifact');
+  assert.doesNotMatch(publicado, /access[_% -]?token/i, 'a chave access_token nao pode sobrar no artifact');
   assert.ok(publicado.includes('executando deploy'), 'o resto do log tem de sobreviver (diagnostico)');
 
   // (c) o valor nunca e' impresso no log do run
