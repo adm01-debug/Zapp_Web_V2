@@ -56,7 +56,7 @@ test('R2-INF-002: com a redacao OK, o diretorio publicavel tem o log redigido e 
   // (b) o log publicado nao tem o valor nem a chave do token
   const publicado = lerSe(join(destino, 'deploy-output.log'));
   assert.equal(publicado.includes(SEGREDO), false, 'o valor do segredo nao pode ir para o artifact');
-  assert.doesNotMatch(publicado, /access[_%-]?token/i, 'a chave access_token nao pode sobrar no artifact');
+  assert.doesNotMatch(publicado, /access[_%- ]?token/i, 'a chave access_token nao pode sobrar no artifact');
   assert.ok(publicado.includes('executando deploy'), 'o resto do log tem de sobreviver (diagnostico)');
 
   // (c) o valor nunca e' impresso no log do run
@@ -114,11 +114,20 @@ test('R2-INF-002: contornos — sem log e sem diretorio de evidencia nao quebram
   assert.equal(existsSync(join(semLog.destino, 'deploy-output.log')), false);
   assert.ok(existsSync(join(semLog.destino, 'edge-deployment-attestation.json')));
 
-  // Nada coletado: o diretorio publicavel fica vazio (o upload sai com warn) e o passo nao falha.
+  // Nada coletado: o diretorio publicavel recebe sem-deploy.json (evita falha do
+  // upload-artifact) e o passo nao falha.
   const base = mkdtempSync(join(tmpdir(), 'preparar-artifact-vazio-'));
   const r2 = rodar(base, { SUPABASE_ACCESS_TOKEN: SEGREDO });
   assert.equal(r2.status, 0, `sem evidencia o passo tem de sair com 0 (stderr: ${r2.stderr})`);
-  assert.equal(readdirSync(join(base, 'edge-deployment-evidence-public')).length, 0);
+  assert.deepEqual(
+    readdirSync(join(base, 'edge-deployment-evidence-public')).sort(),
+    ['sem-deploy.json'],
+    'diretorio publicavel deve conter exatamente o marcador sem-deploy.json',
+  );
+  const marcador = JSON.parse(
+    readFileSync(join(base, 'edge-deployment-evidence-public', 'sem-deploy.json'), 'utf8'),
+  );
+  assert.equal(marcador.status, 'sem-deploy', 'marcador deve ter status=sem-deploy');
 });
 
 /** Shell do passo, lido do proprio YAML (e' ele que roda no runner). */
