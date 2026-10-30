@@ -1,7 +1,5 @@
 /**
  * CV-141 — Dashboard de custo do copilot.
- *
- * Agrega métricas de uso de IA para controle de custo e ROI.
  */
 import { useMemo } from 'react';
 
@@ -15,11 +13,7 @@ export interface CopilotCostMetrics {
 
 const BRL_PER_1K_TOKENS = 0.02;
 
-export function useCostDashboard({
-  sessions,
-}: {
-  sessions: Array<{ tokensUsed: number; suggestionsGenerated: number; suggestionsUsed: number }>;
-}): CopilotCostMetrics {
+export function useCostDashboard({ sessions }: { sessions: Array<{ tokensUsed: number; suggestionsGenerated: number; suggestionsUsed: number }> }): CopilotCostMetrics {
   return useMemo(() => {
     const totalTokensUsed = sessions.reduce((s, r) => s + r.tokensUsed, 0);
     const suggestionsGenerated = sessions.reduce((s, r) => s + r.suggestionsGenerated, 0);

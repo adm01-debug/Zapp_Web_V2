@@ -1,7 +1,5 @@
 /**
  * CV-111 — Guardrails de qualidade da resposta.
- *
- * Verifica se a mensagem viola regras de negócio antes de ser enviada.
  */
 import { useMemo } from 'react';
 
@@ -22,8 +20,6 @@ export function useGuardrails({ draftText }: { draftText: string }): GuardrailVi
   return useMemo(() => {
     if (!draftText) return [];
     const lower = draftText.toLowerCase();
-    return GUARDRAIL_RULES
-      .filter((r) => lower.includes(r.pattern))
-      .map(({ rule, severity, message }) => ({ rule, severity, message }));
+    return GUARDRAIL_RULES.filter((r) => lower.includes(r.pattern)).map(({ rule, severity, message }) => ({ rule, severity, message }));
   }, [draftText]);
 }

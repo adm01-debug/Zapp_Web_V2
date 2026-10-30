@@ -11,31 +11,16 @@ export type AudioToneType = 'angry' | 'frustrated' | 'enthusiastic' | 'neutral' 
 
 export interface AudioToneResult {
   tone: AudioToneType;
-  /** Confiança 0–1. */
   confidence: number;
-  /** Indicadores textuais que dispararam a classificação. */
   signals: string[];
-  /** Sugestão de postura para o vendedor. */
   suggestion: string;
 }
 
 const TONE_SIGNALS: Record<AudioToneType, string[]> = {
-  angry: [
-    'absurdo', 'inaceitável', 'péssimo', 'horrível', 'ridículo', 'uma vergonha',
-    'não aguento', 'que raiva', 'furioso', 'indignado', 'exijo', 'imediatamente',
-  ],
-  frustrated: [
-    'já falei', 'de novo', 'não entende', 'sempre assim', 'toda vez',
-    'cansei', 'paciência', 'demora muito', 'complicado demais', 'difícil',
-  ],
-  enthusiastic: [
-    'adorei', 'perfeito', 'maravilhoso', 'incrível', 'amei', 'top', 'ótimo',
-    'excelente', 'fantástico', 'que legal', 'vou querer', 'quero muito',
-  ],
-  uncertain: [
-    'não sei', 'talvez', 'pode ser', 'não tenho certeza', 'depende',
-    'vou pensar', 'preciso ver', 'não sei não', 'acho que',
-  ],
+  angry: ['absurdo', 'inaceitável', 'péssimo', 'horrível', 'ridículo', 'uma vergonha', 'não aguento', 'que raiva', 'furioso', 'indignado', 'exijo', 'imediatamente'],
+  frustrated: ['já falei', 'de novo', 'não entende', 'sempre assim', 'toda vez', 'cansei', 'paciência', 'demora muito', 'complicado demais', 'difícil'],
+  enthusiastic: ['adorei', 'perfeito', 'maravilhoso', 'incrível', 'amei', 'top', 'ótimo', 'excelente', 'fantástico', 'que legal', 'vou querer', 'quero muito'],
+  uncertain: ['não sei', 'talvez', 'pode ser', 'não tenho certeza', 'depende', 'vou pensar', 'preciso ver', 'não sei não', 'acho que'],
   neutral: [],
 };
 
@@ -47,41 +32,19 @@ const TONE_SUGGESTIONS: Record<AudioToneType, string> = {
   neutral: 'Tom neutro — prossiga normalmente.',
 };
 
-export interface UseAudioToneOptions {
-  /** Texto transcrito do áudio do cliente. */
-  transcribedText: string;
-  /** Aplica análise apenas quando verdadeiro (ex: após áudio recebido). */
-  enabled?: boolean;
-}
-
-export function useAudioTone({
-  transcribedText,
-  enabled = true,
-}: UseAudioToneOptions): AudioToneResult | null {
+export function useAudioTone({ transcribedText, enabled = true }: { transcribedText: string; enabled?: boolean }): AudioToneResult | null {
   return useMemo(() => {
     if (!enabled || !transcribedText.trim()) return null;
     const lower = transcribedText.toLowerCase();
-
     let bestTone: AudioToneType = 'neutral';
     let bestHits = 0;
     const foundSignals: string[] = [];
-
     for (const [tone, keywords] of Object.entries(TONE_SIGNALS) as [AudioToneType, string[]][]) {
       if (tone === 'neutral') continue;
       const hits = keywords.filter((kw) => lower.includes(kw));
-      if (hits.length > bestHits) {
-        bestHits = hits.length;
-        bestTone = tone;
-        foundSignals.splice(0, foundSignals.length, ...hits);
-      }
+      if (hits.length > bestHits) { bestHits = hits.length; bestTone = tone; foundSignals.splice(0, foundSignals.length, ...hits); }
     }
-
     const confidence = bestHits === 0 ? 0.5 : Math.min(bestHits * 0.3, 1);
-    return {
-      tone: bestTone,
-      confidence,
-      signals: foundSignals,
-      suggestion: TONE_SUGGESTIONS[bestTone],
-    };
+    return { tone: bestTone, confidence, signals: foundSignals, suggestion: TONE_SUGGESTIONS[bestTone] };
   }, [transcribedText, enabled]);
 }

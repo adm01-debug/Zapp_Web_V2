@@ -1,7 +1,5 @@
 /**
  * CV-087 — Estimativa de frete por estado.
- *
- * Fornece estimativa de frete por região para orientar o vendedor durante a conversa.
  */
 import { useMemo } from 'react';
 
@@ -23,12 +21,10 @@ const REGION_FREIGHT: Record<string, { range: string; note: string }> = {
 };
 
 const STATE_TO_REGION: Record<string, string> = {
-  SP: 'SP', RJ: 'RJ', MG: 'MG', ES: 'RJ',
-  PR: 'Sul', SC: 'Sul', RS: 'Sul',
+  SP: 'SP', RJ: 'RJ', MG: 'MG', ES: 'RJ', PR: 'Sul', SC: 'Sul', RS: 'Sul',
   DF: 'Centro', GO: 'Centro', MS: 'Centro', MT: 'Centro',
   AM: 'Norte', PA: 'Norte', AC: 'Norte', RO: 'Norte', RR: 'Norte', AP: 'Norte', TO: 'Norte',
-  BA: 'Nordeste', CE: 'Nordeste', PE: 'Nordeste', MA: 'Nordeste', PB: 'Nordeste',
-  RN: 'Nordeste', AL: 'Nordeste', SE: 'Nordeste', PI: 'Nordeste',
+  BA: 'Nordeste', CE: 'Nordeste', PE: 'Nordeste', MA: 'Nordeste', PB: 'Nordeste', RN: 'Nordeste', AL: 'Nordeste', SE: 'Nordeste', PI: 'Nordeste',
 };
 
 export function useFreightEstimate({ stateCode }: { stateCode: string | null }): FreightEstimateResult {

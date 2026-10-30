@@ -1,7 +1,5 @@
 /**
  * CV-083 — Calculadora de prazo real.
- *
- * Calcula viabilidade de entrega com base na data do evento e dias de produção.
  */
 import { useMemo } from 'react';
 
@@ -20,20 +18,9 @@ const PRODUCTION_DAYS: Record<string, number> = {
   caneta: 5, caneca: 7, camiseta: 10, squeeze: 8, mochila: 12, default: 10,
 };
 
-export function useDeadlineCalculator({
-  eventDate,
-  productType = 'default',
-  today = new Date(),
-}: {
-  eventDate: Date | null;
-  productType?: string;
-  today?: Date;
-}): DeadlineResult {
+export function useDeadlineCalculator({ eventDate, productType = 'default', today = new Date() }: { eventDate: Date | null; productType?: string; today?: Date }): DeadlineResult {
   return useMemo(() => {
-    if (!eventDate) {
-      return { feasibility: 'ok', productionDays: 0, lastOrderDate: null, daysUntilEvent: null, message: 'Informe a data do evento para calcular o prazo.', alternatives: [] };
-    }
-
+    if (!eventDate) return { feasibility: 'ok', productionDays: 0, lastOrderDate: null, daysUntilEvent: null, message: 'Informe a data do evento para calcular o prazo.', alternatives: [] };
     const prodDays = PRODUCTION_DAYS[productType] ?? PRODUCTION_DAYS.default;
     const msPerDay = 86_400_000;
     const daysUntilEvent = Math.floor((eventDate.getTime() - today.getTime()) / msPerDay);
@@ -41,7 +28,6 @@ export function useDeadlineCalculator({
     const alternatives: string[] = [];
     let feasibility: DeadlineFeasibility;
     let message: string;
-
     if (daysUntilEvent >= prodDays + 3) {
       feasibility = 'ok';
       message = `Prazo confortável. Último dia para pedir: ${lastOrderDate.toLocaleDateString('pt-BR')}.`;
@@ -56,7 +42,6 @@ export function useDeadlineCalculator({
       alternatives.push('Entrega parcial: parte na data, o restante depois');
       alternatives.push('Produto mais simples com prazo menor');
     }
-
     return { feasibility, productionDays: prodDays, lastOrderDate, daysUntilEvent, message, alternatives };
   }, [eventDate, productType, today]);
 }

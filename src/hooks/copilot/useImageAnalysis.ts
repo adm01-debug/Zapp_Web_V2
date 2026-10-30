@@ -1,8 +1,5 @@
 /**
  * CV-102 — Análise de imagem (stub).
- *
- * Extrai dados de produto/logo/arte de imagens enviadas pelo cliente.
- * Integração com vision LLM delegada (CV-021).
  */
 import { useState, useCallback } from 'react';
 
