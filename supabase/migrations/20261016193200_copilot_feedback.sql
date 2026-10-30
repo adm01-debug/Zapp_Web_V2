@@ -24,9 +24,13 @@ CREATE POLICY copilot_feedback_own ON public.copilot_feedback
   USING (profile_id IN (
     SELECT id FROM public.profiles WHERE user_id = auth.uid()
   ))
-  WITH CHECK (profile_id IN (
-    SELECT id FROM public.profiles WHERE user_id = auth.uid()
-  ));
+  WITH CHECK (
+    profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid())
+    AND session_id IN (
+      SELECT id FROM public.copilot_sessions
+      WHERE profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid())
+    )
+  );
 
 CREATE POLICY copilot_feedback_service ON public.copilot_feedback
   FOR ALL

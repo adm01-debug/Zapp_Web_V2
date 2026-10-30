@@ -27,12 +27,19 @@ BEGIN
     (period_start, session_id, insight_type, feedback_action, count)
   SELECT date_trunc('day', f.created_at)::date, f.session_id, NULL, f.action, count(*)
   FROM public.copilot_feedback f
-  WHERE f.created_at < now() - interval '30 days' AND f.final_text IS NOT NULL
+  WHERE f.created_at < now() - interval '30 days'
   GROUP BY 1,2,3,4
   ON CONFLICT (period_start, session_id, insight_type, feedback_action)
     DO UPDATE SET count = copilot_retention_aggregates.count + EXCLUDED.count;
 
-  DELETE FROM public.copilot_insights WHERE created_at < now() - interval '90 days';
+  -- Só apaga insight se nenhum feedback seu está dentro da janela de 30 dias
+  DELETE FROM public.copilot_insights
+  WHERE created_at < now() - interval '90 days'
+    AND id NOT IN (
+      SELECT DISTINCT insight_id
+      FROM public.copilot_feedback
+      WHERE created_at >= now() - interval '30 days'
+    );
 
   UPDATE public.copilot_feedback
      SET final_text = NULL

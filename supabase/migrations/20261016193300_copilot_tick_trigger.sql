@@ -10,11 +10,13 @@ AS $$
 DECLARE
   v_contact        public.contacts%ROWTYPE;
   v_phone          text;
-  v_flag_disabled  boolean;
+  v_flag_enabled   boolean;
   v_profile_id     uuid;
   v_ikey           text;
+  v_state_version  bigint;
 BEGIN
   IF NEW.sender <> 'contact' THEN RETURN NEW; END IF;
+  IF NEW.is_deleted IS TRUE THEN RETURN NEW; END IF;
 
   SELECT * INTO v_contact FROM public.contacts WHERE id = NEW.contact_id;
   IF NOT FOUND THEN RETURN NEW; END IF;
@@ -24,11 +26,11 @@ BEGIN
   v_phone := regexp_replace(coalesce(v_contact.phone,''), '[^0-9]', '', 'g');
   IF length(v_phone) NOT BETWEEN 10 AND 15 THEN RETURN NEW; END IF;
 
-  SELECT enabled INTO v_flag_disabled
+  SELECT enabled INTO v_flag_enabled
     FROM public.feature_flags
    WHERE key = 'ai.capability.copilot_live'
    LIMIT 1;
-  IF v_flag_disabled = false THEN RETURN NEW; END IF;
+  IF v_flag_enabled IS NOT TRUE THEN RETURN NEW; END IF;
 
   v_profile_id := v_contact.assigned_to;
   IF v_profile_id IS NULL THEN RETURN NEW; END IF;
@@ -41,7 +43,9 @@ BEGIN
     (NEW.contact_id, NEW.whatsapp_connection_id, v_profile_id, NEW.created_at)
   ON CONFLICT (contact_id, whatsapp_connection_id) DO UPDATE
     SET last_contact_message_at = EXCLUDED.last_contact_message_at,
-        updated_at = now();
+        state_version = copilot_sessions.state_version + 1,
+        updated_at = now()
+  RETURNING state_version INTO v_state_version;
 
   v_ikey := 'copilot_tick:'
     || NEW.contact_id::text || ':'
@@ -57,7 +61,8 @@ BEGIN
        'contact_id',             NEW.contact_id,
        'whatsapp_connection_id', NEW.whatsapp_connection_id,
        'trigger_message_id',     NEW.id,
-       'profile_id',             v_profile_id
+       'profile_id',             v_profile_id,
+       'state_version',          v_state_version
      ),
      200,
      now() + interval '4 seconds',
