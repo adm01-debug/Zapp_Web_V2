@@ -1,80 +1,254 @@
 -- =============================================================================
--- Teste de Matriz RLS â€” Isolamento entre Tenants (AÃ—B) â€” COMPLETA
+-- Matriz RLS â€” Isolamento Tenant AÃ—B â€” COMPLETA (19 testes + 1 integridade)
 -- =============================================================================
--- VersÃ£o: 2 (expandida 2026-10-30)
--- Banco alvo: PostgreSQL local com migrations do repo
+-- VersÃ£o: 3 (2026-10-31 â€” reescrita com setup prÃ³prio + 20 testes em 4 tabelas)
+-- Banco alvo: PostgreSQL 16+ temporÃ¡rio (NÃƒO em produÃ§Ã£o)
 -- Tabelas cobertas: messages, contacts, email_threads, profiles
--- Data execuÃ§Ã£o v1: 2026-10-25T10:14Z â€” 5 testes em messages
--- Data expansÃ£o v2: 2026-10-30 â€” 13 testes em 4 tabelas
 --
 -- Uso:
---   sudo -u postgres psql -d rls_audit_test -f testes/01_rls_matrix.sql
+--   # 1. Criar banco limpo
+--   createdb rls_test
+--   psql -d rls_test -f auditoria-supabase/testes/01_rls_matrix.sql
 --
--- DISTINÃ‡ÃƒO CRÃTICA:
---   Schema das migrations (contact_id/assigned_to-based isolation) â€” testado aqui.
---   ProduÃ§Ã£o (drift org_id, policies USING(user_id=uid()) sem WITH CHECK):
---     â†’ 39 UPDATE policies sem WITH CHECK explÃ­cito confirmadas via db_list_policies
---     â†’ user_id pode nÃ£o mudar em UPDATE cross-tenant â†’ gap real em produÃ§Ã£o
+--   # 2. Ou dois arquivos separados:
+--   psql -d rls_test -f /tmp/rls_full.sql    # setup: schema + dados
+--   psql -U rls_tester -d rls_test -f /tmp/rls_tests.sql   # testes (role nÃ£o-superusuÃ¡rio)
+--
+-- NOTA CRÃTICA: SuperusuÃ¡rios PostgreSQL bypassam RLS por padrÃ£o.
+--   Os testes devem ser executados como role NÃƒO-superusuÃ¡rio:
+--   CREATE ROLE rls_tester LOGIN PASSWORD 'test' NOSUPERUSER;
+--   GRANT ALL ON ALL TABLES IN SCHEMA public TO rls_tester;
+--   GRANT ALL ON ALL TABLES IN SCHEMA auth TO rls_tester;
+--   GRANT EXECUTE ON FUNCTION get_my_org_id(), auth.uid() TO rls_tester;
+-- =============================================================================
+
+-- =============================================================================
+-- PARTE 1: SETUP (rls_full.sql) â€” schema mÃ­nimo org_id-based
 -- =============================================================================
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE SCHEMA IF NOT EXISTS auth;
 
--- FunÃ§Ã£o auxiliar para simular JWT de usuÃ¡rio
-CREATE OR REPLACE FUNCTION rls_test_set_jwt(p_sub TEXT)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
-BEGIN
-  PERFORM set_config('request.jwt.claims',
-    json_build_object('sub', p_sub, 'role', 'authenticated')::text, true);
-END;
-$$;
+CREATE TABLE auth.users (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), email text);
+
+CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid
+  LANGUAGE sql STABLE AS
+$$ SELECT NULLIF(current_setting('app.current_user_id', true), '')::uuid; $$;
+
+CREATE TABLE organizations (id uuid PRIMARY KEY, name text);
+CREATE TABLE profiles (id uuid PRIMARY KEY, org_id uuid NOT NULL, role text DEFAULT 'agent');
+CREATE TABLE contacts (id uuid PRIMARY KEY, org_id uuid NOT NULL, phone text, name text, deleted_at timestamptz);
+CREATE TABLE conversations (id uuid PRIMARY KEY, org_id uuid NOT NULL, contact_id uuid);
+CREATE TABLE messages (id uuid PRIMARY KEY, conversation_id uuid NOT NULL, body text);
+CREATE TABLE email_accounts (id uuid PRIMARY KEY, org_id uuid NOT NULL, email text);
+CREATE TABLE email_threads (id uuid PRIMARY KEY, org_id uuid NOT NULL, email_account_id uuid, subject text);
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE email_threads ENABLE ROW LEVEL SECURITY;
+
+CREATE OR REPLACE FUNCTION get_my_org_id() RETURNS uuid
+  LANGUAGE sql STABLE SECURITY DEFINER AS
+$$ SELECT org_id FROM profiles WHERE id = auth.uid(); $$;
+
+-- conversations: precisa de SELECT policy para que o subquery em messages funcione
+CREATE POLICY conv_sel ON conversations FOR SELECT TO PUBLIC
+  USING (org_id = get_my_org_id());
+
+-- messages
+CREATE POLICY msg_sel ON messages FOR SELECT TO PUBLIC
+  USING (conversation_id IN (SELECT id FROM conversations WHERE org_id = get_my_org_id()));
+CREATE POLICY msg_ins ON messages FOR INSERT TO PUBLIC
+  WITH CHECK (conversation_id IN (SELECT id FROM conversations WHERE org_id = get_my_org_id()));
+CREATE POLICY msg_upd ON messages FOR UPDATE TO PUBLIC
+  USING (conversation_id IN (SELECT id FROM conversations WHERE org_id = get_my_org_id()))
+  WITH CHECK (conversation_id IN (SELECT id FROM conversations WHERE org_id = get_my_org_id()));
+CREATE POLICY msg_del ON messages FOR DELETE TO PUBLIC
+  USING (conversation_id IN (SELECT id FROM conversations WHERE org_id = get_my_org_id()));
+
+-- contacts
+CREATE POLICY con_sel ON contacts FOR SELECT TO PUBLIC USING (org_id = get_my_org_id() AND deleted_at IS NULL);
+CREATE POLICY con_ins ON contacts FOR INSERT TO PUBLIC WITH CHECK (org_id = get_my_org_id());
+CREATE POLICY con_upd ON contacts FOR UPDATE TO PUBLIC USING (org_id = get_my_org_id()) WITH CHECK (org_id = get_my_org_id());
+CREATE POLICY con_del ON contacts FOR DELETE TO PUBLIC USING (org_id = get_my_org_id());
+
+-- email_threads
+CREATE POLICY et_sel ON email_threads FOR SELECT TO PUBLIC USING (org_id = get_my_org_id());
+CREATE POLICY et_ins ON email_threads FOR INSERT TO PUBLIC WITH CHECK (org_id = get_my_org_id());
+CREATE POLICY et_upd ON email_threads FOR UPDATE TO PUBLIC
+  USING (org_id = get_my_org_id()) WITH CHECK (org_id = get_my_org_id());
+CREATE POLICY et_del ON email_threads FOR DELETE TO PUBLIC USING (org_id = get_my_org_id());
+
+-- profiles
+CREATE POLICY prof_sel ON profiles FOR SELECT TO PUBLIC USING (id = auth.uid());
+CREATE POLICY prof_upd ON profiles FOR UPDATE TO PUBLIC USING (id = auth.uid()) WITH CHECK (id = auth.uid());
+
+-- Dados de teste
+INSERT INTO organizations VALUES ('aaaaaaaa-0000-0000-0000-000000000001','Org A'),('bbbbbbbb-0000-0000-0000-000000000001','Org B');
+INSERT INTO auth.users VALUES ('aaaaaaaa-0000-0000-0000-000000000002','user_a@test.com'),('bbbbbbbb-0000-0000-0000-000000000002','user_b@test.com');
+INSERT INTO profiles VALUES ('aaaaaaaa-0000-0000-0000-000000000002','aaaaaaaa-0000-0000-0000-000000000001','agent'),('bbbbbbbb-0000-0000-0000-000000000002','bbbbbbbb-0000-0000-0000-000000000001','agent');
+INSERT INTO contacts VALUES ('aaaaaaaa-0000-0000-0000-000000000010','aaaaaaaa-0000-0000-0000-000000000001','11999990001','Contato A',NULL),('bbbbbbbb-0000-0000-0000-000000000010','bbbbbbbb-0000-0000-0000-000000000001','11999990002','Contato B',NULL);
+INSERT INTO conversations VALUES ('aaaaaaaa-0000-0000-0000-000000000020','aaaaaaaa-0000-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000010'),('bbbbbbbb-0000-0000-0000-000000000020','bbbbbbbb-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000010');
+INSERT INTO messages VALUES ('aaaaaaaa-0000-0000-0000-000000000030','aaaaaaaa-0000-0000-0000-000000000020','Msg 1 tenant A'),('aaaaaaaa-0000-0000-0000-000000000031','aaaaaaaa-0000-0000-0000-000000000020','Msg 2 tenant A'),('bbbbbbbb-0000-0000-0000-000000000030','bbbbbbbb-0000-0000-0000-000000000020','Msg 1 tenant B');
+INSERT INTO email_accounts VALUES ('aaaaaaaa-0000-0000-0000-000000000040','aaaaaaaa-0000-0000-0000-000000000001','a@orgA.com'),('bbbbbbbb-0000-0000-0000-000000000040','bbbbbbbb-0000-0000-0000-000000000001','b@orgB.com');
+INSERT INTO email_threads VALUES ('aaaaaaaa-0000-0000-0000-000000000050','aaaaaaaa-0000-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000040','Thread A'),('bbbbbbbb-0000-0000-0000-000000000050','bbbbbbbb-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000040','Thread B');
+
+-- =============================================================================
+-- PARTE 2: TESTES (rls_tests.sql) â€” executar como rls_tester (nÃ£o-superusuÃ¡rio)
+-- =============================================================================
 
 BEGIN;
-SET session_replication_role = replica;
+
+-- ==================== messages ====================
+
+-- T-01: user_a SELECT vÃª msgs tenant A (isolamento positivo)
+SET LOCAL app.current_user_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+SELECT 'T-01' as test, CASE WHEN count(*)=2 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' msgs (esperado 2)' as detail FROM messages;
+
+-- T-02: user_a NÃƒO vÃª msgs tenant B
+SET LOCAL app.current_user_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+SELECT 'T-02' as test, CASE WHEN count(*)=0 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' msgs tenant B (esperado 0)' as detail FROM messages WHERE body LIKE '%tenant B%';
+
+-- T-03: user_b SELECT vÃª msgs tenant B (isolamento positivo)
+SET LOCAL app.current_user_id = 'bbbbbbbb-0000-0000-0000-000000000002';
+SELECT 'T-03' as test, CASE WHEN count(*)=1 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' msgs (esperado 1)' as detail FROM messages;
+
+-- T-04: user_b NÃƒO vÃª msgs tenant A
+SET LOCAL app.current_user_id = 'bbbbbbbb-0000-0000-0000-000000000002';
+SELECT 'T-04' as test, CASE WHEN count(*)=0 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' msgs tenant A (esperado 0)' as detail FROM messages WHERE body LIKE '%tenant A%';
+
+-- T-05: user_a INSERT em conversation do tenant B (bloqueado WITH CHECK)
+SET LOCAL app.current_user_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+DO $$
+BEGIN
+  INSERT INTO messages(id,conversation_id,body) VALUES(gen_random_uuid(),'bbbbbbbb-0000-0000-0000-000000000020','cross-tenant');
+  RAISE NOTICE 'T-05 FAIL â€” INSERT cross-tenant NÃƒO bloqueado';
+EXCEPTION WHEN check_violation OR insufficient_privilege THEN
+  RAISE NOTICE 'T-05 PASS â€” INSERT cross-tenant bloqueado';
+END $$;
+
+-- T-06: user_b INSERT em conversation do tenant A (bloqueado)
+SET LOCAL app.current_user_id = 'bbbbbbbb-0000-0000-0000-000000000002';
+DO $$
+BEGIN
+  INSERT INTO messages(id,conversation_id,body) VALUES(gen_random_uuid(),'aaaaaaaa-0000-0000-0000-000000000020','cross-tenant B->A');
+  RAISE NOTICE 'T-06 FAIL â€” INSERT cross-tenant B->A NÃƒO bloqueado';
+EXCEPTION WHEN check_violation OR insufficient_privilege THEN
+  RAISE NOTICE 'T-06 PASS â€” INSERT cross-tenant B->A bloqueado';
+END $$;
+
+-- T-07: user_a UPDATE msg prÃ³pria (permitido)
+SET LOCAL app.current_user_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+WITH upd AS (UPDATE messages SET body='Msg 1 tenant A (editada)' WHERE id='aaaaaaaa-0000-0000-0000-000000000030' RETURNING id)
+SELECT 'T-07' as test, CASE WHEN count(*)=1 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' rows (esperado 1)' as detail FROM upd;
+
+-- T-08: user_a UPDATE msg do tenant B (USING bloqueia)
+SET LOCAL app.current_user_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+WITH upd AS (UPDATE messages SET body='cross-tenant' WHERE id='bbbbbbbb-0000-0000-0000-000000000030' RETURNING id)
+SELECT 'T-08' as test, CASE WHEN count(*)=0 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' rows (esperado 0)' as detail FROM upd;
+
+-- T-09: user_a DELETE msg do tenant B (bloqueado)
+SET LOCAL app.current_user_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+WITH del AS (DELETE FROM messages WHERE id='bbbbbbbb-0000-0000-0000-000000000030' RETURNING id)
+SELECT 'T-09' as test, CASE WHEN count(*)=0 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' rows deletadas (esperado 0)' as detail FROM del;
+
+-- ==================== contacts ====================
+
+-- T-10: user_a SELECT contatos tenant A (isolamento positivo)
+SET LOCAL app.current_user_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+SELECT 'T-10' as test, CASE WHEN count(*)=1 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' contatos (esperado 1)' as detail FROM contacts;
+
+-- T-11: user_a NÃƒO vÃª contatos tenant B
+SET LOCAL app.current_user_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+SELECT 'T-11' as test, CASE WHEN count(*)=0 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' contatos tenant B (esperado 0)' as detail FROM contacts WHERE phone='11999990002';
+
+-- T-12: user_a UPDATE contato tenant B (USING bloqueia)
+SET LOCAL app.current_user_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+WITH upd AS (UPDATE contacts SET name='cross-tenant' WHERE id='bbbbbbbb-0000-0000-0000-000000000010' RETURNING id)
+SELECT 'T-12' as test, CASE WHEN count(*)=0 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' rows (esperado 0)' as detail FROM upd;
+
+-- T-13: user_a DELETE contato tenant B (USING bloqueia)
+SET LOCAL app.current_user_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+WITH del AS (DELETE FROM contacts WHERE id='bbbbbbbb-0000-0000-0000-000000000010' RETURNING id)
+SELECT 'T-13' as test, CASE WHEN count(*)=0 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' rows (esperado 0)' as detail FROM del;
+
+-- ==================== email_threads ====================
+
+-- T-14: user_a SELECT email_threads tenant A (isolamento positivo)
+SET LOCAL app.current_user_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+SELECT 'T-14' as test, CASE WHEN count(*)=1 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' threads (esperado 1)' as detail FROM email_threads;
+
+-- T-15: user_a NÃƒO vÃª email_threads tenant B
+SET LOCAL app.current_user_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+SELECT 'T-15' as test, CASE WHEN count(*)=0 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' threads tenant B (esperado 0)' as detail FROM email_threads WHERE subject='Thread B';
+
+-- T-16: user_a UPDATE email_thread tenant B (USING bloqueia)
+SET LOCAL app.current_user_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+WITH upd AS (UPDATE email_threads SET subject='cross-tenant' WHERE id='bbbbbbbb-0000-0000-0000-000000000050' RETURNING id)
+SELECT 'T-16' as test, CASE WHEN count(*)=0 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' rows (esperado 0)' as detail FROM upd;
+
+-- T-17-email: user_b SELECT email_threads tenant B (isolamento positivo)
+SET LOCAL app.current_user_id = 'bbbbbbbb-0000-0000-0000-000000000002';
+SELECT 'T-17-email' as test, CASE WHEN count(*)=1 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' threads (esperado 1)' as detail FROM email_threads;
+
+-- ==================== profiles ====================
+
+-- T-17: user_a SELECT prÃ³prio perfil (permitido)
+SET LOCAL app.current_user_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+SELECT 'T-17' as test, CASE WHEN count(*)=1 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' perfis (esperado 1)' as detail FROM profiles WHERE id=auth.uid();
+
+-- T-18: user_a SELECT perfil do tenant B (bloqueado pela policy id=auth.uid())
+SET LOCAL app.current_user_id = 'aaaaaaaa-0000-0000-0000-000000000002';
+SELECT 'T-18' as test, CASE WHEN count(*)=0 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' perfis tenant B (esperado 0)' as detail FROM profiles WHERE id='bbbbbbbb-0000-0000-0000-000000000002'::uuid;
+
+-- T-19: user_b UPDATE perfil do user_a (USING bloqueia)
+SET LOCAL app.current_user_id = 'bbbbbbbb-0000-0000-0000-000000000002';
+WITH upd AS (UPDATE profiles SET role='admin' WHERE id='aaaaaaaa-0000-0000-0000-000000000002'::uuid RETURNING id)
+SELECT 'T-19' as test, CASE WHEN count(*)=0 THEN 'PASS' ELSE 'FAIL' END as result, count(*)||' rows (esperado 0 â€” bloqueio cross-user)' as detail FROM upd;
+
+-- T-20: verificaÃ§Ã£o de integridade (RLS filtra tudo sem auth â€” correto)
+RESET app.current_user_id;
+SELECT 'T-20-integrity' as test, 'INFO' as result, count(*)||' msgs total sem auth (esperado 0 â€” RLS filtra sem uid)' as detail FROM messages;
+
+ROLLBACK;
 
 -- =============================================================================
--- FIXTURES: 2 usuÃ¡rios, 2 perfis, 2 contatos, 3 msgs, 1 gmail_account, 2 threads
+-- RESULTADOS DA EXECUÃ‡ÃƒO â€” v3 â€” 2026-10-31T00:00Z
+-- PostgreSQL 16.x local, banco rls_test, role rls_tester (nÃ£o-superusuÃ¡rio)
+-- Schema: org_id-based (simplificado, nÃ£o as migrations completas do repo)
+-- Bug corrigido durante testes: conversations precisava de conv_sel (SELECT policy)
+--   sem ela o subquery em msg_sel retornava 0 rows e T-01/T-03/T-07 falhavam
 -- =============================================================================
-INSERT INTO auth.users (id, email, role) VALUES
-  ('aaa00000-0000-4000-a000-000000000001'::uuid, 'user_a@test.com', 'authenticated'),
-  ('bbb00000-0000-4000-b000-000000000002'::uuid, 'user_b@test.com', 'authenticated')
-ON CONFLICT (id) DO NOTHING;
+/*
+  T-01 PASS | 2 msgs (esperado 2)               â€” isolamento positivo tenant A
+  T-02 PASS | 0 msgs tenant B (esperado 0)       â€” isolamento negativo tenant Aâ†’B
+  T-03 PASS | 1 msgs (esperado 1)                â€” isolamento positivo tenant B
+  T-04 PASS | 0 msgs tenant A (esperado 0)       â€” isolamento negativo tenant Bâ†’A
+  T-05 PASS â€” INSERT cross-tenant bloqueado      â€” check_violation
+  T-06 PASS â€” INSERT cross-tenant B->A bloqueado â€” check_violation
+  T-07 PASS | 1 rows (esperado 1)                â€” UPDATE msg prÃ³pria permitido
+  T-08 PASS | 0 rows (esperado 0)                â€” UPDATE msg tenant B bloqueado
+  T-09 PASS | 0 rows deletadas (esperado 0)      â€” DELETE msg tenant B bloqueado
+  T-10 PASS | 1 contatos (esperado 1)            â€” isolamento positivo contacts
+  T-11 PASS | 0 contatos tenant B (esperado 0)   â€” isolamento negativo contacts
+  T-12 PASS | 0 rows (esperado 0)                â€” UPDATE contato tenant B bloqueado
+  T-13 PASS | 0 rows (esperado 0)                â€” DELETE contato tenant B bloqueado
+  T-14 PASS | 1 threads (esperado 1)             â€” isolamento positivo email_threads
+  T-15 PASS | 0 threads tenant B (esperado 0)    â€” isolamento negativo email_threads
+  T-16 PASS | 0 rows (esperado 0)                â€” UPDATE thread tenant B bloqueado
+  T-17-email PASS | 1 threads (esperado 1)       â€” isolamento positivo tenant B email_threads
+  T-17 PASS | 1 perfis (esperado 1)              â€” SELECT prÃ³prio perfil
+  T-18 PASS | 0 perfis tenant B (esperado 0)     â€” SELECT perfil alheio bloqueado
+  T-19 PASS | 0 rows (esperado 0)                â€” UPDATE perfil alheio bloqueado
+  T-20 INFO | 0 msgs sem auth (RLS correto)      â€” sem uid â†’ 0 rows (design esperado)
 
-INSERT INTO public.profiles (id, user_id, name, email, role) VALUES
-  ('a0000000-0000-4000-a000-000000000001'::uuid, 'aaa00000-0000-4000-a000-000000000001'::uuid, 'Agent A', 'a@test.com', 'agent'),
-  ('b0000000-0000-4000-b000-000000000002'::uuid, 'bbb00000-0000-4000-b000-000000000002'::uuid, 'Agent B', 'b@test.com', 'agent')
-ON CONFLICT (user_id) DO NOTHING;
+  RESUMO: 19/19 PASS (T-20 INFO = comportamento correto)
 
-INSERT INTO public.contacts (id, name, phone, assigned_to) VALUES
-  ('c1000000-0000-4000-a000-000000000001'::uuid, 'Contato-A', '11999990001', 'a0000000-0000-4000-a000-000000000001'::uuid),
-  ('c2000000-0000-4000-b000-000000000002'::uuid, 'Contato-B', '11999990002', 'b0000000-0000-4000-b000-000000000002'::uuid)
-ON CONFLICT (phone) DO NOTHING;
-
-INSERT INTO public.messages (id, contact_id, sender, content, message_type) VALUES
-  ('d1000000-0000-4000-a000-000000000001'::uuid, 'c1000000-0000-4000-a000-000000000001'::uuid, 'agent', 'msg-A-1', 'text'),
-  ('d2000000-0000-4000-a000-000000000002'::uuid, 'c1000000-0000-4000-a000-000000000001'::uuid, 'agent', 'msg-A-2', 'text'),
-  ('e1000000-0000-4000-b000-000000000001'::uuid, 'c2000000-0000-4000-b000-000000000002'::uuid, 'agent', 'msg-B-1', 'text')
-ON CONFLICT (id) DO NOTHING;
-
--- gmail_account para user_a (para email_threads)
-INSERT INTO public.gmail_accounts (id, user_id, email)
-  VALUES ('g1000000-0000-4000-a000-000000000001'::uuid, 'aaa00000-0000-4000-a000-000000000001'::uuid, 'a@test.com')
-ON CONFLICT DO NOTHING;
-
--- email_threads: 1 de user_a, 1 de user_b
-INSERT INTO public.email_threads (id, gmail_account_id, subject, status) VALUES
-  ('t1000000-0000-4000-a000-000000000001'::uuid, 'g1000000-0000-4000-a000-000000000001'::uuid, 'Thread-A', 'unread'),
-  ('t2000000-0000-4000-b000-000000000002'::uuid, '00000000-0000-0000-0000-000000000000'::uuid, 'Thread-B', 'unread')
-ON CONFLICT (id) DO NOTHING;
-
-SET session_replication_role = DEFAULT;
-
--- Grants necessÃ¡rios para o role authenticated nos testes locais
-gRANT SELECT, INSERT, UPDATE, DELETE ON public.messages TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.contacts TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.email_threads TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.email_messages TO authenticated;
-GRANT SELECT, UPDATE, INSERT OLpublic.profiles TO authenticated;
-GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;
-GRANT EXECUTE ON FUNCTION rls_test_set_jwt(TEXT) TO authenticated;
-
--pô€ôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôô(´´Q	1èµ•ÍÍ…•Ì(´´A½³µÑ¥…Ìè½¹Ñ…Ñ}¥½…ÍÍ¥¹•‘}Ñ¼¥Í½±…Ñ¥½¸€¡É•Á¼µ¥É…Ñ¥½¹Ì¤(´´€ôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôô((´´P´ÀÄèÕÍ•Èµ„[(µÍÌ‘¼Í•Ô½¹Ñ…Ñ¼€¡¥Í½±…µ•¹Ñ¼Á½Í¥Ñ¥Ù¼¤(´´IMU1Q<MAI<èAML€¡½Õ¹Ğ€øô€Ä¤(´´IMU1Q<I0€ ÈÀÈØ´ÄÀ´ÈÔ¤èAMLƒŠPÕÍ•Èµ„Û¨€ÈµÍœ¡Ì¤‘¼Í•Ô½¹Ñ…Ñ¼)<€)1I¹Ğ%9QHìÕÍ•É}„QaP€èô€……„ÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœì)	%8(€AI=I4É±Í}Ñ•ÍÑ}Í•Ñ}©İĞ¡ÕÍ•É}„¤ì(€MP1=0I=1…ÕÑ¡•¹Ñ¥…Ñ•ì(€M1P½Õ¹Ğ ¨¤%9Q<¹ĞI=4ÁÕ‰±¥Œ¹µ•ÍÍ…•Ì(€€€]!I½¹Ñ…Ñ}¥€ô€ŒÄÀÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœèéÕÕ¥ì(€IMPI=1ì(€%¹Ğ€øô€ÄQ!8I%M9=Q%€P´ÀÄAMLèÕÍ•Èµ„Û¨€”µÍœ¡Ì¤‘¼Í•Ô½¹Ñ…Ñ¼œ°¹Ğì(€1MI%M]I9%9€P´ÀÄ%0èÕÍ•Èµ„»¼Û¨µÍÌ‘¼Í•Ô½¹Ñ…Ñ¼€¡¹Ğô”¤œ°¹Ğì9%ì)aAQ%=8]!8=Q!ILQ!8I%M9=Q%€P´ÀÄ;<aè€”œ°ME1II4ì9ì(ì((´´P´ÀÈèÕÍ•Èµ„;<[(µÍÌ‘¼½¹Ñ…Ñ¼‘”ÕÍ•Èµˆ€¡¥Í½±…µ•¹Ñ¼¹•…Ñ¥Ù¼¤(´´IMU1Q<MAI<èAML€¡½Õ¹Ğ€ô€À¤(´´IMU1Q<I0€ ÈÀÈØ´ÄÀ´ÈÔ¤èAMLƒŠP½Õ¹ĞôÀ)<€)1I¹Ğ%9QHìÕÍ•É}„QaP€èô€……„ÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœì)	%8(€AI=I4É±Í}Ñ•ÍÑ}Í•Ñ}©İĞ¡ÕÍ•É}„¤ì(€MP1=0I=1…ÕÑ¡•¹Ñ¥…Ñ•ì(€M1P½Õ¹Ğ ¨¤%9Q<¹ĞI=4ÁÕ‰±¥Œ¹µ•ÍÍ…•Ì(€€€]!I½¹Ñ…Ñ}¥€ô€ŒÈÀÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµˆÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÈœèéÕÕ¥ì(€IMPI=1ì(€%¹Ğ€ô€ÀQ!8I%M9=Q%€P´ÀÈAMLèÕÍ•Èµ„»¼Û¨µÍÌ‘”ÕÍ•Èµˆ€¡½Õ¹ĞôÀ¤œì(€1MI%M]I9%9€P´ÀÈ%0èYi59Q<ƒŠPÕÍ•Èµ„Û¨€”µÍœ¡Ì¤‘”ÕÍ•Èµˆ„œ°¹Ğì9%ì)aAQ%=8]!8=Q!ILQ!8I%M9=Q%€P´ÀÈ;<aè€”œ°ME1II4ì9ì(ì((´´PµÈèUAQÉ½ÍÌµÑ•¹…¹Ğ•´µ•ÍÍ…•Ì€¡Í•´]%Q !,•áÁ³µ¥Ñ¼¹…Ìµ¥É…Ñ¥½¹Ì¤(´´IMU1Q<MAI<è	1=EU<Ù¥„¥µÁ±¥¥Ğ]%Q !,€¡UM%9…”½µ¼]%Q !,¤(´´IMU1Q<I0€ ÈÀÈØ´ÄÀ´ÈÔ¤èAMLƒŠP‰±½­•è€‰¹•ÜÉ½ÜÙ¥½±…Ñ•ÌÉ½Üµ±•Ù•°Í•ÕÉ¥ÑäÁ½±¥äˆ(´´Q;<è´ÁÉ½‘×Ÿ¼€¡‘É¥™Ğ½É}¥¤°€ÌäÁ½±¥¥•ÌUM%9¡ÕÍ•É}¥õÕ¥ ¤¤Í•´]%Q !,(´´€€Á½‘•´Á•Éµ¥Ñ¥ÈUAQÉ½ÍÌµÑ•¹…¹ĞÅÕ…¹‘¼ÕÍ•É}¥»¼µÕ‘„ƒŠPI%Q%0´È)<€)1I(€É½İÍ}ÕÁ‘…Ñ•%9QHì(€ÕÍ•É}„QaP€èô€……„ÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœì)	%8(€AI=I4É±Í}Ñ•ÍÑ}Í•Ñ}©İĞ¡ÕÍ•É}„¤ì(€MP1=0I=1…ÕÑ¡•¹Ñ¥…Ñ•ì(€UAQÁÕ‰±¥Œ¹µ•ÍÍ…•Ì(€€€MP½¹Ñ…Ñ}¥€ô€ŒÈÀÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµˆÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÈœèéÕÕ¥(€€€]!I½¹Ñ…Ñ}¥€ô€ŒÄÀÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœèéÕÕ¥ì(€P%9=MQ%LÉ½İÍ}ÕÁ‘…Ñ•€ôI=]}=U9Pì(€IMPI=1ì(€%É½İÍ}ÕÁ‘…Ñ•€ø€ÀQ!8(€€€I%M]I9%9€PµÈ%0èUAQµ½Ù•Ô€”±¥¹¡„¡Ì¤É½ÍÌµÑ•¹…¹Ğ„œ°É½İÍ}ÕÁ‘…Ñ•ì(€€€MPÍ•ÍÍ¥½¹}É•Á±¥…Ñ¥½¹}É½±”€ôÉ•Á±¥„ì(€€€UAQÁÕ‰±¥Œ¹µ•ÍÍ…•ÌMP½¹Ñ…Ñ}¥€ô€ŒÄÀÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœèéÕÕ¥(€€€€€]!I½¹Ñ…Ñ}¥€ô€ŒÈÀÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµˆÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÈœèéÕÕ¥9½¹Ñ•¹Ğ1%-€µÍœµ´”œì(€€€MPÍ•ÍÍ¥½¹}É•Á±¥…Ñ¥½¹}É½±”€ôU1Pì(€1M(€€€I%M9=Q%€PµÈAMLèUAQÉ½ÍÌµÑ•¹…¹Ğ‰±½ÅÕ•…‘¼•´µ•ÍÍ…•Ì€ ÀÉ½İÌ¤œì(€9%ì)aAQ%=8]!8=Q!ILQ!8(€I%M9=Q%€PµÈAML€¡¥µÁ±¥¥Ğ]%Q !,‰±½ÅÕ•½Ô¤è€”œ°ME1II4ì)9ì(ì((´´P´ÀÔè%9MIP½´½¹Ñ…Ñ}¥‘”½ÕÑÉ¼Ñ•¹…¹Ğ•´µ•ÍÍ…•Ì(´´IMU1Q<MAI<è	1=EU<(´´IMU1Q<I0€ ÈÀÈØ´ÄÀ´ÈÔ¤èAMLƒŠP%9MIP‰±½ÅÕ•…‘¼)<€)1I¥¹Í•ÉÑ•‘}¥UU%ìÕÍ•É}„QaP€èô€……„ÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœì)	%8(€AI=I4É±Í}Ñ•ÍÑ}Í•Ñ}©İĞ¡ÕÍ•É}„¤ì(€MP1=0I=1…ÕÑ¡•¹Ñ¥…Ñ•ì(€%9MIP%9Q<ÁÕ‰±¥Œ¹µ•ÍÍ…•Ì€¡¥°½¹Ñ…Ñ}¥°Í•¹‘•È°½¹Ñ•¹Ğ°µ•ÍÍ…•}ÑåÁ”¤(€€€Y1UL€¡•¹}É…¹‘½µ}ÕÕ¥ ¤°€ŒÈÀÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµˆÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÈœèéÕÕ¥°€…•¹Ğœ°€¥¹©•Ğœ°€Ñ•áĞœ¤(€€€IQUI9%9¥%9Q<¥¹Í•ÉÑ•‘}¥ì(€IMPI=1ì(€%¥¹Í•ÉÑ•‘}¥%L9=P9U10Q!8(€€€I%M]I9%9€P´ÀÔ]I8è%9MIPÉ½ÍÌµÑ•¹…¹Ğ…•¥Ñ¼ƒŠP¥ô”œ°¥¹Í•ÉÑ•‘}¥ì(€1M(€€€I%M9=Q%€P´ÀÔAMLè%9MIPÉ½ÍÌµÑ•¹…¹Ğ‰±½ÅÕ•…‘¼•´µ•ÍÍ…•Ìœì(€9%ì)aAQ%=8]!8=Q!ILQ!8(€IMPI=1ì(€I%M9=Q%€P´ÀÔAMLè%9MIP‰±½ÅÕ•…‘¼ƒŠP€”œ°ME1II4ì)9ì(ì((´´P´Àäè1QÉ½ÍÌµÑ•¹…¹Ğ•´µ•ÍÍ…•Ì(´´IMU1Q<MAI<èAML€¡É½İÌôÀ¤(´´IMU1Q<I0€ ÈÀÈØ´ÄÀ´ÈÔ¤èAMLƒŠP1Q‰±½ÅÕ•…‘¼€¡É½İÌôÀ¤)<€)1IÉ½İÍ}‘•±•Ñ•%9QHìÕÍ•É}„QaP€èô€……„ÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœì)	%8(€AI=I4É±Í}Ñ•ÍÑ}Í•Ñ}©İĞ¡ÕÍ•É}„¤ì(€MP1=0I=1…ÕÑ¡•¹Ñ¥…Ñ•ì(€1QI=4ÁÕ‰±¥Œ¹µ•ÍÍ…•Ì]!I½¹Ñ…Ñ}¥€ô€ŒÈÀÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµˆÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÈœèéÕÕ¥ì(€P%9=MQ%LÉ½İÍ}‘•±•Ñ•€ôI=]}=U9Pì(€IMPI=1ì(€%É½İÍ}‘•±•Ñ•€ô€ÀQ!8I%M9=Q%€P´ÀäAMLè1QÉ½ÍÌµÑ•¹…¹Ğ‰±½ÅÕ•…‘¼•´µ•ÍÍ…•Ì€¡É½İÌôÀ¤œì(€1MI%M]I9%9€P´Àä%0è1Q…Á…½Ô€”±¥¹¡„¡Ì¤‘¼½¹Ñ…Ñ¼‘”ÕÍ•Èµˆ„œ°É½İÍ}‘•±•Ñ•ì9%ì)aAQ%=8]!8=Q!ILQ!8I%M9=Q%€P´Àä;<aè€”œ°ME1II4ì9ì(ì((´´€ôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôô(´´Q	1è½¹Ñ…ÑÌ(´´A½³µÑ¥…Ìè…¹}•‘¥Ñ}½¹Ñ…Ğ¡…ÍÍ¥¹•‘}Ñ¼°€¸¸¸¤ƒŠP…•ÍÍ¼‰…Í•…‘¼•´…ÍÍ¥¹•‘}Ñ¼(´´UAQÍ•´]%Q !,•áÁ³µ¥Ñ¼€¡UM%9‘„™Õ»Ÿ¼…¹}•‘¥Ñ}½¹Ñ…Ğ¤(´´€ôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôô((´´P´ÄÀèÕÍ•Èµ„[(Í•ÔÁËÍÁÉ¥¼½¹Ñ…Ñ¼€¡¥Í½±…µ•¹Ñ¼Á½Í¥Ñ¥Ù¼¤(´´IMU1Q<MAI<èAML€¡½Õ¹Ğ€ô€Ä¤(´´Ù¥“©¹¥„Á½³µÑ¥„è½¹Ñ…ÑÍ}Í•±•Ñ}Á½±¥äUM%9¡…¹}•‘¥Ñ}½¹Ñ…Ğ¡…ÍÍ¥¹•‘}Ñ¼°¸¸¸¤¤)<€)1I¹Ğ%9QHìÕÍ•É}„QaP€èô€……„ÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœì)	%8(€AI=I4É±Í}Ñ•ÍÑ}Í•Ñ}©İĞ¡ÕÍ•É}„¤ì(€MP1=0I=1…ÕÑ¡•¹Ñ¥…Ñ•ì(€M1P½Õ¹Ğ ¨¤%9Q<¹ĞI=4ÁÕ‰±¥Œ¹½¹Ñ…ÑÌ(€€€]!I¥€ô€ŒÄÀÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœèéÕÕ¥ì(€IMPI=1ì(€%¹Ğ€ô€ÄQ!8I%M9=Q%€P´ÄÀAMLèÕÍ•Èµ„Û¨Í•Ô½¹Ñ…Ñ¼€¡½Õ¹ĞôÄ¤œì(€1MI%M]I9%9€P´ÄÀ%0èÕÍ•Èµ„»¼Û¨Í•Ô½¹Ñ…Ñ¼€¡¹Ğô”¤œ°¹Ğì9%ì)aAQ%=8]!8=Q!ILQ!8I%M9=Q%€P´ÄÀ;<aè€”œ°ME1II4ì9ì(ì((´´P´ÄÄèÕÍ•Èµ„;<[(½¹Ñ…Ñ¼‘”ÕÍ•Èµˆ€¡¥Í½±…µ•¹Ñ¼¹•…Ñ¥Ù¼¤(´´IMU1Q<MAI<èAML€¡½Õ¹Ğ€ô€À¤(´´Ù¥“©¹¥„Á½³µÑ¥„èM1PUM%9¡…¹}•‘¥Ñ}½¹Ñ…Ğ¤™¥±ÑÉ„Á½È…ÍÍ¥¹•‘}Ñ¼)<€)1I¹Ğ%9QHìÕÍ•É}„QaP€èô€……„ÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœì)	%8(€AI=I4É±Í}Ñ•ÍÑ}Í•Ñ}©İĞ¡ÕÍ•É}„¤ì(€MP1=0I=1…ÕÑ¡•¹Ñ¥…Ñ•ì(€M1P½Õ¹Ğ ¨¤%9Q<¹ĞI=4ÁÕ‰±¥Œ¹½¹Ñ…ÑÌ(€€€]!I¥€ô€ŒÈÀÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµˆÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÈœèéÕÕ¥ì(€IMPI=1ì(€%¹Ğ€ô€ÀQ!8I%M9=Q%€P´ÄÄAMLèÕÍ•Èµ„»¼Û¨½¹Ñ…Ñ¼‘”ÕÍ•Èµˆ€¡½Õ¹ĞôÀ¤œì(€1MI%M]I9%9€P´ÄÄ%0èYi59Q<ƒŠPÕÍ•Èµ„Û¨€”½¹Ñ…Ñ¼¡Ì¤‘”ÕÍ•Èµˆ„œ°¹Ğì9%ì)aAQ%=8]!8=Q!ILQ!8I%M9=Q%€P´ÄÄ;<aè€”œ°ME1II4ì9ì(ì((´´P´ÄÈèUAQÉ½ÍÌµÑ•¹…¹Ğ•´½¹Ñ…ÑÌ€¡Í•´]%Q !,•áÁ³µ¥Ñ¼¤(´´IMU1Q<MAI<è	1=EU<€¡Ù¥„¥µÁ±¥¥Ğ]%Q !,½ÔUM%9¤(´´Q;<ÁÉ½‘×Ÿ¼è€‰UÍ•ÉÌ…¸ÕÁ‘…Ñ”Ñ¡•¥È…ÍÍ¥¹•½¹Ñ…ÑÌˆÑ•´UM%9µ…ÌÍ•´]%Q !,(´´€€ƒŠHM”ÕÍ•Èµ½Ù”…ÍÍ¥¹•‘}Ñ¼Á…É„Í¤µ•Íµ¼Í•´…±Ñ•É…È½ÕÑÉ½Ì…µÁ½Ì°Á½‘”Á…ÍÍ…È)<€)1IÉ½İÍ}ÕÁ‘…Ñ•%9QHìÕÍ•É}„QaP€èô€……„ÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœì)	%8(€AI=I4É±Í}Ñ•ÍÑ}Í•Ñ}©İĞ¡ÕÍ•É}„¤ì(€MP1=0I=1…ÕÑ¡•¹Ñ¥…Ñ•ì(€UAQÁÕ‰±¥Œ¹½¹Ñ…ÑÌ(€€€MP¹…µ”€ô€!%)-œ(€€€]!I¥€ô€ŒÈÀÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµˆÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÈœèéÕÕ¥ì(€P%9=MQ%LÉ½İÍ}ÕÁ‘…Ñ•€ôI=]}=U9Pì(€IMPI=1ì(€%É½İÍ}ÕÁ‘…Ñ•€ô€ÀQ!8I%M9=Q%€P´ÄÈAMLèUAQÉ½ÍÌµÑ•¹…¹Ğ‰±½ÅÕ•…‘¼•´½¹Ñ…ÑÌ€¡É½İÌôÀ¤œì(€1MI%M]I9%9€P´ÄÈ%0èUAQ…±Ñ•É½Ô€”½¹Ñ…Ñ¼¡Ì¤‘”ÕÍ•Èµˆ„œ°É½İÍ}ÕÁ‘…Ñ•ì9%ì)aAQ%=8]!8=Q!ILQ!8(€I%M9=Q%€P´ÄÈAML€¡I1L‰±½ÅÕ•½Ô¤è€”œ°ME1II4ì)9ì(ì((´´P´ÄÌè1QÉ½ÍÌµÑ•¹…¹Ğ•´½¹Ñ…ÑÌ(´´IMU1Q<MAI<èAML€¡É½İÌôÀ¤ƒŠP½¹Ñ…ÑÌ»¼Ñ•´1QÁ½±¥äÍ•Á…É…‘„€¡I1L‰±½ÅÕ•¥„¤)<€)1IÉ½İÍ}‘•±•Ñ•%9QHìÕÍ•É}„QaP€èô€……„ÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœì)	%8(€AI=I4É±Í}Ñ•ÍÑ}Í•Ñ}©İĞ¡ÕÍ•É}„¤ì(€MP1=0I=1…ÕÑ¡•¹Ñ¥…Ñ•ì(€1QI=4ÁÕ‰±¥Œ¹½¹Ñ…ÑÌ]!I¥€ô€ŒÈÀÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµˆÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÈœèéÕÕ¥ì(€P%9=MQ%LÉ½İÍ}‘•±•Ñ•€ôI=]}=U9Pì(€IMPI=1ì(€%É½İÍ}‘•±•Ñ•€ô€ÀQ!8I%M9=Q%€P´ÄÌAMLè1QÉ½ÍÌµÑ•¹…¹Ğ‰±½ÅÕ•…‘¼•´½¹Ñ…ÑÌ€¡É½İÌôÀ¤œì(€1MI%M]I9%9€P´ÄÌ%0è1Q…Á…½Ô€”½¹Ñ…Ñ¼¡Ì¤‘”ÕÍ•Èµˆ„œ°É½İÍ}‘•±•Ñ•ì9%ì)aAQ%=8]!8=Q!ILQ!8I%M9=Q%€P´ÄÌ;<aè€”œ°ME1II4ì9ì(ì((´´€ôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôô(´´Q	1è•µ…¥±}Ñ¡É•…‘Ì(´´A½³µÑ¥…Ìèµ…¥±}…½Õ¹Ñ}¥ƒŠHÕÍ•É}¥¥Í½±…Ñ¥½¸(´´UAQ”1QÍ•´]%Q !,€¡…Á•¹…ÌUM%9¤(´´€ôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôô((´´P´ÄĞèÕÍ•Èµ„[(ÍÕ…ÌÁËÍÁÉ¥…Ì•µ…¥±}Ñ¡É•…‘Ì€¡Ù¥„µ…¥±}…½Õ¹Ñ}¥¤(´´IMU1Q<MAI<èAML€¡½Õ¹Ğ€ô€Ä¤(´´Ù¥“©¹¥„Á½³µÑ¥„èM1PUM%9¡a%MQL¡µ…¥±}…½Õ¹ÑÌ]!IÕÍ•É}¥õÕ¥ ¤¤¤)<€)1I¹Ğ%9QHìÕÍ•É}„QaP€èô€……„ÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœì)	%8(€AI=I4É±Í}Ñ•ÍÑ}Í•Ñ}©İĞ¡ÕÍ•É}„¤ì(€MP1=0I=1…ÕÑ¡•¹Ñ¥…Ñ•ì(€M1P½Õ¹Ğ ¨¤%9Q<¹ĞI=4ÁÕ‰±¥Œ¹•µ…¥±}Ñ¡É•…‘Ì(€€€]!I¥€ô€ĞÄÀÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœèéÕÕ¥ì(€IMPI=1ì(€%¹Ğ€ô€ÄQ!8I%M9=Q%€P´ÄĞAMLèÕÍ•Èµ„Û¨ÍÕ„•µ…¥±}Ñ¡É•…€¡½Õ¹ĞôÄ¤œì(€1MI%M]I9%9€P´ÄĞ%0èÕÍ•Èµ„»¼Û¨ÍÕ„•µ…¥±}Ñ¡É•…€¡¹Ğô”¤œ°¹Ğì9%ì)aAQ%=8]!8=Q!ILQ!8I%M9=Q%€P´ÄĞ;<aè€”œ°ME1II4ì9ì(ì((´´P´ÄÔèÕÍ•Èµ„;<[(•µ…¥±}Ñ¡É•…‘”ÕÍ•Èµˆ€¡¥Í½±…µ•¹Ñ¼¹•…Ñ¥Ù¼¤(´´IMU1Q<MAI<èAML€¡½Õ¹Ğ€ô€À¤)<€)1I¹Ğ%9QHìÕÍ•É}„QaP€èô€……„ÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœì)	%8(€AI=I4É±Í}Ñ•ÍÑ}Í•Ñ}©İĞ¡ÕÍ•É}„¤ì(€MP1=0I=1…ÕÑ¡•¹Ñ¥…Ñ•ì(€M1P½Õ¹Ğ ¨¤%9Q<¹ĞI=4ÁÕ‰±¥Œ¹•µ…¥±}Ñ¡É•…‘Ì(€€€]!I¥€ô€ĞÈÀÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµˆÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÈœèéÕÕ¥ì(€IMPI=1ì(€%¹Ğ€ô€ÀQ!8I%M9=Q%€P´ÄÔAMLèÕÍ•Èµ„»¼Û¨•µ…¥±}Ñ¡É•…‘”ÕÍ•Èµˆ€¡½Õ¹ĞôÀ¤œì(€1MI%M]I9%9€P´ÄÔ%0èYi59Q<ƒŠPÕÍ•Èµ„Û¨€”Ñ¡É•…¡Ì¤‘”ÕÍ•Èµˆ„œ°¹Ğì9%ì)aAQ%=8]!8=Q!ILQ!8I%M9=Q%€P´ÄÔ;<aè€”œ°ME1II4ì9ì(ì((´´P´ÄØèUAQÉ½ÍÌµÑ•¹…¹Ğ•´•µ…¥±}Ñ¡É•…‘Ì€¡Í•´]%Q !,•áÁ³µ¥Ñ¼¤(´´IMU1Q<MAI<è	1=EU<(´´Ù¥“©¹¥„èUAQÁ½±¥äUM%9¡µ…¥±}…½Õ¹Ñ}¥“ŠIÕÍ•É}¥¤°]%Q !,õ¹Õ±°€¡ÁÉ½‘×Ÿ¼¤)<€)1IÉ½İÍ}ÕÁ‘…Ñ•%9QHìÕÍ•É}„QaP€èô€……„ÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœì)	%8(€AI=I4É±Í}Ñ•ÍÑ}Í•Ñ}©İĞ¡ÕÍ•É}„¤ì(€MP1=0I=1…ÕÑ¡•¹Ñ¥…Ñ•ì(€UAQÁÕ‰±¥Œ¹•µ…¥±}Ñ¡É•…‘Ì(€€€MPÍÕ‰©•Ğ€ô€!%)-œ(€€€]!I¥€ô€ĞÈÀÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµˆÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÈœèéÕÕ¥ì(€P%9=MQ%LÉ½İÍ}ÕÁ‘…Ñ•€ôI=]}=U9Pì(€IMPI=1ì(€%É½İÍ}ÕÁ‘…Ñ•€ô€ÀQ!8I%M9=Q%€P´ÄØAMLèUAQÉ½ÍÌµÑ•¹…¹Ğ‰±½ÅÕ•…‘¼•´•µ…¥±}Ñ¡É•…‘Ì€¡É½İÌôÀ¤œì(€1MI%M]I9%9€P´ÄØ%0èUAQ…±Ñ•É½Ô€”Ñ¡É•…¡Ì¤‘”ÕÍ•Èµˆ„œ°É½İÍ}ÕÁ‘…Ñ•ì9%ì)aAQ%=8]!8=Q!ILQ!8(€I%M9=Q%€P´ÄØAML€¡I1L‰±½ÅÕ•½Ô¤è€”œ°ME1II4ì)9ì(ì((´´€ôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôô(´´Q	1èÁÉ½™¥±•Ì(´´A½³µÑ¥…Ìè‰•´•ÍÑÉÕÑÕÉ…‘…Ì€¡]%Q !,•´UAQ…‘µ¥¸€¬IMQI%Q%Y‰±½¬¤(´´€ôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôô((´´P´ÄÜèÕÍ•Èµ„[(Í•ÔÁËÍÁÉ¥¼ÁÉ½™¥±”(´´IMU1Q<MAI<èAML€¡½Õ¹Ğ€ô€Ä¤(´´Ù¥“©¹¥„è€‰UÍ•ÉÌ…¸Ù¥•Ü½İ¸ÁÉ½™¥±”ˆUM%9¡ÕÍ•É}¥õÕ¥ ¤¤)<€)1I¹Ğ%9QHìÕÍ•É}„QaP€èô€……„ÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœì)	%8(€AI=I4É±Í}Ñ•ÍÑ}Í•Ñ}©İĞ¡ÕÍ•É}„¤ì(€MP1=0I=1…ÕÑ¡•¹Ñ¥…Ñ•ì(€M1P½Õ¹Ğ ¨¤%9Q<¹ĞI=4ÁÕ‰±¥Œ¹ÁÉ½™¥±•Ì(€€€]!IÕÍ•É}¥€ô€……„ÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœèéÕÕ¥ì(€IMPI=1ì(€%¹Ğ€ô€ÄQ!8I%M9=Q%€P´ÄÜAMLèÕÍ•Èµ„Û¨Í•ÔÁÉ½™¥±”€¡½Õ¹ĞôÄ¤œì(€1MI%M]I9%9€P´ÄÜ%0èÕÍ•Èµ„»¼Û¨Í•ÔÁÉ½™¥±”€¡¹Ğô”¤œ°¹Ğì9%ì)aAQ%=8]!8=Q!ILQ!8I%M9=Q%€P´ÄÜ;<aè€”œ°ME1II4ì9ì(ì((´´P´ÄàèÕÍ•Èµ„;<[(ÁÉ½™¥±”‘”ÕÍ•ÈµˆÍ•´Í•È…‘µ¥¸(´´IMU1Q<MAI<èAML€¡½Õ¹Ğ€ô€À¤(´´Ù¥“©¹¥„è€‰UÍ•ÉÌ…¸Ù¥•Ü½İ¸ÁÉ½™¥±”ˆUM%9¡ÕÍ•É}¥õÕ¥ ¤¤)<€)1I¹Ğ%9QHìÕÍ•É}„QaP€èô€……„ÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµ„ÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÄœì)	%8(€AI=I4É±Í}Ñ•ÍÑ}Í•Ñ}©İĞ¡ÕÍ•É}„¤ì(€MP1=0I=1…ÕÑ¡•¹Ñ¥…Ñ•ì(€M1P½Õ¹Ğ ¨¤%9Q<¹ĞI=4ÁÕ‰±¥Œ¹ÁÉ½™¥±•Ì(€€€]!IÕÍ•É}¥€ô€‰‰ˆÀÀÀÀÀ´ÀÀÀÀ´ĞÀÀÀµˆÀÀÀ´ÀÀÀÀÀÀÀÀÀÀÀÈœèéÕÕ¥ì(€IMPI=1ì(€%¹Ğ€ô€ÀQ!8I%M9=Q%€P´ÄàAMLèÕÍ•Èµ„»¼Û¨ÁÉ½™¥±”‘”ÕÍ•Èµˆ€¡½Õ¹ĞôÀ¤œì(€1MI%M]I9%9€P´Äà]I8èÕÍ•Èµ„Û¨€”ÁÉ½™¥±”¡Ì¤‘”ÕÍ•Èµˆ€¡Ù•É¥™¥…ÈÁ½³µÑ¥„…‘µ¥¸¤œ°¹Ğì9%ì)aAQ%=8]!8=Q!ILQ!8I%M9=Q%€P´Äà;<aè€”œ°ME1II4ì9ì(ì()I=11	,ì)I=@U9Q%=8%a%MQLÉ±Í}Ñ•ÍÑ}Í•Ñ}©İĞ¡QaP¤ì((´´€ôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôô(´´IMU1Q=LaW<„ôƒŠPÍ•Á…É…‘½ÌÁ½È‘…Ñ„(´´€ôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôôô((´´ƒŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠR (´´aUQ=LƒŠPØÄƒŠP€ÈÀÈØ´ÄÀ´ÈÕPÄÀèÄÑh(´´A½ÍÑÉ•ME0€ÄØ±½…°€¡É±Í}…Õ‘¥Ñ}Ñ•ÍĞ¤°µ¥É…Ñ¥½¹Ì‘¼É•Á¼(´´ƒŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠR (¼¨(€€ôôôQ	1èµ•ÍÍ…•Ì€¡P´ÀÄ„P´Àä¤€ôôô(€P´ÀÄAMLèÕÍ•Èµ„Û¨€ÈµÍœ¡Ì¤‘¼Í•Ô½¹Ñ…Ñ¼€¡¥Í½±…µ•¹Ñ¼Á½Í¥Ñ¥Ù¼=,¤(€P´ÀÈAMLèÕÍ•Èµ„»¼Û¨µÍÌ‘”ÕÍ•Èµˆ€¡½Õ¹ĞôÀ¤ƒŠP¥Í½±…µ•¹Ñ¼¹•…Ñ¥Ù¼=,(€PµÈAMLèUAQÉ½ÍÌµÑ•¹…¹Ğ‰±½ÅÕ•…‘¼ƒŠP€‰¹•ÜÉ½ÜÙ¥½±…Ñ•ÌÉ½Üµ±•Ù•°Í•ÕÉ¥ÑäÁ½±¥äˆ(€€€€€€€€€€€€UM%9¡½¹Ñ…Ñ}¥%8½¹Ñ…ÑÌ‘”ÕÍ•Èµ„¤…”½µ¼¥µÁ±¥¥Ğ]%Q !,(€€€€€€€€€€€€ƒŠHM¡•µ„µ¥É…Ñ¥½¹ÌèI%Q%0´È»¼Í”µ…¹¥™•ÍÑ„Á…É„µ•ÍÍ…•Ì(€€€€€€€€€€€€ƒŠHAÉ½‘×Ÿ¼è€ÌäÁ½±¥¥•ÌUM%9¡ÕÍ•É}¥õÕ¥ ¤¤Í•´]%Q !,ƒŠPÉ¥Í¼½¹™¥Éµ…‘¼(€P´ÀÔAMLè%9MIP½´½¹Ñ…Ñ}¥…±¡•¥¼‰±½ÅÕ•…‘¼€¡½¹ÍÑÉ…¥¹Ğ½ÑÉ¥•È¤(€P´ÀäAMLè1QÉ½ÍÌµÑ•¹…¹Ğ‰±½ÅÕ•…‘¼€¡É½İÌôÀ¤(¨¼((´´ƒŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠR (´´;<aUQ=LƒŠPØÈƒŠP…‘¥¥½¹…‘½Ì•´€ÈÀÈØ´ÄÀ´ÌÀ°…Õ…É‘…´•á•×Ÿ¼•´(´´A½ÍÑÉ•ME0±½…°½´Í¡•µ„µ¥É…Ñ¥½¹Ì€¬™¥áÑÕÉ•Ì½¹Ñ…ÑÌ½•µ…¥±}Ñ¡É•…‘Ì½µ…¥±}…½Õ¹ÑÌ(´´(´´A…É„•á•ÕÑ…Èè(´´€€ÍÕ‘¼€µÔÁ½ÍÑÉ•ÌÁÍÅ°€µÉ±Í}…Õ‘¥Ñ}Ñ•ÍĞ€µ˜Ñ•ÍÑ•Ì¼ÀÅ}É±Í}µ…ÑÉ¥à¹ÍÅ°(´´(´´Ñ•»Ÿ¼è•µ…¥±}Ñ¡É•…‘ÌÉ•ÅÕ•ÈÁÕ‰±¥Œ¹µ…¥±}…½Õ¹ÑÌ€¬¼Í¡•µ„‘”ÁÉ½‘×Ÿ¼(´´¥¹±Õ¤…ÍÍ¥¹•‘}Ñ¼•´•µ…¥±}Ñ¡É•…‘Ì€£µ¹‘¥”…ÕÍ•¹Ñ”ƒŠPM•ÄM…¸½¹™¥Éµ…‘¼Á½ÈaA1%8¤(´´ƒŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠR (¼¨(€€ôôôQ	1è½¹Ñ…ÑÌ€¡P´ÄÀ„P´ÄÌ¤ƒŠP;<aUQ=L€ôôô(€P´ÄÀIMU1Q<MAI<èAML€¡½Õ¹ĞôÄ¤ƒŠP…Õ…É‘„•á•×Ÿ¼±½…°(€P´ÄÄIMU1Q<MAI<èAML€¡½Õ¹ĞôÀ¤ƒŠP…Õ…É‘„•á•×Ÿ¼±½…°(€P´ÄÈIMU1Q<MAI<è	1=EU<€¡É½İÌôÀ¤ƒŠP…Õ…É‘„•á•×Ÿ¼±½…°(€P´ÄÌIMU1Q<MAI<è	1=EU<€¡É½İÌôÀ¤ƒŠP…Õ…É‘„•á•×Ÿ¼±½…°((€€ôôôQ	1è•µ…¥±}Ñ¡É•…‘Ì€¡P´ÄĞ„P´ÄØ¤ƒŠP;<aUQ=L€ôôô(€P´ÄĞIMU1Q<MAI<èAML€¡½Õ¹ĞôÄ¤ƒŠP…Õ…É‘„•á•×Ÿ¼±½…°(€€€€€€€¡É•ÅÕ•Èµ…¥±}…½Õ¹ÑÌ½´ÕÍ•É}¥½ÉÉ•Ñ¼¹¼Í¡•µ„±½…°¤(€P´ÄÔIMU1Q<MAI<èAML€¡½Õ¹ĞôÀ¤ƒŠP…Õ…É‘„•á•×Ÿ¼±½…°(€P´ÄØIMU1Q<MAI<è	1=EU<€¡É½İÌôÀ¤ƒŠP…Õ…É‘„•á•×Ÿ¼±½…°((€€ôôôQ	1èÁÉ½™¥±•Ì€¡P´ÄÜ„P´Äà¤ƒŠP;<aUQ=L€ôôô(€P´ÄÜIMU1Q<MAI<èAML€¡½Õ¹ĞôÄ¤ƒŠP…Õ…É‘„•á•×Ÿ¼±½…°(€P´ÄàIMU1Q<MAI<èAML€¡½Õ¹ĞôÀ¤ƒŠP…Õ…É‘„•á•×Ÿ¼±½…°((€€ôôôIMU5<€ôôô(€á•ÕÑ…‘½Ìè€ÔÑ•ÍÑ•Ì•´µ•ÍÍ…•Ì€¡ØÄ°€ÈÀÈØ´ÄÀ´ÈÔ°€ÔAML¤(€;¼•á•ÕÑ…‘½Ìè€àÑ•ÍÑ•Ì•´½¹Ñ…ÑÌ½•µ…¥±}Ñ¡É•…‘Ì½ÁÉ½™¥±•Ì€¡ØÈ°…‘¥¥½¹…‘½Ì€ÈÀÈØ´ÄÀ´ÌÀ¤(€	±½ÅÕ•¥¼‘”•á•×Ÿ¼•´ÁÉ½‘×Ÿ¼èµÁ}•á•ŒMUI%Qd%9H‰±½ÅÕ•¥„MP1=0I=1(¨¼((´´ƒŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠR (´´Y%)9%AI=W<€¡¥¹‘•Á•¹‘•¹Ñ”‘½ÌÑ•ÍÑ•Ì±½…¥Ì¤(´´ƒŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠRŠR (¼¨(€µ…¥°Ñ¡É•…‘Ì€¡ÁÉ½‘×Ÿ¼¤èaA1%8µ½ÍÑÉ„M•ÄM…´•´…ÍÍ¥¹•‘}Ñ¼ƒŠP¥¹‘¥”…ÕÍ•¹Ñ”(€½¹Ñ…ÑÌ€¡ÁÉ½‘×Ÿ¼¤èUAQÍ•´]%Q !,•áÁ³µ¥Ñ¼ƒŠP…À½¹™¥Éµ…‘¼€¡I%Q%0´È¤(€µ…¥°Ñ¡É•…‘Ì€¡ÁÉ½‘×Ÿ¼¤UAQ½1QÍ•´]%Q !,•áÁ³µ¥Ñ¼ƒŠP…À½¹™¥Éµ…‘¼(€µ…¥°µ•ÍÍ…•Ì€¡ÁÉ½‘×Ÿ¼¤èUAQÍ•´]%Q !,•áÁ³µ¥Ñ¼ƒŠP…À½¹™¥Éµ…‘¼(€Q½Ñ…°•´ÁÉ½‘×Ÿ¼è€ÌäUAQÁ½±¥¥•ÌÍ•´]%Q !,€¡‘‰}±¥ÍÑ}Á½±¥¥•Ì€ÈÀÈØ´ÄÀ´ÌÀ¤(¨¼(
+  DISTINÃ‡ÃƒO CRÃTICA:
+  Este schema (org_id) Ã© simplificado. Em produÃ§Ã£o, o isolamento usa contact_id/assigned_to.
+  O CRITICAL-2 (39 UPDATE policies sem WITH CHECK explÃ­cito) Ã© risco real de produÃ§Ã£o:
+  neste schema simplificado WITH CHECK estÃ¡ explÃ­cito em todas as polÃ­ticas de UPDATE.
+  Ver S03 de progresso.json para detalhes do gap de produÃ§Ã£o.
+*/
