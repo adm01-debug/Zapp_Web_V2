@@ -69,7 +69,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `allowed_countries` | Países liberados no bloqueio geográfico | ativo | `src/components/security/__tests__/GeoBlockingPanel.confirmacao.test.tsx`, `src/hooks/system/__tests__/useGeoBlocking.test.ts`, `src/hooks/system/useGeoBlocking.ts` … |
 | `audio_meme_favorites` | Áudios e memes favoritados por usuário | ativo | `src/hooks/communication/__tests__/useAudioMemes.realtime.test.tsx`, `src/hooks/communication/useAudioMemes.ts` |
 | `audio_memes` | Biblioteca de áudios e memes disponíveis no chat | ativo | `src/components/settings/MediaLibraryAdmin.tsx`, `src/components/settings/__tests__/MediaLibraryAdmin.resolucao.test.tsx`, `src/components/settings/__tests__/MediaLibraryAdmin.test.tsx` … |
-| `audit_logs` | Trilha de auditoria de ações do sistema (usuário, ação e entidade) | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/admin/__tests__/MediaMigrationTool.test.tsx`, `src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts` … |
+| `audit_logs` | Trilha de auditoria de ações do sistema (usuário, ação, entidade) | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/admin/__tests__/MediaMigrationTool.test.tsx`, `src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts` … |
 | `auto_close_config` | Configuração do fechamento automático por inatividade da conversa | ativo | `src/components/settings/AutomationSettings.tsx`, `src/hooks/__tests__/useUserSettings.test.tsx`, `src/hooks/inbox/useAutoCloseConversations.ts` … |
 | `automations` | Automações client-side (gatilho, configuração e estado) | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/__tests__/CT70_reduzirMovimentoAutomacaoIa.test.tsx`, `src/components/automations/AutomationsManager.tsx` … |
 | `away_messages` | Mensagens de ausência por conexão de WhatsApp | ativo | `src/components/settings/MessagesSettings.tsx`, `src/components/settings/__tests__/MessagesSettings.test.tsx`, `src/hooks/__tests__/useUserSettings.test.tsx` … |
@@ -113,7 +113,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `custom_emojis` | Emojis personalizados disponíveis no chat | ativo | `src/components/settings/MediaLibraryAdmin.tsx`, `src/components/settings/__tests__/MediaLibraryAdmin.resolucao.test.tsx`, `src/components/settings/__tests__/MediaLibraryAdmin.test.tsx` … |
 | `deal_activities` | Atividades registradas em uma negociação do CRM | ativo | `src/hooks/chat/__tests__/useConversationHistoryTimeline.paginacao.test.tsx`, `src/hooks/chat/useConversationHistoryTimeline.ts`, `src/hooks/crm/useContactCrm360.ts` … |
 | `department_audit_logs` | Auditoria de alterações em departamento do chat interno | ativo | `src/hooks/team-chat/README.md`, `src/hooks/team-chat/useDepartmentManagement.ts`, `scripts/db-audit/department-invite-contract-audit-vocabulary.test.sh` … |
-| `department_invitations` | Convites de departamento (código, e-mail, papel e validade) | ativo | `src/components/team-chat/EnterDepartmentByCode.tsx`, `src/hooks/team-chat/useRedeemDepartmentInvite.ts`, `scripts/db-audit/department-invite-contract-audit-vocabulary.test.sh` … |
+| `department_invitations` | Convites de departamento (código, e-mail, papel e validade) | ativo | `src/hooks/team-chat/useRedeemDepartmentInvite.ts`, `scripts/db-audit/department-invite-contract-audit-vocabulary.test.sh`, `scripts/db-audit/migration-evidence.json` |
 | `department_invites` | Convites de departamento por código, com validade | ativo | `src/hooks/team-chat/README.md`, `src/hooks/team-chat/__tests__/departmentInviteCode.random.test.tsx`, `src/hooks/team-chat/__tests__/rls-contract.test.ts` … |
 | `departments` | Departamentos do chat interno e o modo de WhatsApp de cada um | ativo | `src/components/dashboard/SentimentTrendChart.tsx`, `src/components/talkx/TalkXAnalytics.tsx`, `src/components/team-chat/NewConversationDialog.tsx` … |
 | `edge_rate_limits` | Contador de requisições por chave nas Edge Functions, em janela | ativo | `supabase/functions/_shared/ai-circuit.test.ts`, `supabase/functions/_shared/ai-circuit.ts`, `supabase/functions/_shared/ai-generate.ts` … |
@@ -241,9 +241,9 @@ inventário apura hoje:
 - `link_preview_cache_metrics` e `mfa_sessions` (§8.2, "via de escrita ausente ou acoplamento
   mínimo") também estão como `roadmap`: nenhum arquivo do repositório as cita — o efeito que a
   auditoria descrevia (limpeza por cron, policy esperando o produtor) vive no banco, não aqui.
-- `ai_budget_reservations`, `department_invitations`, `talkx_alerts`, `talkx_conversions` e
+- `ai_budget_reservations`, `talkx_alerts`, `talkx_conversions` e
   `webhook_failures` são `parcial`: só o ferramental (`scripts/db-audit/`, `scripts/qa/`,
   `.github/workflows/`) as cita. `multiplix_audience_members`, `multiplix_audiences` e
   `talkx_campaign_segments` saíram dessa lista: viraram `ativo` (consumidoras de produto).
 
-As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 170.
+As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 171.
