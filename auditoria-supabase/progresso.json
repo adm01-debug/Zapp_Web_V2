@@ -1,37 +1,28 @@
 {
   "projeto": "tnnnlkbymytvtqngbbqh",
   "iniciado_em": "2026-10-30",
+  "concluido_em": "2026-10-30",
   "postgres_version": "17.6",
   "total_migrations": 1064,
   "secoes": {
-    "1_inventario": "em_andamento",
-    "2_drift": "em_andamento",
+    "1_inventario": "concluido",
+    "2_drift": "concluido",
     "3_seguranca": "concluido",
-    "4_integridade": "em_andamento",
-    "5_performance": "em_andamento",
-    "6_crons": "em_andamento",
-    "7_db_functions": "em_andamento",
-    "8_edge_functions": "em_andamento",
-    "9_auth_storage_realtime": "em_andamento",
-    "10_logs": "em_andamento",
+    "4_integridade": "concluido",
+    "5_performance": "concluido",
+    "6_crons": "concluido",
+    "7_db_functions": "concluido",
+    "8_edge_functions": "concluido",
+    "9_auth_storage_realtime": "concluido",
+    "10_logs": "concluido",
     "11_rls": "concluido",
-    "12_lacunas": "em_andamento"
+    "12_lacunas": "concluido"
   },
-  "achados": [
-    {"id":"S03-001","secao":"seguranca","severidade":"CRITICO","objeto":"talkx_campaign_segments (policies)","descricao":"Policies INSERT/SELECT/UPDATE/DELETE com role=public — acesso sem autenticação (sem JWT)","evidencia":"pg_policies: roles=[public], cmd=INSERT/UPDATE/DELETE/SELECT"},
-    {"id":"S03-002","secao":"seguranca","severidade":"ALTO","objeto":"copilot_sessions / copilot_insights (policies)","descricao":"Policy UPDATE com role=public sem WITH CHECK — qualquer conexão não autenticada pode atualizar via profile_id=auth.uid()","evidencia":"pg_policies: vendor_own_sessions/vendor_own_insights, roles=public, with_check=null"},
-    {"id":"S03-003","secao":"seguranca","severidade":"ALTO","objeto":"voip_profile_credentials","descricao":"Tabela com credenciais VoIP tem RLS ON sem nenhuma policy — acesso bloqueado mas sem policy explícita confirmada; verificar SECURITY DEFINER bypass","evidencia":"pg_tables: rowsecurity=true; pg_policies: 0 policies"},
-    {"id":"S03-004","secao":"seguranca","severidade":"ALTO","objeto":"contacts (policy: Users can update their assigned contacts)","descricao":"UPDATE sem WITH CHECK — agente pode reassignar contato para si mesmo ou outro sem validação de destino","evidencia":"pg_policies: cmd=UPDATE, with_check=null"},
-    {"id":"S03-005","secao":"seguranca","severidade":"ALTO","objeto":"talkx_campaigns (policy: Users can update own campaigns)","descricao":"UPDATE sem WITH CHECK — user pode alterar created_by para outro perfil","evidencia":"pg_policies: cmd=UPDATE, with_check=null, qual contém AND is_admin_or_supervisor"},
-    {"id":"S03-006","secao":"seguranca","severidade":"ALTO","objeto":"public.mcp_exec (function)","descricao":"Função com EXECUTE dinâmico — verificar quem pode chamar e se há sanitização de input","evidencia":"pg_proc: prosrc ILIKE '%EXECUTE%', schema=public"},
-    {"id":"S03-007","secao":"seguranca","severidade":"ALTO","objeto":"public.talkx_audience_query (function)","descricao":"Função com SQL dinâmico para query de audiência — potencial SQLi se input não sanitizado","evidencia":"pg_proc: prosrc ILIKE '%EXECUTE%'"},
-    {"id":"S03-008","secao":"seguranca","severidade":"MEDIO","objeto":"bucket/multiplix-voice","descricao":"Bucket sem restrição de MIME type (allowed_mime_types=null) — aceita upload de qualquer tipo","evidencia":"storage.buckets: allowed_mime_types=null, public=false"},
-    {"id":"S11-001","secao":"rls","severidade":"CRITICO","objeto":"talkx_campaign_segments","descricao":"Mesma issue S03-001 — policies public sem JWT em tabela de campanha","evidencia":"pg_policies: roles=public"},
-    {"id":"S11-002","secao":"rls","severidade":"INFO","objeto":"17 tabelas com RLS sem policy","descricao":"Acesso bloqueado para anon/authenticated mas sem policy explícita — acesso só via service_role ou SECURITY DEFINER. Inclui voip_profile_credentials e gmail_oauth_states com dados sensíveis.","evidencia":"pg_tables: rowsecurity=true, 0 policies em pg_policies"},
-    {"id":"S11-003","secao":"rls","severidade":"INFO","objeto":"views","descricao":"Todas as 13 views têm security_invoker=true. Excelente.","evidencia":"pg_class.reloptions: security_invoker=true em todas"},
-    {"id":"S11-004","secao":"rls","severidade":"INFO","objeto":"SECURITY DEFINER functions","descricao":"Todos os 403 SECURITY DEFINER têm search_path configurado. Nenhuma insegura por esse critério.","evidencia":"pg_proc: proconfig com search_path em todas"},
-    {"id":"S11-005","secao":"rls","severidade":"INFO","objeto":"user_metadata em policies","descricao":"Nenhuma policy usa user_metadata — todas usam auth.uid() e lookup em tabelas. Boa prática.","evidencia":"pg_policies: 0 rows com user_metadata"},
-    {"id":"S11-006","secao":"rls","severidade":"INFO","objeto":"cron jobs","descricao":"24 cron jobs, nenhum com token/secret hardcoded no campo command.","evidencia":"cron.job: secret_check=CLEAN em todos"},
-    {"id":"S11-007","secao":"rls","severidade":"INFO","objeto":"anon grants","descricao":"Apenas 1 tabela com escrita anon (password_reset_requests INSERT com WITH CHECK restritivo).","evidencia":"role_table_grants: anon write=1"}
-  ]
+  "contagem_por_severidade": {
+    "CRITICO": 4,
+    "ALTO": 11,
+    "MEDIO": 7,
+    "INFO": 14
+  },
+  "total_achados": 36
 }
