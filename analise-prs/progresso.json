@@ -31,9 +31,31 @@
   "nota_pr_2230": "COMPLETAR — deleta src/hooks/integrations/useTalkXSuppression.ts sem atualizar TalkXSuppression.tsx:32 que importa 8 simbolos do modulo; PR #2248 ja inclui esta correcao",
   "nota_pr_2238": "DECISAO_HUMANA — feat(message-delivery) com possivel DDL ou mudanca de behavior",
   "nota_pr_2248": "DECISAO_HUMANA — DESBLOQUEADOR: reduz 136 para 1 arquivo vermelho no CI; requer aprovacao das 2 migrations via producao-ddl",
-  "status": "ANALISE_COMPLETA_BLOQUEADO_SISTEMICO",
+  "status": "CI_AGUARDANDO_MERGE_PENDENTE",
   "merges_realizados": 0,
   "outras_escritas_github": "nenhuma (apenas leituras via github_get_pr_diff, github_get_pull_request, github_list_check_runs, github_list_pull_requests)",
+  "main_sha_atual": "931e97908e9397e4bd46754213cb6319b2cc46d8",
+  "prs_candidatas_merge": [
+    {
+      "numero": 2149,
+      "titulo": "docs(reconciliation): P053 registra regressão do cabeçalho (19/20/25) e superseded (16/28)",
+      "sha": "3c1915e7649206cf75c8cdc55ecc65b4ec1e5daf",
+      "bloqueio": "✅ CI Gate (required check) falhou na run anterior; run atual tem E2E + Contrato DB in_progress"
+    },
+    {
+      "numero": 2141,
+      "titulo": "feat(E83): entrar por codigo - aceite desacoplado (somente arquivos novos)",
+      "sha": "5976450fb883d4b0dfc13208ec8e6634939b5014",
+      "bloqueio": "2 de 3 required checks ainda in_progress (E2E, Contrato DB)"
+    },
+    {
+      "numero": 2357,
+      "titulo": "chore(db): sincronizar artefatos derivados do banco (types-sync bot, auto_merge:squash)",
+      "sha": "2ff1a41873857b6a3df702470e42fa3030d0ad8f",
+      "bloqueio": "2 de 3 required checks ainda in_progress (E2E, Contrato DB)"
+    }
+  ],
+  "nova_required_check_descoberta": "✅ CI Gate (required check) — check consolidador que não estava na análise anterior; substitui os 6 checks individuais como gate final"
   "dossies_completos": 174,
   "dossies_nao_draft": 130,
   "dossies_draft_skip": 37,
