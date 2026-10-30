@@ -1,348 +1,178 @@
-# PENDÊNCIAS — Workflows com falha irresolúvel por agente
+# Pendências de CI — bloqueios que exigem ação humana
 
-> Atualizado em 2026-10-22 01:40 UTC. Branch de trabalho: `claude/kind-gates-87mwoe` (PR #2182).
-> Todos os itens abaixo foram investigados; a causa raiz está identificada e documentada.
-> As correções cabíveis a agente foram aplicadas nesta sessão (ver RELATORIO_CI.md).
-> **§5 CORRIGIDO (2026-10-22 01:40 UTC):** mock `getBoundingClientRect` adicionado a `src/test/setup.ts` (commit `a4dfd16`). Causa raiz: `@tanstack/react-virtual` mede o contêiner por `getBoundingClientRect()` que retornava 0 no jsdom; agora retorna 600px.
-> **§5b atualizado:** E2E cancelled (passo 9 cancelado por timeout às 23:59 UTC).
-> **§5c atualizado:** Build skipped confirmado no run 39695347415 (job 119555036010).
+> Gerado em 2026-10-30 pela sessão de correção de CI (`claude/keen-galileo-dxai3p`).
+> Cada item indica o workflow, o erro exato e o que o Joaquim precisa fazer.
 
 ---
 
-## 1. E2E logado — 4 testes pré-existentes de mapa/geolocalização
+## ~~1. `types-sync` — RESOLVIDO~~
 
-**Workflow:** `e2e-logado.yml` — job `📐 Run Playwright E2E (login real)`
-**Projeto Playwright:** `chromium-mapa`
-**Status:** falha pré-existente na `main`; não é regressão desta PR.
+**Status:** ✅ **RESOLVIDO em 2026-10-30T01:45:45Z**
 
-### Testes que falham
+A coluna `is_pinned` já existia no banco de produção. `src/integrations/supabase/types.ts` na SHA `ca89064` confirma:
+- Linha 2088: `is_pinned: boolean` (Row)
+- Linha 2100: `is_pinned?: boolean` (Insert)
+- Linha 2112: `is_pinned?: boolean` (Update)
 
-| ID | Spec | Linha | Descrição |
-|----|------|-------|----------|
-| E71 | `location-picker.spec.ts` | 81 | Seletor de localização — ação primária |
-| E71 | `location-picker.spec.ts` | 148 | Seletor de localização — confirmação |
-| E73 | `contact-address.spec.ts` | 184 | Endereço do contato via mapa |
-| E74 | `contact-map-pin.spec.ts` | 79 | Pin de localização do contato |
-
-### Causa raiz
-
-Os specs dependem de API de geolocalização do browser e de mapa (provavelmente Google Maps ou Leaflet) que não funciona no ambiente de CI de forma consistente — credenciais ausentes, sandbox sem GPS, ou tile server indisponível.
-
-### O que o Joaquim precisa fazer
-
-1. Investigar se `MAPS_API_KEY` (ou equivalente) está configurada como secret no environment de E2E.
-2. Verificar se os specs usam `page.setGeolocation()` e se o contexto do browser o permite no CI.
-3. Se a falha for de infraestrutura irreparável (e.g., tile server bloqueado pelo proxy), considerar marcar esses specs com `.skip` **somente com documentação de issue rastreável** — decisão do Joaquim, não do agente.
+**Evidência:** run [`40987628915`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40987628915) (SHA `ca89064`) — `conclusion=success`.
+`bunx tsc --noEmit` na SHA `ca89064` = **0 erros**. Não requer mais ação.
 
 ---
 
-## 2. talkx-status-regen — Run 39600726711 com 0 jobs (falha histórica/transitória)
+## 2. `e2e-logado` — timeout na edge function `auth-login` / runs cancelados
 
-**Workflow:** `talkx-status-regen.yml`
-**Run:** [39600726711](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39600726711)
-**Status:** `conclusion: failure`, `total_count: 0` jobs listados pela API.
+**Workflow:** `.github/workflows/e2e-logado.yml`
+**Último run na main:** [`40965991521`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991521) (SHA `a1b27118`) — **cancelled**
 
-### Causa raiz
+**Erro exato:**
+```
+Error: page.goto: net::ERR_ABORTED
+  → POST https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/auth-login
+  → 504 Gateway Timeout (após 3 tentativas)
+```
 
-O workflow tem `concurrency: group: talkx-status-regen, cancel-in-progress: false`. Quando dois runs coexistem, o segundo pode ficar na fila indefinidamente ou ser marcado como falha sem executar nenhum job (comportamento do GitHub quando um run na fila é descartado por problema de runner ou rate-limit).
+**Causa raiz:** A edge function `auth-login` não respondeu em tempo hábil — timeout de infraestrutura (Supabase Functions / cold start sob carga). Não há código errado; é instabilidade pontual de infra.
 
-O YAML atual está sintaticamente correto e o run mais recente do workflow mostra execução normal. Esta falha foi pontual no commit `1fb282e64c66ae8af16d36bbda8e199c9ce2a58c`.
-
-### O que o Joaquim precisa fazer
-
-Nenhuma ação obrigatória — o workflow se auto-recupera. Se a falha se repetir sistematicamente:
-1. Verificar se `cancel-in-progress: false` está causando acúmulo de runs na fila.
-2. Avaliar mudar para `cancel-in-progress: true` se a natureza idempotente do job permitir.
+**Ação imediata necessária:** nenhuma (falha pontual de infra). Reavaliar se reaparecer em mais de 2 runs consecutivos.
 
 ---
 
-## 3. db-migrate — Run 39596763483 com TARGET_VERSION inválido
+## ~~3. `settings-guard` — RESOLVIDO~~
 
-**Workflow:** `db-migrate.yml`
-**Run:** [39596763483](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39596763483)
-**Status:** `missing_count=135` — 135 versões esperadas não encontradas no ledger.
+**Status:** ✅ **RESOLVIDO em 2026-10-30T01:42:39Z**
 
-### Causa raiz
+**Fix aplicado:** PR #2355 mergeado em SHA `ca89064b`.
+**Evidência:** run [`40986380985`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40986380985) (SHA `ca89064`) — `conclusion=success`.
 
-O dispatch foi feito com `TARGET_VERSION: 20261020190001`, mas esse valor está muito à frente do último registro real no ledger. O script de dry-run compara as migrations listadas no diretório com as registradas no banco e reportou 135 ausentes — não é código com bug, é parâmetro errado na invocação.
+Não requer mais ação.
 
-### O que o Joaquim precisa fazer
+---
 
-1. Verificar o `max(version)` atual no ledger:
+## 4. `db-live-guard` — todos os 7 checks do contrato DB vivo falharam
+
+**Workflow:** `.github/workflows/db-live-guard.yml`
+**Último run na main:** [`40282111471`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40282111471) (SHA `2d97c44c`, 2026-10-26) — **failure**
+**Job:** `db-live-guard` (job ID `121437489432`) — step "Consolidar veredito do contrato vivo"
+
+**Erro exato** (variáveis de saída do step de consolidação, lidas do log do job `121437489432`):
+```
+CAUSA: c2908c3a1ea3a8199242ee74b66dee834b3cef41d4064424c0b83e72341df07e
+
+FALHAS_LISTA:
+  Auditar configuracao runtime sem dados de clientes
+  Comparar migrations com schema_migrations
+  Paridade tripla (migrations, edges, grants)
+  Regenerar catalogo e comparar com o commitado
+  Regenerar manifesto e comparar com o committado
+  Verificar ACL e contrato de mcp_exec
+  Verificar frescor do types.ts
+
+LOGS_FALHAS:
+  {"nome":"Comparar migrations com schema_migrations","log":"/tmp/step-migrations.log"}
+  {"nome":"Verificar ACL e contrato de mcp_exec","log":"/tmp/step-acl-mcp-exec.log"}
+  {"nome":"Regenerar catalogo e comparar com o commitado","log":"/tmp/step-catalog.log"}
+  {"nome":"Regenerar manifesto e comparar com o commitado","log":"/tmp/step-manifest.log"}
+  {"nome":"Verificar frescor do types.ts","log":"/tmp/step-types.log"}
+  {"nome":"Paridade tripla (migrations, edges, grants)","log":"/tmp/step-paridade.log"}
+  {"nome":"Auditar configuracao runtime sem dados de clientes","log":"/tmp/step-runtime.log"}
+```
+
+**Todos os 7 passos falharam** — drift abrangente entre o banco de produção e o que está commitado.
+
+**Causa raiz:** DDL aplicado diretamente via MCP sem arquivo correspondente em `supabase/migrations/`, ou `schema-manifest.json` desatualizado. O `db-live-guard` compara migrations vs ledger, regenera catálogo e manifesto e verifica paridade tripla — qualquer divergência falha todos os passos dependentes em cascata.
+
+**O que precisa ser feito:**
+1. Verificar a issue de alerta aberta pelo `db-live-guard` no repositório (label `db-live-guard`).
+2. Identificar as versions órfãs no ledger:
    ```sql
-   SELECT max(version) FROM supabase_migrations.schema_migrations;
+   SELECT version, name FROM supabase_migrations.schema_migrations ORDER BY version DESC LIMIT 20;
    ```
-2. Re-disparar o `db-migrate.yml` com `apply=false` (dry-run) usando o `TARGET_VERSION` correto (versão da migration que precisa ir para produção).
-3. Se o resultado do dry-run estiver correto, re-disparar com `apply=true` e o hash SHA-256 do dry-run anterior.
+   e comparar com `ls supabase/migrations/*.sql | xargs -I{} basename {} .sql | sort | tail -20`.
+3. Para cada version sem arquivo local: criar o arquivo SQL com o DDL real do banco
+   (`pg_get_functiondef`, `pg_indexes`, etc.) e registrar via
+   `node scripts/db-audit/register-migration.mjs <arquivo.sql>`.
+4. Abrir PR com os arquivos reconciliados.
+
+**Relacionado:** `db-migrate` (§6) bloqueado por `remote_only_count=3` — mesma raiz.
 
 ---
 
-## 4. Contrato DB offline — DASH-091/092 (`sanitize_reset_request()`)
+## ~~5. `deploy-functions` — CORRIGIDO (aguardando run de confirmação)~~
 
-**Workflow:** `db-guard.yml` — job `Contrato DB offline`
-**Check runs com falha confirmados:**
-- SHA `b0585a58` — run [39683115745](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39683115745), job 119510528339
-- SHA `7a8c74e6` — run [39686676218](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39686676218), job 119522392829
-- SHA `cf895c6a` — run [39693077439](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077439), job 119543754154
-- SHA `43dd7666` — run [39695347420](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347420), job [119551245762](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347420/job/119551245762)
+**Status:** Fix aplicado — aguardando merge do PR e run de confirmação.
 
-### Passo que falha
-
-Passo 41 — **"Simular fronteira RLS das RPCs do Dashboard (DASH-091/092)"**
-
-### Erro exato
-
+**Falha anterior (run `40988248151`, SHA `ca89064`, 2026-10-30T01:51:01Z):**
 ```
-ERROR:  record "new" has no field "reset_token"
-CONTEXT:  PL/pgSQL assignment "NEW.reset_token := NULL"
-          PL/pgSQL function sanitize_reset_request() line 4 at assignment
-STATEMENT: SET ROLE authenticated;
-           SELECT set_config('request.jwt.claims', '{"sub":"...","role":"authenticated"}', false);
-           INSERT INTO public.password_reset_requests (user_id, email)
-           VALUES ('11111111-1111-1111-1111-111111111111','ti.existente@example.com');
+evidencia publicavel pronta em /home/runner/work/_temp/edge-deployment-evidence-public
+...
+##[warning]No files were found with the provided path:
+  /home/runner/work/_temp/edge-deployment-evidence-public/. No artifacts will be uploaded.
 ```
 
-### Causa raiz
+**Causa raiz confirmada:** `scripts/edge-deploy/preparar-artifact-deploy.sh` criava o diretório `$DESTINO` mas não depositava nenhum arquivo quando acionado via `workflow_dispatch` sem push real em `supabase/functions/`. O passo `upload-artifact` encontrava o diretório vazio e falhava.
 
-A função trigger `sanitize_reset_request()` referencia a coluna `NEW.reset_token` (linha 4), mas a tabela `password_reset_requests` não possui essa coluna. O passo 54 ("Simular recuperação autenticada sem coluna reset_token (R2-DB-023)") existe no mesmo job **especificamente** para cobrir o cenário sem a coluna, mas é pulado porque o passo 41 aborta antes. A função `sanitize_reset_request()` precisa ser corrigida para não referenciar `reset_token`, ou a coluna precisa ser adicionada à tabela.
+**Fix aplicado:** adicionado bloco no final do script — se `$DESTINO` estiver vazio após todas as cópias, grava `sem-deploy.json` como marcador. O bloco fica após o redator (que aborta com `exit 1` em caso de resíduo), preservando o contrato fail-closed do script.
 
-**Pré-existente:** confirmado em 4 commits/runs desta PR (`b0585a58`, `7a8c74e6`, `cf895c6a`, `43dd7666`) e em todas as runs históricas do `db-guard`.
+---
 
-### O que o Joaquim precisa fazer
+## 6. `db-migrate` — bloqueio de segurança por drift no ledger (design intencional)
 
-1. Verificar o estado atual da tabela em produção:
+**Workflow:** `.github/workflows/db-migrate.yml`
+**Último run na main:** [`40236186538`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40236186538) (SHA `2d97c44c`, dispatch 2026-10-25) — **failure**
+**Step com falha:** "Exigir alvo unico ou bundle atomico conhecido"
+
+**Erro exato:**
+```
+O ledger remoto possui versions sem arquivo local; db push foi
+bloqueado antes do CLI. remote_only_count=3
+```
+
+**Causa raiz:** NÃO é bug — é um bloqueio de segurança intencional (CLAUDE.md seção 1, regra 6). O workflow detectou 3 versions no ledger de produção sem arquivo correspondente em `supabase/migrations/` e recusou prosseguir.
+
+**O que precisa ser feito:**
+1. Identificar as 3 versions órfãs:
    ```sql
-   SELECT column_name FROM information_schema.columns
-   WHERE table_name = 'password_reset_requests';
+   SELECT version, name FROM supabase_migrations.schema_migrations ORDER BY version DESC LIMIT 20;
    ```
-2. Verificar o corpo real da função `sanitize_reset_request()` em produção:
-   ```sql
-   SELECT pg_get_functiondef(oid) FROM pg_proc WHERE proname = 'sanitize_reset_request';
-   ```
-3. Se a coluna `reset_token` nunca foi criada: corrigir a função removendo a atribuição `NEW.reset_token := NULL`, criar migration versionada com o fix, abrir PR.
-4. Se a coluna deveria existir mas foi dropada: recriar a coluna, criar migration versionada, abrir PR.
+   vs `ls supabase/migrations/*.sql | sort | tail -20`
+2. Para cada version órfã: recriar o arquivo SQL com DDL real do banco e registrá-lo corretamente.
+3. Após reconciliação, redisparar `db-migrate` com `apply=false` para dry-run.
 
 ---
 
-## 5. Unit Tests flaky — ChatMessagesArea e MessageBubble (timing async)
+## 7. `branch-hygiene-audit` — timeout recorrente (job ultrapassa 14h)
 
-**Workflow:** `ci.yml` — jobs `🧪 Unit Tests (1/3)`, `🧪 Unit Tests (2/3)`, `🧪 Unit Tests (3/3)`
+**Workflow:** `.github/workflows/branch-hygiene-audit.yml`
+**Último run na main:** [`40289875804`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40289875804) (SHA `2d97c44c`, 2026-10-26) — **cancelled** (após ~14h)
 
-**Conclusões confirmadas — run 39693077461 (SHA `cf895c6a`):**
+**Causa raiz:** O job processa todas as branches do repositório e ultrapassa o timeout do GitHub Actions. Não há código errado — o repositório tem muitas branches.
 
-| Job | Job ID | conclusion | completed_at |
-|-----|--------|-----------|-------------|
-| `🧪 Unit Tests (1/3)` | [119544144691](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144691) | ❌ `failure` | 23:30 UTC |
-| `🧪 Unit Tests (2/3)` | [119544144535](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144535) | ❌ `failure` | 23:33 UTC |
-| `🧪 Unit Tests (3/3)` | [119544144721](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119544144721) | ❌ `failure` | 23:33 UTC |
-
-**Segunda falha — run 39695347415 (SHA `43dd766`) — CONCLUÍDO:**
-
-| Job | Job ID | conclusion | completed_at |
-|-----|--------|-----------|-------------|
-| `🧪 Unit Tests (1/3)` | [119551484892](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484892) | ❌ `failure` | 23:52 UTC |
-| `🧪 Unit Tests (2/3)` | [119551484995](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484995) | ❌ `failure` | 23:53 UTC |
-| `🧪 Unit Tests (3/3)` | [119551484800](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484800) | ❌ `failure` | 23:55 UTC |
-
-**Status:** todos os 3 shards falharam em dois runs consecutivos por flaky de timing (`ChatMessagesArea` / `react-virtual`). Os erros adicionais nos shards 2/3 e 3/3 foram **corrigidos neste push** (ver RELATORIO_CI.md §5–§8). O flaky de timing do `ChatMessagesArea` permanece pendente.
-
-### Erros exatos — run 39693077461 (SHA `cf895c6a`) — referência histórica
-
-| Shard | Arquivo | Linha | Erro |
-|-------|---------|-------|-----|
-| 1/3 | `ChatMessagesArea.movimento-reduzido.test.tsx` | 122 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` |
-| 2/3 | `MessageBubble.interactive-list-item.test.tsx` | 110 | `AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times` |
-| 3/3 | `ChatMessagesArea.loop.test.tsx` | 138 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` |
-
-### Erros exatos — run 39695347415 shard 1/3 (SHA `43dd766`) — flaky pré-existente
-
-| Arquivo | Linha | Erro |
-|---------|-------|-----|
-| `ChatMessagesArea.agrupar-envio.test.tsx` | 191 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` |
-| `ChatMessagesArea.movimento-reduzido.test.tsx` | 122 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` |
-
-### Erros exatos — run 39695347415 shard 2/3 (SHA `43dd766`) — histórico
-
-| Arquivo | Linha | Erro | Situação |
-|---------|-------|------|----------|
-| `ChatMessagesArea.*` | vários | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente — **ainda pendente** |
-| `MessageBubble.interactive-list-item.test.tsx` | 110 | `AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times` | ✅ **CORRIGIDO** — prop `onInteractiveListItemClick` adicionada a `MessageBubble.tsx` (RELATORIO_CI.md §5) |
-
-### Erros exatos — run 39695347415 shard 3/3 (SHA `43dd766`) — histórico
-
-| Arquivo | Linha | Erro | Situação |
-|---------|-------|------|----------|
-| `ChatMessagesArea.loop.test.tsx` | 121 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente — **ainda pendente** |
-| `ChatMessagesArea.loop.test.tsx` | 138 | `Proxy.waitForWrapper` → `Unable to find element [data-testid="bubble"]` | flaky pré-existente — **ainda pendente** |
-| `contratosModulo.test.ts` | 87 | `AssertionError: team_message_read_state não existe em types.ts` | ✅ **CORRIGIDO** — view adicionada a `types.ts` (RELATORIO_CI.md §6) |
-| `useTeamChatNotifications.canal-estavel.test.tsx` | 185 | Asserção de `logWarn` não chamado quando esperado | ✅ **CORRIGIDO** — hook trata `membershipError`; testes ajustados (RELATORIO_CI.md §8) |
-| `useTeamChatNotifications.canal-estavel.test.tsx` | 198 | Asserção de argumento errado | ✅ **CORRIGIDO** — mesma correção (RELATORIO_CI.md §8) |
-| `useRealtimeInbox.sendAudio.test.tsx` | 177 | Esperava 6 args, recebeu 7 | ✅ **CORRIGIDO** — asserções atualizadas para 7 args (RELATORIO_CI.md §7) |
-| `useRealtimeInbox.sendAudio.test.tsx` | 185 | Esperava 5 args, recebeu 7 | ✅ **CORRIGIDO** — mesma correção (RELATORIO_CI.md §7) |
-
-### Causa raiz (identificada e corrigida)
-
-`@tanstack/react-virtual@3.14.21` mede a altura do contêiner de scroll por `getBoundingClientRect()`.
-No jsdom, `getBoundingClientRect()` retorna zeros por padrão → `getVirtualItems()` devolve `[]`
-→ nenhum `data-testid="bubble"` é renderizado → `waitFor(() => getByTestId("bubble"))` expira.
-
-**✅ CORRIGIDO em commit `a4dfd16`**: adicionado mock global em `src/test/setup.ts` que retorna
-`{width: 800, height: 600, ...}` para todos os `HTMLElement`. Testes que precisam de valores
-específicos continuam usando `vi.spyOn(Element.prototype, 'getBoundingClientRect')` e sobrescrevem
-o mock global.
-
-### Situação atual
-
-Os arquivos de teste (`ChatMessagesArea.{loop,agrupar-envio,movimento-reduzido}.test.tsx`) são
-idênticos ao `main` — nenhuma alteração desta PR. A correção é no setup global, beneficiando
-todos os testes que dependem de layout no jsdom.
+**Ação imediata necessária:** nenhuma bloqueante (não afeta deploys nem o CI de PRs). Avaliar `timeout-minutes` explícito ou paginação limitada por data.
 
 ---
 
-## 5b. E2E Tests — em execução no run 39695347415
+## 8. `db-guard` — fix ECR→ghcr.io bloqueado pela Regra 8 (PR #2354)
 
-**Workflow:** `ci.yml` — job `🎭 E2E Tests (Playwright)`
+**Workflow:** `.github/workflows/db-guard.yml`
+**Último run confirmado na main:** [`40965991318`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40965991318) (SHA `a1b27118`) — **success**
 
-**Status no run 39693077461 (SHA `cf895c6a`):** cancelado (dependia de Unit Tests falharem antes).
+**Nota importante:** o run `40965991318` passou porque o ECR estava acessível naquele momento — **não** porque o fix já está na main. A linha 68 de `.github/workflows/db-guard.yml` na `main` ainda aponta para `public.ecr.aws/supabase/postgrest:v14.5`, sujeita a throttling anônimo.
 
-**Status no run 39695347415 (SHA `43dd766`):** **CONCLUÍDO** — passo 9 `🧪 Run Playwright E2E (PR sem autenticação)` foi cancelado às 23:59 UTC (timeout de 12 min).
-
-| Job | Job ID | conclusion | completed_at |
-|-----|--------|-----------|-------------|
-| `🎭 E2E Tests (Playwright)` | [119551484580](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484580) | ❌ `cancelled` | 23:59 UTC |
-
-**Causa:** O passo 9 rodou por 12 min 26 seg (23:46–23:59 UTC) antes de ser cancelado. O job de E2E roda em paralelo com os Unit Tests e foi cancelado por timeout. As falhas dos testes E2E de geolocalização documentadas em §1 são a causa esperada dos timeouts nesses testes.
-
-### O que o Joaquim precisa fazer
-
-Investigar os logs do passo `🧪 Run Playwright E2E` do job [119551484580](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119551484580). Os 4 testes de mapa/geolocalização (§1) que fazem `navigator.geolocation` sem mock provavelmente causam timeout nesse passo.
-
----
-
-## 5c. Build — skipped por dependência dos Unit Tests
-
-**Workflow:** `ci.yml` — job `🏗️ Build`
-
-**Conclusão confirmada (SHA `cf895c6a`, run [39693077461](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461)):**
-
-| Job | Job ID | conclusion | completed_at |
-|-----|--------|-----------|-------------|
-| `🏗️ Build` | [119547522695](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119547522695) | ⏭️ `skipped` | 23:33 UTC |
-
-**Causa:** O job `🏗️ Build` só inicia após todos os shards de `Unit Tests` passarem. Como os 3 shards falharam, o Build foi pulado automaticamente pelo CI.
-
-**Prova que o build funciona:** run [39690218238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238), job `🏗️ Build`, `conclusion=success` no SHA `852350f` (mesmo código, sem alterações de fonte entre `852350f` e `43dd766` — apenas mocks de teste, documentação e manifesto de deploy).
-
-**Confirmado no run 39695347415:** job [119555036010](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39695347415/job/119555036010) `conclusion=skipped`, `completed_at=23:55 UTC`. Confirmado por segunda execução consecutiva — o Build é pulado sempre que Unit Tests falham.
-
-**Evidência que o build funciona:** job [119547522695](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39693077461/job/119547522695) `conclusion=success` no SHA `852350f`, e run [39690218238](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690218238) job `🏗️ Build` `success` (mesmo código-fonte entre `852350f` e `43dd766` — apenas mocks de teste, documentação e manifesto de deploy foram alterados).
-
----
-
-## 5d. E2E — contraste no tema de alto contraste do Email
-
-**Workflow:** `ci.yml` — job `🎭 E2E Tests (Playwright)`
-
-**Run:** [40862034884](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40862034884), job [123407422165](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40862034884/job/123407422165).
-
-**Falha:** `e2e/email-navy-visual.spec.ts:482`, teste “alto contraste e movimento reduzido mantêm o workspace acessível”. O axe encontrou no WebKit o horário `span[title="02/10/2026, 17:35:00"]` com texto `#2d2d2d` sobre fundo `#000000`: contraste 1,52:1, abaixo dos 4,5:1 exigidos. No mesmo run, 130 testes passaram e 1 falhou.
-
-**Relação com a PR #2338:** o diff altera somente `docs/consolidacao/_plano/B-grupos.md`; nenhum componente, estilo ou teste E2E foi modificado. O mesmo E2E passou no run [40860092186](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40860092186) da PR #2337, que tinha o mesmo código de produto. A falha é intermitente e não foi causada pela triagem documental.
-
-**Próximo passo:** repetir o E2E. Se voltar a falhar, corrigir a cor do horário no tema de alto contraste em uma PR separada e manter a asserção de acessibilidade. Não pular nem enfraquecer o teste. Enquanto o check estiver vermelho, não mergear a PR #2338.
-
----
-
-## 6. `🧬 Mutação do mapa (não bloqueante)` — baseline inválido
-
-**Workflow:** `ci.yml` — job `🧬 Mutação do mapa (não bloqueante)`
-**Run:** [39690838199](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838199), job [119536574289](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838199/job/119536574289)
-**Status:** ❌ failure (não bloqueante — nome do check indica isso)
-**Conclusão confirmada:** `conclusion=failure`, `completed_at=2026-10-21T23:04:23Z`
-
-### Erro exato
-
+**Erro que pode reaparecer:**
 ```
-BASELINE INVÁLIDO: a suíte precisa passar SEM mutação. Nada foi medido.
+toomanyrequests: Data limit exceeded
 ```
+O ECR público (`public.ecr.aws/supabase/postgrest:v14.5`) limita pulls anônimos por IP nos runners do GitHub.
 
-### Causa raiz
+**Fix pronto:** [PR #2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) — altera somente a linha 68: prefixo `public.ecr.aws/supabase/` → `ghcr.io/supabase/` (mesmo SHA digest `sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b`).
 
-O script de teste de mutação do módulo `mapa` falha ao coletar/executar a suíte base (sem mutações). O teste de mutação nunca chega a medir a taxa de sobrevivência porque a suíte base em si retorna exit code ≠ 0. O nome do check confirma que é intencionalmente não-bloqueante.
-
-**Pré-existente:** presente em todas as runs do branch (confirmado pela run anterior sob SHA `7a8c74e6`).
-
-### O que o Joaquim precisa fazer
-
-1. Investigar por que os testes do módulo `mapa` não produzem output de resumo `Tests ...` no ambiente de CI.
-2. Corrigir a suíte base para que passe sem mutações antes de medir a taxa de sobrevivência.
-3. Ou, se o módulo de mapa não tem cobertura de teste planejada, remover o job de mutação ou marcar com `continue-on-error: true` explicitamente e documentar.
-
----
-
-## 7. `copilot-pull-request-reviewer` — quota de Copilot esgotada
-
-**Workflow:** `copilot-reviewer.yml` (ou integrado ao `ci.yml`)
-**Run:** [39690848555](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690848555), job [119536370336](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39690838199/job/119536370336)
-**Status:** ❌ failure (não é required check — não bloqueia merge)
-**Conclusão confirmada:** `conclusion=failure`, `completed_at=2026-10-21T23:10:12Z`
-
-### Erro exato
-
-```
-SessionModelError: You've reached your additional usage limit for your plan.
-Go to https://github.com/settings/copilot/features for more details.
-(Request ID: FC41:386F8C:14FDB:18E58:6AD9464E)
-statusCode: 402
-errorCode: "quota"
-```
-
-### Causa raiz
-
-Cota de Copilot esgotada na conta `adm01-debug`. O reviewer automático tenta usar o modelo Copilot para revisar o PR e recebe HTTP 402 (Payment Required) ao fazer a chamada de API.
-
-**Não é bug de código** — é limitação de billing/plano.
-
-### O que o Joaquim precisa fazer
-
-1. Acessar https://github.com/settings/copilot/features para verificar e adicionar créditos ou upgrade de plano.
-2. Após recarregar créditos, o check passará automaticamente na próxima run.
-3. Enquanto a quota estiver esgotada, o check continuará falhando — mas não bloqueia merge pois não é required check.
-
----
-
----
-
-## 8. `git push` bloqueado pelo auto mode — commits pendentes
-
-**Commits locais prontos mas não empurrados** (remote branch ainda em `f042a4a`):
-
-| Commit | Descrição |
-|--------|-----------|
-| `ca80a91` | fix(types): restaura types.ts correto (13045 linhas) com view team_message_read_state |
-| `a997734` | docs(pendencias): documenta bloqueio de git push por auto mode |
-| `a4dfd16` | fix(tests): adiciona mock getBoundingClientRect para @tanstack/react-virtual no jsdom |
-
-**Bloqueio:** o auto mode da sessão Claude Cloud bloqueia `git push` com `[Auto-Mode Bypass]`.
+**Por que está bloqueado:** Regra 8 do fluxo Git proíbe o agente de mergear PRs que tocam arquivos em `.github/workflows/`.
 
 **O que o Joaquim precisa fazer:**
-
-```bash
-# Na WSL, dentro do repo:
-git push -u origin claude/kind-gates-87mwoe
-```
-
-**Depois do push, CI esperado:**
-- ✅ TypeCheck: passa (types.ts restaurado + getBoundingClientRect mock)
-- ✅ Unit Tests: passa (mock getBoundingClientRect corrige virtualizer no jsdom)
-- ✅ Lint & TypeCheck: passa
-- ✅ Security Audit: passa
-- ⚠️ Contrato DB offline: falha pré-existente (DASH-091/092, §4)
-- ⚠️ E2E Tests: falha pré-existente (geolocalização, §1)
-- ⚠️ Mutação do mapa: falha pré-existente, não bloqueante (§6)
-- ⚠️ Copilot reviewer: falha por quota, não bloqueante (§7)
+1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/pull/2354
+2. Verificar que os checks de CI estão verdes
+3. Mergear o PR (squash-merge)
 
 ---
 
-*Documento atualizado em 2026-10-22 01:40 UTC.*
-*Correções aplicadas nesta sessão: ver RELATORIO_CI.md.*
+*Atualizado em 2026-10-30T02:15 UTC. §1 (types-sync) e §3 (settings-guard) RESOLVIDOS. §5 (deploy-functions): fix aplicado no script — aguardando run de confirmação após merge do PR.*
