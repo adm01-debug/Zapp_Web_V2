@@ -219,7 +219,7 @@ const CLAUDE_ANTES = [
 ].join('\n\n');
 
 const CLAUDE_DEPOIS = [
-  '**Plano vigente:** auditoria exaustiva dos **16** arquivos em `.github/workflows/` (+3 dinâmicos).',
+  '**Plano vigente:** auditoria exaustiva dos **17** arquivos em `.github/workflows/` (+3 dinâmicos).',
   'A fonte canônica do inventário é o gerado `docs/ci/README.md`.',
   '**Correção de 2026-10-01 — HISTÓRICA, SUPERADA por E15(b):** repetir `strict: false` está REVOGADO.',
 ].join('\n\n');
@@ -265,7 +265,7 @@ test('fixture: CLAUDE.md com contagem antiga e strict=false solto e rejeitado', 
 });
 
 test('fixture: CLAUDE.md corrigido passa (16 arquivos, fonte gerada, strict=false rotulado)', () => {
-  assert.deepEqual(violacoesContagemClaude(CLAUDE_DEPOIS, 16), []);
+  assert.deepEqual(violacoesContagemClaude(CLAUDE_DEPOIS, 17), []);
   assert.deepEqual(violacoesStrictClaude(CLAUDE_DEPOIS), []);
 });
 
@@ -293,14 +293,14 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
 
 test('inventario: 16 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
-  assert.equal(arquivos.length, 16);
+  assert.equal(arquivos.length, 17);
   const readme = await readFile(README_CI, 'utf8');
-  assert.match(readme, /\*\*16 workflows\.\*\*/);
+  assert.match(readme, /\*\*17 workflows\.\*\*/);
   for (const f of arquivos) assert.ok(readme.includes(f));
 });
 
 test('CLAUDE.md: contagem atual e fonte canonica (sem 14/17)', async () => {
-  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 16), []);
+  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 17), []);
 });
 
 test('CLAUDE.md: politica unica de strict, coerente com o baseline', async () => {
@@ -335,7 +335,7 @@ test('plano: nenhuma etapa superada pede reexecucao', async () => {
 test('plano: inventario atual e 16 YAML com fonte gerada', async () => {
   const plano = await readFile(PLANO, 'utf8');
   const chato = achata(plano);
-  assert.match(chato, /\*\*16\*\* arquivos YAML em `\.github\/workflows\/`/);
+  assert.match(chato, /\*\*17\*\* arquivos YAML em `\.github\/workflows\/`/);
   assert.ok(plano.includes('docs/ci/README.md'));
   assert.ok(plano.includes('render-workflow-docs.mjs'));
   assert.match(chato, /403[^.]*limite de evidência/i);
