@@ -58,3 +58,28 @@ CREATE POLICY copilot_insight_feedback_service ON public.copilot_insight_feedbac
   TO service_role
   USING (true)
   WITH CHECK (true);
+
+-- Guard: impede que clientes PostgREST escrevam retained_at diretamente.
+-- Contexto PostgREST = request.jwt.claims presente; funções internas (SECURITY
+-- DEFINER, service_role) não têm esse GUC e passam livremente.
+CREATE OR REPLACE FUNCTION public.guard_copilot_insight_feedback_retained_at()
+RETURNS trigger LANGUAGE plpgsql
+SET search_path TO 'public', 'pg_temp' AS $$
+BEGIN
+  IF current_setting('request.jwt.claims', true) IS NOT NULL THEN
+    IF TG_OP = 'INSERT' THEN
+      NEW.retained_at := NULL;
+    ELSE
+      -- UPDATE: preserva o valor atual; se já retido, garante redação do texto
+      NEW.retained_at := OLD.retained_at;
+      IF OLD.retained_at IS NOT NULL THEN
+        NEW.final_text := NULL;
+      END IF;
+    END IF;
+  END IF;
+  RETURN NEW;
+END; $$;
+
+CREATE TRIGGER copilot_insight_feedback_retention_guard
+  BEFORE INSERT OR UPDATE ON public.copilot_insight_feedback
+  FOR EACH ROW EXECUTE FUNCTION public.guard_copilot_insight_feedback_retained_at();

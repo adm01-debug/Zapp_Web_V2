@@ -70,3 +70,6 @@ BEGIN
    WHERE created_at < now() - interval '30 days'
      AND retained_at IS NULL;
 END; $$;
+
+-- Agendamento diário às 03:00 UTC via pg_cron
+SELECT cron.schedule('copilot-retention-daily', '0 3 * * *', $$SELECT public.run_copilot_retention()$$);
