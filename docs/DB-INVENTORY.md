@@ -130,7 +130,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `email_attachments` | Anexos de e-mail (arquivo, MIME, tamanho e origem no Gmail) | ativo | `src/components/integrations/GmailIntegrationCard.tsx`, `src/components/integrations/__tests__/GmailIntegrationCard.apagar-dados.test.tsx`, `src/hooks/integrations/__tests__/useGmail.historicoPaginacao.test.tsx` … |
 | `email_labels` | Etiquetas das contas de e-mail conectadas | ativo | `src/components/gmail/GmailInboxView.tsx`, `src/components/gmail/GmailLabelSidebar.tsx`, `src/hooks/integrations/useGmail.ts` … |
 | `email_messages` | Mensagens de e-mail (remetente, destinatários, corpo e estado) | ativo | `src/components/email/__tests__/EmailVolumeMedicao.test.tsx`, `src/components/gmail/__tests__/EmailThreadView.test.tsx`, `src/components/integrations/GmailIntegrationCard.tsx` … |
-| `email_signatures` | Assinaturas de e-mail por conta conectada | parcial | `scripts/db-audit/email-signatures-rls.test.sh`, `.github/workflows/db-guard.yml` |
+| `email_signatures` | Assinaturas de e-mail por conta conectada | parcial | `scripts/db-audit/email-signatures-rls.test.sh` |
 | `email_threads` | Conversas de e-mail, vinculadas ao contato quando identificado | ativo | `src/components/admin/GmailWebhookMonitor.tsx`, `src/components/admin/__tests__/GmailWebhookMonitor.falha-consulta.test.tsx`, `src/components/email/__tests__/EmailVolumeMedicao.test.tsx` … |
 | `entity_versions` | Versionamento genérico de entidades (tipo, id e cópia dos dados) | roadmap | — |
 | `favorite_contacts` | Contatos favoritados por usuário | ativo | `src/components/inbox/chat/useChatPanelHandlers.ts`, `src/hooks/chat/__tests__/useConversationActions.test.ts`, `src/hooks/chat/useConversationActions.ts` … |
@@ -224,7 +224,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `talkx_links` | Links com slug usados nas campanhas TalkX | ativo | `src/components/talkx/__tests__/TalkXLinksManager.test.tsx`, `src/components/talkx/report/TalkXCampaignReport.tsx`, `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` … |
 | `talkx_optout_keywords` | Palavras de descadastro reconhecidas pelo TalkX | ativo | `src/components/talkx/__tests__/TalkXCampaignRunning.checklist.test.tsx`, `src/components/talkx/__tests__/TalkXResumeChecklist.test.tsx`, `src/hooks/integrations/__tests__/useTalkXResumeChecklist.test.tsx` … |
 | `talkx_recipients` | Destinatários da campanha TalkX (mensagem personalizada e estado) | ativo | `src/components/talkx/TalkXAnalytics.tsx`, `src/components/talkx/TalkXCampaignPaused.tsx`, `src/components/talkx/TalkXCampaignRunning.tsx` … |
-| `talkx_segment_fields` | Campos disponíveis para construção de segmentos do TalkX | parcial | `scripts/db-audit/talkx-segment-fields.test.sh`, `.github/workflows/db-guard.yml` |
+| `talkx_segment_fields` | Campos disponíveis para construção de segmentos do TalkX | parcial | `scripts/db-audit/talkx-segment-fields.test.sh` |
 | `talkx_segment_library_history` | Histórico de versões dos segmentos da biblioteca TalkX | parcial | `scripts/db-audit/talkx-segment-library-stats.test.sh`, `scripts/ci/check-test-inventory.mjs` |
 | `talkx_segment_versions` | Versões dos segmentos reutilizáveis do TalkX | roadmap | — |
 | `talkx_segments` | Segmentos de audiência reutilizáveis do TalkX | ativo | `src/components/talkx/TalkXCampaignRunning.tsx`, `src/components/talkx/__tests__/TalkXCampaignRunning.segmentoPico.test.tsx`, `src/components/talkx/__tests__/TalkXSegments.builder.test.tsx` … |
@@ -248,7 +248,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `user_sessions` | Sessões do usuário (dispositivo, IP, agente e estado) | ativo | `src/hooks/__tests__/useDeviceDetection.test.tsx`, `src/hooks/ui/useDeviceDetection.ts`, `supabase/functions/detect-new-device/index.test.ts` … |
 | `user_settings` | Preferências do usuário (horário de trabalho, notificações e canais) | ativo | `src/components/monitoring/hooks/useMonitoringNotifications.ts`, `src/components/notifications/SoundVolumeControl.tsx`, `src/components/onboarding/__tests__/OnboardingChecklist.test.tsx` … |
 | `voice_command_logs` | Comandos de voz registrados (transcrição, ação e resposta) | ativo | `src/hooks/voice/logVoiceCommand.ts` |
-| `voip_profile_credentials` | Credenciais de ramal VoIP por usuário (SIP e autenticação) | ativo | `src/components/admin/useAdminData.ts`, `src/components/admin/VoipRamalField.tsx` |
+| `voip_profile_credentials` | Credenciais de ramal VoIP por usuário (SIP e autenticação) | roadmap | — |
 | `warroom_alerts` | Alertas do war-room (tipo, origem e leitura) | ativo | `src/components/dashboard/__tests__/WarRoomDashboard.estado-a11y.test.tsx`, `src/hooks/__tests__/useWarRoomAlerts.test.tsx`, `src/hooks/business/useWarRoomAlerts.ts` … |
 | `webauthn_challenges` | Desafios WebAuthn pendentes, com validade | ativo | `supabase/functions/webauthn/index.test.ts`, `supabase/functions/webauthn/index.ts` |
 | `webhook_failures` | Falhas de webhook registradas (endpoint, evento e payload truncado) | parcial | `.github/workflows/db-migrate.yml`, `scripts/ci/db-migrate-contratos.unit.mjs`, `scripts/db-audit/check-webhook-failures-acl.sql` … |
