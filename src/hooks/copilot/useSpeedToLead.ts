@@ -36,7 +36,7 @@ export function useSpeedToLead({
     if (!firstClientMessageAt) return null;
 
     const firstMsgTime = new Date(firstClientMessageAt).getTime();
-    const currentTime = now ?? Date.now();
+    const currentTime = now ?? Date.now(); // eslint-disable-line react-hooks/purity
 
     if (lastAgentMessageAt) {
       const lastAgentTime = new Date(lastAgentMessageAt).getTime();

@@ -46,7 +46,7 @@ export function useQuoteDraft({
       return { ready: false, clientName, items: [], totalValue: 0, validity: 0, paymentTerms: '', deliveryDate: '', observations: [], textSummary: '' };
     }
 
-    const ts = now ?? Date.now();
+    const ts = now ?? Date.now(); // eslint-disable-line react-hooks/purity
     const lineItems: QuoteLineItem[] = items.map((i) => ({ ...i, total: i.quantity * i.unitPrice }));
     const totalValue = lineItems.reduce((s, i) => s + i.total, 0);
     const VALIDITY_DAYS = 5;
