@@ -63,14 +63,19 @@ export function useKnowledgeBase() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const [articlesRes, filesRes] = await Promise.all([
-      supabase.from('knowledge_base_articles').select('*').order('updated_at', { ascending: false }),
-      supabase.from('knowledge_base_files').select('*').order('created_at', { ascending: false }),
-    ]);
-    if (articlesRes.data) setArticles(articlesRes.data.map((a) => ({ ...a, tags: a.tags || [] })) as Article[]);
-    if (filesRes.data) setFiles(filesRes.data as KBFile[]);
-    setError(articlesRes.error?.message ?? filesRes.error?.message ?? null);
-    setLoading(false);
+    try {
+      const [articlesRes, filesRes] = await Promise.all([
+        supabase.from('knowledge_base_articles').select('*').order('updated_at', { ascending: false }),
+        supabase.from('knowledge_base_files').select('*').order('created_at', { ascending: false }),
+      ]);
+      if (articlesRes.data) setArticles(articlesRes.data.map((a) => ({ ...a, tags: a.tags || [] })) as Article[]);
+      if (filesRes.data) setFiles(filesRes.data as KBFile[]);
+      setError(articlesRes.error?.message ?? filesRes.error?.message ?? null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Falha ao carregar a base de conhecimento');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const saveArticle = useCallback(async (payload: { title: string; content: string; category: string; tags: string[]; is_published: boolean }, editingId?: string) => {

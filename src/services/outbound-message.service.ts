@@ -372,11 +372,11 @@ function avisarFilaOffline(error: unknown, message?: OfflineQueuedMessage): void
 /**
  * A fila é do usuário que a compôs: o IndexedDB é da máquina, não da conta, então o
  * texto de um atendente não pode sair pela sessão de outro que entrou depois. Item
- * com dono só drena para o dono (sem sessão legível, fica parado); item sem dono é
- * anterior a este campo e mantém o comportamento antigo.
+ * com dono só drena para o dono (sem sessão legível, fica parado); item sem dono
+ * nunca drena (não dá para provar de quem é o texto).
  */
 function pertenceAoUsuarioAtual(message: OfflineQueuedMessage): boolean {
-  if (!message.userId) return true;
+  if (!message.userId) return false;
   return message.userId === readAuthenticatedUserId();
 }
 
@@ -402,9 +402,14 @@ async function enqueueOffline(
   input: SendOutboundMessageInput,
   clientMessageId: string,
 ): Promise<OutboundMessageDeliveryResult> {
+  const userId = readAuthenticatedUserId();
+  if (!userId) {
+    // Sem sessão legível não há dono para o item, e item sem dono nunca drena.
+    throw new Error('Sessão expirada. Entre novamente para enviar mensagens.');
+  }
   const queued = await offlineSendQueue.enqueue({
     clientMessageId,
-    userId: readAuthenticatedUserId() ?? undefined,
+    userId,
     contactId: input.contactId,
     content: input.content,
     messageType: input.messageType ?? 'text',
