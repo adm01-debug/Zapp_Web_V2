@@ -5,27 +5,20 @@
 
 ---
 
-## 1. `types-sync` — fix verificado; runs in_progress na SHA ca89064
+## ~~1. `types-sync` — RESOLVIDO~~
 
-**Workflow:** `.github/workflows/types-sync.yml`
-**Runs em execução:** `40986366321` (in_progress desde 01:43 UTC) e `40987628915` (pending desde 01:44 UTC), ambos SHA `ca89064`
-**Próximo agendado:** segundas-feiras 05:49 UTC (schedule `49 5 * * 1`)
+**Status:** ✅ **RESOLVIDO em 2026-10-30T01:45:45Z**
 
-**Estado atual — problema RESOLVIDO no código:**
-
-A falha anterior (`40869806795`, SHA `ac97c0ea`) reportava TS2322: `is_pinned` como `never` em `src/services/contact.service.ts`.
-Verificação direta em `src/integrations/supabase/types.ts` na SHA `ca89064` confirma:
+**Fix verificado:** A coluna `is_pinned` já existia no banco de produção.
+`src/integrations/supabase/types.ts` na SHA `ca89064` confirma:
 - Linha 2088: `is_pinned: boolean` (Row)
 - Linha 2100: `is_pinned?: boolean` (Insert)
 - Linha 2112: `is_pinned?: boolean` (Update)
 
-A coluna **já existe no banco de produção**. `bunx tsc --noEmit` na SHA `ca89064` retorna **0 erros**.
-O `types-sync` ao rodar regenerará os tipos e encontrará `is_pinned` no banco — TypeCheck passará.
+**Evidência:** run `40986366321` (SHA `ca89064`) — `conclusion=success`, `updated_at=2026-10-30T01:45:45Z`.
+`bunx tsc --noEmit` na SHA `ca89064` = **0 erros**.
 
-**PR #2356 fechado sem merge:** o workaround `pinField: any` foi criado antes de confirmar que
-`is_pinned` já existia no banco. Era uma regressão desnecessária.
-
-**Ação imediata necessária:** nenhuma (problema resolvido na main). Aguardar conclusão dos runs `40986366321`/`40987628915`.
+Não requer mais ação.
 
 ---
 
@@ -58,7 +51,7 @@ se reaparecer.
 
 ## ~~3. `settings-guard` — RESOLVIDO~~
 
-**Status:** ✅ **RESOLVIDO em 2026-10-30T01:42 UTC**
+**Status:** ✅ **RESOLVIDO em 2026-10-30T01:42:39Z**
 
 **Fix aplicado:** PR #2355 mergeado em SHA `ca89064b`.
 **Evidência:** run `40986380985` (SHA `ca89064`) — `conclusion=success`, `updated_at=2026-10-30T01:42:39Z`.
@@ -104,37 +97,46 @@ divergência falha todos os passos dependentes.
 4. Abrir PR com os arquivos reconciliados.
 
 **Ação imediata necessária:** verificar a issue de alerta gerada pelo `db-live-guard` no repo GitHub
-e reconciliar as versions órfãs (relacionado também ao `PENDENCIAS.md §6` — `db-migrate` bloqueado
+e reconciliar as versions órfãs (relacionado também ao §6 — `db-migrate` bloqueado
 por `remote_only_count=3`).
 
 ---
 
-## 5. `deploy-functions` — diretório de evidência não produzido
+## 5. `deploy-functions` — diretório de evidência criado mas vazio
 
 **Workflow:** `.github/workflows/deploy-functions.yml`
-**Último run na main com falha:** `40744311421` (SHA `c543c6a`, 2026-10-28) — **failure**
+**Último run confirmado na main:** `40988248151` (SHA `ca89064`, 2026-10-30T01:51:01Z) — **failure**
 **Step com falha:** "Validar gerador e manifesto de deployment" (step 9)
 **Erro exato:**
 
 ```
-Error: No files were found with the provided path:
-  /home/runner/work/_temp/edge-deployment-evidence-public/
+evidencia publicavel pronta em /home/runner/work/_temp/edge-deployment-evidence-public
+...
+##[warning]No files were found with the provided path:
+  /home/runner/work/_temp/edge-deployment-evidence-public/. No artifacts will be uploaded.
 ```
 
-**Causa raiz:** O script `preparar-artifact-deploy.sh` rodou mas não produziu o diretório
-`edge-deployment-evidence-public/`. O step de upload de artifact falhou porque o diretório
-esperado estava vazio ou não foi criado. Isso bloqueia a validação do manifesto de deployment.
+**Causa raiz:** O script `preparar-artifact-deploy.sh` cria o diretório
+`edge-deployment-evidence-public/` (imprime "evidencia publicavel pronta em...") mas
+não deposita nenhum arquivo dentro dele — o `upload-artifact` encontra o diretório vazio
+e reporta warning. O script depende de um arquivo de atestação produzido pelo deploy, mas
+o deploy da `ca89064` não tocou `supabase/functions/`, então não houve deploy real para
+gerar o JSON de atestação.
+
+**Falha pré-existente:** Confirmada desde SHA `c543c6a` (run `40744311421`, 2026-10-28).
+O dispatch em `ca89064` (run `40988248151`) confirmou que o problema persiste na HEAD atual.
 
 **O que precisa ser investigado:**
-- Verificar se houve mudança recente em `supabase/functions/` ou `supabase/config.toml` entre
-  os commits `c543c6a` e `a1b27118` que possa ter alterado o comportamento do script.
-- Examinar o log completo do step "Preparar evidência de deployment" (step anterior ao que falhou)
-  no run `40744311421`.
-- O HEAD atual (`a1b27118`) não tocou `supabase/functions/`, então não disparou novo run automático.
-  Para forçar investigação, dispatch manual via `workflow_dispatch` no GitHub Actions.
+- Examinar `scripts/edge-deploy/preparar-artifact-deploy.sh`: por que o script imprime
+  "evidencia publicavel pronta" mas deixa o diretório vazio? Verificar se o arquivo de
+  atestação (`attestation.json`) é pré-requisito e quando/como é criado.
+- Verificar se o step de deploy (anterior ao step 9) gerou o `attestation.json` esperado.
+  O workflow só precisa de `attestation.json` quando há deploy real; quando `workflow_dispatch`
+  é acionado sem push em `supabase/functions/`, o deploy pode não gerar atestação.
 
-**Ação imediata necessária:** dispatch manual do `deploy-functions` para ver se o problema persiste
-na HEAD atual (`a1b27118`), ou aguardar o próximo push que altere `supabase/functions/`.
+**Ação imediata necessária:** inspecionar `scripts/edge-deploy/preparar-artifact-deploy.sh`
+para identificar por que o diretório fica vazio quando acionado via `workflow_dispatch`
+sem deploy real.
 
 ---
 
@@ -226,4 +228,4 @@ Após o merge, o `Contrato DB offline` voltará a executar corretamente em todos
 
 ---
 
-*Atualizado em 2026-10-30. settings-guard (§3) RESOLVIDO com run 40986380985 success. Remover item ao concluir a ação correspondente.*
+*Atualizado em 2026-10-30T01:53 UTC. §1 (types-sync) e §3 (settings-guard) RESOLVIDOS. §5 (deploy-functions): run `40988248151` na `ca89064` = failure confirmada — diretório criado mas vazio. Remover item ao concluir a ação correspondente.*
