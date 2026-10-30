@@ -214,4 +214,36 @@ Avaliar se o timeout longo é aceitável ou se vale otimizar o script.
 
 ---
 
-*Atualizado em 2026-10-29. Remover item ao concluir a ação correspondente.*
+## 8. `db-guard` — fix ECR→ghcr.io bloqueado pela Regra 8 (PR #2354)
+
+**Workflow:** `.github/workflows/db-guard.yml`
+**Job afetado:** `Contrato DB offline`
+**Última falha antes do fix:** run `40940891714` (SHA `a1b27118`, 2026-10-29)
+
+**Erro exato:**
+```
+toomanyrequests: Data limit exceeded
+```
+O ECR público (`public.ecr.aws/supabase/postgrest:v14.5`) limita pulls anônimos
+por IP em runners do GitHub. O job abortava antes de executar qualquer SQL.
+
+**Fix pronto:** PR #2354 (https://github.com/adm01-debug/Zapp_Web_V2/pull/2354)
+branch `claude/fix-db-guard-ecr-261029` — altera **somente a linha 68 de
+`.github/workflows/db-guard.yml`**: prefixo `public.ecr.aws/supabase/` →
+`ghcr.io/supabase/` (mesmo SHA digest
+`sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b`).
+
+**Por que está bloqueado:** A Regra 8 do fluxo Git proíbe o agente de mergear PRs
+que tocam arquivos em `.github/workflows/`. O agente **não pode** mergear este PR
+— deve deixá-lo aberto para o Joaquim.
+
+**O que o Joaquim precisa fazer:**
+1. Acessar https://github.com/adm01-debug/Zapp_Web_V2/pull/2354
+2. Verificar que os checks de CI estão verdes (o fix não toca código de aplicação)
+3. Mergear o PR (squash-merge)
+
+Após o merge, o `Contrato DB offline` voltará a executar corretamente em todos os PRs.
+
+---
+
+*Atualizado em 2026-10-30. Remover item ao concluir a ação correspondente.*

@@ -129,6 +129,7 @@ Decisão arquitetural (aplicar migration vs remover código) permanece pendente 
 | 5 | `deploy-functions` | Diretório de evidência não produzido pelo script | §5 |
 | 6 | `db-migrate` | Bloqueio de segurança por design (`remote_only_count=3`) | §6 |
 | 7 | `branch-hygiene-audit` | Timeout ~14h (cancelado pelo GitHub) | §7 |
+| 8 | `db-guard` (ECR) | Fix em PR #2354 aguarda merge pelo Joaquim (Regra 8 — toca `.github/workflows/db-guard.yml`) | §8 |
 
 ---
 
@@ -184,7 +185,7 @@ Nenhum teste foi pulado, afrouxado ou removido. Nenhum `continue-on-error` intro
 | Workflow que estava falhando | Causa raiz | Fix aplicado | Run de prova | Status |
 |---|---|---|---|---|
 | `auto-update-pr-branch` | `execFileSync` sem try/catch em `fila-merge.mjs` | try/catch adicionado | `40966272128` (main `a1b27118`) | ✅ `success` |
-| `db-guard` | ECR rate limit (`toomanyerequests`) | `ghcr.io/supabase/postgrest` (W57, mesmo SHA) | `40965991318` (main) | ✅ `success` |
+| `db-guard` | ECR rate limit (`toomanyrequests`) | `ghcr.io/supabase/postgrest` (W57, mesmo SHA) | `40965991318` (main) | ✅ `success` |
 | `settings-guard` | Baseline desatualizado (3 divergências) + emoji errado + testes desatualizados | `github-settings-baseline.json` + 2 arquivos de testes atualizados | **aguarda CI verde no PR #2355** | ⏳ em CI |
 | `types-sync` | `is_pinned` ausente no banco – `RejectExcessProperties` gera `never` | workaround `pinField: any` em `contact.service.ts` | **aguarda CI verde no PR #2356** | ⏳ em CI |
 | `e2e-logado` | 504 infra `auth-login` (instabilidade pontual) | sem código errado | – | ⏳ `PENDENCIAS.md §2` |
