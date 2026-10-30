@@ -32,11 +32,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   // E81: deslogado nao repete (ver RETRIES_LOGADOS no topo do arquivo).
   retries: 0,
-  // W75 (atualizado): 4 workers no CI e localmente.
-  // Com 1 worker: timeout de 20 min (129 testes × ~17s = ~38 min total).
-  // Com 2 workers: ainda ~19 min (só 46s de margem, timeout recorrente).
-  // Com 4 workers: ~10 min, dentro do limite do runner com margem segura.
-  workers: 4,
+  // W75: CI com 4 workers (1 worker estourava o timeout de 20 min: 129 testes × ~17s;
+  // 2 workers ficavam em ~19 min, sem margem). Localmente seguem 2: a fixture do Email
+  // sobe um Vite inteiro e captura artefatos visuais; um pool limitado evita a fome de
+  // cold start que fazia specs independentes caírem no fallback de carregamento em 5 s.
+  workers: process.env.CI ? 4 : 2,
   reporter: 'html',
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173',
