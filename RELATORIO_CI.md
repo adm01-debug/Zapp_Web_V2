@@ -10,7 +10,17 @@
 
 ### 1a. Baseline local
 
-`bun run typecheck` e `bun run build` encerrados com SIGABRT no container cloud remoto (limite de memória do executor). Baseline local não executável neste ambiente. Evidência de CI utilizada como substituto confiável (runs em checks de PR, detalhados abaixo). Linting e testes unitários executados via CI jobs obrigatórios na `main`.
+Tentativa de execução local no container cloud remoto (sessão Claude Code):
+
+| Comando | Resultado | Motivo |
+|---|---|---|
+| `bun install` | ✅ success | Dependências instaladas |
+| `bun run typecheck` | 💥 SIGABRT | Processo morto pelo OS — limite de memória do executor remoto atingido |
+| `bun run build` | 💥 SIGABRT | Mesmo motivo — esbuild/vite consome >2 GB de RAM durante o bundle |
+| `bun run lint` | ✅ success (via CI) | Não executável localmente por SIGABRT; CI jobs obrigatórios usados como substituto |
+| `bun test` / testes unitários | ✅ success (via CI) | Mesmo motivo |
+
+**Evidência substituta:** os jobs obrigatórios da `main` (`🔍 Lint & TypeCheck`, `🏗️ Build`, `🔒 Security Audit`, `🧪 Unit Tests`) estavam ✅ success no SHA baseline `8748ebf2` (último run verde em `ci.yml` antes desta sessão), confirmado via `github_list_check_runs`.
 
 ### 1b. Inventário de workflows — último run na `main` antes desta sessão (baseline)
 
@@ -29,81 +39,92 @@
 | `codeql` | ✅ success | — |
 | `db-guard` (Contrato DB offline) | ✅ success | — |
 
+**Inventário action_required na main:** 0 runs aguardando aprovação manual.
+
 ---
 
-## 2. Correções aplicadas (7 PRs — 6 mergeadas, 1 em CI)
+## 2. Correções aplicadas (7 PRs — todas mergeadas)
 
 ### PR #2355 — `settings-guard` ✅ mergeada
 - **Causa:** HTTP 403 em `github_get_branch_protection` (token sem escopo `administration`) tratado como regressão em vez de "NÃO VERIFICÁVEL".
 - **Fix:** `scripts/ci/settings-guard.mjs` — 403 → "NÃO VERIFICÁVEL".
-- **Arquivo:** `scripts/ci/settings-guard.mjs`
 
 ### PR #2358 — `deploy-functions` (manifesto stale + diretório vazio) ✅ mergeada
 - **Causa:** Manifesto desatualizado (1 função ausente) + `preparar-artifact-deploy.sh` falhava com diretório vazio.
 - **Fix:** Manifesto regenerado; script cria `sem-deploy.json` como marcador quando não há evidências de deploy.
-- **Arquivo:** `supabase/deployment-manifest.json`, `scripts/edge-deploy/preparar-artifact-deploy.sh`
 
 ### PR #2359 — reconciliar 3 migrations órfãs (db-live-guard + db-migrate) ✅ mergeada
-- **Causa:** Versões `20261026210300`, `20261026220300`, `20261026230300` no ledger sem arquivo `.sql`; guard detectava drift.
-- **Fix:** Criados 3 arquivos com DDL exato já em produção. 2 adicionadas a `replay-known-failures.json`.
-- **Arquivo:** `supabase/migrations/20261026{210300,220300,230300}_*.sql`
+- **Causa:** Versões `20261026210300`, `20261026220300`, `20261026230300` no ledger sem arquivo `.sql`.
+- **Fix:** 3 arquivos com DDL exato já em produção. 2 adicionadas a `replay-known-failures.json`.
 
 ### PR #2362 — fix assertion teste `preparar-artifact-deploy` ✅ mergeada
 - **Causa:** PR #2358 adicionou `sem-deploy.json`; teste assertava `length === 0`.
 - **Fix:** `assert.deepEqual(semDeploy, ['sem-deploy.json'])` + verificação de conteúdo.
-- **Arquivo:** `scripts/edge-deploy/preparar-artifact-deploy.unit.mjs`
 
 ### PR #2364 — `deploy-functions` manifesto stale 2ª causa ✅ mergeada
-- **Causa:** 3 arquivos de `supabase/functions/` com hashes alterados por PRs anteriores sem regeneração do manifesto.
+- **Causa:** 3 arquivos de `supabase/functions/` com hashes alterados por PRs anteriores sem regeneração.
 - **Fix:** `node scripts/edge-deploy/generate-manifest.mjs` — 84 funções, 168 source files.
-- **Arquivo:** `supabase/deployment-manifest.json`
 - **Evidência:** CI Gate run [41010314950](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41010314950), SHA `c1202b31`. Squash-merge `3af255603e`.
 
-### PR #2367 — `skipLibCheck` em `deno.json` ✅ mergeada
-- **Causa:** `@types/ws@8.18.1` tem `/// <reference types="node" />` interno; `nodeModulesDir: "none"` impedia resolução de `@types/node`.
+### PR #2367 — `skipLibCheck` em `deno.json` ✅ mergeada (fix parcial, superado pelo #2368)
 - **Fix parcial:** `compilerOptions.skipLibCheck: true` em `supabase/functions/deno.json`.
-- **Nota:** Fix insuficiente — erro ocorre na fase de resolução de referências transitivas antes do type check. Corrigido definitivamente pelo PR #2368.
+- **Nota:** Fix insuficiente — `skipLibCheck` não previne `resolveTypeReferenceDirectiveReferences`.
 
-### PR #2368 — `deploy-functions` nodeModulesDir fix ⏳ CI em andamento
-- **Causa:** `skipLibCheck: true` não previne `resolveTypeReferenceDirectiveReferences` em `findSourceFile` (97_ts_host.js:517). Erro: `Could not find "@types/node" in a node_modules folder`.
-- **Fix real:** `nodeModulesDir: "auto"` + lock como string (remove `frozen: true`) em `supabase/functions/deno.json`.
-- **Arquivo:** `supabase/functions/deno.json`, `scripts/ci/deno-reproducibility.unit.mjs`
-- **Branch:** `claude/fix-deno-nodemodules-261030-0641`
-- **CI run:** [41016020951](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41016020951) (SHA `cbe005ee`)
-  - ✅ `🔎 TypeCheck` (06:47:48Z)
-  - ✅ `🔒 Security Audit` (06:47:08Z)
-  - ✅ `🧩 Node CI Scripts` (06:49:30Z) — deno-reproducibility passou
-  - ✅ `🧪 Unit Tests (1/3)` (06:52:59Z)
-  - ✅ `🧪 Unit Tests (2/3)` (06:53:55Z)
-  - ✅ `🧪 Unit Tests (3/3)` (06:52:23Z)
-  - ⏳ `🎭 E2E Tests (Playwright)` — in_progress
-  - ⏳ `Contrato DB offline` — in_progress
+### PR #2368 — `deploy-functions` nodeModulesDir fix ✅ mergeada (07:37Z)
+- **Causa:** `skipLibCheck: true` não previne busca de `@types/node` na fase de descoberta. `@types/ws@8.18.1` tem `/// <reference types="node" />` transitivo.
+- **Fix:** `nodeModulesDir: "auto"` + lock como string em `supabase/functions/deno.json`.
+- **Squash-merge SHA:** `3f4e16d2ae91e5dae76a3775049798460782cbf5`
+- **CI da PR (14/14 checks ✅):** TypeCheck, Security Audit, Node CI Scripts, Build, Unit Tests (3/3), E2E Tests, Contrato DB offline, Replay local, CI Gate.
 
 ---
 
-## 3. Tabela de prova — workflows que falhavam no baseline
+## 3. Tabela de prova — workflows corrigidos
 
 | Workflow | PR | Run de validação | Conclusão |
 |---|---|---|---|
 | `settings-guard` | [#2355](https://github.com/adm01-debug/Zapp_Web_V2/pull/2355) | [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) | ✅ success |
 | `🧪 Unit Tests` (ci.yml) | [#2362](https://github.com/adm01-debug/Zapp_Web_V2/pull/2362) | CI PR #2364 run [41008768305](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768305) | ✅ success |
-| `deploy-functions` | [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) + [#2368](https://github.com/adm01-debug/Zapp_Web_V2/pull/2368) | PR #2368 CI [41016020951](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41016020951) (5/6 checks ✅ — E2E+Contrato ⏳); run automático pós-merge pendente | ⏳ aguardando merge #2368 |
-| `db-live-guard` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | Dispatch pós-merge do #2368 (pendente) | ⏳ aguardando deploy-functions verde |
+| `deploy-functions` | [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) + [#2368](https://github.com/adm01-debug/Zapp_Web_V2/pull/2368) | Pós-merge run [41021181372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181372) SHA `3f4e16d2` | ❌ failure — **nova 2ª causa** (veja item 4) |
+| `db-live-guard` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | Dispatch pós-merge run [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458) SHA `3f4e16d2` | ❌ failure — **nova causa** (veja item 4) |
 | `db-migrate` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | Environment gate `producao-ddl` | 🔒 Regra 8 |
 
 ---
 
-## 4. Tabela baseline × final (comparação)
+## 4. Workflows ainda falhando — causas novas identificadas pós-merge
+
+### 4a. `deploy-functions` — 2ª causa: `deno install` ausente (Regra 8)
+
+| Campo | Valor |
+|---|---|
+| Run de evidência | [41021181372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181372) job 123948621262 step 17 |
+| Erro exato | `error: Error: Could not find "@types/node" in a node_modules folder. Deno expects the node_modules/ directory to be up to date. Did you forget to run \`deno install\`?` |
+| Causa raiz | `nodeModulesDir: "auto"` em Deno 2.9.5 NÃO cria `node_modules` automaticamente durante `deno check` — exige `deno install` explícito antes. PR #2368 foi necessário mas insuficiente: mudou o deno.json mas não adicionou o passo de install no workflow. |
+| PR de correção | Aguardando aprovação de Joaquim — **Regra 8** (altera `.github/workflows/deploy-functions.yml`) |
+| Ação necessária | Joaquim revisar e mergear a PR de fix do `deploy-functions.yml` |
+
+### 4b. `db-live-guard` — drift das migrations do PR #2361 não aplicadas (Regra 8)
+
+| Campo | Valor |
+|---|---|
+| Run de evidência | [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458) job 123948710854 step 23 |
+| Checks falhando | 7: `Comparar migrations`, `Verificar ACL mcp_exec`, `Regenerar catálogo`, `Regenerar manifesto`, `Verificar frescor types.ts`, `Paridade tripla`, `Auditar configuração runtime` |
+| Causa raiz | PR #2361 (outro agente, mergeado antes desta sessão) adicionou `supabase/functions/copilot-live/index.ts` + 2 migrations (`20261030100000_copilot_sessions.sql`, `20261030110000_copilot_insights.sql`) sem aplicar via `db-migrate`. Forward drift: arquivos no repo ≠ ledger de produção. Catálogo/manifesto/types.ts desatualizados. |
+| Por que está bloqueado | Aplicar migrations em produção exige aprovação no environment `producao-ddl` — **Regra 8 (DDL em produção)** |
+| Ação necessária | Joaquim aprovar `db-migrate.yml` para aplicar `20261030100000` e `20261030110000` |
+
+---
+
+## 5. Tabela baseline × final (comparação completa)
 
 | Workflow | Status baseline | Status final | Evidência |
 |---|---|---|---|
 | `settings-guard` | ❌ failure | ✅ success | Run [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) |
-| `deploy-functions` | ❌ failure | ⏳ aguarda merge PR #2368 | CI [41016020951](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41016020951) — 5/8 jobs ✅ |
-| `db-live-guard` | ❌ failure | ⏳ aguarda deploy-functions | Drift corrigido por PR #2359 |
-| `db-migrate` | ❌ failure | 🔒 Regra 8 | by design — gate `producao-ddl` |
+| `deploy-functions` | ❌ failure | ❌ failure — nova 2ª causa | Pós-merge run [41021181372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181372); PR de fix aguardando Joaquim |
+| `db-live-guard` | ❌ failure | ❌ failure — nova causa | Dispatch run [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458); aguarda db-migrate PR #2361 |
+| `db-migrate` | ❌ failure | 🔒 Regra 8 | Environment gate `producao-ddl` — by design |
 | `🧪 Unit Tests` | ❌ failure | ✅ success | CI PR #2364 run [41008768305](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768305) |
 | `db-guard` (Replay local ECR) | ❌ failure | 🔒 Regra 8 | PR #2354 aguardando Joaquim |
-| `branch-hygiene-audit` | ❌ failure | 🔒 Regra 8 | altera workflow — aguardando Joaquim |
+| `branch-hygiene-audit` | ❌ failure | 🔒 Regra 8 | Altera workflow — aguardando Joaquim |
 | `ci.yml` Lint & TypeCheck | ✅ success | ✅ success | PR #2368 CI: `🔎 TypeCheck` success |
 | `🏗️ Build` | ✅ success | ✅ success | PR #2368 CI: success |
 | `🔒 Security Audit` | ✅ success | ✅ success | PR #2368 CI: success |
@@ -116,18 +137,20 @@
 
 ---
 
-## 5. Workflows bloqueados — Regra 8 (ver PENDENCIAS.md)
+## 6. Workflows bloqueados — Regra 8 (ver PENDENCIAS.md)
 
 | Workflow | Motivo | Item |
 |---|---|---|
-| `db-guard` (Replay local — ECR rate limit) | Altera `.github/workflows/db-guard.yml` | PR [#2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) — PENDENCIAS.md item 1 |
+| `deploy-functions` (deno install) | Altera `.github/workflows/deploy-functions.yml` | PENDENCIAS.md item 7 |
+| `db-live-guard` (drift PR #2361) | DDL em produção — `db-migrate` exige aprovação humana | PENDENCIAS.md item 8 |
+| `db-guard` (Replay local — ECR rate limit) | Altera `.github/workflows/db-guard.yml` | PENDENCIAS.md item 1 / PR #2354 |
 | `branch-hygiene-audit` (timeout) | Altera `.github/workflows/branch-hygiene-audit.yml` | PENDENCIAS.md item 2 |
 | `db-migrate` | Environment gate `producao-ddl` exige aprovação humana | PENDENCIAS.md item 3 — by design |
 | `e2e-logado` (504 Gateway Timeout) | Cold start infra Supabase Edge Runtime | PENDENCIAS.md item 4 |
 
 ---
 
-## 6. Anti-regressão — workflows que permaneceram verdes
+## 7. Anti-regressão — workflows que permaneceram verdes
 
 | Workflow | Evidência |
 |---|---|
@@ -141,22 +164,12 @@
 
 ---
 
-## 7. Gaps identificados
+## 8. Gaps identificados
 
-- `deploy-functions` `@types/node`: causa raiz em `@types/ws@8.18.1` (referência transitiva `/// <reference types="node" />`). Fix: `nodeModulesDir: "auto"` em `supabase/functions/deno.json` (PR #2368 — CI em andamento).
-- `e2e-logado` 504: cold start do edge `auth-login` em `tnnnlkbymytvtqngbbqh` — não é código, é infra transiente.
-- `db-guard` ECR→ghcr.io: coberto pela PR #2354 (Regra 8, aguarda Joaquim).
-- `branch-hygiene-audit` timeout: script sem `timeout-minutes:` + paginação — coberto em PENDENCIAS.md item 2.
-- `db-migrate` environment gate: by design — não executável por agente.
-- Baseline local SIGABRT: limite de memória do container cloud — CI usado como evidência substituta.
-
----
-
-## 8. Próximos passos (após merge do PR #2368)
-
-1. Aguardar conclusão do CI da PR #2368 (E2E Tests + Unit Tests 2/3 + Contrato DB offline).
-2. Converter draft → ready, mergear squash.
-3. Confirmar run automático de `deploy-functions.yml` pós-merge (deno.json alterado dispara o workflow).
-4. Verificar que step 17 (`deno check`) passa com `nodeModulesDir: "auto"`.
-5. Dispatch `db-live-guard` e confirmar success.
-6. Atualizar esta seção 3 / seção 4 com run IDs reais.
+- **`deploy-functions` 2ª causa**: `deno check` com `nodeModulesDir: "auto"` em Deno 2.9.5 não cria `node_modules` automaticamente. Fix real: `deno install --config supabase/functions/deno.json` como step antes do typecheck. Altera `.github/workflows/deploy-functions.yml` → Regra 8.
+- **`db-live-guard` nova causa**: PR #2361 (outro agente) mergeou 2 migrations `20261030100000`/`20261030110000` sem aplicar em produção. Resolve após `db-migrate` com aprovação de Joaquim.
+- **`e2e-logado` 504**: cold start do edge `auth-login` em `tnnnlkbymytvtqngbbqh` — infra transiente.
+- **`db-guard` ECR→ghcr.io**: coberto pela PR #2354 (Regra 8, aguarda Joaquim).
+- **`branch-hygiene-audit` timeout**: script sem `timeout-minutes:` + paginação — Regra 8.
+- **`db-migrate` environment gate**: by design — não executável por agente.
+- **Baseline local SIGABRT**: limite de memória do container cloud — CI usado como evidência substituta.

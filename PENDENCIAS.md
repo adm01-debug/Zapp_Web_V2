@@ -10,7 +10,7 @@
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/db-guard.yml` |
-| Erro exato | `toomanyrequests: Data limit exceeded` (pull do `public.ecr.aws/supabase/postgrest:v14.5`) |
+| Erro exato | `toomanyerequests: Data limit exceeded` (pull do `public.ecr.aws/supabase/postgrest:v14.5`) |
 | Causa | ECR público limita pulls anônimos por IP nos runners do GitHub |
 | PR de correção | [#2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) — troca `public.ecr.aws/supabase/` → `ghcr.io/supabase/` (W57) |
 | Por que está bloqueado | Altera `.github/workflows/db-guard.yml` — **Regra 8** |
@@ -66,8 +66,33 @@ Está em draft. Joaquim deve revisar, aprovar e mergear.
 | Campo | Valor |
 |---|---|
 | Check | `copilot-pull-request-reviewer` |
-| Conclusão | `failure` (observado em SHA `4c4eda7c`, run [41017783433](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41017783433), job [123937933351](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41017783433/job/123937933351)) |
+| Conclusão | `failure` (observado em SHA `4c4eda7c`, run [41017783433](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41017783433)) |
 | É required check? | **Não** — não consta nos 6 required checks da `main` (`🔍 Lint & TypeCheck`, `🧪 Unit Tests`, `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🎭 E2E Tests (Playwright)`) |
-| Causa | Bot de review do Copilot reporta findings via annotations; `conclusion=failure` é o comportamento quando o bot identifica sugestões — não impede merge |
+| Causa | Bot de review do Copilot reporta findings via anotações; `conclusion=failure` é o comportamento quando o bot identifica sugestões — não impede merge |
 | Por que está bloqueado | Não está bloqueado — é cosmético. A failure deste check não bloqueia PR |
 | Ação necessária | Nenhuma. Behavior by design do `copilot-pull-request-reviewer` workflow |
+
+---
+
+## 7. `deploy-functions` — `deno install` ausente antes do typecheck (Regra 8)
+
+| Campo | Valor |
+|---|---|
+| Workflow | `.github/workflows/deploy-functions.yml` |
+| Erro exato | `error: Error: Could not find "@types/node" in a node_modules folder. Deno expects the node_modules/ directory to be up to date. Did you forget to run \`deno install\`?` (step 17 "Typecheck das edge functions", run [41021181372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181372) job 123948621262, SHA `3f4e16d2`) |
+| Causa raiz | `nodeModulesDir: "auto"` em Deno 2.9.5 **não cria** `node_modules` automaticamente durante `deno check` — exige `deno install` explícito. `@types/ws@8.18.1` tem `/// <reference types="node" />` que força resolução de `@types/node` na fase de descoberta de módulos (`resolveTypeReferenceDirectiveReferences` em `findSourceFile`), antes de qualquer type check. PRs #2367 (`skipLibCheck`) e #2368 (`nodeModulesDir: "auto"`) eram necessários mas insuficientes sem o step de install. |
+| PR de correção | Aberta — aguardando aprovação de Joaquim (**Regra 8**: altera `.github/workflows/deploy-functions.yml`) |
+| Fix exato | Adicionar step `deno install --config supabase/functions/deno.json` após "Setup Deno" e antes de "Typecheck das edge functions" em `deploy-functions.yml` |
+| Ação necessária | Joaquim revisar e mergear a PR de fix do `deploy-functions.yml` |
+
+---
+
+## 8. `db-live-guard` — drift das migrations do PR #2361 não aplicadas (Regra 8)
+
+| Campo | Valor |
+|---|---|
+| Workflow | `.github/workflows/db-live-guard.yml` |
+| Erro exato | 7 checks falhando no step 23 "Consolidar veredito do contrato vivo": `Comparar migrations com schema_migrations`, `Verificar ACL e contrato de mcp_exec`, `Regenerar catálogo e comparar com o commitado`, `Regenerar manifesto e comparar com o commitado`, `Verificar frescor do types.ts`, `Paridade tripla`, `Auditar configuração runtime`. Run [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458) job 123948710854. |
+| Causa raiz | PR #2361 (outro agente, mergeado antes desta sessão) adicionou `supabase/functions/copilot-live/index.ts` + 2 migrations (`20261030100000_copilot_sessions.sql`, `20261030110000_copilot_insights.sql`) sem aplicar em produção via `db-migrate`. Forward drift: arquivos no repo ≠ ledger de produção. Catálogo/manifesto/types.ts também desatualizados pelo mesmo PR. |
+| Por que está bloqueado | Aplicar as migrations `20261030100000` e `20261030110000` em produção exige aprovação no environment `producao-ddl` — **Regra 8 (DDL em produção)** |
+| Ação necessária | Joaquim acionar `db-migrate.yml` via `workflow_dispatch` na `main` com `apply=false` (dry-run) e depois `apply=true` com confirmação do hash SHA-256, para aplicar as 2 migrations pendentes |
