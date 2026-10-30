@@ -294,18 +294,20 @@ jobs:
     name: ✅ CI Gate (required check)
     runs-on: ubuntu-24.04
     if: always()
-    needs: [typecheck, unit-tests, node-scripts, build, security]
+    needs: [typecheck, unit-tests, node-scripts, edge-contracts, build, security]
     steps:
       - name: Verificar resultado dos jobs obrigatórios
         run: |
           echo "typecheck: ${{ needs.typecheck.result }}"
           echo "unit-tests: ${{ needs.unit-tests.result }}"
           echo "node-scripts: ${{ needs.node-scripts.result }}"
+          echo "edge-contracts: ${{ needs.edge-contracts.result }}"
           echo "build: ${{ needs.build.result }}"
           echo "security: ${{ needs.security.result }}"
           if [[  "${{ needs.typecheck.result }}" == "failure" || \
                 "${{ needs.unit-tests.result }}" == "failure" || \
                 "${{ needs.node-scripts.result }}" == "failure" || \
+                "${{ needs.edge-contracts.result }}" == "failure" || \
                 "${{ needs.build.result }}" == "failure" || \
                 "${{ needs.security.result }}" == "failure" ]]; then
             echo "❌ Um ou mais jobs obrigatórios falharam"
