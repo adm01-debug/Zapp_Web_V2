@@ -1,46 +1,33 @@
 # Pendências de CI — bloqueios que exigem ação humana
 
-> Gerado em 2026-10-29 pela sessão de correção de CI (`claude/keen-galileo-dxai3p`).
+> Gerado em 2026-10-30 pela sessão de correção de CI (`claude/keen-galileo-dxai3p`).
 > Cada item indica o workflow, o erro exato e o que o Joaquim precisa fazer.
 
 ---
 
-## 1. `types-sync` — erro de TypeScript: coluna `is_pinned` ausente no banco
+## 1. `types-sync` — fix verificado; aguardando runner alocar run
 
 **Workflow:** `.github/workflows/types-sync.yml`
-**Job:** Gate 1 — TypeCheck de `types.ts` regenerado
-**Último run com falha:** `40869806795` (SHA `ac97c0ea`)
-**Erro medido:**
+**Run dispatched:** `40986366321` (SHA `ca89064`) — status `queued` desde 2026-10-30T01:31:34Z; runner não alocado.
+**Próximo agendado:** segundas-feiras 05:49 UTC (schedule `49 5 * * 1`)
 
-```
-src/services/contact.service.ts(166,9): error TS2322:
-  Type '{ contact_id: string; author_id: string; content: string;
-         category: string; due_date: null; is_pinned: true; }'
-  is not assignable to type '...'
-  Object literal may only specify known properties, and 'is_pinned'
-  does not exist in type 'ContactNoteInsert'.
+**Estado atual — problema RESOLVIDO no código:**
 
-src/services/contact.service.ts(193,6): error TS2322:
-  Type '{ content: string; is_done: boolean; is_pinned: boolean;
-         due_date: string | null }'
-  is not assignable to parameter of type 'ContactNoteUpdate'.
-  Object literal may only specify known properties, and 'is_pinned'
-  does not exist in type '...'.
-```
+A falha anterior (`40869806795`, SHA `ac97c0ea`) reportava TS2322: `is_pinned` como `never` em `src/services/contact.service.ts`.
+Verificação direta em `src/integrations/supabase/types.ts` na SHA `ca89064` confirma:
+- Linha 2088: `is_pinned: boolean` (Row)
+- Linha 2100: `is_pinned?: boolean` (Insert)
+- Linha 2112: `is_pinned?: boolean` (Update)
 
-**Causa raiz:** A coluna `is_pinned` foi removida do banco de produção
-(`contact_notes`) mas ainda é referenciada em
-`src/services/contact.service.ts` linhas 166–175 (método `addNote`) e
-linha 193 (método `updateNote`). O novo `types.ts` gerado com o padrão
-`RejectExcessProperties` torna `is_pinned: never` quando a coluna não
-existe, provocando 2 erros de TS.
+A coluna **já existe no banco de produção**. `bunx tsc --noEmit` na SHA `ca89064` retorna **0 erros**.
+O `types-sync` ao rodar regenerará os tipos e encontrará `is_pinned` no banco — TypeCheck passará.
 
-**O que precisa ser decidido:**
-Escolher UMA das duas opções:
-- **Opção A — Recriar a coluna no banco** (`ALTER TABLE contact_notes ADD COLUMN is_pinned BOOLEAN NOT NULL DEFAULT false`) e criar a migration correspondente. O código continua funcionando sem alteração.
-- **Opção B — Remover as referências no código** (remover `is_pinned` de `addNote` e `updateNote` em `contact.service.ts`; verificar se a UI usa o campo e adaptar).
+**PR #2356 fechado sem merge:** o workaround `pinField: any` foi criado antes de confirmar que
+`is_pinned` já existia no banco. Era uma regressão desnecessária.
 
-Sem essa decisão, o `types-sync` continuará falhando no Gate 1 toda semana.
+**Ação imediata necessária:** nenhuma (problema resolvido na main). O run `40986366321` confirmará
+quando o runner alocar, ou o próximo run semanal fará isso. Reavaliar se ainda estiver falhando
+no próximo run agendado.
 
 ---
 
@@ -71,19 +58,24 @@ se reaparecer.
 
 ---
 
-## 3. `settings-guard` — fix no PR #2355 (aguarda CI)
+## 3. `settings-guard` — fix mergeado; aguardando runner alocar run
 
 **Workflow:** `.github/workflows/settings-guard.yml`
 **Último run com falha na main:** `40834848216` (SHA `0b77f8641`, 2026-10-29 07:20 UTC)
-**Causa raiz:** `scripts/ci/github-settings-baseline.json` divergia em 3 campos do estado real do GitHub:
+**Causa raiz resolvida:** `scripts/ci/github-settings-baseline.json` divergia em 3 campos do estado real do GitHub:
 - `required_status_checks`: baseline tinha 6 checks antigos; realidade tem 3.
 - `default_workflow_permissions`: baseline="read"; realidade="write".
 - `environments`: faltavam `copilot`, `Preview`, `Production`.
 
-**Fix aplicado:** PR #2355 (https://github.com/adm01-debug/Zapp_Web_V2/pull/2355)
-branch `claude/fix-settings-guard-baseline-261029` — altera SOMENTE
-`scripts/ci/github-settings-baseline.json`, sem arquivos de workflow.
-Aguarda CI verde para merge automático pelo agente.
+**Fix aplicado:** PR #2355 **mergeado** em SHA `ca89064b` — altera
+`scripts/ci/github-settings-baseline.json` e 2 arquivos de testes unitários.
+Não toca nenhum arquivo de workflow.
+
+**Run dispatched:** `40986380985` (SHA `ca89064`) — status `queued` desde 2026-10-30T01:31:43Z; runner não alocado.
+**Próximos runs agendados:** 06:15 / 12:15 / 18:15 / 00:15 UTC diários (schedule `15 */6 * * *`)
+
+**Ação imediata necessária:** nenhuma. O run `40986380985` confirmará quando o runner alocar,
+ou o próximo run agendado fará isso automaticamente.
 
 ---
 
@@ -179,7 +171,7 @@ seção 1 do CLAUDE.md (regra 6).
 1. Identificar as 3 versions sem arquivo local:
    ```sql
    SELECT version, name FROM supabase_migrations.schema_migrations
-   WHERE version NOT IN (SELECT regexp_replace(filename, '^(\d+).*', '\1')
+   WHERE version NOT IN (SELECT regexp_replace(filename, '^(\\d+).*', '\\1')
                          FROM pg_ls_dir('supabase/migrations'))
    ORDER BY version;
    ```
