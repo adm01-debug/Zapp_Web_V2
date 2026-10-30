@@ -1,8 +1,8 @@
 # PENDÊNCIAS — Workflows Bloqueados por Regra 8
 
 **Última atualização:** 2026-10-30  
-**Branch de origem:** `claude/fix-ci-workflows-261030-0830`  
-**SHA main de referência:** `3f4e16d2ae91e5dae76a3775049798460782cbf5`
+**Branch de origem:** `claude/keen-galileo-dxai3p`  
+**SHA main de referência:** `2da8e5a415c975443ec149d820932c96ee20a897` (merge PR #2376)
 
 ---
 
@@ -101,7 +101,7 @@ SELECT count(*) FROM supabase_migrations.schema_migrations WHERE version >= '202
 | Arquivo | `.github/workflows/db-guard.yml` |
 
 **Causa raiz:**  
-O step `docker pull public.ecr.aws/docker/library/postgres:17-alpine` falha com rate limit (429) no ECR púBlico. Fix: trocar para `ghcr.io/adm01-debug/postgres:17-alpine` (sem rate limit).
+O step `docker pull public.ecr.aws/docker/library/postgres:17-alpine` falha com rate limit (429) no ECR público. Fix: trocar para `ghcr.io/adm01-debug/postgres:17-alpine` (sem rate limit).
 
 **Bloqueio Regra 8:** Altera `.github/workflows/db-guard.yml` — CI/workflow.
 
@@ -125,22 +125,15 @@ O step `docker pull public.ecr.aws/docker/library/postgres:17-alpine` falha com 
 
 ---
 
-## 5. `branch-hygiene-audit` — sempre conclui `cancelled`
+## 5. `branch-hygiene-audit` — timeout/cancel
 
 | Campo | Valor |
 |---|---|
 | Workflow | `Branch Hygiene Audit` |
-| Últimos runs conhecidos | 40289875804 (`cancelled`), 39220130783 (`cancelled`), 41024463986 (`cancelled` — 08:20:57Z) |
+| Últimos runs | 40289875804 (`cancelled`), 39220130783 (`cancelled`) |
+| Run dispatch 2026-10-30 | [41024463986](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41024463986) |
 
-**Causa raiz:**  
-O script do `branch-hygiene-audit` sempre conclui como `cancelled` — não como `failure` nem `success`. Isso é uma deficiência estrutural do workflow que requer alteração em `.github/workflows/branch-hygiene-audit.yml`. Todos os 3 runs conhecidos apresentam esse comportamento.
-
-**Bloqueio Regra 8:** Altera `.github/workflows/branch-hygiene-audit.yml` — CI/workflow.
-
-**O que o Joaquim precisa fazer:**
-1. Analisar o script `branch-hygiene-audit.yml` e o script que ele chama
-2. Identificar por que o workflow emite `cancelled` em vez de `success`/`failure`
-3. Corrigir e mergear via PR
+**Situação:** O workflow já tem `timeout-minutes: 10`. Os runs anteriores foram `cancelled` (não `failure`). Um run foi disparado via `workflow_dispatch` às 08:08Z (2026-10-30) para verificar se conclui com `success`. Correção requer alteração de `.github/workflows/branch-hygiene-audit.yml` — Regra 8.
 
 ---
 

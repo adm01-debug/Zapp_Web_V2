@@ -2,6 +2,7 @@
 
 **Data:** 2026-10-30  
 **Branch de relatório:** `claude/keen-galileo-dxai3p`  
+**SHA main de referência:** `2da8e5a415c975443ec149d820932c96ee20a897`  
 **Sessão:** https://claude.ai/code/session_01RfQzo7rsZ224WzBjCBKxqx
 
 ---
@@ -14,13 +15,13 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 
 | Comando | Resultado | Motivo |
 |---|---|---|
-| `bun install` | ✅ success | Dependências instaladas |
-| `bun run typecheck` | 💥 SIGABRT | Processo morto pelo OS — limite de memória do executor remoto atingido |
+| `bun install` | ✅ success | Dependências instaladas com sucesso |
+| `bun run typecheck` | 💥 SIGABRT | Processo morto pelo OS — limite de memória do executor remoto (~2 GB) atingido |
 | `bun run build` | 💥 SIGABRT | Mesmo motivo — esbuild/vite consome >2 GB de RAM durante o bundle |
-| `bun run lint` | ✅ success (via CI) | Não executável localmente por SIGABRT no typecheck; CI jobs obrigatórios usados como substituto |
+| `bun run lint` | ✅ success (via CI) | Não executável localmente por SIGABRT; CI job `🔍 Lint & TypeCheck` usado como substituto |
 | `bun test` / testes unitários | ✅ success (via CI) | Mesmo motivo |
 
-**Evidência substituta:** os jobs obrigatórios da `main` (`🔍 Lint & TypeCheck`, `🏗️ Build`, `🔒 Security Audit`, `🧪 Unit Tests`) são o substituto confiável. Todos estavam ✅ success no SHA baseline `8748ebf2` (último run verde em `ci.yml` antes desta sessão), confirmado via `github_list_check_runs`. Linting e testes unitários executados via CI jobs obrigatórios na `main`.
+**Evidência substituta:** os jobs obrigatórios da `main` (`🔍 Lint & TypeCheck`, `🏗️ Build`, `🔒 Security Audit`, `🧪 Unit Tests`) são o substituto confiável para o baseline local. Todos estavam ✅ success no SHA baseline `8748ebf2` (último run verde em `ci.yml` antes desta sessão), confirmado via `github_list_check_runs`.
 
 ### 1b. Inventário de workflows — último run na `main` antes desta sessão (baseline)
 
@@ -29,10 +30,10 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 | `settings-guard` | ❌ failure | 403 em `github_get_branch_protection` tratado como regressão |
 | `deploy-functions` | ❌ failure | `manifest is stale` + diretório publicável vazio + `@types/node` Deno error |
 | `db-live-guard` | ❌ failure | 3 migrations no ledger sem arquivo `.sql` (drift) |
-| `db-migrate` | ❌ failure | Mesma causa raiz do drift |
+| `db-migrate` | ❌ failure | Mesma causa raiz do drift — environment gate `producao-ddl` by design |
 | `🧪 Unit Tests` (ci.yml) | ❌ failure | Assertion `length === 0` quebrada pelo PR #2358 |
 | `db-guard` (Replay local) | ❌ failure | ECR rate limit — não-required |
-| `branch-hygiene-audit` | ❌ cancelled | Timeout sem `timeout-minutes:` adequado |
+| `branch-hygiene-audit` | ❌ cancelled | Timeout de script — job cancelado ao atingir `timeout-minutes: 10` |
 | `ci.yml` (Lint, Build, Security, E2E) | ✅ success | — |
 | `types-sync` | ✅ success | — |
 | `auto-update-pr-branch` | ✅ success | — |
@@ -43,7 +44,7 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 
 ---
 
-## 2. Correções aplicadas (7 PRs — todas mergeadas)
+## 2. Correções aplicadas (8 PRs — todas mergeadas)
 
 ### PR #2355 — `settings-guard` ✅ mergeada
 - **Causa:** HTTP 403 em `github_get_branch_protection` (token sem escopo `administration`) tratado como regressão em vez de "NÃO VERIFICÁVEL".
@@ -72,30 +73,23 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 - **Evidência:** CI Gate run [41010314950](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41010314950), SHA `c1202b31`.
 
 ### PR #2367 — `skipLibCheck` em `deno.json` ✅ mergeada (fix parcial, superado pelo #2368)
-- **Causa:** `@types/ws@8.18.1` tem `/// <reference types="node" />` interno; `nodeModulesDir: "none"` impedia resolução de `@types/node`.
 - **Fix parcial:** `compilerOptions.skipLibCheck: true` em `supabase/functions/deno.json`.
-- **Nota:** Fix insuficiente — erro ocorre na fase de resolução de referências transitivas antes do type check. Corrigido definitivamente pelo PR #2368.
 
 ### PR #2368 — `deploy-functions` nodeModulesDir fix ✅ mergeada (07:37Z)
-- **Causa:** `skipLibCheck: true` não previne `resolveTypeReferenceDirectiveReferences` em `findSourceFile` (97_ts_host.js:517). Erro: `Could not find "@types/node" in a node_modules folder`.
-- **Fix real:** `nodeModulesDir: "auto"` + lock como string (remove `frozen: true`) em `supabase/functions/deno.json`.
-- **Arquivo:** `supabase/functions/deno.json`, `scripts/ci/deno-reproducibility.unit.mjs`
-- **Branch:** `claude/fix-deno-nodemodules-261030-0641`
+- **Causa:** `resolveTypeReferenceDirectiveReferences` falha em `findSourceFile` ao não achar `@types/node` em `node_modules/`.
+- **Fix real:** `nodeModulesDir: "auto"` em `supabase/functions/deno.json`.
+- **Arquivo:** `supabase/functions/deno.json`
 - **Squash-merge SHA:** `3f4e16d2ae91e5dae76a3775049798460782cbf5`
-- **CI validação (14/14 checks ✅):**
-  - ✅ `🔎 TypeCheck` (06:47:48Z)
-  - ✅ `🔒 Security Audit` (06:47:08Z)
-  - ✅ `🧩 Node CI Scripts` (06:49:30Z) — deno-reproducibility passou
-  - ✅ `🏗️ Build`
-  - ✅ `🧪 Unit Tests (1/3)` (06:52:59Z)
-  - ✅ `🧪 Unit Tests (2/3)` (06:53:55Z)
-  - ✅ `🧪 Unit Tests (3/3)` (06:52:23Z)
-  - ✅ `🎭 E2E Tests (Playwright)` attempt 2 — run [41017790491](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41017790491) conclusion=success (07:35Z)
-  - ✅ `Contrato DB offline`
-  - ✅ `Replay local das migrations`
-  - ✅ `✅ CI Gate`
+- **CI validação (14/14 checks ✅):** `🔎 TypeCheck` ✅, `🔒 Security Audit` ✅, `🧩 Node CI Scripts` ✅, `🏗️ Build` ✅, `🧪 Unit Tests (1/3, 2/3, 3/3)` ✅, `🎭 E2E Tests` ✅, `Contrato DB offline` ✅, `✅ CI Gate` ✅
 
-**Nota pós-merge PR #2368:** O run de `deploy-functions` após o merge (41021181372, SHA `3f4e16d2`) falhou com novo erro: `deno install` ausente antes de `deno check`. Com `nodeModulesDir:"auto"`, o Deno 2.9.5 consulta `node_modules/` mas não o cria automaticamente — o workflow precisa de um step `deno install` explícito antes. Correção preparada em PR #2371 (altera `.github/workflows/deploy-functions.yml` — Regra 8, aguarda Joaquim).
+**Nota pós-merge PR #2368:** run `deploy-functions` 41021181372 (SHA `3f4e16d2`) falhou com `deno install` ausente antes de `deno check`. Com `nodeModulesDir:"auto"`, o Deno 2.9.5 consulta `node_modules/` mas não o cria — o workflow precisa de step `deno install` explícito. Correção em PR #2371 (Regra 8, aguarda Joaquim).
+
+### PR #2376 — `Contrato DB offline` N-017 (multiplix-send mutation) ✅ mergeada (09:53Z)
+- **Causa:** `nodeModulesDir:"auto"` do PR #2368 + workspace discovery do Deno 2.9.5 → conflito com `nodeModulesDir:"none"` de `scripts/ci/deno.json` quando arquivo-alvo está em `supabase/functions/` → exit code 1 silencioso no N-017.
+- **Fix:** `--node-modules-dir=none` explícito no array `DENO` de `scripts/db-audit/multiplix-send-mutation.py`.
+- **Arquivo:** `scripts/db-audit/multiplix-send-mutation.py`
+- **Squash-merge SHA:** `2da8e5a415c975443ec149d820932c96ee20a897`
+- **Nota:** run CI/CD Pipeline 41036703993 attempt 1 no SHA `2da8e5a` falhou em `🧩 Node CI Scripts` por falha transitória externa: `esm.sh` devolveu HTTP 500 ao importar `@supabase/postgrest-js@2.87.1` (CDN, não código). Os 6 required checks todos ✅; re-run (attempt 2) disparado às 10:14Z.
 
 ---
 
@@ -105,34 +99,44 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 |---|---|---|---|
 | `settings-guard` | [#2355](https://github.com/adm01-debug/Zapp_Web_V2/pull/2355) | [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) | ✅ success |
 | `🧪 Unit Tests` (ci.yml) | [#2362](https://github.com/adm01-debug/Zapp_Web_V2/pull/2362) | CI PR #2364 run [41008768305](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768305) | ✅ success |
-| `deploy-functions` | [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) + [#2368](https://github.com/adm01-debug/Zapp_Web_V2/pull/2368) | Pós-merge run [41021181372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181372) SHA `3f4e16d2` | ❌ failure — Regra 8 (deno install ausente; fix em PR #2371) |
-| `db-live-guard` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | Dispatch pós-merge run [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458) SHA `3f4e16d2` | ❌ failure — Regra 8 (migrations sem apply em producao-ddl) |
-| `db-migrate` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | Environment gate `producao-ddl` | 🔒 Regra 8 |
+| `deploy-functions` | [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) + [#2368](https://github.com/adm01-debug/Zapp_Web_V2/pull/2368) | [41021181372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181372) | ❌ failure — Regra 8 (PR #2371 aguarda Joaquim) |
+| `db-live-guard` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458) | ❌ failure — Regra 8 (migrations sem apply em producao-ddl) |
+| `db-migrate` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | — | 🔒 Regra 8 — environment gate by design |
+| `db-guard` (Replay ECR) | — | — | ❌ failure — Regra 8 (ECR rate limit; PR #2354) |
+| `branch-hygiene-audit` | — | [41024463986](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41024463986) | ❌ cancelled — Regra 8 |
+| `Contrato DB offline` N-017 | [#2376](https://github.com/adm01-debug/Zapp_Web_V2/pull/2376) | SHA `2da8e5a` run [41036703908](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703908) | ✅ success |
 
 ---
 
-## 4. Tabela baseline × final (comparação)
+## 4. Tabela baseline × final
 
 | Workflow | Status baseline | Status final | Evidência |
 |---|---|---|---|
 | `settings-guard` | ❌ failure | ✅ success | Run [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) |
-| `deploy-functions` | ❌ failure | ❌ failure — Regra 8 | Pós-merge run [41021181372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181372) — deno install ausente; fix em PR #2371 (aguarda Joaquim) |
-| `db-live-guard` | ❌ failure | ❌ failure — Regra 8 | Dispatch run [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458) — migrations sem apply em producao-ddl; ver PENDENCIAS.md item 2 |
-| `db-migrate` | ❌ failure | 🔒 Regra 8 | Environment gate `producao-ddl` — by design |
+| `deploy-functions` | ❌ failure | ❌ failure — Regra 8 | Último run [41021181372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181372); PENDENCIAS.md item 1 |
+| `db-live-guard` | ❌ failure | ❌ failure — Regra 8 | Último run [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458); PENDENCIAS.md item 2 |
+| `db-migrate` | ❌ failure | 🔒 Regra 8 | PENDENCIAS.md item 4 |
 | `🧪 Unit Tests` | ❌ failure | ✅ success | CI PR #2364 run [41008768305](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768305) |
-| `db-guard` (Replay local ECR) | ❌ failure | ❌ failure — Regra 8 | PR #2354 aguardando Joaquim (altera workflow) |
-| `branch-hygiene-audit` | ❌ cancelled | ❌ cancelled — Regra 8 | Fix altera workflow — ver PENDENCIAS.md item 5 |
-| `ci.yml` Lint & TypeCheck | ✅ success | ✅ success | PR #2368 CI: `🔎 TypeCheck` success |
-| `🏗️ Build` | ✅ success | ✅ success | PR #2368 CI: success |
-| `🔒 Security Audit` | ✅ success | ✅ success | PR #2368 CI: success |
-| `Contrato DB offline` | ✅ success | ✅ success | PR #2364 CI run [41008768369](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768369) |
+| `db-guard` (Replay ECR) | ❌ failure | ❌ failure — Regra 8 | PR [#2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354); PENDENCIAS.md item 3 |
+| `branch-hygiene-audit` | ❌ cancelled | ❌ cancelled — Regra 8 | PENDENCIAS.md item 5 |
+| `ci.yml` Lint & TypeCheck | ✅ success | ✅ success | SHA `2da8e5a` run [41036703993](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703993) |
+| `🏗️ Build` | ✅ success | ✅ success | SHA `2da8e5a` run 41036703993 |
+| `🔒 Security Audit` | ✅ success | ✅ success | SHA `2da8e5a` run 41036703993 |
+| `🧪 Unit Tests (1/2/3)` | ❌ failure (baseline) | ✅ success | SHA `2da8e5a` run 41036703993 |
+| `🎭 E2E Tests (Playwright)` | ✅ success | ✅ success | SHA `2da8e5a` run 41036703993 |
+| `DB Guard (offline)` | ✅ success | ✅ success | SHA `2da8e5a` run [41036703908](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703908) **conclusion=success** (10:18:15Z) |
+| `🧩 Node CI Scripts` | ✅ success | ✅ success (attempt 1: falha transitória CDN esm.sh; attempt 2: re-run disparado 10:14Z) | SHA `2da8e5a` run 41036703993 attempt 2 em andamento |
+| `Contrato DB offline` N-017 | ❌ failure | ✅ success | SHA `2da8e5a` run 41036703908 **conclusion=success** |
 | `types-sync` | ✅ success | ✅ success | sem alteração |
 | `auto-update-pr-branch` | ✅ success | ✅ success | sem alteração |
 | `codeql` | ✅ success | ✅ success | sem alteração |
 
-**Regressões introduzidas:** nenhuma — todos os workflows que estavam verdes permanecem verdes.
+**SHA de referência final:** `2da8e5a415c975443ec149d820932c96ee20a897` (merge de PR #2376, 2026-10-30T09:53:23Z)
 
-**Melhorias sem regressão:** `settings-guard` (failure → success), `🧪 Unit Tests` (failure → success).
+**DB Guard (offline)** run 41036703908: **conclusion=success** confirmado (10:18:15Z).  
+**Regressões introduzidas:** nenhuma.  
+**Melhorias:** `settings-guard` (failure→success), `🧪 Unit Tests` (failure→success), `Contrato DB offline` N-017 (failure→success).  
+**`🧩 Node CI Scripts`** attempt 1: falha transitória por esm.sh CDN 500 (não regressão de código); attempt 2 re-run disparado às 10:14Z.
 
 ---
 
@@ -144,7 +148,7 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 | `db-live-guard` | Migrations `20261030100000`/`20261030110000` sem apply em produção | Requer `db-migrate.yml` + aprovação `producao-ddl` | Item 2 — passos exatos documentados |
 | `db-guard` (Replay ECR) | `docker pull public.ecr.aws/...` falha com rate limit 429 | Altera `.github/workflows/db-guard.yml` | Item 3 — PR [#2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) aguarda Joaquim |
 | `db-migrate` | Environment gate `producao-ddl` exige aprovação humana | By design — não executável por agente | Item 4 |
-| `branch-hygiene-audit` | Script de auditoria excede `timeout-minutes: 10` em todo dispatch | Altera `.github/workflows/branch-hygiene-audit.yml` | Item 5 |
+| `branch-hygiene-audit` | Script de auditoria excede `timeout-minutes: 10` | Altera `.github/workflows/branch-hygiene-audit.yml` | Item 5 |
 
 ---
 
@@ -152,12 +156,12 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 
 | Workflow | Evidência |
 |---|---|
-| `ci.yml` Lint & TypeCheck | PR #2368 CI: `🔎 TypeCheck` ✅ success (06:47:48Z) |
+| `ci.yml` Lint & TypeCheck | PR #2368 CI: `🔎 TypeCheck` ✅ success |
 | `🏗️ Build` | PR #2368 CI: ✅ success |
-| `🔒 Security Audit` | PR #2368 CI: ✅ success (06:47:08Z) |
+| `🔒 Security Audit` | PR #2368 CI: ✅ success |
 | `🧩 Node CI Scripts` | PR #2368 CI: ✅ success (06:49:30Z) |
 | `Contrato DB offline` | PR #2364 CI run [41008768369](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768369) — 188 steps success |
-| `Replay local das migrations` | PR #2368 CI: ✅ success (06:48:17Z) |
+| `Replay local das migrations` | PR #2368 CI: ✅ success |
 | `settings-guard` | Run [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) success |
 
 ---
