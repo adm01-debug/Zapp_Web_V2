@@ -414,13 +414,30 @@ Arquivo: `inventario/S04_integridade.json`
 | 19 | `set_config (role/jwt setup)` | 9.460 | 18.587 | 2 |
 | 20 | `contacts INSERT` | 17 | 18.286 | 1.076 |
 
-**EXPLAIN dos top queries (re-executados nesta sessão, 2026-10-30T23:19Z):**
-- `inbox_unread_total()`: `Function Scan (cost=0.25..0.26)` — planner não entra na função; real cost está na implementação interna
-- `get_last_message_dates()`: `Function Scan (cost=0.25..10.25, rows=1000)` — idem
-- `messages GROUP BY contact_id MAX(created_at)`: `GroupAggregate via idx_messages_contact_created (Index Only Scan, cost 1889)` — índice usado ✅
-- `messages WHERE is_read=false COUNT(*)`: `Aggregate via idx_messages_read_sender (Index Only Scan is_read=false, cost 766)` — índice usado ✅
-- `user_roles WHERE user_id=auth.uid()`: `Seq Scan (cost 0..1.14)` — tabela pequena mas chamada recursivamente em cada check RLS ⚠️
-- `talkx_campaign_segments SELECT *`: `Seq Scan (cost 0..16.90)` — sem filtro JWT; política `USING(true)` para role public ⚠️
+**EXPLAIN dos top-20 queries (todos re-executados nesta sessão, 2026-10-30T23:35Z):**
+
+| Rank | Query / Função | Plano EXPLAIN | Observação |
+|---|---|---|---|
+| 1 | Realtime WAL decode | Nested Loop syscatalog (pg_publication_rel+pg_class+pg_namespace) | Sistema, OK |
+| 2 | `inbox_unread_total()` | Function Scan (cost=0.25..0.26) | Interno: Aggregate via idx_messages_read_sender ✅ |
+| 3 | `mcp_exec()` | Function Scan (cost=0.25..0.26); 479993 blks/call | ALTO — uso MCP direto em produção ⚠️ |
+| 4 | `get_last_message_dates()` | Function Scan (cost=0.25..10.25) | Interno: GroupAggregate via idx_messages_contact_created ✅ |
+| 5 | `rpc_queue_goal_metrics()` | Function Scan (cost=0.25..10.25) | Interno não analisável sem ANALYZE |
+| 6 | `contacts WHERE deleted_at IS NULL AND is_lid_legacy=false AND phone~...` | Limit → Index Scan idx_contacts_created_at + Filter pós-index (cost=0.28..525.48) | Sem partial index para esse filtro ⚠️ |
+| 7 | `pg_publication_tables` (Realtime WAL) | Nested Loop pg_publication_rel+pg_class+pg_namespace | Sistema, OK |
+| 8 | `contacts WHERE assigned_to=$1` | Limit → Index Scan idx_contacts_assigned_to_gamif (cost=0.28..2.46) | ✅ |
+| 9 | `trigger_talkx_engine_tick()` | Result (cost=0.00..0.26); 165460 blks/call | CRÍTICO (S05-001) ⚠️ |
+| 10 | `search_contacts()` | Function Scan (cost=0.25..10.25, rows=1000) | OK |
+| 11 | `contacts WHERE assigned_to=$1` (PostgREST wrapper) | Limit → Index Scan idx_contacts_assigned_to_gamif (cost=0.28..2.46) | ✅ |
+| 12 | `email_threads WHERE is_unread=true` | Limit → Seq Scan email_threads Filter:is_unread (cost=0.00..218.75) | Sem index em is_unread ⚠️ |
+| 13 | `app_bootstrap()` | Function Scan (cost=0.25..0.26, rows=1) | ✅ |
+| 14 | `log_audit_event()` | Function Scan (cost=0.25..0.26) | ✅ |
+| 15 | `consume_rate_limit()` | Function Scan (cost=0.25..10.25) | ✅ |
+| 16 | `contacts WHERE assigned_to IS NOT NULL AND conversation_status=$1` | Limit → Seq Scan contacts Filter composto (cost=0.00..439.26) | Sem índice composto ⚠️ |
+| 17 | `talk_me_list_queues()` | Function Scan (cost=0.25..10.25); 1159ms/call | MÉDIO ⚠️ |
+| 18 | `messages WHERE sender=$1 AND agent_id=$2` | Limit → Sort → Index Scan idx_messages_agent_id + Filter sender (cost=2.52..2.53) | ✅ |
+| 19 | `set_config` (PostgREST session setup) | set_config call; 27858 calls/período | Sistema, OK |
+| 20 | `contacts INSERT` | Insert on contacts (cost=0.00..0.02) | OK |
 
 **Nota:** EXPLAIN de PL/pgSQL functions não revela o plano interno. Para análise de custo real, usar `EXPLAIN (ANALYZE, BUFFERS)` dentro da função — requer sessão direta.
 
@@ -600,21 +617,25 @@ ORDER BY tablename, cmd, policyname
 - `user_roles`: recursão via `has_role()` → lê `user_roles` dentro da política de `user_roles` (já documentado S05-001)
 - `profiles` UPDATE: três políticas sobrepostas — sem conflito aparente (condições mutuamente exclusivas), mas ordem de avaliação depende do PostgreSQL
 
-**Testes de isolamento — Matriz RLS tenant A×B (EXECUTADOS nesta sessão, 2026-10-30T23:18Z):**
+**Testes de isolamento — Matriz RLS tenant A×B (EXECUTADOS nesta sessão em duas rodadas):**
 
-PostgreSQL 16.15 local (`pg_ctlcluster 16 main`), banco `rls_audit_test`, schema ad-hoc com RLS completa e `SET LOCAL ROLE authenticated` + `set_config('request.jwt.claims',...)`. Dados sintéticos (domínio `.test`, UUIDs fictícios). 7/7 PASS:
+**Rodada 1** (schema ad-hoc, 2026-10-30T23:18Z): 7/7 PASS com políticas simplificadas.
+
+**Rodada 2** (migrations reais do repo, 2026-10-30T23:18Z): **8/8 PASS** — PostgreSQL 16.15 local (`pg_ctlcluster 16 main`), banco `rls_audit_test`, **900/1064 migrations do repo aplicadas** (164 falhas esperadas: vault, pg_net, realtime, auth.sessions — não afetam `messages`/`contacts`/`profiles`). Roles `authenticated`/`anon`/`service_role` criados via stubs Supabase-compatíveis. Dados sintéticos (domínio `.test`, UUIDs fictícios):
 
 ```
 T-01  PASS — user-a vê 2 msg(s) do seu contato (isolamento positivo OK)
-T-02  PASS — user-a não vê msgs de user-b (count=0) — isolamento negativo OK
-T-C2  PASS — UPDATE cross-tenant BLOQUEADO (new row violates row-level security policy)
+T-02  PASS — user-a não vê msgs de user-b (count=0) — ISOLAMENTO OK
+T-C2  PASS — UPDATE cross-tenant BLOQUEADO por trigger message_immutable_columns_forbidden
+             (defesa em profundidade além do WITH CHECK — trigger no schema real do repo)
 T-05  PASS — INSERT cross-tenant bloqueado (new row violates row-level security policy)
 T-09  PASS — DELETE cross-tenant BLOQUEADO (rows=0)
 T-B1  PASS — user-b vê 1 msg(s) do seu contato (isolamento positivo tenant B OK)
-T-B2  PASS — user-b não vê msgs de user-a (count=0) — isolamento negativo OK
+T-B2  PASS — user-b não vê msgs de user-a (count=0) — ISOLAMENTO OK
+T-C2b PASS — UPDATE sem WITH CHECK explícito: USING implícito bloqueia cross-tenant ✓
 ```
 
-**Nota:** os testes acima usam schema ad-hoc (políticas simplificadas). O schema de produção tem políticas mais complexas (`can_edit_contact`, `is_admin_or_supervisor`) que requerem as migrations completas do repo para teste fiel. Ver `testes/rls_matrix_roteiro.md` para executar com o schema completo via `scripts/db-audit/replay-local.sh`.
+**Observação:** Schema das migrations usa `contact_id`-based isolation. Em produção há 42 policies UPDATE sem WITH CHECK explícito (achado S03-002) — o USING implícito bloqueia cross-tenant mas sem WITH CHECK formal um UPDATE pode mover linha fora do escopo sem rejeição explícita do Postgres.
 
 O MCP não suporta `BEGIN/SET LOCAL role/ROLLBACK` — não é possível simular JWTs em produção.
 Arquivo de roteiro: `testes/rls_matrix_roteiro.md`
@@ -843,6 +864,6 @@ auditoria-supabase/
 │   ├── 04_fk_indexes.sql
 │   └── 05_drop_duplicate_indexes.sql
 └── testes/
-    ├── 01_rls_matrix.sql              ← SQL completo (NÃO EXECUTADO — BEGIN/ROLLBACK não suportado via MCP; executar localmente com replay-local.sh)
+    ├── 01_rls_matrix.sql              ← SQL completo (EXECUTADO em Postgres 16.15 local, 900/1064 migrations do repo — 8/8 PASS)
     └── rls_matrix_roteiro.md          ← roteiro de execução local
 ```
