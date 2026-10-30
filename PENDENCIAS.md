@@ -5,10 +5,10 @@
 
 ---
 
-## 1. `types-sync` — fix verificado; aguardando runner alocar run
+## 1. `types-sync` — fix verificado; runs in_progress na SHA ca89064
 
 **Workflow:** `.github/workflows/types-sync.yml`
-**Run dispatched:** `40986366321` (SHA `ca89064`) — status `queued` desde 2026-10-30T01:31:34Z; runner não alocado.
+**Runs em execução:** `40986366321` (in_progress desde 01:43 UTC) e `40987628915` (pending desde 01:44 UTC), ambos SHA `ca89064`
 **Próximo agendado:** segundas-feiras 05:49 UTC (schedule `49 5 * * 1`)
 
 **Estado atual — problema RESOLVIDO no código:**
@@ -25,9 +25,7 @@ O `types-sync` ao rodar regenerará os tipos e encontrará `is_pinned` no banco 
 **PR #2356 fechado sem merge:** o workaround `pinField: any` foi criado antes de confirmar que
 `is_pinned` já existia no banco. Era uma regressão desnecessária.
 
-**Ação imediata necessária:** nenhuma (problema resolvido na main). O run `40986366321` confirmará
-quando o runner alocar, ou o próximo run semanal fará isso. Reavaliar se ainda estiver falhando
-no próximo run agendado.
+**Ação imediata necessária:** nenhuma (problema resolvido na main). Aguardar conclusão dos runs `40986366321`/`40987628915`.
 
 ---
 
@@ -58,24 +56,14 @@ se reaparecer.
 
 ---
 
-## 3. `settings-guard` — fix mergeado; aguardando runner alocar run
+## ~~3. `settings-guard` — RESOLVIDO~~
 
-**Workflow:** `.github/workflows/settings-guard.yml`
-**Último run com falha na main:** `40834848216` (SHA `0b77f8641`, 2026-10-29 07:20 UTC)
-**Causa raiz resolvida:** `scripts/ci/github-settings-baseline.json` divergia em 3 campos do estado real do GitHub:
-- `required_status_checks`: baseline tinha 6 checks antigos; realidade tem 3.
-- `default_workflow_permissions`: baseline="read"; realidade="write".
-- `environments`: faltavam `copilot`, `Preview`, `Production`.
+**Status:** ✅ **RESOLVIDO em 2026-10-30T01:42 UTC**
 
-**Fix aplicado:** PR #2355 **mergeado** em SHA `ca89064b` — altera
-`scripts/ci/github-settings-baseline.json` e 2 arquivos de testes unitários.
-Não toca nenhum arquivo de workflow.
+**Fix aplicado:** PR #2355 mergeado em SHA `ca89064b`.
+**Evidência:** run `40986380985` (SHA `ca89064`) — `conclusion=success`, `updated_at=2026-10-30T01:42:39Z`.
 
-**Run dispatched:** `40986380985` (SHA `ca89064`) — status `queued` desde 2026-10-30T01:31:43Z; runner não alocado.
-**Próximos runs agendados:** 06:15 / 12:15 / 18:15 / 00:15 UTC diários (schedule `15 */6 * * *`)
-
-**Ação imediata necessária:** nenhuma. O run `40986380985` confirmará quando o runner alocar,
-ou o próximo run agendado fará isso automaticamente.
+Não requer mais ação.
 
 ---
 
@@ -171,7 +159,7 @@ seção 1 do CLAUDE.md (regra 6).
 1. Identificar as 3 versions sem arquivo local:
    ```sql
    SELECT version, name FROM supabase_migrations.schema_migrations
-   WHERE version NOT IN (SELECT regexp_replace(filename, '^(\\d+).*', '\\1')
+   WHERE version NOT IN (SELECT regexp_replace(filename, '^(\d+).*', '\1')
                          FROM pg_ls_dir('supabase/migrations'))
    ORDER BY version;
    ```
@@ -238,4 +226,4 @@ Após o merge, o `Contrato DB offline` voltará a executar corretamente em todos
 
 ---
 
-*Atualizado em 2026-10-30. Remover item ao concluir a ação correspondente.*
+*Atualizado em 2026-10-30. settings-guard (§3) RESOLVIDO com run 40986380985 success. Remover item ao concluir a ação correspondente.*

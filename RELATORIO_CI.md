@@ -10,8 +10,8 @@
 
 | Status | Quantidade |
 |--------|----------|
-| ✅ Corrigidos nesta sessão (evidência direta) | 2 |
-| ✅ Fix aplicado na main (runner ainda não alocado para evidência) | 2 |
+| ✅ Corrigidos nesta sessão (evidência direta) | 3 |
+| ✅ Fix aplicado na main (runner ainda não alocado para evidência) | 1 |
 | ⏳ Bloqueados (ação humana / infra externa) | 5 |
 | 🚫 Regressões introduzidas | 0 |
 
@@ -34,13 +34,13 @@
 | `e2e-logado` | SHA `a1b27118` | `40965991521` | ⚠️ `cancelled` | Instabilidade infra `auth-login` – `PENDENCIAS.md §2` |
 | `e2e-talkx` | – | – | ⏯️ nunca rodou na main | Só dispara em `pull_request` |
 | `notifica-falha-main` | SHA `a1b27118` | `40970921119` | ⏯️ `skipped` | Nenhuma falha de CI disparou o workflow |
-| `settings-guard` | — | `40986380985` | ⏳ run `ca89064` queued | Fix aplicado (PR #2355 mergeado). Run dispatch aguarda runner do GitHub. Próximo agendado: 06:15/12:15/18:15/00:15 UTC – `PENDENCIAS.md §3` |
+| `settings-guard` | SHA `ca89064` | `40986380985` | ✅ `success` | **Corrigido nesta sessão** – PR #2355 mergeado em `ca89064`; run `40986380985` concluído com success em 2026-10-30T01:42 UTC |
 | `talkx-status-regen` | SHA `a1b27118` | `40965991307` | ✅ `success` | Verde |
 | `targeted-ledger-evidence` | – | `36041611976` | ✅ `success` | Verde |
-| `types-sync` | — | `40986366321` | ⏳ run `ca89064` queued | Fix presente: `is_pinned?: boolean` em `types.ts` na `ca89064`; `bunx tsc` = 0 erros. Run dispatch aguarda runner – `PENDENCIAS.md §1` |
+| `types-sync` | — | `40986366321` + `40987628915` | ⏳ `in_progress` | Fix presente: `is_pinned?: boolean` em `types.ts` na `ca89064`; `bunx tsc` = 0 erros. Runs SHA `ca89064` em execução – `PENDENCIAS.md §1` |
 | `vercel-env-cleanup` | – | `39296301620` | ✅ `success` | Verde |
 
-**Total:** 18 workflows monitorados | ✅ 7 success | ⏯️ 4 skipped/nunca-rodou | ⚠️ 2 cancelled | ❌ 3 failure (ação humana pendente) | ⏳ 2 fix aplicado aguardando runner
+**Total:** 18 workflows monitorados | ✅ 8 success | ⏯️ 4 skipped/nunca-rodou | ⚠️ 2 cancelled | ❌ 3 failure (ação humana pendente) | ⏳ 1 fix aplicado aguardando runner
 
 ---
 
@@ -109,8 +109,7 @@ de `execFileSync` e `JSON.parse`.
 SHA `ca89064`. Altera `scripts/ci/github-settings-baseline.json` e 2 arquivos de testes
 unitários.
 
-**Estado:** Run `40986380985` dispatched na SHA `ca89064` em 2026-10-30T01:31:43Z,
-status `queued` – runners do GitHub não alocados. Ver `PENDENCIAS.md §3`.
+**Evidência:** run `40986380985` (main SHA `ca89064`) – ✅ `success` (concluído 2026-10-30T01:42 UTC)
 
 ---
 
@@ -132,8 +131,7 @@ passará. Nenhuma mudança de código foi necessária.
 **PR #2356 fechado sem merge:** o workaround `pinField: any` foi criado antes de
 confirmar que `is_pinned` já existia no banco. Era uma regressão desnecessária.
 
-**Estado:** Run `40986366321` dispatched na SHA `ca89064` em 2026-10-30T01:31:34Z,
-status `queued` – runners do GitHub não alocados. Ver `PENDENCIAS.md §1`.
+**Estado:** Runs `40986366321` (in_progress) e `40987628915` (pending) em execução na SHA `ca89064` – Ver `PENDENCIAS.md §1`.
 
 ---
 
@@ -141,9 +139,8 @@ status `queued` – runners do GitHub não alocados. Ver `PENDENCIAS.md §1`.
 
 | # | Workflow | Bloqueio | Seção |
 |---|---|---|---|
-| 1 | `types-sync` | Fix verificado (`is_pinned` existe); runner ainda não alocou run `40986366321` | §1 |
+| 1 | `types-sync` | Fix verificado (`is_pinned` existe); runs `40986366321`/`40987628915` in_progress na SHA `ca89064` | §1 |
 | 2 | `e2e-logado` | Instabilidade pontual infra (504 `auth-login`) | §2 |
-| 3 | `settings-guard` | Fix mergeado (PR #2355); runner ainda não alocou run `40986380985` | §3 |
 | 4 | `db-live-guard` | Drift catálogo/manifesto – reconciliação necessária | §4 |
 | 5 | `deploy-functions` | Diretório de evidência não produzido pelo script | §5 |
 | 6 | `db-migrate` | Bloqueio de segurança por design (`remote_only_count=3`) | §6 |
@@ -158,8 +155,8 @@ status `queued` – runners do GitHub não alocados. Ver `PENDENCIAS.md §1`.
 |---|---|---|---|---|
 | `auto-update-pr-branch` | `execFileSync` sem try/catch em `fila-merge.mjs` | try/catch adicionado | `40966272128` (main `a1b27118`) | ✅ `success` |
 | `db-guard` | ECR rate limit (`toomanyerequests`) | `ghcr.io/supabase/postgrest` (W57, mesmo SHA) | `40965991318` (main) | ✅ `success` |
-| `settings-guard` | Baseline desatualizado (3 divergências) + testes desatualizados | PR #2355 mergeado em `ca89064` | run `40986380985` queued (runner não alocado) | ⏳ `PENDENCIAS.md §3` |
-| `types-sync` | `is_pinned` na DB → coluna JÁ EXISTE; `bunx tsc` = 0 erros em `ca89064` | Nenhum code change necessário | run `40986366321` queued (runner não alocado) | ⏳ `PENDENCIAS.md §1` |
+| `settings-guard` | Baseline desatualizado (3 divergências) + testes desatualizados | PR #2355 mergeado em `ca89064` | run `40986380985` (main `ca89064`, 2026-10-30T01:42 UTC) | ✅ `success` |
+| `types-sync` | `is_pinned` na DB → coluna JÁ EXISTE; `bunx tsc` = 0 erros em `ca89064` | Nenhum code change necessário | runs `40986366321`/`40987628915` in_progress (SHA `ca89064`) | ⏳ `PENDENCIAS.md §1` |
 | `e2e-logado` | 504 infra `auth-login` (instabilidade pontual) | sem código errado | – | ⏳ `PENDENCIAS.md §2` |
 | `db-live-guard` | Drift catálogo/manifesto no banco de produção | reconciliação de migrations necessária | – | ⏳ `PENDENCIAS.md §4` |
 | `deploy-functions` | Script de evidência não produz diretório esperado | investigação do `preparar-artifact-deploy.sh` | – | ⏳ `PENDENCIAS.md §5` |
@@ -170,9 +167,10 @@ status `queued` – runners do GitHub não alocados. Ver `PENDENCIAS.md §1`.
 
 ## Regressões: nenhuma
 
-Todos os 2 fixes diretos são cirúrgicos:
+Todos os 3 fixes diretos são cirúrgicos:
 - `fila-merge.mjs`: try/catch adicionado – comportamento equivalente quando funciona; resiliente quando falha.
 - `db-guard.yml`: mesma imagem, mesmo SHA, registro diferente (sem rate limit).
+- `github-settings-baseline.json`: sincronizado com a realidade ao vivo; o guard deixa de reportar divergências que não são regressões reais.
 
 TypeCheck: 0 erros na `ca89064` (melhora vs 21 pré-existentes na `d251f5a`).
 Nenhum teste foi pulado, afrouxado ou removido. Nenhum `continue-on-error` introduzido.
@@ -188,4 +186,4 @@ Nenhum teste foi pulado, afrouxado ou removido. Nenhum `continue-on-error` intro
 
 ---
 
-*Gerado em 2026-10-30 pela sessão `claude/keen-galileo-dxai3p`.*
+*Atualizado em 2026-10-30 pela sessão `claude/keen-galileo-dxai3p`. settings-guard ✅ confirmado (run 40986380985, 2026-10-30T01:42 UTC).*
