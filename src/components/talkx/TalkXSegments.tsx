@@ -85,7 +85,13 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   // A cópia local ganha do endereço: é ela que tem o que o usuário acabou de digitar.
   const activeEditing = editing ?? routedSeed;
 
-  const selectedSegment = useMemo(() => segments.find((s) => s.id === selected?.id) ?? selected, [segments, selected]);
+  const selectedSegment = useMemo(() => {
+    const cached = segments.find((s) => s.id === selected?.id);
+    if (!cached || !selected) return selected ?? null;
+    const cachedTs = cached.updated_at ?? '';
+    const selectedTs = selected.updated_at ?? '';
+    return cachedTs >= selectedTs ? cached : selected;
+  }, [segments, selected]);
   const closePanel = useCallback(() => {
     const row = selectedRowRef.current;
     setSelected(null);
@@ -476,7 +482,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                 const originLabel = s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado';
                 const statusLabel = s.status === 'active' ? 'Ativo' : s.status === 'inactive' ? 'Inativo' : 'Rascunho';
                 return (
-                  <div key={s.id} data-testid="segment-card" onClick={() => setSelected(s)} className={cn('bg-card border border-border/70 rounded-xl p-3 cursor-pointer hover:bg-muted/20 transition-colors space-y-2', selected?.id === s.id && 'ring-1 ring-primary')}>
+                  <div key={s.id} data-testid="segment-card" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(s); } }} onClick={() => setSelected(s)} className={cn('bg-card border border-border/70 rounded-xl p-3 cursor-pointer hover:bg-muted/20 transition-colors space-y-2', selected?.id === s.id && 'ring-1 ring-primary')}>
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-sm font-semibold text-foreground line-clamp-2">{s.name}</p>
                       <button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="shrink-0 text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button>
@@ -500,7 +506,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                 </tr></thead>
                 <tbody>
                   {paged.map((s) => (
-                    <tr key={s.id} data-testid="segment-card" ref={selected?.id === s.id ? selectedRowRef : null} tabIndex={-1} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
+                    <tr key={s.id} data-testid="segment-card" ref={selected?.id === s.id ? selectedRowRef : null} tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(s); } }} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
                       <Td><div onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} aria-label={`Selecionar ${s.name}`} className="w-3.5 h-3.5 accent-primary cursor-pointer" /></div></Td>
                       <Td><button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
                       <Td>
@@ -757,7 +763,7 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose, onFavorite }: {
         <div className="flex flex-col gap-2 mt-1">
           <PrimaryButton icon={Zap} onClick={onCampaign} disabled={s.status !== 'active'} className="w-full justify-center">Usar em campanha</PrimaryButton>
           {s.status !== 'active' && <p className="text-xs text-destructive text-center">Segmento inativo: não pode ser usado em campanha.</p>}
-          <GhostButton icon={Pencil} onClick={onEdit} className="w-full justify-center">Editar</GhostButton>
+          <GhostButton icon={Pencil} onClick={onEdit} className="w-full justify-center">Editar segmento</GhostButton>
           <GhostButton icon={RefreshCw} onClick={() => refetchEst()} aria-label="Recontar público deste segmento" className="w-full justify-center">Recontar público</GhostButton>
           <GhostButton icon={s.is_favorite ? StarOff : Star} onClick={onFavorite} className="w-full justify-center">{s.is_favorite ? 'Desfavoritar' : 'Favoritar'}</GhostButton>
         </div>
