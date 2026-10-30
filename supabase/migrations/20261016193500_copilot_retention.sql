@@ -34,7 +34,7 @@ BEGIN
   ON CONFLICT (period_start, session_id, insight_type, feedback_action)
     DO UPDATE SET count = copilot_retention_aggregates.count + EXCLUDED.count;
 
-  -- 2. Apaga insights expirados; copilot_feedback.insight_id vira NULL via ON DELETE SET NULL
+  -- 2. Apaga insights expirados; copilot_insight_feedback.insight_id vira NULL via ON DELETE SET NULL
   DELETE FROM public.copilot_insights
   WHERE created_at < now() - interval '90 days';
 
@@ -43,7 +43,7 @@ BEGIN
   INSERT INTO public.copilot_retention_aggregates
     (period_start, session_id, insight_type, feedback_action, count)
   SELECT date_trunc('day', f.created_at)::date, f.session_id, '', f.action, count(*)
-  FROM public.copilot_feedback f
+  FROM public.copilot_insight_feedback f
   WHERE f.created_at < now() - interval '30 days'
     AND f.final_text IS NOT NULL
   GROUP BY 1,2,3,4
@@ -51,7 +51,7 @@ BEGIN
     DO UPDATE SET count = copilot_retention_aggregates.count + EXCLUDED.count;
 
   -- 4. Redigir texto de feedback expirado
-  UPDATE public.copilot_feedback
+  UPDATE public.copilot_insight_feedback
      SET final_text = NULL
    WHERE created_at < now() - interval '30 days' AND final_text IS NOT NULL;
 END; $$;

@@ -43,6 +43,7 @@ BEGIN
     (NEW.contact_id, NEW.whatsapp_connection_id, v_profile_id, NEW.created_at)
   ON CONFLICT (contact_id, whatsapp_connection_id) DO UPDATE
     SET last_contact_message_at = EXCLUDED.last_contact_message_at,
+        profile_id = EXCLUDED.profile_id,
         state_version = copilot_sessions.state_version + 1,
         updated_at = now()
   RETURNING state_version INTO v_state_version;

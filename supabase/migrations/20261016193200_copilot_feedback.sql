@@ -1,11 +1,11 @@
--- CV-013: tabela copilot_feedback
+-- CV-013: tabela copilot_insight_feedback
 -- Cada interação do vendedor com uma sugestão do RADAR.
 --
 -- insight_id é nullable: quando o insight expira (90 dias) e é deletado,
 -- o FK ON DELETE SET NULL preserva o feedback para sua própria janela
 -- de retenção de 30 dias.
 
-CREATE TABLE IF NOT EXISTS public.copilot_feedback (
+CREATE TABLE IF NOT EXISTS public.copilot_insight_feedback (
   id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   insight_id      uuid        REFERENCES public.copilot_insights(id) ON DELETE SET NULL,
   session_id      uuid        NOT NULL REFERENCES public.copilot_sessions(id) ON DELETE CASCADE,
@@ -17,13 +17,13 @@ CREATE TABLE IF NOT EXISTS public.copilot_feedback (
   created_at      timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX copilot_feedback_session_id ON public.copilot_feedback (session_id);
-CREATE INDEX copilot_feedback_insight_id ON public.copilot_feedback (insight_id);
-CREATE INDEX copilot_feedback_profile_id ON public.copilot_feedback (profile_id);
+CREATE INDEX copilot_insight_feedback_session_id ON public.copilot_insight_feedback (session_id);
+CREATE INDEX copilot_insight_feedback_insight_id ON public.copilot_insight_feedback (insight_id);
+CREATE INDEX copilot_insight_feedback_profile_id ON public.copilot_insight_feedback (profile_id);
 
-ALTER TABLE public.copilot_feedback ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.copilot_insight_feedback ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY copilot_feedback_own ON public.copilot_feedback
+CREATE POLICY copilot_insight_feedback_own ON public.copilot_insight_feedback
   FOR ALL
   TO authenticated
   USING (profile_id IN (
@@ -47,7 +47,7 @@ CREATE POLICY copilot_feedback_own ON public.copilot_feedback
     )
   );
 
-CREATE POLICY copilot_feedback_service ON public.copilot_feedback
+CREATE POLICY copilot_insight_feedback_service ON public.copilot_insight_feedback
   FOR ALL
   TO service_role
   USING (true)

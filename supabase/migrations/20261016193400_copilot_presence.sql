@@ -27,6 +27,11 @@ DECLARE v_profile_id uuid;
 BEGIN
   SELECT id INTO v_profile_id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1;
   IF v_profile_id IS NULL THEN RETURN; END IF;
+  -- Verifica que a sessão pertence ao perfil do chamador
+  IF NOT EXISTS (
+    SELECT 1 FROM public.copilot_sessions
+    WHERE id = p_session_id AND profile_id = v_profile_id
+  ) THEN RETURN; END IF;
   INSERT INTO public.copilot_presence (session_id, profile_id, expires_at)
   VALUES (p_session_id, v_profile_id, now() + interval '90 seconds')
   ON CONFLICT (session_id, profile_id) DO UPDATE SET expires_at = now() + interval '90 seconds';
