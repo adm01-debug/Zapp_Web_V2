@@ -1,0 +1,20 @@
+{
+  "secao": "7_db_functions",
+  "gerado_em": "2026-10-30",
+  "resumo": {
+    "total_public_functions_com_issue_potencial": 285,
+    "exception_when_others": 12,
+    "raise_notice": 0,
+    "dynamic_sql_execute": 4,
+    "security_definer_total": "403"
+  },
+  "achados": [
+    {"id": "S07-001", "severidade": "ALTO", "objeto": "decrypt_gmail_token / encrypt_gmail_token (vault sem SECURITY DEFINER)", "descricao": "decrypt_gmail_token e encrypt_gmail_token acessam vault.* mas NAO sao SECURITY DEFINER. Qualquer role authenticated pode chamar e obter acesso a vault.", "evidencia": "FUNC-A3: decrypt_gmail_token prosecdef=false, vault_access=true; encrypt_gmail_token prosecdef=false, vault_access=true", "impacto": "Exposicao de tokens OAuth Gmail a usuarios autenticados sem restricao de tenant", "correcao": "ALTER FUNCTION public.decrypt_gmail_token(...) SECURITY DEFINER SET search_path = public, vault;\nALTER FUNCTION public.encrypt_gmail_token(...) SECURITY DEFINER SET search_path = public, vault;"},
+    {"id": "S07-002", "severidade": "ALTO", "objeto": "dashboard_kpi — funcao duplicada", "descricao": "dashboard_kpi aparece duas vezes em pg_proc. Indica overload ou migration mal aplicada.", "evidencia": "FUNC-A3: proname='dashboard_kpi' com 2 rows"},
+    {"id": "S07-003", "severidade": "ALTO", "objeto": "transfer_conversation — funcao duplicada", "descricao": "transfer_conversation aparece duas vezes. Overloads podem causar ambiguidade em RPC do PostgREST.", "evidencia": "FUNC-A3: proname='transfer_conversation' com 2 rows"},
+    {"id": "S07-004", "severidade": "MEDIO", "objeto": "12 functions com EXCEPTION WHEN OTHERS", "descricao": "12 functions engolindo excecoes. Inclui dispatch_scheduled_messages e trigger_talkx_engine_tick.", "funcoes_criticas": ["dispatch_scheduled_messages", "trigger_talkx_engine_tick", "talkx_campaign_window_open"], "correcao": "Substituir por EXCEPTION WHEN specific_error ou adicionar RAISE LOG com SQLERRM."},
+    {"id": "S07-005", "severidade": "MEDIO", "objeto": "4 functions com SQL dinamico (EXECUTE)", "descricao": "merge_contacts_atomic, purge_talkx_expired_data, score_security_acl, talkx_engine_cron_runs usam EXECUTE. Sanitizacao nao auditada.", "status": "NAO_VERIFICADO"},
+    {"id": "S07-006", "severidade": "INFO", "objeto": "RAISE NOTICE ausente", "descricao": "Nenhuma function publica usa RAISE NOTICE. Boa pratica."},
+    {"id": "S07-007", "severidade": "INFO", "objeto": "Functions vault SECURITY DEFINER", "descricao": "Todas as functions que acessam vault sao SECURITY DEFINER, exceto decrypt/encrypt_gmail_token."}
+  ]
+}
