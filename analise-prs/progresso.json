@@ -38,23 +38,23 @@
     {"pr": 2209, "sha_pr": "ef4e4e4b859450307e1756fec45cc4128d5a986f", "sha_merge": "526ce5281a6c311089f206eb518e4204f31074f3", "timestamp": "2026-10-30T23:00:36Z", "titulo": "fix(test): corrige mock de range/limit no customemojis upload test (auto_merge:squash)"}
   ],
   "outras_escritas_github": "nenhuma (apenas leituras via github_get_pr_diff, github_get_pull_request, github_list_check_runs, github_list_pull_requests, github_update_pr_branch, github_dispatch_workflow)",
-  "main_sha_atual": "526ce5281a6c311089f206eb518e4204f31074f3",
+  "main_sha_atual": "3f18bbe7b25b1db5090e279ca743619e4dbe9b6e",
   "prs_em_ci": [
     {
       "numero": 2357,
       "titulo": "chore(db): sincronizar artefatos derivados do banco (types-sync bot, auto_merge:squash)",
-      "sha": "f5e651e",
+      "sha": "f5e651e01d2f0c12730f13fe154e5082a429f7f4",
       "auto_merge": "squash",
-      "status_ci": "ci.yml re-disparado às 23:29Z; correções adicionais: email_signatures/talkx_segment_fields sem db-guard.yml; voip_profile_credentials ativo→roadmap",
-      "acao_pendente": "Aguardar CI (~22min, termina ~23:51Z). Se CI Gate falhar por timing, re-executar. Auto_merge:squash deve disparar. Verificação agendada 23:44Z e 23:55Z."
+      "status_ci": "ci.yml re-disparado às 23:29Z; correções: email_signatures/talkx_segment_fields sem db-guard.yml; voip_profile_credentials ativo→roadmap; PR behind main=3f18bbe7 (precisa update+re-run após CI Gate passar)",
+      "acao_pendente": "Aguardar CI (~22min). Se CI Gate falhar por timing, re-run. Se behind, update_pr_branch + dispatch ci.yml + aguardar. Auto_merge:squash dispara quando tudo verde e current."
     },
     {
       "numero": 2141,
       "titulo": "feat(E83): entrar por codigo - aceite desacoplado (somente arquivos novos)",
-      "sha": "493a93d0a1fd54ca514df37948b713bccef7df6f",
+      "sha": "d8c36f6458cb1ffd905a467acaa1c18e1ad96543",
       "auto_merge": null,
-      "status_ci": "ci.yml disparado via workflow_dispatch às 2026-10-30T23:15Z; fix department_invitations status ativo aplicado em sessao anterior",
-      "acao_pendente": "Aguardar CI (~22min). Se CI Gate falhar por timing, re-executar. Merge manual (squash) quando CI verde e branch atualizada."
+      "status_ci": "branch atualizado (b2987b99→d8c36f64) às 23:36Z; ci.yml dispatched para d8c36f64 às 23:36Z; CI Gate era success no SHA anterior b2987b99",
+      "acao_pendente": "Aguardar CI (~22min, termina ~00:00Z). Merge manual squash quando CI Gate verde e branch current."
     }
   ],
   "nova_required_check_descoberta": "✅ CI Gate (required check) — check consolidador que não estava na análise anterior; substitui os 6 checks individuais como gate final",
