@@ -516,8 +516,8 @@
     },
     {
       "path": "supabase/functions/copilot-live/index.ts",
-      "bytes": 7020,
-      "sha256": "8ecfd85212d2a94f1cf2b9f4149b9c30d08a414a17953e00ebc4b83a3816e30e"
+      "bytes": 8261,
+      "sha256": "3d5688f38a9282077823dafd50dc28a752601960b457246b24c7fc864be0ebe1"
     },
     {
       "path": "supabase/functions/create-user/index.ts",
@@ -1423,7 +1423,7 @@
       "name": "copilot-live",
       "entrypoint": "supabase/functions/copilot-live/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ad37534a035594150e9151261c1d10de0000d0de306e2b6bd13b2fb438c19c0c",
+      "source_sha256": "2c16e34a3a17d7ed478adbd9509397274e5126e125c43552b04072a7c1a1dfea",
       "source_files": [
         "supabase/functions/copilot-live/index.ts"
       ]
@@ -2533,5 +2533,5 @@
       ]
     }
   ],
-  "manifest_sha256": "85283e5f40fcd0c8a8cbb5bf45a54076bb25b8390400092772f8993f1e09bfee"
+  "manifest_sha256": "949f66a70c3a6abc8cd33a4ec96d106313c7ea0f732a4c314f87985768263a12"
 }
