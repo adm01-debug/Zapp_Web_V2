@@ -15,17 +15,23 @@ import {
 } from "../copilot-tick.ts";
 
 // deno-lint-ignore no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 function fakeSupabase(db: { session: Row | null; messages: Row[]; staleUpdate?: boolean }) {
   const writes = { updates: [] as Row[], inserts: [] as Row[] };
   // deno-lint-ignore no-explicit-any
+   
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const client: any = {
     from(table: string) {
       const f: { op: string; payload?: Row; filters: Array<(r: Row) => boolean>; asc: boolean; limit: number } = {
         op: "select", filters: [], asc: true, limit: 1000,
       };
       // deno-lint-ignore no-explicit-any
+       
+   
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       const q: any = {
         select: () => q,
         update: (p: Row) => { f.op = "update"; f.payload = p; return q; },
