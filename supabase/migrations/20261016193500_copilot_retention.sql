@@ -1,10 +1,15 @@
 -- CV-019: retenção e limpeza de dados do copiloto
--- Prazo: 90 dias insights, 30 dias texto de feedback. Decisão D5 em aberto.
+-- Prazo: 90 dias insights, 30 dias texto de feedback.
 --
--- Sentinel '' (string vazia) representa dimensão ausente nas agregações:
+-- Sentinel '' representa dimensão ausente nas agregações:
 --   linha de insight → feedback_action = '' (sem ação de feedback)
---   linha de feedback → insight_type  = '' (sem tipo de insight)
--- Isso evita violação NOT NULL implícita dos campos que compõem a PK.
+--   linha de feedback → insight_type   = '' (sem tipo de insight)
+--
+-- Idempotência:
+--   insights: agregados imediatamente antes do DELETE; após apagados,
+--             nunca reaparecem no próximo run → sem double-count.
+--   feedback: só agrega rows com final_text IS NOT NULL; após UPDATE
+--             (final_text=NULL) não reaparecem no próximo run → idem.
 
 CREATE TABLE IF NOT EXISTS public.copilot_retention_aggregates (
   period_start    date        NOT NULL,
@@ -19,7 +24,7 @@ CREATE OR REPLACE FUNCTION public.run_copilot_retention()
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER
 SET search_path TO 'public','pg_temp' AS $$
 BEGIN
-  -- Agrega insights expirados; feedback_action ausente → sentinel ''
+  -- 1. Agrega insights expirados antes de apagarlos
   INSERT INTO public.copilot_retention_aggregates
     (period_start, session_id, insight_type, feedback_action, count)
   SELECT date_trunc('day', i.created_at)::date, i.session_id, i.type, '', count(*)
@@ -29,25 +34,23 @@ BEGIN
   ON CONFLICT (period_start, session_id, insight_type, feedback_action)
     DO UPDATE SET count = copilot_retention_aggregates.count + EXCLUDED.count;
 
-  -- Agrega feedbacks expirados; insight_type ausente → sentinel ''
+  -- 2. Apaga insights expirados; copilot_feedback.insight_id vira NULL via ON DELETE SET NULL
+  DELETE FROM public.copilot_insights
+  WHERE created_at < now() - interval '90 days';
+
+  -- 3. Agrega feedbacks com texto prestes a ser redigido
+  --    (final_text IS NOT NULL → idempotente: após UPDATE não reaparecem)
   INSERT INTO public.copilot_retention_aggregates
     (period_start, session_id, insight_type, feedback_action, count)
   SELECT date_trunc('day', f.created_at)::date, f.session_id, '', f.action, count(*)
   FROM public.copilot_feedback f
   WHERE f.created_at < now() - interval '30 days'
+    AND f.final_text IS NOT NULL
   GROUP BY 1,2,3,4
   ON CONFLICT (period_start, session_id, insight_type, feedback_action)
     DO UPDATE SET count = copilot_retention_aggregates.count + EXCLUDED.count;
 
-  -- Só apaga insight se nenhum feedback seu está dentro da janela de 30 dias
-  DELETE FROM public.copilot_insights
-  WHERE created_at < now() - interval '90 days'
-    AND id NOT IN (
-      SELECT DISTINCT insight_id
-      FROM public.copilot_feedback
-      WHERE created_at >= now() - interval '30 days'
-    );
-
+  -- 4. Redigir texto de feedback expirado
   UPDATE public.copilot_feedback
      SET final_text = NULL
    WHERE created_at < now() - interval '30 days' AND final_text IS NOT NULL;
