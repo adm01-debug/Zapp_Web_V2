@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS public.copilot_sessions (
   id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id     uuid        NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
+  conversation_id     uuid        NOT NULL,
   contact_id          uuid        NOT NULL,
   profile_id          uuid        NOT NULL REFERENCES auth.users(id),
   -- B·R·I·N·D·E

@@ -17,6 +17,7 @@ const CORS = {
 interface TickPayload {
   session_id?: string;
   conversation_id: string;
+  contact_id?: string;
   last_client_message?: string;
   draft_text?: string;
   brinde_meter?: number;
@@ -60,14 +61,10 @@ serve(async (req) => {
       });
     }
 
-    // Resolve o contact_id real a partir da conversa antes do INSERT;
-    // contact_id é NOT NULL na tabela e precisa do valor correto na criação.
-    const { data: conversation } = await supabase
-      .from('conversations')
-      .select('contact_id')
-      .eq('id', payload.conversation_id)
-      .maybeSingle();
-    const contactId = conversation?.contact_id ?? user.id;
+    // contact_id vem do payload (o front já conhece); fallback para user.id
+    // apenas como última instância — garante NOT NULL sem depender de tabela
+    // auxiliar que pode não existir em todos os deploys.
+    const contactId = payload.contact_id ?? user.id;
 
     // INSERT atômico: seta profile_id na primeira chamada e não pode ser
     // sobrescrito. Em conflito (23505, unique conversation_id), cai em UPDATE
@@ -92,6 +89,10 @@ serve(async (req) => {
     if (insertError) {
       if (insertError.code !== '23505') {
         console.error('session insert error', insertError);
+        return new Response(JSON.stringify({ error: 'Session error' }), {
+          status: 500,
+          headers: { ...CORS, 'Content-Type': 'application/json' },
+        });
       } else {
         // Conflito: atualiza apenas campos não-proprietários, ownership guardado
         // por profile_id — 0 rows significa que outro usuário é o dono,
@@ -142,6 +143,11 @@ serve(async (req) => {
               headers: { ...CORS, 'Content-Type': 'application/json' },
             });
           }
+          // Transfere também os insights para que o novo dono os veja.
+          await supabase
+            .from('copilot_insights')
+            .update({ profile_id: user.id })
+            .eq('session_id', transferredSession.id);
           session = transferredSession;
         } else {
           session = updatedSession;
