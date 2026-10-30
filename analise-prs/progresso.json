@@ -43,10 +43,10 @@
     {
       "numero": 2357,
       "titulo": "chore(db): sincronizar artefatos derivados do banco (types-sync bot, auto_merge:squash)",
-      "sha": "cdd67d810f5e5c60262b07359d6729e1f1553495",
+      "sha": "f5e651e",
       "auto_merge": "squash",
-      "status_ci": "ci.yml disparado via workflow_dispatch às 2026-10-30T23:15Z; fix docs/DB-INVENTORY.md adicionado (33 tabelas faltantes + contagens corrigidas)",
-      "acao_pendente": "Aguardar CI (~22min). Se CI Gate falhar por timing (bug), re-executar CI Gate. Auto_merge:squash deve disparar. Branch pode estar BEHIND apos merge de #2209 — auto-update-pr-branch.yml vai atualizar."
+      "status_ci": "ci.yml re-disparado às 23:29Z; correções adicionais: email_signatures/talkx_segment_fields sem db-guard.yml; voip_profile_credentials ativo→roadmap",
+      "acao_pendente": "Aguardar CI (~22min, termina ~23:51Z). Se CI Gate falhar por timing, re-executar. Auto_merge:squash deve disparar. Verificação agendada 23:44Z e 23:55Z."
     },
     {
       "numero": 2141,
