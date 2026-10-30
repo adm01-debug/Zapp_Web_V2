@@ -14,7 +14,7 @@
     "required_status_checks": [
       "✅ CI Gate (required check)",
       "🏗️ Build",
-      "🖎 TypeCheck"
+      "🔎 TypeCheck"
     ]
   },
   "merge": {
