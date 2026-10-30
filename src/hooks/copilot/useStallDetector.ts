@@ -4,7 +4,6 @@
  * Identifica quando a conversa travou em "vou pensar" / "depois eu vejo"
  * e sugere uma ação específica de recuperação.
  */
-import { useMemo } from 'react';
 
 export type StallType = 'thinking' | 'busy' | 'silent' | 'ghosted';
 
@@ -54,28 +53,26 @@ export function useStallDetector({
   lastClientMessage,
   minutesSinceLastMessage,
 }: UseStallDetectorOptions): StallAlert | null {
-  return useMemo(() => {
-    if (!lastClientMessage && !minutesSinceLastMessage) return null;
+  if (!lastClientMessage && !minutesSinceLastMessage) return null;
 
-    if (minutesSinceLastMessage && minutesSinceLastMessage > 1440) {
-      const rec = RECOVERIES.ghosted;
-      return { type: 'ghosted', label: rec.label, recoveryAction: rec.action, draftLine: rec.draft };
+  if (minutesSinceLastMessage && minutesSinceLastMessage > 1440) {
+    const rec = RECOVERIES.ghosted;
+    return { type: 'ghosted', label: rec.label, recoveryAction: rec.action, draftLine: rec.draft };
+  }
+  if (minutesSinceLastMessage && minutesSinceLastMessage > 120) {
+    const rec = RECOVERIES.silent;
+    return { type: 'silent', label: rec.label, recoveryAction: rec.action, draftLine: rec.draft };
+  }
+
+  if (!lastClientMessage) return null;
+  const text = lastClientMessage.toLowerCase();
+
+  for (const [type, triggers] of Object.entries(STALL_TRIGGERS) as [StallType, string[]][]) {
+    if (triggers.some((kw) => text.includes(kw))) {
+      const rec = RECOVERIES[type];
+      return { type, label: rec.label, recoveryAction: rec.action, draftLine: rec.draft };
     }
-    if (minutesSinceLastMessage && minutesSinceLastMessage > 120) {
-      const rec = RECOVERIES.silent;
-      return { type: 'silent', label: rec.label, recoveryAction: rec.action, draftLine: rec.draft };
-    }
+  }
 
-    if (!lastClientMessage) return null;
-    const text = lastClientMessage.toLowerCase();
-
-    for (const [type, triggers] of Object.entries(STALL_TRIGGERS) as [StallType, string[]][]) {
-      if (triggers.some((kw) => text.includes(kw))) {
-        const rec = RECOVERIES[type];
-        return { type, label: rec.label, recoveryAction: rec.action, draftLine: rec.draft };
-      }
-    }
-
-    return null;
-  }, [lastClientMessage, minutesSinceLastMessage]);
+  return null;
 }
