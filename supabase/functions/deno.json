@@ -3,5 +3,8 @@
     "path": "../../scripts/ci/deno.lock",
     "frozen": true
   },
-  "nodeModulesDir": "none"
+  "nodeModulesDir": "none",
+  "compilerOptions": {
+    "skipLibCheck": true
+  }
 }
