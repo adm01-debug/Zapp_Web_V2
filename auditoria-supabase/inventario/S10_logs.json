@@ -1,0 +1,36 @@
+{
+  "auditado_em": "2026-10-30",
+  "secao": "10 - Logs (24h)",
+  "cron_failures_24h": {
+    "total_jobs_falhando": 15,
+    "tipo_erro_predominante": "job startup timeout",
+    "detalhes": [
+      {"jobid": 34, "jobname": "dispatch-scheduled-messages", "schedule": "* * * * *", "failures_24h": 184},
+      {"jobid": 16, "jobname": "tasks-notify-due", "schedule": "* * * * *", "failures_24h": 184},
+      {"jobid": 20, "jobname": "ai-jobs-tick-1min", "schedule": "1-59 * * * *", "failures_24h": 180},
+      {"jobid": 11, "jobname": "talkx-scheduler-1min", "schedule": "* * * * *", "failures_24h": 176},
+      {"jobid": 13, "jobname": "expire-stale-agent-presence", "schedule": "1-59/2 * * * *", "failures_24h": 100},
+      {"jobid": 22, "jobname": "crm-sync-outbox", "schedule": "1-59/2 * * * *", "failures_24h": 100},
+      {"jobid": 29, "jobname": "csat-reply-capture-tick", "schedule": "*/2 * * * *", "failures_24h": 89},
+      {"jobid": 15, "jobname": "multiplix-send-trigger", "schedule": "0-58/2 * * * *", "failures_24h": 89},
+      {"jobid": 4, "jobname": "gmail-incremental-sync", "schedule": "0-55/5 * * * *", "failures_24h": 41},
+      {"jobid": 17, "jobname": "connection-health-check", "schedule": "2-57/5 * * * *", "failures_24h": 41},
+      {"jobid": 28, "jobname": "close-stale-calls", "schedule": "*/5 * * * *", "failures_24h": 41},
+      {"jobid": 9, "jobname": "cleanup-edge-rate-limits", "schedule": "7-52/15 * * * *", "failures_24h": 13},
+      {"jobid": 18, "jobname": "avatars-refresh", "schedule": "7 * * * *", "failures_24h": 4},
+      {"jobid": 27, "jobname": "security-acl-score", "schedule": "23 * * * *", "failures_24h": 4},
+      {"jobid": 31, "jobname": "voice-changer-tmp-purge", "schedule": "17 * * * *", "failures_24h": 3}
+    ]
+  },
+  "achados": [
+    {
+      "id": "S10-001",
+      "severidade": "CRITICO",
+      "objeto": "pg_cron - 15 jobs com startup timeout",
+      "descricao": "15 de 24 cron jobs falhando com 'job startup timeout' desde ~20:48 UTC 2026-10-30. Inclui dispatch-scheduled-messages (184 falhas), tasks-notify-due (184), ai-jobs-tick-1min (180), talkx-scheduler-1min (176).",
+      "evidencia": "cron.job_run_details WHERE start_time > now()-interval '24h' AND status='failed': 15 jobids distintos, return_message='job startup timeout'",
+      "impacto": "PRODUÇÃO DEGRADADA: mensagens agendadas não enviadas, tasks sem notificação, AI jobs e campanhas TalkX parados.",
+      "correcao": "Verificar pg_settings cron.max_running_jobs. Investigar se pg_cron background worker travou. Pode precisar de restart do pg_cron worker pelo Supabase."
+    }
+  ]
+}

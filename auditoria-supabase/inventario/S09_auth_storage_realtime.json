@@ -1,0 +1,30 @@
+{
+  "auditado_em": "2026-10-30",
+  "secao": "9 - Auth / Storage / Realtime",
+  "auth": {
+    "total_users": 10,
+    "confirmed_users": 10,
+    "deleted_users": 0,
+    "banned_users": 1,
+    "active_30d": 6,
+    "active_sessions": 0
+  },
+  "storage": {
+    "total_buckets": 9,
+    "buckets_publicos": ["audio-memes", "stickers", "custom-emojis"],
+    "buckets_privados": ["audio-messages", "avatars", "multiplix-voice", "team-chat-files", "voice-changer-tmp", "whatsapp-media"],
+    "achados": [
+      {"id": "S09-002", "severidade": "MEDIO", "objeto": "bucket/multiplix-voice", "descricao": "allowed_mime_types=null — aceita upload de qualquer tipo", "evidencia": "storage.buckets: allowed_mime_types=null"},
+      {"id": "S09-003", "severidade": "INFO", "objeto": "3 buckets públicos", "descricao": "audio-memes, stickers, custom-emojis são públicos. Intencional para assets de UI."},
+      {"id": "S09-004", "severidade": "INFO", "objeto": "whatsapp media readable via visible message", "descricao": "Policy de storage usa subquery em messages sem filtro de workspace. Potencial cross-tenant se RLS de messages não isolar corretamente."}
+    ]
+  },
+  "realtime": {
+    "total_tabelas_em_realtime": 37,
+    "tabelas_sem_rls_public_schema": [],
+    "nota": "Todas as 37 tabelas em realtime têm RLS habilitado no schema public. Schema _bkp_261023 tem 3 tabelas sem RLS mas não estão na publicação realtime.",
+    "achados": [
+      {"id": "S09-005", "severidade": "INFO", "objeto": "_bkp_261023 schema", "descricao": "Schema de backup com 3 tabelas sem RLS. Não expostas via Realtime. Idealmente deveriam ter acesso restrito."}
+    ]
+  }
+}
