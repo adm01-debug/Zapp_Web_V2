@@ -75,5 +75,5 @@ END; $$;
 -- pg_cron roda como postgres (superuser) e não é afetado pelo REVOKE.
 REVOKE EXECUTE ON FUNCTION public.run_copilot_retention() FROM PUBLIC, authenticated;
 
--- Agendamento diário às 03:00 UTC via pg_cron
-SELECT cron.schedule('copilot-retention-daily', '0 3 * * *', $$SELECT public.run_copilot_retention()$$);
+-- Agendamento diário às 02:35 UTC via pg_cron (escalonado para evitar pico do minuto-zero)
+SELECT cron.schedule('copilot-retention-daily', '35 2 * * *', $$SELECT public.run_copilot_retention()$$);
