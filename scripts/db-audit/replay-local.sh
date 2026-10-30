@@ -39,7 +39,8 @@ NOME="${REPLAY_NOME:-hermes-e24-replay-$RUN_ID}"
 ROTULO_CHAVE="hermes.e24.replay"
 ROTULO_VALOR="$NOME"
 PORTA="${REPLAY_PORTA:-5499}"
-# Fixada por digest (indice multi-arch de 17.6.1.159): a tag sozinha nao garante o conteudo.
+# GHCR oficial, com o mesmo digest multi-arch 17.6.1.159 publicado no ECR; a tag sozinha
+# nao garante o conteudo. O mirror evita o limite de pull anonimo do ECR nos runners.
 IMAGEM="${REPLAY_IMAGEM:-ghcr.io/supabase/postgres:17.6.1.159@sha256:86a2e078779e5bdccda1f6f6c5063aa9779a322d1fface5fb408d051909b230f}"
 LOG="$PWD/replay.log"
 ERROS="$PWD/replay-erros.tsv"
