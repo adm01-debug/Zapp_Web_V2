@@ -29,9 +29,12 @@ _Atualizado em 2026-10-30 por sessão de correção de CI._
 
 ---
 
-## 2. Running Copilot Code Review — falha de firewall interno do Copilot
+## 2. Running Copilot Code Review — falha de firewall interno do Copilot (não corrigível via código)
 
-**Runs:** múltiplos hoje (ex.: [41125593441](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41125593441))  
+**Runs confirmados com falha:**
+- [41125593441](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41125593441) — múltiplos no dia 2026-10-30
+- [41140197413](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41140197413) — job `copilot-pull-request-reviewer` (check run 124352329821), SHA `79156ee0e5ac8ebddefab98e3d6b5b19eb6b3dec`, PR #2399, concluído 2026-10-30T22:49:16Z com `conclusion=failure`
+
 **Workflow:** `.github/workflows/` — workflow dinâmico do GitHub Copilot (não tem arquivo próprio no repo)
 
 **O que falhou:** Step "Processing Request (Linux)" falha com:
