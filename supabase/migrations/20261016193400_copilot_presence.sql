@@ -47,12 +47,17 @@ END; $$;
 CREATE OR REPLACE FUNCTION public.copilot_has_presence(p_session_id uuid)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path TO 'public','pg_temp' AS $$
+  -- service_role (worker): auth.uid() é NULL — qualquer presença ativa na sessão basta.
+  -- authenticated: apenas a própria presença conta.
   SELECT EXISTS (
     SELECT 1 FROM public.copilot_presence cp
-    JOIN public.copilot_sessions cs ON cs.id = cp.session_id
-    JOIN public.profiles p ON p.id = cs.profile_id
      WHERE cp.session_id = p_session_id
        AND cp.expires_at > now()
-       AND p.user_id = auth.uid()
+       AND (
+         auth.uid() IS NULL
+         OR cp.profile_id IN (
+           SELECT id FROM public.profiles WHERE user_id = auth.uid()
+         )
+       )
   );
 $$;

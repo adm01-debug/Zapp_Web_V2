@@ -57,6 +57,7 @@ BEGIN
   -- Usa gen_random_uuid() na chave para garantir unicidade sem bucket fixo.
   UPDATE public.ai_jobs
      SET available_at = now() + interval '4 seconds',
+         user_id = v_user_id,
          payload = jsonb_build_object(
            'contact_id',             NEW.contact_id,
            'whatsapp_connection_id', NEW.whatsapp_connection_id,
