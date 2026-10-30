@@ -28,12 +28,17 @@ O inventário geral `INVENTARIO_MELHORIAS_2026-10-07.tsv` contém 1.110 linhas e
 | P1 | Talk X importação CRM | Não localizada no código/migrations: tabelas, RPCs, upload, mapeamento e resolução de conflitos descritos em F13. | Especificar e implementar o fluxo, ou atualizar formalmente o plano se a decisão de produto mudou. |
 | P1 | Encaminhamento de arquivos | Parcial: painel de detalhe e seleção múltipla têm fluxo; botão individual de cartão/lista segue desabilitado. | Implementar ação unitária e provar em teste nos modos cartão e lista. |
 | P1 | Reconciliação de chamadas Bitrix | Não-2xx do Bitrix pode retornar HTTP 200 e `reconciliados: 0`. | Expor falha operacional via status/contrato, preservar detalhes seguros e validar alertas/retry. |
+| P1 | Funções Edge código × runtime | Um levantamento live reportou 82 funções ativas vs. 85 fontes executáveis locais; `ai-usage-outbox-drain`, `automation-suggest-reply`, `copilot-live`, `invite-user` e `recover-message-media` não constavam no runtime observado. | Comparar manifesto e versão implantada por função; classificar cada diferença como deploy pendente, remoção aprovada ou órfã, depois implantar e smoke-testar. |
+| P1 | Configuração SIP | Logs das últimas 24h reportaram 1.260 respostas 503 de `get-sip-password` por ausência de `SIP_PASSWORD`. | Configurar o secret pelo mecanismo operacional aprovado e validar uma chamada autenticada sem revelar o valor. |
+| P1 | Catálogo PromoGifts | Logs reportaram 24 erros 5xx em 75 chamadas e p95 ~141s, com timeout upstream/statement timeout. | Medir separadamente latência da consulta, rede e serviço externo; definir timeout/retry e observabilidade antes de alterar a integração. |
 | P1/externo | Envio do Catálogo | Sem registro do primeiro envio real ponta a ponta. | Executar procedimento autenticado com número conectado e registrar IDs, resultado e evidência em `docs/catalogo/ENVIO_E2E.md`. |
 | P1/externo | DB Live Guard | `41066127274` queued no SHA atual durante esta auditoria; última execução concluída citada no histórico usa SHA antigo e falhou. | Obter uma execução concluída no HEAD atual; se falhar, classificar o contrato antes de prosseguir com DDL live. |
 | P1/planejamento | Migração operacional | `db-migrate.yml` exige environment `producao-ddl`, aceita migration/bundles conhecidos, sem `apply_all_missing` ou confirmação específica destrutiva. | Resolver GA13–GA17 explicitamente; manter guardas e revisão por migration, sem aplicar lote indiscriminado. |
 | P2 | Métrica de envios do Catálogo | `catalog_send_stats` existe nos tipos, sem consumidor identificado em `src`; painel “hoje/7 dias” não encontrado. | Implementar painel ou registrar decisão de produto e remover requisito. |
 | P2/decisão | Política de download Catálogo | Plano diz que export CSV/fotos não consultam `can_download`; requer decisão sobre saída de dados. | Registrar regra de autorização e cobri-la no backend e UI antes de alterar exportações. |
 | P2/decisão | Preview de mídia | `MediaPreview` abre URL assinada via `window.open`, divergindo da política D2 de manter preview no produto. | Confirmar a política vigente e adequar comportamento; validar URL, expiração e acesso. |
+| P2 | Alvo Lighthouse | `performance-budget.json` declara que Lighthouse 90 não tem gate. | Decidir se o alvo é requisito contínuo; se for, adicionar medição reprodutível e limiar que não confunda bundle com Lighthouse. |
+| P2 | Documentação Edge Functions | O inventário de arquitetura lista 74 funções em snapshot de 08/10, vs. 85 fontes locais e 82 remotas no levantamento recente. | Regenerar catálogo com fonte automatizada e registrar diferenças local × remoto. |
 
 ## O que os relatórios antigos classificam incorretamente
 
@@ -46,6 +51,9 @@ Estes exemplos foram encontrados implementados no `main` e não devem continuar 
 - Inbox: `conversation_status` é usado para contagem de resolvidas; downloads da aba Arquivos consideram `downloadAllowed`; controles de modo possuem `aria-label`.
 - No Catálogo/Arquivos, não confundir código parcialmente existente com o aceite de primeiro envio real, que continua sem evidência externa.
 - Os números `2/200` do Talk X e “nada executado” do plano de telefonia derivam de baselines anteriores; não são medição atual de funcionalidades ausentes.
+- Quatro achados de IA/Edge/performance de 03/10 e os itens de segurança Edge (preview, WebAuthn, health check, CORS e escape de HTML) indicados no relatório de 07/10 aparecem corrigidos no código atual; runtime de 82/85 funções e falta de `SIP_PASSWORD` mostram que código não prova deploy/configuração.
+- Advisories agregados reportaram 418 initplans de RLS, 75 pares de policies permissivas, 41 FKs sem índice, 183 funções `SECURITY DEFINER` executáveis por `authenticated` e 6 com `search_path` mutável. São filas de triagem por objeto; contagem isolada não prova explorabilidade nem impacto.
+- O ledger de IA diverge do README para IA-050 (registro diz ausente; README e `ai-circuit.ts` dizem entregue). Corrigir o estado e anexar evidência em vez de reimplementar sem necessidade.
 
 ## Estado do banco e limite de alteração
 
@@ -58,6 +66,7 @@ O executor `postgres` não pode mudar defaults pertencentes a `supabase_admin`; 
 - `bash scripts/db-audit/check-live-invariants.test.sh`: **48 cenários aprovados**, incluindo concessões diretas e defaults inseguros para `TRUNCATE`, `REFERENCES` e `TRIGGER`.
 - `bash scripts/db-audit/replay-local.sh`: **1.041/1.065 migrations aplicadas; 24 falhas classificadas como conhecidas; 0 drift inesperado; `REPLAY=verde`**. Replay descartável, sem acesso ao banco canônico.
 - PR #2353 está integrada em `fb57b4a5`; não é mais uma pendência.
+- PR #2383 contém a correção de ACL e este relatório; aguarda checks do GitHub.
 - O replay e os testes não substituem checks do PR no GitHub nem validação do guard live.
 
 ## Sequência recomendada
