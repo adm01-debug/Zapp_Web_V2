@@ -1,7 +1,7 @@
 # Roteiro — Teste de Matriz RLS (Isolamento entre Tenants)
 
-**Status**: EXECUTADO — Postgres 16 local em 2026-10-30 (ver resultados em `01_rls_matrix.sql`)  
-**Referência**: CRITICAL-2 / Seção 11 do RELATORIO_AUDITORIA_SUPABASE.md
+**Status**: NÃO EXECUTADO via MCP — `BEGIN`/`SET LOCAL role`/`ROLLBACK` não são suportados pelo MCP (erro: `EXECUTE of transaction commands is not implemented`). O arquivo `01_rls_matrix.sql` contém o SQL completo; executar localmente com `scripts/db-audit/replay-local.sh`.
+**Referência**: Seção 11 do RELATORIO_AUDITORIA_SUPABASE.md
 
 ---
 

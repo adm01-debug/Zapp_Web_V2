@@ -36,6 +36,82 @@ SELECT current_setting('server_version'), count(*) FROM supabase_migrations.sche
 
 ---
 
+## pg_stat_statements — Top 20 Queries (evidência executada 2026-10-30T22:50 UTC)
+
+```sql
+SELECT LEFT(query,120) AS q, calls, ROUND(total_exec_time::numeric,0) AS total_ms,
+       ROUND(mean_exec_time::numeric,1) AS mean_ms, rows, shared_blks_read
+FROM extensions.pg_stat_statements ORDER BY total_exec_time DESC LIMIT 20
+```
+
+| # | Query (truncado) | Calls | total_ms | mean_ms | blks_read | Observação |
+|---|---|---|---|---|---|---|
+| 1 | `SELECT wal->>$5 as type...` | 13021 | 480115 | 36.9 | 8 | Realtime WAL decode — esperado |
+| 2 | `...pgrst_scalar...sql` (RPC genérico) | 339 | 458736 | 1353.2 | **479991** | ⚠️ 479k blks_read — busca sem índice |
+| 3 | `...inbox_unread_total()...` | 330 | 329466 | 998.4 | 153 | EXPLAIN: Function Scan cost=0.26 |
+| 4 | `...contact_ids FROM...` (RPC contacts) | 118 | 272990 | 2313.5 | 99 | mean >2s — investigar |
+| 5 | `...rpc_queue_goal_metrics()...` | 141 | 184141 | 1306.0 | 915 | >1s médio, 915 blks_read |
+| 6 | `...contacts.created_at, contact_type...` | 356 | 145087 | 407.5 | 9 | EXPLAIN: idx_contacts_assigned_to_gamif ✅ |
+| 7 | `...search_contacts(search_term...)...` | 165 | 141682 | 858.7 | 0 | 100% cache hit |
+| 8 | `...pg_publication_tables...` (realtime) | 5955 | 138547 | 23.3 | 0 | Alto volume, custo baixo |
+| 9 | `...contacts.assigned_to = $1...` | 1784 | 135340 | 75.9 | 6 | EXPLAIN: Index Scan ✅ |
+| 10 | `...contacts_count_by_type()...` | 143 | 114642 | 801.7 | 137 | EXPLAIN: Function Scan ✅ |
+| 11 | `...email_threads.id...` | 385 | 113837 | 295.7 | 271 | Verificar índice em email_threads |
+| 12 | `SELECT public.trigger_talkx_engine_tick()` | 112 | 88735 | 792.3 | **165460** | 🔴 165k blks/call = 18,5M total |
+| 13 | `...app_bootstrap()...` | 257 | 83533 | 325.0 | 20 | Boot do app — aceitável |
+| 14 | `...p_action...` (RPC ação) | 197 | 80281 | 407.5 | 180 | Média aceitável |
+| 15 | `...p_key, p_max...` | 533 | 61943 | 116.2 | 0 | Cache hit |
+| 16 | `...contacts.assigned_to NOT...` | 133 | 56165 | 422.3 | 185 | Verificar índice |
+| 17 | `...talk_me_list_queues()...` | 50 | 53943 | 1078.9 | 648 | mean >1s — TalkX lento |
+| 18 | `...messages.sender = $1...` | 1079 | 52004 | 48.2 | 48 | Aceitável |
+| 19 | `INSERT INTO contacts...` | 29 | 41242 | 1422.1 | 16 | mean 1.4s — INSERT lento |
+| 20 | `storage.objects WHERE name COLLATE "C"` | 16 | 39994 | 2499.6 | 82 | mean 2.5s — storage busca lenta |
+
+**Destaque:** Query #12 (`trigger_talkx_engine_tick`) lê 165.460 blocos por chamada — 18,5M total em 112 calls. Confirma S05-001 (recursão RLS user_roles) e explica startup timeout dos crons.
+
+---
+
+## Cobertura por Cron — 30 dias (evidência executada 2026-10-30T22:51 UTC)
+
+```sql
+SELECT j.jobname, COUNT(*) FILTER (WHERE d.status='succeeded') AS ok_30d,
+       COUNT(*) FILTER (WHERE d.status='failed') AS fail_30d
+FROM cron.job j LEFT JOIN cron.job_run_details d ON d.jobid=j.jobid
+  AND d.start_time > now()-interval '30 days'
+GROUP BY j.jobname ORDER BY fail_30d DESC NULLS LAST
+```
+
+| Cron | ok_30d | fail_30d | taxa% | Comando | Segredo |
+|---|---|---|---|---|---|
+| talkx-scheduler-1min | 38833 | 4346 | **10.1** | `trigger_talkx_engine_tick()` | Nenhum |
+| tasks-notify-due | 41188 | 1991 | 4.6 | `notify_due_tasks()` | Nenhum |
+| ai-jobs-tick-1min | 38376 | 1720 | 4.3 | `trigger_ai_jobs_tick()` | Nenhum |
+| expire-stale-agent-presence | 20565 | 1025 | 4.7 | `expire_stale_agent_presence()` | Nenhum |
+| multiplix-send-trigger | 20594 | 996 | 4.6 | `trigger_pending_multiplix_dispatches()` | Nenhum |
+| dispatch-scheduled-messages | 9894 | 691 | **6.5** | `dispatch_scheduled_messages()` | Nenhum |
+| gmail-incremental-sync | 8182 | 454 | 5.3 | `net.http_post → gmail-cron-sync` | vault('gmail_cron_secret') ✅ |
+| connection-health-check | 8197 | 437 | 5.1 | `net.http_post → connection-health-check` | vault('conn_health_cron_secret') ✅ |
+| crm-sync-outbox | 9794 | 358 | 3.5 | `trigger_crm_sync_outbox()` | Nenhum |
+| csat-reply-capture-tick | 4986 | 341 | 6.4 | `fn_capture_csat_replies()` | Nenhum |
+| cleanup-edge-rate-limits | 2727 | 151 | 5.2 | `DELETE edge_rate_limits WHERE old` | Nenhum |
+| close-stale-calls | 1981 | 151 | 7.1 | `close_stale_calls()` | Nenhum |
+| avatars-refresh | 680 | 40 | 5.6 | `net.http_post → batch-fetch-avatars` | vault('avatars_refresh_cron_secret') ✅ |
+| voice-changer-tmp-purge | 163 | 15 | 8.4 | `purge_voice_changer_tmp(24,200)` | Nenhum |
+| security-acl-score | 166 | 12 | 6.7 | `score_security_acl()` | Nenhum |
+| vacuum-contacts-daily | 29 | 1 | 3.3 | `VACUUM ANALYZE contacts` | Nenhum |
+| cleanup-link-preview-cache | 29 | 1 | 3.3 | `cleanup_link_preview_cache()` | Nenhum |
+| searchbox-budget-alert | 28 | 0 | 0 | `searchbox_budget_alert_tick()` | Deno.env('CRON_SECRET') |
+| search-events-retention | 14 | 0 | 0 | `purge_old_search_events()` | Nenhum |
+| expire-orphan-user-sessions | 7 | 0 | 0 | `expire_orphan_user_sessions()` | Nenhum |
+| purge-qr-attempts | 7 | 0 | 0 | `purge_qr_attempts()` | Nenhum |
+| reconnection-logs-retention-30d | 7 | 0 | 0 | `DELETE reconnection_logs WHERE old` | Nenhum |
+| crm-sync-outbox-cleanup | 14 | 0 | 0 | `run_crm_sync_outbox_cleanup()` | Nenhum |
+| user-sessions-expire-diario | 7 | 0 | 0 | `expire_user_sessions()` | Nenhum |
+
+**Nenhum cron tem token/segredo hardcoded no comando** — os 3 HTTP crons usam `vault.decrypted_secrets` corretamente.
+
+---
+
 ## 🚨 Top 10 Achados (ordem de prioridade)
 
 ### 1. [CRÍTICO] S10-001 — pg_cron: 15+ jobs com startup timeout — INCIDENTE ATIVO
@@ -68,6 +144,9 @@ talkx-scheduler-1min:           2 falhas | msg: ERROR: canceling statement due t
 ```
 **Impacto:** Mensagens agendadas não enviadas, tasks sem notificação, TalkX parado, AI jobs parados.
 **Ação:** Verificar painel Supabase → Database → pg_cron. Pode ser esgotamento do connection pool causado pela recursão RLS em user_roles (achado S05-001 abaixo).
+**Reprodução:** `SELECT jobname, count(*) FILTER (WHERE status='failed') FROM cron.job_run_details WHERE start_time > now()-interval '24h' GROUP BY jobname ORDER BY 2 DESC`
+**Risco de Regressão:** ALTO — restart do worker não tem rollback; verificar no painel antes de qualquer ação
+**Esforço:** 30min (painel Supabase + contato suporte se necessário)
 
 ---
 
@@ -83,6 +162,9 @@ FROM pg_stat_user_tables WHERE relname = 'user_roles';
 Policy SELECT em `user_roles` chama `is_admin_or_supervisor(auth.uid())` que lê `user_roles` novamente. Cada chamada pode gerar seq scan recursivo na tabela.
 **Hipótese causal:** Esta recursão satura o connection pool → impede pg_cron de obter conexões → "job startup timeout" massivo.
 **Ação:** Reescrever policy para evitar recursão. Opções: (a) usar `auth.jwt() ->> 'app_role'` direto do JWT; (b) função `SECURITY DEFINER` com cache via `pg_advisory_lock`; (c) materializar role em `auth.users.raw_user_meta_data`.
+**Reprodução:** `EXPLAIN SELECT * FROM public.user_roles WHERE user_id = auth.uid()` — observar Seq Scan recursivo
+**Risco de Regressão:** ALTO — mudança de RLS em user_roles afeta autorização de toda a aplicação; requer testes completos de todos os roles
+**Esforço:** 2-4h (materializar role em JWT + migration + testes de regressão)
 
 ---
 
@@ -105,6 +187,9 @@ FROM pg_proc WHERE proname IN ('decrypt_gmail_token', 'encrypt_gmail_token')
 ```
 Funções que acessam `vault.*` (tokens OAuth Gmail) sem `SECURITY DEFINER`. Qualquer usuário `authenticated` pode chamar diretamente e descriptografar tokens de OAuth Gmail de outros usuários.
 **Ação:** Adicionar `SECURITY DEFINER` e `REVOKE EXECUTE ON FUNCTION FROM PUBLIC; GRANT EXECUTE TO service_role;`
+**Reprodução:** `SELECT proname, prosecdef FROM pg_proc WHERE proname IN ('decrypt_gmail_token','encrypt_gmail_token') AND pronamespace='public'::regnamespace`
+**Risco de Regressão:** BAIXO — adicionar SECURITY DEFINER não muda comportamento se search_path estiver correto
+**Esforço:** 1h (migration + teste de invocação por authenticated)
 
 ---
 
@@ -644,24 +729,33 @@ policies_public=505 | tables=204 | buckets=9
 ```
 (Baseline total policies = 505 public + 34 storage + 2 realtime + 2 cron + 1 ops = **544**)
 
-### Estado DEPOIS (2026-10-30T22:36:12 UTC)
+### Estado DEPOIS — medição ampliada (2026-10-30T22:51:15 UTC)
 
 ```sql
 SELECT
-  (SELECT count(*) FROM supabase_migrations.schema_migrations) as migrations,
-  (SELECT max(version) FROM supabase_migrations.schema_migrations) as latest_version,
-  (SELECT count(*) FROM cron.job WHERE active=true) as active_crons,
-  (SELECT count(*) FROM pg_policies WHERE schemaname='public') as policies,
-  (SELECT count(*) FROM pg_tables WHERE schemaname='public') as tables,
-  (SELECT count(*) FROM storage.buckets) as buckets,
-  to_char(now(),'YYYY-MM-DD HH24:MI:SS TZ') as verified_at
-```
-```
-migrations=1064 ✅ | latest_version=20261030110000 ✅ | active_crons=24 ✅
-policies=505 ✅ | tables=204 ✅ | buckets=9 ✅ | verified_at=2026-10-30 22:36:12 UTC
+  (SELECT count(*) FROM supabase_migrations.schema_migrations) AS migrations,
+  (SELECT max(version) FROM supabase_migrations.schema_migrations) AS latest_version,
+  (SELECT count(*) FROM cron.job WHERE active) AS active_crons,
+  (SELECT count(*) FROM pg_policies WHERE schemaname='public') AS public_policies,
+  (SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE') AS tables,
+  (SELECT count(*) FROM storage.buckets) AS buckets,
+  (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON p.pronamespace=n.oid WHERE n.nspname='public' AND p.prosecdef) AS security_definer_fns,
+  (SELECT count(*) FROM pg_indexes WHERE schemaname='public') AS public_indexes,
+  NOW() AS measured_at
 ```
 
-**Produção inalterada** — todas as métricas idênticas ao baseline.
+| Objeto | Baseline (22:28:26 UTC) | After (22:51:15 UTC) | Delta |
+|---|---|---|---|
+| migrations | 1064 | 1064 | **ZERO** |
+| latest_version | 20261030110000 | 20261030110000 | **ZERO** |
+| active_crons | 24 | 24 | **ZERO** |
+| public_policies | 505 | 505 | **ZERO** |
+| tables | 204 | 204 | **ZERO** |
+| buckets | 9 | 9 | **ZERO** |
+| security_definer_fns | 399 | 399 | **ZERO** |
+| public_indexes | 723 | 723 | **ZERO** |
+
+**Produção inalterada — 8 objetos verificados, delta ZERO em todos.**
 
 ### Operações executadas — somente leitura
 
@@ -671,6 +765,24 @@ policies=505 ✅ | tables=204 ✅ | buckets=9 ✅ | verified_at=2026-10-30 22:36
 - Zero `INSERT`, `UPDATE`, `DELETE`, `DDL`, `GRANT`, `REVOKE`
 - Zero `apply_migration`, `db_insert`, `db_update`, `db_delete`, `db_alter_table`
 - Zero deploy de edge function
+
+---
+
+## Grep nos Arquivos de Auditoria — PII e Segredos
+
+**Comando executado nesta sessão:**
+```bash
+grep -rn -E "(senha|password|token=|secret=|api_key=|@gmail|@hotmail|[0-9]{11}|[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2})" auditoria-supabase/
+```
+
+**Resultado:** 35 matches encontrados **somente em `auditoria-supabase/testes/01_rls_matrix.sql`**.
+
+Todos os matches são **dados sintéticos de teste**:
+- Emails: `user_a@example.test`, `a@example.test`, `b@example.test` — domínio `.test` (RFC 2606, reservado para testes, nunca resolve)
+- Telefones: `11999990001`, `11999990002` — formato de número de teste (Anatel)
+- UUIDs: `aaa00000-0000-4000-a000-000000000001`, `bbb00000-...` — formato proposital sintético
+
+**Nenhum valor real de PII, token de produção, secret ou API key** nos arquivos de auditoria.
 
 ---
 
@@ -707,6 +819,6 @@ auditoria-supabase/
 │   ├── 04_fk_indexes.sql
 │   └── 05_drop_duplicate_indexes.sql
 └── testes/
-    ├── 01_rls_matrix.sql              ← 5 testes PASS (Postgres 16 local)
-    └── rls_matrix_roteiro.md
+    ├── 01_rls_matrix.sql              ← SQL completo (NÃO EXECUTADO — BEGIN/ROLLBACK não suportado via MCP; executar localmente com replay-local.sh)
+    └── rls_matrix_roteiro.md          ← roteiro de execução local
 ```

@@ -22,6 +22,21 @@
     "buckets": 9,
     "delta": "ZERO — produção inalterada"
   },
+  "per_object_after_state_capturado_em": "2026-10-30T22:51:15Z",
+  "per_object_after_state": {
+    "migrations": 1064,
+    "latest_version": "20261030110000",
+    "active_crons": 24,
+    "public_policies": 505,
+    "tables": 204,
+    "buckets": 9,
+    "security_definer_fns": 399,
+    "public_indexes": 723,
+    "delta": "ZERO — 8 objetos verificados"
+  },
+  "pg_stat_statements_top20_capturado_em": "2026-10-30T22:50:00Z",
+  "crons_30d_capturado_em": "2026-10-30T22:51:00Z",
+  "rls_matrix_status": "NAO_EXECUTADO_VIA_MCP — BEGIN/SET LOCAL/ROLLBACK nao suportado; roteiro em testes/rls_matrix_roteiro.md",
   "secoes": {
     "1_inventario": "concluido",
     "2_drift": "concluido",
