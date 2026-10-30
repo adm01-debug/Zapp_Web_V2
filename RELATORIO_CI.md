@@ -189,3 +189,36 @@ Nenhum teste foi pulado, afrouxado ou removido. Nenhum `continue-on-error` intro
 ---
 
 *Gerado em 2026-10-30 pela sessão `claude/keen-galileo-dxai3p`. Atualizado em 2026-10-30T02:15 UTC.*
+
+---
+
+## Atualização — Sessão 2026-10-30T21 (`claude/focused-hopper-qhavw1`)
+
+### Novos workflows com falha encontrados
+
+Após o push do SHA `c4c7139e` na main, novas falhas surgiram:
+
+| Workflow | Run ID | Conclusão | Causa raiz |
+|---|---|---|---|
+| `CI/CD Pipeline` | `41131284869` (branch) | ❌ failure (Deno) | Hash `tslib@2.8.1` desatualizado no `scripts/ci/deno.lock`: esm.sh mudou o conteúdo sem mudar a versão |
+| `auto-update-pr-branch` | — | ❌ falha transitória | `gh pr list --json` retornou JSON vazio → `execFileSync` sem try/catch derrubava o workflow |
+| `e2e-logado` | — | ❌ cancelled | Cascata: edge functions sem deploy (Deno falhou no deploy-functions) → `auth-login` → 504 |
+| `db-live-guard` | — | ❌ failure | Drift transitório no banco após janela sem deploy de edge functions |
+| `Copilot Code Review` | — | ❌ failure | Falha interna do GitHub Copilot (serviço externo) |
+
+### Ação tomada
+
+PR [#2394](https://github.com/adm01-debug/Zapp_Web_V2/pull/2394) (sessão anterior `claude/hopeful-knuth-4brqti`) contém:
+1. `scripts/ci/deno.lock`: hash `tslib@2.8.1` revertido ao `c38da5d…` (esm.sh reverteu de volta)
+2. `scripts/ci/fila-merge.mjs`: `execFileSync` do `gh pr list` envolto em try/catch com `maxBuffer: 10MB`
+
+Branch atualizado com main (`update_pr_branch`) em 2026-10-30T21:33 UTC.
+CI rodando no SHA `6e30a4deb8e38331f205dd58ba300ab6e21e36e6`.
+
+### Pendências desta sessão
+
+- DB Live Guard e Copilot Code Review registrados em `PENDENCIAS.md §6` e `§7`
+- E2E logado deve se resolver automaticamente após merge do PR #2394 (edge functions voltam)
+- DB Live Guard deve se resolver no próximo run agendado após merge
+
+*Atualizado em 2026-10-30T21 UTC pela sessão `claude/focused-hopper-qhavw1`.*

@@ -58,3 +58,27 @@
 
 PR [#2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) contém o fix do ECR (item 1 acima).
 Está em draft. Joaquim deve revisar, aprovar e mergear.
+
+---
+
+## 6. `db-live-guard` — drift no banco de produção (transitória ou real)
+
+| Campo | Valor |
+|---|---|
+| Workflow | `.github/workflows/db-live-guard.yml` |
+| Erro observado | Todos os 7 passos falharam no run pós-merge de 2026-10-30 |
+| Causa provável | Deriva transitória de `types.ts`/catálogo/manifesto causada por edge functions sem deploy durante a janela em que o Deno lock estava desatualizado |
+| Por que está bloqueado | Não é fixável via código de repositório — exige confirmação manual ao vivo |
+| Ação necessária | Após o merge do PR #2394 (fix Deno), aguardar o próximo run agendado do `db-live-guard` (diário às 06:13 UTC). Se ainda falhar: Joaquim executar `workflow_dispatch` e examinar o Job Summary para identificar qual passo específico acusa drift real |
+
+---
+
+## 7. `Copilot Code Review` — falha interna do serviço (externo)
+
+| Campo | Valor |
+|---|---|
+| Workflow | Dynamic workflow `copilot-pull-request-reviewer` |
+| Erro observado | Job "Processing Request (Linux)" falha com `conclusion: failure` |
+| Causa | Falha interna do GitHub Copilot SWE agent — firewall bloqueando URLs externas ou instabilidade do serviço |
+| Por que está bloqueado | Serviço externo do GitHub; não há código do repositório para corrigir |
+| Ação necessária | Nenhuma imediata — é um reviewer adicional, não é required check. Se persistir por >7 dias, Joaquim pode verificar nas configurações de Copilot do repositório (Settings → Copilot) se há alguma configuração de rede bloqueando |
