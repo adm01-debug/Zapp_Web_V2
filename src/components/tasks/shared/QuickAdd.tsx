@@ -9,6 +9,8 @@ import type { WorkItemInput } from '@/hooks/tasks/useMyWorkItems';
 import type { Priority, WorkItemStatus } from '@/hooks/tasks/workItem.types';
 import { PRIORITY_LABELS } from '@/hooks/tasks/workItemLabels';
 import { ContactCombobox } from './ContactCombobox';
+import { useTasksUiOptional } from './tasksUi';
+import { guardarRascunhoDaCaptura } from './new-task/rascunhoDaCaptura';
 import { comporLocal, diaLocal, horaLocal } from './localDateTime';
 
 interface Props {
@@ -55,6 +57,16 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
 
   // O contato do chat é fixo; fora do chat, o chip @ escolhe o contato.
   const contactId = defaultContactId ?? escolhido;
+
+  // Etapa 171 — "Mais opções…" leva a captura para o modal "Nova tarefa". Fora do
+  // módulo (sem o contexto) o ⋯ segue abrindo os chips no popover.
+  const ui = useTasksUiOptional();
+  const abrirMaisOpcoes = () => {
+    if (!ui) return false;
+    guardarRascunhoDaCaptura({ title, priority, dueDate, remindAt, contactId });
+    ui.openModal();
+    return true;
+  };
 
   // Fase F2 (auditoria): trocar de dia na Agenda reaplica o prazo SEM remontar o
   // campo — o rascunho digitado sobrevive à troca (antes o `key` do pai descartava
@@ -356,7 +368,17 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
         {compact ? (
           <Popover open={abertoMais} onOpenChange={setAbertoMais}>
             <PopoverTrigger asChild>
-              <button type="button" data-testid="quick-add-more" aria-label="Mais opções" className="chip-btn shrink-0 self-start md:self-auto">
+              <button
+                type="button"
+                data-testid="quick-add-more"
+                aria-label="Mais opções"
+                className="chip-btn shrink-0 self-start md:self-auto"
+                onClick={(e) => {
+                  // Com o contexto do módulo o ⋯ vai para o modal (e não abre o
+                  // popover); sem ele, o Radix segue abrindo os chips.
+                  if (abrirMaisOpcoes()) e.preventDefault();
+                }}
+              >
                 <MoreHorizontal className="h-4 w-4" />
               </button>
             </PopoverTrigger>

@@ -40,6 +40,16 @@ import {
   type ResolvedBlock,
 } from "../_shared/multiplix-content.ts";
 
+function timingSafeStringEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const ab = enc.encode(a);
+  const bb = enc.encode(b);
+  if (ab.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+  return diff === 0;
+}
+
 // F37/F43: as duplicatas locais (`getGreeting`, `personalizeMultiplix`,
 // `randomBetween`, `sleep`, `prepareMedia`, `send`) foram removidas — todas vêm do
 // kernel compartilhado em ../_shared/messaging. O dialeto do Multiplix
@@ -50,15 +60,6 @@ import {
 // importadores deste módulo (index.test.ts importa daqui).
 export { personalize };
 
-function timingSafeStringEqual(a: string, b: string): boolean {
-  const enc = new TextEncoder();
-  const ab = enc.encode(a);
-  const bb = enc.encode(b);
-  if (ab.length !== bb.length) return false;
-  let diff = 0;
-  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
-  return diff === 0;
-}
 
 /** F56: mapeia o tipo REAL detectado pelo prepareMedia para o kind do adaptador. */
 function kindForMedia(kind: MediaKind): MessageKind {
