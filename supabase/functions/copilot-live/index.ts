@@ -60,24 +60,8 @@ serve(async (req) => {
       });
     }
 
-    // Guard: verifica ownership de sessão existente antes do upsert.
-    // Sem isso, qualquer autenticado pode sobrescrever profile_id de outro vendedor
-    // passando o conversation_id da vítima (o conflict target é só conversation_id).
-    const { data: existingSession } = await supabase
-      .from('copilot_sessions')
-      .select('profile_id')
-      .eq('conversation_id', payload.conversation_id)
-      .maybeSingle();
-
-    if (existingSession && existingSession.profile_id !== user.id) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
-        status: 403,
-        headers: { ...CORS, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Resolve o contact_id real a partir da conversa; fallback para user.id se a
-    // conversa não existir ou não tiver contact_id (não deve ocorrer em produção).
+    // Resolve o contact_id real a partir da conversa antes do INSERT;
+    // contact_id é NOT NULL na tabela e precisa do valor correto na criação.
     const { data: conversation } = await supabase
       .from('conversations')
       .select('contact_id')
@@ -85,25 +69,53 @@ serve(async (req) => {
       .maybeSingle();
     const contactId = conversation?.contact_id ?? user.id;
 
-    // Upsert copilot session
-    const { data: session, error: sessionError } = await supabase
+    // INSERT atômico: seta profile_id na primeira chamada e não pode ser
+    // sobrescrito. Em conflito (23505, unique conversation_id), cai em UPDATE
+    // condicional guardado por .eq('profile_id', user.id) — 0 rows = 403.
+    // Elimina a janela de corrida do padrão SELECT+upsert anterior.
+    const { data: insertedSession, error: insertError } = await supabase
       .from('copilot_sessions')
-      .upsert(
-        {
-          conversation_id: payload.conversation_id,
-          profile_id: user.id,
-          contact_id: contactId,
-          ...(payload.sale_stage && { sale_stage: payload.sale_stage }),
-          ...(payload.brinde_meter != null && { brinde_meter: payload.brinde_meter }),
-          last_tick_at: new Date().toISOString(),
-        },
-        { onConflict: 'conversation_id', ignoreDuplicates: false }
-      )
+      .insert({
+        conversation_id: payload.conversation_id,
+        profile_id: user.id,
+        contact_id: contactId,
+        ...(payload.sale_stage && { sale_stage: payload.sale_stage }),
+        ...(payload.brinde_meter != null && { brinde_meter: payload.brinde_meter }),
+        last_tick_at: new Date().toISOString(),
+      })
       .select('id')
       .single();
 
-    if (sessionError) {
-      console.error('session upsert error', sessionError);
+    let session: { id: string } | null = insertedSession;
+
+    if (insertError) {
+      if (insertError.code !== '23505') {
+        console.error('session insert error', insertError);
+      } else {
+        // Conflito: atualiza apenas campos não-proprietários, ownership guardado
+        // por profile_id — 0 rows significa que outro usuário é o dono.
+        const updateData: Record<string, unknown> = {
+          last_tick_at: new Date().toISOString(),
+        };
+        if (payload.sale_stage) updateData.sale_stage = payload.sale_stage;
+        if (payload.brinde_meter != null) updateData.brinde_meter = payload.brinde_meter;
+
+        const { data: updatedSession, error: updateError } = await supabase
+          .from('copilot_sessions')
+          .update(updateData)
+          .eq('conversation_id', payload.conversation_id)
+          .eq('profile_id', user.id)
+          .select('id')
+          .single();
+
+        if (updateError || !updatedSession) {
+          return new Response(JSON.stringify({ error: 'Forbidden' }), {
+            status: 403,
+            headers: { ...CORS, 'Content-Type': 'application/json' },
+          });
+        }
+        session = updatedSession;
+      }
     }
 
     // Stub insight — real LLM call replaced in next iteration
