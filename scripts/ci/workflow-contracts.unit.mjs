@@ -603,3 +603,24 @@ test('W99: todo upload-artifact declara retention-days', async () => {
   }
   assert.deepEqual(infratores, [], `upload-artifact sem retention-days:\n${infratores.join('\n')}`);
 });
+
+test('GA99: notifica monitora apenas workflows que existem', () => {
+  // Se um workflow monitorado for renomeado ou removido sem atualizar esta
+  // lista, a falha deixa de abrir uma issue operacional na main.
+  const texto = wf['notifica-falha-main.yml'];
+  assert.ok(texto, 'notifica-falha-main.yml sumiu');
+  const bloco = /^(\s+)workflows:\s*\n((?:\1\s+-\s+.*\n?)+)/m.exec(texto);
+  assert.ok(bloco, 'bloco workflows: sumiu do notifica-falha-main.yml');
+
+  const monitorados = [...bloco[2].matchAll(/-\s*(.+?)\s*$/gm)].map((m) => m[1]);
+  assert.ok(monitorados.length > 0, 'notifica-falha-main não monitora workflows');
+  const declarados = new Set(
+    nomes.map((nome) => /^name:\s*(.+?)\s*$/m.exec(wf[nome])?.[1]).filter(Boolean),
+  );
+  const inexistentes = monitorados.filter((nome) => !declarados.has(nome));
+  assert.deepEqual(
+    inexistentes,
+    [],
+    `notifica monitora workflow inexistente: ${inexistentes.join(', ')}`,
+  );
+});
