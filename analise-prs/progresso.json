@@ -66,7 +66,7 @@
   ],
   "nova_required_check_descoberta": "✅ CI Gate (required check) — check consolidador que não estava na análise anterior; substitui os 6 checks individuais como gate final",
   "limitacao_github_token": "Quando auto-update-pr-branch.yml ou github_update_pr_branch usa GITHUB_TOKEN para criar merge commit na feature branch, ci.yml NÃO dispara automaticamente. Workaround: github_dispatch_workflow em ci.yml no branch da PR.",
-  "bug_ci_gate_timing": "CI Gate roda em ~4s enquanto E2E leva ~20min. CI Gate vê E2E in_progress e marca failure. Workaround: re-executar CI Gate depois que todos os checks terminarem (github_rerun_workflow no run_id do CI Gate)."
+  "bug_ci_gate_timing": "CI Gate roda em ~4s enquanto E2E leva ~20min. CI Gate vê E2E in_progress e marca failure. Workaround: re-executar CI Gate depois que todos os checks terminarem (github_rerun_workflow no run_id do CI Gate).",
   "dossies_completos": 174,
   "dossies_nao_draft": 130,
   "dossies_draft_skip": 37,
