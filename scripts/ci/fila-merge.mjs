@@ -123,10 +123,15 @@ export async function resolverDesconhecidos(prs, behindBy) {
 }
 
 async function decisaoAtual(repo) {
-  const json = execFileSync(resolverExecutavel('gh'), [
-    'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
-    '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
-  ], { encoding: 'utf8' });
+  let json;
+  try {
+    json = execFileSync(resolverExecutavel('gh'), [
+      'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
+      '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
+    ], { encoding: 'utf8' });
+  } catch {
+    return decidir([], checksObrigatorios());
+  }
   const behindBy = async (head) => Number(execFileSync(resolverExecutavel('gh'), [
     'api', `repos/${repo}/compare/main...${head}`, '--jq', '.behind_by',
   ], { encoding: 'utf8' }).trim());
