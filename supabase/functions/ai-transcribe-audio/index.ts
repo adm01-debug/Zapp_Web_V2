@@ -1,8 +1,10 @@
 import { requireAiIdentityOrService, type AiIdentity } from "../_shared/ai-auth.ts";
 import {
+  assertDictationObjectOwnership,
   assertMessageVisibleToCaller,
   resolveAuthorizedAudioUrl,
   type AudioObjectAuthzResult,
+  type DictationObjectAuthzResult,
 } from "../_shared/ai-audio-authz.ts";
 import {
   checkRateLimit,
@@ -418,6 +420,11 @@ export interface TranscribeAudioDeps {
     req: Request,
     messageId?: string | null,
   ) => Promise<AudioObjectAuthzResult>;
+  /** CV-070 — Checagem de ownership do arquivo de ditado (default: `assertDictationObjectOwnership`). */
+  assertDictationOwnership?: (
+    req: Request,
+    audioUrl: string,
+  ) => Promise<DictationObjectAuthzResult>;
   /** Leitura do estado da transcrição (default: service-role em `messages`). */
   loadTranscription?: (
     messageId: string,
@@ -495,26 +502,42 @@ export async function handleTranscribeAudio(
     // IA-014: antes de baixar com service_role, provar com o JWT do chamador que
     // a mensagem é visível para ele. No caminho de serviço (worker de entrada) a
     // autorização do objeto pertence ao pipeline que já validou a origem.
+    // CV-070: quando `messageId` está ausente no caminho de usuário, é ditado do
+    // próprio vendedor — a autorização verifica que o primeiro segmento do path
+    // no bucket é o userId do JWT.
     let audioUrl = requestedAudioUrl;
     if (identity.kind === "user") {
-      // `deps` só é usado pelo teste offline (SL-195a). Sem injeção — o caminho de
-      // PRODUÇÃO — a chamada real fica literal no código, porque o contrato de
-      // ordem do repositório (tests/contracts/ai-endpoints-auth.contract.test.ts)
-      // lê o FONTE: exige a checagem de visibilidade ANTES do download do objeto.
-      const objectAuthz = deps.assertMessageVisible
-        ? await deps.assertMessageVisible(req, messageId)
-        : await assertMessageVisibleToCaller(req, messageId);
-      if (!objectAuthz.ok) {
-        return errorResponse(objectAuthz.error, objectAuthz.status, req);
+      if (messageId) {
+        // Caminho convencional: transcrição de mensagem recebida.
+        // `deps` só é usado pelo teste offline (SL-195a). Sem injeção — o caminho de
+        // PRODUÇÃO — a chamada real fica literal no código, porque o contrato de
+        // ordem do repositório (tests/contracts/ai-endpoints-auth.contract.test.ts)
+        // lê o FONTE: exige a checagem de visibilidade ANTES do download do objeto.
+        const objectAuthz = deps.assertMessageVisible
+          ? await deps.assertMessageVisible(req, messageId)
+          : await assertMessageVisibleToCaller(req, messageId);
+        if (!objectAuthz.ok) {
+          return errorResponse(objectAuthz.error, objectAuthz.status, req);
+        }
+        // R2-API-027: a `media_url` do registro é a ÚNICA fonte autorizada do objeto
+        // no caminho de usuário. Mensagem visível sem mídia não tem objeto para
+        // transcrever: recusar em vez de baixar a URL escolhida pelo cliente.
+        const authorized = resolveAuthorizedAudioUrl(objectAuthz.mediaUrl);
+        if (!authorized.ok) {
+          return errorResponse(authorized.error, authorized.status, req);
+        }
+        audioUrl = authorized.url;
+      } else {
+        // CV-070 — Ditado por voz: sem messageId, verifica que o arquivo pertence
+        // ao próprio chamador (primeiro segmento do path = userId do JWT).
+        const dictAuthz = deps.assertDictationOwnership
+          ? await deps.assertDictationOwnership(req, requestedAudioUrl)
+          : await assertDictationObjectOwnership(req, requestedAudioUrl);
+        if (!dictAuthz.ok) {
+          return errorResponse(dictAuthz.error, dictAuthz.status, req);
+        }
+        // audioUrl permanece como requestedAudioUrl — ownership confirmado acima
       }
-      // R2-API-027: a `media_url` do registro é a ÚNICA fonte autorizada do objeto
-      // no caminho de usuário. Mensagem visível sem mídia não tem objeto para
-      // transcrever: recusar em vez de baixar a URL escolhida pelo cliente.
-      const authorized = resolveAuthorizedAudioUrl(objectAuthz.mediaUrl);
-      if (!authorized.ok) {
-        return errorResponse(authorized.error, authorized.status, req);
-      }
-      audioUrl = authorized.url;
     }
 
     const saveState = deps.saveTranscription ?? saveTranscriptionState;

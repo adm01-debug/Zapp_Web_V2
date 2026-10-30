@@ -51,6 +51,7 @@ Deno.test("R2-API-001: webhook-diagnostic exige admin/supervisor (403, sem ler c
       body: JSON.stringify({ action: "full-diagnostic" }),
     }),
     {
+      requireAuthFn: async () => ({ userId: 'agent-1' }),
       callerClient: makeCallerClient(false),
       supabase: makeServiceClient(() => { connectionsRead += 1; }),
     },
@@ -68,7 +69,7 @@ Deno.test("R2-API-001: admin passa o gate do diagnóstico", async () => {
       headers: { "Content-Type": "application/json", "Authorization": "Bearer admin-jwt" },
       body: JSON.stringify({ action: "full-diagnostic" }),
     }),
-    { callerClient: makeCallerClient(true), supabase: makeServiceClient(() => {}) },
+    { requireAuthFn: async () => ({ userId: 'admin-1' }), callerClient: makeCallerClient(true), supabase: makeServiceClient(() => {}) },
   );
   assertEquals(res.status, 200, "admin deve passar o gate");
 });
@@ -88,8 +89,10 @@ Deno.test("R2-INF-016: falha inesperada vira 500 sanitizado (o detalhe interno n
     const res = await handleWebhookDiagnostic(
       req,
       {
+        requireAuthFn: async () => ({ userId: 'agent-1' }),
         callerClient: {
           auth: { getUser: () => { throw new Error(SEGREDO); } },
+          rpc: () => { throw new Error(SEGREDO); },
         } as any,
         supabase: makeServiceClient(() => {}),
       },

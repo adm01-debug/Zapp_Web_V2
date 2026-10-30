@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
-import { handleCors, errorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
+import { handleCors, errorResponse, internalErrorResponse, jsonResponse, requireEnv, Logger } from "../_shared/validation.ts";
 import { ExternalDbBridgeSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 // ─── Allowlist of tables and operations ───────────────────────────────────
@@ -27,7 +27,7 @@ function isOperationAllowed(action: string, table?: string | null, rpc?: string 
   return (ops as ReadonlyArray<string>).includes(action);
 }
 
-// ─── Telemetry helper ─────────────────────────────────────────
+// ─── Telemetry helper ──────────────────────────────────
 interface TelemetryPayload {
   operation: string;
   table_name?: string | null;
@@ -156,8 +156,14 @@ export async function handleExternalDbBridge(
 
     try {
       if (action === "select" && table) {
+        // Z018: rejeitar `select` com `(` previne injeção de função PostgREST.
+        const selectParam = params?.select as string | undefined;
+        if (selectParam && selectParam.includes('(')) {
+          return errorResponse("Invalid select parameter", 400, req);
+        }
         // deno-lint-ignore no-explicit-any
-        let query: any = supabaseAdmin.from(table).select(params?.select as string || "*", {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let query: any = supabaseAdmin.from(table).select(selectParam || "*", {
           count: (countMode as "exact" | "planned" | "estimated") || undefined,
         });
         if (params?.filters) {
@@ -181,35 +187,6 @@ export async function handleExternalDbBridge(
         if (error) throw error;
         result = data;
         recordCount = Array.isArray(data) ? data.length : 1;
-      } else if (action === "insert" && table) {
-        const { data, error } = await supabaseAdmin.from(table).insert(params?.rows || params).select();
-        if (error) throw error;
-        result = data;
-        recordCount = Array.isArray(data) ? data.length : 1;
-      } else if (action === "update" && table) {
-        // deno-lint-ignore no-explicit-any
-        let query: any = supabaseAdmin.from(table).update(params?.values || {});
-        if (params?.match) {
-          for (const [k, v] of Object.entries(params.match)) {
-            query = query.eq(k, v as string);
-          }
-        }
-        const { data, error } = await query.select();
-        if (error) throw error;
-        result = data;
-        recordCount = Array.isArray(data) ? data.length : 0;
-      } else if (action === "delete" && table) {
-        // deno-lint-ignore no-explicit-any
-        let query: any = supabaseAdmin.from(table).delete();
-        if (params?.match) {
-          for (const [k, v] of Object.entries(params.match)) {
-            query = query.eq(k, v as string);
-          }
-        }
-        const { data, error } = await query.select();
-        if (error) throw error;
-        result = data;
-        recordCount = Array.isArray(data) ? data.length : 0;
       } else {
         return errorResponse("Invalid action or missing table/rpc", 400, req);
       }
@@ -238,11 +215,10 @@ export async function handleExternalDbBridge(
 
     if (queryError) {
       log.done(500, { severity, durationMs: Math.round(durationMs) });
-      // errorResponse (nao jsonResponse) para status 500: sanitiza a mensagem
-      // antes de expor ao cliente externo, que poderia revelar nome de
-      // tabela/coluna/SQL interno via queryError (js/stack-trace-exposure).
-      // queryError ja vai completo para a telemetria (error_message acima).
-      return errorResponse(queryError, 500, req);
+      // Z015: internalErrorResponse envia "Internal server error" ao cliente —
+      // o erro bruto do banco (nome de tabela/coluna/SQL interno) fica só na
+      // telemetria (error_message acima) e no log server-side.
+      return internalErrorResponse(new Error(queryError), req);
     }
 
     log.done(200, { severity, durationMs: Math.round(durationMs) });

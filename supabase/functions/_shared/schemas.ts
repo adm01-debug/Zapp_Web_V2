@@ -417,7 +417,8 @@ export const WebAuthnActionSchema = z.object({
 
 // ─── External DB Bridge ─────────────────────────────────────
 export const ExternalDbBridgeSchema = z.object({
-  action: z.enum(['select', 'rpc', 'insert', 'update', 'delete']),
+  // Z019: insert/update/delete removidos — allowlist só permite select/rpc.
+  action: z.enum(['select', 'rpc']),
   table: z.string().max(100).optional(),
   rpc: z.string().max(100).optional(),
   params: z.record(z.unknown()).optional(),

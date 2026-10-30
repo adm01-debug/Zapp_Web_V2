@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SidebarNavItem, type NavItemConfig } from './SidebarNavItem';
 
@@ -39,15 +38,10 @@ function writeStoredGroupState(label: string, isOpen: boolean) {
 
 export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, onViewChange, defaultOpen = false, collapsed = true, onToggleFavorite, isFavorite }: SidebarNavGroupProps) {
   const hasActiveItem = items.some(item => item.id === currentView);
-  // Derived: always show group open when it contains the active item
-  // isOpen tracks user's explicit toggle; hasActiveItem is auto-override
   const [isOpen, setIsOpen] = useState(() => {
     const stored = readStoredGroupsState()[label];
     return stored !== undefined ? stored : (defaultOpen || hasActiveItem);
   });
-
-
-
 
   const effectiveOpen = isOpen || hasActiveItem;
   const handleToggle = () => {
@@ -101,37 +95,40 @@ export function SidebarNavGroup({ label, icon: GroupIcon, items, currentView, on
         triggerButton
       )}
 
-      <AnimatePresence initial={false}>
-        {effectiveOpen && (
-          <motion.nav
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-            className={cn('flex flex-col w-full overflow-hidden', collapsed && 'items-center')}
-            aria-label={label}
-          >
-            <ul role="list" className={cn(
-              'flex flex-col gap-0.5 w-full list-none p-0 m-0 pt-0.5',
-              collapsed && 'items-center',
-              !collapsed && 'pl-1'
-            )}>
-              {items.map((item) => (
-                <li key={item.id}>
-                  <SidebarNavItem
-                    item={item}
-                    currentView={currentView}
-                    onViewChange={onViewChange}
-                    collapsed={collapsed}
-                    onToggleFavorite={onToggleFavorite}
-                    isFavorite={isFavorite?.(item.id)}
-                  />
-                </li>
-              ))}
-            </ul>
-          </motion.nav>
-        )}
-      </AnimatePresence>
+      {/* Acordeão via CSS grid: height 0fr↔1fr sem JavaScript de animação.
+          `inert` (React 19) impede foco/leitura em itens ocultos. */}
+      <nav
+        className={cn('flex flex-col w-full overflow-hidden', collapsed && 'items-center')}
+        aria-label={label}
+        inert={effectiveOpen ? undefined : true}
+        style={{
+          display: 'grid',
+          gridTemplateRows: effectiveOpen ? '1fr' : '0fr',
+          opacity: effectiveOpen ? 1 : 0,
+          transition: 'grid-template-rows 0.2s cubic-bezier(0.4,0,0.2,1), opacity 0.15s',
+        }}
+      >
+        <div className="overflow-hidden">
+          <ul role="list" className={cn(
+            'flex flex-col gap-0.5 w-full list-none p-0 m-0 pt-0.5',
+            collapsed && 'items-center',
+            !collapsed && 'pl-1'
+          )}>
+            {items.map((item) => (
+              <li key={item.id}>
+                <SidebarNavItem
+                  item={item}
+                  currentView={currentView}
+                  onViewChange={onViewChange}
+                  collapsed={collapsed}
+                  onToggleFavorite={onToggleFavorite}
+                  isFavorite={isFavorite?.(item.id)}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </nav>
     </div>
   );
 }

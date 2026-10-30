@@ -33,7 +33,9 @@ vi.mock('@/integrations/supabase/client', () => {
     },
   };
 });
-vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
+vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),}));
 
 import { SentimentAlertsDashboard } from '../SentimentAlertsDashboard';
 
@@ -95,5 +97,13 @@ describe('SentimentAlertsDashboard — acessibilidade', () => {
     expect(alerta).toHaveAttribute('role', 'alert');
     expect(alerta).toHaveTextContent('Não foi possível carregar os dados de sentimento');
     expect(screen.getByRole('button', { name: /tentar de novo/i })).toBeInTheDocument();
+  });
+
+  it('falha só na leitura de agentes avisa que os dados estão incompletos', async () => {
+    h.profiles.mockResolvedValue({ data: null, error: { message: 'perfis indisponíveis' } });
+    render(<SentimentAlertsDashboard />);
+
+    expect(await screen.findByTestId('sentiment-incomplete')).toHaveTextContent('não foi completa');
+    expect(screen.queryByTestId('sentiment-error')).toBeNull();
   });
 });
