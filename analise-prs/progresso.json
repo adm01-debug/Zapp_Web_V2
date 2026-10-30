@@ -31,7 +31,7 @@
   "nota_pr_2230": "COMPLETAR — deleta src/hooks/integrations/useTalkXSuppression.ts sem atualizar TalkXSuppression.tsx:32 que importa 8 simbolos do modulo; PR #2248 ja inclui esta correcao",
   "nota_pr_2238": "DECISAO_HUMANA — feat(message-delivery) com possivel DDL ou mudanca de behavior",
   "nota_pr_2248": "DECISAO_HUMANA — DESBLOQUEADOR: reduz 136 para 1 arquivo vermelho no CI; requer aprovacao das 2 migrations via producao-ddl",
-  "status": "CI_RODANDO_PR_2141",
+  "status": "CI_RODANDO_PR_2141_SHA_3bb1ce09",
   "merges_realizados": 3,
   "merges_log": [
     {"pr": 2149, "sha_pr": "3c1915e7649206cf75c8cdc55ecc65b4ec1e5daf", "sha_merge": "c4c7139e75aa326cc21823e816d1e7f526b67412", "timestamp": "2026-10-30T21:18Z", "titulo": "docs(reconciliation): P053 registra regressão do cabeçalho"},
@@ -44,10 +44,10 @@
     {
       "numero": 2141,
       "titulo": "feat(E83): entrar por codigo - aceite desacoplado (somente arquivos novos)",
-      "sha": "d8c36f6458cb1ffd905a467acaa1c18e1ad96543",
+      "sha": "3bb1ce09f43581476696cb82891cea5244760fed",
       "auto_merge": null,
-      "status_ci": "ci.yml dispatched às 23:36Z para d8c36f64 (merge com main 3f18bbe7); TypeCheck+Security+NodeCI+Replay success; Unit Tests+E2E+ContratoDB in_progress; main avançou para 21e828e4 (PR #2357 merged) → branch ficou behind novamente",
-      "acao_pendente": "Aguardar CI Gate. Quando Gate passar: update_pr_branch (para 21e828e4) + dispatch ci.yml + aguardar Gate de novo + merge squash manual."
+      "status_ci": "update_pr_branch OK (23:57Z); conflito docs/DB-INVENTORY.md resolvido (36b2c1cd); novo sha 3bb1ce09; ci.yml dispatched 23:57Z; base=e4e8c265 (main=21e828e4); aguardando CI Gate",
+      "acao_pendente": "Aguardar CI Gate para 3bb1ce09. Se Gate pass: merge squash. Se Gate fail por timing: rerun Gate. Se behind de novo: update_pr_branch + dispatch ci.yml novamente."
     }
   ],
   "nova_required_check_descoberta": "✅ CI Gate (required check) — check consolidador que não estava na análise anterior; substitui os 6 checks individuais como gate final",
