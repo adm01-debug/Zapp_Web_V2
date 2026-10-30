@@ -71,7 +71,8 @@ serve(async (req) => {
 
     // INSERT atômico: seta profile_id na primeira chamada e não pode ser
     // sobrescrito. Em conflito (23505, unique conversation_id), cai em UPDATE
-    // condicional guardado por .eq('profile_id', user.id) — 0 rows = 403.
+    // condicional guardado por .eq('profile_id', user.id) — 0 rows = ou dono
+    // diferente, ou conversa foi transferida para este usuário.
     // Elimina a janela de corrida do padrão SELECT+upsert anterior.
     const { data: insertedSession, error: insertError } = await supabase
       .from('copilot_sessions')
@@ -93,7 +94,8 @@ serve(async (req) => {
         console.error('session insert error', insertError);
       } else {
         // Conflito: atualiza apenas campos não-proprietários, ownership guardado
-        // por profile_id — 0 rows significa que outro usuário é o dono.
+        // por profile_id — 0 rows significa que outro usuário é o dono,
+        // ou a conversa foi transferida para este usuário (ver abaixo).
         const updateData: Record<string, unknown> = {
           last_tick_at: new Date().toISOString(),
         };
@@ -109,12 +111,41 @@ serve(async (req) => {
           .single();
 
         if (updateError || !updatedSession) {
-          return new Response(JSON.stringify({ error: 'Forbidden' }), {
-            status: 403,
-            headers: { ...CORS, 'Content-Type': 'application/json' },
-          });
+          // Zero rows: ou o dono da sessão é outro usuário, ou a conversa foi
+          // transferida para este usuário via transfer_conversation (que atualiza
+          // contacts.assigned_to mas não copilot_sessions.profile_id).
+          // Verificamos se o chamador é agora o responsável pelo contato.
+          const { data: contact } = await supabase
+            .from('contacts')
+            .select('assigned_to')
+            .eq('id', contactId)
+            .maybeSingle();
+
+          if (!contact || contact.assigned_to !== user.id) {
+            return new Response(JSON.stringify({ error: 'Forbidden' }), {
+              status: 403,
+              headers: { ...CORS, 'Content-Type': 'application/json' },
+            });
+          }
+
+          // Conversa foi transferida: transfere ownership da sessão para o novo dono.
+          const { data: transferredSession, error: transferError } = await supabase
+            .from('copilot_sessions')
+            .update({ ...updateData, profile_id: user.id })
+            .eq('conversation_id', payload.conversation_id)
+            .select('id')
+            .single();
+
+          if (transferError || !transferredSession) {
+            return new Response(JSON.stringify({ error: 'Forbidden' }), {
+              status: 403,
+              headers: { ...CORS, 'Content-Type': 'application/json' },
+            });
+          }
+          session = transferredSession;
+        } else {
+          session = updatedSession;
         }
-        session = updatedSession;
       }
     }
 
