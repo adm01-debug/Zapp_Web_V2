@@ -131,6 +131,23 @@ serve(async (req) => {
 
         if (updateError || !updatedSession) {
           // Zero rows: ou o dono é outro usuário, ou a conversa foi transferida.
+
+          // Antes de verificar contacts, confirmar que contactId do payload
+          // bate com o que está gravado na sessão — evita session takeover
+          // via contactId fabricado pelo chamador.
+          const { data: existingSession } = await supabase
+            .from('copilot_sessions')
+            .select('contact_id')
+            .eq('conversation_id', payload.conversation_id)
+            .maybeSingle();
+
+          if (!existingSession || existingSession.contact_id !== contactId) {
+            return new Response(JSON.stringify({ error: 'Forbidden' }), {
+              status: 403,
+              headers: { ...CORS, 'Content-Type': 'application/json' },
+            });
+          }
+
           // Verificar se o chamador é agora o responsável pelo contato.
           // contacts.assigned_to armazena profiles.id — comparar com profileId.
           const { data: contact } = await supabase
