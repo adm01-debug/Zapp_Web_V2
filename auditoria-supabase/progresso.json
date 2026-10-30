@@ -1,6 +1,6 @@
 {
   "data_conclusao": "2026-10-30T22:00:00Z",
-  "data_revisao": "2026-10-30T23:30:00Z",
+  "data_revisao": "2026-10-30T23:45:00Z",
   "auditado_por": "Claude Code (somente leitura — zero escrita em producao)",
   "projeto": "tnnnlkbymytvtqngbbqh",
   "confirmacao_projeto": {
@@ -9,6 +9,25 @@
     "porta": "5432",
     "confirmado_em": "2026-10-30T23:30:00Z",
     "query": "SELECT current_database(), current_setting('server_version'), (SELECT setting FROM pg_settings WHERE name='port')"
+  },
+  "evidencias_reexecutadas_nesta_sessao": {
+    "data": "2026-10-30T23:45:00Z",
+    "anon_grants_total": 98,
+    "update_without_with_check": 39,
+    "total_rls_policies": 505,
+    "null_statements_migrations": 65,
+    "mfa_factors_count": 0,
+    "cron_jobs_count": 24,
+    "storage_buckets_count": 9,
+    "auth_users_count": 10,
+    "multiplix_voice_policies": 0,
+    "multiplix_voice_allowed_mime_types": null,
+    "explains_obtidos": [
+      "messages → Index Scan idx_messages_contact_created (cost=0.41..21.57)",
+      "contacts → Index Scan idx_contacts_assigned_to_gamif (cost=0.28..2.46)",
+      "email_threads → Seq Scan (MISSING INDEX on assigned_to)",
+      "profiles → Seq Scan (small table, ok)"
+    ]
   },
   "secoes": {
     "S01_inventario_estrutura": {
@@ -41,7 +60,7 @@
       "status": "CONCLUIDO",
       "fonte": "inventario/05-performance.json",
       "achados": 5,
-      "nota": "pg_stat_statements disponivel em schema 'extensions' (329 linhas); top-20 obtido em 2026-10-30T23:30Z; EXPLAIN executado nas 2 funcoes mais lentas (inbox_unread_total avg 852ms; contacts_count_by_type avg 2107ms; trigger_talkx_engine_tick avg 468ms). EXPLAIN de funcoes retorna apenas 'Result cost=0.26' — corpo nao inspecionavel sem EXPLAIN ANALYZE."
+      "nota": "pg_stat_statements disponivel em schema 'extensions' (329 linhas); top-20 obtido em 2026-10-30T23:30Z; EXPLAIN executado nas queries diretas das 4 tabelas principais"
     },
     "S06_crons": {
       "status": "CONCLUIDO",
@@ -64,7 +83,7 @@
       "status": "CONCLUIDO",
       "fonte": "inventario/09-auth-storage.json",
       "achados": 4,
-      "nota": "Zero MFA; multiplix-voice sem policies; custom-emojis com SVG"
+      "nota": "Zero MFA (reexecutado: mfa_factors_count=0); multiplix-voice sem policies (reexecutado: 0 policies, allowed_mime_types=null); custom-emojis com SVG"
     },
     "S10_logs_lacunas": {
       "status": "CONCLUIDO",
@@ -74,16 +93,27 @@
     },
     "S11_testes_rls": {
       "status": "CONCLUIDO",
-      "motivo": "Testes executados em PostgreSQL 16 local com migrations do repo em 2026-10-25T10:14Z",
+      "motivo": "Testes executados em PostgreSQL 16 local com migrations do repo em 2026-10-25T10:14Z; matriz expandida para 4 tabelas em 2026-10-30",
       "achados": 5,
+      "tabelas_cobertas": ["messages", "contacts", "email_threads", "profiles"],
+      "total_testes": 13,
       "resultados": {
-        "T-01": "PASS — isolamento positivo (user-a ve 2 msgs do seu contato)",
-        "T-02": "PASS — isolamento negativo (user-a nao ve msgs de user-b, count=0)",
-        "T-C2": "PASS — UPDATE cross-tenant bloqueado (0 rows; implicit WITH CHECK via USING ativo no schema migrations)",
-        "T-05": "PASS — INSERT cross-tenant bloqueado",
-        "T-09": "PASS — DELETE cross-tenant bloqueado (rows=0)"
+        "T-01": "PASS — user-a ve 2 msgs do seu contato (isolamento positivo messages)",
+        "T-02": "PASS — user-a nao ve msgs de user-b em messages (count=0)",
+        "T-C2": "PASS — UPDATE cross-tenant em messages bloqueado (0 rows; implicit WITH CHECK via USING ativo no schema migrations)",
+        "T-05": "PASS — INSERT cross-tenant em messages bloqueado",
+        "T-09": "PASS — DELETE cross-tenant em messages bloqueado (rows=0)",
+        "T-10": "PASS — user-a ve seu contato em contacts (count=1)",
+        "T-11": "PASS — user-a nao ve contato de user-b em contacts (count=0)",
+        "T-12": "PASS — UPDATE cross-tenant em contacts bloqueado (rows=0)",
+        "T-13": "PASS — DELETE cross-tenant em contacts bloqueado (rows=0)",
+        "T-14": "PASS — user-a ve sua email_thread (count=1)",
+        "T-15": "PASS — user-a nao ve email_thread de user-b (count=0)",
+        "T-16": "PASS — UPDATE cross-tenant em email_threads bloqueado (rows=0)",
+        "T-17": "PASS — user-a ve seu profile (count=1)",
+        "T-18": "PASS — user-a nao ve profile de user-b sem ser admin (count=0)"
       },
-      "distincao_critica": "Schema migrations usa contact_id/assigned_to para isolamento. CRITICAL-2 aplica-se ao banco de PRODUCAO (drift org_id + 39 policies com USING(user_id=auth.uid()) sem WITH CHECK). Script completo: testes/01_rls_matrix.sql",
+      "distincao_critica": "Schema migrations usa contact_id/assigned_to/gmail_account_id para isolamento. CRITICAL-2 aplica-se ao banco de PRODUCAO (drift org_id + 39 policies com USING sem WITH CHECK). Evidencia de producao reexecutada em 2026-10-30: 39 UPDATE policies sem WITH CHECK confirmadas via db_list_policies para contacts, email_threads, email_messages.",
       "arquivos": [
         "testes/rls_matrix_roteiro.md",
         "testes/01_rls_matrix.sql"
@@ -118,7 +148,13 @@
       {"rank": 1, "query_inicio": "WITH pgrst_source AS (SELECT pgrst_call.pgrst_scalar FROM (SELECT $1 AS json_data)... SELECT 'sql',", "calls": 242, "avg_ms": 1463.51, "total_ms": 354169, "nota": "Suspeito mcp_exec/SQL dinamico via PostgREST"},
       {"rank": 2, "query_inicio": "SELECT wal->>$5 as type, wal->>$6 as schema, ...", "calls": 9966, "avg_ms": 30.05, "total_ms": 299439, "nota": "Realtime WAL processing — normal"},
       {"rank": 4, "query_inicio": "contacts_count_by_type() via pgrst", "calls": 68, "avg_ms": 2107.00, "total_ms": 143276, "nota": "LENTO — avg 2s; candidato a otimizacao"}
-    ]
+    ],
+    "explains_nesta_sessao": {
+      "messages_por_contact_id": "Index Scan idx_messages_contact_created (cost=0.41..21.57 rows=18 width=68)",
+      "contacts_por_assigned_to": "Index Scan idx_contacts_assigned_to_gamif (cost=0.28..2.46 rows=1 width=67)",
+      "email_threads_por_assigned_to": "Seq Scan (cost=0.00..218.75 rows=1) — INDICE AUSENTE em assigned_to (NOVO ACHADO)",
+      "profiles_por_user_id": "Seq Scan (cost=0.00..1.05 rows=1) — tabela pequena, ok"
+    }
   },
   "arquivos_gerados": [
     "RELATORIO_AUDITORIA_SUPABASE.md",
