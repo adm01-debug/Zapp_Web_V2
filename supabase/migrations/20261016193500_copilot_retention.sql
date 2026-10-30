@@ -71,5 +71,9 @@ BEGIN
      AND retained_at IS NULL;
 END; $$;
 
+-- Impede chamadas diretas de clientes autenticados via PostgREST.
+-- pg_cron roda como postgres (superuser) e não é afetado pelo REVOKE.
+REVOKE EXECUTE ON FUNCTION public.run_copilot_retention() FROM PUBLIC, authenticated;
+
 -- Agendamento diário às 03:00 UTC via pg_cron
 SELECT cron.schedule('copilot-retention-daily', '0 3 * * *', $$SELECT public.run_copilot_retention()$$);
