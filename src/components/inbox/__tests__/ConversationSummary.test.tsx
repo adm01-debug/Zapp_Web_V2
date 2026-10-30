@@ -15,6 +15,7 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
   getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 vi.mock('@/hooks/useSummaryTts', () => ({
@@ -29,10 +30,15 @@ vi.mock('@/hooks/useSummaryTts', () => ({
   }),
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: { div: ({ children, ...props }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div> },
-  AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => children,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    motion: { div: ({ children, ...props }: { children?: import("react").ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div> },
+      AnimatePresence: ({ children }: { children?: import("react").ReactNode }) => children,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 const makeMessages = (count: number) =>
   Array.from({ length: count }, (_, i) => ({

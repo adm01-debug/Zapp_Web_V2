@@ -666,6 +666,7 @@ test('aceita pinned-replay somente quando todas as dimensoes estao fixadas', () 
   assert.match(result.stdout, /1 conteudo\(s\)\/hash\(es\) historico\(s\) verificado\(s\)/);
 });
 
+
 test('pinned-replay falha para adulteracao independente de arquivo e SQL local', () => {
   const statements = [OTHER_SQL.trim()];
   const changedBytes = runGuard({

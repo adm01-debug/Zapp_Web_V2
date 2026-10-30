@@ -22,6 +22,13 @@ vi.mock('@/hooks/crm/useContactCustomFields', () => ({ useContactCustomFields: (
 vi.mock('@/hooks/integrations/useTalkXInsights', () => ({
   useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),
 }));
+// X131 — o rail do wizard lê o resumo pelo servidor (react-query); este teste prova a volta à
+// revisão, não o resumo, então a consulta fica dublada (mesmo dublê do teste de layout).
+vi.mock('@/hooks/integrations/useTalkXCampaignSummary', () => ({
+  useTalkXCampaignSummary: () => ({
+    total: 0, eligible: 0, suppressed: 0, isLoading: false, isError: false, error: null, refetch: vi.fn(),
+  }),
+}));
 vi.mock('@/components/talkx/TalkXOverview', () => ({ TalkXOverview: () => <div /> }));
 vi.mock('@/components/talkx/TalkXLiveMonitor', () => ({ TalkXLiveMonitor: () => <div /> }));
 vi.mock('@/components/talkx/TalkXSegments', () => ({ TalkXSegments: () => <div /> }));

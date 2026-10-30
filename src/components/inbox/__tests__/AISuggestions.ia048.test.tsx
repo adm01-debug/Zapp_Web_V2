@@ -15,18 +15,22 @@ vi.mock('@/hooks/ui/use-toast', () => ({ useToast: () => ({ toast: toastFn }) })
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
   getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 type AnyProps = Record<string, unknown> & { children?: ReactNode };
 
-vi.mock('framer-motion', () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
   const passthrough = (tag: 'div' | 'button') =>
-    ({ children, ...props }: AnyProps) => {
-      const Tag = tag;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return <Tag {...(props as any)}>{children}</Tag>;
-    };
+      ({ children, ...props }: AnyProps) => {
+        const Tag = tag;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return <Tag {...(props as any)}>{children}</Tag>;
+      };
   return {
+    ...actual,
+
     motion: { div: passthrough('div'), button: passthrough('button') },
     AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
   };

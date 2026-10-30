@@ -34,7 +34,7 @@ export async function handleConnectionUpdate(supabase: EvolutionDbClient, instan
     rawState === 'connecting' ? 'connecting' : 'qr_pending';
 
   const { data: prevConn } = await supabase.from('whatsapp_connections')
-    .select('status, phone_number').eq('instance_id', instance).single();
+    .select('id, status, phone_number').eq('instance_id', instance).single();
 
   // 'connecting' transitório: não sobrescrever 'connected' (próximo 'close' perderia alerta).
   // 'disconnected' durante QR ativo: GO emite close por soluço de rede; QR ainda é válido.
@@ -82,30 +82,50 @@ export async function handleConnectionUpdate(supabase: EvolutionDbClient, instan
 
   console.log(`Connection ${instance} status: ${status}`);
 
+  // Feche a chave única da queda ao iniciar um novo ciclo saudável. Isso torna
+  // o dedupe por episódio (e não por toda a vida da conexão), permitindo alertar
+  // novamente se houver outra queda após a reconexão, sem apagar o histórico.
+  if (status === 'connected' && prevConn?.status !== 'connected' && typeof prevConn?.id === 'string') {
+    const connectionId = prevConn.id;
+    const { error } = await supabase.from('warroom_alerts').update({ dedupe_key: null })
+      .in('dedupe_key', [`conn-down:v1:${connectionId}`, `conn-degraded:v1:${connectionId}`]);
+    if (error) console.warn(`Falha ao encerrar alertas do ciclo da conexão ${instance}: ${error.message}`);
+  }
+
   if (status === 'disconnected' && prevConn?.status === 'connected') {
     // E26 (dedup): a GO entrega o evento de queda em dobro e o retry do webhook reenvia o
     // POST, entao o MESMO alerta saia 2x no War Room. O guard de transicao acima nao segura
     // a corrida em que as duas entregas leem o status ANTES de qualquer uma gravar.
-    // Antes de inserir, olha se ja existe alerta identico (mesmo source+title) na janela
-    // curta — sem DDL, a consulta resolve.
     const title = `🔴 Conexão ${instance} desconectou`;
-    const since = new Date(Date.now() - ALERT_DEDUP_WINDOW_MS).toISOString();
-    const { data: recentAlert } = await supabase.from('warroom_alerts')
-      .select('id')
-      .eq('source', 'evolution-webhook')
-      .eq('title', title)
-      .gte('created_at', since)
-      .limit(1);
+    // Com id estável, o índice único parcial é o árbitro atômico. Não consultar
+    // alertas recentes nesse caso: um incidente encerrado preserva a linha, então
+    // seu dedupe_key NULL não pode impedir um novo ciclo iniciado logo em seguida.
+    // Sem id (legado), mantém-se a deduplicação temporal sem chave.
+    let recentAlert: unknown[] | null = null;
+    if (typeof prevConn.id !== 'string') {
+      const since = new Date(Date.now() - ALERT_DEDUP_WINDOW_MS).toISOString();
+      const { data } = await supabase.from('warroom_alerts')
+        .select('id')
+        .eq('source', 'evolution-webhook')
+        .eq('title', title)
+        .gte('created_at', since)
+        .limit(1);
+      recentAlert = data;
+    }
     if (recentAlert?.length) {
       console.log(`Alerta de queda de ${instance} deduplicado (E26)`);
     } else {
       const phone = prevConn.phone_number ? ` (${prevConn.phone_number})` : '';
-      await supabase.from('warroom_alerts').insert({
+      const { error } = await supabase.from('warroom_alerts').insert({
         alert_type: 'critical',
         title,
         message: `A instância ${instance}${phone} perdeu conexão com o WhatsApp. Reconecte imediatamente para evitar perda de mensagens.`,
         source: 'evolution-webhook',
+        ...(typeof prevConn.id === 'string' ? { dedupe_key: `conn-down:v1:${prevConn.id}` } : {}),
       });
+      // A unique partial index on warroom_alerts.dedupe_key arbitrates the
+      // select-then-insert race; 23505 means another delivery won this incident.
+      if (error && error.code !== '23505') console.error(`Falha ao gravar alerta de queda ${instance}: ${error.message}`);
     }
   }
 
@@ -213,68 +233,50 @@ export async function handleContactsUpsert(supabase: EvolutionDbClient, instance
 export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance: string, data: unknown) {
   const presenceData = isRecord(data) ? data : {};
   const jid = ((presenceData.id as string) || (presenceData.remoteJid as string) || '').trim();
+  // Grupos e JIDs de difusão não representam um contato individual; em especial
+  // `status@broadcast` não pode abrir um canal Realtime nem tocar em contacts.
+  if (!jid || jid.endsWith('@broadcast')) return;
 
-  if (jid && !jid.endsWith('@g.us')) {
-    // O GO entrega dois envelopes aqui: ChatPresence {presences:{jid:{lastKnownPresence}}}
-    // com composing/paused, e Presence {status} com online/offline (às vezes
-    // available/unavailable). Antes só 'composing' era aproveitado. Colhemos
-    // TODOS os estados do evento e derivamos digitando e presença real.
-    const estados: string[] = [];
-    if (presences) {
-      for (const [, pState] of Object.entries(presences)) {
-        const valor = pState?.lastKnownPresence ?? pState?.status;
-        if (typeof valor === 'string') estados.push(valor.toLowerCase());
-      }
-    } else {
-      const direto = presenceData.status ?? presenceData.lastKnownPresence;
-      if (typeof direto === 'string') estados.push(direto.toLowerCase());
+  // O GO envia ChatPresence { presences: { jid: { lastKnownPresence } } } e
+  // Presence { status }. Trate a estrutura externa como dado não confiável.
+  const estados: string[] = [];
+  const presences = isRecord(presenceData.presences) ? presenceData.presences : null;
+  const isGroup = jid.endsWith('@g.us');
+  let participant: string | null = null;
+  if (presences) {
+    if (isGroup) {
+      const actor = typeof presenceData.participant === 'string'
+        ? presenceData.participant
+        : typeof presenceData.participantJid === 'string'
+          ? presenceData.participantJid
+          : Object.keys(presences).find((key) => /@(?:s\.whatsapp\.net|lid)$/i.test(key)) ?? '';
+      if (!/@(?:s\.whatsapp\.net|lid)$/i.test(actor)) return;
+      participant = actor;
     }
 
-    const isComposing = estados.includes('composing');
-    const online = estados.some((e) => e === 'online' || e === 'available');
-    const offline = estados.some((e) => e === 'offline' || e === 'unavailable');
-
-    const phone = normalizePhone(jid);
-    if (phone) {
-      const connection = await getConnectionByInstance(supabase, instance);
-      if (connection) {
-        const contact = await getContactByPhone(supabase, phone, connection.id);
-        if (contact) {
-          // 'digitando' inalterado: todo evento de presença ainda avisa o front.
-          const channel = supabase.channel(`typing:${contact.id}`);
-          await channel.send({ type: 'broadcast', event: 'contact_typing', payload: { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() } });
-          supabase.removeChannel(channel);
-
-          // Presença ONLINE/OFFLINE real do contato (R2-INB-030 removia o que era
-          // falso; o real vindo do WhatsApp é permitido). Grava só o estado e os
-          // horários — nada além disso.
-          if (online || offline) {
-            const agora = new Date().toISOString();
-            const updateData: Record<string, unknown> = {
-              presence_status: online ? 'online' : 'offline',
-              presence_updated_at: agora,
-            };
-            if (offline) {
-              // "Visto por último" só avança na TRANSIÇÃO online -> offline:
-              // um contato que o WhatsApp já mandava como offline não reescreve
-              // (nem inventa) esse horário.
-              const { data: atual } = await supabase
-                .from('contacts')
-                .select('presence_status')
-                .eq('id', contact.id)
-                .maybeSingle();
-              if (atual?.presence_status === 'online') updateData.last_seen_at = agora;
-            }
-            await supabase.from('contacts').update(updateData).eq('id', contact.id);
-          }
-        }
-      }
+    const entries = Object.entries(presences).filter(([presenceJid]) => !isGroup || presenceJid === participant);
+    if (isGroup && entries.length === 0 && presenceData.participant) {
+      const direct = presenceData.status ?? presenceData.lastKnownPresence;
+      if (typeof direct === 'string') estados.push(direct.toLowerCase());
     }
-  } else {
-    const directStatus = presenceData.status as string || presenceData.lastKnownPresence as string;
-    isComposing = directStatus === 'composing';
+    for (const [, state] of entries) {
+      if (!isRecord(state)) continue;
+      const value = state.lastKnownPresence ?? state.status;
+      if (typeof value === 'string') estados.push(value.toLowerCase());
+    }
+  } else if (isGroup) {
+    const actor = typeof presenceData.participant === 'string'
+      ? presenceData.participant
+      : typeof presenceData.participantJid === 'string' ? presenceData.participantJid : '';
+    if (!/@(?:s\.whatsapp\.net|lid)$/i.test(actor)) return;
+    participant = actor;
   }
+  const directStatus = presenceData.status ?? presenceData.lastKnownPresence;
+  if (typeof directStatus === 'string' && (!isGroup || estados.length === 0)) estados.push(directStatus.toLowerCase());
 
+  const isComposing = estados.includes('composing');
+  const online = estados.some((state) => state === 'online' || state === 'available');
+  const offline = estados.some((state) => state === 'offline' || state === 'unavailable');
   const phone = normalizePhone(jid);
   if (!phone) return;
 
@@ -285,8 +287,33 @@ export async function handlePresenceUpdate(supabase: EvolutionDbClient, instance
   if (!contact) return;
 
   const channel = supabase.channel(`typing:${contact.id}`, { config: { private: true } });
-  await channel.send({ type: 'broadcast', event: 'contact_typing', payload: { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() } });
-  supabase.removeChannel(channel);
+  try {
+    const payload = isGroup
+      ? { isTyping: isComposing, typing: isComposing, participant, contactId: contact.id, timestamp: new Date().toISOString() }
+      : { isTyping: isComposing, contactId: contact.id, timestamp: new Date().toISOString() };
+    await channel.send({ type: 'broadcast', event: 'contact_typing', payload });
+  } finally {
+    supabase.removeChannel(channel);
+  }
+
+  // Presença real do contato; "visto por último" só avança na transição
+  // online -> offline e nunca é inventado por um evento offline repetido.
+  if (!isGroup && (online || offline)) {
+    const now = new Date().toISOString();
+    const updateData: Record<string, unknown> = {
+      presence_status: online ? 'online' : 'offline',
+      presence_updated_at: now,
+    };
+    if (offline) {
+      const { data: current } = await supabase
+        .from('contacts')
+        .select('presence_status')
+        .eq('id', contact.id)
+        .maybeSingle();
+      if (current?.presence_status === 'online') updateData.last_seen_at = now;
+    }
+    await supabase.from('contacts').update(updateData).eq('id', contact.id);
+  }
 }
 
 // deno-lint-ignore no-explicit-any
