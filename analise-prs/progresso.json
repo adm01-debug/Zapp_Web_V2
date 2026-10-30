@@ -32,7 +32,10 @@
   "nota_pr_2238": "DECISAO_HUMANA — feat(message-delivery) com possivel DDL ou mudanca de behavior",
   "nota_pr_2248": "DECISAO_HUMANA — DESBLOQUEADOR: reduz 136 para 1 arquivo vermelho no CI; requer aprovacao das 2 migrations via producao-ddl",
   "status": "CI_AGUARDANDO_MERGE_PENDENTE",
-  "merges_realizados": 0,
+  "merges_realizados": 1,
+  "merges_log": [
+    {"pr": 2149, "sha_pr": "3c1915e7649206cf75c8cdc55ecc65b4ec1e5daf", "sha_merge": "c4c7139e75aa326cc21823e816d1e7f526b67412", "timestamp": "2026-10-30T21:18Z", "titulo": "docs(reconciliation): P053 registra regressão do cabeçalho"}
+  ],
   "outras_escritas_github": "nenhuma (apenas leituras via github_get_pr_diff, github_get_pull_request, github_list_check_runs, github_list_pull_requests)",
   "main_sha_atual": "931e97908e9397e4bd46754213cb6319b2cc46d8",
   "prs_candidatas_merge": [
