@@ -9,10 +9,14 @@
  * (`duePresetISO` / `comporLocal`), então o teste confere o comportamento e não
  * uma cópia da conta. Relógio fixo (`now`) para o resultado ser determinístico.
  */
+import { resetSupabaseMock } from '@/test/mocks/tarefas';
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import { TasksUiProvider } from '@/components/tasks/shared/TasksUiContext';
 import { NewTaskDialog } from '@/components/tasks/shared/NewTaskDialog';
 import { duePresetISO } from '@/hooks/tasks/workItemPresets';
 import { comporLocal, diaLocal, horaLocal } from '@/components/tasks/shared/localDateTime';
@@ -21,6 +25,7 @@ import { comporLocal, diaLocal, horaLocal } from '@/components/tasks/shared/loca
 const NOW = new Date(2026, 9, 13, 12, 0, 0, 0);
 
 beforeEach(() => {
+  resetSupabaseMock();
   if (!Element.prototype.hasPointerCapture) {
     Element.prototype.hasPointerCapture = () => false;
     Element.prototype.setPointerCapture = () => {};
@@ -34,8 +39,15 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 function renderDialog() {
+  // [refazer 1] o modal cresceu (criação via hook + combobox com query): os
+  // testes 159/160/163 passam a montar com os mesmos providers dos demais.
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   return render(
-    <NewTaskDialog open onOpenChange={vi.fn()} now={NOW} />,
+    <QueryClientProvider client={qc}>
+      <TasksUiProvider>
+        <NewTaskDialog open onOpenChange={vi.fn()} now={NOW} />
+      </TasksUiProvider>
+    </QueryClientProvider>,
   );
 }
 

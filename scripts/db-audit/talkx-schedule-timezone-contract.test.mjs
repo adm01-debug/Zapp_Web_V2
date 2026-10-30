@@ -86,7 +86,7 @@ test('Talk X scheduler resume reuses deliveryWindowStatus (fails closed, respect
   assert.doesNotMatch(scheduler, /connectionStatusById\.get\(/);
   assert.match(resumePolicy, /export function connectionStatusResolver\(/);
   assert.match(resumePolicy, /if \(typeof connectionId !== "string"\) return null;/);
-  assert.match(resumePolicy, /import \{ deliveryWindowStatus, type ScheduleGuardCampaign \} from "\.\.\/talkx-window\.ts"/);
+  assert.match(resumePolicy, /import \{ deliveryWindowStatus, type ScheduleGuardCampaign \} from "\.\/talkx-window\.ts"/);
   assert.match(resumePolicy, /deliveryWindowStatus\(campaign, now\)\.allowed/);
   assert.doesNotMatch(resumePolicy, /nowBR|hmBR|isWithinSendWindow|Intl\.DateTimeFormat/);
 });

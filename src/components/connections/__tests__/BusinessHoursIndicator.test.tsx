@@ -20,20 +20,27 @@ const h = vi.hoisted(() => ({
   filters: [] as unknown[][],
 }));
 
-vi.mock('@/lib/logger', () => ({ log: { error: h.logError } }));
+vi.mock('@/lib/logger', () => ({ log: { error: h.logError },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),}));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({
-      children,
-      initial: _initial,
-      animate: _animate,
-      ...rest
-    }: { children?: React.ReactNode; initial?: unknown; animate?: unknown }) => (
-      <div {...rest}>{children}</div>
-    ),
-  },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    motion: {
+        div: ({
+          children,
+          initial: _initial,
+          animate: _animate,
+          ...rest
+        }: { children?: React.ReactNode; initial?: unknown; animate?: unknown }) => (
+          <div {...rest}>{children}</div>
+        ),
+      },
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {

@@ -116,6 +116,8 @@ export function useScreenProtection() {
       if (overlay) return;
       overlay = document.createElement('div');
       overlay.id = 'screen-protection-overlay';
+      overlay.setAttribute('role', 'alert');
+      overlay.setAttribute('aria-live', 'assertive');
       overlay.style.cssText = `
         position: fixed; inset: 0; z-index: 99999;
         background: hsl(var(--background));

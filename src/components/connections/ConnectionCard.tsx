@@ -38,7 +38,7 @@ interface ConnectionCardProps {
   disconnecting?: boolean;
   onShowQrCode: (c: WhatsAppConnection) => void;
   onCopyId: (id: string) => void;
-  onDisconnect: (c: WhatsAppConnection) => void | Promise<void>;
+  onDisconnect: (c: WhatsAppConnection) => void | boolean | Promise<void | boolean>;
   onSetDefault: (id: string) => void;
   onDelete: (c: WhatsAppConnection) => void;
   onBusinessHours: (id: string, name: string) => void;
@@ -74,9 +74,32 @@ export function ConnectionCard({
 
   // Enquanto o desconectar está em voo (estado `disconnecting` vindo da view),
   // o diálogo fica aberto com o spinner; só fecha quando onDisconnect resolve.
+  const handleDisconnectDialogOpenChange = (open: boolean) => {
+    if (disconnecting || disconnectPending) return;
+    setConfirmDisconnect(open);
+    if (!open) setDisconnectError(null);
+  };
+
   const handleConfirmDisconnect = async () => {
-    await onDisconnect(connection);
-    setConfirmDisconnect(false);
+    if (disconnecting || disconnectPending) return;
+    setDisconnectPending(true);
+    setDisconnectError(null);
+    try {
+      const disconnected = await onDisconnect(connection);
+      if (disconnected === false) {
+        setDisconnectError('Não foi possível desconectar esta conexão. Verifique o estado e tente novamente.');
+        return;
+      }
+      setConfirmDisconnect(false);
+    } catch (error) {
+      setDisconnectError(
+        error instanceof Error && error.message
+          ? error.message
+          : 'Não foi possível desconectar esta conexão. Tente novamente.',
+      );
+    } finally {
+      setDisconnectPending(false);
+    }
   };
 
   return (
@@ -221,7 +244,8 @@ export function ConnectionCard({
         onOpenChange={handleDisconnectDialogOpenChange}
         connectionName={connection.name}
         phoneNumber={connection.phone_number}
-        pending={disconnecting}
+        pending={disconnecting || disconnectPending}
+        errorMessage={disconnectError ?? undefined}
         onConfirm={handleConfirmDisconnect}
       />
       {isAdmin && (

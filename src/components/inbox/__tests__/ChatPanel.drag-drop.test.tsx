@@ -30,6 +30,8 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 vi.mock('@/hooks/chat/useTypingPresence', () => ({
@@ -61,6 +63,7 @@ vi.mock('@/hooks/communication/useTextToSpeech', () => ({
     speed: 1,
     setSpeed: vi.fn(),
   }),
+  LOCAL_VOICE_ID: 'local',
 }));
 
 vi.mock('@/hooks/system/useUserSettings', () => ({

@@ -113,6 +113,13 @@ const ROTA_NETPOLICY = {
   match: "/rest/v1/rpc/resolve_network_policy",
   body: [{ allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 }],
 };
+// R2-AUTH-004: requireAuth também exige um perfil ativo antes de chegar ao
+// handler. O fixture precisa representar essa consulta, além do JWT e da
+// política de rede; sem ele, a resposta correta é 503 fail-closed.
+const ROTA_PROFILE = {
+  match: "/rest/v1/profiles",
+  body: { is_active: true },
+};
 const ROTA_RATE_LIMIT = {
   match: "/rest/v1/rpc/consume_rate_limit",
   body: [{ allowed: true, remaining: 9 }],
@@ -120,7 +127,7 @@ const ROTA_RATE_LIMIT = {
 const ROTA_AUDIO_OK = { match: PROVIDER, body: oggBytes(128) };
 const ROTA_LEDGER = { match: "/rest/v1/ai_usage_logs", status: 201, body: {} };
 const ROTA_FLAG_ON = { match: "/rest/v1/feature_flags", body: { enabled: true } };
-const ROTAS_OK = [ROTA_AUTH, ROTA_NETPOLICY, ROTA_RATE_LIMIT, ROTA_AUDIO_OK, ROTA_LEDGER, ROTA_FLAG_ON];
+const ROTAS_OK = [ROTA_AUTH, ROTA_NETPOLICY, ROTA_PROFILE, ROTA_RATE_LIMIT, ROTA_AUDIO_OK, ROTA_LEDGER, ROTA_FLAG_ON];
 
 function makeRequest(
   form: FormData,
@@ -305,6 +312,7 @@ Deno.test("G3: timeout do provedor -> 504 com mensagem em pt-BR", async () => {
     const rotas = [
       ROTA_AUTH,
       ROTA_NETPOLICY,
+      ROTA_PROFILE,
       ROTA_RATE_LIMIT,
       ROTA_LEDGER,
       ROTA_FLAG_ON,
@@ -346,7 +354,7 @@ Deno.test("G3: áudio lento que estoura os 60 s no meio do download -> 504", asy
   await withEnv(ENV_OK, async () => {
     // O relógio do `AbortSignal.timeout` cobre a resposta TODA: mesmo com 200 já
     // recebido, se o corpo travar no meio, o estouro continua sendo timeout.
-    const stub = withFetch([ROTA_AUTH, ROTA_NETPOLICY, ROTA_RATE_LIMIT, ROTA_LEDGER, ROTA_FLAG_ON]);
+    const stub = withFetch([ROTA_AUTH, ROTA_NETPOLICY, ROTA_PROFILE, ROTA_RATE_LIMIT, ROTA_LEDGER, ROTA_FLAG_ON]);
     const original = globalThis.fetch;
     globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
       const url = typeof input === "string"
@@ -411,6 +419,7 @@ Deno.test("R1 ponto 1: 200 com corpo que quebra no meio do download -> 500 (nunc
     const rotas: Route[] = [
       ROTA_AUTH,
       ROTA_NETPOLICY,
+      ROTA_PROFILE,
       ROTA_RATE_LIMIT,
       ROTA_LEDGER,
       ROTA_FLAG_ON,
@@ -446,6 +455,7 @@ Deno.test("R1 ponto 1 (variante): 200 com corpo VAZIO -> 500 (nunca 200 vazio) +
     const rotas: Route[] = [
       ROTA_AUTH,
       ROTA_NETPOLICY,
+      ROTA_PROFILE,
       ROTA_RATE_LIMIT,
       ROTA_LEDGER,
       ROTA_FLAG_ON,
@@ -521,6 +531,7 @@ Deno.test("kill switch: capacidade de voz DESLIGADA -> 503 sem tocar o provedor"
     const rotas: Route[] = [
       ROTA_AUTH,
       ROTA_NETPOLICY,
+      ROTA_PROFILE,
       ROTA_RATE_LIMIT,
       ROTA_AUDIO_OK,
       ROTA_LEDGER,
@@ -554,6 +565,7 @@ Deno.test("kill switch: leitura da flag FALHA -> 503 fail-closed sem tocar o pro
     const rotas: Route[] = [
       ROTA_AUTH,
       ROTA_NETPOLICY,
+      ROTA_PROFILE,
       ROTA_RATE_LIMIT,
       ROTA_AUDIO_OK,
       ROTA_LEDGER,
@@ -581,6 +593,7 @@ Deno.test("kill switch: capacidade LIGADA -> alcança o provedor e devolve 200",
     const rotas: Route[] = [
       ROTA_AUTH,
       ROTA_NETPOLICY,
+      ROTA_PROFILE,
       ROTA_RATE_LIMIT,
       ROTA_LEDGER,
       ROTA_FLAG_ON,

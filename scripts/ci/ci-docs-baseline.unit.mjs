@@ -27,8 +27,8 @@ const NAO_CONCLUIDOS = new Set(['AGUARDA RUNTIME', 'PARCIAL', 'PRECISA REVALIDA�
 const CONTAGEM_ANTIGA = [/dos\s+17\s+workflows/i, /17\s+no\s+total/i, /14\s+workflows/i, /14\s+arquivos/i];
 const TOCA_STRICT_FALSE = /strict[ ]*[:=][ ]*`?false|`strict`[^\n]{0,40}`false`/i;
 const ROTULO_HISTORICO = /revogad|REVOGAD|históric|HISTÓRIC|superad|SUPERAD|reconciliad|Reconcilia/;
-const RE_ITEM = /^\s*-\s*\[([ xX~!])\]\s*\*\*(E\d{1,3})\*\*/;
-const RE_RECON = /^\|\s*\*\*(E\d{1,3})\*\*[^|]*\|\s*`\[([ x~!])\]`\s*\*{0,2}([A-ZÇÃÉÍÓÚÊÔÂÀ\- ]+)/;
+const RE_ITEM = /^\s*-\s*\[([  xX~!])\]\s*\*\*(E\d{1,3})\*\*/;
+const RE_RECON = /^\|\s*\*\*(E\d{1,3})\*\*[^|]*\|\s*`[\[(]([ x~!])[\])]`\s*\*{0,2}([A-ZÇÃÉÍÓÚÊÔÂÀ\- ]+)/;
 
 const linhas = (t) => t.split('\n');
 const paragrafos = (t) => t.split(/\n[ \t]*\n/);
@@ -197,7 +197,7 @@ function evidenciasDaAbertura(tabela) {
 
 function violacoesTabelaAbertura(plano, esperadas = ABERTURA_ESPERADA) {
   const tabela = tabelaDeAbertura(plano);
-  if (tabela === null) return [`plano sem a secao "${SECAO_ABERTURA}"`];
+  if (tabela === null) return [`plano sem a secao "${SECAO_ABERTURA}"` ];
   const out = [];
   for (const [id, linha] of Object.entries(esperadas)) {
     const atual = tabela.find((l) => l.startsWith(`| **${id}**`));
@@ -219,7 +219,7 @@ const CLAUDE_ANTES = [
 ].join('\n\n');
 
 const CLAUDE_DEPOIS = [
-  '**Plano vigente:** auditoria exaustiva dos **16** arquivos em `.github/workflows/` (+3 dinâmicos).',
+  '**Plano vigente:** auditoria exaustiva dos **17** arquivos em `.github/workflows/` (+3 dinâmicos).',
   'A fonte canônica do inventário é o gerado `docs/ci/README.md`.',
   '**Correção de 2026-10-01 — HISTÓRICA, SUPERADA por E15(b):** repetir `strict: false` está REVOGADO.',
 ].join('\n\n');
@@ -265,7 +265,7 @@ test('fixture: CLAUDE.md com contagem antiga e strict=false solto e rejeitado', 
 });
 
 test('fixture: CLAUDE.md corrigido passa (16 arquivos, fonte gerada, strict=false rotulado)', () => {
-  assert.deepEqual(violacoesContagemClaude(CLAUDE_DEPOIS, 16), []);
+  assert.deepEqual(violacoesContagemClaude(CLAUDE_DEPOIS, 17), []);
   assert.deepEqual(violacoesStrictClaude(CLAUDE_DEPOIS), []);
 });
 
@@ -293,14 +293,14 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
 
 test('inventario: 16 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
-  assert.equal(arquivos.length, 16);
+  assert.equal(arquivos.length, 17);
   const readme = await readFile(README_CI, 'utf8');
-  assert.match(readme, /\*\*16 workflows\.\*\*/);
+  assert.match(readme, /\*\*17 workflows\.\*\*/);
   for (const f of arquivos) assert.ok(readme.includes(f));
 });
 
 test('CLAUDE.md: contagem atual e fonte canonica (sem 14/17)', async () => {
-  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 16), []);
+  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 17), []);
 });
 
 test('CLAUDE.md: politica unica de strict, coerente com o baseline', async () => {
@@ -335,7 +335,7 @@ test('plano: nenhuma etapa superada pede reexecucao', async () => {
 test('plano: inventario atual e 16 YAML com fonte gerada', async () => {
   const plano = await readFile(PLANO, 'utf8');
   const chato = achata(plano);
-  assert.match(chato, /\*\*16\*\* arquivos YAML em `\.github\/workflows\/`/);
+  assert.match(chato, /\*\*17\*\* arquivos YAML em `\.github\/workflows\/`/);
   assert.ok(plano.includes('docs/ci/README.md'));
   assert.ok(plano.includes('render-workflow-docs.mjs'));
   assert.match(chato, /403[^.]*limite de evidência/i);
@@ -354,19 +354,19 @@ test('E62/E76: os numeros citados conferem com o repositorio', async () => {
   assert.match(e62.linha, /guardas de DB|pós-apply/i);
 
   const lock = await readFile(BUN_LOCK, 'utf8');
-  assert.ok(/playwright@1\.63\.0/.test(lock));
-  assert.ok(/playwright-core@1\.63\.0/.test(lock));
-  assert.ok(/@playwright\/test@1\.63\.0/.test(lock));
+  assert.ok(/playwright@1\.64\.1/.test(lock));
+  assert.ok(/playwright-core@1\.64\.1/.test(lock));
+  assert.ok(/@playwright\/test@1\.64\.1/.test(lock));
 
   const tres = ['ci.yml', 'e2e-logado.yml', 'e2e-talkx.yml'];
   for (const f of tres) {
     const wf = await readFile(join(DIR_WF, f), 'utf8');
-    assert.ok(wf.includes('playwright@1.63.0'));
+    assert.ok(wf.includes('playwright@1.64.1'));
   }
   const e76 = rec.get('E76');
   assert.ok(e76);
   for (const f of tres) assert.ok(e76.linha.includes(f), `E76 deve citar ${f}`);
-  assert.match(e76.linha, /1\.63\.0/);
+  assert.match(e76.linha, /1\.64\.1/);
   assert.match(e76.linha, /não há mismatch/i);
 });
 
@@ -478,21 +478,21 @@ test('W95 CONTRIBUTING.md: nao referencia branch develop', async () => {
 const MIGRATIONS_DOC = join(RAIZ, 'docs/MIGRATIONS.md');
 const TERMOS_LOTE = ['apply_all_missing', 'PENDENTE DE APPLY', 'producao-ddl'];
 
+function termosLoteAusentes(conteudo) {
+  if (!/Fluxo diário \(lote\)/u.test(conteudo)) return ['secao "Fluxo diário (lote)"'];
+  return TERMOS_LOTE.filter((termo) => !conteudo.includes(termo));
+}
+
 test('W32: docs/MIGRATIONS.md tem secao "Fluxo diario (lote)" com todos os termos obrigatorios', async () => {
   const conteudo = await readFile(MIGRATIONS_DOC, 'utf8');
-  assert.match(conteudo, /Fluxo diário \(lote\)/u, 'secao "Fluxo diário (lote)" ausente');
-  for (const termo of TERMOS_LOTE) {
-    assert.ok(conteudo.includes(termo), `termo obrigatorio ausente: ${termo}`);
-  }
+  assert.deepEqual(termosLoteAusentes(conteudo), []);
 });
 
 test('W32: fixture — secao sem termo obrigatorio e rejeitada', () => {
-  const semTermo = 'Fluxo diário (lote)\nproducao-ddl\nPENDENTE DE APPLY';
+  const completa = ['Fluxo diário (lote)', ...TERMOS_LOTE].join('\n');
+  assert.deepEqual(termosLoteAusentes(completa), []);
   for (const termo of TERMOS_LOTE) {
-    const ok = TERMOS_LOTE.every((t) => semTermo.includes(t));
-    if (!semTermo.includes(termo)) assert.ok(!ok, `fixture sem "${termo}" deveria falhar`);
+    assert.deepEqual(termosLoteAusentes(completa.replace(termo, '')), [termo]);
   }
-  // fixture completa passa
-  const completa = TERMOS_LOTE.join('\n');
-  assert.ok(TERMOS_LOTE.every((t) => completa.includes(t)));
+  assert.deepEqual(termosLoteAusentes(TERMOS_LOTE.join('\n')), ['secao "Fluxo diário (lote)"']);
 });

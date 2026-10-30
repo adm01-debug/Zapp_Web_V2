@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import React from 'react';
 
 const f = vi.hoisted(() => ({
   campaigns: [] as Array<Record<string, unknown>>,
@@ -28,6 +29,35 @@ vi.mock('@/components/talkx/TalkXSettings', () => ({ TalkXSettings: () => <div /
 vi.mock('@/components/talkx/TalkXCampaignScheduled', () => ({ TalkXCampaignScheduled: () => <div /> }));
 vi.mock('@/components/talkx/TalkXCampaignRunning', () => ({ TalkXCampaignRunning: () => <div /> }));
 vi.mock('@/components/talkx/TalkXCampaignWizard', () => ({ TalkXCampaignWizard: () => <div data-testid="wizard" /> }));
+vi.mock('@/components/talkx/TalkXCampaignPaused', () => ({ TalkXCampaignPaused: () => <div /> }));
+vi.mock('@/hooks/integrations/useTalkXServiceStatus', () => ({ useTalkXServiceStatus: () => ({ whatsapp: { connected: true }, isLoading: false }) }));
+vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: vi.fn() }));
+vi.mock('@/components/talkx/help/TalkXHelpCenter', () => ({
+  TalkXHelpCenter: ({ onClose }: { route: unknown; onRouteChange: unknown; onClose: () => void }) => {
+    const [q, setQ] = React.useState('');
+    React.useEffect(() => {
+      const h = (e: KeyboardEvent) => {
+        if (e.key !== 'Escape') return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (q) { setQ(''); return; }
+        onClose();
+      };
+      window.addEventListener('keydown', h, true);
+      return () => window.removeEventListener('keydown', h, true);
+    }, [q, onClose]);
+    return (
+      <div>
+        <h1>Ajuda do Talk X</h1>
+        <input
+          placeholder="O que você precisa de ajuda hoje?"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </div>
+    );
+  },
+}));
 
 import TalkXView from '@/components/talkx/TalkXView';
 

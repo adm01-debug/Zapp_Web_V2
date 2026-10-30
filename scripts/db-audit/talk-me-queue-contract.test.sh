@@ -7,8 +7,9 @@ set -Eeuo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 migration="$repo_root/supabase/migrations/20260930290000_talk_me_queue_claim.sql"
 hardening_migration="$repo_root/supabase/migrations/20260930310000_harden_talk_me_authorization_and_groups.sql"
+search_hardening_migration="$repo_root/supabase/migrations/20261020190001_talk_me_search_hardening.sql"
 provenance_trigger_migration="$repo_root/supabase/migrations/20261006114108_r2_db_022_provenance_trigger.sql"
-pending_migration="$repo_root/supabase/migrations/20261011010000_talk_me_list_pending_messages.sql"
+pending_migration="$repo_root/supabase/migrations/20261011010003_talk_me_list_pending_messages.sql"
 pending_origins_migration="$repo_root/supabase/migrations/20261011010100_talk_me_pending_history_origins.sql"
 postgres_image="${TALK_ME_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="zapp-v2-talk-me-test-$$"
@@ -48,6 +49,7 @@ command -v docker >/dev/null 2>&1 || fail 'Docker nao esta instalado'
 docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 [[ -f "$migration" ]] || fail "migration nao encontrada: $migration"
 [[ -f "$hardening_migration" ]] || fail "migration nao encontrada: $hardening_migration"
+[[ -f "$search_hardening_migration" ]] || fail "migration nao encontrada: $search_hardening_migration"
 [[ -f "$provenance_trigger_migration" ]] || fail "migration nao encontrada: $provenance_trigger_migration"
 [[ -f "$pending_migration" ]] || fail "migration nao encontrada: $pending_migration"
 [[ -f "$pending_origins_migration" ]] || fail "migration nao encontrada: $pending_origins_migration"
@@ -55,8 +57,10 @@ docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 provenance_version="$(basename "$provenance_trigger_migration" | cut -d_ -f1)"
 pending_version="$(basename "$pending_migration" | cut -d_ -f1)"
 pending_origins_version="$(basename "$pending_origins_migration" | cut -d_ -f1)"
+search_hardening_version="$(basename "$search_hardening_migration" | cut -d_ -f1)"
 [[ "$pending_version" > "$provenance_version" ]] || fail "migration de historico pendente deve ser posterior ao trigger de proveniencia"
 [[ "$pending_origins_version" > "$provenance_version" ]] || fail "migration de origens do historico pendente deve ser posterior ao trigger de proveniencia"
+[[ "$search_hardening_version" > "$pending_origins_version" ]] || fail "migration de busca deve ser posterior ao historico pendente"
 printf '[PASS] A0 migrations do historico pendente ficam depois do trigger de proveniencia
 '
 
@@ -186,6 +190,7 @@ psql_file "$hardening_migration"
 psql_file "$provenance_trigger_migration"
 psql_file "$pending_migration"
 psql_file "$pending_origins_migration"
+psql_file "$search_hardening_migration"
 
 cat > "$tmp_dir/fixtures.sql" <<'SQL'
 INSERT INTO public.profiles(id,user_id) VALUES
@@ -298,6 +303,19 @@ expect_value 'A12 desempate por id inclui contato posterior no mesmo timestamp' 
   "SET app.user_id='$agent1'; SELECT pending_message_count||'|'||last_message_content FROM public.talk_me_list_waiting('$queue1','Mesmo Instante',50,NULL,NULL)"
 expect_value 'A13 grupos por tipo legado, categoria, telefone e registro relacional nao entram' '0' \
   "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_waiting('$queue1','Grupo',50,NULL,NULL)"
+
+psql_sql "INSERT INTO public.contacts(id,name,phone,queue_id,conversation_status,channel_type,contact_type,created_at) VALUES
+  ('c1000000-0000-0000-0000-000000000017','Literal_under_score','551100000017','$queue1','open','whatsapp','cliente','2026-09-01 08:00Z'),
+  ('c1000000-0000-0000-0000-000000000018',repeat('x',80),'551100000018','$queue1','open','whatsapp','cliente','2026-09-01 08:00Z');
+INSERT INTO public.messages(id,contact_id,sender,content,created_at) VALUES
+  ('d1000000-0000-0000-0000-000000000021','c1000000-0000-0000-0000-000000000017','contact','Busca literal','2026-09-01 11:15Z'),
+  ('d1000000-0000-0000-0000-000000000022','c1000000-0000-0000-0000-000000000018','contact','Termo limitado','2026-09-01 11:20Z');" >/dev/null
+expect_value 'A14 percentual e literal e nao devolve a fila inteira' '0' \
+  "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_waiting('$queue1','%',50,NULL,NULL)"
+expect_value 'A15 sublinhado e literal' 'Literal_under_score' \
+  "SET app.user_id='$agent1'; SELECT contact_name FROM public.talk_me_list_waiting('$queue1','_',50,NULL,NULL)"
+expect_value 'A16 termo com 200 caracteres e limitado sem erro' '1' \
+  "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_waiting('$queue1',repeat('x',200),50,NULL,NULL)"
 
 # Historico pendente antes do aceite (TM-01): a leitura e autorizada pelo mesmo
 # contrato da fila, inclui o contexto de saida e as notas internas sem ampliar o
@@ -437,5 +455,17 @@ expect_error 'E1 agente nao pode aceitar conversa de outra fila' 'talk_me_unavai
   "SET app.user_id='$agent1'; SELECT * FROM public.talk_me_claim('c1000000-0000-0000-0000-000000000007')"
 expect_value 'E2 contato fora do escopo permanece sem responsavel' '1' \
   "SELECT count(*) FROM public.contacts WHERE id='c1000000-0000-0000-0000-000000000007' AND assigned_to IS NULL"
+
+psql_sql "UPDATE public.contacts SET assigned_to=NULL, conversation_status='resolved' WHERE id='$contact1'" >/dev/null
+expect_value 'E3 contato resolvido permanece fora da fila' '0' \
+  "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_waiting('$queue1','Ana Antiga',50,NULL,NULL)"
+psql_sql "UPDATE public.contacts SET conversation_status='open' WHERE id='$contact1'" >/dev/null
+expect_value 'E4 contato reaberto e sem responsavel volta para a fila atual' '1' \
+  "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_waiting('$queue1','Ana Antiga',50,NULL,NULL)"
+psql_sql "UPDATE public.contacts SET queue_id='$queue2' WHERE id='$contact1'" >/dev/null
+expect_value 'E5 contato transferido sai da fila anterior' '0' \
+  "SET app.user_id='$agent1'; SELECT count(*) FROM public.talk_me_list_waiting('$queue1','Ana Antiga',50,NULL,NULL)"
+expect_value 'E6 contato transferido entra na nova fila autorizada' '1' \
+  "SET app.user_id='$outsider'; SELECT count(*) FROM public.talk_me_list_waiting('$queue2','Ana Antiga',50,NULL,NULL)"
 
 printf '\n[OK] contrato TALK ME verificado\n'

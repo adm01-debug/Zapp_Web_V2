@@ -417,7 +417,7 @@ export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessage
             >
               <motion.div
                 data-testid={entradaDeGrupo ? 'group-entry-fade' : undefined}
-                initial={entradaDeGrupo ? { opacity: 0 } : false}
+                initial={entradaDeGrupo ? (reduzirMovimento ? false : { opacity: 0 }) : false}
                 animate={{ opacity: 1 }}
                 transition={zappTransition.fast}
               >

@@ -1324,12 +1324,17 @@ Deno.test('X062 resolveTalkxMediaUrl: URL privada do kernel (whatsapp-media) con
   assert(url !== crua, 'uma URL assinada expirada não pode ser devolvida como veio');
 });
 
-Deno.test('X062 resolveTalkxMediaUrl: caminho inseguro não vira objeto assinado (devolve a origem)', async () => {
+Deno.test('X062 resolveTalkxMediaUrl: caminho inseguro é rejeitado e não vira objeto assinado', async () => {
   const signer = makeStorageSigner();
   const crua = 'talkx-media/../segredo.pdf';
-  const url = await resolveTalkxMediaUrl(signer, crua, 'https://supabase-test.example');
+  let rejeitado = false;
+  try {
+    await resolveTalkxMediaUrl(signer, crua, 'https://supabase-test.example');
+  } catch {
+    rejeitado = true;
+  }
   assert(signer.calls.length === 0, `não pode assinar caminho inseguro (houve ${signer.calls.length})`);
-  assert(url === crua, `tem de devolver o valor original: ${url}`);
+  assert(rejeitado, 'caminho inseguro deve falhar fechado, não voltar ao chamador');
 });
 
 Deno.test('X062 resolveTalkxMediaUrl: falha do Storage SOBE em vez de devolver a URL crua', async () => {

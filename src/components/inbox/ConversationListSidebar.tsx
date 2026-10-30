@@ -5,7 +5,7 @@ import { MobilePullToRefreshIndicator } from '@/components/mobile/MobilePullToRe
 import { VirtualizedRealtimeList } from './VirtualizedRealtimeList';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { BulkActionsToolbar } from './BulkActionsToolbar';
-import { InboxFilters } from './InboxFilters';
+import { InboxFilters, type InboxSavedFiltersIntegration } from './InboxFilters';
 import { FILTER_OPTIONS } from './ContactTypeFilter';
 import { StatusChips } from './conversation-list/StatusChips';
 import { RealtimeStatusBadge } from './RealtimeStatusBadge';
@@ -65,8 +65,9 @@ interface ConversationListSidebarProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- retorno do gesto legado inclui handlers dinâmicos.
   pullToRefresh: any;
   conversationActions?: ReturnType<typeof useConversationActions>;
-  onOpenTalkMe?: () => void;
+  onOpenTalkMe?: React.MouseEventHandler<HTMLButtonElement>;
   talkMeCount?: number | null;
+  talkMeCountUnavailable?: boolean;
   talkMeLoading?: boolean;
   talkMeQueueName?: string;
   talkMeEnabled?: boolean;
@@ -80,6 +81,7 @@ export function ConversationListSidebar({
   conversationActions,
   onOpenTalkMe = () => undefined,
   talkMeCount = null,
+  talkMeCountUnavailable = false,
   talkMeLoading = false,
   talkMeQueueName,
   talkMeEnabled = false,
@@ -87,6 +89,15 @@ export function ConversationListSidebar({
   const isMobile = useIsMobile();
   const { isZen = false, toggleZen } = useLayoutContext();
   const contactSearchRef = useRef<HTMLInputElement>(null);
+  const talkMeQueueSuffix = talkMeQueueName ? ` em ${talkMeQueueName}` : '';
+  const talkMeWaitingLabel = talkMeCount === null
+    ? ''
+    : `${talkMeCount} ${talkMeCount === 1 ? 'atendimento aguardando' : 'atendimentos aguardando'}`;
+  const talkMeStatusLabel = talkMeCountUnavailable
+    ? 'contagem de atendimentos indisponível'
+    : talkMeWaitingLabel;
+  const talkMeAccessibleStatus = talkMeStatusLabel ? `: ${talkMeStatusLabel}` : '';
+  const talkMeTitleStatus = talkMeStatusLabel ? ` — ${talkMeStatusLabel}` : '';
 
   /* ── Largura ajustável da lista (desktop) ─────────────────────────────── */
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -264,26 +275,38 @@ export function ConversationListSidebar({
     contactSearchRef.current?.focus();
   }, [inboxFilters]);
 
-  // Opções com que a LISTA conta, para o contador do chip não divergir dela:
-  // adiamentos vigentes, "Mostrar todos", fila e filtros extras (busca, tipo de
-  // contato e painel Filtros) — os MESMOS insumos de useInboxFilters/chipCounts.
-  // Objeto estável para não refazer a varredura a cada render do painel.
-  const statusChipCountOpts = useMemo(
-    () => ({
-      snoozedIds: conversationActions?.snoozedIds ?? null,
-      showAll: inboxFilters.showAll ?? false,
-      selectedQueueId: inboxFilters.selectedQueueId ?? null,
-      search: inboxFilters.search ?? '',
-      selectedContactType: inboxFilters.selectedContactType ?? null,
-      filters: inboxFilters.filters ?? null,
-    }),
+  // Menu "Filtros salvos": o filtro atual é o chip de status, o tipo de contato e a
+  // fila (a busca digitada nunca entra no preset). Aplicar um preset passa pelos
+  // mesmos setters do painel Filtros, então o storage do dono e a URL (?type=)
+  // continuam sendo atualizados num lugar só (useInboxFilters).
+  const setChipTab = inboxFilters.setChipTab;
+  const setContactType = inboxFilters.handleContactTypeChange;
+  const setQueueId = inboxFilters.setSelectedQueueId;
+  const savedFilters = useMemo<InboxSavedFiltersIntegration | undefined>(
+    () =>
+      typeof setChipTab === 'function' &&
+      typeof setContactType === 'function' &&
+      typeof setQueueId === 'function'
+        ? {
+            current: {
+              chipTab: inboxFilters.chipTab,
+              contactType: inboxFilters.selectedContactType ?? null,
+              queueId: inboxFilters.selectedQueueId ?? null,
+            },
+            onApply: (content) => {
+              setChipTab(content.chipTab);
+              setContactType(content.contactType);
+              setQueueId(content.queueId);
+            },
+          }
+        : undefined,
     [
-      conversationActions?.snoozedIds,
-      inboxFilters.showAll,
-      inboxFilters.selectedQueueId,
-      inboxFilters.search,
+      inboxFilters.chipTab,
       inboxFilters.selectedContactType,
-      inboxFilters.filters,
+      inboxFilters.selectedQueueId,
+      setChipTab,
+      setContactType,
+      setQueueId,
     ]
   );
 
@@ -363,7 +386,6 @@ export function ConversationListSidebar({
           counts={inboxFilters.chipCounts}
           chipTab={inboxFilters.chipTab}
           onChipTabChange={inboxFilters.setChipTab}
-          countOpts={statusChipCountOpts}
         />
       </div>
 
@@ -380,6 +402,7 @@ export function ConversationListSidebar({
                 onContactTypeChange={inboxFilters.handleContactTypeChange}
                 selectedQueueId={inboxFilters.selectedQueueId}
                 onQueueChange={inboxFilters.setSelectedQueueId}
+                savedFilters={savedFilters}
               />
             </div>
           )}
@@ -403,12 +426,13 @@ export function ConversationListSidebar({
           {isMobile && talkMeEnabled && (
             <LiquidMetalButton
               data-testid="talk-me-button-mobile"
+              data-talkme-trigger="1"
               label="TALK ME"
               count={talkMeCount}
               loading={talkMeLoading}
               compact
-              aria-label={`TALK ME${talkMeCount === null ? '' : `: ${talkMeCount} atendimentos aguardando`}${talkMeQueueName ? ` em ${talkMeQueueName}` : ''}`}
-              title={`Abrir atendimentos aguardando${talkMeQueueName ? ` em ${talkMeQueueName}` : ''}`}
+              aria-label={`TALK ME${talkMeAccessibleStatus}${talkMeQueueSuffix}`}
+              title={`Abrir TALK ME${talkMeTitleStatus}${talkMeQueueSuffix}`}
               onClick={onOpenTalkMe}
             />
           )}
@@ -424,6 +448,7 @@ export function ConversationListSidebar({
               onContactTypeChange={inboxFilters.handleContactTypeChange}
               selectedQueueId={inboxFilters.selectedQueueId}
               onQueueChange={inboxFilters.setSelectedQueueId}
+              savedFilters={savedFilters}
               onRefetch={inbox.refetch}
               isRefetching={inbox.loading}
             />
