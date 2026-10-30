@@ -9,7 +9,7 @@ O inventário geral `INVENTARIO_MELHORIAS_2026-10-07.tsv` contém 1.110 linhas e
 ## Resumo executivo
 
 - **Confirmado parcialmente implementado:** privilégios `TRUNCATE`, `REFERENCES` e `TRIGGER` para `anon`/`authenticated` em tabelas de `public`; falta retirar os grants existentes e os defaults controláveis de `postgres`. A consulta read-only encontrou 89 tabelas afetadas para `anon` e 130 para `authenticated`.
-- **Gates da main não estão todos verdes:** a execução `41062325861` falhou em E2E e Node CI Scripts, fazendo o CI Gate falhar. A execução do DB Live Guard `41066127274` continua queued. A última consulta ao workflow confirmou que não há resultado atual para essa execução.
+- **Gates da main não estão todos verdes:** a execução `41062325861` falhou em E2E e Node CI Scripts, fazendo o CI Gate falhar. O DB Live Guard `41066127274` concluiu com falha no SHA `fb57b4a5`.
 - **Deploy de Edge Functions ainda sem correção validada:** PRs #2371 e #2380 estão atrás/bloqueadas; #2380 tem falhas em Node CI e E2E em execução.
 - **Itens funcionais concretos:** importação Talk X/CRM não localizada; gestão de convites Team Chat ainda usa `department_invites` e auditoria direta; falha não-2xx do Bitrix vira HTTP 200 em `sync-call-records`; encaminhamento unitário de arquivos não funciona nos modos cartão/lista.
 - **Evidências externas ainda abertas:** envio real de Catálogo e fluxos autenticados em produção dependem de operação/aceite, não podem ser concluídos por inspeção do código.
@@ -32,7 +32,7 @@ O inventário geral `INVENTARIO_MELHORIAS_2026-10-07.tsv` contém 1.110 linhas e
 | P1 | Configuração SIP | Logs das últimas 24h reportaram 1.260 respostas 503 de `get-sip-password` por ausência de `SIP_PASSWORD`. | Configurar o secret pelo mecanismo operacional aprovado e validar uma chamada autenticada sem revelar o valor. |
 | P1 | Catálogo PromoGifts | Logs reportaram 24 erros 5xx em 75 chamadas e p95 ~141s, com timeout upstream/statement timeout. | Medir separadamente latência da consulta, rede e serviço externo; definir timeout/retry e observabilidade antes de alterar a integração. |
 | P1/externo | Envio do Catálogo | Sem registro do primeiro envio real ponta a ponta. | Executar procedimento autenticado com número conectado e registrar IDs, resultado e evidência em `docs/catalogo/ENVIO_E2E.md`. |
-| P1/externo | DB Live Guard | `41066127274` queued no SHA atual durante esta auditoria; última execução concluída citada no histórico usa SHA antigo e falhou. | Obter uma execução concluída no HEAD atual; se falhar, classificar o contrato antes de prosseguir com DDL live. |
+| P1/externo | DB Live Guard | `41066127274` concluiu com falha em `fb57b4a5`. A evidência lista 70 divergências migration×ledger: 48 registros têm `statements` em prosa sem hash verificável, 20 têm SQL divergente e 2 têm nome divergente. Há também baseline de grants diferente, 33 tabelas e 1 view no banco ausentes do catálogo, 318 colunas só no banco, `types.ts` desatualizado e runtime-config sem prova de backup. O check MCP rejeita um `search_path` válido com `pg_temp` ao final; o novo `live-invariants` passou. | Resolver a falsa reprovação do `search_path` no guard; para os demais itens, abrir evidência por contrato e classificar/reconciliar sem alterar ledger ou banco por suposição; repetir o guard antes de DDL live. |
 | P1/planejamento | Migração operacional | `db-migrate.yml` exige environment `producao-ddl`, aceita migration/bundles conhecidos, sem `apply_all_missing` ou confirmação específica destrutiva. | Resolver GA13–GA17 explicitamente; manter guardas e revisão por migration, sem aplicar lote indiscriminado. |
 | P2 | Métrica de envios do Catálogo | `catalog_send_stats` existe nos tipos, sem consumidor identificado em `src`; painel “hoje/7 dias” não encontrado. | Implementar painel ou registrar decisão de produto e remover requisito. |
 | P2/decisão | Política de download Catálogo | Plano diz que export CSV/fotos não consultam `can_download`; requer decisão sobre saída de dados. | Registrar regra de autorização e cobri-la no backend e UI antes de alterar exportações. |
@@ -64,9 +64,11 @@ O executor `postgres` não pode mudar defaults pertencentes a `supabase_admin`; 
 ## Validação realizada neste branch
 
 - `bash scripts/db-audit/check-live-invariants.test.sh`: **48 cenários aprovados**, incluindo concessões diretas e defaults inseguros para `TRUNCATE`, `REFERENCES` e `TRIGGER`.
+- `bash scripts/db-audit/check-mcp-exec-acl.test.sh`: **31 cenários aprovados**; agora aceita `pg_temp` somente ao final do `search_path` e continua bloqueando ordem insegura e ausência de configuração.
 - `bash scripts/db-audit/replay-local.sh`: **1.041/1.065 migrations aplicadas; 24 falhas classificadas como conhecidas; 0 drift inesperado; `REPLAY=verde`**. Replay descartável, sem acesso ao banco canônico.
 - PR #2353 está integrada em `fb57b4a5`; não é mais uma pendência.
 - PR #2383 contém a correção de ACL e este relatório; aguarda checks do GitHub.
+- O artefato `db-live-evidence-41066127274-1` foi lido: `mcp_exec` e `mcp_exec_many` passam owner, grants, corpo e default; a única flag falsa observada é `search_path`, por aceitar apenas `pg_catalog, public` e não a configuração posterior e mais explícita `pg_catalog, public, pg_temp`. O patch local atualiza o contrato e o teste específico cobre a ordem correta e uma ordem insegura.
 - O replay e os testes não substituem checks do PR no GitHub nem validação do guard live.
 
 ## Sequência recomendada
