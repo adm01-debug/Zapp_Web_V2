@@ -8,23 +8,23 @@
       "authenticated_select_true": ["agent_presence","ai_model_prices","audio_memes","auto_close_config","away_messages","business_hours","channel_routing_rules","chatbot_flows","csat_auto_config","custom_emojis","department_invites (SELECT)","departments","number_reputation","playbooks","products","queue_goals","queue_skill_requirements","queues","sales_pipeline_stages","sla_configurations","stickers","talkx_segment_fields (SELECT)","talkx_settings","whatsapp_connection_queues","whatsapp_flows","whatsapp_groups","whatsapp_templates"],
       "authenticated_delete_true": ["department_invites (DELETE)"]
     },
-    "nota": "service_role USING(true) é padrão Supabase (service_role ignora RLS de qualquer forma). authenticated SELECT(true) significa qualquer usuário autenticado pode ler qualquer linha — aceitável para tabelas de configuração global sem dados sensíveis por tenant. REVISAR: as tabelas de configuração global (queues, departments, etc.) não têm isolamento multi-tenant, o que é intencional se há apenas um tenant, mas risco se múltiplos workspaces compartilharem o mesmo banco."
+    "nota": "service_role USING(true) e padrao Supabase (service_role ignora RLS de qualquer forma). authenticated SELECT(true) significa qualquer usuario autenticado pode ler qualquer linha - aceitavel para tabelas de configuracao global sem dados sensiveis por tenant. REVISAR: as tabelas de configuracao global (queues, departments, etc.) nao tem isolamento multi-tenant, o que e intencional se ha apenas um tenant, mas risco se multiplos workspaces compartilharem o mesmo banco."
   },
   "policies_update_sem_with_check": {
     "total_critico": 68,
     "casos_alta_prioridade": [
-      {"tabela": "contacts", "policy": "Users can update their assigned contacts", "problema": "UPDATE com USING mas sem WITH CHECK — agent pode mover contato para assigned_to de outro agent sem validação de destino", "severidade": "ALTO"},
-      {"tabela": "whatsapp_connections", "policy": "Admins can update connections", "problema": "UPDATE USING(is_admin_or_supervisor) sem WITH CHECK — admin pode alterar qualquer campo livremente", "severidade": "MEDIO"},
-      {"tabela": "talkx_campaigns", "policy": "Users can update own campaigns", "problema": "UPDATE sem WITH CHECK — user pode alterar created_by para apontar para outro usuário", "severidade": "ALTO"},
+      {"tabela": "contacts", "policy": "Users can update their assigned contacts", "problema": "UPDATE com USING mas sem WITH CHECK - agent pode mover contato para assigned_to de outro agent sem validacao de destino", "severidade": "ALTO"},
+      {"tabela": "whatsapp_connections", "policy": "Admins can update connections", "problema": "UPDATE USING(is_admin_or_supervisor) sem WITH CHECK - admin pode alterar qualquer campo livremente", "severidade": "MEDIO"},
+      {"tabela": "talkx_campaigns", "policy": "Users can update own campaigns", "problema": "UPDATE sem WITH CHECK - user pode alterar created_by para apontar para outro usuario", "severidade": "ALTO"},
       {"tabela": "talkx_recipients", "policy": "Users can update recipients of own campaigns", "problema": "UPDATE sem WITH CHECK", "severidade": "MEDIO"},
-      {"tabela": "copilot_sessions", "policy": "vendor_own_sessions (public role)", "problema": "UPDATE com role=public sem WITH CHECK — qualquer request (não só autenticado) pode atualizar suas próprias sessões", "severidade": "ALTO"},
+      {"tabela": "copilot_sessions", "policy": "vendor_own_sessions (public role)", "problema": "UPDATE com role=public sem WITH CHECK - qualquer request (nao so autenticado) pode atualizar suas proprias sessoes", "severidade": "ALTO"},
       {"tabela": "copilot_insights", "policy": "vendor_own_insights (public role)", "problema": "UPDATE com role=public sem WITH CHECK", "severidade": "ALTO"},
-      {"tabela": "talkx_campaign_segments", "policy": "Users can update own campaign segments (public role)", "problema": "UPDATE e INSERT/SELECT/DELETE com role=public — exposto sem autenticação", "severidade": "CRITICO"},
-      {"tabela": "voip_profile_credentials", "policy": "RLS ON sem nenhuma policy", "problema": "Credenciais VoIP bloqueadas para authenticated mas sem política explícita — verificar se função DEFINER faz bypass", "severidade": "ALTO"}
+      {"tabela": "talkx_campaign_segments", "policy": "Users can update own campaign segments (public role)", "problema": "UPDATE e INSERT/SELECT/DELETE com role=public - exposto sem autenticacao", "severidade": "CRITICO"},
+      {"tabela": "voip_profile_credentials", "policy": "RLS ON sem nenhuma policy", "problema": "Credenciais VoIP bloqueadas para authenticated mas sem politica explicita - verificar se funcao DEFINER faz bypass", "severidade": "ALTO"}
     ]
   },
   "tabelas_com_role_public_policies": {
     "tabelas": ["talkx_campaign_segments","copilot_sessions","copilot_insights","cron.job","cron.job_run_details"],
-    "nota": "role=public (não confundir com anon) significa qualquer conexão ao banco, incluindo sem JWT. talkx_campaign_segments em particular tem SELECT/INSERT/UPDATE/DELETE para role=public — revisar urgentemente."
+    "nota": "role=public (nao confundir com anon) significa qualquer conexao ao banco, incluindo sem JWT. talkx_campaign_segments em particular tem SELECT/INSERT/UPDATE/DELETE para role=public - revisar urgentemente."
   }
 }

@@ -16,16 +16,16 @@
       "id": "S04-001",
       "severidade": "ALTO",
       "objeto": "profiles.user_id",
-      "descricao": "Coluna user_id uuid NOT NULL em profiles não tem FK para auth.users. A integridade referencial entre agentes e auth é LÓGICA (via trigger), não estrutural.",
-      "evidencia": "information_schema.table_constraints: profiles só tem FK profiles_department_id_fkey. 0 orphans encontrados atualmente mas sem garantia futura.",
-      "impacto": "profile.user_id pode apontar para usuário deletado sem cascata/restrição",
+      "descricao": "Coluna user_id uuid NOT NULL em profiles nao tem FK para auth.users. A integridade referencial entre agentes e auth e LOGICA (via trigger), nao estrutural.",
+      "evidencia": "information_schema.table_constraints: profiles so tem FK profiles_department_id_fkey. 0 orphans encontrados atualmente mas sem garantia futura.",
+      "impacto": "profile.user_id pode apontar para usuario deletado sem cascata/restricao",
       "correcao": "ALTER TABLE public.profiles ADD CONSTRAINT profiles_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;"
     },
     {
       "id": "S04-002",
       "severidade": "ALTO",
-      "objeto": "32 FKs sem índice na coluna referenciante",
-      "descricao": "32 FKs declaradas em public.* sem índice na coluna filho — cascade/lookup sem índice = seq scan completo na tabela filho",
+      "objeto": "32 FKs sem indice na coluna referenciante",
+      "descricao": "32 FKs declaradas em public.* sem indice na coluna filho - cascade/lookup sem indice = seq scan completo na tabela filho",
       "evidencia": "INT-A2 query: 32 rows. Top afetadas: talkx_campaigns (owner, launched_by, paused_by, etc.), conversation_events (from_queue_id, to_queue_id), multiplix_delivery_items (block_id, recipient_id, voice_asset_id)",
       "tabelas_impactadas": [
         "ai_model_prices.provider_id",
@@ -66,29 +66,29 @@
       "id": "S04-003",
       "severidade": "MEDIO",
       "objeto": "_zapp_fn_before",
-      "descricao": "Tabela _zapp_fn_before não tem PK. Provavelmente é tabela de migração auxiliar/internal.",
+      "descricao": "Tabela _zapp_fn_before nao tem PK. Provavelmente e tabela de migracao auxiliar/internal.",
       "evidencia": "INT-A3: table_name='_zapp_fn_before' em information_schema.tables sem PK constraint"
     },
     {
       "id": "S04-004",
       "severidade": "MEDIO",
       "objeto": "108 colunas *_id sem FK",
-      "descricao": "108 colunas com sufixo _id não têm FK declarada. Casos críticos: catalog_favorites.product_id, talkx_recipients.segment_id, voip_profile_credentials.vault_secret_id",
+      "descricao": "108 colunas com sufixo _id nao tem FK declarada. Casos criticos: catalog_favorites.product_id, talkx_recipients.segment_id, voip_profile_credentials.vault_secret_id",
       "evidencia": "INT-A1: 108 rows"
     },
     {
       "id": "S04-005",
       "severidade": "INFO",
       "objeto": "ON DELETE NO ACTION em todas as 50+ FKs",
-      "descricao": "Todas as FKs auditadas usam ON DELETE NO ACTION. Risco de órfãos se registros pai forem deletados sem tratar filhos.",
+      "descricao": "Todas as FKs auditadas usam ON DELETE NO ACTION. Risco de orfaos se registros pai forem deletados sem tratar filhos.",
       "evidencia": "INT-A8: 50 rows com delete_rule=NO ACTION"
     },
     {
       "id": "S04-006",
       "severidade": "INFO",
       "objeto": "Sequences",
-      "descricao": "Todas as sequences usam bigint max (9.2×10^18). Uso atual < 0.0001% — sem risco de overflow.",
-      "evidencia": "pg_sequences: last_value máximo = 3604; pct_used = 0.0000%"
+      "descricao": "Todas as sequences usam bigint max (9.2x10^18). Uso atual < 0.0001% - sem risco de overflow.",
+      "evidencia": "pg_sequences: last_value maximo = 3604; pct_used = 0.0000%"
     }
   ]
 }

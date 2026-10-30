@@ -4,18 +4,18 @@
   "total_no_repo": 84,
   "total_com_verify_jwt_false": 14,
   "funcoes_verify_jwt_false": [
-    {"nome": "evolution-webhook", "risco": "R2", "auth_alternativa": "HMAC-SHA256 (EVOLUTION_WEBHOOK_SECRET) + instanceToken por instância via Vault"},
+    {"nome": "evolution-webhook", "risco": "R2", "auth_alternativa": "HMAC-SHA256 (EVOLUTION_WEBHOOK_SECRET) + instanceToken por instancia via Vault"},
     {"nome": "whatsapp-webhook", "risco": "R2", "auth_alternativa": "HMAC Meta (WHATSAPP_VERIFY_TOKEN) + verifyMetaWebhookSignature"},
     {"nome": "gmail-webhook", "risco": "R2", "auth_alternativa": "Signature verification via webhook-signature.ts + dedupe via audit_logs"},
-    {"nome": "gmail-cron-sync", "risco": "R1", "auth_alternativa": "Chamada só via cron job 4. Baixo risco externo."},
+    {"nome": "gmail-cron-sync", "risco": "R1", "auth_alternativa": "Chamada so via cron job 4. Baixo risco externo."},
     {"nome": "connection-health-check", "risco": "R2", "auth_alternativa": "isAuthorizedCronOrUser - cron secret via Vault OU admin/supervisor"},
     {"nome": "batch-fetch-avatars", "risco": "R2", "auth_alternativa": "authorizeCronOrUser: get_avatars_refresh_cron_secret (Vault) OU is_admin_or_supervisor"},
     {"nome": "elevenlabs-webhook", "risco": "R2", "auth_alternativa": "verifyElevenLabsSignature (HMAC) bloqueante + dedupe por audit_logs"},
-    {"nome": "public-api", "risco": "INFO", "auth_alternativa": "Função DESATIVADA - retorna 410 Gone"},
-    {"nome": "auth-login", "risco": "R1", "auth_alternativa": "Sem JWT por design (pré-auth). Rate limit por IP e por email. Lockout implementado."},
+    {"nome": "public-api", "risco": "INFO", "auth_alternativa": "Funcao DESATIVADA - retorna 410 Gone"},
+    {"nome": "auth-login", "risco": "R1", "auth_alternativa": "Sem JWT por design (pre-auth). Rate limit por IP e por email. Lockout implementado."},
     {"nome": "crm-integration", "risco": "R2", "auth_alternativa": "requireAuth + CRM_TABLE_ALLOWLIST + isExpectedExternalUrl. 12KB max body."},
     {"nome": "csp-report", "risco": "INFO", "auth_alternativa": "Sem auth por design (endpoint CSP de browser)."},
-    {"nome": "talkx-link", "risco": "R2", "auth_alternativa": "GET: redirect público. POST: HMAC-SHA256 v1 + timestamp window ±5min"},
+    {"nome": "talkx-link", "risco": "R2", "auth_alternativa": "GET: redirect publico. POST: HMAC-SHA256 v1 + timestamp window +-5min"},
     {"nome": "searchbox-budget-alert", "risco": "R1", "auth_alternativa": "NAO_VERIFICADO_COMPLETAMENTE"},
     {"nome": "sync-call-records", "risco": "R1", "auth_alternativa": "NAO_VERIFICADO_COMPLETAMENTE"}
   ],
@@ -24,14 +24,14 @@
       "id": "S08-001",
       "severidade": "MEDIO",
       "objeto": "talkx-link DEFAULT_LEGACY_SIGNATURE_ACCEPT_UNTIL",
-      "descricao": "DEFAULT_LEGACY_SIGNATURE_ACCEPT_UNTIL = '2026-10-20T23:59:59.999-03:00' já expirou. Assinaturas legadas deveriam estar bloqueadas.",
+      "descricao": "DEFAULT_LEGACY_SIGNATURE_ACCEPT_UNTIL = '2026-10-20T23:59:59.999-03:00' ja expirou. Assinaturas legadas deveriam estar bloqueadas.",
       "evidencia": "supabase/functions/talkx-link/index.ts:DEFAULT_LEGACY_SIGNATURE_ACCEPT_UNTIL = '2026-10-20T23:59:59.999-03:00'"
     },
     {
       "id": "S08-002",
       "severidade": "INFO",
       "objeto": "searchbox-budget-alert, sync-call-records",
-      "descricao": "verify_jwt=false porém código não verificado completamente. Provavelmente chamadas internas de cron.",
+      "descricao": "verify_jwt=false porem codigo nao verificado completamente. Provavelmente chamadas internas de cron.",
       "evidencia": "supabase/config.toml: verify_jwt=false para ambas"
     }
   ]

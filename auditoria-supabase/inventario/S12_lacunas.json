@@ -17,7 +17,7 @@
   },
   "achados": [
     {"id": "S12-001", "severidade": "MEDIO", "objeto": "staging", "descricao": "Sem ambiente de staging compartilhado. Supabase Branching desativado.", "correcao": "Considerar habilitar Supabase Branching em projeto separado."},
-    {"id": "S12-002", "severidade": "MEDIO", "objeto": "profiles/login_attempts sem deleted_at", "descricao": "Tabelas com PII sem deleted_at ou expires_at. Potencial nao-conformidade LGPD.", "correcao": "Adicionar deleted_at e política de retencao (cron de limpeza após 90 dias para login_attempts)."},
+    {"id": "S12-002", "severidade": "MEDIO", "objeto": "profiles/login_attempts sem deleted_at", "descricao": "Tabelas com PII sem deleted_at ou expires_at. Potencial nao-conformidade LGPD.", "correcao": "Adicionar deleted_at e politica de retencao (cron de limpeza apos 90 dias para login_attempts)."},
     {"id": "S12-003", "severidade": "INFO", "objeto": "webhook_failures sem created_at", "descricao": "Impossivel auditoria temporal de falhas de webhook."},
     {"id": "S12-004", "severidade": "INFO", "objeto": "alerta de falha massiva de crons", "descricao": "15 cron jobs falhando sem alerta automatico ao Joaquim.", "correcao": "Criar cron watchdog que verifica failures_24h e envia alerta."},
     {"id": "S12-005", "severidade": "INFO", "objeto": "PITR - confirmacao de retencao", "descricao": "WAL archiving ativo mas retencao nao verificavel via SQL. Confirmar no painel Supabase."}

@@ -7,21 +7,21 @@
     "grants_write": [
       {"tabela": "password_reset_requests", "ops": ["INSERT"], "nota": "Intencional - fluxo reset senha"}
     ],
-    "nota": "anon tem SELECT em ~104 tabelas mas praticamente todas estão bloqueadas por RLS. As políticas para anon são mínimas: apenas password_reset_requests (INSERT controlado) e webauthn_challenges (USING false = bloqueado)."
+    "nota": "anon tem SELECT em ~104 tabelas mas praticamente todas estao bloqueadas por RLS. As politicas para anon sao minimas: apenas password_reset_requests (INSERT controlado) e webauthn_challenges (USING false = bloqueado)."
   },
   "authenticated_role": {
     "total_grants": 608,
     "tabelas_distintas": 105,
-    "nota": "authenticated tem grants amplos mas controlados por RLS em todas as tabelas. Não há escrita irrestrita."
+    "nota": "authenticated tem grants amplos mas controlados por RLS em todas as tabelas. Nao ha escrita irrestrita."
   },
   "views_security_invoker": {
     "total_views": 13,
     "todas_com_security_invoker": true,
     "lista": ["catalog_send_stats","channel_connections_safe","gmail_accounts_safe","password_reset_requests_safe","profiles_public","searchbox_usage_daily","talkx_campaign_metrics","talkx_campaign_optouts","talkx_engine_health","team_message_read_state","whatsapp_connections_agent","whatsapp_connections_public","whatsapp_connections_safe"],
-    "nota": "EXCELENTE — todas as 13 views têm security_invoker=true. Nenhuma escalação de privilégio via view."
+    "nota": "EXCELENTE - todas as 13 views tem security_invoker=true. Nenhuma escalacao de privilegio via view."
   },
   "user_metadata_em_policies": {
     "policies_usando": 0,
-    "nota": "Nenhuma policy usa user_metadata do JWT. Todas usam auth.uid() e lookup em tabelas internas. BOAS PRÁTICAS ✓"
+    "nota": "Nenhuma policy usa user_metadata do JWT. Todas usam auth.uid() e lookup em tabelas internas. BOAS PRATICAS"
   }
 }

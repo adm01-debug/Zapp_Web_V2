@@ -29,7 +29,7 @@
       "objeto": "pg_cron - 15 jobs com startup timeout",
       "descricao": "15 de 24 cron jobs falhando com 'job startup timeout' desde ~20:48 UTC 2026-10-30. Inclui dispatch-scheduled-messages (184 falhas), tasks-notify-due (184), ai-jobs-tick-1min (180), talkx-scheduler-1min (176).",
       "evidencia": "cron.job_run_details WHERE start_time > now()-interval '24h' AND status='failed': 15 jobids distintos, return_message='job startup timeout'",
-      "impacto": "PRODUÇÃO DEGRADADA: mensagens agendadas não enviadas, tasks sem notificação, AI jobs e campanhas TalkX parados.",
+      "impacto": "PRODUCAO DEGRADADA: mensagens agendadas nao enviadas, tasks sem notificacao, AI jobs e campanhas TalkX parados.",
       "correcao": "Verificar pg_settings cron.max_running_jobs. Investigar se pg_cron background worker travou. Pode precisar de restart do pg_cron worker pelo Supabase."
     }
   ]

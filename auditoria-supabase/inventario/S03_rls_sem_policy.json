@@ -21,5 +21,5 @@
     "team_chat_media_acl_r2_db_020_rb",
     "voip_profile_credentials"
   ],
-  "nota": "RLS ON + sem policy = acesso bloqueado para anon/authenticated; service_role ignora RLS. Estas tabelas só são acessíveis via service_role ou SECURITY DEFINER functions. Algumas são tabelas internas (_rb_, _zapp_) ou de worker-only. CRÍTICO: voip_profile_credentials e gmail_oauth_states contêm credenciais sensíveis e exigem review para confirmar que nenhum path de authenticated chega via RPC."
+  "nota": "RLS ON + sem policy = acesso bloqueado para anon/authenticated; service_role ignora RLS. Estas tabelas so sao acessiveis via service_role ou SECURITY DEFINER functions. Algumas sao tabelas internas (_rb_, _zapp_) ou de worker-only. CRITICO: voip_profile_credentials e gmail_oauth_states contem credenciais sensiveis e exigem review para confirmar que nenhum path de authenticated chega via RPC."
 }
