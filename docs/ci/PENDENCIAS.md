@@ -125,15 +125,19 @@ O step `docker pull public.ecr.aws/docker/library/postgres:17-alpine` falha com 
 
 ---
 
-## 5. `branch-hygiene-audit` — timeout/cancel
+## 5. `branch-hygiene-audit` — timeout/cancel recorrente
 
 | Campo | Valor |
 |---|---|
 | Workflow | `Branch Hygiene Audit` |
-| Últimos runs | 40289875804 (`cancelled`), 39220130783 (`cancelled`) |
-| Run dispatch 2026-10-30 | [41024463986](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41024463986) (em andamento às 08:21Z) |
+| Histórico de runs | 40289875804 (`cancelled`), 39220130783 (`cancelled`) |
+| Run dispatch 2026-10-30 | [41024463986](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41024463986) — **`conclusion=cancelled`** (08:20:57Z) |
 
-**Situação:** O workflow já tem `timeout-minutes: 10`. Os runs anteriores foram `cancelled` (não `failure`). Um run foi disparado via `workflow_dispatch` às 08:08Z (2026-10-30) para verificar se conclui com `success`. Resultado a confirmar.
+**Situação:** Todos os runs conhecidos terminam com `conclusion=cancelled`, nunca `success` nem `failure`. O workflow tem `timeout-minutes: 10` mas é cancelado antes de concluir. O run 41024463986 foi disparado às 08:08:34Z e cancelado às 08:20:57Z (12 min — excedeu o timeout de 10 min). Causa provável: paginação da API de branches consome tempo excessivo no GitHub Actions.
+
+**Bloqueio Regra 8:** A correção do script requer alterar `.github/workflows/branch-hygiene-audit.yml` ou o script chamado — CI/workflow.
+
+**O que o Joaquim precisa fazer:** Revisar o script do workflow e reduzir o escopo da paginação de branches, ou aumentar o `timeout-minutes`.
 
 ---
 
