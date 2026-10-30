@@ -7,9 +7,9 @@
     "sha256": "5dd80482c2ed44b7c0132099f8a81cd13e8fbe11bff866c50f52e85e8972060a"
   },
   "summary": {
-    "function_count": 84,
-    "source_file_count": 168,
-    "verify_jwt_true": 70,
+    "function_count": 85,
+    "source_file_count": 169,
+    "verify_jwt_true": 71,
     "verify_jwt_false": 14
   },
   "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
@@ -513,6 +513,11 @@
       "path": "supabase/functions/connection-health-check/index.ts",
       "bytes": 40551,
       "sha256": "de237cf20a502f7dea47a9de51d7a1254a43eff9061d9484af8e7d35b48910ff"
+    },
+    {
+      "path": "supabase/functions/copilot-live/index.ts",
+      "bytes": 7020,
+      "sha256": "8ecfd85212d2a94f1cf2b9f4149b9c30d08a414a17953e00ebc4b83a3816e30e"
     },
     {
       "path": "supabase/functions/create-user/index.ts",
@@ -1412,6 +1417,15 @@
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/connection-health-check/index.ts"
+      ]
+    },
+    {
+      "name": "copilot-live",
+      "entrypoint": "supabase/functions/copilot-live/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "ad37534a035594150e9151261c1d10de0000d0de306e2b6bd13b2fb438c19c0c",
+      "source_files": [
+        "supabase/functions/copilot-live/index.ts"
       ]
     },
     {
@@ -2519,5 +2533,5 @@
       ]
     }
   ],
-  "manifest_sha256": "20b3ba20a0886da2be078aec44a14a6973a7cd1be118599b2d158ae50ac5b5a6"
+  "manifest_sha256": "85283e5f40fcd0c8a8cbb5bf45a54076bb25b8390400092772f8993f1e09bfee"
 }
