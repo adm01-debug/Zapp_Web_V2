@@ -58,3 +58,16 @@
 
 PR [#2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) contém o fix do ECR (item 1 acima).
 Está em draft. Joaquim deve revisar, aprovar e mergear.
+
+---
+
+## 6. `copilot-pull-request-reviewer` — failure (não é required check)
+
+| Campo | Valor |
+|---|---|
+| Check | `copilot-pull-request-reviewer` |
+| Conclusão | `failure` (observado em SHA `4c4eda7c`, run [41017783433](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41017783433), job [123937933351](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41017783433/job/123937933351)) |
+| É required check? | **Não** — não consta nos 6 required checks da `main` (`🔍 Lint & TypeCheck`, `🧪 Unit Tests`, `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🎭 E2E Tests (Playwright)`) |
+| Causa | Bot de review do Copilot reporta findings via annotations; `conclusion=failure` é o comportamento quando o bot identifica sugestões — não impede merge |
+| Por que está bloqueado | Não está bloqueado — é cosmético. A failure deste check não bloqueia PR |
+| Ação necessária | Nenhuma. Behavior by design do `copilot-pull-request-reviewer` workflow |
