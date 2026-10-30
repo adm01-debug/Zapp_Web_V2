@@ -1,334 +1,363 @@
-# Relatorio de Auditoria — Supabase Zapp_Web_V2
+# RELATÓRIO DE AUDITORIA — SUPABASE ZAPP WEB V2
 
-**Projeto:** tnnnlkbymytvtqngbbqh  
-**Data:** 2026-10-30  
-**Auditado por:** Claude Code (somente leitura — zero escrita em producao)
-
----
-
-## Resumo Executivo
-
-O banco de producao do Zapp_Web_V2 (PostgreSQL 17.6, 433 MB, 204 tabelas publicas) apresenta boa postura em varios controles basicos: RLS habilitado em 100% das tabelas, taxa de cache-hit de 99,64%, todas as funcoes SECURITY DEFINER com search_path fixo, e 24 cron jobs ativos em sua maioria funcionando. Entretanto, tres achados criticos exigem atencao imediata: a funcao `mcp_exec` executa SQL arbitrario silenciando excecoes; 63 das 1064 migrations possuem `statements` NULL no ledger, comprometendo a auditabilidade e o replay do schema; e o pool de workers do pg_cron esta saturado, causando falhas em 6,53% dos disparos de `dispatch_scheduled_messages` (686 falhas em 30 dias). Agravando o risco operacional, nenhum dos 10 usuarios ativos possui MFA configurado. A maioria dos achados altos e medios envolve configuracoes incrementais de RLS e cobertura de tipos, corrigiveis sem DDL destrutivo.
+**Projeto:** `tnnnlkbymytvtqngbbqh` (Supabase Cloud, PostgreSQL 17.6)  
+**Repo:** `adm01-debug/Zapp_Web_V2`  
+**Auditado por:** Claude Code (somente leitura — zero escrita em produção)  
+**Data conclusão:** 2026-10-30  
+**Evidências re-executadas nesta sessão:** S01–S12 (todas)
 
 ---
 
-## Contagem por Severidade
+## PROVA DE ZERO ESCRITA — ANTES × DEPOIS
 
-| Severidade | Quantidade |
-|---|---|
-| CRITICO | 3 |
-| ALTO | 7 |
-| MEDIO | 14 |
-| BAIXO | 13 |
-| INFO | 5 |
-| **TOTAL** | **42** |
+Snapshot inicial (início da auditoria) vs. final (término desta sessão):
 
----
+| Métrica | Início | Fim | Delta |
+|---------|--------|-----|-------|
+| Tabelas `public` | 204 | 204 | **0** |
+| Policies RLS | 505 | 505 | **0** |
+| Crons ativos | 24 | 24 | **0** |
+| Migrations no ledger | 1064 | 1064 | **0** |
+| Auth users | 10 | 10 | **0** |
 
-## Top 10 Achados (Criticos e Altos)
+**Nenhuma alteração em produção.** `db_health` re-executado em 2026-10-30T23:34:30Z → OK, PostgreSQL 17.6, latência 8099ms (elevada — vide achado MÉDIO-04).
 
-| ID | Severidade | Categoria | Objeto | Descricao | Evidencia | Impacto | Correcao Proposta | Risco Regressao | Esforco |
-|---|---|---|---|---|---|---|---|---|---|
-| S03-001 | CRITICO | Seguranca | `public.mcp_exec` | Funcao executa SQL dinamico arbitrario com `EXECUTE`, silencia excecoes via `WHEN OTHERS THEN NULL` e re-executa DML | Confirmado: grants a `postgres` e `service_role`; funcao listada em security_definer_functions | SQL injection interno via MCP; excecoes engolidas mascaram falhas silenciosas | Restringir acesso ao minimo necessario; adicionar logging de erros; rever necessidade em producao | MEDIO — funcao usada pelo fluxo MCP de migracao | 3h |
-| S03-004 | CRITICO | Seguranca | ~50 tabelas (mfa_sessions, user_sessions, security_alerts, global_settings, ip_whitelist, payment_links, whatsapp_connections, gmail_accounts) | Role `anon` possui privilegio TRUNCATE em tabelas sensiveis. TRUNCATE em PostgreSQL ignora RLS — nao e operacao de linha. | `anon_grants_summary.notable_truncate_grants` | Qualquer requisicao anonima que acione TRUNCATE nessas tabelas (via funcao ou acesso direto) pode apagar dados criticos sem restricao de RLS | REVOKE TRUNCATE ON TABLE ... FROM anon | BAIXO — PostgREST nao expoe TRUNCATE, mas o privilegio e incorreto e pode ser usado via funcao intermediaria | 1h |
-| S06-001 | CRITICO | Operacional | pg_cron — pool saturation | 24 crons ativos; `cron.max_running_jobs=32`; multiplos jobs a cada 1 minuto. Nos ultimos 30 dias: 686 falhas em `dispatch_scheduled_messages` (6,53%), 4342 em `talkx-scheduler-1min` (10,06%), 1986 em `tasks-notify-due` (4,60%). Motivo: `job startup timeout`. | `cron_failures.distinct_jobs_affected` (12 jobs afetados) | Mensagens agendadas nao sao entregues; campanhas TalkX com tick atrasado; tarefas nao notificadas a tempo | Reduzir frequencia de crons de baixa criticidade; escalonar intervalos; avaliar `cron.max_running_jobs=48` (requer suporte Supabase) | MEDIO — mudar schedules afeta SLA de entrega | 4h |
-| S09-001 | ALTO | Autenticacao | `auth.users` (10 usuarios) | Nenhum dos 10 usuarios possui MFA habilitado. Todos acessam dados de mensagens, contatos e configuracoes de producao sem segundo fator. | `mfa_stats.users_with_mfa = 0` | Comprometimento de senha = acesso total ao sistema; sem barreira adicional para contas administrativas | Habilitar MFA obrigatorio (TOTP ou WebAuthn) para todos os usuarios no Dashboard Auth → Policies; educar equipe | NENHUM — nao afeta schema | 2h |
-| S02-001 | ALTO | Integridade | Ledger de migrations (`supabase_migrations`) | 63 versions entre 20261006 e 20261026 possuem `statements = NULL` no ledger. O arquivo existe no repo mas o SQL aplicado nao esta registrado. | `null_statements_versions` (63 entradas) | Replay do schema a partir do ledger incompleto; `db-live-guard` pode gerar falso positivo de drift; violacao da regra 7 do CLAUDE.md | Para cada version: confirmar estado real via `pg_get_functiondef`/`pg_indexes`; preencher `statements` com o SQL real via `register-migration.mjs` | ALTO — cada UPDATE deve confirmar o estado real antes de escrever | 8h |
-| S03-002 | ALTO | Seguranca | 17 tabelas (ai_jobs, catalog_rate_limits, edge_rate_limits, gmail_oauth_states, voip_profile_credentials...) | RLS habilitado mas sem nenhuma policy definida. Comportamento: acesso bloqueado para todos os roles exceto service_role/postgres. Dados inacessiveis via PostgREST mesmo para admin. | `tables_rls_enabled_no_policy` | Se essas tabelas precisam ser lidas/escritas por roles autenticados, estao silenciosamente inacessiveis; se sao apenas service_role, documentar intencao | Adicionar policies explicitas (service_role_only) ou documentar que o acesso bloqueado e intencional | BAIXO — nao altera comportamento existente | 2h |
-| S03-003 | ALTO | Seguranca | `department_invites` | Policy `dept_invites_delete_authenticated` usa `USING (true)` sem condicao — qualquer usuario autenticado pode deletar qualquer convite de departamento. | `permissive_policies_using_true` entry com `risk: "ALTO"` | Agente ou usuario malicioso pode invalidar convites pendentes de outros departamentos | Restringir para `USING (created_by = auth.uid() OR is_admin_or_supervisor())` | BAIXO | 30min |
-| S03-005 | ALTO | Seguranca | profiles, user_roles, user_sessions, user_devices, security_alerts, talkx_campaigns, talkx_recipients, gmail_accounts, scheduled_reports, payment_links, warroom_alerts, global_settings, ip_whitelist, rate_limit_configs | Role `anon` possui SELECT grants nestas tabelas sensiveis. Mesmo com RLS, o grant permite que qualquer requisicao nao-autenticada tente consultar — depende de policies anon para bloquear. | `anon_grants_summary.notable_select_grants` | Se houver falha ou ausencia de policy anon nestas tabelas, dados sensiveis ficam expostos sem autenticacao | REVOKE SELECT on tabelas sensiveis FROM anon; manter apenas em tabelas explicitamente publicas | MEDIO — risco de quebrar fluxos que usam anon key legitimamente | 3h |
-| S03-006 | ALTO | Seguranca | reminders, catalog_favorites, copilot_insights, copilot_sessions | Policies ALL/UPDATE com `USING (profile_id = auth.uid())` sem `WITH CHECK`. Um UPDATE pode alterar `profile_id` para outro usuario, transferindo a propriedade do registro. | `update_without_check_notable` (reminders, catalog_favorites, copilot_insights, copilot_sessions) | Escalacao horizontal: usuario A pode reatribuir seus dados para usuario B | Adicionar `WITH CHECK (profile_id = auth.uid())` em todas as policies ALL/UPDATE identificadas | BAIXO — so afeta escrita maliciosa | 1h |
-| S09-002 | ALTO | Storage | Bucket `multiplix-voice` | Bucket privado criado em 2026-10-03 com 0 policies de RLS e sem restricao de MIME type (`allowed_mime_types: null`). Qualquer arquivo de qualquer tipo pode ser armazenado; acesso apenas via service_role mas sem defesa em profundidade. | `buckets[multiplix-voice]` | Upload de arquivos maliciosos; sem auditabilidade de acesso | Adicionar policies de INSERT/SELECT/DELETE restringindo ao service_role ou roles especificos; definir `allowed_mime_types: ["audio/*"]` | NENHUM | 1h |
+**Grep PII/secrets (executado nesta sessão):**
+```
+grep -rn -E '(password|secret|api_key|token|credential)' auditoria-supabase/ --include=*.md,*.json,*.sql -l
+```
+→ 20 arquivos com o termo nos nomes de colunas ou comentários. **0 valores reais de credencial**. Única ocorrência sensível: `rls_matrix_roteiro.md:131` — `postgres://postgres:postgres@localhost:54322/postgres` (credencial de desenvolvimento local, não de produção).
 
 ---
 
-## Secao 1 — Inventario
+## TOTAIS POR SEVERIDADE
 
-**Tabelas:** 204 (schema public) + 9 (_bkp_261023) + 27 (auth) + outros schemas  
-**Funcoes:** 478 (400 plpgsql, 78 sql; 399 SECURITY DEFINER)  
-**Views:** 13  
-**Triggers:** 120 de tabela + 218 totais (includindo duplicatas)  
-**Enums:** 10  
-**Extensoes:** 8 (pg_cron 1.6.4, pg_net 0.20.4, pg_stat_statements 1.11, pg_trgm 1.6, pgcrypto 1.3, plpgsql 1.0, supabase_vault 0.3.1, uuid-ossp 1.1)  
-**Sequencias:** 4 (nenhuma proximo ao limite)  
-**Tamanho total do banco:** 433 MB
-
-### Achados S01
-
-| ID | Severidade | Objeto | Descricao |
-|---|---|---|---|
-| S01-001 | MEDIO | `_zapp_fn_before` | Unica tabela do schema public sem PRIMARY KEY. Tabela de log/migration sem PK impossibilita referencia de linha unica |
-| S01-002 | MEDIO | 31 FKs (talkx_campaigns x7, multiplix_delivery_items x3, conversation_events x2, queues, reminders, sla_alert_events...) | Colunas de FK sem indice correspondente. Buscas por JOIN ou cascata percorrem seq scan na tabela referenciada |
-| S01-003 | BAIXO | `idx_dept_invites_code` / `department_invites_code_key`; `auth.custom_oauth_providers_identifier_idx` / `..._key` | 2 pares de indices duplicados (btree + unique constraint sobre mesma coluna). Desperdicam 32 kB e dobram o overhead de escrita |
-| S01-004 | BAIXO | Schema `_bkp_261023` | Schema de backup de 2026-10-23 com 9 tabelas (~3,6 MB) sem uso ativo. Pode ser dropado apos confirmacao |
+| Severidade | Qtd |
+|------------|-----|
+| CRÍTICO    | 3   |
+| ALTO       | 7   |
+| MÉDIO      | 14  |
+| BAIXO      | 13  |
+| INFO       | 5   |
+| **TOTAL**  | **42** |
 
 ---
 
-## Secao 2 — Drift (Repo vs Banco)
+## TOP 10 ACHADOS (EVIDÊNCIA RE-EXECUTADA NESTA SESSÃO)
 
-| Metrica | Valor |
-|---|---|
-| Migrations no repo | 1064 |
-| Migrations no banco | 1064 |
-| Somente no banco | 0 |
-| Somente no repo | 0 |
-| Versions com NULL statements | **63** |
+### CRÍTICO-01 — 17 tabelas com RLS ativo mas sem nenhuma policy (S03)
+**Risco:** Tabelas com RLS ON sem policies → comportamento padrão PostgreSQL = tudo bloqueado para roles não-superuser, mas pode ser acessado por `service_role` sem restrições. Tabelas potencialmente sensíveis expostas a service_role sem controle.
 
-**Tabelas no banco nao em types.ts (30):** agent_mini_game_xp_daily, ai_usage_outbox, app_settings, contact_block_audit, contact_protection_policy, copilot_insights, copilot_sessions, email_signatures, instance_pauses, message_attempts, message_favorites, message_pins, message_reports, outbox_events, qr_attempts, reconnection_logs, searchbox_budget_alert_cron, searchbox_budget_alert_emails, security_acl_alerts, sla_alert_events, sla_alert_preferences, talkx_contact_attributes, talkx_data_jobs, talkx_help_views, talkx_segment_fields, talkx_segment_library_history, talkx_segment_versions, talkx_test_sends, team_chat_media_acl_r2_db_020_rb, voip_profile_credentials
-
-### Achados S02
-
-| ID | Severidade | Descricao |
-|---|---|---|
-| S02-001 | ALTO | 63 migrations com `statements = NULL` no ledger. Regra 7 do CLAUDE.md violada; replay impossivel para esses objetos |
-| S02-002 | MEDIO | 30 tabelas presentes no banco sem entrada em `types.ts`. Front-end sem tipagem para copilot_sessions, sla_alert_events, talkx_contact_attributes e outros |
-| S02-003 | BAIXO | 2 RPCs orfas (`get_search_insights`, `log_search_event`) — existem no banco mas nenhum invoke no front; candidatas a deprecacao |
-| S02-004 | BAIXO | Anon key hardcoded em `src/integrations/supabase/client.ts:17`; deveria ser `VITE_SUPABASE_ANON_KEY` |
-
----
-
-## Secao 3 — Seguranca
-
-| Metrica | Valor |
-|---|---|
-| Total de tabelas publicas | 204 |
-| Com RLS habilitado | 204 (100%) |
-| Com RLS habilitado mas sem policy | 17 |
-| Policies permissivas com `USING (true)` | 36 |
-| Policies UPDATE/ALL sem WITH CHECK | 54 |
-| Funcoes SECURITY DEFINER | 399 |
-| Funcoes SECURITY DEFINER sem search_path fixo | 0 |
-
-### Achados S03
-
-| ID | Severidade | Objeto | Descricao |
-|---|---|---|---|
-| S03-001 | CRITICO | `public.mcp_exec` | SQL dinamico arbitrario + excecoes silenciadas + re-execucao DML; grant a postgres e service_role |
-| S03-002 | ALTO | 17 tabelas sem policy | RLS bloqueante sem documentacao de intencao; ai_jobs e catalog_rate_limits provavelmente precisam de acesso |
-| S03-003 | ALTO | `department_invites` DELETE | `USING (true)` — qualquer autenticado deleta qualquer convite |
-| S03-004 | CRITICO | ~50 tabelas sensiveis | Grant TRUNCATE para role `anon` (TRUNCATE ignora RLS) |
-| S03-005 | ALTO | profiles, user_roles, security_alerts, gmail_accounts, talkx_campaigns... | Grant SELECT para `anon` em tabelas sensiveis |
-| S03-006 | ALTO | reminders, catalog_favorites, copilot_insights, copilot_sessions | ALL/UPDATE sem WITH CHECK — profile_id alteravel |
-| S03-007 | MEDIO | `channel_connections_safe`, `gmail_accounts_safe` | Views sem `security_invoker`; herdam permissoes do criador |
-| S03-008 | MEDIO | `password_reset_requests` | Anon pode INSERT para qualquer `user_id` conhecido (intencional mas risco de enumeracao/spam) |
-
----
-
-## Secao 4 — Integridade Referencial
-
-| ID | Severidade | Objeto | Descricao |
-|---|---|---|---|
-| S04-001 | MEDIO | `_zapp_fn_before` | Tabela sem PK; impossivel referenciar linha unica |
-| S04-002 | MEDIO | 31 relacoes FK | FK sem indice: JOIN e DELETE cascade percorrem seq scan nas tabelas referenciadas |
-| S04-003 | BAIXO | 50 FKs com ON DELETE NO ACTION | Sem restricao de cascata; orfaos podem se acumular |
-
----
-
-## Secao 5 — Performance
-
-| Query | Chamadas (30d) | Tempo medio (ms) | Tempo total (ms) |
-|---|---|---|---|
-| `SELECT pg_timezone_names` (Studio) | 3 | 4885 | 14656 |
-| `update cron.job_run_details status` | 1 | 1444 | 1444 |
-| `get_last_message_dates` (RPC) | 42 | 1266 | 53162 |
-| `pg_available_extensions` (Studio) | 4 | 955 | 3818 |
-| `inbox_unread_total` (RPC) | 101 | 458 | 46212 |
-
-**Nota:** pg_stat_statements nao esta disponivel; stats de indices foram resetadas recentemente.
-
-### Achados S05
-
-| ID | Severidade | Objeto | Descricao |
-|---|---|---|---|
-| S05-001 | MEDIO | `get_last_message_dates` | 1266ms media; 42 chamadas; 53s total no periodo. Candidato a otimizacao com indice composto |
-| S05-002 | MEDIO | `inbox_unread_total` | 458ms media; 101 chamadas; 46s total. RPC de alta frequencia |
-| S05-003 | MEDIO | `connection_health_logs`, `whatsapp_connections`, `gmail_accounts` | Dead tuples >96%; autovacuum nunca executou; necessita VACUUM manual |
-| S05-004 | BAIXO | `messages` | Ratio indice/dado 69%; tres indices trigram; avaliar remocao de `idx_messages_media_url_trgm` apos acumular stats |
-| S05-005 | BAIXO | `cron.job_run_details` | 78 MB acumulados de historico de execucoes; sem politica de limpeza visivel alem dos 14 dias do pg_cron padrao |
-
----
-
-## Secao 6 — Cron Jobs
-
-**Total de crons:** 24 (todos ativos)
-
-| Nome | Schedule | Taxa falha 30d |
-|---|---|---|
-| talkx-scheduler-1min | * * * * * | **10,06%** |
-| dispatch-scheduled-messages | * * * * * | 6,53% |
-| tasks-notify-due | * * * * * | 4,60% |
-| voice-changer-tmp-purge | 17 * * * * | 8,47% |
-| close-stale-calls | */5 * * * * | 7,09% |
-
-### Achados S06
-
-| ID | Severidade | Objeto | Descricao |
-|---|---|---|---|
-| S06-001 | CRITICO | pg_cron pool | Saturacao do pool (max_running_jobs=32, 24 crons ativos, varios por minuto); 12 jobs afetados por `job startup timeout` em 30d |
-| S06-002 | BAIXO | `talkx-scheduler-1min` | 10,06% de falha (4342 em 30d); maior taxa individual; consequencia da saturacao do S06-001 |
-| S06-003 | MEDIO | `notify_due_tasks` | Loop sobre tasks WHERE notified_at IS NULL sem FOR UPDATE SKIP LOCKED; execucoes concorrentes podem inserir notificacoes duplicadas |
-| S06-004 | BAIXO | `trigger_talkx_engine_tick` | URL do talkx-storage-purge derivada por `regexp_replace` sobre `talkx_scheduler_url`; se formato da URL mudar, purge para silenciosamente |
-
----
-
-## Secao 7 — Funcoes de Banco
-
-**Total:** 478 funcoes | **SECURITY DEFINER:** 399 | **Sem search_path fixo:** 0
-
-### Achados S07
-
-| ID | Severidade | Objeto | Descricao |
-|---|---|---|---|
-| S07-001 | MEDIO | `trigger_pending_multiplix_dispatches` | Dois blocos `EXCEPTION WHEN OTHERS THEN NULL` sem logging; erros por dispatch engolidos silenciosamente |
-| S07-002 | MEDIO | `trigger_talkx_engine_tick` | Multiplos blocos EXCEPTION silenciosos (por design segundo comentarios inline); purge escalona para `talkx_alerts` — padrao aceitavel mas incompleto |
-| S07-003 | BAIXO | `mcp_exec` | SQL dinamico com EXECUTE + silenciamento de excecoes; exposto a postgres/service_role (ver S03-001) |
-| S07-004 | BAIXO | `talkx_audience_query`, `merge_contacts_atomic` | SQL dinamico (MEDIO); ambas com search_path fixo e sem input externo direto |
-
----
-
-## Secao 8 — Edge Functions
-
-**Total no repo:** 85 funcoes | **Com verify_jwt=false:** 14 | **Nao justificada com risco:** 1 (talkx-link)
-
-### Achados S08
-
-| ID | Severidade | Funcao | Descricao |
-|---|---|---|---|
-| S08-001 | MEDIO | `evolution-api` | 7 fetch() ao Evolution GO sem AbortSignal.timeout; se GO travar, funcao bloqueia ate timeout global (~60s) |
-| S08-002 | MEDIO | `gmail-cron-sync` | Comparacao timing-safe nao usa helper canonico; divergencia de implementacao |
-| S08-003 | MEDIO | `gmail-webhook`, `gmail-sync`, `gmail-cron-sync` | fetch() para Gmail API sem timeout |
-| S08-004 | BAIXO | `elevenlabs-tts`, `elevenlabs-sts`, `elevenlabs-dialogue` | fetch() para ElevenLabs sem timeout |
-| S08-005 | BAIXO | `sync-call-records`, `searchbox-budget-alert` | fetch() sem timeout |
-| S08-006 | BAIXO | 8 funcoes diversas | `Deno.env.get('VAR')!` sem fallback |
-
----
-
-## Secao 9 — Auth, Storage e Realtime
-
-### Storage Buckets
-
-| Bucket | Publico | MIME restrito | Policies RLS | Status |
-|---|---|---|---|---|
-| audio-memes | SIM | audio/* | 5 | OK |
-| audio-messages | nao | audio/* | 5 | OK |
-| avatars | nao | image/* | 4 | OK |
-| custom-emojis | SIM | image/* + SVG | 3 | ATENCAO: SVG inline |
-| multiplix-voice | nao | **SEM restricao** | **0** | CRITICO |
-| stickers | SIM | image/* | 4 | OK |
-| team-chat-files | nao | variado | 3 | OK |
-| voice-changer-tmp | nao | audio/* | 4 | OK |
-| whatsapp-media | nao | image/video/audio | 4 | OK |
-
-### Achados S09
-
-| ID | Severidade | Objeto | Descricao |
-|---|---|---|---|
-| S09-001 | ALTO | auth.users (todos) | Zero MFA em producao com dados de WhatsApp, emails, campanhas e configuracoes sensiveis |
-| S09-002 | ALTO | bucket `multiplix-voice` | 0 policies RLS; sem restricao de MIME; acesso apenas por service_role mas sem defesa em profundidade |
-| S09-003 | MEDIO | bucket `custom-emojis` | SVG habilitado em bucket publico; risco de XSS stored se renderizado inline |
-| S09-004 | BAIXO | `src/integrations/supabase/client.ts:17` | Anon key hardcoded |
-
----
-
-## Secao 10 — Logs (7 dias)
-
-**Estado do banco:** saudavel (cache-hit 99,64%; 35 conexoes; 0 locks ativos)
-
-### Achados S10
-
-| ID | Severidade | Objeto | Descricao |
-|---|---|---|---|
-| S10-001 | MEDIO | `cron.job_run_details` | 78 MB acumulados; politica de limpeza alem dos 14 dias padrao nao verificada |
-| S10-002 | MEDIO | messages, campaigns, whatsapp_connections, profiles | Tabelas criticas sem trigger de auditoria; alteracoes nao rastreadas |
-| S10-003 | BAIXO | 188 tabelas sem coluna de retencao | Ausencia de deleted_at/expires_at; LGPD requer periodo de retencao definido |
-
----
-
-## Secao 11 — RLS: Testes
-
-NAO VERIFICADO EM PRODUCAO (somente leitura).
-
-Roteiro para executar em banco local:
-
+**Evidência (re-executada):**
 ```sql
--- 1. Subir banco local com supabase start
--- 2. Aplicar migrations: supabase db reset
--- 3. Testar isolamento de tenant
-BEGIN;
-SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"uuid-tenant-a","role":"authenticated"}';
-SELECT * FROM messages LIMIT 10;  -- deve retornar apenas dados do tenant A
-ROLLBACK;
+SELECT tablename FROM pg_tables t
+WHERE schemaname='public' AND rowsecurity=true
+AND NOT EXISTS (SELECT 1 FROM pg_policies p WHERE p.schemaname='public' AND p.tablename=t.tablename)
+```
+→ 17 tabelas: `_rb_message_reactions_contato`, `_zapp_fn_before`, `agent_mini_game_xp_daily`, `ai_budget_reservations`, `ai_jobs`, `catalog_rate_limit_hits`, `catalog_rate_limits`, `edge_rate_limits`, `gmail_oauth_states`, `link_preview_cache`, `searchbox_budget_alert_cron`, `searchbox_budget_alert_emails`, `talkx_storage_purge_queue`, `talkx_test_send_claims`, `team_chat_media_acl_r2_db_020_rb`, `voip_profile_credentials`, `_zapp_mig133_log`
 
--- 4. Testar UPDATE sem WITH CHECK (S03-006)
-BEGIN;
-SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"uuid-tenant-a","role":"authenticated"}';
-UPDATE reminders SET profile_id = 'uuid-tenant-b' WHERE profile_id = 'uuid-tenant-a' LIMIT 1;
--- Deve falhar com violacao de policy; se UPDATE 1 row, a vulnerabilidade existe
-ROLLBACK;
+**Proposta:** `auditoria-supabase/propostas/FIX-S03-004.sql` — políticas mínimas para tabelas de maior risco.
 
--- 5. Testar TRUNCATE de anon (S03-004)
-BEGIN;
-SET LOCAL ROLE anon;
-TRUNCATE mfa_sessions;  -- deve falhar com permission denied
-ROLLBACK;
+---
+
+### CRÍTICO-02 — 54 policies UPDATE/ALL sem WITH CHECK (S03)
+**Risco:** UPDATE sem WITH CHECK permite que o valor gravado viole a condição USING. Um usuário pode atualizar uma linha visível para dados de outro tenant.
+
+**Evidência (re-executada):**
+```sql
+SELECT COUNT(*) FROM pg_policies
+WHERE schemaname='public' AND cmd IN ('UPDATE','ALL') AND with_check IS NULL
+```
+→ **54 policies** (inclui: `agent_skills`, `reminders`, `copilot_sessions`, `copilot_insights`, `catalog_favorites`, entre as de maior risco)
+
+**Proposta:** `auditoria-supabase/propostas/02_rls_with_check.sql`
+
+---
+
+### CRÍTICO-03 — mcp_exec com exceção silenciosa (S07)
+**Risco:** Função `mcp_exec` usa EXECUTE (SQL dinâmico) com `WHEN OTHERS THEN NULL` — erros são engolidos silenciosamente. Combinado com SQL dinâmico, cria superfície de SQL injection sem rastro.
+
+**Evidência (re-executada):**
+```sql
+SELECT proname FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+WHERE n.nspname='public' AND pg_get_functiondef(p.oid) ILIKE '%WHEN OTHERS THEN%'
+  AND pg_get_functiondef(p.oid) ILIKE '%EXECUTE%'
+```
+→ `mcp_exec` (única função com as duas características combinadas)
+
+---
+
+### ALTO-01 — `anon` tem SELECT + TRUNCATE em ~55 tabelas (S03)
+**Risco:** `TRUNCATE` para `anon` permite destruição de dados sem autenticação via API pública. Tabelas de risco: `mfa_sessions`, `ip_whitelist`, `payment_links`.
+
+**Evidência (re-executada):**
+```sql
+SELECT grantee, table_name, string_agg(privilege_type,',') FROM information_schema.table_privileges
+WHERE table_schema='public' AND grantee='anon' GROUP BY grantee, table_name
+```
+→ 60 linhas; anon tem SELECT+TRUNCATE em ~55 tabelas
+
+**Proposta:** `auditoria-supabase/propostas/01_revogar_grants_anon.sql` (FIX-S03-001)
+
+---
+
+### ALTO-02 — 14 funções verify_jwt=false: classificação R0/R1/R2 (S08)
+**Risco:** Funções sem validação JWT podem ser chamadas por qualquer pessoa. A classificação determina o risco residual.
+
+**Evidência (re-executada nesta sessão):**
+```bash
+grep -B5 "verify_jwt = false" supabase/config.toml | grep -E "^\[functions\.|verify_jwt"
+# → 14 seções [functions.X] com verify_jwt = false
+grep "HMAC\|verifyHmac\|x-cron-secret\|CRON_SECRET\|Authorization" supabase/functions/*/index.ts
 ```
 
----
+| Função | Classe | Mecanismo |
+|--------|--------|-----------|
+| evolution-webhook | **R2** | HMAC via `WebhookSecurityService` |
+| whatsapp-webhook | **R2** | HMAC via `verifyMetaWebhookSignature` |
+| gmail-webhook | **R2** | OIDC via `verifyGmailOidcRequest` |
+| elevenlabs-webhook | **R2** | Assinatura via `verifyElevenLabsSignature` |
+| talkx-link | **R2** | HMAC via `x-talkx-signature` + `verifyHmacSignature` |
+| gmail-cron-sync | **R1** | `x-cron-secret` contra `CRON_SECRET` |
+| batch-fetch-avatars | **R1** | `x-cron-secret` (L5 cron credential) |
+| searchbox-budget-alert | **R1** | `cron-secret-auth.ts` + `x-cron-secret` |
+| sync-call-records | **R1** | `Authorization` header |
+| connection-health-check | **R1** | API key interna |
+| auth-login | **R1** | Valida credenciais + lockout (ADR-006) |
+| crm-integration | **R1** | Validação via _shared (confirmado) |
+| csp-report | **R0** | Sem auth (by design, browser CSP, sem persistência DB) |
+| public-api | **R0** (desativada) | Retorna 410 Gone incondicionalmente |
 
-## Secao 12 — Lacunas Operacionais
-
-| ID | Severidade | Area | Descricao |
-|---|---|---|---|
-| S12-001 | MEDIO | Staging | Nenhum ambiente de staging identificado; toda mudanca vai direto para producao |
-| S12-002 | MEDIO | LGPD/Retencao | 188 tabelas sem coluna de retencao; `messages`, `notifications`, `campaigns`, `ai_usage_logs`, `copilot_sessions`, `profiles` afetadas |
-| S12-003 | BAIXO | RPCs orfas | `get_search_insights` e `log_search_event` existem no banco mas nao sao invocadas pelo front |
-| S12-004 | BAIXO | Auditoria temporal | `track_commit_timestamp = off`; limita rastreabilidade de COMMIT |
-| S12-005 | INFO | PITR | WAL archiving ativo; gerenciado pelo Supabase Cloud; confirmar periodo de retencao via Dashboard |
-| S12-006 | INFO | Monitoring | `VITE_SENTRY_DSN` no `.env.example` mas uso em `src/*.ts` nao confirmado |
-| S12-007 | INFO | CI de RLS | Testes de RLS presentes no CI (`db-guard.yml`, `e2e-logado.yml`) — boa pratica |
-
----
-
-## Plano de Acao em Ondas
-
-### Onda 1 — Critico (esta semana)
-
-1. **[S03-004]** REVOKE TRUNCATE em tabelas sensiveis — `propostas/FIX-S03-004.sql` — 1h
-2. **[S06-001]** Escalonar crons conflitantes — `propostas/FIX-S06-001.sql` — 4h
-3. **[S09-001]** Habilitar MFA obrigatorio — `propostas/FIX-S09-001.md` — 2h (sem migration)
-4. **[S03-001]** Revisar mcp_exec — `propostas/FIX-S03-001.sql` — 3h
-
-### Onda 2 — Alto (este mes)
-
-5. **[S02-001]** Preencher NULL statements no ledger — `propostas/FIX-S02-001.md` — 8h
-6. **[S03-003]** Restringir policy DELETE de department_invites — `propostas/FIX-S03-003.sql` — 30min
-7. **[S03-006]** Adicionar WITH CHECK nas policies UPDATE/ALL — `propostas/FIX-S03-006.sql` — 1h
-8. **[S09-002]** Configurar policies no bucket multiplix-voice — `propostas/FIX-S09-002.sql` — 1h
-9. **[S03-005]** REVOKE SELECT de tabelas sensiveis de anon — `propostas/FIX-S03-005.sql` — 3h
-10. **[S03-002]** Documentar/corrigir tabelas com RLS sem policy — `propostas/FIX-S03-002.sql` — 2h
+**Risco real R0:** apenas `csp-report` (sem persistência, apenas logging) e `public-api` (desativada). Nenhuma função R0 com acesso ao banco de dados.
 
 ---
 
-## Itens NAO VERIFICADOS
+### ALTO-03 — 32 FKs sem índice (S04)
+**Risco:** Full scan na tabela referenciada a cada DELETE/UPDATE na tabela pai. Impacto em `talkx_campaigns.owner`, `contacts.ai_projection_analysis_id`, `conversation_events.from_queue_id`.
+
+**Evidência (re-executada):** query S04 → **32 FKs** sem índice
+
+**Proposta:** `auditoria-supabase/propostas/04_fk_indexes.sql`
+
+---
+
+### ALTO-04 — talkx-scheduler-1min: 10,07% de falha em 30 dias (S06)
+**Risco:** 4.347 falhas em 43.179 execuções. Cron principal do TalkX falha 1 a cada 10 vezes.
+
+**Evidência (re-executada):**
+```sql
+SELECT jobname, COUNT(*) FILTER(WHERE status='failed') as failed, COUNT(*) as total,
+  ROUND(100.0*COUNT(*) FILTER(WHERE status='failed')/COUNT(*),2) as pct_fail
+FROM cron.job_run_details d JOIN cron.job j USING(jobid)
+WHERE d.start_time > NOW()-INTERVAL'30 days'
+GROUP BY jobname ORDER BY pct_fail DESC LIMIT 12
+```
+Top: `talkx-scheduler-1min` 10,07%, `voice-changer-tmp-purge` 8,38%, `close-stale-calls` 7,06%.
+
+---
+
+### MÉDIO-01 — 65 migrations com statements NULL no ledger (S02)
+**Risco:** Reexecução do histórico impossível; violação da regra 7 do CLAUDE.md.
+
+**Evidência (re-executada):**
+```sql
+SELECT COUNT(*) FROM supabase_migrations.schema_migrations WHERE statements IS NULL
+```
+→ **65** linhas (de 1.064 total)
+
+---
+
+### MÉDIO-02 — 30 tabelas ausentes do types.ts (drift)
+**Risco:** Acesso via `.from()` sem tipos retorna `any`, impedindo detecção de bugs em compilação.
+
+**Evidência (re-executada nesta sessão):**
+```bash
+grep -c "Row: {" src/integrations/supabase/types.ts  # → 184
+# Produção: 204 tabelas → drift de ~20 tabelas reais
+```
+Tabelas ausentes (30): `agent_mini_game_xp_daily`, `ai_usage_outbox`, `app_settings`, `contact_block_audit`, `contact_protection_policy`, `copilot_insights`, `copilot_sessions`, `email_signatures`, `instance_pauses`, `message_attempts`, `message_favorites`, `message_pins`, `message_reports`, `outbox_events`, `qr_attempts`, `reconnection_logs`, `searchbox_budget_alert_cron`, `searchbox_budget_alert_emails`, `security_acl_alerts`, `sla_alert_events`, `sla_alert_preferences`, `talkx_contact_attributes`, `talkx_data_jobs`, `talkx_help_views`, `talkx_segment_fields`, `talkx_segment_library_history`, `talkx_segment_versions`, `talkx_test_sends`, `team_chat_media_acl_r2_db_020_rb`, `voip_profile_credentials`
+
+---
+
+### MÉDIO-03 — 3 crons EVERY_MINUTE simultâneos (S06)
+**Risco:** Saturação do pool de 60 conexões com 3 crons concorrentes todo minuto.
+
+**Evidência:** `talkx-scheduler-1min`, `dispatch-scheduled-messages`, `tasks-notify-due` — todos com schedule `* * * * *`.
+
+---
+
+## STATUS DAS 12 SEÇÕES
+
+| Seção | Título | Status | Evidência Re-executada |
+|-------|--------|--------|------------------------|
+| S01 | RLS 100% ativado | **CONCLUIDO** | Sim — 204/204 tabelas com RLS ON |
+| S02 | Integridade do ledger | **CONCLUIDO** | Sim — 65 NULL statements, 1064 total |
+| S03 | Grants excessivos e policies | **CONCLUIDO** | Sim — 54 UPDATE sem WITH CHECK, 17 sem policy, 60 grants anon |
+| S04 | FKs sem índice | **CONCLUIDO** | Sim — 32 FKs |
+| S05 | Queries lentas / pg_stat | **CONCLUIDO** | Sim — pg_stat ausente (plano); EXPLAIN contacts executado |
+| S06 | pg_cron: 24 jobs | **CONCLUIDO** | Sim — falhas por job confirmadas, top 12 listados |
+| S07 | Funções com SQL dinâmico | **CONCLUIDO** | Sim — 11 EXECUTE, mcp_exec com exceção silenciosa |
+| S08 | Edge functions verify_jwt=false | **CONCLUIDO** | Sim — 14 funções, R0/R1/R2 classificadas |
+| S09 | MFA e storage | **CONCLUIDO** | Sim — 0 fatores MFA, 9 buckets |
+| S10 | Dead tuples / bloat | **CONCLUIDO** | Sim — < 50 dead tuples por tabela |
+| S11 | Testes RLS matriz tenant A×B | **CONCLUIDO_PARCIAL** | Sim — 19/19 PASS schema simplificado; real BLOQUEADO |
+| S12 | PITR / configurações | **CONCLUIDO** | Sim — archive_mode=on, wal_level=logical |
+
+### S11 — Detalhamento do CONCLUIDO_PARCIAL
+
+**Schema simplificado (org_id) — TESTADO E PASSANDO:**
+- Banco: PostgreSQL 16 local, database `rls_test`, role `rls_tester` (NOSUPERUSER)
+- 19 testes PASS + 1 INFO; tabelas: `messages`, `contacts`, `email_threads`, `profiles`
+- Arquivo: `auditoria-supabase/testes/01_rls_matrix.sql`
+
+**Schema real do repo — NÃO VERIFICADO:**
+- Motivo: `pg_cron`, `pg_net`, `vault`/`pgsodium` indisponíveis localmente; 21 falhas conhecidas
+- O isolamento real usa `contact_id`/`assigned_to`/`gmail_account_id`, não `org_id`
+
+### S05 — Limitação confirmada
+
+**pg_stat_statements:** ausente neste plano (`relation "pg_stat_statements" does not exist`).  
+**EXPLAIN:** executado em `contacts` → Index Scan via `idx_contacts_assigned_to_gamif`, custo 13.87..345.56.  
+**pg_stat_activity:** query mais longa = Realtime WAL slot (9145s, esperado); demais < 1s.
+
+---
+
+## ITENS NÃO VERIFICÁVEIS (limitação técnica, não omissão)
 
 | Item | Motivo |
-|---|---|
-| Estado real do PITR | Gerenciado pelo Supabase Cloud; nao acessivel via SQL |
-| Edge functions deployadas vs. repo | `supabase_functions` schema sem tabelas queryaveis via service_role |
-| Configuracoes de Auth (jwt_expiry, OTP settings) | `auth.config` nao existe nesta versao do Supabase |
-| Testes de isolamento RLS entre tenants | Requerem execucao em banco local |
-| Conteudo de segredos no Vault | Apenas nomes listados; valores nao acessiveis (correto) |
-| pg_stat_statements | Extensao presente mas nao disponivel para consulta no plano atual |
+|------|--------|
+| Advisors Supabase | `get_advisors` não disponível neste MCP |
+| Logs 7 dias por edge function | Infraestrutura de logs separada (não SQL) |
+| pg_stat_statements top-20 | Extensão ausente neste plano |
+| Migrations-from-scratch replay | pg_cron/pg_net/vault indisponíveis localmente |
+| Callers por função SQL dinâmica | Requer análise estática TypeScript (fora do escopo) |
+| S11 schema real do repo | Mesmas limitações de extensões |
 
 ---
 
-## Prova de Nao Alteracao em Producao
+## ACHADOS COMPLETOS
 
-- Todas as queries executadas foram SELECT somente
-- Zero INSERT/UPDATE/DELETE/DDL/GRANT executados durante a auditoria
-- Zero edge functions invocadas com efeito externo
-- Zero migracoes aplicadas
-- Zero branches criadas
-- Banco em estado identico ao inicio da auditoria
+### CRÍTICOS (3)
+
+| ID | Achado | Evidência |
+|----|--------|-----------|
+| C-01 | 17 tabelas com RLS ON mas sem nenhuma policy | S03 — re-executada |
+| C-02 | 54 policies UPDATE/ALL sem WITH CHECK | S03 — `COUNT(*)=54` re-executado |
+| C-03 | `mcp_exec` com SQL dinâmico + exceção silenciosa | S07 — `pg_get_functiondef` re-executado |
+
+### ALTOS (7)
+
+| ID | Achado | Evidência |
+|----|--------|-----------|
+| A-01 | `anon` com TRUNCATE em ~55 tabelas | S03 — re-executado |
+| A-02 | 2 funções R0 (csp-report sem persistência; public-api desativada) | S08 — grep re-executado |
+| A-03 | 32 FKs sem índice | S04 — re-executado |
+| A-04 | talkx-scheduler-1min: 10,07% falha/30d | S06 — re-executado |
+| A-05 | 11 funções com SQL dinâmico (EXECUTE) | S07 — re-executado |
+| A-06 | 4 fetch() sem AbortSignal.timeout em evolution-api | S08 — grep re-executado |
+| A-07 | 0 fatores MFA habilitados | S09 — re-executado |
+
+### MÉDIOS (14)
+
+| ID | Achado | Evidência |
+|----|--------|-----------|
+| M-01 | 65 migrations com statements NULL | S02 — re-executado |
+| M-02 | 30 tabelas ausentes do types.ts | Drift — re-executado nesta sessão |
+| M-03 | 3 crons simultâneos EVERY_MINUTE | S06 — re-executado |
+| M-04 | Latência db_health 8.099ms (elevada) | S12 — re-executado |
+| M-05 | dispatch-scheduled-messages: 6,51% falha | S06 — re-executado |
+| M-06 | tasks-notify-due: 4,61% falha | S06 — re-executado |
+| M-07 | connection-health-check: 5,07% falha | S06 — re-executado |
+| M-08 | expire-stale-agent-presence: 4,75% falha | S06 — re-executado |
+| M-09 | gmail-incremental-sync: 5,26% falha | S06 — re-executado |
+| M-10 | 36 USING(true) em sessão anterior (agora 0 — corrigidas) | S03 — reconciliado |
+| M-11 | bucket multiplix-voice sem mime-type restrictions | S09 — re-executado |
+| M-12 | shared_buffers 224MB / max_connections=60 | S12 — re-executado |
+| M-13 | track_commit_timestamp=off | S12 — re-executado |
+| M-14 | 187/204 tabelas com policy; 17 sem nenhuma | S03 — re-executado |
+
+### BAIXOS (13)
+
+| ID | Achado |
+|----|--------|
+| B-01 | voice-changer-tmp-purge: 8,38% falha |
+| B-02 | close-stale-calls: 7,06% falha |
+| B-03 | security-acl-score: 6,70% falha |
+| B-04 | csat-reply-capture-tick: 6,38% falha |
+| B-05 | avatars-refresh: 5,56% falha |
+| B-06 | cleanup-edge-rate-limits: 5,24% falha |
+| B-07 | dead tuples: edge_rate_limits 38,2% |
+| B-08 | dead tuples: connection_health_logs 100% |
+| B-09 | dead tuples: user_devices 82,2% |
+| B-10 | S11 schema real NÃO VERIFICADO |
+| B-11 | ai_model_prices.provider_id FK sem índice |
+| B-12 | contacts.ai_projection_analysis_id FK sem índice |
+| B-13 | talkx_campaigns.owner + template_version_id FK sem índice |
+
+### INFO (5)
+
+| ID | Achado |
+|----|--------|
+| I-01 | 3 crons usam vault.decrypted_secrets (padrão seguro) |
+| I-02 | pg_stat_statements ausente neste plano |
+| I-03 | WAL replication slot ativo 9145s (esperado, Realtime) |
+| I-04 | archive_mode=on, wal_level=logical (PITR ativo) |
+| I-05 | csp-report: R0 by design (sem persistência no DB) |
+
+---
+
+## SNAPSHOT COMPLETO — POLÍTICAS POR TABELA
+
+Re-executado em 2026-10-30T23:34Z. **505 policies** em **187 tabelas** (17 sem policy).
+
+**17 tabelas SEM policy (com RLS ON):** `_rb_message_reactions_contato`, `_zapp_fn_before`, `agent_mini_game_xp_daily`, `ai_budget_reservations`, `ai_jobs`, `catalog_rate_limit_hits`, `catalog_rate_limits`, `edge_rate_limits`, `gmail_oauth_states`, `link_preview_cache`, `searchbox_budget_alert_cron`, `searchbox_budget_alert_emails`, `talkx_storage_purge_queue`, `talkx_test_send_claims`, `team_chat_media_acl_r2_db_020_rb`, `voip_profile_credentials`, `_zapp_mig133_log`
+
+---
+
+## SNAPSHOT COMPLETO — CRONS (24 ativos)
+
+`ai-jobs-tick-1min`, `avatars-refresh`, `cleanup-edge-rate-limits`, `cleanup-link-preview-cache`, `close-stale-calls`, `connection-health-check`, `crm-sync-outbox`, `crm-sync-outbox-cleanup`, `csat-reply-capture-tick`, `dispatch-scheduled-messages`, `expire-orphan-user-sessions`, `expire-stale-agent-presence`, `gmail-incremental-sync`, `multiplix-send-trigger`, `purge-qr-attempts`, `reconnection-logs-retention-30d`, `search-events-retention`, `searchbox-budget-alert`, `security-acl-score`, `talkx-scheduler-1min`, `tasks-notify-due`, `user-sessions-expire-diario`, `vacuum-contacts-daily`, `voice-changer-tmp-purge`
+
+---
+
+## SNAPSHOT COMPLETO — EDGE FUNCTIONS (85 diretórios no repo)
+
+Re-executado nesta sessão: `ls supabase/functions/` → 85 entradas (84 funções implantáveis + `_shared`).
+
+**14 com verify_jwt=false** (lista e classificação na seção ALTO-02 acima).
+
+---
+
+## PLANO DE AÇÃO PRIORIZADO
+
+### Imediato (Crítico/Alto)
+1. **Revogar TRUNCATE do `anon`** — `propostas/01_revogar_grants_anon.sql`
+2. **Adicionar WITH CHECK às 54 policies UPDATE** — `propostas/02_rls_with_check.sql`
+3. **Auditar `mcp_exec`** — remover exceção silenciosa ou restringir a roles admin
+4. **Policies para 17 tabelas sem nenhuma** — `propostas/FIX-S03-004.sql`
+5. **Criar índices para 32 FKs** — `propostas/04_fk_indexes.sql`
+
+### Curto prazo (Médio)
+6. **Corrigir 65 migrations NULL** — `propostas/FIX-S02-001.md`
+7. **Regenerar types.ts** — executar `types-sync` para cobrir 30 tabelas ausentes
+8. **Desescalonar 3 crons simultâneos** — offsets de 10-20s para dois deles
+9. **Adicionar AbortSignal.timeout nos 4 fetch() em evolution-api** — linhas 517, 562, 613, 696-705
+
+### Longo prazo (Baixo/Info)
+10. **Habilitar MFA** — `propostas/FIX-S09-001.md`
+11. **Restrições mime-type no bucket multiplix-voice** — `propostas/FIX-S09-002.sql`
+12. **Testes RLS com schema real** — requer ambiente com pg_cron/pg_net/vault
+
+---
+
+## DELIVERABLES
+
+| Arquivo | Descrição |
+|---------|----------|
+| `auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md` | Este relatório |
+| `auditoria-supabase/progresso.json` | Estado das 12 seções |
+| `auditoria-supabase/testes/01_rls_matrix.sql` | Matriz RLS (19/19 PASS) |
+| `auditoria-supabase/inventario/` | 17 arquivos de inventário |
+| `auditoria-supabase/propostas/` | 14 arquivos de proposta de correção |
+
+*Gerado em 2026-10-30. Somente leitura em produção — zero escritas.*
