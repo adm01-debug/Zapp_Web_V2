@@ -414,9 +414,13 @@ Arquivo: `inventario/S04_integridade.json`
 | 19 | `set_config (role/jwt setup)` | 9.460 | 18.587 | 2 |
 | 20 | `contacts INSERT` | 17 | 18.286 | 1.076 |
 
-**EXPLAIN dos top queries:**
+**EXPLAIN dos top queries (re-executados nesta sessão, 2026-10-30T23:19Z):**
 - `inbox_unread_total()`: `Function Scan (cost=0.25..0.26)` — planner não entra na função; real cost está na implementação interna
 - `get_last_message_dates()`: `Function Scan (cost=0.25..10.25, rows=1000)` — idem
+- `messages GROUP BY contact_id MAX(created_at)`: `GroupAggregate via idx_messages_contact_created (Index Only Scan, cost 1889)` — índice usado ✅
+- `messages WHERE is_read=false COUNT(*)`: `Aggregate via idx_messages_read_sender (Index Only Scan is_read=false, cost 766)` — índice usado ✅
+- `user_roles WHERE user_id=auth.uid()`: `Seq Scan (cost 0..1.14)` — tabela pequena mas chamada recursivamente em cada check RLS ⚠️
+- `talkx_campaign_segments SELECT *`: `Seq Scan (cost 0..16.90)` — sem filtro JWT; política `USING(true)` para role public ⚠️
 
 **Nota:** EXPLAIN de PL/pgSQL functions não revela o plano interno. Para análise de custo real, usar `EXPLAIN (ANALYZE, BUFFERS)` dentro da função — requer sessão direta.
 
@@ -596,16 +600,23 @@ ORDER BY tablename, cmd, policyname
 - `user_roles`: recursão via `has_role()` → lê `user_roles` dentro da política de `user_roles` (já documentado S05-001)
 - `profiles` UPDATE: três políticas sobrepostas — sem conflito aparente (condições mutuamente exclusivas), mas ordem de avaliação depende do PostgreSQL
 
-**Testes de isolamento (Postgres local — NÃO RE-EXECUTADOS nesta sessão):**
+**Testes de isolamento — Matriz RLS tenant A×B (EXECUTADOS nesta sessão, 2026-10-30T23:18Z):**
 
-O MCP não suporta `BEGIN/SET LOCAL role/ROLLBACK` para simular tokens JWT em produção. Os 5 testes de isolamento foram executados em sessão anterior contra schema das migrations locais. **Roteiro de re-execução:**
-```sql
-BEGIN;
-  SET LOCAL role TO 'authenticated';
-  SET LOCAL "request.jwt.claims" TO '{"sub":"USER_A_ID","role":"authenticated"}';
-  SELECT count(*) FROM messages; -- deve retornar só msgs do user-a
-ROLLBACK;
+PostgreSQL 16.15 local (`pg_ctlcluster 16 main`), banco `rls_audit_test`, schema ad-hoc com RLS completa e `SET LOCAL ROLE authenticated` + `set_config('request.jwt.claims',...)`. Dados sintéticos (domínio `.test`, UUIDs fictícios). 7/7 PASS:
+
 ```
+T-01  PASS — user-a vê 2 msg(s) do seu contato (isolamento positivo OK)
+T-02  PASS — user-a não vê msgs de user-b (count=0) — isolamento negativo OK
+T-C2  PASS — UPDATE cross-tenant BLOQUEADO (new row violates row-level security policy)
+T-05  PASS — INSERT cross-tenant bloqueado (new row violates row-level security policy)
+T-09  PASS — DELETE cross-tenant BLOQUEADO (rows=0)
+T-B1  PASS — user-b vê 1 msg(s) do seu contato (isolamento positivo tenant B OK)
+T-B2  PASS — user-b não vê msgs de user-a (count=0) — isolamento negativo OK
+```
+
+**Nota:** os testes acima usam schema ad-hoc (políticas simplificadas). O schema de produção tem políticas mais complexas (`can_edit_contact`, `is_admin_or_supervisor`) que requerem as migrations completas do repo para teste fiel. Ver `testes/rls_matrix_roteiro.md` para executar com o schema completo via `scripts/db-audit/replay-local.sh`.
+
+O MCP não suporta `BEGIN/SET LOCAL role/ROLLBACK` — não é possível simular JWTs em produção.
 Arquivo de roteiro: `testes/rls_matrix_roteiro.md`
 
 | ID | Severidade | Achado |
@@ -756,6 +767,19 @@ SELECT
 | public_indexes | 723 | 723 | **ZERO** |
 
 **Produção inalterada — 8 objetos verificados, delta ZERO em todos.**
+
+**Re-verificação final (2026-10-30T23:19:45Z — ao término desta sessão):**
+
+| Objeto | Valor final | Delta vs baseline |
+|---|---|---|
+| migrations | 1064 | **ZERO** |
+| latest_version | 20261030110000 | **ZERO** |
+| active_crons | 24 | **ZERO** |
+| public_policies | 505 | **ZERO** |
+| tables (pg_tables) | 204 | **ZERO** |
+| buckets | 9 | **ZERO** |
+| security_definer_fns | 399 | **ZERO** |
+| public_indexes | 723 | **ZERO** |
 
 ### Operações executadas — somente leitura
 

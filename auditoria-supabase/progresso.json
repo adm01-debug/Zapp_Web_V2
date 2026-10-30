@@ -36,7 +36,27 @@
   },
   "pg_stat_statements_top20_capturado_em": "2026-10-30T22:50:00Z",
   "crons_30d_capturado_em": "2026-10-30T22:51:00Z",
-  "rls_matrix_status": "NAO_EXECUTADO_VIA_MCP — BEGIN/SET LOCAL/ROLLBACK nao suportado; roteiro em testes/rls_matrix_roteiro.md",
+  "rls_matrix_status": "EXECUTADO — PostgreSQL 16 local (pg_ctlcluster 16 main, 2026-10-30T23:18Z); 7/7 PASS (T-01 a T-09 + T-B1 + T-B2); schema ad-hoc com RLS e SET LOCAL ROLE; dados sinteticos .test",
+  "explain_top_queries_executado_em": "2026-10-30T23:19Z",
+  "explain_evidencias": {
+    "user_roles_rls": "Seq Scan on user_roles (cost=0.00..1.14) — sem index em user_id; Filter via auth.uid() COALESCE",
+    "get_last_message_dates": "GroupAggregate via idx_messages_contact_created (Index Only Scan) — cost 1889; OK",
+    "inbox_unread": "Aggregate via idx_messages_read_sender (Index Only Scan is_read=false) — cost 766; OK",
+    "talkx_campaign_segments": "Seq Scan (cost 0.02..16.90) — sem WHERE clause (public USING(true)); acesso sem filtro JWT"
+  },
+  "final_state_capturado_em": "2026-10-30T23:19:45Z",
+  "final_state": {
+    "migrations": 1064,
+    "latest_version": "20261030110000",
+    "active_crons": 24,
+    "public_policies": 505,
+    "tables_pg_tables": 204,
+    "buckets": 9,
+    "security_definer_fns": 399,
+    "public_indexes": 723,
+    "delta": "ZERO — producao inalterada (verificado ao final da sessao)"
+  },
+  "grep_pii_secrets": "0 hits para tokens/JWTs/passwords/emails reais; dados sinteticos apenas em testes/01_rls_matrix.sql (dominio .test, phones 119999900xx fictícios)",
   "secoes": {
     "1_inventario": "concluido",
     "2_drift": "concluido",

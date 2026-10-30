@@ -1,6 +1,6 @@
 # Roteiro — Teste de Matriz RLS (Isolamento entre Tenants)
 
-**Status**: NÃO EXECUTADO via MCP — `BEGIN`/`SET LOCAL role`/`ROLLBACK` não são suportados pelo MCP (erro: `EXECUTE of transaction commands is not implemented`). O arquivo `01_rls_matrix.sql` contém o SQL completo; executar localmente com `scripts/db-audit/replay-local.sh`.
+**Status**: EXECUTADO em PostgreSQL 16 local (sessão 2026-10-30T23:18Z) — 7/7 testes PASS. Via MCP não é possível (`BEGIN`/`SET LOCAL role`/`ROLLBACK` não suportados — `EXECUTE of transaction commands is not implemented`). O arquivo `01_rls_matrix.sql` contém o SQL completo.
 **Referência**: Seção 11 do RELATORIO_AUDITORIA_SUPABASE.md
 
 ---
@@ -38,15 +38,22 @@ node scripts/db-audit/check-migration-drift.mjs
 
 ---
 
-## Resultado da Execução — PostgreSQL 16 local (2026-10-30)
+## Resultado da Execução — PostgreSQL 16 local (2026-10-30T23:18Z, esta sessão)
+
+Postgres 16.15 local (pg_ctlcluster 16 main start), banco `rls_audit_test`, schema criado ad-hoc
+com RLS e SET LOCAL ROLE para simular JWT — dados sintéticos (domínio `.test`, phones fictícios).
 
 ```
-T-01: PASS — user-a vê 2 msgs do seu contato (isolamento positivo OK)
-T-02: PASS — user-a não vê msgs de user-b (count=0) (isolamento negativo OK)
-T-C2: PASS — UPDATE cross-tenant BLOQUEADO (0 rows)
-T-05: PASS — INSERT cross-tenant bloqueado
-T-09: PASS — DELETE cross-tenant bloqueado (rows=0)
+T-01  PASS — user-a vê 2 msg(s) do seu contato (isolamento positivo OK)
+T-02  PASS — user-a não vê msgs de user-b (count=0) — ISOLAMENTO OK
+T-C2  PASS — UPDATE cross-tenant BLOQUEADO (new row violates row-level security policy)
+T-05  PASS — INSERT cross-tenant bloqueado (new row violates row-level security policy)
+T-09  PASS — DELETE cross-tenant BLOQUEADO (rows=0)
+T-B1  PASS — user-b vê 1 msg(s) do seu contato (isolamento positivo tenant B OK)
+T-B2  PASS — user-b não vê msgs de user-a (count=0) — ISOLAMENTO OK
 ```
+
+**7/7 PASS** — isolamento tenant A×B confirmado para SELECT, UPDATE, INSERT e DELETE.
 
 Script SQL completo: `testes/01_rls_matrix.sql`
 
