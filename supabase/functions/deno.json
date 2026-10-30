@@ -1,6 +1,6 @@
 {
   "lock": "../../scripts/ci/deno.lock",
-  "nodeModulesDir": "auto",
+  "nodeModulesDir": "none",
   "compilerOptions": {
     "skipLibCheck": true
   }

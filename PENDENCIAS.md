@@ -85,14 +85,14 @@ Está em draft. Joaquim deve revisar, aprovar e mergear.
 
 ---
 
-## 8. `deploy-functions` — `preparar-artifact-deploy.sh` com diretório vazio (`workflow_dispatch` sem push real)
+## 8. `deploy-functions` — `@types/node` não encontrado no `deno check`
 
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/deploy-functions.yml` |
-| Erro exato | `##[warning]No files were found with the provided path: /home/runner/work/_temp/edge-deployment-evidence-public/. No artifacts will be uploaded.` |
-| Run com falha | [40988248151](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40988248151) (SHA `ca89064`, 2026-10-30) |
-| Causa | `scripts/edge-deploy/preparar-artifact-deploy.sh` cria o diretório `$DESTINO` mas não deposita nenhum arquivo quando acionado via `workflow_dispatch` sem push real em `supabase/functions/`. O passo `upload-artifact` falha com "No files were found". |
-| Fix identificado | Adicionar ao final do script um bloco que grava `sem-deploy.json` quando `$DESTINO` estiver vazio após as cópias — evita a falha sem mascarar erros reais de deploy. |
-| Status | PR em aberto — não mergeado. O `deno.lock` (causa separada que afetava `deno check`) foi corrigido em PR #2394 (mergeado em 2026-10-30T22:12). |
-| Ação necessária | Abrir e mergear PR com o fix de `preparar-artifact-deploy.sh`. Após o merge, disparar `workflow_dispatch` do `deploy-functions` para confirmar `conclusion: success`. |
+| Erro exato | `error: Error: Could not find "@types/node" in a node_modules folder. Deno expects the node_modules/ directory to be up to date.` |
+| Run com falha | [41138661310](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41138661310) (SHA `bcb11c84`, 2026-10-30) |
+| Causa | `supabase/functions/deno.json` usava `nodeModulesDir: "auto"`. Com esse modo, o Deno 2.9.5 cria `node_modules/` mas o lockfile só contém `npm:tslib@2.8.1` — `@types/node` não é instalado. Ao encontrar `/// <reference types="node" />` (transitivo via `@supabase/realtime-js` → `ws`), o `deno check` falha. |
+| Fix | `supabase/functions/deno.json`: `nodeModulesDir: "auto"` → `nodeModulesDir: "none"`. Com `"none"` o Deno não usa `node_modules/`; as referências transitivas em `.d.ts` são ignoradas por `skipLibCheck: true`. |
+| Status | **Fix em PR — aguardando merge e run de prova.** O fix do `preparar-artifact-deploy.sh` (diretório vazio) foi mergeado em PR #2358 (`43ab27a`) antes desta sessão — esse item específico está resolvido. |
+| Ação necessária | Após o merge do PR com este fix, o push em `supabase/functions/deno.json` dispara `deploy-functions.yml` automaticamente. Confirmar `conclusion: success` no run gerado. |
