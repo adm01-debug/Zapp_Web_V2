@@ -15,6 +15,12 @@ import { KeyboardShortcutsHelp } from '@/components/inbox/KeyboardShortcutsHelp'
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
   getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+}));
+
+// TemplatesWithVariables exige AuthProvider via useAuth (só lê profile?.name).
+vi.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'auth-user-1' }, profile: { id: 'perfil-atual-1', name: 'Agente' } }),
 }));
 
 const template = {
@@ -36,7 +42,7 @@ describe('inbox — botões de ícone com nome acessível (UK-13/UK-13b)', () =>
         templates={[template]}
         onUseTemplate={vi.fn()}
         contactData={{ name: 'Ana' }}
-      />,
+      />
     );
 
     expect(screen.getByRole('button', { name: 'Editar template' })).toBeInTheDocument();

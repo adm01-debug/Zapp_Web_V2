@@ -84,6 +84,7 @@ Deno.test("rate limit (IP) nega antes de autenticar -> 429 sem entregar a senha"
 Deno.test("rate limit por USUARIO pos-auth: conta comprometida trocando de IP -> 429", async () => {
   const keys: string[] = [];
   const res = await handleGetSipPassword(postSip({ "x-forwarded-for": "9.9.9.9", Authorization: "Bearer x.y.z" }), {
+    requireAuthFn: async () => ({ userId: USER }),
     client: fakeClient(USER, { id: "p1", is_active: true }),
     enforceRateLimit: (key) => {
       keys.push(key);

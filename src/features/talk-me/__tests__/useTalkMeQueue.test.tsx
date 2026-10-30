@@ -5,6 +5,7 @@ const rpc = vi.hoisted(() => vi.fn());
 const useSupabaseRealtime = vi.hoisted(() => vi.fn());
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc } }));
 vi.mock('@/hooks/realtime/useSupabaseRealtime', () => ({ useSupabaseRealtime }));
+vi.mock('@/lib/talkme/telemetry', () => ({ emitTalkMeTelemetry: vi.fn() }));
 
 import { TalkMeConflictError, TalkMeOfflineError, TalkMeOutcomeUnknownError } from '../types';
 import { useTalkMeQueue } from '../useTalkMeQueue';
@@ -273,6 +274,27 @@ describe('useTalkMeQueue', () => {
     expect(result.current.items).toHaveLength(1);
   });
 
+  it('remove o item e impede abrir o chat quando o aceite idempotente retorna atendimento resolvido', async () => {
+    installRpcHandlers({
+      claim: () => Promise.resolve({
+        data: [{ ...claimRows[0], conversation_status: 'resolved' }],
+        error: null,
+      }),
+    });
+    const { result } = await renderLoadedQueue();
+    const queueCallsBefore = rpcCallCount(rpcNames.queues);
+
+    await act(async () => {
+      await expect(result.current.claim('contact-1')).rejects.toMatchObject({
+        name: 'TalkMeConflictError',
+        message: 'Este atendimento já foi resolvido',
+      });
+    });
+
+    expect(result.current.items).toHaveLength(0);
+    await waitFor(() => expect(rpcCallCount(rpcNames.queues)).toBe(queueCallsBefore + 1));
+  });
+
   it('mantém os resultados protegidos enquanto a nova busca aguarda o debounce', async () => {
     const { result } = renderHook(() => useTalkMeQueue(true));
     await waitFor(() => expect(result.current.items).toHaveLength(1));
@@ -348,6 +370,28 @@ describe('useTalkMeQueue', () => {
       await act(async () => { await vi.advanceTimersByTimeAsync(200); });
       expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_queues')).toHaveLength(2);
       expect(rpc.mock.calls.filter(([name]) => name === 'talk_me_list_waiting')).toHaveLength(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('agrupa dez eventos realtime em 200 ms em um único ciclo de reconciliação', async () => {
+    renderHook(() => useTalkMeQueue(true));
+    await waitFor(() => expectQueueAndWaitingCalls(1, 1));
+    const contactsSubscription = latestRealtimeSubscription('talk-me-contacts');
+
+    vi.useFakeTimers();
+    try {
+      for (let event = 0; event < 10; event += 1) {
+        await advanceTimers(20);
+        act(() => contactsSubscription.onAll());
+      }
+      expectQueueAndWaitingCalls(1, 1);
+
+      await advanceTimers(349);
+      expectQueueAndWaitingCalls(1, 1);
+      await advanceTimers(1);
+      expectQueueAndWaitingCalls(2, 2);
     } finally {
       vi.useRealTimers();
     }
@@ -613,6 +657,50 @@ describe('useTalkMeQueue', () => {
     expect(result.current.items).toHaveLength(51);
     expect(result.current.items[result.current.items.length - 1]?.contactId).toBe('contact-51');
     expect(result.current.reconciling).toBe(false);
+  });
+
+  it('limita a reconciliação a três páginas e continua do cursor reconciliado no loadMore', async () => {
+    const makeRow = (index: number) => ({
+      ...waitingRows[0],
+      contact_id: `contact-${index}`,
+      contact_name: `Contato ${index}`,
+      last_message_id: `message-${index}`,
+      total_count: 250,
+      queue_position: index,
+    });
+    const pages = Array.from({ length: 5 }, (_, page) => (
+      Array.from({ length: 50 }, (_, index) => makeRow(page * 50 + index + 1))
+    ));
+    rpc.mockImplementation((name: string, params?: { p_cursor_contact_id?: string }) => {
+      if (name === 'talk_me_list_queues') {
+        return Promise.resolve({ data: [{ ...queueRows[0], waiting_count: 250 }], error: null });
+      }
+      if (name === 'talk_me_list_waiting') {
+        const cursorIndex = params?.p_cursor_contact_id
+          ? Number(params.p_cursor_contact_id.replace('contact-', ''))
+          : 0;
+        return waitingRequest(pages[Math.floor(cursorIndex / 50)] ?? []);
+      }
+      throw new Error(`RPC inesperada: ${name}`);
+    });
+    const { result } = renderHook(() => useTalkMeQueue(true));
+    await waitFor(() => expect(result.current.items).toHaveLength(50));
+    for (let page = 1; page < pages.length; page += 1) {
+      await act(async () => { await result.current.loadMore(); });
+    }
+    expect(result.current.items).toHaveLength(250);
+    const waitingCallsBeforeRefresh = rpcCallCount(rpcNames.waiting);
+
+    await act(async () => { await result.current.refresh(); });
+
+    expect(rpcCallCount(rpcNames.waiting)).toBe(waitingCallsBeforeRefresh + 3);
+    expect(result.current.selectedQueueId).toBe('queue-1');
+    expect(result.current.items).toHaveLength(150);
+    expect(result.current.items[149]?.contactId).toBe('contact-150');
+
+    await act(async () => { await result.current.loadMore(); });
+    expect(result.current.items).toHaveLength(200);
+    expect(result.current.items[199]?.contactId).toBe('contact-200');
   });
 
   it('alcança o último atendimento de uma fila com 500 itens sem duplicar identidades', async () => {

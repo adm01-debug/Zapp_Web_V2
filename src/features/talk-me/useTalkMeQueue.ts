@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useDebounce } from '@/hooks/performance/useTimingHooks';
 import { useSupabaseRealtime } from '@/hooks/realtime/useSupabaseRealtime';
 import { getLogger } from '@/lib/logger';
+import { emitTalkMeTelemetry } from '@/lib/talkme/telemetry';
 import { useNetworkStatus } from '@/hooks/system/useNetworkStatus';
 import {
   TalkMeConflictError,
@@ -17,9 +18,11 @@ import {
 const log = getLogger('useTalkMeQueue');
 const SELECTED_QUEUE_KEY = 'zapp:talk-me:selected-queue';
 const PAGE_SIZE = 50;
+const MAX_RECONCILE_PAGES = 3;
 const REALTIME_DEBOUNCE_MS = 350;
 const REALTIME_MAX_WAIT_MS = 2_000;
 const ELIGIBILITY_RECONCILE_INTERVAL_MS = 60_000;
+const RESOLVED_CONFLICT_MESSAGE = 'Este atendimento já foi resolvido';
 
 /**
  * Envia o aceite e separa as duas famílias de erro: o servidor respondeu (erro
@@ -142,6 +145,7 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
   const eligibilityReconcileInFlightRef = useRef(false);
   const claimingRef = useRef(false);
   const wasOpenRef = useRef(isOpen);
+  const openedAtRef = useRef<number | null>(null);
   const { isOnline } = useNetworkStatus();
   const isOffline = !isOnline;
   const isOfflineRef = useRef(isOffline);
@@ -169,6 +173,7 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
       if (generation !== queuesGenerationRef.current) return;
       if (error) {
         log.error('Falha ao consultar filas TALK ME', error);
+        emitTalkMeTelemetry('erro_fila', { tipo_erro: 'listar_filas' });
         setQueuesError('Não foi possível atualizar as filas.');
         return;
       }
@@ -188,6 +193,7 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     } catch (error) {
       if (generation !== queuesGenerationRef.current) return;
       log.error('Falha inesperada ao consultar filas TALK ME', error);
+      emitTalkMeTelemetry('erro_fila', { tipo_erro: 'listar_filas_inesperado' });
       setQueuesError('Não foi possível atualizar as filas.');
     } finally {
       if (generation === queuesGenerationRef.current) setQueuesLoading(false);
@@ -241,17 +247,19 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     }
     if (error) {
       log.error('Falha ao consultar atendimentos TALK ME', error);
+      emitTalkMeTelemetry('erro_fila', {
+        queue_id: selectedQueueId,
+        tipo_erro: append ? 'paginar_atendimentos' : 'listar_atendimentos',
+      });
       if (append) setLoadMoreError('Não foi possível carregar mais atendimentos.');
       else setItemsError('Não foi possível carregar os atendimentos.');
     } else {
       const next = (data ?? []).map(mapWaitingContact);
-      setItems((current) => {
-        const merged = append
-          ? [...new Map([...current, ...next].map((item) => [item.contactId, item])).values()]
-          : next;
-        itemsRef.current = merged;
-        return merged;
-      });
+      const merged = append
+        ? [...new Map([...itemsRef.current, ...next].map((item) => [item.contactId, item])).values()]
+        : next;
+      itemsRef.current = merged;
+      setItems(merged);
       if (!append) setResolvedSearch(debouncedSearch);
       setItemsError(null);
       if (append) setLoadMoreError(null);
@@ -269,7 +277,10 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
 
   const reconcileLoadedPages = useCallback(async () => {
     const reconcileGeneration = ++reconcileGenerationRef.current;
-    const pagesToRestore = Math.max(1, Math.ceil(itemsRef.current.length / PAGE_SIZE));
+    const pagesToRestore = Math.min(
+      MAX_RECONCILE_PAGES,
+      Math.max(1, Math.ceil(itemsRef.current.length / PAGE_SIZE)),
+    );
     setReconciling(true);
     try {
       const firstPageLoaded = await fetchWaiting(false);
@@ -302,6 +313,16 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     wasOpenRef.current = isOpen;
     if (justOpened) void fetchQueues();
   }, [fetchQueues, isOpen]);
+
+  useEffect(() => {
+    if (!enabled || !isOpen) {
+      openedAtRef.current = null;
+      return;
+    }
+    if (openedAtRef.current !== null) return;
+    openedAtRef.current = Date.now();
+    emitTalkMeTelemetry('abertura', selectedQueueId ? { queue_id: selectedQueueId } : undefined);
+  }, [enabled, isOpen, selectedQueueId]);
 
   const scheduleRealtimeRefresh = useCallback(() => {
     if (!enabled || !isOpen) return;
@@ -427,8 +448,15 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
   }, []);
 
   const claim = useCallback(async (contactId: string): Promise<TalkMeClaimResult> => {
-    if (!enabled || claimingRef.current) throw new TalkMeConflictError();
+    if (!enabled || claimingRef.current) {
+      emitTalkMeTelemetry('conflito', {
+        queue_id: selectedQueueId ?? undefined,
+        tipo_erro: claimingRef.current ? 'aceite_em_andamento' : 'recurso_desabilitado',
+      });
+      throw new TalkMeConflictError();
+    }
     if (isOfflineRef.current || (typeof navigator !== 'undefined' && navigator.onLine === false)) {
+      emitTalkMeTelemetry('offline', { queue_id: selectedQueueId ?? undefined });
       throw new TalkMeOfflineError();
     }
     claimingRef.current = true;
@@ -451,6 +479,19 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
         return remaining;
       });
       void fetchQueues();
+      if (row.conversation_status !== 'open' && row.conversation_status !== 'waiting') {
+        emitTalkMeTelemetry('conflito', {
+          queue_id: row.queue_id,
+          tipo_erro: 'atendimento_resolvido',
+        });
+        const conflict = new TalkMeConflictError();
+        conflict.message = RESOLVED_CONFLICT_MESSAGE;
+        throw conflict;
+      }
+      emitTalkMeTelemetry('aceite_ok', {
+        queue_id: row.queue_id,
+        ms_desde_abertura: Math.max(0, Date.now() - (openedAtRef.current ?? Date.now())),
+      });
       return {
         contactId: row.contact_id,
         queueId: row.queue_id,
@@ -458,11 +499,24 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
         conversationStatus: row.conversation_status,
         claimedAt: row.claimed_at,
       };
+    } catch (error) {
+      if (error instanceof TalkMeOutcomeUnknownError) {
+        emitTalkMeTelemetry('resultado_desconhecido', {
+          queue_id: selectedQueueId ?? undefined,
+          tipo_erro: 'resposta_ausente',
+        });
+      } else if (error instanceof TalkMeConflictError && error.message !== RESOLVED_CONFLICT_MESSAGE) {
+        emitTalkMeTelemetry('conflito', {
+          queue_id: selectedQueueId ?? undefined,
+          tipo_erro: 'indisponivel',
+        });
+      }
+      throw error;
     } finally {
       claimingRef.current = false;
       setClaimingContactId(null);
     }
-  }, [enabled, fetchQueues]);
+  }, [enabled, fetchQueues, selectedQueueId]);
 
   const fetchPendingMessages = useCallback(async (contactId: string): Promise<TalkMePendingMessage[]> => {
     if (!enabled) return [];
@@ -471,10 +525,14 @@ export function useTalkMeQueue(isOpen: boolean, enabled = true) {
     });
     if (error) {
       log.error('Falha ao consultar histórico pendente TALK ME', error);
+      emitTalkMeTelemetry('erro_fila', {
+        queue_id: selectedQueueId ?? undefined,
+        tipo_erro: 'historico_pendente',
+      });
       throw error;
     }
     return (data ?? []).map(mapPendingMessage);
-  }, [enabled]);
+  }, [enabled, selectedQueueId]);
 
   const selectedQueue = useMemo(
     () => queues.find((queue) => queue.queueId === selectedQueueId) ?? null,

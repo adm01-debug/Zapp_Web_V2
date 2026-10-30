@@ -70,6 +70,7 @@ export function evolutionToRealtimeMessage(evo: EvolutionMessage): NormalizedRea
     media_meta: null,
     ptt: null,
     reply_to_id: null,
+    transcribed_at: null,
   };
 }
 

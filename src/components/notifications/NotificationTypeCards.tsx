@@ -136,9 +136,10 @@ export function NotificationTypeSection({ settings, updateSettings }: Notificati
   );
 }
 
-function NotifRow({ icon: Icon, iconColor, title, desc, enabled, onToggle, soundSelector }: {
+function NotifRow({ icon: Icon, iconColor, title, desc, enabled, onToggle, soundSelector, disabled }: {
   icon: React.ElementType; iconColor: string; title: string; desc: string;
   enabled?: boolean; onToggle?: (checked: boolean) => void; soundSelector?: React.ReactNode;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between py-2">
@@ -151,7 +152,7 @@ function NotifRow({ icon: Icon, iconColor, title, desc, enabled, onToggle, sound
       </div>
       <div className="flex items-center gap-3">
         {soundSelector}
-        {onToggle && <Switch checked={enabled} onCheckedChange={onToggle} aria-label={`Ativar notificação de ${title}`} />}
+        {onToggle && <Switch checked={enabled} onCheckedChange={onToggle} disabled={disabled} aria-label={`Ativar notificação de ${title}`} />}
       </div>
     </div>
   );
@@ -253,7 +254,7 @@ export function SentimentAlertCard({ settings, updateSettings }: SentimentAlertC
  * Cada interruptor grava na hora pelo hook (upsert otimista com rollback).
  */
 export function ConnectionAlertPreferencesCard() {
-  const { preferences, updatePreference } = useConnectionAlertPreferences();
+  const { preferences, updatePreference, isLoading, isError, isSaving } = useConnectionAlertPreferences();
 
   return (
     <Card className="border-secondary/20 bg-card">
@@ -269,6 +270,11 @@ export function ConnectionAlertPreferencesCard() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {isError && (
+          <p role="alert" className="text-sm text-[hsl(var(--destructive-text))]">
+            Não foi possível carregar as preferências. Os interruptores mostram o padrão, não o que está salvo.
+          </p>
+        )}
         <p className="text-sm font-medium">Quando alertar</p>
         <NotifRow
           icon={TrendingDown}
@@ -277,6 +283,7 @@ export function ConnectionAlertPreferencesCard() {
           desc="Avisar quando a conexão ficar instável"
           enabled={preferences.alert_on_degraded}
           onToggle={(checked) => updatePreference({ alert_on_degraded: checked })}
+          disabled={isLoading}
         />
         <Separator />
         <NotifRow
@@ -286,6 +293,7 @@ export function ConnectionAlertPreferencesCard() {
           desc="Avisar quando a conexão cair"
           enabled={preferences.alert_on_disconnected}
           onToggle={(checked) => updatePreference({ alert_on_disconnected: checked })}
+          disabled={isLoading}
         />
         <Separator />
         <p className="text-sm font-medium">Por onde avisar</p>
@@ -296,6 +304,7 @@ export function ConnectionAlertPreferencesCard() {
           desc="Notificação do navegador quando a conexão cair"
           enabled={preferences.push_enabled}
           onToggle={(checked) => updatePreference({ push_enabled: checked })}
+          disabled={isLoading}
         />
         <Separator />
         <NotifRow
@@ -305,9 +314,13 @@ export function ConnectionAlertPreferencesCard() {
           desc="Aviso por e-mail quando a conexão cair"
           enabled={preferences.email_enabled}
           onToggle={(checked) => updatePreference({ email_enabled: checked })}
+          disabled={isLoading}
         />
         <p className="text-xs text-muted-foreground">
           Estas preferências valem apenas para os avisos de conexão de WhatsApp.
+        </p>
+        <p className="text-xs text-muted-foreground" aria-live="polite">
+          {isSaving ? "Salvando…" : ""}
         </p>
       </CardContent>
     </Card>
