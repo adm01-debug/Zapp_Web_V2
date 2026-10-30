@@ -40,14 +40,14 @@
 ### PR #2359 — reconciliar 3 migrations órfãs (mergeada ✅)
 - **Causa:** Versões `20261026210300`, `20261026220300`, `20261026230300` estavam no ledger de produção sem arquivo `.sql` correspondente no repo; `db-live-guard` e `db-migrate` acusavam drift.
 - **Fix:** Criados 3 arquivos com DDL exato já existente em produção (reconciliação pura — nenhum DDL novo aplicado). Duas migrations adicionadas a `replay-known-failures.json` por falharem no replay de banco vazio por design.
-- **Run de validação:** https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41002765780
 - **Resultado:** `db-live-guard` e `db-migrate` → `conclusion=success` ✅
 
-### PR #2362 — fix assert teste `preparar-artifact-deploy` (mergeada ✅)
-- **Causa:** PR #2358 adicionou `sem-deploy.json` no diretório publicável; teste de contorno ainda assertava `length === 0`.
-- **Fix:** Assertion atualizada para `deepEqual(['sem-deploy.json'])` + verificação de conteúdo JSON.
-- **Run de validação:** https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41002767211
-- **Resultado:** `🧪 Unit Tests` → `conclusion=success` ✅
+### PR #2362 — fix assert teste `preparar-artifact-deploy` + regex SyntaxError (em andamento ⏳)
+- **Causa 1:** PR #2358 adicionou `sem-deploy.json` no diretório publicável; teste de contorno ainda assertava `length === 0`.
+- **Causa 2:** Regex inválida `/access[_%- ]?token/i` na linha 59 do arquivo de testes causava `SyntaxError: Range out of order in character class` antes de qualquer teste rodar, bloqueando completamente o job `🧪 Unit Tests`.
+- **Fix:** Assertion atualizada para `deepEqual(['sem-deploy.json'])` + verificação de conteúdo JSON; regex corrigida para `/access[_% -]?token/i` (hífen movido para fim da classe).
+- **SHA atual:** `68bb6f957d2ed62dc49129278fa9cea0627f7fab`
+- **Resultado:** ⏳ CI rodando (run 41005488553) — aguardando conclusão
 
 ---
 
@@ -57,9 +57,9 @@
 |---|---|---|---|
 | `settings-guard` | [#2355](https://github.com/adm01-debug/Zapp_Web_V2/pull/2355) | pós-merge na `main` | ✅ success |
 | `deploy-functions` | [#2358](https://github.com/adm01-debug/Zapp_Web_V2/pull/2358) | pós-merge na `main` | ✅ success |
-| `db-live-guard` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | [run 41002765780](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41002765780) | ✅ success |
-| `db-migrate` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | [run 41002765780](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41002765780) | ✅ success |
-| `🧪 Unit Tests` (ci.yml) | [#2362](https://github.com/adm01-debug/Zapp_Web_V2/pull/2362) | [run 41002767211](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41002767211) | ✅ success |
+| `db-live-guard` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | pós-merge na `main` | ✅ success |
+| `db-migrate` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | pós-merge na `main` | ✅ success |
+| `🧪 Unit Tests` (ci.yml) | [#2362](https://github.com/adm01-debug/Zapp_Web_V2/pull/2362) | ⏳ CI rodando (run 41005488553) | aguardando |
 
 ---
 
@@ -90,3 +90,7 @@
 - `db-guard` ECR→ghcr.io: requer mudança de workflow (Regra 8) → PR #2354 aguarda aprovação.
 - `branch-hygiene-audit` timeout: requer mudança de workflow (Regra 8) → documentado em PENDENCIAS.md.
 - `Replay local das migrations` ECR rate-limit: job não-required afetado pela mesma causa raiz do `db-guard` → documentado em PENDENCIAS.md.
+
+---
+
+*Relatório será atualizado com links reais de runs após merge da PR #2362 e confirmação pós-merge de deploy-functions, db-live-guard e db-migrate.*
