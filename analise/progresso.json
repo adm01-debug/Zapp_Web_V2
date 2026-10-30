@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "analisadas": [
+    {
+      "branch": "hermes/telefonia-contrato-dados-26092615475e51",
+      "tip_sha": "4c41d3b1a",
+      "veredito": "SUPERADA",
+      "confianca": 0.95,
+      "dossie": "analise/dossies/hermes-telefonia-contrato-dados-26092615475e51.md",
+      "analisado_em": "2026-10-23",
+      "sessao": "claude/dazzling-cannon-j7iw08",
+      "verificado_em": "2026-10-30",
+      "verificacao_sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fases 1-2 do plano de telefonia (biblioteca de domínio + contrato de dados). Conteúdo 100% em main: migration 20260926800000 em produção, src/lib/calls/ evoluído para 21 arquivos (branch tinha 6). Análise original: diff 100% (20 arquivos lidos), typecheck 0 erros, 217 testes passam, eslint exit 0, cherry-pick testado (2 conflitos doc-only, código=patches vazios). Verificação 2026-10-30: branch deletada do remoto, commits originais ausentes (git cat-file -t 4c41d3b1a → NOT_EXIST); 4 fatos confirmados em origin/main: 21 arquivos em src/lib/calls/, migration 20260926800000 presente, SINGU 0 refs no código de telefonia, 16 arquivos importam src/lib/calls. Zero escrita em remoto, zero banco tocado, sem worktree nesta sessão (branch inacessível)."
+    }
+  ]
+}
