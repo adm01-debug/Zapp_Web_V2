@@ -107,6 +107,8 @@ export interface AiJobHandlerInput {
   /** `ai_jobs.function_name` — finalidade declarada pelo produtor do job. */
   functionName: string;
   userId: string | null;
+  /** Cliente de service role do próprio worker (o mesmo que leu as linhas do lote). */
+  supabase: SupabaseClient;
   /**
    * Aborta quando o lease é PERDIDO durante o handler (o keeper viu o heartbeat
    * devolver false). A perda é PROPAGADA ao trabalho — nunca só um `warn` e
@@ -247,10 +249,42 @@ async function handleAiGenerate(input: AiJobHandlerInput): Promise<AiJobHandlerR
   };
 }
 
+/**
+ * `copilot.tick` — Copiloto RADAR (CV-021–045). Produzido pelo gatilho
+ * `trg_copilot_tick_on_contact_message`; a lógica mora em `_shared/copilot-tick.ts`.
+ * Gate próprio: a capacidade `ai.capability.copilot_live` (semeada DESLIGADA) —
+ * desligada, o tick termina sem tocar o provedor. Import dinâmico pelo mesmo
+ * motivo do `ai.generate`: sem tick, a pilha de geração nem carrega.
+ */
+async function handleCopilotTickJob(input: AiJobHandlerInput): Promise<AiJobHandlerResult> {
+  const [{ handleCopilotTick, CopilotTickError }, { generateWithRouting }, { readCapabilityFlag }] = await Promise.all([
+    import("../_shared/copilot-tick.ts"),
+    import("../_shared/ai-generate.ts"),
+    import("../_shared/ai-feature-flags.ts"),
+  ]);
+  try {
+    return await Promise.race([
+      handleCopilotTick(
+        { job: { id: input.job.id, attemptCount: input.job.attemptCount }, payload: input.payload },
+        {
+          supabase: input.supabase,
+          generate: (params) => generateWithRouting(params),
+          readFlag: readCapabilityFlag,
+        },
+      ),
+      leaseLostRejection(input.signal, "COPILOT_LEASE_LOST"),
+    ]);
+  } catch (err) {
+    if (err instanceof CopilotTickError) throw new AiJobHandlerError(err.code, err.message);
+    throw err;
+  }
+}
+
 /** Registro EXPLÍCITO de handlers — nenhum `kind` executa fora daqui. */
 export const HANDLERS: Readonly<Record<string, AiJobHandler>> = {
   "ai_jobs.reap_expired": handleReapExpired,
   "ai.generate": handleAiGenerate,
+  "copilot.tick": handleCopilotTickJob,
   // IA-047: confirmador de efeitos externos sem confirmação. SOMENTE-LEITURA no
   // provedor — nunca reenvia (ver `_shared/effect-reconcile.ts`).
   "effect.reconcile": handleEffectReconcile,
@@ -269,7 +303,7 @@ export const HANDLERS: Readonly<Record<string, AiJobHandler>> = {
  * repetir não custa nada no provedor. `effect.reconcile` também fica de fora:
  * é SOMENTE-LEITURA no provedor por contrato (IA-047), repetir é seguro.
  */
-const EFFECTFUL_KINDS: ReadonlySet<string> = new Set(["ai.generate"]);
+const EFFECTFUL_KINDS: ReadonlySet<string> = new Set(["ai.generate", "copilot.tick"]);
 
 // ---------------------------------------------------------------------------
 // Leitura da linha completa (kind/payload) dos jobs arrendados.
@@ -420,6 +454,7 @@ export async function runBatch(
         payload: row.payload ?? {},
         functionName: row.function_name,
         userId: row.user_id,
+        supabase,
         signal: leaseCtl.signal,
       });
     } catch (err) {
