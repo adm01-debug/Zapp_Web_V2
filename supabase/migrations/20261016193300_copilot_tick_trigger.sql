@@ -12,6 +12,7 @@ DECLARE
   v_phone          text;
   v_flag_enabled   boolean;
   v_profile_id     uuid;
+  v_user_id        uuid;
   v_state_version  bigint;
 BEGIN
   IF NEW.sender <> 'contact' THEN RETURN NEW; END IF;
@@ -34,6 +35,9 @@ BEGIN
 
   v_profile_id := v_contact.assigned_to;
   IF v_profile_id IS NULL THEN RETURN NEW; END IF;
+
+  SELECT user_id INTO v_user_id FROM public.profiles WHERE id = v_profile_id LIMIT 1;
+  IF v_user_id IS NULL THEN RETURN NEW; END IF;
 
   PERFORM set_config('request.jwt.claim.role', 'service_role', true);
 
@@ -74,7 +78,7 @@ BEGIN
          || NEW.contact_id::text || ':'
          || NEW.whatsapp_connection_id::text || ':'
          || gen_random_uuid()::text,
-       'copilot_tick', 'copilot-live', v_profile_id,
+       'copilot_tick', 'copilot-live', v_user_id,
        jsonb_build_object(
          'contact_id',             NEW.contact_id,
          'whatsapp_connection_id', NEW.whatsapp_connection_id,

@@ -48,7 +48,11 @@ CREATE OR REPLACE FUNCTION public.copilot_has_presence(p_session_id uuid)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path TO 'public','pg_temp' AS $$
   SELECT EXISTS (
-    SELECT 1 FROM public.copilot_presence
-     WHERE session_id = p_session_id AND expires_at > now()
+    SELECT 1 FROM public.copilot_presence cp
+    JOIN public.copilot_sessions cs ON cs.id = cp.session_id
+    JOIN public.profiles p ON p.id = cs.profile_id
+     WHERE cp.session_id = p_session_id
+       AND cp.expires_at > now()
+       AND p.user_id = auth.uid()
   );
 $$;
