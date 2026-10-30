@@ -22,6 +22,16 @@ CREATE TABLE IF NOT EXISTS public.copilot_retention_aggregates (
   PRIMARY KEY (period_start, session_id, insight_type, feedback_action)
 );
 
+ALTER TABLE public.copilot_retention_aggregates ENABLE ROW LEVEL SECURITY;
+
+-- Somente a função de retenção (SECURITY DEFINER, roda como service_role) acessa esta tabela.
+-- O front nunca lê nem escreve nela diretamente.
+CREATE POLICY "copilot_retention_aggregates_service"
+  ON public.copilot_retention_aggregates
+  FOR ALL TO service_role
+  USING (true)
+  WITH CHECK (true);
+
 CREATE OR REPLACE FUNCTION public.run_copilot_retention()
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER
 SET search_path TO 'public','pg_temp' AS $$
