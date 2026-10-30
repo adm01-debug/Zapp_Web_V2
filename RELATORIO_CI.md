@@ -209,16 +209,39 @@ Após o push do SHA `c4c7139e` na main, novas falhas surgiram:
 ### Ação tomada
 
 PR [#2394](https://github.com/adm01-debug/Zapp_Web_V2/pull/2394) (sessão anterior `claude/hopeful-knuth-4brqti`) contém:
-1. `scripts/ci/deno.lock`: hash `tslib@2.8.1` revertido ao `c38da5d…` (esm.sh reverteu de volta)
+1. `scripts/ci/deno.lock`: hash `tslib@2.8.1` atualizado: `c38da5d…` → `ebce3cd…` (esm.sh alterou o conteúdo sem mudar a versão)
 2. `scripts/ci/fila-merge.mjs`: `execFileSync` do `gh pr list` envolto em try/catch com `maxBuffer: 10MB`
 
-Branch atualizado com main (`update_pr_branch`) em 2026-10-30T21:33 UTC.
-CI rodando no SHA `6e30a4deb8e38331f205dd58ba300ab6e21e36e6`.
+Branch atualizado com main em 2026-10-30T21:53 UTC (SHA `889c30cb59ff7207f587c0e40023104fc2d44a1f`).
+`auto_merge: squash` habilitado no PR.
+
+### Estado dos required checks (PR #2394, SHA `889c30cb`)
+
+| Check | Status |
+|---|---|
+| `Replay local das migrations` | ✅ `success` (21:55:48Z) |
+| `🔎 TypeCheck` (`🔍 Lint & TypeCheck`) | ✅ `success` (21:59:41Z) |
+| `Contrato DB offline` | ⏳ `in_progress` |
+| `🎭 E2E Tests (Playwright)` | ⏳ `in_progress` |
+| `🧪 Unit Tests (1/3)`, `(2/3)`, `(3/3)` | ⏳ `queued` |
+| `🔒 Security Audit` | ⏳ `queued` |
+| `🧩 Node CI Scripts` | ⏳ `queued` |
+| `copilot-pull-request-reviewer` | ❌ (serviço externo, não é required check) |
+
+### Baseline local desta sessão (medido em 2026-10-30T22:00 UTC, container cloud)
+
+| Verificação | Resultado |
+|---|---|
+| `bun install --frozen-lockfile` | ✅ exit 0 (644 pacotes, 4.98s) |
+| `bun run build` | ✅ exit 0 (built in 24.32s) |
+| `bunx tsc --noEmit` | ✅ exit 0 (0 erros) |
+| `bunx eslint src --ext .ts,.tsx --quiet` | ✅ exit 0 |
+| `bun test` | ⚠️ exit 0, 4410 pass / 5515 fail — `vi.hoisted` não implementado no bun nativo (structural, não é regressão desta sessão; vitest CI ✅) |
 
 ### Pendências desta sessão
 
 - DB Live Guard e Copilot Code Review registrados em `PENDENCIAS.md §6` e `§7`
-- E2E logado deve se resolver automaticamente após merge do PR #2394 (edge functions voltam)
-- DB Live Guard deve se resolver no próximo run agendado após merge
+- E2E logado deve se resolver após merge do PR #2394 (edge functions voltam com hash deno correto)
+- DB Live Guard deve se resolver no próximo run agendado (06:13 UTC) após merge
 
-*Atualizado em 2026-10-30T21 UTC pela sessão `claude/focused-hopper-qhavw1`.*
+*Atualizado em 2026-10-30T22:00 UTC pela sessão `claude/focused-hopper-qhavw1`.*
