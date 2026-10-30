@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Workflows Bloqueados por Regra 8
 
-**Última atualização:** 2026-10-30T13:00Z  
+**Última atualização:** 2026-10-30T14:00Z  
 **Branch de origem:** `claude/keen-galileo-dxai3p`  
 **SHA main de referência:** `fec9d78ee8b7f05761f8e6178743907bb5d1b912` (main atual, 2026-10-30)
 
@@ -15,9 +15,9 @@ Estes workflows falharam no baseline e não puderam ser corrigidos por agente po
 | Campo | Valor |
 |---|---|
 | Workflow | `Deploy Edge Functions (all)` |
-| Último run com falha | [41025945945](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41025945945) (mais recente) |
-| SHA | `15c43f46` (anterior: `3f4e16d2ae91e5dae76a3775049798460782cbf5`) |
-| Job | `Deploy Edge Functions` (job 123948621262) |
+| Último run com falha | [41052354854](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41052354854) (mais recente, SHA `fec9d78e`, 2026-10-30T12:02Z) |
+| SHA anterior com falha | `15c43f46` (run [41025945945](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41025945945)) |
+| Job | `Deploy Edge Functions` |
 | Step | 17 — `Typecheck das edge functions (deno check)` |
 
 **Erro exato (log do step 17, 2026-10-30T07:39:29Z):**
@@ -58,7 +58,9 @@ Mudança: step `deno install --config supabase/functions/deno.json` inserido ent
 - ✅ `🏗️ Build` (success)
 - ✅ `✅ CI Gate (required check)` (success)
 
-**12/12 checks verdes — CI totalmente verde. PRONTO PARA MERGE.**
+**12/12 checks verdes — CI totalmente verde.**
+
+> **⛔ BLOQUEADO — REGRA 8:** Este PR altera `.github/workflows/deploy-functions.yml` (CI/workflow). Agente não pode mergear. Requer ação humana do Joaquim.
 
 **O que o Joaquim precisa fazer:**  
 1. Mergear (squash) — [PR #2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371)
@@ -161,7 +163,9 @@ O SHA digest `bb289d00...` é mantido idêntico — imagem idêntica, registro d
 - ✅ `🏗️ Build` (success)
 - ✅ `✅ CI Gate (required check)` (success)
 
-**12/12 checks verdes — CI totalmente verde. PRONTO PARA MERGE.**
+**12/12 checks verdes — CI totalmente verde.**
+
+> **⛔ BLOQUEADO — REGRA 8:** Este PR altera `.github/workflows/db-guard.yml` (CI/workflow). Agente não pode mergear. Requer ação humana do Joaquim.
 
 **O que o Joaquim precisa fazer:**  
 1. Mergear (squash) — [PR #2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377)
