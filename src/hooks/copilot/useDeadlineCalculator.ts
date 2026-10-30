@@ -28,7 +28,7 @@ export function useDeadlineCalculator({ eventDate, productType = 'default', toda
     const alternatives: string[] = [];
     let feasibility: DeadlineFeasibility;
     let message: string;
-    if (daysUntilEvent >= prodDays + 3) {
+    if (daysUntilEvent > prodDays + 3) {
       feasibility = 'ok';
       message = `Prazo confortável. Último dia para pedir: ${lastOrderDate.toLocaleDateString('pt-BR')}.`;
     } else if (daysUntilEvent >= prodDays) {
