@@ -89,7 +89,7 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 - **Fix:** `--node-modules-dir=none` explícito no array `DENO` de `scripts/db-audit/multiplix-send-mutation.py`.
 - **Arquivo:** `scripts/db-audit/multiplix-send-mutation.py`
 - **Squash-merge SHA:** `2da8e5a415c975443ec149d820932c96ee20a897`
-- **Nota:** run CI/CD Pipeline 41036703993 attempt 1 no SHA `2da8e5a` falhou em `🧩 Node CI Scripts` por falha transitória externa: `esm.sh` devolveu HTTP 500 ao importar `@supabase/postgrest-js@2.87.1` (CDN, não código). Os 6 required checks todos ✅; re-run (attempt 2) disparado às 10:14Z.
+- **Evidência:** run CI/CD Pipeline [41036703993](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703993) attempt 2 **conclusion=success** (10:25:55Z) — todos os 14 jobs ✅. Attempt 1 falhou por esm.sh CDN HTTP 500 (transitória, não código). Os 6 required checks todos ✅.
 
 ---
 
@@ -125,8 +125,8 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 | `🧪 Unit Tests (1/2/3)` | ❌ failure (baseline) | ✅ success | SHA `2da8e5a` run 41036703993 |
 | `🎭 E2E Tests (Playwright)` | ✅ success | ✅ success | SHA `2da8e5a` run 41036703993 |
 | `DB Guard (offline)` | ✅ success | ✅ success | SHA `2da8e5a` run [41036703908](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703908) **conclusion=success** (10:18:15Z) |
-| `🧩 Node CI Scripts` | ✅ success | ✅ success (attempt 1: falha transitória CDN esm.sh; attempt 2: re-run disparado 10:14Z) | SHA `2da8e5a` run 41036703993 attempt 2 em andamento |
-| `Contrato DB offline` N-017 | ❌ failure | ✅ success | SHA `2da8e5a` run 41036703908 **conclusion=success** |
+| `🧩 Node CI Scripts` | ✅ success | ✅ success | SHA `2da8e5a` run [41036703993](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703993) attempt 2 **conclusion=success** (10:25:55Z) |
+| `Contrato DB offline` N-017 | ❌ failure | ✅ success | SHA `2da8e5a` run [41036703908](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703908) **conclusion=success** |
 | `types-sync` | ✅ success | ✅ success | sem alteração |
 | `auto-update-pr-branch` | ✅ success | ✅ success | sem alteração |
 | `codeql` | ✅ success | ✅ success | sem alteração |
@@ -134,9 +134,9 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 **SHA de referência final:** `2da8e5a415c975443ec149d820932c96ee20a897` (merge de PR #2376, 2026-10-30T09:53:23Z)
 
 **DB Guard (offline)** run 41036703908: **conclusion=success** confirmado (10:18:15Z).  
+**CI/CD Pipeline** run [41036703993](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703993) attempt 2: `🧩 Node CI Scripts` **conclusion=success** (10:25:55Z) — todos os 14 jobs ✅. Attempt 1 falhou por esm.sh CDN HTTP 500 (transitória, não regressão de código).  
 **Regressões introduzidas:** nenhuma.  
-**Melhorias:** `settings-guard` (failure→success), `🧪 Unit Tests` (failure→success), `Contrato DB offline` N-017 (failure→success).  
-**`🧩 Node CI Scripts`** attempt 1: falha transitória por esm.sh CDN 500 (não regressão de código); attempt 2 re-run disparado às 10:14Z.
+**Melhorias:** `settings-guard` (failure→success), `🧪 Unit Tests` (failure→success), `Contrato DB offline` N-017 (failure→success).
 
 ---
 
