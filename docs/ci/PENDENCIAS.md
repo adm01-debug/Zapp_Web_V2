@@ -1,8 +1,8 @@
 # PENDÊNCIAS — Workflows Bloqueados por Regra 8
 
-**Última atualização:** 2026-10-30T14:00Z  
+**Última atualização:** 2026-10-30T15:30Z  
 **Branch de origem:** `claude/keen-galileo-dxai3p`  
-**SHA main de referência:** `fec9d78ee8b7f05761f8e6178743907bb5d1b912` (main atual, 2026-10-30)
+**SHA main de referência:** `769b88f4347d210d32dbb9999b52254ff6187a01` (PR #2378 mergeado em 12:43Z)
 
 ---
 
@@ -15,9 +15,9 @@ Estes workflows falharam no baseline e não puderam ser corrigidos por agente po
 | Campo | Valor |
 |---|---|
 | Workflow | `Deploy Edge Functions (all)` |
-| Último run com falha | [41052354854](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41052354854) (mais recente, SHA `fec9d78e`, 2026-10-30T12:02Z) |
-| SHA anterior com falha | `15c43f46` (run [41025945945](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41025945945)) |
-| Job | `Deploy Edge Functions` |
+| Último run com falha | [41025945945](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41025945945) (mais recente) |
+| SHA | `15c43f46` (anterior: `3f4e16d2ae91e5dae76a3775049798460782cbf5`) |
+| Job | `Deploy Edge Functions` (job 123948621262) |
 | Step | 17 — `Typecheck das edge functions (deno check)` |
 
 **Erro exato (log do step 17, 2026-10-30T07:39:29Z):**
@@ -42,28 +42,23 @@ Branch: `claude/fix-deploy-functions-deno-install-261030-0840`
 Arquivo: `.github/workflows/deploy-functions.yml`  
 Mudança: step `deno install --config supabase/functions/deno.json` inserido entre "Setup Deno" e "Typecheck das edge functions" no job `deploy`.
 
-**Bloqueio Regra 8:** Altera `.github/workflows/deploy-functions.yml` — CI/workflow.
-
-**Estado CI do PR #2371** (head `0989c375`, base `fec9d78e`, atualizado 13:00Z):
-- ✅ `🔎 TypeCheck` (success)
+**Estado CI do PR #2371** (head `bfb45c59`, base `769b88f4`, reexecução iniciada 12:45Z):
 - ✅ `🔒 Security Audit` (success)
+- ✅ `🔎 TypeCheck` (success)
 - ✅ `🧩 Node CI Scripts` (success)
 - ✅ `Replay local das migrations` (success)
-- ✅ `Contrato DB offline` (success)
 - ✅ `🧬 Mutação do mapa` (success)
-- ✅ `🧪 Unit Tests (1/3)` (success)
-- ✅ `🧪 Unit Tests (2/3)` (success)
-- ✅ `🧪 Unit Tests (3/3)` (success)
-- ✅ `🎭 E2E Tests (Playwright)` (success)
-- ✅ `🏗️ Build` (success)
-- ✅ `✅ CI Gate (required check)` (success)
-
-**12/12 checks verdes — CI totalmente verde.**
+- 🔄 `🧪 Unit Tests (1/3)` (in_progress)
+- 🔄 `🧪 Unit Tests (2/3)` (in_progress)
+- 🔄 `🧪 Unit Tests (3/3)` (in_progress)
+- 🔄 `🎭 E2E Tests (Playwright)` (in_progress)
+- 🔄 `Contrato DB offline` (in_progress)
 
 > **⛔ BLOQUEADO — REGRA 8:** Este PR altera `.github/workflows/deploy-functions.yml` (CI/workflow). Agente não pode mergear. Requer ação humana do Joaquim.
 
 **O que o Joaquim precisa fazer:**  
-1. Mergear (squash) — [PR #2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371)
+1. Aguardar CI verde (checks acima em andamento)
+2. Mergear (squash) — [PR #2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371)
 
 ---
 
@@ -98,6 +93,8 @@ SELECT count(*) FROM supabase_migrations.schema_migrations WHERE version >= '202
 ```
 
 **Bloqueio Regra 8:** Requer execução de `db-migrate.yml` com `apply=true` e aprovação humana no environment `producao-ddl`.
+
+> **⛔ BLOQUEADO — REGRA 8:** Requer execução de `db-migrate.yml` (DDL em produção) e aprovação humana no environment `producao-ddl`. Agente não pode executar apply ou aprovar o environment gate.
 
 **O que o Joaquim precisa fazer:**
 1. Ir em Actions → `DB Migrate` → `Run workflow`
@@ -145,30 +142,25 @@ Mudança em `.github/workflows/db-guard.yml` linha 68:
 ```
 O SHA digest `bb289d00...` é mantido idêntico — imagem idêntica, registro diferente. Compatível com `sha_pinning_required=true`.
 
-**Bloqueio Regra 8:** Altera `.github/workflows/db-guard.yml` — CI/workflow.
-
-**Impacto atual:** `db-guard.yml` em `main` está verde (push-to-main success). Este item é melhoria do check de PR não-required.
-
-**Estado CI do PR #2377** (head `1b627700`, base `fec9d78e`, atualizado 13:00Z):
-- ✅ `Replay local das migrations` (success)
-- ✅ `🧬 Mutação do mapa` (success)
+**Estado CI do PR #2377** (head `f58e15ec`, base `769b88f4`, reexecução iniciada 12:45Z):
+- ✅ `🔒 Security Audit` (success)
 - ✅ `🔎 TypeCheck` (success)
 - ✅ `🧩 Node CI Scripts` (success)
-- ✅ `🔒 Security Audit` (success)
-- ✅ `🧪 Unit Tests (1/3)` (success)
-- ✅ `🧪 Unit Tests (2/3)` (success)
-- ✅ `🧪 Unit Tests (3/3)` (success)
-- ✅ `🎭 E2E Tests (Playwright)` (success)
-- ✅ `Contrato DB offline` (success)
-- ✅ `🏗️ Build` (success)
-- ✅ `✅ CI Gate (required check)` (success)
+- ✅ `Replay local das migrations` (success)
+- ✅ `🧬 Mutação do mapa` (success)
+- 🔄 `🧪 Unit Tests (1/3)` (in_progress)
+- 🔄 `🧪 Unit Tests (2/3)` (in_progress)
+- 🔄 `🧪 Unit Tests (3/3)` (in_progress)
+- 🔄 `🎭 E2E Tests (Playwright)` (in_progress)
+- 🔄 `Contrato DB offline` (in_progress)
 
-**12/12 checks verdes — CI totalmente verde.**
+**Impacto atual:** `db-guard.yml` em `main` está verde (push-to-main success). Este item é melhoria do check de PR não-required.
 
 > **⛔ BLOQUEADO — REGRA 8:** Este PR altera `.github/workflows/db-guard.yml` (CI/workflow). Agente não pode mergear. Requer ação humana do Joaquim.
 
 **O que o Joaquim precisa fazer:**  
-1. Mergear (squash) — [PR #2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377)
+1. Aguardar CI verde (checks acima em andamento)
+2. Mergear (squash) — [PR #2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377)
 
 ---
 
@@ -180,6 +172,8 @@ O SHA digest `bb289d00...` é mantido idêntico — imagem idêntica, registro d
 | Motivo | Environment `producao-ddl` exige aprovação humana por design |
 
 **Não é bug.** O workflow `db-migrate.yml` pausa em `Waiting` no environment `producao-ddl` antes de `apply=true`. Isso é o comportamento esperado de segurança para migrações DDL em produção. Nenhum agente pode obter `conclusion=success` sem intervenção do Joaquim.
+
+> **⛔ BLOQUEADO — REGRA 8:** Environment gate `producao-ddl` exige aprovação humana por design. Nenhuma ação de agente resolve isso.
 
 **Cobertura:** Item 2 acima — quando o Joaquim executar o `db-migrate.yml` para as migrations `20261030100000`/`20261030110000`, o `db-live-guard` voltará a verde.
 
@@ -196,7 +190,7 @@ O SHA digest `bb289d00...` é mantido idêntico — imagem idêntica, registro d
 
 **Causa:** O script de auditoria de branches excede o tempo limite de 10 minutos do job.
 
-**Bloqueio Regra 8:** Corrigir exigiria aumentar `timeout-minutes` ou otimizar o script de auditoria — ambos alteram `.github/workflows/branch-hygiene-audit.yml` (CI/workflow).
+> **⛔ BLOQUEADO — REGRA 8:** Corrigir exigiria aumentar `timeout-minutes` ou otimizar o script de auditoria — ambos alteram `.github/workflows/branch-hygiene-audit.yml` (CI/workflow). Agente não pode mergear esta alteração.
 
 ---
 
