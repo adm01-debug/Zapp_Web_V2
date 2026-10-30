@@ -20,17 +20,22 @@ vi.mock('@/components/ui/popover', () => ({
   PopoverTrigger: ({ children }: AnyProps) => <>{children}</>,
   PopoverContent: ({ children }: AnyProps) => <div>{children}</div>,
 }));
-vi.mock('framer-motion', () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
   const passthrough =
-    (tag: 'div' | 'button') =>
-    ({ children, ...props }: AnyProps) => {
-      const Tag = tag;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return <Tag {...(props as any)}>{children}</Tag>;
-    };
+      (tag: 'div' | 'button') =>
+      ({ children, ...props }: AnyProps) => {
+        const Tag = tag;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return <Tag {...(props as any)}>{children}</Tag>;
+      };
   return {
+    ...actual,
+
     motion: { div: passthrough('div'), button: passthrough('button') },
     AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+    // O componente respeita o movimento reduzido do sistema.
+    useReducedMotion: () => false,
   };
 });
 
@@ -48,7 +53,9 @@ describe('VoiceChanger — botão de prévia com nome acessível (A11Y-13)', () 
 
     fireEvent.click(screen.getByRole('button', { name: /Voz Teste/ }));
 
-    const botao = await screen.findByRole('button', { name: /prévia da voz/ });
+    // O rótulo acompanha o estado ('Ouvir prévia' / 'Pausar prévia' / 'Carregando prévia' —
+    // ver VoiceChanger.falhas.test.tsx); a regra A11Y-13 é o botão só de ícone TER nome.
+    const botao = await screen.findByRole('button', { name: /^(Ouvir|Pausar|Carregando) prévia$/ });
     expect(botao).toBeInTheDocument();
   });
 });

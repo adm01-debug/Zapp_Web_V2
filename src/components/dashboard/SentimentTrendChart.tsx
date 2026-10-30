@@ -4,7 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useSentimentTrend } from '@/hooks/dashboard/useSentimentTrend';
+import { useSentimentTrend, summarizeWindow, sentimentDeltaPct } from '@/hooks/dashboard/useSentimentTrend';
 import { useRecentSentimentAlerts } from '@/hooks/analytics/useRecentSentimentAlerts';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { DashboardCard, SectionHeader, CardSelect, Pill, InitialsAvatar, ProgressBar } from './overview/DashboardCard';
@@ -31,33 +31,31 @@ function sentimentLabel(score: number): { label: string; tone: 'success' | 'warn
 
 export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: string) => void }) {
   const [days, setDays] = useState<'7' | '14' | '30'>('14');
-  const { data, error } = useSentimentTrend(Number.parseInt(days));
+  const { data, previous, error } = useSentimentTrend(Number.parseInt(days));
   const { data: recent } = useRecentSentimentAlerts(Number.parseInt(days));
 
   const stats = useMemo(() => {
     if (!data || data.length === 0) return null;
+    // Período atual × período anterior de mesmo tamanho, ponderados pelo total
+    // real de análises de cada dia (antes: metades do mesmo período, média simples).
+    const cur = summarizeWindow(data);
+    if (!cur) return null;
+    const prev = summarizeWindow(previous);
     const totalAlerts = data.reduce((s, d) => s + d.alerts_count, 0);
-    const avgPositive = data.reduce((s, d) => s + d.positive, 0) / data.length;
-    const avgNegative = data.reduce((s, d) => s + d.negative, 0) / data.length;
-    const avgScore = data.reduce((s, d) => s + d.avg_score, 0) / data.length;
-    const half = Math.ceil(data.length / 2);
-    const recentHalf = data.slice(half);
-    const prevHalf = data.slice(0, half);
-    const recentAvg = recentHalf.length ? recentHalf.reduce((s, d) => s + d.avg_score, 0) / recentHalf.length : 0;
-    const prevAvg = prevHalf.length ? prevHalf.reduce((s, d) => s + d.avg_score, 0) / prevHalf.length : 0;
-    const deltaPct = prevAvg !== 0 ? Math.round(((recentAvg - prevAvg) / Math.abs(prevAvg)) * 100) : null;
-    const recentPos = recentHalf.length ? recentHalf.reduce((s, d) => s + d.positive, 0) / recentHalf.length : 0;
-    const prevPos = prevHalf.length ? prevHalf.reduce((s, d) => s + d.positive, 0) / prevHalf.length : 0;
-    const recentNeg = recentHalf.length ? recentHalf.reduce((s, d) => s + d.negative, 0) / recentHalf.length : 0;
-    const prevNeg = prevHalf.length ? prevHalf.reduce((s, d) => s + d.negative, 0) / prevHalf.length : 0;
+    const avgPositive = cur.positivePct;
+    const avgNegative = cur.negativePct;
+    const avgScore = cur.avgScore;
+    const deltaPct = sentimentDeltaPct(cur, prev);
     return {
       avgScore, totalAlerts,
       avgPositive: Math.round(avgPositive), avgNegative: Math.round(avgNegative),
       avgNeutral: Math.max(0, 100 - Math.round(avgPositive) - Math.round(avgNegative)),
-      deltaPct, posDelta: Math.round(recentPos - prevPos), negDelta: Math.round(recentNeg - prevNeg),
+      deltaPct,
+      posDelta: prev ? Math.round(cur.positivePct - prev.positivePct) : null,
+      negDelta: prev ? Math.round(cur.negativePct - prev.negativePct) : null,
       scoreSeries: data.map((d) => Math.round((d.avg_score + 1) * 50)),
     };
-  }, [data]);
+  }, [data, previous]);
 
   // Total real de análises no período (conversation_analyses) — vem do hook de alertas, não é estimativa.
   const totalAnalyses = useMemo(() => recent?.departments.reduce((s, d) => s + d.total, 0) ?? 0, [recent]);
@@ -77,14 +75,14 @@ export function SentimentTrendChart({ onNavigateTab }: { onNavigateTab?: (tab: s
   const insights = useMemo(() => {
     if (!stats) return [];
     const list: { icon: typeof TrendingUp; tile: string; title: string; text: string }[] = [];
-    if (stats.posDelta !== 0) {
+    if (stats.posDelta != null && stats.posDelta !== 0) {
       list.push({
         icon: TrendingUp, tile: stats.posDelta > 0 ? 'bg-dash-tile-green' : 'bg-dash-tile-red',
         title: stats.posDelta > 0 ? 'Sentimento em alta' : 'Sentimento em queda',
-        text: `O sentimento positivo ${stats.posDelta > 0 ? 'aumentou' : 'caiu'} ${Math.abs(stats.posDelta)} p.p. na segunda metade do período.`,
+        text: `O sentimento positivo ${stats.posDelta > 0 ? 'aumentou' : 'caiu'} ${Math.abs(stats.posDelta)} p.p. em relação ao período anterior.`,
       });
     }
-    list.push({
+    if (stats.negDelta != null) list.push({
       icon: Minus, tile: 'bg-muted/60',
       title: Math.abs(stats.negDelta) <= 2 ? 'Estabilidade no período' : stats.negDelta > 0 ? 'Negativos em alta' : 'Negativos em queda',
       text: Math.abs(stats.negDelta) <= 2

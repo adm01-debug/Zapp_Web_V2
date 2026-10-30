@@ -305,8 +305,11 @@ export function existeArtefatoMonitor() {
   const dirWf = path.join(RAIZ, '.github/workflows');
   if (fs.existsSync(dirWf)) nomes.push(...fs.readdirSync(dirWf));
   const dirScripts = path.join(RAIZ, 'scripts');
+  // edge-deploy/ contém scripts de pós-deploy (taxa de erro), não monitores de uptime do front.
+  const EXCLUIR_SCRIPTS = new Set(['edge-deploy']);
   if (fs.existsSync(dirScripts)) {
     for (const sub of fs.readdirSync(dirScripts)) {
+      if (EXCLUIR_SCRIPTS.has(sub)) continue;
       const p = path.join(dirScripts, sub);
       if (fs.statSync(p).isDirectory()) nomes.push(...fs.readdirSync(p));
     }

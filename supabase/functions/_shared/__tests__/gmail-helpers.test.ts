@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects } from "https://deno.land/std@0.224.0/testing/asserts.ts";
+import { assert, assertEquals, assertRejects } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import { decodeBase64Url, extractAttachments, extractBody, parseGmailAddressList, runGmailFullSync, syncMessages, type GmailMessage } from "../gmail-helpers.ts";
 import { Logger } from "../validation.ts";
 
@@ -112,6 +112,7 @@ Deno.test("syncMessages agrega falhas de mensagem sem abortar as paginas seguint
     assertEquals(r.synced, 2);
     assertEquals(r.failed, 1);
     assertEquals(r.failures, [{ id: "m2", error: "Gmail API error (500): {\"error\":\"boom\"}" }]);
+    assertEquals(updatesDaConta(chamadas).length, 0, "syncMessageIds não pode invalidar o claim; o chamador grava o estado/backoff agregado");
   } finally { restore(); }
 });
 
@@ -188,6 +189,8 @@ Deno.test("runGmailFullSync grava history_id somente depois de consumir todas as
     const final = updatesDaConta(chamadas).find(u => "history_id" in u);
     assertEquals(final?.history_id, "h-99");
     assertEquals(final?.sync_status, "synced");
+    assertEquals(final?.error_count, 0, "full sync bem-sucedido zera as falhas consecutivas");
+    assertEquals(final?.next_attempt_at, null, "full sync bem-sucedido remove o retry agendado");
   } finally { restore(); }
 });
 
@@ -206,7 +209,10 @@ Deno.test("runGmailFullSync nao grava history_id quando uma mensagem falha", asy
     const updates = updatesDaConta(chamadas);
     assertEquals(updates.some(u => "history_id" in u), false);
     assertEquals(updates.some(u => u.sync_status === "synced"), false);
-    assertEquals(updates.some(u => u.sync_status === "error"), true);
+    const failureState = updates.find(u => u.sync_status === "error");
+    assert(failureState, "sync parcial deve persistir estado de erro");
+    assertEquals(failureState?.error_count, 1);
+    assert(new Date(String(failureState?.next_attempt_at)).getTime() > Date.now(), "sync parcial agenda backoff automático");
     assertEquals(eventos.includes("fetch:profile"), false);
   } finally { restore(); }
 });

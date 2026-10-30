@@ -65,7 +65,7 @@ const TIPOS: PreferenceRow[] = [
 ];
 
 export function ConnectionAlertPreferences() {
-  const { preferences, isLoading, isSaving, updatePreferenceAsync } =
+  const { preferences, isLoading, isError: isLoadError, isSaving, updatePreferenceAsync } =
     useConnectionAlertPreferences();
   const [error, setError] = useState<string | null>(null);
 
@@ -148,6 +148,12 @@ export function ConnectionAlertPreferences() {
         <p className="text-sm text-muted-foreground" aria-live="polite">
           {isSaving ? 'Salvando…' : 'As alterações são salvas automaticamente.'}
         </p>
+
+        {isLoadError && (
+          <p role="alert" className="text-sm text-destructive">
+            Não foi possível carregar as preferências. Recarregue a página.
+          </p>
+        )}
 
         {error && (
           <p role="alert" className="text-sm text-destructive">

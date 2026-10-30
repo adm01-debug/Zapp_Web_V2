@@ -34,8 +34,7 @@ export function useMyNetworkStatus(): ResultadoDoStatusDeRede {
 
     // Carga dentro de funcao assincrona: nenhum setState no corpo sincrono do efeito.
     void (async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC nova (t_684693d3): types.ts ainda nao sincronizado com a migration
-      const { data, error } = await (supabase as any).rpc('my_network_status');
+      const { data, error } = await supabase.rpc('my_network_status');
       if (!ativo) return;
 
       if (error) {

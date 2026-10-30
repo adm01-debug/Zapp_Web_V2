@@ -6,6 +6,7 @@ const sb = vi.hoisted(() => ({
   syncHandlers: [] as Array<() => void>,
   track: vi.fn(),
   removed: vi.fn(),
+  unsubscribe: vi.fn(),
 }));
 
 vi.mock('@/integrations/supabase/client', () => {
@@ -13,6 +14,7 @@ vi.mock('@/integrations/supabase/client', () => {
     const ch: Record<string, unknown> = {};
     ch.on = (_event: string, _filter: unknown, cb: () => void) => { sb.syncHandlers.push(cb); return ch; };
     ch.subscribe = () => ch;
+    ch.unsubscribe = sb.unsubscribe;
     ch.presenceState = () => sb.presenceState;
     ch.track = sb.track;
     return ch;
@@ -20,7 +22,7 @@ vi.mock('@/integrations/supabase/client', () => {
   return {
     supabase: {
       channel,
-      removeChannel: sb.removed,
+      removeChannel: (...args: unknown[]) => { sb.removed(...args); return Promise.resolve('ok' as const); },
       from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null }) }) }) }),
     },
   };
@@ -39,6 +41,7 @@ beforeEach(() => {
   sb.syncHandlers = [];
   sb.track.mockReset().mockResolvedValue(undefined);
   sb.removed.mockReset();
+  sb.unsubscribe.mockReset().mockResolvedValue('ok');
   cleanup();
 });
 

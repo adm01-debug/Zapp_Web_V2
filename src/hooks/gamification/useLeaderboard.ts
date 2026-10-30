@@ -78,8 +78,7 @@ export function useLeaderboard() {
     const requisicao = requisicaoRef.current + 1;
     requisicaoRef.current = requisicao;
     try {
-      // cast temporario: types.ts gerado ainda nao tem dashboard_leaderboard (RPC nova) -- sync automatico (PR #791) traz o tipo real em breve.
-      const { data, error } = await (supabase as any).rpc('dashboard_leaderboard', { // eslint-disable-line @typescript-eslint/no-explicit-any -- cast temporario ate sync de types
+      const { data, error } = await supabase.rpc('dashboard_leaderboard', {
         p_period: period,
         p_limit: TEAM_FETCH_LIMIT,
       });

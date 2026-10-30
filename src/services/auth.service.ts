@@ -24,7 +24,7 @@ export interface SignInResult {
  * nao revela IP, pais nem a regra aplicada (o corpo do 403 tambem nao revela).
  */
 export const NETWORK_BLOCKED_MESSAGE =
-  'Acesso bloqueado pela política de rede da empresa (endereço ou país não permitido). Se você deveria ter acesso, fale com o administrador.';
+  'Não foi possível entrar a partir desta rede. Fale com o administrador.';
 
 /** Mensagem quando a politica de rede nao pode ser avaliada agora (retentavel). */
 export const NETWORK_UNAVAILABLE_MESSAGE =

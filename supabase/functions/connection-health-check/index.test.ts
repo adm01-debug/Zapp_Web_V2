@@ -1,4 +1,4 @@
-import { handleConnectionHealthCheck, evaluateOpenConnectionHealth, parseOwnerJid, parseSilenceMinutes, inboxSilenceDedupeKey } from './index.ts';
+import { handleConnectionHealthCheck, evaluateOpenConnectionHealth, parseOwnerJid, parseSilenceMinutes, inboxSilenceDedupeKey, buildConnectionAlertPrefs } from './index.ts';
 
 // ---------------------------------------------------------------------------
 // SL-053 / F3 E23-E29 do plano multi-conexão (E24/E25/E26/E28).
@@ -62,8 +62,10 @@ interface Fake {
   adminProfiles: Array<Record<string, unknown>>;
   /** pushes gravados em notifications */
   pushNotifications: Array<unknown>;
-  /** deletes no warroom (testemunha do auto-resolve) */
+  /** deletes restantes no warroom; alertas resolvidos devem usar UPDATE */
   alertDeletes: Array<unknown>;
+  /** atualizações do warroom (testemunha da preservação do histórico) */
+  alertUpdates: Array<{ filters: Array<[string, string]>; payload: Row }>;
   /** dentro do horário comercial? (RPC is_within_business_hours) */
   withinHours: boolean;
   /** get_instance_token falha (leitura do Vault indisponível) */
@@ -91,6 +93,7 @@ function baseFake(): Fake {
     adminProfiles: [],
     pushNotifications: [],
     alertDeletes: [],
+    alertUpdates: [],
     withinHours: false,
     alerts: [],
     healthLogs: [],
@@ -149,6 +152,23 @@ function result(
     fake.alerts.push(pending);
     return { data: null, error: null };
   }
+  if (table === 'warroom_alerts' && op === 'update' && pending) {
+    fake.alertUpdates.push({ filters, payload: pending });
+    const keyFilter = filters.find(([column]) => column === 'dedupe_key')?.[1];
+    let keys: string[] = [];
+    if (keyFilter) {
+      try {
+        const decoded: unknown = JSON.parse(keyFilter);
+        keys = Array.isArray(decoded) ? decoded.map(String) : [keyFilter];
+      } catch {
+        keys = [keyFilter];
+      }
+    }
+    for (const alert of fake.alerts) {
+      if (keys.includes(String(alert.dedupe_key))) Object.assign(alert, pending);
+    }
+    return { data: null, error: null };
+  }
   if (table === 'warroom_alerts' && op === 'delete') {
     fake.alertDeletes.push(filters);
     return { data: null, error: null };
@@ -202,6 +222,10 @@ function builder(fake: Fake, table: string): Row {
   };
   self.is = (c: string, v: string) => {
     filters.push([c, v]);
+    return self;
+  };
+  self.in = (c: string, v: readonly unknown[]) => {
+    filters.push([c, JSON.stringify(v)]);
     return self;
   };
   self.or = (expr: string) => {
@@ -422,11 +446,61 @@ Deno.test('E26: duas detecções iguais da mesma queda produzem UM único alerta
 
   const alertas = fake.alerts.filter((a) => a.source === 'connection-health-check');
   assert(alertas.length === 1, `esperado 1 alerta para uma única queda, recebido ${alertas.length}`);
+  assert(alertas[0].alert_type === 'critical', 'queda deve gerar alerta crítico');
+  assert(alertas[0].title === 'WhatsApp padrao desconectado', `título inesperado: ${String(alertas[0].title)}`);
+  assert(String(alertas[0].message).includes('perdeu conexão'), 'mensagem da queda deve explicar a desconexão');
+  assert(alertas[0].dedupe_key === 'conn-down:v1:c1', `chave de dedupe inesperada: ${String(alertas[0].dedupe_key)}`);
   const paraDisconnected = fake.connUpdates.filter((u) => u.status === 'disconnected');
   assert(
     paraDisconnected.length === 1,
     `o CAS pelo status lido só pode transicionar uma vez: ${JSON.stringify(fake.connUpdates)}`,
   );
+});
+
+Deno.test('E26: recovery preserva alerta e permite reutilizar a chave na próxima queda', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
+
+  await run(fake);
+  const firstAlert = fake.alerts[0];
+  assert(firstAlert?.dedupe_key === 'conn-down:v1:c1', 'primeira queda deve manter a chave ativa');
+
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
+  await run(fake);
+  assert([...fake.alerts].length === 1, 'recovery deve preservar a linha histórica, não apagá-la');
+  assert(firstAlert.dedupe_key === null, 'recovery deve limpar somente a chave de dedupe');
+  assert(fake.alertUpdates.some(({ payload }) => payload.dedupe_key === null), 'recovery deve usar UPDATE');
+  assert(fake.alertDeletes.length === 0, 'recovery não deve deletar alertas');
+
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
+  await run(fake);
+  assert([...fake.alerts].length === 2, 'nova queda deve inserir alerta sem apagar o anterior');
+  assert(fake.alerts[1].dedupe_key === 'conn-down:v1:c1', 'nova queda deve reutilizar a chave liberada');
+});
+
+Deno.test('PE-87: fim do silêncio limpa a chave e preserva o alerta histórico', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.withinHours = true;
+  fake.lastInbound = [{ created_at: new Date().toISOString() }];
+  fake.alerts = [{
+    alert_type: 'warning',
+    title: 'Caixa sem mensagens — padrao',
+    source: 'connection-health-check',
+    dedupe_key: inboxSilenceDedupeKey('c1'),
+  }];
+
+  await run(fake);
+
+  assert(fake.alerts.length === 1, 'auto-resolve deve preservar a linha histórica');
+  assert(fake.alerts[0].dedupe_key === null, 'mensagem recebida deve liberar a chave de dedupe');
+  assert(fake.alertUpdates.some(({ payload }) => payload.dedupe_key === null), 'auto-resolve deve usar UPDATE');
+  assert(fake.alertDeletes.length === 0, 'auto-resolve não deve deletar alertas');
 });
 
 // ─────────────────────────────── E28 ───────────────────────────────────────
@@ -674,4 +748,40 @@ Deno.test('CA2: checagem SEM transição não grava linha de trilha', async () =
 
   assert(res.status === 200, `esperado 200, veio ${res.status}`);
   assert(fake.auditLogs.length === 0, `sem mudança de status não pode haver trilha, veio ${fake.auditLogs.length}`);
+});
+
+// ---------------------------------------------------------------------------
+// Decisão 1C (2026-10-28): quem recebe o aviso de queda. Todo usuário com papel
+// recebe por padrão; só não recebe quem desligou no cartão "Alertas de Conexão".
+// ---------------------------------------------------------------------------
+
+Deno.test('1C: usuário sem preferência salva recebe queda e degradação por push e e-mail', () => {
+  const prefs = buildConnectionAlertPrefs(['u1'], []);
+  const chaves = prefs.map((p) => `${p.user_id}:${p.channel}:${p.alert_type}`).sort();
+  if (JSON.stringify(chaves) !== JSON.stringify(['u1:email:degraded', 'u1:email:disconnected', 'u1:push:degraded', 'u1:push:disconnected'])) {
+    throw new Error(`esperado os 4 avisos padrão, veio ${JSON.stringify(chaves)}`);
+  }
+});
+
+Deno.test('1C: quem desligou e-mail e degradação recebe só a queda por push', () => {
+  const prefs = buildConnectionAlertPrefs(['u1'], [
+    { user_id: 'u1', push_enabled: true, email_enabled: false, alert_on_degraded: false, alert_on_disconnected: true },
+  ]);
+  const chaves = prefs.map((p) => `${p.channel}:${p.alert_type}`);
+  if (JSON.stringify(chaves) !== JSON.stringify(['push:disconnected'])) {
+    throw new Error(`esperado só push:disconnected, veio ${JSON.stringify(chaves)}`);
+  }
+});
+
+Deno.test('1C: quem desligou a queda não recebe nada de queda', () => {
+  const prefs = buildConnectionAlertPrefs(['u1'], [
+    { user_id: 'u1', push_enabled: true, email_enabled: true, alert_on_degraded: false, alert_on_disconnected: false },
+  ]);
+  if (prefs.length !== 0) throw new Error(`esperado nenhum aviso, veio ${prefs.length}`);
+});
+
+Deno.test('1C: usuário com dois papéis recebe uma vez só', () => {
+  const prefs = buildConnectionAlertPrefs(['u1', 'u1', 'u2'], []);
+  const pushQueda = prefs.filter((p) => p.channel === 'push' && p.alert_type === 'disconnected');
+  if (pushQueda.length !== 2) throw new Error(`esperado 2 destinatários, veio ${pushQueda.length}`);
 });

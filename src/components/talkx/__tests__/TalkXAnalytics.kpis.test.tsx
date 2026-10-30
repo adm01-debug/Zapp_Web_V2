@@ -140,7 +140,10 @@ describe('TalkXAnalytics — filtros e KPIs da RPC (X185)', () => {
   });
 
   it('resolve período personalizado invertido como padrão de 30 dias', () => {
-    const now = new Date('2026-10-09T12:00:00.000Z');
+    // `resolveAnalyticsRange` trabalha no dia LOCAL do navegador; o "agora" nasce em hora
+    // local (meio-dia) e a conferência é por campos locais — vale em qualquer fuso (a CI roda
+    // em UTC, o desenvolvimento em America/Sao_Paulo).
+    const now = new Date(2026, 9, 9, 12, 0, 0, 0);
     const range = resolveAnalyticsRange({
       ...ANALYTICS_FILTER_DEFAULTS,
       period: 'custom',
@@ -148,8 +151,11 @@ describe('TalkXAnalytics — filtros e KPIs da RPC (X185)', () => {
       to: '2026-02-01',
     }, now);
 
-    expect(range.from.toISOString()).toBe('2026-09-10T03:00:00.000Z');
-    expect(range.to.toISOString()).toBe('2026-10-10T02:59:59.999Z');
+    // Invertido -> padrão de 30 dias: de 10/09 00:00:00.000 a 09/10 23:59:59.999 (local).
+    expect([range.from.getFullYear(), range.from.getMonth(), range.from.getDate()]).toEqual([2026, 8, 10]);
+    expect([range.from.getHours(), range.from.getMinutes(), range.from.getSeconds(), range.from.getMilliseconds()]).toEqual([0, 0, 0, 0]);
+    expect([range.to.getFullYear(), range.to.getMonth(), range.to.getDate()]).toEqual([2026, 9, 9]);
+    expect([range.to.getHours(), range.to.getMinutes(), range.to.getSeconds(), range.to.getMilliseconds()]).toEqual([23, 59, 59, 999]);
   });
 
   it('ignora txa_equipe da URL quando o usuário não pode filtrar equipe', async () => {

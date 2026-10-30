@@ -245,7 +245,7 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
 
   for (const nome of nomes) {
     const texto = wf[nome];
-    if (!/\bplaywright@[\w.-]+\s+install\b/.test(texto)) continue;
+    if (!/\bplaywright(?:@[\w.-]+)?\s+install\b/.test(texto)) continue;
     const blocos = passos(texto);
 
     // SL-095 pôs um 2º `actions/cache` no mesmo job (cache do Bun, antes do
@@ -285,19 +285,52 @@ test('E68: browser do Playwright é cacheado e o download só roda em cache miss
     const miss = blocos.find(
       (p) =>
         new RegExp(`if:\\s*steps\\.${id}\\.outputs\\.cache-hit\\s*!=\\s*'true'`).test(p) &&
-        /\bplaywright@[\w.-]+\s+install\s+--with-deps\b/.test(p),
+        /\bplaywright(?:@[\w.-]+)?\s+install\s+--with-deps\b/.test(p),
     );
     if (!miss) problemas.push(`${nome}: 'install --with-deps' não está sob steps.${id}.outputs.cache-hit != 'true'`);
 
     const hit = blocos.find(
       (p) =>
         new RegExp(`if:\\s*steps\\.${id}\\.outputs\\.cache-hit\\s*==\\s*'true'`).test(p) &&
-        /\bplaywright@[\w.-]+\s+install-deps\b/.test(p),
+        /\bplaywright(?:@[\w.-]+)?\s+install-deps\b/.test(p),
     );
     if (!hit) problemas.push(`${nome}: sem 'install-deps' sob cache hit (pacote do apt não vive no cache)`);
   }
 
   assert.deepEqual(problemas, [], `cache dos browsers Playwright:\n${problemas.join('\n')}`);
+});
+
+test('W60: contents:write só onde há git push / tag', () => {
+  // contents:write dá ao GITHUB_TOKEN capacidade de criar branch, tag e commit.
+  // É uma permissão elevada que só faz sentido quando o job de fato escreve no
+  // repositório. Workflows que a declaram sem escrita real entregam capacidade
+  // extra desnecessariamente — blast radius de qualquer comprometimento do job.
+  //
+  // Indicadores de escrita legítima:
+  //   - `git push` / `git tag` num run:
+  //   - `gh api.*update-branch` (atualiza branch de PR via API)
+  //   - `peter-evans/create-pull-request` (cria commit + push internamente)
+  //   - createRef / createTag / update-ref (chamadas à API de refs)
+  const ESCRITA_RUN = /\bgit\s+(?:push|tag)\b|gh\s+api.*update-branch|createRef|createTag|update-ref/;
+  const ESCRITA_USES = /peter-evans\/create-pull-request@/;
+
+  const infratores = [];
+  for (const nome of nomes) {
+    const texto = wf[nome];
+    // Só verifica arquivos que declaram contents: write em nível de job/workflow
+    if (!/^\s+contents:\s+write\s*$/m.test(texto)) continue;
+    // Escrita em run: ou via action de criação de PR
+    const execRun = linhasExecutaveis(texto).some((l) => ESCRITA_RUN.test(l));
+    const execUses = ESCRITA_USES.test(texto);
+    if (!execRun && !execUses) {
+      infratores.push(nome);
+    }
+  }
+  assert.deepEqual(
+    infratores,
+    [],
+    `contents:write sem git push/tag em: ${infratores.join(', ')}`,
+  );
 });
 
 // E86 (auditoria de GitHub Actions, 2026-10-01): "avaliar `supabase start` +
@@ -531,26 +564,63 @@ test('E69: o build continua atrás do lint E do test', () => {
   assert.ok(anc.has('unit-tests'), 'build deixou de esperar o test');
 });
 
-test('GA10: todos os nomes em notifica-falha-main.yml existem como name: em algum workflow', () => {
-  const texto = wf['notifica-falha-main.yml'];
-  assert.ok(texto, 'notifica-falha-main.yml nao encontrado');
+// W99: novos invariantes de segurança de workflow
 
-  const m = texto.match(/^\s{4}workflows:\n((?:\s{6}-\s.+\n)+)/m);
-  assert.ok(m, 'notifica-falha-main.yml nao tem bloco workflows: sob workflow_run');
-
-  const nomesMonitorados = m[1]
-    .split('\n')
-    .map((l) => l.replace(/^\s+-\s+/, '').trim())
-    .filter(Boolean);
-
-  const nomesReais = Object.values(wf)
-    .map((t) => { const m2 = t.match(/^name:\s*(.+)$/m); return m2 ? m2[1].trim() : null; })
-    .filter(Boolean);
-
-  for (const nome of nomesMonitorados) {
-    assert.ok(
-      nomesReais.includes(nome),
-      `notifica-falha-main.yml monitora "${nome}" mas nenhum workflow tem esse name: — renomeou sem atualizar?`,
-    );
+test('W99: todo curl usa --proto e --tlsv1.2', async () => {
+  const dir = new URL('../../.github/workflows/', import.meta.url);
+  const arquivos = (await readdir(dir)).filter((f) => /\.ya?ml$/.test(f));
+  const infratores = [];
+  for (const nome of arquivos) {
+    const texto = await readFile(new URL(nome, dir), 'utf8');
+    const linhas = texto.split('\n');
+    for (let i = 0; i < linhas.length; i += 1) {
+      const linha = linhas[i];
+      if (!/\bcurl\b/.test(linha)) continue;
+      if (/--proto\b/.test(linha) && /--tlsv1\.\d/.test(linha)) continue;
+      // linha de continuação: o curl pode estar na linha e as flags na próxima
+      const bloco = linhas.slice(i, i + 4).join(' ');
+      if (/--proto\b/.test(bloco) && /--tlsv1\.\d/.test(bloco)) continue;
+      infratores.push(`${nome}:${i + 1}: ${linha.trim()}`);
+    }
   }
+  assert.deepEqual(infratores, [], `curl sem --proto='=https' --tlsv1.2:\n${infratores.join('\n')}`);
+});
+
+test('W99: todo upload-artifact declara retention-days', async () => {
+  const dir = new URL('../../.github/workflows/', import.meta.url);
+  const arquivos = (await readdir(dir)).filter((f) => /\.ya?ml$/.test(f));
+  const infratores = [];
+  for (const nome of arquivos) {
+    const texto = await readFile(new URL(nome, dir), 'utf8');
+    const blocos = texto.split(/(?=\n[ \t]+-[ \t])/);
+    for (const bloco of blocos) {
+      if (!/upload-artifact@[a-f0-9]{40}/.test(bloco)) continue;
+      if (/retention-days:/.test(bloco)) continue;
+      // Encontrar a linha do uses: para reportar o número aproximado
+      const match = /\n([ \t]+-?[ \t]*uses:[ \t]*actions\/upload-artifact@)/.exec(bloco);
+      infratores.push(`${nome}: upload-artifact sem retention-days`);
+    }
+  }
+  assert.deepEqual(infratores, [], `upload-artifact sem retention-days:\n${infratores.join('\n')}`);
+});
+
+test('GA99: notifica monitora apenas workflows que existem', () => {
+  // Se um workflow monitorado for renomeado ou removido sem atualizar esta
+  // lista, a falha deixa de abrir uma issue operacional na main.
+  const texto = wf['notifica-falha-main.yml'];
+  assert.ok(texto, 'notifica-falha-main.yml sumiu');
+  const bloco = /^(\s+)workflows:\s*\n((?:\1\s+-\s+.*\n?)+)/m.exec(texto);
+  assert.ok(bloco, 'bloco workflows: sumiu do notifica-falha-main.yml');
+
+  const monitorados = [...bloco[2].matchAll(/-\s*(.+?)\s*$/gm)].map((m) => m[1]);
+  assert.ok(monitorados.length > 0, 'notifica-falha-main não monitora workflows');
+  const declarados = new Set(
+    nomes.map((nome) => /^name:\s*(.+?)\s*$/m.exec(wf[nome])?.[1]).filter(Boolean),
+  );
+  const inexistentes = monitorados.filter((nome) => !declarados.has(nome));
+  assert.deepEqual(
+    inexistentes,
+    [],
+    `notifica monitora workflow inexistente: ${inexistentes.join(', ')}`,
+  );
 });

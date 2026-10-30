@@ -89,7 +89,7 @@ function startFakeWebhook() {
   let ready!: (v: { url: string }) => void;
   const whenReady = new Promise<{ url: string }>((resolve) => { ready = resolve; });
   const server = Deno.serve(
-    { port: 0, onListen: ({ hostname, port }) => ready({ url: `http://${hostname}:${port}` }) },
+    { hostname: "127.0.0.1", port: 0, onListen: ({ hostname, port }) => ready({ url: `http://${hostname}:${port}` }) },
     async (req) => {
       const body = await req.json().catch(() => null);
       calls.push({ path: new URL(req.url).pathname, body });
@@ -118,7 +118,7 @@ Deno.test("selftest: round-trip no servidor com o evento reservado e sem dado re
   try {
     const res = await handleWebhookDiagnostic(
       selftestRequest({ action: "selftest", instanceName: "PRINCIPAL" }),
-      { callerClient: makeCallerClient(true), supabase: makeServiceClient({ token: "tok-instancia" }) },
+      { requireAuthFn: async () => ({ userId: 'admin-1' }), callerClient: makeCallerClient(true), supabase: makeServiceClient({ token: "tok-instancia" }) },
     );
     assertEquals(res.status, 200);
     const json = await res.json();
@@ -147,7 +147,7 @@ Deno.test("selftest: sem credencial da instância não chama o webhook (motivo e
   try {
     const res = await handleWebhookDiagnostic(
       selftestRequest({ action: "selftest", instanceName: "SEM-TOKEN" }),
-      { callerClient: makeCallerClient(true), supabase: makeServiceClient({ token: null }) },
+      { requireAuthFn: async () => ({ userId: 'admin-1' }), callerClient: makeCallerClient(true), supabase: makeServiceClient({ token: null }) },
     );
     assertEquals(res.status, 200);
     const json = await res.json();
@@ -163,7 +163,7 @@ Deno.test("selftest: sem instanceName é 400 (nada a testar)", async () => {
   resetInstanceTokenCache();
   const res = await handleWebhookDiagnostic(
     selftestRequest({ action: "selftest" }),
-    { callerClient: makeCallerClient(true), supabase: makeServiceClient({ token: "t" }) },
+    { requireAuthFn: async () => ({ userId: 'admin-1' }), callerClient: makeCallerClient(true), supabase: makeServiceClient({ token: "t" }) },
   );
   assertEquals(res.status, 400);
   assertEquals((await res.json()).reason, "sem-instancia");
@@ -200,6 +200,7 @@ Deno.test("flavor GO: eventos esperados são os nomes do GO, com a contagem pres
   const restore = stubWebhookLookup("go");
   try {
     const res = await handleWebhookDiagnostic(selftestRequest({ action: "full-diagnostic" }), {
+      requireAuthFn: async () => ({ userId: 'admin-1' }),
       callerClient: makeCallerClient(true),
       supabase: makeServiceClient({ connections: CONNECTIONS, counts: { "conn-a": { contact: 0, agent: 0 } } }),
     });
@@ -219,6 +220,7 @@ Deno.test("flavor v2: eventos esperados são os nomes do v2 (não os do GO)", as
   const restore = stubWebhookLookup("v2");
   try {
     const res = await handleWebhookDiagnostic(selftestRequest({ action: "full-diagnostic" }), {
+      requireAuthFn: async () => ({ userId: 'admin-1' }),
       callerClient: makeCallerClient(true),
       supabase: makeServiceClient({ connections: CONNECTIONS, counts: { "conn-a": { contact: 0, agent: 0 } } }),
     });

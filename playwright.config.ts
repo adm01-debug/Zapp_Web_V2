@@ -32,6 +32,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   // E81: deslogado nao repete (ver RETRIES_LOGADOS no topo do arquivo).
   retries: 0,
+  // W75: 1 worker no CI (estabilidade), 2 localmente (velocidade).
   // The Email fixture boots a full Vite app and captures visual artifacts. A
   // bounded local pool prevents cold-start starvation that made otherwise
   // independent specs observe the module-loading fallback after five seconds.
@@ -177,7 +178,7 @@ export default defineConfig({
       // e backend mockado — DESLOGADO (sem setup, sem secrets), mesmo padrao de
       // chromium-contacts-visual. Roda no job e2e do ci.yml.
       name: 'chromium-a11y',
-      testMatch: /a11y-(contraste|config-admin|toque-44px)\.spec\.ts/,
+      testMatch: /a11y-(contraste|config-admin|toque-44px|fab-cabecalho)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {

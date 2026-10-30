@@ -105,7 +105,7 @@ type PendingDatabaseRpc = (
 
 /** Busca as métricas reais das filas. Lança quando a RPC falha — quem chama decide o que fazer. */
 export async function fetchQueueGoalMetrics(): Promise<QueueGoalMetricsRow[]> {
-  const rpc = supabase.rpc as unknown as PendingDatabaseRpc;
+  const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
   const { data, error } = await rpc('rpc_queue_goal_metrics');
   if (error) throw error;
   return (Array.isArray(data) ? data : []) as QueueGoalMetricsRow[];

@@ -255,9 +255,9 @@ export async function invokeEdge<T = unknown>(
       status: statusOf(resposta.error),
       tipo: resposta.error.name,
     });
+    const parsed = await parseEdgeError(resposta.error);
+    return { data: null, error: new EdgeFunctionError(parsed, functionName) } as unknown as FunctionsResponse<T>;
   }
 
-  // Devolve a união do próprio invoke (sucesso com `error: null` / falha com
-  // `data: null`): o discriminante não pode ser remontado à mão.
   return resposta;
 }
