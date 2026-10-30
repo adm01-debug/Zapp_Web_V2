@@ -11,11 +11,11 @@
 #             * tcm_delete_own_or_admin não guarda o último owner → grupo fica sem owner;
 #             * GRANT UPDATE na tabela team_conversations anula os REVOKEs de coluna
 #               (type, created_by, department_id seguem graváveis).
-#   BLOCO B — migration aplicada: create_team_group_conversation atômica (criador vira
+#   BLOCO B — migrations aplicadas: create_team_group_conversation atômica (criador vira
 #             owner, membro inválido desfaz tudo, departamento é get-or-create), INSERT
-#             direto só cria 'member', último owner não sai nem é rebaixado (promoção e
-#             transferência canônicas liberam a saída), UPDATE por coluna só em
-#             name/avatar_url/updated_at e autorização canônica via user_roles.
+#             direto só cria 'member' e só owner/admin/supervisor pode convidar; bootstrap
+#             permite apenas o próprio criador como primeiro membro. Último owner não sai
+#             nem é rebaixado; UPDATE por coluna só em name/avatar_url/updated_at.
 
 set -Eeuo pipefail
 
@@ -344,6 +344,9 @@ psql_file "$migration" >/dev/null
 psql_file "$membership_auth_migration" >/dev/null
 psql_file "$tmp_dir/seed.sql" >/dev/null
 
+expect_value 'B.0 helper A2 e SECURITY DEFINER, search_path fixo e EXECUTE restrito' 't' \
+  "SELECT p.prosecdef AND p.proconfig @> ARRAY['search_path=public'] AND has_function_privilege('authenticated', p.oid, 'EXECUTE') AND NOT has_function_privilege('anon', p.oid, 'EXECUTE') FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='can_insert_team_conversation_member' AND pg_get_function_arguments(p.oid)='_conversation_id uuid, _profile_id uuid, _member_role text';"
+
 CONV_B1="$(as_user "$ATILA" "SELECT public.create_team_group_conversation('Time X', ARRAY['$P_DORA']::uuid[], NULL);" | tail -n1)"
 [[ "$CONV_B1" =~ ^[0-9a-f-]{36}$ ]] || fail "B.1 a RPC nao devolveu uuid: $CONV_B1"
 printf '[PASS] %s\n' 'B.1 agente cria grupo numa UNICA chamada atomica'
@@ -452,7 +455,7 @@ expect_ok_as 'B.39 owner da conversa adiciona terceiro como member' \
   "$OTTO" "INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('$G_ROLE','$P_EVA');"
 expect_value 'B.39a insercao direta de owner nao eleva o papel do convidado' 'member' \
   "SELECT member_role FROM public.team_conversation_members WHERE conversation_id='$G_ROLE' AND profile_id='$P_EVA';"
-psql_sql "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_ROLE' AND profile_id='$P_EVA'; UPDATE public.team_conversation_members SET member_role='owner' WHERE conversation_id='$G_DIR' AND profile_id='$P_DORA';" >/dev/null
+psql_sql "DELETE FROM public.team_conversation_members WHERE conversation_id='$G_ROLE' AND profile_id='$P_EVA'; UPDATE public.team_conversation_members SET member_role='owner' WHERE conversation_id='$G_OLD' AND profile_id='$P_DORA';" >/dev/null
 expect_error_as 'B.39b owner em outra conversa nao pode adicionar terceiro nesta conversa' \
   'row-level security' "$DORA" \
   "INSERT INTO public.team_conversation_members (conversation_id, profile_id) VALUES ('$G_ROLE','$P_EVA');"

@@ -15,7 +15,6 @@
 -- boundary. A role held in a different conversation grants no authority here.
 
 CREATE OR REPLACE FUNCTION public.can_insert_team_conversation_member(
-  _user_id uuid,
   _conversation_id uuid,
   _profile_id uuid,
   _member_role text
@@ -28,13 +27,13 @@ SET search_path = public
 AS $function$
   SELECT COALESCE(
     _member_role = 'member'
-    AND _user_id IS NOT NULL
+    AND auth.uid() IS NOT NULL
     AND EXISTS (
       SELECT 1
         FROM public.profiles actor
-       WHERE actor.user_id = _user_id
+       WHERE actor.user_id = auth.uid()
          AND (
-           public.is_admin_or_supervisor(_user_id)
+           public.is_admin_or_supervisor(auth.uid())
            OR EXISTS (
              SELECT 1
                FROM public.team_conversation_members owner_membership
@@ -44,7 +43,7 @@ AS $function$
            )
            OR (
              _profile_id = actor.id
-             AND public.is_team_conversation_creator(_user_id, _conversation_id)
+             AND public.is_team_conversation_creator(auth.uid(), _conversation_id)
              AND NOT EXISTS (
                SELECT 1
                  FROM public.team_conversation_members existing_membership
@@ -57,9 +56,9 @@ AS $function$
   );
 $function$;
 
-REVOKE EXECUTE ON FUNCTION public.can_insert_team_conversation_member(uuid, uuid, uuid, text)
+REVOKE EXECUTE ON FUNCTION public.can_insert_team_conversation_member(uuid, uuid, text)
   FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.can_insert_team_conversation_member(uuid, uuid, uuid, text)
+GRANT EXECUTE ON FUNCTION public.can_insert_team_conversation_member(uuid, uuid, text)
   TO authenticated, service_role;
 
 DROP POLICY IF EXISTS tcm_insert_member ON public.team_conversation_members;
@@ -67,7 +66,6 @@ CREATE POLICY tcm_insert_member ON public.team_conversation_members
   FOR INSERT TO authenticated
   WITH CHECK (
     public.can_insert_team_conversation_member(
-      auth.uid(),
       team_conversation_members.conversation_id,
       team_conversation_members.profile_id,
       team_conversation_members.member_role
