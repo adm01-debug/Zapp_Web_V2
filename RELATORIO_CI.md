@@ -52,11 +52,11 @@
 - **Fix:** `assert.deepEqual(semDeploy, ['sem-deploy.json'])` + verificação de conteúdo.
 - **Arquivo:** `scripts/edge-deploy/preparar-artifact-deploy.unit.mjs`
 
-### PR #2364 — `deploy-functions` manifesto stale 2ª causa ✅ (aguardando merge)
+### PR #2364 — `deploy-functions` manifesto stale 2ª causa ✅ (mergeada)
 - **Causa:** 3 arquivos de `supabase/functions/` com hashes alterados por PRs anteriores sem regeneração do manifesto: `_shared/cron-secret-auth.ts`, `_shared/evolution-control-authz.ts`, `evolution-api/index.ts`.
 - **Fix:** `node scripts/edge-deploy/generate-manifest.mjs` — 84 funções, 168 source files.
 - **Arquivo:** `supabase/deployment-manifest.json`
-- **PR:** [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) — CI rodando no SHA `c1202b31` (run [41010314950](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41010314950)). Aguardando `✅ CI Gate`.
+- **PR:** [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) — `✅ CI Gate` success (run [41010314950](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41010314950), SHA `c1202b31`, 05:56Z). Squash-merge em `3af255603e` às 05:59Z.
 
 ---
 
@@ -65,10 +65,10 @@
 | Workflow | PR | Run de validação | Conclusão |
 |---|---|---|---|
 | `settings-guard` | [#2355](https://github.com/adm01-debug/Zapp_Web_V2/pull/2355) | [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) (pós-merge PR #2362) | ✅ success |
-| `deploy-functions` | [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) | Dispatch pós-merge PR #2364 pendente | ⏳ pendente |
-| `db-live-guard` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | Schedule 06:13 UTC ou dispatch pós-merge | ⏳ pendente |
+| `deploy-functions` | [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) | Dispatch pós-merge: run [41011471495](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41011471495) (SHA `3af25560`, 05:59Z) | ⏳ in_progress |
+| `db-live-guard` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | Dispatch manual: run [41011248571](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41011248571) (SHA `a6fbadfa`, 05:57Z) | ⏳ in_progress |
 | `db-migrate` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | Regra 8 (environment gate `producao-ddl`) | 🔒 Regra 8 |
-| `🧪 Unit Tests` (ci.yml) | [#2362](https://github.com/adm01-debug/Zapp_Web_V2/pull/2362) | CI PR #2364: run [41010314950](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41010314950) jobs `Unit Tests (1/3)(2/3)(3/3)` in_progress | ⏳ em andamento |
+| `🧪 Unit Tests` (ci.yml) | [#2362](https://github.com/adm01-debug/Zapp_Web_V2/pull/2362) | CI PR #2364: run [41008768305](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768305) jobs `Unit Tests (1/3)(2/3)(3/3)` success | ✅ success |
 
 **Nota `db-migrate`:** O workflow requer aprovação humana no environment `producao-ddl` (Regra 8). Não é possível obter `conclusion=success` sem intervenção do Joaquim. Documentado em PENDENCIAS.md.
 
@@ -92,14 +92,15 @@
 | `ci.yml` Lint & TypeCheck | PR #2362 / #2364 CI: `🔎 TypeCheck` success |
 | `🏗️ Build` | PR #2362 / #2364 CI: success |
 | `🔒 Security Audit` | PR #2362 / #2364 CI: success |
-| `db-guard` Contrato DB offline | PR #2364 CI run [41010314910](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41010314910) — in_progress (success esperado) |
+| `db-guard` Contrato DB offline | PR #2364 CI: run [41008768369](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768369) — 188 steps, todos success |
+| `db-guard` Replay local | PR #2364 CI: run [41008768369](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768369) job success |
 | `settings-guard` | run [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) success |
 
 ---
 
 ## 6. Gaps identificados
 
-- `e2e-logado` 504: warmup do edge `auth-login` em `tnnnlkbymytvtqngbbqh` — não código, infra.
+- `e2e-logado` 504: warmup do edge `auth-login` em `tnnnlkbymytvtqngbbqh` — not código, infra.
 - `db-guard` ECR→ghcr.io: já coberto pela PR #2354 (Regra 8, aguarda Joaquim).
 - `branch-hygiene-audit` timeout: script sem `timeout-minutes:` + paginação — coberto em PENDENCIAS.md item 3.
 - `db-migrate` environment gate: by design — não executável por agente.
