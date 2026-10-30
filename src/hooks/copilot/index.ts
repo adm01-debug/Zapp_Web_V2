@@ -67,13 +67,13 @@ export { usePdfExtraction } from './usePdfExtraction';
 export type { PdfExtractionResult } from './usePdfExtraction';
 
 export { useAudioTone } from './useAudioTone';
-export type { UseAudioToneOptions, AudioToneResult, AudioToneType } from './useAudioTone';
+export type { AudioToneResult, AudioToneType } from './useAudioTone';
 
 export { useLogoAnalysis } from './useLogoAnalysis';
 export type { UseLogoAnalysisOptions, LogoAnalysisResult, LogoFormat } from './useLogoAnalysis';
 
 export { useBrandColors } from './useBrandColors';
-export type { UseBrandColorsOptions, BrandColorsResult, BrandColor } from './useBrandColors';
+export type { BrandColorsResult, BrandColor } from './useBrandColors';
 
 export { useMediaPrivacy } from './useMediaPrivacy';
 export type { UseMediaPrivacyOptions, MediaPrivacyResult, PrivacyRisk } from './useMediaPrivacy';
@@ -91,7 +91,7 @@ export { usePIIDetector } from './usePIIDetector';
 export type { UsePIIDetectorOptions, PIIDetectorResult, PIIDetection, PIIType } from './usePIIDetector';
 
 export { useDataMasking } from './useDataMasking';
-export type { UseDataMaskingOptions, DataMaskingResult, MaskedField } from './useDataMasking';
+export type { DataMaskingResult, MaskedField } from './useDataMasking';
 
 export { useNegotiationGuard } from './useNegotiationGuard';
 export type { UseNegotiationGuardOptions, NegotiationGuardResult } from './useNegotiationGuard';
@@ -100,14 +100,14 @@ export { useVendorAuthorization } from './useVendorAuthorization';
 export type { UseVendorAuthorizationOptions, AuthorizationResult, VendorLevel, SensitiveAction } from './useVendorAuthorization';
 
 export { useBiasChecker } from './useBiasChecker';
-export type { UseBiasCheckerOptions, BiasCheckerResult, BiasFlag, BiasCategory } from './useBiasChecker';
+export type { BiasCheckerResult, BiasFlag, BiasCategory } from './useBiasChecker';
 
 // ── Fase 13 (CV-121-130) — Supervisor ────────────────────────────────────────
 export { useSupervisorInsights } from './useSupervisorInsights';
 export type { SupervisorInsight } from './useSupervisorInsights';
 
 export { useCopilotSupervisor } from './useCopilotSupervisor';
-export type { UseCopilotSupervisorOptions, SupervisorResult, CopilotInsight, InsightPriority, InsightSource } from './useCopilotSupervisor';
+export type { SupervisorResult, CopilotInsight, InsightPriority, InsightSource } from './useCopilotSupervisor';
 
 export { useSupervisorDashboard } from './useSupervisorDashboard';
 export type { UseSupervisorDashboardOptions, SupervisorDashboardResult, CopilotSessionSummary } from './useSupervisorDashboard';
@@ -118,14 +118,14 @@ export type { UseWhisperChannelOptions, WhisperChannelState, WhisperMessage } fr
 export { useCoachingTip } from './useCoachingTip';
 
 export { useConversationScore } from './useConversationScore';
-export type { UseConversationScoreOptions, ConversationScoreResult, BrindeCompleteness } from './useConversationScore';
+export type { ConversationScoreResult, ConversationScoreDimension, BrindeCompleteness } from './useConversationScore';
 
 export { useLearningMoment } from './useLearningMoment';
-export type { UseLearningMomentOptions, LearningMoment, LearningMomentType } from './useLearningMoment';
+export type { LearningMoment, LearningMomentType } from './useLearningMoment';
 
 // ── Fase 14 (CV-131-140) — Aprendizado ───────────────────────────────────────
 export { useCopilotLearning } from './useCopilotLearning';
-export type { UseCopilotLearningOptions, LearningRecord, SuggestionOutcome } from './useCopilotLearning';
+export type { LearningRecord, SuggestionOutcome } from './useCopilotLearning';
 
 export { usePromptVersioning } from './usePromptVersioning';
 
