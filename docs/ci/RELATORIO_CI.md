@@ -99,10 +99,10 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 |---|---|---|---|
 | `settings-guard` | [#2355](https://github.com/adm01-debug/Zapp_Web_V2/pull/2355) | [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) | ✅ success |
 | `🧪 Unit Tests` (ci.yml) | [#2362](https://github.com/adm01-debug/Zapp_Web_V2/pull/2362) | CI PR #2364 run [41008768305](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768305) | ✅ success |
-| `deploy-functions` | [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) + [#2368](https://github.com/adm01-debug/Zapp_Web_V2/pull/2368) | [41021181372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181372) | ❌ failure — Regra 8 (PR #2371 aguarda Joaquim) |
+| `deploy-functions` | [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) + [#2368](https://github.com/adm01-debug/Zapp_Web_V2/pull/2368) | [41021181372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181372) | ❌ failure — Regra 8 (PR [#2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371) aguarda Joaquim) |
 | `db-live-guard` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458) | ❌ failure — Regra 8 (migrations sem apply em producao-ddl) |
 | `db-migrate` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | — | 🔒 Regra 8 — environment gate by design |
-| `db-guard` (Replay ECR) | — | — | ❌ failure — Regra 8 (ECR rate limit; PR #2354) |
+| `db-guard` (Replay ECR) | — | — | ❌ failure — Regra 8 (ECR rate limit; PR [#2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377) aguarda Joaquim) |
 | `branch-hygiene-audit` | — | [41024463986](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41024463986) | ❌ cancelled — Regra 8 |
 | `Contrato DB offline` N-017 | [#2376](https://github.com/adm01-debug/Zapp_Web_V2/pull/2376) | SHA `2da8e5a` run [41036703908](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703908) | ✅ success |
 
@@ -117,7 +117,7 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 | `db-live-guard` | ❌ failure | ❌ failure — Regra 8 | Último run [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458); PENDENCIAS.md item 2 |
 | `db-migrate` | ❌ failure | 🔒 Regra 8 | PENDENCIAS.md item 4 |
 | `🧪 Unit Tests` | ❌ failure | ✅ success | CI PR #2364 run [41008768305](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768305) |
-| `db-guard` (Replay ECR) | ❌ failure | ❌ failure — Regra 8 | PR [#2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354); PENDENCIAS.md item 3 |
+| `db-guard` (Replay ECR) | ❌ failure | ❌ failure — Regra 8 | PR [#2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377); PENDENCIAS.md item 3 |
 | `branch-hygiene-audit` | ❌ cancelled | ❌ cancelled — Regra 8 | PENDENCIAS.md item 5 |
 | `ci.yml` Lint & TypeCheck | ✅ success | ✅ success | SHA `2da8e5a` run [41036703993](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703993) |
 | `🏗️ Build` | ✅ success | ✅ success | SHA `2da8e5a` run 41036703993 |
@@ -146,7 +146,7 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 |---|---|---|---|
 | `deploy-functions` | `deno install` ausente antes de `deno check` no workflow | Altera `.github/workflows/deploy-functions.yml` | Item 1 — PR [#2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371) aguarda Joaquim |
 | `db-live-guard` | Migrations `20261030100000`/`20261030110000` sem apply em produção | Requer `db-migrate.yml` + aprovação `producao-ddl` | Item 2 — passos exatos documentados |
-| `db-guard` (Replay ECR) | `docker pull public.ecr.aws/...` falha com rate limit 429 | Altera `.github/workflows/db-guard.yml` | Item 3 — PR [#2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) aguarda Joaquim |
+| `db-guard` (Replay ECR) | `docker pull public.ecr.aws/supabase/postgrest:v14.5` falha com rate limit 429 | Altera `.github/workflows/db-guard.yml` | Item 3 — PR [#2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377) aguarda Joaquim |
 | `db-migrate` | Environment gate `producao-ddl` exige aprovação humana | By design — não executável por agente | Item 4 |
 | `branch-hygiene-audit` | Script de auditoria excede `timeout-minutes: 10` | Altera `.github/workflows/branch-hygiene-audit.yml` | Item 5 |
 

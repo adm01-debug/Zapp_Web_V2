@@ -40,14 +40,13 @@ Did you forget to run `deno install`?
 **Fix preparado:** [PR #2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371)  
 Branch: `claude/fix-deploy-functions-deno-install-261030-0840`  
 Arquivo: `.github/workflows/deploy-functions.yml`  
-Mudança: step `deno install --config supabase/functions/deno.json` inserido entre "Setup Deno" e "Typecheck das edge functions".
+Mudança: step `deno install --config supabase/functions/deno.json` inserido entre "Setup Deno" e "Typecheck das edge functions" no job `deploy`.
 
 **Bloqueio Regra 8:** Altera `.github/workflows/deploy-functions.yml` — CI/workflow.
 
 **O que o Joaquim precisa fazer:**  
-1. Abrir [PR #2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371)  
-2. Aguardar CI verde (6 required checks)  
-3. Mergear (squash)
+1. Aguardar CI verde nos 6 required checks do [PR #2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371) (checks em `queued` por saturação de runners do GitHub às 10:33Z de 2026-10-30)
+2. Mergear (squash)
 
 ---
 
@@ -92,23 +91,38 @@ SELECT count(*) FROM supabase_migrations.schema_migrations WHERE version >= '202
 
 ---
 
-## 3. `db-guard` (Replay local — ECR rate limit)
+## 3. `db-guard` (Replay local — ECR rate limit no PostgREST)
 
 | Campo | Valor |
 |---|---|
 | Workflow | `Contrato DB (por PR)` — job `Replay local das migrations` |
-| PR aberta | [#2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) |
+| Último run com falha | [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458) job `Replay local` |
+| PR com fix | [#2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377) |
 | Arquivo | `.github/workflows/db-guard.yml` |
 
+**Erro exato:**
+```
+toomanyrequests: Data limit exceeded. Please see https://docs.aws.amazon.com/AmazonECR/latest/public/public-service-quotas.html
+```
+
 **Causa raiz:**  
-O step `docker pull public.ecr.aws/docker/library/postgres:17-alpine` falha com rate limit (429) no ECR público. Fix: trocar para `ghcr.io/adm01-debug/postgres:17-alpine` (sem rate limit).
+O step `Replay local das migrations` falha com HTTP 429 (rate limit) ao fazer `docker pull public.ecr.aws/supabase/postgrest:v14.5`. O ECR público da AWS impõe rate limit severo para pulls anônimos nos runners do GitHub.
+
+**Fix preparado:** [PR #2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377)  
+Branch: `claude/fix-db-guard-ecr-261030-1040`  
+Commit: `d3aa987a45ea915eed9b844051ccdfe045f58d68`  
+Mudança em `.github/workflows/db-guard.yml` linha 68:
+```diff
+- POSTGREST_TEST_IMAGE: public.ecr.aws/supabase/postgrest:v14.5@sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b
++ POSTGREST_TEST_IMAGE: ghcr.io/supabase/postgrest:v14.5@sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b
+```
+O SHA digest `bb289d00...` é mantido idêntico — imagem idêntica, registro diferente. Compatível com `sha_pinning_required=true`.
 
 **Bloqueio Regra 8:** Altera `.github/workflows/db-guard.yml` — CI/workflow.
 
-**O que o Joaquim precisa fazer:**
-1. Abrir [PR #2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354)  
-2. Aguardar CI verde  
-3. Mergear (squash)
+**O que o Joaquim precisa fazer:**  
+1. Aguardar CI verde nos 6 required checks do [PR #2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377) (checks em `queued` por saturação de runners do GitHub às 10:43Z de 2026-10-30)
+2. Mergear (squash)
 
 ---
 
@@ -125,15 +139,18 @@ O step `docker pull public.ecr.aws/docker/library/postgres:17-alpine` falha com 
 
 ---
 
-## 5. `branch-hygiene-audit` — timeout/cancel
+## 5. `branch-hygiene-audit` — cancelamento consistente (timeout)
 
 | Campo | Valor |
 |---|---|
 | Workflow | `Branch Hygiene Audit` |
-| Últimos runs | 40289875804 (`cancelled`), 39220130783 (`cancelled`) |
-| Run dispatch 2026-10-30 | [41024463986](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41024463986) |
+| Runs analisados | 40289875804 (`cancelled`), 39220130783 (`cancelled`), 41024463986 (`cancelled`) |
 
-**Situação:** O workflow já tem `timeout-minutes: 10`. Os runs anteriores foram `cancelled` (não `failure`). Um run foi disparado via `workflow_dispatch` às 08:08Z (2026-10-30) para verificar se conclui com `success`. Correção requer alteração de `.github/workflows/branch-hygiene-audit.yml` — Regra 8.
+**Situação confirmada:** O workflow cancela consistentemente em 3 runs consecutivos. O run [41024463986](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41024463986) despachado via `workflow_dispatch` em 2026-10-30T08:08Z também retornou `conclusion=cancelled` (completado às 08:20Z) — 12 minutos, excedendo o `timeout-minutes: 10` do workflow.
+
+**Causa:** O script de auditoria de branches excede o tempo limite de 10 minutos do job.
+
+**Bloqueio Regra 8:** Corrigir exigiria aumentar `timeout-minutes` ou otimizar o script de auditoria — ambos alteram `.github/workflows/branch-hygiene-audit.yml` (CI/workflow).
 
 ---
 
