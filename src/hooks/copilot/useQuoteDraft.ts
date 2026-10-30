@@ -17,7 +17,7 @@ export interface QuoteDraft {
   clientName: string;
   items: QuoteLineItem[];
   totalValue: number;
-  validity: string;
+  validity: number;
   paymentTerms: string;
   deliveryDate: string;
   observations: string[];
@@ -43,13 +43,14 @@ export function useQuoteDraft({
   return useMemo(() => {
     const ready = !!(clientName && items.length > 0 && items.every((i) => i.quantity > 0 && i.unitPrice > 0));
     if (!ready) {
-      return { ready: false, clientName, items: [], totalValue: 0, validity: '', paymentTerms: '', deliveryDate: '', observations: [], textSummary: '' };
+      return { ready: false, clientName, items: [], totalValue: 0, validity: 0, paymentTerms: '', deliveryDate: '', observations: [], textSummary: '' };
     }
 
     const lineItems: QuoteLineItem[] = items.map((i) => ({ ...i, total: i.quantity * i.unitPrice }));
     const totalValue = lineItems.reduce((s, i) => s + i.total, 0);
+    const VALIDITY_DAYS = 5;
     const deliveryDate = new Date(now + deliveryDays * 86_400_000).toLocaleDateString('pt-BR');
-    const validity = new Date(now + 5 * 86_400_000).toLocaleDateString('pt-BR');
+    const validityDate = new Date(now + VALIDITY_DAYS * 86_400_000).toLocaleDateString('pt-BR');
 
     const textSummary = [
       `Proposta para ${clientName}`,
@@ -59,7 +60,7 @@ export function useQuoteDraft({
       `Total: R$${totalValue.toFixed(2)}`,
       `Pagamento: ${paymentTerms}`,
       `Prazo de entrega: ${deliveryDate}`,
-      `Validade da proposta: ${validity}`,
+      `Validade da proposta: ${validityDate}`,
     ].join('\n');
 
     return {
@@ -67,7 +68,7 @@ export function useQuoteDraft({
       clientName,
       items: lineItems,
       totalValue,
-      validity,
+      validity: VALIDITY_DAYS,
       paymentTerms,
       deliveryDate,
       observations: ['Arte incluída grátis', 'Frete a calcular conforme endereço'],
