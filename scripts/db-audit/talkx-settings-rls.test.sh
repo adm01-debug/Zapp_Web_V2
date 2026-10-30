@@ -35,12 +35,9 @@ for attempt in 1 2 3; do
     printf 'WARN: container falhou (%s/3)\n' "$attempt" >&2; continue
   fi
   ready=false
-  for _ in $(seq 1 30); do
-    if docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
-      ready=true; break
-    fi
-    sleep 1
-  done
+  if bash "$repo_root/scripts/db-audit/wait-postgres-final-start.sh" "$container_name" 30; then
+    ready=true
+  fi
   [[ "$ready" == true ]] && break
 done
 [[ "$ready" == true ]] || fail 'PostgreSQL 17 descartavel nao ficou pronto'

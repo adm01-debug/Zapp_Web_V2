@@ -157,6 +157,55 @@ describe('createOfflineQueue', () => {
   });
 });
 
+describe('createOfflineQueue — logout e usuário atual', () => {
+  it('clear() durante a drenagem em voo não ressuscita o item apagado', async () => {
+    const queue = createOfflineQueue({ driver: createMemoryOfflineQueueDriver(), lock: null });
+    await queue.enqueue(mensagem(1));
+    await queue.enqueue(mensagem(2));
+    let entregues = 0;
+    const resultado = await queue.drain(async () => {
+      entregues += 1;
+      await queue.clear(); // logout no meio da entrega
+    });
+
+    expect(entregues).toBe(1);
+    expect(resultado.sent).toBe(1);
+    expect(await queue.list()).toEqual([]);
+    expect(queue.getSnapshot()).toBe(0);
+  });
+
+  it('clear() durante o put da drenagem desfaz a ressurreição e não entrega', async () => {
+    const base = createMemoryOfflineQueueDriver();
+    const driver: OfflineQueueDriver = {
+      ...base,
+      put: async (message) => {
+        await base.put(message);
+        if (message.attempts > 0) await queue.clear();
+      },
+    };
+    const queue = createOfflineQueue({ driver, lock: null });
+    await queue.enqueue(mensagem(1));
+    const deliver = vi.fn(async () => {});
+    await queue.drain(deliver);
+
+    expect(deliver).not.toHaveBeenCalled();
+    expect(await queue.list()).toEqual([]);
+  });
+
+  it('itens que shouldDeliver rejeita não entram em remaining nem no snapshot', async () => {
+    const queue = createOfflineQueue({ driver: createMemoryOfflineQueueDriver(), lock: null });
+    await queue.enqueue({ ...mensagem(1), userId: 'a' });
+    await queue.enqueue({ ...mensagem(2), userId: 'b' });
+    await queue.enqueue({ ...mensagem(3), userId: 'b' });
+
+    const resultado = await queue.drain(async () => {}, { shouldDeliver: (item) => item.userId === 'a' });
+
+    expect(resultado).toEqual({ sent: 1, remaining: 0 });
+    expect(queue.getSnapshot()).toBe(0);
+    expect(await queue.list()).toHaveLength(2);
+  });
+});
+
 describe('driver em IndexedDB', () => {
   it('grava no store próprio e sobrevive a um reload da fila', async () => {
     const fake = createFakeIndexedDb();
