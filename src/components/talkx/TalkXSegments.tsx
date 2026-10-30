@@ -236,12 +236,24 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     openBuilder({ id: s.id, name: s.name, description: s.description ?? '', rules: s.rules }, { segmentId: s.id, mode: 'edit' });
   };
   // Fechar o construtor (cancelar ou publicar) devolve a tela e o endereço à biblioteca.
-  const closeBuilder = () => {
+  const closeBuilder = useCallback(() => {
     builderGuardRef.current = null;
     setEditing(null);
     setRoute(null);
     replaceTalkXSegmentsRoute(null);
-  };
+  }, []);
+
+  // Esc enquanto o construtor está aberto e limpo (sem alterações não salvas) fecha o construtor.
+  useEffect(() => {
+    if (!activeEditing) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !e.defaultPrevented && !builderGuardRef.current) {
+        closeBuilder();
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [activeEditing, closeBuilder]);
 
   const save = async (draft: SegmentBuilderContent) => {
     if (saving) return;
@@ -764,7 +776,7 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose, onFavorite }: {
           <PrimaryButton icon={Zap} onClick={onCampaign} disabled={s.status !== 'active'} className="w-full justify-center">Usar em campanha</PrimaryButton>
           {s.status !== 'active' && <p className="text-xs text-destructive text-center">Segmento inativo: não pode ser usado em campanha.</p>}
           <GhostButton icon={Pencil} onClick={onEdit} className="w-full justify-center">Editar segmento</GhostButton>
-          <GhostButton icon={RefreshCw} onClick={() => refetchEst()} aria-label="Recontar público deste segmento" className="w-full justify-center">Recontar público</GhostButton>
+          <GhostButton icon={RefreshCw} onClick={() => refetchEst()} className="w-full justify-center">Recontar público</GhostButton>
           <GhostButton icon={s.is_favorite ? StarOff : Star} onClick={onFavorite} className="w-full justify-center">{s.is_favorite ? 'Desfavoritar' : 'Favoritar'}</GhostButton>
         </div>
       </div>

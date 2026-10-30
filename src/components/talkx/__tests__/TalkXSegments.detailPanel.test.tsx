@@ -310,7 +310,7 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     await waitFor(() => expect(contagens()).toBeGreaterThan(0));
     const antes = contagens();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Recontar público deste segmento' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Recontar público' }));
 
     await waitFor(() => expect(contagens()).toBeGreaterThan(antes));
   });
