@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
-  Archive, AlertTriangle, PowerOff, Tag, RefreshCw,
+  Archive, AlertTriangle, PowerOff, Tag, RefreshCw, LayoutList, LayoutGrid,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -53,6 +53,8 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
   const [editing, setEditing] = useState<EditingSeed | null>(null);
   const [saving, setSaving] = useState(false);
+  // X112 — alternância lista/grade da biblioteca de segmentos.
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   // TL-134: gaveta "Meus segmentos" (<xl) e guarda de edição suja do construtor
   // (o construtor registra a guarda via onGuardChange a cada render).
   const [sideListOpen, setSideListOpen] = useState(false);
@@ -410,7 +412,15 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           }}
           hasActive={filterOrigin !== 'all' || filterStatus !== 'all' || filterOwner !== 'all' || search.trim() !== ''}
           onClear={clearFilters}
-          rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>}
+          rightSlot={(
+            <>
+              <div className="flex items-center gap-0.5 rounded-lg border border-border/70 bg-input/40 p-0.5">
+                <button type="button" data-testid="segments-view-list" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')} aria-label="Visualização em lista" className={cn('h-7 w-7 rounded-md inline-flex items-center justify-center', viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50')}><LayoutList className="w-3.5 h-3.5" /></button>
+                <button type="button" data-testid="segments-view-grid" aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')} aria-label="Visualização em grade" className={cn('h-7 w-7 rounded-md inline-flex items-center justify-center', viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50')}><LayoutGrid className="w-3.5 h-3.5" /></button>
+              </div>
+              <PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>
+            </>
+          )}
         />
 
         <TalkXBulkBar
@@ -443,8 +453,30 @@ export function TalkXSegments({ onUseCampaign }: Props) {
             empty={<div className="p-4"><TalkXEmptyState icon={Bookmark} title="Nenhum segmento salvo" description="Crie segmentos inteligentes para campanhas mais assertivas." actionLabel="Criar segmento" onAction={openNew} /></div>}
           >
            {filtered.length === 0 ? (<div className="p-4"><TalkXEmptyState icon={Search} title="Nenhum segmento encontrado" description="Ajuste os filtros ou tente outro termo." /></div>)
-           : (
-            <div className="overflow-x-auto">
+           : viewMode === 'grid' ? (
+            <div data-testid="segments-grid" className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 p-4">
+              {paged.map((s) => {
+                const rulesFlat = (s.rules?.groups ?? []).flatMap((g) => g.rules);
+                const originLabel = s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado';
+                const statusLabel = s.status === 'active' ? 'Ativo' : s.status === 'inactive' ? 'Inativo' : 'Rascunho';
+                return (
+                  <div key={s.id} data-testid="segment-card" onClick={() => setSelected(s)} className={cn('bg-card border border-border/70 rounded-xl p-3 cursor-pointer hover:bg-muted/20 transition-colors space-y-2', selected?.id === s.id && 'ring-1 ring-primary')}>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-semibold text-foreground line-clamp-2">{s.name}</p>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="shrink-0 text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      <Pill label={originLabel} tone={s.origin === 'crm360' ? 'violet' : 'info'} />
+                      <Pill label={statusLabel} tone={s.status === 'active' ? 'success' : 'muted'} dot />
+                    </div>
+                    <p className="text-xs text-foreground-secondary">{rulesFlat.length === 0 ? 'Toda a base' : `${rulesFlat.length} critério${rulesFlat.length === 1 ? '' : 's'}`}</p>
+                    <p className="text-sm font-bold text-foreground">{fmtInt(s.estimated_count)} <span className="text-2xs text-foreground-secondary font-normal">contatos</span></p>
+                  </div>
+                );
+              })}
+            </div>
+           ) : (
+            <div data-testid="segments-list" className="overflow-x-auto">
               <table className="w-full min-w-[820px] border-collapse">
                 <thead className="bg-muted/20 border-b border-border/60"><tr>
                   <Th className="w-10"><input type="checkbox" checked={allPageSelected} onChange={toggleAllOnPage} aria-label="Selecionar todos os segmentos da página" className="w-3.5 h-3.5 accent-primary cursor-pointer" /></Th>
@@ -452,7 +484,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                 </tr></thead>
                 <tbody>
                   {paged.map((s) => (
-                    <tr key={s.id} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
+                    <tr key={s.id} data-testid="segment-card" className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
                       <Td><div onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} aria-label={`Selecionar ${s.name}`} className="w-3.5 h-3.5 accent-primary cursor-pointer" /></div></Td>
                       <Td><button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
                       <Td>
