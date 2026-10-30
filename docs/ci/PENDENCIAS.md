@@ -2,7 +2,7 @@
 
 **Última atualização:** 2026-10-30  
 **Branch de origem:** `claude/keen-galileo-dxai3p`  
-**SHA main de referência:** `2da8e5a415c975443ec149d820932c96ee20a897` (merge PR #2376)
+**SHA main de referência:** `37ffd2ef` (main atual, 2026-10-30)
 
 ---
 
@@ -15,8 +15,8 @@ Estes workflows falharam no baseline e não puderam ser corrigidos por agente po
 | Campo | Valor |
 |---|---|
 | Workflow | `Deploy Edge Functions (all)` |
-| Último run com falha | [41021181372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181372) |
-| SHA | `3f4e16d2ae91e5dae76a3775049798460782cbf5` |
+| Último run com falha | [41025945945](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41025945945) (mais recente) |
+| SHA | `15c43f46` (anterior: `3f4e16d2ae91e5dae76a3775049798460782cbf5`) |
 | Job | `Deploy Edge Functions` (job 123948621262) |
 | Step | 17 — `Typecheck das edge functions (deno check)` |
 

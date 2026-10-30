@@ -2,7 +2,7 @@
 
 **Data:** 2026-10-30  
 **Branch de relatório:** `claude/keen-galileo-dxai3p`  
-**SHA main de referência:** `2da8e5a415c975443ec149d820932c96ee20a897`  
+**SHA main de referência:** `37ffd2ef` (SHA mais recente confirmado; CI/CD Pipeline ainda queued — último concluded foi success em SHA `2da8e5a415c975443ec149d820932c96ee20a897`)  
 **Sessão:** https://claude.ai/code/session_01RfQzo7rsZ224WzBjCBKxqx
 
 ---
@@ -99,7 +99,7 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 |---|---|---|---|
 | `settings-guard` | [#2355](https://github.com/adm01-debug/Zapp_Web_V2/pull/2355) | [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) | ✅ success |
 | `🧪 Unit Tests` (ci.yml) | [#2362](https://github.com/adm01-debug/Zapp_Web_V2/pull/2362) | CI PR #2364 run [41008768305](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768305) | ✅ success |
-| `deploy-functions` | [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) + [#2368](https://github.com/adm01-debug/Zapp_Web_V2/pull/2368) | [41021181372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181372) | ❌ failure — Regra 8 (PR [#2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371) aguarda Joaquim) |
+| `deploy-functions` | [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) + [#2368](https://github.com/adm01-debug/Zapp_Web_V2/pull/2368) | [41025945945](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41025945945) SHA `15c43f46` | ❌ failure — Regra 8 (PR [#2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371) aguarda Joaquim) |
 | `db-live-guard` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458) | ❌ failure — Regra 8 (migrations sem apply em producao-ddl) |
 | `db-migrate` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | — | 🔒 Regra 8 — environment gate by design |
 | `db-guard` (push-to-main) | ✅ (sempre success em push-to-main) | [41036703908](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703908) push SHA `2da8e5a4` | ✅ success — ECR issue afeta apenas check não-required em runs de PR; push-to-main sempre success |
@@ -113,7 +113,7 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 | Workflow | Status baseline | Status final | Evidência |
 |---|---|---|---|
 | `settings-guard` | ❌ failure | ✅ success | Run [41009792669](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41009792669) |
-| `deploy-functions` | ❌ failure | ❌ failure — Regra 8 | Último run [41021181372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181372); PENDENCIAS.md item 1 |
+| `deploy-functions` | ❌ failure | ❌ failure — Regra 8 | Último run [41025945945](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41025945945) SHA `15c43f46`; PENDENCIAS.md item 1 |
 | `db-live-guard` | ❌ failure | ❌ failure — Regra 8 | Último run [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458); PENDENCIAS.md item 2 |
 | `db-migrate` | ❌ failure | 🔒 Regra 8 | PENDENCIAS.md item 4 |
 | `🧪 Unit Tests` | ❌ failure | ✅ success | CI PR #2364 run [41008768305](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768305) |
@@ -131,7 +131,7 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 | `auto-update-pr-branch` | ✅ success | ✅ success | sem alteração |
 | `codeql` | ✅ success | ✅ success | sem alteração |
 
-**SHA de referência final:** `2da8e5a415c975443ec149d820932c96ee20a897` (merge de PR #2376, 2026-10-30T09:53:23Z)
+**SHA de referência final:** `37ffd2ef` (main atual, 2026-10-30); SHA `2da8e5a4` foi o último com CI/CD Pipeline concluded=success (merge de PR #2376, 2026-10-30T09:53:23Z).
 
 **DB Guard (offline)** run 41036703908: **conclusion=success** confirmado (10:18:15Z).  
 **CI/CD Pipeline** run [41036703993](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703993) attempt 2: `🧩 Node CI Scripts` **conclusion=success** (10:25:55Z) — todos os 14 jobs ✅. Attempt 1 falhou por esm.sh CDN HTTP 500 (transitória, não regressão de código).  
