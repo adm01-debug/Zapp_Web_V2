@@ -3,6 +3,9 @@ import { cn } from '@/lib/utils';
 import { Message } from '@/types/chat';
 // CV-061 — ghost text overlay (texto fantasma)
 import { GhostTextOverlay, GhostTextHint } from '@/components/copilot/GhostTextOverlay';
+// CV-063..070 — painel RADAR da Fase 7 (respostas sugeridas, ditado, sugestão de anexo)
+import { RadarPhase7Panel } from '@/components/copilot/RadarPhase7Panel';
+import type { QuickReplyTemplate } from '@/hooks/chat/useQuickReplies';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -82,6 +85,8 @@ interface ChatInputAreaProps {
   // CV-061 / CV-062 — ghost text (texto fantasma)
   ghostSuffix?: string;
   onGhostKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => boolean;
+  /** CV-066: id da conversa para o feedback do copiloto. */
+  conversationId?: string;
 }
 
 export function ChatInputArea(props: ChatInputAreaProps) {
@@ -98,7 +103,23 @@ export function ChatInputArea(props: ChatInputAreaProps) {
     fileUploaderRef, inputRef, onOpenTransfer,
     // CV-061 / CV-062
     ghostSuffix = '', onGhostKeyDown,
+    conversationId = '',
   } = props;
+
+  // CV-063..070 — entradas do painel RADAR Fase 7
+  const radarMessages = useMemo(
+    () => messages.slice(-20).map((m) => ({ content: m.content ?? '', sender: m.sender })),
+    [messages],
+  );
+  const radarTemplates = useMemo<QuickReplyTemplate[]>(
+    () => quickReplies.map((q) => ({
+      id: q.id, title: q.title, content: q.content, shortcut: q.shortcut ?? null,
+      category: q.category ?? null, is_global: null, use_count: null,
+      user_id: '', created_at: '', updated_at: '',
+    })),
+    [quickReplies],
+  );
+  const lastClientMessage = radarMessages.filter((m) => m.sender === 'contact').slice(-1)[0]?.content;
 
   const logic = useChatInputLogic({
     inputValue, contactId, editingMessage, inputRef, fileUploaderRef, onSend, onPasteFiles,
@@ -167,6 +188,20 @@ export function ChatInputArea(props: ChatInputAreaProps) {
               {tertiaryTools}
             </div>
           }
+        />
+      )}
+
+      {!logic.isMobile && !editingMessage && (
+        <RadarPhase7Panel
+          className="px-4 pt-2"
+          inputValue={inputValue}
+          conversationId={conversationId}
+          contactId={contactId}
+          contactName={contactName}
+          messages={radarMessages}
+          saleContext={{ contactName, lastClientMessage }}
+          quickReplyTemplates={radarTemplates}
+          onDraftText={(text) => setNativeValue(inputRef, text)}
         />
       )}
 
