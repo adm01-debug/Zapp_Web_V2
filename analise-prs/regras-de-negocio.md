@@ -1,167 +1,332 @@
-# Regras de Negócio — Análise de PRs
+# Regras de Negócio — Zapp Web V2
+*Gerado em: 2026-10-30 | SHA main: 6090b6c*
 
-**Data:** 2026-10-26  
-**Repositório:** adm01-debug/Zapp_Web_V2  
-**Main SHA auditado:** `2d97c44cfe7f2fa8a3ca572f8f5689118328e858`
-
-**Fontes primárias desta análise:**
-- `CLAUDE.md` (seções 0–4, project instructions checked into codebase)
-- `.github/workflows/ci.yml` (definição dos jobs e CI Gate)
-- `scripts/ci/github-settings-baseline.json` (branch protection canônica)
+> Este arquivo documenta as regras de negócio do sistema com base em evidências do código.
+> Para regras de merge de PRs, veja a versão anterior (rev. 2026-10-26, mesclada ao progresso).
 
 ---
 
-## 1. Critério de merge (todos obrigatórios)
+## 1. Contatos
 
-Um PR só pode ser mergeado quando TODAS as condições abaixo forem verdadeiras:
+### Critério de visibilidade
+Um contato é visível na tela de Contatos quando:
+- `deleted_at IS NULL`
+- `is_lid_legacy = false`
+- `phone ~ '^[0-9]{10,15}$'` (10 a 15 dígitos, apenas numérico)
 
-| # | Critério | Fonte | Evidência mínima |
-|---|---|---|---|
-| 1 | PR ainda válido (feature não implementada em main) | `CLAUDE.md` seção 3 ("Diff mínimo, causa raiz") | Grep/busca no main atual |
-| 2 | Sem regressão (não reverte código mais recente) | Task `/goal` — regra explícita | Diff comparado com main |
-| 3 | Não implementado em main | Task `/goal` — regra explícita | Comparação SHA do arquivo em main vs PR |
-| 4 | Regra de negócio correta | Task `/goal` — regra explícita | Revisão semântica do diff |
-| 5 | Completo (sem TODO crítico, sem stub) | Task `/goal` — regra explícita | Leitura do diff completo |
-| 6 | Todos os 6 required checks passando | `CLAUDE.md` "Perímetro do GitHub" | `github_list_check_runs` para o head SHA |
-| 7 | PR atualizado com main (`strict=true`) | `scripts/ci/github-settings-baseline.json:9` (`"strict": true`) | `mergeable_state != "behind"` |
-| 8 | `mergeable_state = "clean"` | `CLAUDE.md` seção 3 ("Regras de migration" regra 6) | API do GitHub |
-| 9 | Confiança alta (sem ambiguidade de impacto) | Task `/goal` — regra explícita | — |
+Fonte: `src/hooks/crm/contactsAggregates.ts:44-48` (`CONTACT_VISIBLE_PHONE_PATTERN`) + migration `20260930450000`.
 
----
+### Toggle de legados
+- Contatos legados (`is_lid_legacy = true`) ficam ocultos por padrão.
+- O toggle "Mostrar legados" persiste em `localStorage` com chave `contact-show-legacy`.
+- Quando `include_legacy = true`, as funções `search_contacts()` e `contacts_count_by_type()` incluem legados.
 
-## 2. Checks obrigatórios na `main`
+Fonte: `src/hooks/crm/contactsAggregates.ts:47-48` (constante `CONTACT_SHOW_LEGACY_STORAGE_KEY`).
 
-Fonte: `CLAUDE.md` seção "Perímetro do GitHub — estado canônico (2026-10-03)" e
-`.github/workflows/ci.yml` (jobs: `typecheck:69`, `unit-tests:70`, `build:156`, `ci-gate:275`).
+### Invalidação de cache
+Toda escrita em `contacts` (criar, editar, excluir, mesclar, ações em massa, Kanban) invalida as queries:
+`['contacts-kpi']`, `['contacts-type-counts']`, `['contacts-search']`.
+Essas queries usam `refetchOnMount: 'always'` para capturar mudanças feitas fora da tela de Contatos.
 
-São 6 required checks mais o CI Gate:
+Fonte: `src/hooks/crm/contactsAggregates.ts:16-37`.
 
-- `🔍 Lint & TypeCheck` — job `typecheck` em `ci.yml`
-- `🧪 Unit Tests` (3 partições paralelas) — job `unit-tests` em `ci.yml:69`, matrix `shard: [1,2,3]`
-- `🏗️ Build` — job `build` em `ci.yml`
-- `🔒 Security Audit` — job `security` em `ci.yml`
-- `Contrato DB offline` — job separado em `ci.yml`
-- `🎭 E2E Tests (Playwright)` — job `e2e` em `ci.yml`
-- `✅ CI Gate (required check)` — job `ci-gate` em `ci.yml:275`, `needs: [typecheck, unit-tests, node-scripts, build, security]`; bloqueia merge quando `unit-tests.result == "failure"` (`ci.yml:289`)
+### Notas fixadas
+- Tabela `contact_notes` tem coluna `is_pinned boolean NOT NULL DEFAULT false` (aditiva, sem backfill).
+- Índice parcial `contact_notes_pinned_idx` indexa apenas as notas fixadas (`WHERE is_pinned`).
+- A RLS de UPDATE (autor + contato visível) garante que só o autor fixa/desfixa a própria nota.
+
+Fonte: migration `20261026200000_contact_notes_pinned.sql`.
 
 ---
 
-## 3. Restrições de conteúdo
+## 2. Conversas / Inbox
 
-Fontes: `CLAUDE.md` seção 1 regras de migration, seção 0 regras 0–7, task `/goal` regras explícitas.
-
-| Tipo de mudança | Regra | Fonte |
-|---|---|---|
-| Migration (DDL) | Só aditiva e não destrutiva. Sem DROP, RENAME, ALTER TYPE, DELETE/UPDATE em massa. Idempotente. | `CLAUDE.md` seção 1 "Restrições de conteúdo" ("Sem DROP, RENAME, ALTER TYPE") |
-| Edge function | Só com todos os testes passando e sem afrouxar autenticação | Task `/goal` regra explícita |
-| RLS/permissões | Só se testes no Postgres temporário provarem que nenhum acesso foi ampliado | Task `/goal` regra explícita |
-| `.github/workflows` | NÃO TOCAR — fora do escopo desta análise | Task `/goal`: "não tocar .github/workflows" |
-| SINGU (`src/services/crm/singu-adapter.ts`) | READ-ONLY — PR que escreva nele não é mergeado | Task `/goal`: "SINGU é READ-ONLY" |
-
----
-
-## 4. Método de merge
-
-Fonte: `scripts/ci/github-settings-baseline.json:24-25` e `CLAUDE.md` "Perímetro do GitHub".
-
-- Método: **squash** (`allow_squash_merge=true:24`, `allow_merge_commit=false:25`, `allow_rebase_merge=false`)
-- Branch protection: `strict=true` (`github-settings-baseline.json:9`), `enforce_admins=true`
-- Escrita no GitHub: APENAS via MCP `GITHUB - MCP - FOREVER` (`CLAUDE.md` seção 3: "Escrita no GitHub: somente MCP GITHUB - MCP - FOREVER")
-- Proibido: push direto em main, force-push, fechar/editar/comentar PR, labels, deletar branch (task `/goal`)
-
----
-
-## 5. Classificação de vereditos
-
-| Veredito | Significado |
+### Estados persistidos em `contacts.conversation_status`
+| Estado | Semântica |
 |---|---|
-| `MERGEAR` | Todos os critérios atendidos — merge imediato |
-| `MERGEAR_APOS_AJUSTES` | Pequeno ajuste técnico corrige o bloqueio |
-| `COMPLETAR` | PR incompleta — funcionalidade em desenvolvimento |
-| `RESGATAR_PARCIAL` | Parte do conteúdo é válida, parte não |
-| `FECHAR` | Duplicata, reverte código mais recente, ou inválida |
-| `DECISAO_HUMANA` | Requer aprovação do Joaquim (DDL destrutivo, secret, arquitetura) |
-| `DRAFT_SKIP` | PR em rascunho — não analisar para merge |
-| `BLOQUEADO_CI` | Bloqueado pelo CI sistêmico em main (ver seção 6) |
-| `BLOQUEADO_CI_E_BEHIND` | Bloqueado por CI + desatualizado em relação a main |
+| `open` | Aberta e em atendimento ativo |
+| `waiting` | Aguardando resposta (sem atendente ativo) |
+| `resolved` | Resolvida pelo agente |
+| `archived` | Arquivada |
+
+Fonte: `src/hooks/inbox/chipCounts.ts:70-93`.
+
+### Chips da Inbox
+- `all` — todas as abertas (open + waiting), excluídas as adiadas
+- `unread` — contato com `unread_messages > 0`
+- `attending` — `conversation_status in ('open','waiting')` + está em atendimento
+- `waiting` — `conversation_status = 'waiting'`
+- `resolved` — `conversation_status = 'resolved'`
+- `archived` — `conversation_status = 'archived'`
+
+Chips e lista usam os **mesmos predicados** (sem divergência de contagem).
+
+Fonte: `src/hooks/inbox/chipCounts.ts:45-93`.
+
+### Contatos adiados (Snooze)
+- Conversas adiadas são excluídas da lista ativa enquanto o prazo vigora.
+- A retomada acontece quando o conjunto de `snoozedIds` encolhe no vencimento.
+- Snooze é estado virtual (não persiste como `conversation_status`).
+
+Fonte: `src/hooks/inbox/chipCounts.ts:45-46` + `src/hooks/inbox/useInboxFilters.ts` (prop `snoozedIds`).
+
+### Abas da conversa
+Abas válidas: `['chat', 'files', 'ia', 'crm', 'orders', 'history', 'tasks', 'notes']`.
+- Aba `reminders` foi fundida em `tasks` (etapa 73); valor salvo em localStorage é redirecionado automaticamente.
+- Aba ativa persiste em `localStorage` com chave `zapp:inbox:conversation-tab`.
+
+Fonte: `src/hooks/inbox/useInboxUIState.ts:10-15`.
+
+### Auto-fechamento
+- Configuração global única por org (`auto_close_config`, 1 linha).
+- Campos: `inactivity_hours`, `is_enabled`, `close_message`.
+
+Fonte: `src/hooks/inbox/useAutoCloseConversations.ts`.
+
+### Filtros salvos do inbox (presets)
+- Máximo de **20 presets** por usuário (trava no banco via trigger).
+- Nome único por usuário ignorando maiúsculas/minúsculas (índice único parcial em `lower(name)` para `entity_type = 'inbox_filters'`).
+- Preset do inbox é **sempre privado** — `is_shared = true` é recusado pelo trigger com `check_violation`.
+- A serialização usa `pg_advisory_xact_lock` para evitar race condition de inserção simultânea.
+
+Fonte: migration `20261026190300_saved_filters_inbox_limites.sql`.
 
 ---
 
-## 6. Bloqueio sistêmico identificado (2026-10-26)
+## 3. TalkX (Campanhas)
 
-**Causa raiz:** `main@2d97c44` (commit de 2026-10-24T18:43:20Z — "fix(ci): ci-gate bloqueia merge quando unit tests falham") introduziu um comportamento em que o `CI Gate` bloqueia merge quando unit tests falham. E unit tests estão falhando em **136 arquivos** naquele commit.
+### Blacklist: deleção física proibida
+- Tabela `talkx_blacklist` tem defesa em duas camadas contra DELETE:
+  1. Policy RLS `talkx_blacklist_no_delete` (para `authenticated`): `USING (false)`
+  2. Trigger `trg_talkx_blacklist_no_delete` (para `service_role`/dono)
+- Contatos na blacklist nunca recebem campanha; a barreira é permanente.
 
-**Evidência:**
-- PR #2247 (docs-only, 1 arquivo): `Unit Tests (1/3)` = failure, `Unit Tests (2/3)` = failure, `Unit Tests (3/3)` = failure, `CI Gate` = failure, `Contrato DB offline` = failure
-- PR #2248 (fix CI Gate): documenta 136 arquivos vermelhos, reduz para 1 arquivo (`rlsSchemaGuard.test.ts`) que precisa de 2 migrations aplicadas em produção
+Fonte: migration `20261026160000_restore_rls_security_alerts_talkx_blacklist.sql`.
 
-**Impacto:**
-- **167 PRs abertas** — nenhuma mergeável
-- 35 são drafts (fora do escopo de merge de qualquer forma)
-- 132 são não-draft — todas bloqueadas pelo CI sistêmico
+### Snapshot de audiência (X017)
+- A audiência é resolvida no servidor, não no navegador.
+- No primeiro `persist`, a edge function retorna o snapshot de destinatários.
+- Saves subsequentes reutilizam o snapshot existente (não re-consulta `talkx_blacklist`).
+- Draft usa chave de criação por aba para evitar criação dupla; a chave é reutilizada se a resposta de criação se perder.
 
-**Caminho de desbloqueio:**
-1. PR #2248 contém a correção para 135 dos 136 arquivos vermelhos
-2. O arquivo restante (`rlsSchemaGuard.test.ts`) precisa de 2 migrations em produção
-3. Joaquim deve: revisar PR #2248 → aprovar as 2 migrations via `producao-ddl` → CI fica verde → PRs podem ser mergeadas
+Fonte: `src/components/talkx/__tests__/useCampaignEditor.test.tsx:39-41` (linhas com X017).
 
-**Prioridade:** PR #2248 é o desbloqueador de todos os outros trabalhos.
+### Regras de audiência (V24 — motor de regras)
+- Audiência armazenada em JSON do motor de regras (não como lista plana de contatos).
+- Rascunho salvo com regras reabre com as mesmas regras.
+- Filtros de tag descartados na migração V23→V24 (não persistem, não filtram em silêncio).
+- Snapshot solto do V23 é convertido para regras ao carregar.
+
+Fonte: `src/components/talkx/__tests__/useCampaignEditor.test.tsx:48-51`.
+
+### Agendamento seguro contra horário de verão
+- DST: hora local inexistente (clock spring-forward) é **rejeitada**, não movida silenciosamente.
+- DST: hora local ambígua (clock fall-back) é **rejeitada**, não arbitrariamente escolhida.
+- Hora válida após transição DST é convertida com o offset em vigor naquele instante.
+
+Fonte: `src/components/talkx/__tests__/useCampaignEditor.test.tsx:19-21`.
+
+### Revisão otimista de saves
+- O cliente envia uma `revision` otimista e só avança após confirmação do banco.
+- Conflito de revisão (save concorrente) não sobrescreve silenciosamente.
+
+Fonte: `src/components/talkx/__tests__/useCampaignEditor.test.tsx:42`.
 
 ---
 
-## 7. Cobertura adicional de regras
+## 4. Team Chat (Departamentos)
 
-### 7.1 Documentação e Configuração
+### Tabelas principais
+`team_conversations`, `team_messages`, `team_message_reactions`, `team_message_receipts`, `team_conversation_members`, `team_message_read_state`.
 
-Fonte: `CLAUDE.md` seção 3 ("Repo e escrita"), task `/goal`.
+### Realtime
+- Cada conversa tem seu próprio canal Supabase Realtime (nome contém o `conversationId`).
+- Isolamento garante que `removeChannel()` na desmontagem não derruba canal de outra conversa.
+- Canais de dados (`postgres_changes`) apenas invalidam cache — nunca montam estado a partir do payload.
+- `useTeamTyping`: canal `broadcast` (evento `typing`).
+- `useTeamPresence`: canal `presence` (chave = id do usuário).
+- `team_conversations` fora do realtime do banco (atualizado pelas próprias mutações).
 
-- PRs docs-only (apenas `docs/`, `.claude/commands/`, `README`) passam pelos mesmos 6 required checks
-- Sem exceção de CI para PRs de documentação pura (evidência: PR #2247, docs-only, tem CI Gate failure)
-- `.github/workflows/` — **NÃO TOCAR** (task `/goal`: "não tocar .github/workflows")
+Fonte: `src/hooks/team-chat/README.md`.
 
-### 7.2 Testes
+### RPCs
+| RPC | Função |
+|---|---|
+| `get_team_inbox` | Lista conversas do usuário |
+| `get_team_messages_page` | Paginação de mensagens |
+| `mark_team_conversation_read` | Marca conversa como lida |
+| `toggle_team_reaction` | Adiciona/remove reação a mensagem |
 
-Fonte: `CLAUDE.md` seção 1 regra migration, `.github/workflows/ci.yml` (job `unit-tests:69`, matrix `shard: [1,2,3]`).
+Fonte: `src/hooks/team-chat/README.md`.
 
-- Nunca desativar, pular (skip) ou colocar em quarentena um teste para fazer CI verde (`CLAUDE.md` — "nunca skip, disable ou quarantine a test")
-- 136 arquivos de teste falhando em `main@2d97c44` — o PR que corrigir isso é o desbloqueador
-- PR com correção de teste deve reduzir a contagem de arquivos vermelhos, nunca aumentar
-- `src/__tests__/rlsSchemaGuard.test.ts` — arquivo que testa as 2 migrations pendentes; falha enquanto as migrations não estiverem aplicadas em produção
+---
 
-### 7.3 Enums e Types
+## 5. RADAR (Copilot de Vendas)
 
-Fonte: `src/integrations/supabase/types.ts` (gerado); `scripts/ci/db-guard.yml` (job `types-sync`).
+### Contexto de domínio
+RADAR é o copiloto de vendas de **brindes personalizados** (itens promocionais). Toda a nomenclatura e pontuação reflete esse domínio.
 
-- `src/integrations/supabase/types.ts` é gerado automaticamente pelo `types-sync` workflow
-- PR que adiciona RPC/função no banco deve incluir o types.ts regenerado; sem isso o CI de typecheck falha
-- PR #2244 é exemplo: adiciona 9 RPCs em types.ts — necessário para que o typecheck passe
+### Framework B·R·I·N·D·E
+Seis campos de qualificação do negócio:
+| Letra | Campo | Coluna DB |
+|---|---|---|
+| B | Budget (Orçamento) | `brinde_budget` |
+| R | Responsible (Responsável) | `brinde_responsible` |
+| I | Intention (Intenção) | `brinde_intention` |
+| N | Number (Quantidade) | `brinde_quantity` |
+| D | Deadline (Prazo) | `brinde_deadline` |
+| E | Delivery (Entrega) | `brinde_delivery` |
 
-### 7.4 Migrations / DDL
+Fonte: migration `20261030100000_copilot_sessions.sql:9-16`, `src/hooks/copilot/useLiveScoring.ts:22`.
 
-Fonte: `CLAUDE.md` seção 1 regras 1–9; task `/goal` regras explícitas.
+### Estágios da venda
+```
+novo_contato → qualificando → apresentando → negociando → fechando → pos_venda → perdido
+```
+Constraint: `CHECK (sale_stage IN (...))` na tabela `copilot_sessions`.
 
-- Apenas migrations **aditivas e não destrutivas** (sem DROP, RENAME, ALTER TYPE, DELETE/UPDATE em massa, REVOKE)
-- Idempotentes: aplicar duas vezes não produz resultado diferente
-- Toda migration em `supabase/migrations/` deve estar registrada no ledger (`supabase_migrations.schema_migrations`)
-- `statements` no ledger = SQL real e completo, nunca resumo em prosa
-- Ordem obrigatória: arquivo → PR → merge em `main` → deploy → apply (via `producao-ddl`)
-- `supabase_apply_migration` está bugado — usar `db_query` + INSERT manual no ledger
-- Migrations das PRs em análise: verificar que não há DROP/RENAME/ALTER TYPE antes de recomendar merge
+Fonte: migration `20261030100000_copilot_sessions.sql:20-24`.
 
-### 7.5 Políticas RLS / Permissões
+### Termômetro do lead
+- `hot`: score ≥ 3 ou algum hit de sinal quente → "Faça a proposta agora e sugira fechar."
+- `warm`: score ≥ 1 → "Aprofunde o interesse. Envie amostra ou mockup."
+- `cold`: score < 1 → "Descubra o timing real. Pergunte sobre o próximo evento."
 
-Fonte: `CLAUDE.md` seção 0 regra 3 ("RLS/permissões só se testes no Postgres temporário provarem..."); task `/goal`.
+Fonte: `src/hooks/copilot/useLeadThermometer.ts:22-29`.
 
-- PR com nova política RLS: só aprovar se testes no Postgres temporário provarem que **nenhum acesso foi ampliado** além do intencional
-- PR que amplia SELECT em tabela existente (ex.: `security_alerts`) = aditiva mas requer aprovação humana
-- `WhatsAppTemplatesManager` — admin-only (RLS admin-only; evidência: PR #2248 body)
-- `SINGU` (`src/services/crm/singu-adapter.ts`) — **READ-ONLY**: PR que escreva nele não é mergeado (task `/goal`)
+### Pontuação ao vivo (CV-111)
+| Dimensão | Pontuação | Critério |
+|---|---|---|
+| Velocidade de resposta | 25 pts | Penaliza > 5 min de espera |
+| Completude B·R·I·N·D·E | 40 pts | ~6,7 pts por campo preenchido |
+| Sinais de compra | 20 pts | Baseado em `purchaseSignalWeight` |
+| Tratamento de objeções | 15 pts | Proporção objeções tratadas/total |
+| **Total** | **100 pts** | |
 
-### 7.6 UI / Front-end
+Grades: A (≥ 90), B (≥ 75), C (≥ 60), D (≥ 40), F (< 40).
 
-Fonte: `CLAUDE.md` seção "Lição de UI (2026-09-25)", task `/goal`.
+Fonte: `src/hooks/copilot/useLiveScoring.ts:48-80`.
 
-- Mudança de estilo deve funcionar em light mode E dark mode (token `--inbox-panel-bg` em vez de `bg-black`)
-- Acessibilidade WCAG AA: contraste mínimo 4.5:1 para texto principal
-- PR que quebra acessibilidade (aria, contraste, motion) = regressão
-- PR #2237: correções de `aria-busy`, `motion-safe`, `aria-hidden` em 13 SVGs — aditiva, sem regressão
+### Sessões e Insights
+- Tabela `copilot_sessions`: uma linha por conversa monitorada (UNIQUE em `conversation_id`).
+- Tabela `copilot_insights`: cada "pensamento" do RADAR (suggestion, alert, next_action, objection, brinde_field, temperature_change, stage_change, attachment, follow_up, other).
+- RLS: cada vendedor lê e escreve apenas as próprias sessões/insights (`profile_id = auth.uid()`).
+- `copilot_insights` publicada no Realtime (canal `copilot-insights:{sessionId}`).
+
+Fonte: migrations `20261030100000`, `20261030110000`.
+
+### Feedback do copiloto
+- Tabela `copilot_feedback`: captura dois tipos de feedback:
+  - `edit_distance`: quanto o agente editou a sugestão (`igual`, `pouco`, `muito`)
+  - `thumbs`: avaliação direta (`positive`, `negative`)
+- INSERT permitido para `authenticated` sem restrição de linha (coleta de melhoria contínua).
+- SELECT permitido para `authenticated` (sem filtro por usuário — análise agregada).
+
+Fonte: migration `20261026130300_copilot_feedback.sql`.
+
+---
+
+## 6. Autenticação e Permissões
+
+### Modelo de permissões
+- RLS ativo em **todas** as tabelas do schema `public`.
+- Papel `anon`: sem INSERT, UPDATE, DELETE em nenhuma tabela (exceto `password_reset_requests`).
+  - Exceção explícita: `GRANT INSERT ON public.password_reset_requests TO anon` para o fluxo "esqueci minha senha".
+- `passkey_credentials` (WebAuthn): `anon` não tem SELECT, UPDATE, DELETE, TRUNCATE, TRIGGER.
+  - Racional: TRUNCATE ignora RLS no PostgreSQL — grant explícito seria vetor de ataque.
+
+Fonte: migrations `20261016230000`, `20261016250000`.
+
+### Passkeys (WebAuthn)
+- Suporte detectado por `isWebAuthnSupported()` e `isPlatformAuthenticatorAvailable()`.
+- Registro: edge function `webauthn` com action `registration-options`.
+- Passkeys listadas em ordem decrescente de `created_at` (`passkey_credentials`).
+
+Fonte: `src/hooks/auth/useWebAuthn.ts:36-57`.
+
+### Hierarquia de roles
+- `is_admin_or_supervisor()` — função SQL usada como guarda em RPCs sensíveis.
+- Exemplos de uso: `talk_me_list_waiting`, `dashboard_kpi`.
+
+Fonte: migration `20261020190001_talk_me_search_hardening.sql:48`.
+
+### Alertas de segurança
+- Policy `security_alerts_self_select`: `authenticated` lê apenas alertas onde `user_id = auth.uid()`.
+- Sem essa policy, `SecurityOverview` mostra "sem atividades suspeitas" mesmo com alertas gravados.
+
+Fonte: migration `20261026160000_restore_rls_security_alerts_talkx_blacklist.sql`.
+
+---
+
+## 7. Integrações (Evolution GO / WhatsApp)
+
+### Arquitetura: sem chaves no front-end
+- Toda chamada à Evolution GO passa pela edge function `evolution-api/<action>`.
+- Chaves `EVOLUTION_API_KEY` e `EVOLUTION_INSTANCE_TOKEN` existem apenas em secrets de Edge Functions.
+- Nenhuma chamada direta do front-end para a API da Evolution GO.
+
+Fonte: `src/hooks/evolution/__tests__/useEvolutionMessaging.test.ts:176-177` (asserção: payload sem `apiKey`/`evolutionApiUrl`).
+
+### Instância padrão
+- Nome: `PRINCIPAL` (`EVOLUTION_INSTANCE_NAME`).
+- `create-instance` está deprecado; novas conexões usam `createConnection`.
+
+Fonte: `src/hooks/evolution/useEvolutionInstance.ts:12-14`, `CLAUDE.md` seção 2.
+
+### Recuperação de sessão órfã (QR Code não aparece)
+Quando `connected = false` + `jid` presente na instância GO:
+1. Poll do `/instance/qr` (3× / 1,5s) — QR na GO é assíncrono.
+2. Se sem QR: recria a instância (`DELETE /instance/delete/{id}` + `POST /instance/create`) com o mesmo token e nome `PRINCIPAL`.
+3. Reconnect + novo poll do QR; devolve `recovered: true`.
+4. Se ainda sem QR: retorna `error: true` / 409 (sem spinner infinito).
+
+Fonte: `CLAUDE.md` seção 2 (runbook QR Code).
+
+### Busca literal no Talk Me
+- Busca truncada em **80 caracteres** máximos (`LEFT(BTRIM(...), 80)`).
+- Caracteres especiais LIKE (`%`, `_`, `\`) são escapados antes do `ILIKE`.
+
+Fonte: migration `20261020190001_talk_me_search_hardening.sql:37-47`.
+
+---
+
+## 8. Migrations — critérios para merge seguro
+
+| Tipo de mudança | Classificação | Requer aprovação humana? |
+|---|---|---|
+| `CREATE TABLE` | Aditiva | Não |
+| `ADD COLUMN ... DEFAULT <valor>` (nullable ou com default) | Aditiva | Não |
+| `CREATE INDEX` / `CREATE UNIQUE INDEX` | Aditiva | Não |
+| `CREATE FUNCTION` / `CREATE OR REPLACE FUNCTION` | Aditiva | Não |
+| `GRANT EXECUTE` para roles sem acesso sensível | Aditiva | Não |
+| `REVOKE` (remoção de permissão) | Destrutiva | Sim (Joaquim) |
+| `DROP TABLE` / `DROP FUNCTION` / `DROP INDEX` | Destrutiva | Sim (Joaquim) |
+| `ALTER TABLE ... ALTER COLUMN TYPE` | Destrutiva | Sim (Joaquim) |
+| `ALTER TABLE ... RENAME COLUMN` | Destrutiva | Sim (Joaquim) |
+| `DELETE FROM ...` / `UPDATE ... SET` em massa | Destrutiva | Sim (Joaquim) |
+
+### Ordem obrigatória de apply
+```
+arquivo em supabase/migrations/ → PR → merge em main → deploy (Vercel + Edge Functions) → apply via producao-ddl
+```
+
+### Registro no ledger
+- `statements` = SQL real e completo (nunca resumo em prosa).
+- Usar `scripts/db-audit/register-migration.mjs <arquivo.sql>` para gerar o INSERT correto.
+- INSERT + DDL na mesma transação via `db_query`, com `RETURNING` não-vazio como guarda.
+
+Fonte: `CLAUDE.md` seção 1, regras 1–9.
+
+---
+
+## 9. Dashboard e KPIs
+
+### RPC `dashboard_kpi`
+- Assinatura nova (E31/E34): `dashboard_kpi(p_from, p_until, p_queue, p_agent)`.
+- Retorna métricas do período `[p_from, p_until)` **e** do período anterior de mesmo tamanho.
+- Fallback: se a assinatura nova não existir (`PGRST202`), o front cai na assinatura antiga.
+- `p_from = NULL` → 00:00 de hoje em `America/Sao_Paulo`.
+- `p_until = NULL` → janela aberta (sem teto; período anterior proporcional ao tempo já decorrido).
+- Não expõe dados para `authenticated` sem checar `is_admin_or_supervisor()` (E33).
+
+Fonte: migration `20261026210000_dashboard_kpi_periodo_aditivo.sql`.
