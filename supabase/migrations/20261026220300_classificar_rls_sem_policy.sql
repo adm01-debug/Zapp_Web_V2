@@ -1,19 +1,3 @@
--- Migração: classificação das 17 tabelas com RLS ativa e zero policies
--- Versão: 20261026220300
--- Motivação: GOAL "Backend Supabase 100% operacional" — seção 4, item das 17 tabelas
---
--- Resultado da auditoria (27/10/2026):
---   16 tabelas → "intencional — só service_role acessa"
---              (sem grant a anon/authenticated; RLS + 0 policies = deny all por design)
---    1 tabela  → "intencional — só service_role acessa" COM correção:
---              link_preview_cache tinha grants indevidos a anon/authenticated que contradiziam
---              o design (acesso só via edge function fetch-link-preview + cleanup-cron, ambos
---              em service_role). Grants revogados aqui.
---
--- Nenhuma política criada porque o acesso via anon/authenticated não é intencional em
--- nenhuma das 17 tabelas.
-
--- ── Tabelas de rebuild / arquivamento temporário ──────────────────────────────
 COMMENT ON TABLE public._rb_message_reactions_contato_20261007001008 IS
   '[RLS-sem-policy: intencional] Tabela de rebuild de 07/10/2026. Acesso apenas por service_role durante scripts de reconciliação.';
 
@@ -26,7 +10,6 @@ COMMENT ON TABLE public._zapp_mig133_log IS
 COMMENT ON TABLE public.team_chat_media_acl_r2_db_020_rb IS
   '[RLS-sem-policy: intencional] Tabela de rebuild para ACL de mídia do Team Chat. Só service_role durante scripts de migração.';
 
--- ── Tabelas de infraestrutura de backend ─────────────────────────────────────
 COMMENT ON TABLE public.agent_mini_game_xp_daily IS
   '[RLS-sem-policy: intencional] Acumulador diário de XP do mini-game. Escrito pelos triggers/edge functions via service_role; leitura pela RPC security-definer get_agent_mini_game_stats.';
 
@@ -63,14 +46,8 @@ COMMENT ON TABLE public.talkx_test_send_claims IS
 COMMENT ON TABLE public.voip_profile_credentials IS
   '[RLS-sem-policy: intencional] Credenciais SIP por perfil. Escrita/leitura pela RPC security-definer set_voip_profile_credentials. Sem grant a anon/authenticated.';
 
--- ── link_preview_cache: grants indevidos → revogar ──────────────────────────
--- Diagnóstico: anon + authenticated tinham ALL PRIVILEGES sobre esta tabela, mas
---   (a) RLS está ativa com zero policies → acesso bloqueado de fato;
---   (b) acesso real só ocorre via service_role (edge function fetch-link-preview
---       e cron cleanup-link-preview-cache).
--- Correção: revogar para eliminar contradição e tornar o design explícito.
-
 REVOKE ALL ON TABLE public.link_preview_cache FROM anon;
+
 REVOKE ALL ON TABLE public.link_preview_cache FROM authenticated;
 
 COMMENT ON TABLE public.link_preview_cache IS
