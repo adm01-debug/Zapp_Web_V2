@@ -52,12 +52,16 @@ serve(async (req) => {
       });
     }
 
-    // contacts.assigned_to armazena profiles.id, não auth.users.id.
-    // Resolver o profile do chamador antes de qualquer operação no banco.
+    // copilot_sessions.profile_id e copilot_insights.profile_id referenciam
+    // auth.users(id) — usar user.id para todas as escritas/filtros nessas tabelas.
+    const userId = user.id;
+
+    // contacts.assigned_to armazena profiles.id (não auth.users.id).
+    // Resolver o profiles.id do chamador apenas para comparar com assigned_to.
     const { data: profileRow } = await supabase
       .from('profiles')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .maybeSingle();
     if (!profileRow) {
       return new Response(JSON.stringify({ error: 'Profile not found' }), {
@@ -65,6 +69,7 @@ serve(async (req) => {
         headers: { ...CORS, 'Content-Type': 'application/json' },
       });
     }
+    // profileId é usado SOMENTE para comparar com contacts.assigned_to.
     const profileId = profileRow.id as string;
 
     const payload: TickPayload = await req.json();
@@ -76,21 +81,19 @@ serve(async (req) => {
       });
     }
 
-    // contact_id vem do payload (o front já conhece); fallback para profileId
+    // contact_id vem do payload (o front já conhece); fallback para userId
     // apenas como última instância — garante NOT NULL sem depender de tabela
     // auxiliar que pode não existir em todos os deploys.
-    const contactId = payload.contact_id ?? profileId;
+    const contactId = payload.contact_id ?? userId;
 
-    // INSERT atômico: seta profile_id na primeira chamada e não pode ser
-    // sobrescrito. Em conflito (23505, unique conversation_id), cai em UPDATE
-    // condicional guardado por .eq('profile_id', profileId) — 0 rows = ou dono
-    // diferente, ou conversa foi transferida para este usuário.
-    // Elimina a janela de corrida do padrão SELECT+upsert anterior.
+    // INSERT atômico: seta profile_id = userId na primeira chamada.
+    // Em conflito (23505, unique conversation_id), cai em UPDATE condicional
+    // guardado por .eq('profile_id', userId).
     const { data: insertedSession, error: insertError } = await supabase
       .from('copilot_sessions')
       .insert({
         conversation_id: payload.conversation_id,
-        profile_id: profileId,
+        profile_id: userId,
         contact_id: contactId,
         ...(payload.sale_stage && { sale_stage: payload.sale_stage }),
         ...(payload.brinde_meter != null && { brinde_meter: payload.brinde_meter }),
@@ -110,8 +113,8 @@ serve(async (req) => {
         });
       } else {
         // Conflito: atualiza apenas campos não-proprietários, ownership guardado
-        // por profile_id — 0 rows significa que outro usuário é o dono,
-        // ou a conversa foi transferida para este usuário (ver abaixo).
+        // por profile_id = userId — 0 rows = outro usuário é o dono, ou
+        // conversa foi transferida para este usuário.
         const updateData: Record<string, unknown> = {
           last_tick_at: new Date().toISOString(),
         };
@@ -122,15 +125,13 @@ serve(async (req) => {
           .from('copilot_sessions')
           .update(updateData)
           .eq('conversation_id', payload.conversation_id)
-          .eq('profile_id', profileId)
+          .eq('profile_id', userId)
           .select('id')
           .single();
 
         if (updateError || !updatedSession) {
-          // Zero rows: ou o dono da sessão é outro usuário, ou a conversa foi
-          // transferida para este usuário via transfer_conversation (que atualiza
-          // contacts.assigned_to mas não copilot_sessions.profile_id).
-          // Verificamos se o chamador é agora o responsável pelo contato.
+          // Zero rows: ou o dono é outro usuário, ou a conversa foi transferida.
+          // Verificar se o chamador é agora o responsável pelo contato.
           // contacts.assigned_to armazena profiles.id — comparar com profileId.
           const { data: contact } = await supabase
             .from('contacts')
@@ -145,10 +146,10 @@ serve(async (req) => {
             });
           }
 
-          // Conversa foi transferida: transfere ownership da sessão para o novo dono.
+          // Conversa transferida: transfere ownership para o novo dono (userId).
           const { data: transferredSession, error: transferError } = await supabase
             .from('copilot_sessions')
-            .update({ ...updateData, profile_id: profileId })
+            .update({ ...updateData, profile_id: userId })
             .eq('conversation_id', payload.conversation_id)
             .select('id')
             .single();
@@ -162,7 +163,7 @@ serve(async (req) => {
           // Transfere também os insights para que o novo dono os veja.
           await supabase
             .from('copilot_insights')
-            .update({ profile_id: profileId })
+            .update({ profile_id: userId })
             .eq('session_id', transferredSession.id);
           session = transferredSession;
         } else {
@@ -181,7 +182,7 @@ serve(async (req) => {
     if (session?.id) {
       await supabase.from('copilot_insights').insert({
         session_id: session.id,
-        profile_id: profileId,
+        profile_id: userId,
         insight_type: insight.type,
         content: insight.content,
         source: insight.source,
