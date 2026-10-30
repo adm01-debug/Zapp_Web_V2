@@ -10,7 +10,7 @@
 | Campo | Valor |
 |---|---|
 | Workflow | `.github/workflows/db-guard.yml` |
-| Erro exato | `toomanyerequests: Data limit exceeded` (pull do `public.ecr.aws/supabase/postgrest:v14.5`) |
+| Erro exato | `toomanyrequests: Data limit exceeded` (pull do `public.ecr.aws/supabase/postgrest:v14.5`) |
 | Causa | ECR público limita pulls anônimos por IP nos runners do GitHub |
 | PR de correção | [#2354](https://github.com/adm01-debug/Zapp_Web_V2/pull/2354) — troca `public.ecr.aws/supabase/` → `ghcr.io/supabase/` (W57) |
 | Por que está bloqueado | Altera `.github/workflows/db-guard.yml` — **Regra 8** |
