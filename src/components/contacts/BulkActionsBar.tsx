@@ -219,7 +219,7 @@ export function BulkActionsBar({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 20 }}
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-xl shadow-lg"
+        className="fixed bottom-[calc(144px+env(safe-area-inset-bottom,0px))] md:bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-wrap items-center justify-center gap-2 max-w-[calc(100vw-2rem)] px-4 py-3 bg-primary text-primary-foreground rounded-xl shadow-lg"
       >
         <CheckSquare className="w-4 h-4" />
         <span className="text-sm font-medium">{count} selecionado{count > 1 ? 's' : ''}</span>
