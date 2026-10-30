@@ -84,3 +84,9 @@ O executor `postgres` não pode mudar defaults pertencentes a `supabase_admin`; 
 ## Limitações desta revisão
 
 A revisão foi ampla por frentes, com cinco agentes especializados, consultas ao GitHub e leitura do banco, mas não executou homologação de cada funcionalidade, teste autenticado em produção nem reclassificação linha a linha dos 1.110 itens e das 5.166 tarefas históricas. Esses registros permanecem não revalidados até que cada um tenha evidência atual. Os estados externos e a fila de Actions podem mudar após 30/10/2026.
+
+## Reconciliação item a item P0/P1 — 30/10/2026
+
+Foi concluída a primeira reconciliação individual dos 81 itens P0/P1 que estavam abertos ou sem verificação no filtro do inventário de 07/10. O detalhe por frente, com ID (ou linha de origem quando o inventário não tem ID), status anterior, status observado, confiança, evidência, próxima ação e bloqueio está em [`reconciliation-live-2026-10-30/`](reconciliation-live-2026-10-30/): 33 Segurança/Banco, 10 CI/Edge/Configuração, 12 IA, 8 Mensagens/Telefonia e 18 Fluxos de produto. Os TSVs mantêm alguns vocabulários de status específicos por frente; seus rótulos não devem ser somados sem normalização. O registro não reescreve automaticamente os status históricos do inventário.
+
+Esta rodada é uma reconciliação por amostra definida (itens P0/P1 abertos), não a revisão de todas as 1.110 linhas nem das 5.166 tarefas históricas. Permanecem itens parciais, falhas validadas, decisões de produto, dependências externas e provas de runtime/aceite humano. O plano segue aberto.
