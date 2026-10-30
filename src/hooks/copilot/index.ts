@@ -28,20 +28,15 @@ export { useVouPensarDetector } from './useVouPensarDetector';
 export { useStallDetector } from './useStallDetector';
 export { useMinQuantityAlert } from './useMinQuantityAlert';
 export { useMinQuantityAlternative } from './useMinQuantityAlternative';
-export { useMinQtyAlternative } from './useMinQtyAlternative';
-export { useLossRiskAlert } from './useLossRiskAlert';
 export { useLossRiskDetector } from './useLossRiskDetector';
 export { usePostRejection } from './usePostRejection';
-export { useRejectionRecovery } from './useRejectionRecovery';
 
 // ── Fase 9 (CV-081-090) — Catálogo, Prazo, Orçamento ─────────────────────────
 export { useDeadlineCalculator } from './useDeadlineCalculator';
 export { useHonestUrgency } from './useHonestUrgency';
 export { useQuoteDraft } from './useQuoteDraft';
 export { useFreightEstimate } from './useFreightEstimate';
-export { useUpsell } from './useUpsell';
 export { useUpsellSuggestion } from './useUpsellSuggestion';
-export { useKitSuggestion } from './useKitSuggestion';
 export { useOccasionKits } from './useOccasionKits';
 export { useMockupTrigger } from './useMockupTrigger';
 export { useUrgencyEscalation } from './useUrgencyEscalation';
