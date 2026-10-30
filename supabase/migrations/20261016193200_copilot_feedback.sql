@@ -4,6 +4,11 @@
 -- insight_id é nullable: quando o insight expira (90 dias) e é deletado,
 -- o FK ON DELETE SET NULL preserva o feedback para sua própria janela
 -- de retenção de 30 dias.
+--
+-- retained_at: preenchido por run_copilot_retention() quando o registro
+-- expira (30 dias). Sentinel de idempotência: garante que todos os actions
+-- (incluindo discarded/marked_wrong com final_text=NULL) sejam agregados
+-- exatamente uma vez.
 
 CREATE TABLE IF NOT EXISTS public.copilot_insight_feedback (
   id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -14,6 +19,7 @@ CREATE TABLE IF NOT EXISTS public.copilot_insight_feedback (
                     CHECK (action IN ('used_as_is','edited_and_used','discarded','marked_wrong')),
   final_text_hash text,
   final_text      text,
+  retained_at     timestamptz,
   created_at      timestamptz NOT NULL DEFAULT now()
 );
 

@@ -17,6 +17,7 @@ DECLARE
 BEGIN
   IF NEW.sender <> 'contact' THEN RETURN NEW; END IF;
   IF NEW.is_deleted IS TRUE THEN RETURN NEW; END IF;
+  IF NEW.whatsapp_connection_id IS NULL THEN RETURN NEW; END IF;
 
   SELECT * INTO v_contact FROM public.contacts WHERE id = NEW.contact_id;
   IF NOT FOUND THEN RETURN NEW; END IF;
