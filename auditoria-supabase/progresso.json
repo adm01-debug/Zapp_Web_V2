@@ -36,15 +36,41 @@
   },
   "pg_stat_statements_top20_capturado_em": "2026-10-30T22:50:00Z",
   "crons_30d_capturado_em": "2026-10-30T22:51:00Z",
-  "rls_matrix_status": "EXECUTADO — PostgreSQL 16 local (pg_ctlcluster 16 main, 2026-10-30T23:18Z); 7/7 PASS (T-01 a T-09 + T-B1 + T-B2); schema ad-hoc com RLS e SET LOCAL ROLE; dados sinteticos .test",
-  "explain_top_queries_executado_em": "2026-10-30T23:19Z",
+  "rls_matrix_status": "EXECUTADO — PostgreSQL 16 local (pg_ctlcluster 16 main, 2026-10-30T23:18Z); 7/7 PASS em schema ad-hoc; REEXECUTADO nas migrations reais do repo (900/1064 aplicadas) — 8/8 PASS (T-01 T-02 T-C2 T-05 T-09 T-B1 T-B2 + variante T-C2 via trigger message_immutable_columns_forbidden); dados sinteticos .test",
+  "explain_top20_executado_em": "2026-10-30T23:35Z",
   "explain_evidencias": {
-    "user_roles_rls": "Seq Scan on user_roles (cost=0.00..1.14) — sem index em user_id; Filter via auth.uid() COALESCE",
-    "get_last_message_dates": "GroupAggregate via idx_messages_contact_created (Index Only Scan) — cost 1889; OK",
-    "inbox_unread": "Aggregate via idx_messages_read_sender (Index Only Scan is_read=false) — cost 766; OK",
-    "talkx_campaign_segments": "Seq Scan (cost 0.02..16.90) — sem WHERE clause (public USING(true)); acesso sem filtro JWT"
+    "rank1_realtime_wal": "Nested Loop catalog syscache — cost 0 blks; system query",
+    "rank2_inbox_unread_total": "Function Scan inbox_unread_total (cost=0.25..0.26); interno = Aggregate via idx_messages_read_sender",
+    "rank3_mcp_exec": "Function Scan mcp_exec (cost=0.25..0.26); 479993 blks/call = ALTO — uso de MCP direto em producao",
+    "rank4_get_last_message_dates": "GroupAggregate via idx_messages_contact_created (Index Only Scan) — cost 1889; OK",
+    "rank5_rpc_queue_goal_metrics": "Function Scan (cost=0.25..10.25); interno nao analisavel sem ANALYZE",
+    "rank6_contacts_deleted_at_filter": "Limit → Index Scan idx_contacts_created_at (cost=0.28..525.48) — Filter pos-index, sem partial index",
+    "rank7_pg_publication_tables": "Nested Loop pg_publication_rel+pg_class+pg_namespace — syscatalog, OK",
+    "rank8_contacts_assigned_to": "Limit → Index Scan idx_contacts_assigned_to_gamif (cost=0.28..2.46) — OK",
+    "rank9_trigger_talkx_engine_tick": "Result (cost=0.00..0.26); 165460 blks/call — CRITICO (S05-002)",
+    "rank10_search_contacts": "Function Scan search_contacts (cost=0.25..10.25 rows=1000)",
+    "rank11_contacts_assigned_to_full": "Limit → Index Scan idx_contacts_assigned_to_gamif (cost=0.28..2.46) — OK",
+    "rank12_email_threads_unread": "Limit → Seq Scan email_threads Filter:is_unread (cost=0.00..218.75) — sem index em is_unread",
+    "rank13_app_bootstrap": "Function Scan app_bootstrap (cost=0.25..0.26 rows=1) — OK",
+    "rank14_log_audit_event": "Function Scan log_audit_event (cost=0.25..0.26) — OK",
+    "rank15_consume_rate_limit": "Function Scan consume_rate_limit (cost=0.25..10.25) — OK",
+    "rank16_contacts_conversation_status": "Limit → Seq Scan contacts Filter:(assigned_to IS NOT NULL AND conversation_status=open) (cost=0.00..439.26) — sem index composto",
+    "rank17_talk_me_list_queues": "Function Scan talk_me_list_queues (cost=0.25..10.25) — 1159ms/call, MEDIO",
+    "rank18_messages_sender_agent_id": "Limit → Sort → Index Scan idx_messages_agent_id + Filter sender (cost=2.52..2.53) — OK",
+    "rank19_set_config_postgrest": "system set_config call — PostgREST session setup, OK",
+    "rank20_contacts_insert": "Insert on contacts (cost=0.00..0.02) — OK"
   },
-  "final_state_capturado_em": "2026-10-30T23:19:45Z",
+  "explain_top20_re_evidencias_achados": {
+    "S03-001_anon_write_grants": "98 grants INSERT/UPDATE/DELETE/TRUNCATE para anon (era 99 na auditoria; 1 removido por outra sessao)",
+    "S03-002_update_sem_with_check": "42 policies UPDATE sem WITH CHECK",
+    "S04-001_security_definer_fns": "399 funcoes SECURITY DEFINER em public",
+    "S05-001_user_roles_seq_scan": "2446680 seq_scan vs 1268 idx_scan em user_roles — recursao RLS confirmada",
+    "S05_unused_indexes": "637 indexes com idx_scan=0 em public",
+    "S06_cron_startup_timeout": "10369 falhas startup timeout nos ultimos 30 dias",
+    "final_state_verificado_em": "2026-10-30T23:35Z",
+    "delta": "ZERO — migrations=1064 crons=24 policies=505 tables=204 buckets=9 sec_definer=399 indexes=723"
+  },
+  "final_state_capturado_em": "2026-10-30T23:35Z",
   "final_state": {
     "migrations": 1064,
     "latest_version": "20261030110000",
@@ -54,7 +80,7 @@
     "buckets": 9,
     "security_definer_fns": 399,
     "public_indexes": 723,
-    "delta": "ZERO — producao inalterada (verificado ao final da sessao)"
+    "delta": "ZERO — producao inalterada (verificado ao final da sessao 23:35Z)"
   },
   "grep_pii_secrets": "0 hits para tokens/JWTs/passwords/emails reais; dados sinteticos apenas em testes/01_rls_matrix.sql (dominio .test, phones 119999900xx fictícios)",
   "secoes": {
