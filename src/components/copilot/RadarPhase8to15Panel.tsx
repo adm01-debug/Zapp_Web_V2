@@ -67,7 +67,7 @@ export function RadarPhase8to15Panel({
     clientName,
     items: quoteDraftItems,
     deliveryDays: eventDate ? deadline.productionDays : undefined,
-    paymentTerms: '',
+    now: Date.now(), // eslint-disable-line react-hooks/purity
   });
   const upsell = useUpsellSuggestion({ productMentioned: productType || null });
   const thermometer = useLeadThermometer({
