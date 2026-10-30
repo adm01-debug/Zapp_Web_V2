@@ -34,3 +34,6 @@ CREATE POLICY copilot_insights_service ON public.copilot_insights
   TO service_role
   USING (true)
   WITH CHECK (true);
+
+-- Habilita inserts ao vivo via canal Realtime filtrado por session_id
+ALTER PUBLICATION supabase_realtime ADD TABLE public.copilot_insights;
