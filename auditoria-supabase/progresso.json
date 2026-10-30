@@ -19,10 +19,15 @@
     "12_lacunas": "concluido"
   },
   "contagem_por_severidade": {
-    "CRITICO": 4,
-    "ALTO": 11,
-    "MEDIO": 7,
-    "INFO": 14
+    "CRITICO": 3,
+    "ALTO": 9,
+    "MEDIO": 9,
+    "INFO": 13
   },
-  "total_achados": 36
+  "total_achados": 34,
+  "correcoes": [
+    "S04-001: FK profiles->auth.users EXISTE (pg_constraint confirma); reclassificado INFO",
+    "S03-001: roles=[public] é design; with_check bloqueia anon; reclassificado MÉDIO",
+    "S09-005: _bkp_261023 tem 9 tabelas sem RLS (não 3)"
+  ]
 }
