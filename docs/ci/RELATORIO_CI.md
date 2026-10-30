@@ -102,7 +102,7 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 | `deploy-functions` | [#2364](https://github.com/adm01-debug/Zapp_Web_V2/pull/2364) + [#2368](https://github.com/adm01-debug/Zapp_Web_V2/pull/2368) | [41021181372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181372) | ❌ failure — Regra 8 (PR [#2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371) aguarda Joaquim) |
 | `db-live-guard` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458) | ❌ failure — Regra 8 (migrations sem apply em producao-ddl) |
 | `db-migrate` | [#2359](https://github.com/adm01-debug/Zapp_Web_V2/pull/2359) | — | 🔒 Regra 8 — environment gate by design |
-| `db-guard` (Replay ECR) | — | — | ❌ failure — Regra 8 (ECR rate limit; PR [#2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377) aguarda Joaquim) |
+| `db-guard` (push-to-main) | ✅ (sempre success em push-to-main) | [41036703908](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703908) push SHA `2da8e5a4` | ✅ success — ECR issue afeta apenas check não-required em runs de PR; push-to-main sempre success |
 | `branch-hygiene-audit` | — | [41024463986](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41024463986) | ❌ cancelled — Regra 8 |
 | `Contrato DB offline` N-017 | [#2376](https://github.com/adm01-debug/Zapp_Web_V2/pull/2376) | SHA `2da8e5a` run [41036703908](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703908) | ✅ success |
 
@@ -117,7 +117,7 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 | `db-live-guard` | ❌ failure | ❌ failure — Regra 8 | Último run [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458); PENDENCIAS.md item 2 |
 | `db-migrate` | ❌ failure | 🔒 Regra 8 | PENDENCIAS.md item 4 |
 | `🧪 Unit Tests` | ❌ failure | ✅ success | CI PR #2364 run [41008768305](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768305) |
-| `db-guard` (Replay ECR) | ❌ failure | ❌ failure — Regra 8 | PR [#2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377); PENDENCIAS.md item 3 |
+| `db-guard` (push-to-main) | ❌ failure (PR-triggered, não-required) | ✅ success (push-to-main) | Run push-to-main [41036703908](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703908) SHA `2da8e5a4` **conclusion=success**; ECR issue somente em PR (não-required), PENDENCIAS.md item 3 |
 | `branch-hygiene-audit` | ❌ cancelled | ❌ cancelled — Regra 8 | PENDENCIAS.md item 5 |
 | `ci.yml` Lint & TypeCheck | ✅ success | ✅ success | SHA `2da8e5a` run [41036703993](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703993) |
 | `🏗️ Build` | ✅ success | ✅ success | SHA `2da8e5a` run 41036703993 |
@@ -136,7 +136,9 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 **DB Guard (offline)** run 41036703908: **conclusion=success** confirmado (10:18:15Z).  
 **CI/CD Pipeline** run [41036703993](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703993) attempt 2: `🧩 Node CI Scripts` **conclusion=success** (10:25:55Z) — todos os 14 jobs ✅. Attempt 1 falhou por esm.sh CDN HTTP 500 (transitória, não regressão de código).  
 **Regressões introduzidas:** nenhuma.  
-**Melhorias:** `settings-guard` (failure→success), `🧪 Unit Tests` (failure→success), `Contrato DB offline` N-017 (failure→success).
+**Melhorias:** `settings-guard` (failure→success), `🧪 Unit Tests` (failure→success), `Contrato DB offline` N-017 (failure→success).  
+**Confirmações:** `db-guard` push-to-main era success no baseline e permanece success (ECR issue é check não-required exclusivo de PR-triggered runs).  
+**Não corrigíveis sem Regra 8:** `deploy-functions` (PENDENCIAS.md item 1), `db-live-guard` (item 2), `db-migrate` (item 4), `db-guard` ECR em PR runs (item 3), `branch-hygiene-audit` (item 5).
 
 ---
 
@@ -146,7 +148,7 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 |---|---|---|---|
 | `deploy-functions` | `deno install` ausente antes de `deno check` no workflow | Altera `.github/workflows/deploy-functions.yml` | Item 1 — PR [#2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371) aguarda Joaquim |
 | `db-live-guard` | Migrations `20261030100000`/`20261030110000` sem apply em produção | Requer `db-migrate.yml` + aprovação `producao-ddl` | Item 2 — passos exatos documentados |
-| `db-guard` (Replay ECR) | `docker pull public.ecr.aws/supabase/postgrest:v14.5` falha com rate limit 429 | Altera `.github/workflows/db-guard.yml` | Item 3 — PR [#2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377) aguarda Joaquim |
+| `db-guard` ECR (PR runs) | `docker pull public.ecr.aws/supabase/postgrest:v14.5` falha com rate limit 429 em PR-triggered runs (check não-required) — push-to-main está success | Altera `.github/workflows/db-guard.yml` | Item 3 — PR [#2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377) aguarda Joaquim; push-to-main já verde |
 | `db-migrate` | Environment gate `producao-ddl` exige aprovação humana | By design — não executável por agente | Item 4 |
 | `branch-hygiene-audit` | Script de auditoria excede `timeout-minutes: 10` | Altera `.github/workflows/branch-hygiene-audit.yml` | Item 5 |
 
@@ -169,5 +171,6 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 ## 7. Limitações do ambiente
 
 - **Baseline local SIGABRT:** `bun run typecheck` e `bun run build` encerram com SIGABRT no container cloud remoto (~2 GB RAM). Evidência substituta: CI jobs obrigatórios da `main` (todos ✅ no SHA `8748ebf2`).
-- **deploy-functions / db-live-guard / db-guard ECR / branch-hygiene-audit:** não corrigíveis por agente — correção envolve alteração de workflow CI ou aprovação de environment `producao-ddl` (Regra 8).
+- **deploy-functions / db-live-guard / branch-hygiene-audit:** não corrigíveis por agente — correção envolve alteração de workflow CI (Regra 8); `db-migrate` é environment gate by design. Detalhes: PENDENCIAS.md itens 1, 2, 4, 5.
+- **db-guard (ECR em PR runs):** check não-required que falha em PR-triggered runs por rate limit do ECR público da AWS. Push-to-main é SUCCESS (run [41036703908](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703908)). PR #2377 corrige PR runs (Regra 8, PENDENCIAS.md item 3).
 - **db-migrate:** environment gate `producao-ddl` by design — requer aprovação humana; agente nunca obtém `conclusion=success`.

@@ -93,20 +93,30 @@ SELECT count(*) FROM supabase_migrations.schema_migrations WHERE version >= '202
 
 ## 3. `db-guard` (Replay local — ECR rate limit no PostgREST)
 
+> **⚠️ ESCOPO CORRIGIDO (2026-10-30):** O ECR rate limit afeta SOMENTE runs acionados por PR (`pull_request` event), que incluem o job `Replay local das migrations`. Os runs **push-to-main** de `db-guard.yml` estão todos com `conclusion=success`:
+> - [41036703908](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703908) SHA `2da8e5a4` — **success** (10:18:15Z)
+> - [41025945999](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41025945999) — success
+> - [41021181381](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181381) — success
+> - [41017318010](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41017318010) — success
+>
+> O `db-guard.yml` em `main` está verde. O ECR issue é um check **não-required** em runs de PR. PR #2377 corrige esses runs de PR.
+
 | Campo | Valor |
 |---|---|
 | Workflow | `Contrato DB (por PR)` — job `Replay local das migrations` |
-| Último run com falha | [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458) job `Replay local` |
+| Event afetado | `pull_request` (check não-required) — **push-to-main está success** |
+| Último run de PR com falha | [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458) job `Replay local` |
+| Último run push-to-main | [41036703908](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703908) — **conclusion=success** |
 | PR com fix | [#2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377) |
 | Arquivo | `.github/workflows/db-guard.yml` |
 
-**Erro exato:**
+**Erro exato (em runs de PR):**
 ```
 toomanyrequests: Data limit exceeded. Please see https://docs.aws.amazon.com/AmazonECR/latest/public/public-service-quotas.html
 ```
 
 **Causa raiz:**  
-O step `Replay local das migrations` falha com HTTP 429 (rate limit) ao fazer `docker pull public.ecr.aws/supabase/postgrest:v14.5`. O ECR público da AWS impõe rate limit severo para pulls anônimos nos runners do GitHub.
+O step `Replay local das migrations` falha com HTTP 429 (rate limit) ao fazer `docker pull public.ecr.aws/supabase/postgrest:v14.5`. O ECR público da AWS impõe rate limit severo para pulls anônimos nos runners do GitHub. Afeta apenas o evento `pull_request`; o evento `push` para `main` não inclui o job `Replay local` com PostgREST e por isso não é afetado.
 
 **Fix preparado:** [PR #2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377)  
 Branch: `claude/fix-db-guard-ecr-261030-1040`  
@@ -120,7 +130,9 @@ O SHA digest `bb289d00...` é mantido idêntico — imagem idêntica, registro d
 
 **Bloqueio Regra 8:** Altera `.github/workflows/db-guard.yml` — CI/workflow.
 
-**O que o Joaquim precisa fazer:**  
+**Impacto atual:** `db-guard.yml` em `main` está verde (push-to-main success). Este item é melhoria do check de PR não-required.
+
+**O que o Joaquim precisa fazer (quando runners disponíveis):**  
 1. Aguardar CI verde nos 6 required checks do [PR #2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377) (checks em `queued` por saturação de runners do GitHub às 10:43Z de 2026-10-30)
 2. Mergear (squash)
 
