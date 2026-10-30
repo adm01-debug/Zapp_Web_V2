@@ -17,10 +17,10 @@ Tentativa de execução local no container cloud remoto (sessão Claude Code):
 | Comando | Resultado | Motivo |
 |---|---|---|
 | `bun install` | ✅ success | Dependências instaladas com sucesso |
-| `bun run typecheck` | 💥 SIGABRT | Processo morto pelo OS — limite de memória do executor remoto (~2 GB) atingido |
-| `bun run build` | 💥 SIGABRT | Mesmo motivo — esbuild/vite consome >2 GB de RAM durante o bundle |
-| `bun run lint` | ✅ success (via CI) | Não executável localmente por SIGABRT; CI job `🔍 Lint & TypeCheck` usado como substituto |
-| `bun test` / testes unitários | ✅ success (via CI) | Mesmo motivo |
+| `bun run build` | ✅ success | Vite build finalizado em 16.56s, exit 0 — executável localmente |
+| `bun run typecheck` | ❌ SIGABRT | `FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory` — processo terminado pelo OS (limite ~2 GB RAM) |
+| `bun run lint` | ❌ exit 1 | 814 problemas (601 errors, 213 warnings) — **baseline pré-existente**, `novas=0` (sem dívida nova nesta sessão) |
+| `bun test` / testes unitários | ✅ success (via CI) | CI job `🧪 Unit Tests` ✅ run [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) |
 
 **Evidência substituta:** os jobs obrigatórios da `main` (`🔍 Lint & TypeCheck`, `🏗️ Build`, `🔒 Security Audit`, `🧪 Unit Tests`) são o substituto confiável para o baseline local. Todos estavam ✅ success no SHA baseline `8748ebf2` (último run verde em `ci.yml` antes desta sessão), confirmado via `github_list_check_runs`.
 
@@ -175,15 +175,20 @@ SHA final da main: `37ffd2ef0c1c85bcee942139a677fddb36a46d09` (2026-10-30T11:56Z
 
 ### 8a. Baseline local (executor remoto — ~2 GB RAM)
 
-| Comando | Resultado | Substituto aceito |
-|---|---|---|
-| `bun install` | ✅ success | — |
-| `bun run typecheck` | ❌ SIGABRT (OOM) | CI job `🔎 TypeCheck` ✅ run [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) |
-| `bun run build` | ❌ SIGABRT (OOM) | CI job `🏗️ Build` ✅ run [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) |
-| `bun run lint` | ❌ SIGABRT (OOM) | CI job `🔒 Security Audit` ✅ run [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) |
-| `bun test` | via CI | CI job `🧪 Unit Tests` ✅ run [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) |
+Comandos executados diretamente nesta sessão (branch `claude/keen-galileo-dxai3p`, SHA `fec9d78e`):
 
-O executor cloud desta sessão não tem RAM suficiente para `tsc`/`vite build`. Os jobs da CI são a única fonte confiável — e todos ✅.
+| Comando | Resultado | Evidência / Erro exato |
+|---|---|---|
+| `bun install` | ✅ success (exit 0) | — |
+| `bun run build` | ✅ success (exit 0) | Vite build finalizado em 16.56s, sem erros |
+| `bun run typecheck` | ❌ SIGABRT | `FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory` → `error: script "typecheck" was terminated by signal SIGABRT` (limite de ~2 GB RAM do executor remoto) |
+| `bun run lint` | ❌ exit 1 | 814 problemas (601 errors, 213 warnings) — **baseline pré-existente**, nenhum introduzido por esta sessão (ratchet: `novas=0`, `removidas=5`) |
+| `bun test` / testes unitários | via CI | CI job `🧪 Unit Tests` ✅ run [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055) |
+
+**Notas:**
+- `bun run build` funciona no executor remoto (16.56s, exit 0). Documentado como SIGABRT em versão anterior — **corrigido aqui**.
+- `bun run typecheck` encerra com SIGABRT por limite de memória: o processo V8 (`tsc` via bun) atinge o heap limit (~2 GB) e é terminado pelo OS. CI job `🔎 TypeCheck` ✅ (run [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41045101055)) é a evidência substituta.
+- `bun run lint` retorna exit 1 com 814 problemas: é o baseline pré-existente herdado (601 erros de regras locais/segurança, 213 warnings). O ratchet de lint confirma `novas=0` — nenhuma dívida nova nesta sessão.
 
 ### 8b. Tabela final de todos os workflows — conclusion por workflow na main
 
@@ -221,7 +226,7 @@ O executor cloud desta sessão não tem RAM suficiente para `tsc`/`vite build`. 
 
 ## 7. Limitações do ambiente
 
-- **Baseline local SIGABRT:** `bun run typecheck` e `bun run build` encerram com SIGABRT no container cloud remoto (~2 GB RAM). Evidência substituta: CI jobs obrigatórios da `main` (todos ✅ no SHA `8748ebf2`).
+- **Baseline local SIGABRT:** `bun run typecheck` encerra com SIGABRT no container cloud remoto (~2 GB RAM). `bun run build` funciona (16.56s, exit 0). Evidência substituta: CI jobs obrigatórios da `main` (todos ✅ no SHA `8748ebf2`).
 - **deploy-functions / db-live-guard / branch-hygiene-audit:** não corrigíveis por agente — correção envolve alteração de workflow CI (Regra 8); `db-migrate` é environment gate by design. Detalhes: PENDENCIAS.md itens 1, 2, 4, 5.
 - **db-guard (ECR em PR runs):** check não-required que falha em PR-triggered runs por rate limit do ECR público da AWS. Push-to-main é SUCCESS (run [41036703908](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41036703908)). PR #2377 corrige PR runs (Regra 8, PENDENCIAS.md item 3).
 - **db-migrate:** environment gate `producao-ddl` by design — requer aprovação humana; agente nunca obtém `conclusion=success`.

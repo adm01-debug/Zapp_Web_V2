@@ -1,8 +1,8 @@
 # PENDÊNCIAS — Workflows Bloqueados por Regra 8
 
-**Última atualização:** 2026-10-30  
+**Última atualização:** 2026-10-30T12:20Z  
 **Branch de origem:** `claude/keen-galileo-dxai3p`  
-**SHA main de referência:** `37ffd2ef` (main atual, 2026-10-30)
+**SHA main de referência:** `fec9d78ee8b7f05761f8e6178743907bb5d1b912` (main atual, 2026-10-30)
 
 ---
 
@@ -44,8 +44,17 @@ Mudança: step `deno install --config supabase/functions/deno.json` inserido ent
 
 **Bloqueio Regra 8:** Altera `.github/workflows/deploy-functions.yml` — CI/workflow.
 
+**Estado CI do PR #2371** (head `0989c375`, base `fec9d78e`, atualizado 12:04Z):
+- ✅ `🔎 TypeCheck` (success, 12:06Z)
+- ✅ `🔒 Security Audit` (success, 12:09Z)
+- ✅ `🧩 Node CI Scripts` (success, 12:07Z)
+- ✅ `Replay local das migrations` (success, 12:10Z)
+- 🔄 `Contrato DB offline` (in_progress)
+- 🔄 `🎭 E2E Tests (Playwright)` (in_progress)
+- 🔄 `🧪 Unit Tests (1/3, 2/3, 3/3)` (in_progress)
+
 **O que o Joaquim precisa fazer:**  
-1. Aguardar CI verde nos 6 required checks do [PR #2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371) (checks em `queued` por saturação de runners do GitHub às 10:33Z de 2026-10-30)
+1. Aguardar CI verde nos 6 required checks do [PR #2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371) (4 já verdes, 3 ainda em andamento)
 2. Mergear (squash)
 
 ---
@@ -132,8 +141,16 @@ O SHA digest `bb289d00...` é mantido idêntico — imagem idêntica, registro d
 
 **Impacto atual:** `db-guard.yml` em `main` está verde (push-to-main success). Este item é melhoria do check de PR não-required.
 
+**Estado CI do PR #2377** (head `1b627700`, base `fec9d78e`, atualizado 12:04Z):
+- ✅ `Replay local das migrations` (success, 12:06Z)
+- ✅ `🧬 Mutação do mapa` (success, 12:07Z)
+- ✅ `🔎 TypeCheck` (success, 12:10Z)
+- 🔄 `🧩 Node CI Scripts` (in_progress)
+- 🔄 `🧪 Unit Tests (1/3)` (in_progress)
+- ⏳ `🧪 Unit Tests (2/3, 3/3)`, `🔒 Security Audit`, `🎭 E2E Tests`, `Contrato DB offline` (queued/pending)
+
 **O que o Joaquim precisa fazer (quando runners disponíveis):**  
-1. Aguardar CI verde nos 6 required checks do [PR #2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377) (checks em `queued` por saturação de runners do GitHub às 10:43Z de 2026-10-30)
+1. Aguardar CI verde nos 6 required checks do [PR #2377](https://github.com/adm01-debug/Zapp_Web_V2/pull/2377) (3 já verdes, restantes em andamento)
 2. Mergear (squash)
 
 ---
@@ -172,8 +189,8 @@ O SHA digest `bb289d00...` é mantido idêntico — imagem idêntica, registro d
 |---|---|---|
 | `bun install` | ✅ success | — |
 | `bun run typecheck` | ❌ SIGABRT | OS encerra por exceder limite de memória do executor cloud (~2 GB); CI job `🔍 Lint & TypeCheck` ✅ no SHA `3f4e16d2` |
-| `bun run build` | ❌ SIGABRT | Mesma causa; CI job `🏗️ Build` ✅ no SHA `3f4e16d2` |
-| `bun run lint` | via CI | `🔍 Lint & TypeCheck` ✅ |
+| `bun run build` | ✅ success (16.56s, exit 0) | Vite build finalizado localmente |
+| `bun run lint` | ❌ exit 1 | 814 problemas baseline pré-existente, `novas=0` |
 | `bun test` (unit) | via CI | `🧪 Unit Tests` ✅ run [41008768305](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41008768305) |
 
 Os 6 required checks de PR (`ci.yml`) permaneceram verdes durante toda a sessão. Nenhuma regressão foi introduzida.
