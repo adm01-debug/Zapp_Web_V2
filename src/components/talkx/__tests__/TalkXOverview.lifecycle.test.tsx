@@ -111,7 +111,8 @@ const renderOverview = (
   );
 
 const abrirMenuAcoes = () =>
-  fireEvent.keyDown(screen.getByRole('button', { name: 'Ações' }), { key: 'ArrowDown' });
+  // O gatilho do menu da linha leva o NOME da campanha ("Ações de <campanha>", X079/X080).
+  fireEvent.keyDown(screen.getByRole('button', { name: 'Ações de Campanha teste' }), { key: 'ArrowDown' });
 
 const clicarItemDoMenu = (nome: string) =>
   fireEvent.click(screen.getByRole('menuitem', { name: nome }));

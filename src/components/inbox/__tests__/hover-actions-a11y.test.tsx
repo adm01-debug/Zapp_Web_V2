@@ -119,15 +119,20 @@ vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: vi.fn(() => ({ user: { id: 'u1', email: 'test@test.com' } })),
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: { children?: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
-    // O botão do framer-motion perde `whileHover`/`whileTap` (atributo que não
-    // existe no DOM); o que interessa aqui é o botão nativo por dentro.
-    button: ({ children }: { children?: ReactNode }) => <button type="button">{children}</button>,
-  },
-  AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...props }: { children?: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
+        // O botão do framer-motion perde `whileHover`/`whileTap` (atributo que não
+        // existe no DOM); o que interessa aqui é o botão nativo por dentro.
+        button: ({ children }: { children?: ReactNode }) => <button type="button">{children}</button>,
+      },
+      AnimatePresence: ({ children }: { children?: ReactNode }) => <>{children}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 vi.mock('@/components/ui/dialog', () => ({
   Dialog: ({ open, children }: { open: boolean; children: ReactNode }) => (open ? <div>{children}</div> : null),
@@ -239,7 +244,7 @@ vi.mock('@/hooks/chat/useQuickReplies', () => ({
 
 vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }) }));
 
-const NOME_FAVORITAR = 'Favoritar resposta: Boas-vindas';
+const NOME_FAVORITAR = 'Favoritar Boas-vindas';
 
 describe('hoverActions — o favoritar da resposta rápida é alcançável', () => {
   it('é um botão nativo com nome: aceita foco e alterna ao clique', () => {
