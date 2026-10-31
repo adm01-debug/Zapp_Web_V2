@@ -1,22 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/integrations/supabase/client', () => {
-  const makeChain = () => {
-    const chain: Record<string, unknown> = {};
-    chain.like = vi.fn(() => Promise.resolve({ count: 0, error: null }));
-    chain.eq = vi.fn(() => chain);
-    chain.order = vi.fn(() => chain);
-    chain.limit = vi.fn(() => Promise.resolve({ data: [], error: null }));
-    chain.in = vi.fn(() => Promise.resolve({ data: [], error: null }));
-    return chain;
-  };
-  return {
-    supabase: {
-      from: vi.fn(() => ({ select: vi.fn(() => makeChain()) })),
-    },
-  };
-});
+vi.mock('@/services/mediaMigration.service', () => ({
+  countPendingMedia: vi.fn(() => Promise.resolve(0)),
+  fetchMigrationHistory: vi.fn(() => Promise.resolve([])),
+}));
 vi.mock('@/lib/invokeEdge', () => ({
   invokeEdge: vi.fn(() => new Promise(() => {})),
 }));
@@ -35,7 +23,7 @@ describe('MediaMigrationTool — progresso durante a migração', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Iniciar migração' }));
     const barra = screen.getByRole('progressbar', { name: 'Progresso da migração de mídia' });
     expect(barra).toBeInTheDocument();
-    expect(screen.getByText(/Processando mídias/)).toBeInTheDocument();
+    expect(screen.getByText(/Migrando mídias/)).toBeInTheDocument();
     expect(barra).not.toHaveAttribute('aria-valuenow');
     expect(barra).toHaveAttribute('data-state', 'indeterminate');
   });

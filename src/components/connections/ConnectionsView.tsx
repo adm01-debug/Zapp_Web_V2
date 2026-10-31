@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription,
@@ -37,6 +38,7 @@ export function ConnectionsView() {
     syncingHistory, setSyncingHistory, evolutionLoading,
     handleAddConnection, handleShowQrCode, handleRefreshQrCode,
     handleCopyId, handleDisconnect, handleSetDefault, handleDelete, closeQrDialog,
+    addConnectionError, clearAddConnectionError,
   } = useConnectionsManager();
 
   // Trava a criação de conexão nova até o token por instância (Vault) estar
@@ -57,6 +59,33 @@ export function ConnectionsView() {
   // existe para impedir.
   const openAddConnectionDialog = () => {
     if (multiConnectionEnabled) setIsAddDialogOpen(true);
+  };
+
+  // Abrir (reabrir), Cancelar ou fechar o diálogo descarta os erros da tentativa
+  // anterior: sem isso a mensagem de uma criação que falhou acompanhava o diálogo
+  // seguinte, como se o novo formulário já tivesse errado.
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const handleAddDialogOpenChange = (open: boolean) => {
+    clearAddConnectionError();
+    setPhoneError(null);
+    setIsAddDialogOpen(open);
+  };
+
+  // Validação do telefone antes de criar: número brasileiro (DDI 55) precisa ter
+  // DDD + assinante (12+ dígitos); E.164 explícito com outro DDI segue aceito.
+  const telefoneValido = (valor: string) => {
+    const texto = valor.trim();
+    if (!texto.startsWith('+')) return false;
+    const digitos = texto.replace(/\D/g, '');
+    return digitos.startsWith('55') ? digitos.length >= 12 : digitos.length >= 7;
+  };
+  const handleCreateConnection = () => {
+    if (!telefoneValido(newConnection.phone_number)) {
+      setPhoneError('Informe o número com DDI 55, ex.: +55 11 99999-0000 (ou E.164 com outro DDI).');
+      return;
+    }
+    setPhoneError(null);
+    handleAddConnection();
   };
 
   const [businessHoursDialog, setBusinessHoursDialog] = useState({ open: false, connectionId: '', connectionName: '' });
@@ -113,7 +142,7 @@ export function ConnectionsView() {
       <PageHeader title="Conexões WhatsApp" subtitle="Gerencie múltiplas conexões WhatsApp via Evolution API"
         breadcrumbs={[{ label: 'Configurações' }, { label: 'Conexões' }]}
         actions={
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
             <DialogTrigger asChild>
               <Button
                 className="bg-whatsapp hover:bg-whatsapp-dark text-primary-foreground"
@@ -126,11 +155,16 @@ export function ConnectionsView() {
             <DialogContent aria-describedby={undefined} className="sm:max-w-md">
               <DialogHeader><DialogTitle>Adicionar Nova Conexão</DialogTitle><DialogDescription>Crie uma nova instância para conectar ao WhatsApp</DialogDescription></DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => setNewConnection({ ...newConnection, name: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Número do WhatsApp</Label><Input placeholder="+55 11 99999-0000" value={newConnection.phone_number} onChange={(e) => setNewConnection({ ...newConnection, phone_number: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Nome da Conexão</Label><Input placeholder="Ex: WhatsApp Vendas" value={newConnection.name} onChange={(e) => { clearAddConnectionError(); setNewConnection({ ...newConnection, name: e.target.value }); }} /></div>
+                <div className="space-y-2"><Label>Número do WhatsApp</Label><PhoneInput value={newConnection.phone_number} onChange={(formatted) => { clearAddConnectionError(); if (phoneError && telefoneValido(formatted)) setPhoneError(null); setNewConnection({ ...newConnection, phone_number: formatted }); }} disabled={isCreating} />{phoneError && <p role="alert" className="text-xs text-destructive">{phoneError}</p>}</div>
+                {addConnectionError && (
+                  <p role="alert" data-testid="add-connection-error" className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                    {addConnectionError}
+                  </p>
+                )}
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isCreating}>Cancelar</Button>
-                  <Button onClick={handleAddConnection} className="bg-whatsapp hover:bg-whatsapp-dark" disabled={isCreating}>
+                  <Button variant="outline" onClick={() => handleAddDialogOpenChange(false)} disabled={isCreating}>Cancelar</Button>
+                  <Button onClick={handleCreateConnection} className="bg-whatsapp hover:bg-whatsapp-dark" disabled={isCreating}>
                     {isCreating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Criando...</> : 'Adicionar'}
                   </Button>
                 </div>

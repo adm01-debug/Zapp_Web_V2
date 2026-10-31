@@ -1,91 +1,56 @@
-# PENDÊNCIAS — Zapp Web V2
+# PENDENCIAS.md — Workflows com falha não corrigível via código
 
-Gerado automaticamente pela auditoria de 2026-10-22.
-Atualizar conforme as tarefas forem concluídas.
+_Atualizado em 2026-10-30 por sessão de correção de CI._
 
 ---
 
-## P-001 — Ativar MFA (S8-01) ⚠️ ALTO — REQUER AÇÃO DO JOAQUIM
+## 1. DB Live Guard — deriva transitória (todos os 7 passos falharam)
 
-**O que é:** Nenhum dos 10 usuários do projeto tem MFA ativo. Zero fatores verificados.
+**Run:** [41066127274](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41066127274) — 2026-10-30T13:47:10Z  
+**Head SHA:** `fb57b4a5cd071bf86a384d10f143360bd18feb61`
 
-**Por que trava:** Ativar MFA para uma conta requer que o próprio usuário faça a configuração
-no Supabase Dashboard (Settings → Account → Multi-factor Authentication) ou via e-mail de convite
-com link de enrollment. Um agente/script não pode ativar MFA por outra pessoa.
+**O que falhou:** Todos os 7 passos do "Contrato DB vivo":
+- Comparar migrations com schema_migrations
+- Verificar ACL e contrato de mcp_exec
+- Regenerar catálogo e comparar com o commitado
+- Regenerar manifesto e comparar com o commitado
+- Verificar frescor do types.ts
+- Paridade tripla (migrations, edges, grants)
+- Auditar configuração runtime sem dados de clientes
+
+**Por que não foi corrigido:** O DB Live Guard compara o estado do banco de produção com os artefatos do repositório (types.ts, schema-catalog.json, deployment-manifest.json). A falha em TODOS os passos — incluindo "Verificar frescor do types.ts" — sugere deriva transitória causada pelo deploy-functions estar parado desde às 08:21 (por causa do deno.lock quebrado). Os artefatos gerados por `types-sync` e `deploy-functions` podem estar desatualizados.
 
 **O que o Joaquim precisa fazer:**
-1. Acesse https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/auth/users
-2. Para a conta admin, clique no usuário → "Send MFA enrollment link" (ou instrua cada usuário)
-3. No mínimo: ativar para as contas com papel admin/supervisor
-4. Opcional: habilitar MFA obrigatório em Authentication → Policies → "Enforce MFA"
-   (isso bloqueia login de quem não tiver MFA — avisar usuários antes de ligar)
+1. Aguardar o merge do PR #2394 (corrige deno.lock → deploy-functions volta a funcionar)
+2. Após o merge, disparar manualmente o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`
+3. Se ainda falhar, os logs do artifact `db-live-evidence-{run_id}-1` mostrarão qual passo específico tem diferença real
+4. Se o passo "Comparar migrations com schema_migrations" falhar: verificar se há migration aplicada em produção sem estar no ledger (SELECT max(version) FROM supabase_migrations.schema_migrations)
+5. Se o passo "Verificar frescor do types.ts" falhar: disparar `workflow_dispatch` do `types-sync.yml` para regenerar types.ts
 
 ---
 
-## P-002 — Corrigir 61 migrations com statements NULL — BACKLOG
+## 2. Running Copilot Code Review — falha de firewall interno do Copilot (não corrigível via código)
 
-**O que é:** 61 registros em `supabase_migrations.schema_migrations` têm `statements = NULL`,
-impossibilitando replay local e auditoria offline.
+**Runs confirmados com falha:**
+- [41125593441](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41125593441) — múltiplos no dia 2026-10-30
+- [41140197413](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41140197413) — job `copilot-pull-request-reviewer` (check run 124352329821), SHA `79156ee0e5ac8ebddefab98e3d6b5b19eb6b3dec`, PR #2399, concluído 2026-10-30T22:49:16Z com `conclusion=failure`
 
-**Como corrigir (progressivamente):**
-Para cada migration com NULL:
-```bash
-# 1. Verificar se o arquivo existe no repo
-ls supabase/migrations/<version>_*.sql
+**Workflow:** `.github/workflows/` — workflow dinâmico do GitHub Copilot (não tem arquivo próprio no repo)
 
-# 2. Confirmar o estado ao vivo do objeto no banco (função, índice, policy)
-# Exemplo para função:
-SELECT pg_get_functiondef(oid) FROM pg_proc WHERE proname = '<nome_da_funcao>';
-
-# 3. Registrar com o script oficial (nunca à mão):
-node scripts/db-audit/register-migration.mjs supabase/migrations/<version>_<name>.sql
-
-# 4. O script gera o SQL de INSERT — conferir RETURNING não-vazio antes de aplicar
+**O que falhou:** Step "Processing Request (Linux)" falha com:
+```
+If you need me to access, download, or install something from one of these locations, you can either:
+  - Configure Actions setup steps to set up my env before the firewall is enabled.
+  - Add the appropriate URLs or hosts to my firewall allow list
 ```
 
-**Migrations com NULL que também têm RPCs ausentes** (alto impacto — resolver primeiro):
-- `20261012225242` — warroom_rpcs_agentes_filas (warroom_agent_today, warroom_queue_stats)
-- `20261012235745` — dashboard_daily_series
-- `20261013230000` — search_email_threads
-- `20261013230004` — inbox_unread_total
-- `20261013012531` — custom_emoji_use_rpc (increment_custom_emoji_use)
-- `20261013210003` — reabre_conversa_com_nova_mensagem (reopen_conversation)
-- `20261015221500` — sentiment_trend_rpc (sentiment_trend)
-- `20261015223614` — app_bootstrap
+**Por que não foi corrigido:** Este é um workflow dinâmico do GitHub Copilot — não tem código no repositório. A falha está no ambiente de execução do Copilot (firewall bloqueando URLs externas necessárias para o processamento da review). Não é corrigível via código do projeto.
 
-**Atenção:** Ao registrar uma migration "ausente", checar se a mesma função não está
-registrada sob outra versão (ver CLAUDE.md — lição do incidente de 2026-09-25).
+**O que o Joaquim precisa fazer:**
+1. Verificar em GitHub Settings → Copilot → Code Review quais URLs estão sendo bloqueadas
+2. Adicionar as URLs necessárias na lista de permissões do firewall do Copilot (ver: https://gh.io/copilot/firewall-config)
+3. Ou aguardar correção do próprio GitHub (pode ser uma indisponibilidade temporária do serviço Copilot)
 
 ---
 
-## P-003 — RPC log_search_event completamente ausente — INVESTIGAR
-
-**O que é:** A RPC `log_search_event` é chamada no frontend mas não existe no banco nem
-em nenhum arquivo de migration no repo.
-
-**Próximo passo:**
-```bash
-grep -rn 'log_search_event' src/ --include='*.ts'
-```
-Decidir: criar a função (se necessária) ou remover a chamada no frontend.
-
----
-
-## P-004 — 7 RPCs em migrations não aplicadas (S2-A1 parcial)
-
-**O que são:** RPCs chamadas no frontend que existem em arquivos .sql no repo
-mas nunca foram aplicadas em produção (fazem parte das 129 migrations pendentes):
-
-| RPC | Arquivo |
-|-----|---------|
-| enqueue_group_outbound_message | 20261011155946_enqueue_group_outbound_message.sql |
-| admin_list_cron_jobs | 20261011173000_admin_cron_jobs.sql |
-| admin_toggle_cron_job | 20261011173000_admin_cron_jobs.sql |
-| talkx_segment_library_stats | 20261009063248_talkx_segment_library_stats.sql |
-| talkx_segment_bulk_action | 20261009063730_talkx_segment_bulk_actions.sql |
-| talkx_suppression_stats | 20261009071216_talkx_suppression_read_rpcs.sql |
-| talkx_campaign_recipients_page | 20261010062941_talkx_campaign_recipients_page.sql |
-
-**Próximo passo:** Aplicar essas migrations no banco local, testar, depois aplicar
-em produção pelo fluxo db-migrate.yml. As 129 migrations não aplicadas precisam
-de revisão e aplicação em ordem — coordenar com o plano TalkX V4.
+_Nota: Este arquivo deve ser removido ou atualizado quando os itens acima forem resolvidos._

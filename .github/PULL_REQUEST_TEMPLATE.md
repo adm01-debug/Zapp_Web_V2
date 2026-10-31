@@ -37,7 +37,7 @@
 <!-- Estes dois têm passo obrigatório DEPOIS do merge; marcar só o que se aplica -->
 
 - [ ] **Migration?** → arquivo versionado em `supabase/migrations/` + registro no ledger + catálogo de migrations atualizado
-- [ ] **Edge?** → disparar `deploy-functions` após o merge (a função não sobe sozinha)
+- [ ] **Edge?** → após merge que altera código implantável em `supabase/functions/` (exceto testes, `.md` e `fixtures/`) ou `supabase/config.toml`, confirmar `deploy-functions`; dispatch manual só para rollback/operação direcionada
 - [ ] Nenhum dos dois
 
 ## ✅ Checklist

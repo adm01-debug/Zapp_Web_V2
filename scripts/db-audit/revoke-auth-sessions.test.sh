@@ -21,13 +21,10 @@ trap cleanup EXIT
 
 [ -f "$MIGRATION" ] || { echo "[FALHOU] migration nao encontrada: $MIGRATION"; exit 1; }
 
-docker run --rm -d --name "$CNAME" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres postgres:17-alpine >/dev/null
+docker run --rm -d --name "$CNAME" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres postgres:17-alpine >/dev/null \
+  || { echo "FAIL: PostgreSQL de teste não iniciou (docker run retornou $?)"; exit 1; }
 
-for _ in $(seq 1 60); do
-  docker exec "$CNAME" pg_isready -U postgres -d postgres >/dev/null 2>&1 && break
-  sleep 1
-done
-docker exec "$CNAME" pg_isready -U postgres -d postgres >/dev/null
+bash scripts/db-audit/wait-postgres-final-start.sh "$CNAME" 60
 
 # ---- fixtures: schema auth + public mínimo que a migration espera
 "${PSQL[@]}" <<'SQL'

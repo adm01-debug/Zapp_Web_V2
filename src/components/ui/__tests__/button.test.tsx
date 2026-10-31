@@ -35,6 +35,21 @@ describe('Button Component', () => {
     // Lucide Loader2 should be present (aria-hidden by default usually, but we check for text)
   });
 
+  it('em carregamento anuncia aria-busy e o indicador gira só com movimento liberado', () => {
+    const { container, rerender } = render(<Button isLoading loadingText="Salvando…">Salvar</Button>);
+    const button = screen.getByRole('button');
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    const indicador = container.querySelector('svg');
+    expect(indicador).not.toBeNull();
+    expect(indicador).toHaveAttribute('aria-hidden', 'true');
+    expect(indicador?.getAttribute('class')).toContain('motion-safe:animate-spin');
+    expect(indicador?.getAttribute('class')).not.toMatch(/(^|\s)animate-spin/);
+
+    // Fora do carregamento o atributo não existe (nada de aria-busy="false" espalhado).
+    rerender(<Button>Salvar</Button>);
+    expect(screen.getByRole('button')).not.toHaveAttribute('aria-busy');
+  });
+
   it('handles click events', () => {
     const handleClick = vi.fn();
     render(<Button onClick={handleClick}>Click</Button>);
@@ -76,16 +91,19 @@ describe('MotionButton — hover/tap em CSS', () => {
       </MotionButton>,
     );
     expect(screen.getByRole('button')).toBeDisabled();
+    expect(screen.getByRole('button')).toHaveAttribute('aria-busy', 'true');
     expect(screen.getByText(/enviando/i)).toBeDefined();
   });
 });
 
 describe('button.tsx — sem o runtime de animação no caminho inicial (SL-103A)', () => {
   it('não importa nem usa o runtime de animação por JS', () => {
-    expect(FONTE).not.toMatch(/from ['"]framer-motion['"]/);
+    expect(FONTE).not.toMatch(/from ['"']framer-motion['"']/);
     expect(FONTE).not.toMatch(/\bmotion\.[a-z]/);
     expect(FONTE).not.toMatch(/\bAnimatePresence\b/);
     expect(FONTE).not.toMatch(/whileHover=/);
     expect(FONTE).not.toMatch(/whileTap=/);
   });
 });
+
+// C297

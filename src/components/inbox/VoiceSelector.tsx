@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { attachMediaVolume } from '@/lib/mediaVolumeElement';
 import { LOCAL_VOICE_ID } from '@/hooks/communication/useTextToSpeech';
+import { guardarPreviaDeVoz, lerPreviaDeVoz } from '@/lib/voicePreviewCache';
 
 export interface ElevenLabsVoice {
   id: string;
@@ -67,6 +68,13 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
   const [loadingVoiceId, setLoadingVoiceId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
+  // G6: a geração em andamento pode ser cancelada (menu fechado / outra voz).
+  const geracaoRef = useRef<AbortController | null>(null);
+
+  const cancelarGeracao = () => {
+    geracaoRef.current?.abort();
+    geracaoRef.current = null;
+  };
 
   const stopPreview = () => {
     if (audioRef.current) {
@@ -89,32 +97,44 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
       return;
     }
 
-    // Stop any current preview
+    // Stop any current preview (e a geração anterior, que não pode tocar por baixo desta)
+    cancelarGeracao();
     stopPreview();
-    
+
+    const controle = new AbortController();
+    geracaoRef.current = controle;
     setLoadingVoiceId(voice.id);
 
     try {
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/elevenlabs-tts`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(await edgeAuthHeaders()),
-          },
-          body: JSON.stringify({ 
-            text: voice.sampleText || `Olá! Eu sou ${voice.name}.`,
-            voiceId: voice.id
-          }),
+      // G6: o texto de amostra é fixo, então a MESMA voz só paga a síntese uma vez por sessão.
+      let audioBlob = lerPreviaDeVoz(voice.id);
+      if (!audioBlob) {
+        const response = await fetch(
+          `${SUPABASE_URL}/functions/v1/elevenlabs-tts`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(await edgeAuthHeaders()),
+            },
+            body: JSON.stringify({
+              text: voice.sampleText || `Olá! Eu sou ${voice.name}.`,
+              voiceId: voice.id
+            }),
+            signal: controle.signal,
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Erro ao gerar preview');
         }
-      );
 
-      if (!response.ok) {
-        throw new Error('Erro ao gerar preview');
+        audioBlob = await response.blob();
+        // Menu fechado (ou outra voz pedida) durante a geração: a resposta atrasada não toca.
+        if (controle.signal.aborted) return;
+        guardarPreviaDeVoz(voice.id, audioBlob);
       }
-
-      const audioBlob = await response.blob();
+      if (controle.signal.aborted) return;
       const audioUrl = URL.createObjectURL(audioBlob);
       audioUrlRef.current = audioUrl;
 
@@ -140,15 +160,18 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
 
       await audio.play();
     } catch (error) {
+      // Cancelar a geração é decisão do usuário, não erro: nada de toast.
+      if (controle.signal.aborted) return;
       log.error('Preview error:', error);
       toast.error('Erro ao carregar preview da voz');
     } finally {
-      setLoadingVoiceId(null);
+      if (geracaoRef.current === controle) geracaoRef.current = null;
+      setLoadingVoiceId((atual) => (atual === voice.id ? null : atual));
     }
   };
 
   return (
-    <DropdownMenu onOpenChange={(open) => { if (!open) stopPreview(); }}>
+    <DropdownMenu onOpenChange={(open) => { if (!open) { cancelarGeracao(); stopPreview(); setLoadingVoiceId(null); } }}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
@@ -198,6 +221,8 @@ export function VoiceSelector({ selectedVoiceId, onVoiceChange, className }: Voi
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   {/* Preview button */}
                   <button
+                    type="button"
+                    aria-label={isPlaying ? `Parar prévia da voz ${voice.name}` : `Ouvir prévia da voz ${voice.name}`}
                     onClick={(e) => playPreview(voice, e)}
                     className={cn(
                       "flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors",

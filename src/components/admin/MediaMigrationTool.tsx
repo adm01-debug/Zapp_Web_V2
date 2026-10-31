@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react';
-import { HardDrive, RefreshCw, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { HardDrive, Play, RefreshCw, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { toast } from 'sonner';
+import { invokeEdge } from '@/lib/invokeEdge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,146 +15,121 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { supabase } from '@/integrations/supabase/client';
-import { invokeEdge } from '@/lib/invokeEdge';
-import { toast } from 'sonner';
-
-const CDN_PREFIXES = [
-  'https://mmg.whatsapp.net/%',
-  'https://pps.whatsapp.net/%',
-];
+import { countPendingMedia, fetchMigrationHistory } from '@/services/mediaMigration.service';
+import type { MigrationHistoryEntry } from '@/services/mediaMigration.service';
 
 interface MigrationResult {
   success: boolean;
   processed: number;
   migrated: number;
   failed: number;
+  details?: string[];
   message?: string;
-}
-
-interface EdgeError {
-  message: string;
   code?: string;
-  status?: number;
 }
 
-interface AuditEntry {
-  id: string;
-  user_id: string | null;
-  created_at: string;
-  details: { processed: number; migrated: number; failed: number; ignored?: number } | null;
+interface PendingCount {
+  status: 'loading' | 'ready' | 'error';
+  count: number;
 }
 
-interface Profile {
-  user_id: string;
-  name: string;
+interface HistoryState {
+  status: 'loading' | 'ready' | 'error';
+  entries: MigrationHistoryEntry[];
+}
+
+function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 }
 
 export function MediaMigrationTool() {
-  const [pendingCount, setPendingCount] = useState<number | null>(null);
-  const [countError, setCountError] = useState(false);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<MigrationResult | null>(null);
-  const [edgeError, setEdgeError] = useState<EdgeError | null>(null);
-  const [history, setHistory] = useState<AuditEntry[]>([]);
-  const [historyError, setHistoryError] = useState(false);
-  const [profiles, setProfiles] = useState<Map<string, string>>(new Map());
+  const [pending, setPending] = useState<PendingCount>({ status: 'loading', count: 0 });
+  const [history, setHistory] = useState<HistoryState>({ status: 'loading', entries: [] });
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const loadPending = useCallback(async () => {
+    try {
+      const count = await countPendingMedia();
+      setPending({ status: 'ready', count });
+    } catch {
+      setPending({ status: 'error', count: 0 });
+    }
+  }, []);
+
+  const loadHistory = useCallback(async () => {
+    try {
+      const entries = await fetchMigrationHistory();
+      setHistory({ status: 'ready', entries });
+    } catch {
+      setHistory({ status: 'error', entries: [] });
+    }
+  }, []);
 
   useEffect(() => {
-    async function countPending() {
-      let total = 0;
-      for (const prefix of CDN_PREFIXES) {
-        const { count, error } = await supabase
-          .from('messages')
-          .select('id', { count: 'exact', head: true })
-          .like('media_url', prefix);
-        if (error) {
-          setCountError(true);
-          return;
-        }
-        total += count ?? 0;
-      }
-      setPendingCount(total);
-    }
-
-    async function loadHistory() {
-      const { data: logs, error: logsError } = await supabase
-        .from('audit_logs')
-        .select('id, user_id, created_at, details')
-        .eq('action', 'media_migration')
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (logsError) {
-        setHistoryError(true);
-        return;
-      }
-
-      if (!logs || logs.length === 0) return;
-
-      setHistory(logs as AuditEntry[]);
-
-      const userIds = [...new Set((logs as AuditEntry[]).map((l) => l.user_id).filter(Boolean))] as string[];
-      if (userIds.length > 0) {
-        const { data: profs } = await supabase
-          .from('profiles')
-          .select('user_id, name')
-          .in('user_id', userIds);
-        if (profs) {
-          const map = new Map<string, string>();
-          (profs as Profile[]).forEach((p) => map.set(p.user_id, p.name));
-          setProfiles(map);
-        }
-      }
-    }
-
-    void countPending();
-    void loadHistory();
+    // Leitura inicial: o estado de partida já é `loading`; os dois estados só mudam
+    // quando a consulta responde (e nunca depois de a tela desmontar).
+    let ativo = true;
+    countPendingMedia().then(
+      (count) => { if (ativo) setPending({ status: 'ready', count }); },
+      () => { if (ativo) setPending({ status: 'error', count: 0 }); },
+    );
+    fetchMigrationHistory().then(
+      (entries) => { if (ativo) setHistory({ status: 'ready', entries }); },
+      () => { if (ativo) setHistory({ status: 'error', entries: [] }); },
+    );
+    return () => { ativo = false; };
   }, []);
+
+  const refreshPending = () => {
+    setPending((prev) => ({ status: 'loading', count: prev.count }));
+    void loadPending();
+  };
 
   const runMigration = async () => {
     setRunning(true);
     setResult(null);
-    setEdgeError(null);
-    try {
-      const { data, error } = await invokeEdge('migrate-media-storage', { method: 'POST' });
 
-      if (error) {
-        const err = error as EdgeError;
-        setEdgeError(err);
-        toast.error(err.message ?? 'Erro ao executar migração');
-        return;
-      }
+    const { data: bruto, error } = await invokeEdge('migrate-media-storage', { method: 'POST' });
+    const data = bruto as MigrationResult | null;
 
-      if (!data) {
-        toast.info('Nenhuma mídia para migrar');
-        return;
-      }
-
-      const migrationResult = data as MigrationResult;
+    if (error) {
+      setResult({
+        success: false,
+        processed: 0,
+        migrated: 0,
+        failed: 0,
+        message: error.message,
+        code: error.code,
+      });
+      toast.error(error.message);
+    } else {
+      const migrationResult: MigrationResult = data ?? { success: true, processed: 0, migrated: 0, failed: 0 };
       setResult(migrationResult);
-
       if (migrationResult.migrated > 0) {
         toast.success(`${migrationResult.migrated} mídias migradas com sucesso!`);
       } else {
         toast.info(migrationResult.message || 'Nenhuma mídia para migrar');
       }
-    } catch (e) {
-      const msg = (e instanceof Error ? e.message : null) ?? 'Erro inesperado na migração';
-      setEdgeError({ message: msg });
-      toast.error(msg);
-    } finally {
-      setRunning(false);
     }
+
+    setRunning(false);
+    await Promise.all([loadPending(), loadHistory()]);
   };
 
-  const countDisplay = countError
-    ? 'Não foi possível contar as mídias pendentes'
-    : pendingCount !== null
-      ? `${pendingCount} mídias pendentes`
-      : null;
+  const progress =
+    result && result.processed > 0
+      ? Math.round(((result.migrated + result.failed) / result.processed) * 100)
+      : 0;
+
+  const pendingLabel =
+    pending.status === 'ready'
+      ? `${pending.count} ${pending.count === 1 ? 'mídia aguarda' : 'mídias aguardam'} migração`
+      : 'a contagem de mídias pendentes não está disponível agora';
 
   return (
     <div className="space-y-6 w-full min-w-0">
@@ -177,41 +155,38 @@ export function MediaMigrationTool() {
             e upload permanente para o Storage. URLs expiradas tentam recuperação via Evolution API.
           </p>
 
-          {countDisplay !== null && (
-            <p
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge
               role="status"
-              className={`text-sm font-medium ${countError ? 'text-warning' : 'text-foreground'}`}
+              aria-live="polite"
+              variant={pending.status === 'error' ? 'destructive' : 'secondary'}
             >
-              {countDisplay}
-            </p>
-          )}
+              {pending.status === 'loading'
+                ? 'Contando mídias pendentes...'
+                : pending.status === 'error'
+                  ? 'Não foi possível contar as mídias pendentes'
+                  : `${pending.count} ${pending.count === 1 ? 'mídia pendente' : 'mídias pendentes'}`}
+            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1"
+              onClick={refreshPending}
+              disabled={pending.status === 'loading'}
+            >
+              <RefreshCw className={pending.status === 'loading' ? 'w-3 h-3 motion-safe:animate-spin' : 'w-3 h-3'} />
+              Atualizar contagem
+            </Button>
+          </div>
 
           <div className="flex items-center gap-3">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button disabled={running} className="gap-2">
-                  {running ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Migrando...</>
-                  ) : (
-                    <>Iniciar Migração</>
-                  )}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Iniciar a migração de mídia?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {pendingCount !== null
-                      ? `${pendingCount} mídias aguardam migração. Esta operação pode demorar alguns minutos.`
-                      : 'Esta operação pode demorar alguns minutos.'}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={runMigration}>Iniciar migração</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <Button onClick={() => setConfirmOpen(true)} disabled={running} className="gap-2">
+              {running ? (
+                <><Loader2 className="w-4 h-4 motion-safe:animate-spin" /> Migrando...</>
+              ) : (
+                <><Play className="w-4 h-4" /> Iniciar Migração</>
+              )}
+            </Button>
             <span className="text-xs text-muted-foreground">
               Processa até 50 mídias por execução
             </span>
@@ -219,35 +194,23 @@ export function MediaMigrationTool() {
 
           {running && (
             <div className="space-y-2">
-              <Progress
-                className="h-2"
+              <div
+                role="progressbar"
                 aria-label="Progresso da migração de mídia"
                 aria-valuetext="Migrando mídias"
-              />
+                data-state="indeterminate"
+                className="h-2 w-full overflow-hidden rounded-full bg-secondary"
+              >
+                <div className="h-full w-full rounded-full bg-primary/60 motion-safe:animate-pulse" />
+              </div>
               <p className="text-xs text-muted-foreground">
-                Processando mídias — o total só aparece quando a execução termina.
+                Migrando mídias... o total só aparece quando a execução termina.
               </p>
+
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Edge error */}
-      {edgeError && (
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-destructive">
-              <XCircle className="w-5 h-5" /> Erro na migração
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-sm">{edgeError.message}</p>
-            {edgeError.code && (
-              <p className="text-xs text-muted-foreground">Código do erro: {edgeError.code}</p>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       {/* Result */}
       {result && (
@@ -263,6 +226,14 @@ export function MediaMigrationTool() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {!result.success && result.message && (
+              <p className="text-sm text-destructive">{result.message}</p>
+            )}
+
+            {!result.success && result.code && (
+              <p className="text-xs font-mono text-muted-foreground">Código do erro: {result.code}</p>
+            )}
+
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center p-3 rounded-lg bg-muted/50">
                 <p className="text-2xl font-bold text-foreground">{result.processed}</p>
@@ -277,52 +248,81 @@ export function MediaMigrationTool() {
                 <p className="text-xs text-muted-foreground">Falhas</p>
               </div>
             </div>
-            {result.message && (
+
+            {result.processed > 0 && (
+              <Progress value={progress} className="h-2" aria-label="Progresso da migração" />
+            )}
+
+            {result.success && result.message && (
               <p className="text-sm text-muted-foreground">{result.message}</p>
+            )}
+
+            {result.details && result.details.length > 0 && (
+              <div className="max-h-[300px] overflow-auto rounded-lg border bg-muted/30 p-3">
+                {result.details.map((detail, i) => (
+                  <p key={i} className="text-xs font-mono py-0.5">
+                    {detail}
+                  </p>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
       )}
 
-      {/* History from audit_logs */}
+      {/* History */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <RefreshCw className="w-5 h-5" /> Histórico
+            <RefreshCw className="w-5 h-5" /> Histórico de migrações
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {historyError ? (
-            <p className="text-sm text-destructive">Erro ao carregar histórico de migrações.</p>
-          ) : history.length === 0 ? (
+          {history.status === 'loading' && (
+            <p className="text-sm text-muted-foreground">Carregando histórico...</p>
+          )}
+          {history.status === 'error' && (
+            <p className="text-sm text-muted-foreground">Não foi possível carregar o histórico.</p>
+          )}
+          {history.status === 'ready' && history.entries.length === 0 && (
             <p className="text-sm text-muted-foreground">Nenhuma migração registrada.</p>
-          ) : (
+          )}
+          {history.entries.length > 0 && (
             <div className="space-y-2">
-              {history.map((entry) => {
-                const d = entry.details;
-                const author = entry.user_id ? (profiles.get(entry.user_id) ?? entry.user_id) : 'Sistema';
-                const when = new Date(entry.created_at).toLocaleString('pt-BR');
-                return (
-                  <div key={entry.id} className="flex flex-wrap items-center gap-3 p-2 rounded border text-xs">
-                    <span className="font-medium">{author}</span>
-                    <span className="text-muted-foreground">{when}</span>
-                    {d && (
-                      <>
-                        <span>{d.processed} processados</span>
-                        <span className="text-success">{d.migrated} migrados</span>
-                        {d.failed > 0 && <span className="text-destructive">{d.failed} falhas</span>}
-                        {d.ignored != null && d.ignored > 0 && (
-                          <span className="text-muted-foreground">{d.ignored} ignorados</span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                );
-              })}
+              {history.entries.map((entry) => (
+                <div key={entry.id} className="flex flex-wrap items-center gap-3 p-2 rounded border text-xs">
+                  {entry.failed > 0 ? (
+                    <XCircle className="w-3 h-3 text-destructive" />
+                  ) : (
+                    <CheckCircle className="w-3 h-3 text-success" />
+                  )}
+                  <span className="text-muted-foreground">{formatDateTime(entry.createdAt)}</span>
+                  <span>{entry.authorName ?? 'Sistema'}</span>
+                  <span>{entry.processed} processados</span>
+                  <span className="text-success">{entry.migrated} migrados</span>
+                  {entry.failed > 0 && <span className="text-destructive">{entry.failed} falhas</span>}
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Iniciar a migração de mídia?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingLabel}. A execução processa até 50 mídias, baixa cada uma da CDN do WhatsApp e grava
+              no Storage permanente. Pode levar alguns minutos e não é possível desfazer pela tela.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { void runMigration(); }}>Iniciar migração</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

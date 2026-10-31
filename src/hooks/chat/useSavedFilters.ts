@@ -5,9 +5,15 @@
  * @description Gerencia filtros salvos por usuário e entidade
  */
 
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+/** Teto de linhas por leitura (A10): a lista não pode crescer sem limite. */
+export const SAVED_FILTERS_FETCH_LIMIT = 50;
+/** Tipo dos presets de filtro do Inbox — é do dono, nunca compartilhado. */
+const INBOX_FILTER_ENTITY = 'inbox_filters';
 
 // ============================================
 // TIPOS
@@ -38,6 +44,18 @@ export function useSavedFilters(entityType: string) {
   const queryClient = useQueryClient();
   const queryKey = ['saved-filters', entityType];
 
+  // EC-3: cache de filtros é do usuário que saiu. O AuthProvider já limpa o
+  // QueryClient inteiro no SIGNED_OUT; esta assinatura garante a mesma higiene
+  // quando o hook roda sem o provider e deixa a regra verificável aqui.
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        queryClient.removeQueries({ queryKey: ['saved-filters'] });
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  }, [queryClient]);
+
   // Listar filtros salvos (próprios + compartilhados)
   const { data: filters = [], isLoading } = useQuery({
     queryKey,
@@ -46,12 +64,23 @@ export function useSavedFilters(entityType: string) {
       if (!user) return [];
 
       // Fetch own filters + shared filters from others
-      const { data, error } = await supabase
+      const base = supabase
         .from('saved_filters')
         .select('*')
-        .eq('entity_type', entityType)
-        .or(`user_id.eq.${user.id},is_shared.eq.true`)
-        .order('created_at', { ascending: false });
+        .eq('entity_type', entityType);
+
+      // A10 + EC-1: preset do Inbox é só do dono (nem o compartilhado entra na
+      // consulta — a policy do banco também já o barra). A leitura ganha teto e
+      // desempate por id, para a lista não crescer sem limite nem trocar de
+      // ordem entre duas leituras.
+      const scoped = entityType === INBOX_FILTER_ENTITY
+        ? base.eq('user_id', user.id)
+        : base.or(`user_id.eq.${user.id},is_shared.eq.true`);
+
+      const { data, error } = await scoped
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: true })
+        .limit(SAVED_FILTERS_FETCH_LIMIT);
       
       if (error) throw error;
       return (data || []) as SavedFilter[];
