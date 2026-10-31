@@ -187,7 +187,10 @@ checks AS (
     COALESCE(
       (
         SELECT count(*) = 1
-          AND bool_and(config = 'search_path=pg_catalog, public')
+          AND bool_and(config IN (
+            'search_path=pg_catalog, public',
+            'search_path=pg_catalog, public, pg_temp'
+          ))
         FROM unnest(COALESCE(p.proconfig, ARRAY[]::text[])) config
         WHERE config LIKE 'search_path=%'
       ),

@@ -1,0 +1,30 @@
+# Baseline Unit Tests — main@ac97c0ea (2026-10-29)
+
+## Fonte
+Job logs do CI de PR #2270 (head e3a11a9, base ac97c0ea = main atual)
+Job ID: 123435288946 (🧪 Unit Tests 2/3)
+
+## Resultado
+Test Files: 1 failed | 613 passed | 2 skipped (616 total)
+Tests:      1 failed | 5212 passed | 6 expected fail | 9 todo (5228 total)
+
+## Arquivo que falha (SHARD 2)
+src/components/talkx/__tests__/TalkXView.ajuda-teclado.test.tsx
+  - Status: 2 tests | 1 failed | 5826ms
+  - Causa: "Loading chunk 5 failed." (erro em runtime do test environment)
+
+## Erros encontrados nos logs
+- [ERROR] [TeamChatPanel] Erro ao enviar áudio Error: upload failed
+- [WARN] [App] Private storage URL resolution failed (bucket: whatsapp-media, object missing) — múltiplas ocorrências
+- Error: Loading chunk 5 failed. (4× no mesmo test file)
+
+## Conclusão
+A regressão de Unit Tests no main@ac97c0ea é LOCALIZADA:
+- Apenas shard 2 falha (1 arquivo de teste)
+- Shards 1 e 3 passam completamente para PRs baseadas em ac97c0ea
+- O CI Gate bloqueia merge mesmo quando apenas 1 shard falha (ci.yml:289)
+
+## Nota sobre outros shards
+Para PRs cujo base é mais antigo (ex: #2272 base 2d97c44), TODOS os 3 shards falham —
+indicando regressão mais severa no ponto 2d97c44 (commit de 2026-10-24T18:43:20Z).
+O main atual (ac97c0ea) tem regressão menor (apenas TalkXView.ajuda-teclado.test.tsx).

@@ -9,7 +9,17 @@ const h = vi.hoisted(() => {
   const results: Record<string, { data: unknown; error: unknown; count?: number }> = {};
   const makeChain = (table: string) => {
     const chain: Record<string, unknown> = {};
-    for (const method of ['select', 'order', 'in', 'eq', 'limit', 'range', 'gte', 'lte', 'single']) {
+    for (const method of [
+      'select',
+      'order',
+      'in',
+      'eq',
+      'limit',
+      'range',
+      'gte',
+      'lte',
+      'single',
+    ]) {
       chain[method] = vi.fn((...args: unknown[]) => {
         calls.push({ table, method, args });
         return chain;
@@ -18,11 +28,14 @@ const h = vi.hoisted(() => {
     chain.then = (resolve: unknown, reject: unknown) =>
       Promise.resolve(results[table] ?? { data: [], error: null }).then(
         resolve as (v: unknown) => unknown,
-        reject as (e: unknown) => unknown,
+        reject as (e: unknown) => unknown
       );
     return chain;
   };
-  return { toastError, calls, results, makeChain };
+  // `handleCreateUser` passa pela camada padrão de Edge (`invokeEdge`, não
+  // mockado aqui — só o `supabase.functions.invoke` que ele chama por baixo).
+  const invokeFunction = vi.fn().mockResolvedValue({ data: { success: true }, error: null });
+  return { toastError, calls, results, makeChain, invokeFunction };
 });
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -35,6 +48,7 @@ vi.mock('@/integrations/supabase/client', () => ({
         getPublicUrl: () => ({ data: { publicUrl: 'https://local.test/avatar.png' } }),
       }),
     },
+    functions: { invoke: h.invokeFunction },
     rpc: vi.fn(),
   },
   SUPABASE_URL: 'https://local.test',
@@ -51,7 +65,7 @@ import {
 } from '@/components/admin/useAdminData';
 
 function callsFor(table: string, method: string) {
-  return h.calls.filter(c => c.table === table && c.method === method);
+  return h.calls.filter((c) => c.table === table && c.method === method);
 }
 
 describe('useAdminData — erro nunca vira lista vazia silenciosa', () => {
@@ -119,7 +133,9 @@ describe('useAdminData — auditoria com filtro de data e paginação', () => {
   // O dia escolhido no calendário é o dia do operador, não o dia UTC: com o
   // fuso fixado em São Paulo (UTC-3) o valor esperado deixa de ser meia-noite UTC.
   const tzOriginal = process.env.TZ;
-  beforeAll(() => { process.env.TZ = 'America/Sao_Paulo'; });
+  beforeAll(() => {
+    process.env.TZ = 'America/Sao_Paulo';
+  });
   afterAll(() => {
     if (tzOriginal === undefined) delete process.env.TZ;
     else process.env.TZ = tzOriginal;
@@ -134,7 +150,7 @@ describe('useAdminData — auditoria com filtro de data e paginação', () => {
   it('aplica gte/lte com o dia inteiro no fuso local e range 1-based', async () => {
     h.results.audit_logs = { data: [], error: null, count: 137 };
     const { result } = renderHook(() =>
-      useAdminData('audit', { from: '2026-10-01', to: '2026-10-12', page: 3, pageSize: 50 }),
+      useAdminData('audit', { from: '2026-10-01', to: '2026-10-12', page: 3, pageSize: 50 })
     );
 
     await act(async () => {
@@ -176,7 +192,9 @@ describe('useAdminData — senha mínima alinhada à Edge create-user', () => {
 
   // Um teste que não restaura o stub deixa o `fetch` falsificado para os
   // seguintes; a limpeza fica no afterEach em vez de no fim de cada teste.
-  afterEach(() => { vi.unstubAllGlobals(); });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
 
   it('expõe a régua de 8 caracteres da Edge', () => {
     expect(MIN_PASSWORD_LENGTH).toBe(8);
@@ -199,14 +217,10 @@ describe('useAdminData — senha mínima alinhada à Edge create-user', () => {
 
     expect(ok).toBe(false);
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(h.toastError).toHaveBeenCalledWith(
-      expect.stringContaining('8 caracteres'),
-    );
+    expect(h.toastError).toHaveBeenCalledWith(expect.stringContaining('8 caracteres'));
   });
 
   it('aceita 8 caracteres e chama a Edge', async () => {
-    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
-    vi.stubGlobal('fetch', fetchSpy);
     const { result } = renderHook(() => useAdminData('users'));
 
     let ok = false;
@@ -220,6 +234,9 @@ describe('useAdminData — senha mínima alinhada à Edge create-user', () => {
     });
 
     expect(ok).toBe(true);
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    // Camada padrão de Edge (PE-43): `invokeEdge` -> `supabase.functions.invoke`,
+    // não `fetch` cru.
+    expect(h.invokeFunction).toHaveBeenCalledTimes(1);
+    expect(h.invokeFunction.mock.calls[0][0]).toBe('create-user');
   });
 });

@@ -26,18 +26,23 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ user: { id: 'u1' } }) }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
-vi.mock('framer-motion', () => ({
-  motion: new Proxy(
-    {},
-    {
-      get: (_t, tag: string) => (props: Record<string, unknown>) => {
-        const { children, initial, animate, exit, transition, layout, ...rest } = props;
-        return React.createElement(tag, rest as Record<string, unknown>, children as React.ReactNode);
-      },
-    },
-  ),
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    motion: new Proxy(
+        {},
+        {
+          get: (_t, tag: string) => (props: Record<string, unknown>) => {
+            const { children, initial, animate, exit, transition, layout, ...rest } = props;
+            return React.createElement(tag, rest as Record<string, unknown>, children as React.ReactNode);
+          },
+        },
+      ),
+      AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 vi.mock('@/components/inbox/collaboration/MentionInput', () => ({
   MentionInput: () => <div />,
@@ -102,6 +107,22 @@ describe('InternalNotesPanel — selo com a lista de nomes indisponível', () =>
 
     expect(await screen.findByText('@Ana Lima')).toBeInTheDocument();
     expect(screen.getByText(/Falar com/)).toBeInTheDocument();
+    expect(screen.getByText(/sobre o pedido/)).toBeInTheDocument();
+  });
+
+  it('escapa pontuação no nome sem quebrar o reconhecimento da menção', async () => {
+    nomesMock.nomes = ['Ana (Suporte)'];
+    db.notes = [
+      {
+        id: 'n1',
+        content: 'Falar com @Ana (Suporte) sobre o pedido',
+        created_at: '2026-01-06T12:00:00',
+        author: { id: 'a1', name: 'Ana (Suporte)', avatar_url: null },
+      },
+    ];
+    renderPanel();
+
+    expect(await screen.findByText('@Ana (Suporte)')).toBeInTheDocument();
     expect(screen.getByText(/sobre o pedido/)).toBeInTheDocument();
   });
 });
