@@ -20,6 +20,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# W49: VITE_* movido para os jobs build (step-level) e e2e (job-level); sem vazamento para lint/test/security.
 defaults:
   run:
     shell: bash --noprofile --norc -euo pipefail {0}
