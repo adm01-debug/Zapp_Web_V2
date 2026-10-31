@@ -15,6 +15,7 @@ import sys
 WORKER = "supabase/functions/multiplix-send/index.ts"
 DENO = [
     "deno", "test", "--config", "scripts/ci/deno.json", "--frozen", "--allow-env",
+    "--node-modules-dir=none",
     "supabase/functions/multiplix-send/index.test.ts",
 ]
 
