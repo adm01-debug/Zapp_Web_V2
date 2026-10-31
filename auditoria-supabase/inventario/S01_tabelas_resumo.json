@@ -1,0 +1,16 @@
+{
+  "coletado_em": "2026-10-30",
+  "total_tabelas_public": 204,
+  "todas_com_rls": true,
+  "tabelas_rls_sem_policy": {
+    "count": 17,
+    "lista": ["_rb_message_reactions_contato_20261007001008","_zapp_fn_before","_zapp_mig133_log","agent_mini_game_xp_daily","ai_budget_reservations","ai_jobs","catalog_rate_limit_hits","catalog_rate_limits","edge_rate_limits","gmail_oauth_states","link_preview_cache","searchbox_budget_alert_cron","searchbox_budget_alert_emails","talkx_storage_purge_queue","talkx_test_send_claims","team_chat_media_acl_r2_db_020_rb","voip_profile_credentials"]
+  },
+  "schemas": {
+    "public": "204 tabelas, todas RLS=true",
+    "_bkp_261023": "backup historico (RLS=false)",
+    "vault": "secrets criptografados (RLS=false, acesso somente service_role)",
+    "cron": "pg_cron jobs",
+    "net": "pg_net HTTP async"
+  }
+}
