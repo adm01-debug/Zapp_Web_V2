@@ -39,6 +39,7 @@
     "public.team_messages",
     "public.warroom_alerts",
     "public.whatsapp_connections",
-    "public.whisper_messages"
+    "public.whisper_messages",
+    "public.copilot_insights"
   ]
 }
