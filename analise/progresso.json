@@ -12,6 +12,306 @@
       "verificado_em": "2026-10-30",
       "verificacao_sessao": "claude/trusting-albattani-9x3ipg",
       "notas": "Fases 1-2 do plano de telefonia (biblioteca de domínio + contrato de dados). Conteúdo 100% em main: migration 20260926800000 em produção, src/lib/calls/ evoluído para 21 arquivos (branch tinha 6). Análise original: diff 100% (20 arquivos lidos), typecheck 0 erros, 217 testes passam, eslint exit 0, cherry-pick testado (2 conflitos doc-only, código=patches vazios). Verificação 2026-10-30: branch deletada do remoto, commits originais ausentes (git cat-file -t 4c41d3b1a → NOT_EXIST); 4 fatos confirmados em origin/main: 21 arquivos em src/lib/calls/, migration 20260926800000 presente, SINGU 0 refs no código de telefonia, 16 arquivos importam src/lib/calls. Zero escrita em remoto, zero banco tocado, sem worktree nesta sessão (branch inacessível)."
+    },
+    {
+      "branch": "automation/types-sync",
+      "tip_sha": "f5e651e01",
+      "veredito": "SUPERADA",
+      "confianca": 0.97,
+      "dossie": "analise/dossies/automation-types-sync.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "merge-tree produce tree = main tree (f7b413078b11e47b67f521e0a5d32ea294583c83). Fixes de db-inventory chegaram à main por outros PRs. Branch apagada."
+    },
+    {
+      "branch": "claude/fervent-noether-vvq63j",
+      "tip_sha": "95295a7cb",
+      "veredito": "SUPERADA",
+      "confianca": 0.97,
+      "dossie": "analise/dossies/claude-fervent-noether-vvq63j.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "merge-tree produce tree = main tree (f7b413078b11e47b67f521e0a5d32ea294583c83). Correção hash pngjs chegou à main. Branch apagada."
+    },
+    {
+      "branch": "claude/fix-deploy-functions-2408",
+      "tip_sha": "b643d5d43",
+      "veredito": "COBERTA",
+      "confianca": 0.9,
+      "dossie": "analise/dossies/claude-fix-deploy-functions-2408.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "merge-tree difere da main. Delta: deno.json adiciona npm:@types/node@^22. Problema resolvido na main via #2407 (npm install no workflow). Abordagem alternativa causaria conflito de versão. Branch apagada."
+    },
+    {
+      "branch": "claude/fix-types-sync-is-pinned-261029",
+      "tip_sha": "f87dc1ab7",
+      "veredito": "COBERTA",
+      "confianca": 0.93,
+      "dossie": "analise/dossies/claude-fix-types-sync-is-pinned-261029.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "merge-tree difere da main (ab18c074b...). Delta: contact.service.ts adiciona 'const pinField: any' + @ts-disable comments. Workaround desnecessário: is_pinned já está nos types gerados (src/integrations/supabase/types.ts linha 2266+). Combinar introduziria any desnecessário. Branch apagada."
+    },
+    {
+      "branch": "claude/fix-ci-workitem-tz-261025-1350",
+      "tip_sha": "d411709b0",
+      "veredito": "INTEGRAR-LIMPO",
+      "confianca": 0.95,
+      "dossie": "analise/dossies/claude-fix-ci-workitem-tz-261025-1350.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "merge-tree difere da main (bba5205ca...), exit 0 (sem conflitos). Delta: vitest.config.ts adiciona process.env.TZ = 'America/Sao_Paulo'. Fix não está em main. PR aberto."
+    },
+    {
+      "branch": "claude/fix-unit-tests-inbox-261023-1108",
+      "tip_sha": "7be2c50e5",
+      "veredito": "INTEGRAR-LIMPO",
+      "confianca": 0.95,
+      "dossie": "analise/dossies/claude-fix-unit-tests-inbox-261023-1108.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "merge-tree difere da main (099bd7a98...), exit 0 (sem conflitos). Delta: setup.ts adiciona clientHeight/clientWidth mocks para @tanstack/virtual-core >=3.19; FilesTab test: Element→HTMLElement spy. Fix não está em main. PR aberto."
+    },
+    {
+      "branch": "claude/pensive-cori-i93zgf",
+      "tip_sha": "b4bd6fd2e",
+      "veredito": "COBERTA",
+      "confianca": 0.85,
+      "dossie": "analise/dossies/claude-pensive-cori-i93zgf.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "merge-tree difere da main (dacdabe13...). Delta: nextBestActionKey type tightening (string | null | undefined → string) pode quebrar chamadores; regex change (/[\\u0300-\\u036f]/ → chars literais) é regressão de legibilidade. Nenhum fix de bug real. Branch apagada."
+    },
+    {
+      "branch": "claude/fix-plano-190-etapas-261019-1200",
+      "tip_sha": "a17c111ff",
+      "veredito": "INTEGRAR-LIMPO",
+      "confianca": 0.90,
+      "dossie": "analise/dossies/claude-fix-plano-190-etapas-261019-1200.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "merge-tree difere da main (d45f96926...), exit 0 (sem conflitos). Delta: docs/plans/PLANO_CORRECOES_190_ETAPAS_2026-10-19.md (979 linhas, arquivo novo). Docs-only. PR aberto."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv011-020-migrations-261016-1930",
+      "tip_sha": "26c1427da",
+      "veredito": "INTEGRAR-LIMPO",
+      "confianca": 0.90,
+      "dossie": "analise/dossies/feat-copiloto-cv011-020-migrations.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "merge-tree exit 0 (sem conflitos). 6 migrations DDL (copilot_sessions, copilot_insights, copilot_feedback, copilot_tick_trigger, copilot_presence, copilot_retention) + 1 doc. Versões 20261016193000-193500 livres em main. Schema pendente do Copiloto — código mergeado via PR #2361 usa 'as any' aguardando essas tabelas. PR aberto."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv021-030-worker-261016-2100",
+      "tip_sha": "d6625dd1e",
+      "veredito": "COBERTA",
+      "confianca": 0.80,
+      "dossie": "analise/dossies/feat-copiloto-cv021-030-worker.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "CONFLICT add/add em supabase/functions/copilot-live/index.ts (main tem versão final via PR #2361). Migration 20261016194000 (merge_brinde_state) depende de copilot_sessions de cv011-020. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv031-040-brinde-intelligence-261016-2025",
+      "tip_sha": "81adcfd82",
+      "veredito": "COBERTA",
+      "confianca": 0.88,
+      "dossie": "analise/dossies/feat-copiloto-cv031-040-brinde-intelligence.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Colisão de versão: 20261016200000 já existe em main (revoke_passkey_anon_insert). Arquitetura inbox/copilot supersedida. CONFLICT add/add na edge function. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv041-050-suggest-reply-261016-2145",
+      "tip_sha": "9c8283f05",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv041-050-suggest-reply.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 4 RADAR. CONFLICT add/add na edge copilot-live (main tem versão final). Arquitetura inbox/copilot supersedida. Coberta por PR #2361. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv051-060-radar-popup-261016-2130",
+      "tip_sha": "b93278e0d",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv051-060-radar-popup.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 5 RADAR. Conflitos em useNextBestAction.ts e workItemAggregates.ts (type tightening arriscado — mesmos que claude/pensive-cori-i93zgf rejeitada). Arquitetura inbox/copilot supersedida. Coberta por PR #2361. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv071-080-objection-battlecard-261016-2230",
+      "tip_sha": "cd63d6dd6",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv071-080-objection-battlecard.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 8 RADAR. Conflitos em ObjectionCard.tsx e hooks; versão final em main via PR #2361 tem nomes mais refinados (useBattleCard vs useBattlecard, useLossRiskDetector vs useLossRisk). Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv071-150-fases-8-15-261024-1400",
+      "tip_sha": "71e8db9f1",
+      "veredito": "COBERTA",
+      "confianca": 0.92,
+      "dossie": "analise/dossies/feat-copiloto-cv071-150-fases-8-15.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Mega-branch que originou PR #2361 (Copiloto RADAR Fases 8-15). 8 commits não mergeados incluem fixes pós-PR e 14 arquivos intencionalmente excluídos (cast as any confirma dependência de tabelas pendentes). 10 conflitos add/add com main. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv081-090-catalog-budget-261016-2235",
+      "tip_sha": "b5f2833f5",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv081-090-catalog-budget.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 9 RADAR. Conflitos em QuoteDraftCard.tsx e hooks; main tem versão final. 4 novos arquivos são iterações anteriores. Coberta por PR #2361. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv091-100-lead-signals-261016-2240",
+      "tip_sha": "b5388fbad",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv091-100-lead-signals.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 10 RADAR (lead-signals). Conflitos em barrel + useLeadThermometer e useSpeedToLead. 7 novos arquivos são iterações anteriores. Coberta por PR #2361. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv091-100-signals-261016-2305",
+      "tip_sha": "9b9a335bf",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv091-100-signals.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 10 RADAR (signals — duplicata de lead-signals). Conflitos em barrel + 5 hooks. 7 novos arquivos são iterações anteriores. Coberta por PR #2361. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv101-110-multimodal-261016-0730",
+      "tip_sha": "d69101f9d",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv101-110-multimodal-0730.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 11 RADAR (versão matinal). Conflitos em 5 hooks + barrel. 11 novos arquivos são variantes experimentais (AudioSuggestion, CompetitorQuote, useLogoColors, etc.). Coberta por PR #2361. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv101-110-multimodal-261016-2310",
+      "tip_sha": "90f05f6ca",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv101-110-multimodal-2310.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 11 RADAR (versão noturna). Conflitos em useImageAnalysis + barrel. 5 novos arquivos são variantes não selecionadas. Coberta por PR #2361. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv111-120-guardrails-261016-0810",
+      "tip_sha": "6d65e42d6",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv111-120-guardrails-0810.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 12 RADAR (versão matinal). Apenas conflitos de barrel. 10 novos arquivos; PR #2361 escolheu subset destes. Coberta. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv111-120-guardrails-261016-2315",
+      "tip_sha": "1d07250e8",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv111-120-guardrails-2315.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 12 RADAR (versão noturna — subconjunto da 0810). Apenas conflitos de barrel. 6 novos arquivos. Coberta por PR #2361. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv121-130-supervisor-261016-2304",
+      "tip_sha": "285fd6751",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv121-130-supervisor-2304.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 13 RADAR (versão 2304). Conflitos em useConversationScore e useLearningMoment + barrel. 8 novos arquivos. Coberta por PR #2361. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv121-130-supervisor-261016-2320",
+      "tip_sha": "39f615a83",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv121-130-supervisor-2320.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 13 RADAR (versão 2320 — subconjunto da 2304). Apenas conflitos de barrel. 6 novos arquivos. Coberta por PR #2361. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv131-140-analytics-261016-2325",
+      "tip_sha": "98fc0eb85",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv131-140-analytics-2325.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 14 RADAR (analytics). Apenas conflitos de barrel. 6 novos arquivos. Coberta por PR #2361. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv131-140-aprendizado-261016-2310",
+      "tip_sha": "5ef9d9e5c",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv131-140-aprendizado-2310.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 14 RADAR (aprendizado). Apenas conflitos de barrel. 10 novos arquivos. Coberta por PR #2361. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv141-150-integration-261016-2330",
+      "tip_sha": "43da1ee5b",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv141-150-integration-2330.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 15 RADAR (integration). Apenas conflitos de barrel. 6 novos arquivos. Coberta por PR #2361. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-copiloto-cv141-150-piloto-261016-2317",
+      "tip_sha": "6fd40abfa",
+      "veredito": "COBERTA",
+      "confianca": 0.82,
+      "dossie": "analise/dossies/feat-copiloto-cv141-150-piloto-2317.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fase 15 RADAR (piloto). Apenas conflitos de barrel. 10 novos arquivos. Coberta por PR #2361. Branch apagada."
+    },
+    {
+      "branch": "claude/feat-e83-entrar-por-codigo-261020-1935",
+      "tip_sha": "e53fff230",
+      "veredito": "COBERTA",
+      "confianca": 0.85,
+      "dossie": "analise/dossies/feat-e83-entrar-por-codigo.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Feature E83 (entrar por código de convite) já em main. CONFLICT add/add em EnterDepartmentByCode.tsx (main:85 linhas vs branch:79). Branch apagada."
+    },
+    {
+      "branch": "fix/f1a-lote-b-batch14",
+      "tip_sha": "b8514cc9e",
+      "veredito": "COBERTA",
+      "confianca": 0.88,
+      "dossie": "analise/dossies/fix-f1a-lote-b-batch14.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fix fila offline por usuário já em main. authSession.ts (branch) equivale a authenticatedUserId.ts (main). outbound-message.service.ts já importa readAuthenticatedUserId em main. CONFLICT em useAuth.tsx e mediaVolumeStore.ts. Branch apagada."
     }
   ]
 }
