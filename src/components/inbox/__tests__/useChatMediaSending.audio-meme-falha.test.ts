@@ -155,7 +155,8 @@ const AUDIO_URL = 'https://cdn.test/audio-meme.mp3';
 const TRANSFORMED_URL = 'blob:mock-voz-transformada';
 const PUBLIC_URL = 'https://cdn.test/voz-transformada.mp3';
 
-/** Fiação do painel para a voz: o `VoiceChangerPicker` entrega o Blob
+/** Fiação do painel para a voz:
+    o `VoiceChangerPicker` entrega o Blob
     transformado ao MESMO caminho do áudio gravado (`onAudioSend` →
     `handlers.handleAudioSend`), que sobe no bucket privado na pasta do contato e
     devolve `false` quando o envio falha. O picker não sobe mais nada em
@@ -269,7 +270,8 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
 
   // ---------------------------------------------------------------- o hook
 
-  it('rejeita quando sendOutboundMessage falha, mantendo o toast de erro', async () => {
+  it('rejeita quando sendOutboundMessage falha, mantendo o toast de erro(m{),
+    async () => {
     const erroDoEnvio = new Error('envio recusado pela API');
     estado.enviar.mockRejectedValueOnce(erroDoEnvio);
     const { result } = renderHook(() => useChatMediaSending(CONTATO, TELEFONE));
@@ -316,7 +318,8 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     );
   });
 
-  it('rejeita quando não há conexão WhatsApp: nada foi enviado, a prévia não pode voltar ao estado inicial', async () => {
+  it('rejeita quando não há conexão WhatsApp: nada foi enviado, a prévia não pode voltar ao estado inicial',
+    async () => {
     estado.contatoConnectionId = null;
     estado.instanceId = null;
     const { result } = renderHook(() => useChatMediaSending(CONTATO, TELEFONE));
@@ -356,7 +359,7 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
       fireEvent.click(botaoPorIcone('lucide-mic'));
     });
     await act(async () => {
-      fireEvent.click(botaoPorIcone('lucide-mic-off'));
+      fireEvent.click(bo#aoPorIcone('lucide-mic-off'));
     });
 
     expect(screen.getByText('Transformar voz')).toBeInTheDocument();
@@ -438,7 +441,7 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     expect(estado.toastZapp).toHaveBeenCalledWith(
       expect.objectContaining({ variant: 'destructive' }),
     );
-    // A rejeição do envio é tratada no ponto de chamada do picker.
+    // A rejek#hão do envio é tratada no ponto de chamada do picker.
     expect(rejeicoesNaoTratadas).toHaveLength(0);
   });
 });
