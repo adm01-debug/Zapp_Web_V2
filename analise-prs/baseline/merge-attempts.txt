@@ -1,0 +1,28 @@
+# Evidência de Merge Attempts — 2026-10-29
+
+## Ferramenta usada
+mcp__GITHUB_-_MCP_-_FOREVER__github_merge_pull_request (squash)
+Sessão: f25df632-1569-5c66-abd1-e14cb862eb74
+
+## Tentativa 1: PR #2244 (fix(types): 9 RPCs + offline queue userId + m4a)
+- Estado na análise inicial: clean, MERGEAR_SE_CI_VERDE
+- Estado ao tentar merge: dirty (conflito com main — main avançou após análise)
+- Resposta da API: 405 "Pull Request has merge conflicts"
+- Conclusão: main avançou e introduziu conflito em types.ts após análise inicial
+
+## Tentativa 2: PR #2247 (docs: resgate-validacao command)
+- Estado: behind (1 arquivo: .claude/commands/resgate-validacao.md)
+- Resposta da API: 405 "3 of 3 required status checks are expected."
+- Documentação: https://docs.github.com/articles/about-protected-branches
+- Conclusão: Branch protection bloqueia merge — CI Gate failing porque Unit Tests (shard 2) falha
+
+## Interpretação
+A mensagem "3 of 3 required status checks are expected" indica que apenas 3 dos 6 checks
+obrigatórios passaram no head SHA desta PR. Os 3 faltantes são os que envolvem Unit Tests
+(CI Gate depende de unit-tests.result != "failure").
+
+## Para todas as PRs MERGEAR_SE_CI_VERDE
+O mesmo bloqueio se aplica: branch protection enforces required status checks antes de
+aceitar merge. Não é possível contornar via API — a única solução é corrigir o Unit Test
+que falha em main:
+  src/components/talkx/__tests__/TalkXView.ajuda-teclado.test.tsx

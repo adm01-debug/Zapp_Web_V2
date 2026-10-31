@@ -1,8 +1,8 @@
 # Regras de Negócio — Análise de PRs
 
-**Data:** 2026-10-26  
+**Data:** 2026-10-29  
 **Repositório:** adm01-debug/Zapp_Web_V2  
-**Main SHA auditado:** `2d97c44cfe7f2fa8a3ca572f8f5689118328e858`
+**Main SHA auditado:** `ac97c0ea300877335a43600ed025c28b6dfa4579`
 
 **Fontes primárias desta análise:**
 - `CLAUDE.md` (seções 0–4, project instructions checked into codebase)
