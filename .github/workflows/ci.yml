@@ -20,6 +20,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# W49: VITE_* movido para os jobs build (step-level) e e2e (job-level); sem vazamento para lint/test/security.
 defaults:
   run:
     shell: bash --noprofile --norc -euo pipefail {0}
@@ -65,6 +66,11 @@ jobs:
       # "tsc -b --force" e falha so se surgir erro de tipo novo.
       - name: 🔎 Run TypeScript debt ratchet
         run: node scripts/ci/typecheck-ratchet.mjs
+
+      - name: 🛡️ Integridade do CLAUDE.md (GA02)
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          CLAUDE_MD_BASE=FETCH_HEAD node scripts/ci/check-claude-md-integrity.mjs
 
   unit-tests:
     name: 🧪 Unit Tests (${{ matrix.shard }}/3)
