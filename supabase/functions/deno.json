@@ -4,7 +4,5 @@
   "imports": {
     "@types/node": "npm:@types/node@^22"
   },
-  "compilerOptions": {
-    "skipLibCheck": true
-  }
+  "compilerOptions": { "skipLibCheck": true }
 }

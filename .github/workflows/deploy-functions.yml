@@ -453,10 +453,13 @@ jobs:
       - name: Instalar dependencias node_modules (deno install)
         # W99: nodeModulesDir:"auto" em Deno 2.9.5 nao cria node_modules automaticamente
         # durante `deno check` — exige `deno install` explicito. @types/ws@8.18.1
-        # tem `/// <reference types="node" />` que forca resolucao de @types/node
-        # na fase de descoberta de modulos (antes do type check).
-        # --frozen=false: deno.lock nao tem entry npm para @types/node; sem a flag
-        # o install falharia ao encontrar package nao registrado no lock.
+        # tem `/// <reference types="node" />` que forca resolucao de @types/node.
+        # @types/node e declarado em supabase/functions/deno.json imports para que
+        # o deno install o instale com estrutura gerenciada pelo Deno.
+        # npm install direto nao funciona: Deno 2.9.5 nao reconhece node_modules
+        # criado fora da sua propria estrutura gerenciada (W101).
+        # --frozen=false e necessario porque scripts/ci/deno.lock tem zero entradas
+        # npm; o lockfile e atualizado localmente no CI sem impactar o repositorio.
         run: deno install --config supabase/functions/deno.json --frozen=false
 
       - name: Typecheck das edge functions (deno check)
