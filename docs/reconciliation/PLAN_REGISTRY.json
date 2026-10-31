@@ -1919,8 +1919,10 @@
       "record_id": "P053",
       "task_file": "tasks/P053.json",
       "status_counts": {
-        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 28,
-        "PARTIAL": 14,
+        "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 25,
+        "PARTIAL": 12,
+        "SUPERSEDED": 2,
+        "ACTIVE_REGRESSION": 3,
         "NEEDS_REVALIDATION": 8
       },
       "review_level_counts": {
