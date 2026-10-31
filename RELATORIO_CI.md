@@ -145,8 +145,9 @@ Medido localmente na main `4dc8adbf` antes da branch `claude/fix-deploy-frozen-o
 
 | Verificação | Resultado |
 |---|---|
+| `bun install` | ✅ no changes (668 installs, 710 packages, 282ms) |
 | `bun run build` | ✅ exit 0 |
-| `bun run lint` | ⚠️ exit 1 — 814 problemas pré-existentes (601 errors + 213 warnings; nenhum introduzido por esta sessão) |
+| `bun run lint` | ⚠️ exit 1 — 814 problemas pré-existentes (601 errors + 213 warnings; 1 warning fixable com --fix; nenhum introduzido por esta sessão) |
 | `bun run typecheck` | ⚠️ crash SIGABRT (OOM no container cloud remoto; `tsc` nativo passa no CI GitHub Actions com RAM suficiente — não é bug do projeto) |
 | `bun run test` | ✅ 15.667 testes passando (referência confirmada pelo CI do Round 1) |
 
@@ -177,6 +178,14 @@ error TS2307: Cannot find module '@types/node' or its corresponding type declara
 ### copilot-pull-request-reviewer — diagnóstico
 
 Workflow dinâmico do GitHub Copilot (sem arquivo no repositório). Step "Processing Request (Linux)" falha por URLs externas bloqueadas pelo firewall interno do Copilot. **Não é required check**; não é corrigível por código do projeto. Ver PENDENCIAS.md item 2.
+
+### CI Gate (SHA `8e60103...`) — aparência de falha, não é real
+
+Run `41152825247` no SHA `8e60103...` teve todos os jobs com `conclusion: cancelled`. Causa: push posterior à branch cancelou o run anterior. Não é falha real — é comportamento esperado do GitHub Actions.
+
+### Qodo/Codex (comentários de review, não workflows com falha)
+
+O Qodo Code Review flagou `--frozen=false` + `@types/node@^22` como potencialmente não-reprodutível sem o `deno.lock` atualizado. Isso é um comentário de review, não um workflow falhando. A solução correta (regenerar `deno.lock` com Deno instalado localmente) está documentada em PENDENCIAS.md item 4. O `--frozen=false` é necessário e correto para este ambiente — não há alternativa sem regenerar o lockfile.
 
 ---
 
@@ -212,31 +221,40 @@ Dois arquivos alterados:
 Branch: `claude/fix-deploy-frozen-oct31`  
 HEAD: `6521a05f27a307559803f0ffa331483727362542`  
 auto_merge: squash (ativo)  
-CI rodando: run [41160241806](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160241806) (iniciado 2026-10-31T02:31Z)
+Estado atual: CI rodando (run 41160241806, iniciado 2026-10-31T02:29Z)
 
 ### Tabela de prova — workflows que estavam em falha
 
 | Workflow | Última run com falha | Situação |
 |---|---|---|
-| `deploy-functions.yml` | [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) — `failure` | ⏳ Correção em PR #2409; CI em andamento (run 41160241806); auto-merge disparará ao concluir |
-| `copilot-pull-request-reviewer` | [41160249404](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160249404) — `failure` | ❌ Não corrigível (ver PENDENCIAS.md item 2) |
+| `deploy-functions.yml` | [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) — `failure` | ⏳ Correção em PR #2409; deploy automático após merge na main |
+| `copilot-pull-request-reviewer` | [41154128287](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41154128287) — `failure` | ❌ Não corrigível (ver PENDENCIAS.md item 2) |
 | `db-live-guard.yml` | [41066127274](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41066127274) — `failure` | ❌ Deriva transitória (ver PENDENCIAS.md item 1) |
 
-### Checks no PR #2409 (HEAD `6521a05f`, run 41160241806, capturado em 02:33Z)
+### Checks obrigatórios no PR #2409 (HEAD `6521a05f`)
 
-| Check | Status (02:33Z) |
+| Check obrigatório | Status (run 41160241806, ~02:52Z) |
 |---|---|
-| `Replay local das migrations` | ✅ success |
-| `Contrato DB offline` | ⏳ in_progress |
-| `🔍 Lint & TypeCheck` | ⏳ queued |
-| `🧪 Unit Tests (1/3)` | ⏳ queued |
-| `🧪 Unit Tests (2/3)` | ⏳ queued |
-| `🧪 Unit Tests (3/3)` | ⏳ queued |
-| `🔒 Security Audit` | ⏳ queued |
-| `🎭 E2E Tests (Playwright)` | ⏳ queued |
-| `copilot-pull-request-reviewer` | ❌ failure (NÃO é required check — ver PENDENCIAS.md item 2) |
+| `🔍 Lint & TypeCheck` | ✅ success (`🔎 TypeCheck` completou 02:47Z) |
+| `🧪 Unit Tests` | ⏳ in_progress (1/3 e 3/3); `🧪 Unit Tests (2/3)` ✅ success (02:51Z) |
+| `🏗️ Build` | ⏳ em andamento |
+| `🔒 Security Audit` | ✅ success (02:38Z) |
+| `Contrato DB offline` | ✅ success (02:49Z, run 41160241900) |
+| `🎭 E2E Tests (Playwright)` | ⏳ in_progress (desde 02:42Z) |
 
-> **Estimativa de conclusão do CI:** ~02:51-02:55Z. Sem intervenção humana necessária.
+> Quando os 6 checks passarem, o auto_merge (squash) disparará automaticamente. Após o merge, o `deploy-functions.yml` será acionado na main para completar a prova.
+
+---
+
+## Comparação baseline × final — Round 2
+
+| Verificação | Baseline (main `4dc8adbf`) | Final (PR #2409 pós-merge) |
+|---|---|---|
+| Build | ✅ exit 0 | ⏳ aguardando CI |
+| Lint | ⚠️ 814 pré-existentes | ⏳ aguardando CI (esperado: igual ou melhor) |
+| Testes unitários | ✅ 15.667 passando | ⏳ aguardando CI |
+| `deploy-functions.yml` | ❌ failure | ⏳ aguardando merge + deploy |
+| Required checks (6) | ✅ todos verdes na main | ⏳ CI em andamento |
 
 ---
 
@@ -248,16 +266,4 @@ CI rodando: run [41160241806](https://github.com/adm01-debug/Zapp_Web_V2/actions
 
 ---
 
-## Comparação baseline × final — Round 2
-
-| Verificação | Baseline (main `4dc8adbf`) | Final (PR #2409 pós-merge) |
-|---|---|---|
-| Build | ✅ exit 0 | ⏳ aguardando CI (~02:51Z) |
-| Lint | ⚠️ 814 pré-existentes | ⏳ aguardando CI (esperado: igual ou melhor) |
-| Testes unitários | ✅ 15.667 passando | ⏳ aguardando CI |
-| `deploy-functions.yml` | ❌ failure | ⏳ aguardando merge + deploy automático |
-| Required checks (6) | ✅ todos verdes na main | ⏳ CI em andamento |
-
----
-
-*Relatório Round 2 em andamento — PR #2409 com CI em execução (run 41160241806). Wakeup agendado para 02:55Z para confirmar merge e atualizar tabela de prova.*
+*Relatório Round 2 em andamento — PR #2409 aguardando CI. Atualizar tabela de prova após merge.*
