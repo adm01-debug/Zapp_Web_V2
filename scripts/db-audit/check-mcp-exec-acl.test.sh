@@ -175,6 +175,16 @@ psql_sql "
 reset_fixture
 assert_guard_passes 'baseline seguro com topologia Supabase Cloud PG 17.6'
 
+psql_sql "
+  ALTER FUNCTION public.mcp_exec(text, integer)
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp';
+  ALTER FUNCTION public.mcp_exec_many(text[], integer)
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp';
+" >/dev/null
+assert_guard_passes 'search_path endurecido com pg_temp explicitamente ao final'
+
+reset_fixture
+
 reset_fixture
 docker exec -i "$container_name" \
   psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres >/dev/null <<'SQL'
@@ -273,6 +283,10 @@ run_negative_sql_case \
 run_negative_sql_case \
   'search_path ausente' \
   'ALTER FUNCTION public.mcp_exec(text, integer) RESET search_path'
+
+run_negative_sql_case \
+  'pg_temp antes de schemas confiaveis no search_path' \
+  "ALTER FUNCTION public.mcp_exec(text, integer) SET search_path TO 'pg_temp', 'pg_catalog', 'public'"
 
 reset_fixture
 sed '0,/DEFAULT 200/s//DEFAULT 201/' "$contract_migration" | \
