@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
  * GA02: garante que o CLAUDE.md nao foi apagado ou esvaziado por outra sessao.
- * Verifica: arquivo existe, cabecalhos obrigatorios presentes, nao encolheu >30% vs HEAD.
+ * Verifica: arquivo existe, cabecalhos obrigatorios presentes, nao encolheu >30% vs a base.
+ * Base: CLAUDE_MD_BASE (no CI, a main buscada; no checkout do CI o HEAD e o proprio arquivo
+ * e a comparacao viraria no-op). Localmente, sem a variavel, compara com o HEAD.
  */
 import { readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
@@ -30,9 +32,10 @@ if (missing.length > 0) {
   process.exit();
 }
 
+const BASE = process.env.CLAUDE_MD_BASE || 'HEAD';
 let headContent;
 try {
-  headContent = execSync('git show HEAD:CLAUDE.md', { encoding: 'utf8' });
+  headContent = execSync(`git show ${BASE}:CLAUDE.md`, { encoding: 'utf8' });
 } catch {
   headContent = null;
 }
@@ -40,7 +43,7 @@ try {
 if (headContent) {
   const ratio = content.length / headContent.length;
   if (ratio < (1 - SHRINK_THRESHOLD)) {
-    console.error(`::error::CLAUDE.md encolheu ${Math.round((1 - ratio) * 100)}% vs HEAD (atual: ${content.length} bytes, HEAD: ${headContent.length} bytes). Possivel wipe por sessao paralela.`);
+    console.error(`::error::CLAUDE.md encolheu ${Math.round((1 - ratio) * 100)}% vs ${BASE} (atual: ${content.length} bytes, base: ${headContent.length} bytes). Possivel wipe por sessao paralela.`);
     process.exitCode = 1;
     process.exit();
   }
