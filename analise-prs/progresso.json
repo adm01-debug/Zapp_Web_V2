@@ -32,7 +32,7 @@
   "nota_pr_2238": "DECISAO_HUMANA — feat(message-delivery) com possivel DDL ou mudanca de behavior",
   "nota_pr_2248": "DECISAO_HUMANA — DESBLOQUEADOR: reduz 136 para 1 arquivo vermelho no CI; requer aprovacao das 2 migrations via producao-ddl",
   "status": "DOSSIES_198_COMPLETOS_CI_LOTE3_RELANCADO",
-  "merges_realizados": 8,
+  "merges_realizados": 9,
   "merges_log": [
     {"pr": 2149, "sha_pr": "3c1915e7649206cf75c8cdc55ecc65b4ec1e5daf", "sha_merge": "c4c7139e75aa326cc21823e816d1e7f526b67412", "timestamp": "2026-10-30T21:18Z", "titulo": "docs(reconciliation): P053 registra regressão do cabeçalho"},
     {"pr": 2209, "sha_pr": "ef4e4e4b859450307e1756fec45cc4128d5a986f", "sha_merge": "526ce5281a6c311089f206eb518e4204f31074f3", "timestamp": "2026-10-30T23:00:36Z", "titulo": "fix(test): corrige mock de range/limit no customemojis upload test (auto_merge:squash)"},
@@ -41,13 +41,16 @@
     {"pr": 2385, "sha_pr": "c6e66f9fbe1b42bde2289543c6e869459ee4b0e3", "sha_merge": "4dc8adbf288b5032fc4381be18fc80f2c8b66b68", "timestamp": "2026-10-31T01:00Z", "titulo": "fix(rlsSchemaGuard): elimina ultimo arquivo vermelho do CI sistemico"},
     {"pr": 2343, "sha_pr": "desconhecido-auto_merge", "sha_merge": "fe30391894743a6befdabbeb4b8218a93906bb40", "timestamp": "2026-10-31T01:37Z", "titulo": "chore: sincronizar artefatos derivados do banco (auto_merge:squash) — auto-mergeado pelo GitHub"},
     {"pr": 2278, "sha_pr": "desconhecido-apos-update_pr_branch", "sha_merge": "668d77329964d54b7c76af8737a5c577f9b0223d", "timestamp": "2026-10-31T02:22Z", "titulo": "fix(contrato-db-offline-dashboard-kpi-guard): corrige contrato db offline"},
-    {"pr": 2407, "sha_pr": "desconhecido-outra-sessao", "sha_merge": "004e74a8c596959f45f61c8b0b64b30a70c1ff19", "timestamp": "2026-10-31T02:53:54Z", "titulo": "fix(deploy-functions): instalar @types/node via npm antes do deno check (W100) — mergeado por outra sessao"}
+    {"pr": 2407, "sha_pr": "desconhecido-outra-sessao", "sha_merge": "004e74a8c596959f45f61c8b0b64b30a70c1ff19", "timestamp": "2026-10-31T02:53:54Z", "titulo": "fix(deploy-functions): instalar @types/node via npm antes do deno check (W100) — mergeado por outra sessao"},
+    {"pr": 2411, "sha_pr": "desconhecido-auto_merge", "sha_merge": "desconhecido", "timestamp": "2026-10-31T04:19:20Z", "titulo": "auto_merge squash — PR #2411 mergeado automaticamente"}
   ],
   "outras_escritas_github": "nenhuma (apenas leituras via github_get_pr_diff, github_get_pull_request, github_list_check_runs, github_list_pull_requests, github_update_pr_branch, github_dispatch_workflow)",
   "main_sha_atual": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
-  "prs_em_ci": [2286, 2372, 2383, 2384, 2386, 2396, 2411],
+  "prs_em_ci": [2286, 2383, 2384, 2386, 2396],
+  "prs_conflito_apos_merge": [2372],
   "ci_dispatch_timestamp": "2026-10-31T03:10Z",
-  "nota_ci_em_andamento": "Lote 3 relancado: 7 PRs com branches atualizados + CI dispatched às 03:10Z após merge de #2407 (sha 004e74a8) por outra sessão às 02:53Z. PRs #2396 e #2411 têm auto_merge ativo (squash). Aguardar ~20min para CI Gate completar.",
+  "ci_checks_queued_at": "2026-10-31T04:38Z",
+  "nota_ci_em_andamento": "Lote 3: #2411 mergeado às 04:19Z (auto_merge squash). #2372 ficou CONFLICTING após merge. 5 PRs (2286,2383,2384,2386,2396) com CI queued às 04:38Z + auto_merge SQUASH. Bug CI Gate: re-executar após E2E concluir.",
   "nova_required_check_descoberta": "✅ CI Gate (required check) — check consolidador que não estava na análise anterior; substitui os 6 checks individuais como gate final",
   "limitacao_github_token": "Quando auto-update-pr-branch.yml ou github_update_pr_branch usa GITHUB_TOKEN para criar merge commit na feature branch, ci.yml NÃO dispara automaticamente. Workaround: github_dispatch_workflow em ci.yml no branch da PR.",
   "bug_ci_gate_timing": "CI Gate roda em ~4s enquanto E2E leva ~20min. CI Gate vê E2E in_progress e marca failure. Workaround: re-executar CI Gate depois que todos os checks terminarem (github_rerun_workflow no run_id do CI Gate).",
