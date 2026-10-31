@@ -1,6 +1,6 @@
 # PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-10-30 por sessão de correção de CI._
+_Atualizado em 2026-10-31 por sessão de correção de CI._
 
 ---
 
