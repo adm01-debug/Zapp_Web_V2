@@ -86,4 +86,13 @@ describe('useCreateDepartmentInvite — codigo do convite', () => {
     expect(segundo).toMatch(FORMATO_CONVITE);
     expect(primeiro).not.toBe(segundo);
   });
+
+  it('nao duplica o codigo secreto nos detalhes da auditoria', async () => {
+    const codigo = await criarConvite();
+    const auditoria = f.inserts.find((insert) => insert.table === 'department_audit_logs');
+
+    expect(auditoria?.payload.action).toBe('create_invite');
+    expect(auditoria?.payload.details).toEqual({ profile_name: 'Ana' });
+    expect(JSON.stringify(auditoria?.payload.details)).not.toContain(codigo);
+  });
 });
