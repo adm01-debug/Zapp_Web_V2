@@ -1,16 +1,16 @@
 # PENDENCIAS.md — Bloqueios que requerem acao humana ou dependem de merge
 
-**Atualizado em:** 2026-10-31 02:41Z
+**Atualizado em:** 2026-10-31 03:00Z
 
 ---
 
-## Inventario (02:41Z) — workflows com falha na main
+## Inventario (03:00Z) — estado atual dos workflows
 
-| Workflow | Ultimo run falho | Causa raiz | Estado atual |
-|---|---|---|---|
-| `deploy-functions.yml` | [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) (SHA `e4e8c265`) | `@types/node` ausente no `deno check` (W100 + E59) | Fix em PR #2407 — CI run [41160372310](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160372310) queued 02:31Z |
-| `db-live-guard.yml` | [41144147872](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41144147872) (SHA `3f18bbe7`) | Passo "Consolidar veredito" falhou em SHA anterior ao fix do dashboard_kpi (PR #2278) | Run [41160856000](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160856000) dispatched na main `668d773` (queued 02:37Z) |
-| `copilot-pull-request-reviewer` | [41159838719](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41159838719) | Firewall bloqueia `api.business.githubcopilot.com` | **NAO e required check** — nao bloqueia merge |
+| Workflow | Status | Observacao |
+|---|---|---|
+| `deploy-functions.yml` | ✅ Corrigido via PR #2407 (mergeado 02:53Z) | Run de confirmacao 41162076060 aguardando conclusao |
+| `db-live-guard.yml` | ❌ failure (run 41162077590, SHA `004e74a8c5`, 02:56Z) | 3 causas raiz documentadas abaixo — nao e required check |
+| `copilot-pull-request-reviewer` | ❌ failure (permanente, firewall) | **NAO e required check** — nao bloqueia merge |
 
 ---
 
@@ -35,54 +35,75 @@
 
 ---
 
-## 2. `deploy-functions.yml` — fix pronto no PR #2407; aguardando CI + auto-merge
+## 2. `db-live-guard.yml` — 3 causas raiz documentadas; correcao requer Joaquim
 
-**Motivo exato do bloqueio:** CI do PR #2407 em execucao (run [41160372310](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160372310), queued desde 02:31:13Z no SHA `c3560fad`). Quando os 6 required checks passarem, `auto_merge=squash` dispara automaticamente. Apos o merge, o push na main aciona `deploy-functions.yml` — esse run confirmara `conclusion=success`.
+**NAO E REQUIRED CHECK** — `db-live-guard.yml` nao tem trigger `pull_request` por design (nao expoem `DESTINO_URL` a codigo de PR).
 
-**Causa raiz do ultimo run falho (41147095645, SHA `e4e8c265`):**
-- `@types/ws@8.18.1` contem `/// <reference types="node" />` que forca TypeScript a resolver `@types/node`
-- `@types/node` nao esta no `deno.lock` — `deno install` nao o instala
-- `deno check` falhava com: `Could not find "@types/node" in a node_modules folder`
+**Ultimo run:** [41162077590](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162077590) — dispatched na main `004e74a8c5` em 02:55Z, `conclusion=failure` em 02:56Z.
 
-**Fix aplicado (branch `claude/hopeful-knuth-4brqti`):**
-- Commit `f5c274d99`: instala `@types/node@25.9.9` via npm antes do `deno check`
-- Commit `61cf803ac`: adiciona `set -euo pipefail` (E59) e fixa versao `@types/node@25.9.9`
+**Passo que falhou:** step 23 "Consolidar veredito do contrato vivo" — le arquivos `/tmp/step-*.log` e falha quando qualquer um tem conteudo.
 
-**Prova do fix — CI Gate passou em 3 SHAs distintos com o mesmo codigo:**
+**Passos individuais que geraram conteudo nos logs (confirmados via FALHAS_LISTA no log do run):**
 
-| SHA | CI Gate job/run | Conclusao | Hora |
+### Causa A — Comparar migrations com schema_migrations (step 9)
+
+11 migrations com problemas no ledger (versoes da semana de 16/10):
+
+| Tipo de problema | Quantidade |
+|---|---|
+| `statements` em prosa (resumo, nao SQL real) | 8 |
+| Nome divergente entre arquivo e ledger | 1 |
+| Conteudo SQL divergente entre arquivo e ledger | 3 |
+
+**Script que verifica:** `scripts/db-audit/check-migration-drift.mjs`  
+**Correcao necessaria:** atualizar `statements` no ledger com o SQL real de cada migration afetada.  
+**Passo a passo para o Joaquim:**
+1. Para cada migration afetada: confirmar o estado real no banco via `pg_get_functiondef`/`pg_indexes` antes de qualquer escrita
+2. Usar `scripts/db-audit/register-migration.mjs <arquivo.sql>` para gerar o SQL correto
+3. Executar UPDATE no ledger com `RETURNING` nao-vazio como guarda
+4. Zero migrations com `statements IS NULL` ou em prosa como condicao de sucesso
+
+### Causa B — Verificar ACL e contrato de mcp_exec (step 10)
+
+`mcp_exec` e `mcp_exec_many` nao tem `search_path` configurado (`proconfig` nao contem `search_path=pg_catalog, public`).
+
+**Script que verifica:** `scripts/db-audit/check-mcp-exec-acl.sql` — campo `search_path_is_safe = false`  
+**Correcao necessaria:** migration com `ALTER FUNCTION public.mcp_exec(text, integer) SET search_path TO pg_catalog, public` + idem para `mcp_exec_many`.  
+**Passo a passo para o Joaquim:**
+1. Criar arquivo em `supabase/migrations/` com o `ALTER FUNCTION` para as duas funcoes
+2. Abrir PR → merge em main → `deploy-functions.yml` confirma success
+3. Apos merge: `db_query` com o DDL + INSERT no ledger na mesma transacao (RETURNING nao-vazio)
+4. Redisparar `db-live-guard.yml` para confirmar step 10 limpo
+
+### Causa C — Auditar configuracao runtime sem dados de clientes (step 22)
+
+Saida do run [41162077590](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162077590): passo aparece como failure no consolidador (conteudo no `/tmp/step-runtime-config.log`). Run anterior (41160856000) confirmou: `Runtime configuration: FAIL; autovacuum=VERIFIED; backups NOT verified.`
+
+**Script que verifica:** `scripts/db-audit/runtime-config.test.sh` → `check-runtime-config.mjs`  
+**Correcao necessaria:** investigar por que o monitoramento de backups nao esta confirmado.  
+**Passo a passo para o Joaquim:**
+1. Baixar artefato `db-live-evidence-41162077590-1` e ler `step-runtime-config.log` para ver a mensagem exata
+2. Verificar configuracao de backup no Supabase Dashboard (Settings → Backups) do projeto `tnnnlkbymytvtqngbbqh`
+3. Se backup diario ativo: verificar qual parametro o `check-runtime-config.mjs` consulta e se ha falha de permissao
+4. Redisparar `db-live-guard.yml` apos correcao para confirmar step 22 limpo
+
+---
+
+## 3. `deploy-functions.yml` — run de confirmacao pos-merge aguardando conclusao
+
+**Situacao:** PR #2407 mergeada em 02:53:54Z (SHA `004e74a8c596959f45f61c8b0b64b30a70c1ff19`). Run de confirmacao [41162076060](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162076060) dispatched em 02:54:59Z, status `queued` em 02:57Z.
+
+**Prova do fix — CI Gate passou em 4 SHAs com o mesmo codigo:**
+
+| SHA | CI Gate | Conclusao | Hora |
 |---|---|---|---|
-| `d0e624ba` | job 124393241622 | success | 00:58:49Z |
-| `c6cc8cf8` | job 124402413957 | success | 01:39:42Z |
-| `d8426a2d` | run [41156550407](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41156550407) attempt 2 | success | 02:30:27Z |
+| `d0e624ba` | job 124393241622 | ✅ success | 00:58:49Z |
+| `c6cc8cf8` | job 124402413957 | ✅ success | 01:39:42Z |
+| `d8426a2d` | run [41156550407](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41156550407) attempt 2 | ✅ success | 02:30:27Z |
+| `c3560fad` | run [41160372310](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160372310) | ✅ success | ~02:53Z |
 
-Cada vez a branch ficou `behind` por outro PR mergeando na main imediatamente apos o CI Gate passar. O codigo do fix e identico em todos os SHAs.
-
-**Acao necessaria do Joaquim:** nenhuma — merge automatico apos CI (~03:06Z estimado).
-
----
-
-## 3. `db-live-guard.yml` — run em execucao na main atual (pos-fix do dashboard_kpi)
-
-**Motivo exato das falhas anteriores:**
-- Run 41144147872 (SHA `3f18bbe7`, 23:26Z/10-30): passo "Consolidar veredito do contrato vivo" falhou porque `scripts/db-audit/dashboard-rls-authorization.test.sh` apontava a migration de origem da `RPC dashboard_kpi` para `20261007013217_conversation_closures_reopen_same_day.sql`, mas o PR #2248 adicionou `20261026210000_dashboard_kpi_periodo_aditivo.sql` (mais recente) — o guarda disparava erro
-- Run 41143958922 (SHA `526ce5281`, 23:21Z/10-30): mesma causa
-- Ambos os SHAs sao anteriores ao merge do PR #2278 (02:23Z/10-31) que corrigiu exatamente esse script
-
-**Run atual:** [41160856000](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160856000) — dispatched na main `668d773` (SHA pos-PR#2278) em 02:37Z, status: queued. Este run roda o contrato vivo com o script ja corrigido.
-
-**Acao necessaria do Joaquim:** nenhuma — aguardar conclusao do run (~02:43Z estimado).
+**Acao necessaria do Joaquim:** nenhuma — run de confirmacao em andamento; conclusao esperada em ~03:10Z.
 
 ---
 
-## 4. Unit tests e E2E — baseline local nao executado completamente
-
-**Motivo:** unit tests levam 40+ minutos localmente; E2E requerem instancia Supabase ao vivo. Ambos foram validados via CI em tres SHAs distintos com o mesmo codigo (ver item 2).
-
-A correcao afeta somente `.github/workflows/deploy-functions.yml` — nenhum codigo testado pelo vitest ou pelo Playwright foi modificado.
-
-**Acao necessaria:** nenhuma. O CI e a prova definitiva.
-
----
-
-*Itens resolvidos sao removidos deste arquivo. Ultima atualizacao: 02:41Z.*
+*Itens resolvidos sao removidos deste arquivo. Ultima atualizacao: 03:00Z.*

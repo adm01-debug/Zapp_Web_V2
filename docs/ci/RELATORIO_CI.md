@@ -2,7 +2,7 @@
 
 **Data:** 2026-10-31  
 **Branch de correcao:** `claude/hopeful-knuth-4brqti`  
-**PR principal:** [#2407](https://github.com/adm01-debug/Zapp_Web_V2/pull/2407)  
+**PR principal:** [#2407](https://github.com/adm01-debug/Zapp_Web_V2/pull/2407) — **MERGEADA em 02:53:54Z**  
 **PR de documentacao:** [#2411](https://github.com/adm01-debug/Zapp_Web_V2/pull/2411)
 
 ---
@@ -149,33 +149,38 @@ AssertionError: bloco da linha 461 nao abre com modo estrito
 | **CI Gate (required)** | **124402413957** | **✅ success** | **01:39:42Z** |
 | copilot-pull-request-reviewer | 124394565891 | failure (nao required) | 01:06:10Z |
 
-**Nota:** Imediatamente apos o CI Gate passar (01:39:42Z), PR #2343 mergeou na main (01:37:35Z). A branch voltou a ficar `behind`. Novo merge commit `d8426a2d` gerado via `github_update_pr_branch`. CI reiniciado.
+### SHA `d8426a2d` — todos os 6 required checks passaram (run ci.yml 41156550407 attempt 2)
 
-### SHA `d8426a2d` — CI em andamento (rerun iniciado 02:01:19Z, verificado 02:10Z)
+| Check | Conclusao | Hora |
+|---|---|---|
+| Security Audit | ✅ success | 01:49:21Z |
+| TypeCheck | ✅ success | 01:51:27Z |
+| Node CI Scripts | ✅ success | 01:54:34Z |
+| Replay local das migrations | ✅ success | 01:55:13Z |
+| Contrato DB offline | ✅ success | 01:58:04Z |
+| Unit Tests (1/3) | ✅ success | 01:58:42Z |
+| Unit Tests (2/3) | ✅ success | 02:26:11Z |
+| Unit Tests (3/3) | ✅ success | 02:27:19Z |
+| Build | ✅ success | 02:28:33Z |
+| E2E Tests (Playwright) | ✅ success | 02:29:54Z |
+| **CI Gate (required)** | **✅ success** | **02:30:27Z** |
 
-| Check | Job ID | Conclusao | Hora |
+### SHA `c3560fad` — merge commit (4o ciclo); CI Gate passou (run ci.yml 41160372310)
+
+| Check | Conclusao | Hora |
+|---|---|---|
+| **CI Gate (required)** | **✅ success** | **~02:53Z** |
+
+**Merge da PR #2407:** executado em 02:53:54Z pelo auto_merge squash. Commit de merge na main: `004e74a8c596959f45f61c8b0b64b30a70c1ff19`.
+
+### Pos-merge — runs de confirmacao na main `004e74a8c5`
+
+| Item | Run ID | Status | Conclusao |
 |---|---|---|---|
-| Security Audit | 124409141378 | ✅ success | 01:49:21Z |
-| TypeCheck | 124409116638 | ✅ success | 01:51:27Z |
-| Node CI Scripts | 124409116493 | ✅ success | 01:54:34Z |
-| Replay local das migrations | 124404498612 | ✅ success | 01:55:13Z |
-| Contrato DB offline | 124404498540 | ✅ success | 01:58:04Z |
-| Unit Tests (1/3) | 124409115980 | ✅ success | 01:58:42Z |
-| Unit Tests (2/3) | 124409115206 | queued desde 02:01:19Z | — |
-| Unit Tests (3/3) | 124409115400 | queued desde 02:01:19Z | — |
-| E2E Tests (Playwright) | 124409115007 | queued desde 02:01:19Z | — |
-| Build | — | na fila | — |
-| **CI Gate (required)** | — | aguardando | — |
-| copilot-pull-request-reviewer | 124404528834 | failure (nao required) | 01:46:13Z |
+| `deploy-functions.yml` dispatch | [41162076060](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162076060) | queued (02:55Z) | A confirmar — run em andamento |
+| `db-live-guard.yml` dispatch | [41162077590](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162077590) | completed (02:56Z) | `failure` — ver item 2 do PENDENCIAS.md para as 3 causas raiz |
 
-**Nota sobre cancelamento anterior:** Os 3 jobs foram cancelados em 01:58:47Z por perda de conexao do worker (nao por falha de codigo). Recolocados em fila via `rerun_failed_jobs` em 02:01:19Z. Codigo identico ao dos SHAs `d0e624ba` e `c6cc8cf8` que ja passaram.
-
-### Pos-merge — verificacoes a confirmar (ver PENDENCIAS.md)
-
-| Item | Status |
-|---|---|
-| `deploy-functions.yml` run na main (SHA pos-merge) | A confirmar apos merge da PR #2407 |
-| `db-live-guard.yml` dispatch na main | A disparar e confirmar apos merge |
+**Nota sobre db-live-guard:** o workflow falhou no step 23 "Consolidar veredito" devido a 3 causas pre-existentes no banco (nao relacionadas ao fix do deploy-functions). As causas sao documentadas em PENDENCIAS.md item 2 e requerem correcao por migracao + aprovacao do Joaquim.
 
 ### Workflows antes verdes — seguem verdes
 
@@ -183,21 +188,22 @@ Nenhum dos 13 workflows verdes foi alterado. Somente `.github/workflows/deploy-f
 
 ---
 
-## 6. Inventario final — estado de todos os workflows (2026-10-31 02:10Z)
+## 6. Inventario final — estado de todos os workflows (2026-10-31 03:00Z)
 
 | Workflow | Ultimo run | Status | Observacao |
 |---|---|---|---|
-| `deploy-functions.yml` | [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) | Corrigido via PR #2407 | Run pos-merge a confirmar |
-| `copilot-pull-request-reviewer` | [41156559736](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41156559736) | failure (nao e required check) | Bloqueio de firewall externo — exit code 1, `https://api.business.githubcopilot.com` inacessivel. Ver PENDENCIAS item 1. |
-| `ci.yml` | run 41156550407 (SHA d8426a2d) | CI em andamento | 6/9 jobs verdes; Unit Tests 2/3, 3/3, E2E queued desde 02:01Z |
-| `db-guard.yml` | run 41156550613 (SHA d8426a2d) | ✅ success | Replay migrations + Contrato DB offline |
+| `deploy-functions.yml` | [41162076060](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162076060) (pos-merge) | queued — A confirmar | Fix mergeado via PR #2407; run de confirmacao em andamento |
+| `copilot-pull-request-reviewer` | [41159838719](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41159838719) | failure (nao e required check) | Bloqueio de firewall externo — nao corrigivel via codigo. Ver PENDENCIAS item 1. |
+| `db-live-guard.yml` | [41162077590](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162077590) | failure — 3 causas pre-existentes | ACL mcp_exec sem search_path + 11 issues no ledger + backups nao verificados. Ver PENDENCIAS item 2. |
+| `ci.yml` | run [41160372310](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160372310) (SHA c3560fad) | ✅ success | Todos os 6 required checks passaram (~02:53Z) |
+| `db-guard.yml` | — | ✅ verde | nao tocado |
 | `settings-guard.yml` | — | ✅ verde | nao tocado |
 | `branch-hygiene-audit.yml` | — | ✅ verde | nao tocado |
 | `types-sync.yml` | — | ✅ verde | nao tocado |
 | `codeql.yml` | — | ✅ verde | nao tocado |
 | `auto-update-pr-branch.yml` | — | ✅ verde | nao tocado |
-| `db-live-guard.yml` | — | ✅ verde | sera redisparado apos merge |
 | `talkx-status-regen.yml` | — | ✅ verde | nao tocado |
 | `crm-sync-worker.yml` | — | ✅ verde | nao tocado |
 | `targeted-ledger-evidence.yml` | — | ✅ verde | nao tocado |
 | `vercel-env-cleanup.yml` | — | ✅ verde | nao tocado |
+| `db-migrate.yml` | — | nao aplicavel | workflow_dispatch, sem run pendente |
