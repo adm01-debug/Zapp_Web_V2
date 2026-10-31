@@ -9,9 +9,12 @@
 
 ## 1. Inventario inicial — workflows com falha na main
 
+Inventario feito em 2026-10-31 ~00:05Z pela URL `is:action_required is:failure`:
+
 | Workflow | Run ID | SHA | Conclusao | Causa raiz |
 |---|---|---|---|---|
 | `deploy-functions.yml` | [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) | `e4e8c265` | `failure` | `Could not find "@types/node" in a node_modules folder` — `@types/ws@8.18.1` tem `/// <reference types="node" />` que forca resolucao de `@types/node`, mas ele nao esta no `deno.lock` |
+| `copilot-pull-request-reviewer` | [41153329470](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41153329470) | `c6cc8cf8` | `failure` | Bloqueio de firewall externo — job 124394565891 tentou acessar `https://api.business.githubcopilot.com/agents/swe/agent/cleanup`, bloqueado pelo CI runner. Ver `https://gh.io/copilot/firewall-config`. **NAO e required check** — nao bloqueia merge. |
 
 ### Workflows verdes antes desta sessao (nao tocados)
 
@@ -33,7 +36,7 @@
 
 ## 2. Baseline local (pre-correcao, executado em 2026-10-31 ~01:18Z)
 
-A correcao afeta somente `.github/workflows/deploy-functions.yml`; nenhum codigo de aplicacao foi alterado. Os resultados abaixo sao identicos antes e depois do fix (o arquivo YAML nao e importado pela aplicacao).
+A correcao afeta somente `.github/workflows/deploy-functions.yml`; nenhum codigo de aplicacao foi alterado.
 
 | Metrica | Resultado local | Comando |
 |---|---|---|
@@ -42,7 +45,7 @@ A correcao afeta somente `.github/workflows/deploy-functions.yml`; nenhum codigo
 | Typecheck (ratchet) | ✅ baseline=93, atual=4, novas=0 | `node scripts/ci/typecheck-ratchet.mjs` |
 | Lint (ratchet) | ✅ baseline=819, atual=814, novas=0 | `node scripts/ci/lint-ratchet.mjs` |
 | Unit tests | ✅ success — via CI run 41150191456 (3/3 shards); suite completa leva 40+ min localmente sem infra Supabase | `bun run test` (CI) |
-| E2E tests | ✅ success — via CI run 41150191456; requer instancia Supabase ao vivo | Playwright (CI) |
+| E2E tests | ✅ success — via CI run 41153322581 (SHA `c6cc8cf8`); requer instancia Supabase ao vivo | Playwright (CI) |
 
 **Saida literal do pre-push hook:**
 ```
@@ -129,24 +132,24 @@ AssertionError: bloco da linha 461 nao abre com modo estrito
 | E2E Tests (Playwright) | — | ✅ success | — |
 | **CI Gate (required)** | **124393241622** | **✅ success** | **00:58:49Z** |
 
-**Nota:** SHA `d0e624ba` ficou BEHIND da main (PR #2385 mergeou em 00:55:39Z). Branch atualizada para SHA `c6cc8cf8` (merge com `4dc8adbf`) em 01:02Z. CI reiniciado — codigo identico, apenas merge commit adicionado.
-
-### SHA `c6cc8cf8` — CI em andamento (iniciado 01:02Z, verificado 01:18Z)
+### SHA `c6cc8cf8` — todos os 6 required checks passaram (run ci.yml 41153322581)
 
 | Check | Job ID | Conclusao | Hora |
 |---|---|---|---|
-| Replay local das migrations | 124394540137 | ✅ success | 01:08Z |
-| Security Audit | 124394540341 | ✅ success | 01:06:33Z |
-| Contrato DB offline | 124394540355 | em andamento (iniciou 01:13:28Z) | — |
-| TypeCheck | 124394540578 | na fila desde 01:02:13Z | — |
-| Node CI Scripts | 124394540570 | na fila desde 01:02:13Z | — |
-| Unit Tests (1/3) | 124394540598 | na fila desde 01:02:13Z | — |
-| Unit Tests (2/3) | 124394540539 | na fila desde 01:02:13Z | — |
-| Unit Tests (3/3) | 124394540548 | na fila desde 01:02:13Z | — |
-| E2E Tests (Playwright) | 124394540622 | na fila desde 01:02:13Z | — |
-| auto_merge: squash | — | ativo | mergeara ao completar os 6 required checks |
+| Replay local das migrations | (db-guard run 41153322527) | ✅ success | 01:08:00Z |
+| Security Audit | — | ✅ success | 01:06:33Z |
+| Contrato DB offline | — | ✅ success | 01:28:09Z |
+| TypeCheck | — | ✅ success | 01:23:08Z |
+| Node CI Scripts | — | ✅ success | 01:25:13Z |
+| Unit Tests (3/3) | — | ✅ success | 01:24:05Z |
+| Unit Tests (2/3) | — | ✅ success | 01:31:00Z |
+| Unit Tests (1/3) | — | ✅ success | 01:31:16Z |
+| Build | — | ✅ success | 01:32:55Z |
+| E2E Tests (Playwright) | — | ✅ success | 01:37:39Z |
+| **CI Gate (required)** | **124402413957** | **✅ success** | **01:39:42Z** |
+| copilot-pull-request-reviewer | 124394565891 | failure (nao required) | 01:06:10Z |
 
-O SHA anterior `d0e624ba` provou todos os 6 required checks com o mesmo codigo. O SHA `c6cc8cf8` e um merge commit sobre esse mesmo codigo; o CI recomecou porque `strict=true` exige que a branch esteja atualizada com a main.
+**Nota:** Imediatamente apos o CI Gate passar (01:39:42Z), PR #2343 mergeou na main (01:37:35Z). A branch voltou a ficar `behind`. Novo merge commit gerado via `github_update_pr_branch` — CI reiniciando no novo SHA. Codigo do fix e identico.
 
 ### Pos-merge — verificacoes a confirmar (ver PENDENCIAS.md)
 
@@ -157,18 +160,18 @@ O SHA anterior `d0e624ba` provou todos os 6 required checks com o mesmo codigo. 
 
 ### Workflows antes verdes — seguem verdes
 
-Nenhum dos 13 workflows verdes foi alterado. Somente `.github/workflows/deploy-functions.yml` foi modificado (2 commits). Ratchets locais confirmam zero novas regressoes de typecheck e lint.
+Nenhum dos 13 workflows verdes foi alterado. Somente `.github/workflows/deploy-functions.yml` foi modificado (2 commits).
 
 ---
 
-## 6. Inventario final — estado de todos os workflows (2026-10-31 01:18Z)
+## 6. Inventario final — estado de todos os workflows (2026-10-31 01:42Z)
 
 | Workflow | Ultimo run | Status | Observacao |
 |---|---|---|---|
 | `deploy-functions.yml` | [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) | Corrigido via PR #2407 | Run pos-merge a confirmar |
-| `copilot-pull-request-reviewer` | [41153329470](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41153329470) | failure (nao e required check) | Bloqueio de firewall externo — ver PENDENCIAS.md |
-| `ci.yml` | run na PR #2407 (SHA c6cc8cf8) | CI em andamento | SHA d0e624ba: todos os 6 required checks ✅ |
-| `db-guard.yml` | run na PR #2407 | ✅ Replay success | 01:08Z |
+| `copilot-pull-request-reviewer` | [41153329470](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41153329470) | failure (nao e required check) | Bloqueio de firewall externo — exit code 1, `https://api.business.githubcopilot.com` inacessivel |
+| `ci.yml` | run 41153322581 (SHA c6cc8cf8) | ✅ success | Todos os 6 required checks passaram em 01:39:42Z |
+| `db-guard.yml` | run 41153322527 | ✅ success | Replay migrations + contrato DB offline |
 | `settings-guard.yml` | — | ✅ verde | nao tocado |
 | `branch-hygiene-audit.yml` | — | ✅ verde | nao tocado |
 | `types-sync.yml` | — | ✅ verde | nao tocado |
