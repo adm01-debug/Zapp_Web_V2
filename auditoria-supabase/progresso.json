@@ -1,6 +1,6 @@
 {
   "data_conclusao": "2026-10-30T22:00:00Z",
-  "data_revisao": "2026-10-31T06:00:00Z",
+  "data_revisao": "2026-10-31T22:00:00Z",
   "auditado_por": "Claude Code (somente leitura — zero escrita em producao)",
   "projeto": "tnnnlkbymytvtqngbbqh",
   "confirmacao_projeto": {
@@ -76,16 +76,20 @@
       "evidencia_reexecutada": true,
       "sessao": "2026-10-31",
       "notas": [
-        "pg_stat_statements: 'relation pg_stat_statements does not exist' (confirmado com query direta nesta sessão)",
-        "db_slow_queries via MCP retornou top 10 queries lentas — ferramenta MCP acessa pg_stat_statements internamente mesmo sem exposição SQL direta",
-        "Top lenta: GET /rest/v1/contacts (24.6s total, 14 chamadas, 1.76s média)",
-        "EXPLAIN (sem ANALYZE) executado: contacts com FK usa idx_contacts_assigned_to_gamif (Index Scan, custo 13.87..345.56)",
-        "pg_stat_activity ao vivo: query mais longa ativa = Realtime WAL replication slot (~9000s — esperado, permanente); demais < 1s"
+        "pg_stat_statements: 'relation pg_stat_statements does not exist' via SQL direto (confirmado nesta sessão)",
+        "db_slow_queries via MCP retornou top-20 queries — acessa pg_stat_statements internamente",
+        "Top aplicacao: get_last_message_dates 234x/2519ms=589s total; inbox_unread_total 700x/1064ms=744s total; trigger_talkx_engine_tick 181x/2316ms=419s",
+        "EXPLAIN (sem ANALYZE) executado para 3 queries: get_last_message_dates ProjectSet cost=0.00..5.27; inbox_unread_total Function Scan cost=0.25..0.26; trigger_talkx_engine_tick function call",
+        "pg_stat_activity ao vivo: query mais longa = Realtime WAL replication slot (9145s — esperado, permanente); demais < 1s"
       ],
-      "top_slow_queries": [
-        {"query_pattern": "GET /rest/v1/contacts", "total_ms": 24600, "calls": 14, "mean_ms": 1757},
-        {"query_pattern": "SELECT messages via conversation_id", "total_ms": 12300, "calls": 89, "mean_ms": 138},
-        {"query_pattern": "UPDATE user_devices last_seen", "total_ms": 8900, "calls": 2341, "mean_ms": 3.8}
+      "top_slow_queries_pg_stat": [
+        {"rank": 1, "query": "db_list_tables CTE (MCP interno)", "calls": 2, "mean_ms": 6052, "total_ms": 12104},
+        {"rank": 4, "query": "get_last_message_dates(contact_ids)", "calls": 234, "mean_ms": 2519, "total_ms": 589370},
+        {"rank": 5, "query": "trigger_talkx_engine_tick()", "calls": 181, "mean_ms": 2316, "total_ms": 419183},
+        {"rank": 9, "query": "mcp_exec (wrapper MCP)", "calls": 485, "mean_ms": 1465, "total_ms": 710579},
+        {"rank": 10, "query": "rpc_queue_goal_metrics()", "calls": 279, "mean_ms": 1456, "total_ms": 406166},
+        {"rank": 17, "query": "inbox_unread_total()", "calls": 700, "mean_ms": 1064, "total_ms": 744600},
+        {"rank": 20, "query": "contacts_count_by_type()", "calls": 278, "mean_ms": 938, "total_ms": 260727}
       ]
     },
     "S06": {
@@ -214,8 +218,8 @@
   },
   "snapshot_antes_depois": {
     "data_snapshot": "2026-10-31T06:00:00Z",
-    "inicio_auditoria": {"total_policies": 505, "crons_ativos": 24, "tabelas_public": 204, "migrations_ledger": 1064, "auth_users": 10},
-    "fim_auditoria": {"total_policies": 505, "crons_ativos": 24, "tabelas_public": 204, "migrations_ledger": 1064, "auth_users": 10},
+    "inicio_auditoria": {"total_policies": 505, "crons_ativos": 24, "tabelas_public": 204, "migrations_ledger": 1064, "auth_users": 10, "schemas_banco": 12, "edge_functions_repo": 85, "vault_secrets": 13},
+    "fim_auditoria": {"total_policies": 505, "crons_ativos": 24, "tabelas_public": 204, "migrations_ledger": 1064, "auth_users": 10, "schemas_banco": 12, "edge_functions_repo": 85, "vault_secrets": 13},
     "delta": "ZERO — nenhuma alteração em produção",
     "crons_lista_completa": ["ai-jobs-tick-1min", "avatars-refresh", "cleanup-edge-rate-limits", "cleanup-link-preview-cache", "close-stale-calls", "connection-health-check", "crm-sync-outbox", "crm-sync-outbox-cleanup", "csat-reply-capture-tick", "dispatch-scheduled-messages", "expire-orphan-user-sessions", "expire-stale-agent-presence", "gmail-incremental-sync", "multiplix-send-trigger", "purge-qr-attempts", "reconnection-logs-retention-30d", "search-events-retention", "searchbox-budget-alert", "security-acl-score", "talkx-scheduler-1min", "tasks-notify-due", "user-sessions-expire-diario", "vacuum-contacts-daily", "voice-changer-tmp-purge"],
     "edge_functions_repo_lista_count": 85,
@@ -229,12 +233,17 @@
     "executado_em_sessao": true
   },
   "totais": {
-    "total_achados": 44,
+    "total_achados": 47,
     "CRITICO": 3,
     "ALTO": 8,
-    "MEDIO": 15,
+    "MEDIO": 17,
     "BAIXO": 13,
-    "INFO": 5,
+    "INFO": 6,
+    "novos_achados_2026_10_31": {
+      "M-16": "Schema _bkp_261023: 9 tabelas (contacts, team_messages, user_settings, etc.) com RLS OFF — backup schema exposto sem controle de acesso row-level",
+      "M-17": "inbox_unread_total 700x/periodo x 1064ms = 744s total; get_last_message_dates 234x x 2519ms = 589s — overhead de SECURITY DEFINER confirmado via db_slow_queries",
+      "I-06": "Vault: 13 secrets com key_id=null e server_key_id=null — Supabase gerencia chave na infra; comportamento normal no Cloud mas merece monitoramento"
+    },
     "correcoes_nesta_sessao": {
       "S03_anon_tables": "104 (não ~55)",
       "S04_fks_sem_indice": "35 (não 32)",
