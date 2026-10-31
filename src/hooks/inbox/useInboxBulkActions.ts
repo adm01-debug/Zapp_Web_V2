@@ -140,9 +140,9 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
       for (const contactId of contactIds) {
         const { error } = await supabase.rpc('transfer_conversation', {
           p_contact_id: contactId,
-          p_to_agent_id: type === 'agent' ? targetId : undefined,
-          p_to_queue_id: type === 'queue' ? targetId : undefined,
-          p_note: undefined,
+          p_to_agent_id: type === 'agent' ? targetId : null,
+          p_to_queue_id: type === 'queue' ? targetId : null,
+          p_note: null,
         });
         if (error) failures.push(error);
         else transferidos += 1;
@@ -188,7 +188,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
 
       const previousStatus = new Map<string, string | null>();
       for (const row of originals ?? []) {
-        previousStatus.set(row.id, row.conversation_status ?? null);
+        previousStatus.set(row.id, (row as { id: string; conversation_status: string | null }).conversation_status ?? null);
       }
       // Só arquiva quem foi LIDO. Zero linha lida (RLS filtrando) não é
       // sucesso — sem alvo, avisa em vez de arquivar às cegas.
@@ -201,28 +201,23 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
         action: async () => {
           const { error } = await supabase
             .from('contacts')
-            .update({ conversation_status: 'archived' })
+            .update({ conversation_status: 'archived', updated_at: new Date().toISOString() })
             .in('id', targetIds);
           if (error) throw error;
           clearSelection();
           refetch();
         },
         undoAction: async () => {
-          // Agrupa por status original para emitir um UPDATE por grupo —
-          // restauração atômica por valor: uma falha não deixa o lote parcialmente
-          // revertido.
-          const byStatus = new Map<string | null, string[]>();
+          // A trigger enforce_conversation_status_transition só permite archived → open|pending.
+          // Estados que não fazem essa transição (waiting, resolved, closed) voltam para 'open'.
+          const VALID_FROM_ARCHIVED = new Set(['open', 'pending']);
           for (const id of targetIds) {
-            const original = previousStatus.get(id) ?? null;
-            const group = byStatus.get(original) ?? [];
-            group.push(id);
-            byStatus.set(original, group);
-          }
-          for (const [status, ids] of byStatus) {
+            const prev = previousStatus.get(id);
+            const restoreStatus = prev && VALID_FROM_ARCHIVED.has(prev) ? prev : 'open';
             const { error } = await supabase
               .from('contacts')
-              .update({ conversation_status: status as unknown as string })
-              .in('id', ids);
+              .update({ conversation_status: restoreStatus, updated_at: new Date().toISOString() })
+              .eq('id', id);
             if (error) throw error;
           }
           refetch();

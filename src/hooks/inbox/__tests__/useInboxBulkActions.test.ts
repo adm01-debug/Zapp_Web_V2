@@ -428,8 +428,8 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
 
     expect(rpcCalls.map((c) => c.name)).toEqual(['transfer_conversation', 'transfer_conversation']);
     expect(rpcCalls.map((c) => c.args)).toEqual([
-      { p_contact_id: c1, p_to_agent_id: 'ag-2', p_to_queue_id: undefined, p_note: undefined },
-      { p_contact_id: c2, p_to_agent_id: 'ag-2', p_to_queue_id: undefined, p_note: undefined },
+      { p_contact_id: c1, p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },
+      { p_contact_id: c2, p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },
     ]);
     // Nada de UPDATE solto em contacts: o único caminho é a RPC atômica.
     expect(recorded).toEqual([]);
@@ -449,13 +449,13 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
     expect(rpcCalls).toHaveLength(1);
     expect(rpcCalls[0].args).toEqual({
       p_contact_id: c1,
-      p_to_agent_id: undefined,
+      p_to_agent_id: null,
       p_to_queue_id: 'q-7',
-      p_note: undefined,
+      p_note: null,
     });
   });
 
-  it('a mensagem opcional NÃO é persistida (p_note vai undefined)', async () => {
+  it('a mensagem opcional NÃO é persistida (p_note vai null, não undefined)', async () => {
     const { result } = renderInbox();
     selectIds(result, [c1]);
 
@@ -466,8 +466,8 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
     expect(rpcCalls[0].args).toEqual({
       p_contact_id: c1,
       p_to_agent_id: 'ag-2',
-      p_to_queue_id: undefined,
-      p_note: undefined,
+      p_to_queue_id: null,
+      p_note: null,
     });
   });
 
@@ -567,9 +567,40 @@ describe('useInboxBulkActions — bulkArchive', () => {
 
     const restores = contactUpdates().slice(1);
     expect(restores).toHaveLength(2);
-    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1] } });
-    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'pending' }, filters: { id: [c2] } });
+    // A nova implementação faz um UPDATE por contato via .eq(), não .in().
+    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: c1 } });
+    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'pending' }, filters: { id: c2 } });
     expect(refetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('desfazer de contato com status inválido desde archived (waiting/resolved/closed) restaura para open', async () => {
+    // A trigger enforce_conversation_status_transition só permite archived → open|pending.
+    // Contatos que estavam em waiting/resolved/closed antes do arquivo devem voltar para 'open'.
+    selectQueue.push({
+      data: [
+        { id: c1, conversation_status: 'waiting' },
+        { id: c2, conversation_status: 'resolved' },
+        { id: c3, conversation_status: 'closed' },
+      ],
+      error: null,
+    });
+    const { result } = renderInbox();
+    selectIds(result, [c1, c2, c3]);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    await act(async () => {
+      await lastUndo?.undoAction();
+    });
+
+    const restores = contactUpdates().slice(1);
+    expect(restores).toHaveLength(3);
+    // Todos os três devem restaurar para 'open' (única transição válida além de 'pending').
+    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: c1 } });
+    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: c2 } });
+    expect(restores[2]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: c3 } });
   });
 
   it('sem seleção não lê nem arquiva nada', async () => {
