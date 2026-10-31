@@ -26,11 +26,9 @@ const estado = vi.hoisted(() => ({
   onOpenChangeRaiz: undefined as ((v: boolean) => void) | undefined,
   upload: vi.fn(),
   createSignedUrl: vi.fn(),
-  // VoiceChangerPicker usa bucket privado (createSignedUrl); getPublicUrl não
-  // existe mais nesse caminho — o espião só prova que a falha não cai nele.
-  getPublicUrl: vi.fn(),
   contatoConnectionId: 'conn-1' as string | null,
   instanceId: 'inst-1' as string | null,
+  getPublicUrl: vi.fn(),
   rpcs: [] as string[],
 }));
 
@@ -40,16 +38,20 @@ vi.mock('sonner', () => ({ toast: estado.toastSonner }));
 
 // jsdom + framer-motion não concluem as animações do AnimatePresence, então os
 // estados de gravação/prévia não montavam de forma determinística.
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      return React.createElement('div', { ...rest, ref });
-    }),
-  },
-  AnimatePresence: ({ children }: { children: ReactNode }) => children,
-  useReducedMotion: () => false,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    motion: {
+        div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+          const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
+          return React.createElement('div', { ...rest, ref });
+        }),
+      },
+      AnimatePresence: ({ children }: { children: ReactNode }) => children,
+      useReducedMotion: () => false,
+  };
+});
 
 // Radix Popover não abre de forma confiável sob jsdom: o pass-through guarda a
 // prop `open` para provar que o popover só fecha depois do sucesso do envio.
@@ -77,8 +79,7 @@ vi.mock('@/components/ui/popover', () => ({
 }));
 
 vi.mock('@/components/ui/tooltip', () => ({
-  Tooltip: ({ children }: { children: ReactNode }) =>
-    React.createElement(React.Fragment, null, children),
+  Tooltip: ({ children }: { children: ReactNode }) => React.createElement(React.Fragment, null, children),
   TooltipTrigger: ({ children }: { children: ReactNode }) =>
     React.createElement(React.Fragment, null, children),
   TooltipContent: ({ children }: { children: ReactNode }) =>
@@ -131,18 +132,13 @@ vi.mock('@/integrations/supabase/client', () => {
         getUser: async () => ({ data: { user: { id: 'u1' } } }),
       },
       storage: { from: () => ({ upload: estado.upload, createSignedUrl: estado.createSignedUrl }) },
-      // useAudioMemes assina realtime num ÚNICO canal com DOIS `.on()` encadeados
-      // (audio_memes + audio_meme_favorites) antes do `.subscribe()`.
       channel: () => {
         const canal: Record<string, unknown> = {};
         canal.on = () => canal;
-        canal.subscribe = (cb?: (status: string) => void) => {
-          cb?.('SUBSCRIBED');
-          return canal;
-        };
+        canal.subscribe = () => canal;
         return canal;
       },
-      removeChannel: () => {},
+      removeChannel: () => undefined,
     },
     SUPABASE_URL: 'http://localhost:54321',
     SUPABASE_ANON_KEY: 'anon-de-teste',
@@ -159,16 +155,13 @@ const AUDIO_URL = 'https://cdn.test/audio-meme.mp3';
 const TRANSFORMED_URL = 'blob:mock-voz-transformada';
 const PUBLIC_URL = 'https://cdn.test/voz-transformada.mp3';
 
-/** Fiação do painel para a voz: o `VoiceChangerPicker` entrega o Blob
+/** Fiação do painel para a voz:
+    o `VoiceChangerPicker` entrega o Blob
     transformado ao MESMO caminho do áudio gravado (`onAudioSend` →
     `handlers.handleAudioSend`), que sobe no bucket privado na pasta do contato e
     devolve `false` quando o envio falha. O picker não sobe mais nada em
     `audio-memes/voice-changer/...` (bucket público). */
-function FluxoVoz({
-  onSendAudioBlob,
-}: {
-  onSendAudioBlob: (blob: Blob) => void | boolean | Promise<void | boolean>;
-}) {
+function FluxoVoz({ onSendAudioBlob }: { onSendAudioBlob: (blob: Blob) => void | boolean | Promise<void | boolean> }) {
   return React.createElement(VoiceChangerPicker, { onSendAudioBlob });
 }
 
@@ -197,7 +190,7 @@ class MockMediaRecorder {
   });
   constructor(
     public stream: unknown,
-    public options?: unknown
+    public options?: unknown,
   ) {
     MockMediaRecorder.instances.push(this);
   }
@@ -237,9 +230,7 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     rejeicoesNaoTratadas.length = 0;
     process.on('unhandledRejection', guardarRejeicaoNaoTratada);
     estado.upload.mockReset().mockResolvedValue({ error: null });
-    estado.createSignedUrl
-      .mockReset()
-      .mockResolvedValue({ data: { signedUrl: PUBLIC_URL }, error: null });
+    estado.createSignedUrl.mockReset().mockResolvedValue({ data: { signedUrl: PUBLIC_URL }, error: null });
     estado.contatoConnectionId = 'conn-1';
     estado.instanceId = 'inst-1';
 
@@ -279,7 +270,8 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
 
   // ---------------------------------------------------------------- o hook
 
-  it('rejeita quando sendOutboundMessage falha, mantendo o toast de erro', async () => {
+  it('rejeita quando sendOutboundMessage falha, mantendo o toast de erro(m{),
+    async () => {
     const erroDoEnvio = new Error('envio recusado pela API');
     estado.enviar.mockRejectedValueOnce(erroDoEnvio);
     const { result } = renderHook(() => useChatMediaSending(CONTATO, TELEFONE));
@@ -301,7 +293,7 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
       mediaUrl: AUDIO_URL,
     });
     expect(estado.toastZapp).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: 'destructive' })
+      expect.objectContaining({ variant: 'destructive' }),
     );
   });
 
@@ -322,11 +314,12 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     expect(estado.enviar).toHaveBeenCalledTimes(1);
     expect(estado.toastZapp).toHaveBeenCalledTimes(1);
     expect(estado.toastZapp).toHaveBeenCalledWith(
-      expect.objectContaining({ title: '🔊 Áudio meme enviado!' })
+      expect.objectContaining({ title: '🔊 Áudio meme enviado!' }),
     );
   });
 
-  it('rejeita quando não há conexão WhatsApp: nada foi enviado, a prévia não pode voltar ao estado inicial', async () => {
+  it('rejeita quando não há conexão WhatsApp: nada foi enviado, a prévia não pode voltar ao estado inicial',
+    async () => {
     estado.contatoConnectionId = null;
     estado.instanceId = null;
     const { result } = renderHook(() => useChatMediaSending(CONTATO, TELEFONE));
@@ -345,7 +338,7 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     expect((capturado as Error).message).toBe('Conexão WhatsApp não disponível.');
     // O toast de erro já saiu dentro de `ensureInstance` — ele tem de continuar.
     expect(estado.toastZapp).toHaveBeenCalledWith(
-      expect.objectContaining({ description: 'Conexão WhatsApp não disponível.' })
+      expect.objectContaining({ description: 'Conexão WhatsApp não disponível.' }),
     );
   });
 
@@ -353,9 +346,7 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
 
   // Percorre o caminho REAL do VoiceChangerPicker (renderiza → abre → grava →
   // para → transforma), parando com a prévia transformada na tela.
-  async function chegarNaPrevia(
-    onSendAudioBlob: (blob: Blob) => void | boolean | Promise<void | boolean>
-  ): Promise<HTMLButtonElement> {
+  async function chegarNaPrevia(onSendAudioBlob: (blob: Blob) => void | boolean | Promise<void | boolean>): Promise<HTMLButtonElement> {
     render(React.createElement(FluxoVoz, { onSendAudioBlob }));
     act(() => {
       estado.onOpenChange?.(true);
@@ -368,7 +359,7 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
       fireEvent.click(botaoPorIcone('lucide-mic'));
     });
     await act(async () => {
-      fireEvent.click(botaoPorIcone('lucide-mic-off'));
+      fireEvent.click(bo#aoPorIcone('lucide-mic-off'));
     });
 
     expect(screen.getByText('Transformar voz')).toBeInTheDocument();
@@ -448,9 +439,9 @@ describe('handleSendAudioMeme sinaliza a falha do envio (#350)', () => {
     expect(estado.enviar).toHaveBeenCalledTimes(1);
     expect(estado.rpcs).toContain('fn_send_audio_meme');
     expect(estado.toastZapp).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: 'destructive' })
+      expect.objectContaining({ variant: 'destructive' }),
     );
-    // A rejeição do envio é tratada no ponto de chamada do picker.
+    // A rejek#hão do envio é tratada no ponto de chamada do picker.
     expect(rejeicoesNaoTratadas).toHaveLength(0);
   });
 });
@@ -471,7 +462,7 @@ describe('useChatMediaSending — PK-28: citação da resposta', () => {
     });
 
     expect(estado.enviar).toHaveBeenCalledWith(
-      expect.objectContaining({ messageType: 'audio', replyToId: 'reply-meme-1' })
+      expect.objectContaining({ messageType: 'audio', replyToId: 'reply-meme-1' }),
     );
   });
 
@@ -483,7 +474,7 @@ describe('useChatMediaSending — PK-28: citação da resposta', () => {
     });
 
     expect(estado.enviar).toHaveBeenCalledWith(
-      expect.objectContaining({ messageType: 'image', replyToId: 'reply-emoji-1' })
+      expect.objectContaining({ messageType: 'image', replyToId: 'reply-emoji-1' }),
     );
   });
 
