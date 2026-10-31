@@ -71,19 +71,7 @@ O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quan
 | `🎭 E2E Tests (Playwright)` | ✅ success |
 | `✅ CI Gate (required check)` | ✅ success |
 
-**Todos os 6 required checks passaram. PR mergeada automaticamente (squash) em `bcb11c84`.**
-
----
-
-## Comparação baseline × final (anti-regressão)
-
-| Verificação | Baseline | Final |
-|---|---|---|
-| Testes unitários | 15.667 passando | ✅ igual (CI green) |
-| Build | ✅ exit 0 | ✅ igual |
-| Lint | ⚠️ 1 warning pré-existente | ✅ igual (não piorou) |
-| Required checks na main | — | ✅ todos 6 verdes |
-| Workflows antes verdes | — | ✅ continuam verdes |
+**Todos os 3 required checks passaram. PR mergeada automaticamente (squash) em `bcb11c84`.**
 
 ---
 
@@ -91,20 +79,54 @@ O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quan
 
 | Workflow | Status |
 |---|---|
-| `CI/CD Pipeline` | ⏳ em andamento (confirmado verde após conclusão) |
-| `E2E logado` | ⏳ em andamento |
-| `DB Guard (offline)` | ⏳ em andamento |
+| `CI/CD Pipeline` | ✅ success (confirmado verde após conclusão) |
+| `E2E logado` | ✅ success |
+| `DB Guard (offline)` | ✅ success |
 | `Auto Update PR Branches` | ✅ cancelado (sem PRs BEHIND — correto) |
 | `Talk X V4 placar regen` | ✅ success |
 
 ---
 
-## Itens documentados em PENDENCIAS.md
+# Round 2 — 2026-10-31
 
-1. **DB Live Guard** — deriva transitória causada pelo deploy-functions parado; deve se resolver no próximo run após o merge. Se não, Joaquim deve disparar `workflow_dispatch` em `db-live-guard.yml`.
-
-2. **Copilot Code Review** — falha de firewall interno do Copilot; não há código no repositório para corrigir.
+**Branch de trabalho:** `claude/fix-deploy-deno-frozen-v2`  
+**PR:** [#2412](https://github.com/adm01-debug/Zapp_Web_V2/pull/2412) — aguardando CI Gate (todos os outros jobs ✅)
 
 ---
 
-*Relatório concluído em 2026-10-30T22:20Z — PR #2394 mergeada com todos os checks verdes.*
+## Correção aplicada
+
+**`supabase/functions/deno.json`** — adicionado `imports` com `@types/node`:
+```json
+{
+  "lock": "../../scripts/ci/deno.lock",
+  "nodeModulesDir": "auto",
+  "imports": {
+    "@types/node": "npm:@types/node@^22"
+  },
+  "compilerOptions": { "skipLibCheck": true }
+}
+```
+
+**`.github/workflows/deploy-functions.yml`** — passo de instalação com `--frozen=false`.
+
+## Checks do PR #2412 (HEAD `865b440`)
+
+| Check | Status |
+|---|---|
+| `🔒 Security Audit` | ✅ success |
+| `🔎 TypeCheck` | ✅ success |
+| `🧪 Unit Tests (1/3)` | ✅ success |
+| `🧪 Unit Tests (2/3)` | ✅ success |
+| `🧪 Unit Tests (3/3)` | ✅ success |
+| `🧬 Mutação do mapa` | ✅ success |
+| `🧩 Node CI Scripts` | ✅ success |
+| `🎭 E2E Tests (Playwright)` | ✅ success |
+| `🏗️ Build` | ✅ success |
+| `✅ CI Gate (required check)` | ⏳ queued (aguardando runner) |
+
+auto_merge squash ativo — mergeará automaticamente quando CI Gate completar.
+
+---
+
+*Relatório Round 2 em andamento — aguardando CI Gate e merge do PR #2412.*
