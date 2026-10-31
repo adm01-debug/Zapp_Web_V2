@@ -26,15 +26,19 @@ vi.mock('@/components/ui/tooltip', () => ({
   TooltipContent: ({ children }: AnyProps) => <>{children}</>,
   TooltipProvider: ({ children }: AnyProps) => <>{children}</>,
 }));
-vi.mock('framer-motion', () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
   const passthrough =
-    (tag: 'div' | 'button') =>
-    ({ children, ...props }: AnyProps) => {
-      const Tag = tag;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return <Tag {...(props as any)}>{children}</Tag>;
-    };
-  return { motion: { div: passthrough('div'), button: passthrough('button') } };
+      (tag: 'div' | 'button') =>
+      ({ children, ...props }: AnyProps) => {
+        const Tag = tag;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return <Tag {...(props as any)}>{children}</Tag>;
+      };
+  return {
+    ...actual,
+    motion: { div: passthrough('div'), button: passthrough('button') }
+  };
 });
 
 describe('QuickReactionBar — botão "mais reações" com nome acessível (A11Y-13)', () => {

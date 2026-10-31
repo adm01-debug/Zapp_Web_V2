@@ -59,13 +59,13 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres -d postgres"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
       POSTGRES_TEST_IMAGE: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
-      POSTGREST_TEST_IMAGE: public.ecr.aws/supabase/postgrest:v14.5@sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b
+      POSTGREST_TEST_IMAGE: ghcr.io/supabase/postgrest:v14.5@sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b
       # E47: coordenadas do serviço compartilhado, lidas pelo docker-shim.
       POSTGRES_SERVICE_HOST: localhost
       POSTGRES_SERVICE_PORT: "5432"
@@ -393,6 +393,10 @@ jobs:
       - name: Simular pedido anônimo de recuperação de senha (item 72)
         env:
           RECUPERACAO_ANONIMA_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # E47: SKIP_DOCKER_SHIM=1 — o teste cria seu próprio container descartável
+          # via `docker run --rm -d` (linha 86 do script); o docker-shim redirecionaria
+          # esse comando para o container compartilhado, quebrando o isolamento do teste.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh
 
       # Item 265 (R2-AUTH-041): a consulta de custo do painel de IA recebia fim
@@ -508,6 +512,10 @@ jobs:
       - name: Simular recuperacao autenticada sem coluna reset_token (R2-DB-023)
         env:
           RESET_GATILHO_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          # E47: SKIP_DOCKER_SHIM=1 — o teste cria seu próprio container descartável
+          # via `docker run --rm -d`; o docker-shim redirecionaria para o container
+          # compartilhado, corrompendo o isolamento do BLOCO A / BLOCO B.
+          SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/reset-gatilho-coluna-removida.test.sh
 
       # Despacho de mensagens agendadas (scheduled_messages nunca saia): extrai o corpo
@@ -1680,12 +1688,12 @@ jobs:
             echo "mudou=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # O ECR limita pull anonimo; sem este passo um 429 do registry apareceria como
-      # "exit 2" do replay e confundiria infraestrutura com drift de migration.
+      # Usa o mirror oficial GHCR do mesmo digest para evitar o limite de pull anonimo do ECR.
+      # O digest imutavel continua sendo extraido do replay-local.sh e verificado por Docker.
       - name: Pre-baixar a imagem do replay
         if: steps.mudou.outputs.mudou == 'true'
         run: |
-          img=$(grep -m1 -oE 'public\.ecr\.aws/supabase/postgres:[0-9.]+@sha256:[a-f0-9]{64}' scripts/db-audit/replay-local.sh)
+          img=$(grep -m1 -oE 'ghcr\.io/supabase/postgres:[0-9.]+@sha256:[a-f0-9]{64}' scripts/db-audit/replay-local.sh)
           if [ -z "$img" ]; then
             echo "nao achei a imagem fixada por digest em scripts/db-audit/replay-local.sh"
             exit 2

@@ -210,6 +210,9 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
   const listeners = new Set<() => void>();
   let snapshot = 0;
   let draining: Promise<OfflineQueueDrainResult> | null = null;
+  // Incrementa em `clear()` (logout): a drenagem em voo confere antes de cada put/remove
+  // para não ressuscitar item apagado.
+  let generation = 0;
 
   function commitSnapshot(next: number): void {
     if (next === snapshot) return;
@@ -233,6 +236,10 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
     drainOptions: OfflineQueueDrainOptions = {},
   ): Promise<OfflineQueueDrainResult> {
       let sent = 0;
+      const startGeneration = generation;
+      // Itens que `shouldDeliver` rejeita (outro usuário) não contam para o usuário atual.
+      const mine = (all: OfflineQueuedMessage[]): number =>
+        drainOptions.shouldDeliver ? all.filter((item) => drainOptions.shouldDeliver!(item)).length : all.length;
       let pending: OfflineQueuedMessage[];
       try {
         pending = await list();
@@ -240,11 +247,17 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
         drainOptions.onError?.(error);
         return { sent: 0, remaining: snapshot };
       }
-      commitSnapshot(pending.length);
+      commitSnapshot(mine(pending));
       for (const message of pending) {
         if (drainOptions.shouldDeliver && !drainOptions.shouldDeliver(message)) continue;
+        if (generation !== startGeneration) break;
         try {
           await driver.put({ ...message, attempts: message.attempts + 1 });
+          if (generation !== startGeneration) {
+            // `clear()` rodou durante o put: desfaz a ressurreição e não entrega.
+            await driver.remove(message.clientMessageId);
+            break;
+          }
           await deliver(message);
         } catch (error) {
           // Para na primeira falha: a ordem de composição vale mais que a vazão.
@@ -253,9 +266,10 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
         }
         // A entrega já aconteceu: conta como enviada mesmo se a baixa local falhar.
         sent += 1;
+        if (generation !== startGeneration) break;
         try {
           await driver.remove(message.clientMessageId);
-          commitSnapshot((await driver.readAll()).length);
+          commitSnapshot(mine(await driver.readAll()));
         } catch (error) {
           // A baixa local falhou depois da entrega: a mensagem fica na fila e a
           // próxima drenagem a reenvia — a chave `clientMessageId` (item 024)
@@ -267,7 +281,7 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
       }
       let remaining = snapshot;
       try {
-        remaining = (await driver.readAll()).length;
+        remaining = mine(await driver.readAll());
       } catch (error) {
         drainOptions.onError?.(error);
       }
@@ -319,6 +333,7 @@ export function createOfflineQueue(options: OfflineQueueOptions = {}): OfflineQu
     list,
     remove,
     async clear() {
+      generation += 1;
       await driver.clear();
       commitSnapshot(0);
     },
