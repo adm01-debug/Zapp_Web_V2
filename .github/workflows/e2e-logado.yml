@@ -43,7 +43,7 @@ permissions:
 # seguida (os intermediarios sao pulados) -- mesma semantica de "valida so o
 # commit mais novo", sem desperdicar runs quase completas.
 concurrency:
-  group: e2e-logado-${{ github.ref }}
+  group: e2e-logado
   cancel-in-progress: false
 
 jobs:
