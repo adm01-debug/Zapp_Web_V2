@@ -42,4 +42,14 @@ if [ -f "$ORIGEM/deploy-output.log" ]; then
   mv "$STAGING" "$DESTINO/deploy-output.log"
 fi
 
+# Garante que o diretorio publicavel nao fique vazio.
+# upload-artifact falha com diretorio vazio; quando nao houve deploy real
+# (dispatch sem alteracao em supabase/functions/), $ORIGEM nao existe e
+# $DESTINO fica sem arquivos. O marcador sem-deploy.json evita a falha sem
+# mascarar erros reais (o redator ainda aborta com exit != 0 acima).
+if [ -z "$(ls -A "$DESTINO" 2>/dev/null)" ]; then
+  echo '{"status":"sem-deploy","motivo":"nenhuma funcao foi alterada neste acionamento"}' \
+    > "$DESTINO/sem-deploy.json"
+fi
+
 echo "evidencia publicavel pronta em $DESTINO" >&2

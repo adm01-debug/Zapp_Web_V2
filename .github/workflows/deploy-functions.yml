@@ -143,7 +143,7 @@ jobs:
       - name: Resolver ref para rollback automatico
         if: inputs.rollback_to_last_success == true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           node --input-type=module <<'NODE'
@@ -218,7 +218,7 @@ jobs:
       - name: Serializar escopo TODAS contra deploys por funcao
         # Roda com a ferramenta fixada do GITHUB_SHA (vale tambem em rollback).
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           SCOPE: ${{ inputs.function_name || 'all' }}
         run: node "$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/serialize-scope.mjs"
 
@@ -450,6 +450,19 @@ jobs:
         with:
           deno-version: '2.9.5'
 
+      - name: Instalar dependencias node_modules (deno install + @types/node)
+        # W99: nodeModulesDir:"auto" em Deno 2.9.5 nao cria node_modules automaticamente
+        # durante `deno check` — exige `deno install` explicito. @types/ws@8.18.1
+        # tem `/// <reference types="node" />` que forca resolucao de @types/node
+        # na fase de descoberta de modulos (antes do type check).
+        # W100: @types/node nao esta no deno.lock (trazido transitivamente por
+        # @types/ws@8.18.1 via CDN esm.sh) — deno install nao o instala.
+        # Solucao: npm install direto no node_modules das edges apos o deno install.
+        run: |
+          set -euo pipefail
+          deno install --config supabase/functions/deno.json
+          (cd supabase/functions && echo '{}' > package.json && npm install --no-save --ignore-scripts --no-package-lock @types/node@25.9.9 && rm -f package.json)
+
       - name: Typecheck das edge functions (deno check)
         run: deno check supabase/functions/**/index.ts
 
@@ -538,7 +551,7 @@ jobs:
       # indisponível → ::warning:: (não bloqueia o deploy: observabilidade não
       # pode derrubar um deploy bem-sucedido). O script vive em
       # scripts/edge-deploy/health-check.mjs (W65).
-      - name: 🏥 Verificação de saúde pós-deploy (5 min)
+      - name: "\U0001F3E5 Verificação de saúde pós-deploy (5 min)"
         if: inputs.dry_run != true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -590,7 +603,7 @@ jobs:
         if: success() && inputs.dry_run != true
         id: deployment
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           ESCOPO: ${{ inputs.function_name }}
         run: |
           set -euo pipefail

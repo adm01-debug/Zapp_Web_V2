@@ -75,7 +75,15 @@ beforeEach(() => {
   mocks.getUser.mockResolvedValue({ data: { user: { id: UID } }, error: null });
   mocks.invoke.mockResolvedValue({ data: { category: 'produto' }, error: null });
   mocks.tableFrom.mockImplementation(() => ({
-    select: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [emoji()], error: null }) }) }),
+    select: () => {
+      const q: Record<string, unknown> = {
+        order: () => q,
+        range: (_from: number, to: number) =>
+          Promise.resolve({ data: [emoji()].slice(0, to + 1), error: null }),
+        limit: () => Promise.resolve({ data: [emoji()], error: null }),
+      };
+      return q;
+    },
     insert: (payload: Record<string, unknown>) => {
       inserted.push(payload);
       return Promise.resolve({ error: null });

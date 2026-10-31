@@ -79,6 +79,7 @@ function fakeAdmin(opts: {
   const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = [];
   const updateCalls: Array<Record<string, unknown>> = [];
   const upsertCalls: Array<{ row: Record<string, unknown>; options: Record<string, unknown> }> = [];
+  const auditCalls: Record<string, unknown>[] = [];
   const updateResults = [...(opts.updateResults ?? [])];
   const account = opts.account === undefined ? ACCOUNT : opts.account;
 
@@ -87,6 +88,7 @@ function fakeAdmin(opts: {
     rpcCalls,
     updateCalls,
     upsertCalls,
+    auditCalls,
     rpc(fn: string, args: Record<string, unknown>) {
       rpcCalls.push({ fn, args });
       if (fn === "consume_gmail_oauth_state") {

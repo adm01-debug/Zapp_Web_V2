@@ -43,38 +43,166 @@ if (coverageMatches.length > 1) {
 }
 
 // ---------------------------------------------------------------------------
-// R5: nenhum job de required-check pode ter `if: always()` no nível do job.
-// Um job-level `if:` fica recuado com exatamente 4 espaços (nível 2 no YAML
-// de workflow). A regex captura o padrão específico de job + if: always().
+// R5: nenhum job que compõe os required checks deste workflow pode ter
+// `if: always()` no nível do job. IDs reais: estes são os gates do CI; o job de
+// mutação é informativo e continua fora da lista por `continue-on-error`.
 // ---------------------------------------------------------------------------
 const REQUIRED_JOBS = [
-  'lint-and-typecheck', 'test', 'build', 'security', 'e2e',
+  'typecheck', 'unit-tests', 'node-scripts', 'build', 'security', 'e2e',
 ];
 
+function workflowJobBlocks(source) {
+  const lines = source.split(/\r?\n/);
+  const jobsIndex = lines.findIndex((line) => /^jobs:\s*(?:#.*)?$/.test(line));
+  if (jobsIndex === -1) return new Map();
+
+  const jobs = new Map();
+  let currentId = null;
+  let currentLines = [];
+  const save = () => {
+    if (currentId !== null) jobs.set(currentId, currentLines.join('\n'));
+  };
+
+  for (let index = jobsIndex + 1; index < lines.length; index += 1) {
+    const line = lines[index];
+    const jobHeader = /^ {2}([\w-]+):\s*(?:#.*)?$/.exec(line);
+    if (jobHeader) {
+      save();
+      currentId = jobHeader[1];
+      currentLines = [line];
+      continue;
+    }
+
+    if (currentId !== null) currentLines.push(line);
+  }
+  save();
+  return jobs;
+}
+
+const jobs = workflowJobBlocks(text);
+const missingRequiredJobs = REQUIRED_JOBS.filter((jobId) => !jobs.has(jobId));
+for (const jobId of missingRequiredJobs) {
+  fail(`R5: required-check '${jobId}' não foi encontrado em ci.yml — atualize a lista de jobs protegidos`);
+}
+
+let requiredJobUsesAlways = false;
 for (const jobId of REQUIRED_JOBS) {
-  // Padrão: `  <jobId>:` seguido de qualquer coisa e depois `    if: always()`
-  // dentro do mesmo bloco (antes do próximo job de nível 2).
-  const jobBlockRe = new RegExp(
-    `^  ${jobId}:\n([\\s\\S]*?)(?=^  [\\w-]+:|\\z)`,
-    'm',
-  );
-  const match = text.match(jobBlockRe);
-  if (match && /^    if:\s+always\s*\(\)/m.test(match[1] ?? '')) {
+  const block = jobs.get(jobId);
+  if (block && /^ {4}if:\s*(?:\$\{\{\s*)?always\s*\(\s*\)/im.test(block)) {
     fail(`R5: job '${jobId}' em ci.yml usa always() no nível do job — usar !cancelled()`);
+    requiredJobUsesAlways = true;
   }
 }
-pass('R5: nenhum required-check usa always() no nível do job');
+if (missingRequiredJobs.length === 0 && !requiredJobUsesAlways) {
+  pass('R5: nenhum required-check usa always() no nível do job');
+}
 
 // ---------------------------------------------------------------------------
 // W46: upload-artifact para `dist` deve ter um `if:` guard
 // ---------------------------------------------------------------------------
-const distArtifactRe = /upload-artifact[\s\S]{0,600}?name:\s+dist\b/;
-const distBlock = text.match(distArtifactRe);
-if (distBlock) {
-  // Verifica se há um `if:` antes do `uses: actions/upload-artifact` deste bloco.
-  // O `if:` no YAML de step fica na mesma indentação do `uses:`.
-  const blockText = distBlock[0];
-  if (!/^\s+if:/m.test(blockText)) {
+function workflowStepBlocks(source) {
+  const lines = source.split(/\r?\n/);
+  const blocks = [];
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const stepsHeader = /^(\s*)steps:\s*(?:#.*)?$/.exec(lines[i]);
+    if (!stepsHeader) continue;
+
+    const stepsIndent = stepsHeader[1].length;
+    let itemIndent = null;
+    let block = null;
+    const saveBlock = () => {
+      if (block) blocks.push(block);
+      block = null;
+    };
+
+    for (let j = i + 1; j < lines.length; j += 1) {
+      const line = lines[j];
+      if (!line.trim() || /^\s*#/.test(line)) {
+        if (block) block.push(line);
+        continue;
+      }
+
+      const indent = line.length - line.trimStart().length;
+      if (indent <= stepsIndent) break;
+
+      const sequenceItem = /^(\s*)-\s+/.exec(line);
+      if (!sequenceItem) {
+        if (block) block.push(line);
+        continue;
+      }
+
+      const sequenceIndent = sequenceItem[1].length;
+      if (itemIndent === null) itemIndent = sequenceIndent;
+      if (sequenceIndent === itemIndent) {
+        saveBlock();
+        block = [line];
+      } else if (sequenceIndent > itemIndent && block) {
+        // Lista aninhada dentro de um step (por exemplo, um valor de `with`).
+        block.push(line);
+      }
+    }
+
+    saveBlock();
+  }
+
+  return blocks;
+}
+
+function distArtifactStepHasIf(source) {
+  let foundDistArtifact = false;
+
+  for (const block of workflowStepBlocks(source)) {
+    const item = /^(\s*)-\s+(.*)$/.exec(block[0]);
+    if (!item) continue;
+
+    const itemIndent = item[1].length;
+    const fieldIndent = itemIndent + 2;
+    let usesUploadArtifact = false;
+    let hasDistNameInWith = false;
+    let hasIf = false;
+    let inWith = false;
+    const distNameRe = new RegExp(`^ {${fieldIndent + 2}}name:\\s*(.*?)\\s*(?:#.*)?$`);
+
+    for (let i = 0; i < block.length; i += 1) {
+      const line = block[i];
+      const firstLine = i === 0;
+      const fieldMatch = firstLine
+        ? /^\s*-\s+([\w-]+):\s*(.*)$/.exec(line)
+        : new RegExp(`^ {${fieldIndent}}([\\w-]+):\\s*(.*)$`).exec(line);
+
+      if (fieldMatch) {
+        const key = fieldMatch[1];
+        const value = fieldMatch[2].trim();
+        inWith = key === 'with';
+        if (key === 'uses' && /^actions\/upload-artifact(?:@|$)/.test(value)) {
+          usesUploadArtifact = true;
+        }
+        if (key === 'if') hasIf = true;
+        continue;
+      }
+
+      const nameMatch = inWith ? distNameRe.exec(line) : null;
+      if (nameMatch) {
+        const name = nameMatch[1];
+        if (name === 'dist' || name === '"dist"' || name === "'dist'") {
+          hasDistNameInWith = true;
+        }
+      }
+    }
+
+    if (usesUploadArtifact && hasDistNameInWith) {
+      foundDistArtifact = true;
+      if (!hasIf) return false;
+    }
+  }
+
+  return foundDistArtifact ? true : null;
+}
+
+const distArtifactGuard = distArtifactStepHasIf(text);
+if (distArtifactGuard !== null) {
+  if (!distArtifactGuard) {
     fail('W46: upload-artifact para dist não tem `if:` guard — subiria em todo run');
   } else {
     pass('W46: dist artifact tem if: guard');
