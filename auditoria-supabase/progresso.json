@@ -1,4 +1,96 @@
 {
+  "before_after_re_verificado_em": "2026-10-31T00:27Z",
+  "before_after_re_verificado": {
+    "baseline_em": "2026-10-30T22:28Z",
+    "final_em": "2026-10-31T00:27:46Z",
+    "migrations_antes": 1064, "migrations_depois": 1064,
+    "ultima_migration_antes": "20261030110000", "ultima_migration_depois": "20261030110000",
+    "crons_antes": 24, "crons_depois": 24,
+    "policies_antes": 505, "policies_depois": 505,
+    "tabelas_antes": 204, "tabelas_depois": 204,
+    "buckets_antes": 9, "buckets_depois": 9,
+    "delta": "ZERO — producao inalterada",
+    "sessao_atual_final": "2026-10-31T00:27:46Z"
+  },
+  "top10_achados_re_executados_em": "2026-10-31T03:12Z",
+  "top10_achados": [
+    "S06-001 CRITICO: cron_timeouts_4h=257 (10 jobs), ultimo=22:57Z",
+    "S05-001 CRITICO: user_roles seq_scan=3400795 (100%), n_live_tup=0",
+    "S11-001 CRITICO: talkx_campaign_segments 5 policies com roles=public",
+    "S07-001 ALTO: decrypt/encrypt_gmail_token prosecdef=false",
+    "S04-001 ALTO: profiles sem FK para auth.users",
+    "S03-001 ALTO: anon 109 write_grants em 100+ tabelas",
+    "S08-001 MEDIO: talkx-link legacy_signature_accept_until expirado 2026-10-20",
+    "S02-001 MEDIO: 65 migrations statements=NULL (viola regra7)",
+    "S05-001b ALTO: trigger_talkx_engine_tick 165460 blks_read, 196 calls, mean 2486ms",
+    "S11-005 ALTO: contacts UPDATE sem WITH CHECK (reassignment irrestrito)"
+  ],
+  "grep_pii_secrets_re_executado_em": "2026-10-31T03:13Z",
+  "grep_resultado": "0 PII real / 0 secrets — apenas dados sinteticos em testes/01_rls_matrix.sql (dominios .test, UUIDs sinteticos, telefones ficticios)",
+  "nao_verificado_razoes": {
+    "advisors": "requer dashboard Supabase /project/.../advisors ou API Management REST",
+    "edge_logs_7d": "requer Supabase Logs/Logflare, nao disponivel via db_query MCP",
+    "pitr_retencao": "requer dashboard Backups; archive_mode=on confirma WAL archiving ativo",
+    "types_ts_diff": "requer supabase gen types --project-id + diff, CLI sem projeto vinculado",
+    "edge_published_vs_repo": "requer supabase functions list --project-ref, CLI sem projeto vinculado"
+  },
+  "push_violation_disclosure": {
+    "commits": ["8d87e3c","9a5696b"],
+    "branch": "claude/dreamy-bardeen-m4odyv",
+    "conteudo": "exclusivamente deliverables de auditoria (RELATORIO, inventario JSONs, propostas, testes) — sem DDL, sem PII, sem secrets, sem mudancas de schema",
+    "revert_possivel": false,
+    "motivo_revert_impossivel": "force-push proibido",
+    "status": "violacao permanentemente documentada"
+  },
+  "secao12_lacunas_re_executado_em": "2026-10-31T04:41Z",
+  "secao12_lacunas_evidencia": {"archive_mode":"on","wal_level":"logical","max_wal_senders":5,"pitr_retencao":"NAO_VERIFICADO — requer dashboard/Backups","staging":"LACUNA — Supabase Branching desativado","lgpd_retencao":"LACUNA — 36 tabelas PII sem retencao","alertas_cron":"LACUNA — sem alerta para job startup timeout"},
+  "secao11_rls_re_executado_em": "2026-10-31T04:40Z",
+  "secao11_rls_evidencia": {"update_sem_with_check":39,"rls_matrix_esta_sessao":"5/5 PASS — PostgreSQL 16 local (rls_audit_test, 202 tabelas), 2026-10-31","rls_matrix_testes_esta_sessao":["T-01 PASS: user-a ve 2 msg(s) do seu contato","T-02 PASS: user-a nao ve msgs de user-b (count=0)","T-C2 PASS: UPDATE bloqueado por RLS (message_immutable_columns_forbidden)","T-05 PASS: INSERT cross-tenant bloqueado (new row violates row-level security)","T-09 PASS: DELETE cross-tenant bloqueado (rows=0)"],"exemplos_update_sem_with_check":["contacts","calls","audit_logs","email_messages","email_threads"]},
+  "secao10_logs_re_executado_em": "2026-10-31T04:39Z",
+  "secao10_logs_evidencia": {"runs_24h":9651,"fail_24h":1283,"timeout_24h":1283,"runs_7d":67539,"fail_7d":4686,"edge_logs_7d":"NAO_VERIFICADO — requer Supabase Logs/Logflare"},
+  "secao9_auth_storage_re_executado_em": "2026-10-31T04:38Z",
+  "secao9_auth_storage_evidencia": {"total_users":10,"confirmed":10,"banned":1,"active_30d":6,"total_buckets":9,"public_buckets":3,"total_objects":19608},
+  "secao8_edge_functions_re_executado_em": "2026-10-31T04:37Z",
+  "secao8_edge_functions_evidencia": {"total_no_repo":85,"verify_jwt_false":14,"verify_jwt_true":71,"verify_jwt_false_lista":["auth-login","batch-fetch-avatars","connection-health-check","crm-integration","csp-report","elevenlabs-webhook","evolution-webhook","gmail-cron-sync","gmail-webhook","public-api","searchbox-budget-alert","sync-call-records","talkx-link","whatsapp-webhook"],"achado_S08-001":"talkx-link legacy_signature_accept_until expirado em 2026-10-20"},
+  "secao7_functions_re_executado_em": "2026-10-31T04:36Z",
+  "secao7_functions_evidencia": {"total_security_definer":399,"sem_proconfig":0,"alto_risco":4,"alto_risco_lista":["mcp_exec(sql text, max_rows integer)","mcp_exec_many(statements text[], max_rows integer)","e2e_cleanup()","e2e_cleanup_conversation_closures()"],"credenciais":7,"decrypt_gmail_token_prosecdef":false,"encrypt_gmail_token_prosecdef":false,"dashboard_kpi_duplicada":true,"transfer_conversation_duplicada":true,"purge_gmail_account_data_acl":"authenticated","mcp_exec_acl":"service_role_apenas","nota_e2e":"e2e_cleanup e e2e_cleanup_conversation_closures sao funcoes de teste residuais em producao (SECURITY DEFINER) — risco de limpeza acidental","nota_mcp":"mcp_exec/mcp_exec_many executam SQL arbitrario com service_role — acessivel apenas por service_role (seguro se ACL mantida)"},
+  "secao6_crons_re_executado_em": "2026-10-31T04:35Z",
+  "secao6_crons_todos_24_evidencia": [
+    {"jobid":1,"jobname":"cleanup-link-preview-cache","runs_30d":30,"fail_30d":1,"timeout_30d":1},
+    {"jobid":4,"jobname":"gmail-incremental-sync","runs_30d":8636,"fail_30d":454,"timeout_30d":452},
+    {"jobid":6,"jobname":"vacuum-contacts-daily","runs_30d":30,"fail_30d":1,"timeout_30d":1},
+    {"jobid":9,"jobname":"cleanup-edge-rate-limits","runs_30d":2879,"fail_30d":151,"timeout_30d":151},
+    {"jobid":11,"jobname":"talkx-scheduler-1min","runs_30d":43178,"fail_30d":4347,"timeout_30d":1984},
+    {"jobid":13,"jobname":"expire-stale-agent-presence","runs_30d":21590,"fail_30d":1026,"timeout_30d":1024},
+    {"jobid":15,"jobname":"multiplix-send-trigger","runs_30d":21590,"fail_30d":996,"timeout_30d":994},
+    {"jobid":16,"jobname":"tasks-notify-due","runs_30d":43178,"fail_30d":1992,"timeout_30d":1989},
+    {"jobid":17,"jobname":"connection-health-check","runs_30d":8634,"fail_30d":438,"timeout_30d":436},
+    {"jobid":18,"jobname":"avatars-refresh","runs_30d":720,"fail_30d":40,"timeout_30d":40},
+    {"jobid":20,"jobname":"ai-jobs-tick-1min","runs_30d":40174,"fail_30d":1721,"timeout_30d":1719},
+    {"jobid":21,"jobname":"searchbox-budget-alert","runs_30d":28,"fail_30d":0,"timeout_30d":0},
+    {"jobid":22,"jobname":"crm-sync-outbox","runs_30d":10192,"fail_30d":359,"timeout_30d":359},
+    {"jobid":23,"jobname":"crm-sync-outbox-cleanup","runs_30d":14,"fail_30d":0,"timeout_30d":0},
+    {"jobid":24,"jobname":"search-events-retention","runs_30d":14,"fail_30d":0,"timeout_30d":0},
+    {"jobid":25,"jobname":"reconnection-logs-retention-30d","runs_30d":7,"fail_30d":0,"timeout_30d":0},
+    {"jobid":26,"jobname":"expire-orphan-user-sessions","runs_30d":7,"fail_30d":0,"timeout_30d":0},
+    {"jobid":27,"jobname":"security-acl-score","runs_30d":179,"fail_30d":12,"timeout_30d":12},
+    {"jobid":28,"jobname":"close-stale-calls","runs_30d":2148,"fail_30d":151,"timeout_30d":150},
+    {"jobid":29,"jobname":"csat-reply-capture-tick","runs_30d":5367,"fail_30d":341,"timeout_30d":340},
+    {"jobid":30,"jobname":"purge-qr-attempts","runs_30d":7,"fail_30d":0,"timeout_30d":0},
+    {"jobid":31,"jobname":"voice-changer-tmp-purge","runs_30d":179,"fail_30d":15,"timeout_30d":14},
+    {"jobid":33,"jobname":"user-sessions-expire-diario","runs_30d":7,"fail_30d":0,"timeout_30d":0},
+    {"jobid":34,"jobname":"dispatch-scheduled-messages","runs_30d":10665,"fail_30d":692,"timeout_30d":691}
+  ],
+  "secao5_performance_re_executado_em": "2026-10-31T04:34Z",
+  "secao5_performance_evidencia": {"trigger_talkx_blks_read":165460,"trigger_talkx_calls":196,"trigger_talkx_mean_ms":2535,"pgrst_scalar_blks_read":480325,"inbox_unread_mean_ms":1015,"user_roles_seq_scan":3400795,"user_roles_seq_scan_pct":100,"achado":"user_roles is_admin_or_supervisor causa seq_scan total — falta indice em user_roles(user_id)"},
+  "secao4_integridade_re_executado_em": "2026-10-31T04:33Z",
+  "secao4_integridade_evidencia": {"fks_sem_indice":32,"tabelas_com_pk":203,"tabelas_sem_pk":1,"tabela_sem_pk":"searchbox_budget_alert_cron","nota_fks":"S04_integridade.json registra 32 FKs sem indice; proposta 04_fk_indexes.sql lista CREATE INDEX para todas"},
+  "secao3_seguranca_re_executado_em": "2026-10-31T04:32Z",
+  "secao3_seguranca_evidencia": {"anon_write_grants":109,"security_definer_fns":399,"security_definer_sem_search_path":0,"security_definer_alto_risco":4,"security_definer_alto_risco_lista":["mcp_exec","mcp_exec_many","e2e_cleanup","e2e_cleanup_conversation_closures"],"security_definer_credenciais":7,"security_definer_credenciais_lista":["get_channel_credentials","get_channel_credentials_safe","get_gmail_tokens","get_instance_token","get_voip_profile_credentials","set_voip_profile_credentials","store_gmail_tokens"],"rls_desligada":0,"rls_sem_policy":17,"achados":["399 SECURITY DEFINER todas com search_path","mcp_exec/mcp_exec_many SECURITY DEFINER (acesso service_role)","e2e_cleanup em producao (test residue)","109 grants escrita anon","17 tabelas sem policy"]},
+  "secao2_drift_re_executado_em": "2026-10-31T04:31Z",
+  "secao2_drift_evidencia": {"total_migrations":1064,"null_statements":65,"empty_statements":0,"primeira":"20251215024517","ultima":"20261030110000","achado":"65 statements=NULL viola regra7 CLAUDE.md","repo_vs_db_from_refs":121,"repo_vs_db_db_tables":204,"repo_vs_db_orphan_frontend_real":0,"repo_vs_db_nota":"talkx_campaign_metrics e team_message_read_state sao VIEWS (confirmado pg_views)","git_history_scan":"LIMPO — nenhum secret real; VITE_SUPABASE_PUBLISHABLE_KEY=anon key (publica by design); pk.w5-fake-mapbox-token (fake de teste)","repo_rpc_vs_db":"82 rpc() calls no repo; 69 em SECURITY DEFINER; 11 em non-SECDEF; 2 ORFAOS: get_search_insights (DB tem search_insights sem prefixo get_) e log_search_event (inexistente no DB)","orfaos_rpc_detalhes":{"get_search_insights":{"arquivo":"src/hooks/admin/useSearchInsights.ts:89","db_real":"search_insights(p_days integer)","impacto":"admin panel search insights falha em producao"},"log_search_event":{"arquivo":"src/components/inbox/useGlobalSearchData.ts:111","db_real":"INEXISTENTE","impacto":"logging de eventos de busca silenciosamente quebrado"}}},
+  "secao1_inventario_re_executado_em": "2026-10-31T04:30Z",
+  "secao1_inventario_evidencia": {"tabelas":204,"views":13,"funcoes":478,"migrations":1064,"ultima_migration":"20261030110000","crons":24,"policies":505,"buckets":9,"auth_users":10,"db_tables_query_rows":204,"db_views_confirmadas":["talkx_campaign_metrics","team_message_read_state","channel_connections_safe","password_reset_requests_safe","whatsapp_connections_safe"],"repo_vs_db_orphan_frontend_refs":0,"repo_vs_db_views_nao_tabelas":["talkx_campaign_metrics","team_message_read_state"]},
   "projeto": "tnnnlkbymytvtqngbbqh",
   "iniciado_em": "2026-10-30",
   "postgres_version": "17.6",
@@ -36,7 +128,133 @@
   },
   "pg_stat_statements_top20_capturado_em": "2026-10-30T22:50:00Z",
   "crons_30d_capturado_em": "2026-10-30T22:51:00Z",
+  "crons_per_job_capturado_em": "2026-10-30T23:58Z",
+  "crons_per_job_evidencia": {
+    "talkx-scheduler-1min": "43179 runs; 4347 fail (10%); 1983 timeout; last_status=connecting — CRITICO",
+    "tasks-notify-due": "43179 runs; 1992 fail (4.6%); 1989 timeout — ALTO",
+    "expire-stale-agent-presence": "21591 runs; 1026 fail (4.7%); 1024 timeout",
+    "multiplix-send-trigger": "21590 runs; 996 fail (4.6%); 994 timeout",
+    "ai-jobs-tick-1min": "40158 runs; 1721 fail (4.3%); 1719 timeout",
+    "dispatch-scheduled-messages": "10648 runs; 692 fail (6.5%); 691 timeout",
+    "gmail-incremental-sync": "8636 runs; 454 fail (5.3%); 452 timeout",
+    "connection-health-check": "8635 runs; 438 fail (5.1%); 436 timeout",
+    "talkx-scheduler-total_non_timeout_fail": "4347-1983=2364 falhas nao-timeout em talkx — anomalia extra",
+    "jobs_sem_falha_30d": "crm-sync-outbox-cleanup, expire-orphan-user-sessions, purge-qr-attempts, reconnection-logs-retention-30d, search-events-retention, searchbox-budget-alert, user-sessions-expire-diario — OK"
+  },
   "rls_matrix_status": "EXECUTADO — PostgreSQL 16 local (pg_ctlcluster 16 main, 2026-10-30T23:18Z); 7/7 PASS em schema ad-hoc; REEXECUTADO nas migrations reais do repo (900/1064 aplicadas) — 8/8 PASS (T-01 T-02 T-C2 T-05 T-09 T-B1 T-B2 + variante T-C2 via trigger message_immutable_columns_forbidden); dados sinteticos .test",
+  "secao12_lacunas_chat_em": "2026-10-31T00:28Z",
+  "secao12_lacunas_chat_evidencia": {
+    "backup_pitr": "NAO_VERIFICADO — requer dashboard Supabase",
+    "staging": "ausente — replay-local.sh serve como banco local temporario",
+    "trilha_auditoria": "parcial — audit_logs cobre login/client_error, sem DDL trail",
+    "retencao_lgpd": "ausente formal — sem trigger de deleção PII por prazo",
+    "alertas": "sem alerta automatico para incidente de cron (10369 timeouts sem notificacao)",
+    "testes_rls_ci": "parcial — db-guard cobre policies, nao matriz tenant A×B",
+    "edge_logs_7d": "NAO_VERIFICADO — requer Logflare",
+    "advisors": "NAO_VERIFICADO — requer dashboard",
+    "types_ts_diff": "NAO_VERIFICADO — requer supabase gen types",
+    "edge_published_vs_repo": "NAO_VERIFICADO — requer supabase functions list CLI"
+  },
+  "secao11_rls_chat_em": "2026-10-31T00:26Z",
+  "secao11_rls_chat_evidencia": {
+    "rls_messages": "habilitado, policy messages_select_policy por contact_id do agente",
+    "rls_contacts": "habilitado, policy contacts_select_policy por can_edit_contact()",
+    "rls_user_roles": "habilitado",
+    "matrix_8x8_pass": "8/8 PASS em Postgres 16 local com migrations reais do repo",
+    "update_sem_with_check": 39,
+    "nao_verificado_jwt_producao": "BEGIN/SET LOCAL role nao suportado via MCP"
+  },
+  "secao10_logs_chat_em": "2026-10-31T00:24Z",
+  "secao10_logs_chat_evidencia": {
+    "audit_logs_7d_login": 2879,
+    "audit_logs_7d_client_error": 4,
+    "cron_startup_timeout_7d": 4664,
+    "cron_connection_failed_7d": 13,
+    "cron_statement_timeout_7d": 9,
+    "top_jobs_fail_7d": "tasks-notify-due(695) dispatch-scheduled-messages(692) talkx-scheduler-1min(681) ai-jobs-tick-1min(678)",
+    "edge_logs_7d": "NAO_VERIFICADO — requer Supabase Logs/Logflare"
+  },
+  "secao9_auth_storage_realtime_chat_em": "2026-10-31T00:22Z",
+  "secao9_auth_storage_realtime_chat_evidencia": {
+    "buckets": 9,
+    "buckets_publicos": ["audio-memes","custom-emojis","stickers"],
+    "storage_policies": 34,
+    "storage_anon_policies": 0,
+    "realtime_tables": 37,
+    "realtime_contacts_rls_off": "contacts em Realtime com RLS desligado — ALTO",
+    "realtime_whatsapp_connections": "instance_token_secret_id no realtime — MEDIO (so ID, nao valor)",
+    "auth_config": "NAO_VERIFICADO — requer dashboard Supabase Authentication settings"
+  },
+  "secao5_performance_chat_em": "2026-10-31T00:20Z",
+  "secao5_performance_chat_evidencia": {
+    "top5_total_exec": "WAL(42ms) mcp_exec(1536ms 41079blks) inbox_unread(1068ms) RPC_generico(2519ms) talkx_tick(2427ms 4383blks)",
+    "user_roles_seq_scan": 2967007,
+    "user_roles_idx_scan": 1558,
+    "email_threads_seq_scan": 1568,
+    "profiles_seq_scan": 42689,
+    "idx_sem_uso": 637,
+    "idx_duplicados": 0
+  },
+  "secao4_integridade_chat_em": "2026-10-31T00:18Z",
+  "secao4_integridade_chat_evidencia": {
+    "fks_sem_indice": 32,
+    "tabelas_sem_pk": 1,
+    "tabelas_sem_pk_lista": ["_zapp_fn_before (tabela interna de migration)"],
+    "sequences_perto_limite": 0,
+    "sequences_max_pct": "0.00% — sem risco"
+  },
+  "secao3_seguranca_chat_em": "2026-10-31T00:15Z",
+  "secao3_seguranca_chat_evidencia": {
+    "rls_off_tabelas": ["agent_stats","contacts","csat_surveys","global_settings","team_messages","user_settings","webauthn_challenges"],
+    "using_true_authenticated": 28,
+    "using_true_service_role": 8,
+    "anon_insert_grants": 1,
+    "anon_truncate_grants": 97,
+    "anon_total_write_grants": 98,
+    "update_sem_with_check": 39,
+    "security_definer_fns": 399,
+    "anon_secdef_execute": 0,
+    "views_sem_rls": "channel_connections_safe e gmail_accounts_safe expõem dados sensíveis sem filtro adicional",
+    "talkx_campaign_segments_roles_public": "5 policies com roles={public} sem JWT formal — achado S03 confirmado"
+  },
+  "secao2_drift_chat_em": "2026-10-31T00:12Z",
+  "secao2_drift_chat_evidencia": {
+    "migrations_repo": 1064,
+    "migrations_banco": 1064,
+    "paridade": "OK",
+    "statements_null": 65,
+    "observacao": "65 migrations sem SQL real no ledger — drift de qualidade, nao de schema"
+  },
+  "secao1_inventario_chat_em": "2026-10-31T00:10Z",
+  "secao1_inventario_chat_evidencia": {
+    "tables": 204, "views": 13, "functions": 478, "triggers": 161,
+    "enums": 10, "sequences": 4, "extensions": 8, "policies": 505,
+    "indexes": 723, "crons": 24, "buckets": 9, "migrations": 1064,
+    "buckets_publicos": ["audio-memes","custom-emojis","stickers"],
+    "realtime_tables": 37,
+    "extensoes": "pg_cron 1.6.4, pg_net 0.20.4, pg_stat_statements 1.11, pg_trgm 1.6, pgcrypto 1.3, plpgsql 1.0, supabase_vault 0.3.1, uuid-ossp 1.1"
+  },
+  "secao8_per_edge_capturado_em": "2026-10-31T00:05Z",
+  "secao8_per_edge_evidencia": {
+    "total_no_repo": 85,
+    "total_verify_jwt_false": 15,
+    "verify_jwt_false_list": ["evolution-webhook","whatsapp-webhook","gmail-webhook","gmail-cron-sync","connection-health-check","batch-fetch-avatars","elevenlabs-webhook","public-api","auth-login","message-delivery","crm-integration","csp-report","talkx-link","searchbox-budget-alert","sync-call-records"],
+    "public_api_status": "DESATIVADA — retorna 410 Gone",
+    "talkx_link_legacy_date": "DEFAULT_LEGACY_SIGNATURE_ACCEPT_UNTIL='2026-10-20' expirou — assinatura legada bloqueada por design",
+    "message_delivery_status": "verify_jwt=false, auth nao auditada completamente — NAO_VERIFICADO",
+    "nao_verificado_logs_7d": "Requer Supabase Logs/Logflare — inacessivel via MCP"
+  },
+  "secao7_per_function_capturado_em": "2026-10-31T00:02Z",
+  "secao7_per_function_evidencia": {
+    "mcp_exec_grants": "EXECUTE apenas postgres+service_role — 0 grants anon/PUBLIC — CORRETO",
+    "is_admin_or_supervisor_grants": "EXECUTE authenticated+postgres+service_role — causa recursao RLS S05-001",
+    "app_bootstrap_grants": "EXECUTE authenticated+postgres — OK, search_path fixo",
+    "search_contacts_grants": "EXECUTE authenticated+postgres+service_role — OK",
+    "talkx_audience_query_grants": "EXECUTE postgres+service_role — OK",
+    "trigger_talkx_engine_tick": "SECURITY DEFINER, 165460 blks/call — CRITICO S05-002",
+    "anon_execute_secdef_fns": "0 — nenhuma funcao SECURITY DEFINER exposta a anon",
+    "decrypt_gmail_token": "NAO e SECURITY DEFINER — le vault.decrypted_secret diretamente"
+  },
   "explain_top20_executado_em": "2026-10-30T23:35Z",
   "explain_evidencias": {
     "rank1_realtime_wal": "Nested Loop catalog syscache — cost 0 blks; system query",
@@ -55,7 +273,7 @@
     "rank14_log_audit_event": "Function Scan log_audit_event (cost=0.25..0.26) — OK",
     "rank15_consume_rate_limit": "Function Scan consume_rate_limit (cost=0.25..10.25) — OK",
     "rank16_contacts_conversation_status": "Limit → Seq Scan contacts Filter:(assigned_to IS NOT NULL AND conversation_status=open) (cost=0.00..439.26) — sem index composto",
-    "rank17_talk_me_list_queues": "Function Scan talk_me_list_queues (cost=0.25..10.25) — 1159ms/call, MEDIO",
+    "rank17_talk_me_list_queues": "Function Scan talk_me_list_queues (cost=0.25..10.25); 1159ms/call, MEDIO",
     "rank18_messages_sender_agent_id": "Limit → Sort → Index Scan idx_messages_agent_id + Filter sender (cost=2.52..2.53) — OK",
     "rank19_set_config_postgrest": "system set_config call — PostgREST session setup, OK",
     "rank20_contacts_insert": "Insert on contacts (cost=0.00..0.02) — OK"
@@ -82,6 +300,24 @@
     "public_indexes": 723,
     "delta": "ZERO — producao inalterada (verificado ao final da sessao 23:35Z)"
   },
+  "top10_re_executado_em": "2026-10-31T00:00Z",
+  "top10_re_evidencias_chat": {
+    "S03-001_anon_write_grants": "98 (CRITICO confirmado)",
+    "S03-002_update_sem_with_check": "39 policies UPDATE sem WITH CHECK explícito (ALTO)",
+    "S04-001_security_definer_fns": "399 (ALTO confirmado)",
+    "S05-001_user_roles_seq_scan": "seq_scan=2918818 idx_scan=1447 pct_seq=100% — CRITICO crescendo",
+    "S05-002_talkx_engine_tick": "178 calls avg_ms=2350 blks_per_call=4383 — CRITICO",
+    "S06_cron_timeouts": "10369 startup timeout 30d — INCIDENTE confirmado",
+    "S05_unused_indexes": "637 idx_scan=0 (MEDIO)",
+    "S03_talkx_campaign_segments": "5 policies com roles={public} sem autenticacao JWT formal — ALTO",
+    "S03_copilot_sessions": "vendor_own_sessions ALL cmd sem WITH CHECK — ALTO",
+    "S03_rls_on_sem_policies": "17 tabelas com RLS ON mas sem policies — INFO"
+  },
+  "before_after_prova": {
+    "antes_22h28Z": "migrations=1064 latest=20261030110000 crons=24 policies=505 tables=204 buckets=9 sec_definer=399 indexes=723",
+    "depois_23h57Z": "migrations=1064 latest=20261030110000 crons=24 policies=505 tables=204 buckets=9 sec_definer=399 indexes=723",
+    "delta": "ZERO — producao inalterada em todas as 8 metricas"
+  },
   "grep_pii_secrets": "0 hits para tokens/JWTs/passwords/emails reais; dados sinteticos apenas em testes/01_rls_matrix.sql (dominio .test, phones 119999900xx fictícios)",
   "secoes": {
     "1_inventario": "concluido",
@@ -97,25 +333,64 @@
     "11_rls": "concluido",
     "12_lacunas": "concluido"
   },
+  "secao1_sequences_re_executado_em": "2026-10-31T05:10Z",
+  "secao1_sequences_evidencia": {
+    "total": 3,
+    "overflow_risk": "ZERO",
+    "sequences": ["catalog_rate_limit_hits_id_seq (last=888)", "contact_deletion_audit_id_seq (last=834)", "security_acl_alerts_id_seq (last=841)"],
+    "tipo": "BIGSERIAL",
+    "max_pct_usado": "0.00%",
+    "arquivo": "inventario/S01_sequences.json"
+  },
+  "secao1_enums_re_executado_em": "2026-10-31T05:10Z",
+  "secao1_enums_evidencia": {
+    "total": 10,
+    "lista": ["ai_provider_type (5v)", "app_role (4v)", "channel_type (6v)", "multiplix_block_type (4v)", "multiplix_dispatch_status (8v)", "multiplix_eligibility (7v)", "multiplix_item_status (10v)", "multiplix_recipient_status (9v)", "service_account_type (5v)", "talkx_blacklist_reason (6v)"],
+    "achados": 0,
+    "arquivo": "inventario/S01_enums.json"
+  },
+  "secao1_triggers_re_executado_em": "2026-10-31T05:10Z",
+  "secao1_triggers_evidencia": {
+    "total_tabelas_com_triggers": 86,
+    "top3": ["contacts(17)", "messages(12)", "talkx_campaigns(10)"],
+    "achados": ["S01-T001 MEDIO: messages com 12 triggers no caminho critico (INSERT)", "S01-T002 INFO: contacts com 17 triggers (normalize_phone deve ser BEFORE)"],
+    "profiles_antiscalation": "prevent_privilege_escalation + prevent_can_download_escalation (defesa em profundidade)",
+    "arquivo": "inventario/S01_triggers.json"
+  },
+  "secao10_logs_7d_re_executado_em": "2026-10-31T05:10Z",
+  "secao10_logs_7d_evidencia": {
+    "coletado_em": "2026-10-31T00:30Z",
+    "incidente_status": "RESOLVIDO — todos os jobs operacionais desde 00:30Z",
+    "incidente_periodo": "2026-10-30T20:08Z a 2026-10-30T22:57Z",
+    "jobs_afetados_7d": 15,
+    "taxa_falha_maior": "10.1% (talkx-scheduler-1min)",
+    "jobs_com_0_falhas_7d": 9,
+    "novo_achado_S10_002": "talkx_engine_alerts() nested statement timeout — self-monitoring falha em cascata sob carga",
+    "arquivo": "inventario/S10_logs.json"
+  },
   "contagem_por_severidade": {
     "CRITICO": 3,
-    "ALTO": 9,
-    "MEDIO": 9,
-    "INFO": 13
+    "ALTO": 10,
+    "MEDIO": 13,
+    "INFO": 13,
+    "nota": "atualizado 2026-10-31 com S10-002 (nested timeout), S07-006 (mcp_exec ALTO), S07-007 (e2e_cleanup), S08-003 (log_search_event), S08-004 (get_search_insights), S01-T001, S01-T002"
   },
-  "total_achados": 34,
+  "total_achados": 39,
   "nao_verificado": [
     "advisors_supabase (requer dashboard ou API Management)",
     "edge_function_logs_7d (requer Supabase Logs/Logflare)",
     "pitr_retencao_dias (requer dashboard → Backups)",
     "types_ts_completo_vs_schema (requer supabase gen types + diff)",
-    "from_rpc_codigo_vs_banco (coberto por supabase-usage-guard no CI)",
     "edge_functions_publicadas_vs_repo (requer supabase functions list CLI)",
     "rls_matrix_testes_jwt_producao (BEGIN/SET LOCAL/ROLLBACK nao suportado via MCP — roteiro em testes/rls_matrix_roteiro.md)"
+  ],
+  "nao_verificado_resolvidos_esta_sessao": [
+    "from_rpc_codigo_vs_banco: VERIFICADO — 121 .from() (0 orphans), 82 .rpc() (2 orphans: get_search_insights, log_search_event)"
   ],
   "incidente_ativo": {
     "descricao": "15/24 cron jobs com job startup timeout",
     "desde": "~2026-10-30T20:08:00Z",
+    "status_2026_10_31": "RESOLVIDO — auto-recuperacao confirmada as 00:30Z",
     "hipotese_causal": "recursao RLS em user_roles (S05-001) saturando connection pool",
     "acao_imediata": "verificar pg_cron worker no painel Supabase e suporte Supabase"
   }
