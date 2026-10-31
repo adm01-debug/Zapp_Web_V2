@@ -545,7 +545,7 @@ jobs:
       # indisponível → ::warning:: (não bloqueia o deploy: observabilidade não
       # pode derrubar um deploy bem-sucedido). O script vive em
       # scripts/edge-deploy/health-check.mjs (W65).
-      - name: "\U0001F3E5 Verificação de saúde pós-deploy (5 min)"
+      - name: "🏥 Verificação de saúde pós-deploy (5 min)"
         if: inputs.dry_run != true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
