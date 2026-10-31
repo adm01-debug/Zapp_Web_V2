@@ -186,6 +186,7 @@ async function abrirDiscador(page: Page) {
 
   await expect(telView).toBeVisible({ timeout: BOOT_DEADLINE_MS });
   await expect(page.getByRole('heading', { name: 'Telefonia' })).toBeVisible();
+  await expect(teclado(page)).toBeVisible();
   return page.getByTestId('tel-new-call-panel');
 }
 
