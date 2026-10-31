@@ -197,25 +197,15 @@ const ALLOWLIST = new Set([
 export const ALLOWLIST_NODE = new Set([
   // Valida um plano de catálogo sintético contra o repositório (offline).
   'scripts/catalog/validate-plan.test.mjs',
-  // Prova o resolvedor de executáveis usado por várias guardas (offline).
-  'scripts/lib/seguranca-processo.test.mjs',
-  // Prova os provadores de visão com `fetch` stubbed (offline).
-  'scripts/qa/prova-visao-classificadores.unit.mjs',
-  // Prova o log do validador de banco do team chat com `fetch` stubbed (offline).
-  'scripts/team-chat-db-validate.unit.mjs',
-  // Auditorias de layout/UI lidas do próprio repositório (offline).
-  'scripts/ui-audit/contacts-navy-header.unit.mjs',
-  'scripts/ui-audit/layout-guard.unit.mjs',
+  // Auditoria de layout lida do próprio repositório (offline); falha hoje (0/2 em 30/10), fica até ser corrigida.
   'scripts/ui-audit/view-container-padding.unit.mjs',
   // R2-INF-010: prova o contrato da resposta do `mcp_exec` no runner da suite de banco
   // (runner de verdade em child process, `fetch` stubbed); offline. A promoção a um bloco
   // `run:` de ci.yml é do dono do workflow.
   'scripts/db-tests/run-all.unit.mjs',
-  // Suites TalkX offline (gen-estados, lado-a-lado, v4-status): provam o motor TalkX sem
+  // Suite TalkX offline (gen-estados): prova o motor TalkX sem
   // banco. Passo de uma linha em ci.yml — promover pelo dono do workflow (agente não edita workflow).
   'scripts/talkx/gen-estados.unit.mjs',
-  'scripts/talkx/lado-a-lado.unit.mjs',
-  'scripts/talkx/v4-status.unit.mjs',
 ]);
 
 // ── 1. .test.ts: disco vs ci.yml ───────────────────────────────────────────────
