@@ -11,6 +11,7 @@
     "public.agent_stats",
     "public.calls",
     "public.contacts",
+    "public.copilot_insights",
     "public.conversation_sla",
     "public.conversation_tasks",
     "public.email_messages",
