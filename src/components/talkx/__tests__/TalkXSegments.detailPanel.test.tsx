@@ -9,7 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
  * O painel do rail era um card com o nome do segmento no título, origem em uma
  * linha de texto e nenhuma condição. Faltava: cabeçalho fixo "Detalhes do
  * segmento" com ✕ (Esc fecha e devolve o foco à linha), "Principais critérios"
- * com os chips legíveis + "Editar", origem por extenso, ↻ que reconta o público
+ * com os chips legíveis + "Editar segmento", origem por extenso, ↻ que reconta o público
  * do segmento, leitura pela id no cache (favoritar reflete sem novo clique) e
  * "Usar em campanha" desabilitado com motivo para segmento inativo.
  *
@@ -123,7 +123,7 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     );
   });
 
-  it('mostra "Detalhes do segmento", os critérios por extenso e o "Editar" do construtor', async () => {
+  it('mostra "Detalhes do segmento", os critérios por extenso e o "Editar segmento" do construtor', async () => {
     renderView();
     await abrirPainel();
 
@@ -137,8 +137,8 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     // Origem por extenso, não a sigla.
     expect(screen.getByText('Dados do ZAPP, em tempo real')).toBeInTheDocument();
 
-    // "Editar" abre o construtor com o segmento aberto.
-    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    // "Editar segmento" abre o construtor com o segmento aberto.
+    fireEvent.click(screen.getByRole('button', { name: 'Editar segmento' }));
     const nome = (await screen.findByPlaceholderText('Nome do segmento…')) as HTMLInputElement;
     expect(nome.value).toBe('Segmento teste');
   });
@@ -171,7 +171,7 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
 
     // O botão Favoritar da linha: a lista volta com a cópia nova (updated_at mais
     // novo) e o painel, que lê o segmento pela id no cache, reflete sem novo clique.
-    fireEvent.click(screen.getByRole('button', { name: 'Favoritar' }));
+    fireEvent.click(within(linhaDoSegmento()).getByRole('button', { name: 'Favoritar' }));
     state.segments = [{ ...segmento, is_favorite: true, updated_at: '2026-10-09T12:00:00.000Z' }];
     // Re-render equivalente ao da invalidação da query (o hook está mockado).
     fireEvent.change(screen.getByPlaceholderText('Buscar segmentos…'), { target: { value: 'Segmento' } });
@@ -190,12 +190,12 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     expect(screen.getByText('Inativo')).toBeInTheDocument();
   });
 
-  it('Esc com o construtor aberto via "Editar" fecha só o construtor e mantém o painel (linha sem foco)', async () => {
+  it('Esc com o construtor aberto via "Editar segmento" fecha só o construtor e mantém o painel (linha sem foco)', async () => {
     renderView();
     await abrirPainel();
 
-    // "Editar" do painel abre o construtor (tela interna do módulo, X111).
-    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    // "Editar segmento" do painel abre o construtor (tela interna do módulo, X111).
+    fireEvent.click(screen.getByRole('button', { name: 'Editar segmento' }));
     await screen.findByPlaceholderText('Nome do segmento…');
 
     fireEvent.keyDown(document, { key: 'Escape' });
@@ -213,7 +213,7 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     renderView();
     await abrirPainel();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Editar segmento' }));
     const nome = (await screen.findByPlaceholderText('Nome do segmento…')) as HTMLInputElement;
     // Mexer no nome deixa o construtor "sujo": o "Voltar" abre o aviso do próprio construtor.
     fireEvent.change(nome, { target: { value: 'Segmento mexido' } });
@@ -310,7 +310,7 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     await waitFor(() => expect(contagens()).toBeGreaterThan(0));
     const antes = contagens();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Recontar público deste segmento' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Recontar público' }));
 
     await waitFor(() => expect(contagens()).toBeGreaterThan(antes));
   });

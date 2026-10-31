@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
+import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 import type { WhatsAppStatusMessage } from '@/hooks/integrations/useWhatsAppStatus';
 import { zappTransition } from '@/lib/motion';
 import { cn } from '@/lib/utils';
@@ -30,6 +31,10 @@ interface StoryMediaState {
 
 function StoryMedia({ message, instanceName }: { message: WhatsAppStatusMessage; instanceName: string | null }) {
   const { getMediaBase64 } = useEvolutionApi();
+  // o <video> do status obedece ao controle único de volume do app (mesmo
+  // contrato das outras superfícies de mídia — ver media-volume-surfaces).
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const { muted } = useMediaElementVolume(videoRef);
   const kind = storyMediaKind(message);
   const mediaKey = storyKeyOf(message);
   const [media, setMedia] = useState<StoryMediaState>({
@@ -109,6 +114,8 @@ function StoryMedia({ message, instanceName }: { message: WhatsAppStatusMessage;
 
       {!media.loading && !media.error && media.src && kind === 'video' && (
         <video
+          ref={videoRef}
+          muted={muted}
           src={media.src}
           controls
           playsInline

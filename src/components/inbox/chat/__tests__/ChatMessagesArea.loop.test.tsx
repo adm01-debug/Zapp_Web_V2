@@ -48,9 +48,38 @@ class ResizeObserverMock {
 
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
+  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+    height: 600, width: 800, top: 0, left: 0, bottom: 600, right: 800, x: 0, y: 0,
+    toJSON: () => ({}),
+  } as DOMRect);
+  Object.defineProperty(Element.prototype, 'clientHeight', { get: () => 600, configurable: true });
 });
 
 // Mock pesado: o alvo é o virtualizer, não as bolhas.
+vi.mock('@tanstack/react-virtual', async () => {
+  const actual = await vi.importActual<typeof import('@tanstack/react-virtual')>('@tanstack/react-virtual');
+  return {
+    ...actual,
+    useVirtualizer: (opts: { count: number; getScrollElement: () => Element | null; estimateSize: () => number }) => ({
+      getVirtualItems: () =>
+        Array.from({ length: opts.count }, (_, i) => ({
+          index: i,
+          key: i,
+          start: i * opts.estimateSize(),
+          size: opts.estimateSize(),
+          lane: 0,
+          end: (i + 1) * opts.estimateSize(),
+          measureElement: undefined,
+        })),
+      getTotalSize: () => opts.count * opts.estimateSize(),
+      scrollToIndex: vi.fn(),
+      scrollToOffset: vi.fn(),
+      measure: vi.fn(),
+      options: opts,
+    }),
+  };
+});
+
 vi.mock('../MessageBubble', () => ({
   MessageBubble: () => <div data-testid="bubble" style={{ height: 120 }} />,
 }));

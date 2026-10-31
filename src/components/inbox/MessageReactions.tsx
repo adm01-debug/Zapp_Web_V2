@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { HOVER_REVEAL, HOVER_REVEAL_TAP } from './hoverActions';
@@ -6,9 +6,109 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SmilePlus, X } from 'lucide-react';
 import { useMessageReactions } from '@/hooks/chat/useMessageReactions';
+import type { MessageReaction } from '@/hooks/reactions/types';
 
 const WHATSAPP_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 const EXTENDED_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '🎉', '👏', '💯', '✅', '❌'];
+
+/**
+ * Uma reação por autor por mensagem (cartão t_fa2f142f, paridade V3 → V2).
+ *
+ * Reagir com outro emoji enquanto já há uma reação própria TROCA: a antiga sai
+ * ANTES de a nova ser gravada (senão a mensagem ficava com duas reações do mesmo
+ * atendente). A tela reage na hora (sobreposição otimista) e, se a gravação falha,
+ * volta ao estado anterior — inclusive devolvendo a reação antiga que já tinha saído.
+ *
+ * A sobreposição só vale enquanto a lista de reações do hook é a mesma de quando
+ * ela nasceu: assim que o servidor/realtime entrega a lista nova, ela é a verdade.
+ */
+type Sobreposicao = { base: string; remover: string[]; adicionar: string | null };
+
+const EMPTY_REACTIONS: MessageReaction[] = [];
+
+const assinaturaDe = (reacoes: MessageReaction[]) =>
+  reacoes.map((r) => `${r.user_id ?? ''}:${r.emoji}`).join('|');
+
+interface ReacaoUnicaParams {
+  reactions: MessageReaction[];
+  currentProfileId?: string;
+  hasReacted: (emoji: string) => boolean;
+  addReaction: (emoji: string) => Promise<unknown>;
+  removeReaction: (emoji: string) => Promise<unknown>;
+}
+
+function useReacaoUnica({ reactions: reacoesBrutas, currentProfileId, hasReacted, addReaction, removeReaction }: ReacaoUnicaParams) {
+  // Mocks/consumidores que não expõem a lista (QuickReactionBar) seguem sem sobreposição.
+  const reactions = reacoesBrutas ?? EMPTY_REACTIONS;
+  const [sobreposicao, setSobreposicao] = useState<Sobreposicao | null>(null);
+  const assinatura = assinaturaDe(reactions);
+
+  const visiveis = useMemo(() => {
+    if (!sobreposicao || sobreposicao.base !== assinatura || !currentProfileId) return reactions;
+    const restantes = reactions.filter(
+      (r) => !(r.user_id === currentProfileId && sobreposicao.remover.includes(r.emoji)),
+    );
+    const jaTem = restantes.some((r) => r.user_id === currentProfileId && r.emoji === sobreposicao.adicionar);
+    if (!sobreposicao.adicionar || jaTem) return restantes;
+    const otimista: MessageReaction = {
+      id: `otimista-${sobreposicao.adicionar}`,
+      message_id: reactions[0]?.message_id ?? '',
+      user_id: currentProfileId,
+      contact_id: null,
+      emoji: sobreposicao.adicionar,
+      created_at: new Date(0).toISOString(),
+      user_name: 'Você',
+    };
+    return [...restantes, otimista];
+  }, [reactions, sobreposicao, assinatura, currentProfileId]);
+
+  const hasReactedVisivel = (emoji: string) =>
+    currentProfileId
+      ? visiveis.some((r) => r.user_id === currentProfileId && r.emoji === emoji)
+      : hasReacted(emoji);
+
+  /** Resolve quando gravou; rejeita (já desfeito na tela) quando a gravação falhou. */
+  const reagir = async (emoji: string) => {
+    const minhas = currentProfileId
+      ? [...new Set(visiveis.filter((r) => r.user_id === currentProfileId).map((r) => r.emoji))]
+      : [];
+
+    if (hasReactedVisivel(emoji)) {
+      setSobreposicao({ base: assinatura, remover: [emoji], adicionar: null });
+      try {
+        await removeReaction(emoji);
+      } catch (erro) {
+        setSobreposicao(null);
+        throw erro;
+      }
+      return;
+    }
+
+    const antigas = minhas.filter((e) => e !== emoji);
+    setSobreposicao({ base: assinatura, remover: antigas, adicionar: emoji });
+    const removidas: string[] = [];
+    try {
+      for (const antiga of antigas) {
+        await removeReaction(antiga);
+        removidas.push(antiga);
+      }
+      await addReaction(emoji);
+    } catch (erro) {
+      setSobreposicao(null);
+      // A antiga já saiu no servidor: devolve, senão o rollback da tela mentiria.
+      for (const antiga of removidas) {
+        try {
+          await addReaction(antiga);
+        } catch {
+          /* o hook já avisou da falha; a lista real é refeita pelo servidor */
+        }
+      }
+      throw erro;
+    }
+  };
+
+  return { visiveis, hasReactedVisivel, reagir };
+}
 
 interface MessageReactionsProps {
   messageId: string;
@@ -35,10 +135,10 @@ export function MessageReactions({
 }: MessageReactionsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const {
-    reactions,
+    reactions: reacoesDoHook,
     addReaction,
     removeReaction,
-    hasReacted,
+    hasReacted: hasReactedDoHook,
     isReacting,
     currentProfileId,
   } = useMessageReactions(messageId, {
@@ -48,6 +148,13 @@ export function MessageReactions({
     senderType,
     refreshKey,
     disableRealtime,
+  });
+  const { visiveis: reactions, hasReactedVisivel: hasReacted, reagir } = useReacaoUnica({
+    reactions: reacoesDoHook,
+    currentProfileId,
+    hasReacted: hasReactedDoHook,
+    addReaction,
+    removeReaction,
   });
 
   const groupedReactions = reactions.reduce((acc, reaction) => {
@@ -75,11 +182,7 @@ export function MessageReactions({
 
   const handleReact = async (emoji: string) => {
     try {
-      if (hasReacted(emoji)) {
-        await removeReaction(emoji);
-      } else {
-        await addReaction(emoji);
-      }
+      await reagir(emoji);
 
       setIsOpen(false);
     } catch {
@@ -102,6 +205,8 @@ export function MessageReactions({
               <button
                 data-testid="reaction-badge"
                 data-emoji={reaction.emoji}
+                aria-label={`Reação ${reaction.emoji}: ${reaction.count} ${reaction.count === 1 ? 'reação' : 'reações'}`}
+                aria-pressed={reaction.hasCurrentUser}
                 disabled={isReacting}
                 onClick={() => handleReact(reaction.emoji)}
                 className={cn(
@@ -138,6 +243,7 @@ export function MessageReactions({
         <PopoverTrigger asChild>
           <button
             data-testid="reaction-add-button"
+            aria-label="Adicionar reação"
             disabled={isReacting}
             className={cn(
               'p-1 rounded-full transition-all hover:scale-110 active:scale-90',
@@ -152,17 +258,20 @@ export function MessageReactions({
           </button>
         </PopoverTrigger>
         <PopoverContent
+          aria-label="Reações"
           className="w-auto p-2 bg-popover"
           align={isSent ? 'end' : 'start'}
           sideOffset={4}
         >
-          <div className="flex flex-wrap items-center gap-1 max-w-[200px]">
+          <div role="group" aria-label="Escolha uma reação" className="flex flex-wrap items-center gap-1 max-w-[200px]">
             {availableReactions.map((emoji) => {
               const userHasReacted = hasReacted(emoji);
 
               return (
                 <motion.button
                   key={emoji}
+                  aria-label={`Reagir com ${emoji}`}
+                  aria-pressed={userHasReacted}
                   whileHover={{ scale: 1.25 }}
                   whileTap={{ scale: 0.9 }}
                   disabled={isReacting}
@@ -217,7 +326,14 @@ export function QuickReactionBar({
   disableRealtime,
 }: QuickReactionBarProps) {
   const [showPicker, setShowPicker] = useState(false);
-  const { addReaction, removeReaction, hasReacted, isReacting, currentProfileId } = useMessageReactions(messageId, {
+  const {
+    reactions,
+    addReaction,
+    removeReaction,
+    hasReacted: hasReactedDoHook,
+    isReacting,
+    currentProfileId,
+  } = useMessageReactions(messageId, {
     instanceName,
     contactJid,
     externalId,
@@ -225,14 +341,17 @@ export function QuickReactionBar({
     refreshKey,
     disableRealtime,
   });
+  const { hasReactedVisivel: hasReacted, reagir } = useReacaoUnica({
+    reactions,
+    currentProfileId,
+    hasReacted: hasReactedDoHook,
+    addReaction,
+    removeReaction,
+  });
 
   const handleReact = async (emoji: string) => {
     try {
-      if (hasReacted(emoji)) {
-        await removeReaction(emoji);
-      } else {
-        await addReaction(emoji);
-      }
+      await reagir(emoji);
       setShowPicker(false);
     } catch {
       // A rejeição já vira toast pt-BR no hook (`useReactionMutations`); aqui só
@@ -263,6 +382,8 @@ export function QuickReactionBar({
             key={emoji}
             data-testid="quick-reaction-emoji"
             data-emoji={emoji}
+            aria-label={`Reagir com ${emoji}`}
+            aria-pressed={hasReacted(emoji)}
             disabled={isReacting}
             onClick={() => handleReact(emoji)}
             className={cn(
@@ -286,14 +407,17 @@ export function QuickReactionBar({
             </button>
           </PopoverTrigger>
           <PopoverContent
+            aria-label="Reações"
             className="w-auto p-2 bg-popover"
             align={isSent ? 'end' : 'start'}
             sideOffset={4}
           >
-            <div className="flex flex-wrap items-center gap-1 max-w-[220px]">
+            <div role="group" aria-label="Escolha uma reação" className="flex flex-wrap items-center gap-1 max-w-[220px]">
               {EXTENDED_REACTIONS.map((emoji) => (
                 <button
                   key={emoji}
+                  aria-label={`Reagir com ${emoji}`}
+                  aria-pressed={hasReacted(emoji)}
                   onClick={() => handleReact(emoji)}
                   className={cn(
                     'w-8 h-8 flex items-center justify-center rounded-md text-lg hover:bg-muted transition-all hover:scale-110',

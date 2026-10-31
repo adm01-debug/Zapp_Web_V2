@@ -1,0 +1,27 @@
+caminho_B	tipo_git	gitdir	git_disponivel	branch	commit	data	mensagem	status_porcelain	commits_fora_main	branch_remota
+Zapp_Web_V2-anexos/arquivo/qa-fase0/qa4/t/ia	repositório	/home/joaquim_ataides/projetos/ZAPP WEB V2 - LOCAL - ARQUIVOS A PROCESSAR/Zapp_Web_V2-anexos/arquivo/qa-fase0/qa4/t/ia/.git	sim	main	93fe7f8dea4f098e0450dd57a5b504ddbb78396b	2026-10-04T13:52:40-03:00	c	—	—	não
+Zapp_Web_V2-anexos/arquivo/qa-fase0/qa4/t/origin	repositório	/home/joaquim_ataides/projetos/ZAPP WEB V2 - LOCAL - ARQUIVOS A PROCESSAR/Zapp_Web_V2-anexos/arquivo/qa-fase0/qa4/t/origin/.git	sim	main	26959e727b9f1b50068d3c0a61217f87c5a31310	2026-10-04T13:49:45-03:00	o-1-1791132585218904685	—	—	não
+Zapp_Web_V2-anexos/arquivo/qa-fase0/qa4/t/ref	repositório	/home/joaquim_ataides/projetos/ZAPP WEB V2 - LOCAL - ARQUIVOS A PROCESSAR/Zapp_Web_V2-anexos/arquivo/qa-fase0/qa4/t/ref/.git	sim	main	26959e727b9f1b50068d3c0a61217f87c5a31310	2026-10-04T13:49:45-03:00	o-1-1791132585218904685	?? graphify-out/	—	sim
+Zapp_Web_V2-anexos/sensiveis/clones-sidebar-261003/zapp-sidebar-edge-final-261003	worktree (ponteiro)	/tmp/zapp-sidebar-audit-20261003/.git/worktrees/zapp-sidebar-edge-final-261003	não	—	—	—	—	—	indisponível	indisponível
+Zapp_Web_V2-anexos/sensiveis/clones-sidebar-261003/zapp-sidebar-final-261003	worktree (ponteiro)	/tmp/zapp-sidebar-audit-20261003/.git/worktrees/zapp-sidebar-final-261003	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/ci-cache-261020	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/ci-cache-261020	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/docs-contatos	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/docs-contatos	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/docs-p053-ledger	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/docs-p053-ledger	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/fix-contatos-cabecalho	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/fix-contatos-cabecalho	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/fix-ga-resto-sonar-contracts	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/fix-ga-resto-sonar-contracts	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/fix-ga-resto-typessync	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/fix-ga-resto-typessync	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/fix-toque44-spec	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/fix-toque44-spec	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/ga-resto-docs-regen	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/ga-resto-docs-regen	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/ordem-abas-261020	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/ordem-abas-261020	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/ordem-abas-doc-261020	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/ordem-abas-doc-261020	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/preview	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/preview1	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/resto-dbmigrate	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/resto-dbmigrate	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/talkme-a-banco	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/talkme-a-banco	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/talkme-b-midia	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/talkme-b-midia	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/talkme-c-perf	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/talkme-c-perf	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/talkme-d-entrada	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/talkme-d-entrada	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/talkme-e-e2e	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/talkme-e-e2e	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/talkme-gov	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/talkme-gov	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/talkme-ledger	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/talkme-ledger	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/talkme-revoke	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/talkme-revoke	não	—	—	—	—	—	indisponível	indisponível
+zapp-worktrees/test-e2e-contatos-fab	worktree (ponteiro)	/home/joaquim_ataides/projetos/Zapp_Web_V2/.git/worktrees/test-e2e-contatos-fab	não	—	—	—	—	—	indisponível	indisponível

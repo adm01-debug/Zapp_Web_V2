@@ -38,6 +38,17 @@ describe('StatusChips', () => {
     makeConversation({ id: 'c4', hasMessages: false }),
   ];
 
+  it('renderiza as contagens calculadas pelo filtro da Inbox, sem exigir a lista bruta', () => {
+    render(<StatusChips
+      counts={{ all: 7, unread: 3, attending: 2, waiting: 1, resolved: 4, archived: 5 }}
+      chipTab="all"
+      onChipTabChange={() => {}}
+    />);
+    expect(screen.getByTestId('status-chip-all')).toHaveTextContent('7');
+    expect(screen.getByTestId('status-chip-unread')).toHaveTextContent('3');
+    expect(screen.getByTestId('status-chip-archived')).toHaveTextContent('5');
+  });
+
   it('renders the 6 chips (no Spam — não existe no modelo)', () => {
     render(<StatusChips conversations={conversations} chipTab="all" onChipTabChange={() => {}} />);
     expect(screen.getByTestId('status-chip-all')).toBeInTheDocument();
@@ -210,11 +221,17 @@ describe('StatusChips', () => {
       expect(chip.className).toContain('focus-visible:ring-primary/50');
     });
 
-    it('aria-pressed marca só o chip ativo', () => {
+    it('o estado ativo é anunciado só no chip ativo (aria-selected, sem aria-pressed)', () => {
+      // Os chips são `role="tab"` num tablist (cartão t_90dcdcc8, StatusChips.a11y.test.tsx):
+      // nesse papel o estado é `aria-selected`; `aria-pressed` não é permitido e o axe o
+      // reprova (aria-allowed-attr). Mesma garantia — só o ativo é marcado — pelo atributo válido.
       renderComAtivo();
-      expect(screen.getByTestId('status-chip-attending')).toHaveAttribute('aria-pressed', 'true');
-      expect(screen.getByTestId('status-chip-all')).toHaveAttribute('aria-pressed', 'false');
-      expect(screen.getByTestId('status-chip-resolved')).toHaveAttribute('aria-pressed', 'false');
+      expect(screen.getByTestId('status-chip-attending')).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByTestId('status-chip-all')).toHaveAttribute('aria-selected', 'false');
+      expect(screen.getByTestId('status-chip-resolved')).toHaveAttribute('aria-selected', 'false');
+      for (const id of ['attending', 'all', 'resolved']) {
+        expect(screen.getByTestId(`status-chip-${id}`)).not.toHaveAttribute('aria-pressed');
+      }
     });
 
     it('o ícone Archive vai em h-4 w-4 antes do texto', () => {
