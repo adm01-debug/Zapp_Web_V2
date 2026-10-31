@@ -1,0 +1,109 @@
+{
+  "_meta": {
+    "nota": "V068: baseline de vars VITE_* esperadas no Vercel por target. Vars fora desta lista em target production/preview são candidatas a remoção. Atualizado em 2026-10-18.",
+    "como_usar": "node scripts/ci/vercel-env-baseline.unit.mjs"
+  },
+  "production": {
+    "required": [
+      "VITE_SUPABASE_URL",
+      "VITE_SUPABASE_ANON_KEY",
+      "VITE_APP_VERSION",
+      "VITE_CRM_INTEGRATION_ENABLED",
+      "VITE_RECEIVED",
+      "VITE_SEARCHBOX_MONTHLY_SESSION_LIMIT",
+      "VITE_TALKX_KIT"
+    ],
+    "optional": [
+      "VITE_CLIENTES_SUPABASE_URL",
+      "VITE_CLIENTES_SUPABASE_ANON_KEY"
+    ],
+    "forbidden": [
+      "VITE_ZAPP_LOCAL_SUPABASE_URL",
+      "VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY",
+      "VITE_SENTRY_DSN",
+      "VITE_SENTRY_ENVIRONMENT",
+      "VITE_APP_NAME",
+      "VITE_APP_ENV",
+      "VITE_ENABLE_ANALYTICS",
+      "VITE_ENABLE_DEBUG",
+      "VITE_ENABLE_GAMIFICATION",
+      "VITE_ENABLE_GMAIL_INTEGRATION",
+      "VITE_LOG_LEVEL",
+      "VITE_EVOLUTION_API_URL"
+    ],
+    "forbidden_nonvite": [
+      "OPENAI_API_KEY",
+      "ANTHROPIC_API_KEY",
+      "GROQ_API_KEY",
+      "EVOLUTION_API_KEY",
+      "EVOLUTION_API_URL",
+      "POSTGRES_URL",
+      "POSTGRES_PRISMA_URL",
+      "POSTGRES_URL_NO_SSL",
+      "POSTGRES_URL_NON_POOLING",
+      "POSTGRES_USER",
+      "POSTGRES_HOST",
+      "POSTGRES_PASSWORD",
+      "POSTGRES_DATABASE",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "SUPABASE_JWT_SECRET",
+      "SUPABASE_SECRET_KEY",
+      "TURBO_TOKEN",
+      "NX_DAEMON",
+      "TURBO_TEAM",
+      "TURBO_REMOTE_ONLY"
+    ]
+  },
+  "preview": {
+    "required": [
+      "VITE_SUPABASE_URL",
+      "VITE_SUPABASE_ANON_KEY",
+      "VITE_CRM_INTEGRATION_ENABLED",
+      "VITE_TALKX_KIT"
+    ],
+    "optional": [
+      "VITE_APP_VERSION",
+      "VITE_RECEIVED",
+      "VITE_SEARCHBOX_MONTHLY_SESSION_LIMIT",
+      "VITE_CLIENTES_SUPABASE_URL",
+      "VITE_CLIENTES_SUPABASE_ANON_KEY"
+    ],
+    "forbidden_nonvite": [
+      "OPENAI_API_KEY",
+      "ANTHROPIC_API_KEY",
+      "GROQ_API_KEY",
+      "EVOLUTION_API_KEY",
+      "EVOLUTION_API_URL",
+      "POSTGRES_URL",
+      "POSTGRES_PRISMA_URL",
+      "POSTGRES_URL_NO_SSL",
+      "POSTGRES_URL_NON_POOLING",
+      "POSTGRES_USER",
+      "POSTGRES_HOST",
+      "POSTGRES_PASSWORD",
+      "POSTGRES_DATABASE",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "SUPABASE_JWT_SECRET",
+      "SUPABASE_SECRET_KEY",
+      "TURBO_TOKEN",
+      "NX_DAEMON",
+      "TURBO_TEAM",
+      "TURBO_REMOTE_ONLY"
+    ]
+  },
+  "development": {
+    "optional": [
+      "VITE_SUPABASE_URL",
+      "VITE_SUPABASE_ANON_KEY",
+      "VITE_APP_VERSION",
+      "VITE_CRM_INTEGRATION_ENABLED",
+      "VITE_RECEIVED",
+      "VITE_SEARCHBOX_MONTHLY_SESSION_LIMIT",
+      "VITE_TALKX_KIT",
+      "VITE_ZAPP_LOCAL_SUPABASE_URL",
+      "VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY",
+      "VITE_CLIENTES_SUPABASE_URL",
+      "VITE_CLIENTES_SUPABASE_ANON_KEY"
+    ]
+  }
+}

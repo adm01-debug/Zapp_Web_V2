@@ -30,7 +30,7 @@ const MOTIVO_FALHA = 'Falha no processamento: não foi possível extrair o texto
 export function KnowledgeBaseView() {
   // CT-70 — com "reduzir movimento" ligado, os cards entram já no estado final.
   const prefersReducedMotion = useReducedMotion();
-  const { articles, files, loading, fetchData, saveArticle, deleteArticle, uploadFile, deleteFile, reprocessFile } = useKnowledgeBase();
+  const { articles, files, loading, error, fetchData, saveArticle, deleteArticle, uploadFile, deleteFile, reprocessFile } = useKnowledgeBase();
   // Trava por arquivo: o `ref` barra o segundo clique no MESMO botão antes do
   // re-render (dois cliques no mesmo tick); o estado só pinta o `aria-busy`.
   // Linhas diferentes seguem livres — a ação é por arquivo.
@@ -41,6 +41,8 @@ export function KnowledgeBaseView() {
   // Excluir é destrutivo e sem volta: o clique na linha só abre o diálogo; a
   // exclusão só sai na confirmação. Guardamos o botão de origem para devolver o foco.
   const [fileToDelete, setFileToDelete] = useState<{ id: string; name: string } | null>(null);
+  // Excluir artigo também é destrutivo: mesmo desenho do arquivo, diálogo próprio.
+  const [articleToDelete, setArticleToDelete] = useState<{ id: string; title: string } | null>(null);
   const deleteOriginRef = useRef<HTMLButtonElement | null>(null);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -98,10 +100,36 @@ export function KnowledgeBaseView() {
     if (fileToDelete) void handleDeleteFile(fileToDelete.id);
   };
 
+  const confirmDeleteArticle = () => {
+    if (articleToDelete) {
+      void deleteArticle(articleToDelete.id);
+      setArticleToDelete(null);
+    }
+  };
+
   const filteredArticles = articles.filter(a => {
     const matchesSearch = !search || a.title.toLowerCase().includes(search.toLowerCase()) || a.content.toLowerCase().includes(search.toLowerCase());
     return matchesSearch && (selectedCategory === 'all' || a.category === selectedCategory);
   });
+
+  // Falha de leitura nao e "base vazia": sem este bloco os contadores iam a zero e a
+  // aba de arquivos anunciava "Nenhum arquivo enviado" com a leitura quebrada.
+  const kbErrorBlock = (
+    <div
+      role="alert"
+      data-testid="kb-error"
+      className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 p-4 flex flex-col items-start gap-2"
+    >
+      <div className="flex items-center gap-2 text-destructive">
+        <AlertCircle className="w-4 h-4" />
+        <p className="text-sm font-semibold">Não foi possível carregar a base de conhecimento</p>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        A leitura dos artigos e dos arquivos falhou, então nenhuma contagem é exibida — zero aqui seria dado inventado.
+      </p>
+      <Button variant="outline" size="sm" onClick={() => fetchData()}>Tentar novamente</Button>
+    </div>
+  );
 
   return (
     <div className="flex flex-col h-full w-full min-w-0">
@@ -112,6 +140,9 @@ export function KnowledgeBaseView() {
           <Button onClick={openNew} className="gap-2"><Plus className="w-4 h-4" /> Novo Artigo</Button>
         </div>} />
 
+      {error ? (
+        <div className="px-6 pb-6">{kbErrorBlock}</div>
+      ) : (<>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-6 pb-4">
         {[
           { icon: BookOpen, color: 'bg-primary/20', textColor: 'text-primary', label: 'Artigos', value: articles.length },
@@ -141,7 +172,7 @@ export function KnowledgeBaseView() {
                     <div className="flex items-center gap-2">{statusIcon(article.embedding_status)}<Badge variant="outline" className="text-3xs">{CATEGORY_LABELS[article.category] || article.category}</Badge></div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" className="h-6 w-6" aria-label={`Editar artigo: ${article.title}`} onClick={() => openEdit(article)}><Edit className="w-3 h-3" /></Button>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" aria-label={`Excluir artigo: ${article.title}`} onClick={() => deleteArticle(article.id)}><Trash2 className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" aria-label={`Excluir artigo: ${article.title}`} onClick={(e) => { deleteOriginRef.current = e.currentTarget; setArticleToDelete({ id: article.id, title: article.title }); }}><Trash2 className="w-3 h-3" /></Button>
                     </div>
                   </div>
                   <h2 className="font-semibold text-sm text-foreground mb-1">{article.title}</h2>
@@ -199,6 +230,7 @@ export function KnowledgeBaseView() {
           </div>
         </TabsContent>
       </Tabs>
+      </>)}
 
       <Dialog open={showEditor} onOpenChange={setShowEditor}>
         <DialogContent aria-describedby={undefined} size="xl">
@@ -235,6 +267,30 @@ export function KnowledgeBaseView() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={confirmDeleteFile}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Excluir artigo é destrutivo: o clique na linha só abre este diálogo. */}
+      <AlertDialog open={articleToDelete !== null} onOpenChange={(next) => { if (!next) setArticleToDelete(null); }}>
+        <AlertDialogContent
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            const origem = deleteOriginRef.current;
+            if (origem && origem.isConnected) origem.focus();
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir artigo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O artigo <strong>{articleToDelete?.title}</strong> sai da base de conhecimento. Não pode ser desfeito.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={confirmDeleteArticle}>
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

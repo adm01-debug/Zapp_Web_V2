@@ -1,0 +1,12 @@
+-- 20261016120000_security_fixes_passkey_purge_gmail_search_events.sql
+-- Stub de paridade: em 16/10/2026 tres ajustes foram aplicados diretamente
+-- no banco e registrados no ledger sem arquivo (INSERT em passkeys,
+-- SELECT/DELETE em search_events e ACL de purge_gmail_account_data).
+-- A reversao esta em 20261016130000_revert_wrong_security_fixes.sql e o
+-- estado atual ja equivale a "nunca existiu". NAO reintroduza o DDL
+-- original aqui: ele continha regressao documentada na PR #2014.
+-- Este arquivo existe para fechar o delta banco/repo no ledger:
+--   schema_migrations.version = '20261016120000'
+--   schema_migrations.name    = 'security_fixes_passkey_purge_gmail_search_events'
+-- Tipo: ledger-only/comment-only em scripts/db-audit/migration-evidence.json.
+-- stub: ajustes aplicados diretamente; revertidos em 20261016130000

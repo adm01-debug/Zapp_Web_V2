@@ -51,10 +51,11 @@ function authBody(over: Record<string, unknown> = {}) {
 }
 
 type DBResult = { data: unknown; error: unknown };
+type DBFilter = { op: "eq" | "gt"; column: string; value: unknown };
 
 /** Chain PostgREST mínimo e thenable: `.select().eq().single()` e `.insert()` etc. */
 function fakeDb(script: Record<string, (op: string) => DBResult> = {}) {
-  const tableCalls: Array<{ table: string; op: string }> = [];
+  const tableCalls: Array<{ table: string; op: string; filters: DBFilter[] }> = [];
 
   function resolve(table: string, op: string): DBResult {
     const fn = script[table];
@@ -63,15 +64,18 @@ function fakeDb(script: Record<string, (op: string) => DBResult> = {}) {
 
   function chain(table: string): unknown {
     let op = "";
+    const filters: DBFilter[] = [];
     const obj = {
-      select: () => { if (!op) { op = "select"; tableCalls.push({ table, op }); } return obj; },
-      insert: () => { op = "insert"; tableCalls.push({ table, op }); return obj; },
-      update: () => { op = "update"; tableCalls.push({ table, op }); return obj; },
-      delete: () => { op = "delete"; tableCalls.push({ table, op }); return obj; },
-      eq: () => obj,
+      select: () => { if (!op) { op = "select"; tableCalls.push({ table, op, filters }); } return obj; },
+      insert: () => { op = "insert"; tableCalls.push({ table, op, filters }); return obj; },
+      update: () => { op = "update"; tableCalls.push({ table, op, filters }); return obj; },
+      delete: () => { op = "delete"; tableCalls.push({ table, op, filters }); return obj; },
+      eq: (column: string, value: unknown) => { filters.push({ op: "eq", column, value }); return obj; },
+      gt: (column: string, value: unknown) => { filters.push({ op: "gt", column, value }); return obj; },
       order: () => obj,
       limit: () => obj,
       single: () => Promise.resolve(resolve(table, op || "select")),
+      maybeSingle: () => Promise.resolve(resolve(table, op || "select")),
       then: (onFulfilled: (v: DBResult) => unknown, onRejected?: (e: unknown) => unknown) =>
         Promise.resolve(resolve(table, op || "select")).then(onFulfilled, onRejected),
     };
@@ -133,7 +137,9 @@ function loginDb(over: Record<string, (op: string) => DBResult> = {}) {
       ? { data: STORED_CRED, error: null }
       : { data: null, error: null },
     webauthn_challenges: (op) => op === "select"
-      ? { data: { challenge: "chal-1", expires_at: FUTURE }, error: null }
+      ? { data: { id: "challenge-1", challenge: "chal-1", expires_at: FUTURE }, error: null }
+      : op === "delete"
+      ? { data: { id: "challenge-1" }, error: null }
       : { data: null, error: null },
     audit_logs: () => ({ data: null, error: null }),
     ...over,
@@ -358,8 +364,96 @@ Deno.test("sucesso -> 200 com token_hash (sessão sem e-mail) e login auditado",
 
   // Efeitos: contador/último uso atualizados, desafio consumido, login auditado.
   assertEquals(db.tableCalls.some((t) => t.table === "passkey_credentials" && t.op === "update"), true);
-  assertEquals(db.tableCalls.some((t) => t.table === "webauthn_challenges" && t.op === "delete"), true);
+  const challengeClaim = db.tableCalls.find((t) => t.table === "webauthn_challenges" && t.op === "delete");
+  assertEquals(challengeClaim?.filters.slice(0, 4), [
+    { op: "eq", column: "id", value: "challenge-1" },
+    { op: "eq", column: "user_id", value: "u1" },
+    { op: "eq", column: "type", value: "authentication" },
+    { op: "eq", column: "challenge", value: "chal-1" },
+  ]);
+  assertEquals(challengeClaim?.filters[4]?.op, "gt");
+  assertEquals(challengeClaim?.filters[4]?.column, "expires_at");
   assertEquals(db.tableCalls.some((t) => t.table === "audit_logs" && t.op === "insert"), true);
+});
+
+Deno.test("duas asserções concorrentes só consomem o mesmo challenge uma vez", async () => {
+  let challengeAvailable = true;
+  let successfulClaims = 0;
+  const db = loginDb({
+    webauthn_challenges: (op) => {
+      if (op === "select") {
+        return { data: { id: "challenge-1", challenge: "chal-1", expires_at: FUTURE }, error: null };
+      }
+      if (op === "delete") {
+        if (!challengeAvailable) return { data: null, error: null };
+        challengeAvailable = false;
+        successfulClaims += 1;
+        return { data: { id: "challenge-1" }, error: null };
+      }
+      return { data: null, error: null };
+    },
+  });
+  const admin = fakeAdmin({
+    policy: allowedPolicy(),
+    db,
+    rpcs: {
+      is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null },
+      clear_login_attempts: { data: null, error: null },
+    },
+  });
+
+  let verifications = 0;
+  let releaseVerification!: () => void;
+  const bothVerified = new Promise<void>((resolve) => { releaseVerification = resolve; });
+  const verifyTogether = async () => {
+    verifications += 1;
+    if (verifications === 2) releaseVerification();
+    await bothVerified;
+    return { ok: true as const, newCounter: 4 };
+  };
+  const rl = fakeRateLimit();
+
+  const responses = await Promise.all([1, 2].map(() =>
+    handleWebAuthn(post(authBody(), { "x-forwarded-for": IP }), {
+      admin,
+      enforceRateLimit: rl.enforceRateLimit,
+      verifyAuthenticationAssertion: verifyTogether,
+    })
+  ));
+  const statuses = responses.map((response) => response.status).sort((a, b) => a - b);
+
+  assertEquals(statuses, [200, 401]);
+  assertEquals(successfulClaims, 1);
+  assertEquals(admin.linkCalls.length, 1);
+  assertEquals(db.tableCalls.filter((t) => t.table === "passkey_credentials" && t.op === "update").length, 1);
+  assertEquals(db.tableCalls.filter((t) => t.table === "audit_logs" && t.op === "insert").length, 1);
+  assertEquals(admin.rpcCalls.filter((c) => c.fn === "record_failed_login").length, 0);
+});
+
+Deno.test("erro ao consumir challenge falha fechado sem atualizar credencial nem emitir sessão", async () => {
+  const db = loginDb({
+    webauthn_challenges: (op) => op === "select"
+      ? { data: { id: "challenge-1", challenge: "chal-1", expires_at: FUTURE }, error: null }
+      : { data: null, error: { code: "08006", message: "database unavailable" } },
+  });
+  const admin = fakeAdmin({
+    policy: allowedPolicy(),
+    db,
+    rpcs: { is_account_locked: { data: [{ is_locked: false, locked_until: null, attempts: 0 }], error: null } },
+  });
+  const rl = fakeRateLimit();
+
+  const res = await handleWebAuthn(post(authBody(), { "x-forwarded-for": IP }), {
+    admin,
+    enforceRateLimit: rl.enforceRateLimit,
+    verifyAuthenticationAssertion: okVerify,
+  });
+
+  assertEquals(res.status, 500);
+  assertEquals((await res.json()).error, "Internal server error");
+  assertEquals(db.tableCalls.some((t) => t.table === "passkey_credentials" && t.op === "update"), false);
+  assertEquals(admin.linkCalls.length, 0);
+  assertEquals(db.tableCalls.some((t) => t.table === "audit_logs"), false);
 });
 
 Deno.test("falha ao emitir sessão -> 503 e NÃO audita", async () => {
