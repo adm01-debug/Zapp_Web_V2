@@ -253,7 +253,7 @@ test('o fix continua sendo o ultimo a tocar nas policies guardadas (teto dinamic
       ...AUDIO_MEMES_DELETE_FINAL,
     ];
     const citaGuardado = GUARD_BUCKETS.some((b) => citados.has(b))
-      || nomesGuardados.some((n) => txt.includes(`"${n}"`));
+      || nomesGuardados.some((n) => txt.includes(`"${n}"`);
     // CREATE/DROP/ALTER POLICY em storage.objects + menção a bucket/policy guardada = infrator.
     const temPolicyDDL = divide(txt).some((st) => RE_CP.test(st) || RE_DP.test(st) || RE_AP.test(st));
     if (temPolicyDDL && citaGuardado) infratores.push(basename(arq));
