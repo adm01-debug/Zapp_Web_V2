@@ -1,0 +1,57 @@
+{
+  "_auditoria": "ZAPP WEB V2 — Vault, FKs sem índice, integridade (S4)",
+  "_data": "2026-10-22",
+  "vault_secrets": {
+    "total": 13,
+    "nomes": [
+      "ai_jobs_cron_secret",
+      "avatars_refresh_cron_secret",
+      "connection_health_check_cron_secret",
+      "gmail_cron_secret",
+      "gmail_encryption_key",
+      "multiplix_cron_secret",
+      "multiplix_send_url",
+      "sicoob_service_role_key",
+      "talkx_anon_key",
+      "talkx_cron_secret",
+      "talkx_scheduler_url",
+      "talkx_send_url",
+      "zapp_anon_key"
+    ],
+    "nota": "Valores NUNCA consultados — apenas nomes via vault.secrets. sicoob_service_role_key é chave de banco externo (somente leitura); zapp_anon_key é chave pública do próprio projeto."
+  },
+  "fks_sem_indice": {
+    "total": 20,
+    "achado_id": "S4-01",
+    "severidade": "MÉDIO",
+    "descricao": "20 FKs sem índice na coluna referenciadora — risco de seq scan em DELETE/UPDATE na tabela pai",
+    "lista": [
+      "ai_model_prices.provider_id",
+      "contacts.ai_projection_analysis_id",
+      "conversation_events.from_queue_id",
+      "conversation_events.to_queue_id",
+      "department_invitations.used_by",
+      "multiplix_delivery_items.voice_asset_id",
+      "multiplix_delivery_items.recipient_id",
+      "multiplix_delivery_items.block_id",
+      "multiplix_dispatches.whatsapp_connection_id",
+      "reminders.migrated_task_id",
+      "talkx_campaigns.launched_by",
+      "talkx_campaigns.owner",
+      "talkx_campaigns.responsible_id",
+      "talkx_campaigns.template_version_id",
+      "talkx_campaigns.consent_confirmed_by",
+      "talkx_campaigns.paused_by",
+      "talkx_campaigns.cancelled_by",
+      "talkx_links.created_by",
+      "talkx_optout_keywords.created_by",
+      "talkx_templates.current_version_id"
+    ]
+  },
+  "tabela_sem_pk": {
+    "achado_id": "S4-02",
+    "severidade": "BAIXO",
+    "tabela": "_zapp_fn_before",
+    "descricao": "Tabela interna de controle de migrations sem chave primária — risco de duplicatas"
+  }
+}

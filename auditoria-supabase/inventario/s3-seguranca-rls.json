@@ -1,0 +1,51 @@
+{
+  "_auditoria": "ZAPP WEB V2 — Segurança RLS (S3)",
+  "_data": "2026-10-22",
+  "_fonte": "mcp__SUPABASE_-_ZAPP_WEB_V2_-_MCP__db_query via pg_policies",
+  "resumo": {
+    "total_policies": 456,
+    "qual_true": 29,
+    "withcheck_true": 5,
+    "delete_qual_true": 1,
+    "insert_withcheck_true": 5,
+    "tabelas_rls_sem_policy": 11
+  },
+  "achados_criticos": [
+    {
+      "id": "S3-01",
+      "severidade": "ALTO",
+      "tabela": "department_invites",
+      "policy": "dept_invites_delete_authenticated",
+      "cmd": "DELETE",
+      "qual": "true",
+      "descricao": "Qualquer usuário autenticado pode deletar convite de qualquer outro — sem restrição de propriedade",
+      "status_producao": "ATIVA (migration corretiva 20261026100300 em PR #2186, não aplicada)",
+      "correcao": "supabase/migrations/20261026100300_dept_invites_ownership_fix.sql"
+    },
+    {
+      "id": "S3-02",
+      "severidade": "ALTO",
+      "tabela": "department_invites",
+      "policy": "dept_invites_insert_authenticated",
+      "cmd": "INSERT",
+      "with_check": "true",
+      "descricao": "Qualquer usuário autenticado pode criar convite — sem restrição de role admin/supervisor",
+      "status_producao": "ATIVA (migration corretiva 20261026100300 em PR #2186, não aplicada)",
+      "correcao": "supabase/migrations/20261026100300_dept_invites_ownership_fix.sql"
+    }
+  ],
+  "tabelas_rls_ligado_zero_policies": [
+    "_zapp_fn_before",
+    "_zapp_mig133_log",
+    "ai_budget_reservations",
+    "ai_jobs",
+    "catalog_rate_limit_hits",
+    "catalog_rate_limits",
+    "edge_rate_limits",
+    "gmail_oauth_states",
+    "link_preview_cache",
+    "talkx_storage_purge_queue",
+    "talkx_test_send_claims"
+  ],
+  "nota": "Tabelas com RLS habilitado e ZERO policies resultam em acesso negado para todos os roles não-superuser — comportamento de default-deny intencional para tabelas internas/cron."
+}

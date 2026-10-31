@@ -2,7 +2,6 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationSettings } from '../system/useNotificationSettings';
-import { showBrowserNotification } from '@/utils/notificationSounds';
 
 interface WarRoomAlert {
   id: string;
@@ -145,14 +144,15 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
             playAlertSound();
           }
 
-          // Aviso de desktop pela API `Notification` direta: o push exige Service Worker
-          // de aplicação (desligado em `config/service_worker.ts`) e falhava em silêncio.
-          // Respeita o "Alertas do navegador" do painel.
-          if (settings.browserNotifications) {
-            showBrowserNotification(`⚠️ ${alert.title}`, alert.message, {
-              tag: `warroom-${alert.id}`,
-              requireInteraction: alert.alert_type === 'critical',
-            });
+          // Browser notification
+          if (settings.browserNotifications && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            try {
+              new Notification(`⚠️ ${alert.title}`, {
+                body: alert.message,
+                tag: `warroom-${alert.id}`,
+                requireInteraction: alert.alert_type === 'critical',
+              });
+            } catch { /* blocked by browser policy */ }
           }
         }
       )
@@ -164,8 +164,8 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
   }, [queryClient, playAlertSound, settings.browserNotifications]);
 
   // A segunda batida tem vida própria: este efeito (realtime) se refaz a cada mudança
-  // de identidade de `playAlertSound`, e limpar o timer no cleanup
-  // dele engolia a segunda batida no meio do caminho.
+  // de identidade de `playAlertSound`, e limpar o timer no cleanup dele engolia
+  // a segunda batida no meio do caminho.
   useEffect(() => () => {
     if (segundaBatida.current) { clearTimeout(segundaBatida.current); segundaBatida.current = null; }
   }, []);

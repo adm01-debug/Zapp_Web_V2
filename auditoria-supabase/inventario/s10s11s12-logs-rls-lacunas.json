@@ -1,0 +1,178 @@
+{
+  "auditoria": "s10-s11-s12",
+  "data": "2026-10-22",
+  "projeto": "tnnnlkbymytvtqngbbqh",
+
+  "secao10_logs_7dias": {
+    "Q1_auth_erros": {
+      "query": "SELECT date_trunc('day',created_at)::date as day, payload->>'action' as action, payload->>'error_code' as error_code, count(*) as cnt FROM auth.audit_log_entries WHERE created_at>NOW()-INTERVAL '7 days' AND (payload->>'error_code') IS NOT NULL GROUP BY 1,2,3 ORDER BY 1 DESC, 4 DESC LIMIT 30",
+      "nota": "Coluna error_code nao existe diretamente — fica em payload JSON. Consulta corrigida retornou 0 linhas: nenhum error_code registrado nos ultimos 7 dias.",
+      "resultado": [],
+      "observacao": "Ausencia de erros de auth nos logs nao e necessariamente sinal de saude — pode indicar que o nivel de log do Supabase Auth nao persiste error_code no payload. Verificar no Supabase Dashboard > Authentication > Logs."
+    },
+    "Q2_cron_falhas": {
+      "query": "SELECT j.jobname, r.start_time::date as day, r.status, LEFT(r.return_message,100) as msg FROM cron.job_run_details r JOIN cron.job j ON j.jobid=r.jobid WHERE r.start_time>NOW()-INTERVAL '7 days' AND r.status!='succeeded' ORDER BY r.start_time DESC LIMIT 20",
+      "resultado": [
+        {"day": "2026-10-21", "status": "failed", "jobname": "ai-jobs-tick-1min", "msg": "job startup timeout"},
+        {"day": "2026-10-21", "status": "failed", "jobname": "expire-stale-agent-presence", "msg": "job startup timeout"},
+        {"day": "2026-10-21", "status": "failed", "jobname": "crm-sync-outbox", "msg": "job startup timeout"},
+        {"day": "2026-10-21", "status": "failed", "jobname": "gmail-incremental-sync", "msg": "job startup timeout"},
+        {"day": "2026-10-21", "status": "failed", "jobname": "tasks-notify-due", "msg": "job startup timeout"},
+        {"day": "2026-10-21", "status": "failed", "jobname": "talkx-scheduler-1min", "msg": "job startup timeout"},
+        {"day": "2026-10-18", "status": "failed", "jobname": "tasks-notify-due", "msg": "job startup timeout"},
+        {"day": "2026-10-18", "status": "failed", "jobname": "ai-jobs-tick-1min", "msg": "job startup timeout"},
+        {"day": "2026-10-18", "status": "failed", "jobname": "multiplix-send-trigger", "msg": "job startup timeout"},
+        {"day": "2026-10-18", "status": "failed", "jobname": "talkx-scheduler-1min", "msg": "job startup timeout"},
+        {"day": "2026-10-17", "status": "failed", "jobname": "crm-sync-outbox", "msg": "job startup timeout"},
+        {"day": "2026-10-17", "status": "failed", "jobname": "talkx-scheduler-1min", "msg": "job startup timeout"},
+        {"day": "2026-10-17", "status": "failed", "jobname": "ai-jobs-tick-1min", "msg": "job startup timeout"},
+        {"day": "2026-10-17", "status": "failed", "jobname": "gmail-incremental-sync", "msg": "job startup timeout"},
+        {"day": "2026-10-17", "status": "failed", "jobname": "expire-stale-agent-presence", "msg": "job startup timeout"},
+        {"day": "2026-10-17", "status": "failed", "jobname": "tasks-notify-due", "msg": "job startup timeout"},
+        {"day": "2026-10-16", "status": "failed", "jobname": "multiplix-send-trigger", "msg": "job startup timeout"},
+        {"day": "2026-10-16", "status": "failed", "jobname": "ai-jobs-tick-1min", "msg": "job startup timeout"},
+        {"day": "2026-10-16", "status": "failed", "jobname": "tasks-notify-due", "msg": "job startup timeout"},
+        {"day": "2026-10-16", "status": "failed", "jobname": "tasks-notify-due", "msg": "job startup timeout"}
+      ],
+      "resumo_por_dia": [
+        {"day": "2026-10-21", "total_failed": 6},
+        {"day": "2026-10-18", "total_failed": 4},
+        {"day": "2026-10-17", "total_failed": 6},
+        {"day": "2026-10-16", "total_failed": 1779},
+        {"day": "2026-10-15", "total_failed": 96}
+      ],
+      "detalhes_pico_20261016": {
+        "query": "SELECT j.jobname, count(*) as cnt, LEFT(r.return_message,80) as msg FROM cron.job_run_details r JOIN cron.job j ON j.jobid=r.jobid WHERE r.start_time::date='2026-10-16' AND r.status!='succeeded' GROUP BY j.jobname, msg ORDER BY cnt DESC LIMIT 15",
+        "resultado": [
+          {"jobname": "tasks-notify-due", "cnt": 390, "msg": "job startup timeout"},
+          {"jobname": "ai-jobs-tick-1min", "cnt": 380, "msg": "job startup timeout"},
+          {"jobname": "talkx-scheduler-1min", "cnt": 374, "msg": "job startup timeout"},
+          {"jobname": "expire-stale-agent-presence", "cnt": 200, "msg": "job startup timeout"},
+          {"jobname": "multiplix-send-trigger", "cnt": 193, "msg": "job startup timeout"},
+          {"jobname": "gmail-incremental-sync", "cnt": 91, "msg": "job startup timeout"},
+          {"jobname": "connection-health-check", "cnt": 81, "msg": "job startup timeout"},
+          {"jobname": "talkx-scheduler-1min", "cnt": 31, "msg": "ERROR: canceling statement due to statement timeout (CONTEXT SQL)"},
+          {"jobname": "cleanup-edge-rate-limits", "cnt": 30, "msg": "job startup timeout"},
+          {"jobname": "avatars-refresh", "cnt": 8, "msg": "job startup timeout"},
+          {"jobname": "cleanup-link-preview-cache", "cnt": 1, "msg": "job startup timeout"}
+        ],
+        "analise": "Em 2026-10-16 ocorreu um pico massivo de 1779 falhas de cron — todos os jobs com 'job startup timeout' simultaneamente. Indica indisponibilidade da infra Supabase (connection pool saturado ou edge runtime fora) por varios minutos naquele dia. talkx-scheduler-1min acumulou adicionalmente 31 erros de statement timeout (query excedeu limite de tempo), sugerindo carga excessiva quando o servico voltou."
+      }
+    },
+    "Q3_pg_stat_statements": {
+      "resultado": "ERRO: relacao pg_stat_statements nao existe",
+      "observacao": "Extensao pg_stat_statements nao esta habilitada. Sem ela nao e possivel identificar queries lentas proativamente via SQL."
+    }
+  },
+
+  "secao11_rls_readonly": {
+    "metodo": "BEGIN/SET LOCAL role='anon'/ROLLBACK nao suportado pelo MCP (EXECUTE of transaction commands is not implemented). Avaliado via inspecao de pg_tables (rowsecurity) e pg_policies.",
+    "tabelas_rls_habilitado": [
+      {"tablename": "contacts", "rowsecurity": true},
+      {"tablename": "departments", "rowsecurity": true},
+      {"tablename": "messages", "rowsecurity": true},
+      {"tablename": "profiles", "rowsecurity": true},
+      {"tablename": "scheduled_report_configs", "rowsecurity": true},
+      {"tablename": "talkx_campaigns", "rowsecurity": true},
+      {"tablename": "whatsapp_connections", "rowsecurity": true}
+    ],
+    "tabelas_inexistentes_como_public": ["conversations", "users"],
+    "analise_politicas": "Todas as 27 politicas RLS encontradas nas tabelas sensiveis usam roles=['authenticated']. Nenhuma politica permissiva para o role 'anon' foi encontrada. Com RLS habilitado e sem politica permissiva para anon, o role anonimo recebe 0 linhas por padrao — comportamento correto.",
+    "resultado_efetivo_anon": {
+      "contacts": "0 (RLS bloqueia anon — sem politica permissiva para esse role)",
+      "conversations": "tabela nao existe em public schema",
+      "messages": "0 (RLS bloqueia anon)",
+      "profiles": "0 (RLS bloqueia anon)",
+      "whatsapp_connections": "0 (RLS bloqueia anon)",
+      "scheduled_report_configs": "0 (RLS bloqueia anon)",
+      "talkx_campaigns": "0 (RLS bloqueia anon)",
+      "departments": "0 (RLS bloqueia anon)",
+      "users": "tabela nao existe em public schema"
+    },
+    "login_attempts": {
+      "rowsecurity": true,
+      "politicas": [
+        {"cmd": "SELECT", "roles": ["authenticated"], "policyname": "Admins and supervisors can view login attempts"},
+        {"cmd": "INSERT", "roles": ["authenticated"], "policyname": "Block authenticated inserts on login_attempts"},
+        {"cmd": "UPDATE", "roles": ["authenticated"], "policyname": "Block authenticated updates on login_attempts"},
+        {"cmd": "DELETE", "roles": ["authenticated"], "policyname": "Only admins can delete login attempts"}
+      ],
+      "nota": "RLS habilitado, sem politica para anon — correto. Contem email e ip_address (PII) sem coluna de retencao/anonimizacao."
+    }
+  },
+
+  "secao12_lacunas": {
+    "Q4_wal_backup": {
+      "query": "SELECT name, setting FROM pg_settings WHERE name IN ('archive_mode','wal_level','max_wal_senders') ORDER BY name",
+      "resultado": [
+        {"name": "archive_mode", "setting": "on"},
+        {"name": "max_wal_senders", "setting": "5"},
+        {"name": "wal_level", "setting": "logical"}
+      ],
+      "analise": "Configuracao WAL saudavel: archive_mode=on (backup continuo ativo), wal_level=logical (suporta replicacao logica e CDC), max_wal_senders=5 (slots de replicacao disponiveis)."
+    },
+    "Q5_tabelas_auditoria": {
+      "query": "SELECT tablename FROM pg_tables WHERE schemaname='public' AND (tablename ILIKE '%audit%' OR tablename ILIKE '%log%' OR tablename ILIKE '%history%' OR tablename ILIKE '%changelog%') ORDER BY tablename",
+      "resultado": [
+        "_zapp_mig133_log", "ai_usage_logs", "audit_logs", "catalog_favorites",
+        "catalog_rate_limit_hits", "catalog_rate_limits", "catalog_send_events",
+        "connection_health_logs", "contact_deletion_audit", "department_audit_logs",
+        "login_attempts", "rate_limit_logs", "talkx_delivery_log", "voice_command_logs"
+      ],
+      "analise": "14 tabelas de log/auditoria encontradas. Cobertura ampla: ai_usage_logs, audit_logs, contact_deletion_audit, department_audit_logs, login_attempts, connection_health_logs, talkx_delivery_log."
+    },
+    "Q6_pii_sem_retencao": {
+      "query": "SELECT c.table_name, c.column_name FROM information_schema.columns c WHERE c.table_schema='public' AND c.column_name IN ('email','phone','nome','name','cpf','rg','address','endereco') AND NOT EXISTS (SELECT 1 FROM information_schema.columns c2 WHERE c2.table_schema='public' AND c2.table_name=c.table_name AND c2.column_name IN ('deleted_at','anonymized_at','expires_at')) ORDER BY c.table_name LIMIT 30",
+      "resultado_parcial_30": [
+        {"table_name": "ai_providers", "column_name": "name"},
+        {"table_name": "audio_memes", "column_name": "name"},
+        {"table_name": "automations", "column_name": "name"},
+        {"table_name": "campaigns", "column_name": "name"},
+        {"table_name": "channel_connections", "column_name": "name"},
+        {"table_name": "channel_connections_safe", "column_name": "name"},
+        {"table_name": "chatbot_flows", "column_name": "name"},
+        {"table_name": "client_wallet_rules", "column_name": "name"},
+        {"table_name": "custom_emojis", "column_name": "name"},
+        {"table_name": "departments", "column_name": "name"},
+        {"table_name": "email_labels", "column_name": "name"},
+        {"table_name": "followup_sequences", "column_name": "name"},
+        {"table_name": "login_attempts", "column_name": "email"},
+        {"table_name": "multiplix_audiences", "column_name": "name"},
+        {"table_name": "multiplix_dispatches", "column_name": "name"},
+        {"table_name": "password_reset_requests", "column_name": "email"},
+        {"table_name": "password_reset_requests_safe", "column_name": "email"},
+        {"table_name": "permissions", "column_name": "name"},
+        {"table_name": "playbooks", "column_name": "name"},
+        {"table_name": "products", "column_name": "name"},
+        {"table_name": "profiles", "column_name": "name"},
+        {"table_name": "profiles", "column_name": "email"},
+        {"table_name": "profiles", "column_name": "phone"},
+        {"table_name": "profiles_public", "column_name": "name"},
+        {"table_name": "queues", "column_name": "name"},
+        {"table_name": "rate_limit_configs", "column_name": "name"},
+        {"table_name": "sales_pipeline_stages", "column_name": "name"},
+        {"table_name": "saved_filters", "column_name": "name"},
+        {"table_name": "scheduled_report_configs", "column_name": "name"},
+        {"table_name": "scheduled_reports", "column_name": "name"}
+      ],
+      "analise": "Tabelas de alto risco LGPD sem coluna de retencao: login_attempts (email + ip_address + user_agent), password_reset_requests (email), profiles (name + email + phone). A maioria das ocorrencias de 'name' sao nomes de entidades nao-pessoais (campanhas, flows, etc). Critico: login_attempts armazena email + IP sem TTL ou mecanismo de expiracao identificado via SQL."
+    },
+    "Q7_config_toml": {
+      "conteudo_head30": "project_id = 'tnnnlkbymytvtqngbbqh'\n[functions.evolution-webhook] verify_jwt=false\n[functions.whatsapp-webhook] verify_jwt=false\n[functions.gmail-webhook] verify_jwt=false\n[functions.gmail-cron-sync] verify_jwt=false\n[functions.connection-health-check] verify_jwt=false\n[functions.batch-fetch-avatars] verify_jwt=false\n[functions.elevenlabs-webhook] verify_jwt=false",
+      "analise": "7 edge functions com verify_jwt=false: webhooks externos (evolution, whatsapp, gmail, elevenlabs) sao legitimos. Funcoes de cron interno (gmail-cron-sync, connection-health-check, batch-fetch-avatars) documentadas no config como usando x-cron-secret no Vault — requerem validacao interna explicita em cada funcao."
+    },
+    "Q8_monitoramento_externo": {
+      "resultado": "Nenhuma integracao com Sentry, Datadog, New Relic ou PagerDuty encontrada em src/. Arquivos encontrados com 'monitor' sao modulos internos: useEvolutionMonitoring.ts, useMonitoringNotifications.ts (monitoramento de conexao WhatsApp, nao APM externo).",
+      "observacao": "Sem APM/alerting externo: erros de producao, degradacao de performance e falhas de cron nao geram alertas proativos fora do Supabase Dashboard."
+    },
+    "Q9_pitr": {
+      "resultado": "NAO VERIFICAVEL via SQL",
+      "observacao": "PITR (Point-in-Time Recovery) e configurado pelo Supabase Cloud automaticamente para planos Pro+. Verificar em: https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh/settings/general"
+    },
+    "Q10_ci_rls": {
+      "supabase_tests_dir": "Diretorio supabase/tests/ listado com ~80+ arquivos SQL de teste cobrindo RLS, comportamento de funcoes, contratos de seguranca.",
+      "scripts_db_audit_test_sh": "20+ arquivos .test.sh em scripts/db-audit/ incluindo testes especificos de RLS: e44-whatsapp-connections-anon-grants.test.sh, contact_protection_policy_rls.sql, rls_conversation_tab_counts_files_total.sql, rls_dashboard.sql, rls_message_reactions_autoria.sql, rls_message_templates.sql, rls_whatsapp_media_select_via_messages.sql, rls_whatsapp_media_storage_acl.sql, security_acl_alerts_monitor.sql",
+      "analise": "Cobertura de CI para RLS e ampla e bem estruturada. Tanto supabase/tests/ quanto scripts/db-audit/ tem testes especificos de RLS rodando no CI (db-guard.yml)."
+    }
+  }
+}

@@ -24,28 +24,31 @@ const mockLogs = [
   { id: '3', ip_address: '1.2.3.4', endpoint: '/api/messages', user_id: null, request_count: 30, blocked: false, user_agent: 'Chrome', country: 'BR', city: 'SP', created_at: '2024-01-02' },
 ];
 
-function queryResult(data: typeof mockLogs | null, error: Error | null = null) {
-  const result = Promise.resolve({ data, error });
+function queryResult(data: typeof mockLogs | null, count: number | null = null, error: Error | null = null) {
+  const result = Promise.resolve({ data, count, error });
   return Object.assign(result, { abortSignal: vi.fn(() => result) });
 }
 
-function buildChain(result: ReturnType<typeof queryResult>) {
-  const q: Record<string, ReturnType<typeof vi.fn>> = {};
-  q.order = vi.fn(() => q);
-  q.limit = vi.fn(() => result);
-  q.range = vi.fn(() => result);
-  q.ilike = vi.fn(() => q);
-  q.eq = vi.fn(() => q);
-  return q;
+/** Cadeia completa: suporta duplo order() + range()/limit() + abortSignal(). */
+function makeChain(data: typeof mockLogs | null, count: number | null = null, error: Error | null = null) {
+  const qr = queryResult(data, count, error);
+  const chain: Record<string, ReturnType<typeof vi.fn>> = {};
+  chain.order = vi.fn().mockImplementation(() => chain);
+  chain.ilike = vi.fn().mockImplementation(() => chain);
+  chain.eq = vi.fn().mockImplementation(() => chain);
+  chain.in = vi.fn().mockImplementation(() => chain);
+  chain.limit = vi.fn().mockReturnValue(qr);
+  chain.range = vi.fn().mockReturnValue(qr);
+  return chain;
 }
 
 describe('useRateLimitLogs', () => {
   afterEach(() => vi.useRealTimers());
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue(buildChain(queryResult(mockLogs))),
-    });
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn().mockImplementation(() => makeChain(mockLogs)),
+    }));
   });
 
   it('fetches logs on mount', async () => {
@@ -87,9 +90,9 @@ describe('useRateLimitLogs', () => {
   });
 
   it('handles empty logs', async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue(buildChain(queryResult([]))),
-    });
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn().mockImplementation(() => makeChain([])),
+    }));
 
     const { result } = renderHook(() => useRateLimitLogs());
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -99,9 +102,9 @@ describe('useRateLimitLogs', () => {
   });
 
   it('handles fetch error', async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue(buildChain(queryResult(null, new Error('fail')))),
-    });
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn().mockImplementation(() => makeChain(null, null, new Error('fail'))),
+    }));
 
     const { result } = renderHook(() => useRateLimitLogs());
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -132,7 +135,7 @@ describe('useRateLimitLogs', () => {
     const { result } = renderHook(() => useRateLimitLogs());
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     const updated = [{ ...mockLogs[0], request_count: 900, blocked: true }];
-    mockFrom.mockReturnValue({ select: vi.fn(() => buildChain(queryResult(updated))) });
+    mockFrom.mockImplementation(() => ({ select: vi.fn(() => makeChain(updated, updated.length)) }));
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
     expect(result.current.logs).toEqual(updated);
     expect(result.current.stats?.totalRequests).toBe(900);

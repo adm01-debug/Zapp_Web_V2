@@ -1,0 +1,130 @@
+{
+  "secao": "S4 - Integridade de Dados",
+  "gerado_em": "2026-10-22",
+  "queries": {
+    "Q1_fks_declaradas": {
+      "descricao": "FKs declaradas no schema public",
+      "total": 226,
+      "nota": "Resultado completo armazenado abaixo (amostra de padrões notáveis)",
+      "delete_rules_resumo": {
+        "CASCADE": "maioria para tabelas filhas dependentes (ex: messages->contacts, campaign_contacts->campaigns)",
+        "SET NULL": "colunas opcionais como agent_id, created_by, closed_by",
+        "NO ACTION": "relações onde a exclusão deve ser explicitamente gerenciada (ex: contacts->whatsapp_connection_id, messages->channel_connection_id)",
+        "RESTRICT": "multiplix_events->dispatch_id, multiplix_events->recipient_id, crm_contact_links->zapp_contact_id"
+      },
+      "cascades_criticos": [
+        {"table": "conversation_snoozes", "col": "snoozed_by", "ref": "profiles", "rule": "CASCADE"},
+        {"table": "sla_rules", "col": "agent_id", "ref": "profiles", "rule": "CASCADE"},
+        {"table": "sla_rules", "col": "contact_id", "ref": "contacts", "rule": "CASCADE"},
+        {"table": "sla_rules", "col": "queue_id", "ref": "queues", "rule": "CASCADE"},
+        {"table": "client_wallet_rules", "col": "agent_id", "ref": "profiles", "rule": "CASCADE"},
+        {"table": "client_wallet_rules", "col": "whatsapp_connection_id", "ref": "whatsapp_connections", "rule": "CASCADE"}
+      ]
+    },
+    "Q2_colunas_id_sem_fk": {
+      "descricao": "Colunas *_id/*_uuid sem FK declarada (LIMIT 50, truncado)",
+      "total_retornado": 50,
+      "truncado": true,
+      "colunas_suspeitas_sem_fk_interna": [
+        {"table": "ai_budget_reservations", "col": "user_id", "nota": "provavelmente auth.users — FK cross-schema impossível no Postgres/Supabase"},
+        {"table": "ai_jobs", "col": "user_id", "nota": "idem"},
+        {"table": "ai_usage_logs", "col": "job_id", "nota": "deveria referenciar ai_jobs.id"},
+        {"table": "multiplix_audiences", "col": "owner_id", "nota": "deveria referenciar profiles.id"},
+        {"table": "mfa_sessions", "col": "factor_id", "nota": "provavelmente auth.mfa_factors — cross-schema"},
+        {"table": "gmail_accounts_safe", "col": "user_id", "nota": "view — não aplica FK"},
+        {"table": "channel_connections_safe", "col": "whatsapp_connection_id", "nota": "view — não aplica FK"}
+      ],
+      "colunas_externas_legitimas": [
+        "calls.provider_call_id", "calls.provider_event_id",
+        "campaign_contacts.external_id",
+        "channel_connections.external_account_id", "channel_connections.external_page_id",
+        "email_attachments.gmail_attachment_id", "email_labels.gmail_label_id",
+        "email_messages.gmail_message_id", "email_threads.gmail_thread_id",
+        "gmail_accounts.history_id",
+        "messages.client_message_id", "messages.external_id",
+        "multiplix_audience_members.singu_company_id", "multiplix_audience_members.singu_contact_id",
+        "multiplix_delivery_items.external_id"
+      ]
+    },
+    "Q3_fks_sem_indice": {
+      "descricao": "FKs sem índice na coluna referenciante — causa seq scan em DELETE/UPDATE do pai",
+      "total": 20,
+      "rows": [
+        {"fk": "ai_model_prices_provider_id_fkey", "table": "ai_model_prices", "col": "provider_id"},
+        {"fk": "contacts_ai_projection_analysis_id_fkey", "table": "contacts", "col": "ai_projection_analysis_id"},
+        {"fk": "conversation_events_from_queue_id_fkey", "table": "conversation_events", "col": "from_queue_id"},
+        {"fk": "conversation_events_to_queue_id_fkey", "table": "conversation_events", "col": "to_queue_id"},
+        {"fk": "department_invitations_used_by_fkey", "table": "department_invitations", "col": "used_by"},
+        {"fk": "multiplix_delivery_items_voice_asset_id_fkey", "table": "multiplix_delivery_items", "col": "voice_asset_id"},
+        {"fk": "multiplix_delivery_items_recipient_id_fkey", "table": "multiplix_delivery_items", "col": "recipient_id"},
+        {"fk": "multiplix_delivery_items_block_id_fkey", "table": "multiplix_delivery_items", "col": "block_id"},
+        {"fk": "multiplix_dispatches_whatsapp_connection_id_fkey", "table": "multiplix_dispatches", "col": "whatsapp_connection_id"},
+        {"fk": "reminders_migrated_task_id_fkey", "table": "reminders", "col": "migrated_task_id"},
+        {"fk": "talkx_campaigns_launched_by_fkey", "table": "talkx_campaigns", "col": "launched_by"},
+        {"fk": "talkx_campaigns_cancelled_by_fkey", "table": "talkx_campaigns", "col": "cancelled_by"},
+        {"fk": "talkx_campaigns_consent_confirmed_by_fkey", "table": "talkx_campaigns", "col": "consent_confirmed_by"},
+        {"fk": "talkx_campaigns_owner_fkey", "table": "talkx_campaigns", "col": "owner"},
+        {"fk": "talkx_campaigns_paused_by_fkey", "table": "talkx_campaigns", "col": "paused_by"},
+        {"fk": "talkx_campaigns_responsible_id_fkey", "table": "talkx_campaigns", "col": "responsible_id"},
+        {"fk": "talkx_campaigns_template_version_id_fkey", "table": "talkx_campaigns", "col": "template_version_id"},
+        {"fk": "talkx_links_created_by_fkey", "table": "talkx_links", "col": "created_by"},
+        {"fk": "talkx_optout_keywords_created_by_fkey", "table": "talkx_optout_keywords", "col": "created_by"},
+        {"fk": "talkx_templates_current_version_id_fkey", "table": "talkx_templates", "col": "current_version_id"}
+      ]
+    },
+    "Q4_tabelas_sem_pk": {
+      "descricao": "Tabelas no schema public sem PRIMARY KEY",
+      "total": 1,
+      "rows": [{"tablename": "_zapp_fn_before"}],
+      "nota": "_zapp_fn_before é tabela auxiliar interna de migration; não é tabela operacional"
+    },
+    "Q5_sequences_limite": {
+      "descricao": "Sequences no schema public e % de uso",
+      "total": 2,
+      "rows": [
+        {"sequencename": "catalog_rate_limit_hits_id_seq", "last_value": 744, "max_value": 9223372036854775807, "pct": 0.0},
+        {"sequencename": "contact_deletion_audit_id_seq", "last_value": 619, "max_value": 9223372036854775807, "pct": 0.0}
+      ],
+      "nota": "Ambas BIGINT com uso < 0.001% — nenhum risco de overflow"
+    },
+    "Q6_tabelas_sem_created_at": {
+      "descricao": "Tabelas sem coluna created_at",
+      "total": 22,
+      "rows": [
+        "_zapp_fn_before", "_zapp_mig133_log", "agent_achievements", "agent_presence",
+        "app_settings", "catalog_rate_limit_hits", "catalog_rate_limits",
+        "connection_health_logs", "contact_deletion_audit", "contact_identity_map",
+        "crm_contact_links", "edge_rate_limits", "feature_flags",
+        "link_preview_cache_metrics", "talkx_alerts", "talkx_link_clicks",
+        "talkx_settings", "talkx_storage_purge_queue", "team_conversation_members",
+        "team_message_receipts", "user_sessions", "webhook_failures"
+      ],
+      "operacionais_notaveis": [
+        "connection_health_logs — log de saúde sem timestamp próprio",
+        "team_conversation_members — membership sem data de entrada",
+        "team_message_receipts — recibos sem data de leitura",
+        "user_sessions — sessões sem data de criação",
+        "webhook_failures — falhas sem data de ocorrência",
+        "crm_contact_links — vinculação sem data"
+      ]
+    },
+    "Q7_auth_vs_profiles": {
+      "descricao": "Paridade auth.users ativos vs public.profiles",
+      "auth_users_ativos": 10,
+      "profiles_count": 10,
+      "paridade": true,
+      "nota": "Paridade perfeita 1:1 — sem orphans em nenhuma direção"
+    },
+    "Q8_tabelas_sem_deleted_at": {
+      "descricao": "Tabelas sem coluna deleted_at (sem suporte a soft-delete)",
+      "total": 172,
+      "tabelas_operacionais_de_alto_volume_sem_soft_delete": [
+        "messages", "campaigns", "whatsapp_connections", "talkx_recipients",
+        "talkx_delivery_log", "talkx_campaigns", "conversation_closures",
+        "conversation_events", "audit_logs", "scheduled_messages",
+        "contact_notes", "contact_purchases", "sales_deals"
+      ],
+      "nota": "172 de ~175 tabelas carecem de deleted_at — expected para tabelas de log/event, mas tabelas operacionais importantes como messages e campaigns não têm soft-delete"
+    }
+  }
+}

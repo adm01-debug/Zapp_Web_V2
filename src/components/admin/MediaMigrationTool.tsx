@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { invokeEdge } from '@/lib/invokeEdge';
 import {
@@ -17,15 +16,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-
-/** Prefixos de CDN temporária do WhatsApp — o mesmo filtro que a Edge `migrate-media-storage` usa. */
-const CDN_TEMP_PREFIXES = ['https://mmg.whatsapp.net/', 'https://pps.whatsapp.net/'] as const;
-
-/** Ação que a Edge grava em `audit_logs` ao fim de cada execução. */
-const MIGRATION_ACTION = 'media_migration';
-
-/** Quantas execuções o histórico mostra. */
-const HISTORY_LIMIT = 10;
+import { countPendingMedia, fetchMigrationHistory } from '@/services/mediaMigration.service';
+import type { MigrationHistoryEntry } from '@/services/mediaMigration.service';
 
 interface MigrationResult {
   success: boolean;
@@ -35,15 +27,6 @@ interface MigrationResult {
   details?: string[];
   message?: string;
   code?: string;
-}
-
-interface MigrationHistoryEntry {
-  id: string;
-  createdAt: string;
-  authorName: string | null;
-  processed: number;
-  migrated: number;
-  failed: number;
 }
 
 interface PendingCount {
@@ -56,60 +39,10 @@ interface HistoryState {
   entries: MigrationHistoryEntry[];
 }
 
-function asCount(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
-}
-
 function formatDateTime(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
   return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-}
-
-/** Conta, sem trazer linhas (`head`), as mensagens que ainda apontam para a CDN temporária. */
-async function countPendingMedia(): Promise<number> {
-  let total = 0;
-  for (const prefix of CDN_TEMP_PREFIXES) {
-    const { count, error } = await supabase
-      .from('messages')
-      .select('id', { count: 'exact', head: true })
-      .like('media_url', `${prefix}%`);
-    if (error) throw error;
-    total += asCount(count);
-  }
-  return total;
-}
-
-/** Histórico real: uma linha de `audit_logs` por execução da Edge (só contagens, sem URL). */
-async function fetchMigrationHistory(): Promise<MigrationHistoryEntry[]> {
-  const { data, error } = await supabase
-    .from('audit_logs')
-    .select('id, user_id, created_at, details')
-    .eq('action', MIGRATION_ACTION)
-    .order('created_at', { ascending: false })
-    .limit(HISTORY_LIMIT);
-  if (error) throw error;
-
-  const logs = data ?? [];
-  const userIds = [...new Set(logs.map((log) => log.user_id).filter((id): id is string => Boolean(id)))];
-  const { data: profiles } = userIds.length > 0
-    ? await supabase.from('profiles').select('user_id, name').in('user_id', userIds)
-    : { data: [] as { user_id: string; name: string | null }[] };
-
-  return logs.map((log) => {
-    const details =
-      typeof log.details === 'object' && log.details !== null
-        ? (log.details as Record<string, unknown>)
-        : {};
-    return {
-      id: log.id,
-      createdAt: log.created_at,
-      authorName: profiles?.find((profile) => profile.user_id === log.user_id)?.name ?? null,
-      processed: asCount(details.processed),
-      migrated: asCount(details.migrated),
-      failed: asCount(details.failed),
-    };
-  });
 }
 
 export function MediaMigrationTool() {

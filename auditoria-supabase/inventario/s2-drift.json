@@ -1,0 +1,166 @@
+{
+  "generated_at": "2026-10-22T00:00:00Z",
+  "secao": "2 - DRIFT (repo vs ledger vs schema real)",
+  "resumo": {
+    "arquivos_repo": 1051,
+    "versions_ledger": 922,
+    "max_version_ledger": "20261026090300",
+    "max_version_repo_only": "20261011205122",
+    "apenas_no_repo_nao_aplicado": 129,
+    "apenas_no_ledger_sem_arquivo": 0,
+    "null_stmts_no_ledger": 61,
+    "schema_manifest_gerado_em": "2026-10-16T18:17:30Z",
+    "defasagem_manifest_dias": 10
+  },
+  "achados": [
+    {
+      "id": "S2-A1",
+      "severidade": "ALTO",
+      "titulo": "129 migrations no repo NÃO aplicadas em produção",
+      "descricao": "Existem 129 arquivos .sql em supabase/migrations/ com versions superiores ao máximo do ledger anterior (20261005130925 a 20261011205122) que não possuem registro no ledger de produção. Esses arquivos incluem novas tabelas, RPCs e funcionalidades já referenciadas no código frontend.",
+      "evidence": {
+        "query": "SELECT max(version) as max_version, count(*) as total FROM supabase_migrations.schema_migrations",
+        "resultado": "max_version=20261026090300, total=922",
+        "calculo": "1051 arquivos no repo - 922 no ledger = 129 unapplied",
+        "range_nao_aplicado": "20261005130925 a 20261011205122",
+        "exemplos_arquivos_impactantes": [
+          "20261011155946_enqueue_group_outbound_message.sql",
+          "20261011173000_admin_cron_jobs.sql",
+          "20261009063248_talkx_segment_library_stats.sql",
+          "20261009063730_talkx_segment_bulk_actions.sql",
+          "20261009071216_talkx_suppression_read_rpcs.sql",
+          "20261010062941_talkx_campaign_recipients_page.sql",
+          "20261011131142_request_department_access_rpc.sql",
+          "20261011133612_dispatch_scheduled_messages.sql",
+          "20261011151650_edit_message_rpc.sql",
+          "20261011124430_message_attempts.sql",
+          "20261011125915_message_favorites_pins_reports.sql"
+        ]
+      },
+      "impacto": "RPCs e tabelas chamadas no frontend (enqueue_group_outbound_message, admin_list_cron_jobs, admin_toggle_cron_job, talkx_segment_library_stats, talkx_segment_bulk_action, talkx_suppression_stats, talkx_campaign_recipients_page) não existem em produção — chamadas resultam em erro 404/PGRST202."
+    },
+    {
+      "id": "S2-A2",
+      "severidade": "ALTO",
+      "titulo": "11 RPCs chamadas no frontend não existem em produção",
+      "descricao": "Funções referenciadas via .rpc() no código TypeScript do frontend não existem no schema public do banco de produção. Algumas estão em migrations não aplicadas (S2-A1); outras estão em migrations registradas no ledger com statements IS NULL mas as funções correspondentes não foram criadas.",
+      "evidence": {
+        "query_verificacao": "SELECT proname FROM pg_proc p JOIN pg_namespace n ON p.pronamespace=n.oid WHERE n.nspname='public' AND proname IN ('admin_list_cron_jobs','admin_toggle_cron_job','app_bootstrap','dashboard_daily_series','enqueue_group_outbound_message','inbox_unread_total','increment_custom_emoji_use','reopen_conversation','search_email_threads','sentiment_trend','warroom_agent_today','warroom_queue_stats','log_search_event','talkx_campaign_recipients_page','talkx_segment_bulk_action','talkx_segment_library_stats','talkx_suppression_stats')",
+        "resultado": "0 rows — nenhuma dessas funções existe em produção",
+        "funcoes_ausentes": [
+          {"rpc": "enqueue_group_outbound_message", "origem": "unapplied: 20261011155946"},
+          {"rpc": "admin_list_cron_jobs", "origem": "unapplied: 20261011173000"},
+          {"rpc": "admin_toggle_cron_job", "origem": "unapplied: 20261011173000"},
+          {"rpc": "talkx_segment_library_stats", "origem": "unapplied: 20261009063248"},
+          {"rpc": "talkx_segment_bulk_action", "origem": "unapplied: 20261009063730"},
+          {"rpc": "talkx_suppression_stats", "origem": "unapplied: 20261009071216"},
+          {"rpc": "talkx_campaign_recipients_page", "origem": "unapplied: 20261010062941"},
+          {"rpc": "dashboard_daily_series", "origem": "null_stmts: 20261012235745"},
+          {"rpc": "inbox_unread_total", "origem": "null_stmts: 20261013230004"},
+          {"rpc": "search_email_threads", "origem": "null_stmts: 20261013230000"},
+          {"rpc": "log_search_event", "origem": "sem arquivo no repo, sem ledger"},
+          {"rpc": "warroom_agent_today", "origem": "null_stmts: 20261012225242 (warroom_rpcs_agentes_filas)"},
+          {"rpc": "warroom_queue_stats", "origem": "null_stmts: 20261012225242 (warroom_rpcs_agentes_filas)"},
+          {"rpc": "increment_custom_emoji_use", "origem": "null_stmts: 20261013012531 (custom_emoji_use_rpc)"},
+          {"rpc": "reopen_conversation", "origem": "null_stmts: 20261013210003 (reabre_conversa_com_nova_mensagem)"},
+          {"rpc": "sentiment_trend", "origem": "null_stmts: 20261015221500 (sentiment_trend_rpc)"},
+          {"rpc": "app_bootstrap", "origem": "null_stmts: 20261015223614"}
+        ]
+      },
+      "impacto": "Cada chamada a essas RPCs retorna erro em produção. Funcionalidades afetadas: warroom/sala de crise, métricas de campanha TalkX, supressões TalkX, paginação de destinatários, enfileiramento de mensagens em grupo, dashboard diário, thread de e-mail, bootstrap do app."
+    },
+    {
+      "id": "S2-A3",
+      "severidade": "ALTO",
+      "titulo": "RPC get_search_insights chamada no código mas DB tem search_insights (divergência de nome)",
+      "descricao": "O hook useSearchInsights.ts e o componente SearchInsightsView.tsx chamam rpc('get_search_insights') mas a função em produção se chama search_insights (sem prefixo get_). A chamada sempre retorna erro PGRST202.",
+      "evidence": {
+        "query_codigo": "grep -rn 'get_search_insights' src/ | head",
+        "resultado_codigo": "src/hooks/admin/useSearchInsights.ts:89 — rpc('get_search_insights', { p_days: days })",
+        "query_banco": "SELECT proname FROM pg_proc WHERE proname IN ('get_search_insights','search_insights')",
+        "resultado_banco": "search_insights existe, get_search_insights NÃO existe",
+        "arquivo_impactado": "src/hooks/admin/useSearchInsights.ts"
+      },
+      "impacto": "A tela de admin SearchInsightsView nunca carrega os dados — a RPC retorna erro PGRST202 silencioso ou exibido como 'Erro ao carregar insights'."
+    },
+    {
+      "id": "S2-A4",
+      "severidade": "MÉDIO",
+      "titulo": "61 migrations no ledger com statements IS NULL",
+      "descricao": "61 registros em supabase_migrations.schema_migrations têm statements = NULL, impossibilitando replay, auditoria e verificação de drift offline. Desses, a maioria não tem função correspondente no banco (a correspondência por nome é indicativa — algumas migrations criam políticas/triggers, não funções).",
+      "evidence": {
+        "query": "SELECT count(*) as null_stmts_count FROM supabase_migrations.schema_migrations WHERE statements IS NULL",
+        "resultado": "61",
+        "query_sem_funcao_correspondente": "SELECT version, name FROM supabase_migrations.schema_migrations WHERE statements IS NULL AND NOT EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON p.pronamespace=n.oid WHERE n.nspname='public' AND p.proname = name) ORDER BY version",
+        "resultado_sem_funcao": "60 das 61 migrations (apenas talk_me_list_pending_messages tem função homônima)",
+        "sample_versions_null": [
+          "20261006234158 (whatsapp_default_connection_rpc_atomica)",
+          "20261011010000 (fix_whatsapp_media_select_contact_scope)",
+          "20261011010001 (higiene_grants_public_policies)",
+          "20261011010002 (bucket_limits_e_team_chat_files_identidade)",
+          "20261012225242 (warroom_rpcs_agentes_filas)",
+          "20261012235745 (dashboard_daily_series)",
+          "20261013230000 (search_email_threads)",
+          "20261013230004 (inbox_unread_total)",
+          "20261015221500 (sentiment_trend_rpc)",
+          "20261015223614 (app_bootstrap)"
+        ]
+      },
+      "impacto": "Impossível auditar o que foi aplicado. O db-guard não consegue verificar drift para essas migrations. O check 'Contrato DB offline' pode passar false-positive para essas versions."
+    },
+    {
+      "id": "S2-A5",
+      "severidade": "MÉDIO",
+      "titulo": "schema-manifest.json defasado 10 dias em relação ao ledger de produção",
+      "descricao": "O arquivo supabase/schema-manifest.json foi gerado em 2026-10-16T18:17:30Z, mas o max(version) no ledger é 20261026090300 (2026-10-26). Migrações aplicadas nos últimos 10 dias não estão refletidas no manifesto.",
+      "evidence": {
+        "manifest_generated_at": "2026-10-16T18:17:30Z",
+        "ledger_max_version": "20261026090300",
+        "defasagem": "~10 dias",
+        "comando_verificacao": "grep 'generated_at' supabase/schema-manifest.json"
+      },
+      "impacto": "O db-live-guard e o db-guard podem reportar falsos positivos de drift ao comparar com um manifesto desatualizado. O types.ts pode estar desatualizado em relação ao schema real."
+    },
+    {
+      "id": "S2-A6",
+      "severidade": "BAIXO",
+      "titulo": "0 versions no ledger sem arquivo no repo (sem DDL direto confirmado)",
+      "descricao": "Todos os 922 registros do ledger têm um arquivo correspondente em supabase/migrations/. Não há evidência de DDL aplicado diretamente no banco sem passar pelo repo.",
+      "evidence": {
+        "query": "Comparação entre versões no ledger vs arquivos no repo (excluindo _foreign/ e _superseded/)",
+        "resultado": "0 versions apenas no ledger sem arquivo"
+      },
+      "impacto": "Positivo — não há drift por DDL direto detectado nesta verificação."
+    }
+  ],
+  "tabelas_no_codigo_sem_correspondencia_no_banco": [],
+  "nota_tabelas": "Todas as tabelas referenciadas via .from() no código src/ existem no schema public do banco de produção. Referências como 'audio-memes', 'audio-messages', 'whatsapp-media', 'custom-emojis', 'avatars' são buckets de Storage, não tabelas — esperado.",
+  "lista_completa_versions_nao_aplicadas": [
+    "20261005130925","20261005134241","20261005150259","20261005151753","20261005185729",
+    "20261006064259","20261006152414","20261006170426","20261006180831","20261006193506",
+    "20261006193547","20261006193554","20261006202215","20261006203249","20261006210406",
+    "20261006211601","20261006221242","20261006222007","20261006222024","20261006222504",
+    "20261006222858","20261006231105","20261006232024","20261006235031","20261007000311",
+    "20261007000554","20261007001008","20261007004252","20261007004545","20261007010129",
+    "20261007010651","20261007012808","20261007013217","20261007034219","20261008210159",
+    "20261009000118","20261009011641","20261009012702","20261009031223","20261009031958",
+    "20261009032406","20261009032420","20261009054459","20261009055051","20261009060347",
+    "20261009060408","20261009060425","20261009061939","20261009062323","20261009063248",
+    "20261009063730","20261009071216","20261009090603","20261009120000","20261009142650",
+    "20261009162228","20261009172324","20261009182648","20261009193246","20261009230001",
+    "20261009230002","20261010024534","20261010042500","20261010060000","20261010062941",
+    "20261010063527","20261010064729","20261010071304","20261010071402","20261010101613",
+    "20261010111757","20261010113500","20261010120000","20261010130000","20261010150628",
+    "20261010151242","20261010180000","20261010180001","20261010211000","20261011000003",
+    "20261011000012","20261011000013","20261011000014","20261011000015","20261011000017",
+    "20261011000019","20261011000020","20261011000021","20261011003001","20261011003003",
+    "20261011003004","20261011003005","20261011003006","20261011003007","20261011003008",
+    "20261011003010","20261011003011","20261011003014","20261011003015","20261011003016",
+    "20261011003018","20261011003020","20261011003021","20261011003022","20261011003023",
+    "20261011003024","20261011003025","20261011003026","20261011003027","20261011124430",
+    "20261011125915","20261011131142","20261011133612","20261011140613","20261011142742",
+    "20261011150527","20261011151650","20261011151736","20261011152008","20261011154648",
+    "20261011155015","20261011155946","20261011173000","20261011180337","20261011183812",
+    "20261011191021","20261011192905","20261011193310","20261011205122"
+  ]
+}
