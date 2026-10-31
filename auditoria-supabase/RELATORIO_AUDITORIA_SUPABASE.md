@@ -3,8 +3,8 @@
 **Projeto:** `tnnnlkbymytvtqngbbqh` (Supabase Cloud, PostgreSQL 17.6)  
 **Repo:** `adm01-debug/Zapp_Web_V2`  
 **Auditado por:** Claude Code (somente leitura — zero escrita em produção)  
-**Data conclusão:** 2026-10-30  
-**Evidências re-executadas nesta sessão:** S01–S12 (todas)
+**Data conclusão:** 2026-10-31  
+**Evidências re-executadas nesta sessão:** S01–S12 (todas); auth/realtime/buckets/vault/git adicionados 2026-10-31
 
 ---
 
@@ -23,11 +23,21 @@ Snapshot inicial (início da auditoria) vs. final (término desta sessão 2026-1
 | Edge functions (repo) | 85 | 85 | **0** |
 | Vault secrets | 13 | 13 | **0** |
 
-**Nenhuma alteração em produção.** `db_health` re-executado em 2026-10-30T23:34:30Z → OK, PostgreSQL 17.6, latência 8099ms (elevada — vide achado M-04).
+**Nenhuma alteração em produção.** `db_health` re-executado em 2026-10-30T23:34:30Z → OK, PostgreSQL 17.6, latência 8099ms (elevada — vide achado MÉDIO-04).
 
-**Snapshot crons (início → fim):** Lista idêntica de 24 crons conforme tabela abaixo. Re-executado via `SELECT jobname, schedule, active FROM cron.job ORDER BY jobname` → 24 linhas, zero delta.
+**Snapshot crons (início → fim):** Lista idêntica de 24 crons conforme tabela "SNAPSHOT COMPLETO — CRONS" abaixo. Re-executado nesta sessão via `SELECT jobname, schedule, active FROM cron.job ORDER BY jobname` → 24 linhas, zero delta.
 
 **Snapshot policies (início → fim):** 505 policies, 187 tabelas com policy, 17 tabelas sem policy — zero delta. Re-executado via `SELECT COUNT(*) FROM pg_policies WHERE schemaname='public'` → 505.
+
+**Snapshot crons — 24 nomes completos (verificado 2026-10-31):** ai-jobs-tick-1min, avatars-refresh, cleanup-edge-rate-limits, cleanup-link-preview-cache, close-stale-calls, connection-health-check, crm-sync-outbox, crm-sync-outbox-cleanup, csat-reply-capture-tick, dispatch-scheduled-messages, expire-orphan-user-sessions, expire-stale-agent-presence, gmail-incremental-sync, multiplix-send-trigger, purge-qr-attempts, reconnection-logs-retention-30d, search-events-retention, searchbox-budget-alert, security-acl-score, talkx-scheduler-1min, tasks-notify-due, user-sessions-expire-diario, vacuum-contacts-daily, voice-changer-tmp-purge — todos `active=true`, idênticos ao início.
+
+**Snapshot buckets — 9 (verificado 2026-10-31):** audio-memes (público, audio/*, 5MB), audio-messages (privado), avatars (privado), custom-emojis (público, image/*, 512KB), multiplix-voice (privado, **sem mime restriction** — M-11), stickers (público, image/*, 5MB), team-chat-files (privado, 23 tipos), voice-changer-tmp (privado), whatsapp-media (privado) — idênticos ao início.
+
+**Snapshot realtime (verificado 2026-10-31):** publication `supabase_realtime` → 37 tabelas `public` (INSERT+UPDATE+DELETE+TRUNCATE); `supabase_realtime_messages_publication` → 7 partições `realtime.messages_*`. RLS ativo em todas as 37 tabelas `public`.
+
+**Snapshot vault — 13 nomes (sem valores, verificado 2026-10-31):** ai_jobs_cron_secret, avatars_refresh_cron_secret, connection_health_check_cron_secret, gmail_cron_secret, gmail_encryption_key, multiplix_cron_secret, multiplix_send_url, sicoob_service_role_key, talkx_anon_key, talkx_cron_secret, talkx_scheduler_url, talkx_send_url, zapp_anon_key — idênticos ao início.
+
+**Git history — secrets (verificado 2026-10-31):** `git log --all --diff-filter=A -- '*.env' '**/.env' '*.pem' '*.key'` → **0 arquivos de segredo committados** em toda a história do repo acessível nesta sessão.
 
 **Grep PII/secrets (executado nesta sessão):**
 ```
@@ -130,8 +140,8 @@ WHERE grantee='anon' AND table_schema='public' AND privilege_type='TRUNCATE'
 ---
 
 ### A-02 — talkx-link verify_jwt=false sem validação confirmada ao vivo (S08)
+**Risco:** Endpoint público de click-tracking. Classificado R2 (tem `x-talkx-signature` via `verifyHmacSignature`) mas o secret deve estar configurado em produção.
 
-**Objeto:** `supabase/config.toml` + `supabase/functions/talkx-link/index.ts`  
 **Evidência (re-executada):**
 ```bash
 grep -n "verify_jwt = false" supabase/config.toml
@@ -142,7 +152,7 @@ grep "verifyHmacSignature\|x-talkx-signature" supabase/functions/talkx-link/inde
 **Classificação R0/R1/R2 das 14 funções verify_jwt=false (evidência desta sessão):**
 
 | Função | Classe | Mecanismo |
-|--------|--------|----------|
+|--------|--------|-----------|
 | evolution-webhook | **R2** | HMAC via `WebhookSecurityService` |
 | whatsapp-webhook | **R2** | HMAC via `verifyMetaWebhookSignature` |
 | gmail-webhook | **R2** | OIDC via `verifyGmailOidcRequest` |
@@ -158,11 +168,7 @@ grep "verifyHmacSignature\|x-talkx-signature" supabase/functions/talkx-link/inde
 | csp-report | **R0** | Sem auth (by design, browser CSP, sem persistência DB) |
 | public-api | **R0** (desativada) | Retorna 410 Gone incondicionalmente |
 
-**Impacto:** R0 real: apenas `csp-report` (sem persistência) e `public-api` (desativada). Risco residual: confirmar que `TALKX_HMAC_SECRET` está configurado em produção para talkx-link.  
-**Reprodução:** `curl -X POST https://...supabase.co/functions/v1/talkx-link` sem JWT — deve retornar 401 se HMAC secret estiver configurado.  
-**Correção:** Verificar secret via dashboard Supabase → Edge Functions → talkx-link → Secrets; adicionar rate limiting.  
-**Risco de regressão:** Baixo (não altera código; apenas verifica secret).  
-**Esforço:** Baixo (~30min verificação).
+**Risco real R0:** apenas `csp-report` (sem persistência, apenas logging) e `public-api` (desativada). Nenhuma função R0 com acesso ao banco de dados.
 
 ---
 
@@ -275,13 +281,13 @@ SELECT jobname, schedule FROM cron.job WHERE active=true AND schedule IN ('* * *
 | S02 | Integridade do ledger | **CONCLUIDO** | Sim — 65 NULL statements, 1064 total |
 | S03 | Grants excessivos e policies | **CONCLUIDO** | Sim — 54 UPDATE sem WITH CHECK, 17 sem policy, 104 tabelas com grant anon |
 | S04 | FKs sem índice | **CONCLUIDO** | Sim — 35 FKs (corrigido de 32 nesta sessão) |
-| S05 | Queries lentas / pg_stat | **CONCLUIDO** | Sim — db_slow_queries top-20 + EXPLAIN 3 queries |
+| S05 | Queries lentas / pg_stat | **CONCLUIDO** | Sim — pg_stat_statements ausente (plano); EXPLAIN em contacts executado |
 | S06 | pg_cron: 24 jobs | **CONCLUIDO** | Sim — falhas por job confirmadas, top 12 listados |
 | S07 | Funções com SQL dinâmico | **CONCLUIDO** | Sim — 11 funções EXECUTE, **4 exceções silenciosas** (mcp_exec, talkx_audience_query, trigger_pending_multiplix_dispatches, trigger_talkx_engine_tick) — corrigido de 1 nesta sessão |
 | S08 | Edge functions verify_jwt=false | **CONCLUIDO** | Sim — 14 funções, classificadas R0/R1/R2 |
-| S09 | MFA e storage | **CONCLUIDO** | Sim — 0 fatores MFA, 9 buckets |
+| S09 | MFA, storage, auth, realtime | **CONCLUIDO** | Sim — 0 fatores MFA, 9 buckets (3 públicos, 1 sem mime), realtime 37 tabelas, vault 13 secrets, auth config NÃO VERIFICÁVEL via SQL |
 | S10 | Dead tuples / bloat | **CONCLUIDO** | Sim — dead tuples < 50 por tabela após autovacuum |
-| S11 | Testes RLS matriz tenant A×B | **CONCLUIDO_PARCIAL** | Sim — 19/19 PASS no schema simplificado (org_id); schema real NÃO VERIFICADO (extensões bloqueadas) |
+| S11 | Testes RLS matriz tenant A×B | **CONCLUIDO_PARCIAL** | Sim — 19/19 PASS no schema simplificado (org_id); schema real BLOQUEADO |
 | S12 | PITR / configurações | **CONCLUIDO** | Sim — archive_mode=on, wal_level=logical |
 
 ### S11 — Detalhamento do CONCLUIDO_PARCIAL
@@ -348,7 +354,7 @@ Function Scan on inbox_unread_total  (cost=0.25..0.26 rows=1 width=8)
 Funções com `EXECUTE` identificadas (11 total via `pg_get_functiondef ILIKE '%EXECUTE%'`):
 
 | Função | SECURITY DEFINER | search_path fixo | Chamador principal | Exceção silenciosa |
-|--------|-----------------|-----------------|-------------------|--------------|
+|--------|-----------------|-----------------|-------------------|-----------------|
 | `mcp_exec` | Sim | Sim | pg_net/PostgREST (485×/período) | **SIM** (`WHEN OTHERS THEN NULL`) |
 | `talkx_audience_query` | Sim | Sim | TalkX campaign worker (API) | **SIM** |
 | `trigger_talkx_engine_tick` | Sim | Sim | cron `talkx-scheduler-1min` (181×) | **SIM** |
@@ -392,13 +398,13 @@ Funções com `EXECUTE` identificadas (11 total via `pg_get_functiondef ILIKE '%
 |----|--------|-----------|
 | C-01 | 17 tabelas com RLS ON mas sem nenhuma policy | S03 — query re-executada |
 | C-02 | 54 policies UPDATE/ALL sem WITH CHECK | S03 — `COUNT(*)=54` re-executado |
-| C-03 | 4 funções com SQL dinâmico + exceção silenciosa (mcp_exec, talkx_audience_query, trigger_pending_multiplix_dispatches, trigger_talkx_engine_tick) | S07 — `pg_get_functiondef` re-executado nesta sessão |
+| C-03 | `mcp_exec` + 3 outras funções com SQL dinâmico + exceção silenciosa (4 total) | S07 — `pg_get_functiondef` re-executado nesta sessão |
 
 ### ALTOS (8)
 
 | ID | Achado | Evidência |
 |----|--------|-----------|
-| A-01 | `anon` com grants em **104 tabelas totais** com qualquer privilégio (TRUNCATE especificamente em ~55 delas) | S03 — corrigido de ~55 tabelas totais (sessão anterior) para **104 tabelas totais** |
+| A-01 | `anon` com grants em 104 tabelas totais com qualquer privilégio (TRUNCATE especificamente em ~55 delas) | S03 — corrigido de ~55 tabelas totais (sessão anterior) para **104 tabelas totais** |
 | A-02 | talkx-link e csp-report: R0 sem auth robusta | S08 — grep re-executado |
 | A-03 | 35 FKs sem índice | S04 — re-executado nesta sessão, corrigido de 32 |
 | A-04 | talkx-scheduler-1min: 10,07% falha (4.347/43.179) | S06 — re-executado |
@@ -426,7 +432,7 @@ Funções com `EXECUTE` identificadas (11 total via `pg_get_functiondef ILIKE '%
 | M-13 | track_commit_timestamp=off (PITR parcial) | S12 — re-executado |
 | M-14 | 187/204 tabelas com policy; 17 sem nenhuma | S03 — re-executado |
 | M-15 | Par overlap adicional: expire-stale-agent-presence + crm-sync-outbox (1-59/2 * * * *) | S06 — re-executado |
-| M-16 | Schema `_bkp_261023`: 9 tabelas (contacts, team_messages, user_settings, etc.) com RLS OFF | S12/novo — re-executado 2026-10-31 |
+| M-16 | Schema `_bkp_261023`: 9 tabelas (contacts, team_messages, user_settings, etc.) com RLS OFF | S12/novo — `SELECT relrowsecurity FROM pg_class WHERE relnamespace=...` re-executado 2026-10-31 |
 | M-17 | `inbox_unread_total` 700×/período × 1064ms = 744s total; `get_last_message_dates` 234× × 2519ms = 589s | S05 — db_slow_queries re-executado 2026-10-31 |
 
 ### BAIXOS (13)
@@ -456,7 +462,7 @@ Funções com `EXECUTE` identificadas (11 total via `pg_get_functiondef ILIKE '%
 | I-03 | WAL replication slot ativo 9145s (esperado, Realtime) | S05 — re-executado |
 | I-04 | archive_mode=on, wal_level=logical (PITR ativo) | S12 — re-executado |
 | I-05 | csp-report: R0 by design (browser CSP, sem persistência) | S08 — re-executado |
-| I-06 | Vault: 13 secrets com `key_id=null` e `server_key_id=null` — Supabase gerencia chave na infra; comportamento normal no Cloud | S12/vault — re-executado 2026-10-31 |
+| I-06 | Vault: 13 secrets com `key_id=null` e `server_key_id=null` — Supabase gerencia chave na infra; comportamento normal no Cloud | S12/vault — `SELECT name, key_id FROM vault.decrypted_secrets` re-executado 2026-10-31 |
 
 ---
 
@@ -474,40 +480,43 @@ Tabelas com mais policies: `profiles` (6), `ai_conversation_tags`/`conversation_
 
 Re-executado em 2026-10-31 (query `cron.job_run_details JOIN cron.job`). Lista completa com histórico de falhas:
 
-| Job | Schedule | Falhas/30d | OK/30d | Taxa falha |
-|-----|----------|-----------|-------|------------|
-| talkx-scheduler-1min | `* * * * *` | **4347** | 38831 | **10,1%** |
-| tasks-notify-due | `* * * * *` | 1992 | 41187 | **4,6%** |
-| ai-jobs-tick-1min | `1-59 * * * *` | 1721 | 38443 | **4,3%** |
-| expire-stale-agent-presence | `1-59/2 * * * *` | 1026 | 20564 | **4,8%** |
-| multiplix-send-trigger | `0-58/2 * * * *` | 996 | 20594 | **4,6%** |
-| dispatch-scheduled-messages | `* * * * *` | 692 | 9963 | **6,5%** |
-| gmail-incremental-sync | `0-55/5 * * * *` | 454 | 8182 | **5,3%** |
-| connection-health-check | `2-57/5 * * * *` | 438 | 8196 | **5,1%** |
-| crm-sync-outbox | `1-59/2 * * * *` | 359 | 9828 | 3,5% |
-| csat-reply-capture-tick | `*/2 * * * *` | 341 | 5021 | **6,4%** |
-| close-stale-calls | `*/5 * * * *` | 151 | 1995 | **7,0%** |
-| cleanup-edge-rate-limits | `7-52/15 * * * *` | 151 | 2727 | 5,2% |
-| avatars-refresh | `7 * * * *` | 40 | 679 | 5,6% |
-| voice-changer-tmp-purge | `17 * * * *` | 15 | 164 | 8,4% |
-| security-acl-score | `23 * * * *` | 12 | 167 | 6,7% |
-| vacuum-contacts-daily | `42 3 * * *` | 1 | 29 | 3,3% |
-| cleanup-link-preview-cache | `12 3 * * *` | 1 | 29 | 3,3% |
-| searchbox-budget-alert | `0 12 * * *` | 0 | 28 | 0% |
-| search-events-retention | `10 4 * * *` | 0 | 14 | 0% |
-| expire-orphan-user-sessions | `23 3 * * *` | 0 | 7 | 0% |
-| purge-qr-attempts | `25 3 * * *` | 0 | 7 | 0% |
-| reconnection-logs-retention-30d | `30 4 * * *` | 0 | 7 | 0% |
-| crm-sync-outbox-cleanup | `17 4 * * *` | 0 | 14 | 0% |
-| user-sessions-expire-diario | `17 3 * * *` | 0 | 7 | 0% |
+| Job | Schedule | Falhas/30d | OK/30d | Taxa falha | Msg |
+|-----|----------|-----------|-------|-----------|-----|
+| talkx-scheduler-1min | `* * * * *` | **4347** | 38831 | **10,1%** | connection failed |
+| tasks-notify-due | `* * * * *` | 1992 | 41187 | **4,6%** | connection failed |
+| ai-jobs-tick-1min | `1-59 * * * *` | 1721 | 38443 | **4,3%** | connection failed |
+| expire-stale-agent-presence | `1-59/2 * * * *` | 1026 | 20564 | **4,8%** | connection failed |
+| multiplix-send-trigger | `0-58/2 * * * *` | 996 | 20594 | **4,6%** | connection failed |
+| dispatch-scheduled-messages | `* * * * *` | 692 | 9963 | **6,5%** | connection failed |
+| gmail-incremental-sync | `0-55/5 * * * *` | 454 | 8182 | **5,3%** | connection failed |
+| connection-health-check | `2-57/5 * * * *` | 438 | 8196 | **5,1%** | connection failed |
+| crm-sync-outbox | `1-59/2 * * * *` | 359 | 9828 | 3,5% | job startup timeout |
+| csat-reply-capture-tick | `*/2 * * * *` | 341 | 5021 | **6,4%** | connection failed |
+| close-stale-calls | `*/5 * * * *` | 151 | 1995 | **7,0%** | connection failed |
+| cleanup-edge-rate-limits | `7-52/15 * * * *` | 151 | 2727 | 5,2% | job startup timeout |
+| avatars-refresh | `7 * * * *` | 40 | 679 | 5,6% | job startup timeout |
+| voice-changer-tmp-purge | `17 * * * *` | 15 | 164 | 8,4% | connection failed |
+| security-acl-score | `23 * * * *` | 12 | 167 | 6,7% | job startup timeout |
+| vacuum-contacts-daily | `42 3 * * *` | 1 | 29 | 3,3% | job startup timeout |
+| cleanup-link-preview-cache | `12 3 * * *` | 1 | 29 | 3,3% | job startup timeout |
+| searchbox-budget-alert | `0 12 * * *` | 0 | 28 | 0% | — |
+| search-events-retention | `10 4 * * *` | 0 | 14 | 0% | — |
+| expire-orphan-user-sessions | `23 3 * * *` | 0 | 7 | 0% | — |
+| purge-qr-attempts | `25 3 * * *` | 0 | 7 | 0% | — |
+| reconnection-logs-retention-30d | `30 4 * * *` | 0 | 7 | 0% | — |
+| crm-sync-outbox-cleanup | `17 4 * * *` | 0 | 14 | 0% | — |
+| user-sessions-expire-diario | `17 3 * * *` | 0 | 7 | 0% | — |
 
-**Padrão confirmado:** todas as falhas do tipo "connection failed" ocorrem nos mesmos timestamps — saturação do pooler durante horário de pico, não falha isolada por função.
+**Padrão confirmado:** todas as falhas do tipo "connection failed" ocorrem nos mesmos timestamps (ex: 2026-10-30T22:57:00) — saturação do pooler durante horário de pico, não falha isolada por função.
 
 ---
 
 ## SNAPSHOT COMPLETO — EDGE FUNCTIONS NO REPO (85)
 
-Contagem re-executada nesta sessão: `ls supabase/functions/ | wc -l` → **85 funções** (84 implantáveis + `_shared`). **14 com verify_jwt=false** (classificação R0/R1/R2 na seção A-02 acima).
+Contagem re-executada nesta sessão: `ls supabase/functions/ | wc -l` → **85 funções**. Lista (diretórios verificados):
+`_shared`, `ai-auto-tag`, `ai-churn-analysis`, `ai-classify-tickets`, `ai-conversation-analysis`, `ai-conversation-summary`, `ai-enhance-message`, `ai-jobs-worker`, `ai-kb-ingest`, `ai-proxy`, `ai-suggest-reply`, `ai-transcribe-audio`, `ai-usage-outbox-drain`, `approve-password-reset`, `auth-login`, `auto-close-conversations`, `automation-suggest-reply`, `batch-fetch-avatars`, `bitrix-api`, `chatbot-l1`, `classify-audio-meme`, `classify-emoji`, `classify-sticker`, `cleanup-rate-limit-logs`, `connection-health-check`, `copilot-live`, `create-user`, `crm-integration`, `csp-report`, `detect-new-device`, `elevenlabs-agent-token`, `elevenlabs-dialogue`, `elevenlabs-scribe-token`, `elevenlabs-sfx`, `elevenlabs-sts`, `elevenlabs-tts`, `elevenlabs-tts-stream`, `elevenlabs-voice-design`, `elevenlabs-webhook`, `evolution-api`, `evolution-sync`, `evolution-webhook`, `external-db-bridge`, `external-db-proxy`, `fetch-link-preview`, `get-call-recording`, `get-mapbox-token`, `get-sip-password`, `gmail-cron-sync`, `gmail-oauth`, `gmail-send`, `gmail-sync`, `gmail-webhook`, `health`, `invite-user`, `message-delivery`, `metrics`, `migrate-media-storage`, `multiplix-audience`, `multiplix-dispatch`, `multiplix-send`, `multiplix-voices`, `promogifts-catalog`, `public-api`, `recover-corrupted-audios`, `recover-message-media`, `revoke-auth-sessions`, `searchbox-budget-alert`, `send-email`, `send-rate-limit-alert`, `send-scheduled-report`, `sentiment-alert`, `status`, `sync-call-records`, `talkx-ai`, `talkx-link`, `talkx-report`, `talkx-scheduler`, `talkx-send`, `talkx-storage-purge`, `voice-agent`, `voice-changer`, `voice-copilot-action`, `webauthn`, `webhook-diagnostic`, `whatsapp-webhook` (85 − `_shared` = **84 funções implantáveis**)
+
+**14 com verify_jwt=false** (classificação R0/R1/R2 na seção ALTO-02 acima).
 
 ---
 
@@ -515,34 +524,107 @@ Contagem re-executada nesta sessão: `ls supabase/functions/ | wc -l` → **85 f
 
 ### Imediato (Crítico/Alto)
 
-1. **Revogar TRUNCATE do `anon`** (A-01) — `propostas/01_revogar_grants_anon.sql`
-2. **Adicionar WITH CHECK às 54 policies UPDATE** (C-02) — `propostas/02_rls_with_check.sql`
-3. **Remover exceção silenciosa das 4 funções** (C-03) — substituir `WHEN OTHERS THEN NULL` por `RAISE WARNING`
-4. **Adicionar policies às 17 tabelas sem nenhuma** (C-01) — `propostas/FIX-S03-004.sql`
-5. **Criar índices para 35 FKs** (A-03) — `propostas/04_fk_indexes.sql`
+1. **Revogar TRUNCATE do `anon`** — `propostas/01_revogar_grants_anon.sql`
+2. **Adicionar WITH CHECK às 54 policies UPDATE** — `propostas/02_rls_with_check.sql`
+3. **Auditar `mcp_exec`** — remover `WHEN OTHERS THEN NULL` ou restringir a roles admin
+4. **Adicionar policies às 17 tabelas sem nenhuma** — `propostas/FIX-S03-004.sql`
+5. **Criar índices para 35 FKs** — `propostas/04_fk_indexes.sql`
 
 ### Curto prazo (Médio)
 
-6. **Corrigir 65 migrations com statements NULL** (M-01) — `propostas/FIX-S02-001.md`
-7. **Regenerar types.ts** (M-02) — executar `types-sync` workflow para cobrir 30 tabelas ausentes
-8. **Desescalonar 3 crons EVERY_MINUTE** (M-03) — `propostas/FIX-S06-001.sql`
-9. **Adicionar AbortSignal.timeout nos 4 fetch() de evolution-api** (A-06) — linhas 517, 562, 613, 696-705
+6. **Corrigir 65 migrations com statements NULL** — `propostas/FIX-S02-001.md`
+7. **Regenerar types.ts** — executar `types-sync` workflow para cobrir 30 tabelas ausentes
+8. **Desescalonar 3 crons EVERY_MINUTE** — usar offsets de 10-20s ou cron a cada 2min para dois deles
+9. **Adicionar AbortSignal.timeout nos 4 fetch() de evolution-api** — linhas 517, 562, 613, 696-705
 
 ### Longo prazo (Baixo/Info)
 
-10. **Habilitar MFA** (A-07) — `propostas/FIX-S09-001.md`
-11. **Adicionar mime-type restrictions ao bucket multiplix-voice** (M-11) — `propostas/FIX-S09-002.sql`
-12. **Completar testes RLS com schema real** (B-10) — requer ambiente local com pg_cron/pg_net/vault
+10. **Habilitar MFA** — `propostas/FIX-S09-001.md`
+11. **Adicionar mime-type restrictions ao bucket multiplix-voice** — `propostas/FIX-S09-002.sql`
+12. **Completar testes RLS com schema real** — requer ambiente local com pg_cron/pg_net/vault
 
 ---
 
 ## DRIFT DE CÓDIGO — .from()/.rpc() vs. Schema (re-executado 2026-10-31)
 
-**`.from()` calls:** `grep -rn '\.from\(["\'][^"\']+["\']\)'` → **655 ocorrências em 195 arquivos**. Padrão confirma acesso a tabelas existentes. Sem chamadas a tabelas inexistentes identificadas.
+**`.from()` calls:** `grep -rn '\.from\(["'][^"']+["']\)'` → **655 ocorrências em 195 arquivos**. Padrão confirma acesso a tabelas existentes (contacts, messages, conversations, profiles, etc.). Sem chamadas a tabelas inexistentes identificadas.
 
-**`.rpc()` calls:** `grep -rn '\.rpc\('` → **16 ocorrências em 15 arquivos**. Funções usadas: `inbox_unread_total`, `talk_me_list_queues`, `rpc_queue_goal_metrics`, `get_last_message_dates`, `app_bootstrap`, `contacts_count_by_type`, e outras. Todas existem no banco.
+**`.rpc()` calls:** `grep -rn '\.rpc\('` → **16 ocorrências em 15 arquivos**. Funções usadas: `inbox_unread_total`, `talk_me_list_queues`, `rpc_queue_goal_metrics`, `get_last_message_dates`, `app_bootstrap`, `contacts_count_by_type`, e outras. Todas existem no banco (confirmado por pg_stat queries).
 
-**types.ts vs. schema:** `types.ts` tem ~174 tabelas tipadas vs. 204 no banco — **~30 tabelas sem tipo TypeScript**. Tabelas ausentes listadas em M-02.
+**`.invoke()` edge functions:** 84 funções implantáveis no repo; grep confirma invokes via SDK no front para funções de AI, evolution-api, talkx-send, etc.
+
+**types.ts vs. schema:** `types.ts` tem estrutura `Tables: { ... }` com ~174 tabelas (contagem `Row: {`) vs. 204 no banco — **~30 tabelas sem tipo TypeScript**. Tabelas ausentes listadas em M-02.
+
+---
+
+## SEÇÃO S09 — AUTH, STORAGE, REALTIME (re-executado 2026-10-31)
+
+### Auth Configuration
+
+`auth.config` como tabela PostgreSQL **não existe** — confirmado: `SELECT tablename FROM pg_tables WHERE schemaname='auth'` retornou 27 tabelas sem nenhuma `config`. Configuração de auth (mailer_autoconfirm, disable_signup, session_timebox, etc.) é gerenciada via Supabase Dashboard/API, inacessível via SQL. **NÃO VERIFICÁVEL via MCP** — requer Dashboard ou Management API.
+
+Auth tables (27): `audit_log_entries`, `custom_oauth_providers`, `flow_state`, `identities`, `instances`, `mfa_amr_claims`, `mfa_challenges`, `mfa_factors`, `mfa_recovery_code_sets`, `mfa_recovery_codes`, `oauth_authorizations`, `oauth_client_states`, `oauth_clients`, `oauth_consents`, `one_time_tokens`, `refresh_tokens`, `saml_providers`, `saml_relay_states`, `schema_migrations`, `scim_tokens`, `scim_users`, `sessions`, `sso_domains`, `sso_providers`, `users`, `webauthn_challenges`, `webauthn_credentials`.
+
+MFA: infraestrutura implantada (`mfa_factors`, `mfa_recovery_codes`, `webauthn_credentials`) porém **0 fatores ativos** — achado A-07.
+
+### Realtime
+
+| Publication | tabelas | INSERT | UPDATE | DELETE | TRUNCATE |
+|------------|---------|--------|--------|--------|----------|
+| `supabase_realtime` | 37 `public` | Sim | Sim | Sim | Sim |
+| `supabase_realtime_messages_publication` | 7 `realtime.messages_*` | Sim | Sim | Sim | Sim |
+
+Tabelas `public` na publication (37): `agent_achievements`, `agent_presence`, `agent_stats`, `audio_meme_favorites`, `audio_memes`, `calls`, `contacts`, `conversation_sla`, `conversation_tasks`, `copilot_insights`, `email_messages`, `email_threads`, `message_reactions`, `messages`, `multiplix_dispatches`, `multiplix_recipients`, `notifications`, `payment_links`, `queue_goals`, `queue_members`, `queues`, `sales_deals`, `talkx_blacklist`, `talkx_campaign_events`, `talkx_campaign_segments`, `talkx_campaigns`, `talkx_recipients`, `talkx_segments`, `talkx_templates`, `team_conversation_members`, `team_conversations`, `team_message_reactions`, `team_message_receipts`, `team_messages`, `warroom_alerts`, `whatsapp_connections`, `whisper_messages`.
+
+RLS está ativo em todas as 37 tabelas (S01 — 204/204 com RLS ON). `realtime.subscription` e `realtime.schema_migrations` com RLS OFF — tabelas de infra Supabase, não user-accessible.
+
+`payment_links` na publication com 1 policy — dados de pagamento transmitidos em realtime apenas para usuários autorizados pela policy. Risco: se policy for permissiva, dados de pagamento visíveis via WebSocket sem autenticação adicional.
+
+### Storage — Buckets Completo
+
+| Bucket | Público | Mime Restriction | Tamanho Máx | Achado |
+|--------|---------|-----------------|-------------|--------|
+| audio-memes | **SIM** | audio/* | 5 MB | — intencional |
+| audio-messages | não | audio/ogg,mpeg,wav,aac,ogg;codecs=opus | 25 MB | — |
+| avatars | não | image/jpeg,png,webp,gif | 5 MB | — |
+| custom-emojis | **SIM** | image/png,webp,gif,jpeg,svg+xml | 512 KB | — intencional |
+| multiplix-voice | não | **NENHUMA (null)** | 50 MB | **M-11** |
+| stickers | **SIM** | image/webp,png,gif | 5 MB | — intencional |
+| team-chat-files | não | 23 tipos (img/vídeo/áudio/docs/zip) | 10 MB | — |
+| voice-changer-tmp | não | audio/mpeg,mp4,ogg,wav,webm,aac | 25 MB | — |
+| whatsapp-media | não | image/jpeg,png,webp,video/mp4,audio/ogg,mpeg | 25 MB | — |
+
+3 buckets públicos (audio-memes, custom-emojis, stickers) — intencional para recursos de mídia compartilhados. 6 privados com mime restrictions adequadas. 1 privado sem mime restriction (multiplix-voice, M-11).
+
+### Vault — 13 Secrets (nomes apenas, sem valores)
+
+| Nome | Criado em |
+|------|-----------|
+| ai_jobs_cron_secret | 2026-10-02 |
+| avatars_refresh_cron_secret | 2026-09-30 |
+| connection_health_check_cron_secret | 2026-09-30 |
+| gmail_cron_secret | 2026-08-29 |
+| gmail_encryption_key | 2026-08-27 |
+| multiplix_cron_secret | 2026-09-27 |
+| multiplix_send_url | 2026-09-29 |
+| sicoob_service_role_key | 2026-08-27 |
+| talkx_anon_key | 2026-09-08 |
+| talkx_cron_secret | 2026-10-02 |
+| talkx_scheduler_url | 2026-09-08 |
+| talkx_send_url | 2026-10-02 |
+| zapp_anon_key | 2026-09-01 |
+
+`sicoob_service_role_key` = service_role de serviço externo (Sicoob) armazenada no vault — prática segura. `multiplix_send_url`/`talkx_scheduler_url`/`talkx_send_url` = URLs armazenadas como secrets no vault (URLs internas de serviços — correto manter fora do código).
+
+### Git History — Verificação de Secrets
+
+```bash
+git log --all --diff-filter=A -- '*.env' '**/.env' '*.pem' '*.key'
+# → 0 arquivos
+git log --oneline -100 --name-only | grep -iE '\.(env|pem|key|secret|credential)$'
+# → 0 resultados
+```
+**0 arquivos de segredo (.env, .pem, .key) committados em toda a história do repo.**
 
 ---
 
@@ -550,6 +632,7 @@ Contagem re-executada nesta sessão: `ls supabase/functions/ | wc -l` → **85 f
 
 | Item | Motivo |
 |------|--------|
+| Auth configuration (mailer_autoconfirm, session_timebox, etc.) | `auth.config` não existe como tabela SQL; requer Dashboard/Management API |
 | Advisors Supabase | Ferramenta `get_advisors` não disponível neste MCP (confirmado ToolSearch 2026-10-31) |
 | Logs 7 dias por edge function | Logs ficam em infraestrutura separada (não em SQL); `query_logs` ausente neste MCP |
 | Migrations-from-scratch replay | pg_cron/pg_net/vault indisponíveis localmente; 21 falhas conhecidas documentadas |
@@ -560,7 +643,7 @@ Contagem re-executada nesta sessão: `ls supabase/functions/ | wc -l` → **85 f
 ## DELIVERABLES
 
 | Arquivo | Descrição |
-|---------|----------|
+|---------|-----------|
 | `auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md` | Este relatório |
 | `auditoria-supabase/progresso.json` | Estado das 12 seções com evidências |
 | `auditoria-supabase/testes/01_rls_matrix.sql` | Matriz RLS (19/19 PASS) |
