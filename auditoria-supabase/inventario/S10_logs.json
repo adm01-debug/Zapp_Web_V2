@@ -1,7 +1,13 @@
 {
-  "auditado_em": "2026-10-30",
-  "secao": "10 - Logs (24h)",
-  "cron_failures_24h": {
+  "auditado_em": "2026-10-31",
+  "secao": "10 - Logs",
+  "incidente_resolvido": {
+    "periodo": "2026-10-30T20:08Z a 2026-10-30T22:57Z",
+    "causa": "pg_cron background worker com 'job startup timeout' em massa",
+    "status_atual": "RESOLVIDO — todos os jobs operacionais às 00:30Z de 2026-10-31",
+    "como_resolveu": "Auto-recuperação (pg_cron worker reiniciou sozinho ou o pool de conexões se liberou)"
+  },
+  "cron_failures_24h_snapshot_2026_10_30": {
     "total_jobs_falhando": 15,
     "tipo_erro_predominante": "job startup timeout",
     "detalhes": [
@@ -22,15 +28,59 @@
       {"jobid": 31, "jobname": "voice-changer-tmp-purge", "schedule": "17 * * * *", "failures_24h": 3}
     ]
   },
+  "cron_logs_7d_por_status": {
+    "fonte": "cron.job_run_details WHERE start_time > now()-interval '7d' GROUP BY jobname, status",
+    "coletado_em": "2026-10-31T00:30Z",
+    "resumo_por_job": [
+      {"jobname": "talkx-scheduler-1min", "succeeded": 9390, "failed": 681, "taxa_falha_pct": 7.3, "ultima_falha": "2026-10-30T22:57Z"},
+      {"jobname": "dispatch-scheduled-messages", "succeeded": 9379, "failed": 692, "taxa_falha_pct": 7.4},
+      {"jobname": "tasks-notify-due", "succeeded": 9376, "failed": 695, "taxa_falha_pct": 7.4},
+      {"jobname": "ai-jobs-tick-1min", "succeeded": 9225, "failed": 678, "taxa_falha_pct": 7.4},
+      {"jobname": "expire-stale-agent-presence", "succeeded": 5086, "failed": 396, "taxa_falha_pct": 7.2},
+      {"jobname": "crm-sync-outbox", "succeeded": 5075, "failed": 407, "taxa_falha_pct": 7.4},
+      {"jobname": "csat-reply-capture-tick", "succeeded": 4703, "failed": 326, "taxa_falha_pct": 6.9},
+      {"jobname": "multiplix-send-trigger", "succeeded": 4699, "failed": 330, "taxa_falha_pct": 7.0},
+      {"jobname": "gmail-incremental-sync", "succeeded": 1935, "failed": 132, "taxa_falha_pct": 6.8},
+      {"jobname": "connection-health-check", "succeeded": 1934, "failed": 133, "taxa_falha_pct": 6.9},
+      {"jobname": "close-stale-calls", "succeeded": 1933, "failed": 134, "taxa_falha_pct": 6.9},
+      {"jobname": "cleanup-edge-rate-limits", "succeeded": 651, "failed": 44, "taxa_falha_pct": 6.8},
+      {"jobname": "avatars-refresh", "succeeded": 162, "failed": 5, "taxa_falha_pct": 3.0},
+      {"jobname": "security-acl-score", "succeeded": 163, "failed": 4, "taxa_falha_pct": 2.4},
+      {"jobname": "voice-changer-tmp-purge", "succeeded": 164, "failed": 3, "taxa_falha_pct": 1.8},
+      {"jobname": "cleanup-link-preview-cache", "succeeded": 7, "failed": 0, "taxa_falha_pct": 0},
+      {"jobname": "searchbox-budget-alert", "succeeded": 7, "failed": 0, "taxa_falha_pct": 0},
+      {"jobname": "search-events-retention", "succeeded": 7, "failed": 0, "taxa_falha_pct": 0},
+      {"jobname": "crm-sync-outbox-cleanup", "succeeded": 7, "failed": 0, "taxa_falha_pct": 0},
+      {"jobname": "reconnection-logs-retention-30d", "succeeded": 7, "failed": 0, "taxa_falha_pct": 0},
+      {"jobname": "purge-qr-attempts", "succeeded": 7, "failed": 0, "taxa_falha_pct": 0},
+      {"jobname": "expire-orphan-user-sessions", "succeeded": 7, "failed": 0, "taxa_falha_pct": 0},
+      {"jobname": "vacuum-contacts-daily", "succeeded": 7, "failed": 0, "taxa_falha_pct": 0},
+      {"jobname": "user-sessions-expire-diario", "succeeded": 7, "failed": 0, "taxa_falha_pct": 0}
+    ],
+    "observacao": "Todas as falhas concentradas no incidente de 20:08–22:57Z de 2026-10-30. Jobs que rodam menos de 7x/dia (vacuum, searchbox, etc.) têm 0 falhas porque não coincidiram com a janela do incidente."
+  },
+  "achado_critico_nested_timeout": {
+    "id": "S10-002",
+    "severidade": "ALTO",
+    "objeto": "talkx_engine_alerts() → talkx_engine_cron_runs() nested timeout",
+    "descricao": "talkx-scheduler-1min teve 2 falhas adicionais com 'ERROR: canceling statement due to statement timeout' dentro de talkx_engine_alerts(), chamada por trigger_talkx_engine_tick. A função talkx_engine_cron_runs(10) consulta cron.job_run_details e durante o incidente de carga essa query também excedeu o statement_timeout, causando timeout aninhado: o self-monitoring falhou ao tentar reportar a falha.",
+    "evidencia": "cron.job_run_details.return_message = 'ERROR: canceling statement due to statement timeout' em talkx-scheduler-1min (2 ocorrências além das de job startup timeout)",
+    "correcao": "Adicionar SET LOCAL statement_timeout = '5s' no início de talkx_engine_cron_runs() para evitar propagação. Ou mover chamada de talkx_engine_alerts() para fora do transaction path do trigger."
+  },
   "achados": [
     {
       "id": "S10-001",
       "severidade": "CRITICO",
       "objeto": "pg_cron - 15 jobs com startup timeout",
-      "descricao": "15 de 24 cron jobs falhando com 'job startup timeout' desde ~20:48 UTC 2026-10-30. Inclui dispatch-scheduled-messages (184 falhas), tasks-notify-due (184), ai-jobs-tick-1min (180), talkx-scheduler-1min (176).",
-      "evidencia": "cron.job_run_details WHERE start_time > now()-interval '24h' AND status='failed': 15 jobids distintos, return_message='job startup timeout'",
-      "impacto": "PRODUCAO DEGRADADA: mensagens agendadas nao enviadas, tasks sem notificacao, AI jobs e campanhas TalkX parados.",
-      "correcao": "Verificar pg_settings cron.max_running_jobs. Investigar se pg_cron background worker travou. Pode precisar de restart do pg_cron worker pelo Supabase."
+      "descricao": "15 de 24 cron jobs falhando com 'job startup timeout' no incidente de 2026-10-30T20:08Z–22:57Z. Incidente resolvido por auto-recuperação. Nenhum alerta automático foi disparado.",
+      "correcao": "Criar cron watchdog (S12-004): verificar cron.job_run_details a cada 15min; se failures_15min > threshold, enviar alerta ao Joaquim via edge function ou Slack webhook."
+    },
+    {
+      "id": "S10-002",
+      "severidade": "ALTO",
+      "objeto": "talkx_engine_alerts() nested statement timeout",
+      "descricao": "Função de self-monitoring falha em cascata sob carga: tenta reportar problema consultando cron.job_run_details, que também excede o timeout, causando statement timeout aninhado.",
+      "correcao": "Adicionar statement_timeout local em talkx_engine_cron_runs() ou refatorar para consulta assíncrona."
     }
   ]
 }
