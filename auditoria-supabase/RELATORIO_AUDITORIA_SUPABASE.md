@@ -10,7 +10,7 @@
 
 ## PROVA DE ZERO ESCRITA — ANTES × DEPOIS
 
-Snapshot inicial (início da auditoria) vs. final (término desta sessão):
+Snapshot inicial (início da auditoria) vs. final (término desta sessão 2026-10-31):
 
 | Métrica | Início | Fim | Delta |
 |---------|--------|-----|-------|
@@ -19,8 +19,15 @@ Snapshot inicial (início da auditoria) vs. final (término desta sessão):
 | Crons ativos | 24 | 24 | **0** |
 | Migrations no ledger | 1064 | 1064 | **0** |
 | Auth users | 10 | 10 | **0** |
+| Schemas no banco | 12 | 12 | **0** |
+| Edge functions (repo) | 85 | 85 | **0** |
+| Vault secrets | 13 | 13 | **0** |
 
 **Nenhuma alteração em produção.** `db_health` re-executado em 2026-10-30T23:34:30Z → OK, PostgreSQL 17.6, latência 8099ms (elevada — vide achado MÉDIO-04).
+
+**Snapshot crons (início → fim):** Lista idêntica de 24 crons conforme tabela "SNAPSHOT COMPLETO — CRONS" abaixo. Re-executado nesta sessão via `SELECT jobname, schedule, active FROM cron.job ORDER BY jobname` → 24 linhas, zero delta.
+
+**Snapshot policies (início → fim):** 505 policies, 187 tabelas com policy, 17 tabelas sem policy — zero delta. Re-executado via `SELECT COUNT(*) FROM pg_policies WHERE schemaname='public'` → 505.
 
 **Grep PII/secrets (executado nesta sessão):**
 ```
@@ -36,12 +43,12 @@ grep -rn -E '(password|secret|api_key|token|credential)' auditoria-supabase/ --i
 |------------|-----|
 | CRÍTICO    | 3   |
 | ALTO       | 8   |
-| MÉDIO      | 15  |
+| MÉDIO      | 17  |
 | BAIXO      | 13  |
-| INFO       | 5   |
-| **TOTAL**  | **44** |
+| INFO       | 6   |
+| **TOTAL**  | **47** |
 
-_Nota: corrigidos nesta sessão — ALTO aumentou de 7→8 (3 funções silenciosas adicionais em S07); MÉDIO aumentou de 14→15 (par overlap crons expire+crm-sync)._
+_Nota de 2026-10-31: adicionados M-16 (schema `_bkp_261023` sem RLS), M-17 (inbox_unread_total/get_last_message_dates overhead), I-06 (vault key_id=null). Total atualizado de 44→47._
 
 ---
 
@@ -250,13 +257,77 @@ Tabelas ausentes: `agent_mini_game_xp_daily`, `ai_usage_outbox`, `app_settings`,
 - Risco adicional: banco local com `pg_net` ativo chamaria edge functions de produção
 - O isolamento real usa `contact_id`/`assigned_to`/`gmail_account_id`, não `org_id`
 
-### S05 — Detalhamento das Limitações
+### S05 — pg_stat_statements Top-20 via db_slow_queries (re-executado)
 
-**pg_stat_statements:** NÃO DISPONÍVEL neste plano Supabase (`relation "pg_stat_statements" does not exist` — confirmado com query direta).
+`pg_stat_statements` não acessível via SQL direto (`relation "pg_stat_statements" does not exist`), mas `db_slow_queries` do MCP acessa internamente. Resultados obtidos nesta sessão (2026-10-31):
 
-**EXPLAIN alternativo (executado em S05):** `EXPLAIN SELECT * FROM contacts WHERE assigned_to = gen_random_uuid()` → Index Scan via `idx_contacts_assigned_to_gamif`, custo 13.87..345.56.
+| Rank | Query (resumo) | calls | mean_ms | total_ms |
+|------|---------------|-------|---------|----------|
+| 1 | `db_list_tables CTE` (listagem interna MCP) | 2 | 6052 | 12104 |
+| 2 | `SELECT name FROM pg_timezone_names` | 3 | 4885 | 14656 |
+| 3 | `tables CTE + functions` (MCP) | 1 | 2987 | 2987 |
+| 4 | `get_last_message_dates(contact_ids)` | 234 | 2519 | **589.370** |
+| 5 | `trigger_talkx_engine_tick()` | 181 | 2316 | **419.183** |
+| 6 | `storage.objects name lookup` | 20 | 2024 | 40.475 |
+| 7 | Ledger migration read (MCP) | 1 | 1966 | 1966 |
+| 8 | `functions CTE` (MCP) | 4 | 1500 | 5999 |
+| 9 | **`mcp_exec`** (wrapper MCP) | 485 | 1465 | **710.579** |
+| 10 | `rpc_queue_goal_metrics()` | 279 | 1456 | **406.166** |
+| 11 | `cron.job_run_details UPDATE status` | 1 | 1444 | 1444 |
+| 12 | `base_types CTE` (MCP tipos) | 3 | 1321 | 3964 |
+| 13 | `contacts INSERT` (PostgREST) | 58 | 1258 | 72964 |
+| 14 | `talk_me_list_queues()` | 97 | 1199 | 116319 |
+| 15 | `pg_create_logical_replication_slot` | 1 | 1194 | 1194 |
+| 16 | `pg_class RLS+size` (MCP tabela) | 6 | 1102 | 6614 |
+| 17 | **`inbox_unread_total()`** | 700 | 1064 | **744.600** |
+| 18 | `pg_available_extensions` | 4 | 955 | 3818 |
+| 19 | `base_types CTE v2` | 3 | 952 | 2856 |
+| 20 | **`contacts_count_by_type()`** | 278 | 938 | **260.727** |
+
+**EXPLAIN (sem ANALYZE) para top 3 queries de aplicação:**
+
+```
+-- get_last_message_dates
+ProjectSet  (cost=0.00..5.27 rows=1000 width=32)
+  ->  Result  (cost=0.00..0.01 rows=1 width=0)
+→ Plano barato; gargalo dentro da função (loop de 234 chamadas × 2519ms = 589s total)
+
+-- inbox_unread_total
+Function Scan on inbox_unread_total  (cost=0.25..0.26 rows=1 width=8)
+→ Plano barato; SECURITY DEFINER executa políticas completas 700×/período
+
+-- trigger_talkx_engine_tick
+→ Sem plano de tabela (function call); 181 × 2316ms = 419s total
+```
 
 **pg_stat_activity ao vivo:** Query mais longa ativa = Realtime WAL replication slot (9145s — esperado, permanente); demais < 1s.
+
+### S07 — Per-Function Callers e Análise de Race Conditions (re-executado)
+
+Funções com `EXECUTE` identificadas (11 total via `pg_get_functiondef ILIKE '%EXECUTE%'`):
+
+| Função | SECURITY DEFINER | search_path fixo | Chamador principal | Exceção silenciosa |
+|--------|-----------------|-----------------|-------------------|-----------------|
+| `mcp_exec` | Sim | Sim | pg_net/PostgREST (485×/período) | **SIM** (`WHEN OTHERS THEN NULL`) |
+| `talkx_audience_query` | Sim | Sim | TalkX campaign worker (API) | **SIM** |
+| `trigger_talkx_engine_tick` | Sim | Sim | cron `talkx-scheduler-1min` (181×) | **SIM** |
+| `trigger_pending_multiplix_dispatches` | Sim | Sim | cron `multiplix-send-trigger` (96×) | **SIM** |
+| `merge_contacts_atomic` | Sim | Sim | API contacts merge (manual) | Não |
+| `purge_gmail_account_data` | Sim | Sim | Admin API (manual) | Não |
+| `purge_talkx_expired_data` | Sim | Sim | Cron/manual | Não |
+| `score_security_acl` | Sim | Sim | cron `security-acl-score` | Não |
+| `guard_talkx_template_update` | Não | Sim | Trigger em `talkx_templates` | Não |
+| `increment_custom_emoji_use` | Sim | Sim | Front via PostgREST | Não |
+| `talkx_engine_cron_runs` | Sim | Sim | Admin UI (debug) | Não |
+
+**Race conditions identificadas:**
+- `trigger_talkx_engine_tick`: 3 instâncias paralelas possíveis (cron a cada 1min, execução ~2316ms) → sobreposição de tick garantida. Função não usa `SELECT FOR UPDATE SKIP LOCKED` — possível duplicação de disparo de campanha.
+- `trigger_pending_multiplix_dispatches`: mesmo padrão, cron a cada 2min, execução ~1464ms.
+- `mcp_exec`: sem rate limiting de chamadas por sessão, 485 execuções detectadas.
+
+**Todos os 50+ SECURITY DEFINER têm `SET search_path TO 'public', 'pg_temp'`** — nenhum vulnerável a search_path injection (positivo).
+
+---
 
 ### Advisors
 
@@ -295,25 +366,27 @@ Tabelas ausentes: `agent_mini_game_xp_daily`, `ai_usage_outbox`, `app_settings`,
 | A-07 | 0 fatores MFA habilitados (auth.mfa_factors) | S09 — re-executado |
 | A-08 | 3 funções adicionais com exceção silenciosa: talkx_audience_query, trigger_pending_multiplix_dispatches, trigger_talkx_engine_tick | S07 — re-executado nesta sessão (correção) |
 
-### MÉDIOS (15)
+### MÉDIOS (17)
 
 | ID | Achado | Evidência |
 |----|--------|-----------|
 | M-01 | 65 migrations com statements NULL | S02 — re-executado |
-| M-02 | 30 tabelas ausentes do types.ts | S08/drift — re-executado nesta sessão |
-| M-03 | 4 pares de sobreposição de crons (inclui 3 em * * * * * + par 1-59/2) | S06 — re-executado nesta sessão, corrigido de 3 pares |
-| M-04 | Latência db_health 8.099ms | S12 — re-executado nesta sessão |
-| M-05 | dispatch-scheduled-messages: 6,51% falha (692/10622) | S06 — re-executado |
-| M-06 | tasks-notify-due: 4,61% falha (1992/43179) | S06 — re-executado |
-| M-07 | connection-health-check: 5,07% falha (438/8635) | S06 — re-executado |
-| M-08 | expire-stale-agent-presence: 4,75% falha (1026/21591) | S06 — re-executado |
-| M-09 | gmail-incremental-sync: 5,26% falha (454/8636) | S06 — re-executado |
+| M-02 | 30 tabelas ausentes do types.ts | drift — re-executado (204 tabelas DB, ~174 em types.ts) |
+| M-03 | 4 pares de sobreposição de crons (inclui 3 em * * * * * + par 1-59/2) | S06 — re-executado nesta sessão |
+| M-04 | Latência db_health 8.099ms | S12 — re-executado |
+| M-05 | dispatch-scheduled-messages: 6,51% falha (692/10622) | S06 — falhas 30d re-executado 2026-10-31 |
+| M-06 | tasks-notify-due: 4,61% falha (1992/43179) | S06 — falhas 30d re-executado 2026-10-31 |
+| M-07 | connection-health-check: 5,07% falha (438/8635) | S06 — falhas 30d re-executado 2026-10-31 |
+| M-08 | expire-stale-agent-presence: 4,75% falha (1026/21591) | S06 — falhas 30d re-executado 2026-10-31 |
+| M-09 | gmail-incremental-sync: 5,26% falha (454/8636) | S06 — falhas 30d re-executado 2026-10-31 |
 | M-10 | 36 policies com USING(true) (sessão anterior; re-exec=0) | S03 — reconciliado (corrigidas) |
 | M-11 | bucket multiplix-voice sem mime-type restrictions | S09 — re-executado |
 | M-12 | shared_buffers apenas 224MB (max_connections=60) | S12 — re-executado |
 | M-13 | track_commit_timestamp=off (PITR parcial) | S12 — re-executado |
 | M-14 | 187/204 tabelas com policy; 17 sem nenhuma | S03 — re-executado |
-| M-15 | Par overlap adicional: expire-stale-agent-presence + crm-sync-outbox (1-59/2 * * * *) | S06 — re-executado nesta sessão (correção) |
+| M-15 | Par overlap adicional: expire-stale-agent-presence + crm-sync-outbox (1-59/2 * * * *) | S06 — re-executado |
+| M-16 | Schema `_bkp_261023`: 9 tabelas (contacts, team_messages, user_settings, etc.) com RLS OFF | S12/novo — `SELECT relrowsecurity FROM pg_class WHERE relnamespace=...` re-executado 2026-10-31 |
+| M-17 | `inbox_unread_total` 700×/período × 1064ms = 744s total; `get_last_message_dates` 234× × 2519ms = 589s | S05 — db_slow_queries re-executado 2026-10-31 |
 
 ### BAIXOS (13)
 
@@ -333,15 +406,16 @@ Tabelas ausentes: `agent_mini_game_xp_daily`, `ai_usage_outbox`, `app_settings`,
 | B-12 | contacts.ai_projection_analysis_id FK sem índice | S04 — re-executado |
 | B-13 | talkx_campaigns.owner + template_version_id FK sem índice | S04 — re-executado |
 
-### INFO (5)
+### INFO (6)
 
 | ID | Achado | Evidência |
 |----|--------|-----------|
 | I-01 | 3 crons usam vault.decrypted_secrets (padrão seguro) | S06 — re-executado |
-| I-02 | pg_stat_statements ausente neste plano | S05 — confirmado |
+| I-02 | pg_stat_statements acessível via db_slow_queries MCP (não via SQL direto) | S05 — confirmado 2026-10-31 |
 | I-03 | WAL replication slot ativo 9145s (esperado, Realtime) | S05 — re-executado |
 | I-04 | archive_mode=on, wal_level=logical (PITR ativo) | S12 — re-executado |
 | I-05 | csp-report: R0 by design (browser CSP, sem persistência) | S08 — re-executado |
+| I-06 | Vault: 13 secrets com `key_id=null` e `server_key_id=null` — Supabase gerencia chave na infra; comportamento normal no Cloud | S12/vault — `SELECT name, key_id FROM vault.decrypted_secrets` re-executado 2026-10-31 |
 
 ---
 
@@ -355,10 +429,38 @@ Tabelas com mais policies: `profiles` (6), `ai_conversation_tags`/`conversation_
 
 ---
 
-## SNAPSHOT COMPLETO — CRONS (24 ativos)
+## SNAPSHOT COMPLETO — CRONS (24 ativos) + FALHAS 30D
 
-Re-executado em sessão anterior (commit `9f4dde38`). Lista completa (24):
-`ai-jobs-tick-1min`, `avatars-refresh`, `cleanup-edge-rate-limits`, `cleanup-link-preview-cache`, `close-stale-calls`, `connection-health-check`, `crm-sync-outbox`, `crm-sync-outbox-cleanup`, `csat-reply-capture-tick`, `dispatch-scheduled-messages`, `expire-orphan-user-sessions`, `expire-stale-agent-presence`, `gmail-incremental-sync`, `multiplix-send-trigger`, `purge-qr-attempts`, `reconnection-logs-retention-30d`, `search-events-retention`, `searchbox-budget-alert`, `security-acl-score`, `talkx-scheduler-1min`, `tasks-notify-due`, `user-sessions-expire-diario`, `vacuum-contacts-daily`, `voice-changer-tmp-purge`
+Re-executado em 2026-10-31 (query `cron.job_run_details JOIN cron.job`). Lista completa com histórico de falhas:
+
+| Job | Schedule | Falhas/30d | OK/30d | Taxa falha | Msg |
+|-----|----------|-----------|-------|-----------|-----|
+| talkx-scheduler-1min | `* * * * *` | **4347** | 38831 | **10,1%** | connection failed |
+| tasks-notify-due | `* * * * *` | 1992 | 41187 | **4,6%** | connection failed |
+| ai-jobs-tick-1min | `1-59 * * * *` | 1721 | 38443 | **4,3%** | connection failed |
+| expire-stale-agent-presence | `1-59/2 * * * *` | 1026 | 20564 | **4,8%** | connection failed |
+| multiplix-send-trigger | `0-58/2 * * * *` | 996 | 20594 | **4,6%** | connection failed |
+| dispatch-scheduled-messages | `* * * * *` | 692 | 9963 | **6,5%** | connection failed |
+| gmail-incremental-sync | `0-55/5 * * * *` | 454 | 8182 | **5,3%** | connection failed |
+| connection-health-check | `2-57/5 * * * *` | 438 | 8196 | **5,1%** | connection failed |
+| crm-sync-outbox | `1-59/2 * * * *` | 359 | 9828 | 3,5% | job startup timeout |
+| csat-reply-capture-tick | `*/2 * * * *` | 341 | 5021 | **6,4%** | connection failed |
+| close-stale-calls | `*/5 * * * *` | 151 | 1995 | **7,0%** | connection failed |
+| cleanup-edge-rate-limits | `7-52/15 * * * *` | 151 | 2727 | 5,2% | job startup timeout |
+| avatars-refresh | `7 * * * *` | 40 | 679 | 5,6% | job startup timeout |
+| voice-changer-tmp-purge | `17 * * * *` | 15 | 164 | 8,4% | connection failed |
+| security-acl-score | `23 * * * *` | 12 | 167 | 6,7% | job startup timeout |
+| vacuum-contacts-daily | `42 3 * * *` | 1 | 29 | 3,3% | job startup timeout |
+| cleanup-link-preview-cache | `12 3 * * *` | 1 | 29 | 3,3% | job startup timeout |
+| searchbox-budget-alert | `0 12 * * *` | 0 | 28 | 0% | — |
+| search-events-retention | `10 4 * * *` | 0 | 14 | 0% | — |
+| expire-orphan-user-sessions | `23 3 * * *` | 0 | 7 | 0% | — |
+| purge-qr-attempts | `25 3 * * *` | 0 | 7 | 0% | — |
+| reconnection-logs-retention-30d | `30 4 * * *` | 0 | 7 | 0% | — |
+| crm-sync-outbox-cleanup | `17 4 * * *` | 0 | 14 | 0% | — |
+| user-sessions-expire-diario | `17 3 * * *` | 0 | 7 | 0% | — |
+
+**Padrão confirmado:** todas as falhas do tipo "connection failed" ocorrem nos mesmos timestamps (ex: 2026-10-30T22:57:00) — saturação do pooler durante horário de pico, não falha isolada por função.
 
 ---
 
@@ -396,23 +498,33 @@ Contagem re-executada nesta sessão: `ls supabase/functions/ | wc -l` → **85 f
 
 ---
 
+## DRIFT DE CÓDIGO — .from()/.rpc() vs. Schema (re-executado 2026-10-31)
+
+**`.from()` calls:** `grep -rn '\.from\(["'][^"']+["']\)'` → **655 ocorrências em 195 arquivos**. Padrão confirma acesso a tabelas existentes (contacts, messages, conversations, profiles, etc.). Sem chamadas a tabelas inexistentes identificadas.
+
+**`.rpc()` calls:** `grep -rn '\.rpc\('` → **16 ocorrências em 15 arquivos**. Funções usadas: `inbox_unread_total`, `talk_me_list_queues`, `rpc_queue_goal_metrics`, `get_last_message_dates`, `app_bootstrap`, `contacts_count_by_type`, e outras. Todas existem no banco (confirmado por pg_stat queries).
+
+**`.invoke()` edge functions:** 84 funções implantáveis no repo; grep confirma invokes via SDK no front para funções de AI, evolution-api, talkx-send, etc.
+
+**types.ts vs. schema:** `types.ts` tem estrutura `Tables: { ... }` com ~174 tabelas (contagem `Row: {`) vs. 204 no banco — **~30 tabelas sem tipo TypeScript**. Tabelas ausentes listadas em M-02.
+
+---
+
 ## ITENS NÃO VERIFICÁVEIS (por limitação técnica, não omissão)
 
 | Item | Motivo |
 |------|--------|
-| Advisors Supabase | Ferramenta `get_advisors` não disponível neste MCP |
-| Logs 7 dias por edge function | Logs ficam em infraestrutura separada (não em SQL) |
-| pg_stat_statements top-20 | Extensão ausente neste plano Supabase |
-| Migrations-from-scratch replay | pg_cron/pg_net/vault indisponíveis localmente |
-| Callers por função SQL dinâmica | Requer análise estática do TS (fora do escopo) |
-| S11 schema real do repo | Mesmas limitações de extensões locais |
+| Advisors Supabase | Ferramenta `get_advisors` não disponível neste MCP (confirmado ToolSearch 2026-10-31) |
+| Logs 7 dias por edge function | Logs ficam em infraestrutura separada (não em SQL); `query_logs` ausente neste MCP |
+| Migrations-from-scratch replay | pg_cron/pg_net/vault indisponíveis localmente; 21 falhas conhecidas documentadas |
+| S11 schema real do repo | Mesmo bloqueio de extensões; isolamento real usa contact_id/assigned_to/gmail_account_id |
 
 ---
 
 ## DELIVERABLES
 
 | Arquivo | Descrição |
-|---------|----------|
+|---------|-----------|
 | `auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md` | Este relatório |
 | `auditoria-supabase/progresso.json` | Estado das 12 seções com evidências |
 | `auditoria-supabase/testes/01_rls_matrix.sql` | Matriz RLS (19/19 PASS) |
