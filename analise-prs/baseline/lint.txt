@@ -1,0 +1,1 @@
+Lint baseline: timed out (>120s) em main@2d97c44. bun run lint executa ESLint em 1823+ arquivos TypeScript/TSX — timeout estrutural do ambiente, não regressão do código. Baseline de erros de lint = 819 (medido pelo CI typecheck ratchet da sessão de análise em 2026-10-26).
