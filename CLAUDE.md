@@ -198,7 +198,7 @@ Estado dos achados após re-auditoria de 2026-09-17:
   vários agentes abrindo PR e usando auto-merge, exigir aprovação humana pararia o fluxo inteiro.
   `required_conversation_resolution` segue desligado pelo mesmo motivo (bots de review deixam
   threads abertas). O perímetro real da `main` hoje é: `enforce_admins`, sem force-push, sem
-  deleção, e os 6 required checks da seção abaixo — consolidado na tabela canônica "Perímetro do GitHub".
+  deleção, e os 3 required checks da seção abaixo — consolidado na tabela canônica "Perímetro do GitHub".
 
   **Correção de 2026-09-25 (auditoria de 5 agentes, achado do agente de cruzamento de PRs) — HISTÓRICA,
   SUPERADA (b):**
@@ -244,7 +244,7 @@ GitHub medida em 03/10/2026 (`docs/audits/e95-perimetro-github-2026-10-03.md`).
 
 | Campo | Estado canônico | Verificado por |
 |---|---|---|
-| Branch protection — required checks | **6**: `🔍 Lint & TypeCheck` · `🧪 Unit Tests` · `🏗️ Build` · `🔒 Security Audit` · `Contrato DB offline` · `🎭 E2E Tests (Playwright)` | `settings-guard` ⚠ |
+| Branch protection — required checks | **3**: `🏗️ Build` · `🔎 TypeCheck` · `✅ CI Gate (required check)` | `settings-guard` ⚠ |
 | Branch protection — `strict` | **`true`** (política vigente desde 01/10; a opção `strict=false` foi **revogada** em 02/10 — E15(b)) | `settings-guard` ⚠ |
 | Branch protection — `enforce_admins` | `true` | `settings-guard` ⚠ |
 | Branch protection — review obrigatório | nenhum (deliberado: vários agentes com auto-merge) | — |
@@ -278,10 +278,8 @@ total naquele retrato. A lista é histórica; a fonte canônica atual do invent�
 Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.
 
-**Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
-`🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e
-`🎭 E2E Tests (Playwright)` — este último passou a ser obrigatório em 25/09; antes rodava em PR
-sem bloquear merge. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check
+**Required checks da `main`** (3; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🏗️ Build`, `🔎 TypeCheck` e
+`✅ CI Gate (required check)` — medidos em 2026-10-29 via API; confirmado em `scripts/ci/github-settings-baseline.json`. `🔬 CodeQL (javascript-typescript)` roda em CI mas **não** é required check
 (não bloqueia merge).
 
 **Environments com gate de aprovação** (branch policy restrita a branches protegidas) — os quatro já
