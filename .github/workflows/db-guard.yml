@@ -65,7 +65,7 @@ jobs:
           --health-retries 10
     env:
       POSTGRES_TEST_IMAGE: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
-      POSTGREST_TEST_IMAGE: public.ecr.aws/supabase/postgrest:v14.5@sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b
+      POSTGREST_TEST_IMAGE: ghcr.io/supabase/postgrest:v14.5@sha256:bb289d00570b569525e1e22fb77c49cd17c17ca3f41da9ee2b4351a35027551b
       # E47: coordenadas do serviço compartilhado, lidas pelo docker-shim.
       POSTGRES_SERVICE_HOST: localhost
       POSTGRES_SERVICE_PORT: "5432"
@@ -1688,12 +1688,12 @@ jobs:
             echo "mudou=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # O ECR limita pull anonimo; sem este passo um 429 do registry apareceria como
-      # "exit 2" do replay e confundiria infraestrutura com drift de migration.
+      # Usa o mirror oficial GHCR do mesmo digest para evitar o limite de pull anonimo do ECR.
+      # O digest imutavel continua sendo extraido do replay-local.sh e verificado por Docker.
       - name: Pre-baixar a imagem do replay
         if: steps.mudou.outputs.mudou == 'true'
         run: |
-          img=$(grep -m1 -oE 'public\.ecr\.aws/supabase/postgres:[0-9.]+@sha256:[a-f0-9]{64}' scripts/db-audit/replay-local.sh)
+          img=$(grep -m1 -oE 'ghcr\.io/supabase/postgres:[0-9.]+@sha256:[a-f0-9]{64}' scripts/db-audit/replay-local.sh)
           if [ -z "$img" ]; then
             echo "nao achei a imagem fixada por digest em scripts/db-audit/replay-local.sh"
             exit 2
