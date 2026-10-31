@@ -46,10 +46,11 @@ Há **cinco camadas**. Cada uma tem seu runner, seu diretório e seu motivo de e
 * Moram em `scripts/ci/`, `scripts/edge-deploy/`, `scripts/talkx/`, `scripts/db-audit/`
   (os três últimos com o mesmo padrão de nome; em `db-audit` há dois `.test.mjs`).
 * Runner: **`node:test`** (nativo), sem framework. O job `node-scripts` da CI roda
-  as guardas `*.unit.mjs` de `scripts/ci/`; as suítes de deploy e os contratos de
+  as guardas `*.unit.mjs` de `scripts/ci/` e as suítes offline de `lib`, `qa`, `talkx`,
+  team chat e `ui-audit` listadas no passo; as suítes de deploy e os contratos de
   Edge rodam nos workflows específicos.
 * Comando (CI, passo "Run Node CI scripts tests"):
-  `node --test scripts/ci/*.unit.mjs`.
+  `node --test scripts/ci/*.unit.mjs scripts/lib/seguranca-processo.test.mjs scripts/qa/prova-visao-classificadores.unit.mjs scripts/talkx/lado-a-lado.unit.mjs scripts/talkx/v4-status.unit.mjs scripts/team-chat-db-validate.unit.mjs scripts/ui-audit/contacts-navy-header.unit.mjs scripts/ui-audit/layout-guard.unit.mjs`.
 * Guarda de documentação entra aqui: quando um doc afirma algo do código, o teste lê os
   dois lados e falha se divergirem (ex.: `scripts/ci/dashboard-readme-drift.unit.mjs`).
 * Rodar um só: `node --test scripts/ci/<arquivo>.unit.mjs`.

@@ -144,6 +144,13 @@ jobs:
       - name: 🧩 Run Node CI scripts tests
         run: >-
           node --test scripts/ci/*.unit.mjs
+          scripts/lib/seguranca-processo.test.mjs
+          scripts/qa/prova-visao-classificadores.unit.mjs
+          scripts/talkx/lado-a-lado.unit.mjs
+          scripts/talkx/v4-status.unit.mjs
+          scripts/team-chat-db-validate.unit.mjs
+          scripts/ui-audit/contacts-navy-header.unit.mjs
+          scripts/ui-audit/layout-guard.unit.mjs
         env:
           CI: true
 

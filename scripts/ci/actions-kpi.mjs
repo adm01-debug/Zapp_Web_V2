@@ -129,14 +129,18 @@ const CABECALHOS = (token) => ({
   'X-GitHub-Api-Version': '2022-11-28',
 });
 
-async function pedir(caminho, token, { metodo = 'GET', corpo } = {}) {
-  const r = await fetch(`${API}${caminho}`, {
-    method: metodo,
-    headers: { ...CABECALHOS(token), ...(corpo ? { 'Content-Type': 'application/json' } : {}) },
-    body: corpo ? JSON.stringify(corpo) : undefined,
-  });
-  if (!r.ok) throw new Error(`${metodo} ${caminho} -> ${r.status}`);
-  return r.json();
+async function pedir(caminho, token, { metodo = 'GET', corpo, tentativas = 4, delaysMs = [5000, 10000, 20000] } = {}) {
+  for (let i = 0; i < tentativas; i++) {
+    const r = await fetch(`${API}${caminho}`, {
+      method: metodo,
+      headers: { ...CABECALHOS(token), ...(corpo ? { 'Content-Type': 'application/json' } : {}) },
+      body: corpo ? JSON.stringify(corpo) : undefined,
+    });
+    if (r.ok) return r.json();
+    const transitorio = r.status === 502 || r.status === 503 || r.status === 504;
+    if (!transitorio || i >= tentativas - 1) throw new Error(`${metodo} ${caminho} -> ${r.status}`);
+    await new Promise((res) => setTimeout(res, delaysMs[Math.min(i, delaysMs.length - 1)]));
+  }
 }
 
 // Pagina os runs ate cobrir a janela inteira. `pedir` e' injetavel para o teste
