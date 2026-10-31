@@ -1,6 +1,18 @@
 # PENDENCIAS.md — Bloqueios que requerem acao humana ou dependem de merge
 
-**Atualizado em:** 2026-10-31 02:10Z
+**Atualizado em:** 2026-10-31 02:33Z
+
+---
+
+## Inventario reconsultado (02:33Z)
+
+Workflows com falha na `main` (status `failure`, consultado via `list_workflow_runs?branch=main&status=failure`):
+
+| Workflow | Run ID | Conclusao | Causa |
+|---|---|---|---|
+| `deploy-functions.yml` | [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) | `failure` | `@types/node` ausente — **CORRIGIDO via PR #2407** (pendente merge) |
+| `db-live-guard.yml` | [41144147872](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41144147872) | `failure` | Falha em 23:26Z (10/30); a ser **redisparado pos-merge** — ver item 2 |
+| `copilot-pull-request-reviewer` | [41159838719](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41159838719) | `failure` | Firewall — **NAO e required check** — ver item 1 |
 
 ---
 
@@ -9,78 +21,52 @@
 **NAO E REQUIRED CHECK — NAO BLOQUEIA MERGE NEM A CONCLUSAO DESTA TAREFA**
 
 **Workflow:** `copilot-pull-request-reviewer`  
-**Status:** `failure` em todos os runs — este check nao consta nos 6 required checks obrigatorios da branch `main`.
+**Status:** `failure` em todos os runs — nao consta nos 6 required checks obrigatorios da branch `main`.
 
-**Evidencia nos dois ultimos SHAs da PR #2407:**
+**Causa raiz:** o runner de CI bloqueia chamadas para `api.business.githubcopilot.com` por firewall. Nao e corrigivel via codigo.
 
-| SHA | Run ID | Job ID | Conclusao | Hora |
-|---|---|---|---|---|
-| `c6cc8cf8` | [41153329470](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41153329470) | 124394565891 | `failure` | 01:06:10Z |
-| `d8426a2d` | [41156559736](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41156559736) | 124404528834 | `failure` | 01:46:13Z |
+**Evidencia:**
 
-**Erro exato (ambos os runs):**
-```
-##[error]Process completed with exit code 1
-```
-O job tentou chamar `https://api.business.githubcopilot.com/agents/swe/agent/cleanup`
-(e endpoints similares em `api.business.githubcopilot.com`), todos bloqueados pelo firewall do runner.
-
-**Por que nao bloqueia a conclusao:**
-- O GitHub exibe os 6 required checks que bloqueiam merge: `🔍 Lint & TypeCheck`, `🧪 Unit Tests`, `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🎭 E2E Tests (Playwright)`. O `copilot-pull-request-reviewer` nao esta nessa lista.
-- A PR #2407 tem `auto_merge=squash` ativo e vai mergear automaticamente quando os 6 required checks passarem — o `copilot` failure nao impede o merge.
-- O erro e de firewall do runner do CI (nao alcanca `api.business.githubcopilot.com`), nao de codigo. Nao e corrigivel via codigo neste repositorio.
+| SHA | Run ID | Conclusao |
+|---|---|---|
+| `c6cc8cf8` | [41153329470](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41153329470) | `failure` |
+| `d8426a2d` | [41156559736](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41156559736) | `failure` |
 
 **Referencia para configurar o firewall:** `https://gh.io/copilot/firewall-config`  
-**Acao necessaria:** nenhuma. Este bloqueio de PENDENCIAS existe apenas para documentar formalmente que o check e conhecido, nao e required e nao pode ser corrigido via codigo.
+**Acao necessaria:** nenhuma. Documentado formalmente — nao e required check e nao pode ser corrigido via codigo.
 
 ---
 
-## 2. PR #2407 — CI rodando no SHA d8426a2d; pos-merge: verificar deploy-functions.yml e db-live-guard.yml
+## 2. PR #2407 — CI rodando no SHA c3560fad; pos-merge: verificar deploy-functions.yml e db-live-guard.yml
 
 **PR:** [#2407](https://github.com/adm01-debug/Zapp_Web_V2/pull/2407)  
-**SHA atual:** `d8426a2d` (3o merge commit com main: PR #2343 mergeou em 01:37:35Z)  
-**Run CI:** [41156550407](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41156550407) (rerun apos cancelamento em 01:58:47Z; jobs recolocados em fila em 02:01:19Z)
+**SHA atual:** `c3560fad` (4o merge commit com main; branch atualizada via `update_pr_branch` em 02:31Z)  
+**Run CI atual:** [41160372310](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160372310) (queued desde 02:31:13Z)  
+**auto_merge:** squash ativo — mergeara automaticamente quando os 6 required checks passarem
 
-**Por que os passos pos-merge nao podem ser executados agora:**  
-O CI Gate (required check que agrega os 6 obrigatorios) ainda nao fechou — os seguintes jobs estao `queued` desde 02:01:19Z:
+**Prova do codigo correto (runs anteriores com o mesmo codigo):**
 
-| Job | Job ID | Status desde |
-|---|---|---|
-| Unit Tests (2/3) | 124409115206 | queued 02:01:19Z |
-| Unit Tests (3/3) | 124409115400 | queued 02:01:19Z |
-| E2E Tests (Playwright) | 124409115007 | queued 02:01:19Z |
-
-**Jobs ja concluidos neste run:**
-
-| Check | Job ID | Conclusao | Hora |
+| SHA | CI Gate | Conclusao | Hora |
 |---|---|---|---|
-| Security Audit | 124409141378 | ✅ success | 01:49:21Z |
-| TypeCheck | 124409116638 | ✅ success | 01:51:27Z |
-| Node CI Scripts | 124409116493 | ✅ success | 01:54:34Z |
-| Unit Tests (1/3) | 124409115980 | ✅ success | 01:58:42Z |
-| Contrato DB offline | 124404498540 | ✅ success | 01:58:04Z |
-| Replay local das migrations | 124404498612 | ✅ success | 01:55:13Z |
+| `d0e624ba` | job 124393241622 | ✅ success | 00:58:49Z |
+| `c6cc8cf8` | job 124402413957 | ✅ success | 01:39:42Z |
+| `d8426a2d` | run [41156550407](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41156550407) attempt 2 | ✅ success | 02:30:27Z |
 
-**Motivo do cancelamento anterior:**  
-Os jobs Unit Tests (2/3, 3/3) e E2E foram cancelados em 01:58:47Z quando o worker perdeu a conexao — nao houve falha de codigo. Os mesmos jobs foram recolocados em fila via `rerun_failed_jobs` em 02:01:19Z com o codigo identico.
-
-**Prova do codigo correto:**  
-SHAs anteriores `d0e624ba` (CI Gate 124393241622 ✅ 00:58:49Z) e `c6cc8cf8` (CI Gate 124402413957 ✅ 01:39:42Z) — ambos com o mesmo codigo de fix — passaram todos os 6 required checks.
+Cada vez a branch ficou `behind` por outro PR mergeando na main imediatamente apos o CI Gate passar. O codigo do fix e identico em todos os SHAs.
 
 **Apos o merge automatico, o agente deve:**
 1. Verificar o run de `deploy-functions.yml` disparado pelo push na main — confirmar `conclusion=success`
-2. Disparar `db-live-guard.yml` via `workflow_dispatch` na main e confirmar `conclusion=success`
+2. Disparar `db-live-guard.yml` via `workflow_dispatch` na main e confirmar `conclusion=success` (ultimo run [41144147872](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41144147872) falhou em 23:26Z/10-30)
 3. Atualizar `docs/ci/RELATORIO_CI.md` com os run IDs reais de ambos os workflows
+4. Remover os itens 2 e 3 deste arquivo
 
-**O que o Joaquim precisa fazer:** nenhuma acao — o merge sera automatico quando o CI Gate fechar.
+**O que o Joaquim precisa fazer:** nenhuma acao — o merge sera automatico quando o CI Gate fechar (~03:06Z estimado).
 
 ---
 
 ## 3. Unit tests e E2E — baseline local nao executado completamente
 
-**Motivo:** unit tests levam 40+ minutos localmente; E2E requerem instancia Supabase ao vivo. Ambos foram validados via CI runs:
-- Run [41150191456](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41150191456) — SHA `d0e624ba`: 3/3 shards unit tests ✅ e E2E ✅
-- Run [41153322581](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41153322581) — SHA `c6cc8cf8`: todos os required checks ✅
+**Motivo:** unit tests levam 40+ minutos localmente; E2E requerem instancia Supabase ao vivo. Ambos foram validados via CI em tres SHAs distintos com o mesmo codigo (ver item 2).
 
 A correcao afeta somente `.github/workflows/deploy-functions.yml` — nenhum codigo testado pelo vitest ou pelo Playwright foi modificado.
 
