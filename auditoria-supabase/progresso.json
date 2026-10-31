@@ -15,222 +15,18 @@
     "rls_esquema_real": "NAO_VERIFICADO — mesmo bloqueio do replay; isolamento real usa contact_id/assigned_to/gmail_account_id, não org_id; banco local não é equivalente ao schema de produção sem reconciliação"
   },
   "secoes": {
-    "S01": {
-      "status": "CONCLUIDO",
-      "evidencia_reexecutada": true,
-      "sessao": "2026-10-31",
-      "query": "SELECT COUNT(*) FILTER (WHERE relrowsecurity) AS rls_on, COUNT(*) AS total FROM pg_class WHERE relnamespace=(SELECT oid FROM pg_namespace WHERE nspname='public') AND relkind='r'",
-      "resultado": {"tabelas_public": 204, "tabelas_rls_on": 204, "pct_rls": "100%"},
-      "nota": "RLS habilitado em 100% das tabelas public — sem lacuna de cobertura de RLS"
-    },
-    "S02": {
-      "status": "CONCLUIDO",
-      "evidencia_reexecutada": true,
-      "sessao": "2026-10-31",
-      "query": "SELECT COUNT(*) AS null_statements, (SELECT COUNT(*) FROM supabase_migrations.schema_migrations) AS total, MAX(version) FROM supabase_migrations.schema_migrations WHERE statements IS NULL",
-      "resultado": {"null_statements": 65, "total_migrations": 1064, "max_version": "20261030110000"},
-      "nota": "65 migrations com statements NULL — impede replay fiel; risco de drift silencioso"
-    },
-    "S03": {
-      "status": "CONCLUIDO",
-      "evidencia_reexecutada": true,
-      "sessao": "2026-10-31",
-      "correcao": "Sessão anterior relatou '~55 tabelas'; re-execução desta sessão com GROUP BY grantee,table_name confirma 104 tabelas com algum grant para anon",
-      "queries_rodadas": [
-        {
-          "desc": "anon grants — tabelas distintas com qualquer privilégio",
-          "query": "SELECT COUNT(DISTINCT table_name) FROM information_schema.role_table_grants WHERE grantee='anon' AND table_schema='public'",
-          "resultado": "104 tabelas com algum grant para anon (SELECT, INSERT, REFERENCES, TRIGGER, TRUNCATE)"
-        },
-        {
-          "desc": "tabelas com TRUNCATE para anon (mais crítico)",
-          "resultado": "mfa_sessions, ip_whitelist, payment_links, user_devices entre as ~55 com TRUNCATE; TRUNCATE ignora RLS — vetor de destruição de dados"
-        },
-        {
-          "desc": "UPDATE/ALL sem WITH CHECK",
-          "resultado": "39 policies: agent_skills, reminders, copilot_sessions, copilot_insights, catalog_favorites entre as de maior risco"
-        },
-        {
-          "desc": "USING(true) sem condição",
-          "resultado": "0 linhas — policies corrigidas desde auditoria anterior"
-        },
-        {
-          "desc": "tabelas RLS sem nenhuma policy",
-          "resultado": "17 tabelas: _rb_message_reactions_contato, _zapp_fn_before, agent_mini_game_xp_daily, ai_budget_reservations, ai_jobs, catalog_rate_limit_hits, catalog_rate_limits, edge_rate_limits, gmail_oauth_states, link_preview_cache, searchbox_budget_alert_cron, searchbox_budget_alert_emails, talkx_storage_purge_queue, talkx_test_send_claims, team_chat_media_acl_r2_db_020_rb, voip_profile_credentials, _zapp_mig133_log"
-        }
-      ]
-    },
-    "S04": {
-      "status": "CONCLUIDO",
-      "evidencia_reexecutada": true,
-      "sessao": "2026-10-31",
-      "correcao": "Sessão anterior relatou 32; re-execução desta sessão retornou 35 FKs sem índice",
-      "query": "FKs sem índice via information_schema + pg_index (LEFT JOIN pg_index ON att match)",
-      "resultado": {
-        "total_fks_sem_indice": 35,
-        "exemplos": ["ai_model_prices.provider_id", "contacts.ai_projection_analysis_id", "conversation_events.from_queue_id", "talkx_campaigns.owner", "talkx_campaigns.template_version_id", "email_threads.email_account_id", "messages.conversation_id (parcial)", "scheduled_messages.contact_id"]
-      }
-    },
-    "S05": {
-      "status": "CONCLUIDO",
-      "evidencia_reexecutada": true,
-      "sessao": "2026-10-31",
-      "notas": [
-        "pg_stat_statements: 'relation pg_stat_statements does not exist' via SQL direto (confirmado nesta sessão)",
-        "db_slow_queries via MCP retornou top-20 queries — acessa pg_stat_statements internamente",
-        "Top aplicacao: get_last_message_dates 234x/2519ms=589s total; inbox_unread_total 700x/1064ms=744s total; trigger_talkx_engine_tick 181x/2316ms=419s",
-        "EXPLAIN (sem ANALYZE) executado para 3 queries: get_last_message_dates ProjectSet cost=0.00..5.27; inbox_unread_total Function Scan cost=0.25..0.26; trigger_talkx_engine_tick function call",
-        "pg_stat_activity ao vivo: query mais longa = Realtime WAL replication slot (9145s — esperado, permanente); demais < 1s"
-      ],
-      "top_slow_queries_pg_stat": [
-        {"rank": 1, "query": "db_list_tables CTE (MCP interno)", "calls": 2, "mean_ms": 6052, "total_ms": 12104},
-        {"rank": 4, "query": "get_last_message_dates(contact_ids)", "calls": 234, "mean_ms": 2519, "total_ms": 589370},
-        {"rank": 5, "query": "trigger_talkx_engine_tick()", "calls": 181, "mean_ms": 2316, "total_ms": 419183},
-        {"rank": 9, "query": "mcp_exec (wrapper MCP)", "calls": 485, "mean_ms": 1465, "total_ms": 710579},
-        {"rank": 10, "query": "rpc_queue_goal_metrics()", "calls": 279, "mean_ms": 1456, "total_ms": 406166},
-        {"rank": 17, "query": "inbox_unread_total()", "calls": 700, "mean_ms": 1064, "total_ms": 744600},
-        {"rank": 20, "query": "contacts_count_by_type()", "calls": 278, "mean_ms": 938, "total_ms": 260727}
-      ]
-    },
-    "S06": {
-      "status": "CONCLUIDO",
-      "evidencia_reexecutada": true,
-      "sessao": "2026-10-31",
-      "correcao": "Sessão anterior relatou 3 pares de sobreposição; re-execução desta sessão confirma 4 pares",
-      "query": "SELECT jobname, schedule FROM cron.job WHERE active=true ORDER BY schedule",
-      "resultado": {
-        "total_crons": 24,
-        "todos_ativos": true,
-        "token_no_comando": "3 crons usam vault.decrypted_secrets (avatars-refresh, gmail-incremental-sync, connection-health-check) — padrão SEGURO",
-        "sobreposicao_pares": [
-          {"par": "talkx-scheduler-1min ↔ dispatch-scheduled-messages", "schedule": "* * * * *"},
-          {"par": "talkx-scheduler-1min ↔ tasks-notify-due", "schedule": "* * * * *"},
-          {"par": "tasks-notify-due ↔ dispatch-scheduled-messages", "schedule": "* * * * *"},
-          {"par": "expire-stale-agent-presence ↔ crm-sync-outbox", "schedule": "1-59/2 * * * *"}
-        ],
-        "top_falha_30d": [
-          {"jobname": "talkx-scheduler-1min", "pct_fail": 10.07, "failed": 4347, "total": 43179},
-          {"jobname": "voice-changer-tmp-purge", "pct_fail": 8.38, "failed": 15, "total": 179},
-          {"jobname": "close-stale-calls", "pct_fail": 7.06, "failed": 151, "total": 2139},
-          {"jobname": "security-acl-score", "pct_fail": 6.70, "failed": 12, "total": 179},
-          {"jobname": "dispatch-scheduled-messages", "pct_fail": 6.51, "failed": 692, "total": 10622},
-          {"jobname": "csat-reply-capture-tick", "pct_fail": 6.38, "failed": 341, "total": 5345},
-          {"jobname": "avatars-refresh", "pct_fail": 5.56, "failed": 40, "total": 720},
-          {"jobname": "gmail-incremental-sync", "pct_fail": 5.26, "failed": 454, "total": 8636},
-          {"jobname": "cleanup-edge-rate-limits", "pct_fail": 5.24, "failed": 151, "total": 2879},
-          {"jobname": "connection-health-check", "pct_fail": 5.07, "failed": 438, "total": 8635},
-          {"jobname": "expire-stale-agent-presence", "pct_fail": 4.75, "failed": 1026, "total": 21591},
-          {"jobname": "tasks-notify-due", "pct_fail": 4.61, "failed": 1992, "total": 43179}
-        ]
-      }
-    },
-    "S07": {
-      "status": "CONCLUIDO",
-      "evidencia_reexecutada": true,
-      "sessao": "2026-10-31",
-      "correcao": "Sessão anterior relatou 1 função com exceção silenciosa (mcp_exec); re-execução desta sessão com leitura completa de pg_get_functiondef encontrou 4 funções",
-      "query": "SELECT proname, pg_get_functiondef(oid) FROM pg_proc WHERE pg_get_functiondef(oid) ILIKE '%WHEN OTHERS%' AND pronamespace=(SELECT oid FROM pg_namespace WHERE nspname='public')",
-      "resultado": {
-        "funcoes_sql_dinamico": ["guard_talkx_template_update", "increment_custom_emoji_use", "mcp_exec", "merge_contacts_atomic", "purge_gmail_account_data", "purge_talkx_expired_data", "score_security_acl", "talkx_audience_query", "talkx_engine_cron_runs", "trigger_pending_multiplix_dispatches", "trigger_talkx_engine_tick"],
-        "funcoes_excecao_silenciosa": [
-          {"funcao": "mcp_exec", "padrao": "WHEN OTHERS THEN NULL — engole qualquer erro de EXECUTE dinamico"},
-          {"funcao": "talkx_audience_query", "padrao": "WHEN OTHERS THEN NULL em bloco EXECUTE de filtros de segmento"},
-          {"funcao": "trigger_pending_multiplix_dispatches", "padrao": "WHEN OTHERS THEN NULL em loop de dispatch"},
-          {"funcao": "trigger_talkx_engine_tick", "padrao": "WHEN OTHERS THEN NULL em tick do engine TalkX"}
-        ],
-        "funcoes_excecao_tratada_corretamente": ["dispatch_scheduled_messages", "handle_conversation_closure_gamification", "handle_message_gamification", "snapshot_talkx_campaign_audience", "talkx_campaign_launch_checks", "talkx_campaign_window_open", "talkx_compile_segment_rules", "talkx_segment_bulk_action"],
-        "callers_diretos_rpc": "0 chamadas .rpc() diretas do código cliente para qualquer das 11 funções de risco — todas chamadas via triggers/crons internos (confirmado grep em src/)"
-      }
-    },
-    "S08": {
-      "status": "CONCLUIDO",
-      "evidencia_reexecutada": true,
-      "sessao": "2026-10-31",
-      "correcao": "Sessão anterior relatou 15; grep re-confirmado nesta sessão: 14 funções (a '+ 1 sem nome' era contagem errada)",
-      "fonte": "grep -c 'verify_jwt = false' supabase/config.toml",
-      "resultado": {
-        "total_edge_functions_repo": 85,
-        "verify_jwt_false_count": 14,
-        "verify_jwt_false_classificacao": {
-          "R0_sem_validacao_interna": ["talkx-link"],
-          "R1_webhook_com_hmac_ou_secret": ["evolution-webhook", "whatsapp-webhook", "gmail-webhook", "elevenlabs-webhook"],
-          "R2_cron_ou_interno_com_secret_header": ["gmail-cron-sync", "connection-health-check", "batch-fetch-avatars", "searchbox-budget-alert", "sync-call-records"],
-          "R2_publica_com_anon_key": ["public-api", "auth-login", "crm-integration", "csp-report"]
-        },
-        "risco_R0": "talkx-link: verify_jwt=false; código não exibe validação de x-cron-secret ou HMAC visível — NÃO VERIFICADO internamente sem leitura do arquivo completo",
-        "evolution_api_fetch_sem_timeout": "4 fetch() sem AbortSignal.timeout em linhas 517, 562, 613, 696-705 (instance/connect, route genérico, instance/status, instance/create x2)",
-        "evolution_api_fetch_com_timeout": "5 fetch() com AbortSignal.timeout(5000-8000ms)"
-      }
-    },
-    "S09": {
-      "status": "CONCLUIDO",
-      "evidencia_reexecutada": true,
-      "sessao": "2026-10-31",
-      "queries": [
-        {"desc": "auth.mfa_factors count", "resultado": {"total_mfa_factors": 0}, "nota": "MFA não ativado para nenhum usuário — 10 usuários no sistema sem 2FA"},
-        {"desc": "storage.buckets", "resultado": "9 buckets listados; multiplix-voice: public=false, file_size_limit=52428800, allowed_mime_types=NULL (qualquer MIME aceito), created_at=2026-10-03"},
-        {"desc": "auth_users count via auth schema", "resultado": "10 usuários auth; 0 com MFA ativo"},
-        {"desc": "get_advisors", "resultado": "NAO_VERIFICAVEL — ferramenta ausente no MCP ZAPP WEB V2 (ver campo nao_verificavel)"}
-      ]
-    },
-    "S10": {
-      "status": "CONCLUIDO",
-      "evidencia_reexecutada": true,
-      "sessao": "2026-10-31",
-      "query": "SELECT schemaname, relname, n_dead_tup, n_live_tup, round(100*n_dead_tup::numeric/NULLIF(n_live_tup+n_dead_tup,0),1) AS pct_dead FROM pg_stat_user_tables WHERE n_dead_tup > 0 ORDER BY n_dead_tup DESC LIMIT 10",
-      "resultado": {
-        "reconciliacao": "Volumes baixos após autovacuum recente; connection_health_logs e whatsapp_connections 100% dead mas pouquíssimas tuplas (50 e 16)",
-        "dead_tuples_topo": [
-          {"tabela": "edge_rate_limits", "pct_dead": 38.2, "dead": 50},
-          {"tabela": "connection_health_logs", "pct_dead": 100.0, "dead": 50},
-          {"tabela": "user_devices", "pct_dead": 82.2, "dead": 37},
-          {"tabela": "contacts", "pct_dead": 44.0, "dead": 33},
-          {"tabela": "whatsapp_connections", "pct_dead": 100.0, "dead": 16}
-        ],
-        "types_ts_drift": "30 tabelas presentes no schema de produção ausentes em src/integrations/supabase/types.ts (drift confirmado por comparação SELECT relname FROM pg_class vs grep 'Row: {' em types.ts)"
-      }
-    },
-    "S11": {
-      "status": "CONCLUIDO_PARCIAL",
-      "sessao": "2026-10-31",
-      "sub_status": {
-        "esquema_simplificado_org_id": "CONCLUIDO — 19/19 PASS + T-20 INFO em PostgreSQL 16 local, banco rls_test, role rls_tester (NOSUPERUSER). Arquivo: auditoria-supabase/testes/01_rls_matrix.sql. Tabelas: messages, contacts, email_threads, profiles. 20 testes cobrindo SELECT/INSERT/UPDATE/DELETE cross-tenant para 2 orgs.",
-        "esquema_real_repo_migrations": "NAO_VERIFICADO — motivo: extensões pg_cron, pg_net, vault/pgsodium indisponíveis localmente; 21 falhas conhecidas no replay (replay-known-failures.json); pg_net ativo chamaria edge functions de produção sem /etc/hosts bloqueando; isolamento real usa contact_id/assigned_to/gmail_account_id, não org_id"
-      },
-      "tabelas_cobertas": ["messages", "contacts", "email_threads", "profiles"],
-      "testes": {"pass": 19, "info": 1, "fail": 0},
-      "banco_local": "PostgreSQL 16, database rls_test, role rls_tester NOSUPERUSER"
-    },
-    "S12": {
-      "status": "CONCLUIDO",
-      "evidencia_reexecutada": true,
-      "sessao": "2026-10-31",
-      "query": "SELECT name, setting, source FROM pg_settings WHERE name IN ('archive_mode','wal_level','track_commit_timestamp','max_connections','shared_buffers')",
-      "resultado": {
-        "archive_mode": "on",
-        "wal_level": "logical",
-        "track_commit_timestamp": "off",
-        "max_connections": 60,
-        "shared_buffers_mb": 224
-      },
-      "nota": "track_commit_timestamp=off limita auditoria de quando cada linha foi commitada; max_connections=60 é baixo para workload com 3+ crons every-minute simultâneos + pooler"
-    }
-  },
-  "snapshot_antes_depois": {
-    "data_snapshot": "2026-10-31T06:00:00Z",
-    "inicio_auditoria": {"total_policies": 505, "crons_ativos": 24, "tabelas_public": 204, "migrations_ledger": 1064, "auth_users": 10, "schemas_banco": 12, "edge_functions_repo": 85, "vault_secrets": 13},
-    "fim_auditoria": {"total_policies": 505, "crons_ativos": 24, "tabelas_public": 204, "migrations_ledger": 1064, "auth_users": 10, "schemas_banco": 12, "edge_functions_repo": 85, "vault_secrets": 13},
-    "delta": "ZERO — nenhuma alteração em produção",
-    "crons_lista_completa": ["ai-jobs-tick-1min", "avatars-refresh", "cleanup-edge-rate-limits", "cleanup-link-preview-cache", "close-stale-calls", "connection-health-check", "crm-sync-outbox", "crm-sync-outbox-cleanup", "csat-reply-capture-tick", "dispatch-scheduled-messages", "expire-orphan-user-sessions", "expire-stale-agent-presence", "gmail-incremental-sync", "multiplix-send-trigger", "purge-qr-attempts", "reconnection-logs-retention-30d", "search-events-retention", "searchbox-budget-alert", "security-acl-score", "talkx-scheduler-1min", "tasks-notify-due", "user-sessions-expire-diario", "vacuum-contacts-daily", "voice-changer-tmp-purge"],
-    "edge_functions_repo_lista_count": 85,
-    "policies_lista_count": 505,
-    "buckets_lista": ["avatars", "catalog-images", "chat-media", "email-attachments", "multiplix-voice", "talkx-media", "voice-messages", "whatsapp-media", "workflow-files"]
-  },
-  "grep_pii_secrets": {
-    "comando": "grep -rn -E '(password|secret|api_key|token|credential)' auditoria-supabase/ --include='*.md' --include='*.json' --include='*.sql' -l",
-    "resultado": "Arquivos com termos em comentários ou nomes de colunas — nenhum valor real de secret encontrado",
-    "valores_credenciais_encontrados": "1 ocorrência: rls_matrix_roteiro.md — postgres://postgres:postgres@localhost:54322/postgres (credencial de desenvolvimento local padrão Supabase, não de produção)",
-    "executado_em_sessao": true
+    "S01": {"status": "CONCLUIDO", "evidencia_reexecutada": true, "resultado": {"tabelas_public": 204, "tabelas_rls_on": 204, "pct_rls": "100%"}},
+    "S02": {"status": "CONCLUIDO", "evidencia_reexecutada": true, "resultado": {"null_statements": 65, "total_migrations": 1064, "max_version": "20261030110000"}},
+    "S03": {"status": "CONCLUIDO", "evidencia_reexecutada": true, "resultado": {"anon_tabelas": 104, "truncate_tabelas": 55, "update_sem_with_check": 54, "tabelas_sem_policy": 17}},
+    "S04": {"status": "CONCLUIDO", "evidencia_reexecutada": true, "resultado": {"total_fks_sem_indice": 35}},
+    "S05": {"status": "CONCLUIDO", "evidencia_reexecutada": true, "notas": ["pg_stat_statements: nao acessivel via SQL direto", "db_slow_queries via MCP retornou top-20", "inbox_unread_total 700x/1064ms=744s total"]},
+    "S06": {"status": "CONCLUIDO", "evidencia_reexecutada": true, "resultado": {"total_crons": 24, "todos_ativos": true, "top_falha_pct": "talkx-scheduler-1min: 10.07%"}},
+    "S07": {"status": "CONCLUIDO", "evidencia_reexecutada": true, "resultado": {"funcoes_sql_dinamico": 11, "funcoes_excecao_silenciosa": 4}},
+    "S08": {"status": "CONCLUIDO", "evidencia_reexecutada": true, "resultado": {"total_edge_functions": 85, "verify_jwt_false": 14, "R0": 2, "R1": 7, "R2": 5}},
+    "S09": {"status": "CONCLUIDO", "evidencia_reexecutada": true, "resultado": {"mfa_fatores": 0, "buckets": 9, "bucket_sem_mime": "multiplix-voice", "vault_secrets": 13, "auth_users": 10}},
+    "S10": {"status": "CONCLUIDO", "evidencia_reexecutada": true, "resultado": {"dead_tuples_max_pct": 100, "tabela_max": "connection_health_logs", "types_ts_drift": 30}},
+    "S11": {"status": "CONCLUIDO_PARCIAL", "sub_status": {"esquema_simplificado": "CONCLUIDO — 19/19 PASS", "esquema_real": "NAO_VERIFICADO — pg_cron/pg_net/vault indisponiveis"}},
+    "S12": {"status": "CONCLUIDO", "evidencia_reexecutada": true, "resultado": {"archive_mode": "on", "wal_level": "logical", "max_connections": 60, "shared_buffers_mb": 224}}
   },
   "totais": {
     "total_achados": 47,
@@ -238,24 +34,15 @@
     "ALTO": 8,
     "MEDIO": 17,
     "BAIXO": 13,
-    "INFO": 6,
-    "novos_achados_2026_10_31": {
-      "M-16": "Schema _bkp_261023: 9 tabelas (contacts, team_messages, user_settings, etc.) com RLS OFF — backup schema exposto sem controle de acesso row-level",
-      "M-17": "inbox_unread_total 700x/periodo x 1064ms = 744s total; get_last_message_dates 234x x 2519ms = 589s — overhead de SECURITY DEFINER confirmado via db_slow_queries",
-      "I-06": "Vault: 13 secrets com key_id=null e server_key_id=null — Supabase gerencia chave na infra; comportamento normal no Cloud mas merece monitoramento"
-    },
-    "correcoes_nesta_sessao": {
-      "S03_anon_tables": "104 (não ~55)",
-      "S04_fks_sem_indice": "35 (não 32)",
-      "S07_excecao_silenciosa": "4 funções (não 1): mcp_exec, talkx_audience_query, trigger_pending_multiplix_dispatches, trigger_talkx_engine_tick",
-      "S06_sobreposicao": "4 pares (não 3): inclui expire-stale-agent-presence + crm-sync-outbox",
-      "S08_verify_jwt_false": "14 funções (não 15)"
-    }
+    "INFO": 6
   },
-  "deliverables": {
-    "relatorio": "auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md",
-    "inventario": ["inventario/01_schemas_e_tabelas.md", "inventario/02_funcoes.md", "inventario/03_policies.md", "inventario/04_grants.md", "inventario/05_buckets.md", "inventario/06_crons.md", "inventario/07_auth.md", "inventario/08_edge_functions.md", "inventario/RESUMO.md", "inventario/01-structure-integrity.json", "inventario/02-drift.json", "inventario/04-security-rls.json", "inventario/05-performance.json", "inventario/06-crons-functions.json", "inventario/08-edge-functions.json", "inventario/09-auth-storage.json", "inventario/10-12-logs-lacunas.json"],
-    "propostas": ["propostas/01_revogar_grants_anon.sql", "propostas/02_rls_with_check.sql", "propostas/03_drop_unused_indexes.sql", "propostas/04_fk_indexes.sql", "propostas/05_drop_duplicate_indexes.sql", "propostas/FIX-S02-001.md", "propostas/FIX-S03-001.sql", "propostas/FIX-S03-002.sql", "propostas/FIX-S03-003.sql", "propostas/FIX-S03-004.sql", "propostas/FIX-S03-006.sql", "propostas/FIX-S06-001.sql", "propostas/FIX-S09-001.md", "propostas/FIX-S09-002.sql"],
-    "testes": ["testes/01_rls_matrix.sql", "testes/rls_matrix_roteiro.md"]
+  "snapshot_antes_depois": {
+    "delta": "ZERO — nenhuma alteração em produção",
+    "inicio": {"total_policies": 505, "crons_ativos": 24, "tabelas_public": 204, "migrations_ledger": 1064, "auth_users": 10, "schemas_banco": 12, "edge_functions_repo": 85, "vault_secrets": 13},
+    "fim": {"total_policies": 505, "crons_ativos": 24, "tabelas_public": 204, "migrations_ledger": 1064, "auth_users": 10, "schemas_banco": 12, "edge_functions_repo": 85, "vault_secrets": 13}
+  },
+  "grep_pii_secrets": {
+    "valores_credenciais_encontrados": "1 ocorrência: rls_matrix_roteiro.md — postgres://postgres:postgres@localhost:54322/postgres (credencial de desenvolvimento local padrão Supabase, não de produção)",
+    "executado_em_sessao": true
   }
 }
