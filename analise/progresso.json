@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "analisadas": [
+    {
+      "branch": "hermes/telefonia-contrato-dados-26092615475e51",
+      "tip_sha": "4c41d3b1a",
+      "veredito": "SUPERADA",
+      "confianca": 0.95,
+      "dossie": "analise/dossies/hermes-telefonia-contrato-dados-26092615475e51.md",
+      "analisado_em": "2026-10-23",
+      "sessao": "claude/dazzling-cannon-j7iw08",
+      "verificado_em": "2026-10-30",
+      "verificacao_sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "Fases 1-2 do plano de telefonia (biblioteca de domínio + contrato de dados). Conteúdo 100% em main: migration 20260926800000 em produção, src/lib/calls/ evoluído para 21 arquivos (branch tinha 6). Análise original: diff 100% (20 arquivos lidos), typecheck 0 erros, 217 testes passam, eslint exit 0, cherry-pick testado (2 conflitos doc-only, código=patches vazios). Verificação 2026-10-30: branch deletada do remoto, commits originais ausentes (git cat-file -t 4c41d3b1a → NOT_EXIST); 4 fatos confirmados em origin/main: 21 arquivos em src/lib/calls/, migration 20260926800000 presente, SINGU 0 refs no código de telefonia, 16 arquivos importam src/lib/calls. Zero escrita em remoto, zero banco tocado, sem worktree nesta sessão (branch inacessível)."
+    },
+    {
+      "branch": "automation/types-sync",
+      "tip_sha": "f5e651e01",
+      "veredito": "SUPERADA",
+      "confianca": 0.97,
+      "dossie": "analise/dossies/automation-types-sync.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "merge-tree produce tree = main tree (f7b413078b11e47b67f521e0a5d32ea294583c83). Fixes de db-inventory chegaram à main por outros PRs. Branch apagada."
+    },
+    {
+      "branch": "claude/fervent-noether-vvq63j",
+      "tip_sha": "95295a7cb",
+      "veredito": "SUPERADA",
+      "confianca": 0.97,
+      "dossie": "analise/dossies/claude-fervent-noether-vvq63j.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "merge-tree produce tree = main tree (f7b413078b11e47b67f521e0a5d32ea294583c83). Correção hash pngjs chegou à main. Branch apagada."
+    },
+    {
+      "branch": "claude/fix-deploy-functions-2408",
+      "tip_sha": "b643d5d43",
+      "veredito": "COBERTA",
+      "confianca": 0.9,
+      "dossie": "analise/dossies/claude-fix-deploy-functions-2408.md",
+      "analisado_em": "2026-10-31",
+      "sessao": "claude/trusting-albattani-9x3ipg",
+      "notas": "merge-tree difere da main. Delta: deno.json adiciona npm:@types/node@^22. Problema resolvido na main via #2407 (npm install no workflow). Abordagem alternativa causaria conflito de versão. Branch apagada."
+    }
+  ]
+}
