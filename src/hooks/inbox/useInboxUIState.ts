@@ -10,7 +10,7 @@ import type { ConversationTab } from '@/components/inbox/chat/ConversationTabs';
 const TAB_REDIRECTS: Record<string, ConversationTab> = { reminders: 'tasks' };
 
 const VALID_TABS: readonly ConversationTab[] =
-  ['chat', 'ia', 'crm', 'orders', 'tasks', 'notes', 'files', 'history'];
+  ['chat', 'files', 'ia', 'crm', 'orders', 'history', 'tasks', 'notes'];
 
 export const CONVERSATION_TAB_STORAGE_KEY = 'zapp:inbox:conversation-tab';
 

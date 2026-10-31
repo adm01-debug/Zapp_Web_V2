@@ -115,21 +115,20 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
     expect(toast.error).not.toHaveBeenCalled();
   });
 
-  it('o botão olho alterna aria-label entre "Mostrar chave" e "Ocultar chave" com aria-pressed', async () => {
-    renderizar();
-
-    const { container } = render(<IntegrationKeysSection />);
+  // Sem o papel de admin a seção não renderiza nada (o segredo nunca vaza).
+  it('sem o papel de admin a seção não renderiza nada', async () => {
+    roleState.isAdmin = false;
+    const { container } = renderizar();
 
     await waitFor(() => {
-      expect(mockOrder).toHaveBeenCalled();
+      expect(container).toBeEmptyDOMElement();
     });
     expect(screen.queryByText('Chaves de Integração')).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Nova chave para substituir...')).not.toBeInTheDocument();
-    expect(container).toBeEmptyDOMElement();
   });
 
   it('o admin não tem botão para revelar o valor e o segredo não vai para a tela', async () => {
-    render(<IntegrationKeysSection />);
+    renderizar();
 
     expect(await screen.findByText(/Registrada \(não usada pelo TTS\)/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Mostrar chave/i })).not.toBeInTheDocument();
@@ -142,7 +141,7 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
   });
 
   it('o admin vê a data em que a chave foi registrada e segue podendo substituí-la', async () => {
-    render(<IntegrationKeysSection />);
+    renderizar();
 
     const registrada = await screen.findByTestId('chave-elevenlabs_api_key-registrada');
     expect(registrada).toHaveTextContent('Configurada em 01/10/2026');
@@ -154,10 +153,12 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
     expect(screen.getByRole('button', { name: /salvar/i })).toBeEnabled();
   });
 
-  it('axe não aponta violações no botão olho', async () => {
-    renderizar();
-    const botaoOlho = await screen.findByRole('button', { name: /^Mostrar chave ElevenLabs API Key$/i });
-    const results = await axe(botaoOlho);
+  // A seção não tem botão olho (o valor registrado nunca é revelado): o axe
+  // roda na seção inteira.
+  it('axe não aponta violações na seção', async () => {
+    const { container } = renderizar();
+    await screen.findByText('Chaves de Integração');
+    const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 });
