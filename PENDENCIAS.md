@@ -21,8 +21,8 @@ _Atualizado em 2026-10-31 por sessão de correção de CI._
 **Por que não foi corrigido:** O DB Live Guard compara o estado do banco de produção com os artefatos do repositório (types.ts, schema-catalog.json, deployment-manifest.json). A falha em TODOS os passos sugere deriva transitória causada pelo `deploy-functions.yml` estar parado (deno.lock quebrado). Os artefatos gerados por `types-sync` e `deploy-functions` estavam desatualizados.
 
 **O que o Joaquim precisa fazer:**
-1. Aguardar o merge do PR #2409 (corrige `deploy-functions.yml` → ele volta a rodar na main)
-2. Após o merge e o deploy das edge functions com sucesso, disparar manualmente o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`
+1. Aguardar a conclusão do run [41162076060](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162076060) do `deploy-functions.yml` na main (fix do PR #2407, commit `004e74a8`)
+2. Após o deploy das edge functions com sucesso, disparar manualmente o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`
 3. Se ainda falhar, os logs do artifact `db-live-evidence-{run_id}-1` mostrarão qual passo específico tem diferença real
 4. Se o passo "Comparar migrations com schema_migrations" falhar: verificar se há migration aplicada em produção sem estar no ledger (`SELECT max(version) FROM supabase_migrations.schema_migrations`)
 5. Se o passo "Verificar frescor do types.ts" falhar: disparar `workflow_dispatch` do `types-sync.yml` para regenerar types.ts
@@ -38,8 +38,6 @@ _Atualizado em 2026-10-31 por sessão de correção de CI._
 - [41125593441](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41125593441) — 2026-10-30
 - [41140197413](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41140197413) — `copilot-pull-request-reviewer`, conclusão `failure` em 2026-10-30T22:49:16Z
 - [41154128287](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41154128287) — `copilot-pull-request-reviewer`, conclusão `failure` em 2026-10-31T01:11:xx
-- [41160212070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160212070) — `copilot-pull-request-reviewer`, conclusão `failure` em 2026-10-31T02:33:xx (PR #2408)
-- [41160249404](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160249404) — `copilot-pull-request-reviewer`, conclusão `failure` em 2026-10-31T02:33:xx (PR #2409)
 
 **O que falhou:** Step "Processing Request (Linux)" falha com:
 ```
@@ -57,7 +55,7 @@ If you need me to access, download, or install something from one of these locat
 
 ---
 
-## 3. deploy-functions.yml — correção aplicada, aguardando CI automático (sem bloqueio humano)
+## 3. deploy-functions.yml — fix em main, aguardando conclusão do run
 
 **Última run com falha:** [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645)
 
@@ -66,21 +64,25 @@ If you need me to access, download, or install something from one of these locat
 error TS2307: Cannot find module '@types/node' or its corresponding type declarations
 ```
 
-**Causa raiz:** `@types/ws@8.18.1` tem `/// <reference types="node" />` que força resolução de `@types/node`. O `scripts/ci/deno.lock` tem zero entradas npm, então `deno install --frozen` rejeita qualquer pacote npm ausente → `@types/node` não instalado.
+**Causa raiz:** `@types/ws@8.18.1` tem `/// <reference types="node" />` que força resolução de `@types/node`. O `scripts/ci/deno.lock` tem zero entradas npm, então `deno install --frozen` não instala `@types/node`.
 
-**Correção aplicada em PR #2409:**
-- `supabase/functions/deno.json`: adicionado `@types/node: npm:@types/node@^22` ao `imports`
-- `.github/workflows/deploy-functions.yml`: `--frozen=false` no `deno install`
+**Correção aplicada em PR #2407** (commit `004e74a8`, 2026-10-31T02:53:54Z):
+```yaml
+- name: Instalar dependencias node_modules (deno install + @types/node)
+  run: |
+    deno install --config supabase/functions/deno.json
+    (cd supabase/functions && echo '{}' > package.json && npm install --no-save --ignore-scripts --no-package-lock @types/node && rm -f package.json)
+```
 
-**Status:** PR #2409 aberta com auto_merge squash ativo. CI (run [`41160241806`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160241806)) iniciado em 2026-10-31T02:31Z no HEAD `6521a05f`. **Bloqueio atual: apenas tempo de CI (~20 min) — sem ação humana necessária.** O auto-merge squash disparará automaticamente quando os 6 required checks passarem (estimativa ~02:51-02:55Z). Após o merge, o `deploy-functions.yml` rodará na main e este item será removido.
+**Status:** Fix em main desde commit `004e74a8`. Run [41162076060](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162076060) (workflow_dispatch, 2026-10-31T02:54:59Z) estava `queued` na SHA `004e74a8`. Aguardando `conclusion=success`.
 
-**O que o Joaquim precisa fazer:** Nada. O processo é automático.
+**O que o Joaquim precisa fazer:** Apenas confirmar que o run [41162076060](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162076060) completou com `success`. Se ainda estiver `queued` sem iniciar depois de 10 minutos, verificar se o environment `producao-edge-functions` tem aprovação pendente.
 
 ---
 
 ## 4. Lockfile npm desatualizado — solução requer Deno local
 
-**Contexto:** O `scripts/ci/deno.lock` tem zero entradas npm. A fix do item 3 usa `--frozen=false` + `@types/node@^22`, o que resolve o sintoma mas cria um build não-reprodutível: a versão exata de `@types/node` não está pinada no lockfile.
+**Contexto:** O `scripts/ci/deno.lock` tem zero entradas npm. A abordagem atual (PR #2407: instalar `@types/node` via npm diretamente em `node_modules/` após `deno install`) funciona mas não é rastreada no lockfile — a versão de `@types/node` instalada não está pinada.
 
 **Por que não foi corrigido:** Regenerar `deno.lock` com entradas npm exige Deno instalado localmente (não disponível no container cloud desta sessão). O comando seria:
 ```sh
@@ -92,10 +94,11 @@ deno install --config deno.json
 **O que o Joaquim precisa fazer (ou autorizar):**
 1. Instalar Deno localmente (se não tiver): `curl -fsSL https://deno.land/install.sh | sh`
 2. Rodar `deno install --config supabase/functions/deno.json` na raiz do repo
-3. Commitar o `scripts/ci/deno.lock` atualizado
-4. Após isso, reverter o `--frozen=false` para `--frozen` no `deploy-functions.yml`
+3. Verificar que `scripts/ci/deno.lock` ganhou entradas npm
+4. Commitar o `scripts/ci/deno.lock` atualizado
+5. Após isso, remover o passo `npm install` do `deploy-functions.yml` (usar `--frozen` novamente)
 
-Enquanto isso, o `--frozen=false` funciona e o CI passa — apenas não é reprodutível com versão pinada.
+Enquanto isso, o `npm install` do passo atual funciona — apenas instala a versão mais recente de `@types/node@22.x` a cada run.
 
 ---
 
