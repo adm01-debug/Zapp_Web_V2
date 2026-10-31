@@ -1,8 +1,1 @@
-{
-  "lock": "../../scripts/ci/deno.lock",
-  "nodeModulesDir": "auto",
-  "imports": {
-    "@types/node": "npm:@types/node@^22"
-  },
-  "compilerOptions": { "skipLibCheck": true }
-}
+{"lock":"../../scripts/ci/deno.lock","nodeModulesDir":"auto","imports":{"@types/node":"npm:@types/node@^22"},"compilerOptions":{"skipLibCheck":true}}
