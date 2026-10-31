@@ -171,6 +171,43 @@ os logs de cada edge function individualmente.
 
 ---
 
+## P9 — Re-executar evidências críticas (MCP indisponível em 2026-10-31)
+
+**O que:** O servidor MCP `SUPABASE - ZAPP WEB V2 - MCP` estava inacessível (timeout em ping)
+em 2026-10-31, impedindo re-execução ao vivo das queries de CRITICAL-1, CRITICAL-2, CRITICAL-3
+e do snapshot de produção nesta sessão.
+
+**Evidências registradas em sessões anteriores (2026-10-24/25) no `progresso.json`:**
+- CRITICAL-1 (anon grants): INSERT:98, DELETE:97, UPDATE:97, TRUNCATE:98 — 2026-10-25T01:42Z
+- CRITICAL-2 (UPDATE sem WITH CHECK): count=39 — 2026-10-25
+- CRITICAL-3 (cron failures): 9724 falhas talkx-scheduler-1min em 30d — 2026-10-25T01:42Z
+- Snapshot delta ZERO: migrations=1054, crons=24, policies=499, functions=475, tables=202
+
+**Passo a passo (quando o MCP voltar):**
+```sql
+-- Snapshot
+SELECT
+  (SELECT count(*) FROM supabase_migrations.schema_migrations) AS migrations,
+  (SELECT count(*) FROM cron.job WHERE active) AS crons,
+  (SELECT count(*) FROM pg_policies WHERE schemaname = 'public') AS policies,
+  (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public') AS functions,
+  (SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE') AS tables;
+
+-- CRITICAL-1
+SELECT privilege_type, count(*) FROM information_schema.role_table_grants
+WHERE grantee='anon' AND table_schema='public' AND privilege_type IN ('INSERT','UPDATE','DELETE','TRUNCATE')
+GROUP BY privilege_type;
+
+-- CRITICAL-2
+SELECT count(*) FROM pg_policies WHERE schemaname='public' AND cmd='UPDATE' AND (with_check IS NULL OR with_check='');
+
+-- CRITICAL-3
+SELECT count(*) FILTER(WHERE status='failed'), count(*) FROM cron.job_run_details d
+JOIN cron.job j ON j.jobid=d.jobid WHERE j.jobname='talkx-scheduler-1min' AND d.start_time >= now()-interval '30 days';
+```
+
+---
+
 ## Itens NÃO VERIFICÁVEIS por limitação técnica desta auditoria
 
 | Item | Limitação | Como verificar |
