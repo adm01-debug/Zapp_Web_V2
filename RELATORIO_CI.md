@@ -182,15 +182,9 @@ Workflow dinâmico do GitHub Copilot (sem arquivo no repositório). Step "Proces
 
 Run `41152825247` no SHA `8e60103...` teve todos os jobs com `conclusion: cancelled`. Causa: push posterior à branch cancelou o run anterior. Não é falha real — é comportamento esperado do GitHub Actions.
 
-### Qodo/Codex (comentários de review, não workflows com falha)
-
-O Qodo Code Review flagou `--frozen=false` + `@types/node@^22` como potencialmente não-reprodutível sem o `deno.lock` atualizado. Isso é um comentário de review, não um workflow falhando. A solução correta (regenerar `deno.lock` com Deno instalado localmente) está documentada em PENDENCIAS.md item 4. O `--frozen=false` é necessário e correto para este ambiente — não há alternativa sem regenerar o lockfile.
-
 ---
 
 ## Passo 4 — Execução
-
-Subagente único (causa raiz única, sem paralelismo necessário).
 
 Dois arquivos alterados:
 
@@ -212,15 +206,15 @@ Dois arquivos alterados:
   run: deno install --config supabase/functions/deno.json --frozen=false
 ```
 
+**Prova de funcionamento:** `🧩 Node CI Scripts` (`deno check`) concluiu ✅ no SHA `b27f5cb5` (run 41155530566, attempt 2).
+
 ---
 
 ## Passo 5 — Correção
 
 **PR #2409** — `fix(ci): deno install --frozen=false + @types/node no deno.json`  
 Branch: `claude/fix-deploy-frozen-oct31`  
-HEAD anterior: `780ff262d202de38ed08a474e73880aae0fd1c90`  
 auto_merge: squash (ativo)  
-Estado atual: CI rodando na main `claude/fix-deploy-frozen-oct31`
 
 ### Tabela de prova — workflows que estavam em falha
 
@@ -241,7 +235,7 @@ Estado atual: CI rodando na main `claude/fix-deploy-frozen-oct31`
 | `Contrato DB offline` | ⏳ CI em andamento |
 | `🎭 E2E Tests (Playwright)` | ⏳ CI em andamento |
 
-> Quando os 6 checks passarem, o auto_merge (squash) disparará automaticamente. Após o merge, o `deploy-functions.yml` será acionado na main para completar a prova.
+> Quando os 6 checks passarem, o auto_merge (squash) disparará automaticamente.
 
 ---
 
@@ -261,7 +255,7 @@ Estado atual: CI rodando na main `claude/fix-deploy-frozen-oct31`
 
 1. **Lockfile npm desatualizado:** `scripts/ci/deno.lock` tem zero entradas npm. A fix com `--frozen=false` + `@types/node@^22` resolve o sintoma mas não é reprodutível sem regenerar o lockfile com Deno instalado localmente. Documentado em PENDENCIAS.md item 4.
 
-2. **CI sem path filters para `.md`:** Pushes de documentação ao branch cancelam o CI em andamento (reiniciam todos os runs). Melhoria de baixo risco: adicionar `paths-ignore: ['**/*.md']` ao `ci.yml`. Não implementado nesta rodada para minimizar mudanças.
+2. **CI sem path filters para `.md`:** Pushes de documentação ao branch cancelam o CI em andamento. Melhoria: adicionar `paths-ignore: ['**/*.md']` ao `ci.yml`. Não implementado nesta rodada para minimizar mudanças.
 
 ---
 
