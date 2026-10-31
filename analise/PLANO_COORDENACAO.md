@@ -7,6 +7,8 @@
 - `analise/inventario-2026-10-31/workflows-main.md` — último run de cada workflow na `main` e causa da falha
 - `analise/inventario-2026-10-31/branches-remotas.md` — 225 branches classificadas por `git merge-tree`
 
+**Lista de tarefas individuais (239, por sessão e lote):** `analise/BACKLOG_TAREFAS.md`.
+
 Para ler: `git fetch origin claude/trusting-albattani-9x3ipg && git show origin/claude/trusting-albattani-9x3ipg:analise/PLANO_COORDENACAO.md`
 
 ---
