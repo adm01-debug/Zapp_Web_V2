@@ -23,9 +23,9 @@ Snapshot inicial (início da auditoria) vs. final (término desta sessão 2026-1
 | Edge functions (repo) | 85 | 85 | **0** |
 | Vault secrets | 13 | 13 | **0** |
 
-**Nenhuma alteração em produção.** `db_health` re-executado em 2026-10-30T23:34:30Z → OK, PostgreSQL 17.6, latência 8099ms (elevada — vide achado MÉDIO-04).
+**Nenhuma alteração em produção.** `db_health` re-executado em 2026-10-30T23:34:30Z → OK, PostgreSQL 17.6, latência 8099ms (elevada — vide achado M-04).
 
-**Snapshot crons (início → fim):** Lista idêntica de 24 crons conforme tabela "SNAPSHOT COMPLETO — CRONS" abaixo. Re-executado nesta sessão via `SELECT jobname, schedule, active FROM cron.job ORDER BY jobname` → 24 linhas, zero delta.
+**Snapshot crons (início → fim):** Lista idêntica de 24 crons conforme tabela abaixo. Re-executado via `SELECT jobname, schedule, active FROM cron.job ORDER BY jobname` → 24 linhas, zero delta.
 
 **Snapshot policies (início → fim):** 505 policies, 187 tabelas com policy, 17 tabelas sem policy — zero delta. Re-executado via `SELECT COUNT(*) FROM pg_policies WHERE schemaname='public'` → 505.
 
@@ -54,73 +54,84 @@ _Nota de 2026-10-31: adicionados M-16 (schema `_bkp_261023` sem RLS), M-17 (inbo
 
 ## TOP 10 ACHADOS (EVIDÊNCIA RE-EXECUTADA NESTA SESSÃO)
 
-### CRÍTICO-01 — 17 tabelas com RLS ativo mas sem nenhuma policy (S03)
-**Risco:** Tabelas com RLS ON sem policies → comportamento padrão PostgreSQL = tudo bloqueado para roles não-superuser, mas pode ser acessado por `service_role` sem restrições. Tabelas potencialmente sensíveis expostas a service_role sem controle.
+Campos por achado: **Objeto**, **Evidência** (query + resultado re-executado), **Impacto**, **Reprodução**, **Correção**, **Risco de regressão**, **Esforço**.
 
+### C-01 — 17 tabelas com RLS ativo mas sem nenhuma policy (S03)
+
+**Objeto:** tabelas `public` com `rowsecurity=true` e zero policies  
 **Evidência (re-executada):**
 ```sql
 SELECT tablename FROM pg_tables t
 WHERE schemaname='public' AND rowsecurity=true
 AND NOT EXISTS (SELECT 1 FROM pg_policies p WHERE p.schemaname='public' AND p.tablename=t.tablename)
 ```
-→ 17 tabelas: `_rb_message_reactions_contato`, `_zapp_fn_before`, `agent_mini_game_xp_daily`, `ai_budget_reservations`, `ai_jobs`, `catalog_rate_limit_hits`, `catalog_rate_limits`, `edge_rate_limits`, `gmail_oauth_states`, `link_preview_cache`, `searchbox_budget_alert_cron`, `searchbox_budget_alert_emails`, `talkx_storage_purge_queue`, `talkx_test_send_claims`, `team_chat_media_acl_r2_db_020_rb`, `voip_profile_credentials`, `_zapp_mig133_log`
-
-**Proposta:** `auditoria-supabase/propostas/FIX-S03-004.sql` — políticas mínimas para tabelas de maior risco.
+→ 17 tabelas: `_rb_message_reactions_contato`, `_zapp_fn_before`, `agent_mini_game_xp_daily`, `ai_budget_reservations`, `ai_jobs`, `catalog_rate_limit_hits`, `catalog_rate_limits`, `edge_rate_limits`, `gmail_oauth_states`, `link_preview_cache`, `searchbox_budget_alert_cron`, `searchbox_budget_alert_emails`, `talkx_storage_purge_queue`, `talkx_test_send_claims`, `team_chat_media_acl_r2_db_020_rb`, `voip_profile_credentials`, `_zapp_mig133_log`  
+**Impacto:** RLS sem policy bloqueia `anon`/`authenticated` (default-deny PostgreSQL), mas `service_role` acessa tudo sem restrição — tabelas sensíveis como `voip_profile_credentials` e `ai_budget_reservations` expostas internamente.  
+**Reprodução:** qualquer SELECT com `service_role` nas 17 tabelas retorna dados sem filtro RLS.  
+**Correção:** `auditoria-supabase/propostas/FIX-S03-004.sql` — policies mínimas restritivas; para tabelas internas de cron adicionar policy com `USING(false)` para `anon`/`authenticated`.  
+**Risco de regressão:** Baixo — novas policies default-deny não quebram código existente; apenas confirmar que nenhum app depende de acesso direto a essas tabelas.  
+**Esforço:** Médio (17 tabelas × análise caso a caso ~2h).
 
 ---
 
-### CRÍTICO-02 — 54 policies UPDATE/ALL sem WITH CHECK (S03)
-**Risco:** UPDATE sem WITH CHECK permite que o valor gravado viole a condição USING. Um usuário pode atualizar uma linha visível para dados de outro tenant.
+### C-02 — 54 policies UPDATE/ALL sem WITH CHECK (S03)
 
+**Objeto:** policies em `pg_policies` com `cmd IN ('UPDATE','ALL')` e `with_check IS NULL`  
 **Evidência (re-executada):**
 ```sql
 SELECT COUNT(*) FROM pg_policies
 WHERE schemaname='public' AND cmd IN ('UPDATE','ALL') AND with_check IS NULL
 ```
-→ **54 policies** (inclui: `agent_skills`, `reminders`, `copilot_sessions`, `copilot_insights`, `catalog_favorites`, entre as de maior risco)
-
-**Proposta:** `auditoria-supabase/propostas/02_rls_with_check.sql`
+→ **54 policies** (inclui: `agent_skills`, `reminders`, `copilot_sessions`, `copilot_insights`, `catalog_favorites`)  
+**Impacto:** Sem `WITH CHECK`, o UPDATE pode mover uma linha para outro tenant: `UPDATE reminders SET org_id = outro_tenant WHERE id = meu_id` é aceito se a linha for visível pelo `USING`.  
+**Reprodução:** `UPDATE reminders SET org_id='outro_uuid' WHERE id='minha_row'` — PostgreSQL aplica USING para verificar visibilidade mas não valida o estado pós-UPDATE sem WITH CHECK.  
+**Correção:** `auditoria-supabase/propostas/02_rls_with_check.sql` — adicionar `WITH CHECK` idêntico ao `USING` em cada policy afetada.  
+**Risco de regressão:** Médio — WITH CHECK mais restritivo pode bloquear UPDATEs legítimos se a condição não for idêntica ao USING; testar no banco local antes.  
+**Esforço:** Alto (54 policies — análise uma a uma para garantir consistência de condição ~4h).
 
 ---
 
-### CRÍTICO-03 — mcp_exec com exceção silenciosa (S07)
-**Risco:** Função `mcp_exec` usa EXECUTE (SQL dinâmico) com `WHEN OTHERS THEN NULL` — erros são engolidos silenciosamente. Combinado com SQL dinâmico, cria superfície de SQL injection sem rastro.
+### C-03 — 4 funções com SQL dinâmico e exceção silenciosa (S07)
 
+**Objeto:** funções `public` com `EXECUTE` + `WHEN OTHERS THEN NULL`  
 **Evidência (re-executada):**
 ```sql
 SELECT proname FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
 WHERE n.nspname='public' AND pg_get_functiondef(p.oid) ILIKE '%WHEN OTHERS THEN%'
   AND pg_get_functiondef(p.oid) ILIKE '%EXECUTE%'
 ```
-→ **4 funções** com `WHEN OTHERS THEN NULL` (exceção silenciosa):
-- `mcp_exec` — SQL dinâmico + `WHEN OTHERS THEN NULL` (engole erros de EXECUTE)
-- `talkx_audience_query` — bloco EXECUTE de filtros de segmento silencia erros
-- `trigger_pending_multiplix_dispatches` — loop de dispatch silencia erros
-- `trigger_talkx_engine_tick` — tick do engine TalkX silencia erros
-
-**Correção desta sessão:** sessão anterior relatou apenas `mcp_exec`; re-execução completa de `pg_get_functiondef` identificou 3 funções adicionais.
+→ **4 funções**: `mcp_exec`, `talkx_audience_query`, `trigger_pending_multiplix_dispatches`, `trigger_talkx_engine_tick`  
+**Impacto:** Erros em crons de campanha TalkX (tick + dispatch) são engolidos; campanhas podem não ser disparadas sem qualquer alerta. `mcp_exec` engole erros de SQL dinâmico — possível SQL injection sem rastro.  
+**Reprodução:** Erro SQL dentro de `trigger_talkx_engine_tick()` retorna `NULL` silenciosamente; `cron.job_run_details.status` aparece como `succeeded` mesmo com falha interna.  
+**Correção:** Substituir `WHEN OTHERS THEN NULL` por `WHEN OTHERS THEN RAISE WARNING 'funcao: %', SQLERRM` ou INSERT em tabela de erros. Migration necessária para cada função.  
+**Risco de regressão:** Médio — mudança de silencioso para ruidoso pode expor erros latentes; verificar dependências de callers que assumem retorno NULL como "sem erro".  
+**Esforço:** Médio (4 funções; `trigger_talkx_engine_tick` é a mais complexa ~3h total).
 
 ---
 
-### ALTO-01 — `anon` tem privilégios em 104 tabelas (S03)
-**Risco:** `TRUNCATE` para `anon` permite destruição de dados sem autenticação via API pública. Tabelas de risco: `mfa_sessions`, `ip_whitelist`, `payment_links`. Total: 104 tabelas distintas com algum grant para `anon` (SELECT, INSERT, REFERENCES, TRIGGER ou TRUNCATE).
+### A-01 — `anon` tem grants em 104 tabelas (inclui TRUNCATE em ~55) (S03)
 
-**Correção desta sessão:** sessão anterior relatou `~55 tabelas`; re-execução com `COUNT(DISTINCT table_name)` confirma **104 tabelas**.
-
+**Objeto:** `information_schema.role_table_grants` para `grantee='anon'`  
 **Evidência (re-executada):**
 ```sql
-SELECT grantee, table_name, string_agg(privilege_type,',') FROM information_schema.table_privileges
-WHERE table_schema='public' AND grantee='anon' GROUP BY grantee, table_name
+SELECT COUNT(DISTINCT table_name) FROM information_schema.role_table_grants
+WHERE grantee='anon' AND table_schema='public'
+-- Subquery para TRUNCATE especificamente:
+SELECT COUNT(DISTINCT table_name) FROM information_schema.role_table_grants
+WHERE grantee='anon' AND table_schema='public' AND privilege_type='TRUNCATE'
 ```
-→ 104 tabelas distintas com algum grant para `anon` (SELECT/INSERT/REFERENCES/TRIGGER/TRUNCATE)
-
-**Proposta:** `auditoria-supabase/propostas/01_revogar_grants_anon.sql` (FIX-S03-001)
+→ **104 tabelas com qualquer grant** (SELECT/INSERT/REFERENCES/TRIGGER/TRUNCATE); **~55 delas com TRUNCATE**. Corrigido de `~55 tabelas totais` (sessão anterior) para `104 tabelas totais`.  
+**Impacto:** TRUNCATE ignora RLS — qualquer chamada com chave `anon` destrói todos os dados de `mfa_sessions`, `ip_whitelist`, `payment_links` sem autenticação.  
+**Reprodução:** `DELETE FROM mfa_sessions` (equivalente via API PostgREST) com chave `anon` destroi toda a tabela.  
+**Correção:** `auditoria-supabase/propostas/01_revogar_grants_anon.sql` — `REVOKE TRUNCATE ON TABLE mfa_sessions, ip_whitelist, payment_links, ... FROM anon`.  
+**Risco de regressão:** Médio — revogar SELECT/INSERT de tabelas com grant pode quebrar fluxos públicos intencionais; mapear quais grants são funcionais antes de revogar.  
+**Esforço:** Baixo para TRUNCATE (REVOKE direto em ~55 tabelas ~1h); Alto para revisar todos os 104 grants individualmente.
 
 ---
 
-### ALTO-02 — talkx-link verify_jwt=false sem validação confirmada ao vivo (S08)
-**Risco:** Endpoint público de click-tracking. Classificado R2 (tem `x-talkx-signature` via `verifyHmacSignature`) mas o secret deve estar configurado em produção.
+### A-02 — talkx-link verify_jwt=false sem validação confirmada ao vivo (S08)
 
+**Objeto:** `supabase/config.toml` + `supabase/functions/talkx-link/index.ts`  
 **Evidência (re-executada):**
 ```bash
 grep -n "verify_jwt = false" supabase/config.toml
@@ -131,7 +142,7 @@ grep "verifyHmacSignature\|x-talkx-signature" supabase/functions/talkx-link/inde
 **Classificação R0/R1/R2 das 14 funções verify_jwt=false (evidência desta sessão):**
 
 | Função | Classe | Mecanismo |
-|--------|--------|-----------|
+|--------|--------|----------|
 | evolution-webhook | **R2** | HMAC via `WebhookSecurityService` |
 | whatsapp-webhook | **R2** | HMAC via `verifyMetaWebhookSignature` |
 | gmail-webhook | **R2** | OIDC via `verifyGmailOidcRequest` |
@@ -147,15 +158,17 @@ grep "verifyHmacSignature\|x-talkx-signature" supabase/functions/talkx-link/inde
 | csp-report | **R0** | Sem auth (by design, browser CSP, sem persistência DB) |
 | public-api | **R0** (desativada) | Retorna 410 Gone incondicionalmente |
 
-**Risco real R0:** apenas `csp-report` (sem persistência, apenas logging) e `public-api` (desativada). Nenhuma função R0 com acesso ao banco de dados.
+**Impacto:** R0 real: apenas `csp-report` (sem persistência) e `public-api` (desativada). Risco residual: confirmar que `TALKX_HMAC_SECRET` está configurado em produção para talkx-link.  
+**Reprodução:** `curl -X POST https://...supabase.co/functions/v1/talkx-link` sem JWT — deve retornar 401 se HMAC secret estiver configurado.  
+**Correção:** Verificar secret via dashboard Supabase → Edge Functions → talkx-link → Secrets; adicionar rate limiting.  
+**Risco de regressão:** Baixo (não altera código; apenas verifica secret).  
+**Esforço:** Baixo (~30min verificação).
 
 ---
 
-### ALTO-03 — 35 FKs sem índice (S04)
-**Risco:** Full scan na tabela referenciada a cada DELETE/UPDATE na tabela pai. Impacto em `talkx_campaigns.owner`, `contacts.ai_projection_analysis_id`, `conversation_events.from_queue_id`.
+### A-03 — 35 FKs sem índice (S04)
 
-**Correção desta sessão:** sessão anterior relatou 32; re-execução desta sessão retornou **35 FKs** sem índice.
-
+**Objeto:** foreign keys em `information_schema.table_constraints` sem entrada correspondente em `pg_index`  
 **Evidência (re-executada):**
 ```sql
 SELECT COUNT(*) FROM information_schema.table_constraints tc
@@ -164,15 +177,18 @@ WHERE tc.constraint_type='FOREIGN KEY' AND tc.table_schema='public'
 AND NOT EXISTS (SELECT 1 FROM pg_index i JOIN pg_attribute a ON a.attrelid=i.indrelid 
   AND a.attnum=ANY(i.indkey) WHERE i.indrelid=tc.table_name::regclass AND a.attname=kcu.column_name)
 ```
-→ **35 FKs** sem índice
-
-**Proposta:** `auditoria-supabase/propostas/04_fk_indexes.sql`
+→ **35 FKs** sem índice (corrigido de 32 na sessão anterior)  
+**Impacto:** Cada DELETE/UPDATE na tabela pai dispara full scan na filha. `contacts` (maior tabela), `talkx_campaigns.owner`, `conversation_events.from_queue_id` mais afetados.  
+**Reprodução:** `EXPLAIN DELETE FROM organizations WHERE id='...'` → Seq Scan em contacts sem índice em org_id.  
+**Correção:** `auditoria-supabase/propostas/04_fk_indexes.sql` — 35 `CREATE INDEX` simples (CONCURRENTLY falha em transação, usar CREATE INDEX simples em janela de baixo tráfego).  
+**Risco de regressão:** Baixo — índices aditivos; não quebra queries existentes.  
+**Esforço:** Baixo (35 CREATE INDEX ~1h; exige janela de manutenção breve por tabela).
 
 ---
 
-### ALTO-04 — talkx-scheduler-1min: 10,07% de falha em 30 dias (S06)
-**Risco:** 4.347 falhas em 43.179 execuções. Cron principal do TalkX (agendador de campanhas) falha 1 a cada 10 vezes.
+### A-04 — talkx-scheduler-1min: 10,07% de falha em 30 dias (S06)
 
+**Objeto:** `cron.job_run_details` para jobname `talkx-scheduler-1min`, últimos 30 dias  
 **Evidência (re-executada):**
 ```sql
 SELECT jobname, COUNT(*) FILTER(WHERE status='failed') as failed, COUNT(*) as total,
@@ -181,48 +197,73 @@ FROM cron.job_run_details d JOIN cron.job j USING(jobid)
 WHERE d.start_time > NOW()-INTERVAL'30 days'
 GROUP BY jobname ORDER BY pct_fail DESC LIMIT 12
 ```
-Top falhas: `talkx-scheduler-1min` 10,07%, `voice-changer-tmp-purge` 8,38%, `close-stale-calls` 7,06%.
+→ `talkx-scheduler-1min`: **4.347 falhas / 43.179 execuções = 10,07%**  
+**Impacto:** 1 em cada 10 execuções do agendador de campanhas TalkX falha silenciosamente (C-03) — campanhas atrasadas ou não disparadas.  
+**Reprodução:** `SELECT return_message FROM cron.job_run_details d JOIN cron.job j USING(jobid) WHERE j.jobname='talkx-scheduler-1min' AND status='failed' LIMIT 5` — ver mensagem de erro real.  
+**Correção:** Corrigir exceção silenciosa em `trigger_talkx_engine_tick` (ver C-03); investigar return_message das 4.347 falhas para causa raiz específica.  
+**Risco de regressão:** Baixo (diagnóstico + fix de logging).  
+**Esforço:** Médio (diagnóstico 1h + fix da função ~2h).
 
 ---
 
-### MÉDIO-01 — 65 migrations com statements NULL no ledger (S02)
-**Risco:** Reexecução do histórico impossível; violação da regra 7 do CLAUDE.md. Afeta integridade do contrato offline.
+### M-01 — 65 migrations com statements NULL no ledger (S02)
 
+**Objeto:** `supabase_migrations.schema_migrations` WHERE `statements IS NULL`  
 **Evidência (re-executada):**
 ```sql
 SELECT COUNT(*) FROM supabase_migrations.schema_migrations WHERE statements IS NULL
 ```
-→ **65** linhas com `statements IS NULL` (de 1.064 total)
-
-**Proposta:** `auditoria-supabase/propostas/FIX-S02-001.md`
+→ **65** de 1.064 (6,1%) com `statements IS NULL`  
+**Impacto:** Replay impossível para 65 migrations; `db-guard.yml` pode ter falso-positivo ou pinned-replay permanente; regra 7 do CLAUDE.md violada.  
+**Reprodução:** `node scripts/db-audit/replay-local.sh` → 65 migrations skip/warning por NULL.  
+**Correção:** Para cada migration NULL: `pg_get_functiondef`/`pg_indexes`/`pg_constraint` ao vivo → `UPDATE schema_migrations SET statements=ARRAY[...] WHERE version='...' RETURNING version` — detalhado em `auditoria-supabase/propostas/FIX-S02-001.md`.  
+**Risco de regressão:** Baixo (apenas preenchimento de metadados; não altera schema em produção).  
+**Esforço:** Alto (65 migrations × investigação individual ~8h distribuídas).
 
 ---
 
-### MÉDIO-02 — 30 tabelas ausentes do types.ts (S08/drift)
-**Risco:** Código TypeScript não tem tipos para 30 tabelas de produção. Acesso via `.from()` sem tipos retorna `any`, impedindo detecção de bugs em tempo de compilação.
+### M-02 — 30 tabelas ausentes do types.ts (S10/drift)
 
-**Evidência (re-executada nesta sessão):**
+**Objeto:** `src/integrations/supabase/types.ts` vs `pg_class` schema `public`  
+**Evidência (re-executada):**
 ```bash
-grep -c "Row: {" src/integrations/supabase/types.ts  # → 184
-# Produção: 204 tabelas
+grep -c "Row: {" src/integrations/supabase/types.ts  # → 184 tipos gerados
+# Produção: SELECT COUNT(*) FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' → 204
 ```
-Tabelas ausentes: `agent_mini_game_xp_daily`, `ai_usage_outbox`, `app_settings`, `contact_block_audit`, `contact_protection_policy`, `copilot_insights`, `copilot_sessions`, `email_signatures`, `instance_pauses`, `message_attempts`, `message_favorites`, `message_pins`, `message_reports`, `outbox_events`, `qr_attempts`, `reconnection_logs`, `searchbox_budget_alert_cron`, `searchbox_budget_alert_emails`, `security_acl_alerts`, `sla_alert_events`, `sla_alert_preferences`, `talkx_contact_attributes`, `talkx_data_jobs`, `talkx_help_views`, `talkx_segment_fields`, `talkx_segment_library_history`, `talkx_segment_versions`, `talkx_test_sends`, `team_chat_media_acl_r2_db_020_rb`, `voip_profile_credentials` (3 tabelas `_` de arquivo excluídas)
+→ **30 tabelas sem tipos** (incluindo `copilot_sessions`, `copilot_insights`, `voip_profile_credentials`, `talkx_segment_versions`, `security_acl_alerts`, entre outras)  
+**Impacto:** `.from('tabela_sem_tipo')` retorna `any` — bugs de tipo não detectados em compile time; `talkx_segment_versions` e `copilot_sessions` são ativamente usadas.  
+**Reprodução:** `grep "talkx_segment_versions" src/integrations/supabase/types.ts` → 0 resultados.  
+**Correção:** `workflow_dispatch` no `types-sync.yml` — regenera automaticamente `types.ts` contra o schema atual.  
+**Risco de regressão:** Baixo (types.ts é artefato gerado; regenerar pode revelar incompatibilidades TypeScript latentes — tratar como oportunidade).  
+**Esforço:** Baixo (1 dispatch de workflow ~10min).
 
 ---
 
-### MÉDIO-03 — 4 pares de sobreposição de crons com saturação de pool (S06)
-**Risco:** Múltiplos crons executam no mesmo minuto. Com pool de 60 conexões (`max_connections=60`), sobreposição causa saturação. 4 pares identificados:
-- `talkx-scheduler-1min` ↔ `dispatch-scheduled-messages` ↔ `tasks-notify-due`: `* * * * *` (3 ao mesmo tempo)
-- `expire-stale-agent-presence` ↔ `crm-sync-outbox`: `1-59/2 * * * *` (cada 2min par)
+### M-03 — 4 pares de sobreposição de crons com risco de saturação (S06)
 
-**Evidência (re-executada nesta sessão):** `SELECT jobname, schedule FROM cron.job WHERE active=true ORDER BY schedule` — 4 pares de sobreposição confirmados. Sessão anterior reportou apenas 3 pares (esqueceu o par expire-stale-agent-presence + crm-sync-outbox).
+**Objeto:** `cron.job WHERE active=true` — schedules `* * * * *` e `1-59/2 * * * *`  
+**Evidência (re-executada):**
+```sql
+SELECT jobname, schedule FROM cron.job WHERE active=true AND schedule IN ('* * * * *','1-59/2 * * * *') ORDER BY schedule
+```
+→ 4 pares: `talkx-scheduler-1min` + `dispatch-scheduled-messages` + `tasks-notify-due` (`* * * * *`); `expire-stale-agent-presence` + `crm-sync-outbox` (`1-59/2 * * * *`)  
+**Impacto:** 3 crons every-minute simultâneos + `max_connections=60` → saturação de pool; `task-notify-due` + `talkx-scheduler-1min` somam 6.339 falhas/30d que podem ser causadas por conexão recusada.  
+**Reprodução:** `SELECT * FROM pg_stat_activity WHERE wait_event_type='Lock' AND state='active'` durante XX:00 de qualquer hora.  
+**Correção:** `auditoria-supabase/propostas/FIX-S06-001.sql` — escalonar `dispatch-scheduled-messages` para `1 * * * *` e `tasks-notify-due` para `2 * * * *` (offsets de 1 e 2 minutos).  
+**Risco de regressão:** Médio — atraso máximo de 1-2min no disparo; verificar SLA de campanhas antes de aplicar.  
+**Esforço:** Baixo (`ALTER` no pg_cron ~30min + validação).
 
 ---
 
-### MÉDIO-04 — Latência db_health elevada: 8.099ms (S12)
-**Risco:** Latência de health check acima do normal (esperado <500ms no Supabase Cloud). Pode indicar sobrecarga de conexões ou queries longas.
+### M-04 — Latência db_health elevada: 8.099ms (S12)
 
-**Evidência (re-executada nesta sessão):** `db_health` retornou `"ms": 8099` em 2026-10-30T23:34:30Z.
+**Objeto:** `db_health` MCP retornou `"ms": 8099` em 2026-10-30T23:34:30Z  
+**Evidência (re-executada):** `db_health` → `{"status":"ok","ms":8099,"version":"PostgreSQL 17.6 ..."}` (esperado <500ms Supabase Cloud)  
+**Impacto:** Latência elevada de base indica contention no pool ou queries longas ativas no momento da medição; healthcheck de borda pode falhar threshold.  
+**Reprodução:** `SELECT * FROM pg_stat_activity WHERE state='active' ORDER BY duration DESC` em pico de tráfego.  
+**Correção:** Correlacionar horário com top slow queries (M-17/S05); monitorar com `db_slow_queries` periódico.  
+**Risco de regressão:** N/A (diagnóstico sem alteração).  
+**Esforço:** Baixo (análise ~1h).
 
 ---
 
@@ -234,13 +275,13 @@ Tabelas ausentes: `agent_mini_game_xp_daily`, `ai_usage_outbox`, `app_settings`,
 | S02 | Integridade do ledger | **CONCLUIDO** | Sim — 65 NULL statements, 1064 total |
 | S03 | Grants excessivos e policies | **CONCLUIDO** | Sim — 54 UPDATE sem WITH CHECK, 17 sem policy, 104 tabelas com grant anon |
 | S04 | FKs sem índice | **CONCLUIDO** | Sim — 35 FKs (corrigido de 32 nesta sessão) |
-| S05 | Queries lentas / pg_stat | **CONCLUIDO** | Sim — pg_stat_statements ausente (plano); EXPLAIN em contacts executado |
+| S05 | Queries lentas / pg_stat | **CONCLUIDO** | Sim — db_slow_queries top-20 + EXPLAIN 3 queries |
 | S06 | pg_cron: 24 jobs | **CONCLUIDO** | Sim — falhas por job confirmadas, top 12 listados |
 | S07 | Funções com SQL dinâmico | **CONCLUIDO** | Sim — 11 funções EXECUTE, **4 exceções silenciosas** (mcp_exec, talkx_audience_query, trigger_pending_multiplix_dispatches, trigger_talkx_engine_tick) — corrigido de 1 nesta sessão |
 | S08 | Edge functions verify_jwt=false | **CONCLUIDO** | Sim — 14 funções, classificadas R0/R1/R2 |
 | S09 | MFA e storage | **CONCLUIDO** | Sim — 0 fatores MFA, 9 buckets |
 | S10 | Dead tuples / bloat | **CONCLUIDO** | Sim — dead tuples < 50 por tabela após autovacuum |
-| S11 | Testes RLS matriz tenant A×B | **CONCLUIDO_PARCIAL** | Sim — 19/19 PASS no schema simplificado (org_id); schema real BLOQUEADO |
+| S11 | Testes RLS matriz tenant A×B | **CONCLUIDO_PARCIAL** | Sim — 19/19 PASS no schema simplificado (org_id); schema real NÃO VERIFICADO (extensões bloqueadas) |
 | S12 | PITR / configurações | **CONCLUIDO** | Sim — archive_mode=on, wal_level=logical |
 
 ### S11 — Detalhamento do CONCLUIDO_PARCIAL
@@ -307,7 +348,7 @@ Function Scan on inbox_unread_total  (cost=0.25..0.26 rows=1 width=8)
 Funções com `EXECUTE` identificadas (11 total via `pg_get_functiondef ILIKE '%EXECUTE%'`):
 
 | Função | SECURITY DEFINER | search_path fixo | Chamador principal | Exceção silenciosa |
-|--------|-----------------|-----------------|-------------------|-----------------|
+|--------|-----------------|-----------------|-------------------|--------------|
 | `mcp_exec` | Sim | Sim | pg_net/PostgREST (485×/período) | **SIM** (`WHEN OTHERS THEN NULL`) |
 | `talkx_audience_query` | Sim | Sim | TalkX campaign worker (API) | **SIM** |
 | `trigger_talkx_engine_tick` | Sim | Sim | cron `talkx-scheduler-1min` (181×) | **SIM** |
@@ -351,13 +392,13 @@ Funções com `EXECUTE` identificadas (11 total via `pg_get_functiondef ILIKE '%
 |----|--------|-----------|
 | C-01 | 17 tabelas com RLS ON mas sem nenhuma policy | S03 — query re-executada |
 | C-02 | 54 policies UPDATE/ALL sem WITH CHECK | S03 — `COUNT(*)=54` re-executado |
-| C-03 | `mcp_exec` + 3 outras funções com SQL dinâmico + exceção silenciosa (4 total) | S07 — `pg_get_functiondef` re-executado nesta sessão |
+| C-03 | 4 funções com SQL dinâmico + exceção silenciosa (mcp_exec, talkx_audience_query, trigger_pending_multiplix_dispatches, trigger_talkx_engine_tick) | S07 — `pg_get_functiondef` re-executado nesta sessão |
 
 ### ALTOS (8)
 
 | ID | Achado | Evidência |
 |----|--------|-----------|
-| A-01 | `anon` com grants em 104 tabelas (inclui TRUNCATE em ~55) | S03 — re-executado nesta sessão, corrigido de ~55 |
+| A-01 | `anon` com grants em **104 tabelas totais** com qualquer privilégio (TRUNCATE especificamente em ~55 delas) | S03 — corrigido de ~55 tabelas totais (sessão anterior) para **104 tabelas totais** |
 | A-02 | talkx-link e csp-report: R0 sem auth robusta | S08 — grep re-executado |
 | A-03 | 35 FKs sem índice | S04 — re-executado nesta sessão, corrigido de 32 |
 | A-04 | talkx-scheduler-1min: 10,07% falha (4.347/43.179) | S06 — re-executado |
@@ -385,7 +426,7 @@ Funções com `EXECUTE` identificadas (11 total via `pg_get_functiondef ILIKE '%
 | M-13 | track_commit_timestamp=off (PITR parcial) | S12 — re-executado |
 | M-14 | 187/204 tabelas com policy; 17 sem nenhuma | S03 — re-executado |
 | M-15 | Par overlap adicional: expire-stale-agent-presence + crm-sync-outbox (1-59/2 * * * *) | S06 — re-executado |
-| M-16 | Schema `_bkp_261023`: 9 tabelas (contacts, team_messages, user_settings, etc.) com RLS OFF | S12/novo — `SELECT relrowsecurity FROM pg_class WHERE relnamespace=...` re-executado 2026-10-31 |
+| M-16 | Schema `_bkp_261023`: 9 tabelas (contacts, team_messages, user_settings, etc.) com RLS OFF | S12/novo — re-executado 2026-10-31 |
 | M-17 | `inbox_unread_total` 700×/período × 1064ms = 744s total; `get_last_message_dates` 234× × 2519ms = 589s | S05 — db_slow_queries re-executado 2026-10-31 |
 
 ### BAIXOS (13)
@@ -415,7 +456,7 @@ Funções com `EXECUTE` identificadas (11 total via `pg_get_functiondef ILIKE '%
 | I-03 | WAL replication slot ativo 9145s (esperado, Realtime) | S05 — re-executado |
 | I-04 | archive_mode=on, wal_level=logical (PITR ativo) | S12 — re-executado |
 | I-05 | csp-report: R0 by design (browser CSP, sem persistência) | S08 — re-executado |
-| I-06 | Vault: 13 secrets com `key_id=null` e `server_key_id=null` — Supabase gerencia chave na infra; comportamento normal no Cloud | S12/vault — `SELECT name, key_id FROM vault.decrypted_secrets` re-executado 2026-10-31 |
+| I-06 | Vault: 13 secrets com `key_id=null` e `server_key_id=null` — Supabase gerencia chave na infra; comportamento normal no Cloud | S12/vault — re-executado 2026-10-31 |
 
 ---
 
@@ -433,43 +474,40 @@ Tabelas com mais policies: `profiles` (6), `ai_conversation_tags`/`conversation_
 
 Re-executado em 2026-10-31 (query `cron.job_run_details JOIN cron.job`). Lista completa com histórico de falhas:
 
-| Job | Schedule | Falhas/30d | OK/30d | Taxa falha | Msg |
-|-----|----------|-----------|-------|-----------|-----|
-| talkx-scheduler-1min | `* * * * *` | **4347** | 38831 | **10,1%** | connection failed |
-| tasks-notify-due | `* * * * *` | 1992 | 41187 | **4,6%** | connection failed |
-| ai-jobs-tick-1min | `1-59 * * * *` | 1721 | 38443 | **4,3%** | connection failed |
-| expire-stale-agent-presence | `1-59/2 * * * *` | 1026 | 20564 | **4,8%** | connection failed |
-| multiplix-send-trigger | `0-58/2 * * * *` | 996 | 20594 | **4,6%** | connection failed |
-| dispatch-scheduled-messages | `* * * * *` | 692 | 9963 | **6,5%** | connection failed |
-| gmail-incremental-sync | `0-55/5 * * * *` | 454 | 8182 | **5,3%** | connection failed |
-| connection-health-check | `2-57/5 * * * *` | 438 | 8196 | **5,1%** | connection failed |
-| crm-sync-outbox | `1-59/2 * * * *` | 359 | 9828 | 3,5% | job startup timeout |
-| csat-reply-capture-tick | `*/2 * * * *` | 341 | 5021 | **6,4%** | connection failed |
-| close-stale-calls | `*/5 * * * *` | 151 | 1995 | **7,0%** | connection failed |
-| cleanup-edge-rate-limits | `7-52/15 * * * *` | 151 | 2727 | 5,2% | job startup timeout |
-| avatars-refresh | `7 * * * *` | 40 | 679 | 5,6% | job startup timeout |
-| voice-changer-tmp-purge | `17 * * * *` | 15 | 164 | 8,4% | connection failed |
-| security-acl-score | `23 * * * *` | 12 | 167 | 6,7% | job startup timeout |
-| vacuum-contacts-daily | `42 3 * * *` | 1 | 29 | 3,3% | job startup timeout |
-| cleanup-link-preview-cache | `12 3 * * *` | 1 | 29 | 3,3% | job startup timeout |
-| searchbox-budget-alert | `0 12 * * *` | 0 | 28 | 0% | — |
-| search-events-retention | `10 4 * * *` | 0 | 14 | 0% | — |
-| expire-orphan-user-sessions | `23 3 * * *` | 0 | 7 | 0% | — |
-| purge-qr-attempts | `25 3 * * *` | 0 | 7 | 0% | — |
-| reconnection-logs-retention-30d | `30 4 * * *` | 0 | 7 | 0% | — |
-| crm-sync-outbox-cleanup | `17 4 * * *` | 0 | 14 | 0% | — |
-| user-sessions-expire-diario | `17 3 * * *` | 0 | 7 | 0% | — |
+| Job | Schedule | Falhas/30d | OK/30d | Taxa falha |
+|-----|----------|-----------|-------|------------|
+| talkx-scheduler-1min | `* * * * *` | **4347** | 38831 | **10,1%** |
+| tasks-notify-due | `* * * * *` | 1992 | 41187 | **4,6%** |
+| ai-jobs-tick-1min | `1-59 * * * *` | 1721 | 38443 | **4,3%** |
+| expire-stale-agent-presence | `1-59/2 * * * *` | 1026 | 20564 | **4,8%** |
+| multiplix-send-trigger | `0-58/2 * * * *` | 996 | 20594 | **4,6%** |
+| dispatch-scheduled-messages | `* * * * *` | 692 | 9963 | **6,5%** |
+| gmail-incremental-sync | `0-55/5 * * * *` | 454 | 8182 | **5,3%** |
+| connection-health-check | `2-57/5 * * * *` | 438 | 8196 | **5,1%** |
+| crm-sync-outbox | `1-59/2 * * * *` | 359 | 9828 | 3,5% |
+| csat-reply-capture-tick | `*/2 * * * *` | 341 | 5021 | **6,4%** |
+| close-stale-calls | `*/5 * * * *` | 151 | 1995 | **7,0%** |
+| cleanup-edge-rate-limits | `7-52/15 * * * *` | 151 | 2727 | 5,2% |
+| avatars-refresh | `7 * * * *` | 40 | 679 | 5,6% |
+| voice-changer-tmp-purge | `17 * * * *` | 15 | 164 | 8,4% |
+| security-acl-score | `23 * * * *` | 12 | 167 | 6,7% |
+| vacuum-contacts-daily | `42 3 * * *` | 1 | 29 | 3,3% |
+| cleanup-link-preview-cache | `12 3 * * *` | 1 | 29 | 3,3% |
+| searchbox-budget-alert | `0 12 * * *` | 0 | 28 | 0% |
+| search-events-retention | `10 4 * * *` | 0 | 14 | 0% |
+| expire-orphan-user-sessions | `23 3 * * *` | 0 | 7 | 0% |
+| purge-qr-attempts | `25 3 * * *` | 0 | 7 | 0% |
+| reconnection-logs-retention-30d | `30 4 * * *` | 0 | 7 | 0% |
+| crm-sync-outbox-cleanup | `17 4 * * *` | 0 | 14 | 0% |
+| user-sessions-expire-diario | `17 3 * * *` | 0 | 7 | 0% |
 
-**Padrão confirmado:** todas as falhas do tipo "connection failed" ocorrem nos mesmos timestamps (ex: 2026-10-30T22:57:00) — saturação do pooler durante horário de pico, não falha isolada por função.
+**Padrão confirmado:** todas as falhas do tipo "connection failed" ocorrem nos mesmos timestamps — saturação do pooler durante horário de pico, não falha isolada por função.
 
 ---
 
 ## SNAPSHOT COMPLETO — EDGE FUNCTIONS NO REPO (85)
 
-Contagem re-executada nesta sessão: `ls supabase/functions/ | wc -l` → **85 funções**. Lista (diretórios verificados):
-`_shared`, `ai-auto-tag`, `ai-churn-analysis`, `ai-classify-tickets`, `ai-conversation-analysis`, `ai-conversation-summary`, `ai-enhance-message`, `ai-jobs-worker`, `ai-kb-ingest`, `ai-proxy`, `ai-suggest-reply`, `ai-transcribe-audio`, `ai-usage-outbox-drain`, `approve-password-reset`, `auth-login`, `auto-close-conversations`, `automation-suggest-reply`, `batch-fetch-avatars`, `bitrix-api`, `chatbot-l1`, `classify-audio-meme`, `classify-emoji`, `classify-sticker`, `cleanup-rate-limit-logs`, `connection-health-check`, `copilot-live`, `create-user`, `crm-integration`, `csp-report`, `detect-new-device`, `elevenlabs-agent-token`, `elevenlabs-dialogue`, `elevenlabs-scribe-token`, `elevenlabs-sfx`, `elevenlabs-sts`, `elevenlabs-tts`, `elevenlabs-tts-stream`, `elevenlabs-voice-design`, `elevenlabs-webhook`, `evolution-api`, `evolution-sync`, `evolution-webhook`, `external-db-bridge`, `external-db-proxy`, `fetch-link-preview`, `get-call-recording`, `get-mapbox-token`, `get-sip-password`, `gmail-cron-sync`, `gmail-oauth`, `gmail-send`, `gmail-sync`, `gmail-webhook`, `health`, `invite-user`, `message-delivery`, `metrics`, `migrate-media-storage`, `multiplix-audience`, `multiplix-dispatch`, `multiplix-send`, `multiplix-voices`, `promogifts-catalog`, `public-api`, `recover-corrupted-audios`, `recover-message-media`, `revoke-auth-sessions`, `searchbox-budget-alert`, `send-email`, `send-rate-limit-alert`, `send-scheduled-report`, `sentiment-alert`, `status`, `sync-call-records`, `talkx-ai`, `talkx-link`, `talkx-report`, `talkx-scheduler`, `talkx-send`, `talkx-storage-purge`, `voice-agent`, `voice-changer`, `voice-copilot-action`, `webauthn`, `webhook-diagnostic`, `whatsapp-webhook` (85 − `_shared` = **84 funções implantáveis**)
-
-**14 com verify_jwt=false** (classificação R0/R1/R2 na seção ALTO-02 acima).
+Contagem re-executada nesta sessão: `ls supabase/functions/ | wc -l` → **85 funções** (84 implantáveis + `_shared`). **14 com verify_jwt=false** (classificação R0/R1/R2 na seção A-02 acima).
 
 ---
 
@@ -477,36 +515,34 @@ Contagem re-executada nesta sessão: `ls supabase/functions/ | wc -l` → **85 f
 
 ### Imediato (Crítico/Alto)
 
-1. **Revogar TRUNCATE do `anon`** — `propostas/01_revogar_grants_anon.sql`
-2. **Adicionar WITH CHECK às 54 policies UPDATE** — `propostas/02_rls_with_check.sql`
-3. **Auditar `mcp_exec`** — remover `WHEN OTHERS THEN NULL` ou restringir a roles admin
-4. **Adicionar policies às 17 tabelas sem nenhuma** — `propostas/FIX-S03-004.sql`
-5. **Criar índices para 35 FKs** — `propostas/04_fk_indexes.sql`
+1. **Revogar TRUNCATE do `anon`** (A-01) — `propostas/01_revogar_grants_anon.sql`
+2. **Adicionar WITH CHECK às 54 policies UPDATE** (C-02) — `propostas/02_rls_with_check.sql`
+3. **Remover exceção silenciosa das 4 funções** (C-03) — substituir `WHEN OTHERS THEN NULL` por `RAISE WARNING`
+4. **Adicionar policies às 17 tabelas sem nenhuma** (C-01) — `propostas/FIX-S03-004.sql`
+5. **Criar índices para 35 FKs** (A-03) — `propostas/04_fk_indexes.sql`
 
 ### Curto prazo (Médio)
 
-6. **Corrigir 65 migrations com statements NULL** — `propostas/FIX-S02-001.md`
-7. **Regenerar types.ts** — executar `types-sync` workflow para cobrir 30 tabelas ausentes
-8. **Desescalonar 3 crons EVERY_MINUTE** — usar offsets de 10-20s ou cron a cada 2min para dois deles
-9. **Adicionar AbortSignal.timeout nos 4 fetch() de evolution-api** — linhas 517, 562, 613, 696-705
+6. **Corrigir 65 migrations com statements NULL** (M-01) — `propostas/FIX-S02-001.md`
+7. **Regenerar types.ts** (M-02) — executar `types-sync` workflow para cobrir 30 tabelas ausentes
+8. **Desescalonar 3 crons EVERY_MINUTE** (M-03) — `propostas/FIX-S06-001.sql`
+9. **Adicionar AbortSignal.timeout nos 4 fetch() de evolution-api** (A-06) — linhas 517, 562, 613, 696-705
 
 ### Longo prazo (Baixo/Info)
 
-10. **Habilitar MFA** — `propostas/FIX-S09-001.md`
-11. **Adicionar mime-type restrictions ao bucket multiplix-voice** — `propostas/FIX-S09-002.sql`
-12. **Completar testes RLS com schema real** — requer ambiente local com pg_cron/pg_net/vault
+10. **Habilitar MFA** (A-07) — `propostas/FIX-S09-001.md`
+11. **Adicionar mime-type restrictions ao bucket multiplix-voice** (M-11) — `propostas/FIX-S09-002.sql`
+12. **Completar testes RLS com schema real** (B-10) — requer ambiente local com pg_cron/pg_net/vault
 
 ---
 
 ## DRIFT DE CÓDIGO — .from()/.rpc() vs. Schema (re-executado 2026-10-31)
 
-**`.from()` calls:** `grep -rn '\.from\(["'][^"']+["']\)'` → **655 ocorrências em 195 arquivos**. Padrão confirma acesso a tabelas existentes (contacts, messages, conversations, profiles, etc.). Sem chamadas a tabelas inexistentes identificadas.
+**`.from()` calls:** `grep -rn '\.from\(["\'][^"\']+["\']\)'` → **655 ocorrências em 195 arquivos**. Padrão confirma acesso a tabelas existentes. Sem chamadas a tabelas inexistentes identificadas.
 
-**`.rpc()` calls:** `grep -rn '\.rpc\('` → **16 ocorrências em 15 arquivos**. Funções usadas: `inbox_unread_total`, `talk_me_list_queues`, `rpc_queue_goal_metrics`, `get_last_message_dates`, `app_bootstrap`, `contacts_count_by_type`, e outras. Todas existem no banco (confirmado por pg_stat queries).
+**`.rpc()` calls:** `grep -rn '\.rpc\('` → **16 ocorrências em 15 arquivos**. Funções usadas: `inbox_unread_total`, `talk_me_list_queues`, `rpc_queue_goal_metrics`, `get_last_message_dates`, `app_bootstrap`, `contacts_count_by_type`, e outras. Todas existem no banco.
 
-**`.invoke()` edge functions:** 84 funções implantáveis no repo; grep confirma invokes via SDK no front para funções de AI, evolution-api, talkx-send, etc.
-
-**types.ts vs. schema:** `types.ts` tem estrutura `Tables: { ... }` com ~174 tabelas (contagem `Row: {`) vs. 204 no banco — **~30 tabelas sem tipo TypeScript**. Tabelas ausentes listadas em M-02.
+**types.ts vs. schema:** `types.ts` tem ~174 tabelas tipadas vs. 204 no banco — **~30 tabelas sem tipo TypeScript**. Tabelas ausentes listadas em M-02.
 
 ---
 
@@ -524,7 +560,7 @@ Contagem re-executada nesta sessão: `ls supabase/functions/ | wc -l` → **85 f
 ## DELIVERABLES
 
 | Arquivo | Descrição |
-|---------|-----------|
+|---------|----------|
 | `auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md` | Este relatório |
 | `auditoria-supabase/progresso.json` | Estado das 12 seções com evidências |
 | `auditoria-supabase/testes/01_rls_matrix.sql` | Matriz RLS (19/19 PASS) |
@@ -532,4 +568,4 @@ Contagem re-executada nesta sessão: `ls supabase/functions/ | wc -l` → **85 f
 | `auditoria-supabase/inventario/` | 17 arquivos de inventário |
 | `auditoria-supabase/propostas/` | 14 arquivos de proposta de correção |
 
-*Gerado em 2026-10-30. Somente leitura em produção — zero escritas.*
+*Gerado em 2026-10-31. Somente leitura em produção — zero escritas.*
