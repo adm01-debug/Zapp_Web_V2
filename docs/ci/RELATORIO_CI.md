@@ -149,7 +149,26 @@ AssertionError: bloco da linha 461 nao abre com modo estrito
 | **CI Gate (required)** | **124402413957** | **✅ success** | **01:39:42Z** |
 | copilot-pull-request-reviewer | 124394565891 | failure (nao required) | 01:06:10Z |
 
-**Nota:** Imediatamente apos o CI Gate passar (01:39:42Z), PR #2343 mergeou na main (01:37:35Z). A branch voltou a ficar `behind`. Novo merge commit gerado via `github_update_pr_branch` — CI reiniciando no novo SHA. Codigo do fix e identico.
+**Nota:** Imediatamente apos o CI Gate passar (01:39:42Z), PR #2343 mergeou na main (01:37:35Z). A branch voltou a ficar `behind`. Novo merge commit `d8426a2d` gerado via `github_update_pr_branch`. CI reiniciado.
+
+### SHA `d8426a2d` — CI em andamento (rerun iniciado 02:01:19Z, verificado 02:10Z)
+
+| Check | Job ID | Conclusao | Hora |
+|---|---|---|---|
+| Security Audit | 124409141378 | ✅ success | 01:49:21Z |
+| TypeCheck | 124409116638 | ✅ success | 01:51:27Z |
+| Node CI Scripts | 124409116493 | ✅ success | 01:54:34Z |
+| Replay local das migrations | 124404498612 | ✅ success | 01:55:13Z |
+| Contrato DB offline | 124404498540 | ✅ success | 01:58:04Z |
+| Unit Tests (1/3) | 124409115980 | ✅ success | 01:58:42Z |
+| Unit Tests (2/3) | 124409115206 | queued desde 02:01:19Z | — |
+| Unit Tests (3/3) | 124409115400 | queued desde 02:01:19Z | — |
+| E2E Tests (Playwright) | 124409115007 | queued desde 02:01:19Z | — |
+| Build | — | na fila | — |
+| **CI Gate (required)** | — | aguardando | — |
+| copilot-pull-request-reviewer | 124404528834 | failure (nao required) | 01:46:13Z |
+
+**Nota sobre cancelamento anterior:** Os 3 jobs foram cancelados em 01:58:47Z por perda de conexao do worker (nao por falha de codigo). Recolocados em fila via `rerun_failed_jobs` em 02:01:19Z. Codigo identico ao dos SHAs `d0e624ba` e `c6cc8cf8` que ja passaram.
 
 ### Pos-merge — verificacoes a confirmar (ver PENDENCIAS.md)
 
@@ -160,18 +179,18 @@ AssertionError: bloco da linha 461 nao abre com modo estrito
 
 ### Workflows antes verdes — seguem verdes
 
-Nenhum dos 13 workflows verdes foi alterado. Somente `.github/workflows/deploy-functions.yml` foi modificado (2 commits).
+Nenhum dos 13 workflows verdes foi alterado. Somente `.github/workflows/deploy-functions.yml` foi modificado (2 commits). Ratchets locais confirmam zero novas regressoes de typecheck e lint.
 
 ---
 
-## 6. Inventario final — estado de todos os workflows (2026-10-31 01:42Z)
+## 6. Inventario final — estado de todos os workflows (2026-10-31 02:10Z)
 
 | Workflow | Ultimo run | Status | Observacao |
 |---|---|---|---|
 | `deploy-functions.yml` | [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) | Corrigido via PR #2407 | Run pos-merge a confirmar |
-| `copilot-pull-request-reviewer` | [41153329470](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41153329470) | failure (nao e required check) | Bloqueio de firewall externo — exit code 1, `https://api.business.githubcopilot.com` inacessivel |
-| `ci.yml` | run 41153322581 (SHA c6cc8cf8) | ✅ success | Todos os 6 required checks passaram em 01:39:42Z |
-| `db-guard.yml` | run 41153322527 | ✅ success | Replay migrations + contrato DB offline |
+| `copilot-pull-request-reviewer` | [41156559736](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41156559736) | failure (nao e required check) | Bloqueio de firewall externo — exit code 1, `https://api.business.githubcopilot.com` inacessivel. Ver PENDENCIAS item 1. |
+| `ci.yml` | run 41156550407 (SHA d8426a2d) | CI em andamento | 6/9 jobs verdes; Unit Tests 2/3, 3/3, E2E queued desde 02:01Z |
+| `db-guard.yml` | run 41156550613 (SHA d8426a2d) | ✅ success | Replay migrations + Contrato DB offline |
 | `settings-guard.yml` | — | ✅ verde | nao tocado |
 | `branch-hygiene-audit.yml` | — | ✅ verde | nao tocado |
 | `types-sync.yml` | — | ✅ verde | nao tocado |
