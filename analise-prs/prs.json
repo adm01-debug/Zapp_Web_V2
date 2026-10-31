@@ -1738,5 +1738,245 @@
     "base": "",
     "conflito": "",
     "intencao": "chore: auditoria completa de 164 PRs abertas — bloqueio sistêmico documentado"
+  },
+  {
+    "numero": 2277,
+    "titulo": "chore(db): adiciona RLS ao módulo GOAL (backend)",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "chore(db): adiciona RLS ao módulo GOAL (backend)"
+  },
+  {
+    "numero": 2278,
+    "titulo": "fix(ci): corrige guard dashboard_kpi no Contrato DB offline",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "1297fb71d927c33797d82674e47bf492aa5fc1af",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(ci): corrige guard dashboard_kpi no Contrato DB offline"
+  },
+  {
+    "numero": 2279,
+    "titulo": "fix(e2e): aumenta timeout para workers lentos",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(e2e): aumenta timeout para workers lentos"
+  },
+  {
+    "numero": 2284,
+    "titulo": "chore(analise-prs): dossiers dos primeiros 100 PRs",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "chore(analise-prs): dossiers dos primeiros 100 PRs"
+  },
+  {
+    "numero": 2286,
+    "titulo": "fix(edge-deploy): E09 — corrige detecção de timestampBumped no deploy-functions",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "732cbcbc2bb74f1a4153b5571d5bd85bb7267881",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(edge-deploy): E09 — corrige detecção de timestampBumped"
+  },
+  {
+    "numero": 2295,
+    "titulo": "feat(ci): E71 — pular PRs draft no auto-update-pr-branch",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "NÃO",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "feat(ci): E71 — pular PRs draft no auto-update-pr-branch"
+  },
+  {
+    "numero": 2297,
+    "titulo": "feat(e70): contratos de Edge Functions — geração automática",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "",
+    "intencao": "feat(e70): contratos de Edge Functions — geração automática"
+  },
+  {
+    "numero": 2298,
+    "titulo": "feat(e75): adiciona toolchain.json para controle de versão de ferramentas",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "NÃO",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "feat(e75): adiciona toolchain.json para controle de versão de ferramentas"
+  },
+  {
+    "numero": 2343,
+    "titulo": "chore: sincronizar artefatos derivados do banco",
+    "veredito": "JA_MERGEADA",
+    "draft": "NÃO",
+    "head_sha": "fe30391894743a6befdabbeb4b8218a93906bb40",
+    "base": "main",
+    "conflito": "",
+    "intencao": "chore: sincronizar artefatos derivados do banco (auto-mergeado)"
+  },
+  {
+    "numero": 2354,
+    "titulo": "fix: corrige 3 workflows com falhas de CI",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "NÃO",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "fix: corrige 3 workflows com falhas de CI"
+  },
+  {
+    "numero": 2372,
+    "titulo": "chore: atualiza PENDENCIAS.md e docs/ci/ com estado atual",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "0e28ca24b320b70d80af51191752473b9880376b",
+    "base": "main",
+    "conflito": "",
+    "intencao": "chore: atualiza PENDENCIAS.md e docs/ci/ com estado atual"
+  },
+  {
+    "numero": 2380,
+    "titulo": "fix: deno check com --node-modules-dir=none para Edge Functions",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "NÃO",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "fix: deno check com --node-modules-dir=none"
+  },
+  {
+    "numero": 2381,
+    "titulo": "feat(copilot): RADAR motor CV-021-045 — fase 2 do copilot-live",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "NÃO",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "feat(copilot): RADAR motor CV-021-045"
+  },
+  {
+    "numero": 2383,
+    "titulo": "fix(db): revoga privilégios PUBLIC no schema e tabelas sensíveis",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "fb4a8e2bd5af4c23a29e328940fbe8c3b1dae8ff",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(db): revoga privilégios PUBLIC no schema e tabelas sensíveis"
+  },
+  {
+    "numero": 2384,
+    "titulo": "fix(team-chat): aceita ações de auditoria emitidas pelo trigger",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "9509658c79e53a705db1b36d5e6e59f4f67c5a4e",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(team-chat): aceita ações de auditoria emitidas pelo trigger"
+  },
+  {
+    "numero": 2386,
+    "titulo": "fix(team-chat): restringe inserts de membros diretos a owners",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "6563f05cc2003f2c1653efc25895f518512892e1",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(team-chat): restringe inserts de membros diretos a owners"
+  },
+  {
+    "numero": 2388,
+    "titulo": "PR invertida — head=main base=feature (fix-unit-tests)",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "fe30391894743a6befdabbeb4b8218a93906bb40",
+    "base": "claude/fix-unit-tests-src-261024-1630",
+    "conflito": "SIM",
+    "intencao": "PR invertida — unmergeable"
+  },
+  {
+    "numero": 2389,
+    "titulo": "PR invertida — head=main base=feature (dazzling-cannon)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "NÃO",
+    "head_sha": "fe30391894743a6befdabbeb4b8218a93906bb40",
+    "base": "claude/dazzling-cannon",
+    "conflito": "",
+    "intencao": "PR invertida — behind"
+  },
+  {
+    "numero": 2396,
+    "titulo": "docs: adiciona dossiê de análise hermes/telefonia",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "a57b473a99905dcffb79d8394277f370c045c010",
+    "base": "main",
+    "conflito": "",
+    "intencao": "docs: adiciona dossiê de análise hermes/telefonia"
+  },
+  {
+    "numero": 2397,
+    "titulo": "Reset audit progress to new session baseline",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "e20c90020819e810276ed6669079b45479a302f6",
+    "base": "main",
+    "conflito": "",
+    "intencao": "Reset audit progress to new session baseline"
+  },
+  {
+    "numero": 2407,
+    "titulo": "fix(deploy-functions): W100 — instala @types/node via npm no workflow",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "NÃO",
+    "head_sha": "d8426a2d5d4130bd4e46f92e41bfafd5756621a3",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(deploy-functions): W100 — @types/node via npm"
+  },
+  {
+    "numero": 2408,
+    "titulo": "fix(ci): corrige entrada duplicada no deploy-functions",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "f4a6203887938a6e667e85f7c1da8295d6886105",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "fix(ci): corrige entrada duplicada no deploy-functions"
+  },
+  {
+    "numero": 2409,
+    "titulo": "fix(ci): deno install com --frozen=false e @types/node no deploy-functions",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "NÃO",
+    "head_sha": "a9ec56bf4fd5c2b0bd6492bd22bef711515bd1de",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(ci): deno install --frozen=false + @types/node"
+  },
+  {
+    "numero": 2411,
+    "titulo": "docs(ci): adiciona RELATORIO_CI.md e atualiza PENDENCIAS.md",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "98334a67ebdbdd18b86eafe4a948bbc85470c52b",
+    "base": "main",
+    "conflito": "",
+    "intencao": "docs(ci): RELATORIO_CI.md e PENDENCIAS.md"
   }
 ]

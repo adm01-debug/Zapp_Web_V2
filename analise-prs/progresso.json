@@ -12,17 +12,17 @@
     ]
   },
   "vereditos": {
-    "BLOQUEADO_CI": 30,
-    "BLOQUEADO_CI_E_BEHIND": 94,
-    "DRAFT_SKIP": 37,
-    "DECISAO_HUMANA": 7,
+    "BLOQUEADO_CI": 43,
+    "BLOQUEADO_CI_E_BEHIND": 95,
+    "DRAFT_SKIP": 39,
+    "DECISAO_HUMANA": 14,
     "COMPLETAR": 1,
-    "JA_MERGEADA": 4,
+    "JA_MERGEADA": 5,
     "NAO_EXISTE": 1,
-    "total_nao_draft": 130,
-    "total_prs": 167,
-    "total_dossies": 174,
-    "nota_contagem": "174 dossies = 167 open PRs (130 nao-draft + 37 draft) + 5 extras (4 ja-mergeadas + 1 nao-existe) + 2 fechadas-durante-analise. Counts derivados diretamente dos dossies."
+    "total_nao_draft": 151,
+    "total_prs": 190,
+    "total_dossies": 198,
+    "nota_contagem": "198 dossies = 190 open PRs (151 nao-draft + 39 draft) + 6 extras (5 ja-mergeadas + 1 nao-existe) + 2 fechadas-durante-analise. Lote inicial 174 + 24 novos (2277-2411). Counts derivados diretamente dos dossies."
   },
   "nota_pr_1997": "DECISAO_HUMANA — feat: CV-010-020 Fase 2 RADAR copilot (migrations + feature flag)",
   "nota_pr_1998": "DECISAO_HUMANA — feat: CV-021-030 Motor copilot-live (worker incremental)",
@@ -31,7 +31,7 @@
   "nota_pr_2230": "COMPLETAR — deleta src/hooks/integrations/useTalkXSuppression.ts sem atualizar TalkXSuppression.tsx:32 que importa 8 simbolos do modulo; PR #2248 ja inclui esta correcao",
   "nota_pr_2238": "DECISAO_HUMANA — feat(message-delivery) com possivel DDL ou mudanca de behavior",
   "nota_pr_2248": "DECISAO_HUMANA — DESBLOQUEADOR: reduz 136 para 1 arquivo vermelho no CI; requer aprovacao das 2 migrations via producao-ddl",
-  "status": "CI_EM_ANDAMENTO_9_PRS_AGUARDANDO_CI_GATE_LOTE2",
+  "status": "DOSSIES_198_COMPLETOS_CI_GATE_LOTE2_AGUARDANDO",
   "merges_realizados": 6,
   "merges_log": [
     {"pr": 2149, "sha_pr": "3c1915e7649206cf75c8cdc55ecc65b4ec1e5daf", "sha_merge": "c4c7139e75aa326cc21823e816d1e7f526b67412", "timestamp": "2026-10-30T21:18Z", "titulo": "docs(reconciliation): P053 registra regressão do cabeçalho"},
@@ -49,10 +49,10 @@
   "nova_required_check_descoberta": "✅ CI Gate (required check) — check consolidador que não estava na análise anterior; substitui os 6 checks individuais como gate final",
   "limitacao_github_token": "Quando auto-update-pr-branch.yml ou github_update_pr_branch usa GITHUB_TOKEN para criar merge commit na feature branch, ci.yml NÃO dispara automaticamente. Workaround: github_dispatch_workflow em ci.yml no branch da PR.",
   "bug_ci_gate_timing": "CI Gate roda em ~4s enquanto E2E leva ~20min. CI Gate vê E2E in_progress e marca failure. Workaround: re-executar CI Gate depois que todos os checks terminarem (github_rerun_workflow no run_id do CI Gate).",
-  "dossies_completos": 174,
-  "dossies_nao_draft": 130,
-  "dossies_draft_skip": 37,
+  "dossies_completos": 198,
+  "dossies_nao_draft": 151,
+  "dossies_draft_skip": 39,
   "dossies_fechadas_fora_do_escopo": 7,
-  "nota_conclusao": "174 dossies criados (167 open PRs = 130 nao-draft + 37 draft; + 5 extras: 4 ja-mergeadas + 1 nao-existe; + 2 fechadas-durante-analise). Bloqueio sistemico RESOLVIDO em 2026-10-31T01:00Z com merge de #2385. 6 merges realizados (5 + #2343 auto-merge às 01:37Z). Lote 2: 9 PRs com CI dispatched às 01:47Z (#2411 às 01:53Z). Aguardando CI Gate disparar (~02:07Z) para mergear as elegíveis.",
-  "dossies_completos_count": 174
+  "nota_conclusao": "198 dossies criados (190 open PRs = 151 nao-draft + 39 draft; + 6 extras: 5 ja-mergeadas + 1 nao-existe; + 2 fechadas-durante-analise). Bloqueio sistemico RESOLVIDO em 2026-10-31T01:00Z com merge de #2385. 6 merges realizados (5 + #2343 auto-merge às 01:37Z). Lote 2: 9 PRs com CI dispatched às 01:47Z (#2411 às 01:53Z). Aguardando CI Gate para mergear as elegíveis.",
+  "dossies_completos_count": 198
 }
