@@ -31,6 +31,7 @@ export function AIGenerateDialog({ open, onOpenChange, onSaved }: { open: boolea
       const { data, error } = await supabase.functions.invoke('elevenlabs-sfx', { body: { prompt: genPrompt, duration: genDuration, mode: genMode } });
       if (error || data?.error) throw new Error(data?.error || 'Generation failed');
       if (!data?.audioContent) throw new Error('Resposta sem conteúdo de áudio');
+      // eslint-disable-next-line local/no-secret-compare -- generationToken descarta resposta obsoleta, só UI.
       if (generationToken !== generationTokenRef.current) return;
       const audioUrl = `data:audio/mpeg;base64,${data.audioContent}`;
       setGenPreviewUrl(audioUrl);

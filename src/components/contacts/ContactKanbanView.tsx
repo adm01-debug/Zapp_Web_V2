@@ -136,6 +136,7 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
 
     // Se outro drag do mesmo contato comecou depois deste, ele e a verdade:
     // ignora resultado e rollback desta operacao ja superada.
+    // eslint-disable-next-line local/no-secret-compare -- token identifica o arraste em andamento, só UI.
     if (inFlightDrags.current.get(draggableId) !== token) return;
     inFlightDrags.current.delete(draggableId);
 

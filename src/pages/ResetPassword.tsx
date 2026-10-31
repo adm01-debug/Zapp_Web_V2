@@ -138,6 +138,7 @@ export default function ResetPassword() {
       }
     }
 
+    // eslint-disable-next-line local/no-secret-compare -- confirmação de senha digitada, só UI.
     if (password !== confirmPassword) {
       setError('As senhas não coincidem');
       return;

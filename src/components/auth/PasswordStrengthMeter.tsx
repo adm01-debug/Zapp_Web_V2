@@ -81,6 +81,7 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: PasswordSt
   // esperar a proxima consulta responder. Senao a confirmacao/alerta da
   // senha anterior continuaria na tela descrevendo um valor que ja mudou.
   const [senhaDoVeredito, setSenhaDoVeredito] = useState(password);
+  // eslint-disable-next-line local/no-secret-compare -- compara o que o usuário digitou com o último veredito, só UI.
   if (senhaDoVeredito !== password) {
     setSenhaDoVeredito(password);
     setIsBreached(null);

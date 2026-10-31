@@ -134,6 +134,7 @@ function ImageGallery({
   // durante o render (mesmo padrão já usado no SendProductDialog) em vez de
   // setState dentro de efeito, que dispararia renders em cascata.
   const [focusApplied, setFocusApplied] = useState<number | null>(null);
+  // eslint-disable-next-line local/no-secret-compare -- focusToken é contador de foco da UI.
   if (focusToken != null && focusToken !== focusApplied) {
     setFocusApplied(focusToken);
     const target = focusUrl ? images.indexOf(focusUrl) : -1;
