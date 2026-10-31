@@ -1,0 +1,46 @@
+{
+  "audit_date": "2026-10-30T21:30:00Z",
+  "project": "tnnnlkbymytvtqngbbqh",
+  "rls_summary": {
+    "total_tables": 204,
+    "tables_with_rls_enabled": 204,
+    "tables_with_rls_disabled": 0
+  },
+  "tables_rls_enabled_no_policy": [
+    "_rb_message_reactions_contato_20261007001008","_zapp_fn_before","_zapp_mig133_log",
+    "agent_mini_game_xp_daily","ai_budget_reservations","ai_jobs","catalog_rate_limit_hits",
+    "catalog_rate_limits","edge_rate_limits","gmail_oauth_states","link_preview_cache",
+    "searchbox_budget_alert_cron","searchbox_budget_alert_emails","talkx_storage_purge_queue",
+    "talkx_test_send_claims","team_chat_media_acl_r2_db_020_rb","voip_profile_credentials"
+  ],
+  "permissive_using_true_count": 36,
+  "dept_invites_delete_risk": "ALTO - qualquer autenticado pode deletar qualquer convite",
+  "update_without_check_count": 54,
+  "update_without_check_notable": [
+    {"tablename": "reminders", "risk": "pode alterar profile_id para outro usuario"},
+    {"tablename": "catalog_favorites", "risk": "pode alterar user_id para outro usuario"},
+    {"tablename": "copilot_insights", "risk": "pode alterar profile_id"},
+    {"tablename": "copilot_sessions", "risk": "pode alterar profile_id"}
+  ],
+  "security_definer_functions": {
+    "count_total": 399,
+    "count_without_search_path": 0,
+    "mcp_exec_risk": "CRITICO - executa SQL dinamico arbitrario, silencia excecoes"
+  },
+  "anon_grants_summary": {
+    "has_truncate_on_sensitive_tables": true,
+    "truncate_sensitive_count": 10,
+    "select_sensitive_tables": [
+      "mfa_sessions","user_sessions","user_devices","security_alerts","webauthn_challenges",
+      "gmail_accounts","rate_limit_logs","user_service_accounts"
+    ]
+  },
+  "dynamic_sql_functions_count": 11,
+  "mcp_exec_grants": ["postgres (EXECUTE)", "service_role (EXECUTE)"],
+  "roles": [
+    {"rolname": "anon", "rolbypassrls": false},
+    {"rolname": "authenticated", "rolbypassrls": false},
+    {"rolname": "postgres", "rolbypassrls": true},
+    {"rolname": "service_role", "rolbypassrls": true}
+  ]
+}

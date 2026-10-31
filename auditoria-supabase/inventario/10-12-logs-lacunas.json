@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-10-30",
+  "project": "tnnnlkbymytvtqngbbqh",
+  "active_locks_count": 0,
+  "backup_config": {
+    "archive_mode": "on",
+    "wal_level": "logical",
+    "track_commit_timestamp": "off"
+  },
+  "audit_triggers": [
+    {"table": "contacts", "triggers": ["trg_audit_contact_purge","trg_audit_contact_block_change","trg_audit_contact_address_change","trg_audit_contact_deletion_change"]},
+    {"table": "queue_members", "triggers": ["audit_queue_members_config"]},
+    {"table": "queues", "triggers": ["audit_queues_config"]},
+    {"table": "rate_limit_configs", "triggers": ["audit_rate_limit_configs_config"]},
+    {"table": "role_permissions", "triggers": ["audit_role_permissions_changes"]},
+    {"table": "user_roles", "triggers": ["audit_user_role_changes"]},
+    {"table": "whatsapp_connection_queues", "triggers": ["audit_connection_queues_config"]}
+  ],
+  "audit_trigger_coverage_note": "Tabelas criticas SEM trigger de auditoria: messages, campaigns, whatsapp_connections, profiles, notifications, copilot_sessions",
+  "staging_env": false,
+  "lgpd_retention": "parcial",
+  "lgpd_note": "188 tabelas publicas sem coluna de retencao; criticas: messages, notifications, campaigns, ai_usage_logs, copilot_sessions",
+  "cron_role_escalation": {
+    "pattern": "set_config('request.jwt.claim.role', 'service_role', true)",
+    "occurrences": 8,
+    "note": "Padrao esperado em crons pg_net com SECURITY DEFINER; risco mitigado pelo escopo limitado"
+  },
+  "latest_migrations": [
+    {"version": "20261030110000", "name": "copilot_insights"},
+    {"version": "20261030100000", "name": "copilot_sessions"},
+    {"version": "20261026230300", "name": "decidir_schemas_backup"}
+  ],
+  "monitoring_tools": {
+    "sentry_dsn_in_env_example": true,
+    "pagerduty": false,
+    "internal_monitoring_hooks": true
+  }
+}
