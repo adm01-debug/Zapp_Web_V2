@@ -123,14 +123,22 @@ export async function resolverDesconhecidos(prs, behindBy) {
 }
 
 async function decisaoAtual(repo) {
-  const json = execFileSync(resolverExecutavel('gh'), [
-    'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
-    '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
-  ], { encoding: 'utf8' });
+  let json;
+  try {
+    json = execFileSync(resolverExecutavel('gh'), [
+      'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
+      '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
+    ], { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
+  } catch (err) {
+    console.error(`gh pr list falhou (${err.message?.split('\n')[0]}); nenhuma PR atualizada nesta execução.`);
+    return decidir([], checksObrigatorios());
+  }
   const behindBy = async (head) => Number(execFileSync(resolverExecutavel('gh'), [
     'api', `repos/${repo}/compare/main...${head}`, '--jq', '.behind_by',
   ], { encoding: 'utf8' }).trim());
-  const prs = await resolverDesconhecidos(JSON.parse(json), behindBy);
+  let parsedPrs;
+  try { parsedPrs = JSON.parse(json); } catch { return decidir([], checksObrigatorios()); }
+  const prs = await resolverDesconhecidos(parsedPrs, behindBy);
   return decidir(prs, checksObrigatorios());
 }
 

@@ -60,12 +60,22 @@ export function useContactsSearch() {
 
   const dateFrom = useMemo(() => {
     const now = new Date();
+    // Recua meses de calendário sem transbordar: 31/03 - 1 mês = 28/02, não 03/03.
+    const mesesAtras = (meses: number) => {
+      const alvo = new Date(now.getTime());
+      const dia = alvo.getDate();
+      alvo.setDate(1);
+      alvo.setMonth(alvo.getMonth() - meses);
+      const ultimoDia = new Date(alvo.getFullYear(), alvo.getMonth() + 1, 0).getDate();
+      alvo.setDate(Math.min(dia, ultimoDia));
+      return alvo.toISOString();
+    };
     switch (filterDateRange) {
       case 'today': return new Date(now.getTime() - 86400000).toISOString();
       case 'week': return new Date(now.getTime() - 7 * 86400000).toISOString();
-      case 'month': return new Date(now.setMonth(now.getMonth() - 1)).toISOString();
-      case 'quarter': return new Date(new Date().setMonth(new Date().getMonth() - 3)).toISOString();
-      case 'year': return new Date(new Date().setMonth(new Date().getMonth() - 12)).toISOString();
+      case 'month': return mesesAtras(1);
+      case 'quarter': return mesesAtras(3);
+      case 'year': return mesesAtras(12);
       default: return null;
     }
   }, [filterDateRange]);

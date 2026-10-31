@@ -7,6 +7,7 @@
 // medido em gzip porque e o que o navegador baixa da Vercel (br/gzip).
 //
 // Uso: node scripts/ci/bundle-budget.mjs [--dist dist] [--budget performance-budget.json]
+// retrigger: 2026-10-28d
 
 import { gzipSync } from "node:zlib";
 import { existsSync, readFileSync, readdirSync } from "node:fs";

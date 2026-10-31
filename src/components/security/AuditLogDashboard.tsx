@@ -1,28 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Search, Filter, Calendar, User, Globe, AlertTriangle, Shield, Activity } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { localDayKey } from '@/lib/localDay';
 import { ptBR } from 'date-fns/locale';
-
-interface AuditLog {
-  id: string;
-  action: string;
-  entity_type: string | null;
-  entity_id: string | null;
-  user_id: string | null;
-  details: Record<string, unknown> | null;
-  ip_address: string | null;
-  user_agent: string | null;
-  created_at: string;
-}
+import { useAuditLogDashboard, type AuditLogRow } from '@/hooks/security/useAuditLogDashboard';
 
 // Contrato compartilhado de ações e entidades de papel: todo evento de papel em
 // public.audit_logs começa com `role_` (audit_role_changes grava role_granted /
@@ -70,67 +56,32 @@ const ACTION_ICONS: Record<string, typeof Shield> = {
 };
 
 export function AuditLogDashboard() {
-  const [logs, setLogs] = useState<AuditLog[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [entityFilter, setEntityFilter] = useState<string>('all');
-  const [stats, setStats] = useState({ total: 0, today: 0, suspicious: 0, uniqueUsers: 0 });
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
-  const [truncated, setTruncated] = useState(false);
 
-  const fetchLogs = useCallback(async () => {
-    setLoading(true);
-    let query = supabase
-      .from('audit_logs')
-      .select('id, action, entity_type, user_id, details, ip_address, created_at')
-      .order('created_at', { ascending: false })
-      .limit(LOGS_PAGE_LIMIT);
+  // HZ1-08: os totais vêm de contagem no servidor e a lista traz só as 200 mais
+  // recentes; aqui os filtros da tela viram coluna/valor para o hook.
+  const actionLike = actionFilter === ROLE_FILTER_VALUE ? ROLE_ACTION_PREFIX + '%' : null;
+  const actionEq = actionFilter !== 'all' && actionFilter !== ROLE_FILTER_VALUE ? actionFilter : null;
+  const entityTypes = entityFilter === 'all' ? null : (ENTITY_TYPES_BY_FILTER[entityFilter] ?? [entityFilter]);
 
-    if (actionFilter === ROLE_FILTER_VALUE) {
-      query = query.like('action', ROLE_ACTION_PREFIX + '%');
-    } else if (actionFilter !== 'all') {
-      query = query.eq('action', actionFilter);
-    }
-    if (entityFilter !== 'all') {
-      query = query.in('entity_type', ENTITY_TYPES_BY_FILTER[entityFilter] ?? [entityFilter]);
-    }
+  const { stats, logs, nomesPorUsuario, loading, error } = useAuditLogDashboard({ actionLike, actionEq, entityTypes });
 
-    const { data, error } = await query;
-    if (!error && data) {
-      setLogs(data as AuditLog[]);
-      // A consulta corta em LOGS_PAGE_LIMIT: com a página cheia o número exibido
-      // é "os N mais recentes", não o total — o aviso na tela deixa isso claro.
-      setTruncated(data.length >= LOGS_PAGE_LIMIT);
-      
-      const today = localDayKey(new Date());
-      const todayLogs = data.filter(l => localDayKey(l.created_at) === today);
-      const uniqueUsers = new Set(data.map(l => l.user_id).filter(Boolean));
-      const suspicious = data.filter(l => isSensitiveAction(l.action));
-      
-      setStats({
-        total: data.length,
-        today: todayLogs.length,
-        suspicious: suspicious.length,
-        uniqueUsers: uniqueUsers.size,
-      });
-    }
-    setLoading(false);
-  }, [actionFilter, entityFilter]);
+  // A lista corta em LOGS_PAGE_LIMIT: com a página cheia ela mostra "as N mais recentes".
+  const truncated = !loading && !error && logs.length >= LOGS_PAGE_LIMIT;
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount/troca-de-filtro padrão, sem estado derivado de props para sincronizar.
-    fetchLogs();
-  }, [fetchLogs]);
-
-  const filteredLogs = logs.filter(log => {
+  const filteredLogs = logs.filter((log: AuditLogRow) => {
     if (!search) return true;
     const s = search.toLowerCase();
+    const nome = log.user_id ? (nomesPorUsuario[log.user_id] ?? '') : '';
     return (
       log.action.toLowerCase().includes(s) ||
-      log.entity_type?.toLowerCase().includes(s) ||
-      log.ip_address?.includes(s) ||
-      log.user_id?.includes(s)
+      (log.entity_type ?? '').toLowerCase().includes(s) ||
+      (log.ip_address ?? '').includes(s) ||
+      (log.user_id ?? '').includes(s) ||
+      nome.toLowerCase().includes(s)
     );
   });
 
@@ -150,13 +101,18 @@ export function AuditLogDashboard() {
 
   return (
     <div className="space-y-6 w-full min-w-0">
-      {/* Stats */}
+      {error && (
+        <div role="alert" className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          Falha ao carregar auditoria: {error}
+        </div>
+      )}
+      {/* Stats: com a leitura falha o número vira "—" (nunca um zero inventado). */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: truncated ? 'Últimos 200' : 'Total de Logs', value: stats.total, icon: FileText, color: 'text-primary' },
-          { label: 'Hoje', value: stats.today, icon: Calendar, color: 'text-success' },
-          { label: 'Ações Sensíveis', value: stats.suspicious, icon: AlertTriangle, color: 'text-destructive' },
-          { label: 'Usuários Únicos', value: stats.uniqueUsers, icon: User, color: 'text-info' },
+          { label: 'Total de Logs', value: (error || !stats) ? '—' : stats.total, icon: FileText, color: 'text-primary' },
+          { label: 'Hoje', value: (error || !stats) ? '—' : stats.ultimas24h, icon: Calendar, color: 'text-success', hint: 'últimas 24 h' },
+          { label: 'Ações Sensíveis', value: (error || !stats) ? '—' : stats.sensiveis24h, icon: AlertTriangle, color: 'text-destructive', hint: 'últimas 24 h' },
+          { label: 'Usuários Únicos', value: (error || !stats) ? '—' : stats.usuariosUnicos7d, icon: User, color: 'text-info' },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="pt-4 pb-4">
@@ -165,6 +121,9 @@ export function AuditLogDashboard() {
                 <div>
                   <p className="text-2xl font-bold">{stat.value}</p>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  {'hint' in stat && stat.hint ? (
+                    <p className="text-[11px] text-muted-foreground/80">{stat.hint}</p>
+                  ) : null}
                 </div>
               </div>
             </CardContent>
@@ -250,8 +209,9 @@ export function AuditLogDashboard() {
                   Nenhum log encontrado
                 </p>
               ) : (
-                filteredLogs.map((log) => {
+                filteredLogs.map((log: AuditLogRow) => {
                   const Icon = getActionIcon(log.action);
+                  const autor = log.user_id ? (nomesPorUsuario[log.user_id] ?? log.user_id) : null;
                   return (
                     <motion.div
                       key={log.id}
@@ -274,6 +234,12 @@ export function AuditLogDashboard() {
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                             <span>{format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</span>
+                            {autor && (
+                              <>
+                                <span>•</span>
+                                <span>{autor}</span>
+                              </>
+                            )}
                             {log.ip_address && (
                               <>
                                 <span>•</span>
