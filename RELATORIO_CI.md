@@ -116,7 +116,7 @@ O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quan
 # Round 2 — 2026-10-31
 
 **Branch de trabalho:** `claude/fix-deploy-frozen-oct31`  
-**PR:** [#2409](https://github.com/adm01-debug/Zapp_Web_V2/pull/2409) — CI em andamento (HEAD `a9ec56bf`, auto_merge squash ativo)
+**PR:** [#2409](https://github.com/adm01-debug/Zapp_Web_V2/pull/2409) — aguardando CI (auto_merge: squash ativo)
 
 ---
 
@@ -182,6 +182,8 @@ Workflow dinâmico do GitHub Copilot (sem arquivo no repositório). Step "Proces
 
 ## Passo 4 — Execução
 
+Subagente único (causa raiz única, sem paralelismo necessário).
+
 Dois arquivos alterados:
 
 **`supabase/functions/deno.json`** — adicionado `imports` com `@types/node`:
@@ -206,34 +208,35 @@ Dois arquivos alterados:
 
 ## Passo 5 — Correção
 
-**PR [#2409](https://github.com/adm01-debug/Zapp_Web_V2/pull/2409)** — `fix(ci): deno install --frozen=false + @types/node no deno.json`  
+**PR #2409** — `fix(ci): deno install --frozen=false + @types/node no deno.json`  
 Branch: `claude/fix-deploy-frozen-oct31`  
-HEAD: `a9ec56bf4fd5c2b0bd6492bd22bef711515bd1de`  
+HEAD: `6521a05f27a307559803f0ffa331483727362542`  
 auto_merge: squash (ativo)  
-Estado: CI em andamento — aguardando merge automático quando todos os required checks passarem
+CI rodando: run [41160241806](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160241806) (iniciado 2026-10-31T02:31Z)
 
 ### Tabela de prova — workflows que estavam em falha
 
 | Workflow | Última run com falha | Situação |
 |---|---|---|
-| `deploy-functions.yml` | [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) — `failure` | ⏳ Correção em PR #2409; deploy automático após merge na main |
-| `copilot-pull-request-reviewer` | [41154128287](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41154128287) — `failure` | ❌ Não corrigível (ver PENDENCIAS.md item 2) |
+| `deploy-functions.yml` | [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) — `failure` | ⏳ Correção em PR #2409; CI em andamento (run 41160241806); auto-merge disparará ao concluir |
+| `copilot-pull-request-reviewer` | [41160249404](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160249404) — `failure` | ❌ Não corrigível (ver PENDENCIAS.md item 2) |
 | `db-live-guard.yml` | [41066127274](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41066127274) — `failure` | ❌ Deriva transitória (ver PENDENCIAS.md item 1) |
 
-### Checks obrigatórios no PR #2409 (HEAD `a9ec56bf`) — run 41157219104
+### Checks no PR #2409 (HEAD `6521a05f`, run 41160241806, capturado em 02:33Z)
 
-| Check obrigatório | Status |
+| Check | Status (02:33Z) |
 |---|---|
-| `🔍 Lint & TypeCheck` | ✅ success (02:16Z) |
-| `🔒 Security Audit` | ✅ success (02:10Z) |
-| `Contrato DB offline` | ✅ success (02:16Z) |
-| `🧪 Unit Tests (2/3)` | ✅ success (02:18Z) |
-| `🧪 Unit Tests (3/3)` | ✅ success (02:13Z) |
-| `🧪 Unit Tests (1/3)` | ⏳ in_progress (desde 02:19Z) |
-| `🎭 E2E Tests (Playwright)` | ⏳ in_progress (desde 02:17Z) |
-| `copilot-pull-request-reviewer` | ❌ failure — NÃO é required check |
+| `Replay local das migrations` | ✅ success |
+| `Contrato DB offline` | ⏳ in_progress |
+| `🔍 Lint & TypeCheck` | ⏳ queued |
+| `🧪 Unit Tests (1/3)` | ⏳ queued |
+| `🧪 Unit Tests (2/3)` | ⏳ queued |
+| `🧪 Unit Tests (3/3)` | ⏳ queued |
+| `🔒 Security Audit` | ⏳ queued |
+| `🎭 E2E Tests (Playwright)` | ⏳ queued |
+| `copilot-pull-request-reviewer` | ❌ failure (NÃO é required check — ver PENDENCIAS.md item 2) |
 
-> Nota: `Unit Tests (1/3)` e `E2E Tests (Playwright)` seguem in_progress — CI externo, sem ação possível além de aguardar. O auto_merge disparará automaticamente quando os 6 required checks passarem. O PR está `behind` (main avançou durante o CI); será atualizado e CI reiniciará.
+> **Estimativa de conclusão do CI:** ~02:51-02:55Z. Sem intervenção humana necessária.
 
 ---
 
@@ -241,8 +244,20 @@ Estado: CI em andamento — aguardando merge automático quando todos os require
 
 1. **Lockfile npm desatualizado:** `scripts/ci/deno.lock` tem zero entradas npm. A fix com `--frozen=false` + `@types/node@^22` resolve o sintoma mas não é reprodutível sem regenerar o lockfile com Deno instalado localmente. Documentado em PENDENCIAS.md item 4.
 
-2. **PR behind (main avançou):** O branch `claude/fix-deploy-frozen-oct31` está atrás da main. O `auto-update-pr-branch.yml` ou atualização manual atualizará o branch e o CI reiniciará.
+2. **CI sem path filters para `.md`:** Pushes de documentação ao branch cancelam o CI em andamento (reiniciam todos os runs). Melhoria de baixo risco: adicionar `paths-ignore: ['**/*.md']` ao `ci.yml`. Não implementado nesta rodada para minimizar mudanças.
 
 ---
 
-*Relatório Round 2 — PR #2409 aguardando CI e merge automático.*
+## Comparação baseline × final — Round 2
+
+| Verificação | Baseline (main `4dc8adbf`) | Final (PR #2409 pós-merge) |
+|---|---|---|
+| Build | ✅ exit 0 | ⏳ aguardando CI (~02:51Z) |
+| Lint | ⚠️ 814 pré-existentes | ⏳ aguardando CI (esperado: igual ou melhor) |
+| Testes unitários | ✅ 15.667 passando | ⏳ aguardando CI |
+| `deploy-functions.yml` | ❌ failure | ⏳ aguardando merge + deploy automático |
+| Required checks (6) | ✅ todos verdes na main | ⏳ CI em andamento |
+
+---
+
+*Relatório Round 2 em andamento — PR #2409 com CI em execução (run 41160241806). Wakeup agendado para 02:55Z para confirmar merge e atualizar tabela de prova.*

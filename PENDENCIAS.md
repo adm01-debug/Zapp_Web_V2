@@ -38,6 +38,8 @@ _Atualizado em 2026-10-31 por sessão de correção de CI._
 - [41125593441](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41125593441) — 2026-10-30
 - [41140197413](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41140197413) — `copilot-pull-request-reviewer`, conclusão `failure` em 2026-10-30T22:49:16Z
 - [41154128287](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41154128287) — `copilot-pull-request-reviewer`, conclusão `failure` em 2026-10-31T01:11:xx
+- [41160212070](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160212070) — `copilot-pull-request-reviewer`, conclusão `failure` em 2026-10-31T02:33:xx (PR #2408)
+- [41160249404](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160249404) — `copilot-pull-request-reviewer`, conclusão `failure` em 2026-10-31T02:33:xx (PR #2409)
 
 **O que falhou:** Step "Processing Request (Linux)" falha com:
 ```
@@ -55,7 +57,7 @@ If you need me to access, download, or install something from one of these locat
 
 ---
 
-## 3. deploy-functions.yml — correção em andamento (PR #2409)
+## 3. deploy-functions.yml — correção aplicada, aguardando CI automático (sem bloqueio humano)
 
 **Última run com falha:** [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645)
 
@@ -70,7 +72,9 @@ error TS2307: Cannot find module '@types/node' or its corresponding type declara
 - `supabase/functions/deno.json`: adicionado `@types/node: npm:@types/node@^22` ao `imports`
 - `.github/workflows/deploy-functions.yml`: `--frozen=false` no `deno install`
 
-**Status:** PR #2409 aberta, auto_merge (squash) ativo, CI rodando no HEAD `a9ec56bf`. O branch está `behind` (main avançou); será atualizado e CI reiniciará. Este item será removido após o merge e confirmação de `conclusion=success` no `deploy-functions.yml` na main.
+**Status:** PR #2409 aberta com auto_merge squash ativo. CI (run [`41160241806`](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41160241806)) iniciado em 2026-10-31T02:31Z no HEAD `6521a05f`. **Bloqueio atual: apenas tempo de CI (~20 min) — sem ação humana necessária.** O auto-merge squash disparará automaticamente quando os 6 required checks passarem (estimativa ~02:51-02:55Z). Após o merge, o `deploy-functions.yml` rodará na main e este item será removido.
+
+**O que o Joaquim precisa fazer:** Nada. O processo é automático.
 
 ---
 
