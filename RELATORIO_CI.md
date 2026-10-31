@@ -115,8 +115,10 @@ O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quan
 
 # Round 2 — 2026-10-31
 
-**Branch de trabalho:** `claude/fix-deploy-frozen-oct31`  
-**PR:** [#2409](https://github.com/adm01-debug/Zapp_Web_V2/pull/2409) — aguardando CI (auto_merge: squash ativo)
+**Branch de trabalho desta sessão:** `claude/fix-deploy-frozen-oct31`  
+**PR desta sessão:** [#2409](https://github.com/adm01-debug/Zapp_Web_V2/pull/2409) — **FECHADA** (supersedida por PR #2407)
+
+**Fix real aplicado:** [PR #2407](https://github.com/adm01-debug/Zapp_Web_V2/pull/2407) — sessão paralela — **MERGEADA** em `004e74a8` às 02:53:54Z
 
 ---
 
@@ -147,7 +149,7 @@ Medido localmente na main `4dc8adbf` antes da branch `claude/fix-deploy-frozen-o
 |---|---|
 | `bun install` | ✅ no changes (668 installs, 710 packages, 282ms) |
 | `bun run build` | ✅ exit 0 |
-| `bun run lint` | ⚠️ exit 1 — 814 problemas pré-existentes (601 errors + 213 warnings; 1 warning fixable com --fix; nenhum introduzido por esta sessão) |
+| `bun run lint` | ⚠️ exit 1 — 814 problemas pré-existentes (601 errors + 213 warnings; nenhum introduzido por esta sessão) |
 | `bun run typecheck` | ⚠️ crash SIGABRT (OOM no container cloud remoto; `tsc` nativo passa no CI GitHub Actions com RAM suficiente — não é bug do projeto) |
 | `bun run test` | ✅ 15.667 testes passando (referência confirmada pelo CI do Round 1) |
 
@@ -159,7 +161,7 @@ Medido localmente na main `4dc8adbf` antes da branch `claude/fix-deploy-frozen-o
 
 ### deploy-functions.yml — causa raiz
 
-O step `Typecheck das edge functions (deno check)` falha com:
+O step `Typecheck das edge functions (deno check)` falhava com:
 ```
 error TS2307: Cannot find module '@types/node' or its corresponding type declarations
 ```
@@ -171,99 +173,64 @@ error TS2307: Cannot find module '@types/node' or its corresponding type declara
 4. `deno install --frozen` rejeita qualquer pacote npm ausente no lockfile → `@types/node` não é instalado
 5. `deno check` não encontra `@types/node` → erro TS2307
 
-**Fix:** duas mudanças mínimas:
-- `supabase/functions/deno.json`: declarar `@types/node: npm:@types/node@^22` no `imports` (para Deno reconhecer o pacote)
-- `.github/workflows/deploy-functions.yml`: adicionar `--frozen=false` ao `deno install` (para instalar o pacote mesmo sem entrada no lockfile)
-
 ### copilot-pull-request-reviewer — diagnóstico
 
 Workflow dinâmico do GitHub Copilot (sem arquivo no repositório). Step "Processing Request (Linux)" falha por URLs externas bloqueadas pelo firewall interno do Copilot. **Não é required check**; não é corrigível por código do projeto. Ver PENDENCIAS.md item 2.
 
-### CI Gate (SHA `8e60103...`) — aparência de falha, não é real
-
-Run `41152825247` no SHA `8e60103...` teve todos os jobs com `conclusion: cancelled`. Causa: push posterior à branch cancelou o run anterior. Não é falha real — é comportamento esperado do GitHub Actions.
-
-### Qodo/Codex (comentários de review, não workflows com falha)
-
-O Qodo Code Review flagou `--frozen=false` + `@types/node@^22` como potencialmente não-reprodutível sem o `deno.lock` atualizado. Isso é um comentário de review, não um workflow falhando. A solução correta (regenerar `deno.lock` com Deno instalado localmente) está documentada em PENDENCIAS.md item 4. O `--frozen=false` é necessário e correto para este ambiente — não há alternativa sem regenerar o lockfile.
-
 ---
 
-## Passo 4 — Execução
+## Passo 4 & 5 — Correção
 
-Subagente único (causa raiz única, sem paralelismo necessário).
+### Fix aplicado: PR #2407 (sessão paralela)
 
-Dois arquivos alterados:
+Enquanto esta sessão trabalhava na PR #2409, uma **sessão paralela** (`session_014nTibS9cuNo8UN81A4hCUu`) abriu e mergeou a [PR #2407](https://github.com/adm01-debug/Zapp_Web_V2/pull/2407) com uma abordagem diferente.
 
-**`supabase/functions/deno.json`** — adicionado `imports` com `@types/node`:
-```json
-{
-  "lock": "../../scripts/ci/deno.lock",
-  "nodeModulesDir": "auto",
-  "imports": {
-    "@types/node": "npm:@types/node@^22"
-  },
-  "compilerOptions": { "skipLibCheck": true }
-}
-```
+**Commit na main:** `004e74a8` — `fix(deploy-functions): instalar @types/node via npm antes do deno check (W100) (#2407)` — mergeada em 2026-10-31T02:53:54Z
 
-**`.github/workflows/deploy-functions.yml`** — passo de instalação com `--frozen=false`:
+**Fix da PR #2407** (`.github/workflows/deploy-functions.yml`):
 ```yaml
-- name: Instalar dependencias node_modules (deno install)
-  run: deno install --config supabase/functions/deno.json --frozen=false
+- name: Instalar dependencias node_modules (deno install + @types/node)
+  run: |
+    deno install --config supabase/functions/deno.json
+    (cd supabase/functions && echo '{}' > package.json && npm install --no-save --ignore-scripts --no-package-lock @types/node && rm -f package.json)
 ```
 
----
+Esta abordagem não modifica `deno.json` nem usa `--frozen=false` — instala `@types/node` via npm diretamente em `node_modules/` após o `deno install`.
 
-## Passo 5 — Correção
+### PR #2409 (esta sessão)
 
-**PR #2409** — `fix(ci): deno install --frozen=false + @types/node no deno.json`  
-Branch: `claude/fix-deploy-frozen-oct31`  
-HEAD: `6521a05f27a307559803f0ffa331483727362542`  
-auto_merge: squash (ativo)  
-Estado atual: CI rodando (run 41160241806, iniciado 2026-10-31T02:29Z)
+A PR #2409 ficou com conflito de merge irresolvível (ambas tocavam `.github/workflows/deploy-functions.yml`) e foi **fechada** como supersedida. O fix já está em main via PR #2407.
 
 ### Tabela de prova — workflows que estavam em falha
 
 | Workflow | Última run com falha | Situação |
 |---|---|---|
-| `deploy-functions.yml` | [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) — `failure` | ⏳ Correção em PR #2409; deploy automático após merge na main |
+| `deploy-functions.yml` | [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) — `failure` | ⏳ Fix em main (commit `004e74a8`); run [41162076060](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162076060) `queued` na SHA `004e74a8` |
 | `copilot-pull-request-reviewer` | [41154128287](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41154128287) — `failure` | ❌ Não corrigível (ver PENDENCIAS.md item 2) |
 | `db-live-guard.yml` | [41066127274](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41066127274) — `failure` | ❌ Deriva transitória (ver PENDENCIAS.md item 1) |
 
-### Checks obrigatórios no PR #2409 (HEAD `6521a05f`)
-
-| Check obrigatório | Status (run 41160241806, ~02:52Z) |
-|---|---|
-| `🔍 Lint & TypeCheck` | ✅ success (`🔎 TypeCheck` completou 02:47Z) |
-| `🧪 Unit Tests` | ⏳ in_progress (1/3 e 3/3); `🧪 Unit Tests (2/3)` ✅ success (02:51Z) |
-| `🏗️ Build` | ⏳ em andamento |
-| `🔒 Security Audit` | ✅ success (02:38Z) |
-| `Contrato DB offline` | ✅ success (02:49Z, run 41160241900) |
-| `🎭 E2E Tests (Playwright)` | ⏳ in_progress (desde 02:42Z) |
-
-> Quando os 6 checks passarem, o auto_merge (squash) disparará automaticamente. Após o merge, o `deploy-functions.yml` será acionado na main para completar a prova.
+> **Aguardando:** run `41162076060` concluir com `conclusion=success` para fechar a prova do `deploy-functions.yml`.
 
 ---
 
 ## Comparação baseline × final — Round 2
 
-| Verificação | Baseline (main `4dc8adbf`) | Final (PR #2409 pós-merge) |
+| Verificação | Baseline (main `4dc8adbf`) | Final (main `004e74a8`, pós PR #2407) |
 |---|---|---|
-| Build | ✅ exit 0 | ⏳ aguardando CI |
-| Lint | ⚠️ 814 pré-existentes | ⏳ aguardando CI (esperado: igual ou melhor) |
-| Testes unitários | ✅ 15.667 passando | ⏳ aguardando CI |
-| `deploy-functions.yml` | ❌ failure | ⏳ aguardando merge + deploy |
-| Required checks (6) | ✅ todos verdes na main | ⏳ CI em andamento |
+| Build | ✅ exit 0 | ✅ CI verde (PR #2407 passou todos os required checks) |
+| Lint | ⚠️ 814 pré-existentes | ✅ igual (não piorou — PR #2407 só tocou workflow YAML) |
+| Testes unitários | ✅ 15.667 passando | ✅ igual (CI verde) |
+| `deploy-functions.yml` | ❌ failure | ⏳ Fix em main, run `41162076060` queued |
+| Required checks (6) | ✅ todos verdes na main | ✅ continuam verdes |
 
 ---
 
 ## Passo 6 — Gaps identificados
 
-1. **Lockfile npm desatualizado:** `scripts/ci/deno.lock` tem zero entradas npm. A fix com `--frozen=false` + `@types/node@^22` resolve o sintoma mas não é reprodutível sem regenerar o lockfile com Deno instalado localmente. Documentado em PENDENCIAS.md item 4.
+1. **Lockfile npm desatualizado:** `scripts/ci/deno.lock` tem zero entradas npm. A abordagem da PR #2407 (instalar `@types/node` via npm após `deno install`) funciona mas cria um passo de build não rastreado no lockfile. A solução completa requer regenerar o lockfile com Deno instalado localmente. Documentado em PENDENCIAS.md item 4.
 
-2. **CI sem path filters para `.md`:** Pushes de documentação ao branch cancelam o CI em andamento (reiniciam todos os runs). Melhoria de baixo risco: adicionar `paths-ignore: ['**/*.md']` ao `ci.yml`. Não implementado nesta rodada para minimizar mudanças.
+2. **Sessões paralelas com PRs conflitantes:** Esta sessão e `session_014nTibS9cuNo8UN81A4hCUu` abriram PRs tocando o mesmo arquivo simultaneamente. O resultado foi PR #2409 supersedida com conflito. Prevenção: verificar PRs abertas antes de iniciar trabalho no mesmo arquivo (regra 3 do fluxo Git do CLAUDE.md).
 
 ---
 
-*Relatório Round 2 em andamento — PR #2409 aguardando CI. Atualizar tabela de prova após merge.*
+*Relatório Round 2 atualizado em 2026-10-31T02:58Z — PR #2407 mergeada; aguardando `deploy-functions.yml` run 41162076060 completar com success.*
