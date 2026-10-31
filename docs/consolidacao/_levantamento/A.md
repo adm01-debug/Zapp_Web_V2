@@ -1,5 +1,7 @@
 # Local A — clone principal
 
+**Atualização read-only de 29/10/2026:** a branch segue em `dia/2026-10-23`, HEAD `3024ca92c706`, 4 commits à frente e 67 atrás da `origin/main` atual `a1340faa6daa`; `git status --porcelain` mostrou 227 entradas. Os índices detalhados abaixo continuam na base histórica `7cacbe2` e contavam 215 entradas; não foram regenerados nesta rodada. Na main atual, a comparação segura de Edge, o estado parcial de sentimento e o filtro de período de Contatos já têm implementação/cobertura; a correção de período entrou pela #2310 (`faefc0c9`). Os mocks Framer Motion/Vitest exigem comparação por arquivo, sem prova para integrar o lote de 139. O teste de paginação da Inbox existe na main pelo caminho citado em `A-grupos.md`. Esta atualização não substitui diff individual das mudanças locais e não altera a origem A.
+
 Leitura em 28/10/2026. Repositório `adm01-debug/Zapp_Web_V2`, branch `dia/2026-10-23`, commit `3024ca92c70638c2b315ebe9992eb85bc0c02521` (24/10/2026, `fix(tests): tipa importOriginal nos mocks de framer-motion (TS2698)`). A branch existe em `origin/dia/2026-10-23`. Os índices de arquivos da main e das 215 entradas locais foram atualizados para `7cacbe2f39845ca600c2dd18a4d30f70f03c217e`. O baseline de testes foi medido no SHA anterior `653f3d3304eec342a4360fd14d1b0c1d45d1f202`; a main avançou depois da medição.
 
 | Item | Tipo | Onde está | Existe na main? | Diff relevante? | Funcionalidade | Decisão proposta | Prioridade |

@@ -1,38 +1,40 @@
 # Inventário das peças do Zapp Web V2
 
-Leitura iniciada em **28/10/2026**. O baseline de testes foi medido na `main` `653f3d3304eec342a4360fd14d1b0c1d45d1f202`; as comparações mais recentes dos locais A, C, D/E e GitHub usam `7cacbe2f39845ca600c2dd18a4d30f70f03c217e`. A pasta B foi comparada com a primeira revisão. A `main` pode avançar novamente: **recomparar cada candidato com a `main` imediatamente antes de implementar ou arquivar**.
+Levantamento iniciado em **28/10/2026** e revalidado parcialmente em **29/10/2026, 20:03 UTC**. O baseline de testes continua sendo a medição histórica na `main` `653f3d3304eec342a4360fd14d1b0c1d45d1f202`; a `main` atual é `a1340faa6daa6cda1f71537f10e88205a2568fff`. As tabelas abaixo distinguem a coleta histórica da atualização pontual. B ainda precisa de reindexação integral, e as comparações por origem não substituem a conferência funcional de cada candidato. **Recomparar cada item com a `main` imediatamente antes de implementar ou arquivar.**
 
-As tabelas abaixo dão o mapa por local. Os índices citados contêm uma linha por arquivo, branch, commit, PR ou issue observada, com uma das cinco decisões propostas. Arquivos gerados, dependências e objetos internos Git da pasta B estão contados por categoria no relatório B; não são código a integrar. Uma decisão proposta por nome/hash é **triagem**, não prova de que a funcionalidade está pronta ou autorização para copiar código. `DESCARTAR` significa excluir da integração V2; nenhum arquivo de origem foi apagado ou movido nesta fase.
+As tabelas abaixo dão o mapa por local. Os índices citados contêm uma linha por arquivo, branch, commit, PR ou issue observada, com uma das cinco decisões propostas. Os índices detalhados de B ainda representam a raiz e o conteúdo da coleta de 28/10; não comprovam cobertura dos 181 itens hoje no topo da nova raiz. Arquivos gerados, dependências e objetos internos Git da pasta B estão contados por categoria no relatório histórico B; não são código a integrar. Uma decisão proposta por nome/hash é **triagem**, não prova de que a funcionalidade está pronta ou autorização para copiar código. `DESCARTAR` significa excluir da integração V2; nenhum arquivo de origem foi apagado ou movido nesta fase.
 
 ## A — clone principal
 
 | Item | Tipo | Onde está | Existe na main? | Diff relevante? | Funcionalidade | Decisão proposta | Prioridade |
 |---|---|---|---|---|---|---|---|
-| 7.832 arquivos rastreados pela revisão medida da `main` | Código/documentos | `projetos/Zapp_Web_V2` | Sim | Não | Todas | JÁ ESTÁ NA MAIN | Baixa |
-| Branch `dia/2026-10-23`: 3 commits próprios e 1 merge | Testes/contatos | Mesmo clone; branch também no remoto | Não por patch-id | Sim; 143 caminhos no diff da branch | Contatos e mocks de Framer Motion | INTEGRAR após revisão por funcionalidade | Alta |
-| 215 entradas no estado local: 195 de bytes iguais à main, 16 de bytes diferentes e 4 metadados/configurações locais | Arquivos de trabalho | Mesmo clone, índice e working tree | Parcial | Sim para 16 | Auth, gamificação, dashboard, Edge Functions e scripts | Dos 16 diferentes: 2 INTEGRAR, 4 TERMINAR, 10 DESCARTAR; demais conforme índice | Alta |
+| Estado em 29/10: branch `dia/2026-10-23`, HEAD `3024ca92`; `origin/main` consultada em `a1340faa`; 67 commits atrás e 4 à frente | Clone Git | `/home/joaquim_ataides/projetos/Zapp_Web_V2` | Parcial | Sim; branch não equivale à main | Várias | Preservar e comparar por grupo | Alta |
+| 227 entradas em `git status --porcelain` na consulta de 29/10 | Arquivos de trabalho | Mesmo clone, índice e working tree | Parcial; não recontado por hash nesta rodada | Sim | Várias | Preservar; confirmar cada item no índice antes de decidir | Alta |
 | 4.266 branches locais e 13 stashes | Referências/trabalho guardado | `.git` do clone | 21 branches ancestrais da main; as demais não foram provadas por conteúdo | Potencial | Diversas | TERMINAR verificação antes de limpeza | Alta |
 
-Detalhes: [relatório A](_levantamento/A.md), [arquivos da main](_levantamento/A-main.tsv), [alterações locais](_levantamento/A-pendentes.tsv), [branches](_levantamento/A-branches.tsv), [stashes](_levantamento/A-stashes.tsv). A classificação de branches de 24/10 guardada em F é pista histórica, não confirmação atual.
+Detalhes históricos: [relatório A](_levantamento/A.md), [arquivos da main](_levantamento/A-main.tsv), [alterações locais](_levantamento/A-pendentes.tsv), [branches](_levantamento/A-branches.tsv), [stashes](_levantamento/A-stashes.tsv). A contagem de status mudou de 215 para 227 entre as leituras; os TSVs ainda usam a base `7cacbe2` e precisam de atualização. A classificação de branches de 24/10 guardada em F é pista histórica, não confirmação atual.
 
 ## B — arquivos locais a processar (prioridade máxima)
 
 | Item | Tipo | Onde está | Existe na main? | Diff relevante? | Funcionalidade | Decisão proposta | Prioridade |
 |---|---|---|---|---|---|---|---|
-| 178.642 arquivos úteis de 584.817 arquivos regulares encontrados | Código, SQL, docs, designs e dados | `projetos/ZAPP WEB V2 - LOCAL - ARQUIVOS A PROCESSAR` | 141.963 têm SHA-256 igual à main medida | 27.033 têm hash diferente | Diversas | 141.962 JÁ ESTÁ NA MAIN; 34.128 DESCARTAR; 1.021 INTEGRAR; 1.531 TERMINAR | Alta para candidatos |
+| 181 itens no topo em 29/10: 31 diretórios e 150 arquivos | Pastas reorganizadas | `/home/joaquim_ataides/projetos/_a-processar/ZAPP_WEB_V2_LOCAL` | Inventário antigo usa outra raiz | Comparação item a item pendente | Diversas | Reindexar antes de reutilizar decisões antigas | Alta |
+| 7.646 arquivos no clone Git aninhado, fora `.git`, dependências e builds; branch `claude/feat-c098-restore-tests-261027-1433`, HEAD `ba20b9d2`, 6 à frente/55 atrás da main `a1340faa` | Clone Git local | `.../ZAPP_WEB_V2_LOCAL/Zapp_Web_V2` | Parcial; 2 testes modificados são idênticos à main; 1 script não rastreado difere | `resolve-rollback-ref.mjs`, SHA256 `948849028d5fcd16bdc09a6e79dde12ba62ce360e233f85838baba6f73b43d65`, idêntico ao arquivo da PR #2128, ainda `DIRTY` | Deploy/rollback | Preservar; revisar contrato e PR antes de propor integração | Alta |
+| 178.642 arquivos úteis de 584.817 arquivos regulares encontrados | Código, SQL, docs, designs e dados | Raiz antiga registrada em 28/10 | 141.963 tinham SHA-256 igual à main medida | 27.033 tinham hash diferente naquela coleta | Diversas | Contagens e decisões são históricas; não projetar na raiz atual | Alta para candidatos |
 | 406.617 entradas excluídas da triagem útil, inclusive links e metadados | Dependências, builds, caches, grafo gerado e objetos Git | B | Não se aplica | Não há código de produto proposto | Nenhuma | DESCARTAR da integração; preservar origem | Baixa |
 | 9.646 caminhos protegidos dentro do índice | Potenciais credenciais ou nomes sensíveis | B, inclusive `sensiveis/` | Não aferido | Conteúdo não lido | Configuração/segurança | Não integrar; índice separa DESCARTAR e TERMINAR para revisão segura; dono confere rotação se houver credencial ativa | Alta |
 | 26 marcadores Git, 23 com destino ausente | Worktrees/clones copiados | B | Indeterminado | Sim em alguns | Diversas | TERMINAR análise dos deltas sem restaurar ponteiros nesta fase | Alta |
 | Três documentos `zapp-web-v3*.md` | Planejamento de outro produto | Raiz de B | Não se aplica | Não para V2 | V3 | DESCARTAR da integração V2 | Baixa |
 
-O [relatório B](_levantamento/B.md) explica exclusões de `node_modules`, builds, caches e objetos Git. Índices: [todos os arquivos úteis](_levantamento/B-arquivos.tsv), [406.617 artefatos excluídos, comprimidos](_levantamento/B-excluidos.tsv.gz), [2.552 candidatos](_levantamento/B-candidatos.tsv), [deltas de worktrees](_levantamento/B-deltas-worktrees.tsv), [marcadores Git](_levantamento/B-repositorios.tsv) e [contagens](_levantamento/B-resumo-tecnico.tsv). Os 1.021 `INTEGRAR` são **candidaturas automáticas**, ainda sem prova de valor; cada uma exige comparação funcional antes do plano de PR.
+O [relatório B](_levantamento/B.md) explica exclusões da coleta antiga de dependências, builds, caches e objetos Git. Índices: [todos os arquivos úteis](_levantamento/B-arquivos.tsv), [artefatos excluídos](_levantamento/B-excluidos.tsv.gz), [candidatos](_levantamento/B-candidatos.tsv), [deltas de worktrees](_levantamento/B-deltas-worktrees.tsv), [marcadores Git](_levantamento/B-repositorios.tsv) e [contagens](_levantamento/B-resumo-tecnico.tsv). Esses índices não cobrem comprovadamente a raiz reorganizada. Os candidatos `INTEGRAR` antigos são triagem automática, não prova de valor.
 
 ## C — `zapp-worktrees`
 
 | Item | Tipo | Onde está | Existe na main? | Diff relevante? | Funcionalidade | Decisão proposta | Prioridade |
 |---|---|---|---|---|---|---|---|
-| `preview`, HEAD destacado `45338438ba` | Worktree de prévia com vínculo Git quebrado | `zapp-worktrees/preview` | Parte; há 2.525 caminhos diferentes da main atual | Sim, 1.548 commits exclusivos por ancestralidade | Contatos, tarefas e várias áreas históricas | TERMINAR triagem; INTEGRAR apenas a correção de datas já identificada, se ainda ausente | Alta |
-| Três alterações sem commit em `preview` | Código/testes | Mesmo local | A versão do HEAD corrige datas; working tree reverte a correção | Sim, regressivo | Filtro de período e teste de fuso | DESCARTAR da integração após preservar evidência | Alta |
+| 30 worktrees de origem consultáveis em 29/10, excluído o worktree desta auditoria | Worktrees | `/home/joaquim_ataides/zapp-worktrees` | 29 limpos; `preview` é exceção | Não se aplica | Várias | Atualizar lista em C.md; não limpar worktrees | Alta |
+| `preview`, HEAD destacado `45338438ba` | Worktree de prévia com vínculo `.git` quebrado (`preview1` ausente; registro `preview` encontrado) | `zapp-worktrees/preview` | Dados históricos de 2.525 caminhos/1.548 commits usam base antiga | Sim | Contatos, tarefas e várias áreas históricas | Preservar e reavaliar por funcionalidade | Alta |
+| Três alterações rastreadas sem commit em `preview`; nenhum untracked | Código/testes | Mesmo local | A versão do HEAD corrige datas; working tree reverte a correção | Sim, regressivo segundo comparação anterior | Filtro de período e teste de fuso | Manter fora de integração e preservar evidência | Alta |
 
 O [relatório C](_levantamento/C.md) registra status, último commit e limitação do vínculo Git. Índices por item: [2.525 caminhos](_levantamento/C-diferencas.tsv), [1.548 commits](_levantamento/C-commits.tsv) e [157 documentos de planejamento](_levantamento/C-planejamento.tsv). Os diffs de uma cópia antiga não serão mesclados em bloco.
 
@@ -40,15 +42,15 @@ O [relatório C](_levantamento/C.md) registra status, último commit e limitaç�
 
 | Item | Tipo | Onde está | Existe na main? | Diff relevante? | Funcionalidade | Decisão proposta | Prioridade |
 |---|---|---|---|---|---|---|---|
-| `.base-tc` e materiais locais do integrador | Worktree/arquivos soltos | `hermes-workspaces/Zapp_Web_V2` | Parcial | Sim; há trabalho de dashboard e Evolution API incompleto | Dashboard/Evolution API | TERMINAR comparação e trabalho inacabado | Alta |
+| `.base-tc` destacado em `3024ca92` e arquivos de handoff | Worktree/arquivos soltos | `hermes-workspaces/Zapp_Web_V2` | Diretório pai não é checkout Git; `.base-tc` é o worktree identificável, 4 à frente/67 atrás | Sim | Dashboard/Evolution API | Preservar e reconciliar por arquivo; sem importação em bloco | Alta |
 
 ## E — demais workspaces Hermes do Zapp
 
 | Item | Tipo | Onde está | Existe na main? | Diff relevante? | Funcionalidade | Decisão proposta | Prioridade |
 |---|---|---|---|---|---|---|---|
-| 13 worktrees V2 adicionais e 2 V3 identificados no conjunto D/E | Branches e cópias de trabalho | `.integra/`, `ga-fix/`, `ga-audit-261020/`, `Zapp_Web_V3/` | Parcial; comparação por caminho no índice | 16.008 diferenças no conjunto D/E, com repetição entre worktrees | Banco, inbox, plataforma, Talk X e CI | TERMINAR triagem V2; DESCARTAR V3 da integração V2 | Alta |
+| Worktrees Git D/E reconsultados em 29/10 | Branches e cópias de trabalho | `.integra/`, `.base-tc`, `ga-fix/`, `ga-audit-261020/` | Bases locais variam; vários refs 185 commits atrás e `lote-main` 107 atrás/1 à frente | Não recontado em conteúdo | Banco, inbox, plataforma, Talk X e CI | Atualizar lista e comparar funcionalmente; ancestralidade não decide integração | Alta |
 | 8.265 arquivos soltos selecionados no conjunto D/E | Documentos de fila, código e metadados | `hermes-workspaces/` | 8 hashes iguais à main; demais exigem análise | Sim em parte | Várias | Decisão por item no índice | Média |
-| 12 entradas de alterações locais em dois worktrees | Trabalho sem commit | `.integra/fase2` e `.integra/lote-main` | Não comprovado | Sim | Conflitos e documentação | TERMINAR antes de qualquer limpeza | Alta |
+| `.integra/fase2`: 6 staged e 7 unstaged; `.integra/lote-main`: working tree limpo, 1 commit à frente/107 atrás | Trabalho e diferenças versionadas | D/E | Cinco caminhos de hooks/tipos diferem da main apesar de lote-main estar limpo; manifesto alterado e `.merge_file_*` staged em fase2 | Sim | Conflitos, deploy, tipos e hooks | Preservar; “12 alterações locais” é retrato antigo | Alta |
 
 Os totais D/E são compartilhados; **não somar as mesmas diferenças como funcionalidades distintas**. [Relatório D/E](_levantamento/DE.md), [estado por worktree](_levantamento/DE-repos.md), [arquivos diferentes](_levantamento/DE-arquivos.tsv), [commits](_levantamento/DE-commits.tsv) e [arquivos soltos](_levantamento/DE-soltos.tsv). Os arquivos com nomes potencialmente sensíveis estão marcados para exclusão da integração e sem hash publicado.
 
@@ -74,8 +76,8 @@ Os totais D/E são compartilhados; **não somar as mesmas diferenças como funci
 
 | Item | Tipo | Onde está | Existe na main? | Diff relevante? | Funcionalidade | Decisão proposta | Prioridade |
 |---|---|---|---|---|---|---|---|
-| 164 PRs abertos | Revisões pendentes | GitHub | Não por definição, mas conteúdo pode ter entrado por outro squash | Sim | Diversas | Decisão individual em `GITHUB.json`; nenhum PR foi considerado verde automaticamente | Alta |
-| 221 branches remotas, incluindo `main` | Referências | GitHub | Só `main` é ancestral; conteúdo das demais precisa comparação | Potencial | Diversas | Decisão individual em `GITHUB.json` | Alta |
+| 156 PRs abertas na consulta de 29/10 20:03 UTC | Revisões pendentes | GitHub | Não por definição, conteúdo pode entrar por squash em outra PR | Sim | Diversas | Atualizar `GITHUB.json` antes de usar como lista operacional | Alta |
+| 222 branches remotas, incluindo `main`, na consulta de 29/10 | Referências | GitHub | Só `main` é ancestral; conteúdo das demais precisa comparação | Potencial | Diversas | Atualizar `GITHUB.json` antes de limpeza | Alta |
 | 25 issues abertas | Demandas | GitHub | Não se aplica | Potencial | Diversas | Decisão individual em `GITHUB.json` | Média |
 | 55 views efetivas em `FEATURE_REGISTRY.md` | Funcionalidades/telas | `main` | Sim como código/rota; prontidão não comprovada | 10 estão classificadas Partial | Diversas | TERMINAR verificação funcional e testes de cada view | Alta |
 
@@ -83,7 +85,7 @@ Os totais D/E são compartilhados; **não somar as mesmas diferenças como funci
 
 ## Decisões e limites desta fase
 
-1. Preservar as alterações já existentes em A e os 12 arquivos locais dos worktrees Hermes antes de integrar qualquer coisa. Não copiar arquivos protegidos, `.env*`, tokens ou credenciais para um PR.
+1. Preservar as alterações já existentes em A, o clone e itens locais de B, e as alterações staged/unstaged de D/E antes de integrar qualquer coisa. Não copiar arquivos protegidos, `.env*`, tokens ou credenciais para um PR.
 2. A triagem por SHA identifica duplicatas exatas. Diferença de SHA, commit exclusivo ou PR aberto **não** provam que o código é melhor ou deve ser integrado. A Fase 2 deve transformar apenas grupos funcionalmente confirmados em PRs pequenos.
 3. A `main` mudou durante a coleta. Cada grupo da Fase 2/3 precisa de nova comparação com o SHA atual e baseline de checks correspondente antes do PR.
 4. F e G foram somente lidos. B, C, D e E não tiveram arquivos movidos nesta fase. A prévia `preview` e alguns workspaces Hermes podem ser usados por serviços locais; sua limpeza exige verificação desses serviços.
