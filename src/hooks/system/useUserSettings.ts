@@ -141,13 +141,15 @@ export function useUserSettings() {
         if (error && error.code !== 'PGRST116') {
           // PGRST116 = no rows returned
           log.error('Error fetching settings:', error);
-          setIsError(true);
-          toast({
-            title: 'Não foi possível carregar suas configurações',
-            description:
-              'Os valores exibidos são os padrões. Recarregue a página para tentar de novo.',
-            variant: 'destructive',
-          });
+          if (ativo) {
+            setIsError(true);
+            toast({
+              title: 'Não foi possível carregar suas configurações',
+              description:
+                'Os valores exibidos são os padrões. Recarregue a página para tentar de novo.',
+              variant: 'destructive',
+            });
+          }
           return;
         }
 
