@@ -2,8 +2,8 @@
   "main_sha": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858",
   "data_analise": "2026-10-26",
   "bloqueio_sistemico": {
-    "ativo": true,
-    "causa": "Unit Tests falhando em 136 arquivos em main@2d97c44 (commit 2026-10-24T18:43:20Z)",
+    "ativo": false,
+    "causa": "RESOLVIDO: PR #2385 (fix rlsSchemaGuard) mergeado em 2026-10-31T01:00Z — eliminou o ultimo arquivo vermelho do CI sistêmico",
     "pr_desbloqueador": 2248,
     "arquivo_restante_apos_2248": "src/__tests__/rlsSchemaGuard.test.ts",
     "migrations_pendentes": [
@@ -31,7 +31,7 @@
   "nota_pr_2230": "COMPLETAR — deleta src/hooks/integrations/useTalkXSuppression.ts sem atualizar TalkXSuppression.tsx:32 que importa 8 simbolos do modulo; PR #2248 ja inclui esta correcao",
   "nota_pr_2238": "DECISAO_HUMANA — feat(message-delivery) com possivel DDL ou mudanca de behavior",
   "nota_pr_2248": "DECISAO_HUMANA — DESBLOQUEADOR: reduz 136 para 1 arquivo vermelho no CI; requer aprovacao das 2 migrations via producao-ddl",
-  "status": "AGUARDANDO_DESBLOQUEADOR_PR_2248",
+  "status": "CI_EM_ANDAMENTO_9_PRS_AGUARDANDO_CI_GATE",
   "merges_realizados": 5,
   "merges_log": [
     {"pr": 2149, "sha_pr": "3c1915e7649206cf75c8cdc55ecc65b4ec1e5daf", "sha_merge": "c4c7139e75aa326cc21823e816d1e7f526b67412", "timestamp": "2026-10-30T21:18Z", "titulo": "docs(reconciliation): P053 registra regressão do cabeçalho"},
@@ -52,6 +52,6 @@
   "dossies_nao_draft": 130,
   "dossies_draft_skip": 37,
   "dossies_fechadas_fora_do_escopo": 7,
-  "nota_conclusao": "174 dossies criados (167 open PRs = 130 nao-draft + 37 draft; + 5 extras: 4 ja-mergeadas + 1 nao-existe; + 2 fechadas-durante-analise). 0 merges possiveis enquanto PR #2248 nao for mergeada e as 2 migrations nao forem aplicadas em producao (environment producao-ddl). Toda PR nao-draft esta BLOQUEADA pelo CI Gate sistemico de main@2d97c44.",
+  "nota_conclusao": "174 dossies criados (167 open PRs = 130 nao-draft + 37 draft; + 5 extras: 4 ja-mergeadas + 1 nao-existe; + 2 fechadas-durante-analise). Bloqueio sistemico RESOLVIDO em 2026-10-31T01:00Z com merge de #2385. 5 merges realizados. 9 PRs com CI em andamento (queued por congestionamento de runners). Aguardando CI Gate disparar (~01:36Z) para mergear as elegíveis.",
   "dossies_completos_count": 174
 }
