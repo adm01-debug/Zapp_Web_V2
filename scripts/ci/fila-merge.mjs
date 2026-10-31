@@ -122,10 +122,26 @@ export async function resolverDesconhecidos(prs, behindBy) {
   return saida;
 }
 
+function erroTransitorio(err) {
+  const msg = String(err?.stderr ?? err?.message ?? '');
+  return /HTTP 50[234]|50[234] Bad Gateway|50[234] Service Unavailable|connection reset|ECONNRESET|ETIMEDOUT/i.test(msg);
+}
+
+async function execComRetry(cmd, args, opts, { tentativas = 4, delaysMs = [5000, 10000, 20000] } = {}) {
+  for (let i = 0; i < tentativas; i++) {
+    try {
+      return execFileSync(cmd, args, opts);
+    } catch (err) {
+      if (!erroTransitorio(err) || i >= tentativas - 1) throw err;
+      await new Promise((r) => setTimeout(r, delaysMs[Math.min(i, delaysMs.length - 1)]));
+    }
+  }
+}
+
 async function decisaoAtual(repo) {
   let json;
   try {
-    json = execFileSync(resolverExecutavel('gh'), [
+    json = await execComRetry(resolverExecutavel('gh'), [
       'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
       '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
     ], { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
@@ -133,9 +149,9 @@ async function decisaoAtual(repo) {
     console.error(`gh pr list falhou (${err.message?.split('\n')[0]}); nenhuma PR atualizada nesta execução.`);
     return decidir([], checksObrigatorios());
   }
-  const behindBy = async (head) => Number(execFileSync(resolverExecutavel('gh'), [
+  const behindBy = async (head) => Number((await execComRetry(resolverExecutavel('gh'), [
     'api', `repos/${repo}/compare/main...${head}`, '--jq', '.behind_by',
-  ], { encoding: 'utf8' }).trim());
+  ], { encoding: 'utf8' })).trim());
   let parsedPrs;
   try { parsedPrs = JSON.parse(json); } catch { return decidir([], checksObrigatorios()); }
   const prs = await resolverDesconhecidos(parsedPrs, behindBy);
