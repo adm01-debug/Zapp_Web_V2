@@ -203,6 +203,29 @@ assert_mutation_blocked 'policy de escrita true para role herdada por authentica
   'DROP POLICY p_herdada ON public.t_base; DROP ROLE zz_pai' \
   'public.t_base: policy p_herdada'
 
+# Grants estruturais sao efetivos mesmo com RLS habilitada e precisam ser
+# removidos das tabelas existentes e dos defaults controlados por postgres.
+for structural_privilege in TRUNCATE REFERENCES TRIGGER; do
+  assert_mutation_blocked "${structural_privilege} para anon bloqueado" \
+    "GRANT ${structural_privilege} ON public.t_base TO anon" \
+    "REVOKE ${structural_privilege} ON public.t_base FROM anon" \
+    'INV-LIVE (ACL)' 'public.t_base' 'anon'
+  assert_mutation_blocked "${structural_privilege} para authenticated bloqueado" \
+    "GRANT ${structural_privilege} ON public.t_base TO authenticated" \
+    "REVOKE ${structural_privilege} ON public.t_base FROM authenticated" \
+    'INV-LIVE (ACL)' 'public.t_base' 'authenticated'
+done
+
+assert_mutation_blocked 'default TRUNCATE para anon bloqueado' \
+  'ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT TRUNCATE ON TABLES TO anon' \
+  'ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE TRUNCATE ON TABLES FROM anon' \
+  'INV-LIVE (DEFAULT ACL)' 'anon' 'TRUNCATE'
+
+assert_mutation_blocked 'default REFERENCES para authenticated bloqueado' \
+  'ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT REFERENCES ON TABLES TO authenticated' \
+  'ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE REFERENCES ON TABLES FROM authenticated' \
+  'INV-LIVE (DEFAULT ACL)' 'authenticated' 'REFERENCES'
+
 # allowlist POR POLICY: a excecao documentada passa, mas uma policy aberta NOVA na
 # MESMA tabela continua reprovando (a excecao e a policy, nao a tabela).
 psql_sql "
