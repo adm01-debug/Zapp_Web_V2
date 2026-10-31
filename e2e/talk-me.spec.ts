@@ -299,7 +299,9 @@ test.describe('TALK ME — fila e aceite', () => {
     await dialog.getByRole('button', { name: 'Próximo atendimento' }).click();
     await expect(dialog.getByRole('button', { name: CONTACT_FIXTURES[1].name, exact: true })).toBeVisible();
     await expect(dialog).toBeVisible();
-    await expect(page.getByRole('heading', { name: CONTACT_FIXTURES[1].name, exact: true })).toHaveCount(0);
+    // A fila do TALK ME exibe o nome em cartões <h3>. Só um <h2> da conversa
+    // no inbox deve aparecer depois do aceite; não usar a página inteira sem nível.
+    await expect(page.getByRole('heading', { name: CONTACT_FIXTURES[1].name, exact: true, level: 2 })).toHaveCount(0);
 
     await dialog.getByRole('button', { name: 'Atendimento anterior' }).click();
     await expect(oldest).toBeVisible();

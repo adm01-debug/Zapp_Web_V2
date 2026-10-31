@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-19",
+  "phase": "after-security-headers-v130-v150",
+  "plan_ref": "PLANO_VERCEL_190_ETAPAS_2026-10-18.md",
+  "headers_added": {
+    "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+    "Reporting-Endpoints": "csp=\"https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/csp-report\""
+  },
+  "headers_updated": {
+    "Content-Security-Policy-Report-Only": "adicionado 'report-to csp' antes do report-uri existente"
+  },
+  "headers_already_present": {
+    "Permissions-Policy": "camera=(), microphone=(self), geolocation=(self), payment=(), usb=(), magnetometer=(), gyroscope=(), fullscreen=(self)",
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "X-Robots-Tag": "noindex, nofollow"
+  },
+  "headers_deliberately_omitted": {
+    "Cross-Origin-Resource-Policy": "quebraria Vercel Speed Insights (recurso de origem cruzada)",
+    "Strict-Transport-Security": "gerenciado automaticamente pelo Vercel em domínios verificados"
+  },
+  "firewall_v138": {
+    "status": "bloqueado_waf_nao_ativado",
+    "reason": "PUT e GET /v1/security/firewall/config retornam 404 'Seawall Config not found' — WAF precisa ser ativado em Project Settings → Security → Web Application Firewall antes do apply via MCP",
+    "paths_to_block": ["/wp-admin", "/wp-login.php", "/.env", "/.git/", "/phpmyadmin", "/xmlrpc.php"]
+  },
+  "vercel_project": {
+    "id": "prj_J4wb8egzz8iL1CJnSOXJDtqnbvRp",
+    "name": "zapp_web_v2",
+    "team": "juca1"
+  },
+  "ci_unit_tests": {
+    "file": "scripts/ci/vercel-config.unit.mjs",
+    "new_tests_added": [
+      "Cross-Origin-Opener-Policy é same-origin-allow-popups",
+      "Reporting-Endpoints define endpoint csp"
+    ]
+  }
+}

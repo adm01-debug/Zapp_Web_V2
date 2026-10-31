@@ -6,6 +6,8 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  changedLintableFiles,
+  changedRemovedFiles,
   compareBaseline,
   createBaseline,
   eslintCommandArguments,
@@ -548,6 +550,133 @@ test("--staged nao combina com --update-baseline", (t) => {
   const { root, cleanup } = gitFixture();
   try {
     assert.equal(main(["--staged", "--update-baseline", "--root", root]), 2);
+  } finally {
+    cleanup();
+  }
+});
+
+test("changedLintableFiles/changedRemovedFiles listam alterado, removido e renomeado desde a base", () => {
+  const { root, git, cleanup } = gitFixture();
+  try {
+    write(root, "src/a.ts", "a();\n");
+    write(root, "src/removed.ts", "r();\n");
+    write(root, "src/old.ts", "old();\n");
+    write(root, "README.md", "# x\n");
+    git("add", ".");
+    git("commit", "-q", "-m", "base");
+    git("branch", "-q", "base-ref");
+
+    write(root, "src/a.ts", "a();\nb();\n");
+    write(root, "src/b.tsx", "b();\n");
+    git("rm", "-q", "src/removed.ts");
+    git("mv", "src/old.ts", "src/new.ts");
+    git("add", ".");
+    git("commit", "-q", "-m", "mudancas");
+
+    assert.deepEqual(changedLintableFiles(root, "base-ref").sort(), ["src/a.ts", "src/b.tsx", "src/new.ts"]);
+    // --no-renames: a renomeacao aparece como remocao do caminho antigo, igual ao --staged.
+    assert.deepEqual(changedRemovedFiles(root, "base-ref").sort(), ["src/old.ts", "src/removed.ts"]);
+  } finally {
+    cleanup();
+  }
+});
+
+test("--base ignora divida antiga fora do diff e acusa divida nova no arquivo mudado", (t) => {
+  silenced(t);
+  const { root, git, cleanup } = gitFixture();
+  try {
+    write(root, "src/a.ts", "missing();\nother();\n");
+    write(root, "src/legacy.ts", "missing();\n");
+    git("add", ".");
+    git("commit", "-q", "-m", "base");
+    git("branch", "-q", "base-ref");
+
+    const baselinePath = path.join(root, "baseline.json");
+    writeFileSync(
+      baselinePath,
+      JSON.stringify(
+        createBaseline(
+          [result(root, "src/a.ts", "missing();\nother();\n"), result(root, "src/legacy.ts", "missing();\n")],
+          root,
+        ),
+      ),
+    );
+
+    // Um commit depois da base que so toca src/a.ts; src/legacy.ts fica fora do diff.
+    write(root, "src/a.ts", "missing();\nother();\n// alterado\n");
+    git("add", "src/a.ts");
+    git("commit", "-q", "-m", "altera a.ts");
+
+    const reportPath = path.join(root, "report.json");
+    const args = ["--base", "base-ref", "--root", root, "--baseline", baselinePath, "--report", reportPath];
+
+    // legacy.ts tem divida no baseline mas nao esta no diff: nao pode contar como nova nem como removida.
+    writeFileSync(reportPath, JSON.stringify([result(root, "src/a.ts", "missing();\nother();\n")]));
+    assert.equal(main(args), 0);
+
+    const extra = message({ line: 2, endLine: 2, message: "'other' is not defined." });
+    writeFileSync(reportPath, JSON.stringify([result(root, "src/a.ts", "missing();\nother();\n", [message(), extra])]));
+    assert.equal(main(args), 1);
+  } finally {
+    cleanup();
+  }
+});
+
+test("--base reconhece arquivo renomeado pelo hash em vez de contar divida nova", (t) => {
+  silenced(t);
+  const { root, git, cleanup } = gitFixture();
+  try {
+    write(root, "src/old.ts", "missing();\n");
+    git("add", "src/old.ts");
+    git("commit", "-q", "-m", "base");
+    git("branch", "-q", "base-ref");
+
+    const baselinePath = path.join(root, "baseline.json");
+    writeFileSync(baselinePath, JSON.stringify(createBaseline([result(root, "src/old.ts", "missing();\n")], root)));
+
+    git("mv", "src/old.ts", "src/new.ts");
+    git("commit", "-q", "-m", "renomeia");
+
+    const reportPath = path.join(root, "report.json");
+    writeFileSync(reportPath, JSON.stringify([result(root, "src/new.ts", "missing();\n")]));
+    assert.equal(
+      main(["--base", "base-ref", "--root", root, "--baseline", baselinePath, "--report", reportPath]),
+      0,
+    );
+  } finally {
+    cleanup();
+  }
+});
+
+test("--base sem arquivo alterado desde a ref sai com sucesso sem rodar o ESLint", (t) => {
+  silenced(t);
+  const { root, git, cleanup } = gitFixture();
+  try {
+    write(root, "README.md", "# x\n");
+    git("add", ".");
+    git("commit", "-q", "-m", "base");
+    git("branch", "-q", "base-ref");
+    assert.equal(main(["--base", "base-ref", "--root", root]), 0);
+  } finally {
+    cleanup();
+  }
+});
+
+test("--base nao combina com --staged", (t) => {
+  silenced(t);
+  const { root, cleanup } = gitFixture();
+  try {
+    assert.equal(main(["--base", "main", "--staged", "--root", root]), 2);
+  } finally {
+    cleanup();
+  }
+});
+
+test("--base nao combina com --update-baseline", (t) => {
+  silenced(t);
+  const { root, cleanup } = gitFixture();
+  try {
+    assert.equal(main(["--base", "main", "--update-baseline", "--root", root]), 2);
   } finally {
     cleanup();
   }

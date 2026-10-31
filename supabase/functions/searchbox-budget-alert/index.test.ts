@@ -20,6 +20,17 @@ Deno.env.set("CRON_SECRET", CRON_SECRET);
 Deno.env.set("SUPABASE_URL", "http://127.0.0.1:54321");
 Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "service-role-de-teste");
 
+Deno.test("searchbox-budget-alert recusa secret ausente ou incorreto antes de consultar o banco", async () => {
+  for (const secret of [undefined, "cron-secret-incorreto"]) {
+    const req = new Request("http://localhost/functions/v1/searchbox-budget-alert", {
+      headers: secret ? { "x-cron-secret": secret } : {},
+    });
+    const res = await handleSearchboxBudgetAlert(req);
+    assertEquals(res.status, 401);
+    assertEquals((await res.json()).error, "Unauthorized");
+  }
+});
+
 Deno.test("R2-INF-016: falha da consulta de uso → 500 sanitizado (sem detalhe interno)", async () => {
   const original = globalThis.fetch;
   globalThis.fetch = () =>

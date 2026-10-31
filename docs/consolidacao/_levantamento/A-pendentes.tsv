@@ -1,0 +1,216 @@
+item	tipo	onde está	existe na main?	diff relevante?	funcionalidade relacionada	decisão proposta	prioridade
+.cursor/mcp.json	documento/dados	A: dia/2026-10-23 (A )	não	configuração local do editor, sem credencial na URL	.cursor	DESCARTAR	baixa
+.husky/commit-msg	outro	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	.husky	JÁ ESTÁ NA MAIN	baixa
+.husky/pre-commit	outro	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	.husky	JÁ ESTÁ NA MAIN	baixa
+.husky/pre-push	outro	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	.husky	JÁ ESTÁ NA MAIN	baixa
+_resgate-wsl-20261021/arquivo-zapp/prototipos_redesign/Inbox Futurista v2.dc.htmlZone.Identifier	outro	A: dia/2026-10-23 (AD)	não	metadado do Windows; preservar arquivo	_resgate-wsl-20261021	DESCARTAR	baixa
+_resgate-wsl-20261021/arquivo-zapp/prototipos_redesign/ZAPP App v2.dc.htmlZone.Identifier	outro	A: dia/2026-10-23 (AD)	não	metadado do Windows; preservar arquivo	_resgate-wsl-20261021	DESCARTAR	baixa
+_resgate-wsl-20261021/arquivo-zapp/prototipos_redesign/ZAPP Auth.dc.htmlZone.Identifier	outro	A: dia/2026-10-23 (AD)	não	metadado do Windows; preservar arquivo	_resgate-wsl-20261021	DESCARTAR	baixa
+docs/adr/ADR-007-MULTIPLIX.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/audits/ARQUITETURA_V2_DESCOBERTAS.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/audits/COBERTURA_DELTA.csv	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/audits/CONSOLIDACAO_BABBAGE_2117_2118_2026-10-21.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/audits/FINDINGS_DELTA.json	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/audits/INVENTARIO_MELHORIAS_2026-10-07.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/audits/INVENTARIO_MELHORIAS_2026-10-07.tsv	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/audits/MATRIZ_BABBAGE_SALVAGE.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/audits/RELATORIO_REAUDITORIA_DELTA_2026-10-04.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/audits/ZAPP_WEB_V2_TELEFONIA_AUDITORIA_E_60_MELHORIAS.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/audits/onda3-260930/poc/team-chat-two-findings.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/decisions/ADR-007-talk-me-decisoes-de-produto.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/design/CLAUDE_BLUE_PREMIUM_ACTIVATION_PROMPT.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/design/Multiplix_ZAPP_V2_Especificacao (1).md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/design/Multiplix_ZAPP_V2_Prototipo (1).html	outro	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/design/PLANO_MELHORIAS_TELEFONIA_100_ETAPAS.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/design/PROMO_GIFTS_V4_BLUE_PREMIUM_DESIGN_SYSTEM (1).md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/design/PROMO_GIFTS_V4_BLUE_PREMIUM_REFERENCE.css	outro	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/design/PROMO_GIFTS_V4_BLUE_PREMIUM_TOKENS.json	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/design/TALK_ME_RASTREABILIDADE_2026-10-20.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/design/TALK_ME_RUNBOOK_PILOTO_E_HOMOLOGACAO.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/design/ZAPP App v2.dc.html	outro	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/design/ZAPP_DARKBLUE_PREMIUM_MOTION.ts	código	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/design/ZAPP_DARKBLUE_PREMIUM_TOKENS__externo-2026-10-08.css	outro	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/design/ZAPP_WEB_V2_DARKBLUE_PREMIUM_DESIGN_SYSTEM.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/design/design-system.json	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/design/ui-kit-preview.html	outro	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/handoffs/HANDOFF-melhorias50-f4-2026-10-03.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/plans/00_PROMPT_MESTRE_DASHBOARD_WIDE_24_FULLHD_ZAPP_WEB_V2 (1).md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/plans/PLANO_100_ETAPAS_WORKFLOWS_2026-09-27.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/plans/PLANO_IMPLEMENTACAO_MULTIPLIX_200_ETAPAS_v1.1_2026-09-26.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/plans/PLANO_MULTIPLIX_200_ETAPAS.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/plans/PLANO_REDESIGN_ARQUIVOS_CHAT_PANEL_ZAPP_WEB_V2_50_ETAPAS.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/plans/PLANO_SEGUNDA_LEVA_MELHORIAS_2026-10-08_RASCUNHO.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/plans/PROMPT_IMPLEMENTACAO_REDESIGN_CONTATOS_ZAPP_WEB_V2.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/plans/Plano_IA_Zapp_Web_V2_200_Etapas.json	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/prompts/HERMES_AUTONOMOUS_ENGINE_V1.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/prompts/PROMPT_AUDITORIA_MIGRACAO_DB_v1.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+docs/prompts/guia-exaustivo-promptops.md	documento/dados	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	docs	JÁ ESTÁ NA MAIN	baixa
+inventario/collect.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	inventario	JÁ ESTÁ NA MAIN	baixa
+inventario/collect2.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	inventario	JÁ ESTÁ NA MAIN	baixa
+inventario/conflict_check.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	inventario	JÁ ESTÁ NA MAIN	baixa
+performance-budget.json	documento/dados	A: dia/2026-10-23 ( M)	sim	eleva limite do bundle de 325 para 370 KB; enfraquece orçamento	performance-budget.json	DESCARTAR	alta
+scripts/ci/github-settings-guard.mjs	código	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/ci/implicit-any-ratchet.mjs	código	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/ci/install-postgresql-client.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/ai-block03-vocabulary-contract.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/ai-usage-cost-window-open.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/anon-privileges-contact-messages.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/assume-return-conversation.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/auto-reconnect-logs.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/calls-telefonia-contract.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/check-live-invariants.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/check-mcp-exec-acl.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/check-reconcile-ledger-drift.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/check-secdef-public-execute.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/check-webhook-failures-acl.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/contacts-legacy-visibility.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/contacts-soft-delete-and-status.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/contacts-stats-series-rpc.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/conversation-analyses-authorization.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/conversation-tasks-events-insert-authorization.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/crm-sync-outbox-behavior.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/cron-remocao-vacuum-messages.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/dashboard-daily-series.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/docker-shim	outro	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/docker-shim.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/edit-message-authorization.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/email-rls-sem-ramo-admin.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/enqueue-connection-scope.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/feature-flags-rollout.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/gen-types.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/gen-types.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/generic-migration-runtime.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/gmail-accounts-sync-backoff.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/ia-usage-outbox-duravel.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/ia131-audio-stt-cadeia.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/ia131-audio-stt-openrouter.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/inbox-contact-authorization.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	remove 83 linhas de teste de notas fixadas	scripts	DESCARTAR	alta
+scripts/db-audit/interactive-buttons-list-behavior.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/login_gate_rpc.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/message-delivery-phase1-behavior.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/message-reactions-author-model.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/message-reactions-autoria.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/messages-group-sender.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/multiplix-completion-item-queue.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/multiplix-delivery-leases.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/multiplix-drain-enum-cast.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/multiplix-revoke-execute-public.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/multiplix-rls.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/multiplix-scope.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/n011-storage-avatar-policies-dedup.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/n142-message-reactions-select-user-id.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/network-policy-rpc.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/profiles-role-escalation-guard.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/public-api-disable.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/recriar-banco-local.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/reminders-migracao-identidade.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/replay-local-harness.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/replay-local.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/request-department-access.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/reset-gatilho-coluna-removida.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/scope-snoozes-pins-favorites-authenticated.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/search_path_pg_temp_is_admin_get_own_gmail.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/searchbox-budget-alert-monthly-idempotency.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/sec-y25-01-insert-alvo.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/send-messages-permission-authorization.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/storage-limits-stickers-audio-memes.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/storage-limits-whatsapp-audio-multiplix.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talk-me-client-privileges.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talk-me-queue-contract.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-ab-weights.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-alerts-outcome-unknown-lote.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-attribution.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-audience-rpc.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-audience-snapshot.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-benchmarks-period-names.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-blacklist-audit-trigger.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-blacklist-realtime.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-campaign-launch-checks.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-campaign-logs-cursor.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-campaign-recipients-page.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-campaign-recurrence.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-campaign-segments-rpc.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-campaign-state-transitions.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-campaign-transitions.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-campaign-window-open.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-contact-attributes.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-conversion-defaults.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-counters-integrity.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-current-template-version.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-delivery-leases.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-e27-replay-divergence.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-engine-cron-runs-role-gate.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-engine-health.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-engine-provider.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-events-contract.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-help-top-topics.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-history-saved-by-fk.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-insights-rules.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-lgpd.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-lifecycle-events.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-message-snapshot.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-metrics-view-invoker.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-monitor-panel.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-n102-window-acl.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-n102b-cast.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-n102c-window.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-optout.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-receipts-replies.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-regressoes-chain.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-retry-resolve.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-rfm.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-save-template-variants.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-segment-library-stats.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-segment-progress.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-send-budget.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-template-columns.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-template-history-behavior.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-template-second-update-snapshot.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-tick-expurgo.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/talkx-transition-overload-postgrest.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/tasks-rearm-on-remind-change.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/tc002-direct-conversation-race.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/team-chat-department-transfer-guards.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/team-chat-department-whatsapp-safe-config.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/team-chat-media-contract.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/team-direct-conversation-race.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/team-member-role-rpcs.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/team-membership-bootstrap-owner.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/team-message-read-state.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/team-messages-page-cursor-tiebreak.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/wa-label-connection-scope.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/wa-tag-and-status-authorization.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/whatsapp-default-connection-atomicity.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db-audit/whatsapp-media-select-scope.test.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/db/seed-contatos-redesign-local.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/eslint/no-secret-compare.js	código	A: dia/2026-10-23 (M )	sim	estreita regra de comparação de credenciais; não afrouxar lint	scripts	DESCARTAR	alta
+scripts/graphify/setup.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/qa/medir-tipografia.cjs	código	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+scripts/vercel/ignore-build.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	scripts	JÁ ESTÁ NA MAIN	baixa
+src/assets/hero-worldmap.jpg	outro	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	src	JÁ ESTÁ NA MAIN	baixa
+src/components/auth/PasswordStrengthMeter.tsx	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
+src/components/catalog/ProductDetailDialog.tsx	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
+src/components/contacts/ContactKanbanView.tsx	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
+src/components/dashboard/useSentimentData.ts	código	A: dia/2026-10-23 (M )	sim	sinaliza leitura parcial de agentes; conferir contra #2301 e testar	src	TERMINAR	alta
+src/components/gamification/MiniGameDialogs.tsx	código	A: dia/2026-10-23 ( M)	sim	cálculo de XP da partida contraria contrato PB-18/D4 e testes da main	src	DESCARTAR	alta
+src/components/gamification/miniGamesData.ts	código	A: dia/2026-10-23 ( M)	sim	xpReward e cálculo por partida contrariam contrato PB-18/D4 e testes da main	src	DESCARTAR	alta
+src/components/queues/QueueAlertsDisplay.tsx	código	A: dia/2026-10-23 (M )	sim	remove aria-label de botão; regressão de acessibilidade	src	DESCARTAR	alta
+src/components/settings/media-library/AIGenerateDialog.tsx	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
+src/hooks/auth/useAuthForm.ts	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
+src/hooks/gamification/useAgentGamification.ts	código	A: dia/2026-10-23 ( M)	sim	cliente de RPC sem uso na tela e contrário ao contrato PB-18/D4 atual	src	DESCARTAR	alta
+src/pages/ResetPassword.tsx	código	A: dia/2026-10-23 (M )	sim	acrescenta eslint-disable; proibido	src	DESCARTAR	alta
+supabase-export/POST_EXPORT_CHECKLIST.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase-export	JÁ ESTÁ NA MAIN	baixa
+supabase-export/import.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase-export	JÁ ESTÁ NA MAIN	baixa
+supabase-export/validate_destino.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase-export	JÁ ESTÁ NA MAIN	baixa
+supabase/functions/searchbox-budget-alert/index.ts	código	A: dia/2026-10-23 (M )	sim	substitui comparação de secret por helper de tempo constante	supabase	INTEGRAR	alta
+supabase/functions/whatsapp-webhook/index.ts	código	A: dia/2026-10-23 (M )	sim	substitui comparação de token por helper de tempo constante	supabase	INTEGRAR	alta
+supabase/migrations/20261016120000_security_fixes_passkey_purge_gmail_search_events.sql	SQL/migration	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase	JÁ ESTÁ NA MAIN	baixa
+supabase/migrations/20261019000001_grant_multiplix_audiences_validate_shared_roles.sql	SQL/migration	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase	JÁ ESTÁ NA MAIN	baixa
+supabase/migrations/20261019010001_grant_multiplix_audiences_validate_shared_roles.sql	SQL/migration	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase	JÁ ESTÁ NA MAIN	baixa
+supabase/migrations/20261026090300_revoke_multiplix_anon_public_execute.sql	SQL/migration	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase	JÁ ESTÁ NA MAIN	baixa
+supabase/tests/mini_game_xp_daily_limit_race.sh	script/config	A: dia/2026-10-23 (MM)	sim	conteúdo idêntico; modo/índice local	supabase	JÁ ESTÁ NA MAIN	baixa
