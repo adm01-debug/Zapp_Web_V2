@@ -28,12 +28,14 @@
  * `Access-Control-Allow-Headers` de `_shared/validation.ts` neste mesmo cartão —
  * sem isso o preflight recusaria a chamada e quebraria justamente o chat.
  */
-import type { FunctionInvokeOptions, FunctionsResponse } from '@supabase/functions-js';
+import type { FunctionInvokeOptions } from '@supabase/supabase-js';
 
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger, generateCorrelationId } from '@/lib/logger';
 
 const log = createLogger('edge-invoke');
+
+type FunctionsResponse<T> = Awaited<ReturnType<typeof supabase.functions.invoke<T>>>;
 
 /** Cabeçalho canônico do id (compatível com a V3). */
 export const CORRELATION_HEADER = 'x-correlation-id';
