@@ -1,12 +1,69 @@
 # Relatório de CI — Correção de Workflows com Falha
 
-**Data:** 2026-10-30  
+---
+
+## [Round 2 — 2026-10-31] deploy-functions.yml
+
+**Branch:** `claude/fix-deploy-frozen-oct31`  
+**PR:** [#2409](https://github.com/adm01-debug/Zapp_Web_V2/pull/2409) — aguardando CI (run [41153047351](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41153047351))
+
+### Baseline antes das mudanças Round 2
+
+| Verificação | Resultado |
+|---|---|
+| `bun run build` | ✅ exit 0 (confirmado Round 1) |
+| `bun run typecheck` | ✅ exit 0 (confirmado Round 1) |
+| `bun run lint` | ⚠️ 1 warning pré-existente (não alterado) |
+| `bun run test` | ✅ 15.667 testes passando (confirmado Round 1) |
+
+### Inventário de workflows com falha na `main` (última execução antes do fix Round 2)
+
+| Workflow | Último run com falha | SHA | Causa |
+|---|---|---|---|
+| `deploy-functions.yml` | [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) — `conclusion: failure` | `e4e8c265` | `@types/node` não declarado em `deno.json`; `deno install` sem `--frozen=false` recusa pacotes npm ausentes do lockfile |
+
+> **CI Gate (SHA `8e60103...`) — NÃO foi falha real.** A run `41152825247` em SHA `8e60103...` mostrou todos os jobs com `conclusion: cancelled`: um push posterior à mesma branch cancelou a execução anterior — comportamento padrão do GitHub Actions. Nenhum código a corrigir.
+
+### Causa raiz
+
+`@types/ws@8.18.1` contém `/// <reference types="node" />`, forçando resolução de `@types/node` na fase de descoberta de módulos do `deno check`. O `scripts/ci/deno.lock` tem zero entradas npm. Com `deno install` padrão (frozen), o Deno recusa instalar pacotes npm ausentes do lockfile — `@types/node` nunca é copiado para `node_modules/` e o `deno check` falha.
+
+### Correções aplicadas (PR #2409)
+
+| Arquivo | Mudança |
+|---|---|
+| `supabase/functions/deno.json` | Adicionado `"@types/node": "npm:@types/node@^22"` no `imports` map |
+| `.github/workflows/deploy-functions.yml` | `deno install --frozen=false` no step de instalação de dependências (W99) |
+
+### Resultado atual do CI no PR #2409
+
+| Check | Status no HEAD `4a7455896` |
+|---|---|
+| `🔍 Lint & TypeCheck` | ⏳ queued |
+| `🧪 Unit Tests (1/3)` | ⏳ queued |
+| `🧪 Unit Tests (2/3)` | ⏳ queued |
+| `🧪 Unit Tests (3/3)` | ⏳ queued |
+| `🔒 Security Audit` | ⏳ queued |
+| `Contrato DB offline` | ⏳ queued |
+| `🎭 E2E Tests (Playwright)` | ⏳ queued |
+| `auto_merge` | ✅ habilitado (squash) — mergeará automaticamente quando os 6 checks passarem |
+
+> Run CI: [41153047351](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41153047351) — iniciado 2026-10-31T01:01Z
+
+### Nota Qodo — reprodutibilidade (severidade média, não bloqueante)
+
+Qodo apontou que `--frozen=false` + `@types/node@^22` (sem pin de versão no lockfile) cria build não-reprodutível. O Deno não está disponível neste ambiente cloud para gerar entradas npm no lockfile. Fix pragmático aceito para desbloquear CI; follow-up registrado em PENDENCIAS.md item 4.
+
+---
+
+## [Round 1 — 2026-10-30] deno.lock hash + fila-merge.mjs
+
 **Branch de trabalho:** `claude/hopeful-knuth-4brqti`  
 **PR:** [#2394](https://github.com/adm01-debug/Zapp_Web_V2/pull/2394) — **MERGEADA** em `bcb11c84`
 
 ---
 
-## Baseline local (antes das mudanças)
+## Baseline local (antes das mudanças Round 1)
 
 | Verificação | Resultado |
 |---|---|
@@ -19,7 +76,7 @@
 
 ---
 
-## Inventário de workflows com falha na `main` (antes do fix)
+## Inventário de workflows com falha na `main` (antes do fix Round 1)
 
 | Workflow | Última run com falha | SHA | Causa | Corrigível? |
 |---|---|---|---|---|
@@ -32,7 +89,7 @@
 
 ---
 
-## Causa raiz e correções aplicadas
+## Causa raiz e correções aplicadas (Round 1)
 
 ### 1. Hash inconsistente do Deno lockfile (`deno.lock`)
 
@@ -75,7 +132,7 @@ O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quan
 
 ---
 
-## Comparação baseline × final (anti-regressão)
+## Comparação baseline × final Round 1 (anti-regressão)
 
 | Verificação | Baseline | Final |
 |---|---|---|
@@ -87,7 +144,7 @@ O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quan
 
 ---
 
-## Pós-merge — workflows na main (SHA `bcb11c84`)
+## Pós-merge Round 1 — workflows na main (SHA `bcb11c84`)
 
 | Workflow | Status |
 |---|---|
@@ -105,6 +162,10 @@ O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quan
 
 2. **Copilot Code Review** — falha de firewall interno do Copilot; não há código no repositório para corrigir.
 
+3. **deploy-functions.yml** — em correção via PR #2409 (Round 2 deste relatório).
+
+4. **Reprodutibilidade do lockfile Deno** — `--frozen=false` + `@types/node@^22` sem pin no lockfile; não corrigível sem Deno disponível no ambiente cloud.
+
 ---
 
-*Relatório concluído em 2026-10-30T22:20Z — PR #2394 mergeada com todos os checks verdes.*
+*Relatório atualizado em 2026-10-31T01:10Z — PR #2409 com CI em andamento.*
