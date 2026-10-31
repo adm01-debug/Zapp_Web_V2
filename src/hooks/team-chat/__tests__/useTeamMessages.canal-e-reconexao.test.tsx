@@ -44,12 +44,14 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
+vi.mock('@/hooks/team-chat/useTeamReadState', () => ({
+  useTeamReadState: () => ({ readStates: {}, isLoading: false }),
+  deriveOwnMessageStatus: () => 'sent',
+}));
+
 import { useTeamMessages } from '@/hooks/team-chat/useTeamMessages';
 
-function render(
-  conversationId = 'conv-1',
-  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-) {
+function render(conversationId = 'conv-1', queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
   const wrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client: queryClient }, children);
   return { ...renderHook(() => useTeamMessages(conversationId), { wrapper }), queryClient };
@@ -63,30 +65,20 @@ beforeEach(() => {
   h.rpc.mockResolvedValue({ data: [], error: null });
 });
 
-/**
- * `useTeamMessages` compõe `useTeamReadState`, que abre o PRÓPRIO canal
- * (`team-read-state-<conversationId>`) — o mesmo mock de `supabase.channel`
- * vê os dois. `h.nomes`/`h.subs` ficam no mesmo índice um do outro (cada
- * canal chama `.channel(nome)` e `.subscribe(cb)` em sequência síncrona),
- * então filtrar por prefixo em `h.nomes` dá o índice certo em `h.subs`.
- */
-function canaisDeMensagens(): Array<{ nome: string; sub: (status: string) => void }> {
-  return h.nomes
-    .map((nome, i) => ({ nome, sub: h.subs[i] }))
-    .filter(({ nome }) => nome.startsWith('team-messages-'));
-}
-
 describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (PE-75)', () => {
   it('dá sufixo exclusivo ao canal da conversa em cada montagem', async () => {
     const a = render('conv-1');
     const b = render('conv-1');
 
-    await waitFor(() => expect(canaisDeMensagens().length).toBeGreaterThanOrEqual(2));
+    // useTeamReadState também cria canal próprio; filtra só os do useTeamMessages
+    await waitFor(() =>
+      expect(h.nomes.filter(n => n.startsWith('team-messages-')).length).toBeGreaterThanOrEqual(2),
+    );
 
-    const [m0, m1] = canaisDeMensagens();
-    expect(m0.nome.startsWith('team-messages-conv-1:')).toBe(true);
-    expect(m1.nome.startsWith('team-messages-conv-1:')).toBe(true);
-    expect(m0.nome).not.toBe(m1.nome);
+    const msgNomes = h.nomes.filter(n => n.startsWith('team-messages-'));
+    expect(msgNomes[0].startsWith('team-messages-conv-1:')).toBe(true);
+    expect(msgNomes[1].startsWith('team-messages-conv-1:')).toBe(true);
+    expect(msgNomes[0]).not.toBe(msgNomes[1]);
 
     a.unmount();
     b.unmount();
@@ -96,13 +88,16 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const { queryClient } = render('conv-1');
     const invalidar = vi.spyOn(queryClient, 'invalidateQueries');
 
-    await waitFor(() => expect(canaisDeMensagens().length).toBe(1));
-    const sub = canaisDeMensagens()[0].sub;
+    // useTeamReadState chama .subscribe() sem callback; filtra só callbacks reais
+    await waitFor(() =>
+      expect(h.subs.filter((s): s is (status: string) => void => typeof s === 'function').length).toBe(1),
+    );
 
-    act(() => sub('SUBSCRIBED'));
+    const msgSubs = h.subs.filter((s): s is (status: string) => void => typeof s === 'function');
+    act(() => msgSubs[0]('SUBSCRIBED'));
     expect(invalidar).not.toHaveBeenCalled();
 
-    act(() => sub('SUBSCRIBED'));
+    act(() => msgSubs[0]('SUBSCRIBED'));
     const chaves = invalidar.mock.calls.map((c) => c[0]?.queryKey);
     expect(chaves).toContainEqual(['team-messages', 'conv-1']);
     expect(invalidar).toHaveBeenCalledTimes(2);
@@ -112,12 +107,14 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const { queryClient } = render('conv-1');
     const invalidar = vi.spyOn(queryClient, 'invalidateQueries');
 
-    await waitFor(() => expect(canaisDeMensagens().length).toBe(1));
-    const sub = canaisDeMensagens()[0].sub;
+    await waitFor(() =>
+      expect(h.subs.filter((s): s is (status: string) => void => typeof s === 'function').length).toBe(1),
+    );
 
-    act(() => sub('SUBSCRIBED'));
-    act(() => sub('CHANNEL_ERROR'));
-    act(() => sub('SUBSCRIBED'));
+    const msgSubs = h.subs.filter((s): s is (status: string) => void => typeof s === 'function');
+    act(() => msgSubs[0]('SUBSCRIBED'));
+    act(() => msgSubs[0]('CHANNEL_ERROR'));
+    act(() => msgSubs[0]('SUBSCRIBED'));
 
     expect(invalidar).toHaveBeenCalled();
   });
