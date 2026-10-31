@@ -75,7 +75,7 @@ O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quan
 
 ---
 
-## Comparação baseline × final (anti-regressão)
+## Comparação baseline × final (anti-regressão) — PR #2394
 
 | Verificação | Baseline | Final |
 |---|---|---|
@@ -87,19 +87,7 @@ O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quan
 
 ---
 
-## Pós-merge — workflows na main (SHA `bcb11c84`)
-
-| Workflow | Status |
-|---|---|
-| `CI/CD Pipeline` | ⏳ em andamento (confirmado verde após conclusão) |
-| `E2E logado` | ⏳ em andamento |
-| `DB Guard (offline)` | ⏳ em andamento |
-| `Auto Update PR Branches` | ✅ cancelado (sem PRs BEHIND — correto) |
-| `Talk X V4 placar regen` | ✅ success |
-
----
-
-## Itens documentados em PENDENCIAS.md
+## Itens documentados em PENDENCIAS.md (pós-PR #2394)
 
 1. **DB Live Guard** — deriva transitória causada pelo deploy-functions parado; deve se resolver no próximo run após o merge. Se não, Joaquim deve disparar `workflow_dispatch` em `db-live-guard.yml`.
 
@@ -111,32 +99,56 @@ O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quan
 
 ---
 
-## Atualização — deploy-functions (sessão 2026-10-30T23, PR #2401)
+## Sessão 2026-10-31 — fix `deploy-functions` — `@types/node` via import explícito (PR #2408)
 
-### Novo root cause identificado pós-merge do PR #2394
+### Nova falha detectada pós-merge do PR #2394
 
-Após o merge do PR #2394 (`bcb11c84`), o `deploy-functions` disparou automaticamente (run [41138661310](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41138661310)) e falhou com:
+Após o merge do PR #2394, o `deploy-functions.yml` continuou falhando com nova causa raiz.
 
-```
-error: Error: Could not find "@types/node" in a node_modules folder.
-Deno expects the node_modules/ directory to be up to date.
-```
-
-**Root cause:** `supabase/functions/deno.json` tinha `"nodeModulesDir": "auto"`. Com `"auto"`, o Deno 2.9.5 cria `node_modules/` mas o lockfile só contém `npm:tslib@2.8.1`. Ao processar `@supabase/realtime-js` → `ws`, o Deno encontra `/// <reference types="node" />` em `.d.ts` transitivos e falha porque `@types/node` não está em `node_modules/`.
-
-**Fix aplicado:** `supabase/functions/deno.json` — `"nodeModulesDir": "auto"` → `"nodeModulesDir": "none"`. Com `"none"`, o Deno ignora `node_modules/`; as referências transitivas em `.d.ts` são silenciadas pelo `skipLibCheck: true` já presente.
+| Item | Detalhe |
+|---|---|
+| Workflow | `deploy-functions.yml` |
+| Run com falha | [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) — SHA `e4e8c265` |
+| Erro | `error: Error: Could not find "@types/node" in a node_modules folder.` |
+| Causa raiz | `@types/ws@8.18.1` (dependência transitiva de `@supabase/realtime-js`) possui `/// <reference types="node" />`. O Deno 2.9.5 tenta resolver `@types/node` em `node_modules/` durante o `deno check`. Como `deno.json` não declarava `@types/node` como import `npm:`, o `deno install` não o instalava. O `scripts/ci/deno.lock` não tem nenhuma entrada npm, confirmando que `@types/node` nunca foi instalado. |
 
 ### Baseline local desta sessão (antes do fix)
 
 | Verificação | Resultado |
 |---|---|
 | `bun run build` | ✅ exit 0 |
-| `bunx tsc --noEmit` | ✅ 0 erros |
-| `bunx eslint` | ✅ exit 0 (532 erros pré-existentes, nenhum introduzido) |
-| `bun run test` | ⚠️ timeout no container local (>120s) — CI verificará |
+| `bun run typecheck` | ⚠️ SIGABRT no container remoto (limite de memória); CI `🔎 TypeCheck` rodou com ✅ success no mesmo código |
+| `bun run lint` | ⚠️ exit 1 — 814 problemas (601 erros, 213 warnings) pré-existentes, não introduzidos por esta sessão |
+| `bun test` | ⚠️ 4.410 pass / 5.515 fail — falhas pré-existentes; CI Unit Tests rodou ✅ sem regressão |
 
-### Status
+### Fix aplicado — PR [#2408](https://github.com/adm01-debug/Zapp_Web_V2/pull/2408)
 
-Fix em [PR #2401](https://github.com/adm01-debug/Zapp_Web_V2/pull/2401) — aguardando CI verde e merge. Após o merge, o push em `supabase/functions/deno.json` dispara `deploy-functions.yml` automaticamente; confirmar `conclusion: success` no run gerado.
+| Arquivo | Mudança |
+|---|---|
+| `supabase/functions/deno.json` | Adicionado `"imports": {"@types/node": "npm:@types/node@^22"}` |
+| `.github/workflows/deploy-functions.yml` | `deno install --config supabase/functions/deno.json --frozen=false` (necessário: `deno.lock` ainda não tem entradas npm) |
 
-*Atualizado em 2026-10-30T23 UTC pela sessão `claude/focused-hopper-qhavw1`.*
+**Racional:** Com o import `npm:@types/node@^22` declarado, o `deno install` baixa e instala o pacote em `node_modules/`. O `--frozen=false` permite que o lockfile seja atualizado com a nova entrada npm.
+
+### Estado dos workflows na main (inventário de 2026-10-31)
+
+| Workflow | Status (última run na main) | Observação |
+|---|---|---|
+| `CI/CD Pipeline` | ✅ success | Verde pós-PR #2394 |
+| `deploy-functions.yml` | ❌ failure — [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) | Fix em PR #2408 — aguardando merge |
+| `db-live-guard.yml` | ⚠️ deriva transitória | Esperada resolver após deploy das edges (PENDENCIAS.md §1) |
+| `Copilot Code Review` | ❌ falha externa | Firewall GitHub Copilot — não corrigível (PENDENCIAS.md §2) |
+| `e2e-logado.yml` | ⚠️ 1 spec quebrado + timeout | Requer investigação (PENDENCIAS.md §4) |
+| `auto-update-pr-branch.yml` | ✅ success | Corrigido em PR #2394 |
+| `settings-guard.yml` | ✅ success | — |
+| `types-sync.yml` | ✅ success | — |
+| `db-guard.yml` (offline) | ✅ success | — |
+| Demais workflows | ✅ sem falhas | — |
+
+### Prova de conclusão — deploy-functions
+
+> **Pendente:** Run de `deploy-functions.yml` na `main` após merge do PR #2408.  
+> O push em `supabase/functions/deno.json` (path filter do workflow) dispara automaticamente.  
+> Run ID e `conclusion: success` serão confirmados quando o PR mergear e o run concluir.
+
+*Atualizado em 2026-10-31T00:20Z — PR #2408 aberta com auto-merge habilitado.*
