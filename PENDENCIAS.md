@@ -2,7 +2,7 @@
 
 Branch: `claude/kind-gates-87mwoe`  
 Data: 2026-10-22  
-SHA HEAD: `12e9162b50e898ace5e100318f00fd59b811af7f`
+SHA HEAD: `255ec2daf388c1b942135abd563ab751f171d145`
 
 ---
 
@@ -28,38 +28,42 @@ com o da produção. DDL vai pelo fluxo arquivo→PR→merge (seção 1, regra 6
 
 ---
 
-## P2 — `🏗️ Build` falha por budget de bundle (revelado por este PR)
+## P2 — `🏗️ Build` falha por budget de bundle (pré-existente em `main`)
 
 **Check:** `🏗️ Build` (job em `ci.yml`)  
-**Status:** BLOQUEADO — falha ao medir gzip do bundle inicial  
+**Status:** BLOQUEADO — falha pré-existente em `main`; não é regressão deste PR  
 **Erro exato:**  
 ```
 initial-js: 359.5 KB gzip > budget 300 KB
 FALHA: budget de bundle estourado
 ```
 
-**Causa:** O commit anterior no `ci.yml` tinha `if: success()` no job `build`, então ele ficava
-`skipped` quando unit-tests falhavam, mascarando a falha. Após o fix de `if: !cancelled()`,
-o build passou a rodar e revelou que o bundle inicial está 59.5 KB acima do limite de 300 KB.
-
-**A falha de bundle preexiste a este PR** — ela estava oculta pelo `skipped`. O fix de `ci.yml`
-é correto; ele apenas expôs o estado real.
-
-**Investigação inicial:**  
-`scripts/ci/bundle-budget.mjs` mede gzip de JS carregado no first paint. O limite em
-`performance-budget.json` é `initial-js.maxKB = 300`. A medição atual é 359.5 KB.
-
-**Solução sugerida (não implementada — requer build local para validar):**  
-Adicionar code splitting em `vite.config.ts` para extrair framer-motion para chunk lazy:
-```ts
-// vite.config.ts — manualChunks
-'vendor-motion': ['framer-motion']
+**Evidência de pré-existência em `main` (medição local, 2026-10-31):**  
+```bash
+git checkout origin/main -- src/ vite.config.ts package.json performance-budget.json
+bun run build && node scripts/ci/bundle-budget.mjs
 ```
-Isso move framer-motion do bundle inicial para chunk lazy, reduzindo o initial-js.
+Resultado na `main` (SHA `004e74a8c`):
+```
+JS inicial:  359.5 KB (budget 300 KB, 15 chunks)  ← FALHA
+```
+Branch `255ec2daf`:
+```
+JS inicial:  359.4 KB (budget 300 KB, 15 chunks)  ← FALHA (0.1 KB abaixo do main)
+```
 
-**Ação necessária pelo Joaquim ou sessão com build local disponível:**  
-Rodar `bun run build` localmente, medir com `node scripts/ci/bundle-budget.mjs`, ajustar
-`vite.config.ts` e validar que `initial-js < 300 KB` antes de commitar.
+**Conclusão:** O branch não piorou o bundle em relação a `main`. Diferença de 0.1 KB é irrelevante.
+A falha estava oculta por `if: success()` no job `build` que ficava `skipped`; o fix de `ci.yml`
+(`if: !cancelled()`) revelou o estado real.
+
+**code splitting do framer-motion já está configurado** (`vendor-motion` chunk = 43 KB) mas
+o `index.js` principal continua com 89 KB, `vendor-core` 79.5 KB, `vendor-ui` 66.8 KB,
+`vendor-data` 62.6 KB — total inicial = 359 KB, a redução necessária é de 60 KB.
+
+**Ação necessária pelo Joaquim:**  
+Investigar quais módulos no grafo inicial podem ser extraídos para imports dinâmicos.
+Contexto histórico: `main` em 2026-10-12 (SL-103) atingiu 292.3 KB — o aumento de 67 KB
+aconteceu em commits na `main` fora deste PR.
 
 ---
 
@@ -115,7 +119,7 @@ git log main..origin/claude/kind-gates-87mwoe -- src/hooks/__tests__/useDashboar
 | # | Check | Bloqueante? | Depende de |
 |---|---|---|---|
 | P1 | `Contrato DB offline` | Sim (required) | Joaquim — DDL de correção |
-| P2 | `🏗️ Build` (bundle budget) | Sim (required) | Sessão com build local |
+| P2 | `🏗️ Build` (bundle budget) | Sim (required, pré-existente em main) | Joaquim — análise de imports |
 | P3 | `copilot-pull-request-reviewer` | Não | Joaquim — billing |
 | P4 | `🧪 Unit Tests` (3 suites, 15 falhas) | Não (pré-existente em main) | Investigação separada |
 
