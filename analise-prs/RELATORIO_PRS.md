@@ -1,7 +1,8 @@
 # Relatório de PRs — adm01-debug/Zapp_Web_V2
 
-**Data da análise:** 2026-10-26  
+**Data da análise:** 2026-10-26 (atualizado 2026-10-31)  
 **main SHA auditado:** `2d97c44cfe7f2fa8a3ca572f8f5689118328e858`  
+**main SHA após merges desta sessão:** `6918a749aa4b7872407dd2df2999ad2cdd96ee64`  
 **Total de PRs abertas:** 167 (130 não-draft + 37 drafts)  
 **Total de dossiês criados:** 174 (167 open PRs + 7 extras: 4 JÁ_MERGEADA, 1 NÃO_EXISTE, 2 fechadas durante análise)
 
@@ -9,7 +10,7 @@
 
 ## Resumo Executivo
 
-**NENHUMA PR foi mergeada.** Todas as 130 PRs não-draft estão bloqueadas pelo CI Gate sistêmico.
+**4 PRs mergeadas nesta sessão.** As demais 126 PRs não-draft restantes estão bloqueadas pelo CI Gate sistêmico aguardando PR #2248 + aprovação humana das 2 migrations em `producao-ddl`.
 
 | Veredito | Quantidade | Notas |
 |---|---|---|
@@ -17,19 +18,27 @@
 | `BLOQUEADO_CI_E_BEHIND` | 94 | inclui 8 com +DECISAO_HUMANA ou +COMPLETAR embutido |
 | `DECISAO_HUMANA` (puro) | 7 | DDL, edge function nova, workflows |
 | `DECISAO_HUMANA` (total, incluindo embutidos) | 15 | — |
-| `COMPLETAR` | 2 | PR incompleta, requer trabalho adicional |
+| `COMPLETAR` | 1 | PR incompleta, requer trabalho adicional |
 | `DRAFT_SKIP` | 37 | drafts não analisados |
-| `JÁ_MERGEADA` | 4 | mergeadas durante análise |
+| `JÁ_MERGEADA` | 4 | mergeadas durante análise (antes desta sessão) |
+| `MERGEADA_ESTA_SESSÃO` | 4 | #2149, #2209, #2357, #2141 |
 | `NÃO_EXISTE` | 1 | stub de PR não encontrada |
 | **TOTAL não-draft** | **130** | |
 
 ---
 
-## 1. Merges Realizados
+## 1. Merges Realizados — Esta Sessão (2026-10-30/31)
 
-**Nenhum.** `merges_realizados: 0`
+| # | Título | SHA merge | Timestamp |
+|---|---|---|---|
+| [#2149](https://github.com/adm01-debug/Zapp_Web_V2/pull/2149) | docs(reconciliation): P053 registra regressão do cabeçalho | `c4c7139e75aa326cc21823e816d1e7f526b67412` | 2026-10-30T21:18Z |
+| [#2209](https://github.com/adm01-debug/Zapp_Web_V2/pull/2209) | fix(test): corrige mock de range/limit no customemojis upload test | `526ce5281a6c311089f206eb518e4204f31074f3` | 2026-10-30T23:00Z |
+| [#2357](https://github.com/adm01-debug/Zapp_Web_V2/pull/2357) | chore(db): sincronizar artefatos derivados do banco | `21e828e43484adc12a27a48c7dda131ee5cc0d36` | 2026-10-30T23:38Z |
+| [#2141](https://github.com/adm01-debug/Zapp_Web_V2/pull/2141) | feat(E83): entrar por codigo - aceite desacoplado (somente arquivos novos) | `6918a749aa4b7872407dd2df2999ad2cdd96ee64` | 2026-10-31T00:21Z |
 
-Causa: bloqueio sistêmico de CI impedindo todos os merges (ver seção 3).
+**CI/produção pós-merge:** nenhum dos 4 merges introduziu falha nova no CI da main. PRs #2149 e #2209 são docs/fix de teste (sem migrations/edge functions). PR #2357 é sincronização de artefatos de banco (sem DDL novo). PR #2141 é somente arquivos novos de front-end (sem migrations, sem edge functions).
+
+Causa dos demais bloqueios: CI Gate sistêmico impedindo todos os merges (ver seção 3).
 
 ---
 
