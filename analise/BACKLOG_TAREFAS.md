@@ -6,8 +6,8 @@ Gerado em 2026-10-31 a partir de `analise/inventario-2026-10-31/` (`main@668d773
 
 | Sessão | Total | L1 | L2 | L3 | L4 | L5 |
 |---|---|---|---|---|---|---|
-| GR — GH ACTIONS REQUIRED | 43 | 10 | 8 | 2 | 20 | 3 |
-| GF — GH ACTIONS FAILURE | 44 | 9 | 7 | 7 | 20 | 1 |
+| GR — GH ACTIONS REQUIRED | 31 | 10 | 8 | 2 | 8 | 3 |
+| GF — GH ACTIONS FAILURE | 56 | 9 | 7 | 7 | 8 | 25 |
 | PA — PRS ABERTAS 03 | 39 | 13 | 4 | 11 | 9 | 2 |
 | S2 — SUPABASE 02 | 29 | 3 | 3 | 20 | 1 | 2 |
 | S3 — SUPABASE 03 | 28 | 3 | 1 | 16 | 8 | 0 |
@@ -48,25 +48,13 @@ Gerado em 2026-10-31 a partir de `analise/inventario-2026-10-31/` (`main@668d773
 - [ ] **GR-024** [PR] #2123 `claude/fix-ci-contratos-cache-261020-2320` — fix(ci): restaura o parse dos contratos de workflow e corrige 8 violações (cache _(workflow, 7 arq., 137 atrás)_ — 4 arquivos em conflito → `git merge-tree` contra a main; delta vazio → FECHAR; senão resolver ou isolar o delta.
 - [ ] **GR-025** [PR] #2129 `claude/fix-ga-fase78-perimetro-custo-261020-2200` — fix(ci): Fases 7+8 do plano GA75-GA95 _(workflow, 21 arq., 137 atrás)_ — 8 arquivos em conflito → `git merge-tree` contra a main; delta vazio → FECHAR; senão resolver ou isolar o delta.
 - [ ] **GR-026** [PR] #2185 `claude/kind-gates-87mwoe` — docs(pendencias): §8 RESOLVIDO + §9 inventário de workflows da main _(workflow, 18 arq., 120 atrás)_ — 14 arquivos em conflito → `git merge-tree` contra a main; delta vazio → FECHAR; senão resolver ou isolar o delta.
-- [ ] **GR-027** [BR] `adm01-debug-patch-1-3` _(+47)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GR-028** [BR] `adm01-debug-patch-1-5` _(+57)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GR-029** [BR] `adm01-debug-patch-1-7` _(+55)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GR-030** [BR] `adm01-debug-patch-1` _(+39)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GR-031** [BR] `adm01-debug-patch-2-11` _(+40)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GR-032** [BR] `adm01-debug-patch-2-1` _(+28)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GR-033** [BR] `adm01-debug-patch-2-3` _(+31)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GR-034** [BR] `adm01-debug-patch-2-5` _(+98)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GR-035** [BR] `adm01-debug-patch-2-7` _(+33)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GR-036** [BR] `adm01-debug-patch-2-9` _(+34)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GR-037** [BR] `adm01-debug-patch-3-2` _(+93)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GR-038** [BR] `adm01-debug-patch-4` _(+1)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GR-039** [BR] `claude/fix-ci-main-verde-261023-1540` _(+122, 5 em conflito)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GR-040** [BR] `claude/fix-restore-settings-guard-281028-1830` _(+31, 1 em conflito)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
+- [ ] **GR-027** [BR] `claude/fix-ci-main-verde-261023-1540` _(+122, 5 em conflito)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
+- [ ] **GR-028** [BR] `claude/fix-restore-settings-guard-281028-1830` _(+31, 1 em conflito)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
 
 ### Lote 5 — mega-PRs, decisões e documentação
-- [ ] **GR-041** [PR] #2040 `claude/charming-mccarthy-jbxy56` — fix(e2e-logado): restaura W71 — workflow_run em vez de push na main _(workflow, 435 arq., 137 atrás)_ — MEGA-PR (435 arq., 30 em conflito, base antiga) → fechar e reabrir só com o delta real sobre a main.
-- [ ] **GR-042** [PR] #2105 `claude_pink/nice-hypatia-iikl82` — docs: plano de integração de branches em 300 etapas (153 branches → só main) _(workflow, 337 arq., 137 atrás)_ — MEGA-PR (337 arq., 30 em conflito, base antiga) → fechar e reabrir só com o delta real sobre a main.
-- [ ] **GR-043** [PR] #2126 `claude/fix-ga-fase456-fila-sast-guard-261020-2200` — fix(ci): Fases 4+5+6 do plano GA49-GA74 _(workflow, 224 arq., 118 atrás)_ — MEGA-PR (224 arq., 6 em conflito, base antiga) → fechar e reabrir só com o delta real sobre a main.
+- [ ] **GR-029** [PR] #2040 `claude/charming-mccarthy-jbxy56` — fix(e2e-logado): restaura W71 — workflow_run em vez de push na main _(workflow, 435 arq., 137 atrás)_ — MEGA-PR (435 arq., 30 em conflito, base antiga) → fechar e reabrir só com o delta real sobre a main.
+- [ ] **GR-030** [PR] #2105 `claude_pink/nice-hypatia-iikl82` — docs: plano de integração de branches em 300 etapas (153 branches → só main) _(workflow, 337 arq., 137 atrás)_ — MEGA-PR (337 arq., 30 em conflito, base antiga) → fechar e reabrir só com o delta real sobre a main.
+- [ ] **GR-031** [PR] #2126 `claude/fix-ga-fase456-fila-sast-guard-261020-2200` — fix(ci): Fases 4+5+6 do plano GA49-GA74 _(workflow, 224 arq., 118 atrás)_ — MEGA-PR (224 arq., 6 em conflito, base antiga) → fechar e reabrir só com o delta real sobre a main.
 
 ## GF — GH ACTIONS FAILURE (`session_014nTibS9cuNo8UN81A4hCUu`)
 
@@ -105,24 +93,36 @@ Gerado em 2026-10-31 a partir de `analise/inventario-2026-10-31/` (`main@668d773
 - [ ] **GF-026** [PR] #2144 `claude/fix-ga-resto-docs-regen-20261021-0726` — fix(ci): Resto GA37 GA96-GA98 (docs deploy, regen, CODEOWNERS) _(workflow, 9 arq., 137 atrás)_ — 6 arquivos em conflito → `git merge-tree` contra a main; delta vazio → FECHAR; senão resolver ou isolar o delta.
 - [ ] **GF-027** [PR] #2145 `claude/fix-ga-resto-sonar-contracts-20261021-0726` — fix(ci): Resto GA86 GA99 GA100 (sonar, contracts, adocao) _(workflow, 26 arq., 137 atrás)_ — 4 arquivos em conflito → `git merge-tree` contra a main; delta vazio → FECHAR; senão resolver ou isolar o delta.
 - [ ] **GF-028** [PR] #2195 `claude/confident-bardeen-ndq0ch` — fix: crash cachedConversations undefined e this-binding perdido no rpc de metas  _(workflow, 25 arq., 111 atrás)_ — 14 arquivos em conflito → `git merge-tree` contra a main; delta vazio → FECHAR; senão resolver ou isolar o delta.
-- [ ] **GF-029** [BR] `adm01-debug-patch-1-2` _(+43)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GF-030** [BR] `adm01-debug-patch-1-4` _(+55)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GF-031** [BR] `adm01-debug-patch-1-6` _(+55)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GF-032** [BR] `adm01-debug-patch-1-8` _(+43)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GF-033** [BR] `adm01-debug-patch-2-10` _(+30)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GF-034** [BR] `adm01-debug-patch-2-12` _(+29)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GF-035** [BR] `adm01-debug-patch-2-2` _(+66)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GF-036** [BR] `adm01-debug-patch-2-4` _(+36)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GF-037** [BR] `adm01-debug-patch-2-6` _(+18)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GF-038** [BR] `adm01-debug-patch-2-8` _(+70)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GF-039** [BR] `adm01-debug-patch-2` _(+42)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GF-040** [BR] `adm01-debug-patch-3` _(+32)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GF-041** [BR] `claude/fix-auto-update-pr-branch-261023-1950` _(+75, 3 em conflito)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GF-042** [BR] `claude/fix-e2e-logado-ga09-261017-1410` _(+5)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
-- [ ] **GF-043** [BR] `claude/fix-types-sync-ga20-ga21-261017-0015` _(+63, 2 em conflito)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
+- [ ] **GF-029** [BR] `claude/fix-auto-update-pr-branch-261023-1950` _(+75, 3 em conflito)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
+- [ ] **GF-030** [BR] `claude/fix-e2e-logado-ga09-261017-1410` _(+5)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
+- [ ] **GF-031** [BR] `claude/fix-types-sync-ga20-ga21-261017-0015` _(+63, 2 em conflito)_ — workflow sem PR → `git merge-tree`: já na main → apagar branch; senão abrir PR única por workflow.
 
 ### Lote 5 — mega-PRs, decisões e documentação
-- [ ] **GF-044** [WF] 25 workflows "fantasma" — listar e documentar (Bearer, Hadolint, super-linter, main.yml…); não apagar runs sem necessidade.
+- [ ] **GF-032** [WF] 25 workflows "fantasma" — listar e documentar (Bearer, Hadolint, super-linter, main.yml…); não apagar runs sem necessidade.
+- [ ] **GF-033** [BR] `adm01-debug-patch-1-2` _(+43)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-034** [BR] `adm01-debug-patch-1-3` _(+47)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-035** [BR] `adm01-debug-patch-1-4` _(+55)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-036** [BR] `adm01-debug-patch-1-5` _(+57)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-037** [BR] `adm01-debug-patch-1-6` _(+55)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-038** [BR] `adm01-debug-patch-1-7` _(+55)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-039** [BR] `adm01-debug-patch-1-8` _(+43)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-040** [BR] `adm01-debug-patch-1` _(+39)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-041** [BR] `adm01-debug-patch-2-10` _(+30)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-042** [BR] `adm01-debug-patch-2-11` _(+40)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-043** [BR] `adm01-debug-patch-2-12` _(+29)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-044** [BR] `adm01-debug-patch-2-1` _(+28)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-045** [BR] `adm01-debug-patch-2-2` _(+66)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-046** [BR] `adm01-debug-patch-2-3` _(+31)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-047** [BR] `adm01-debug-patch-2-4` _(+36)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-048** [BR] `adm01-debug-patch-2-5` _(+98)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-049** [BR] `adm01-debug-patch-2-6` _(+18)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-050** [BR] `adm01-debug-patch-2-7` _(+33)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-051** [BR] `adm01-debug-patch-2-8` _(+70)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-052** [BR] `adm01-debug-patch-2-9` _(+34)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-053** [BR] `adm01-debug-patch-2` _(+42)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-054** [BR] `adm01-debug-patch-3-2` _(+93)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-055** [BR] `adm01-debug-patch-3` _(+32)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
+- [ ] **GF-056** [BR] `adm01-debug-patch-4` _(+1)_ — criada pelo Joaquim na interface do GitHub (workflow de template — origem dos workflows "fantasma") → NÃO apagar nem abrir PR; registrar em PENDENCIAS.md o que ela adiciona, para decisão dele.
 
 ## PA — PRS ABERTAS 03 (`session_014nTibSHzggW5SPQNJ2z38L`)
 
