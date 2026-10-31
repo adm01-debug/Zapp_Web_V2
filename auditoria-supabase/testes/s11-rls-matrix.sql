@@ -19,25 +19,38 @@ DECLARE
   v_org_b      uuid := '00000000-0000-4000-b000-bbbbbbbbbbbb';
   v_user_a     uuid := '11111111-1111-4000-a000-aaaaaaaaaaaa';
   v_user_b     uuid := '22222222-2222-4000-b000-bbbbbbbbbbbb';
-  v_profile_a  uuid := '55555555-5555-4000-a000-aaaaaaaaaaaa';
-  v_profile_b  uuid := '66666666-6666-4000-b000-bbbbbbbbbbbb';
+  -- v_profile_a/b são descobertos após o INSERT em auth.users: o trigger handle_new_user()
+  -- cria o profile com UUID gerado automaticamente. Não inicializar com UUID fixo para
+  -- evitar FK violation quando assigned_to referenciar um UUID que não existe em profiles.
+  v_profile_a  uuid;
+  v_profile_b  uuid;
   v_dept_a     uuid := '33333333-3333-4000-a000-aaaaaaaaaaaa';
   v_dept_b     uuid := '44444444-4444-4000-b000-bbbbbbbbbbbb';
 BEGIN
-  -- Inserir usuários mock em auth.users
+  -- Inserir usuários mock em auth.users (trigger pode criar profiles automaticamente)
   INSERT INTO auth.users (id, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
   VALUES
     (v_user_a, 'user_a@test.local', jsonb_build_object('organization_id', v_org_a), '{}', now(), now()),
     (v_user_b, 'user_b@test.local', jsonb_build_object('organization_id', v_org_b), '{}', now(), now())
   ON CONFLICT DO NOTHING;
 
-  -- Inserir profiles mock
-  -- profiles.id != profiles.user_id: profiles.id é UUID próprio, user_id referencia auth.users.id
-  INSERT INTO profiles (id, user_id, name, created_at)
-  VALUES
-    (v_profile_a, v_user_a, 'User A', now()),
-    (v_profile_b, v_user_b, 'User B', now())
-  ON CONFLICT DO NOTHING;
+  -- Descobrir o profile.id real criado pelo trigger handle_new_user() (profiles.user_id → auth.users.id)
+  -- profiles.id é UUID próprio distinto de profiles.user_id
+  SELECT id INTO v_profile_a FROM profiles WHERE user_id = v_user_a;
+  SELECT id INTO v_profile_b FROM profiles WHERE user_id = v_user_b;
+
+  -- Fallback: banco sem trigger não cria o profile automaticamente
+  IF v_profile_a IS NULL THEN
+    v_profile_a := '55555555-5555-4000-a000-aaaaaaaaaaaa';
+    INSERT INTO profiles (id, user_id, name, created_at)
+    VALUES (v_profile_a, v_user_a, 'User A', now());
+  END IF;
+
+  IF v_profile_b IS NULL THEN
+    v_profile_b := '66666666-6666-4000-b000-bbbbbbbbbbbb';
+    INSERT INTO profiles (id, user_id, name, created_at)
+    VALUES (v_profile_b, v_user_b, 'User B', now());
+  END IF;
 
   -- Inserir departamentos
   INSERT INTO departments (id, organization_id, name, created_at)
@@ -47,13 +60,14 @@ BEGIN
   ON CONFLICT DO NOTHING;
 
   -- Inserir convite do dept_a (pertence ao tenant A)
-  -- created_by referencia profiles.id (não auth.uid)
+  -- created_by referencia profiles.id (não auth.uid) — usa o profile ID real
   INSERT INTO department_invites (id, department_id, code, created_by, expires_at, created_at)
   VALUES
     ('aaaaaaaa-0000-4000-a000-aaaaaaaaaaaa', v_dept_a, 'TESTCODE1', v_profile_a, now() + interval '7 days', now())
   ON CONFLICT DO NOTHING;
 
-  -- Inserir contatos para cada tenant (isolação via assigned_to → profiles.user_id)
+  -- Inserir contatos para cada tenant usando os profile IDs reais
+  -- (isolação via assigned_to → profiles.user_id = auth.uid())
   INSERT INTO contacts (id, name, phone, assigned_to, conversation_status, is_lid_legacy, created_at, updated_at)
   VALUES
     ('cccccccc-0000-4000-a000-aaaaaaaaaaaa', 'Contato Teste A', '11999990001', v_profile_a, 'open', false, now(), now()),
