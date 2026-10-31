@@ -1,7 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { usePushNotifications } from '../system/usePushNotifications';
 import { useNotificationSettings } from '../system/useNotificationSettings';
 
 interface WarRoomAlert {
@@ -78,7 +77,6 @@ async function fetchBreachedConversationIds(): Promise<string[]> {
 
 export function useWarRoomAlerts(soundEnabled?: boolean) {
   const queryClient = useQueryClient();
-  const { showNotification, permission } = usePushNotifications();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // Segunda batida do alerta crítico (`setTimeout`), para cancelar no desmonte.
   const segundaBatida = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -146,14 +144,15 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
             playAlertSound();
           }
 
-          // Push notification
-          if (permission === 'granted') {
-            showNotification({
-              title: `⚠️ ${alert.title}`,
-              body: alert.message,
-              tag: `warroom-${alert.id}`,
-              requireInteraction: alert.alert_type === 'critical',
-            });
+          // Browser notification
+          if (settings.browserNotifications && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            try {
+              new Notification(`⚠️ ${alert.title}`, {
+                body: alert.message,
+                tag: `warroom-${alert.id}`,
+                requireInteraction: alert.alert_type === 'critical',
+              });
+            } catch { /* blocked by browser policy */ }
           }
         }
       )
@@ -162,11 +161,11 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient, playAlertSound, permission, showNotification]);
+  }, [queryClient, playAlertSound, settings.browserNotifications]);
 
   // A segunda batida tem vida própria: este efeito (realtime) se refaz a cada mudança
-  // de identidade de `showNotification`/`playAlertSound`, e limpar o timer no cleanup
-  // dele engolia a segunda batida no meio do caminho.
+  // de identidade de `playAlertSound`, e limpar o timer no cleanup dele engolia
+  // a segunda batida no meio do caminho.
   useEffect(() => () => {
     if (segundaBatida.current) { clearTimeout(segundaBatida.current); segundaBatida.current = null; }
   }, []);
