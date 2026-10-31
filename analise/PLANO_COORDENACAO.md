@@ -116,7 +116,47 @@ Das 17 branches: 7 tocam migrations, 8 conflitam com a `main`, 1 toca workflow, 
 5. ✅ **Lote 5 (BR-056):** BACKLOG_TAREFAS.md e PLANO_COORDENACAO.md atualizados.
 6. ✅ **Lote 6 (BR-057..BR-058):** 24 branches `adm01-debug-patch-*` WORKFLOW-OBSOLETO apagadas remotamente; 13 PRs rascunho abertas (#2434–#2446) para todas as branches que ainda não tinham PR — condição de parada atendida.
 
-**Branches sem PR ativas (NENHUMA):** verificação por GraphQL em 2026-10-31 confirmou que cada branch remota tem pelo menos uma PR aberta ou foi apagada.
+**Branches sem PR ativas (NENHUMA):** verificação definitiva em 2026-10-31 (via `pullRequests(states: OPEN, headRefName: ...)` por branch) confirmou que toda branch remota tem pelo menos uma PR aberta ou foi apagada. Mapa de cobertura final:
+
+| Branch | PR | Sessão |
+|---|---|---|
+| `fix/f1a-framer-motion-mock-voicechangerpicker-20261018` | #2434 (draft S6) | S3 |
+| `fix/f1a-lote-b-batch10` | #2435 (draft S6) | S3 |
+| `fix/f1a-lote-b-batch2` | #2436 (draft S6) | S3 |
+| `fix/f1a-lote-b-batch6` | #2437 (draft S6) | S3 |
+| `fix/f1a-lote-b-realtime-channel-mock` | #2438 (draft S6) | S3 |
+| `fix/f1a-lote-b-talkxsegments` | #2439 (draft S6) | S3 |
+| `fix/f1a-lote-b-useadmindata-createuser-avatar` | #2440 (draft S6) | S3 |
+| `fix/types-rpc-ausentes-261025` | #2441 (draft S6) | S3 |
+| `codex/publish-followup-20261021` | #2442 (draft S6) | S2 |
+| `codex/fix-failed-workflows-20261020` | #2443 (draft S6) | S2 |
+| `fix/ci-verde-261021` | #2444 (draft S6) | S1 |
+| `fix/ci-workflows-vermelhos` | #2445 (draft S6) | S1 |
+| `fix/ci-f1b-restaura-workflows-20261018` | #2446 (draft S6) | S1 |
+| `fix/ci-workflows` | #2447 (S1, não-draft) | S1 |
+| `fix/f1a-lote-b-main` | #2058 (S3, pré-existente) | S3 |
+| `fix/f1a-lote-b-connectioncard-dialog` | #2059 (S3) | S3 |
+| `fix/f1a-lote-b-authprovider` | #2063 (S3) | S3 |
+| `fix/f1a-supabase-channel-mock-audiomeme-20261018` | #2064 (S3) | S3 |
+| `fix/f1a-logger-ttsvoice-mock-arquivos-conversa-20261018` | #2067 (S3) | S3 |
+| `fix/f1a-lote-b-admin-audit-page-size` | #2068 (S3) | S3 |
+| `fix/f1a-lote-b-useadmindata-select` | #2069 (S3) | S3 |
+| `fix/f1a-lote-b-talkxsuppression-hook-morto` | #2071 (S3, INTEGRAR-LIMPO) | S3 |
+| `fix/f1a-lote-b-hooks-misc-1` | #2074 (S3) | S3 |
+| `fix/f1a-lote-b-usewarroomalerts` | #2075 (S3) | S3 |
+| `fix/f1a-lote-b-useteamchatnotifications` | #2080 (S3) | S3 |
+| `fix/f1a-lote-b-batch4` | #2081 (S3) | S3 |
+| `fix/f1a-lote-b-batch5` | #2082 (S3) | S3 |
+| `fix/f1a-lote-b-batch7` | #2084 (S3) | S3 |
+| `fix/f1a-lote-b-batch9` | #2086 (S3) | S3 |
+| `fix/f1a-lote-b-batch12` | #2088 (S3) | S3 |
+| `fix/f1a-lote-b-batch13` | #2089 (S3) | S3 |
+| `fix/f1a-lote-b-audiomemes-storage-path` | #2087 (S3, estimado) | S3 |
+| `codex/revoke-public-truncate-grants-20261030` | #2383 (S4) | S4 |
+| `codex/teamchat-audit-action-contract-20261030` | #2384 (S4) | S4 |
+| `codex/tcm-insert-member-a2-20261030` | #2386 (S4) | S4 |
+
+**Nota técnica:** o GraphQL `associatedPullRequests(states: OPEN, first: 1) { totalCount }` retorna 0 para PRs em rascunho — bug de API do GitHub. A verificação definitiva usou `pullRequests(states: OPEN, headRefName: "<branch>")` por branch.
 
 **PRs rascunho S6 (aguardam avaliação das sessões responsáveis):** #2434–#2446.
 
