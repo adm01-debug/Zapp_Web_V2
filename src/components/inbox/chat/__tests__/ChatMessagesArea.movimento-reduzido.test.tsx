@@ -10,9 +10,33 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Message } from '@/types/chat';
 import { ChatMessagesArea, type ChatMessagesAreaRef } from '../ChatMessagesArea';
 
-vi.mock('framer-motion', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('framer-motion')>();
+vi.mock('framer-motion', async () => {
+  const actual = await vi.importActual<typeof import('framer-motion')>('framer-motion');
   return { ...actual, useReducedMotion: () => true };
+});
+
+vi.mock('@tanstack/react-virtual', async () => {
+  const actual = await vi.importActual<typeof import('@tanstack/react-virtual')>('@tanstack/react-virtual');
+  return {
+    ...actual,
+    useVirtualizer: (opts: { count: number; getScrollElement: () => Element | null; estimateSize: () => number }) => ({
+      getVirtualItems: () =>
+        Array.from({ length: opts.count }, (_, i) => ({
+          index: i,
+          key: i,
+          start: i * opts.estimateSize(),
+          size: opts.estimateSize(),
+          lane: 0,
+          end: (i + 1) * opts.estimateSize(),
+          measureElement: undefined,
+        })),
+      getTotalSize: () => opts.count * opts.estimateSize(),
+      scrollToIndex: vi.fn(),
+      scrollToOffset: vi.fn(),
+      measure: vi.fn(),
+      options: opts,
+    }),
+  };
 });
 
 class ResizeObserverMock {
@@ -46,11 +70,12 @@ class ResizeObserverMock {
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
   (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = vi.fn();
+  Object.defineProperty(Element.prototype, 'clientHeight', { get: () => 600, configurable: true });
 });
 
 vi.mock('../MessageBubble', () => ({
   MessageBubble: ({ message }: { message: { id: string } }) => (
-    <div data-testid="bubble" data-message-id={message.id} />
+    <div data-testid="bubble" data-message-id={message.id} style={{ height: 60 }} />
   ),
 }));
 
