@@ -433,9 +433,10 @@ grep -q '\$function\$;' "$tmp_dir/kpi_final.sql" \
   || fail 'extracao de dashboard_kpi de 20261003272707 nao fechou o corpo da funcao'
 psql_file "$tmp_dir/kpi_final.sql"
 
-# Definição FINAL de dashboard_kpi: 20261007013217 é o último arquivo a redefinir
-# a função (migration posterior que reconstruiu dashboard_kpi com a guarda de
-# ciclo de reabertura no mesmo dia). Extrai só o CREATE OR REPLACE dessa função.
+# Definição FINAL de dashboard_kpi (3 args): 20261007013217 reconstruiu
+# dashboard_kpi com a guarda de ciclo de reabertura no mesmo dia.
+# 20261026210000 adicionou overload de 4 args — a assinatura de 3 args
+# abaixo permanece inalterada e é a que os testes chamam.
 awk '/CREATE OR REPLACE FUNCTION public.dashboard_kpi/,/\$function\$;/' \
   "$migrations_dir/20261007013217_conversation_closures_reopen_same_day.sql" \
   > "$tmp_dir/kpi_final.sql"
