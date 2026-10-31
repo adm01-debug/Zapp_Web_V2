@@ -455,7 +455,7 @@ jobs:
         # durante `deno check` — exige `deno install` explicito. @types/ws@8.18.1
         # tem `/// <reference types="node" />` que forca resolucao de @types/node
         # na fase de descoberta de modulos (antes do type check).
-        run: deno install --config supabase/functions/deno.json
+        run: deno install --config supabase/functions/deno.json --frozen=false
 
       - name: Typecheck das edge functions (deno check)
         run: deno check supabase/functions/**/index.ts
