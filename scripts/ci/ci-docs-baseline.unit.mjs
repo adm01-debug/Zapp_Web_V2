@@ -42,7 +42,7 @@ function violacoesContagemClaude(texto, totalYaml) {
     }
   }
   const chato = achata(texto);
-  if (!new RegExp(`\\*\\*${totalYaml}\\*\\* arquivos em \`.github/workflows/\``).test(chato)) {
+  if (!new RegExp(`\\*\\*${totalYaml}\\*\\* arquivos em \`\.github/workflows/\``).test(chato)) {
     out.push(`CLAUDE.md nao declara os ${totalYaml} arquivos de .github/workflows/`);
   }
   if (!texto.includes('docs/ci/README.md')) {
@@ -510,4 +510,27 @@ test('W95 CONTRIBUTING.md: lista os 6 required checks', async () => {
 test('W95 CONTRIBUTING.md: nao referencia branch develop', async () => {
   const texto = await readFile(CONTRIBUTING, 'utf8');
   assert.ok(!texto.includes('`develop`'), 'nao deve referenciar branch develop');
+});
+
+// W32 — docs/MIGRATIONS.md deve ter a secao "Fluxo diario (lote)" com os termos obrigatorios
+const MIGRATIONS_DOC = join(RAIZ, 'docs/MIGRATIONS.md');
+const TERMOS_LOTE = ['apply_all_missing', 'PENDENTE DE APPLY', 'producao-ddl'];
+
+function termosLoteAusentes(conteudo) {
+  if (!/Fluxo diário \(lote\)/u.test(conteudo)) return ['secao "Fluxo diário (lote)"'];
+  return TERMOS_LOTE.filter((termo) => !conteudo.includes(termo));
+}
+
+test('W32: docs/MIGRATIONS.md tem secao "Fluxo diario (lote)" com todos os termos obrigatorios', async () => {
+  const conteudo = await readFile(MIGRATIONS_DOC, 'utf8');
+  assert.deepEqual(termosLoteAusentes(conteudo), []);
+});
+
+test('W32: fixture — secao sem termo obrigatorio e rejeitada', () => {
+  const completa = ['Fluxo diário (lote)', ...TERMOS_LOTE].join('\n');
+  assert.deepEqual(termosLoteAusentes(completa), []);
+  for (const termo of TERMOS_LOTE) {
+    assert.deepEqual(termosLoteAusentes(completa.replace(termo, '')), [termo]);
+  }
+  assert.deepEqual(termosLoteAusentes(TERMOS_LOTE.join('\n')), ['secao "Fluxo diário (lote)"']);
 });
