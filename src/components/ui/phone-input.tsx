@@ -56,15 +56,22 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
     const isDeletion = inputType.startsWith('delete') || inputType === 'historyUndo';
     const isPasteOrDrop = inputType === 'insertFromPaste' || inputType === 'insertFromDrop';
 
+    // Bug D: dataTransfer gives the actual pasted/dropped text; e.target.value always starts
+    // with '+' from the formatter, so it cannot distinguish a paste-with-+ from a paste-without-+.
+    const pastedText = isPasteOrDrop
+      ? (nativeInput.dataTransfer?.getData('text/plain') ?? nativeInput.data ?? '')
+      : '';
+
     // User explicitly entered '+': typed it (data==='+') or pasted/dropped content with leading '+'
-    // Chrome sets data=null for paste, so we check e.target.value (raw DOM, pre-formatter)
     const isExplicitPlusInput =
       (inputType === 'insertText' && nativeInput.data === '+') ||
-      (isPasteOrDrop && e.target.value.startsWith('+') && !digits.startsWith('55'));
+      (isPasteOrDrop && pastedText.trimStart().startsWith('+') && !extractDigits(pastedText).startsWith('55'));
 
     if (isExplicitPlusInput) {
       isExplicitInternationalRef.current = true;
-      wasExplicitPlusRef.current = digits.length === 0;
+      // Bug F: mark true only when '+' was typed (insertText), not pasted — guards the next
+      // keypress from resetting international mode while the field still displays empty.
+      wasExplicitPlusRef.current = inputType === 'insertText';
     } else if (!e.target.value.startsWith('+') && !isDeletion && (!wasExplicitPlusRef.current || isPasteOrDrop)) {
       // Paste/type without leading '+' (e.g. '(11) 98765-4321') → treat as BR.
       // Bug B: wasExplicitPlusRef guards regular typing so a lone '+' keystroke isn't undone by the
