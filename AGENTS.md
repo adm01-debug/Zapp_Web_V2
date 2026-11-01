@@ -1,3 +1,7 @@
+## Congelamento de features (desde 2026-11-01)
+
+Leia `.claude/CLAUDE.md` antes de qualquer tarefa: só entram correções dos fluxos críticos de
+`docs/PRONTO_PRODUCAO.md`, CI que impede verificá-los e segurança. Feature nova não entra.
 
 ## Segurança — Regras para Agentes
 
