@@ -77,11 +77,11 @@ Run CI Gate: **[41162012506](https://github.com/adm01-debug/Zapp_Web_V2/actions/
 | `🎭 E2E Tests (Playwright)` | ✅ success | 41162012506 |
 | **✅ CI Gate (required check)** | **✅ success** | 41162012506 |
 
-> **Nota:** O CI Gate (`ci.yml`, run 41162012506) confirma `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
-> `🏗️ Build` e `🔒 Security Audit`. Os checks `Contrato DB offline` (`db-guard.yml`) e
-> `🎭 E2E Tests (Playwright)` (`e2e-logado.yml`) são reportados por workflows separados e
-> constam como `success` via GitHub status checks para o SHA `004e74a8c5`. O run 41162012506
-> é de `ci.yml` — não cobre diretamente os outros dois workflows.
+> **Nota:** O CI Gate (`ci.yml`, run 41162012506) confirma todos os 8 checks acima, incluindo
+> `🎭 E2E Tests (Playwright)` — que roda **sem autenticação** dentro do próprio `ci.yml`.
+> O workflow `e2e-logado.yml` é a suite E2E **autenticada** e roda separadamente (não é o que
+> popula o check required `🎭 E2E Tests (Playwright)`). O check `Contrato DB offline`
+> é produzido por `db-guard.yml` e também consta como `success` para o SHA `004e74a8c5`.
 
 ### SHA `1a9858b236` (PR #2411 mergeado — HEAD atual da main)
 
@@ -138,13 +138,13 @@ Esta sessão (`fix/ci-workflows`) incluiu mudanças de código além da document
 | Lint | ✅ exit 0 | ✅ idêntico |
 | Unit Tests | ✅ 3 shards success (run 41162012506) | ✅ idêntico |
 | `🏗️ Build` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
-| `🎭 E2E Tests` CI | ✅ success run 41162012506 (e2e-logado.yml) | ⏳ aguardando run no SHA atual da PR |
+| `🎭 E2E Tests` CI | ✅ success run 41162012506 (ci.yml, sem autenticação) | ⏳ aguardando run no SHA atual da PR |
 | `Contrato DB offline` CI | ✅ success run 41162012506 | ⏳ aguardando run — migration corrigida neste commit |
 | `🔒 Security Audit` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
 | `✅ CI Gate (required check)` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
 | DB Live Guard | ❌ 3 falhas reais: migrations/ledger, ACL/mcp_exec, runtime (ver PENDENCIAS.md §1) | ❌ idem — investigação pendente |
 | Copilot Code Review | ❌ limite de cota HTTP 402 (ver PENDENCIAS.md §2) | ❌ idem — não corrigível |
-| Deploy Edge Functions | ❌ `@types/node` em run 41162076060 (pré-fix PR #2407) | ❌ run 41162076060 pós-merge PR #2407 ainda falha — fix insuficiente (ver PENDENCIAS.md §3) |
+| Deploy Edge Functions | ❌ `@types/node` no `deno check` (sem run pré-fix capturado) | ❌ run 41162076060 pós-merge PR #2407 ainda falha — fix insuficiente (ver PENDENCIAS.md §3) |
 
 ---
 
@@ -245,7 +245,7 @@ O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quan
 ## Pós-merge — workflows na main (SHA `bcb11c84`)
 
 | Workflow | Status |
-|---|---|
+|---|
 | `CI/CD Pipeline` | ⏳ em andamento (confirmado verde após conclusão) |
 | `E2E logado` | ⏳ em andamento |
 | `DB Guard (offline)` | ⏳ em andamento |
