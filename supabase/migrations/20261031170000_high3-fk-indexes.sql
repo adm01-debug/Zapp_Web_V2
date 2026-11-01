@@ -1,7 +1,7 @@
--- HIGH-3: 50 foreign-key columns without a covering index
+-- HIGH-3: 48 foreign-key columns without a covering index
 -- Detected live on 2026-11-01 via information_schema + pg_index.
 -- Per CLAUDE.md: CREATE INDEX (not CONCURRENTLY) — gateway wraps in transaction.
--- 7 columns excluded: already covered by partial indexes (WHERE col IS NOT NULL).
+-- 9 columns excluded: already covered by partial indexes (WHERE col IS NOT NULL).
 
 CREATE INDEX IF NOT EXISTS idx_ai_model_prices_provider_id
   ON public.ai_model_prices (provider_id);
@@ -18,17 +18,11 @@ CREATE INDEX IF NOT EXISTS idx_conversation_events_from_queue_id
 CREATE INDEX IF NOT EXISTS idx_conversation_events_to_queue_id
   ON public.conversation_events (to_queue_id);
 
-CREATE INDEX IF NOT EXISTS idx_conversation_tasks_migrated_from_reminder_id
-  ON public.conversation_tasks (migrated_from_reminder_id);
-
 CREATE INDEX IF NOT EXISTS idx_copilot_feedback_created_by
   ON public.copilot_feedback (created_by);
 
 CREATE INDEX IF NOT EXISTS idx_crm_contact_links_linked_by
   ON public.crm_contact_links (linked_by);
-
-CREATE INDEX IF NOT EXISTS idx_crm_sync_outbox_contact_id
-  ON public.crm_sync_outbox (contact_id);
 
 CREATE INDEX IF NOT EXISTS idx_department_invitations_used_by
   ON public.department_invitations (used_by);
