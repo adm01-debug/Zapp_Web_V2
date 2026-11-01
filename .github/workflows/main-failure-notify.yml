@@ -111,6 +111,11 @@ jobs:
               return;
             }
             const data = await resp.json().catch(() => null);
+            // Rejeitar respostas 2xx com erro logico no corpo (ex: numero invalido)
+            if (data?.error || data?.status === 'error') {
+              core.setFailed(`Evolution GO retornou erro no corpo (2xx): ${JSON.stringify(data).slice(0, 300)}`);
+              return;
+            }
             // Evolution GO retorna o ID da mensagem em data.key.id, data.id ou data.Info.ID
             const msgId = data?.key?.id ?? data?.id ?? data?.Info?.ID ?? null;
             if (!msgId) {
