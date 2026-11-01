@@ -135,8 +135,10 @@ BEGIN
     BEGIN
       PERFORM public.talkx_engine_alerts();
     EXCEPTION
-      WHEN OTHERS THEN NULL
-      WHEN query_canceled THEN NULL;
+      WHEN OTHERS THEN
+        NULL;
+      WHEN query_canceled THEN
+        NULL;
     END;
   END IF;
 
