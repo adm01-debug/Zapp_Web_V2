@@ -20,6 +20,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# W49: VITE_* movido para os jobs build (step-level) e e2e (job-level); sem vazamento para lint/test/security.
 defaults:
   run:
     shell: bash --noprofile --norc -euo pipefail {0}
@@ -66,6 +67,11 @@ jobs:
       - name: 🔎 Run TypeScript debt ratchet
         run: node scripts/ci/typecheck-ratchet.mjs
 
+      - name: 🛡️ Integridade do CLAUDE.md (GA02)
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          CLAUDE_MD_BASE=FETCH_HEAD node scripts/ci/check-claude-md-integrity.mjs
+
   unit-tests:
     name: 🧪 Unit Tests (${{ matrix.shard }}/3)
     runs-on: ubuntu-24.04
@@ -74,6 +80,7 @@ jobs:
       matrix:
         shard: [1, 2, 3]
       fail-fast: false
+    if: github.event.pull_request.draft != true
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -115,11 +122,6 @@ jobs:
         with:
           node-version: '24'
 
-      - name: 🦕 Setup Deno
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
-        with:
-          deno-version: '2.9.5'
-
       - name: 🧄 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
@@ -144,11 +146,35 @@ jobs:
       - name: 🧩 Run Node CI scripts tests
         run: >-
           node --test scripts/ci/*.unit.mjs
+          scripts/lib/seguranca-processo.test.mjs
+          scripts/qa/prova-visao-classificadores.unit.mjs
+          scripts/talkx/lado-a-lado.unit.mjs
+          scripts/talkx/v4-status.unit.mjs
+          scripts/team-chat-db-validate.unit.mjs
+          scripts/ui-audit/contacts-navy-header.unit.mjs
+          scripts/ui-audit/layout-guard.unit.mjs
         env:
           CI: true
 
       - name: 🧪 Test Vercel ignore-build guard
         run: node scripts/vercel/ignore-build.unit.mjs
+
+  edge-contracts:
+    name: 🦕 Edge contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # E70: job separado para contratos Deno das edge functions — não é required check
+    # ainda (E100 adiciona após 7 dias verde). Assim o node-scripts fica abaixo de 90s.
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🦕 Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: '2.9.5'
 
       - name: 🦕 Test Edge handlers
         run: |
@@ -160,6 +186,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs: [typecheck, unit-tests]
+    if: github.event.pull_request.draft != true
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -282,18 +309,20 @@ jobs:
     name: ✅ CI Gate (required check)
     runs-on: ubuntu-24.04
     if: always()
-    needs: [typecheck, unit-tests, node-scripts, build, security]
+    needs: [typecheck, unit-tests, node-scripts, edge-contracts, build, security]
     steps:
       - name: Verificar resultado dos jobs obrigatórios
         run: |
           echo "typecheck: ${{ needs.typecheck.result }}"
           echo "unit-tests: ${{ needs.unit-tests.result }}"
           echo "node-scripts: ${{ needs.node-scripts.result }}"
+          echo "edge-contracts: ${{ needs.edge-contracts.result }}"
           echo "build: ${{ needs.build.result }}"
           echo "security: ${{ needs.security.result }}"
           if [[  "${{ needs.typecheck.result }}" == "failure" || \
                 "${{ needs.unit-tests.result }}" == "failure" || \
                 "${{ needs.node-scripts.result }}" == "failure" || \
+                "${{ needs.edge-contracts.result }}" == "failure" || \
                 "${{ needs.build.result }}" == "failure" || \
                 "${{ needs.security.result }}" == "failure" ]]; then
             echo "❌ Um ou mais jobs obrigatórios falharam"

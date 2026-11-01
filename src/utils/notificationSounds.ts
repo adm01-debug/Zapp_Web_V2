@@ -86,6 +86,6 @@ export const showBrowserNotification = (
     if (options?.onClick) {
       notification.onclick = () => { window.focus(); options.onClick?.(); notification.close(); };
     }
-    setTimeout(() => notification.close(), 5000);
+    if (!options?.requireInteraction) { setTimeout(() => notification.close(), 5000); }
   }
 };
