@@ -1,6 +1,8 @@
 {
   "sessao_20261101": {
-    "verificado_em": "2026-11-01T17:12:57Z",
+    "verificado_em": "2026-11-01T18:30Z",
+    "reVerificado_em": "2026-11-01T18:19Z",
+    "mcp_confirmado": "SUPABASE - ZAPP WEB V2 - MCP → tnnnlkbymytvtqngbbqh (ping ok, 284ms)",
     "baseline": {
       "migrations": 1072,
       "latest_migration": "20261031130000",
@@ -18,22 +20,38 @@
       "crons": "0",
       "buckets": "0"
     },
+    "re_verificacao_critico_alto_18h30": {
+      "ZW-0002_user_roles_seq": "seq_scan=7.687.641 idx_scan=4.173 (99.9% seq) — AGRAVOU de 7.3M",
+      "ZW-0003_talkx_segments_public": "policies_role_public=5 — AGRAVOU (estava 4 em 17:04Z, voltou a 5)",
+      "ZW-0004_cron_fails": "8 jobs falhando em 24h: tasks=14, dispatch=14, ai-jobs=14, talkx=10, crm-sync=7, multiplix=7, csat=7, expire-stale=7 — AGRAVOU de 4 jobs",
+      "ZW-0005_gmail_prosecdef": "decrypt_gmail_token e encrypt_gmail_token prosecdef=false — CONFIRMADO",
+      "ZW-0006_profiles_fk": "RESOLVIDO — fk_profiles_to_auth=1 (FK existe; ausente em 31/10, adicionada por outra sessão)",
+      "ZW-0007_update_with_check": "update_sem_with_check=42 — AGRAVOU de 39",
+      "ZW-0008_contacts_realtime": "relrowsecurity=false — CONFIRMADO",
+      "ZW-0009_engine_alerts": "has_timeout_guard=false — CONFIRMADO",
+      "ZW-0026_ledger_duplicates": "20 nomes duplicados (2 com count=3) — AGRAVOU de 1",
+      "ZW-0044_copilot_rls": "multiplix:1, talkx_log:1, copilot_sessions:2, copilot_scores:3; 6 tabelas ausentes — CONFIRMADO"
+    },
     "acoes_autonomas": [
       "ZW-0011: useSearchInsights.ts + SearchInsightsView.test.tsx — rpc get_search_insights → search_insights (migration 20261031130000)",
-      "achados.json: 47 ZW-nnnn achados consolidados de 3 auditorias anteriores"
+      "achados.json: 47 ZW-nnnn achados consolidados de 3 auditorias anteriores",
+      "ZW-0006: atualizado para RESOLVIDO (FK profiles→auth.users existe)",
+      "ZW-0026: atualizado para 20 nomes duplicados (era 1)",
+      "PR #2462: triagem — docs 2026-10-25, absorvida (sem novos achados ZW)"
     ],
     "achados_json": {
       "total": 47,
       "CRITICO": 2,
-      "ALTO": 7,
+      "ALTO": 6,
       "MEDIO": 15,
       "BAIXO": 3,
       "INFO": 13,
-      "RESOLVIDO": 7
+      "RESOLVIDO": 8
     },
-    "prs_triadas": 13,
+    "prs_triadas": 14,
     "pr_aguardando_aprovacao": ["#2481","#2485","#2487","#2491","#2461","#2471","#2476","#2460","#2473"],
-    "pr_autonoma_pendente": ["#2494 (types-sync, auto_merge ativo, needs branch update)"]
+    "pr_autonoma_pendente": ["#2494 (types-sync, auto_merge ativo, needs branch update)"],
+    "pr_2462_triagem": "ABSORVER — docs 2026-10-25 (RELATORIO+progresso.json com 5 correções); sobreposição com PR #2498; fechar após commit desta sessão"
   },
   "before_after_re_verificado_em": "2026-10-31T00:27Z",
   "before_after_re_verificado": {
