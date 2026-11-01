@@ -275,10 +275,17 @@ beforeAll(async () => {
   await import('@/components/inbox/ChatPanel');
 }, 120_000);
 
+let _layout: { mockRestore: () => void };
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.contactId = CONTACT_ID;
   mocks.messages = useMessagesState();
+  _layout = medirLayout();
+});
+
+afterEach(() => {
+  _layout.mockRestore();
 });
 
 describe('ChatPopup — histórico antigo alcançável (R2-INB-004)', () => {

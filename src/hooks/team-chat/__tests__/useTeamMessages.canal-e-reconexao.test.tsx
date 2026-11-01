@@ -76,7 +76,7 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
   });
 
   it('revalida a página corrente só na RE-inscrição, não na primeira', async () => {
-    const { queryClient } = render('conv-1');
+    const { queryClient, unmount } = render('conv-1');
     const invalidar = vi.spyOn(queryClient, 'invalidateQueries');
 
     await waitFor(() => expect(h.subs.length).toBe(1));
@@ -88,6 +88,7 @@ describe('useTeamMessages — tópico exclusivo e revalidação na reconexão (P
     const chaves = invalidar.mock.calls.map((c) => c[0]?.queryKey);
     expect(chaves).toContainEqual(['team-messages', 'conv-1']);
     expect(invalidar).toHaveBeenCalledTimes(2);
+    unmount();
   });
 
   it('revalida depois de um erro de canal seguido de nova inscrição', async () => {
