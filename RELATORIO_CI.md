@@ -1,8 +1,23 @@
 # RELATORIO_CI.md — Diagnóstico e Estado Final dos Workflows
 
-**Data:** 2026-10-31  
-**Branch de trabalho:** `fix/ci-workflows`  
+**Data:** 2026-11-01 (atualizado)  
+**Branch de trabalho:** `claude_04/pensive-tesla-ixtl9w`  
 **PR:** A abrir para `main`
+
+---
+
+## 0. Fixes aplicados em 2026-11-01 (esta sessão)
+
+| Arquivo | Causa raiz | Fix |
+|---------|-----------|-----|
+| `.github/workflows/deploy-functions.yml` | `deno check` sem `--config supabase/functions/deno.json` — Deno 2.9.5 não encontra o `node_modules` instalado por `deno install --config` em subdiretório sem `--config` no check | Adicionado `--config supabase/functions/deno.json` ao `deno check` |
+| `e2e/email-navy-visual.spec.ts` (test:142) | WebKit lê cores interpoladas durante transição de tema antes de `freezeVisualTransitions`; `waitForTimeout(400)` insuficiente para webkit | Adicionado `waitForAppliedTheme(page, 'dark')` antes de `freezeVisualTransitions` — mesmo padrão já usado no test:497 do mesmo arquivo |
+
+**Workflows que permanecem em PENDENCIAS.md:**  
+§1 DB Live Guard — drift banco/artefatos, requer acesso a produção  
+§2 Copilot Code Review — HTTP 402 cota do plano, workflow dinâmico  
+§3 E2E logado — telefonia SIP (503) + testes autenticados  
+§4 DB Migrate — dispatch manual com versão incorreta
 
 ---
 

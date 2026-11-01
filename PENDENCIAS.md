@@ -1,12 +1,12 @@
 # PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-10-31 por sessão `fix/ci-workflows`._
+_Atualizado em 2026-11-01 por sessão `claude_04/pensive-tesla-ixtl9w`._
 
 ---
 
 ## 1. DB Live Guard — falhas em contrato vivo (investigação pendente)
 
-**Último run com falha:** [41162077590](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162077590)  
+**Último run com falha:** [41318522203](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41318522203) (2026-11-01T14:54Z)  
 **Head SHA:** vários (pós-merge de `main`)
 
 **O que falha:**
@@ -57,29 +57,40 @@ workflow **não é um required check** — não bloqueia merges na `main`.
 
 ---
 
-## 3. Deploy Edge Functions — fix de @types/node tentado (PR #2407) mas ainda falha
+## 3. E2E logado — falhas em testes de telefonia e autenticação
 
-**Comportamento esperado:** `deploy-functions.yml` só executa quando o push na `main` altera
-código implantável em `supabase/functions/` ou `supabase/config.toml`. Quando o push toca
-apenas arquivos de frontend, documentação ou configuração de CI, o workflow não é disparado
-(condição `paths:` no trigger).
+**Runs com falha recentes:**
+- [41240478106](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41240478106) — job `deslogado-secundario` (telefonia) — 2026-10-31T20:46Z
+- [41172264670](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41172264670) — job `authenticated` (3 testes) — 2026-10-31T05:21Z
 
-**Run com falha após o fix:** Run `41162076060` executou no SHA `004e74a8c5` (pós-merge da
-PR #2407, que adicionou a instalação npm de `@types/node` em `deploy-functions.yml`),
-e **ainda falhou** com `Could not find "@types/node"` no step `deno check`. O fix da PR #2407
-não foi suficiente para resolver o erro.
+**O que falha:**
+- **Job `deslogado-secundario`** (`chromium-telefonia`, `firefox-telefonia`, `webkit-telefonia`): log indica `503 ***/functions/v1/get-sip-password :: {"error":"SIP não configurado","code":"SIP_NOT_CONFIGURED"}`. O job é cancelado por timeout. A edge function `get-sip-password` retorna 503 porque SIP não está configurado no ambiente de produção usado pelo CI.
+- **Job `authenticated`**: 3 testes falharam (nomes não visíveis — logs retornam vazios via API). Uma issue `[e2e-logado] Suíte logada quebrada na main` foi aberta automaticamente pelo workflow.
 
-**Por que não foi corrigido:** O mecanismo pelo qual `deno check` falha mesmo após a instalação
-npm de `@types/node` requer investigação adicional — provavelmente o path do `node_modules`
-gerado não é o que o `deno check` procura. Este workflow **não é um required check** — não bloqueia merges na `main`.
+**Por que não foi corrigido:** Os testes de telefonia dependem de `get-sip-password` que retorna 503 quando SIP não está configurado — é um estado esperado do ambiente de CI, não um bug de código. Os testes autenticados dependem de estado no banco de produção e de credenciais reais. Este workflow **não é um required check** — não bloqueia merges na `main`.
 
 **O que o Joaquim precisa fazer:**
-1. Disparar `workflow_dispatch` do `deploy-functions.yml` **na branch `main`** com
-   **`dry_run: true`** (ensaio: roda tudo até o deploy exclusive, sem publicar nada e sem
-   reescrever secrets) para diagnosticar o erro `@types/node` sem risco de side-effects
-2. Se falhar, investigar por que a instalação npm de `@types/node` não resolve o `Could not find "@types/node"` do `deno check`; verificar o path do `node_modules` gerado versus o caminho que o Deno resolve
-3. **Não** disparar sem `dry_run: true` — o deploy sem ensaio reescreve secrets e publica
-   as funções imediatamente no ambiente de produção
+1. Verificar a issue aberta `[e2e-logado] Suíte logada quebrada na main` para ver os 3 testes autenticados com falha
+2. Se os testes de telefonia falharem por SIP não configurado: avaliar se o mock de `get-sip-password` deve ser expandido para cobrir o estado 503 nos specs de telefonia
+3. Os logs completos do Playwright estarão no artifact `playwright-report` do run correspondente
+
+---
+
+## 4. DB Migrate — dispatch manual com versão incorreta
+
+**Runs com falha recentes:**
+- [41313326544](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41313326544) — 2026-11-01T13:52Z
+- [41209212823](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41209212823) — 2026-10-31T14:14Z
+
+**O que falha:** `workflow_dispatch` manual com `TARGET_VERSION` incorreto ou `missing_count > 0`.
+
+**Por que não foi corrigido:** Workflow de dispatch manual — sem código para corrigir. Este
+workflow **não é um required check** — não bloqueia merges na `main`.
+
+**O que o Joaquim precisa fazer:**
+1. O `db-migrate.yml` é disparado manualmente (Settings → Actions → db-migrate → Run workflow)
+2. Passar o `TARGET_VERSION` correto (última migration do ledger: `SELECT max(version) FROM supabase_migrations.schema_migrations`)
+3. Fazer dry-run primeiro (`apply=false`) e conferir o hash SHA-256 antes do apply
 
 ---
 
