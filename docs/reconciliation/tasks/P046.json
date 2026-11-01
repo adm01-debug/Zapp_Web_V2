@@ -6531,7 +6531,7 @@
       "id": "X048",
       "canonical_id": "docs--talkx--plano_talkx_v4_200_etapas_2026-10-01::X048",
       "title": "Aplicar WhatsApp desconectado, CRM indisponível e sem permissão, com botões ligados | 17 | front + testes | — | — | X014, X046, X047 |",
-      "status": "PARTIAL",
+      "status": "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE",
       "source": {
         "path": "docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md",
         "line": 258,
@@ -6543,7 +6543,7 @@
       "review_level": "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS",
       "assessment": "Estados do kit e hook de conexão existem; tratamento uniforme de CRM indisponível/sem permissão com ações ligadas não concluído.",
       "implementation": {
-        "state": "PRESENT_WITH_GAPS",
+        "state": "COMPLETE",
         "assessment": "Estados do kit e hook de conexão existem; tratamento uniforme de CRM indisponível/sem permissão com ações ligadas não concluído.",
         "planned_delta": "Hook `src/hooks/integrations/useTalkXServiceStatus.ts`: `whatsapp` (existe conexão `connected` em `whatsapp_connections`), `crm` (`ok | unavailable | not_configured`, vindo do sinal de CAP-092; sem vínculo configurado é `not_configured`, não \"indisponível\") e `realtime`. Visão geral: sem conexão ativa, faixa compacta do estado WhatsApp acima da tabela, com \"Conectar WhatsApp\" → view `connections`; wizard passo 1 troca o texto âmbar pelo mesmo estado. Segmentos e cartão \"Origem do público\" mostram `TalkXCrmUnavailableState` quando `crm = unavailable`. \"Ver status dos serviços\" abre `kit/ServiceStatusSheet.tsx` com 3 linhas (WhatsApp por conexão, CRM 360 com hora da última sincronização, tempo real). `ViewRouter.tsx`: para a view `talkx`, renderizar `TalkXNoPermissionState` no lugar da tela genérica, com \"Falar com o administrador\" → view `team-chat` (`src/services/navigation.service.ts:41`). `TalkXQueryBoundary` mapeia erro 42501 para o estado sem permissão.",
         "inspection": "Read-only source/diff/schema-catalog inspection at fixed baseline; no deployed-source query."
@@ -6575,10 +6575,14 @@
         "src/components/talkx/TalkXView.tsx",
         "src/components/talkx/kit/dialogs.tsx",
         "src/components/talkx/kit/states.tsx",
-        "src/services/navigation.service.ts"
+        "src/services/navigation.service.ts",
+        "src/components/talkx/kit/ServiceStatusSheet.tsx",
+        "src/pages/__tests__/ViewRouter.talkx-permission.test.tsx"
       ],
       "test_paths": [],
-      "pr_numbers": [],
+      "pr_numbers": [
+        2544
+      ],
       "commits": [],
       "evidence": [
         {
@@ -7135,7 +7139,7 @@
       "id": "X053",
       "canonical_id": "docs--talkx--plano_talkx_v4_200_etapas_2026-10-01::X053",
       "title": "Cabeçalho do módulo: trilha, botão \"Ajuda\" com rótulo e indicador de campanha em andamento | 01, 17 | front + testes | — | — | X052 |",
-      "status": "PARTIAL",
+      "status": "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE",
       "source": {
         "path": "docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md",
         "line": 263,
@@ -7147,7 +7151,7 @@
       "review_level": "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS",
       "assessment": "Ajuda ganhou rótulo em X007; breadcrumb unificado e ActiveCampaignIndicator não existem.",
       "implementation": {
-        "state": "PRESENT_WITH_GAPS",
+        "state": "COMPLETE",
         "assessment": "Ajuda ganhou rótulo em X007; breadcrumb unificado e ActiveCampaignIndicator não existem.",
         "planned_delta": "`ModuleHeader` (em `kit/primitives.tsx`) ganha `breadcrumb` (`nav` com `aria-label`), preenchido pela rota: \"Talk X › Campanhas › <aba | Nova campanha | nome da campanha>\". Substituir as duas trilhas à mão e o botão solto do Monitor. Botão \"Ajuda\" com ícone e rótulo. `kit/ActiveCampaignIndicator.tsx`: cartão \"● Em andamento ▾ / <nome> / Iniciada às HH:mm\", alimentado por consulta a `talkx_campaigns` com `status in (sending, paused)`, `started_at desc`, limite 5; o menu lista as demais e o clique abre `campaign=<id>`; pausada aparece em âmbar; sem campanha ativa o cartão não é desenhado. O \"Ao vivo\" vira ponto/tooltip desse cartão e do botão ⟳.",
         "inspection": "Read-only source/diff/schema-catalog inspection at fixed baseline; no deployed-source query."
