@@ -162,13 +162,13 @@ function providerBodyText(body: unknown): string {
  * entrega, logo não ambíguo.
  */
 export function classifyProviderFailure(status: number, body: unknown): DeliveryFailure {
-  if (status === 429) return EDGE_RATE_LIMITED_FAILURE;
   // 408 (Request Timeout) e 425 (Too Early): o provedor pode ter processado
   // a requisição antes de retornar — efeito INCERTO, reconciliar.
   if (status === 408 || status === 425) return unconfirmedReceiptFailure();
-  if (status >= 500) {
-    return { status: 502, code: 'provider_unavailable', retryable: false, ambiguous: true };
-  }
+
+  // Verificar conteúdo do body ANTES dos early-returns de 429/5xx: um body com
+  // invalid_number ou auth_failed em resposta a qualquer status é definitivo
+  // (sem ambiguidade), e um 429 com body de instância fora do ar é instance_unavailable.
   const text = providerBodyText(body);
   if (INSTANCE_DOWN_CUES.some((cue) => text.includes(cue))) {
     return { status: 409, code: 'instance_unavailable', retryable: true, ambiguous: false };
@@ -179,6 +179,11 @@ export function classifyProviderFailure(status: number, body: unknown): Delivery
   }
   if (info.code === 'auth_failed') {
     return { status: 409, code: 'instance_unavailable', retryable: true, ambiguous: false };
+  }
+
+  if (status === 429) return EDGE_RATE_LIMITED_FAILURE;
+  if (status >= 500) {
+    return { status: 502, code: 'provider_unavailable', retryable: false, ambiguous: true };
   }
   return PROMPT_REJECTED_FAILURE;
 }
@@ -440,8 +445,15 @@ export async function deliverOutbound(
   // Costura de teste do PD-80 (deps.evoFetch). O default é o evoFetch real, então
   // o caminho de produção e a resolução do token da instância não mudam.
   send: typeof evoFetch = evoFetch,
+  // Fix #4: token pré-resolvido antes do mark_outbound_post_started — se passado,
+  // pula a resolução interna (o token foi obtido antes do carimbo, portanto erros
+  // de lookup não são tratados como pós-POST).
+  preResolvedToken?: string,
 ): Promise<Response> {
-  const instanceToken = await resolveInstanceToken(service, instanceName);
+  // eslint-disable-next-line local/no-secret-compare
+  const instanceToken = preResolvedToken !== undefined
+    ? preResolvedToken
+    : await resolveInstanceToken(service, instanceName);
   return send(
     evolutionUrl,
     evolutionKey,
@@ -480,6 +492,7 @@ async function classifyUnclaimedCause(
   existing: {
     status?: string | null; contact_id?: string | null;
     whatsapp_connection_id?: string | null;
+    delivery_post_started_at?: string | null;
   },
 ): Promise<DeliveryFailure> {
   // Mensagem sem contato (envio para GRUPO, `whatsapp_group_id`; 20261011155946):
@@ -490,6 +503,10 @@ async function classifyUnclaimedCause(
   // Também não seleciona `whatsapp_group_id`: a coluna só existe depois do apply
   // dessa migration, e a função não pode depender dela.
   if (!existing.contact_id) {
+    // PD-79: POST já iniciado = resultado ambíguo — não IN_PROGRESS nem terminal.
+    if (existing.delivery_post_started_at && existing.status === 'sending') {
+      return unconfirmedReceiptFailure();
+    }
     return existing.status === 'sending' ? IN_PROGRESS_FAILURE : TERMINAL_WITHOUT_RECEIPT_FAILURE;
   }
   let contact: { phone?: unknown; whatsapp_connection_id?: unknown } | null = null;
@@ -536,6 +553,8 @@ async function classifyUnclaimedCause(
     return INVALID_NUMBER_FAILURE;
   }
   if (existing.status === 'sending') {
+    // PD-79: POST já iniciado = resultado ambíguo — não IN_PROGRESS.
+    if (existing.delivery_post_started_at) return unconfirmedReceiptFailure();
     return IN_PROGRESS_FAILURE;
   }
   return TERMINAL_WITHOUT_RECEIPT_FAILURE;
@@ -637,7 +656,7 @@ export async function handleMessageDeliveryRequest(
   if (!claim) {
     const { data: existing, error: existingError } = await service
       .from('messages')
-      .select('agent_id, sender, status, external_id, contact_id, whatsapp_connection_id')
+      .select('agent_id, sender, status, external_id, contact_id, whatsapp_connection_id, delivery_post_started_at')
       .eq('id', messageId)
       .maybeSingle();
     if (existingError || !existing || existing.agent_id !== profile.id || existing.sender !== 'agent') {
@@ -683,6 +702,9 @@ export async function handleMessageDeliveryRequest(
       if (!richPayload) throw new Error('missing_rich_delivery_payload');
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
+    // Fix #4: resolver o token da instância ANTES do carimbo — se o lookup falhar,
+    // nada foi enviado ainda (erro pré-dispatch sem ambiguidade).
+    const instanceToken = await resolveInstanceToken(service, claim.whatsapp_instance_name) ?? undefined;
     // PD-79: carimbo durável antes do POST — fencing contra reenvio após lease vencido.
     // Falha aqui = infra pré-dispatch: nada saiu, sem ambiguidade.
     const { error: markError } = await service.rpc('mark_outbound_post_started', {
@@ -693,7 +715,7 @@ export async function handleMessageDeliveryRequest(
     providerPostAttempted = true;
     const providerResponse = await deliverOutbound(
       service, evolutionUrl, evolutionKey, outbound, claim.whatsapp_instance_name,
-      undefined, fetchProvider,
+      undefined, fetchProvider, instanceToken,
     );
     const raw = await providerResponse.text();
     let providerData: unknown = null;

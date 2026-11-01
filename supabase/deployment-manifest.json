@@ -211,13 +211,13 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "bytes": 68383,
-      "sha256": "7b6ce2f9762d7098539a66f436c016ca1d5ee4eef926916b1b73d17ec31e1f6f"
+      "bytes": 69743,
+      "sha256": "32397ee6a28503a304a6590806dbbc9d7394297db54dac4ea53134f3c8e897d7"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "bytes": 23472,
-      "sha256": "e6623128bb316d89a09001bd97669793cc084aeead7583c3512e688acbf98026"
+      "bytes": 26213,
+      "sha256": "5d77a6a526bef04595d693e239df92c55c99992b6fb9034efafdc37e74e15355"
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
@@ -671,8 +671,8 @@
     },
     {
       "path": "supabase/functions/message-delivery/index.ts",
-      "bytes": 34339,
-      "sha256": "533d0d3844faed3f9497b7810326cd3eccc4703bf37f72545dc4804e87ae83bb"
+      "bytes": 35992,
+      "sha256": "0cbcf683a48d5062553c5a6328e83b1483d13e3839cd254871784cff57956999"
     },
     {
       "path": "supabase/functions/metrics/index.ts",
@@ -1714,7 +1714,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "af164efe46313d0e1843a86944d501028f1d914dd73a666e943ce781340c18ac",
+      "source_sha256": "65b265c1d205511cd615bb7a70eecbb22af3275e7c8321f7b266e1b76b506766",
       "source_files": [
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-jobs.ts",
@@ -1948,7 +1948,7 @@
       "name": "message-delivery",
       "entrypoint": "supabase/functions/message-delivery/index.ts",
       "verify_jwt": true,
-      "source_sha256": "1144d80e380a48db705dc9865b3c178946c17620f2503c9a19f4c7dd22b98b1a",
+      "source_sha256": "2d8f65677eeeddfc2c4241459c1d78708f6e4a7e7d5e6e6b6635e7f4c29a1c7d",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
@@ -2537,5 +2537,5 @@
       ]
     }
   ],
-  "manifest_sha256": "ef8ac66a93d2e4956c71ec756a8c28741d6395458d65c6b5cb4bc4cfc56aa3cf"
+  "manifest_sha256": "9fffd6d06073d10bf9e557f602f0f731b8e5aadda2d222c6d586367f169cb14c"
 }
