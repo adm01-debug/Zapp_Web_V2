@@ -111,9 +111,10 @@ jobs:
               return;
             }
             const data = await resp.json().catch(() => null);
-            const msgId = data?.key?.id ?? data?.id ?? null;
+            // Evolution GO retorna o ID da mensagem em data.key.id, data.id ou data.Info.ID
+            const msgId = data?.key?.id ?? data?.id ?? data?.Info?.ID ?? null;
             if (!msgId) {
-              core.setFailed(`Evolution GO retornou 2xx mas sem ID de mensagem: ${JSON.stringify(data)}`);
+              core.setFailed(`Evolution GO retornou 2xx mas sem ID de mensagem: ${JSON.stringify(data).slice(0, 300)}`);
               return;
             }
             core.info(`Mensagem enviada para ${numero} (id: ${msgId}) -- Evolution GO ${resp.status}`);
