@@ -1,6 +1,6 @@
 # PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-10-31 por sessão de correção de CI._
+_Atualizado em 2026-11-01 por sessão de correção de CI._
 
 ---
 
@@ -105,6 +105,26 @@ Branches: `adm01-debug-patch-4`
 **Decisão pendente do Joaquim:**
 - Descartar: o `main.yml` de 1 byte não tem utilidade; `eslint.yml` é redundante com `ci.yml`
 - A branch pode ser apagada sem perda
+
+---
+
+## 4. Workflows dinâmicos sem arquivo no repositório (GF-032)
+
+**Situação:** O repositório tem 3 workflows dinâmicos gerenciados pelo GitHub que aparecem no histórico do Actions mas **não têm arquivo `.yml` próprio em `.github/workflows/`**. Não são corrigíveis via código — são controlados pelo GitHub ou pela conta.
+
+| Workflow | Origem | Runs visíveis | Ação possível |
+|---|---|---|---|
+| **Dependabot Updates** | Configuração Dependabot da conta | Sim, em cada PR com dependências | Nenhuma — gerenciado pelo GitHub |
+| **Dependency Graph** | Feature automática do GitHub | Sim, em pushes na `main` | Nenhuma — gerenciado pelo GitHub |
+| **Copilot Code Reviewer** | App GitHub Copilot instalada | Sim, em PRs com `@copilot` ou auto-review | Ver seção 2 (falha de firewall) |
+
+**Runs de branches deletadas:** Workflows disparados em branches de PR que foram mergeadas e deletadas permanecem no histórico do Actions com status `completed`. São runs legítimos, não fantasmas — aparecem porque o GitHub mantém o histórico de runs mesmo após a deleção da branch. Não requerem ação.
+
+**Por que não foi corrigido:** Não há código para corrigir. O inventário canônico de workflows do repo está em `docs/ci/README.md` (gerado por `scripts/ci/render-workflow-docs.mjs`); qualquer discrepância entre o README gerado e os runs visíveis no Actions é esperada devido a esses 3 workflows dinâmicos.
+
+**O que o Joaquim pode fazer (opcional):**
+- Se os runs do Dependabot ou Dependency Graph estiverem falhando: verificar em GitHub Settings → Security → Dependabot
+- Se quiser suprimir runs do Copilot Reviewer: desabilitar em GitHub Settings → Copilot → Code Review
 
 ---
 
