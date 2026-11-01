@@ -57,7 +57,7 @@ workflow **não é um required check** — não bloqueia merges na `main`.
 
 ---
 
-## 3. Deploy Edge Functions — CORRIGIDO em 2026-11-01
+## 3. Deploy Edge Functions — fix aplicado, aguardando validação (2026-11-01)
 
 **Causa raiz identificada e corrigida:** O passo `deno check` em `deploy-functions.yml` não
 passava `--config supabase/functions/deno.json`, então o Deno procurava `node_modules/` na raiz
@@ -66,11 +66,11 @@ do repo em vez de em `supabase/functions/node_modules/` (onde `deno install --co
 **Fix aplicado:** `deno check --config supabase/functions/deno.json supabase/functions/**/index.ts`
 em `.github/workflows/deploy-functions.yml` — branch `claude_04/dazzling-archimedes-n9k59w`.
 
-**Status:** PR aberta. Após merge, o próximo push que alterar `supabase/functions/` irá
-disparar o `deploy-functions.yml` com o fix. O comportamento esperado é que o step `deno check`
-passe sem erros `Could not find "@types/node"`.
-3. **Não** disparar sem `dry_run: true` — o deploy sem ensaio reescreve secrets e publica
-   as funções imediatamente no ambiente de produção
+**Status:** PR #2527 aberta, aguardando CI verde e merge em `main`. Após merge, o próximo
+push que alterar código implantável em `supabase/functions/` (exceto `*.test.ts`, `*.md` e
+`fixtures/`) irá disparar o `deploy-functions.yml` com o fix. O comportamento esperado é que
+o step `deno check` passe sem erros `Could not find "@types/node"`. Status atualizado para
+`VALIDADO` somente após run bem-sucedido de `deploy-functions.yml` pós-merge.
 
 ---
 
