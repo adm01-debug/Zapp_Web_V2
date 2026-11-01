@@ -1,9 +1,10 @@
-# Baseline de typecheck — main SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
-# Fonte: github_list_check_runs na SHA 5a4632c (CI run do main)
-# Data: 2026-10-22
-# Nota: container não tem bun install; resultados abaixo são da API do GitHub
+SHA main: 3617a2acd517dcc9a6eaf2533cd256913e462c21
+Comando: NODE_OPTIONS="--max-old-space-size=4096" npx tsc -b --noEmit
+Data: 2026-11-01
 
-CHECK: 🔎 TypeCheck (parte de 🔍 Lint & TypeCheck)
-STATUS: success
-SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
-RESULT: passed — sem erros de typecheck na main atual
+ERROS (3 — pré-existentes):
+src/components/queues/QueueAlertsDisplay.tsx(94,19): error TS17001: JSX elements cannot have multiple attributes with the same name.
+src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx(123,55): error TS2353: Object literal may only specify known properties, and 'tags' does not exist in type 'InboxFiltersState'.
+src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx(124,55): error TS2353: Object literal may only specify known properties, and 'tags' does not exist in type 'InboxFiltersState'.
+
+BASELINE: 3 erros TS no main. Qualquer PR que introduza erro NOVO é regressão.

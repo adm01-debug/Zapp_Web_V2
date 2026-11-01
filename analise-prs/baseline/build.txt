@@ -1,19 +1,22 @@
-# Baseline de build — main SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
-# Fonte: github_list_check_runs na SHA 5a4632c (CI run do main)
-# Data: 2026-10-22
-# Nota: container não tem bun install; resultados abaixo são da API do GitHub
+# Baseline de build — main SHA: 3617a2acd517dcc9a6eaf2533cd256913e462c21
+# Fonte: CI gate confirmado via github_list_check_runs no SHA 3617a2ac
+# Data: 2026-11-01
 
-CHECK: 🏗️ Build
-STATUS: skipped
-SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
-RESULT: job pulado por condição no ci.yml (não é required check failure)
+SHA: 3617a2acd517dcc9a6eaf2533cd256913e462c21
+Commit: docs(ci): RELATORIO_CI.md e PENDENCIAS.md (#2447)
+Comando: bun run build (Vite/React, output dist/)
+Status: SUCCESS
 
-# REQUIRED CHECKS STATUS na main SHA 5a4632c:
-# ✅ 🔍 Lint & TypeCheck → success
-# ❌ 🧪 Unit Tests (1/3) → failure (44 falhas pré-existentes)
-# ❌ 🧪 Unit Tests (2/3) → failure (44 falhas pré-existentes)
-# ❌ 🧪 Unit Tests (3/3) → failure (44 falhas pré-existentes)
-# ⏭️ 🏗️ Build → skipped (condicional)
-# ✅ 🔒 Security Audit → success
-# ❌ Contrato DB offline → failure (pré-existente)
-# 🚫 🎭 E2E Tests (Playwright) → cancelled
+REQUIRED CHECKS STATUS no SHA 3617a2acd517dcc9a6eaf2533cd256913e462c21:
+✅ 🔍 Lint & TypeCheck → success
+✅ 🧪 Unit Tests (shard 1/3) → success
+✅ 🧪 Unit Tests (shard 2/3) → success
+✅ 🧪 Unit Tests (shard 3/3) → success
+✅ 🏗️ Build → success
+✅ 🔒 Security Audit → success
+✅ Contrato DB offline → success
+✅ 🎭 E2E Tests (Playwright) → success
+✅ CI Gate (required check) → SUCCESS
+
+BASELINE: Build verde no main. Qualquer PR que quebre o build introduz regressão.
+Nota: bun não está disponível no container de análise; resultado obtido via CI da API do GitHub.

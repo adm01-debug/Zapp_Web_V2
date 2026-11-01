@@ -1,9 +1,18 @@
-# Baseline de lint/typecheck — main SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
-# Fonte: github_list_check_runs na SHA 5a4632c (CI run do main)
-# Data: 2026-10-22
-# Nota: container não tem bun install; resultados abaixo são da API do GitHub
+SHA main: 3617a2acd517dcc9a6eaf2533cd256913e462c21
+Comando: bun run lint (eslint .)
+Data: 2026-11-01
+Exit code: 1
 
-CHECK: 🔍 Lint & TypeCheck
-STATUS: success
-SHA: 5a4632c87f7e233fe62e830443f8b0eddf3e1a72
-RESULT: passed — sem erros de lint nem typecheck na main atual
+RESUMO: ✖ 813 problems (600 errors, 213 warnings) — TUDO pré-existente no main
+
+CATEGORIAS DOS ERROS (principais):
+- local/no-secret-compare: comparação direta de credenciais em edge functions (supabase/functions/)
+- @typescript-eslint/no-explicit-any: uso de `any` sem tipo explícito
+- Cascading renders: setState síncrono em effect
+- Cannot call impure function during render
+
+CATEGORIAS DOS WARNINGS (principais):
+- react-refresh/only-export-components: exports mistos em arquivos de componentes
+- no-restricted-imports: import direto do supabase/client em componentes/pages
+
+BASELINE: 813 problems no main. Qualquer PR que introduza problema NOVO é regressão.

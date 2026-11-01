@@ -1,101 +1,68 @@
-number,title,branch,draft,mergeable_state,created_at,labels,base,additions,deletions,changed_files,commits
-1975,ci: reativar 8 suites no job node-scripts (allowlist → runner),claude/fix-ci-reativar-suites-261016-1530,False,unknown,2026-10-16T16:03:45Z,,main,0,0,0,0
-1997,feat: CV-010–020 — Fase 2 RADAR copilot (migrations + feature flag),claude/feat-copiloto-cv011-020-migrations-261016-1930,False,unknown,2026-10-16T19:58:38Z,,main,0,0,0,0
-2034,fix(ci): GA02 + GA10 — guarda CLAUDE.md no CI e contrato de nomes do notificador,claude/fix-notify-names-ga10-ga02-261017-0900,False,unknown,2026-10-17T00:06:11Z,,main,0,0,0,0
-2036,fix(ci): GA04/GA05 — console.error no heredoc db-migrate + fixtures GA05,claude/fix-db-migrate-ga04-ga05-261016-0011,True,unknown,2026-10-17T00:15:40Z,,main,0,0,0,0
-2042,ci(W94+W32): talkx-status-regen concurrency + MIGRATIONS daily lote section,claude/w32-w94-migrations-concurrency,False,unknown,2026-10-18T12:13:48Z,,main,0,0,0,0
-2044,"ci(W39/W49/W50): playwright versao dinamica, VITE_* scoped, codeql dispatch",claude/w39-w49-w50-ci-cleanup,False,unknown,2026-10-18T12:13:55Z,,main,0,0,0,0
-2046,W45: pular test/build/security/e2e/db-guard em PR draft,claude/w45-draft-fast-exit,False,unknown,2026-10-18T12:14:09Z,,main,0,0,0,0
-2051,ci(W85/W86/W87): OpenSSF Scorecard semanal + dependency-review no security job,claude/w85-w86-w87-ossf-scorecard,False,unknown,2026-10-18T12:16:08Z,,main,0,0,0,0
-2058,fix(test): mock de @/lib/logger sem createLogger — 9 arquivos (lote F1a),fix/f1a-lote-b-main,False,unknown,2026-10-18T14:25:31Z,,main,0,0,0,0
-2059,fix(test): ConnectionCard — handleDisconnectDialogOpenChange indefinido — 6 arquivos (lote F1a),fix/f1a-lote-b-connectioncard-dialog,False,unknown,2026-10-18T14:33:22Z,,main,0,0,0,0
-2063,fix(test): useAuth sem AuthProvider no teste — 2 arquivos (lote F1a),fix/f1a-lote-b-authprovider,False,unknown,2026-10-18T14:38:27Z,,main,0,0,0,0
-2064,fix(test): mock de supabase.channel incompleto — 1 arquivo (lote F1a),fix/f1a-supabase-channel-mock-audiomeme-20261018,False,unknown,2026-10-18T14:40:39Z,,main,0,0,0,0
-2066,fix: useAudioMemes sobe chave solta no bucket com policy por pasta (PK-16/PK-17),fix/f1a-lote-b-audiomemes-storage-path,False,unknown,2026-10-18T14:45:37Z,,main,0,0,0,0
-2067,fix(test): 2 mocks locais incompletos — 1 arquivo (lote F1a),fix/f1a-logger-ttsvoice-mock-arquivos-conversa-20261018,False,unknown,2026-10-18T14:46:14Z,,main,0,0,0,0
-2068,fix(test): mock de useAdminData sem AUDIT_PAGE_SIZE/MIN_PASSWORD_LENGTH — 2 arquivos (lote F1a),fix/f1a-lote-b-admin-audit-page-size,False,unknown,2026-10-18T14:53:32Z,,main,0,0,0,0
-2069,fix(test): mock de supabase sem .range()/.gte()/.lte() em useAdminData.select — 1 arquivo (lote F1a),fix/f1a-lote-b-useadmindata-select,False,unknown,2026-10-18T15:07:34Z,,main,0,0,0,0
-2071,fix: remove hook morto useTalkXSuppression (TL-002) — 1 produto + 1 teste (lote F1a),fix/f1a-lote-b-talkxsuppression-hook-morto,False,unknown,2026-10-18T15:15:55Z,,main,0,0,0,0
-2074,fix: overlay de useScreenProtection sem role=alert/aria-live — 1 arquivo (lote F1a),fix/f1a-lote-b-hooks-misc-1,False,unknown,2026-10-18T15:36:42Z,,main,0,0,0,0
-2075,fix: aviso de desktop do War Room saía pelo caminho que exige Service Worker — 1 arquivo (lote F1a),fix/f1a-lote-b-usewarroomalerts,False,unknown,2026-10-18T15:37:35Z,,main,0,0,0,0
-2078,ci(F3): baseline strict=false — opção A sem fila serial,f3/strict-false-baseline-20261018,False,unknown,2026-10-18T16:01:51Z,,main,0,0,0,0
-2080,fix: useTeamChatNotifications — canal recriado no volume + aviso sem Service Worker + cache do inbox (HZ5-09/PE-75) — 2 arquivos (lote F1a),fix/f1a-lote-b-useteamchatnotifications,False,unknown,2026-10-18T16:04:19Z,,main,0,0,0,0
-2081,fix: contagem de whatsapp_connections lançava e derrubava toda a coleta de diagnóstico (N-216) — 1 arquivo (lote F1a),fix/f1a-lote-b-batch4,False,unknown,2026-10-18T16:08:44Z,,main,0,0,0,0
-2082,fix: falha de leitura em useUserSettings ficava invisível (C-1) — 1 arquivo (lote F1a),fix/f1a-lote-b-batch5,False,unknown,2026-10-18T16:12:33Z,,main,0,0,0,0
-2084,fix: Leaderboard não distinguia RPC caída de ranking vazio — 1 arquivo (lote F1a),fix/f1a-lote-b-batch7,False,unknown,2026-10-18T16:19:02Z,,main,0,0,0,0
-2086,fix: botão de remover atendente do QueueCard sem nome exato e morto ao toque (N-180.6) — 1 arquivo (lote F1a),fix/f1a-lote-b-batch9,False,unknown,2026-10-18T16:27:28Z,,main,0,0,0,0
-2088,fix: área segura mobile (safe-area-*) e rolagem sem barra (scrollbar-none) sem regra CSS (t_edd11f2d) — 1 arquivo (lote F1a),fix/f1a-lote-b-batch12,False,unknown,2026-10-18T16:33:38Z,,main,0,0,0,0
-2089,"fix: ChatService.uploadAudio gravava sempre como .webm, ignorando o mime real do Blob — 1 arquivo (lote F1a)",fix/f1a-lote-b-batch13,False,unknown,2026-10-18T16:35:46Z,,main,0,0,0,0
-2091,fix: timing-safe comparison em searchbox-budget-alert e whatsapp-webhook (Z011-B/C),claude/fix-z011bc-timing-safe-261018-1855,False,unknown,2026-10-18T18:50:03Z,,main,0,0,0,0
-2092,fix(ci): types-sync job summary + gmail-cron-sync raw-500 (Z029+Z015p),claude/fix-z029-z015-summary-500-261018-1940,False,unknown,2026-10-18T19:52:08Z,,main,0,0,0,0
-2095,"fix(security): Z018+Z020 — external-db-proxy code-leak em 502, catch via internalErrorResponse (Z017+Z019 auditados, já corretos)",claude/fix-z017-z020-auth-cors-261018-1950,False,unknown,2026-10-18T20:00:45Z,,main,0,0,0,0
-2097,fix: corrige falhas pré-existentes nos Unit Tests (useKnowledgeBase + useTalkXSegments),claude/fix-unit-tests-main-261019-1500,False,unknown,2026-10-19T10:08:18Z,,main,0,0,0,0
-2100,"fix: GA09/GA62/GA75/GA92/GA98/GA100 — concurrency, codeql diário, endpoint, rate-limit, docs",claude/fix-fase5-GA09-GA62-GA75-GA92-261019-1206,False,unknown,2026-10-19T12:10:07Z,,main,0,0,0,0
-2104,fix(ci): PGUSER postgres + GA75 endpoint + GA77 sem auto-restore + TS2322 + security-unit,claude/fix-db-guard-pguser-261019-1430,False,unknown,2026-10-19T12:17:16Z,,main,0,0,0,0
-2107,docs(g9): absorver planos de docs ausentes da main — E274,claude/docs-g9-absorb-261019-1300,False,unknown,2026-10-19T12:56:06Z,,main,0,0,0,0
-2110,fix(tests): add createLogger to vi.mock('@/lib/logger') em 20 testes,claude/fix-unit-tests-createlogger-261019-1620,False,unknown,2026-10-19T13:25:05Z,,main,0,0,0,0
-2111,fix(types): narrowar reason_code em useTalkXSuppression para union type,claude/fix-typecheck-suppression-261019-1342,False,unknown,2026-10-19T13:41:59Z,,main,0,0,0,0
-2113,"fix(evolution-api): remover set-presence, find-chats e find-status-messages (GO_GAPS D6)",claude/fix-evolution-go-gaps-d6-261019-1548,True,unknown,2026-10-19T15:00:40Z,,main,0,0,0,0
-2125,fix(ci): Fase 1 do plano GA18 GA19 + GA26 prepare,claude/fix-ga-fase1-lote-banco-261020-2200,False,unknown,2026-10-20T22:53:55Z,,main,0,0,0,0
-2137,fix(db): recria canonicamente as policies de receipt do team chat (replay),claude/fix-canonical-receipt-policies-261020-2005,False,unknown,2026-10-20T23:13:03Z,,main,0,0,0,0
-2142,"fix(ci): Resto GA13-GA17 (db-migrate 2 jobs, apply_all_missing, portao destrutivo)",claude/fix-ga-resto-dbmigrate-20261021-0729,False,unknown,2026-10-21T10:55:37Z,,main,0,0,0,0
-2143,"fix(ci): Resto GA20-GA25 (Gate 3, DESTINO split, auto-merge grants)",claude/fix-ga-resto-typessync-20261021-0730,False,unknown,2026-10-21T10:55:40Z,,main,0,0,0,0
-2144,"fix(ci): Resto GA37 GA96-GA98 (docs deploy, regen, CODEOWNERS)",claude/fix-ga-resto-docs-regen-20261021-0726,False,unknown,2026-10-21T10:55:43Z,,main,0,0,0,0
-2145,"fix(ci): Resto GA86 GA99 GA100 (sonar, contracts, adocao)",claude/fix-ga-resto-sonar-contracts-20261021-0726,False,unknown,2026-10-21T10:55:45Z,,main,0,0,0,0
-2146,feat(team-chat): TeamChatView seleciona conversa via ?cid= (receptor E90),claude/feat-teamchat-cid-261021-0758,False,unknown,2026-10-21T11:01:10Z,,main,0,0,0,0
-2147,fix(db-audit): guard n011 com teto dinamico por dominio e canonico atual,claude/fix-n011-dinamico-261021-0759,False,unknown,2026-10-21T11:01:25Z,,main,0,0,0,0
-2148,test(e2e): destrava specs deslogados de Contatos com boot e health mockados,claude/test-e2e-contatos-fab-261021-0819,False,unknown,2026-10-21T11:27:17Z,,main,0,0,0,0
-2152,test(e2e): spec de toque 44px volta ao verde com seletores do app real,claude/test-toque44-seletores-261021-0853,False,unknown,2026-10-21T11:55:45Z,,main,0,0,0,0
-2185,docs(pendencias): §8 RESOLVIDO + §9 inventário de workflows da main,claude/kind-gates-87mwoe,False,unknown,2026-10-22T02:10:20Z,,main,0,0,0,0
-2186,fix(security): auditoria Supabase 2026-10-22 — department_invites ownership + login_attempts TTL LGPD,claude/loving-lovelace-esc3l2,False,unknown,2026-10-22T12:46:33Z,,main,0,0,0,0
-2195,fix: crash cachedConversations undefined e this-binding perdido no rpc de metas de fila,claude/confident-bardeen-ndq0ch,False,unknown,2026-10-23T13:28:11Z,,main,0,0,0,0
-2196,feat: TalkX editor de templates e artefatos gerados (dia/2026-10-19),claude/dia-2026-10-19-ct011-hmac-talkx-artefatos-231023,False,unknown,2026-10-23T14:06:06Z,,main,0,0,0,0
-2197,"ci: lote GA49–GA64 — fila-merge, actions-kpi, types-sync, codeql e branch-hygiene",claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023,False,unknown,2026-10-23T14:06:23Z,,main,0,0,0,0
-2200,analise: dossiê branch hermes/telefonia-contrato-dados-26092615475e51,claude/dazzling-cannon-j7iw08,False,unknown,2026-10-23T18:42:40Z,,main,0,0,0,0
-2206,fix(ci): adiciona copilot_feedback a known-violations para desbloquear Contrato DB offline,claude/fix-known-violations-copilot-feedback-261023-2035,True,unknown,2026-10-23T20:39:29Z,,main,0,0,0,0
-2208,fix(types): named SuppressionReasonCode type export,claude/fix-typecheck-suppression-261023-2230,False,unknown,2026-10-23T22:31:22Z,,main,0,0,0,0
-2216,feat: 7 edge functions copiloto RADAR fases 8-15 (CV-071–CV-150),claude/feat-copiloto-edge-fns-fases8-15-261024-1615,False,unknown,2026-10-24T14:30:03Z,,main,0,0,0,0
-2222,fix(db): corrige TC-009 — aplica predecessora 20261006222024 antes da 20261009193246 no teste,claude/fix-tc009-team-receipts-cid-261024-1730,False,unknown,2026-10-24T17:28:12Z,,main,0,0,0,0
-2226,fix(db-guard): corrige assertion B.0c no TC-009 — backfill não deve disparar trigger de update,claude/fix-db-guard-b0c-261024-1527,False,unknown,2026-10-24T18:32:29Z,,main,0,0,0,0
-2228,fix(tests): corrige falha mecânica de mock em useAdminDataCreateUser.test.ts,claude/fix-unit-tests-mechanical-261024-1527,False,unknown,2026-10-24T18:34:22Z,,main,0,0,0,0
-2230,chore: remove hook morto useTalkXSuppression,claude/chore-remove-hook-morto-talksuppression-261024-1541,False,unknown,2026-10-24T18:43:50Z,,main,0,0,0,0
-2232,test(inbox): corrige seletor CSS do TtsButton — h-6.w-6 → h-8.w-8 [round2],claude/fix-unit-tests-ui-divergent-round2-261024-1541,False,unknown,2026-10-24T18:50:47Z,,main,0,0,0,0
-2233,"fix: corrige 3 falhas de Vitest (SL-070, HZ5-09, a11y TTS)",claude/fix-ci-tests-batch2-2610-1830,False,unknown,2026-10-24T19:34:43Z,,main,0,0,0,0
-2238,feat(message-delivery): carimbo do POST iniciado (PD-79) + codigo de erro estavel retryable/ambiguous (PD-80) [C110] [DECISAO HUMANA],claude/feat-message-delivery-post-iniciado-261024-1719,False,unknown,2026-10-24T20:40:41Z,,main,0,0,0,0
-2245,fix(talkx): corrige 4.007 falhas/30d do cron talkx-scheduler-1min,claude/fix-talkx-cron-startup-timeout-261025-1700,True,unknown,2026-10-25T10:56:46Z,,main,0,0,0,0
-2249,"fix: 3 falhas de testes unitários (HighContrastToggle, mock de canal Talk X, nome dos selects do editor)",claude/fix-testes-unitarios-minimo-251025-1230,True,unknown,2026-10-25T12:35:53Z,,main,0,0,0,0
-2255,chore: auditoria Supabase — relatório e progresso finais (2026-10-25),claude/chore-auditoria-supabase-final-251025-1655,False,unknown,2026-10-25T16:53:02Z,,main,0,0,0,0
-2265,fix: revoga grants de escrita do anon em public (CRITICAL-1),claude/fix-revogar-grants-escrita-anon-261025-2115,True,unknown,2026-10-25T21:06:08Z,,main,0,0,0,0
-2277,chore(db): GOAL backend — classifica 17 tabelas RLS + decide backups + prepara DROP _bkp_261023,claude_04/clever-ramanujan-xllbpo,False,unknown,2026-10-27T00:37:18Z,,main,0,0,0,0
-2279,fix(e2e): aumenta workers de 1→2 no CI para evitar timeout de 20 min,claude/fix-e2e-workers-ci-timeout-271027-0924,False,unknown,2026-10-27T09:26:37Z,,main,0,0,0,0
-2286,fix(edge-deploy): E09 — timestampBumped como evidência quando version não incrementa,claude/fix-stable-inventory-e09-261027-2359,False,unknown,2026-10-28T00:08:46Z,,main,0,0,0,0
-2297,feat: E70 — job 🦕 Edge contracts separado do node-scripts,claude/feat-e70-edge-contracts-job-281028-0305,False,unknown,2026-10-28T03:07:01Z,,main,0,0,0,0
-2354,"fix: corrigir 3 workflows com falha no CI (auto-update-pr-branch, settings-guard, db-guard)",claude/keen-galileo-dxai3p,False,unknown,2026-10-29T22:22:11Z,,main,0,0,0,0
-2372,chore: PENDENCIAS.md e RELATORIO_CI_FINAL.md — workflows bloqueados Regra 8,claude/fix-ci-workflows-261030-0830,False,unknown,2026-10-30T08:19:35Z,,main,0,0,0,0
-2383,fix(db): revoga privilégios estruturais de clientes públicos,codex/revoke-public-truncate-grants-20261030,False,unknown,2026-10-30T14:00:07Z,,main,0,0,0,0
-2384,fix(team-chat): accept emitted audit actions,codex/teamchat-audit-action-contract-20261030,False,unknown,2026-10-30T14:40:48Z,,main,0,0,0,0
-2386,fix(team-chat): scope direct member inserts to owners,codex/tcm-insert-member-a2-20261030,False,unknown,2026-10-30T16:33:50Z,,main,0,0,0,0
-2396,docs(resgate): dossiê hermes/telefonia + plano de coordenação e inventários de 31/10,claude/trusting-albattani-9x3ipg,False,unknown,2026-10-30T21:54:03Z,,main,0,0,0,0
-2397,Reset audit progress to new session baseline,claude/dreamy-bardeen-m4odyv,False,unknown,2026-10-30T21:57:01Z,,main,0,0,0,0
-2412,fix(ci): deno install --frozen=false + @types/node no deno.json,claude/fix-deploy-deno-frozen-v2,False,unknown,2026-10-31T03:20:31Z,,main,0,0,0,0
-2413,"docs(br): dossiês lote 1 — 3 branches analisadas (2 SUPERADA, 1 COBERTA)",claude/br-dossies-lote1-261031,False,unknown,2026-10-31T03:23:14Z,,main,0,0,0,0
-2414,docs: Auditoria Supabase completa com 47 achados e propostas de correção,claude/festive-faraday-kv669k,False,unknown,2026-10-31T03:23:23Z,,main,0,0,0,0
-2415,"docs(br): dossiês lote 2 — 5 branches analisadas (2 COBERTA, 3 INTEGRAR-LIMPO)",claude/br-dossies-lote2-261031,False,unknown,2026-10-31T03:26:52Z,,main,0,0,0,0
-2416,fix(ci): fixar fuso America/Sao_Paulo no vitest para testes timezone-dependentes,claude/fix-ci-workitem-tz-261025-1350,False,unknown,2026-10-31T03:26:59Z,,main,0,0,0,0
-2417,fix(tests): mocks clientHeight/clientWidth e spy HTMLElement para @tanstack/virtual-core >=3.19,claude/fix-unit-tests-inbox-261023-1108,False,unknown,2026-10-31T03:27:07Z,,main,0,0,0,0
-2418,docs: plano de correções e melhorias — 190 etapas (2026-10-19),claude/fix-plano-190-etapas-261019-1200,False,unknown,2026-10-31T03:27:10Z,,main,0,0,0,0
-2419,"feat(copilot): motor do RADAR no ai-jobs-worker, nascendo desligado (CV-021–045)",resolve-2381-from-main,False,unknown,2026-10-31T03:28:56Z,,main,0,0,0,0
-2420,feat: DDL 7 tabelas copiloto RADAR fases 13-15 (CV-121–CV-150),feat-copiloto-fases13-15-ddl-v2-311031,False,unknown,2026-10-31T03:32:31Z,,main,0,0,0,0
-2421,fix(docs): corrige required checks de 6 para 3 no CLAUDE.md (GR-011),claude/fix-gr011-required-checks-311031,False,unknown,2026-10-31T03:39:04Z,,main,0,0,0,0
-2422,docs(analise): lote 3 — 22 dossiês RADAR/Copiloto + progresso.json (31 entradas),claude/br-dossies-lote3-261031,False,unknown,2026-10-31T03:41:05Z,,main,0,0,0,0
-2423,feat(copilot): S3-018 migration merge_brinde_state RPC — CV-026 (20261031110000),feat-cv021-copilot-live-helpers-311031,False,unknown,2026-10-31T03:42:34Z,,main,0,0,0,0
-2424,feat(copilot): S3-019 migration colunas Fase 4 RADAR — CV-031/037-039 (20261031120000),feat-cv031-brinde-intelligence-311031,False,unknown,2026-10-31T03:42:38Z,,main,0,0,0,0
-2425,feat(search): S3-020 migration log_search_event RPC idempotente (20261031130000),feat-codex-search-event-rpc-311031,False,unknown,2026-10-31T03:42:42Z,,main,0,0,0,0
-2426,fix(ci): corrigir timeout do branch-hygiene-audit e baseline do Realtime,claude/hopeful-knuth-4brqti,False,unknown,2026-10-31T03:48:01Z,,main,0,0,0,0
-2427,feat(e2e): S3-024 migration GA11 — e2e_fixture_message RPC (resolve #2124),resolve-2124-from-main,False,unknown,2026-10-31T03:51:46Z,,main,0,0,0,0
-2428,fix(e2e): aguarda teclado visível antes do primeiro clique — Firefox GR-012,claude/fix-telefonia-firefox-gr012,False,unknown,2026-10-31T03:51:54Z,,main,0,0,0,0
-2429,docs(analise): dossiês lote 4 — BR-031..BR-055 (25 branches COBERTA),claude/br-dossies-lote4-261031,False,unknown,2026-10-31T03:53:01Z,,main,0,0,0,0
-2430,feat(talkx): adiciona p_segment_id à talkx_campaign_recipients_page (N-131) (S3-026),resolve-2190-from-main,False,unknown,2026-10-31T04:01:07Z,,main,0,0,0,0
-2431,fix(ci): docker-shim protege roles pg_*; setup.ts usa Element.prototype + clientHeight (S3-027),resolve-2199-from-main,False,unknown,2026-10-31T04:01:14Z,,main,0,0,0,0
-2432,fix(ci): retry HTTP 502/503/504 em fila-merge.mjs e actions-kpi.mjs,claude/fix-retry-http502-261031,False,unknown,2026-10-31T04:10:01Z,,main,0,0,0,0
-2433,fix(inbox): undo de arquivamento respeita constraint archived→open|pending,claude/archived-undo-constraint-fix,False,unknown,2026-10-31T04:16:38Z,,main,0,0,0,0
+numero,veredito,titulo,merge_commit_sha,merged_at,head_sha
+1930,AGUARDANDO_CI,,,,
+1997,BLOQUEADO_DDL_WORKFLOW,,,,
+2051,SKIP_WORKFLOWS,,,,
+2078,BLOQUEADO_CONFLITO,,,,
+2091,BLOQUEADO_CONFLITO,,,,
+2095,BLOQUEADO_CONFLITO,,,,
+2097,BLOQUEADO_CONFLITO,,,,
+2107,AGUARDANDO_CI,,,,
+2111,BLOQUEADO_CONFLITO,,,,
+2113,DRAFT_SKIP,,,,
+2137,BLOQUEADO_RLS_SEM_TESTE,,,,
+2146,AGUARDANDO_CI,,,,
+2206,DRAFT_SKIP,,,,
+2233,BLOQUEADO_CI,,,,
+2238,BLOQUEADO_DECISAO_HUMANA,,,,
+2245,DRAFT_SKIP,,,,
+2249,DRAFT_SKIP,,,,
+2265,DRAFT_SKIP,,,,
+2279,AGUARDANDO_CI,,,,
+2283,MERGEADA,fix: aumentar timeout do job E2E de 20 para 45 minutos,6271b716e08df80d21b6cfdbdfd9263ddb6e7acb,2026-10-27T20:04:29Z,
+2417,BLOQUEADO_CI,,,,
+2418,AGUARDANDO_CI,,,,
+2426,BLOQUEADO_CONFLITO,,,,
+2428,AGUARDANDO_CI,,,,
+2431,AGUARDANDO_CI,,,,
+2445,DRAFT_SKIP,,,,
+2447,MERGEADA,docs(ci): RELATORIO_CI.md e PENDENCIAS.md,3617a2acd517dcc9a6eaf2533cd256913e462c21,2026-11-01,,
+2457,INCOMPLETO,,,,
+2460,BLOQUEADO_DDL_FALTANDO,,,,
+2461,AGUARDANDO_CI_APOS_UPDATE,,,,93a3628e4a38867e41d830ce1402136720d383c3
+2462,AGUARDANDO_CI,,,,
+2463,AGUARDANDO_CI_APOS_UPDATE,,,,b3f7ab1f0d943cd08f0479c789eca21bc0a2c632
+2465,AGUARDANDO_CI,,,,
+2466,BLOQUEADO_AGUARDANDO_APROVACAO,,,,
+2468,SUPERSEDIDA,,,,
+2469,AGUARDANDO_CI,,,,
+2471,AGUARDANDO_CI,,,,
+2472,AGUARDANDO_CI,,,,
+2473,AGUARDANDO_CI,,,,
+2475,AGUARDANDO_CI,,,,
+2476,BLOQUEADO_AGUARDANDO_APROVACAO,,,,
+2478,AGUARDANDO_CI,,,,
+2479,AGUARDANDO_CI,,,,
+2480,AGUARDANDO_CI,,,,
+2481,BLOQUEADO_AGUARDANDO_APROVACAO,,,,
+2482,MERGEADA,docs(talkx): marca V4 como vigente e V3 como substituido (X001),3b5f8a96db0337af7310eec1b0dc5f86bb45912c,2026-11-01,,
+2483,AGUARDANDO_CI,,,,
+2484,AGUARDANDO_CI,,,,
+2485,AGUARDANDO_CI,,,,
+2486,AGUARDANDO_CI,,,,
+2487,BLOQUEADO_AGUARDANDO_APROVACAO,,,,
+2489,AGUARDANDO_CI,,,,
+2491,AGUARDANDO_CI,,,,
+2492,BLOQUEADO_CONFLITO,,,,
+2493,BLOQUEADO_FALSO_CLAUDE_MD,,,,
+2494,AGUARDANDO_CI_APOS_UPDATE,,,,
+2495,AGUARDANDO_CI,,,,
+2496,BLOQUEADO_AGUARDANDO_APROVACAO,,,,
+2497,SKIP_WORKFLOWS,,,,
+2498,AGUARDANDO_CI_APOS_UPDATE,,,,4e464ea872c896019b71306ec410b74fe72a0860
+2499,SKIP_WORKFLOWS,,,,
+2500,DRAFT_SKIP,,,,
+2501,AGUARDANDO_CI,,,,
+2502,DRAFT_SKIP,,,,
+2503,SKIP_WORKFLOWS,,,,
+2504,AGUARDANDO_CI,,,,
+2505,DRAFT_SKIP,,,,

@@ -1,18 +1,21 @@
 {
   "main_sha": "3617a2acd517dcc9a6eaf2533cd256913e462c21",
+  "main_sha_atual": "3b5f8a96db0337af7310eec1b0dc5f86bb45912c",
   "main_commit": "docs(ci): RELATORIO_CI.md e PENDENCIAS.md (#2447)",
   "data_baseline": "2026-10-31",
   "data_analise": "2026-11-01",
-  "total_prs_abertas": 63,
-  "drafts": 5,
-  "ci_baseline": "todos os 6 required checks verdes no SHA 004e74a8c5",
-  "typecheck_baseline": "0 erros",
-  "testes_baseline": "36 passed + 1 expected fail (37 total) no useInboxBulkActions",
-  "prs_analisadas": 7,
-  "prs_mergeadas": 1,
-  "status": "em_andamento",
-  "nota": "PR #2433 fechada pelo Joaquim — coberta por #2467. #2467: Não tocar. CI Gate usa check name '✅ CI Gate (required check)'. strict=true em main. Main SHA atual: 3617a2acd517dcc9a6eaf2533cd256913e462c21 (PR #2447 mergeada às 18:35:38Z).",
-  "check_in_2463": "DELETADO (já disparou)",
+  "total_prs_analisadas": 67,
+  "total_prs_abertas_no_inicio": 65,
+  "drafts": 9,
+  "ci_baseline": "todos os 6 required checks verdes no SHA 3617a2acd517dcc9a6eaf2533cd256913e462c21",
+  "typecheck_baseline": "3 erros pré-existentes (QueueAlertsDisplay.tsx TS17001 + useInboxFilters.type-url.test.tsx TS2353 x2)",
+  "lint_baseline": "813 problems (600 errors, 213 warnings) — todos pré-existentes",
+  "prs_analisadas": 67,
+  "prs_mergeadas_nesta_sessao": 2,
+  "prs_mergeadas_nesta_sessao_lista": ["#2447 (SHA 3617a2ac)", "#2482 (SHA 3b5f8a96)"],
+  "prs_aguardando_ci_gate": ["#2461 (SHA 93a3628e)", "#2463 (SHA b3f7ab1f)", "#2498 (SHA 5d855474)"],
+  "status": "aguardando_ci_gate",
+  "nota": "CI Gate não apareceu ainda para as 3 PRs (jobs queued/in_progress às 19:57Z). Merge manual quando CI Gate = SUCCESS. PR #2433 fechada pelo Joaquim — coberta por #2467. #2467: Não tocar. strict=true em main permanente.",
   "verdicts": {
     "2113": "DRAFT_SKIP",
     "2206": "DRAFT_SKIP",
@@ -22,11 +25,12 @@
     "2445": "DRAFT_SKIP",
     "2500": "DRAFT_SKIP",
     "2502": "DRAFT_SKIP",
+    "2505": "DRAFT_SKIP",
     "2233": "BLOQUEADO_CI",
     "2417": "BLOQUEADO_CI",
     "2463": "AGUARDANDO_CI_APOS_UPDATE",
     "2465": "AGUARDANDO_CI",
-    "2482": "AGUARDANDO_CI_APOS_UPDATE",
+    "2482": "MERGEADA",
     "2447": "MERGEADA",
     "2462": "AGUARDANDO_CI",
     "2501": "AGUARDANDO_CI",
@@ -79,42 +83,24 @@
     "2466": "BLOQUEADO_AGUARDANDO_APROVACAO",
     "2476": "BLOQUEADO_AGUARDANDO_APROVACAO",
     "2487": "BLOQUEADO_AGUARDANDO_APROVACAO",
-    "2496": "BLOQUEADO_AGUARDANDO_APROVACAO",
-    "2505": "DRAFT_SKIP"
+    "2496": "BLOQUEADO_AGUARDANDO_APROVACAO"
   },
-  "analise_diffs": {
-    "2463": {
-      "tipo": "fix/refactor",
-      "arquivos": 5,
-      "descricao": "Extrai lógica de acesso a dados de MediaMigrationTool para service (no-restricted-imports)",
-      "regressao": "NENHUMA",
-      "migracao": "nao",
-      "valida": true,
-      "ci_gate_last_known": "SUCCESS (eec06ea3ef), branch atualizada — aguardando novo CI"
-    },
-    "2465": {
-      "tipo": "docs",
-      "arquivos": 1,
-      "descricao": "Registra medição de baseline técnico de 01/11 em docs/consolidacao/BASELINE.md",
-      "regressao": "NENHUMA",
-      "migracao": "nao",
-      "valida": true
-    },
-    "2482": {
-      "tipo": "docs",
-      "arquivos": 2,
-      "descricao": "Marca V4 como vigente e V3 como substituído (X001 executada em 01/11)",
-      "regressao": "NENHUMA",
-      "migracao": "nao",
-      "valida": true
-    },
-    "2501": {
-      "tipo": "docs",
-      "arquivos": 1,
-      "descricao": "Marca E19/E20/E21 como [x] no plano de GitHub Actions",
-      "regressao": "NENHUMA",
-      "migracao": "nao",
-      "valida": true
-    }
+  "contagem_por_veredito": {
+    "MERGEADA": 3,
+    "AGUARDANDO_CI_APOS_UPDATE": 4,
+    "AGUARDANDO_CI": 26,
+    "DRAFT_SKIP": 9,
+    "BLOQUEADO_CONFLITO": 7,
+    "BLOQUEADO_AGUARDANDO_APROVACAO": 5,
+    "BLOQUEADO_CI": 2,
+    "SKIP_WORKFLOWS": 4,
+    "BLOQUEADO_DECISAO_HUMANA": 1,
+    "BLOQUEADO_DDL_FALTANDO": 1,
+    "BLOQUEADO_DDL_WORKFLOW": 1,
+    "BLOQUEADO_RLS_SEM_TESTE": 1,
+    "BLOQUEADO_FALSO_CLAUDE_MD": 1,
+    "INCOMPLETO": 1,
+    "SUPERSEDIDA": 1,
+    "TOTAL": 67
   }
 }
