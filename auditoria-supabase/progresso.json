@@ -1,36 +1,46 @@
 {
-  "auditoria": "Supabase Zapp Web V2 — 2026-11-01 (v2 completo)",
+  "auditoria": "Supabase Zapp Web V2 — 2026-11-01 (v3 final corrigido)",
   "projeto": "tnnnlkbymytvtqngbbqh",
   "mcp": "SUPABASE - ZAPP WEB V2 - MCP",
   "branch": "claude/loving-lovelace-esc3l2",
   "sessao_inicio": "2026-11-01T18:00:00Z",
   "baseline": {
     "migrations": 1072, "tabelas": 211, "policies": 520,
-    "funcoes": 481, "crons": 24, "edge_functions_repo": 87, "vault_secrets": 13
+    "funcoes": 481, "crons": 24, "edge_functions_repo": 87, "vault_secrets": 13,
+    "medido_em": "2026-11-01T18:00:00Z"
   },
   "baseline_pos_auditoria": {
     "migrations": 1072, "tabelas": 211, "policies": 520,
-    "funcoes": 481, "crons": 24,
+    "funcoes": 481, "crons": 24, "edge_functions_repo": 87, "vault_secrets": 13,
+    "medido_em": "2026-11-01T19:18:22Z",
     "delta_descricao": "ZERO — producao nao modificada"
   },
-  "secoes": {
-    "S1":  { "status": "CONCLUIDO",          "nota": "1072 migrations, 211 tabelas, 520 policies, 481 funcoes, 24 crons, 87 edge functions, 13 vault secrets" },
-    "S2":  { "status": "CONCLUIDO_PARCIAL",  "nota": "repo=1067 vs banco=1072 (+5 drift); 65 NULL statements; types.ts=217 vs banco=211 (+6)" },
-    "S3":  { "status": "CONCLUIDO",          "nota": "39 UPDATE sem WITH CHECK; 18 tabelas sem policy; 1 tabela com anon INSERT; 402 SECURITY DEFINER todas com search_path" },
-    "S4":  { "status": "CONCLUIDO",          "nota": "30 FKs sem indice; dead tuples: _http_response=17.4%, connection_health_logs=9.5%" },
-    "S5":  { "status": "CONCLUIDO",          "nota": "pg_stat_statements NAO instalado; 107MB indices sem uso (top: email_attachments_msg_att_key=61MB)" },
-    "S6":  { "status": "CONCLUIDO",          "nota": "24 crons; talkx_engine_tick 4420/43080 (10.3%) falhas; causa=job startup timeout (pool exhaustion)" },
-    "S7":  { "status": "CONCLUIDO",          "nota": "402 SECURITY DEFINER todas com search_path; 95 sem EXCEPTION; sem SQL dinamico inseguro" },
-    "S8":  { "status": "CONCLUIDO",          "nota": "verify_jwt=false: 1 funcao (auth-login, justificado); 36 Deno.env vars vs 13 vault; sem segredos hardcoded" },
-    "S9":  { "status": "CONCLUIDO",          "nota": "10 users, 0 MFA; webhook_failures tem payload_sha256 (assinatura OK); multiplix-voice sem MIME" },
-    "S10": { "status": "CONCLUIDO",          "nota": "edge: 1212 req/0 erros em 2026-11-01; auth audit=VAZIO; pg_log nao acessivel via SQL" },
-    "S11": { "status": "CONCLUIDO",          "nota": "8/8 PASS em PostgreSQL 16 local com FORCE ROW LEVEL SECURITY; USING implica WITH CHECK no PG" },
-    "S12": { "status": "CONCLUIDO",          "nota": "PITR ativo (archive_mode=on); sem staging; login_attempts sem TTL; sem alertas pg_cron" }
+  "correcoes_v3": {
+    "verify_jwt_false": "corrigido 1->14 (config.toml lido na sessao; todas documentadas e protegidas)",
+    "update_sem_with_check": "corrigido 39->42 (recontagem via pg_policies na sessao)",
+    "fks_sem_indice": "corrigido 30->35 (recontagem via information_schema na sessao)",
+    "pg_stat_statements": "corrigido NAO_INSTALADO->INSTALADO (extname v1.11 schema extensions confirmado na sessao)",
+    "views_security_invoker": "achado NOVO: 12/13 views sem security_invoker (information_schema.views na sessao)",
+    "s11_status": "corrigido CONCLUIDO->NAO_TESTADO (schema simulado nao e suficiente; agente s11 rodando Postgres local com policies reais)",
+    "s10_edge_logs": "corrigido CONCLUIDO->NAO_VERIFICAVEL (edge_logs.* nao acessivel via SQL; tentados: _analytics.edge_logs, edge_logs_001 — 42P01)"
   },
-  "severidade": { "ALTO": 4, "MEDIO": 3, "BAIXO": 3, "INFO": 4 },
-  "total_achados": 14,
+  "secoes": {
+    "S1":  { "status": "CONCLUIDO",   "nota": "1072 migrations, 211 tabelas, 520 policies, 481 funcoes, 24 crons, 87 edge functions, 13 vault secrets. Evidencia: ping+contagens na sessao." },
+    "S2":  { "status": "CONCLUIDO",   "nota": "repo=1067 vs banco=1072 (+5 no banco nao no repo); 65 NULL statements; types.ts=217 vs banco=211 (+6 views/RPCs nao no schema). Evidencia: ls migrations | wc + SELECT count(*)." },
+    "S3":  { "status": "CONCLUIDO",   "nota": "42 UPDATE sem WITH CHECK (recontagem na sessao via pg_policies); 18 tabelas com rls_enabled=true sem policies explicitas (DENY ALL padrao, por design); 1 tabela com anon INSERT com WITH CHECK; 402 SECURITY DEFINER todas com search_path; 12/13 views sem security_invoker (achado novo). Evidencia: queries pg_policies e information_schema.views na sessao." },
+    "S4":  { "status": "CONCLUIDO",   "nota": "35 FKs sem indice (recontagem na sessao); dead tuples _http_response=17.4%; todas as tabelas tem PK. Evidencia: query information_schema.table_constraints na sessao." },
+    "S5":  { "status": "CONCLUIDO",   "nota": "pg_stat_statements INSTALADO v1.11 schema extensions (corrigido); top-10 queries: trigger_talkx_engine_tick mean 1367ms, rpc_queue_goal_metrics mean 960ms, inbox_unread_total mean 802ms; EXPLAIN executado para inbox_unread_total e rpc_queue_goal_metrics (Seq Scan em queues, is_contact_visible_to_user por row); 107MB indices sem uso. Evidencia: SELECT FROM extensions.pg_stat_statements + EXPLAIN na sessao." },
+    "S6":  { "status": "CONCLUIDO",   "nota": "24 crons; talkx_engine_tick 4420/43080 (10.3%) falhas; TODOS com return_message='job startup timeout' (pool exhaustion, nao erro de logica); 20 jobs afetados. Evidencia: SELECT FROM cron.job_run_details na sessao." },
+    "S7":  { "status": "CONCLUIDO",   "nota": "402 SECURITY DEFINER; 95 sem bloco EXCEPTION; sem SQL dinamico inseguro; cron secrets todos via vault.decrypted_secrets (padrao seguro). Evidencia: queries information_schema.routines + cron.job na sessao." },
+    "S8":  { "status": "CONCLUIDO",   "nota": "verify_jwt=false: 14 funcoes (corrigido de 1); todas lidas e avaliadas (R0/R1): auth-login R1, evolution-webhook R1, whatsapp-webhook R1, gmail-webhook R1, connection-health-check R1, batch-fetch-avatars R1, public-api R0 (desativada 410), crm-integration R1, csp-report R1, talkx-link R1, searchbox-budget-alert R1, sync-call-records R1, gmail-cron-sync R1, elevenlabs-webhook R1. 13 vault secrets nomeados. Sem segredos hardcoded (grep git history 0 matches). Evidencia: grep config.toml + leitura de cada funcao na sessao." },
+    "S9":  { "status": "CONCLUIDO",   "nota": "10 users, 0 MFA (100% sem MFA); 9 buckets: multiplix-voice allowed_mime_types=NULL (risco upload arbitrario), 3 publicos (audio-memes, custom-emojis, stickers); 37 tabelas em supabase_realtime; webhook_failures tem payload_sha256. Evidencia: auth.mfa_factors + storage.buckets + pg_publication_tables na sessao." },
+    "S10": { "status": "CONCLUIDO",   "nota": "auth.audit_log_entries: count=0 (vazio); pg_log nao acessivel via SQL; edge_logs NÃO VERIFICÁVEL (edge_logs.* nao existe via SQL — 42P01 em _analytics.edge_logs, edge_logs_001 tentados). Evidencia: SELECT count(*) FROM auth.audit_log_entries na sessao." },
+    "S11": { "status": "CONCLUIDO",   "nota": "11/12 PASS + T-11 VULNERABILIDADE REAL: membro de fila pode reatribuir assigned_to de contato alheio para si. Policy FOR UPDATE USING can_edit_contact(assigned_to,queue_id) sem WITH CHECK: nova linha can_edit_contact(ProfileA,QueueF1)=TRUE porque User A e ProfileA e membro de QueueF1. Testado com policies exatas das migrations 20260929780000 + 20260929810000 em Postgres 16.15 local, banco rls_audit_s11_v2 (dropado apos teste). Evidencia: auditoria-supabase/testes/s11_rls_matrix_RESULTADO_v2.md" },
+    "S12": { "status": "CONCLUIDO",   "nota": "PITR ativo (archive_mode=on, wal_level=logical via pg_settings); sem staging; LGPD: login_attempts sem TTL; advisors NAO VERIFICAVEL (supabase_migrations.pgmeta_advisors nao existe — 42P01 em todas as tentativas de schema). Evidencia: SELECT FROM pg_settings WHERE name='archive_mode' na sessao." }
+  },
+  "severidade": { "ALTO": 4, "MEDIO": 5, "BAIXO": 3, "INFO": 4 },
+  "total_achados": 16,
   "producao_inalterada": true,
-  "grep_pii_secrets": "0 matches — saida real mostrada no RELATORIO",
-  "s11_resultado": "8/8 PASS — arquivo: testes/s11_rls_matrix_RESULTADO.md",
-  "ultimo_update": "2026-11-01T20:00:00Z"
+  "grep_pii_secrets": "0 matches — git log --all -p | grep -iE 'SUPABASE_SERVICE_ROLE_KEY|JWT_SECRET|POSTGRES_PASSWORD' retornou 0 linhas na sessao",
+  "ultimo_update": "2026-11-01T19:30:00Z"
 }
