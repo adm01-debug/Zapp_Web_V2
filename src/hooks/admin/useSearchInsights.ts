@@ -2,11 +2,11 @@
  * useSearchInsights
  *
  * HZ1-06: números da busca global para a tela de admin "Insights de Busca".
- * Faz UMA consulta à RPC `search_insights(p_days)` (migration
- * 20261031130000) e normaliza o jsonb para a tela.
+ * Faz UMA consulta à RPC `search_insights(p_days)` e normaliza a linha
+ * retornada para a tela.
  *
- * Sem PII: a RPC lê apenas `search_events.term_normalized` (nada de contato,
- * telefone ou conteúdo de conversa).
+ * Sem PII: a RPC lê apenas contadores agregados de `search_events`; o texto
+ * da busca nunca é armazenado (privacidade por design da migration 20261031130000).
  * Visibilidade: quem barra é a própria RPC — ela nega quem não é admin/supervisor
  * (42501). O hook não acrescenta nem contorna recorte de papel.
  */
@@ -52,21 +52,24 @@ function toTerms(value: unknown): SearchInsightTerm[] {
   });
 }
 
-/** Normaliza o jsonb da RPC: campo ausente ou de tipo inesperado vira 0/[] em vez de quebrar a tela. */
-export function parseSearchInsights(raw: unknown): SearchInsights {
-  const data = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  const clickRate = typeof data.click_rate === 'number' && Number.isFinite(data.click_rate)
-    ? data.click_rate
-    : 0;
+/** Normaliza a linha de TABLE retornada pela RPC (array de um elemento) para a tela. */
+export function parseSearchInsights(raw: unknown, days: number): SearchInsights {
+  // RPC usa RETURNS TABLE → Supabase entrega [{…}]; extraímos a única linha.
+  const row = Array.isArray(raw) && raw.length > 0 ? raw[0] : raw;
+  const data = (row && typeof row === 'object' ? row : {}) as Record<string, unknown>;
+
+  const total = toCount(data.total_searches);
+  const clicks = toCount(data.searches_with_click);
+  const clickRate = total > 0 ? clicks / total : 0;
 
   return {
-    days: toCount(data.days),
-    total: toCount(data.total),
-    noResults: toCount(data.no_results),
-    clicks: toCount(data.clicks),
+    days,
+    total,
+    noResults: toCount(data.searches_without_results),
+    clicks,
     clickRate,
-    topQueries: toTerms(data.top_queries),
-    noResultTerms: toTerms(data.no_result_terms),
+    topQueries: [],
+    noResultTerms: [],
   };
 }
 
@@ -78,8 +81,7 @@ export class SearchInsightsError extends Error {
 }
 
 async function fetchSearchInsights(days: number): Promise<SearchInsights> {
-  // A RPC `search_insights` foi criada na migration 20261031130000.
-  // O cast manual permanece até o types.ts incluir a função gerada;
+  // O cast manual permanece até o types.ts incluir search_insights;
   // quando incluir, substituir por supabase.rpc('search_insights', { p_days: days }).
   const rpc = supabase.rpc.bind(supabase) as unknown as (
     fn: 'search_insights',
@@ -88,7 +90,7 @@ async function fetchSearchInsights(days: number): Promise<SearchInsights> {
 
   const { data, error } = await rpc('search_insights', { p_days: days });
   if (error) throw new SearchInsightsError(error.message);
-  return parseSearchInsights(data);
+  return parseSearchInsights(data, days);
 }
 
 export function useSearchInsights(days: SearchInsightsPeriod = DEFAULT_SEARCH_INSIGHTS_PERIOD) {
