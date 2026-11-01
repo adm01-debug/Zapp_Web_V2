@@ -17,7 +17,7 @@
 --   copilot_outcomes           INSERT/SELECT  -- vendedor pode gravar e ler
 --   copilot_objection_catalog  INSERT/SELECT  -- vendedor pode gravar e ler
 --   copilot_usage              INSERT/SELECT  -- vendedor pode gravar e ler
---   copilot_seller_settings    INSERT/SELECT/UPDATE -- vendedor pode gravar, ler e editar proprias settings
+--   copilot_seller_settings    INSERT/SELECT/UPDATE -- vendedor pode gravar, ler e editar (policy nao isola por linha: USING(true))
 --   copilot_help_requests      INSERT/SELECT  -- vendedor pode gravar e ler
 --   copilot_learning_moments   SELECT         -- vendedor pode ler (so nao pode inserir)
 --   copilot_conversation_scores INSERT/SELECT -- vendedor pode inserir e ler (so nao pode atualizar)
