@@ -707,10 +707,16 @@ export async function handleMessageDeliveryRequest(
     const instanceToken = await resolveInstanceToken(service, claim.whatsapp_instance_name) ?? undefined;
     // PD-79: carimbo durável antes do POST — fencing contra reenvio após lease vencido.
     // Falha aqui = infra pré-dispatch: nada saiu, sem ambiguidade.
-    const { error: markError } = await service.rpc('mark_outbound_post_started', {
-      p_message_id: claim.message_id,
-      p_claim_token: claim.claim_token,
-    });
+    // Erro da RPC E exceção (rede/cliente) são a mesma coisa: sem carimbo, sem POST.
+    let markError: unknown = null;
+    try {
+      ({ error: markError } = await service.rpc('mark_outbound_post_started', {
+        p_message_id: claim.message_id,
+        p_claim_token: claim.claim_token,
+      }));
+    } catch (markThrown) {
+      markError = markThrown ?? new Error('mark_outbound_post_started_threw');
+    }
     if (markError) throw new PreDispatchInfraError('mark_outbound_post_started_failed');
     providerPostAttempted = true;
     const providerResponse = await deliverOutbound(

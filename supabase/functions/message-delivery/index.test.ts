@@ -492,7 +492,7 @@ Deno.test('PD-80: classifyProviderFailure é a fonte única do código por ramo'
   assertEqual(classifyProviderFailure(429, {}).code, 'rate_limited', '429');
   assertEqual(classifyProviderFailure(500, {}).code, 'provider_unavailable', '500');
   assertEqual(classifyProviderFailure(400, { message: 'no such user' }).code, 'invalid_number', '400 numero');
-  assertEqual(classifyProviderFailure(503, { message: 'Connection Closed' }).code, 'provider_unavailable', '503 instancia');
+  assertEqual(classifyProviderFailure(503, { message: 'Connection Closed' }).code, 'instance_unavailable', '503 instancia (marca no corpo vence o status)');
   assertEqual(classifyProviderFailure(400, { message: 'recipient blocked you' }).code, 'provider_rejected', '400 recusa');
   assertEqual(classifyProviderFailure(500, {}).ambiguous, true, '500 ambiguo');
   assertEqual(classifyProviderFailure(422, { message: 'no such user' }).ambiguous, false, '422 nao ambiguo');
@@ -777,4 +777,127 @@ Deno.test('PD-80 [merge main/E15]: o handler continua entregando com o token da 
   assertEqual(rpcArgs(client, 'get_instance_token')?.p_instance_id, 'inst-token-test', 'get_instance_token p_instance_id');
   if (!seenPath) throw new Error('evoFetch não foi chamado');
   resetInstanceTokenCache();
+});
+
+// ── PD-79: carimbo durável do POST iniciado (mark_outbound_post_started) ─────
+// Fail-closed: o carimbo precisa existir ANTES do POST ao provedor. Sem ele, um
+// envio que cai depois do POST seria reivindicado de novo com o lease vencido e
+// duplicaria a mensagem do cliente.
+
+/** Cliente fake que registra a ORDEM entre o carimbo (RPC) e o POST (provedor). */
+function makeOrderedClient(cfg: Parameters<typeof makeClient>[0]) {
+  const events: string[] = [];
+  const inner = makeClient(cfg);
+  const client: FakeClient = {
+    ...inner,
+    async rpc(fn: string, args?: Row) {
+      events.push(`rpc:${fn}`);
+      return inner.rpc(fn, args);
+    },
+  };
+  return { client, events, inner };
+}
+
+Deno.test('PD-79: carimbo ok -> chama mark_outbound_post_started com id+token ANTES do POST e envia', async () => {
+  const { client, events } = makeOrderedClient({ claim: { data: [CLAIM], error: null } });
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    events.push('provider:post');
+    return jsonOf(200, { key: { id: 'wamid.provider-1' } });
+  }));
+  assertStatus(response.status, 200);
+  const body = await response.json() as Row;
+  assertEqual(body.status, 'sent', 'status');
+  const args = rpcArgs(client, 'mark_outbound_post_started');
+  if (!args) throw new Error('mark_outbound_post_started não foi chamado');
+  assertEqual(args.p_message_id, MESSAGE_ID, 'mark p_message_id');
+  assertEqual(args.p_claim_token, 'token-1', 'mark p_claim_token');
+  assertEqual(events.filter((e) => e === 'provider:post').length, 1, 'POST ao provedor exatamente 1x');
+  const markAt = events.indexOf('rpc:mark_outbound_post_started');
+  const postAt = events.indexOf('provider:post');
+  const completeAt = events.indexOf('rpc:complete_outbound_message');
+  if (!(markAt >= 0 && markAt < postAt && postAt < completeAt)) {
+    throw new Error(`ordem inválida (esperado mark < POST < complete): ${events.join(' > ')}`);
+  }
+  assertEqual(rpcCalled(client, 'fail_outbound_message'), false, 'fail_outbound_message não chamado');
+});
+
+Deno.test('PD-79: carimbo falha (erro da RPC) -> NÃO envia, libera o claim e devolve 503 estável não ambíguo', async () => {
+  const { client } = makeOrderedClient({
+    claim: { data: [CLAIM], error: null },
+    rpcErrors: { mark_outbound_post_started: { code: 'XX000', message: 'db down SECRET-DETAIL' } },
+  });
+  let providerCalled = false;
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    providerCalled = true;
+    return jsonOf(200, { key: { id: 'wamid.provider-1' } });
+  }));
+  assertEqual(providerCalled, false, 'provedor NÃO pode ser chamado sem o carimbo');
+  assertStatus(response.status, 503);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'provider_unavailable', 'code');
+  assertEqual(body.retryable, true, 'retryable');
+  assertEqual(body.ambiguous, false, 'ambiguous');
+  if (JSON.stringify(body).includes('SECRET-DETAIL')) throw new Error('resposta vazou texto do erro da RPC');
+  assertFailClaim(client);
+  assertEqual(rpcCalled(client, 'complete_outbound_message'), false, 'complete_outbound_message não chamado');
+  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'nada saiu: sem reconciliação');
+});
+
+Deno.test('PD-79: carimbo lança exceção -> NÃO envia e devolve o mesmo 503 estável', async () => {
+  const { client } = makeOrderedClient({
+    claim: { data: [CLAIM], error: null },
+    rpcThrows: ['mark_outbound_post_started'],
+  });
+  let providerCalled = false;
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    providerCalled = true;
+    return jsonOf(200, { key: { id: 'wamid.provider-1' } });
+  }));
+  assertEqual(providerCalled, false, 'provedor NÃO pode ser chamado sem o carimbo');
+  assertStatus(response.status, 503);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'provider_unavailable', 'code');
+  assertEqual(body.ambiguous, false, 'ambiguous');
+  assertFailClaim(client);
+});
+
+Deno.test('PD-79: mensagem já carimbada com lease vencido (claim vazio) -> NÃO reenvia, ambígua, sem nova marcação', async () => {
+  // A claim_outbound_message devolve 0 linhas para carimbada+lease vencido; o
+  // handler lê a linha e precisa tratar como ambígua, NUNCA tentar enviar de novo.
+  const { client } = makeOrderedClient({
+    claim: { data: [], error: null },
+    messages: [{ data: {
+      agent_id: 'profile-1', sender: 'agent', status: 'sending', external_id: null,
+      contact_id: 'contact-1', whatsapp_connection_id: 'conn-1',
+      delivery_post_started_at: '2026-11-01T12:00:00Z',
+    }, error: null }],
+    // Conexão fora do ar: o carimbo vence a classificação de conexão/número.
+    contacts: [{ data: { phone: CONTACT_PHONE, whatsapp_connection_id: 'conn-1' }, error: null }],
+    connections: [{ data: { status: 'disconnected', instance_id: 'inst-1' }, error: null }],
+  });
+  let providerCalled = false;
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    providerCalled = true;
+    return jsonOf(200, { key: { id: 'wamid.dup' } });
+  }));
+  assertEqual(providerCalled, false, 'provedor NÃO pode ser chamado de novo');
+  assertStatus(response.status, 502);
+  const body = await response.json() as Row;
+  assertEqual(body.code, 'receipt_unconfirmed', 'code');
+  assertEqual(body.retryable, false, 'retryable');
+  assertEqual(body.ambiguous, true, 'ambiguous');
+  assertEqual(rpcCalled(client, 'mark_outbound_post_started'), false, 'sem nova marcação');
+  assertEqual(rpcCalled(client, 'fail_outbound_message'), false, 'não devolve a linha para a fila');
+  assertEqual(rpcCalled(client, 'complete_outbound_message'), false, 'complete_outbound_message não chamado');
+});
+
+Deno.test('PD-79: auth continua antes de tudo — sem token nem o claim nem o carimbo são tentados', async () => {
+  const { client } = makeOrderedClient({ claim: { data: [CLAIM], error: null } });
+  const deps = makeDeps(client, async () => jsonOf(200, {}));
+  const response = await handleMessageDeliveryRequest(postRequest(), {
+    ...deps,
+    requireAuth: async () => new Response('unauthorized', { status: 401 }),
+  });
+  assertStatus(response.status, 401);
+  assertEqual(client.rpcCalls.length, 0, 'nenhuma RPC antes da autenticação');
 });
