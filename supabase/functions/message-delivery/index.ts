@@ -492,4 +492,8 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
       await enqueueDeliveryReconciliation(service, claim, externalId);
     }
     console.error(JSON.stringify({ event: 'message_delivery_exception', code: error instanceof Error ? error.message : 'unknown' }));
-    return errorResponM” 5•ÍÍ…”‘•±¥Ù•Éä™…¥±•œ°€ÔÀÈ°É•Ä¤ì(€ô)ô()¥˜€¡¥µÁ½ÉÐ¹µ•Ñ„¹µ…¥¸¤•¹¼¹Í•ÉÙ”¡¡…¹‘±•5•ÍÍ…••±¥Ù•ÉåI•ÅÕ•ÍÐ¤ì(
+    return errorResponse('Message delivery failed', 502, req);
+  }
+}
+
+if (import.meta.main) Deno.serve(handleMessageDeliveryRequest);
