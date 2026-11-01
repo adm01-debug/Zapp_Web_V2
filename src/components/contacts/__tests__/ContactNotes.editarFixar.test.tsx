@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { toast } from 'sonner';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
 import { ContactNotes } from '../ContactNotes';
+import { TestQueryWrapper } from '@/test/mocks/queryClient';
+import { toast as toastHook } from '@/hooks/ui/use-toast';
 
 /**
  * CT-B (paridade V3 -> V2) — a ficha do contato (ContactDetailPanel → ContactNotes)
@@ -14,26 +14,25 @@ import { ContactNotes } from '../ContactNotes';
  * A policy `contact_notes_update_policy` (migration
  * 20260909200000_harden_inbox_contact_authorization.sql) só alcança a nota cujo
  * `author_id = get_profile_id_for_user(auth.uid())`: editar/fixar nota de colega
- * altera ZERO linhas e o PostgREST responde 204 vazio. Por isso o componente pede
- * a linha de volta (`select('id')`) antes de mexer na tela.
+ * altera ZERO linhas. A tela grava pelo `useContactNotes` (`editNote`/`togglePin` →
+ * `ContactService.updateNote`, que pede a linha de volta com `.select().single()`): sem linha
+ * alterada o PostgREST devolve PGRST116, a mutação falha e o toast de erro é do hook.
  */
 
 const h = vi.hoisted(() => ({
   myProfileId: 'profile-me' as string | null,
   notes: [] as Array<Record<string, unknown>>,
   profiles: [] as Array<Record<string, unknown>>,
-  /** Vazio = simula PGRST116 (zero linhas afetadas pelo .single()). */
-  updateRows: [{ id: 'x' }] as Array<{ id: string }>,
+  /** false = RLS não alcança a nota: o UPDATE altera zero linhas. */
+  updateAllowed: true,
   updateCalls: [] as Array<{ id: string; patch: Record<string, unknown> }>,
 }));
-const useToastSpy = vi.hoisted(() => vi.fn());
 
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: h.myProfileId ? { id: h.myProfileId } : null }),
 }));
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
-vi.mock('@/hooks/ui/use-toast', () => ({ toast: useToastSpy, useToast: () => ({ toast: useToastSpy }) }));
 
 vi.mock('@/integrations/supabase/client', () => {
   const buildQuery = (table: string) => {
@@ -42,6 +41,8 @@ vi.mock('@/integrations/supabase/client', () => {
       _table: table,
       _filters: {} as Record<string, unknown>,
       _patch: null as Record<string, unknown> | null,
+      _orders: [] as Array<{ col: string; asc: boolean }>,
+      _range: null as [number, number] | null,
     };
     q.select = vi.fn(() => q);
     q.insert = vi.fn(() => q);
@@ -50,31 +51,50 @@ vi.mock('@/integrations/supabase/client', () => {
       return q;
     });
     q.in = vi.fn(() => q);
-    q.order = vi.fn(() => q);
-    q.limit = vi.fn(() => q);
-    q.range = vi.fn(() => q);
+    q.order = vi.fn((col: string, opts?: { ascending?: boolean }) => {
+      (q._orders as Array<{ col: string; asc: boolean }>).push({ col, asc: opts?.ascending ?? true });
+      return q;
+    });
+    q.range = vi.fn((from: number, to: number) => {
+      q._range = [from, to];
+      return q;
+    });
     q.single = vi.fn(() => q);
     q.update = vi.fn((patch: Record<string, unknown>) => {
       q._op = 'update';
       q._patch = patch;
       return q;
     });
-    // A consulta é "thenable": o componente faz `await supabase.from(...)....`.
+    // A consulta é "thenable": o serviço faz `await supabase.from(...)....`.
     q.then = (onOk: (v: unknown) => unknown, onErr?: (e: unknown) => unknown) => {
       let result: unknown;
       if (q._op === 'update') {
         const id = String((q._filters as Record<string, unknown>).id);
-        const patch = q._patch as Record<string, unknown>;
-        h.updateCalls.push({ id, patch });
-        if (h.updateRows.length === 0) {
-          // Simula .single() com 0 linhas afetadas (RLS bloqueou) → PGRST116
-          result = { data: null, error: { message: 'no rows returned', code: 'PGRST116' } };
+        h.updateCalls.push({ id, patch: q._patch as Record<string, unknown> });
+        const row = h.notes.find((n) => n.id === id);
+        if (h.updateAllowed && row) {
+          // Não muta o objeto original (as constantes dos testes são compartilhadas).
+          const atualizada = { ...row, ...(q._patch as Record<string, unknown>) };
+          h.notes = h.notes.map((n) => (n.id === id ? atualizada : n));
+          result = { data: atualizada, error: null };
         } else {
-          h.notes = h.notes.map((n) => (n.id === id ? { ...n, ...patch } : n));
-          result = { data: h.notes.find((n) => n.id === id) ?? null, error: null };
+          // RLS: UPDATE em nota de outro autor altera ZERO linhas; `.single()` vira PGRST116.
+          result = { data: null, error: { code: 'PGRST116', message: 'JSON object requested, multiple (or no) rows returned' } };
         }
       } else if (table === 'contact_notes') {
-        result = { data: h.notes, error: null };
+        const orders = q._orders as Array<{ col: string; asc: boolean }>;
+        const val = (row: Record<string, unknown>, col: string): number | string =>
+          col === 'is_pinned' ? Number(row[col] === true) : String(row[col] ?? '');
+        const rows = [...h.notes].sort((a, b) => {
+          for (const { col, asc } of orders) {
+            const va = val(a, col);
+            const vb = val(b, col);
+            if (va !== vb) return (va < vb ? -1 : 1) * (asc ? 1 : -1);
+          }
+          return 0;
+        });
+        const range = q._range as [number, number] | null;
+        result = { data: range ? rows.slice(range[0], range[1] + 1) : rows, error: null };
       } else {
         result = { data: h.profiles, error: null };
       }
@@ -91,8 +111,10 @@ vi.mock('@/integrations/supabase/client', () => {
   };
 });
 
+vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn(), useToast: () => ({ toast: vi.fn() }) }));
+
 const toastSuccess = vi.mocked(toast.success);
-const toastError = vi.mocked(toast.error);
+const toastErroDoHook = vi.mocked(toastHook);
 
 const NOTA_MINHA = {
   id: 'nota-minha',
@@ -116,13 +138,6 @@ const NOTA_COLEGA = {
   is_pinned: false,
 };
 
-function wrapper({ children }: { children: React.ReactNode }) {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } },
-  });
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-}
-
 /** Cartão da nota na lista (o motion.div que envolve autor + conteúdo + ações). */
 function cartao(texto: string): HTMLElement {
   return screen.getByText(texto).closest('.group') as HTMLElement;
@@ -133,7 +148,7 @@ function cartoesEmOrdem(): HTMLElement[] {
 }
 
 async function abrir() {
-  render(<ContactNotes contactId="contato-1" />, { wrapper });
+  render(<ContactNotes contactId="contato-1" />, { wrapper: TestQueryWrapper });
   await screen.findByText('Minha nota');
 }
 
@@ -145,7 +160,7 @@ beforeEach(() => {
     { id: 'profile-me', name: 'Íris' },
     { id: 'profile-colega', name: 'Colega' },
   ];
-  h.updateRows = [{ id: 'x' }];
+  h.updateAllowed = true;
   h.updateCalls = [];
 });
 
@@ -207,12 +222,12 @@ describe('ContactNotes · editar e fixar (ficha do contato)', () => {
 
     expect(screen.getByText('Descartar as alterações não salvas?')).toBeInTheDocument();
 
-    // "Continuar editando" manté o rascunho e nada é gravado.
+    // "Continuar editando" mantém o rascunho e nada é gravado.
     fireEvent.click(screen.getByText('Continuar editando'));
     expect(screen.getByRole('textbox', { name: 'Editar nota' })).toHaveValue('rascunho');
     expect(h.updateCalls).toHaveLength(0);
 
-    // "Descartar" abandona a edição sem gravar e o texto original volta para a lista.
+    // "Descartar" abandona a edição sem gravar e o texto original segue na lista.
     fireEvent.keyDown(screen.getByRole('textbox', { name: 'Editar nota' }), { key: 'Escape' });
     fireEvent.click(screen.getByText('Descartar'));
     expect(screen.queryByRole('textbox', { name: 'Editar nota' })).toBeNull();
@@ -252,15 +267,15 @@ describe('ContactNotes · editar e fixar (ficha do contato)', () => {
     expect(toastSuccess).toHaveBeenCalledWith('Nota desafixada');
   });
 
-  it('UPDATE {sem linha alterada (RLS preserva a nota do colega): não muda o texto e o erro é explícito', async () => {
-    h.updateRows = [];
+  it('UPDATE sem linha alterada (RLS preserva a nota): não muda o texto e o erro é explícito', async () => {
+    h.updateAllowed = false;
     await abrir();
 
     fireEvent.click(within(cartao('Minha nota')).getByRole('button', { name: 'Editar nota' }));
-    fireEvent.change(screen.getByRole('textbox', { name: 'Editar nota' }), { target: { value: 'Texto novo'} });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Editar nota' }), { target: { value: 'Texto novo' } });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
-    await waitFor(() => expect(useToastSpy).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' })));
+    await waitFor(() => expect(toastErroDoHook).toHaveBeenCalledWith(expect.objectContaining({ title: 'Erro ao atualizar nota', variant: 'destructive' })));
     expect(toastSuccess).not.toHaveBeenCalled();
     expect(h.updateCalls).toEqual([{ id: 'nota-minha', patch: { content: 'Texto novo' } }]);
     // Nada mudou no estado: o editor segue aberto com o rascunho para o autor
