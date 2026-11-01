@@ -21,11 +21,11 @@ partir do código e falha quando:
 
 | Grupo | Edges |
 |---|---|
-| A | 54 |
+| A | 55 |
 | B | 1 |
 | C | 3 |
 | D | 6 |
-| E | 28 |
+| E | 27 |
 | **total** | **92** |
 
 ## Tabela
@@ -43,7 +43,7 @@ partir do código e falha quando:
 | `ai-deadline-calculator` | E | — sem chamador no repositório — |
 | `ai-lead-temperature` | E | — sem chamador no repositório — |
 | `ai-loss-risk` | E | — sem chamador no repositório — |
-| `ai-multimodal-analysis` | E | — sem chamador no repositório — |
+| `ai-multimodal-analysis` | A | `src/hooks/copilot/useMultimodalAnalysis.ts:50` |
 | `ai-objection-handler` | E | — sem chamador no repositório — |
 | `ai-price-anchor` | E | — sem chamador no repositório — |
 | `ai-product-recommendation` | E | — sem chamador no repositório — |
@@ -125,7 +125,7 @@ partir do código e falha quando:
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:79` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
-## Órfãs (28) — GATE B
+## Órfãs (27) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador ext de
@@ -158,7 +158,6 @@ mantém a lista honesta.
 - `ai-deadline-calculator`
 - `ai-lead-temperature`
 - `ai-loss-risk`
-- `ai-multimodal-analysis`
 - `ai-objection-handler`
 - `ai-price-anchor`
 - `ai-product-recommendation`
