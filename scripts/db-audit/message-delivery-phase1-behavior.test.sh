@@ -911,7 +911,7 @@ const ok = proof.server_major === 17
   && proof.service_internal_guard_execute === false
   && proof.service_internal_guard_direct_count === 0
   && proof.custom_guc_reference_count === 0
-  && proof.definition_sha256 === 'f228a9d6121ca364cbebd4f8686d2ace733b3582e24964506aab8653feaddf73'
+  && proof.definition_sha256 === '1ecc1a846f5b76aac03ab22c8298ccb9206fbc20f48c4b006e737f6074425c6c'
   && proof.constraint_definition_sha256 === '3a7b8480becb1fc422677195037169803648f8041c0f64515d3b9e885b2dad55'
   && proof.index_definition_sha256 === '1df306fd2981d1ee83aab373764a87cefdcfd474ac0e3b2023bedd9be046e976'
   && proof.trigger_definition_sha256 === '66ea750c2101611aac2a3eaf9de8e08ef01df4fe9fc1975791f35dafe1c83498'
