@@ -46,7 +46,7 @@
     },
     "20261001351230_f51a_multiplix_confirm_dispatch_fn.sql": {
       "categoria": "nao-idempotente-inerte",
-      "motivo": "function multiplex_confirm_dispatch already exists. Canonico: a funcao existe. CREATE sem OR REPLACE. Efeito real: nenhum."
+      "motivo": "function multiplix_confirm_dispatch already exists. Canonico: a funcao existe. CREATE sem OR REPLACE. Efeito real: nenhum."
     },
     "20260910100000_restrict_talkx_blacklist_update_policy.sql": {
       "categoria": "ordem-idempotencia",
