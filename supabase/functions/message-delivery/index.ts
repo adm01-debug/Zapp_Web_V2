@@ -700,13 +700,14 @@ export async function handleMessageDeliveryRequest(
     try { providerData = raw ? JSON.parse(raw) : null; } catch { /* provider response is invalid */ }
 
     if (!providerResponse.ok) {
-      // C110: não marcar failed — POST foi iniciado, a supervisora resolve
-      // manualmente. failClaim com delivery_post_started_at setado esconderia
-      // a mensagem da query de reconciliação (que exclui status 'failed').
       const failure = classifyProviderFailure(providerResponse.status, providerData ?? raw);
-      // 5xx e timeout (408/425): o provedor pode ter aceitado → efeito INCERTO.
-      // 4xx definitive: mas mesmo assim o POST foi iniciado — reconciliar.
-      await enqueueDeliveryReconciliation(service, claim, null);
+      if (failure.ambiguous) {
+        // POST efeito incerto (408/425/5xx): o provedor pode ter processado — reconciliar.
+        await enqueueDeliveryReconciliation(service, claim, null);
+      } else {
+        // Rejeição definitiva (4xx): o provedor não processou o envio — marcar failed.
+        await failClaim(service, claim);
+      }
       console.error(JSON.stringify({ event: 'message_delivery_provider_error', status: providerResponse.status, code: failure.code }));
       return deliveryFailureResponse(failure, req);
     }
