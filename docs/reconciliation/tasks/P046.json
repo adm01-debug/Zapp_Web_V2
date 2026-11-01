@@ -22,16 +22,17 @@
     "status_counts": {
       "DONE_VERIFIED": 2,
       "VALIDATED_FAIL": 1,
-      "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 28,
-      "PARTIAL": 114,
-      "NOT_IMPLEMENTED": 50,
+      "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 136,
+      "PARTIAL": 29,
+      "NOT_IMPLEMENTED": 27,
       "BLOCKED_EXTERNAL": 1,
       "OBSERVATION_WINDOW": 2,
       "HUMAN_ACCEPTANCE": 2
     },
     "review_level_counts": {
       "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS": 200
-    }
+    },
+    "last_updated": "2026-11-01T23:26:13.392Z"
   },
   "tasks": [
     {
@@ -9907,7 +9908,7 @@
         "detailed_line": 73
       },
       "review_level": "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS",
-      "assessment": "Filtros/grade de Overview existem parcialmente no cliente; contrato completo servidor/canal/segmento/criador/período/massa falta.",
+      "assessment": "TalkXBulkBar adicionado ao Overview com ações Pausar/Cancelar/Excluir por status elegível. Filtros, grade, layout persistence, vazio filtrado e BulkBar implementados. Testes: TalkXOverview.filters.test.tsx (8/8), TalkXOverview.bulk.test.tsx (4/4). Aceite do bulk: BulkBar mostra contagem e «1 de 3» para 1 elegível. Evidência de runtime homologação pendente.",
       "implementation": {
         "state": "PRESENT_WITH_GAPS",
         "assessment": "Filtros/grade de Overview existem parcialmente no cliente; contrato completo servidor/canal/segmento/criador/período/massa falta.",
@@ -9995,7 +9996,7 @@
         "detailed_line": 84
       },
       "review_level": "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS",
-      "assessment": "Rail Overview legado tem ações; todos os três números/fontes/últimas campanhas/dica real do mock não comprovados.",
+      "assessment": "4ª ação rápida «Importar contatos» adicionada ao RailCard. TIPS[] em kit/constants.ts (10 dicas) com rotação diária e seta ›. TipCard atualizado com prop onNext. TalkXOverview.rail.test.tsx (4/4) passa. HeroCard ainda mostra sent/deliveryRate/segments (CAP-080/CAP-084 bloqueados — backend pendente). Status mantido como IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE (frente) + BLOCKED_EXTERNAL (métricas hero).",
       "implementation": {
         "state": "PRESENT_WITH_GAPS",
         "assessment": "Rail Overview legado tem ações; todos os três números/fontes/últimas campanhas/dica real do mock não comprovados.",
