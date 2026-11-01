@@ -571,7 +571,7 @@ Módulo em desenvolvimento ativo. **Plano vigente:** `docs/talkx/PLANO_TALKX_V4_
 (200 etapas X001–X200). Os planos anteriores (`PLANO_IMPLEMENTACAO_TALKX_100.md`,
 `PLANO_RECUPERACAO_100_ETAPAS_2026-09-11.md`, `PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md` e
 `PARIDADE.md`) estão marcados como SUBSTITUÍDO — não executar.
-- Convenção V4: uma etapa = uma PR; branch `<agente>/<tipo>-talkx-x<NNN>-<slug>-<AAMMDD-HHMM>`; título de
+- Convenção V4: uma etapa = uma PR; branch `<agente>/<tipo>-talkx-x<NNN>-<slug>-<AAMMDD-HHMM>`; branch `<agente>/<tipo>-talkx-x<NNN>-<slug>-<AAMMDD-HHMM>`; título de
   PR terminando em `(X<NNN>)`. Etapa do V3 em curso (PR aberta) termina pelo número V4 equivalente da tabela
   "V3 → V4" do plano.
 - **NUNCA** imprimir tokens ou secrets no output.
