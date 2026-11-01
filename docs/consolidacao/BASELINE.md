@@ -6,7 +6,7 @@ Executada em **01/11/2026, 09:40–09:51 (America/Sao_Paulo)** no SHA `df4d597dc
 
 | Verificação | Comando | Resultado atual |
 |---|---|---|
-| Build | `bun run build` | Passou; **0 erros**, 4 avisos do Tailwind sobre classes ambíguas e aviso de chunks maiores que 1.200 kB. |
+| Build | `bun run build` | Passou; **0 erros**, 2 avisos de classes Tailwind ambíguas e aviso de chunks maiores que 1.200 kB. |
 | Lint | `bun run lint` | **606 erros e 213 avisos**; exit code 1. O total de erros é 3 acima da medição de 28/10; a origem da diferença ainda não foi atribuída. |
 | Typecheck | `bun run typecheck` | **3 erros TypeScript**; exit code 2: atributo JSX duplicado em `QueueAlertsDisplay.tsx:94` e duas propriedades `tags` incompatíveis nos testes `useInboxFilters.type-url.test.tsx:123–124`. |
 | Testes unitários | `bun run test` | **15.683 passaram**, 0 falharam, 19 falhas esperadas e 43 `todo`; 1.856 arquivos passaram e 5 foram pulados. Exit code 0; duração 533,57 s. |
