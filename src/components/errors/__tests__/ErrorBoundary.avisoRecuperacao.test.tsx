@@ -40,7 +40,7 @@ function avisoDoBoundary(): string {
  * disponivel"). Sem isso o aviso fala de orcamento esgotado quando o usuario
  * esta vendo outra tela.
  */
-describe('ErrorBoundary — o aviso de chunk diz qual tela o usuario esta vendo', () => {
+describe('ErrorBoundary — o aviso de chunk diz qual tela o usuário está vendo', () => {
   beforeEach(() => {
     sessionStorage.clear();
     resetChunkReloadGuard();

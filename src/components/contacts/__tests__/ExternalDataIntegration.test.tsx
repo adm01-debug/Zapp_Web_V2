@@ -41,7 +41,7 @@ function createWrapper(client?: QueryClient) {
   );
 }
 
-// ─── useExternalEmpresas — ação estreita `companyNames` ────────────
+// ─── useExternalEmpresas — ação estreita `companyNames` ──────────────────
 describe('useExternalEmpresas', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -93,7 +93,7 @@ describe('useExternalEmpresas', () => {
   });
 });
 
-// ─── useExternalCargos — ação estreita `roleNames` ─────────────────
+// ─── useExternalCargos — ação estreita `roleNames` ─────────────────────
 describe('useExternalCargos', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -177,7 +177,7 @@ describe('ContactForm — Empresa autocomplete logic', () => {
   });
 });
 
-// ─── ContactForm — Cargo select logic ─────────────────────────────
+// ─── ContactForm — Cargo select logic ───────────────────────────
 describe('ContactForm — Cargo select logic', () => {
   it('__none__ maps to empty string', () => {
     const value = '__none__';
@@ -190,7 +190,7 @@ describe('ContactForm — Cargo select logic', () => {
   });
 });
 
-// ─── ContactForm — Validation ─────────────────────────────────────
+// ─── ContactForm — Validation ─────────────────────────────────
 describe('ContactForm — Validation', () => {
   const validateEmail = (email: string): boolean => {
     if (!email) return true;
