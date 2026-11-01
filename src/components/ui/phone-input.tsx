@@ -65,12 +65,16 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
     if (isExplicitPlusInput) {
       isExplicitInternationalRef.current = true;
       wasExplicitPlusRef.current = digits.length === 0;
-    } else if (!e.target.value.startsWith('+') && !isDeletion) {
-      // Paste/type without leading '+' (e.g. '(11) 98765-4321') → treat as BR
+    } else if (!e.target.value.startsWith('+') && !isDeletion && (!wasExplicitPlusRef.current || isPasteOrDrop)) {
+      // Paste/type without leading '+' (e.g. '(11) 98765-4321') → treat as BR.
+      // Bug B: wasExplicitPlusRef guards regular typing so a lone '+' keystroke isn't undone by the
+      //         next digit (which arrives without '+' in e.target.value while the field is empty).
+      // Bug A: isPasteOrDrop bypasses the guard — a paste is always an intentional replacement.
       isExplicitInternationalRef.current = false;
       wasExplicitPlusRef.current = false;
-    } else if (isDeletion && digits.length < 3 && !wasExplicitPlusRef.current) {
-      // Backspace to < 3 digits without an explicit '+' press → reset digit-detected mode
+    } else if (isDeletion && digits.length < 3 && !wasExplicitPlusRef.current && !e.target.value.startsWith('+')) {
+      // Bug C: only reset when the field is completely empty ('+' has left the display).
+      // Prevents resetting a loaded international number whose mode wasn't set by an explicit '+' key.
       isExplicitInternationalRef.current = false;
       wasExplicitPlusRef.current = false;
     } else if (!isDeletion && digits.length >= 3 && !digits.startsWith('55')) {
