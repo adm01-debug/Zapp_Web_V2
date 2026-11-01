@@ -30,7 +30,8 @@ export function useUnconfirmedMessages(conversationContactId: string | null | un
         .eq('contact_id', conversationContactId)
         .eq('sender', 'agent')
         .not('delivery_post_started_at', 'is', null)
-        .not('status', 'in', '("sent","delivered","read")')
+        .not('status', 'in', '("sent","delivered","read","failed")')
+        .is('manually_resolved_at', null)
         .lt('delivery_post_started_at', threshold)
         .order('created_at', { ascending: false });
       if (error) throw error;

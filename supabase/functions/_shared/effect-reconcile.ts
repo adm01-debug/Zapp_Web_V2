@@ -463,6 +463,8 @@ export function makeEffectReconcileDeps(opts: {
       .update(patch)
       .eq("id", ctx.sourceId)
       .in("status", rule.uncertainStatuses)
+      // C110: não sobrescreve resolução manual do operador
+      .is("manually_resolved_at", null)
       .select("id");
     if (error) {
       throw new AiJobInfraError(
