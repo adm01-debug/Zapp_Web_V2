@@ -22,6 +22,9 @@ test.describe('tela 01 — Campanhas — Visão geral (X003)', () => {
     await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeVisible({ timeout: 30_000 });
     // Label do KPI é hardcoded no JSX de TalkXOverview — verifica que a seção renderizou
     await expect(page.getByText('Total de campanhas')).toBeVisible();
+    // Valor da fixture 01-campanhas.json: 24 campanhas (talkx_campaigns). Se o RPC
+    // ou o mapeamento regredir, esta assertion captura antes de qualquer smoke visual.
+    await expect(page.getByText('24').first()).toBeVisible();
     // Usa campanhas completed/scheduled/draft: não aparecem no rail de recentes
     // (apenas campanhas em andamento aparecem lá), evitando falso positivo se a
     // tabela não renderizar mas o rail sim.
