@@ -1,5 +1,4 @@
 -- CV-121 a CV-150: 7 tabelas de suporte para as fases 13-15 do copiloto RADAR
--- (idempotente: DROP POLICY IF EXISTS antes de cada CREATE POLICY)
 --
 -- Fase 13 (CV-121-130): supervisor — copilot_help_requests, copilot_learning_moments, copilot_conversation_scores
 -- Fase 14 (CV-131-140): aprendizado — copilot_outcomes, copilot_objection_catalog
@@ -28,11 +27,9 @@ CREATE TABLE IF NOT EXISTS public.copilot_outcomes (
 
 ALTER TABLE public.copilot_outcomes ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "copilot_outcomes_insert" ON public.copilot_outcomes;
 CREATE POLICY "copilot_outcomes_insert"
   ON public.copilot_outcomes FOR INSERT TO authenticated WITH CHECK (true);
 
-DROP POLICY IF EXISTS "copilot_outcomes_select" ON public.copilot_outcomes;
 CREATE POLICY "copilot_outcomes_select"
   ON public.copilot_outcomes FOR SELECT TO authenticated USING (true);
 
@@ -49,11 +46,9 @@ CREATE TABLE IF NOT EXISTS public.copilot_objection_catalog (
 
 ALTER TABLE public.copilot_objection_catalog ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "copilot_objection_catalog_insert" ON public.copilot_objection_catalog;
 CREATE POLICY "copilot_objection_catalog_insert"
   ON public.copilot_objection_catalog FOR INSERT TO authenticated WITH CHECK (true);
 
-DROP POLICY IF EXISTS "copilot_objection_catalog_select" ON public.copilot_objection_catalog;
 CREATE POLICY "copilot_objection_catalog_select"
   ON public.copilot_objection_catalog FOR SELECT TO authenticated USING (true);
 
@@ -70,11 +65,9 @@ CREATE TABLE IF NOT EXISTS public.copilot_usage (
 
 ALTER TABLE public.copilot_usage ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "copilot_usage_insert" ON public.copilot_usage;
 CREATE POLICY "copilot_usage_insert"
   ON public.copilot_usage FOR INSERT TO authenticated WITH CHECK (true);
 
-DROP POLICY IF EXISTS "copilot_usage_select" ON public.copilot_usage;
 CREATE POLICY "copilot_usage_select"
   ON public.copilot_usage FOR SELECT TO authenticated USING (true);
 
@@ -87,15 +80,12 @@ CREATE TABLE IF NOT EXISTS public.copilot_seller_settings (
 
 ALTER TABLE public.copilot_seller_settings ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "copilot_seller_settings_insert" ON public.copilot_seller_settings;
 CREATE POLICY "copilot_seller_settings_insert"
   ON public.copilot_seller_settings FOR INSERT TO authenticated WITH CHECK (true);
 
-DROP POLICY IF EXISTS "copilot_seller_settings_select" ON public.copilot_seller_settings;
 CREATE POLICY "copilot_seller_settings_select"
   ON public.copilot_seller_settings FOR SELECT TO authenticated USING (true);
 
-DROP POLICY IF EXISTS "copilot_seller_settings_update" ON public.copilot_seller_settings;
 CREATE POLICY "copilot_seller_settings_update"
   ON public.copilot_seller_settings FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
 
@@ -110,11 +100,9 @@ CREATE TABLE IF NOT EXISTS public.copilot_help_requests (
 
 ALTER TABLE public.copilot_help_requests ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "copilot_help_requests_insert" ON public.copilot_help_requests;
 CREATE POLICY "copilot_help_requests_insert"
   ON public.copilot_help_requests FOR INSERT TO authenticated WITH CHECK (true);
 
-DROP POLICY IF EXISTS "copilot_help_requests_select" ON public.copilot_help_requests;
 CREATE POLICY "copilot_help_requests_select"
   ON public.copilot_help_requests FOR SELECT TO authenticated USING (true);
 
@@ -131,11 +119,9 @@ CREATE TABLE IF NOT EXISTS public.copilot_learning_moments (
 
 ALTER TABLE public.copilot_learning_moments ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "copilot_learning_moments_insert" ON public.copilot_learning_moments;
 CREATE POLICY "copilot_learning_moments_insert"
   ON public.copilot_learning_moments FOR INSERT TO authenticated WITH CHECK (true);
 
-DROP POLICY IF EXISTS "copilot_learning_moments_select" ON public.copilot_learning_moments;
 CREATE POLICY "copilot_learning_moments_select"
   ON public.copilot_learning_moments FOR SELECT TO authenticated USING (true);
 
@@ -149,14 +135,11 @@ CREATE TABLE IF NOT EXISTS public.copilot_conversation_scores (
 
 ALTER TABLE public.copilot_conversation_scores ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "copilot_conversation_scores_insert" ON public.copilot_conversation_scores;
 CREATE POLICY "copilot_conversation_scores_insert"
   ON public.copilot_conversation_scores FOR INSERT TO authenticated WITH CHECK (true);
 
-DROP POLICY IF EXISTS "copilot_conversation_scores_select" ON public.copilot_conversation_scores;
 CREATE POLICY "copilot_conversation_scores_select"
   ON public.copilot_conversation_scores FOR SELECT TO authenticated USING (true);
 
-DROP POLICY IF EXISTS "copilot_conversation_scores_update" ON public.copilot_conversation_scores;
 CREATE POLICY "copilot_conversation_scores_update"
   ON public.copilot_conversation_scores FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
