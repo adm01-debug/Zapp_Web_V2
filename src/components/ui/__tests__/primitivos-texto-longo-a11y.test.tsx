@@ -35,7 +35,7 @@ describe('primitivos de UI com texto longo (120 caracteres)', () => {
     expect(classesCurto).toContain('truncate');
   });
 
-  it('TabsTrigger: o trigger retém min-w-0 + whitespace-nowrap e o title guarda o texto inteiro', () => {
+  it('TabsTrigger: o trigger retém min-w-0 + whitespace-nowrap e o inner span trunca o texto', () => {
     render(
       <Tabs defaultValue="a">
         <TabsList>
@@ -47,14 +47,20 @@ describe('primitivos de UI com texto longo (120 caracteres)', () => {
       </Tabs>,
     );
 
-    // O texto é filho direto do trigger (sem inner span); `min-w-0` + `whitespace-nowrap`
-    // ficam no próprio botão — sem `truncate` no trigger para não clipar badges absolutos.
+    // O trigger não tem `truncate` diretamente (evita clipar badges absolutos irmãos).
+    // O inner `<span className="truncate min-w-0">` é quem corta o texto com ellipsis.
     const aba = screen.getByRole('tab', { name: TEXTO_120 });
     expect(aba.textContent).toBe(TEXTO_120);
     expect(aba.className).toContain('min-w-0');
     expect(aba.className).toContain('whitespace-nowrap');
     expect(aba.className).not.toContain('truncate');
     expect(aba).toHaveAttribute('title', TEXTO_120);
+
+    // Inner span deve ter truncate + min-w-0
+    const innerSpan = aba.querySelector('span');
+    expect(innerSpan).not.toBeNull();
+    expect(innerSpan?.className).toContain('truncate');
+    expect(innerSpan?.className).toContain('min-w-0');
   });
 
   it('Card: a caixa do pai encolhe (min-w-0) e o título/descrição quebram linha', () => {

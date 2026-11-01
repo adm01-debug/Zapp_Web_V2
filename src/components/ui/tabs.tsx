@@ -20,9 +20,9 @@ const TabsList = React.forwardRef<
 ));
 TabsList.displayName = TabsPrimitive.List.displayName;
 
-// `min-w-0` no trigger garante que texto longo seja cortado pelo `whitespace-nowrap`
-// sem afetar filhos absolutos (badges de contagem). Quem usa o componente passa
-// `title` via `...props` para preservar o texto completo no tooltip.
+// O trigger tem `min-w-0` para ceder espaço ao flex pai. O inner span tem
+// `truncate min-w-0` para cortar o texto com ellipsis sem afetar badges
+// absolutos que o consumidor posicionar como irmãos do span (fora dele).
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
@@ -35,7 +35,7 @@ const TabsTrigger = React.forwardRef<
     )}
     {...props}
   >
-    {children}
+    <span className="truncate min-w-0">{children}</span>
   </TabsPrimitive.Trigger>
 ));
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
