@@ -9,7 +9,7 @@
 ## 0. Fixes aplicados em 2026-11-01 (esta sessão) — commit `e798dcc`
 
 **PR:** [#2526](https://github.com/adm01-debug/Zapp_Web_V2/pull/2526) — branch `claude_04/pensive-tesla-ixtl9w`  
-**CI:** DB Guard run [41357706184](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41357706184) `queued` / CI/CD Pipeline run [41357013021](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41357013021) `queued` (2026-11-01T22:33Z)
+**CI:** aguardando runs nos commits ee28e86d / 272448f (queued/pending 2026-11-01T23:26Z)
 
 ### Inventário de workflows com falha — última execução na main (2026-11-01)
 
@@ -38,9 +38,10 @@
 | `bun run lint` — arquivos alterados | ✅ 0 erros nos 4 arquivos do commit | `email-navy-visual.spec.ts`, `deploy-functions.yml`, `PENDENCIAS.md`, `RELATORIO_CI.md` — 0 lint errors |
 | `bun run lint` — repo completo | ⚠️ 813 problemas **pré-existentes** | Falha idêntica na main (`1252bb5`); nenhum arquivo TypeScript de aplicação foi alterado |
 | `bun run typecheck` — local | ⚠️ `@types/node` pré-existente | Falha idêntica na main; CI usa `typecheck-ratchet.mjs` e passa |
-| `bun run test` — shard 1/3 | ✅ exit 0 | 621 arquivos, **5125 passed**, 6 expected failures — 2026-11-01T20:01Z |
-| `bun run test` — shard 2/3 | ⏳ em execução | rodando em background — nenhum dos arquivos alterados é TypeScript de app |
-| `bun run test` — shard 3/3 | ⏳ em execução | rodando em background — nenhum dos arquivos alterados é TypeScript de app |
+| `bun run test` — shard 1/3 | ✅ exit 0 | 621 arquivos, **5125 passed**, 6 expected failures |
+| `bun run test` — shard 2/3 | ✅ exit 0 | 620 arquivos, **5260 passed**, 6 expected failures |
+| `bun run test` — shard 3/3 | ✅ exit 0 | 620 arquivos, **5300 passed**, 7 expected failures |
+| `bun run test` — **TOTAL** | ✅ **15.685 passed** | 1861 arquivos, 19 expected failures, 38 todo — todos os 3 shards exit 0 |
 
 **Workflows que permanecem em PENDENCIAS.md:**  
 §1 DB Live Guard — drift banco/artefatos, requer acesso a produção  
@@ -178,10 +179,10 @@ Esta sessão (`fix/ci-workflows`) incluiu mudanças de código além da document
 | Build | ✅ 323 KB (budget 325 KB) | ✅ idêntico |
 | TypeCheck | ✅ exit 0 | ✅ idêntico |
 | Lint | ✅ exit 0 | ✅ idêntico |
-| Unit Tests | ✅ 3 shards success (run 41162012506) | ✅ idêntico |
+| Unit Tests | ✅ 3 shards success (run 41162012506) | ✅ **15.685 testes passando** (3 shards exit 0, medidos nesta sessão) |
 | `🏗️ Build` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
 | `🎭 E2E Tests` CI | ✅ success run 41162012506 (ci.yml, sem autenticação) | ⏳ aguardando run no SHA atual da PR |
-| `Contrato DB offline` CI | ✅ success run 41162012506 | ⏳ aguardando run — migration corrigida neste commit |
+| `Contrato DB offline` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
 | `🔒 Security Audit` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
 | `✅ CI Gate (required check)` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
 | DB Live Guard | ❌ 3 falhas reais: migrations/ledger, ACL/mcp_exec, runtime (ver PENDENCIAS.md §1) | ❌ idem — investigação pendente |
@@ -190,7 +191,7 @@ Esta sessão (`fix/ci-workflows`) incluiu mudanças de código além da document
 
 ---
 
-*Relatório concluído em 2026-10-31 ~04:30Z — atualizado 2026-11-01 neste commit — branch `claude_04/pensive-tesla-ixtl9w`.*
+*Relatório concluído em 2026-10-31 ~04:30Z — atualizado 2026-11-01T23:30Z — branch `claude_04/pensive-tesla-ixtl9w`.*
 
 <details>
 <summary>Relatório histórico da correção de CI na PR #2394 (2026-10-30)</summary>
