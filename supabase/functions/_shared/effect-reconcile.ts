@@ -458,14 +458,16 @@ export function makeEffectReconcileDeps(opts: {
       : { status: "sent", external_id: externalId, sent_at: now, error_message: null, updated_at: now };
     // Guarda pelos estados INCERTOS: já confirmado por outro caminho não é
     // sobrescrito (idempotente). Linha fora desses estados → 0 linhas.
-    const { data, error } = await opts.supabase
+    // C110: não sobrescreve resolução manual do operador (coluna só existe em messages)
+    let q = opts.supabase
       .from(rule.sourceTable)
       .update(patch)
       .eq("id", ctx.sourceId)
-      .in("status", rule.uncertainStatuses)
-      // C110: não sobrescreve resolução manual do operador
-      .is("manually_resolved_at", null)
-      .select("id");
+      .in("status", rule.uncertainStatuses);
+    if (rule.sourceTable === "messages") {
+      q = q.is("manually_resolved_at", null);
+    }
+    const { data, error } = await q.select("id");
     if (error) {
       throw new AiJobInfraError(
         `effect-reconcile: atualizacao de ${rule.sourceTable} falhou: ${error.message ?? "erro"}`,
