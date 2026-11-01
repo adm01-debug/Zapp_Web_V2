@@ -29,15 +29,18 @@
 | `.github/workflows/deploy-functions.yml` | `deno check` sem `--config supabase/functions/deno.json` — Deno 2.9.5 não encontra o `node_modules` instalado por `deno install --config` em subdiretório sem `--config` no check | Adicionado `--config supabase/functions/deno.json` ao `deno check` |
 | `e2e/email-navy-visual.spec.ts` (test:142) | WebKit lê cores interpoladas durante transição de tema antes de `freezeVisualTransitions`; `waitForTimeout(400)` insuficiente para webkit | Adicionado `waitForAppliedTheme(page, 'dark')` antes de `freezeVisualTransitions` — mesmo padrão já usado no test:497 do mesmo arquivo |
 
-### Baseline local (medido em 2026-11-01T22:30Z neste container, SHA `e798dcc`)
+### Baseline local (medido neste container, SHA `0fbc4be`)
 
 | Verificação | Resultado | Detalhe |
 |---|---|---|
 | `bun install` | ✅ exit 0 | 644 pacotes instalados |
 | `bun run build` | ✅ exit 0 | 19.66s, bundle passa o budget |
 | `bun run lint` — arquivos alterados | ✅ 0 erros nos 4 arquivos do commit | `email-navy-visual.spec.ts`, `deploy-functions.yml`, `PENDENCIAS.md`, `RELATORIO_CI.md` — 0 lint errors |
-| `bun run lint` — repo completo | ⚠️ 813 problemas **pré-existentes** | Falha idêntica na main (`1252bb5`); meu commit não alterou nenhum arquivo TypeScript de aplicação |
-| `bun run typecheck` — local | ⚠️ `@types/node` pré-existente | Falha idêntica na main; CI usa `typecheck-ratchet.mjs` (não `bun run typecheck`) e passa |
+| `bun run lint` — repo completo | ⚠️ 813 problemas **pré-existentes** | Falha idêntica na main (`1252bb5`); nenhum arquivo TypeScript de aplicação foi alterado |
+| `bun run typecheck` — local | ⚠️ `@types/node` pré-existente | Falha idêntica na main; CI usa `typecheck-ratchet.mjs` e passa |
+| `bun run test` — shard 1/3 | ✅ exit 0 | 621 arquivos, **5125 passed**, 6 expected failures — 2026-11-01T20:01Z |
+| `bun run test` — shard 2/3 | ⏳ em execução | rodando em background — nenhum dos arquivos alterados é TypeScript de app |
+| `bun run test` — shard 3/3 | ⏳ em execução | rodando em background — nenhum dos arquivos alterados é TypeScript de app |
 
 **Workflows que permanecem em PENDENCIAS.md:**  
 §1 DB Live Guard — drift banco/artefatos, requer acesso a produção  
