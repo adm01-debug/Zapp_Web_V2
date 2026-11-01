@@ -24,11 +24,18 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+export type CrmStatus = 'ok' | 'unavailable' | 'not_configured';
+
 export interface TalkXServiceStatus {
   whatsapp: {
     /** `true` ativa · `false` sem conexão ativa · `null` ainda não se sabe. */
     connected: boolean | null;
   };
+  /**
+   * Estado do CRM 360 — stub `'ok'` até CAP-092 expor o sinal de disponibilidade.
+   * Quando o sinal existir, basta trocar a constante pela consulta real.
+   */
+  crm: CrmStatus;
 }
 
 export function useTalkXServiceStatus(): TalkXServiceStatus {
@@ -56,5 +63,5 @@ export function useTalkXServiceStatus(): TalkXServiceStatus {
     return () => { cancelled = true; };
   }, []);
 
-  return { whatsapp: { connected } };
+  return { whatsapp: { connected }, crm: 'ok' };
 }

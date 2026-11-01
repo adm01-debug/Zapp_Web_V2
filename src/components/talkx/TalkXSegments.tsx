@@ -10,7 +10,9 @@ import { DashboardKpiCard, type KpiDelta } from '@/components/dashboard/overview
 import { cn } from '@/lib/utils';
 import { useTalkXSegments, emptyRules, RULE_FIELDS, RULE_OPS, useAudienceEstimate, countAudience, DEFAULT_SEGMENT_LIBRARY_FILTERS, SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT, SEGMENT_LIBRARY_OWNER_NONE, parseSegmentLibraryFilters, readSegmentLibraryPageSize, readSegmentLibraryPageSizeFromUrl, saveSegmentLibraryPageSize, syncSegmentLibraryUrl, clearSegmentLibraryUrl, type SegmentRule, type SegmentLibraryFilters, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type TalkXSegmentBulkAction, type TalkXSegmentBulkResult } from '@/hooks/integrations/useTalkXSegments';
 import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, TalkXBulkBar, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
-import { TalkXQueryBoundary } from './kit/states';
+import { TalkXQueryBoundary, TalkXCrmUnavailableState } from './kit/states';
+import { ServiceStatusSheet } from './kit/ServiceStatusSheet';
+import { useTalkXServiceStatus } from '@/hooks/integrations/useTalkXServiceStatus';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
 import { SegmentSideList } from './segments/SegmentSideList';
 import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
@@ -59,7 +61,9 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   // TL-134: gaveta "Meus segmentos" (<xl) e guarda de edição suja do construtor
   // (o construtor registra a guarda via onGuardChange a cada render).
   const [sideListOpen, setSideListOpen] = useState(false);
+  const [statusSheetOpen, setStatusSheetOpen] = useState(false);
   const builderGuardRef = useRef<((proceed: () => void) => void) | null>(null);
+  const serviceStatus = useTalkXServiceStatus();
   // X111 — o construtor da tela 03 vive no endereço (?view=talkx&tab=segments&segment=<id>&mode=edit|new):
   // o link direto abre o segmento, o F5 mantém a tela e voltar/avançar do navegador fecham e reabrem.
   // `route` é o que o endereço pede; `editing` é a cópia que o usuário está editando na tela.
@@ -416,8 +420,15 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   }
 
   return (
+    <>
+    {statusSheetOpen && (
+      <ServiceStatusSheet status={serviceStatus} onClose={() => setStatusSheetOpen(false)} />
+    )}
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 min-w-0">
       <div className="min-w-0 space-y-4">
+        {serviceStatus.crm === 'unavailable' && (
+          <TalkXCrmUnavailableState onViewStatus={() => setStatusSheetOpen(true)} />
+        )}
         {/* X103/TL-135b — KPIs da biblioteca vem da RPC talkx_segment_library_stats
             (uso real no mês e conversão com base mínima); nada é somado aqui. */}
         <TalkXQueryBoundary
@@ -581,6 +592,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
 
       {confirmDeleteDialog}
     </div>
+    </>
   );
 }
 
