@@ -52,7 +52,11 @@ jobs:
   e2e-logado:
     name: 🎭 E2E logado (Playwright)
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    # Relogio por grupo (valor na matriz). O grupo authenticated era cortado aos 15 min
+    # em TODOS os commits da main (ex.: 3b5f8a9, 20:07:15 -> 20:22:32 UTC) antes do
+    # fim: o Playwright morria antes de imprimir quais testes
+    # falharam e o relatorio nunca subia. Com 45 min a suite termina e mostra o defeito.
+    timeout-minutes: ${{ matrix.timeout-minutes }}
     # E83: a suite logada (173 testes) estourava o timeout do job unico e a run
     # inteira caia como "cancelled". A matriz abaixo divide os mesmos 15 projetos
     # em 3 grupos, cada um com seu proprio relogio de 15 min: se um grupo ficar
@@ -77,15 +81,18 @@ jobs:
             # de browser (I/O), nao em CPU. Os 2 grupos deslogados sao pequenos
             # (16 e 27 testes) e seguem com 1, sem mudanca de comportamento.
             workers: 4
+            timeout-minutes: 45
           # Grupo 2: deslogados nos browsers principais + mapa (sessao FALSA,
           # sem secrets de login).
           - name: deslogado-principal
             projects: --project=chromium-mapa --project=firefox-auth --project=webkit-auth
             workers: 1
+            timeout-minutes: 15
           # Grupo 3: telefonia nos 3 browsers (sessao FALSA, sem secrets).
           - name: deslogado-secundario
             projects: --project=chromium-telefonia --project=firefox-telefonia --project=webkit-telefonia
             workers: 1
+            timeout-minutes: 15
     # E83: as permissoes de escrita ficam no JOB, nunca no nivel do workflow -- o zizmor
     # reprova `write` no topo (excessive-permissions, severidade alta) porque o escopo
     # vale para todos os jobs. Foi o que reprovou o merge do #1784.
