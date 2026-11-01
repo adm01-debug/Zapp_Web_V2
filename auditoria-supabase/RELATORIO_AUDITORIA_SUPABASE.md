@@ -22,14 +22,15 @@
 | Severidade | Quantidade | Destaque |
 |---|---|---|
 | **CRÍTICO** | 2 | ZW-0002 (user_roles seq_scan 7.3M), ZW-0003 (4 policies roles=public) |
-| **ALTO** | 8 | ZW-0004~ZW-0012 (WITH CHECK, SECURITY DEFINER, cron timeouts) |
-| **MÉDIO** | 14 | ZW-0013~ZW-0026 |
+| **ALTO** | 7 | ZW-0004~ZW-0012 (WITH CHECK, SECURITY DEFINER, cron timeouts) |
+| **MÉDIO** | 15 | ZW-0013~ZW-0026 (exceto ZW-0014 absorvido) |
 | **BAIXO** | 3 | ZW-0027~ZW-0029 |
 | **INFO** | 13 | ZW-0030~ZW-0042 |
-| **RESOLVIDO** | 7 | ZW-0001 (anon grants), ZW-0010 (log_search_event), ZW-0011 (get_search_insights) |
+| **RESOLVIDO** | 7 | ZW-0001 (anon grants), ZW-0010 (log_search_event), ZW-0011 (get_search_insights), ZW-0014 (absorvido por ZW-0003) |
 
 **Ações autônomas desta sessão:**
 - **ZW-0011 RESOLVIDO:** `useSearchInsights.ts` + teste — `get_search_insights` → `search_insights` (RPC correta desde migration `20261031130000`)
+- **ZW-0014 ABSORVIDO:** duplicata de ZW-0003 (mesma exposição `talkx_campaign_segments`); contagens recalculadas para refletir registros reais em `achados.json`
 
 **PRs aguardando aprovação (Joaquim):** #2481, #2485, #2487, #2491, #2461, #2471, #2476, #2460, #2473
 

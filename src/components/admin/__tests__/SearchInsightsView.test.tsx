@@ -55,6 +55,8 @@ describe('SearchInsightsView — números da busca global (HZ1-06)', () => {
     expect(screen.getByText('518 clique(s)')).toBeInTheDocument();
 
     expect(rpcMock).toHaveBeenCalledWith('search_insights', { p_days: 30 });
+    // Mesmo com 308 buscas sem resultado, termos não são exibidos — privacidade por design.
+    expect(screen.getAllByText('Textos de busca não são armazenados — privacidade por design.')).toHaveLength(2);
   });
 
   it('não oferece exportar, baixar, imprimir nem copiar (a informação não sai do sistema)', async () => {
@@ -90,7 +92,7 @@ describe('SearchInsightsView — números da busca global (HZ1-06)', () => {
 
     expect(await screen.findByText('Nenhuma busca registrada no período.')).toBeInTheDocument();
     expect(screen.getAllByText('0,0%')).toHaveLength(2); // taxa de clique e sem resultado
-    expect(screen.getByText('Nenhum termo sem resultado no período.')).toBeInTheDocument();
+    expect(screen.getByText('Textos de busca não são armazenados — privacidade por design.')).toBeInTheDocument();
   });
 
   it('melhor caso: taxa de clique e sem resultado em 100% (fração 1) não viram NaN', async () => {
