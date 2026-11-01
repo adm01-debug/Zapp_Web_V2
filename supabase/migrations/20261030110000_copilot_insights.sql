@@ -32,8 +32,4 @@ ALTER TABLE public.copilot_insights ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "vendor_own_insights" ON public.copilot_insights
   FOR ALL USING (profile_id = auth.uid());
 
-CREATE POLICY "service_role_insights" ON public.copilot_insights
-  FOR ALL TO service_role USING (true) WITH CHECK (true);
-
--- Publicar para Realtime (canal copilot-insights:{sessionId})
-ALTER PUBLICATION supabase_realtime ADD TABLE public.copilot_insights;
+CREATE POLCIY -ï…Ÿ•çï}…Ω±ï}•πÕ•ù°—ÃàÅ=8Å¡’â±•åπçΩ¡•±Ω—}•πÕ•ù°—Ã(ÄÅ=HÅ10ÅQ<ÅÕï…Ÿ•çï}…Ω±îÅUM%9Ä°—…’î§Å]%Q Å!,Ä°—…’î§Ï((¥¥ÅA’â±•çÖ»Å¡Ö…ÑÅIïÖ±—•µîÄ°çÖπÖ∞ÅçΩ¡•±Ω–µ•πÕ•ù°—ÃÈÌÕïÕÕ•Ωπ%ëÙ§)1QHÅAU	1%Q%=8ÅÕ’¡ÖâÖÕï}…ïÖ±—•µîÅÅQ	1Å¡’â±•åπçΩ¡•±Ω—}•πÕ•ù°—ÃÏ

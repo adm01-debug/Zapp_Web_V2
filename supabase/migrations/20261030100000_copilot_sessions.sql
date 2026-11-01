@@ -13,14 +13,16 @@ CREATE TABLE IF NOT EXISTS public.copilot_sessions (
   brinde_quantity     integer,
   brinde_deadline     date,
   brinde_delivery     text,
-  brinde_meter        integer     NOT NULL DEFAULT 0 CHECK (brinde_meter >= 0 AND brinde_meter <= 6),
+  brinde_meter        integer     NOT NULL DEFAULT 0
+    CHECK (brinde_meter >= 0 AND brinde_meter <= 6),
   -- EstÃ¡gio e temperatura
   sale_stage          text        NOT NULL DEFAULT 'novo_contato'
     CHECK (sale_stage IN (
       'novo_contato','qualificando','apresentando','negociando',
       'fechando','pos_venda','perdido'
     )),
-  temperature         integer     NOT NULL DEFAULT 0 CHECK (temperature >= 0 AND temperature <= 100),
+  temperature         integer     NOT NULL DEFAULT 0
+    CHECK (temperature >= 0 AND temperature <= 100),
   state_version       integer     NOT NULL DEFAULT 1,
   -- Timestamps
   started_at          timestamptz NOT NULL DEFAULT now(),
@@ -47,9 +49,8 @@ CREATE POLICY "service_role_sessions" ON public.copilot_sessions
 
 CREATE OR REPLACE FUNCTION public.copilot_sessions_updated_at()
 RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN NEW.updated_at = now(); RETURN NEW; END;
-$$;
+BEGIN NEW.updated_at = now(); RETURN NEW; END>Ê$$
 
 CREATE TRIGGER trg_copilot_sessions_updated_at
   BEFORE UPDATE ON public.copilot_sessions
-  FOR EACH ROW EXECUTE FUNCTION public.copilot_sessions_updated_at();
+  FOR EACH ROW EXECUTE4T5D”ôâTeTä5D”ôâV&Æ–2æ6÷–Æ÷E÷6W76–öç5÷WFFVEöB‚“°
