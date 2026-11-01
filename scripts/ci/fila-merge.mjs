@@ -26,6 +26,22 @@ import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
 
 const RAIZ = new URL('../../', import.meta.url);
 
+function erroTransitorio(err) {
+  const msg = String(err?.stderr ?? err?.message ?? '');
+  return /HTTP 50[234]|50[234] Bad Gateway|50[234] Service Unavailable|connection reset|ECONNRESET|ETIMEDOUT|timeout expired|unexpected end of JSON/i.test(msg);
+}
+
+async function execComRetry(cmd, args, opts, { tentativas = 4, delaysMs = [5000, 10000, 20000] } = {}) {
+  for (let i = 0; i < tentativas; i++) {
+    try {
+      return execFileSync(cmd, args, opts);
+    } catch (err) {
+      if (!erroTransitorio(err) || i >= tentativas - 1) throw err;
+      await new Promise((resolve) => setTimeout(resolve, delaysMs[Math.min(i, delaysMs.length - 1)]));
+    }
+  }
+}
+
 export function checksObrigatorios() {
   const baseline = JSON.parse(readFileSync(new URL('scripts/ci/github-settings-baseline.json', RAIZ), 'utf8'));
   return baseline.branch_protection_main.required_status_checks;
@@ -120,22 +136,6 @@ export async function resolverDesconhecidos(prs, behindBy) {
     saida.push(atras > 0 ? { ...pr, mergeStateStatus: 'BEHIND' } : pr);
   }
   return saida;
-}
-
-function erroTransitorio(err) {
-  const msg = String(err?.stderr ?? err?.message ?? '');
-  return /HTTP 50[234]|50[234] Bad Gateway|50[234] Service Unavailable|connection reset|ECONNRESET|ETIMEDOUT/i.test(msg);
-}
-
-async function execComRetry(cmd, args, opts, { tentativas = 4, delaysMs = [5000, 10000, 20000] } = {}) {
-  for (let i = 0; i < tentativas; i++) {
-    try {
-      return execFileSync(cmd, args, opts);
-    } catch (err) {
-      if (!erroTransitorio(err) || i >= tentativas - 1) throw err;
-      await new Promise((r) => setTimeout(r, delaysMs[Math.min(i, delaysMs.length - 1)]));
-    }
-  }
 }
 
 async function decisaoAtual(repo) {
