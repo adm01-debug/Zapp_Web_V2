@@ -31,6 +31,11 @@ BEGIN
   END IF;
 END$$;
 
+-- Remove o default array (text[]) antes de mudar o tipo; sem isso o
+-- PostgreSQL não consegue converter o default automaticamente.
+ALTER TABLE public.copilot_sessions
+  ALTER COLUMN comm_style DROP DEFAULT;
+
 ALTER TABLE public.copilot_sessions
   ALTER COLUMN comm_style TYPE text USING (comm_style[1]);
 
