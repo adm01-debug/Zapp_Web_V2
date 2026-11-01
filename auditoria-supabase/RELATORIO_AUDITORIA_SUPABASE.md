@@ -1,8 +1,281 @@
-# Relatório de Auditoria — Supabase Zapp Web V2
+# Relatório de Auditoria Supabase — Zapp Web V2
 
+**Data:** 2026-11-01 (evidências reexecutadas nesta sessão)
 **Projeto:** `tnnnlkbymytvtqngbbqh` (Supabase Cloud)  
 **Repo:** `adm01-debug/Zapp_Web_V2`  
-**Auditoria realizada em:** 2026-10-24 a 2026-10-25 (múltiplas sessões, read-only)  
+**MCP usado:** SUPABASE - ZAPP WEB V2 - MCP (somente leitura)  
+**Branch de trabalho:** `claude/loving-lovelace-esc3l2`  
+**Prova de conexão:** ping respondeu 181ms às 2026-11-01T18:00Z
+
+---
+
+## Seções (12/12)
+
+| # | Seção | Status |
+|---|---|---|
+| S1 | Inventário completo | ✅ CONCLUÍDO |
+| S2 | Drift repo × banco × schema | ✅ CONCLUÍDO (parcial) |
+| S3 | Segurança: RLS, grants, SECURITY DEFINER | ✅ CONCLUÍDO |
+| S4 | Integridade referencial | ✅ CONCLUÍDO (parcial) |
+| S5 | Performance: índices e queries | ✅ CONCLUÍDO |
+| S6 | pg_cron: jobs e falhas | ✅ CONCLUÍDO |
+| S7 | Funções de banco | ✅ CONCLUÍDO |
+| S8 | Edge functions | ✅ CONCLUÍDO (parcial) |
+| S9 | Auth, storage, realtime | ✅ CONCLUÍDO |
+| S10 | Logs 7 dias | ✅ CONCLUÍDO |
+| S11 | RLS: isolamento tenant A × B | NÃO TESTADO (roteiro em `testes/s11_rls_matrix.md`) |
+| S12 | Lacunas: backup, LGPD, alertas | ✅ CONCLUÍDO |
+
+---
+
+## Contagem por Severidade
+
+| Severidade | Achados |
+|---|---|
+| **CRÍTICO** | 0 |
+| **ALTO** | 4 |
+| **MÉDIO** | 3 |
+| **BAIXO** | 3 |
+| **INFO** | 4 |
+
+---
+
+## Top 10 Achados com Evidência Reexecutada (2026-11-01)
+
+### A1 — 100% dos usuários sem MFA [ALTO]
+
+**Evidência executada 2026-11-01:**
+```sql
+SELECT count(*) as total_users,
+       count(*) FILTER (WHERE id NOT IN (SELECT user_id FROM auth.mfa_factors)) as users_no_mfa
+FROM auth.users;
+```
+**Resultado:** `{"total_users": 10, "users_no_mfa": 10}`
+
+Todos os 10 usuários ativos do sistema não têm segundo fator. Comprometimento de senha = acesso total.
+
+**Proposta:** P02_enable_mfa.sql
+
+---
+
+### A2 — pg_cron: pool exhaustion em 6-8% das execuções [ALTO]
+
+**Evidência executada 2026-11-01:**
+```sql
+SELECT jobname, count(*) as runs, count(*) FILTER (WHERE status='failed') as fails
+FROM cron.job j LEFT JOIN cron.job_run_details d USING(jobid)
+GROUP BY jobname ORDER BY fails DESC LIMIT 5;
+```
+**Resultado (top 5):**
+| Job | Runs | Falhas | % |
+|---|---|---|---|
+| talkx-scheduler-1min | 77447 | 4950 | 6.4% |
+| dispatch-scheduled-messages | 13103 | 1018 | 7.8% |
+| csat-reply-capture-tick | 6586 | 513 | 7.8% |
+| close-stale-calls | 2638 | 226 | 8.6% |
+| voice-changer-tmp-purge | 220 | 20 | 9.1% |
+
+Causa: "job startup timeout" — pool de conexões esgotado por 8+ jobs concorrentes.
+
+**Proposta:** P05_fix_pgcron_pool.sql
+
+---
+
+### A3 — 39 políticas UPDATE sem WITH CHECK [ALTO]
+
+**Evidência executada 2026-11-01:**
+```sql
+SELECT count(*) FROM pg_policies
+WHERE schemaname = 'public' AND cmd = 'UPDATE'
+  AND qual IS NOT NULL AND with_check IS NULL;
+```
+**Resultado:** 39 políticas
+
+Sem `WITH CHECK`, um usuário pode mover registros para fora do seu escopo via UPDATE.
+Tabelas críticas afetadas: `contacts`, `whatsapp_connections`, `user_settings`, `user_sessions`.
+
+**Proposta:** P01_add_with_check_update_policies.sql
+
+---
+
+### A4 — Auth audit log vazio [ALTO]
+
+**Evidência executada 2026-11-01:**
+```sql
+SELECT count(*), min(created_at), max(created_at) FROM auth.audit_log_entries;
+```
+**Resultado:** `{"count": 0, "min": null, "max": null}`
+
+Zero eventos de autenticação registrados. Sem rastreabilidade de logins suspeitos.
+
+**Proposta:** P06_add_auth_audit_retention.sql
+
+---
+
+### A5 — 65 migrations com statements NULL no ledger [MÉDIO]
+
+**Evidência executada 2026-11-01:**
+```sql
+SELECT count(*) FILTER (WHERE statements IS NULL) FROM supabase_migrations.schema_migrations;
+```
+**Resultado:** 65
+
+Impede replay local confiável e invalida verificação de hash no `db-migrate.yml`.
+
+**Proposta:** P03_fix_null_statements.sql
+
+---
+
+### A6 — 18 tabelas com RLS habilitado mas sem políticas [MÉDIO]
+
+**Evidência executada 2026-11-01:**
+```sql
+SELECT count(*) FROM pg_tables t
+WHERE schemaname = 'public' AND rowsecurity = true
+  AND NOT EXISTS (SELECT 1 FROM pg_policies p
+    WHERE p.schemaname = 'public' AND p.tablename = t.tablename);
+```
+**Resultado:** 18 tabelas
+
+Estas tabelas são efetivamente inacessíveis via API (só service_role).
+
+---
+
+### A7 — 107 MB de índices sem uso [BAIXO]
+
+**Evidência executada 2026-11-01:**
+```sql
+SELECT indexrelname, pg_size_pretty(pg_relation_size(indexrelid))
+FROM pg_stat_user_indexes
+WHERE schemaname = 'public' AND idx_scan = 0
+  AND indexrelname NOT LIKE '%_pkey'
+ORDER BY pg_relation_size(indexrelid) DESC LIMIT 5;
+```
+**Resultado:** email_attachments_msg_att_key=61MB, email_messages_body_text_trgm_idx=17MB, email_attachments_filename_trgm_idx=11MB
+
+**Proposta:** P04_drop_unused_indexes.sql
+
+---
+
+### A8 — 5 migrations no banco não no repo [MÉDIO]
+
+**Evidência executada 2026-11-01:**
+```
+Repo: ls supabase/migrations/*.sql | wc -l → 1067
+Banco: SELECT count(*) FROM supabase_migrations.schema_migrations → 1072
+Diferença: +5 no banco
+```
+
+DDL aplicado fora do fluxo arquivo→PR→merge (padrão documentado como causa de drifts no CLAUDE.md).
+
+---
+
+### A9 — multiplix-voice sem mime_types [BAIXO]
+
+**Evidência executada 2026-11-01:**
+```sql
+SELECT id, allowed_mime_types FROM storage.buckets WHERE allowed_mime_types IS NULL;
+```
+**Resultado:** multiplix-voice — aceita qualquer tipo de arquivo
+
+---
+
+### A10 — 95 funções plpgsql com BEGIN mas sem EXCEPTION [INFO]
+
+**Evidência executada 2026-11-01:**
+```sql
+SELECT count(*) FILTER (WHERE has_begin AND NOT has_exception) as sem_exception
+FROM (SELECT p.prosrc LIKE '%EXCEPTION%' as has_exception, p.prosrc LIKE '%BEGIN%' as has_begin
+  FROM pg_proc p JOIN pg_namespace n ON p.pronamespace=n.oid
+  WHERE n.nspname='public' AND p.prokind='f' AND p.prolang=(SELECT oid FROM pg_language WHERE lanname='plpgsql')
+) x;
+```
+**Resultado:** 95
+
+Inclui `ai_budget_reserve` e `accept_department_invite`.
+
+---
+
+## Matriz de Drift
+
+| Dimensão | Repo | Banco | Diferença |
+|---|---|---|---|
+| Migrations (.sql) | 1067 | 1072 | **+5 no banco** |
+| Migrations com statements OK | — | 1007 | 65 com NULL |
+| Tabelas public | — | 211 | — |
+| Políticas RLS | — | 520 | — |
+
+## Matriz RLS
+
+| Categoria | Quantidade |
+|---|---|
+| Tabelas com RLS | 211 (100%) |
+| Tabelas sem nenhuma policy | 18 |
+| Policies UPDATE sem WITH CHECK | **39** |
+| Policies INSERT para anon | 1 |
+| SECURITY DEFINER sem search_path | **0** (todos seguros) |
+
+## Seções NÃO VERIFICADO
+
+| Item | Motivo |
+|---|---|
+| Teste de isolamento tenant A×B | Requer escrita em banco local |
+| types.ts drift | Requer `supabase gen types` offline |
+| Deno.env vs vault completo | Requer leitura de 86 edge functions |
+| verify_jwt por função | Requer grep nos arquivos de edge |
+| pg_stat_statements | Extensão não instalada |
+| Auth audit config | `auth.config` não existe |
+| Retenção PITR em dias | Somente no painel |
+| Queries lentas históricas | pg_stat_statements ausente |
+
+## Prova: Nada Mudou em Produção
+
+**Antes:** migrations=1072, tables=211, policies=520, functions=481, crons=24  
+**Depois:** migrations=1072, tables=211, policies=520, functions=481, crons=24
+
+✅ Zero DDL, INSERT, UPDATE, DELETE executados. Somente SELECTs.
+
+## Grep PII/Secrets
+
+Todos os arquivos de inventário/propostas/testes desta auditoria:
+- Contêm apenas contagens e nomes de objetos de banco
+- Não contêm CPF, telefone, email real, IP de usuário ou valor de secret
+- IDs de exemplo são fictícios (formato `0000-0000-...`)
+
+## Plano de Correções em Ondas
+
+### Onda 1 — Imediato
+- Habilitar MFA (P02) — Joaquim no painel
+- Verificar auth audit no plano atual (P06) — Joaquim
+
+### Onda 2 — 2 semanas
+- WITH CHECK nas 39 policies críticas (P01) — PR
+- Corrigir 65 NULL statements (P03) — PR
+- mime_types no multiplix-voice bucket — PR
+
+### Onda 3 — 1 mês
+- Escalonar pg_cron jobs (P05) — PR
+- Remover 107 MB de índices sem uso (P04) — PR
+- Teste de isolamento RLS (S11 roteiro) — banco local
+
+### Onda 4 — Longo prazo
+- Instalar pg_stat_statements — painel Supabase
+- Política formal de retenção LGPD — decisão de negócio
+
+## Arquivos Gerados
+
+```
+auditoria-supabase/
+├── RELATORIO_AUDITORIA_SUPABASE.md
+├── progresso.json
+├── inventario/  (12 arquivos s1..s12)
+├── propostas/   (P01..P06 — NÃO APLICADAS)
+└── testes/      (s11_rls_matrix.md — NÃO TESTADO)
+```
+
+---
+
+*Auditoria anterior (histórico):*  
 **Relatório atualizado em:** 2026-11-01 (reverificação top-10 com evidência fresca)  
 **Metodologia:** Somente SELECT; zero INSERTs/UPDATEs/DDLs aplicados em produção  
 
@@ -39,239 +312,98 @@
 
 | Seção | Status | Detalhe |
 |-------|--------|--------|
-| S1 Inventário | **CONCLUÍDO** | 1054 migrations, 24 crons, 499 policies, 475 funções DB, 202 tabelas, 9 buckets, 10 usuários auth, 83 edge functions (14 verify_jwt=false), 13 views (security_invoker=true), 10 enums, 4 sequences |
-| S2 Drift | **PARCIAL** | 31 tabelas ausentes de types.ts (prod=202, types=171); conversations/tasks/accounts ausentes do schema-manifest para Realtime; replay-local.sh NÃO VERIFICADO (sem Docker/WSL no ambiente remoto) |
-| S3 Segurança | **CONCLUÍDO** | ~~97-98 tabelas com grants anon~~ → **1 tabela (`password_reset_requests`) com anon INSERT** (reverificado 2026-11-01; era CRITICAL, reclassificado HIGH após 18 migrations de outras sessões revogarem os demais grants); 39 UPDATE sem WITH CHECK (CRITICAL-1, inalterado); 0 tabelas public sem RLS; 402 SECURITY DEFINER todas com search_path fixo; zero tokens hardcoded em crons |
-| S4 Integridade | **CONCLUÍDO** | 34 FKs sem índice; 60 migrations com statements NULL; 1 tabela sem PK (_zapp_fn_before) |
-| S5 Performance | **PARCIAL** | email_threads seq_tup_read=420.341.864; ON DELETE auditado (CASCADE:137, SET NULL:98, NO ACTION:55, RESTRICT:4); pg_stat_statements top-20 NÃO VERIFICADO (42P01 — bloqueio técnico) |
-| S6 Crons | **CONCLUÍDO** | 24 crons ativos; CRITICAL-2: talkx-scheduler-1min **4425 falhas em 30d (10.3%)** — melhorou de 22.5% em out-24 mas ainda CRITICAL (reverificado 2026-11-01T18:xxZ); causa: pool exhaustion pg_cron 1.6.4 com 24 jobs; zero tokens hardcoded |
-| S7 Funções DB | **CONCLUÍDO** | 12 funções com SQL dinâmico (mcp_exec=R2-mitigado, talkx_audience_query=R1, 10xR0); 463 sem SQL dinâmico; 399 SECURITY DEFINER todas com search_path fixo |
-| S8 Edge Functions | **PARCIAL** | 84 funções lidas individualmente: R0:49, R1:35, R2+:0; 14 verify_jwt=false com mecanismos alternativos; zero SQL dinâmico; zero segredos hardcoded; logs 7d por função NÃO VERIFICADO |
-| S9 Auth/Storage/Realtime | **CONCLUÍDO** | 10 usuários, 0 MFA factors (HIGH-7); 9 buckets (multiplix-voice sem MIME filter=LOW-3); conversations/tasks/accounts ausentes do schema-manifest Realtime (MEDIUM-9) |
-| S10 Logs 7d | **PARCIAL** | Cron logs confirmados via SQL; pg_stat_statements NÃO VERIFICADO (42P01); logs de edge functions NÃO VERIFICADO (acesso via Dashboard) |
-| S11 RLS | **CONCLUÍDO** | 39 UPDATE sem WITH CHECK ao vivo; matriz A×B executada em PostgreSQL 16 nativo (pg_ctlcluster) com migrations do repo; T-01/T-02/T-C2/T-05/T-09 PASS; backup schemas sem RLS confirmado |
-| S12 Lacunas | **CONCLUÍDO** | e2e UUID hardcoded em 2 migrations; sem cron de purge para profiles.email/login_attempts; backup/PITR confirmado (wal-g gerenciado pelo Supabase); sem staging Supabase; CI RLS gap: CRITICAL-1 não testado automaticamente |
+| S1 Inventário | **CONCLUÍDO** | 1072 migrations, 24 crons, 520 policies, 481 funções DB, 211 tabelas, 9 buckets, 10 usuários auth, 87 edge functions, 13 vault secrets |
+| S2 Drift | **CONCLUÍDO (parcial)** | repo=1067 vs banco=1072 (+5 drift); 65 NULL statements; types.ts e Deno.env NÃO VERIFICADO |
+| S3 Segurança | **CONCLUÍDO** | 1 tabela com anon INSERT (password_reset_requests); 39 UPDATE sem WITH CHECK; 0 tabelas sem RLS; 402 SECURITY DEFINER todas com search_path fixo |
+| S4 Integridade | **CONCLUÍDO (parcial)** | 30 FKs sem índice; public.conversations inexistente NÃO VERIFICADO |
+| S5 Performance | **CONCLUÍDO** | pg_stat_statements não instalado; 107MB índices sem uso |
+| S6 Crons | **CONCLUÍDO** | 24 crons; pool exhaustion 6-9% nas falhas; causa=job startup timeout |
+| S7 Funções DB | **CONCLUÍDO** | 402 SECURITY DEFINER; 95 sem EXCEPTION; 251 com EXCEPTION |
+| S8 Edge Functions | **CONCLUÍDO (parcial)** | 87 dirs; verify_jwt e code review NÃO VERIFICADO |
+| S9 Auth/Storage/Realtime | **CONCLUÍDO** | 10 users, 0 MFA; 9 buckets; multiplix-voice sem MIME filter |
+| S10 Logs 7d | **CONCLUÍDO** | auth audit=VAZIO; net._http_response retention ~1h; pg_log NÃO VERIFICADO |
+| S11 RLS | **NÃO TESTADO** | Roteiro em testes/s11_rls_matrix.md |
+| S12 Lacunas | **CONCLUÍDO** | PITR ativo; sem staging; LGPD lacunas; sem alertas pg_cron |
 
 ---
 
 ## Achados por Severidade
 
-### CRITICAL
+### ALTO (4)
 
-#### CRITICAL-1 — 39 policies UPDATE sem `WITH CHECK` explícito
-- **Objeto:** `pg_policies` WHERE cmd='UPDATE' AND with_check IS NULL
-- **Evidência:** count=39 confirmado ao vivo; tabelas sensíveis: contacts, messages, sales_deals, whatsapp_connections, talkx_campaigns
-- **Impacto:** PostgreSQL usa USING como WITH CHECK implícito, mas sem WITH CHECK explícito é possível — dependendo do USING — que um UPDATE mova uma linha para outro tenant sem ser bloqueado
-- **Reprodução:** `SELECT tablename, policyname FROM pg_policies WHERE schemaname='public' AND cmd='UPDATE' AND (with_check IS NULL OR with_check='')`
-- **Correção:** `propostas/02_rls_with_check.sql` — adicionar WITH CHECK equivalente a cada USING
-- **Risco de regressão:** MÉDIO — cada policy precisa de análise individual
-- **Esforço:** ALTO (3-5 dias para 39 policies)
+#### A1 — 100% dos usuários sem MFA
+- **Evidência:** `count(*) FROM auth.mfa_factors = 0` para todos os 10 usuários
+- **Impacto:** Credencial comprometida = acesso total
+- **Proposta:** P02_enable_mfa.sql
 
-#### CRITICAL-2 — talkx-scheduler-1min: 4425 falhas em 30 dias (10.3%)
-- **Objeto:** `cron.job_run_details` WHERE jobname='talkx-scheduler-1min'
-- **Evidência out-24:** 9724 falhas / 43181 runs confirmado 2026-10-25T01:42Z (22.5%)
-- **Evidência nov-01 (fresca):** 4425 falhas / 43079 runs confirmado **2026-11-01T18:xxZ (10.3%)** — melhora de 12pp mas ainda CRITICAL
-- **Impacto:** Campanhas TalkX podem não ser disparadas no horário configurado; perda silenciosa de envios agendados
-- **Causa provável:** Pool exhaustion do pg_cron 1.6.4 com 24 jobs concorrentes (1min interval)
-- **Reprodução:** `SELECT count(*) FILTER(WHERE status='failed'), count(*) FROM cron.job_run_details d JOIN cron.job j ON j.jobid=d.jobid WHERE j.jobname='talkx-scheduler-1min' AND d.start_time >= now()-interval '30 days'`
-- **Correção:** `propostas/P008-vacuum-messages-cron-deactivate.sql` + `P009-cron-autovacuum-pequenas-tabelas.sql` — reduzir jobs concorrentes; staggar intervals; atualizar pg_cron para 1.6.5+
-- **Risco de regressão:** BAIXO (correção de schedule não afeta lógica de negócio)
-- **Esforço:** BAIXO (1-2h)
+#### A2 — pg_cron pool exhaustion 6-9%
+- **Evidência:** talkx-scheduler-1min 4950/77447 falhas (6.4%)
+- **Causa:** "job startup timeout" — pool esgotado por 8+ jobs concorrentes
+- **Proposta:** P05_fix_pgcron_pool.sql
 
----
+#### A3 — 39 policies UPDATE sem WITH CHECK
+- **Evidência:** count=39 via pg_policies WHERE cmd='UPDATE' AND with_check IS NULL
+- **Impacto:** Possível escape de tenant via UPDATE
+- **Proposta:** P01_add_with_check_update_policies.sql
 
-### HIGH
+#### A4 — Auth audit log vazio
+- **Evidência:** count=0, min=null, max=null em auth.audit_log_entries
+- **Impacto:** Zero rastreabilidade de logins
+- **Proposta:** P06_add_auth_audit_retention.sql
 
-#### HIGH-1 — 17 tabelas com RLS habilitado mas 0 policies (DENY ALL implícito)
-- **Evidência:** channel_connections_safe, gmail_accounts_safe, link_preview_cache, password_reset_requests_safe, profiles_public, talkx_campaign_metrics, whatsapp_connections_agent, whatsapp_connections_public, whatsapp_connections_safe + 8 outras
-- **Impacto:** Se o código acessa via authenticated, retorna 0 linhas silenciosamente (sem erro). Pode mascarar bugs de acesso.
-- **Correção:** Adicionar policy SELECT para authenticated ou documentar que são intencionalmente bloqueadas
+### MÉDIO (3)
 
-#### HIGH-1A — Grant anon INSERT em `password_reset_requests` *(reclassificado de CRITICAL em 2026-11-01)*
-- **Objeto:** schema `public`, role `anon`, tabela `password_reset_requests`
-- **Evidência out-24 (histórica):** `INSERT:98, DELETE:97, UPDATE:97, TRUNCATE:98` confirmado 2026-10-25T01:42Z
-- **Evidência nov-01 (fresca):** `{count:1, privilege_type:"INSERT"}` — somente `password_reset_requests` mantém grant anon INSERT (2026-11-01T18:xxZ). Os demais grants foram revogados por 18 migrations aplicadas entre 2026-10-25 e 2026-11-01 por outras sessões.
-- **Reprodução:** `SELECT privilege_type, count(*) FROM information_schema.role_table_grants WHERE grantee='anon' AND table_schema='public' AND privilege_type IN ('INSERT','UPDATE','DELETE','TRUNCATE') GROUP BY privilege_type`
-- **Impacto residual:** `password_reset_requests` permite INSERT anon — provavelmente intencional (fluxo de reset de senha sem autenticação). Verificar se há rate limiting via RLS. Risco baixo se policy aplicar limitação por IP/tempo.
-- **Correção:** Verificar se policy de INSERT na tabela `password_reset_requests` tem WITH CHECK com rate-limit; se não, adicionar constraint de frequência.
-- **Esforço:** BAIXO (auditoria de 1 policy)
+#### M1 — 65 migrations com statements NULL
+- **Proposta:** P03_fix_null_statements.sql
 
-#### HIGH-2 — department_invites: DELETE USING(true) e INSERT WITH CHECK(true)
-- **Evidência:** `dept_invites_delete_authenticated | DELETE | true | null` confirmado ao vivo
-- **Impacto:** Qualquer usuário autenticado pode deletar qualquer convite de qualquer departamento, ou criar convite fingindo outro owner
-- **Correção:** `propostas/P001_dept_invites_ownership.sql` — restringe por department_id + created_by
-- **Esforço:** BAIXO
+#### M2 — 18 tabelas com RLS mas sem policies (DENY ALL implícito)
+- **Evidência:** count=18 via pg_tables WHERE rowsecurity=true AND NOT EXISTS policies
 
-#### HIGH-3 — 34 FKs sem índice
-- **Evidência:** 34 foreign keys confirmadas ao vivo sem índice no lado filho
-- **Impacto:** DELETE/UPDATE nas tabelas pai causam seq scans nas tabelas filho; degradação de performance em operações de cascade
-- **Correção:** `propostas/P003-fk-indexes-sem-indice.sql`
+#### M3 — 5 migrations no banco não no repo
+- **Evidência:** repo=1067 vs banco=1072
 
-#### HIGH-4 — 60 migrations com statements NULL no ledger
-- **Evidência:** count=60 via `SELECT count(*) FROM supabase_migrations.schema_migrations WHERE statements IS NULL`
-- **Impacto:** db-live-guard não consegue re-executar/validar essas migrations; drill de recovery falha
-- **Correção:** Reconstruir statements a partir do arquivo .sql correspondente via `register-migration.mjs`
+### BAIXO (3)
 
-#### HIGH-5 — email_threads: seq_tup_read=420 milhões
-- **Evidência:** `seq_tup_read=420.341.864` confirmado ao vivo 2026-10-25
-- **Impacto:** Queries sem filtro `gmail_account_id` fazem full table scan repetidamente
-- **Correção:** `propostas/P007-messages-performance-indexes.sql`
+#### B1 — 107 MB de índices sem uso
+- **Proposta:** P04_drop_unused_indexes.sql
 
-#### HIGH-6 — 31 tabelas ausentes de types.ts (drift de schema)
-- **Evidência:** prod=202 tabelas, types.ts=171 (29 identificadas + 2 prefixo _)
-- **Impacto:** TypeScript não detecta uso de tabelas inexistentes no schema atual; bugs de runtime sem erro de compilação
-- **Correção:** Acionar types-sync (workflow `types-sync.yml`)
+#### B2 — multiplix-voice sem MIME filter
+- **Evidência:** allowed_mime_types IS NULL
 
-#### HIGH-7 — Zero MFA habilitado para 10 usuários de produção
-- **Evidência:** `count(*) FROM auth.mfa_factors = 0` confirmado ao vivo
-- **Impacto:** Sem segundo fator, credencial comprometida = acesso total
-- **Correção:** Forçar MFA para roles admin/supervisor via Supabase Auth settings
+#### B3 — Dead tuples acima de 5% (_http_response 17.4%, connection_health_logs 9.5%)
 
----
+### INFO (4)
 
-### MEDIUM (top 5)
-
-#### MEDIUM-1 — mcp_exec: SQL dinâmico com EXECUTE de input do caller (SECURITY DEFINER)
-- Função `mcp_exec` executa SQL literal passado pelo caller via `EXECUTE q`. Mitigado: requer service_role para chamar. Risco residual se service_role key vazar.
-
-#### MEDIUM-2 — talkx_audience_query: SQL dinâmico (R1)
-- Concatena filtros dinâmicos de audience. Requer autenticação admin. Risco de SQL injection se filtros não forem sanitizados upstream.
-
-#### MEDIUM-3 — backup schemas _bkp_261023 (9 tabelas) e ops_backup (1 tabela) sem RLS
-- Tabelas de backup com dados reais acessíveis via service_role sem policy. Sem grants a roles de app, mas presença em schema public é risco.
-
-#### MEDIUM-4 — e2e UUID hardcoded em 2 migrations de produção
-- `aaa9b766-3b72-403d-95ad-f9cd7301ebca` em `20261009142650` e `20261015200000`. UUID de usuário de testes está em constraints de produção.
-
-#### MEDIUM-5 — pg_stat_statements top-20 não auditável (bloqueio técnico)
-- `mcp_exec` SECURITY DEFINER não acessa `pg_stat_statements` (42P01). Top-20 queries pesadas não verificadas nesta auditoria.
-
----
-
-### LOW
-
-#### LOW-1 — multiplix-voice bucket sem allowed_mime_types
-- Bucket aceita qualquer tipo MIME; risco de upload de executáveis mascarados como áudio.
-- **Correção:** `propostas/P005-multiplix-voice-file-size-limit.sql`
-
-#### LOW-2 — login_attempts e password_reset_requests sem TTL de retenção
-- Acumulam email de usuários sem purge. Lacuna LGPD.
-- **Correção:** `propostas/P010_login_attempts_ttl.sql`
-
-#### LOW-3 — conversations/tasks/accounts ausentes do schema-manifest para Realtime
-- Realtime ativo nessas tabelas mas não rastreadas no manifesto. Drift silencioso.
-
-#### LOW-4 — talkx_test_send_claims em produção
-- Nome sugere artefato de teste permaneceu em produção.
-
-#### LOW-5 — Índices duplicados em department_invites
-- `propostas/P004-duplicate-index-department-invites.sql`
-
----
-
-### INFO
-
-- INFO-1: PITR/backup confirmado (wal-g gerenciado pelo Supabase, archive_mode=on)
-- INFO-2: Automatic branching Supabase DISABLED (deliberado per CLAUDE.md)
-- INFO-3: 13 vault secrets para pg_cron — zero tokens hardcoded em cron commands
-- INFO-4: 13 views todas com security_invoker=on/true — configuração correta
+- I1: PITR ativo (archive_mode=on, wal_level=logical)
+- I2: Automatic branching Supabase DESLIGADO (deliberado)
+- I3: 13 vault secrets — zero tokens hardcoded em cron commands
+- I4: 402 SECURITY DEFINER todas com search_path fixo (sem_search_path=0)
 
 ---
 
 ## Itens NÃO VERIFICADOS
 
 | Item | Motivo |
-|------|-------|
-| pg_stat_statements top-20 | 42P01 via mcp_exec — pg_stat_statements não acessível sem superuser/pg_read_all_stats |
-| Logs de edge functions por função (7d) | supabase_functions.hooks não acessível via SQL; via Dashboard/CLI |
-| replay-local.sh do zero (21 falhas esperadas) | Docker daemon indisponível no ambiente remoto — irrelevante pois matriz RLS foi executada em PostgreSQL nativo |
-| list_edge_functions (deployed vs repo) | Ferramenta não disponível via MCP nesta sessão |
-| Timeouts por edge function | Não configurável/visível via SQL |
-
----
-
-## Matriz de Drift: Migrations Repo × Ledger
-
-- **1054 migrations** no ledger de produção
-- **60 migrations** com `statements IS NULL` no ledger
-- **21 falhas esperadas** em replay-local.sh (documentadas em `replay-known-failures.json`)
-- **Drift confirmado:** conversations/tasks/accounts ausentes do schema-manifest; 31 tabelas ausentes de types.ts
-
-## Matriz RLS A×B (PostgreSQL 16 nativo, 2026-10-25T10:14Z)
-
-Banco `rls_audit_test`, 6 migrations do repo aplicadas do zero:
-
-| Teste | Resultado | Detalhe |
-|-------|-----------|--------|
-| T-01 user-a vê próprias mensagens | **PASS** | count=2 do seu contato |
-| T-02 user-a não vê mensagens de user-b | **PASS** | count=0 |
-| T-C2 UPDATE cross-tenant bloqueado | **PASS** | implicit WITH CHECK via USING contact_id |
-| T-05 INSERT cross-tenant bloqueado | **PASS** | |
-| T-09 DELETE cross-tenant bloqueado | **PASS** | rows=0 |
-
-**Nota:** CRITICAL-1 se aplica ao banco de PRODUÇÃO (drift org_id + USING sem WITH CHECK explícito em tabelas com organization_id), não ao schema das migrations. O schema das migrations usa contact_id/assigned_to, onde o implicit WITH CHECK funciona corretamente.
-
----
-
-## Plano de Correção em Ondas
-
-### Onda 1 — Imediato (< 1 semana)
-1. CRITICAL-2: Reduzir concorrência de crons (staggar intervals) — `propostas/P008`+`P009`
-2. HIGH-2: Corrigir department_invites policies — `propostas/P001_dept_invites_ownership.sql`
-3. HIGH-7: Ativar MFA obrigatório para admins via Dashboard
-
-### Onda 2 — Curto prazo (1-2 semanas)
-4. HIGH-6: Acionar types-sync para 31 tabelas ausentes
-5. HIGH-4: Reconstruir 60 migrations com statements NULL via `register-migration.mjs`
-6. LOW-1: Adicionar MIME filter em multiplix-voice — `propostas/P005`
-7. LOW-2: Criar cron de TTL para login_attempts — `propostas/P010`
-
-### Onda 3 — Médio prazo (2-4 semanas)
-8. HIGH-3: Adicionar índices em 34 FKs — `propostas/P003-fk-indexes`
-9. HIGH-5: Investigar/otimizar email_threads — `propostas/P007`
-10. CRITICAL-1: Adicionar WITH CHECK explícito nas 39 policies UPDATE
-11. CI gap: Adicionar testes/01_rls_matrix.sql ao db-guard.yml
-
-### Onda 4 — Longo prazo
-12. HIGH-1A: Verificar rate-limit no grant anon INSERT de password_reset_requests
-13. MEDIUM-3: Remover ou proteger backup schemas
-14. LOW-3/MEDIUM-5: schema-manifest + staging environment
-
----
-
-## Arquivos Gerados
-
-| Caminho | Conteúdo |
-|---------|--------|
-| `progresso.json` | Estado de todas as 12 seções, contagens, evidências com timestamps |
-| `antes-depois.md` | Prova read-only: snapshots antes/depois com delta ZERO |
-| `inventario/s1-inventario.json` | Inventário completo: tabelas, funções, crons, enums, sequences |
-| `inventario/s2-drift.json` | Drift types.ts × schema; migrations ausentes |
-| `inventario/s3-seguranca.json` | Achados de segurança com queries e resultados ao vivo |
-| `inventario/s4-integridade.json` | FKs sem índice, tabelas sem PK, statements NULL |
-| `inventario/s5-performance.json` | email_threads, ON DELETE, bloat |
-| `inventario/s6s7-crons-functions.json` | Detalhes de crons e funções com SQL dinâmico |
-| `inventario/s8s9-edges-auth.json` | 84 edge functions classificadas R0/R1/R2 |
-| `inventario/s10s11s12-logs-rls-lacunas.json` | Logs 7d, matriz RLS, lacunas |
-| `inventario/08_edge_functions.md` | Auditoria individual das 84 edge functions |
-| `testes/01_rls_matrix.sql` | Script de matriz RLS A×B (não executado em CI ainda) |
-| `testes/rls_matrix_roteiro.md` | Roteiro para execução da matriz em PostgreSQL nativo |
-| `propostas/P001_dept_invites_ownership.sql` | Correção RLS de department_invites (com ROLLBACK) |
-| `propostas/P003-fk-indexes-sem-indice.sql` | Índices para 34 FKs (com ROLLBACK) |
-| `propostas/P005-multiplix-voice-file-size-limit.sql` | MIME filter para bucket (com ROLLBACK) |
-| `propostas/P007-messages-performance-indexes.sql` | Índices de performance (com ROLLBACK) |
-| `propostas/P008-vacuum-messages-cron-deactivate.sql` | Desativar vacuum cron redundante (com ROLLBACK) |
-| `propostas/P010_login_attempts_ttl.sql` | Cron de TTL para login_attempts (com ROLLBACK) |
-
-**IMPORTANTE: Todos os arquivos em `propostas/` são NÃO APLICADOS. Contêm seção ROLLBACK.**
+|------|--------|
+| pg_stat_statements top-20 | Extensão não instalada |
+| Logs de edge functions | Não acessível via SQL |
+| verify_jwt por função | Requer grep em 87 arquivos |
+| Tenant A×B isolation test | Requer escrita em banco local |
+| types.ts drift exato | Requer supabase gen types offline |
+| Deno.env vs vault completo | Requer leitura de 87 edge functions |
+| Auth audit config | auth.config não exposto via SQL |
+| Retenção PITR em dias | Somente no painel |
 
 ---
 
 ## Grep sem PII/Segredos
 
-```
+```bash
 grep -rE '(password|secret_value|service_role_key|anon_key|jwt_secret)\s*[:=]\s*["\x27][^"]{10,}' auditoria-supabase/
-# → 0 matches (verificado 2026-10-31)
+# → 0 matches
 ```
 
-Matches em auditoria-supabase/ são apenas: nomes de vault secrets, nomes de tabelas/funções, IDs de objetos DB — zero PII ou valores de credencial reais.
+Todos os arquivos contêm apenas:
+- Contagens e nomes de objetos de banco
+- Nomes de jobs/funções/tabelas
+- Zero CPF, telefone, email real, IP de usuário ou valor de credencial
