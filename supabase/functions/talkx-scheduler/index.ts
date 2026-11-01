@@ -22,6 +22,7 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, internalErrorResponse, Logger } from "../_shared/validation.ts";
 import { AUTO_RESUME_REASONS, connectionStatusResolver, selectResumableCampaigns } from "../_shared/talkx-resume-policy.ts";
+import { isInstancePaused } from "../_shared/instance-pause.ts";
 import { parseBusinessHours, type BusinessHours } from "../_shared/talkx-window.ts";
 import { timingSafeEqual } from "../_shared/hmac-validation.ts";
 
@@ -192,16 +193,28 @@ export async function handleTalkxScheduler(
         .filter((id): id is string => typeof id === "string"),
     )];
     const connectionStatusById = new Map<string, string | null>();
+    const instanceIdByConnection = new Map<string, string>();
     if (connectionIds.length > 0) {
       const { data: connections, error: connectionsErr } = await supabase
         .from("whatsapp_connections")
-        .select("id, status")
+        .select("id, status, instance_id")
         .in("id", connectionIds);
       if (connectionsErr) {
         log.error("Error fetching connections for auto-resume", { error: connectionsErr.message });
       }
       for (const connection of connections ?? []) {
         connectionStatusById.set(connection.id as string, (connection.status as string | null) ?? null);
+        if (typeof connection.instance_id === "string") instanceIdByConnection.set(connection.id as string, connection.instance_id);
+      }
+    }
+
+    // C121: instâncias ainda em pausa entre as campanhas pausadas por `instance_paused`.
+    const pausedInstances = new Set<string>();
+    for (const campaign of pausedCampaigns ?? []) {
+      if (campaign.pause_reason !== "instance_paused") continue;
+      const instanceId = instanceIdByConnection.get(campaign.whatsapp_connection_id as string);
+      if (instanceId && !pausedInstances.has(instanceId) && await isInstancePaused(supabase, instanceId)) {
+        pausedInstances.add(instanceId);
       }
     }
 
@@ -230,6 +243,10 @@ export async function handleTalkxScheduler(
       connectionStatusResolver(connectionStatusById),
       now,
       businessHours,
+      (campaign) => {
+        const instanceId = instanceIdByConnection.get(campaign.whatsapp_connection_id as string);
+        return instanceId ? pausedInstances.has(instanceId) : false;
+      },
     );
 
     // X015: no máximo 1 retomada por conexão. selectResumableCampaigns devolve só a

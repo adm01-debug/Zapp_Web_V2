@@ -32,7 +32,7 @@ export type BusinessHoursSetting = Parameters<typeof deliveryWindowStatus>[2];
 /** Motivos que autorizam retomada automática. Qualquer outro valor (texto livre
  *  do usuário, nulo, motivo desconhecido) significa pausa manual/diagnóstica e
  *  NUNCA é retomado por robô. */
-export const AUTO_RESUME_REASONS = ["send_window", "business_hours", "connection_lost", "daily_limit"] as const;
+export const AUTO_RESUME_REASONS = ["send_window", "business_hours", "connection_lost", "daily_limit", "instance_paused"] as const;
 export type AutoResumeReason = (typeof AUTO_RESUME_REASONS)[number];
 
 /**
@@ -98,6 +98,8 @@ export function selectResumableCampaigns(
   connectionStatus: (campaign: PausedCampaignRow) => string | null,
   now = new Date(),
   businessHours: BusinessHoursSetting = null,
+  /** C121: true quando a instância da campanha ainda está em pausa (is_instance_paused). */
+  instancePaused: (campaign: PausedCampaignRow) => boolean = () => false,
 ): ResumeDecision[] {
   return rows.map((campaign) => {
     const pauseReason = typeof campaign.pause_reason === "string" ? campaign.pause_reason : "";
@@ -123,6 +125,21 @@ export function selectResumableCampaigns(
         };
       }
       return { ...base, resume: true, because: "conexão restabelecida" };
+    }
+
+    if (pauseReason === "instance_paused") {
+      // C121: a campanha só volta quando a pausa da instância acabou E a conexão está de pé.
+      if (instancePaused(campaign)) {
+        return { ...base, resume: false, because: "instância ainda pausada — só retoma quando a pausa acabar" };
+      }
+      const status = connectionStatus(campaign);
+      if (status !== "connected") {
+        return {
+          ...base,
+          resume: false,
+          because: `conexão WhatsApp '${status ?? "desconhecida"}' — só retoma com a conexão de pé`,
+        };
+      }
     }
 
     if (pauseReason === "daily_limit") {

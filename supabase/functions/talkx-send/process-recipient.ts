@@ -15,6 +15,7 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, type DndSetting } from "../_shared/talkx-window.ts";
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
+import { isInstancePaused } from "../_shared/instance-pause.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 import {
@@ -500,13 +501,19 @@ export async function processRecipient(
       .maybeSingle();
     if (beforeSendConnectionError) throw new Error(`talkx_connection_state_lookup_failed: ${beforeSendConnectionError.message}`);
     const beforeSendInstanceId = liveTalkXInstanceId(beforeSendConnection);
-    if (beforeSend?.status !== "sending" || !beforeSendWindowStatus.allowed || !beforeSendInstanceId) {
+    // C121: instância pausada pelo operador/sistema — a campanha pausa junto (volta sozinha).
+    const beforeSendInstancePaused = beforeSendInstanceId
+      ? await isInstancePaused(supabase, beforeSendInstanceId)
+      : false;
+    if (beforeSend?.status !== "sending" || !beforeSendWindowStatus.allowed || !beforeSendInstanceId || beforeSendInstancePaused) {
       if (beforeSend?.status === "sending") {
         // V03: mesmo cuidado do mid-loop — o motivo gravado diz se a pausa
         // foi da janela ou da conexão (era nulo nos dois casos).
         const autoPauseReason = !beforeSendWindowStatus.allowed
           ? pauseReasonForWindow(beforeSendWindowStatus)
-          : "connection_lost";
+          : !beforeSendInstanceId
+          ? "connection_lost"
+          : "instance_paused";
         const { error: pauseError } = await supabase.rpc("transition_talkx_campaign", {
           p_campaign_id: campaignId,
           p_action: "pause",
