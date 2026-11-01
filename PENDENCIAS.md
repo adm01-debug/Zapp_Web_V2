@@ -1,86 +1,55 @@
-# PENDENCIAS.md — Workflows com falha não corrigível via código
+# PENDENCIAS.md — Workflows com falha não corrigível sem ação do Joaquim
 
-_Atualizado em 2026-10-31 por sessão `fix/ci-workflows`._
+_Atualizado em 2026-11-01 por sessão `claude_04/gifted-ride-xq3mj4`._
 
 ---
 
-## 1. DB Live Guard — falhas em contrato vivo (investigação pendente)
+## 1. DB Live Guard — diagnosticar artefato de evidência
 
-**Último run com falha:** [41162077590](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162077590)  
-**Head SHA:** vários (pós-merge de `main`)
+**Workflow:** `db-live-guard.yml`  
+**Run:** [41318522203](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41318522203)  
+**Commit:** `532aa09b`  
+**Hora:** 2026-11-01 ~15:29 UTC  
 
-**O que falha:**
-- Step "Consolidar veredito do contrato vivo" — artifact `13027601857` contém evidências
-- Compara o estado do banco de produção com artefatos do repositório (types.ts, schema-catalog.json,
-  schema-manifest.json)
-
-**Falhas identificadas no run 41162077590 (3 contratos reais, não deriva transitória):**
-1. **migrations/ledger** — diferença entre migrations no disco (`supabase/migrations/`) e entradas no ledger do banco
-2. **ACL/mcp_exec** — contrato de permissão `mcp_exec` não satisfeito
-3. **configuração runtime** — `runtime-config` com divergência detectada
-
-**Por que não foi corrigido:** DB Live Guard conecta ao banco de produção e exige análise
-das evidências no artifact `db-live-evidence-{run_id}-1` para diagnosticar cada divergência.
-Requer acesso ao banco de produção para comparação e possível migration corretiva. Este
-workflow **não é um required check** — não bloqueia merges na `main`.
+**O que falhou:** 7 de 7 passos do contrato vivo falharam simultaneamente. Os logs reais estão no artefato `db-live-evidence-41318522203-1`.
 
 **O que o Joaquim precisa fazer:**
-1. Disparar manualmente o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`
-2. Se falhar, os logs do artifact `db-live-evidence-{run_id}-1` mostrarão qual passo tem diferença real
-3. Se o passo "Verificar frescor do types.ts" falhar: disparar `workflow_dispatch` do `types-sync.yml` **na branch `main`**
-4. Se o passo "Comparar migrations com schema_migrations" falhar: verificar se há migration
-   no disco (em `supabase/migrations/`) sem entrada no ledger
+1. Abrir o artefato: https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41318522203/artifacts/13089517610
+2. Baixar e inspecionar `step-migrations.log` para verificar se há drift de migration.
+3. Verificar `step-types.log` para saber se `types.ts` está desatualizado.
+4. Se for problema de conectividade (todos os logs mostram timeout ou "connection refused"), verificar validade do secret `DESTINO_URL` em Settings → Secrets → Actions.
+
+**Atenção:** run `41356605138` está `pending` na HEAD atual `1252bb5a` (iniciado 22:20 UTC). Se este run passar verde, o problema foi transitório. Se falhar, os logs do novo artefato devem ser inspecionados.
+
+**Por que agente não resolve:** os logs de falha estão em artefatos ZIP (não acessíveis via MCP). Sem ler o conteúdo de `step-migrations.log` ou `step-catalog.log` não é possível saber o que exatamente divergiu.
 
 ---
 
-## 2. Running Copilot Code Review — limite de cota do plano (HTTP 402)
+## 2. DB Migrate — 9 migrations faltando para target
 
-**Runs com falha confirmados (exemplos):**
-- [41167331596](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41167331596) — 2026-10-31T04:08Z
-- [41166869775](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41166869775) — 2026-10-31T04:02Z
-- múltiplos anteriores no mesmo dia
+**Workflow:** `db-migrate.yml`  
+**Run:** [41307726882](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41307726882)  
+**Commit:** `1252bb5a` (HEAD atual da main)  
 
-**Workflow:** Dinâmico do GitHub Copilot — **não tem arquivo no repositório**.
-
-**O que falha:** Step "Processing Request (Linux)" termina com `errorType: 'quota'`, HTTP 402,
-"You've reached your additional usage limit for your plan". A mensagem de firewall que aparece
-no log é secundária — a causa real é esgotamento de cota de uso do Copilot Code Review.
-
-**Por que não foi corrigido:** Workflow dinâmico do GitHub Copilot — sem código no repositório.
-A falha está no limite de cota do plano do Copilot (HTTP 402). Este
-workflow **não é um required check** — não bloqueia merges na `main`.
+**O que falhou:** o workflow foi disparado com `target=20261030135126`. Esse version não está registrado no ledger, e há 9 versões intermediárias não aplicadas entre o último version registrado e o target solicitado.
 
 **O que o Joaquim precisa fazer:**
-1. Verificar em GitHub Settings → Billing and plans → Copilot usage limits
-2. Aguardar reset de ciclo de faturamento ou fazer upgrade do plano
-3. Configurar allowlist de firewall do Copilot **não resolve** este erro — a causa é HTTP 402 quota, não HTTP 403 firewall
+1. Acessar o run: https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41307726882
+2. Ver quais são as 9 versões listadas como faltando.
+3. Decidir se quer: (a) aplicar essas migrations agora via `workflow_dispatch` com `apply=false` (dry-run) + aprovação no environment `producao-ddl`; ou (b) cancelar o target e criar um dispatch com o version correto.
+4. **Nunca** aplicar DDL sem antes fazer o dry-run (`apply=false`) e confirmar o hash SHA-256.
+
+**Por que agente não resolve:** o DB Migrate envolve DDL em produção — requer aprovação humana no environment `producao-ddl`. Agente não tem permissão para aprovar deploys em produção.
 
 ---
 
-## 3. Deploy Edge Functions — fix de @types/node tentado (PR #2407) mas ainda falha
+## 3. PRs em CI (monitoramento)
 
-**Comportamento esperado:** `deploy-functions.yml` só executa quando o push na `main` altera
-código implantável em `supabase/functions/` ou `supabase/config.toml`. Quando o push toca
-apenas arquivos de frontend, documentação ou configuração de CI, o workflow não é disparado
-(condição `paths:` no trigger).
+As seguintes PRs estavam com CI rodando às 22:00 UTC de 2026-11-01. Se o CI falhar por motivo diferente do esperado, será necessária investigação adicional:
 
-**Run com falha após o fix:** Run `41162076060` executou no SHA `004e74a8c5` (pós-merge da
-PR #2407, que adicionou a instalação npm de `@types/node` em `deploy-functions.yml`),
-e **ainda falhou** com `Could not find "@types/node"` no step `deno check`. O fix da PR #2407
-não foi suficiente para resolver o erro.
-
-**Por que não foi corrigido:** O mecanismo pelo qual `deno check` falha mesmo após a instalação
-npm de `@types/node` requer investigação adicional — provavelmente o path do `node_modules`
-gerado não é o que o `deno check` procura. Este workflow **não é um required check** — não bloqueia merges na `main`.
-
-**O que o Joaquim precisa fazer:**
-1. Disparar `workflow_dispatch` do `deploy-functions.yml` **na branch `main`** com
-   **`dry_run: true`** (ensaio: roda tudo até o deploy exclusive, sem publicar nada e sem
-   reescrever secrets) para diagnosticar o erro `@types/node` sem risco de side-effects
-2. Se falhar, investigar por que a instalação npm de `@types/node` não resolve o `Could not find "@types/node"` do `deno check`; verificar o path do `node_modules` gerado versus o caminho que o Deno resolve
-3. **Não** disparar sem `dry_run: true` — o deploy sem ensaio reescreve secrets e publica
-   as funções imediatamente no ambiente de produção
+- **PR #2513** — `claude/fix-email-navy-contrast-261101-2057`: corrige contraste WCAG AA em `accessibility.css`. Se CI falhar → verificar se houve regressão no build ou nos testes unitários.
+- **PR #2508** — `claude/fix-deploy-functions-types-node-011101`: adiciona `npm install @types/node` em `deploy-functions.yml`. Se CI falhar → verificar se versão do `@types/node` mudou ou se o step de deno check ainda falha.
 
 ---
 
-_Nota: Este arquivo deve ser atualizado quando os itens acima forem resolvidos._
+_Nada neste arquivo requer decisão de arquitetura ou custo — apenas acesso a artefatos e aprovação de deploy em produção._
