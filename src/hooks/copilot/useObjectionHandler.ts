@@ -3,8 +3,12 @@
  *
  * Detecta tipo de objeção no texto do cliente e retorna roteiro de resposta.
  * Metodologia B·R·I·N·D·E: acolher → perguntar causa → responder com valor → checar.
+ *
+ * Resultado local: sincrônico via keyword matching.
+ * Resultado AI: async via edge `ai-objection-handler` (invocar `analyze()`).
  */
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback, useRef } from 'react';
+import { invokeEdge } from '@/lib/invokeEdge';
 
 export type ObjeçãoType =
   | 'preco'
@@ -24,8 +28,23 @@ export interface ObjectionResult {
   suggestedReply: string;
 }
 
+export interface AiObjectionResult {
+  objectionType: string | null;
+  isSmokescreen: boolean;
+  treatmentSteps: string[];
+  suggestedReply: string;
+  escalationTrigger: string | null;
+}
+
+export interface UseObjectionHandlerReturn extends ObjectionResult {
+  aiResult: AiObjectionResult | null;
+  aiLoading: boolean;
+  aiError: string | null;
+  analyze: () => Promise<void>;
+}
+
 const OBJECTION_TRIGGERS: Record<ObjeçãoType, string[]> = {
-  preco: ['caro', 'preço alto', 'muito caro', 'sai mais barato', 'orçamento', 'apertado', 'tá salgado'],
+  preco: ['caro', 'preço alto', 'muito caro', 'sai mais barato', 'barato', 'orçamento', 'apertado', 'tá salgado'],
   prazo: ['prazo', 'demora', 'urgente', 'quando fica', 'tempo', 'preciso antes'],
   quantidade_minima: ['mínimo', 'minimo', 'poucas', 'menos unidades', 'só preciso', 'quantidade pequena'],
   concorrente: ['outro fornecedor', 'cotei', 'comparei', 'outra empresa'],
@@ -72,8 +91,19 @@ const OBJECTION_SCRIPTS: Record<ObjeçãoType, { steps: string[]; reply: string 
 
 const SMOKESCREEN_SIGNALS = ['gostei', 'legal', 'bonito', 'quero sim', 'me interessei', 'pode ser', 'aprovamos', 'exatamente', 'perfeito', 'ótimo'];
 
-export function useObjectionHandler({ clientText }: { clientText: string }): ObjectionResult {
-  return useMemo(() => {
+export function useObjectionHandler({
+  clientText,
+  messages = [],
+}: {
+  clientText: string;
+  messages?: Array<{ content: string; sender: string }>;
+}): UseObjectionHandlerReturn {
+  const [aiResult, setAiResult] = useState<AiObjectionResult | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const local = useMemo((): ObjectionResult => {
     if (!clientText) return { detected: false, type: null, isSmokescreen: false, treatmentSteps: [], suggestedReply: '' };
     const lower = clientText.toLowerCase();
 
@@ -89,4 +119,24 @@ export function useObjectionHandler({ clientText }: { clientText: string }): Obj
     const script = OBJECTION_SCRIPTS[detectedType];
     return { detected: true, type: detectedType, isSmokescreen, treatmentSteps: script.steps, suggestedReply: script.reply };
   }, [clientText]);
+
+  const analyze = useCallback(async () => {
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const { data, error } = await invokeEdge<AiObjectionResult>('ai-objection-handler', {
+        body: { messages, clientText },
+      });
+      if (error) { setAiError(error.message); return; }
+      if (data) setAiResult(data);
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') setAiError(err instanceof Error ? err.message : 'Erro desconhecido');
+    } finally {
+      setAiLoading(false);
+    }
+  }, [messages, clientText]);
+
+  return { ...local, aiResult, aiLoading, aiError, analyze };
 }

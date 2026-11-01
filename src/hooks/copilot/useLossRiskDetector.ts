@@ -2,11 +2,11 @@
  * CV-079 — Detector de risco de perda de venda.
  *
  * Identifica sinais de que o cliente pode estar desistindo ou indo para concorrente.
- * Une as duas implementações paralelas do CV-079 (antigo useLossRiskAlert): frases de
- * gatilho das duas, histórico recente opcional e `script` — a mensagem pronta para o
- * cliente, separada de `recoveryAction`, que é a orientação para o vendedor.
+ * Resultado local: sincrônico via keyword matching.
+ * Resultado AI: async via edge `ai-loss-risk` (invocar `analyze()`).
  */
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback, useRef } from 'react';
+import { invokeEdge } from '@/lib/invokeEdge';
 
 export type LossRiskLevel = 'low' | 'medium' | 'high';
 
@@ -17,6 +17,20 @@ export interface LossRiskResult {
   recoveryAction: string;
   /** Mensagem sugerida para o cliente; vazia quando não há risco. */
   script: string;
+}
+
+export interface AiLossRiskResult {
+  riskLevel: LossRiskLevel;
+  signals: string[];
+  recoveryAction: string;
+  urgencyMessage: string;
+}
+
+export interface UseLossRiskDetectorReturn extends LossRiskResult {
+  aiResult: AiLossRiskResult | null;
+  aiLoading: boolean;
+  aiError: string | null;
+  analyze: () => Promise<void>;
 }
 
 const HIGH_RISK = [
@@ -38,14 +52,22 @@ export function useLossRiskDetector({
   clientText,
   recentClientMessages = [],
   daysSinceLastContact,
+  messages = [],
 }: {
   clientText: string;
   recentClientMessages?: string[];
   daysSinceLastContact?: number;
-}): LossRiskResult {
+  messages?: Array<{ content: string; sender: string }>;
+}): UseLossRiskDetectorReturn {
+  const [aiResult, setAiResult] = useState<AiLossRiskResult | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
   // Chave estável: o default `[]` é um array novo a cada render.
   const recentes = recentClientMessages.join(' ');
-  return useMemo(() => {
+
+  const local = useMemo((): LossRiskResult => {
     const lower = `${clientText ?? ''} ${recentes}`.toLowerCase();
     if (!lower.trim() && !daysSinceLastContact) return { level: 'low', signals: [], recoveryAction: '', script: '' };
     const silenceRisk = (daysSinceLastContact ?? 0) > SILENCIO_DIAS;
@@ -74,4 +96,24 @@ export function useLossRiskDetector({
     }
     return { level: 'low', signals: lowMatches, recoveryAction: 'Agende follow-up para o prazo que o cliente mencionou.', script: '' };
   }, [clientText, recentes, daysSinceLastContact]);
+
+  const analyze = useCallback(async () => {
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const { data, error } = await invokeEdge<AiLossRiskResult>('ai-loss-risk', {
+        body: { messages, lastContactDays: daysSinceLastContact ?? 0 },
+      });
+      if (error) { setAiError(error.message); return; }
+      if (data) setAiResult(data);
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') setAiError(err instanceof Error ? err.message : 'Erro desconhecido');
+    } finally {
+      setAiLoading(false);
+    }
+  }, [messages, daysSinceLastContact]);
+
+  return { ...local, aiResult, aiLoading, aiError, analyze };
 }
