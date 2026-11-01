@@ -1,6 +1,6 @@
 # Relatório de Auditoria — Supabase Zapp Web V2
 
-**Data**: 2026-10-24 → 2026-10-25 (re-executado e corrigido)
+**Data**: 2026-10-24 → 2026-10-25 (re-executado e corrigido)  
 **Projeto**: `tnnnlkbymytvtqngbbqh` (Supabase Cloud)  
 **Repo**: `adm01-debug/Zapp_Web_V2`  
 **Escopo**: Produção somente-leitura + análise de código  
@@ -73,9 +73,9 @@ WHERE schemaname='public' AND cmd='UPDATE'
 
 **Reprodução**: **TESTADO em Postgres 16 local — CONFIRMADO (2026-10-24)**. Condição exata de exploração: policy SELECT com `USING (user_id = auth.uid())` + policy UPDATE com `USING (user_id = auth.uid())` sem WITH CHECK → `UPDATE 2` rows com `organization_id` trocado para Tenant B. Quando SELECT usa `is_member_of(organization_id)`, o PostgreSQL aplica esse USING como implicit WITH CHECK na linha nova, bloqueando o ataque — mitigação presente na maioria das tabelas auditadas (ver matrix completa na Seção 11).
 
-**Correção**: `propostas/02_rls_with_check.sql` — adicionar `WITH CHECK` equivalente ao `USING` em todas as 39 policies.
+**Correção**: `propostas/02_rls_with_check.sql` — para cada uma das 39 policies, identificar se o predicado `USING` contém isolamento por `organization_id`; se não contiver (padrão `USING(user_id = auth.uid())` sem org), reescrever a policy adicionando `organization_id = (SELECT organization_id FROM profiles WHERE user_id = auth.uid())` tanto no `USING` quanto no `WITH CHECK`. Simplesmente copiar o `USING` existente como `WITH CHECK` não corrige nada — o PostgreSQL já aplica `USING` como `WITH CHECK` implícito quando `WITH CHECK` é omitido.
 
-**Risco de regressão**: BAIXO — `WITH CHECK` idêntico ao `USING` não muda o comportamento para uso legítimo.
+**Risco de regressão**: MÉDIO — mudar o predicado de `user_id` para `organization_id` pode rejeitar acessos que hoje são permitidos (ex.: admins de outra org com permissão explícita). Testar cada policy contra os fixtures E2E antes de aplicar.
 
 **Esforço**: 4h (identificar as 39 policies + testar)
 
@@ -561,11 +561,11 @@ types.ts (src/integrations/supabase/types.ts): 171 tabelas
 
 ### Edge Functions Publicadas vs Repo
 
-83 funções no repo (contagem de diretórios). Funções publicadas vs repo: **NÃO VERIFICADO** via API Supabase (endpoint de listagem não disponível via SQL).
+85 funções no repo (contagem de diretórios em `supabase/functions/`, excluindo `_shared`). Funções publicadas vs repo: **NÃO VERIFICADO** via API Supabase (endpoint de listagem não disponível via SQL).
 
 ---
 
-## Seção 8 — Edge Functions (Auditadas: 14 de 83)
+## Seção 8 — Edge Functions (Auditadas: 14 de 85)
 
 | Função | verify_jwt | Auth interna | Risco | Evidência |
 |--------|-----------|-------------|-------|----------|
@@ -593,7 +593,7 @@ types.ts (src/integrations/supabase/types.ts): 171 tabelas
 - Zero ocorrências de JWT hardcoded, URLs de produção hardcoded, service_role key literal
 - Vault (Supabase Secrets) usado para 13 secrets DB-level adicionais: `ai_jobs_cron_secret`, `avatars_refresh_cron_secret`, `connection_health_check_cron_secret`, `gmail_cron_secret`, `gmail_encryption_key`, `multiplix_cron_secret`, `multiplix_send_url`, `sicoob_service_role_key`, `talkx_anon_key`, `talkx_cron_secret`, `talkx_scheduler_url`, `talkx_send_url`, `zapp_anon_key`
 
-**63 funções não auditadas individualmente** (de 83): têm `verify_jwt = true` por padrão (JWT validado pelo gateway Supabase) — risco base mais baixo que as 6 com `verify_jwt = false` (auditadas).
+**71 funções não auditadas individualmente** (de 85): têm `verify_jwt = true` por padrão (JWT validado pelo gateway Supabase) — risco base mais baixo que as 6 com `verify_jwt = false` (auditadas).
 
 ### Funções DB com SQL Dinâmico (Seção 7 — COMPLETO para categoria EXECUTE)
 
@@ -663,7 +663,7 @@ SELECT (SELECT count(*) FROM auth.users) AS total_users,
 - Risco: `multiplix-voice` sem filtro MIME → ver MEDIUM-5
 - **Políticas de storage — VERIFICADO** (2026-10-25T14:00Z via `pg_policies WHERE schemaname='storage'`): 34 policies encontradas em `storage.objects`.
 
-**ACHADO CRÍTICO — `multiplix-voice` sem nenhuma policy de storage**: 0 policies para esse bucket. Como é `public=false`, o acesso é controlado apenas pelo bucket-level (não público), mas **sem RLS de objeto** qualquer usuário autenticado pode ler/escrever qualquer arquivo no bucket. Os demais buckets têm policies scoped a `auth.uid()`. Políticas ausentes para multiplix-voice: SELECT, INSERT, UPDATE, DELETE — tudo aberto para usuários autenticados.
+**`multiplix-voice` — 0 policies de storage (design intencional)**: Bucket `public=false` com zero políticas RLS de objeto. No Supabase/PostgreSQL, zero políticas em um bucket privado = **negação por padrão** (default-deny), não acesso aberto. Acesso é controlado exclusivamente pela edge function `multiplix-voices` via service-role + URLs assinadas (`requireAuth`, `canRecoverAsset` em `supabase/functions/multiplix-voices/index.ts`), documentado em `supabase/migrations/20261003132707_f64_voz_assets_e_grants.sql`. **Não é um achado de segurança** — retificar a classificação anterior como HIGH exposure, que invertia o modelo de acesso real.
 
 **`audio-messages` UPDATE policy**: `with_check` é NULL — mesmo problema do CRITICAL-2 para storage.
 
@@ -726,7 +726,7 @@ FROM extensions.pg_stat_statements ORDER BY total_exec_time DESC LIMIT 20;
 **Cron logs 7 dias — CONFIRMADO via `cron.job_run_details`** (confirmado 2026-10-25T01:12:28Z):
 
 | Job | OK | Falhas | Total | % Falha |
-|-----|-----|--------|-------|---------|
+|-----|-----|--------|-------|----------|
 | talkx-scheduler-1min | 9.941 | 135 | 10.076 | 1,3% |
 | dispatch-scheduled-messages | 1.961 | 134 | 2.095 | 6,4% |
 | close-stale-calls | 404 | 29 | 433 | 6,7% |
@@ -787,7 +787,7 @@ GROUP BY c.relname, c.relrowsecurity ORDER BY c.relname;
 **Nota importante — distinção repo vs produção**: O schema das migrations do repo usa isolamento por `contact_id`/`assigned_to`, **não** `organization_id`. O `organization_id` é drift exclusivo de produção (ausente em todas as 1055 migrations do repo, confirmado por grep). Os testes abaixo refletem o comportamento real das migrations do repo.
 
 | # | Operação | Usuário | Alvo | Resultado | Conclusão |
-|---|----------|---------|------|-----------|----------|
+|---|----------|---------|------|-----------|-----------|
 | T-01 | SELECT messages | user-a | contato de user-a | 2 linhas | ✅ PASS — isolamento positivo OK |
 | T-02 | SELECT messages | user-a | contato de user-b | 0 linhas | ✅ PASS — isolamento negativo OK |
 | T-C2 | UPDATE contact_id A→B (USING contact_id IN user contacts) | user-a | msgs do contato-A | **0 rows updated** — "new row violates row-level security" | ✅ PASS — CRITICAL-2 não manifesta no schema migrations |
@@ -796,11 +796,13 @@ GROUP BY c.relname, c.relrowsecurity ORDER BY c.relname;
 
 **Resultado T-C2 — Explicação**: No schema das migrations, a policy UPDATE usa `USING(contact_id IN (SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid())))`. O PostgreSQL aplica esse `USING` como implicit `WITH CHECK` para a **linha nova** — se o novo `contact_id` não pertence ao usuário, o UPDATE é bloqueado com "new row violates row-level security policy".
 
-**CRITICAL-2 é risco de PRODUÇÃO, não do schema migrations**: Em produção, há drift de `organization_id` com políticas `USING(user_id = auth.uid())` sem checar org — esse padrão permite mover uma linha para outro tenant. As 39 policies UPDATE sem WITH CHECK explícito em produção representam o risco real. O schema migrations (contact_id-based) está protegido pelo implicit WITH CHECK.
+**CRITICAL-2 — distinção entre teste local e risco inferido em produção**:
 
-**Nuance crítica (válida para produção)**: O PostgreSQL aplica a cláusula `USING` da policy SELECT como implicit WITH CHECK na linha **nova** durante UPDATE. Portanto:
-- Se USING usa `contact_id IN user_contacts` → o ataque é **bloqueado** (schema migrations — confirmado nesta execução)
-- Se USING usa apenas `user_id = auth.uid()` → o ataque é **possível** (produção, drift org_id — 39 policies afetadas)
+1. **Teste local (CONFIRMADO)**: no schema das migrations (contact_id-based), o ataque cross-tenant é **bloqueado** — o PostgreSQL aplica o `USING(contact_id IN ...)` como implicit WITH CHECK na linha nova. Resultado T-C2: ✅ PASS.
+
+2. **Inspeção de catálogo em produção (VERIFICADO)**: 39 policies UPDATE em produção têm predicado `USING(user_id = auth.uid())` sem `organization_id` — esse padrão **não isola por tenant**. Identificado via `pg_policies` sem execução de query.
+
+3. **Ataque cross-tenant em produção (NÃO VERIFICADO — risco inferido)**: não foi possível executar a matriz RLS contra o banco de produção com sessão `authenticated` real (o MCP wrapper não permite simular `SET LOCAL role = authenticated` com claims JWT). O risco é **inferido** a partir das expressões das policies inspecionadas — não testado diretamente. Classificação: HIGH inferido; confirmação requer sessão autenticada real ou teste com service-role + `set_config('request.jwt.claims', ...)`.
 
 ---
 
@@ -852,7 +854,7 @@ GROUP BY c.relname, c.relrowsecurity ORDER BY c.relname;
 | Item | Status | Motivo / Evidência |
 |------|--------|---------------------|
 | Auth config (JWT_EXP, MFA, captcha) | **NÃO VERIFICADO** | `auth.config` não existe como relação SQL (`ERROR 42P01: relation "auth.config" does not exist`); `auth.instances` existe mas retorna 0 linhas; configurações JWT/MFA/captcha gerenciadas via Dashboard Supabase e API de Management, não acessíveis via SQL |
-| Storage policies (RLS de buckets) | **VERIFICADO** (2026-10-25T14:00Z) | 34 policies via `pg_policies WHERE schemaname='storage'`; `multiplix-voice` com **0 policies** (HIGH finding — qualquer usuário autenticado lê/escreve sem restrição de política RLS) |
+| Storage policies (RLS de buckets) | **VERIFICADO** (2026-10-25T14:00Z) | 34 policies via `pg_policies WHERE schemaname='storage'`; `multiplix-voice` com **0 policies** (design intencional — bucket privado sem policies = default-deny; acesso via edge function `multiplix-voices` + service-role signed URLs; não é HIGH exposure) |
 | Logs 7 dias de edge functions | **NÃO VERIFICADO** | Schema `supabase_functions` não existe neste banco (não listado em `information_schema.schemata`); logs acessíveis via Dashboard > Edge Functions > Logs |
 | ~~Types.ts vs schema atual~~ | **VERIFICADO** | 28 tabelas ausentes, 0 órfãs (ver Seção 2) |
 | Edge functions publicadas vs repo | **NÃO VERIFICADO** | Schema `supabase_functions` não existe no banco (não em `information_schema.schemata`); comparação repo×publicadas requer Supabase Management API ou CLI — verificar em Dashboard > Edge Functions |
@@ -939,7 +941,3 @@ Todas as queries executadas foram SELECT em catálogos de sistema (`pg_class`, `
 - `functions_invoke` (com efeito externo)
 
 O snapshot acima pode ser re-executado a qualquer momento para confirmar que os valores não mudaram durante a auditoria. Confirmação: ping inicial retornou `tnnnlkbymytvtqngbbqh` — projeto correto.
-
----
-
-*Gerado por auditoria automatizada em 2026-10-24. Arquivo: `auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md`*
