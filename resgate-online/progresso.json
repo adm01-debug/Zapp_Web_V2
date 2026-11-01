@@ -1,0 +1,91 @@
+{
+ "C007": {
+  "estado": "JA_IMPLEMENTADA (+ resíduo D12 em PR alheia aberta)",
+  "prs": [
+   "#2223 (mergeada)",
+   "#2478 (aberta, D12 cores de prioridade)"
+  ],
+  "commits_proprios": 15,
+  "tags": 8
+ },
+ "C019": {
+  "estado": "JA_IMPLEMENTADA",
+  "prs": [
+   "#2224 (mergeada)"
+  ],
+  "commits_proprios": 10,
+  "tags": 6
+ },
+ "C098": {
+  "estado": "JA_IMPLEMENTADA",
+  "prs": [
+   "#2231 (mergeada)",
+   "#2281 (mergeada, restaura 6 testes)"
+  ],
+  "commits_proprios": 13,
+  "tags": 3
+ },
+ "C097": {
+  "estado": "JA_IMPLEMENTADA",
+  "prs": [
+   "#2234 (mergeada)"
+  ],
+  "commits_proprios": 9,
+  "tags": 1
+ },
+ "C121": {
+  "estado": "ABERTA: COMPLETAR (PRs alheias #2471/#2469)",
+  "prs": [
+   "#2235 (mergeada e depois revertida por #2280)",
+   "#2471 (aberta)",
+   "#2469 (aberta, completar)",
+   "#2457 (aberta)"
+  ],
+  "commits_proprios": 15,
+  "tags": 3
+ },
+ "C297": {
+  "estado": "ABERTA: DECISÃO HUMANA (PR alheia #2480)",
+  "prs": [
+   "#2237 (mergeada, parte a11y do Button)",
+   "#2480 (aberta)"
+  ],
+  "commits_proprios": 10,
+  "tags": 2
+ },
+ "C303": {
+  "estado": "JA_IMPLEMENTADA",
+  "prs": [
+   "#2236 (mergeada)"
+  ],
+  "commits_proprios": 11,
+  "tags": 2
+ },
+ "C110": {
+  "estado": "ABERTA: DECISÃO HUMANA (PR alheia #2466, superconjunto)",
+  "prs": [
+   "#2238 (aberta, auditada DECISAO_HUMANA)",
+   "#2466 (aberta, 01/11)"
+  ],
+  "commits_proprios": 11,
+  "tags": 3
+ },
+ "C130": {
+  "estado": "ABERTA (CI em andamento)",
+  "prs": [
+   "#2484 (minha)",
+   "#2239 (mergeada, squash VAZIO: 0 arquivos)",
+   "#2468 (aberta alheia, mesmo tema)"
+  ],
+  "commits_proprios": 11,
+  "tags": 3
+ },
+ "C011": {
+  "estado": "JA_IMPLEMENTADA",
+  "prs": [
+   "#2240 (mergeada)"
+  ],
+  "commits_proprios": 7,
+  "tags": 7
+ }
+}
