@@ -1,46 +1,81 @@
-# Regras de negócio aplicadas na análise de PRs
+# Regras de Negócio — Classificação de PRs
 
-> Gerado em 2026-11-01. Fonte: `/goal` + `CLAUDE.md`.
+**Fonte canônica:** `CLAUDE.md` do repositório `adm01-debug/Zapp_Web_V2`  
+**Aplicadas na análise de 2026-11-01**  
+**SHA de main ao início:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c`
 
-## 1. Restrições absolutas (qualquer uma → DECISAO_HUMANA)
+---
 
-| Regra | Motivo | Evidência |
-|---|---|---|
-| Não tocar `.github/workflows/` | Risco de CI/deploy; escopo vedado pelo `/goal` | CLAUDE.md §0 regra 6; `/goal` literal |
-| Não mergear PRs DRAFT | Trabalho incompleto por definição do autor | GitHub API `draft: true` |
-| Migration destrutiva: `DROP TABLE`, `DROP COLUMN`, `DROP TYPE`, `ALTER TYPE`, `RENAME`, `UPDATE/DELETE em massa` | Irrecuperável sem backup; pode quebrar produção | CLAUDE.md §1 regra 6; `/goal` |
-| Edge function R2: WhatsApp, email, voz, CRM, pagamento | Efeito colateral real (mensagens enviadas, cobranças) | `/goal` literal |
-| PR com body explícito "AGUARDANDO APROVAÇÃO" | Próprio agente sinalizou que Joaquim precisa decidir | PR body verificado via API |
-| SINGU (bancos externos CRM/Catálogo) | Read-only; fora do escopo deste repo | CLAUDE.md §1 bancos externos |
+## Regra 8 — DECISAO_HUMANA (não mergear sem aprovação)
 
-## 2. Critérios para MERGE_OK
+**Fonte:** user preferences → "Fluxo Git → regra 8"
 
-Todos os itens abaixo devem ser verdadeiros:
+PR entra na Regra 8 quando toca qualquer um destes escopos:
 
-1. **Não é DRAFT** (`draft: false`)
-2. **Não toca `.github/workflows/`**
-3. **Sem migration destrutiva** (sem `DROP`, `RENAME`, `ALTER TYPE`, `UPDATE/DELETE em massa`)
-4. **Migration presente é aditiva e idempotente** (`CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, etc.)
-5. **Edge functions são R0/R1** ou ausentes
-6. **PR body não declara aguardando aprovação externa**
-7. **Sem conflito de merge** (`mergeable != false`)
-8. **Não depende de PR DECISAO_HUMANA ainda não mergeada**
+| Escopo | Evidência no CLAUDE.md |
+|---|---|
+| **Migration/DDL em produção** | Seção 1, regras 1–8: "Toda mudança de DDL = arquivo em supabase/migrations/"; environment `producao-ddl` exige aprovação humana |
+| **`.github/workflows/`** | User preferences regra 8: "CI/workflows, segredos, Dockerfile, stack/Swarm, Traefik" |
+| **Secrets / env vars críticos** | User preferences regra 8: "segredos" |
+| **Deleção destrutiva de dados** | User preferences regra 8: "deleção de dado, mudança de arquitetura ou custo" |
+| **Edge functions (lógica crítica)** | CLAUDE.md seção "Deploy e edge functions": deploy automático em `producao-edge-functions`; edge functions com lógica de negócio crítica ficam na regra 8 |
+| **Conflito com PR de outro agente** | User preferences regra 8: "conflito com PR de outro agente" |
 
-## 3. Classificação de edge functions
+---
 
-| Classe | Exemplos | Ação |
-|---|---|---|
-| R0 | Leitura pura (SELECT, GET) | Livre para merge |
-| R1 | Escrita interna sem efeito colateral externo | Livre para merge |
-| R2 | Envia WhatsApp, email, SMS, voz; CRM externo; pagamento | DECISAO_HUMANA obrigatória |
+## MERGE_OK — pode mergear automaticamente
 
-## 4. Merge method
+Critérios simultâneos exigidos:
+1. PR não é DRAFT
+2. PR não está fechada (`state=open`)
+3. Sem migration (`supabase/migrations/`)
+4. Sem `.github/workflows/`
+5. Sem deploy de edge function com lógica crítica não revisada
+6. Sem conflito de merge (`mergeable_state ≠ dirty`)
+7. Não escreve no banco SINGU (read-only: `pgxfvjmuubtbowutlide`, `doufsxqlfjyuvxuezpln`)
 
-- Squash-merge exclusivamente (`merge_method: "squash"`)
-- `allow_merge_commit=false`, `allow_rebase_merge=false` no repo
+`MERGE_OK_AUTO_MERGE_PENDING` = critérios acima satisfeitos + `auto_merge=true` habilitado + CI ainda rodando.
 
-## 5. Branch protection
+---
 
-- `strict=true` (required)
-- Required checks: `🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate (required check)` (3 checks)
-- `enforce_admins=true`
+## MERGEAR — docs/planos sem risco técnico
+
+PRs que alteram apenas documentação (`docs/`, `*.md`) ou arquivos de configuração sem efeito em produção. Sem migration, sem workflow, sem edge function.
+
+---
+
+## MERGEAR_COM_RESSALVA — OK mas com caveats
+
+PRs elegíveis para merge mas com conflito potencial entre si (ex: #2417 e #2431 tocam o mesmo `src/test/setup.ts`). Mergear uma pode invalida a outra.
+
+---
+
+## CONFLITO — rebase necessário
+
+`mergeable_state=dirty` retornado pela API do GitHub. Autor da branch deve fazer `git rebase origin/main`.
+
+---
+
+## AGUARDANDO_APROVACAO
+
+PR body contém sinalização explícita de aguardar aprovação humana, ou PR tem migration de alto impacto (ex: 57 índices FK).
+
+---
+
+## DRAFT — não mergear
+
+`draft=true` na API do GitHub. Drafts não são mergeados independente do conteúdo.
+
+---
+
+## IMPOSSIVEL_MERGE
+
+PR com `rebaseable=false` (GitHub não consegue rebasear automaticamente) e muito atrás do main. Requer intervenção manual complexa.
+
+---
+
+## Fontes consultadas
+
+- `CLAUDE.md` (seções 0, 1, 3 — banco, migrations, repo)
+- User preferences → "Fluxo Git" (regras 1–11)
+- PR bodies e dossiers individuais em `analise-prs/dossies/`
