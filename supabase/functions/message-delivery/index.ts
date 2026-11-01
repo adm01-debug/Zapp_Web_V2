@@ -163,6 +163,9 @@ function providerBodyText(body: unknown): string {
  */
 export function classifyProviderFailure(status: number, body: unknown): DeliveryFailure {
   if (status === 429) return EDGE_RATE_LIMITED_FAILURE;
+  // 408 (Request Timeout) e 425 (Too Early): o provedor pode ter processado
+  // a requisição antes de retornar — efeito INCERTO, reconciliar.
+  if (status === 408 || status === 425) return unconfirmedReceiptFailure();
   if (status >= 500) {
     return { status: 502, code: 'provider_unavailable', retryable: false, ambiguous: true };
   }
@@ -697,20 +700,20 @@ export async function handleMessageDeliveryRequest(
     try { providerData = raw ? JSON.parse(raw) : null; } catch { /* provider response is invalid */ }
 
     if (!providerResponse.ok) {
-      await failClaim(service, claim);
+      // C110: não marcar failed — POST foi iniciado, a supervisora resolve
+      // manualmente. failClaim com delivery_post_started_at setado esconderia
+      // a mensagem da query de reconciliação (que exclui status 'failed').
       const failure = classifyProviderFailure(providerResponse.status, providerData ?? raw);
-      // 5xx: o provedor pode ter aceitado antes de falhar → efeito INCERTO.
-      // 4xx/429: rejeição definitiva, nada a reconciliar.
-      if (failure.ambiguous) {
-        await enqueueDeliveryReconciliation(service, claim, null);
-      }
+      // 5xx e timeout (408/425): o provedor pode ter aceitado → efeito INCERTO.
+      // 4xx definitive: mas mesmo assim o POST foi iniciado — reconciliar.
+      await enqueueDeliveryReconciliation(service, claim, null);
       console.error(JSON.stringify({ event: 'message_delivery_provider_error', status: providerResponse.status, code: failure.code }));
       return deliveryFailureResponse(failure, req);
     }
 
     externalId = extractMessageId(providerData) ?? null;
     if (!externalId || externalId.length > 512) {
-      await failClaim(service, claim);
+      // C110: sem chamar failClaim — POST saiu, resultado ambíguo.
       // 200 sem id: ambíguo (pode ter enviado). Efeito INCERTO.
       await enqueueDeliveryReconciliation(service, claim, null);
       console.error(JSON.stringify({ event: 'message_delivery_missing_provider_id' }));
@@ -724,10 +727,7 @@ export async function handleMessageDeliveryRequest(
       p_delivery_status: 'sent',
     });
     if (completeError || !completed?.id) {
-      // Evolution may have accepted the send even though its receipt could not
-      // be persisted. Make this terminal so an expired lease can never resend
-      // the same WhatsApp message; reconciliation is an explicit operation.
-      await failClaim(service, claim);
+      // C110: não chamar failClaim — POST iniciado, externalId existe.
       // IA-047: temos o id do provedor — o varredor confirma por ele, SOMENTE-LEITURA.
       await enqueueDeliveryReconciliation(service, claim, externalId);
       console.error(JSON.stringify({ event: 'message_delivery_complete_error', code: completeError?.code }));
@@ -741,7 +741,9 @@ export async function handleMessageDeliveryRequest(
     // com service_role. Nada a fazer depois do recibo.
     return jsonResponse({ messageId: completed.id, status: completed.status, externalId, idempotent: false }, 200, req);
   } catch (error) {
-    await failClaim(service, claim);
+    // C110: só chama failClaim antes do POST — se o POST foi iniciado, a mensagem
+    // fica no estado atual (delivery_post_started_at setado) para reconciliação.
+    if (!providerPostAttempted) await failClaim(service, claim);
     // IA-047: exceção depois do POST (rede/timeout/corpo): efeito INCERTO.
     // Enfileira a reconciliação com o id se já o tínhamos; nunca reenvia.
     // Antes do POST há dois casos: infra (storage/payload ilegível — nada

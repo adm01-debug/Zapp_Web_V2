@@ -150,7 +150,7 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
       if (!currentMessage?.id && key?.fromMe === false && connection?.id &&
           (newStatus === 'delivered' || newStatus === 'read')) {
         const { data: outboundMessage } = await supabase.from('messages')
-          .select('id, status, sender')
+          .select('id, status, sender, manually_resolved_at')
           .eq('external_id', key.id)
           .eq('whatsapp_connection_id', connection.id)
           .eq('sender', 'agent')
