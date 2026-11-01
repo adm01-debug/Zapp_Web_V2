@@ -179,37 +179,35 @@ antes mesmo das correções desta sessão.
 
 ---
 
-## §6. db-guard.yml N-008 — falha pré-existente mascarada pelo TC-009, exposta após o fix
+## §6. db-guard.yml N-008 — step adicionado por esta branch, falhou por `*_IMAGE` ausente
 
 **Workflow:** `db-guard.yml`  
-**Run com N-008 exposto:** [40243878705](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40243878705) `failure`  
+**Run com falha:** [40243878705](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40243878705) `failure`  
 **Script:** `scripts/db-audit/user-sessions-expire.test.sh`  
-**Step:** 171 — "Provar encerramento diario de sessoes vencidas (N-008)"
+**Step:** "Provar encerramento diario de sessoes vencidas (N-008)"
 
 **Causa raiz exata:**
 
-A falha N-008 é **pré-existente na `main`**, mas estava mascarada no baseline porque o TC-009
-(passo 147 — `team-receipts-reactions-conversation-id.test.sh`) falhava antes e o job abortava
-sem chegar ao passo 171 (N-008). Evidência:
+O step N-008 foi **adicionado por esta branch** (confirmado: grep de "N-008|user-sessions-expire"
+em `db-guard.yml` na `main` retorna zero resultados). O step falhava porque:
 
-- Baseline run `40122006482` (main, SHA `2d97c44`): falha no passo 147 (TC-009), job encerrado
-  antes do passo 171. N-008 nunca foi executado no baseline.
-- Após fix do TC-009 (commit `4adee58`), job da branch avança até o passo 171 e falha em N-008.
-- `scripts/db-audit/user-sessions-expire.test.sh` testa o encerramento diário de sessões
-  vencidas via pg_cron — requer banco local com pg_cron ativo e dados de sessão preenchidos.
+1. O step não tinha variável `*_IMAGE` no seu bloco `env:`.
+2. `retry-disposable-postgres-test.sh` só faz pre-pull de imagens quando encontra variáveis
+   no padrão `*_IMAGE` no ambiente — sem elas, ignora o pre-pull.
+3. Com `SKIP_DOCKER_SHIM: "1"`, o Docker real é chamado; como a tag `postgres:17-alpine` não
+   estava no cache local (só o digest-pinned `postgres:17-alpine@sha256:b0f9...` é cacheado pelo
+   service container), `docker run postgres:17-alpine` falhou imediatamente com erro de pull.
 
-**Por que não é regressão desta branch:**
+**Evidência do padrão correto:** steps N-002 (`PROFILES_ESCALATION_TEST_POSTGRES_IMAGE`) e
+SEC-Y25-01 (`SEC_Y25_INSERT_ALVO_TEST_POSTGRES_IMAGE`) usam `SKIP_DOCKER_SHIM: "1"` e incluem
+`*_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}` no env — todos passam.
 
-Nenhum arquivo desta branch toca `user-sessions-expire.test.sh` ou a lógica de pg_cron.
-A falha existia antes desta sessão, apenas nunca era visível porque TC-009 a mascarava.
+**Fix aplicado nesta branch (dois arquivos):**
 
-**O que o Joaquim precisa fazer:**
+1. `.github/workflows/db-guard.yml` — step N-008 ganhou `N008_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}` no bloco `env:`.
+2. `scripts/db-audit/user-sessions-expire.test.sh` — imagem hardcoded `postgres:17-alpine` substituída por `PG_IMG="${N008_POSTGRES_IMAGE:-postgres:17-alpine}"`.
 
-1. Verificar se `pg_cron` está ativo no banco local do CI.
-2. Checar se há dados de sessão vencida no banco local para o teste exercitar.
-3. Corrigir ou adaptar `scripts/db-audit/user-sessions-expire.test.sh` para o ambiente de CI.
-
-**Sem fix de agente possível:** requer banco local com pg_cron ativo — infraestrutura de CI.
+**Status:** Fix commitado — aguarda CI para validação (`conclusion=success` pendente).
 
 ---
 
