@@ -1,6 +1,7 @@
--- HIGH-3: 57 foreign-key columns without a covering index
+-- HIGH-3: 50 foreign-key columns without a covering index
 -- Detected live on 2026-11-01 via information_schema + pg_index.
 -- Per CLAUDE.md: CREATE INDEX (not CONCURRENTLY) — gateway wraps in transaction.
+-- 7 columns excluded: already covered by partial indexes (WHERE col IS NOT NULL).
 
 CREATE INDEX IF NOT EXISTS idx_ai_model_prices_provider_id
   ON public.ai_model_prices (provider_id);
@@ -10,9 +11,6 @@ CREATE INDEX IF NOT EXISTS idx_calls_answered_by
 
 CREATE INDEX IF NOT EXISTS idx_contacts_ai_projection_analysis_id
   ON public.contacts (ai_projection_analysis_id);
-
-CREATE INDEX IF NOT EXISTS idx_conversation_events_closure_id
-  ON public.conversation_events (closure_id);
 
 CREATE INDEX IF NOT EXISTS idx_conversation_events_from_queue_id
   ON public.conversation_events (from_queue_id);
@@ -56,12 +54,6 @@ CREATE INDEX IF NOT EXISTS idx_messages_audio_meme_id
 CREATE INDEX IF NOT EXISTS idx_messages_channel_connection_id
   ON public.messages (channel_connection_id);
 
-CREATE INDEX IF NOT EXISTS idx_messages_reply_to_id
-  ON public.messages (reply_to_id);
-
-CREATE INDEX IF NOT EXISTS idx_messages_whatsapp_group_id
-  ON public.messages (whatsapp_group_id);
-
 CREATE INDEX IF NOT EXISTS idx_multiplix_delivery_items_block_id
   ON public.multiplix_delivery_items (block_id);
 
@@ -73,12 +65,6 @@ CREATE INDEX IF NOT EXISTS idx_multiplix_delivery_items_voice_asset_id
 
 CREATE INDEX IF NOT EXISTS idx_multiplix_dispatches_whatsapp_connection_id
   ON public.multiplix_dispatches (whatsapp_connection_id);
-
-CREATE INDEX IF NOT EXISTS idx_multiplix_events_recipient_id
-  ON public.multiplix_events (recipient_id);
-
-CREATE INDEX IF NOT EXISTS idx_profiles_department_id
-  ON public.profiles (department_id);
 
 CREATE INDEX IF NOT EXISTS idx_queues_overflow_queue_id
   ON public.queues (overflow_queue_id);
@@ -158,9 +144,6 @@ CREATE INDEX IF NOT EXISTS idx_talkx_test_sends_connection_id
 CREATE INDEX IF NOT EXISTS idx_talkx_test_sends_template_id
   ON public.talkx_test_sends (template_id);
 
-CREATE INDEX IF NOT EXISTS idx_team_conversations_department_id
-  ON public.team_conversations (department_id);
-
 CREATE INDEX IF NOT EXISTS idx_team_conversations_direct_member_a
   ON public.team_conversations (direct_member_a);
 
@@ -169,6 +152,3 @@ CREATE INDEX IF NOT EXISTS idx_team_conversations_direct_member_b
 
 CREATE INDEX IF NOT EXISTS idx_team_message_receipts_conversation_id
   ON public.team_message_receipts (conversation_id);
-
-CREATE INDEX IF NOT EXISTS idx_team_messages_reply_to_id
-  ON public.team_messages (reply_to_id);
