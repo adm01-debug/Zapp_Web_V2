@@ -1,5 +1,5 @@
 {
-  "auditoria": "Supabase Zapp Web V2 — 2026-11-01 (v3 final corrigido)",
+  "auditoria": "Supabase Zapp Web V2 — 2026-11-01 (v4 final)",
   "projeto": "tnnnlkbymytvtqngbbqh",
   "mcp": "SUPABASE - ZAPP WEB V2 - MCP",
   "branch": "claude/loving-lovelace-esc3l2",
@@ -15,32 +15,80 @@
     "medido_em": "2026-11-01T19:18:22Z",
     "delta_descricao": "ZERO — producao nao modificada"
   },
-  "correcoes_v3": {
-    "verify_jwt_false": "corrigido 1->14 (config.toml lido na sessao; todas documentadas e protegidas)",
-    "update_sem_with_check": "corrigido 39->42 (recontagem via pg_policies na sessao)",
-    "fks_sem_indice": "corrigido 30->35 (recontagem via information_schema na sessao)",
-    "pg_stat_statements": "corrigido NAO_INSTALADO->INSTALADO (extname v1.11 schema extensions confirmado na sessao)",
-    "views_security_invoker": "achado NOVO: 12/13 views sem security_invoker (information_schema.views na sessao)",
-    "s11_status": "corrigido CONCLUIDO->NAO_TESTADO (schema simulado nao e suficiente; agente s11 rodando Postgres local com policies reais)",
-    "s10_edge_logs": "corrigido CONCLUIDO->NAO_VERIFICAVEL (edge_logs.* nao acessivel via SQL; tentados: _analytics.edge_logs, edge_logs_001 — 42P01)"
+  "baseline_final_verificacao": {
+    "migrations": 1072, "tabelas": 211, "policies": 520,
+    "funcoes": 481, "crons": 24, "vault_secrets": 13,
+    "medido_em": "2026-11-01T20:12:33Z",
+    "delta_descricao": "ZERO — producao inalterada (3a medicao)"
+  },
+  "correcoes_v4": {
+    "severidade_critico": "adicionado nivel CRITICO: C1=0%MFA, C2=T-11 hijack (eram ALTO, promovidos)",
+    "top20_pg_stat_statements": "executado top-20 real (calls>100): #1 search_contacts 1952ms, #2 talkx_engine_tick 1404ms",
+    "explain_search_contacts": "EXPLAIN executado: sem ILIKE -> Index Scan idx_contacts_name_asc; com ILIKE -> Seq Scan completo + can_edit_contact por row",
+    "rls_prod_matrix": "teste RLS producao executado via set_config+can_edit_contact direto (BEGIN/SET LOCAL bloqueado por mcp_exec SECURITY DEFINER); resultado: A e B veem 3104/3306 contatos (mesmas filas, isolamento OK); 202 contatos em filas de terceiros",
+    "propostas_filenames": "criados P07_fix_views_security_invoker.sql e P08_add_missing_fk_indexes.sql; corrigidas referencias no relatorio (P01_add_with_check_update_policies, P07, P08)",
+    "24_crons_completo": "tabela completa 24 crons x 7d adicionada no relatorio S6",
+    "s11_prod_test_limitation": "BEGIN/SET LOCAL bloqueado pelo MCP (SECURITY DEFINER); teste feito via funcoes de policy diretamente com profile IDs reais"
   },
   "secoes": {
-    "S1":  { "status": "CONCLUIDO",   "nota": "1072 migrations, 211 tabelas, 520 policies, 481 funcoes, 24 crons, 87 edge functions, 13 vault secrets. Evidencia: ping+contagens na sessao." },
+    "S1":  { "status": "CONCLUIDO",   "nota": "1072 migrations, 211 tabelas, 520 policies, 481 funcoes, 24 crons, 87 edge functions, 13 vault secrets (nomes catalogados, valores nao consultados). Evidencia: ping+contagens na sessao; ping retornou project=tnnnlkbymytvtqngbbqh." },
     "S2":  { "status": "CONCLUIDO",   "nota": "repo=1067 vs banco=1072 (+5 no banco nao no repo); 65 NULL statements; types.ts=217 vs banco=211 (+6 views/RPCs nao no schema). Evidencia: ls migrations | wc + SELECT count(*)." },
-    "S3":  { "status": "CONCLUIDO",   "nota": "42 UPDATE sem WITH CHECK (recontagem na sessao via pg_policies); 18 tabelas com rls_enabled=true sem policies explicitas (DENY ALL padrao, por design); 1 tabela com anon INSERT com WITH CHECK; 402 SECURITY DEFINER todas com search_path; 12/13 views sem security_invoker (achado novo). Evidencia: queries pg_policies e information_schema.views na sessao." },
-    "S4":  { "status": "CONCLUIDO",   "nota": "35 FKs sem indice (recontagem na sessao); dead tuples _http_response=17.4%; todas as tabelas tem PK. Evidencia: query information_schema.table_constraints na sessao." },
-    "S5":  { "status": "CONCLUIDO",   "nota": "pg_stat_statements INSTALADO v1.11 schema extensions (corrigido); top-10 queries: trigger_talkx_engine_tick mean 1367ms, rpc_queue_goal_metrics mean 960ms, inbox_unread_total mean 802ms; EXPLAIN executado para inbox_unread_total e rpc_queue_goal_metrics (Seq Scan em queues, is_contact_visible_to_user por row); 107MB indices sem uso. Evidencia: SELECT FROM extensions.pg_stat_statements + EXPLAIN na sessao." },
-    "S6":  { "status": "CONCLUIDO",   "nota": "24 crons; talkx_engine_tick 4420/43080 (10.3%) falhas; TODOS com return_message='job startup timeout' (pool exhaustion, nao erro de logica); 20 jobs afetados. Evidencia: SELECT FROM cron.job_run_details na sessao." },
-    "S7":  { "status": "CONCLUIDO",   "nota": "402 SECURITY DEFINER; 95 sem bloco EXCEPTION; sem SQL dinamico inseguro; cron secrets todos via vault.decrypted_secrets (padrao seguro). Evidencia: queries information_schema.routines + cron.job na sessao." },
-    "S8":  { "status": "CONCLUIDO",   "nota": "verify_jwt=false: 14 funcoes (corrigido de 1); todas lidas e avaliadas (R0/R1): auth-login R1, evolution-webhook R1, whatsapp-webhook R1, gmail-webhook R1, connection-health-check R1, batch-fetch-avatars R1, public-api R0 (desativada 410), crm-integration R1, csp-report R1, talkx-link R1, searchbox-budget-alert R1, sync-call-records R1, gmail-cron-sync R1, elevenlabs-webhook R1. 13 vault secrets nomeados. Sem segredos hardcoded (grep git history 0 matches). Evidencia: grep config.toml + leitura de cada funcao na sessao." },
+    "S3":  { "status": "CONCLUIDO",   "nota": "Re-exec: 39 UPDATE sem WITH CHECK (era 42); 18 tabelas com rls_enabled=true sem policies explicitas (DENY ALL padrao); 1 tabela anon INSERT; 402 SECURITY DEFINER todas com search_path; re-exec pg_class.reloptions: 1/13 views sem security_invoker (catalog_send_stats; era 12 por information_schema que nao tem coluna is_security_invoker neste setup). Evidencia: queries pg_policies e pg_class na sessao." },
+    "S4":  { "status": "CONCLUIDO",   "nota": "Re-exec: 34 FKs sem indice (era 35); dead tuples _http_response=17.4%; todas as tabelas tem PK. Evidencia: query information_schema.table_constraints na sessao." },
+    "S5":  { "status": "CONCLUIDO",   "nota": "pg_stat_statements INSTALADO v1.11 schema extensions; top-20 queries executado: #1 search_contacts 1952ms (750 calls), #2 talkx_engine_tick 1404ms (1643 calls), #3 RPC-param 1087ms; EXPLAIN executado para search_contacts (Seq Scan ILIKE sem indice + can_edit_contact por row), inbox_unread_total e rpc_queue_goal_metrics; 107MB indices ociosos. Evidencia: SELECT FROM extensions.pg_stat_statements + EXPLAIN na sessao." },
+    "S6":  { "status": "CONCLUIDO",   "nota": "24 crons analisados — 30d: 226945 runs, 14055 falhas (6.2%), 212889 sucessos; 7d: 5992 falhas 'job startup timeout' (100% das falhas). TODOS os 24 crons versioned em migrations (1-7 arquivos cada). 18/18 funcoes-alvo DB verificadas existentes via pg_proc. 3/3 edge function targets verificados no repo (gmail-cron-sync, connection-health-check, batch-fetch-avatars). Overlap pico: 9 crons simultâneos no minuto :07 (3 every-minute + ai-jobs + 2 odd + avatars + edge-rate-limits + conn-health). Achados novos: (1) reconnection-logs-retention-30d usa DELETE raw sem funcao (sem audit log, sem row count); (2) cleanup-edge-rate-limits usa DELETE raw; (3) vacuum-contacts-daily usa VACUUM ANALYZE direto. Evidencia: SELECT * FROM cron.job + SELECT proname FROM pg_proc + ls supabase/functions/ na sessao." },
+    "S7":  { "status": "CONCLUIDO",   "nota": "402 SECURITY DEFINER; 95 sem bloco EXCEPTION; 10 funcoes com EXECUTE dinamico revisadas (nenhuma insegura); cron secrets todos via vault.decrypted_secrets. Evidencia: queries information_schema.routines + cron.job + pg_get_functiondef na sessao. 6 funcoes com EXECUTE real analisadas: merge_contacts_atomic, purge_gmail_account_data, purge_talkx_expired_data, talkx_audience_query, talkx_engine_cron_runs, score_security_acl — TODAS SAFE via USING/format %L/%I/whitelist." },
+    "S8":  { "status": "CONCLUIDO",   "nota": "87 edge functions TODAS LIDAS (14 verify_jwt=false + 73 verify_jwt=true). Padroes de auth: requireAuth, isAuthorizedCronOrUser+timingSafeEqual, requireAiIdentity/OrService, enforceAiGuards, authorizeObservability, decideControlAuthz/SendAuthz. Achados: S8-F1=M6 (MEDIO) ai-jobs-worker — get_ai_jobs_cron_secret() RPC ausente no banco, fail-closed 401, cron nunca executa; confirmado via codigo (comentario exato na linha 29-32 do index.ts) e ausencia no pg_proc; S8-F2=I5 (INFO) copilot-live (stub, deprecated deno std serve, CORS *); S8-F3=I6 (INFO) status (publico por design). 0 segredos hardcoded; 13 vault secrets nomes mascarados. Evidencia: leitura completa de todos os 87 index.ts na sessao + config.toml + verificacao pg_proc." },
     "S9":  { "status": "CONCLUIDO",   "nota": "10 users, 0 MFA (100% sem MFA); 9 buckets: multiplix-voice allowed_mime_types=NULL (risco upload arbitrario), 3 publicos (audio-memes, custom-emojis, stickers); 37 tabelas em supabase_realtime; webhook_failures tem payload_sha256. Evidencia: auth.mfa_factors + storage.buckets + pg_publication_tables na sessao." },
-    "S10": { "status": "CONCLUIDO",   "nota": "auth.audit_log_entries: count=0 (vazio); pg_log nao acessivel via SQL; edge_logs NÃO VERIFICÁVEL (edge_logs.* nao existe via SQL — 42P01 em _analytics.edge_logs, edge_logs_001 tentados). Evidencia: SELECT count(*) FROM auth.audit_log_entries na sessao." },
-    "S11": { "status": "CONCLUIDO",   "nota": "11/12 PASS + T-11 VULNERABILIDADE REAL: membro de fila pode reatribuir assigned_to de contato alheio para si. Policy FOR UPDATE USING can_edit_contact(assigned_to,queue_id) sem WITH CHECK: nova linha can_edit_contact(ProfileA,QueueF1)=TRUE porque User A e ProfileA e membro de QueueF1. Testado com policies exatas das migrations 20260929780000 + 20260929810000 em Postgres 16.15 local, banco rls_audit_s11_v2 (dropado apos teste). Evidencia: auditoria-supabase/testes/s11_rls_matrix_RESULTADO_v2.md" },
-    "S12": { "status": "CONCLUIDO",   "nota": "PITR ativo (archive_mode=on, wal_level=logical via pg_settings); sem staging; LGPD: login_attempts sem TTL; advisors NAO VERIFICAVEL (supabase_migrations.pgmeta_advisors nao existe — 42P01 em todas as tentativas de schema). Evidencia: SELECT FROM pg_settings WHERE name='archive_mode' na sessao." }
+    "S10": { "status": "PARCIAL",     "nota": "Logs de aplicacao 7d: audit_logs=4553 (total=88172), connection_health_logs=1795, ai_usage_logs=2. auth.audit_log_entries=0 (achado A1). edge_logs infra: NAO VERIFICAVEL (42P01 — nao exposto via SQL). pg_log: NAO VERIFICAVEL. Evidencia: SELECT count queries na sessao 2026-11-01." },
+    "S11": { "status": "CONCLUIDO+NAO_VERIFICAVEL_PROD", "nota": "Postgres temporario (16.15 local): 11/12 PASS; T-11 VULNERABILIDADE REAL (C2). Producao: BEGIN; SET LOCAL role='authenticated' → HTTP 400 code 0A000 'EXECUTE of transaction commands is not implemented' (PostgREST SECURITY DEFINER bloqueia transacoes). Nao ha como contornar via este MCP. Evidencia: erro exato retornado na sessao + testes/s11_rls_matrix_RESULTADO_v2.md." },
+    "S12": { "status": "PARCIAL",     "nota": "PITR confirmado: archive_mode=on, wal_level=logical, archive_command=/usr/bin/admin-mgr wal-push. Sem staging. Login_attempts=18 registros sem TTL (min=2026-08-28, max=2026-10-10). idle_in_transaction_session_timeout=0 (lacuna). Advisors: NAO VERIFICAVEL (supabase_migrations.pgmeta_advisors 42P01; ferramenta get_advisors nao existe neste MCP). Evidencia: SELECT FROM pg_settings na sessao." }
   },
-  "severidade": { "ALTO": 4, "MEDIO": 5, "BAIXO": 3, "INFO": 4 },
-  "total_achados": 16,
+  "severidade": { "CRITICO": 2, "ALTO": 2, "MEDIO": 6, "BAIXO": 6, "INFO": 7 },
+  "total_achados": 23,
+  "baseline_final_s8_completo": {
+    "migrations": 1072, "tabelas": 211, "policies": 520,
+    "crons": 24, "vault_secrets": 13,
+    "medido_em": "2026-11-01T23:46:00Z",
+    "delta_descricao": "ZERO — producao inalterada (4a medicao, pos-S8 completo)"
+  },
   "producao_inalterada": true,
-  "grep_pii_secrets": "0 matches — git log --all -p | grep -iE 'SUPABASE_SERVICE_ROLE_KEY|JWT_SECRET|POSTGRES_PASSWORD' retornou 0 linhas na sessao",
-  "ultimo_update": "2026-11-01T19:30:00Z"
+  "confirmacao_projeto": "ping → project=https://tnnnlkbymytvtqngbbqh.supabase.co (MCP SUPABASE - ZAPP WEB V2 - MCP, ms=143)",
+  "reexecucao_2026_11_01": {
+    "migrations": 1072, "tabelas": 211, "policies": 520, "funcoes": 481,
+    "crons": 24, "vault_secrets": 13,
+    "mfa_factors": 0, "auth_users": 10,
+    "update_sem_with_check": 39,
+    "views_sem_security_invoker_pg_class": 1,
+    "fks_sem_indice": 34,
+    "audit_log_entries": 0,
+    "cron_falhas_7d_job_startup_timeout": 5992,
+    "cron_30d_total_runs": 226945,
+    "cron_30d_falhas": 14055,
+    "cron_30d_sucessos": 212889,
+    "cron_30d_pct_falha": "6.2%",
+    "cron_db_funcoes_verificadas": "18/18 existem em pg_proc",
+    "cron_edge_targets_verificados": "3/3 existem no repo (gmail-cron-sync, connection-health-check, batch-fetch-avatars)",
+    "cron_versioning": "24/24 crons com registro em migrations (1-7 arquivos por cron)",
+    "cron_overlap_pico": "9 crons simultâneos no minuto :07"
+  },
+  "rls_producao_tentativa": "BEGIN; SET LOCAL role='authenticated' → HTTP 400 code 0A000: EXECUTE of transaction commands is not implemented (PostgREST SECURITY DEFINER bloqueia)",
+  "grep_pii_secrets": "0 valores de secret. Nomes de vault mascarados por tipo no relatorio (13 nomes removidos, substituidos por descricoes de tipo). git log --all -p | grep -iE 'SERVICE_ROLE_KEY|JWT_SECRET|POSTGRES_PASSWORD' retornou 0 linhas.",
+  "relatorio_v4_final": {
+    "S3_M1_reexec": "39 (não 42); 3 blocking policies (qual=false) incluídas na query original mas sem risco real",
+    "S7_execute_evidence": "6 funções analisadas via pg_get_functiondef: merge_contacts_atomic, purge_gmail_account_data, purge_talkx_expired_data, talkx_audience_query, talkx_engine_cron_runs, score_security_acl — TODAS SAFE",
+    "S10_audit_7d": 4553,
+    "S10_audit_total": 88172,
+    "S10_conn_health_7d": 1795,
+    "S10_ai_usage_7d": 2,
+    "S10_auth_audit_total": 0,
+    "S12_login_attempts": 18,
+    "S12_login_attempts_oldest": "2026-08-28",
+    "S12_login_attempts_newest": "2026-10-10",
+    "S12_idle_in_transaction_timeout": 0,
+    "S12_statement_timeout_ms": 120000,
+    "detalhamento_por_achado": "23 achados com reproducao, correcao, risco_regressao, esforco",
+    "plano_em_ondas": "Onda1=imediato(C1,C2), Onda2=curto(A1,A2,M1,M2,M6), Onda3=medio(M3-M5,B1-B2,B4-B6), Onda4=backlog(B3,I4,I5,I7)"
+  },
+  "ultimo_update": "2026-11-02T02:00:00Z"
 }
