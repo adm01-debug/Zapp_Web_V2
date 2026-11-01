@@ -282,6 +282,17 @@ async function checarSelectedActions() {
       restauravel: false,
     });
   }
+  // GA09/GA75: verificar também verified_allowed e github_owned_allowed
+  const blVerified = baseline.selected_actions_verified_allowed ?? false;
+  const encontradoVerified = sel?.verified_allowed ?? false;
+  if (encontradoVerified !== blVerified) {
+    divergencias.push({ campo: 'selected_actions.verified_allowed', esperado: blVerified, encontrado: encontradoVerified, restauravel: false });
+  }
+  const blGithubOwned = baseline.selected_actions_github_owned_allowed ?? false;
+  const encontradoGithubOwned = sel?.github_owned_allowed ?? false;
+  if (encontradoGithubOwned !== blGithubOwned) {
+    divergencias.push({ campo: 'selected_actions.github_owned_allowed', esperado: blGithubOwned, encontrado: encontradoGithubOwned, restauravel: false });
+  }
   return divergencias;
 }
 
