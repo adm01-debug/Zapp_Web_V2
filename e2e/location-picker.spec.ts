@@ -91,7 +91,8 @@ test.describe('E71 · picker de localização (combobox de endereço, sem enviar
     // Abre a conversa do contato fixo (o único que o usuário E2E enxerga).
     await page.goto('/');
     const conversa = page.locator('[data-testid="conversation-item"]').filter({ hasText: '[E2E]' });
-    await expect(conversa).toBeVisible();
+    // Timeout explícito: CI com 4 workers tem maior contenção de CPU; 5 s padrão é curto.
+    await expect(conversa).toBeVisible({ timeout: 30_000 });
     await conversa.click();
 
     // Abre o picker. DIVERGÊNCIA: a etapa fala em "Compartilhar localização", mas o
@@ -156,7 +157,7 @@ test.describe('E71 · picker de localização (combobox de endereço, sem enviar
 
     await page.goto('/');
     const conversa = page.locator('[data-testid="conversation-item"]').filter({ hasText: '[E2E]' });
-    await expect(conversa).toBeVisible();
+    await expect(conversa).toBeVisible({ timeout: 30_000 });
     await conversa.click();
 
     await page.getByTestId('chip-more').click();
