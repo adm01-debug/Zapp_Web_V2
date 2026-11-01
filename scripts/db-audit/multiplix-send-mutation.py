@@ -8,6 +8,7 @@ Roda no CI: passo "Provar por mutação os testes do worker do Multiplix (N-017)
 do .github/workflows/db-guard.yml (job offline-contract) — fail-closed: sai 1 se
 algum mutante sobreviver. A mao: python3 scripts/db-audit/multiplix-send-mutation.py
 """
+import pathlib
 import re
 import subprocess
 import sys
@@ -128,6 +129,19 @@ def classificar(out: str) -> tuple[str, int, int]:
     passed, failed = int(resumo.group(1)), int(resumo.group(2))
     return ("morto" if failed > 0 else "vivo"), passed, failed
 
+
+# Pre-aquece o cache de modulos Deno: sem isso o `deno test --frozen` falha em
+# runner limpo porque as URLs de esm.sh nao estao no cache local, mesmo que o
+# deno.lock ja contenha todos os hashes. O cache nao altera o lock (frozen no
+# deno.json) — apenas baixa os modulos e os verifica contra os hashes do lock.
+_cache = subprocess.run(
+    ["deno", "cache", "--config", "scripts/ci/deno.json",
+     "supabase/functions/multiplix-send/index.test.ts"],
+    capture_output=True, text=True,
+    cwd=str(pathlib.Path(__file__).resolve().parent.parent.parent),
+)
+if _cache.returncode != 0:
+    sys.exit("ABORT: deno cache falhou\n" + (_cache.stdout + _cache.stderr)[-800:])
 
 print("== baseline (sem mutante) ==")
 code, out = run_tests()
