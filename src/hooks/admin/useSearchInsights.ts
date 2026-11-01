@@ -6,7 +6,8 @@
  * retornada para a tela.
  *
  * Sem PII: a RPC lê apenas contadores agregados de `search_events`; o texto
- * da busca nunca é armazenado (privacidade por design da migration 20261031130000).
+ * da busca nunca é armazenado (privacidade por design da migration 20261016013134,
+ * que cria a tabela com `term_length` mas sem coluna de texto).
  * Visibilidade: quem barra é a própria RPC — ela nega quem não é admin/supervisor
  * (42501). O hook não acrescenta nem contorna recorte de papel.
  */
