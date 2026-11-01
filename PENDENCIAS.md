@@ -57,23 +57,30 @@ workflow **não é um required check** — não bloqueia merges na `main`.
 
 ---
 
-## 3. Deploy Edge Functions — @types/node pendente de confirmação
+## 3. Deploy Edge Functions — fix de @types/node tentado (PR #2407) mas ainda falha
 
 **Comportamento esperado:** `deploy-functions.yml` só executa quando o push na `main` altera
 código implantável em `supabase/functions/` ou `supabase/config.toml`. Quando o push toca
 apenas arquivos de frontend, documentação ou configuração de CI, o workflow não é disparado
 (condição `paths:` no trigger).
 
-**Run com falha identificado:** Run `41162076060` (SHA `e4e8c265`, pós-merge PR #2394) falhou
-com `Could not find "@types/node"` no step `deno check`. A PR #2407 introduziu o fix para esse
-erro, mas nenhum run de `deploy-functions.yml` com sucesso confirmado existe após o merge do
-#2407 — o filtro `paths:` explica a ausência de novos runs (nenhum push alterou `supabase/functions/`
-desde então).
+**Run com falha após o fix:** Run `41162076060` executou no SHA `004e74a8c5` (pós-merge da
+PR #2407, que introduziu a declaração de `@types/node` em `supabase/functions/deno.json`),
+e **ainda falhou** com `Could not find "@types/node"` no step `deno check`. O fix da PR #2407
+não foi suficiente para resolver o erro.
+
+**Por que não foi corrigido:** O mecanismo pelo qual `deno check` falha mesmo após a declaração
+de `@types/node` em `deno.json` requer investigação adicional em `supabase/functions/` e
+`supabase/config.toml`. Este workflow **não é um required check** — não bloqueia merges na `main`.
 
 **O que o Joaquim precisa fazer:**
-1. Disparar `workflow_dispatch` do `deploy-functions.yml` **na branch `main`** para confirmar
-   que o fix do PR #2407 resolve o erro `@types/node`
-2. Se falhar, verificar as dependências Deno em `supabase/functions/_shared/` e `supabase/config.toml`
+1. Disparar `workflow_dispatch` do `deploy-functions.yml` **na branch `main`** com
+   **`dry_run: true`** (ensaio: roda tudo até o deploy exclusive, sem publicar nada e sem
+   reescrever secrets) para diagnosticar o erro `@types/node` sem risco de side-effects
+2. Se falhar, verificar as dependências Deno em `supabase/functions/deno.json`, `_shared/` e
+   `supabase/config.toml`; confirmar que `@types/node` está mapeado corretamente no import map
+3. **Não** disparar sem `dry_run: true` — o deploy sem ensaio reescreve secrets e publica
+   as funções imediatamente no ambiente de produção
 
 ---
 

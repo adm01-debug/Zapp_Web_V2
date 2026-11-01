@@ -51,7 +51,7 @@ Inventário feito em 2026-10-31 ~04:00Z pela URL `?query=is%3Afailure`:
 | `ci.yml` | `fix/f1a-order-mock-usecustomemojis-20261018` | `040dae98` | Falha em branch de outra sessão — NÃO é a `main` | ⚠️ Outra sessão, fora do escopo |
 | `talkx-status-regen.yml` | `fix/f1a-order-mock-usecustomemojis-20261018` | `040dae98` | Mesma branch de outra sessão — NÃO é a `main` | ⚠️ Outra sessão, fora do escopo |
 | `DB Live Guard` | `main` (push/schedule) | `fb57b4a5` | 3 falhas reais no run 41162077590: migrations/ledger, ACL/mcp_exec, configuração runtime — investigação pendente | ❌ Não corrigível via código (ver PENDENCIAS.md §1) |
-| `Deploy Edge Functions` | `main` (push) | `e4e8c265` | Run 41162076060 falhou com `Could not find "@types/node"`; PR #2407 introduziu fix mas sem run de sucesso confirmado após o merge | ❌ Pendente confirmação (ver PENDENCIAS.md §3) |
+| `Deploy Edge Functions` | `main` (push) | `004e74a8c5` | Run 41162076060 (pós-merge PR #2407) ainda falha com `@types/node` — fix tentado e insucesso confirmado | ❌ Fix tentado, ainda falha (ver PENDENCIAS.md §3) |
 
 > **Falhas em branches de outras sessões** (`fix/f1a-order-mock-usecustomemojis-20261018`) não
 > afetam a `main` e não são required checks — estão fora do escopo desta correção.
@@ -77,11 +77,11 @@ Run CI Gate: **[41162012506](https://github.com/adm01-debug/Zapp_Web_V2/actions/
 | `🎭 E2E Tests (Playwright)` | ✅ success | 41162012506 |
 | **✅ CI Gate (required check)** | **✅ success** | 41162012506 |
 
-> **Nota:** O CI Gate (`ci.yml`) não cobre diretamente `Contrato DB offline` (`db-guard.yml`) nem
-> `🎭 E2E Tests (Playwright)` (`e2e-logado.yml`) — cada um tem seu próprio workflow e execução
-> separada. O run 41162012506 confirma o CI Gate de `ci.yml`; os checks `Contrato DB offline`
-> e `🎭 E2E Tests` são reportados via status checks do GitHub a partir dos workflows `db-guard.yml`
-> e `e2e-logado.yml` respectivamente, e constam como `success` para o SHA `004e74a8c5`.
+> **Nota:** O CI Gate (`ci.yml`, run 41162012506) confirma `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
+> `🏗️ Build` e `🔒 Security Audit`. Os checks `Contrato DB offline` (`db-guard.yml`) e
+> `🎭 E2E Tests (Playwright)` (`e2e-logado.yml`) são reportados por workflows separados e
+> constam como `success` via GitHub status checks para o SHA `004e74a8c5`. O run 41162012506
+> é de `ci.yml` — não cobre diretamente os outros dois workflows.
 
 ### SHA `1a9858b236` (PR #2411 mergeado — HEAD atual da main)
 
@@ -123,9 +123,9 @@ Esta sessão (`fix/ci-workflows`) incluiu mudanças de código além da document
 | Criar branch `fix/ci-workflows` | ✅ Criada a partir da `main` |
 | Criar PR para `main` | ✅ PR aberta |
 | `scripts/ci/fila-merge.mjs` — expansão de retry para erros de JSON truncado | ✅ Incluído na PR |
-| `supabase/migrations/20261026210300_reconcile_*` — removidos comentários extras que causavam falha no DB Guard | ✅ Neste commit |
-| Diagnósticos corrigidos em PENDENCIAS.md (§1 falhas reais, §2 quota, §3 @types/node) | ✅ Neste commit |
-| Diagnósticos corrigidos em RELATORIO_CI.md (§3 tabela, §4 nota CI Gate, §7 comparação) | ✅ Neste commit |
+| `supabase/migrations/20261026210300_reconcile_*` — removidos comentários extras que causavam falha no DB Guard | ✅ Incluído na PR |
+| Diagnósticos corrigidos em PENDENCIAS.md (§1 falhas reais, §2 quota, §3 fix tentado e falha) | ✅ Incluído na PR |
+| Diagnósticos corrigidos em RELATORIO_CI.md (§3 tabela, §4 nota CI Gate, §7 comparação) | ✅ Incluído na PR |
 
 ---
 
@@ -138,13 +138,13 @@ Esta sessão (`fix/ci-workflows`) incluiu mudanças de código além da document
 | Lint | ✅ exit 0 | ✅ idêntico |
 | Unit Tests | ✅ 3 shards success (run 41162012506) | ✅ idêntico |
 | `🏗️ Build` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
-| `🎭 E2E Tests` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
+| `🎭 E2E Tests` CI | ✅ success run 41162012506 (e2e-logado.yml) | ⏳ aguardando run no SHA atual da PR |
 | `Contrato DB offline` CI | ✅ success run 41162012506 | ⏳ aguardando run — migration corrigida neste commit |
 | `🔒 Security Audit` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
 | `✅ CI Gate (required check)` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
 | DB Live Guard | ❌ 3 falhas reais: migrations/ledger, ACL/mcp_exec, runtime (ver PENDENCIAS.md §1) | ❌ idem — investigação pendente |
 | Copilot Code Review | ❌ limite de cota HTTP 402 (ver PENDENCIAS.md §2) | ❌ idem — não corrigível |
-| Deploy Edge Functions | ❌ `@types/node` em run 41162076060, fix PR #2407 não confirmado | ❌ idem — pendente confirmação (ver PENDENCIAS.md §3) |
+| Deploy Edge Functions | ❌ `@types/node` em run 41162076060 (pré-fix PR #2407) | ❌ run 41162076060 pós-merge PR #2407 ainda falha — fix insuficiente (ver PENDENCIAS.md §3) |
 
 ---
 
@@ -164,7 +164,7 @@ Esta sessão (`fix/ci-workflows`) incluiu mudanças de código além da document
 ## Baseline local (antes das mudanças)
 
 | Verificação | Resultado |
-|---|---|
+|---|
 | `bun run build` | ✅ exit 0 |
 | `bun run typecheck` | ✅ exit 0 |
 | `bun run lint` | ⚠️ exit 1 — 1 warning (pré-existente, não introduzida por esta PR) |
