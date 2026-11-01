@@ -72,6 +72,8 @@ BEGIN
 END;
 $$;
 
--- Revogar acesso público (função roda SECURITY DEFINER, só edge functions chamam via service_role).
+-- Revogar acesso de todas as roles (função roda SECURITY DEFINER, só edge functions chamam via service_role).
+-- PUBLIC não cobre authenticated quando o projeto tem default privileges explícitos (ver 20260925203000).
 REVOKE EXECUTE ON FUNCTION public.commit_copilot_tick(uuid, int, jsonb, jsonb) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.commit_copilot_tick(uuid, int, jsonb, jsonb) FROM authenticated, anon;
 GRANT  EXECUTE ON FUNCTION public.commit_copilot_tick(uuid, int, jsonb, jsonb) TO service_role;
