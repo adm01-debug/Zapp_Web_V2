@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ExternalLink, FileBarChart2, Lightbulb } from 'lucide-react';
+import { ChevronLeft, Download, ExternalLink, FileBarChart2, Lightbulb } from 'lucide-react';
+import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
+import { serializeTalkXCsv, downloadCsv, RECIPIENT_COLUMNS, type TalkXRecipientExportRow } from '@/lib/talkxCsv';
 
 import { fromTable, supabase } from '@/lib/supabaseHelpers';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -75,6 +77,7 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
   const timeZone = campaign.schedule_timezone || DEFAULT_TIMEZONE;
   const [granularity, setGranularity] = useState<TalkXReportGranularity>('day');
   const [heatmapMetric, setHeatmapMetric] = useState<TalkXReportHeatmapMetric>('replied');
+  const { canDownload } = useDownloadPermission();
 
   const reportQuery = useQuery({
     queryKey: ['talkx-campaign-report', campaign.id],
@@ -150,6 +153,19 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
   const handleGranularity = useCallback((next: TalkXReportGranularity) => setGranularity(next), []);
   const handleMetric = useCallback((next: TalkXReportHeatmapMetric) => setHeatmapMetric(next), []);
 
+  const handleExportCsv = useCallback(() => {
+    const rows: TalkXRecipientExportRow[] = (recipientsQuery.data ?? []).map((r) => ({
+      nome: '',
+      telefone: '',
+      status: r.replied_at ? 'Respondeu' : r.delivered_at ? 'Entregue' : r.sent_at ? 'Enviado' : 'Pendente',
+      enviado_em: r.sent_at ?? '',
+      entregue_em: r.delivered_at ?? '',
+      respondeu_em: r.replied_at ?? '',
+    }));
+    const slug = campaign.name.replace(/[^a-z0-9]/gi, '-').toLowerCase().slice(0, 40);
+    downloadCsv(`talkx-${slug}-destinatarios.csv`, serializeTalkXCsv(rows, RECIPIENT_COLUMNS));
+  }, [recipientsQuery.data, campaign.name]);
+
   const boundaryQuery: TalkXQueryLike = {
     isLoading: reportQuery.isLoading,
     isFetching: reportQuery.isFetching,
@@ -184,16 +200,29 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
             <p className="text-xs text-foreground-secondary truncate">{campaign.name}</p>
           </div>
         </div>
-        {onViewMonitor && (
-          <button
-            type="button"
-            onClick={() => onViewMonitor(campaign.id)}
-            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 shrink-0"
-          >
-            <ExternalLink className="w-4 h-4" />
-            Abrir Monitor
-          </button>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {canDownload && (
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              aria-label="Exportar relatório CSV"
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50"
+            >
+              <Download className="w-4 h-4" />
+              Exportar CSV
+            </button>
+          )}
+          {onViewMonitor && (
+            <button
+              type="button"
+              onClick={() => onViewMonitor(campaign.id)}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Abrir Monitor
+            </button>
+          )}
+        </div>
       </div>
 
       <TalkXQueryBoundary

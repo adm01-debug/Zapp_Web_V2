@@ -19082,7 +19082,7 @@
       "id": "X168",
       "canonical_id": "docs--talkx--plano_talkx_v4_200_etapas_2026-10-01::X168",
       "title": "Exportar o relatório em PDF (sem `window.print`) e CSV, com permissão e trilha | 14 | front + testes | — | — | X162, X163, X164, X165 |",
-      "status": "PARTIAL",
+      "status": "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE",
       "source": {
         "path": "docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md",
         "line": 413,
