@@ -143,6 +143,7 @@ test('workspace do Email não introduz violações axe', async ({ page }) => {
   await abrirEmail(page);
   await expect(page.getByTestId('email-header').getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
   await freezeVisualTransitions(page);
+  await waitForAppliedTheme(page, 'dark');
   await page.waitForTimeout(400);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => {
