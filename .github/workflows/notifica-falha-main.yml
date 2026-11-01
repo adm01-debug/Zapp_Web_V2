@@ -3,7 +3,7 @@
 #   prova: abre issue quando qualquer workflow critico falha na main
 #   falha: a falha do workflow original fica sem issue de acompanhamento
 #   avisa: equipe de operacao, por meio da issue criada no repositorio
-#   workflows monitorados: ci, deploy-functions, db-migrate, db-live-guard, types-sync, e2e-logado, db-guard
+#   workflows monitorados: ci, deploy-functions, db-migrate, db-live-guard, types-sync, e2e-logado, db-guard, scorecard
 
 name: Notifica falha na main
 
@@ -17,6 +17,7 @@ on:
       - types-sync
       - E2E logado
       - DB Guard (offline)
+      - OpenSSF Scorecard (push + semanal)
     branches: [main]
     types: [completed]
 

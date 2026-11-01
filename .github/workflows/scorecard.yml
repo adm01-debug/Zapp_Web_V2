@@ -23,10 +23,6 @@ on:
 
 permissions: read-all
 
-defaults:
-  run:
-    shell: bash --noprofile --norc -euo pipefail {0}
-
 jobs:
   scorecard:
     name: 🔒 OpenSSF Scorecard
