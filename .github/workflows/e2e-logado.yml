@@ -42,8 +42,10 @@ permissions:
 # chegarem enquanto a run atual roda, so o mais recente pendente roda em
 # seguida (os intermediarios sao pulados) -- mesma semantica de "valida so o
 # commit mais novo", sem desperdicar runs quase completas.
+# GA62: dispatch fora da main recebe grupo proprio (run_id) para nao deslocar
+# run pendente da main antes de o step "Somente executa na main" cancela-la.
 concurrency:
-  group: e2e-logado-${{ github.ref }}
+  group: ${{ github.ref == 'refs/heads/main' && 'e2e-logado' || format('e2e-logado-branch-{0}', github.run_id) }}
   cancel-in-progress: false
 
 jobs:
