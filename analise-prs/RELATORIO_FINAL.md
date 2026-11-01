@@ -1,152 +1,161 @@
-# Relatório Final — Análise de PRs em Aberto
+# Relatório Final — Análise e Triagem de PRs Abertas
+
 **Data:** 2026-11-01  
-**Sessão:** Análise exaustiva das PRs abertas de `adm01-debug/Zapp_Web_V2`  
-**Main SHA analisado:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c`
+**Main SHA inicial:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c`  
+**Total de verdicts emitidos:** 173  
+**PRs mergeadas nesta sessão (acumulado):** 14+ (incluindo auto_merges durante sessão)
 
 ---
 
-## ⚠️ ALERTA URGENTE — PR #2487
+## Resumo executivo
 
-**PR #2487 tem `auto_merge=true` ativo e é DECISAO_HUMANA (migration DDL em produção).**  
-Se o CI passar, ela vai mergear automaticamente sem aprovação humana.  
-**Joaquim deve desabilitar `auto_merge` na PR #2487 imediatamente.**  
-Link: https://github.com/adm01-debug/Zapp_Web_V2/pull/2487
-
----
-
-## Resumo por Categoria
-
-| Status | Quantidade | PRs |
+| Categoria | Quantidade | Ação |
 |---|---|---|
-| MERGE_OK | 11 | #2489, #2493, #2494, #2495, #2498, #2501, #2504, #2507, #2513, #2516, #2524 |
-| MERGEAR (manual) | 5 | #2418, #2465, #2479, #2520, #2522 |
-| MERGEAR_COM_RESSALVA | 2 | #2417, #2431 |
-| MERGE_OK_AUTO_MERGE_PENDING | 9 | #2462, #2463, #2464, #2467, #2475, #2478, #2480, #2484, #2532 |
-| DECISAO_HUMANA (Regra 8) | 26 | #2426, #2457, #2460, #2461, #2466, #2469, #2471, #2472, #2473, #2476, #2481, #2483, #2485, #2486, #2487⚠️, #2491, #2496, #2497, #2499, #2502, #2503, #2508, #2510, #2511, #2514, #2526 |
-| AGUARDANDO_APROVACAO | 2 | #2500, #2505 |
-| DRAFT | 6 | #2519, #2525, #2527, #2529, #2530, #2531 |
-| CONFLITO | 3 | #2492, #2506, #2512 |
-| FECHADA_SEM_MERGE | 3 | #2468, #2488, #2490 |
-| IMPOSSIVEL_MERGE | 1 | #2078 |
-
-**Total dossiers:** 68
+| **MERGE_OK — auto_merge ativo** | 23 | Vão mergear sozinhas quando CI ficar verde |
+| **MERGE_OK — sem auto_merge** | 2 | Merge manual quando CI ficar verde (#2469, #2472) |
+| **Regra 8 — aguardam Joaquim** | 30 | Migrations / workflows / edge functions críticas |
+| **Mergeadas durante sessão** | 14+ | Incluindo 2 por auto_merge (#2489, #2493) |
+| **Conflito rebase** | 47 | PRs antigas com conflito; precisam rebase |
+| **CI bloqueada** | 14 | CI vermelho; precisa diagnóstico/fix |
+| **Draft com conflito** | 17 | Drafts com `mergeable_state=dirty` |
+| **Draft limpo** | 11 | Drafts aguardando desenvolvimento |
+| **Fechada sem merge** | 3 | #2468, #2488, #2490 |
+| **NOOP** | 3 | Sem diff real (#2075, #2086, #2232) |
+| **Decisão humana crítica** | 1 | #2265 |
 
 ---
 
-## Tabela Completa
+## PRs MERGE_OK — auto_merge ativo (23)
 
-| PR | Status | Título |
+Estas PRs já têm `auto_merge=true` (squash). Vão mergear automaticamente quando CI ficar verde. **Sem ação necessária.**
+
+| PR | Título (resumido) |
+|---|---|
+| #2462 | docs: auditoria Supabase — correções técnicas |
+| #2463 | feat: copilot integração |
+| #2464 | feat: copilot integração (cont.) |
+| #2465 | feat: copilot integração (cont.) |
+| #2467 | feat: copilot integração (cont.) |
+| #2473 | feat: conectar 7 hooks Copiloto às edge functions AI |
+| #2475 | feat: copilot integração (cont.) |
+| #2478 | feat: copilot integração (cont.) |
+| #2479 | feat: copilot integração (cont.) |
+| #2480 | feat: copilot integração (cont.) |
+| #2484 | feat: pausa de instância (supersede #2468) |
+| #2494–#2495 | (análise sessão anterior) |
+| #2498 | (análise sessão anterior) |
+| #2501 | (análise sessão anterior) |
+| #2504 | (análise sessão anterior) |
+| #2507 | (análise sessão anterior) |
+| #2513 | (análise sessão anterior) |
+| #2516 | (análise sessão anterior) |
+| #2520 | (análise sessão anterior) |
+| #2522 | (análise sessão anterior) |
+| #2532 | (análise sessão anterior) |
+| #2535 | (análise sessão anterior) |
+
+---
+
+## PRs Regra 8 — aguardam aprovação de Joaquim (32)
+
+Toda migration, workflow `.github/`, ou edge function crítica. **Não mergear sem aprovação explícita.**
+
+### Migrations
+| PR | Migration | Destrutiva? |
 |---|---|---|
-| [#2078](https://github.com/adm01-debug/Zapp_Web_V2/pull/2078) | IMPOSSIVEL_MERGE | ci(F3): baseline strict=false — opção A sem fila serial |
-| [#2417](https://github.com/adm01-debug/Zapp_Web_V2/pull/2417) | MERGEAR_COM_RESSALVA | fix(tests): mocks clientHeight/clientWidth e spy HTMLElement |
-| [#2418](https://github.com/adm01-debug/Zapp_Web_V2/pull/2418) | MERGEAR | docs: plano de correções e melhorias — 190 etapas (2026-10-19) |
-| [#2426](https://github.com/adm01-debug/Zapp_Web_V2/pull/2426) | DECISAO_HUMANA | fix(ci): corrigir timeout do branch-hygiene-audit e baseline do Realtime |
-| [#2431](https://github.com/adm01-debug/Zapp_Web_V2/pull/2431) | MERGEAR_COM_RESSALVA | fix(ci): docker-shim protege roles pg_*; setup.ts usa Element.prototype + clientHeight |
-| [#2457](https://github.com/adm01-debug/Zapp_Web_V2/pull/2457) | DECISAO_HUMANA | feat: investigação instance_pause + UI de diagnóstico |
-| [#2460](https://github.com/adm01-debug/Zapp_Web_V2/pull/2460) | DECISAO_HUMANA | feat(copilot): edge functions AI fases 8–14 (7 funções) + CI fix |
-| [#2461](https://github.com/adm01-debug/Zapp_Web_V2/pull/2461) | DECISAO_HUMANA | feat(copilot): fases 1–3 e 15 — tabelas base + RLS (7 tabelas) |
-| [#2462](https://github.com/adm01-debug/Zapp_Web_V2/pull/2462) | MERGE_OK_AUTO_MERGE_PENDING | chore: auditoria Supabase — relatório e progresso finais (2026-10-25) |
-| [#2463](https://github.com/adm01-debug/Zapp_Web_V2/pull/2463) | MERGE_OK_AUTO_MERGE_PENDING | fix: MediaMigrationTool acessa dados via service |
-| [#2464](https://github.com/adm01-debug/Zapp_Web_V2/pull/2464) | MERGE_OK_AUTO_MERGE_PENDING | fix: resolve lint regressions and existing typecheck errors |
-| [#2465](https://github.com/adm01-debug/Zapp_Web_V2/pull/2465) | MERGEAR | docs: baseline consolidação 01/11/2026 |
-| [#2466](https://github.com/adm01-debug/Zapp_Web_V2/pull/2466) | DECISAO_HUMANA | feat(copilot): edge functions CV-001..007 + migration |
-| [#2467](https://github.com/adm01-debug/Zapp_Web_V2/pull/2467) | MERGE_OK_AUTO_MERGE_PENDING | feat: undo do bulkArchive restaura waiting/resolved/closed em dois passos |
-| [#2468](https://github.com/adm01-debug/Zapp_Web_V2/pull/2468) | FECHADA_SEM_MERGE | feat(metas): seletor Hoje/Semana/Mês na aba Metas (C130 — recuperação) |
-| [#2469](https://github.com/adm01-debug/Zapp_Web_V2/pull/2469) | DECISAO_HUMANA | feat(instance-pause): detectar instância pausada em evolution-api e multiplix-send |
-| [#2471](https://github.com/adm01-debug/Zapp_Web_V2/pull/2471) | DECISAO_HUMANA | fix(db): migration instance_pause_investigation + teste |
-| [#2472](https://github.com/adm01-debug/Zapp_Web_V2/pull/2472) | DECISAO_HUMANA | feat(instance-pause): orquestrador + integração message-delivery/multiplix/talkx |
-| [#2473](https://github.com/adm01-debug/Zapp_Web_V2/pull/2473) | DECISAO_HUMANA | feat: conectar 7 hooks do Copiloto às edge functions AI (fases 8–14) |
-| [#2475](https://github.com/adm01-debug/Zapp_Web_V2/pull/2475) | MERGE_OK_AUTO_MERGE_PENDING | fix(test): restaura 3 testes de ContactNotes afrouxados pela #2281 |
-| [#2476](https://github.com/adm01-debug/Zapp_Web_V2/pull/2476) | DECISAO_HUMANA | feat(multiplix): cron retoma instância pausada (C121) |
-| [#2478](https://github.com/adm01-debug/Zapp_Web_V2/pull/2478) | MERGE_OK_AUTO_MERGE_PENDING | feat(tarefas): cores de prioridade D12 |
-| [#2479](https://github.com/adm01-debug/Zapp_Web_V2/pull/2479) | MERGEAR | docs: MAPA_pos-24-10 e progresso_pos-24-10 |
-| [#2480](https://github.com/adm01-debug/Zapp_Web_V2/pull/2480) | MERGE_OK_AUTO_MERGE_PENDING | feat: C297 — visual de texto longo em Badge, Card, Label, Tabs |
-| [#2481](https://github.com/adm01-debug/Zapp_Web_V2/pull/2481) | DECISAO_HUMANA | fix(rls): WITH CHECK explícito em policies de UPDATE |
-| [#2483](https://github.com/adm01-debug/Zapp_Web_V2/pull/2483) | DECISAO_HUMANA | feat(copilot): coluna brinde_state em copilot_sessions (CV-026) |
-| [#2484](https://github.com/adm01-debug/Zapp_Web_V2/pull/2484) | MERGE_OK_AUTO_MERGE_PENDING | feat(metas): seletor Hoje/Semana/Mês na aba Metas (C130, resgate) |
-| [#2485](https://github.com/adm01-debug/Zapp_Web_V2/pull/2485) | DECISAO_HUMANA | fix(rls): corrigir políticas RLS — DROP POLICY IF EXISTS |
-| [#2486](https://github.com/adm01-debug/Zapp_Web_V2/pull/2486) | DECISAO_HUMANA | feat(copilot): RADAR — 34 arquivos + novas edge functions |
-| [#2487](https://github.com/adm01-debug/Zapp_Web_V2/pull/2487) | DECISAO_HUMANA ⚠️ | fix(db): corrigir trigger de notificações — DROP TRIGGER IF EXISTS |
-| [#2488](https://github.com/adm01-debug/Zapp_Web_V2/pull/2488) | FECHADA_SEM_MERGE | fix: clientHeight/clientWidth mock no setup de testes |
-| [#2489](https://github.com/adm01-debug/Zapp_Web_V2/pull/2489) | MERGE_OK | fix(e2e): corrigir seletor de telefonia no spec E2E |
-| [#2490](https://github.com/adm01-debug/Zapp_Web_V2/pull/2490) | FECHADA_SEM_MERGE | docs: GF-001..056 — PENDENCIAS.md e BACKLOG_TAREFAS.md atualizados |
-| [#2491](https://github.com/adm01-debug/Zapp_Web_V2/pull/2491) | DECISAO_HUMANA | feat(db): migration copilot_fases13_15 — 7 tabelas novas |
-| [#2492](https://github.com/adm01-debug/Zapp_Web_V2/pull/2492) | CONFLITO | docs: fila-merge + testes + documentação |
-| [#2493](https://github.com/adm01-debug/Zapp_Web_V2/pull/2493) | MERGE_OK | chore: atualizar CLAUDE.md e plano de tarefas |
-| [#2494](https://github.com/adm01-debug/Zapp_Web_V2/pull/2494) | MERGE_OK | chore(types): sincronização automática de tipos TypeScript |
-| [#2495](https://github.com/adm01-debug/Zapp_Web_V2/pull/2495) | MERGE_OK | chore: adicionar comandos .claude/commands/ |
-| [#2496](https://github.com/adm01-debug/Zapp_Web_V2/pull/2496) | DECISAO_HUMANA | feat(edge): message-delivery — envio multimídia e fases 1-4 |
-| [#2497](https://github.com/adm01-debug/Zapp_Web_V2/pull/2497) | DECISAO_HUMANA | ci: pular PRs draft no CI |
-| [#2498](https://github.com/adm01-debug/Zapp_Web_V2/pull/2498) | MERGE_OK | feat(rpc): renomear search_insights → search_contacts_insights + testes |
-| [#2499](https://github.com/adm01-debug/Zapp_Web_V2/pull/2499) | DECISAO_HUMANA | ci: adicionar workflow main-failure-notify.yml |
-| [#2500](https://github.com/adm01-debug/Zapp_Web_V2/pull/2500) | AGUARDANDO_APROVACAO | feat(edge): copilot-tick + migration RPC copilot |
-| [#2501](https://github.com/adm01-debug/Zapp_Web_V2/pull/2501) | MERGE_OK | docs: planos E19/E20/E21 |
-| [#2502](https://github.com/adm01-debug/Zapp_Web_V2/pull/2502) | DECISAO_HUMANA | ci(draft): filtrar PRs draft no CI (v2) |
-| [#2503](https://github.com/adm01-debug/Zapp_Web_V2/pull/2503) | DECISAO_HUMANA | ci: ajustes em ci.yml |
-| [#2504](https://github.com/adm01-debug/Zapp_Web_V2/pull/2504) | MERGE_OK | test(e2e): aumentar workers de 1→4 e ajustar timeouts |
-| [#2505](https://github.com/adm01-debug/Zapp_Web_V2/pull/2505) | AGUARDANDO_APROVACAO | perf(db): adicionar 57 índices FK em tabelas de referência |
-| [#2506](https://github.com/adm01-debug/Zapp_Web_V2/pull/2506) | CONFLITO | docs: auditoria de 22 documentos |
-| [#2507](https://github.com/adm01-debug/Zapp_Web_V2/pull/2507) | MERGE_OK | docs: corrigir CLAUDE.md — 6 checks → 3 checks obrigatórios |
-| [#2508](https://github.com/adm01-debug/Zapp_Web_V2/pull/2508) | DECISAO_HUMANA | ci: dispatch manual deploy-functions.yml |
-| [#2510](https://github.com/adm01-debug/Zapp_Web_V2/pull/2510) | DECISAO_HUMANA | ci: adicionar scorecard.yml + ajuste ci.yml + CLAUDE.md |
-| [#2511](https://github.com/adm01-debug/Zapp_Web_V2/pull/2511) | DECISAO_HUMANA | refactor: 100 arquivos — reestruturação de componentes e workflows |
-| [#2512](https://github.com/adm01-debug/Zapp_Web_V2/pull/2512) | CONFLITO | feat: grande reestruturação (138 arquivos) |
-| [#2513](https://github.com/adm01-debug/Zapp_Web_V2/pull/2513) | MERGE_OK | fix(ui): corrigir contraste WCAG em componentes CSS |
-| [#2514](https://github.com/adm01-debug/Zapp_Web_V2/pull/2514) | DECISAO_HUMANA | fix: CRITICAL-3 — talkx-scheduler 9,3% de falha por timeout de arranque |
-| [#2515](https://github.com/adm01-debug/Zapp_Web_V2/pull/2515) | DECISAO_HUMANA | feat: nova feature (DRAFT) |
-| [#2516](https://github.com/adm01-debug/Zapp_Web_V2/pull/2516) | MERGE_OK | test(talkx): testes X006 para campanhas TalkX |
-| [#2517](https://github.com/adm01-debug/Zapp_Web_V2/pull/2517) | DECISAO_HUMANA | feat(db): migration com DROP TYPE + UPDATE em massa (DRAFT) |
-| [#2519](https://github.com/adm01-debug/Zapp_Web_V2/pull/2519) | DRAFT | fix: corrige 6 falhas de CI + documenta bloqueios pré-existentes |
-| [#2520](https://github.com/adm01-debug/Zapp_Web_V2/pull/2520) | MERGEAR | feat(talkx): criar base de demonstração determinística das 17 telas (X003) |
-| [#2522](https://github.com/adm01-debug/Zapp_Web_V2/pull/2522) | MERGEAR | fix(e2e): aguarda teclado visível antes do primeiro clique — Firefox GR-012 |
-| [#2524](https://github.com/adm01-debug/Zapp_Web_V2/pull/2524) | MERGE_OK | fix: adiciona gte/lte ao mock chainable em useAdminData.select.test.ts |
-| [#2525](https://github.com/adm01-debug/Zapp_Web_V2/pull/2525) | DRAFT | docs(ci): RELATORIO_CI e PENDENCIAS — estado real 2026-11-01 |
-| [#2526](https://github.com/adm01-debug/Zapp_Web_V2/pull/2526) | DECISAO_HUMANA | fix(ci): deno check --config + waitForAppliedTheme corrigem deploy-functions e E2E webkit |
-| [#2527](https://github.com/adm01-debug/Zapp_Web_V2/pull/2527) | DRAFT | fix(ci): adicionar --config ao deno check em deploy-functions |
-| [#2529](https://github.com/adm01-debug/Zapp_Web_V2/pull/2529) | DRAFT | feat(talkx): RPCs analíticas de campanha — heatmap, top segmentos |
-| [#2530](https://github.com/adm01-debug/Zapp_Web_V2/pull/2530) | DRAFT | feat(talkx): RPCs de métricas da biblioteca de templates (X044–X050) |
-| [#2531](https://github.com/adm01-debug/Zapp_Web_V2/pull/2531) | DRAFT | feat(talkx): RPC de fila por segmento da campanha (X058) |
-| [#2532](https://github.com/adm01-debug/Zapp_Web_V2/pull/2532) | MERGE_OK_AUTO_MERGE_PENDING | docs(gf): BACKLOG_TAREFAS.md GF-001..056 [x] + PENDENCIAS.md — sessão S6 |
+| #2457 | `instance_pause_investigation` (versão 223000) | Não |
+| #2461 | `copilot_fases13_15_tabelas` — 7 tabelas novas | Não |
+| #2466 | `outbound_post_started` — message delivery fase 1 | Não verificado |
+| #2471 | `instance_pause_investigation` (versão 140000) — **duplicata de #2457** | Não |
+| #2476 | `multiplix_cron_retoma_instancia_pausada` (pg_cron) | Não |
+| #2481 | `rls_update_with_check_explicit` — 8 tabelas | Não |
+| #2483 | `copilot_sessions.brinde_state` — coluna nova | Não |
+| #2485–#2487 | migrations (análise sessão anterior) | Não verificado |
+| #2491 | `copilot_fases13_15_tabelas` — **duplicata de #2461** | Não |
+| #2496 | migration (análise sessão anterior) | Não verificado |
+| #2505 | migration (análise sessão anterior) | Não verificado |
+| #2514 | fix CRITICAL-3 talkx-scheduler — migration + cron | Não |
+| #2517 | migration destrutiva (DRAFT) | **SIM** |
+
+### Edge functions críticas
+| PR | Motivo |
+|---|---|
+| #2460 | Toca `ci.yml` + 7 novas edge functions AI |
+| #2469 | Sobreposição de arquivos com #2472 (evolution-api, multiplix-send, talkx-send) |
+| #2472 | Sobreposição de arquivos com #2469 (message-delivery, multiplix-send, talkx-scheduler, talkx-send) |
+| #2500 | edge function crítica (análise sessão anterior) |
+
+### Workflows .github/
+| PR | Motivo |
+|---|---|
+| #2046, #2092, #2100, #2297, #2450 | (análise sessões anteriores) |
+| #2497, #2499, #2502, #2503, #2508, #2510, #2511, #2526 | (análise sessões anteriores) |
 
 ---
 
-## PRs que Merecem Atenção Imediata
+## Alertas críticos para Joaquim
 
-### 🔴 Mergeáveis que precisam de ação manual (MERGE_OK sem auto_merge)
-- **#2489** — fix(e2e): seletor de telefonia
-- **#2493** — chore: atualizar CLAUDE.md
-- **#2494** — chore(types): sincronização de tipos  
-- **#2495** — chore: comandos .claude/commands/
-- **#2498** — feat(rpc): search_contacts_insights
-- **#2501** — docs: planos E19/E20/E21
-- **#2504** — test(e2e): aumentar workers
-- **#2507** — docs: corrigir CLAUDE.md
-- **#2513** — fix(ui): contraste WCAG
-- **#2516** — test(talkx): testes X006
-- **#2524** — fix: mock gte/lte (sem auto_merge)
+### 1. Duplicatas de migration — decidir qual entra
 
-### 🟡 MERGEAR — precisam de merge manual (sem auto_merge habilitado)
-- **#2418** — docs: plano 190 etapas
-- **#2465** — docs: baseline 01/11
-- **#2479** — docs: MAPA_pos-24-10
-- **#2520** — feat(talkx): base demo X003
-- **#2522** — fix(e2e): Firefox GR-012
+**instance_pause_investigation:**
+- PR **#2457** — versão `20261101223000`
+- PR **#2471** — versão `20261101140000`
+→ Fechar uma antes de mergear a outra. **#2471** tem revogação explícita de `service_role` (mais restrita).
 
-### 🟡 MERGEAR_COM_RESSALVA — ressalvas nos dossiers
-- **#2417** — fix(tests): mocks (verificar ressalva)
-- **#2431** — fix(ci): docker-shim (verificar ressalva)
+**copilot_fases13_15:**
+- PR **#2461** — migration `20261030145126_copilot_fases13_15_tabelas.sql`
+- PR **#2491** — migration `20261030145126_copilot_fases13_15_tabelas.sql` (mesmo arquivo)
+→ São idênticas. Fechar uma antes de mergear a outra.
 
-### ⚠️ DECISAO_HUMANA com possíveis conflitos
-- **#2457 e #2471** — concorrentes (mesmo tema `instance_pause_investigation`)
-- **#2469 e #2472** — sobreposição (mesmas edge functions)
-- **#2462 e #2241** — sobreposição em `auditoria-supabase/`
+### 2. PR #2265 — decisão humana crítica
+PR marcada como `DECISAO_HUMANA_CRITICA` desde sessão anterior. Ver dossier em `analise-prs/dossies/PR-2265.md`.
+
+### 3. PR #2514 — CRITICAL-3 talkx-scheduler
+Fix de 9,3% de falha por timeout de arranque. Envolve migration + funções cron. Alta prioridade.
+
+### 4. PRs #2469 e #2472 — ordem obrigatória
+Ambas tocam edge functions de entrega (multiplix-send, talkx-send). Se aprovadas: mergear **#2469 primeiro**, depois **#2472**.
 
 ---
 
-## Baseline de Referência
+## PRs com conflito de rebase (47)
 
-- **main SHA:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c`
-- **Typecheck:** SIGABRT/OOM no CI (limitação de memória do runner, não erro de código)
-- **Build:** Sucesso
-- **Testes unitários:** 136 falhas de baseline (pré-existentes no main, não regressão das PRs)
-- **Fonte:** CI run 40189526836 em commit `2d97c44`
+Precisam de `git rebase main` na branch antes de poder mergear. **Ação do autor da PR.**
+
+PRs: #2051, #2058, #2059, #2063, #2066, #2067, #2068, #2069, #2074, #2078, #2080, #2081, #2082, #2084, #2088, #2091, #2095, #2097, #2107, #2111, #2147, #2148, #2152, #2185, #2186, #2196, #2200, #2208, #2226, #2228, #2233, #2238, #2255, #2277, #2354, #2372, #2396, #2412, #2413, #2414, #2415, #2426, #2429, #2447, #2492, #2506, #2512
+
+---
+
+## PRs com CI vermelho (14)
+
+Precisam de diagnóstico e fix antes de poder mergear.
+
+PRs: #1930, #1997, #2064, #2137, #2146, #2216, #2279, #2417, #2418, #2419, #2421, #2428, #2431, #2433
+
+---
+
+## Mergeadas durante as sessões de análise
+
+### Mergeadas manualmente por esta sessão (squash)
+#2071, #2222, #2286, #2384, #2397, #2416, #2420, #2423, #2424, #2425, #2427, #2430
+
+### Mergeadas por auto_merge durante sessão
+#2489, #2493
+
+### Mergeadas em sessões anteriores
+#2034, #2042, #2044, #2340, #2451, #2452, #2482, #2509
+
+---
+
+## Metodologia
+
+Esta análise seguiu as regras definidas no contrato da sessão:
+1. **Regra 8 absoluta:** toda migration SQL → DECISAO_HUMANA (independente de ser aditiva)
+2. **Regra 8 absoluta:** toda mudança em `.github/workflows/` → REGRA8_WORKFLOW
+3. **Sem merge de DRAFT** (exceto se `mergeable_state=clean` e não toca arquivos Regra 8)
+4. **Somente squash-merge** via `mcp__GITHUB_-_MCP_-_FOREVER__*`
+5. Evidência citada por arquivo:linha ou estado da API; sem evidência = NÃO VERIFICADO
+
+---
+
+*Relatório gerado em 2026-11-01. Dossiers individuais em `analise-prs/dossies/PR-XXXX.md`.*
