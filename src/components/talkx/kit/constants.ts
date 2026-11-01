@@ -80,3 +80,18 @@ export const VARIABLE_KEYS = ['{{nome}}', '{{nome_completo}}', '{{apelido}}', '{
 export const TALKX_CHANNELS: { value: string; label: string }[] = [
   { value: 'whatsapp', label: 'WhatsApp' },
 ];
+
+/** X082 — Dicas do dia exibidas no TipCard. Troca por dia (índice = dias desde
+ *  a época + offset manual do usuário). A seta "›" avança o offset em +1. */
+export const TIPS: string[] = [
+  'Segmentar por ramo ajuda a direcionar a mensagem ao público certo.',
+  'Enviar no horário de pico aumenta as taxas de abertura e resposta.',
+  'Personalize com {{nome}} para aumentar o engajamento da campanha.',
+  'Campanhas de reativação têm melhor resultado entre 30 e 60 dias após inatividade.',
+  'Use o objetivo correto — ele define o tom e ajuda a medir o sucesso.',
+  'Teste a mensagem com um segmento pequeno antes de enviar para toda a base.',
+  'Contatos com opt-out são suprimidos automaticamente — mantenha a lista limpa.',
+  'Mensagens curtas e diretas têm maior taxa de leitura no WhatsApp.',
+  'Dicas de horário: evite enviar após as 20 h para não gerar reclamações.',
+  'Campanha com imagem impacta mais — use uma arte de qualidade.',
+];

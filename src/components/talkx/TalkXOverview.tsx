@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   Users, Play, CheckCircle2, Target, Send, Eye, Pencil, Zap, Plus,
-  FileText, Bookmark, BarChart3, ChevronDown, ChevronRight,
+  FileText, Bookmark, BarChart3, ChevronDown, ChevronRight, Upload,
 } from 'lucide-react';
 import { ProgressBar, VerTodasButton } from '@/components/dashboard/overview/DashboardCard';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -10,8 +10,8 @@ import {
   CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, TalkXTable, StatusPill, RailCard, RailAction, IconTile,
   EntityCell, ChannelCell, ProgressCell, ResultsCell, DateByCell,
   TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard,
-  InsightCard, TalkXQueryBoundary,
-  fmtInt, pct, fmtAgo, OBJECTIVES, TALKX_CHANNELS,
+  InsightCard, TalkXQueryBoundary, TalkXBulkBar,
+  fmtInt, pct, fmtAgo, OBJECTIVES, TALKX_CHANNELS, TIPS,
 } from './talkxShared';
 import type { TalkXColumn, TalkXSort, RowAction } from './talkxShared';
 import type { TalkXPeriodRange } from './kit/periods';
@@ -95,6 +95,11 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   // N35 — os blocos que o mock não tem ficam abaixo da tabela e recolhidos por padrão.
   const [draftsOpen, setDraftsOpen] = useState(false);
   const [insightsOpen, setInsightsOpen] = useState(false);
+  // X082 — dica do dia: índice muda por dia + offset manual (seta ›).
+  // dayBase é calculado uma vez na montagem (lazy initializer) para evitar impureza.
+  const [dayBase] = useState(() => Math.floor(Date.now() / 86400000));
+  const [tipOffset, setTipOffset] = useState(0);
+  const tipIndex = (dayBase + tipOffset) % TIPS.length;
 
   // X080 — as ações de linha (matriz por status + confirmação das ações que
   // mudam o estado da campanha) ficam em um lugar só e servem a tabela, a grade
@@ -219,6 +224,13 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   // Mudou o recorte (filtro, período, busca, página, ordenação) → a seleção é zerada.
   const selectionKey = [status, objective, channel, segment, creator, period ?? '', search.trim(), page, pageSize, sort?.key ?? '', sort?.dir ?? ''].join('|');
 
+  // X081 — ações em massa: conta as elegíveis no conjunto selecionado.
+  const selectedList = useMemo(() => campaigns.filter((c) => selected.has(c.id)), [campaigns, selected]);
+  const pauseEligible  = selectedList.filter((c) => c.status === 'sending');
+  const cancelEligible = selectedList.filter((c) => c.status === 'sending' || c.status === 'paused' || c.status === 'scheduled');
+  const deleteEligible = selectedList.filter((c) => c.status === 'draft' || c.status === 'cancelled');
+  const bulkLabel = (count: number, label: string) => count > 0 ? `${label} (${count} de ${selected.size})` : label;
+
   // X077 — os cinco números do topo saem da RPC `talkx_overview_stats` para o período da
   // barra (padrão: 30 dias); nenhum KPI é calculado aqui. Campo ausente = "Sem dados ainda".
   const { data: stats } = useTalkXOverviewStats(period, periodRange);
@@ -331,6 +343,31 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
           onRefresh={onRetry ? handleRefresh : undefined} refreshing={refreshing}
           view={layout} onView={setLayout}
         />
+
+        {/* X081 — barra de seleção em massa */}
+        {selected.size > 0 && (
+          <TalkXBulkBar
+            count={selected.size}
+            onClear={() => setSelected(new Set())}
+            actions={<>
+              <button type="button" disabled={pauseEligible.length === 0}
+                onClick={() => pauseEligible.forEach((c) => rowActions.run('pause', c))}
+                className="text-xs font-semibold text-foreground-secondary hover:text-foreground disabled:opacity-40 transition-colors">
+                {bulkLabel(pauseEligible.length, 'Pausar')}
+              </button>
+              <button type="button" disabled={cancelEligible.length === 0}
+                onClick={() => cancelEligible.forEach((c) => rowActions.run('cancel', c))}
+                className="text-xs font-semibold text-foreground-secondary hover:text-foreground disabled:opacity-40 transition-colors">
+                {bulkLabel(cancelEligible.length, 'Cancelar')}
+              </button>
+              <button type="button" disabled={deleteEligible.length === 0}
+                onClick={() => deleteEligible.forEach((c) => onDelete(c.id))}
+                className="text-xs font-semibold text-destructive hover:text-destructive/80 disabled:opacity-40 transition-colors">
+                {bulkLabel(deleteEligible.length, 'Excluir')}
+              </button>
+            </>}
+          />
+        )}
 
         {/* Tabela */}
         <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
@@ -450,9 +487,10 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
         />
         <RailCard icon={Zap} title="Ações rápidas">
           <div className="space-y-1.5">
-            <RailAction icon={Plus}     color="blue"   title="Nova campanha"      subtitle="Criar do zero"          onClick={onNew} />
-            <RailAction icon={FileText} color="violet" title="Usar template"      subtitle="Escolher da biblioteca" onClick={() => onGoTab('templates')} />
-            <RailAction icon={Bookmark} color="green"  title="Criar segmento"     subtitle="Definir público-alvo"   onClick={() => onGoTab('segments')} />
+            <RailAction icon={Plus}     color="blue"   title="Nova campanha"      subtitle="Criar do zero"              onClick={onNew} />
+            <RailAction icon={FileText} color="violet" title="Usar template"      subtitle="Escolher da biblioteca"     onClick={() => onGoTab('templates')} />
+            <RailAction icon={Bookmark} color="green"  title="Criar segmento"     subtitle="Definir público-alvo"       onClick={() => onGoTab('segments')} />
+            <RailAction icon={Upload}   color="amber"  title="Importar contatos"  subtitle="Adicionar novos contatos"   onClick={() => onGoTab('contacts')} />
           </div>
         </RailCard>
         <RailCard icon={BarChart3} title="Últimas campanhas" right={<VerTodasButton onClick={clear} />}>
@@ -463,7 +501,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
             })} />
           )}
         </RailCard>
-        <TipCard tip="Segmentar por ramo ajuda a direcionar a mensagem ao público certo." />
+        <TipCard tip={TIPS[tipIndex]} onNext={() => setTipOffset((o) => (o + 1) % TIPS.length)} />
       </div>
 
       {/* X080 — duplicar/excluir seguem nas confirmações de linha; X051 — ciclo de vida usa um diálogo único. */}

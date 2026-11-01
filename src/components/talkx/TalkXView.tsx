@@ -592,7 +592,7 @@ export default function TalkXView() {
             onPause={async (id) => { try { await pauseCampaign(id); toast.info('Campanha pausada'); } catch { toast.error('Erro ao pausar'); } }}
             onCancel={async (id) => { try { await cancelCampaign(id); toast.info('Campanha cancelada'); } catch { toast.error('Erro ao cancelar'); } }}
             onDelete={(id) => deleteCampaign.mutate(id)}
-            onGoTab={(tab) => { if (tab === 'templates') goTab('templates'); else if (tab === 'segments') goTab('segments'); }}
+            onGoTab={(tab) => { if (tab === 'templates') goTab('templates'); else if (tab === 'segments') goTab('segments'); else if (tab === 'contacts') goTab('segments'); }}
           />
         </TabsContent>
         <TabsContent value="segments" className="mt-4">
