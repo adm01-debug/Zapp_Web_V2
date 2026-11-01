@@ -42,16 +42,31 @@
     "achados_json": {
       "total": 47,
       "CRITICO": 2,
-      "ALTO": 6,
+      "ALTO": 3,
       "MEDIO": 15,
       "BAIXO": 3,
       "INFO": 13,
-      "RESOLVIDO": 8
+      "RESOLVIDO": 11
     },
-    "prs_triadas": 14,
+    "prs_triadas": 13,
     "pr_aguardando_aprovacao": ["#2481","#2485","#2487","#2491","#2461","#2471","#2476","#2460","#2473"],
     "pr_autonoma_pendente": ["#2494 (types-sync, auto_merge ativo, needs branch update)"],
     "pr_2462_triagem": "ABSORVER — docs 2026-10-25 (RELATORIO+progresso.json com 5 correções); sobreposição com PR #2498; fechar após commit desta sessão"
+  },
+  "re_verificacao_21h20z_2026_11_01": {
+    "timestamp": "2026-11-01T21:20Z",
+    "ping": {"ok": true, "ms": 355, "projeto": "tnnnlkbymytvtqngbbqh"},
+    "baseline_confirmado": {"migrations": 1072, "tables": 211, "policies": 520, "crons": 24, "vault_secrets": 13},
+    "critico_alto": {
+      "ZW-0002_user_roles_seq": "idx_scan=0 seq_scan=79 pct_seq=100.0 — stats resetados mas 0 idx_scan confirma: zero índice em user_id",
+      "ZW-0003_talkx_segments_public": "5 policies roles=public (SELECT×2, INSERT, UPDATE, DELETE) — AGRAVOU: sem JWT em nenhuma",
+      "ZW-0007_update_sem_withcheck": "count=39 — CONFIRMADO (vs 42 em 18h30; 3 resolvidos por PRs paralelas)",
+      "ZW-0004_cron_failures_24h": "73 falhas em 10 jobs: ai-jobs=13, dispatch=12, tasks=12, talkx=7, multiplix=6, csat=6, expire-stale=6, crm-sync=6, connection=3, close-stale=2",
+      "ZW-0009_engine_timeout": "has_timeout_guard=false — SEM MUDANÇA (code-read anterior; não re-executado, NÃO VERIFICADO nesta run)"
+    },
+    "vault_a13": "total_secrets=13 novos_30d=0 — sem anomalias",
+    "search_insights_zw0011": "proname=search_insights pronargs=1 — CONFIRMADO (ZW-0011 RESOLVIDO)",
+    "zero_escrita_producao": "apenas SELECT executados; baseline inalterado migrations/tables/policies/crons"
   },
   "before_after_re_verificado_em": "2026-10-31T00:27Z",
   "before_after_re_verificado": {
