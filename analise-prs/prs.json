@@ -3,8 +3,9 @@
     "data_analise": "2026-11-01",
     "total_prs": 67,
     "sha_main_inicio": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
-    "sha_main_atual": "3b5f8a96db0337af7310eec1b0dc5f86bb45912c",
-    "gerado_em": "2026-11-01T20:30Z"
+    "sha_main_atual": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+    "gerado_em": "2026-11-01T21:53Z",
+    "nota": "PRs #2463/#2461/#2498 com CI blocked por outage GitHub Actions desde ~20:30Z; head_sha atualizados"
   },
   "prs": [
     {"numero": 1930, "veredito": "AGUARDANDO_CI"},
@@ -36,9 +37,9 @@
     {"numero": 2447, "veredito": "MERGEADA", "merge_commit_sha": "3617a2acd517dcc9a6eaf2533cd256913e462c21", "merged_at": "2026-11-01", "titulo": "docs(ci): RELATORIO_CI.md e PENDENCIAS.md"},
     {"numero": 2457, "veredito": "INCOMPLETO"},
     {"numero": 2460, "veredito": "BLOQUEADO_DDL_FALTANDO"},
-    {"numero": 2461, "veredito": "AGUARDANDO_CI_APOS_UPDATE", "head_sha": "93a3628e4a38867e41d830ce1402136720d383c3"},
+    {"numero": 2461, "veredito": "AGUARDANDO_CI_APOS_UPDATE", "head_sha": "7a8bea7d4b974bec52e1dd2eda37b67fe1b2fe37"},
     {"numero": 2462, "veredito": "AGUARDANDO_CI"},
-    {"numero": 2463, "veredito": "AGUARDANDO_CI_APOS_UPDATE", "head_sha": "b3f7ab1f0d943cd08f0479c789eca21bc0a2c632"},
+    {"numero": 2463, "veredito": "AGUARDANDO_CI_APOS_UPDATE", "head_sha": "8fa57120c82c254d58ad1f4267fc3673f3d3bd74"},
     {"numero": 2465, "veredito": "AGUARDANDO_CI"},
     {"numero": 2466, "veredito": "BLOQUEADO_AGUARDANDO_APROVACAO"},
     {"numero": 2468, "veredito": "SUPERSEDIDA"},
@@ -66,7 +67,7 @@
     {"numero": 2495, "veredito": "AGUARDANDO_CI"},
     {"numero": 2496, "veredito": "BLOQUEADO_AGUARDANDO_APROVACAO"},
     {"numero": 2497, "veredito": "SKIP_WORKFLOWS"},
-    {"numero": 2498, "veredito": "AGUARDANDO_CI_APOS_UPDATE", "head_sha": "4e464ea872c896019b71306ec410b74fe72a0860"},
+    {"numero": 2498, "veredito": "AGUARDANDO_CI_APOS_UPDATE", "head_sha": "eb03117a823947804ba1659449968714c36b4ac1"},
     {"numero": 2499, "veredito": "SKIP_WORKFLOWS"},
     {"numero": 2500, "veredito": "DRAFT_SKIP"},
     {"numero": 2501, "veredito": "AGUARDANDO_CI"},
