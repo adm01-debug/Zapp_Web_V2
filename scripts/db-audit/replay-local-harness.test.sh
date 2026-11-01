@@ -74,6 +74,7 @@ case "${1:-}" in
       case "$sql" in
         *"create schema if not exists storage"*)
           printf "%s\n" "$*" >> "$STUB_LOG/bootstrap-argv.log"
+          printf "%s\n" "$sql" >> "$STUB_LOG/bootstrap-sql.log"
           if [ "${STUB_FALHA_BOOTSTRAP:-0}" = 1 ]; then echo "ERROR: bootstrap falhou (stub)" >&2; exit 1; fi
           exit 0 ;;
         *)
@@ -118,8 +119,12 @@ esac
 if [ "$NOME_A" = "hermes-e24-replay" ]; then echo "  FALHA: A: reusa o nome fixo"; falhou=1; fi
 checa "A: rotulo de posse com o id do run" "hermes.e24.replay=$NOME_A" "$(cat "$CA/log/run-labels.log")"
 contem "A: imagem fixada por digest" "@sha256:" "$CA/log/run-images.log"
+contem "A: replay usa o mirror GHCR oficial no digest aprovado" "ghcr.io/supabase/postgres:17.6.1.159@sha256:86a2e078779e5bdccda1f6f6c5063aa9779a322d1fface5fb408d051909b230f" "$CA/log/run-images.log"
 nao_contem "A: NAO remove o container alheio de nome fixo" "hermes-e24-replay" "$CA/log/rm.log"
 contem "A: remove o proprio container" "^$NOME_A$" "$CA/log/rm.log"
+contem "A: bootstrap reproduz o schema de backup preexistente para o replay" "create schema if not exists ops_backup" "$CA/log/bootstrap-sql.log"
+contem "A: bootstrap cria os alvos de COMMENT da migration de snapshot" "create table if not exists _bkp_261023.agent_stats" "$CA/log/bootstrap-sql.log"
+contem "A: bootstrap reproduz snapshots operacionais preexistentes" "create table if not exists public._zapp_fn_before" "$CA/log/bootstrap-sql.log"
 
 # ===========================================================================
 # Caso B: bootstrap falha. Deve sair com status 2 (setup indisponivel),

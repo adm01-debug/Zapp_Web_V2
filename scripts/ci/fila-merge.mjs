@@ -26,19 +26,18 @@ import { resolverExecutavel } from '../lib/seguranca-processo.mjs';
 
 const RAIZ = new URL('../../', import.meta.url);
 
-// Executa um comando com retry automático para erros transitórios de rede
-// (HTTP 504, Gateway Timeout, ECONNRESET, ETIMEDOUT). Erros permanentes
-// (403, 404, 422, auth) propagam imediatamente sem nenhum retry.
-function execComRetry(cmd, args, opts, { tentativas = 3, esperas = [5000, 10000, 20000] } = {}) {
-  for (let i = 0; ; i++) {
+function erroTransitorio(err) {
+  const msg = String(err?.stderr ?? err?.message ?? '');
+  return /HTTP 50[234]|50[234] Bad Gateway|50[234] Service Unavailable|connection reset|ECONNRESET|ETIMEDOUT|timeout expired|unexpected end of JSON/i.test(msg);
+}
+
+async function execComRetry(cmd, args, opts, { tentativas = 4, delaysMs = [5000, 10000, 20000] } = {}) {
+  for (let i = 0; i < tentativas; i++) {
     try {
       return execFileSync(cmd, args, opts);
     } catch (err) {
-      const stderr = String(err.stderr ?? '');
-      const transitorio = /504|Gateway Timeout|timeout expired|ECONNRESET|ETIMEDOUT|unexpected end of JSON/i.test(stderr);
-      if (!transitorio || i >= tentativas - 1) throw err;
-      const espera = esperas[i] ?? esperas.at(-1);
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, espera);
+      if (!erroTransitorio(err) || i >= tentativas - 1) throw err;
+      await new Promise((resolve) => setTimeout(resolve, delaysMs[Math.min(i, delaysMs.length - 1)]));
     }
   }
 }
@@ -140,14 +139,22 @@ export async function resolverDesconhecidos(prs, behindBy) {
 }
 
 async function decisaoAtual(repo) {
-  const json = execComRetry(resolverExecutavel('gh'), [
-    'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
-    '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
-  ], { encoding: 'utf8' });
-  const behindBy = async (head) => Number(execComRetry(resolverExecutavel('gh'), [
+  let json;
+  try {
+    json = await execComRetry(resolverExecutavel('gh'), [
+      'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
+      '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
+    ], { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
+  } catch (err) {
+    console.error(`gh pr list falhou (${err.message?.split('\n')[0]}); nenhuma PR atualizada nesta execução.`);
+    return decidir([], checksObrigatorios());
+  }
+  const behindBy = async (head) => Number((await execComRetry(resolverExecutavel('gh'), [
     'api', `repos/${repo}/compare/main...${head}`, '--jq', '.behind_by',
-  ], { encoding: 'utf8' }).trim());
-  const prs = await resolverDesconhecidos(JSON.parse(json), behindBy);
+  ], { encoding: 'utf8' })).trim());
+  let parsedPrs;
+  try { parsedPrs = JSON.parse(json); } catch { return decidir([], checksObrigatorios()); }
+  const prs = await resolverDesconhecidos(parsedPrs, behindBy);
   return decidir(prs, checksObrigatorios());
 }
 

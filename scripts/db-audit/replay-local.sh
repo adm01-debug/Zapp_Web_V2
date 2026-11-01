@@ -39,8 +39,9 @@ NOME="${REPLAY_NOME:-hermes-e24-replay-$RUN_ID}"
 ROTULO_CHAVE="hermes.e24.replay"
 ROTULO_VALOR="$NOME"
 PORTA="${REPLAY_PORTA:-5499}"
-# Fixada por digest (indice multi-arch de 17.6.1.159): a tag sozinha nao garante o conteudo.
-IMAGEM="${REPLAY_IMAGEM:-public.ecr.aws/supabase/postgres:17.6.1.159@sha256:86a2e078779e5bdccda1f6f6c5063aa9779a322d1fface5fb408d051909b230f}"
+# GHCR oficial, com o mesmo digest multi-arch 17.6.1.159 publicado no ECR; a tag sozinha
+# nao garante o conteudo. O mirror evita o limite de pull anonimo do ECR nos runners.
+IMAGEM="${REPLAY_IMAGEM:-ghcr.io/supabase/postgres:17.6.1.159@sha256:86a2e078779e5bdccda1f6f6c5063aa9779a322d1fface5fb408d051909b230f}"
 LOG="$PWD/replay.log"
 ERROS="$PWD/replay-erros.tsv"
 
@@ -99,6 +100,27 @@ declare p text[]; begin p := string_to_array(name,'.'); return p[array_length(p,
 create schema if not exists supabase_migrations;
 create table if not exists supabase_migrations.schema_migrations(
   version text primary key, statements text[], name text);
+
+-- Snapshots operacionais preexistentes no banco canonico, fora do historico versionado.
+-- O replay precisa reproduzir somente a existencia para validar os COMMENTs; sem dados.
+create table if not exists public._zapp_fn_before (id integer);
+create table if not exists public._zapp_mig133_log (id integer);
+
+-- Estado manual preexistente no banco canonico, criado fora das migrations:
+-- 20261026230300 remove ops_backup e documenta o snapshot _bkp_261023. O replay
+-- descartavel precisa reproduzir esses objetos vazios para exercitar a migration real;
+-- nenhum dado de backup e copiado para este banco local.
+create schema if not exists ops_backup;
+create schema if not exists _bkp_261023;
+create table if not exists _bkp_261023.contacts (id integer);
+create table if not exists _bkp_261023.schema_migrations (id integer);
+create table if not exists _bkp_261023.functions_before (id integer);
+create table if not exists _bkp_261023.policies_before (id integer);
+create table if not exists _bkp_261023.user_settings (id integer);
+create table if not exists _bkp_261023.team_messages (id integer);
+create table if not exists _bkp_261023.global_settings (id integer);
+create table if not exists _bkp_261023.csat_surveys (id integer);
+create table if not exists _bkp_261023.agent_stats (id integer);
 
 -- Colunas de auth.users que as migrations referenciam (a imagem traz a tabela, mas nao todas
 -- as colunas que o Supabase adiciona com o passar das versoes).

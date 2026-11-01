@@ -20,6 +20,7 @@ END;
 $$;
 
 DROP TRIGGER IF EXISTS team_reactions_force_conversation_id_trig ON public.team_message_reactions;
+
 CREATE TRIGGER team_reactions_force_conversation_id_trig
   BEFORE INSERT OR UPDATE ON public.team_message_reactions
   FOR EACH ROW EXECUTE FUNCTION team_reactions_force_conversation_id();

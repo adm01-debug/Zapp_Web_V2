@@ -74,4 +74,59 @@ permanece disponível para rollback e operações direcionadas.
 
 ---
 
+## 4. Branches adm01-debug-patch-* — criadas pelo GitHub UI (templates de workflow) (GF-033..056)
+
+**Situação:** 24 branches criadas por Joaquim diretamente na interface do GitHub ao explorar templates de workflows do GitHub Actions. Cada grupo de branches representa edições iterativas do mesmo template (sub-branches são histórico de edição via UI). **Não abrir PR, não apagar.** Aguardar decisão do Joaquim sobre adotar ou descartar cada template.
+
+### Grupo 1 — `dependency-review.yml` (8 branches: GF-033..040)
+
+Branches: `adm01-debug-patch-1`, `adm01-debug-patch-1-2`, `adm01-debug-patch-1-3`, `adm01-debug-patch-1-4`, `adm01-debug-patch-1-5`, `adm01-debug-patch-1-6`, `adm01-debug-patch-1-7`, `adm01-debug-patch-1-8`
+
+**O que propõe:** Adicionar `.github/workflows/dependency-review.yml` — workflow padrão do GitHub para revisar licenças e vulnerabilidades de dependências em PRs (acionado em `pull_request` para a `main`).
+
+**Decisão pendente do Joaquim:**
+- Adotar: abrir PR a partir de `adm01-debug-patch-1` (a mais recente/completa do grupo)
+- Descartar: as 8 branches podem ser apagadas sem perda
+
+### Grupo 2 — `deno.yml` (13 branches: GF-041..053)
+
+Branches: `adm01-debug-patch-2`, `adm01-debug-patch-2-1`, `adm01-debug-patch-2-2`, `adm01-debug-patch-2-3`, `adm01-debug-patch-2-4`, `adm01-debug-patch-2-5`, `adm01-debug-patch-2-6`, `adm01-debug-patch-2-7`, `adm01-debug-patch-2-8`, `adm01-debug-patch-2-9`, `adm01-debug-patch-2-10`, `adm01-debug-patch-2-11`, `adm01-debug-patch-2-12`
+
+**O que propõe:** Adicionar `.github/workflows/deno.yml` — workflow de CI para Deno (template oficial GitHub para projetos Deno).
+
+**Atenção:** O projeto já tem CI para Deno integrado em `ci.yml` e `deploy-functions.yml`. Adotar este template provavelmente causaria execução duplicada.
+
+**Decisão pendente do Joaquim:**
+- Adotar: revisar se o conteúdo de `adm01-debug-patch-2` é diferente/complementar ao CI atual antes de abrir PR
+- Descartar: as 13 branches podem ser apagadas sem perda
+
+### Grupo 3 — `eslint.yml` + `manual.yml` (2 branches: GF-054..055)
+
+Branches: `adm01-debug-patch-3`, `adm01-debug-patch-3-2`
+
+**O que propõe:** Adicionar dois arquivos:
+- `.github/workflows/eslint.yml` — workflow de lint com ESLint (template GitHub)
+- `.github/workflows/manual.yml` — workflow de disparo manual simples (template "Manual workflow")
+
+**Atenção:** O projeto já tem ESLint integrado em `ci.yml` (passo `🔍 Lint & TypeCheck`). Um `eslint.yml` separado causaria execução duplicada.
+
+**Decisão pendente do Joaquim:**
+- Adotar `eslint.yml`: revisar se é complementar; provavelmente redundante
+- Adotar `manual.yml`: pode ser útil como workflow genérico de disparo manual
+- Descartar: as 2 branches podem ser apagadas sem perda
+
+### Grupo 4 — `eslint.yml` + `main.yml` (1 branch: GF-056)
+
+Branches: `adm01-debug-patch-4`
+
+**O que propõe:** Adicionar dois arquivos:
+- `.github/workflows/eslint.yml` — igual ao do Grupo 3
+- `.github/workflows/main.yml` — arquivo de 1 byte (starter vazio do GitHub)
+
+**Decisão pendente do Joaquim:**
+- Descartar: o `main.yml` de 1 byte não tem utilidade; `eslint.yml` é redundante com `ci.yml`
+- A branch pode ser apagada sem perda
+
+---
+
 _Nota: Este arquivo deve ser atualizado quando os itens acima forem resolvidos._

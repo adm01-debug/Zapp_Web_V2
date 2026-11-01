@@ -106,8 +106,8 @@ jobs:
               core.setOutput('skip', 'false');
             }
 
-  sync:
-    name: Propor sync de types + catalogo + manifesto + grants
+  ler-banco:
+    name: Ler banco oficial e gerar candidatos
     needs: preflight
     if: >-
       github.ref == 'refs/heads/main' &&
@@ -115,13 +115,15 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment: banco-leitura
-    permissions:  # zizmor: ignore[excessive-permissions]
-      contents: write
-      issues: write
-      pull-requests: write
-      # actions: write apenas para liberar os checks do PR que este job abre
-      # (ver o passo "Destravar os checks do PR de sincronizacao").
-      actions: write
+    permissions:
+      contents: read
+    outputs:
+      types_changed: ${{ steps.diff.outputs.types_changed }}
+      catalog_changed: ${{ steps.diff.outputs.catalog_changed }}
+      manifest_changed: ${{ steps.diff.outputs.manifest_changed }}
+      grants_changed: ${{ steps.diff.outputs.grants_changed }}
+      schema_changed: ${{ steps.diff.outputs.schema_changed }}
+      awaiting_apply: ${{ steps.apply-pending.outputs.awaiting_apply }}
     steps:
       - name: Checkout confiavel da main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -327,13 +329,27 @@ jobs:
             cp /tmp/grants.new.json scripts/db-audit/grants-baseline.json
           fi
 
-      # Se um gate bloquear a proposta (ex.: Gate 3, remocoes > 10 linhas),
-      # nenhum PR e aberto e os candidatos ficam presos no runner efemero.
-      # Publica os 4 candidatos como artifact para revisao/aplicacao manual,
-      # independente do resultado dos gates.
+      # A classificacao usa o banco e fica neste job protegido. O job seguinte
+      # recebe somente o resultado booleano, nunca a credencial ou GITHUB_ENV.
+      - name: Classificar apply pendente
+        id: apply-pending
+        if: steps.diff.outputs.schema_changed == 'true'
+        run: |
+          set +e
+          node scripts/db-audit/lote-pendente.mjs > /tmp/drift.log 2>&1
+          drift_exit=$?
+          set -e
+          if [ "$drift_exit" -eq 2 ]; then
+            echo "awaiting_apply=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Apply pendente; o gate de TypeScript pode aguardar o ciclo de migrations."
+          else
+            echo "awaiting_apply=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Este artifact serve como evidencia e como transferencia dos candidatos
+      # ao job de gates; falha de upload deve interromper o fluxo.
       - name: Publicar candidatos como artifact
         if: steps.diff.outputs.schema_changed == 'true'
-        continue-on-error: true
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: types-sync-candidates-${{ github.run_id }}-${{ github.run_attempt }}
@@ -344,15 +360,64 @@ jobs:
             scripts/db-audit/grants-baseline.json
           retention-days: 14
 
+
+  gates-e-pr:
+    name: Gates e PR de sincronizacao (sem credencial)
+    needs: [preflight, ler-banco]
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      needs.preflight.outputs.skip != 'true' &&
+      needs.ler-banco.outputs.schema_changed == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:  # zizmor: ignore[excessive-permissions]
+      contents: write
+      issues: write
+      pull-requests: write
+      # Necessaria para aprovar os checks da PR aberta por este job.
+      actions: write
+    steps:
+      - name: Checkout confiavel da main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Baixar candidatos do job protegido
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: types-sync-candidates-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/sync-in
+
+      - name: Normalizar candidatos baixados
+        run: |
+          for f in types.ts schema-catalog.json schema-manifest.json grants-baseline.json; do
+            found=$(find /tmp/sync-in -name "$f" -type f -print -quit)
+            test -n "$found"
+            case "$f" in
+              types.ts) dest=/tmp/types.new.ts ;;
+              schema-catalog.json) dest=/tmp/catalog.new.json ;;
+              schema-manifest.json) dest=/tmp/manifest.new.json ;;
+              grants-baseline.json) dest=/tmp/grants.new.json ;;
+            esac
+            cp "$found" "$dest"
+          done
+
+      - name: Aplicar candidatos no worktree
+        run: |
+          if [ "${{ needs.ler-banco.outputs.types_changed }}" = true ]; then cp /tmp/types.new.ts src/integrations/supabase/types.ts; fi
+          if [ "${{ needs.ler-banco.outputs.catalog_changed }}" = true ]; then cp /tmp/catalog.new.json supabase/schema-catalog.json; fi
+          if [ "${{ needs.ler-banco.outputs.manifest_changed }}" = true ]; then cp /tmp/manifest.new.json supabase/schema-manifest.json; fi
+          if [ "${{ needs.ler-banco.outputs.grants_changed }}" = true ]; then cp /tmp/grants.new.json scripts/db-audit/grants-baseline.json; fi
+
       - name: Setup Bun
-        if: steps.diff.outputs.schema_changed == 'true'
+        if: needs.ler-banco.outputs.schema_changed == 'true'
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: '1.4.0'
 
       - name: 💾 Cache de dependências Bun
         # W35: cache do bun reduz bun install de ~30s para <10s com cache quente.
-        if: steps.diff.outputs.schema_changed == 'true'
+        if: needs.ler-banco.outputs.schema_changed == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
@@ -360,12 +425,12 @@ jobs:
           restore-keys: bun-
 
       - name: Instalar dependencias
-        if: steps.diff.outputs.schema_changed == 'true'
+        if: needs.ler-banco.outputs.schema_changed == 'true'
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: Gate 1 — TypeScript nao piora
         id: gate1
-        if: steps.diff.outputs.schema_changed == 'true'
+        if: needs.ler-banco.outputs.schema_changed == 'true'
         run: |
           # F-01 (auditoria 2026-09-27): sem pipefail, tee sempre exitava 0 e
           # gate1.outputs.passed ficava 'true' mesmo com node falhando.
@@ -377,32 +442,16 @@ jobs:
             echo "::warning::Gate 1 falhou: novos erros de TypeScript introduzidos pelo novo types.ts."
           fi
 
-      - name: Gate 1b — W23 — verificar se falha e apply-pendente
-        # W23: se Gate 1 falhou mas a causa e' ausencia de objeto que existe apenas
-        # no repo (migration nao aplicada em prod), classifica como "awaiting apply"
-        # e nao abre issue — o problema some quando a migration entrar no banco.
-        # W26: lote-pendente.mjs (fonte unica): exit 0 = sem drift, exit 1 = drift real,
-        # exit 2 = so apply-pendente.
+      - name: Gate 1b — classificar apply pendente
         id: gate1b
-        if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'false'
-        env:
-          DESTINO_URL: ${{ env.DESTINO_URL }}
-          PGSSLMODE: ${{ env.PGSSLMODE }}
+        if: needs.ler-banco.outputs.awaiting_apply == 'true' && steps.gate1.outputs.passed == 'false'
         run: |
-          set +e
-          node scripts/db-audit/lote-pendente.mjs > /tmp/drift.log 2>&1
-          drift_exit=$?
-          set -e
-          if [ "$drift_exit" -eq 2 ]; then
-            echo "awaiting_apply=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::Gate 1 aguardando apply de migrations pendentes — erros de TypeScript decorrem de objetos nao aplicados em prod ainda."
-          else
-            echo "awaiting_apply=false" >> "$GITHUB_OUTPUT"
-          fi
+          echo "awaiting_apply=true" >> "$GITHUB_OUTPUT"
+          echo "::notice::Gate 1 aguardando apply de migrations pendentes, classificado no job de leitura."
 
       - name: Gate 2 — usage-guard
         id: gate2
-        if: steps.diff.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'true'
+        if: needs.ler-banco.outputs.schema_changed == 'true' && steps.gate1.outputs.passed == 'true'
         run: |
           # F-01 (auditoria 2026-09-27): mesma correção de pipefail do Gate 1.
           # W24: --prune-obsolete poda entradas obsoletas do baseline (aviso, nao bloqueia);
@@ -428,7 +477,7 @@ jobs:
       # como artifact para aplicacao manual com revisao humana.
       - name: Gate 3 — remocoes destrutivas
         id: gate3
-        if: steps.diff.outputs.schema_changed == 'true' && steps.gate2.outputs.passed == 'true'
+        if: needs.ler-banco.outputs.schema_changed == 'true' && steps.gate2.outputs.passed == 'true'
         run: |
           # F-01 (auditoria 2026-09-27): mesmo pipefail dos Gates 1 e 2 — sem ele o
           # tee sempre saia 0 e o gate passava mesmo com o script bloqueando.
@@ -441,7 +490,7 @@ jobs:
           fi
 
       - name: Garantir label types-sync
-        if: steps.diff.outputs.schema_changed == 'true'
+        if: needs.ler-banco.outputs.schema_changed == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
@@ -459,7 +508,7 @@ jobs:
 
       - name: Registrar falha dos gates
         if: >-
-          steps.diff.outputs.schema_changed == 'true' &&
+          needs.ler-banco.outputs.schema_changed == 'true' &&
           steps.gate1b.outputs.awaiting_apply != 'true' &&
           (steps.gate1.outputs.passed == 'false' ||
            steps.gate2.outputs.passed == 'false' ||
@@ -574,7 +623,7 @@ jobs:
 
       - name: Falhar quando um gate rejeitar a proposta
         if: >-
-          steps.diff.outputs.schema_changed == 'true' &&
+          needs.ler-banco.outputs.schema_changed == 'true' &&
           (steps.gate1.outputs.passed == 'false' ||
            steps.gate2.outputs.passed == 'false' ||
            steps.gate3.outputs.passed == 'false')
@@ -585,7 +634,7 @@ jobs:
       - name: Abrir ou atualizar PR de sincronizacao
         id: pull-request
         if: >-
-          steps.diff.outputs.schema_changed == 'true' &&
+          needs.ler-banco.outputs.schema_changed == 'true' &&
           steps.gate1.outputs.passed == 'true' &&
           steps.gate2.outputs.passed == 'true' &&
           steps.gate3.outputs.passed == 'true'
@@ -603,10 +652,10 @@ jobs:
             Sincronização automatizada a partir do banco oficial.
 
             - main de origem: `${{ github.sha }}`
-            - types.ts alterado: `${{ steps.diff.outputs.types_changed }}`
-            - catálogo alterado: `${{ steps.diff.outputs.catalog_changed }}`
-            - manifesto alterado: `${{ steps.diff.outputs.manifest_changed }}`
-            - baseline de grants alterado: `${{ steps.diff.outputs.grants_changed }}`
+            - types.ts alterado: `${{ needs.ler-banco.outputs.types_changed }}`
+            - catálogo alterado: `${{ needs.ler-banco.outputs.catalog_changed }}`
+            - manifesto alterado: `${{ needs.ler-banco.outputs.manifest_changed }}`
+            - baseline de grants alterado: `${{ needs.ler-banco.outputs.grants_changed }}`
             - gates TypeScript, usage-guard e remoções: aprovados
 
             Revisão humana e checks da PR continuam obrigatórios.
@@ -620,7 +669,7 @@ jobs:
 
       - name: Exigir PR criado ou atualizado
         if: >-
-          steps.diff.outputs.schema_changed == 'true' &&
+          needs.ler-banco.outputs.schema_changed == 'true' &&
           steps.gate1.outputs.passed == 'true' &&
           steps.gate2.outputs.passed == 'true' &&
           steps.gate3.outputs.passed == 'true'
@@ -718,13 +767,34 @@ jobs:
         if: always()
         run: |
           {
-            echo "## types-sync — $(date -u '+%Y-%m-%d %H:%M UTC')"
+            echo "## types-sync / gates-e-pr — $(date -u '+%Y-%m-%d %H:%M UTC')"
             echo
             echo "| Item | Alterado |"
             echo "|---|---|"
-            echo "| types.ts | ${{ steps.diff.outputs.types_changed || 'n/a' }} |"
-            echo "| schema-catalog.json | ${{ steps.diff.outputs.catalog_changed || 'n/a' }} |"
-            echo "| schema-manifest.json | ${{ steps.diff.outputs.manifest_changed || 'n/a' }} |"
-            echo "| grants-baseline.json | ${{ steps.diff.outputs.grants_changed || 'n/a' }} |"
+            echo "| types.ts | ${{ needs.ler-banco.outputs.types_changed || 'n/a' }} |"
+            echo "| schema-catalog.json | ${{ needs.ler-banco.outputs.catalog_changed || 'n/a' }} |"
+            echo "| schema-manifest.json | ${{ needs.ler-banco.outputs.manifest_changed || 'n/a' }} |"
+            echo "| grants-baseline.json | ${{ needs.ler-banco.outputs.grants_changed || 'n/a' }} |"
             echo "| PR | ${{ steps.pull-request.outputs.pull-request-number || 'n/a' }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Z029: quando o workflow falha, exibe o motivo no Job Summary para facilitar
+      # diagnóstico sem precisar abrir os logs de cada step individualmente.
+      - name: Resumo de falha
+        if: failure()
+        run: |
+          {
+            echo ""
+            echo "## ❌ types-sync falhou"
+            echo ""
+            # Decide pelo resultado de cada gate (steps.gateN.outputs.passed), não pela
+            # existência do log: os gates rodam em sequência e deixam log mesmo quando passam.
+            mostrou=0
+            mostra() {
+              echo "### $1"; echo '```'; head -100 "$2" 2>/dev/null || echo "(log $2 ausente)"; echo '```'; mostrou=1
+            }
+            [ "${{ steps.gate1.outputs.passed }}" = "false" ] && mostra "Gate 1 — TypeScript" /tmp/tsc.log
+            [ "${{ steps.gate2.outputs.passed }}" = "false" ] && mostra "Gate 2 — usage-guard" /tmp/guard.log
+            [ "${{ steps.gate3.outputs.passed }}" = "false" ] && mostra "Gate 3 — remoções destrutivas" /tmp/gate3.log
+            [ "$mostrou" = 1 ] || echo "Verifique os logs do step anterior para detalhes."
           } >> "$GITHUB_STEP_SUMMARY"

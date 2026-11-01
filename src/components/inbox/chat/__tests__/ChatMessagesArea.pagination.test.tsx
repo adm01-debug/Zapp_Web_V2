@@ -64,6 +64,8 @@ beforeAll(() => {
     height: 600, width: 800, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0,
     toJSON: () => ({}),
   } as DOMRect);
+  // jsdom nao calcula offsetHeight, que o virtual-core usa para medir cada linha.
+  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, get: () => 120 });
 });
 
 afterAll(() => {
