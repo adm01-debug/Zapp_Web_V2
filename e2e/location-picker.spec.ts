@@ -79,6 +79,8 @@ async function mockSupabaseBackend(page: Page, registro: Registro): Promise<void
 
 test.describe('E71 · picker de localização (combobox de endereço, sem enviar)', () => {
   test('digita, escolhe por teclado e confirma o cartão — sem gerar WhatsApp', async ({ page }) => {
+    // Boot + navegação + picker + asserções finais somam mais que os 30 s padrão do Playwright.
+    test.setTimeout(90_000);
     const registro: Registro = { writesApp: [], mapbox: [] };
 
     // Mocks ANTES da navegação (precisam estar registrados quando o app faz as chamadas).
@@ -147,6 +149,8 @@ test.describe('E71 · picker de localização (combobox de endereço, sem enviar
   // seleciona. É a diferença de um caso "só /suggest 200": aqui o caminho exercitado é a
   // cascata de fallback, não a busca normal.
   test('E72 · /suggest 500 → lista mostra o resultado do /forward e Enter seleciona', async ({ page }) => {
+    // Mesmo motivo do E71: budget total de 90 s cobre boot + fallback + asserções.
+    test.setTimeout(90_000);
     const registro: Registro = { writesApp: [], mapbox: [] };
 
     await mockAppShell(page, registro);
