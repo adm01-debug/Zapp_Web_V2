@@ -25,6 +25,19 @@ import { useAgents } from '@/hooks/crm/useAgents';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { useQueues } from '@/hooks/business/useQueues';
 import { FILTER_OPTIONS } from './ContactTypeFilter';
+import { InboxSavedFiltersMenu } from './InboxSavedFiltersMenu';
+import type { InboxFilterPresetContent } from '@/hooks/inbox/useInboxFilterPresets';
+
+/**
+ * Ligação do menu "Filtros salvos": o dono da tela entrega o filtro que está
+ * aplicado agora (`current`) e recebe de volta o conteúdo do preset escolhido.
+ * Enquanto não for passado, o menu não é renderizado (nada de salvar um
+ * "filtro atual" adivinhado).
+ */
+export interface InboxSavedFiltersIntegration {
+  current: InboxFilterPresetContent;
+  onApply: (content: InboxFilterPresetContent) => void;
+}
 
 export interface InboxFiltersState {
   status: string[];
@@ -46,6 +59,8 @@ interface InboxFiltersProps {
   onQueueChange?: (v: string | null) => void;
   onRefetch?: () => void;
   isRefetching?: boolean;
+  /** Menu "Filtros salvos" (status, tipo de contato e fila). Sem ele o menu não aparece. */
+  savedFilters?: InboxSavedFiltersIntegration;
 }
 
 const STATUS_OPTIONS = [
@@ -68,6 +83,7 @@ export function InboxFilters({
   selectedContactType = null, onContactTypeChange,
   selectedQueueId = null, onQueueChange,
   onRefetch, isRefetching = false,
+  savedFilters,
 }: InboxFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { agents } = useAgents();
@@ -117,6 +133,9 @@ export function InboxFilters({
 
   return (
     <div className="flex items-center gap-2">
+      {savedFilters && (
+        <InboxSavedFiltersMenu current={savedFilters.current} onApply={savedFilters.onApply} />
+      )}
       {onRefetch && (
         <Button
           variant="ghost"

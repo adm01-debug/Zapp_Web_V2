@@ -26,7 +26,13 @@ export interface ContactOption {
 interface Props {
   /** Contato selecionado (id). `null` = nenhum. */
   value: string | null;
-  onChange: (contactId: string | null) => void;
+  /**
+   * ([refazer 1] ponto 4 do modal Nova tarefa): além do id, recebe o
+   * `ContactOption` escolhido — quem chama guarda o objeto e não precisa
+   * reler a busca para mostrar a prévia. O 2º argumento é opcional, então
+   * quem passa `setState` de um arg só continua compilando.
+   */
+  onChange: (contactId: string | null, option?: ContactOption | null) => void;
   /** Opcional: dados do contato já selecionado — evita o lookup por id. */
   selectedContact?: ContactOption | null;
   /** Texto do gatilho quando não há contato. Default: "Contato". */
@@ -137,7 +143,7 @@ export function ContactCombobox({
 
   const selecionar = (contact: ContactOption) => {
     setEscolhidos((prev) => ({ ...prev, [contact.id]: contact }));
-    onChange(contact.id);
+    onChange(contact.id, contact);
     setOpen(false);
   };
 
@@ -180,7 +186,7 @@ export function ContactCombobox({
           type="button"
           aria-label="Remover contato"
           data-testid="contact-combobox-clear"
-          onClick={() => onChange(null)}
+          onClick={() => onChange(null, null)}
           className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full opacity-70 transition-opacity hover:opacity-100"
         >
           <X className="h-3 w-3" />

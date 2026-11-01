@@ -82,3 +82,23 @@ export function extractVariables(content: string): string[] {
   const matches = content.match(/\{\{([^}]+)\}\}/g) || [];
   return [...new Set(matches.map(m => m.slice(2, -2).toLowerCase()))];
 }
+
+/**
+ * Preenche as variáveis de uma resposta rápida inserida no chat com os dados do
+ * contato da conversa e o nome do atendente logado. O nome do atendente só vale
+ * se for um nome de verdade: o rótulo de presença cai no e-mail quando o perfil
+ * não tem nome, e e-mail não entra no lugar de `{{atendente}}` (fica pendente).
+ */
+export function fillQuickReplyVariables(
+  content: string,
+  contact: { name?: string | null; company?: string | null; job_title?: string | null },
+  agentName?: string | null,
+): string {
+  const atendente = agentName && !agentName.includes('@') ? agentName : undefined;
+  return replaceVariables(
+    content,
+    { name: contact.name ?? undefined, company: contact.company ?? undefined, job_title: contact.job_title ?? undefined },
+    undefined,
+    atendente,
+  );
+}

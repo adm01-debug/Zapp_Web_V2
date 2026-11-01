@@ -25,7 +25,7 @@ function useMotionGate(): (props: MotionProps) => MotionProps {
 export function IlustracaoInbox() {
   const m = useMotionGate();
   return (
-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none" aria-hidden="true">
       <motion.g {...m({ animate: { y: [0, -8, 0] }, transition: { duration: 3, repeat: Infinity, ease: "easeInOut" } })}>
         <rect x="35" y="45" width="85" height="45" rx="12" className="fill-primary/20" />
         <rect x="48" y="58" width="45" height="5" rx="2.5" className="fill-primary/40" />
@@ -49,7 +49,7 @@ export function IlustracaoInbox() {
 export function IlustracaoContacts() {
   const m = useMotionGate();
   return (
-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none" aria-hidden="true">
       <motion.g {...m({ animate: { x: [0, 5, 0] }, transition: { duration: 4, repeat: Infinity, ease: "easeInOut" } })}>
         <rect x="28" y="38" width="144" height="38" rx="10" className="fill-muted/50" />
         <circle cx="55" cy="57" r="14" className="fill-primary/30" />
@@ -74,7 +74,7 @@ export function IlustracaoContacts() {
 export function IlustracaoDashboard() {
   const m = useMotionGate();
   return (
-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none" aria-hidden="true">
       <motion.rect x="28" y="95" width="28" height="45" rx="5" className="fill-primary/30" {...m({ animate: { height: [45, 55, 45], y: [95, 85, 95] }, transition: { duration: 2, repeat: Infinity, ease: "easeInOut" } })} />
       <motion.rect x="65" y="72" width="28" height="68" rx="5" className="fill-primary/45" {...m({ animate: { height: [68, 78, 68], y: [72, 62, 72] }, transition: { duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 } })} />
       <motion.rect x="102" y="50" width="28" height="90" rx="5" className="fill-primary/55" {...m({ animate: { height: [90, 100, 90], y: [50, 40, 50] }, transition: { duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.6 } })} />
@@ -90,7 +90,7 @@ export function IlustracaoDashboard() {
 export function IlustracaoCalls() {
   const m = useMotionGate();
   return (
-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none" aria-hidden="true">
       <motion.g {...m({ animate: { rotate: [-8, 8, -8] }, transition: { duration: 0.4, repeat: Infinity, ease: "easeInOut" } })} style={{ transformOrigin: '100px 80px' }}>
         <rect x="68" y="48" width="64" height="64" rx="16" className="fill-primary/20" />
         <path d="M88 68 C88 68 94 74 100 80 C106 86 112 92 112 92" className="stroke-primary" strokeWidth="5" strokeLinecap="round" fill="none" />
@@ -104,7 +104,7 @@ export function IlustracaoCalls() {
 export function IlustracaoNotifications() {
   const m = useMotionGate();
   return (
-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none" aria-hidden="true">
       <motion.g {...m({ animate: { rotate: [-12, 12, -12] }, transition: { duration: 0.5, repeat: Infinity, repeatDelay: 2 } })} style={{ transformOrigin: '100px 48px' }}>
         <path d="M100 28 C78 28 68 50 68 72 L68 92 L56 104 L144 104 L132 92 L132 72 C132 50 122 28 100 28 Z" className="fill-primary/30" />
         <ellipse cx="100" cy="114" rx="12" ry="6" className="fill-primary/40" />
@@ -119,7 +119,7 @@ export function IlustracaoNotifications() {
 export function IlustracaoQueues() {
   const m = useMotionGate();
   return (
-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none" aria-hidden="true">
       {[0, 1, 2].map((i) => (
         <motion.g key={i}>
           <motion.rect x="45" y={38 + i * 32} width="110" height="24" rx="6" className="fill-muted stroke-border" strokeWidth="2" {...m({ initial: { x: -50, opacity: 0 }, animate: { x: 0, opacity: 1 }, transition: { duration: 0.4, delay: i * 0.15 } })} />
@@ -133,7 +133,7 @@ export function IlustracaoQueues() {
 export function IlustracaoMessages() {
   const m = useMotionGate();
   return (
-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none" aria-hidden="true">
       <motion.rect x="28" y="38" width="85" height="40" rx="10" className="fill-muted stroke-border" strokeWidth="2" {...m({ initial: { x: -30, opacity: 0 }, animate: { x: 0, opacity: 1 }, transition: { duration: 0.4 } })} />
       <motion.rect x="88" y="88" width="85" height="40" rx="10" className="fill-primary/20 stroke-primary" strokeWidth="2" {...m({ initial: { x: 30, opacity: 0 }, animate: { x: 0, opacity: 1 }, transition: { duration: 0.4, delay: 0.2 } })} />
       <motion.g {...m({ initial: { scale: 0 }, animate: { scale: 1 }, transition: { duration: 0.3, delay: 0.5, type: 'spring' } })}>
@@ -148,7 +148,7 @@ export function IlustracaoMessages() {
 export function IlustracaoData() {
   const m = useMotionGate();
   return (
-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none" aria-hidden="true">
       <motion.rect x="48" y="98" width="28" height="44" rx="5" className="fill-primary/30 stroke-primary" strokeWidth="2" style={{ originY: 1 }} {...m({ initial: { scaleY: 0 }, animate: { scaleY: 1 }, transition: { duration: 0.4, delay: 0.1 } })} />
       <motion.rect x="85" y="68" width="28" height="74" rx="5" className="fill-secondary/30 stroke-secondary" strokeWidth="2" style={{ originY: 1 }} {...m({ initial: { scaleY: 0 }, animate: { scaleY: 1 }, transition: { duration: 0.4, delay: 0.2 } })} />
       <motion.rect x="122" y="48" width="28" height="94" rx="5" className="fill-success/30 stroke-success" strokeWidth="2" style={{ originY: 1 }} {...m({ initial: { scaleY: 0 }, animate: { scaleY: 1 }, transition: { duration: 0.4, delay: 0.3 } })} />
@@ -160,7 +160,7 @@ export function IlustracaoData() {
 export function IlustracaoSearch() {
   const m = useMotionGate();
   return (
-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none" aria-hidden="true">
       <motion.g {...m({ animate: { x: [0, 8, 0], y: [0, -4, 0] }, transition: { duration: 3, repeat: Infinity, ease: "easeInOut" } })}>
         <motion.circle cx="88" cy="68" r="38" className="fill-muted stroke-border" strokeWidth="4" {...m({ initial: { scale: 0 }, animate: { scale: 1 }, transition: { duration: 0.4, type: 'spring' } })} />
         <motion.line x1="116" y1="96" x2="148" y2="128" className="stroke-primary" strokeWidth="6" strokeLinecap="round" {...m({ initial: { pathLength: 0 }, animate: { pathLength: 1 }, transition: { duration: 0.3, delay: 0.3 } })} />
@@ -174,7 +174,7 @@ export function IlustracaoSearch() {
 export function IlustracaoTranscriptions() {
   const m = useMotionGate();
   return (
-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none" aria-hidden="true">
       <motion.rect x="48" y="28" width="104" height="104" rx="10" className="fill-muted stroke-border" strokeWidth="2" {...m({ initial: { y: 20, opacity: 0 }, animate: { y: 0, opacity: 1 }, transition: { duration: 0.4 } })} />
       {[0, 1, 2, 3].map((i) => (
         <motion.rect key={i} x="60" y={48 + i * 20} width={75 - i * 12} height="10" rx="3" className="fill-primary/30" {...m({ initial: { scaleX: 0 }, animate: { scaleX: 1 }, transition: { duration: 0.3, delay: 0.3 + i * 0.1 } })} />
@@ -188,7 +188,7 @@ export function IlustracaoTranscriptions() {
 export function IlustracaoAgents() {
   const m = useMotionGate();
   return (
-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none" aria-hidden="true">
       <motion.circle cx="100" cy="52" r="28" className="fill-primary/20 stroke-primary" strokeWidth="2" {...m({ initial: { scale: 0 }, animate: { scale: 1 }, transition: { duration: 0.4, type: 'spring' } })} />
       <motion.path d="M52 132 C52 94 100 82 100 82 C100 82 148 94 148 132" className="fill-muted stroke-border" strokeWidth="2" {...m({ initial: { pathLength: 0 }, animate: { pathLength: 1 }, transition: { duration: 0.5, delay: 0.3 } })} />
       <motion.circle cx="132" cy="38" r="14" className="fill-success/30 stroke-success" strokeWidth="2" {...m({ initial: { scale: 0 }, animate: { scale: 1 }, transition: { duration: 0.3, delay: 0.5 } })} />
@@ -200,7 +200,7 @@ export function IlustracaoAgents() {
 export function IlustracaoWallet() {
   const m = useMotionGate();
   return (
-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none" aria-hidden="true">
       <motion.rect x="38" y="48" width="124" height="74" rx="10" className="fill-muted stroke-border" strokeWidth="2" {...m({ initial: { scale: 0.8, opacity: 0 }, animate: { scale: 1, opacity: 1 }, transition: { duration: 0.4 } })} />
       <motion.rect x="118" y="68" width="54" height="34" rx="6" className="fill-primary/20 stroke-primary" strokeWidth="2" {...m({ initial: { x: 20, opacity: 0 }, animate: { x: 0, opacity: 1 }, transition: { duration: 0.3, delay: 0.3 } })} />
       <motion.circle cx="142" cy="85" r="10" className="fill-primary stroke-primary-foreground" strokeWidth="2" {...m({ initial: { scale: 0 }, animate: { scale: 1 }, transition: { duration: 0.3, delay: 0.5, type: 'spring' } })} />
@@ -211,7 +211,7 @@ export function IlustracaoWallet() {
 export function IlustracaoGeneric() {
   const m = useMotionGate();
   return (
-    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none">
+    <svg viewBox="0 0 200 160" className="w-full h-full" fill="none" aria-hidden="true">
       <motion.g {...m({ animate: { y: [0, -5, 0] }, transition: { duration: 3, repeat: Infinity, ease: "easeInOut" } })}>
         <rect x="60" y="50" width="80" height="60" rx="8" className="fill-muted/30" />
         <path d="M60 65 L100 85 L140 65" className="stroke-muted-foreground/20" strokeWidth="2" fill="none" />

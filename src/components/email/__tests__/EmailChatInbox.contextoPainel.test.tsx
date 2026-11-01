@@ -60,7 +60,17 @@ const state = vi.hoisted(() => ({
   subscribeToThreads: vi.fn(() => () => {}),
 }));
 
-vi.mock('framer-motion', () => ({ AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</> }));
+vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
+  // O estado vazio compartilhado (ConversationEmptyState) usa motion.* e useReducedMotion.
+  motion: new Proxy({}, {
+    get: (_t, tag: string) => ({ children, initial: _i, animate: _a, exit: _e, transition: _tr, layout: _l, ...props }: Record<string, unknown> & { children?: ReactNode }) => {
+      const Tag = tag as 'div';
+      return <Tag {...props}>{children}</Tag>;
+    },
+  }),
+  useReducedMotion: () => false,
+}));
 
 vi.mock('@/hooks/integrations/useGmail', () => ({
   useGmail: () => ({

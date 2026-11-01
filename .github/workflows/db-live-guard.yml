@@ -227,6 +227,9 @@ jobs:
           node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
             -f scripts/db-audit/check-talkx-transition-contract.sql 2>&1 | tee /tmp/step-contract-talkx-transition.log
 
+      # INV-LIVE: RLS, security_invoker, matview exposure, SECURITY DEFINER
+      # search_path, open write policies e referencias mortas — tudo numa so
+      # passada fail-closed sobre o catalogo vivo. Veja check-live-invariants.sql.
       - name: Verificar invariantes gerais do banco vivo
         id: live-invariants
         if: steps.credencial.outcome == 'success'
