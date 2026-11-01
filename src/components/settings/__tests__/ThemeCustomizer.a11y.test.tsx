@@ -58,7 +58,7 @@ function hslParaRgb(h: number, s: number, l: number): Rgb {
 
 /** Tokens de UM bloco por cabeçalho em INÍCIO DE LINHA (senão `.high-contrast` casaria com `.dark.high-contrast`). */
 function tokensDoBloco(css: string, cabecalho: string): Record<string, Rgb> {
-  const limpo = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const limpo = css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s*!important/g, '');
   const alvo = `\n${cabecalho} {`;
   const i = limpo.indexOf(alvo);
   if (i < 0) throw new Error(`bloco ${cabecalho} ausente`);
@@ -73,7 +73,7 @@ function tokensDoBloco(css: string, cabecalho: string): Record<string, Rgb> {
         for (const t of Array.from(
           limpo
             .slice(abre + 1, j)
-            .matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*(?:!important\s*)?;/g),
+            .matchAll(/--(\w[\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g),
         )) {
           out[t[1]] = hslParaRgb(Number(t[2]), Number(t[3]), Number(t[4]));
         }
@@ -110,7 +110,7 @@ const classes = (el: Element) => (el as HTMLElement).className ?? '';
 /** Texto: `text-[hsl(var(--primary-text))]` ou `text-primary[/70]` → token + alfa. */
 function textoDe(el: Element): { token: string; alfa: number } {
   const c = classes(el);
-  const viaVar = c.match(/text-\[hsl\(var\(--([\w-]+)\)\)\]/);
+  const viaVar = c.match(/text-\[hsl\(var\(--(\w[\w-]+)\)\)\]/);
   if (viaVar) return { token: viaVar[1], alfa: 1 };
   const m = c.match(/(?:^|\s)text-([a-z][a-z-]+)(?:\/(\d+))?(?:\s|$)/);
   if (!m) throw new Error(`sem classe text-* em: ${c}`);

@@ -64,7 +64,7 @@ function razao(a: Rgb, b: Rgb): number {
  * contraste CLARO seria medido com os tokens do ESCURO.
  */
 function tokensDoBloco(css: string, cabecalho: string): Record<string, Rgb> {
-  const limpo = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const limpo = css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s*!important/g, '');
   const alvo = `${cabecalho} {`;
   const i = limpo.indexOf(alvo);
   if (i < 0) throw new Error(`bloco ${cabecalho} ausente`);
@@ -79,7 +79,7 @@ function tokensDoBloco(css: string, cabecalho: string): Record<string, Rgb> {
         for (const t of Array.from(
           limpo
             .slice(abre + 1, j)
-            .matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*(?:!important\s*)?;/g)
+            .matchAll(/--(\w[\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g)
         )) {
           out[t[1]] = hslParaRgb(Number(t[2]), Number(t[3]), Number(t[4]));
         }
@@ -123,7 +123,7 @@ function tokenDoChipNoAltoContrasteClaro(css: string): string | null {
   if (!regra) return null;
   const [, seletor, declaracoes] = regra;
   if (!/\.high-contrast/.test(seletor) || !/:not\(\.dark\)/.test(seletor)) return null;
-  const cor = declaracoes.match(/color:\s*hsl\(var\(--([a-z0-9-]+)\)\)/);
+  const cor = declaracoes.match(/color:\s*hsl\(var\(--([ a-z0-9-]+)\)\)/);
   return cor ? cor[1] : null;
 }
 

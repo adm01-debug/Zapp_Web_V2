@@ -117,7 +117,7 @@ function compor(fundo: RGB, topo: RGB, alfa: number): RGB {
 /** Tokens de UM bloco por cabeçalho EXATO (`seletor {`) — `indexOf` simples
  *  deixaria `.high-contrast` casar com `.dark.high-contrast` (substring). */
 function tokensDoBloco(css: string, cabecalho: string): Record<string, RGB> {
-  const limpo = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const limpo = css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s*!important/g, '');
   const alvo = `${cabecalho} {`;
   const i = limpo.indexOf(alvo);
   if (i < 0) throw new Error(`bloco ${cabecalho} ausente`);
@@ -131,7 +131,7 @@ function tokensDoBloco(css: string, cabecalho: string): Record<string, RGB> {
         const out: Record<string, RGB> = {};
         for (const t of limpo
           .slice(abre + 1, j)
-          .matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*(?:!important\s*)?;/g)) {
+          .matchAll(/--(\w[\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g)) {
           out[t[1]] = hslParaRgb(Number(t[2]), Number(t[3]), Number(t[4]));
         }
         return out;
