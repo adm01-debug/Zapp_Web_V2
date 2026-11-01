@@ -3,7 +3,7 @@
 **Projeto:** `tnnnlkbymytvtqngbbqh` (Supabase Cloud)  
 **Repo:** `adm01-debug/Zapp_Web_V2`  
 **Auditoria realizada em:** 2026-10-24 a 2026-10-25 (múltiplas sessões, read-only)  
-**Relatório gerado em:** 2026-10-31 (reconstruído de `progresso.json` e inventários)  
+**Relatório atualizado em:** 2026-11-01 (reverificação top-10 com evidência fresca)  
 **Metodologia:** Somente SELECT; zero INSERTs/UPDATEs/DDLs aplicados em produção  
 
 ---
@@ -11,42 +11,46 @@
 ## Resumo Executivo
 
 | Severidade | Quantidade |
-|------------|-----------|
-| CRITICAL   | 3         |
-| HIGH       | 7         |
+|------------|----------|
+| CRITICAL   | 2         |
+| HIGH       | 8         |
 | MEDIUM     | 9         |
 | LOW        | 5         |
 | INFO       | 4         |
 | **TOTAL**  | **28**    |
 
+*Nota 2026-11-01: CRITICAL-1 (grants anon) reclassificado para HIGH após reverificação revelar redução de 97-98 tabelas para 1 tabela (`password_reset_requests`), consequência de 18 migrations aplicadas por outras sessões entre 2026-10-25 e 2026-11-01.*
+
 **Prova de produção não modificada:**
 
-| Objeto | Antes (2026-10-24T20:53:57Z) | Depois (2026-10-25T01:42:33Z) | Delta |
-|--------|------------------------------|-------------------------------|-------|
-| Migrations | 1054 | 1054 | ZERO |
-| Crons ativos | 24 | 24 | ZERO |
-| Policies RLS | 499 | 499 | ZERO |
-| Funções DB | 475 | 475 | ZERO |
-| Tabelas public | 202 | 202 | ZERO |
+| Objeto | Antes out-24 (20:53Z) | Depois out-25 (01:42Z) | Δ out-24/25 | Antes nov-01 (18:xx) | Depois nov-01 (18:xx) | Δ nov-01 |
+|--------|----------------------|------------------------|-------------|---------------------|----------------------|----------|
+| Migrations | 1054 | 1054 | ZERO | 1072 | 1072 | **ZERO** |
+| Crons ativos | 24 | 24 | ZERO | 24 | 24 | **ZERO** |
+| Policies RLS | 499 | 499 | ZERO | 520 | 520 | **ZERO** |
+| Funções DB | 475 | 475 | ZERO | 481 | 481 | **ZERO** |
+| Tabelas public | 202 | 202 | ZERO | 211 | 211 | **ZERO** |
+
+*Variação entre sessões (1054→1072 migrations, 499→520 policies, etc.) reflete 18 migrations aplicadas por outras sessões entre 2026-10-25 e 2026-11-01. Esta sessão (nov-01) não escreveu nada: todos os deltas são ZERO.*
 
 ---
 
 ## Status das 12 Seções
 
 | Seção | Status | Detalhe |
-|-------|--------|---------|
+|-------|--------|--------|
 | S1 Inventário | **CONCLUÍDO** | 1054 migrations, 24 crons, 499 policies, 475 funções DB, 202 tabelas, 9 buckets, 10 usuários auth, 83 edge functions (14 verify_jwt=false), 13 views (security_invoker=true), 10 enums, 4 sequences |
 | S2 Drift | **PARCIAL** | 31 tabelas ausentes de types.ts (prod=202, types=171); conversations/tasks/accounts ausentes do schema-manifest para Realtime; replay-local.sh NÃO VERIFICADO (sem Docker/WSL no ambiente remoto) |
-| S3 Segurança | **CONCLUÍDO** | 97-98 tabelas com grants anon de escrita (CRITICAL-1); 39 UPDATE sem WITH CHECK (CRITICAL-2); 0 tabelas public sem RLS; 399 SECURITY DEFINER todas com search_path fixo; zero tokens hardcoded em crons |
+| S3 Segurança | **CONCLUÍDO** | ~~97-98 tabelas com grants anon~~ → **1 tabela (`password_reset_requests`) com anon INSERT** (reverificado 2026-11-01; era CRITICAL, reclassificado HIGH após 18 migrations de outras sessões revogarem os demais grants); 39 UPDATE sem WITH CHECK (CRITICAL-1, inalterado); 0 tabelas public sem RLS; 402 SECURITY DEFINER todas com search_path fixo; zero tokens hardcoded em crons |
 | S4 Integridade | **CONCLUÍDO** | 34 FKs sem índice; 60 migrations com statements NULL; 1 tabela sem PK (_zapp_fn_before) |
 | S5 Performance | **PARCIAL** | email_threads seq_tup_read=420.341.864; ON DELETE auditado (CASCADE:137, SET NULL:98, NO ACTION:55, RESTRICT:4); pg_stat_statements top-20 NÃO VERIFICADO (42P01 — bloqueio técnico) |
-| S6 Crons | **CONCLUÍDO** | 24 crons ativos; CRITICAL-3: talkx-scheduler-1min 9724 falhas em 30d (22.5%); causa provável: pool exhaustion do pg_cron 1.6.4 com 24 jobs; zero tokens hardcoded |
+| S6 Crons | **CONCLUÍDO** | 24 crons ativos; CRITICAL-2: talkx-scheduler-1min **4425 falhas em 30d (10.3%)** — melhorou de 22.5% em out-24 mas ainda CRITICAL (reverificado 2026-11-01T18:xxZ); causa: pool exhaustion pg_cron 1.6.4 com 24 jobs; zero tokens hardcoded |
 | S7 Funções DB | **CONCLUÍDO** | 12 funções com SQL dinâmico (mcp_exec=R2-mitigado, talkx_audience_query=R1, 10xR0); 463 sem SQL dinâmico; 399 SECURITY DEFINER todas com search_path fixo |
 | S8 Edge Functions | **PARCIAL** | 84 funções lidas individualmente: R0:49, R1:35, R2+:0; 14 verify_jwt=false com mecanismos alternativos; zero SQL dinâmico; zero segredos hardcoded; logs 7d por função NÃO VERIFICADO |
 | S9 Auth/Storage/Realtime | **CONCLUÍDO** | 10 usuários, 0 MFA factors (HIGH-7); 9 buckets (multiplix-voice sem MIME filter=LOW-3); conversations/tasks/accounts ausentes do schema-manifest Realtime (MEDIUM-9) |
 | S10 Logs 7d | **PARCIAL** | Cron logs confirmados via SQL; pg_stat_statements NÃO VERIFICADO (42P01); logs de edge functions NÃO VERIFICADO (acesso via Dashboard) |
 | S11 RLS | **CONCLUÍDO** | 39 UPDATE sem WITH CHECK ao vivo; matriz A×B executada em PostgreSQL 16 nativo (pg_ctlcluster) com migrations do repo; T-01/T-02/T-C2/T-05/T-09 PASS; backup schemas sem RLS confirmado |
-| S12 Lacunas | **CONCLUÍDO** | e2e UUID hardcoded em 2 migrations; sem cron de purge para profiles.email/login_attempts; backup/PITR confirmado (wal-g gerenciado pelo Supabase); sem staging Supabase; CI RLS gap: CRITICAL-2 não testado automaticamente |
+| S12 Lacunas | **CONCLUÍDO** | e2e UUID hardcoded em 2 migrations; sem cron de purge para profiles.email/login_attempts; backup/PITR confirmado (wal-g gerenciado pelo Supabase); sem staging Supabase; CI RLS gap: CRITICAL-1 não testado automaticamente |
 
 ---
 
@@ -54,16 +58,7 @@
 
 ### CRITICAL
 
-#### CRITICAL-1 — Grants de escrita para `anon` em 97-98 tabelas públicas
-- **Objeto:** schema `public`, role `anon`
-- **Evidência:** `INSERT:98, DELETE:97, UPDATE:97, TRUNCATE:98` confirmado ao vivo 2026-10-25T01:42Z
-- **Impacto:** Qualquer visitante não autenticado pode tentar INSERT/DELETE/UPDATE em 97+ tabelas. RLS bloqueia nas tabelas com policies corretas, mas tabelas com USING(true)/WITH CHECK(true) ficam abertas (ex.: `department_invites`).
-- **Reprodução:** `SELECT privilege_type, count(*) FROM information_schema.role_table_grants WHERE grantee='anon' AND table_schema='public' AND privilege_type IN ('INSERT','UPDATE','DELETE','TRUNCATE') GROUP BY privilege_type`
-- **Correção:** `propostas/01_revogar_grants_anon.sql` — REVOKE para tabelas sem necessidade de acesso anon
-- **Risco de regressão:** ALTO — edge functions e anon-flows públicos podem depender de alguns grants; auditoria por tabela necessária antes do apply
-- **Esforço:** MÉDIO (1-2 dias de triagem + migration)
-
-#### CRITICAL-2 — 39 policies UPDATE sem `WITH CHECK` explícito
+#### CRITICAL-1 — 39 policies UPDATE sem `WITH CHECK` explícito
 - **Objeto:** `pg_policies` WHERE cmd='UPDATE' AND with_check IS NULL
 - **Evidência:** count=39 confirmado ao vivo; tabelas sensíveis: contacts, messages, sales_deals, whatsapp_connections, talkx_campaigns
 - **Impacto:** PostgreSQL usa USING como WITH CHECK implícito, mas sem WITH CHECK explícito é possível — dependendo do USING — que um UPDATE mova uma linha para outro tenant sem ser bloqueado
@@ -72,9 +67,10 @@
 - **Risco de regressão:** MÉDIO — cada policy precisa de análise individual
 - **Esforço:** ALTO (3-5 dias para 39 policies)
 
-#### CRITICAL-3 — talkx-scheduler-1min: 9724 falhas acumuladas em 30 dias (22.5%)
+#### CRITICAL-2 — talkx-scheduler-1min: 4425 falhas em 30 dias (10.3%)
 - **Objeto:** `cron.job_run_details` WHERE jobname='talkx-scheduler-1min'
-- **Evidência:** 9724 falhas / 43181 runs confirmado ao vivo 2026-10-25T01:42Z
+- **Evidência out-24:** 9724 falhas / 43181 runs confirmado 2026-10-25T01:42Z (22.5%)
+- **Evidência nov-01 (fresca):** 4425 falhas / 43079 runs confirmado **2026-11-01T18:xxZ (10.3%)** — melhora de 12pp mas ainda CRITICAL
 - **Impacto:** Campanhas TalkX podem não ser disparadas no horário configurado; perda silenciosa de envios agendados
 - **Causa provável:** Pool exhaustion do pg_cron 1.6.4 com 24 jobs concorrentes (1min interval)
 - **Reprodução:** `SELECT count(*) FILTER(WHERE status='failed'), count(*) FROM cron.job_run_details d JOIN cron.job j ON j.jobid=d.jobid WHERE j.jobname='talkx-scheduler-1min' AND d.start_time >= now()-interval '30 days'`
@@ -90,6 +86,15 @@
 - **Evidência:** channel_connections_safe, gmail_accounts_safe, link_preview_cache, password_reset_requests_safe, profiles_public, talkx_campaign_metrics, whatsapp_connections_agent, whatsapp_connections_public, whatsapp_connections_safe + 8 outras
 - **Impacto:** Se o código acessa via authenticated, retorna 0 linhas silenciosamente (sem erro). Pode mascarar bugs de acesso.
 - **Correção:** Adicionar policy SELECT para authenticated ou documentar que são intencionalmente bloqueadas
+
+#### HIGH-1A — Grant anon INSERT em `password_reset_requests` *(reclassificado de CRITICAL em 2026-11-01)*
+- **Objeto:** schema `public`, role `anon`, tabela `password_reset_requests`
+- **Evidência out-24 (histórica):** `INSERT:98, DELETE:97, UPDATE:97, TRUNCATE:98` confirmado 2026-10-25T01:42Z
+- **Evidência nov-01 (fresca):** `{count:1, privilege_type:"INSERT"}` — somente `password_reset_requests` mantém grant anon INSERT (2026-11-01T18:xxZ). Os demais grants foram revogados por 18 migrations aplicadas entre 2026-10-25 e 2026-11-01 por outras sessões.
+- **Reprodução:** `SELECT privilege_type, count(*) FROM information_schema.role_table_grants WHERE grantee='anon' AND table_schema='public' AND privilege_type IN ('INSERT','UPDATE','DELETE','TRUNCATE') GROUP BY privilege_type`
+- **Impacto residual:** `password_reset_requests` permite INSERT anon — provavelmente intencional (fluxo de reset de senha sem autenticação). Verificar se há rate limiting via RLS. Risco baixo se policy aplicar limitação por IP/tempo.
+- **Correção:** Verificar se policy de INSERT na tabela `password_reset_requests` tem WITH CHECK com rate-limit; se não, adicionar constraint de frequência.
+- **Esforço:** BAIXO (auditoria de 1 policy)
 
 #### HIGH-2 — department_invites: DELETE USING(true) e INSERT WITH CHECK(true)
 - **Evidência:** `dept_invites_delete_authenticated | DELETE | true | null` confirmado ao vivo
@@ -176,7 +181,7 @@
 ## Itens NÃO VERIFICADOS
 
 | Item | Motivo |
-|------|--------|
+|------|-------|
 | pg_stat_statements top-20 | 42P01 via mcp_exec — pg_stat_statements não acessível sem superuser/pg_read_all_stats |
 | Logs de edge functions por função (7d) | supabase_functions.hooks não acessível via SQL; via Dashboard/CLI |
 | replay-local.sh do zero (21 falhas esperadas) | Docker daemon indisponível no ambiente remoto — irrelevante pois matriz RLS foi executada em PostgreSQL nativo |
@@ -197,21 +202,21 @@
 Banco `rls_audit_test`, 6 migrations do repo aplicadas do zero:
 
 | Teste | Resultado | Detalhe |
-|-------|-----------|---------|
+|-------|-----------|--------|
 | T-01 user-a vê próprias mensagens | **PASS** | count=2 do seu contato |
 | T-02 user-a não vê mensagens de user-b | **PASS** | count=0 |
 | T-C2 UPDATE cross-tenant bloqueado | **PASS** | implicit WITH CHECK via USING contact_id |
 | T-05 INSERT cross-tenant bloqueado | **PASS** | |
 | T-09 DELETE cross-tenant bloqueado | **PASS** | rows=0 |
 
-**Nota:** CRITICAL-2 se aplica ao banco de PRODUÇÃO (drift org_id + USING sem WITH CHECK explícito em tabelas com organization_id), não ao schema das migrations. O schema das migrations usa contact_id/assigned_to, onde o implicit WITH CHECK funciona corretamente.
+**Nota:** CRITICAL-1 se aplica ao banco de PRODUÇÃO (drift org_id + USING sem WITH CHECK explícito em tabelas com organization_id), não ao schema das migrations. O schema das migrations usa contact_id/assigned_to, onde o implicit WITH CHECK funciona corretamente.
 
 ---
 
 ## Plano de Correção em Ondas
 
 ### Onda 1 — Imediato (< 1 semana)
-1. CRITICAL-3: Reduzir concorrência de crons (staggar intervals) — `propostas/P008`+`P009`
+1. CRITICAL-2: Reduzir concorrência de crons (staggar intervals) — `propostas/P008`+`P009`
 2. HIGH-2: Corrigir department_invites policies — `propostas/P001_dept_invites_ownership.sql`
 3. HIGH-7: Ativar MFA obrigatório para admins via Dashboard
 
@@ -224,11 +229,11 @@ Banco `rls_audit_test`, 6 migrations do repo aplicadas do zero:
 ### Onda 3 — Médio prazo (2-4 semanas)
 8. HIGH-3: Adicionar índices em 34 FKs — `propostas/P003-fk-indexes`
 9. HIGH-5: Investigar/otimizar email_threads — `propostas/P007`
-10. CRITICAL-2: Adicionar WITH CHECK explícito nas 39 policies UPDATE
+10. CRITICAL-1: Adicionar WITH CHECK explícito nas 39 policies UPDATE
 11. CI gap: Adicionar testes/01_rls_matrix.sql ao db-guard.yml
 
 ### Onda 4 — Longo prazo
-12. CRITICAL-1: Auditar e revogar grants anon por tabela — `propostas/01_revogar_grants_anon.sql`
+12. HIGH-1A: Verificar rate-limit no grant anon INSERT de password_reset_requests
 13. MEDIUM-3: Remover ou proteger backup schemas
 14. LOW-3/MEDIUM-5: schema-manifest + staging environment
 
@@ -237,7 +242,7 @@ Banco `rls_audit_test`, 6 migrations do repo aplicadas do zero:
 ## Arquivos Gerados
 
 | Caminho | Conteúdo |
-|---------|---------|
+|---------|--------|
 | `progresso.json` | Estado de todas as 12 seções, contagens, evidências com timestamps |
 | `antes-depois.md` | Prova read-only: snapshots antes/depois com delta ZERO |
 | `inventario/s1-inventario.json` | Inventário completo: tabelas, funções, crons, enums, sequences |
