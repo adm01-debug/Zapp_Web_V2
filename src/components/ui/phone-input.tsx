@@ -64,23 +64,40 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
   // O valor exibido é DERIVADO do `value` controlado (sem effect): o que sobe
   // pelo onChange já vem formatado, então formatar de novo é idempotente.
   const displayValue = useMemo(() => formatPhone(extractDigits(value)), [value]);
-  // Rastreia se o usuário digitou '+' explicitamente (número internacional).
-  const isExplicitInternationalRef = useRef(false);
+
+  // Rastreia se o usuário iniciou entrada como número internacional explícito.
+  // Inicializa como true quando o valor recebido já é internacional (não-55),
+  // para não corromper edições de contatos internacionais existentes.
+  const initialDigits = extractDigits(value);
+  const isExplicitInternationalRef = useRef(
+    initialDigits.length >= 2 && !initialDigits.startsWith('55')
+  );
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     let digits = extractDigits(e.target.value);
 
-    // O input controlado sempre exibe '+...' após o primeiro dígito, então
-    // e.target.value.startsWith('+') seria sempre true e nunca prefixaria +55.
-    // Usa ref para distinguir '+' digitado pelo usuário de '+' injetado pelo formatter.
+    // O formatter sempre exibe '+...' após o primeiro dígito, então não podemos
+    // usar e.target.value.startsWith('+') para detectar intenção internacional —
+    // seria sempre true. Usamos ref + contexto do campo antes do evento.
     if (e.target.value === '+') {
+      // '+' sozinho ocorre em dois cenários:
+      // (a) Usuário digita '+' num campo vazio → intl explícito
+      // (b) Usuário apaga o 1º dígito de uma entrada BR ("+NN" → "+"): artefato do formatter
+      // Só é intl explícito quando o campo estava vazio antes deste evento.
+      if (displayValue === '') {
+        isExplicitInternationalRef.current = true;
+      }
+      // Se displayValue !== '', é backspace de dígito BR — não alterar o ref
+    } else if (e.target.value.startsWith('+') && e.target.value.length > 1 && displayValue === '') {
+      // Cola de número internacional em campo vazio (ex: "+351 912 345 678")
       isExplicitInternationalRef.current = true;
     } else if (!digits) {
+      // Campo completamente esvaziado → sai do modo internacional
       isExplicitInternationalRef.current = false;
     }
 
     // Prefixa 55 quando o operador digita um DDD brasileiro direto (ex.: "11...").
-    // Não aplica em números internacionais que já vieram com '+'.
+    // Não aplica em números internacionais explícitos.
     if (digits.length >= 2 && !digits.startsWith('55') && !isExplicitInternationalRef.current) {
       const possibleDDD = parseInt(digits.slice(0, 2), 10);
       if (possibleDDD >= 11 && possibleDDD <= 99) {
@@ -92,7 +109,7 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
     if (digits.length > 13) digits = digits.slice(0, 13);
 
     onChange(formatPhone(digits), digits);
-  }, [onChange]);
+  }, [onChange, displayValue]);
 
   return (
     <Input
