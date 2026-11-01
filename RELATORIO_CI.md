@@ -265,3 +265,64 @@ O `execFileSync` de `gh pr list` falhava com "unexpected end of JSON input" quan
 *Relatório concluído em 2026-10-30T22:20Z — PR #2394 mergeada com todos os checks verdes.*
 
 </details>
+
+---
+
+## Sessão 2026-11-01 — Fix N-008 DB Guard (branch `claude/fix-ci-n008-261101-2340`)
+
+**Data:** 2026-11-01  
+**Branch:** `claude/fix-ci-n008-261101-2340`  
+**PR:** [#2542](https://github.com/adm01-debug/Zapp_Web_V2/pull/2542)  
+**SHA HEAD:** `68c998eeffd2266c49cd01bade28697422280f9b`
+
+### Baseline local — início da sessão
+
+| Verificação | Resultado | Detalhe |
+|---|---|---|
+| `bun install --frozen-lockfile` | ✅ exit 0 | 77 pacotes instalados em 4,00s |
+| `bun run build` | ✅ exit 0 | `✓ built in 14.12s` — sem erro de compilação |
+| `lint-ratchet.mjs` | ✅ novas=0 | baseline=819, atual=813, removidas=6, novas=**0** |
+| `tsc --noEmit` (4 GB) | ✅ exit 0 | Zero erros de tipo |
+| `vitest run src/utils` | ✅ 79/79 | 7 test files, todos os 79 testes passaram |
+| `vitest run` (suite completa) | ⚠️ env constraint | Runner sem conexão Supabase — testes de integração time out; 410 falhas pré-existentes documentadas em PENDENCIAS.md §4 |
+| Docker / N-008 test local | ⚠️ env constraint | Docker não disponível neste container — teste N-008 não executável localmente |
+
+> **Nota:** Typecheck com `bun run typecheck` (usa `tsc -b --force`) falha por OOM/SIGABRT no container.
+> Solução: `node --max-old-space-size=4096 node_modules/.bin/tsc --noEmit --incremental false` → exit 0.
+
+### Fix aplicado
+
+**Causa raiz:** Step `Provar encerramento diario de sessoes vencidas (N-008)` em `db-guard.yml`
+não tinha `N008_POSTGRES_IMAGE` no bloco `env:`, causando falha de pull de imagem Docker com rate limit.
+
+**Diff mínimo (2 linhas adicionadas em db-guard.yml, linha ~1481):**
+```diff
+ - name: Provar encerramento diario de sessoes vencidas (N-008)
+   env:
++    N008_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
++    SKIP_DOCKER_SHIM: "1"
+   run: bash scripts/db-audit/retry-disposable-postgres-test.sh ...
+```
+
+### Estado do CI desta sessão
+
+| Check | Run | Status | Nota |
+|---|---|---|---|
+| `Contrato DB offline` (db-guard.yml) | [41363412314](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41363412314) | `queued` às 23:42:30Z | PR convertida de draft → ready_for_review para disparar o job |
+| `Replay local das migrations` | 41363412314 | `queued` | Mesmo run |
+
+> **Nota:** Run anterior `41363080487` foi cancelado automaticamente ao converter a PR de draft;
+> o job `Contrato DB offline` estava `skipped` porque a PR era draft (`if: github.event.pull_request.draft != true`).
+
+### Inventário completo de workflows com falha em 2026-11-01
+
+| Workflow | Último run falha | Causa | PENDENCIAS.md |
+|---|---|---|---|
+| DB Guard / N-008 | [41363080487](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41363080487) | `N008_POSTGRES_IMAGE` ausente | §6 — fix em PR #2542 |
+| CI/CD Pipeline | [41328939149](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41328939149) | 410 unit tests pré-existentes | §4 |
+| DB Live Guard | [41318522203](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41318522203) | Drift schema/ledger/ACL | §1 |
+| DB Migrate | [41313326544](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41313326544) | TARGET_VERSION errado no dispatch | §7 |
+| Deploy Edge Functions | [41338277476](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41338277476) | `@types/node` path incorreto no deno check | §3 |
+| E2E logado | [41240478106](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41240478106) | Geolocation permission em CI | §5 |
+| Running Copilot Code Review | [41162024077](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162024077) | HTTP 402 quota esgotada (plano) | §2 |
+| types-sync | — | Schema drift (dispatch manual necessário) | §8 |

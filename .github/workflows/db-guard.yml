@@ -1478,6 +1478,7 @@ jobs:
       # N-008: rotina diaria encerra user_sessions vencidas (container proprio, readiness por docker exec).
       - name: Provar encerramento diario de sessoes vencidas (N-008)
         env:
+          N008_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/user-sessions-expire.test.sh
       # SEC-Y25-01 (P0, SEC-RLS_TAREFAS_EMAIL_LIGACOES-01): o INSERT de deal_activities,

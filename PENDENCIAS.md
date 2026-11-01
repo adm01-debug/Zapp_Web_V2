@@ -83,4 +83,114 @@ gerado não é o que o `deno check` procura. Este workflow **não é um required
 
 ---
 
+## 4. CI/CD Pipeline — 410 falhas de teste pré-existentes
+
+**Último run com falha:** [41328939149](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41328939149)
+**Head SHA:** `b94be0a2` (2026-11-01T16:57Z)
+
+**O que falha:** 410 testes unitários falham nos 3 shards do job `🧪 Unit Tests`. As falhas estão
+em testes de integração que tentam conectar ao banco Supabase de produção em ambiente de CI
+(sem `SUPABASE_URL`/`ANON_KEY` configurados nos shards, ou testes que dependem de estado do banco).
+
+**Por que não foi corrigido:** Falhas pré-existentes na `main` antes desta sessão. Corrigir
+requereria ou adaptar cada teste de integração para funcionar sem banco, ou adicionar secrets de
+banco ao CI — ambas mudanças de escopo de aplicação, não de CI config. Este workflow **é** um
+required check.
+
+**O que o Joaquim precisa fazer:**
+1. Verificar quantos dos 410 testes são realmente unitários vs. integração (mock vs. banco real)
+2. Os testes que dependem de banco: ou mockar o cliente Supabase, ou mover para a suite E2E
+3. Alternativamente: criar `SUPABASE_URL` e `SUPABASE_ANON_KEY` como secrets de CI (conta
+   Supabase de testes, não de produção)
+
+---
+
+## 5. E2E logado — 4 specs falham por geolocation em CI
+
+**Último run com falha:** [41240478106](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41240478106)
+**Head SHA:** `b16152f0` (2026-10-31T20:46Z)
+
+**O que falha:** 4 specs da suite E2E autenticada (`e2e-logado.yml`) falham porque o runner
+do CI não tem permissão para usar geolocation da API do browser (erro de permissão de
+geolocation/navigator). Este workflow **é** um required check.
+
+**Por que não foi corrigido:** Os specs precisam ou de mock de geolocation, ou de remoção da
+dependência de geolocation nos testes. Mudança nos arquivos de spec e/ou fixtures E2E —
+fora do escopo do fix de CI config.
+
+**O que o Joaquim precisa fazer:**
+1. Adicionar `geolocation: { latitude: 0, longitude: 0 }` no `browserContextOptions` do
+   `playwright.config.ts` para o projeto `chromium-authenticated`
+2. Ou remover a dependência de geolocation nos specs que falham
+
+---
+
+## 6. DB Guard (offline) — N-008: fix commitado, aguardando conclusão do CI
+
+**Branch do fix:** `claude/fix-ci-n008-261101-2340`
+**PR:** [#2542](https://github.com/adm01-debug/Zapp_Web_V2/pull/2542)
+**Head SHA do fix:** `68c998eeffd2266c49cd01bade28697422280f9b`
+**Run CI em andamento:** [41363412314](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41363412314) — `queued` às 23:42:30Z em 2026-11-01
+
+**Causa raiz identificada:** O step `Provar encerramento diario de sessoes vencidas (N-008)` em
+`.github/workflows/db-guard.yml` (origin/main) não tinha `N008_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}`
+no bloco `env:`. O script `retry-disposable-postgres-test.sh` faz pull via `*_IMAGE` vars;
+sem ela, `docker run postgres:17-alpine` falha com rate limit/imagem não cacheada.
+
+**Fix aplicado (diff mínimo):**
+```yaml
+- name: Provar encerramento diario de sessoes vencidas (N-008)
+  env:
+    N008_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}   # ← adicionado
+    SKIP_DOCKER_SHIM: "1"                                  # ← adicionado
+  run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/user-sessions-expire.test.sh
+```
+
+**Por que ainda está pendente:** CI do run `41363412314` ainda em `queued`. O job `Contrato DB offline`
+estava sendo `skipped` no run anterior porque a PR estava como draft (`if: github.event.pull_request.draft != true`);
+convertida para ready-for-review às 23:40Z em 2026-11-01, disparando novo run.
+
+**O que precisa acontecer:**
+1. Run `41363412314` completar com `Contrato DB offline` = `conclusion: success`
+2. PR #2542 mergear após CI verde
+
+---
+
+## 7. DB Migrate (production) — TARGET_VERSION divergente
+
+**Último run com falha:** [41313326544](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41313326544)
+**Head SHA:** `50fc5f0e` (2026-11-01T13:52Z)
+
+**O que falha:** O workflow `db-migrate.yml` (dispatch) falha no passo de dry-run porque
+`TARGET_VERSION` passado manualmente não existe no ledger do banco, ou é inferior ao `max(version)`
+atual — o workflow rejeita por segurança. Este workflow **não é um required check**.
+
+**Por que não foi corrigido:** O dispatch manual com `TARGET_VERSION` errado é erro de operação,
+não de código. O workflow está correto.
+
+**O que o Joaquim precisa fazer:**
+1. Antes de disparar `db-migrate.yml`: executar `SELECT max(version) FROM supabase_migrations.schema_migrations`
+   no banco de produção para obter o `TARGET_VERSION` correto
+2. Usar o formato `YYYYMMDDHHMMSS` estritamente maior que o max do ledger
+
+---
+
+## 8. types-sync — schema drift detectado
+
+**Último run com falha:** verificar via `workflow_dispatch` do `types-sync.yml` na `main`
+
+**O que falha:** `types-sync.yml` gera `supabase/types.ts` a partir do banco e detecta
+divergência entre o arquivo commitado e o schema atual — indicativo de que migrations foram
+aplicadas no banco sem regenerar os tipos. Este workflow **não é um required check**.
+
+**Por que não foi corrigido:** Requer acesso ao banco de produção para regenerar `types.ts`.
+A divergência é no schema real do banco, não em código do repositório.
+
+**O que o Joaquim precisa fazer:**
+1. Disparar `workflow_dispatch` do `types-sync.yml` na branch `main` — ele abre PR automática
+   com o `types.ts` atualizado
+2. Revisar a PR aberta pelo types-sync e mergear se o diff for esperado
+
+---
+
 _Nota: Este arquivo deve ser atualizado quando os itens acima forem resolvidos._
