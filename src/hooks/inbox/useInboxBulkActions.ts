@@ -190,9 +190,14 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
       for (const row of originals ?? []) {
         previousStatus.set(row.id, row.conversation_status ?? null);
       }
-      // Só arquiva quem foi LIDO. Zero linha lida (RLS filtrando) não é
-      // sucesso — sem alvo, avisa em vez de arquivar às cegas.
-      const targetIds = contactIds.filter((id) => previousStatus.has(id));
+      // Só arquiva quem foi LIDO e não está already archived. Zero linha lida
+      // (RLS filtrando) não é sucesso — sem alvo, avisa em vez de arquivar às cegas.
+      // Contato já 'archived' é excluído: arquivar não muda seu estado, mas o
+      // desfazer mapearia 'archived' → 'open' (fora de validFromArchived), abrindo
+      // uma conversa que estava arquivada antes da ação do operador.
+      const targetIds = contactIds.filter(
+        (id) => previousStatus.has(id) && previousStatus.get(id) !== 'archived',
+      );
       if (targetIds.length === 0) throw new Error('nenhum contato lido');
 
       await executeUndoable({

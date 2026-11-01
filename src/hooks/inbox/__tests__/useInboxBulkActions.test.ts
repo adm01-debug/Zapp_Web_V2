@@ -595,6 +595,38 @@ describe('useInboxBulkActions — bulkArchive', () => {
     expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1, c2] } });
   });
 
+  it('desfazer: contato já archived antes da seleção NÃO é aberto — excluído do lote desde o início', async () => {
+    selectQueue.push({
+      data: [
+        { id: c1, conversation_status: 'open' },
+        { id: c2, conversation_status: 'archived' },
+      ],
+      error: null,
+    });
+    const { result, refetch } = renderInbox();
+    selectIds(result, [c1, c2]);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    // c2 (já archived) não entra no targetIds; só c1 é arquivado
+    expect(contactUpdates()[0]).toMatchObject({
+      payload: { conversation_status: 'archived' },
+      filters: { id: [c1] },
+    });
+    expect(lastUndo?.successMessage).toBe('1 contato(s) arquivado(s)');
+
+    await act(async () => {
+      await lastUndo?.undoAction();
+    });
+
+    const restores = contactUpdates().slice(1);
+    expect(restores).toHaveLength(1);
+    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1] } });
+    expect(refetch).toHaveBeenCalledTimes(2);
+  });
+
   it('sem seleção não lê nem arquiva nada', async () => {
     const { result } = renderInbox();
 
