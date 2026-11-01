@@ -1,343 +1,368 @@
 {
-  "meta": {
-    "total": 30,
-    "analisados": 30,
-    "mergeados": 0,
-    "rejeitar": 24,
-    "ci_falha": 6,
-    "main_sha": "5a4632c87f7e233fe62e830443f8b0eddf3e1a72",
-    "data": "2026-10-22"
-  },
+  "main_sha": "3617a2acd517dcc9a6eaf2533cd256913e462c21",
+  "data_analise": "2026-11-01",
+  "total_prs_abertas": 63,
+  "prs_mergeadas": 1,
   "prs": [
     {
-      "number": 2149,
-      "titulo": "docs(reconciliation): P053",
-      "branch": "claude/docs-p053-regressao-261021-0827",
-      "sha": "d78360c437",
-      "grupo": "A",
-      "veredito": "CI-FALHA",
-      "merge_ready": false,
-      "motivo_bloqueio": "CI vermelho por falhas pré-existentes na main (44 testes + ContratoDB). PR toca apenas 5 arquivos docs/; passa os 4 critérios de análise.",
-      "criterios": {"valida": true, "regressao": false, "ja_em_main": false, "regra_negocio_correta": true}
+      "pr": 1930,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1930",
+      "veredito": "AGUARDANDO_CI"
     },
     {
-      "number": 2151,
-      "titulo": "fix(ci): destravar workflows que falhavam antes de executar",
-      "branch": "fix/ci-workflows-vermelhos",
-      "sha": "0770f6b5ef",
-      "grupo": "A",
-      "veredito": "CI-FALHA",
-      "merge_ready": false,
-      "motivo_bloqueio": "CI vermelho por falhas pré-existentes na main. PR adiciona Deno ao ci.yml; passa os 4 critérios.",
-      "criterios": {"valida": true, "regressao": false, "ja_em_main": false, "regra_negocio_correta": true}
+      "pr": 1997,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1997",
+      "veredito": "BLOQUEADO_DDL_WORKFLOW"
     },
     {
-      "number": 2152,
-      "titulo": "test(e2e): spec de toque 44px",
-      "branch": "claude/test-toque44-seletores-261021-0853",
-      "sha": "3eca130737",
-      "grupo": "A",
-      "veredito": "CI-FALHA",
-      "merge_ready": false,
-      "motivo_bloqueio": "CI vermelho por falhas pré-existentes na main. PR toca apenas 2 arquivos e2e/; passa os 4 critérios.",
-      "criterios": {"valida": true, "regressao": false, "ja_em_main": false, "regra_negocio_correta": true}
+      "pr": 2051,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2051",
+      "veredito": "SKIP_WORKFLOWS"
     },
     {
-      "number": 2155,
-      "titulo": "fix(ci): destrava workflows que falhavam antes de executar",
-      "branch": "fix/ci-verde-261021",
-      "sha": "6493401",
-      "grupo": "A",
-      "veredito": "CI-FALHA",
-      "merge_ready": false,
-      "motivo_bloqueio": "CI vermelho por falhas pré-existentes na main. PR adiciona Deno + job de cobertura ao ci.yml; passa os 4 critérios.",
-      "criterios": {"valida": true, "regressao": false, "ja_em_main": false, "regra_negocio_correta": true}
+      "pr": 2078,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2078",
+      "veredito": "BLOQUEADO_CONFLITO"
     },
     {
-      "number": 2157,
-      "titulo": "Add Dependency Review Action workflow",
-      "branch": "adm01-debug-patch-1-2",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Stack errada (workflow para análise de dependências genérica, já coberta pelo ci.yml existente) + SHA pinning ausente nas actions",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2091,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2091",
+      "veredito": "BLOQUEADO_CONFLITO"
     },
     {
-      "number": 2159,
-      "titulo": "Add Bearer workflow for code scanning",
-      "branch": "adm01-debug-patch-1-3",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Bearer é scanner para PHP/Go — stack errada + secret BEARER_TOKEN ausente no repositório",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2095,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2095",
+      "veredito": "BLOQUEADO_CONFLITO"
     },
     {
-      "number": 2160,
-      "titulo": "Add Hadolint workflow for Dockerfile linting",
-      "branch": "adm01-debug-patch-1-4",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Sem Docker neste projeto — ./Dockerfile inexistente",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2097,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2097",
+      "veredito": "BLOQUEADO_CONFLITO"
     },
     {
-      "number": 2161,
-      "titulo": "Add puppet-lint GitHub Actions workflow",
-      "branch": "adm01-debug-patch-1-5",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Puppet não existe neste projeto (TypeScript/React/Supabase)",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2107,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2107",
+      "veredito": "AGUARDANDO_CI"
     },
     {
-      "number": 2162,
-      "titulo": "Add PHPMD workflow for PHP code analysis",
-      "branch": "adm01-debug-patch-1-6",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "PHP não existe neste projeto",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2111,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2111",
+      "veredito": "BLOQUEADO_CONFLITO"
     },
     {
-      "number": 2163,
-      "titulo": "Add lintr workflow for R code analysis",
-      "branch": "adm01-debug-patch-1-7",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "R não existe neste projeto",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2113,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2113",
+      "veredito": "DRAFT_SKIP"
     },
     {
-      "number": 2164,
-      "titulo": "Add GitHub Actions workflow for rust-clippy",
-      "branch": "adm01-debug-patch-1-8",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Rust não existe neste projeto",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2137,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2137",
+      "veredito": "BLOQUEADO_RLS_SEM_TESTE"
     },
     {
-      "number": 2165,
-      "titulo": "Add PMD code scanning workflow",
-      "branch": "adm01-debug-patch-1-9",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Java/PMD não existe neste projeto; branch tem CONFLITO com main",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2146,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2146",
+      "veredito": "AGUARDANDO_CI"
     },
     {
-      "number": 2166,
-      "titulo": "Add GitHub Actions workflow for Deno",
-      "branch": "adm01-debug-patch-2",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "App usa Bun, não Deno como runtime principal",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2206,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2206",
+      "veredito": "DRAFT_SKIP"
     },
     {
-      "number": 2167,
-      "titulo": "Add GitHub Actions workflow for Node.js with Webpack",
-      "branch": "adm01-debug-patch-2-1",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Usa Bun/Vite, não Node/Webpack",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2233,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2233",
+      "veredito": "BLOQUEADO_CI"
     },
     {
-      "number": 2168,
-      "titulo": "Add SLSA generic generator workflow",
-      "branch": "adm01-debug-patch-2-2",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "SLSA não aplicável a este projeto (não é pacote publicado)",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2238,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2238",
+      "veredito": "BLOQUEADO_DECISAO_HUMANA"
     },
     {
-      "number": 2169,
-      "titulo": "Add Node.js CI workflow for testing",
-      "branch": "adm01-debug-patch-2-3",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "CI já existe com Bun/Vitest (ci.yml); duplicata + SHA pinning ausente",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": true, "regra_negocio_correta": false}
+      "pr": 2245,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2245",
+      "veredito": "DRAFT_SKIP"
     },
     {
-      "number": 2170,
-      "titulo": "Add GitHub Actions workflow for npm package publishing",
-      "branch": "adm01-debug-patch-2-4",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Projeto não publica pacote npm",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2249,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2249",
+      "veredito": "DRAFT_SKIP"
     },
     {
-      "number": 2171,
-      "titulo": "Add Docker publish workflow configuration",
-      "branch": "adm01-debug-patch-2-5",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Sem Docker neste projeto",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2265,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2265",
+      "veredito": "DRAFT_SKIP"
     },
     {
-      "number": 2172,
-      "titulo": "Add Docker Image CI workflow",
-      "branch": "adm01-debug-patch-2-6",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Sem Docker neste projeto",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2279,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2279",
+      "veredito": "AGUARDANDO_CI"
     },
     {
-      "number": 2173,
-      "titulo": "Add GitHub Actions workflow for npm publishing",
-      "branch": "adm01-debug-patch-2-7",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Projeto não publica pacote npm",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2283,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2283",
+      "veredito": "MERGEADA"
     },
     {
-      "number": 2174,
-      "titulo": "Add GitHub Actions workflow for Python package",
-      "branch": "adm01-debug-patch-2-8",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Python não existe neste projeto",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2417,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2417",
+      "veredito": "BLOQUEADO_CI"
     },
     {
-      "number": 2175,
-      "titulo": "Add GitHub Actions workflow for Python package with Conda",
-      "branch": "adm01-debug-patch-2-9",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Python/Conda não existe neste projeto",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2418,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2418",
+      "veredito": "AGUARDANDO_CI"
     },
     {
-      "number": 2176,
-      "titulo": "Add Django CI workflow",
-      "branch": "adm01-debug-patch-2-10",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Django não existe neste projeto",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2426,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2426",
+      "veredito": "BLOQUEADO_CONFLITO"
     },
     {
-      "number": 2177,
-      "titulo": "Add GitHub Actions workflow for Python package",
-      "branch": "adm01-debug-patch-2-11",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Python não existe neste projeto",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2428,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2428",
+      "veredito": "AGUARDANDO_CI"
     },
     {
-      "number": 2178,
-      "titulo": "Add GitHub Super Linter workflow",
-      "branch": "adm01-debug-patch-2-12",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Duplica lint existente em ci.yml; SHA pinning ausente",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": true, "regra_negocio_correta": false}
+      "pr": 2431,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2431",
+      "veredito": "AGUARDANDO_CI"
     },
     {
-      "number": 2179,
-      "titulo": "Add manual workflow for greeting",
-      "branch": "adm01-debug-patch-3",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Demo/exemplo sem valor operacional",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2445,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2445",
+      "veredito": "DRAFT_SKIP"
     },
     {
-      "number": 2181,
-      "titulo": "Create nextjs.yml",
-      "branch": "adm01-debug-patch-3-2",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "Usa Vite, não Next.js — stack errada",
-      "criterios": {"valida": false, "regressao": null, "ja_em_main": null, "regra_negocio_correta": false}
+      "pr": 2447,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2447",
+      "veredito": "MERGEADA"
     },
     {
-      "number": 2183,
-      "titulo": "chore(ci): remove workflows alienígenas",
-      "branch": "chore/remove-alien-workflows",
-      "sha": "",
-      "grupo": "B",
-      "veredito": "REJEITAR",
-      "merge_ready": false,
-      "motivo_bloqueio": "eslint.yml e static.yml já não existem na main (SHA 5a4632c) — remoção sem efeito (critério 3: já implementado)",
-      "criterios": {"valida": true, "regressao": false, "ja_em_main": true, "regra_negocio_correta": true}
+      "pr": 2457,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2457",
+      "veredito": "INCOMPLETO"
     },
     {
-      "number": 2185,
-      "titulo": "docs(pendencias): §8 + §9",
-      "branch": "claude/kind-gates-87mwoe",
-      "sha": "63b6e666bb",
-      "grupo": "C",
-      "veredito": "CI-FALHA",
-      "merge_ready": false,
-      "motivo_bloqueio": "Apaga src/hooks/integrations/__tests__/useTalkXSuppression.test.ts (371 linhas — arquivo de teste existente e verde); viola regra anti-regressão",
-      "criterios": {"valida": true, "regressao": true, "ja_em_main": false, "regra_negocio_correta": true}
+      "pr": 2460,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2460",
+      "veredito": "BLOQUEADO_DDL_FALTANDO"
     },
     {
-      "number": 2186,
-      "titulo": "fix(security): auditoria Supabase",
-      "branch": "claude/loving-lovelace-esc3l2",
-      "sha": "dd5ec6ac73",
-      "grupo": "D",
-      "veredito": "CI-FALHA",
-      "merge_ready": false,
-      "motivo_bloqueio": "Migration 20261026100300_dept_invites_ownership_fix.sql contém DROP POLICY IF EXISTS x2 — viola regra de migrations aditivas e não destrutivas",
-      "criterios": {"valida": true, "regressao": true, "ja_em_main": false, "regra_negocio_correta": true}
+      "pr": 2461,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2461",
+      "veredito": "AGUARDANDO_CI_APOS_UPDATE"
+    },
+    {
+      "pr": 2462,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2462",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2463,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2463",
+      "veredito": "AGUARDANDO_CI_APOS_UPDATE",
+      "tipo": "fix/refactor",
+      "arquivos": 5,
+      "descricao": "Extrai lógica de acesso a dados de MediaMigrationTool para service (no-restricted-imports)",
+      "regressao": "NENHUMA",
+      "migracao": "nao",
+      "valida": true,
+      "ci_gate_last_known": "SUCCESS (eec06ea3ef), branch atualizada — aguardando novo CI"
+    },
+    {
+      "pr": 2465,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2465",
+      "veredito": "AGUARDANDO_CI",
+      "tipo": "docs",
+      "arquivos": 1,
+      "descricao": "Registra medição de baseline técnico de 01/11 em docs/consolidacao/BASELINE.md",
+      "regressao": "NENHUMA",
+      "migracao": "nao",
+      "valida": true
+    },
+    {
+      "pr": 2466,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2466",
+      "veredito": "BLOQUEADO_AGUARDANDO_APROVACAO"
+    },
+    {
+      "pr": 2468,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2468",
+      "veredito": "SUPERSEDIDA"
+    },
+    {
+      "pr": 2469,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2469",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2471,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2471",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2472,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2472",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2473,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2473",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2475,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2475",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2476,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2476",
+      "veredito": "BLOQUEADO_AGUARDANDO_APROVACAO"
+    },
+    {
+      "pr": 2478,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2478",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2479,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2479",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2480,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2480",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2481,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2481",
+      "veredito": "BLOQUEADO_AGUARDANDO_APROVACAO"
+    },
+    {
+      "pr": 2482,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2482",
+      "veredito": "AGUARDANDO_CI_APOS_UPDATE",
+      "tipo": "docs",
+      "arquivos": 2,
+      "descricao": "Marca V4 como vigente e V3 como substituído (X001 executada em 01/11)",
+      "regressao": "NENHUMA",
+      "migracao": "nao",
+      "valida": true
+    },
+    {
+      "pr": 2483,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2483",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2484,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2484",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2485,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2485",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2486,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2486",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2487,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2487",
+      "veredito": "BLOQUEADO_AGUARDANDO_APROVACAO"
+    },
+    {
+      "pr": 2489,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2489",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2491,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2491",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2492,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2492",
+      "veredito": "BLOQUEADO_CONFLITO"
+    },
+    {
+      "pr": 2493,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2493",
+      "veredito": "BLOQUEADO_FALSO_CLAUDE_MD"
+    },
+    {
+      "pr": 2494,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2494",
+      "veredito": "AGUARDANDO_CI_APOS_UPDATE"
+    },
+    {
+      "pr": 2495,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2495",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2496,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2496",
+      "veredito": "BLOQUEADO_AGUARDANDO_APROVACAO"
+    },
+    {
+      "pr": 2497,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2497",
+      "veredito": "SKIP_WORKFLOWS"
+    },
+    {
+      "pr": 2498,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2498",
+      "veredito": "AGUARDANDO_CI_APOS_UPDATE"
+    },
+    {
+      "pr": 2499,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2499",
+      "veredito": "SKIP_WORKFLOWS"
+    },
+    {
+      "pr": 2500,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2500",
+      "veredito": "DRAFT_SKIP"
+    },
+    {
+      "pr": 2501,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2501",
+      "veredito": "AGUARDANDO_CI",
+      "tipo": "docs",
+      "arquivos": 1,
+      "descricao": "Marca E19/E20/E21 como [x] no plano de GitHub Actions",
+      "regressao": "NENHUMA",
+      "migracao": "nao",
+      "valida": true
+    },
+    {
+      "pr": 2502,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2502",
+      "veredito": "DRAFT_SKIP"
+    },
+    {
+      "pr": 2503,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2503",
+      "veredito": "SKIP_WORKFLOWS"
+    },
+    {
+      "pr": 2504,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2504",
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "pr": 2505,
+      "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2505",
+      "veredito": "DRAFT_SKIP"
     }
   ]
 }
