@@ -21,10 +21,10 @@ const REPO_OK =
   "send({ allow_auto_merge: true, allow_squash_merge: true, allow_merge_commit: false, allow_rebase_merge: false, delete_branch_on_merge: true, squash_merge_commit_message: 'PR_BODY', squash_merge_commit_title: 'PR_TITLE', security_and_analysis: { secret_scanning: { status: 'enabled' }, secret_scanning_push_protection: { status: 'enabled' } } })";
 const ACTIONS_OK = "send({ enabled: true, allowed_actions: 'selected', sha_pinning_required: true })";
 const WORKFLOW_PERMS_OK = "send({ default_workflow_permissions: 'write', can_approve_pull_request_reviews: true })";
-const SELECTED_PATTERNS = "['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions/cache','actions/checkout','actions/github-script','actions/setup-go','actions/setup-node','actions/upload-artifact','github/codeql-action','actions/dependency-review-action','ossf/scorecard-action']";
-const SELECTED_OK = `send({ patterns_allowed: ${SELECTED_PATTERNS} })`;
-// Formato real da API: sufixo @* e o CodeQL separado em init/analyze.
-const SELECTED_API = "send({ patterns_allowed: ['oven-sh/setup-bun@*','denoland/setup-deno@*','supabase/setup-cli@*','peter-evans/create-pull-request@*','gitleaks/gitleaks-action@*','actions/cache@*','actions/checkout@*','actions/github-script@*','actions/setup-go@*','actions/setup-node@*','actions/upload-artifact@*','github/codeql-action/init@*','github/codeql-action/analyze@*','actions/dependency-review-action@*','ossf/scorecard-action@*'] })";
+const SELECTED_PATTERNS = "['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions/cache','actions/checkout','actions/github-script','actions/setup-go','actions/setup-node','actions/upload-artifact','github/codeql-action/init','github/codeql-action/analyze','actions/dependency-review-action','ossf/scorecard-action']";
+// Formato real da API: sufixo @*, sub-ações separadas, verified_allowed e github_owned_allowed.
+const SELECTED_OK = "send({ patterns_allowed: ['oven-sh/setup-bun@*','denoland/setup-deno@*','supabase/setup-cli@*','peter-evans/create-pull-request@*','gitleaks/gitleaks-action@*','actions/cache@*','actions/checkout@*','actions/github-script@*','actions/setup-go@*','actions/setup-node@*','actions/upload-artifact@*','github/codeql-action/init@*','github/codeql-action/analyze@*','actions/dependency-review-action@*','ossf/scorecard-action@*'], verified_allowed: false, github_owned_allowed: true })";
+const SELECTED_API = SELECTED_OK;
 const SEM_ESCOPO = "send({ message: 'Resource not accessible by integration' }, 403)";
 
 /**
@@ -38,7 +38,7 @@ const SEM_ESCOPO = "send({ message: 'Resource not accessible by integration' }, 
  *                403 em branch protection e actions, e `GET /repos` 200 SEM os
  *                campos de merge (o defeito W04: isso virava "7 divergencias")
  *   parcial    — `GET /repos` 200 com PARTE dos campos de merge (cegueira parcial)
- *   injecao    — valores com \n vindos da API (jssecurity:S5145)
+ *   injecao    — valores com \\n vindos da API (jssecurity:S5145)
  * Opcoes:
  *   issue          — simula a issue [settings-guard] ja aberta
  *   ultimoMarcador — marcador do ultimo comentario da issue (W05: dedupe por causa)

@@ -13,7 +13,8 @@
     "actions/setup-node",
     "actions/upload-artifact",
     "actions/download-artifact",
-    "github/codeql-action",
+    "github/codeql-action/init",
+    "github/codeql-action/analyze",
     "actions/dependency-review-action",
     "ossf/scorecard-action"
   ]
