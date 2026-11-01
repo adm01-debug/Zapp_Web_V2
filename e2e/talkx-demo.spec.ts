@@ -20,6 +20,8 @@ test.describe('tela 01 — Campanhas — Visão geral (X003)', () => {
     await mockTalkXVisual(page, slug!);
     await page.goto('/?view=talkx');
     await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeVisible({ timeout: 30_000 });
+    // Label do KPI é hardcoded no JSX de TalkXOverview — verifica que a seção renderizou
+    await expect(page.getByText('Total de campanhas')).toBeVisible();
     // Usa campanhas completed/scheduled/draft: não aparecem no rail de recentes
     // (apenas campanhas em andamento aparecem lá), evitando falso positivo se a
     // tabela não renderizar mas o rail sim.
