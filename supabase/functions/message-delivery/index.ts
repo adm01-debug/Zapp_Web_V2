@@ -680,6 +680,13 @@ export async function handleMessageDeliveryRequest(
       if (!richPayload) throw new Error('missing_rich_delivery_payload');
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
+    // PD-79: carimbo durável antes do POST — fencing contra reenvio após lease vencido.
+    // Falha aqui = infra pré-dispatch: nada saiu, sem ambiguidade.
+    const { error: markError } = await service.rpc('mark_outbound_post_started', {
+      p_message_id: claim.message_id,
+      p_claim_token: claim.claim_token,
+    });
+    if (markError) throw new PreDispatchInfraError('mark_outbound_post_started_failed');
     providerPostAttempted = true;
     const providerResponse = await deliverOutbound(
       service, evolutionUrl, evolutionKey, outbound, claim.whatsapp_instance_name,
