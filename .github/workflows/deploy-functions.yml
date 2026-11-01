@@ -460,7 +460,7 @@ jobs:
         run: |
           set -euo pipefail
           deno install --config supabase/functions/deno.json
-          npm --prefix supabase/functions install --no-save @types/node@25.9.9
+          npm --prefix supabase/functions install --no-save --ignore-scripts @types/node@25.9.9
 
       - name: Typecheck das edge functions (deno check)
         run: deno check supabase/functions/**/index.ts
