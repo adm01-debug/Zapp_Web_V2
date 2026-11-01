@@ -40,6 +40,7 @@ jobs:
         with:
           script: |
             const DEDUP_HORAS = 1;
+
             const wf = context.payload.workflow_run;
             const titulo = `[falha-main] ${wf.name} falhou na main`;
             const corpo = [
@@ -60,9 +61,10 @@ jobs:
             const existente = issues.find(i => i.title.startsWith(`[falha-main] ${wf.name}`));
 
             if (existente) {
-              const diff = Date.now() - new Date(existente.updated_at).getTime();
+              const atualizadoEm = new Date(existente.updated_at);
+              const diff = Date.now() - atualizadoEm.getTime();
               if (diff < DEDUP_HORAS * 60 * 60 * 1000) {
-                core.info(`Dedup: issue #${existente.number} atualizada há ${Math.round(diff/60000)} min — comentário suprimido`);
+                core.info(`Dedup: issue #${existente.number} atualizada ha ${Math.round(diff / 60000)} min — comentario suprimido`);
                 return;
               }
               await github.rest.issues.createComment({
