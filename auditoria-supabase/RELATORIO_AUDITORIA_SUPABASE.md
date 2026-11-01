@@ -36,7 +36,27 @@
 - **ZW-0014 ABSORVIDO:** duplicata de ZW-0003 (mesma exposição `talkx_campaign_segments`); contagens recalculadas para refletir registros reais em `achados.json`
 - **PR #2462 ABSORVIDA:** docs 2026-10-25 (RELATORIO+progresso.json); 5 correções técnicas absorvidas; fechar após commit desta sessão
 
-**PRs aguardando aprovação (Joaquim):** #2481, #2485, #2487, #2491, #2461, #2471, #2476, #2460, #2473
+**PRs aguardando aprovação (Joaquim):** #2487, #2485, #2476, #2471 (todas REGRA 8 — DDL em produção)
+
+### Re-verificação Final 2026-11-01 — Guardas G2/G4 + ALTO + 10 PRs triadas
+
+**G2 (check-secdef-public-execute):** PASS — 402 SECURITY DEFINER em public, nenhuma com EXECUTE para PUBLIC/anon
+
+**G4 (check-mcp-exec-acl):** PASS na ACL — `mcp_exec`/`mcp_exec_many` restritos a postgres+service_role; body md5s diferem do guard file (informacional — guard desatualizado, ACL correta)
+
+**CRÍTICO/ALTO re-verificados:**
+| Finding | Resultado | Estado |
+|---|---|---|
+| ZW-0002 user_roles seq_scan | seq_scan=4957, idx_scan=6, pct_seq=99.9% | ALTO — sem melhora |
+| ZW-0004 cron failures | 94 falhas/24h, 14 jobs; PR #2245 fechado | ALTO — agravou |
+| ZW-0007 UPDATE sem WITH CHECK | 46 policies (era 42) | ALTO — agravou |
+| ZW-0009 talkx_engine_alerts | sem statement_timeout | ALTO — sem melhora |
+
+**10 PRs triadas — resumo:**
+- #2265, #2277, #2245, #2186: fechadas sem merge (DDL sem aprovação ou multi-topic) — REGRA 8
+- #2460, #2473: abertas, bloqueadas por CI — edge functions copilot RADAR
+- #2487, #2476, #2471: abertas, bloqueadas por REGRA 8 — aguardam aprovação Joaquim (DDL)
+- #2485: aberta, bloqueada por CI — fix RLS copilot (restricts INSERT/UPDATE; approve via REGRA 8)
 
 ---
 
