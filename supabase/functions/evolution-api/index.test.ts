@@ -284,6 +284,45 @@ Deno.test("C121/IP1: mark-read passa e send-status é bloqueado com a instância
   }
 });
 
+// C121/IP1: 429 do provedor num envio grava a pausa automática (30 min, instância
+// correta) e preserva a resposta original; falha da RPC não altera a resposta.
+for (const rpcFails of [false, true]) {
+  Deno.test(`C121/IP1: 429 do provedor em send-text chama auto_pause_instance (RPC ${rpcFails ? "com erro" : "ok"})`, async () => {
+    const provider = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, () =>
+      new Response(JSON.stringify({ error: "too many requests" }), { status: 429, headers: { "Content-Type": "application/json" } }));
+    const addr = provider.addr as Deno.NetAddr;
+    Deno.env.set("EVOLUTION_API_URL", `http://127.0.0.1:${addr.port}`);
+    const autoPauseCalls: Record<string, unknown>[] = [];
+    try {
+      const supabase: any = {
+        from: () => makeQuery(null),
+        rpc: (fn: string, args: Record<string, unknown>) => {
+          if (fn === "get_instance_token") return Promise.resolve({ data: "vault-instance-token", error: null });
+          if (fn === "is_instance_paused") return Promise.resolve({ data: false, error: null });
+          if (fn === "auto_pause_instance") {
+            autoPauseCalls.push(args);
+            return Promise.resolve({ data: null, error: rpcFails ? { code: "42501", message: "negado" } : null });
+          }
+          return Promise.resolve({ data: null, error: null });
+        },
+      };
+      const res = await handleEvolutionApi(
+        controlRequest("send-text", { instanceName: "PRINCIPAL", number: "5511999999999", text: "oi" }),
+        { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },
+      );
+      const json = await res.json();
+      assertEquals(json.error, true, "resposta original do provedor preservada");
+      assertEquals(json.status, 429, "status do provedor preservado no corpo");
+      assertEquals(autoPauseCalls.length, 1, "exatamente uma pausa automática");
+      assertEquals(autoPauseCalls[0].p_instance, "PRINCIPAL");
+      assertEquals(autoPauseCalls[0].p_minutes, 30);
+    } finally {
+      resetInstanceTokenCache();
+      await provider.shutdown();
+    }
+  });
+}
+
 // ─── R2-API-014 (P2) ────────────────────────────────────────────────────────
 // Falha ao ler a privacidade atual NÃO pode virar abertura dos outros campos.
 // Antes: GET /user/privacy falhando deixava `current = {}` e o merge fabricava

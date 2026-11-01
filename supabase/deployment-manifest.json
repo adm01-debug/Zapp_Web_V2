@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 85,
-    "source_file_count": 169,
+    "source_file_count": 170,
     "verify_jwt_true": 71,
     "verify_jwt_false": 14
   },
@@ -233,6 +233,11 @@
       "path": "supabase/functions/_shared/hmac-validation.ts",
       "bytes": 24376,
       "sha256": "cf58dbc890e8c4cf62425b8a5645af291b953264998cd327e5cc4fd4c895956b"
+    },
+    {
+      "path": "supabase/functions/_shared/instance-pause-actions.ts",
+      "bytes": 595,
+      "sha256": "6b1b66e14ea781bdedb55cb8e7246a4a45e5de7b41854a76f7f2a26b6a4f5430"
     },
     {
       "path": "supabase/functions/_shared/media-egress.ts",
@@ -591,8 +596,8 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "bytes": 77702,
-      "sha256": "ff57ccd8dbaee662901b4a0a3123038e9ef4a4132bef7156e2931a83f57a513f"
+      "bytes": 78174,
+      "sha256": "89ad037e67ed341a0c89b58e5f566a195f6d5f29dbc0f0de534d464dbca60019"
     },
     {
       "path": "supabase/functions/evolution-sync/index.ts",
@@ -1670,7 +1675,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d7fca8d1e309aa38eeabc60ebb69c4ea9b64b57d9fca635c16c3c6347282eaec",
+      "source_sha256": "927b8cfc0fcc639b06ca969c762a5213ca3efe2fd024311efb922bf226733a27",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -1682,6 +1687,7 @@
         "supabase/functions/_shared/evolution-sync-actions.ts",
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/instance-pause-actions.ts",
         "supabase/functions/_shared/media-egress.ts",
         "supabase/functions/_shared/rate-limit-log.ts",
         "supabase/functions/_shared/request-policy.ts",
@@ -2533,5 +2539,5 @@
       ]
     }
   ],
-  "manifest_sha256": "96262db5e04f7c1a26f21ccfff51859b31c21a60618b0379e5828ff32ec8a6db"
+  "manifest_sha256": "83196a010b38f47e6cf5a329cd2dbcdbde6432d3b8efabfcc71f51d9b0856542"
 }
