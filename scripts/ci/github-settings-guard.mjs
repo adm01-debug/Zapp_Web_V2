@@ -271,8 +271,9 @@ async function checarSelectedActions() {
   const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions/selected-actions`);
   const divergencias = [];
   const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort();
-  // A API devolve `dono/acao@*` e sub-ações completas (`github/codeql-action/init@*`); strip apenas o sufixo de versão.
-  const normalizar = (p) => p.replace(/@.*$/, '');
+  // A API devolve padrões com `@*` (wildcard total); strip só esse sufixo.
+  // `@v1`, `@sha` e similares são preservados: diferem do baseline e disparam divergência.
+  const normalizar = (p) => p.replace(/@\*$/, '');
   const encontradosPatterns = [...new Set((sel?.patterns_allowed ?? []).map(normalizar))].sort();
   if (blPatterns.join('|') !== encontradosPatterns.join('|')) {
     divergencias.push({

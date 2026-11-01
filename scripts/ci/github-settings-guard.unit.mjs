@@ -22,7 +22,8 @@ const REPO_OK =
 const ACTIONS_OK = "send({ enabled: true, allowed_actions: 'selected', sha_pinning_required: true })";
 const WORKFLOW_PERMS_OK = "send({ default_workflow_permissions: 'write', can_approve_pull_request_reviews: true })";
 const SELECTED_PATTERNS = "['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions/cache','actions/checkout','actions/github-script','actions/setup-go','actions/setup-node','actions/upload-artifact','github/codeql-action/init','github/codeql-action/analyze','actions/dependency-review-action','ossf/scorecard-action']";
-// Formato real da API: sufixo @*, sub-ações separadas, verified_allowed e github_owned_allowed.
+// Formato real da API: sufixo @* (wildcard total), sub-ações separadas, verified_allowed e github_owned_allowed.
+// Refs mais restritos (@v1, @sha) não são stripped — o guard os detecta como divergência.
 const SELECTED_OK = "send({ patterns_allowed: ['oven-sh/setup-bun@*','denoland/setup-deno@*','supabase/setup-cli@*','peter-evans/create-pull-request@*','gitleaks/gitleaks-action@*','actions/cache@*','actions/checkout@*','actions/github-script@*','actions/setup-go@*','actions/setup-node@*','actions/upload-artifact@*','github/codeql-action/init@*','github/codeql-action/analyze@*','actions/dependency-review-action@*','ossf/scorecard-action@*'], verified_allowed: false, github_owned_allowed: true })";
 const SELECTED_API = SELECTED_OK;
 const SEM_ESCOPO = "send({ message: 'Resource not accessible by integration' }, 403)";
@@ -181,6 +182,15 @@ describe('settings-guard: perimetro conforme o baseline', () => {
   it('acao a mais em selected-actions e divergencia', () => {
     const r = rodarGuard('ok', { selected: "send({ patterns_allowed: ['evil/acao@*'] })" });
     assert.equal(r.code, 1, `esperava exit 1, veio ${r.code}:\n${r.out}`);
+    assert.ok(r.out.includes('selected_actions.patterns_allowed'), `nao apontou o campo:\n${r.out}`);
+  });
+
+  it('ref restritivo (@v1) e detectado como divergencia (nao e stripped)', () => {
+    // Se alguem troca oven-sh/setup-bun@* por oven-sh/setup-bun@v1, o guard precisa
+    // acusar divergencia: @v1 e mais restritivo que o wildcard esperado pelo baseline.
+    const selV1 = SELECTED_API.replace('oven-sh/setup-bun@*', 'oven-sh/setup-bun@v1');
+    const r = rodarGuard('ok', { selected: selV1 });
+    assert.equal(r.code, 1, `esperava exit 1 (ref restritivo diverge), veio ${r.code}:\n${r.out}`);
     assert.ok(r.out.includes('selected_actions.patterns_allowed'), `nao apontou o campo:\n${r.out}`);
   });
 
