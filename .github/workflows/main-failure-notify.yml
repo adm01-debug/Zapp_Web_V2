@@ -1,3 +1,8 @@
+# docs:
+#   gatilho: workflow_run (e2e-logado, db-live-guard, deploy-functions, types-sync) em main com conclusion=failure
+#   prova: dedupe de 1h — suprime se o propio workflow teve run com sucesso no ultimo 1h
+#   falha: sem secrets configurados o step retorna exit 0 silencioso (nao bloqueia main)
+#   avisa: WhatsApp para JOAQUIM_WHATSAPP_NUMBER via Evolution GO instancia PRINCIPAL
 # E90 (plano 2026-10-01): notifica Joaquim por WhatsApp quando workflow critico
 # falha na main. Chama Evolution GO /message/sendText direto do Actions.
 #
