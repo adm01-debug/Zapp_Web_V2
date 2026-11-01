@@ -146,7 +146,7 @@ BEGIN
 END
 $mark_pause_investigated$;
 
-REVOKE ALL ON FUNCTION public.mark_pause_investigated(uuid, text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.mark_pause_investigated(uuid, text) FROM PUBLIC, anon, service_role, authenticated;
 GRANT EXECUTE ON FUNCTION public.mark_pause_investigated(uuid, text) TO authenticated;
 
 

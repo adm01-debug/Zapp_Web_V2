@@ -188,25 +188,28 @@ BEGIN
       coalesce(v_errmsg, 'sem erro');
   END IF;
 
-  -- service_role: sem usuario humano, nao substitui o ator
+  -- service_role: sem EXECUTE — para no ACL, antes de entrar no corpo da funcao
   PERFORM set_config('role', 'service_role', true);
   v_errcode := NULL;
+  v_errmsg  := NULL;
   BEGIN
-    v_out := public.mark_pause_investigated(v_pause_2, 'sem ator humano');
+    v_out := public.mark_pause_investigated(v_pause_2, 'service_role');
   EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS v_errcode = RETURNED_SQLSTATE, v_errmsg = MESSAGE_TEXT;
   END;
   PERFORM set_config('role', 'none', true);
   IF v_errcode IS DISTINCT FROM '42501' THEN
-    RAISE EXCEPTION 'T2 FALHOU: service_role sem ator deveria dar 42501 (deu %)', coalesce(v_errcode, 'sem erro');
+    RAISE EXCEPTION 'T2 FALHOU: service_role deveria dar 42501 (deu %)', coalesce(v_errcode, 'sem erro');
   END IF;
-  IF v_errmsg IS DISTINCT FROM 'sem_permissao_para_investigar_pausa' THEN
-    RAISE EXCEPTION 'T2 FALHOU: service_role sem ator deveria receber sem_permissao_para_investigar_pausa (deu %)',
+  IF v_errmsg IS NULL
+     OR v_errmsg = 'sem_permissao_para_investigar_pausa'
+     OR v_errmsg !~ '(function|fun[uç][ãa]o) mark_pause_investigated' THEN
+    RAISE EXCEPTION 'T2 FALHOU: service_role deveria parar no ACL do EXECUTE (mensagem=%)',
       coalesce(v_errmsg, 'sem erro');
   END IF;
   SELECT count(*) INTO v_n FROM public.audit_logs WHERE entity_id = v_pause_2;
   IF v_n <> 0 THEN
-    RAISE EXCEPTION 'T2 FALHOU: service_role sem ator deixou rastro na auditoria';
+    RAISE EXCEPTION 'T2 FALHOU: service_role deixou rastro na auditoria';
   END IF;
   v_ok := v_ok + 1;
 
@@ -424,6 +427,9 @@ BEGIN
 
   IF has_function_privilege('anon', 'public.mark_pause_investigated(uuid,text)', 'EXECUTE') THEN
     RAISE EXCEPTION 'T6 FALHOU: anon nao deveria ter EXECUTE na funcao nova';
+  END IF;
+  IF has_function_privilege('service_role', 'public.mark_pause_investigated(uuid,text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'T6 FALHOU: service_role nao deveria ter EXECUTE na funcao nova';
   END IF;
   IF NOT has_function_privilege('authenticated', 'public.mark_pause_investigated(uuid,text)', 'EXECUTE') THEN
     RAISE EXCEPTION 'T6 FALHOU: authenticated deveria ter EXECUTE na funcao nova';
