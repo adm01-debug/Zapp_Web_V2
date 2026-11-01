@@ -81,14 +81,7 @@ export class SearchInsightsError extends Error {
 }
 
 async function fetchSearchInsights(days: number): Promise<SearchInsights> {
-  // O cast manual permanece até o types.ts incluir search_insights;
-  // quando incluir, substituir por supabase.rpc('search_insights', { p_days: days }).
-  const rpc = supabase.rpc.bind(supabase) as unknown as (
-    fn: 'search_insights',
-    args: { p_days: number },
-  ) => Promise<{ data: unknown; error: { message: string } | null }>;
-
-  const { data, error } = await rpc('search_insights', { p_days: days });
+  const { data, error } = await supabase.rpc('search_insights', { p_days: days });
   if (error) throw new SearchInsightsError(error.message);
   return parseSearchInsights(data, days);
 }
