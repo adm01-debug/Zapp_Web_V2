@@ -1,32 +1,614 @@
 [
-  {"pr": 2489, "titulo": "fix(e2e): corrigir seletor de telefonia no spec E2E", "status": "MERGE_OK", "auto_merge": true, "mergeable_state": "behind", "sha": "14881cea7f87c1dcf11b754273f333ca1855f0b3"},
-  {"pr": 2491, "titulo": "chore(migrations): reconciliar migration de search_insights no ledger", "status": "MERGE_OK", "auto_merge": true, "mergeable_state": "blocked", "sha": "07ac5c6f0550bb12ffa990435d8be820bad2d251"},
-  {"pr": 2492, "titulo": "docs: fila-merge + testes + documentação", "status": "CONFLITO", "auto_merge": false, "mergeable_state": "dirty", "sha": null},
-  {"pr": 2493, "titulo": "chore: atualizar CLAUDE.md e plano de tarefas", "status": "MERGE_OK", "auto_merge": true, "mergeable_state": "behind", "sha": null},
-  {"pr": 2494, "titulo": "chore(types): sincronização automática de tipos TypeScript", "status": "MERGE_OK", "auto_merge": true, "mergeable_state": "behind", "sha": "f5bd023d90e16b881beb336b1560e6560d25bd62"},
-  {"pr": 2495, "titulo": "chore: adicionar comandos .claude/commands/", "status": "MERGE_OK", "auto_merge": true, "mergeable_state": "behind", "sha": null},
-  {"pr": 2496, "titulo": "feat(edge): message-delivery — envio multimídia e fases 1-4", "status": "DECISAO_HUMANA", "auto_merge": false, "mergeable_state": null, "sha": null},
-  {"pr": 2497, "titulo": "ci: pular PRs draft no CI", "status": "DECISAO_HUMANA", "auto_merge": false, "mergeable_state": null, "sha": null},
-  {"pr": 2498, "titulo": "feat(rpc): renomear search_insights → search_contacts_insights + testes", "status": "MERGE_OK", "auto_merge": true, "mergeable_state": "blocked", "sha": "eb03117a823947804ba1659449968714c36b4ac1"},
-  {"pr": 2499, "titulo": "ci: adicionar workflow main-failure-notify.yml", "status": "DECISAO_HUMANA", "auto_merge": false, "mergeable_state": null, "sha": null},
-  {"pr": 2500, "titulo": "feat(edge): copilot-tick + migration RPC copilot", "status": "AGUARDANDO_APROVACAO", "auto_merge": false, "mergeable_state": null, "sha": null},
-  {"pr": 2501, "titulo": "docs: planos E19/E20/E21", "status": "MERGE_OK", "auto_merge": true, "mergeable_state": "blocked", "sha": null},
-  {"pr": 2502, "titulo": "ci(draft): filtrar PRs draft no CI (v2)", "status": "DECISAO_HUMANA", "auto_merge": false, "mergeable_state": null, "sha": null},
-  {"pr": 2503, "titulo": "ci: ajustes em ci.yml", "status": "DECISAO_HUMANA", "auto_merge": false, "mergeable_state": null, "sha": null},
-  {"pr": 2504, "titulo": "test(e2e): aumentar workers de 1→4 e ajustar timeouts", "status": "MERGE_OK", "auto_merge": true, "mergeable_state": "behind", "sha": "240d06fee91049b5adaa730bd5d91a09ec870ebd"},
-  {"pr": 2505, "titulo": "perf(db): adicionar 57 índices FK em tabelas de referência", "status": "AGUARDANDO_APROVACAO", "auto_merge": false, "mergeable_state": null, "sha": null},
-  {"pr": 2506, "titulo": "docs: auditoria de 22 documentos", "status": "CONFLITO", "auto_merge": false, "mergeable_state": "dirty", "sha": null},
-  {"pr": 2507, "titulo": "docs: corrigir CLAUDE.md — 6 checks → 3 checks obrigatórios", "status": "MERGE_OK", "auto_merge": true, "mergeable_state": "blocked", "sha": null},
-  {"pr": 2508, "titulo": "ci: dispatch manual deploy-functions.yml", "status": "DECISAO_HUMANA", "auto_merge": false, "mergeable_state": null, "sha": null},
-  {"pr": 2510, "titulo": "ci: adicionar scorecard.yml + ajuste ci.yml + CLAUDE.md", "status": "DECISAO_HUMANA", "auto_merge": false, "mergeable_state": null, "sha": null},
-  {"pr": 2511, "titulo": "refactor: 100 arquivos — reestruturação de componentes e workflows", "status": "DECISAO_HUMANA", "auto_merge": false, "mergeable_state": null, "sha": null},
-  {"pr": 2512, "titulo": "feat: grande reestruturação (138 arquivos)", "status": "CONFLITO", "auto_merge": false, "mergeable_state": "dirty", "sha": null},
-  {"pr": 2513, "titulo": "fix(ui): corrigir contraste WCAG em componentes CSS", "status": "MERGE_OK", "auto_merge": true, "mergeable_state": "blocked", "sha": "6a7924ba6381dfbffc8140375a045711b95caf73"},
-  {"pr": 2514, "titulo": "feat(db): migration cron startup — CREATE INDEX IF NOT EXISTS", "status": "MERGE_OK", "auto_merge": false, "mergeable_state": "blocked", "sha": "9db8ac785490c8a6d5e0b15a39b28bcb27d36aff"},
-  {"pr": 2515, "titulo": "feat: nova feature (DRAFT)", "status": "DECISAO_HUMANA", "auto_merge": false, "mergeable_state": null, "sha": null},
-  {"pr": 2516, "titulo": "test(talkx): testes X006 para campanhas TalkX", "status": "MERGE_OK", "auto_merge": true, "mergeable_state": "blocked", "sha": "992c155d11d713082df5096ab4b59d964b8aa2b1"},
-  {"pr": 2517, "titulo": "feat(db): migration com DROP TYPE + UPDATE em massa (DRAFT)", "status": "DECISAO_HUMANA", "auto_merge": false, "mergeable_state": null, "sha": null},
-  {"pr": 2485, "titulo": "fix(rls): corrigir políticas RLS — DROP POLICY IF EXISTS", "status": "DECISAO_HUMANA", "auto_merge": false, "mergeable_state": null, "sha": null},
-  {"pr": 2486, "titulo": "feat(copilot): RADAR — 34 arquivos + novas edge functions", "status": "DECISAO_HUMANA", "auto_merge": false, "mergeable_state": null, "sha": null},
-  {"pr": 2487, "titulo": "fix(db): corrigir trigger de notificações — DROP TRIGGER IF EXISTS", "status": "DECISAO_HUMANA", "auto_merge": false, "mergeable_state": null, "sha": null}
+  {
+    "pr": 1930,
+    "title": "feat(db-audit): W21 — check-migration-drift --classificar: 4 classes de drift",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK_AUTO_MERGE_PENDING",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/1930"
+  },
+  {
+    "pr": 2078,
+    "title": "ci(F3): baseline strict=false — opção A sem fila serial",
+    "draft": false,
+    "auto_merge": false,
+    "mergeable_state": "blocked",
+    "status": "IMPOSSIVEL_MERGE",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2078"
+  },
+  {
+    "pr": 2417,
+    "title": "fix(tests): mocks clientHeight/clientWidth e spy HTMLElement",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGEAR_COM_RESSALVA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2417"
+  },
+  {
+    "pr": 2418,
+    "title": "docs: plano de correções e melhorias — 190 etapas (2026-10-1...)",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGEAR",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2418"
+  },
+  {
+    "pr": 2426,
+    "title": "fix(ci): corrigir timeout do branch-hygiene-audit e baseline",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2426"
+  },
+  {
+    "pr": 2431,
+    "title": "fix(ci): docker-shim protege roles pg_*; setup.ts usa Element...",
+    "draft": false,
+    "auto_merge": false,
+    "mergeable_state": "blocked",
+    "status": "MERGEAR_COM_RESSALVA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2431"
+  },
+  {
+    "pr": 2457,
+    "title": "feat(db): investigação de incidentes de pausa de instância",
+    "draft": false,
+    "auto_merge": false,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2457"
+  },
+  {
+    "pr": 2460,
+    "title": "feat: 7 edge functions copiloto RADAR fases 8-10 (CV-071–CV-...)",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2460"
+  },
+  {
+    "pr": 2461,
+    "title": "feat(db): 7 tabelas copiloto fases 13-15 (CV-121–CV-150)",
+    "draft": false,
+    "auto_merge": false,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2461"
+  },
+  {
+    "pr": 2462,
+    "title": "chore: auditoria Supabase — relatório e progresso finais",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK_AUTO_MERGE_PENDING",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2462"
+  },
+  {
+    "pr": 2463,
+    "title": "fix: MediaMigrationTool acessa dados via service (no-restrict...)",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK_AUTO_MERGE_PENDING",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2463"
+  },
+  {
+    "pr": 2464,
+    "title": "fix: resolve lint regressions and existing typecheck errors",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK_AUTO_MERGE_PENDING",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2464"
+  },
+  {
+    "pr": 2465,
+    "title": "docs(consolidacao): registra baseline técnica de 01/11",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGEAR",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2465"
+  },
+  {
+    "pr": 2466,
+    "title": "feat(message-delivery): carimbo do POST iniciado (PD-79)",
+    "draft": false,
+    "auto_merge": false,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2466"
+  },
+  {
+    "pr": 2467,
+    "title": "feat: undo do bulkArchive restaura waiting/resolved/closed",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK_AUTO_MERGE_PENDING",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2467"
+  },
+  {
+    "pr": 2469,
+    "title": "feat: completa pausa de instância (C121) — painel, bloqueio",
+    "draft": false,
+    "auto_merge": false,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2469"
+  },
+  {
+    "pr": 2471,
+    "title": "infra: investigação de pausas de instância — migration IP2-A",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2471"
+  },
+  {
+    "pr": 2472,
+    "title": "feat: pausa de instância segura a entrega de mensagens",
+    "draft": false,
+    "auto_merge": false,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2472"
+  },
+  {
+    "pr": 2473,
+    "title": "feat: conectar 7 hooks do Copiloto às edge functions AI (fas...)",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2473"
+  },
+  {
+    "pr": 2475,
+    "title": "fix(test): restaura os 3 testes de ContactNotes afrouxados",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK_AUTO_MERGE_PENDING",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2475"
+  },
+  {
+    "pr": 2476,
+    "title": "feat: cron do Multiplix retoma dispatch pausado por instância",
+    "draft": false,
+    "auto_merge": false,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2476"
+  },
+  {
+    "pr": 2478,
+    "title": "feat(tarefas): cores de prioridade D12 — Média âmbar, Alta/U",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK_AUTO_MERGE_PENDING",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2478"
+  },
+  {
+    "pr": 2479,
+    "title": "docs(resgate): mapa do delta pós 24/10 do trabalho local",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGEAR",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2479"
+  },
+  {
+    "pr": 2480,
+    "title": "feat: C297 — visual de texto longo em Badge, Card, Label",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK_AUTO_MERGE_PENDING",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2480"
+  },
+  {
+    "pr": 2481,
+    "title": "fix(rls): WITH CHECK explícito em 8 policies UPDATE críticas",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2481"
+  },
+  {
+    "pr": 2483,
+    "title": "fix: adiciona brinde_state em copilot_sessions (CV-026)",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2483"
+  },
+  {
+    "pr": 2484,
+    "title": "feat(metas): seletor Hoje/Semana/Mês na aba Metas (C130)",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK_AUTO_MERGE_PENDING",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2484"
+  },
+  {
+    "pr": 2485,
+    "title": "fix: RLS copilot — INSERT learning_moments e UPDATE scores",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2485"
+  },
+  {
+    "pr": 2486,
+    "title": "feat: motor e telas do RADAR Copiloto (CV-021–060)",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2486"
+  },
+  {
+    "pr": 2487,
+    "title": "feat: migration 20261030200000 — motor Copiloto RADAR",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2487"
+  },
+  {
+    "pr": 2491,
+    "title": "fix: reconciliar migration 20261030145126 (copilot_fases13_1)",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2491"
+  },
+  {
+    "pr": 2492,
+    "title": "fix: fila-merge retry p/ JSON truncado + testes paginação",
+    "draft": false,
+    "auto_merge": false,
+    "mergeable_state": "dirty",
+    "status": "CONFLITO",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2492"
+  },
+  {
+    "pr": 2494,
+    "title": "chore(db): sincronizar artefatos derivados do banco",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2494"
+  },
+  {
+    "pr": 2495,
+    "title": "chore: adiciona comando /auditoria-supabase",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2495"
+  },
+  {
+    "pr": 2496,
+    "title": "feat(message-delivery): carimbo do POST iniciado (PD-79) dup",
+    "draft": false,
+    "auto_merge": false,
+    "mergeable_state": "dirty",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2496"
+  },
+  {
+    "pr": 2498,
+    "title": "fix(admin): corrige RPC get_search_insights → search_insights",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2498"
+  },
+  {
+    "pr": 2499,
+    "title": "feat(ci): notificação WhatsApp em falha crítica na main (E90)",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2499"
+  },
+  {
+    "pr": 2500,
+    "title": "fix: CV-052 — commit atômico session+insights via RPC",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "AGUARDANDO_APROVACAO",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2500"
+  },
+  {
+    "pr": 2501,
+    "title": "chore(plano): marcar E19/E20/E21 como [x]",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2501"
+  },
+  {
+    "pr": 2502,
+    "title": "docs: atualiza perímetro do GitHub e checkboxes do plano",
+    "draft": true,
+    "auto_merge": false,
+    "mergeable_state": "unknown",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2502"
+  },
+  {
+    "pr": 2503,
+    "title": "fix(ci): E69+E71 — parallelizar build/typecheck e filtrar jobs",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2503"
+  },
+  {
+    "pr": 2504,
+    "title": "fix(e2e): workers CI 1→4 + timeouts explícitos",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2504"
+  },
+  {
+    "pr": 2505,
+    "title": "fix: HIGH-3 — 57 índices de FK sem cobertura",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "AGUARDANDO_APROVACAO",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2505"
+  },
+  {
+    "pr": 2506,
+    "title": "docs(audit): auditoria Supabase — 47 achados",
+    "draft": false,
+    "auto_merge": false,
+    "mergeable_state": "dirty",
+    "status": "CONFLITO",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2506"
+  },
+  {
+    "pr": 2507,
+    "title": "fix(docs): CLAUDE.md — corrige referências de 6 checks → 3",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2507"
+  },
+  {
+    "pr": 2508,
+    "title": "fix(ci): corrige typecheck das edges — npm instala @types/node",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2508"
+  },
+  {
+    "pr": 2510,
+    "title": "ci(W85/W86/W87): OpenSSF Scorecard + dependency-review",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2510"
+  },
+  {
+    "pr": 2513,
+    "title": "fix: contraste WCAG AA no modo alto contraste escuro",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2513"
+  },
+  {
+    "pr": 2514,
+    "title": "fix: CRITICAL-3 — talkx-scheduler 9,3% de falha por timeout",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2514"
+  },
+  {
+    "pr": 2515,
+    "title": "fix: pre-aquecer cache Deno antes do baseline N-017",
+    "draft": true,
+    "auto_merge": false,
+    "mergeable_state": "unknown",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2515"
+  },
+  {
+    "pr": 2516,
+    "title": "fix(talkx): caso de aceite X006 — Limites de Envio",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2516"
+  },
+  {
+    "pr": 2517,
+    "title": "feat(talkx): catálogo de motivos de supressão com RLS e FK",
+    "draft": true,
+    "auto_merge": false,
+    "mergeable_state": "unknown",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2517"
+  },
+  {
+    "pr": 2519,
+    "title": "fix: corrige 6 falhas de CI + documenta bloqueios pré-exist.",
+    "draft": true,
+    "auto_merge": false,
+    "mergeable_state": "unknown",
+    "status": "DRAFT",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2519"
+  },
+  {
+    "pr": 2520,
+    "title": "feat(talkx): criar base de demonstração determinística",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGEAR",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2520"
+  },
+  {
+    "pr": 2522,
+    "title": "fix(e2e): aguarda teclado visível antes do primeiro clique",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGEAR",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2522"
+  },
+  {
+    "pr": 2523,
+    "title": "chore(analise-prs): relatório completo de 30 PRs abertas",
+    "draft": true,
+    "auto_merge": false,
+    "mergeable_state": "unknown",
+    "status": "DRAFT",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2523"
+  },
+  {
+    "pr": 2524,
+    "title": "fix: adiciona gte/lte ao mock chainable em useAdminData",
+    "draft": false,
+    "auto_merge": false,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2524"
+  },
+  {
+    "pr": 2525,
+    "title": "docs(ci): RELATORIO_CI e PENDENCIAS — estado real 2026-11-01",
+    "draft": true,
+    "auto_merge": false,
+    "mergeable_state": "unknown",
+    "status": "DRAFT",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2525"
+  },
+  {
+    "pr": 2526,
+    "title": "fix(ci): deno check --config + waitForAppliedTheme corrigem",
+    "draft": false,
+    "auto_merge": false,
+    "mergeable_state": "blocked",
+    "status": "DECISAO_HUMANA",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2526"
+  },
+  {
+    "pr": 2527,
+    "title": "fix(ci): adicionar --config ao deno check em deploy-function",
+    "draft": true,
+    "auto_merge": false,
+    "mergeable_state": "unknown",
+    "status": "DRAFT",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2527"
+  },
+  {
+    "pr": 2529,
+    "title": "feat(talkx): RPCs analíticas de campanha — heatmap, top segm.",
+    "draft": true,
+    "auto_merge": false,
+    "mergeable_state": "unknown",
+    "status": "DRAFT",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2529"
+  },
+  {
+    "pr": 2530,
+    "title": "feat(talkx): RPCs de métricas da biblioteca de templates",
+    "draft": true,
+    "auto_merge": false,
+    "mergeable_state": "unknown",
+    "status": "DRAFT",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2530"
+  },
+  {
+    "pr": 2531,
+    "title": "feat(talkx): RPC de fila por segmento da campanha (X058)",
+    "draft": true,
+    "auto_merge": false,
+    "mergeable_state": "unknown",
+    "status": "DRAFT",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2531"
+  },
+  {
+    "pr": 2532,
+    "title": "docs(gf): BACKLOG_TAREFAS.md GF-001..056 [x] + PENDENCIAS.md",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK_AUTO_MERGE_PENDING",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2532"
+  },
+  {
+    "pr": 2533,
+    "title": "chore: arquivo de reconciliação migration 20261030145126",
+    "draft": true,
+    "auto_merge": false,
+    "mergeable_state": "unknown",
+    "status": "DRAFT",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2533"
+  },
+  {
+    "pr": 2534,
+    "title": "fix: bulkArchive mostra toast.info quando RLS bloqueia SELECT",
+    "draft": true,
+    "auto_merge": false,
+    "mergeable_state": "unknown",
+    "status": "DRAFT",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2534"
+  },
+  {
+    "pr": 2535,
+    "title": "fix(talkx): restaura X111/X112/X116 perdidos no squash",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK_AUTO_MERGE_PENDING",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2535"
+  },
+  {
+    "pr": 2536,
+    "title": "fix(e2e): workers sempre 2 — elimina timeout do Email fixture",
+    "draft": false,
+    "auto_merge": true,
+    "mergeable_state": "blocked",
+    "status": "MERGE_OK_AUTO_MERGE_PENDING",
+    "url": "https://github.com/adm01-debug/Zapp_Web_V2/pull/2536"
+  }
 ]
