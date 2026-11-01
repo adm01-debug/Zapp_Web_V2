@@ -184,7 +184,10 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
         .from('contacts')
         .select('id, conversation_status')
         .in('id', contactIds);
-      if (selectError) throw selectError;
+      if (selectError) {
+        toast.info('Sem permissão para verificar o estado das conversas');
+        return;
+      }
 
       const previousStatus = new Map<string, string | null>();
       for (const row of originals ?? []) {
@@ -198,7 +201,10 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
       const targetIds = contactIds.filter(
         (id) => previousStatus.has(id) && previousStatus.get(id) !== 'archived',
       );
-      if (targetIds.length === 0) throw new Error('nenhum contato lido');
+      if (targetIds.length === 0) {
+        toast.info('Nenhum contato disponível para arquivar');
+        return;
+      }
 
       await executeUndoable({
         successMessage: `${targetIds.length} contato(s) arquivado(s)`,

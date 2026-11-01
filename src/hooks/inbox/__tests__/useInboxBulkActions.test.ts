@@ -682,12 +682,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
     expect(archiveUpdate?.filters.id).toEqual([c1]);
   });
 
-  // BUG (documentado): o SELECT dos contatos originais está FORA do try e tem o `error`
-  // ignorado. Se ele falha (RLS/rede), `originalContacts` fica nulo e o hook segue
-  // arquivando: o botão "Desfazer" aparece, anuncia "Arquivamento desfeito" e não
-  // restaura nada. Se o SELECT lançar, `bulkLoading` fica preso em true.
-  // Ver relato: useInboxBulkActions.ts:102-105, :120-130.
-  it.fails('erro no SELECT dos originais (RLS) não pode resultar num desfazer que não restaura nada', async () => {
+  it('erro no SELECT dos originais (RLS) mostra aviso neutro e não arquiva', async () => {
     selectQueue.push({ data: null, error: { message: 'permission denied', code: '42501' } });
     const { result } = renderInbox();
     selectIds(result, [c1]);
@@ -696,13 +691,13 @@ describe('useInboxBulkActions — bulkArchive', () => {
       await result.current.bulkArchive();
     });
 
-    const antesDoDesfazer = contactUpdates().length;
-    await act(async () => {
-      await lastUndo?.undoAction();
-    });
-
-    // O desfazer precisa ter restaurado alguma coisa (hoje: nada, porque não há original).
-    expect(contactUpdates().length).toBeGreaterThan(antesDoDesfazer);
+    // RLS bloqueou: nenhuma escrita no banco
+    expect(contactUpdates()).toHaveLength(0);
+    // Aviso neutro (info), não erro
+    expect(mocks.toast.info).toHaveBeenCalled();
+    expect(mocks.toast.error).not.toHaveBeenCalled();
+    // Nenhum undo foi registrado (nada mudou)
+    expect(lastUndo).toBeNull();
   });
 });
 
