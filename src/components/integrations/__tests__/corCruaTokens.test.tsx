@@ -104,7 +104,7 @@ import { OmnichannelManager } from '../../omnichannel/OmnichannelManager';
 describe('"Não conectado" — render real', () => {
   it('GmailIntegrationCard desconectado usa outline + status-offline', () => {
     render(<GmailIntegrationCard />);
-    const badge = screen.getByText('Desconectado').parentElement as HTMLElement;
+    const badge = screen.getByText('Desconectado') as HTMLElement;
     expect(badge.className).toContain('border-status-offline');
     expect(badge.className).toContain('text-status-offline');
     // `destructive` fica só para a falha real (Indisponível), não para a ausência de conta.
@@ -126,7 +126,7 @@ describe('"Não conectado" — render real', () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const wrap = (ui: ReactNode) => render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
     wrap(<OmnichannelManager />);
-    const badge = (await screen.findByText('Desconectado')).parentElement as HTMLElement;
+    const badge = (await screen.findByText('Desconectado')) as HTMLElement;
     expect(badge.className).toContain('border-status-offline');
     expect(badge.className).toContain('text-status-offline');
   });

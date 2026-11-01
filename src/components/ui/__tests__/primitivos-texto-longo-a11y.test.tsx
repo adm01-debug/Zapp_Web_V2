@@ -14,18 +14,15 @@ describe('primitivos de UI com texto longo (120 caracteres)', () => {
     expect(TEXTO_120).toHaveLength(120);
   });
 
-  it('Badge: o filho interno retém com truncate + min-w-0 e o title guarda o texto inteiro', () => {
+  it('Badge: o div raiz retém truncate + min-w-0 e o title guarda o texto inteiro', () => {
     render(<Badge title={TEXTO_120}>{TEXTO_120}</Badge>);
 
-    // Quem corta de verdade é o `span` interno: `truncate` no `inline-flex` do pai
-    // sozinho não gera reticências (o item flex precisa de `min-w-0` no filho).
-    const interno = screen.getByText(TEXTO_120);
-    expect(interno.tagName).toBe('SPAN');
-    expect(interno.className).toContain('truncate');
-    expect(interno.className).toContain('min-w-0');
-
-    const pilula = interno.closest('div');
+    // O texto é filho direto do `div`; `truncate` e `min-w-0` ficam no próprio wrapper,
+    // sem inner span (inner span quebra gap-* e clipa botões de remoção).
+    const pilula = screen.getByText(TEXTO_120).closest('div');
     expect(pilula).not.toBeNull();
+    expect(pilula?.className).toContain('truncate');
+    expect(pilula?.className).toContain('min-w-0');
     expect(pilula).toHaveAttribute('title', TEXTO_120);
   });
 
@@ -38,7 +35,7 @@ describe('primitivos de UI com texto longo (120 caracteres)', () => {
     expect(classesCurto).toContain('truncate');
   });
 
-  it('TabsTrigger: o filho interno retém com truncate + min-w-0 e o title guarda o texto inteiro', () => {
+  it('TabsTrigger: o trigger retém min-w-0 + whitespace-nowrap e o title guarda o texto inteiro', () => {
     render(
       <Tabs defaultValue="a">
         <TabsList>
@@ -50,12 +47,13 @@ describe('primitivos de UI com texto longo (120 caracteres)', () => {
       </Tabs>,
     );
 
+    // O texto é filho direto do trigger (sem inner span); `min-w-0` + `whitespace-nowrap`
+    // ficam no próprio botão — sem `truncate` no trigger para não clipar badges absolutos.
     const aba = screen.getByRole('tab', { name: TEXTO_120 });
-    const interno = aba.querySelector('span');
-    expect(interno).not.toBeNull();
-    expect(interno?.textContent).toBe(TEXTO_120);
-    expect(interno?.className).toContain('truncate');
-    expect(interno?.className).toContain('min-w-0');
+    expect(aba.textContent).toBe(TEXTO_120);
+    expect(aba.className).toContain('min-w-0');
+    expect(aba.className).toContain('whitespace-nowrap');
+    expect(aba.className).not.toContain('truncate');
     expect(aba).toHaveAttribute('title', TEXTO_120);
   });
 

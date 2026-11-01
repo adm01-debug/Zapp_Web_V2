@@ -120,7 +120,7 @@ describe('N-073 — selo de contagem legível', () => {
   it('mostra a contagem em tamanho legível, sem text-3xs', async () => {
     renderTable();
 
-    const selo = (await screen.findByText(/reg\./)).parentElement as HTMLElement;
+    const selo = (await screen.findByText(/reg\./)) as HTMLElement;
     expect(selo).toHaveTextContent('1.234 reg.');
     expect(selo).toHaveClass('text-xs');
     expect(selo).not.toHaveClass('text-3xs');
