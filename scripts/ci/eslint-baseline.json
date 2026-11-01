@@ -398,7 +398,7 @@
     },
     {
       "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
-      "sha256": "51109d10cfa2419d2d3cb7b262c72ab5a54b84a401cfa93c95ae936a520573d9"
+      "sha256": "59addfbfddbd1615559e4721fd3410b9a2d83838afdc1fc7cb0e18f536d1aedf"
     },
     {
       "path": "src/components/inbox/chat/ChatSearchBar.tsx",
@@ -422,7 +422,7 @@
     },
     {
       "path": "src/components/inbox/chat/MessageBubble.tsx",
-      "sha256": "b26c3697607a48af8aadd4bb9042f54df7ec9683290d9607261c05a779a0eabb"
+      "sha256": "06dd5b7a7b5ce40b1dd9c3c6e7a0d47a31e71d2aa0b3665c842433023c313963"
     },
     {
       "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
@@ -778,7 +778,7 @@
     },
     {
       "path": "src/components/security/AuditLogDashboard.tsx",
-      "sha256": "a4cc257ac70667f887c4a108381e7afe4836168a66e02bf3808b77f565f14220"
+      "sha256": "8a20ae1aa544428d92288ddb0266f58838f0de469c21fa54cfc97003a533e559"
     },
     {
       "path": "src/components/security/BlockedIPDialogs.tsx",
@@ -914,7 +914,7 @@
     },
     {
       "path": "src/components/talkx/TalkXOverview.tsx",
-      "sha256": "a5b6393a1d90ca932f8fc2e417560c9b7b5b729e609c4ccf6e4020d7dcebc04a"
+      "sha256": "f9ba19af6e0f1b5e5e1bb078fb84b968a802c565d0e8266ed70ba7507d9d7c30"
     },
     {
       "path": "src/components/talkx/TalkXSettings.tsx",
@@ -1034,7 +1034,7 @@
     },
     {
       "path": "src/components/ui/dialog.tsx",
-      "sha256": "8866bb0af8e8b2054aa7cc203eb4ebab52bcb9bb3506a929736852b1e27027f0"
+      "sha256": "5b9dc96e7611d55fe431eb2a2247951a7202977636710c3da8d1edcfa9a636a9"
     },
     {
       "path": "src/components/ui/emoji-picker.tsx",
@@ -1165,6 +1165,10 @@
       "sha256": "ea6f0869db804891ba4449b468bfe270ae233e438b91a95033ebedeb00b9e8d4"
     },
     {
+      "path": "src/hooks/chat/useFilesContainerColumns.ts",
+      "sha256": "93745dd019cbe86a17a77d365d3859527c771deb47c432ac122dbbcf90e4ad2b"
+    },
+    {
       "path": "src/hooks/chat/useFilesSelection.ts",
       "sha256": "4b12a7a34983f9c58d1d2f7c39aaefe10980ff6ad30d22b08e95560e3386e5c2"
     },
@@ -1218,7 +1222,7 @@
     },
     {
       "path": "src/hooks/gamification/useAgentCelebrations.ts",
-      "sha256": "4f98f75128cbbb5acc341139d18305630b8dbc78dafaf2f8fa07388b236f68e4"
+      "sha256": "7124d883163763f80fb48de955bd04f33703046bdae86466d151360204984c86"
     },
     {
       "path": "src/hooks/inbox/useConnectionQueues.ts",
@@ -1298,7 +1302,7 @@
     },
     {
       "path": "src/hooks/system/useUserSettings.ts",
-      "sha256": "61d29b48b67c16491c9800a9ef875f180c4d5e41ed4941172651b5cb56bba690"
+      "sha256": "4d9e5d7412f6138c93f1fa8cf411528ba77838cff47efb371a25cd9a0c295001"
     },
     {
       "path": "src/hooks/team-chat/queryKeys.ts",
@@ -1595,8 +1599,7 @@
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
       "sha256": "5d4c2305b9eee8afd4e3b716ee04288d69c239b19d5988704c754502491821dc"
-    },
-    "src/hooks/chat/useFilesContainerColumns.ts"
+    }
   ],
   "issues": [
     {
@@ -8237,9 +8240,9 @@
     },
     {
       "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 125,
+      "line": 126,
       "column": 9,
-      "endLine": 125,
+      "endLine": 126,
       "endColumn": 25,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8251,9 +8254,9 @@
     },
     {
       "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 126,
+      "line": 127,
       "column": 14,
-      "endLine": 126,
+      "endLine": 127,
       "endColumn": 33,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8265,9 +8268,9 @@
     },
     {
       "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 127,
+      "line": 128,
       "column": 14,
-      "endLine": 127,
+      "endLine": 128,
       "endColumn": 31,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8279,9 +8282,9 @@
     },
     {
       "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 128,
+      "line": 129,
       "column": 14,
-      "endLine": 128,
+      "endLine": 129,
       "endColumn": 31,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8293,9 +8296,9 @@
     },
     {
       "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 129,
+      "line": 130,
       "column": 14,
-      "endLine": 129,
+      "endLine": 130,
       "endColumn": 31,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -10336,6 +10339,20 @@
       "contextHash": "8c2b14949a6f3e8da1d4b51d6521f488c5b27c5f62ac0b65b6d6cb5569cd6298"
     },
     {
+      "file": "src/hooks/chat/useFilesContainerColumns.ts",
+      "line": 80,
+      "column": 3,
+      "endLine": 80,
+      "endColumn": 18,
+      "severity": 1,
+      "ruleId": "react-hooks/exhaustive-deps",
+      "messageId": null,
+      "message": "React Hook useLayoutEffect contains a call to 'setWidth'. Without a list of dependencies, this can lead to an infinite chain of updates. To fix this, pass [ref] as a second argument to the useLayoutEffect Hook.",
+      "spanHash": "f809da716dd5e0b8e2dd13835aad869333a029adadb27afdc27801bd71409b9b",
+      "lineHash": "d4000bc37df2aee66354e6a5816cb8f6161295473edf29eeb0746935989c873b",
+      "contextHash": "c3ffa0e0b0dbccc39a16df958a47793d8d3ce92b93514ccc1f12391074cc8f03"
+    },
+    {
       "file": "src/hooks/chat/useFilesSelection.ts",
       "line": 40,
       "column": 7,
@@ -10561,9 +10578,9 @@
     },
     {
       "file": "src/hooks/gamification/useAgentCelebrations.ts",
-      "line": 266,
+      "line": 277,
       "column": 46,
-      "endLine": 266,
+      "endLine": 277,
       "endColumn": 59,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -10995,28 +11012,28 @@
     },
     {
       "file": "src/hooks/system/useUserSettings.ts",
-      "line": 114,
+      "line": 115,
       "column": 7,
-      "endLine": 114,
+      "endLine": 115,
       "endColumn": 19,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/system/useUserSettings.ts:114:7 112 | useEffect(() => { 113 | if (!user?.id) { > 114 | setIsLoading(false); | ^^^^^^^^^^^^ Avoid calling setState() directly within an effect 115 | return; 116 | } 117 |",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/system/useUserSettings.ts:115:7 113 | useEffect(() => { 114 | if (!user?.id) { > 115 | setIsLoading(false); | ^^^^^^^^^^^^ Avoid calling setState() directly within an effect 116 | return; 117 | } 118 |",
       "spanHash": "f4c53e9c2756b64e09a7b71ace5bcefcf30b9044da81f142b98fba03631870af",
       "lineHash": "ccc30b1e46ad22797a4f9e4f74e554fc8015ff82f9d540703ffaf80f8915caad",
       "contextHash": "5f57432804b0384216dd6fc25b4f66c89ff0514ee92aa3077f43e4f9c44a142d"
     },
     {
       "file": "src/hooks/system/useUserSettings.ts",
-      "line": 211,
+      "line": 220,
       "column": 36,
-      "endLine": 275,
+      "endLine": 284,
       "endColumn": 4,
       "severity": 2,
       "ruleId": "react-hooks/preserve-manual-memoization",
       "messageId": null,
-      "message": "Compilation Skipped: Existing memoization could not be preserved React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `user`, but the source dependencies were [user?.id, settings]. Inferred less specific property than source. <ROOT>/src/hooks/system/useUserSettings.ts:211:36 209 | 210 | // Save settings to DB > 211 | const saveSettings = useCallback(async () => { | ^^^^^^^^^^^^^ > 212 | if (!user?.id) { | ^^^^^^^^^^^^^^^^^^^^ > 213 | toast({ … | ^^^^^^^^^^^^^^^^^^^^ > 274 | } | ^^^^^^^^^^^^^^^^^^^^ > 275 | }, [user?.id, settings]); | ^^^^ Could not preserve existing manual memoization 276 | 277 | // Reset to defaults 278 | const resetSettings = useCallback(() => {",
+      "message": "Compilation Skipped: Existing memoization could not be preserved React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `user`, but the source dependencies were [user?.id, settings]. Inferred less specific property than source. <ROOT>/src/hooks/system/useUserSettings.ts:220:36 218 | 219 | // Save settings to DB > 220 | const saveSettings = useCallback(async () => { | ^^^^^^^^^^^^^ > 221 | if (!user?.id) { | ^^^^^^^^^^^^^^^^^^^^ > 222 | toast({ … | ^^^^^^^^^^^^^^^^^^^^ > 283 | } | ^^^^^^^^^^^^^^^^^^^^ > 284 | }, [user?.id, settings]); | ^^^^ Could not preserve existing manual memoization 285 | 286 | // Reset to defaults 287 | const resetSettings = useCallback(() => {",
       "spanHash": "7927460a9eab5a7fc91de5ece3fd046f2839d24685b0c384e5972be6eb7d37f7",
       "lineHash": "d5facd9427646de8f14236c254875960eecc2de811176b786d632131e8edb07b",
       "contextHash": "923463aab60d3280124d8fcba5b565b97af96547fa12ee33ed2123f944a22041"
@@ -13064,17 +13081,6 @@
       "spanHash": "68ec560a4a8a7535020397e74687be017aa3b7b31c1f23bf933683ba2f859b48",
       "lineHash": "f449bbab9e76dff5ba0db79efd2aa39ddc19209d0fdff2a71532815103216c5b",
       "contextHash": "abeae14ca6f1f32395e8395feee1ed997b34351992a80adaab5d1b985e90959b"
-    },
-    {
-      "file": "src/hooks/chat/useFilesContainerColumns.ts",
-      "line": 80,
-      "column": 3,
-      "endLine": 80,
-      "endColumn": 18,
-      "severity": 1,
-      "ruleId": "react-hooks/exhaustive-deps",
-      "messageId": null,
-      "message": "React Hook useLayoutEffect contains a call to 'setWidth'. Without a list of dependencies, this can lead to an infinite chain of updates. To fix this, pass [ref] as a second argument to the useLayoutEffect Hook."
     }
   ]
 }
