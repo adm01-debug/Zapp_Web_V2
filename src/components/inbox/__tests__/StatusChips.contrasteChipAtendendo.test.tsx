@@ -123,7 +123,7 @@ function tokenDoChipNoAltoContrasteClaro(css: string): string | null {
   if (!regra) return null;
   const [, seletor, declaracoes] = regra;
   if (!/\.high-contrast/.test(seletor) || !/:not\(\.dark\)/.test(seletor)) return null;
-  const cor = declaracoes.match(/color:\s*hsl\(var\(--([ a-z0-9-]+)\)\)/);
+  const cor = declaracoes.match(/color:\s*hsl\(var\(--([a-z0-9-]+)\)\)/);
   return cor ? cor[1] : null;
 }
 
