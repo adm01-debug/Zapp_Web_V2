@@ -82,14 +82,14 @@ workflow **não é um required check** — não bloqueia merges na `main`.
 - [41313326544](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41313326544) — 2026-11-01T13:52Z
 - [41209212823](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41209212823) — 2026-10-31T14:14Z
 
-**O que falha:** `workflow_dispatch` manual com `TARGET_VERSION` incorreto ou `missing_count > 0`.
+**O que falha:** `workflow_dispatch` manual disparado com `TARGET_VERSION` apontando para uma migration já registrada no ledger (não é a migration pendente local que ainda precisa ser aplicada). O preflight do workflow exige que `TARGET_VERSION` seja exatamente a versão pendente — uma versão já aplicada falha na verificação de `missing_count`.
 
 **Por que não foi corrigido:** Workflow de dispatch manual — sem código para corrigir. Este
 workflow **não é um required check** — não bloqueia merges na `main`.
 
 **O que o Joaquim precisa fazer:**
 1. O `db-migrate.yml` é disparado manualmente (Settings → Actions → db-migrate → Run workflow)
-2. Passar o `TARGET_VERSION` correto (última migration do ledger: `SELECT max(version) FROM supabase_migrations.schema_migrations`)
+2. Identificar a migration pendente: comparar `ls supabase/migrations/*.sql` com o ledger do banco (`SELECT version FROM supabase_migrations.schema_migrations ORDER BY version DESC LIMIT 5`) e usar a versão do arquivo local que **ainda não consta no banco** como `TARGET_VERSION`
 3. Fazer dry-run primeiro (`apply=false`) e conferir o hash SHA-256 antes do apply
 
 ---
