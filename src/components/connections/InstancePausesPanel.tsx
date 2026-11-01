@@ -185,7 +185,7 @@ export function InstancePausesPanel({ connections }: { connections: PanelConnect
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Pausar envios — {target?.name}</DialogTitle>
-            <DialogDescription>Nenhuma mensagem sai por esta instância até o fim da pausa ou até você retomar.</DialogDescription>
+            <DialogDescription>Envios feitos pela API de envio (ações do atendente) são bloqueados até o fim da pausa ou até você retomar. Campanhas e a fila de entrega ainda não respeitam a pausa.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">

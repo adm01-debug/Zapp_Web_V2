@@ -199,7 +199,15 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         instance ? (await resolveInstanceToken(supabase, instance)) ?? undefined : undefined);
       // C121/IP1: 429 do provedor num envio = limite de envio; pausa a instância sozinha
       // (30 min) para não insistir. Falha ao registrar a pausa não altera a resposta.
-      if (actionKind === 'send' && instance && res.status === 429) {
+      // O proxy devolve HTTP 200 e carrega o status do provedor no corpo ({ error, status }).
+      let providerRateLimited = false;
+      if (actionKind === 'send' && instance) {
+        try {
+          const payload = await res.clone().json();
+          providerRateLimited = payload?.error === true && payload?.status === 429;
+        } catch { /* corpo não-JSON: não é limite de envio */ }
+      }
+      if (providerRateLimited) {
         const { error: autoPauseError } = await supabase.rpc('auto_pause_instance', { p_instance: instance, p_minutes: 30, p_reason: 'limite de envio (429 do provedor)' });
         if (autoPauseError) new Logger('evolution-api').warn('auto_pause_instance falhou', { instance, code: autoPauseError.code });
       }
