@@ -470,7 +470,7 @@ function queryLedgerOnce() {
 
 // O pooler do Supabase esgota conexoes momentaneamente sob push/carga concorrente
 // alta (varias sessoes simultaneas). Isso e falha de infraestrutura transitoria,
-// nao drift real de schema — sem retry, cada esgotamento abria/comentava o alerta
+// nao drift real de schema -- sem retry, cada esgotamento abria/comentava o alerta
 // de contrato quebrado (issue #691 teve 9 comentarios em 80min no incidente de
 // 2026-09-25). Erros nao reconhecidos como transitorios continuam fail-fast.
 function queryLedger() {
@@ -824,17 +824,17 @@ function compare(migrations, records, exceptionsByVersion, { duplicateVersions =
       if (!exception && record.statements.length > 0) {
         // O ledger TEM statements mas nenhum produz evidencia verificavel (sem hash
         // SHA-256, sem SQL canonico) e nao ha excecao no manifesto: conteudo e prosa
-        // pura, violando a regra 7 da secao 1 do CLAUDE.md. Saía exit 0 com apenas
-        // console.warn — agora falha fechado (achado Agent 3 HIGH, auditoria 2026-09-27).
+        // pura, violando a regra 7 da secao 1 do CLAUDE.md. Saia exit 0 com apenas
+        // console.warn -- agora falha fechado (achado Agent 3 HIGH, auditoria 2026-09-27).
         // Nota: statements: null fica normalizado a [] em parseLedger() e cai no
-        // ramo de warnings abaixo — migracao legacy sem conteudo gravado e diferente
+        // ramo de warnings abaixo -- migracao legacy sem conteudo gravado e diferente
         // de migracao com prosa no lugar do SQL.
         errors.push(
           divergenceLine(migration.version, migration.fileName, ledgerName ?? record.name, 'statements no ledger sao prosa pura sem hash verificavel'),
         );
         errors.push(
           `${migration.version} (${migration.fileName}): statements no ledger sao prosa pura `
-          + '(sem hash SHA-256, sem SQL canonico) e nao ha excecao no manifesto — '
+          + '(sem hash SHA-256, sem SQL canonico) e nao ha excecao no manifesto -- '
           + 'regra 7 da secao 1 do CLAUDE.md (statements devem ser o SQL real e completo). '
           + 'Adicione o SQL real via register-migration.mjs ou crie excecao em migration-evidence.json.',
         );
@@ -914,8 +914,16 @@ function main() {
   }
 
   if (!url) {
-    flushStatus();
-    console.log('DESTINO_URL ausente - estrutura local validada; comparacao com ledger pulada.');
+    if (classificar && jsonOutput) {
+      console.log(JSON.stringify({
+        classificacoes: [],
+        totais: { 'apply-pendente': 0, 'ledger-sem-arquivo': 0, 'conteudo-divergente': 0, 'version-duplicada': 0 },
+        erros: [],
+      }, null, 2));
+    } else {
+      flushStatus();
+      console.log('DESTINO_URL ausente - estrutura local validada; comparacao com ledger pulada.');
+    }
     return 0;
   }
 
@@ -964,7 +972,7 @@ function main() {
         console.log('classificar: sem pendencias ou drift');
       } else {
         for (const c of rows) {
-          console.log(`${c.version} | ${c.disco} | ${c.ledger} | ${c.classe}`);
+          console.log(`${c.version} | ${safeDivergenceName(c.disco)} | ${safeDivergenceName(c.ledger)} | ${c.classe}`);
         }
       }
     }
@@ -980,7 +988,8 @@ function main() {
       }
       return 1;
     }
-    return 0;
+    // exit 2 para apply-pendente (neutro) -- lote-pendente.mjs usa este codigo
+    return result.classifications.filter((c) => c.classe === 'apply-pendente').length > 0 ? 2 : 0;
   }
 
   if (result.errors.length) {
