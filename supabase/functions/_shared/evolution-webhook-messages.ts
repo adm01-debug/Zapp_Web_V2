@@ -966,10 +966,11 @@ export async function handleOutgoingWhatsAppMessage(
 
   const recentCutoff = new Date(Date.now() - 60_000).toISOString();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let { data: pendingMessage, error: pendingMsgError } = await (supabase.from('messages') as any).select('id, manually_resolved_at')
+  const { data: pendingMessageInitial, error: pendingMsgError } = await (supabase.from('messages') as any).select('id, manually_resolved_at')
     .eq('contact_id', contact.id).eq('sender', 'agent').eq('message_type', parsed.messageType)
     .is('external_id', null).gte('created_at', recentCutoff)
     .order('created_at', { ascending: true }).limit(1).maybeSingle();
+  let pendingMessage = pendingMessageInitial;
   // 42703 = coluna ainda não existe (pre-DDL): re-query sem manually_resolved_at.
   let pendingColumnExists = true;
   if (pendingMsgError?.code === '42703') {
