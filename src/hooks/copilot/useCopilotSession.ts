@@ -106,7 +106,7 @@ export function useCopilotSession(contactId: string | undefined): UseCopilotSess
       const { data, error } = await supabase
         .from('copilot_sessions')
         .select(COLUNAS)
-        .eq('conversation_id', contactId)
+        .eq('contact_id', contactId)
         .maybeSingle();
       if (cancelado) return;
       // Erro (ex.: tabela ainda sem as colunas do motor) = sem RADAR, sem quebrar a Inbox.
