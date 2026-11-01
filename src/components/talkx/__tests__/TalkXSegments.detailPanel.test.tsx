@@ -9,7 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
  * O painel do rail era um card com o nome do segmento no título, origem em uma
  * linha de texto e nenhuma condição. Faltava: cabeçalho fixo "Detalhes do
  * segmento" com ✕ (Esc fecha e devolve o foco à linha), "Principais critérios"
- * com os chips legíveis + "Editar segmento", origem por extenso, ↻ que reconta o público
+ * com os chips legíveis + "Editar", origem por extenso, ↻ que reconta o público
  * do segmento, leitura pela id no cache (favoritar reflete sem novo clique) e
  * "Usar em campanha" desabilitado com motivo para segmento inativo.
  *
@@ -18,7 +18,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
  */
 
 const f = vi.hoisted(() => ({ update: vi.fn(), create: vi.fn(), rpc: vi.fn() }));
-const state = vi.hoisted(() => ({ segments: [] as unknown[] }));
+const state = vi.hoisted(() => ({ segments: [] as unknown[], viewMode: 'list' as 'list' | 'grid' }));
+
+/** Liga a contagem pendente do teste do ↻ (fora do mock para valer só dentro dele). */
+const recontando = { on: false, liberar: null as (() => void) | null };
 
 const countResposta = { mode: 'count', matched: 42, eligible: 42, suppressed: 0, invalid_phone: 0, legacy_or_deleted: 0 };
 const pageResposta = { mode: 'page', rows: [], has_more: false, next_after: null };
@@ -56,12 +59,15 @@ vi.mock('@/hooks/integrations/useTalkXSegments', async (importOriginal) => {
       updateSegment: { mutateAsync: f.update },
       deleteSegment: { mutate: vi.fn() },
       refreshEstimates: { mutate: vi.fn() },
+      viewMode: state.viewMode,
+      setViewMode: vi.fn(),
     }),
   };
 });
 
 import { TalkXSegments } from '@/components/talkx/TalkXSegments';
 import type { TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
+import { fmtDateTime } from '@/components/talkx/kit/format';
 
 const segmento: TalkXSegment = {
   id: 'seg-1',
@@ -115,6 +121,9 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     // teste monta direto no construtor em vez da biblioteca.
     window.history.replaceState({}, '', '/');
     state.segments = [{ ...segmento }];
+    state.viewMode = 'list';
+    recontando.on = false;
+    recontando.liberar = null;
     f.update.mockReset();
     f.create.mockReset();
     f.rpc.mockReset();
@@ -123,7 +132,7 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     );
   });
 
-  it('mostra "Detalhes do segmento", os critérios por extenso e o "Editar segmento" do construtor', async () => {
+  it('mostra "Detalhes do segmento", os critérios por extenso e o "Editar" do construtor', async () => {
     renderView();
     await abrirPainel();
 
@@ -137,8 +146,8 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     // Origem por extenso, não a sigla.
     expect(screen.getByText('Dados do ZAPP, em tempo real')).toBeInTheDocument();
 
-    // "Editar segmento" abre o construtor com o segmento aberto.
-    fireEvent.click(screen.getByRole('button', { name: 'Editar segmento' }));
+    // "Editar" abre o construtor com o segmento aberto.
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
     const nome = (await screen.findByPlaceholderText('Nome do segmento…')) as HTMLInputElement;
     expect(nome.value).toBe('Segmento teste');
   });
@@ -171,7 +180,7 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
 
     // O botão Favoritar da linha: a lista volta com a cópia nova (updated_at mais
     // novo) e o painel, que lê o segmento pela id no cache, reflete sem novo clique.
-    fireEvent.click(within(linhaDoSegmento()).getByRole('button', { name: 'Favoritar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Favoritar' }));
     state.segments = [{ ...segmento, is_favorite: true, updated_at: '2026-10-09T12:00:00.000Z' }];
     // Re-render equivalente ao da invalidação da query (o hook está mockado).
     fireEvent.change(screen.getByPlaceholderText('Buscar segmentos…'), { target: { value: 'Segmento' } });
@@ -190,12 +199,12 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     expect(screen.getByText('Inativo')).toBeInTheDocument();
   });
 
-  it('Esc com o construtor aberto via "Editar segmento" fecha só o construtor e mantém o painel (linha sem foco)', async () => {
+  it('Esc com o construtor aberto via "Editar" fecha só o construtor e mantém o painel (linha sem foco)', async () => {
     renderView();
     await abrirPainel();
 
-    // "Editar segmento" do painel abre o construtor (tela interna do módulo, X111).
-    fireEvent.click(screen.getByRole('button', { name: 'Editar segmento' }));
+    // "Editar" do painel abre o construtor (tela interna do módulo, X111).
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
     await screen.findByPlaceholderText('Nome do segmento…');
 
     fireEvent.keyDown(document, { key: 'Escape' });
@@ -213,7 +222,7 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     renderView();
     await abrirPainel();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Editar segmento' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
     const nome = (await screen.findByPlaceholderText('Nome do segmento…')) as HTMLInputElement;
     // Mexer no nome deixa o construtor "sujo": o "Voltar" abre o aviso do próprio construtor.
     fireEvent.change(nome, { target: { value: 'Segmento mexido' } });
@@ -310,8 +319,112 @@ describe('TalkXSegments · painel "Detalhes do segmento" (X116)', () => {
     await waitFor(() => expect(contagens()).toBeGreaterThan(0));
     const antes = contagens();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Recontar público' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Recontar público deste segmento' }));
 
     await waitFor(() => expect(contagens()).toBeGreaterThan(antes));
+  });
+  it('mostra "Criado em" e a "Amostra de contatos" do público (RPC em modo página)', async () => {
+    f.rpc.mockImplementation((_name: string, args?: { p_mode?: string }) =>
+      Promise.resolve({
+        data: args?.p_mode === 'page'
+          ? { mode: 'page', rows: [
+            { id: 'c1', name: 'Ana Souza', nickname: null, phone: '+55 11 9****-0001', company: 'Acme Ltda', avatar_url: null, tags: null },
+            { id: 'c2', name: 'Bruno Lima', nickname: null, phone: '+55 11 9****-0002', company: null, avatar_url: null, tags: null },
+          ], has_more: false, next_after: null }
+          : countResposta,
+        error: null,
+      }),
+    );
+    renderView();
+    await abrirPainel();
+
+    // "Criado em": rótulo + data formatada pelo mesmo formatador da tela.
+    const criadoEm = screen.getByText('Criado em');
+    expect(criadoEm).toBeInTheDocument();
+    expect(within(criadoEm.parentElement as HTMLElement).getByText(fmtDateTime(segmento.created_at))).toBeInTheDocument();
+
+    // "Amostra de contatos": nome + empresa (ou telefone, sem empresa).
+    expect(await screen.findByText('Amostra de contatos')).toBeInTheDocument();
+    expect(screen.getByText('Ana Souza')).toBeInTheDocument();
+    expect(screen.getByText('Acme Ltda')).toBeInTheDocument();
+    expect(screen.getByText('Bruno Lima')).toBeInTheDocument();
+    expect(screen.getByText('+55 11 9****-0002')).toBeInTheDocument();
+  });
+
+  it('sem contatos na amostra, o bloco "Amostra de contatos" não aparece', async () => {
+    renderView();
+    await abrirPainel();
+    await waitFor(() => expect(f.rpc).toHaveBeenCalled());
+    expect(screen.queryByText('Amostra de contatos')).toBeNull();
+  });
+
+  it('modo grade: o cartão mostra descrição e Esc/✕ devolvem o foco ao cartão que abriu o painel', async () => {
+    state.viewMode = 'grid';
+    renderView();
+    const grade = await screen.findByTestId('segments-grid');
+    expect(screen.queryByTestId('segments-list')).toBeNull();
+
+    const cartao = within(grade).getByText('Segmento teste').closest('[data-testid="segment-card"]') as HTMLElement;
+    expect(within(cartao).getByText('Clientes que já compraram')).toBeInTheDocument();
+    fireEvent.click(cartao);
+    await screen.findByText('Detalhes do segmento');
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByText('Detalhes do segmento')).toBeNull());
+    expect(cartao).toHaveFocus();
+
+    // Mesmo caminho pelo ✕, depois de reabrir pelo teclado (Enter no cartão focado).
+    cartao.focus();
+    fireEvent.keyDown(cartao, { key: 'Enter' });
+    await screen.findByText('Detalhes do segmento');
+    cartao.blur();
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
+    await waitFor(() => expect(screen.queryByText('Detalhes do segmento')).toBeNull());
+    expect(cartao).toHaveFocus();
+  });
+
+  it('o ↻ do cabeçalho tem o nome acessível "Recontar público deste segmento" e fica desabilitado enquanto conta', async () => {
+    f.rpc.mockImplementation((_name: string, args?: { p_mode?: string }) =>
+      args?.p_mode === 'count' && recontando.on
+        ? new Promise((ok) => { recontando.liberar = () => ok({ data: countResposta, error: null }); })
+        : Promise.resolve({ data: args?.p_mode === 'page' ? pageResposta : countResposta, error: null }),
+    );
+    renderView();
+    await abrirPainel();
+
+    const botao = await screen.findByRole('button', { name: 'Recontar público deste segmento' });
+    await waitFor(() => expect(botao).toBeEnabled());
+
+    // A nova contagem fica pendente: o botão desabilita e o ícone gira (motion-safe).
+    recontando.on = true;
+    fireEvent.click(botao);
+    await waitFor(() => expect(botao).toBeDisabled());
+    expect(botao.querySelector('svg')?.getAttribute('class')).toContain('animate-spin');
+
+    // Resolvida a contagem, o botão volta a ficar disponível e para de girar.
+    recontando.on = false;
+    recontando.liberar?.();
+    await waitFor(() => expect(botao).toBeEnabled());
+    expect(botao.querySelector('svg')?.getAttribute('class') ?? '').not.toContain('animate-spin');
+  });
+
+  it('o nome no cartão da grade usa a classe "font-semibold" (typo "font--semibold" corrigido)', async () => {
+    state.viewMode = 'grid';
+    renderView();
+    const grade = await screen.findByTestId('segments-grid');
+    const nome = within(grade).getByText('Segmento teste');
+    expect(nome.className).toContain('font-semibold');
+    expect(nome.className).not.toContain('font--semibold');
+  });
+
+  it('o painel lista TODOS os critérios por extenso (sem corte em 5)', async () => {
+    const extras = Array.from({ length: 4 }, (_, i) => ({ id: `rx${i}`, field: 'tags', op: 'contains', value: `T${i}` }));
+    state.segments = [{ ...segmento, rules: { groups: [{ id: 'g1', match: 'and', rules: [...segmento.rules.groups[0].rules, ...extras] }] } }];
+    renderView();
+    await abrirPainel();
+
+    // 3 originais + 4 extras = 7 chips; o 7º ("Tags contém T3") passaria do corte de 5.
+    expect(screen.getByText('Tags contém T3')).toBeInTheDocument();
+    expect(screen.getByText('Lead score maior que 50')).toBeInTheDocument();
   });
 });

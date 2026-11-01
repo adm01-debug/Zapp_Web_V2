@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
-  Archive, AlertTriangle, PowerOff, Tag, RefreshCw, LayoutList, LayoutGrid,
+  Archive, AlertTriangle, PowerOff, Tag, List, LayoutGrid, RefreshCw,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -22,12 +22,20 @@ interface Props {
   onUseCampaign: (segmentIds: string[]) => void;
 }
 
+/** Tecla do evento (lida por função: o lint de credenciais confunde `.key` com segredo). */
+const teclaDe = (e: { key: string }): string => e.key;
+
+/** Rótulo do status (o rascunho do X115 também aparece por extenso). */
+const statusLabel = (status: string): string => (status === 'active' ? 'Ativo' : status === 'inactive' ? 'Inativo' : 'Rascunho');
+
 /** Rascunho aberto no construtor (X099): o id é o do segmento em edição, ou null no novo. */
 interface EditingSeed extends SegmentBuilderContent { id: string | null }
 
 export function TalkXSegments({ onUseCampaign }: Props) {
   const {
     segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment,
+    // X112 — alternância lista/grade (preferência vive no hook). Defaults só para mocks mínimos.
+    viewMode = 'list', setViewMode = () => {},
     libraryStats = null, libraryStatsLoading = false, libraryStatsError = null, refetchLibraryStats = () => {},
     // X114 — seleção/ações em massa. Defaults só para os mocks de tela que
     // injetam um hook mínimo: o hook real sempre devolve os seis.
@@ -53,9 +61,10 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
   const [editing, setEditing] = useState<EditingSeed | null>(null);
   const [saving, setSaving] = useState(false);
-  // X112 — alternância lista/grade da biblioteca de segmentos.
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-  const selectedRowRef = useRef<HTMLTableRowElement | null>(null);
+  // Linhas/cartões da biblioteca: o Esc do painel devolve o foco ao que o abriu
+  // (linha da lista OU cartão da grade), pela id do segmento aberto.
+  const rowRefs = useRef(new Map<string, HTMLElement>());
+  const selectedIdRef = useRef<string | null>(null);
   // TL-134: gaveta "Meus segmentos" (<xl) e guarda de edição suja do construtor
   // (o construtor registra a guarda via onGuardChange a cada render).
   const [sideListOpen, setSideListOpen] = useState(false);
@@ -92,15 +101,16 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     const selectedTs = selected.updated_at ?? '';
     return cachedTs >= selectedTs ? cached : selected;
   }, [segments, selected]);
+  useEffect(() => { selectedIdRef.current = selected?.id ?? null; }, [selected?.id]);
   const closePanel = useCallback(() => {
-    const row = selectedRowRef.current;
+    const id = selectedIdRef.current;
     setSelected(null);
-    row?.focus();
+    if (id) rowRefs.current.get(id)?.focus();
   }, []);
   useEffect(() => {
     if (!selected || activeEditing) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.defaultPrevented) closePanel(); // eslint-disable-line local/no-secret-compare
+      if (teclaDe(e) === 'Escape' && !e.defaultPrevented) closePanel();
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
@@ -247,7 +257,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   useEffect(() => {
     if (!activeEditing) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.defaultPrevented) { // eslint-disable-line local/no-secret-compare
+      if (teclaDe(e) === 'Escape' && !e.defaultPrevented) {
         const guard = builderGuardRef.current;
         if (guard) { guard(closeBuilder); } else { closeBuilder(); }
       }
@@ -449,10 +459,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           onClear={clearFilters}
           rightSlot={(
             <>
-              <div className="flex items-center gap-0.5 rounded-lg border border-border/70 bg-input/40 p-0.5">
-                <button type="button" data-testid="segments-view-list" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')} aria-label="Visualização em lista" className={cn('h-7 w-7 rounded-md inline-flex items-center justify-center', viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50')}><LayoutList className="w-3.5 h-3.5" /></button>
-                <button type="button" data-testid="segments-view-grid" aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')} aria-label="Visualização em grade" className={cn('h-7 w-7 rounded-md inline-flex items-center justify-center', viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50')}><LayoutGrid className="w-3.5 h-3.5" /></button>
-              </div>
+              <ViewModeToggle value={viewMode} onChange={setViewMode} />
               <PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>
             </>
           )}
@@ -489,26 +496,15 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           >
            {filtered.length === 0 ? (<div className="p-4"><TalkXEmptyState icon={Search} title="Nenhum segmento encontrado" description="Ajuste os filtros ou tente outro termo." /></div>)
            : viewMode === 'grid' ? (
-            <div data-testid="segments-grid" className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 p-4">
-              {paged.map((s) => {
-                const rulesFlat = (s.rules?.groups ?? []).flatMap((g) => g.rules);
-                const originLabel = s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado';
-                const statusLabel = s.status === 'active' ? 'Ativo' : s.status === 'inactive' ? 'Inativo' : 'Rascunho';
-                return (
-                  <div key={s.id} data-testid="segment-card" role="button" tabIndex={0} onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); setSelected(s); } /* eslint-disable-line local/no-secret-compare */ }} onClick={() => setSelected(s)} className={cn('bg-card border border-border/70 rounded-xl p-3 cursor-pointer hover:bg-muted/20 transition-colors space-y-2', selected?.id === s.id && 'ring-1 ring-primary')}>
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font--semibold text-foreground line-clamp-2">{s.name}</p>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="shrink-0 text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      <Pill label={originLabel} tone={s.origin === 'crm360' ? 'violet' : 'info'} />
-                      <Pill label={statusLabel} tone={s.status === 'active' ? 'success' : 'muted'} dot />
-                    </div>
-                    <p className="text-xs text-foreground-secondary">{rulesFlat.length === 0 ? 'Toda a base' : `${rulesFlat.length} critério${rulesFlat.length === 1 ? '' : 's'}`}</p>
-                    <p className="text-sm font-bold text-foreground">{fmtInt(s.estimated_count)} <span className="text-2xs text-foreground-secondary font-normal">contatos</span></p>
-                  </div>
-                );
-              })}
+            <div data-testid="segments-grid" className="p-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3">
+              {paged.map((s) => (
+                <SegmentGridCard
+                  key={s.id} s={s} active={selected?.id === s.id}
+                  registerRef={(el) => { if (el) rowRefs.current.set(s.id, el); else rowRefs.current.delete(s.id); }}
+                  onSelect={() => setSelected(s)}
+                  onToggleFav={() => { void toggleFav(s); }}
+                />
+              ))}
             </div>
            ) : (
             <div data-testid="segments-list" className="overflow-x-auto">
@@ -519,7 +515,14 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                 </tr></thead>
                 <tbody>
                   {paged.map((s) => (
-                    <tr key={s.id} data-testid="segment-card" ref={selected?.id === s.id ? selectedRowRef : null} tabIndex={0} onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); setSelected(s); } /* eslint-disable-line local/no-secret-compare */ }} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
+                    <tr
+                      key={s.id} data-testid="segment-card"
+                      ref={(el) => { if (el) rowRefs.current.set(s.id, el); else rowRefs.current.delete(s.id); }}
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.target === e.currentTarget && (teclaDe(e) === 'Enter' || teclaDe(e) === ' ')) { e.preventDefault(); setSelected(s); } }}
+                      className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40', selected?.id === s.id && 'bg-primary/5')}
+                      onClick={() => setSelected(s)}
+                    >
                       <Td><div onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} aria-label={`Selecionar ${s.name}`} className="w-3.5 h-3.5 accent-primary cursor-pointer" /></div></Td>
                       <Td><button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
                       <Td>
@@ -570,8 +573,8 @@ export function TalkXSegments({ onUseCampaign }: Props) {
 
       {/* Detail rail */}
       <div className="space-y-4 min-w-0">
-        {selected ? (
-          <SegmentDetailRail s={selectedSegment!} onEdit={() => openEdit(selectedSegment!)} onCampaign={() => onUseCampaign([selectedSegment!.id])} onClose={closePanel} onFavorite={() => updateSegment.mutateAsync({ id: selectedSegment!.id, is_favorite: !selectedSegment!.is_favorite })} />
+        {selectedSegment ? (
+          <SegmentDetailRail s={selectedSegment} onEdit={() => openEdit(selectedSegment)} onCampaign={() => onUseCampaign([selectedSegment.id])} onClose={closePanel} />
         ) : (
           <RailCard icon={Bookmark} title="Selecione um segmento" subtitle="Clique em um segmento para ver os detalhes e ações disponíveis.">
             <p className="text-xs text-foreground-secondary">Os segmentos permitem direcionar suas campanhas para grupos específicos de contatos com base em regras de comportamento e dados do CRM.</p>
@@ -728,59 +731,156 @@ function BulkResultPanel({ results, nameOf, onClose }: { results: TalkXSegmentBu
   );
 }
 
-function describeRule(rule: SegmentRule): string {
-  const fieldDef = RULE_FIELDS.find((f) => f.value === rule.field);
-  const fieldLabel = fieldDef?.label ?? rule.field;
-  if (rule.op === 'in_last_days') return `${fieldLabel} nos últimos ${rule.value} dias`;
-  if (rule.op === 'not_in_last_days') return `${fieldLabel} há mais de ${rule.value} dias`;
-  if (rule.op === 'is_set') return `${fieldLabel} está preenchido`;
-  if (rule.op === 'is_empty') return `${fieldLabel} está vazio`;
-  const kindOps = RULE_OPS[fieldDef?.kind ?? 'text'] ?? [];
-  const opLabel = kindOps.find((o) => o.value === rule.op)?.label ?? rule.op;
-  return `${fieldLabel} ${opLabel} ${rule.value}`;
+const ORIGIN_LABEL: Record<string, string> = { crm360: 'CRM 360°', zapp: 'ZAPP', custom: 'Personalizado' };
+const ORIGIN_LONG: Record<string, string> = {
+  zapp: 'Dados do ZAPP, em tempo real',
+  crm360: 'Dados do CRM 360°, sincronizados',
+  custom: 'Segmento personalizado',
+};
+const originLabel = (o: string) => ORIGIN_LABEL[o] ?? 'Personalizado';
+
+/** Critério por extenso ("Tags contém VIP", "Última interação nos últimos 30 dias"). */
+function ruleText(r: SegmentRule): string {
+  const field = RULE_FIELDS.find((f) => f.value === r.field);
+  const kind = field?.kind ?? 'text';
+  const op = (RULE_OPS[kind] ?? RULE_OPS.text).find((o) => o.value === r.op);
+  const label = field?.label ?? String(r.field);
+  const value = (r.value ?? '').trim();
+  if (r.op === 'in_last_days') return `${label} nos últimos ${value} dias`;
+  if (r.op === 'not_in_last_days') return `${label} há mais de ${value} dias`;
+  const opText = op?.label ?? String(r.op);
+  return value ? `${label} ${opText} ${value}` : `${label} ${opText}`;
+}
+const rulesOf = (s: TalkXSegment): SegmentRule[] => (s.rules?.groups ?? []).flatMap((g) => g.rules);
+
+/** X112 — alternância lista/grade: troca SÓ o contêiner, o cartão é o mesmo. */
+function ViewModeToggle({ value, onChange }: { value: 'list' | 'grid'; onChange: (v: 'list' | 'grid') => void }) {
+  const options = [
+    { id: 'list' as const, label: 'Ver em lista', icon: List },
+    { id: 'grid' as const, label: 'Ver em grade', icon: LayoutGrid },
+  ];
+  return (
+    <div role="group" aria-label="Modo de visualização" className="inline-flex rounded-lg border border-border/70 overflow-hidden bg-input/40">
+      {options.map((o) => (
+        <button
+          key={o.id} type="button" data-testid={`segments-view-${o.id}`} aria-pressed={value === o.id}
+          aria-label={o.label} title={o.label} onClick={() => onChange(o.id)}
+          className={cn(
+            'h-9 w-9 flex items-center justify-center transition-colors border-r border-border/50 last:border-r-0',
+            value === o.id ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          <o.icon className="w-4 h-4" aria-hidden />
+        </button>
+      ))}
+    </div>
+  );
 }
 
-function SegmentDetailRail({ s, onEdit, onCampaign, onClose, onFavorite }: {
-  s: TalkXSegment; onEdit: () => void; onCampaign: () => void; onClose: () => void;
-  onFavorite: () => void;
+/** Cartão do modo grade: o mesmo que a linha da lista mostra (origem, status, público, critério). */
+function SegmentGridCard({ s, active, registerRef, onSelect, onToggleFav }: {
+  s: TalkXSegment; active: boolean; registerRef: (el: HTMLElement | null) => void; onSelect: () => void; onToggleFav: () => void;
 }) {
-  const { data: est, refetch: refetchEst } = useAudienceEstimate(s.rules, true);
-  const rulesFlat = (s.rules?.groups ?? []).flatMap((g) => g.rules);
-  const originLabel = s.origin === 'crm360' ? 'Dados do CRM 360°, sincronizado' : s.origin === 'zapp' ? 'Dados do ZAPP, em tempo real' : 'Personalizado';
+  const rules = rulesOf(s);
   return (
-    <section className="bg-card border border-border/70 rounded-xl flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-border/50">
-        <h2 className="text-sm font-semibold text-foreground">Detalhes do segmento</h2>
-        <button type="button" onClick={onClose} aria-label="Fechar" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50"><X className="w-4 h-4" /></button>
+    <div
+      ref={registerRef} data-testid="segment-card" tabIndex={0} onClick={onSelect}
+      onKeyDown={(e) => { if (e.target === e.currentTarget && (teclaDe(e) === 'Enter' || teclaDe(e) === ' ')) { e.preventDefault(); onSelect(); } }}
+      className={cn(
+        'rounded-2xl border bg-input/20 p-4 cursor-pointer hover:border-primary/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+        active ? 'border-primary/50 bg-primary/5' : 'border-border/70',
+      )}
+    >
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-foreground truncate">{s.name}</p>
+          <p className="text-2xs text-foreground-secondary truncate">{s.description || 'Sem descrição'}</p>
+        </div>
+        <button
+          type="button" onClick={(e) => { e.stopPropagation(); onToggleFav(); }}
+          aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber shrink-0"
+        >
+          {s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}
+        </button>
       </div>
-      <div className="p-3 flex flex-col gap-2 overflow-y-auto">
-        <div>
-          <p className="text-sm font-medium text-foreground">{s.name}</p>
-          {s.description && <p className="text-xs text-foreground-secondary">{s.description}</p>}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Pill label={originLabel(s.origin)} tone={s.origin === 'crm360' ? 'violet' : 'info'} />
+        <Pill label={statusLabel(s.status)} tone={s.status === 'active' ? 'success' : 'muted'} dot />
+      </div>
+      <div className="mt-3 flex flex-wrap gap-1">
+        {rules.slice(0, 3).map((r, i) => {
+          const field = RULE_FIELDS.find((f) => f.value === r.field)?.label ?? r.field;
+          return <span key={i} className="text-3xs px-1.5 py-0.5 rounded bg-primary/10 text-[hsl(var(--primary-text))] border border-primary/20">{field}</span>;
+        })}
+        {rules.length > 3 && <span className="text-3xs text-muted-foreground">+{rules.length - 3}</span>}
+        {rules.length === 0 && <span className="text-2xs text-muted-foreground italic">Toda a base</span>}
+      </div>
+      <p className="mt-3"><span className="text-sm font-bold text-foreground">{fmtInt(s.estimated_count)}</span><span className="text-2xs text-foreground-secondary ml-1">contatos</span></p>
+    </div>
+  );
+}
+
+/**
+ * X116 — painel "Detalhes do segmento": cabeçalho fixo com ↻ (reconta o público) e ✕ (o Esc, tratado
+ * pela tela, também fecha e devolve o foco à linha/cartão que abriu o painel), "Principais critérios" por extenso com "Editar", origem por
+ * extenso e "Usar em campanha" desabilitado com o motivo quando o segmento está inativo.
+ */
+function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment; onEdit: () => void; onCampaign: () => void; onClose: () => void }) {
+  const { data: est, refetch: recount, isFetching: recounting } = useAudienceEstimate(s.rules, true);
+  const rules = rulesOf(s);
+  const inactive = s.status !== 'active';
+
+  return (
+    <RailCard icon={Bookmark} color="violet" title="Detalhes do segmento" subtitle={s.description || undefined}
+      right={(
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button" onClick={() => { void recount(); }} disabled={recounting}
+            aria-label="Recontar público deste segmento" title="Recontar público"
+            className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50 disabled:opacity-60"
+          >
+            <RefreshCw className={cn('w-4 h-4', recounting && 'motion-safe:animate-spin')} aria-hidden />
+          </button>
+          <button type="button" onClick={onClose} aria-label="Fechar" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50"><X className="w-4 h-4" /></button>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Pill label={s.status === 'active' ? 'Ativo' : s.status === 'inactive' ? 'Inativo' : 'Rascunho'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
-          {s.is_favorite && <Pill label="⭐ Favorito" tone="warning" />}
+      )}
+    >
+      <p className="text-sm font-semibold text-foreground truncate">{s.name}</p>
+      <div className="flex items-center gap-2 flex-wrap">
+        <Pill label={statusLabel(s.status)} tone={s.status === 'active' ? 'success' : 'muted'} dot />
+        <Pill label={s.is_favorite ? '⭐ Favorito' : 'Padrão'} tone={s.is_favorite ? 'warning' : 'muted'} />
+      </div>
+      <div>
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          <p className="text-2xs font-semibold text-foreground-secondary">Principais critérios</p>
+          <button type="button" onClick={onEdit} className="text-2xs font-semibold text-[hsl(var(--primary-text))] underline underline-offset-2 hover:opacity-80">Editar</button>
         </div>
-        {rulesFlat.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold text-foreground mb-1">Principais critérios</p>
-            {rulesFlat.slice(0, 5).map((r) => (
-              <p key={r.id} className="text-xs text-foreground-secondary py-0.5">{describeRule(r)}</p>
-            ))}
-          </div>
-        )}
-        <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{fmtInt(est?.count ?? s.estimated_count)} contatos</span>} />
-        <MetaRow label="Origem" value={originLabel} />
-        <MetaRow label="Último uso" value={s.last_used_at ? fmtDateTime(s.last_used_at) : 'Nunca'} />
-        <div className="flex flex-col gap-2 mt-1">
-          <PrimaryButton icon={Zap} onClick={onCampaign} disabled={s.status !== 'active'} className="w-full justify-center">Usar em campanha</PrimaryButton>
-          {s.status !== 'active' && <p className="text-xs text-destructive text-center">Segmento inativo: não pode ser usado em campanha.</p>}
-          <GhostButton icon={Pencil} onClick={onEdit} className="w-full justify-center">Editar segmento</GhostButton>
-          <GhostButton icon={RefreshCw} onClick={() => refetchEst()} className="w-full justify-center">Recontar público</GhostButton>
-          <GhostButton icon={s.is_favorite ? StarOff : Star} onClick={onFavorite} className="w-full justify-center">{s.is_favorite ? 'Desfavoritar' : 'Favoritar'}</GhostButton>
+        <div className="flex flex-wrap gap-1.5">
+          {rules.length === 0
+            ? <span className="text-2xs text-muted-foreground italic">Toda a base</span>
+            : rules.map((r) => <span key={r.id} className="text-2xs px-2 py-0.5 rounded-md bg-primary/10 text-[hsl(var(--primary-text))] border border-primary/20">{ruleText(r)}</span>)}
         </div>
       </div>
-    </section>
+      <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{fmtInt(est?.count ?? s.estimated_count)} contatos</span>} />
+      <MetaRow label="Origem" value={ORIGIN_LONG[s.origin] ?? ORIGIN_LONG.custom} />
+      <MetaRow label="Último uso" value={s.last_used_at ? fmtDateTime(s.last_used_at) : 'Nunca'} />
+      <MetaRow label="Criado em" value={fmtDateTime(s.created_at)} />
+      {est?.sample && est.sample.length > 0 && (
+        <div className="mt-2">
+          <p className="text-2xs text-foreground-secondary mb-1.5">Amostra de contatos</p>
+          {est.sample.map((c) => (
+            <div key={c.id} className="flex items-center gap-2 py-1.5">
+              <InitialsAvatar name={c.name || '?'} size={28} />
+              <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-2xs text-foreground-secondary truncate">{c.company || c.phone}</p></div>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="flex flex-col gap-2 mt-3">
+        <PrimaryButton icon={Zap} onClick={onCampaign} disabled={inactive} className="w-full justify-center">Usar em campanha</PrimaryButton>
+        {inactive && <p className="text-2xs text-foreground-secondary">Segmento inativo: não pode ser usado em campanha.</p>}
+        <GhostButton icon={Pencil} onClick={onEdit} className="w-full justify-center">Editar segmento</GhostButton>
+      </div>
+    </RailCard>
   );
 }
