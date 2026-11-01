@@ -129,9 +129,15 @@ async function main() {
     });
   } catch (err) {
     if (err instanceof HttpError && err.status >= 400 && err.status < 500) {
-      // GA29: 4xx = erro de configuração (endpoint errado, auth falhou) — falha dura.
-      console.error(`::error::Health check falhou com HTTP ${err.status}: ${err.message}. Verifique o endpoint e o SUPABASE_ACCESS_TOKEN.`);
-      process.exitCode = 1;
+      if (err.status === 404 || err.status === 410) {
+        // GA29: endpoint logs.all foi removido em 23/09/2026 (Supabase changelog #48235).
+        // 404/410 = endpoint depreciado, não erro de configuração — aviso, não bloqueia o deploy.
+        console.error(`::warning::Health check: endpoint analytics retornou HTTP ${err.status} (endpoint removido/depreciado). Prosseguindo.`);
+      } else {
+        // 401/403 = erro de autenticação/configuração — falha dura.
+        console.error(`::error::Health check falhou com HTTP ${err.status}: ${err.message}. Verifique o SUPABASE_ACCESS_TOKEN.`);
+        process.exitCode = 1;
+      }
     } else {
       // 5xx ou falha de transporte/timeout → aviso, não bloqueia o deploy.
       console.error(`::warning::Health check falhou ao consultar a Management API: ${err.message}. Prosseguindo.`);
@@ -171,8 +177,12 @@ async function main() {
 
 main().catch((err) => {
   if (err instanceof HttpError && err.status >= 400 && err.status < 500) {
-    console.error(`::error::health-check.mjs falhou com HTTP ${err.status}: ${err.message}`);
-    process.exitCode = 1;
+    if (err.status === 404 || err.status === 410) {
+      console.error(`::warning::health-check.mjs: endpoint analytics retornou HTTP ${err.status} (removido/depreciado). Prosseguindo.`);
+    } else {
+      console.error(`::error::health-check.mjs falhou com HTTP ${err.status}: ${err.message}`);
+      process.exitCode = 1;
+    }
   } else {
     console.error(`::warning::health-check.mjs falhou inesperadamente: ${err.message}. Prosseguindo.`);
   }
