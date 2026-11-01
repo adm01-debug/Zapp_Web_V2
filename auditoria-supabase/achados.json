@@ -48,7 +48,7 @@
       "evidencia": "seq_scan=7.314.770 idx_scan=3.983 (100% seq) — 2026-11-01T17:04Z; agravou de 3.4M em 31/10",
       "pr": null,
       "proposta": "auditoria-supabase/propostas/ZW0002_user_roles_index.sql",
-      "impacto": "RLS recursivo satura pool de conexões; causa direta dos 14.104 timeouts de cron nos últimos 30 dias",
+      "impacto": "RLS recursivo sobrecarrega pool de conexões — hipótese: correlaciona com os 14.104 timeouts de cron nos últimos 30 dias, mas causalidade não confirmada (requer métricas de pool e medição pós-índice)",
       "classe": "APROVAÇÃO",
       "esforco": "P"
     },
