@@ -461,7 +461,7 @@ jobs:
           deno install --config supabase/functions/deno.json
 
       - name: Typecheck das edge functions (deno check)
-        run: deno check supabase/functions/**/index.ts
+        run: deno check --config supabase/functions/deno.json supabase/functions/**/index.ts
 
       - name: Deploy
         if: inputs.dry_run != true
