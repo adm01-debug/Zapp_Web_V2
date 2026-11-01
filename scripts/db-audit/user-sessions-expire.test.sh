@@ -17,8 +17,13 @@ trap cleanup EXIT
 
 [ -f "$MIGRATION" ] || { echo "[FALHOU] migration nao encontrada: $MIGRATION"; exit 1; }
 
-docker run --rm -d --name "$CNAME" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres postgres:17-alpine >/dev/null
-bash scripts/db-audit/wait-postgres-final-start.sh "$CNAME" 60
+PG_IMG="${N008_POSTGRES_IMAGE:-postgres:17-alpine}"
+docker run --rm -d --name "$CNAME" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres "$PG_IMG" >/dev/null
+for _ in $(seq 1 60); do
+  docker exec "$CNAME" pg_isready -U postgres -d postgres >/dev/null 2>&1 && break
+  sleep 1
+done
+docker exec "$CNAME" pg_isready -U postgres -d postgres >/dev/null
 
 # fixtures: papeis, stub de pg_cron e user_sessions minima (mesmas colunas da tabela real)
 "${PSQL[@]}" <<'SQL'
