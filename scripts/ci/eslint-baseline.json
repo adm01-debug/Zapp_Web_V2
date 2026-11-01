@@ -1595,7 +1595,8 @@
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
       "sha256": "5d4c2305b9eee8afd4e3b716ee04288d69c239b19d5988704c754502491821dc"
-    }
+    },
+    "src/hooks/chat/useFilesContainerColumns.ts"
   ],
   "issues": [
     {
@@ -13063,6 +13064,17 @@
       "spanHash": "68ec560a4a8a7535020397e74687be017aa3b7b31c1f23bf933683ba2f859b48",
       "lineHash": "f449bbab9e76dff5ba0db79efd2aa39ddc19209d0fdff2a71532815103216c5b",
       "contextHash": "abeae14ca6f1f32395e8395feee1ed997b34351992a80adaab5d1b985e90959b"
+    },
+    {
+      "file": "src/hooks/chat/useFilesContainerColumns.ts",
+      "line": 80,
+      "column": 3,
+      "endLine": 80,
+      "endColumn": 18,
+      "severity": 1,
+      "ruleId": "react-hooks/exhaustive-deps",
+      "messageId": null,
+      "message": "React Hook useLayoutEffect contains a call to 'setWidth'. Without a list of dependencies, this can lead to an infinite chain of updates. To fix this, pass [ref] as a second argument to the useLayoutEffect Hook."
     }
   ]
 }
