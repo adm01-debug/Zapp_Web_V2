@@ -143,12 +143,13 @@ describe('ScheduleCalendarView — R2-MOD-029', () => {
       // O startOfWeek do 1º dia do próximo mês pode cair no mês atual
       // (ex.: startOfWeek(01/dez) = 29/nov quando dom é 1º dia da semana),
       // então o gte da nova janela pode ter .getMonth() igual ao mês atual.
-      // Verificamos pelo lte: a janela de PROXIMO_MES termina APÓS
-      // endOfMonth(PROXIMO_MES), enquanto a janela de MES_EXIBIDO termina antes.
+      // Verificamos pelo lte: a janela de PROXIMO_MES termina em ou após
+      // endOfMonth(PROXIMO_MES). Quando o último dia do mês já é sábado,
+      // endOfWeek == endOfMonth — por isso usamos >= e não >.
       const lteFaixas = held.server!.queries.flatMap((q) =>
         q.lte.filter(([c]) => c === 'scheduled_at').map(([, v]) => v),
       );
-      expect(lteFaixas.some((v) => new Date(String(v)) > endOfMonth(PROXIMO_MES))).toBe(true);
+      expect(lteFaixas.some((v) => new Date(String(v)) >= endOfMonth(PROXIMO_MES))).toBe(true);
     });
   });
 
