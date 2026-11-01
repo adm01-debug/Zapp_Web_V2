@@ -76,7 +76,7 @@ function variaveisDoBloco(css: string, cabecalho: string): Record<string, Rgb> {
         for (const t of Array.from(
           limpo
             .slice(abre + 1, j)
-            .matchAll(/--(\u[\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g),
+            .matchAll(/--(\w[\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g),
         )) {
           out[t[1]] = hslParaRgb(Number(t[2]), Number(t[3]), Number(t[4]));
         }
@@ -207,7 +207,7 @@ function medirSelos(): Selo[] {
 
 /** O par de TEXTO que o design system define para cada estado. */
 const TEXTO_DO_ESTADO: Record<SLAStatus, string> = {
-  ok: 'success', // o verde já é o próprio par de texto — não existe `--success-text`
+  ok: 'success', // o verde jà �� opróprio par de texto � não existe `--success-text`
   warning: 'warning-text',
   breached: 'destructive-text',
 };
@@ -216,7 +216,7 @@ const MIN_TEXTO = 4.5;
 
 afterEach(() => cleanup());
 
-describe('N-029 — os selos de SLA fecham AA com o par de texto do estado', () => {
+describe('N-029 � os selos de SLA fecham AA com o par de texto do estado', () => {
   const selos = medirSelos();
 
   it('renderiza os 3 estados de selo (incluindo o do trecho 149-156)', () => {
@@ -251,7 +251,7 @@ describe('N-029 — os selos de SLA fecham AA com o par de texto do estado', () 
         const medido = razao(texto, sobreTinta(tinta, selo.alfa, tokens.card));
         expect(
           medido,
-          `${selo.rotulo} — ${nome}: ${selo.texto} sobre ${selo.tinta}/${selo.alfa * 100}`,
+          `${selo.rotulo} —  ${nome}: ${selo.texto} sobre ${selo.tinta}/${selo.alfa * 100}`,
         ).toBeGreaterThanOrEqual(MIN_TEXTO);
       }
     });
