@@ -15,7 +15,7 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, type DndSetting } from "../_shared/talkx-window.ts";
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
-import { isInstancePaused } from "../_shared/instance-pause.ts";
+import { isInstancePaused } from "../_shared/instance_pause.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 import {
