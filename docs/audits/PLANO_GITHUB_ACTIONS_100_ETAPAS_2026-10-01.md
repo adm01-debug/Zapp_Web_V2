@@ -504,14 +504,15 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   (`src/integrations/supabase/types.ts`, `supabase/schema-catalog.json`, `supabase/schema-manifest.json`,
   `scripts/db-audit/grants-baseline.json`) com `paths-ignore` combinado, para o merge do PR de sync não redisparar o
   sync. Verificação: merge de um PR `[auto]` não cria run de `types-sync`.
-- [ ] **E19** · B · G-17 · Redesenhar o Gate 3: em vez de contar linhas de `types.ts`, comparar **objetos**
+- [x] **E19** · B · G-17 · Redesenhar o Gate 3: em vez de contar linhas de `types.ts`, comparar **objetos**
   (tabelas/views/funções/enums removidos) usando `supabase/schema-catalog.json` antigo × novo; bloquear só remoção de
   tabela/view com call-site no `src/` (reaproveitar `supabase-usage-guard.mjs` em modo projeção). Troca de assinatura
   (DROP+CREATE mesmo nome) passa. Verificação: fixture com a `20260930390000` passa; fixture com `DROP TABLE
   public.playbooks` bloqueia.
-- [ ] **E20** · B · G-16 · "Registrar falha dos gates" do `types-sync`: mesmo dedupe do guarda vivo (marcador
+  **FEITO** (confirmado 2026-11-01): `types-sync.yml` usa `scripts/db-audit/check-remocoes-destrutivas.mjs` comparando `supabase/schema-catalog.json` antigo × novo; `scripts/ci/check-remocoes-destrutivas.unit.mjs` tem fixture `20260930390000` (passa) e `DROP TABLE public.playbooks` (bloqueia).
+- [x] **E20** · B · G-16 · "Registrar falha dos gates" do `types-sync`: mesmo dedupe do guarda vivo (marcador
   `<!-- causa:… -->` com hash do gate + 6 h). Verificação: 3 falhas iguais seguidas → 1 comentário.
-- [ ] **E21** · B · G-25 · "Destravar os checks": filtrar `workflow_runs` por `head_branch ==
+- [x] **E21** · B · G-25 · "Destravar os checks": filtrar `workflow_runs` por `head_branch ==
   'automation/types-sync'` além de `head_sha`. Verificação: unit test com run de outra branch no mesmo SHA → não
   aprovado.
 - [~] **E22** · B · G-02 · `types-sync.yml`: usar `peter-evans/create-pull-request` com `branch-suffix: ''` e
