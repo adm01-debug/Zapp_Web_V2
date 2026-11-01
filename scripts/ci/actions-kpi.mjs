@@ -227,6 +227,7 @@ async function principal() {
   }
   const janela = Number(process.env.JANELA_DIAS ?? 7);
   const runs = await coletarRuns({ repo, token, janelaDias: janela });
+  // O ranking dos jobs mais lentos vale para todos os runs da janela, não só os que falharam.
   const jobs = await coletarJobs(runsNaJanela(runs, { janelaDias: janela }), { repo, token });
   const corpo = corpoDoKpi(runs, jobs, { janelaDias: janela });
   console.log(corpo);
