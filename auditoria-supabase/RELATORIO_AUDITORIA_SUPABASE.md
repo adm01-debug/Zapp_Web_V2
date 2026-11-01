@@ -21,12 +21,12 @@
 
 | Severidade | Quantidade | Destaque |
 |---|---|---|
-| **CRÍTICO** | 2 | ZW-0002 (user_roles seq_scan 7.7M — AGRAVOU), ZW-0003 (5 policies roles=public — AGRAVOU) |
-| **ALTO** | 6 | ZW-0004 (8 jobs falhando — AGRAVOU), ZW-0005, ZW-0007 (42 sem WITH CHECK — AGRAVOU), ZW-0008, ZW-0009, ZW-0044 |
-| **MÉDIO** | 15 | ZW-0013~ZW-0026 (exceto ZW-0014 absorvido) |
-| **BAIXO** | 3 | ZW-0027~ZW-0029 |
-| **INFO** | 13 | ZW-0030~ZW-0042 |
-| **RESOLVIDO** | 8 | ZW-0001, ZW-0006, ZW-0010, ZW-0011, ZW-0014, ZW-0045, ZW-0046, ZW-0047 |
+| **CRÍTICO** | 0 | — todos reclassificados após re-verificação com evidência de produção (2026-11-01) |
+| **ALTO** | 4 | ZW-0002 (user_roles seq_scan 99.9%), ZW-0004 (73 cron failures/24h), ZW-0007 (46 UPDATE sem WITH CHECK), ZW-0009 (talkx_engine_alerts sem timeout) |
+| **MÉDIO** | 17 | ZW-0003, ZW-0012~ZW-0013, ZW-0015~ZW-0027 |
+| **BAIXO** | 3 | ZW-0028, ZW-0029, ZW-0030 |
+| **INFO** | 13 | ZW-0031~ZW-0043 |
+| **RESOLVIDO** | 11 | ZW-0001, ZW-0005, ZW-0006, ZW-0008, ZW-0010, ZW-0011, ZW-0014, ZW-0044, ZW-0045, ZW-0046, ZW-0047 |
 
 **Ações autônomas desta sessão (2026-11-01):**
 - **ZW-0006 RESOLVIDO:** FK `fk_profiles_to_auth` confirmada em `pg_constraint` — ausente em 31/10, adicionada por outra sessão
