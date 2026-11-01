@@ -496,6 +496,19 @@ test('alto contraste e movimento reduzido mantêm o workspace acessível', async
   // específico e vence o `*` dele. Espera o tema ASSENTADO — a mesma checagem que o teste de tokens
   // acima usa antes de medir — e só então congela e mede.
   await waitForAppliedTheme(page, 'dark');
+  // Webkit aplica tokens de `.dark.high-contrast` num frame posterior ao da luminância:
+  // espera `--muted-foreground` resolver para o valor alto-contraste (≥75% lightness).
+  await page.waitForFunction(() => {
+    const probe = document.createElement('div');
+    probe.className = 'text-muted-foreground';
+    document.body.appendChild(probe);
+    const color = getComputedStyle(probe).color;
+    probe.remove();
+    const [r, g, b] = (color.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+    const linear = (v: number) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+    const lum = 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+    return lum > 0.5;
+  });
   await freezeVisualTransitions(page);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => {
