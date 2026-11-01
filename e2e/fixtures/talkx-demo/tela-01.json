@@ -1,0 +1,106 @@
+{
+  "talkx_campaigns": [
+    {
+      "id": "demo-c1",
+      "name": "Lançamento Linha Office",
+      "status": "scheduled",
+      "connection_id": "demo-conn-1",
+      "segment_id": "demo-seg-1",
+      "template_id": "demo-tmpl-1",
+      "total_recipients": 1240,
+      "sent_count": 0,
+      "created_at": "2026-10-28T08:00:00Z",
+      "scheduled_at": "2026-11-10T09:00:00Z"
+    },
+    {
+      "id": "demo-c2",
+      "name": "Black Friday VIP",
+      "status": "draft",
+      "connection_id": "demo-conn-1",
+      "segment_id": "demo-seg-2",
+      "template_id": "demo-tmpl-2",
+      "total_recipients": 3800,
+      "sent_count": 0,
+      "created_at": "2026-10-25T10:00:00Z",
+      "scheduled_at": null
+    },
+    {
+      "id": "demo-c3",
+      "name": "Volta às Aulas 2027",
+      "status": "sent",
+      "connection_id": "demo-conn-1",
+      "segment_id": "demo-seg-3",
+      "template_id": "demo-tmpl-3",
+      "total_recipients": 980,
+      "sent_count": 960,
+      "created_at": "2026-10-20T07:00:00Z",
+      "scheduled_at": "2026-10-22T08:00:00Z"
+    },
+    {
+      "id": "demo-c4",
+      "name": "Reativação Clientes Inativos",
+      "status": "running",
+      "connection_id": "demo-conn-1",
+      "segment_id": "demo-seg-4",
+      "template_id": "demo-tmpl-4",
+      "total_recipients": 2150,
+      "sent_count": 1050,
+      "created_at": "2026-10-31T06:00:00Z",
+      "scheduled_at": "2026-11-01T06:00:00Z"
+    },
+    {
+      "id": "demo-c5",
+      "name": "Promoção Dia do Cliente",
+      "status": "sent",
+      "connection_id": "demo-conn-1",
+      "segment_id": "demo-seg-5",
+      "template_id": "demo-tmpl-5",
+      "total_recipients": 560,
+      "sent_count": 554,
+      "created_at": "2026-09-10T09:00:00Z",
+      "scheduled_at": "2026-09-15T10:00:00Z"
+    },
+    {
+      "id": "demo-c6",
+      "name": "Novidades Setembro",
+      "status": "sent",
+      "connection_id": "demo-conn-1",
+      "segment_id": "demo-seg-6",
+      "template_id": "demo-tmpl-6",
+      "total_recipients": 1800,
+      "sent_count": 1790,
+      "created_at": "2026-09-01T08:00:00Z",
+      "scheduled_at": "2026-09-02T09:00:00Z"
+    },
+    {
+      "id": "demo-c7",
+      "name": "Brindes Personalizados Premium",
+      "status": "draft",
+      "connection_id": "demo-conn-1",
+      "segment_id": null,
+      "template_id": null,
+      "total_recipients": 0,
+      "sent_count": 0,
+      "created_at": "2026-11-01T11:00:00Z",
+      "scheduled_at": null
+    },
+    {
+      "id": "demo-c8",
+      "name": "Fim de Ano Corporativo",
+      "status": "scheduled",
+      "connection_id": "demo-conn-1",
+      "segment_id": "demo-seg-7",
+      "template_id": "demo-tmpl-7",
+      "total_recipients": 4200,
+      "sent_count": 0,
+      "created_at": "2026-10-15T14:00:00Z",
+      "scheduled_at": "2026-12-01T07:00:00Z"
+    }
+  ],
+  "rpc/talkx_overview_kpis": {
+    "total_campaigns": 24,
+    "active_campaigns": 3,
+    "sent_last_30d": 18790,
+    "delivery_rate": 0.97
+  }
+}

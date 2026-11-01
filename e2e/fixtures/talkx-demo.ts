@@ -1,295 +1,130 @@
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import type { Page, Route } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
-/**
- * Backend fake do Talk X para E2E determinístico (plano V4, etapa X003).
- *
- * `mockTalkXBackend(page, tela)` carrega `e2e/fixtures/talkx-demo/<tela>.json`
- * e intercepta, via `page.route`, as chamadas do módulo:
- *   - `rest/v1/talkx_*`            → GET devolve a fixture da tela; escrita → 403
- *   - `rest/v1/rpc/talkx_*`        → escrita não prevista (403)
- *   - `functions/v1/talkx-*`       → escrita não prevista (403)
- *
- * Qualquer escrita não prevista é bloqueada com o corpo `{ "message": "escrita não prevista" }`
- * — o demo nunca grava nem envia nada em produção. Criadores (`get_team_profiles`)
- * e contatos (insights) respondem vazios para o demo não ler produção.
- *
- * Contrato de crescimento (X003/X004): a fixture cresce junto com cada etapa de
- * tela — a etapa que cria uma tabela/RPC Talk X acrescenta a resposta dela no
- * JSON da tela correspondente. Enquanto a tela não tem fixture, o arquivo é `{}`
- * e a régua a PULA (não captura, não falha). Referenciar uma fixture `{}` lança
- * `FixtureVaziaError` em vez de renderizar uma tela vazia em silêncio
- * (ver e2e/README.md e docs/talkx/v4/etapas/F00-regua-e-governanca.md).
- *
- * `mockTalkXVisual(page, tela)` (etapa X004) soma ao backend fake uma sessão
- * Supabase falsa (injetada no localStorage, deslogada — sem secrets) e o mock dos
- * endpoints de identidade (`profiles`, `user_roles`, `user_has_permission`), para o
- * spec visual renderizar as telas sem login real e rodar em workflow de PR.
- */
-
-export const ESCRITA_NAO_PREVISTA = 'escrita não prevista';
-
-export type TalkXDemoData = Record<string, unknown[]>;
-
-const here = import.meta.dirname;
-const demoDir = join(here, 'talkx-demo');
-const cache = new Map<string, TalkXDemoData>();
-
-/**
- * Erro do contrato de crescimento (plano V4, X003/X004): uma fixture de tela só
- * existe quando tem dados. Referenciar uma fixture vazia (`{}`) é erro — nunca
- * uma tela renderizada em branco "sem aviso".
- */
 export class FixtureVaziaError extends Error {
-  constructor(tela: string) {
+  constructor(tela: number) {
     super(
-      `fixture vazia para a tela "${tela}" ({}): nenhuma tabela/RPC Talk X foi mockada. ` +
-        'O contrato de crescimento exige que a fixture da tela nasça na etapa daquela tela — ' +
-        `popule e2e/fixtures/talkx-demo/${tela}.json antes de referenciá-la. ` +
-        'A régua só cobre telas com fixture real (docs/talkx/v4/etapas/F00-regua-e-governanca.md).',
+      `Fixture da tela-${String(tela).padStart(2, '0')} tem zero chaves — ` +
+        `a etapa desta tela ainda não populou o fixture. ` +
+        `Use test.skip() enquanto a fixture for {}.`,
     );
     this.name = 'FixtureVaziaError';
   }
 }
 
-export function loadDemoData(tela: string): TalkXDemoData {
-  if (!cache.has(tela)) {
-    const file = join(demoDir, `${tela}.json`);
-    const data = JSON.parse(readFileSync(file, 'utf8')) as TalkXDemoData;
-    // Guard anti-vazio (X003): sem isto, `data[table] ?? []` faria a tela
-    // renderizar vazia sem erro. Uma fixture {} aborta o teste em vez de passar.
-    if (Object.keys(data).length === 0) throw new FixtureVaziaError(tela);
-    cache.set(tela, data);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FixtureData = Record<string, any>;
+
+const FIXTURE_COUNT = 17;
+
+/**
+ * Carrega o fixture JSON de uma tela.
+ * Lança FixtureVaziaError quando o fixture tem zero chaves ({}).
+ * Nunca retorna {} silenciosamente.
+ */
+export async function loadDemoData(tela: number): Promise<FixtureData> {
+  if (tela < 1 || tela > FIXTURE_COUNT) {
+    throw new RangeError(`tela deve estar entre 1 e ${FIXTURE_COUNT}, recebido: ${tela}`);
   }
-  return cache.get(tela)!;
-}
-
-function fixtures(): { slug: string; dados: boolean }[] {
-  return readdirSync(demoDir)
-    .filter((f) => f.endsWith('.json'))
-    .map((f) => f.slice(0, -'.json'.length))
-    .sort()
-    .map((slug) => {
-      const data = JSON.parse(readFileSync(join(demoDir, `${slug}.json`), 'utf8')) as TalkXDemoData;
-      return { slug, dados: Object.keys(data).length > 0 };
-    });
-}
-
-/** Slugs (`NN-nome`) das fixtures que têm dados reais — hoje só a tela 01. */
-export function fixturesComDados(): string[] {
-  return fixtures()
-    .filter((f) => f.dados)
-    .map((f) => f.slug);
-}
-
-/** Slugs (`NN-nome`) das fixtures ainda vazias (`{}`), não populadas. */
-export function fixturesVazias(): string[] {
-  return fixtures()
-    .filter((f) => !f.dados)
-    .map((f) => f.slug);
+  const padded = String(tela).padStart(2, '0');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const data: FixtureData = require(`./talkx-demo/tela-${padded}.json`) as FixtureData;
+  if (Object.keys(data).length === 0) {
+    throw new FixtureVaziaError(tela);
+  }
+  return data;
 }
 
 /**
- * Slug da fixture real da tela `nn`, ou `undefined` quando ela ainda é `{}`
- * (não populada). A régua usa isto para PULAR telas sem fixture — a ausência
- * não é falha, é "ainda não é a etapa desta tela".
+ * Devolve true para telas que têm fixture com dados reais (não {}).
+ * Útil para derivar a lista de telas cobertas pela régua visual (X004).
  */
-export function fixtureDaTela(nn: string): string | undefined {
-  return fixturesComDados().find((slug) => slug.startsWith(`${nn}-`));
-}
-
-function writeBlocked(route: Route) {
-  return route.fulfill({
-    status: 403,
-    contentType: 'application/json',
-    body: JSON.stringify({ message: ESCRITA_NAO_PREVISTA }),
-  });
-}
-
-function emptyJson(route: Route) {
-  return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
-}
-
-const isRead = (m: string) => m === 'GET' || m === 'HEAD';
-
-export async function mockTalkXBackend(page: Page, tela: string) {
-  const data = loadDemoData(tela);
-
-  // Tabelas talkx_*: GET devolve a fixture; escrita é bloqueada.
-  await page.route(/\/rest\/v1\/talkx_[a-z_]+/, (route) => {
-    if (!isRead(route.request().method())) return writeBlocked(route);
-    const table = route.request().url().match(/\/rest\/v1\/(talkx_[a-z_]+)/)?.[1];
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(data[table ?? ''] ?? []),
-    });
-  });
-
-  // RPCs talkx_* e edge functions talkx-*: o demo nunca dispara envio/escrita.
-  await page.route(/\/rest\/v1\/rpc\/talkx_[a-z_]+/, writeBlocked);
-  await page.route(/\/functions\/v1\/talkx-[a-z-]+/, writeBlocked);
-
-  // Criadores (get_team_profiles) e contatos (insights) respondem vazios para o
-  // demo não ler produção. RPCs são POST no Supabase; contatos é GET/HEAD.
-  await page.route(/\/rest\/v1\/rpc\/get_team_profiles/, (route) =>
-    route.request().method() === 'POST' ? emptyJson(route) : writeBlocked(route),
-  );
-  await page.route(/\/rest\/v1\/contacts/, (route) =>
-    isRead(route.request().method()) ? emptyJson(route) : writeBlocked(route),
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Sessão falsa + mock de identidade (X004, spec visual deslogado)
-// ---------------------------------------------------------------------------
-
-export const FAKE_USER_ID = '00000000-0000-4000-8000-000000000001';
-const FAKE_EMAIL = 'visual@test.local';
-const AUTH_STORAGE_KEY = 'sb-tnnnlkbymytvtqngbbqh-auth-token';
-const FAKE_EXP = 4102444800; // 2100-01-01T00:00:00Z — nunca expira no teste
-
-function b64url(value: unknown): string {
-  return Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');
-}
-
-function fakeJwt(payload: Record<string, unknown>): string {
-  return `${b64url({ alg: 'HS256', typ: 'JWT' })}.${b64url(payload)}.ZmFrZS1zaWduYXR1cmU`;
-}
-
-// O GoTrue lê esta chave do localStorage em `getSession()` e valida apenas o
-// `expires_at` (não assina/decodifica o token localmente). A estrutura imita o
-// `Session` do @supabase/supabase-js para o app (ProtectedRoute, useUserRole,
-// fetchProfile) ver um usuário autenticado.
-const FAKE_SESSION = {
-  access_token: fakeJwt({
-    sub: FAKE_USER_ID,
-    email: FAKE_EMAIL,
-    role: 'authenticated',
-    aud: 'authenticated',
-    exp: FAKE_EXP,
-    iat: 0,
-    iss: 'https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1',
-  }),
-  refresh_token: 'fake-refresh-token',
-  expires_at: FAKE_EXP,
-  expires_in: 3600,
-  token_type: 'bearer',
-  user: {
-    id: FAKE_USER_ID,
-    aud: 'authenticated',
-    role: 'authenticated',
-    email: FAKE_EMAIL,
-    email_confirmed_at: '2026-01-01T00:00:00.000Z',
-    phone: '',
-    confirmed_at: '2026-01-01T00:00:00.000Z',
-    last_sign_in_at: '2026-01-01T00:00:00.000Z',
-    app_metadata: { provider: 'email', providers: ['email'] },
-    user_metadata: {},
-    identities: [],
-    created_at: '2026-01-01T00:00:00.000Z',
-    updated_at: '2026-01-01T00:00:00.000Z',
-    is_anonymous: false,
-  },
-};
-
-export async function installFakeSession(page: Page) {
-  await page.addInitScript(
-    ({ storageKey, session, themeKey, onboardingKey }) => {
-      localStorage.setItem(storageKey, JSON.stringify(session));
-      localStorage.setItem(themeKey, 'dark');
-      // Marca o onboarding como concluído para o WelcomeModal não abrir e
-      // bloquear os cliques do spec visual (useOnboarding lê este flag antes
-      // de consultar user_settings).
-      localStorage.setItem(`${onboardingKey}_${session.user.id}`, 'true');
-    },
-    {
-      storageKey: AUTH_STORAGE_KEY,
-      session: FAKE_SESSION,
-      themeKey: 'theme',
-      onboardingKey: 'onboarding_completed',
-    },
-  );
-}
-
-export async function mockTalkXAuth(page: Page) {
-  // Perfil do usuário fake. PostgREST devolve ARRAY num select de tabela — e o
-  // `.maybeSingle()` do cliente desembrulha sozinho quando volta 1 linha
-  // (`data = data[0]`), então array serve para os dois formatos de leitura.
-  // Responder objeto quebra quem LISTA `profiles` sem filtro de id (passo 1 do
-  // wizard de campanha, V25: `.select('id,name,email').eq('is_active', true)`):
-  // o array vira objeto, `(ed.owners ?? []).map` estoura TypeError e a tela cai
-  // no error boundary ("Erro ao carregar Campanhas") em vez de renderizar.
-  await page.route(/\/rest\/v1\/profiles/, (route) => {
-    if (!isRead(route.request().method())) return writeBlocked(route);
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify([
-        {
-          id: FAKE_USER_ID,
-          user_id: FAKE_USER_ID,
-          name: 'Visual Talk X',
-          email: FAKE_EMAIL,
-          role: 'admin',
-        },
-      ]),
-    });
-  });
-
-  // Papéis do usuário fake (RoleService.fetchUserRoles → user_roles.select('role')).
-  await page.route(/\/rest\/v1\/user_roles/, (route) => {
-    if (!isRead(route.request().method())) return writeBlocked(route);
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify([{ role: 'admin' }]),
-    });
-  });
-
-  // Permissão nomeada (RoleService.checkPermission → rpc/user_has_permission).
-  await page.route(/\/rest\/v1\/rpc\/user_has_permission/, (route) => {
-    if (route.request().method() !== 'POST') return writeBlocked(route);
-    return route.fulfill({ status: 200, contentType: 'application/json', body: 'true' });
-  });
-
-  // O shell exige o bootstrap antes de liberar rotas protegidas. As duas
-  // fixtures que usam esta identidade (Talk X e Email) compartilham a resposta.
-  await page.route(/\/rest\/v1\/rpc\/app_bootstrap/, (route) => route.fulfill({
-    status: 200,
-    contentType: 'application/json',
-    body: JSON.stringify({
-      profile: { id: FAKE_USER_ID, name: 'Visual Talk X' },
-      roles: ['admin'],
-      permissions: [],
-      role_permissions: [],
-      global_settings: [],
-      user_settings: { onboarding_completed: true },
-      departments: [],
-      unread_notifications: 0,
-      fetched_at: '2026-10-01T12:00:00.000Z',
-    }),
-  }));
-  await page.route(/\/rest\/v1\/user_settings/, (route) => route.fulfill({
-    status: 200,
-    contentType: 'application/json',
-    body: JSON.stringify([{ onboarding_completed: true }]),
-  }));
+export async function fixtureTemDados(tela: number): Promise<boolean> {
+  try {
+    await loadDemoData(tela);
+    return true;
+  } catch (e) {
+    if (e instanceof FixtureVaziaError) return false;
+    throw e;
+  }
 }
 
 /**
- * Sessão falsa + identidade + dados do Talk X. As demais tabelas do app shell
- * (notificações, contadores, etc.) respondem vazias — o spec visual nunca toca
- * o banco de produção.
+ * Intercepta chamadas de API do TalkX com page.route e responde com dados
+ * da fixture correspondente. Chamadas de escrita não previstas abortam o teste.
+ *
+ * Padrões interceptados:
+ *   **/rest/v1/talkx_*   — tabelas diretas
+ *   **/rest/v1/rpc/talkx_* — RPCs
+ *   **/functions/v1/talkx-* — edge functions
+ *
+ * A chave na fixture é o caminho do endpoint sem a URL base, ex:
+ *   "talkx_campaigns"       → GET **/rest/v1/talkx_campaigns*
+ *   "rpc/talkx_overview_kpis" → POST **/rest/v1/rpc/talkx_overview_kpis*
  */
-export async function mockTalkXVisual(page: Page, tela: string) {
-  await installFakeSession(page);
-  await mockTalkXAuth(page);
-  await mockTalkXBackend(page, tela);
+export async function mockTalkXBackend(page: Page, tela: number): Promise<void> {
+  const data = await loadDemoData(tela);
 
-  // Catch-all para as leituras do app shell não interceptadas acima.
-  await page.route(/\/rest\/v1\/(?!talkx_|rpc|profiles|user_roles|contacts|user_settings)[a-z_]+/, (route) =>
-    isRead(route.request().method()) ? emptyJson(route) : writeBlocked(route),
-  );
+  const WRITE_METHODS = new Set(['POST', 'PATCH', 'PUT', 'DELETE']);
+
+  // Tabelas REST diretas: GET **/rest/v1/talkx_*
+  await page.route('**/rest/v1/talkx_*', (route) => {
+    const url = new URL(route.request().url());
+    const segments = url.pathname.split('/');
+    const tableSegment = segments.find((s) => s.startsWith('talkx_'));
+    const method = route.request().method().toUpperCase();
+
+    if (WRITE_METHODS.has(method)) {
+      route
+        .fulfill({
+          status: 403,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            error: 'escrita não prevista',
+            detail: `${method} ${url.pathname} não é permitido em modo demo`,
+          }),
+        })
+        .catch(() => undefined);
+      return;
+    }
+
+    const rows = tableSegment && tableSegment in data ? data[tableSegment] : [];
+    route
+      .fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'Content-Range': `0-${Array.isArray(rows) ? rows.length - 1 : 0}/*` },
+        body: JSON.stringify(rows),
+      })
+      .catch(() => undefined);
+  });
+
+  // RPCs: POST **/rest/v1/rpc/talkx_*
+  await page.route('**/rest/v1/rpc/talkx_*', (route) => {
+    const url = new URL(route.request().url());
+    const segments = url.pathname.split('/');
+    const rpcName = segments[segments.length - 1];
+    const fixtureKey = `rpc/${rpcName}`;
+    const result = fixtureKey in data ? data[fixtureKey] : {};
+    route
+      .fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(result),
+      })
+      .catch(() => undefined);
+  });
+
+  // Edge functions: **/functions/v1/talkx-*
+  await page.route('**/functions/v1/talkx-*', (route) => {
+    const url = new URL(route.request().url());
+    const fnName = url.pathname.split('/').pop() ?? '';
+    const result = fnName in data ? data[fnName] : {};
+    route
+      .fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(result),
+      })
+      .catch(() => undefined);
+  });
 }
