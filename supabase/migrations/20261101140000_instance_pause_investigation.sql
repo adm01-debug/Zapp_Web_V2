@@ -122,7 +122,7 @@ BEGIN
 
   UPDATE public.instance_pauses
      SET investigated_at     = COALESCE(investigated_at, now()),
-         investigated_by     = COALESCE(investigated_by, v_profile),
+         investigated_by     = CASE WHEN investigated_at IS NULL THEN v_profile ELSE investigated_by END,
          investigation_notes = COALESCE(v_notes, investigation_notes)
    WHERE id = p_pause_id
   RETURNING * INTO v_row;

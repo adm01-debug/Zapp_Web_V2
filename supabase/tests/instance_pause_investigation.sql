@@ -323,6 +323,16 @@ BEGIN
     RAISE EXCEPTION 'T3b FALHOU: excluir o perfil do investigador derrubou a investigacao da pausa';
   END IF;
 
+  -- reinvestigar depois da exclusao NAO transfere a autoria ao novo chamador
+  PERFORM pg_temp.t_auth(v_admin_user);
+  PERFORM public.mark_pause_investigated(v_pause_5, NULL);
+  PERFORM set_config('role', 'none', true);
+  SELECT count(*) INTO v_n FROM public.instance_pauses
+   WHERE id = v_pause_5 AND investigated_at IS NOT NULL AND investigated_by IS NULL;
+  IF v_n <> 1 THEN
+    RAISE EXCEPTION 'T3b FALHOU: reinvestigar apos excluir o perfil atribuiu a investigacao original a outro ator';
+  END IF;
+
   -- devolve o perfil: o resto da suite segue com a fixture como estava
   INSERT INTO public.profiles (id, user_id, name)
   VALUES (v_tmp_prof, v_tmp_user, 'Investigador temporario (sintetico)')
