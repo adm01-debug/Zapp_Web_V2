@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -50,7 +50,16 @@ function PauseSeries({ rows, now }: { rows: InstancePause[]; now: number }) {
           ))}
         </div>
       </div>
-      <div className="flex items-end gap-1 h-24" role="img" aria-label={`Pausas por ${window === '24h' ? 'hora' : 'dia'}`}>
+      <table className="sr-only">
+        <caption>Pausas por {window === '24h' ? 'hora' : 'dia'}</caption>
+        <thead><tr><th scope="col">Período</th><th scope="col">Manuais</th><th scope="col">Automáticas</th></tr></thead>
+        <tbody>
+          {buckets.map((b) => (
+            <tr key={b.start}><th scope="row">{label(b.start)}</th><td>{b.manual}</td><td>{b.auto}</td></tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="flex items-end gap-1 h-24" aria-hidden="true">
         {buckets.map((b) => {
           const n = b.manual + b.auto;
           return (
@@ -82,8 +91,14 @@ export function InstancePausesPanel({ connections }: { connections: PanelConnect
   const [reason, setReason] = useState('');
 
   const rows = useMemo(() => data ?? [], [data]);
-  // referência de tempo = instante da última leitura (atualiza a cada refetch de 60s)
-  const now = dataUpdatedAt || 0;
+  // relógio vivo (15s): pausa que vence entre leituras deixa de aparecer como ativa
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    const tick = () => setNow(Date.now());
+    tick();
+    const id = setInterval(tick, 15_000);
+    return () => clearInterval(id);
+  }, [dataUpdatedAt]);
   const activeByInstance = useMemo(() => {
     const map = new Map<string, InstancePause>();
     for (const r of rows) if (isPauseActive(r, now) && !map.has(r.instance)) map.set(r.instance, r);
@@ -157,7 +172,7 @@ export function InstancePausesPanel({ connections }: { connections: PanelConnect
               })}
             </ul>
 
-            <PauseSeries rows={rows} now={now} />
+            <PauseSeries rows={rows} now={now || dataUpdatedAt} />
 
             <div>
               <p className="text-sm font-medium mb-2">Últimas pausas</p>

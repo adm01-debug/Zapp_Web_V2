@@ -259,6 +259,31 @@ Deno.test("C121/IP1: envio em instância pausada é bloqueado sem chegar ao prov
   }
 });
 
+Deno.test("C121/IP1: mark-read passa e send-status é bloqueado com a instância pausada", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  try {
+    const supabase: any = {
+      from: () => makeQuery({ id: "x" }),
+      rpc: (fn: string) => fn === "is_instance_paused"
+        ? Promise.resolve({ data: true, error: null })
+        : Promise.resolve({ data: null, error: null }),
+    };
+    const status = await handleEvolutionApi(
+      controlRequest("send-status", { instanceName: "PRINCIPAL", text: "oi" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },
+    );
+    assertEquals((await status.json()).paused, true);
+    const read = await handleEvolutionApi(
+      controlRequest("mark-read", { instanceName: "PRINCIPAL", key: { remoteJid: "5511999999999@s.whatsapp.net", fromMe: false, id: "M1" } }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },
+    );
+    assert((await read.json()).paused !== true, "mark-read não é entrega de conteúdo");
+  } finally {
+    await fake.stop();
+  }
+});
+
 // ─── R2-API-014 (P2) ────────────────────────────────────────────────────────
 // Falha ao ler a privacidade atual NÃO pode virar abertura dos outros campos.
 // Antes: GET /user/privacy falhando deixava `current = {}` e o merge fabricava

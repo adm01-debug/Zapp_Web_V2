@@ -6,6 +6,7 @@ import { resolveInstanceToken } from "../_shared/evolution-instance-token.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
 import { classifyEvolutionAction, decideControlAuthz, decideSendAuthz, sanitizeStatusPayload, type EvolutionAuthzDecision } from "../_shared/evolution-control-authz.ts";
 // E45 (SL-050): o corpo passa por schema (ação conhecida + instância alvo).
+import { PAUSE_BLOCKED_ACTIONS } from "../_shared/instance-pause-actions.ts";
 import { EvolutionApiRequestSchema, evolutionApiRequiresInstance, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 // R2-API-015: rotas de ciclo de sessão (connect/status/disconnect) por flavor.
 import {
@@ -179,7 +180,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     // C121/IP1: instância em pausa (manual ou automática) não envia. `supabase` aqui é o
     // cliente de serviço (is_instance_paused aceita service_role). Falha de leitura NÃO
     // bloqueia o envio (fail-open): a pausa é proteção, não pré-requisito de entrega.
-    if (actionKind === 'send' && instance) {
+    if (PAUSE_BLOCKED_ACTIONS.has(action) && instance) {
       const { data: paused, error: pausedError } = await supabase.rpc('is_instance_paused', { p_instance: instance });
       if (pausedError) {
         new Logger('evolution-api').warn('is_instance_paused falhou; envio liberado', { instance, code: pausedError.code });
@@ -201,7 +202,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       // (30 min) para não insistir. Falha ao registrar a pausa não altera a resposta.
       // O proxy devolve HTTP 200 e carrega o status do provedor no corpo ({ error, status }).
       let providerRateLimited = false;
-      if (actionKind === 'send' && instance) {
+      if (PAUSE_BLOCKED_ACTIONS.has(action) && instance) {
         try {
           const payload = await res.clone().json();
           providerRateLimited = payload?.error === true && payload?.status === 429;

@@ -11,11 +11,13 @@ const state = vi.hoisted(() => ({
 
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isSupervisor: state.isSupervisor }) }));
 vi.mock('@/integrations/supabase/client', () => {
+  const rows = () => state.rows as Array<{ resumed_at: string | null }>;
   const q: Record<string, unknown> = {};
   q.select = () => q;
-  q.or = () => q;
+  q.is = () => Promise.resolve({ data: state.selectError ? null : rows().filter((r) => r.resumed_at === null), error: state.selectError });
+  q.gte = () => q;
   q.order = () => q;
-  q.limit = () => Promise.resolve({ data: state.rows, error: state.selectError });
+  q.range = () => Promise.resolve({ data: state.selectError ? null : state.rows, error: state.selectError });
   return { supabase: { from: () => q, rpc: (...a: unknown[]) => state.rpc(...a) } };
 });
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
