@@ -51,6 +51,10 @@ export const SALE_STAGES = [
   "novo_contato", "qualificando", "apresentando", "negociando", "fechando", "pos_venda", "perdido",
 ] as const;
 
+/** Valores aceitos pela coluna `decision_role` (CHECK constraint na migration). */
+export const DECISION_ROLES = ["buyer", "user", "approver", "intermediary", "unknown"] as const;
+const DECISION_ROLE_SET = new Set<string>(DECISION_ROLES);
+
 const texto = (max: number) => z.string().trim().min(1).max(max);
 
 export const CopilotTier1Schema = z.object({
@@ -175,6 +179,13 @@ function brindeAtual(s: SessionRow): Record<BrindeKey, unknown> {
   ) as Record<BrindeKey, unknown>;
 }
 
+/** Retorna true se a string AAAA-MM-DD representa uma data real no calendário. */
+function isRealDate(d: string): boolean {
+  const [y, mo, day] = d.split("-").map(Number);
+  const dt = new Date(y, mo - 1, day);
+  return dt.getFullYear() === y && dt.getMonth() === mo - 1 && dt.getDate() === day;
+}
+
 /**
  * Patch da sessão a partir do andar 1. Campo que o modelo não trouxe NÃO apaga o
  * que já se sabia; o medidor B·R·I·N·D·E é recontado no servidor (0–6).
@@ -191,8 +202,12 @@ export function buildSessionPatch(
   };
   if (out.sale_stage) patch.sale_stage = out.sale_stage;
   if (out.temperature !== undefined) patch.temperature = out.temperature;
-  for (const campo of ["intent", "sentiment", "comm_style", "decision_role", "occasion"] as const) {
+  for (const campo of ["intent", "sentiment", "comm_style", "occasion"] as const) {
     if (out[campo]) patch[campo] = out[campo];
+  }
+  // Normaliza para o conjunto aceito pelo CHECK constraint; não falha o tick.
+  if (out.decision_role) {
+    patch.decision_role = DECISION_ROLE_SET.has(out.decision_role) ? out.decision_role : "unknown";
   }
   if (out.stakeholders?.length) patch.stakeholders = out.stakeholders;
 
@@ -200,6 +215,8 @@ export function buildSessionPatch(
   for (const k of Object.keys(BRINDE_COLUMNS) as BrindeKey[]) {
     const v = out.brinde?.[k];
     if (v !== undefined && v !== null) {
+      // Descarta datas que passam na regex mas não existem no calendário (ex.: 2026-02-30).
+      if (k === "deadline" && typeof v === "string" && !isRealDate(v)) continue;
       patch[BRINDE_COLUMNS[k]] = v;
       brinde[k] = v;
     }
@@ -287,9 +304,10 @@ export function buildTier1System(session: SessionRow): string {
     "Responda SOMENTE um objeto JSON com os campos (todos opcionais):",
     `  sale_stage: um de ${SALE_STAGES.join(", ")}`,
     "  temperature: inteiro 0–100 (interesse de compra)",
-    "  brinde: { budget, responsible, intention, quantity (inteiro), deadline (AAAA-MM-DD), delivery } — só o que a conversa disse",
+    "  brinde: { budget, responsible, intention, quantity (inteiro), deadline (AAAA-MM-DD real), delivery } — só o que a conversa disse",
     "  brinde_evidence: { campo: trecho literal da conversa que comprova }",
-    "  intent, sentiment, comm_style, decision_role, occasion: texto curto",
+    "  intent, sentiment, comm_style, occasion: texto curto",
+    `  decision_role: um de ${DECISION_ROLES.join(", ")}`,
     "  stakeholders: [{ name, role }]",
     "  key_moments: lista curta (ex.: price_request, objection, buy_signal)",
     "  risks: até 5 frases curtas",
