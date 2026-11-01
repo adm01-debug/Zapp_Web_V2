@@ -76,7 +76,7 @@ function tokensDoBloco(css: string, seletor: string): Record<string, Rgb> {
           for (const t of Array.from(
             limpo
               .slice(abre + 1, j)
-              .matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g)
+              .matchAll(/--(\w[\w-]*):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*(?:!important\s*)?;/g)
           )) {
             tokens[t[1]] = hslParaRgb(Number(t[2]), Number(t[3]), Number(t[4]));
           }
