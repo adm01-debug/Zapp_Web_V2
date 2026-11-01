@@ -10,6 +10,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { enforceRateLimit, getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
+import { isInstancePaused } from "../_shared/instance_pause.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
@@ -870,12 +871,20 @@ export async function handleMultiplixSend(
           const beforeSendInstanceToken = beforeSendInstanceId
             ? await resolveInstanceToken(beforeSendInstanceId)
             : null;
-          if (beforeSend?.status !== "sending" || !beforeSendWindowStatus.allowed || !beforeSendInstanceId || !beforeSendInstanceToken) {
+          // C121: instância pausada (operador/sistema) — o disparo pausa junto, com motivo próprio.
+          const beforeSendInstancePaused = beforeSendInstanceId
+            ? await isInstancePaused(supabase, beforeSendInstanceId)
+            : false;
+          if (beforeSend?.status !== "sending" || !beforeSendWindowStatus.allowed || !beforeSendInstanceId || !beforeSendInstanceToken || beforeSendInstancePaused) {
             if (beforeSend?.status === "sending") {
               // F10c: janela fechada no meio do disparo -> 'outside_window' (o cron
               // retoma); conexao ou token da instancia caiu -> 'connection_lost'
               // (exige operador).
-              await pauseDispatch(beforeSendInstanceId && beforeSendInstanceToken ? "outside_window" : "connection_lost");
+              await pauseDispatch(
+                !beforeSendInstanceId || !beforeSendInstanceToken ? "connection_lost"
+                  : !beforeSendWindowStatus.allowed ? "outside_window"
+                  : "instance_paused",
+              );
             }
             const { data: released, error: releaseError } = await supabase.rpc("release_multiplix_item_claim", {
               p_item_id: item.item_id,
