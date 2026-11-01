@@ -296,7 +296,7 @@ function assertReconcileEnqueued(client: FakeClient, expectedExternalId: string 
   assertEqual(payload.external_id, expectedExternalId, 'reconcile payload.external_id');
 }
 
-Deno.test('PD-80: recusa de número pelo provedor vira code=invalid_number, não ambíguo e sem reconciliação', async () => {
+Deno.test('PD-80: recusa de número pelo provedor vira code=invalid_number, não ambíguo; POST iniciado reconcilia', async () => {
   const client = makeClient({ claim: { data: [CLAIM], error: null } });
   const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
     jsonOf(400, { message: 'Number is not registered on WhatsApp' })));
@@ -305,11 +305,12 @@ Deno.test('PD-80: recusa de número pelo provedor vira code=invalid_number, não
   assertEqual(body.code, 'invalid_number', 'code');
   assertEqual(body.retryable, false, 'retryable');
   assertEqual(body.ambiguous, false, 'ambiguous');
-  assertFailClaim(client);
-  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
+  // C110: POST foi iniciado — fail_outbound_message não é chamado (ocultaria da reconciliação)
+  assertEqual(rpcCalled(client, 'fail_outbound_message'), false, 'fail_outbound_message não chamado');
+  assertReconcileEnqueued(client, null);
 });
 
-Deno.test('PD-80: instância desconectada vira code=instance_unavailable (409) sem confundir com número inválido', async () => {
+Deno.test('PD-80: instância desconectada vira code=instance_unavailable (409); POST iniciado reconcilia', async () => {
   const client = makeClient({ claim: { data: [CLAIM], error: null } });
   const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
     jsonOf(400, { message: 'Connection Closed' })));
@@ -318,11 +319,11 @@ Deno.test('PD-80: instância desconectada vira code=instance_unavailable (409) s
   assertEqual(body.code, 'instance_unavailable', 'code');
   assertEqual(body.retryable, true, 'retryable');
   assertEqual(body.ambiguous, false, 'ambiguous');
-  assertFailClaim(client);
-  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
+  assertEqual(rpcCalled(client, 'fail_outbound_message'), false, 'fail_outbound_message não chamado');
+  assertReconcileEnqueued(client, null);
 });
 
-Deno.test('PD-80: 401 do provedor vira code=instance_unavailable', async () => {
+Deno.test('PD-80: 401 do provedor vira code=instance_unavailable; POST iniciado reconcilia', async () => {
   const client = makeClient({ claim: { data: [CLAIM], error: null } });
   const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
     jsonOf(401, { message: 'Unauthorized' })));
@@ -331,11 +332,11 @@ Deno.test('PD-80: 401 do provedor vira code=instance_unavailable', async () => {
   assertEqual(body.code, 'instance_unavailable', 'code');
   assertEqual(body.retryable, true, 'retryable');
   assertEqual(body.ambiguous, false, 'ambiguous');
-  assertFailClaim(client);
-  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
+  assertEqual(rpcCalled(client, 'fail_outbound_message'), false, 'fail_outbound_message não chamado');
+  assertReconcileEnqueued(client, null);
 });
 
-Deno.test('PD-80: 429 do provedor vira code=rate_limited e não reconcilia', async () => {
+Deno.test('PD-80: 429 do provedor vira code=rate_limited; POST iniciado reconcilia mesmo com rate limit', async () => {
   const client = makeClient({ claim: { data: [CLAIM], error: null } });
   const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
     jsonOf(429, { message: 'Too Many Requests' })));
@@ -344,11 +345,11 @@ Deno.test('PD-80: 429 do provedor vira code=rate_limited e não reconcilia', asy
   assertEqual(body.code, 'rate_limited', 'code');
   assertEqual(body.retryable, true, 'retryable');
   assertEqual(body.ambiguous, false, 'ambiguous');
-  assertFailClaim(client);
-  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
+  assertEqual(rpcCalled(client, 'fail_outbound_message'), false, 'fail_outbound_message não chamado');
+  assertReconcileEnqueued(client, null);
 });
 
-Deno.test('PD-80: recusa 4xx genérica do provedor não reconcilia (só 5xx/ambíguo reconcilia)', async () => {
+Deno.test('PD-80: recusa 4xx genérica do provedor reconcilia quando POST foi iniciado', async () => {
   const client = makeClient({ claim: { data: [CLAIM], error: null } });
   const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
     jsonOf(400, { message: 'recipient blocked you' })));
@@ -356,8 +357,8 @@ Deno.test('PD-80: recusa 4xx genérica do provedor não reconcilia (só 5xx/amb�
   const body = await response.json() as Row;
   assertEqual(body.code, 'provider_rejected', 'code');
   assertEqual(body.ambiguous, false, 'ambiguous');
-  assertFailClaim(client);
-  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job');
+  assertEqual(rpcCalled(client, 'fail_outbound_message'), false, 'fail_outbound_message não chamado');
+  assertReconcileEnqueued(client, null);
 });
 
 Deno.test('PD-80: 5xx do provedor vira code=provider_unavailable, ambíguo e reconcilia; sem dado pessoal no corpo', async () => {
@@ -369,7 +370,7 @@ Deno.test('PD-80: 5xx do provedor vira code=provider_unavailable, ambíguo e rec
   assertEqual(body.code, 'provider_unavailable', 'code');
   assertEqual(body.retryable, false, 'retryable');
   assertEqual(body.ambiguous, true, 'ambiguous');
-  assertFailClaim(client);
+  assertEqual(rpcCalled(client, 'fail_outbound_message'), false, 'fail_outbound_message não chamado');
   assertReconcileEnqueued(client, null);
   const serialized = JSON.stringify(body);
   if (serialized.includes(CONTACT_PHONE)) throw new Error('resposta vazou telefone do provedor');
@@ -384,7 +385,7 @@ Deno.test('PD-80: 200 sem id do provedor vira code=receipt_unconfirmed e reconci
   const body = await response.json() as Row;
   assertEqual(body.code, 'receipt_unconfirmed', 'code');
   assertEqual(body.ambiguous, true, 'ambiguous');
-  assertFailClaim(client);
+  assertEqual(rpcCalled(client, 'fail_outbound_message'), false, 'fail_outbound_message não chamado');
   assertReconcileEnqueued(client, null);
 });
 
@@ -399,7 +400,7 @@ Deno.test('PD-80: falha ao gravar o recibo (pós-POST) vira code=receipt_unconfi
   const body = await response.json() as Row;
   assertEqual(body.code, 'receipt_unconfirmed', 'code');
   assertEqual(body.ambiguous, true, 'ambiguous');
-  assertFailClaim(client);
+  assertEqual(rpcCalled(client, 'fail_outbound_message'), false, 'fail_outbound_message não chamado');
   assertReconcileEnqueued(client, 'wamid.provider-1');
 });
 
@@ -429,7 +430,7 @@ Deno.test('PD-80: exceção de rede DEPOIS do POST vira code=receipt_unconfirmed
   const body = await response.json() as Row;
   assertEqual(body.code, 'receipt_unconfirmed', 'code');
   assertEqual(body.ambiguous, true, 'ambiguous');
-  assertFailClaim(client);
+  assertEqual(rpcCalled(client, 'fail_outbound_message'), false, 'fail_outbound_message não chamado');
   assertReconcileEnqueued(client, null);
 });
 
@@ -496,6 +497,10 @@ Deno.test('PD-80: classifyProviderFailure é a fonte única do código por ramo'
   assertEqual(classifyProviderFailure(400, { message: 'recipient blocked you' }).code, 'provider_rejected', '400 recusa');
   assertEqual(classifyProviderFailure(500, {}).ambiguous, true, '500 ambiguo');
   assertEqual(classifyProviderFailure(422, { message: 'no such user' }).ambiguous, false, '422 nao ambiguo');
+  // C110: 408 e 425 são timeout/ambíguo — não provider_rejected
+  assertEqual(classifyProviderFailure(408, {}).code, 'receipt_unconfirmed', '408 timeout ambiguo');
+  assertEqual(classifyProviderFailure(425, {}).code, 'receipt_unconfirmed', '425 too early ambiguo');
+  assertEqual(classifyProviderFailure(408, {}).ambiguous, true, '408 ambiguo');
 });
 
 Deno.test('PD-80: claim vazio de mensagem de OUTRO agente devolve 404 (linha EXISTE e é negada, não é 409)', async () => {
