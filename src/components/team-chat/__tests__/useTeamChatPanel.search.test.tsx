@@ -36,6 +36,7 @@ vi.mock('@/hooks/communication/useTextToSpeech', () => ({
     speak: vi.fn(), stop: vi.fn(), isLoading: false, isPlaying: false,
     currentMessageId: null, voiceId: 'v1', setVoiceId: vi.fn(), speed: 1, setSpeed: vi.fn(),
   }),
+  LOCAL_VOICE_ID: 'local',
 }));
 
 vi.mock('@/hooks/system/useUserSettings', () => ({
@@ -121,12 +122,12 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
     await esperarDebounce();
 
     expect(h.rpc).toHaveBeenCalledTimes(1);
-    expect(result.current.isSearchingMessages).toBe(true);
+    expect(result.current.isSearching).toBe(true);
     expect(result.current.filteredMessages).toEqual([]);
 
     await act(async () => { liberarResposta({ data: [], error: null }); });
 
-    expect(result.current.isSearchingMessages).toBe(false);
+    expect(result.current.isSearching).toBe(false);
   });
 
   it('falha da RPC vira estado de erro, não "busca sem resultado"', async () => {
@@ -142,7 +143,7 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
     // O erro é exposto como estado próprio...
     expect(result.current.searchError).toBe(true);
     // ...e a resposta (com falha) NÃO deixa a tela presa em "buscando".
-    expect(result.current.isSearchingMessages).toBe(false);
+    expect(result.current.isSearching).toBe(false);
     // A lista vazia não é o veredito da busca: o aviso de erro é.
     expect(result.current.filteredMessages).toEqual([]);
   });
@@ -193,7 +194,7 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
       p_limit: 100,
     });
     expect(result.current.searchError).toBe(false);
-    expect(result.current.isSearchingMessages).toBe(true);
+    expect(result.current.isSearching).toBe(true);
     expect(result.current.filteredMessages).toEqual([]);
 
     await act(async () => {
@@ -204,7 +205,7 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
     });
 
     expect(result.current.searchError).toBe(false);
-    expect(result.current.isSearchingMessages).toBe(false);
+    expect(result.current.isSearching).toBe(false);
     expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-b']);
   });
 
@@ -228,7 +229,7 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
     await esperarDebounce();
 
     expect(result.current.filteredMessages).toEqual([]);
-    expect(result.current.isSearchingMessages).toBe(true);
+    expect(result.current.isSearching).toBe(true);
 
     await act(async () => {
       liberarConvB({
@@ -237,7 +238,7 @@ describe('useTeamChatPanel — busca server-side (SL-082)', () => {
       });
     });
 
-    expect(result.current.isSearchingMessages).toBe(false);
+    expect(result.current.isSearching).toBe(false);
     expect(result.current.filteredMessages.map(m => m.id)).toEqual(['m-b']);
   });
 });

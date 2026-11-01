@@ -28,6 +28,7 @@ const estado = vi.hoisted(() => ({
   createSignedUrl: vi.fn(),
   contatoConnectionId: 'conn-1' as string | null,
   instanceId: 'inst-1' as string | null,
+  getPublicUrl: vi.fn(),
   rpcs: [] as string[],
 }));
 
@@ -37,16 +38,20 @@ vi.mock('sonner', () => ({ toast: estado.toastSonner }));
 
 // jsdom + framer-motion não concluem as animações do AnimatePresence, então os
 // estados de gravação/prévia não montavam de forma determinística.
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      return React.createElement('div', { ...rest, ref });
-    }),
-  },
-  AnimatePresence: ({ children }: { children: ReactNode }) => children,
-  useReducedMotion: () => false,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    motion: {
+        div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+          const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
+          return React.createElement('div', { ...rest, ref });
+        }),
+      },
+      AnimatePresence: ({ children }: { children: ReactNode }) => children,
+      useReducedMotion: () => false,
+  };
+});
 
 // Radix Popover não abre de forma confiável sob jsdom: o pass-through guarda a
 // prop `open` para provar que o popover só fecha depois do sucesso do envio.
@@ -127,6 +132,13 @@ vi.mock('@/integrations/supabase/client', () => {
         getUser: async () => ({ data: { user: { id: 'u1' } } }),
       },
       storage: { from: () => ({ upload: estado.upload, createSignedUrl: estado.createSignedUrl }) },
+      channel: () => {
+        const canal: Record<string, unknown> = {};
+        canal.on = () => canal;
+        canal.subscribe = () => canal;
+        return canal;
+      },
+      removeChannel: () => undefined,
     },
     SUPABASE_URL: 'http://localhost:54321',
     SUPABASE_ANON_KEY: 'anon-de-teste',

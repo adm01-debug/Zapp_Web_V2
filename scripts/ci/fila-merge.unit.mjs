@@ -22,8 +22,8 @@ function pr(number, extra = {}) {
 
 test('os checks obrigatórios saem do baseline do settings-guard (fonte única)', () => {
   const lista = checksObrigatorios();
-  assert.equal(lista.length, 9); // 9 checks: TypeCheck, Unit(1/3,2/3,3/3), Build, Security, ContratoDB, E2E, NodeCIScripts
-  assert.ok(lista.includes('🧩 Node CI Scripts'));
+  assert.equal(lista.length, 3);
+  assert.ok(lista.includes('✅ CI Gate (required check)'));
 });
 
 test('estado do check: ausente e em andamento são pendentes; cancelado não conta como falha', () => {

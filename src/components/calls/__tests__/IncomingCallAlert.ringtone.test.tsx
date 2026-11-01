@@ -70,12 +70,17 @@ class FakeAudioContext {
 
 vi.stubGlobal('AudioContext', FakeAudioContext);
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,
-  },
-  AnimatePresence: ({ children }: { children?: unknown }) => <>{children as never}</>,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,
+      },
+      AnimatePresence: ({ children }: { children?: unknown }) => <>{children as never}</>,
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 vi.mock('../CallDialog', () => ({ CallDialog: () => null }));
 
@@ -133,8 +138,7 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
-
-  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 // O alerta assina a sessão de chamada no realtime (`useTerminoRemoto` →

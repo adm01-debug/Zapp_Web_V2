@@ -61,10 +61,14 @@ const { toastMock, supabaseMock } = vi.hoisted(() => {
 vi.mock('@/integrations/supabase/client', () => ({ supabase: supabaseMock }));
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: toastMock }));
 vi.mock('@/lib/logger', () => {
-  const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn() };
-  return { log: logger, getLogger: () => logger, createLogger: vi.fn(() => logger) };
+  const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+  return { log: logger, getLogger: () => logger, createLogger: () => logger };
 });
-vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isSupervisor: false, roles: [] }) }));
+vi.mock('@/hooks/system/useUserRole', () => ({
+  useUserRole: () => ({ isSupervisor: false, roles: [] }),
+  getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
+}));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
 /**
  * Isolamento do histórico de buscas (R2-PLAT-006): o hook passou a escopar o

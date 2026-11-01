@@ -15,16 +15,19 @@ import { Message, type UnsupportedMessageKind } from '@/types/chat';
 
 const reduced = vi.hoisted(() => ({ value: false }));
 
-vi.mock('framer-motion', () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
   const passthrough = ({
-    children,
-    whileHover: _whileHover,
-    transition: _transition,
-    initial: _initial,
-    animate: _animate,
-    ...rest
-  }: React.HTMLAttributes<HTMLDivElement> & Record<string, unknown>) => <div {...rest}>{children}</div>;
+      children,
+      whileHover: _whileHover,
+      transition: _transition,
+      initial: _initial,
+      animate: _animate,
+      ...rest
+    }: React.HTMLAttributes<HTMLDivElement> & Record<string, unknown>) => <div {...rest}>{children}</div>;
   return {
+    ...actual,
+
     motion: new Proxy({}, { get: () => passthrough }),
     AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     useReducedMotion: () => reduced.value,
@@ -39,8 +42,7 @@ vi.mock('@/hooks/ui/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) })
 vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ profile: { name: 'Ana' } }) }));
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
-
-  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 vi.mock('@/components/mobile/SwipeableMessage', () => ({
   SwipeableMessage: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

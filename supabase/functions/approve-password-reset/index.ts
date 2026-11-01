@@ -5,11 +5,11 @@ import {
   internalErrorResponse,
   jsonResponse,
   requireEnv,
-  isAllowedOrigin,
   Logger,
   enforceRateLimit,
   getClientIP,
 } from "../_shared/validation.ts";
+import { isAllowedOrigin } from "../_shared/cors-origins.ts";
 import { ApprovePasswordResetSchema, parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 
 /** Endereço canônico do app — MESMA lista exata do CORS em `_shared/validation.ts`. */

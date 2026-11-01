@@ -40,7 +40,7 @@ const mocks = vi.hoisted(() => ({
   rpcError: null as { message: string } | null,
 }));
 
-vi.mock('@/integrations/supabase/client', () => ({
+vi.mock('@/integrations/supabase/client', () =>({
   supabase: {
     rpc: mocks.rpc,
     from: mocks.from,
@@ -51,8 +51,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
   getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
-
-  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 vi.mock('@/hooks/ui/use-toast', () => ({ toast: mocks.toast }));
@@ -86,6 +85,7 @@ vi.mock('@/hooks/communication/useTextToSpeech', () => ({
     speed: 1,
     setSpeed: vi.fn(),
   }),
+  LOCAL_VOICE_ID: 'local',
 }));
 
 vi.mock('@/hooks/system/useUserSettings', () => ({
@@ -93,13 +93,15 @@ vi.mock('@/hooks/system/useUserSettings', () => ({
 }));
 
 vi.mock('@/hooks/chat/useScheduledMessages', () => ({
-  useScheduledMessages: () => ({
-    messages: [],
-    isLoading: false,
-    scheduleMessage: vi.fn(),
-    cancelMessage: vi.fn(),
-    isScheduling: false,
-  }),
+  useScheduledMessages: () => {
+    return {
+      messages: [],
+      isLoading: false,
+      scheduleMessage: vi.fn(),
+      cancelMessage: vi.fn(),
+      isScheduling: false,
+    };
+  },
 }));
 
 vi.mock('@/hooks/chat/useMessageSignature', () => ({
@@ -260,7 +262,7 @@ describe('ChatPanel → TransferDialog — contrato de transferência (#88)', ()
     expect(call.args).toEqual({
       p_contact_id: CONTACT_ID,
       p_to_agent_id: 'colega-profile',
-      p_to_queue_id: null,
+      p_to_queue_id: undefined,
       p_note: 'Cliente pediu urgência',
     });
     // Nenhuma escrita solta: update+evento vivem dentro da transação da função.
@@ -286,7 +288,7 @@ describe('ChatPanel → TransferDialog — contrato de transferência (#88)', ()
     expect(call.name).toBe('transfer_conversation');
     expect(call.args).toEqual({
       p_contact_id: CONTACT_ID,
-      p_to_agent_id: null,
+      p_to_agent_id: undefined,
       p_to_queue_id: 'queue-2',
       p_note: 'Fila com contexto',
     });

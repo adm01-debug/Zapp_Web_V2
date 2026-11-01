@@ -22,19 +22,23 @@ const h = vi.hoisted(() => ({
   estado: { data: [] as Record<string, unknown>[], isLoading: false, isError: false },
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { initial, animate, exit, transition, variants, whileHover, whileTap, ...rest } = props;
-      return React.createElement('div', { ...rest, ref });
-    }),
-  },
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    motion: {
+        div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+          const { initial, animate, exit, transition, variants, whileHover, whileTap, ...rest } = props;
+          return React.createElement('div', { ...rest, ref });
+        }),
+      },
+      useReducedMotion: vi.fn(() => null),
+  };
+});
 
 vi.mock('sonner', () => ({ toast: h.toast }));
-vi.mock('@/lib/logger', () => ({ log: h.log, getLogger: () => h.log ,
-  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
-}));
+vi.mock('@/lib/logger', () => ({ log: h.log, getLogger: () => h.log,
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),}));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { from: () => ({ insert: h.insert }) },
 }));

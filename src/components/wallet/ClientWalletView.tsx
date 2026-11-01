@@ -1,4 +1,5 @@
 import { EmptyState } from '@/components/ui/empty-state';
+import { useReducedMotion } from 'framer-motion';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { motion } from '@/components/ui/motion';
 import { useReducedMotion } from 'framer-motion';
@@ -17,6 +18,7 @@ import { Wallet, Plus, Trash2, Users, Phone, ArrowUpDown, UserCheck } from 'luci
 import { useClientWallet } from '@/hooks/business/useClientWallet';
 
 export function ClientWalletView() {
+  const reduzido = useReducedMotion() ?? false;
   const w = useClientWallet();
   const reduzido = useReducedMotion() ?? false;
 

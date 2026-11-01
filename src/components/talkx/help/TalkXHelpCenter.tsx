@@ -91,6 +91,8 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
     [onRouteChange, route.topic],
   );
 
+  const { query: searchQuery, setQuery: setSearchQuery } = search;
+
   const focusSearch = useCallback(() => {
     searchRef.current?.focus();
   }, []);
@@ -107,8 +109,10 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
-        if (search.query) {
-          search.setQuery('');
+        // Com a busca escrita o primeiro Esc só limpa a busca (a Ajuda segue aberta), como
+        // no próprio campo; o Esc seguinte, com a busca vazia, fecha a Ajuda.
+        if (searchQuery) {
+          setSearchQuery('');
           return;
         }
         onClose();
@@ -125,7 +129,7 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
     };
     window.addEventListener('keydown', handleShortcut, true);
     return () => window.removeEventListener('keydown', handleShortcut, true);
-  }, [focusSearch, onClose, onRouteChange, route.article, route.topic, search.query, search.setQuery]);
+  }, [focusSearch, onClose, onRouteChange, route.article, route.topic, searchQuery, setSearchQuery]);
 
   // O campo é o primeiro alvo da tela: ao voltar do artigo, o foco volta para ele.
   useEffect(() => {

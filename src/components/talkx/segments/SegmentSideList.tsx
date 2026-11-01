@@ -195,11 +195,11 @@ function SideListBody({
       </Popover>
 
       <div role="tablist" aria-label="Segmentos" className="grid grid-cols-3 gap-1 rounded-lg border border-border/60 bg-input/20 p-1">
-        {TAB_ORDER.map((key) => (
-          <button key={key} type="button" role="tab" aria-selected={tab === key} onClick={() => setTab(key)}
+        {TAB_ORDER.map((tabId) => (
+          <button key={tabId} type="button" role="tab" aria-selected={tab === tabId} onClick={() => setTab(tabId)}
             className={cn('h-7 rounded-md text-2xs font-semibold transition-colors',
-              tab === key ? 'bg-primary/15 text-[hsl(var(--primary-text))]' : 'text-foreground-secondary hover:bg-muted/40')}>
-            {TAB_LABEL[key]} {counts[key]}
+              tab === tabId ? 'bg-primary/15 text-[hsl(var(--primary-text))]' : 'text-foreground-secondary hover:bg-muted/40')}>
+            {TAB_LABEL[tabId]} {counts[tabId]}
           </button>
         ))}
       </div>

@@ -12,7 +12,7 @@
  * Todas as mensagens usam o MESMO timestamp de proposito: a ancora e o item
  * (key do virtualizer), nunca o timestamp.
  */
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import type { ComponentProps } from 'react';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -52,27 +52,24 @@ class ResizeObserverMock {
   disconnect() {}
 }
 
+let getBCRSpy: ReturnType<typeof vi.spyOn>;
+
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
   (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = vi.fn();
-  // jsdom não computa layout: clientHeight/offsetHeight/getBoundingClientRect ficam 0.
-  // O virtual-core v3 usa observeElementRect → getBoundingClientRect().height para o
-  // viewport inicial; sem isso getVirtualItems() não renderiza nenhum item.
-  Object.defineProperty(Element.prototype, 'clientHeight', {
-    configurable: true,
-    get() { return 600; },
-  });
-  Object.defineProperty(Element.prototype, 'offsetHeight', {
-    configurable: true,
-    get() { return 600; },
-  });
-  Element.prototype.getBoundingClientRect = function () {
-    return {
-      width: 800, height: 600, top: 0, left: 0,
-      bottom: 600, right: 800, x: 0, y: 0,
-      toJSON: () => ({}),
-    } as DOMRect;
-  };
+  Object.defineProperty(Element.prototype, 'clientHeight', { get: () => 600, configurable: true });
+  // TanStack Virtual chama getBoundingClientRect() no scroll element para medir
+  // a altura do container; jsdom retorna 0 por padrão, impedindo a renderização.
+  getBCRSpy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+    height: 600, width: 800, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0,
+    toJSON: () => ({}),
+  } as DOMRect);
+  // jsdom nao calcula offsetHeight, que o virtual-core usa para medir cada linha.
+  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, get: () => 120 });
+});
+
+afterAll(() => {
+  getBCRSpy.mockRestore();
 });
 
 vi.mock('../MessageBubble', () => ({

@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { parseEdgeError } from '@/lib/invokeEdge';
-import { isAccessDeniedError, ACCESS_DENIED_MESSAGE } from '@/lib/rlsError';
+import { ACCESS_DENIED_MESSAGE, isAccessDeniedError } from '@/lib/rlsError';
 import { toast } from 'sonner';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -30,13 +30,17 @@ export function PasswordResetRequestsPanel() {
     setProcessing(true);
     try {
       const { error } = await supabase.functions.invoke('approve-password-reset', { body: { requestId: request.id, action: 'approve' } });
-      if (error) {
-        if (isAccessDeniedError(error)) throw new Error(ACCESS_DENIED_MESSAGE);
-        throw new Error((await parseEdgeError(error, 'Erro ao aprovar')).message);
-      }
+      if (error) throw new Error((await parseEdgeError(error, 'Erro ao aprovar')).message);
       toast.success('Solicitação aprovada! Email de reset enviado.');
       fetchRequests();
-    } catch (error) { log.error('Error approving:', error); toast.error(error instanceof Error ? error.message : 'Erro ao aprovar'); }
+    } catch (error) {
+      log.error('Error approving:', error);
+      // Negacao de acesso (RLS 42501 / "row-level security"): mensagem fixa, sem
+      // ecoar a tabela nem a policy do erro cru.
+      toast.error(isAccessDeniedError(error)
+        ? ACCESS_DENIED_MESSAGE
+        : (error instanceof Error ? error.message : 'Erro ao aprovar'));
+    }
     finally { setProcessing(false); setSelectedRequest(null); }
   };
 
@@ -45,13 +49,15 @@ export function PasswordResetRequestsPanel() {
     setProcessing(true);
     try {
       const { error } = await supabase.functions.invoke('approve-password-reset', { body: { requestId: selectedRequest.id, action: 'reject', rejectionReason: reason } });
-      if (error) {
-        if (isAccessDeniedError(error)) throw new Error(ACCESS_DENIED_MESSAGE);
-        throw new Error((await parseEdgeError(error, 'Erro ao rejeitar')).message);
-      }
+      if (error) throw new Error((await parseEdgeError(error, 'Erro ao rejeitar')).message);
       toast.success('Solicitação rejeitada');
       setRejectDialogOpen(false); setSelectedRequest(null); fetchRequests();
-    } catch (error) { log.error('Error rejecting:', error); toast.error(error instanceof Error ? error.message : 'Erro ao rejeitar'); }
+    } catch (error) {
+      log.error('Error rejecting:', error);
+      toast.error(isAccessDeniedError(error)
+        ? ACCESS_DENIED_MESSAGE
+        : (error instanceof Error ? error.message : 'Erro ao rejeitar'));
+    }
     finally { setProcessing(false); }
   };
 

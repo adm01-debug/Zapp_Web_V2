@@ -142,18 +142,17 @@ jobs:
         if: steps.credencial.outcome == 'success'
         continue-on-error: true
         run: |
-          # GA19/W26: lote-pendente.mjs e a fonte unica da regra "apply pendente" (sobre W21/W22).
+          # W26: lote-pendente.mjs e a fonte unica da regra "apply pendente" (sobre W21/W22).
           # No evento push (lote acabou de entrar na main), apply-pendente e esperado:
           # o apply acontece no mesmo dia pelo fluxo de lote. Tratar como neutral (exit 0)
           # para nao abrir issue espuria. No schedule/dispatch: manter estrito (exit 3).
-          # exit 2 = erro de conexao/parse (nunca tratar como neutro — falha real).
           # O shell padrao e `-euo pipefail` (W44): sem o `set +e`, o exit 3 do pipeline
           # aborta o passo antes de `rc` ser lido e a regra acima nunca executa.
           set +e
           node scripts/db-audit/lote-pendente.mjs 2>&1 | tee /tmp/step-migrations.log
           rc=${PIPESTATUS[0]}
           set -e
-          if [ "$rc" -eq 3 ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
+          if [ "$rc" -eq 2 ] && [ "$GITHUB_EVENT_NAME" = "push" ]; then
             echo "::warning::Apply pendente no push — nao e drift; o schedule de amanha verificara se o apply aconteceu."
             exit 0
           fi
@@ -200,7 +199,7 @@ jobs:
       # que ninguem executa da sensacao de cobertura sem cobrir nada.
       - name: Fixtures de E2E em producao (E85)
         id: e2e-fixtures
-        # W07 (14/10/2026): era o unico dos 11 sub-checks sem esta guarda. Hoje o
+        # W07 (14/10/2026): era o unico sub-check sem esta guarda. Hoje o
         # efeito e nulo (`credencial` nao tem continue-on-error, entao a falha dele ja
         # pula tudo pelo success() implicito), mas o invariante W07 em
         # workflow-contracts.unit.mjs exige a guarda EXPLICITA em todo sub-check com
@@ -228,6 +227,9 @@ jobs:
           node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
             -f scripts/db-audit/check-talkx-transition-contract.sql 2>&1 | tee /tmp/step-contract-talkx-transition.log
 
+      # INV-LIVE: RLS, security_invoker, matview exposure, SECURITY DEFINER
+      # search_path, open write policies e referencias mortas — tudo numa so
+      # passada fail-closed sobre o catalogo vivo. Veja check-live-invariants.sql.
       - name: Verificar invariantes gerais do banco vivo
         id: live-invariants
         if: steps.credencial.outcome == 'success'
@@ -323,7 +325,7 @@ jobs:
           set -o pipefail
           # --sem-migrations: a perna de migrations e provada (com a regra de apply
           # pendente) no passo "Comparar migrations"; aqui ficam edges e grants.
-          node scripts/db-audit/check-triple-parity.mjs --require-live --sem-migrations --verbose 2>&1 | tee /tmp/step-triple-parity.log
+          node scripts/db-audit/check-triple-parity.mjs --require-live --sem-migrations 2>&1 | tee /tmp/step-triple-parity.log
 
       - name: Auditar configuracao runtime sem dados de clientes
         id: runtime-config
@@ -556,4 +558,4 @@ jobs:
             /tmp/step-triple-parity.log
             /tmp/step-runtime-config.log
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 3

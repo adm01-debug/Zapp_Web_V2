@@ -857,6 +857,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       return new Response(JSON.stringify(deleteBody), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+
     // ─── 3. Webhook ───
     if (action === 'set-webhook') {
       // Dois contratos em uso: o painel de monitoramento manda `{ instanceName,
@@ -993,6 +994,15 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'delete-message') return await proxy(`/message/delete/${instance}`, 'DELETE', { id: body.id, remoteJid: body.remoteJid, fromMe: body.fromMe });
     if (action === 'update-message') return await proxy(`/message/update/${instance}`, 'PUT', { number: body.number, key: body.key, text: body.text });
 
+    // ─── 5. Chat ───
+    // /chat/findMessages nao existe na Evolution GO (GO_GAPS D6): sem a guarda a
+    // GO devolve 404 e o chamador engole o erro em Promise.allSettled, virando
+    // "sem dados". Alem disso os 404 alimentavam o contador do circuit breaker.
+    if (action === 'find-messages') {
+      if (isGoFlavor) return goHistoryNotSupported('find-messages', corsHeaders);
+      return await proxy(`/chat/findMessages/${instance}`, 'POST', { where: body.where || {}, page: body.page, offset: body.offset });
+    }
+
     if (action === 'find-contacts') return await proxy(`/chat/findContacts/${instance}`, 'POST', { where: body.where || {} });
     if (action === 'check-numbers') return await proxy(`/chat/whatsappNumbers/${instance}`, 'POST', { numbers: body.numbers });
     if (action === 'get-media-base64') return await proxy(`/chat/getBase64FromMediaMessage/${instance}`, 'POST', { message: body.message, convertToMp4: body.convertToMp4 ?? false });
@@ -1084,7 +1094,6 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     if (action === 'find-labels') return await proxy(`/label/findLabels/${instance}`, 'GET');
     if (action === 'handle-label') return await proxy(`/label/handleLabel/${instance}`, 'POST', { number: body.number, labelId: body.labelId, action: body.action });
 
-    // ─── 9. Infrastructure (Block, PTV, Presence) ───
     if (action === 'update-block-status') return await proxy(`/chat/updateBlockStatus/${instance}`, 'POST', { number: body.number, status: body.status });
     if (action === 'send-ptv') {
       let videoSource = body.video || body.mediaUrl;

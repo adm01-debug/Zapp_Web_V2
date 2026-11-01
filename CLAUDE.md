@@ -177,7 +177,7 @@ então esse caminho nunca foi executável por agente de qualquer forma.
 
 ## Auditoria e plano de correções (2026-09-16)
 
-**Plano vigente:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (auditoria exaustiva dos 16 arquivos de `.github/workflows/` (+3 workflows dinâmicos) + meta CI score 10/10; supercede PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md).
+**Plano vigente:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (auditoria exaustiva dos 15 arquivos atuais de `.github/workflows/` (+3 workflows dinâmicos; 18 no total) + meta CI score 10/10; supercede PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md).
 Auditoria exaustiva local↔GitHub↔banco em `docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md`.
 Estado dos achados após re-auditoria de 2026-09-17:
 - `messages` >75% dead tuples — **RESOLVIDO**: autovacuum executou em 2026-09-16 18:37; em
@@ -244,7 +244,7 @@ GitHub medida em 03/10/2026 (`docs/audits/e95-perimetro-github-2026-10-03.md`).
 
 | Campo | Estado canônico | Verificado por |
 |---|---|---|
-| Branch protection — required checks | **9**: `🔎 TypeCheck` · `🧪 Unit Tests (1/3)` · `🧪 Unit Tests (2/3)` · `🧪 Unit Tests (3/3)` · `🏗️ Build` · `🔒 Security Audit` · `Contrato DB offline` · `🎭 E2E Tests (Playwright)` · `🧩 Node CI Scripts` | `settings-guard` ⚠ |
+| Branch protection — required checks | **6**: `🔍 Lint & TypeCheck` · `🧪 Unit Tests` · `🏗️ Build` · `🔒 Security Audit` · `Contrato DB offline` · `🎭 E2E Tests (Playwright)` | `settings-guard` ⚠ |
 | Branch protection — `strict` | **`true`** (política vigente desde 01/10; a opção `strict=false` foi **revogada** em 02/10 — E15(b)) | `settings-guard` ⚠ |
 | Branch protection — `enforce_admins` | `true` | `settings-guard` ⚠ |
 | Branch protection — review obrigatório | nenhum (deliberado: vários agentes com auto-merge) | — |
@@ -262,18 +262,20 @@ GitHub medida em 03/10/2026 (`docs/audits/e95-perimetro-github-2026-10-03.md`).
 
 ## Auditoria de workflows (2026-09-25) — estado dos guardas
 
-Auditoria dos 14 workflows + 3 dinâmicos (17 total), da branch protection, dos secrets e dos environments. O que passou a
-valer (confira antes de propor mudança de CI, para não refazer o que já existe):
+Retrato da auditoria de 2026-09-25: 16 workflows + 3 dinâmicos (19 total), branch protection, secrets e environments. O que passou a
+valer naquele retrato (confira antes de propor mudança de CI, para não refazer o que já existe):
 
-**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions) — retificada em 19/10/2026:** são **15**
-arquivos em `.github/workflows/` (`branch-hygiene-audit.yml`, `ci.yml`,
+**Snapshot histórico de 05/10/2026 (auditoria exaustiva de GitHub Actions):** naquele retrato havia 16
+arquivos em `.github/workflows/` (`auto-update-pr-branch.yml`, `branch-hygiene-audit.yml`, `ci.yml`,
 `codeql.yml`, `crm-sync-worker.yml`, `db-guard.yml`, `db-live-guard.yml`, `db-migrate.yml`,
-`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `notifica-falha-main.yml`,
-`talkx-status-regen.yml`, `targeted-ledger-evidence.yml`, `types-sync.yml`,
-`vercel-env-cleanup.yml`), mais 3 workflows dinâmicos
-que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — **18 no
-total**. A fonte canônica do inventário é o **gerado** `docs/ci/README.md`
-(`scripts/ci/render-workflow-docs.mjs --check`), não esta lista manual. Plano completo em
+`deploy-functions.yml`, `e2e-logado.yml`, `e2e-talkx.yml`, `settings-guard.yml`, `talkx-status-regen.yml`,
+`targeted-ledger-evidence.yml`, `types-sync.yml`, `vercel-env-cleanup.yml`), mais 3 workflows dinâmicos
+que não têm arquivo próprio no repo (Dependabot Updates, Dependency Graph, Copilot reviewer) — 19 no
+total naquele retrato. A lista é histórica; a fonte canônica atual do inventário é o **gerado** `docs/ci/README.md`
+(`scripts/ci/render-workflow-docs.mjs --check`), não esta lista manual.
+
+**Inventário vigente (2026-10-20):** **17** arquivos em `.github/workflows/` e 3 workflows dinâmicos — 20 no total.
+Plano completo em
 `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`.
 
 **Required checks da `main`** (6; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🔍 Lint & TypeCheck`, `🧪 Unit Tests`,
@@ -473,7 +475,7 @@ e pasta mudaram. Quem for renomear id precisa de `TAB_REDIRECTS` em `useInboxUIS
 (precedente `reminders → tasks`). Estatísticas do contato não têm série histórica — não
 reintroduzir % de variação sem query real. Plano: `docs/design/PLANO_SALESVIEW_JOURNEY_50_ETAPAS_2026-10-02.md`.
 
-## Decisões de 2026-09-26 — como DDL entra em produção, e por que merge ≠ deploy
+## Decisões de 2026-09-26 — como DDL entra em produção
 
 **DDL em produção vai por MCP (`db_query`) + registro no ledger no mesmo turno, não pelo
 `db-migrate.yml`.** O workflow existe, funciona e é mais seguro no papel (dry-run + hash), mas
@@ -492,12 +494,13 @@ Aplicado assim hoje: `20260926120600` (`DROP INDEX idx_talkx_template_versions_t
 índice duplicado da unique `(template_id, version_number)`; 0 linhas e 0 `idx_scan` na tabela
 antes do drop). O arquivo estava em `main` desde a manhã sem nunca ter sido aplicado.
 
-**Merge em `main` NÃO deploya edge function.** O front é Vercel e sobe sozinho; as edge functions
-sobem **só** por `workflow_dispatch` do `deploy-functions.yml` (é deliberado — ver cabeçalho do
-workflow), e o job ainda pausa em `Waiting` no environment `producao-edge-functions`. Ou seja:
-uma correção de edge function mergeada continua **fora do ar** até alguém disparar o workflow E
-aprovar. Quem mergear fix de edge function e disser "está em produção" sem esse par de passos está
-reportando errado — aconteceu nesta sessão com o fix do `trash-thread` do Gmail (PR #840).
+**Retificação de 2026-10-07 — Edge Functions:** o parágrafo histórico sobre deploy manual foi
+superado. Hoje, um push na `main` que altera código implantável em `supabase/functions/`
+ou `supabase/config.toml` (exceto `*.test.ts`, `.md` e `fixtures/`)
+dispara `deploy-functions.yml` automaticamente. O environment `producao-edge-functions` restringe
+a branch confiável e não exige aprovação humana adicional. O dispatch manual permanece para
+rollback (`source_ref`), função única, dry-run e rotação de secrets. Confirme o run após o merge;
+não execute `supabase functions deploy` diretamente em produção.
 
 ## Alocação de versão de migration (2026-09-28) — evita colisão entre sessões paralelas
 
@@ -611,7 +614,7 @@ Referência: issue #888 (`[types-sync]`, 89 comentários), fechada em 2026-10-01
 ### Deploy e edge functions
 
 - **Front (Vercel):** automático na `main` — merge em `main` = deploy em produção.
-- **Edge functions:** NÃO sobem com o front. Requerem `workflow_dispatch` do `deploy-functions.yml` + aprovação de Joaquim em `producao-edge-functions`.
+- **Edge functions:** deploy automático quando o push na `main` altera código implantável em `supabase/functions/` ou `supabase/config.toml` (exceto `*.test.ts`, `.md` e `fixtures/`); `workflow_dispatch` é para rollback e operações direcionadas. O environment `producao-edge-functions` restringe a branch e não exige aprovação humana adicional.
 - `FALLBACK_ORIGIN` atual: `https://zapp-web-v2.vercel.app`. Mudar para `https://zappweb.app.br` 7 dias após DNS estabilizar (V185).
 
 ### Regras de env vars no Vercel
@@ -626,7 +629,7 @@ Referência: issue #888 (`[types-sync]`, 89 comentários), fechada em 2026-10-01
 ### Ações pendentes do Joaquim (pós-auditoria 2026-10-18)
 
 1. **V017** — Inverter redirect: apex canônico, `www` → apex (Dashboard Vercel → Domains).
-2. **V023** — Deploy edge functions após merge (dispatch + aprovar `producao-edge-functions`).
+2. **V023 (retificada em 2026-10-07)** — Após merge que altera código implantável de Edge Functions, confirmar o run automático de `deploy-functions.yml`; dispatch manual fica para rollback e operações direcionadas.
 3. **V043–V065** — Remover 17 vars de integração morta + 5 chaves servidor + VITE_* não lidas.
 4. **V175/V176** — Pausar e deletar projeto legado `zapp-web` (`prj_OsErjUqsrMbwwC7S1LVfawmNgEce`).
 

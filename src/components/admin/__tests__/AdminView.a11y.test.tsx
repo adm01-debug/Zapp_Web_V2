@@ -124,7 +124,7 @@ describe('AdminView — abas acessíveis e busca no lugar certo (N-064)', () => 
     fetchDataSpy.mockClear();
   });
 
-  it('expõe tablist nomeado, 4 abas (a de Tarefas agendadas entra só para admin) e painel rotulado pela aba ativa', () => {
+  it('expõe tablist nomeado, 4 abas (Usuários, Auditoria, CRM 360° e, só para admin, Tarefas agendadas) e painel rotulado pela aba ativa', () => {
     render(<AdminView />);
     expect(screen.getByRole('tablist', { name: 'Seções da administração' })).toBeInTheDocument();
     expect(screen.getAllByRole('tab')).toHaveLength(4);
@@ -168,14 +168,14 @@ describe('AdminView — abas acessíveis e busca no lugar certo (N-064)', () => 
     expect(screen.getByPlaceholderText('Buscar usuários...')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('tab', { name: /Auditoria/ }));
     expect(screen.getByPlaceholderText('Buscar logs...')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('tab', { name: /CRM/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /CRM 360°/ }));
     expect(screen.queryByPlaceholderText(/Buscar/)).toBeNull();
   });
 
   it('não busca dados de usuário nas abas que não os usam, e busca ao voltar para Usuários', () => {
     render(<AdminView />);
     expect(fetchDataSpy).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByRole('tab', { name: /CRM/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /CRM 360°/ }));
     expect(fetchDataSpy).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole('tab', { name: /Usuários/ }));
     expect(fetchDataSpy).toHaveBeenCalledTimes(2);

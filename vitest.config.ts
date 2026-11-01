@@ -3,6 +3,10 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import { fileURLToPath } from "node:url";
 
+// Fuso do produto: vários testes (workItemFormat, filesPeriod, TalkXAnalytics) assumem America/Sao_Paulo.
+// Sem fixar, o resultado depende do fuso da máquina (UTC no CI).
+process.env.TZ = "America/Sao_Paulo";
+
 const rootDir = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
@@ -10,6 +14,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
+    globalSetup: ["./src/test/global-setup-tz.ts"],
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     testTimeout: 15000,

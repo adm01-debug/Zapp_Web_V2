@@ -14,29 +14,32 @@ const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'github-settings-gu
 const TITULO = '[settings-guard] perimeter regression detected';
 
 const CONTEXTS_OK =
-  "['🔎 TypeCheck','🧪 Unit Tests (1/3)','🧪 Unit Tests (2/3)','🧪 Unit Tests (3/3)','🏗️ Build','🔒 Security Audit','Contrato DB offline','🎭 E2E Tests (Playwright)','🧩 Node CI Scripts']";
+  "['✅ CI Gate (required check)','🏗️ Build','🔎 TypeCheck']";
 const PROT_OK = `send({ required_status_checks: { strict: true, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
 const PROT_REGRESSAO = `send({ required_status_checks: { strict: false, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enabled: false } })`;
 const REPO_OK =
   "send({ allow_auto_merge: true, allow_squash_merge: true, allow_merge_commit: false, allow_rebase_merge: false, delete_branch_on_merge: true, squash_merge_commit_message: 'PR_BODY', squash_merge_commit_title: 'PR_TITLE', security_and_analysis: { secret_scanning: { status: 'enabled' }, secret_scanning_push_protection: { status: 'enabled' } } })";
 const ACTIONS_OK = "send({ enabled: true, allowed_actions: 'selected', sha_pinning_required: true })";
-const WORKFLOW_PERMS_OK = "send({ default_workflow_permissions: 'read', can_approve_pull_request_reviews: true })";
-const SELECTED_PATTERNS = "['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions/cache','actions/checkout','actions/github-script','actions/setup-go','actions/setup-node','actions/upload-artifact','github/codeql-action','actions/dependency-review-action','ossf/scorecard-action']";
-const SELECTED_OK = `send({ patterns_allowed: ${SELECTED_PATTERNS} })`;
+const WORKFLOW_PERMS_OK = "send({ default_workflow_permissions: 'write', can_approve_pull_request_reviews: true })";
+const SELECTED_PATTERNS = "['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions/cache','actions/checkout','actions/github-script','actions/setup-go','actions/setup-node','actions/upload-artifact','github/codeql-action/init','github/codeql-action/analyze','actions/dependency-review-action','ossf/scorecard-action']";
+// Formato real da API: sufixo @* (wildcard total), sub-ações separadas, verified_allowed e github_owned_allowed.
+// Refs mais restritos (@v1, @sha) não são stripped — o guard os detecta como divergência.
+const SELECTED_OK = "send({ patterns_allowed: ['oven-sh/setup-bun@*','denoland/setup-deno@*','supabase/setup-cli@*','peter-evans/create-pull-request@*','gitleaks/gitleaks-action@*','actions/cache@*','actions/checkout@*','actions/github-script@*','actions/setup-go@*','actions/setup-node@*','actions/upload-artifact@*','github/codeql-action/init@*','github/codeql-action/analyze@*','actions/dependency-review-action@*','ossf/scorecard-action@*'], verified_allowed: false, github_owned_allowed: true })";
+const SELECTED_API = SELECTED_OK;
 const SEM_ESCOPO = "send({ message: 'Resource not accessible by integration' }, 403)";
 
 /**
  * Stub de `fetch` no mesmo formato do baseline real. `modo` escolhe a resposta:
  *   ok         — tudo conforme o baseline
  *   regressao  — strict=false (a regressão que o guard existe para pegar)
- *   semChecks  — `required_status_checks: null` (os 9 checks obrigatorios apagados;
+ *   semChecks  — `required_status_checks: null` (os 6 checks obrigatorios apagados;
  *                e assim que a API DESLIGA os checks — achado do Codex na PR #1920)
  *   semEscopo  — a branch protection responde 403
  *   tokenReal  — o que o GITHUB_TOKEN devolve HOJE (medido no run 38615982485):
  *                403 em branch protection e actions, e `GET /repos` 200 SEM os
  *                campos de merge (o defeito W04: isso virava "7 divergencias")
  *   parcial    — `GET /repos` 200 com PARTE dos campos de merge (cegueira parcial)
- *   injecao    — valores com \n vindos da API (jssecurity:S5145)
+ *   injecao    — valores com \\n vindos da API (jssecurity:S5145)
  * Opcoes:
  *   issue          — simula a issue [settings-guard] ja aberta
  *   ultimoMarcador — marcador do ultimo comentario da issue (W05: dedupe por causa)
@@ -44,6 +47,7 @@ const SEM_ESCOPO = "send({ message: 'Resource not accessible by integration' }, 
  *   comentarioDepois — um comentario alheio (humano/outro bot) DEPOIS do marcador
  *   autorMarcador  — quem escreveu o comentario com o marcador (default: o proprio guard)
  *   patchStatus    — status HTTP devolvido a qualquer PATCH (403 = restauracao falha)
+ *   selected       — resposta de /actions/permissions/selected-actions (default: SELECTED_OK)
  */
 const GUARD = 'github-actions[bot]';
 function stub(
@@ -55,6 +59,7 @@ function stub(
     comentarioDepois = false,
     autorMarcador = GUARD,
     patchStatus = 200,
+    selected = SELECTED_OK,
   } = {},
 ) {
   const prot = {
@@ -83,7 +88,7 @@ function stub(
 
   const actions = modo === 'tokenReal' ? SEM_ESCOPO : ACTIONS_OK;
   const envs =
-    "send({ environments: [{ name: 'banco-leitura' },{ name: 'db-ledger-evidence' },{ name: 'legacy-import-destrutivo' },{ name: 'perimetro-leitura' },{ name: 'producao-ddl' },{ name: 'producao-edge-functions' }] })";
+    "send({ environments: [{ name: 'banco-leitura' },{ name: 'copilot' },{ name: 'db-ledger-evidence' },{ name: 'legacy-import-destrutivo' },{ name: 'perimetro-leitura' },{ name: 'Preview' },{ name: 'producao-ddl' },{ name: 'producao-edge-functions' },{ name: 'Production' }] })";
 
   const criadoEm = new Date(Date.now() - idadeMs).toISOString();
   const totalComentarios = comentarioDepois ? 2 : 1;
@@ -119,7 +124,7 @@ function stub(
     "  if (method === 'GET' && p.indexOf('/issues/42/comments') !== -1) return " + comentarios + ';',
     "  if (p.endsWith('/branches/main/protection')) return " + prot + ';',
     "  if (p.endsWith('/actions/permissions/workflow')) return " + workflowPerms + ';',
-    "  if (p.endsWith('/actions/permissions/selected-actions')) return " + SELECTED_OK + ';',
+    "  if (p.endsWith('/actions/permissions/selected-actions')) return " + selected + ';',
     "  if (p.indexOf('/actions/permissions') !== -1) return " + actions + ';',
     "  if (method === 'GET' && p.endsWith('/rulesets')) return send([]);",
     "  if (p.indexOf('/environments') !== -1) return " + envs + ';',
@@ -168,6 +173,27 @@ describe('settings-guard: perimetro conforme o baseline', () => {
     assert.ok(!r.out.includes('::warning::'), `avisou sem motivo:\n${r.out}`);
   });
 
+  it('selected-actions no formato da API (@* e codeql-action/init|analyze) confere com o baseline', () => {
+    const r = rodarGuard('ok', { selected: SELECTED_API });
+    assert.equal(r.code, 0, `esperava exit 0, veio ${r.code}:\n${r.out}`);
+    assert.ok(!r.out.includes('selected_actions.patterns_allowed'), `divergencia falsa:\n${r.out}`);
+  });
+
+  it('acao a mais em selected-actions e divergencia', () => {
+    const r = rodarGuard('ok', { selected: "send({ patterns_allowed: ['evil/acao@*'] })" });
+    assert.equal(r.code, 1, `esperava exit 1, veio ${r.code}:\n${r.out}`);
+    assert.ok(r.out.includes('selected_actions.patterns_allowed'), `nao apontou o campo:\n${r.out}`);
+  });
+
+  it('ref restritivo (@v1) e detectado como divergencia (nao e stripped)', () => {
+    // Se alguem troca oven-sh/setup-bun@* por oven-sh/setup-bun@v1, o guard precisa
+    // acusar divergencia: @v1 e mais restritivo que o wildcard esperado pelo baseline.
+    const selV1 = SELECTED_API.replace('oven-sh/setup-bun@*', 'oven-sh/setup-bun@v1');
+    const r = rodarGuard('ok', { selected: selV1 });
+    assert.equal(r.code, 1, `esperava exit 1 (ref restritivo diverge), veio ${r.code}:\n${r.out}`);
+    assert.ok(r.out.includes('selected_actions.patterns_allowed'), `nao apontou o campo:\n${r.out}`);
+  });
+
   it('strict=false e detectado como divergencia (a regressao que o guard existe para pegar)', () => {
     const r = rodarGuard('regressao');
     assert.equal(r.code, 1, `esperava exit 1, veio ${r.code}:\n${r.out}`);
@@ -175,8 +201,7 @@ describe('settings-guard: perimetro conforme o baseline', () => {
       r.out.includes('branch_protection_main.strict'),
       `nao apontou o campo divergente:\n${r.out}`,
     );
-    // GA77: GITHUB_TOKEN nao tem escopo `administration`; guard nao tenta restaurar.
-    assert.ok(!r.out.includes('Restaurado'), `tentou restaurar sem escopo administration:\n${r.out}`);
+    assert.ok(r.out.includes('Restaurado'), `nao tentou restaurar o que sabe restaurar:\n${r.out}`);
   });
 
   it('required_status_checks: null e regressao (checks apagados), nunca ponto cego', () => {
@@ -287,13 +312,11 @@ describe('settings-guard: ponto cego (E95, W04, W05)', () => {
     assert.ok(r.out.includes('Issue #42 atualizada com novo comentario'), `causa nova sem comentario:\n${r.out}`);
   });
 
-  it('W05: divergencia real dentro do dedupe de 6 h suprime o comentario (GA77: sem restauracao automatica)', () => {
-    // GA77: restauravel e sempre false; forcar=false; o dedupe de 6 h aplica mesmo
-    // com divergencia real -- o comentario so sai quando a janela expirar.
+  it('W05: divergencia real com restauracao EFETIVA sempre comenta (mesmo com dedupe)', () => {
     const r = rodarGuard('regressao', { issue: true, ultimoMarcador: MARCADOR_REGRESSAO, idadeMs: 60_000 });
     assert.equal(r.code, 1, r.out);
-    assert.ok(!r.out.includes('Restaurado:'), `guard nao deve ter restaurado nada:\n${r.out}`);
-    assert.ok(r.out.includes('Dedupe'), `dentro do dedupe deveria suprimir o comentario:\n${r.out}`);
+    assert.ok(r.out.includes('Restaurado:'), `a restauracao precisa ter acontecido:\n${r.out}`);
+    assert.ok(r.out.includes('Issue #42 atualizada com novo comentario'), `restauracao sem registro:\n${r.out}`);
   });
 
   it('W05: restauracao que FALHOU nao forca comentario — o dedupe de 6 h vale', () => {
@@ -361,10 +384,9 @@ describe('settings-guard: log injection (jssecurity:S5145)', () => {
 // W13: environments extras (Vercel-managed vs inesperados)
 function rodarComEnvsExtra(extras) {
   // Injeta o stub de environments com os itens do baseline + os extras recebidos.
-  // Usar exatamente os environments do baseline atual (scripts/ci/github-settings-baseline.json).
   const todos = [
-    'banco-leitura', 'db-ledger-evidence', 'legacy-import-destrutivo',
-    'perimetro-leitura', 'producao-ddl', 'producao-edge-functions',
+    'banco-leitura', 'copilot', 'db-ledger-evidence', 'legacy-import-destrutivo',
+    'perimetro-leitura', 'Preview', 'producao-ddl', 'producao-edge-functions', 'Production',
     ...extras,
   ];
   const envsStub =

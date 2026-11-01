@@ -173,8 +173,7 @@ async function checarBranchProtection() {
       esperado: esperado.strict,
       encontrado: checksDesligados ? 'required_status_checks desligado' : strict,
       // Sem o bloco de checks o PATCH do sub-recurso nao tem o que atualizar.
-      // GA77: GITHUB_TOKEN não tem escopo `administration`; restauração sempre falha com 403.
-      restauravel: false,
+      restauravel: !checksDesligados,
     });
   }
 
@@ -221,7 +220,7 @@ async function checarRepo() {
     }
     const encontrado = repo[campo];
     if (encontrado !== esperado) {
-      divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: false });
+      divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: campo === 'allow_auto_merge' });
     }
   }
   if (ausentes.length === Object.keys(baseline.merge).length) {
@@ -272,8 +271,10 @@ async function checarSelectedActions() {
   const sel = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}/actions/permissions/selected-actions`);
   const divergencias = [];
   const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort();
-  // A API devolve padrões com sufixo @* (ex: actions/checkout@*); normalizar antes de comparar.
-  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].map((p) => p.replace(/@.*$/, '')).sort();
+  // A API devolve padrões com `@*` (wildcard total); strip só esse sufixo.
+  // `@v1`, `@sha` e similares são preservados: diferem do baseline e disparam divergência.
+  const normalizar = (p) => p.replace(/@\*$/, '');
+  const encontradosPatterns = [...new Set((sel?.patterns_allowed ?? []).map(normalizar))].sort();
   if (blPatterns.join('|') !== encontradosPatterns.join('|')) {
     divergencias.push({
       campo: 'selected_actions.patterns_allowed',
@@ -281,6 +282,16 @@ async function checarSelectedActions() {
       encontrado: encontradosPatterns.join(', ') || '(nenhum)',
       restauravel: false,
     });
+  }
+  const blVerified = baseline.selected_actions_verified_allowed ?? false;
+  const encontradoVerified = sel?.verified_allowed ?? false;
+  if (encontradoVerified !== blVerified) {
+    divergencias.push({ campo: 'selected_actions.verified_allowed', esperado: blVerified, encontrado: encontradoVerified, restauravel: false });
+  }
+  const blGithubOwned = baseline.selected_actions_github_owned_allowed ?? false;
+  const encontradoGithubOwned = sel?.github_owned_allowed ?? false;
+  if (encontradoGithubOwned !== blGithubOwned) {
+    divergencias.push({ campo: 'selected_actions.github_owned_allowed', esperado: blGithubOwned, encontrado: encontradoGithubOwned, restauravel: false });
   }
   return divergencias;
 }
@@ -332,11 +343,24 @@ async function checarEnvironments() {
   return divergencias;
 }
 
-// ---------------------------------------------------------------- sem restauração automática
-// GA77: GITHUB_TOKEN de workflow não tem escopo `administration`; qualquer PATCH
-// em branch protection ou /repos que exija esse escopo retorna 403. Todos os
-// `restauravel` estão `false`; o bloco de restauração não executa.
+// ---------------------------------------------------------------- restauração
 
+async function restaurar(campo) {
+  if (campo === 'branch_protection_main.strict') {
+    const protection = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection`);
+    const contexts = protection?.required_status_checks?.contexts ?? [];
+    await gh('PATCH', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection/required_status_checks`, {
+      strict: true,
+      contexts,
+    });
+    return '`branch_protection_main.strict` restaurado para `true`';
+  }
+  if (campo === 'merge.allow_auto_merge') {
+    await gh('PATCH', `/repos/${OWNER}/${REPO_NAME}`, { allow_auto_merge: true });
+    return '`merge.allow_auto_merge` restaurado para `true`';
+  }
+  return null;
+}
 
 // ---------------------------------------------------------------- issue
 
@@ -503,8 +527,22 @@ async function main() {
     return;
   }
 
+  // Restaura só o que o guard sabe restaurar; o resto vira alerta. Sucesso e falha
+  // ficam em listas separadas: so o sucesso forca comentario (Devin, PR #1920).
   const restaurados = [];
   const restauracoesEfetivas = [];
+  for (const d of divergencias.filter((x) => x.restauravel)) {
+    try {
+      const feito = await restaurar(d.campo);
+      if (feito) {
+        restaurados.push(feito);
+        restauracoesEfetivas.push(d.campo);
+        console.log(`Restaurado: ${semQuebra(d.campo)}`);
+      }
+    } catch (e) {
+      restaurados.push(`⚠️ falhou ao restaurar \`${d.campo}\`: ${e.message.split(':')[0]}`);
+    }
+  }
 
   const soCegos = divergencias.length === 0;
   const assinatura = assinaturaDe(divergencias, naoVerificaveis);

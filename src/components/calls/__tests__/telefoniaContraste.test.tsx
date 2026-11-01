@@ -28,13 +28,17 @@ const { estado } = vi.hoisted(() => ({
   estado: { incomingCall: null as null | Record<string, unknown> },
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,
-  },
-  AnimatePresence: ({ children }: { children?: unknown }) => <>{children as never}</>,
-  useReducedMotion: () => false,
-}));
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
+  return {
+    ...actual,
+    motion: {
+        div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,
+      },
+      AnimatePresence: ({ children }: { children?: unknown }) => <>{children as never}</>,
+      useReducedMotion: () => false,
+  };
+});
 vi.mock('../CallDialog', () => ({ CallDialog: () => <div data-testid="call-dialog" /> }));
 vi.mock('@/hooks/communication/useIncomingCallListener', () => ({
   useIncomingCallListener: () => ({ incomingCall: estado.incomingCall, dismissCall: vi.fn() }),
@@ -55,8 +59,7 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
 }));
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
-
-  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 vi.mock('@/hooks/calls/useTerminoRemoto', () => ({ useTerminoRemoto: vi.fn() }));
 vi.mock('@/lib/calls/persistence', () => ({ upsertMyCall: vi.fn() }));

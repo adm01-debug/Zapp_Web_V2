@@ -59,8 +59,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 vi.mock('@/lib/logger', () => ({
   log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
   getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
-
-  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 // ---- dependências internas do ChatPanel (mesmo conjunto do ChatPopup.pagination) ----
@@ -105,6 +104,7 @@ vi.mock('@/hooks/communication/useTextToSpeech', () => ({
     speak: vi.fn(), stop: vi.fn(), isLoading: false, isPlaying: false,
     currentMessageId: null, voiceId: '', setVoiceId: vi.fn(), speed: 1, setSpeed: vi.fn(),
   }),
+  LOCAL_VOICE_ID: 'local',
 }));
 vi.mock('@/hooks/system/useUserSettings', () => ({
   useUserSettings: () => ({ settings: {}, updateSettings: vi.fn(), saveSettings: vi.fn() }),
@@ -257,10 +257,21 @@ function medirLayout() {
       return this.getAttribute('role') === 'log' ? ALTURA_JANELA : ALTURA_ESTIMADA;
     },
   });
+  // O virtual-core 3.19 mede o contêiner de rolagem por `clientHeight` (as versões
+  // anteriores liam `offsetHeight`); os itens continuam medidos por `offsetHeight`.
+  const originalClient = Object.getOwnPropertyDescriptor(proto, 'clientHeight');
+  Object.defineProperty(proto, 'clientHeight', {
+    configurable: true,
+    get(this: HTMLElement) {
+      return this.getAttribute('role') === 'log' ? ALTURA_JANELA : 0;
+    },
+  });
   return {
     mockRestore() {
       if (original) Object.defineProperty(proto, 'offsetHeight', original);
       else delete (proto as unknown as Record<string, unknown>).offsetHeight;
+      if (originalClient) Object.defineProperty(proto, 'clientHeight', originalClient);
+      else delete (proto as unknown as Record<string, unknown>).clientHeight;
     },
   };
 }

@@ -94,6 +94,7 @@ function readStoredPrefs(storageKey: string | null): Partial<InboxFilterPrefs> |
 }
 
 export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInboxFiltersProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const storageKey = profileId ? inboxFiltersStorageKey(profileId) : null;
   const ownerKey = storageKey ?? NO_OWNER;
 
@@ -104,22 +105,19 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   // troca de conta no mesmo navegador não reaproveita o estado do anterior.
   const [draft, setDraft] = useState<Record<string, InboxFilterPrefs>>({});
 
-  const [searchParams, setSearchParams] = useSearchParams();
-
   const basePrefs = useMemo<InboxFilterPrefs>(() => {
     const chipTab = storedPrefs?.chipTab ?? DEFAULT_CHIP;
     return {
       chipTab,
       ...tabsForChip(chipTab),
       queueId: storedPrefs?.queueId ?? null,
-      contactType: storedPrefs?.contactType ?? null,
+      // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
+      contactType: normalizeContactType(searchParams.get('type')) ?? storedPrefs?.contactType ?? null,
     };
-  }, [storedPrefs]);
+  }, [storedPrefs, searchParams]);
 
   const prefs = draft[ownerKey] ?? basePrefs;
-  const { chipTab, mainTab, subTab, queueId: selectedQueueId, contactType: storedContactType } = prefs;
-  // URL param tem prioridade; sem ele, restaura a preferência persistida do usuário.
-  const selectedContactType = normalizeContactType(searchParams.get('type')) ?? storedContactType;
+  const { chipTab, mainTab, subTab, queueId: selectedQueueId, contactType: selectedContactType } = prefs;
 
   /**
    * Aplica a mudança sobre o estado vivo do dono e persiste só o que sobrevive
@@ -157,16 +155,15 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
   const setSelectedQueueId = useCallback((id: string | null) => applyPrefs({ queueId: id }), [applyPrefs]);
 
   const handleContactTypeChange = useCallback((value: string | null) => {
-    const normalized = value && value !== 'all' ? value : null;
-    applyPrefs({ contactType: normalized });
-    setSearchParams(prev => {
-      const params = new URLSearchParams(prev);
-      if (normalized) {
-        params.set('type', normalized);
+    applyPrefs({ contactType: value && value !== 'all' ? value : null });
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value && value !== 'all') {
+        next.set('type', value);
       } else {
-        params.delete('type');
+        next.delete('type');
       }
-      return params;
+      return next;
     }, { replace: true });
   }, [applyPrefs, setSearchParams]);
 

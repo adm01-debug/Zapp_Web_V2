@@ -28,7 +28,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     functions: { invoke: mocks.invoke },
     from: mocks.tableFrom,
     auth: { getUser: mocks.getUser },
-    channel: vi.fn().mockReturnValue({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() }),
+    channel: vi.fn(() => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() })),
     removeChannel: vi.fn(),
   },
 }));

@@ -47,20 +47,22 @@ vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), info: vi.fn(), debug: vi.fn(), warn: vi.fn() },
   logger: { error: vi.fn(), info: vi.fn(), debug: vi.fn(), warn: vi.fn() },
   getLogger: () => ({ error: vi.fn(), info: vi.fn(), debug: vi.fn(), warn: vi.fn() }),
-
-  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() } }));
 
-vi.mock('framer-motion', () => {
+vi.mock('framer-motion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('framer-motion')>();
   const semMovimento = (tag: string) =>
-    React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
-      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
-      void whileHover; void whileTap; void initial; void animate; void exit; void transition; void variants;
-      return React.createElement(tag, { ...rest, ref });
-    });
+      React.forwardRef((props: Record<string, unknown>, ref: unknown) => {
+        const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;
+        void whileHover; void whileTap; void initial; void animate; void exit; void transition; void variants;
+        return React.createElement(tag, { ...rest, ref });
+      });
   return {
+    ...actual,
+
     motion: {
       div: semMovimento('div'),
       span: semMovimento('span'),

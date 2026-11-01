@@ -38,7 +38,7 @@ interface ConnectionCardProps {
   disconnecting?: boolean;
   onShowQrCode: (c: WhatsAppConnection) => void;
   onCopyId: (id: string) => void;
-  onDisconnect: (c: WhatsAppConnection) => boolean | void | Promise<boolean | void>;
+  onDisconnect: (c: WhatsAppConnection) => void | boolean | Promise<void | boolean>;
   onSetDefault: (id: string) => void;
   onDelete: (c: WhatsAppConnection) => void;
   onBusinessHours: (id: string, name: string) => void;
@@ -72,20 +72,31 @@ export function ConnectionCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
 
-  // t_cce2f0f7: só fecha o diálogo quando a desconexão teve êxito (result !== false).
-  // Erro ou retorno false mantém o diálogo aberto e mostra o motivo.
+  // Enquanto o desconectar está em voo (estado `disconnecting` vindo da view),
+  // o diálogo fica aberto com o spinner; só fecha quando onDisconnect resolve.
+  const handleDisconnectDialogOpenChange = (open: boolean) => {
+    if (disconnecting || disconnectPending) return;
+    setConfirmDisconnect(open);
+    if (!open) setDisconnectError(null);
+  };
+
   const handleConfirmDisconnect = async () => {
+    if (disconnecting || disconnectPending) return;
     setDisconnectPending(true);
     setDisconnectError(null);
     try {
-      const result = await onDisconnect(connection);
-      if (result === false) {
-        setDisconnectError('Não foi possível desconectar. Tente novamente.');
-      } else {
-        setConfirmDisconnect(false);
+      const disconnected = await onDisconnect(connection);
+      if (disconnected === false) {
+        setDisconnectError('Não foi possível desconectar esta conexão. Verifique o estado e tente novamente.');
+        return;
       }
-    } catch (e) {
-      setDisconnectError(e instanceof Error ? e.message : 'Não foi possível desconectar. Tente novamente.');
+      setConfirmDisconnect(false);
+    } catch (error) {
+      setDisconnectError(
+        error instanceof Error && error.message
+          ? error.message
+          : 'Não foi possível desconectar esta conexão. Tente novamente.',
+      );
     } finally {
       setDisconnectPending(false);
     }
@@ -230,10 +241,10 @@ export function ConnectionCard({
 
       <ConnectionDisconnectDialog
         open={confirmDisconnect}
-        onOpenChange={(open: boolean) => { setConfirmDisconnect(open); if (!open) setDisconnectError(null); }}
+        onOpenChange={handleDisconnectDialogOpenChange}
         connectionName={connection.name}
         phoneNumber={connection.phone_number}
-        pending={disconnectPending}
+        pending={disconnecting || disconnectPending}
         errorMessage={disconnectError ?? undefined}
         onConfirm={handleConfirmDisconnect}
       />

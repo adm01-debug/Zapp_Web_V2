@@ -428,8 +428,8 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
 
     expect(rpcCalls.map((c) => c.name)).toEqual(['transfer_conversation', 'transfer_conversation']);
     expect(rpcCalls.map((c) => c.args)).toEqual([
-      { p_contact_id: c1, p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },
-      { p_contact_id: c2, p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },
+      { p_contact_id: c1, p_to_agent_id: 'ag-2', p_to_queue_id: undefined, p_note: undefined },
+      { p_contact_id: c2, p_to_agent_id: 'ag-2', p_to_queue_id: undefined, p_note: undefined },
     ]);
     // Nada de UPDATE solto em contacts: o único caminho é a RPC atômica.
     expect(recorded).toEqual([]);
@@ -438,7 +438,7 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
-  it('fila: manda p_to_queue_id e deixa p_to_agent_id nulo', async () => {
+  it('fila: manda p_to_queue_id e deixa p_to_agent_id undefined', async () => {
     const { result } = renderInbox();
     selectIds(result, [c1]);
 
@@ -449,13 +449,13 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
     expect(rpcCalls).toHaveLength(1);
     expect(rpcCalls[0].args).toEqual({
       p_contact_id: c1,
-      p_to_agent_id: null,
+      p_to_agent_id: undefined,
       p_to_queue_id: 'q-7',
-      p_note: null,
+      p_note: undefined,
     });
   });
 
-  it('a mensagem opcional NÃO é persistida (p_note vai nulo)', async () => {
+  it('a mensagem opcional NÃO é persistida (p_note vai undefined)', async () => {
     const { result } = renderInbox();
     selectIds(result, [c1]);
 
@@ -466,8 +466,8 @@ describe('useInboxBulkActions — bulkTransfer (RPC transfer_conversation por co
     expect(rpcCalls[0].args).toEqual({
       p_contact_id: c1,
       p_to_agent_id: 'ag-2',
-      p_to_queue_id: null,
-      p_note: null,
+      p_to_queue_id: undefined,
+      p_note: undefined,
     });
   });
 
@@ -532,7 +532,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
     selectQueue.push({
       data: [
         { id: c1, conversation_status: 'open' },
-        { id: c2, conversation_status: 'waiting' },
+        { id: c2, conversation_status: 'pending' },
       ],
       error: null,
     });
@@ -556,6 +556,8 @@ describe('useInboxBulkActions — bulkArchive', () => {
       payload: { conversation_status: 'archived' },
       filters: { id: [c1, c2] },
     });
+    // Arquivar não tira o responsável: `assigned_to` nunca é tocado.
+    expect(contactUpdates()[0].payload).not.toHaveProperty('assigned_to');
     expect(result.current.selectedIds.size).toBe(0);
     expect(refetch).toHaveBeenCalledTimes(1);
 
@@ -566,7 +568,62 @@ describe('useInboxBulkActions — bulkArchive', () => {
     const restores = contactUpdates().slice(1);
     expect(restores).toHaveLength(2);
     expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1] } });
-    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'waiting' }, filters: { id: [c2] } });
+    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'pending' }, filters: { id: [c2] } });
+    expect(refetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('desfazer: original fora de open/pending (waiting/resolved) volta como "open" — archived só transita para open/pending no banco', async () => {
+    selectQueue.push({
+      data: [
+        { id: c1, conversation_status: 'waiting' },
+        { id: c2, conversation_status: 'resolved' },
+      ],
+      error: null,
+    });
+    const { result } = renderInbox();
+    selectIds(result, [c1, c2]);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+    await act(async () => {
+      await lastUndo?.undoAction();
+    });
+
+    const restores = contactUpdates().slice(1);
+    expect(restores).toHaveLength(1);
+    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1, c2] } });
+  });
+
+  it('desfazer: contato já archived antes da seleção NÃO é aberto — excluído do lote desde o início', async () => {
+    selectQueue.push({
+      data: [
+        { id: c1, conversation_status: 'open' },
+        { id: c2, conversation_status: 'archived' },
+      ],
+      error: null,
+    });
+    const { result, refetch } = renderInbox();
+    selectIds(result, [c1, c2]);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+
+    // c2 (já archived) não entra no targetIds; só c1 é arquivado
+    expect(contactUpdates()[0]).toMatchObject({
+      payload: { conversation_status: 'archived' },
+      filters: { id: [c1] },
+    });
+    expect(lastUndo?.successMessage).toBe('1 contato(s) arquivado(s)');
+
+    await act(async () => {
+      await lastUndo?.undoAction();
+    });
+
+    const restores = contactUpdates().slice(1);
+    expect(restores).toHaveLength(1);
+    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1] } });
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 

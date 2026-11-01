@@ -14,14 +14,13 @@ import { cn } from '@/lib/utils';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { WizardState } from './TalkXCampaignWizard';
 import { IconTile, WhatsAppBubble, RailCard, MetaRow, InsightCard, OBJECTIVES, SPEED_PROFILES, fmtInt, fmtPct, fmtDateTime, fmtDurationShort, personalizePreview, extractVariables, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';
 import type { TalkXPreviewInteractive } from './TalkXMessagePreview';
 import { TalkXNoData } from './kit/states';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
 import { formatScheduleRelative, type WizardStep } from './useCampaignEditor';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
-import { TalkXLifecycleDialog, useTalkXLifecycle } from './useTalkXLifecycle';
-
 
 function formatLocalSchedule(localDateTime: string, timezone: string): string {
   const [date = '', time = ''] = localDateTime.split('T');
@@ -238,6 +237,10 @@ function ForecastRow({ icon: Icon, label }: { icon: React.ElementType; label: st
 }
 
 export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed: WizardState; campaign: TalkXCampaign | null; onLaunched: (id: string, status: 'scheduled' | 'sending') => void; onEditStep?: (step: 1 | 2 | 3, returnTo: 4) => void }) {
+  // X051 — o disparo passa pelo controlador ÚNICO de ciclo de vida: UM diálogo de confirmação
+  // (alertdialog do kit) e o executor do wizard (`ed.handleSave`), que salva o rascunho e gera o
+  // snapshot antes de iniciar. As três confirmações obrigatórias (X136) seguem no cartão da revisão
+  // e alimentam `ed.canProceed[4]`, que é o portão do botão de lançar.
   const lifecycle = useTalkXLifecycle();
   const sample = ed.contacts?.[0];
   // Review da PR #909: sem os campos customizados reais do contato de
@@ -296,6 +299,27 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
   const { data: insights } = useTalkXInsights();
   const timingInsight = insights?.find((insight) => insight.id === 'best-hour') ?? null;
   const templateInsight = insights?.find((insight) => insight.id === 'best-template') ?? null;
+
+  const scheduledLaunch = !!(ed.isScheduled && ed.scheduledAt);
+  const requestLaunch = () => {
+    if (!launchAllowed) return;
+    lifecycle.request({
+      kind: 'start',
+      target: { id: campaign?.id ?? 'novo', name: ed.name || null, total_recipients: ed.eligibleCount },
+      details: [
+        { label: 'Segmento', value: ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((sg) => sg.name).join(', ') : '—') : 'Contatos ZAPP' },
+        { label: 'Destinatários', value: `${fmtInt(ed.eligibleCount)} contatos` },
+        { label: 'Envio', value: scheduledLaunch ? formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone) : 'Imediato' },
+      ],
+      // Executor próprio do wizard: `false` mantém o diálogo aberto com o erro do controlador.
+      run: async () => {
+        const id = await ed.handleSave(scheduledLaunch ? 'schedule' : 'launch');
+        if (!id) return false;
+        onLaunched(id, scheduledLaunch ? 'scheduled' : 'sending');
+        return true;
+      },
+    });
+  };
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr_0.9fr] gap-4 min-w-0">
@@ -359,29 +383,12 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
           </div>
         </div>
 
-        <PrimaryButton size="lg" icon={Rocket} className="w-full justify-center h-12 text-base" disabled={!launchAllowed} onClick={() => {
-          const mode = ed.isScheduled && ed.scheduledAt ? 'schedule' : 'launch';
-          lifecycle.request({
-            kind: 'start',
-            target: { id: campaign?.id ?? '' },
-            details: [
-              { label: 'Segmento', value: ed.audienceSource === 'segment' && ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : 'Contatos ZAPP' },
-              { label: 'Destinatários', value: `${fmtInt(ed.eligibleCount)} contatos` },
-              { label: 'Envio', value: mode === 'schedule' ? formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone) : 'Imediato' },
-            ],
-            run: async () => {
-              const id = await ed.handleSave(mode);
-              if (!id) return false;
-              onLaunched(id, mode === 'schedule' ? 'scheduled' : 'sending');
-              return true;
-            },
-          });
-        }}>
+        <PrimaryButton size="lg" icon={Rocket} className="w-full justify-center h-12 text-base" disabled={!launchAllowed} onClick={requestLaunch}>
           {ed.isScheduled && ed.scheduledAt ? 'Agendar campanha' : 'Lançar campanha'}
         </PrimaryButton>
       </div>
 
-      {/* X051 — disparo pelo controlador único de ciclo de vida. */}
+      {/* X051 — confirmação única do ciclo de vida (alertdialog do kit). */}
       <TalkXLifecycleDialog controller={lifecycle} />
     </div>
   );

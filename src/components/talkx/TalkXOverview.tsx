@@ -1,25 +1,24 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Users, Play, CheckCircle2, Target, Send, MoreVertical, Eye, Pencil, Zap, Plus,
-  FileText, Bookmark, BarChart3, Loader2,
+  Users, Play, CheckCircle2, Target, Send, Eye, Pencil, Zap, Plus,
+  FileText, Bookmark, BarChart3, ChevronDown, ChevronRight,
 } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Checkbox } from '@/components/ui/checkbox';
 import { ProgressBar, VerTodasButton } from '@/components/dashboard/overview/DashboardCard';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 import type { TalkXSegment } from '@/hooks/integrations/useTalkXSegments';
 import {
-  CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, Th, Td, StatusPill, RailCard, RailAction, IconTile,
+  CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, TalkXTable, StatusPill, RailCard, RailAction, IconTile,
+  EntityCell, ChannelCell, ProgressCell, ResultsCell, DateByCell,
   TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard,
   InsightCard, TalkXQueryBoundary,
-  fmtInt, fmtPct, pct, fmtAgo, OBJECTIVES, TALKX_CHANNELS,
+  fmtInt, pct, fmtAgo, OBJECTIVES, TALKX_CHANNELS,
 } from './talkxShared';
+import type { TalkXColumn, TalkXSort, RowAction } from './talkxShared';
 import type { TalkXPeriodRange } from './kit/periods';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
 import { useTalkXOverviewStats } from '@/hooks/integrations/useTalkXOverviewStats';
 import { useCampaignRowActions } from './useCampaignRowActions';
 import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';
-import { EntityCell, ChannelCell, ProgressCell, ResultsCell, DateByCell } from './kit/cells';
 
 const STORAGE_KEY = 'talkx.overview.filters';
 const LAYOUT_KEY = 'talkx.overview.layout';
@@ -91,9 +90,9 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   const [layout, setLayout] = useState<'list' | 'grid'>(loadLayout);
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  // X079 — ordenação da coluna Campanha (none → asc → desc → none).
-  const [sort, setSort] = useState<{ key: string; dir: 'asc' | 'desc' } | null>(null);
-  // X079 N35 — blocos após a tabela: recolhidos por padrão.
+  // Ordenação por coluna (cliente). `null` = ordem de chegada da consulta (created_at desc).
+  const [sort, setSort] = useState<TalkXSort | null>(null);
+  // N35 — os blocos que o mock não tem ficam abaixo da tabela e recolhidos por padrão.
   const [draftsOpen, setDraftsOpen] = useState(false);
   const [insightsOpen, setInsightsOpen] = useState(false);
 
@@ -130,21 +129,18 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   const handleFilter = (key: string, val: string) => {
     if (key === 'status') { setStatus(val); setPage(1); }
     else if (key === 'objective') { setObjective(val); setPage(1); }
-    // X079 — trocar o canal zera a seleção.
-    else if (key === 'channel') { setChannel(val); setPage(1); setSelected(new Set()); }
+    else if (key === 'channel') { setChannel(val); setPage(1); }
     else if (key === 'segment') { setSegment(val); setPage(1); }
     else if (key === 'creator') { setCreator(val); setPage(1); }
   };
   /**
    * X081 — o chip de período só aparece porque a Visão geral consome o recorte
    * (R2-MOD-059): o intervalo recebido aqui corta a lista e os KPIs.
-   * X079 — trocar o período zera a seleção.
    */
   const handlePeriod = (p: string | null, range?: TalkXPeriodRange | null) => {
     setPeriod(p);
     setPeriodRange(range ?? null);
     setPage(1);
-    setSelected(new Set());
   };
   /**
    * ⟳ da barra — refaz a consulta de campanhas (a mesma que alimenta lista e KPIs)
@@ -156,16 +152,6 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
     setRefreshing(true);
     try { await onRetry(); } catch { /* o boundary mostra o erro da consulta */ } finally { setRefreshing(false); }
   }, [onRetry, refreshing]);
-
-  // X079 — clique no cabeçalho Campanha cicla: none → asc → desc → none.
-  const handleSortName = () => {
-    setSort((prev) => {
-      if (!prev) return { key: 'name', dir: 'asc' };
-      if (prev.dir === 'asc') return { key: 'name', dir: 'desc' };
-      return null;
-    });
-  };
-
   const periodAtivo = period !== null && period !== 'all';
   const hasActive = status !== 'all' || objective !== 'all' || channel !== 'all' || segment !== 'all' || creator !== 'all' || periodAtivo || search.trim() !== '';
   const clear = () => { setSearch(''); setStatus('all'); setObjective('all'); setChannel('all'); setSegment('all'); setCreator('all'); setPeriod(null); setPeriodRange(null); setPage(1); };
@@ -207,14 +193,31 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
     return r;
   }, [noPeriodo, status, objective, channel, segment, creator, search]);
 
-  // X079 — ordenação por nome (none mantém a ordem de chegada da consulta).
-  const sortedItems = useMemo(() => {
+  const sorted = useMemo(() => {
     if (!sort) return filtered;
+    const valor = (c: TalkXCampaign): string | number => {
+      switch (sort.key) {
+        case 'name': return c.name.toLocaleLowerCase('pt-BR');
+        case 'segment': return (segments.find((sg) => sg.id === c.segment_id)?.name ?? (c.audience_source === 'crm360' ? 'CRM 360°' : 'Seleção manual')).toLocaleLowerCase('pt-BR');
+        case 'status': return CAMPAIGN_STATUS[c.status]?.label ?? c.status;
+        case 'progress': return pct(c.sent_count + c.failed_count, c.total_recipients);
+        case 'results': return c.sent_count;
+        case 'date': return new Date(c.scheduled_at ?? c.started_at ?? c.created_at).getTime();
+        default: return 0;
+      }
+    };
     const dir = sort.dir === 'asc' ? 1 : -1;
-    return [...filtered].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR') * dir);
-  }, [filtered, sort]);
+    // `sort` do Array é estável: empates mantêm a ordem de chegada.
+    return [...filtered].sort((a, b) => {
+      const va = valor(a); const vb = valor(b);
+      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+      return String(va).localeCompare(String(vb), 'pt-BR') * dir;
+    });
+  }, [filtered, sort, segments]);
 
-  const pageItems = sortedItems.slice((page - 1) * pageSize, page * pageSize);
+  const pageItems = sorted.slice((page - 1) * pageSize, page * pageSize);
+  // Mudou o recorte (filtro, período, busca, página, ordenação) → a seleção é zerada.
+  const selectionKey = [status, objective, channel, segment, creator, period ?? '', search.trim(), page, pageSize, sort?.key ?? '', sort?.dir ?? ''].join('|');
 
   // X077 — os cinco números do topo saem da RPC `talkx_overview_stats` para o período da
   // barra (padrão: 30 dias); nenhum KPI é calculado aqui. Campo ausente = "Sem dados ainda".
@@ -231,11 +234,61 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   // campanha fora do período escolhido.
   const latest = useMemo(() => [...noPeriodo].sort((a, b) => (b.started_at ?? b.updated_at).localeCompare(a.started_at ?? a.updated_at)).slice(0, 4), [noPeriodo]);
 
-  // X079 N35 — blocos calculados uma vez para reutilizar no botão e no conteúdo.
   const drafts = useMemo(() => campaigns.filter((c) => c.status === 'draft'), [campaigns]);
-  const insightList = useMemo(() => (insights && insights.length > 0 ? insights : []), [insights]);
 
-  const toggleAll = () => setSelected((prev) => prev.size === pageItems.length ? new Set() : new Set(pageItems.map((c) => c.id)));
+  // Colunas do mock da tela 01 (X079), sobre o `TalkXTable` do kit e as células do kit.
+  const columns: TalkXColumn<TalkXCampaign>[] = [
+    {
+      key: 'name', header: 'Campanha', sortKey: 'name',
+      render: (c) => (
+        <button type="button" onClick={() => onView(c)} className="text-left min-w-0">
+          <EntityCell
+            name={c.name} description={c.description || c.message_template}
+            mediaUrl={c.media_url} mediaType={c.media_type}
+            icon={objectiveIcon(c.objective)} color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'}
+          />
+        </button>
+      ),
+    },
+    {
+      key: 'segment', header: 'Segmento / Público', sortKey: 'segment',
+      render: (c) => (
+        <>
+          <span className="inline-block text-2xs font-medium px-2 py-0.5 rounded-md bg-muted/50 border border-border/60 text-foreground truncate max-w-[180px]">{segmentName(c.segment_id) ?? (c.audience_source === 'crm360' ? 'CRM 360°' : 'Seleção manual')}</span>
+          <span className="block text-2xs text-foreground-secondary mt-1">{fmtInt(c.total_recipients)} contatos</span>
+        </>
+      ),
+    },
+    { key: 'channel', header: 'Canal', render: () => <ChannelCell /> },
+    {
+      key: 'status', header: 'Status', sortKey: 'status',
+      render: (c) => (
+        <div className="flex items-center gap-1.5">
+          {c.status === 'sending' && <span className="talkx-dot-pulse" aria-hidden />}
+          <StatusPill status={c.status} map={CAMPAIGN_STATUS} />
+        </div>
+      ),
+    },
+    {
+      key: 'progress', header: 'Progresso', sortKey: 'progress', width: 150,
+      render: (c) => <ProgressCell status={c.status} value={pct(c.sent_count + c.failed_count, c.total_recipients)} />,
+    },
+    {
+      key: 'results', header: 'Resultados', sortKey: 'results',
+      render: (c) => <ResultsCell sent={c.sent_count} delivered={c.delivered_count ?? 0} failed={c.failed_count} />,
+    },
+    {
+      key: 'date', header: 'Agendada em', sortKey: 'date',
+      render: (c) => <DateByCell date={c.scheduled_at ?? c.started_at ?? null} by={creators[c.created_by ?? ''] ?? null} />,
+    },
+  ];
+
+  // Menu ⋮ da linha: a matriz por status e a confirmação saem do hook único (X080).
+  const rowActionsFor = (c: TalkXCampaign): RowAction[] =>
+    rowActions.actionsFor(c).map((action) => ({
+      label: action.label, icon: action.icon, danger: action.destructive,
+      onSelect: () => rowActions.run(action.id, c),
+    }));
 
   // X047 — a Visão geral passa pelo boundary de consulta: carregando -> erro ->
   // vazio -> conteúdo. Com a consulta em erro a tela mostra o erro com retry
@@ -279,7 +332,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
           view={layout} onView={setLayout}
         />
 
-        {/* X079 — Tabela (primeiro) */}
+        {/* Tabela */}
         <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
           {filtered.length === 0 ? (
             <div className="p-4"><TalkXFilteredEmptyState onClearFilters={clear} /></div>
@@ -288,103 +341,44 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
               {pageItems.map((c) => <CampaignGridCard key={c.id} c={c} segmentName={segmentName(c.segment_id)} onView={() => onView(c)} onEdit={() => onEdit(c)} />)}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[980px] border-collapse">
-                <thead className="bg-muted/20 border-b border-border/60">
-                  <tr>
-                    <Th className="w-10"><Checkbox checked={pageItems.length > 0 && selected.size === pageItems.length} onCheckedChange={toggleAll} aria-label="Selecionar todas" /></Th>
-                    {/* X079 — cabeçalho Campanha com aria-sort e botão de ordenação */}
-                    <Th aria-sort={sort ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
-                      <button type="button" onClick={handleSortName}>Campanha</button>
-                    </Th>
-                    <Th>Segmento / Público</Th><Th>Canal</Th><Th>Status</Th><Th className="w-[150px]">Progresso</Th><Th>Resultados</Th><Th>Agendada em</Th><Th className="text-right">Ações</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pageItems.map((c) => {
-                    return (
-                      <tr key={c.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
-                        <Td><Checkbox checked={selected.has(c.id)} onCheckedChange={() => setSelected((p) => { const n = new Set(p); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; })} aria-label={`Selecionar ${c.name}`} /></Td>
-                        {/* X079 Campanha: EntityCell (img para mídia, tile fallback) */}
-                        <Td>
-                          <button type="button" onClick={() => onView(c)} className="flex items-center gap-3 text-left min-w-0 group">
-                            <EntityCell
-                              name={c.name}
-                              description={c.description ?? c.message_template}
-                              mediaUrl={c.media_url}
-                              mediaType={c.media_type}
-                              icon={objectiveIcon(c.objective)}
-                              color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'}
-                            />
-                          </button>
-                        </Td>
-                        <Td>
-                          <span className="inline-block text-2xs font-medium px-2 py-0.5 rounded-md bg-muted/50 border border-border/60 text-foreground truncate max-w-[180px]">{segmentName(c.segment_id) ?? (c.audience_source === 'crm360' ? 'CRM 360°' : 'Seleção manual')}</span>
-                          <span className="block text-2xs text-foreground-secondary mt-1">{fmtInt(c.total_recipients)} contatos</span>
-                        </Td>
-                        {/* X079 Canal: ChannelCell com logo WhatsApp */}
-                        <Td><ChannelCell /></Td>
-                        {/* X079 Status: pill + ponto pulsante apenas em andamento */}
-                        <Td>
-                          <div className="flex items-center gap-1.5">
-                            {c.status === 'sending' && <span className="talkx-dot-pulse" />}
-                            <StatusPill status={c.status} map={CAMPAIGN_STATUS} />
-                          </div>
-                        </Td>
-                        {/* X079 Progresso: ProgressCell (rascunho=—, agendada=0% sem barra) */}
-                        <Td><ProgressCell status={c.status} value={pct(c.sent_count + c.failed_count, c.total_recipients)} /></Td>
-                        {/* X079 Resultados: ResultsCell (enviados + entregues com taxa) */}
-                        <Td><ResultsCell sent={c.sent_count} delivered={c.delivered_count} failed={c.failed_count} /></Td>
-                        {/* X079 Data: DateByCell com fmtRelativeDay */}
-                        <Td><DateByCell date={c.scheduled_at ?? c.started_at ?? null} by={creators[c.created_by ?? ''] ?? null} /></Td>
-                        <Td className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button type="button" disabled={rowActions.pendingId === c.id} aria-busy={rowActions.pendingId === c.id} className="h-8 w-8 rounded-lg border border-border/70 bg-input/40 inline-flex items-center justify-center hover:bg-muted/50 disabled:opacity-70" aria-label={`Ações de ${c.name}`}>
-                                {rowActions.pendingId === c.id
-                                  ? <Loader2 className="w-4 h-4 motion-safe:animate-spin" />
-                                  : <MoreVertical className="w-4 h-4" />}
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              {rowActions.actionsFor(c).map((action, i) => (
-                                <React.Fragment key={action.id}>
-                                  {action.destructive && i > 0 && <DropdownMenuSeparator />}
-                                  <DropdownMenuItem className={action.destructive ? 'text-dash-red' : undefined} onClick={() => rowActions.run(action.id, c)}>
-                                    <action.icon className="w-4 h-4 mr-2" />{action.label}
-                                  </DropdownMenuItem>
-                                </React.Fragment>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </Td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <TalkXTable<TalkXCampaign>
+              columns={columns}
+              rows={pageItems}
+              getId={(c) => c.id}
+              selectable
+              selected={selected}
+              onSelectionChange={setSelected}
+              selectionResetKey={selectionKey}
+              sort={sort}
+              onSortChange={(next) => { setSort(next); setPage(1); }}
+              rowLabel={(c) => c.name}
+              rowBusy={(c) => rowActions.pendingId === c.id}
+              rowActions={rowActionsFor}
+              className="min-w-0"
+            />
           )}
           {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={(n) => { setPageSize(n); setPage(1); }} noun="campanhas" /></div>}
         </section>
 
-        {/* X079 N35 — Rascunhos pendentes: APÓS a tabela, recolhido por padrão */}
+        {/* E68: Rascunhos pendentes — abaixo da tabela e recolhido por padrão (N35 / TL-115). */}
         {drafts.length > 0 && (
           <section className="rounded-2xl bg-card border border-dash-amber/30 overflow-hidden">
             <button
               type="button"
               aria-expanded={draftsOpen}
+              aria-controls="talkx-overview-drafts"
               onClick={() => setDraftsOpen((v) => !v)}
-              className="w-full px-4 py-3 border-b border-border/50 flex items-center justify-between"
+              className="w-full px-4 py-3 flex items-center justify-between gap-2 text-left hover:bg-muted/10 transition-colors"
             >
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-dash-amber" />
-                <p className="text-[13px] font-semibold text-foreground">Rascunhos pendentes</p>
+              <span className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-dash-amber" aria-hidden />
+                <span className="text-[13px] font-semibold text-foreground">Rascunhos pendentes</span>
                 <span className="text-2xs text-muted-foreground">({drafts.length})</span>
-              </div>
+              </span>
+              {draftsOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" aria-hidden /> : <ChevronRight className="w-4 h-4 text-muted-foreground" aria-hidden />}
             </button>
             {draftsOpen && (
-              <div className="divide-y divide-border/50">
+              <div id="talkx-overview-drafts" className="divide-y divide-border/50 border-t border-border/50">
                 {drafts.slice(0, 5).map((c) => (
                   <div key={c.id} className="px-4 py-3 flex items-center justify-between gap-4 hover:bg-muted/10 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
@@ -410,21 +404,23 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
           </section>
         )}
 
-        {/* X079 N35 — Insights heurísticos: APÓS a tabela, recolhido por padrão */}
-        {insightList.length > 0 && (
+        {/* E94: Insights heurísticos — também abaixo da tabela e recolhido por padrão. */}
+        {insights && insights.length > 0 && (
           <section className="space-y-3">
             <button
               type="button"
               aria-expanded={insightsOpen}
+              aria-controls="talkx-overview-insights"
               onClick={() => setInsightsOpen((v) => !v)}
-              className="flex items-center gap-2 px-1"
+              className="flex items-center gap-2 px-1 text-left"
             >
+              {insightsOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" aria-hidden /> : <ChevronRight className="w-4 h-4 text-muted-foreground" aria-hidden />}
               <span className="text-sm font-semibold text-foreground">Insights</span>
-              <span className="text-xs text-muted-foreground">({insightList.length})</span>
+              <span className="text-xs text-muted-foreground">({insights.length})</span>
             </button>
             {insightsOpen && (
-              <div className="space-y-2">
-                {insightList.map((insight) => (
+              <div id="talkx-overview-insights" className="space-y-2">
+                {insights.map((insight) => (
                   <InsightCard
                     key={insight.id}
                     type={insight.type}

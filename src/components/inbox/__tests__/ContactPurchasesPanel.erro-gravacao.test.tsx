@@ -15,9 +15,8 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock('sonner', () => ({ toast: h.toast }));
-vi.mock('@/lib/logger', () => ({ log: h.log, getLogger: () => h.log ,
-  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
-}));
+vi.mock('@/lib/logger', () => ({ log: h.log, getLogger: () => h.log,
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),}));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { from: () => ({ insert: h.insert }) },
 }));

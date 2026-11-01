@@ -359,13 +359,14 @@ export default function TalkXView() {
     if (c.status === 'paused') { openPaused(c); return; }
     if (c.status === 'sending') { openRunning(c); return; }
     openMonitor(c);
-  }, [openMonitor, openScheduled, openRunning, openPaused]);
+  }, [openMonitor, openPaused, openScheduled, openRunning]);
 
-  // X156/T13: a ação de linha (onViewRunning) também encaminha paused para a tela própria
+  // X156/T13: a ação de linha decide o destino por status antes de chegar aqui; campanha
+  // pausada vai para a tela própria (TalkXCampaignPaused), em andamento para a genérica.
   const onViewRunning = useCallback((c: TalkXCampaign) => {
     if (c.status === 'paused') { openPaused(c); return; }
     openRunning(c);
-  }, [openRunning, openPaused]);
+  }, [openPaused, openRunning]);
 
   if (topView === 'scheduled' && scheduledCampaignId) {
     return (
@@ -390,6 +391,30 @@ export default function TalkXView() {
   }
 
 
+  if (topView === 'paused' && pausedCampaignId) {
+    const pausedCampaign = campaigns.find((candidate) => candidate.id === pausedCampaignId);
+    return (
+      <Suspense fallback={<TalkXScreenFallback />}>
+        <TalkXCampaignPaused
+          campaignId={pausedCampaignId}
+          pausedByName={pausedCampaign?.paused_by ? creators[pausedCampaign.paused_by] ?? null : null}
+          onBack={backToList}
+          onStatusChange={(campaign) => {
+            setPausedCampaignId(null);
+            if (campaign.status === 'sending') {
+              // Retomada: segue para o acompanhamento da campanha em andamento.
+              setRunningCampaignId(campaign.id);
+              setTopView('running');
+              writeScreenRoute(campaign.id, 'running', true);
+              return;
+            }
+            backToList();
+          }}
+        />
+      </Suspense>
+    );
+  }
+
   if (topView === 'running') {
     return (
       <Suspense fallback={<TalkXScreenFallback />}>
@@ -397,28 +422,6 @@ export default function TalkXView() {
           initialCampaignId={runningCampaignId}
           onBack={backToList}
           onViewMonitor={(id) => { setRunningCampaignId(null); setMonitorId(id); setTopView('monitor'); writeScreenRoute(id, 'monitor', true); }}
-        />
-      </Suspense>
-    );
-  }
-
-  if (topView === 'paused' && pausedCampaignId) {
-    return (
-      <Suspense fallback={<TalkXScreenFallback />}>
-        <TalkXCampaignPaused
-          campaignId={pausedCampaignId}
-          onBack={backToList}
-          pausedByName={null}
-          onStatusChange={(campaign) => {
-            setPausedCampaignId(null);
-            if (campaign.status === 'sending') {
-              setMonitorId(campaign.id);
-              setTopView('monitor');
-              writeScreenRoute(campaign.id, 'monitor', true);
-              return;
-            }
-            backToList();
-          }}
         />
       </Suspense>
     );

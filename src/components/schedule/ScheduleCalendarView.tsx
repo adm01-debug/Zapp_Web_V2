@@ -154,7 +154,7 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className="space-y-4">
+      <div className="space-y-4">
       <PageHeader
         title="Agendamentos"
         subtitle="Mensagens agendadas organizadas por data"
@@ -336,7 +336,7 @@ export function ScheduleCalendarView({ onSelectMessage }: ScheduleCalendarViewPr
           </ScrollArea>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
     </MotionConfig>
   );
 }

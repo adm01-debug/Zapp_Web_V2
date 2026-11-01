@@ -155,8 +155,9 @@ test('ARQUITETURA e PARIDADE mantêm o aviso de que são parciais (reescrita com
   assert.match(paridade, /DESATUALIZADO/iu, 'PARIDADE.md perdeu o aviso de desatualizado');
 
   // Âncora: cada componente citado pelo banner precisa existir (ou não) exatamente como o
-  // banner afirma — `TalkXCampaignPaused.tsx` (TL-075) existe e está ligado em
-  // `TalkXView.tsx` (X156/T13); os outros dois continuam sem existir.
+  // banner afirma — `TalkXCampaignPaused.tsx` (TL-075) já existe e está ligado em
+  // `TalkXView.tsx` (`paused` abre a tela própria); os outros dois continuam
+  // sem existir.
   for (const componente of ['TalkXSegmentBuilder.tsx', 'TalkXCampaignPaused.tsx', 'TalkXCampaignReport.tsx']) {
     assert.match(arquitetura, new RegExp(componente.replace(/\./gu, '\\.')), `ARQUITETURA.md não cita mais ${componente}`);
   }
@@ -173,13 +174,12 @@ test('ARQUITETURA e PARIDADE mantêm o aviso de que são parciais (reescrita com
   assert.match(
     arquitetura,
     /TalkXCampaignPaused\.tsx[^.]*passou a existir/u,
-    'ARQUITETURA.md não registra que TalkXCampaignPaused.tsx existe e está ligado (X156/T13)',
+    'ARQUITETURA.md não registra que TalkXCampaignPaused.tsx já existe (mas não está ligado)',
   );
-  // TalkXCampaignPaused foi ligado em TalkXView.tsx (X156/T13) — âncora atualizada.
   const talkXView = ler('src/components/talkx/TalkXView.tsx');
   assert.match(
     talkXView,
     /<TalkXCampaignPaused\b/u,
-    'TalkXCampaignPaused.tsx não está sendo usado em TalkXView.tsx (X156/T13 regrediu)',
+    'TalkXCampaignPaused.tsx deixou de ser usado em TalkXView.tsx — o banner da ARQUITETURA.md está desatualizado',
   );
 });

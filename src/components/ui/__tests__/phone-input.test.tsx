@@ -60,7 +60,6 @@ describe('PhoneInput — máscara brasileira', () => {
   it('número internacional é aceito sem formato brasileiro', () => {
     render(<Harness initial="+351211234567" />);
 
-    // E.164 passthrough: internacionais não ganham espaço (ver phone-input.tsx linha 41).
     expect(field().value).toBe('+351211234567');
   });
 

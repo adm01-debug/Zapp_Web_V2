@@ -39,9 +39,10 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 vi.mock('@/lib/logger', () => ({
   log: { warn: (...args: unknown[]) => mocks.warn(...args), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
-
-  getLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
-  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => {
+    return { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) };
+  }),
 }));
 
 vi.mock('../ViewersIndicator', () => ({ ViewersIndicator: () => null }));
@@ -132,7 +133,7 @@ describe('RealtimeCollaboration — handleHandoff pelo painel do contato', () =>
     );
   });
 
-  it('sucesso sem comentário: RPC com o agente de destino e noteSaved=true, sem tocar na nota', async () => {
+  it('sucesso sem comentário: RPCcom o agente de destino e noteSaved=true, sem tocar na nota', async () => {
     renderComponent();
     mocks.rpc.mockResolvedValue({ data: 'evt-1', error: null });
 
@@ -144,8 +145,8 @@ describe('RealtimeCollaboration — handleHandoff pelo painel do contato', () =>
         args: {
           p_contact_id: CONTACT_ID,
           p_to_agent_id: 'agent-1',
-          p_to_queue_id: null,
-          p_note: null,
+          p_to_queue_id: undefined,
+          p_note: undefined,
         },
       },
     ]);

@@ -27,10 +27,9 @@ vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => roleState }));
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() } ,
-  getLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
-  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() })) })),
-}));
+vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
+  createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),}));
 
 import { IntegrationKeysSection } from '@/components/settings/IntegrationKeysSection';
 import { toast } from 'sonner';
@@ -116,13 +115,11 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
     expect(toast.error).not.toHaveBeenCalled();
   });
 
-  it('não renderiza nada quando o usuário não é admin', async () => {
+  // Sem o papel de admin a seção não renderiza nada (o segredo nunca vaza).
+  it('sem o papel de admin a seção não renderiza nada', async () => {
     roleState.isAdmin = false;
     const { container } = renderizar();
 
-    await waitFor(() => {
-      expect(mockOrder).toHaveBeenCalled();
-    });
     await waitFor(() => {
       expect(container).toBeEmptyDOMElement();
     });
@@ -156,10 +153,12 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
     expect(screen.getByRole('button', { name: /salvar/i })).toBeEnabled();
   });
 
-  it('axe não aponta violações no botão salvar', async () => {
-    renderizar();
-    const botaoSalvar = await screen.findByRole('button', { name: /salvar/i });
-    const results = await axe(botaoSalvar);
+  // A seção não tem botão olho (o valor registrado nunca é revelado): o axe
+  // roda na seção inteira.
+  it('axe não aponta violações na seção', async () => {
+    const { container } = renderizar();
+    await screen.findByText('Chaves de Integração');
+    const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 });

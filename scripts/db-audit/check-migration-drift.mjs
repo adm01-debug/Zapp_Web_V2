@@ -185,7 +185,7 @@ function loadEvidence(filePath) {
         ? [
           'file_sha256', 'file_sql_sha256', 'filename', 'justification', 'kind',
           'ledger_name', 'ledger_sql_sha256', 'ledger_statements_sha256',
-          'reason', 'related_migration', 'sql-sha256', 'version',
+          'reason', 'related_migration', 'version',
         ]
         : null;
     if (!expectedKeys) {
@@ -558,6 +558,7 @@ function compare(migrations, records, exceptionsByVersion) {
   for (const record of records) {
     if (typeof record.name === 'string'
         && (record.name !== record.name.trim() || /[\0-\x1f\x7f]/u.test(record.name))) {
+      errors.push(divergenceLine(record.version, null, record.name, 'name malformado no ledger'));
       errors.push(`name malformado no ledger para ${record.version}`);
     }
   }
@@ -569,9 +570,6 @@ function compare(migrations, records, exceptionsByVersion) {
       errors.push(`  ${version}  ${fileName}`);
     }
   }
-  // GA19: marcar se todos os erros ate agora sao so de apply-pendente (sem drift real)
-  const errCountAfterWithoutRecord = errors.length;
-
   if (withoutFile.length) {
     errors.push('Registro no banco sem arquivo no repo (DDL fora do Git):');
     for (const record of withoutFile) {
@@ -800,11 +798,7 @@ function compare(migrations, records, exceptionsByVersion) {
     }
   }
 
-  // GA19: apply-pendente puro = so withoutRecord, sem withoutFile, sem erros de divergencia
-  const applyPendingOnly = withoutRecord.length > 0
-    && withoutFile.length === 0
-    && errors.length === errCountAfterWithoutRecord;
-  return { errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent, applyPendingOnly };
+  return { errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent };
 }
 
 function printErrors(errors) {
@@ -823,8 +817,6 @@ function printDriftErrors(errors) {
 }
 
 function main() {
-  // GA19: --classificar diferencia apply-pendente (exit 3) de erro de conexao (exit 2)
-  const classificar = process.argv.includes('--classificar');
   let evidence;
   let local;
   try {
@@ -835,14 +827,17 @@ function main() {
     return 2;
   }
 
-  console.log(`arquivos validos em ${DIR}: ${local.migrations.length}`);
+  // E53: buffer status lines so divergence summary is first on stdout on drift path
+  const pendingStatus = [`arquivos validos em ${DIR}: ${local.migrations.length}`];
   if (evidence.errors.length || local.errors.length) {
+    for (const line of pendingStatus) console.log(line);
     console.error('\nFALHA: migrations locais invalidas:');
     printErrors([...evidence.errors, ...local.errors].map((error) => `  ${error}`));
     return 1;
   }
 
   if (!url) {
+    for (const line of pendingStatus) console.log(line);
     console.log('DESTINO_URL ausente - estrutura local validada; comparacao com ledger pulada.');
     return 0;
   }
@@ -855,8 +850,9 @@ function main() {
     return 2;
   }
 
-  console.log(`registros em schema_migrations: ${parsed.records.length}`);
+  pendingStatus.push(`registros em schema_migrations: ${parsed.records.length}`);
   if (parsed.errors.length) {
+    for (const line of pendingStatus) console.log(line);
     console.error('\nFALHA: ledger invalido:');
     printErrors(parsed.errors.map((error) => `  ${error}`));
     return 1;
@@ -864,20 +860,18 @@ function main() {
 
   const result = compare(local.migrations, parsed.records, local.exceptionsByVersion);
   if (result.errors.length) {
-    // E53: resumo de 1 linha por divergencia como PRIMEIRA coisa no stdout, antes do
-    // log detalhado no stderr -- permite `grep '^[0-9]'` no stdout para triagem rapida.
-    for (const error of result.errors) {
-      if (DIVERGENCE_LINE_RE.test(error)) console.log(error);
-    }
+    // E53 (G-03): resumo de 1 linha por divergencia como primeira coisa no stdout,
+    // no formato "version | disco | ledger | motivo", para filtrar com `grep '^[0-9]'`.
+    const summaryLines = result.errors.filter((e) => DIVERGENCE_LINE_RE.test(e));
+    for (const line of summaryLines) console.log(line);
+    for (const line of pendingStatus) console.log(line);
     console.error('\nFALHA: drift de migrations detectado:');
     printDriftErrors(result.errors);
     console.error('\nVer docs/MIGRATIONS.md para o procedimento de reconciliacao.');
-    // GA19: com --classificar, diferenciar apply-pendente (3) de drift real (1).
-    // Sem --classificar, retorna 1 para manter retrocompatibilidade.
-    if (classificar && result.applyPendingOnly) return 3;
     return 1;
   }
 
+  for (const line of pendingStatus) console.log(line);
   if (result.warnings.length) {
     console.warn(
       `ATENCAO: ${result.warnings.length} migration(s) legada(s) sem hash/SQL verificavel no ledger; `

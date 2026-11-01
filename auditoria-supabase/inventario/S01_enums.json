@@ -1,0 +1,78 @@
+{
+  "auditado_em": "2026-10-31",
+  "secao": "1 - Enums",
+  "total": 10,
+  "enums": [
+    {
+      "schema": "public",
+      "nome": "ai_provider_type",
+      "valores": ["lovable_ai", "openai_compatible", "google_gemini", "custom_webhook", "custom_agent"],
+      "tabelas_uso": ["ai_configurations"],
+      "observacao": "OK"
+    },
+    {
+      "schema": "public",
+      "nome": "app_role",
+      "valores": ["admin", "supervisor", "agent", "special_agent"],
+      "tabelas_uso": ["user_roles", "profiles"],
+      "observacao": "Centraliza hierarquia RBAC. Cada role implica permissões específicas de RLS."
+    },
+    {
+      "schema": "public",
+      "nome": "channel_type",
+      "valores": ["whatsapp", "instagram", "telegram", "messenger", "webchat", "email"],
+      "tabelas_uso": ["whatsapp_connections", "conversations", "messages"],
+      "observacao": "OK"
+    },
+    {
+      "schema": "public",
+      "nome": "multiplix_block_type",
+      "valores": ["text", "voice_ai", "audio_recorded", "file"],
+      "tabelas_uso": ["multiplix_blocks"],
+      "observacao": "OK — módulo Multiplix (campanhas de voz)"
+    },
+    {
+      "schema": "public",
+      "nome": "multiplix_dispatch_status",
+      "valores": ["draft", "scheduled", "sending", "paused", "completed", "completed_with_failures", "failed", "cancelled"],
+      "tabelas_uso": ["multiplix_dispatches"],
+      "observacao": "OK"
+    },
+    {
+      "schema": "public",
+      "nome": "multiplix_eligibility",
+      "valores": ["eligible", "no_destination", "suppressed", "out_of_scope", "media_pending", "connection_unavailable", "requires_template"],
+      "tabelas_uso": ["multiplix_recipients"],
+      "observacao": "OK"
+    },
+    {
+      "schema": "public",
+      "nome": "multiplix_item_status",
+      "valores": ["pending", "sending", "sent", "delivered", "read", "failed", "failed_transient", "skipped", "cancelled", "outcome_unknown"],
+      "tabelas_uso": ["multiplix_items"],
+      "observacao": "OK — 10 estados de entrega"
+    },
+    {
+      "schema": "public",
+      "nome": "multiplix_recipient_status",
+      "valores": ["pending", "sending", "sent", "delivered", "read", "failed", "skipped", "cancelled", "outcome_unknown"],
+      "tabelas_uso": ["multiplix_recipients"],
+      "observacao": "OK"
+    },
+    {
+      "schema": "public",
+      "nome": "service_account_type",
+      "valores": ["google_sheets", "google_docs", "google_calendar", "google_drive", "dropbox"],
+      "tabelas_uso": ["service_accounts"],
+      "observacao": "OK — tipos de integração OAuth de terceiros"
+    },
+    {
+      "schema": "public",
+      "nome": "talkx_blacklist_reason",
+      "valores": ["opt_out", "invalid_number", "manual", "lgpd", "no_commercial_permission", "bounce"],
+      "tabelas_uso": ["talkx_blacklist"],
+      "observacao": "LGPD: 'lgpd' e 'opt_out' garantem rastreabilidade de remoção de consentimento"
+    }
+  ],
+  "achados": []
+}

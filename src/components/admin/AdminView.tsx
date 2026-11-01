@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { motion } from '@/components/ui/motion';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
@@ -14,7 +14,7 @@ import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
 import {
   Shield, Users, Search, Crown, UserCog, User, History, RefreshCw,
   UserPlus, Building, Eye, Loader2,
-  Brain, CalendarClock, AlertTriangle, ChevronLeft, ChevronRight,
+  AlertTriangle, CalendarClock, ChevronLeft, ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 import { useUserRole, AppRole } from '@/hooks/system/useUserRole';
@@ -44,7 +44,7 @@ function normalizarLimiteChats(valor: number): number {
 
 type GoogleServiceKey = 'google_sheets' | 'google_docs' | 'google_calendar' | 'google_drive';
 
-type AdminTab = 'users' | 'audit' | 'crm' | 'playbooks' | 'copilot' | 'training' | 'crisis' | 'cron';
+type AdminTab = 'users' | 'audit' | 'crm' | 'cron';
 
 // SL-160/P2-3.4: a integração com Google Calendar não existe no produto (não há OAuth
 // nem sincronização em src/ ou supabase/functions — só a tela de demonstração, fora dos
@@ -80,11 +80,8 @@ export function AdminView() {
   const [auditTo, setAuditTo] = useState('');
   const [auditPage, setAuditPage] = useState(1);
 
-  const dataTab: 'users' | 'audit' | 'crm' =
-    activeTab === 'users' || activeTab === 'audit' ? activeTab : 'crm';
-
   const { users, auditLogs, auditTotal, loading, error, fetchData, handleRoleChange, handleToggleActive, handleSaveUser, handleSaveRamal, handleCreateUser } =
-    useAdminData(dataTab, {
+    useAdminData(activeTab, {
       from: auditFrom || undefined,
       to: auditTo || undefined,
       page: auditPage,
@@ -101,9 +98,11 @@ export function AdminView() {
     return () => URL.revokeObjectURL(editAvatarPreview);
   }, [editAvatarPreview]);
 
+  // Carrega os dados da aba que os usa (Usuários e Auditoria), inclusive no primeiro
+  // render e ao voltar para ela. CRM 360° e Tarefas agendadas têm leitura própria.
   useEffect(() => {
-    if (activeTab === 'users') fetchData();
-  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (activeTab === 'users' || activeTab === 'audit') void fetchData();
+  }, [activeTab, fetchData]);
 
   // Trocar o período volta para a primeira página: sem isso a página 3 de um
   // período novo poderia cair fora do intervalo e mostrar tabela vazia.
@@ -196,6 +195,22 @@ export function AdminView() {
     ...(isAdmin ? ([['cron', CalendarClock, 'Tarefas agendadas']] as const) : []),
   ];
 
+  const navegarNasAbas = (event: KeyboardEvent<HTMLButtonElement>, tab: AdminTab) => {
+    const indice = abas.findIndex(([id]) => id === tab);
+    if (indice < 0) return;
+    let proximo = indice;
+    if (event.key === 'ArrowRight') proximo = (indice + 1) % abas.length;
+    else if (event.key === 'ArrowLeft') proximo = (indice - 1 + abas.length) % abas.length;
+    else if (event.key === 'Home') proximo = 0;
+    else if (event.key === 'End') proximo = abas.length - 1;
+    else return;
+
+    event.preventDefault();
+    const proximaAba = abas[proximo][0];
+    setActiveTab(proximaAba);
+    tabsRef.current[proximaAba]?.focus();
+  };
+
   return (
     <div className="space-y-6 relative bg-background w-full min-w-0">
       <AuroraBorealis />
@@ -216,23 +231,18 @@ export function AdminView() {
         {abas.map(([tab, Icon, label]) => (
           <Button
             key={tab}
-            role="tab"
             id={`tab-${tab}`}
+            role="tab"
             aria-selected={activeTab === tab}
+            aria-controls="admin-tabpanel"
             tabIndex={activeTab === tab ? 0 : -1}
-            variant={activeTab === tab ? 'default' : 'outline'}
+            ref={(element) => { tabsRef.current[tab] = element; }}
             onClick={() => setActiveTab(tab)}
-            onKeyDown={(e) => {
-              const idx = abas.findIndex(([t]) => t === activeTab);
-              let nextTab: AdminTab | null = null;
-              if (e.key === 'ArrowRight') nextTab = abas[(idx + 1) % abas.length][0];
-              else if (e.key === 'ArrowLeft') nextTab = abas[(idx - 1 + abas.length) % abas.length][0];
-              else if (e.key === 'Home') nextTab = abas[0][0];
-              if (nextTab) { setActiveTab(nextTab); tabsRef.current[nextTab]?.focus(); }
-            }}
-            ref={(el) => { tabsRef.current[tab] = el; }}
+            onKeyDown={(event) => navegarNasAbas(event, tab)}
+            variant={activeTab === tab ? 'default' : 'outline'}
             className={activeTab === tab ? 'bg-primary hover:bg-primary/90' : ''}
-            size="sm">
+            size="sm"
+          >
             <Icon className="w-4 h-4 mr-2" /> {label}
           </Button>
         ))}
@@ -489,8 +499,10 @@ export function AdminView() {
         <SectionErrorBoundary key="crm" sectionName="CRM Admin">
           <AdminCRMDashboard />
         </SectionErrorBoundary>
-      ) : activeTab === 'cron' ? (
-        <CronJobsTab />
+      ) : activeTab === 'cron' && isAdmin ? (
+        <SectionErrorBoundary key="cron" sectionName="Tarefas agendadas">
+          <CronJobsTab />
+        </SectionErrorBoundary>
       ) : null}
       </div>
     </div>

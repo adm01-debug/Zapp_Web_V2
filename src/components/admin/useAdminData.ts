@@ -1,13 +1,12 @@
 import { useState, useCallback, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
-import { SUPABASE_URL } from '@/integrations/supabase/client';
-import { supabase, invokeEdge } from '@/lib/supabaseHelpers';
+import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 import { parseSupabaseStorageObjectUrl } from '@/lib/storage_object_reference';
 import { getLogger } from '@/lib/logger';
 import { toast } from 'sonner';
 import { describeAccessError, isAccessDeniedError } from '@/lib/rlsError';
 import type { AppRole } from '@/hooks/system/useUserRole';
-import { readEdgeError } from '@/lib/invokeEdge';
+import { invokeEdge, readEdgeError } from '@/lib/invokeEdge';
 
 const log = getLogger('useAdminData');
 
@@ -125,7 +124,7 @@ export const AUDIT_PAGE_SIZE = 50;
 /** Erro por campo devolvido por `mapCreateUserError`. */
 export interface CreateUserFieldError {
   /** Campo que originou o erro (`null` = erro geral, sem campo específico). */
-  field: 'email' | 'password' | 'name' | null;
+  field: 'email' | 'password' | 'name' | 'role' | null;
   /** Mensagem amigável sem expor detalhes internos do servidor. */
   message: string;
 }
@@ -137,11 +136,23 @@ export interface CreateUserFieldError {
 export function mapCreateUserError(rawMessage: string | undefined): CreateUserFieldError {
   if (!rawMessage) return { field: null, message: 'Erro ao criar usuário' };
   const msg = rawMessage.toLowerCase();
-  if (msg.includes('already') && (msg.includes('registered') || msg.includes('cadastr'))) return { field: 'email', message: 'Este e-mail já está cadastrado.' };
+  // E-mail já cadastrado (GoTrue: "A user with this email address has already
+  // been registered" / "User already registered") é um caso distinto do
+  // formato inválido: o motivo é outro e o usuário precisa saber qual é.
+  if (msg.includes('already registered') || msg.includes('already been registered')) {
+    return { field: 'email', message: 'Este e-mail já está cadastrado.' };
+  }
+  // Enum de papel inválido (zod: "Invalid enum value. Expected '...', received '...'")
+  // não cita "role"/"papel" no texto — cita os próprios valores do enum.
+  if (
+    msg.includes('invalid enum value') &&
+    (msg.includes('admin') || msg.includes('supervisor') || msg.includes('agent'))
+  ) {
+    return { field: 'role', message: 'Papel de usuário inválido.' };
+  }
   if (msg.includes('email') || msg.includes('e-mail')) return { field: 'email', message: 'Informe um e-mail válido.' };
   if (msg.includes('senha') || msg.includes('password')) return { field: 'password', message: `A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.` };
   if (msg.includes('nome') || msg.includes('name')) return { field: 'name', message: 'Informe o nome do usuário.' };
-  if (msg.includes('enum') || msg.includes('role') || msg.includes('papel')) return { field: 'role', message: 'Papel de usuário inválido.' };
   return { field: null, message: 'Erro ao criar usuário' };
 }
 
@@ -169,7 +180,7 @@ export interface AuditLogFilter {
   pageSize?: number;
 }
 
-export function useAdminData(activeTab: 'users' | 'audit' | 'crm', auditFilter?: AuditLogFilter) {
+export function useAdminData(activeTab: 'users' | 'audit' | 'crm' | 'cron', auditFilter?: AuditLogFilter) {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [auditTotal, setAuditTotal] = useState(0);
@@ -218,25 +229,38 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm', auditFilter?:
         return;
       }
 
-      const usersWithRoles = (profiles ?? []).map(profile => {
+      // O bucket `avatars` é privado (mesma TTL curta do AvatarUpload):
+      // `profiles.avatar_url` guarda só o caminho durável (ou, em registros
+      // legados, uma URL pública/assinada); a tela precisa de uma URL
+      // assinada para exibir. Assina em paralelo e nunca deixa uma falha de
+      // assinatura derrubar a lista inteira — sem foto vira `null`.
+      const avatarUrls = await Promise.all(
+        (profiles ?? []).map(async (profile) => {
+          const path = avatarObjectPath(profile.avatar_url);
+          if (!path) return null;
+          const { data, error: signError } = await supabase.storage
+            .from(AVATAR_BUCKET)
+            .createSignedUrl(path, AVATAR_SIGNED_URL_TTL_SECONDS);
+          if (signError || !data?.signedUrl) {
+            log.warn('Falha ao assinar avatar do usuário', {
+              userId: profile.user_id,
+              message: signError?.message,
+            });
+            return null;
+          }
+          return data.signedUrl;
+        })
+      );
+
+      const usersWithRoles = (profiles ?? []).map((profile, index) => {
         const userRole = (roles ?? []).find(r => r.user_id === profile.user_id);
         return {
           ...profile,
+          avatar_url: avatarUrls[index],
           role: (userRole?.role || 'agent') as AppRole,
         };
       });
-      const signedUsers = await Promise.all(
-        usersWithRoles.map(async (user) => {
-          if (!user.avatar_url) return user;
-          const path = avatarObjectPath(user.avatar_url);
-          if (!path) return user;
-          const { data: signedData } = await supabase.storage
-            .from(AVATAR_BUCKET)
-            .createSignedUrl(path, AVATAR_SIGNED_URL_TTL_SECONDS);
-          return { ...user, avatar_url: signedData?.signedUrl ?? user.avatar_url };
-        })
-      );
-      setUsers(signedUsers);
+      setUsers(usersWithRoles);
     } else if (activeTab === 'audit') {
       const start = (auditPage - 1) * auditPageSize;
 
@@ -459,14 +483,14 @@ export function useAdminData(activeTab: 'users' | 'audit' | 'crm', auditFilter?:
       // `Bearer ${session?.access_token}` à mão (podia virar 'Bearer undefined')
       // e lia o corpo do erro sem guarda.
       try {
-        await invokeEdge('create-user', body);
+        await invokeEdge('create-user', { body });
       } catch (firstError) {
         const { status } = await readEdgeError(firstError);
         if (status !== 401) throw firstError;
         // Sessão expirada: renova UMA vez e repete antes de desistir.
         const { error: refreshError } = await supabase.auth.refreshSession();
         if (refreshError) throw firstError;
-        await invokeEdge('create-user', body);
+        await invokeEdge('create-user', { body });
       }
 
       toast.success('Usuário criado com sucesso!');
