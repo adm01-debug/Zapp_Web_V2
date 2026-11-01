@@ -236,21 +236,22 @@ Estado dos achados após re-auditoria de 2026-09-17:
   disponibilidade documentada pelo GitHub exige repositório público de organização ou organização
   com GitHub Enterprise Cloud para repositórios privados.
 
-## Perímetro do GitHub — estado canônico (2026-10-03)
+## Perímetro do GitHub — estado canônico (2026-10-29)
 
 **Regra:** qualquer mudança nos campos abaixo atualiza **esta tabela** e `scripts/ci/github-settings-baseline.json`
 **no mesmo PR** — o `settings-guard` compara a realidade com o baseline e divergência é regressão. Fonte: API do
-GitHub medida em 03/10/2026 (`docs/audits/e95-perimetro-github-2026-10-03.md`).
+GitHub medida em 29/10/2026 (baseline `scripts/ci/github-settings-baseline.json`, medido_em 2026-10-29).
 
 | Campo | Estado canônico | Verificado por |
 |---|---|---|
-| Branch protection — required checks | **6**: `🔍 Lint & TypeCheck` · `🧪 Unit Tests` · `🏗️ Build` · `🔒 Security Audit` · `Contrato DB offline` · `🎭 E2E Tests (Playwright)` | `settings-guard` ⚠ |
+| Branch protection — required checks | **3**: `✅ CI Gate (required check)` · `🏗️ Build` · `🔎 TypeCheck` — o ci-gate agrega todos os jobs (E70: edge-contracts, unit-tests, node-scripts, security são dependências do gate) | `settings-guard` ⚠ |
 | Branch protection — `strict` | **`true`** (política vigente desde 01/10; a opção `strict=false` foi **revogada** em 02/10 — E15(b)) | `settings-guard` ⚠ |
 | Branch protection — `enforce_admins` | `true` | `settings-guard` ⚠ |
+| Branch protection — `required_linear_history` | `true` | `settings-guard` |
 | Branch protection — review obrigatório | nenhum (deliberado: vários agentes com auto-merge) | — |
 | Merge | `allow_squash_merge=true` · `allow_merge_commit=false` · `allow_rebase_merge=false` · `allow_auto_merge=true` · `delete_branch_on_merge=true` | `settings-guard` |
 | Squash | `squash_merge_commit_message=PR_BODY` · `squash_merge_commit_title=PR_TITLE` | `settings-guard` |
-| Environments | **7**: `copilot` · `db-ledger-evidence` · `legacy-import-destrutivo` · `Preview` · `producao-ddl` · `producao-edge-functions` · `Production` (E94 apaga 3) | `settings-guard` |
+| Environments | **9**: `banco-leitura` · `copilot` · `db-ledger-evidence` · `legacy-import-destrutivo` · `perimetro-leitura` · `Preview` · `producao-ddl` · `producao-edge-functions` · `Production` | `settings-guard` |
 | Secrets (escopos) | repo + `producao-ddl` · `producao-edge-functions` · `legacy-import-destrutivo` · `db-ledger-evidence` | `check-pr-workflow-secrets` |
 | Actions — `allowed_actions` | `selected` | `settings-guard` |
 | Actions — `sha_pinning_required` | `true` | `check-workflow-pins` |
