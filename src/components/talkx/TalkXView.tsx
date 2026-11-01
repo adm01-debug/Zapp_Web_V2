@@ -60,7 +60,7 @@ function TalkXScreenFallback() {
   );
 }
 
-export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running';
+export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running' | 'paused';
 
 // X053: a trilha do cabeçalho sai da rota (?tab=/sub=). Os rótulos são os mesmos
 // que as abas e o menu de Analytics mostram — a trilha não inventa nome novo.
