@@ -1,14 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
-/**
- * N-216 — Auditoria do admin: select explícito em audit_logs.
- *
- * Antes: `.select('*')`. Depois: só as colunas que a tabela de auditoria usa
- * (id, user_id, action, entity_type, details, created_at). `details` permanece
- * porque a tela a exibe; as demais colunas da linha não voltam ao navegador.
- */
-
 const selects = vi.hoisted(() => [] as Array<{ table: string; cols: string }>);
 
 vi.mock('sonner', () => ({ toast: vi.fn() }));
@@ -19,7 +11,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     from: (t: string) => {
       const b: Record<string, unknown> = {};
       b.select = (cols: string) => { selects.push({ table: t, cols }); return b; };
-      for (const m of ['order', 'limit', 'eq', 'in', 'neq', 'range']) b[m] = () => b;
+      for (const m of ['order', 'limit', 'eq', 'in', 'neq', 'range', 'gte', 'lte']) b[m] = () => b;
       b.then = (resolve: (v: unknown) => unknown) =>
         Promise.resolve({ data: [], error: null }).then(resolve);
       return b;
@@ -47,7 +39,6 @@ describe('useAdminData — select explícito em audit_logs', () => {
     expect(cols).toContain('action');
     expect(cols).toContain('entity_type');
     expect(cols).toContain('created_at');
-    // details é exibida na tabela — permanece.
     expect(cols).toContain('details');
   });
 });
