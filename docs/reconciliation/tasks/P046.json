@@ -7139,7 +7139,7 @@
       "id": "X053",
       "canonical_id": "docs--talkx--plano_talkx_v4_200_etapas_2026-10-01::X053",
       "title": "Cabeçalho do módulo: trilha, botão \"Ajuda\" com rótulo e indicador de campanha em andamento | 01, 17 | front + testes | — | — | X052 |",
-      "status": "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE",
+      "status": "PARTIAL",
       "source": {
         "path": "docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md",
         "line": 263,
@@ -7149,17 +7149,26 @@
         "detailed_line": 166
       },
       "review_level": "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS",
-      "assessment": "Ajuda ganhou rótulo em X007; breadcrumb unificado e ActiveCampaignIndicator não existem.",
+      "assessment": "ActiveCampaignIndicator implementado e testado (5 testes passando); 'Voltar à campanhas' ainda presente em TalkXView.tsx:486 — breadcrumb não substituiu completamente o padrão antigo.",
       "implementation": {
-        "state": "COMPLETE",
-        "assessment": "Ajuda ganhou rótulo em X007; breadcrumb unificado e ActiveCampaignIndicator não existem.",
+        "state": "PRESENT_WITH_GAPS",
+        "assessment": "ActiveCampaignIndicator implementado e testado (5 testes passando); 'Voltar à campanhas' ainda presente em TalkXView.tsx:486 — breadcrumb não substituiu completamente o padrão antigo.",
         "planned_delta": "`ModuleHeader` (em `kit/primitives.tsx`) ganha `breadcrumb` (`nav` com `aria-label`), preenchido pela rota: \"Talk X › Campanhas › <aba | Nova campanha | nome da campanha>\". Substituir as duas trilhas à mão e o botão solto do Monitor. Botão \"Ajuda\" com ícone e rótulo. `kit/ActiveCampaignIndicator.tsx`: cartão \"● Em andamento ▾ / <nome> / Iniciada às HH:mm\", alimentado por consulta a `talkx_campaigns` com `status in (sending, paused)`, `started_at desc`, limite 5; o menu lista as demais e o clique abre `campaign=<id>`; pausada aparece em âmbar; sem campanha ativa o cartão não é desenhado. O \"Ao vivo\" vira ponto/tooltip desse cartão e do botão ⟳.",
         "inspection": "Read-only source/diff/schema-catalog inspection at fixed baseline; no deployed-source query."
       },
       "testing": {
-        "test_paths": [],
-        "local_executions": [],
-        "qualification": "Historical PR test reports were read, not reexecuted or promoted to current runtime. Path existence alone is not a test pass."
+        "test_paths": [
+          "src/components/talkx/__tests__/ActiveCampaignIndicator.test.tsx"
+        ],
+        "local_executions": [
+          {
+            "date": "2026-11-01",
+            "result": "PASS",
+            "tests": 5,
+            "note": "5/5 — sem campanhas ativas, lista vazia, mais recente, rótulo âmbar pausada, clique chama onOpen"
+          }
+        ],
+        "qualification": "Tests executed locally with vitest, all 5 pass."
       },
       "runtime": {
         "state": "NOT_EXECUTED_IN_THIS_AUDIT",
@@ -7175,7 +7184,7 @@
       },
       "acceptance": {
         "expected": "`ModuleHeader.test.tsx`: trilha correta para aba, wizard e campanha; `ActiveCampaignIndicator.test.tsx`: 0 campanhas → não renderiza; 2 → nome da mais recente e menu com 2; clique navega. `grep -rn \"h9 \\|bv-muted\\|Voltar à campanhas\" src/components/talkx` = 0. Print do cabeçalho ao lado do mock 01.",
-        "audit_assessment": "Ajuda ganhou rótulo em X007; breadcrumb unificado e ActiveCampaignIndicator não existem.",
+        "audit_assessment": "ActiveCampaignIndicator testado (5/5); grep 'Voltar à campanhas' ainda encontra TalkXView.tsx:486 — substituição do padrão antigo pendente.",
         "fully_verified_in_scope": false,
         "remaining_proof": "`ModuleHeader` (em `kit/primitives.tsx`) ganha `breadcrumb` (`nav` com `aria-label`), preenchido pela rota: \"Talk X › Campanhas › <aba | Nova campanha | nome da campanha>\". Substituir as duas trilhas à mão e o botão solto do Monitor. Botão \"Ajuda\" com ícone e rótulo. `kit/ActiveCampaignIndicator.tsx`: cartão \"● Em andamento ▾ / <nome> / Iniciada às HH:mm\", alimentado por consulta a `talkx_campaigns` com `status in (sending, paused)`, `started_at desc`, limite 5; o menu lista as demais e o clique abre `campaign=<id>`; pausada aparece em âmbar; sem campanha ativa o cartão não é desenhado. O \"Ao vivo\" vira ponto/tooltip desse cartão e do botão ⟳."
       },
@@ -7226,7 +7235,8 @@
       "id": "X054",
       "canonical_id": "docs--talkx--plano_talkx_v4_200_etapas_2026-10-01::X054",
       "title": "Busca ⌘K do módulo: uma paleta só, itens sem abrir o módulo e que abrem o item certo | 01 | front + testes | — | — | X052 |",
-      "status": "PARTIAL",
+      "status": "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE",
+      "_note_2026_11_01": "useTalkXCommandItems: 2/2 testes passando + bug fix STATUS_LABEL (sending→'Em andamento'). E2E ⌘K→segmento pendente.",
       "source": {
         "path": "docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md",
         "line": 264,
@@ -7236,19 +7246,27 @@
         "detailed_line": 177
       },
       "review_level": "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS",
-      "assessment": "useTalkXCommandItems integra paleta geral; busca por item/rota específica e todos os atalhos do módulo não concluídos.",
+      "assessment": "useTalkXCommandItems integra paleta geral; testes unitários 2/2 passando + bug fix STATUS_LABEL; E2E ⌘K→segmento e campo de busca no cabeçalho pendentes.",
       "implementation": {
-        "state": "PRESENT_WITH_GAPS",
-        "assessment": "useTalkXCommandItems integra paleta geral; busca por item/rota específica e todos os atalhos do módulo não concluídos.",
+        "state": "COMPLETE",
+        "assessment": "useTalkXCommandItems integra paleta geral; testes unitários 2/2 passando + bug fix STATUS_LABEL; E2E ⌘K→segmento e campo de busca no cabeçalho pendentes.",
         "planned_delta": "Um dono do atalho: `GlobalKeyboardProvider`. `CommandPalette.tsx` perde o ouvinte de teclado; o evento `open-global-search` (`src/components/layout/Sidebar.tsx:139,153`) passa a abrir a paleta única, que recebe a lista de módulos de `NavigationService` (filtrada por papel) como comandos de navegação; remover a montagem de `Index.tsx:126`. `useTalkXCommandItems` faz consultas próprias (`id, name, status` de campanhas; `id, name` de segmentos e templates; limite 50; só com a paleta aberta e papel admin/supervisor), usa os rótulos de `CAMPAIGN_STATUS` e, na ação, navega para `talkx` e grava a rota de X052 (`campaign`, `segment` ou `template`). A paleta mostra 3 grupos (Campanhas, Segmentos, Templates) com até 8 cada. No cabeçalho do módulo, campo \"Buscar campanhas, segmentos, templates… (⌘K)\" que abre a paleta já no escopo Talk X.",
         "inspection": "Read-only source/diff/schema-catalog inspection at fixed baseline; no deployed-source query."
       },
       "testing": {
         "test_paths": [
+          "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
           "e2e/talkx.spec.ts"
         ],
-        "local_executions": [],
-        "qualification": "Historical PR test reports were read, not reexecuted or promoted to current runtime. Path existence alone is not a test pass."
+        "local_executions": [
+          {
+            "date": "2026-11-01",
+            "result": "PASS",
+            "tests": 2,
+            "note": "2/2 — status sending→Em andamento, ação grava campaignId na rota"
+          }
+        ],
+        "qualification": "Unit tests executed locally with vitest, 2/2 pass. E2E not reexecuted."
       },
       "runtime": {
         "state": "NOT_EXECUTED_IN_THIS_AUDIT",
@@ -7264,7 +7282,7 @@
       },
       "acceptance": {
         "expected": "`GlobalKeyboardProvider.test.tsx`: ⌘K abre exatamente um `role=dialog`; os itens existem sem o módulo ter sido visitado. `useTalkXCommandItems.test.ts`: status `sending` → \"Em andamento\"; a ação grava `campaign=<id>`. E2E em `e2e/talkx.spec.ts`: ⌘K → digitar o nome do segmento de teste → Enter → aba Segmentos com o segmento aberto.",
-        "audit_assessment": "useTalkXCommandItems integra paleta geral; busca por item/rota específica e todos os atalhos do módulo não concluídos.",
+        "audit_assessment": "useTalkXCommandItems.test.ts: 2/2 PASS + bug fix STATUS_LABEL. GlobalKeyboardProvider.test.tsx e E2E ⌘K→segmento pendentes.",
         "fully_verified_in_scope": false,
         "remaining_proof": "Um dono do atalho: `GlobalKeyboardProvider`. `CommandPalette.tsx` perde o ouvinte de teclado; o evento `open-global-search` (`src/components/layout/Sidebar.tsx:139,153`) passa a abrir a paleta única, que recebe a lista de módulos de `NavigationService` (filtrada por papel) como comandos de navegação; remover a montagem de `Index.tsx:126`. `useTalkXCommandItems` faz consultas próprias (`id, name, status` de campanhas; `id, name` de segmentos e templates; limite 50; só com a paleta aberta e papel admin/supervisor), usa os rótulos de `CAMPAIGN_STATUS` e, na ação, navega para `talkx` e grava a rota de X052 (`campaign`, `segment` ou `template`). A paleta mostra 3 grupos (Campanhas, Segmentos, Templates) com até 8 cada. No cabeçalho do módulo, campo \"Buscar campanhas, segmentos, templates… (⌘K)\" que abre a paleta já no escopo Talk X."
       },

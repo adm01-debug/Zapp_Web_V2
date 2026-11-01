@@ -2,7 +2,7 @@ import { toast } from 'sonner';
 import React, { useEffect, useState, useMemo, useCallback, useRef, Suspense } from 'react';
 import {
   Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
-  LayoutDashboard, HelpCircle,
+  LayoutDashboard, HelpCircle, Search,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -12,6 +12,7 @@ import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { useTalkXServiceStatus } from '@/hooks/integrations/useTalkXServiceStatus';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
+import { useGlobalKeyboard } from '@/components/keyboard/GlobalKeyboardProvider';
 import { ModuleHeader, ModuleBreadcrumb, IconTile, TalkXSkeletonRows, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { ActiveCampaignIndicator } from './kit/ActiveCampaignIndicator';
 import { PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
@@ -91,6 +92,7 @@ export default function TalkXView() {
   // estado não aparece (nunca um falso "desconectado" na tela).
   const { whatsapp: whatsappService } = useTalkXServiceStatus();
   const whatsappDisconnected = whatsappService.connected === false;
+  const { openCommandPalette } = useGlobalKeyboard();
   // TL-152: a mesma precedência do syncFromBrowserHistory (?campaign= com
   // screen explícito vence o wizard) — load e popstate abrem a mesma tela
   // para o mesmo endereço.
@@ -514,6 +516,17 @@ export default function TalkXView() {
         subtitle="Conecte. Engaje. Converta. Comunicação em escala, com resultado real."
         right={
           <div className="flex items-center gap-3">
+            {/* X054 — campo de busca que abre a paleta ⌘K no escopo Talk X */}
+            <button
+              type="button"
+              onClick={openCommandPalette}
+              aria-label="Buscar campanhas, segmentos, templates (⌘K)"
+              className="talkx-glow-ring hidden sm:inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border/60 bg-input/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors text-xs"
+            >
+              <Search className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden lg:inline">Buscar campanhas, segmentos, templates…</span>
+              <kbd className="ml-1 hidden lg:inline font-mono text-[10px] bg-muted/60 border border-border/60 rounded px-1">⌘K</kbd>
+            </button>
             <ActiveCampaignIndicator
               campaigns={campaigns}
               live={isLive}
