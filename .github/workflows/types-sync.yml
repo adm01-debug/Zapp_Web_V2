@@ -777,3 +777,24 @@ jobs:
             echo "| grants-baseline.json | ${{ needs.ler-banco.outputs.grants_changed || 'n/a' }} |"
             echo "| PR | ${{ steps.pull-request.outputs.pull-request-number || 'n/a' }} |"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # Z029: quando o workflow falha, exibe o motivo no Job Summary para facilitar
+      # diagnóstico sem precisar abrir os logs de cada step individualmente.
+      - name: Resumo de falha
+        if: failure()
+        run: |
+          {
+            echo ""
+            echo "## ❌ types-sync falhou"
+            echo ""
+            # Decide pelo resultado de cada gate (steps.gateN.outputs.passed), não pela
+            # existência do log: os gates rodam em sequência e deixam log mesmo quando passam.
+            mostrou=0
+            mostra() {
+              echo "### $1"; echo '```'; head -100 "$2" 2>/dev/null || echo "(log $2 ausente)"; echo '```'; mostrou=1
+            }
+            [ "${{ steps.gate1.outputs.passed }}" = "false" ] && mostra "Gate 1 — TypeScript" /tmp/tsc.log
+            [ "${{ steps.gate2.outputs.passed }}" = "false" ] && mostra "Gate 2 — usage-guard" /tmp/guard.log
+            [ "${{ steps.gate3.outputs.passed }}" = "false" ] && mostra "Gate 3 — remoções destrutivas" /tmp/gate3.log
+            [ "$mostrou" = 1 ] || echo "Verifique os logs do step anterior para detalhes."
+          } >> "$GITHUB_STEP_SUMMARY"
