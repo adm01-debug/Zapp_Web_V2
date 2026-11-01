@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     const { messages = [], currentProduct = "", catalog = [] } = body;
 
     const catalogCtx = catalog.length > 0
-      ? `Catálogo disponível:\n${(catalog as Array<{ name: string; price?: number; description?: string }>).slice(0, 20).map((p) => `- ${p.name}${p.price != null ? ` (R$ ${p.price})` : ""}${p.description ? `: ${p.description}` : ""}`).join("\n")}`
+      ? `Catálogo disponível:\n${(catalog as Array<{ name: string; sale_price?: number; suggested_price?: number; price?: number; description?: string }>).slice(0, 20).map((p) => { const price = p.sale_price ?? p.suggested_price ?? p.price; return `- ${p.name}${price != null ? ` (R$ ${price})` : ""}${p.description ? `: ${p.description}` : ""}`; }).join("\n")}`
       : "";
 
     const system = `Você é um copiloto de vendas especialista em recomendação de produtos.

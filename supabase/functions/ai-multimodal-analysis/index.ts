@@ -1,6 +1,7 @@
 import { handleCors, errorResponse, jsonResponse, Logger, requireAuth } from "../_shared/validation.ts";
 import { generateWithRouting } from "../_shared/ai-generate.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
+import { toInlineImage, AiImageInputError } from "../_shared/ai-image-input.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -12,6 +13,7 @@ Deno.serve(async (req) => {
   const guard = await enforceAiGuards({ functionName: "ai-multimodal-analysis", userId: auth.userId, req });
   if (guard) return guard;
 
+  const bearerToken = (req.headers.get("Authorization") ?? req.headers.get("authorization") ?? "").replace(/^bearer /i, "").trim();
   const log = new Logger("ai-multimodal-analysis");
 
   try {
@@ -49,9 +51,26 @@ Responda APENAS em JSON:
       content: String(m.content || ""),
     }));
 
-    const lastUserContent = (mediaType === "image" || mediaType === "sticker") && mediaUrl
+    const isVisualMedia = (mediaType === "image" || mediaType === "sticker") && !!mediaUrl;
+    let imageDataUrl = "";
+    if (isVisualMedia) {
+      try {
+        const inline = await toInlineImage(mediaUrl, {
+          storageIdentity: { kind: "user", bearerToken },
+        });
+        imageDataUrl = inline.dataUrl;
+      } catch (err) {
+        if (err instanceof AiImageInputError) {
+          log.error("image-download", { code: err.code, msg: err.message });
+        }
+        // degradar para análise textual quando o download falha
+        imageDataUrl = "";
+      }
+    }
+
+    const lastUserContent = isVisualMedia && imageDataUrl
       ? [
-          { type: "image_url" as const, image_url: { url: mediaUrl } },
+          { type: "image_url" as const, image_url: { url: imageDataUrl } },
           { type: "text" as const, text: "Analise a mídia recebida e extraia informações relevantes para a negociação." },
         ]
       : `Analise a mídia recebida e extraia informações relevantes para a negociação. ${mediaCtx}`;
@@ -66,6 +85,7 @@ Responda APENAS em JSON:
         { role: "user", content: lastUserContent },
       ],
       temperature: 0.4,
+      ...(isVisualMedia && imageDataUrl ? { need: { modality: "vision" as const } } : {}),
     });
 
     if (!response.ok || !data) {
