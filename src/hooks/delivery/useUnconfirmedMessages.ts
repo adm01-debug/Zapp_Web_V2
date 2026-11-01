@@ -43,7 +43,8 @@ export function useUnconfirmedMessages(conversationContactId: string | null | un
 
   const resolveMutation = useMutation({
     mutationFn: async ({ messageId, outcome }: { messageId: string; outcome: 'sent' | 'not_delivered' }) => {
-      const { data, error } = await supabase.rpc('resolve_unconfirmed_message' as never, {
+      // @ts-expect-error resolve_unconfirmed_message not in generated types until production migration
+      const { data, error } = await supabase.rpc('resolve_unconfirmed_message', {
         p_message_id: messageId,
         p_outcome: outcome,
       });
