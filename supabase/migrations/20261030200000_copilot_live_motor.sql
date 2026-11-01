@@ -21,7 +21,7 @@ ALTER TABLE public.copilot_sessions
   ADD COLUMN IF NOT EXISTS last_processed_message_at timestamptz,
   ADD COLUMN IF NOT EXISTS intent                    text,
   ADD COLUMN IF NOT EXISTS sentiment                 text,
-  ADD COLUMN IF NOT EXISTS comm_style                text[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS comm_style                text,
   ADD COLUMN IF NOT EXISTS decision_role             text,
   ADD COLUMN IF NOT EXISTS occasion                  text,
   ADD COLUMN IF NOT EXISTS stakeholders              jsonb NOT NULL DEFAULT '[]'::jsonb,
