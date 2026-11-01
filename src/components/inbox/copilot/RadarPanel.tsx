@@ -1,7 +1,7 @@
 /**
  * CV-051–060 — Painel RADAR flutuante.
- * Pop-up encaixado no Chat Panel: arrastável, 3 modos, mobile bottom drawer,
- * "não perturbe", acessibilidade, atalhos de teclado, indicador de pensamento.
+ * Pop-up encãixado no Chat Panel: arrastável, 3 modos, mobile bottom drawer,
+ * "ãão perturbe", acessibilidade, atalhos de teclado, indicador de pensamento.
  */
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { X, Minimize2, Maximize2, Minus, BellOff, Bell, RefreshCw, Radar } from 'lucide-react';
@@ -20,7 +20,7 @@ import {
   DecisionMakerCard,
 } from './RadarCards';
 
-// ─── Props ────────────────────────────────────────────────────
+// ─── Props ────────────────────────────────────────────────
 export interface RadarPanelProps {
   // State from useRadarPanel
   mode: RadarMode;
@@ -52,14 +52,14 @@ export interface RadarPanelProps {
   className?: string;
 }
 
-// ─── Mode buttons ─────────────────────────────────────────────
+// ─── Mode buttons ────────────────────────────────────────────────
 const MODE_OPTIONS: Array<{ id: RadarMode; label: string; title: string }> = [
   { id: 'mini', label: 'Mini', title: 'Modo Mini — melhor sugestão e medidor' },
   { id: 'normal', label: 'Normal', title: 'Modo Normal — cartões' },
   { id: 'focus', label: 'Foco', title: 'Modo Foco — painel completo' },
 ];
 
-// ─── Timeout para "RADAR pensando" (CV-054) ──────────────────
+// ─── Timeout para "RADAR pensando" (CV-054) ────────────────────
 const THINKING_TIMEOUT_MS = 8000;
 
 // ─── RadarPanel ──────────────────────────────────────────────
@@ -101,10 +101,10 @@ export function RadarPanel({
     };
   }, [suggestionsLoading]);
 
-  // CV-055 — aria-live anuncia novas sugestões
-  const latestSuggestionText = suggestions[0]?.text ?? null;
+  // CV-055 — aria-live anuncia novas sugestões (suprimido em DND)
+  const latestSuggestionText = !isDnd ? (suggestions[0]?.text ?? null) : null;
 
-  // ─── Drag logic (CV-051) ──────────────────────────────────
+  // ─── Drag logic (CV-051) ───────────────────────────────────────────────
   const onMouseDown = useCallback((e: React.MouseEvent<HTMLElement>) => {
     if ((e.target as HTMLElement).closest('button, input, textarea')) return;
     e.preventDefault();
@@ -125,18 +125,17 @@ export function RadarPanel({
     document.addEventListener('mouseup', onUp);
   }, [position]);
 
-  // ─── Keyboard shortcuts (CV-056) ─────────────────────────
+  // ─── Keyboard shortcuts (CV-056) ──────────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       const tecla = e.key;
-      // Teclas do próprio painel (não entram no registro global, que exige executor). Ctrl+Shift+R
-      // e Ctrl+1..3 ficam com o navegador (recarregar / trocar de aba).
       if (e.ctrlKey && e.shiftKey && tecla.toLowerCase() === 'l') {
         e.preventDefault();
         onToggleCollapsed();
       }
-      if (e.ctrlKey && e.altKey && !e.shiftKey && (tecla === '1' || tecla === '2' || tecla === '3')) {
+      // Ctrl+Alt+1..3: usar sugestão — ignorado quando RADAR está silenciado
+      if (!isDnd && e.ctrlKey && e.altKey && !e.shiftKey && (tecla === '1' || tecla === '2' || tecla === '3')) {
         const idx = parseInt(tecla, 10) - 1;
         if (suggestions[idx]) {
           e.preventDefault();
@@ -146,12 +145,12 @@ export function RadarPanel({
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [onToggleCollapsed, onUseSuggestion, suggestions]);
+  }, [isDnd, onToggleCollapsed, onUseSuggestion, suggestions]);
 
-  // ─── Mobile detection ─────────────────────────────────────
+  // ─── Mobile detection ───────────────────────────────────────────────
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
-  // ─── Mini mode ────────────────────────────────────────────
+  // ─── Mini mode ───────────────────────────────────────────────────────
   if (collapsed) {
     return (
       <div
@@ -167,7 +166,7 @@ export function RadarPanel({
       >
         <Radar className={cn('h-4 w-4 text-primary', suggestionsLoading && 'animate-pulse')} />
         <span className="text-[11px] font-semibold text-primary">RADAR</span>
-        {suggestions.length > 0 && (
+        {!isDnd && suggestions.length > 0 && (
           <span className="rounded-full bg-primary px-1.5 text-[9px] font-bold text-primary-foreground">{suggestions.length}</span>
         )}
         <button
@@ -182,7 +181,7 @@ export function RadarPanel({
     );
   }
 
-  // ─── Mobile bottom drawer (CV-060) ───────────────────────
+  // ─── Mobile bottom drawer (CV-060) ───────────────────────────────────
   if (isMobile) {
     return (
       <div
@@ -202,7 +201,13 @@ export function RadarPanel({
             <Minimize2 className="h-4 w-4" />
           </button>
         </div>
-        {suggestions[0] ? (
+        {isDnd ? (
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground py-2">
+            <BellOff className="h-3 w-3" />
+            RADAR silenciado.{' '}
+            <button type="button" className="underline ml-auto" onClick={onClearDnd}>Retomar</button>
+          </div>
+        ) : suggestions[0] ? (
           <div
             className="rounded-lg border border-primary/20 bg-primary/5 p-3 cursor-pointer hover:bg-primary/10 transition-colors"
             onClick={() => onUseSuggestion(suggestions[0].text)}
@@ -219,7 +224,7 @@ export function RadarPanel({
             {suggestionsLoading ? 'RADAR analisando...' : 'Aguardando momento-chave...'}
           </p>
         )}
-        {nextStep && (
+        {!isDnd && nextStep && (
           <p className="mt-2 text-[11px] text-muted-foreground">
             <span className="font-semibold">Próximo passo:</span> {nextStep}
           </p>
@@ -228,7 +233,7 @@ export function RadarPanel({
     );
   }
 
-  // ─── Desktop floating panel ───────────────────────────────
+  // ─── Desktop floating panel ───────────────────────────────────────────
   return (
     <div
       ref={panelRef}
@@ -251,7 +256,7 @@ export function RadarPanel({
         <span className="text-[11px] font-bold text-primary flex-1">RADAR</span>
 
         {/* CV-054 — indicator */}
-        {suggestionsLoading && !timedOut && (
+        {!isDnd && suggestionsLoading && !timedOut && (
           <span className="flex h-1.5 w-1.5 rounded-full bg-primary animate-ping mr-1" aria-hidden="true" />
         )}
 
@@ -314,7 +319,7 @@ export function RadarPanel({
       </div>
 
       {/* CV-054 — timeout message */}
-      {timedOut && (
+      {!isDnd && timedOut && (
         <div className="px-3 py-2 text-[11px] text-amber-600 dark:text-amber-400 bg-amber-500/10 border-b border-border/60">
           Não consegui analisar agora —{' '}
           <button type="button" className="underline" onClick={onRefresh}>tentar de novo</button>
@@ -330,7 +335,7 @@ export function RadarPanel({
         </div>
       )}
 
-      {/* aria-live region (CV-055/057) — announces new suggestions to screen readers */}
+      {/* aria-live region (CV-055/057) — suprimido quando DND ativo */}
       <div
         aria-live="polite"
         aria-atomic="true"
@@ -339,113 +344,118 @@ export function RadarPanel({
         {latestSuggestionText && `Nova sugestão do RADAR: ${latestSuggestionText}`}
       </div>
 
-      {/* Mini mode body */}
-      {mode === 'mini' && (
-        <div className="p-3 space-y-2">
-          <SuggestionsCard
-            suggestions={suggestions.slice(0, 1)}
-            loading={suggestionsLoading}
-            collapsed={false}
-            onToggle={() => {}}
-            onUse={onUseSuggestion}
-          />
-          {session && (
-            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-              <span className="rounded bg-muted px-1.5 py-0.5 font-bold">{SALE_STAGE_META[session.stage].label}</span>
-              <div className="flex gap-0.5">
-                {(['B','R','I','N','D','E'] as const).map((l) => (
-                  <span key={l} className={cn('font-bold text-[10px]', session.brinde_state[l] ? 'text-primary' : 'text-muted-foreground/30')}>{l}</span>
-                ))}
-              </div>
+      {/* Corpo do painel — não renderiza quando RADAR silenciado (CV-058) */}
+      {!isDnd && (
+        <>
+          {/* Mini mode body */}
+          {mode === 'mini' && (
+            <div className="p-3 space-y-2">
+              <SuggestionsCard
+                suggestions={suggestions.slice(0, 1)}
+                loading={suggestionsLoading}
+                collapsed={false}
+                onToggle={() => {}}
+                onUse={onUseSuggestion}
+              />
+              {session && (
+                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                  <span className="rounded bg-muted px-1.5 py-0.5 font-bold">{SALE_STAGE_META[session.stage].label}</span>
+                  <div className="flex gap-0.5">
+                    {(['B','R','I','N','D','E'] as const).map((l) => (
+                      <span key={l} className={cn('font-bold text-[10px]', session.brinde_state[l] ? 'text-primary' : 'text-muted-foreground/30')}>{l}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
-      {/* Normal / Focus mode body */}
-      {(mode === 'normal' || mode === 'focus') && (
-        <div className="max-h-[calc(100vh-180px)] overflow-y-auto p-2 space-y-1.5 overscroll-contain" style={{ scrollbarWidth: 'thin' }}>
-          {cardOrder.map((cardId) => {
-            const isCollapsed = collapsedCards.includes(cardId);
-            switch (cardId) {
-              case 'stage':
-                return (
-                  <StageCard
-                    key="stage"
-                    stage={session?.stage ?? null}
-                    temperature={session?.temperature ?? null}
-                    collapsed={isCollapsed}
-                    onToggle={() => onToggleCard('stage')}
-                  />
-                );
-              case 'brinde':
-                return (
-                  <BrindeCard
-                    key="brinde"
-                    brindeState={session?.brinde_state ?? null}
-                    collapsed={isCollapsed}
-                    onToggle={() => onToggleCard('brinde')}
-                  />
-                );
-              case 'suggestions':
-                return (
-                  <SuggestionsCard
-                    key="suggestions"
-                    suggestions={suggestions}
-                    loading={suggestionsLoading}
-                    collapsed={isCollapsed}
-                    onToggle={() => onToggleCard('suggestions')}
-                    onUse={onUseSuggestion}
-                  />
-                );
-              case 'next_step':
-                return (
-                  <NextStepCard
-                    key="next_step"
-                    nextStep={nextStep ?? null}
-                    collapsed={isCollapsed}
-                    onToggle={() => onToggleCard('next_step')}
-                  />
-                );
-              case 'alerts':
-                return (
-                  <AlertsCard
-                    key="alerts"
-                    alerts={alerts}
-                    collapsed={isCollapsed}
-                    onToggle={() => onToggleCard('alerts')}
-                  />
-                );
-              case 'products':
-                return (
-                  <ProductsCard
-                    key="products"
-                    products={suggestedProducts}
-                    collapsed={isCollapsed}
-                    onToggle={() => onToggleCard('products')}
-                  />
-                );
-              case 'decision_maker':
-                return (
-                  <DecisionMakerCard
-                    key="decision_maker"
-                    decisionRole={session?.decision_role ?? null}
-                    stakeholders={session?.stakeholders ?? []}
-                    collapsed={isCollapsed}
-                    onToggle={() => onToggleCard('decision_maker')}
-                  />
-                );
-              default:
-                return null;
-            }
-          })}
-        </div>
+          {/* Normal / Focus mode body */}
+          {(mode === 'normal' || mode === 'focus') && (
+            <div className="max-h-[calc(100vh-180px)] overflow-y-auto p-2 space-y-1.5 overscroll-contain" style={{ scrollbarWidth: 'thin' }}>
+              {cardOrder.map((cardId) => {
+                const isCollapsed = collapsedCards.includes(cardId);
+                switch (cardId) {
+                  case 'stage':
+                    return (
+                      <StageCard
+                        key="stage"
+                        stage={session?.stage ?? null}
+                        temperature={session?.temperature ?? null}
+                        collapsed={isCollapsed}
+                        onToggle={() => onToggleCard('stage')}
+                      />
+                    );
+                  case 'brinde':
+                    return (
+                      <BrindeCard
+                        key="brinde"
+                        brindeState={session?.brinde_state ?? null}
+                        collapsed={isCollapsed}
+                        onToggle={() => onToggleCard('brinde')}
+                      />
+                    );
+                  case 'suggestions':
+                    return (
+                      <SuggestionsCard
+                        key="suggestions"
+                        suggestions={suggestions}
+                        loading={suggestionsLoading}
+                        collapsed={isCollapsed}
+                        onToggle={() => onToggleCard('suggestions')}
+                        onUse={onUseSuggestion}
+                      />
+                    );
+                  case 'next_step':
+                    return (
+                      <NextStepCard
+                        key="next_step"
+                        nextStep={nextStep ?? null}
+                        collapsed={isCollapsed}
+                        onToggle={() => onToggleCard('next_step')}
+                      />
+                    );
+                  case 'alerts':
+                    return (
+                      <AlertsCard
+                        key="alerts"
+                        alerts={alerts}
+                        collapsed={isCollapsed}
+                        onToggle={() => onToggleCard('alerts')}
+                      />
+                    );
+                  case 'products':
+                    return (
+                      <ProductsCard
+                        key="products"
+                        products={suggestedProducts}
+                        collapsed={isCollapsed}
+                        onToggle={() => onToggleCard('products')}
+                      />
+                    );
+                  case 'decision_maker':
+                    return (
+                      <DecisionMakerCard
+                        key="decision_maker"
+                        decisionRole={session?.decision_role ?? null}
+                        stakeholders={session?.stakeholders ?? []}
+                        collapsed={isCollapsed}
+                        onToggle={() => onToggleCard('decision_maker')}
+                      />
+                    );
+                  default:
+                    return null;
+                }
+              })}
+            </div>
+          )}
+        </>
       )}
 
       {/* Footer — keyboard hint (CV-056) */}
       <div className="rounded-b-xl border-t border-border/40 px-3 py-1 text-[9px] text-muted-foreground/50 flex gap-3">
         <span>Ctrl+Shift+L: abrir/fechar</span>
-        <span>Ctrl+Alt+1/2/3: usar sugestão</span>
+        {!isDnd && <span>Ctrl+Alt+1/2/3: usar sugestão</span>}
       </div>
     </div>
   );
