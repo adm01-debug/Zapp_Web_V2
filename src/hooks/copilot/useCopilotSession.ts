@@ -1,9 +1,11 @@
 /**
  * CV-032 — Sessão do Copiloto RADAR do contato aberto.
  *
- * Lê `copilot_sessions` (uma por contato: `conversation_id = contact_id`, ver a
- * migration 20261030200000) e entrega o estado no formato das telas: etapa,
- * temperatura 0–100 e as letras B·R·I·N·D·E vindas das colunas `brinde_*`.
+ * Lê `copilot_sessions` (uma por conversa: `UNIQUE(conversation_id)`) e
+ * entrega o estado no formato das telas: etapa, temperatura 0–100 e as
+ * letras B·R·I·N·D·E vindas das colunas `brinde_*`.
+ * Quando o contato tem mais de uma sessão (mais de uma conversa aberta),
+ * retorna a mais recente por `started_at DESC`.
  * RLS: o vendedor só enxerga a própria sessão (`profile_id = auth.uid()`).
  *
  * `copilot_sessions` não está na publicação do Realtime; quem avisa que o
@@ -107,6 +109,8 @@ export function useCopilotSession(contactId: string | undefined): UseCopilotSess
         .from('copilot_sessions')
         .select(COLUNAS)
         .eq('contact_id', contactId)
+        .order('started_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
       if (cancelado) return;
       // Erro (ex.: tabela ainda sem as colunas do motor) = sem RADAR, sem quebrar a Inbox.
