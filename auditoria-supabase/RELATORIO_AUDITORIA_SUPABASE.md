@@ -21,16 +21,20 @@
 
 | Severidade | Quantidade | Destaque |
 |---|---|---|
-| **CRÍTICO** | 2 | ZW-0002 (user_roles seq_scan 7.3M), ZW-0003 (4 policies roles=public) |
-| **ALTO** | 7 | ZW-0004~ZW-0012 (WITH CHECK, SECURITY DEFINER, cron timeouts) |
+| **CRÍTICO** | 2 | ZW-0002 (user_roles seq_scan 7.7M — AGRAVOU), ZW-0003 (5 policies roles=public — AGRAVOU) |
+| **ALTO** | 6 | ZW-0004 (8 jobs falhando — AGRAVOU), ZW-0005, ZW-0007 (42 sem WITH CHECK — AGRAVOU), ZW-0008, ZW-0009, ZW-0044 |
 | **MÉDIO** | 15 | ZW-0013~ZW-0026 (exceto ZW-0014 absorvido) |
 | **BAIXO** | 3 | ZW-0027~ZW-0029 |
 | **INFO** | 13 | ZW-0030~ZW-0042 |
-| **RESOLVIDO** | 7 | ZW-0001 (anon grants), ZW-0010 (log_search_event), ZW-0011 (get_search_insights), ZW-0014 (absorvido por ZW-0003) |
+| **RESOLVIDO** | 8 | ZW-0001 (anon grants), ZW-0006 (FK profiles→auth.users), ZW-0010 (log_search_event), ZW-0011 (get_search_insights), ZW-0014 (absorvido por ZW-0003) |
 
-**Ações autônomas desta sessão:**
+**Ações autônomas desta sessão (2026-11-01):**
+- **ZW-0006 RESOLVIDO:** FK `fk_profiles_to_auth` confirmada em `pg_constraint` — ausente em 31/10, adicionada por outra sessão
+- **ZW-0026 AGRAVOU:** 20 nomes duplicados no ledger (era 1); 2 com count=3 (`add_sync_contact_status_on_closure_trigger`, `gamification_guard_fix_xp_cap`)
+- **ZW-0002/ZW-0003/ZW-0004/ZW-0007 AGRAVARAM** na re-verificação de 2026-11-01T18:19Z
 - **ZW-0011 RESOLVIDO:** `useSearchInsights.ts` + teste — `get_search_insights` → `search_insights` (RPC correta desde migration `20261031130000`)
 - **ZW-0014 ABSORVIDO:** duplicata de ZW-0003 (mesma exposição `talkx_campaign_segments`); contagens recalculadas para refletir registros reais em `achados.json`
+- **PR #2462 ABSORVIDA:** docs 2026-10-25 (RELATORIO+progresso.json); 5 correções técnicas absorvidas; fechar após commit desta sessão
 
 **PRs aguardando aprovação (Joaquim):** #2481, #2485, #2487, #2491, #2461, #2471, #2476, #2460, #2473
 
