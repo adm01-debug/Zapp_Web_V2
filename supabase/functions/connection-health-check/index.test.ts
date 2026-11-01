@@ -1,4 +1,4 @@
-import { handleConnectionHealthCheck, evaluateOpenConnectionHealth, parseOwnerJid, parseSilenceMinutes, inboxSilenceDedupeKey, buildConnectionAlertPrefs } from './index.ts';
+import { handleConnectionHealthCheck, decideReconnect, RECONNECT_EXHAUSTED_REASON, evaluateOpenConnectionHealth, parseOwnerJid, parseSilenceMinutes, inboxSilenceDedupeKey, buildConnectionAlertPrefs } from './index.ts';
 
 // ---------------------------------------------------------------------------
 // SL-053 / F3 E23-E29 do plano multi-conexão (E24/E25/E26/E28).
@@ -46,6 +46,10 @@ interface ConnRow {
   id: string;
   instance_id: string;
   phone_number: string | null;
+  retry_count?: number;
+  auto_reconnect_enabled?: boolean;
+  reconnect_max_attempts?: number;
+  reconnect_interval_seconds?: number;
 }
 
 interface Fake {
@@ -141,6 +145,11 @@ function result(
   if (table === 'connection_health_logs' && op === 'insert' && pending) {
     fake.insertTables.push(table);
     fake.healthLogs.push(pending);
+    return { data: null, error: null };
+  }
+  if (table === 'reconnection_logs' && op === 'insert' && pending) {
+    fake.insertTables.push(table);
+    fake.auditLogs.push({ __reconnect: true, ...pending });
     return { data: null, error: null };
   }
   if (table === 'audit_logs' && op === 'insert' && pending) {
@@ -784,4 +793,68 @@ Deno.test('1C: usuário com dois papéis recebe uma vez só', () => {
   const prefs = buildConnectionAlertPrefs(['u1', 'u1', 'u2'], []);
   const pushQueda = prefs.filter((p) => p.channel === 'push' && p.alert_type === 'disconnected');
   if (pushQueda.length !== 2) throw new Error(`esperado 2 destinatários, veio ${pushQueda.length}`);
+});
+
+// ─────────────────────── Reconexão automática ──────────────────────────────
+
+Deno.test('reconexão: decideReconnect respeita política, limite e intervalo', () => {
+  const now = new Date('2026-11-01T12:00:00Z');
+  const base = { enabled: true, attempts: 0, maxAttempts: 3, intervalSeconds: 60, lastAttemptAt: null, now };
+  assert(decideReconnect({ ...base, enabled: false }) === 'disabled', 'política desligada não tenta');
+  assert(decideReconnect(base) === 'attempt', 'primeira queda tenta');
+  assert(decideReconnect({ ...base, attempts: 3 }) === 'exhausted', 'no limite para');
+  assert(decideReconnect({ ...base, attempts: 1, lastAttemptAt: new Date('2026-11-01T11:59:30Z') }) === 'wait',
+    'dentro do intervalo espera');
+  assert(decideReconnect({ ...base, attempts: 1, lastAttemptAt: new Date('2026-11-01T11:58:00Z') }) === 'attempt',
+    'passado o intervalo tenta de novo');
+});
+
+Deno.test('reconexão: conexão caída com política ligada chama /instance/reconnect e registra a tentativa', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 0, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = ({ path }) => path.includes('/instance/reconnect')
+    ? jsonResponse({ message: 'success' })
+    : jsonResponse({ instance: { state: 'close' } });
+
+  const res = await run(fake);
+  assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+  const reconnects = fake.calls.filter((c) => c.path.includes('/instance/reconnect'));
+  assert(reconnects.length === 1, `esperada 1 tentativa, veio ${reconnects.length}`);
+  const log = fake.auditLogs.find((l) => l.__reconnect);
+  assert(log && log.attempt === 1 && log.result === 'success' && log.connection_id === 'c1', `log de tentativa inválido: ${JSON.stringify(log)}`);
+  assert(fake.connUpdates.some((u) => u.retry_count === 1), 'retry_count deve ir para 1');
+});
+
+Deno.test('reconexão: política desligada (ou ausente) não tenta', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
+  await run(fake);
+  assert(!fake.calls.some((c) => c.path.includes('/instance/reconnect')), 'não deveria tentar reconectar');
+  assert(!fake.insertTables.includes('reconnection_logs'), 'não deveria registrar tentativa');
+});
+
+Deno.test('reconexão: esgotadas as tentativas, para e pede o QR no motivo de saúde', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 3, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
+  await run(fake);
+  assert(!fake.calls.some((c) => c.path.includes('/instance/reconnect')), 'esgotado não tenta');
+  assert(fake.connUpdates.some((u) => u.health_reason === RECONNECT_EXHAUSTED_REASON), 'motivo de saúde deve pedir QR');
+});
+
+Deno.test('reconexão: conexão que volta zera o contador e o motivo', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 2, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
+  await run(fake);
+  assert(fake.connUpdates.some((u) => u.retry_count === 0 && u.health_reason === null), 'deve zerar retry_count e health_reason');
 });
