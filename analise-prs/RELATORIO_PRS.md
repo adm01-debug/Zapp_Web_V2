@@ -2,7 +2,7 @@
 
 **Data:** 2026-11-01  
 **SHA main no início:** `004e74a8c596959f45f61c8b0b64b30a70c1ff19`  
-**SHA main atual:** `3617a2acd517dcc9a6eaf2533cd256913e462c21` (PR #2447 mergeada às 18:35Z)  
+**SHA main atual:** `3b5f8a96db0337af7310eec1b0dc5f86bb45912c` (PR #2482 mergeada após #2447)  
 **Total PRs abertas analisadas:** 65 (mais 2 mergeadas = 67 total)
 
 ---
@@ -39,6 +39,7 @@
 | PR | SHA merge | Descrição |
 |---|---|---|
 | [#2447](https://github.com/adm01-debug/Zapp_Web_V2/pull/2447) | `3617a2ac` | docs(ci): RELATORIO_CI.md e PENDENCIAS.md |
+| [#2482](https://github.com/adm01-debug/Zapp_Web_V2/pull/2482) | `3b5f8a96` | docs(talkx): marca V4 como vigente e V3 como substituído (X001) |
 | [#2283](https://github.com/adm01-debug/Zapp_Web_V2/pull/2283) | (sessão anterior) | — |
 
 ---
@@ -47,9 +48,9 @@
 
 | Veredito | Contagem | PRs |
 |---|---|---|
-| **MERGEADA** | 2 | #2447, #2283 |
+| **MERGEADA** | 3 | #2447, #2482, #2283 |
 | **AGUARDANDO_CI** | 26 | #2465, #2462, #2501, #2418, #2107, #2480, #2504, #2475, #2428, #2479, #2431, #2469, #2472, #2478, #2484, #2485, #2489, #2279, #2146, #2471, #2473, #2483, #2486, #2491, #2495, #1930 |
-| **AGUARDANDO_CI_APOS_UPDATE** | 5 | #2463, #2482, #2494, #2461, #2498 |
+| **AGUARDANDO_CI_APOS_UPDATE** | 4 | #2463, #2494, #2461, #2498 |
 | **DRAFT_SKIP** | 9 | #2113, #2206, #2245, #2249, #2265, #2445, #2500, #2502, #2505 |
 | **BLOQUEADO_CONFLITO** | 7 | #2097, #2111, #2426, #2492, #2091, #2095, #2078 |
 | **BLOQUEADO_AGUARDANDO_APROVACAO** | 5 | #2481, #2466, #2476, #2487, #2496 |
@@ -73,7 +74,6 @@
 | PR | Tipo | auto_merge | Notas |
 |---|---|---|---|
 | [#2463](https://github.com/adm01-debug/Zapp_Web_V2/pull/2463) | fix/refactor | NÃO | MediaMigrationTool → service (no-restricted-imports). Merge manual quando CI Gate = SUCCESS |
-| [#2482](https://github.com/adm01-debug/Zapp_Web_V2/pull/2482) | docs | SIM | TalkX V4 vigente, V3 arquivado. Merge automático |
 | [#2494](https://github.com/adm01-debug/Zapp_Web_V2/pull/2494) | chore | SIM | types-sync automático. Merge automático |
 | [#2461](https://github.com/adm01-debug/Zapp_Web_V2/pull/2461) | feat(db) | NÃO | Migration conciliação 7 tabelas copilot fases 13-15 (DDL já aplicado em prod). Merge manual quando CI Gate = SUCCESS |
 | [#2498](https://github.com/adm01-debug/Zapp_Web_V2/pull/2498) | fix(admin) | NÃO | Fix RPC `get_search_insights` → `search_insights` + auditoria supabase. Merge manual quando CI Gate = SUCCESS |
@@ -133,4 +133,4 @@ A grande maioria tem `auto_merge` ativo e CI Gate pendente — mergeiam automati
 
 ---
 
-*Gerado em 2026-11-01 ~19:05 UTC. Check-in de segurança agendado para 19:18 UTC.*
+*Gerado em 2026-11-01 ~19:05 UTC. Atualizado ~20:05 UTC: #2482 mergeada (SHA 3b5f8a96). PRs #2461/#2463/#2498 com CI rodando.*
