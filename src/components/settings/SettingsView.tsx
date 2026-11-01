@@ -60,7 +60,7 @@ const TABS_META: Record<string, { label: string; icon: LucideIcon; staffOnly: bo
 // Grupos logicos montados olhando o CONTEUDO de cada painel (nao o nome):
 // Atendimento = operacao do atendimento (horario, mensagens, automacao,
 // roteamento, follow-up); Inteligencia artificial = recursos de IA; Qualidade =
-// pesquisa de satisfacao (CSAT automatico) e painel NPS; Aparência = preferencias
+// pesquisa de satisfacao (CSAT automatico) e painel NPS; Aparencia = preferencias
 // pessoais do usuario; Sistema = configuracoes globais/integracoes e biblioteca
 // de midia. A ordem das abas dentro do grupo preserva a ordem original da barra.
 const TAB_GROUPS: { id: string; label: string; icon: LucideIcon; tabs: string[] }[] = [
@@ -75,7 +75,7 @@ export function SettingsView() {
   const { settings, isLoading, isSaving, updateSettings, saveSettings, toggleWorkDay } = useUserSettings();
   const { resetOnboarding } = useOnboarding();
   const { isAdmin, isSupervisor } = useUserRole();
-  // Agent/special_agent so vem as 4 abas pessoais — o resto configura a
+  // Agent/special_agent so vem as 4 abas pessoais -- o resto configura a
   // operacao inteira (horario, roteamento, IA, integracoes...), nao o usuario.
   const isStaff = isAdmin || isSupervisor;
 
@@ -151,7 +151,7 @@ export function SettingsView() {
         </SkeletonRegion>
       ) : (
       <Tabs value={activeTab} onValueChange={setSelectedTab} className="space-y-4">
-        {/* Nivel 1 — grupos logicos. Substitui a barra horizontal unica de 16
+        {/* Nivel 1 -- grupos logicos. Substitui a barra horizontal unica de 16
             abas (com scroll, fade e seta pulsante) por poucas categorias que
             quebram linha em telas pequenas, sem scroll horizontal. */}
         <nav
@@ -184,7 +184,7 @@ export function SettingsView() {
           })}
         </nav>
 
-        {/* Nivel 2 — abas do grupo ativo. Poucas por grupo, entao quebram linha
+        {/* Nivel 2 -- abas do grupo ativo. Poucas por grupo, entao quebram linha
             em vez de exigir scroll horizontal. */}
         {activeGroup && (
           <TabsList className="bg-muted/30 flex flex-wrap h-auto max-sm:h-auto w-full justify-start gap-1 p-1">
@@ -229,7 +229,7 @@ export function SettingsView() {
         </TabsContent>
 
         <TabsContent value="appearance">
-          <AppearanceSettings settings={settings} updateSettings={updateSettings} onResetOnboarding={handleResetOnboarding} />
+          <AppearanceSettings settings={settings} updateSettings={updateSettings} onResetOnboarding={handleResetOnboarding} isSaving={isSaving} onSave={saveSettings} />
         </TabsContent>
 
         <TabsContent value="shortcuts">
