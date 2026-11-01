@@ -10,10 +10,10 @@ passando na `main`. Quem marcar OK cola a prova na linha.
 
 | # | Fluxo | Estado | Prova |
 |---|---|---|---|
-| 1 | Login, sessão e papéis (agente/supervisor/admin) | NÃO VERIFICADO | edge `auth-login` responde; 2 logins nos últimos 7 dias (último 01/11 22:01 UTC). Suíte E2E logada nunca termina na `main` (ver nota) |
+| 1 | Login, sessão e papéis (agente/supervisor/admin) | NÃO VERIFICADO | edge `auth-login` responde; nos últimos 30 dias só logaram usuários internos (admin, e2e, dev, qa); nenhum atendente. Suíte E2E logada nunca termina na `main` (ver nota) |
 | 2 | Conectar número WhatsApp (QR / instância Evolution) | **QUEBRADO** | conexão padrão "Promo Brindes WhatsApp" (instância `PRINCIPAL`) com `status=disconnected`; 284 checagens "desconectado" em 24 h; reconexão automática ligada e sem efeito |
 | 3 | Receber mensagem (webhook → banco → inbox) | **QUEBRADO** | última mensagem recebida de cliente: 2026-10-07 20:36 UTC. Zero desde então. Edge `evolution-webhook` responde |
-| 4 | Enviar mensagem (texto e mídia) | **QUEBRADO** | último envio confirmado: 2026-10-11 14:21 UTC. 4 envios da última semana presos em `sending` (último 01/11 23:01 UTC). Edge `message-delivery` responde |
+| 4 | Enviar mensagem (texto e mídia) | **QUEBRADO** | último envio real confirmado: 2026-10-11 14:21 UTC; nenhum envio real desde então (número desconectado). Os 4 registros em `sending` da última semana são do E2E (conexão `[E2E] Conexão WhatsApp Teste`), não de cliente. Edge `message-delivery` responde |
 | 5 | Inbox: lista, atribuição, transferência, fechamento | NÃO VERIFICADO | sem tráfego desde 07/10; sem E2E de transferência |
 | 6 | Contatos (criar, editar, buscar, mesclar, excluir) | NÃO VERIFICADO | E2E existe (`e2e/contacts-*`), depende da suíte logada |
 | 7 | Admin de usuários (criar, editar, desativar, papéis) | NÃO VERIFICADO | sem E2E funcional (só acessibilidade) |
