@@ -46,6 +46,7 @@ jobs:
     name: Contrato DB offline
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    if: github.event.pull_request.draft != true
     # E47: um PostgreSQL 17 compartilhado para todos os ~48 testes de contrato.
     # O docker-shim intercepta `docker run/exec/rm` e roteia cada teste para
     # um banco isolado (CREATE/DROP DATABASE por invocação) no mesmo serviço,

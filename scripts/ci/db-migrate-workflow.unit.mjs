@@ -94,4 +94,9 @@ test('R2-INF-003: o CLI do Supabase recebe o mesmo DSN endurecido via GITHUB_ENV
   // O CLI herda o valor do GITHUB_ENV: nenhum dos dois declara SUPABASE_DB_URL sozinho.
   assert.doesNotMatch(executavel, /^\s+SUPABASE_DB_URL: /m,
     'nenhum passo redeclara SUPABASE_DB_URL: o CLI herda o valor do GITHUB_ENV');
+  assert.equal(
+    [...executavel.matchAll(/supabase db push --db-url "\$SUPABASE_DB_URL"/g)].length,
+    2,
+    'dry-run e apply usam o DSN oficial validado e endurecido, sem exigir supabase link',
+  );
 });

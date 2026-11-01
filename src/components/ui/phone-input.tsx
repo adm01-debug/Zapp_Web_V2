@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -10,76 +10,125 @@ interface PhoneInputProps {
   disabled?: boolean;
 }
 
-/**
- * Formata uma string de dígitos em telefone brasileiro:
- *   +55 XX XXXXX-XXXX  (celular, 11 dígitos no total)
- *   +55 XX XXXX-XXXX   (fixo, 10)
- *   +CC XXXXXXXXX      (internacional/incompleto — passthrough)
- * Comportamento portado do `PhoneInput` da V3.
- */
 function formatPhone(digits: string): string {
   if (!digits) return '';
-
-  // Começa com 55 e tem corpo suficiente: formata como BR.
   if (digits.startsWith('55') && digits.length >= 4) {
     const ddd = digits.slice(2, 4);
     const rest = digits.slice(4);
-    if (rest.length <= 5) {
-      return `+55 ${ddd} ${rest}`;
-    }
-    // Fixo (10 dígitos no total): 8 após o DDD, sem '9' inicial → XXXX-XXXX.
+    if (rest.length <= 5) return `+55 ${ddd} ${rest}`;
     if (rest.length === 8 && !rest.startsWith('9')) {
       return `+55 ${ddd} ${rest.slice(0, 4)}-${rest.slice(4)}`;
     }
-    // Celular (11 dígitos) e parciais: 5-4.
-    // Teto: no máximo 9 dígitos após o DDD.
     const capped = rest.slice(0, 9);
     return `+55 ${ddd} ${capped.slice(0, 5)}-${capped.slice(5)}`;
   }
-
-  // Parcial: usuário começou a digitar.
   if (digits.length <= 2) return `+${digits}`;
   if (digits.length <= 4) return `+${digits.slice(0, 2)} ${digits.slice(2)}`;
-
-  // Internacional: passthrough E.164 sem reformatar (Ajuste UI-07).
   return `+${digits}`;
 }
 
-/** Extrai apenas os dígitos de uma string. */
 function extractDigits(value: string): string {
   return value.replace(/\D/g, '');
 }
 
-/**
- * Campo de telefone com máscara brasileira (+55 XX XXXXX-XXXX).
- * - Prefixa +55 quando o operador digita um DDD direto
- * - Aceita apenas dígitos
- * - Formata em tempo real
- * - `onChange` devolve (formatado, bruto)
- * - Sem pré-preenchimento no foco: o campo vazio continua vazio e o
- *   placeholder faz o papel de dica ([refazer 1] P1 — '+55' sozinho não
- *   pode contar como número preenchido).
- */
 export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000', className, disabled }: PhoneInputProps) {
-  // O valor exibido é DERIVADO do `value` controlado (sem effect): o que sobe
-  // pelo onChange já vem formatado, então formatar de novo é idempotente.
   const displayValue = useMemo(() => formatPhone(extractDigits(value)), [value]);
+
+  const initialDigits = extractDigits(value);
+  const isExplicitInternationalRef = useRef(
+    initialDigits.length >= 2 && !initialDigits.startsWith('55')
+  );
+  const wasExplicitPlusRef = useRef(false);
+  const lastEmittedRawRef = useRef(initialDigits);
+  // Bug Copilot: InputEvent.data e dataTransfer podem ser null em certos browsers
+  // durante paste/drop. Capturamos o texto aqui antes do evento change.
+  const pastedTextRef = useRef<string | null>(null);
+
+  const currentRaw = extractDigits(value);
+  if (currentRaw !== lastEmittedRawRef.current) {
+    isExplicitInternationalRef.current = currentRaw.length >= 2 && !currentRaw.startsWith('55');
+    wasExplicitPlusRef.current = false;
+    lastEmittedRawRef.current = currentRaw;
+  }
+
+  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLInputElement>) => {
+    pastedTextRef.current = e.clipboardData.getData('text/plain');
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLInputElement>) => {
+    pastedTextRef.current = e.dataTransfer.getData('text/plain');
+  }, []);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     let digits = extractDigits(e.target.value);
+    const prevRaw = lastEmittedRawRef.current;
+    const nativeInput = e.nativeEvent as InputEvent;
+    const inputType = nativeInput.inputType ?? '';
+    const isDeletion = inputType.startsWith('delete') || inputType === 'historyUndo';
+    const isPasteOrDrop = inputType === 'insertFromPaste' || inputType === 'insertFromDrop';
 
-    // Prefixa 55 quando o operador digita um DDD brasileiro direto (ex.: "11...").
-    // Não aplica em números internacionais que já vieram com '+'.
-    if (digits.length >= 2 && !digits.startsWith('55') && !e.target.value.startsWith('+')) {
+    // Bug D / Bug Copilot: usar pastedTextRef como fonte autoritativa quando disponível
+    // (capturado antes do change via onPaste/onDrop), pois InputEvent.data/dataTransfer
+    // podem ser null em alguns browsers durante paste/drop.
+    const pastedText = isPasteOrDrop
+      ? (pastedTextRef.current ?? nativeInput.dataTransfer?.getData('text/plain') ?? nativeInput.data ?? '')
+      : '';
+    if (isPasteOrDrop) pastedTextRef.current = null; // consumir após uso
+
+    // User explicitly entered '+': typed it (data==='+') or pasted/dropped content with leading '+'
+    const isExplicitPlusInput =
+      (inputType === 'insertText' && nativeInput.data === '+') ||
+      (isPasteOrDrop && pastedText.trimStart().startsWith('+') && !extractDigits(pastedText).startsWith('55'));
+
+    if (isExplicitPlusInput) {
+      isExplicitInternationalRef.current = true;
+      // Bug G: pasting a standalone '+' has the same semantics as typing '+' — both must set
+      // this guard so the next typed digit doesn't reset international mode.
+      wasExplicitPlusRef.current = true;
+    } else if (!e.target.value.startsWith('+') && !isDeletion && (!wasExplicitPlusRef.current || isPasteOrDrop)) {
+      // Paste/type without leading '+' (e.g. '(11) 98765-4321') → treat as BR.
+      // Bug B: wasExplicitPlusRef guards regular typing so a lone '+' keystroke isn't undone by the
+      //         next digit (which arrives without '+' in e.target.value while the field is empty).
+      // Bug A: isPasteOrDrop bypasses the guard — a paste is always an intentional replacement.
+      isExplicitInternationalRef.current = false;
+      wasExplicitPlusRef.current = false;
+    } else if (isDeletion && digits.length === 0) {
+      // Bug I: select-all + delete with wasExplicitPlusRef=true would leave international mode stuck;
+      // an empty field always resets both refs regardless of prior explicit '+'.
+      isExplicitInternationalRef.current = false;
+      wasExplicitPlusRef.current = false;
+    } else if (isDeletion && digits.length < 3 && !wasExplicitPlusRef.current && !e.target.value.startsWith('+')) {
+      // Bug C: only reset when the field is completely empty ('+' has left the display).
+      // Prevents resetting a loaded international number whose mode wasn't set by an explicit '+' key.
+      isExplicitInternationalRef.current = false;
+      wasExplicitPlusRef.current = false;
+    } else if (!isDeletion && !isPasteOrDrop && digits.length >= 3 && !digits.startsWith('55')) {
+      // Bug J: paste events must not trigger this branch — pasting '1987654321' after typing '1'
+      // combined to '11987654321' which matched here and set international mode, bypassing DDD
+      // auto-prefix. Paste falls through to the DDD check below instead.
+      const isBRPrefixDeletion = prevRaw.startsWith('55') && digits === prevRaw.slice(2);
+      if (!isBRPrefixDeletion) {
+        isExplicitInternationalRef.current = true;
+      } else {
+        digits = '55' + digits;
+      }
+    }
+
+    // DDD auto-prefix: only on insertions and when not in international mode
+    if (
+      !isDeletion &&
+      digits.length >= 2 &&
+      !digits.startsWith('55') &&
+      !isExplicitInternationalRef.current
+    ) {
       const possibleDDD = parseInt(digits.slice(0, 2), 10);
       if (possibleDDD >= 11 && possibleDDD <= 99) {
         digits = '55' + digits;
       }
     }
 
-    // Teto de 13 dígitos (55 + 2 DDD + 9 número).
     if (digits.length > 13) digits = digits.slice(0, 13);
-
+    lastEmittedRawRef.current = digits;
     onChange(formatPhone(digits), digits);
   }, [onChange]);
 
@@ -91,6 +140,8 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
       placeholder={placeholder}
       value={displayValue}
       onChange={handleChange}
+      onPaste={handlePaste}
+      onDrop={handleDrop}
       disabled={disabled}
       className={cn('tracking-wide', className)}
     />

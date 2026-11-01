@@ -397,6 +397,9 @@ printf '\n============ BLOCO B — migration aplicada ============\n'
 if [[ "${TEAM_CID_PRESTATE:-0}" = "1" ]]; then
   printf '>>> TEAM_CID_PRESTATE=1: bloco B roda SEM aplicar a migration (prova do vermelho)\n'
 else
+  # 20261009193246 sucede 20261006222024 na producao; o backfill dela e no-op apos a predecessora.
+  migration_predecessor="$repo_root/supabase/migrations/20261006222024_team_receipts_reactions_conversation_id_forced.sql"
+  psql_file "$migration_predecessor" >/dev/null
   psql_file "$migration" >/dev/null
 fi
 

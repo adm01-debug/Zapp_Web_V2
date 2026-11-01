@@ -20,6 +20,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# W49: VITE_* movido para os jobs build (step-level) e e2e (job-level); sem vazamento para lint/test/security.
 defaults:
   run:
     shell: bash --noprofile --norc -euo pipefail {0}
@@ -66,6 +67,11 @@ jobs:
       - name: 🔎 Run TypeScript debt ratchet
         run: node scripts/ci/typecheck-ratchet.mjs
 
+      - name: 🛡️ Integridade do CLAUDE.md (GA02)
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          CLAUDE_MD_BASE=FETCH_HEAD node scripts/ci/check-claude-md-integrity.mjs
+
   unit-tests:
     name: 🧪 Unit Tests (${{ matrix.shard }}/3)
     runs-on: ubuntu-24.04
@@ -74,6 +80,7 @@ jobs:
       matrix:
         shard: [1, 2, 3]
       fail-fast: false
+    if: github.event.pull_request.draft != true
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -144,6 +151,13 @@ jobs:
       - name: 🧩 Run Node CI scripts tests
         run: >-
           node --test scripts/ci/*.unit.mjs
+          scripts/lib/seguranca-processo.test.mjs
+          scripts/qa/prova-visao-classificadores.unit.mjs
+          scripts/talkx/lado-a-lado.unit.mjs
+          scripts/talkx/v4-status.unit.mjs
+          scripts/team-chat-db-validate.unit.mjs
+          scripts/ui-audit/contacts-navy-header.unit.mjs
+          scripts/ui-audit/layout-guard.unit.mjs
         env:
           CI: true
 
@@ -160,6 +174,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs: [typecheck, unit-tests]
+    if: github.event.pull_request.draft != true
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
