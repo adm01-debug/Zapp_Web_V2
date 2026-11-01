@@ -108,8 +108,10 @@ export function useObjectionHandler({
     const lower = clientText.toLowerCase();
 
     let detectedType: ObjeçãoType | null = null;
+    let maxMatches = 0;
     for (const [type, triggers] of Object.entries(OBJECTION_TRIGGERS) as [ObjeçãoType, string[]][]) {
-      if (triggers.some((t) => lower.includes(t))) { detectedType = type; break; }
+      const matchCount = triggers.filter((t) => lower.includes(t)).length;
+      if (matchCount > maxMatches) { maxMatches = matchCount; detectedType = type; }
     }
 
     if (!detectedType) return { detected: false, type: null, isSmokescreen: false, treatmentSteps: [], suggestedReply: '' };
