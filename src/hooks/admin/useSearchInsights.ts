@@ -79,7 +79,8 @@ export class SearchInsightsError extends Error {
 
 async function fetchSearchInsights(days: number): Promise<SearchInsights> {
   // A RPC `search_insights` foi criada na migration 20261031130000.
-  // O cast manual permanece até o types.ts incluir a função gerada.
+  // O cast manual permanece até o types.ts incluir a função gerada;
+  // quando incluir, substituir por supabase.rpc('search_insights', { p_days: days }).
   const rpc = supabase.rpc.bind(supabase) as unknown as (
     fn: 'search_insights',
     args: { p_days: number },
