@@ -1,10 +1,39 @@
 # Relatório de Auditoria Supabase — Zapp Web V2
 
 **Projeto:** `tnnnlkbymytvtqngbbqh` (Supabase Cloud)
-**Auditado em:** 2026-10-30 | **Re-verificado em:** 2026-10-31 (sessão atual)
+**Auditado em:** 2026-10-30 | **Re-verificado em:** 2026-10-31, **2026-11-01 (sessão atual)**
 **PostgreSQL:** 17.6
-**Total de migrations:** 1064 (ledger) = 1064 (repo) ✅
-**Modo:** SOMENTE LEITURA — todas as evidências abaixo foram coletadas por SELECT nesta sessão
+**Total de migrations:** 1072 (ledger) — 8 novas desde 2026-10-31 (1064→1072, latest `20261031130000`)
+**Modo:** SOMENTE LEITURA — todas as evidências foram coletadas por SELECT; código via PR
+
+### Re-verificação 2026-11-01 — Consolidação 3 auditorias (ZW-nnnn)
+
+| Métrica | 2026-10-31 | 2026-11-01 | Delta |
+|---|---|---|---|
+| Migrations | 1064 | 1072 | +8 |
+| Tables | 204 | 211 | +7 |
+| Policies | 505 | 520 | +15 |
+| SECURITY DEFINER fns | 399 | 402 | +3 |
+| Crons | 24 | 24 | 0 |
+| Buckets | 9 | 9 | 0 |
+
+**Achados unificados (`auditoria-supabase/achados.json`):** 47 ZW-nnnn consolidando 3 sessões anteriores (S-series 39, A/M/C 47, P001-P010 68) com deduplicação.
+
+| Severidade | Quantidade | Destaque |
+|---|---|---|
+| **CRÍTICO** | 2 | ZW-0002 (user_roles seq_scan 7.3M), ZW-0003 (4 policies roles=public) |
+| **ALTO** | 8 | ZW-0004~ZW-0012 (WITH CHECK, SECURITY DEFINER, cron timeouts) |
+| **MÉDIO** | 14 | ZW-0013~ZW-0026 |
+| **BAIXO** | 3 | ZW-0027~ZW-0029 |
+| **INFO** | 13 | ZW-0030~ZW-0042 |
+| **RESOLVIDO** | 7 | ZW-0001 (anon grants), ZW-0010 (log_search_event), ZW-0011 (get_search_insights) |
+
+**Ações autônomas desta sessão:**
+- **ZW-0011 RESOLVIDO:** `useSearchInsights.ts` + teste — `get_search_insights` → `search_insights` (RPC correta desde migration `20261031130000`)
+
+**PRs aguardando aprovação (Joaquim):** #2481, #2485, #2487, #2491, #2461, #2471, #2476, #2460, #2473
+
+---
 
 ### Re-verificação 2026-10-31 — Novos achados desta sessão
 

@@ -1,4 +1,40 @@
 {
+  "sessao_20261101": {
+    "verificado_em": "2026-11-01T17:12:57Z",
+    "baseline": {
+      "migrations": 1072,
+      "latest_migration": "20261031130000",
+      "tables": 211,
+      "policies": 520,
+      "crons": 24,
+      "buckets": 9,
+      "sec_definer_fns": 402
+    },
+    "delta_vs_20261031": {
+      "migrations": "+8 (1064→1072)",
+      "tables": "+7 (204→211)",
+      "policies": "+15 (505→520)",
+      "sec_definer_fns": "+3 (399→402)",
+      "crons": "0",
+      "buckets": "0"
+    },
+    "acoes_autonomas": [
+      "ZW-0011: useSearchInsights.ts + SearchInsightsView.test.tsx — rpc get_search_insights → search_insights (migration 20261031130000)",
+      "achados.json: 47 ZW-nnnn achados consolidados de 3 auditorias anteriores"
+    ],
+    "achados_json": {
+      "total": 47,
+      "CRITICO": 2,
+      "ALTO": 8,
+      "MEDIO": 14,
+      "BAIXO": 3,
+      "INFO": 13,
+      "RESOLVIDO": 7
+    },
+    "prs_triadas": 13,
+    "pr_aguardando_aprovacao": ["#2481","#2485","#2487","#2491","#2461","#2471","#2476","#2460","#2473"],
+    "pr_autonoma_pendente": ["#2494 (types-sync, auto_merge ativo, needs branch update)"]
+  },
   "before_after_re_verificado_em": "2026-10-31T00:27Z",
   "before_after_re_verificado": {
     "baseline_em": "2026-10-30T22:28Z",

@@ -2,8 +2,8 @@
  * useSearchInsights
  *
  * HZ1-06: números da busca global para a tela de admin "Insights de Busca".
- * Faz UMA consulta à RPC `get_search_insights(p_days)` (migration
- * 20261016112552, trilha irmã) e normaliza o jsonb para a tela.
+ * Faz UMA consulta à RPC `search_insights(p_days)` (migration
+ * 20261031130000) e normaliza o jsonb para a tela.
  *
  * Sem PII: a RPC lê apenas `search_events.term_normalized` (nada de contato,
  * telefone ou conteúdo de conversa).
@@ -78,15 +78,14 @@ export class SearchInsightsError extends Error {
 }
 
 async function fetchSearchInsights(days: number): Promise<SearchInsights> {
-  // A RPC nasce na migration irmã 20261016112552 (HZ1-06) e ainda não está no
-  // types.ts gerado. O contrato fica replicado aqui até o artefato ser
-  // ressincronizado — então esta ponte vira um `supabase.rpc('get_search_insights', …)`.
+  // A RPC `search_insights` foi criada na migration 20261031130000.
+  // O cast manual permanece até o types.ts incluir a função gerada.
   const rpc = supabase.rpc.bind(supabase) as unknown as (
-    fn: 'get_search_insights',
+    fn: 'search_insights',
     args: { p_days: number },
   ) => Promise<{ data: unknown; error: { message: string } | null }>;
 
-  const { data, error } = await rpc('get_search_insights', { p_days: days });
+  const { data, error } = await rpc('search_insights', { p_days: days });
   if (error) throw new SearchInsightsError(error.message);
   return parseSearchInsights(data);
 }

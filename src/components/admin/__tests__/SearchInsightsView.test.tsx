@@ -2,7 +2,7 @@
  * HZ1-06 — tela "Insights de Busca" (admin/supervisor).
  *
  * O que esta prova cobre:
- *  - os KPIs vêm da RPC `get_search_insights` (janela de 30 dias por padrão) e a
+ *  - os KPIs vêm da RPC `search_insights` (janela de 30 dias por padrão) e a
  *    taxa exibida é a FRAÇÃO devolvida pela RPC virando porcentagem (0.42 → 42,0%),
  *    inclusive a parcela de buscas sem resultado, calculada sobre o total;
  *  - as duas tabelas (mais buscadas / sem resultado) mostram os termos normalizados;
@@ -60,7 +60,7 @@ describe('SearchInsightsView — números da busca global (HZ1-06)', () => {
     expect(screen.getByText('210')).toBeInTheDocument();
     expect(screen.getByText('azulejo')).toBeInTheDocument();
 
-    expect(rpcMock).toHaveBeenCalledWith('get_search_insights', { p_days: 30 });
+    expect(rpcMock).toHaveBeenCalledWith('search_insights', { p_days: 30 });
   });
 
   it('não oferece exportar, baixar, imprimir nem copiar (a informação não sai do sistema)', async () => {
