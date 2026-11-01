@@ -106,7 +106,7 @@ const TEMAS: Array<[string, Record<string, Rgb>]> = [
 
 /** Tinta do selo: `bg-destructive/10` â†’ ['destructive', 0.1]. */
 function tintaDaClasse(className: string): { token: string; alfa: number } {
-  const m = className.match(/(?:^|\s)bg-([a-z][a-z0-9-]*)\/( \d+)(?:\s|$)/);
+  const m = className.match(/(?:^|\s)bg-([a-z][a-z0-9-]*)\/(\d+)(?:\s|$)/);
   if (!m) throw new Error(`selo sem tinta \`bg-<token>/<alfa>\`: "${className}"`);
   return { token: m[1], alfa: Number(m[2]) / 100 };
 }
@@ -247,31 +247,31 @@ describe('N-029 â€” os selos de SLA fecham AA com o par de texto do estado', () 
         const texto = tokens[selo.texto];
         const tinta = tokens[selo.tinta];
         expect(texto, `${selo.rotulo}: --${selo.texto} nÃ£o estÃ¡ definido em ${nome}`).toBeDefined();
-        expect(tinta, `${selo.rotulo}: --${selo.tinta} nÃ£o estÃ¡ definido em ${nome}`).toBeDefined();
-        const medido = razao(texto, sobreTinta(tinta, selo.alfa, tokens.card));
-        expect(
-          medido,
-          `${selo.rotulo} â€” ${nome}: ${selo.texto} sobre ${selo.tinta}/${selo.alfa * 100}`,
-        ).toBeGreaterThanOrEqual(MIN_TEXTO);
-      }
-    });
-  }
+        expect(tinta, `${selo.rotulo}KIÜÙ[Ë[_H°èÛÈ\İ0èHYš[šYÈ[H	Û›ÛY_X
+KĞ™QYš[™Y
 
-  it('a medida registrada Ã© a real (muda de propÃ³sito se um token mudar)', () => {
-    // Ordem dos temas: [claro, escuro, claro+alto contraste, escuro+alto contraste].
-    // Antes da correÃ§Ã£o (texto = preenchimento): atenÃ§Ã£o 1,98 / 8,20 e violado 3,32 / 5,21.
-    const medido = selos.map((selo) => ({
-      selo: selo.rotulo,
-      razao: TEMAS.map(([, tokens]) =>
-        Number(razao(tokens[selo.texto], sobreTinta(tokens[selo.tinta], selo.alfa, tokens.card)).toFixed(2)),
-      ),
-    }));
+NÂˆÛÛœİYYYÈH˜^˜[Ê^ËÛØœ™U[J[KÙ[Ë˜[˜KÚÙ[œË˜Ø\™
+JNÂˆ^Xİ
+ˆYYYËˆ	ÜÙ[Ëœ›İ[ßH8 %	Û›ÛY_Nˆ	ÜÙ[Ë^ßHÛØœ™H	ÜÙ[Ë[_KÉÜÙ[Ë˜[˜H
+ˆLXˆ
+KĞ™QÜ™X]\•[“Ü‘\]X[
+RS—ÕVÊNÂˆBˆJNÂˆB‚ˆ]
+	ØHYYYH™YÚ\İ˜YH0êHH™X[
+]YHH›Ü0ìÜÚ]ÈÙH[HÚÙ[ˆ]Y\ŠIË
 
-    expect(medido).toEqual([
-      { selo: 'no prazo (ok)', razao: [4.92, 6.59, 4.92, 7.44] },
-      { selo: 'atenÃ§Ã£o (warning)', razao: [5.01, 8.2, 5.01, 9.33] },
-      { selo: 'violado (breached, ainda sem resposta)', razao: [6.02, 5.32, 5.7, 6.13] },
-      { selo: 'violado (breached, com resposta fora do prazo)', razao: [6.02, 5.32, 5.7, 6.13] },
-    ]);
-  });
-});
+HOˆÂˆËÈÜ™[HÜÈ[X\ÎˆØÛ\›Ë\Øİ\›ËÛ\›ÊØ[ÈÛÛ˜\İK\Øİ\›ÊØ[ÈÛÛ˜\İWK‚ˆËÈ[\ÈHÛÜœ™péğèÛÈ
+^ÈH™Y[˜Ú[Y[ÊNˆ][°éğèÛÈKNÈŒHš[ÛYÈËÌˆÈKŒK‚ˆÛÛœİYYYÈHÙ[ÜË›X\
+
+Ù[ÊHOˆ
+ÂˆÙ[ÎˆÙ[Ëœ›İ[Ëˆ˜^˜[ÎˆSPTË›X\
+
+ËÚÙ[œ×JHO‚ˆ[X™\Š˜^˜[ÊÚÙ[œÖÜÙ[Ë^×KÛØœ™U[JÚÙ[œÖÜÙ[Ë[WKÙ[Ë˜[˜KÚÙ[œË˜Ø\™
+JKÑš^Y
+ŠJKˆ
+KˆJJNÂ‚ˆ^Xİ
+YYYÊKÑ\]X[
+ÂˆÈÙ[Îˆ	Û›È˜^›È
+ÚÊIË˜^˜[ÎˆÍL‹‹NKL‹ËHKˆÈÙ[Îˆ	Ø][°éğèÛÈ
+Ø\›š[™ÊIË˜^˜[ÎˆÍKŒKŒ‹KŒKKŒÌ×HKˆÈÙ[Îˆ	İš[ÛYÈ
+œ™XXÚYZ[™HÙ[H™\ÜÜİJIË˜^˜[ÎˆÍ‹Œ‹KŒÌ‹KË‹ŒL×HKˆÈÙ[Îˆ	İš[ÛYÈ
+œ™XXÚYÛÛH™\ÜÜİH›Ü˜HÈ˜^›ÊIË˜^˜[ÎˆÍ‹Œ‹KŒÌ‹KË‹ŒL×HKˆJNÂˆJNÂŸJNÂ
