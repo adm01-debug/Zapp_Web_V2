@@ -17,33 +17,37 @@ ALTER TABLE public.copilot_insights
 ALTER TABLE public.copilot_insights
   ADD COLUMN IF NOT EXISTS data jsonb;
 
--- 3. comm_style: 20261031120000 criou como text[]; normaliza para text
---    (motor RADAR v4 usa string única, não array)
---    Guard: aborta se alguma linha tiver mais de um elemento (invariante de dados).
+-- 3. comm_style: garante tipo text nullable.
+--    Se a coluna já é text (20261030200000 corrigida ou produção prévia), não-op.
+--    Se ainda for text[] (20261031120000 legada), converte com guard de dados.
 DO $$
+DECLARE
+  v_type text;
 BEGIN
-  IF EXISTS (
-    SELECT 1 FROM public.copilot_sessions
-    WHERE array_length(comm_style, 1) > 1
-  ) THEN
-    RAISE EXCEPTION
-      'comm_style conversion: existem linhas com múltiplos elementos, abortar migration';
+  SELECT data_type INTO v_type
+    FROM information_schema.columns
+   WHERE table_schema = 'public'
+     AND table_name   = 'copilot_sessions'
+     AND column_name  = 'comm_style';
+
+  IF v_type = 'ARRAY' THEN
+    -- Guard: aborta se alguma linha tiver mais de um elemento (invariante de dados).
+    IF EXISTS (
+      SELECT 1 FROM public.copilot_sessions
+      WHERE array_length(comm_style, 1) > 1
+    ) THEN
+      RAISE EXCEPTION
+        'comm_style conversion: existem linhas com múltiplos elementos, abortar migration';
+    END IF;
+
+    -- Remove o default array antes de mudar o tipo.
+    ALTER TABLE public.copilot_sessions ALTER COLUMN comm_style DROP DEFAULT;
+    ALTER TABLE public.copilot_sessions ALTER COLUMN comm_style TYPE text USING (comm_style[1]);
+    ALTER TABLE public.copilot_sessions ALTER COLUMN comm_style DROP NOT NULL;
+    ALTER TABLE public.copilot_sessions ALTER COLUMN comm_style SET DEFAULT NULL;
   END IF;
+  -- Se v_type = 'text': coluna já está correta, não-op.
 END$$;
-
--- Remove o default array (text[]) antes de mudar o tipo; sem isso o
--- PostgreSQL não consegue converter o default automaticamente.
-ALTER TABLE public.copilot_sessions
-  ALTER COLUMN comm_style DROP DEFAULT;
-
-ALTER TABLE public.copilot_sessions
-  ALTER COLUMN comm_style TYPE text USING (comm_style[1]);
-
-ALTER TABLE public.copilot_sessions
-  ALTER COLUMN comm_style DROP NOT NULL;
-
-ALTER TABLE public.copilot_sessions
-  ALTER COLUMN comm_style SET DEFAULT NULL;
 
 -- 4. Perfil comportamental e sentimento detectado
 ALTER TABLE public.copilot_sessions
