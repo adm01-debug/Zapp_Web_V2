@@ -40,6 +40,9 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
   );
   const wasExplicitPlusRef = useRef(false);
   const lastEmittedRawRef = useRef(initialDigits);
+  // Bug Copilot: InputEvent.data e dataTransfer podem ser null em certos browsers
+  // durante paste/drop. Capturamos o texto aqui antes do evento change.
+  const pastedTextRef = useRef<string | null>(null);
 
   const currentRaw = extractDigits(value);
   if (currentRaw !== lastEmittedRawRef.current) {
@@ -47,6 +50,14 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
     wasExplicitPlusRef.current = false;
     lastEmittedRawRef.current = currentRaw;
   }
+
+  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLInputElement>) => {
+    pastedTextRef.current = e.clipboardData.getData('text/plain');
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLInputElement>) => {
+    pastedTextRef.current = e.dataTransfer.getData('text/plain');
+  }, []);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     let digits = extractDigits(e.target.value);
@@ -56,11 +67,13 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
     const isDeletion = inputType.startsWith('delete') || inputType === 'historyUndo';
     const isPasteOrDrop = inputType === 'insertFromPaste' || inputType === 'insertFromDrop';
 
-    // Bug D: dataTransfer gives the actual pasted/dropped text; e.target.value always starts
-    // with '+' from the formatter, so it cannot distinguish a paste-with-+ from a paste-without-+.
+    // Bug D / Bug Copilot: usar pastedTextRef como fonte autoritativa quando disponível
+    // (capturado antes do change via onPaste/onDrop), pois InputEvent.data/dataTransfer
+    // podem ser null em alguns browsers durante paste/drop.
     const pastedText = isPasteOrDrop
-      ? (nativeInput.dataTransfer?.getData('text/plain') ?? nativeInput.data ?? '')
+      ? (pastedTextRef.current ?? nativeInput.dataTransfer?.getData('text/plain') ?? nativeInput.data ?? '')
       : '';
+    if (isPasteOrDrop) pastedTextRef.current = null; // consumir após uso
 
     // User explicitly entered '+': typed it (data==='+') or pasted/dropped content with leading '+'
     const isExplicitPlusInput =
@@ -127,6 +140,8 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
       placeholder={placeholder}
       value={displayValue}
       onChange={handleChange}
+      onPaste={handlePaste}
+      onDrop={handleDrop}
       disabled={disabled}
       className={cn('tracking-wide', className)}
     />

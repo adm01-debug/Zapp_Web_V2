@@ -184,6 +184,9 @@ export function useUserSettings() {
         }
       } catch (err) {
         log.error('Error in fetchSettings:', err);
+        // Bug Qodo: sem este set, isError ficava false após exceção no fetch,
+        // permitindo que saveAppearanceSettings sobrescrevesse o banco com defaults.
+        if (ativo) setIsError(true);
       } finally {
         if (ativo) setIsLoading(false);
       }
