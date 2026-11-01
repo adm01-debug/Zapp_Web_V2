@@ -182,6 +182,8 @@ test.describe('E73 · cadastro de contato com endereço e edição sem perda', (
   });
 
   test('cria com autocomplete, edita só o nome e o endereço continua', async ({ page }) => {
+    // Boot + navegação + mocks + asserções somam mais que os 30 s padrão do Playwright.
+    test.setTimeout(90_000);
     estado = { contatos: [], patches: [], writes: [] };
     registro = { writesApp: [], mapbox: [], redeBarrada: [] };
 
