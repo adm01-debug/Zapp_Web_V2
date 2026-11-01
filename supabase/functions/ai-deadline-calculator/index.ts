@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { messages = [], requestedDeadline = "", productionDays = null } = body;
 
-    if (!requestedDeadline && productionDays == null) {
+    if (!requestedDeadline && productionDays == null && messages.length === 0) {
       return jsonResponse({ feasible: null, insufficient_data: true, reason: "Prazo ou dias de produção não informados na conversa." }, 200, req);
     }
 
@@ -35,12 +35,15 @@ ${ctx}
 
 Considere: tempo de produção, entrega, imprevistos e datas comemorativas próximas.
 
+Se não houver informação suficiente na conversa para avaliar o prazo, retorne feasible: null com insufficient_data: true.
+
 Responda APENAS em JSON:
 {
-  "feasible": <true|false>,
-  "suggestedDeadline": "<prazo sugerido mais realista>",
-  "riskLevel": "<low|medium|high>",
-  "rushFeeApplicable": <true|false>,
+  "feasible": <true|false|null>,
+  "insufficient_data": <true|false>,
+  "suggestedDeadline": "<prazo sugerido mais realista ou null>",
+  "riskLevel": "<low|medium|high|null>",
+  "rushFeeApplicable": <true|false|null>,
   "negotiationScript": "<script para negociar o prazo com o cliente>",
   "alternativeOptions": ["<opção 1>", "<opção 2>"]
 }`;
