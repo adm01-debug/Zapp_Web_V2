@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 85,
-    "source_file_count": 169,
+    "source_file_count": 170,
     "verify_jwt_true": 71,
     "verify_jwt_false": 14
   },
@@ -118,6 +118,11 @@
       "path": "supabase/functions/_shared/contracts.ts",
       "bytes": 1607,
       "sha256": "6b3f5665803c7a63412df191b83c4e9d7ae52e8b6e329dd225bfd723b31cd7d7"
+    },
+    {
+      "path": "supabase/functions/_shared/copilot-tick.ts",
+      "bytes": 20656,
+      "sha256": "50dedaf11b393a36b483340c5f353df31c3e458e02d0fbcb803a1034151b659f"
     },
     {
       "path": "supabase/functions/_shared/cors-origins.ts",
@@ -426,8 +431,8 @@
     },
     {
       "path": "supabase/functions/ai-jobs-worker/index.ts",
-      "bytes": 22527,
-      "sha256": "625b2bdc4c6c6c750f31d7adc1900649a296ee4bd0428cdd6e7c1c9ac6fe64fb"
+      "bytes": 24009,
+      "sha256": "1e1126ffa59ad2258f2915c857a6e6dfdb55e57c302117dd774fb9e3ffde9ebd"
     },
     {
       "path": "supabase/functions/ai-kb-ingest/index.ts",
@@ -1027,7 +1032,7 @@
       "name": "ai-jobs-worker",
       "entrypoint": "supabase/functions/ai-jobs-worker/index.ts",
       "verify_jwt": true,
-      "source_sha256": "c6d4a3cdbc602c12bf5b525709e581a3c513fc4df8e5760df606fdac7641db58",
+      "source_sha256": "f313c27e07c10b8b9db3ec3244ce2d9ee161411292eb8b669c60c587f5bbe84e",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1037,8 +1042,11 @@
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/ai-providers.ts",
+        "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
+        "supabase/functions/_shared/ai-vocabulary.ts",
+        "supabase/functions/_shared/copilot-tick.ts",
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/edge-boot.ts",
@@ -2533,5 +2541,5 @@
       ]
     }
   ],
-  "manifest_sha256": "949f66a70c3a6abc8cd33a4ec96d106313c7ea0f732a4c314f87985768263a12"
+  "manifest_sha256": "3482f30eeaaab3e87721bb8cb4ad3afa45d351a5049c43f8b00a28c7b0b0a657"
 }

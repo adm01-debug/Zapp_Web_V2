@@ -98,6 +98,8 @@ vi.mock('@/lib/calls/events', () => ({ dispatchStartCall: vi.fn() }));
 
 // Componentes pesados que não participam do caminho do atalho.
 vi.mock('../CRMAutoSync', () => ({ CRMAutoSync: () => null }));
+// RadarLive (lazy no ChatInputArea) usa useAuth; estes testes não montam AuthProvider.
+vi.mock('../copilot/RadarLive', () => ({ default: () => null }));
 vi.mock('../chat/ChatToolPanels', () => ({ ChatToolPanels: () => null }));
 vi.mock('../chat/ChatPanelHeader', () => ({ ChatPanelHeader: () => null }));
 vi.mock('../chat/ChatMessagesArea', () => ({ ChatMessagesArea: () => null }));

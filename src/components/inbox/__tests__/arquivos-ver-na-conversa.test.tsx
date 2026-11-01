@@ -72,6 +72,8 @@ vi.mock('@/hooks/storage/useResolvedStorageUrl', () => ({
 // Peças visuais do cartão/painel sem relação com a ação: só o mínimo para renderizar.
 vi.mock('../tabs/FileThumb', () => ({ FileThumb: () => <div data-testid="thumb" /> }));
 vi.mock('../tabs/FileActionsMenu', () => ({ FileActionsMenu: () => null }));
+// RadarLive (lazy no ChatInputArea) usa useAuth; estes testes não montam AuthProvider.
+vi.mock('../copilot/RadarLive', () => ({ default: () => null }));
 vi.mock('../tabs/SenderAvatar', () => ({ SenderAvatar: () => <span data-testid="sender-avatar" /> }));
 
 // Observador do caminho real: o ChatPanel chama `scrollToMessage` nesta ref e passa o destaque.

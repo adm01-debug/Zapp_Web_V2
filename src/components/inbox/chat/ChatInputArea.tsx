@@ -1,10 +1,12 @@
-import { useMemo, useRef } from 'react';
+import { lazy, Suspense, useMemo, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Message } from '@/types/chat';
 // CV-061 — ghost text overlay (texto fantasma)
 import { GhostTextOverlay, GhostTextHint } from '@/components/copilot/GhostTextOverlay';
 // CV-063..070 — painel RADAR da Fase 7 (respostas sugeridas, ditado, sugestão de anexo)
 import { RadarPhase7Panel } from '@/components/copilot/RadarPhase7Panel';
+// Fases 4–6 do RADAR (dados do motor de IA): sob demanda, fora do initial-js.
+const RadarLive = lazy(() => import('@/components/inbox/copilot/RadarLive'));
 import type { QuickReplyTemplate } from '@/hooks/chat/useQuickReplies';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -203,6 +205,12 @@ export function ChatInputArea(props: ChatInputAreaProps) {
           quickReplyTemplates={radarTemplates}
           onDraftText={(text) => setNativeValue(inputRef, text)}
         />
+      )}
+
+      {!logic.isMobile && !editingMessage && contactId && (
+        <Suspense fallback={null}>
+          <RadarLive className="mx-4 mt-2" contactId={contactId} onDraftText={(text) => setNativeValue(inputRef, text)} />
+        </Suspense>
       )}
 
       <div className={cn("px-4 py-3 border-t border-border bg-inbox-panel", logic.isMobile && "px-2.5 py-2 safe-area-bottom")}>
