@@ -25,26 +25,30 @@
 }
 
 .dark.high-contrast {
-  --background: 0 0% 0%;
-  --foreground: 0 0% 100%;
-  --card: 0 0% 5%;
-  --card-foreground: 0 0% 100%;
-  --popover: 0 0% 5%;
-  --popover-foreground: 0 0% 100%;
-  --primary: 258 100% 65%;
-  --primary-foreground: 0 0% 0%;
-  --secondary: 0 0% 80%;
-  --secondary-foreground: 0 0% 0%;
-  --muted: 0 0% 15%;
-  --muted-foreground: 0 0% 80%;
-  --accent: 258 100% 65%;
-  --accent-foreground: 0 0% 0%;
-  --destructive: 0 100% 60%;
-  --destructive-foreground: 0 0% 0%;
-  --border: 0 0% 100%;
-  --input: 0 0% 15%;
-  --ring: 258 100% 65%;
-  --inbox-panel-bg: 0 0% 0%;
+  /* !important necessário: applyThemePreset() grava estes tokens como inline styles no <html>
+     (via style.setProperty em presets.ts), e inline styles vencem regras de classe sem !important.
+     Sem ele, --muted-foreground fica com o valor do preset escuro (#3c3c3c, contraste 1,9:1
+     contra fundo preto), abaixo do piso AA de 4,5:1. */
+  --background: 0 0% 0% !important;
+  --foreground: 0 0% 100% !important;
+  --card: 0 0% 5% !important;
+  --card-foreground: 0 0% 100% !important;
+  --popover: 0 0% 5% !important;
+  --popover-foreground: 0 0% 100% !important;
+  --primary: 258 100% 65% !important;
+  --primary-foreground: 0 0% 0% !important;
+  --secondary: 0 0% 80% !important;
+  --secondary-foreground: 0 0% 0% !important;
+  --muted: 0 0% 15% !important;
+  --muted-foreground: 0 0% 80% !important;
+  --accent: 258 100% 65% !important;
+  --accent-foreground: 0 0% 0% !important;
+  --destructive: 0 100% 60% !important;
+  --destructive-foreground: 0 0% 0% !important;
+  --border: 0 0% 100% !important;
+  --input: 0 0% 15% !important;
+  --ring: 258 100% 65% !important;
+  --inbox-panel-bg: 0 0% 0% !important;
 }
 
 .high-contrast * { font-weight: calc(var(--font-weight, 400) + 100); }
