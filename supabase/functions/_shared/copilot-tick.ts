@@ -462,7 +462,11 @@ export async function handleCopilotTick(input: CopilotTickInput, deps: CopilotTi
   });
   const lat1 = now() - t1;
   if (!gen1.ok || !gen1.data) throw new CopilotTickError(gen1.errorCode ?? "COPILOT_TIER1_FAILED");
-  const p1 = parseModelOutput(CopilotTier1Schema, gen1.data);
+  const raw1 = (gen1.data as { choices?: Array<{ message?: { content?: string } }> })?.choices?.[0]?.message?.content;
+  if (!raw1) throw new CopilotTickError("COPILOT_TIER1_FAILED");
+  let parsed1: unknown;
+  try { parsed1 = JSON.parse(raw1); } catch { throw new CopilotTickError("COPILOT_TIER1_CONTRACT"); }
+  const p1 = parseModelOutput(CopilotTier1Schema, parsed1);
   if (!p1.ok) throw new CopilotTickError("COPILOT_TIER1_CONTRACT");
   const out1 = p1.data;
   const allMoments = [...new Set([...keyMoments, ...(out1.key_moments ?? [])])];
@@ -487,8 +491,14 @@ export async function handleCopilotTick(input: CopilotTickInput, deps: CopilotTi
     lat2 = now() - t2;
     model2 = gen2.model;
     if (gen2.ok && gen2.data) {
-      const p2 = parseModelOutput(CopilotTier2Schema, gen2.data);
-      if (p2.ok) out2 = p2.data;
+      const raw2 = (gen2.data as { choices?: Array<{ message?: { content?: string } }> })?.choices?.[0]?.message?.content;
+      if (raw2) {
+        try {
+          const parsed2 = JSON.parse(raw2);
+          const p2 = parseModelOutput(CopilotTier2Schema, parsed2);
+          if (p2.ok) out2 = p2.data;
+        } catch { /* tier2 inválido — não perde o tier1 */ }
+      }
     }
   }
 
