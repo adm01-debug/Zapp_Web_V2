@@ -2,16 +2,42 @@
 
 **Data:** 2026-11-01 (atualizado)  
 **Branch de trabalho:** `claude_04/pensive-tesla-ixtl9w`  
-**PR:** A abrir para `main`
+**PR:** [#2526](https://github.com/adm01-debug/Zapp_Web_V2/pull/2526)
 
 ---
 
-## 0. Fixes aplicados em 2026-11-01 (esta sessão)
+## 0. Fixes aplicados em 2026-11-01 (esta sessão) — commit `e798dcc`
+
+**PR:** [#2526](https://github.com/adm01-debug/Zapp_Web_V2/pull/2526) — branch `claude_04/pensive-tesla-ixtl9w`  
+**CI:** DB Guard run [41357706184](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41357706184) `queued` / CI/CD Pipeline run [41357013021](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41357013021) `queued` (2026-11-01T22:33Z)
+
+### Inventário de workflows com falha — última execução na main (2026-11-01)
+
+| Workflow | Última run na main | Status | Corrigível via código? |
+|---|---|---|---|
+| Deploy Edge Functions (`deploy-functions.yml`) | [41338277476](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41338277476) | ❌ falha | ✅ **Corrigido** neste PR |
+| CI/CD Pipeline (`ci.yml`) — job `webkit-email-navy` axe | [41328939149](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41328939149) | ❌ falha | ✅ **Corrigido** neste PR |
+| DB Live Guard (`db-live-guard.yml`) | [41318522203](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41318522203) | ❌ falha | ❌ Requer análise produção (PENDENCIAS §1) |
+| Running Copilot Code Review (dinâmico) | múltiplos | ❌ falha | ❌ HTTP 402 quota billing (PENDENCIAS §2) |
+| E2E logado (`e2e-logado.yml`) | [41240478106](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41240478106) | ❌ falha | ❌ SIP não configurado + estado produção (PENDENCIAS §3) |
+| DB Migrate (`db-migrate.yml`) | [41313326544](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41313326544) | ❌ falha | ❌ Dispatch manual com versão incorreta (PENDENCIAS §4) |
+
+### Fixes no commit `e798dcc`
 
 | Arquivo | Causa raiz | Fix |
 |---------|-----------|-----|
 | `.github/workflows/deploy-functions.yml` | `deno check` sem `--config supabase/functions/deno.json` — Deno 2.9.5 não encontra o `node_modules` instalado por `deno install --config` em subdiretório sem `--config` no check | Adicionado `--config supabase/functions/deno.json` ao `deno check` |
 | `e2e/email-navy-visual.spec.ts` (test:142) | WebKit lê cores interpoladas durante transição de tema antes de `freezeVisualTransitions`; `waitForTimeout(400)` insuficiente para webkit | Adicionado `waitForAppliedTheme(page, 'dark')` antes de `freezeVisualTransitions` — mesmo padrão já usado no test:497 do mesmo arquivo |
+
+### Baseline local (medido em 2026-11-01T22:30Z neste container, SHA `e798dcc`)
+
+| Verificação | Resultado | Detalhe |
+|---|---|---|
+| `bun install` | ✅ exit 0 | 644 pacotes instalados |
+| `bun run build` | ✅ exit 0 | 19.66s, bundle passa o budget |
+| `bun run lint` — arquivos alterados | ✅ 0 erros nos 4 arquivos do commit | `email-navy-visual.spec.ts`, `deploy-functions.yml`, `PENDENCIAS.md`, `RELATORIO_CI.md` — 0 lint errors |
+| `bun run lint` — repo completo | ⚠️ 813 problemas **pré-existentes** | Falha idêntica na main (`1252bb5`); meu commit não alterou nenhum arquivo TypeScript de aplicação |
+| `bun run typecheck` — local | ⚠️ `@types/node` pré-existente | Falha idêntica na main; CI usa `typecheck-ratchet.mjs` (não `bun run typecheck`) e passa |
 
 **Workflows que permanecem em PENDENCIAS.md:**  
 §1 DB Live Guard — drift banco/artefatos, requer acesso a produção  
@@ -98,11 +124,9 @@ Run CI Gate: **[41162012506](https://github.com/adm01-debug/Zapp_Web_V2/actions/
 > popula o check required `🎭 E2E Tests (Playwright)`). O check `Contrato DB offline`
 > é produzido por `db-guard.yml` e também consta como `success` para o SHA `004e74a8c5`.
 
-### SHA `1a9858b236` (PR #2411 mergeado — HEAD atual da main)
+### SHA `1252bb5` (HEAD atual da main — base do PR #2526)
 
-PR #2411 adicionou apenas `docs/ci/RELATORIO_CI.md` e `docs/ci/PENDENCIAS.md` (arquivos Markdown de documentação — nenhum código, nenhum teste). CI em progresso ao momento desta documentação:
-- `🔔 Notificar falha na main` = **skipped** em SHA `1a9858b236` → indicador de que CI não falhou.
-- Checks queued: `🧪 Unit Tests`, `🏗️ Build`, `Contrato DB offline`, `🎭 E2E Tests`, etc.
+Verificado: CI/CD Pipeline run 41328939149 — `🎭 E2E Tests (Playwright)` falhou no job `webkit-email-navy` (axe color-contrast). Causa corrigida no commit `e798dcc` deste PR.
 
 ---
 
@@ -159,11 +183,11 @@ Esta sessão (`fix/ci-workflows`) incluiu mudanças de código além da document
 | `✅ CI Gate (required check)` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
 | DB Live Guard | ❌ 3 falhas reais: migrations/ledger, ACL/mcp_exec, runtime (ver PENDENCIAS.md §1) | ❌ idem — investigação pendente |
 | Copilot Code Review | ❌ limite de cota HTTP 402 (ver PENDENCIAS.md §2) | ❌ idem — não corrigível |
-| Deploy Edge Functions | ❌ `@types/node` no `deno check` (sem run pré-fix capturado) | ❌ run 41162076060 pós-merge PR #2407 ainda falha — fix insuficiente (ver PENDENCIAS.md §3) |
+| Deploy Edge Functions | ❌ `@types/node` no `deno check` (sem run pré-fix capturado) | ✅ **Corrigido** neste PR (commit `e798dcc`) |
 
 ---
 
-*Relatório concluído em 2026-10-31 ~04:30Z — atualizado 2026-11-01 neste commit — branch `fix/ci-workflows`.*
+*Relatório concluído em 2026-10-31 ~04:30Z — atualizado 2026-11-01 neste commit — branch `claude_04/pensive-tesla-ixtl9w`.*
 
 <details>
 <summary>Relatório histórico da correção de CI na PR #2394 (2026-10-30)</summary>
