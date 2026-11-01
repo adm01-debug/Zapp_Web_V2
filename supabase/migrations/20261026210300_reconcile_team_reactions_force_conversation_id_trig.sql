@@ -1,7 +1,3 @@
--- Reconcilia drift: função e trigger existem em produção sem migration.
--- A função é chamada pelo trigger BEFORE INSERT OR UPDATE em team_message_reactions
--- para preencher conversation_id a partir da mensagem pai (team_messages).
-
 CREATE OR REPLACE FUNCTION public.team_reactions_force_conversation_id()
 RETURNS trigger
 LANGUAGE plpgsql

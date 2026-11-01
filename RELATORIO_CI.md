@@ -47,11 +47,11 @@ Inventário feito em 2026-10-31 ~04:00Z pela URL `?query=is%3Afailure`:
 
 | Workflow | Branch | SHA | Causa raiz | Corrigível? |
 |---|---|---|---|---|
-| `Running Copilot Code Review` | PRs diversas | múltiplos | Firewall do GitHub Copilot bloqueia URLs externas (HTTP 402) — workflow dinâmico sem código no repo | ❌ Não corrigível (ver PENDENCIAS.md §2) |
+| `Running Copilot Code Review` | PRs diversas | múltiplos | Limite de cota do plano (`errorType: quota`, HTTP 402) — workflow dinâmico sem código no repo | ❌ Não corrigível (ver PENDENCIAS.md §2) |
 | `ci.yml` | `fix/f1a-order-mock-usecustomemojis-20261018` | `040dae98` | Falha em branch de outra sessão — NÃO é a `main` | ⚠️ Outra sessão, fora do escopo |
 | `talkx-status-regen.yml` | `fix/f1a-order-mock-usecustomemojis-20261018` | `040dae98` | Mesma branch de outra sessão — NÃO é a `main` | ⚠️ Outra sessão, fora do escopo |
-| `DB Live Guard` | `main` (push/schedule) | `fb57b4a5` | Deriva transitória; deploy-functions estava parado → tipos/manifesto desatualizados | ❌ Não corrigível via código (ver PENDENCIAS.md §1) |
-| `Deploy Edge Functions` | `main` (push) | — | Por design: requer `workflow_dispatch` manual ou push que altere `supabase/functions/` | ❌ Por design (ver PENDENCIAS.md §3) |
+| `DB Live Guard` | `main` (push/schedule) | `fb57b4a5` | 3 falhas reais no run 41162077590: migrations/ledger, ACL/mcp_exec, configuração runtime — investigação pendente | ❌ Não corrigível via código (ver PENDENCIAS.md §1) |
+| `Deploy Edge Functions` | `main` (push) | `e4e8c265` | Run 41162076060 falhou com `Could not find "@types/node"`; PR #2407 introduziu fix mas sem run de sucesso confirmado após o merge | ❌ Pendente confirmação (ver PENDENCIAS.md §3) |
 
 > **Falhas em branches de outras sessões** (`fix/f1a-order-mock-usecustomemojis-20261018`) não
 > afetam a `main` e não são required checks — estão fora do escopo desta correção.
@@ -76,6 +76,12 @@ Run CI Gate: **[41162012506](https://github.com/adm01-debug/Zapp_Web_V2/actions/
 | `Contrato DB offline` | ✅ success | 41162012506 |
 | `🎭 E2E Tests (Playwright)` | ✅ success | 41162012506 |
 | **✅ CI Gate (required check)** | **✅ success** | 41162012506 |
+
+> **Nota:** O CI Gate (`ci.yml`) não cobre diretamente `Contrato DB offline` (`db-guard.yml`) nem
+> `🎭 E2E Tests (Playwright)` (`e2e-logado.yml`) — cada um tem seu próprio workflow e execução
+> separada. O run 41162012506 confirma o CI Gate de `ci.yml`; os checks `Contrato DB offline`
+> e `🎭 E2E Tests` são reportados via status checks do GitHub a partir dos workflows `db-guard.yml`
+> e `e2e-logado.yml` respectivamente, e constam como `success` para o SHA `004e74a8c5`.
 
 ### SHA `1a9858b236` (PR #2411 mergeado — HEAD atual da main)
 
@@ -106,8 +112,7 @@ em um SHA desatualizado.
 
 ## 6. Correções aplicadas nesta sessão
 
-Nenhuma mudança de código foi necessária — a `main` já estava com todos os required checks
-verdes e o bundle abaixo do budget. O trabalho desta sessão é documentar o estado real.
+Esta sessão (`fix/ci-workflows`) incluiu mudanças de código além da documentação:
 
 | Ação | Status |
 |---|---|
@@ -117,6 +122,10 @@ verdes e o bundle abaixo do budget. O trabalho desta sessão é documentar o est
 | Documentar falhas não corrigíveis | ✅ Ver PENDENCIAS.md |
 | Criar branch `fix/ci-workflows` | ✅ Criada a partir da `main` |
 | Criar PR para `main` | ✅ PR aberta |
+| `scripts/ci/fila-merge.mjs` — expansão de retry para erros de JSON truncado | ✅ Incluído na PR |
+| `supabase/migrations/20261026210300_reconcile_*` — removidos comentários extras que causavam falha no DB Guard | ✅ Neste commit |
+| Diagnósticos corrigidos em PENDENCIAS.md (§1 falhas reais, §2 quota, §3 @types/node) | ✅ Neste commit |
+| Diagnósticos corrigidos em RELATORIO_CI.md (§3 tabela, §4 nota CI Gate, §7 comparação) | ✅ Neste commit |
 
 ---
 
@@ -128,18 +137,18 @@ verdes e o bundle abaixo do budget. O trabalho desta sessão é documentar o est
 | TypeCheck | ✅ exit 0 | ✅ idêntico |
 | Lint | ✅ exit 0 | ✅ idêntico |
 | Unit Tests | ✅ 3 shards success (run 41162012506) | ✅ idêntico |
-| `🏗️ Build` CI | ✅ success run 41162012506 | ✅ idêntico |
-| `🎭 E2E Tests` CI | ✅ success run 41162012506 | ✅ idêntico |
-| `Contrato DB offline` CI | ✅ success run 41162012506 | ✅ idêntico |
-| `🔒 Security Audit` CI | ✅ success run 41162012506 | ✅ idêntico |
-| `✅ CI Gate (required check)` CI | ✅ success run 41162012506 | ✅ idêntico |
-| DB Live Guard | ❌ deriva transitória (ver PENDENCIAS.md) | ❌ idem — não corrigível |
-| Copilot Code Review | ❌ firewall HTTP 402 (ver PENDENCIAS.md) | ❌ idem — não corrigível |
-| Deploy Edge Functions | ❌ por design, sem push para `supabase/functions/` | ❌ idem — por design |
+| `🏗️ Build` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
+| `🎭 E2E Tests` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
+| `Contrato DB offline` CI | ✅ success run 41162012506 | ⏳ aguardando run — migration corrigida neste commit |
+| `🔒 Security Audit` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
+| `✅ CI Gate (required check)` CI | ✅ success run 41162012506 | ⏳ aguardando run no SHA atual da PR |
+| DB Live Guard | ❌ 3 falhas reais: migrations/ledger, ACL/mcp_exec, runtime (ver PENDENCIAS.md §1) | ❌ idem — investigação pendente |
+| Copilot Code Review | ❌ limite de cota HTTP 402 (ver PENDENCIAS.md §2) | ❌ idem — não corrigível |
+| Deploy Edge Functions | ❌ `@types/node` em run 41162076060, fix PR #2407 não confirmado | ❌ idem — pendente confirmação (ver PENDENCIAS.md §3) |
 
 ---
 
-*Relatório concluído em 2026-10-31 ~04:30Z — branch `fix/ci-workflows`.*
+*Relatório concluído em 2026-10-31 ~04:30Z — atualizado 2026-11-01 neste commit — branch `fix/ci-workflows`.*
 
 <details>
 <summary>Relatório histórico da correção de CI na PR #2394 (2026-10-30)</summary>
