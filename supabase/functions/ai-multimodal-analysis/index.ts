@@ -56,7 +56,11 @@ Responda APENAS em JSON:
     if (isVisualMedia) {
       try {
         const inline = await toInlineImage(mediaUrl, {
-          storageIdentity: { kind: "user", bearerToken },
+          storageIdentity: {
+            kind: "user",
+            bearerToken,
+            anonKey: Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "",
+          },
         });
         imageDataUrl = inline.dataUrl;
       } catch (err) {
