@@ -423,14 +423,13 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
     // C121: instÃ¢ncia pausada nÃ£o envia. Nada foi ao provedor ainda (sem efeito incerto,
-    // sem reconciliaÃ§Ã£o). Texto pode ser redigitado â†’ encerra como falha imediata.
-    // MÃ­dia/interativa nÃ£o pode ser recuperada apÃ³s failClaim â†’ deixa o lease expirar
-    // (90 s) para redespacho natural depois que o operador retomar a instÃ¢ncia.
+    // sem reconciliaÃ§Ã£o): encerra como falha visÃ­vel para todos os tipos. MÃ­dia/interativa
+    // exibe banner e hoje nÃ£o Ã© reenviÃ¡vel pela UI; o caminho durÃ¡vel (retry job + cap de
+    // tentativas em claim_outbound_message, 20260909270000:60-77) exige migration â€” PR
+    // separada, regra 8.
     if (await isInstancePaused(service, claim.whatsapp_instance_name,
       (code) => console.error(JSON.stringify({ event: 'message_delivery_pause_check_error', code })))) {
-      if (claim.message_type === 'text') {
-        await failClaim(service, claim);
-      }
+      await failClaim(service, claim);
       console.error(JSON.stringify({ event: 'message_delivery_instance_paused' }));
       return errorResponse('Instance is paused; resend after it is resumed', 409, req);
     }
@@ -493,8 +492,4 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
       await enqueueDeliveryReconciliation(service, claim, externalId);
     }
     console.error(JSON.stringify({ event: 'message_delivery_exception', code: error instanceof Error ? error.message : 'unknown' }));
-    return errorResponse('Message delivery failed', 502, req);
-  }
-}
-
-if (import.meta.main) Deno.serve(handleMessageDeliveryRequest);
+    return errorResponM” 5•ÍÍ…”‘•±¥Ù•Éä™…¥±•œ°€ÔÀÈ°É•Ä¤ì(€ô)ô()¥˜€¡¥µÁ½ÉÐ¹µ•Ñ„¹µ…¥¸¤•¹¼¹Í•ÉÙ”¡¡…¹‘±•5•ÍÍ…••±¥Ù•ÉåI•ÅÕ•ÍÐ¤ì(
