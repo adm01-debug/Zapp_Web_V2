@@ -1,20 +1,20 @@
 /**
  * fix(app) — boundary das rotas com "Tentar novamente" e resetKey por rota
- * (cartão t_507786c4).
+ * (cartao t_507786c4).
  *
  * Defeito original: `AppRoutes` envolvia todas as rotas num boundary de texto
- * fixo ("Erro ao carregar roteamento") sem botão e sem resetKey. Um erro numa
- * rota prendia o usuário naquele texto morto — navegar não limpava nada.
+ * fixo ("Erro ao carregar roteamento") sem botao e sem resetKey. Um erro numa
+ * rota prendia o usuario naquele texto morto — navegar nao limpava nada.
  *
  * O que este arquivo trava:
  *  - trocar de rota muda o `resetKey` (pathname) e o erro e limpo, a tela nova
  *    renderiza;
- *  - "Tentar novamente" relança a MESMA rota (sufixo no resetKey) quando a
+ *  - "Tentar novamente" relanca a MESMA rota (sufixo no resetKey) quando a
  *    causa do erro sumiu.
  *
  * O arquivo mora em `components/errors/__tests__` porque o sujeito e o
  * ErrorBoundary aplicado pela tabela de rotas — os testes de AppRoutes em
- * `src/routes/__tests__` não estão na lista de arquivos do cartão.
+ * `src/routes/__tests__` nao estao na lista de arquivos do cartao.
  */
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -35,7 +35,7 @@ vi.mock('@/components/transitions', () => ({
 }));
 
 // Estado da sonda de rota. `vi.hoisted` garante que existe antes das fabricas
-// de mock (que são elevadas ao topo do módulo).
+// de mock (que sao elevadas ao topo do modulo).
 const estado = vi.hoisted(() => ({
   index: 'ok' as 'ok' | 'quebrado' | 'sempre',
   liberar: false,
@@ -82,7 +82,7 @@ describe('AppRoutes — boundary das rotas', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('"Tentar novamente" relança a mesma rota quando a causa sumiu', async () => {
+  it('"Tentar novamente" relanca a mesma rota quando a causa sumiu', async () => {
     estado.index = 'quebrado';
     estado.liberar = false;
 
@@ -95,8 +95,8 @@ describe('AppRoutes — boundary das rotas', () => {
     const botao = await screen.findByRole('button', { name: 'Tentar novamente' });
     expect(screen.queryByTestId('index')).toBeNull();
 
-    // A causa do erro sumiu; o botão deve relançar a MESMA rota (pathname não
-    // muda, então o resetKey precisa do sufixo de tentativa para resetar).
+    // A causa do erro sumiu; o botao deve relancar a MESMA rota (pathname nao
+    // muda, entao o resetKey precisa do sufixo de tentativa para resetar).
     estado.liberar = true;
     fireEvent.click(botao);
 
@@ -114,7 +114,7 @@ describe('AppRoutes — boundary das rotas', () => {
       </MemoryRouter>,
     );
 
-    // A rota quebrada mostra o fallback com a saída.
+    // A rota quebrada mostra o fallback com a saida.
     expect(await screen.findByRole('button', { name: 'Tentar novamente' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('ir-para-/auth'));

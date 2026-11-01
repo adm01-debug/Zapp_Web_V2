@@ -24,7 +24,7 @@ function montar(erro: Error) {
   );
 }
 
-describe('ErrorBoundary — fallback por cenário', () => {
+describe('ErrorBoundary — fallback por cenario', () => {
   beforeEach(() => {
     sessionStorage.clear();
     resetChunkReloadGuard();
