@@ -157,6 +157,8 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
         if (typeof key.fromMe === 'boolean') fbQuery = fbQuery.eq('sender', key.fromMe ? 'agent' : 'contact');
         ({ data: currentMessage } = await fbQuery.order('created_at', { ascending: false }).limit(1).maybeSingle());
       }
+      // Sinaliza se a coluna já existe (pós-DDL) para o predicado atômico do UPDATE.
+      const resolvedColumnExists = msgQueryErr?.code !== '42703';
 
       // GO receipt fix: no Evolution GO o adaptador infere key.fromMe por
       // Chat === Sender, entao um recibo de mensagem NOSSA chega com
@@ -195,7 +197,11 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
         // C110: recibo tardio não sobrescreve decisão manual do operador
         if (!(currentMessage as { manually_resolved_at?: string | null }).manually_resolved_at
             && shouldUpdateStatus(currentMessage.status as string | null, newStatus)) {
-          await supabase.from('messages').update({ status: newStatus, status_updated_at: now }).eq('id', currentMessage.id);
+          // Predicado atômico: evita TOCTOU entre leitura e escrita do status.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let updateStatusQ: any = supabase.from('messages').update({ status: newStatus, status_updated_at: now }).eq('id', currentMessage.id);
+          if (resolvedColumnExists) updateStatusQ = updateStatusQ.is('manually_resolved_at', null);
+          await updateStatusQ;
           console.warn(`Message ${key.id} status: ${currentMessage.status} -> ${newStatus}`);
         }
       }
