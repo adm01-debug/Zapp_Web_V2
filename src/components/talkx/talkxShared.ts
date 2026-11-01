@@ -12,3 +12,4 @@ export * from './kit/rail';
 export * from './kit/dialogs';
 export * from './kit/insight';
 export * from './kit/cells';
+export * from './kit/ServiceStatusSheet';

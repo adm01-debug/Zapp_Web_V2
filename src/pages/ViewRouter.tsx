@@ -9,6 +9,8 @@ import { ViewLoadingFallback } from '@/components/layout/ViewLoadingFallback';
 import { ViewContainer } from '@/components/layout/ViewContainer';
 import { NavigationService } from '@/services/navigation.service';
 import { TALKX_KIT_VIEW_ID, isTalkXKitEnabled } from '@/components/talkx/kit/forcedState';
+import { TalkXNoPermissionState } from '@/components/talkx/kit/states';
+import { navigateToView } from '@/hooks/system/useNavigationHistory';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { ShieldAlert } from 'lucide-react';
 
@@ -137,6 +139,11 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
       return <ViewLoadingFallback noPadding />;
     }
     if (!authorized) {
+      // X048: view talkx mostra estado próprio ("Você não tem permissão para
+      // acessar Campanhas") com botão para team-chat, em vez da tela genérica.
+      if (currentView === 'talkx') {
+        return <TalkXNoPermissionState onContactAdmin={() => navigateToView('team-chat')} />;
+      }
       return <RestrictedView onNavigateTo={onNavigateTo} />;
     }
     // Check special views first (those needing props)

@@ -352,7 +352,11 @@ export function TalkXQueryBoundary({
   }
 
   // 2. Erro — tem precedência sobre o vazio. Nunca mostra o vazio com erro.
+  //    X048: código 42501 (permission_denied do PostgreSQL) → estado de permissão,
+  //    não estado genérico de erro.
   if (query.isError) {
+    const errCode = (query.error as { code?: string } | undefined)?.code;
+    if (errCode === '42501') return <TalkXNoPermissionState />;
     return <TalkXErrorState entity={entity} error={query.error} onRetry={onRetry} />;
   }
 
