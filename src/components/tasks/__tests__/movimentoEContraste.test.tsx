@@ -175,13 +175,31 @@ describe('Etapa 80 — contraste AA dos estados (E.3)', () => {
   }
 
   it('o texto dos chips de prioridade usa o par de TEXTO (não a cor de preenchimento)', () => {
+    // D12 / etapa 170: Alta é o vermelho (par de texto `--destructive-text`).
     const { container: high } = render(<PriorityChip priority="high" />);
-    expect(high.firstElementChild?.className).toContain('text-[hsl(var(--warning-text))]');
-    expect(high.firstElementChild?.className).not.toMatch(/(^|\s)text-warning(\s|$)/);
+    expect(high.firstElementChild?.className).toContain('text-[hsl(var(--destructive-text))]');
+    expect(high.firstElementChild?.className).not.toMatch(/(^|\s)text-destructive(\s|$)/);
 
     const { container: urgent } = render(<PriorityChip priority="urgent" />);
     expect(urgent.firstElementChild?.className).toContain('text-[hsl(var(--destructive-text))]');
     expect(urgent.firstElementChild?.className).not.toMatch(/(^|\s)text-destructive(\s|$)/);
+
+    // Média é o âmbar (Média âmbar, D12) — e não o `primary` do segmento.
+    const { container: medium } = render(<PriorityChip priority="medium" />);
+    expect(medium.firstElementChild?.className).toContain('text-[hsl(var(--warning-text))]');
+    expect(medium.firstElementChild?.className).not.toMatch(/(^|\s)text-primary(\s|$)/);
+  });
+
+  it('D12: a ponta da escada (Urgente, tinta /20 e borda sólida) também fecha AA', () => {
+    // `PriorityPill`/`PriorityChip` usam `bg-destructive/20` em Urgente — a tinta
+    // mais cheia da escada. O texto é o mesmo `--destructive-text`; aqui se mede o
+    // par REAL sobre essa tinta, nos dois modos, com o medidor WCAG de cima.
+    for (const [nome, vars] of [['claro', claro], ['escuro', escuro]] as const) {
+      expect(
+        razaoNaTinta(vars['destructive-text'], vars.destructive, 0.2, vars.card),
+        `${nome}: texto de Urgente sobre bg-destructive/20`,
+      ).toBeGreaterThanOrEqual(MIN_TEXTO);
+    }
   });
 
   it('DueChip: atrasado e "Hoje" usam o par de TEXTO do estado', () => {
