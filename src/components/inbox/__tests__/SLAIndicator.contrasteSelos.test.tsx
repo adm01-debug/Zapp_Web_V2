@@ -76,7 +76,7 @@ function variaveisDoBloco(css: string, cabecalho: string): Record<string, Rgb> {
         for (const t of Array.from(
           limpo
             .slice(abre + 1, j)
-            .matchAll(/--(\w[\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g),
+            .matchAll(/--(\u[\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g),
         )) {
           out[t[1]] = hslParaRgb(Number(t[2]), Number(t[3]), Number(t[4]));
         }
@@ -106,14 +106,14 @@ const TEMAS: Array<[string, Record<string, Rgb>]> = [
 
 /** Tinta do selo: `bg-destructive/10` → ['destructive', 0.1]. */
 function tintaDaClasse(className: string): { token: string; alfa: number } {
-  const m = className.match(/(?:^|\s)bg-([a-z][a-z0-9-]*)\/( \d+)(?:\s|$)/);
+  const m = className.match(/(?:^|\s)bg-([a-z][a-z0-9-]*)\/(\d+)(?:\s|$)/);
   if (!m) throw new Error(`selo sem tinta \`bg-<token>/<alfa>\`: "${className}"`);
   return { token: m[1], alfa: Number(m[2]) / 100 };
 }
 
 /** Token de TEXTO do selo: `text-success` ou `text-[hsl(var(--warning-text))]`. */
 function textoDaClasse(className: string): string {
-  const literal = className.match(/(?:^|\s)text-\[hsl\(var\(--([\w][\w-]+)\)\)\](?:\s|$)/);
+  const literal = className.match(/(?:^|\s)text-\[hsl\(var\(--(\w[\w-]+)\)\)\](?:\s|$)/);
   if (literal) return literal[1];
   for (const c of className.split(/\s+/)) {
     const m = c.match(/^text-([a-z][a-z0-9-]*)$/);
