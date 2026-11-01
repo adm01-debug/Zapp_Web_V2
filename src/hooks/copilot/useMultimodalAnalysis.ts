@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeEdge } from '@/lib/invokeEdge';
 
 export interface MultimodalExtractedData {
   productSpecs: string | null;
@@ -43,32 +43,20 @@ export function useMultimodalAnalysis({
   const analyze = useCallback(async () => {
     if (!mediaUrl) return;
     abortRef.current?.abort();
-    const ctrl = new AbortController();
-    abortRef.current = ctrl;
+    abortRef.current = new AbortController();
     setLoading(true);
     setError(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Não autenticado');
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL ?? ''}/functions/v1/ai-multimodal-analysis`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-          body: JSON.stringify({ messages, mediaUrl, mediaType }),
-          signal: ctrl.signal,
-        },
+      const { data, error: edgeError } = await invokeEdge<MultimodalAnalysisResult>(
+        'ai-multimodal-analysis',
+        { body: { messages, mediaUrl, mediaType } },
       );
-      if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        throw new Error(`Erro ${res.status}: ${text}`);
-      }
-      const data = await res.json() as MultimodalAnalysisResult;
-      setResult(data);
+      if (edgeError) { setError(edgeError.message); return; }
+      if (data) setResult(data);
     } catch (err) {
       if ((err as Error).name !== 'AbortError') setError(err instanceof Error ? err.message : 'Erro desconhecido');
     } finally {
-      if (!ctrl.signal.aborted) setLoading(false);
+      if (!abortRef.current?.signal.aborted) setLoading(false);
     }
   }, [messages, mediaUrl, mediaType]);
 
