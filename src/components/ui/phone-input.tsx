@@ -73,6 +73,22 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
     initialDigits.length >= 2 && !initialDigits.startsWith('55')
   );
 
+  // Rastreia os dígitos brutos do último valor emitido pelo onChange.
+  // Isso permite distinguir um eco do próprio onChange (value volta idêntico)
+  // de uma mudança externa feita pelo pai (reset de formulário, troca de contato).
+  // extractDigits(formatPhone(d)) === d é invariante para qualquer d, então a
+  // comparação por dígitos é suficiente e robusta.
+  const lastEmittedRawRef = useRef(initialDigits);
+
+  // Sincroniza isExplicitInternationalRef quando o pai muda value externamente.
+  // Executado durante o render (React permite mutação de ref em render; é
+  // idempotente: renders extras do Strict Mode produzem o mesmo resultado).
+  const currentRaw = extractDigits(value);
+  if (currentRaw !== lastEmittedRawRef.current) {
+    isExplicitInternationalRef.current = currentRaw.length >= 2 && !currentRaw.startsWith('55');
+    lastEmittedRawRef.current = currentRaw;
+  }
+
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     let digits = extractDigits(e.target.value);
 
@@ -82,14 +98,21 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
     if (e.target.value === '+') {
       // '+' sozinho ocorre em dois cenários:
       // (a) Usuário digita '+' num campo vazio → intl explícito
-      // (b) Usuário apaga o 1º dígito de uma entrada BR ("+NN" → "+"): artefato do formatter
-      // Só é intl explícito quando o campo estava vazio antes deste evento.
+      // (b) Usuário apaga entrada existente até restar só '+' → limpando; reseta
       if (displayValue === '') {
         isExplicitInternationalRef.current = true;
+      } else {
+        // Limpando número existente. O próximo dígito reclassifica a entrada.
+        isExplicitInternationalRef.current = false;
       }
-      // Se displayValue !== '', é backspace de dígito BR — não alterar o ref
-    } else if (e.target.value.startsWith('+') && e.target.value.length > 1 && displayValue === '') {
-      // Cola de número internacional em campo vazio (ex: "+351 912 345 678")
+    } else if (
+      e.target.value.startsWith('+') &&
+      digits.length >= 3 &&
+      !digits.startsWith('55')
+    ) {
+      // Número internacional colado (ou digitado diretamente), independente de
+      // o campo estar vazio ou não. 3+ dígitos sem prefixo '55' é sinal seguro
+      // de número intl — evita falso-positivo com DDDs BR como 35, 44, etc.
       isExplicitInternationalRef.current = true;
     } else if (!digits) {
       // Campo completamente esvaziado → sai do modo internacional
@@ -108,6 +131,10 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
     // Teto de 13 dígitos (55 + 2 DDD + 9 número).
     if (digits.length > 13) digits = digits.slice(0, 13);
 
+    // Registra o que estamos emitindo antes de chamar onChange, para que o
+    // bloco de sincronização de render reconheça o eco do pai e não sobrescreva
+    // o ref com o valor errado.
+    lastEmittedRawRef.current = digits;
     onChange(formatPhone(digits), digits);
   }, [onChange, displayValue]);
 

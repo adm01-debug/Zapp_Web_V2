@@ -213,7 +213,7 @@ export function useUserSettings() {
     setSettings((prev) => ({ ...prev, ...updates }));
   }, [setTheme]);
 
-  // Save settings to DB
+  // Save settings to DB (inclui campos TTS — use saveAppearanceSettings na aba Aparência)
   const saveSettings = useCallback(async () => {
     if (!user?.id) {
       toast({
@@ -280,6 +280,61 @@ export function useUserSettings() {
     }
   }, [user?.id, settings]);
 
+  // Salva apenas os campos de aparência (theme, language, compact_mode).
+  // Não inclui tts_voice_id/tts_speed para evitar sobrescrever configurações
+  // de voz salvas em outra aba ou por outro hook nesta sessão.
+  const saveAppearanceSettings = useCallback(async () => {
+    if (!user?.id) {
+      toast({
+        title: 'Erro',
+        description: 'Você precisa estar logado para salvar configurações.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert(
+          {
+            user_id: user.id,
+            theme: settings.theme,
+            language: settings.language,
+            compact_mode: settings.compact_mode,
+          },
+          { onConflict: 'user_id' },
+        );
+
+      if (error) {
+        log.error('Error saving appearance settings:', error);
+        toast({
+          title: 'Erro ao salvar',
+          description: 'Não foi possível salvar as configurações.',
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      toast({
+        title: 'Configurações salvas',
+        description: 'Suas configurações foram salvas com sucesso.',
+      });
+      return true;
+    } catch (err) {
+      log.error('Error in saveAppearanceSettings:', err);
+      toast({
+        title: 'Erro ao salvar',
+        description: 'Ocorreu um erro inesperado.',
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [user?.id, settings.theme, settings.language, settings.compact_mode]);
+
   // Reset to defaults
   const resetSettings = useCallback(() => {
     setSettings(DEFAULT_SETTINGS);
@@ -302,6 +357,7 @@ export function useUserSettings() {
     isError,
     updateSettings,
     saveSettings,
+    saveAppearanceSettings,
     resetSettings,
     toggleWorkDay,
   };
