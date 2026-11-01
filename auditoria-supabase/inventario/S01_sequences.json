@@ -1,0 +1,39 @@
+{
+  "auditado_em": "2026-10-31",
+  "secao": "1 - Sequences",
+  "total": 3,
+  "overflow_risk": "ZERO — todas BIGSERIAL (<1% utilizadas)",
+  "sequences": [
+    {
+      "schema": "public",
+      "sequence": "catalog_rate_limit_hits_id_seq",
+      "tabela": "catalog_rate_limit_hits",
+      "tipo": "BIGSERIAL",
+      "last_value": 888,
+      "max_value": 9223372036854775807,
+      "pct_usado": "0.00%",
+      "risco_overflow": "ZERO"
+    },
+    {
+      "schema": "public",
+      "sequence": "contact_deletion_audit_id_seq",
+      "tabela": "contact_deletion_audit",
+      "tipo": "BIGSERIAL",
+      "last_value": 834,
+      "max_value": 9223372036854775807,
+      "pct_usado": "0.00%",
+      "risco_overflow": "ZERO"
+    },
+    {
+      "schema": "public",
+      "sequence": "security_acl_alerts_id_seq",
+      "tabela": "security_acl_alerts",
+      "tipo": "BIGSERIAL",
+      "last_value": 841,
+      "max_value": 9223372036854775807,
+      "pct_usado": "0.00%",
+      "risco_overflow": "ZERO"
+    }
+  ],
+  "observacao": "As 3 sequences existentes usam BIGSERIAL (max 9.2×10^18). Com last_value < 1000 todas estão a décadas de overflow. Sem achado de segurança ou desempenho."
+}

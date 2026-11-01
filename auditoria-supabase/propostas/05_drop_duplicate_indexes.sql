@@ -2,14 +2,12 @@
 -- PROPOSTA 05 — Remover índices duplicados/redundantes
 -- Status: NOT APPLIED
 -- Severidade: MEDIUM-6
--- Evidência: auditoria 2026-10-24
+-- Evidência: auditoria 2026-10-30
 --
 -- Contexto:
 --   Índices onde as colunas são subconjunto de outro índice
 --   existente, ou índices idênticos (mesmo set de colunas).
 --   Redundâncias consomem espaço e aumentam overhead de escrita.
---
--- Verificação de duplicatas exatas ao vivo:
 -- ============================================================
 
 -- Identificar duplicatas exatas:
@@ -34,7 +32,6 @@ SELECT
   pg_size_pretty(pg_relation_size(i1.oid)) AS size_to_free
 FROM pg_index ix1
 JOIN pg_index ix2 ON ix1.indrelid = ix2.indrelid
-  AND ix1.indrelid != ix2.indrelid
   AND ix1.oid != ix2.oid
 JOIN pg_class i1 ON i1.oid = ix1.indexrelid
 JOIN pg_class i2 ON i2.oid = ix2.indexrelid
@@ -50,26 +47,3 @@ LIMIT 20;
 -- BEGIN;
 -- DROP INDEX IF EXISTS public.<index_name>;
 -- COMMIT;
-
--- ============================================================
--- ROLLBACK — recriar os índices removidos como duplicatas
--- (executar somente se a remoção causar regressão inesperada;
---  duplicatas não oferecem ganho de performance, então
---  rollback aqui é improvável de ser necessário)
--- ============================================================
-BEGIN;
-
--- Recriar os índices que eram duplicatas exatas:
--- (preencher com os nomes reais identificados pela query acima
---  antes de executar o DROP)
--- CREATE INDEX <index_name> ON public.<table_name>(<colunas>);
-
--- Verificação pós-rollback:
--- SELECT indexname, tablename FROM pg_indexes
--- WHERE schemaname = 'public'
---   AND indexname IN ('<index_name>');
-
-COMMIT;
-
--- Nota: identificar os índices duplicados exatos com a query SELECT
--- no início deste arquivo antes de executar qualquer DROP.
