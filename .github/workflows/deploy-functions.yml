@@ -454,11 +454,13 @@ jobs:
         # W99: nodeModulesDir:"auto" em Deno 2.9.5 nao cria node_modules automaticamente
         # durante `deno check` — exige `deno install` explicito.
         # W100: @types/ws@8.18.1 tem `/// <reference types="node" />` que forca
-        # resolucao de @types/node. Declarado em supabase/functions/deno.json (imports)
-        # para que deno install o inclua em node_modules e atualize o deno.lock.
+        # resolucao de @types/node via cadeia: @supabase/realtime-js -> @types/ws@8.18.1.
+        # W101: deno install nao instala pacotes apenas no imports map sem import real;
+        # npm --prefix garante @types/node em supabase/functions/node_modules.
         run: |
           set -euo pipefail
           deno install --config supabase/functions/deno.json
+          npm --prefix supabase/functions install --no-save @types/node@25.9.9
 
       - name: Typecheck das edge functions (deno check)
         run: deno check supabase/functions/**/index.ts
