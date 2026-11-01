@@ -1,6 +1,7 @@
 # Relatório CI — adm01-debug/Zapp_Web_V2
 
-> Gerado em 2026-10-25 — baseline da branch `claude_05/festive-carson-ub43wu` (PR #2246).
+> Gerado em 2026-10-25 — atualizado em 2026-11-01. Branch `claude_05/festive-carson-ub43wu`.
+> PR #2246 fechada sem merge em 2026-10-31. Nova PR a ser aberta com os mesmos commits.
 
 ---
 
@@ -132,9 +133,9 @@ Falhas notáveis pré-existentes:
 ## Resumo
 
 - **Corrigidos nesta sessão:** 6 (`pagination.test.tsx`, `fila-merge.mjs`, `useInboxFilters.ts` PK-14, TC-009 versão migration, `useDiagnosticsData.ts` throw→dbError, `deployment-manifest.json` stale)
-- **Pré-existentes na main, requerem decisão humana/infra:** ver `PENDENCIAS.md` §1–§5
+- **Pré-existentes na main, requerem decisão humana/infra:** ver `PENDENCIAS.md` §1–§8
 - **Sem regressão introduzida:** confirmado — 15/15 testes dos arquivos alterados passam; as 410 falhas da suíte existiam antes desta branch
-- **CI do PR #2246 (SHA `69cf182`):** runs `40239966487` (CI/CD Pipeline) e `40239966512` (DB Guard) em `pending`/`queued` — saturação de runners; 0 `in_progress` no repo inteiro em 23:10 UTC
-- **Bloqueador para merge:** `e2e-logado.yml` / `types-sync.yml` / `db-live-guard.yml` — bloqueios de infra documentados em §1–§3 de PENDENCIAS.md
+- **Runs na branch (SHA `4137eec`):** [40243878635](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40243878635) (CI/CD Pipeline `failure`) e [40243878705](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40243878705) (DB Guard `failure`) — falhas pré-existentes documentadas em §6–§8 de PENDENCIAS.md
+- **Bloqueadores para merge:** `e2e-logado.yml` / `types-sync.yml` / `db-live-guard.yml` (infra — §1–§3) + N-008 pré-existente exposto (§6) + Replay ECR rate limit (§8) + 410 unit test failures pré-existentes (§7)
 
 *Este arquivo deve ser atualizado após cada ciclo de correção de CI.*

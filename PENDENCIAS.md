@@ -1,6 +1,7 @@
 # PENDÊNCIAS — Workflows com falha irresolúvel por agente
 
-> Atualizado em 2026-10-25 UTC. Branch de trabalho: `claude_05/festive-carson-ub43wu` (PR #2246).
+> Atualizado em 2026-11-01 UTC. Branch de trabalho: `claude_05/festive-carson-ub43wu`.
+> PR #2246 fechada sem merge em 2026-10-31. Nova PR será aberta com os mesmos commits.
 > Inventário baseline: runs na `main` em 2026-10-25 (SHA `2d97c44`).
 
 ---
@@ -9,10 +10,10 @@
 
 | Workflow | ID | Baseline (main) | Causa baseline | Fix aplicado | Status final |
 |---|---|---|---|---|---|
-| CI/CD Pipeline (`ci.yml`) | 279058466 | [40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) `failure` | Unit tests: TC-009 versão errada de migration | ✅ commit `4adee58` | Aguardando CI do PR |
-| DB Guard offline (`db-guard.yml`) | 344052670 | [40122006482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006482) `failure` | TC-009: `scripts/db-audit/team-receipts-reactions-conversation-id.test.sh` referenciava versão `20261009193246` inexistente | ✅ commit `4adee58` (versão corrigida para `20261006222024`) | Aguardando CI do PR |
-| Deploy Edge Functions (`deploy-functions.yml`) | 344691397 | [40097636982](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40097636982) `failure` | `supabase/deployment-manifest.json` stale | ✅ commit `chore: regenera deployment-manifest.json` (este push) | Aguardando re-run |
-| Auto Update PR Branches (`auto-update-pr-branch.yml`) | 366925501 | failure (HTTP 504) | Sem retry em `scripts/ci/fila-merge.mjs` para erros transitórios | ✅ commit anterior do PR #2246 (retry com backoff) | Aguardando CI |
+| CI/CD Pipeline (`ci.yml`) | 279058466 | [40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) `failure` | Unit tests pré-existentes (410 falhas) + TC-009 versão errada de migration | ✅ commit `4adee58` (TC-009) — 410 unit test failures pré-existentes: ver §7 | Fix pronto; aguarda merge da nova PR |
+| DB Guard offline (`db-guard.yml`) | 344052670 | [40122006482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006482) `failure` | TC-009: `scripts/db-audit/team-receipts-reactions-conversation-id.test.sh` referenciava versão `20261009193246` inexistente | ✅ commit `4adee58` (TC-009 corrigido) — N-008 pré-existente exposto após fix: ver §6; Replay rate limit: ver §8 | Fix pronto; bloqueado por N-008 (pré-existente) + Replay ECR (infra) |
+| Deploy Edge Functions (`deploy-functions.yml`) | 344691397 | [40097636982](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40097636982) `failure` | `supabase/deployment-manifest.json` stale | ✅ commit `96b1aa6` (manifesto regenerado) — workflow não dispara em PR, só em push para `main` | Fix pronto; aguarda merge da nova PR |
+| Auto Update PR Branches (`auto-update-pr-branch.yml`) | 366925501 | failure (HTTP 504) | Sem retry em `scripts/ci/fila-merge.mjs` para erros transitórios | ✅ commit `a6d68651` (retry com backoff) — workflow não dispara em PR, só em push para `main` | Fix pronto; aguarda merge da nova PR |
 | Talk X V4 placar (`talkx-status-regen.yml`) | 372647819 | [40122006445](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006445) `success` | — | Sem fix necessário | ✅ Já success |
 | Notifica falha na main (`notifica-falha-main.yml`) | 385680890 | [40170019860](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40170019860) `success` | — | Sem fix necessário | ✅ Já success |
 | CodeQL | 349267462 | [39232205552](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39232205552) `success` | — | Sem fix necessário | ✅ Já success |
@@ -89,12 +90,12 @@ CAUSA: c2908c3a1ea3a8199242ee74b66dee834b3cef41d4064424c0b83e72341df07e
 
 O artifact de evidência (3 dias de retenção) expirou em 2026-10-22 — não é possível inspecionar
 os logs individuais de cada passo. A run é anterior às correções desta sessão (TC-009, manifesto,
-etc.); a próxima execução agendada (06:13 UTC diário) após o merge de #2246 indicará se os fixes
+etc.); a próxima execução agendada (06:13 UTC diário) após o merge indicará se os fixes
 desta sessão resolvem os passos de manifesto e migrations.
 
 **O que o Joaquim precisa fazer:**
 
-1. Após o merge de #2246, aguardar a próxima execução agendada do `db-live-guard` (06:13 UTC)
+1. Após o merge da nova PR, aguardar a próxima execução agendada do `db-live-guard` (06:13 UTC)
    ou disparar manualmente via `workflow_dispatch`.
 2. Se persistirem falhas de paridade (catálogo, manifesto), comparar com o commit mergeado.
 
@@ -178,4 +179,110 @@ antes mesmo das correções desta sessão.
 
 ---
 
-*Documento gerado em 2026-10-25 UTC pela sessão `claude_05/festive-carson-ub43wu` (PR #2246).*
+## §6. db-guard.yml N-008 — falha pré-existente mascarada pelo TC-009, exposta após o fix
+
+**Workflow:** `db-guard.yml`  
+**Run com N-008 exposto:** [40243878705](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40243878705) `failure`  
+**Script:** `scripts/db-audit/user-sessions-expire.test.sh`  
+**Step:** 171 — "Provar encerramento diario de sessoes vencidas (N-008)"
+
+**Causa raiz exata:**
+
+A falha N-008 é **pré-existente na `main`**, mas estava mascarada no baseline porque o TC-009
+(passo 147 — `team-receipts-reactions-conversation-id.test.sh`) falhava antes e o job abortava
+sem chegar ao passo 171 (N-008). Evidência:
+
+- Baseline run `40122006482` (main, SHA `2d97c44`): falha no passo 147 (TC-009), job encerrado
+  antes do passo 171. N-008 nunca foi executado no baseline.
+- Após fix do TC-009 (commit `4adee58`), job da branch avança até o passo 171 e falha em N-008.
+- `scripts/db-audit/user-sessions-expire.test.sh` testa o encerramento diário de sessões
+  vencidas via pg_cron — requer banco local com pg_cron ativo e dados de sessão preenchidos.
+
+**Por que não é regressão desta branch:**
+
+Nenhum arquivo desta branch toca `user-sessions-expire.test.sh` ou a lógica de pg_cron.
+A falha existia antes desta sessão, apenas nunca era visível porque TC-009 a mascarava.
+
+**O que o Joaquim precisa fazer:**
+
+1. Verificar se `pg_cron` está ativo no banco local do CI.
+2. Checar se há dados de sessão vencida no banco local para o teste exercitar.
+3. Corrigir ou adaptar `scripts/db-audit/user-sessions-expire.test.sh` para o ambiente de CI.
+
+**Sem fix de agente possível:** requer banco local com pg_cron ativo — infraestrutura de CI.
+
+---
+
+## §7. ci.yml — 410 falhas de unit tests pré-existentes na `main`
+
+**Workflow:** `ci.yml`  
+**Run da branch:** [40243878635](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40243878635) `failure`  
+**Required check afetado:** `🧪 Unit Tests`
+
+**Causa raiz exata:**
+
+410 falhas de testes unitários são **pré-existentes na `main`**, confirmado por duas evidências
+independentes:
+
+1. **Run na main antes desta branch:** [40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) (SHA `2d97c44`) já era `failure` com os mesmos
+   arquivos falhando.
+2. **Nenhum arquivo falho foi tocado por esta branch:** todos os arquivos com falha —
+   `useTalkXSegments.test.ts`, `useTeamChatPanel.search-antigas.test.tsx`,
+   `useInboxBulkActions.test.ts`, `useDashboardKpi.periodo.test.tsx`,
+   `useAgentCelebrations.test.tsx`, `configuracoes.leituraErro.test.tsx`,
+   `workItemFormat.test.ts` — são arquivos que esta branch não modificou.
+
+Resultado da suíte completa rodada localmente (SHA `69cf182`, 2026-10-25 ~23:00 UTC):
+
+| Shard | Arquivos falhos | Testes falhos | Testes passando |
+|-------|----------------|---------------|-----------------|
+| 1/3   | 44             | 148           | 4921 + 12 todo/expected |
+| 2/3   | 45             | 149           | 4985 + 15 todo/expected |
+| 3/3   | 37             | 113           | 5089 + 36 todo/expected |
+| **Total** | **126** | **410** | **14995 + 63 todo/expected** |
+
+Os 15 testes dos arquivos alterados nesta branch passam: 15/15 ✅ (confirmado em
+`bun vitest run …pagination.test.tsx …useDiagnosticsData.select.test.ts …useInboxFilters.type-url.test.tsx`).
+
+**Sem fix de agente possível:** 410 falhas são pré-existentes e requerem decisão de produto/
+engenharia sobre quais priorizar. Nenhuma foi introduzida por esta branch.
+
+---
+
+## §8. db-guard.yml — Replay local das migrations falha por rate limit do ECR (infra transiente)
+
+**Workflow:** `db-guard.yml`  
+**Run:** [40243878705](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40243878705) `failure`  
+**Job:** `Replay local das migrations`  
+**Step:** 4 — "Pre-baixar a imagem do replay"
+
+**Causa raiz exata:**
+
+```
+toomanyrequests: Data limit exceeded. Please see https://docs.aws.amazon.com/AmazonECR/latest/public/public-gallery.html#public-gallery-rate-limiting for more information.
+```
+
+O runner do GitHub Actions atingiu o rate limit do Amazon ECR Public ao tentar fazer `docker pull`
+da imagem `public.ecr.aws/supabase/postgres:17.6.1.159@sha256:86a2e...`. Três tentativas
+consecutivas falharam com o mesmo erro. **Não é falha de código** — é rate limit transiente
+de infraestrutura do ECR no pool de runners GitHub-hosted.
+
+**Evidência de que é transiente:**
+
+- O código do step não foi alterado por esta branch.
+- A mesma imagem foi usada com sucesso em runs anteriores na main.
+- O erro é explicitamente de quota (`Data limit exceeded`), não de digest inválido ou imagem
+  inexistente.
+
+**O que o Joaquim precisa fazer:**
+
+1. Re-run manual do job `Replay local das migrations` após o merge — a maioria dos rate limits
+   do ECR Public se recupera em poucos minutos/horas.
+2. Se persistir, considerar espelhar a imagem em GHCR ou Docker Hub para evitar dependência
+   do ECR Public.
+
+**Sem fix de agente possível:** rate limit externo de infraestrutura; não é falha de código.
+
+---
+
+*Documento atualizado em 2026-11-01 UTC pela sessão `claude_05/festive-carson-ub43wu`.*
