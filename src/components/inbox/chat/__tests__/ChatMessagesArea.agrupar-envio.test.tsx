@@ -56,6 +56,13 @@ beforeAll(() => {
     configurable: true,
     get() { return 600; },
   });
+  (Element.prototype as unknown as { getBoundingClientRect: unknown }).getBoundingClientRect = vi.fn(() => ({
+    height: 600, width: 800, top: 0, left: 0, bottom: 600, right: 800, x: 0, y: 0, toJSON: () => ({}),
+  }));
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+    configurable: true,
+    get() { return 600; },
+  });
 });
 
 vi.mock('../MessageBubble', () => ({
