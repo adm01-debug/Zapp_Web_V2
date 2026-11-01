@@ -131,7 +131,7 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
       // key.fromMe quando o provedor manda o flag; sem ele, cai no
       // comportamento antigo (linha mais recente da conexao).
       let currentMessageQuery = supabase.from('messages')
-        .select('id, status, sender').eq('external_id', key.id);
+        .select('id, status, sender, manually_resolved_at').eq('external_id', key.id);
       if (connection?.id) currentMessageQuery = currentMessageQuery.eq('whatsapp_connection_id', connection.id);
       if (typeof key.fromMe === 'boolean') {
         currentMessageQuery = currentMessageQuery.eq('sender', key.fromMe ? 'agent' : 'contact');
@@ -164,7 +164,9 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
       const receiptIsOurs = key?.fromMe === true || currentMessage?.sender === 'agent';
 
       if (currentMessage?.id) {
-        if (shouldUpdateStatus(currentMessage.status as string | null, newStatus)) {
+        // C110: recibo tardio não sobrescreve decisão manual do operador
+        if (!(currentMessage as { manually_resolved_at?: string | null }).manually_resolved_at
+            && shouldUpdateStatus(currentMessage.status as string | null, newStatus)) {
           await supabase.from('messages').update({ status: newStatus, status_updated_at: now }).eq('id', currentMessage.id);
           console.warn(`Message ${key.id} status: ${currentMessage.status} -> ${newStatus}`);
         }
