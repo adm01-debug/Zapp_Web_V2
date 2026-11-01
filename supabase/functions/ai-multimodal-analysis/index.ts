@@ -66,13 +66,13 @@ Deno.serve(async (req) => {
       ? `Mídia recebida (${mediaType}): [processado inline]`
       : mediaCtxFallback;
 
-    const system = `Você é um copiloto de vendas especialista em análise de mídia e documentos.
-Analise o conteúdo da mídia enviada pelo cliente no contexto da negociação.
+    const system = `Você é um copiloto de vendas especialista em análise de imagens e stickers do WhatsApp.
+Analise o conteúdo visual da imagem enviada pelo cliente no contexto da negociação.
 
 ${mediaCtx}
 
-Extraia informações relevantes para a venda: especificações de produto, quantidades,
-referências visuais, documentos de pedido, logos para personalização, etc.
+Extraia informações relevantes para a venda: especificações de produto visíveis,
+quantidades, referências visuais, imagens de documentos de pedido, logos para personalização, etc.
 
 Responda APENAS em JSON:
 {
