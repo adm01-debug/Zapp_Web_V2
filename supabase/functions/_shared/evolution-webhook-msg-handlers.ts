@@ -147,8 +147,9 @@ export async function handleMessagesUpdate(supabase: EvolutionDbClient, instance
       if (typeof key.fromMe === 'boolean') {
         currentMessageQuery = currentMessageQuery.eq('sender', key.fromMe ? 'agent' : 'contact');
       }
-      let { data: currentMessage, error: msgQueryErr } = await currentMessageQuery
+      const { data: currentMessageInitial, error: msgQueryErr } = await currentMessageQuery
         .order('created_at', { ascending: false }).limit(1).maybeSingle();
+      let currentMessage = currentMessageInitial;
       // 42703 = column not found: manually_resolved_at ainda não existe (pre-DDL).
       // Fallback sem a coluna — receipts continuam sendo processados normalmente.
       if (msgQueryErr?.code === '42703') {
