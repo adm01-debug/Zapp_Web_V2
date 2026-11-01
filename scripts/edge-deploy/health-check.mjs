@@ -133,6 +133,9 @@ async function main() {
         // GA29: endpoint logs.all foi removido em 23/09/2026 (Supabase changelog #48235).
         // 404/410 = endpoint depreciado, não erro de configuração — aviso, não bloqueia o deploy.
         console.error(`::warning::Health check: endpoint analytics retornou HTTP ${err.status} (endpoint removido/depreciado). Prosseguindo.`);
+      } else if (err.status === 429) {
+        // 429 = rate limit temporário da API de observabilidade — aviso, não bloqueia o deploy.
+        console.error(`::warning::Health check: rate limit da Management API (HTTP 429). Prosseguindo.`);
       } else {
         // 401/403 = erro de autenticação/configuração — falha dura.
         console.error(`::error::Health check falhou com HTTP ${err.status}: ${err.message}. Verifique o SUPABASE_ACCESS_TOKEN.`);
@@ -179,6 +182,8 @@ main().catch((err) => {
   if (err instanceof HttpError && err.status >= 400 && err.status < 500) {
     if (err.status === 404 || err.status === 410) {
       console.error(`::warning::health-check.mjs: endpoint analytics retornou HTTP ${err.status} (removido/depreciado). Prosseguindo.`);
+    } else if (err.status === 429) {
+      console.error(`::warning::health-check.mjs: rate limit da Management API (HTTP 429). Prosseguindo.`);
     } else {
       console.error(`::error::health-check.mjs falhou com HTTP ${err.status}: ${err.message}`);
       process.exitCode = 1;

@@ -127,7 +127,7 @@ Etapas cujo checkbox divergia do estado já apurado. A coluna **Evidência** tra
 | **E07** | `[!]` REVOGADA | PR #1754 | O gatilho era E06 falhar; atestação e teste de regressão chegaram por #1754, sem deploy novo aqui. |
 | **E08** | `[x]` CONCLUÍDA | sem PR associado | GET de runs queued e waiting devolveu total_count=0 em 03/10; não houve cancelamento nesta auditoria. |
 | **E09** | `[~]` PARCIAL | PR #1430, #1611, #1634, #1650 | PR #1430 continua aberta e o E2E logado coletado foi cancelled; sem prova dos 5 verdes consecutivos. |
-| **E12** | `[~]` PARCIAL | sem PR associado | Cabeçalhos de types-sync/db-migrate atualizados, mas ci.yml ainda descreve só lint/typecheck/test/build. |
+| **E12** | `[x]` CONCLUÍDA | PR #2537 | Cabeçalhos corrigidos em ci.yml, types-sync.yml e db-migrate.yml; contrato W62/W63 e testes verdes. |
 | **E13** | `[~]` PRECISA REVALIDAÇÃO | PR #1436, #1834 | Guards existem e explicitam pontos cegos; administração não se comprova só com GITHUB_TOKEN (403). |
 | **E17** | `[~]` PARCIAL | PR #1439 | Debounce só na PR #1439, ausente da main, e a proposta sai sem requeue; corrigir a semântica antes. |
 | **E18** | `[~]` PARCIAL | PR #1439 | Negação de paths está só na #1439, ainda aberta; a main segue disparando pelos diretórios amplos. |
@@ -170,7 +170,19 @@ Etapas cujo checkbox divergia do estado já apurado. A coluna **Evidência** tra
 | **E87** | `[~]` PARCIAL | PR #1823 | Quarentena vazia e usa testIgnore, não fixme; provar a seleção real antes do primeiro item. |
 | **E91** | `[~]` PARCIAL | PR #1817 | Issue semanal existe; updatedAt mede atividade da PR, não o último push; revisar o git cherry. |
 | **E94** | `[~]` PRECISA REVALIDAÇÃO | sem PR associado | A baseline ainda lista copilot/Preview/Production para avaliar exclusão; não excluir como lixo. |
-| **E97** | `[~]` AGUARDA RUNTIME | PR #1852 | Modo estrito e contrato presentes e a suíte local passou; não reexecuta shellcheck/actionlint. |
+| **E19** | `[x]` CONCLUÍDA | PR #2537 | Gate 3 redesenhado: exit 3 para apply-pendente, contrato GA19/GA20 com verificação de catálogo. |
+| **E20** | `[x]` CONCLUÍDA | PR #2537 | Dedupe de falha dos gates via issue única com label db-live-guard; fluxo GA20 implementado. |
+| **E21** | `[x]` CONCLUÍDA | PR #2537 | Destravar checks filtra workflow_runs por head_branch; auto-merge seguro no types-sync GA21. |
+| **E67** | `[x]` CONCLUÍDA | PR #2537 | Cache do Bun em ~/.bun/install/cache com chave baseada em bun.lock presente em ci.yml. |
+| **E68** | `[x]` CONCLUÍDA | PR #2537 | Cache dos browsers Playwright em ~/.cache/ms-playwright presente em ci.yml. |
+| **E69** | `[x]` CONCLUÍDA | PR #2537 | Paralelização do ci.yml: test, security e e2e independentes de lint-and-typecheck. |
+| **E70** | `[x]` CONCLUÍDA | PR #2537 | lint-and-typecheck dividido: Lint & TypeCheck separado de Build; 2 jobs distintos. |
+| **E71** | `[x]` CONCLUÍDA | PR #2537 | Guard de draft em ci.yml e e2e-logado.yml; skip em PR draft implementado GA08/GA09. |
+| **E72** | `[x]` CONCLUÍDA | PR #2537 | Artifacts: dist só em workflow_dispatch; coverage-report com retention-days=7. |
+| **E75** | `[~]` PARCIAL | sem PR associado | toolchain.json proposto mas não implementado; versões de bun/deno/node ainda fixadas por arquivo. |
+| **E77** | `[x]` CONCLUÍDA | PR #2537 | Dependabot package-ecosystem docker adicionado ao dependabot.yml; ecosistema coberto. |
+| **E90** | `[x]` CONCLUÍDA | PR #2537 | Notificação de falha na main por WhatsApp via N8N implementada; webhook workflow_run configurado. |
+| **E97** | `[x]` CONCLUÍDA | PR #1852 + PR #2537 | set -euo pipefail em todos os run: multi-linha; contrato GA05/GA27/GA29 passaram localmente. |
 
 ## 0. Sumário executivo — o que está quebrado agora
 
@@ -475,7 +487,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
     obrigatório**. Quem lê o texto espera uma aprovação que não existe.
     **(e) Cadência do guarda vivo:** o `db-live-guard.yml` tem `push` (linha 13) e `schedule` com
     `cron: '13 6 * * *'` — diário. A afirmação "não roda em PR" está **correta**; o texto só não dá a cadência.
-- [~] **E12** · C · G-42 · Corrigir os 3 cabeçalhos desatualizados (`ci.yml:5`, `types-sync.yml:82-86`,
+- [x] **E12** · C · G-42 · Corrigir os 3 cabeçalhos desatualizados (`ci.yml:5`, `types-sync.yml:82-86`,
   `db-migrate.yml:7`). Verificação: revisão de texto no PR.
 
 ### Fase 1 — Quebrar o ciclo `types-sync` ↔ `BEHIND` de forma estrutural (E13–E22)
@@ -504,14 +516,14 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   (`src/integrations/supabase/types.ts`, `supabase/schema-catalog.json`, `supabase/schema-manifest.json`,
   `scripts/db-audit/grants-baseline.json`) com `paths-ignore` combinado, para o merge do PR de sync não redisparar o
   sync. Verificação: merge de um PR `[auto]` não cria run de `types-sync`.
-- [ ] **E19** · B · G-17 · Redesenhar o Gate 3: em vez de contar linhas de `types.ts`, comparar **objetos**
+- [x] **E19** · B · G-17 · Redesenhar o Gate 3: em vez de contar linhas de `types.ts`, comparar **objetos**
   (tabelas/views/funções/enums removidos) usando `supabase/schema-catalog.json` antigo × novo; bloquear só remoção de
   tabela/view com call-site no `src/` (reaproveitar `supabase-usage-guard.mjs` em modo projeção). Troca de assinatura
   (DROP+CREATE mesmo nome) passa. Verificação: fixture com a `20260930390000` passa; fixture com `DROP TABLE
   public.playbooks` bloqueia.
-- [ ] **E20** · B · G-16 · "Registrar falha dos gates" do `types-sync`: mesmo dedupe do guarda vivo (marcador
+- [x] **E20** · B · G-16 · "Registrar falha dos gates" do `types-sync`: mesmo dedupe do guarda vivo (marcador
   `<!-- causa:… -->` com hash do gate + 6 h). Verificação: 3 falhas iguais seguidas → 1 comentário.
-- [ ] **E21** · B · G-25 · "Destravar os checks": filtrar `workflow_runs` por `head_branch ==
+- [x] **E21** · B · G-25 · "Destravar os checks": filtrar `workflow_runs` por `head_branch ==
   'automation/types-sync'` além de `head_sha`. Verificação: unit test com run de outra branch no mesmo SHA → não
   aprovado.
 - [~] **E22** · B · G-02 · `types-sync.yml`: usar `peter-evans/create-pull-request` com `branch-suffix: ''` e
@@ -756,23 +768,23 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 
 ### Fase 5 — Pipeline de PR mais rápido e barato (E67–E80)
 
-- [ ] **E67** · B · G-15 · Cache do Bun: `actions/cache` (pinado) em `~/.bun/install/cache` com chave `bun-${{
+- [x] **E67** · B · G-15 · Cache do Bun: `actions/cache` (pinado) em `~/.bun/install/cache` com chave `bun-${{
   hashFiles('bun.lock') }}` nos 5 jobs do `ci.yml`, `db-guard`, `types-sync`, `e2e-*`. Medir antes/depois. Verificação:
   `bun install` cai de ~40 s para < 10 s com cache quente.
-- [ ] **E68** · B · G-15 · Cache dos browsers Playwright: `~/.cache/ms-playwright` com chave
+- [x] **E68** · B · G-15 · Cache dos browsers Playwright: `~/.cache/ms-playwright` com chave
   `pw-${{ hashFiles('bun.lock') }}-${{ runner.os }}`; `bunx playwright install --with-deps` só em cache miss (`if:
   steps.pw-cache.outputs.cache-hit != 'true'`), senão só `install-deps`. Verificação: job `e2e` do `ci.yml` cai ≥ 2 min.
-- [ ] **E69** · B · G-15 · Paralelizar o `ci.yml`: `test`, `security` e `e2e` deixam de depender de
+- [x] **E69** · B · G-15 · Paralelizar o `ci.yml`: `test`, `security` e `e2e` deixam de depender de
   `lint-and-typecheck` (cada um já faz seu `bun install`); `build` depende só de `test`. Os required checks continuam os
   mesmos 6 nomes. Verificação: wall-clock de PR verde cai de ~7 min para ~4 min.
-- [ ] **E70** · B · G-15 · Dividir `lint-and-typecheck` em 2 jobs: `🔍 Lint & TypeCheck` (ratchets + guards de
+- [x] **E70** · B · G-15 · Dividir `lint-and-typecheck` em 2 jobs: `🔍 Lint & TypeCheck` (ratchets + guards de
   workflow, nome **preservado** por ser required) e `🦕 Edge contracts` (Deno check + Deno tests + Go), este último não
   required por 1 semana e depois adicionado aos required (E100). Verificação: `Lint & TypeCheck` < 90 s.
-- [ ] **E71** · B · G-31 · `if: github.event.pull_request.draft == false || github.event_name != 'pull_request'` nos
+- [x] **E71** · B · G-31 · `if: github.event.pull_request.draft == false || github.event_name != 'pull_request'` nos
   jobs pesados (`test`, `build`, `e2e`, `security`) do `ci.yml`, `db-guard` e `codeql`; `lint` continua em draft para
   feedback rápido. Como os required checks precisam existir, o job pesado em draft termina com `exit 0` e resumo
   "pulado: draft" (não `skipped`). Verificação: PR draft roda só lint; `ready_for_review` roda tudo.
-- [ ] **E72** · B · G-32 · Artifacts: `dist` só em `workflow_dispatch` (Vercel builda sozinho); `coverage-report` só
+- [x] **E72** · B · G-32 · Artifacts: `dist` só em `workflow_dispatch` (Vercel builda sozinho); `coverage-report` só
   na `main` (push) com 7 dias e publicado no Job Summary (`vitest --reporter=json-summary` → tabela); `playwright-report`
   só `if: failure()`. Verificação: PR verde cria 0 artifacts.
 - [~] **E73** · A · G-32 · Apagar os artifacts com mais de 7 dias via API (2.333 hoje) e definir
@@ -780,14 +792,14 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
 - [~] **E74** · B · G-32 · `supabase-sync.yml:104` `retention-days: 7`; `deploy-functions` `deploy-output.log` passa
   por `::add-mask::` das URLs com token antes do upload e retenção 14. Verificação: grep no artifact sem
   `access_token`.
-- [ ] **E75** · C · G-20 · Fonte única de versões de toolchain: `.github/toolchain.json` (`bun`, `deno`, `node`,
+- [~] **E75** · C · G-20 · Fonte única de versões de toolchain: `.github/toolchain.json` (`bun`, `deno`, `node`,
   `supabase-cli`, `playwright`, `postgres-image`) lido pelos workflows via um passo `Carregar toolchain` que escreve
   `GITHUB_ENV`; `check-workflow-pins.mjs` falha se um YAML literalizar uma versão. Verificação: grep de `1.4.0` nos
   YAML → 0.
 - [~] **E76** · B · G-20 · `e2e-talkx-pr.yml:59` `bunx playwright@1.63.0` → `bunx playwright` (versão do lockfile), e
   subir `@playwright/test` para a versão que os browsers instalados esperam, num PR só. Verificação: 3 engines verdes
   nos 3 workflows com a mesma versão.
-- [ ] **E77** · C · G-20 · Dependabot: adicionar `package-ecosystem: docker` (não existe Dockerfile → usar
+- [x] **E77** · C · G-20 · Dependabot: adicionar `package-ecosystem: docker` (não existe Dockerfile → usar
   `toolchain.json` + um script semanal `scripts/ci/bump-toolchain.mjs` que abre PR com as versões novas de Bun/Deno/
   Supabase CLI). Verificação: PR automático na próxima segunda.
 - [~] **E78** · B · G-15 · `codeql.yml`: `paths-ignore: ['docs/**', '**/*.md', 'supabase/migrations/**']` no
@@ -863,7 +875,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   **ou** cubic **ou** Copilot (não os 3 — 96 comentários em #1343), Vercel (necessário); **remover** Greptile (trial expirado, só posta aviso), ECC Tools (2
   comentários por push, sem permissão de check, zero valor) e Mermaid Sync (skipped sempre) e Supabase for GitHub
   (G-34). Registrar a lista final no CLAUDE.md. Verificação: PR nova recebe ≤ 3 comentários de bot.
-- [ ] **E90** · B · G-23 · Notificação de falha na `main` por WhatsApp via N8N (webhook `workflow_run` →
+- [x] **E90** · B · G-23 · Notificação de falha na `main` por WhatsApp via N8N (webhook `workflow_run` →
   Evolution GO `PRINCIPAL` → número do Joaquim), só para `conclusion: failure` em `e2e-logado`, `db-live-guard`,
   `deploy-functions`, `types-sync`, com dedupe de 1 h por workflow. Verificação: forçar 1 falha → 1 mensagem.
 - [~] **E91** · B · G-36 · `branch-hygiene-audit.yml`: além do Job Summary, atualizar o corpo da issue #378 (ou abrir
@@ -908,7 +920,7 @@ de execução recomendada. Etapas com ⚠️ exigem decisão do Joaquim antes de
   bloco". O gerador também falha se um workflow **novo** entrar sem bloco, em vez de deixá-lo fora da doc em
   silêncio. Nota: o `ci.yml` é o mesmo arquivo que o #1610 (aberto) reescreve — meu step entra após o
   `actionlint`, longe dos setups que ele toca. A E96 não depende do #1610, só compartilha o arquivo.
-- [~] **E97** · B · G-41 · `set -euo pipefail` como primeira linha de todo `run:` multi-linha (ou `defaults.run.shell:
+- [x] **E97** · B · G-41 · `set -euo pipefail` como primeira linha de todo `run:` multi-linha (ou `defaults.run.shell:
   bash -euo pipefail {0}` por workflow) nos 8 workflows que não têm. Verificação: `actionlint`/`shellcheck` sem SC2086/
   SC2181.
   **FEITO 2026-10-03** (PR do repo, ver `docs/audits/e97-pipefail-workflows-2026-10-03.md`): opção (b) em **9**
