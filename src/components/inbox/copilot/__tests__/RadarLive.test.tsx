@@ -14,7 +14,7 @@ vi.mock('@/integrations/supabase/client', () => {
     in: () => query,
     is: () => query,
     order: () => query,
-    limit: () => Promise.resolve({ data: [], error: null }),
+    limit: () => query,
     maybeSingle,
   };
   const channel = { on: () => channel, subscribe: () => channel };
@@ -106,7 +106,7 @@ describe('atalhos do RadarPanel', () => {
 });
 
 describe('etapas reais', () => {
-  it('StageIndicator mostra o rótulo e converte 0–100 em 10 barras', () => {
+  it('StageIndicator mostra o rotulo e converte 0–100 em 10 barras', () => {
     render(<StageIndicator stage="fechando" temperature={73} />);
     expect(screen.getByText('Fechando')).toBeTruthy();
     expect(screen.getByLabelText('Temperatura de compra: 73/100')).toBeTruthy();
