@@ -11,6 +11,7 @@ import {
 } from '../_shared/validation.ts';
 import { resolvePrivateBucketUrl } from '../_shared/evolution-api-proxy.ts';
 import { evoFetch, extractMessageId } from '../_shared/evolution-send.ts';
+import { isInstancePaused } from '../_shared/instance-pause.ts';
 import { resolveInstanceToken, type InstanceTokenClient } from '../_shared/evolution-instance-token.ts';
 import {
   EFFECT_MESSAGE_SEND,
@@ -421,6 +422,14 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
       if (metadataError || !richPayload) throw new Error('missing_rich_delivery_payload');
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
+    // C121: instância pausada não envia. Nada foi ao provedor ainda (sem efeito incerto,
+    // sem reconciliação): encerra a entrega como falha e o operador reenvia após retomar.
+    if (await isInstancePaused(service, claim.whatsapp_instance_name,
+      (code) => console.error(JSON.stringify({ event: 'message_delivery_pause_check_error', code })))) {
+      await failClaim(service, claim);
+      console.error(JSON.stringify({ event: 'message_delivery_instance_paused' }));
+      return errorResponse('Instance is paused; resend after it is resumed', 409, req);
+    }
     providerPostAttempted = true;
     const providerResponse = await deliverOutbound(
       service, evolutionUrl, evolutionKey, outbound, claim.whatsapp_instance_name,

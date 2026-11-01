@@ -152,3 +152,12 @@ Deno.test('message delivery does not call the redundant mark_first_response RPC'
     throw new Error('a RPC mark_first_response não pode ser chamada: o trigger já registra o SLA');
   }
 });
+
+Deno.test('C121: a checagem de pausa roda antes do POST ao provedor', async () => {
+  const src = await Deno.readTextFile(new URL('./index.ts', import.meta.url));
+  const pausa = src.indexOf('await isInstancePaused(');
+  const envio = src.indexOf('providerPostAttempted = true;', pausa);
+  if (pausa < 0 || envio < 0 || pausa > envio) {
+    throw new Error('isInstancePaused precisa vir antes de marcar/enviar o POST ao provedor');
+  }
+});
