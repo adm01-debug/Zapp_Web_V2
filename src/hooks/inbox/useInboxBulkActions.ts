@@ -213,29 +213,59 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
           refetch();
         },
         undoAction: async () => {
-          // Agrupa por status original para emitir um UPDATE por grupo —
-          // restauração atômica por valor: uma falha não deixa o lote parcialmente
-          // revertido.
-          // Trigger enforce_conversation_status_transition (produção): a partir de
-          // 'archived' só são válidos 'open' e 'pending'. Qualquer outro original
-          // (waiting/resolved/closed/null) voltaria erro e o desfazer falharia —
-          // cai em 'open'.
-          const validFromArchived = new Set(['open', 'pending']);
-          const byStatus = new Map<string | null, string[]>();
+          // FSM enforce_conversation_status_transition: archived → open | pending direto.
+          // Para waiting/resolved/closed: dois passos — archived → open, open → status.
+          const directFromArchived = new Set(['open', 'pending']);
+          const twoStepFromOpen = new Set(['waiting', 'resolved', 'closed']);
+
+          const directByStatus = new Map<string, string[]>();
+          const twoStepByFinal = new Map<string, string[]>();
+
           for (const id of targetIds) {
             const raw = previousStatus.get(id) ?? null;
-            const original = raw !== null && validFromArchived.has(raw) ? raw : 'open';
-            const group = byStatus.get(original) ?? [];
-            group.push(id);
-            byStatus.set(original, group);
+            if (raw !== null && directFromArchived.has(raw)) {
+              const g = directByStatus.get(raw) ?? [];
+              g.push(id);
+              directByStatus.set(raw, g);
+            } else if (raw !== null && twoStepFromOpen.has(raw)) {
+              const g = twoStepByFinal.get(raw) ?? [];
+              g.push(id);
+              twoStepByFinal.set(raw, g);
+            } else {
+              // null ou estado desconhecido: cai em open direto
+              const g = directByStatus.get('open') ?? [];
+              g.push(id);
+              directByStatus.set('open', g);
+            }
           }
-          for (const [status, ids] of byStatus) {
+
+          // Passo 1 — restaurações diretas (archived → open | pending)
+          for (const [status, ids] of directByStatus) {
             const { error } = await supabase
               .from('contacts')
-              .update({ conversation_status: status as unknown as string })
+              .update({ conversation_status: status })
               .in('id', ids);
             if (error) throw error;
           }
+
+          // Passo 2 — dois saltos: archived → open → waiting/resolved/closed
+          if (twoStepByFinal.size > 0) {
+            const twoStepIds = [...twoStepByFinal.values()].flat();
+            const { error: e1 } = await supabase
+              .from('contacts')
+              .update({ conversation_status: 'open' })
+              .in('id', twoStepIds);
+            if (e1) throw e1;
+
+            for (const [status, ids] of twoStepByFinal) {
+              const { error } = await supabase
+                .from('contacts')
+                .update({ conversation_status: status })
+                .in('id', ids);
+              if (error) throw error;
+            }
+          }
+
           refetch();
         },
       });

@@ -572,7 +572,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 
-  it('desfazer: original fora de open/pending (waiting/resolved) volta como "open" — archived só transita para open/pending no banco', async () => {
+  it('desfazer: waiting/resolved — dois passos: archived→open, open→status_original', async () => {
     selectQueue.push({
       data: [
         { id: c1, conversation_status: 'waiting' },
@@ -591,8 +591,73 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
 
     const restores = contactUpdates().slice(1);
-    expect(restores).toHaveLength(1);
-    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1, c2] } });
+    // Passo 1: archived→open para todos os ids two-step (c1 e c2 juntos)
+    expect(restores[0]).toMatchObject({
+      payload: { conversation_status: 'open' },
+      filters: { id: [c1, c2] },
+    });
+    // Passo 2a: open→waiting (c1)
+    expect(restores[1]).toMatchObject({
+      payload: { conversation_status: 'waiting' },
+      filters: { id: [c1] },
+    });
+    // Passo 2b: open→resolved (c2)
+    expect(restores[2]).toMatchObject({
+      payload: { conversation_status: 'resolved' },
+      filters: { id: [c2] },
+    });
+    expect(restores).toHaveLength(3);
+  });
+
+  it('desfazer: closed — dois passos: archived→open, open→closed', async () => {
+    selectQueue.push({
+      data: [{ id: c1, conversation_status: 'closed' }],
+      error: null,
+    });
+    const { result } = renderInbox();
+    selectIds(result, [c1]);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+    await act(async () => {
+      await lastUndo?.undoAction();
+    });
+
+    const restores = contactUpdates().slice(1);
+    expect(restores).toHaveLength(2);
+    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1] } });
+    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'closed' }, filters: { id: [c1] } });
+  });
+
+  it('desfazer misto: open direto + resolved dois-passos', async () => {
+    selectQueue.push({
+      data: [
+        { id: c1, conversation_status: 'open' },
+        { id: c2, conversation_status: 'resolved' },
+        { id: c3, conversation_status: 'pending' },
+      ],
+      error: null,
+    });
+    const { result } = renderInbox();
+    selectIds(result, [c1, c2, c3]);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+    await act(async () => {
+      await lastUndo?.undoAction();
+    });
+
+    const restores = contactUpdates().slice(1);
+    // Diretos primeiro: open → [c1], pending → [c3] (ordem de inserção no Map)
+    const directStatuses = restores.slice(0, 2).map((r) => (r.payload as { conversation_status: string }).conversation_status);
+    expect(directStatuses).toContain('open');
+    expect(directStatuses).toContain('pending');
+    // Dois passos: archived→open para c2, depois open→resolved para c2
+    const twoStep = restores.slice(2);
+    expect(twoStep[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c2] } });
+    expect(twoStep[1]).toMatchObject({ payload: { conversation_status: 'resolved' }, filters: { id: [c2] } });
   });
 
   it('desfazer: contato já archived antes da seleção NÃO é aberto — excluído do lote desde o início', async () => {
