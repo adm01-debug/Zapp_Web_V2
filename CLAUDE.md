@@ -23,7 +23,7 @@ Regras que decorrem disso:
 
 1. **Git local, push quando o Joaquim pedir.** Commits entram numa branch local do dia
    (`dia/AAAA-MM-DD`); um PR por lote. Nenhum agente faz push, abre PR ou mergeia por conta própria.
-2. **Ordem do lote na produção:** push → PR → 6 checks → merge → deploy do código (Vercel e edge
+2. **Ordem do lote na produção:** push → PR → 3 checks → merge → deploy do código (Vercel e edge
    functions) → `db-migrate.yml` com `apply=false` → aprovação do Joaquim no environment
    `producao-ddl` → `apply=true`. É a mesma ordem da regra 6 da seção 1; o que muda é que acontece
    uma vez por lote, e quem dispara é a sessão do Claude Code que fez o push, nunca um agente executor.
