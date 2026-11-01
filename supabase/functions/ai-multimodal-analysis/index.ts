@@ -44,7 +44,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    const mediaCtx = (isVisualMedia && imageDataUrl)
+    if (isVisualMedia && !imageDataUrl) {
+      return errorResponse("Imagem não pôde ser obtida para análise.", 422, req);
+    }
+
+    if (imageDataUrl.length > 200_000) {
+      return errorResponse("Imagem muito grande para análise de IA (máx. ~150 KB).", 413, req);
+    }
+
+    const mediaCtx = imageDataUrl
       ? `Mídia recebida (${mediaType}): [processado inline]`
       : mediaCtxFallback;
 
