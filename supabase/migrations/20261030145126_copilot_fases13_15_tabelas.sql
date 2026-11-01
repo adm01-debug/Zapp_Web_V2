@@ -87,7 +87,7 @@ CREATE POLICY "copilot_seller_settings_select"
   ON public.copilot_seller_settings FOR SELECT TO authenticated USING (true);
 
 CREATE POLICY "copilot_seller_settings_update"
-  OM public.copilot_seller_settings FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+  ON public.copilot_seller_settings FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
 
 -- Fase 13: pedidos de ajuda ao supervisor
 CREATE TABLE IF NOT EXISTS public.copilot_help_requests (
