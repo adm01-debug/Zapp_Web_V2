@@ -1,51 +1,31 @@
-numero,titulo,draft,bot,estado,veredito,mergeable_state,files
-2340,docs(consolidacao): registra types-sync integrado,false,false,closed,MERGEADA,merged,1
-2305,docs(mapa): USO_SEARCHBOX,false,false,open,CI_BLOQUEADO,behind,1
-2298,feat(e75): centraliza versoes de toolchain em toolchain.json,false,false,open,SKIP_PROHIBITED,dirty,17
-2295,feat(ci): skip heavy jobs em draft PRs (E71),false,false,open,SKIP_PROHIBITED,dirty,5
-2286,fix(edge-deploy): E09 — timestampBumped como evidencia,false,false,open,CI_BLOQUEADO,behind,1
-2284,analise-prs: entregaveis de sessao anterior,false,false,open,SUPERSEDED,dirty,107
-2278,fix(ci): atualiza guarda dashboard_kpi para migration 20261026210000,false,false,open,CI_BLOQUEADO,behind,2
-2277,chore(db) GOAL backend — storage audit + manifest + migrations docs,false,false,open,DECISAO_HUMANA,dirty,8
-2274,fix: corrige workflows com falha — types.ts +9 RPCs retry HTTP 502,true,false,open,DRAFT_SKIP,,
-2273,fix(test+ci): fila-merge retry + correcao de mocks em 4 test files,false,false,open,MERGEAR_SE_CI_VERDE,dirty,4
-2272,chore(infra): preview-egress-proxy Dockerfile golang SHA bump,false,true,open,MERGEAR_SE_CI_VERDE,clean,1
-2270,chore(ci): codeql-action SHA bump v4.39.0 v4.39.1,false,true,open,MERGEAR_SE_CI_VERDE,clean,1
-2269,fix: Talk X segmentos sem estimativa enganosa,false,false,open,BLOQUEADO_CI_E_BEHIND,behind,
-2268,fix: supervisor volta a gerenciar templates do WhatsApp,false,false,open,BLOQUEADO_CI_E_BEHIND,behind,
-2267,fix: fila de envio offline nao entrega item sem dono,false,false,open,BLOQUEADO_CI_E_BEHIND,behind,
-2266,fix: paleta de comandos acessivel filtros do inbox,false,false,open,BLOQUEADO_CI_E_BEHIND,behind,
-2265,fix: revoga grants de escrita do anon em public (CRITICAL-1),true,false,open,DRAFT_SKIP,,
-2263,fix: salvar preferencias na Aparencia,false,false,open,DRAFT_SKIP,,
-2261,fix: corrigir falhas de CI em 4 suites de teste,true,false,open,DRAFT_SKIP,,
-2255,chore: auditoria Supabase — relatorio e progresso finais (2026-10-25),true,false,open,DRAFT_SKIP,,
-2250,fix(types): adiciona 9 assinaturas de RPC ausentes em types.ts,true,false,open,DRAFT_SKIP,,
-2249,fix: 3 falhas de testes unitarios (HighContrastToggle mock canal),true,false,open,DRAFT_SKIP,,
-2247,docs: resgate-validacao command,false,false,open,MERGEAR_SE_CI_VERDE,clean,
-2246,fix(ci+docs): TC-009 + ChatMessagesArea + fila-merge + PK-14 + deployment-manifest,false,false,open,MERGEAR_SE_CI_VERDE,clean,
-2245,fix(talkx): corrige 4.007 falhas/30d do cron talkx-scheduler-1min,true,false,open,DRAFT_SKIP,,
-2244,fix(types): 9 RPCs + offline queue userId + m4a,false,false,open,MERGEAR_SE_CI_VERDE,clean,
-2242,chore: inventario de PRs abertas e regras de negocio para analise,true,false,open,DRAFT_SKIP,,
-2241,chore: auditoria exaustiva Supabase — 28 achados (CRITICAL×3 HIGH×7),true,false,open,DRAFT_SKIP,,
-2240,feat(talkx): X115 — TalkXSegments filtros persistem em URL,false,false,open,MERGEAR_SE_CI_VERDE,clean,
-2239,feat(ui): GoalsDashboard — seletor de periodo + skeleton de loading,false,false,open,MERGEAR_SE_CI_VERDE,clean,
-2238,feat(message-delivery): carimbo POST iniciado (PD-79 PD-80) [DECISAO HUMANA],false,false,open,DECISAO_HUMANA,clean,
-2233,fix: corrige 3 falhas de Vitest (SL-070 HZ5-09 a11y TTS),false,false,open,BLOQUEADO_CI,clean,
-2232,fix(test): SummaryResult — selector h-6xw-6 h-8xw-8,false,false,open,MERGEAR_SE_CI_VERDE,clean,1
-2230,chore: remove hook morto useTalkXSuppression,false,false,open,COMPLETAR,clean,3
-2229,test(inbox): corrige InboxEmptyChat.cta divergente apos reescrita no PR #1986,false,false,open,BLOQUEADO_CI_E_BEHIND,behind,
-2228,fix(tests): corrige falha mecanica de mock em useAdminDataCreateUser.test.ts,false,false,open,BLOQUEADO_CI_E_BEHIND,behind,
-2226,fix(db-guard): corrige assertion B.0c no TC-009,false,false,open,BLOQUEADO_CI_E_BEHIND,behind,
-2225,fix(e2e): mock do RPC app_bootstrap para corrigir travamento em ProtectedRoute,false,false,open,BLOQUEADO_CI_E_BEHIND,behind,
-2222,fix(db): corrige TC-009 — aplica predecessora 20261006222024 antes,true,false,open,DRAFT_SKIP,,
-2221,fix: corrige falhas pre-existentes nos Unit Tests de src/,true,false,open,DRAFT_SKIP,,
-2219,fix: corrige falhas de testes unitarios pre-existentes em main,true,false,open,DRAFT_SKIP,,
-2218,fix(talkx+ci): X094 TalkXTemplateEditor + guards useTalkXSegments + PK-14 + fixes de testes,false,false,open,MERGEAR_SE_CI_VERDE,clean,
-2217,feat: edge functions AI copiloto fases 8-15 (CV-071–CV-150),true,false,open,DRAFT_SKIP,,
-2216,feat: 7 edge functions copiloto RADAR fases 8-15 (CV-071–CV-150),true,false,open,DRAFT_SKIP,,
-2215,feat: 7 edge functions copilot fases 8-10 (CV-071–CV-100),true,false,open,DRAFT_SKIP,,
-2214,feat: DDL 7 tabelas copiloto RADAR fases 13-15 (CV-121–CV-150),true,false,open,DRAFT_SKIP,,
-2213,feat: RADAR Copilot Fases 8–15 — CV-071 a CV-150,true,false,open,DRAFT_SKIP,,
-2297,feat: E70 — job Edge contracts separado do node-scripts,true,false,open,DRAFT_SKIP,,
-2279,fix(e2e): aumenta workers de 1→2 no CI para evitar timeout de 20 min,true,false,open,DRAFT_SKIP,,
-2211,fix(ci+tests): corrige auto-update-pr-branch e falhas nos testes unitarios,true,false,open,DRAFT_SKIP,,
+pr,titulo,status,auto_merge,mergeable_state,sha
+2485,"fix(rls): corrigir políticas RLS — DROP POLICY IF EXISTS",DECISAO_HUMANA,false,,
+2486,"feat(copilot): RADAR — 34 arquivos + novas edge functions",DECISAO_HUMANA,false,,
+2487,"fix(db): corrigir trigger de notificações — DROP TRIGGER IF EXISTS",DECISAO_HUMANA,false,,
+2489,"fix(e2e): corrigir seletor de telefonia no spec E2E",MERGE_OK,true,behind,14881cea7f87c1dcf11b754273f333ca1855f0b3
+2491,"chore(migrations): reconciliar migration de search_insights no ledger",MERGE_OK,true,blocked,07ac5c6f0550bb12ffa990435d8be820bad2d251
+2492,"docs: fila-merge + testes + documentação",CONFLITO,false,dirty,
+2493,"chore: atualizar CLAUDE.md e plano de tarefas",MERGE_OK,true,behind,
+2494,"chore(types): sincronização automática de tipos TypeScript",MERGE_OK,true,behind,f5bd023d90e16b881beb336b1560e6560d25bd62
+2495,"chore: adicionar comandos .claude/commands/",MERGE_OK,true,behind,
+2496,"feat(edge): message-delivery — envio multimídia e fases 1-4",DECISAO_HUMANA,false,,
+2497,"ci: pular PRs draft no CI",DECISAO_HUMANA,false,,
+2498,"feat(rpc): renomear search_insights → search_contacts_insights + testes",MERGE_OK,true,blocked,eb03117a823947804ba1659449968714c36b4ac1
+2499,"ci: adicionar workflow main-failure-notify.yml",DECISAO_HUMANA,false,,
+2500,"feat(edge): copilot-tick + migration RPC copilot",AGUARDANDO_APROVACAO,false,,
+2501,"docs: planos E19/E20/E21",MERGE_OK,true,blocked,
+2502,"ci(draft): filtrar PRs draft no CI (v2)",DECISAO_HUMANA,false,,
+2503,"ci: ajustes em ci.yml",DECISAO_HUMANA,false,,
+2504,"test(e2e): aumentar workers de 1→4 e ajustar timeouts",MERGE_OK,true,behind,240d06fee91049b5adaa730bd5d91a09ec870ebd
+2505,"perf(db): adicionar 57 índices FK em tabelas de referência",AGUARDANDO_APROVACAO,false,,
+2506,"docs: auditoria de 22 documentos",CONFLITO,false,dirty,
+2507,"docs: corrigir CLAUDE.md — 6 checks → 3 checks obrigatórios",MERGE_OK,true,blocked,
+2508,"ci: dispatch manual deploy-functions.yml",DECISAO_HUMANA,false,,
+2510,"ci: adicionar scorecard.yml + ajuste ci.yml + CLAUDE.md",DECISAO_HUMANA,false,,
+2511,"refactor: 100 arquivos — reestruturação de componentes e workflows",DECISAO_HUMANA,false,,
+2512,"feat: grande reestruturação (138 arquivos)",CONFLITO,false,dirty,
+2513,"fix(ui): corrigir contraste WCAG em componentes CSS",MERGE_OK,true,blocked,6a7924ba6381dfbffc8140375a045711b95caf73
+2514,"feat(db): migration cron startup — CREATE INDEX IF NOT EXISTS",MERGE_OK,false,blocked,9db8ac785490c8a6d5e0b15a39b28bcb27d36aff
+2515,"feat: nova feature (DRAFT)",DECISAO_HUMANA,false,,
+2516,"test(talkx): testes X006 para campanhas TalkX",MERGE_OK,true,blocked,992c155d11d713082df5096ab4b59d964b8aa2b1
+2517,"feat(db): migration com DROP TYPE + UPDATE em massa (DRAFT)",DECISAO_HUMANA,false,,

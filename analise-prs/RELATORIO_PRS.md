@@ -1,78 +1,111 @@
-# Relatório PRs — Zapp_Web_V2
+# Relatório de Análise — 30 PRs Abertas
 
-**Atualizado:** 2026-10-31  
-**main SHA:** `e2e4989faaa46f5baa2028e69563a9a7eb9a8d76`  
-**PRs abertas:** ~82 | **Mergeadas nesta sessão:** 13
+**Gerado em:** 2026-11-01  
+**Escopo:** `adm01-debug/Zapp_Web_V2` — todas as 30 PRs abertas  
+**Branch de destino:** `main`
 
 ---
 
-## ✅ Mergeadas nesta sessão (13)
+## Resumo executivo
 
-| PR | Conteúdo | SHA squash |
+| Status | Quantidade | Ação |
 |---|---|---|
-| #2071 | fix hook morto useTalkXSuppression.ts | `662083c5` |
-| #2222 | TC-009 team-receipts migration predecessor | `2ca8db80` |
-| #2286 | E09 timestamp fallback stable-inventory.mjs | `438e609b` |
-| #2384 | team-chat audit compat + security fix | `8d27ad09` |
-| #2397 | auditoria supabase docs/inventário JSON | `049094e0` |
-| #2416 | vitest.config.ts TZ=America/Sao_Paulo | `94434b32` |
-| #2420 | DDL aditiva fases 13-15 RADAR × 7 tabelas | `089551d0` |
-| #2423 | RPC merge_brinde_state optimistic locking | `2b0dc69f` |
-| #2424 | ADD COLUMN IF NOT EXISTS copilot_sessions | `6e2e2d02` |
-| #2425 | search_event_rpc — RPC log_search_event + filtro PII | `e2e4989f` |
-| #2427 | RPC e2e_fixture_message GA11 | `7df72c83` |
-| #2430 | talkx_campaign_recipients_page 5→6 args | `00ad8718` |
+| **MERGE_OK** | 12 | 11 com auto_merge ativado; 1 (#2514) merge manual necessário |
+| **DECISAO_HUMANA** | 13 | Joaquim decide; detalhes abaixo |
+| **CONFLITO** | 3 | Rebase necessário pelo autor |
+| **AGUARDANDO_APROVACAO** | 2 | Body da PR declara espera explícita |
+| **Total** | 30 | |
 
 ---
 
-## 🚫 Regra 8 — aguardam decisão humana (5)
+## MERGE_OK (12 PRs)
 
-PRs tocando `.github/workflows/` — não mergear em autopilot:
+PRs seguras para mergear — sem workflow, sem migration destrutiva, sem edge R2, sem conflito.
 
-- **#2046** — workflow
-- **#2092** — workflow (MERGEABLE + CI SUCCESS)
-- **#2100** — workflow (MERGEABLE + CI SUCCESS)
-- **#2297** — workflow (MERGEABLE + CI SUCCESS)
-- **#2450** — workflow (MERGEABLE + CI SUCCESS)
+| PR | Título | auto_merge | Estado |
+|---|---|---|---|
+| [#2489](https://github.com/adm01-debug/Zapp_Web_V2/pull/2489) | fix(e2e): corrigir seletor de telefonia | ✓ squash | behind |
+| [#2491](https://github.com/adm01-debug/Zapp_Web_V2/pull/2491) | chore(migrations): reconciliar migration search_insights | ✓ squash | blocked |
+| [#2493](https://github.com/adm01-debug/Zapp_Web_V2/pull/2493) | chore: atualizar CLAUDE.md e plano | ✓ squash | behind |
+| [#2494](https://github.com/adm01-debug/Zapp_Web_V2/pull/2494) | chore(types): sincronização automática de tipos | ✓ squash (bot) | behind |
+| [#2495](https://github.com/adm01-debug/Zapp_Web_V2/pull/2495) | chore: .claude/commands/ | ✓ squash | behind |
+| [#2498](https://github.com/adm01-debug/Zapp_Web_V2/pull/2498) | feat(rpc): search_insights → search_contacts_insights | ✓ squash | blocked |
+| [#2501](https://github.com/adm01-debug/Zapp_Web_V2/pull/2501) | docs: planos E19/E20/E21 | ✓ squash | blocked |
+| [#2504](https://github.com/adm01-debug/Zapp_Web_V2/pull/2504) | test(e2e): workers 1→4 + timeouts | ✓ squash | behind |
+| [#2507](https://github.com/adm01-debug/Zapp_Web_V2/pull/2507) | docs: CLAUDE.md 6→3 checks | ✓ squash | blocked |
+| [#2513](https://github.com/adm01-debug/Zapp_Web_V2/pull/2513) | fix(ui): contraste WCAG CSS | ✓ squash | blocked |
+| [#2516](https://github.com/adm01-debug/Zapp_Web_V2/pull/2516) | test(talkx): testes X006 | ✓ squash | blocked |
+| [#2514](https://github.com/adm01-debug/Zapp_Web_V2/pull/2514) | feat(db): migration cron startup | **✗ MANUAL** | blocked |
 
----
+### Ação para MERGE_OK
 
-## ⚠️ Decisão humana crítica (1)
-
-- **#2265** — `CRITICAL-1`: revoga grants para role `anon` — DDL de segurança. Draft, MERGEABLE, CI FAILURE.
-
----
-
-## 🔄 CONFLICTING — precisam de rebase (44)
-
-#2051, #2058, #2059, #2063, #2066, #2067, #2068, #2069, #2074, #2078, #2080, #2081, #2082, #2084, #2088, #2091, #2095, #2097, #2107, #2111, #2147, #2148, #2152, #2185, #2186, #2196, #2200, #2208, #2226, #2228, #2233, #2238, #2255, #2277, #2354, #2372, #2396, #2412, #2413, #2414, #2415, #2426, #2429, #2447
-
----
-
-## ❌ CI FAILURE — bloqueadas por testes (14)
-
-Regressão nos unit tests desde ~24/10. Fix do TZ (#2416) já mergeado.
-
-#1930, #1997, #2064, #2137, #2146, #2216, #2279, #2417, #2418, #2419, #2421, #2428, #2431, #2433
+- **#2514**: merge manual necessário (auto_merge não estava ativado). SHA: `9db8ac785490c8a6d5e0b15a39b28bcb27d36aff`. Se CI ainda bloqueado, ativar auto_merge squash.
+- **Demais 11**: auto_merge já ativado — mergeiam sozinhas quando CI passar e branch for atualizada.
 
 ---
 
-## 📝 Draft CONFLICTING (17)
+## DECISAO_HUMANA (13 PRs)
 
-#2113, #2206, #2245, #2249, #2434–#2446 (lote), #2445 (mega: 325 arquivos)
+Requerem decisão de Joaquim. Razão principal listada.
+
+| PR | Título | Razão principal |
+|---|---|---|
+| [#2485](https://github.com/adm01-debug/Zapp_Web_V2/pull/2485) | fix(rls): DROP POLICY IF EXISTS | Migration destrutiva (DROP POLICY) |
+| [#2486](https://github.com/adm01-debug/Zapp_Web_V2/pull/2486) | feat(copilot): RADAR 34 arquivos | Novas edges (tipo incerto) + escopo grande |
+| [#2487](https://github.com/adm01-debug/Zapp_Web_V2/pull/2487) | fix(db): DROP TRIGGER IF EXISTS | Migration destrutiva (DROP TRIGGER) |
+| [#2496](https://github.com/adm01-debug/Zapp_Web_V2/pull/2496) | feat(edge): message-delivery fases 1-4 | Edge R2 (WhatsApp) + migration 484 linhas |
+| [#2497](https://github.com/adm01-debug/Zapp_Web_V2/pull/2497) | ci: pular drafts no CI | Toca ci.yml |
+| [#2499](https://github.com/adm01-debug/Zapp_Web_V2/pull/2499) | ci: main-failure-notify.yml | Novo workflow |
+| [#2502](https://github.com/adm01-debug/Zapp_Web_V2/pull/2502) | ci(draft): filtrar drafts v2 | DRAFT + toca workflows |
+| [#2503](https://github.com/adm01-debug/Zapp_Web_V2/pull/2503) | ci: ajustes ci.yml | Toca ci.yml |
+| [#2508](https://github.com/adm01-debug/Zapp_Web_V2/pull/2508) | ci: deploy-functions.yml | Toca deploy-functions.yml |
+| [#2510](https://github.com/adm01-debug/Zapp_Web_V2/pull/2510) | ci: scorecard.yml + ci.yml | Novo workflow + ci.yml |
+| [#2511](https://github.com/adm01-debug/Zapp_Web_V2/pull/2511) | refactor: 100 arquivos | Toca workflows + escopo enorme |
+| [#2515](https://github.com/adm01-debug/Zapp_Web_V2/pull/2515) | feat: nova feature | DRAFT |
+| [#2517](https://github.com/adm01-debug/Zapp_Web_V2/pull/2517) | feat(db): DROP TYPE + UPDATE massa | DRAFT + migration destrutiva |
 
 ---
 
-## ♻️ NOOP — sem diff real (3)
+## CONFLITO (3 PRs)
 
-#2075, #2086, #2232
+Têm conflito real com `main` (`mergeable: false`). Autor precisa fazer rebase.
+
+| PR | Título | Tamanho |
+|---|---|---|
+| [#2492](https://github.com/adm01-debug/Zapp_Web_V2/pull/2492) | docs: fila-merge + testes | Médio |
+| [#2506](https://github.com/adm01-debug/Zapp_Web_V2/pull/2506) | docs: auditoria 22 documentos | 22 arquivos |
+| [#2512](https://github.com/adm01-debug/Zapp_Web_V2/pull/2512) | feat: grande reestruturação | 138 arquivos |
 
 ---
 
-## 📋 Próximos passos
+## AGUARDANDO_APROVACAO (2 PRs)
 
-1. **Regra 8**: decidir sobre #2092, #2100, #2297, #2450 (CI verde, apenas workflows)
-2. **CONFLICTING**: rebase local nas 44 PRs — cada rebase desbloqueará nova rodada de merges
-3. **CI**: investigar causa raiz dos ~14 failures (regressão desde 24/10)
-4. **#2265**: revisar manualmente antes de mergear (DDL crítico)
-5. **#2445**: avaliar fechar (mega-branch com 325 arquivos, CONFLICTING)
+Body da PR declara explicitamente que Joaquim deve aprovar.
+
+| PR | Título | Razão |
+|---|---|---|
+| [#2505](https://github.com/adm01-debug/Zapp_Web_V2/pull/2505) | perf(db): 57 índices FK | Body: "⚠️ AGUARDANDO APROVAÇÃO (regra 8 CLAUDE.md)" |
+| [#2500](https://github.com/adm01-debug/Zapp_Web_V2/pull/2500) | feat(edge): copilot-tick | Body: "AGUARDANDO APROVAÇÃO"; depende de #2486 |
+
+---
+
+## Metodologia
+
+- Dados coletados via `mcp__GITHUB_-_MCP_-_FOREVER__github_get_pull_request` para cada PR
+- `mergeable` e `mergeable_state` verificados individualmente (endpoint de lista retorna "unknown")
+- Classificação automática por regras em `regras-de-negocio.md`
+- Evidência: arquivo + linha em `prs-raw.json` e `prs.json`; dossiê individual em `dossies/PR-<n>.md`
+
+## Arquivos deste relatório
+
+```
+analise-prs/
+├── RELATORIO_PRS.md
+├── prs.json
+├── prs.csv
+├── regras-de-negocio.md
+├── prs-raw.json
+├── baseline/
+└── dossies/
+    ├── PR-2485.md ... PR-2517.md
+```
