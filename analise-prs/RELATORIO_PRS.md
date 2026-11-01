@@ -1,12 +1,13 @@
 # Relatório PRs — Zapp_Web_V2
 
-**Atualizado:** 2026-11-01  
-**main SHA:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c`  
-**PRs abertas:** ~86 | **Mergeadas nesta sessão:** 13 (todas por squash-merge)
+**Atualizado:** 2026-11-01 (análise COMPLETA)
+**main SHA inicial:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c` (avançou para `3b5f8a96` durante a sessão)
+**PRs abertas ao início:** ~86 | **Mergeadas nesta sessão:** 12 (squash-merge)
+**Verdicts emitidos:** 149
 
 ---
 
-## ✅ Mergeadas nesta sessão (13)
+## ✅ Mergeadas nesta sessão (12)
 
 | PR | Conteúdo | SHA squash |
 |---|---|---|
@@ -25,101 +26,98 @@
 
 ---
 
-## ⏳ MERGE_OK — auto_merge ativado, aguardando CI (10)
+## ⏳ MERGE_OK — auto_merge ativado, aguardando CI (21)
 
-PRs classificadas como seguras, sem migration/workflow/edge function, não-draft, sem conflito.  
+PRs classificadas como seguras, sem migration/workflow/edge function, não-draft, sem conflito.
 `auto_merge` squash ativado — mergearão automaticamente quando CI passar.
 
-| PR | Conteúdo | SHA HEAD | auto_merge |
-|---|---|---|---|
-| #2489 | fix(e2e): seletor telefonia spec E2E | `e5fd0eb9` | ✓ squash |
-| #2493 | docs(claude): CLAUDE.md atualizar checks 6→3 | `a38e2ad4` | ✓ squash |
-| #2494 | chore(db): types-sync — artifacts DB (types.ts, schema-catalog, manifesto) | `069c0cd6` | ✓ squash |
-| #2495 | chore(claude): auditoria-supabase.md comando | `4b780aaf` | ✓ squash |
-| #2498 | feat(db): RPC rename get_search_insights→search_insights + auditoria | `eb03117a` | ✓ squash |
-| #2501 | docs: plano E19/E20/E21 | `6b6e7076` | ✓ squash |
-| #2504 | fix(e2e): workers 1→4 + timeouts | `f67082c3` | ✓ squash |
-| #2507 | docs(claude): CLAUDE.md GR-011 checks 6→3 | `cfae9fd4` | ✓ squash |
-| #2513 | fix(css): accessibility.css !important + test | `6a7924ba` | ✓ squash |
-| #2516 | test(talkx): testes X006 campanhas TalkX | `992c155d` | ✓ squash |
+| PR | Conteúdo | SHA HEAD |
+|---|---|---|
+| #2463 | fix: MediaMigrationTool acessa dados via service | `8fa57120` |
+| #2464 | fix: lint regressions + typecheck errors | `b46eabe4` |
+| #2465 | feat(talkx): X007 UI campanhas TalkX | `*` |
+| #2467 | feat: undo bulkArchive FSM two-step | `873ba948` |
+| #2475 | fix(test): restaura 3 testes ContactNotes | `ac145076` |
+| #2478 | feat(tarefas): cores de prioridade D12 | `c46e71fa` |
+| #2479 | feat(talkx): X008 monitoramento TalkX | `*` |
+| #2480 | feat: C297 texto longo Badge/Card/Label/Tabs | `c5178c37` |
+| #2484 | feat(metas): seletor Hoje/Semana/Mês C130 | `de9584f2` |
+| #2489 | fix(e2e): seletor telefonia spec E2E | `e5fd0eb9` |
+| #2493 | docs(claude): CLAUDE.md checks 6→3 | `a38e2ad4` |
+| #2494 | chore(db): types-sync artifacts | `069c0cd6` |
+| #2495 | chore(claude): auditoria-supabase.md | `4b780aaf` |
+| #2498 | feat(db): RPC rename get_search_insights | `eb03117a` |
+| #2501 | docs: plano E19/E20/E21 | `6b6e7076` |
+| #2504 | fix(e2e): workers 1→4 + timeouts | `f67082c3` |
+| #2507 | docs(claude): CLAUDE.md GR-011 | `cfae9fd4` |
+| #2513 | fix(css): accessibility.css !important | `6a7924ba` |
+| #2516 | test(talkx): testes X006 campanhas | `992c155d` |
+| #2520 | feat(talkx): X009 análise campanhas | `*` |
+| #2522 | feat(talkx): X010 relatório campanhas | `*` |
+
+*SHA não confirmado diretamente nesta sessão (análise via subagente).*
 
 ---
 
-## 🚫 Regra 8 — aguardam decisão humana (21 novas + anteriores)
+## 🚫 Regra 8 — aguardam decisão humana (22)
 
-### Anteriores (da sessão anterior)
-
-PRs tocando `.github/workflows/` — não mergear em autopilot:
-
-- **#2046** — workflow
-- **#2092** — workflow (MERGEABLE + CI SUCCESS)
-- **#2100** — workflow (MERGEABLE + CI SUCCESS)
-- **#2297** — workflow (MERGEABLE + CI SUCCESS)
-- **#2450** — workflow (MERGEABLE + CI SUCCESS)
-
-### Novas — Regra 8 (PRs #2485–#2517)
-
-**Migrations (#2485–#2517):**
-
-| PR | Conteúdo | Motivo bloqueio |
-|---|---|---|
-| #2485 | fix(rls): DROP POLICY IF EXISTS copilot_supervisor_only | DROP POLICY = destrutivo |
-| #2486 | feat: migration + edge functions message-delivery (34 arquivos) | migration + edge function |
-| #2487 | feat(db): migration ALTER TABLE + INSERT + FUNCTION + TRIGGER copilot_live_motor | migration destrutiva |
-| #2491 | feat(db): migration 7 tabelas copilot fases 13-15 | migration aditiva mas requer aprovação |
-| #2496 | feat: migration outbound_post_started + edge functions evolution-webhook | migration + edge function |
-| #2500 | feat(copilot): copilot-tick.ts + migration | edge function + migration |
-| #2505 | perf(db): migration 48 CREATE INDEX IF NOT EXISTS high3-fk-indexes | migration (CREATE INDEX) |
-| #2514 | fix(talkx): CRITICAL-3 talkx-scheduler timeout + cron startup | migration + cron functions |
-| #2517 | feat(db): DROP TYPE + UPDATE em massa — DRAFT | DRAFT + operação destrutiva irrecuperável |
-
-**Workflows (.github/workflows/):**
+### Workflows (.github/workflows/) — 7 antigas + 1 nova
 
 | PR | Conteúdo |
 |---|---|
-| #2497 | ci: pular PRs draft no CI — altera ci.yml |
-| #2499 | ci: main-failure-notify.yml — novo workflow |
-| #2502 | ci: múltiplos workflows alterados |
-| #2503 | ci: altera ci.yml |
-| #2508 | ci: altera deploy-functions.yml |
+| #2046 | workflow |
+| #2092 | workflow (CI SUCCESS, MERGEABLE) |
+| #2100 | workflow (CI SUCCESS, MERGEABLE) |
+| #2297 | workflow (CI SUCCESS, MERGEABLE) |
+| #2450 | workflow (CI SUCCESS, MERGEABLE) |
+| #2497 | ci: pular PRs draft no CI (ci.yml) |
+| #2499 | ci: main-failure-notify.yml novo workflow |
+| #2502 | ci: múltiplos workflows |
+| #2503 | ci: ci.yml |
+| #2508 | ci: deploy-functions.yml |
 | #2510 | ci: scorecard.yml + ci.yml |
-| #2511 | refactor: 100 arquivos incluindo .github/workflows/ |
+| #2511 | refactor 100 arquivos + .github/workflows/ |
+| #2526 | ci: deploy-functions.yml |
+
+### Migrations / DDL em produção
+
+| PR | Conteúdo | Tipo |
+|---|---|---|
+| #2485 | fix(rls): DROP POLICY IF EXISTS copilot_supervisor_only | DROP = destrutivo |
+| #2486 | feat: migration + edge functions message-delivery | migration + edge |
+| #2487 | feat(db): ALTER TABLE + INSERT + FUNCTION + TRIGGER copilot_live_motor | migration destrutiva |
+| #2491 | feat(db): 7 tabelas copilot fases 13-15 | migration aditiva |
+| #2496 | feat: migration outbound_post_started + edge functions | migration + edge |
+| #2500 | feat(copilot): copilot-tick.ts + migration | edge + migration |
+| #2505 | perf(db): 48 CREATE INDEX IF NOT EXISTS | migration índices |
+| #2514 | fix(talkx): CRITICAL-3 talkx-scheduler timeout + cron | migration + cron |
+| #2517 | feat(db): DROP TYPE + UPDATE em massa — DRAFT | DRAFT + destrutivo |
 
 ---
 
 ## ⚠️ Decisão humana crítica (1)
 
-- **#2265** — `CRITICAL-1`: revoga grants para role `anon` — DDL de segurança. Draft, MERGEABLE, CI FAILURE.
+- **#2265** — `CRITICAL-1`: revoga grants `anon` — DDL de segurança. Draft, MERGEABLE, CI FAILURE.
 
 ---
 
 ## 🔄 CONFLICTING — precisam de rebase (47)
 
-### Anteriores (44)
-#2051, #2058, #2059, #2063, #2066, #2067, #2068, #2069, #2074, #2078, #2080, #2081, #2082, #2084, #2088, #2091, #2095, #2097, #2107, #2111, #2147, #2148, #2152, #2185, #2186, #2196, #2200, #2208, #2226, #2228, #2233, #2238, #2255, #2277, #2354, #2372, #2396, #2412, #2413, #2414, #2415, #2426, #2429, #2447
-
-### Novas (3)
-- **#2492** — docs: fila-merge + testes + documentação (`mergeable_state: dirty`)
-- **#2506** — feat(talkx): talkx-scheduler + monitoring 2771 linhas (`mergeable_state: dirty`)
-- **#2512** — 138 arquivos, 43 commits (`mergeable_state: dirty`)
+#2051, #2058, #2059, #2063, #2066, #2067, #2068, #2069, #2074, #2078, #2080, #2081, #2082, #2084, #2088, #2091, #2095, #2097, #2107, #2111, #2147, #2148, #2152, #2185, #2186, #2196, #2200, #2208, #2226, #2228, #2233, #2238, #2255, #2277, #2354, #2372, #2396, #2412, #2413, #2414, #2415, #2426, #2429, #2447, #2492, #2506, #2512
 
 ---
 
-## ❌ CI FAILURE — bloqueadas por testes (14)
+## ❌ CI FAILURE — bloqueadas (14)
 
-Regressão nos unit tests desde ~24/10. Fix do TZ (#2416) já mergeado.
+Regressão nos unit tests desde ~24/10 (mock global `@/lib/logger` removido em `2d97c44`).
 
 #1930, #1997, #2064, #2137, #2146, #2216, #2279, #2417, #2418, #2419, #2421, #2428, #2431, #2433
 
 ---
 
-## 📝 Draft CONFLICTING (17)
+## 📝 Draft CONFLICTING (18)
 
-#2113, #2206, #2245, #2249, #2434–#2446 (lote), #2445 (mega: 325 arquivos)
-
-**Drafts novos (Regra 8):**
-- #2515 — draft genérico, incompleto
-- #2517 — draft + DROP TYPE + UPDATE em massa (destrutivo)
+#2113, #2206, #2245, #2249, #2434–#2446 (lote — #2445 mega: 325 arquivos), #2515 (draft incompleto), #2517 (draft + DROP TYPE)
 
 ---
 
@@ -129,23 +127,24 @@ Regressão nos unit tests desde ~24/10. Fix do TZ (#2416) já mergeado.
 
 ---
 
-## 🔒 Fechadas sem merge por outras sessões (2)
+## 🔒 Fechadas sem merge (3)
 
-- **#2488** — fix: clientHeight/clientWidth mock no setup de testes — fechada sem merge (0 changed files, state=closed)
-- **#2490** — docs: GF-001..056 PENDENCIAS.md e BACKLOG_TAREFAS.md — fechada sem merge (dirty, substituída por #2426)
+- **#2468** — feat(metas): C130 — fechada sem merge em 2026-11-01 (supersedida por #2484)
+- **#2488** — fix: clientHeight/clientWidth mock — fechada sem merge (0 changed files)
+- **#2490** — docs: PENDENCIAS.md BACKLOG — fechada sem merge (dirty, substituída por #2426)
 
 ---
 
-## ✅ Mergeadas por outras sessões (cobertura completa)
+## ✅ Mergeadas por outras sessões
 
-#2034, #2042, #2044, #2340, #2451, #2452, #2482 (docs talkx V4 X001), #2509 (feat talkx V4 X002)
+#2034, #2042, #2044, #2340, #2451, #2452, #2482, #2509
 
 ---
 
 ## 📋 Próximos passos
 
-1. **Regra 8 — Workflows**: decidir sobre #2046, #2092, #2100, #2297, #2450, #2497, #2499, #2502, #2503, #2508, #2510, #2511 (CI verde, aguardam aprovação humana)
-2. **CONFLICTING**: rebase local nas 47 PRs (44 antigas + #2492, #2506, #2512) — cada rebase desbloqueará nova rodada
-3. **Regra 8 — Migrations**: revisar #2485, #2486, #2487, #2491, #2496, #2500, #2505, #2514, #2517
-4. **#2265**: revisar manualmente antes de mergear (DDL crítico — revoga grants `anon`)
-5. **CI**: investigar causa raiz dos ~14 failures (regressão desde 24/10)
+1. **Regra 8 — Workflows** (13): #2046, #2092, #2100, #2297, #2450, #2497, #2499, #2502, #2503, #2508, #2510, #2511, #2526 — decidir merge ou fechar
+2. **Regra 8 — Migrations** (9): #2485, #2486, #2487, #2491, #2496, #2500, #2505, #2514, #2517 — revisar DDL antes de mergear
+3. **CI**: investigar causa raiz dos 14 failures (regressão de `@/lib/logger` mock desde `2d97c44` em 24/10)
+4. **#2265**: revisar manualmente antes de mergear (CRITICAL-1 — revoga grants `anon`)
+5. **CONFLICTING (47)**: cada PR precisa de rebase manual pelo seu autor
