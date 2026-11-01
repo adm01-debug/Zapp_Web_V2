@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -64,13 +64,24 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
   // O valor exibido é DERIVADO do `value` controlado (sem effect): o que sobe
   // pelo onChange já vem formatado, então formatar de novo é idempotente.
   const displayValue = useMemo(() => formatPhone(extractDigits(value)), [value]);
+  // Rastreia se o usuário digitou '+' explicitamente (número internacional).
+  const isExplicitInternationalRef = useRef(false);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     let digits = extractDigits(e.target.value);
 
+    // O input controlado sempre exibe '+...' após o primeiro dígito, então
+    // e.target.value.startsWith('+') seria sempre true e nunca prefixaria +55.
+    // Usa ref para distinguir '+' digitado pelo usuário de '+' injetado pelo formatter.
+    if (e.target.value === '+') {
+      isExplicitInternationalRef.current = true;
+    } else if (!digits) {
+      isExplicitInternationalRef.current = false;
+    }
+
     // Prefixa 55 quando o operador digita um DDD brasileiro direto (ex.: "11...").
     // Não aplica em números internacionais que já vieram com '+'.
-    if (digits.length >= 2 && !digits.startsWith('55') && !e.target.value.startsWith('+')) {
+    if (digits.length >= 2 && !digits.startsWith('55') && !isExplicitInternationalRef.current) {
       const possibleDDD = parseInt(digits.slice(0, 2), 10);
       if (possibleDDD >= 11 && possibleDDD <= 99) {
         digits = '55' + digits;
