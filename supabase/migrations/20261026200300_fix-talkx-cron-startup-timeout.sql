@@ -9,11 +9,12 @@
 CREATE INDEX IF NOT EXISTS idx_job_run_details_jobid_start
   ON cron.job_run_details (jobid, start_time DESC, runid DESC);
 
--- Retenção: deleta runs com mais de 7 dias, evita crescimento ilimitado de 69 MB
+-- Retenção: deleta runs com mais de 30 dias (alinhado com janela de consulta de 14 dias
+-- e análise operacional de 30 dias); evita crescimento ilimitado de 69 MB
 SELECT cron.schedule(
-  'cleanup-cron-run-details-7d',
+  'cleanup-cron-run-details-30d',
   '0 4 * * *',
-  'DELETE FROM cron.job_run_details WHERE end_time < now() - interval ''7 days'' AND end_time IS NOT NULL'
+  'DELETE FROM cron.job_run_details WHERE end_time < now() - interval ''30 days'' AND end_time IS NOT NULL'
 );
 
 -- C2: janela de 14 dias no SELECT dinâmico — usa o índice acima
