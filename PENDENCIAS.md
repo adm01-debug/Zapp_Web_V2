@@ -1,127 +1,111 @@
-# PENDENCIAS.md — Itens que dependem do Joaquim
+# PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-10-31 por sessão GF._
+_Atualizado em 2026-10-31 por sessão de correção de CI._
 
 ---
 
-## 1. DB Live Guard — 2 falhas estruturais que exigem intervenção no banco
+## 1. DB Live Guard — deriva transitória (todos os 7 passos falharam)
 
-**Issue de alerta:** [#1965](https://github.com/adm01-debug/Zapp_Web_V2/issues/1965)
+**Run:** [41066127274](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41066127274) — 2026-10-30T13:47:10Z  
+**Head SHA:** `fb57b4a5cd071bf86a384d10f143360bd18feb61`
 
-### 1a. ACL de `mcp_exec` / `mcp_exec_many` — `search_path` perdido
+**O que falhou:** Todos os 7 passos do "Contrato DB vivo":
+- Comparar migrations com schema_migrations
+- Verificar ACL e contrato de mcp_exec
+- Regenerar catálogo e comparar com o commitado
+- Regenerar manifesto e comparar com o commitado
+- Verificar frescor do types.ts
+- Paridade tripla (migrations, edges, grants)
+- Auditar configuração runtime sem dados de clientes
 
-**Diagnóstico:** As funções `public.mcp_exec(text, integer)` e `public.mcp_exec_many(text[], integer)` perderam o atributo `SET search_path = pg_catalog, public`. O check `check-mcp-exec-acl.sql` verifica `p.proconfig @> ARRAY['search_path=pg_catalog, public']` e retorna `search_path_is_safe = false` para ambas.
-
-**Causa provável:** A migration `fix_security_definer_search_path_batch2` (aplicada em 2026-10-16) pode ter conteúdo divergente entre o arquivo e o que foi aplicado em produção — as duas funções podem ter sido sobrescritas sem o `SET search_path`.
+**Por que não foi corrigido:** O DB Live Guard compara o estado do banco de produção com os artefatos do repositório (types.ts, schema-catalog.json, deployment-manifest.json). A falha em TODOS os passos — incluindo "Verificar frescor do types.ts" — sugere deriva transitória causada pelo deploy-functions estar parado desde às 08:21 (por causa do deno.lock quebrado). Os artefatos gerados por `types-sync` e `deploy-functions` podem estar desatualizados.
 
 **O que o Joaquim precisa fazer:**
-1. Confirmar o estado atual das funções:
-   ```sql
-   SELECT proname, proconfig
-   FROM pg_catalog.pg_proc
-   WHERE pronamespace = 'public'::regnamespace
-     AND proname IN ('mcp_exec', 'mcp_exec_many');
-   ```
-2. Se `proconfig` não contiver `search_path=pg_catalog, public`, restaurar com:
-   ```sql
-   ALTER FUNCTION public.mcp_exec(text, integer) SET search_path = pg_catalog, public;
-   ALTER FUNCTION public.mcp_exec_many(text[], integer) SET search_path = pg_catalog, public;
-   ```
-3. Registrar como migration (`supabase/migrations/`) + ledger antes de aplicar em produção.
+1. Aguardar o merge do PR #2396 (corrige deno.lock → deploy-functions volta a funcionar)
+2. Após o merge, disparar manualmente o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`
+3. Se ainda falhar, os logs do artifact `db-live-evidence-{run_id}-1` mostrarão qual passo específico tem diferença real
+4. Se o passo "Comparar migrations com schema_migrations" falhar: verificar se há migration aplicada em produção sem estar no ledger (SELECT max(version) FROM supabase_migrations.schema_migrations)
+5. Se o passo "Verificar frescor do types.ts" falhar: disparar `workflow_dispatch` do `types-sync.yml` para regenerar types.ts
 
 ---
 
-### 1b. Migrations 2026-10-16 com "prosa pura" no ledger
+## 2. Running Copilot Code Review — falha de firewall interno do Copilot (não corrigível via código)
 
-**Diagnóstico:** O passo "Comparar migrations" (`lote-pendente.mjs`) falha porque várias migrations de 2026-10-16 têm a coluna `statements` preenchida com texto descritivo (resumo em prosa) em vez do SQL real. Isso viola a regra 7 da seção 1 do CLAUDE.md.
+**Runs confirmados com falha:**
+- [41125593441](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41125593441) — múltiplos no dia 2026-10-30
+- [41140197413](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41140197413) — job `copilot-pull-request-reviewer` (check run 124352329821), SHA `79156ee0e5ac8ebddefab98e3d6b5b19eb6b3dec`, PR #2399, concluído 2026-10-30T22:49:16Z com `conclusion=failure`
 
-**O que o Joaquim precisa fazer:**
-1. Identificar as migrations afetadas:
-   ```sql
-   SELECT version, name,
-          array_to_string(statements, ' | ') AS stmt_preview
-   FROM supabase_migrations.schema_migrations
-   WHERE version LIKE '20261016%'
-     AND (statements IS NULL
-          OR array_length(statements, 1) = 0
-          OR statements[1] !~ '^\s*(ALTER|CREATE|DROP|INSERT|UPDATE|REVOKE|GRANT|DO)');
-   ```
-2. Para cada migration afetada, confirmar o SQL real que foi aplicado em produção (via `pg_get_functiondef`, `pg_indexes`, `pg_constraint`, etc.).
-3. Atualizar o ledger com o SQL real:
-   ```sql
-   UPDATE supabase_migrations.schema_migrations
-   SET statements = ARRAY['<SQL real>']
-   WHERE version = '<versao>'
-   RETURNING version;
-   ```
-4. Revalidar com `node scripts/db-audit/supabase-usage-guard.mjs` (deve sair com `novas: 0`).
+**Workflow:** `.github/workflows/` — workflow dinâmico do GitHub Copilot (não tem arquivo próprio no repo)
 
----
+**O que falhou:** Step "Processing Request (Linux)" falha com:
+```
+If you need me to access, download, or install something from one of these locations, you can either:
+  - Configure Actions setup steps to set up my env before the firewall is enabled.
+  - Add the appropriate URLs or hosts to my firewall allow list
+```
 
-## 2. DB Migrate — pendente de aprovação humana
-
-O workflow `db-migrate.yml` está aguardando aprovação no environment `producao-ddl` para migrations que estão na branch `main` mas ainda não foram aplicadas em produção.
-
-**O que o Joaquim precisa fazer:**
-1. Acessar a aba Actions → workflow "DB Migrate" → run mais recente
-2. Verificar o dry-run (passou no step `apply=false`)
-3. Aprovar o apply no environment `producao-ddl`
-
----
-
-## 3. Copilot Code Review — falha de firewall interno do Copilot
-
-**O que falha:** Step "Processing Request (Linux)" no workflow dinâmico do GitHub Copilot — firewall bloqueando URLs externas.
+**Por que não foi corrigido:** Este é um workflow dinâmico do GitHub Copilot — não tem código no repositório. A falha está no ambiente de execução do Copilot (firewall bloqueando URLs externas necessárias para o processamento da review). Não é corrigível via código do projeto.
 
 **O que o Joaquim precisa fazer:**
 1. Verificar em GitHub Settings → Copilot → Code Review quais URLs estão sendo bloqueadas
-2. Adicionar na lista de permissões do firewall (ver: https://gh.io/copilot/firewall-config)
-3. Ou aguardar correção do próprio GitHub (pode ser indisponibilidade temporária)
+2. Adicionar as URLs necessárias na lista de permissões do firewall do Copilot (ver: https://gh.io/copilot/firewall-config)
+3. Ou aguardar correção do próprio GitHub (pode ser uma indisponibilidade temporária do serviço Copilot)
 
 ---
 
-## 4. Branches adm01-debug-patch-* — 24 workflows templates não necessários
+## 3. Branches adm01-debug-patch-* — criadas pelo GitHub UI (templates de workflow) (GF-033..056)
 
-**Diagnóstico (2026-10-31):** 24 branches criadas por Joaquim via interface do GitHub ("Create new file" com template de workflow) em 2026-10-21. Cada branch adiciona **um único arquivo** de workflow genérico em `.github/workflows/` que **não existe em `main`** e não tem relação com o projeto TypeScript/Supabase. Nenhuma foi mergeada. São a fonte dos "25 ghost workflows" mencionados no backlog.
+**Situação:** 24 branches criadas por Joaquim diretamente na interface do GitHub ao explorar templates de workflows do GitHub Actions. Cada grupo de branches representa edições iterativas do mesmo template (sub-branches são histórico de edição via UI). **Não abrir PR, não apagar.** Aguardar decisão do Joaquim sobre adotar ou descartar cada template.
 
-**Conteúdo de cada branch** (arquivo adicionado → não existe em main):
+### Grupo 1 — `dependency-review.yml` (8 branches: GF-033..040)
 
-| Branch | Arquivo adicionado | Template |
-|---|---|---|
-| `adm01-debug-patch-1` | `.github/workflows/dependency-review.yml` | Dependency Review Action |
-| `adm01-debug-patch-1-2` | `.github/workflows/bearer.yml` | Bearer code scanning |
-| `adm01-debug-patch-1-3` | `.github/workflows/hadolint.yml` | Hadolint (Dockerfile linting) |
-| `adm01-debug-patch-1-4` | `.github/workflows/puppet-lint.yml` | puppet-lint |
-| `adm01-debug-patch-1-5` | `.github/workflows/phpmd.yml` | PHPMD (PHP) |
-| `adm01-debug-patch-1-6` | `.github/workflows/lintr.yml` | lintr (R) |
-| `adm01-debug-patch-1-7` | `.github/workflows/rust-clippy.yml` | rust-clippy |
-| `adm01-debug-patch-1-8` | `.github/workflows/pmd.yml` | PMD code scanning |
-| `adm01-debug-patch-2` | `.github/workflows/deno.yml` | Deno CI |
-| `adm01-debug-patch-2-1` | `.github/workflows/webpack.yml` | Node.js + Webpack |
-| `adm01-debug-patch-2-2` | `.github/workflows/generator-generic-ossf-slsa3-publish.yml` | SLSA generic generator |
-| `adm01-debug-patch-2-3` | `.github/workflows/node.js.yml` | Node.js CI |
-| `adm01-debug-patch-2-4` | `.github/workflows/npm-publish-github-packages.yml` | npm publish (GitHub Packages) |
-| `adm01-debug-patch-2-5` | `.github/workflows/docker-publish.yml` | Docker publish |
-| `adm01-debug-patch-2-6` | `.github/workflows/docker-image.yml` | Docker Image CI |
-| `adm01-debug-patch-2-7` | `.github/workflows/npm-publish.yml` | npm publish |
-| `adm01-debug-patch-2-8` | `.github/workflows/python-publish.yml` | Python package publish |
-| `adm01-debug-patch-2-9` | `.github/workflows/python-package-conda.yml` | Python + Conda |
-| `adm01-debug-patch-2-10` | `.github/workflows/django.yml` | Django CI |
-| `adm01-debug-patch-2-11` | `.github/workflows/python-package.yml` | Python package CI |
-| `adm01-debug-patch-2-12` | `.github/workflows/super-linter.yml` | GitHub Super Linter |
-| `adm01-debug-patch-3` | `.github/workflows/manual.yml` | Manual workflow (greeting) |
-| `adm01-debug-patch-3-2` | `.github/workflows/nextjs.yml` | Next.js CI |
-| `adm01-debug-patch-4` | `.github/workflows/main.yml` | Workflow genérico |
+Branches: `adm01-debug-patch-1`, `adm01-debug-patch-1-2`, `adm01-debug-patch-1-3`, `adm01-debug-patch-1-4`, `adm01-debug-patch-1-5`, `adm01-debug-patch-1-6`, `adm01-debug-patch-1-7`, `adm01-debug-patch-1-8`
 
-**O que o Joaquim precisa fazer:**
-1. Confirmar que nenhum desses 24 workflows template é necessário para o projeto (são todos irrelevantes para TypeScript/Supabase: PHP, R, Rust, Deno, Docker, Python, etc.)
-2. Deletar as 24 branches no GitHub (Settings → Branches ou via API):
-   ```bash
-   for b in adm01-debug-patch-1 adm01-debug-patch-1-2 adm01-debug-patch-1-3 adm01-debug-patch-1-4 adm01-debug-patch-1-5 adm01-debug-patch-1-6 adm01-debug-patch-1-7 adm01-debug-patch-1-8 adm01-debug-patch-2 adm01-debug-patch-2-1 adm01-debug-patch-2-2 adm01-debug-patch-2-3 adm01-debug-patch-2-4 adm01-debug-patch-2-5 adm01-debug-patch-2-6 adm01-debug-patch-2-7 adm01-debug-patch-2-8 adm01-debug-patch-2-9 adm01-debug-patch-2-10 adm01-debug-patch-2-11 adm01-debug-patch-2-12 adm01-debug-patch-3 adm01-debug-patch-3-2 adm01-debug-patch-4; do
-     git push origin --delete "$b"
-   done
-   ```
+**O que propõe:** Adicionar `.github/workflows/dependency-review.yml` — workflow padrão do GitHub para revisar licenças e vulnerabilidades de dependências em PRs (acionado em `pull_request` para a `main`).
+
+**Decisão pendente do Joaquim:**
+- Adotar: abrir PR a partir de `adm01-debug-patch-1` (a mais recente/completa do grupo)
+- Descartar: as 8 branches podem ser apagadas sem perda
+
+### Grupo 2 — `deno.yml` (13 branches: GF-041..053)
+
+Branches: `adm01-debug-patch-2`, `adm01-debug-patch-2-1`, `adm01-debug-patch-2-2`, `adm01-debug-patch-2-3`, `adm01-debug-patch-2-4`, `adm01-debug-patch-2-5`, `adm01-debug-patch-2-6`, `adm01-debug-patch-2-7`, `adm01-debug-patch-2-8`, `adm01-debug-patch-2-9`, `adm01-debug-patch-2-10`, `adm01-debug-patch-2-11`, `adm01-debug-patch-2-12`
+
+**O que propõe:** Adicionar `.github/workflows/deno.yml` — workflow de CI para Deno (template oficial GitHub para projetos Deno).
+
+**Atenção:** O projeto já tem CI para Deno integrado em `ci.yml` e `deploy-functions.yml`. Adotar este template provavelmente causaria execução duplicada.
+
+**Decisão pendente do Joaquim:**
+- Adotar: revisar se o conteúdo de `adm01-debug-patch-2` é diferente/complementar ao CI atual antes de abrir PR
+- Descartar: as 13 branches podem ser apagadas sem perda
+
+### Grupo 3 — `eslint.yml` + `manual.yml` (2 branches: GF-054..055)
+
+Branches: `adm01-debug-patch-3`, `adm01-debug-patch-3-2`
+
+**O que propõe:** Adicionar dois arquivos:
+- `.github/workflows/eslint.yml` — workflow de lint com ESLint (template GitHub)
+- `.github/workflows/manual.yml` — workflow de disparo manual simples (template "Manual workflow")
+
+**Atenção:** O projeto já tem ESLint integrado em `ci.yml` (passo `🔍 Lint & TypeCheck`). Um `eslint.yml` separado causaria execução duplicada.
+
+**Decisão pendente do Joaquim:**
+- Adotar `eslint.yml`: revisar se é complementar; provavelmente redundante
+- Adotar `manual.yml`: pode ser útil como workflow genérico de disparo manual
+- Descartar: as 2 branches podem ser apagadas sem perda
+
+### Grupo 4 — `eslint.yml` + `main.yml` (1 branch: GF-056)
+
+Branches: `adm01-debug-patch-4`
+
+**O que propõe:** Adicionar dois arquivos:
+- `.github/workflows/eslint.yml` — igual ao do Grupo 3
+- `.github/workflows/main.yml` — arquivo de 1 byte (starter vazio do GitHub)
+
+**Decisão pendente do Joaquim:**
+- Descartar: o `main.yml` de 1 byte não tem utilidade; `eslint.yml` é redundante com `ci.yml`
+- A branch pode ser apagada sem perda
 
 ---
 
-_Este arquivo deve ser atualizado ou removido quando os itens forem resolvidos._
+_Nota: Este arquivo deve ser removido ou atualizado quando os itens acima forem resolvidos._
