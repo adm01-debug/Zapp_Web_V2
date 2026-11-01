@@ -257,7 +257,7 @@ async function handleAiGenerate(input: AiJobHandlerInput): Promise<AiJobHandlerR
  * motivo do `ai.generate`: sem tick, a pilha de geração nem carrega.
  */
 async function handleCopilotTickJob(input: AiJobHandlerInput): Promise<AiJobHandlerResult> {
-  const [{ handleCopilotTick, CopilotTickError }, { generateWithRouting }, { readCapabilityFlag }] = await Promise.all([
+  const [{ handleCopilotTick, CopilotTickError }, { generateWithRouting }, { readCapabilityFlagFailClosed }] = await Promise.all([
     import("../_shared/copilot-tick.ts"),
     import("../_shared/ai-generate.ts"),
     import("../_shared/ai-feature-flags.ts"),
@@ -269,7 +269,7 @@ async function handleCopilotTickJob(input: AiJobHandlerInput): Promise<AiJobHand
         {
           supabase: input.supabase,
           generate: (params) => generateWithRouting(params),
-          readFlag: readCapabilityFlag,
+          readFlag: readCapabilityFlagFailClosed,
         },
       ),
       leaseLostRejection(input.signal, "COPILOT_LEASE_LOST"),
