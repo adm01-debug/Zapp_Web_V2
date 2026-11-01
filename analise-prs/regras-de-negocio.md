@@ -1,6 +1,6 @@
 # Regras de Negócio — Zapp Web V2
 
-**SHA main de referência:** `3617a2acd517dcc9a6eaf2533cd256913e462c21`  
+**SHA main de referência:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c`  
 **Data:** 2026-11-01
 
 ## Fontes consultadas
