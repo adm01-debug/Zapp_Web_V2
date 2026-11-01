@@ -6,13 +6,7 @@ ALTER TABLE public.copilot_sessions
     '{"B":null,"R":null,"I":null,"N":null,"D":null,"E":null}';
 
 ALTER TABLE public.copilot_sessions
-  ADD COLUMN IF NOT EXISTS comm_style text;
-
-ALTER TABLE public.copilot_sessions
-  ADD COLUMN IF NOT EXISTS intent text;
-
-ALTER TABLE public.copilot_sessions
-  ADD COLUMN IF NOT EXISTS sentiment text;
+  ADD COLUMN IF NOT EXISTS comm_style text[] NOT NULL DEFAULT '{}';
 
 ALTER TABLE public.copilot_sessions
   ADD COLUMN IF NOT EXISTS decision_role text

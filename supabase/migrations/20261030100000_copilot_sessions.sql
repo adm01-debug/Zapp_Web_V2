@@ -25,7 +25,6 @@ CREATE TABLE IF NOT EXISTS public.copilot_sessions (
   -- Timestamps
   started_at          timestamptz NOT NULL DEFAULT now(),
   last_tick_at        timestamptz,
-  last_processed_message_at timestamptz,
   closed_at           timestamptz,
   created_at          timestamptz NOT NULL DEFAULT now(),
   updated_at          timestamptz NOT NULL DEFAULT now(),
