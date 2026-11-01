@@ -190,9 +190,14 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
       for (const row of originals ?? []) {
         previousStatus.set(row.id, row.conversation_status ?? null);
       }
-      // Só arquiva quem foi LIDO. Zero linha lida (RLS filtrando) não é
-      // sucesso — sem alvo, avisa em vez de arquivar às cegas.
-      const targetIds = contactIds.filter((id) => previousStatus.has(id));
+      // Só arquiva quem foi LIDO e não está already archived. Zero linha lida
+      // (RLS filtrando) não é sucesso — sem alvo, avisa em vez de arquivar às cegas.
+      // Contato já 'archived' é excluído: arquivar não muda seu estado, mas o
+      // desfazer mapearia 'archived' → 'open' (fora de validFromArchived), abrindo
+      // uma conversa que estava arquivada antes da ação do operador.
+      const targetIds = contactIds.filter(
+        (id) => previousStatus.has(id) && previousStatus.get(id) !== 'archived',
+      );
       if (targetIds.length === 0) throw new Error('nenhum contato lido');
 
       await executeUndoable({
@@ -211,9 +216,15 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
           // Agrupa por status original para emitir um UPDATE por grupo —
           // restauração atômica por valor: uma falha não deixa o lote parcialmente
           // revertido.
+          // Trigger enforce_conversation_status_transition (produção): a partir de
+          // 'archived' só são válidos 'open' e 'pending'. Qualquer outro original
+          // (waiting/resolved/closed/null) voltaria erro e o desfazer falharia —
+          // cai em 'open'.
+          const validFromArchived = new Set(['open', 'pending']);
           const byStatus = new Map<string | null, string[]>();
           for (const id of targetIds) {
-            const original = previousStatus.get(id) ?? null;
+            const raw = previousStatus.get(id) ?? null;
+            const original = raw !== null && validFromArchived.has(raw) ? raw : 'open';
             const group = byStatus.get(original) ?? [];
             group.push(id);
             byStatus.set(original, group);
