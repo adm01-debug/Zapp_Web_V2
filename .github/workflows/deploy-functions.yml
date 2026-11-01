@@ -479,7 +479,7 @@ jobs:
           set -euo pipefail
           deno test \
             --config scripts/ci/deno.json \
-            --allow-env --allow-read \
+            --allow-env --allow-read --allow-net=127.0.0.1 \
             --no-check \
             supabase/functions/**/*.test.ts
 
