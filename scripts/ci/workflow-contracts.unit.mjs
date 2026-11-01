@@ -558,10 +558,15 @@ test('E69: unit-tests/node-scripts não esperam o typecheck (rodam em paralelo)'
   }
 });
 
-test('E69: o build continua atrás do lint E do test', () => {
-  const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');
-  assert.ok(anc.has('typecheck'), 'build deixou de esperar o lint');
-  assert.ok(anc.has('unit-tests'), 'build deixou de esperar o test');
+test('E69: build espera unit-tests; typecheck corre em paralelo mas ci-gate espera os dois', () => {
+  const grafo = grafoDeNeeds(wf['ci.yml']);
+  const ancBuild = ancestrais(grafo, 'build');
+  assert.ok(ancBuild.has('unit-tests'), 'build deixou de esperar o test');
+  assert.ok(!ancBuild.has('typecheck'), 'build voltou a esperar typecheck — desfaz E69');
+  // ci-gate deve continuar esperando typecheck (prova que o parallelismo nao remove a exigencia)
+  const ancGate = ancestrais(grafo, 'ci-gate');
+  assert.ok(ancGate.has('typecheck'), 'ci-gate deixou de esperar typecheck');
+  assert.ok(ancGate.has('build'), 'ci-gate deixou de esperar build');
 });
 
 // W99: novos invariantes de segurança de workflow
