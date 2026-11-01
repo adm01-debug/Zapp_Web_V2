@@ -31,7 +31,7 @@ vi.mock('sonner', () => ({ toast: toastMock }));
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() },
   getLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() , withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })}),
-}));
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),}));
 
 vi.mock('@/hooks/chat/useConversationAnalyses', () => ({
   useConversationAnalyses: () => ({ analyses: [], refetch: vi.fn(), getSentimentTrend: () => null, loading: false }),
