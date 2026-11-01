@@ -1,132 +1,98 @@
-# Regras de Negócio — Critérios de Merge de PRs
+# Regras de Negócio — Zapp Web V2
 
-> Extraídas de `CLAUDE.md`, branch protection da API do GitHub, e da convenção vigente do projeto.
-> Data: 2026-10-22 · main SHA: `5a4632c87f7e233fe62e830443f8b0eddf3e1a72`
+**SHA main de referência:** `3617a2acd517dcc9a6eaf2533cd256913e462c21`  
+**Data:** 2026-11-01
 
----
+## Fontes consultadas
 
-## 1. Stack tecnológica do projeto
-
-- **Runtime**: Bun (não Node, não Deno)
-- **Bundler**: Vite (não Webpack, não Next.js)
-- **Linguagem**: TypeScript/React (não PHP, Python, Java, Rust, R, Go, Puppet)
-- **Containerização**: nenhuma — sem Dockerfile, sem Docker Compose neste repositório
-- **Banco**: Supabase Postgres 17 (`tnnnlkbymytvtqngbbqh`)
-- **Deploy front**: Vercel automático na `main`
-- **Deploy edge functions**: manual via `deploy-functions.yml` + aprovação
-
-PR que adiciona workflow para tecnologia ausente neste projeto **é inválida** (critério 1 falha).
+- `CLAUDE.md` (regras gerais, banco, CI, workflows)
+- `supabase/migrations/` (schema e RLS)
+- `src/hooks/`, `src/services/` (lógica de negócio)
+- `docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md`
+- `docs/audits/`
 
 ---
 
-## 2. GitHub Actions — SHA pinning obrigatório
+## 1. Contatos
 
-`sha_pinning_required = true` (verificado em CLAUDE.md, seção "Perímetro do GitHub").
+**Regra vigente (F5/D4, migration 20260930450000):**
 
-Toda referência a action **deve** usar SHA completo de 40 caracteres, não tag semântica:
+Contato visível = `deleted_at IS NULL` + `is_lid_legacy = false` + `phone ~ '^[0-9]{10,15}$'`
 
-```yaml
-# ERRADO
-uses: actions/checkout@v4
-
-# CORRETO
-uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
-```
-
-PR que adiciona workflow com `@vN` ou `@latest` viola esta regra e **é rejeitada**.
+Qualquer PR que altere esse critério deve atualizar **simultaneamente**:
+1. Migration com nova RLS
+2. `CONTACT_VISIBLE_PHONE_PATTERN` em `src/hooks/crm/contactsAggregates.ts`
+3. `scripts/db-audit/contacts-legacy-visibility.test.sh`
 
 ---
 
-## 3. Proteção de branch `main`
+## 2. Conversas / Inbox
 
-| Campo | Valor |
-|---|---|
-| `strict` | `true` (PR deve estar atualizada com a `main`) |
-| `enforce_admins` | `true` |
-| `required_status_checks` | 6 checks obrigatórios |
-| `required_pull_request_reviews` | nenhum (deliberado) |
-| Método de merge | squash only |
-| `delete_branch_on_merge` | `true` |
+**Estados de transição (migration de constraint):**  
+`archived → open` ou `archived → pending` são as únicas transições permitidas desde `cbe53b574`.  
+PR #2463 (contexto): sem DDL de conversa, só serviço de mídia.
 
-### 6 required checks
-
-1. `🔍 Lint & TypeCheck`
-2. `🧪 Unit Tests`
-3. `🏗️ Build`
-4. `🔒 Security Audit`
-5. `Contrato DB offline`
-6. `🎭 E2E Tests (Playwright)`
-
-PR não pode ser mergeada enquanto qualquer required check falhar, **mesmo que a falha seja pré-existente na `main`**.
+**Regra de undo de archive:**  
+Voltar conversa arquivada ao estado original respeita constraint `archived → open|pending`.
 
 ---
 
-## 4. Migrations de banco de dados
+## 3. Copiloto / RADAR (em desenvolvimento)
 
-Somente migrations **aditivas e não destrutivas** são aceitas:
+**Tabelas copilot** (migration 20261030145126 — PR #2461):
+`copilot_sessions`, `copilot_insights`, `copilot_conversation_context`, `copilot_product_catalog`, `copilot_objection_patterns`, `copilot_success_patterns`, `copilot_performance_metrics`
 
-| Operação | Permitida? |
-|---|---|
-| `CREATE TABLE` | ✅ |
-| `CREATE INDEX` | ✅ (não CONCURRENTLY — falha no gateway) |
-| `ALTER TABLE ADD COLUMN NULL` | ✅ |
-| `CREATE FUNCTION` / `CREATE OR REPLACE FUNCTION` | ✅ |
-| `CREATE POLICY` (nova) | ✅ |
-| `DROP POLICY` / `DROP TABLE` / `DROP FUNCTION` | ❌ |
-| `RENAME` (tabela, coluna, função) | ❌ |
-| `ALTER TYPE` | ❌ |
-| `DELETE ... WHERE` em massa | ❌ |
-| `UPDATE ... WHERE` em massa | ❌ |
-
-Migration com `DROP POLICY IF EXISTS` viola esta regra mesmo que seja seguida de `CREATE POLICY`.
+**Edge functions copilot** (PR #2460 — BLOQUEADO):
+Dependem das tabelas acima + `copilot_sessions`/`copilot_insights` da migration 20261030200000 (ainda em `producao-ddl`). Não mergear edge functions antes das tabelas.
 
 ---
 
-## 5. Testes — zero regressão
+## 4. TalkX / Campanhas
 
-**Proibido:**
-- Apagar arquivo de teste existente
-- Pular (`test.skip`) ou enfraquecer asserções
-- Atualizar snapshots sem justificativa explícita
-- Usar `|| true`, `continue-on-error`, `@ts-ignore` para esconder erros
+**Plano vigente:** V4 (200 etapas X001–X200), `docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md`  
+V3 e anteriores: substituídos, não executar.
 
-PR que deleta arquivo de teste **é rejeitada**, independente do motivo alegado.
+**Convenção de branch:** `<agente>/<tipo>-talkx-x<NNN>-<slug>-<AAMMDD-HHMM>`
 
 ---
 
-## 6. SINGU — somente leitura
+## 5. Migrations — regras obrigatórias
 
-O sistema SINGU é externo e read-only neste contexto. PR que tente **escrever** no SINGU não é mergeada.
+Ver `CLAUDE.md` seção 1 para detalhes completos. Resumo:
 
----
-
-## 7. Workflows existentes — não duplicar
-
-O `ci.yml` já cobre: lint, typecheck, unit tests (Bun/Vitest), build (Vite), security audit, E2E (Playwright), DB contract.
-
-PR que adiciona workflow que duplica funcionalidade já existente **é rejeitada** (critério 3: já implementado).
+- **Aditiva e não destrutiva:** sem `DROP`, `RENAME`, `ALTER TYPE`, `DELETE`/`UPDATE` em massa
+- **Ordem obrigatória:** arquivo → PR → merge → deploy → apply
+- **Teste:** aplicar toda cadeia de migrations em Postgres temporário
+- **Registro:** `version` > max(ledger), `statements` = SQL real (não prosa)
+- **RLS:** sempre com teste provando que nenhum acesso foi ampliado
 
 ---
 
-## 8. Critérios de análise (4 perguntas)
+## 6. Edge Functions
 
-Para cada PR, 4 critérios devem ser verdadeiros para o merge ser permitido:
-
-1. **Válida?** — A mudança tem valor real para este projeto?
-2. **Sem regressão?** — Nenhum teste é apagado, nenhuma funcionalidade existente é removida?
-3. **Não já implementada?** — O conteúdo não está já na `main`?
-4. **Regra de negócio correta?** — A mudança está alinhada com as decisões de produto?
-
-Qualquer critério falso → PR **não é mergeada**.
+- Deploy automático: push na `main` que altera `supabase/functions/` ou `supabase/config.toml`
+- Autenticação: nunca afrouxar (sem remover `Authorization` checks, sem ampliar roles)
+- Testes obrigatórios antes do merge
 
 ---
 
-## 9. CI vermelho na main — impacto
+## 7. Permissões / Roles
 
-Os checks `🧪 Unit Tests` (×3) e `Contrato DB offline` **já falham na `main` SHA `5a4632c`** com 44 testes pré-existentes e falha de conexão de banco respectivamente.
-
-Com `strict=true`, mesmo PRs que passem os critérios 1–4 **não podem ser mergeadas** enquanto o CI da `main` estiver vermelho, pois o required check `🧪 Unit Tests` sempre falhará no SHA da PR.
+- `is_admin_or_supervisor()`: admins e supervisores
+- `is_admin()`: apenas admins
+- RLS: toda nova policy deve ser testada isoladamente em Postgres temporário
+- Nunca ampliar acesso via RLS sem evidência de teste
 
 ---
 
-*Fonte: `CLAUDE.md` (seções 0–3), `scripts/ci/github-settings-baseline.json`, API GitHub branch protection.*
+## 8. Workflows de CI (.github/workflows/)
+
+Proibido alterar workflows nesta sessão (regra de segurança). PRs com apenas mudanças de workflow → SKIP_WORKFLOWS.
+
+6 required checks: `🔍 Lint & TypeCheck`, `🧪 Unit Tests`, `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🎭 E2E Tests (Playwright)`
+
+CI Gate = aggregate check `✅ CI Gate (required check)` — aparece após todos os individuais.
+
+---
+
+*Gerado automaticamente em 2026-11-01 com base nas fontes acima.*
