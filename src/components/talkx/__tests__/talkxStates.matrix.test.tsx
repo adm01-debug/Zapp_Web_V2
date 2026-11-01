@@ -232,7 +232,7 @@ describe('X047 — matriz tela×estado: boundary de erro prevalece sobre vazio',
       <TalkXOverview
         campaigns={[]}
         segments={[]}
-        creators={[]}
+        creators={{}}
         isLoading={false}
         isError={true}
         error={new Error('X047')}
