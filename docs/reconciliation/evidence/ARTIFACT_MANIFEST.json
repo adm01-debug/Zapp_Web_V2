@@ -79,7 +79,7 @@
     {
       "path": "MASTER_LEDGER.json",
       "bytes": 979311,
-      "sha256": "ff6ca269633e3fed398c22e4d68a8decb43a2a4943f276612805582471d0360f",
+      "sha256": "5827ce4d521bf98ba75a2fdf5c7bf41739db53b4a375c230d6522cf1eb25a1d7",
       "git_blob_sha": "cbefa947b341316f39dc54880f3979c2d0003b45"
     },
     {
@@ -103,7 +103,7 @@
     {
       "path": "PLAN_REGISTRY.json",
       "bytes": 105951,
-      "sha256": "94ba1874a404102d2bfc5b4bc46d9a9cd0a8c93e2c10999ef3a54801d14d54bf",
+      "sha256": "0e5afe9b5999cd7d6a4f1b0e87fa615a84c995171be7c9ad4515f329332b853a",
       "git_blob_sha": "bc6ea7ded88ea6ac6c4a1c567ae065d17c8d7660"
     },
     {
@@ -199,7 +199,7 @@
     {
       "path": "evidence/TASK_LEDGER_FULL.json.gz",
       "bytes": 2305252,
-      "sha256": "6be7755959f77e3b47326071e1dac0a69240c6163feaee266fd55398bd7949ee",
+      "sha256": "5545a114e3b6cad37751d4ed5e1dfd01f02a04d0fdea292b903520e671a1beae",
       "git_blob_sha": "3949edda7d1400600623a90fa77019e661a6002d"
     },
     {
@@ -4225,7 +4225,7 @@
     {
       "path": "tasks/P006.json",
       "bytes": 223821,
-      "sha256": "73a9dc031cd39db4ea5692ede73c19ea5932e303b26f2bdba252be184b967d47",
+      "sha256": "276362c4247c1793abd39077c83ef5203a84c50be57c812bc745e3f2f8e099b5",
       "git_blob_sha": "5e72027999e5639fade2f0f98b41e58346270c09"
     },
     {

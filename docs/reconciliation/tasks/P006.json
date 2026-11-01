@@ -21,12 +21,12 @@
     "task_file": "tasks/P006.json",
     "status_counts": {
       "SUPERSEDED": 3,
-      "DONE_VERIFIED": 23,
+      "DONE_VERIFIED": 26,
       "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 27,
       "NEEDS_REVALIDATION": 11,
       "PARTIAL": 11,
       "PRODUCT_DECISION_REQUIRED": 8,
-      "NOT_IMPLEMENTED": 15,
+      "NOT_IMPLEMENTED": 12,
       "BLOCKED_TECHNICAL": 2
     },
     "review_level_counts": {
