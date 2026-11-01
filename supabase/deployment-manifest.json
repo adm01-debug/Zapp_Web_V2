@@ -121,8 +121,8 @@
     },
     {
       "path": "supabase/functions/_shared/copilot-tick.ts",
-      "bytes": 21242,
-      "sha256": "33c1dd03b30cbf409d1534791350c6509841d927dbc3dfc6daf0f0516024f504"
+      "bytes": 22087,
+      "sha256": "c6ac32f1afe410a4f24e327a8a98cf60e1c7b39635c35e794fe28929d41fcfb6"
     },
     {
       "path": "supabase/functions/_shared/cors-origins.ts",
@@ -1032,7 +1032,7 @@
       "name": "ai-jobs-worker",
       "entrypoint": "supabase/functions/ai-jobs-worker/index.ts",
       "verify_jwt": true,
-      "source_sha256": "4fbde47ad3288d7e8bb8845a9777ef1936cd8959646fd200635f5e2d5742bb02",
+      "source_sha256": "63461ae561aeeaad9d2f971638123f8ce791256e03d29a343e2235a2761a23f8",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -2541,5 +2541,5 @@
       ]
     }
   ],
-  "manifest_sha256": "50a1df4ea548453ddd97dc97ec2dfbe05c9e810b514f5b0b423df05c11b2256f"
+  "manifest_sha256": "2017785c0ab74dd5df00984cd578593d2f2fe5027290b9a44a3d42b4a7111889"
 }

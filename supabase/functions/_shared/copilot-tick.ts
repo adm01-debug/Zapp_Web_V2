@@ -205,9 +205,9 @@ export function buildSessionPatch(
   for (const campo of ["intent", "sentiment", "comm_style", "occasion"] as const) {
     if (out[campo]) patch[campo] = out[campo];
   }
-  // Normaliza para o conjunto aceito pelo CHECK constraint; não falha o tick.
   if (out.decision_role) {
-    patch.decision_role = DECISION_ROLE_SET.has(out.decision_role) ? out.decision_role : "unknown";
+    if (DECISION_ROLE_SET.has(out.decision_role)) patch.decision_role = out.decision_role;
+    // valor não reconhecido → omite (não sobrescreve role válido já gravado)
   }
   if (out.stakeholders?.length) patch.stakeholders = out.stakeholders;
 
@@ -469,6 +469,10 @@ export async function handleCopilotTick(input: CopilotTickInput, deps: CopilotTi
   const p1 = parseModelOutput(CopilotTier1Schema, parsed1);
   if (!p1.ok) throw new CopilotTickError("COPILOT_TIER1_CONTRACT");
   const out1 = p1.data;
+  // Sanitiza deadline inválida antes de usar em patch ou prompt tier2.
+  if (out1.brinde?.deadline && !isRealDate(out1.brinde.deadline)) {
+    delete (out1.brinde as Record<string, unknown>).deadline;
+  }
   const allMoments = [...new Set([...keyMoments, ...(out1.key_moments ?? [])])];
 
   // 4. Andar 2 (só em momento-chave). Falha aqui não perde o andar 1.
