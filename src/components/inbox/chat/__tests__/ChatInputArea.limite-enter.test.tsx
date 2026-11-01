@@ -97,6 +97,7 @@ vi.mock('@/components/inbox/SlashCommands', () => ({ SlashCommands: () => null }
 vi.mock('@/components/inbox/AudioRecorder', () => ({ AudioRecorder: () => null }));
 vi.mock('@/components/inbox/StickerPicker', () => ({ StickerPicker: () => null }));
 vi.mock('@/components/inbox/CustomEmojiPicker', () => ({ CustomEmojiPicker: () => null }));
+vi.mock('@/components/inbox/copilot/RadarLive', () => ({ default: () => null }));
 
 import { ChatInputArea } from '../ChatInputArea';
 import { useChatPanelHandlers } from '../useChatPanelHandlers';
