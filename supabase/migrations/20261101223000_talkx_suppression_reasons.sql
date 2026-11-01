@@ -54,9 +54,23 @@ CREATE POLICY "talkx_suppression_reasons_update"
   USING (is_admin_or_supervisor(auth.uid()))
   WITH CHECK (is_admin_or_supervisor(auth.uid()));
 
+-- 4.5. Descartar view que depende de reason_code como enum
+DROP VIEW IF EXISTS talkx_campaign_optouts;
+
 -- 5. Converter reason_code de enum para text
 ALTER TABLE talkx_blacklist
   ALTER COLUMN reason_code TYPE text USING reason_code::text;
+
+-- 5.1. Recriar view sem dependência de enum
+CREATE OR REPLACE VIEW talkx_campaign_optouts AS
+SELECT campaign_id,
+    count(*) AS optout_count,
+    count(*) FILTER (WHERE origin = 'auto_optout') AS auto_optout_count,
+    max(created_at) AS last_optout_at
+  FROM talkx_blacklist b
+ WHERE campaign_id IS NOT NULL
+   AND reason_code = 'opt_out'
+ GROUP BY campaign_id;
 
 -- 6. Adicionar FK (todos os valores existentes já estão na tabela de motivos)
 ALTER TABLE talkx_blacklist
