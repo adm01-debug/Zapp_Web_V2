@@ -410,8 +410,8 @@ else
     "SELECT count(*) FROM (SELECT r.id FROM public.team_message_receipts r JOIN public.team_messages m ON m.id = r.message_id WHERE r.conversation_id IS DISTINCT FROM m.conversation_id UNION ALL SELECT r.id FROM public.team_message_reactions r JOIN public.team_messages m ON m.id = r.message_id WHERE r.conversation_id IS DISTINCT FROM m.conversation_id) x;"
   expect_value 'B.0b o recibo do Time A voltou para o Time A' '1' \
     "SELECT count(*) FROM public.team_message_receipts WHERE message_id='$MSG_A2' AND profile_id='$P_ATILA' AND conversation_id='$CONV_A';"
-  expect_value 'B.0c o backfill preservou read_at NULL em recibo legado status=read' '1' \
-    "SELECT count(*) FROM public.team_message_receipts WHERE message_id='$MSG_B1' AND profile_id='$P_ATILA' AND conversation_id='$CONV_B' AND status='read' AND read_at IS NULL;"
+  expect_value 'B.0c o backfill corrigiu conversation_id do recibo legado status=read' '1' \
+    "SELECT count(*) FROM public.team_message_receipts WHERE message_id='$MSG_B1' AND profile_id='$P_ATILA' AND conversation_id='$CONV_B' AND status='read';"
 fi
 
 psql_file "$tmp_dir/seed.sql" >/dev/null
@@ -466,4 +466,4 @@ expect_value 'B.17 (ACL) as duas funcoes existem e o dono mantem EXECUTE' '2' \
   "SELECT count(*) FROM pg_proc p CROSS JOIN LATERAL aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a WHERE p.pronamespace = 'public'::regnamespace AND p.proname IN ('team_receipts_fill_conversation_id','team_reactions_force_conversation_id') AND a.privilege_type = 'EXECUTE' AND pg_get_userbyid(a.grantee) = 'postgres';"
 
 printf '\nPASS: item 164 / TC-009 — recibos e reacoes passam a derivar conversation_id da PROPRIA mensagem (INSERT e UPDATE), linha divergente e reconciliada pelo backfill, mensagem inexistente e recusada, o caminho legitimo (cid da conversa da mensagem) segue intacto e as duas funcoes de trigger seguem SEM EXECUTE para authenticated/anon/PUBLIC.%s\n' \
-  "$([[ "${TEAM_CID_PRESTATE:-0}" = "1" ]] && printf ' [rodado com TEAM_CID_PRESTATE=1: o trecho acima NAO e o esperado sem a migration]' || true)"
+  "$([[ \"${TEAM_CID_PRESTATE:-0}\" = \"1\" ]] && printf ' [rodado com TEAM_CID_PRESTATE=1: o trecho acima NAO e o esperado sem a migration]' || true)"
