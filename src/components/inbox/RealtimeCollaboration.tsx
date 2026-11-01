@@ -57,7 +57,7 @@ export function RealtimeCollaboration({ contactId, className }: RealtimeCollabor
 
     const trimmedComment = comment.trim();
 
-    const { data: eventId, error: transferError } = await supabase.rpc('transfer_conversation', {
+    const { data: eventId, error: transferError } = await supabase.rpc('transfer_conversation' as never, {
       p_contact_id: contactId,
       p_to_agent_id: agentId,
       p_to_queue_id: null,
