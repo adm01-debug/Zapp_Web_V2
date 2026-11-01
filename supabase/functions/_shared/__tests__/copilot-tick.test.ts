@@ -94,8 +94,11 @@ function gerador(respostas: Record<string, Row | null>) {
   const chamadas: string[] = [];
   const generate: CopilotGenerate = (p) => {
     chamadas.push(p.purpose);
-    const data = respostas[p.purpose] ?? null;
-    return Promise.resolve({ ok: data !== null, data, model: `m-${p.purpose}` });
+    const obj = respostas[p.purpose] ?? null;
+    const data = obj !== null
+      ? { choices: [{ message: { content: JSON.stringify(obj) } }] }
+      : null;
+    return Promise.resolve({ ok: obj !== null, data, model: `m-${p.purpose}` });
   };
   return { generate, chamadas };
 }
