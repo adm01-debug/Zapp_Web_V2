@@ -281,7 +281,7 @@ export function useUserSettings() {
     } finally {
       setIsSaving(false);
     }
-  }, [user?.id, settings]);
+  }, [user, settings]);
 
   // Salva apenas os campos de aparência (theme, language, compact_mode).
   // Não inclui tts_voice_id/tts_speed para evitar sobrescrever configurações
@@ -347,7 +347,7 @@ export function useUserSettings() {
     } finally {
       setIsSaving(false);
     }
-  }, [user?.id, isLoading, isError, settings.theme, settings.language, settings.compact_mode]);
+  }, [user, isLoading, isError, settings.theme, settings.language, settings.compact_mode]);
 
   // Reset to defaults
   const resetSettings = useCallback(() => {
