@@ -19,6 +19,18 @@ ALTER TABLE public.copilot_insights
 
 -- 3. comm_style: 20261031120000 criou como text[]; normaliza para text
 --    (motor RADAR v4 usa string única, não array)
+--    Guard: aborta se alguma linha tiver mais de um elemento (invariante de dados).
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM public.copilot_sessions
+    WHERE array_length(comm_style, 1) > 1
+  ) THEN
+    RAISE EXCEPTION
+      'comm_style conversion: existem linhas com múltiplos elementos, abortar migration';
+  END IF;
+END$$;
+
 ALTER TABLE public.copilot_sessions
   ALTER COLUMN comm_style TYPE text USING (comm_style[1]);
 
