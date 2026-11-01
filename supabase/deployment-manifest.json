@@ -216,8 +216,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
-      "bytes": 26213,
-      "sha256": "5d77a6a526bef04595d693e239df92c55c99992b6fb9034efafdc37e74e15355"
+      "bytes": 26272,
+      "sha256": "787214dd32ff1edc8df8e89c0322bc66f5e1bb62a78967266bdee3667279ab67"
     },
     {
       "path": "supabase/functions/_shared/gmail-helpers.ts",
@@ -1713,7 +1713,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "303d6972349fb949d42350b13928b5e87ade5dac4137455cb98148f48449e1ef",
+      "source_sha256": "4e65b00de0c518aa049702c24faee6dc24a6bd0a93bbe73273e53ecfe05ad1f9",
       "source_files": [
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-jobs.ts",
@@ -2536,5 +2536,5 @@
       ]
     }
   ],
-  "manifest_sha256": "008dfcf101f2926527ca938ca79606198689e9cab55f0e5c66c69c7b12c1be6d"
+  "manifest_sha256": "982589dabdc4037bdd43d0e61cb55dfa8466e2a383b4ee55a53fe348bf4c7353"
 }
