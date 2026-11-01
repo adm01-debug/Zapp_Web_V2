@@ -32,7 +32,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   // E81: deslogado nao repete (ver RETRIES_LOGADOS no topo do arquivo).
   retries: 0,
-  // W75: CI com 4 workers (1 worker estourava o timeout de 20 min: 129 testes × ~17s;
+  // GR-016/W75: CI com 4 workers (1 worker estourava o timeout de 20 min: 129 testes × ~17s;
   // 2 workers ficavam em ~19 min, sem margem). Localmente seguem 2: a fixture do Email
   // sobe um Vite inteiro e captura artefatos visuais; um pool limitado evita a fome de
   // cold start que fazia specs independentes caírem no fallback de carregamento em 5 s.
