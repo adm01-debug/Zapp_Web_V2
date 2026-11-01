@@ -16,28 +16,38 @@ export interface UnconfirmedMessage {
 // Abaixo desse limiar o job de reconciliação ainda pode fechar sozinho.
 const AMBIGUOUS_THRESHOLD_MS = 2 * 60 * 1000;
 
-export function useUnconfirmedMessages(conversationContactId: string | null | undefined) {
+export function useUnconfirmedMessages(
+  conversationContactId: string | null | undefined,
+  conversationGroupId?: string | null,
+) {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ['unconfirmed-messages', conversationContactId],
+    queryKey: ['unconfirmed-messages', conversationContactId ?? null, conversationGroupId ?? null],
     queryFn: async () => {
-      if (!conversationContactId) return [];
+      if (!conversationContactId && !conversationGroupId) return [];
       const threshold = new Date(Date.now() - AMBIGUOUS_THRESHOLD_MS).toISOString();
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let q = (supabase as any)
         .from('messages')
         .select('id, content, created_at, delivery_post_started_at, status, contact_id, agent_id')
-        .eq('contact_id', conversationContactId)
         .eq('sender', 'agent')
         .not('delivery_post_started_at', 'is', null)
-        .not('status', 'in', '("sent","delivered","read","failed")')
+        .not('status', 'in', '("sent","delivered","read")')
         .is('manually_resolved_at', null)
         .lt('delivery_post_started_at', threshold)
         .order('created_at', { ascending: false });
+      if (conversationGroupId) {
+        // Mensagens para grupo: contact_id é NULL, filtrar por whatsapp_group_id
+        q = q.eq('whatsapp_group_id', conversationGroupId).is('contact_id', null);
+      } else {
+        q = q.eq('contact_id', conversationContactId);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as unknown as UnconfirmedMessage[];
     },
-    enabled: !!conversationContactId,
+    enabled: !!conversationContactId || !!conversationGroupId,
     refetchInterval: 30_000,
   });
 
@@ -52,7 +62,7 @@ export function useUnconfirmedMessages(conversationContactId: string | null | un
       return data as unknown as string;
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['unconfirmed-messages', conversationContactId] });
+      queryClient.invalidateQueries({ queryKey: ['unconfirmed-messages', conversationContactId ?? null, conversationGroupId ?? null] });
       queryClient.invalidateQueries({ queryKey: ['messages'] });
       const label = variables.outcome === 'sent' ? 'marcada como entregue' : 'marcada como não entregue';
       toast({ title: `Mensagem ${label}`, description: 'Status corrigido manualmente.' });
