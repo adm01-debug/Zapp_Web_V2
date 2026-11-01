@@ -47,12 +47,11 @@ export function useMultimodalAnalysis({
     setLoading(true);
     setError(null);
     try {
-      const { data, error: edgeError } = await invokeEdge<MultimodalAnalysisResult>(
-        'ai-multimodal-analysis',
+      const { data, error: edgeError } = await invokeEdge('ai-multimodal-analysis',
         { body: { messages, mediaUrl, mediaType } },
       );
       if (edgeError) { setError(edgeError.message); return; }
-      if (data) setResult(data);
+      if (data) setResult(data as MultimodalAnalysisResult);
     } catch (err) {
       if ((err as Error).name !== 'AbortError') setError(err instanceof Error ? err.message : 'Erro desconhecido');
     } finally {
