@@ -241,7 +241,7 @@ test('busca, ajuda e foco do diálogo funcionam por teclado', async ({ page }) =
   const search = page.getByRole('textbox', { name: 'Busca global do Email' });
   // A lista mostra o resultado ANTERIOR até a busca chegar ao servidor (a espera curta de
   // 300 ms junta as teclas) e fica vazia enquanto a resposta não volta. Assertar antes disso
-  // passava por dois motivos que não são "a lista filtrou": a lista antiga ainda na tela (com
+  // passava por dois motivos que não são "a busca filtrou": a lista antiga ainda na tela (com
   // o termo já digitado) e a lista vazia do carregamento. Era assim que este teste passava na
   // 1ª tentativa de forma intermitente nos PRs #1908/#1910. Esperar a resposta do termo
   // digitado prende as asserções ao resultado REAL da busca — sem `waitForTimeout` e sem
@@ -258,7 +258,8 @@ test('busca, ajuda e foco do diálogo funcionam por teclado', async ({ page }) =
   await page.keyboard.press('Enter');
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('dialog')).toBeHidden();
+  // Timeout explícito: animação de saída do Radix Dialog (data-[state=closed]:animate-out) é mais lenta no webkit em CI.
+  await expect(page.getByRole('dialog')).toBeHidden({ timeout: 10_000 });
   await expect(help).toBeFocused();
 });
 
