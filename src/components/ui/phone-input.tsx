@@ -39,7 +39,6 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
     initialDigits.length >= 2 && !initialDigits.startsWith('55')
   );
   const wasExplicitPlusRef = useRef(false);
-
   const lastEmittedRawRef = useRef(initialDigits);
 
   const currentRaw = extractDigits(value);
@@ -52,36 +51,44 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     let digits = extractDigits(e.target.value);
     const prevRaw = lastEmittedRawRef.current;
+    const nativeInput = e.nativeEvent as InputEvent;
+    const inputType = nativeInput.inputType ?? '';
+    const isDeletion = inputType.startsWith('delete') || inputType === 'historyUndo';
+    const isPasteOrDrop = inputType === 'insertFromPaste' || inputType === 'insertFromDrop';
 
-    if (e.target.value === '+') {
-      if (displayValue === '') {
-        isExplicitInternationalRef.current = true;
-        wasExplicitPlusRef.current = true;
-      } else {
-        isExplicitInternationalRef.current = false;
-        wasExplicitPlusRef.current = false;
-      }
-    } else if (
-      e.target.value.startsWith('+') &&
-      digits.length >= 3 &&
-      !digits.startsWith('55')
-    ) {
+    // User explicitly entered '+': typed it (data==='+') or pasted/dropped content with leading '+'
+    // Chrome sets data=null for paste, so we check e.target.value (raw DOM, pre-formatter)
+    const isExplicitPlusInput =
+      (inputType === 'insertText' && nativeInput.data === '+') ||
+      (isPasteOrDrop && e.target.value.startsWith('+') && !digits.startsWith('55'));
+
+    if (isExplicitPlusInput) {
+      isExplicitInternationalRef.current = true;
+      wasExplicitPlusRef.current = digits.length === 0;
+    } else if (!e.target.value.startsWith('+') && !isDeletion) {
+      // Paste/type without leading '+' (e.g. '(11) 98765-4321') → treat as BR
+      isExplicitInternationalRef.current = false;
+      wasExplicitPlusRef.current = false;
+    } else if (isDeletion && digits.length < 3 && !wasExplicitPlusRef.current) {
+      // Backspace to < 3 digits without an explicit '+' press → reset digit-detected mode
+      isExplicitInternationalRef.current = false;
+      wasExplicitPlusRef.current = false;
+    } else if (!isDeletion && digits.length >= 3 && !digits.startsWith('55')) {
+      // Digit sequence ≥ 3 non-55 chars: check for BR country-prefix deletion first
       const isBRPrefixDeletion = prevRaw.startsWith('55') && digits === prevRaw.slice(2);
       if (!isBRPrefixDeletion) {
         isExplicitInternationalRef.current = true;
       } else {
         digits = '55' + digits;
       }
-    } else if (!digits || (digits.length < 3 && !wasExplicitPlusRef.current)) {
-      isExplicitInternationalRef.current = false;
-      wasExplicitPlusRef.current = false;
     }
 
+    // DDD auto-prefix: only on insertions and when not in international mode
     if (
+      !isDeletion &&
       digits.length >= 2 &&
       !digits.startsWith('55') &&
-      !isExplicitInternationalRef.current &&
-      digits.length >= prevRaw.length
+      !isExplicitInternationalRef.current
     ) {
       const possibleDDD = parseInt(digits.slice(0, 2), 10);
       if (possibleDDD >= 11 && possibleDDD <= 99) {
@@ -90,10 +97,9 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
     }
 
     if (digits.length > 13) digits = digits.slice(0, 13);
-
     lastEmittedRawRef.current = digits;
     onChange(formatPhone(digits), digits);
-  }, [onChange, displayValue]);
+  }, [onChange]);
 
   return (
     <Input
