@@ -80,6 +80,7 @@ jobs:
       matrix:
         shard: [1, 2, 3]
       fail-fast: false
+    # E71: pula em PRs draft para economizar minutes (security, build e e2e idem)
     if: github.event.pull_request.draft != true
     steps:
       - name: 📥 Checkout code
@@ -186,6 +187,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs: [typecheck, unit-tests]
+    # E71: pula em PRs draft para economizar minutes (unit-tests, security e e2e idem)
     if: github.event.pull_request.draft != true
     steps:
       - name: 📥 Checkout code
@@ -253,6 +255,7 @@ jobs:
     name: 🔒 Security Audit
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    # E71: pula em PRs draft para economizar minutes (unit-tests, build e e2e idem)
     if: github.event.pull_request.draft != true
     steps:
       - name: 📥 Checkout code
@@ -344,6 +347,7 @@ jobs:
     name: 🎭 E2E Tests (Playwright)
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    # E71: pula em PRs draft para economizar minutes (unit-tests, build e security idem)
     if: github.event.pull_request.draft != true
     steps:
       - name: 📥 Checkout code
