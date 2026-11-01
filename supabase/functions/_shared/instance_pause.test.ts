@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { isInstancePaused, type PauseRpcClient } from "./instance-pause.ts";
+import { isInstancePaused, type PauseRpcClient } from "./instance_pause.ts";
 
 const client = (result: { data: unknown; error: { code?: string } | null } | Error): PauseRpcClient => ({
   rpc: () => result instanceof Error ? Promise.reject(result) : Promise.resolve(result),

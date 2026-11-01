@@ -22,7 +22,7 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getCorsHeaders, handleCors, internalErrorResponse, Logger } from "../_shared/validation.ts";
 import { AUTO_RESUME_REASONS, connectionStatusResolver, selectResumableCampaigns } from "../_shared/talkx-resume-policy.ts";
-import { isInstancePaused } from "../_shared/instance-pause.ts";
+import { isInstancePaused } from "../_shared/instance_pause.ts";
 import { parseBusinessHours, type BusinessHours } from "../_shared/talkx-window.ts";
 import { timingSafeEqual } from "../_shared/hmac-validation.ts";
 
@@ -209,11 +209,19 @@ export async function handleTalkxScheduler(
     }
 
     // C121: instâncias ainda em pausa entre as campanhas pausadas por `instance_paused`.
+    // Fail-closed para o scheduler: RPC indisponível = instância permanece como "pausada",
+    // impedindo a retomada sem confirmação do fim da pausa.
     const pausedInstances = new Set<string>();
+    const instancePauseUnknown = new Set<string>();
     for (const campaign of pausedCampaigns ?? []) {
       if (campaign.pause_reason !== "instance_paused") continue;
       const instanceId = instanceIdByConnection.get(campaign.whatsapp_connection_id as string);
-      if (instanceId && !pausedInstances.has(instanceId) && await isInstancePaused(supabase, instanceId)) {
+      if (!instanceId || pausedInstances.has(instanceId) || instancePauseUnknown.has(instanceId)) continue;
+      const rpcErrors: Array<string | undefined> = [];
+      const stillPaused = await isInstancePaused(supabase, instanceId, (code) => rpcErrors.push(code));
+      if (rpcErrors.length > 0) {
+        instancePauseUnknown.add(instanceId);
+      } else if (stillPaused) {
         pausedInstances.add(instanceId);
       }
     }
@@ -245,7 +253,7 @@ export async function handleTalkxScheduler(
       businessHours,
       (campaign) => {
         const instanceId = instanceIdByConnection.get(campaign.whatsapp_connection_id as string);
-        return instanceId ? pausedInstances.has(instanceId) : false;
+        return instanceId ? (pausedInstances.has(instanceId) || instancePauseUnknown.has(instanceId)) : false;
       },
     );
 

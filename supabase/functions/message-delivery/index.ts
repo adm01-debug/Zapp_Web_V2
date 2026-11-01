@@ -11,7 +11,7 @@ import {
 } from '../_shared/validation.ts';
 import { resolvePrivateBucketUrl } from '../_shared/evolution-api-proxy.ts';
 import { evoFetch, extractMessageId } from '../_shared/evolution-send.ts';
-import { isInstancePaused } from '../_shared/instance-pause.ts';
+import { isInstancePaused } from '../_shared/instance_pause.ts';
 import { resolveInstanceToken, type InstanceTokenClient } from '../_shared/evolution-instance-token.ts';
 import {
   EFFECT_MESSAGE_SEND,
