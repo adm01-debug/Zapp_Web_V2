@@ -6,7 +6,7 @@ import { Message, Conversation } from '@/types/chat';
 import { toast } from 'sonner';
 
 // R2-INB-021 (item 317): o menu do balão e o menu do header exibiam itens que
-// anunciavam uma ação e não concluíam nada (Favoritar/Fixar/Responder depois/
+// anunciavam uma ação e não concluídam nada (Favoritar/Fixar/Responder depois/
 // Reportar no balão; "Adicionar tag" no header). Aqui se prova o consumidor:
 // nenhuma dessas entradas é oferecida e cada entrada que sobra conclui a
 // operação declarada no clique.
@@ -44,7 +44,8 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() , withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })}),
-}));
+  log: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) },
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),}));
 
 vi.mock('@/components/inbox/TextToSpeechButton', () => ({
   TextToSpeechButton: () => null,
@@ -164,7 +165,7 @@ beforeEach(() => {
 });
 
 describe('menu do balão — R2-INB-021', () => {
-  it('não oferece mais as ações que não concluíam nada', () => {
+  it('não oferece mais as ações que não concluídam nada', () => {
     renderToolbar(makeMessage());
 
     for (const morta of ['Favoritar', 'Fixar', 'Responder depois', 'Em 1 hora', 'Em 3 horas', 'Amanhã', 'Reportar']) {

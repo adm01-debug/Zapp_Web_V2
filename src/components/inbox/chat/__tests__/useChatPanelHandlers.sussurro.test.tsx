@@ -4,7 +4,7 @@
  * O sussurro é uma NOTA INTERNA: o texto digitado com o modo sussurro ligado tem de
  * ser gravado em `whisper_messages` e NUNCA pode chamar `onSendMessage` (o canal).
  * O caso perigoso é o retry: quando a gravação falha, o texto continua no editor e o
- * Enter seguinte precisa tentar de novo o sussurro — jamais virar mensagem de canal.
+ * Enter seguinte precisa tentar de novo o sussurro — jamão virar mensagem de canal.
  *
  * Aqui `useChatPanelHandlers` é o REAL; só o cliente Supabase é controlado pelo teste,
  * com um destino (`contacts.assigned_to`) configurável.
@@ -77,7 +77,7 @@ vi.mock('@/integrations/supabase/client', () => {
 vi.mock('@/lib/logger', () => ({
   log: { error: vi.fn(), debug: vi.fn(), warn: vi.fn(), info: vi.fn() },
   getLogger: () => ({ error: vi.fn(), debug: vi.fn(), warn: vi.fn(), info: vi.fn() , withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })}),
-}));
+  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), withCorrelation: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }) }),}));
 // useWhisperCount (contador do selo) lê o perfil logado para contar só o que é dele.
 vi.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ profile: { id: '33333333-3333-4333-8333-333333333333', role: 'supervisor' } }),
