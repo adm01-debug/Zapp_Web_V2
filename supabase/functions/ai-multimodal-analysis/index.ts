@@ -3,6 +3,8 @@ import { generateWithRouting } from "../_shared/ai-generate.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { toInlineImage, AiImageInputError } from "../_shared/ai-image-input.ts";
 
+const SUPPORTED_MEDIA_TYPES = ["image", "sticker"];
+
 Deno.serve(async (req) => {
   const cors = handleCors(req);
   if (cors) return cors;
@@ -19,6 +21,14 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const { messages = [], mediaUrl = "", mediaType = "image" } = body;
+
+    if (mediaUrl && !SUPPORTED_MEDIA_TYPES.includes(mediaType)) {
+      return errorResponse(
+        `Tipo de mídia '${mediaType}' não suportado para análise inline. Tipos aceitos: ${SUPPORTED_MEDIA_TYPES.join(", ")}.`,
+        415,
+        req,
+      );
+    }
 
     const mediaCtxFallback = mediaUrl
       ? `Mídia recebida (${mediaType}): [referência de mídia]`
