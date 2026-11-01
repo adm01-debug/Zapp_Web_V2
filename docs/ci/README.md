@@ -4,7 +4,7 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**17 workflows.**
+**18 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
@@ -19,8 +19,9 @@
 | Deploy Edge Functions | [`deploy-functions.yml`](../../.github/workflows/deploy-functions.yml) | push na main (supabase/functions/**, config.toml) e dispatch manual | as Edge Functions publicadas batem com o repo | o deploy aborta antes de publicar | operador que disparou | — | — |
 | E2E logado | [`e2e-logado.yml`](../../.github/workflows/e2e-logado.yml) | push na main e dispatch sobre main | o fluxo logado (Playwright com login real) contra producao | artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro | issue de E2E e autor do push | — | — |
 | E2E Talk X (visual/launch + Auth smoke) | [`e2e-talkx.yml`](../../.github/workflows/e2e-talkx.yml) | pull_request e dispatch | o fluxo do Talk X no navegador | PR fica vermelho com o artefato do Playwright | autor do PR | — | — |
+| main-failure-notify | [`main-failure-notify.yml`](../../.github/workflows/main-failure-notify.yml) | workflow_run (E2E logado, DB Live Guard, Deploy Edge Functions, types-sync) em main com conclusion=failure | dedupe de 1h — suprime (com setFailed) se o proprio workflow teve run com sucesso no ultimo 1h | sem secrets configurados o step falha explicitamente (secrets ausentes) | WhatsApp para JOAQUIM_WHATSAPP_NUMBER via Evolution GO instancia PRINCIPAL (/send/text nativo) | — | — |
 | Notifica falha na main | [`notifica-falha-main.yml`](../../.github/workflows/notifica-falha-main.yml) | workflow_run (conclusao dos workflows principais na main) | abre issue quando qualquer workflow critico falha na main | a falha do workflow original fica sem issue de acompanhamento | equipe de operacao, por meio da issue criada no repositorio | — | — |
-| Settings Guard | [`settings-guard.yml`](../../.github/workflows/settings-guard.yml) | agendado e dispatch | o perimetro do GitHub (branch protection, merge, environments) contra o baseline versionado | issue aberta; sem escopo suficiente o guarda reporta ponto cego em vez de falhar em silencio | issue de settings | — | — |
+| Settings Guard | [`settings-guard.yml`](../../.github/workflows/settings-guard.yml) | agendado e dispatch | o perimetro do GitHub (branch protection, merge, environments) contra o baseline versionado | quando falha issue aberta; sem escopo suficiente o guarda reporta ponto cego em vez de falhar em silencio | issue de settings | — | — |
 | Talk X V4 placar regen (push + semanal) | [`talkx-status-regen.yml`](../../.github/workflows/talkx-status-regen.yml) | push na main; schedule semanal (seg 07:45 UTC); dispatch | o placar do Talk X regenerado a partir dos dados atuais | o job fica vermelho e o placar nao e atualizado | autor do push | — | — |
 | Targeted Ledger Evidence | [`targeted-ledger-evidence.yml`](../../.github/workflows/targeted-ledger-evidence.yml) | dispatch | a evidencia do ledger de migrations para uma version especifica | o job aborta sem publicar evidencia | operador que disparou | — | — |
 | types-sync | [`types-sync.yml`](../../.github/workflows/types-sync.yml) | push na main, agendado e dispatch | os tipos gerados batem com o banco oficial (Gates 1 e 2) | PR em `automation/types-sync` ou issue `[types-sync]`; nunca passa com tipo divergente | PR de types e issue de gate | — | — |
@@ -104,6 +105,13 @@
 - **O que prova:** o fluxo do Talk X no navegador
 - **Quando falha:** PR fica vermelho com o artefato do Playwright
 - **Quem é avisado:** autor do PR
+
+### main-failure-notify (`main-failure-notify.yml`)
+
+- **Gatilho:** workflow_run (E2E logado, DB Live Guard, Deploy Edge Functions, types-sync) em main com conclusion=failure
+- **O que prova:** dedupe de 1h — suprime (com setFailed) se o proprio workflow teve run com sucesso no ultimo 1h
+- **Quando falha:** sem secrets configurados o step falha explicitamente (secrets ausentes)
+- **Quem é avisado:** WhatsApp para JOAQUIM_WHATSAPP_NUMBER via Evolution GO instancia PRINCIPAL (/send/text nativo)
 
 ### Notifica falha na main (`notifica-falha-main.yml`)
 

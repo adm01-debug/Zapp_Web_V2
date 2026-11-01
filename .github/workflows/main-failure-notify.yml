@@ -1,12 +1,13 @@
 # docs:
-#   gatilho: workflow_run (e2e-logado, db-live-guard, deploy-functions, types-sync) em main com conclusion=failure
-#   prova: dedupe de 1h — suprime se o propio workflow teve run com sucesso no ultimo 1h
-#   falha: sem secrets configurados o step retorna exit 0 silencioso (nao bloqueia main)
-#   avisa: WhatsApp para JOAQUIM_WHATSAPP_NUMBER via Evolution GO instancia PRINCIPAL
+#   gatilho: workflow_run (E2E logado, DB Live Guard, Deploy Edge Functions, types-sync) em main com conclusion=failure
+#   prova: dedupe de 1h — suprime (com setFailed) se o proprio workflow teve run com sucesso no ultimo 1h
+#   falha: sem secrets configurados o step falha explicitamente (secrets ausentes)
+#   avisa: WhatsApp para JOAQUIM_WHATSAPP_NUMBER via Evolution GO instancia PRINCIPAL (/send/text nativo)
 # E90 (plano 2026-10-01): notifica Joaquim por WhatsApp quando workflow critico
-# falha na main. Chama Evolution GO /message/sendText direto do Actions.
+# falha na main. Chama Evolution GO /send/text (rota nativa GO) direto do Actions.
 #
-# Dedupe de 1h: suprime se este workflow ja teve run com sucesso no ultimo 1h.
+# Dedupe de 1h: suprime se este workflow ja teve run com conclusion=success no ultimo 1h.
+# Runs suprimidos terminam com core.setFailed -- nao criam anchor de sucesso falso.
 #
 # Secrets necessarios (criar no repo antes de ativar; nao estao nos Edge Functions):
 #   EVOLUTION_INSTANCE_TOKEN -- token da instancia PRINCIPAL da Evolution GO
@@ -17,15 +18,19 @@ name: main-failure-notify
 on:
   workflow_run:
     workflows:
-      - e2e-logado
-      - db-live-guard
-      - deploy-functions
+      - E2E logado
+      - DB Live Guard
+      - Deploy Edge Functions
       - types-sync
     types: [completed]
     branches: [main]
 
 permissions:
   actions: read
+
+concurrency:
+  group: main-failure-notify
+  cancel-in-progress: false
 
 defaults:
   run:
@@ -50,19 +55,19 @@ jobs:
             const run = context.payload.workflow_run;
 
             // Dedupe: busca runs deste proprio workflow concluidos com sucesso no ultimo 1h.
-            // Se achou, e porque a notificacao ja foi enviada -- suprime.
+            // Se achou, e porque a notificacao ja foi enviada.
+            // Suprime com setFailed para nao criar anchor de sucesso falso (loop infinito).
             const umHoraAtras = new Date(Date.now() - 3600 * 1000).toISOString();
             const { data: myRuns } = await github.rest.actions.listWorkflowRuns({
               owner, repo,
               workflow_id: 'main-failure-notify.yml',
+              status: 'success',
               created: '>' + umHoraAtras,
-              per_page: 20,
+              per_page: 50,
             });
-            const jaNotificou = myRuns.workflow_runs.some(
-              (r) => r.conclusion === 'success' && r.id !== context.runId
-            );
+            const jaNotificou = myRuns.workflow_runs.some((r) => r.id !== context.runId);
             if (jaNotificou) {
-              core.info('Dedupe: notificacao ja enviada no ultimo 1h -- suprimindo.');
+              core.setFailed('Dedupe: notificacao ja enviada no ultimo 1h -- suprimindo.');
               return;
             }
 
@@ -89,7 +94,7 @@ jobs:
             ].join('\n');
 
             const resp = await fetch(
-              'https://evolution-go-rxj2.srv1481814.hstgr.cloud/message/sendText/PRINCIPAL',
+              'https://evolution-go-rxj2.srv1481814.hstgr.cloud/send/text',
               {
                 method: 'POST',
                 headers: {
@@ -105,4 +110,9 @@ jobs:
               core.setFailed(`Evolution GO respondeu ${resp.status}: ${body.slice(0, 300)}`);
               return;
             }
-            core.info(`Mensagem enviada para ${numero} -- Evolution GO ${resp.status}`);
+            const data = await resp.json().catch(() => null);
+            const msgId = data?.key?.id ?? data?.id ?? null;
+            if (!msgId) {
+              core.warning(`Evolution GO retornou 2xx mas sem ID de mensagem: ${JSON.stringify(data)}`);
+            }
+            core.info(`Mensagem enviada para ${numero} (id: ${msgId}) -- Evolution GO ${resp.status}`);
