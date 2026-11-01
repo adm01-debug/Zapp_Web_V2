@@ -128,7 +128,7 @@ function tokensDoBloco(css: string, cabecalho: string): { cru: Record<string, st
         for (const t of corpo.matchAll(/--([\w-]+):\s*([^;]+);/g)) {
           cru[t[1]] = t[2].trim().replace(/\s+/g, ' ');
         }
-        for (const t of corpo.matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g)) {
+        for (const t of corpo.matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*(?:!important\s*)?;/g)) {
           rgb[t[1]] = hslParaRgb(Number(t[2]), Number(t[3]), Number(t[4]));
         }
         return { cru, rgb };

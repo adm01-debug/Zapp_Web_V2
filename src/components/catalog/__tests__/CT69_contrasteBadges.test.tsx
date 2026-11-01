@@ -79,7 +79,7 @@ function bloco(css: string, seletor: string): Record<string, Hsl> {
     i += 1;
   }
   const vars: Record<string, Hsl> = {};
-  const valores = /--([a-z0-9-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g;
+  const valores = /--([a-z0-9-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*(?:!important\s*)?;/g;
   let m: RegExpExecArray | null;
   const corpo = css.slice(abre + 1, i - 1);
   while ((m = valores.exec(corpo))) vars[m[1]] = [Number(m[2]), Number(m[3]), Number(m[4])];

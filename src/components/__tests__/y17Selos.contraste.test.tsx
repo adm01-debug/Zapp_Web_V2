@@ -131,7 +131,7 @@ function tokensDoBloco(css: string, cabecalho: string): Record<string, RGB> {
         const out: Record<string, RGB> = {};
         for (const t of limpo
           .slice(abre + 1, j)
-          .matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g)) {
+          .matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*(?:!important\s*)?;/g)) {
           out[t[1]] = hslParaRgb(Number(t[2]), Number(t[3]), Number(t[4]));
         }
         return out;

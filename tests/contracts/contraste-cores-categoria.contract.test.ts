@@ -39,7 +39,7 @@ function tokensDoBloco(seletor: string): Tokens {
       j++;
     }
     const corpo = semComentarios.slice(abrir + 1, j - 1);
-    const re = /--([a-z0-9-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g;
+    const re = /--([a-z0-9-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*(?:!important\s*)?;/g;
     let m: RegExpExecArray | null;
     while ((m = re.exec(corpo))) out[m[1]] = { h: +m[2], s: +m[3], l: +m[4] };
     from = j;
