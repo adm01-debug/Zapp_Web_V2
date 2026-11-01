@@ -477,6 +477,7 @@ jobs:
         # para nao publicar funcao com erro de tipo ou de comportamento.
         run: |
           set -euo pipefail
+          shopt -s globstar
           deno test \
             --config scripts/ci/deno.json \
             --allow-env --allow-read --allow-net=127.0.0.1 \

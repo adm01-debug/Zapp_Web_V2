@@ -74,7 +74,7 @@ function consumidores(nomeSecret) {
 // O supabase-sync.yml foi removido em 15/10 e deixou de consumir.
 const DESTINO_URL_POR_JOB = {
   'db-live-guard.yml:live-contract': 'banco-leitura',
-  'db-migrate.yml:migrate': null, // GA13: environment dinamico (${{ inputs.apply }}); parser estatico devolve null
+  'db-migrate.yml:migrate': 'producao-ddl',
   'targeted-ledger-evidence.yml:export-encrypted-evidence': 'db-ledger-evidence',
   'types-sync.yml:ler-banco': 'banco-leitura',
 };
