@@ -35,7 +35,7 @@ export function useUnconfirmedMessages(conversationContactId: string | null | un
         .lt('delivery_post_started_at', threshold)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data ?? []) as UnconfirmedMessage[];
+      return (data ?? []) as unknown as UnconfirmedMessage[];
     },
     enabled: !!conversationContactId,
     refetchInterval: 30_000,
@@ -43,12 +43,12 @@ export function useUnconfirmedMessages(conversationContactId: string | null | un
 
   const resolveMutation = useMutation({
     mutationFn: async ({ messageId, outcome }: { messageId: string; outcome: 'sent' | 'not_delivered' }) => {
-      const { data, error } = await supabase.rpc('resolve_unconfirmed_message', {
+      const { data, error } = await supabase.rpc('resolve_unconfirmed_message' as never, {
         p_message_id: messageId,
         p_outcome: outcome,
       });
       if (error) throw error;
-      return data as string;
+      return data as unknown as string;
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['unconfirmed-messages', conversationContactId] });
