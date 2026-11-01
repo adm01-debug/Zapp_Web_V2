@@ -23,6 +23,7 @@ interface Builder {
   select: () => Builder;
   eq: (col?: string, val?: unknown) => Builder;
   single: () => Promise<QueryResult>;
+  maybeSingle: () => Promise<QueryResult>;
   then: <TResult1 = QueryResult, TResult2 = never>(
     onfulfilled?: ((value: QueryResult) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
@@ -43,6 +44,7 @@ vi.mock('@/integrations/supabase/client', () => {
     b.select = () => b;
     b.eq = () => b;
     b.single = () => Promise.resolve(result);
+    b.maybeSingle = () => Promise.resolve(result);
     b.then = (onfulfilled, onrejected) => Promise.resolve(result).then(onfulfilled, onrejected);
     b.update = (payload) => ({
       eq: (_col, val) => {
