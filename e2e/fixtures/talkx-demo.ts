@@ -7,23 +7,23 @@ import type { Page, Route } from '@playwright/test';
  *
  * `mockTalkXBackend(page, tela)` carrega `e2e/fixtures/talkx-demo/<tela>.json`
  * e intercepta, via `page.route`, as chamadas do módulo:
- *   - `rest/v1/talkx_*`            → GET devolve a fixture da tela; escrita → 403
- *   - `rest/v1/rpc/talkx_*`        → escrita não prevista (403)
- *   - `functions/v1/talkx-*`       → escrita não prevista (403)
+ *   - `rest/v1/talkx_*`            -> GET devolve a fixture da tela; escrita -> 403
+ *   - `rest/v1/rpc/talkx_*`        -> escrita não prevista (403)
+ *   - `functions/v1/talkx-*`       -> escrita não prevista (403)
  *
  * Qualquer escrita não prevista é bloqueada com o corpo `{ "message": "escrita não prevista" }`
- * — o demo nunca grava nem envia nada em produção. Criadores (`get_team_profiles`)
+ * -- o demo nunca grava nem envia nada em produção. Criadores (`get_team_profiles`)
  * e contatos (insights) respondem vazios para o demo não ler produção.
  *
  * Contrato de crescimento (X003/X004): a fixture cresce junto com cada etapa de
- * tela — a etapa que cria uma tabela/RPC Talk X acrescenta a resposta dela no
+ * tela -- a etapa que cria uma tabela/RPC Talk X acrescenta a resposta dela no
  * JSON da tela correspondente. Enquanto a tela não tem fixture, o arquivo é `{}`
  * e a régua a PULA (não captura, não falha). Referenciar uma fixture `{}` lança
  * `FixtureVaziaError` em vez de renderizar uma tela vazia em silêncio
  * (ver e2e/README.md e docs/talkx/v4/etapas/F00-regua-e-governanca.md).
  *
  * `mockTalkXVisual(page, tela)` (etapa X004) soma ao backend fake uma sessão
- * Supabase falsa (injetada no localStorage, deslogada — sem secrets) e o mock dos
+ * Supabase falsa (injetada no localStorage, deslogada -- sem secrets) e o mock dos
  * endpoints de identidade (`profiles`, `user_roles`, `user_has_permission`), para o
  * spec visual renderizar as telas sem login real e rodar em workflow de PR.
  */
@@ -38,14 +38,14 @@ const cache = new Map<string, TalkXDemoData>();
 
 /**
  * Erro do contrato de crescimento (plano V4, X003/X004): uma fixture de tela só
- * existe quando tem dados. Referenciar uma fixture vazia (`{}`) é erro — nunca
+ * existe quando tem dados. Referenciar uma fixture vazia (`{}`) é erro -- nunca
  * uma tela renderizada em branco "sem aviso".
  */
 export class FixtureVaziaError extends Error {
   constructor(tela: string) {
     super(
       `fixture vazia para a tela "${tela}" ({}): nenhuma tabela/RPC Talk X foi mockada. ` +
-        'O contrato de crescimento exige que a fixture da tela nasça na etapa daquela tela — ' +
+        'O contrato de crescimento exige que a fixture da tela nasça na etapa daquela tela -- ' +
         `popule e2e/fixtures/talkx-demo/${tela}.json antes de referenciá-la. ` +
         'A régua só cobre telas com fixture real (docs/talkx/v4/etapas/F00-regua-e-governanca.md).',
     );
@@ -76,7 +76,7 @@ function fixtures(): { slug: string; dados: boolean }[] {
     });
 }
 
-/** Slugs (`NN-nome`) das fixtures que têm dados reais — hoje só a tela 01. */
+/** Slugs (`NN-nome`) das fixtures que têm dados reais -- hoje só a tela 01. */
 export function fixturesComDados(): string[] {
   return fixtures()
     .filter((f) => f.dados)
@@ -92,7 +92,7 @@ export function fixturesVazias(): string[] {
 
 /**
  * Slug da fixture real da tela `nn`, ou `undefined` quando ela ainda é `{}`
- * (não populada). A régua usa isto para PULAR telas sem fixture — a ausência
+ * (não populada). A régua usa isto para PULAR telas sem fixture -- a ausência
  * não é falha, é "ainda não é a etapa desta tela".
  */
 export function fixtureDaTela(nn: string): string | undefined {
@@ -148,7 +148,7 @@ export async function mockTalkXBackend(page: Page, tela: string) {
 export const FAKE_USER_ID = '00000000-0000-4000-8000-000000000001';
 const FAKE_EMAIL = 'visual@test.local';
 const AUTH_STORAGE_KEY = 'sb-tnnnlkbymytvtqngbbqh-auth-token';
-const FAKE_EXP = 4102444800; // 2100-01-01T00:00:00Z — nunca expira no teste
+const FAKE_EXP = 4102444800; // 2100-01-01T00:00:00Z -- nunca expira no teste
 
 function b64url(value: unknown): string {
   return Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');
@@ -214,7 +214,7 @@ export async function installFakeSession(page: Page) {
 }
 
 export async function mockTalkXAuth(page: Page) {
-  // Perfil do usuário fake. PostgREST devolve ARRAY num select de tabela — e o
+  // Perfil do usuário fake. PostgREST devolve ARRAY num select de tabela -- e o
   // `.maybeSingle()` do cliente desembrulha sozinho quando volta 1 linha
   // (`data = data[0]`), então array serve para os dois formatos de leitura.
   // Responder objeto quebra quem LISTA `profiles` sem filtro de id (passo 1 do
@@ -238,7 +238,7 @@ export async function mockTalkXAuth(page: Page) {
     });
   });
 
-  // Papéis do usuário fake (RoleService.fetchUserRoles → user_roles.select('role')).
+  // Papéis do usuário fake (RoleService.fetchUserRoles -> user_roles.select('role')).
   await page.route(/\/rest\/v1\/user_roles/, (route) => {
     if (!isRead(route.request().method())) return writeBlocked(route);
     return route.fulfill({
@@ -248,7 +248,7 @@ export async function mockTalkXAuth(page: Page) {
     });
   });
 
-  // Permissão nomeada (RoleService.checkPermission → rpc/user_has_permission).
+  // Permissão nomeada (RoleService.checkPermission -> rpc/user_has_permission).
   await page.route(/\/rest\/v1\/rpc\/user_has_permission/, (route) => {
     if (route.request().method() !== 'POST') return writeBlocked(route);
     return route.fulfill({ status: 200, contentType: 'application/json', body: 'true' });
@@ -280,7 +280,7 @@ export async function mockTalkXAuth(page: Page) {
 
 /**
  * Sessão falsa + identidade + dados do Talk X. As demais tabelas do app shell
- * (notificações, contadores, etc.) respondem vazias — o spec visual nunca toca
+ * (notificações, contadores, etc.) respondem vazias -- o spec visual nunca toca
  * o banco de produção.
  */
 export async function mockTalkXVisual(page: Page, tela: string) {
