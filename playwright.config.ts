@@ -346,8 +346,8 @@ export default defineConfig({
     },
   ],
   webServer: (() => {
-    // A porta vem do proprio ambiente quando PLAYWRIGHT_BASE_URL e' definida.
-    // Sem isso, a suite e' fixa em 5173 e, com `reuseExistingServer` fora do CI,
+    // A porta vem do próprio ambiente quando PLAYWRIGHT_BASE_URL é definida.
+    // Sem isso, a suite é fixa em 5173 e, com `reuseExistingServer` fora do CI,
     // ela ADOTA o dev server que estiver la -- inclusive o de outro chat, o que
     // fazia o e2e de um workspace exercitar o codigo de outro (medido 02/10).
     const alvo = process.env.PLAYWRIGHT_BASE_URL;
