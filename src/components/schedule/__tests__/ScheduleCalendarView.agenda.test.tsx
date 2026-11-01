@@ -17,7 +17,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { fireEvent } from '@testing-library/dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
-import { addMonths, startOfMonth } from 'date-fns';
+import { addMonths, endOfMonth, startOfMonth } from 'date-fns';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createScheduledMessagesServer,
@@ -140,8 +140,16 @@ describe('ScheduleCalendarView — R2-MOD-029', () => {
 
     expect(await screen.findByText('10:00')).toBeInTheDocument();
     await waitFor(() => {
-      const faixas = held.server!.queries.flatMap((q) => q.gte.filter(([c]) => c === 'scheduled_at').map(([, v]) => v));
-      expect(faixas.some((v) => new Date(String(v)).getMonth() === PROXIMO_MES.getMonth())).toBe(true);
+      // O startOfWeek do 1º dia do próximo mês pode cair no mês atual
+      // (ex.: startOfWeek(01/dez) = 29/nov quando dom é 1º dia da semana),
+      // então o gte da nova janela pode ter .getMonth() igual ao mês atual.
+      // Verificamos pelo lte: a janela de PROXIMO_MES termina em ou após
+      // endOfMonth(PROXIMO_MES). Quando o último dia do mês já é sábado,
+      // endOfWeek == endOfMonth — por isso usamos >= e não >.
+      const lteFaixas = held.server!.queries.flatMap((q) =>
+        q.lte.filter(([c]) => c === 'scheduled_at').map(([, v]) => v),
+      );
+      expect(lteFaixas.some((v) => new Date(String(v)) >= endOfMonth(PROXIMO_MES))).toBe(true);
     });
   });
 

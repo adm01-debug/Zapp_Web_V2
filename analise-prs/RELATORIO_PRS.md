@@ -1,158 +1,78 @@
-# Relatório de PRs — adm01-debug/Zapp_Web_V2
+# Relatório PRs — Zapp_Web_V2
 
-**Data da análise:** 2026-10-29  
-**main SHA auditado:** `ac97c0ea300877335a43600ed025c28b6dfa4579`  
-**Total de PRs abertas analisadas:** 50 (29 não-draft + 2 bots + 19 drafts)  
-**Total de dossiês criados:** 50
+**Atualizado:** 2026-10-31  
+**main SHA:** `e2e4989faaa46f5baa2028e69563a9a7eb9a8d76`  
+**PRs abertas:** ~82 | **Mergeadas nesta sessão:** 13
 
 ---
 
-## Resumo Executivo
+## ✅ Mergeadas nesta sessão (13)
 
-**NENHUMA PR foi mergeada.** Todas as PRs não-draft estão bloqueadas pelo CI Gate sistêmico ou por outras razões explícitas.
-
-**PR #2340 já foi mergeada** por outra sessão antes da análise (2026-10-29T14:29:03Z).
-
-| Veredito | Quantidade | PRs |
+| PR | Conteúdo | SHA squash |
 |---|---|---|
-| `MERGEADA` (outra sessão) | 1 | #2340 |
-| `MERGEAR_SE_CI_VERDE` | 10 | #2218, #2232, #2239, #2240, #2244, #2246, #2247, #2270, #2272, #2273 |
-| `BLOQUEADO_CI_E_BEHIND` | 8 | #2225, #2226, #2228, #2229, #2266, #2267, #2268, #2269 |
-| `BLOQUEADO_CI` | 1 | #2233 |
-| `CI_BLOQUEADO` (behind) | 3 | #2278, #2286, #2305 |
-| `DECISAO_HUMANA` | 2 | #2238, #2277 |
-| `COMPLETAR` | 1 | #2230 |
-| `SKIP_PROHIBITED` (workflows) | 2 | #2295, #2298 |
-| `SUPERSEDED` (obsoleto) | 1 | #2284 |
-| `DRAFT_SKIP` | 21 | #2211–2222, #2241, #2242, #2245, #2249, #2250, #2255, #2261, #2263, #2265, #2274, #2275, #2279, #2297 |
-| **TOTAL** | **50** | |
+| #2071 | fix hook morto useTalkXSuppression.ts | `662083c5` |
+| #2222 | TC-009 team-receipts migration predecessor | `2ca8db80` |
+| #2286 | E09 timestamp fallback stable-inventory.mjs | `438e609b` |
+| #2384 | team-chat audit compat + security fix | `8d27ad09` |
+| #2397 | auditoria supabase docs/inventário JSON | `049094e0` |
+| #2416 | vitest.config.ts TZ=America/Sao_Paulo | `94434b32` |
+| #2420 | DDL aditiva fases 13-15 RADAR × 7 tabelas | `089551d0` |
+| #2423 | RPC merge_brinde_state optimistic locking | `2b0dc69f` |
+| #2424 | ADD COLUMN IF NOT EXISTS copilot_sessions | `6e2e2d02` |
+| #2425 | search_event_rpc — RPC log_search_event + filtro PII | `e2e4989f` |
+| #2427 | RPC e2e_fixture_message GA11 | `7df72c83` |
+| #2430 | talkx_campaign_recipients_page 5→6 args | `00ad8718` |
 
 ---
 
-## 1. Merges Realizados
+## 🚫 Regra 8 — aguardam decisão humana (5)
 
-**Nenhum por esta sessão.** `merges_realizados: 0`
+PRs tocando `.github/workflows/` — não mergear em autopilot:
 
-PR #2340 foi mergeada por outra sessão antes desta análise iniciar (docs/consolidacao/_plano/B-grupos.md).
-
----
-
-## 2. PRs Prontas para Merge (MERGEAR_SE_CI_VERDE)
-
-As PRs abaixo passaram nas 4 perguntas com evidência real e estão bloqueadas **apenas** pelo CI Gate sistêmico:
-
-| PR | Título resumido | Arquivos | Risco |
-|---|---|---|---|
-| #2218 | fix(talkx+ci): X094 TalkXTemplateEditor + guards | múltiplos | médio |
-| #2232 | fix(test): SummaryResult selector h-6→h-8 | 1 | baixo |
-| #2239 | feat(ui): GoalsDashboard seletor de período | 2-3 | baixo |
-| #2240 | feat(talkx): X115 filtros persistem em URL | 2-3 | baixo |
-| #2244 | fix(types): 9 RPCs + offline queue userId + m4a | 1 | baixo (fix crítico de CI) |
-| #2246 | fix(ci+docs): TC-009 + ChatMessagesArea + fila-merge | múltiplos | médio |
-| #2247 | docs: resgate-validacao command | docs | baixo |
-| #2270 | chore(ci): codeql-action SHA bump | 1 workflow | baixo (bot) |
-| #2272 | chore(infra): Dockerfile golang SHA bump | 1 | baixo (bot) |
-| #2273 | fix(test+ci): fila-merge retry + mocks | 4 | médio (tem conflito) |
-
-**Condição de desbloqueio:** CI Gate verde (especialmente `Contrato DB offline` = `novas: 0`).
-**Causa raiz do bloqueio:** `src/integrations/supabase/types.ts` sem 9 assinaturas RPC — PR #2244 corrige isso.
+- **#2046** — workflow
+- **#2092** — workflow (MERGEABLE + CI SUCCESS)
+- **#2100** — workflow (MERGEABLE + CI SUCCESS)
+- **#2297** — workflow (MERGEABLE + CI SUCCESS)
+- **#2450** — workflow (MERGEABLE + CI SUCCESS)
 
 ---
 
-## 3. Bloqueio Sistêmico de CI
+## ⚠️ Decisão humana crítica (1)
 
-### 3.1 Causa primária: `Contrato DB offline` falha com `novas=12`
-
-`scripts/db-audit/supabase-usage-guard.mjs` detecta 12 chamadas RPC no front sem assinatura em `types.ts`.
-**Fix:** PR #2244 (`fix(types): 9 RPCs + offline queue userId + m4a`) adiciona as 9 assinaturas faltantes.
-
-### 3.2 `Unit Tests` falhando em múltiplos shards
-
-Regressão em main desde ~24/10/2026. Causa: mocks desalinhados após refatorações recentes.
-Vários PRs tentam corrigir isso (#2219, #2221, #2228, #2229, #2233) mas estão em draft ou blocked.
-
-### 3.3 `E2E Tests (Playwright)` cancelados frequentemente
-
-Jobs E2E sendo cancelados por timeout ou conflito de ambiente.
+- **#2265** — `CRITICAL-1`: revoga grants para role `anon` — DDL de segurança. Draft, MERGEABLE, CI FAILURE.
 
 ---
 
-## 4. PRs com Decisão Humana
+## 🔄 CONFLICTING — precisam de rebase (44)
 
-| PR | Título resumido | Motivo |
-|---|---|---|
-| #2238 | feat(message-delivery): carimbo POST iniciado (PD-79, PD-80) | Mudança em edge function com impacto em rastreabilidade de produção |
-| #2277 | chore(db) GOAL backend — storage audit + manifest | Conflito + DDL + manifesto schema + 25 commits; escopo amplo |
+#2051, #2058, #2059, #2063, #2066, #2067, #2068, #2069, #2074, #2078, #2080, #2081, #2082, #2084, #2088, #2091, #2095, #2097, #2107, #2111, #2147, #2148, #2152, #2185, #2186, #2196, #2200, #2208, #2226, #2228, #2233, #2238, #2255, #2277, #2354, #2372, #2396, #2412, #2413, #2414, #2415, #2426, #2429, #2447
 
 ---
 
-## 5. PRs Proibidas por Escopo
+## ❌ CI FAILURE — bloqueadas por testes (14)
 
-| PR | Título resumido | Motivo |
-|---|---|---|
-| #2298 | feat(e75): centraliza versões de toolchain em toolchain.json | Toca 11 arquivos `.github/workflows/` |
-| #2295 | feat(ci): skip heavy jobs em draft PRs (E71) | Toca 3 arquivos `.github/workflows/` |
+Regressão nos unit tests desde ~24/10. Fix do TZ (#2416) já mergeado.
 
----
-
-## 6. PRs Obsoletas/Superseded
-
-| PR | Status | Motivo |
-|---|---|---|
-| #2284 | SUPERSEDED | Entregáveis de sessão anterior (SHA e1f2ee4, 100 PRs) — conflito + escopo diferente |
+#1930, #1997, #2064, #2137, #2146, #2216, #2279, #2417, #2418, #2419, #2421, #2428, #2431, #2433
 
 ---
 
-## 7. PRs Behind + CI Bloqueado
+## 📝 Draft CONFLICTING (17)
 
-Estas PRs são tecnicamente válidas mas dependem do CI Gate verde E de atualização de branch:
-
-| PR | Título resumido | Tipo de mudança |
-|---|---|---|
-| #2225 | fix(e2e): mock RPC app_bootstrap | test |
-| #2226 | fix(db-guard): assertion B.0c TC-009 | CI script |
-| #2228 | fix(tests): mock useAdminDataCreateUser | test |
-| #2229 | test(inbox): InboxEmptyChat.cta divergente | test |
-| #2266 | fix: paleta comandos + filtros inbox + celebrações | UI |
-| #2267 | fix: fila offline sem dono / logout | edge/front |
-| #2268 | fix: supervisor templates + Base de Conhecimento | front |
-| #2269 | fix: Talk X segmentos sem estimativa enganosa | front |
-| #2278 | fix(ci): guarda dashboard_kpi migration 20261026210000 | CI script |
-| #2286 | fix(edge-deploy): E09 timestampBumped como evidência | edge function |
-| #2305 | docs(mapa): USO_SEARCHBOX | docs |
+#2113, #2206, #2245, #2249, #2434–#2446 (lote), #2445 (mega: 325 arquivos)
 
 ---
 
-## 8. Draft PRs (não analisadas em profundidade)
+## ♻️ NOOP — sem diff real (3)
 
-19 PRs em estado draft — não elegíveis para merge enquanto em draft:
-#2211, #2213, #2214, #2215, #2216, #2217, #2219, #2221, #2222, #2241, #2242, #2245, #2249, #2250, #2255, #2261, #2265, #2279, #2297
-
----
-
-## 9. Baseline do main (ac97c0ea)
-
-### Lint (bun run lint)
-- **Erros pré-existentes em main:** `local/no-secret-compare` (14×), `@typescript-eslint/no-explicit-any` (2×), `react-hooks` (setState-in-effect 2×, impure-in-render 1×)
-- **Warnings pré-existentes:** `react-refresh/only-export-components` (7×), `no-restricted-imports` (4×)
-- **Exit code: 0**
-
-### TypeCheck (bun run typecheck)
-- **SIGABRT** (OOM no container) — não foi possível coletar baseline de typecheck
-- Regressão de CI não causada por esta análise
+#2075, #2086, #2232
 
 ---
 
-## 10. Conclusão
+## 📋 Próximos passos
 
-**Bloqueador principal:** CI Gate sistêmico + `types.ts` desatualizado.
-
-**Caminho de desbloqueio (em ordem):**
-1. Mergear PR #2244 (`fix(types): 9 RPCs`) → resolve `Contrato DB offline novas=12`
-2. Resolver Unit Tests falhando em main (regressão desde 24/10)
-3. Com CI verde, mergear PRs `MERGEAR_SE_CI_VERDE` em ordem de risco crescente
-4. Atualizar branches das PRs `BLOQUEADO_CI_E_BEHIND` com main e remergear
-
----
-
-*Análise gerada em 2026-10-29 | main@ac97c0ea | sessão `f25df632-1569-5c66-abd1-e14cb862eb74`*
+1. **Regra 8**: decidir sobre #2092, #2100, #2297, #2450 (CI verde, apenas workflows)
+2. **CONFLICTING**: rebase local nas 44 PRs — cada rebase desbloqueará nova rodada de merges
+3. **CI**: investigar causa raiz dos ~14 failures (regressão desde 24/10)
+4. **#2265**: revisar manualmente antes de mergear (DDL crítico)
+5. **#2445**: avaliar fechar (mega-branch com 325 arquivos, CONFLICTING)
