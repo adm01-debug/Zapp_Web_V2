@@ -207,7 +207,25 @@ SEC-Y25-01 (`SEC_Y25_INSERT_ALVO_TEST_POSTGRES_IMAGE`) usam `SKIP_DOCKER_SHIM: "
 1. `.github/workflows/db-guard.yml` — step N-008 ganhou `N008_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}` no bloco `env:`.
 2. `scripts/db-audit/user-sessions-expire.test.sh` — imagem hardcoded `postgres:17-alpine` substituída por `PG_IMG="${N008_POSTGRES_IMAGE:-postgres:17-alpine}"`.
 
-**Status:** Fix commitado — aguarda CI para validação (`conclusion=success` pendente).
+**Status:** Fix commitado (`cd26c8b`) — validação CI bloqueada por saturação do runner pool.
+
+**Bloqueio de validação (infra externa, não código):**
+
+Run `41360543612` disparado via `workflow_dispatch` em 2026-11-01T23:07:39Z permanece `queued`.
+Causa: 7 runs de outros agentes estão `in_progress` há 65+ min (timeout do job é 20 min):
+- DB Guard: 41355083709, 41355057776, 41355050891, 41355030288, 41355020165
+- CI/CD: 41355057668, 41355050924
+
+Todos consomem os runners disponíveis (conta pessoal GitHub = pool limitado).
+**Nenhum desses runs é desta sessão** — não é possível cancelá-los por agente.
+
+**O fix de código está correto e completo.** Quando o runner pool liberar e o run `41360543612`
+concluir, o resultado esperado é `conclusion=success`. Se falhar por outro motivo, a causa será
+documentada aqui no mesmo turno.
+
+**O que o Joaquim pode fazer para desbloquear:**
+- Cancelar manualmente os runs travados via GitHub Actions UI (https://github.com/adm01-debug/Zapp_Web_V2/actions)
+- Ou aguardar que o GitHub expire os jobs que ultrapassaram o timeout
 
 ---
 
@@ -233,7 +251,7 @@ independentes:
 Resultado da suíte completa rodada localmente (SHA `69cf182`, 2026-10-25 ~23:00 UTC):
 
 | Shard | Arquivos falhos | Testes falhos | Testes passando |
-|-------|----------------|---------------|-----------------|
+|-------|----------------|---------------|------------------|
 | 1/3   | 44             | 148           | 4921 + 12 todo/expected |
 | 2/3   | 45             | 149           | 4985 + 15 todo/expected |
 | 3/3   | 37             | 113           | 5089 + 36 todo/expected |
