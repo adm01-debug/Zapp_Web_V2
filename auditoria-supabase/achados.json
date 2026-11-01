@@ -9,16 +9,17 @@
       "PR #2186 (68 achados P001-P010)",
       "PR #2462 (docs 2026-10-25 — absorvida, sem novos achados ZW)",
       "reverificacao-2026-11-01T18:30Z",
-      "reverificacao-2026-11-01T19:05Z (ZW-0008/ZW-0044 resolvidos, ZW-0004/ZW-0007 atualizados)"
+      "reverificacao-2026-11-01T19:05Z (ZW-0008/ZW-0044 resolvidos, ZW-0004/ZW-0007 atualizados)",
+      "reverificacao-2026-11-01T20:15Z (ZW-0005 reclassificado RESOLVIDO: prosecdef=false confirmado, falso-positivo; ZW-0004 mantido ALTO: cnt=60 falhas/24h crescendo)"
     ],
     "total_zw": 47,
     "contagem": {
       "CRITICO": 2,
-      "ALTO": 4,
+      "ALTO": 3,
       "MEDIO": 15,
       "BAIXO": 3,
       "INFO": 13,
-      "RESOLVIDO": 10
+      "RESOLVIDO": 11
     }
   },
   "achados": [
@@ -89,14 +90,15 @@
       "id": "ZW-0005",
       "origem": "S07-001",
       "secao": "A.7",
-      "severidade": "ALTO",
+      "severidade": "RESOLVIDO",
       "tipo": "SEGURANÇA",
       "objeto": "public.decrypt_gmail_token / public.encrypt_gmail_token",
-      "guarda": "nenhuma",
-      "estado": "aberto",
-      "evidencia": "prosecdef=false (decrypt e encrypt) — confirmado 2026-11-01T18:19Z; lê vault.decrypted_secret sem SECURITY DEFINER",
+      "guarda": "check-secdef-public-execute.sql",
+      "estado": "resolvido",
+      "resolucao": "prosecdef=false confirmado em produção — funções nunca foram SECURITY DEFINER; achado original era falso-positivo quanto ao vetor SECURITY DEFINER",
+      "evidencia": "db_list_functions: prosecdef=false (decrypt_gmail_token e encrypt_gmail_token) — confirmado 2026-11-01T18:19Z e reverificado 2026-11-01T20:00Z; guard3 check-secdef-public-execute.sql: ok=true, rows_affected=0",
       "pr": null,
-      "impacto": "Qualquer role authenticated pode ler tokens OAuth do Gmail via essas funções sem proteção de search_path",
+      "impacto": "RESOLVIDO — falso-positivo; funções não têm SECURITY DEFINER portanto o vetor de privilege escalation via search_path não existe",
       "classe": "APROVAÇÃO",
       "esforco": "P"
     },
