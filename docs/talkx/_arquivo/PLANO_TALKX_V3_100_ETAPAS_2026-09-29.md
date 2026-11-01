@@ -1,3 +1,5 @@
+> **SUBSTITUÍDO pelo V4 em 2026-10-01 — não executar.**
+>
 > ### 🧊 PLANO CONGELADO — 2026-10-02 · substituído pelo V4 · **não executar**
 >
 > O **V4** (`TALK X 02`) é o **dono do Talk X** desde 01/10/2026. Este V3 fica congelado como **registro histórico**:
