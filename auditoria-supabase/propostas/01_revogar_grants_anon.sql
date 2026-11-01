@@ -2,7 +2,7 @@
 -- PROPOSTA 01 — Revogar grants de escrita de anon em 99 tabelas
 -- Status: NOT APPLIED
 -- Severidade: CRITICAL-1
--- Evidência: auditoria 2026-10-24
+-- Evidência: auditoria 2026-10-30
 --
 -- Contexto:
 --   99 tabelas têm GRANT INSERT/UPDATE/DELETE/TRUNCATE para o
@@ -45,6 +45,6 @@ COMMIT;
 -- ============================================================
 
 -- ROLLBACK:
-BEGIN;
-GRANT INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public TO anon;
-COMMIT;
+-- BEGIN;
+-- GRANT INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public TO anon;
+-- COMMIT;

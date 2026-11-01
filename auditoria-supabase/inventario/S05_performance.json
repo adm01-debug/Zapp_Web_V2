@@ -1,0 +1,23 @@
+{
+  "secao": "5_performance",
+  "gerado_em": "2026-10-30",
+  "top_10_queries_por_tempo": [
+    {"rank": 1, "query": "mcp_exec (gateway RPC)", "calls": 191, "total_ms": 318272, "mean_ms": 1666},
+    {"rank": 2, "query": "realtime WAL processor", "calls": 7734, "total_ms": 249727, "mean_ms": 32},
+    {"rank": 3, "query": "inbox_unread_total()", "calls": 174, "total_ms": 146337, "mean_ms": 841},
+    {"rank": 4, "query": "get_last_message_dates (contact_ids array)", "calls": 66, "total_ms": 136342, "mean_ms": 2066},
+    {"rank": 5, "query": "rpc_queue_goal_metrics()", "calls": 76, "total_ms": 79531, "mean_ms": 1046},
+    {"rank": 6, "query": "contacts SELECT (por deleted_at)", "calls": 206, "total_ms": 71251, "mean_ms": 346},
+    {"rank": 7, "query": "contacts SELECT (assigned_to + created_at)", "calls": 1002, "total_ms": 71074, "mean_ms": 71},
+    {"rank": 8, "query": "pg_publication_tables (realtime)", "calls": 3149, "total_ms": 64165, "mean_ms": 20},
+    {"rank": 9, "query": "search_contacts", "calls": 93, "total_ms": 62295, "mean_ms": 670},
+    {"rank": 10, "query": "contacts_count_by_type()", "calls": 80, "total_ms": 53473, "mean_ms": 668}
+  ],
+  "achados": [
+    {"id": "S05-001", "severidade": "CRITICO", "objeto": "public.user_roles (RLS policy recursao)", "descricao": "user_roles tem 673750 seq_scans (99.95%). Policy SELECT usa is_admin_or_supervisor(auth.uid()) que internamente faz lookup em user_roles - RECURSAO RLS. Cada query a user_roles dispara outro seq_scan em user_roles.", "evidencia": "pg_stat_user_tables: seq_scan=673750, idx_scan=336", "impacto": "Satura o connection pool - explica os job startup timeout em massa (S06-001/S10-001)", "correcao": "Remover dependencia circular: policy SELECT em user_roles NAO pode chamar is_admin_or_supervisor que le user_roles. Usar SECURITY DEFINER com SET search_path para o lookup interno."},
+    {"id": "S05-002", "severidade": "ALTO", "objeto": "get_last_message_dates (mean 2066ms)", "descricao": "Function mais lenta por chamada individual. 66 chamadas, mean 2066ms.", "evidencia": "extensions.pg_stat_statements: calls=66, mean_exec_time=2065ms", "correcao": "EXPLAIN a query; adicionar indice em messages(contact_id, created_at DESC)."},
+    {"id": "S05-003", "severidade": "ALTO", "objeto": "inbox_unread_total (mean 841ms)", "descricao": "174 chamadas, mean 841ms, soma 146s de DB time.", "correcao": "Revisar function; considerar materializacao ou cache de contagem."},
+    {"id": "S05-004", "severidade": "ALTO", "objeto": "public.profiles (99% seq_scan)", "descricao": "10743 seq_scans em tabela de 10 rows.", "correcao": "Revisar queries que acessam profiles sem filtro por id/user_id."},
+    {"id": "S05-005", "severidade": "MEDIO", "objeto": "email_threads seq_scan 99% com 759k tup_read", "descricao": "310 seq_scans, 759000 seq_tup_read.", "correcao": "EXPLAIN queries que acessam email_threads; adicionar indice no campo filtrado."}
+  ]
+}

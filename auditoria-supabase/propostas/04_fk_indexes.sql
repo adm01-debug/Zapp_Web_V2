@@ -2,23 +2,15 @@
 -- PROPOSTA 04 — Criar índices em FKs sem índice
 -- Status: NOT APPLIED
 -- Severidade: HIGH-3
--- Evidência: auditoria 2026-10-24
+-- Evidência: auditoria 2026-10-30
 --
 -- Contexto:
---   35 colunas de chave estrangeira não têm índice.
+--   32 colunas de chave estrangeira não têm índice.
 --   Isso causa seq scan na tabela filho a cada:
 --   - DELETE/UPDATE na tabela pai (FK check)
 --   - JOIN pela FK
 --   - CASCADE ou SET NULL trigger
 --
--- Impacto maior em tabelas com volume alto:
---   messages, conversations, events — operações frequentes
---   geram seq scans caros.
---
--- Verificação prévia (executar antes de criar):
---   Ver pg_stat_user_tables.seq_scan para as tabelas afetadas.
---
--- Rollback: DROP INDEX para cada índice criado.
 -- NOTA: usar CREATE INDEX simples (sem CONCURRENTLY) —
 --   gateway envolve em transação, CONCURRENTLY falha.
 -- ============================================================
@@ -54,31 +46,15 @@ ORDER BY tc.table_name, kcu.column_name;
 -- COMMIT;
 
 -- ============================================================
--- ROLLBACK — remover todos os índices criados por esta proposta
--- (executar se algum índice causar regressão inesperada)
+-- Top 10 mais impactantes (por volume de seq_scan estimado):
+-- talkx_campaigns.owner
+-- talkx_campaigns.launched_by
+-- talkx_campaigns.paused_by
+-- talkx_campaigns.cancelled_by
+-- talkx_campaigns.responsible_id
+-- conversation_events.from_queue_id
+-- conversation_events.to_queue_id
+-- multiplix_delivery_items.block_id
+-- multiplix_delivery_items.recipient_id
+-- sla_alert_events.queue_id
 -- ============================================================
-
--- Identificar os índices criados por esta proposta (padrão idx_<table>_<column>):
--- SELECT indexname FROM pg_indexes
--- WHERE schemaname = 'public'
---   AND indexname LIKE 'idx_%'
---   AND indexdef NOT LIKE '%UNIQUE%'
--- ORDER BY indexname;
-
--- Remover todos de uma vez (ajustar lista após aplicar o CREATE):
-BEGIN;
-
--- DROP INDEX IF EXISTS public.idx_<table1>_<coluna1>;
--- DROP INDEX IF EXISTS public.idx_<table2>_<coluna2>;
--- ... (um DROP por cada índice criado acima — preencher após executar o apply)
-
--- Verificação pós-rollback (deve retornar 0 para os índices removidos):
--- SELECT count(*) FROM pg_indexes
--- WHERE schemaname = 'public'
---   AND indexname IN ('idx_<table1>_<coluna1>', 'idx_<table2>_<coluna2>');
-
-COMMIT;
-
--- Nota: os 35 índices específicos são gerados dinamicamente pela
--- query de identificação no início deste arquivo. Salvar a lista
--- antes de aplicar para usar no rollback.
