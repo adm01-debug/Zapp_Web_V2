@@ -32,6 +32,12 @@ export { useLossRiskDetector } from './useLossRiskDetector';
 export { usePostRejection } from './usePostRejection';
 
 // ── Fase 9 (CV-081-090) — Catálogo, Prazo, Orçamento ─────────────────────────
+export { useProductRecommendation } from './useProductRecommendation';
+export type { ProductRecommendationItem, ProductRecommendationResult } from './useProductRecommendation';
+
+export { useMultimodalAnalysis } from './useMultimodalAnalysis';
+export type { MultimodalExtractedData, MultimodalAnalysisResult } from './useMultimodalAnalysis';
+
 export { useDeadlineCalculator } from './useDeadlineCalculator';
 export { useHonestUrgency } from './useHonestUrgency';
 export { useQuoteDraft } from './useQuoteDraft';

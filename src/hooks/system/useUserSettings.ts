@@ -216,9 +216,11 @@ export function useUserSettings() {
     setSettings((prev) => ({ ...prev, ...updates }));
   }, [setTheme]);
 
+  const userId = user?.id;
+
   // Save settings to DB (inclui campos TTS — use saveAppearanceSettings na aba Aparência)
   const saveSettings = useCallback(async () => {
-    if (!user?.id) {
+    if (!userId) {
       toast({
         title: 'Erro',
         description: 'Você precisa estar logado para salvar configurações.',
@@ -233,7 +235,7 @@ export function useUserSettings() {
       // Horário e Mensagens são POR CONEXÃO (`business_hours`/`away_messages`);
       // Automação é GLOBAL (`global_settings` / `auto_close_config`).
       const settingsData = {
-        user_id: user.id,
+        user_id: userId,
         // `browser_notifications_enabled` NÃO entra: é a mesma coluna que o hook
         // canônico useNotificationSettings grava na hora em que o interruptor é
         // mexido. Gravá-la aqui, a partir da cópia lida no mount, DESFAZIA o que
@@ -281,13 +283,13 @@ export function useUserSettings() {
     } finally {
       setIsSaving(false);
     }
-  }, [user?.id, settings]);
+  }, [userId, settings]);
 
   // Salva apenas os campos de aparência (theme, language, compact_mode).
   // Não inclui tts_voice_id/tts_speed para evitar sobrescrever configurações
   // de voz salvas em outra aba ou por outro hook nesta sessão.
   const saveAppearanceSettings = useCallback(async () => {
-    if (!user?.id) {
+    if (!userId) {
       toast({
         title: 'Erro',
         description: 'Você precisa estar logado para salvar configurações.',
@@ -313,7 +315,7 @@ export function useUserSettings() {
         .from('user_settings')
         .upsert(
           {
-            user_id: user.id,
+            user_id: userId,
             theme: settings.theme,
             language: settings.language,
             compact_mode: settings.compact_mode,
@@ -347,7 +349,7 @@ export function useUserSettings() {
     } finally {
       setIsSaving(false);
     }
-  }, [user?.id, isLoading, isError, settings.theme, settings.language, settings.compact_mode]);
+  }, [userId, isLoading, isError, settings.theme, settings.language, settings.compact_mode]);
 
   // Reset to defaults
   const resetSettings = useCallback(() => {

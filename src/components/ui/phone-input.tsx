@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -45,11 +45,13 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
   const pastedTextRef = useRef<string | null>(null);
 
   const currentRaw = extractDigits(value);
-  if (currentRaw !== lastEmittedRawRef.current) {
-    isExplicitInternationalRef.current = currentRaw.length >= 2 && !currentRaw.startsWith('55');
-    wasExplicitPlusRef.current = false;
-    lastEmittedRawRef.current = currentRaw;
-  }
+  useLayoutEffect(() => {
+    if (currentRaw !== lastEmittedRawRef.current) {
+      isExplicitInternationalRef.current = currentRaw.length >= 2 && !currentRaw.startsWith('55');
+      wasExplicitPlusRef.current = false;
+      lastEmittedRawRef.current = currentRaw;
+    }
+  });
 
   const handlePaste = useCallback((e: React.ClipboardEvent<HTMLInputElement>) => {
     pastedTextRef.current = e.clipboardData.getData('text/plain');
