@@ -74,10 +74,6 @@ export function useGoalsDashboard() {
   const [celebrationData, setCelebrationData] = useState({ title: '', subtitle: '', emoji: '🎉' });
   const previousCompletedGoals = useRef<Set<string>>(new Set());
   const previousOverallComplete = useRef(false);
-  // Período cujas conclusões estão em `previousCompletedGoals`: trocar de período
-  // reinicia a linha de base em silêncio, senão metas já cumpridas no novo período
-  // disparariam a celebração só porque o período anterior estava incompleto.
-  const baselinePeriod = useRef(period);
   const { user } = useAuth();
 
   // A MESMA janela de período do aviso de conquista (useGoalNotifications), inclusive a
@@ -138,7 +134,7 @@ export function useGoalsDashboard() {
     enabled: !!profile?.id,
   });
 
-  const { data: customGoals, isLoading: loadingConfig } = useQuery({
+  const { data: customGoals } = useQuery({
     queryKey: ['goals-config', profile?.id],
     queryFn: async () => {
       if (!profile?.id) return [];
@@ -191,18 +187,11 @@ export function useGoalsDashboard() {
 
   const completedGoals = useMemo(() => goals.filter(g => g.current >= g.target).length, [goals]);
   // Inclui o perfil: as contagens só habilitam depois dele, então sem isto a tela mostraria 0% antes dos dados.
-  // E a configuração de metas: sem ela os alvos/ativas são os padrões e o progresso mostrado seria provisório.
-  const isLoading = loadingProfile || loadingMessages || loadingContacts || loadingAnalyses || loadingConfig;
+  const isLoading = loadingProfile || loadingMessages || loadingContacts || loadingAnalyses;
 
   useEffect(() => {
     if (isLoading || goals.length === 0) return;
     const allGoalsCompleted = overallProgress >= 100;
-    if (baselinePeriod.current !== period) {
-      baselinePeriod.current = period;
-      previousOverallComplete.current = allGoalsCompleted;
-      previousCompletedGoals.current = new Set(goals.filter(g => g.current >= g.target).map(g => g.id));
-      return;
-    }
     if (allGoalsCompleted && !previousOverallComplete.current) {
       setCelebrationData({ title: 'Todas as Metas Alcançadas! 🏆', subtitle: 'Parabéns! Você completou todas as metas do período!', emoji: '🎉' });
       setShowCelebration(true);
@@ -221,7 +210,7 @@ export function useGoalsDashboard() {
       }
     });
     previousCompletedGoals.current = currentCompletedIds;
-  }, [goals, overallProgress, isLoading, period]);
+  }, [goals, overallProgress, isLoading]);
 
   return {
     period, setPeriod, configDialogOpen, setConfigDialogOpen,
