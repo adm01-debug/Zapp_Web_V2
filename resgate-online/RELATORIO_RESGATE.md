@@ -50,3 +50,7 @@ Ver seção "Estado final" ao fim (preenchida após o CI).
 - Commit da #2484 feito com `core.hooksPath=/dev/null` (hooks husky locais desligados; o checkout principal tem .husky modificado).
 - Se `talkx_segments.tags` existe em produção (C011).
 - Confiança nos vereditos de "JÁ IMPLEMENTADA" é por conteúdo (diff vazio ou resíduo inspecionado), não por execução de testes de cada cluster.
+
+## Estado final
+- Nenhum merge feito por esta rodada. #2484 (C130): todos os checks verdes (Unit 1-3/3, TypeCheck, Edge, Replay, Contrato DB, E2E, Security) na 2ª rodada; 1ª rodada falhou por erro meu (`.maybeSingle()`), corrigido em 7b19a19a8a. Ao fechar, o CI Gate estava pendente e a branch ficou BEHIND da main (strict=true); atualizar a branch e esperar nova rodada (~35 min de fila) não coube no limite de turnos. PR aberta, pronta para merge assim que o gate passar.
+- Nenhuma outra escrita no GitHub (só a branch claude/feat-metas-seletor-periodo-261101-1208, a PR #2484 e a edição do corpo dela).

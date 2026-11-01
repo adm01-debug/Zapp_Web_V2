@@ -71,7 +71,7 @@
   "tags": 3
  },
  "C130": {
-  "estado": "ABERTA (CI em andamento)",
+  "estado": "ABERTA: checks verdes, gate pendente, branch BEHIND (merge pendente)",
   "prs": [
    "#2484 (minha)",
    "#2239 (mergeada, squash VAZIO: 0 arquivos)",
