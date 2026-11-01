@@ -32,7 +32,7 @@ export type BusinessHoursSetting = Parameters<typeof deliveryWindowStatus>[2];
 /** Motivos que autorizam retomada automática. Qualquer outro valor (texto livre
  *  do usuário, nulo, motivo desconhecido) significa pausa manual/diagnóstica e
  *  NUNCA é retomado por robô. */
-export const AUTO_RESUME_REASONS = ["send_window", "business_hours", "connection_lost", "daily_limit"] as const;
+export const AUTO_RESUME_REASONS = ["send_window", "business_hours", "connection_lost", "daily_limit", "instance_paused"] as const;
 export type AutoResumeReason = (typeof AUTO_RESUME_REASONS)[number];
 
 /**
@@ -150,7 +150,11 @@ export function selectResumableCampaigns(
     return {
       ...base,
       resume: true,
-      because: pauseReason === "business_hours" ? "horário comercial aberto" : "dentro da janela de envio",
+      because: pauseReason === "business_hours"
+        ? "horário comercial aberto"
+        : pauseReason === "instance_paused"
+        ? "instância pode ter voltado — talkx-send re-pausa se ainda estiver inativa"
+        : "dentro da janela de envio",
     };
   });
 }
