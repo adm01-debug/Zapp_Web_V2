@@ -35,7 +35,7 @@
   "prs_aguardando_ci": 22,
   "prs_aguardando_ci_apos_update": 4,
   "status": "aguardando_ci_outage",
-  "nota": "GitHub Actions outage desde ~20:30Z em 2026-11-01. Todos os 22+4=26 PRs aprovados ainda BLOCKED (CI jobs queued às 22:19Z). PRs #2107/#2146/#2279/#2428 reclassificadas BLOQUEADO_CONFLITO (DIRTY/merge conflict confirmado via GraphQL mergeStateStatus e update_pr_branch 422). 22 PRs com auto_merge=squash vão auto-mergear quando CI ficar verde. 4 PRs sem auto_merge precisam de merge manual quando CLEAN: #2431 #2461 #2469 #2472. Check-in programado 22:55Z (trig_01PQgB16vwrzWLpxiVWyeEaQ).",
+  "nota": "GitHub Actions outage desde ~20:30Z em 2026-11-01. Check-in 22:57Z: CI ainda BLOCKED/queued (~55min de fila). PRs fechadas por outra sessão: #2146/#2279/#2428 (FECHADA_SEM_MERGE — conflito), #2489 (FECHADA_SEM_MERGE — duplicata de #2522). Nova PR: #2522 fix(e2e) GR-012 Firefox com auto_merge=SQUASH. 22 PRs auto_merge=squash vão mergear quando CI verde. PRs sem auto_merge: #2431 #2461 #2469 #2472 #2473. Check-in agendado 23:27Z.",
   "verdicts": {
     "1930": "AGUARDANDO_CI",
     "1997": "BLOQUEADO_DDL_WORKFLOW",
@@ -48,19 +48,19 @@
     "2111": "BLOQUEADO_CONFLITO",
     "2113": "DRAFT_SKIP",
     "2137": "BLOQUEADO_RLS_SEM_TESTE",
-    "2146": "BLOQUEADO_CONFLITO",
+    "2146": "FECHADA_SEM_MERGE",
     "2206": "DRAFT_SKIP",
     "2233": "BLOQUEADO_CI",
     "2238": "BLOQUEADO_DECISAO_HUMANA",
     "2245": "DRAFT_SKIP",
     "2249": "DRAFT_SKIP",
     "2265": "DRAFT_SKIP",
-    "2279": "BLOQUEADO_CONFLITO",
+    "2279": "FECHADA_SEM_MERGE",
     "2283": "MERGEADA",
     "2417": "BLOQUEADO_CI",
     "2418": "AGUARDANDO_CI",
     "2426": "BLOQUEADO_CONFLITO",
-    "2428": "BLOQUEADO_CONFLITO",
+    "2428": "FECHADA_SEM_MERGE",
     "2431": "AGUARDANDO_CI",
     "2445": "DRAFT_SKIP",
     "2447": "MERGEADA",
@@ -88,7 +88,7 @@
     "2485": "AGUARDANDO_CI",
     "2486": "AGUARDANDO_CI",
     "2487": "BLOQUEADO_AGUARDANDO_APROVACAO",
-    "2489": "AGUARDANDO_CI",
+    "2489": "FECHADA_SEM_MERGE",
     "2491": "AGUARDANDO_CI",
     "2492": "BLOQUEADO_CONFLITO",
     "2493": "BLOQUEADO_FALSO_CLAUDE_MD",
@@ -103,14 +103,15 @@
     "2502": "DRAFT_SKIP",
     "2503": "SKIP_WORKFLOWS",
     "2504": "AGUARDANDO_CI",
-    "2505": "DRAFT_SKIP"
+    "2505": "DRAFT_SKIP",
+    "2522": "AGUARDANDO_CI"
   },
   "contagem_por_veredito": {
     "MERGEADA": 3,
     "AGUARDANDO_CI_APOS_UPDATE": 4,
     "AGUARDANDO_CI": 22,
     "DRAFT_SKIP": 9,
-    "BLOQUEADO_CONFLITO": 11,
+    "BLOQUEADO_CONFLITO": 8,
     "BLOQUEADO_AGUARDANDO_APROVACAO": 5,
     "BLOQUEADO_CI": 2,
     "SKIP_WORKFLOWS": 4,
@@ -121,6 +122,7 @@
     "BLOQUEADO_FALSO_CLAUDE_MD": 1,
     "INCOMPLETO": 1,
     "SUPERSEDIDA": 1,
-    "TOTAL": 67
+    "FECHADA_SEM_MERGE": 4,
+    "TOTAL": 68
   }
 }
