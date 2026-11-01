@@ -42,7 +42,7 @@ function violacoesContagemClaude(texto, totalYaml) {
     }
   }
   const chato = achata(texto);
-  if (!new RegExp(`\\*\\*${totalYaml}\\*\\* arquivos em \`.github/workflows/\``).test(chato)) {
+  if (!new RegExp(`\\*\\*${totalYaml}\\*\\* arquivos em \`\.github/workflows/\``).test(chato)) {
     out.push(`CLAUDE.md nao declara os ${totalYaml} arquivos de .github/workflows/`);
   }
   if (!texto.includes('docs/ci/README.md')) {
@@ -354,19 +354,25 @@ test('E62/E76: os numeros citados conferem com o repositorio', async () => {
   assert.match(e62.linha, /guardas de DB|pós-apply/i);
 
   const lock = await readFile(BUN_LOCK, 'utf8');
-  assert.ok(/playwright@1\.64\.1/.test(lock));
-  assert.ok(/playwright-core@1\.64\.1/.test(lock));
-  assert.ok(/@playwright\/test@1\.64\.1/.test(lock));
+  // W39: extrair versão do bun.lock em vez de pinar literalmente (ex.: playwright@1.63.0).
+  // Assim o bump do Playwright no Dependabot não exige editar este arquivo.
+  const pwMatch = lock.match(/playwright@(\d+\.\d+\.\d+)/);
+  assert.ok(pwMatch, 'playwright deve estar no bun.lock');
+  const pwVer = pwMatch[1];
+  const pwEsc = pwVer.replace(/\./g, '\\.');
+  assert.ok(new RegExp(`playwright-core@${pwEsc}`).test(lock), `playwright-core@${pwVer} deve estar no bun.lock`);
+  assert.ok(new RegExp(`@playwright/test@${pwEsc}`).test(lock), `@playwright/test@${pwVer} deve estar no bun.lock`);
 
   const tres = ['ci.yml', 'e2e-logado.yml', 'e2e-talkx.yml'];
   for (const f of tres) {
     const wf = await readFile(join(DIR_WF, f), 'utf8');
-    assert.ok(wf.includes('playwright@1.64.1'));
+    assert.ok(wf.includes(`playwright@${pwVer}`), `${f} deve usar playwright@${pwVer} (versao do bun.lock)`);
   }
   const e76 = rec.get('E76');
   assert.ok(e76);
   for (const f of tres) assert.ok(e76.linha.includes(f), `E76 deve citar ${f}`);
-  assert.match(e76.linha, /1\.64\.1/);
+  // Não verificar versão literal aqui: a linha do plano menciona a versão em texto livre,
+  // mas o contrato é que a paridade seja verdadeira (todos os três arquivos == bun.lock).
   assert.match(e76.linha, /não há mismatch/i);
 });
 
@@ -438,6 +444,38 @@ test('plano: tabela de abertura (E01/E13/E14/E16) preserva as evidencias medidas
   assert.deepEqual(violacoesTabelaAbertura(plano), []);
 });
 
+// W39: garante que nenhum teste neste arquivo pina uma versão literal de dependência
+// (ex.: playwright@1.63.0) em chamadas de assert. Versão deve ser lida do bun.lock.
+// Pega linhas de assert com @X.Y.Z literal, inclusive escrito como regex (@1\.64\.1);
+// exclui comentarios e padroes genericos (\d+), que nao pinam versao.
+function assertsComVersaoPinada(src) {
+  return src.split('\n').filter(
+    (l) =>
+      !/^\s*\/\//.test(l) &&
+      /assert\./.test(l) &&
+      /@\d+(?:\.|\\\.)\d+(?:\.|\\\.)\d+/.test(l) &&
+      !l.includes('\\d+'),
+  );
+}
+
+test('meta: nenhum assert neste arquivo pina versao literal de dependencia (package@X.Y.Z)', async () => {
+  const violacoes = assertsComVersaoPinada(await readFile(new URL(import.meta.url), 'utf8'));
+  assert.deepEqual(
+    violacoes,
+    [],
+    `assert com versao literal de dependencia encontrado:\n${violacoes.join('\n')}`,
+  );
+});
+
+test('meta: fixture — pino literal e pino em regex sao pegos; padrao generico nao', () => {
+  const PONTO = '.';
+  const BARRA = '\\';
+  const literal = `  assert.ok(wf.includes('playwright@1${PONTO}64${PONTO}1'));`;
+  const emRegex = `  assert.ok(/playwright@1${BARRA}.64${BARRA}.1/.test(lock));`;
+  const generico = `  assert.ok(/playwright@(${BARRA}d+${BARRA}.${BARRA}d+)/.test(lock));`;
+  assert.deepEqual(assertsComVersaoPinada([literal, emRegex, generico].join('\n')), [literal, emRegex]);
+});
+
 // W95: CONTRIBUTING.md deve referenciar o stack e o fluxo atuais
 const CONTRIBUTING = join(RAIZ, 'CONTRIBUTING.md');
 
@@ -472,4 +510,27 @@ test('W95 CONTRIBUTING.md: lista os 6 required checks', async () => {
 test('W95 CONTRIBUTING.md: nao referencia branch develop', async () => {
   const texto = await readFile(CONTRIBUTING, 'utf8');
   assert.ok(!texto.includes('`develop`'), 'nao deve referenciar branch develop');
+});
+
+// W32 — docs/MIGRATIONS.md deve ter a secao "Fluxo diario (lote)" com os termos obrigatorios
+const MIGRATIONS_DOC = join(RAIZ, 'docs/MIGRATIONS.md');
+const TERMOS_LOTE = ['apply_all_missing', 'PENDENTE DE APPLY', 'producao-ddl'];
+
+function termosLoteAusentes(conteudo) {
+  if (!/Fluxo diário \(lote\)/u.test(conteudo)) return ['secao "Fluxo diário (lote)"'];
+  return TERMOS_LOTE.filter((termo) => !conteudo.includes(termo));
+}
+
+test('W32: docs/MIGRATIONS.md tem secao "Fluxo diario (lote)" com todos os termos obrigatorios', async () => {
+  const conteudo = await readFile(MIGRATIONS_DOC, 'utf8');
+  assert.deepEqual(termosLoteAusentes(conteudo), []);
+});
+
+test('W32: fixture — secao sem termo obrigatorio e rejeitada', () => {
+  const completa = ['Fluxo diário (lote)', ...TERMOS_LOTE].join('\n');
+  assert.deepEqual(termosLoteAusentes(completa), []);
+  for (const termo of TERMOS_LOTE) {
+    assert.deepEqual(termosLoteAusentes(completa.replace(termo, '')), [termo]);
+  }
+  assert.deepEqual(termosLoteAusentes(TERMOS_LOTE.join('\n')), ['secao "Fluxo diário (lote)"']);
 });

@@ -173,6 +173,46 @@ BEGIN
       USING HINT = 'Policy de escrita USING(true)/WITH CHECK(true) deixa qualquer autenticado escrever a tabela inteira. Restrinja por dono/organizacao (ex.: user_id = auth.uid()) ou, se for deliberado, documente "<tabela>: <policy>" na v_allowlist_escrita deste arquivo.';
   END IF;
 
+  -- ── (6) privilégios de estrutura que ignoram RLS ───────────────────────────
+  -- TRUNCATE não executa policies de linha. REFERENCES/TRIGGER também não são
+  -- necessários aos clientes anon/authenticated e ampliam a superfície de DDL.
+  -- Conferir privilégios efetivos detecta grants diretos, PUBLIC e herdados.
+  SELECT string_agg(
+           format('public.%s: anon=%s, authenticated=%s', c.relname, role_name, privilege_name),
+           E'\n  ' ORDER BY c.relname, role_name, privilege_name)
+    INTO v_faltas
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    CROSS JOIN (VALUES ('anon'), ('authenticated')) AS roles(role_name)
+    CROSS JOIN (VALUES ('TRUNCATE'), ('REFERENCES'), ('TRIGGER')) AS privileges(privilege_name)
+   WHERE n.nspname = 'public'
+     AND c.relkind IN ('r', 'p')
+     AND has_table_privilege(roles.role_name, c.oid, privileges.privilege_name);
+  IF v_faltas IS NOT NULL THEN
+    RAISE EXCEPTION E'INV-LIVE (ACL): privilégios TRUNCATE/REFERENCES/TRIGGER para anon/authenticated:\n  %', v_faltas
+      USING HINT = 'TRUNCATE ignora RLS. Revogue estes privilégios de PUBLIC, anon e authenticated; preserve SELECT/DML somente quando houver contrato explícito.';
+  END IF;
+
+  -- Defaults pertencentes a postgres podem e devem permanecer seguros. Não
+  -- afirmamos controle sobre defaults de supabase_admin, cujo owner está fora
+  -- das permissões do role postgres usado pelo projeto.
+  SELECT string_agg(
+           format('postgres/public: %s tem %s', coalesce(grantee.rolname, 'PUBLIC'), acl.privilege_type),
+           E'\n  ' ORDER BY coalesce(grantee.rolname, 'PUBLIC'), acl.privilege_type)
+    INTO v_faltas
+    FROM pg_default_acl defaults
+    CROSS JOIN LATERAL aclexplode(defaults.defaclacl) acl
+    LEFT JOIN pg_roles grantee ON grantee.oid = acl.grantee
+   WHERE defaults.defaclrole = (SELECT oid FROM pg_roles WHERE rolname = 'postgres')
+     AND defaults.defaclobjtype = 'r'
+     AND defaults.defaclnamespace IN (0, 'public'::regnamespace)
+     AND (acl.grantee = 0 OR grantee.rolname IN ('anon', 'authenticated'))
+     AND acl.privilege_type IN ('TRUNCATE', 'REFERENCES', 'TRIGGER');
+  IF v_faltas IS NOT NULL THEN
+    RAISE EXCEPTION E'INV-LIVE (DEFAULT ACL): privilégio estrutural padrão para anon/authenticated:\n  %', v_faltas
+      USING HINT = 'Revogue os privilégios estruturais dos defaults de postgres; o teste deve cobrir também relações criadas depois da migration.';
+  END IF;
+
   -- ── (6a) referencia pendurada: funcao de public -> public.<algo> inexistente ─
   -- Remove comentario de linha e literais de texto antes de casar 'public.<nome>(',
   -- para documentacao antiga e strings nao gerarem falso positivo.
@@ -232,7 +272,7 @@ BEGIN
     END IF;
   END IF;
 
-  RAISE NOTICE 'INV-LIVE OK — % tabela(s) com RLS, % view(s) com security_invoker, % SECURITY DEFINER com search_path, 0 matview exposta, 0 policy de escrita aberta, 0 referencia pendurada.',
+  RAISE NOTICE 'INV-LIVE OK — % tabela(s) com RLS, % view(s) com security_invoker, % SECURITY DEFINER com search_path, 0 matview exposta, 0 policy de escrita aberta, 0 privilégio estrutural anon/authenticated, 0 referencia pendurada.',
                v_tabelas, v_views, v_secdef;
 END
 $inv_live$;
