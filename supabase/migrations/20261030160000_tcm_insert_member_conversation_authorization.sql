@@ -13,6 +13,19 @@
 --
 -- No tenant_id exists on this membership relation; conversation_id is the scope
 -- boundary. A role held in a different conversation grants no authority here.
+--
+-- Rollback to the immediately previous policy contract:
+--   DROP POLICY IF EXISTS tcm_insert_member ON public.team_conversation_members;
+--   CREATE POLICY tcm_insert_member ON public.team_conversation_members
+--     FOR INSERT TO authenticated WITH CHECK (
+--       member_role = 'member'
+--       AND (public.is_team_conversation_member(auth.uid(), conversation_id)
+--            OR public.is_admin_or_supervisor(auth.uid())
+--            OR public.is_team_conversation_creator(auth.uid(), conversation_id))
+--     );
+--   REVOKE EXECUTE ON FUNCTION public.can_insert_team_conversation_member(uuid, uuid, text)
+--     FROM PUBLIC, anon, authenticated, service_role;
+--   DROP FUNCTION IF EXISTS public.can_insert_team_conversation_member(uuid, uuid, text);
 
 CREATE OR REPLACE FUNCTION public.can_insert_team_conversation_member(
   _conversation_id uuid,
