@@ -747,6 +747,36 @@ describe('useInboxBulkActions — bulkArchive', () => {
     expect(archiveUpdate?.filters.id).toEqual([c1]);
   });
 
+  it('desfazer two-step: falha no passo 2 reverte os contatos de volta para archived (rollback)', async () => {
+    selectQueue.push({ data: [{ id: c1, conversation_status: 'waiting' }], error: null });
+    // Passo do hook: archive (action)
+    updateQueue.push({ data: null, error: null });
+    // undoAction passo 1: archived → open (sucesso)
+    updateQueue.push({ data: null, error: null });
+    // undoAction passo 2: open → waiting (FALHA)
+    updateQueue.push({ data: null, error: { message: 'simulated network error' } });
+    // rollback: twoStepIds → archived (deve ser chamado)
+    updateQueue.push({ data: null, error: null });
+
+    const { result } = renderInbox();
+    selectIds(result, [c1]);
+
+    await act(async () => { await result.current.bulkArchive(); });
+    // undoAction lança porque o passo 2 falhou — capturamos para não quebrar o teste
+    await act(async () => { await lastUndo?.undoAction().catch(() => {}); });
+
+    const updates = contactUpdates();
+    // updates[0]: archive → archived
+    // updates[1]: undo passo 1 → open
+    // updates[2]: undo passo 2 → waiting (tentativa, falhou)
+    // updates[3]: rollback → archived (comprovação do fix)
+    expect(updates).toHaveLength(4);
+    expect(updates[3]).toMatchObject({
+      payload: { conversation_status: 'archived' },
+      filters: { id: [c1] },
+    });
+  });
+
   // BUG (documentado): o SELECT dos contatos originais está FORA do try e tem o `error`
   // ignorado. Se ele falha (RLS/rede), `originalContacts` fica nulo e o hook segue
   // arquivando: o botão "Desfazer" aparece, anuncia "Arquivamento desfeito" e não

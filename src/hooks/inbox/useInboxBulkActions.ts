@@ -257,12 +257,25 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
               .in('id', twoStepIds);
             if (e1) throw e1;
 
-            for (const [status, ids] of twoStepByFinal) {
-              const { error } = await supabase
+            // Se qualquer update de status final falhar, reverte os contatos ainda
+            // em 'open' de volta para 'archived' — FSM permite open → archived.
+            // Contatos já no status final (loop parcial) passam pelo mesmo UPDATE;
+            // se o FSM bloquear a transição, ficam no status final em vez de
+            // 'archived' (preferível a ficarem presos em 'open').
+            try {
+              for (const [status, ids] of twoStepByFinal) {
+                const { error } = await supabase
+                  .from('contacts')
+                  .update({ conversation_status: status })
+                  .in('id', ids);
+                if (error) throw error;
+              }
+            } catch (e2) {
+              await supabase
                 .from('contacts')
-                .update({ conversation_status: status })
-                .in('id', ids);
-              if (error) throw error;
+                .update({ conversation_status: 'archived' })
+                .in('id', twoStepIds);
+              throw e2;
             }
           }
 
