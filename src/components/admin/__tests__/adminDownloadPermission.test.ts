@@ -355,11 +355,10 @@ describe('useAdminData — avatares no bucket privado', () => {
 describe('useAdminData — handleCreateUser com avatar (bucket privado)', () => {
   const storageFrom = supabase.storage.from as unknown as ReturnType<typeof vi.fn>;
   const tableFrom = supabase.from as unknown as ReturnType<typeof vi.fn>;
+  const invokeFn = supabase.functions.invoke as unknown as ReturnType<typeof vi.fn>;
   const upload = vi.fn();
   const getPublicUrl = vi.fn();
   const createSignedUrl = vi.fn();
-  const getSession = vi.fn();
-  const fetchMock = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -375,14 +374,7 @@ describe('useAdminData — handleCreateUser com avatar (bucket privado)', () => 
       update: () => ({ eq: async () => ({ error: null }) }),
       insert: async () => ({ data: null, error: null }),
     });
-    getSession.mockResolvedValue({ data: { session: { access_token: 'tok' } } });
-    Object.assign(supabase.auth, { getSession });
-    fetchMock.mockResolvedValue({ ok: true, json: async () => ({}) });
-    vi.stubGlobal('fetch', fetchMock);
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
+    invokeFn.mockResolvedValue({ data: null, error: null });
   });
 
   it('upload de avatar na criação grava o caminho <uuid>.<ext>, não a URL', async () => {
@@ -392,16 +384,16 @@ describe('useAdminData — handleCreateUser com avatar (bucket privado)', () => 
     let ok = false;
     await act(async () => {
       ok = await result.current.handleCreateUser({
-        name: 'Novo', email: 'novo@test.com', password: 'abcdef', role: 'agent', avatarFile: file,
+        name: 'Novo', email: 'novo@test.com', password: 'abcdefgh', role: 'agent', avatarFile: file,
       });
     });
 
     expect(ok).toBe(true);
     expect(upload).toHaveBeenCalled();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toContain('create-user');
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
-    expect(body.avatar_url).toMatch(/^[0-9a-f-]{36}\.jpg$/);
+    expect(invokeFn).toHaveBeenCalledTimes(1);
+    expect(invokeFn.mock.calls[0][0]).toBe('create-user');
+    const callBody = invokeFn.mock.calls[0][1].body;
+    expect(callBody.avatar_url).toMatch(/^[0-9a-f-]{36}\.jpg$/);
     expect(getPublicUrl).not.toHaveBeenCalled();
   });
 
@@ -413,12 +405,12 @@ describe('useAdminData — handleCreateUser com avatar (bucket privado)', () => 
     let ok = true;
     await act(async () => {
       ok = await result.current.handleCreateUser({
-        name: 'Novo', email: 'novo@test.com', password: 'abcdef', role: 'agent', avatarFile: file,
+        name: 'Novo', email: 'novo@test.com', password: 'abcdefgh', role: 'agent', avatarFile: file,
       });
     });
 
     expect(ok).toBe(false);
     expect(toast.error).toHaveBeenCalledWith('Erro ao fazer upload da foto');
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(invokeFn).not.toHaveBeenCalled();
   });
 });

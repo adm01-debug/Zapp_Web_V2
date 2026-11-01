@@ -69,7 +69,7 @@ interface Props {
   onOpenMonitor?: (campaignId: string) => void;
 }
 
-export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab, onActiveTemplateChange, onClose, onOpenMonitor }: Props) {
+export function TalkXTemplateEditor({ templates, isLoading, isError: isErrorProp, error: errorProp, onRetry, editing, initialTtab, onActiveTemplateChange, onClose, onOpenMonitor }: Props) {
   const {
     createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
     saveVariant, deleteVariant, countVariantRecipients,
@@ -493,9 +493,9 @@ export function TalkXTemplateEditor({ templates, isLoading, editing, initialTtab
           {/* Lista compacta — X047: carregando -> erro -> vazio -> conteúdo */}
           <div className="flex-1 overflow-y-auto space-y-1">
             <TalkXQueryBoundary
-              query={{ isLoading, isError: templatesIsError, error: templatesError }}
+              query={{ isLoading, isError: isErrorProp !== undefined ? isErrorProp : templatesIsError, error: isErrorProp !== undefined ? (errorProp ?? null) : templatesError }}
               entity="os templates"
-              onRetry={() => { void refetchTemplates(); }}
+              onRetry={onRetry ?? (() => { void refetchTemplates(); })}
               skeleton={<TalkXSkeletonRows rows={5} />}
               isEmpty={libFiltered.length === 0}
               empty={<p className="text-2xs text-muted-foreground text-center pt-4">Nenhum template</p>}

@@ -24,6 +24,7 @@ import { AdminUsersTable } from './AdminUsersTable';
 import { AdminAuditTable } from './AdminAuditTable';
 import { VoipRamalField } from './VoipRamalField';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
+import { CronJobsTab } from './CronJobsTab';
 
 const roleIconMap = { admin: Crown, supervisor: UserCog, agent: User, special_agent: Eye } as const;
 const roleLabelMap = { admin: 'Administrador', supervisor: 'Supervisor', agent: 'Atendente', special_agent: 'Agente Especial' } as const;
@@ -192,10 +193,6 @@ export function AdminView() {
     ['users', Users, `Usuários (${users.length})`],
     ['audit', History, 'Auditoria'],
     ['crm', Building, 'CRM 360°'],
-    ['playbooks', Shield, 'Playbooks'],
-    ['copilot', Brain, 'Copilot IA'],
-    ['training', Users, 'Treinamento'],
-    ['crisis', Shield, 'Sala de Crise'],
     ...(isAdmin ? ([['cron', CalendarClock, 'Tarefas agendadas']] as const) : []),
   ];
 
@@ -492,6 +489,8 @@ export function AdminView() {
         <SectionErrorBoundary key="crm" sectionName="CRM Admin">
           <AdminCRMDashboard />
         </SectionErrorBoundary>
+      ) : activeTab === 'cron' ? (
+        <CronJobsTab />
       ) : null}
       </div>
     </div>

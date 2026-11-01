@@ -107,6 +107,10 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
+        if (search.query) {
+          search.setQuery('');
+          return;
+        }
         onClose();
         return;
       }
@@ -121,7 +125,7 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
     };
     window.addEventListener('keydown', handleShortcut, true);
     return () => window.removeEventListener('keydown', handleShortcut, true);
-  }, [focusSearch, onClose, onRouteChange, route.article, route.topic]);
+  }, [focusSearch, onClose, onRouteChange, route.article, route.topic, search.query, search.setQuery]);
 
   // O campo é o primeiro alvo da tela: ao voltar do artigo, o foco volta para ele.
   useEffect(() => {
