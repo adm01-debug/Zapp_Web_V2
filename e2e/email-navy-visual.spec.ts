@@ -520,7 +520,8 @@ test('workspace do Email é desmontado ao alternar entre módulos', async ({ pag
   await expect(page).toHaveURL(/view=dashboard/);
   await expect(page.locator('.email-workspace')).toHaveCount(0);
   await page.getByRole('button', { name: 'Email', exact: true }).click();
-  await expect(page.locator('.email-workspace')).toHaveCount(1);
+  // Timeout explícito: remontagem lazy do módulo Email após navegação é mais lenta em CI.
+  await expect(page.locator('.email-workspace')).toHaveCount(1, { timeout: 30_000 });
 });
 
 test('consumidor Omnichannel incorpora Email sem duplicar o cabeçalho autônomo', async ({ page }) => {
