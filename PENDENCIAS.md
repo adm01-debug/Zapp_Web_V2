@@ -4,28 +4,30 @@ _Atualizado em 2026-11-01 por sessão de correção de CI._
 
 ---
 
-## 1. DB Live Guard — deriva transitória (todos os 7 passos falharam)
+## 1. DB Live Guard — deriva de migration + artefatos desatualizados (issue #1965)
 
-**Run:** [41066127274](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41066127274) — 2026-10-30T13:47:10Z  
-**Head SHA:** `fb57b4a5cd071bf86a384d10f143360bd18feb61`
+**Causa raiz identificada em 2026-11-01:**
 
-**O que falhou:** Todos os 7 passos do "Contrato DB vivo":
-- Comparar migrations com schema_migrations
-- Verificar ACL e contrato de mcp_exec
-- Regenerar catálogo e comparar com o commitado
-- Regenerar manifesto e comparar com o commitado
-- Verificar frescor do types.ts
-- Paridade tripla (migrations, edges, grants)
-- Auditar configuração runtime sem dados de clientes
+### 1a. Migration ausente no repositório (DRIFT REAL — em correção)
 
-**Por que não foi corrigido:** O DB Live Guard compara o estado do banco de produção com os artefatos do repositório (types.ts, schema-catalog.json, deployment-manifest.json). A falha em TODOS os passos — incluindo "Verificar frescor do types.ts" — sugere deriva transitória causada pelo deploy-functions estar parado desde às 08:21 (por causa do deno.lock quebrado). Os artefatos gerados por `types-sync` e `deploy-functions` podem estar desatualizados.
+A migration `20261030145126_copilot_fases13_15_tabelas` estava no ledger de produção mas sem arquivo correspondente no repositório. Isso causava exit 1 no passo "Comparar migrations com schema_migrations".
 
-**O que o Joaquim precisa fazer:**
-1. Aguardar o merge do PR #2396 (corrige deno.lock → deploy-functions volta a funcionar)
-2. Após o merge, disparar manualmente o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`
-3. Se ainda falhar, os logs do artifact `db-live-evidence-{run_id}-1` mostrarão qual passo específico tem diferença real
-4. Se o passo "Comparar migrations com schema_migrations" falhar: verificar se há migration aplicada em produção sem estar no ledger (SELECT max(version) FROM supabase_migrations.schema_migrations)
-5. Se o passo "Verificar frescor do types.ts" falhar: disparar `workflow_dispatch` do `types-sync.yml` para regenerar types.ts
+**Correção em andamento:** PR #2491 (`fix/reconciliar-migration-copilot-fases13-15`) adiciona o arquivo. Auto-merge ativo — aguardando CI.
+
+### 1b. Artefatos desatualizados (schema-catalog, deployment-manifest, types.ts)
+
+Os artefatos commitados não refletem as tabelas copilot criadas diretamente em produção. Causam falha nos passos de catálogo, manifesto, types e paridade tripla.
+
+**Correção em andamento:** `types-sync.yml` disparado manualmente em 2026-11-01. O workflow gera PR com auto-merge para regenerar os três artefatos.
+
+### 1c. Migrations apply-pending (veja Seção 4)
+
+Há migrations em `main` não ainda aplicadas no banco de produção, causando exit 2 no passo "Comparar migrations". Depende do Joaquim aprovar (Seção 4).
+
+**O que o Joaquim precisa fazer (após os PRs acima mergearem):**
+1. Confirmar que PR #2491 e o PR do types-sync mergearam na main
+2. Disparar manualmente o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`
+3. Se o passo "Comparar migrations" ainda falhar: aprovar as migrations pendentes (Seção 4)
 
 ---
 
@@ -108,23 +110,29 @@ Branches: `adm01-debug-patch-4`
 
 ---
 
-## 4. Workflows dinâmicos sem arquivo no repositório (GF-032)
+## 4. db-migrate — migrations apply-pending exigem aprovação no environment producao-ddl
 
-**Situação:** O repositório tem 3 workflows dinâmicos gerenciados pelo GitHub que aparecem no histórico do Actions mas **não têm arquivo `.yml` próprio em `.github/workflows/`**. Não são corrigíveis via código — são controlados pelo GitHub ou pela conta.
+**Situação (2026-11-01):** Há migrations em `supabase/migrations/` (presentes na `main`) que ainda não foram aplicadas no banco de produção. O workflow `db-migrate.yml` falha quando há múltiplas migrations pending porque exige um alvo único ou bundle atômico conhecido.
 
-| Workflow | Origem | Runs visíveis | Ação possível |
-|---|---|---|---|
-| **Dependabot Updates** | Configuração Dependabot da conta | Sim, em cada PR com dependências | Nenhuma — gerenciado pelo GitHub |
-| **Dependency Graph** | Feature automática do GitHub | Sim, em pushes na `main` | Nenhuma — gerenciado pelo GitHub |
-| **Copilot Code Reviewer** | App GitHub Copilot instalada | Sim, em PRs com `@copilot` ou auto-review | Ver seção 2 (falha de firewall) |
+**Migrations apply-pending conhecidas (podem mudar conforme PRs mergearem):**
+- `20261023100000_*` — arquivo em main, não no ledger
+- `20261020120000_*` — arquivo em main, não no ledger
+- (possivelmente outros adicionados por PRs recentes)
 
-**Runs de branches deletadas:** Workflows disparados em branches de PR que foram mergeadas e deletadas permanecem no histórico do Actions com status `completed`. São runs legítimos, não fantasmas — aparecem porque o GitHub mantém o histórico de runs mesmo após a deleção da branch. Não requerem ação.
+**Como verificar o estado atual:**
+```sql
+SELECT max(version) FROM supabase_migrations.schema_migrations;
+```
+E comparar com `ls supabase/migrations/*.sql | sort | tail -10`.
 
-**Por que não foi corrigido:** Não há código para corrigir. O inventário canônico de workflows do repo está em `docs/ci/README.md` (gerado por `scripts/ci/render-workflow-docs.mjs`); qualquer discrepância entre o README gerado e os runs visíveis no Actions é esperada devido a esses 3 workflows dinâmicos.
+**O que o Joaquim precisa fazer:**
+1. Abrir [db-migrate.yml → workflow_dispatch](https://github.com/adm01-debug/Zapp_Web_V2/actions/workflows/db-migrate.yml) na aba Actions
+2. Executar com `apply=false` (dry-run) para ver quais migrations serão aplicadas e obter o hash SHA-256
+3. Se o resultado do dry-run estiver correto, executar com `apply=true` e o `confirm_runtime_sha256` obtido no passo anterior
+4. O job pausa em `Waiting` no environment `producao-ddl` — aprovar na aba Actions → Environments
+5. **Atenção:** executar uma migration por vez se houver dependências de ordem entre elas
 
-**O que o Joaquim pode fazer (opcional):**
-- Se os runs do Dependabot ou Dependency Graph estiverem falhando: verificar em GitHub Settings → Security → Dependabot
-- Se quiser suprimir runs do Copilot Reviewer: desabilitar em GitHub Settings → Copilot → Code Review
+**Nota:** O `db-migrate.yml` exige um alvo único (`target_version`) ou bundle atômico. Se houver múltiplas migrations pending, executar o workflow uma vez por migration, em ordem crescente de versão.
 
 ---
 
