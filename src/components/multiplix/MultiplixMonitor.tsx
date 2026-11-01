@@ -440,6 +440,8 @@ export function MultiplixMonitor({ dispatchId, onBack }: Props) {
                 ? 'Pausado automaticamente: conexão do WhatsApp caiu'
                 : dispatch.pause_reason === 'outside_window'
                   ? 'Pausado automaticamente: fora da janela de envio'
+                  : dispatch.pause_reason === 'instance_paused'
+                  ? 'Pausado automaticamente: a instância foi pausada (retome manualmente depois)'
                   : `Pausado automaticamente: ${dispatch.pause_reason}`}
           </p>
         )}

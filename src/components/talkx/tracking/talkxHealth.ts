@@ -39,6 +39,7 @@ const AUTO_PAUSE_TEXT: Record<string, string> = {
   business_hours: 'fora do horário comercial',
   connection_lost: 'a conexão do WhatsApp caiu',
   daily_limit: 'limite diário da conexão atingido',
+  instance_paused: 'a instância foi pausada',
 };
 
 export interface TalkXHealth {
