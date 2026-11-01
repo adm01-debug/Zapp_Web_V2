@@ -282,7 +282,6 @@ async function checarSelectedActions() {
       restauravel: false,
     });
   }
-  // GA09/GA75: verificar também verified_allowed e github_owned_allowed
   const blVerified = baseline.selected_actions_verified_allowed ?? false;
   const encontradoVerified = sel?.verified_allowed ?? false;
   if (encontradoVerified !== blVerified) {
