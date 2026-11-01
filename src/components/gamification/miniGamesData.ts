@@ -8,17 +8,24 @@ export interface Game {
   description: string;
   icon: typeof Gamepad2;
   difficulty: 'easy' | 'medium' | 'hard';
+  /** XP exibido no cartão. O crédito real é o XP que a partida rendeu (limite diário no servidor). */
+  xpReward: number;
 }
 
-// Os mini-games NÃO creditam XP: o cliente não pode creditar XP (PB-18/D4) e
-// nenhum caminho do servidor credita por partida. O que se guarda é o recorde
-// pessoal, por `game.id`.
+// R2-AUTH-043: a partida credita o XP que rendeu pela RPC `credit_agent_mini_game_xp`
+// (limite de 5 créditos por dia por agente e mini-game, imposto no servidor). O recorde
+// pessoal continua local, por `game.id`.
 export const GAMES: Game[] = [
-  { id: 'speed-typing', name: 'Speed Typing', description: 'Digite respostas rápidas para clientes', icon: Keyboard, difficulty: 'medium' },
-  { id: 'quiz', name: 'Quiz do Atendimento', description: 'Teste seus conhecimentos', icon: Brain, difficulty: 'easy' },
-  { id: 'response-match', name: 'Response Match', description: 'Combine perguntas com respostas', icon: MessageSquare, difficulty: 'medium' },
-  { id: 'emoji-decode', name: 'Emoji Decode', description: 'Descubra o sentimento do cliente', icon: Target, difficulty: 'easy' },
+  { id: 'speed-typing', name: 'Speed Typing', description: 'Digite respostas rápidas para clientes', icon: Keyboard, difficulty: 'medium', xpReward: 50 },
+  { id: 'quiz', name: 'Quiz do Atendimento', description: 'Teste seus conhecimentos', icon: Brain, difficulty: 'easy', xpReward: 30 },
+  { id: 'response-match', name: 'Response Match', description: 'Combine perguntas com respostas', icon: MessageSquare, difficulty: 'medium', xpReward: 40 },
+  { id: 'emoji-decode', name: 'Emoji Decode', description: 'Descubra o sentimento do cliente', icon: Target, difficulty: 'easy', xpReward: 25 },
 ];
+
+// XP que a partida rende a partir da pontuação (0 pontos = 0 XP, que não credita nada).
+export const xpDoSpeedTyping = (pontos: number) => Math.floor(pontos / 2);
+export const xpDoQuiz = (pontos: number) => Math.floor(pontos / 3);
+export const xpDoEmojiDecode = (pontos: number) => Math.floor(pontos / 4);
 
 export const TYPING_PHRASES = [
   "Olá! Como posso ajudar você hoje?",
