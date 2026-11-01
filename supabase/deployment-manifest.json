@@ -671,8 +671,8 @@
     },
     {
       "path": "supabase/functions/message-delivery/index.ts",
-      "bytes": 36003,
-      "sha256": "8857d2d4c73f5b8bb239543104491d8517199c12c84dfa5867e52ee3c87a820e"
+      "bytes": 35988,
+      "sha256": "709e79daf38378a0b67854f2467e2dce8234b1532719174ee1f022cf198cc855"
     },
     {
       "path": "supabase/functions/metrics/index.ts",
@@ -1947,7 +1947,7 @@
       "name": "message-delivery",
       "entrypoint": "supabase/functions/message-delivery/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d628332dec498e43f8d681d18cd956674aec291e8c9d3774042e9ec316bfbccb",
+      "source_sha256": "ec18977d48251487f0b70b06bfab677e532540641fcb8fb68154ee1dfebfa015",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
@@ -2536,5 +2536,5 @@
       ]
     }
   ],
-  "manifest_sha256": "982589dabdc4037bdd43d0e61cb55dfa8466e2a383b4ee55a53fe348bf4c7353"
+  "manifest_sha256": "6a67e4b9527440b0ae114b06dcbf582cbe5c934918b5145ef9dbe12af14d027e"
 }

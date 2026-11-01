@@ -502,11 +502,13 @@ async function classifyUnclaimedCause(
   // anterior: 'sending' = em andamento (409); estado final sem recibo = terminal.
   // Também não seleciona `whatsapp_group_id`: a coluna só existe depois do apply
   // dessa migration, e a função não pode depender dela.
+  // PD-79: POST já iniciado = resultado ambíguo, independente do estado da conexão.
+  // Verificar ANTES de qualquer lookup de contato/conexão: uma conexão que cai
+  // após o POST sair não torna o resultado "não ambíguo".
+  if (existing.delivery_post_started_at && existing.status === 'sending') {
+    return unconfirmedReceiptFailure();
+  }
   if (!existing.contact_id) {
-    // PD-79: POST já iniciado = resultado ambíguo — não IN_PROGRESS nem terminal.
-    if (existing.delivery_post_started_at && existing.status === 'sending') {
-      return unconfirmedReceiptFailure();
-    }
     return existing.status === 'sending' ? IN_PROGRESS_FAILURE : TERMINAL_WITHOUT_RECEIPT_FAILURE;
   }
   let contact: { phone?: unknown; whatsapp_connection_id?: unknown } | null = null;
@@ -553,8 +555,6 @@ async function classifyUnclaimedCause(
     return INVALID_NUMBER_FAILURE;
   }
   if (existing.status === 'sending') {
-    // PD-79: POST já iniciado = resultado ambíguo — não IN_PROGRESS.
-    if (existing.delivery_post_started_at) return unconfirmedReceiptFailure();
     return IN_PROGRESS_FAILURE;
   }
   return TERMINAL_WITHOUT_RECEIPT_FAILURE;
