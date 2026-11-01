@@ -26,7 +26,7 @@
 | **MÉDIO** | 15 | ZW-0013~ZW-0026 (exceto ZW-0014 absorvido) |
 | **BAIXO** | 3 | ZW-0027~ZW-0029 |
 | **INFO** | 13 | ZW-0030~ZW-0042 |
-| **RESOLVIDO** | 8 | ZW-0001 (anon grants), ZW-0006 (FK profiles→auth.users), ZW-0010 (log_search_event), ZW-0011 (get_search_insights), ZW-0014 (absorvido por ZW-0003) |
+| **RESOLVIDO** | 8 | ZW-0001, ZW-0006, ZW-0010, ZW-0011, ZW-0014, ZW-0045, ZW-0046, ZW-0047 |
 
 **Ações autônomas desta sessão (2026-11-01):**
 - **ZW-0006 RESOLVIDO:** FK `fk_profiles_to_auth` confirmada em `pg_constraint` — ausente em 31/10, adicionada por outra sessão
