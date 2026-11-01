@@ -792,6 +792,45 @@
       "justification": "DDL aplicado diretamente em 16/10/2026 e revertido em 20261016130000; o stub fecha a paridade sem reintroduzir a regressao (PR #2014)."
     },
     {
+      "version": "20261016180000",
+      "filename": "20261016180000_set_trusted_domains_guc.sql",
+      "file_sha256": "622ef430cd3dd51193117380ae09aa884663aeb7262de28cb1d18308cead378d",
+      "file_sql_sha256": "bd527ed4c2cf6b58e94bf90a6ade3c9d0b7f8f770591a2cd6c17090bd0bb2de9",
+      "ledger_name": "set_trusted_domains_guc",
+      "ledger_statements_sha256": "d0533550ba55f2291289882ccedd9bfb04ff20bbfd1f02330a78f0d19c0e2643",
+      "ledger_sql_sha256": "9e5820b05744365d4f47bacad786f5ead0a4a7ddc8d57fdd0927dd3346016439",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "O ledger registrou o ultimo statement como resumo em prosa ('CREATE OR REPLACE FUNCTION public.handle_new_user_role() -- reads trusted_domains from app_settings'); o arquivo contem a definicao completa da funcao. Os 4 statements SQL anteriores (CREATE TABLE, ALTER TABLE, CREATE POLICY, INSERT) sao identicos. Hashes medidos em 01/11/2026."
+    },
+    {
+      "version": "20261016190000",
+      "filename": "20261016190000_fix_security_definer_search_path_batch2.sql",
+      "file_sha256": "d68d206f57119e988558ae1b4f5ef21c54efa056bce085272c0550bbc3e92a25",
+      "file_sql_sha256": "e830b18284bf33731695e3aa6c993f6a57cff716eae501a593794b9647e9a199",
+      "ledger_name": "fix_security_definer_search_path_batch2",
+      "ledger_statements_sha256": "b5e8bce0024d9ec37e7205fedd46b62c03a3f0501269753242dc2053109f0765",
+      "ledger_sql_sha256": "cc362d838b54be204a695eab80fe9b0481d7b4865fcbe810d719066941d73a29",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "O ledger registrou um DO block simplificado (sem a lista already_fixed); o arquivo contem a versao completa que exclui as 19 funcoes ja corrigidas na primeira leva (20261016170000). A semantica em producao e identica pois essas funcoes ja tinham search_path correto antes desta migration. Hashes medidos em 01/11/2026."
+    },
+    {
+      "version": "20261016220000",
+      "filename": "20261016220000_fix_domain_case_sensitivity.sql",
+      "file_sha256": "2d427726a050194ec8aa8ebec6e7a99055b0ee64582351be55b67b92756f195d",
+      "file_sql_sha256": "d1c4d3607360f84e4c1ebc8186181ca54cbec0e2c8a8102b1751f43fc28bf96f",
+      "ledger_name": "fix_domain_case_sensitivity",
+      "ledger_statements_sha256": "93266bd07a500e55eeab41bbb7db521d7083c39c9dad8062da841c2830470f09",
+      "ledger_sql_sha256": "e88f9b6027a5c228878a5503a0eba56634fc54c7afc9be0e32fc5bf08653c860",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "O ledger registrou apenas um resumo ('CREATE OR REPLACE FUNCTION public.handle_new_user_role() -- lower() fix'); o arquivo contem a definicao completa da funcao com a correcao lower() no email domain. Hashes medidos em 01/11/2026."
+    },
+    {
       "version": "20261016240000",
       "filename": "20261016240000_search_events_rls_decision.sql",
       "file_sha256": "65d54fca860da5150347b97c28c27d1865ece494baef8e3be6b48288181cf472",
@@ -799,6 +838,19 @@
       "ledger_statements_sha256": "6a02ba1765e2fe299c7d5eec599a1a13443e3b9c5c31ad0884cb0b8182bf811b",
       "kind": "ledger-only/comment-only",
       "justification": "Arquivo de documentacao arquitetural: a ausencia de SELECT policy em search_events e intencional (decisao D-SearchRLS, 16/10/2026). Nenhuma DDL e executada; o registro no ledger preserva a decisao sem alterar o schema."
+    },
+    {
+      "version": "20261031130000",
+      "filename": "20261031130000_search_event_rpc.sql",
+      "file_sha256": "42616394101b1acf12dfa751f9e8ce56b4e6fcdf1e8bd4f1b7e20f1a05efe5c0",
+      "file_sql_sha256": "680f12b736490264aaf6589ca717a9a23141d89d438e29f501ee74615c924300",
+      "ledger_name": "search_event_rpc",
+      "ledger_statements_sha256": "4d9afb682bb9fcba05444693f97d532442037c711cbe48055e946836e22b77db",
+      "ledger_sql_sha256": "448ffab6eed95a310906034ce70827fe2bd4c77cc8bed968ff146ff2ffcd2cda",
+      "kind": "ledger-divergence/pinned-replay",
+      "reason": "ledger-summary",
+      "related_migration": null,
+      "justification": "O ledger armazena o corpo da funcao log_search_event em uppercase inline (single-line) enquanto o arquivo usa lowercase com indentacao multi-linha. O SQL tokenizer nao normaliza o conteudo de $function$...$function$ (tratado como string literal), portanto os hashes divergem apesar do comportamento em producao ser identico. Hashes medidos em 01/11/2026."
     }
   ]
 }
