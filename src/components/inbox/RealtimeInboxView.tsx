@@ -260,7 +260,7 @@ export function RealtimeInboxView() {
   };
 
   // R2-INB-015: com um cache válido a Inbox continua utilizável offline. A tela
-  // de erro global só substitui a UI quando NÃO há cache para sustentá-la —
+  // de erro global só substitui a UI quando NÃO há cache para susté-la —
   // antes ela engolia o recorte em cache tão logo a carga falhava.
   if (inbox.error && !inbox.usingCache) {
     return (
@@ -473,11 +473,7 @@ export function RealtimeInboxView() {
                 />
               </div>
             )}
-            <InboxEmptyChat
-              waitingCount={inboxFilters.chipCounts?.waiting ?? 0}
-              unreadCount={inboxFilters.chipCounts?.unread ?? 0}
-              onNewConversation={() => inbox.setShowNewConversation(true)}
-            />
+            <InboxEmptyChat />
           </div>
         )}
       </div>

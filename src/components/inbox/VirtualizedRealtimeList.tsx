@@ -78,6 +78,7 @@ interface VirtualizedRealtimeListProps {
   onFavorite?: (contactId: string) => void;
   favoriteIds?: Set<string>;
   onSnooze?: (contactId: string, duration: string) => void;
+  onReopen?: (contactId: string) => Promise<void>;
 }
 
 const HEADER_HEIGHT = 32;
