@@ -118,6 +118,7 @@ vi.mock('@/hooks/inbox/useConnectionsManager', () => ({
 }));
 vi.mock('@/components/connections/ConnectionCard', () => ({ ConnectionCard: () => null }));
 vi.mock('@/components/connections/NumberReputationMonitor', () => ({ NumberReputationMonitor: () => null }));
+vi.mock('@/components/connections/InstancePausesPanel', () => ({ InstancePausesPanel: () => null }));
 vi.mock('@/components/connections/BusinessHoursDialog', () => ({ BusinessHoursDialog: () => null }));
 vi.mock('@/components/connections/ConnectionQueuesDialog', () => ({ ConnectionQueuesDialog: () => null }));
 vi.mock('@/components/connections/InstanceSettingsDialog', () => ({ InstanceSettingsDialog: () => null }));

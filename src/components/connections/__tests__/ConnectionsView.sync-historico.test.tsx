@@ -89,6 +89,7 @@ vi.mock('../BusinessHoursDialog', () => ({ BusinessHoursDialog: () => null }));
 vi.mock('../ConnectionQueuesDialog', () => ({ ConnectionQueuesDialog: () => null }));
 vi.mock('../InstanceSettingsDialog', () => ({ InstanceSettingsDialog: () => null }));
 vi.mock('../NumberReputationMonitor', () => ({ NumberReputationMonitor: () => null }));
+vi.mock('../InstancePausesPanel', () => ({ InstancePausesPanel: () => null }));
 vi.mock('@/components/effects/AuroraBorealis', () => ({ AuroraBorealis: () => null }));
 vi.mock('@/components/dashboard/FloatingParticles', () => ({ FloatingParticles: () => null }));
 

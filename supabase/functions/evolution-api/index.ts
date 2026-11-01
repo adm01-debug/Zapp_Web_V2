@@ -176,15 +176,35 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
     }
 
+    // C121/IP1: instância em pausa (manual ou automática) não envia. `supabase` aqui é o
+    // cliente de serviço (is_instance_paused aceita service_role). Falha de leitura NÃO
+    // bloqueia o envio (fail-open): a pausa é proteção, não pré-requisito de entrega.
+    if (actionKind === 'send' && instance) {
+      const { data: paused, error: pausedError } = await supabase.rpc('is_instance_paused', { p_instance: instance });
+      if (pausedError) {
+        new Logger('evolution-api').warn('is_instance_paused falhou; envio liberado', { instance, code: pausedError.code });
+      } else if (paused === true) {
+        return new Response(JSON.stringify({ error: true, paused: true, message: 'Instância pausada: envios suspensos até o fim da pausa ou retomada manual.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+
     // E22: chave do circuit breaker por instância — '__admin' para list-instances.
     // E16/TRA-002 (#18): toda ação de instância envia o token DELA (Vault via
     // get_instance_token, cacheado por isolate) — nunca a credencial da padrão
     // nem a key global. Sem token resolvido, o proxy falha fechado (exceto a
     // instância padrão, que ainda pode cair no fallback de transição
     // EVOLUTION_INSTANCE_TOKEN, dentro do proxy).
-    const proxy = async (path: string, method = 'POST', body?: unknown) =>
-      proxyToEvolution(evolutionApiUrl, evolutionApiKey, corsHeaders, path, method, body, undefined, instance || '__admin',
+    const proxy = async (path: string, method = 'POST', body?: unknown) => {
+      const res = await proxyToEvolution(evolutionApiUrl, evolutionApiKey, corsHeaders, path, method, body, undefined, instance || '__admin',
         instance ? (await resolveInstanceToken(supabase, instance)) ?? undefined : undefined);
+      // C121/IP1: 429 do provedor num envio = limite de envio; pausa a instância sozinha
+      // (30 min) para não insistir. Falha ao registrar a pausa não altera a resposta.
+      if (actionKind === 'send' && instance && res.status === 429) {
+        const { error: autoPauseError } = await supabase.rpc('auto_pause_instance', { p_instance: instance, p_minutes: 30, p_reason: 'limite de envio (429 do provedor)' });
+        if (autoPauseError) new Logger('evolution-api').warn('auto_pause_instance falhou', { instance, code: autoPauseError.code });
+      }
+      return res;
+    };
 
     // ─── 0. Janela de manutenção (proteção contra bloqueio da Meta) ───
     // Enquanto whatsapp_maintenance_until estiver no futuro, ações que fazem a

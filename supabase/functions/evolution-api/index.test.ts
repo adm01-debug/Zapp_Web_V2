@@ -236,6 +236,29 @@ Deno.test("R2-API-001: envio direto de agente sem contato visível é negado (fa
   }
 });
 
+Deno.test("C121/IP1: envio em instância pausada é bloqueado sem chegar ao provedor", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  try {
+    const supabase: any = {
+      from: () => makeQuery(null),
+      rpc: (fn: string) => fn === "is_instance_paused"
+        ? Promise.resolve({ data: true, error: null })
+        : Promise.resolve({ data: null, error: null }),
+    };
+    const res = await handleEvolutionApi(
+      controlRequest("send-text", { instanceName: "PRINCIPAL", number: "5511999999999", text: "oi" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },
+    );
+    const json = await res.json();
+    assertEquals(json.paused, true);
+    assertEquals(json.error, true);
+    assertEquals(fake.posts.length, 0, "instância pausada não pode enviar ao provedor");
+  } finally {
+    await fake.stop();
+  }
+});
+
 // ─── R2-API-014 (P2) ────────────────────────────────────────────────────────
 // Falha ao ler a privacidade atual NÃO pode virar abertura dos outros campos.
 // Antes: GET /user/privacy falhando deixava `current = {}` e o merge fabricava
