@@ -67,13 +67,10 @@ SHA main atual: `1252bb5a41123ba4d49efd84d0f91604bff6c87c`
 
 | PR | HEAD SHA | Estado GraphQL |
 |----|----------|---------------|
-| #2146 | `c6d0f97801991e91a5f1fd5a6ee839a996ec3a59` | BEHIND (auto-update pendente) |
-| #2279 | `c2055dff93ae93eaeea6c6a9625a22d1b2e1c980` | BEHIND |
-| #2428 | `0b7db6cbcfdb466b8494171ce361b548561eb344` | BEHIND |
-| #2431 | `0302ba7c90a1499101852aa85d162501271991c4` | BEHIND |
-| #2469 | `4d77db544fa415138e367303efffe1dba87eadbe` | UNKNOWN |
-| #2472 | `5c759d8f1bb355db7ae44b1a98df4f310872078f` | BLOCKED |
-| #2473 | `7a6c255646a735687218f8a5775bca00e4375cc2` | BLOCKED |
+| #2431 | `4940f384757f7921b3eac8d29f2cc9c40ee602a0` | BLOCKED (CI queued) |
+| #2469 | `4d77db544fa415138e367303efffe1dba87eadbe` | BLOCKED (CI queued) |
+| #2472 | `5c759d8f1bb355db7ae44b1a98df4f310872078f` | BLOCKED (CI queued) |
+| #2473 | `7a6c255646a735687218f8a5775bca00e4375cc2` | BLOCKED (CI queued) |
 
 ### AGUARDANDO_CI_APOS_UPDATE (ci.yml reiniciou após outage)
 
@@ -95,9 +92,12 @@ SHA main atual: `1252bb5a41123ba4d49efd84d0f91604bff6c87c`
 | #2091 | Conflito — rebase necessário |
 | #2095 | Conflito — rebase necessário |
 | #2097 | Conflito — rebase necessário |
-| #2107 | DIRTY (confirmado GraphQL 22:04Z) |
+| #2107 | DIRTY — mergeStateStatus=DIRTY (GraphQL 22:04Z) |
 | #2111 | Conflito — rebase necessário |
+| #2146 | Conflito — update_pr_branch 422 (22:20Z) |
+| #2279 | Conflito — update_pr_branch 422 (22:20Z) |
 | #2426 | Conflito — rebase necessário |
+| #2428 | Conflito — update_pr_branch 422 (22:20Z) |
 | #2492 | Conflito — rebase necessário |
 
 ### Aguardando aprovação humana
@@ -160,10 +160,10 @@ SHA main atual: `1252bb5a41123ba4d49efd84d0f91604bff6c87c`
 | Veredito | Contagem |
 |----------|----------|
 | MERGEADA | 3 |
-| AGUARDANDO_CI | 26 |
+| AGUARDANDO_CI | 22 |
 | AGUARDANDO_CI_APOS_UPDATE | 4 |
 | DRAFT_SKIP | 9 |
-| BLOQUEADO_CONFLITO | 7 |
+| BLOQUEADO_CONFLITO | 11 |
 | BLOQUEADO_AGUARDANDO_APROVACAO | 5 |
 | BLOQUEADO_CI | 2 |
 | SKIP_WORKFLOWS | 4 |
@@ -201,4 +201,4 @@ Fonte: `analise-prs/baseline/` no branch `claude/busy-cannon-40szm9`, commit `07
 
 ---
 
-*Nota: CI do GitHub Actions ficou indisponível ~20:30Z–22:00Z em 2026-11-01. PRs com AGUARDANDO_CI ou AGUARDANDO_CI_APOS_UPDATE aguardam retomada dos runners. Check-in agendado para 22:55Z para executar merges quando CI ficar verde.*
+*Nota: CI do GitHub Actions ficou indisponível ~20:30Z–22:46Z em 2026-11-01. PRs com AGUARDANDO_CI ou AGUARDANDO_CI_APOS_UPDATE aguardam retomada dos runners. As 22 com `auto_merge=squash` se mergeiam automaticamente; as 4 sem precisam de merge manual (#2431, #2461, #2469, #2472 — atenção: #2469×#2472 conflitam no arquivo `_shared/instance_pause.ts`, mergear #2472 antes). Check-in agendado para 22:55Z. Progresso salvo em `analise-prs/progresso.json` commit `0dbba41e3`.*
