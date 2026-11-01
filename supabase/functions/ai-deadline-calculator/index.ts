@@ -18,6 +18,10 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { messages = [], requestedDeadline = "", productionDays = null } = body;
 
+    if (!requestedDeadline && productionDays == null) {
+      return jsonResponse({ feasible: null, insufficient_data: true, reason: "Prazo ou dias de produção não informados na conversa." }, 200, req);
+    }
+
     const ctx = [
       `Data/hora atual: ${new Date().toISOString()}`,
       requestedDeadline ? `Prazo solicitado pelo cliente: ${requestedDeadline}` : "",

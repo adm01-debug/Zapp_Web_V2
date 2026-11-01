@@ -20,9 +20,33 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { messages = [], mediaUrl = "", mediaType = "image" } = body;
 
-    const mediaCtx = mediaUrl
-      ? `Mídia recebida (${mediaType}): ${mediaUrl}`
+    const mediaCtxFallback = mediaUrl
+      ? `Mídia recebida (${mediaType}): [referência de mídia]`
       : "Nenhuma mídia anexada.";
+
+    const isVisualMedia = (mediaType === "image" || mediaType === "sticker") && !!mediaUrl;
+    let imageDataUrl = "";
+    if (isVisualMedia) {
+      try {
+        const inline = await toInlineImage(mediaUrl, {
+          storageIdentity: {
+            kind: "user",
+            bearerToken,
+            anonKey: Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "",
+          },
+        });
+        imageDataUrl = inline.dataUrl;
+      } catch (err) {
+        if (err instanceof AiImageInputError) {
+          log.error("image-download", { code: err.code, msg: err.message });
+        }
+        imageDataUrl = "";
+      }
+    }
+
+    const mediaCtx = (isVisualMedia && imageDataUrl)
+      ? `Mídia recebida (${mediaType}): [processado inline]`
+      : mediaCtxFallback;
 
     const system = `Você é um copiloto de vendas especialista em análise de mídia e documentos.
 Analise o conteúdo da mídia enviada pelo cliente no contexto da negociação.
@@ -50,27 +74,6 @@ Responda APENAS em JSON:
       role: m.sender === "agent" ? "assistant" : "user",
       content: String(m.content || ""),
     }));
-
-    const isVisualMedia = (mediaType === "image" || mediaType === "sticker") && !!mediaUrl;
-    let imageDataUrl = "";
-    if (isVisualMedia) {
-      try {
-        const inline = await toInlineImage(mediaUrl, {
-          storageIdentity: {
-            kind: "user",
-            bearerToken,
-            anonKey: Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "",
-          },
-        });
-        imageDataUrl = inline.dataUrl;
-      } catch (err) {
-        if (err instanceof AiImageInputError) {
-          log.error("image-download", { code: err.code, msg: err.message });
-        }
-        // degradar para análise textual quando o download falha
-        imageDataUrl = "";
-      }
-    }
 
     const lastUserContent = isVisualMedia && imageDataUrl
       ? [
