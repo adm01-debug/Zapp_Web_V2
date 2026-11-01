@@ -59,8 +59,9 @@
     "S09_auth_storage": {
       "status": "CONCLUIDO",
       "ts": "2026-10-25T11:33Z",
-      "resumo": "auth.users: 10 usuarios, todos confirmados, 1 banido. 9 buckets de storage. multiplix-voice: 0 policies (HIGH — sem restricao de acesso via RLS policy). 34 policies de storage via pg_policies WHERE schemaname='storage'. Todos outros buckets com RLS. Auth config (JWT/MFA/captcha): NAO VERIFICADO — auth.config nao existe como relacao SQL (42P01), auth.instances retorna 0 linhas.",
-      "inconsistencia_resolvida": "Storage policies verificado via pg_policies (schemaname='storage') — metodo correto. multiplix-voice tem 0 policies = HIGH finding adicionado."
+      "resumo": "auth.users: 10 usuarios, todos confirmados, 1 banido. 9 buckets de storage. multiplix-voice: 0 policies — DESIGN INTENCIONAL (bucket privado = default-deny sem policies; acesso so via service-role signed URL). 34 policies de storage via pg_policies WHERE schemaname='storage'. Todos outros buckets com RLS. Auth config (JWT/MFA/captcha): NAO VERIFICADO — auth.config nao existe como relacao SQL (42P01), auth.instances retorna 0 linhas.",
+      "inconsistencia_resolvida": "Storage policies verificado via pg_policies (schemaname='storage') — metodo correto. multiplix-voice: 0 policies = DESIGN INTENCIONAL (bucket privado sem policies e default-deny no Supabase Storage, nao abertura de acesso). Reclassificado de HIGH para design-intencional em 2026-11-01.",
+      "finding": "INFO — multiplix-voice sem RLS policies; comportamento esperado (default-deny em bucket privado)"
     },
     "S10_logs": {
       "status": "CONCLUIDO",
@@ -88,9 +89,11 @@
   },
   "findings_count": {
     "CRITICAL": 3,
-    "HIGH": 4,
+    "HIGH": 3,
     "MEDIUM": 3,
-    "LOW": 2
+    "LOW": 2,
+    "INFO": 2,
+    "nota": "multiplix-voice reclassificado HIGH→INFO em 2026-11-01 (bucket privado=default-deny)"
   },
   "corrections_this_session": [
     {
