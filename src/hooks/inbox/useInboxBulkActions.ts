@@ -211,9 +211,15 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
           // Agrupa por status original para emitir um UPDATE por grupo —
           // restauração atômica por valor: uma falha não deixa o lote parcialmente
           // revertido.
+          // Trigger enforce_conversation_status_transition (produção): a partir de
+          // 'archived' só são válidos 'open' e 'pending'. Qualquer outro original
+          // (waiting/resolved/closed/null) voltaria erro e o desfazer falharia —
+          // cai em 'open'.
+          const validFromArchived = new Set(['open', 'pending']);
           const byStatus = new Map<string | null, string[]>();
           for (const id of targetIds) {
-            const original = previousStatus.get(id) ?? null;
+            const raw = previousStatus.get(id) ?? null;
+            const original = raw !== null && validFromArchived.has(raw) ? raw : 'open';
             const group = byStatus.get(original) ?? [];
             group.push(id);
             byStatus.set(original, group);

@@ -572,6 +572,29 @@ describe('useInboxBulkActions — bulkArchive', () => {
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 
+  it('desfazer: original fora de open/pending (waiting/resolved) volta como "open" — archived só transita para open/pending no banco', async () => {
+    selectQueue.push({
+      data: [
+        { id: c1, conversation_status: 'waiting' },
+        { id: c2, conversation_status: 'resolved' },
+      ],
+      error: null,
+    });
+    const { result } = renderInbox();
+    selectIds(result, [c1, c2]);
+
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+    await act(async () => {
+      await lastUndo?.undoAction();
+    });
+
+    const restores = contactUpdates().slice(1);
+    expect(restores).toHaveLength(1);
+    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1, c2] } });
+  });
+
   it('sem seleção não lê nem arquiva nada', async () => {
     const { result } = renderInbox();
 
