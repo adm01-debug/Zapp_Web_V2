@@ -471,7 +471,7 @@ test('registro extra informa hashes seguros e nome normalizado sem vazar stateme
   assert.equal(result.status, 1);
   assert.match(result.stderr, /Registro no banco sem arquivo no repo/);
   assert.match(result.stderr, new RegExp(`version=${extraVersion}`));
-  assert.match(result.stderr, new RegExp(`ledger_name="${extraVersion}_db_only\\.sql"`));
+  assert.match(result.stderr, new RegExp(`ledger_name="${extraVersion}_db_only\.sql"`));
   assert.match(result.stderr, /normalized_name="db_only"/);
   assert.match(
     result.stderr,
@@ -534,7 +534,7 @@ test('registro extra preserva whitespace do ledger e normaliza em campo separado
   assert.match(result.stderr, new RegExp(`name malformado no ledger para ${extraVersion}`));
   assert.match(
     result.stderr,
-    new RegExp(`ledger_name="  ${extraVersion}_db_only\\.sql  "`),
+    new RegExp(`ledger_name="  ${extraVersion}_db_only\.sql  "`),
   );
   assert.match(result.stderr, /normalized_name="db_only"/);
 });
@@ -1076,14 +1076,14 @@ const VERSION2 = '20260829060000';
 const FILE2 = `${VERSION2}_create_second.sql`;
 const SQL2 = 'CREATE TABLE public.second (id integer);\n';
 
-test('W21 (classificar): arquivo local sem ledger → apply-pendente, exit 0', () => {
+test('W21 (classificar): arquivo local sem ledger → apply-pendente, exit 2', () => {
   // FILE exists on disk, ledger has NO entry for it → apply-pendente
   const result = runGuard({
     files: { [FILE]: SQL },
     ledger: [], // ledger empty → file has no record
     scriptArgs: ['--classificar'],
   });
-  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.status, 2, result.stderr);
   assert.match(result.stdout, /apply-pendente/);
   assert.match(result.stdout, new RegExp(VERSION));
 });
@@ -1146,7 +1146,7 @@ test('W21 (classificar --json): saida e JSON valido com campo classificacoes', (
     ledger: [],
     scriptArgs: ['--classificar', '--json'],
   });
-  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.status, 2, result.stderr);
   let parsed;
   assert.doesNotThrow(() => { parsed = JSON.parse(result.stdout); }, 'stdout deve ser JSON valido');
   assert.ok(Array.isArray(parsed.classificacoes), 'classificacoes deve ser array');
@@ -1161,7 +1161,7 @@ test('W21 (classificar): tabela tem formato version | disco | ledger | classe po
     ledger: [],
     scriptArgs: ['--classificar'],
   });
-  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.status, 2, result.stderr);
   const lines = result.stdout.trim().split('\n').filter((l) => l.includes('|'));
   assert.ok(lines.length >= 1, 'deve ter pelo menos uma linha com |');
   for (const line of lines) {
@@ -1338,9 +1338,9 @@ test('W21 (classificar): excecoes validas continuam exit 0 (sem falso positivo)'
   }
 });
 
-test('W21 (classificar): apply-pendente sozinho nao reprova mesmo com o erro no ledger', () => {
+test('W21 (classificar): apply-pendente sozinho → exit 2 (neutro, sem drift)', () => {
   const result = runGuard({ files: { [FILE]: SQL, [FILE2]: SQL2 }, scriptArgs: ['--classificar', '--json'] });
-  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.status, 2, result.stderr);
   const parsed = JSON.parse(result.stdout);
   assert.equal(parsed.totais['apply-pendente'], 1);
   assert.deepEqual(parsed.erros, []);
