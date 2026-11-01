@@ -13,7 +13,7 @@
 | **CI/CD Pipeline (`ci.yml`)** | 279058466 | [40122006424](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006424) `failure` | TC-009 (versão de migration) + 410 unit test failures pré-existentes | ✅ commit `4adee58` (TC-009) — porém `🧪 Unit Tests` segue bloqueado por 410 falhas pré-existentes: ver §7 | **BLOQUEADO** — ver §7 |
 | **DB Guard offline (`db-guard.yml`)** | 344052670 | [40122006482](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006482) `failure` | TC-009 versão `20261009193246` inexistente | ✅ commit `4adee58` (TC-009 corrigido) — porém N-008 pré-existente exposto (§6) + Replay ECR rate limit (§8) | **BLOQUEADO** — ver §6 e §8 |
 | **Deploy Edge Functions (`deploy-functions.yml`)** | 344691397 | [40097636982](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40097636982) `failure` | `supabase/deployment-manifest.json` stale | ✅ commit `96b1aa6` (manifesto regenerado) — validação exige merge; merge bloqueado pelos required checks: ver §9 | **BLOQUEADO** — ver §9 |
-| **Auto Update PR Branches (`auto-update-pr-branch.yml`)** | 366925501 | failure (HTTP 504) | Sem retry em `scripts/ci/fila-merge.mjs` para erros transitórios | ✅ commit `a6d68651` (retry com backoff) — validação exige merge; merge bloqueado pelos required checks: ver §10 | **BLOQUEADO** — ver §10 |
+| **Auto Update PR Branches (`auto-update-pr-branch.yml`)** | 366925501 | [40210888395](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40210888395) `failure` (HTTP 504) | Sem retry em `scripts/ci/fila-merge.mjs` para erros transitórios | ✅ commit `a6d68651` (retry com backoff) — validação exige merge; merge bloqueado pelos required checks: ver §10 | **BLOQUEADO** — ver §10 |
 | Talk X V4 placar (`talkx-status-regen.yml`) | 372647819 | [40122006445](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40122006445) `success` | — | Sem fix necessário | ✅ Já success |
 | Notifica falha na main (`notifica-falha-main.yml`) | 385680890 | [40170019860](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40170019860) `success` | — | Sem fix necessário | ✅ Já success |
 | CodeQL | 349267462 | [39232205552](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/39232205552) `success` | — | Sem fix necessário | ✅ Já success |
@@ -313,14 +313,14 @@ Os três required checks em falha são **pré-existentes na `main`** (confirmado
 2. Mergear a PR `claude_05/festive-carson-ub43wu`.
 3. Disparar `deploy-functions.yml` via `workflow_dispatch` na `main` e aprovar no environment `producao-edge-functions`.
 
-**Sem fix de agente possível:** o fix de código está commitado; a validação requer merge que está bloqueado por infra pré-existente.
+**Fix commitado — validação bloqueada por infra pré-existente:** o fix de código (commit `96b1aa6`) está na branch; a validação final requer merge em `main` bloqueado pelos required checks pré-existentes (§3, §6, §7).
 
 ---
 
 ## §10. auto-update-pr-branch.yml — retry adicionado, mas merge bloqueado por required checks pré-existentes
 
 **Workflow:** `auto-update-pr-branch.yml`  
-**Run baseline:** failure (HTTP 504 sem retry)  
+**Run baseline:** [40210888395](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40210888395) `failure` (HTTP 504 sem retry)  
 **Causa baseline:** `scripts/ci/fila-merge.mjs` não incluía `"unexpected end of JSON input"` no regex de erros transitórios, tratando respostas truncadas da API do GitHub como falha permanente.  
 **Fix aplicado:** commit `a6d68651` — `"unexpected end of JSON"` adicionado ao regex de erros transitórios em `scripts/ci/fila-merge.mjs:38`.
 
@@ -341,7 +341,7 @@ Esses três required checks eram `failure` na `main` (SHA `2d97c44`) antes desta
 1. Resolver os bloqueadores de required checks pré-existentes (§3, §6, §7).
 2. Mergear a PR — o `auto-update-pr-branch.yml` disparará automaticamente no push.
 
-**Sem fix de agente possível:** o fix de código está commitado; a validação requer merge bloqueado por infra pré-existente.
+**Fix commitado — validação bloqueada por infra pré-existente:** o fix de código (commit `a6d68651`) está na branch; a validação final requer merge em `main` bloqueado pelos required checks pré-existentes (§3, §6, §7). Runs recentes do `auto-update-pr-branch` na main (SHA `1252bb5a`) são `cancelled` — comportamento normal quando push novo supersede run pendente. Não é `failure` ativa.
 
 ---
 

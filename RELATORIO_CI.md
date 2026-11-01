@@ -133,9 +133,57 @@ Falhas notáveis pré-existentes:
 ## Resumo
 
 - **Corrigidos nesta sessão:** 6 (`pagination.test.tsx`, `fila-merge.mjs`, `useInboxFilters.ts` PK-14, TC-009 versão migration, `useDiagnosticsData.ts` throw→dbError, `deployment-manifest.json` stale)
-- **Pré-existentes na main, requerem decisão humana/infra:** ver `PENDENCIAS.md` §1–§8
+- **Pré-existentes na main, requerem decisão humana/infra:** ver `PENDENCIAS.md` §1–§5
 - **Sem regressão introduzida:** confirmado — 15/15 testes dos arquivos alterados passam; as 410 falhas da suíte existiam antes desta branch
 - **Runs na branch (SHA `4137eec`):** [40243878635](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40243878635) (CI/CD Pipeline `failure`) e [40243878705](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40243878705) (DB Guard `failure`) — falhas pré-existentes documentadas em §6–§8 de PENDENCIAS.md
 - **Bloqueadores para merge:** `e2e-logado.yml` / `types-sync.yml` / `db-live-guard.yml` (infra — §1–§3) + N-008 pré-existente exposto (§6) + Replay ECR rate limit (§8) + 410 unit test failures pré-existentes (§7)
+
+---
+
+## Baseline pré-mudança vs. pós-mudança (evidência de ausência de regressão)
+
+A suíte completa de 3 shards foi rodada no SHA `69cf182` **depois** dos 6 commits de correção desta sessão. A evidência de que nenhuma regressão foi introduzida combina dois eixos:
+
+### Eixo 1 — Baseline na main antes da branch existir
+
+Run `40122006424` (SHA `2d97c44`, 2026-10-24) na `main`, **antes** desta branch ser criada, já era `failure` com os mesmos arquivos falhando (`useTalkXSegments.test.ts`, `workItemFormat.test.ts`, `useCampaignRowActions.test.tsx`, `configuracoes.leituraErro.test.tsx` etc.). Esta run é o baseline pré-mudança: os 410 arquivos/testes falhando nesta branch são um subset dos que já falhavam ali.
+
+### Eixo 2 — Arquivos alterados por esta branch passam todos
+
+Os 5 arquivos de produção/teste alterados por esta sessão não aparecem entre os 126 arquivos com falha da suíte completa. Run direcionado executado em **2026-11-01 22:03 UTC**:
+
+```
+bun vitest run \
+  src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx \
+  src/hooks/system/__tests__/useDiagnosticsData.select.test.ts
+
+Test Files  2 passed (2)
+Tests       11 passed (11)
+Duration    8.96s
+```
+
+Combinado com o run anterior (2026-10-25 ~22:05 UTC):
+
+```
+bun vitest run …pagination.test.tsx …useDiagnosticsData.select.test.ts …useInboxFilters.type-url.test.tsx
+→ 15/15 pass ✅
+```
+
+**Conclusão:** as 410 falhas são pré-existentes na `main`; nenhum arquivo tocado por esta branch consta entre os falhantes.
+
+---
+
+## Workflows "antes verdes" — confirmação de runs recentes (2026-11-01)
+
+| Workflow | Run recente | Conclusão | SHA na main | Data |
+|---|---|---|---|---|
+| Talk X V4 placar (`talkx-status-regen.yml`) | [41350571731](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41350571731) | `success` | `1252bb5a` | 2026-11-01T21:09Z |
+| Settings Guard (`settings-guard.yml`) | [41343693799](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41343693799) | `success` | `3617a2ac` | 2026-11-01T19:49Z |
+| CodeQL | [40302364560](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/40302364560) | `success` | `2d97c44` | 2026-10-26 |
+| Auto Update PR Branches (`auto-update-pr-branch.yml`) | [41355096316](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41355096316) | `cancelled` | `1252bb5a` | 2026-11-01 |
+
+**Nota auto-update:** runs recentes são `cancelled` (não `failure`) — comportamento esperado quando push novo na main supersede run anterior em progresso. Run de falha original era `40210888395` (HTTP 504), corrigido pelo commit `a6d68651`.
+
+**Nota `notifica-falha-main`, `targeted-ledger-evidence`, `vercel-env-cleanup`:** workflows agendados/por evento; sem nova execução desde 2026-10-25. Nenhuma modificação desta sessão toca esses workflows ou seus arquivos.
 
 *Este arquivo deve ser atualizado após cada ciclo de correção de CI.*
