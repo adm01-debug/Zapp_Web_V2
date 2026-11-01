@@ -1,4 +1,35 @@
 {
+  "encerramento_20261101": {
+    "timestamp": "2026-11-01T23:55Z",
+    "leituras_obrigatorias_evidenciadas": {
+      "CLAUDE_md": "em project instructions durante toda a sessão — seções 0/1/2/3 conferidas",
+      "AGENTS_md": "lido diretamente nesta sessão (linhas 1-16): regras de segredos, graphify",
+      "CONTRIBUTING_md": "lido diretamente nesta sessão (linhas 1-60): stack, fluxo dev, 6 required checks confirmados",
+      "scripts_db_audit_README_md": "lido diretamente nesta sessão (linhas 1-80): inventário de guardas, requisitos Docker"
+    },
+    "guardas_A14": {
+      "G2_check_secdef_public_execute": "PASS — 402 SECURITY DEFINER em public, nenhuma com EXECUTE para PUBLIC/anon (db_query 2026-11-01T22:00Z)",
+      "G4_check_mcp_exec_acl": "PASS — mcp_exec/mcp_exec_many restritos a postgres+service_role; body md5s informativos (guard desatualizado), ACL correta (db_query 2026-11-01T22:00Z)",
+      "supabase_usage_guard_mjs": "PASS — 0 novas violações, 2 obsoletas podadas (rpc:log_search_event, rpc:get_search_insights; resolvidos em ZW-0011) — node scripts/db-audit/supabase-usage-guard.mjs exit 0",
+      "database_identity_mjs": "NÃO VERIFICADO — exit 0 sem output (requer DESTINO_URL env var para conectar ao banco; não disponível nesta sessão remota)",
+      "check_manifest_fresh_mjs": "NÃO VERIFICADO — requer DESTINO_URL env var",
+      "check_catalog_fresh_mjs": "NÃO VERIFICADO — requer DESTINO_URL env var",
+      "check_migration_drift_mjs": "NÃO VERIFICADO — requer DESTINO_URL env var",
+      "replay_local_sh": "NÃO VERIFICADO — Docker daemon não disponível no container (socket /var/run/docker.sock ausente; docker images falhou com 'dial unix /var/run/docker.sock: connect: no such file or directory'); image ghcr.io/supabase/postgres:17.6.1.159@sha256:86a2e078... não executável"
+    },
+    "lacunas_A13_pendentes_parciais": {
+      "ZW_0039_PITR_retencao": "NÃO VERIFICADO — requer aba Backups do Dashboard Supabase; archive_mode=on e archive_command=wal-g confirmados por pg_settings, mas número de dias de retenção não acessível via SQL",
+      "ZW_0040_edge_verify_jwt_false": "VERIFICADO PARCIALMENTE — 14 edge functions com verify_jwt=false auditadas individualmente (Seção 8 do RELATORIO); todas com autenticação alternativa adequada (HMAC, cron secret, auth explícita); message-delivery não listada entre as 14 com verify_jwt=false no config.toml",
+      "ZW_0032_17_tables_no_policy": "VERIFICADO — lista completa em Seção 1: _rb_message_reactions_contato_20261007001008, _zapp_fn_before, _zapp_mig133_log, agent_mini_game_xp_daily, ai_budget_reservations, ai_jobs, catalog_rate_limit_hits, catalog_rate_limits, edge_rate_limits, gmail_oauth_states, link_preview_cache, searchbox_budget_alert_cron, searchbox_budget_alert_emails, talkx_storage_purge_queue, talkx_test_send_claims, team_chat_media_acl_r2_db_020_rb, voip_profile_credentials — todas service_role only por padrão (sem policy = bloqueio total para authenticated/anon)"
+    },
+    "relatorio_fix": {
+      "linhas_24_29_corrigidas": true,
+      "antes": "CRITICO=2, ALTO=6, MEDIO=15, RESOLVIDO=8",
+      "depois": "CRITICO=0, ALTO=4 (ZW-0002/0004/0007/0009), MEDIO=17, BAIXO=3, INFO=13, RESOLVIDO=11",
+      "evidencia": "achados.json _meta.contagem confirma; reclassificacoes: ZW-0002 CRITICO→ALTO (indexes existem), ZW-0003 CRITICO→MEDIO (sem grant anon confirmado), ZW-0005 ALTO→RESOLVIDO (prosecdef=false é design correto), ZW-0008 ALTO→RESOLVIDO (contacts realtime = view, não tabela), ZW-0044 ALTO→RESOLVIDO (copilot RLS confirmada)"
+    },
+    "zero_escrita_producao_final": "baseline ao encerramento: migrations=1072, tables=211, policies=520, crons=24, buckets=9, sec_definer_fns=402 — inalterado desde 2026-11-01T21:20Z"
+  },
   "re_verificacao_final_20261101": {
     "timestamp": "2026-11-01T22:00Z",
     "descricao": "Sessão compactada — verificação de guardas G2/G4 + re-verificação ALTO + triagem 10 PRs",
