@@ -131,6 +131,9 @@ Etapas cujo checkbox divergia do estado já apurado. A coluna **Evidência** tra
 | **E13** | `[~]` PRECISA REVALIDAÇÃO | PR #1436, #1834 | Guards existem e explicitam pontos cegos; administração não se comprova só com GITHUB_TOKEN (403). |
 | **E17** | `[~]` PARCIAL | PR #1439 | Debounce só na PR #1439, ausente da main, e a proposta sai sem requeue; corrigir a semântica antes. |
 | **E18** | `[~]` PARCIAL | PR #1439 | Negação de paths está só na #1439, ainda aberta; a main segue disparando pelos diretórios amplos. |
+| **E19** | `[x]` CONCLUÍDA | PR #1897 | Gate 3 usa `check-remocoes-destrutivas.mjs` comparando `schema-catalog.json` antigo × novo; fixtures 20260930390000 (passa) e DROP TABLE (bloqueia) provam a aceitação. |
+| **E20** | `[x]` CONCLUÍDA | PR #2378 | Dedupe com marcador `<!-- causa:<hash> -->` (hash SHA-1 do gate) e janela de 6 h implementado em `types-sync.yml`; 3 falhas iguais → 1 comentário. |
+| **E21** | `[x]` CONCLUÍDA | sem PR associado | `types-sync.yml` filtra `workflow_runs` por `head_branch == 'automation/types-sync'` antes de `approveWorkflowRun`; run de outra branch no mesmo SHA não é aprovado. |
 | **E22** | `[~]` PARCIAL | sem PR associado | Sem label automerge-ok e sem auto-merge habilitado no passo seguinte da create-pull-request. |
 | **E26** | `[~]` PARCIAL | sem PR associado | Consumidores ainda referenciam DESTINO_URL; privilégios do usuário do secret não foram consultados. |
 | **E27** | `[~]` AGUARDA RUNTIME | PR #1442, #1790 | Guard local confirma ausência de segredo privilegiado nos gatilhos não confiáveis do Talk X. |
