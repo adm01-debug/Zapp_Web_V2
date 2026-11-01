@@ -95,4 +95,53 @@ Enquanto isso, o `--frozen=false` funciona e o CI passa — apenas não é repro
 
 ---
 
+## 5. Branches adm01-debug-patch-* — criadas pelo GitHub UI (GF-033..056)
+
+**Situação:** 24 branches criadas por Joaquim diretamente na interface do GitHub ao explorar templates de workflows do GitHub Actions. Uma sessão anterior (BR) apagou as branches e abriu 13 PRs rascunho a partir delas antes de receber a instrução de não apagar. O conteúdo está preservado nas PRs rascunho. Aguardar decisão do Joaquim sobre adotar ou descartar cada template.
+
+### Grupo 1 — `dependency-review.yml` (8 branches: GF-033..040)
+
+Branches originais: `adm01-debug-patch-1`, `adm01-debug-patch-1-2`, `adm01-debug-patch-1-3`, `adm01-debug-patch-1-4`, `adm01-debug-patch-1-5`, `adm01-debug-patch-1-6`, `adm01-debug-patch-1-7`, `adm01-debug-patch-1-8`
+
+**O que propunha:** Adicionar `.github/workflows/dependency-review.yml` — workflow padrão do GitHub para revisar licenças e vulnerabilidades de dependências em PRs (acionado em `pull_request` para a `main`).
+
+**Decisão pendente do Joaquim:**
+- Adotar: abrir PR a partir do rascunho correspondente
+- Descartar: fechar os rascunhos e apagar as branches restantes
+
+### Grupo 2 — `deno.yml` (13 branches: GF-041..053)
+
+Branches originais: `adm01-debug-patch-2`, `adm01-debug-patch-2-1` até `adm01-debug-patch-2-12`
+
+**O que propunha:** Adicionar `.github/workflows/deno.yml` — workflow de CI para Deno (template oficial GitHub para projetos Deno).
+
+**Atenção:** O projeto já tem CI para Deno integrado em `ci.yml` e `deploy-functions.yml`. Adotar causaria execução duplicada.
+
+**Decisão pendente do Joaquim:**
+- Adotar: revisar se o conteúdo é diferente/complementar ao CI atual
+- Descartar: fechar os rascunhos
+
+### Grupo 3 — `eslint.yml` + `manual.yml` (2 branches: GF-054..055)
+
+Branches originais: `adm01-debug-patch-3`, `adm01-debug-patch-3-2`
+
+**O que propunha:** Adicionar `.github/workflows/eslint.yml` (ESLint via template GitHub) e `.github/workflows/manual.yml` (workflow de disparo manual simples).
+
+**Atenção:** ESLint já está integrado em `ci.yml`. O `manual.yml` pode ser útil como workflow genérico.
+
+**Decisão pendente do Joaquim:**
+- `eslint.yml`: provavelmente redundante
+- `manual.yml`: pode ser útil; revisar antes de adotar
+
+### Grupo 4 — `eslint.yml` + `main.yml` (1 branch: GF-056)
+
+Branch original: `adm01-debug-patch-4`
+
+**O que propunha:** Adicionar `.github/workflows/eslint.yml` (igual ao Grupo 3) e `.github/workflows/main.yml` (arquivo de 1 byte, starter vazio).
+
+**Decisão pendente do Joaquim:**
+- Descartar: o `main.yml` de 1 byte não tem utilidade; `eslint.yml` é redundante
+
+---
+
 _Nota: Remover ou atualizar este arquivo conforme os itens forem resolvidos._
