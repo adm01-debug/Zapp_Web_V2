@@ -1,5 +1,5 @@
 # docs:
-#   gatilho: agendado (semanal) e dispatch
+#   gatilho: agendado (diário) e dispatch
 #   prova: analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows
 #   falha: alerta aparece em Security -> Code scanning
 #   avisa: aba Security
