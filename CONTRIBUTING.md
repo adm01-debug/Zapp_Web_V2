@@ -62,6 +62,7 @@ Todo PR deve passar estes checks antes do merge:
 | `🎭 E2E Tests (Playwright)` | `ci.yml` |
 
 `strict=true` está ligado: a branch do PR precisa estar atualizada com a `main` antes que os checks sejam aceitos.
+Quando um PR tem auto-merge habilitado, o workflow `auto-update-pr-branch.yml` atualiza a branch automaticamente após qualquer push na `main`.
 
 ## Padrão de commits
 
