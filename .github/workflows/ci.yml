@@ -156,6 +156,9 @@ jobs:
         env:
           CI: true
 
+      - name: 📊 Verificar placar V4 (--check)
+        run: node scripts/talkx/v4-status.mjs --check --ref HEAD
+
       - name: 🧪 Test Vercel ignore-build guard
         run: node scripts/vercel/ignore-build.unit.mjs
 
