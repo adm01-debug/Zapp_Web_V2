@@ -69,9 +69,9 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
 
     if (isExplicitPlusInput) {
       isExplicitInternationalRef.current = true;
-      // Bug F: mark true only when '+' was typed (insertText), not pasted — guards the next
-      // keypress from resetting international mode while the field still displays empty.
-      wasExplicitPlusRef.current = inputType === 'insertText';
+      // Bug G: pasting a standalone '+' has the same semantics as typing '+' — both must set
+      // this guard so the next typed digit doesn't reset international mode.
+      wasExplicitPlusRef.current = true;
     } else if (!e.target.value.startsWith('+') && !isDeletion && (!wasExplicitPlusRef.current || isPasteOrDrop)) {
       // Paste/type without leading '+' (e.g. '(11) 98765-4321') → treat as BR.
       // Bug B: wasExplicitPlusRef guards regular typing so a lone '+' keystroke isn't undone by the
