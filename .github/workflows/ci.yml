@@ -230,7 +230,7 @@ jobs:
           path: dist/
           retention-days: 3
 
-      - name: 📏 Enforce initial bundle budget (performance-budget.json)
+      - name: 📐 Enforce initial bundle budget (performance-budget.json)
         run: node scripts/ci/bundle-budget.mjs
 
       - name: 📐 Report bundle size
