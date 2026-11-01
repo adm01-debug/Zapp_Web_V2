@@ -151,7 +151,7 @@ grep -c "verify_jwt = false" supabase/config.toml  # → 14
 **Tabela per-edge: auth + validação + timeouts + idempotência (lido de index.ts nesta sessão):**
 
 | Função | Classe | Mecanismo de Auth | Timeout | Idempotente | Linhas | Risco |
-|--------|--------|-------------------|---------|-------------|--------|
+|--------|--------|-------------------|---------|-------------|--------|-------|
 | evolution-webhook | **R2** | `WebhookSecurityService` + HMAC-SHA256 (falha-fechado sem secret) | Não | Sim (4 upserts) | 336 | Baixo |
 | whatsapp-webhook | **R2** | `verifyMetaWebhookSignature` (3 refs) | Não | Sim | 271 | Baixo |
 | gmail-webhook | **R2** | `verifyGmailOidcRequest` OIDC (2 refs) | Não | Sim (3 ON CONFLICT) | 304 | Baixo |
@@ -294,16 +294,38 @@ SELECT jobname, schedule FROM cron.job WHERE active=true AND schedule IN ('* * *
 | S08 | Edge functions verify_jwt=false | **CONCLUIDO** | Sim — 14 funções, classificadas R0/R1/R2 |
 | S09 | MFA, storage, auth, realtime | **CONCLUIDO** | Sim — 0 fatores MFA, 9 buckets (3 públicos, 1 sem mime), realtime 37 tabelas, vault 13 secrets, auth config NÃO VERIFICÁVEL via SQL |
 | S10 | Dead tuples / bloat | **CONCLUIDO** | Sim — dead tuples < 50 por tabela após autovacuum |
-| S11 | Testes RLS matriz tenant A×B | **CONCLUIDO_PARCIAL** | Sim — 19/19 PASS no schema simplificado (org_id); schema real BLOQUEADO |
+| S11 | Testes RLS matriz tenant A×B | **CONCLUIDO_PARCIAL** | Sim — 19/19 PASS no schema simplificado (org_id) re-executado 2026-10-31 em `rls_matrix`; schema real BLOQUEADO |
 | S12 | PITR / configurações | **CONCLUIDO** | Sim — archive_mode=on, wal_level=logical |
 
 ### S11 — Detalhamento do CONCLUIDO_PARCIAL
 
-**Schema simplificado (org_id) — TESTADO E PASSANDO:**
-- Banco: PostgreSQL 16 local, database `rls_test`, role `rls_tester` (NOSUPERUSER)
-- 19 testes PASS + 1 INFO (T-20: integridade)
-- Tabelas cobertas: `messages`, `contacts`, `email_threads`, `profiles`
-- Arquivo: `auditoria-supabase/testes/01_rls_matrix.sql`
+**Schema simplificado (org_id) — EXECUTADO NESTA SESSÃO (2026-10-31):**
+- Banco: PostgreSQL 16.15 local, database `rls_matrix`, via `su -s /bin/bash postgres`
+- Método: `set_config('app.current_user_id', '<uuid>', false)` (session-level) + `SET ROLE authenticated` para cada bloco de teste
+- Correção do erro anterior (sessão anterior usava `is_local=true` que revertia entre statements em psql autocommit)
+- **19 testes PASS + 1 INFO (T-INTEG: integridade):**
+  - T-01 PASS: user_a vê 2 msgs (tenant A)
+  - T-02 PASS: user_a NÃO vê msgs tenant B (0)
+  - T-03 PASS: user_b vê 1 msg (tenant B)
+  - T-04 PASS: user_b NÃO vê msgs tenant A (0)
+  - T-05 PASS: INSERT cross-tenant bloqueado (NOTICE: T-05 PASS)
+  - T-07 PASS: UPDATE msg própria (1 row)
+  - T-08 PASS: UPDATE msg outro tenant bloqueada (0 rows)
+  - T-09 PASS: DELETE msg outro tenant bloqueada (0 rows)
+  - T-10 PASS: user_a vê 1 contato (tenant A)
+  - T-11 PASS: user_a NÃO vê contatos tenant B (0)
+  - T-12 PASS: UPDATE contato outro tenant bloqueado (0 rows)
+  - T-13 PASS: DELETE contato outro tenant bloqueado (0 rows)
+  - T-14 PASS: user_a vê 1 email_thread (tenant A)
+  - T-15 PASS: user_a NÃO vê email_threads tenant B (0)
+  - T-16 PASS: UPDATE email_thread outro tenant bloqueado (0 rows)
+  - T-17 PASS: user_b vê 1 email_thread (tenant B)
+  - T-18 PASS: user_a vê próprio perfil (1)
+  - T-19 PASS: user_a NÃO vê perfil tenant B (0)
+  - T-20 PASS: user_b NÃO faz UPDATE perfil user_a (0 rows)
+  - T-INTEG INFO: 3 msgs total (integridade preservada após todos os testes)
+- Database dropada após testes (`DROP DATABASE rls_matrix`)
+- Arquivo de teste: `auditoria-supabase/testes/01_rls_matrix.sql` (usa BEGIN/ROLLBACK para db_query; versão executada usou set_config+SET ROLE para psql)
 
 **Schema real do repo — NÃO VERIFICADO:**
 - Motivo: extensões `pg_cron`, `pg_net`, `vault`/`pgsodium` indisponíveis localmente
@@ -361,7 +383,7 @@ Function Scan on inbox_unread_total  (cost=0.25..0.26 rows=1 width=8)
 Funções com `EXECUTE` identificadas (11 total via `pg_get_functiondef ILIKE '%EXECUTE%'`):
 
 | Função | SECURITY DEFINER | search_path fixo | Chamador principal | Exceção silenciosa |
-|--------|-----------------|-----------------|-------------------|
+|--------|-----------------|-----------------|-------------------|-------------------|
 | `mcp_exec` | Sim | Sim | pg_net/PostgREST (485×/período) | **SIM** (`WHEN OTHERS THEN NULL`) |
 | `talkx_audience_query` | Sim | Sim | TalkX campaign worker (API) | **SIM** |
 | `trigger_talkx_engine_tick` | Sim | Sim | cron `talkx-scheduler-1min` (181×) | **SIM** |
@@ -402,7 +424,7 @@ Funções com `EXECUTE` identificadas (11 total via `pg_get_functiondef ILIKE '%
 ### CRÍTICOS (3)
 
 | ID | Achado | Evidência |
-|----|--------|-----------|
+|----|--------|----------|
 | C-01 | 17 tabelas com RLS ON mas sem nenhuma policy | S03 — query re-executada |
 | C-02 | 54 policies UPDATE/ALL sem WITH CHECK | S03 — `COUNT(*)=54` re-executado |
 | C-03 | `mcp_exec` + 3 outras funções com SQL dinâmico + exceção silenciosa (4 total) | S07 — `pg_get_functiondef` re-executado nesta sessão |
@@ -410,7 +432,7 @@ Funções com `EXECUTE` identificadas (11 total via `pg_get_functiondef ILIKE '%
 ### ALTOS (8)
 
 | ID | Achado | Evidência |
-|----|--------|-----------|
+|----|--------|----------|
 | A-01 | `anon` com grants em 104 tabelas totais com qualquer privilégio (TRUNCATE especificamente em ~55 delas) | S03 — corrigido de ~55 tabelas totais (sessão anterior) para **104 tabelas totais** |
 | A-02 | talkx-link e csp-report: R0 sem auth robusta | S08 — grep re-executado |
 | A-03 | 35 FKs sem índice | S04 — re-executado nesta sessão, corrigido de 32 |
@@ -423,7 +445,7 @@ Funções com `EXECUTE` identificadas (11 total via `pg_get_functiondef ILIKE '%
 ### MÉDIOS (17)
 
 | ID | Achado | Evidência |
-|----|--------|-----------|
+|----|--------|----------|
 | M-01 | 65 migrations com statements NULL | S02 — re-executado |
 | M-02 | 30 tabelas ausentes do types.ts | drift — re-executado (204 tabelas DB, ~174 em types.ts) |
 | M-03 | 4 pares de sobreposição de crons (inclui 3 em * * * * * + par 1-59/2) | S06 — re-executado nesta sessão |
@@ -445,7 +467,7 @@ Funções com `EXECUTE` identificadas (11 total via `pg_get_functiondef ILIKE '%
 ### BAIXOS (13)
 
 | ID | Achado | Evidência |
-|----|--------|-----------|
+|----|--------|----------|
 | B-01 | voice-changer-tmp-purge: 8,38% falha (15/179) | S06 — re-executado |
 | B-02 | close-stale-calls: 7,06% falha (151/2139) | S06 — re-executado |
 | B-03 | security-acl-score: 6,70% falha (12/179) | S06 — re-executado |
@@ -463,7 +485,7 @@ Funções com `EXECUTE` identificadas (11 total via `pg_get_functiondef ILIKE '%
 ### INFO (6)
 
 | ID | Achado | Evidência |
-|----|--------|-----------|
+|----|--------|----------|
 | I-01 | 3 crons usam vault.decrypted_secrets (padrão seguro) | S06 — re-executado |
 | I-02 | pg_stat_statements acessível via db_slow_queries MCP (não via SQL direto) | S05 — confirmado 2026-10-31 |
 | I-03 | WAL replication slot ativo 9145s (esperado, Realtime) | S05 — re-executado |
@@ -514,7 +536,7 @@ Re-executado em 2026-10-31 (query `cron.job_run_details JOIN cron.job`). Lista c
 | crm-sync-outbox-cleanup | `17 4 * * *` | 0 | 14 | 0% | — |
 | user-sessions-expire-diario | `17 3 * * *` | 0 | 7 | 0% | — |
 
-**Padrão confirmado:** todas as falhas do tipo "connection failed" ocorrem nos mesmos timestamps — saturação do pooler durante horário de pico, não falha isolada por função.
+**Padrão confirmado:** todas as falhas do tipo "connection failed" ocorrem nos mesmos timestamps (ex: 2026-10-30T22:57:00) — saturação do pooler durante horário de pico, não falha isolada por função.
 
 ---
 
@@ -554,7 +576,7 @@ Contagem re-executada nesta sessão: `ls supabase/functions/ | wc -l` → **85 f
 
 ## DRIFT DE CÓDIGO — .from()/.rpc() vs. Schema (re-executado 2026-10-31)
 
-**`.from()` calls:** `grep -rn '\.from\(["\'][^"\']+["\'\])'` → **655 ocorrências em 195 arquivos**. Padrão confirma acesso a tabelas existentes (contacts, messages, conversations, profiles, etc.). Sem chamadas a tabelas inexistentes identificadas.
+**`.from()` calls:** `grep -rn '\.from\(["'"'"'][^"'"'"']+["'"'"']\)'` → **655 ocorrências em 195 arquivos**. Padrão confirma acesso a tabelas existentes (contacts, messages, conversations, profiles, etc.). Sem chamadas a tabelas inexistentes identificadas.
 
 **`.rpc()` calls:** `grep -rn '\.rpc\('` → **16 ocorrências em 15 arquivos**. Funções usadas: `inbox_unread_total`, `talk_me_list_queues`, `rpc_queue_goal_metrics`, `get_last_message_dates`, `app_bootstrap`, `contacts_count_by_type`, e outras. Todas existem no banco (confirmado por pg_stat queries).
 
@@ -606,7 +628,7 @@ RLS está ativo em todas as 37 tabelas (S01 — 204/204 com RLS ON). `realtime.s
 ### Vault — 13 Secrets (nomes apenas, sem valores)
 
 | Nome | Criado em |
-|------|-----------|
+|------|----------|
 | ai_jobs_cron_secret | 2026-10-02 |
 | avatars_refresh_cron_secret | 2026-09-30 |
 | connection_health_check_cron_secret | 2026-09-30 |
