@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { limitsPayload } from '../tracking/talkxCampaignRules';
 
 vi.mock('@/integrations/supabase/client', () => {
   const mockFrom = vi.fn().mockReturnValue({
@@ -243,8 +244,7 @@ describe('Talk X — Estimated Time Calculator', () => {
   });
 
   it('handles exact hour', () => {
-    // Need to find values that give exactly 60 min
-    // contacts * (avg) = 3600s → contacts=360 with avg=10
+    // contacts=360 with avg=10
     expect(estimateTime(360, [5, 5], [5, 5])).toBe('~1h');
   });
 
@@ -304,5 +304,65 @@ describe('Talk X — Contact Filter', () => {
 
   it('handles whitespace-only query as empty', () => {
     expect(filterContacts(contacts, '   ')).toHaveLength(3);
+  });
+});
+
+// X006 — Editar limites: digitar 10 chama updateCampaignLimits com send_interval_min=10000
+describe('Talk X — Limites de Envio (X006)', () => {
+  it('digitar 10 gera payload com send_interval_min=10000', () => {
+    const draft = {
+      speedProfile: 'moderate',
+      intervalMin: 10,
+      intervalMax: 20,
+      windowStart: '',
+      windowEnd: '',
+      businessHoursOnly: false,
+    };
+    const payload = limitsPayload(draft);
+    expect(payload.send_interval_min).toBe(10000);
+    expect(payload.send_interval_max).toBe(20000);
+  });
+
+  it('grava piso correto: 3 s → 3000 ms', () => {
+    const draft = {
+      speedProfile: 'fast',
+      intervalMin: 3,
+      intervalMax: 8,
+      windowStart: '',
+      windowEnd: '',
+      businessHoursOnly: false,
+    };
+    const payload = limitsPayload(draft);
+    expect(payload.send_interval_min).toBe(3000);
+    expect(payload.send_interval_max).toBe(8000);
+  });
+
+  it('janela de envio é convertida para o formato do banco', () => {
+    const draft = {
+      speedProfile: 'moderate',
+      intervalMin: 8,
+      intervalMax: 20,
+      windowStart: '08:00',
+      windowEnd: '18:00',
+      businessHoursOnly: true,
+    };
+    const payload = limitsPayload(draft);
+    expect(payload.send_window_start).toBe('08:00:00');
+    expect(payload.send_window_end).toBe('18:00:00');
+    expect(payload.business_hours_only).toBe(true);
+  });
+
+  it('janela vazia → null no payload', () => {
+    const draft = {
+      speedProfile: 'moderate',
+      intervalMin: 8,
+      intervalMax: 20,
+      windowStart: '',
+      windowEnd: '',
+      businessHoursOnly: false,
+    };
+    const payload = limitsPayload(draft);
+    expect(payload.send_window_start).toBeNull();
+    expect(payload.send_window_end).toBeNull();
   });
 });
