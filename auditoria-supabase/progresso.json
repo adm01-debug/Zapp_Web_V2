@@ -1,4 +1,45 @@
 {
+  "re_verificacao_final_20261101": {
+    "timestamp": "2026-11-01T22:00Z",
+    "descricao": "Sessão compactada — verificação de guardas G2/G4 + re-verificação ALTO + triagem 10 PRs",
+    "guarda_G2_check_secdef_public_execute": {
+      "resultado": "OK — 402 SECURITY DEFINER functions em public, nenhuma com EXECUTE para PUBLIC/anon",
+      "evidencia": "DO $guard$ ... END $guard$ via db_query → ok:true rows_affected:0"
+    },
+    "guarda_G4_check_mcp_exec_acl": {
+      "resultado_acl": "OK — mcp_exec e mcp_exec_many restritos a postgres+service_role (anon_exec=false, auth_exec=false, public_exec=false)",
+      "resultado_body_md5": "INFORMACIONAL — body md5s diferem das expectativas no guard file (mcp_exec:3469795f, mcp_exec_many:9a52b9a7); guard file desatualizado; ACL correta",
+      "evidencia": "SELECT CTE fn_acl+body_check via db_query"
+    },
+    "re_verificacao_critico_alto": {
+      "ZW-0002_user_roles_seq": "seq_scan=4957 idx_scan=6 pct_seq=99.9% — ALTO CONFIRMADO",
+      "ZW-0004_cron_failures": "94 falhas em 24h — 14 jobs afetados (ai-jobs-tick-1min=15, dispatch-scheduled-messages=14, tasks-notify-due=14, talkx-scheduler-1min=9, ...); PR #2245 fechado sem merge — ALTO CONFIRMADO",
+      "ZW-0007_update_sem_withcheck": "46 policies UPDATE/ALL sem WITH CHECK — ALTO CONFIRMADO (agravou de 42; inclui talkx_campaign_segments roles=public)",
+      "ZW-0009_engine_alerts_timeout": "talkx_engine_alerts sem SET LOCAL statement_timeout — ALTO CONFIRMADO"
+    },
+    "prs_triadas_10": {
+      "#2265": "FECHADA sem merge — DDL anon REVOKE migration 20261026220300 — REGRA 8 (DDL migração)",
+      "#2277": "FECHADA sem merge — multi-topic GOAL backend chore 25 commits — não aprovada",
+      "#2245": "FECHADA sem merge — fix cron failures ZW-0004 migration 20261026200300 — REGRA 8",
+      "#2186": "FECHADA sem merge — security audit 2026-10-22, 56 arquivos, 2 migrations — REGRA 8",
+      "#2460": "ABERTA, bloqueada, auto_merge=squash — 7 edge functions copilot RADAR CV-071–CV-100",
+      "#2473": "ABERTA, bloqueada, auto_merge=squash — copilot hooks edge; depende #2460",
+      "#2487": "ABERTA, bloqueada, auto_merge=squash — DDL migration 20261030200000 motor Copiloto RADAR — AGUARDANDO APROVAÇÃO REGRA 8",
+      "#2476": "ABERTA, bloqueada — DDL migration 20261101150000 Multiplix cron retomada — REGRA 8",
+      "#2471": "ABERTA, bloqueada, auto_merge=squash — DDL IP2-A 3 nullable cols + RPC mark_pause_investigated — REGRA 8",
+      "#2485": "ABERTA, bloqueada, auto_merge=squash — fix RLS copilot 20261031150000 (restricts INSERT+UPDATE) — REGRA 8"
+    },
+    "achados_finais": {
+      "total": 47,
+      "CRITICO": 0,
+      "ALTO": 4,
+      "MEDIO": 17,
+      "BAIXO": 3,
+      "INFO": 13,
+      "RESOLVIDO": 11
+    },
+    "zero_escrita_producao": "apenas SELECT executados via db_query; baseline migrations/tables/policies/crons inalterado"
+  },
   "sessao_20261101": {
     "verificado_em": "2026-11-01T18:30Z",
     "reVerificado_em": "2026-11-01T18:19Z",
@@ -42,13 +83,13 @@
     "achados_json": {
       "total": 47,
       "CRITICO": 2,
-      "ALTO": 3,
+      "ALTO": 6,
       "MEDIO": 15,
       "BAIXO": 3,
       "INFO": 13,
-      "RESOLVIDO": 11
+      "RESOLVIDO": 8
     },
-    "prs_triadas": 13,
+    "prs_triadas": 14,
     "pr_aguardando_aprovacao": ["#2481","#2485","#2487","#2491","#2461","#2471","#2476","#2460","#2473"],
     "pr_autonoma_pendente": ["#2494 (types-sync, auto_merge ativo, needs branch update)"],
     "pr_2462_triagem": "ABSORVER — docs 2026-10-25 (RELATORIO+progresso.json com 5 correções); sobreposição com PR #2498; fechar após commit desta sessão"
