@@ -18,7 +18,10 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { messages = [], silenceThresholdMinutes = 60 } = body;
 
+    const now = new Date();
     const system = `Você é um copiloto de vendas especialista em qualificação de leads.
+Data/hora atual: ${now.toISOString()}
+
 Analise a conversa e meça a "temperatura" do lead — o nível de interesse e proximidade de fechar.
 
 Sinais de temperatura alta: perguntas sobre preço/prazo/entrega, pedido de proposta, urgência declarada,
@@ -46,9 +49,9 @@ Responda APENAS em JSON:
   "silenceAlertMinutes": <null ou minutos desde última mensagem do cliente>
 }`;
 
-    const history = messages.slice(-15).map((m: { content: string; sender: string }) => ({
+    const history = messages.slice(-15).map((m: { content: string; sender: string; sent_at?: string; created_at?: string }) => ({
       role: m.sender === "agent" ? "assistant" : "user",
-      content: String(m.content || ""),
+      content: (m.sent_at ?? m.created_at) ? `[${m.sent_at ?? m.created_at}] ${String(m.content || "")}` : String(m.content || ""),
     }));
 
     const { response, data } = await generateWithRouting({
@@ -76,8 +79,9 @@ Responda APENAS em JSON:
       if (m) result = JSON.parse(m[0]);
     } catch { result = null; }
 
+    if (!result) return errorResponse("Resposta do modelo inválida.", 502, req);
     log.done(200);
-    return jsonResponse(result ?? {}, 200, req);
+    return jsonResponse(result, 200, req);
   } catch (err) {
     log.error("unhandled", { msg: err instanceof Error ? err.message : String(err) });
     return errorResponse("Internal server error", 500, req);

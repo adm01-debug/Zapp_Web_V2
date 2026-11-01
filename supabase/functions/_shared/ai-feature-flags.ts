@@ -75,6 +75,14 @@ export const AI_CAPABILITY_BY_FUNCTION: Readonly<Record<string, AiCapability>> =
   // CV-010: Copiloto de Vendas ao Vivo — chave `ai.capability.copilot_live`.
   // Desligar esta capacidade bloqueia TODA a família copilot-live sem deploy.
   "copilot-live": "copilot_live",
+  // CV-081-087: Análise contextual do Copiloto RADAR (fases 8-9).
+  "ai-objection-handler": "copilot_live",
+  "ai-price-anchor": "copilot_live",
+  "ai-loss-risk": "copilot_live",
+  "ai-product-recommendation": "copilot_live",
+  "ai-deadline-calculator": "copilot_live",
+  "ai-lead-temperature": "copilot_live",
+  "ai-multimodal-analysis": "copilot_live",
 });
 
 /** Chave canônica de uma capacidade: `ai.capability.<capacidade>`. */

@@ -18,9 +18,10 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { messages = [], lastActivityAt } = body;
 
-    const silenceCtx = lastActivityAt
-      ? `Última atividade: ${lastActivityAt}`
-      : "";
+    const silenceCtx = [
+      `Data/hora atual: ${new Date().toISOString()}`,
+      lastActivityAt ? `Última atividade: ${lastActivityAt}` : "",
+    ].filter(Boolean).join("\n");
 
     const system = `Você é um copiloto de vendas especialista em detectar risco de perda de negócio.
 Analise a conversa e avalie a probabilidade de perda do cliente/negócio.
@@ -69,8 +70,9 @@ Responda APENAS em JSON:
       if (m) result = JSON.parse(m[0]);
     } catch { result = null; }
 
+    if (!result) return errorResponse("Resposta do modelo inválida.", 502, req);
     log.done(200);
-    return jsonResponse(result ?? {}, 200, req);
+    return jsonResponse(result, 200, req);
   } catch (err) {
     log.error("unhandled", { msg: err instanceof Error ? err.message : String(err) });
     return errorResponse("Internal server error", 500, req);

@@ -49,6 +49,13 @@ Responda APENAS em JSON:
       content: String(m.content || ""),
     }));
 
+    const lastUserContent = (mediaType === "image" || mediaType === "sticker") && mediaUrl
+      ? [
+          { type: "image_url" as const, image_url: { url: mediaUrl } },
+          { type: "text" as const, text: "Analise a mídia recebida e extraia informações relevantes para a negociação." },
+        ]
+      : `Analise a mídia recebida e extraia informações relevantes para a negociação. ${mediaCtx}`;
+
     const { response, data } = await generateWithRouting({
       purpose: "copilot",
       functionName: "ai-multimodal-analysis",
@@ -56,7 +63,7 @@ Responda APENAS em JSON:
       system,
       messages: [
         ...history,
-        { role: "user", content: `Analise a mídia recebida e extraia informações relevantes para a negociação. ${mediaCtx}` },
+        { role: "user", content: lastUserContent },
       ],
       temperature: 0.4,
     });
@@ -74,8 +81,9 @@ Responda APENAS em JSON:
       if (m) result = JSON.parse(m[0]);
     } catch { result = null; }
 
+    if (!result) return errorResponse("Resposta do modelo inválida.", 502, req);
     log.done(200);
-    return jsonResponse(result ?? {}, 200, req);
+    return jsonResponse(result, 200, req);
   } catch (err) {
     log.error("unhandled", { msg: err instanceof Error ? err.message : String(err) });
     return errorResponse("Internal server error", 500, req);

@@ -19,6 +19,7 @@ Deno.serve(async (req) => {
     const { messages = [], requestedDeadline = "", productionDays = null } = body;
 
     const ctx = [
+      `Data/hora atual: ${new Date().toISOString()}`,
       requestedDeadline ? `Prazo solicitado pelo cliente: ${requestedDeadline}` : "",
       productionDays != null ? `Dias de produção necessários: ${productionDays}` : "",
     ].filter(Boolean).join("\n");
@@ -70,8 +71,9 @@ Responda APENAS em JSON:
       if (m) result = JSON.parse(m[0]);
     } catch { result = null; }
 
+    if (!result) return errorResponse("Resposta do modelo inválida.", 502, req);
     log.done(200);
-    return jsonResponse(result ?? {}, 200, req);
+    return jsonResponse(result, 200, req);
   } catch (err) {
     log.error("unhandled", { msg: err instanceof Error ? err.message : String(err) });
     return errorResponse("Internal server error", 500, req);
