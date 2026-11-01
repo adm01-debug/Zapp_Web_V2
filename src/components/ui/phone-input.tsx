@@ -79,13 +79,20 @@ export function PhoneInput({ value, onChange, placeholder = '+55 11 99999-0000',
       // Bug A: isPasteOrDrop bypasses the guard — a paste is always an intentional replacement.
       isExplicitInternationalRef.current = false;
       wasExplicitPlusRef.current = false;
+    } else if (isDeletion && digits.length === 0) {
+      // Bug I: select-all + delete with wasExplicitPlusRef=true would leave international mode stuck;
+      // an empty field always resets both refs regardless of prior explicit '+'.
+      isExplicitInternationalRef.current = false;
+      wasExplicitPlusRef.current = false;
     } else if (isDeletion && digits.length < 3 && !wasExplicitPlusRef.current && !e.target.value.startsWith('+')) {
       // Bug C: only reset when the field is completely empty ('+' has left the display).
       // Prevents resetting a loaded international number whose mode wasn't set by an explicit '+' key.
       isExplicitInternationalRef.current = false;
       wasExplicitPlusRef.current = false;
-    } else if (!isDeletion && digits.length >= 3 && !digits.startsWith('55')) {
-      // Digit sequence ≥ 3 non-55 chars: check for BR country-prefix deletion first
+    } else if (!isDeletion && !isPasteOrDrop && digits.length >= 3 && !digits.startsWith('55')) {
+      // Bug J: paste events must not trigger this branch — pasting '1987654321' after typing '1'
+      // combined to '11987654321' which matched here and set international mode, bypassing DDD
+      // auto-prefix. Paste falls through to the DDD check below instead.
       const isBRPrefixDeletion = prevRaw.startsWith('55') && digits === prevRaw.slice(2);
       if (!isBRPrefixDeletion) {
         isExplicitInternationalRef.current = true;

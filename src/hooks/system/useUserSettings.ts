@@ -293,6 +293,17 @@ export function useUserSettings() {
       return false;
     }
 
+    // Bug H: guard against saving when settings failed to load — otherwise the
+    // call would upsert DEFAULT_SETTINGS values, overwriting real DB data.
+    if (isLoading || isError) {
+      toast({
+        title: 'Erro',
+        description: 'Aguarde as configurações carregarem antes de salvar.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
     setIsSaving(true);
     try {
       const { error } = await supabase
@@ -333,7 +344,7 @@ export function useUserSettings() {
     } finally {
       setIsSaving(false);
     }
-  }, [user?.id, settings.theme, settings.language, settings.compact_mode]);
+  }, [user?.id, isLoading, isError, settings.theme, settings.language, settings.compact_mode]);
 
   // Reset to defaults
   const resetSettings = useCallback(() => {
