@@ -63,6 +63,28 @@ describe('useSentimentData', () => {
     const { result } = renderHook(() => useSentimentData('7'));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.alerts).toEqual([]);
+    expect(result.current.isError).toBe(true);
+    expect(result.current.error?.message).toBe('rpc indisponível');
+    expect(result.current.incomplete).toBe(false);
+  });
+
+  it('falha na leitura secundária de agentes mantém os dados principais e sinaliza leitura incompleta', async () => {
+    h.rpc.mockResolvedValue({
+      data: [{ id: 'a1', entity_id: 'contact-1', created_at: '2026-09-25T00:00:00.000Z', details: { sentiment_score: 12 } }],
+      error: null,
+    });
+    h.profiles.mockResolvedValue({ data: null, error: new Error('perfis indisponíveis') });
+    const { result } = renderHook(() => useSentimentData('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.stats.totalAlerts).toBe(1);
+    expect(result.current.isError).toBe(false);
+    expect(result.current.incomplete).toBe(true);
+    expect(result.current.agentData).toEqual([]);
+
+    h.profiles.mockResolvedValue({ data: [{ id: 'ag1', name: 'Ana', avatar_url: null }], error: null });
+    await result.current.fetchData();
+    await waitFor(() => expect(result.current.incomplete).toBe(false));
+    expect(result.current.agents).toHaveLength(1);
   });
 
   it('mapeia os alertas da RPC (id/entity_id/created_at/details) para o shape do hook', async () => {

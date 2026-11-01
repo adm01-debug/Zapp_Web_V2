@@ -1,0 +1,96 @@
+grupo	item	quantidade
+topo	Zapp_Web_V2-anexos	21217
+topo	analise-projeto-90	13
+topo	backend-zapp-como-provar	1
+topo	design-system-zapp	1
+topo	zapp-web-v3-gates.md	1
+topo	zapp-web-v3-leitura-e-rls.md	1
+topo	zapp-web-v3.md	1
+topo	zapp-worktrees	157407
+tipo	SQL/migration	27332
+tipo	config/dados	15200
+tipo	código	93066
+tipo	documento	20863
+tipo	edge function	8437
+tipo	imagem	3071
+tipo	outros	5697
+tipo	script	4976
+decisao	DESCARTAR	34128
+decisao	INTEGRAR	1021
+decisao	JÁ ESTÁ NA MAIN	141962
+decisao	TERMINAR	1531
+sensivel	arvore_sensiveis	8038
+sensivel	env	55
+sensivel	sensivel_reclassificado	9646
+worktree/ci-cache-261020	DESCARTAR	645
+worktree/ci-cache-261020	INTEGRAR	1
+worktree/ci-cache-261020	JÁ ESTÁ NA MAIN	6811
+worktree/ci-cache-261020	TERMINAR	65
+worktree/docs-contatos	DESCARTAR	640
+worktree/docs-contatos	JÁ ESTÁ NA MAIN	6836
+worktree/docs-contatos	TERMINAR	60
+worktree/docs-p053-ledger	DESCARTAR	640
+worktree/docs-p053-ledger	JÁ ESTÁ NA MAIN	6829
+worktree/docs-p053-ledger	TERMINAR	65
+worktree/fix-contatos-cabecalho	DESCARTAR	640
+worktree/fix-contatos-cabecalho	INTEGRAR	7
+worktree/fix-contatos-cabecalho	JÁ ESTÁ NA MAIN	6846
+worktree/fix-contatos-cabecalho	TERMINAR	60
+worktree/fix-ga-resto-sonar-contracts	DESCARTAR	645
+worktree/fix-ga-resto-sonar-contracts	INTEGRAR	19
+worktree/fix-ga-resto-sonar-contracts	JÁ ESTÁ NA MAIN	6791
+worktree/fix-ga-resto-sonar-contracts	TERMINAR	67
+worktree/fix-ga-resto-typessync	DESCARTAR	649
+worktree/fix-ga-resto-typessync	INTEGRAR	8
+worktree/fix-ga-resto-typessync	JÁ ESTÁ NA MAIN	6808
+worktree/fix-ga-resto-typessync	TERMINAR	64
+worktree/fix-toque44-spec	DESCARTAR	640
+worktree/fix-toque44-spec	INTEGRAR	2
+worktree/fix-toque44-spec	JÁ ESTÁ NA MAIN	6849
+worktree/fix-toque44-spec	TERMINAR	60
+worktree/ga-resto-docs-regen	DESCARTAR	647
+worktree/ga-resto-docs-regen	INTEGRAR	2
+worktree/ga-resto-docs-regen	JÁ ESTÁ NA MAIN	6807
+worktree/ga-resto-docs-regen	TERMINAR	67
+worktree/ordem-abas-261020	DESCARTAR	637
+worktree/ordem-abas-261020	JÁ ESTÁ NA MAIN	6837
+worktree/ordem-abas-261020	TERMINAR	60
+worktree/ordem-abas-doc-261020	DESCARTAR	640
+worktree/ordem-abas-doc-261020	JÁ ESTÁ NA MAIN	6834
+worktree/ordem-abas-doc-261020	TERMINAR	60
+worktree/preview	DESCARTAR	315
+worktree/preview	INTEGRAR	935
+worktree/preview	JÁ ESTÁ NA MAIN	5311
+worktree/preview	TERMINAR	108
+worktree/resto-dbmigrate	DESCARTAR	650
+worktree/resto-dbmigrate	INTEGRAR	18
+worktree/resto-dbmigrate	JÁ ESTÁ NA MAIN	6804
+worktree/resto-dbmigrate	TERMINAR	62
+worktree/talkme-a-banco	DESCARTAR	649
+worktree/talkme-a-banco	JÁ ESTÁ NA MAIN	6831
+worktree/talkme-a-banco	TERMINAR	60
+worktree/talkme-b-midia	DESCARTAR	648
+worktree/talkme-b-midia	JÁ ESTÁ NA MAIN	6832
+worktree/talkme-b-midia	TERMINAR	60
+worktree/talkme-c-perf	DESCARTAR	647
+worktree/talkme-c-perf	JÁ ESTÁ NA MAIN	6833
+worktree/talkme-c-perf	TERMINAR	60
+worktree/talkme-d-entrada	DESCARTAR	650
+worktree/talkme-d-entrada	JÁ ESTÁ NA MAIN	6831
+worktree/talkme-d-entrada	TERMINAR	60
+worktree/talkme-e-e2e	DESCARTAR	650
+worktree/talkme-e-e2e	JÁ ESTÁ NA MAIN	6832
+worktree/talkme-e-e2e	TERMINAR	60
+worktree/talkme-gov	DESCARTAR	651
+worktree/talkme-gov	JÁ ESTÁ NA MAIN	6814
+worktree/talkme-gov	TERMINAR	60
+worktree/talkme-ledger	DESCARTAR	639
+worktree/talkme-ledger	JÁ ESTÁ NA MAIN	6837
+worktree/talkme-ledger	TERMINAR	61
+worktree/talkme-revoke	DESCARTAR	640
+worktree/talkme-revoke	JÁ ESTÁ NA MAIN	6835
+worktree/talkme-revoke	TERMINAR	60
+worktree/test-e2e-contatos-fab	DESCARTAR	640
+worktree/test-e2e-contatos-fab	INTEGRAR	3
+worktree/test-e2e-contatos-fab	JÁ ESTÁ NA MAIN	6849
+worktree/test-e2e-contatos-fab	TERMINAR	60
