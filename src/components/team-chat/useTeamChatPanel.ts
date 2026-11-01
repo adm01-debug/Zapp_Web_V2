@@ -82,7 +82,7 @@ export function useTeamChatPanel(conversation: TeamConversation) {
   const isNearBottomRef = useRef(true);
   const savedScrollFromBottomRef = useRef<number | null>(null);
 
-  const { messages: newestMessages, isLoading } = useTeamMessages(conversation.id);
+  const { messages: newestMessages, isLoading, isError: messagesIsError, refetch: refetchNewestMessages } = useTeamMessages(conversation.id);
   const sendMutation = useSendTeamMessage();
   const deleteMutation = useDeleteTeamMessage();
   const editMutation = useEditTeamMessage();
@@ -486,7 +486,10 @@ export function useTeamChatPanel(conversation: TeamConversation) {
     messages,
     filteredMessages,
     isSearching,
+    isSearchingMessages: isSearching,
     searchError,
+    messagesError: messagesIsError,
+    refetchMessages: refetchNewestMessages,
     isLoading,
     isMuted,
     canTransfer,
