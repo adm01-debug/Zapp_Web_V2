@@ -26,7 +26,7 @@
     },
     {
       "path": "src/components/admin/AdminView.tsx",
-      "sha256": "2049ff126809e894f0c05c7d6f9540c47ee8ba3b81ca995b32f3d8251b677cb2"
+      "sha256": "6bbfdbd581c9d2fd037bf62b9730d63dbfa83e0bba34fbb1e89ded8b4c9219f4"
     },
     {
       "path": "src/components/admin/AIUsageDashboard.tsx",
@@ -50,7 +50,7 @@
     },
     {
       "path": "src/components/admin/MediaMigrationTool.tsx",
-      "sha256": "77ac45f8a807b8ededd4eae2719a37b850a6e442e2f8bdad294fbeb31dbe5ac8"
+      "sha256": "778f2e86f269e7a079f88ad790b1abab0eec3443676efb5a4f717a6551a7db7e"
     },
     {
       "path": "src/components/admin/PlaybooksManager.tsx",
@@ -82,7 +82,7 @@
     },
     {
       "path": "src/components/ai/ChurnPredictionDashboard.tsx",
-      "sha256": "030dea2d0273418a9028533a4893dcf48ed33a1a3c91db23e9dadb12f370d9a1"
+      "sha256": "6bc89c0a4480ad3c0d94837d726dc107f85e8938d23984367d60a2e7050587a7"
     },
     {
       "path": "src/components/alerts/EvolutionDisconnectBanner.tsx",
@@ -178,7 +178,7 @@
     },
     {
       "path": "src/components/connections/ConnectionsView.tsx",
-      "sha256": "78784086313aff123ee2b3db4076732a4ed8987659e0cfaf590bb0a3e63a75d9"
+      "sha256": "5efa44c15d8c8521ba6c38f0c6d69c554755fc7dc6464c827a7b0ba9e884211e"
     },
     {
       "path": "src/components/connections/NumberReputationMonitor.tsx",
@@ -186,7 +186,7 @@
     },
     {
       "path": "src/components/contacts/BulkActionsBar.tsx",
-      "sha256": "da734aafaa942b52895c287878aaf77f867b9d6c18605223a784ca6cb940fed4"
+      "sha256": "716c2a080fe6721f15af66969e5918e14e7b809b8f00a17d940ca07a5035e392"
     },
     {
       "path": "src/components/contacts/ContactActivityTimeline.tsx",
@@ -214,7 +214,7 @@
     },
     {
       "path": "src/components/contacts/ContactNotes.tsx",
-      "sha256": "101e268fd11c806eec6d5564aeb744639493ade0b4a9c486896f321b07f664dc"
+      "sha256": "af3bffcdb75a0939fe00696fb58aef141f4ed5ad5d3c1e4f5488e4b83030cae7"
     },
     {
       "path": "src/components/contacts/ContactPurchaseHistory.tsx",
@@ -286,7 +286,7 @@
     },
     {
       "path": "src/components/dashboard/useSentimentData.ts",
-      "sha256": "eb596d70f682cd2233a5b1dd8418294c4f301173990911ed1d8c9b27321ba4cd"
+      "sha256": "817b5a57bbf9b2cfd29862070ee4ce4a662e62a1d2804db8d00bebbb49280286"
     },
     {
       "path": "src/components/dashboard/WidgetConfigSheet.tsx",
@@ -398,7 +398,7 @@
     },
     {
       "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
-      "sha256": "51109d10cfa2419d2d3cb7b262c72ab5a54b84a401cfa93c95ae936a520573d9"
+      "sha256": "59addfbfddbd1615559e4721fd3410b9a2d83838afdc1fc7cb0e18f536d1aedf"
     },
     {
       "path": "src/components/inbox/chat/ChatSearchBar.tsx",
@@ -422,7 +422,7 @@
     },
     {
       "path": "src/components/inbox/chat/MessageBubble.tsx",
-      "sha256": "b26c3697607a48af8aadd4bb9042f54df7ec9683290d9607261c05a779a0eabb"
+      "sha256": "06dd5b7a7b5ce40b1dd9c3c6e7a0d47a31e71d2aa0b3665c842433023c313963"
     },
     {
       "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
@@ -450,7 +450,7 @@
     },
     {
       "path": "src/components/inbox/ChatPanel.tsx",
-      "sha256": "425ba74cd47958be59080db76e542d59cfe3f06e712540c01f199b23d671a928"
+      "sha256": "d56af1ad4df4014b9cca8c9c03611c172453409d19dc4279c5c461e731d5e65c"
     },
     {
       "path": "src/components/inbox/CloseConversationDialog.tsx",
@@ -478,7 +478,7 @@
     },
     {
       "path": "src/components/inbox/contact-details/StoryViewer.tsx",
-      "sha256": "a6e9bce11a603151c2826764ab221bd98804b0234f81b2b258abe77f2539459b"
+      "sha256": "bc2c2874faa48f689bf32a5bfc7065d4bc0b397f451d610a3aef8fe463f947e5"
     },
     {
       "path": "src/components/inbox/ContactDetails.tsx",
@@ -494,11 +494,11 @@
     },
     {
       "path": "src/components/inbox/ConversationListSidebar.tsx",
-      "sha256": "bb70fcc68409475597402f37d3a54ae6302cc2233e782d89d3dfc233f753e750"
+      "sha256": "bdbf62b7f7d59824f15dc396973e4d99d8aff98d37c53c08bcf7c9835aaca206"
     },
     {
       "path": "src/components/inbox/ConversationSummary.tsx",
-      "sha256": "98ccb35ae6c3116f68f04147efd9da63228b261b3215147a8c56a0959f54d1f2"
+      "sha256": "536a1e4b1b3b49175b818584148cfa1957e9be7731c36c548e497dde2ea79fbd"
     },
     {
       "path": "src/components/inbox/GlobalSearch.tsx",
@@ -522,11 +522,11 @@
     },
     {
       "path": "src/components/inbox/MediaPreview.tsx",
-      "sha256": "09664055f5181c693526d0a6abf94a593ba6b22db4268454afe161c64c32b190"
+      "sha256": "d9b97c27e2aa0e244c71ce67f20528828eb752a1bcc6d645d6c7a66baa45365f"
     },
     {
       "path": "src/components/inbox/MessageContextActions.tsx",
-      "sha256": "8989caf5e632a0a6a57d7e77fa11c2f94dfcff07ff70736494ace5365c13373d"
+      "sha256": "482753eb081fb7219f622b1555c2ca867dfc3708aff17213eb9e059937d283f5"
     },
     {
       "path": "src/components/inbox/MessagePreview.tsx",
@@ -542,11 +542,11 @@
     },
     {
       "path": "src/components/inbox/RealtimeCollaboration.tsx",
-      "sha256": "cd94d2ac2ab5793076821dc5875ebc75fb4b49dfdda243b7e9f02d77fce2383b"
+      "sha256": "58dac359451ede752521db4b99c2bfb57c1c6ee4a08b7b7a658c407594392672"
     },
     {
       "path": "src/components/inbox/RealtimeInboxView.tsx",
-      "sha256": "4fdeee0cc67ed84642bfa54d39adb6c5c1c920eef19ab0856c11c5c4045aa038"
+      "sha256": "1d3e721aa720845da90726ecaea6ebc95e5024a40ed0d6633a5237da00b0a137"
     },
     {
       "path": "src/components/inbox/RealtimeTranscription.tsx",
@@ -558,7 +558,7 @@
     },
     {
       "path": "src/components/inbox/SlashCommands.tsx",
-      "sha256": "063f1776cd1331fba29a20acabd3a2ecb29493cf0b9b2e20192b20e6c2781e21"
+      "sha256": "6f732f1d58b1a7cfe9beb679d2c28af09fbedbe4fffeb2014d16652169c3ab00"
     },
     {
       "path": "src/components/inbox/stickers/StickerGrid.tsx",
@@ -586,11 +586,11 @@
     },
     {
       "path": "src/components/inbox/tabs/NotesTab.tsx",
-      "sha256": "00e2755fac575db9c39a29d7ed87b6476b69282d65bd35d5cc457b4d4b6efe3d"
+      "sha256": "f199c07977293d6a30f19f8957de2247b7417ceca97b346a33dd760184f94a0b"
     },
     {
       "path": "src/components/inbox/TemplatesWithVariables.tsx",
-      "sha256": "7f2907a97d5aede5016df8c801fd1ae12935d623769408417b72767dc5d90a09"
+      "sha256": "638262dd454d6cf6df9415e6743c541cdc311af7f012877243bf1d420ac28213"
     },
     {
       "path": "src/components/inbox/TextToAudioButton.tsx",
@@ -618,7 +618,7 @@
     },
     {
       "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
-      "sha256": "2511fa7ed04eae1d6bf1a0fc2c7a4232f64131faa448554944c643f7255b31ad"
+      "sha256": "14b9613595122a313fdce50dfa5239787bfee15103a3a3c8ca0c645b9200fca4"
     },
     {
       "path": "src/components/inbox/VoiceChanger.tsx",
@@ -630,11 +630,11 @@
     },
     {
       "path": "src/components/inbox/VoiceSelector.tsx",
-      "sha256": "714ba60dafb3ed15ba463685f5728e7859ff0cd2ff9ef85967de60dadcb9ad0e"
+      "sha256": "e34138f6136c90a11bb3285cc25bc66cca59439e2192b41644166c8575044b40"
     },
     {
       "path": "src/components/inbox/WhisperMode.tsx",
-      "sha256": "976d8078db767c6a0a34942b4dc933824e8c22107eae033a353d66cec18e8a62"
+      "sha256": "6c78ff71f79716b4dd9b706f351699cbff6032fcb55d225bf8170094c2063a44"
     },
     {
       "path": "src/components/integrations/BitrixIntegrationView.tsx",
@@ -666,7 +666,7 @@
     },
     {
       "path": "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
-      "sha256": "a5e44efb99f10b5886bb88a9a05bf0c5a73d75b4827b3267149c0825569d5832"
+      "sha256": "6217f6012ce912c8f867e1160310c32155bbc0518ebbc17636fb7cc8d4e66a8a"
     },
     {
       "path": "src/components/monitoring/hooks/useEvolutionMonitoring.ts",
@@ -758,7 +758,7 @@
     },
     {
       "path": "src/components/reports/PeriodComparison.tsx",
-      "sha256": "9e3068a132226469cc52c0f92c478c1a57d423c05737f0b4d6a3165571d5c783"
+      "sha256": "d73cd50ab4f4ac909ebb31498aa2bd16858bd35bb21d6f4aa3a019b9c06c2ca2"
     },
     {
       "path": "src/components/reports/ScheduledReportConfigs.tsx",
@@ -775,10 +775,6 @@
     {
       "path": "src/components/SearchInput.tsx",
       "sha256": "04ed6aa1befd03be729bfb01cbaa83f5eb1cf1f3a7bd02464fd74636490ab385"
-    },
-    {
-      "path": "src/components/security/AuditLogDashboard.tsx",
-      "sha256": "a4cc257ac70667f887c4a108381e7afe4836168a66e02bf3808b77f565f14220"
     },
     {
       "path": "src/components/security/BlockedIPDialogs.tsx",
@@ -822,7 +818,7 @@
     },
     {
       "path": "src/components/settings/AvatarUpload.tsx",
-      "sha256": "7ead96a2498d05509da253c1614ede5653975873499b297ac0093554a57adade"
+      "sha256": "736f9578f22d77e826bcce59e7fe7d1b2f8bed96858d38b2e46713f194e63ef6"
     },
     {
       "path": "src/components/settings/ChatbotL1Config.tsx",
@@ -842,7 +838,7 @@
     },
     {
       "path": "src/components/settings/IntegrationKeysSection.tsx",
-      "sha256": "11f2eb4aa7506c52537b97631111668f8163ca75172c74f5f01c24283287dfee"
+      "sha256": "41e8a313b0568b04d1997919bb14681b12a91c3d110c280b313355ca56afb8d4"
     },
     {
       "path": "src/components/settings/KeyboardShortcutsSettings.tsx",
@@ -882,7 +878,7 @@
     },
     {
       "path": "src/components/talkx/help/TalkXHelpCenter.tsx",
-      "sha256": "c3430f5842cccbb62ad53ff37e5bfbe694140239ca0e2c18cef0f11ffbb7f27a"
+      "sha256": "3cb52d1843b4feff688fd44a6383c0eb50d95780d64648f9c625480d1c0315a2"
     },
     {
       "path": "src/components/talkx/kit/personalize.ts",
@@ -897,24 +893,20 @@
       "sha256": "10c33da85f4fdce7a8b72b67cb188bcab4ecbd3c76ac17f24acfac107117ce1f"
     },
     {
-      "path": "src/components/talkx/segments/SegmentSideList.tsx",
-      "sha256": "8b3a34b9af0fd7e908b535ae95a5ab75671a2432be62c51ef5217e67993ecfdb"
-    },
-    {
       "path": "src/components/talkx/TalkXAudienceFilters.tsx",
       "sha256": "55514553bcdbd0fe4e48e4093cedff9dcbb65f44d2d5ab24b34e611de4f8556c"
     },
     {
       "path": "src/components/talkx/TalkXCampaignRunning.tsx",
-      "sha256": "ae1e78e5dee5fa2fead8d9799ddc6317e10b6dcdeac78e62ad340041907b9f83"
+      "sha256": "e69607e0897845ceeeeaac09b3d17840d5945349271264bc18a183269bd2e1fd"
     },
     {
       "path": "src/components/talkx/TalkXCampaignWizard.tsx",
-      "sha256": "5ba969d76e8ed11c181fe144dcd779659a0ddca51978155e442089b158240dbb"
+      "sha256": "65e1aecc16cb8d2ec7c75356496059409cc62244aa88778d6d88bd481ae4da2a"
     },
     {
       "path": "src/components/talkx/TalkXOverview.tsx",
-      "sha256": "a5b6393a1d90ca932f8fc2e417560c9b7b5b729e609c4ccf6e4020d7dcebc04a"
+      "sha256": "958f8c94d85ef95b967e7eb9c1714635ec99dd05f9f2216e4f0001fc7e8a4dde"
     },
     {
       "path": "src/components/talkx/TalkXSettings.tsx",
@@ -926,7 +918,7 @@
     },
     {
       "path": "src/components/talkx/TalkXTemplateEditor.tsx",
-      "sha256": "fea818547fcec4db1172eaae5a5faa8ecaa553951a87ed08219ac03504476509"
+      "sha256": "c8e543f0f8e0dc9c40f28ff9f52ed64cb8fbc4dec9c303448d07935b14318333"
     },
     {
       "path": "src/components/talkx/useCampaignEditor.ts",
@@ -938,7 +930,7 @@
     },
     {
       "path": "src/components/tasks/shared/QuickAdd.tsx",
-      "sha256": "a8bed781de1e48e9df1366b11a21d2f779320f736968c38d47a52b52df939a71"
+      "sha256": "3a1ebfa02763a412b4ec398eae26023c8a9cb28233dacad74fa2a05cd3b74d77"
     },
     {
       "path": "src/components/tasks/shared/WorkItemCard.tsx",
@@ -946,11 +938,11 @@
     },
     {
       "path": "src/components/tasks/shared/WorkItemSheet.tsx",
-      "sha256": "2cdc91c071206568aa0730435fc6a38c11d60718b1c3acba83c7913a75e142f5"
+      "sha256": "f28a3387e79830d7f7cbd5511497e650fc69b0e00b1941bcadf172ecb320d918"
     },
     {
       "path": "src/components/tasks/TasksModule.tsx",
-      "sha256": "7c5f53a7302b36c90516c4a2fc3cfe3a3875e3346dd18701672a8d233d78cac8"
+      "sha256": "cffcdae5df1d1386e4524b51bf6ded7614b63b87006ea4dfe8fa1a5d19a00494"
     },
     {
       "path": "src/components/team-chat/DepartmentManagementDialog.tsx",
@@ -970,7 +962,7 @@
     },
     {
       "path": "src/components/team-chat/TeamChatPanel.tsx",
-      "sha256": "63aa56f248e3c93874ee8ed486bcfc9f1c7a2025c7a70177d17e5362e77a8fdc"
+      "sha256": "c1478e21e958cba3fe804842cb7c2086440032d5d5a4c1fea51f7c1afe66a658"
     },
     {
       "path": "src/components/team-chat/TeamConversationList.tsx",
@@ -978,7 +970,7 @@
     },
     {
       "path": "src/components/team-chat/TeamFileUploader.tsx",
-      "sha256": "e7bbc6b515e46b5b97adf5f867528399d77d7e85383a5b078db823c39c2b827c"
+      "sha256": "e5d784e94894695e1093f490cac1c98b72f665e8f1b62c1761189b8a1a227ec3"
     },
     {
       "path": "src/components/team-chat/TeamMemberProfileHeader.tsx",
@@ -1018,7 +1010,7 @@
     },
     {
       "path": "src/components/ui/button.tsx",
-      "sha256": "c5c0d91cbdc30c89d44285e5e3c9681c3431f5b9c5066fb611a73ebecd14457c"
+      "sha256": "3c445ee46e967362a2d40ff5aeb5529758d54d5550da2b030878df01777e28a3"
     },
     {
       "path": "src/components/ui/card.tsx",
@@ -1030,7 +1022,7 @@
     },
     {
       "path": "src/components/ui/command-palette.tsx",
-      "sha256": "5172f967f2f6cf8fb802183fbd4b326e4d31287d85980c0d58a08362524c39c2"
+      "sha256": "5018e46287536d39469497edd6860b91f27680be2791cfdd8f0c4908e8a5221a"
     },
     {
       "path": "src/components/ui/dialog.tsx",
@@ -1134,7 +1126,7 @@
     },
     {
       "path": "src/hooks/auth/useAuth.tsx",
-      "sha256": "01a76cde569975629a919b3989248899ec94f3cdbfb1c4fd68e62501e04130e9"
+      "sha256": "ce177def06ffebe3cdb17b0ae968946f1adebae0cd2ca2663b4fe3982057ec35"
     },
     {
       "path": "src/hooks/auth/useAuthForm.ts",
@@ -1218,7 +1210,7 @@
     },
     {
       "path": "src/hooks/gamification/useAgentCelebrations.ts",
-      "sha256": "4f98f75128cbbb5acc341139d18305630b8dbc78dafaf2f8fa07388b236f68e4"
+      "sha256": "77b7ddc4ad1133b39d7440b0ff9847f07e4afbfe199f6da4b72500b21f086986"
     },
     {
       "path": "src/hooks/inbox/useConnectionQueues.ts",
@@ -1298,7 +1290,7 @@
     },
     {
       "path": "src/hooks/system/useUserSettings.ts",
-      "sha256": "61d29b48b67c16491c9800a9ef875f180c4d5e41ed4941172651b5cb56bba690"
+      "sha256": "8917cf138ebc64bd994a964a79632f752458fbf02e0262e69ab56e3a59f85ce3"
     },
     {
       "path": "src/hooks/team-chat/queryKeys.ts",
@@ -1306,7 +1298,7 @@
     },
     {
       "path": "src/hooks/team-chat/useTeamMessages.ts",
-      "sha256": "809569a7ebf87e257aa0a012fa68ac3a23a74dbc1853f29571e6cad7309dafe7"
+      "sha256": "6524d80429ac8c3f551d569b314c2ec53fe197380bee98a07e937394b3b57823"
     },
     {
       "path": "src/hooks/ui/use-mobile.tsx",
@@ -1394,7 +1386,7 @@
     },
     {
       "path": "src/lib/mediaVolumeStore.ts",
-      "sha256": "0892e3337bc587dac4692e0090d7e0d35107b3661ec01ff66060bd71d9ed2061"
+      "sha256": "d90ab9345f976e95ca3405ed44a1585aeea85571f8d79f0952c49aec5e9e5015"
     },
     {
       "path": "src/lib/webauthnUtils.ts",
@@ -1486,11 +1478,11 @@
     },
     {
       "path": "supabase/functions/_shared/cron-secret-auth.ts",
-      "sha256": "321fff7bca46941938d6b64158aab12ab8508bfc82a53ffc887b7a903563dd9a"
+      "sha256": "e78ced5e21d29c760b28d42697ad196194406abe8335bf7809badf5269c65dcc"
     },
     {
       "path": "supabase/functions/_shared/evolution-control-authz.ts",
-      "sha256": "af53c7adc8ed009533d4281343c2de13d036f674eea87a07fc9136925366a03a"
+      "sha256": "080fae3bd0f209963db341860d8c2d4078917624efb5bcdddcf6c88c0f9cb3fe"
     },
     {
       "path": "supabase/functions/_shared/hmac-validation.ts",
@@ -1530,15 +1522,15 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "sha256": "9d0b0c073889f35d5359ebaef9b05c1a9e92596674628bc7c7eaa978b611ba69"
+      "sha256": "996b5224287d460ee9fcd5e9aeb81a3f750f9349e1b0356c5a0c9be1d0cc31fa"
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
-      "sha256": "2e71f9f8a5e85772898aeae028fab886096a35c2d8d0fd1eedb7088bbd72aded"
+      "sha256": "5a9762286c7ab3209c66b87c20df81925d1ce51ad0be3a3755e037ecc253882b"
     },
     {
       "path": "supabase/functions/get-sip-password/index.ts",
-      "sha256": "5cebe4c27155f7df43360a0c855f96a3f6ee8e4ef410b80f8379ad9699ce60e5"
+      "sha256": "f5d69b0eee1536b3803b6019866baf14f2344166f8295d969d385d4a0102c371"
     },
     {
       "path": "supabase/functions/gmail-oauth/index.ts",
@@ -1558,11 +1550,7 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "sha256": "894b5d3743f3516abac35a73ed58c1380ecb599a042e98fb94a4ae6684f40503"
-    },
-    {
-      "path": "supabase/functions/searchbox-budget-alert/index.ts",
-      "sha256": "058a54232ba25efe76dd83a2a526431f758fbaf4d75e87d714753c790d64267b"
+      "sha256": "bc80064757393b751d8faed42407dfddbacc228152fa6d7fcda6b296ab122d14"
     },
     {
       "path": "supabase/functions/send-rate-limit-alert/index.ts",
@@ -1591,10 +1579,6 @@
     {
       "path": "supabase/functions/talkx-storage-purge/index.ts",
       "sha256": "ce848c35af9d2700184892233b207f8a3db7dddf9827d601e3871db433108332"
-    },
-    {
-      "path": "supabase/functions/whatsapp-webhook/index.ts",
-      "sha256": "5d4c2305b9eee8afd4e3b716ee04288d69c239b19d5988704c754502491821dc"
     }
   ],
   "issues": [
@@ -1796,9 +1780,9 @@
     },
     {
       "file": "src/components/admin/AdminView.tsx",
-      "line": 191,
+      "line": 202,
       "column": 9,
-      "endLine": 191,
+      "endLine": 202,
       "endColumn": 35,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -1810,9 +1794,9 @@
     },
     {
       "file": "src/components/admin/AdminView.tsx",
-      "line": 192,
+      "line": 203,
       "column": 14,
-      "endLine": 192,
+      "endLine": 203,
       "endColumn": 39,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -1824,9 +1808,9 @@
     },
     {
       "file": "src/components/admin/AdminView.tsx",
-      "line": 193,
+      "line": 204,
       "column": 14,
-      "endLine": 193,
+      "endLine": 204,
       "endColumn": 34,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -1838,9 +1822,9 @@
     },
     {
       "file": "src/components/admin/AdminView.tsx",
-      "line": 194,
+      "line": 205,
       "column": 14,
-      "endLine": 194,
+      "endLine": 205,
       "endColumn": 33,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -2846,9 +2830,9 @@
     },
     {
       "file": "src/components/connections/ConnectionsView.tsx",
-      "line": 19,
+      "line": 20,
       "column": 1,
-      "endLine": 19,
+      "endLine": 20,
       "endColumn": 59,
       "severity": 1,
       "ruleId": "no-restricted-imports",
@@ -3028,9 +3012,9 @@
     },
     {
       "file": "src/components/contacts/ContactNotes.tsx",
-      "line": 165,
+      "line": 275,
       "column": 23,
-      "endLine": 165,
+      "endLine": 275,
       "endColumn": 40,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -4918,9 +4902,9 @@
     },
     {
       "file": "src/components/inbox/ChatPanel.tsx",
-      "line": 256,
+      "line": 257,
       "column": 39,
-      "endLine": 256,
+      "endLine": 257,
       "endColumn": 64,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -5072,9 +5056,9 @@
     },
     {
       "file": "src/components/inbox/contact-details/StoryViewer.tsx",
-      "line": 195,
+      "line": 202,
       "column": 9,
-      "endLine": 195,
+      "endLine": 202,
       "endColumn": 35,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5086,9 +5070,9 @@
     },
     {
       "file": "src/components/inbox/contact-details/StoryViewer.tsx",
-      "line": 198,
+      "line": 205,
       "column": 16,
-      "endLine": 198,
+      "endLine": 205,
       "endColumn": 41,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5422,9 +5406,9 @@
     },
     {
       "file": "src/components/inbox/MediaPreview.tsx",
-      "line": 100,
+      "line": 101,
       "column": 13,
-      "endLine": 100,
+      "endLine": 101,
       "endColumn": 30,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5436,9 +5420,9 @@
     },
     {
       "file": "src/components/inbox/MediaPreview.tsx",
-      "line": 100,
+      "line": 101,
       "column": 34,
-      "endLine": 100,
+      "endLine": 101,
       "endColumn": 47,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5450,9 +5434,9 @@
     },
     {
       "file": "src/components/inbox/MediaPreview.tsx",
-      "line": 188,
+      "line": 189,
       "column": 19,
-      "endLine": 188,
+      "endLine": 189,
       "endColumn": 36,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5464,9 +5448,9 @@
     },
     {
       "file": "src/components/inbox/MediaPreview.tsx",
-      "line": 188,
+      "line": 189,
       "column": 40,
-      "endLine": 188,
+      "endLine": 189,
       "endColumn": 53,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5478,23 +5462,23 @@
     },
     {
       "file": "src/components/inbox/MessageContextActions.tsx",
-      "line": 154,
+      "line": 155,
       "column": 31,
-      "endLine": 154,
+      "endLine": 155,
       "endColumn": 41,
       "severity": 2,
       "ruleId": "react-hooks/purity",
       "messageId": null,
-      "message": "Error: Cannot call impure function during render `Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/inbox/MessageContextActions.tsx:154:31 152 | {isSent && message.type === 'text' && onEditStart && (() => { 153 | const ts = message.timestamp instanceof Date ? message.timestamp : new Date(message.created_at || String(message.timestamp)); > 154 | const minutesAgo = (Date.now() - ts.getTime()) / 60000; | ^^^^^^^^^^ Cannot call impure function 155 | return minutesAgo <= 15; 156 | })() && ( 157 | <DropdownMenuItem onClick={() => onEditStart(message)}>",
+      "message": "Error: Cannot call impure function during render `Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/inbox/MessageContextActions.tsx:155:31 153 | {isSent && message.type === 'text' && onEditStart && (() => { 154 | const ts = message.timestamp instanceof Date ? message.timestamp : new Date(message.created_at || String(message.timestamp)); > 155 | const minutesAgo = (Date.now() - ts.getTime()) / 60000; | ^^^^^^^^^^ Cannot call impure function 156 | return minutesAgo <= 15; 157 | })() && ( 158 | <DropdownMenuItem onClick={() => onEditStart(message)}>",
       "spanHash": "d8171d118e19556010680eb7b3001365c6aed91869027eb5edd26dca0c6c2609",
       "lineHash": "ec0fae5fac5e632bc730af7a2a8f80619514fddb8179d2228ed042438f020007",
       "contextHash": "0d39b2759032eba23a51549fbd9527b5b45c713e030e50600af6bb31823b9622"
     },
     {
       "file": "src/components/inbox/MessageContextActions.tsx",
-      "line": 6,
+      "line": 7,
       "column": 1,
-      "endLine": 6,
+      "endLine": 7,
       "endColumn": 59,
       "severity": 1,
       "ruleId": "no-restricted-imports",
@@ -5576,9 +5560,9 @@
     },
     {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
-      "line": 284,
+      "line": 285,
       "column": 39,
-      "endLine": 284,
+      "endLine": 285,
       "endColumn": 50,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5590,9 +5574,9 @@
     },
     {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
-      "line": 288,
+      "line": 289,
       "column": 12,
-      "endLine": 288,
+      "endLine": 289,
       "endColumn": 30,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5604,9 +5588,9 @@
     },
     {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
-      "line": 288,
+      "line": 289,
       "column": 34,
-      "endLine": 288,
+      "endLine": 289,
       "endColumn": 55,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5618,9 +5602,9 @@
     },
     {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
-      "line": 289,
+      "line": 290,
       "column": 11,
-      "endLine": 289,
+      "endLine": 290,
       "endColumn": 29,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5632,9 +5616,9 @@
     },
     {
       "file": "src/components/inbox/RealtimeInboxView.tsx",
-      "line": 290,
+      "line": 291,
       "column": 11,
-      "endLine": 290,
+      "endLine": 291,
       "endColumn": 22,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5688,14 +5672,14 @@
     },
     {
       "file": "src/components/inbox/SlashCommands.tsx",
-      "line": 32,
+      "line": 33,
       "column": 21,
-      "endLine": 32,
+      "endLine": 33,
       "endColumn": 37,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/SlashCommands.tsx:32:21 30 | }, [inputValue]); 31 | > 32 | useEffect(() => { setSelectedIndex(0); setSelectedCommand(null); }, [inputValue]); | ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 33 | 34 | useEffect(() => { 35 | const handleKeyDown = (e: KeyboardEvent) => {",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/components/inbox/SlashCommands.tsx:33:21 31 | }, [inputValue]); 32 | > 33 | useEffect(() => { setSelectedIndex(0); setSelectedCommand(null); }, [inputValue]); | ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 34 | 35 | useEffect(() => { 36 | const handleKeyDown = (e: KeyboardEvent) => {",
       "spanHash": "1bb7083a8b5045917a700d76e9789ea201cbfbd53caf3a556af5a1384b13a71d",
       "lineHash": "2cc23d7d9781e4f3c023712651f0ec4e819829db1f6af6e9995f55e54a2e5d59",
       "contextHash": "24dc29b46af963ca4fd37630826af22ca7f1c3ebb3cb60674106577b3cf959a1"
@@ -6038,9 +6022,9 @@
     },
     {
       "file": "src/components/inbox/tabs/NotesTab.tsx",
-      "line": 61,
+      "line": 62,
       "column": 15,
-      "endLine": 61,
+      "endLine": 62,
       "endColumn": 33,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6052,9 +6036,9 @@
     },
     {
       "file": "src/components/inbox/tabs/NotesTab.tsx",
-      "line": 62,
+      "line": 63,
       "column": 16,
-      "endLine": 62,
+      "endLine": 63,
       "endColumn": 33,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6066,9 +6050,9 @@
     },
     {
       "file": "src/components/inbox/tabs/NotesTab.tsx",
-      "line": 62,
+      "line": 63,
       "column": 52,
-      "endLine": 62,
+      "endLine": 63,
       "endColumn": 69,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6080,9 +6064,9 @@
     },
     {
       "file": "src/components/inbox/TemplatesWithVariables.tsx",
-      "line": 123,
+      "line": 124,
       "column": 66,
-      "endLine": 123,
+      "endLine": 124,
       "endColumn": 82,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -6178,23 +6162,23 @@
     },
     {
       "file": "src/components/inbox/VirtualizedRealtimeList.tsx",
-      "line": 168,
+      "line": 172,
       "column": 23,
-      "endLine": 168,
+      "endLine": 172,
       "endColumn": 37,
       "severity": 1,
       "ruleId": "react-hooks/incompatible-library",
       "messageId": null,
-      "message": "Compilation Skipped: Use of incompatible library This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized. <ROOT>/src/components/inbox/VirtualizedRealtimeList.tsx:168:23 166 | // TanStack Virtual retorna funcoes nao memoizaveis pelo React Compiler — mesma 167 | // limitacao ja aceita na baseline do ratchet para este mesmo hook. > 168 | const virtualizer = useVirtualizer({ | ^^^^^^^^^^^^^^ TanStack Virtual's `useVirtualizer()` API returns functions that cannot be memoized safely 169 | count: flatRows.length, 170 | getScrollElement, 171 | estimateSize,",
+      "message": "Compilation Skipped: Use of incompatible library This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized. <ROOT>/src/components/inbox/VirtualizedRealtimeList.tsx:172:23 170 | // TanStack Virtual retorna funcoes nao memoizaveis pelo React Compiler — mesma 171 | // limitacao ja aceita na baseline do ratchet para este mesmo hook. > 172 | const virtualizer = useVirtualizer({ | ^^^^^^^^^^^^^^ TanStack Virtual's `useVirtualizer()` API returns functions that cannot be memoized safely 173 | count: flatRows.length, 174 | getScrollElement, 175 | estimateSize,",
       "spanHash": "f4e0eaa448a4a05be7d6db80323e491f2377e2c17a034e8f2ee6e2bd44a923b0",
       "lineHash": "c198de567abd89b5e249ef2ea843524d4f27a54f243ab646c25ccaf2785a33ac",
       "contextHash": "142d513f7c3d82d5e1a989b146f50b4cfa57ada24f79b2440fadea157a5a71b5"
     },
     {
       "file": "src/components/inbox/VirtualizedRealtimeList.tsx",
-      "line": 232,
+      "line": 236,
       "column": 84,
-      "endLine": 232,
+      "endLine": 236,
       "endColumn": 110,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6206,9 +6190,9 @@
     },
     {
       "file": "src/components/inbox/VirtualizedRealtimeList.tsx",
-      "line": 496,
+      "line": 531,
       "column": 19,
-      "endLine": 496,
+      "endLine": 531,
       "endColumn": 36,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6220,9 +6204,9 @@
     },
     {
       "file": "src/components/inbox/VirtualizedRealtimeList.tsx",
-      "line": 496,
+      "line": 531,
       "column": 40,
-      "endLine": 496,
+      "endLine": 531,
       "endColumn": 53,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6276,9 +6260,9 @@
     },
     {
       "file": "src/components/inbox/VoiceSelector.tsx",
-      "line": 30,
+      "line": 31,
       "column": 14,
-      "endLine": 30,
+      "endLine": 31,
       "endColumn": 50,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -6290,9 +6274,9 @@
     },
     {
       "file": "src/components/inbox/WhisperMode.tsx",
-      "line": 127,
+      "line": 136,
       "column": 9,
-      "endLine": 127,
+      "endLine": 136,
       "endColumn": 31,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6304,9 +6288,9 @@
     },
     {
       "file": "src/components/inbox/WhisperMode.tsx",
-      "line": 132,
+      "line": 141,
       "column": 9,
-      "endLine": 132,
+      "endLine": 141,
       "endColumn": 34,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6318,9 +6302,9 @@
     },
     {
       "file": "src/components/inbox/WhisperMode.tsx",
-      "line": 138,
+      "line": 147,
       "column": 9,
-      "endLine": 138,
+      "endLine": 147,
       "endColumn": 32,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6332,9 +6316,9 @@
     },
     {
       "file": "src/components/inbox/WhisperMode.tsx",
-      "line": 144,
+      "line": 153,
       "column": 10,
-      "endLine": 144,
+      "endLine": 153,
       "endColumn": 31,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6346,9 +6330,9 @@
     },
     {
       "file": "src/components/inbox/WhisperMode.tsx",
-      "line": 144,
+      "line": 153,
       "column": 35,
-      "endLine": 144,
+      "endLine": 153,
       "endColumn": 52,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6360,9 +6344,9 @@
     },
     {
       "file": "src/components/inbox/WhisperMode.tsx",
-      "line": 150,
+      "line": 159,
       "column": 9,
-      "endLine": 150,
+      "endLine": 159,
       "endColumn": 28,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6388,9 +6372,9 @@
     },
     {
       "file": "src/components/inbox/WhisperMode.tsx",
-      "line": 492,
+      "line": 580,
       "column": 21,
-      "endLine": 492,
+      "endLine": 580,
       "endColumn": 38,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6570,9 +6554,9 @@
     },
     {
       "file": "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
-      "line": 84,
+      "line": 85,
       "column": 9,
-      "endLine": 84,
+      "endLine": 85,
       "endColumn": 22,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6584,9 +6568,9 @@
     },
     {
       "file": "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
-      "line": 85,
+      "line": 86,
       "column": 9,
-      "endLine": 85,
+      "endLine": 86,
       "endColumn": 22,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6598,9 +6582,9 @@
     },
     {
       "file": "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
-      "line": 86,
+      "line": 87,
       "column": 9,
-      "endLine": 86,
+      "endLine": 87,
       "endColumn": 22,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6612,9 +6596,9 @@
     },
     {
       "file": "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
-      "line": 87,
+      "line": 88,
       "column": 9,
-      "endLine": 87,
+      "endLine": 88,
       "endColumn": 22,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6626,9 +6610,9 @@
     },
     {
       "file": "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
-      "line": 88,
+      "line": 89,
       "column": 9,
-      "endLine": 88,
+      "endLine": 89,
       "endColumn": 22,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -6640,9 +6624,9 @@
     },
     {
       "file": "src/components/monitoring/EvolutionMonitoringDashboard.tsx",
-      "line": 89,
+      "line": 90,
       "column": 9,
-      "endLine": 89,
+      "endLine": 90,
       "endColumn": 22,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -7126,7 +7110,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "430c2bc9626668803fcb542c5eb750b718b3960784bf0d51638ab9b5c9a4b71f"
+      "contextHash": "dc86bc4007cbc859357027dff22a49ad2a9c366da1e4675f7d59d40cac4963fa"
     },
     {
       "file": "src/components/reports/ScheduledReportConfigs.tsx",
@@ -7225,20 +7209,6 @@
       "spanHash": "da91c698140b62ec1f9f1b5dea1d15db9b51abc9b65051c0311660b04153386e",
       "lineHash": "2529a14047703a1d3b79a77efe17eca8ab81af16ea797b81500a855ef28d39ef",
       "contextHash": "dcb7c8c4cd2296a31ecb904eea0238710f5675200e4e16ab31f86e78eabc1b05"
-    },
-    {
-      "file": "src/components/security/AuditLogDashboard.tsx",
-      "line": 10,
-      "column": 1,
-      "endLine": 10,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "cf2c2ad8d9bc597421e21c01c4293f9485134f6e34d0c773bcd0eed7b11ddae0"
     },
     {
       "file": "src/components/security/BlockedIPDialogs.tsx",
@@ -7522,9 +7492,9 @@
     },
     {
       "file": "src/components/settings/IntegrationKeysSection.tsx",
-      "line": 114,
+      "line": 116,
       "column": 32,
-      "endLine": 114,
+      "endLine": 116,
       "endColumn": 45,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -7536,9 +7506,9 @@
     },
     {
       "file": "src/components/settings/IntegrationKeysSection.tsx",
-      "line": 117,
+      "line": 119,
       "column": 28,
-      "endLine": 117,
+      "endLine": 119,
       "endColumn": 45,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -7900,9 +7870,9 @@
     },
     {
       "file": "src/components/talkx/help/TalkXHelpCenter.tsx",
-      "line": 107,
+      "line": 109,
       "column": 11,
-      "endLine": 107,
+      "endLine": 109,
       "endColumn": 33,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -7914,9 +7884,9 @@
     },
     {
       "file": "src/components/talkx/help/TalkXHelpCenter.tsx",
-      "line": 133,
+      "line": 141,
       "column": 11,
-      "endLine": 133,
+      "endLine": 141,
       "endColumn": 36,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -7928,9 +7898,9 @@
     },
     {
       "file": "src/components/talkx/help/TalkXHelpCenter.tsx",
-      "line": 138,
+      "line": 146,
       "column": 11,
-      "endLine": 138,
+      "endLine": 146,
       "endColumn": 34,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -7942,9 +7912,9 @@
     },
     {
       "file": "src/components/talkx/help/TalkXHelpCenter.tsx",
-      "line": 143,
+      "line": 151,
       "column": 11,
-      "endLine": 143,
+      "endLine": 151,
       "endColumn": 32,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -7956,9 +7926,9 @@
     },
     {
       "file": "src/components/talkx/help/TalkXHelpCenter.tsx",
-      "line": 149,
+      "line": 157,
       "column": 11,
-      "endLine": 149,
+      "endLine": 157,
       "endColumn": 33,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8081,34 +8051,6 @@
       "contextHash": "1504719c8f9de72865bbb5f700a6799901a31d3264683269e4e9df352dfedb76"
     },
     {
-      "file": "src/components/talkx/segments/SegmentSideList.tsx",
-      "line": 199,
-      "column": 69,
-      "endLine": 199,
-      "endColumn": 80,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "74cf1d9447efc0811bbaf4ec4302bf99e9787c9797c2e6a764e809002d5272d3",
-      "lineHash": "420b1e1f6ddc09505b3f71215499c086062ab706b3d4db21b2684758e067c906",
-      "contextHash": "7e06378c84c571adb6db8737c07fe0a99874edccd3e85f8735f7c394f291738d"
-    },
-    {
-      "file": "src/components/talkx/segments/SegmentSideList.tsx",
-      "line": 201,
-      "column": 15,
-      "endLine": 201,
-      "endColumn": 26,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "74cf1d9447efc0811bbaf4ec4302bf99e9787c9797c2e6a764e809002d5272d3",
-      "lineHash": "b611ab14a010d8562f106fc80199fbbca3ccba00470f5997c00d634c150cb3c4",
-      "contextHash": "8092c11df666cc8120f6339538fffd419a0c1f5b7cc3cdf30564b704db538843"
-    },
-    {
       "file": "src/components/talkx/TalkXAudienceFilters.tsx",
       "line": 272,
       "column": 7,
@@ -8180,9 +8122,9 @@
     },
     {
       "file": "src/components/talkx/TalkXCampaignWizard.tsx",
-      "line": 104,
+      "line": 105,
       "column": 21,
-      "endLine": 104,
+      "endLine": 105,
       "endColumn": 47,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8194,9 +8136,9 @@
     },
     {
       "file": "src/components/talkx/TalkXCampaignWizard.tsx",
-      "line": 104,
+      "line": 105,
       "column": 51,
-      "endLine": 104,
+      "endLine": 105,
       "endColumn": 76,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8208,9 +8150,9 @@
     },
     {
       "file": "src/components/talkx/TalkXCampaignWizard.tsx",
-      "line": 105,
+      "line": 106,
       "column": 22,
-      "endLine": 105,
+      "endLine": 106,
       "endColumn": 47,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8222,9 +8164,9 @@
     },
     {
       "file": "src/components/talkx/TalkXCampaignWizard.tsx",
-      "line": 105,
+      "line": 106,
       "column": 51,
-      "endLine": 105,
+      "endLine": 106,
       "endColumn": 74,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8236,9 +8178,9 @@
     },
     {
       "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 125,
+      "line": 130,
       "column": 9,
-      "endLine": 125,
+      "endLine": 130,
       "endColumn": 25,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8250,9 +8192,9 @@
     },
     {
       "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 126,
+      "line": 131,
       "column": 14,
-      "endLine": 126,
+      "endLine": 131,
       "endColumn": 33,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8264,9 +8206,9 @@
     },
     {
       "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 127,
+      "line": 132,
       "column": 14,
-      "endLine": 127,
+      "endLine": 132,
       "endColumn": 31,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8278,9 +8220,9 @@
     },
     {
       "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 128,
+      "line": 133,
       "column": 14,
-      "endLine": 128,
+      "endLine": 133,
       "endColumn": 31,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8292,9 +8234,9 @@
     },
     {
       "file": "src/components/talkx/TalkXOverview.tsx",
-      "line": 129,
+      "line": 134,
       "column": 14,
-      "endLine": 129,
+      "endLine": 134,
       "endColumn": 31,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8362,9 +8304,9 @@
     },
     {
       "file": "src/components/talkx/TalkXTemplateEditor.tsx",
-      "line": 614,
+      "line": 667,
       "column": 49,
-      "endLine": 614,
+      "endLine": 667,
       "endColumn": 62,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8376,9 +8318,9 @@
     },
     {
       "file": "src/components/talkx/TalkXTemplateEditor.tsx",
-      "line": 615,
+      "line": 668,
       "column": 49,
-      "endLine": 615,
+      "endLine": 668,
       "endColumn": 66,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8390,9 +8332,9 @@
     },
     {
       "file": "src/components/talkx/TalkXTemplateEditor.tsx",
-      "line": 669,
+      "line": 722,
       "column": 23,
-      "endLine": 669,
+      "endLine": 722,
       "endColumn": 40,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8404,9 +8346,9 @@
     },
     {
       "file": "src/components/talkx/TalkXTemplateEditor.tsx",
-      "line": 710,
+      "line": 763,
       "column": 23,
-      "endLine": 710,
+      "endLine": 763,
       "endColumn": 40,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8558,9 +8500,9 @@
     },
     {
       "file": "src/components/tasks/shared/QuickAdd.tsx",
-      "line": 149,
+      "line": 161,
       "column": 22,
-      "endLine": 149,
+      "endLine": 161,
       "endColumn": 35,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8572,9 +8514,9 @@
     },
     {
       "file": "src/components/tasks/shared/QuickAdd.tsx",
-      "line": 151,
+      "line": 163,
       "column": 11,
-      "endLine": 151,
+      "endLine": 163,
       "endColumn": 24,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8586,9 +8528,9 @@
     },
     {
       "file": "src/components/tasks/shared/QuickAdd.tsx",
-      "line": 152,
+      "line": 164,
       "column": 11,
-      "endLine": 152,
+      "endLine": 164,
       "endColumn": 24,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8600,9 +8542,9 @@
     },
     {
       "file": "src/components/tasks/shared/QuickAdd.tsx",
-      "line": 153,
+      "line": 165,
       "column": 11,
-      "endLine": 153,
+      "endLine": 165,
       "endColumn": 24,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8614,9 +8556,9 @@
     },
     {
       "file": "src/components/tasks/shared/QuickAdd.tsx",
-      "line": 154,
+      "line": 166,
       "column": 11,
-      "endLine": 154,
+      "endLine": 166,
       "endColumn": 24,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8628,9 +8570,9 @@
     },
     {
       "file": "src/components/tasks/shared/QuickAdd.tsx",
-      "line": 154,
+      "line": 166,
       "column": 28,
-      "endLine": 154,
+      "endLine": 166,
       "endColumn": 41,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8642,9 +8584,9 @@
     },
     {
       "file": "src/components/tasks/shared/QuickAdd.tsx",
-      "line": 163,
+      "line": 175,
       "column": 9,
-      "endLine": 163,
+      "endLine": 175,
       "endColumn": 26,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8656,9 +8598,9 @@
     },
     {
       "file": "src/components/tasks/shared/QuickAdd.tsx",
-      "line": 164,
+      "line": 176,
       "column": 9,
-      "endLine": 164,
+      "endLine": 176,
       "endColumn": 27,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8726,9 +8668,9 @@
     },
     {
       "file": "src/components/tasks/shared/WorkItemSheet.tsx",
-      "line": 156,
+      "line": 165,
       "column": 11,
-      "endLine": 156,
+      "endLine": 165,
       "endColumn": 29,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8740,9 +8682,9 @@
     },
     {
       "file": "src/components/tasks/shared/WorkItemSheet.tsx",
-      "line": 434,
+      "line": 461,
       "column": 49,
-      "endLine": 434,
+      "endLine": 461,
       "endColumn": 70,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8754,9 +8696,9 @@
     },
     {
       "file": "src/components/tasks/TasksModule.tsx",
-      "line": 247,
+      "line": 272,
       "column": 15,
-      "endLine": 247,
+      "endLine": 272,
       "endColumn": 26,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8768,9 +8710,9 @@
     },
     {
       "file": "src/components/tasks/TasksModule.tsx",
-      "line": 247,
+      "line": 272,
       "column": 39,
-      "endLine": 247,
+      "endLine": 272,
       "endColumn": 50,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -9174,9 +9116,9 @@
     },
     {
       "file": "src/components/ui/button.tsx",
-      "line": 124,
+      "line": 126,
       "column": 32,
-      "endLine": 124,
+      "endLine": 126,
       "endColumn": 46,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -9384,9 +9326,9 @@
     },
     {
       "file": "src/components/ui/command-palette.tsx",
-      "line": 280,
+      "line": 304,
       "column": 17,
-      "endLine": 280,
+      "endLine": 304,
       "endColumn": 34,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -9398,9 +9340,9 @@
     },
     {
       "file": "src/components/ui/command-palette.tsx",
-      "line": 283,
+      "line": 307,
       "column": 71,
-      "endLine": 283,
+      "endLine": 307,
       "endColumn": 84,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -10182,9 +10124,9 @@
     },
     {
       "file": "src/hooks/auth/useAuth.tsx",
-      "line": 245,
+      "line": 260,
       "column": 17,
-      "endLine": 245,
+      "endLine": 260,
       "endColumn": 24,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -10560,9 +10502,9 @@
     },
     {
       "file": "src/hooks/gamification/useAgentCelebrations.ts",
-      "line": 266,
+      "line": 287,
       "column": 46,
-      "endLine": 266,
+      "endLine": 287,
       "endColumn": 59,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -10994,31 +10936,17 @@
     },
     {
       "file": "src/hooks/system/useUserSettings.ts",
-      "line": 114,
+      "line": 101,
       "column": 7,
-      "endLine": 114,
+      "endLine": 101,
       "endColumn": 19,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/system/useUserSettings.ts:114:7 112 | useEffect(() => { 113 | if (!user?.id) { > 114 | setIsLoading(false); | ^^^^^^^^^^^^ Avoid calling setState() directly within an effect 115 | return; 116 | } 117 |",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/system/useUserSettings.ts:101:7 99 | useEffect(() => { 100 | if (!user?.id) { > 101 | setIsLoading(false); | ^^^^^^^^^^^^ Avoid calling setState() directly within an effect 102 | return; 103 | } 104 |",
       "spanHash": "f4c53e9c2756b64e09a7b71ace5bcefcf30b9044da81f142b98fba03631870af",
       "lineHash": "ccc30b1e46ad22797a4f9e4f74e554fc8015ff82f9d540703ffaf80f8915caad",
       "contextHash": "5f57432804b0384216dd6fc25b4f66c89ff0514ee92aa3077f43e4f9c44a142d"
-    },
-    {
-      "file": "src/hooks/system/useUserSettings.ts",
-      "line": 211,
-      "column": 36,
-      "endLine": 275,
-      "endColumn": 4,
-      "severity": 2,
-      "ruleId": "react-hooks/preserve-manual-memoization",
-      "messageId": null,
-      "message": "Compilation Skipped: Existing memoization could not be preserved React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `user`, but the source dependencies were [user?.id, settings]. Inferred less specific property than source. <ROOT>/src/hooks/system/useUserSettings.ts:211:36 209 | 210 | // Save settings to DB > 211 | const saveSettings = useCallback(async () => { | ^^^^^^^^^^^^^ > 212 | if (!user?.id) { | ^^^^^^^^^^^^^^^^^^^^ > 213 | toast({ … | ^^^^^^^^^^^^^^^^^^^^ > 274 | } | ^^^^^^^^^^^^^^^^^^^^ > 275 | }, [user?.id, settings]); | ^^^^ Could not preserve existing manual memoization 276 | 277 | // Reset to defaults 278 | const resetSettings = useCallback(() => {",
-      "spanHash": "7927460a9eab5a7fc91de5ece3fd046f2839d24685b0c384e5972be6eb7d37f7",
-      "lineHash": "d5facd9427646de8f14236c254875960eecc2de811176b786d632131e8edb07b",
-      "contextHash": "923463aab60d3280124d8fcba5b565b97af96547fa12ee33ed2123f944a22041"
     },
     {
       "file": "src/hooks/team-chat/queryKeys.ts",
@@ -11036,9 +10964,9 @@
     },
     {
       "file": "src/hooks/team-chat/useTeamMessages.ts",
-      "line": 134,
+      "line": 161,
       "column": 9,
-      "endLine": 134,
+      "endLine": 161,
       "endColumn": 39,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -11652,9 +11580,9 @@
     },
     {
       "file": "src/lib/mediaVolumeStore.ts",
-      "line": 265,
+      "line": 234,
       "column": 7,
-      "endLine": 265,
+      "endLine": 234,
       "endColumn": 32,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -11666,9 +11594,9 @@
     },
     {
       "file": "src/lib/mediaVolumeStore.ts",
-      "line": 271,
+      "line": 240,
       "column": 7,
-      "endLine": 271,
+      "endLine": 240,
       "endColumn": 31,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12254,9 +12182,9 @@
     },
     {
       "file": "supabase/functions/_shared/cron-secret-auth.ts",
-      "line": 87,
+      "line": 92,
       "column": 9,
-      "endLine": 87,
+      "endLine": 92,
       "endColumn": 29,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12268,9 +12196,9 @@
     },
     {
       "file": "supabase/functions/_shared/cron-secret-auth.ts",
-      "line": 93,
+      "line": 98,
       "column": 7,
-      "endLine": 93,
+      "endLine": 98,
       "endColumn": 29,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12282,9 +12210,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-control-authz.ts",
-      "line": 268,
+      "line": 238,
       "column": 29,
-      "endLine": 268,
+      "endLine": 238,
       "endColumn": 47,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12296,9 +12224,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-control-authz.ts",
-      "line": 268,
+      "line": 238,
       "column": 51,
-      "endLine": 268,
+      "endLine": 238,
       "endColumn": 73,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12310,9 +12238,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-control-authz.ts",
-      "line": 268,
+      "line": 238,
       "column": 9,
-      "endLine": 268,
+      "endLine": 238,
       "endColumn": 25,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12324,9 +12252,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-control-authz.ts",
-      "line": 269,
+      "line": 239,
       "column": 9,
-      "endLine": 269,
+      "endLine": 239,
       "endColumn": 32,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12338,9 +12266,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-control-authz.ts",
-      "line": 274,
+      "line": 244,
       "column": 9,
-      "endLine": 274,
+      "endLine": 244,
       "endColumn": 26,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12604,9 +12532,9 @@
     },
     {
       "file": "supabase/functions/get-sip-password/index.ts",
-      "line": 86,
+      "line": 75,
       "column": 22,
-      "endLine": 86,
+      "endLine": 75,
       "endColumn": 46,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12800,9 +12728,9 @@
     },
     {
       "file": "supabase/functions/multiplix-send/index.ts",
-      "line": 114,
+      "line": 115,
       "column": 7,
-      "endLine": 114,
+      "endLine": 115,
       "endColumn": 36,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -12811,20 +12739,6 @@
       "spanHash": "e98faa162b087f0ed766b89705b880304f193835e5a503ea51cfad3d879d786c",
       "lineHash": "55791afbfce12597d41048fe6549de4e6128bacae689455b41b4d6e064afdd0b",
       "contextHash": "20d3afe844fffcfa94597c9e1f86e90102a5d7fa23053c928ce6b537c4cf035b"
-    },
-    {
-      "file": "supabase/functions/searchbox-budget-alert/index.ts",
-      "line": 26,
-      "column": 31,
-      "endLine": 26,
-      "endColumn": 50,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"secret\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "9bd2b28bd7aa267997f22a3df48e998ab1ac53edd26ed425068e6f8c6fd52e1a",
-      "lineHash": "99823a9ce1069d56a5e1e3627dfdbb8965674e9c453bfbb84c627f05c2847f05",
-      "contextHash": "08ee6d239dc434439efdb836a15b3bbfd81f2078816532043dcad5365c33b27a"
     },
     {
       "file": "supabase/functions/send-rate-limit-alert/index.ts",
@@ -13049,20 +12963,6 @@
       "spanHash": "41b5195cca6abc1e2492ab17a6c53784d6d7d75c3cd9a6a7024dc9401f9a3776",
       "lineHash": "4bb750b78eef0e52f09b93ce61ce78cd7b2d94d0e4569c640b00df6147583cca",
       "contextHash": "7c84deea5c2890b97ebdde82d4c79f0904c200d004fecce56cc858d83e09c332"
-    },
-    {
-      "file": "supabase/functions/whatsapp-webhook/index.ts",
-      "line": 84,
-      "column": 33,
-      "endLine": 84,
-      "endColumn": 54,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"token\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "68ec560a4a8a7535020397e74687be017aa3b7b31c1f23bf933683ba2f859b48",
-      "lineHash": "f449bbab9e76dff5ba0db79efd2aa39ddc19209d0fdff2a71532815103216c5b",
-      "contextHash": "abeae14ca6f1f32395e8395feee1ed997b34351992a80adaab5d1b985e90959b"
     }
   ]
 }

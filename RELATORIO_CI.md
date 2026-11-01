@@ -1,8 +1,41 @@
 # RELATORIO_CI.md — Diagnóstico e Estado Final dos Workflows
 
-**Data:** 2026-10-31  
-**Branch de trabalho:** `fix/ci-workflows`  
-**PR:** A abrir para `main`
+**Data:** 2026-10-31 (atualizado 2026-11-01)  
+**Branch de trabalho:** `fix/ci-workflows` → `claude_05/brave-mccarthy-zvzky4`  
+**PR:** #2538
+
+---
+
+## 0. Atualização 2026-11-01 — sessão `claude_05/brave-mccarthy-zvzky4`
+
+### Baseline local — main SHA `1252bb5a4` (2026-11-01)
+
+| Verificação | Resultado | Detalhe |
+|---|---|---|
+| `bun run build` | ✅ exit 0 | Bundle inicial: **74.7 KB gzip** — abaixo do budget de **325 KB** |
+| `node scripts/ci/typecheck-ratchet.mjs` | ✅ exit 0 | baseline=93, atual=3, removidas=90, novas=0 |
+| `node scripts/ci/lint-ratchet.mjs` | ✅ exit 0 | baseline=819→813 (6 entradas obsoletas removidas), novas=0 |
+| Unit Tests | ✅ evidência CI | Run [41350571743](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41350571743) — 3 shards: success |
+
+### Correção aplicada nesta sessão
+
+| Arquivo | Mudança |
+|---|---|
+| `scripts/ci/eslint-baseline.json` | Removidas 6 entradas obsoletas (819→813); novas=0 |
+| `PENDENCIAS.md` | Adicionada §4: erro exato do E2E (WCAG contrast, webkit-email-navy) |
+
+### Estado dos 6 required checks — main run [41350571743](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41350571743) (SHA `1252bb5a4`)
+
+| Check | Status | Observação |
+|---|---|---|
+| 🔍 Lint & TypeCheck | ✅ success | run concluído |
+| 🧪 Unit Tests (1/3) | ✅ success | |
+| 🧪 Unit Tests (2/3) | ✅ success | |
+| 🧪 Unit Tests (3/3) | ✅ success | |
+| 🏗️ Build | ⏳ queued | aguardando runner |
+| 🔒 Security Audit | ✅ success | |
+| 🎭 E2E Tests (Playwright) | ❌ failure | webkit-email-navy WCAG contrast — pré-existente (ver PENDENCIAS §4) |
+| Contrato DB offline | ✅ success (Node CI Scripts) | |
 
 ---
 
