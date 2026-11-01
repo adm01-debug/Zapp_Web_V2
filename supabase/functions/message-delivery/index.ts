@@ -423,10 +423,14 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
     // C121: instância pausada não envia. Nada foi ao provedor ainda (sem efeito incerto,
-    // sem reconciliação): encerra a entrega como falha e o operador reenvia após retomar.
+    // sem reconciliação). Texto pode ser redigitado → encerra como falha imediata.
+    // Mídia/interativa não pode ser recuperada após failClaim → deixa o lease expirar
+    // (90 s) para redespacho natural depois que o operador retomar a instância.
     if (await isInstancePaused(service, claim.whatsapp_instance_name,
       (code) => console.error(JSON.stringify({ event: 'message_delivery_pause_check_error', code })))) {
-      await failClaim(service, claim);
+      if (claim.message_type === 'text') {
+        await failClaim(service, claim);
+      }
       console.error(JSON.stringify({ event: 'message_delivery_instance_paused' }));
       return errorResponse('Instance is paused; resend after it is resumed', 409, req);
     }
