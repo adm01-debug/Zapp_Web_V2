@@ -10,7 +10,7 @@ interface TalkXSegment { id: string; name: string }
 interface TalkXTemplate { id: string; name: string }
 
 const STATUS_LABEL: Record<string, string> = {
-  draft: 'Rascunho', scheduled: 'Agendada', running: 'Em andamento',
+  draft: 'Rascunho', scheduled: 'Agendada', sending: 'Em andamento', running: 'Em andamento',
   paused: 'Pausada', completed: 'Concluída', cancelled: 'Cancelada',
 };
 
