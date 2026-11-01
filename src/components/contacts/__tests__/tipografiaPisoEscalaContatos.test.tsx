@@ -108,9 +108,9 @@ describe('tipografia do card de Contatos — piso da escala (text-3xs)', () => {
     const { getByText, container } = render(<CRMContactCard contact={contato} />);
 
     // O elemento que o React renderizou traz a classe real; o tamanho sai dela.
-    const badgeEstado = getByText('Ativo');
+    const badgeEstado = getByText('Ativo').parentElement as HTMLElement;
     expect(menorTextoPx(badgeEstado.className, escala)).toBe(10);
-    expect(menorTextoPx(getByText('Champions').className, escala)).toBe(10);
+    expect(menorTextoPx((getByText('Champions').parentElement as HTMLElement).className, escala)).toBe(10);
 
     // Nenhum elemento do cartão em execução usa tamanho arbitrário (text-[Npx]).
     expect(container.innerHTML).not.toMatch(/text-\[[0-9.]+(px|rem|em)\]/);
@@ -129,8 +129,8 @@ describe('tipografia do card de Contatos — piso da escala (text-3xs)', () => {
     // O foco abre o dropdown de sugestões com os badges Empresa/Tag.
     fireEvent.focus(getByPlaceholderText(/Buscar por nome/));
 
-    expect(menorTextoPx(getByText('Empresa').className, escala)).toBe(10);
-    expect(menorTextoPx(getByText('Tag').className, escala)).toBe(10);
+    expect(menorTextoPx((getByText('Empresa').parentElement as HTMLElement).className, escala)).toBe(10);
+    expect(menorTextoPx((getByText('Tag').parentElement as HTMLElement).className, escala)).toBe(10);
   });
 
   it.each(['ContactDetailPanel.tsx', 'ContactKanbanView.tsx'])('%s não tem mais text-[9px]', (nome) => {

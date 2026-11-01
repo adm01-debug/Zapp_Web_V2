@@ -208,7 +208,8 @@ describe('ChurnPredictionDashboard', () => {
       fireEvent.click(screen.getByText('Análise IA'));
 
       for (const { riskScore, classe } of niveis) {
-        const badge = await screen.findByText(`${riskScore}%`);
+        // O Badge agora segura o texto num <span> interno; a cor mora na raiz do Badge.
+        const badge = (await screen.findByText(`${riskScore}%`)).parentElement as HTMLElement;
         const linha = badge.closest('div.flex');
         expect(linha).not.toBeNull();
         const barra = linha!.querySelector('[role="progressbar"]') as HTMLElement;

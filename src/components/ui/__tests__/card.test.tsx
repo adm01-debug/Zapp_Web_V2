@@ -100,7 +100,7 @@ describe('CardTitle — nível de título (N-209)', () => {
     render(<CardTitle>Título Padrão</CardTitle>);
     const titulo = screen.getByRole('heading', { level: 3, name: 'Título Padrão' });
     expect(titulo.tagName).toBe('H3');
-    expect(titulo).toHaveClass('text-2xl', 'font-semibold', 'leading-none', 'tracking-tight');
+    expect(titulo).toHaveClass('text-2xl', 'font-semibold', 'leading-tight', 'tracking-tight');
   });
 
   it("as='h2' renderiza h2 com as mesmas classes do h3 padrão", () => {
@@ -110,7 +110,7 @@ describe('CardTitle — nível de título (N-209)', () => {
     render(<CardTitle as="h2">Título Nível 2</CardTitle>);
     const titulo = screen.getByRole('heading', { level: 2, name: 'Título Nível 2' });
     expect(titulo.tagName).toBe('H2');
-    expect(titulo).toHaveClass('text-2xl', 'font-semibold', 'leading-none', 'tracking-tight');
+    expect(titulo).toHaveClass('text-2xl', 'font-semibold', 'leading-tight', 'tracking-tight');
     expect(titulo.className).toBe(padrao);
   });
 
@@ -122,6 +122,6 @@ describe('CardTitle — nível de título (N-209)', () => {
     );
     const titulo = screen.getByRole('heading', { level: 1, name: 'Título Nível 1' });
     expect(titulo.tagName).toBe('H1');
-    expect(titulo).toHaveClass('text-2xl', 'font-semibold', 'leading-none', 'tracking-tight', 'texto-extra');
+    expect(titulo).toHaveClass('text-2xl', 'font-semibold', 'leading-tight', 'tracking-tight', 'texto-extra');
   });
 });

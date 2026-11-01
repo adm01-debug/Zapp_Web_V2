@@ -199,7 +199,7 @@ function contadorDoCardContatos(): HTMLElement {
   );
 
   const titulo = screen.getByRole('heading', { name: /Contatos/ });
-  const contador = screen.getByText('2/3');
+  const contador = screen.getByText('2/3').parentElement as HTMLElement;
   expect(titulo).toContainElement(contador);
   return contador;
 }

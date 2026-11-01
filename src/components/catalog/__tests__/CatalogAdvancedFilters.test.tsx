@@ -153,7 +153,7 @@ describe('CatalogAdvancedFilters — contador de filtros ativos', () => {
     renderFilters({
       filters: { ...DEFAULT_ADVANCED_FILTERS, colors: ['Azul', 'Preto'], materials: ['Metal'] },
     });
-    expect(screen.getByText((_, node) => node?.textContent === '3 ativos')).toBeInTheDocument();
+    expect(screen.getByText((_, node) => node?.textContent === '3 ativos' && node.children.length === 0)).toBeInTheDocument();
   });
 });
 

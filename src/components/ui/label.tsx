@@ -4,7 +4,10 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-const labelVariants = cva("text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70");
+// `leading-snug` (e não `leading-none`): o rótulo de duas linhas não cola uma na outra.
+// É o valor do tema mais próximo do token do próprio `text-sm` (1.25rem = 20px no
+// `tailwind.config.ts`), então o rótulo passa a seguir a escala do sistema.
+const labelVariants = cva("text-sm font-medium leading-snug peer-disabled:cursor-not-allowed peer-disabled:opacity-70");
 
 const Label = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
