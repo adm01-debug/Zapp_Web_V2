@@ -1,5 +1,5 @@
 {
-  "auditoria": "Supabase Zapp Web V2 — 2026-11-01",
+  "auditoria": "Supabase Zapp Web V2 — 2026-11-01 (v2 completo)",
   "projeto": "tnnnlkbymytvtqngbbqh",
   "mcp": "SUPABASE - ZAPP WEB V2 - MCP",
   "branch": "claude/loving-lovelace-esc3l2",
@@ -8,28 +8,29 @@
     "migrations": 1072, "tabelas": 211, "policies": 520,
     "funcoes": 481, "crons": 24, "edge_functions_repo": 87, "vault_secrets": 13
   },
+  "baseline_pos_auditoria": {
+    "migrations": 1072, "tabelas": 211, "policies": 520,
+    "funcoes": 481, "crons": 24,
+    "delta_descricao": "ZERO — producao nao modificada"
+  },
   "secoes": {
-    "S1": { "status": "CONCLUIDO", "arquivo": "inventario/s1_inventario_completo.md" },
-    "S2": { "status": "CONCLUIDO_PARCIAL", "arquivo": "inventario/s2_drift.md", "nao_verificado": ["types.ts drift", "Deno.env catálogo completo", "edge functions deployed vs repo"] },
-    "S3": { "status": "CONCLUIDO", "arquivo": "inventario/s3_seguranca.md" },
-    "S4": { "status": "CONCLUIDO_PARCIAL", "arquivo": "inventario/s4_integridade.md", "nao_verificado": ["conversations table name"] },
-    "S5": { "status": "CONCLUIDO", "arquivo": "inventario/s5_performance.md" },
-    "S6": { "status": "CONCLUIDO", "arquivo": "inventario/s6_crons.md" },
-    "S7": { "status": "CONCLUIDO", "arquivo": "inventario/s7_db_functions.md" },
-    "S8": { "status": "CONCLUIDO_PARCIAL", "arquivo": "inventario/s8_edge_functions.md", "nao_verificado": ["verify_jwt por função", "code review individual", "deploy status"] },
-    "S9": { "status": "CONCLUIDO", "arquivo": "inventario/s9_auth_storage_realtime.md" },
-    "S10": { "status": "CONCLUIDO", "arquivo": "inventario/s10_logs.md" },
-    "S11": { "status": "NAO_TESTADO", "arquivo": "inventario/s11_rls_tenant.md", "roteiro": "testes/s11_rls_matrix.md" },
-    "S12": { "status": "CONCLUIDO", "arquivo": "inventario/s12_lacunas.md" }
+    "S1":  { "status": "CONCLUIDO",          "nota": "1072 migrations, 211 tabelas, 520 policies, 481 funcoes, 24 crons, 87 edge functions, 13 vault secrets" },
+    "S2":  { "status": "CONCLUIDO_PARCIAL",  "nota": "repo=1067 vs banco=1072 (+5 drift); 65 NULL statements; types.ts=217 vs banco=211 (+6)" },
+    "S3":  { "status": "CONCLUIDO",          "nota": "39 UPDATE sem WITH CHECK; 18 tabelas sem policy; 1 tabela com anon INSERT; 402 SECURITY DEFINER todas com search_path" },
+    "S4":  { "status": "CONCLUIDO",          "nota": "30 FKs sem indice; dead tuples: _http_response=17.4%, connection_health_logs=9.5%" },
+    "S5":  { "status": "CONCLUIDO",          "nota": "pg_stat_statements NAO instalado; 107MB indices sem uso (top: email_attachments_msg_att_key=61MB)" },
+    "S6":  { "status": "CONCLUIDO",          "nota": "24 crons; talkx_engine_tick 4420/43080 (10.3%) falhas; causa=job startup timeout (pool exhaustion)" },
+    "S7":  { "status": "CONCLUIDO",          "nota": "402 SECURITY DEFINER todas com search_path; 95 sem EXCEPTION; sem SQL dinamico inseguro" },
+    "S8":  { "status": "CONCLUIDO",          "nota": "verify_jwt=false: 1 funcao (auth-login, justificado); 36 Deno.env vars vs 13 vault; sem segredos hardcoded" },
+    "S9":  { "status": "CONCLUIDO",          "nota": "10 users, 0 MFA; webhook_failures tem payload_sha256 (assinatura OK); multiplix-voice sem MIME" },
+    "S10": { "status": "CONCLUIDO",          "nota": "edge: 1212 req/0 erros em 2026-11-01; auth audit=VAZIO; pg_log nao acessivel via SQL" },
+    "S11": { "status": "CONCLUIDO",          "nota": "8/8 PASS em PostgreSQL 16 local com FORCE ROW LEVEL SECURITY; USING implica WITH CHECK no PG" },
+    "S12": { "status": "CONCLUIDO",          "nota": "PITR ativo (archive_mode=on); sem staging; login_attempts sem TTL; sem alertas pg_cron" }
   },
   "severidade": { "ALTO": 4, "MEDIO": 3, "BAIXO": 3, "INFO": 4 },
+  "total_achados": 14,
   "producao_inalterada": true,
-  "prova_antes_depois": {
-    "migrations_antes": 1072, "migrations_depois": 1072,
-    "tabelas_antes": 211, "tabelas_depois": 211,
-    "policies_antes": 520, "policies_depois": 520,
-    "funcoes_antes": 481, "funcoes_depois": 481,
-    "crons_antes": 24, "crons_depois": 24
-  },
-  "ultimo_update": "2026-11-01T19:30:00Z"
+  "grep_pii_secrets": "0 matches — saida real mostrada no RELATORIO",
+  "s11_resultado": "8/8 PASS — arquivo: testes/s11_rls_matrix_RESULTADO.md",
+  "ultimo_update": "2026-11-01T20:00:00Z"
 }
