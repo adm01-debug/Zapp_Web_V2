@@ -1,0 +1,103 @@
+# E90 (plano 2026-10-01): notifica Joaquim por WhatsApp quando workflow critico
+# falha na main. Chama Evolution GO /message/sendText direto do Actions.
+#
+# Dedupe de 1h: suprime se este workflow ja teve run com sucesso no ultimo 1h.
+#
+# Secrets necessarios (criar no repo antes de ativar; nao estao nos Edge Functions):
+#   EVOLUTION_INSTANCE_TOKEN -- token da instancia PRINCIPAL da Evolution GO
+#   JOAQUIM_WHATSAPP_NUMBER  -- numero no formato internacional sem + (ex: 5511999999999)
+
+name: main-failure-notify
+
+on:
+  workflow_run:
+    workflows:
+      - e2e-logado
+      - db-live-guard
+      - deploy-functions
+      - types-sync
+    types: [completed]
+    branches: [main]
+
+permissions:
+  actions: read
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+jobs:
+  notify:
+    name: Notificar falha na main via WhatsApp
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    if: github.event.workflow_run.conclusion == 'failure'
+    steps:
+      - name: Dedupe 1h e enviar notificacao
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          EVOLUTION_INSTANCE_TOKEN: ${{ secrets.EVOLUTION_INSTANCE_TOKEN }}
+          JOAQUIM_WHATSAPP_NUMBER: ${{ secrets.JOAQUIM_WHATSAPP_NUMBER }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const run = context.payload.workflow_run;
+
+            // Dedupe: busca runs deste proprio workflow concluidos com sucesso no ultimo 1h.
+            // Se achou, e porque a notificacao ja foi enviada -- suprime.
+            const umHoraAtras = new Date(Date.now() - 3600 * 1000).toISOString();
+            const { data: myRuns } = await github.rest.actions.listWorkflowRuns({
+              owner, repo,
+              workflow_id: 'main-failure-notify.yml',
+              created: '>' + umHoraAtras,
+              per_page: 20,
+            });
+            const jaNotificou = myRuns.workflow_runs.some(
+              (r) => r.conclusion === 'success' && r.id !== context.runId
+            );
+            if (jaNotificou) {
+              core.info('Dedupe: notificacao ja enviada no ultimo 1h -- suprimindo.');
+              return;
+            }
+
+            const token = process.env.EVOLUTION_INSTANCE_TOKEN;
+            const numero = process.env.JOAQUIM_WHATSAPP_NUMBER;
+            if (!token || !numero) {
+              core.setFailed(
+                'Secrets EVOLUTION_INSTANCE_TOKEN e/ou JOAQUIM_WHATSAPP_NUMBER nao configurados.'
+              );
+              return;
+            }
+
+            const sha7 = run.head_sha.slice(0, 7);
+            const horario = new Date(run.updated_at).toLocaleString(
+              'pt-BR', { timeZone: 'America/Sao_Paulo' }
+            );
+            const texto = [
+              '🔴 *Zapp Web V2 — falha na main*',
+              '',
+              `Workflow: *${run.name}*`,
+              `Commit: \`${sha7}\` em \`${run.head_branch}\``,
+              `Horario: ${horario}`,
+              `Logs: ${run.html_url}`,
+            ].join('\n');
+
+            const resp = await fetch(
+              'https://evolution-go-rxj2.srv1481814.hstgr.cloud/message/sendText/PRINCIPAL',
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  apikey: token,
+                },
+                body: JSON.stringify({ number: numero, text: texto }),
+              }
+            );
+
+            if (!resp.ok) {
+              const body = await resp.text().catch(() => '');
+              core.setFailed(`Evolution GO respondeu ${resp.status}: ${body.slice(0, 300)}`);
+              return;
+            }
+            core.info(`Mensagem enviada para ${numero} -- Evolution GO ${resp.status}`);
