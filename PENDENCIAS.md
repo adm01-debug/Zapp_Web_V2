@@ -57,27 +57,18 @@ workflow **não é um required check** — não bloqueia merges na `main`.
 
 ---
 
-## 3. Deploy Edge Functions — fix de @types/node tentado (PR #2407) mas ainda falha
+## 3. Deploy Edge Functions — CORRIGIDO em 2026-11-01
 
-**Comportamento esperado:** `deploy-functions.yml` só executa quando o push na `main` altera
-código implantável em `supabase/functions/` ou `supabase/config.toml`. Quando o push toca
-apenas arquivos de frontend, documentação ou configuração de CI, o workflow não é disparado
-(condição `paths:` no trigger).
+**Causa raiz identificada e corrigida:** O passo `deno check` em `deploy-functions.yml` não
+passava `--config supabase/functions/deno.json`, então o Deno procurava `node_modules/` na raiz
+do repo em vez de em `supabase/functions/node_modules/` (onde `deno install --config supabase/functions/deno.json` instalou `@types/node`).
 
-**Run com falha após o fix:** Run `41162076060` executou no SHA `004e74a8c5` (pós-merge da
-PR #2407, que adicionou a instalação npm de `@types/node` em `deploy-functions.yml`),
-e **ainda falhou** com `Could not find "@types/node"` no step `deno check`. O fix da PR #2407
-não foi suficiente para resolver o erro.
+**Fix aplicado:** `deno check --config supabase/functions/deno.json supabase/functions/**/index.ts`
+em `.github/workflows/deploy-functions.yml` — branch `claude_04/dazzling-archimedes-n9k59w`.
 
-**Por que não foi corrigido:** O mecanismo pelo qual `deno check` falha mesmo após a instalação
-npm de `@types/node` requer investigação adicional — provavelmente o path do `node_modules`
-gerado não é o que o `deno check` procura. Este workflow **não é um required check** — não bloqueia merges na `main`.
-
-**O que o Joaquim precisa fazer:**
-1. Disparar `workflow_dispatch` do `deploy-functions.yml` **na branch `main`** com
-   **`dry_run: true`** (ensaio: roda tudo até o deploy exclusive, sem publicar nada e sem
-   reescrever secrets) para diagnosticar o erro `@types/node` sem risco de side-effects
-2. Se falhar, investigar por que a instalação npm de `@types/node` não resolve o `Could not find "@types/node"` do `deno check`; verificar o path do `node_modules` gerado versus o caminho que o Deno resolve
+**Status:** PR aberta. Após merge, o próximo push que alterar `supabase/functions/` irá
+disparar o `deploy-functions.yml` com o fix. O comportamento esperado é que o step `deno check`
+passe sem erros `Could not find "@types/node"`.
 3. **Não** disparar sem `dry_run: true` — o deploy sem ensaio reescreve secrets e publica
    as funções imediatamente no ambiente de produção
 

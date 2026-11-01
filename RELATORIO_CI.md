@@ -1,7 +1,7 @@
 # RELATORIO_CI.md — Diagnóstico e Estado Final dos Workflows
 
-**Data:** 2026-10-31  
-**Branch de trabalho:** `fix/ci-workflows`  
+**Data:** 2026-11-01 (atualizado)  
+**Branch de trabalho:** `claude_04/dazzling-archimedes-n9k59w`  
 **PR:** A abrir para `main`
 
 ---
@@ -112,7 +112,7 @@ em um SHA desatualizado.
 
 ## 6. Correções aplicadas nesta sessão
 
-Esta sessão (`fix/ci-workflows`) incluiu mudanças de código além da documentação:
+Esta sessão (`claude_04/dazzling-archimedes-n9k59w`) incluiu mudanças de CI além da documentação:
 
 | Ação | Status |
 |---|---|
@@ -120,12 +120,19 @@ Esta sessão (`fix/ci-workflows`) incluiu mudanças de código além da document
 | Medir bundle local | ✅ 323,0 KB (budget 325 KB) |
 | Verificar lint/typecheck localmente | ✅ exit 0 ambos |
 | Documentar falhas não corrigíveis | ✅ Ver PENDENCIAS.md |
-| Criar branch `fix/ci-workflows` | ✅ Criada a partir da `main` |
-| Criar PR para `main` | ✅ PR aberta |
-| `scripts/ci/fila-merge.mjs` — expansão de retry para erros de JSON truncado | ✅ Incluído na PR |
-| `supabase/migrations/20261026210300_reconcile_*` — removidos comentários extras que causavam falha no DB Guard | ✅ Incluído na PR |
-| Diagnósticos corrigidos em PENDENCIAS.md (§1 falhas reais, §2 quota, §3 fix tentado e falha) | ✅ Incluído na PR |
-| Diagnósticos corrigidos em RELATORIO_CI.md (§3 tabela, §4 nota CI Gate, §7 comparação) | ✅ Incluído na PR |
+| `deploy-functions.yml` — adicionar `--config supabase/functions/deno.json` ao `deno check` (W101) | ✅ Aplicado |
+| Diagnósticos atualizados em PENDENCIAS.md (§3 deploy-functions removido) | ✅ Aplicado |
+| Diagnósticos atualizados em RELATORIO_CI.md | ✅ Aplicado |
+
+### Causa raiz do Deploy Edge Functions
+
+O passo "Instalar dependencias node_modules" (`deno install --config supabase/functions/deno.json`)
+cria `supabase/functions/node_modules/` porque `nodeModulesDir:"auto"` está configurado em
+`supabase/functions/deno.json`. O passo seguinte (`deno check supabase/functions/**/index.ts`)
+não passava `--config`, então o Deno procurava `node_modules/` na raiz do repo (não encontrava
+`@types/node`) e falhava com `Could not find "@types/node"`.
+
+Fix: `deno check --config supabase/functions/deno.json supabase/functions/**/index.ts`
 
 ---
 
