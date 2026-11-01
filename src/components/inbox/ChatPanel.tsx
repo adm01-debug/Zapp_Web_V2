@@ -333,7 +333,7 @@ export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, 
   }, [chatNavigation, handleOpenMessageFromFiles]);
 
   // Pílulas de entrega: rolar até a primeira mensagem do estado e realçar com anel por 1,2 s.
-  // O realce e PROPRIO (`deliveryFocusId`) e visual: nunca toca no realce da busca
+  // O realçe e PROPRIO (`deliveryFocusId`) e visual: nunca toca no realçe da busca
   // (`highlightedMessageIds`/`activeHighlightId`) — a area recebe a uniao dos dois.
   const [deliveryFocusId, setDeliveryFocusId] = useState<string | null>(null);
   // `useMemo` para nao quebrar a memoizacao da area com um Set novo a cada render.
