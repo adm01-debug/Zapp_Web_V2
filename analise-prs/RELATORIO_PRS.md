@@ -179,6 +179,23 @@
 
 ---
 
+## Verificação pós-merge em produção
+
+PRs com migration ou edge function requerem verificação em produção. Das 13 mergeadas:
+
+| PR | O que deployou | Evidência em produção |
+|---|---|---|
+| #2549 | Edge function `connection-health-check` (+93 linhas: reconexão automática) | `connection_health_logs`: 10 runs nas últimas 3h (até 2026-11-02T07:02Z), `error_message = null` em todos; colunas `retry_count`, `auto_reconnect_enabled`, `reconnect_max_attempts`, `reconnect_interval_seconds` confirmadas em `whatsapp_connections`; migration `20261012134000` presente no ledger ✅ |
+| #2570 | Migration `20261102012200` + RPC `create_department_invite` | Migration no ledger; 3 policies em `pg_policy`; função em `pg_proc` ✅ |
+
+Demais 11 PRs (#2283, #2447, #2482, #2547, #2560, #2545, #2567, #2543, #2569, #2522, #2565): apenas arquivos CI/E2E/docs — sem `supabase/functions/*.ts` (não-test) nem `supabase/migrations/` — verificação de produção não obrigatória.
+
+**Worktrees:** `git worktree list` retorna apenas `/home/user/Zapp_Web_V2` (branch principal) — zero worktrees pendentes ✅
+
+**Baseline por nome de teste:** `analise-prs/baseline/unit-tests-failing.txt` (172 linhas, 136 arquivos `src/...` falhando no baseline SHA `2d97c44c`, CI run `40189526836`). `ContactFormRecalculoCorrida` **ausente** do arquivo → flake confirmado por prova independente ✅
+
+---
+
 ## PRs Fechadas sem Merge (66)
 
 PRs #1930, #1997, #2051, #2078, #2091, #2095, #2097, #2107, #2111, #2113, #2137, #2146, #2186, #2206, #2233, #2238, #2245, #2249, #2265, #2277, #2279, #2417, #2418, #2426, #2428, #2431, #2445, #2457, #2460, #2461, #2462, #2463, #2465, #2466, #2468, #2469, #2471, #2472, #2473, #2475, #2476, #2478, #2479, #2480, #2483, #2484, #2485, #2486, #2487, #2489, #2491, #2492, #2493, #2495, #2497, #2499, #2500, #2501, #2502, #2503, #2504, #2505, #2552, #2559, #2564, #2566
