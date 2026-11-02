@@ -1,31 +1,9 @@
 # AGENTS.md — Zapp Web V2
 
-Fonte única de orientação para qualquer agente de IA neste repositório.
-Se algo em `docs/` contradisser este arquivo, **este arquivo vence**.
-Relatórios, auditorias, handoffs e planos antigos em `docs/` são histórico, não ordem vigente.
-
----
-
-## 0. Congelamento de features — vale para TODA sessão (desde 2026-11-01, decisão do dono)
-
-O sistema não chega a "pronto" porque entra feature nova enquanto os fluxos que fazem o atendimento
-funcionar estão quebrados em produção. Até os fluxos de `docs/PRONTO_PRODUCAO.md` ficarem OK,
-nada fora deles entra.
-
-**PODE entrar:**
-1. Correção de bug em um dos fluxos críticos de `docs/PRONTO_PRODUCAO.md`.
-2. Correção de CI que impede verificar esses fluxos.
-3. Correção de segurança (vazamento de dado, RLS aberta, segredo exposto).
-
-**NÃO entra** (feche a tarefa e avise o dono): feature nova ou etapa de plano (TalkX V4, Copiloto/Radar,
-War Room, gamificação, metas, IA nova); ajuste visual, contraste, a11y, animação, snapshot ou texto —
-salvo se quebra um fluxo crítico; relatório, auditoria, dossiê, inventário ou placar em markdown/JSON;
-workflow, guarda ou script de CI novo.
-
-Toda PR diz, no corpo, **qual fluxo** de `docs/PRONTO_PRODUCAO.md` ela destrava.
-
-Um fluxo só é "OK" com prova **em produção** (query, request ou log real, com data e hora) e com o E2E
-desse fluxo passando na `main`. PR mergeada não é prova. Só o dono revoga o congelamento.
+Como trabalhar neste repositório: regras do dono do projeto, válidas para qualquer agente de IA.
+Se algo em `docs/` contradisser este arquivo, **este arquivo vence** — relatórios, auditorias,
+handoffs e planos antigos em `docs/` são histórico, não ordem vigente.
+Conteúdo técnico do projeto (banco, Evolution, CI, Vercel) fica em [`CLAUDE.md`](CLAUDE.md).
 
 ---
 
@@ -160,7 +138,7 @@ o `gh` CLI e o `git push` retornam 403 do proxy em write.
 5. Commits curtos em PT-BR com prefixo (`fix:`, `feat:`, `chore:`, `infra:`), de preferência 1 commit atômico
    (`github_push_files` aceita `files` e `delete` no mesmo commit).
 6. PR sempre. Título = o que muda. Corpo = causa/por quê + o que foi verificado de verdade, com a
-   evidência + qual fluxo de `docs/PRONTO_PRODUCAO.md` destrava.
+   evidência.
 7. **Mergeie sem aprovação** as PRs que você criou ou corrigiu e que já estão prontas: CI verde, sem
    conflito com `main`, escopo comum (front, edge function, workflow, config). Squash-merge e apague a
    branch. Não espere "ok" — a única exceção é a regra 8.
@@ -173,14 +151,6 @@ o `gh` CLI e o `git push` retornam 403 do proxy em write.
     reporte. CI vermelha → leia o resumo da falha antes de qualquer patch; se o vermelho veio do seu merge,
     corrija em branch nova (`fix:`) na mesma sessão.
 11. Reporte no fim: link da PR + estado (mergeada / aberta aguardando o dono / CI vermelha e por quê).
-
-### Áreas exclusivas — no máximo 3 sessões ao mesmo tempo
-
-| Área | Pastas | Uma sessão por vez |
-|---|---|---|
-| A — Front | `src/`, `e2e/` | sim |
-| B — Banco e edge | `supabase/` | sim |
-| C — CI | `.github/`, `scripts/` | sim |
 
 ---
 
