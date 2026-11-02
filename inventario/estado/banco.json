@@ -46,15 +46,16 @@
     },
     {
       "detalhe": [
-        "237819 linhas com mais de 7 dias"
-      ],
-      "tipo": "historico_cron_sem_limpeza"
-    },
-    {
-      "detalhe": [
         "PRINCIPAL: disconnected"
       ],
       "tipo": "whatsapp_desconectado"
+    },
+    {
+      "detalhe": [
+        "sicoob-bridge",
+        "sicoob-bridge-reply"
+      ],
+      "tipo": "edge_publicada_sem_codigo"
     }
   ],
   "cron": {
@@ -64,10 +65,10 @@
       "max_worker_processes": "6"
     },
     "historico": {
-      "bytes": 88915968,
-      "linhas": 304662,
-      "mais_antigo": "2026-08-27T03:00:00Z",
-      "mais_de_7_dias": 237819
+      "bytes": 89006080,
+      "linhas": 67020,
+      "mais_antigo": "2026-10-26T15:02:00Z",
+      "mais_de_7_dias": 177
     },
     "horas_paradas_7d": [
       {
@@ -534,13 +535,626 @@
   },
   "edge_functions": {
     "no_repo": 85,
-    "no_repo_sem_deploy": null,
-    "publicadas": null,
-    "publicadas_sem_codigo_no_repo": null
+    "no_repo_sem_deploy": [],
+    "publicadas": [
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "ai-auto-tag",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 612
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "ai-churn-analysis",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 599
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "ai-classify-tickets",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 598
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "ai-conversation-analysis",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 609
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "ai-conversation-summary",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 607
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "ai-enhance-message",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 605
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "ai-jobs-worker",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 160
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "ai-kb-ingest",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 4
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "ai-proxy",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 609
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "ai-suggest-reply",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 606
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "ai-transcribe-audio",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 596
+      },
+      {
+        "atualizada_em": "2026-11-02T08:11Z",
+        "slug": "ai-usage-outbox-drain",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 2
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "approve-password-reset",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 593
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "auth-login",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 558
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "auto-close-conversations",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 589
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "automation-suggest-reply",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 1
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "batch-fetch-avatars",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 600
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "bitrix-api",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 589
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "chatbot-l1",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 606
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "classify-audio-meme",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 601
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "classify-emoji",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 603
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "classify-sticker",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 604
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "cleanup-rate-limit-logs",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 587
+      },
+      {
+        "atualizada_em": "2026-11-02T08:11Z",
+        "slug": "connection-health-check",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 598
+      },
+      {
+        "atualizada_em": "2026-11-02T08:11Z",
+        "slug": "copilot-live",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 2
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "create-user",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 588
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "crm-integration",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 550
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "csp-report",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 559
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "detect-new-device",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 592
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "elevenlabs-agent-token",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 586
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "elevenlabs-dialogue",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 590
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "elevenlabs-scribe-token",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 586
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "elevenlabs-sfx",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 590
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "elevenlabs-sts",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 586
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "elevenlabs-tts",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 591
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "elevenlabs-tts-stream",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 591
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "elevenlabs-voice-design",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 590
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "elevenlabs-webhook",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 628
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "evolution-api",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 605
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "evolution-sync",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 596
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "evolution-webhook",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 672
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "external-db-bridge",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 591
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "external-db-proxy",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 594
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "fetch-link-preview",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 590
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "get-call-recording",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 9
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "get-mapbox-token",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 585
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "get-sip-password",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 588
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "gmail-cron-sync",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 606
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "gmail-oauth",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 597
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "gmail-send",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 596
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "gmail-sync",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 595
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "gmail-webhook",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 624
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "health",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 4
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "invite-user",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 1
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "message-delivery",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 544
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "metrics",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 4
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "migrate-media-storage",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 592
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "multiplix-audience",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 469
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "multiplix-dispatch",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 149
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "multiplix-send",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 485
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "multiplix-voices",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 8
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "promogifts-catalog",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 619
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "public-api",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 631
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "recover-corrupted-audios",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 592
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "recover-message-media",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 1
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "revoke-auth-sessions",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 8
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "searchbox-budget-alert",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 80
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "send-email",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 590
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "send-rate-limit-alert",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 593
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "send-scheduled-report",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 595
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "sentiment-alert",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 597
+      },
+      {
+        "atualizada_em": "2026-09-29T12:57Z",
+        "slug": "sicoob-bridge",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 581
+      },
+      {
+        "atualizada_em": "2026-09-29T12:57Z",
+        "slug": "sicoob-bridge-reply",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 581
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "status",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 4
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "sync-call-records",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 9
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "talkx-ai",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 4
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "talkx-link",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 510
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "talkx-report",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 509
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "talkx-scheduler",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 594
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "talkx-send",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 618
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "talkx-storage-purge",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 4
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "voice-agent",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 597
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "voice-changer",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 585
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "voice-copilot-action",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 588
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "webauthn",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 592
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "webhook-diagnostic",
+        "status": "ACTIVE",
+        "verify_jwt": true,
+        "versao": 597
+      },
+      {
+        "atualizada_em": "2026-11-02T05:08Z",
+        "slug": "whatsapp-webhook",
+        "status": "ACTIVE",
+        "verify_jwt": false,
+        "versao": 623
+      }
+    ],
+    "publicadas_sem_codigo_no_repo": [
+      "sicoob-bridge",
+      "sicoob-bridge-reply"
+    ]
   },
   "fonte": "scripts/inventario/banco.sql + GET /functions + .from() em src/ e supabase/functions/ (scripts/inventario/gerar-banco.mjs)",
   "format_version": 1,
-  "medido_em": "2026-11-02T14:08:25Z",
+  "medido_em": "2026-11-02T15:27:21Z",
   "resumo": {
     "cron_ativos": 24,
     "cron_jobs": 24,
@@ -552,7 +1166,7 @@
     "postgres": "17.6",
     "tabelas_public": 211,
     "tabelas_sem_rls": 0,
-    "tamanho_bytes": 472394899,
+    "tamanho_bytes": 472411283,
     "triggers_public": 161,
     "views_public": 13
   },
@@ -860,7 +1474,7 @@
     {
       "bytes": 40132608,
       "citada_no_banco": true,
-      "linhas": 88832,
+      "linhas": 88833,
       "linhas_exatas": true,
       "nome": "audit_logs",
       "policies": 4,
@@ -1730,7 +2344,7 @@
     {
       "bytes": 65536,
       "citada_no_banco": true,
-      "linhas": 9,
+      "linhas": 7,
       "linhas_exatas": true,
       "nome": "edge_rate_limits",
       "policies": 0,
@@ -3750,14 +4364,14 @@
   "whatsapp": {
     "conexoes": [
       {
-        "atualizada_em": "2026-11-02T14:07:03Z",
+        "atualizada_em": "2026-11-02T15:27:02Z",
         "health_reason": "Reconexão automática esgotada — gere um novo QR Code na tela Conexões.",
         "health_status": "disconnected",
         "instance_id": "PRINCIPAL",
         "nome": "Promo Brindes WhatsApp",
         "padrao": true,
         "status": "disconnected",
-        "ultimo_health_check": "2026-11-02T14:07:03Z"
+        "ultimo_health_check": "2026-11-02T15:27:02Z"
       },
       {
         "atualizada_em": "2026-09-28T20:21:53Z",
