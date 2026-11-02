@@ -63,7 +63,7 @@ function varsDoBloco(css: string, seletor: string): Record<string, string> {
   }
   if (fim < 0) throw new Error(`bloco ${seletor} sem fechamento`);
   const vars: Record<string, string> = {};
-  for (const m of css.slice(abre + 1, fim).matchAll(/--([\w-]+):\s*([^;]+);/g)) {
+  for (const m of css.slice(abre + 1, fim).matchAll(/--(\w[\w-]*):\s*([^;]+);/g)) {
     vars[m[1]] = m[2].trim().replace(/\s+/g, ' ');
   }
   return vars;
@@ -92,7 +92,7 @@ type Rgb = [number, number, number];
 
 /** `H S% L%` (a forma dos tokens da folha) → RGB 0..1. */
 function hslDoToken(valor: string, nome: string): Rgb {
-  const m = /^([\d.]+)\s+([\d.]+)%\s+([\d.]+)%$/.exec(valor);
+  const m = /^([\d.]+)\s+([\d.]+)%\s+([\d.]+)%(?:\s+!important)?$/.exec(valor);
   if (!m) throw new Error(`--${nome}: "${valor}" não é a trinca HSL esperada`);
   const h = Number(m[1]) / 360;
   const s = Number(m[2]) / 100;
