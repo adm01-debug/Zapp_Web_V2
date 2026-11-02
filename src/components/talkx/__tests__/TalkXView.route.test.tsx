@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const f = vi.hoisted(() => ({
@@ -143,13 +143,15 @@ describe('TalkXView tab deep links (X007)', () => {
     expect(new URLSearchParams(window.location.search).get('tab')).toBe('suppression');
   });
 
-  it('renderiza o botão Voltar à campanhas com classes válidas na tela de monitor', async () => {
+  it('a trilha do monitor tem "Campanhas" clicável que volta à lista (X053)', async () => {
     window.history.replaceState(null, '', '/?view=talkx&campaign=draft_1&screen=monitor');
     render(<TalkXView />);
 
-    const back = await screen.findByRole('button', { name: /Voltar à campanhas/ });
-    expect(back).toHaveClass('h-9');
-    expect(back).toHaveClass('hover:bg-muted/50');
+    const nav = await screen.findByRole('navigation', { name: 'Trilha de navegação' });
+    const campanhasBtn = within(nav).getByRole('button', { name: 'Campanhas' });
+    expect(campanhasBtn).toBeInTheDocument();
+    fireEvent.click(campanhasBtn);
+    await waitFor(() => expect(window.location.search).not.toContain('screen=monitor'));
   });
 
   // X053 — a trilha do cabeçalho é preenchida pela ROTA: mesma aba na URL, mesma
