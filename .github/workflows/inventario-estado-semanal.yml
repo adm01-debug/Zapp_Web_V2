@@ -71,17 +71,17 @@ jobs:
       - name: Inventário do repositório (rotas e edge functions)
         run: |
           node scripts/inventario/gerar-rotas.mjs
-          node scripts/inventario/gerar-repo.mjs
+          # < /dev/null: sem lista de tabelas no stdin o script so grava edges.json (o uso de tabelas sai no banco.json)
+          node scripts/inventario/gerar-repo.mjs < /dev/null
 
       - name: Decidir se vale PR
         id: mudou
+        # Compara o JSON sem os carimbos de data (medido_em/gerado_em), arquivo a arquivo contra o
+        # HEAD. Filtrar linhas do diff não serve: o edges.json é gravado numa linha só, com a data.
         run: |
-          git add -N inventario/estado
-          # Só data/carimbo mudou? Não vale PR.
-          if git diff -U0 -- inventario/estado | grep -E '^[+-][^+-]' | grep -vqE '"(medido_em|gerado_em)"'; then
-            echo "valor=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "valor=false" >> "$GITHUB_OUTPUT"
+          valor="$(node scripts/inventario/mudou-conteudo.mjs)"
+          echo "valor=$valor" >> "$GITHUB_OUTPUT"
+          if [ "$valor" != "true" ]; then
             echo "Inventário sem mudança de conteúdo — nenhum PR a abrir."
           fi
 
