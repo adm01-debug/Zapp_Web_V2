@@ -1,0 +1,8 @@
+ALTER POLICY "Users can update their assigned contacts" ON public.contacts WITH CHECK ( can_edit_contact( assigned_to, queue_id, (SELECT array_agg(v.v) FROM get_visible_agent_ids(auth.uid()) v(v)), (SELECT get_profile_id_for_user(auth.uid())), (SELECT is_admin_or_supervisor(auth.uid())) ) );
+ALTER POLICY "Users can update their calls" ON public.calls WITH CHECK ( agent_id IN ( SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid() ) );
+ALTER POLICY "Users can update their own templates" ON public.message_templates WITH CHECK (user_id = auth.uid());
+ALTER POLICY "Users can update own payment links" ON public.payment_links WITH CHECK ( ( created_by IN ( SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid() ) ) OR is_admin_or_supervisor(auth.uid()) );
+ALTER POLICY "Users can update assigned deals" ON public.sales_deals WITH CHECK ( ( assigned_to IN ( SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid() ) ) OR is_admin_or_supervisor(auth.uid()) );
+ALTER POLICY "Users can update own campaigns" ON public.talkx_campaigns WITH CHECK ( ( created_by = ( SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid() LIMIT 1 ) ) AND is_admin_or_supervisor(auth.uid()) );
+ALTER POLICY "Users can update recipients of own campaigns" ON public.talkx_recipients WITH CHECK ( EXISTS ( SELECT 1 FROM talkx_campaigns tc WHERE tc.id = talkx_recipients.campaign_id AND tc.created_by = ( SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid() LIMIT 1 ) ) );
+ALTER POLICY "talkx_templates_update" ON public.talkx_templates WITH CHECK ( ( created_by = ( SELECT p.id FROM profiles p WHERE p.user_id = auth.uid() LIMIT 1 ) ) OR is_admin_or_supervisor(auth.uid()) );
