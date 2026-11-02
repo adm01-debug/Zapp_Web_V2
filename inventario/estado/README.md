@@ -40,7 +40,9 @@ regere o arquivo (comandos abaixo) em vez de corrigir à mão.
   também não (`execucoes_24h`, `taxa_falha_7d_pct`, `horas_paradas_7d`, `cron.historico.linhas/bytes`,
   `mensagens_7d`, `ultimo_health_check`/`atualizada_em`): esses números rolam toda semana só pela
   janela de 7 dias, sem mudança real, e abrir PR por isso era ruído. Quem quiser o valor fresco desses
-  campos regenera à mão (comandos acima) — o commitado pode estar até uma semana atrasado neles.
+  campos regenera à mão (comandos acima). Como só esses campos mudarem nunca abre PR sozinho, o
+  commitado pode ficar atrasado por tempo indefinido neles — semanas a fio sem nenhuma mudança
+  estrutural não atualizam nada; confie neles só depois de regenerar.
 - Nada de segredo sai do banco: de `cron.job` só o nome das funções chamadas (nunca o comando, que pode
   ter URL/cabeçalho); de `whatsapp_connections`, nem telefone, QR ou token. O teste
   `scripts/ci/inventario-banco.unit.mjs` barra escrita e esses campos no SQL, e o script se recusa a gravar
