@@ -74,7 +74,7 @@ const mockCampaign: TalkXCampaign = {
   total_recipients: 100,
   schedule_timezone: 'America/Sao_Paulo',
   owner: null,
-  objective: null,
+  objective: undefined,
   segment_ids: [],
   description: null,
   scheduled_at: null,
