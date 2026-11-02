@@ -42,6 +42,22 @@
 -- revisao de team-chat (20260928460000 revogou so o anon). A allowlist e POR POLICY:
 -- nova policy aberta na MESMA tabela continua reprovando.
 --
+-- Tabelas do Copilot (fases 13-15, 20261031100000_copilot_fases13_15_tabelas.sql):
+-- Telemetria e configuracoes do copilot de vendas. Qualquer agente autenticado pode
+-- registrar outcomes, pedidos de ajuda, momentos de aprendizado, etc. Fase inicial
+-- deliberadamente aberta (sem restricao por user_id) para facilitar adocao e coleta
+-- de dados. A decisao de restringir por dono sera revisada quando o modulo estiver
+-- em producao estavel.
+--   copilot_conversation_scores: copilot_conversation_scores_insert
+--   copilot_conversation_scores: copilot_conversation_scores_update
+--   copilot_help_requests: copilot_help_requests_insert
+--   copilot_learning_moments: copilot_learning_moments_insert
+--   copilot_objection_catalog: copilot_objection_catalog_insert
+--   copilot_outcomes: copilot_outcomes_insert
+--   copilot_seller_settings: copilot_seller_settings_insert
+--   copilot_seller_settings: copilot_seller_settings_update
+--   copilot_usage: copilot_usage_insert
+--
 -- Uso (banco vivo, no db-live-guard):
 --   node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
 --     -f scripts/db-audit/check-live-invariants.sql
@@ -61,7 +77,17 @@ DECLARE
   -- Allowlist documentada do invariante (5): "<tabela>: <policy>", sem schema.
   v_allowlist_escrita constant text[] := ARRAY[
     'department_invites: dept_invites_insert_authenticated',
-    'department_invites: dept_invites_delete_authenticated'
+    'department_invites: dept_invites_delete_authenticated',
+    -- Copilot fases 13-15 (20261031100000): telemetria aberta por design inicial
+    'copilot_conversation_scores: copilot_conversation_scores_insert',
+    'copilot_conversation_scores: copilot_conversation_scores_update',
+    'copilot_help_requests: copilot_help_requests_insert',
+    'copilot_learning_moments: copilot_learning_moments_insert',
+    'copilot_objection_catalog: copilot_objection_catalog_insert',
+    'copilot_outcomes: copilot_outcomes_insert',
+    'copilot_seller_settings: copilot_seller_settings_insert',
+    'copilot_seller_settings: copilot_seller_settings_update',
+    'copilot_usage: copilot_usage_insert'
   ];
 
   v_tabelas integer;

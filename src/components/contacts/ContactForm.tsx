@@ -155,7 +155,9 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
   // #263/R2-AUTH-039: o endereço que está no formulário AGORA. Comparado com o endereço consultado
   // quando a resposta chega — o ref acompanha o estado mais recente, sem closure velha.
   const enderecoVigenteRef = useRef(assinaturaEndereco(values));
-  enderecoVigenteRef.current = assinaturaEndereco(values);
+  useEffect(() => {
+    enderecoVigenteRef.current = assinaturaEndereco(values);
+  });
   const recalcularCoordenada = async () => {
     const alvo = [
       values.address,
