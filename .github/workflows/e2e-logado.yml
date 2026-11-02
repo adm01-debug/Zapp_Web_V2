@@ -55,7 +55,12 @@ jobs:
   e2e-logado:
     name: 🎭 E2E logado (Playwright)
     runs-on: ubuntu-24.04
-    if: (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || github.event_name == 'workflow_dispatch'
+    if: >-
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository) ||
+      github.event_name == 'workflow_dispatch'
     # Relogio por grupo (valor na matriz). O grupo authenticated era cortado aos 15 min
     # em TODOS os commits da main (ex.: 3b5f8a9, 20:07:15 -> 20:22:32 UTC) antes do
     # fim: o Playwright morria antes de imprimir quais testes
@@ -114,6 +119,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Para workflow_run, fixa o SHA exato que o CI aprovou; dispatch usa HEAD da main.
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
 
       - name: 🥖 Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
