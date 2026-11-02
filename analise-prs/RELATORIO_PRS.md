@@ -50,7 +50,6 @@ Todas mergearão automaticamente quando os required checks passarem (3 obrigató
 | #2542 | `c61cbe617f4d06b0f29cb41ddb8f4a1c03082327` | fix: N-008 DB Guard — dirty após main avançar; mergeable_state=dirty |
 | #2526 | `f3cccccae8189a91743b37a05723a833565023cc` | fix(ci): deno check --config + E2E webkit — dirty após main avançar; mergeable_state=dirty |
 | #2533 | `2388e1ac52b22578880c3a5d6d408a4436ac16f0` | chore: migration reconciliation 20261030145126 — dirty após main avançar; mergeable_state=dirty |
-| #2566 | `f12084606dcdd9d9d8c71605ab0235e9126431ee` | fix(ci) GR-027+GR-029 (mocks supabase + e2e-logado workflow_run); dirty — precisa resolver conflito; auto_merge=SQUASH |
 
 ---
 
@@ -86,10 +85,10 @@ Todas mergearão automaticamente quando os required checks passarem (3 obrigató
 
 ---
 
-## 📋 FECHADAS SEM MERGE (65 PRs)
+## 📋 FECHADAS SEM MERGE (66 PRs)
 
-Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Adicionalmente #2559 e #2564 fechadas em 2026-11-02. Números:
-`#1930 #1997 #2051 #2078 #2091 #2095 #2097 #2107 #2111 #2113 #2137 #2146 #2186 #2206 #2233 #2238 #2245 #2249 #2265 #2277 #2279 #2417 #2418 #2426 #2428 #2431 #2445 #2457 #2460 #2461 #2462 #2463 #2465 #2466 #2468 #2469 #2471 #2472 #2473 #2475 #2476 #2478 #2479 #2480 #2483 #2484 #2485 #2486 #2487 #2489 #2491 #2492 #2493 #2495 #2497 #2499 #2500 #2501 #2502 #2503 #2504 #2505 #2552 #2559 #2564`
+Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Adicionalmente #2559 e #2564 fechadas em 2026-11-02; #2566 fechada em 2026-11-02T03:38:56Z (estava dirty). Números:
+`#1930 #1997 #2051 #2078 #2091 #2095 #2097 #2107 #2111 #2113 #2137 #2146 #2186 #2206 #2233 #2238 #2245 #2249 #2265 #2277 #2279 #2417 #2418 #2426 #2428 #2431 #2445 #2457 #2460 #2461 #2462 #2463 #2465 #2466 #2468 #2469 #2471 #2472 #2473 #2475 #2476 #2478 #2479 #2480 #2483 #2484 #2485 #2486 #2487 #2489 #2491 #2492 #2493 #2495 #2497 #2499 #2500 #2501 #2502 #2503 #2504 #2505 #2552 #2559 #2564 #2566`
 
 ---
 
@@ -100,14 +99,14 @@ Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Adicional
 | MERGEADA | 6 |
 | AGUARDANDO_CI | 6 |
 | AGUARDANDO_CI_APOS_UPDATE | 1 |
-| BLOQUEADO_CONFLITO | 5 |
+| BLOQUEADO_CONFLITO | 4 |
 | DRAFT_SKIP | 5 |
 | BLOQUEADO_AGUARDANDO_APROVACAO | 2 |
 | BLOQUEADO_DDL_WORKFLOW | 1 |
 | BLOQUEADO_RLS_SEM_TESTE | 1 |
 | BLOQUEADO_FEATURE_FREEZE | 1 |
 | BLOQUEADO_DECISAO_HUMANA | 1 |
-| FECHADA_SEM_MERGE | 65 |
+| FECHADA_SEM_MERGE | 66 |
 | **TOTAL** | **94** |
 
 ---
