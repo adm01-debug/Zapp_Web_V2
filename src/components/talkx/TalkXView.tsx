@@ -1,7 +1,7 @@
 import { toast } from 'sonner';
 import React, { useEffect, useState, useMemo, useCallback, useRef, Suspense } from 'react';
 import {
-  Zap, Plus, FileText, ShieldBan, BarChart3, ArrowLeft,
+  Zap, Plus, FileText, ShieldBan, BarChart3,
   LayoutDashboard, HelpCircle,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -478,13 +478,9 @@ export default function TalkXView() {
     const monitorCampaign = campaigns.find((candidate) => candidate.id === monitorId);
     return (
       <div className="min-h-full w-full min-w-0 bg-background">
-        {/* X053: a trilha substitui o botão solto do Monitor; o voltar continua
-            com o rótulo e as classes que já entraram (h-9, hover:bg-muted/50). */}
+        {/* X053: trilha clicável — o item "Campanhas" (índice 1) navega de volta à lista. */}
         <div className="flex items-center gap-3 mb-4 flex-wrap">
-          <ModuleBreadcrumb items={['Talk X', 'Campanhas', monitorCampaign?.name ?? 'Monitor']} />
-          <button type="button" onClick={backToList} className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bg-muted/50 shrink-0 ml-auto">
-            <ArrowLeft className="w-4 h-4" />Voltar à campanhas
-          </button>
+          <ModuleBreadcrumb items={['Talk X', 'Campanhas', monitorCampaign?.name ?? 'Monitor']} onItemClick={(i) => { if (i === 1) backToList(); }} />
         </div>
         <Suspense fallback={<TalkXScreenFallback />}>
           <SectionErrorBoundary sectionName="Monitor ao vivo">
