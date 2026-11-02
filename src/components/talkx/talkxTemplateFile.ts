@@ -139,7 +139,7 @@ export function parseTemplateFile(
       const row: TemplateImportRow = { name: '', content: '' };
       headerCells.forEach((key, j) => {
         if (key in row || CSV_HEADERS.includes(key)) {
-          (row as Record<string, string>)[key as string] = cells[j] ?? '';
+          (row as unknown as Record<string, string>)[key as string] = cells[j] ?? '';
         }
       });
       rawRows.push(row);
@@ -191,7 +191,7 @@ export function serializeTemplatesToCsv(
   const body = templates
     .map((t) =>
       CSV_HEADERS.map((k) => {
-        const val = (t as Record<string, unknown>)[k];
+        const val = (t as unknown as Record<string, unknown>)[k];
         if (val === null || val === undefined) return '';
         return escapeCell(String(val));
       }).join(SEP),
