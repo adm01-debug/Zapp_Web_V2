@@ -32,11 +32,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   // E81: deslogado nao repete (ver RETRIES_LOGADOS no topo do arquivo).
   retries: 0,
-  // W75: 1 worker no CI (estabilidade), 2 localmente (velocidade).
-  // The Email fixture boots a full Vite app and captures visual artifacts. A
-  // bounded local pool prevents cold-start starvation that made otherwise
-  // independent specs observe the module-loading fallback after five seconds.
-  workers: process.env.CI ? 1 : 2,
+  // W75/GR-016: 2 workers sempre. O Email fixture sobe um Vite completo e captura
+  // artefatos visuais; com 1 worker no CI, specs independentes esperavam em fila
+  // e ultrapassavam o timeout (cold-start starvation). Pool de 2 é suficiente.
+  workers: 2,
   reporter: 'html',
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173',
@@ -347,8 +346,8 @@ export default defineConfig({
     },
   ],
   webServer: (() => {
-    // A porta vem do proprio ambiente quando PLAYWRIGHT_BASE_URL e' definida.
-    // Sem isso, a suite e' fixa em 5173 e, com `reuseExistingServer` fora do CI,
+    // A porta vem do próprio ambiente quando PLAYWRIGHT_BASE_URL é definida.
+    // Sem isso, a suite é fixa em 5173 e, com `reuseExistingServer` fora do CI,
     // ela ADOTA o dev server que estiver la -- inclusive o de outro chat, o que
     // fazia o e2e de um workspace exercitar o codigo de outro (medido 02/10).
     const alvo = process.env.PLAYWRIGHT_BASE_URL;
