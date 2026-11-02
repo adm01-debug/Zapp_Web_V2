@@ -85,7 +85,7 @@ function renderReport(canDownload: boolean) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <TalkXCampaignReport campaign={mockCampaign as TalkXCampaign} onBack={vi.fn()} />
+      <TalkXCampaignReport campaign={mockCampaign as unknown as TalkXCampaign} onBack={vi.fn()} />
     </QueryClientProvider>,
   );
 }
