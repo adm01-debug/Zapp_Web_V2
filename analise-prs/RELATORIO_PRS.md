@@ -1,141 +1,102 @@
-# Relatório de Análise — PRs Abertas adm01-debug/Zapp_Web_V2
+# RELATÓRIO DE PRs — adm01-debug/Zapp_Web_V2
 
-**Data:** 2026-11-01  
-**SHA de main ao início:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c`  
-**Total PRs abertas analisadas:** **68**  
-**PRs mergeadas por esta sessão:** **0** (todas bloqueadas por CI; auto_merge squash ativo nas elegíveis)
+**Gerado em:** 2026-11-02  
+**SHA main ao início da análise:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c`  
+**Total de PRs analisadas (histórico):** 173  
+**PRs abertas ao início desta sessão (2026-11-01):** ~96  
+**PRs abertas ao fim da análise (2026-11-02):** 19  
 
 ---
 
-## Resumo por veredito
+## Resumo executivo
 
-| Veredito | Qtd | PRs |
+| Veredito | Quantidade | PRs |
 |---|---|---|
-| **DECISAO_HUMANA** (Regra 8) | 26 | #2426 #2457 #2460 #2461 #2466 #2469 #2471 #2472 #2473 #2476 #2481 #2483 #2485 #2486 #2487 #2491 #2496 #2499 #2502 #2503 #2508 #2510 #2514 #2515 #2517 #2526 |
-| **MERGE_OK_AUTO_MERGE_PENDING** | 12 | #1930 #2462 #2463 #2464 #2467 #2475 #2478 #2480 #2484 #2532 #2535 #2536 |
-| **MERGE_OK** (auto_merge ativo em 8/9) | 9 | #2494 #2495 #2498 #2501 #2504 #2507 #2513 #2516 #2524\* |
-| **DRAFT** | 9 | #2519 #2523 #2525 #2527 #2529 #2530 #2531 #2533 #2534 |
-| **MERGEAR** (auto_merge ativo) | 5 | #2418 #2465 #2479 #2520 #2522 |
-| **MERGEAR_COM_RESSALVA** | 2 | #2417 #2431 |
-| **CONFLITO** | 2 | #2492 #2506 |
-| **AGUARDANDO_APROVACAO** | 2 | #2500 #2505 |
-| **IMPOSSIVEL_MERGE** | 1 | #2078 |
-| **TOTAL** | **68** | |
-
-\* #2524 não tem auto_merge ativo — requer merge manual quando CI passar.
-
----
-
-## ⚠️ ALERTA CRÍTICO — 14 PRs Regra 8 com auto_merge ativo
-
-As PRs abaixo têm **DECISAO_HUMANA** (Regra 8: migration, workflow, edge function) **E** `auto_merge=squash` ativo. Se o CI passar, elas **mergeiam automaticamente sem aprovação de Joaquim**:
-
-| PR | Motivo Regra 8 |
-|---|---|
-| **#2426** | Toca `.github/workflows/` |
-| **#2471** | Migration (investigação de pausas) |
-| **#2473** | Edge functions Copiloto (7 hooks AI) |
-| **#2481** | Migration RLS — WITH CHECK em 8 tabelas críticas |
-| **#2483** | Migration — `brinde_state` em copilot_sessions |
-| **#2485** | Migration RLS Copilot |
-| **#2486** | Motor RADAR Copiloto |
-| **#2487** | Migration `20261030200000` — motor Copiloto |
-| **#2491** | Migration reconciliação copilot_fases13_15 |
-| **#2499** | Toca `.github/workflows/` (E90 WhatsApp alerts) |
-| **#2503** | Toca `.github/workflows/` (E69+E71) |
-| **#2508** | Toca `.github/workflows/` (typecheck edges) |
-| **#2510** | Toca `.github/workflows/` (OpenSSF Scorecard) |
-| **#2514** | Migration + cron (CRITICAL-3 talkx-scheduler) |
-
-**Ação recomendada:** Joaquim deve desabilitar o `auto_merge` nessas 14 PRs enquanto revisa.
+| **MERGE_OK** (auto_merge ativo, aguardando CI) | 4 | #2494, #2504, #2543, #2545 |
+| **REGRA8_WORKFLOW** | 14 | #2046, #2092, #2100, #2297, #2450, #2497, #2499, #2502, #2503, #2508, #2510, #2511, #2526, #2527, #2542, #2547 |
+| **REGRA8_MIGRATION** | 15 | #2457, #2461, #2466, #2471, #2476, #2481, #2483, #2485, #2486, #2487, #2491, #2496, #2505, #2514, #2533 |
+| **REGRA8_EDGE_FUNCTION** | 5 | #2460, #2469, #2472, #2500, #2549 |
+| **DRAFT** | 8 | #2515, #2519, #2523, #2525, #2529, #2530, #2531, #2534 |
+| **DRAFT_CONFLICTING** | 17 | #2113, #2206, #2245, #2249, #2434–#2446 |
+| **DRAFT (outros)** | 3 | #2517 (REGRA8_DESTRUCTIVE_DRAFT), #2539 (DRAFT_MIGRATION_RECONCILE), #2548 (congelamento features) |
+| **BLOQUEADO_CI** | 14 | #1930, #1997, #2064, #2137, #2146, #2216, #2279, #2417–#2419, #2421, #2428, #2431, #2433 |
+| **CONFLICTING_REBASE** | 46 | (ver progresso.json) |
+| **DECISAO_HUMANA_CRITICA** | 1 | #2265 |
+| **NOOP** | 3 | #2075, #2086, #2232 |
+| **MERGEADAS esta sessão** | 12 | #2071, #2222, #2286, #2384, #2397, #2416, #2420, #2423, #2424, #2425, #2427, #2430 |
+| **MERGEADAS por auto_merge** | 2 | #2489, #2493 |
+| **MERGEADAS (sessões anteriores)** | 6 | #2034, #2042, #2044, #2340, #2451, #2452 |
+| **MERGEADAS (outras sessões)** | 3 | #2482, #2509 + outras |
+| **FECHADAS sem merge** | 35+ | (feature freeze, supersedidas, outras sessões) |
 
 ---
 
-## PRs prontas para merge (auto_merge aguardando CI)
+## PRs abertas em 2026-11-02 (19 total)
 
-As 12 + 8 = **20 PRs** abaixo têm `auto_merge=squash` ativo e base em `main`. Mergearão automaticamente quando os 3 required checks passarem (`🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate`):
+### MERGE_OK — auto_merge=SQUASH ativo (4 PRs)
 
-**MERGE_OK_AUTO_MERGE_PENDING (12):**  
-`#1930` `#2462` `#2463` `#2464` `#2467` `#2475` `#2478` `#2480` `#2484` `#2532` `#2535` `#2536`
+| PR | Título | Branch | Estado |
+|---|---|---|---|
+| #2494 | fix: unit tests logger mock | `claude/fix-...` | auto_merge=SQUASH, CI queued |
+| #2504 | fix: unit tests pinia | `claude/fix-...` | auto_merge=SQUASH, CI queued |
+| #2543 | fix: E2E alto-contraste + N-008 healthcheck | `claude/fix-e2e-a11y-contrast-db-guard-n008-011126-2310` | auto_merge=SQUASH, CI queued |
+| #2545 | chore: congela features + 9 fluxos críticos | `claude/chore-congelamento-features-261101-2035` | auto_merge=SQUASH, CI queued |
 
-**MERGE_OK com auto_merge (8):**  
-`#2494` `#2495` `#2498` `#2501` `#2504` `#2507` `#2513` `#2516`
+**Status CI (2026-11-02T00:00Z):** GitHub Actions runners queued desde 2026-11-01T22:27Z. Auto_merge dispara automaticamente quando CI verde.
 
-**MERGEAR com auto_merge (5):**  
-`#2418` `#2465` `#2479` `#2520` `#2522`
+### REGRA8 — Decisão humana obrigatória
 
-**Total esperando CI para auto-mergear: 25 PRs**
-
----
-
-## PRs que requerem ação manual
-
-| PR | Status | Motivo |
+| PR | Título | Motivo REGRA8 |
 |---|---|---|
-| #2524 | MERGE_OK | Sem auto_merge — merge manual quando CI passar |
-| #2417 | MERGEAR_COM_RESSALVA | auto_merge ativo, caveats documentados no dossier |
-| #2431 | MERGEAR_COM_RESSALVA | Sem auto_merge, caveats no dossier |
-| #2492 | CONFLITO | dirty — rebase necessário |
-| #2506 | CONFLITO | dirty — rebase necessário |
-| #2500 | AGUARDANDO_APROVACAO | Revisão pendente |
-| #2505 | AGUARDANDO_APROVACAO | Revisão pendente — migration HIGH-3 (57 índices FK) |
-| #2078 | IMPOSSIVEL_MERGE | rebaseable=false, behind |
+| #2527 | fix: auto-update branch target | REGRA8_WORKFLOW — `auto-update-pr-branch.yml` |
+| #2542 | fix: N-008 DB Guard N008_POSTGRES_IMAGE | REGRA8_WORKFLOW — `db-guard.yml` |
+| #2547 | infra: E2E logado timeout 45 min | REGRA8_WORKFLOW — `e2e-logado.yml` |
+| #2549 | fix: reconexão automática WhatsApp via health check | REGRA8_EDGE_FUNCTION — deno test NÃO verificado |
 
----
+> **Nota crítica #2549:** Implementa reconexão automática do WhatsApp (fluxos 2, 3, 4 quebrados desde 07/10). Bloqueada porque `deno test`/`deno check` não pôde ser executado (deno indisponível no ambiente do autor). O job `🦕 Edge contracts` NÃO é required check — auto_merge passaria mesmo se Edge contracts falhasse.
 
-## PRs DECISAO_HUMANA — detalhes
-
-Requerem revisão de Joaquim antes de mergear (Regra 8):
+### DRAFT — Não mergear
 
 | PR | Título | Motivo |
 |---|---|---|
-| #2426 | fix(ci): corrigir timeout branch-hygiene-audit | Workflow |
-| #2457 | feat(db): investigação incidentes de pausa | Migration |
-| #2460 | feat: 7 edge functions copiloto RADAR (CV-071–CV-...) | Edge functions + workflow |
-| #2461 | feat(db): 7 tabelas copiloto fases 13-15 | Migration |
-| #2466 | feat(message-delivery): carimbo POST iniciado (PD-79) | Migration + edge function |
-| #2469 | feat: completa pausa de instância (C121) | Edge function crítica |
-| #2471 | infra: investigação pausas — migration IP2-A | Migration |
-| #2472 | feat: pausa instância segura a entrega mensagens | Edge functions |
-| #2473 | feat: 7 hooks Copiloto → edge functions AI | Edge functions |
-| #2476 | feat: cron Multiplix retoma dispatch pausado | Migration cron |
-| #2481 | fix(rls): WITH CHECK explícito em 8 policies UPDATE | Migration RLS |
-| #2483 | fix: brinde_state em copilot_sessions | Migration |
-| #2485 | fix: RLS copilot INSERT learning_moments + scores | Migration RLS |
-| #2486 | feat: motor e telas RADAR Copiloto | Migration + edge functions |
-| #2487 | feat: migration motor Copiloto RADAR | Migration |
-| #2491 | fix: reconciliar migration copilot_fases13_15 | Migration |
-| #2496 | feat(message-delivery): dup do #2466 | Migration + edge function |
-| #2499 | feat(ci): notificação WhatsApp falha crítica | Workflow |
-| #2502 | docs: atualiza perímetro GitHub (DRAFT) | Workflow + DRAFT |
-| #2503 | fix(ci): parallelizar build/typecheck (E69+E71) | Workflow |
-| #2508 | fix(ci): typecheck edges — @types/node | Workflow |
-| #2510 | ci(W85/W86/W87): OpenSSF Scorecard + dep-review | Workflow |
-| #2514 | fix: CRITICAL-3 — talkx-scheduler 9,3% timeout | Migration + cron **(prioridade alta)** |
-| #2515 | fix: pre-aquecer cache Deno (DRAFT) | DRAFT + CI |
-| #2517 | feat(talkx): catálogo supressão RLS+FK (DRAFT) | DRAFT + migration |
-| #2526 | fix(ci): deno check --config + waitForAppliedTheme | Workflow |
+| #2539 | fix: reconcilia migrations 20261026 | DRAFT + toca ci.yml + DROP migration |
+| #2548 | feat: TalkX X048 estados WA/CRM | DRAFT + feature freeze |
 
 ---
 
-## Arquivos de saída
+## Fluxos críticos de produção (docs/PRONTO_PRODUCAO.md)
 
-| Arquivo | Caminho |
+| Fluxo | Estado em 2026-11-02 |
 |---|---|
-| Dossiers individuais | `analise-prs/dossies/PR-<n>.md` (76 arquivos, 68 para PRs abertas) |
-| Dados JSON | `analise-prs/prs.json` (68 registros) |
-| Dados CSV | `analise-prs/prs.csv` (68 registros) |
-| Este relatório | `analise-prs/RELATORIO_PRS.md` |
-| Relatório ampliado | `analise-prs/RELATORIO_FINAL.md` |
-| Regras de negócio | `analise-prs/regras-de-negocio.md` |
-| Baseline | `analise-prs/baseline/` |
+| 1. Login e autenticação | ✅ Funcionando |
+| 2. Receber mensagem WhatsApp | ❌ QUEBRADO (disconnected desde 07/10) |
+| 3. Responder mensagem | ❌ QUEBRADO |
+| 4. Reconexão automática WhatsApp | ❌ QUEBRADO — fix na PR #2549 (REGRA8_EDGE_FUNCTION) |
+| 5–9 | Estado não verificado nesta sessão |
 
 ---
 
-## META CUMPRIDA
+## Merges realizados nesta sessão (2026-11-01 a 2026-11-02)
 
-- **Total PRs abertas = Total analisadas:** 68 = 68 ✓
-- **PRs mergeadas por esta sessão:** 0 (todas bloqueadas por CI; `auto_merge` ativo nas elegíveis)
-- **Nenhuma outra escrita no GitHub** além de push para branch de análise ✓
-- **Worktrees:** nenhum worktree criado nesta sessão ✓
-- **Branch:** `claude_05/awesome-ramanujan-ufxolu` (PR #2523, DRAFT)
+12 PRs mergeadas via squash (auto_merge): #2071, #2222, #2286, #2384, #2397, #2416, #2420, #2423, #2424, #2425, #2427, #2430.
+
+SHAs exatos disponíveis no histórico de commits do repositório pós-merge.
+
+---
+
+## Ações de segurança realizadas
+
+1. **auto_merge desativado** em #2481, #2508, #2527, #2533, #2549 — eram REGRA8 com auto_merge indevidamente ativo
+2. **Worktrees:** nenhum worktree adicional (`git worktree list` = apenas main)
+3. **Nenhum push direto em main** — toda escrita via merge squash pelo GitHub
+
+---
+
+## Arquivos de análise
+
+- `analise-prs/RELATORIO_PRS.md` — este arquivo
+- `analise-prs/progresso.json` — estado detalhado de todos os 173+ verdicts
+- `analise-prs/regras-de-negocio.md` — regras aplicadas na análise
+- `analise-prs/baseline/main-1252bb5a-ci-state.md` — estado do CI no SHA inicial
+- `analise-prs/baseline/unit-tests-failing.txt` — 136 testes falhando (causa raiz: mock logger removido)
+- `analise-prs/dossies/PR-<n>.md` — dossiê individual por PR (265 arquivos)
