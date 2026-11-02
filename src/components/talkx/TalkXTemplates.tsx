@@ -480,7 +480,9 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
           <div className="space-y-2">
             <RailAction icon={Plus} title="Criar template" subtitle="Do zero" onClick={openNew} />
             <RailAction icon={Copy} color="violet" title="Duplicar template" subtitle="Baseado em um existente" onClick={() => selected ? duplicateTemplate.mutate(selected) : openNew()} />
-
+            {canDownload && (
+              <RailAction icon={Upload} color="blue" title="Importar templates" subtitle="CSV ou JSON" onClick={() => setShowImport(true)} />
+            )}
           </div>
         </RailCard>
       </div>
