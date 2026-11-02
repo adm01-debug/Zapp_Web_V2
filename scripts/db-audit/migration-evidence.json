@@ -861,6 +861,198 @@
       "justification": "O arquivo no repo difere do SQL aplicado em producao para o guard de mutabilidade de campanhas TalkX (fail-closed). Migration imutavel; arquivo fixado por hash proprio. Hashes medidos em 02/11/2026."
     },
     {
+      "version": "20261015230338",
+      "filename": "20261015230338_voice_command_logs_lgpd.sql",
+      "file_sha256": "b2a32772edbd2c008dc91e22987f76c715fac6a391c04b8c6d249c0f2f8a08d9",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "voice_command_logs_lgpd",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261015232316",
+      "filename": "20261015232316_rpc_queue_goal_metrics.sql",
+      "file_sha256": "0bc3bc4b7fdb4c5e5b28284658e883e683407bc19d7be40d0d48dcb2c2ad4110",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "rpc_queue_goal_metrics",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261015232546",
+      "filename": "20261015232546_profiles_self_update_sensitive_columns.sql",
+      "file_sha256": "7a66fd2f60c477d33741d73accf35b5f1fa91df9589b3d2cda5cb4b55b0d76d8",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "profiles_self_update_sensitive_columns",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016001136",
+      "filename": "20261016001136_audio_memes_bucket_limits_admin_delete.sql",
+      "file_sha256": "efdb0da84f1c016d6073fca73915f218ee8888d24ec2c2e017b912d3cf14f0fd",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "audio_memes_bucket_limits_admin_delete",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016002012",
+      "filename": "20261016002012_my_network_status.sql",
+      "file_sha256": "a04dba878b2f632f5136324123084fdf99d5d213aa0bc27f8142c5c91357ef36",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "my_network_status",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016005650",
+      "filename": "20261016005650_admin_unlock_login.sql",
+      "file_sha256": "7b18fd29bc96e718ec5cc230fac80b255bd5042e666d7615d88a27ddecc24dc2",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "admin_unlock_login",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016005752",
+      "filename": "20261016005752_passkey_credentials_hardening.sql",
+      "file_sha256": "f5c13639c3d877cb9404411c4ce3f25fbb12fab3463d98bbe54139613f469ad6",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "passkey_credentials_hardening",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016010011",
+      "filename": "20261016010011_set_conversation_status_waiting_para_archived.sql",
+      "file_sha256": "f4a96f130a0b38b8a760bdd12e3842b83a13b1e997c6a31ec7d88546213e4183",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "set_conversation_status_waiting_para_archived",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016010744",
+      "filename": "20261016010744_consent_status_guard.sql",
+      "file_sha256": "34798a3398dd57bbc874a56da0c2cc845629419e2575da9b34076702edeae225",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "consent_status_guard",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016011302",
+      "filename": "20261016011302_crm_sync_outbox_cron.sql",
+      "file_sha256": "3a4a85e4ca06e79eff133c52448d1dba6274dfa1108d448b7a4cb90176113c1e",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "crm_sync_outbox_cron",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016013134",
+      "filename": "20261016013134_search_events.sql",
+      "file_sha256": "ddb6cd21d88de217fd04033421af7735505df120f87e7facb5314ead94ed128a",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "search_events",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016013528",
+      "filename": "20261016013528_scheduled_messages_state_machine.sql",
+      "file_sha256": "74e97ae571e4e40790863aa1126ae59afc4b8baf21a4de5bdd20a0fa19df1d71",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "scheduled_messages_state_machine",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016015438",
+      "filename": "20261016015438_whisper_mark_read_policy.sql",
+      "file_sha256": "42e06763c210227cbce9284156a7ddc3d82ec974acaea6bf5fec4b59fafc0559",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "whisper_mark_read_policy",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016023444",
+      "filename": "20261016023444_inbox_wait_summary.sql",
+      "file_sha256": "e7eb605e410708d5c796926ba55d704b40f40bed0936206b480810ca4abe36e0",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "inbox_wait_summary",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016030109",
+      "filename": "20261016030109_tasks_contact_visibility.sql",
+      "file_sha256": "94b91679c39142deeecfa8437083c34113f246c9c2e2b10ad073e87471db24fe",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "tasks_contact_visibility",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016030211",
+      "filename": "20261016030211_messages_transcribed_at.sql",
+      "file_sha256": "aecab9469fd6ba6888ccd9c7ab162cf2e19a37994dbe968d39069b6636186419",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "messages_transcribed_at",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016033451",
+      "filename": "20261016033451_purge_gmail_account_data.sql",
+      "file_sha256": "b5c51b5132e01fa79d7d9a04d4cd028e5fa02327c7a481d830b59bcd2a19d4c2",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "purge_gmail_account_data",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016050617",
+      "filename": "20261016050617_messages_trgm_busca.sql",
+      "file_sha256": "1703e664e22a69ce1ef51fff65b0ba22bf649e4cb73eb3c188cbae5861494f1b",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "messages_trgm_busca",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016102054",
+      "filename": "20261016102054_team_chat_files_limit.sql",
+      "file_sha256": "b6ff41aebb819cabffab50e3baf0eeddcde902ba63fd007461b8ba2e4c4a5378",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "team_chat_files_limit",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016102337",
+      "filename": "20261016102337_get_team_birthdays.sql",
+      "file_sha256": "5df1f0495d872fecee7641e9c3979b19b06194e87c2d6afc3b0d20b7530b8485",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "get_team_birthdays",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016102541",
+      "filename": "20261016102541_delivery_stats_rpc.sql",
+      "file_sha256": "fb87e780df18e4d4b5de378523b513f73733434098f4145726ef0cc1c73b2c54",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "delivery_stats_rpc",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016105108",
+      "filename": "20261016105108_n011_storage_drop_duplicate_avatar_policies.sql",
+      "file_sha256": "d990bcbd7645fd8bca65eb7dd0197be2332e95a19c8220f8daf8039f8e3184d3",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "n011_storage_drop_duplicate_avatar_policies",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016112802",
+      "filename": "20261016112802_whisper_audio_path.sql",
+      "file_sha256": "57e7e0205cfad8d9836dcb8a2503013d37d6655381dc17293357cf0946325673",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "whisper_audio_path",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
+      "version": "20261016115413",
+      "filename": "20261016115413_realtime_publication_agent_achievements.sql",
+      "file_sha256": "26735d3f1222f8e67b1a55a42edf18c1ef17616f5edf7931ab3fe5c1d9de5904",
+      "kind": "ledger-only/name-and-file-pinned",
+      "ledger_name": "realtime_publication_agent_achievements",
+      "justification": "O ledger registrou esta migration com statements=['applied'] (prosa pura, sem SQL executavel). A migration foi aplicada em producao na data registrada na version; o arquivo no repo contem o SQL completo que foi executado. Excecao name-and-file-pinned fixada em 02/11/2026 apos auditoria dos 28 drifts do db-live-guard (run #41400432274)."
+    },
+    {
       "version": "20261016120000",
       "filename": "20261016120000_security_fixes_passkey_purge_gmail_search_events.sql",
       "file_sha256": "00fe9a89d69b868ae08c5b047536c30eaa998c607dfba2d7cad00767c00ae6ca",
