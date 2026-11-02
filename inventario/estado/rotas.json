@@ -203,6 +203,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -293,6 +294,7 @@
         "avatars"
       ],
       "edges": [
+        "auth-login",
         "create-user",
         "crm-integration",
         "detect-new-device",
@@ -398,6 +400,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "evolution-api",
         "invite-user",
@@ -412,6 +415,7 @@
         "user_has_permission"
       ],
       "tabelas": [
+        "agent_presence",
         "contacts",
         "messages",
         "permissions",
@@ -537,6 +541,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -642,6 +647,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery",
         "promogifts-catalog"
@@ -826,6 +832,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "connection-health-check",
         "detect-new-device",
         "evolution-api",
@@ -1026,6 +1033,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "crm-integration",
         "detect-new-device",
         "external-db-proxy",
@@ -1146,6 +1154,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "crm-integration",
         "detect-new-device",
         "external-db-proxy",
@@ -1376,6 +1385,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -1395,6 +1405,7 @@
       ],
       "tabelas": [
         "agent_achievements",
+        "agent_presence",
         "agent_stats",
         "ai_providers",
         "audit_logs",
@@ -1563,6 +1574,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "crm-integration",
         "detect-new-device",
         "message-delivery"
@@ -1671,6 +1683,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "connection-health-check",
         "detect-new-device",
         "evolution-api",
@@ -1750,6 +1763,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -2510,6 +2524,7 @@
         "ai-proxy",
         "ai-suggest-reply",
         "ai-transcribe-audio",
+        "auth-login",
         "batch-fetch-avatars",
         "classify-audio-meme",
         "classify-emoji",
@@ -2517,12 +2532,16 @@
         "crm-integration",
         "detect-new-device",
         "elevenlabs-scribe-token",
+        "elevenlabs-sts",
+        "elevenlabs-tts",
+        "elevenlabs-tts-stream",
         "evolution-api",
         "external-db-proxy",
         "get-mapbox-token",
         "message-delivery",
         "promogifts-catalog",
-        "sentiment-alert"
+        "sentiment-alert",
+        "voice-changer"
       ],
       "rpcs": [
         "app_bootstrap",
@@ -2555,6 +2574,7 @@
         "user_has_permission"
       ],
       "tabelas": [
+        "agent_presence",
         "ai_conversation_tags",
         "audio_memes",
         "calls",
@@ -2678,6 +2698,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "bitrix-api",
         "detect-new-device",
         "message-delivery"
@@ -2734,7 +2755,9 @@
           "arquivo": "src/contexts/LayoutContext.tsx"
         }
       ],
-      "buckets": [],
+      "buckets": [
+        "whatsapp-media"
+      ],
       "edges": [
         "ai-kb-ingest"
       ],
@@ -3179,6 +3202,7 @@
       ],
       "edges": [
         "ai-conversation-analysis",
+        "auth-login",
         "crm-integration",
         "detect-new-device",
         "evolution-api",
@@ -3202,6 +3226,7 @@
         "transfer_conversation"
       ],
       "tabelas": [
+        "agent_presence",
         "ai_conversation_tags",
         "channel_connections_safe",
         "contact_custom_fields",
@@ -3320,6 +3345,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -3380,6 +3406,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -3512,6 +3539,7 @@
       "edges": [],
       "rpcs": [],
       "tabelas": [
+        "agent_presence",
         "contacts",
         "conversation_closures",
         "messages",
@@ -3580,6 +3608,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -3589,6 +3618,7 @@
         "get_inbox_contact_summaries"
       ],
       "tabelas": [
+        "agent_presence",
         "contacts",
         "messages",
         "profiles",
@@ -3740,6 +3770,7 @@
       "buckets": [],
       "edges": [
         "approve-password-reset",
+        "auth-login",
         "detect-new-device",
         "external-db-proxy",
         "message-delivery",
@@ -3767,9 +3798,11 @@
         "password_reset_requests_safe",
         "profiles",
         "rate_limit_configs",
+        "security_acl_alerts",
         "security_alerts",
         "user_devices",
         "user_roles",
+        "user_sessions",
         "user_settings"
       ],
       "imports_quebrados": []
@@ -3973,10 +4006,13 @@
       ],
       "edges": [
         "ai-proxy",
+        "auth-login",
         "chatbot-l1",
         "classify-audio-meme",
         "detect-new-device",
+        "elevenlabs-dialogue",
         "elevenlabs-sfx",
+        "elevenlabs-voice-design",
         "evolution-api",
         "message-delivery"
       ],
@@ -4157,6 +4193,7 @@
       "buckets": [],
       "edges": [
         "ai-proxy",
+        "auth-login",
         "detect-new-device",
         "evolution-api",
         "message-delivery"
@@ -4170,6 +4207,7 @@
         "user_has_permission"
       ],
       "tabelas": [
+        "agent_presence",
         "contacts",
         "conversation_sla",
         "messages",
@@ -4374,12 +4412,16 @@
           "arquivo": "src/hooks/crm/useTeamProfiles.ts"
         }
       ],
-      "buckets": [],
+      "buckets": [
+        "talkx-media"
+      ],
       "edges": [
+        "auth-login",
         "crm-integration",
         "detect-new-device",
         "external-db-proxy",
         "message-delivery",
+        "talkx-link",
         "talkx-send"
       ],
       "rpcs": [
@@ -4430,13 +4472,19 @@
         "messages",
         "profiles",
         "talkx_blacklist",
+        "talkx_campaign_events",
         "talkx_campaign_metrics",
+        "talkx_campaign_segments",
         "talkx_campaigns",
         "talkx_link_clicks",
+        "talkx_links",
+        "talkx_optout_keywords",
         "talkx_recipients",
+        "talkx_segments",
         "talkx_settings",
         "talkx_template_variants",
         "talkx_template_versions",
+        "talkx_templates",
         "user_settings",
         "whatsapp_connections"
       ],
@@ -4533,6 +4581,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -4778,15 +4827,20 @@
         "audio-memes",
         "audio-messages",
         "custom-emojis",
-        "stickers"
+        "stickers",
+        "team-chat-files"
       ],
       "edges": [
         "ai-enhance-message",
+        "auth-login",
         "classify-audio-meme",
         "classify-emoji",
         "classify-sticker",
         "detect-new-device",
-        "message-delivery"
+        "elevenlabs-sts",
+        "elevenlabs-tts",
+        "message-delivery",
+        "voice-changer"
       ],
       "rpcs": [
         "create_department_invite",
@@ -5055,7 +5109,9 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
+        "get-call-recording",
         "message-delivery"
       ],
       "rpcs": [
@@ -5175,6 +5231,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -5297,6 +5354,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -5310,6 +5368,7 @@
         "warroom_queue_stats"
       ],
       "tabelas": [
+        "agent_presence",
         "contacts",
         "conversation_sla",
         "messages",
