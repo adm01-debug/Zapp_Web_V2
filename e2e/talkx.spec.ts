@@ -119,6 +119,19 @@ test.describe('Talk X module', () => {
     await expect(page.getByPlaceholder('Buscar templates…')).toBeVisible();
   });
 
+  test('reload on Segments tab preserves tab state (X052)', async ({ page }) => {
+    // X052: o parâmetro ?tab= é o único dono do estado da aba. Recarregar a página
+    // deve restaurar a mesma aba sem depender de localStorage ou sessionStorage.
+    await page.goto('/?view=talkx&tab=segments');
+    await expect(page.getByPlaceholder('Buscar segmentos…')).toBeVisible();
+
+    await page.reload();
+
+    await expect(page.getByPlaceholder('Buscar segmentos…')).toBeVisible();
+    const url = new URL(page.url());
+    expect(url.searchParams.get('tab')).toBe('segments');
+  });
+
   test('wizard step 1 shows audience fields and stepper', async ({ page }) => {
     // Navigate directly via URL to the campaigns overview, bypassing sidebar clicks.
     // This exercises the deep-link routing path (?view=talkx) independently of the
