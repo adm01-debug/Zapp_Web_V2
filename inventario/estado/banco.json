@@ -1,0 +1,3775 @@
+{
+  "alertas": [
+    {
+      "detalhe": [
+        "ai-jobs-tick-1min (9% em 7d)",
+        "avatars-refresh (9.8% em 7d)",
+        "cleanup-edge-rate-limits (10% em 7d)",
+        "close-stale-calls (10.2% em 7d)",
+        "connection-health-check (9.8% em 7d)",
+        "crm-sync-outbox (9.5% em 7d)",
+        "crm-sync-outbox-cleanup (14.3% em 7d)",
+        "csat-reply-capture-tick (9.1% em 7d)",
+        "dispatch-scheduled-messages (9.1% em 7d)",
+        "expire-stale-agent-presence (9.5% em 7d)",
+        "gmail-incremental-sync (10.1% em 7d)",
+        "multiplix-send-trigger (9.2% em 7d)",
+        "reconnection-logs-retention-30d (14.3% em 7d)",
+        "search-events-retention (14.3% em 7d)",
+        "security-acl-score (9% em 7d)",
+        "talkx-scheduler-1min (8.8% em 7d)",
+        "tasks-notify-due (9.1% em 7d)",
+        "voice-changer-tmp-purge (10.8% em 7d)"
+      ],
+      "tipo": "cron_falhando"
+    },
+    {
+      "detalhe": [
+        "2026-10-28T17:00Z",
+        "2026-10-28T18:00Z",
+        "2026-10-28T19:00Z",
+        "2026-10-29T16:00Z",
+        "2026-10-29T17:00Z",
+        "2026-10-29T18:00Z",
+        "2026-10-29T19:00Z",
+        "2026-10-30T05:00Z",
+        "2026-10-30T19:00Z",
+        "2026-10-30T20:00Z",
+        "2026-10-31T04:00Z",
+        "2026-10-31T05:00Z",
+        "2026-10-31T06:00Z",
+        "2026-10-31T07:00Z",
+        "2026-10-31T08:00Z",
+        "2026-10-31T09:00Z"
+      ],
+      "tipo": "cron_parado"
+    },
+    {
+      "detalhe": [
+        "237819 linhas com mais de 7 dias"
+      ],
+      "tipo": "historico_cron_sem_limpeza"
+    },
+    {
+      "detalhe": [
+        "PRINCIPAL: disconnected"
+      ],
+      "tipo": "whatsapp_desconectado"
+    }
+  ],
+  "cron": {
+    "config": {
+      "cron.max_running_jobs": "32",
+      "cron.use_background_workers": "off",
+      "max_worker_processes": "6"
+    },
+    "historico": {
+      "bytes": 88915968,
+      "linhas": 304662,
+      "mais_antigo": "2026-08-27T03:00:00Z",
+      "mais_de_7_dias": 237819
+    },
+    "horas_paradas_7d": [
+      {
+        "execucoes": 402,
+        "falhas": 267,
+        "hora": "2026-10-28T17:00Z"
+      },
+      {
+        "execucoes": 402,
+        "falhas": 370,
+        "hora": "2026-10-28T18:00Z"
+      },
+      {
+        "execucoes": 402,
+        "falhas": 364,
+        "hora": "2026-10-28T19:00Z"
+      },
+      {
+        "execucoes": 402,
+        "falhas": 318,
+        "hora": "2026-10-29T16:00Z"
+      },
+      {
+        "execucoes": 402,
+        "falhas": 303,
+        "hora": "2026-10-29T17:00Z"
+      },
+      {
+        "execucoes": 402,
+        "falhas": 335,
+        "hora": "2026-10-29T18:00Z"
+      },
+      {
+        "execucoes": 402,
+        "falhas": 306,
+        "hora": "2026-10-29T19:00Z"
+      },
+      {
+        "execucoes": 402,
+        "falhas": 362,
+        "hora": "2026-10-30T05:00Z"
+      },
+      {
+        "execucoes": 402,
+        "falhas": 267,
+        "hora": "2026-10-30T19:00Z"
+      },
+      {
+        "execucoes": 396,
+        "falhas": 320,
+        "hora": "2026-10-30T20:00Z"
+      },
+      {
+        "execucoes": 405,
+        "falhas": 386,
+        "hora": "2026-10-31T04:00Z"
+      },
+      {
+        "execucoes": 389,
+        "falhas": 365,
+        "hora": "2026-10-31T05:00Z"
+      },
+      {
+        "execucoes": 301,
+        "falhas": 298,
+        "hora": "2026-10-31T06:00Z"
+      },
+      {
+        "execucoes": 402,
+        "falhas": 392,
+        "hora": "2026-10-31T07:00Z"
+      },
+      {
+        "execucoes": 402,
+        "falhas": 357,
+        "hora": "2026-10-31T08:00Z"
+      },
+      {
+        "execucoes": 291,
+        "falhas": 221,
+        "hora": "2026-10-31T09:00Z"
+      }
+    ],
+    "jobs": [
+      {
+        "agenda": "1-59 * * * *",
+        "ativo": true,
+        "chama": [
+          "public.trigger_ai_jobs_tick"
+        ],
+        "duracao_max_s_7d": 469,
+        "execucoes_24h": 1413,
+        "execucoes_7d": 9799,
+        "falhas_24h": 22,
+        "falhas_7d": 882,
+        "nome": "ai-jobs-tick-1min",
+        "startup_timeout_7d": 880,
+        "taxa_falha_7d_pct": 9,
+        "ultima_falha": "2026-11-02T12:44:00Z"
+      },
+      {
+        "agenda": "7 * * * *",
+        "ativo": true,
+        "chama": [
+          "net.http_post"
+        ],
+        "duracao_max_s_7d": 5,
+        "execucoes_24h": 24,
+        "execucoes_7d": 164,
+        "falhas_24h": 1,
+        "falhas_7d": 16,
+        "nome": "avatars-refresh",
+        "startup_timeout_7d": 16,
+        "taxa_falha_7d_pct": 9.8,
+        "ultima_falha": "2026-11-01T22:07:00Z"
+      },
+      {
+        "agenda": "7-52/15 * * * *",
+        "ativo": true,
+        "chama": [],
+        "duracao_max_s_7d": 5,
+        "execucoes_24h": 96,
+        "execucoes_7d": 663,
+        "falhas_24h": 2,
+        "falhas_7d": 66,
+        "nome": "cleanup-edge-rate-limits",
+        "startup_timeout_7d": 66,
+        "taxa_falha_7d_pct": 10,
+        "ultima_falha": "2026-11-02T02:52:00Z"
+      },
+      {
+        "agenda": "12 3 * * *",
+        "ativo": true,
+        "chama": [
+          "public.cleanup_link_preview_cache"
+        ],
+        "duracao_max_s_7d": 1,
+        "execucoes_24h": 1,
+        "execucoes_7d": 7,
+        "falhas_24h": 0,
+        "falhas_7d": 0,
+        "nome": "cleanup-link-preview-cache",
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
+      },
+      {
+        "agenda": "*/5 * * * *",
+        "ativo": true,
+        "chama": [
+          "public.close_stale_calls"
+        ],
+        "duracao_max_s_7d": 10,
+        "execucoes_24h": 287,
+        "execucoes_7d": 1995,
+        "falhas_24h": 6,
+        "falhas_7d": 203,
+        "nome": "close-stale-calls",
+        "startup_timeout_7d": 202,
+        "taxa_falha_7d_pct": 10.2,
+        "ultima_falha": "2026-11-02T05:05:00Z"
+      },
+      {
+        "agenda": "2-57/5 * * * *",
+        "ativo": true,
+        "chama": [
+          "net.http_post"
+        ],
+        "duracao_max_s_7d": 36,
+        "execucoes_24h": 288,
+        "execucoes_7d": 1993,
+        "falhas_24h": 5,
+        "falhas_7d": 196,
+        "nome": "connection-health-check",
+        "startup_timeout_7d": 195,
+        "taxa_falha_7d_pct": 9.8,
+        "ultima_falha": "2026-11-02T12:42:00Z"
+      },
+      {
+        "agenda": "1-59/2 * * * *",
+        "ativo": true,
+        "chama": [
+          "public.trigger_crm_sync_outbox"
+        ],
+        "duracao_max_s_7d": 40,
+        "execucoes_24h": 719,
+        "execucoes_7d": 4984,
+        "falhas_24h": 12,
+        "falhas_7d": 474,
+        "nome": "crm-sync-outbox",
+        "startup_timeout_7d": 474,
+        "taxa_falha_7d_pct": 9.5,
+        "ultima_falha": "2026-11-02T12:43:00Z"
+      },
+      {
+        "agenda": "17 4 * * *",
+        "ativo": true,
+        "chama": [
+          "public.run_crm_sync_outbox_cleanup"
+        ],
+        "duracao_max_s_7d": 0,
+        "execucoes_24h": 1,
+        "execucoes_7d": 7,
+        "falhas_24h": 0,
+        "falhas_7d": 1,
+        "nome": "crm-sync-outbox-cleanup",
+        "startup_timeout_7d": 1,
+        "taxa_falha_7d_pct": 14.3,
+        "ultima_falha": "2026-10-31T04:17:34Z"
+      },
+      {
+        "agenda": "*/2 * * * *",
+        "ativo": true,
+        "chama": [
+          "public.fn_capture_csat_replies"
+        ],
+        "duracao_max_s_7d": 36,
+        "execucoes_24h": 718,
+        "execucoes_7d": 4982,
+        "falhas_24h": 9,
+        "falhas_7d": 453,
+        "nome": "csat-reply-capture-tick",
+        "startup_timeout_7d": 452,
+        "taxa_falha_7d_pct": 9.1,
+        "ultima_falha": "2026-11-02T12:44:00Z"
+      },
+      {
+        "agenda": "* * * * *",
+        "ativo": true,
+        "chama": [
+          "public.dispatch_scheduled_messages"
+        ],
+        "duracao_max_s_7d": 53,
+        "execucoes_24h": 1437,
+        "execucoes_7d": 9965,
+        "falhas_24h": 21,
+        "falhas_7d": 902,
+        "nome": "dispatch-scheduled-messages",
+        "startup_timeout_7d": 901,
+        "taxa_falha_7d_pct": 9.1,
+        "ultima_falha": "2026-11-02T12:44:00Z"
+      },
+      {
+        "agenda": "23 3 * * *",
+        "ativo": true,
+        "chama": [
+          "public.expire_orphan_user_sessions"
+        ],
+        "duracao_max_s_7d": 0,
+        "execucoes_24h": 1,
+        "execucoes_7d": 7,
+        "falhas_24h": 0,
+        "falhas_7d": 0,
+        "nome": "expire-orphan-user-sessions",
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
+      },
+      {
+        "agenda": "1-59/2 * * * *",
+        "ativo": true,
+        "chama": [
+          "public.expire_stale_agent_presence"
+        ],
+        "duracao_max_s_7d": 470,
+        "execucoes_24h": 719,
+        "execucoes_7d": 4984,
+        "falhas_24h": 12,
+        "falhas_7d": 475,
+        "nome": "expire-stale-agent-presence",
+        "startup_timeout_7d": 474,
+        "taxa_falha_7d_pct": 9.5,
+        "ultima_falha": "2026-11-02T12:43:00Z"
+      },
+      {
+        "agenda": "0-55/5 * * * *",
+        "ativo": true,
+        "chama": [
+          "net.http_post"
+        ],
+        "duracao_max_s_7d": 10,
+        "execucoes_24h": 287,
+        "execucoes_7d": 1995,
+        "falhas_24h": 6,
+        "falhas_7d": 202,
+        "nome": "gmail-incremental-sync",
+        "startup_timeout_7d": 201,
+        "taxa_falha_7d_pct": 10.1,
+        "ultima_falha": "2026-11-02T05:05:00Z"
+      },
+      {
+        "agenda": "0-58/2 * * * *",
+        "ativo": true,
+        "chama": [
+          "public.trigger_pending_multiplix_dispatches"
+        ],
+        "duracao_max_s_7d": 37,
+        "execucoes_24h": 718,
+        "execucoes_7d": 4982,
+        "falhas_24h": 9,
+        "falhas_7d": 458,
+        "nome": "multiplix-send-trigger",
+        "startup_timeout_7d": 457,
+        "taxa_falha_7d_pct": 9.2,
+        "ultima_falha": "2026-11-02T12:44:00Z"
+      },
+      {
+        "agenda": "25 3 * * *",
+        "ativo": true,
+        "chama": [
+          "public.purge_qr_attempts"
+        ],
+        "duracao_max_s_7d": 0,
+        "execucoes_24h": 1,
+        "execucoes_7d": 7,
+        "falhas_24h": 0,
+        "falhas_7d": 0,
+        "nome": "purge-qr-attempts",
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
+      },
+      {
+        "agenda": "30 4 * * *",
+        "ativo": true,
+        "chama": [],
+        "duracao_max_s_7d": 1,
+        "execucoes_24h": 1,
+        "execucoes_7d": 7,
+        "falhas_24h": 0,
+        "falhas_7d": 1,
+        "nome": "reconnection-logs-retention-30d",
+        "startup_timeout_7d": 1,
+        "taxa_falha_7d_pct": 14.3,
+        "ultima_falha": "2026-10-31T04:31:28Z"
+      },
+      {
+        "agenda": "10 4 * * *",
+        "ativo": true,
+        "chama": [
+          "public.purge_old_search_events"
+        ],
+        "duracao_max_s_7d": 0,
+        "execucoes_24h": 1,
+        "execucoes_7d": 7,
+        "falhas_24h": 0,
+        "falhas_7d": 1,
+        "nome": "search-events-retention",
+        "startup_timeout_7d": 1,
+        "taxa_falha_7d_pct": 14.3,
+        "ultima_falha": "2026-10-31T04:10:00Z"
+      },
+      {
+        "agenda": "0 12 * * *",
+        "ativo": true,
+        "chama": [
+          "public.searchbox_budget_alert_tick"
+        ],
+        "duracao_max_s_7d": 0,
+        "execucoes_24h": 1,
+        "execucoes_7d": 7,
+        "falhas_24h": 0,
+        "falhas_7d": 0,
+        "nome": "searchbox-budget-alert",
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
+      },
+      {
+        "agenda": "23 * * * *",
+        "ativo": true,
+        "chama": [
+          "public.score_security_acl"
+        ],
+        "duracao_max_s_7d": 68,
+        "execucoes_24h": 24,
+        "execucoes_7d": 166,
+        "falhas_24h": 0,
+        "falhas_7d": 15,
+        "nome": "security-acl-score",
+        "startup_timeout_7d": 15,
+        "taxa_falha_7d_pct": 9,
+        "ultima_falha": "2026-10-31T09:24:22Z"
+      },
+      {
+        "agenda": "* * * * *",
+        "ativo": true,
+        "chama": [
+          "public.trigger_talkx_engine_tick"
+        ],
+        "duracao_max_s_7d": 467,
+        "execucoes_24h": 1437,
+        "execucoes_7d": 9965,
+        "falhas_24h": 17,
+        "falhas_7d": 881,
+        "nome": "talkx-scheduler-1min",
+        "startup_timeout_7d": 865,
+        "taxa_falha_7d_pct": 8.8,
+        "ultima_falha": "2026-11-02T12:44:00Z"
+      },
+      {
+        "agenda": "* * * * *",
+        "ativo": true,
+        "chama": [
+          "public.notify_due_tasks"
+        ],
+        "duracao_max_s_7d": 49,
+        "execucoes_24h": 1437,
+        "execucoes_7d": 9965,
+        "falhas_24h": 21,
+        "falhas_7d": 902,
+        "nome": "tasks-notify-due",
+        "startup_timeout_7d": 900,
+        "taxa_falha_7d_pct": 9.1,
+        "ultima_falha": "2026-11-02T12:44:00Z"
+      },
+      {
+        "agenda": "17 3 * * *",
+        "ativo": true,
+        "chama": [
+          "public.expire_user_sessions"
+        ],
+        "duracao_max_s_7d": 0,
+        "execucoes_24h": 1,
+        "execucoes_7d": 7,
+        "falhas_24h": 0,
+        "falhas_7d": 0,
+        "nome": "user-sessions-expire-diario",
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
+      },
+      {
+        "agenda": "42 3 * * *",
+        "ativo": true,
+        "chama": [],
+        "duracao_max_s_7d": 3,
+        "execucoes_24h": 1,
+        "execucoes_7d": 7,
+        "falhas_24h": 0,
+        "falhas_7d": 0,
+        "nome": "vacuum-contacts-daily",
+        "startup_timeout_7d": 0,
+        "taxa_falha_7d_pct": 0,
+        "ultima_falha": null
+      },
+      {
+        "agenda": "17 * * * *",
+        "ativo": true,
+        "chama": [
+          "public.purge_voice_changer_tmp"
+        ],
+        "duracao_max_s_7d": 3,
+        "execucoes_24h": 24,
+        "execucoes_7d": 166,
+        "falhas_24h": 1,
+        "falhas_7d": 18,
+        "nome": "voice-changer-tmp-purge",
+        "startup_timeout_7d": 17,
+        "taxa_falha_7d_pct": 10.8,
+        "ultima_falha": "2026-11-01T20:17:00Z"
+      }
+    ]
+  },
+  "edge_functions": {
+    "no_repo": 85,
+    "no_repo_sem_deploy": null,
+    "publicadas": null,
+    "publicadas_sem_codigo_no_repo": null
+  },
+  "fonte": "scripts/inventario/banco.sql + GET /functions + .from() em src/ e supabase/functions/ (scripts/inventario/gerar-banco.mjs)",
+  "format_version": 1,
+  "medido_em": "2026-11-02T14:08:25Z",
+  "resumo": {
+    "cron_ativos": 24,
+    "cron_jobs": 24,
+    "funcoes_public": 481,
+    "ledger_registros": 1075,
+    "ledger_versao_max": "20261102012200",
+    "max_connections": 60,
+    "policies": 521,
+    "postgres": "17.6",
+    "tabelas_public": 211,
+    "tabelas_sem_rls": 0,
+    "tamanho_bytes": 472394899,
+    "triggers_public": 161,
+    "views_public": 13
+  },
+  "tabelas": [
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 7,
+      "linhas_exatas": true,
+      "nome": "_rb_message_reactions_contato_20261007001008",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 73728,
+      "citada_no_banco": false,
+      "linhas": 354,
+      "linhas_exatas": true,
+      "nome": "_zapp_fn_before",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 4,
+      "linhas_exatas": true,
+      "nome": "_zapp_mig133_log",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 114688,
+      "citada_no_banco": true,
+      "linhas": 109,
+      "linhas_exatas": true,
+      "nome": "agent_achievements",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 5
+      }
+    },
+    {
+      "bytes": 16384,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "agent_mini_game_xp_daily",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 65536,
+      "citada_no_banco": true,
+      "linhas": 6,
+      "linhas_exatas": true,
+      "nome": "agent_presence",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "agent_skills",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 57344,
+      "citada_no_banco": true,
+      "linhas": 10,
+      "linhas_exatas": true,
+      "nome": "agent_stats",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 3,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "agent_visibility_grants",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 65536,
+      "citada_no_banco": true,
+      "linhas": 6,
+      "linhas_exatas": true,
+      "nome": "ai_budget_reservations",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 65536,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "ai_conversation_tags",
+      "policies": 5,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 245760,
+      "citada_no_banco": true,
+      "linhas": 171,
+      "linhas_exatas": true,
+      "nome": "ai_jobs",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "ai_model_prices",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 4,
+      "linhas_exatas": true,
+      "nome": "ai_providers",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 2,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 5
+      }
+    },
+    {
+      "bytes": 180224,
+      "citada_no_banco": true,
+      "linhas": 35,
+      "linhas_exatas": true,
+      "nome": "ai_usage_logs",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 4,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "ai_usage_outbox",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 5,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "allowed_countries",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 1,
+      "linhas_exatas": true,
+      "nome": "app_settings",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "audio_meme_favorites",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 237568,
+      "citada_no_banco": true,
+      "linhas": 542,
+      "linhas_exatas": true,
+      "nome": "audio_memes",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 40132608,
+      "citada_no_banco": true,
+      "linhas": 88832,
+      "linhas_exatas": true,
+      "nome": "audit_logs",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 11,
+        "src": 10
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": false,
+      "linhas": 1,
+      "linhas_exatas": true,
+      "nome": "auto_close_config",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "automations",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "away_messages",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "blocked_countries",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "blocked_ips",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "business_hours",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 155648,
+      "citada_no_banco": true,
+      "linhas": 22,
+      "linhas_exatas": true,
+      "nome": "calls",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "campaign_ab_variants",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "campaign_contacts",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "campaigns",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "catalog_favorites",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 172032,
+      "citada_no_banco": true,
+      "linhas": 200,
+      "linhas_exatas": true,
+      "nome": "catalog_rate_limit_hits",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 65536,
+      "citada_no_banco": false,
+      "linhas": 5,
+      "linhas_exatas": true,
+      "nome": "catalog_rate_limits",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 98304,
+      "citada_no_banco": true,
+      "linhas": 2,
+      "linhas_exatas": true,
+      "nome": "catalog_send_events",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "channel_connections",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "channel_routing_rules",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "chatbot_executions",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "chatbot_flows",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 8
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "client_wallet_rules",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 16384,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "connection_alert_preferences",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 622592,
+      "citada_no_banco": true,
+      "linhas": 1792,
+      "linhas_exatas": true,
+      "nome": "connection_health_logs",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 5
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "contact_block_audit",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "contact_custom_fields",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 393216,
+      "citada_no_banco": true,
+      "linhas": 1020,
+      "linhas_exatas": true,
+      "nome": "contact_deletion_audit",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "contact_identity_map",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "contact_notes",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 2,
+      "uso_no_codigo": {
+        "edges": 4,
+        "src": 11
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": true,
+      "linhas": 1,
+      "linhas_exatas": true,
+      "nome": "contact_protection_policy",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 90112,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "contact_purchases",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 3,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 5
+      }
+    },
+    {
+      "bytes": 7045120,
+      "citada_no_banco": true,
+      "linhas": 4345,
+      "linhas_exatas": true,
+      "nome": "contacts",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 15,
+      "uso_no_codigo": {
+        "edges": 65,
+        "src": 89
+      }
+    },
+    {
+      "bytes": 122880,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "conversation_analyses",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 5,
+        "src": 10
+      }
+    },
+    {
+      "bytes": 172032,
+      "citada_no_banco": true,
+      "linhas": 17,
+      "linhas_exatas": true,
+      "nome": "conversation_closures",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 5,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 1515520,
+      "citada_no_banco": true,
+      "linhas": 3254,
+      "linhas_exatas": true,
+      "nome": "conversation_events",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 3,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 6
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "conversation_memory",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 712704,
+      "citada_no_banco": true,
+      "linhas": 1830,
+      "linhas_exatas": true,
+      "nome": "conversation_sla",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 9
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "conversation_snoozes",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 5
+      }
+    },
+    {
+      "bytes": 278528,
+      "citada_no_banco": true,
+      "linhas": 2,
+      "linhas_exatas": true,
+      "nome": "conversation_tasks",
+      "policies": 5,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 5,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 15
+      }
+    },
+    {
+      "bytes": 8192,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "copilot_conversation_scores",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "copilot_feedback",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 8192,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "copilot_help_requests",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "copilot_insights",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 16384,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "copilot_learning_moments",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 16384,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "copilot_objection_catalog",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 16384,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "copilot_outcomes",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 8192,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "copilot_seller_settings",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "copilot_sessions",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 4,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 16384,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "copilot_usage",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "crisis_room_alerts",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "crm_contact_links",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 4,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 483328,
+      "citada_no_banco": true,
+      "linhas": 481,
+      "linhas_exatas": true,
+      "nome": "crm_sync_outbox",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "csat_auto_config",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 65536,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "csat_surveys",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 16384,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "custom_emojis",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 6
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "deal_activities",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "department_audit_logs",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "department_invitations",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "department_invites",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "departments",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 65536,
+      "citada_no_banco": true,
+      "linhas": 9,
+      "linhas_exatas": true,
+      "nome": "edge_rate_limits",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 145334272,
+      "citada_no_banco": true,
+      "linhas": 84790,
+      "linhas_exatas": true,
+      "nome": "email_attachments",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 65536,
+      "citada_no_banco": false,
+      "linhas": 24,
+      "linhas_exatas": true,
+      "nome": "email_labels",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 4,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 61284352,
+      "citada_no_banco": true,
+      "linhas": 3427,
+      "linhas_exatas": true,
+      "nome": "email_messages",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 22,
+        "src": 5
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "email_signatures",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 2277376,
+      "citada_no_banco": true,
+      "linhas": 2460,
+      "linhas_exatas": true,
+      "nome": "email_threads",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 20,
+        "src": 8
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "entity_versions",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 73728,
+      "citada_no_banco": false,
+      "linhas": 1,
+      "linhas_exatas": true,
+      "nome": "favorite_contacts",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 14,
+      "linhas_exatas": true,
+      "nome": "feature_flags",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "followup_executions",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "followup_sequences",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "followup_steps",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 1,
+      "linhas_exatas": true,
+      "nome": "geo_blocking_settings",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 7,
+      "linhas_exatas": true,
+      "nome": "global_settings",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 5,
+        "src": 5
+      }
+    },
+    {
+      "bytes": 98304,
+      "citada_no_banco": true,
+      "linhas": 1,
+      "linhas_exatas": true,
+      "nome": "gmail_accounts",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 25,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "gmail_oauth_states",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 98304,
+      "citada_no_banco": true,
+      "linhas": 30,
+      "linhas_exatas": true,
+      "nome": "goals_configurations",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 5
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "instance_pauses",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "ip_whitelist",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "knowledge_base_articles",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 5
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "knowledge_base_files",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 81920,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "link_preview_cache",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 57344,
+      "citada_no_banco": true,
+      "linhas": 117,
+      "linhas_exatas": true,
+      "nome": "link_preview_cache_metrics",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 98304,
+      "citada_no_banco": true,
+      "linhas": 19,
+      "linhas_exatas": true,
+      "nome": "login_attempts",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "message_attempts",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 8192,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "message_favorites",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "message_pins",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 204800,
+      "citada_no_banco": false,
+      "linhas": 116,
+      "linhas_exatas": true,
+      "nome": "message_reactions",
+      "policies": 5,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 5
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "message_reports",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "message_templates",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 12
+      }
+    },
+    {
+      "bytes": 44163072,
+      "citada_no_banco": true,
+      "linhas": 53463,
+      "linhas_exatas": true,
+      "nome": "messages",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 8,
+      "uso_no_codigo": {
+        "edges": 68,
+        "src": 67
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "meta_capi_events",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "mfa_sessions",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "multiplix_audience_members",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": true,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "multiplix_audiences",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": true,
+      "triggers": 2,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "multiplix_blocks",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": true,
+      "triggers": 2,
+      "uso_no_codigo": {
+        "edges": 6,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 73728,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "multiplix_delivery_items",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 57344,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "multiplix_dispatches",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": true,
+      "triggers": 3,
+      "uso_no_codigo": {
+        "edges": 15,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "multiplix_events",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "multiplix_recipients",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": true,
+      "triggers": 2,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "multiplix_voice_assets",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": true,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "multiplix_voice_grants",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": true,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 90112,
+      "citada_no_banco": true,
+      "linhas": 18,
+      "linhas_exatas": true,
+      "nome": "notifications",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 8
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "nps_surveys",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "number_reputation",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "outbox_events",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "passkey_credentials",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 5,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "password_reset_requests",
+      "policies": 5,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 2,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "payment_links",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 65536,
+      "citada_no_banco": false,
+      "linhas": 2,
+      "linhas_exatas": true,
+      "nome": "performance_snapshots",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 31,
+      "linhas_exatas": true,
+      "nome": "permissions",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 73728,
+      "citada_no_banco": false,
+      "linhas": 9,
+      "linhas_exatas": true,
+      "nome": "pinned_conversations",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "playbooks",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "products",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 106496,
+      "citada_no_banco": true,
+      "linhas": 10,
+      "linhas_exatas": true,
+      "nome": "profiles",
+      "policies": 6,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 6,
+      "uso_no_codigo": {
+        "edges": 28,
+        "src": 69
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "qr_attempts",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "query_telemetry",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 16384,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "queue_goals",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 73728,
+      "citada_no_banco": true,
+      "linhas": 4,
+      "linhas_exatas": true,
+      "nome": "queue_members",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 6
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "queue_positions",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "queue_skill_requirements",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 1,
+      "linhas_exatas": true,
+      "nome": "queues",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 3,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 17
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 5,
+      "linhas_exatas": true,
+      "nome": "rate_limit_configs",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 2,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "rate_limit_logs",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 65536,
+      "citada_no_banco": false,
+      "linhas": 3,
+      "linhas_exatas": true,
+      "nome": "reconnection_logs",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 114688,
+      "citada_no_banco": true,
+      "linhas": 1,
+      "linhas_exatas": true,
+      "nome": "reminders",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 57344,
+      "citada_no_banco": true,
+      "linhas": 64,
+      "linhas_exatas": true,
+      "nome": "role_permissions",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "sales_deals",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 5,
+      "linhas_exatas": true,
+      "nome": "sales_pipeline_stages",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "saved_filters",
+      "policies": 5,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 3,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 12
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "scheduled_messages",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 2,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "scheduled_report_configs",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 2,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 7
+      }
+    },
+    {
+      "bytes": 16384,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "scheduled_reports",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 5
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "search_events",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 1,
+      "linhas_exatas": true,
+      "nome": "searchbox_budget_alert_cron",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 16384,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "searchbox_budget_alert_emails",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 65536,
+      "citada_no_banco": true,
+      "linhas": 15,
+      "linhas_exatas": true,
+      "nome": "security_acl_alerts",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 245760,
+      "citada_no_banco": false,
+      "linhas": 137,
+      "linhas_exatas": true,
+      "nome": "security_alerts",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 6
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "sicoob_contact_mapping",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "sla_alert_events",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 8192,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "sla_alert_preferences",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 3,
+      "linhas_exatas": true,
+      "nome": "sla_configurations",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 7
+      }
+    },
+    {
+      "bytes": 65536,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "sla_rules",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 8
+      }
+    },
+    {
+      "bytes": 507904,
+      "citada_no_banco": false,
+      "linhas": 971,
+      "linhas_exatas": true,
+      "nome": "stickers",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 22
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "talkx_alerts",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 147456,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "talkx_blacklist",
+      "policies": 5,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 131072,
+      "citada_no_banco": true,
+      "linhas": 57,
+      "linhas_exatas": true,
+      "nome": "talkx_campaign_events",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 4,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "talkx_campaign_segments",
+      "policies": 5,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 311296,
+      "citada_no_banco": true,
+      "linhas": 10,
+      "linhas_exatas": true,
+      "nome": "talkx_campaigns",
+      "policies": 5,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 5,
+      "uso_no_codigo": {
+        "edges": 11,
+        "src": 5
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "talkx_contact_attributes",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "talkx_conversions",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 1,
+      "linhas_exatas": true,
+      "nome": "talkx_data_jobs",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "talkx_delivery_log",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "talkx_help_views",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "talkx_link_clicks",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "talkx_links",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 4,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 10,
+      "linhas_exatas": true,
+      "nome": "talkx_optout_keywords",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 3637248,
+      "citada_no_banco": true,
+      "linhas": 8175,
+      "linhas_exatas": true,
+      "nome": "talkx_recipients",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 5,
+      "uso_no_codigo": {
+        "edges": 7,
+        "src": 6
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 18,
+      "linhas_exatas": true,
+      "nome": "talkx_segment_fields",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": true,
+      "linhas": 8,
+      "linhas_exatas": true,
+      "nome": "talkx_segment_library_history",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "talkx_segment_versions",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 81920,
+      "citada_no_banco": true,
+      "linhas": 1,
+      "linhas_exatas": true,
+      "nome": "talkx_segments",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 2,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 19,
+      "linhas_exatas": true,
+      "nome": "talkx_settings",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 4,
+        "src": 2
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "talkx_storage_purge_queue",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "talkx_template_variants",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 81920,
+      "citada_no_banco": true,
+      "linhas": 5,
+      "linhas_exatas": true,
+      "nome": "talkx_template_versions",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 81920,
+      "citada_no_banco": true,
+      "linhas": 5,
+      "linhas_exatas": true,
+      "nome": "talkx_templates",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 3,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "talkx_test_send_claims",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 4,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "talkx_test_sends",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 16384,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "team_chat_media_acl_r2_db_020_rb",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 73728,
+      "citada_no_banco": true,
+      "linhas": 4,
+      "linhas_exatas": true,
+      "nome": "team_conversation_members",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 5
+      }
+    },
+    {
+      "bytes": 114688,
+      "citada_no_banco": true,
+      "linhas": 2,
+      "linhas_exatas": true,
+      "nome": "team_conversations",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 6
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "team_message_reactions",
+      "policies": 5,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 2,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "team_message_receipts",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 3,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 90112,
+      "citada_no_banco": true,
+      "linhas": 2,
+      "linhas_exatas": true,
+      "nome": "team_messages",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 4,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 7
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "training_sessions",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 114688,
+      "citada_no_banco": false,
+      "linhas": 137,
+      "linhas_exatas": true,
+      "nome": "user_devices",
+      "policies": 5,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 4,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 90112,
+      "citada_no_banco": true,
+      "linhas": 11,
+      "linhas_exatas": true,
+      "nome": "user_roles",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 2,
+      "uso_no_codigo": {
+        "edges": 10,
+        "src": 9
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "user_service_accounts",
+      "policies": 5,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 2,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 188416,
+      "citada_no_banco": true,
+      "linhas": 122,
+      "linhas_exatas": true,
+      "nome": "user_sessions",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 3,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 49152,
+      "citada_no_banco": true,
+      "linhas": 4,
+      "linhas_exatas": true,
+      "nome": "user_settings",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 15
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "voice_command_logs",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 1
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "voip_profile_credentials",
+      "policies": 0,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 237568,
+      "citada_no_banco": false,
+      "linhas": 514,
+      "linhas_exatas": true,
+      "nome": "warroom_alerts",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 8,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "webauthn_challenges",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 5,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "webhook_failures",
+      "policies": 1,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "webhook_rate_limits",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 0,
+      "uso_no_codigo": {
+        "edges": 1,
+        "src": 0
+      }
+    },
+    {
+      "bytes": 32768,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "whatsapp_connection_queues",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 3
+      }
+    },
+    {
+      "bytes": 270336,
+      "citada_no_banco": true,
+      "linhas": 2,
+      "linhas_exatas": true,
+      "nome": "whatsapp_connections",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 2,
+      "uso_no_codigo": {
+        "edges": 50,
+        "src": 29
+      }
+    },
+    {
+      "bytes": 65536,
+      "citada_no_banco": false,
+      "linhas": 1,
+      "linhas_exatas": true,
+      "nome": "whatsapp_flows",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 221184,
+      "citada_no_banco": true,
+      "linhas": 221,
+      "linhas_exatas": true,
+      "nome": "whatsapp_groups",
+      "policies": 2,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 6
+      }
+    },
+    {
+      "bytes": 24576,
+      "citada_no_banco": false,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "whatsapp_templates",
+      "policies": 3,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 1,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 4
+      }
+    },
+    {
+      "bytes": 40960,
+      "citada_no_banco": true,
+      "linhas": 0,
+      "linhas_exatas": true,
+      "nome": "whisper_messages",
+      "policies": 4,
+      "rls": true,
+      "rls_forcado": false,
+      "triggers": 2,
+      "uso_no_codigo": {
+        "edges": 0,
+        "src": 6
+      }
+    }
+  ],
+  "tabelas_orfas": {
+    "criterio": "0 linhas + nao citada em funcao/view do banco + nenhum .from() em src/ ou supabase/functions/",
+    "lista": [
+      "campaign_ab_variants",
+      "campaign_contacts",
+      "copilot_conversation_scores",
+      "copilot_help_requests",
+      "copilot_learning_moments",
+      "copilot_objection_catalog",
+      "copilot_outcomes",
+      "copilot_seller_settings",
+      "copilot_usage",
+      "crisis_room_alerts",
+      "department_invites",
+      "email_signatures",
+      "entity_versions",
+      "mfa_sessions",
+      "payment_links",
+      "sicoob_contact_mapping",
+      "sla_alert_preferences",
+      "team_chat_media_acl_r2_db_020_rb",
+      "webhook_failures"
+    ]
+  },
+  "whatsapp": {
+    "conexoes": [
+      {
+        "atualizada_em": "2026-11-02T14:07:03Z",
+        "health_reason": "Reconexão automática esgotada — gere um novo QR Code na tela Conexões.",
+        "health_status": "disconnected",
+        "instance_id": "PRINCIPAL",
+        "nome": "Promo Brindes WhatsApp",
+        "padrao": true,
+        "status": "disconnected",
+        "ultimo_health_check": "2026-11-02T14:07:03Z"
+      },
+      {
+        "atualizada_em": "2026-09-28T20:21:53Z",
+        "health_reason": null,
+        "health_status": "connected",
+        "instance_id": "E2E_FIXTURE",
+        "nome": "[E2E] Conexão WhatsApp Teste",
+        "padrao": false,
+        "status": "connected",
+        "ultimo_health_check": "2026-09-28T19:55:02Z"
+      }
+    ],
+    "mensagens_7d": 4
+  }
+}
