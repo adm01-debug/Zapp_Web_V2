@@ -81,14 +81,17 @@ import { useCoisa } from '@/hooks/useCoisa';
 import { Filho } from './Filho';
 import { Button } from '@/components/ui/button';
 export function AView() { useCoisa(); return null; }`);
-  escrever('src/components/a/Filho.tsx', "export const Filho = () => supabase.functions.invoke('edge-a');");
+  escrever('src/components/a/Filho.tsx', "export const Filho = () => supabase.functions.invoke('edge-a'); supabase.functions.invoke('edge-sub/acao');\nconst rpc = supabase.rpc.bind(supabase); rpc('rpc_por_apelido');");
   escrever('src/components/a/Filho.test.tsx', "supabase.from('so_no_teste')");
   escrever('src/components/ui/button.tsx', "supabase.from('nao_e_da_feature')");
   escrever('src/hooks/useCoisa.ts', `
 import { servico } from '@/services/servico';
 export function useCoisa() { return supabase.from('coisas').select(); }`);
   escrever('src/services/servico.ts', "export const servico = () => supabase.rpc('fn_servico');");
-  escrever('src/components/b/BView.tsx', 'export function BView() { return null; }');
+  escrever('src/components/b/BView.tsx', "import { Aba } from '@/components/c/Aba';\nimport { Some } from './nao-existe';\nimport './estilo.css';\nexport function BView() { return null; }");
+  escrever('src/components/c/Aba.tsx', "import { Neta } from './Neta';\nexport const Aba = () => db.from('de_outra_feature');");
+  escrever('src/components/c/Neta.tsx', "import { Longe } from '@/components/d/Longe';\nexport const Neta = () => db.from('neta_da_outra_feature');");
+  escrever('src/components/d/Longe.tsx', "export const Longe = () => db.from('alem_do_limite');");
   return dir;
 }
 
@@ -105,16 +108,19 @@ test('repo de brinquedo: URLs, telas, menu, fecho e problemas saem do codigo', (
   assert.equal(telas.a.arquivo, 'src/components/a/AView.tsx');
   assert.deepEqual(telas.a.menu, { rotulo: 'Tela A', secao: 'primary', grupo: null, papeis: [], permissao: 'a.ver', atalho: 'Alt+A', layout: null });
   assert.deepEqual(telas.a.hooks, [{ nome: 'useCoisa', arquivo: 'src/hooks/useCoisa.ts' }]);
-  assert.deepEqual(telas.a.edges, ['edge-a']);
-  assert.deepEqual(telas.a.rpcs, ['fn_servico'], 'segue hook -> service');
+  assert.deepEqual(telas.a.edges, ['edge-a', 'edge-sub'], "invoke('edge-sub/acao') conta como edge-sub");
+  assert.deepEqual(telas.a.rpcs, ['fn_servico', 'rpc_por_apelido'], 'segue hook -> service e pega rpc por apelido');
   assert.deepEqual(telas.a.tabelas, ['coisas'], 'ignora teste e componente compartilhado de UI');
   assert.equal(telas.b.especial, true);
+  assert.deepEqual(telas.b.tabelas, ['de_outra_feature', 'neta_da_outra_feature'],
+    'componente de outra feature entra ate 2 saltos; o terceiro (alem_do_limite) fica de fora');
+  assert.deepEqual(telas.b.imports_quebrados, ['src/components/b/BView.tsx -> ./nao-existe'], 'css nao conta como quebrado');
   assert.equal(telas.b.menu.grupo, 'Grupo B');
   assert.deepEqual(telas.b.menu.papeis, ['admin', 'supervisor']);
   assert.deepEqual(inv.hooks.useCoisa, { arquivo: 'src/hooks/useCoisa.ts', telas: ['a'] });
 
   const problemas = inv.problemas.map((p) => `${p.tipo}:${p.id}`).sort();
-  assert.deepEqual(problemas, ['menu_sem_tela:fantasma', 'tela_sem_arquivo:sumida', 'tela_sem_menu:sumida']);
+  assert.deepEqual(problemas, ['import_quebrado:b', 'menu_sem_tela:fantasma', 'tela_sem_arquivo:sumida', 'tela_sem_menu:sumida']);
   fs.rmSync(dir, { recursive: true, force: true });
 });
 

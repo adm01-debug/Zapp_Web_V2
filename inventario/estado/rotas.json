@@ -5,7 +5,7 @@
     "urls": 18,
     "telas": 55,
     "itens_de_menu": 53,
-    "hooks_distintos": 335,
+    "hooks_distintos": 353,
     "problemas": 2
   },
   "urls": [
@@ -215,7 +215,8 @@
         "messages",
         "profiles",
         "user_settings"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "admin",
@@ -234,7 +235,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 34,
+      "arquivos_lidos": 37,
       "hooks": [
         {
           "nome": "useAdminData",
@@ -307,7 +308,8 @@
         "profiles",
         "user_roles",
         "user_settings"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "agents",
@@ -327,7 +329,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 31,
+      "arquivos_lidos": 34,
       "hooks": [
         {
           "nome": "useAgentPendingCounts",
@@ -358,6 +360,10 @@
           "arquivo": "src/hooks/connections/useConnectionsHealth.ts"
         },
         {
+          "nome": "useLayoutContext",
+          "arquivo": "src/contexts/LayoutContext.tsx"
+        },
+        {
           "nome": "useMessageUpdateBatcher",
           "arquivo": "src/hooks/realtime/useMessageUpdateBatcher.ts"
         },
@@ -384,6 +390,7 @@
       ],
       "buckets": [],
       "edges": [
+        "evolution-api",
         "invite-user"
       ],
       "rpcs": [
@@ -404,7 +411,8 @@
         "user_roles",
         "user_settings",
         "whatsapp_connections"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "ai-usage",
@@ -436,7 +444,8 @@
       "tabelas": [
         "ai_usage_logs",
         "profiles"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "audit-logs",
@@ -468,7 +477,8 @@
       "tabelas": [
         "audit_logs",
         "profiles"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "automations",
@@ -528,7 +538,8 @@
         "messages",
         "profiles",
         "user_settings"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "catalog",
@@ -545,7 +556,7 @@
         "atalho": "Alt+A",
         "layout": null
       },
-      "arquivos_lidos": 43,
+      "arquivos_lidos": 58,
       "hooks": [
         {
           "nome": "useAuth",
@@ -634,7 +645,8 @@
         "talkx_blacklist",
         "user_settings",
         "whatsapp_connections"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "chatbot",
@@ -667,7 +679,8 @@
       "tabelas": [
         "chatbot_executions",
         "chatbot_flows"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "churn",
@@ -696,7 +709,8 @@
       "rpcs": [],
       "tabelas": [
         "contacts"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "connections",
@@ -716,7 +730,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 42,
+      "arquivos_lidos": 45,
       "hooks": [
         {
           "nome": "useAppBootstrap",
@@ -763,6 +777,10 @@
           "arquivo": "src/hooks/evolution/useEvolutionMessaging.ts"
         },
         {
+          "nome": "useLayoutContext",
+          "arquivo": "src/contexts/LayoutContext.tsx"
+        },
+        {
           "nome": "useMessageUpdateBatcher",
           "arquivo": "src/hooks/realtime/useMessageUpdateBatcher.ts"
         },
@@ -794,6 +812,7 @@
       "buckets": [],
       "edges": [
         "connection-health-check",
+        "evolution-api",
         "evolution-sync"
       ],
       "rpcs": [
@@ -819,7 +838,8 @@
         "user_settings",
         "whatsapp_connection_queues",
         "whatsapp_connections"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "contacts",
@@ -836,7 +856,7 @@
         "atalho": "Alt+O",
         "layout": null
       },
-      "arquivos_lidos": 89,
+      "arquivos_lidos": 106,
       "hooks": [
         {
           "nome": "useActionFeedback",
@@ -859,8 +879,16 @@
           "arquivo": "src/hooks/auth/useAuth.tsx"
         },
         {
+          "nome": "useCatalogFavorites",
+          "arquivo": "src/hooks/integrations/useExternalCatalog.ts"
+        },
+        {
           "nome": "useCatalogSendHistory",
           "arquivo": "src/hooks/integrations/useCatalogSendHistory.ts"
+        },
+        {
+          "nome": "useCatalogSendReadiness",
+          "arquivo": "src/hooks/integrations/useCatalogSendReadiness.ts"
         },
         {
           "nome": "useContactFormValidation",
@@ -873,6 +901,10 @@
         {
           "nome": "useContactsCRUD",
           "arquivo": "src/components/contacts/useContactsCRUD.ts"
+        },
+        {
+          "nome": "useContactSearch",
+          "arquivo": "src/components/catalog/useSendProduct.ts"
         },
         {
           "nome": "useContactSearchV2",
@@ -903,8 +935,16 @@
           "arquivo": "src/hooks/system/useCRMIntegrationEnabled.ts"
         },
         {
+          "nome": "useDownloadPermission",
+          "arquivo": "src/hooks/system/useDownloadPermission.ts"
+        },
+        {
           "nome": "useExternalCargos",
           "arquivo": "src/hooks/crm/useExternalCargos.ts"
+        },
+        {
+          "nome": "useExternalCatalog",
+          "arquivo": "src/hooks/integrations/useExternalCatalog.ts"
         },
         {
           "nome": "useExternalContact360Batch",
@@ -915,8 +955,16 @@
           "arquivo": "src/hooks/crm/useExternalEmpresas.ts"
         },
         {
+          "nome": "useExternalProduct",
+          "arquivo": "src/hooks/integrations/useExternalCatalog.ts"
+        },
+        {
           "nome": "useFeatureFlag",
           "arquivo": "src/hooks/system/useFeatureFlag.ts"
+        },
+        {
+          "nome": "useIsMobile",
+          "arquivo": "src/hooks/ui/use-mobile.tsx"
         },
         {
           "nome": "useLayoutScroll",
@@ -935,8 +983,16 @@
           "arquivo": "src/components/tasks/shared/pointerMedia.ts"
         },
         {
+          "nome": "useRateLimitCooldown",
+          "arquivo": "src/components/catalog/catalogShared.tsx"
+        },
+        {
           "nome": "useRealtimeNotifications",
           "arquivo": "src/hooks/realtime/useRealtimeNotifications.ts"
+        },
+        {
+          "nome": "useSendToContact",
+          "arquivo": "src/components/catalog/useSendProduct.ts"
         },
         {
           "nome": "useSupabaseRealtime",
@@ -952,7 +1008,9 @@
         }
       ],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "promogifts-catalog"
+      ],
       "rpcs": [
         "app_bootstrap",
         "can_delete_contacts",
@@ -971,6 +1029,7 @@
       ],
       "tabelas": [
         "ai_conversation_tags",
+        "catalog_favorites",
         "catalog_send_events",
         "contact_custom_fields",
         "contact_notes",
@@ -982,9 +1041,12 @@
         "feature_flags",
         "messages",
         "profiles",
+        "talkx_blacklist",
         "user_roles",
-        "user_settings"
-      ]
+        "user_settings",
+        "whatsapp_connections"
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "crm360",
@@ -1003,7 +1065,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 31,
+      "arquivos_lidos": 32,
       "hooks": [
         {
           "nome": "useAppBootstrap",
@@ -1034,6 +1096,10 @@
           "arquivo": "src/hooks/system/useFeatureFlag.ts"
         },
         {
+          "nome": "useLayoutContext",
+          "arquivo": "src/contexts/LayoutContext.tsx"
+        },
+        {
           "nome": "useMessageUpdateBatcher",
           "arquivo": "src/hooks/realtime/useMessageUpdateBatcher.ts"
         },
@@ -1070,7 +1136,8 @@
         "profiles",
         "user_roles",
         "user_settings"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "dashboard",
@@ -1087,7 +1154,7 @@
         "atalho": "Alt+R",
         "layout": null
       },
-      "arquivos_lidos": 110,
+      "arquivos_lidos": 123,
       "hooks": [
         {
           "nome": "useActiveAIProvider",
@@ -1126,6 +1193,10 @@
           "arquivo": "src/hooks/auth/useAuth.tsx"
         },
         {
+          "nome": "useCelebration",
+          "arquivo": "src/components/effects/Confetti.tsx"
+        },
+        {
           "nome": "useCRMAdminAccess",
           "arquivo": "src/hooks/crm/useCRMAdminAccess.ts"
         },
@@ -1160,6 +1231,14 @@
         {
           "nome": "useDemandPrediction",
           "arquivo": "src/hooks/business/useDemandPrediction.ts"
+        },
+        {
+          "nome": "useFocusManagement",
+          "arquivo": "src/components/a11y/a11yHooks.tsx"
+        },
+        {
+          "nome": "useFocusVisible",
+          "arquivo": "src/components/a11y/a11yHooks.tsx"
         },
         {
           "nome": "useGoalsDashboard",
@@ -1212,6 +1291,10 @@
         {
           "nome": "useRecentSentimentAlerts",
           "arquivo": "src/hooks/analytics/useRecentSentimentAlerts.ts"
+        },
+        {
+          "nome": "useRovingTabindex",
+          "arquivo": "src/components/a11y/a11yHooks.tsx"
         },
         {
           "nome": "useSatisfactionBreakdown",
@@ -1267,6 +1350,8 @@
       "rpcs": [
         "app_bootstrap",
         "dashboard_contact_counts",
+        "dashboard_daily_series",
+        "dashboard_hourly_volume",
         "dashboard_kpi",
         "dashboard_leaderboard",
         "enqueue_outbound_message",
@@ -1294,10 +1379,12 @@
         "queues",
         "scheduled_report_configs",
         "sla_configurations",
+        "sla_rules",
         "user_roles",
         "user_settings",
         "whatsapp_connections"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "diagnostics",
@@ -1339,7 +1426,8 @@
         "contacts",
         "messages",
         "whatsapp_connections"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "docs",
@@ -1364,7 +1452,8 @@
       "buckets": [],
       "edges": [],
       "rpcs": [],
-      "tabelas": []
+      "tabelas": [],
+      "imports_quebrados": []
     },
     {
       "id": "email-chat",
@@ -1381,7 +1470,7 @@
         "atalho": "Alt+L",
         "layout": "full"
       },
-      "arquivos_lidos": 37,
+      "arquivos_lidos": 41,
       "hooks": [
         {
           "nome": "useAuth",
@@ -1469,7 +1558,8 @@
         "messages",
         "profiles",
         "user_settings"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "evolution-monitor",
@@ -1488,7 +1578,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 40,
+      "arquivos_lidos": 42,
       "hooks": [
         {
           "nome": "useAuth",
@@ -1564,7 +1654,8 @@
         "profiles",
         "user_settings",
         "whatsapp_connections"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "gmail",
@@ -1637,7 +1728,8 @@
         "messages",
         "profiles",
         "user_settings"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "gmail-webhook",
@@ -1665,7 +1757,8 @@
       ],
       "tabelas": [
         "email_threads"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "google-calendar",
@@ -1690,7 +1783,8 @@
       "buckets": [],
       "edges": [],
       "rpcs": [],
-      "tabelas": []
+      "tabelas": [],
+      "imports_quebrados": []
     },
     {
       "id": "groups",
@@ -1710,7 +1804,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 7,
+      "arquivos_lidos": 10,
       "hooks": [
         {
           "nome": "useActionFeedback",
@@ -1723,6 +1817,10 @@
         {
           "nome": "useGroupsManager",
           "arquivo": "src/hooks/chat/useGroupsManager.ts"
+        },
+        {
+          "nome": "useLayoutContext",
+          "arquivo": "src/contexts/LayoutContext.tsx"
         },
         {
           "nome": "useToast",
@@ -1740,7 +1838,8 @@
         "contacts",
         "whatsapp_connections",
         "whatsapp_groups"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "inbox",
@@ -1757,11 +1856,15 @@
         "atalho": "Alt+C",
         "layout": "full"
       },
-      "arquivos_lidos": 341,
+      "arquivos_lidos": 400,
       "hooks": [
         {
           "nome": "useAddressAutocomplete",
           "arquivo": "src/components/inbox/location-picker/useAddressAutocomplete.ts"
+        },
+        {
+          "nome": "useAdvancedContactSearch",
+          "arquivo": "src/hooks/crm/useAdvancedContactSearch.ts"
         },
         {
           "nome": "useAdvanceDealStage",
@@ -1800,6 +1903,10 @@
           "arquivo": "src/hooks/sla/useApplicableSLA.ts"
         },
         {
+          "nome": "useAttachmentSuggestion",
+          "arquivo": "src/hooks/copilot/useAttachmentSuggestion.ts"
+        },
+        {
           "nome": "useAudioMemes",
           "arquivo": "src/hooks/communication/useAudioMemes.ts"
         },
@@ -1814,6 +1921,14 @@
         {
           "nome": "useAuth",
           "arquivo": "src/hooks/auth/useAuth.tsx"
+        },
+        {
+          "nome": "useCatalogFavorites",
+          "arquivo": "src/hooks/integrations/useExternalCatalog.ts"
+        },
+        {
+          "nome": "useCatalogSendReadiness",
+          "arquivo": "src/hooks/integrations/useCatalogSendReadiness.ts"
         },
         {
           "nome": "useChatInputLogic",
@@ -1852,6 +1967,10 @@
           "arquivo": "src/hooks/crm/useContactEnrichedData.ts"
         },
         {
+          "nome": "useContactFormValidation",
+          "arquivo": "src/components/contacts/useContactFormValidation.ts"
+        },
+        {
           "nome": "useContactIntelligence",
           "arquivo": "src/hooks/crm/useContactIntelligence.ts"
         },
@@ -1880,8 +1999,16 @@
           "arquivo": "src/hooks/inbox/useContactQuickActions.ts"
         },
         {
+          "nome": "useContactSearch",
+          "arquivo": "src/components/catalog/useSendProduct.ts"
+        },
+        {
           "nome": "useContactSidebar",
           "arquivo": "src/hooks/crm/useContactSidebar.ts"
+        },
+        {
+          "nome": "useContactsSearch",
+          "arquivo": "src/hooks/crm/useContactsSearch.ts"
         },
         {
           "nome": "useContactStats",
@@ -1916,8 +2043,16 @@
           "arquivo": "src/hooks/chat/useConversationTabCounts.ts"
         },
         {
+          "nome": "useCopilotFeedback",
+          "arquivo": "src/hooks/copilot/useCopilotFeedback.ts"
+        },
+        {
           "nome": "useCountUp",
           "arquivo": "src/components/inbox/tabs/journey/motion/index.ts"
+        },
+        {
+          "nome": "useCRMAdminAccess",
+          "arquivo": "src/hooks/crm/useCRMAdminAccess.ts"
         },
         {
           "nome": "useCRMIntegrationEnabled",
@@ -1964,6 +2099,14 @@
           "arquivo": "src/hooks/chat/useExclusiveAudio.ts"
         },
         {
+          "nome": "useExternalCargos",
+          "arquivo": "src/hooks/crm/useExternalCargos.ts"
+        },
+        {
+          "nome": "useExternalCatalog",
+          "arquivo": "src/hooks/integrations/useExternalCatalog.ts"
+        },
+        {
           "nome": "useExternalContact360",
           "arquivo": "src/hooks/crm/useExternalContact360.ts"
         },
@@ -1972,8 +2115,16 @@
           "arquivo": "src/hooks/integrations/useExternalEvolution.ts"
         },
         {
+          "nome": "useExternalEmpresas",
+          "arquivo": "src/hooks/crm/useExternalEmpresas.ts"
+        },
+        {
           "nome": "useExternalMessages",
           "arquivo": "src/hooks/integrations/useExternalEvolution.ts"
+        },
+        {
+          "nome": "useExternalProduct",
+          "arquivo": "src/hooks/integrations/useExternalCatalog.ts"
         },
         {
           "nome": "useFeatureFlag",
@@ -2100,6 +2251,10 @@
           "arquivo": "src/hooks/tasks/useMyWorkItems.ts"
         },
         {
+          "nome": "useNarrowViewport",
+          "arquivo": "src/components/tasks/shared/pointerMedia.ts"
+        },
+        {
           "nome": "useNewConversation",
           "arquivo": "src/hooks/chat/useNewConversation.ts"
         },
@@ -2128,8 +2283,16 @@
           "arquivo": "src/components/inbox/ai-tools/PeriodFilterSelector.tsx"
         },
         {
+          "nome": "usePointerCoarse",
+          "arquivo": "src/components/tasks/shared/pointerMedia.ts"
+        },
+        {
           "nome": "usePullToRefresh",
           "arquivo": "src/hooks/ui/usePullToRefresh.ts"
+        },
+        {
+          "nome": "useQuarantineForMessage",
+          "arquivo": "src/hooks/integrations/useQuarantineForMessage.ts"
         },
         {
           "nome": "useQueues",
@@ -2138,6 +2301,10 @@
         {
           "nome": "useQuickReplies",
           "arquivo": "src/hooks/chat/useQuickReplies.ts"
+        },
+        {
+          "nome": "useRateLimitCooldown",
+          "arquivo": "src/components/catalog/catalogShared.tsx"
         },
         {
           "nome": "useReactionMutations",
@@ -2180,12 +2347,24 @@
           "arquivo": "src/hooks/system/useSearchHistory.ts"
         },
         {
+          "nome": "useSendToContact",
+          "arquivo": "src/components/catalog/useSendProduct.ts"
+        },
+        {
           "nome": "useSentimentAlerts",
           "arquivo": "src/hooks/inbox/useSentimentAlerts.ts"
         },
         {
           "nome": "useSLACalculation",
           "arquivo": "src/hooks/sla/useSLACalculation.ts"
+        },
+        {
+          "nome": "useSmartTemplates",
+          "arquivo": "src/hooks/copilot/useSmartTemplates.ts"
+        },
+        {
+          "nome": "useSpeechToText",
+          "arquivo": "src/hooks/communication/useSpeechToText.ts"
         },
         {
           "nome": "useStickerPicker",
@@ -2206,6 +2385,10 @@
         {
           "nome": "useTalkMeQueue",
           "arquivo": "src/features/talk-me/useTalkMeQueue.ts"
+        },
+        {
+          "nome": "useTasksUiOptional",
+          "arquivo": "src/components/tasks/shared/tasksUi.ts"
         },
         {
           "nome": "useTextToSpeech",
@@ -2244,6 +2427,10 @@
           "arquivo": "src/hooks/system/useUserSettings.ts"
         },
         {
+          "nome": "useVoiceDictation",
+          "arquivo": "src/hooks/copilot/useVoiceDictation.ts"
+        },
+        {
           "nome": "useVolumeRocker",
           "arquivo": "src/hooks/ui/useVolumeRocker.ts"
         },
@@ -2279,6 +2466,8 @@
         "classify-emoji",
         "classify-sticker",
         "elevenlabs-scribe-token",
+        "evolution-api",
+        "promogifts-catalog",
         "sentiment-alert"
       ],
       "rpcs": [
@@ -2297,6 +2486,7 @@
         "get_last_message_dates",
         "get_team_profiles",
         "increment_custom_emoji_use",
+        "is_admin_or_supervisor",
         "log_search_event",
         "reopen_conversation",
         "search_contacts",
@@ -2308,6 +2498,8 @@
         "ai_conversation_tags",
         "audio_memes",
         "calls",
+        "catalog_favorites",
+        "catalog_send_events",
         "contact_custom_fields",
         "contact_notes",
         "contact_purchases",
@@ -2319,6 +2511,7 @@
         "conversation_sla",
         "conversation_snoozes",
         "conversation_tasks",
+        "copilot_feedback",
         "crm_contact_links",
         "csat_surveys",
         "custom_emojis",
@@ -2341,12 +2534,14 @@
         "sla_configurations",
         "sla_rules",
         "stickers",
+        "talkx_blacklist",
         "user_roles",
         "user_settings",
         "whatsapp_connections",
         "whatsapp_groups",
         "whisper_messages"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "integrations",
@@ -2445,7 +2640,8 @@
         "profiles",
         "user_roles",
         "user_settings"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "knowledge",
@@ -2465,11 +2661,15 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 3,
+      "arquivos_lidos": 4,
       "hooks": [
         {
           "nome": "useKnowledgeBase",
           "arquivo": "src/hooks/integrations/useKnowledgeBase.ts"
+        },
+        {
+          "nome": "useLayoutContext",
+          "arquivo": "src/contexts/LayoutContext.tsx"
         }
       ],
       "buckets": [],
@@ -2480,7 +2680,8 @@
       "tabelas": [
         "knowledge_base_articles",
         "knowledge_base_files"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "media-migration",
@@ -2508,7 +2709,8 @@
         "audit_logs",
         "messages",
         "profiles"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "meta-capi",
@@ -2528,8 +2730,12 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 2,
+      "arquivos_lidos": 3,
       "hooks": [
+        {
+          "nome": "useLayoutContext",
+          "arquivo": "src/contexts/LayoutContext.tsx"
+        },
         {
           "nome": "useMetaCAPIData",
           "arquivo": "src/hooks/integrations/useMetaCAPIData.ts"
@@ -2541,7 +2747,8 @@
       "tabelas": [
         "global_settings",
         "meta_capi_events"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "multiplix",
@@ -2558,7 +2765,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 5,
+      "arquivos_lidos": 24,
       "hooks": [
         {
           "nome": "useConfirmMultiplixDispatch",
@@ -2619,10 +2826,15 @@
         "multiplix-dispatch",
         "multiplix-send"
       ],
-      "rpcs": [],
+      "rpcs": [
+        "enqueue_outbound_message",
+        "enqueue_rich_outbound_message"
+      ],
       "tabelas": [
+        "catalog_send_events",
         "contacts"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "nps",
@@ -2655,7 +2867,8 @@
       "tabelas": [
         "nps_surveys",
         "profiles"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "omni-inbox",
@@ -2675,50 +2888,249 @@
         "atalho": null,
         "layout": "full"
       },
-      "arquivos_lidos": 29,
+      "arquivos_lidos": 107,
       "hooks": [
+        {
+          "nome": "useAgentPresenceMap",
+          "arquivo": "src/hooks/crm/useAgentPresence.ts"
+        },
+        {
+          "nome": "useAgents",
+          "arquivo": "src/hooks/crm/useAgents.ts"
+        },
+        {
+          "nome": "useAiRequestGeneration",
+          "arquivo": "src/lib/aiRequest/context.ts"
+        },
+        {
+          "nome": "useAmbientColor",
+          "arquivo": "src/hooks/ui/useAmbientColor.ts"
+        },
+        {
+          "nome": "useAnalysisTts",
+          "arquivo": "src/components/inbox/ai-tools/useAnalysisTts.ts"
+        },
+        {
+          "nome": "useApplicableSLA",
+          "arquivo": "src/hooks/sla/useApplicableSLA.ts"
+        },
+        {
+          "nome": "useAudioRecorder",
+          "arquivo": "src/hooks/communication/useAudioRecorder.ts"
+        },
         {
           "nome": "useAuth",
           "arquivo": "src/hooks/auth/useAuth.tsx"
+        },
+        {
+          "nome": "useChatInputLogic",
+          "arquivo": "src/components/inbox/chat/useChatInputLogic.ts"
+        },
+        {
+          "nome": "useChatMediaSending",
+          "arquivo": "src/components/inbox/useChatMediaSending.ts"
+        },
+        {
+          "nome": "useChatMessageNavigation",
+          "arquivo": "src/components/inbox/chat/chatMessageNavigation.ts"
+        },
+        {
+          "nome": "useChatPanelHandlers",
+          "arquivo": "src/components/inbox/chat/useChatPanelHandlers.ts"
+        },
+        {
+          "nome": "useChatSearch",
+          "arquivo": "src/hooks/chat/useChatSearch.ts"
+        },
+        {
+          "nome": "useContactNotes",
+          "arquivo": "src/hooks/crm/useContactNotes.ts"
+        },
+        {
+          "nome": "useConversationActions",
+          "arquivo": "src/hooks/chat/useConversationActions.ts"
+        },
+        {
+          "nome": "useConversationAnalyses",
+          "arquivo": "src/hooks/chat/useConversationAnalyses.ts"
         },
         {
           "nome": "useConversationPanelInvalidation",
           "arquivo": "src/hooks/chat/useConversationPanelInvalidation.ts"
         },
         {
+          "nome": "useCRMIntegrationEnabled",
+          "arquivo": "src/hooks/system/useCRMIntegrationEnabled.ts"
+        },
+        {
+          "nome": "useDownloadPermission",
+          "arquivo": "src/hooks/system/useDownloadPermission.ts"
+        },
+        {
+          "nome": "useEmailContactContext",
+          "arquivo": "src/hooks/crm/useEmailContactContext.ts"
+        },
+        {
+          "nome": "useEmailThreadForContact",
+          "arquivo": "src/hooks/integrations/useEmailThreadForContact.ts"
+        },
+        {
+          "nome": "useEmailThreadListQuery",
+          "arquivo": "src/hooks/email/useEmailThreadListQuery.ts"
+        },
+        {
+          "nome": "useEvolutionApi",
+          "arquivo": "src/hooks/integrations/useEvolutionApi.ts"
+        },
+        {
+          "nome": "useEvolutionApiCore",
+          "arquivo": "src/hooks/evolution/useEvolutionApiCore.ts"
+        },
+        {
+          "nome": "useEvolutionGroups",
+          "arquivo": "src/hooks/evolution/useEvolutionGroups.ts"
+        },
+        {
+          "nome": "useEvolutionInstance",
+          "arquivo": "src/hooks/evolution/useEvolutionInstance.ts"
+        },
+        {
+          "nome": "useEvolutionMessaging",
+          "arquivo": "src/hooks/evolution/useEvolutionMessaging.ts"
+        },
+        {
+          "nome": "useFeatureFlag",
+          "arquivo": "src/hooks/system/useFeatureFlag.ts"
+        },
+        {
+          "nome": "useFileUploadLogic",
+          "arquivo": "src/components/inbox/useFileUploadLogic.ts"
+        },
+        {
+          "nome": "useGmail",
+          "arquivo": "src/hooks/integrations/useGmail.ts"
+        },
+        {
+          "nome": "useGmailLabelsManagement",
+          "arquivo": "src/hooks/integrations/useGmailLabels.ts"
+        },
+        {
+          "nome": "useIsMobile",
+          "arquivo": "src/hooks/ui/use-mobile.tsx"
+        },
+        {
+          "nome": "useMentions",
+          "arquivo": "src/components/inbox/chat/MentionAutocomplete.tsx"
+        },
+        {
           "nome": "useMessages",
           "arquivo": "src/hooks/chat/useMessages.ts"
+        },
+        {
+          "nome": "useMessageSignature",
+          "arquivo": "src/hooks/chat/useMessageSignature.ts"
         },
         {
           "nome": "useMessageUpdateBatcher",
           "arquivo": "src/hooks/realtime/useMessageUpdateBatcher.ts"
         },
         {
+          "nome": "useMyWorkItems",
+          "arquivo": "src/hooks/tasks/useMyWorkItems.ts"
+        },
+        {
+          "nome": "useNextBestAction",
+          "arquivo": "src/hooks/chat/useNextBestAction.ts"
+        },
+        {
           "nome": "useNotificationSettings",
           "arquivo": "src/hooks/system/useNotificationSettings.ts"
+        },
+        {
+          "nome": "usePeriodFilter",
+          "arquivo": "src/components/inbox/ai-tools/PeriodFilterSelector.tsx"
+        },
+        {
+          "nome": "useQueues",
+          "arquivo": "src/hooks/business/useQueues.ts"
+        },
+        {
+          "nome": "useQuickReplies",
+          "arquivo": "src/hooks/chat/useQuickReplies.ts"
         },
         {
           "nome": "useRealtimeNotifications",
           "arquivo": "src/hooks/realtime/useRealtimeNotifications.ts"
         },
         {
+          "nome": "useScheduledMessages",
+          "arquivo": "src/hooks/chat/useScheduledMessages.ts"
+        },
+        {
+          "nome": "useSentimentAlerts",
+          "arquivo": "src/hooks/inbox/useSentimentAlerts.ts"
+        },
+        {
           "nome": "useSupabaseRealtime",
           "arquivo": "src/hooks/realtime/useSupabaseRealtime.ts"
+        },
+        {
+          "nome": "useSyncToCRM",
+          "arquivo": "src/hooks/integrations/useSyncToCRM.ts"
+        },
+        {
+          "nome": "useTextToSpeech",
+          "arquivo": "src/hooks/communication/useTextToSpeech.ts"
+        },
+        {
+          "nome": "useTheme",
+          "arquivo": "src/hooks/ui/useTheme.ts"
+        },
+        {
+          "nome": "useToast",
+          "arquivo": "src/hooks/ui/use-toast.ts"
+        },
+        {
+          "nome": "useTypingPresence",
+          "arquivo": "src/hooks/chat/useTypingPresence.ts"
+        },
+        {
+          "nome": "useUserSettings",
+          "arquivo": "src/hooks/system/useUserSettings.ts"
+        },
+        {
+          "nome": "useWhisperCount",
+          "arquivo": "src/hooks/chat/useWhisperCount.ts"
+        },
+        {
+          "nome": "useWhisperMessagesMutation",
+          "arquivo": "src/hooks/chat/useWhisperMessagesMutation.ts"
         }
       ],
       "buckets": [
-        "audio-messages"
+        "audio-messages",
+        "whatsapp-media"
       ],
-      "edges": [],
+      "edges": [
+        "ai-conversation-analysis",
+        "evolution-api",
+        "sentiment-alert"
+      ],
       "rpcs": [
         "can_delete_contacts",
+        "close_conversation_atomic",
         "contacts_count_by_type",
         "enqueue_outbound_message",
         "enqueue_rich_outbound_message",
         "get_conversation_tab_counts",
         "get_inbox_contact_summaries",
         "get_last_message_dates",
-        "search_contacts"
+        "get_own_gmail_accounts",
+        "reopen_conversation",
+        "search_contacts",
+        "search_email_threads",
+        "set_conversation_status",
+        "transfer_conversation"
       ],
       "tabelas": [
         "ai_conversation_tags",
@@ -2727,18 +3139,38 @@
         "contact_notes",
         "contact_purchases",
         "contacts",
+        "conversation_analyses",
         "conversation_events",
         "conversation_memory",
         "conversation_sla",
+        "conversation_snoozes",
         "conversation_tasks",
         "csat_surveys",
         "deal_activities",
+        "email_attachments",
+        "email_labels",
+        "email_messages",
+        "email_threads",
+        "favorite_contacts",
+        "feature_flags",
+        "message_reactions",
+        "message_templates",
         "messages",
+        "pinned_conversations",
         "profiles",
+        "queue_members",
+        "queues",
         "sales_deals",
         "sales_pipeline_stages",
-        "user_settings"
-      ]
+        "scheduled_messages",
+        "sla_configurations",
+        "sla_rules",
+        "stickers",
+        "user_settings",
+        "whatsapp_connections",
+        "whisper_messages"
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "omnichannel",
@@ -2770,7 +3202,8 @@
         "profiles",
         "queues",
         "whatsapp_connections_safe"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "performance",
@@ -2829,7 +3262,8 @@
         "performance_snapshots",
         "profiles",
         "user_settings"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "privacy",
@@ -2885,7 +3319,8 @@
         "messages",
         "profiles",
         "user_settings"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "public-api",
@@ -2899,7 +3334,8 @@
       "buckets": [],
       "edges": [],
       "rpcs": [],
-      "tabelas": []
+      "tabelas": [],
+      "imports_quebrados": []
     },
     {
       "id": "queues",
@@ -2919,8 +3355,12 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 14,
+      "arquivos_lidos": 17,
       "hooks": [
+        {
+          "nome": "useLayoutContext",
+          "arquivo": "src/contexts/LayoutContext.tsx"
+        },
         {
           "nome": "useQueueGoalMetrics",
           "arquivo": "src/hooks/business/useQueueGoals.ts"
@@ -2944,14 +3384,17 @@
       ],
       "buckets": [],
       "edges": [],
-      "rpcs": [],
+      "rpcs": [
+        "rpc_queue_goal_metrics"
+      ],
       "tabelas": [
         "contacts",
         "profiles",
         "queue_goals",
         "queue_members",
         "queues"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "reports",
@@ -3000,7 +3443,8 @@
         "profiles",
         "queue_members",
         "queues"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "schedule",
@@ -3020,7 +3464,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 20,
+      "arquivos_lidos": 21,
       "hooks": [
         {
           "nome": "useAgentPresenceMap",
@@ -3033,6 +3477,10 @@
         {
           "nome": "useAuth",
           "arquivo": "src/hooks/auth/useAuth.tsx"
+        },
+        {
+          "nome": "useLayoutContext",
+          "arquivo": "src/contexts/LayoutContext.tsx"
         },
         {
           "nome": "useMessageUpdateBatcher",
@@ -3070,7 +3518,8 @@
         "queues",
         "scheduled_messages",
         "user_settings"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "search-insights",
@@ -3102,7 +3551,8 @@
       "rpcs": [
         "get_search_insights"
       ],
-      "tabelas": []
+      "tabelas": [],
+      "imports_quebrados": []
     },
     {
       "id": "security",
@@ -3122,7 +3572,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 54,
+      "arquivos_lidos": 57,
       "hooks": [
         {
           "nome": "useAppBootstrap",
@@ -3151,6 +3601,10 @@
         {
           "nome": "useMessageUpdateBatcher",
           "arquivo": "src/hooks/realtime/useMessageUpdateBatcher.ts"
+        },
+        {
+          "nome": "useMFA",
+          "arquivo": "src/hooks/auth/useMFA.ts"
         },
         {
           "nome": "useMfaFactors",
@@ -3236,7 +3690,8 @@
         "user_devices",
         "user_roles",
         "user_settings"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "sentiment",
@@ -3272,7 +3727,8 @@
         "audit_logs",
         "conversation_analyses",
         "profiles"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "settings",
@@ -3289,7 +3745,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 71,
+      "arquivos_lidos": 95,
       "hooks": [
         {
           "nome": "useActionFeedback",
@@ -3314,6 +3770,14 @@
         {
           "nome": "useBusinessHours",
           "arquivo": "src/hooks/business/useBusinessHours.ts"
+        },
+        {
+          "nome": "useChatTextSize",
+          "arquivo": "src/components/theme/useChatTextSize.ts"
+        },
+        {
+          "nome": "useConnectionAlertPreferences",
+          "arquivo": "src/hooks/system/useConnectionAlertPreferences.ts"
         },
         {
           "nome": "useConnectionsManager",
@@ -3372,8 +3836,24 @@
           "arquivo": "src/hooks/system/useNotificationSettings.ts"
         },
         {
+          "nome": "useNPSSurveys",
+          "arquivo": "src/hooks/business/useNPSSurveys.ts"
+        },
+        {
           "nome": "useOnboarding",
           "arquivo": "src/hooks/ui/useOnboarding.ts"
+        },
+        {
+          "nome": "usePersonalStickers",
+          "arquivo": "src/hooks/integrations/usePersonalStickers.ts"
+        },
+        {
+          "nome": "usePushNotifications",
+          "arquivo": "src/hooks/system/usePushNotifications.ts"
+        },
+        {
+          "nome": "useQuickReplies",
+          "arquivo": "src/hooks/chat/useQuickReplies.ts"
         },
         {
           "nome": "useRealtimeNotifications",
@@ -3407,13 +3887,15 @@
       "buckets": [
         "audio-memes",
         "audio-messages",
-        "avatars"
+        "avatars",
+        "stickers"
       ],
       "edges": [
         "ai-proxy",
         "chatbot-l1",
         "classify-audio-meme",
-        "elevenlabs-sfx"
+        "elevenlabs-sfx",
+        "evolution-api"
       ],
       "rpcs": [
         "app_bootstrap",
@@ -3433,6 +3915,7 @@
         "away_messages",
         "business_hours",
         "chatbot_flows",
+        "connection_alert_preferences",
         "contacts",
         "csat_auto_config",
         "followup_executions",
@@ -3440,14 +3923,18 @@
         "followup_steps",
         "global_settings",
         "knowledge_base_articles",
+        "message_templates",
         "messages",
+        "nps_surveys",
         "profiles",
         "queue_skill_requirements",
         "queues",
+        "stickers",
         "user_roles",
         "user_settings",
         "whatsapp_connections"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "sla",
@@ -3467,8 +3954,12 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 6,
+      "arquivos_lidos": 15,
       "hooks": [
+        {
+          "nome": "useSLAConfigurations",
+          "arquivo": "src/hooks/sla/useSLAConfigurations.ts"
+        },
         {
           "nome": "useSLAHistory",
           "arquivo": "src/hooks/sla/useSLAHistory.ts"
@@ -3476,15 +3967,32 @@
         {
           "nome": "useSLAMetrics",
           "arquivo": "src/hooks/sla/useSLAMetrics.ts"
+        },
+        {
+          "nome": "useSLARules",
+          "arquivo": "src/hooks/sla/useSLARules.ts"
+        },
+        {
+          "nome": "useSLARulesCounts",
+          "arquivo": "src/hooks/sla/useSLARulesCounts.ts"
+        },
+        {
+          "nome": "useSLAScopeNames",
+          "arquivo": "src/hooks/sla/useSLAScopeNames.ts"
         }
       ],
       "buckets": [],
       "edges": [],
       "rpcs": [],
       "tabelas": [
+        "contacts",
         "conversation_sla",
-        "profiles"
-      ]
+        "profiles",
+        "queues",
+        "sla_configurations",
+        "sla_rules"
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "supervisao",
@@ -3504,7 +4012,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 27,
+      "arquivos_lidos": 40,
       "hooks": [
         {
           "nome": "useAgentPresenceMap",
@@ -3523,12 +4031,28 @@
           "arquivo": "src/hooks/connections/useConnectionsHealth.ts"
         },
         {
+          "nome": "useLayoutContext",
+          "arquivo": "src/contexts/LayoutContext.tsx"
+        },
+        {
           "nome": "useMessageUpdateBatcher",
           "arquivo": "src/hooks/realtime/useMessageUpdateBatcher.ts"
         },
         {
           "nome": "useNotificationSettings",
           "arquivo": "src/hooks/system/useNotificationSettings.ts"
+        },
+        {
+          "nome": "useQueueGoalMetrics",
+          "arquivo": "src/hooks/business/useQueueGoals.ts"
+        },
+        {
+          "nome": "useQueueGoals",
+          "arquivo": "src/hooks/business/useQueueGoals.ts"
+        },
+        {
+          "nome": "useQueues",
+          "arquivo": "src/hooks/business/useQueues.ts"
         },
         {
           "nome": "useRealtimeNotifications",
@@ -3539,19 +4063,25 @@
           "arquivo": "src/hooks/realtime/useSupabaseRealtime.ts"
         },
         {
+          "nome": "useToast",
+          "arquivo": "src/hooks/ui/use-toast.ts"
+        },
+        {
           "nome": "useUserRole",
           "arquivo": "src/hooks/system/useUserRole.ts"
         }
       ],
       "buckets": [],
       "edges": [
-        "ai-proxy"
+        "ai-proxy",
+        "evolution-api"
       ],
       "rpcs": [
         "app_bootstrap",
         "enqueue_outbound_message",
         "enqueue_rich_outbound_message",
         "get_inbox_contact_summaries",
+        "rpc_queue_goal_metrics",
         "user_has_permission"
       ],
       "tabelas": [
@@ -3560,12 +4090,15 @@
         "messages",
         "playbooks",
         "profiles",
+        "queue_goals",
+        "queue_members",
         "queues",
         "training_sessions",
         "user_roles",
         "user_settings",
         "whatsapp_connections"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "talkx",
@@ -3585,7 +4118,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 132,
+      "arquivos_lidos": 137,
       "hooks": [
         {
           "nome": "useActiveDepartments",
@@ -3763,6 +4296,8 @@
       "rpcs": [
         "can_delete_contacts",
         "contacts_count_by_type",
+        "delete_talkx_campaign",
+        "duplicate_talkx_campaign",
         "enqueue_outbound_message",
         "enqueue_rich_outbound_message",
         "get_inbox_contact_summaries",
@@ -3770,8 +4305,11 @@
         "get_team_profiles",
         "is_admin_or_supervisor",
         "log_talkx_campaign_checklist",
+        "replace_talkx_draft_recipients",
         "retry_talkx_recipients",
+        "save_talkx_campaign_draft",
         "search_contacts",
+        "snapshot_talkx_campaign_audience",
         "talkx_benchmarks",
         "talkx_campaign_recipients_page",
         "talkx_campaign_report",
@@ -3779,12 +4317,20 @@
         "talkx_delete_link",
         "talkx_engine_window_open",
         "talkx_overview_stats",
+        "talkx_resolve_audience",
+        "talkx_segment_bulk_action",
+        "talkx_segment_library_stats",
         "talkx_suppress_contact",
+        "talkx_suppression_stats",
+        "talkx_template_library_stats",
+        "talkx_template_stats",
         "talkx_upsert_link",
+        "update_talkx_campaign_limits",
         "update_talkx_template_with_snapshot"
       ],
       "tabelas": [
         "ai_conversation_tags",
+        "catalog_send_events",
         "contact_custom_fields",
         "contact_notes",
         "contacts",
@@ -3804,7 +4350,8 @@
         "talkx_template_versions",
         "user_settings",
         "whatsapp_connections"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "talkx-kit",
@@ -3813,12 +4360,13 @@
       "arquivo": "src/components/talkx/__dev__/TalkXKit.tsx",
       "especial": false,
       "menu": null,
-      "arquivos_lidos": 1,
+      "arquivos_lidos": 17,
       "hooks": [],
       "buckets": [],
       "edges": [],
       "rpcs": [],
-      "tabelas": []
+      "tabelas": [],
+      "imports_quebrados": []
     },
     {
       "id": "tasks",
@@ -3835,7 +4383,7 @@
         "atalho": "Alt+K",
         "layout": "full"
       },
-      "arquivos_lidos": 76,
+      "arquivos_lidos": 81,
       "hooks": [
         {
           "nome": "useAuth",
@@ -3844,6 +4392,10 @@
         {
           "nome": "useContactsSearch",
           "arquivo": "src/hooks/crm/useContactsSearch.ts"
+        },
+        {
+          "nome": "useLayoutContext",
+          "arquivo": "src/contexts/LayoutContext.tsx"
         },
         {
           "nome": "useMessageUpdateBatcher",
@@ -3903,6 +4455,7 @@
       ],
       "tabelas": [
         "ai_conversation_tags",
+        "catalog_send_events",
         "contact_custom_fields",
         "contact_notes",
         "contacts",
@@ -3912,7 +4465,8 @@
         "messages",
         "profiles",
         "user_settings"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "team-chat",
@@ -3929,7 +4483,7 @@
         "atalho": "Alt+M",
         "layout": "full"
       },
-      "arquivos_lidos": 61,
+      "arquivos_lidos": 87,
       "hooks": [
         {
           "nome": "useActiveDepartments",
@@ -3952,6 +4506,14 @@
           "arquivo": "src/hooks/team-chat/useDepartmentManagement.ts"
         },
         {
+          "nome": "useAudioMemes",
+          "arquivo": "src/hooks/communication/useAudioMemes.ts"
+        },
+        {
+          "nome": "useAudioRecorder",
+          "arquivo": "src/hooks/communication/useAudioRecorder.ts"
+        },
+        {
           "nome": "useAuth",
           "arquivo": "src/hooks/auth/useAuth.tsx"
         },
@@ -3962,6 +4524,10 @@
         {
           "nome": "useCreateTeamConversation",
           "arquivo": "src/hooks/chat/useTeamChat.ts"
+        },
+        {
+          "nome": "useCustomEmojis",
+          "arquivo": "src/hooks/integrations/useCustomEmojis.ts"
         },
         {
           "nome": "useDeleteConversation",
@@ -4052,6 +4618,14 @@
           "arquivo": "src/hooks/chat/useTeamChat.ts"
         },
         {
+          "nome": "useSpeechToText",
+          "arquivo": "src/hooks/communication/useSpeechToText.ts"
+        },
+        {
+          "nome": "useStickerPicker",
+          "arquivo": "src/hooks/sticker-picker/useStickerPicker.ts"
+        },
+        {
           "nome": "useSupabaseRealtime",
           "arquivo": "src/hooks/realtime/useSupabaseRealtime.ts"
         },
@@ -4108,20 +4682,34 @@
           "arquivo": "src/hooks/system/useUserSettings.ts"
         }
       ],
-      "buckets": [],
-      "edges": [],
+      "buckets": [
+        "audio-memes",
+        "audio-messages",
+        "custom-emojis",
+        "stickers"
+      ],
+      "edges": [
+        "ai-enhance-message",
+        "classify-audio-meme",
+        "classify-emoji",
+        "classify-sticker"
+      ],
       "rpcs": [
         "create_department_invite",
         "create_team_group_conversation",
         "enqueue_outbound_message",
         "enqueue_rich_outbound_message",
         "find_or_create_direct_conversation",
+        "fn_list_audio_memes_for_user",
+        "fn_send_audio_meme",
+        "fn_toggle_user_meme_favorite",
         "get_department_whatsapp_mode",
         "get_inbox_contact_summaries",
         "get_team_birthdays",
         "get_team_inbox",
         "get_team_messages_page",
         "get_team_profiles",
+        "increment_custom_emoji_use",
         "mark_team_conversation_read",
         "search_team_messages",
         "set_department_whatsapp_config",
@@ -4131,19 +4719,23 @@
         "transfer_team_conversation_ownership"
       ],
       "tabelas": [
+        "audio_memes",
         "contacts",
+        "custom_emojis",
         "department_audit_logs",
         "department_invitations",
         "departments",
         "messages",
         "profiles",
+        "stickers",
         "team_conversation_members",
         "team_conversations",
         "team_message_reactions",
         "team_message_read_state",
         "team_messages",
         "user_settings"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "telemetry",
@@ -4162,7 +4754,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 7,
+      "arquivos_lidos": 8,
       "hooks": [
         {
           "nome": "useClientErrors",
@@ -4175,7 +4767,8 @@
       "tabelas": [
         "audit_logs",
         "query_telemetry"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "themes",
@@ -4209,7 +4802,8 @@
       "buckets": [],
       "edges": [],
       "rpcs": [],
-      "tabelas": []
+      "tabelas": [],
+      "imports_quebrados": []
     },
     {
       "id": "ticket-classifier",
@@ -4236,7 +4830,8 @@
         "ai-classify-tickets"
       ],
       "rpcs": [],
-      "tabelas": []
+      "tabelas": [],
+      "imports_quebrados": []
     },
     {
       "id": "transcriptions",
@@ -4255,7 +4850,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 5,
+      "arquivos_lidos": 7,
       "hooks": [
         {
           "nome": "useMediaElementVolume",
@@ -4275,7 +4870,8 @@
       "rpcs": [],
       "tabelas": [
         "messages"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "voip",
@@ -4292,7 +4888,7 @@
         "atalho": "Alt+T",
         "layout": null
       },
-      "arquivos_lidos": 54,
+      "arquivos_lidos": 55,
       "hooks": [
         {
           "nome": "useAppBootstrap",
@@ -4321,6 +4917,10 @@
         {
           "nome": "useCallsKpi",
           "arquivo": "src/hooks/calls/useCallsKpi.ts"
+        },
+        {
+          "nome": "useLayoutContext",
+          "arquivo": "src/contexts/LayoutContext.tsx"
         },
         {
           "nome": "useMediaElementVolume",
@@ -4387,7 +4987,8 @@
         "user_roles",
         "user_settings",
         "whatsapp_connections"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "wa-flows",
@@ -4407,14 +5008,20 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 3,
-      "hooks": [],
+      "arquivos_lidos": 4,
+      "hooks": [
+        {
+          "nome": "useLayoutContext",
+          "arquivo": "src/contexts/LayoutContext.tsx"
+        }
+      ],
       "buckets": [],
       "edges": [],
       "rpcs": [],
       "tabelas": [
         "whatsapp_flows"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "wa-templates",
@@ -4485,7 +5092,8 @@
         "user_roles",
         "user_settings",
         "whatsapp_templates"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "wallet",
@@ -4505,11 +5113,15 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 3,
+      "arquivos_lidos": 6,
       "hooks": [
         {
           "nome": "useClientWallet",
           "arquivo": "src/hooks/business/useClientWallet.ts"
+        },
+        {
+          "nome": "useLayoutContext",
+          "arquivo": "src/contexts/LayoutContext.tsx"
         }
       ],
       "buckets": [],
@@ -4519,7 +5131,8 @@
         "client_wallet_rules",
         "profiles",
         "whatsapp_connections"
-      ]
+      ],
+      "imports_quebrados": []
     },
     {
       "id": "warroom",
@@ -4539,11 +5152,15 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 24,
+      "arquivos_lidos": 26,
       "hooks": [
         {
           "nome": "useAgentPresenceMap",
           "arquivo": "src/hooks/crm/useAgentPresence.ts"
+        },
+        {
+          "nome": "useAgentReassignment",
+          "arquivo": "src/hooks/crm/useAgentReassignment.ts"
         },
         {
           "nome": "useAuth",
@@ -4584,6 +5201,8 @@
         "enqueue_outbound_message",
         "enqueue_rich_outbound_message",
         "get_inbox_contact_summaries",
+        "reassign_absent_agents",
+        "reassign_overloaded_agents",
         "warroom_agent_today",
         "warroom_queue_stats"
       ],
@@ -4594,7 +5213,8 @@
         "profiles",
         "user_settings",
         "warroom_alerts"
-      ]
+      ],
+      "imports_quebrados": []
     }
   ],
   "hooks": {
@@ -4701,7 +5321,8 @@
     "useAdvancedContactSearch": {
       "arquivo": "src/hooks/crm/useAdvancedContactSearch.ts",
       "telas": [
-        "contacts"
+        "contacts",
+        "inbox"
       ]
     },
     "useAgentGamification": {
@@ -4723,9 +5344,16 @@
         "agents",
         "dashboard",
         "inbox",
+        "omni-inbox",
         "reports",
         "schedule",
         "supervisao",
+        "warroom"
+      ]
+    },
+    "useAgentReassignment": {
+      "arquivo": "src/hooks/crm/useAgentReassignment.ts",
+      "telas": [
         "warroom"
       ]
     },
@@ -4741,6 +5369,7 @@
         "agents",
         "dashboard",
         "inbox",
+        "omni-inbox",
         "reports",
         "schedule"
       ]
@@ -4754,19 +5383,22 @@
     "useAiRequestGeneration": {
       "arquivo": "src/lib/aiRequest/context.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useAmbientColor": {
       "arquivo": "src/hooks/ui/useAmbientColor.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useAnalysisTts": {
       "arquivo": "src/components/inbox/ai-tools/useAnalysisTts.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useAppBootstrap": {
@@ -4790,6 +5422,13 @@
     "useApplicableSLA": {
       "arquivo": "src/hooks/sla/useApplicableSLA.ts",
       "telas": [
+        "inbox",
+        "omni-inbox"
+      ]
+    },
+    "useAttachmentSuggestion": {
+      "arquivo": "src/hooks/copilot/useAttachmentSuggestion.ts",
+      "telas": [
         "inbox"
       ]
     },
@@ -4802,7 +5441,8 @@
     "useAudioMemes": {
       "arquivo": "src/hooks/communication/useAudioMemes.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "team-chat"
       ]
     },
     "useAudioPlayer": {
@@ -4814,7 +5454,9 @@
     "useAudioRecorder": {
       "arquivo": "src/hooks/communication/useAudioRecorder.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox",
+        "team-chat"
       ]
     },
     "useAuditLogDashboard": {
@@ -4886,6 +5528,7 @@
       "telas": [
         "contacts",
         "dashboard",
+        "inbox",
         "talkx"
       ]
     },
@@ -4897,6 +5540,7 @@
         "crm360",
         "email-chat",
         "inbox",
+        "omni-inbox",
         "talkx"
       ]
     },
@@ -4951,7 +5595,9 @@
     "useCatalogFavorites": {
       "arquivo": "src/hooks/integrations/useExternalCatalog.ts",
       "telas": [
-        "catalog"
+        "catalog",
+        "contacts",
+        "inbox"
       ]
     },
     "useCatalogRecentSends": {
@@ -4970,7 +5616,9 @@
     "useCatalogSendReadiness": {
       "arquivo": "src/hooks/integrations/useCatalogSendReadiness.ts",
       "telas": [
-        "catalog"
+        "catalog",
+        "contacts",
+        "inbox"
       ]
     },
     "useCatalogStats": {
@@ -4979,34 +5627,51 @@
         "catalog"
       ]
     },
+    "useCelebration": {
+      "arquivo": "src/components/effects/Confetti.tsx",
+      "telas": [
+        "dashboard"
+      ]
+    },
     "useChatInputLogic": {
       "arquivo": "src/components/inbox/chat/useChatInputLogic.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useChatMediaSending": {
       "arquivo": "src/components/inbox/useChatMediaSending.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useChatMessageNavigation": {
       "arquivo": "src/components/inbox/chat/chatMessageNavigation.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useChatPanelHandlers": {
       "arquivo": "src/components/inbox/chat/useChatPanelHandlers.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useChatSearch": {
       "arquivo": "src/hooks/chat/useChatSearch.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
+      ]
+    },
+    "useChatTextSize": {
+      "arquivo": "src/components/theme/useChatTextSize.ts",
+      "telas": [
+        "settings"
       ]
     },
     "useChatbotFlows": {
@@ -5031,6 +5696,12 @@
       "arquivo": "src/hooks/integrations/useMultiplixDispatches.ts",
       "telas": [
         "multiplix"
+      ]
+    },
+    "useConnectionAlertPreferences": {
+      "arquivo": "src/hooks/system/useConnectionAlertPreferences.ts",
+      "telas": [
+        "settings"
       ]
     },
     "useConnectionAuditLogs": {
@@ -5098,7 +5769,8 @@
     "useContactFormValidation": {
       "arquivo": "src/components/contacts/useContactFormValidation.ts",
       "telas": [
-        "contacts"
+        "contacts",
+        "inbox"
       ]
     },
     "useContactIntelligence": {
@@ -5130,7 +5802,8 @@
       "telas": [
         "contacts",
         "email-chat",
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useContactPurchases": {
@@ -5148,7 +5821,9 @@
     "useContactSearch": {
       "arquivo": "src/components/catalog/useSendProduct.ts",
       "telas": [
-        "catalog"
+        "catalog",
+        "contacts",
+        "inbox"
       ]
     },
     "useContactSearchV2": {
@@ -5197,6 +5872,7 @@
       "arquivo": "src/hooks/crm/useContactsSearch.ts",
       "telas": [
         "contacts",
+        "inbox",
         "tasks"
       ]
     },
@@ -5215,13 +5891,15 @@
     "useConversationActions": {
       "arquivo": "src/hooks/chat/useConversationActions.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useConversationAnalyses": {
       "arquivo": "src/hooks/chat/useConversationAnalyses.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useConversationHistoryTimeline": {
@@ -5239,6 +5917,12 @@
     },
     "useConversationTabCounts": {
       "arquivo": "src/hooks/chat/useConversationTabCounts.ts",
+      "telas": [
+        "inbox"
+      ]
+    },
+    "useCopilotFeedback": {
+      "arquivo": "src/hooks/copilot/useCopilotFeedback.ts",
       "telas": [
         "inbox"
       ]
@@ -5270,7 +5954,8 @@
     "useCustomEmojis": {
       "arquivo": "src/hooks/integrations/useCustomEmojis.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "team-chat"
       ]
     },
     "useCustomShortcuts": {
@@ -5399,10 +6084,12 @@
       "arquivo": "src/hooks/system/useDownloadPermission.ts",
       "telas": [
         "catalog",
+        "contacts",
         "email-chat",
         "gmail",
         "inbox",
-        "integrations"
+        "integrations",
+        "omni-inbox"
       ]
     },
     "useEditTeamMessage": {
@@ -5414,19 +6101,22 @@
     "useEmailContactContext": {
       "arquivo": "src/hooks/crm/useEmailContactContext.ts",
       "telas": [
-        "email-chat"
+        "email-chat",
+        "omni-inbox"
       ]
     },
     "useEmailThreadForContact": {
       "arquivo": "src/hooks/integrations/useEmailThreadForContact.ts",
       "telas": [
-        "email-chat"
+        "email-chat",
+        "omni-inbox"
       ]
     },
     "useEmailThreadListQuery": {
       "arquivo": "src/hooks/email/useEmailThreadListQuery.ts",
       "telas": [
-        "email-chat"
+        "email-chat",
+        "omni-inbox"
       ]
     },
     "useEvolutionApi": {
@@ -5434,6 +6124,7 @@
       "telas": [
         "connections",
         "inbox",
+        "omni-inbox",
         "settings"
       ]
     },
@@ -5442,6 +6133,7 @@
       "telas": [
         "connections",
         "inbox",
+        "omni-inbox",
         "settings"
       ]
     },
@@ -5450,6 +6142,7 @@
       "telas": [
         "connections",
         "inbox",
+        "omni-inbox",
         "settings"
       ]
     },
@@ -5458,6 +6151,7 @@
       "telas": [
         "connections",
         "inbox",
+        "omni-inbox",
         "settings"
       ]
     },
@@ -5466,6 +6160,7 @@
       "telas": [
         "connections",
         "inbox",
+        "omni-inbox",
         "settings"
       ]
     },
@@ -5484,13 +6179,16 @@
     "useExternalCargos": {
       "arquivo": "src/hooks/crm/useExternalCargos.ts",
       "telas": [
-        "contacts"
+        "contacts",
+        "inbox"
       ]
     },
     "useExternalCatalog": {
       "arquivo": "src/hooks/integrations/useExternalCatalog.ts",
       "telas": [
-        "catalog"
+        "catalog",
+        "contacts",
+        "inbox"
       ]
     },
     "useExternalContact360": {
@@ -5515,7 +6213,8 @@
     "useExternalEmpresas": {
       "arquivo": "src/hooks/crm/useExternalEmpresas.ts",
       "telas": [
-        "contacts"
+        "contacts",
+        "inbox"
       ]
     },
     "useExternalMessages": {
@@ -5533,7 +6232,9 @@
     "useExternalProduct": {
       "arquivo": "src/hooks/integrations/useExternalCatalog.ts",
       "telas": [
-        "catalog"
+        "catalog",
+        "contacts",
+        "inbox"
       ]
     },
     "useExternalSelect": {
@@ -5557,13 +6258,15 @@
         "crm360",
         "email-chat",
         "inbox",
+        "omni-inbox",
         "talkx"
       ]
     },
     "useFileUploadLogic": {
       "arquivo": "src/components/inbox/useFileUploadLogic.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useFilesActions": {
@@ -5594,6 +6297,18 @@
       "arquivo": "src/hooks/chat/useFilesViewState.ts",
       "telas": [
         "inbox"
+      ]
+    },
+    "useFocusManagement": {
+      "arquivo": "src/components/a11y/a11yHooks.tsx",
+      "telas": [
+        "dashboard"
+      ]
+    },
+    "useFocusVisible": {
+      "arquivo": "src/components/a11y/a11yHooks.tsx",
+      "telas": [
+        "dashboard"
       ]
     },
     "useForwardMessage": {
@@ -5632,7 +6347,8 @@
       "telas": [
         "email-chat",
         "gmail",
-        "integrations"
+        "integrations",
+        "omni-inbox"
       ]
     },
     "useGmailLabelsManagement": {
@@ -5640,7 +6356,8 @@
       "telas": [
         "email-chat",
         "gmail",
-        "integrations"
+        "integrations",
+        "omni-inbox"
       ]
     },
     "useGmailStoredDataCounts": {
@@ -5707,7 +6424,9 @@
       "arquivo": "src/hooks/ui/use-mobile.tsx",
       "telas": [
         "catalog",
+        "contacts",
         "inbox",
+        "omni-inbox",
         "team-chat"
       ]
     },
@@ -5732,7 +6451,20 @@
     "useLayoutContext": {
       "arquivo": "src/contexts/LayoutContext.tsx",
       "telas": [
-        "inbox"
+        "agents",
+        "connections",
+        "crm360",
+        "groups",
+        "inbox",
+        "knowledge",
+        "meta-capi",
+        "queues",
+        "schedule",
+        "supervisao",
+        "tasks",
+        "voip",
+        "wa-flows",
+        "wallet"
       ]
     },
     "useLayoutScroll": {
@@ -5761,6 +6493,12 @@
     },
     "useLoginBlockedLog": {
       "arquivo": "src/hooks/system/useLoginBlockedLog.ts",
+      "telas": [
+        "security"
+      ]
+    },
+    "useMFA": {
+      "arquivo": "src/hooks/auth/useMFA.ts",
       "telas": [
         "security"
       ]
@@ -5817,6 +6555,7 @@
       "arquivo": "src/components/inbox/chat/MentionAutocomplete.tsx",
       "telas": [
         "inbox",
+        "omni-inbox",
         "team-chat"
       ]
     },
@@ -5829,7 +6568,8 @@
     "useMessageSignature": {
       "arquivo": "src/hooks/chat/useMessageSignature.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useMessageTemplates": {
@@ -5983,6 +6723,7 @@
       "arquivo": "src/hooks/tasks/useMyWorkItems.ts",
       "telas": [
         "inbox",
+        "omni-inbox",
         "tasks"
       ]
     },
@@ -5990,12 +6731,14 @@
       "arquivo": "src/hooks/business/useNPSSurveys.ts",
       "telas": [
         "dashboard",
-        "nps"
+        "nps",
+        "settings"
       ]
     },
     "useNarrowViewport": {
       "arquivo": "src/components/tasks/shared/pointerMedia.ts",
       "telas": [
+        "inbox",
         "tasks"
       ]
     },
@@ -6008,7 +6751,8 @@
     "useNextBestAction": {
       "arquivo": "src/hooks/chat/useNextBestAction.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useNotificationSettings": {
@@ -6082,13 +6826,21 @@
     "usePeriodFilter": {
       "arquivo": "src/components/inbox/ai-tools/PeriodFilterSelector.tsx",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
+      ]
+    },
+    "usePersonalStickers": {
+      "arquivo": "src/hooks/integrations/usePersonalStickers.ts",
+      "telas": [
+        "settings"
       ]
     },
     "usePointerCoarse": {
       "arquivo": "src/components/tasks/shared/pointerMedia.ts",
       "telas": [
         "contacts",
+        "inbox",
         "tasks"
       ]
     },
@@ -6113,7 +6865,14 @@
     "usePushNotifications": {
       "arquivo": "src/hooks/system/usePushNotifications.ts",
       "telas": [
-        "security"
+        "security",
+        "settings"
+      ]
+    },
+    "useQuarantineForMessage": {
+      "arquivo": "src/hooks/integrations/useQuarantineForMessage.ts",
+      "telas": [
+        "inbox"
       ]
     },
     "useQuarantineMedia": {
@@ -6125,13 +6884,15 @@
     "useQueueGoalMetrics": {
       "arquivo": "src/hooks/business/useQueueGoals.ts",
       "telas": [
-        "queues"
+        "queues",
+        "supervisao"
       ]
     },
     "useQueueGoals": {
       "arquivo": "src/hooks/business/useQueueGoals.ts",
       "telas": [
-        "queues"
+        "queues",
+        "supervisao"
       ]
     },
     "useQueueHealth": {
@@ -6146,19 +6907,25 @@
         "connections",
         "dashboard",
         "inbox",
-        "queues"
+        "omni-inbox",
+        "queues",
+        "supervisao"
       ]
     },
     "useQuickReplies": {
       "arquivo": "src/hooks/chat/useQuickReplies.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox",
+        "settings"
       ]
     },
     "useRateLimitCooldown": {
       "arquivo": "src/components/catalog/catalogShared.tsx",
       "telas": [
-        "catalog"
+        "catalog",
+        "contacts",
+        "inbox"
       ]
     },
     "useReactionMutations": {
@@ -6298,6 +7065,12 @@
         "transcriptions"
       ]
     },
+    "useRovingTabindex": {
+      "arquivo": "src/components/a11y/a11yHooks.tsx",
+      "telas": [
+        "dashboard"
+      ]
+    },
     "useSLACalculation": {
       "arquivo": "src/hooks/sla/useSLACalculation.ts",
       "telas": [
@@ -6307,7 +7080,8 @@
     "useSLAConfigurations": {
       "arquivo": "src/hooks/sla/useSLAConfigurations.ts",
       "telas": [
-        "dashboard"
+        "dashboard",
+        "sla"
       ]
     },
     "useSLAHistory": {
@@ -6321,6 +7095,24 @@
       "arquivo": "src/hooks/sla/useSLAMetrics.ts",
       "telas": [
         "dashboard",
+        "sla"
+      ]
+    },
+    "useSLARules": {
+      "arquivo": "src/hooks/sla/useSLARules.ts",
+      "telas": [
+        "sla"
+      ]
+    },
+    "useSLARulesCounts": {
+      "arquivo": "src/hooks/sla/useSLARulesCounts.ts",
+      "telas": [
+        "sla"
+      ]
+    },
+    "useSLAScopeNames": {
+      "arquivo": "src/hooks/sla/useSLAScopeNames.ts",
+      "telas": [
         "sla"
       ]
     },
@@ -6340,6 +7132,7 @@
       "arquivo": "src/hooks/chat/useScheduledMessages.ts",
       "telas": [
         "inbox",
+        "omni-inbox",
         "schedule"
       ]
     },
@@ -6376,13 +7169,16 @@
     "useSendToContact": {
       "arquivo": "src/components/catalog/useSendProduct.ts",
       "telas": [
-        "catalog"
+        "catalog",
+        "contacts",
+        "inbox"
       ]
     },
     "useSentimentAlerts": {
       "arquivo": "src/hooks/inbox/useSentimentAlerts.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useSentimentData": {
@@ -6397,10 +7193,24 @@
         "dashboard"
       ]
     },
+    "useSmartTemplates": {
+      "arquivo": "src/hooks/copilot/useSmartTemplates.ts",
+      "telas": [
+        "inbox"
+      ]
+    },
+    "useSpeechToText": {
+      "arquivo": "src/hooks/communication/useSpeechToText.ts",
+      "telas": [
+        "inbox",
+        "team-chat"
+      ]
+    },
     "useStickerPicker": {
       "arquivo": "src/hooks/sticker-picker/useStickerPicker.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "team-chat"
       ]
     },
     "useSummaryTts": {
@@ -6445,7 +7255,8 @@
     "useSyncToCRM": {
       "arquivo": "src/hooks/integrations/useSyncToCRM.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useSystemHealthSignals": {
@@ -6637,6 +7448,7 @@
     "useTasksUiOptional": {
       "arquivo": "src/components/tasks/shared/tasksUi.ts",
       "telas": [
+        "inbox",
         "tasks"
       ]
     },
@@ -6700,6 +7512,7 @@
       "arquivo": "src/hooks/communication/useTextToSpeech.ts",
       "telas": [
         "inbox",
+        "omni-inbox",
         "team-chat"
       ]
     },
@@ -6707,6 +7520,7 @@
       "arquivo": "src/hooks/ui/useTheme.ts",
       "telas": [
         "inbox",
+        "omni-inbox",
         "settings",
         "team-chat",
         "themes"
@@ -6726,8 +7540,10 @@
         "dashboard",
         "groups",
         "inbox",
+        "omni-inbox",
         "queues",
-        "settings"
+        "settings",
+        "supervisao"
       ]
     },
     "useTodayHourlyVolume": {
@@ -6751,7 +7567,8 @@
     "useTypingPresence": {
       "arquivo": "src/hooks/chat/useTypingPresence.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useUndoableAction": {
@@ -6794,6 +7611,7 @@
       "arquivo": "src/hooks/system/useUserSettings.ts",
       "telas": [
         "inbox",
+        "omni-inbox",
         "settings",
         "team-chat"
       ]
@@ -6805,6 +7623,12 @@
         "diagnostics",
         "evolution-monitor",
         "security"
+      ]
+    },
+    "useVoiceDictation": {
+      "arquivo": "src/hooks/copilot/useVoiceDictation.ts",
+      "telas": [
+        "inbox"
       ]
     },
     "useVolumeRocker": {
@@ -6852,13 +7676,15 @@
     "useWhisperCount": {
       "arquivo": "src/hooks/chat/useWhisperCount.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     },
     "useWhisperMessagesMutation": {
       "arquivo": "src/hooks/chat/useWhisperMessagesMutation.ts",
       "telas": [
-        "inbox"
+        "inbox",
+        "omni-inbox"
       ]
     }
   },

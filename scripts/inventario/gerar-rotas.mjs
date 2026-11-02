@@ -10,7 +10,8 @@
  *  - Para cada tela: segue os imports a partir do arquivo da tela (mesma pasta de feature,
  *    src/hooks/ e src/services/) e lista hooks, edge functions invocadas, RPCs, tabelas (.from e
  *    /rest/v1) e buckets de storage (storage.from).
- *  - `problemas`: item de menu sem tela, tela sem item de menu, import que nao resolve.
+ *  - `problemas`: item de menu sem tela, tela sem item de menu, tela/URL sem arquivo e import local
+ *    que nao resolve.
  *
  * Uso:
  *   node scripts/inventario/gerar-rotas.mjs           grava inventario/estado/rotas.json
@@ -68,47 +69,61 @@ export function extrairChamadas(texto) {
   return {
     tabelas,
     buckets,
-    rpcs: [...pegar(/\.rpc\(\s*['"`]([A-Za-z0-9_]+)['"`]/g), ...pegar(/\/rest\/v1\/rpc\/([A-Za-z0-9_]+)/g)],
-    edges: pegar(/functions\.invoke\(\s*['"`]([A-Za-z0-9_-]+)['"`]/g),
+    // `.rpc('x')` e o apelido `const rpc = supabase.rpc.bind(...)` + `rpc('x')`.
+    rpcs: [...pegar(/(?:\.|\b)rpc\(\s*['"`]([A-Za-z0-9_]+)['"`]/g), ...pegar(/\/rest\/v1\/rpc\/([A-Za-z0-9_]+)/g)],
+    // `invoke('evolution-api/connect')` conta como a edge `evolution-api`.
+    edges: pegar(/functions\.invoke\(\s*['"`]([A-Za-z0-9_-]+)(?:\/[^'"`]*)?['"`]/g),
   };
 }
 
 const ehTeste = (p) => /(\.test\.|\.spec\.|__tests__|\.stories\.)/.test(p);
 
 /**
- * Fecho de imports a partir do arquivo da tela, limitado a: a pasta da feature da tela,
- * src/hooks/ e src/services/ (componentes compartilhados de UI ficam de fora).
+ * Fecho de imports a partir do arquivo da tela. Segue sem limite a pasta da feature da tela,
+ * src/hooks/ e src/services/; componentes de OUTRA feature em src/components/ (ex.: a aba
+ * Filas da Supervisão renderiza QueuesView) entram ate MAX_SALTOS_FEATURE saltos. Fica de fora
+ * so o kit de UI (src/components/ui/) e teste. Import local que nao resolve vira problema.
  */
+export const MAX_SALTOS_FEATURE = 2;
 export function fechoDaTela(raiz, arquivoTelaAbs) {
   const pastaFeature = path.dirname(arquivoTelaAbs);
-  const permitido = (abs) => !ehTeste(abs) && (abs.startsWith(pastaFeature + path.sep)
-    || abs.startsWith(path.join(raiz, 'src/hooks') + path.sep)
-    || abs.startsWith(path.join(raiz, 'src/services') + path.sep));
-  const visitados = new Set();
+  const dentro = (abs, rel_) => abs.startsWith(path.join(raiz, rel_) + path.sep);
+  const livre = (abs) => abs.startsWith(pastaFeature + path.sep) || dentro(abs, 'src/hooks') || dentro(abs, 'src/services');
+  const outraFeature = (abs) => dentro(abs, 'src/components') && !dentro(abs, 'src/components/ui');
+  const saltosVistos = new Map(); // arquivo -> menor numero de saltos com que foi visitado
   const hooks = new Map();
+  const quebrados = new Set();
   const chamadas = { tabelas: [], buckets: [], rpcs: [], edges: [] };
-  const pilha = [arquivoTelaAbs];
-  while (pilha.length) {
-    const atual = pilha.pop();
-    if (visitados.has(atual)) continue;
-    visitados.add(atual);
+  const fila = [[arquivoTelaAbs, 0]];
+  while (fila.length) {
+    const [atual, saltos] = fila.shift();
+    if (saltosVistos.has(atual) && saltosVistos.get(atual) <= saltos) continue;
+    const primeiraVez = !saltosVistos.has(atual);
+    saltosVistos.set(atual, saltos);
     const texto = fs.readFileSync(atual, 'utf8');
-    const c = extrairChamadas(texto);
-    for (const k of Object.keys(chamadas)) chamadas[k].push(...c[k]);
+    if (primeiraVez) {
+      const c = extrairChamadas(texto);
+      for (const k of Object.keys(chamadas)) chamadas[k].push(...c[k]);
+    }
     for (const imp of extrairImports(texto)) {
       const alvo = resolverImport(raiz, atual, imp.especificador);
-      if (!alvo) continue;
+      if (alvo === undefined && !/\.(css|scss|svg|png|jpe?g|webp|gif|json)(\?.*)?$|\?/.test(imp.especificador)) {
+        quebrados.add(`${rel(raiz, atual)} -> ${imp.especificador}`);
+      }
+      if (!alvo || ehTeste(alvo)) continue;
       for (const nome of imp.nomes) if (/^use[A-Z]/.test(nome) && !hooks.has(nome)) hooks.set(nome, rel(raiz, alvo));
-      if (permitido(alvo)) pilha.push(alvo);
+      if (livre(alvo)) fila.push([alvo, saltos]);
+      else if (outraFeature(alvo) && saltos < MAX_SALTOS_FEATURE) fila.push([alvo, saltos + 1]);
     }
   }
   return {
-    arquivos_lidos: visitados.size,
+    arquivos_lidos: saltosVistos.size,
     hooks: [...hooks.entries()].map(([nome, arquivo]) => ({ nome, arquivo })).sort((a, b) => a.nome.localeCompare(b.nome)),
     buckets: unico(chamadas.buckets),
     edges: unico(chamadas.edges),
     rpcs: unico(chamadas.rpcs),
     tabelas: unico(chamadas.tabelas),
+    imports_quebrados: [...quebrados].sort(),
   };
 }
 
@@ -207,7 +222,7 @@ export function gerarRotas(raiz = RAIZ_PADRAO) {
     arquivo: t.arquivo,
     especial: t.especial,
     menu: menu[t.id] ?? null,
-    ...(t.arquivo ? fechoDaTela(raiz, path.join(raiz, t.arquivo)) : { arquivos_lidos: 0, hooks: [], buckets: [], edges: [], rpcs: [], tabelas: [] }),
+    ...(t.arquivo ? fechoDaTela(raiz, path.join(raiz, t.arquivo)) : { arquivos_lidos: 0, hooks: [], buckets: [], edges: [], rpcs: [], tabelas: [], imports_quebrados: [] }),
   })).sort((a, b) => a.id.localeCompare(b.id));
 
   const hooks = {};
@@ -222,6 +237,7 @@ export function gerarRotas(raiz = RAIZ_PADRAO) {
     ...telas.filter((t) => !t.menu).map((t) => ({ tipo: 'tela_sem_menu', id: t.id, detalhe: 'sem item no NavigationService: canAccess nega por padrao, salvo gate proprio' })),
     ...telas.filter((t) => !t.arquivo).map((t) => ({ tipo: 'tela_sem_arquivo', id: t.id, detalhe: `${t.componente} nao resolve em lazyViews` })),
     ...urls.filter((u) => u.componente && !u.arquivo && !u.redireciona).map((u) => ({ tipo: 'url_sem_arquivo', id: u.caminho, detalhe: `${u.componente} nao resolve em AppRoutes` })),
+    ...telas.flatMap((t) => t.imports_quebrados.map((q) => ({ tipo: 'import_quebrado', id: t.id, detalhe: q }))),
   ];
 
   return {
