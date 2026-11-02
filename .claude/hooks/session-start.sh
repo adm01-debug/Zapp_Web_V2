@@ -20,9 +20,10 @@ mkdir -p graphify-out
 LOG=graphify-out/.session-start.log
 MARCA=graphify-out/.session-built-commit
 
-# Mesma versão do setup local (fonte única: scripts/graphify/setup.sh).
-versao="$(sed -n 's/^GRAPHIFY_VERSION="\${GRAPHIFY_VERSION:-\([0-9.]*\)}"$/\1/p' scripts/graphify/setup.sh)"
-versao="${versao:-0.9.68}"
+# Mesma versão do setup local (fonte única: scripts/graphify/setup.sh), respeitando o mesmo
+# override GRAPHIFY_VERSION que o setup aceita.
+versao_padrao="$(sed -n 's/^GRAPHIFY_VERSION="\${GRAPHIFY_VERSION:-\([0-9.]*\)}"$/\1/p' scripts/graphify/setup.sh)"
+versao="${GRAPHIFY_VERSION:-${versao_padrao:-0.9.68}}"
 
 exec >>"$LOG" 2>&1
 echo "== $(date -u +%FT%TZ) session-start (graphify $versao)"
@@ -49,7 +50,7 @@ fi
 graphify --version
 
 head_sha="$(git rev-parse HEAD)"
-if [ -f graphify-out/graph.json ] && [ "$(cat "$MARCA" 2>/dev/null)" = "$head_sha" ]; then
+if [ -f graphify-out/graph.json ] && [ -f graphify-out/GRAPH_REPORT.md ] && [ "$(cat "$MARCA" 2>/dev/null)" = "$head_sha" ]; then
   echo "grafo já está no commit $head_sha — nada a fazer"
   exit 0
 fi
