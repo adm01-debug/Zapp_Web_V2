@@ -342,7 +342,7 @@ O deploy é automático via **Vercel** (projeto `zapp_web_v2`, branch de produç
 
 | Documento | Descrição |
 |-----------|-----------|
-| [`docs/TECHNICAL_DOCUMENTATION.md`](docs/TECHNICAL_DOCUMENTATION.md) | Documentação técnica (90KB) |
+| [`docs/_arquivo/docs/TECHNICAL_DOCUMENTATION.md`](docs/_arquivo/docs/TECHNICAL_DOCUMENTATION.md) | Documentação técnica (90KB) — arquivada, histórico; o estado atual está em `CLAUDE.md` e `inventario/estado/` |
 | [`docs/COMPLETE_SYSTEM_FEATURES.md`](docs/COMPLETE_SYSTEM_FEATURES.md) | Funcionalidades do sistema (45KB) |
 | [`docs/EVOLUTION_API_REFERENCE.md`](docs/EVOLUTION_API_REFERENCE.md) | Referência de 60+ endpoints |
 | [`docs/BACKUP-RECOVERY-STRATEGY.md`](docs/BACKUP-RECOVERY-STRATEGY.md) | Estratégia de backup |

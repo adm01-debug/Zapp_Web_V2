@@ -1,101 +1,26 @@
-# CLAUDE.md — ZAPP WEB V2 (leitura OBRIGATÓRIA antes de qualquer ação)
+# CLAUDE.md — ZAPP WEB V2 (ficha técnica do repositório)
 
-> Fonte de verdade sobre **como trabalhar**, **qual banco** e **qual Evolution API** este projeto usa.
+> **Só conteúdo técnico e estado real do projeto**: qual banco, qual Evolution API, como o repo é
+> escrito, o que o CI faz, o que a Vercel serve e as regras de domínio que o código não deixa óbvio.
 > Errar o banco aqui já causou retrabalho real. Confira SEMPRE antes de rodar SQL ou deploy.
 > Revisado em 2026-11-01 contra o estado real (GitHub, banco, workflows). Se algo divergir da
 > realidade, corrija ESTE arquivo no mesmo PR do fix.
+> Como trabalhar (comunicação, PR, merge) fica em AGENTS.md, importado abaixo — aqui, não.
 
----
-
-## Regras de trabalho (definidas pelo Joaquim — valem acima de qualquer outra seção)
-
-### Contexto
-Quase tudo aqui é código, raramente do zero: manutenção de sistemas ~80% prontos — bug em front, edge functions, SQL, workflows; auditoria/hardening (RLS, índices, permissões, CI, segredos); deploy/infra quebrado em produção; implementar o que falta nos 20%. O Joaquim não é dev: decide negócio, você executa engenharia. Responda em PT-BR.
-
-### Princípio de toda decisão
-Qualidade + velocidade: executar com êxito total o máximo de tarefas e desafios, pelo caminho mais rápido e mais econômico em tokens. Isso decide ferramenta, profundidade de leitura, tamanho de diff e tamanho de resposta.
-
-### Como trabalhar
-1. Execução end-to-end via MCP (GitHub, Supabase, infra, automações). O Joaquim manda print/descrição; você resolve inteiro. Nunca "copie e cole", "roda aí", "você faz X e eu faço Y".
-2. Aja como dev sênior e decida por ele. Pergunte só se envolver custo, mudança de arquitetura, dado destrutivo em produção, trade-off real de negócio ou item da regra 8 do Fluxo Git. Para ler/inspecionar, nunca peça permissão.
-3. Verdade acima de validação. Não sabe → diga. Falhou → diga. Nunca afirme ter testado/validado o que não rodou. Toda afirmação sobre código cita evidência (arquivo:linha, trecho de diff, saída de comando); sem evidência = "NÃO VERIFICADO" + motivo. Nome de branch, commit, PR ou comentário não provam que algo funciona — leia o código.
-4. Diff mínimo, zero churn. Causa raiz, não reescrita. Não refatore, renomeie, "melhore" ou comente o que não foi pedido. Não reescreva arquivo inteiro para mudar 3 linhas. Dependência nova ou bump de versão major só se indispensável — e avise na PR.
-5. `APROVADO` = execute o plano exatamente como descrito, sem reconfirmar.
-6. Foco: uma tarefa por vez (vários itens pedidos = em sequência, cada um com sua branch/PR). Achou outro bug? Não conserte — anote em "Próximos passos". Nada de "aproveitei e também…". Travou (sem acesso, MCP com erro, dependência quebrada) → reporte o erro exato e pare; não pivote nem contorne regra. Antes de concluir, releia o pedido e entregue aquilo.
-7. Tokens: leia só o trecho necessário (range de linhas, grep). Se o repo tiver índice/grafo de código, use antes de buscar por texto (confira se está no commit atual). Exploração ampla → subagente. Não rode tool "por garantia" que não muda a decisão. Não gere código que não será aplicado. Não reformule o plano a cada turno.
-8. Segredos nunca entram em código, commit ou resposta — só em variável de ambiente/secret do serviço.
-
-### Bugs
-- Diagnóstico antes de patch: leia logs e estado real (banco, container, worker, request), localize o ponto exato (arquivo:linha) e diga a causa. Não chute fix em cima de suposição. Sintoma com mais de uma causa → liste todas, corrija a pedida.
-- Antes de abrir PR: typecheck/lint/testes dos arquivos tocados, quando o repo tiver. Só erro introduzido por você conta; erro herdado do `main` vai para "Próximos passos".
-- "Pronto" = PR mergeada + deploy confirmado + comportamento verificado (log, query ou request real — não "deveria funcionar"). Faltou um dos três → diga em que ponto parou.
-
-### Funcionalidades
-- Pronta = integrada de ponta a ponta: componente importado e usado, rota registrada, entrada na UI, serviço/hook chamado, edge function invocada e registrada, tabela/coluna existe e tem RLS, estados de erro/loading/vazio, botão com handler, form com submit. Sem corpo vazio, mock, hardcode, TODO/WIP.
-- Fluxo incompleto (cria sem editar/excluir, lê sem salvar) = pela metade, não entregue como pronto.
-- Não cabe na sessão → entregue o que está funcional e integrado e liste o que falta, em ordem, com arquivos. Nunca deixe código morto ou feature "quase" sem dizer.
-
-### Comunicação
-- Resultado primeiro, contexto depois — só o que muda uma decisão do Joaquim. Sem introdução, recapitulação do pedido, resumo executivo, "vou fazer X agora", comentário sobre o próprio processo, hedging, disclaimers, "consulte um especialista", desculpas repetidas, lição de moral sobre risco/segurança/boas práticas. Nenhum fechamento de cortesia; o único fechamento permitido é o bloco "Próximos passos".
-- Diga o que mudou e o efeito no negócio; explique a técnica só se ele perguntar.
-- Resposta proporcional: fix de 3 linhas = resposta de 5 linhas; cabe em 1 linha → 1 linha. Não despeje log/arquivo/resultado de tool — cite só a linha que importa. Caminhos, comandos e links completos.
-- Destrutivo de verdade: uma linha ("isso apaga X, sem volta — confirma?") e ponto.
-
-### Nunca
-- Reaproveitar branch existente. Comitar em branch que você não criou nesta sessão. Commitar em `main`.
-- Mergear o que está na regra 8 do Fluxo Git.
-- Sugerir passo manual do Joaquim quando existe MCP para aquilo. Pedir para ele revisar diff, rodar comando ou testar localmente.
-- Narrar o que está fazendo. Perguntar "quer que eu faça?" depois de ele já ter pedido.
-- Plano de 12 fases para fix de 20 linhas.
-- Ler repo inteiro para achar 1 função.
-- Expandir escopo ou consertar o que não foi pedido, mesmo quebrado.
-- Afirmar "testado", "validado", "funcionando" sem evidência real.
-
-### Fluxo Git (vários agentes nos mesmos repos ao mesmo tempo)
-Escrita no GitHub em repos `adm01-debug`: use o `GITHUB - MCP - FOREVER`. O MCP padrão do GitHub retorna 403 em write.
-1. Nunca commite em `main`/`master`. Toda mudança nasce em branch própria.
-2. Só escreva em branch que VOCÊ criou nesta sessão. Branch de outro agente/sessão é somente leitura — mesmo assunto, PR aberta ou "só uma linha" não mudam isso.
-3. Antes de começar: liste as PRs abertas. PR aberta tocando os mesmos arquivos → pare e avise; não trabalhe nela nem abra outra por cima.
-4. Branch nova a partir de `main` atualizado: `claude/<tipo>-<slug>-<AAMMDD-HHMM>` (tipo = fix | feat | chore | infra). Sem carimbo não é aceito. Uma tarefa = uma branch = uma PR. Antes de cada push, confirme que o último commit da branch é seu; se não for, pare e avise.
-5. Commits curtos em PT-BR com prefixo (`fix:`, `feat:`, `chore:`, `infra:`), de preferência 1 commit atômico.
-6. PR sempre. Título = o que muda. Corpo = causa/por quê + o que foi verificado de verdade, com a evidência.
-7. Mergeie sem aprovação nem supervisão humana as PRs que você criou ou corrigiu e que já estão prontas: CI verde (ou repo sem CI), sem conflito com `main`, escopo comum (front, edge function, workflow, config). Squash-merge e apague a branch. Não espere "ok" — a única exceção é a regra 8.
-8. Deixe a PR aberta e chame o Joaquim (sem mergear) quando envolver: DDL/migration em banco de produção; CI/workflows, segredos, Dockerfile, stack/Swarm, Traefik; deleção de dado, mudança de arquitetura ou custo; conflito com PR de outro agente.
-9. Conflito: rebase da sua branch em `main`; `--force-with-lease` só na sua branch. Nunca force-push em `main`. Nunca rebase/force-push/commit/merge em branch alheia — nem para "ajudar".
-10. Merge em repo com deploy automático (Lovable/Vercel/Cloudflare) = produção. Depois do merge, confira que o deploy subiu e reporte. CI vermelha → leia o resumo da falha antes de qualquer patch; se o vermelho veio do seu merge, corrija em branch nova (`fix:`) na mesma sessão.
-11. Reporte no fim: link da PR + estado (mergeada / aberta aguardando o Joaquim / CI vermelha e por quê).
-
-### Sempre feche com 3 próximos passos
-Ao terminar qualquer tarefa de execução (fix, deploy, migração, auditoria, PR):
-
-```
-Próximos passos
-1. [título curto] — [por que, em 1 linha] · [repo/arquivo/camada]
-2. ...
-3. ...
-```
-
-- Exatamente 3, por impacto (o 1 é o que ele deveria fazer agora).
-- Derivados do que você realmente viu nesta sessão (código, logs, schema). Nada de "adicionar testes", "melhorar documentação", "revisar segurança".
-- Cada item executável por você via MCP, não tarefa manual dele. Escrito para quem não é dev: efeito no negócio, não a técnica.
-- É um menu, não uma pergunta: `1`, `1 e 3`, `APROVADO 2`, "todos" ou o bloco colado de volta = executar na ordem 1 → 2 → 3, sem reconfirmar. Nunca peça para "escolher uma" quando ele mandou o bloco inteiro.
-- Não use o bloco em resposta que foi só consulta, quando ele já rejeitou aquelas 3 sugestões ou quando não sobrou nada — escreva `Próximos passos: nada pendente neste escopo.`
+@AGENTS.md
 
 ---
 
 ## 0. Onde se trabalha
 
-**Fluxo vigente (medido em 2026-11-01):** agentes trabalham em branch própria `claude/...`, abrem PR, a
-CI roda e o merge é feito pelo agente conforme as regras 7 e 8 do Fluxo Git acima. O fluxo antigo de
-"git local + branch `dia/AAAA-MM-DD` + um PR por lote, nenhum agente abre PR" (2026-10-04) foi
-**abandonado** na prática — não o siga.
+Qual banco usar em cada situação:
 
 | Situação | Banco | Como |
 |---|---|---|
 | Diagnóstico | **produção, só leitura** | `SELECT` pelo MCP `SUPABASE - ZAPP WEB V2 - MCP`; nunca escrita para "testar" |
-| Migration nova | arquivo em `supabase/migrations/` | PR → CI (`db-guard.yml` faz o replay em Postgres descartável) → aprovação do Joaquim (regra 8) → apply (seção 1) |
+| Migration nova | arquivo em `supabase/migrations/` | PR → CI (`db-guard.yml` faz o replay em Postgres descartável) → apply (seção 1) |
 | Teste de comportamento de banco | **Postgres descartável** | `scripts/db-audit/*.test.sh` no CI; nunca no banco oficial |
-| Migration destrutiva, segredos, rotação de chaves | **só com o Joaquim** | — |
+| Migration destrutiva, segredos, rotação de chaves | **só com o dono do projeto** | — |
 
 Fatos técnicos que continuam valendo:
 
@@ -229,15 +154,10 @@ regerado. Não há passo manual no Postgres da GO (o MCP `HOSTINGER` não expõe
 - Sessão na nuvem: `git clone` e leitura por `raw.githubusercontent.com` funcionam (repo público), mas
   `git push` volta 403 do proxy (o repo não está entre as fontes autorizadas da sessão) — escreva só
   pelo MCP. Para listar PRs abertas com os arquivos que tocam numa chamada só, use `github_graphql`
-  (`pullRequests(states:OPEN){ nodes { number files { nodes { path } } } }`): é o jeito barato de
-  cumprir a regra 3 do Fluxo Git.
+  (`pullRequests(states:OPEN){ nodes { number files { nodes { path } } } }`): `github_list_pull_requests`
+  devolve o repositório inteiro em cada nó e estoura o contexto.
 - Sessões paralelas commitam no mesmo repo e no mesmo banco: re-sync antes de editar, conferir
   `max(version)` antes de registrar migration.
-- **Nunca feche PR de outra sessão** sem antes confirmar que o conteúdo dela chegou na `main` ou está
-  coberto por outra PR — fechar não é neutro, é desfazer trabalho alheio. Duas sessões já corrigiram o
-  mesmo problema em camadas diferentes e as duas mergearam (#704 + #707, retries que viraram 3 × 3).
-- Branch mergeado = deletado no mesmo turno. Nunca trabalhar em worktree sob `/tmp` (acumula
-  `prunable` silenciosamente).
 
 ### Mapa rápido e comandos (medido em 2026-11-01)
 
@@ -251,7 +171,8 @@ regerado. Não há passo manual no Postgres da GO (o MCP `HOSTINGER` não expõe
 | `scripts/ci/` | guardas do CI (`fila-merge.mjs`, `render-workflow-docs.mjs`, `check-claude-md-integrity.mjs`, baselines) |
 | `e2e/` | 51 specs Playwright; fixtures em `e2e/fixtures/` |
 | `docs/` | `DEPLOYMENT.md`, `MIGRATIONS.md`, `INCIDENT-RUNBOOK.md`, `CONEXOES_WHATSAPP_RUNBOOK.md`, `ci/README.md` (gerado), `talkx/`, `audits/` |
-| `analise/`, `analise-prs/`, `auditoria-supabase/`, `inventario/`, `qa/` | relatórios de sessões anteriores — leitura de contexto, não fonte de verdade |
+| `inventario/estado/` | **estado real gerado por script — consulte antes de buscar por texto:** `banco.json` (tabelas, RLS, uso no código, órfãs, cron com falhas, WhatsApp, edges publicadas, `alertas`), `rotas.json` (URL/tela → menu, papéis, hooks, edges, RPCs, tabelas), `edges.json`. Refeito toda segunda pelo `inventario-estado-semanal.yml` (PR automático); como gerar à mão em `inventario/estado/README.md` |
+| `docs/_arquivo/`, `qa/` | relatórios de sessões anteriores (`analise/`, `analise-prs/`, `auditoria-supabase/`, `inventario/` antigo, prosa velha da raiz e de `docs/`) — leitura de contexto, não fonte de verdade; `inventario/estado/` é o inventário vivo |
 
 Comandos (o repo usa **bun**: há `bun.lock` e **não** há `package-lock.json`, então `npm ci` falha —
 use `bun install --frozen-lockfile`):
@@ -325,9 +246,9 @@ Fatos do perímetro que já custaram retrabalho:
 
 ### Workflows
 
-**Inventário vigente (2026-11-01):** **17** arquivos em `.github/workflows/` — `auto-update-pr-branch`,
+**Inventário vigente (2026-11-02):** **18** arquivos em `.github/workflows/` — `auto-update-pr-branch`,
 `branch-hygiene-audit`, `ci`, `codeql`, `crm-sync-worker`, `db-guard`, `db-live-guard`, `db-migrate`,
-`deploy-functions`, `e2e-logado`, `e2e-talkx`, `notifica-falha-main`, `settings-guard`,
+`deploy-functions`, `e2e-logado`, `e2e-talkx`, `inventario-estado-semanal`, `notifica-falha-main`, `settings-guard`,
 `talkx-status-regen`, `targeted-ledger-evidence`, `types-sync`, `vercel-env-cleanup` — mais os
 dinâmicos do GitHub (Dependabot, Dependency Graph, Copilot). A fonte canônica do inventário é o
 **gerado** `docs/ci/README.md` (`scripts/ci/render-workflow-docs.mjs --check` roda no CI); esta lista
@@ -335,7 +256,7 @@ dinâmicos do GitHub (Dependabot, Dependency Graph, Copilot). A fonte canônica 
 
 - **Agendamentos (UTC):** types-sync `49 5 * * 1` · db-live-guard `13 6 * * 1` · settings-guard
   `15 7 * * *` · talkx-status-regen `45 7 * * 1` · branch-hygiene `56 7 * * 1` · codeql `30 9 * * *` ·
-  auto-update-pr-branch `7,37 * * * *`.
+  inventario-estado-semanal `23 10 * * 1` · auto-update-pr-branch `7,37 * * * *`.
 - **`db-live-guard` não roda em PR, por design** (não expõe `DESTINO_URL` a código de PR): roda no
   push da `main`, agendado e por dispatch, e abre/comenta uma issue única com label `db-live-guard`.
   Por isso o "Contrato DB vivo" nunca é required check. O retry de conexão mora **só** no transporte
@@ -351,14 +272,6 @@ dinâmicos do GitHub (Dependabot, Dependency Graph, Copilot). A fonte canônica 
   lista muda com frequência.
 - **Issues de alerta com mais de 20 comentários de bot** (`types-sync`, `db-live-guard`): feche com
   comentário-resumo e abra uma nova com o mesmo título e link para a anterior.
-
-### Planos e auditorias de referência
-
-- CI: `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md` (checklist reconciliado com
-  `docs/reconciliation/tasks/P006.json` — o teste `scripts/ci/ci-docs-baseline.unit.mjs` cobra a paridade).
-- Perímetro: `docs/audits/e95-perimetro-github-2026-10-03.md`.
-- Auditoria local↔GitHub↔banco: `docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md` (histórico).
-- Estado e pendências correntes do CI: `RELATORIO_CI.md`, `PENDENCIAS.md`, `ESTADO.md`.
 
 ---
 
@@ -397,24 +310,19 @@ superado pela regra acima (deploy automático no push da `main`).
 - Baseline de vars esperadas: `scripts/ci/vercel-env-baseline.json`; snapshot "antes":
   `docs/audits/vercel-snapshot-2026-10-18-antes.json`.
 
-### Pendências de Vercel (dependem do Joaquim no dashboard)
+### Pendências de Vercel (dependem de ação no dashboard)
 
-1. **V017** — redirect: apex canônico, `www` → apex.
-2. **V043–V065** — remover 17 vars de integração morta + 5 chaves de servidor + `VITE_*` não lidas.
-3. **V175/V176** — pausar e apagar o projeto legado `zapp-web` (`prj_OsErjUqsrMbwwC7S1LVfawmNgEce`),
-   que **ainda existe** (listado em 2026-11-01). Não é o projeto atual.
-4. **V185** — trocar `FALLBACK_ORIGIN` para o domínio próprio 7 dias depois do DNS estabilizar.
+1. Redirect: apex canônico, `www` → apex.
+2. Remover 17 vars de integração morta + 5 chaves de servidor + `VITE_*` não lidas.
+3. Pausar e apagar o projeto legado `zapp-web` (`prj_OsErjUqsrMbwwC7S1LVfawmNgEce`), que **ainda
+   existe** (listado em 2026-11-01). Não é o projeto atual.
+4. Trocar `FALLBACK_ORIGIN` para o domínio próprio 7 dias depois do DNS estabilizar.
 
 ---
 
 ## 6. Regras de domínio que o código não deixa óbvio
 
 ### Talk X / Campanhas
-- **Plano vigente: V4** — `docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md` (X001–X200), placar em
-  `docs/talkx/v4/STATUS.md` (gerado por `scripts/talkx/v4-status.mjs`; o CI roda `--check`). Os planos
-  anteriores (V3, recuperação, implementação 100, `PARIDADE.md`) estão arquivados — não executar.
-- Convenção V4: uma etapa = uma PR; branch `<agente>/<tipo>-talkx-x<NNN>-<slug>-<AAMMDD-HHMM>`; título
-  de PR terminando em `(X<NNN>)`.
 - Fixtures de E2E em produção — **não apagar:** conexão `e2e0e2e0-0000-4000-a000-e2e000000001`
   (status `connected`), segmento `621521f3-e9c9-49c2-834e-cea07545d476`, contato
   `04dff4dc-c6b1-4283-ac22-bd8639804759` ("[E2E] Contato de teste - nao apagar"). Sem eles,
@@ -431,7 +339,7 @@ superado pela regra acima (deploy automático no push da `main`).
 
 ### Convites de departamento (Team Chat)
 - O convite vive em `department_invitations` — a tabela que o aceite (`accept_department_invite`) lê.
-  `department_invites` é legada. Decisão do Joaquim (2026-11-01): **somente admin** cria e apaga
+  `department_invites` é legada. Decisão de produto (2026-11-01): **somente admin** cria e apaga
   convites. Detalhes em `src/hooks/team-chat/README.md`.
 
 ### UI
@@ -456,4 +364,6 @@ O projeto tem um grafo de conhecimento do código em `graphify-out/` quando ele 
 - Frescura: compare `git rev-parse --short HEAD` com a linha "Built from commit" do
   `GRAPH_REPORT.md`; se divergir, `graphify update .` (só AST, sem custo de API).
 - Os hooks em `.claude/settings.json` chamam `graphify hook-guard` e não fazem nada onde o graphify
-  não estiver instalado. Em sessão de nuvem sem graphify, siga sem ele.
+  não estiver instalado. Em sessão de nuvem, `.claude/hooks/session-start.sh` instala o graphify e gera o
+  grafo em segundo plano (~3 min; log em `graphify-out/.session-start.log`; pula se o grafo já é do commit
+  atual); até terminar, siga sem ele.
