@@ -3,9 +3,9 @@
     "data_analise": "2026-11-02",
     "total_prs": 98,
     "sha_main_inicio": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
-    "sha_main_atual": "50ca61a6ef96b366084548fbb3866974083def52",
+    "sha_main_atual": "4b5c6e7970512d16db5501a35cb2e7176941f69d",
     "gerado_em": "2026-11-02T06:00Z",
-    "nota": "98 PRs analisadas; 9 mergeadas; SHA main final: 50ca61a6 (PR #2569)"
+    "nota": "98 PRs analisadas; 10 mergeadas; SHA main final: 4b5c6e79 (PR #2522)"
   },
   "prs": [
     { "numero": 1930, "veredito": "FECHADA_SEM_MERGE" },
@@ -77,7 +77,7 @@
     { "numero": 2503, "veredito": "FECHADA_SEM_MERGE" },
     { "numero": 2504, "veredito": "FECHADA_SEM_MERGE" },
     { "numero": 2505, "veredito": "FECHADA_SEM_MERGE" },
-    { "numero": 2522, "veredito": "AGUARDANDO_CI", "motivo": "behind; auto_merge=squash" },
+    { "numero": 2522, "veredito": "MERGEADA", "merge_sha": "4b5c6e7970512d16db5501a35cb2e7176941f69d", "merged_at": "2026-11-02T05:20:24Z" },
     { "numero": 2526, "veredito": "BLOQUEADO_CONFLITO", "motivo": "dirty apos main avancar" },
     { "numero": 2533, "veredito": "BLOQUEADO_CONFLITO", "motivo": "dirty apos main avancar" },
     { "numero": 2536, "veredito": "BLOQUEADO_CONFLITO", "motivo": "supersedido por #2560" },

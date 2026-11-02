@@ -68,7 +68,7 @@ numero,veredito,merge_sha,merged_at,motivo
 2503,FECHADA_SEM_MERGE,,,
 2504,FECHADA_SEM_MERGE,,,
 2505,FECHADA_SEM_MERGE,,,
-2522,AGUARDANDO_CI,,,behind auto_merge=squash
+2522,MERGEADA,4b5c6e7970512d16db5501a35cb2e7176941f69d,2026-11-02T05:20:24Z,fix(e2e) Firefox GR-012
 2526,BLOQUEADO_CONFLITO,,,dirty apos main avancar
 2533,BLOQUEADO_CONFLITO,,,dirty apos main avancar
 2536,BLOQUEADO_CONFLITO,,,supersedido por 2560

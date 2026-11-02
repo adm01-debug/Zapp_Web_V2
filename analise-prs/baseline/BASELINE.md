@@ -1,19 +1,19 @@
-# Baseline do main — SHA: 50ca61a6ef96b366084548fbb3866974083def52
+# Baseline do main — SHA: 4b5c6e7970512d16db5501a35cb2e7176941f69d
 Data: 2026-11-02
 
-Última PR mergeada: #2569 (fix(ci): testes GR-027 + gatilho workflow_run e2e-logado GR-029) em 2026-11-02T04:43:24Z
+Última PR mergeada: #2522 (fix(e2e): aguarda teclado visível antes do primeiro clique — Firefox GR-012) em 2026-11-02T05:20:24Z
+SHA anterior (#2569): 50ca61a6ef96b366084548fbb3866974083def52
 
-## TypeCheck (ratchet)
+## TypeCheck (ratchet + tsc direto)
 - Baseline histórico: 93 erros
-- Atual no main: 3 erros (redução de 90 vs baseline histórico)
-- Novas dívidas introduzidas: 0
-- Status: ✅ ZERO erros novos
+- `npx tsc --noEmit` no SHA 4b5c6e79: exit=0 (ZERO erros reportados pelo tsc)
+- Ratchet node scripts/ci/typecheck-ratchet.mjs: baseline=93, atual=3, novas=0
+- Status: ✅ ZERO erros novos (evidência: tsc exit=0; ratchet exit=0)
 
 ## Lint (ESLint ratchet)
 - Baseline histórico: 820 ocorrências
-- Atual no main: 813 ocorrências (redução de 7 vs baseline histórico)
-- Novas dívidas introduzidas: 0
-- Status: ✅ ZERO ocorrências novas
+- node scripts/ci/lint-ratchet.mjs no SHA 4b5c6e79: baseline=820, atual=813, novas=0
+- Status: ✅ ZERO ocorrências novas (evidência: lint-ratchet exit=0)
 
 ## Build
 - Status: ✅ PASSANDO

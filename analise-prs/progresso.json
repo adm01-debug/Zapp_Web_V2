@@ -1,7 +1,7 @@
 {
   "main_sha": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
-  "main_sha_atual": "50ca61a6ef96b366084548fbb3866974083def52",
-  "main_commit": "Último merge confirmado: #2569 fix(ci): testes GR-027 + gatilho workflow_run e2e-logado GR-029",
+  "main_sha_atual": "4b5c6e7970512d16db5501a35cb2e7176941f69d",
+  "main_commit": "Último merge confirmado: #2522 fix(e2e): aguarda teclado visível antes do primeiro clique — Firefox GR-012 — 2026-11-02T05:20:24Z",
   "data_baseline": "2026-11-01",
   "data_analise": "2026-11-02",
   "total_prs_analisadas": 98,
@@ -11,7 +11,7 @@
   "typecheck_baseline": "72 erros (baseline histórico 93, redução de 21 confirmada em analise-prs/baseline/typecheck.txt)",
   "lint_baseline": "820 ocorrências (100% pré-existentes; confirmado em analise-prs/baseline/lint.txt)",
   "prs_analisadas": 92,
-  "prs_mergeadas_total": 9,
+  "prs_mergeadas_total": 10,
   "prs_mergeadas_lista": [
     {
       "numero": 2283,
@@ -66,6 +66,12 @@
       "sha": "50ca61a6ef96b366084548fbb3866974083def52",
       "merged_at": "2026-11-02T04:43:24Z",
       "titulo": "fix(ci): testes GR-027 + gatilho workflow_run e2e-logado GR-029"
+    },
+    {
+      "numero": 2522,
+      "sha": "4b5c6e7970512d16db5501a35cb2e7176941f69d",
+      "merged_at": "2026-11-02T05:20:24Z",
+      "titulo": "fix(e2e): aguarda teclado visível antes do primeiro clique — Firefox GR-012"
     }
   ],
   "auto_merge_habilitado_nesta_sessao": [
