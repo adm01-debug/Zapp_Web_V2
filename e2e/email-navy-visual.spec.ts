@@ -497,6 +497,17 @@ test('alto contraste e movimento reduzido mantêm o workspace acessível', async
   // acima usa antes de medir — e só então congela e mede.
   await waitForAppliedTheme(page, 'dark');
   await freezeVisualTransitions(page);
+  // Aguarda o primeiro elemento text-muted-foreground do workspace ter luminância > 0,3 (cinza
+  // claro do modo escuro ≈ 0,47) antes de executar o axe — garante que as variáveis CSS do tema
+  // foram commitadas no paint após o freeze, sem ler cores interpoladas da transição.
+  await page.waitForFunction(() => {
+    const el = document.querySelector('.email-workspace .text-muted-foreground');
+    if (!el) return true;
+    const c = getComputedStyle(el).color;
+    const [r, g, b] = (c.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+    const lin = (v: number) => { const x = v / 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.3;
+  });
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => {
     const axe = (window as unknown as Window & { axe: { run: (target: string) => Promise<AxeViolationResult>; _running?: boolean } }).axe;
