@@ -4,13 +4,13 @@
   "main_commit": "Último merge confirmado: #2482 docs(talkx): marca V4 como vigente e V3 como substituido",
   "data_baseline": "2026-11-01",
   "data_analise": "2026-11-02",
-  "total_prs_analisadas": 88,
+  "total_prs_analisadas": 91,
   "total_prs_abertas_no_inicio": 67,
   "drafts": 14,
   "ci_baseline": "72 erros TypeCheck (baseline 93; -21 via PR #2188); ESLint 820 ocorrências; Build passando; Testes unitários passando — SHA main 1252bb5a41123ba4d49efd84d0f91604bff6c87c",
   "typecheck_baseline": "72 erros (baseline histórico 93, redução de 21 confirmada em analise-prs/baseline/typecheck.txt)",
   "lint_baseline": "820 ocorrências (100% pré-existentes; confirmado em analise-prs/baseline/lint.txt)",
-  "prs_analisadas": 88,
+  "prs_analisadas": 91,
   "prs_mergeadas_total": 3,
   "prs_mergeadas_lista": [
     {
@@ -42,10 +42,11 @@
     {"numero": 2549, "titulo": "fix: reconexão automática WhatsApp", "motivo": "fix fluxos 2 e 9 — HABILITADO NESTA SESSÃO (2026-11-02)"}
   ],
   "auto_merge_desabilitado_nesta_sessao": [
-    {"numero": 2481, "titulo": "fix(rls): WITH CHECK explícito em 8 policies UPDATE críticas", "motivo": "corpo diz AGUARDANDO APROVAÇÃO DO JOAQUIM — DDL em produção (regra 8); auto_merge desabilitado 2026-11-02"}
+    {"numero": 2481, "titulo": "fix(rls): WITH CHECK explícito em 8 policies UPDATE críticas", "motivo": "corpo diz AGUARDANDO APROVAÇÃO DO JOAQUIM — DDL em produção (regra 8); auto_merge desabilitado 2026-11-02"},
+    {"numero": 2551, "titulo": "fix(ci): branch-hygiene-audit timeout no step KPI (GF-010)", "motivo": "contém 3 migrations RLS sem testes Postgres + 12 arquivos vs título diz 2; BLOQUEADO_RLS_SEM_TESTE; auto_merge desabilitado 2026-11-02"}
   ],
-  "status": "analise_completa_90_prs_revisado_02",
-  "nota": "2026-11-02T02:30Z: revisão 2ª sessão. #2481 corrigido para BLOQUEADO_AGUARDANDO_APROVACAO (auto_merge desabilitado). #2551 corrigido para BLOQUEADO_RLS_SEM_TESTE (título diz fix(ci) mas contém 3 migrations RLS sem testes Postgres). 14 PRs com auto_merge=SQUASH aguardando CI (fila pós-outage). Bloqueadas aguardando Joaquim: #2481 #2561 #2496 #2562. Feature freeze drafts: #2553 #2555 #2556 #2558 #2539.",
+  "status": "analise_completa_91_prs_revisado_03",
+  "nota": "2026-11-02T03:00Z: revisão 3ª sessão. #2563 novo PR adicionado (AGUARDANDO_CI; fix(ci) deploy-functions — 1 arquivo, auto_merge=squash já ativo). #2551 auto_merge desabilitado (BLOQUEADO_RLS_SEM_TESTE confirmado: 12 arquivos vs título diz 2). Total: 91 PRs analisadas. PRs com auto_merge=SQUASH aguardando CI: #2494 #2498 #2522 #2526 #2533 #2536 #2542 #2543 #2545 #2547 #2549 #2557 #2559 #2560 #2563 (15 total). Bloqueadas aguardando Joaquim: #2481 #2561 #2496 #2562. Feature freeze drafts: #2553 #2555 #2556 #2558 #2539.",
   "verdicts": {
     "1930": "AGUARDANDO_CI",
     "1997": "BLOQUEADO_DDL_WORKFLOW",
@@ -136,11 +137,12 @@
     "2559": "AGUARDANDO_CI",
     "2560": "AGUARDANDO_CI",
     "2561": "BLOQUEADO_AGUARDANDO_APROVACAO",
-    "2562": "BLOQUEADO_FEATURE_FREEZE"
+    "2562": "BLOQUEADO_FEATURE_FREEZE",
+    "2563": "AGUARDANDO_CI"
   },
   "contagem_por_veredito": {
     "MERGEADA": 3,
-    "AGUARDANDO_CI": 35,
+    "AGUARDANDO_CI": 36,
     "AGUARDANDO_CI_APOS_UPDATE": 3,
     "DRAFT_SKIP": 14,
     "BLOQUEADO_CONFLITO": 7,
@@ -156,6 +158,6 @@
     "SUPERSEDIDA": 1,
     "BLOQUEADO_FEATURE_FREEZE": 1,
     "FECHADA_SEM_MERGE": 8,
-    "TOTAL": 90
+    "TOTAL": 91
   }
 }
