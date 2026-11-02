@@ -98,6 +98,40 @@ A V15 corrigida (ordem REVOKE antes do DROP) é a migration
 `20260930750000_talkx_v15_replied_count_guard_and_drop_increment.sql` (mesmo nome,
 versão nova). Este arquivo fica aqui só como registro histórico do bug.
 
+### `20261020120000_e2e_fixture_message_rpc.sql`
+
+**Nunca aplicada — movida para evitar `missing_count=2` no `db-migrate.yml` (2026-11-02).**
+Função SECURITY DEFINER `public.e2e_fixture_message(p_op text)` para a suite E2E inserir
+mensagens `sender='contact'` sem violar o trigger `guard_message_provenance_fields`.
+
+Nunca foi aplicada porque a aprovação via ambiente `producao-ddl` não foi dada. A suite E2E
+usa o fallback legado em `e2e/fixtures/e2e-contact.ts` enquanto a função não existir.
+O comportamento do E2E é idêntico ao de antes desta migration ser escrita.
+
+Confirmação: `SELECT count(*) FROM supabase_migrations.schema_migrations WHERE version =
+'20261020120000'` → `0` (verificado em 2026-11-02).
+
+**Para reaplicar quando TalkX V4 / E2E forem retomados:** ver o arquivo neste diretório e
+aplicar via `producao-ddl` com aprovação do Joaquim. Não mover de volta para
+`supabase/migrations/`.
+
+### `20261023100000_talkx_campaign_recipients_page_add_segment.sql`
+
+**Nunca aplicada — movida para evitar `missing_count=2` no `db-migrate.yml` (2026-11-02).**
+Adiciona parâmetro `p_segment_id uuid DEFAULT NULL` à função
+`public.talkx_campaign_recipients_page` (etapa N-131 / N-095 do TalkX V4).
+
+Nunca foi aplicada porque o TalkX V4 está congelado por decisão de 2026-11-01
+(`.claude/CLAUDE.md`). A versão em produção tem 5 parâmetros (sem `p_segment_id`);
+o front (`TalkXRecipientsTable.tsx:71-77`) e `types.ts:14743-14750` usam essa assinatura.
+
+Confirmação: `SELECT count(*) FROM supabase_migrations.schema_migrations WHERE version =
+'20261023100000'` → `0` (verificado em 2026-11-02).
+
+**Para reaplicar quando TalkX V4 for retomado:** confirmar que front e `types.ts` foram
+atualizados para 6 parâmetros, então aplicar via `producao-ddl` com aprovação do Joaquim.
+Não mover de volta para `supabase/migrations/`.
+
 ## Regra
 
 Nao apagar. Nao reaplicar. Servem como registro historico do schema anterior a migracao.
