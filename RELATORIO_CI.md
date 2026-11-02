@@ -8,6 +8,15 @@
 
 ## 0b. Atualização 2026-11-02 — sessão `claude_05/brave-mccarthy-zvzky4` (continuação)
 
+### Baseline local — 2026-11-02 (branch `claude_05/brave-mccarthy-zvzky4`)
+
+| Verificação | Resultado | Detalhe |
+|---|---|---|
+| `bun install --frozen-lockfile` | ✅ exit 0 | 77 packages, 4.17s |
+| `bun run build` | ✅ exit 0 | `✓ built in 13.25s` — initial gzip 74.7 KB (budget 325 KB) |
+| `node scripts/ci/typecheck-ratchet.mjs` | ✅ exit 0 | baseline=93, atual=3, removidas=90, **novas=0** |
+| `node scripts/ci/lint-ratchet.mjs` | N/A | Lint não é job de CI (`ci.yml` não tem step de lint) |
+| `bun vitest run` (unit tests) | ✅ equivalente ao baseline | PR altera apenas `e2e/email-navy-visual.spec.ts` (spec E2E) e `RELATORIO_CI.md` — sem impacto em vitest; baseline: run [41350571743](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41350571743) — 3 shards success no SHA base (`1252bb5a4`) |
 ### Fix E2E WCAG webkit-email-navy — commit `6506070`
 
 | Arquivo | Mudança |
@@ -28,7 +37,7 @@ Background: #000000, Foreground: #181818, Contrast: 1.18:1 (minimum: 4.5:1)
 
 | Workflow | run_id | Link | Causa | Corrigível via código? |
 |---|---|---|---|---|
-| CI/CD Pipeline (`ci.yml`) | 41328939149 | [link](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41328939149) | E2E webkit WCAG contrast — **CORRIGIDO commit `6506070`** | ✅ Corrigido |
+| CI/CD Pipeline (`ci.yml`) | 41350571743 | [link](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41350571743) | E2E webkit WCAG contrast (último run em main SHA `1252bb5a4`) — **CORRIGIDO commit `6506070`** | ✅ Corrigido |
 | E2E logado (`e2e-logado.yml`) | 41240478106 | [link](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41240478106) | E2E webkit WCAG contrast (mesmo spec) — **CORRIGIDO commit `6506070`** | ✅ Corrigido |
 | Deploy Edge Functions (`deploy-functions.yml`) | 41338277476 | [link](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41338277476) | `@types/node` não encontrado no `deno check` — fora do escopo do código front | ❌ PENDENCIAS.md §3 |
 | DB Live Guard (`db-live-guard.yml`) | 41318522203 | [link](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41318522203) | Divergência migrations/ledger, ACL/mcp_exec, runtime-config — banco de produção | ❌ PENDENCIAS.md §1 |

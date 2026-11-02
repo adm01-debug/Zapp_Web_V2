@@ -83,38 +83,4 @@ gerado não é o que o `deno check` procura. Este workflow **não é um required
 
 ---
 
----
-
-## 4. E2E Tests (Playwright) — falha WCAG de contraste no webkit-email-navy (pré-existente)
-
-**Run com falha:** [41350571743](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41350571743) — job `🎭 E2E Tests (Playwright)` ID `124987818391`  
-**HEAD SHA:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c` (main)  
-**Este workflow É um required check** — bloqueia merge.
-
-**Erro exato (step "🧪 Run Playwright E2E (PR sem autenticação)", linha 513):**
-```
-[webkit-email-navy] › e2e/email-navy-visual.spec.ts:482:1
-  › alto contraste e movimento reduzido mantêm o workspace acessível
-
-    expect(violations).toEqual([]);
-
-  Violation: color-contrast
-  - Element .min-h-[72px].border-border/50 text (#181818 sobre #000000): contraste 1.18, mínimo 4.5:1
-  - Element span[title="02/10/2026, 11:24:00"]: contraste 1.18 (10px, normal)
-  - Element .line-clamp-2.leading-snug: contraste 1.18 (12px, normal)
-
-  130 passed, 1 failed
-  error: script "test:e2e" exited with code 1
-```
-
-**Causa raiz:** O inbox usa `bg-black` como fundo (documentado em "Lição de UI (2026-09-25)" no CLAUDE.md — token `--inbox-panel-bg`). Sob tema alto-contraste claro (`prefers-color-scheme: light, prefers-contrast: more`), o background vira `#000000` mas o texto permanece `#181818`, contraste 1.18:1 (WCAG AA exige 4.5:1 para texto normal < 18pt). O spec `email-navy-visual.spec.ts` detecta isso corretamente.
-
-**Por que não foi corrigido:** Requer mudança visual: rever o valor de `--inbox-panel-bg` no tema alto-contraste ou adicionar regra CSS `prefers-contrast: more`. Está fora do escopo desta sessão (correção de CI de infra).
-
-**O que o Joaquim precisa fazer:**
-1. Abrir `src/styles/tokens.css` e ajustar `--inbox-panel-bg` para um fundo com contraste ≥ 4.5:1 quando `prefers-contrast: more` estiver ativo (ex.: `#1a1a1a` → `#0a0a0a` não resolve — precisa de fundo claro ou texto mais claro no modo alto-contraste)
-2. Validar com `npx playwright test e2e/email-navy-visual.spec.ts --project=webkit-email-navy` localmente
-
----
-
-_Nota: Este arquivo deve ser atualizado quando os itens acima forem resolvidos._
+_Nota: §4 removido em 2026-11-02 — o erro WCAG webkit-email-navy foi corrigido via `requestAnimationFrame` em `e2e/email-navy-visual.spec.ts:499` (commit `6506070`). CI aguarda confirmação._
