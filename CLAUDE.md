@@ -171,6 +171,7 @@ regerado. Não há passo manual no Postgres da GO (o MCP `HOSTINGER` não expõe
 | `scripts/ci/` | guardas do CI (`fila-merge.mjs`, `render-workflow-docs.mjs`, `check-claude-md-integrity.mjs`, baselines) |
 | `e2e/` | 51 specs Playwright; fixtures em `e2e/fixtures/` |
 | `docs/` | `DEPLOYMENT.md`, `MIGRATIONS.md`, `INCIDENT-RUNBOOK.md`, `CONEXOES_WHATSAPP_RUNBOOK.md`, `ci/README.md` (gerado), `talkx/`, `audits/` |
+| `inventario/estado/` | **estado real gerado por script — consulte antes de buscar por texto:** `banco.json` (tabelas, RLS, uso no código, órfãs, cron com falhas, WhatsApp, edges publicadas, `alertas`), `rotas.json` (URL/tela → menu, papéis, hooks, edges, RPCs, tabelas), `edges.json`. Refeito toda segunda pelo `inventario-estado-semanal.yml` (PR automático); como gerar à mão em `inventario/estado/README.md` |
 | `docs/_arquivo/`, `qa/` | relatórios de sessões anteriores (`analise/`, `analise-prs/`, `auditoria-supabase/`, `inventario/` antigo, prosa velha da raiz e de `docs/`) — leitura de contexto, não fonte de verdade; `inventario/estado/` é o inventário vivo |
 
 Comandos (o repo usa **bun**: há `bun.lock` e **não** há `package-lock.json`, então `npm ci` falha —
@@ -245,9 +246,9 @@ Fatos do perímetro que já custaram retrabalho:
 
 ### Workflows
 
-**Inventário vigente (2026-11-01):** **17** arquivos em `.github/workflows/` — `auto-update-pr-branch`,
+**Inventário vigente (2026-11-02):** **18** arquivos em `.github/workflows/` — `auto-update-pr-branch`,
 `branch-hygiene-audit`, `ci`, `codeql`, `crm-sync-worker`, `db-guard`, `db-live-guard`, `db-migrate`,
-`deploy-functions`, `e2e-logado`, `e2e-talkx`, `notifica-falha-main`, `settings-guard`,
+`deploy-functions`, `e2e-logado`, `e2e-talkx`, `inventario-estado-semanal`, `notifica-falha-main`, `settings-guard`,
 `talkx-status-regen`, `targeted-ledger-evidence`, `types-sync`, `vercel-env-cleanup` — mais os
 dinâmicos do GitHub (Dependabot, Dependency Graph, Copilot). A fonte canônica do inventário é o
 **gerado** `docs/ci/README.md` (`scripts/ci/render-workflow-docs.mjs --check` roda no CI); esta lista
@@ -255,7 +256,7 @@ dinâmicos do GitHub (Dependabot, Dependency Graph, Copilot). A fonte canônica 
 
 - **Agendamentos (UTC):** types-sync `49 5 * * 1` · db-live-guard `13 6 * * 1` · settings-guard
   `15 7 * * *` · talkx-status-regen `45 7 * * 1` · branch-hygiene `56 7 * * 1` · codeql `30 9 * * *` ·
-  auto-update-pr-branch `7,37 * * * *`.
+  inventario-estado-semanal `23 10 * * 1` · auto-update-pr-branch `7,37 * * * *`.
 - **`db-live-guard` não roda em PR, por design** (não expõe `DESTINO_URL` a código de PR): roda no
   push da `main`, agendado e por dispatch, e abre/comenta uma issue única com label `db-live-guard`.
   Por isso o "Contrato DB vivo" nunca é required check. O retry de conexão mora **só** no transporte
@@ -363,4 +364,6 @@ O projeto tem um grafo de conhecimento do código em `graphify-out/` quando ele 
 - Frescura: compare `git rev-parse --short HEAD` com a linha "Built from commit" do
   `GRAPH_REPORT.md`; se divergir, `graphify update .` (só AST, sem custo de API).
 - Os hooks em `.claude/settings.json` chamam `graphify hook-guard` e não fazem nada onde o graphify
-  não estiver instalado. Em sessão de nuvem sem graphify, siga sem ele.
+  não estiver instalado. Em sessão de nuvem, `.claude/hooks/session-start.sh` instala o graphify e gera o
+  grafo em segundo plano (~3 min; log em `graphify-out/.session-start.log`; pula se o grafo já é do commit
+  atual); até terminar, siga sem ele.
