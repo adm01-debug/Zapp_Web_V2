@@ -79,14 +79,16 @@ export class NavigationService {
   escrever('src/components/a/AView.tsx', `
 import { useCoisa } from '@/hooks/useCoisa';
 import { Filho } from './Filho';
+import { Painel } from './Painel';
 import { Button } from '@/components/ui/button';
 export function AView() { useCoisa(); return null; }`);
   escrever('src/components/a/Filho.tsx', "export const Filho = () => supabase.functions.invoke('edge-a'); supabase.functions.invoke('edge-sub/acao');\nconst rpc = supabase.rpc.bind(supabase); rpc('rpc_por_apelido');");
+  escrever('src/components/a/Painel.tsx', "export const Painel = () => <code>\n  {SUPABASE_URL}/functions/v1/so-mostrada\n</code>;");
   escrever('src/components/a/Filho.test.tsx', "supabase.from('so_no_teste')");
   escrever('src/components/ui/button.tsx', "supabase.from('nao_e_da_feature')");
   escrever('src/hooks/useCoisa.ts', `
 import { servico } from '@/services/servico';
-export function useCoisa() { return supabase.from('coisas').select(); }`);
+export function useCoisa() { fetch(\`\${URL}/functions/v1/edge-por-url?x=1\`); fetch(\`\${URL}/functions/v1/\${nome}\`); return supabase.from('coisas').select(); }`);
   escrever('src/services/servico.ts', "import { ajudante } from '@/lib/ajudante';\nexport const servico = () => supabase.rpc('fn_servico');");
   escrever('src/lib/ajudante.ts', "export const ajudante = () => invokeEdge('edge-da-lib');");
   escrever('src/components/b/BView.tsx', "import { Aba } from '@/components/c/Aba';\nimport { Some } from './nao-existe';\nimport './estilo.css';\nexport function BView() { return null; }");
@@ -109,7 +111,8 @@ test('repo de brinquedo: URLs, telas, menu, fecho e problemas saem do codigo', (
   assert.equal(telas.a.arquivo, 'src/components/a/AView.tsx');
   assert.deepEqual(telas.a.menu, { rotulo: 'Tela A', secao: 'primary', grupo: null, papeis: [], permissao: 'a.ver', atalho: 'Alt+A', layout: null });
   assert.deepEqual(telas.a.hooks, [{ nome: 'useCoisa', arquivo: 'src/hooks/useCoisa.ts' }]);
-  assert.deepEqual(telas.a.edges, ['edge-a', 'edge-da-lib', 'edge-sub'], "invoke('edge-sub/acao') conta como edge-sub; segue service -> src/lib");
+  assert.deepEqual(telas.a.edges, ['edge-a', 'edge-da-lib', 'edge-por-url', 'edge-sub'],
+    "invoke('edge-sub/acao') conta como edge-sub; segue service -> src/lib; fetch em /functions/v1/<edge> conta; URL dinamica e URL so mostrada em JSX nao");
   assert.deepEqual(telas.a.rpcs, ['fn_servico', 'rpc_por_apelido'], 'segue hook -> service e pega rpc por apelido');
   assert.deepEqual(telas.a.tabelas, ['coisas'], 'ignora teste e componente compartilhado de UI');
   assert.equal(telas.b.especial, true);
@@ -163,4 +166,19 @@ test('rotas.json commitado esta em dia na parte estrutural (rode node scripts/in
   const commitado = JSON.parse(fs.readFileSync(path.join(raiz, 'inventario/estado/rotas.json'), 'utf8'));
   assert.deepEqual(estrutura(commitado), estrutura(gerarRotas(raiz)),
     'inventario/estado/rotas.json desatualizado: rode node scripts/inventario/gerar-rotas.mjs e commite');
+});
+
+test('extrairChamadas resolve fromTable literal e const de string do mesmo arquivo', () => {
+  const texto = `
+export const ACL_ALERTS_TABLE = 'security_acl_alerts';
+const TALKX_MEDIA_BUCKET = 'talkx-media';
+export function f() {
+  fromTable('user_sessions').select('id');
+  fromTable(ACL_ALERTS_TABLE).select('*');
+  supabase.storage.from(TALKX_MEDIA_BUCKET).remove(['x']);
+  supabase.storage.from(NAO_EXISTE).remove(['y']);
+}`;
+  const c = extrairChamadas(texto);
+  assert.deepEqual(c.tabelas.sort(), ['security_acl_alerts', 'user_sessions']);
+  assert.deepEqual(c.buckets, ['talkx-media']);
 });

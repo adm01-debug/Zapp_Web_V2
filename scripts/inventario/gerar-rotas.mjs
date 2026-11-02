@@ -57,14 +57,38 @@ export function extrairImports(texto) {
 }
 
 /**
- * Chamadas ao Supabase num texto: tabelas (`.from` do cliente e `/rest/v1/<tabela>`), buckets
- * (`storage.from`), RPCs (`.rpc`) e edges (`functions.invoke`).
+ * Mapa nome -> valor dos `const NOME = 'literal'` (ou `export const`) de nivel de modulo no texto.
+ * So resolve o caso mais comum do repo: identificador passado direto pra `.from`/`fromTable`/
+ * `storage.from`/`rpc`/`invoke` que e, no mesmo arquivo, uma constante de string (ex.:
+ * `TALKX_MEDIA_BUCKET`, `ACL_ALERTS_TABLE`). Nao resolve parametro de funcao nem ternario.
+ */
+function constantesDeString(texto) {
+  const mapa = new Map();
+  for (const m of texto.matchAll(/^\s*(?:export\s+)?const\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?::\s*[^=]+)?=\s*['"`]([A-Za-z0-9_.-]+)['"`]\s*[;,]?\s*$/gm)) {
+    mapa.set(m[1], m[2]);
+  }
+  return mapa;
+}
+
+/**
+ * Chamadas ao Supabase num texto: tabelas (`.from` do cliente, `fromTable` de
+ * src/lib/supabaseHelpers.ts e `/rest/v1/<tabela>`), buckets (`storage.from`), RPCs (`.rpc`) e
+ * edges (`functions.invoke`, `invokeEdge`, `/functions/v1/<edge>`).
  */
 export function extrairChamadas(texto) {
   const pegar = (re) => [...texto.matchAll(re)].map((m) => m[1]);
+  const consts = constantesDeString(texto);
   const tabelas = [];
   const buckets = [];
   for (const m of texto.matchAll(/(\bstorage\s*)?\.from\(\s*['"`]([A-Za-z0-9_-]+)['"`]/g)) (m[1] ? buckets : tabelas).push(m[2]);
+  for (const m of texto.matchAll(/(\bstorage\s*)?\.from\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)/g)) {
+    if (consts.has(m[2])) (m[1] ? buckets : tabelas).push(consts.get(m[2]));
+  }
+  // `fromTable('x')` / `fromTable(CONST)` — atalho tipado de src/lib/supabaseHelpers.ts, sempre tabela.
+  for (const m of texto.matchAll(/\bfromTable\(\s*['"`]([A-Za-z0-9_-]+)['"`]/g)) tabelas.push(m[1]);
+  for (const m of texto.matchAll(/\bfromTable\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)/g)) {
+    if (consts.has(m[1])) tabelas.push(consts.get(m[1]));
+  }
   tabelas.push(...pegar(/\/rest\/v1\/([A-Za-z0-9_]+)/g).filter((t) => t !== 'rpc'));
   return {
     tabelas,
@@ -73,7 +97,12 @@ export function extrairChamadas(texto) {
     rpcs: [...pegar(/(?:\.|\b)rpc\(\s*['"`]([A-Za-z0-9_]+)['"`]/g), ...pegar(/\/rest\/v1\/rpc\/([A-Za-z0-9_]+)/g)],
     // `functions.invoke` (inclusive quebrado em linha) e o atalho `invokeEdge<T>(...)` de
     // src/lib/invokeEdge.ts; `invoke('evolution-api/connect')` conta como a edge `evolution-api`.
-    edges: pegar(/(?:functions\s*\.\s*invoke|\binvokeEdge)(?:<[^>()]*>)?\(\s*['"`]([A-Za-z0-9_-]+)(?:\/[^'"`]*)?['"`]/g),
+    // `fetch(`${SUPABASE_URL}/functions/v1/get-call-recording`)` (chamada direta pela URL): so dentro
+    // de string/template; a URL mostrada como texto em JSX (ex.: GmailWebhookMonitor) nao e chamada.
+    edges: [
+      ...pegar(/(?:functions\s*\.\s*invoke|\binvokeEdge)(?:<[^>()]*>)?\(\s*['"`]([A-Za-z0-9_-]+)(?:\/[^'"`]*)?['"`]/g),
+      ...pegar(/['"`][^'"`\n]*\/functions\/v1\/([A-Za-z0-9_-]+)/g),
+    ],
   };
 }
 
