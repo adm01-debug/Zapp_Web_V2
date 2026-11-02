@@ -27,12 +27,8 @@ versao="${versao:-0.9.68}"
 exec >>"$LOG" 2>&1
 echo "== $(date -u +%FT%TZ) session-start (graphify $versao)"
 
-head_sha="$(git rev-parse HEAD)"
-if [ -f graphify-out/graph.json ] && [ "$(cat "$MARCA" 2>/dev/null)" = "$head_sha" ]; then
-  echo "grafo já está no commit $head_sha — nada a fazer"
-  exit 0
-fi
-
+# Instala/confere a versão ANTES do atalho: o grafo pode estar em dia e o binário ter sumido
+# (os hooks hook-guard dependem dele).
 if ! graphify --version 2>/dev/null | grep -qx "graphify $versao"; then
   if command -v uv >/dev/null 2>&1; then
     uv tool install --force "graphifyy[sql]==${versao}"
@@ -44,6 +40,19 @@ if ! graphify --version 2>/dev/null | grep -qx "graphify $versao"; then
 fi
 graphify --version
 
+head_sha="$(git rev-parse HEAD)"
+if [ -f graphify-out/graph.json ] && [ "$(cat "$MARCA" 2>/dev/null)" = "$head_sha" ]; then
+  echo "grafo já está no commit $head_sha — nada a fazer"
+  exit 0
+fi
+
+rm -f "$MARCA"
 PYTHONHASHSEED=0 graphify update .
-echo "$head_sha" > "$MARCA"
-echo "grafo pronto no commit $head_sha"
+# O build leva minutos e roda em segundo plano: se o checkout mudou no meio, não carimba —
+# a próxima sessão refaz.
+if [ "$(git rev-parse HEAD)" = "$head_sha" ]; then
+  echo "$head_sha" > "$MARCA"
+  echo "grafo pronto no commit $head_sha"
+else
+  echo "HEAD mudou durante o build ($head_sha -> $(git rev-parse HEAD)); marca não gravada"
+fi
