@@ -31,12 +31,12 @@ _Objetivo: documentar baseline × final desta sessão e inventário completo dos
 | `🧪 Unit Tests` | `ci.yml` | [41343946533](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41343946533) | ✅ success (com 410 skips pré-existentes) | `3b5f8a96` |
 | `🏗️ Build` | `ci.yml` | [41343946533](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41343946533) | ✅ success | `3b5f8a96` |
 | `🔒 Security Audit` | `ci.yml` | [41343946533](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41343946533) | ✅ success | `3b5f8a96` |
-| `Contrato DB offline` | `db-guard.yml` | [41364695562](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41364695562) | ⏳ queued (attempt 2, PR #2542 `c61cbe617`) | — |
+| `Contrato DB offline` | `db-guard.yml` | [41364695562](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41364695562) | ⏳ queued (attempt 3, PR #2542 `c61cbe617`) | — |
 | `🎭 E2E Tests (Playwright)` | `e2e-logado.yml` | [41350571737](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41350571737) | ⚠️ cancelled (concorrência) | `1252bb5a` |
 
 **Notas sobre required checks:**
 - `CI/CD Pipeline` run `41343946533` = `success` na `main` SHA `3b5f8a96` (2026-11-01T19:52Z) — todos os 6 required checks verdes nesse SHA.
-- `Contrato DB offline` (DB Guard): PR #2542 tem o fix do N-008; run `41364695562` está em fila por contention de runners — não é falha de código (documentado em PENDENCIAS.md §6).
+- `Contrato DB offline` (DB Guard): PR #2542 tem o fix do N-008; run `41364695562` (attempt 3) está em fila por contention de runners — não é falha de código (documentado em PENDENCIAS.md §6).
 - `E2E logado` `cancelled` no run `41350571737` foi por grupo de concorrência (novo push na `main` cancelou o anterior); a última falha real com 4 specs de geolocation está em PENDENCIAS.md §5.
 
 ### Workflows não-required — estado verificado
@@ -69,7 +69,7 @@ _Objetivo: documentar baseline × final desta sessão e inventário completo dos
 
 **Causa raiz confirmada:** Sem `N008_POSTGRES_IMAGE`, o script `retry-disposable-postgres-test.sh` não encontra a imagem em cache e o `docker run postgres:17-alpine` falha por rate limit do Docker Hub.
 
-**Estado do CI da PR:** Run `41364695562` (attempt 2) em `queued` por contention de runners — aguardando conclusão.
+**Estado do CI da PR:** Run `41364695562` (attempt 3) em `queued` por contention de runners — aguardando conclusão.
 
 ---
 
@@ -104,4 +104,4 @@ _Objetivo: documentar baseline × final desta sessão e inventário completo dos
 
 ---
 
-_Próxima ação necessária: aguardar `conclusion=success` no run `41364695562` (DB Guard PR #2542) para fechar PENDENCIAS §6._
+_Próxima ação necessária: aguardar `conclusion=success` no run `41364695562` (attempt 3, DB Guard PR #2542) para fechar PENDENCIAS §6._

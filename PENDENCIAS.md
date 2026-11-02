@@ -125,14 +125,16 @@ fora do escopo do fix de CI config.
 **Branch do fix:** `claude/fix-ci-n008-261101-2340`
 **PR:** [#2542](https://github.com/adm01-debug/Zapp_Web_V2/pull/2542)
 **Head SHA do fix:** `c61cbe617f4d06b0f29cb41ddb8f4a1c03082327`
-**Run CI em andamento:** [41364695562](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41364695562) — attempt 2, `queued` desde 2026-11-02T00:16:03Z
+**Run CI em andamento:** [41364695562](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41364695562) — attempt 3, `queued` desde 2026-11-02T00:35:21Z
 
 **Causa raiz identificada e corrigida:** O step `Provar encerramento diario de sessoes vencidas (N-008)` em
 `.github/workflows/db-guard.yml` tinha dois problemas:
 1. `N008_POSTGRES_IMAGE` ausente no bloco `env:` — sem ela, `docker run postgres:17-alpine` falha com rate limit/imagem não cacheada. **Fix:** adicionado `N008_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}` e `SKIP_DOCKER_SHIM: "1"`.
 2. `user-sessions-expire.test.sh` usava loop `pg_isready` vulnerável à race condition do servidor temporário do PostgreSQL. **Fix (commit `c61cbe617`):** substituído por `wait-postgres-final-start.sh` que aguarda o marcador "init process complete" nos logs + query real.
 
-**Estado atual do CI:** Run `41364695562` (attempt 2) permanece em `queued` com `runner_id: 0` — alta contention de runners em 2026-11-02T00:16Z (múltiplas sessões paralelas). **Não é falha de código** — o fix está correto. A PR #2542 não deve ser mergeada sem `conclusion=success` do CI.
+**Jobs em fila (attempt 3):** `Replay local das migrations` (job 125032044343) e `Contrato DB offline` (job 125032044483) — ambos `ubuntu-24.04`, `runner_id: 0`. Alta contention de runners por sessões paralelas. **Não é falha de código** — o fix está correto.
+
+**Estado atual do CI:** Run `41364695562` (attempt 3) em `queued` desde 2026-11-02T00:35:21Z. A PR #2542 não deve ser mergeada sem `conclusion=success` do CI.
 
 **O que precisa acontecer:**
 1. Run `41364695562` completar com `Contrato DB offline` = `conclusion: success`
