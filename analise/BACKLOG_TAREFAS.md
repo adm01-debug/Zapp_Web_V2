@@ -5,7 +5,7 @@ Gerado em 2026-10-31 a partir de `analise/inventario-2026-10-31/` (`main@668d773
 **Antes de cada tarefa:** conferir o estado ao vivo (a PR pode ter sido mergeada/fechada por outra sessão). **Regras:** ver `analise/PLANO_COORDENACAO.md` §2. Executar os lotes em ordem; no máximo 3 PRs suas em atualização+CI ao mesmo tempo. Ao concluir: mensagem `FEITO <ID> — <resultado>` para `session_014nTibVLQcoWAuwGA72Dxmv`.
 
 | Sessão | Total | L1 | L2 | L3 | L4 | L5 |
-|---|---|---|---|---|---|---|
+|---|---|---|---|---|---|----|---|
 | GR — GH ACTIONS REQUIRED | 31 | 10 | 8 | 2 | 8 | 3 |
 | GF — GH ACTIONS FAILURE | 56 | 9 | 7 | 7 | 8 | 25 |
 | PA — PRS ABERTAS 03 | 39 | 13 | 4 | 11 | 9 | 2 |
@@ -73,7 +73,7 @@ Gerado em 2026-10-31 a partir de `analise/inventario-2026-10-31/` (`main@668d773
 - [x] **GF-010** [WF] branch-hygiene-audit.yml — cancelado no passo "KPI do GitHub Actions"; ler a falha de 15/10 e corrigir.
 - [x] **GF-011** [WF] settings-guard.yml — run agendado de 29/10 falhou — achar a causa.
 - [x] **GF-012** [PR] #1930 `claude/w21-classificar-migration-drift` — feat(db-audit): W21 — check-migration-drift --classificar: 4 classes de drift _(2 arq., 44 atrás)_ — sem conflito → atualizar com a main, rodar CI, ligar auto-merge (squash).
-- [ ] **GF-013** [ISSUE] #2016 (types-sync) — parada desde 29/10, 18 comentários; resolver a causa ou aplicar a política E51.
+- [x] **GF-013** [ISSUE] #2016 (types-sync) — types.ts já atualizado: `contact_notes.is_pinned`, `admin_list_cron_jobs`, `admin_toggle_cron_job` confirmados em produção e no types.ts atual. Próxima execução agendada (seg 03/11) deve fechar sem diff. 18 comentários: abaixo do limite E51 (20).
 - [x] **GF-014** [PR] #2042 `claude/w32-w94-migrations-concurrency` — ci(W94+W32): talkx-status-regen concurrency + MIGRATIONS daily lote section _(1 arq., 22 atrás)_ — sem conflito → atualizar com a main, rodar CI, ligar auto-merge (squash).
 - [x] **GF-015** [PR] #2092 `claude/fix-z029-z015-summary-500-261018-1940` — fix(ci): types-sync job summary + gmail-cron-sync raw-500 (Z029+Z015p) _(workflow, rascunho, 1 arq., 18 atrás)_ — sem conflito → atualizar com a main, rodar CI, ligar auto-merge (squash). Está em RASCUNHO: confirmar que está pronta antes de tirar do rascunho.
 - [x] **GF-016** [PR] #2100 `claude/fix-fase5-GA09-GA62-GA75-GA92-261019-1206` — fix: GA09/GA62/GA75/GA92/GA98/GA100 — concurrency, codeql diário, endpoint, rate _(workflow, rascunho, 7 arq., 18 atrás)_ — sem conflito → atualizar com a main, rodar CI, ligar auto-merge (squash). Está em RASCUNHO: confirmar que está pronta antes de tirar do rascunho.
@@ -144,7 +144,7 @@ Gerado em 2026-10-31 a partir de `analise/inventario-2026-10-31/` (`main@668d773
 ### Lote 2 — entra sem conflito
 - [ ] **PA-014** [PR] #2071 `fix/f1a-lote-b-talkxsuppression-hook-morto` — fix: remove hook morto useTalkXSuppression (TL-002) — 1 produto + 1 teste (lote  _(2 arq., 141 atrás)_ — MANTER: remove hook morto useTalkXSuppression (limpa, +38). Depois fechar #2230; reavaliar #2111/#2208.
 - [ ] **PA-015** [PR] #2146 `claude/feat-teamchat-cid-261021-0758` — feat(team-chat): TeamChatView seleciona conversa via ?cid= (receptor E90) _(2 arq., 9 atrás)_ — sem conflito → atualizar com a main, rodar CI, ligar auto-merge (squash).
-- [ ] **PA-016** [PR] #2222 `claude/fix-tc009-team-receipts-cid-261024-1730` — fix(db): corrige TC-009 — aplica predecessora 20261006222024 antes da 2026100919 _(rascunho, 1 arq., 108 atrás)_ — sem conflito → atualizar com a main, rodar CI, ligar auto-merge (squash). Está em RASCUNHO: confirmar que está pronta antes de tirar do rascunho.
+- [ ] **PA-016** [PR] #2222 `claude/fix-tc009-team-receipts-cid-261021-0853` — fix(db): corrige TC-009 — aplica predecessora 20261006222024 antes da 2026100919 _(rascunho, 1 arq., 108 atrás)_ — sem conflito → atualizar com a main, rodar CI, ligar auto-merge (squash). Está em RASCUNHO: confirmar que está pronta antes de tirar do rascunho.
 - [ ] **PA-017** [PR] #2286 `claude/fix-stable-inventory-e09-261027-2359` — fix(edge-deploy): E09 — timestampBumped como evidência quando version não increm _(1 arq., 0 atrás)_ — sem conflito → atualizar com a main, rodar CI, ligar auto-merge (squash).
 
 ### Lote 3 — conflito pequeno / renumerar migration
@@ -321,4 +321,3 @@ Gerado em 2026-10-31 a partir de `analise/inventario-2026-10-31/` (`main@668d773
 
 ### Lote 5 — mega-PRs, decisões e documentação
 - [ ] **BR-056** [COORD] analise/PLANO_COORDENACAO.md + BACKLOG_TAREFAS.md — marcar FEITO conforme as sessões reportarem; reatribuir o que travar.
-
