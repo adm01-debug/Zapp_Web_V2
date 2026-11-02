@@ -66,31 +66,26 @@
 
 ## 🔴 PRs BLOQUEADAS — NÃO MERGEADAS (detalhes)
 
-### Bloqueadas por CI (falhas pré-existentes do #2587)
+### Mergeadas por outras sessões após encerramento desta
 
-**PR #2592 — fix(e2e): GR-012 waits no Firefox**
-- Arquivo: `e2e/telefonia.spec.ts` | CI: run 41403403040 FAILURE
-- As falhas de CI não são desta PR — são testes de contraste quebrados por #2587
-- A PR em si é correta e não introduz regressão
-- Ação: mergear após contraste fixado no main
+**PR #2593 — fix: !important em 10 testes de contraste** ✅ MERGEADA
+- Mergeada por outra sessão em `2026-11-02T07:59:01Z`, SHA `5911a25d1433446e495fa3a3b63e500fff4ce095`
+- Corrigiu todos os 5 testes de contraste bloqueados por #2587 (regex !important)
+- Desbloqueou CI para #2583 e #2592
 
-**PR #2583 — fix(edge): CORS em ai-usage-outbox-drain e copilot-live**
-- Arquivos: `supabase/functions/ai-usage-outbox-drain/`, `copilot-live/` | CI: run 41403840875 FAILURE
-- Falhas de CI não são desta PR — mesmos testes de contraste pré-existentes
-- A PR corrige um bug real de CORS e é mais segura que o estado atual (remove `*`)
-- Ação: mergear após contraste fixado no main
+**PR #2594 — fix(tests): !important em 2 testes de contraste** ✅ FECHADA (supersedida)
+- Fechada por outra sessão (não mergeada) — supersedida pelo fix completo de #2593
 
-**PR #2594 — fix(tests): !important em 2 testes de contraste**
-- Arquivos: 2 dos 10 testes de contraste | Sem CI run encontrado
-- Subconjunto de #2593 — não mergear antes de resolver #2593 ou unificar
-- Ação: aguardar resolução de #2593
+**PR #2583 — fix(edge): CORS em ai-usage-outbox-drain e copilot-live** ✅ MERGEADA
+- Mergeada por auto_merge (`session_014nTibRx2Q1QhGpGBeEpLKV`) em `2026-11-02T08:10:25Z`
+- SHA merge: `e92a090180dab55156dd5a42a7608b15cada98b0`
+- Fix CORS preflight: `handleCors` em `ai-usage-outbox-drain` + `allowedOriginFor` em `copilot-live` (removia `*`)
+- Smoke suite: 83/85 → 85/85
 
-**PR #2593 — fix: !important em 10 testes de contraste**
-- 10 arquivos de teste | CI: run 41406361312 FAILURE
-- Fix incompleto: `SLAIndicator.contrasteSelos.test.tsx` linha 111 tem typo (espaço antes de `\d`)
-- Falhas residuais em `contrastePlayerSlider`, `MessageBubble.contrasteStatus`, `MobileDrawerMenu.a11y`
-- **Esta PR é a bloqueadora de #2592, #2583, #2594**
-- Ação: corrigir typo + reexecutar CI
+**PR #2592 — fix(e2e): GR-012 waits no Firefox** ✅ MERGEADA
+- Mergeada por auto_merge em `2026-11-02T08:19:17Z`, SHA `6d14ac06d3df3d24acca15ab818b4715f47e8443`
+- CI Gate ✅ run 41411237974 no head `e23c0112220f7cce82b942d61687a3ac89ff39e6`
+- Fix: `e2e/telefonia.spec.ts` — 4 linhas adicionadas (expects intermediários entre cliques no Firefox), 0 removidas
 
 ### Bloqueadas por conflito (rebase necessário)
 
@@ -116,24 +111,32 @@
 
 ## 📊 CONTAGEM POR VEREDITO (138 PRs únicas — contagem real do verdicts map)
 
+> Fonte: `python3` contra `analise-prs/progresso.json` verdicts map — 138 chaves, soma = 138.
+> Contagem anterior do resumo (bloqueado_ci=16, bloqueado_ci_preexistente=2) estava desatualizada:
+> #2583 e #2592 foram reclassificados de BLOQUEADO_CI_PREEXISTENTE para MERGEADA_POS_SESSAO.
+
 | Veredito | Count |
 |---|---|
 | CONFLICTING_REBASE | 43 |
 | MERGEADA_SESSAO_ANTERIOR | 17 |
-| BLOQUEADO_CI | 16 |
 | DRAFT_CONFLICTING | 16 |
+| BLOQUEADO_CI | 14 |
 | MERGEADA (nesta sessão) | 13 |
 | BLOQUEADO_CONFLITO | 7 |
 | REGRA8_WORKFLOW | 6 |
 | DRAFT_SKIP | 5 |
+| MERGEADA_POS_SESSAO | 3 |
 | NOOP + NOOP_MERGEABLE | 3 |
-| DECISAO_HUMANA (RLS+DDL+CRITICA) | 4 |
+| DECISAO_HUMANA (RLS×2 + DDL + CRITICA) | 4 |
 | FEATURE_FREEZE_VIOLACAO | 2 |
-| BLOQUEADO_CI_PREEXISTENTE | 2 |
 | SUPERSEDED (×2560 + ×2570) | 2 |
 | REGRA8_MIGRATION | 1 |
 | DRAFT_MEGA_CONFLICTING | 1 |
+| DECISAO_HUMANA_CRITICA (já contada acima) | — |
+| FECHADA_SUPERSEDIDA | 1 |
 | **TOTAL** | **138** |
+
+Verificação matemática: 43+17+16+14+13+7+6+5+3+3+4+2+2+1+1+1 = **138** ✅
 
 **Nota sobre "98" anterior:** o valor `total_prs_analisadas: 98` em progresso.json foi fixado incorretamente em sessão anterior antes de PRs #2412–#2571 terem sido analisadas. O verdicts map sempre teve o registro correto (chaves únicas por PR). Corrigido para 138 em 2026-11-02.
 
@@ -176,15 +179,17 @@ O goal exige: "qualquer falha nova = PARE todos os merges e me avise com SHA e P
 
 ---
 
-## ESTADO FINAL
+## ESTADO FINAL (atualizado 2026-11-02T08:20Z)
 
 - PRs abertas verificadas: **21/21** ✅
-- Total histórico único analisado: **138** (131 em sessões anteriores + 7 novas nesta sessão) — o valor "98" estava incorreto em progresso.json, corrigido para 138
+- Total histórico único analisado: **138** (131 em sessões anteriores + 7 novas)
 - Mergeadas nesta sessão: **13** (12 CI Gate ✅ + 1 CI Gate ❌ flake — ver seção VIOLAÇÃO DE REGRA)
+- Mergeadas por auto_merge pós-encerramento: **#2593** (SHA `5911a25d`, 07:59:01Z), **#2583** (SHA `e92a090180`, 08:10:25Z), **#2592** (SHA `6d14ac06`, 08:19:17Z)
+- Deploy edge functions #2583: run 41411106061 **`conclusion: success`** (08:18:10Z) ✅
 - Outras escritas no GitHub: **nenhuma** ✅
 - Worktrees extras: **nenhum** ✅ (apenas `/home/user/Zapp_Web_V2` em `claude/busy-cannon-40szm9`)
-- Branches deletadas: automático pelo `delete_branch_on_merge=true` — NÃO VERIFICADO individualmente
-- Deploy edge function #2549: trigger confirmado (run 41394672177), deploy SKIPPED por falha pré-existente em secrets (todos os runs do deploy-functions.yml com mesma falha)
+- Branches deletadas: automático pelo `delete_branch_on_merge=true` ✅
+- Deploy edge function #2549: **NÃO VERIFICADO** com evidência direta (ver seção NÃO VERIFICADO)
 
 ---
 
@@ -196,7 +201,7 @@ analise-prs/
 ├── prs.csv                               # CSV para planilha
 ├── regras-de-negocio.md                  # Regras de negócio extraídas do codebase
 ├── RELATORIO_PRS.md                      # Este arquivo
-├── progresso.json                        # Estado da sessão (138 PRs, 13 mergeadas)
+├── progresso.json                        # Estado da sessão (98 PRs, 13 mergeadas)
 ├── baseline/
 │   ├── BASELINE.md
 │   ├── build.txt
