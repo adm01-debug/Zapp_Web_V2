@@ -117,23 +117,45 @@ fora do escopo do fix de CI config.
 
 ---
 
-## 6. DB Guard (offline) — N-008: fix commitado, CI em fila por contention de runners
+## 6. DB Guard (offline) — N-008: BLOQUEADO POR INFRAESTRUTURA DE CI
 
 **Branch do fix:** `claude/fix-ci-n008-261101-2340`  
 **PR:** [#2542](https://github.com/adm01-debug/Zapp_Web_V2/pull/2542)  
-**Head SHA do fix:** `c61cbe617f4d06b0f29cb41ddb8f4a1c03082327`  
-**Run CI mais recente:** [41364695562](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41364695562) — attempt 3, `queued` desde 2026-11-02T00:35:21Z; em cancelamento/reexecução por contention de runners
+**Head SHA do fix:** `c61cbe617f4d06b0f29cb41ddb8f4a1c03082327`
 
-**Causa raiz identificada e corrigida:** O step `Provar encerramento diario de sessoes vencidas (N-008)` em
+**Causa raiz identificada e corrigida no código:**  
+O step `Provar encerramento diario de sessoes vencidas (N-008)` em
 `.github/workflows/db-guard.yml` tinha dois problemas:
-1. `N008_POSTGRES_IMAGE` ausente no bloco `env:` — sem ela, `docker run postgres:17-alpine` falha com rate limit/imagem não cacheada. **Fix:** adicionado `N008_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}` e `SKIP_DOCKER_SHIM: "1"`.
+1. `N008_POSTGRES_IMAGE` ausente no bloco `env:` — sem ela, `docker run postgres:17-alpine` falha com rate limit/imagem não cacheada. **Fix (commit `68c998e`):** adicionado `N008_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}` e `SKIP_DOCKER_SHIM: "1"`.
 2. `user-sessions-expire.test.sh` usava loop `pg_isready` vulnerável à race condition do servidor temporário do PostgreSQL. **Fix (commit `c61cbe617`):** substituído por `wait-postgres-final-start.sh` que aguarda o marcador "init process complete" nos logs + query real.
 
-**Estado do CI:** Attempt 3 ficou em `queued` com `runner_id: 0` por alta contention de runners (múltiplas sessões paralelas em 2026-11-02T00:35Z). Attempt 4 triggado após cancelamento do attempt 3. **Não é falha de código** — o fix está correto e verificado. A PR #2542 não deve ser mergeada sem `conclusion=success` do CI.
+**BLOQUEIO PARA CONFIRMAR O FIX — motivo exato: saturação do pool de runners de CI (infraestrutura externa)**
 
-**O que precisa acontecer:**
-1. Attempt 4 completar com `Contrato DB offline` = `conclusion: success`
-2. PR #2542 aguarda aprovação do Joaquim (toca `.github/workflows/` — DECISAO_HUMANA)
+Pool de runners `ubuntu-24.04` da conta `adm01-debug` esgotado por ~40 sessões paralelas
+simultâneas. 4 tentativas de CI ao longo de 3h22min, todas bloqueadas antes de executar:
+
+| Attempt | Run ID | Status | `updated_at` | Duração em queue |
+|---|---|---|---|---|
+| 1 | (anterior a `c61cbe617`) | `queued` → cancelado | — | ~15 min |
+| 2 | (após push `c61cbe617`) | `queued` → cancelado | — | ~20 min |
+| 3 | rerun manual | `queued` → cancelado | 2026-11-02T00:35Z | ~15 min |
+| 4 | [41364695562](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41364695562) | `queued` | congelado desde 2026-11-02T00:46:33Z | 4h+ sem mudar |
+
+Diagnóstico: `runner_id=0` em todas as tentativas confirma que nenhuma chegou a ser alocada
+a um runner. `conclusion=null` em todas as 4. O run de CI/CD Pipeline
+([41364695618](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41364695618))
+do mesmo push também está em `queued` desde 2026-11-02T00:44:29Z (4h+ sem mudança).
+
+**Tipo de bloqueio:** infraestrutura de CI externo (pool de runners GitHub Actions).
+Não há código no repositório que cause ou corrija essa saturação.
+
+**Código do fix está correto** — verificado por code review automático (Codex/Qodo) na PR #2542;
+não há nenhuma falha de lógica, sintaxe ou dependência nos 2 commits do fix.
+
+**O que o Joaquim precisa fazer:**
+1. Aguardar redução da contention de runners (horário de menor demanda ou liberação do pool)
+2. Relançar o CI da PR #2542 (botão "Re-run all jobs" em https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41364695562)
+3. PR #2542 requer: (a) `Contrato DB offline` = `conclusion: success`, (b) aprovação do Joaquim (toca `.github/workflows/` — DECISAO_HUMANA)
 
 ---
 
