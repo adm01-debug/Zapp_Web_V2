@@ -5,7 +5,9 @@
 > Errar o banco aqui já causou retrabalho real. Confira SEMPRE antes de rodar SQL ou deploy.
 > Revisado em 2026-11-01 contra o estado real (GitHub, banco, workflows). Se algo divergir da
 > realidade, corrija ESTE arquivo no mesmo PR do fix.
-> Como trabalhar (comunicação, PR, merge) fica em [`AGENTS.md`](AGENTS.md) — aqui, não.
+> Como trabalhar (comunicação, PR, merge) fica em AGENTS.md, importado abaixo — aqui, não.
+
+@AGENTS.md
 
 ---
 
