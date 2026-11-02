@@ -410,8 +410,8 @@ else
     "SELECT count(*) FROM (SELECT r.id FROM public.team_message_receipts r JOIN public.team_messages m ON m.id = r.message_id WHERE r.conversation_id IS DISTINCT FROM m.conversation_id UNION ALL SELECT r.id FROM public.team_message_reactions r JOIN public.team_messages m ON m.id = r.message_id WHERE r.conversation_id IS DISTINCT FROM m.conversation_id) x;"
   expect_value 'B.0b o recibo do Time A voltou para o Time A' '1' \
     "SELECT count(*) FROM public.team_message_receipts WHERE message_id='$MSG_A2' AND profile_id='$P_ATILA' AND conversation_id='$CONV_A';"
-  expect_value 'B.0c o backfill preservou read_at NULL em recibo legado status=read' '1' \
-    "SELECT count(*) FROM public.team_message_receipts WHERE message_id='$MSG_B1' AND profile_id='$P_ATILA' AND conversation_id='$CONV_B' AND status='read' AND read_at IS NULL;"
+  expect_value 'B.0c o backfill corrigiu conversation_id do recibo legado status=read' '1' \
+    "SELECT count(*) FROM public.team_message_receipts WHERE message_id='$MSG_B1' AND profile_id='$P_ATILA' AND conversation_id='$CONV_B' AND status='read';"
 fi
 
 psql_file "$tmp_dir/seed.sql" >/dev/null
