@@ -81,7 +81,8 @@ const ehTeste = (p) => /(\.test\.|\.spec\.|__tests__|\.stories\.)/.test(p);
 
 /**
  * Fecho de imports a partir do arquivo da tela. Segue sem limite a pasta da feature da tela,
- * src/hooks/ e src/services/; componentes de OUTRA feature em src/components/ (ex.: a aba
+ * src/hooks/, src/services/, src/lib/ e src/features/ (helpers que chamam edge/RPC, ex.:
+ * callCRMIntegration, mapboxToken); componentes de OUTRA feature em src/components/ (ex.: a aba
  * Filas da Supervisão renderiza QueuesView) entram ate MAX_SALTOS_FEATURE saltos. Fica de fora
  * so o kit de UI (src/components/ui/) e teste. Import local que nao resolve vira problema.
  */
@@ -89,7 +90,7 @@ export const MAX_SALTOS_FEATURE = 2;
 export function fechoDaTela(raiz, arquivoTelaAbs) {
   const pastaFeature = path.dirname(arquivoTelaAbs);
   const dentro = (abs, rel_) => abs.startsWith(path.join(raiz, rel_) + path.sep);
-  const livre = (abs) => abs.startsWith(pastaFeature + path.sep) || dentro(abs, 'src/hooks') || dentro(abs, 'src/services');
+  const livre = (abs) => abs.startsWith(pastaFeature + path.sep) || ['src/hooks', 'src/services', 'src/lib', 'src/features'].some((d) => dentro(abs, d));
   const outraFeature = (abs) => dentro(abs, 'src/components') && !dentro(abs, 'src/components/ui');
   const saltosVistos = new Map(); // arquivo -> menor numero de saltos com que foi visitado
   const hooks = new Map();

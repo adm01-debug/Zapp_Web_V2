@@ -5,7 +5,7 @@
     "urls": 18,
     "telas": 55,
     "itens_de_menu": 53,
-    "hooks_distintos": 353,
+    "hooks_distintos": 354,
     "problemas": 2
   },
   "urls": [
@@ -174,7 +174,7 @@
         "atalho": "Alt+Q",
         "layout": null
       },
-      "arquivos_lidos": 23,
+      "arquivos_lidos": 39,
       "hooks": [
         {
           "nome": "useAgentGamification",
@@ -203,6 +203,7 @@
       ],
       "buckets": [],
       "edges": [
+        "detect-new-device",
         "message-delivery"
       ],
       "rpcs": [
@@ -237,7 +238,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 37,
+      "arquivos_lidos": 59,
       "hooks": [
         {
           "nome": "useAdminData",
@@ -293,6 +294,9 @@
       ],
       "edges": [
         "create-user",
+        "crm-integration",
+        "detect-new-device",
+        "external-db-proxy",
         "message-delivery",
         "revoke-auth-sessions"
       ],
@@ -333,7 +337,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 34,
+      "arquivos_lidos": 53,
       "hooks": [
         {
           "nome": "useAgentPendingCounts",
@@ -394,6 +398,7 @@
       ],
       "buckets": [],
       "edges": [
+        "detect-new-device",
         "evolution-api",
         "invite-user",
         "message-delivery"
@@ -469,7 +474,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 2,
+      "arquivos_lidos": 4,
       "hooks": [
         {
           "nome": "useAuditLogDashboard",
@@ -503,7 +508,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 21,
+      "arquivos_lidos": 37,
       "hooks": [
         {
           "nome": "useAuth",
@@ -532,6 +537,7 @@
       ],
       "buckets": [],
       "edges": [
+        "detect-new-device",
         "message-delivery"
       ],
       "rpcs": [
@@ -563,7 +569,7 @@
         "atalho": "Alt+A",
         "layout": null
       },
-      "arquivos_lidos": 58,
+      "arquivos_lidos": 83,
       "hooks": [
         {
           "nome": "useAuth",
@@ -636,6 +642,7 @@
       ],
       "buckets": [],
       "edges": [
+        "detect-new-device",
         "message-delivery",
         "promogifts-catalog"
       ],
@@ -674,7 +681,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 7,
+      "arquivos_lidos": 8,
       "hooks": [
         {
           "nome": "useChatbotFlows",
@@ -708,7 +715,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 2,
+      "arquivos_lidos": 4,
       "hooks": [],
       "buckets": [],
       "edges": [
@@ -738,7 +745,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 45,
+      "arquivos_lidos": 63,
       "hooks": [
         {
           "nome": "useAppBootstrap",
@@ -820,6 +827,7 @@
       "buckets": [],
       "edges": [
         "connection-health-check",
+        "detect-new-device",
         "evolution-api",
         "evolution-sync",
         "message-delivery"
@@ -865,7 +873,7 @@
         "atalho": "Alt+O",
         "layout": null
       },
-      "arquivos_lidos": 106,
+      "arquivos_lidos": 143,
       "hooks": [
         {
           "nome": "useActionFeedback",
@@ -1018,6 +1026,10 @@
       ],
       "buckets": [],
       "edges": [
+        "crm-integration",
+        "detect-new-device",
+        "external-db-proxy",
+        "get-mapbox-token",
         "message-delivery",
         "promogifts-catalog"
       ],
@@ -1025,6 +1037,7 @@
         "app_bootstrap",
         "can_delete_contacts",
         "contacts_count_by_type",
+        "count_searchbox_sessions_this_month",
         "delete_contact",
         "delete_contacts",
         "enqueue_outbound_message",
@@ -1033,6 +1046,7 @@
         "get_inbox_contact_summaries",
         "get_last_message_dates",
         "is_admin_or_supervisor",
+        "log_audit_event",
         "merge_contacts_atomic",
         "search_contacts",
         "user_has_permission"
@@ -1075,7 +1089,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 32,
+      "arquivos_lidos": 51,
       "hooks": [
         {
           "nome": "useAppBootstrap",
@@ -1132,6 +1146,9 @@
       ],
       "buckets": [],
       "edges": [
+        "crm-integration",
+        "detect-new-device",
+        "external-db-proxy",
         "message-delivery"
       ],
       "rpcs": [
@@ -1166,7 +1183,7 @@
         "atalho": "Alt+R",
         "layout": null
       },
-      "arquivos_lidos": 123,
+      "arquivos_lidos": 148,
       "hooks": [
         {
           "nome": "useActiveAIProvider",
@@ -1359,6 +1376,7 @@
       ],
       "buckets": [],
       "edges": [
+        "detect-new-device",
         "message-delivery"
       ],
       "rpcs": [
@@ -1417,7 +1435,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 4,
+      "arquivos_lidos": 7,
       "hooks": [
         {
           "nome": "useDiagnosticsData",
@@ -1484,7 +1502,7 @@
         "atalho": "Alt+L",
         "layout": "full"
       },
-      "arquivos_lidos": 41,
+      "arquivos_lidos": 73,
       "hooks": [
         {
           "nome": "useAuth",
@@ -1545,6 +1563,8 @@
       ],
       "buckets": [],
       "edges": [
+        "crm-integration",
+        "detect-new-device",
         "message-delivery"
       ],
       "rpcs": [
@@ -1594,7 +1614,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 42,
+      "arquivos_lidos": 61,
       "hooks": [
         {
           "nome": "useAuth",
@@ -1652,6 +1672,7 @@
       "buckets": [],
       "edges": [
         "connection-health-check",
+        "detect-new-device",
         "evolution-api",
         "evolution-webhook",
         "message-delivery",
@@ -1692,7 +1713,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 27,
+      "arquivos_lidos": 54,
       "hooks": [
         {
           "nome": "useAuth",
@@ -1729,6 +1750,7 @@
       ],
       "buckets": [],
       "edges": [
+        "detect-new-device",
         "message-delivery"
       ],
       "rpcs": [
@@ -1767,7 +1789,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 1,
+      "arquivos_lidos": 2,
       "hooks": [],
       "buckets": [],
       "edges": [],
@@ -1823,7 +1845,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 10,
+      "arquivos_lidos": 13,
       "hooks": [
         {
           "nome": "useActionFeedback",
@@ -1875,7 +1897,7 @@
         "atalho": "Alt+C",
         "layout": "full"
       },
-      "arquivos_lidos": 400,
+      "arquivos_lidos": 483,
       "hooks": [
         {
           "nome": "useAddressAutocomplete",
@@ -2086,6 +2108,10 @@
           "arquivo": "src/hooks/ui/useCustomShortcuts.ts"
         },
         {
+          "nome": "useDebounce",
+          "arquivo": "src/hooks/performance/useTimingHooks.ts"
+        },
+        {
           "nome": "useDensity",
           "arquivo": "src/hooks/ui/useDensity.ts"
         },
@@ -2272,6 +2298,10 @@
         {
           "nome": "useNarrowViewport",
           "arquivo": "src/components/tasks/shared/pointerMedia.ts"
+        },
+        {
+          "nome": "useNetworkStatus",
+          "arquivo": "src/hooks/system/useNetworkStatus.ts"
         },
         {
           "nome": "useNewConversation",
@@ -2484,8 +2514,12 @@
         "classify-audio-meme",
         "classify-emoji",
         "classify-sticker",
+        "crm-integration",
+        "detect-new-device",
         "elevenlabs-scribe-token",
         "evolution-api",
+        "external-db-proxy",
+        "get-mapbox-token",
         "message-delivery",
         "promogifts-catalog",
         "sentiment-alert"
@@ -2495,6 +2529,7 @@
         "can_delete_contacts",
         "close_conversation_atomic",
         "contacts_count_by_type",
+        "count_searchbox_sessions_this_month",
         "delivery_stats",
         "enqueue_outbound_message",
         "enqueue_rich_outbound_message",
@@ -2507,10 +2542,15 @@
         "get_team_profiles",
         "increment_custom_emoji_use",
         "is_admin_or_supervisor",
+        "log_audit_event",
         "log_search_event",
         "reopen_conversation",
         "search_contacts",
         "set_conversation_status",
+        "talk_me_claim",
+        "talk_me_list_pending_messages",
+        "talk_me_list_queues",
+        "talk_me_list_waiting",
         "transfer_conversation",
         "user_has_permission"
       ],
@@ -2581,7 +2621,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 32,
+      "arquivos_lidos": 54,
       "hooks": [
         {
           "nome": "useAppBootstrap",
@@ -2639,6 +2679,7 @@
       "buckets": [],
       "edges": [
         "bitrix-api",
+        "detect-new-device",
         "message-delivery"
       ],
       "rpcs": [
@@ -2682,7 +2723,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 4,
+      "arquivos_lidos": 6,
       "hooks": [
         {
           "nome": "useKnowledgeBase",
@@ -2721,10 +2762,11 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 1,
+      "arquivos_lidos": 3,
       "hooks": [],
       "buckets": [],
       "edges": [
+        "message-delivery",
         "migrate-media-storage"
       ],
       "rpcs": [],
@@ -2753,7 +2795,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 3,
+      "arquivos_lidos": 4,
       "hooks": [
         {
           "nome": "useLayoutContext",
@@ -2788,7 +2830,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 24,
+      "arquivos_lidos": 38,
       "hooks": [
         {
           "nome": "useConfirmMultiplixDispatch",
@@ -2878,7 +2920,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 2,
+      "arquivos_lidos": 3,
       "hooks": [
         {
           "nome": "useNPSSurveys",
@@ -2912,7 +2954,7 @@
         "atalho": null,
         "layout": "full"
       },
-      "arquivos_lidos": 107,
+      "arquivos_lidos": 155,
       "hooks": [
         {
           "nome": "useAgentPresenceMap",
@@ -3137,6 +3179,8 @@
       ],
       "edges": [
         "ai-conversation-analysis",
+        "crm-integration",
+        "detect-new-device",
         "evolution-api",
         "message-delivery",
         "sentiment-alert"
@@ -3215,7 +3259,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 2,
+      "arquivos_lidos": 3,
       "hooks": [],
       "buckets": [],
       "edges": [],
@@ -3247,7 +3291,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 18,
+      "arquivos_lidos": 34,
       "hooks": [
         {
           "nome": "useAuth",
@@ -3276,6 +3320,7 @@
       ],
       "buckets": [],
       "edges": [
+        "detect-new-device",
         "message-delivery"
       ],
       "rpcs": [
@@ -3310,7 +3355,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 17,
+      "arquivos_lidos": 32,
       "hooks": [
         {
           "nome": "useAuth",
@@ -3335,6 +3380,7 @@
       ],
       "buckets": [],
       "edges": [
+        "detect-new-device",
         "message-delivery"
       ],
       "rpcs": [
@@ -3384,7 +3430,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 17,
+      "arquivos_lidos": 21,
       "hooks": [
         {
           "nome": "useLayoutContext",
@@ -3443,7 +3489,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 11,
+      "arquivos_lidos": 16,
       "hooks": [
         {
           "nome": "useAbandonmentRate",
@@ -3493,7 +3539,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 21,
+      "arquivos_lidos": 38,
       "hooks": [
         {
           "nome": "useAgentPresenceMap",
@@ -3534,6 +3580,7 @@
       ],
       "buckets": [],
       "edges": [
+        "detect-new-device",
         "message-delivery"
       ],
       "rpcs": [
@@ -3603,7 +3650,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 57,
+      "arquivos_lidos": 83,
       "hooks": [
         {
           "nome": "useAppBootstrap",
@@ -3693,6 +3740,8 @@
       "buckets": [],
       "edges": [
         "approve-password-reset",
+        "detect-new-device",
+        "external-db-proxy",
         "message-delivery",
         "revoke-auth-sessions",
         "webauthn"
@@ -3743,7 +3792,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 3,
+      "arquivos_lidos": 6,
       "hooks": [
         {
           "nome": "useSentimentData",
@@ -3777,7 +3826,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 95,
+      "arquivos_lidos": 117,
       "hooks": [
         {
           "nome": "useActionFeedback",
@@ -3926,6 +3975,7 @@
         "ai-proxy",
         "chatbot-l1",
         "classify-audio-meme",
+        "detect-new-device",
         "elevenlabs-sfx",
         "evolution-api",
         "message-delivery"
@@ -3987,7 +4037,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 15,
+      "arquivos_lidos": 17,
       "hooks": [
         {
           "nome": "useSLAConfigurations",
@@ -4045,7 +4095,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 40,
+      "arquivos_lidos": 58,
       "hooks": [
         {
           "nome": "useAgentPresenceMap",
@@ -4107,6 +4157,7 @@
       "buckets": [],
       "edges": [
         "ai-proxy",
+        "detect-new-device",
         "evolution-api",
         "message-delivery"
       ],
@@ -4152,7 +4203,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 137,
+      "arquivos_lidos": 166,
       "hooks": [
         {
           "nome": "useActiveDepartments",
@@ -4325,6 +4376,9 @@
       ],
       "buckets": [],
       "edges": [
+        "crm-integration",
+        "detect-new-device",
+        "external-db-proxy",
         "message-delivery",
         "talkx-send"
       ],
@@ -4395,7 +4449,7 @@
       "arquivo": "src/components/talkx/__dev__/TalkXKit.tsx",
       "especial": false,
       "menu": null,
-      "arquivos_lidos": 17,
+      "arquivos_lidos": 18,
       "hooks": [],
       "buckets": [],
       "edges": [],
@@ -4418,7 +4472,7 @@
         "atalho": "Alt+K",
         "layout": "full"
       },
-      "arquivos_lidos": 81,
+      "arquivos_lidos": 109,
       "hooks": [
         {
           "nome": "useAuth",
@@ -4479,6 +4533,7 @@
       ],
       "buckets": [],
       "edges": [
+        "detect-new-device",
         "message-delivery"
       ],
       "rpcs": [
@@ -4520,7 +4575,7 @@
         "atalho": "Alt+M",
         "layout": "full"
       },
-      "arquivos_lidos": 87,
+      "arquivos_lidos": 119,
       "hooks": [
         {
           "nome": "useActiveDepartments",
@@ -4730,6 +4785,7 @@
         "classify-audio-meme",
         "classify-emoji",
         "classify-sticker",
+        "detect-new-device",
         "message-delivery"
       ],
       "rpcs": [
@@ -4792,7 +4848,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 8,
+      "arquivos_lidos": 12,
       "hooks": [
         {
           "nome": "useClientErrors",
@@ -4826,7 +4882,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 8,
+      "arquivos_lidos": 11,
       "hooks": [
         {
           "nome": "useTheme",
@@ -4861,7 +4917,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 1,
+      "arquivos_lidos": 2,
       "hooks": [],
       "buckets": [],
       "edges": [
@@ -4888,7 +4944,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 7,
+      "arquivos_lidos": 14,
       "hooks": [
         {
           "nome": "useMediaElementVolume",
@@ -4926,7 +4982,7 @@
         "atalho": "Alt+T",
         "layout": null
       },
-      "arquivos_lidos": 55,
+      "arquivos_lidos": 87,
       "hooks": [
         {
           "nome": "useAppBootstrap",
@@ -4999,6 +5055,7 @@
       ],
       "buckets": [],
       "edges": [
+        "detect-new-device",
         "message-delivery"
       ],
       "rpcs": [
@@ -5048,7 +5105,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 4,
+      "arquivos_lidos": 5,
       "hooks": [
         {
           "nome": "useLayoutContext",
@@ -5081,7 +5138,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 22,
+      "arquivos_lidos": 38,
       "hooks": [
         {
           "nome": "useAppBootstrap",
@@ -5118,6 +5175,7 @@
       ],
       "buckets": [],
       "edges": [
+        "detect-new-device",
         "message-delivery"
       ],
       "rpcs": [
@@ -5155,7 +5213,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 6,
+      "arquivos_lidos": 8,
       "hooks": [
         {
           "nome": "useClientWallet",
@@ -5194,7 +5252,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 26,
+      "arquivos_lidos": 42,
       "hooks": [
         {
           "nome": "useAgentPresenceMap",
@@ -5239,6 +5297,7 @@
       ],
       "buckets": [],
       "edges": [
+        "detect-new-device",
         "message-delivery"
       ],
       "rpcs": [
@@ -6048,6 +6107,7 @@
     "useDebounce": {
       "arquivo": "src/hooks/performance/useTimingHooks.ts",
       "telas": [
+        "inbox",
         "talkx"
       ]
     },
@@ -6784,6 +6844,12 @@
       "telas": [
         "inbox",
         "tasks"
+      ]
+    },
+    "useNetworkStatus": {
+      "arquivo": "src/hooks/system/useNetworkStatus.ts",
+      "telas": [
+        "inbox"
       ]
     },
     "useNewConversation": {
