@@ -27,6 +27,14 @@ versao="${versao:-0.9.68}"
 exec >>"$LOG" 2>&1
 echo "== $(date -u +%FT%TZ) session-start (graphify $versao)"
 
+# O hook também dispara em resume/clear/compact, que podem cair no meio de um build de
+# minutos: só um por vez neste clone. O segundo sai na hora; o primeiro termina e carimba.
+exec 9>graphify-out/.session-start.lock
+if ! flock -n 9; then
+  echo "outro session-start já está rodando neste clone — saindo"
+  exit 0
+fi
+
 # Instala/confere a versão ANTES do atalho: o grafo pode estar em dia e o binário ter sumido
 # (os hooks hook-guard dependem dele).
 if ! graphify --version 2>/dev/null | grep -qx "graphify $versao"; then
