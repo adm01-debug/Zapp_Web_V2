@@ -9,8 +9,8 @@ Idioma: PT-BR. Repo: `adm01-debug/Zapp_Web_V2` (público, deploy Vercel no merge
 ## 0. Leitura obrigatória antes de qualquer coisa
 
 1. `CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md`, `TESTING_CONVENTION.md` (convenções de migration, `reserve_migration_version()`, `db-migrate.yml`, gates de CI, ratchet de typecheck).
-2. `docs/resgate/MAPA_2026-10-24.md` (clusters, cabeças, peças, vereditos, tags).
-3. `resgate-online/` se existir no main (progresso.json, dossiês, RELATORIO_RESGATE.md) e `analise-prs/` se existir em alguma ref (prs.json, baseline/, regras-de-negocio.md).
+2. `docs/_arquivo/docs/resgate/MAPA_2026-10-24.md` (arquivado em 2026-11-02; clusters, cabeças, peças, vereditos, tags).
+3. `resgate-online/` se existir no main (progresso.json, dossiês, RELATORIO_RESGATE.md) e `docs/_arquivo/analise-prs/` (arquivado em 2026-11-02: prs.json, baseline/, regras-de-negocio.md).
 4. PRs abertas relevantes ao contexto (não mexer nelas): #2244 (75 erros de typecheck herdados no main — tudo que bater nisso é **HERDADO**, não regressão), #2241 (auditoria Supabase: anon write, UPDATE sem WITH CHECK, FKs sem índice — usar como lista de verificação do agente BANCO), #2245, #2219, #2211.
 
 ## 1. Regras (valem para o coordenador e para os 5 agentes)
