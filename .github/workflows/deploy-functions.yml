@@ -275,8 +275,8 @@ jobs:
             echo "::warning::Nao foi possivel ler os secrets do projeto; a decisao cai no comportamento anterior."
             rm -f "$ARQUIVO"
           fi
-          # A decisao CONTINUA rodando no ensaio (sem if de dry_run aqui): e' ela
-          # que registra no log/plano o que o deploy faria. O modo chega ao
+          # A decisao CONTINUA rodando no ensaio (sem if de dry_run aqui): e'
+          # ela que registra no log/plano o que o deploy faria. O modo chega ao
           # secrets-scope.mjs como --dry-run e a decisao devolve MANTER.
           set -- --fn "$FN" --lista "$ARQUIVO"
           if [ "$DRY_RUN" = "true" ]; then
@@ -379,21 +379,27 @@ jobs:
               exit 1
             fi
             echo "Validando acesso server-side minimo ao catalogo"
-            STATUS=$(curl --proto '=https' --tlsv1.2 --silent --output /tmp/promogifts-preflight.json --write-out '%{http_code}' \
+            STATUS=$(curl --proto '=https' --tlsv1.2 --silent --show-error --output /tmp/promogifts-preflight.json --write-out '%{http_code}' \
+              --connect-timeout 10 --max-time 30 \
               "$PROMOGIFTS_SUPABASE_URL/rest/v1/products?select=id&limit=1" \
               -H "apikey: $PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
               -H "Authorization: Bearer $PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY")
             if [ "$STATUS" != "200" ]; then
-              echo "::error::Preflight do catalogo falhou (HTTP $STATUS)."
-              exit 1
-            fi
-            node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/promogifts-preflight.json','utf8'));if(!Array.isArray(d))process.exit(1);console.log('OK: catalogo acessivel; linhas amostradas='+d.length)"
-            echo "Setando endpoint e credencial server-side do catalogo nas edges"
-            if [ "$REESCREVER" = "true" ]; then
-              supabase secrets set \
-                PROMOGIFTS_SUPABASE_URL="$PROMOGIFTS_SUPABASE_URL" \
-                PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY="$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
-                --project-ref "$PROJECT_REF"
+              if [ "$REESCREVER" = "true" ]; then
+                echo "::error::Preflight do catalogo falhou (HTTP $STATUS) — necessario para reescrever secrets."
+                exit 1
+              else
+                echo "::warning::Preflight do catalogo falhou (HTTP $STATUS) — secrets inalterados; deploy prossegue."
+              fi
+            else
+              node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/promogifts-preflight.json','utf8'));if(!Array.isArray(d))process.exit(1);console.log('OK: catalogo acessivel; linhas amostradas='+d.length)"
+              echo "Setando endpoint e credencial server-side do catalogo nas edges"
+              if [ "$REESCREVER" = "true" ]; then
+                supabase secrets set \
+                  PROMOGIFTS_SUPABASE_URL="$PROMOGIFTS_SUPABASE_URL" \
+                  PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY="$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY" \
+                  --project-ref "$PROJECT_REF"
+              fi
             fi
           fi
           # fetch-link-preview nunca pode ser promovida sem o proxy HTTPS e
