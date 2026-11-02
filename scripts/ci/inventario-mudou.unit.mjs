@@ -93,3 +93,15 @@ test('telemetria tambem some do TEXTO dos alertas cron_falhando/cron_parado (ach
     true, 'cron_parado deixar de existir e mudanca real',
   );
 });
+
+test('historico_cron_sem_limpeza: o contador rolando sozinho nao abre PR, mas o alerta surgir/sumir sim (achado da revisao de hoje)', () => {
+  const dado = (n) => JSON.stringify({
+    alertas: n === null ? [] : [{ tipo: 'historico_cron_sem_limpeza', detalhe: [`${n} linhas com mais de 7 dias`] }],
+  });
+  assert.equal(mudou(['h.json'], ler({ 'h.json': dado(50001) }), ler({ 'h.json': dado(62000) })), false,
+    'so o contador mudou, alerta ja existia nos dois');
+  assert.equal(mudou(['h.json'], ler({ 'h.json': dado(null) }), ler({ 'h.json': dado(50001) })), true,
+    'alerta passar a existir (cruzou o limiar) e mudanca real');
+  assert.equal(mudou(['h.json'], ler({ 'h.json': dado(62000) }), ler({ 'h.json': dado(null) })), true,
+    'alerta deixar de existir e mudanca real');
+});
