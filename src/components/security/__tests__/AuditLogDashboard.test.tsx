@@ -363,29 +363,27 @@ describe('R2-AUTH-032 — papéis entram no contador sensível e nos filtros', (
       await waitFor(() => expect(valorDoCartao('Usuários Únicos')).toBe('4'));
     });
 
-    it('INSERT de audit_logs atualiza os totais sem recarregar a página', async () => {
+    it('não abre canal Realtime audit-logs-dashboard (tabela fora da publicação)', async () => {
+      // audit_logs foi removida da publicação Realtime; o hook não deve criar
+      // o canal — qualquer subscrição falharia silenciosamente em produção.
       definirDados([fakeAuditLog({ id: 'r1', action: 'login', user_id: 'uid1', created_at: agora })]);
       render(<AuditLogDashboard />);
       await waitFor(() => expect(valorDoCartao('Total de Logs')).toBe('1'));
 
-      definirDados([
-        ...(estado.dados as ReturnType<typeof fakeAuditLog>[]),
-        fakeAuditLog({ id: 'r2', action: 'role_granted', user_id: 'uid2', created_at: new Date().toISOString() }),
-      ]);
-      const inicio = performance.now();
-      estado.realtime?.emitirInsert(fakeAuditLog({ id: 'r2', action: 'role_granted', user_id: 'uid2' }));
-
-      await waitFor(() => expect(valorDoCartao('Ações Sensíveis')).toBe('1'));
-      expect(performance.now() - inicio).toBeLessThan(5000);
+      // Nenhum canal deve ser aberto: a lista deve continuar vazia.
+      expect(estado.realtime?.canais).not.toContain('audit-logs-dashboard');
+      expect(estado.realtime?.canais).toHaveLength(0);
     });
 
-    it('assina o canal audit-logs-dashboard e limpa ao desmontar', async () => {
+    it('monta e desmonta sem criar canais Realtime', async () => {
       const { unmount } = render(<AuditLogDashboard />);
-      await waitFor(() => expect(estado.realtime?.canais).toContain('audit-logs-dashboard'));
+      await waitFor(() => expect(valorDoCartao('Total de Logs')).toBeDefined());
 
+      // Nenhum canal aberto antes de desmontar.
+      expect(estado.realtime?.canais).toHaveLength(0);
       unmount();
-
-      await waitFor(() => expect(estado.realtime?.canais).toEqual([]));
+      // Continua sem canais após desmontar.
+      expect(estado.realtime?.canais).toHaveLength(0);
     });
 
     it('mostra o nome do autor buscado em profiles', async () => {

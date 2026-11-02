@@ -227,8 +227,8 @@ async function principal() {
   }
   const janela = Number(process.env.JANELA_DIAS ?? 7);
   const runs = await coletarRuns({ repo, token, janelaDias: janela });
-  // O ranking dos jobs mais lentos vale para todos os runs da janela, não só os que falharam.
-  const jobs = await coletarJobs(runsNaJanela(runs, { janelaDias: janela }), { repo, token });
+  // Limita a 50 runs mais recentes para evitar timeout (1 req HTTP por run).
+  const jobs = await coletarJobs(runsNaJanela(runs, { janelaDias: janela }).slice(0, 50), { repo, token });
   const corpo = corpoDoKpi(runs, jobs, { janelaDias: janela });
   console.log(corpo);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, corpo + '\n');
