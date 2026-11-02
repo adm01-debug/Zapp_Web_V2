@@ -27,11 +27,11 @@ Todas mergearão automaticamente quando os required checks passarem (3 obrigató
 
 | PR | Título | HEAD SHA |
 |----|--------|----------|
-| #2494 | chore(db): sincronizar artefatos (types-sync) | `7ac5326a` — **CI VERMELHO**: `db-inventory-doc.unit.mjs:406` falha — 7 tabelas `copilot_*` no banco não estão em `docs/DB-INVENTORY.md`; `types-sync.yml` não regenera este arquivo; ver PENDENCIAS.md §5 |
+| #2494 | chore(db): sincronizar artefatos (types-sync) | `b08bcee3` — **CI VERMELHO**: `db-inventory-doc.unit.mjs:406` falha — 7 tabelas `copilot_*` no banco não estão em `docs/DB-INVENTORY.md`; `types-sync.yml` não regenera este arquivo; ver PENDENCIAS.md §5 |
 | #2498 | fix(admin): RPC get_search_insights→search_insights | `984104a1e22cc924303055fff3ff96048d8bac6e` — behind, auto_merge=squash |
 | #2522 | fix(e2e): aguarda teclado visível — Firefox GR-012 | `ac6f690e` — behind, auto_merge=squash |
 | #2549 | fix: reconexão automática WhatsApp | `7742d72eb9899d131db4d053d37d7b113cc09cc8` — behind, auto_merge=squash |
-| #2557 | fix(docs): atualiza required checks no CLAUDE.md | `dc3a3c50` — behind, auto_merge=squash |
+| #2557 | fix(docs): atualiza required checks no CLAUDE.md | `62d6a9d5` — blocked (CI rodando pós-update), auto_merge=squash |
 | #2570 | fix: RLS department_invites restringe escrita a admins | `1456db651` — behind, auto_merge=squash |
 
 ---

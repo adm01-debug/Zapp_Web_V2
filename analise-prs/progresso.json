@@ -118,7 +118,7 @@
     }
   ],
   "status": "analise_completa_98_prs_revisado_15",
-  "nota": "2026-11-02: revisão 16ª sessão. #2569 MERGEADA em 2026-11-02T04:43:24Z (SHA 50ca61a6) — 9ª PR mergeada. #2494 HEAD atual 7ac5326a: CI VERMELHO — mesma falha de drift: 7 tabelas copilot_* no banco ausentes de docs/DB-INVENTORY.md; types-sync não regenera este arquivo; bloqueio estrutural documentado em PENDENCIAS.md §5. HEADs atualizados: #2570→1456db651. 6 PRs AGUARDANDO_CI: #2494(bloqueada CI), #2498/#2522/#2549/#2557/#2570(behind, auto_merge ativo).",
+  "nota": "2026-11-02: revisão 16ª sessão. #2569 MERGEADA em 2026-11-02T04:43:24Z (SHA 50ca61a6) — 9ª PR mergeada. #2494 HEAD atual b08bcee3: CI VERMELHO (runs 41388205922 e 41390536109) — mesma falha: 7 tabelas copilot_* no banco ausentes de docs/DB-INVENTORY.md; types-sync não regenera este arquivo; bloqueio estrutural documentado em PENDENCIAS.md §5. #2557 auto-atualizado para 62d6a9d5 (CI rodando). HEADs: #2570→1456db651.",
   "verdicts": {
     "1930": "FECHADA_SEM_MERGE",
     "1997": "FECHADA_SEM_MERGE",
