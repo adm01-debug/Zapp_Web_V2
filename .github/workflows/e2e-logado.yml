@@ -315,7 +315,7 @@ jobs:
             const { data: abertas } = await github.rest.issues.listForRepo({
               owner, repo, state: 'open', per_page: 50,
             });
-            const issue = abertas.find((i) => i.title === titulo);
+            const issue = abertas.find((i) => i.title === titulo && !i.pull_request);
 
             if (!issue) {
               await github.rest.issues.create({
@@ -354,7 +354,7 @@ jobs:
             const { data: abertas } = await github.rest.issues.listForRepo({
               owner, repo, state: 'open', per_page: 50,
             });
-            const issue = abertas.find((i) => i.title === titulo);
+            const issue = abertas.find((i) => i.title === titulo && !i.pull_request);
             if (!issue) {
               core.info('nenhuma issue aberta -- nada a fechar');
               return;
