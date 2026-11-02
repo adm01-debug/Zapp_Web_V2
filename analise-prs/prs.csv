@@ -95,5 +95,5 @@ numero,veredito,merge_sha,merged_at,motivo
 2566,FECHADA_SEM_MERGE,,,
 2567,MERGEADA,8ba0b4361290f37171fd6ec27012a46665ca5b7e,2026-11-02T03:51:55Z,
 2569,MERGEADA,50ca61a6ef96b366084548fbb3866974083def52,2026-11-02T04:43:24Z,
-2570,AGUARDANDO_CI,,,behind auto_merge=squash
+2570,MERGEADA,d45033e812ba7e8338f07d8b83682ca559ec93bb,2026-11-02T06:01:52Z,fix RLS department_invites
 2571,BLOQUEADO_CONFLITO,,,dirty auto_merge ativo mas conflito pendente

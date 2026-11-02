@@ -2,7 +2,7 @@
 
 **Gerado em:** 2026-11-02  
 **SHA main no início:** `004e74a8c596959f45f61c8b0b64b30a70c1ff19`  
-**SHA main atual:** `ac04c5c03e1caef48a45819f2322cf96f0bbb6b6` (após PR #2565)  
+**SHA main atual:** `d45033e812ba7e8338f07d8b83682ca559ec93bb` (após PR #2570)  
 **Total de PRs analisadas:** 98  
 
 ---
@@ -11,9 +11,9 @@
 
 | Veredito | Quantidade |
 |---|---|
-| FECHADA_SEM_MERGE | 66 |
-| **MERGEADA** | **11** |
-| AGUARDANDO_CI | 4 |
+| FECHADA_SEM_MERGE | 67 |
+| **MERGEADA** | **13** |
+| AGUARDANDO_CI | 2 |
 | BLOQUEADO_CONFLITO | 6 |
 | DRAFT_SKIP | 5 |
 | BLOQUEADO_AGUARDANDO_APROVACAO | 2 |
@@ -41,8 +41,9 @@
 | #2522 | `4b5c6e79` | 2026-11-02T05:20Z | fix(e2e): aguarda teclado visível antes do clique — Firefox GR-012 |
 | #2549 | `dfef2487` | 2026-11-02T05:32Z | fix: reconexão automática WhatsApp pelo health check |
 | #2565 | `ac04c5c0` | 2026-11-02T05:49Z | chore: CLAUDE.md revisado — regras do Joaquim no topo e arquitetura abandonada removida |
+| #2570 | `d45033e8` | 2026-11-02T06:01Z | fix: RLS department_invites restringe escrita a admins, cria RPC create_department_invite |
 
-**Pós-merge CI:** todos os 12 merges entraram via auto_merge=squash com CI Gate = success (ou CI Gate passando em run precedente confirmado).
+**Pós-merge CI:** todos os 13 merges entraram via auto_merge=squash com CI Gate = success (ou CI Gate passando em run precedente confirmado).
 
 ---
 
@@ -51,8 +52,8 @@
 | PR | Status | Detalhe |
 |---|---|---|
 | ~~#2557~~ | FECHADA | coberta pela #2565 (mergeada); fechada por adm01-debug em 2026-11-02T05:49:39Z |
-| #2570 | blocked | fix: RLS department_invites — CI rodando (Contrato DB + Replay in_progress) |
-| #2498 | behind→updated | fix(admin): RPC get_search_insights→search_insights — branch atualizado 05:35Z |
+| ~~#2570~~ | MERGEADA | SHA `d45033e8` — 2026-11-02T06:01:52Z via auto_merge=squash |
+| #2498 | behind | fix(admin): RPC get_search_insights→search_insights — aguardando auto-update-pr-branch |
 | #2494 | aguardando | db-inventory-doc falha: 7 tabelas copilot_* ausentes de DB-INVENTORY.md — bloqueio estrutural (ver §Pendências) |
 
 ---
