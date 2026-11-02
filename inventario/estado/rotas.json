@@ -415,6 +415,7 @@
         "user_has_permission"
       ],
       "tabelas": [
+        "agent_presence",
         "contacts",
         "messages",
         "permissions",
@@ -1404,6 +1405,7 @@
       ],
       "tabelas": [
         "agent_achievements",
+        "agent_presence",
         "agent_stats",
         "ai_providers",
         "audit_logs",
@@ -2572,6 +2574,7 @@
         "user_has_permission"
       ],
       "tabelas": [
+        "agent_presence",
         "ai_conversation_tags",
         "audio_memes",
         "calls",
@@ -2752,7 +2755,9 @@
           "arquivo": "src/contexts/LayoutContext.tsx"
         }
       ],
-      "buckets": [],
+      "buckets": [
+        "whatsapp-media"
+      ],
       "edges": [
         "ai-kb-ingest"
       ],
@@ -3221,6 +3226,7 @@
         "transfer_conversation"
       ],
       "tabelas": [
+        "agent_presence",
         "ai_conversation_tags",
         "channel_connections_safe",
         "contact_custom_fields",
@@ -3533,6 +3539,7 @@
       "edges": [],
       "rpcs": [],
       "tabelas": [
+        "agent_presence",
         "contacts",
         "conversation_closures",
         "messages",
@@ -3611,6 +3618,7 @@
         "get_inbox_contact_summaries"
       ],
       "tabelas": [
+        "agent_presence",
         "contacts",
         "messages",
         "profiles",
@@ -3790,9 +3798,11 @@
         "password_reset_requests_safe",
         "profiles",
         "rate_limit_configs",
+        "security_acl_alerts",
         "security_alerts",
         "user_devices",
         "user_roles",
+        "user_sessions",
         "user_settings"
       ],
       "imports_quebrados": []
@@ -4197,6 +4207,7 @@
         "user_has_permission"
       ],
       "tabelas": [
+        "agent_presence",
         "contacts",
         "conversation_sla",
         "messages",
@@ -4401,7 +4412,9 @@
           "arquivo": "src/hooks/crm/useTeamProfiles.ts"
         }
       ],
-      "buckets": [],
+      "buckets": [
+        "talkx-media"
+      ],
       "edges": [
         "auth-login",
         "crm-integration",
@@ -4459,13 +4472,19 @@
         "messages",
         "profiles",
         "talkx_blacklist",
+        "talkx_campaign_events",
         "talkx_campaign_metrics",
+        "talkx_campaign_segments",
         "talkx_campaigns",
         "talkx_link_clicks",
+        "talkx_links",
+        "talkx_optout_keywords",
         "talkx_recipients",
+        "talkx_segments",
         "talkx_settings",
         "talkx_template_variants",
         "talkx_template_versions",
+        "talkx_templates",
         "user_settings",
         "whatsapp_connections"
       ],
@@ -4808,7 +4827,8 @@
         "audio-memes",
         "audio-messages",
         "custom-emojis",
-        "stickers"
+        "stickers",
+        "team-chat-files"
       ],
       "edges": [
         "ai-enhance-message",
@@ -5348,6 +5368,7 @@
         "warroom_queue_stats"
       ],
       "tabelas": [
+        "agent_presence",
         "contacts",
         "conversation_sla",
         "messages",

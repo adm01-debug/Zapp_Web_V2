@@ -78,6 +78,15 @@ test('alertas: sem RLS, cron falhando, cron parado, historico sem limpeza, Whats
   assert.deepEqual(tipos.whatsapp_desconectado, ['PRINCIPAL: disconnected']);
 });
 
+test('rls_sem_policy: RLS ligado sem nenhuma policy nega tudo e hoje nao avisava', () => {
+  const dado = base();
+  dado.tabelas.push(tabela('cofre_vazio', { policies: 0, linhas: 0 }), tabela('com_rls_e_policy'));
+  const alerta = montarInventario(dado, {}).alertas.find((a) => a.tipo === 'rls_sem_policy');
+  assert.deepEqual(alerta.detalhe, ['cofre_vazio'], 'so a tabela sem nenhuma policy entra, mesmo vazia');
+  assert.equal(montarInventario(base(), {}).alertas.some((a) => a.tipo === 'rls_sem_policy'), false,
+    'base() ja tem policies:1 em todas; sem tabela sem policy, sem alerta');
+});
+
 test('sem conexao padrao vira alerta proprio', () => {
   const dado = base();
   dado.whatsapp.conexoes[0].padrao = false;

@@ -195,6 +195,12 @@ export function montarInventario(dado, uso, edges = compararEdges(null, [])) {
   const alertas = [];
   const semRls = tabelas.filter((t) => !t.rls).map((t) => t.nome);
   if (semRls.length) alertas.push({ tipo: 'tabela_sem_rls', detalhe: semRls });
+  // RLS ligado sem nenhuma policy nega tudo pra authenticated/anon (service_role sempre passa por
+  // cima, rolbypassrls). Pode ser de proposito (tabela so-interna), mas hoje fica invisivel: nem
+  // tabela_sem_rls (tem RLS) nem nenhum outro alerta aponta — inclusive tabela vazia hoje (ex. um
+  // cofre de credencial ainda sem linha) merece o aviso do mesmo jeito.
+  const rlsSemPolicy = tabelas.filter((t) => t.rls && t.policies === 0).map((t) => t.nome);
+  if (rlsSemPolicy.length) alertas.push({ tipo: 'rls_sem_policy', detalhe: rlsSemPolicy });
   const cronRuim = dado.cron.jobs
     .filter((j) => j.ativo && j.taxa_falha_7d_pct >= LIMIARES.taxaFalhaCronPct)
     .map((j) => `${j.nome} (${j.taxa_falha_7d_pct}% em 7d)`);

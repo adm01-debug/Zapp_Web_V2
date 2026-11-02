@@ -167,3 +167,18 @@ test('rotas.json commitado esta em dia na parte estrutural (rode node scripts/in
   assert.deepEqual(estrutura(commitado), estrutura(gerarRotas(raiz)),
     'inventario/estado/rotas.json desatualizado: rode node scripts/inventario/gerar-rotas.mjs e commite');
 });
+
+test('extrairChamadas resolve fromTable literal e const de string do mesmo arquivo', () => {
+  const texto = `
+export const ACL_ALERTS_TABLE = 'security_acl_alerts';
+const TALKX_MEDIA_BUCKET = 'talkx-media';
+export function f() {
+  fromTable('user_sessions').select('id');
+  fromTable(ACL_ALERTS_TABLE).select('*');
+  supabase.storage.from(TALKX_MEDIA_BUCKET).remove(['x']);
+  supabase.storage.from(NAO_EXISTE).remove(['y']);
+}`;
+  const c = extrairChamadas(texto);
+  assert.deepEqual(c.tabelas.sort(), ['security_acl_alerts', 'user_sessions']);
+  assert.deepEqual(c.buckets, ['talkx-media']);
+});
