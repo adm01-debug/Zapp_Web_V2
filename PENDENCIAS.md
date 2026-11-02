@@ -166,7 +166,7 @@ gerado não é o que o `deno check` procura. Este workflow **não é um required
   no replay zerado, `20261030145126` cria as políticas antes desta, causando `duplicate_object`.
   Efeito no canônico: nenhum — todos os objetos existem.
 
-**Estado:** ✅ RESOLVIDO — PR #2551 mergeado em 2026-11-02T03:17Z, SHA `587ec25f` na `main`.
+**Estado:** ✅ RESOLVIDO — PR #2551 mergeada em 2026-11-02T03:17Z, SHA `587ec25f` na `main`.
 
 ---
 
