@@ -1,16 +1,16 @@
 /**
  * SearchInsightsView — HZ1-06
  *
- * Tela de admin com os KPIs da busca global (RPC `get_search_insights`):
- * total de buscas, taxa de clique, buscas sem resultado, top 10 consultas e
- * top 10 termos sem resultado. Leitura apenas — esta tela NÃO exporta, não
- * imprime, não copia e não baixa nada (a informação não sai do sistema).
+ * Tela de admin com os KPIs da busca global (RPC `search_insights`):
+ * total de buscas, taxa de clique e buscas sem resultado. Leitura apenas —
+ * esta tela NÃO exporta, não imprime, não copia e não baixa nada (a
+ * informação não sai do sistema).
  *
  * Acesso: a própria RPC nega quem não é admin/supervisor (42501); a rota é
  * gated pelo item de menu em NavigationService (STAFF_ROLES).
  *
- * Sem PII: os termos vêm normalizados pela RPC (`term_normalized`), nunca de
- * contato, telefone ou conversa.
+ * Sem PII: a RPC expõe apenas contadores agregados — o texto de cada busca
+ * nunca é armazenado em `search_events` (privacidade por design).
  */
 import { useState } from 'react';
 import { SearchCheck, MousePointerClick, SearchX, RefreshCw, AlertTriangle } from 'lucide-react';
@@ -117,7 +117,7 @@ export function SearchInsightsView() {
             Insights de Busca
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            O que as pessoas procuram, o que não encontram e o que clicam — apenas termos normalizados, sem dados pessoais.
+            Contadores agregados da busca global — o texto de cada busca não é armazenado por privacidade.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -207,8 +207,8 @@ export function SearchInsightsView() {
           <p className="flex items-start gap-2 text-xs text-muted-foreground">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" aria-hidden="true" />
             <span>
-              Termos sem resultado são lacunas de conteúdo: a busca aconteceu e nada apareceu — nenhum clique
-              podia acontecer. Use a lista abaixo para decidir o que cadastrar ou documentar.
+              Buscas sem resultado são lacunas de conteúdo: a busca aconteceu mas nada apareceu.
+              O texto de cada busca não é armazenado — apenas os contadores acima estão disponíveis.
             </span>
           </p>
 
@@ -218,14 +218,14 @@ export function SearchInsightsView() {
               emptyMessage={
                 data.total === 0
                   ? 'Nenhuma busca registrada no período.'
-                  : 'Nenhum termo registrado no período.'
+                  : 'Textos de busca não são armazenados — privacidade por design.'
               }
               rows={data.topQueries}
               tone="default"
             />
             <TermTable
               title="Sem resultado"
-              emptyMessage="Nenhum termo sem resultado no período."
+              emptyMessage="Textos de busca não são armazenados — privacidade por design."
               rows={data.noResultTerms}
               tone="warning"
             />

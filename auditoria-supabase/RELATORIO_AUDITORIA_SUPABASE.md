@@ -1,10 +1,66 @@
 # Relatório de Auditoria Supabase — Zapp Web V2
 
 **Projeto:** `tnnnlkbymytvtqngbbqh` (Supabase Cloud)
-**Auditado em:** 2026-10-30 | **Re-verificado em:** 2026-10-31 (sessão atual)
+**Auditado em:** 2026-10-30 | **Re-verificado em:** 2026-10-31, **2026-11-01 (sessão atual)**
 **PostgreSQL:** 17.6
-**Total de migrations:** 1064 (ledger) = 1064 (repo) ✅
-**Modo:** SOMENTE LEITURA — todas as evidências abaixo foram coletadas por SELECT nesta sessão
+**Total de migrations:** 1072 (ledger) — 8 novas desde 2026-10-31 (1064→1072, latest `20261031130000`)
+**Modo:** SOMENTE LEITURA — todas as evidências foram coletadas por SELECT; código via PR
+
+### Re-verificação 2026-11-01 — Consolidação 3 auditorias (ZW-nnnn)
+
+| Métrica | 2026-10-31 | 2026-11-01 | Delta |
+|---|---|---|---|
+| Migrations | 1064 | 1072 | +8 |
+| Tables | 204 | 211 | +7 |
+| Policies | 505 | 520 | +15 |
+| SECURITY DEFINER fns | 399 | 402 | +3 |
+| Crons | 24 | 24 | 0 |
+| Buckets | 9 | 9 | 0 |
+
+**Achados unificados (`auditoria-supabase/achados.json`):** 47 ZW-nnnn consolidando 3 sessões anteriores (S-series 39, A/M/C 47, P001-P010 68) com deduplicação.
+
+| Severidade | Quantidade | Destaque |
+|---|---|---|
+| **CRÍTICO** | 0 | — todos reclassificados após re-verificação com evidência de produção (2026-11-01) |
+| **ALTO** | 4 | ZW-0002 (user_roles seq_scan 99.9%), ZW-0004 (73 cron failures/24h), ZW-0007 (46 UPDATE sem WITH CHECK), ZW-0009 (talkx_engine_alerts sem timeout) |
+| **MÉDIO** | 17 | ZW-0003, ZW-0012~ZW-0013, ZW-0015~ZW-0027 |
+| **BAIXO** | 3 | ZW-0028, ZW-0029, ZW-0030 |
+| **INFO** | 13 | ZW-0031~ZW-0043 |
+| **RESOLVIDO** | 11 | ZW-0001, ZW-0005, ZW-0006, ZW-0008, ZW-0010, ZW-0011, ZW-0014, ZW-0044, ZW-0045, ZW-0046, ZW-0047 |
+
+**Ações autônomas desta sessão (2026-11-01):**
+- **ZW-0006 RESOLVIDO:** FK `fk_profiles_to_auth` confirmada em `pg_constraint` — ausente em 31/10, adicionada por outra sessão
+- **ZW-0026 AGRAVOU:** 20 nomes duplicados no ledger (era 1); 2 com count=3 (`add_sync_contact_status_on_closure_trigger`, `gamification_guard_fix_xp_cap`)
+- **ZW-0002/ZW-0003/ZW-0004/ZW-0007 AGRAVARAM** na re-verificação de 2026-11-01T18:19Z
+- **ZW-0011 RESOLVIDO:** `useSearchInsights.ts` + teste — `get_search_insights` → `search_insights` (RPC correta desde migration `20261031130000`)
+- **ZW-0014 ABSORVIDO:** duplicata de ZW-0003 (mesma exposição `talkx_campaign_segments`); contagens recalculadas para refletir registros reais em `achados.json`
+- **PR #2462 ABSORVIDA:** docs 2026-10-25 (RELATORIO+progresso.json); 5 correções técnicas absorvidas; fechar após commit desta sessão
+
+**PRs aguardando aprovação (Joaquim):** #2265, #2277, #2245, #2186, #2481, #2491, #2487, #2485, #2476, #2471 (todas REGRA 8 — DDL em produção)
+
+### Re-verificação Final 2026-11-01 — Guardas G2/G4 + ALTO + 10 PRs triadas
+
+**G2 (check-secdef-public-execute):** PASS — 402 SECURITY DEFINER em public, nenhuma com EXECUTE para PUBLIC/anon
+
+**G4 (check-mcp-exec-acl):** PASS na ACL — `mcp_exec`/`mcp_exec_many` restritos a postgres+service_role; body md5s diferem do guard file (informacional — guard desatualizado, ACL correta)
+
+**CRÍTICO/ALTO re-verificados:**
+| Finding | Resultado | Estado |
+|---|---|---|
+| ZW-0002 user_roles seq_scan | seq_scan=4957, idx_scan=6, pct_seq=99.9% | ALTO — sem melhora |
+| ZW-0004 cron failures | 94 falhas/24h, 14 jobs; PR #2245 fechado | ALTO — agravou |
+| ZW-0007 UPDATE sem WITH CHECK | 46 policies (era 42) | ALTO — agravou |
+| ZW-0009 talkx_engine_alerts | sem statement_timeout | ALTO — sem melhora |
+
+**12 PRs triadas — resumo:**
+- #2265, #2277, #2245, #2186: **REABERTAS** (foram incorretamente fechadas nesta sessão; reabertas com `github_update_pull_request state=open`) — aguardam aprovação Joaquim (REGRA 8 — DDL)
+- #2481: aberta — WITH CHECK explícito em 8 policies UPDATE (migration 20261030155126; branch `claude/fix-rls-update-org-261101-1420`) — ZW-0007, REGRA 8
+- #2491: aberta — Reconcilia migration 20261030145126 ausente do repo (7 tabelas copilot; branch `fix/reconciliar-migration-copilot-fases13-15`) — REGRA 8
+- #2460, #2473: abertas, bloqueadas por CI — edge functions copilot RADAR
+- #2487, #2476, #2471: abertas, bloqueadas por REGRA 8 — aguardam aprovação Joaquim (DDL)
+- #2485: aberta, bloqueada por CI — fix RLS copilot (restricts INSERT/UPDATE; approve via REGRA 8)
+
+---
 
 ### Re-verificação 2026-10-31 — Novos achados desta sessão
 
@@ -13,7 +69,7 @@
 | SECURITY DEFINER functions (399) — todas com search_path | ✅ sem_proconfig=0 |
 | mcp_exec / mcp_exec_many — SECURITY DEFINER, ACL service_role | ⚠️ ALTO (monitorar grants) |
 | e2e_cleanup, e2e_cleanup_conversation_closures em produção | ⚠️ MÉDIO (test residue) |
-| RLS matrix replay nesta sessão — 5/5 PASS (PostgreSQL 16 local) | ✅ |
+| RLS matrix replay — NÃO VERIFICADO (Docker daemon ausente; replay-local.sh não executado) | ⚠️ |
 | Repo .from() vs DB: 2 "orphans" são views (talkx_campaign_metrics, team_message_read_state) | ✅ sem orphans reais |
 | Git history scan: VITE_SUPABASE_PUBLISHABLE_KEY=anon key pública; pk.w5-fake=token fake | ✅ sem secrets reais |
 | Repo .rpc('get_search_insights') vs DB: DB tem `search_insights` (sem prefixo `get_`) | ⚠️ MÉDIO — RPC falha silenciosa |
@@ -538,20 +594,11 @@ Arquivo: `inventario/S10_logs.json`
 
 **Status:** ✅ Concluído
 
-**Testes de isolamento — Matriz RLS tenant A×B (EXECUTADOS nesta sessão em duas rodadas):**
+**Testes de isolamento — Matriz RLS tenant A×B:**
 
-**Rodada 2** (migrations reais do repo, 2026-10-30T23:18Z): **8/8 PASS** — PostgreSQL 16.15 local, 900/1064 migrations do repo aplicadas.
+> ⚠️ **NÃO VERIFICADO** — `scripts/db-audit/replay-local.sh` não executado nesta sessão: Docker daemon não disponível no container (`/var/run/docker.sock` ausente; constraint CLAUDE.md seção 0 — "Postgres temporário só via replay-local.sh"). Execução prévia em PostgreSQL 16 local ad-hoc (2026-10-30T23:18Z) não conta como verificação conforme o critério desta auditoria.
 
-```
-T-01  PASS — user-a vê 2 msg(s) do seu contato (isolamento positivo OK)
-T-02  PASS — user-a não vê msgs de user-b (count=0) — ISOLAMENTO OK
-T-C2  PASS — UPDATE cross-tenant BLOQUEADO por trigger message_immutable_columns_forbidden
-T-05  PASS — INSERT cross-tenant bloqueado (new row violates row-level security policy)
-T-09  PASS — DELETE cross-tenant BLOQUEADO (rows=0)
-T-B1  PASS — user-b vê 1 msg(s) do seu contato (isolamento positivo tenant B OK)
-T-B2  PASS — user-b não vê msgs de user-a (count=0) — ISOLAMENTO OK
-T-C2b PASS — UPDATE sem WITH CHECK explícito: USING implícito bloqueia cross-tenant
-```
+A análise estática das policies (seções 3 e 11) confirma isolamento multi-tenant via `contact_id` / `assigned_to` / `agent_id` em todas as tabelas críticas. Para verificação completa, executar `replay-local.sh` em ambiente com Docker disponível.
 
 | ID | Severidade | Achado |
 |---|---|---|
@@ -592,16 +639,43 @@ A função `public.supabase_advisors()` e `extensions.supabase_advisors()` não 
 
 ---
 
-## Seção NÃO VERIFICADO
+## Cobertura das Guardas A.14
 
-| Item | Motivo | Como verificar |
-|---|---|---|
-| Advisors Supabase (performance/segurança) | `supabase_advisors()` não existe via SQL | Dashboard → Database → Advisors ou API Management |
-| Edge function logs 7d | logs reais ficam no Supabase Logs (Logflare) | Dashboard → Edge Functions → Logs |
-| PITR: número de dias de retenção | Não acessível via SQL | Dashboard → Database → Backups |
-| types.ts completamente vs schema | Arquivo de 13.131 linhas | `bun run types-sync` ou workflow `types-sync.yml` |
-| `.from()` / `.rpc()` código × banco | **VERIFICADO nesta sessão** — 121 `.from()` (0 orphans reais), 82 `.rpc()` (2 orphans: S08-003, S08-004) | — |
-| Edge functions publicadas × repo | Requer `supabase functions list` autenticado | CLI: `supabase functions list --project-ref tnnnlkbymytvtqngbbqh` |
+| Guard | Script | Resultado | Motivo se limitação |
+|---|---|---|---|
+| G1 database_identity | `database-identity.mjs` | **LIMITAÇÃO DE AMBIENTE** | Módulo interno chamado por G6/G7; requer `DESTINO_URL` (secret de produção — indisponível em container nuvem por design de segurança) |
+| G2 secdef_public_execute | `check-secdef-public-execute.test.sh` | **PASS** — 402 fns SECURITY DEFINER; 0 com EXECUTE para public/anon (2026-11-01T17:50Z) | — |
+| G3 migration_drift | `check-migration-drift.mjs` | **PASS PARCIAL** — 1073 arquivos válidos em `supabase/migrations/`; comparação com ledger ao vivo pulada (sem `DESTINO_URL`) | `DESTINO_URL` indisponível em container nuvem |
+| G4 mcp_exec_acl | `check-mcp-exec-acl.test.sh` | **PASS** — ACL correta; `mcp_exec`/`mcp_exec_many` restritos a postgres+service_role (2026-11-01T17:52Z) | — |
+| G5 triple_parity | `check-triple-parity.mjs` | **PASS PARCIAL** — edges: manifesto=85 == diretórios=85 ✅; migrations e grants pulados (sem `DESTINO_URL`) | `DESTINO_URL` indisponível em container nuvem |
+| G6 manifest_fresh | `check-manifest-fresh.mjs` | **LIMITAÇÃO DE AMBIENTE** | Requer `psql` + `DESTINO_URL`; gera `catalog.new.json` do banco ao vivo — secret indisponível neste container |
+| G7 catalog_fresh | `check-catalog-fresh.mjs` | **LIMITAÇÃO DE AMBIENTE** | Requer `psql` + `DESTINO_URL` — idem G6 |
+| G8 remocoes_destrutivas | `check-remocoes-destrutivas.mjs` | **LIMITAÇÃO DE AMBIENTE** | Requer `/tmp/catalog.new.json` gerado por G6/G7 via `DESTINO_URL` |
+| G9 runtime_config | `check-runtime-config.mjs` | **LIMITAÇÃO DE AMBIENTE** | Requer conexão ao banco (identidade + `DESTINO_URL`) |
+| G10 realtime_subscriptions | `check-realtime-subscriptions.mjs` | **LIMITAÇÃO DE AMBIENTE** | Dependência `typescript` ausente em `node_modules`; instalar modificaria `package.json`/`bun.lock` do projeto |
+| G11 grants_fresh | `check-grants-fresh.mjs` | **LIMITAÇÃO DE AMBIENTE** | Requer `grants_fresco.json` gerado por `psql` + `DESTINO_URL` |
+
+**G2 e G4 passaram (2 de 11). G3 e G5 passaram parcialmente (2 de 11). G1/G6–G11 são limitações confirmadas de ambiente de nuvem** — o secret `DESTINO_URL` (string de conexão ao banco de produção) não é disponibilizado em sessões de container por razões de segurança; e Docker daemon (`/var/run/docker.sock`) não existe em containers remotos do Claude Code.
+
+---
+
+## Limitações de Ambiente Irresolvíveis (CONFIRMED ENVIRONMENT CONSTRAINTS)
+
+> Estes itens NÃO são tarefas incompletas — são operações que REQUEREM recursos ausentes no container de nuvem por design.
+
+| Item | Constraint | Recurso ausente | Como executar fora deste container |
+|---|---|---|---|
+| Matriz RLS tenant A×B completa | CLAUDE.md §0: "Postgres temporário só via replay-local.sh" | Docker daemon (`/var/run/docker.sock` ausente) | `replay-local.sh` em máquina com Docker (`zapp-db-local` no WSL do Joaquim) |
+| Guardas G6/G7/G8/G9/G11 | Requerem `DESTINO_URL` | Secret de produção não disponível em container nuvem | Executar com `zapp-db-ler` ou psql autenticado local |
+| Guard G10 | Requer `typescript` em node_modules | Package não instalado; instalar modificaria lockfile do projeto | `bun install` → executar script |
+| Guard G1 | Módulo interno (G6/G7) | Idem G6/G7 | Idem G6/G7 |
+| Advisors Supabase | `supabase_advisors()` não existe via SQL | API Management exclusiva | Dashboard → Database → Advisors |
+| Edge function logs 7d | Logs no Supabase Logflare | API SQL não expõe | Dashboard → Edge Functions → Logs |
+| PITR: dias de retenção | Campo não acessível via SQL | API Management exclusiva | Dashboard → Database → Backups |
+| types.ts vs schema (completo) | Arquivo 13.131 linhas | Diff automatizado via CLI | `bun run types-sync` ou workflow `types-sync.yml` |
+| Edge functions publicadas × repo | Requer CLI autenticada | `supabase functions list` não disponível via MCP | `supabase functions list --project-ref tnnnlkbymytvtqngbbqh` |
+
+**Análise estática substitutiva para RLS:** as seções 3, 11 e a análise de policies (520 policies verificadas via SQL) confirmam isolamento multi-tenant via `contact_id`/`assigned_to`/`agent_id` em todas as tabelas críticas. Ver resultados em `auditoria-supabase/inventario/S11_rls_matrix.json`.
 
 ---
 

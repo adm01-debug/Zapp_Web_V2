@@ -1,8 +1,10 @@
 {
+    "generated_at": "2026-11-01",
+    "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
     "note": "Regenerar apos qualquer GRANT/REVOKE e revisar o diff antes de commitar.",
-    "anon_execute": [
-    ],
-    "generated_at": "2026-10-30",
+    "anon_execute": [],
+    "authenticated_execute_count": 223,
+    "service_role_execute_count": 394,
     "anon_table_select": [
         "agent_achievements",
         "agent_presence",
@@ -104,8 +106,5 @@
         "whatsapp_flows",
         "whatsapp_templates",
         "whisper_messages"
-    ],
-    "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 391,
-    "authenticated_execute_count": 220
+    ]
 }
