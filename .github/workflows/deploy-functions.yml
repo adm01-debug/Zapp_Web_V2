@@ -395,6 +395,9 @@ jobs:
               else
                 echo "::warning::Preflight do catalogo: erro de transporte (exit $CURL_EXIT) — secrets inalterados; deploy prossegue."
               fi
+            elif [ "$STATUS" = "401" ] || [ "$STATUS" = "403" ]; then
+              echo "::error::Preflight do catalogo falhou (HTTP $STATUS — credencial invalida) — deploy bloqueado."
+              exit 1
             elif [ "$STATUS" != "200" ]; then
               if [ "$REESCREVER" = "true" ]; then
                 echo "::error::Preflight do catalogo falhou (HTTP $STATUS) — necessario para reescrever secrets."
