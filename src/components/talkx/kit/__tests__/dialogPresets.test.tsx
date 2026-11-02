@@ -185,7 +185,7 @@ describe('X049 — espera da ação', () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByRole('alertdialog')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Excluir' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Iniciando…' })).toBeDisabled();
 
     await act(async () => { resolver(); });
 
@@ -222,7 +222,7 @@ describe('X049 — espera da ação', () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByRole('alertdialog')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Excluir' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Iniciando…' })).toBeDisabled();
   });
 
   it('abre com o foco no "Cancelar" nos destrutivos', async () => {

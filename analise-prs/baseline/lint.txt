@@ -1,29 +1,18 @@
-# Baseline Lint — main@ac97c0ea (2026-10-29)
+SHA main: 3617a2acd517dcc9a6eaf2533cd256913e462c21
+Comando: bun run lint (eslint .)
+Data: 2026-11-01
+Exit code: 1
 
-## Comando
-bun run lint 2>&1  (exec em /home/user/Zapp_Web_V2)
+RESUMO: ✖ 813 problems (600 errors, 213 warnings) — TUDO pré-existente no main
 
-## Exit code
-1 (falha — pré-existente em main)
+CATEGORIAS DOS ERROS (principais):
+- local/no-secret-compare: comparação direta de credenciais em edge functions (supabase/functions/)
+- @typescript-eslint/no-explicit-any: uso de `any` sem tipo explícito
+- Cascading renders: setState síncrono em effect
+- Cannot call impure function during render
 
-## Resumo
-✖ 814 problems (601 errors, 213 warnings)
-  0 errors and 1 warning potentially fixable with --fix
+CATEGORIAS DOS WARNINGS (principais):
+- react-refresh/only-export-components: exports mistos em arquivos de componentes
+- no-restricted-imports: import direto do supabase/client em componentes/pages
 
-## Categoria dos erros (pré-existentes)
-- local/no-secret-compare: ≥14 ocorrências em supabase/functions/_shared/cron-secret-auth.ts
-  e outros arquivos de edge functions (comparação direta de credencial sem timingSafeStringEqual)
-- @typescript-eslint/no-explicit-any: ocorrências em src/
-- react-hooks (setState-in-effect, impure-in-render): em src/
-- react-refresh/only-export-components: em src/ (warnings)
-- no-restricted-imports: em src/ (warnings)
-
-## Arquivos com erros confirmados
-- supabase/functions/talkx-send/_test-utils.ts:16 (local/no-secret-compare)
-- supabase/functions/_shared/cron-secret-auth.ts:93, :96, :84, :86, :89 (local/no-secret-compare)
-- supabase/functions/*.ts (múltiplos — local/no-secret-compare)
-
-## Nota
-A sessão anterior registrou "Exit code: 0" incorretamente (possivelmente rodou lint só em src/).
-O baseline correto é exit code 1 com 814 problemas todos pré-existentes em main.
-Qualquer PR que não toque supabase/functions/ não deve introduzir erros novos de lint.
+BASELINE: 813 problems no main. Qualquer PR que introduza problema NOVO é regressão.

@@ -59,6 +59,7 @@ describe('useCallRecording — a Edge entrega BYTES (TEL-RECORDING-001)', () => 
     });
     fetchDaEdge.mockReset().mockImplementation(() => Promise.resolve(respostaDeAudio('audio/mpeg')));
     vi.stubGlobal('fetch', fetchDaEdge);
+    vi.stubGlobal('Blob', globalThis.Blob);
   });
 
   it('nao chama a Edge nem a sessao quando a chamada nao tem gravacao', () => {

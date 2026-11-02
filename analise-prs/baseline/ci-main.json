@@ -1,0 +1,182 @@
+[
+  {
+    "name": "update-behind-branches",
+    "status": "queued",
+    "conclusion": null,
+    "id": 124439823214
+  },
+  {
+    "name": "Contrato DB vivo",
+    "status": "queued",
+    "conclusion": null,
+    "id": 124438134710
+  },
+  {
+    "name": "\u2705 CI Gate (required check)",
+    "status": "queued",
+    "conclusion": null,
+    "id": 124436195092
+  },
+  {
+    "name": "update-behind-branches",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124435636831
+  },
+  {
+    "name": "\ud83c\udfd7\ufe0f Build",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124432209848
+  },
+  {
+    "name": "update-behind-branches",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124430445277
+  },
+  {
+    "name": "\ud83d\udd14 Notificar falha",
+    "status": "completed",
+    "conclusion": "skipped",
+    "id": 124428842029
+  },
+  {
+    "name": "update-behind-branches",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124428464324
+  },
+  {
+    "name": "\u2705 CI Gate (required check)",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124428037199
+  },
+  {
+    "name": "\ud83c\udfd7\ufe0f Build",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124427508513
+  },
+  {
+    "name": "update-behind-branches",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124425931964
+  },
+  {
+    "name": "\ud83d\udd14 Notificar falha",
+    "status": "completed",
+    "conclusion": "skipped",
+    "id": 124425745274
+  },
+  {
+    "name": "\ud83d\udd14 Notificar falha",
+    "status": "completed",
+    "conclusion": "skipped",
+    "id": 124425554992
+  },
+  {
+    "name": "update-behind-branches",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124425501103
+  },
+  {
+    "name": "\ud83d\udd14 Notificar falha",
+    "status": "completed",
+    "conclusion": "skipped",
+    "id": 124424439695
+  },
+  {
+    "name": "update-behind-branches",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124424416489
+  },
+  {
+    "name": "\ud83d\udd14 Notificar falha",
+    "status": "completed",
+    "conclusion": "skipped",
+    "id": 124423283382
+  },
+  {
+    "name": "\ud83e\udde9 Node CI Scripts",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124423270871
+  },
+  {
+    "name": "\ud83e\uddea Unit Tests (2/3)",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124423270825
+  },
+  {
+    "name": "\ud83c\udfad E2E Tests (Playwright)",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124423270777
+  },
+  {
+    "name": "\ud83d\udd0e TypeCheck",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124423270767
+  },
+  {
+    "name": "\ud83e\uddea Unit Tests (1/3)",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124423270751
+  },
+  {
+    "name": "\ud83e\uddea Unit Tests (3/3)",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124423270729
+  },
+  {
+    "name": "\ud83e\uddec Muta\u00e7\u00e3o do mapa (n\u00e3o bloqueante)",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124423270718
+  },
+  {
+    "name": "\ud83d\udd12 Security Audit",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124423270564
+  },
+  {
+    "name": "update-behind-branches",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124422933285
+  },
+  {
+    "name": "\ud83d\udd14 Notificar falha",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124422838355
+  },
+  {
+    "name": "update-behind-branches",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124421854167
+  },
+  {
+    "name": "\ud83d\udd14 Notificar falha",
+    "status": "completed",
+    "conclusion": "success",
+    "id": 124421836672
+  },
+  {
+    "name": "\ud83d\udd14 Notificar falha",
+    "status": "completed",
+    "conclusion": "skipped",
+    "id": 124421731988
+  }
+]

@@ -128,13 +128,22 @@ globalThis.fetch = ((input: unknown, init?: unknown) => {
 }) as typeof fetch;
 
 // ==========================================================================
-// MOCK getBoundingClientRect — @tanstack/react-virtual no jsdom.
+// MOCK getBoundingClientRect / clientHeight / clientWidth / offsetHeight
+// — @tanstack/react-virtual no jsdom.
 //
-// O virtualizador mede a altura do contêiner por getBoundingClientRect() antes
-// de calcular quais itens são visíveis. O jsdom retorna zeros por padrão, então
-// getVirtualItems() retorna [] e nenhum item é renderizado (nem data-testid).
-// Retornar uma dimensão não-nula faz o virtualizador funcionar nos testes.
-// Testes que precisam de valores específicos usam vi.spyOn e sobrescrevem isso.
+// O virtual-core 3.19 mede o contêiner de rolagem por `clientHeight` e os
+// itens por `offsetHeight`. O jsdom retorna zeros para ambos, fazendo o
+// virtualizador nao renderizar nenhum item. A correcao:
+//   • getBoundingClientRect: retorna 600 de altura para qualquer elemento —
+//     suficiente para o contêiner de teste ser visto como viewport não-nulo.
+//   • clientHeight / clientWidth: retorna 600/800 para todo HTMLElement —
+//     o contêiner de rolagem usa clientHeight para calcular o viewport.
+//   • offsetHeight: le style.height do elemento — itens com style.height
+//     setado pelo virtualizador retornam seu tamanho exato (= estimateSize),
+//     evitando o ciclo "medicao != estimativa → re-render → Maximum update
+//     depth exceeded".
+// Testes que precisam de valores especificos sobrescrevem via vi.spyOn ou
+// Object.defineProperty com configurable: true.
 // ==========================================================================
 Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
   configurable: true,
@@ -142,6 +151,22 @@ Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
   writable: true,
   value: function () {
     return { width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) };
+  },
+});
+
+Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+  configurable: true,
+  get() { return 600; },
+});
+Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+  configurable: true,
+  get() { return 800; },
+});
+Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+  configurable: true,
+  get(this: HTMLElement) {
+    const h = parseInt(this.style.height, 10);
+    return Number.isFinite(h) && h > 0 ? h : 0;
   },
 });
 

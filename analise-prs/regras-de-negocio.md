@@ -1,167 +1,98 @@
-# Regras de Negócio — Análise de PRs
+# Regras de Negócio — Zapp Web V2
 
-**Data:** 2026-10-29  
-**Repositório:** adm01-debug/Zapp_Web_V2  
-**Main SHA auditado:** `ac97c0ea300877335a43600ed025c28b6dfa4579`
+**SHA main de referência:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c`  
+**Data:** 2026-11-01
 
-**Fontes primárias desta análise:**
-- `CLAUDE.md` (seções 0–4, project instructions checked into codebase)
-- `.github/workflows/ci.yml` (definição dos jobs e CI Gate)
-- `scripts/ci/github-settings-baseline.json` (branch protection canônica)
+## Fontes consultadas
 
----
-
-## 1. Critério de merge (todos obrigatórios)
-
-Um PR só pode ser mergeado quando TODAS as condições abaixo forem verdadeiras:
-
-| # | Critério | Fonte | Evidência mínima |
-|---|---|---|---|
-| 1 | PR ainda válido (feature não implementada em main) | `CLAUDE.md` seção 3 ("Diff mínimo, causa raiz") | Grep/busca no main atual |
-| 2 | Sem regressão (não reverte código mais recente) | Task `/goal` — regra explícita | Diff comparado com main |
-| 3 | Não implementado em main | Task `/goal` — regra explícita | Comparação SHA do arquivo em main vs PR |
-| 4 | Regra de negócio correta | Task `/goal` — regra explícita | Revisão semântica do diff |
-| 5 | Completo (sem TODO crítico, sem stub) | Task `/goal` — regra explícita | Leitura do diff completo |
-| 6 | Todos os 6 required checks passando | `CLAUDE.md` "Perímetro do GitHub" | `github_list_check_runs` para o head SHA |
-| 7 | PR atualizado com main (`strict=true`) | `scripts/ci/github-settings-baseline.json:9` (`"strict": true`) | `mergeable_state != "behind"` |
-| 8 | `mergeable_state = "clean"` | `CLAUDE.md` seção 3 ("Regras de migration" regra 6) | API do GitHub |
-| 9 | Confiança alta (sem ambiguidade de impacto) | Task `/goal` — regra explícita | — |
+- `CLAUDE.md` (regras gerais, banco, CI, workflows)
+- `supabase/migrations/` (schema e RLS)
+- `src/hooks/`, `src/services/` (lógica de negócio)
+- `docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md`
+- `docs/audits/`
 
 ---
 
-## 2. Checks obrigatórios na `main`
+## 1. Contatos
 
-Fonte: `CLAUDE.md` seção "Perímetro do GitHub — estado canônico (2026-10-03)" e
-`.github/workflows/ci.yml` (jobs: `typecheck:69`, `unit-tests:70`, `build:156`, `ci-gate:275`).
+**Regra vigente (F5/D4, migration 20260930450000):**
 
-São 6 required checks mais o CI Gate:
+Contato visível = `deleted_at IS NULL` + `is_lid_legacy = false` + `phone ~ '^[0-9]{10,15}$'`
 
-- `🔍 Lint & TypeCheck` — job `typecheck` em `ci.yml`
-- `🧪 Unit Tests` (3 partições paralelas) — job `unit-tests` em `ci.yml:69`, matrix `shard: [1,2,3]`
-- `🏗️ Build` — job `build` em `ci.yml`
-- `🔒 Security Audit` — job `security` em `ci.yml`
-- `Contrato DB offline` — job separado em `ci.yml`
-- `🎭 E2E Tests (Playwright)` — job `e2e` em `ci.yml`
-- `✅ CI Gate (required check)` — job `ci-gate` em `ci.yml:275`, `needs: [typecheck, unit-tests, node-scripts, build, security]`; bloqueia merge quando `unit-tests.result == "failure"` (`ci.yml:289`)
+Qualquer PR que altere esse critério deve atualizar **simultaneamente**:
+1. Migration com nova RLS
+2. `CONTACT_VISIBLE_PHONE_PATTERN` em `src/hooks/crm/contactsAggregates.ts`
+3. `scripts/db-audit/contacts-legacy-visibility.test.sh`
 
 ---
 
-## 3. Restrições de conteúdo
+## 2. Conversas / Inbox
 
-Fontes: `CLAUDE.md` seção 1 regras de migration, seção 0 regras 0–7, task `/goal` regras explícitas.
+**Estados de transição (migration de constraint):**  
+`archived → open` ou `archived → pending` são as únicas transições permitidas desde `cbe53b574`.  
+PR #2463 (contexto): sem DDL de conversa, só serviço de mídia.
 
-| Tipo de mudança | Regra | Fonte |
-|---|---|---|
-| Migration (DDL) | Só aditiva e não destrutiva. Sem DROP, RENAME, ALTER TYPE, DELETE/UPDATE em massa. Idempotente. | `CLAUDE.md` seção 1 "Restrições de conteúdo" ("Sem DROP, RENAME, ALTER TYPE") |
-| Edge function | Só com todos os testes passando e sem afrouxar autenticação | Task `/goal` regra explícita |
-| RLS/permissões | Só se testes no Postgres temporário provarem que nenhum acesso foi ampliado | Task `/goal` regra explícita |
-| `.github/workflows` | NÃO TOCAR — fora do escopo desta análise | Task `/goal`: "não tocar .github/workflows" |
-| SINGU (`src/services/crm/singu-adapter.ts`) | READ-ONLY — PR que escreva nele não é mergeado | Task `/goal`: "SINGU é READ-ONLY" |
+**Regra de undo de archive:**  
+Voltar conversa arquivada ao estado original respeita constraint `archived → open|pending`.
 
 ---
 
-## 4. Método de merge
+## 3. Copiloto / RADAR (em desenvolvimento)
 
-Fonte: `scripts/ci/github-settings-baseline.json:24-25` e `CLAUDE.md` "Perímetro do GitHub".
+**Tabelas copilot** (migration 20261030145126 — PR #2461):
+`copilot_sessions`, `copilot_insights`, `copilot_conversation_context`, `copilot_product_catalog`, `copilot_objection_patterns`, `copilot_success_patterns`, `copilot_performance_metrics`
 
-- Método: **squash** (`allow_squash_merge=true:24`, `allow_merge_commit=false:25`, `allow_rebase_merge=false`)
-- Branch protection: `strict=true` (`github-settings-baseline.json:9`), `enforce_admins=true`
-- Escrita no GitHub: APENAS via MCP `GITHUB - MCP - FOREVER` (`CLAUDE.md` seção 3: "Escrita no GitHub: somente MCP GITHUB - MCP - FOREVER")
-- Proibido: push direto em main, force-push, fechar/editar/comentar PR, labels, deletar branch (task `/goal`)
-
----
-
-## 5. Classificação de vereditos
-
-| Veredito | Significado |
-|---|---|
-| `MERGEAR` | Todos os critérios atendidos — merge imediato |
-| `MERGEAR_APOS_AJUSTES` | Pequeno ajuste técnico corrige o bloqueio |
-| `COMPLETAR` | PR incompleta — funcionalidade em desenvolvimento |
-| `RESGATAR_PARCIAL` | Parte do conteúdo é válida, parte não |
-| `FECHAR` | Duplicata, reverte código mais recente, ou inválida |
-| `DECISAO_HUMANA` | Requer aprovação do Joaquim (DDL destrutivo, secret, arquitetura) |
-| `DRAFT_SKIP` | PR em rascunho — não analisar para merge |
-| `BLOQUEADO_CI` | Bloqueado pelo CI sistêmico em main (ver seção 6) |
-| `BLOQUEADO_CI_E_BEHIND` | Bloqueado por CI + desatualizado em relação a main |
+**Edge functions copilot** (PR #2460 — BLOQUEADO):
+Dependem das tabelas acima + `copilot_sessions`/`copilot_insights` da migration 20261030200000 (ainda em `producao-ddl`). Não mergear edge functions antes das tabelas.
 
 ---
 
-## 6. Bloqueio sistêmico identificado (2026-10-26)
+## 4. TalkX / Campanhas
 
-**Causa raiz:** `main@2d97c44` (commit de 2026-10-24T18:43:20Z — "fix(ci): ci-gate bloqueia merge quando unit tests falham") introduziu um comportamento em que o `CI Gate` bloqueia merge quando unit tests falham. E unit tests estão falhando em **136 arquivos** naquele commit.
+**Plano vigente:** V4 (200 etapas X001–X200), `docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md`  
+V3 e anteriores: substituídos, não executar.
 
-**Evidência:**
-- PR #2247 (docs-only, 1 arquivo): `Unit Tests (1/3)` = failure, `Unit Tests (2/3)` = failure, `Unit Tests (3/3)` = failure, `CI Gate` = failure, `Contrato DB offline` = failure
-- PR #2248 (fix CI Gate): documenta 136 arquivos vermelhos, reduz para 1 arquivo (`rlsSchemaGuard.test.ts`) que precisa de 2 migrations aplicadas em produção
-
-**Impacto:**
-- **167 PRs abertas** — nenhuma mergeável
-- 35 são drafts (fora do escopo de merge de qualquer forma)
-- 132 são não-draft — todas bloqueadas pelo CI sistêmico
-
-**Caminho de desbloqueio:**
-1. PR #2248 contém a correção para 135 dos 136 arquivos vermelhos
-2. O arquivo restante (`rlsSchemaGuard.test.ts`) precisa de 2 migrations em produção
-3. Joaquim deve: revisar PR #2248 → aprovar as 2 migrations via `producao-ddl` → CI fica verde → PRs podem ser mergeadas
-
-**Prioridade:** PR #2248 é o desbloqueador de todos os outros trabalhos.
+**Convenção de branch:** `<agente>/<tipo>-talkx-x<NNN>-<slug>-<AAMMDD-HHMM>`
 
 ---
 
-## 7. Cobertura adicional de regras
+## 5. Migrations — regras obrigatórias
 
-### 7.1 Documentação e Configuração
+Ver `CLAUDE.md` seção 1 para detalhes completos. Resumo:
 
-Fonte: `CLAUDE.md` seção 3 ("Repo e escrita"), task `/goal`.
+- **Aditiva e não destrutiva:** sem `DROP`, `RENAME`, `ALTER TYPE`, `DELETE`/`UPDATE` em massa
+- **Ordem obrigatória:** arquivo → PR → merge → deploy → apply
+- **Teste:** aplicar toda cadeia de migrations em Postgres temporário
+- **Registro:** `version` > max(ledger), `statements` = SQL real (não prosa)
+- **RLS:** sempre com teste provando que nenhum acesso foi ampliado
 
-- PRs docs-only (apenas `docs/`, `.claude/commands/`, `README`) passam pelos mesmos 6 required checks
-- Sem exceção de CI para PRs de documentação pura (evidência: PR #2247, docs-only, tem CI Gate failure)
-- `.github/workflows/` — **NÃO TOCAR** (task `/goal`: "não tocar .github/workflows")
+---
 
-### 7.2 Testes
+## 6. Edge Functions
 
-Fonte: `CLAUDE.md` seção 1 regra migration, `.github/workflows/ci.yml` (job `unit-tests:69`, matrix `shard: [1,2,3]`).
+- Deploy automático: push na `main` que altera `supabase/functions/` ou `supabase/config.toml`
+- Autenticação: nunca afrouxar (sem remover `Authorization` checks, sem ampliar roles)
+- Testes obrigatórios antes do merge
 
-- Nunca desativar, pular (skip) ou colocar em quarentena um teste para fazer CI verde (`CLAUDE.md` — "nunca skip, disable ou quarantine a test")
-- 136 arquivos de teste falhando em `main@2d97c44` — o PR que corrigir isso é o desbloqueador
-- PR com correção de teste deve reduzir a contagem de arquivos vermelhos, nunca aumentar
-- `src/__tests__/rlsSchemaGuard.test.ts` — arquivo que testa as 2 migrations pendentes; falha enquanto as migrations não estiverem aplicadas em produção
+---
 
-### 7.3 Enums e Types
+## 7. Permissões / Roles
 
-Fonte: `src/integrations/supabase/types.ts` (gerado); `scripts/ci/db-guard.yml` (job `types-sync`).
+- `is_admin_or_supervisor()`: admins e supervisores
+- `is_admin()`: apenas admins
+- RLS: toda nova policy deve ser testada isoladamente em Postgres temporário
+- Nunca ampliar acesso via RLS sem evidência de teste
 
-- `src/integrations/supabase/types.ts` é gerado automaticamente pelo `types-sync` workflow
-- PR que adiciona RPC/função no banco deve incluir o types.ts regenerado; sem isso o CI de typecheck falha
-- PR #2244 é exemplo: adiciona 9 RPCs em types.ts — necessário para que o typecheck passe
+---
 
-### 7.4 Migrations / DDL
+## 8. Workflows de CI (.github/workflows/)
 
-Fonte: `CLAUDE.md` seção 1 regras 1–9; task `/goal` regras explícitas.
+Proibido alterar workflows nesta sessão (regra de segurança). PRs com apenas mudanças de workflow → SKIP_WORKFLOWS.
 
-- Apenas migrations **aditivas e não destrutivas** (sem DROP, RENAME, ALTER TYPE, DELETE/UPDATE em massa, REVOKE)
-- Idempotentes: aplicar duas vezes não produz resultado diferente
-- Toda migration em `supabase/migrations/` deve estar registrada no ledger (`supabase_migrations.schema_migrations`)
-- `statements` no ledger = SQL real e completo, nunca resumo em prosa
-- Ordem obrigatória: arquivo → PR → merge em `main` → deploy → apply (via `producao-ddl`)
-- `supabase_apply_migration` está bugado — usar `db_query` + INSERT manual no ledger
-- Migrations das PRs em análise: verificar que não há DROP/RENAME/ALTER TYPE antes de recomendar merge
+6 required checks: `🔍 Lint & TypeCheck`, `🧪 Unit Tests`, `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🎭 E2E Tests (Playwright)`
 
-### 7.5 Políticas RLS / Permissões
+CI Gate = aggregate check `✅ CI Gate (required check)` — aparece após todos os individuais.
 
-Fonte: `CLAUDE.md` seção 0 regra 3 ("RLS/permissões só se testes no Postgres temporário provarem..."); task `/goal`.
+---
 
-- PR com nova política RLS: só aprovar se testes no Postgres temporário provarem que **nenhum acesso foi ampliado** além do intencional
-- PR que amplia SELECT em tabela existente (ex.: `security_alerts`) = aditiva mas requer aprovação humana
-- `WhatsAppTemplatesManager` — admin-only (RLS admin-only; evidência: PR #2248 body)
-- `SINGU` (`src/services/crm/singu-adapter.ts`) — **READ-ONLY**: PR que escreva nele não é mergeado (task `/goal`)
-
-### 7.6 UI / Front-end
-
-Fonte: `CLAUDE.md` seção "Lição de UI (2026-09-25)", task `/goal`.
-
-- Mudança de estilo deve funcionar em light mode E dark mode (token `--inbox-panel-bg` em vez de `bg-black`)
-- Acessibilidade WCAG AA: contraste mínimo 4.5:1 para texto principal
-- PR que quebra acessibilidade (aria, contraste, motion) = regressão
-- PR #2237: correções de `aria-busy`, `motion-safe`, `aria-hidden` em 13 SVGs — aditiva, sem regressão
+*Gerado automaticamente em 2026-11-01 com base nas fontes acima.*

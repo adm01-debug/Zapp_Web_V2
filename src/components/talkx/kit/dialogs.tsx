@@ -193,7 +193,7 @@ export function TalkXConfirmDialog({
             loading={loading} disabled={!allChecked || loading} onClick={handleConfirm}
             className={cn('h-9 text-[13px]', buttonToneClass(tone))}
           >
-            {confirmLabel}
+            {loading ? 'Iniciando…' : confirmLabel}
           </TalkXPrimaryButton>
         </>
       }

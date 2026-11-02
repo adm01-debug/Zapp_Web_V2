@@ -1,3 +1,10 @@
-=== TYPECHECK ===
-error: script "typecheck" was terminated by signal SIGABRT (Abort)
-EXIT: 0
+SHA main: 3617a2acd517dcc9a6eaf2533cd256913e462c21
+Comando: NODE_OPTIONS="--max-old-space-size=4096" npx tsc -b --noEmit
+Data: 2026-11-01
+
+ERROS (3 — pré-existentes):
+src/components/queues/QueueAlertsDisplay.tsx(94,19): error TS17001: JSX elements cannot have multiple attributes with the same name.
+src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx(123,55): error TS2353: Object literal may only specify known properties, and 'tags' does not exist in type 'InboxFiltersState'.
+src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx(124,55): error TS2353: Object literal may only specify known properties, and 'tags' does not exist in type 'InboxFiltersState'.
+
+BASELINE: 3 erros TS no main. Qualquer PR que introduza erro NOVO é regressão.

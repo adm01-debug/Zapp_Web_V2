@@ -1,0 +1,36 @@
+# Baseline de testes com falha — main SHA: 3617a2acd517dcc9a6eaf2533cd256913e462c21
+# Fonte: typecheck.txt + CI gate da branch main + análise das PRs
+# Data: 2026-11-01
+# Nota: falhas pré-existentes no main — não introduzidas pelas PRs analisadas nesta sessão
+
+SHA: 3617a2acd517dcc9a6eaf2533cd256913e462c21
+Commit: docs(ci): RELATORIO_CI.md e PENDENCIAS.md (#2447)
+
+## ERROS DE TYPECHECK (3 pré-existentes)
+
+src/components/queues/QueueAlertsDisplay.tsx(94,19):
+  error TS17001: JSX elements cannot have multiple attributes with the same name.
+
+src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx(123,55):
+  error TS2353: Object literal may only specify known properties,
+  and 'tags' does not exist in type 'InboxFiltersState'.
+
+src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx(124,55):
+  error TS2353: Object literal may only specify known properties,
+  and 'tags' does not exist in type 'InboxFiltersState'.
+
+## STATUS DOS 6 REQUIRED CHECKS NO SHA BASELINE
+
+✅ 🔍 Lint & TypeCheck → success (813 problems pré-existentes; 3 erros TS acima)
+✅ 🧪 Unit Tests (shards 1/2/3) → success (falhas abaixo do threshold configurado)
+✅ 🏗️ Build → success
+✅ 🔒 Security Audit → success
+✅ Contrato DB offline → success
+✅ 🎭 E2E Tests (Playwright) → success
+✅ CI Gate → SUCCESS
+
+## REGRA DE REGRESSÃO
+
+Qualquer PR que introduza erro de typecheck NOVO além dos 3 acima = regressão.
+Qualquer PR que cause falha nova nos 6 required checks = regressão.
+Baseline: 813 problems lint (600 errors, 213 warnings) — ver lint.txt.
