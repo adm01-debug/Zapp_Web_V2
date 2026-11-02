@@ -1,6 +1,31 @@
 # PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-11-02T01:55Z por sessão `GF-001..GF-056`._
+_Atualizado em 2026-11-02T02:05Z por sessão `GF-001..GF-056`._
+
+---
+
+## 0. GitHub Actions — runners bloqueados (problema de plataforma)
+
+**Estado:** Desde ~2026-11-02T01:40Z todos os runs do repositório entram em `queued` e **nunca progridem** (`updated_at` idêntico ao `created_at`). Afeta CI/CD Pipeline, DB Guard e qualquer outro workflow.
+
+**Sintoma:** `status: "queued"`, `updated_at == created_at` em todos os runs criados após 01:40Z.
+
+**Impacto direto:** PR #2551 (`claude/hopeful-knuth-4brqti`) não consegue ter os required checks (`🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate`) aprovados. Auto-merge está ativo mas bloqueado.
+
+**Tentativas já feitas (sem sucesso):**
+- 8+ runs via PR event (`pull_request` trigger)
+- 3 runs via `workflow_dispatch` (grupos de concorrência diferentes)
+- Múltiplos commits de retry
+- Force-cancel + novo dispatch
+
+**O que o Joaquim precisa fazer:**
+1. Verificar https://www.githubstatus.com — pode haver incidente ativo de Actions
+2. Acessar Settings → Billing para verificar se o limite de minutos de Actions foi atingido
+3. Quando a plataforma se recuperar: o PR #2551 tem `auto_merge` habilitado — o merge acontecerá automaticamente quando os checks passarem (sem ação adicional necessária)
+4. Alternativamente: mergear manualmente o PR #2551 com squash — o código já está correto, o CI é o único bloqueio
+
+**Branch:** `claude/hopeful-knuth-4brqti` → PR [#2551](https://github.com/adm01-debug/Zapp_Web_V2/pull/2551)  
+**SHA atual:** `757b5e4ff35da2c50e71849bfdde5c9a5bad3c93`
 
 ---
 
