@@ -1,7 +1,7 @@
-# RELATÓRIO DE ANÁLISE — 92 PRs ANALISADAS
-**adm01-debug/Zapp_Web_V2** | Atualizado em 2026-11-02T06:00Z  
+# RELATÓRIO DE ANÁLISE — 93 PRs ANALISADAS
+**adm01-debug/Zapp_Web_V2** | Atualizado em 2026-11-02T05:00Z  
 SHA main início da análise: `004e74a8c596959f45f61c8b0b64b30a70c1ff19`  
-SHA main atual: `1252bb5a41123ba4d49efd84d0f91604bff6c87c`
+SHA main atual: `a7a53f56771257106ad79847e6a9f13b9ddada80`
 
 ---
 
@@ -12,6 +12,8 @@ SHA main atual: `1252bb5a41123ba4d49efd84d0f91604bff6c87c`
 | #2283 | fix: aumentar timeout do job E2E de 20 para 45 minutos | `6271b716e08df80d21b6cfdbdfd9263ddb6e7acb` | 2026-10-27T20:04:29Z |
 | #2447 | docs(ci): RELATORIO_CI.md e PENDENCIAS.md | `3617a2acd517dcc9a6eaf2533cd256913e462c21` | 2026-11-01 |
 | #2482 | docs(talkx): marca V4 como vigente e V3 como substituído (X001) | `3b5f8a96db0337af7310eec1b0dc5f86bb45912c` | 2026-11-01 |
+| #2547 | infra: E2E logado timeout 45 min | `3066fac062f934e5469bb573e88bc464559a023c` | 2026-11-02T02:13:43Z |
+| #2560 | fix(e2e): workers 1→2 em CI — GR-016 | `a7a53f56771257106ad79847e6a9f13b9ddada80` | 2026-11-02T02:43:28Z |
 
 ---
 
@@ -29,11 +31,9 @@ Todas mergearão automaticamente quando os required checks passarem.
 | #2542 | fix: N-008 DB Guard N008_POSTGRES_IMAGE | `c61cbe617f4d06b0f29cb41ddb8f4a1c03082327` |
 | #2543 | fix: E2E alto-contraste e N-008 healthcheck | `68dff679c1551472f7b5c06a0bf0855c920fc7eb` |
 | #2545 | chore: congela features — 9 fluxos críticos | `0a04a1d36874a6cd95721e658876ba10af0f0644` |
-| #2547 | infra: E2E logado timeout 45 min | `cd659d185658a03e3b6746d1e21ac69d7e58f327` |
 | #2549 | fix: reconexão automática WhatsApp | `7742d72eb9899d131db4d053d37d7b113cc09cc8` |
 | #2557 | fix(docs): atualiza required checks no CLAUDE.md | `93cfc9d09660ba91d932554a1f2e6b782e569de6` |
 | #2559 | fix(ci): corrige mocks supabase e dependência migrations | `3caf2e3bfb16d90702e10623ef07a658e60646de` |
-| #2560 | fix(e2e): workers 1→2 em CI — GR-016 | `27fe36ca1263adc336e849db4d8434c5008aced2` |
 | #2563 | fix(ci): instala @types/node via npm após deno install | `355f3ea4916e7d54c9d09ebd6c83bc88a5d32317` |
 | #2564 | fix(ci): W71 e2e-logado via workflow_run | `e00c8857bd36085547840ce5f26497115b4d54eb` |
 
@@ -55,6 +55,7 @@ Todas mergearão automaticamente quando os required checks passarem.
 | #2561 | BLOQUEADO_AGUARDANDO_APROVACAO | DDL em produção (convites departamento RLS) — requer aprovação. |
 | #2496 | BLOQUEADO_DDL_WORKFLOW | Feature freeze + DDL em produção sem aprovação. |
 | #2562 | BLOQUEADO_FEATURE_FREEZE | feat(lgpd) — feature nova, fora do escopo do freeze. |
+| #2565 | BLOQUEADO_DECISAO_HUMANA | CLAUDE.md revisado — conflita com #2557 (ambas tocam CLAUDE.md); PR body diz que #2565 torna #2557 redundante; Joaquim decide qual mergear e qual fechar. |
 
 ---
 
@@ -89,20 +90,21 @@ Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Números:
 
 | Veredito | Contagem |
 |----------|----------|
-| MERGEADA | 3 |
-| AGUARDANDO_CI | 15 |
+| MERGEADA | 5 |
+| AGUARDANDO_CI | 13 |
 | AGUARDANDO_CI_APOS_UPDATE | 1 |
 | DRAFT_SKIP | 5 |
 | BLOQUEADO_AGUARDANDO_APROVACAO | 2 |
 | BLOQUEADO_DDL_WORKFLOW | 1 |
 | BLOQUEADO_RLS_SEM_TESTE | 1 |
 | BLOQUEADO_FEATURE_FREEZE | 1 |
+| BLOQUEADO_DECISAO_HUMANA | 1 |
 | FECHADA_SEM_MERGE | 63 |
-| **TOTAL** | **92** |
+| **TOTAL** | **93** |
 
 ---
 
-## 🔍 LINHA DE BASE (main `1252bb5a`)
+## 🔍 LINHA DE BASE (main `a7a53f56`)
 
 - **TypeCheck**: 3 erros no main atual (ratchet baseline=93 histórico)
 - **ESLint**: 813 problems (ratchet baseline=820; 7 removidas, 0 novas)

@@ -1,11 +1,11 @@
 {
   "meta": {
     "data_analise": "2026-11-02",
-    "total_prs": 92,
+    "total_prs": 93,
     "sha_main_inicio": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
-    "sha_main_atual": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
-    "gerado_em": "2026-11-02T06:00Z",
-    "nota": "Atualizado 2026-11-02: 92 PRs analisadas; Joaquim fechou ~55 PRs em lote em 2026-11-01T23:48-50Z; adicionada #2564; progresso.json é a fonte de verdade"
+    "sha_main_atual": "a7a53f56771257106ad79847e6a9f13b9ddada80",
+    "gerado_em": "2026-11-02T05:00Z",
+    "nota": "Atualizado 2026-11-02: 93 PRs analisadas; #2547 mergeada (SHA 3066fac062f934e5469bb573e88bc464559a023c); #2560 mergeada (SHA a7a53f56771257106ad79847e6a9f13b9ddada80); #2565 adicionada BLOQUEADO_DECISAO_HUMANA"
   },
   "prs": [
     { "numero": 1930, "veredito": "FECHADA_SEM_MERGE" },
@@ -197,13 +197,15 @@
     {
       "numero": 2547,
       "titulo": "infra: E2E logado (grupo autenticado) com 45 min para terminar e reportar falhas",
-      "estado": "open",
+      "estado": "closed",
       "draft": false,
       "head_sha": "cd659d185658a03e3b6746d1e21ac69d7e58f327",
       "branch": "claude/infra-e2e-logado-timeout-261101-2050",
       "criada_em": "2026-11-01T23:44:44Z",
+      "merged_at": "2026-11-02T02:13:43Z",
+      "merge_sha": "3066fac062f934e5469bb573e88bc464559a023c",
       "auto_merge": "SQUASH",
-      "veredito": "AGUARDANDO_CI"
+      "veredito": "MERGEADA"
     },
     {
       "numero": 2549,
@@ -286,13 +288,15 @@
     {
       "numero": 2560,
       "titulo": "fix(e2e): workers 1→2 em CI — GR-016",
-      "estado": "open",
+      "estado": "closed",
       "draft": false,
       "head_sha": "27fe36ca1263adc336e849db4d8434c5008aced2",
       "branch": "claude/fix-e2e-workers-gr016-261102",
       "criada_em": "2026-11-02T01:13:24Z",
+      "merged_at": "2026-11-02T02:43:28Z",
+      "merge_sha": "a7a53f56771257106ad79847e6a9f13b9ddada80",
       "auto_merge": "SQUASH",
-      "veredito": "AGUARDANDO_CI"
+      "veredito": "MERGEADA"
     },
     {
       "numero": 2561,
@@ -339,18 +343,31 @@
       "criada_em": "2026-11-02",
       "auto_merge": "SQUASH",
       "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "numero": 2565,
+      "titulo": "chore: CLAUDE.md revisado — regras do Joaquim no topo e arquitetura abandonada removida",
+      "estado": "open",
+      "draft": false,
+      "head_sha": "18ccfa202a1e172616506da9ed964349bed46d20",
+      "branch": "claude/chore-claude-md-revisao-261102-0201",
+      "criada_em": "2026-11-02T02:01:24Z",
+      "auto_merge": "SQUASH",
+      "veredito": "BLOQUEADO_DECISAO_HUMANA",
+      "motivo_bloqueio": "Conflita com #2557 (ambas tocam CLAUDE.md); PR body diz que #2565 torna #2557 redundante; Joaquim decide qual mergear e qual fechar"
     }
   ],
   "contagem_por_veredito": {
-    "MERGEADA": 3,
-    "AGUARDANDO_CI": 15,
+    "MERGEADA": 5,
+    "AGUARDANDO_CI": 13,
     "AGUARDANDO_CI_APOS_UPDATE": 1,
     "DRAFT_SKIP": 5,
     "BLOQUEADO_AGUARDANDO_APROVACAO": 2,
     "BLOQUEADO_DDL_WORKFLOW": 1,
     "BLOQUEADO_RLS_SEM_TESTE": 1,
     "BLOQUEADO_FEATURE_FREEZE": 1,
+    "BLOQUEADO_DECISAO_HUMANA": 1,
     "FECHADA_SEM_MERGE": 63,
-    "TOTAL": 92
+    "TOTAL": 93
   }
 }
