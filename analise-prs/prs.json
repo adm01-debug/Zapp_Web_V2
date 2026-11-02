@@ -1,92 +1,34 @@
 {
   "meta": {
-    "data_analise": "2026-11-01",
-    "total_prs": 88,
+    "data_analise": "2026-11-02",
+    "total_prs": 92,
     "sha_main_inicio": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
     "sha_main_atual": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
-    "gerado_em": "2026-11-02T03:00Z",
-    "nota": "Atualizado 2026-11-02: adicionados PRs #2522-#2563; total 91 analisadas"
+    "gerado_em": "2026-11-02T06:00Z",
+    "nota": "Atualizado 2026-11-02: 92 PRs analisadas; Joaquim fechou ~55 PRs em lote em 2026-11-01T23:48-50Z; adicionada #2564; progresso.json é a fonte de verdade"
   },
   "prs": [
-    {
-      "numero": 1930,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 1997,
-      "veredito": "BLOQUEADO_DDL_WORKFLOW"
-    },
-    {
-      "numero": 2051,
-      "veredito": "SKIP_WORKFLOWS"
-    },
-    {
-      "numero": 2078,
-      "veredito": "BLOQUEADO_CONFLITO"
-    },
-    {
-      "numero": 2091,
-      "veredito": "BLOQUEADO_CONFLITO"
-    },
-    {
-      "numero": 2095,
-      "veredito": "BLOQUEADO_CONFLITO"
-    },
-    {
-      "numero": 2097,
-      "veredito": "BLOQUEADO_CONFLITO"
-    },
-    {
-      "numero": 2107,
-      "veredito": "BLOQUEADO_CONFLITO",
-      "nota": "DIRTY detectado em 2026-11-01T22:20Z via GraphQL mergeStateStatus"
-    },
-    {
-      "numero": 2111,
-      "veredito": "BLOQUEADO_CONFLITO"
-    },
-    {
-      "numero": 2113,
-      "veredito": "DRAFT_SKIP"
-    },
-    {
-      "numero": 2137,
-      "veredito": "BLOQUEADO_RLS_SEM_TESTE"
-    },
-    {
-      "numero": 2146,
-      "veredito": "BLOQUEADO_CONFLITO",
-      "nota": "merge conflict detectado em 2026-11-01T22:20Z via update_pr_branch 422"
-    },
-    {
-      "numero": 2206,
-      "veredito": "DRAFT_SKIP"
-    },
-    {
-      "numero": 2233,
-      "veredito": "BLOQUEADO_CI"
-    },
-    {
-      "numero": 2238,
-      "veredito": "BLOQUEADO_DECISAO_HUMANA"
-    },
-    {
-      "numero": 2245,
-      "veredito": "DRAFT_SKIP"
-    },
-    {
-      "numero": 2249,
-      "veredito": "DRAFT_SKIP"
-    },
-    {
-      "numero": 2265,
-      "veredito": "DRAFT_SKIP"
-    },
-    {
-      "numero": 2279,
-      "veredito": "BLOQUEADO_CONFLITO",
-      "nota": "merge conflict detectado em 2026-11-01T22:20Z via update_pr_branch 422"
-    },
+    { "numero": 1930, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 1997, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2051, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2078, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2091, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2095, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2097, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2107, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2111, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2113, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2137, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2146, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2186, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2206, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2233, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2238, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2245, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2249, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2265, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2277, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2279, "veredito": "FECHADA_SEM_MERGE" },
     {
       "numero": 2283,
       "veredito": "MERGEADA",
@@ -94,31 +36,12 @@
       "merged_at": "2026-10-27T20:04:29Z",
       "titulo": "fix: aumentar timeout do job E2E de 20 para 45 minutos"
     },
-    {
-      "numero": 2417,
-      "veredito": "BLOQUEADO_CI"
-    },
-    {
-      "numero": 2418,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2426,
-      "veredito": "BLOQUEADO_CONFLITO"
-    },
-    {
-      "numero": 2428,
-      "veredito": "BLOQUEADO_CONFLITO",
-      "nota": "merge conflict detectado em 2026-11-01T22:20Z via update_pr_branch 422"
-    },
-    {
-      "numero": 2431,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2445,
-      "veredito": "DRAFT_SKIP"
-    },
+    { "numero": 2417, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2418, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2426, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2428, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2431, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2445, "veredito": "FECHADA_SEM_MERGE" },
     {
       "numero": 2447,
       "veredito": "MERGEADA",
@@ -126,80 +49,24 @@
       "merged_at": "2026-11-01",
       "titulo": "docs(ci): RELATORIO_CI.md e PENDENCIAS.md"
     },
-    {
-      "numero": 2457,
-      "veredito": "INCOMPLETO"
-    },
-    {
-      "numero": 2460,
-      "veredito": "BLOQUEADO_DDL_FALTANDO"
-    },
-    {
-      "numero": 2461,
-      "veredito": "AGUARDANDO_CI_APOS_UPDATE",
-      "head_sha": "7a8bea7d4b974bec52e1dd2eda37b67fe1b2fe37"
-    },
-    {
-      "numero": 2462,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2463,
-      "veredito": "AGUARDANDO_CI_APOS_UPDATE",
-      "head_sha": "8fa57120c82c254d58ad1f4267fc3673f3d3bd74"
-    },
-    {
-      "numero": 2465,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2466,
-      "veredito": "BLOQUEADO_AGUARDANDO_APROVACAO"
-    },
-    {
-      "numero": 2468,
-      "veredito": "SUPERSEDIDA"
-    },
-    {
-      "numero": 2469,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2471,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2472,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2473,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2475,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2476,
-      "veredito": "BLOQUEADO_AGUARDANDO_APROVACAO"
-    },
-    {
-      "numero": 2478,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2479,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2480,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2481,
-      "veredito": "BLOQUEADO_AGUARDANDO_APROVACAO"
-    },
+    { "numero": 2457, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2460, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2461, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2462, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2463, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2465, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2466, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2468, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2469, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2471, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2472, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2473, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2475, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2476, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2478, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2479, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2480, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2481, "veredito": "BLOQUEADO_AGUARDANDO_APROVACAO", "nota": "DDL em produção (WITH CHECK RLS) — AGUARDANDO APROVAÇÃO DO JOAQUIM; auto_merge desabilitado" },
     {
       "numero": 2482,
       "veredito": "MERGEADA",
@@ -207,91 +74,38 @@
       "merged_at": "2026-11-01",
       "titulo": "docs(talkx): marca V4 como vigente e V3 como substituido (X001)"
     },
-    {
-      "numero": 2483,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2484,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2485,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2486,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2487,
-      "veredito": "BLOQUEADO_AGUARDANDO_APROVACAO"
-    },
-    {
-      "numero": 2489,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2491,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2492,
-      "veredito": "BLOQUEADO_CONFLITO"
-    },
-    {
-      "numero": 2493,
-      "veredito": "BLOQUEADO_FALSO_CLAUDE_MD"
-    },
+    { "numero": 2483, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2484, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2485, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2486, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2487, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2489, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2491, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2492, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2493, "veredito": "FECHADA_SEM_MERGE" },
     {
       "numero": 2494,
-      "veredito": "AGUARDANDO_CI_APOS_UPDATE"
+      "veredito": "AGUARDANDO_CI_APOS_UPDATE",
+      "head_sha": "7c765b95a0fd05fcc168eed1951e14ad0c6984a4",
+      "auto_merge": "SQUASH"
     },
-    {
-      "numero": 2495,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2496,
-      "veredito": "BLOQUEADO_AGUARDANDO_APROVACAO"
-    },
-    {
-      "numero": 2497,
-      "veredito": "SKIP_WORKFLOWS"
-    },
+    { "numero": 2495, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2496, "veredito": "BLOQUEADO_DDL_WORKFLOW", "nota": "Feature freeze + DDL em produção sem aprovação" },
+    { "numero": 2497, "veredito": "FECHADA_SEM_MERGE" },
     {
       "numero": 2498,
-      "veredito": "AGUARDANDO_CI_APOS_UPDATE",
-      "head_sha": "eb03117a823947804ba1659449968714c36b4ac1"
+      "veredito": "AGUARDANDO_CI",
+      "titulo": "fix(admin): RPC get_search_insights→search_insights",
+      "head_sha": "984104a1e22cc924303055fff3ff96048d8bac6e",
+      "auto_merge": "SQUASH"
     },
-    {
-      "numero": 2499,
-      "veredito": "SKIP_WORKFLOWS"
-    },
-    {
-      "numero": 2500,
-      "veredito": "DRAFT_SKIP"
-    },
-    {
-      "numero": 2501,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2502,
-      "veredito": "DRAFT_SKIP"
-    },
-    {
-      "numero": 2503,
-      "veredito": "SKIP_WORKFLOWS"
-    },
-    {
-      "numero": 2504,
-      "veredito": "AGUARDANDO_CI"
-    },
-    {
-      "numero": 2505,
-      "veredito": "DRAFT_SKIP"
-    },
+    { "numero": 2499, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2500, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2501, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2502, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2503, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2504, "veredito": "FECHADA_SEM_MERGE" },
+    { "numero": 2505, "veredito": "FECHADA_SEM_MERGE" },
     {
       "numero": 2522,
       "titulo": "fix(e2e): aguarda teclado visível antes do primeiro clique — Firefox GR-012",
@@ -300,12 +114,8 @@
       "head_sha": "737518f952999dad4f023e9eb36270bd6203ed75",
       "branch": "claude/fix-e2e-firefox-gr012-261101-2200",
       "criada_em": "2026-11-01T22:03:42Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": "SQUASH",
-      "veredito": "AGUARDANDO_CI",
-      "merged_at": null
+      "veredito": "AGUARDANDO_CI"
     },
     {
       "numero": 2526,
@@ -315,12 +125,8 @@
       "head_sha": "f3cccccae8189a91743b37a05723a833565023cc",
       "branch": "claude_04/pensive-tesla-ixtl9w",
       "criada_em": "2026-11-01T22:24:56Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": "SQUASH",
-      "veredito": "AGUARDANDO_CI",
-      "merged_at": null
+      "veredito": "AGUARDANDO_CI"
     },
     {
       "numero": 2533,
@@ -330,12 +136,8 @@
       "head_sha": "2388e1ac52b22578880c3a5d6d408a4436ac16f0",
       "branch": "claude/chore-reconcile-ledger-drift-261101-2249",
       "criada_em": "2026-11-01T22:50:47Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": "SQUASH",
-      "veredito": "AGUARDANDO_CI",
-      "merged_at": null
+      "veredito": "AGUARDANDO_CI"
     },
     {
       "numero": 2536,
@@ -345,12 +147,8 @@
       "head_sha": "901357404c7cad5fcc398fdf2e66512077e16956",
       "branch": "claude/fix-gr016-playwright-workers-011101",
       "criada_em": "2026-11-01T22:56:54Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": "SQUASH",
-      "veredito": "AGUARDANDO_CI",
-      "merged_at": null
+      "veredito": "AGUARDANDO_CI"
     },
     {
       "numero": 2539,
@@ -360,12 +158,8 @@
       "head_sha": "06ae04404de39b5931704e044fb33f75f39b6969",
       "branch": "claude/fix-reconcilia-migrations-20261026-261101-2230",
       "criada_em": "2026-11-01T23:20:12Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": null,
-      "veredito": "DRAFT_SKIP",
-      "merged_at": null
+      "veredito": "DRAFT_SKIP"
     },
     {
       "numero": 2542,
@@ -375,12 +169,8 @@
       "head_sha": "c61cbe617f4d06b0f29cb41ddb8f4a1c03082327",
       "branch": "claude/fix-ci-n008-261101-2340",
       "criada_em": "2026-11-01T23:30:30Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": "SQUASH",
-      "veredito": "AGUARDANDO_CI",
-      "merged_at": null
+      "veredito": "AGUARDANDO_CI"
     },
     {
       "numero": 2543,
@@ -390,12 +180,8 @@
       "head_sha": "68dff679c1551472f7b5c06a0bf0855c920fc7eb",
       "branch": "claude/fix-e2e-a11y-contrast-db-guard-n008-011126-2310",
       "criada_em": "2026-11-01T23:31:15Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": "SQUASH",
-      "veredito": "AGUARDANDO_CI",
-      "merged_at": null
+      "veredito": "AGUARDANDO_CI"
     },
     {
       "numero": 2545,
@@ -405,12 +191,8 @@
       "head_sha": "0a04a1d36874a6cd95721e658876ba10af0f0644",
       "branch": "claude/chore-congelamento-features-261101-2035",
       "criada_em": "2026-11-01T23:36:30Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": "SQUASH",
-      "veredito": "AGUARDANDO_CI",
-      "merged_at": null
+      "veredito": "AGUARDANDO_CI"
     },
     {
       "numero": 2547,
@@ -420,12 +202,8 @@
       "head_sha": "cd659d185658a03e3b6746d1e21ac69d7e58f327",
       "branch": "claude/infra-e2e-logado-timeout-261101-2050",
       "criada_em": "2026-11-01T23:44:44Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": "SQUASH",
-      "veredito": "AGUARDANDO_CI",
-      "merged_at": null
+      "veredito": "AGUARDANDO_CI"
     },
     {
       "numero": 2549,
@@ -435,12 +213,8 @@
       "head_sha": "7742d72eb9899d131db4d053d37d7b113cc09cc8",
       "branch": "claude/fix-reconexao-automatica-whatsapp-261101-2100",
       "criada_em": "2026-11-01T23:55:56Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": "SQUASH",
-      "veredito": "AGUARDANDO_CI",
-      "merged_at": null
+      "veredito": "AGUARDANDO_CI"
     },
     {
       "numero": 2551,
@@ -450,57 +224,34 @@
       "head_sha": "9518dbd9309be9bf2e023c2a503a02b9c50eb555",
       "branch": "claude/hopeful-knuth-4brqti",
       "criada_em": "2026-11-02T00:15:09Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
-      "auto_merge": "SQUASH",
+      "auto_merge": null,
       "veredito": "BLOQUEADO_RLS_SEM_TESTE",
-      "merged_at": null
+      "nota": "título diz fix(ci) mas contém 3 migrations RLS + 12 arquivos; auto_merge desabilitado"
     },
+    { "numero": 2552, "veredito": "FECHADA_SEM_MERGE" },
     {
       "numero": 2553,
       "titulo": "feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050)",
       "estado": "open",
       "draft": true,
-      "head_sha": "52cf2c537b408891219df84c29479895626592a3",
-      "branch": "claude/feat-talkx-x050-dialogs-kit-261101-2100",
-      "criada_em": "2026-11-02T00:28:08Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": null,
-      "veredito": "DRAFT_SKIP",
-      "merged_at": null
+      "veredito": "DRAFT_SKIP"
     },
     {
       "numero": 2555,
       "titulo": "feat: unificar ciclo de vida de campanha em useTalkXLifecycle nas 5 telas (X051)",
       "estado": "open",
       "draft": true,
-      "head_sha": "d870489dc9603d2d283d5d0e2ae2b0522d0d5ab6",
-      "branch": "claude/feat-talkx-x051-lifecycle-unificado-261102-0600",
-      "criada_em": "2026-11-02T00:38:25Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": null,
-      "veredito": "DRAFT_SKIP",
-      "merged_at": null
+      "veredito": "DRAFT_SKIP"
     },
     {
       "numero": 2556,
       "titulo": "feat: E2E reload test para preservação de rota URL (X052)",
       "estado": "open",
       "draft": true,
-      "head_sha": "cf61b887f4b1c39389d04353213bfc1892cf851a",
-      "branch": "claude/feat-talkx-x052-reload-test-261102-1000",
-      "criada_em": "2026-11-02T00:45:03Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": null,
-      "veredito": "DRAFT_SKIP",
-      "merged_at": null
+      "veredito": "DRAFT_SKIP"
     },
     {
       "numero": 2557,
@@ -510,27 +261,16 @@
       "head_sha": "93cfc9d09660ba91d932554a1f2e6b782e569de6",
       "branch": "claude/fix-claude-md-gr011-261102-0100",
       "criada_em": "2026-11-02T00:51:43Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": "SQUASH",
-      "veredito": "AGUARDANDO_CI",
-      "merged_at": null
+      "veredito": "AGUARDANDO_CI"
     },
     {
       "numero": 2558,
       "titulo": "feat(talkx): trilha de navegação clicável no monitor (X053)",
       "estado": "open",
       "draft": true,
-      "head_sha": "21be44c6214271a229d1cd91cf3bfcb6ed834217",
-      "branch": "claude/feat-talkx-x053-breadcrumb-261102-1130",
-      "criada_em": "2026-11-02T00:58:02Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": null,
-      "veredito": "DRAFT_SKIP",
-      "merged_at": null
+      "veredito": "DRAFT_SKIP"
     },
     {
       "numero": 2559,
@@ -540,12 +280,8 @@
       "head_sha": "3caf2e3bfb16d90702e10623ef07a658e60646de",
       "branch": "claude/fix-ci-gr027-261102-0100",
       "criada_em": "2026-11-02T00:59:53Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": "SQUASH",
-      "veredito": "AGUARDANDO_CI",
-      "merged_at": null
+      "veredito": "AGUARDANDO_CI"
     },
     {
       "numero": 2560,
@@ -555,12 +291,8 @@
       "head_sha": "27fe36ca1263adc336e849db4d8434c5008aced2",
       "branch": "claude/fix-e2e-workers-gr016-261102",
       "criada_em": "2026-11-02T01:13:24Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": "SQUASH",
-      "veredito": "AGUARDANDO_CI",
-      "merged_at": null
+      "veredito": "AGUARDANDO_CI"
     },
     {
       "numero": 2561,
@@ -570,12 +302,9 @@
       "head_sha": "15d1d4990307867b8cdaea515c14f68c361bdc06",
       "branch": "claude/fix-rls-department-invites-261101-2222",
       "criada_em": "2026-11-02T01:20:26Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": null,
       "veredito": "BLOQUEADO_AGUARDANDO_APROVACAO",
-      "merged_at": null
+      "nota": "DDL em produção (convites departamento RLS) — requer aprovação do Joaquim"
     },
     {
       "numero": 2562,
@@ -585,12 +314,9 @@
       "head_sha": "57b2986ba1246058768deb8d79cb51c44d9c8dfa",
       "branch": "claude/feat-login-attempts-retencao-261101-2224",
       "criada_em": "2026-11-02T01:21:09Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": null,
       "veredito": "BLOQUEADO_FEATURE_FREEZE",
-      "merged_at": null
+      "nota": "feat nova fora do escopo do freeze"
     },
     {
       "numero": 2563,
@@ -600,32 +326,31 @@
       "head_sha": "355f3ea4916e7d54c9d09ebd6c83bc88a5d32317",
       "branch": "claude/fix-deploy-functions-gr001-261102",
       "criada_em": "2026-11-02T01:39:37Z",
-      "arquivos_alterados": 0,
-      "adicoes": 0,
-      "remocoes": 0,
       "auto_merge": "SQUASH",
-      "veredito": "AGUARDANDO_CI",
-      "merged_at": null
+      "veredito": "AGUARDANDO_CI"
+    },
+    {
+      "numero": 2564,
+      "titulo": "fix(ci): W71 e2e-logado dispara via workflow_run em vez de merge direto na main",
+      "estado": "open",
+      "draft": false,
+      "head_sha": "e00c8857bd36085547840ce5f26497115b4d54eb",
+      "branch": "claude/fix-e2e-logado-workflow-run-261102",
+      "criada_em": "2026-11-02",
+      "auto_merge": "SQUASH",
+      "veredito": "AGUARDANDO_CI"
     }
   ],
   "contagem_por_veredito": {
     "MERGEADA": 3,
-    "AGUARDANDO_CI": 36,
-    "AGUARDANDO_CI_APOS_UPDATE": 3,
-    "DRAFT_SKIP": 14,
-    "BLOQUEADO_CONFLITO": 7,
-    "BLOQUEADO_AGUARDANDO_APROVACAO": 5,
-    "BLOQUEADO_CI": 2,
-    "SKIP_WORKFLOWS": 4,
-    "BLOQUEADO_DECISAO_HUMANA": 1,
-    "BLOQUEADO_DDL_FALTANDO": 1,
-    "BLOQUEADO_DDL_WORKFLOW": 2,
-    "BLOQUEADO_RLS_SEM_TESTE": 2,
-    "BLOQUEADO_FALSO_CLAUDE_MD": 1,
-    "INCOMPLETO": 1,
-    "SUPERSEDIDA": 1,
+    "AGUARDANDO_CI": 15,
+    "AGUARDANDO_CI_APOS_UPDATE": 1,
+    "DRAFT_SKIP": 5,
+    "BLOQUEADO_AGUARDANDO_APROVACAO": 2,
+    "BLOQUEADO_DDL_WORKFLOW": 1,
+    "BLOQUEADO_RLS_SEM_TESTE": 1,
     "BLOQUEADO_FEATURE_FREEZE": 1,
-    "FECHADA_SEM_MERGE": 8,
-    "TOTAL": 91
+    "FECHADA_SEM_MERGE": 63,
+    "TOTAL": 92
   }
 }
