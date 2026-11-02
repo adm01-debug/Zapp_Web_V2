@@ -233,8 +233,12 @@ test.describe('Y11 · Telefonia', () => {
     await expect(page.getByTestId('tel-dial-button')).toBeDisabled();
 
     // Apagar dígito volta o painel ao estado inicial (nem número, nem aviso).
+    // GR-012: aguarda estado intermediário entre cada clique — Firefox não processa
+    // três cliques consecutivos sem renderizar entre eles.
     await page.getByRole('button', { name: 'Apagar dígito' }).click();
+    await expect(page.getByTestId('tel-number-display')).toContainText('11');
     await page.getByRole('button', { name: 'Apagar dígito' }).click();
+    await expect(page.getByTestId('tel-number-display')).not.toContainText('11');
     await page.getByRole('button', { name: 'Apagar dígito' }).click();
     await expect(page.getByTestId('tel-number-display')).toContainText('Digite o número');
     await expect(page.getByTestId('tel-number-incomplete')).toHaveCount(0);
