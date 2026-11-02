@@ -3,7 +3,7 @@ import {
   X, Check, Copy, ChevronLeft, ChevronRight, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { TalkXDialogShell } from './kit/dialogs';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -111,7 +111,7 @@ export function TalkXTemplateEditor({
     id: string; template_id: string; version_number: number; name: string; description: string | null; content: string;
     category: string; status: string; media_url: string|null; media_type: string|null;
     tags: string[]; custom_variables: string[]; created_at: string;
-  }>>([]);
+  }>>([]); 
   const [loadingVersions, setLoadingVersions] = useState(false);
   // Sub-aba que o ENDEREÇO pediu: ela segue aberta quando a biblioteca lateral troca de
   // template (o endereço preserva o `ttab`). Abrir/fechar à mão fora dela é transitório.
@@ -830,21 +830,28 @@ export function TalkXTemplateEditor({
 
       {/* E47: Test Dialog */}
       {dialogo}
-      <Dialog open={showTest} onOpenChange={setShowTest}><DialogContent className="max-w-sm"><DialogHeader><DialogTitle>Testar template</DialogTitle><DialogDescription>Envia a mensagem personalizada para um número via WhatsApp.</DialogDescription></DialogHeader>
-            <div>
-              <Label className="text-xs text-foreground-secondary">Número de destino</Label>
-              <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="5541999001234" className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono" />
-            </div>
-            {testResult && (
-              <div className={testResult.ok ? 'flex items-center gap-2 text-dash-green text-xs' : 'flex items-center gap-2 text-dash-red text-xs'}>
-                {testResult.ok ? <CheckCircle className="w-4 h-4 flex-shrink-0" /> : <XCircle className="w-4 h-4 flex-shrink-0" />}
-                {testResult.msg}
-              </div>
-            )}
-            <div className="flex gap-2 pt-1">
-              <button type="button" onClick={() => setShowTest(false)} className="flex-1 h-9 rounded-lg border border-border/70 bg-input/40 text-[13px] font-medium">Fechar</button>
-              <button type="button" onClick={handleTest} disabled={testing || !testPhone.trim()} className="flex-1 h-9 rounded-lg bg-primary text-white text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5">{testing ? 'Enviando...' : (<><Send className="w-3.5 h-3.5" /> Enviar</>)}</button>
-            </div></DialogContent></Dialog>
+      <TalkXDialogShell
+        open={showTest}
+        onClose={() => setShowTest(false)}
+        title="Testar template"
+        className="max-w-sm"
+        footer={<>
+          <button type="button" onClick={() => setShowTest(false)} className="flex-1 h-9 rounded-lg border border-border/70 bg-input/40 text-[13px] font-medium">Fechar</button>
+          <button type="button" onClick={handleTest} disabled={testing || !testPhone.trim()} className="flex-1 h-9 rounded-lg bg-primary text-white text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5">{testing ? 'Enviando...' : (<><Send className="w-3.5 h-3.5" /> Enviar</>)}</button>
+        </>}
+      >
+        <p className="text-xs text-muted-foreground -mt-1">Envia a mensagem personalizada para um número via WhatsApp.</p>
+        <div>
+          <Label className="text-xs text-foreground-secondary">Número de destino</Label>
+          <Input value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="5541999001234" className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono" />
+        </div>
+        {testResult && (
+          <div className={testResult.ok ? 'flex items-center gap-2 text-dash-green text-xs' : 'flex items-center gap-2 text-dash-red text-xs'}>
+            {testResult.ok ? <CheckCircle className="w-4 h-4 flex-shrink-0" /> : <XCircle className="w-4 h-4 flex-shrink-0" />}
+            {testResult.msg}
+          </div>
+        )}
+      </TalkXDialogShell>
     </div>
   );
 }
