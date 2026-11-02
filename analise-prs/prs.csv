@@ -1,69 +1,20 @@
-pr,title,draft,auto_merge,mergeable_state,status,url
-1930,feat(db-audit): W21 — check-migration-drift --classificar: 4 classes de drift,False,True,blocked,MERGE_OK_AUTO_MERGE_PENDING,https://github.com/adm01-debug/Zapp_Web_V2/pull/1930
-2078,ci(F3): baseline strict=false — opção A sem fila serial,False,False,blocked,IMPOSSIVEL_MERGE,https://github.com/adm01-debug/Zapp_Web_V2/pull/2078
-2417,fix(tests): mocks clientHeight/clientWidth e spy HTMLElement,False,True,blocked,MERGEAR_COM_RESSALVA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2417
-2418,docs: plano de correções e melhorias — 190 etapas (2026-10-1...),False,True,blocked,MERGEAR,https://github.com/adm01-debug/Zapp_Web_V2/pull/2418
-2426,fix(ci): corrigir timeout do branch-hygiene-audit e baseline,False,True,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2426
-2431,fix(ci): docker-shim protege roles pg_*; setup.ts usa Element...,False,False,blocked,MERGEAR_COM_RESSALVA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2431
-2457,feat(db): investigação de incidentes de pausa de instância,False,False,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2457
-2460,feat: 7 edge functions copiloto RADAR fases 8-10 (CV-071–CV-...),False,True,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2460
-2461,feat(db): 7 tabelas copiloto fases 13-15 (CV-121–CV-150),False,False,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2461
-2462,chore: auditoria Supabase — relatório e progresso finais,False,True,blocked,MERGE_OK_AUTO_MERGE_PENDING,https://github.com/adm01-debug/Zapp_Web_V2/pull/2462
-2463,fix: MediaMigrationTool acessa dados via service (no-restrict...),False,True,blocked,MERGE_OK_AUTO_MERGE_PENDING,https://github.com/adm01-debug/Zapp_Web_V2/pull/2463
-2464,fix: resolve lint regressions and existing typecheck errors,False,True,blocked,MERGE_OK_AUTO_MERGE_PENDING,https://github.com/adm01-debug/Zapp_Web_V2/pull/2464
-2465,docs(consolidacao): registra baseline técnica de 01/11,False,True,blocked,MERGEAR,https://github.com/adm01-debug/Zapp_Web_V2/pull/2465
-2466,feat(message-delivery): carimbo do POST iniciado (PD-79),False,False,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2466
-2467,feat: undo do bulkArchive restaura waiting/resolved/closed,False,True,blocked,MERGE_OK_AUTO_MERGE_PENDING,https://github.com/adm01-debug/Zapp_Web_V2/pull/2467
-2469,"feat: completa pausa de instância (C121) — painel, bloqueio",False,False,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2469
-2471,infra: investigação de pausas de instância — migration IP2-A,False,True,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2471
-2472,feat: pausa de instância segura a entrega de mensagens,False,False,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2472
-2473,feat: conectar 7 hooks do Copiloto às edge functions AI (fas...),False,True,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2473
-2475,fix(test): restaura os 3 testes de ContactNotes afrouxados,False,True,blocked,MERGE_OK_AUTO_MERGE_PENDING,https://github.com/adm01-debug/Zapp_Web_V2/pull/2475
-2476,feat: cron do Multiplix retoma dispatch pausado por instância,False,False,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2476
-2478,"feat(tarefas): cores de prioridade D12 — Média âmbar, Alta/U",False,True,blocked,MERGE_OK_AUTO_MERGE_PENDING,https://github.com/adm01-debug/Zapp_Web_V2/pull/2478
-2479,docs(resgate): mapa do delta pós 24/10 do trabalho local,False,True,blocked,MERGEAR,https://github.com/adm01-debug/Zapp_Web_V2/pull/2479
-2480,"feat: C297 — visual de texto longo em Badge, Card, Label",False,True,blocked,MERGE_OK_AUTO_MERGE_PENDING,https://github.com/adm01-debug/Zapp_Web_V2/pull/2480
-2481,fix(rls): WITH CHECK explícito em 8 policies UPDATE críticas,False,True,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2481
-2483,fix: adiciona brinde_state em copilot_sessions (CV-026),False,True,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2483
-2484,feat(metas): seletor Hoje/Semana/Mês na aba Metas (C130),False,True,blocked,MERGE_OK_AUTO_MERGE_PENDING,https://github.com/adm01-debug/Zapp_Web_V2/pull/2484
-2485,fix: RLS copilot — INSERT learning_moments e UPDATE scores,False,True,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2485
-2486,feat: motor e telas do RADAR Copiloto (CV-021–060),False,True,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2486
-2487,feat: migration 20261030200000 — motor Copiloto RADAR,False,True,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2487
-2491,fix: reconciliar migration 20261030145126 (copilot_fases13_1),False,True,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2491
-2492,fix: fila-merge retry p/ JSON truncado + testes paginação,False,False,dirty,CONFLITO,https://github.com/adm01-debug/Zapp_Web_V2/pull/2492
-2494,chore(db): sincronizar artefatos derivados do banco,False,True,blocked,MERGE_OK,https://github.com/adm01-debug/Zapp_Web_V2/pull/2494
-2495,chore: adiciona comando /auditoria-supabase,False,True,blocked,MERGE_OK,https://github.com/adm01-debug/Zapp_Web_V2/pull/2495
-2496,feat(message-delivery): carimbo do POST iniciado (PD-79) dup,False,False,dirty,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2496
-2498,fix(admin): corrige RPC get_search_insights → search_insights,False,True,blocked,MERGE_OK,https://github.com/adm01-debug/Zapp_Web_V2/pull/2498
-2499,feat(ci): notificação WhatsApp em falha crítica na main (E90),False,True,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2499
-2500,fix: CV-052 — commit atômico session+insights via RPC,False,True,blocked,AGUARDANDO_APROVACAO,https://github.com/adm01-debug/Zapp_Web_V2/pull/2500
-2501,chore(plano): marcar E19/E20/E21 como [x],False,True,blocked,MERGE_OK,https://github.com/adm01-debug/Zapp_Web_V2/pull/2501
-2502,docs: atualiza perímetro do GitHub e checkboxes do plano,True,False,unknown,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2502
-2503,fix(ci): E69+E71 — parallelizar build/typecheck e filtrar jobs,False,True,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2503
-2504,fix(e2e): workers CI 1→4 + timeouts explícitos,False,True,blocked,MERGE_OK,https://github.com/adm01-debug/Zapp_Web_V2/pull/2504
-2505,fix: HIGH-3 — 57 índices de FK sem cobertura,False,True,blocked,AGUARDANDO_APROVACAO,https://github.com/adm01-debug/Zapp_Web_V2/pull/2505
-2506,docs(audit): auditoria Supabase — 47 achados,False,False,dirty,CONFLITO,https://github.com/adm01-debug/Zapp_Web_V2/pull/2506
-2507,fix(docs): CLAUDE.md — corrige referências de 6 checks → 3,False,True,blocked,MERGE_OK,https://github.com/adm01-debug/Zapp_Web_V2/pull/2507
-2508,fix(ci): corrige typecheck das edges — npm instala @types/node,False,True,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2508
-2510,ci(W85/W86/W87): OpenSSF Scorecard + dependency-review,False,True,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2510
-2513,fix: contraste WCAG AA no modo alto contraste escuro,False,True,blocked,MERGE_OK,https://github.com/adm01-debug/Zapp_Web_V2/pull/2513
-2514,"fix: CRITICAL-3 — talkx-scheduler 9,3% de falha por timeout",False,True,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2514
-2515,fix: pre-aquecer cache Deno antes do baseline N-017,True,False,unknown,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2515
-2516,fix(talkx): caso de aceite X006 — Limites de Envio,False,True,blocked,MERGE_OK,https://github.com/adm01-debug/Zapp_Web_V2/pull/2516
-2517,feat(talkx): catálogo de motivos de supressão com RLS e FK,True,False,unknown,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2517
-2519,fix: corrige 6 falhas de CI + documenta bloqueios pré-exist.,True,False,unknown,DRAFT,https://github.com/adm01-debug/Zapp_Web_V2/pull/2519
-2520,feat(talkx): criar base de demonstração determinística,False,True,blocked,MERGEAR,https://github.com/adm01-debug/Zapp_Web_V2/pull/2520
-2522,fix(e2e): aguarda teclado visível antes do primeiro clique,False,True,blocked,MERGEAR,https://github.com/adm01-debug/Zapp_Web_V2/pull/2522
-2523,chore(analise-prs): relatório completo de 30 PRs abertas,True,False,unknown,DRAFT,https://github.com/adm01-debug/Zapp_Web_V2/pull/2523
-2524,fix: adiciona gte/lte ao mock chainable em useAdminData,False,False,blocked,MERGE_OK,https://github.com/adm01-debug/Zapp_Web_V2/pull/2524
-2525,docs(ci): RELATORIO_CI e PENDENCIAS — estado real 2026-11-01,True,False,unknown,DRAFT,https://github.com/adm01-debug/Zapp_Web_V2/pull/2525
-2526,fix(ci): deno check --config + waitForAppliedTheme corrigem,False,False,blocked,DECISAO_HUMANA,https://github.com/adm01-debug/Zapp_Web_V2/pull/2526
-2527,fix(ci): adicionar --config ao deno check em deploy-function,True,False,unknown,DRAFT,https://github.com/adm01-debug/Zapp_Web_V2/pull/2527
-2529,"feat(talkx): RPCs analíticas de campanha — heatmap, top segm.",True,False,unknown,DRAFT,https://github.com/adm01-debug/Zapp_Web_V2/pull/2529
-2530,feat(talkx): RPCs de métricas da biblioteca de templates,True,False,unknown,DRAFT,https://github.com/adm01-debug/Zapp_Web_V2/pull/2530
-2531,feat(talkx): RPC de fila por segmento da campanha (X058),True,False,unknown,DRAFT,https://github.com/adm01-debug/Zapp_Web_V2/pull/2531
-2532,docs(gf): BACKLOG_TAREFAS.md GF-001..056 [x] + PENDENCIAS.md,False,True,blocked,MERGE_OK_AUTO_MERGE_PENDING,https://github.com/adm01-debug/Zapp_Web_V2/pull/2532
-2533,chore: arquivo de reconciliação migration 20261030145126,True,False,unknown,DRAFT,https://github.com/adm01-debug/Zapp_Web_V2/pull/2533
-2534,fix: bulkArchive mostra toast.info quando RLS bloqueia SELECT,True,False,unknown,DRAFT,https://github.com/adm01-debug/Zapp_Web_V2/pull/2534
-2535,fix(talkx): restaura X111/X112/X116 perdidos no squash,False,True,blocked,MERGE_OK_AUTO_MERGE_PENDING,https://github.com/adm01-debug/Zapp_Web_V2/pull/2535
-2536,fix(e2e): workers sempre 2 — elimina timeout do Email fixture,False,True,blocked,MERGE_OK_AUTO_MERGE_PENDING,https://github.com/adm01-debug/Zapp_Web_V2/pull/2536
+numero,titulo,branch,autor,draft,veredito,auto_merge,mergeable,mergeable_state,motivo_bloqueio,toca_workflow,toca_migration,toca_edge_function,diff_verificado,valida,ja_no_main,tem_regressao,regra_negocio_ok,acao
+2494,"chore(db): sincronizar artefatos derivados do banco",automation/types-sync,bot,false,MERGE_OK,SQUASH,true,blocked,CI queue overloaded,false,false,false,true,true,false,false,true,aguardar CI verde
+2504,"fix(e2e): workers CI 1→4 + timeouts explícitos","claude/fix-e2e-workers-timeout-tests-011101-1800",claude,false,MERGE_OK,SQUASH,true,blocked,CI queue overloaded,false,false,false,true,true,false,false,true,aguardar CI verde
+2543,"fix: E2E alto-contraste e N-008 healthcheck","claude/fix-e2e-a11y-contrast-db-guard-n008-011126-2310",claude,false,MERGE_OK,SQUASH,true,blocked,CI queue overloaded,false,false,false,true,true,false,false,true,aguardar CI verde
+2545,"chore: congela features e define os 9 fluxos críticos","claude/chore-congelamento-features-261101-2035",claude,false,MERGE_OK,SQUASH,true,blocked,CI queue overloaded,false,false,false,true,true,false,false,true,aguardar CI verde
+2527,"fix: auto-update branch target",claude/fix-auto-update-branch-target,claude,false,REGRA8_WORKFLOW,desabilitado,true,mergeable,REGRA8 - toca deploy-functions.yml,true,false,false,true,true,false,false,true,decisão humana (Joaquim)
+2542,"fix: N-008 DB Guard N008_POSTGRES_IMAGE",claude/fix-db-guard-n008-postgres-image,claude,false,REGRA8_WORKFLOW,desabilitado,true,mergeable,REGRA8 - toca db-guard.yml,true,false,false,true,true,false,false,true,decisão humana (Joaquim)
+2547,"infra: E2E logado timeout 45 min",claude/infra-e2e-logado-timeout,claude,false,REGRA8_WORKFLOW,desabilitado,true,mergeable,REGRA8 - toca e2e-logado.yml,true,false,false,true,true,false,false,true,decisão humana (Joaquim)
+2549,"fix: reconexão automática WhatsApp via health check","claude/fix-reconexao-automatica-whatsapp-261101-2100",claude,false,REGRA8_EDGE_FUNCTION,desabilitado,true,mergeable,REGRA8 - edge function sem deno test,false,false,true,true,true,false,false,true,"decisão humana (Joaquim) - CRÍTICO: flows 2/3/4 quebrados"
+2539,"fix: reconcilia migrations 20261026",claude/fix-reconcile-migrations-20261026,claude,true,DRAFT_MIGRATION_RECONCILE,não ativado,true,a verificar,"DRAFT + ci.yml + DROP migration",true,true,false,false,NÃO VERIFICADO,false,NÃO VERIFICADO,NÃO VERIFICADO,DRAFT - não mergear
+2548,"feat: TalkX X048 estados WA/CRM","claude/feat-talkx-x048-estados-servico-261101-2100",claude,true,DRAFT_FEATURE_FREEZE,não ativado,true,mergeable,DRAFT + feature freeze,false,false,false,true,true,false,false,true,DRAFT + feature freeze
+2515,"fix: multiplix deno cache pre-warm",claude/fix-multiplix-deno-cache,claude,true,DRAFT,não ativado,true,a verificar,DRAFT,false,false,false,true,true,false,false,true,DRAFT - não mergear
+2517,"feat(talkx): X070 catálogo motivos de supressão",claude/feat-talkx-x070-suppression-reasons,claude,true,DRAFT_REGRA8_DESTRUCTIVE,não ativado,true,a verificar,"DRAFT + DROP TYPE + ALTER TYPE + UPDATE massa",false,true,false,true,NÃO MERGEAR,false,RISCO,true,DRAFT + destrutiva - não mergear
+2519,"fix: corrige 6 falhas de CI + bloqueios pré-existentes",não identificado,claude,true,DRAFT_REGRA8_WORKFLOW_MIGRATION,não ativado,true,a verificar,"DRAFT + db-guard.yml + edita migration existente",true,true,false,true,PARCIALMENTE,false,RISCO,PARCIALMENTE,DRAFT + múltiplas REGRA8 - não mergear
+2523,"chore: análise de PRs (sessão de auditoria)","claude_05/awesome-ramanujan-ufxolu",claude,true,DRAFT_SESSAO_ANALISE,não ativado,true,a verificar,DRAFT - PR desta sessão,false,false,false,false,true,false,false,true,DRAFT - esta sessão
+2525,"fix: reconcilia migrations 20261031170000 e 20261101213000","claude_04/gifted-ride-xq3mj4",claude,true,DRAFT_REGRA8_MIGRATION,ativo,true,a verificar,"DRAFT + migrations aditivas (FK indexes + RLS ALTER POLICY)",false,true,false,true,true,false,false,true,DRAFT + REGRA8_MIGRATION
+2529,"feat(talkx): X074 analytics RPCs",não identificado,claude,true,DRAFT_REGRA8_MIGRATION_FEATURE_FREEZE,não ativado,true,a verificar,DRAFT + feature freeze + migration funções,false,true,false,true,true,false,false,true,DRAFT + feature freeze
+2530,"feat(talkx): X086 template metrics RPCs",não identificado,claude,true,DRAFT_REGRA8_MIGRATION_FEATURE_FREEZE,não ativado,true,a verificar,DRAFT + feature freeze + migration funções,false,true,false,true,true,false,false,true,DRAFT + feature freeze
+2531,"feat(talkx): X058 campaign queue by segment RPC",não identificado,claude,true,DRAFT_REGRA8_MIGRATION_FEATURE_FREEZE,não ativado,true,a verificar,DRAFT + feature freeze + migration função,false,true,false,true,true,false,false,true,DRAFT + feature freeze
+2534,"fix: bulkArchive - erro RLS mostra aviso neutro",não identificado,claude,true,DRAFT,não ativado,true,a verificar,DRAFT,false,false,false,true,true,false,false,true,DRAFT - fix válido aguardando conversão
