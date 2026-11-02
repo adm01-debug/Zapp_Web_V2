@@ -1,6 +1,6 @@
 # PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-10-31 por sessão `fix/ci-workflows`._
+_Atualizado em 2026-11-02 por sessão `GF-001..GF-056`._
 
 ---
 
@@ -83,22 +83,19 @@ gerado não é o que o `deno check` procura. Este workflow **não é um required
 
 ---
 
-## 4. DB Migrate — 3 versões no ledger sem arquivo no disco
+## 4. DB Migrate — 3 versões no ledger sem arquivo no disco ✅ RESOLVIDO (PR #2551)
 
-**Versões afetadas (remote_only):** encontradas pelo step "Paridade arquivos↔ledger" do
-`db-live-guard`. Versões que existem no ledger do banco mas não têm arquivo em `supabase/migrations/`.
+**Versões reconciliadas (commit `6fc91a8f9` no PR #2551):**
+- `20261030145126_copilot_fases13_15_tabelas.sql` — SQL exato do ledger (30 statements, tabelas copilot)
+- `20261031170000_high3-fk-indexes.sql` — SQL exato do ledger corrigido (48 CREATE INDEX IF NOT EXISTS; commit `4a6a54e21`)
+- `20261101213000_rls_update_with_check_explicit.sql` — SQL exato do ledger (8 ALTER POLICY WITH CHECK)
 
-**Por que não foi corrigido:** Requer análise de cada versão para determinar se o arquivo foi
-deletado por engano, nunca foi commitado, ou se a migration foi aplicada manualmente sem
-passar pelo fluxo de arquivo→PR→merge. Risco de criar arquivo errado e introduzir drift.
-Este workflow **não é um required check** — não bloqueia merges na `main`.
+**Falha colateral documentada em `scripts/db-audit/replay-known-failures.json`:**
+- `20261031100000_copilot_fases13_15_tabelas.sql` adicionado como `nao-idempotente-inerte`:
+  no replay zerado, `20261030145126` cria as políticas antes desta, causando `duplicate_object`.
+  Efeito no canônico: nenhum — todos os objetos existem.
 
-**O que o Joaquim precisa fazer:**
-1. Consultar `SELECT version, name, statements FROM supabase_migrations.schema_migrations
-   WHERE version NOT IN (SELECT regexp_replace(filename, '^(\\d{14}).*$', '\\1') FROM ...)` para listar as versões
-2. Para cada versão remote_only: decidir se o arquivo precisa ser criado (reconciliação) ou
-   se a entrada do ledger está errada (correção)
-3. Seguir CLAUDE.md §1 regra 7: o arquivo deve ter o SQL exato aplicado em produção
+**Estado:** Aguardando merge do PR #2551 para entrar na `main`.
 
 ---
 
@@ -179,6 +176,20 @@ esses workflows nunca entraram na main. Não há ação necessária.
 - Branches deletadas — conteúdo inacessível via API.
 - Se quiser reativar algum workflow das branches: recriar o arquivo diretamente na main
   usando os templates do GitHub Actions.
+
+---
+
+## 7. Branch de trabalho GF — mudança de nome
+
+**Branch original** do enunciado da tarefa: `claude/trusting-albattani-9x3ipg` (PR #2532).  
+**Branch efetiva**: `claude/hopeful-knuth-4brqti` (PR #2551 — "fix(ci): branch-hygiene-audit timeout no step KPI (GF-010)").
+
+**Por que mudou:** PR #2532 foi fechada durante o congelamento de features (§5) em 2026-11-01.
+O trabalho GF foi continuado na branch `claude/hopeful-knuth-4brqti`, que contém todos os
+commits das 56 tarefas GF-001..GF-056.
+
+**Estado:** PR #2551 aberta com auto-merge ativo. Quando o CI (Build, TypeCheck, CI Gate) passar
+e o merge ocorrer, as 56 tarefas estarão na `main`.
 
 ---
 
