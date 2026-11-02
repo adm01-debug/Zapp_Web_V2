@@ -69,20 +69,49 @@ function listarArquivos(dir, acc = []) {
   return acc;
 }
 
-/** Quantos `.from('tabela')` existem em src/ e em supabase/functions/ (testes e storage.from excluidos). */
+/**
+ * Uso de cada tabela no codigo de producao (testes fora): `.from('tabela')` do cliente
+ * Supabase (sem `storage.from`, que e bucket) e acesso direto ao PostgREST `/rest/v1/tabela`.
+ * Limite conhecido: `.from(variavel)` nao e resolvido.
+ */
 export function contarUsoNoCodigo(raiz, nomes) {
   const uso = Object.fromEntries(nomes.map((n) => [n, { src: 0, edges: 0 }]));
-  const re = /(\bstorage\s*)?\.from\(\s*['"`]([A-Za-z0-9_]+)['"`]/g;
+  const reFrom = /(\bstorage\s*)?\.from\(\s*['"`]([A-Za-z0-9_]+)['"`]/g;
+  const reRest = /\/rest\/v1\/([A-Za-z0-9_]+)/g;
   for (const pasta of PASTAS_CODIGO) {
     const chave = pasta === 'src' ? 'src' : 'edges';
     for (const arquivo of listarArquivos(path.join(raiz, pasta))) {
       if (/(\.test\.|\.spec\.|__tests__)/.test(arquivo)) continue;
       const texto = fs.readFileSync(arquivo, 'utf8');
-      for (const m of texto.matchAll(re)) if (!m[1] && uso[m[2]]) uso[m[2]][chave] += 1;
+      for (const m of texto.matchAll(reFrom)) if (!m[1] && uso[m[2]]) uso[m[2]][chave] += 1;
+      for (const m of texto.matchAll(reRest)) if (m[1] !== 'rpc' && uso[m[1]]) uso[m[1]][chave] += 1;
     }
   }
   return uso;
 }
+
+/**
+ * A resposta e mesmo do banco oficial? Confere contra supabase/schema-manifest.json (foto da
+ * producao mantida pelo types-sync), fonte independente do arquivo de entrada: pelo menos 90%
+ * das tabelas do manifesto tem de estar na resposta, e vice-versa.
+ */
+export function conferirOrigem(dado, tabelasManifesto) {
+  const resposta = new Set(dado.tabelas.map((t) => t.nome));
+  const manifesto = new Set(tabelasManifesto);
+  const comuns = [...manifesto].filter((t) => resposta.has(t)).length;
+  const cobreManifesto = manifesto.size ? comuns / manifesto.size : 0;
+  const cobreResposta = resposta.size ? comuns / resposta.size : 0;
+  if (cobreManifesto < 0.9 || cobreResposta < 0.9) {
+    throw new Error(`a resposta nao parece ser do banco oficial: ${comuns} tabelas em comum com o manifesto `
+      + `(${Math.round(cobreManifesto * 100)}% do manifesto, ${Math.round(cobreResposta * 100)}% da resposta). `
+      + 'Confira se o MCP usado e o SUPABASE - ZAPP WEB V2 - MCP.');
+  }
+  return { tabelas_em_comum_com_manifesto: comuns, tabelas_no_manifesto: manifesto.size };
+}
+
+const tabelasDoManifesto = (raiz) => Object.keys(
+  JSON.parse(fs.readFileSync(path.join(raiz, 'supabase/schema-manifest.json'), 'utf8')).rls ?? {},
+);
 
 /** Edge functions do repo (pastas com index.ts, sem _shared). */
 export function edgesNoRepo(raiz) {
@@ -144,6 +173,8 @@ export function montarInventario(dado, uso, edges = compararEdges(null, [])) {
   if (!padrao) alertas.push({ tipo: 'whatsapp_sem_conexao_padrao', detalhe: [] });
   else if (padrao.status !== 'connected') {
     alertas.push({ tipo: 'whatsapp_desconectado', detalhe: [`${padrao.instance_id}: ${padrao.status}`] });
+  } else if (padrao.health_status && !['connected', 'healthy'].includes(padrao.health_status)) {
+    alertas.push({ tipo: 'whatsapp_saude_degradada', detalhe: [`${padrao.instance_id}: ${padrao.health_status}`] });
   }
   if (edges.no_repo_sem_deploy?.length) alertas.push({ tipo: 'edge_sem_deploy', detalhe: edges.no_repo_sem_deploy });
   if (edges.publicadas_sem_codigo_no_repo?.length) {
@@ -204,6 +235,7 @@ async function main(argv) {
   if (!publicadasApi && token) publicadasApi = await chamarApi('/functions');
 
   const dado = extrairInventario(bruto);
+  conferirOrigem(dado, tabelasDoManifesto(RAIZ));
   const uso = contarUsoNoCodigo(RAIZ, dado.tabelas.map((t) => t.nome));
   const inventario = montarInventario(dado, uso, compararEdges(publicadasApi, edgesNoRepo(RAIZ)));
   const texto = JSON.stringify(inventario, null, 2) + '\n';

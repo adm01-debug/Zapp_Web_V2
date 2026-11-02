@@ -5,7 +5,7 @@
 --                           node scripts/inventario/gerar-banco.mjs --entrada <arquivo.json>
 --
 -- Imprime UMA linha com UM JSON. So SELECT em catalogo e em tabelas de estado; nada de
--- texto livre que possa carregar segredo: de cron.job sai so o nome das funcoes chamadas
+-- texto livre que possa carregar segredo: de cron.job sai so o nome das funcoes chamadas (nome seguido de "(")
 -- (nunca o command inteiro, que pode ter URL/cabecalho), e de whatsapp_connections nao
 -- sai telefone, QR nem token. Ordem de toda lista e explicita para o diff ser estavel.
 
@@ -112,7 +112,7 @@ SELECT jsonb_build_object(
                'agenda', j.schedule,
                'ativo', j.active,
                'chama', (SELECT coalesce(jsonb_agg(DISTINCT m[1] ORDER BY m[1]), '[]'::jsonb)
-                           FROM regexp_matches(j.command, '((?:public|net|cron)\.[a-z_0-9]+)', 'g') AS m),
+                           FROM regexp_matches(j.command, '((?:public|net|cron)\.[a-z_0-9]+)\s*\(', 'g') AS m),
                'execucoes_24h', coalesce(pj.exec_24h, 0),
                'falhas_24h', coalesce(pj.falhas_24h, 0),
                'execucoes_7d', coalesce(pj.exec_7d, 0),

@@ -187,9 +187,7 @@
       {
         "agenda": "7-52/15 * * * *",
         "ativo": true,
-        "chama": [
-          "public.edge_rate_limits"
-        ],
+        "chama": [],
         "duracao_max_s_7d": 5,
         "execucoes_24h": 96,
         "execucoes_7d": 663,
@@ -395,9 +393,7 @@
       {
         "agenda": "30 4 * * *",
         "ativo": true,
-        "chama": [
-          "public.reconnection_logs"
-        ],
+        "chama": [],
         "duracao_max_s_7d": 1,
         "execucoes_24h": 1,
         "execucoes_7d": 7,
@@ -507,9 +503,7 @@
       {
         "agenda": "42 3 * * *",
         "ativo": true,
-        "chama": [
-          "public.contacts"
-        ],
+        "chama": [],
         "duracao_max_s_7d": 3,
         "execucoes_24h": 1,
         "execucoes_7d": 7,
@@ -784,7 +778,7 @@
       "rls_forcado": false,
       "triggers": 0,
       "uso_no_codigo": {
-        "edges": 3,
+        "edges": 4,
         "src": 2
       }
     },
@@ -799,7 +793,7 @@
       "rls_forcado": false,
       "triggers": 0,
       "uso_no_codigo": {
-        "edges": 0,
+        "edges": 5,
         "src": 0
       }
     },
@@ -2419,7 +2413,7 @@
       "rls_forcado": false,
       "triggers": 0,
       "uso_no_codigo": {
-        "edges": 0,
+        "edges": 1,
         "src": 0
       }
     },
@@ -3560,7 +3554,7 @@
       "triggers": 0,
       "uso_no_codigo": {
         "edges": 0,
-        "src": 0
+        "src": 1
       }
     },
     {
@@ -3732,7 +3726,6 @@
   "tabelas_orfas": {
     "criterio": "0 linhas + nao citada em funcao/view do banco + nenhum .from() em src/ ou supabase/functions/",
     "lista": [
-      "ai_usage_outbox",
       "campaign_ab_variants",
       "campaign_contacts",
       "copilot_conversation_scores",
@@ -3747,7 +3740,6 @@
       "email_signatures",
       "entity_versions",
       "mfa_sessions",
-      "outbox_events",
       "payment_links",
       "sicoob_contact_mapping",
       "sla_alert_preferences",

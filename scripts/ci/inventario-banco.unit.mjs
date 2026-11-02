@@ -10,7 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  extrairInventario, contarUsoNoCodigo, montarInventario, compararEdges, LIMIARES, PARECE_CREDENCIAL,
+  extrairInventario, contarUsoNoCodigo, montarInventario, compararEdges, conferirOrigem, LIMIARES, PARECE_CREDENCIAL,
 } from '../inventario/gerar-banco.mjs';
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -95,9 +95,12 @@ test('contarUsoNoCodigo conta .from() em src e edges e ignora testes', () => {
   fs.writeFileSync(path.join(dir, 'src/hooks/a.ts'), "supabase.from('contatos').select(); db.from(\"contatos\")\n.from(`outra`)");
   fs.writeFileSync(path.join(dir, 'src/__tests__/a.test.ts'), "supabase.from('contatos')");
   fs.writeFileSync(path.join(dir, 'src/hooks/b.test.tsx'), "supabase.from('contatos')");
-  fs.writeFileSync(path.join(dir, 'supabase/functions/x/index.ts'), "admin.from( 'contatos' ); admin.storage.from('contatos').upload()");
-  const uso = contarUsoNoCodigo(dir, ['contatos', 'nada']);
-  assert.deepEqual(uso, { contatos: { src: 2, edges: 1 }, nada: { src: 0, edges: 0 } });
+  fs.writeFileSync(path.join(dir, 'supabase/functions/x/index.ts'),
+    "admin.from( 'contatos' ); admin.storage.from('contatos').upload(); supabase.storage\n    .from('contatos').remove()\n"
+    + "fetch(`${url}/rest/v1/so_rest?id=eq.1`); fetch(`${url}/rest/v1/rpc/so_rest`)");
+  const uso = contarUsoNoCodigo(dir, ['contatos', 'nada', 'so_rest']);
+  assert.deepEqual(uso, { contatos: { src: 2, edges: 1 }, nada: { src: 0, edges: 0 }, so_rest: { src: 0, edges: 1 } },
+    'bucket (storage.from) nao conta; /rest/v1/<tabela> conta; /rest/v1/rpc nao');
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
@@ -106,7 +109,8 @@ test('banco.sql so le: nenhum comando de escrita e nada de command/telefone/QR/t
     .split('\n').filter((l) => !l.trim().startsWith('--')).join('\n');
   assert.doesNotMatch(sql, /\b(INSERT|UPDATE|DELETE|TRUNCATE|DROP|ALTER|CREATE|GRANT|REVOKE)\b/i);
   assert.doesNotMatch(sql, /'command'|phone_number|qr_code|instance_token/);
-  assert.match(sql, /regexp_matches\(j\.command/, 'de cron.job sai so o nome das funcoes chamadas');
+  assert.match(sql, /regexp_matches\(j\.command, '\(\(\?:public\|net\|cron\)\\\.\[a-z_0-9\]\+\)\\s\*\\\(/,
+    'de cron.job sai so o nome das funcoes chamadas (nome seguido de parentese, nunca tabela)');
 });
 
 test('edges: publicadas x repo, e sem token fica explicito que nao foi consultado', () => {
@@ -131,4 +135,22 @@ test('trava de credencial reconhece Bearer, JWT e sb_secret_ e deixa texto norma
   assert.match('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMifQ.x', PARECE_CREDENCIAL);
   assert.match('sb_secret_abc', PARECE_CREDENCIAL);
   assert.doesNotMatch(JSON.stringify(montarInventario(base(), {})), PARECE_CREDENCIAL);
+});
+
+test('origem: resposta de outro banco (tabelas nao batem com o manifesto) e recusada', () => {
+  const dado = base();
+  const manifesto = dado.tabelas.map((t) => t.nome);
+  assert.deepEqual(conferirOrigem(dado, manifesto), { tabelas_em_comum_com_manifesto: 4, tabelas_no_manifesto: 4 });
+  assert.throws(() => conferirOrigem(dado, ['x', 'y', 'z', 'orfa']), /nao parece ser do banco oficial/);
+  assert.throws(() => conferirOrigem({ ...dado, tabelas: dado.tabelas.slice(0, 1) }, manifesto), /nao parece/);
+  const real = Object.keys(JSON.parse(fs.readFileSync(path.join(raiz, 'supabase/schema-manifest.json'), 'utf8')).rls);
+  assert.ok(real.length > 100, 'manifesto real tem as tabelas de producao');
+});
+
+test('WhatsApp conectado mas com saude degradada vira alerta proprio', () => {
+  const dado = base();
+  dado.whatsapp.conexoes[0].health_status = 'degraded';
+  assert.deepEqual(montarInventario(dado, {}).alertas, [{ detalhe: ['PRINCIPAL: degraded'], tipo: 'whatsapp_saude_degradada' }]);
+  dado.whatsapp.conexoes[0].health_status = 'connected';
+  assert.deepEqual(montarInventario(dado, {}).alertas, []);
 });
