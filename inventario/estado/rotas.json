@@ -202,7 +202,9 @@
         }
       ],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "message-delivery"
+      ],
       "rpcs": [
         "enqueue_outbound_message",
         "enqueue_rich_outbound_message",
@@ -290,6 +292,8 @@
         "avatars"
       ],
       "edges": [
+        "create-user",
+        "message-delivery",
         "revoke-auth-sessions"
       ],
       "rpcs": [
@@ -391,7 +395,8 @@
       "buckets": [],
       "edges": [
         "evolution-api",
-        "invite-user"
+        "invite-user",
+        "message-delivery"
       ],
       "rpcs": [
         "app_bootstrap",
@@ -526,7 +531,9 @@
         }
       ],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "message-delivery"
+      ],
       "rpcs": [
         "enqueue_outbound_message",
         "enqueue_rich_outbound_message",
@@ -629,6 +636,7 @@
       ],
       "buckets": [],
       "edges": [
+        "message-delivery",
         "promogifts-catalog"
       ],
       "rpcs": [
@@ -813,7 +821,8 @@
       "edges": [
         "connection-health-check",
         "evolution-api",
-        "evolution-sync"
+        "evolution-sync",
+        "message-delivery"
       ],
       "rpcs": [
         "app_bootstrap",
@@ -1009,6 +1018,7 @@
       ],
       "buckets": [],
       "edges": [
+        "message-delivery",
         "promogifts-catalog"
       ],
       "rpcs": [
@@ -1121,7 +1131,9 @@
         }
       ],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "message-delivery"
+      ],
       "rpcs": [
         "app_bootstrap",
         "enqueue_outbound_message",
@@ -1346,7 +1358,9 @@
         }
       ],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "message-delivery"
+      ],
       "rpcs": [
         "app_bootstrap",
         "dashboard_contact_counts",
@@ -1530,7 +1544,9 @@
         }
       ],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "message-delivery"
+      ],
       "rpcs": [
         "can_delete_contacts",
         "contacts_count_by_type",
@@ -1638,6 +1654,7 @@
         "connection-health-check",
         "evolution-api",
         "evolution-webhook",
+        "message-delivery",
         "webhook-diagnostic"
       ],
       "rpcs": [
@@ -1711,7 +1728,9 @@
         }
       ],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "message-delivery"
+      ],
       "rpcs": [
         "enqueue_outbound_message",
         "enqueue_rich_outbound_message",
@@ -2467,6 +2486,7 @@
         "classify-sticker",
         "elevenlabs-scribe-token",
         "evolution-api",
+        "message-delivery",
         "promogifts-catalog",
         "sentiment-alert"
       ],
@@ -2618,7 +2638,8 @@
       ],
       "buckets": [],
       "edges": [
-        "bitrix-api"
+        "bitrix-api",
+        "message-delivery"
       ],
       "rpcs": [
         "app_bootstrap",
@@ -2703,7 +2724,9 @@
       "arquivos_lidos": 1,
       "hooks": [],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "migrate-media-storage"
+      ],
       "rpcs": [],
       "tabelas": [
         "audit_logs",
@@ -2822,6 +2845,7 @@
       ],
       "buckets": [],
       "edges": [
+        "message-delivery",
         "multiplix-audience",
         "multiplix-dispatch",
         "multiplix-send"
@@ -3114,6 +3138,7 @@
       "edges": [
         "ai-conversation-analysis",
         "evolution-api",
+        "message-delivery",
         "sentiment-alert"
       ],
       "rpcs": [
@@ -3250,7 +3275,9 @@
         }
       ],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "message-delivery"
+      ],
       "rpcs": [
         "enqueue_outbound_message",
         "enqueue_rich_outbound_message",
@@ -3307,7 +3334,9 @@
         }
       ],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "message-delivery"
+      ],
       "rpcs": [
         "enqueue_outbound_message",
         "enqueue_rich_outbound_message",
@@ -3504,7 +3533,9 @@
         }
       ],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "message-delivery"
+      ],
       "rpcs": [
         "enqueue_outbound_message",
         "enqueue_rich_outbound_message",
@@ -3662,6 +3693,7 @@
       "buckets": [],
       "edges": [
         "approve-password-reset",
+        "message-delivery",
         "revoke-auth-sessions",
         "webauthn"
       ],
@@ -3895,7 +3927,8 @@
         "chatbot-l1",
         "classify-audio-meme",
         "elevenlabs-sfx",
-        "evolution-api"
+        "evolution-api",
+        "message-delivery"
       ],
       "rpcs": [
         "app_bootstrap",
@@ -4074,7 +4107,8 @@
       "buckets": [],
       "edges": [
         "ai-proxy",
-        "evolution-api"
+        "evolution-api",
+        "message-delivery"
       ],
       "rpcs": [
         "app_bootstrap",
@@ -4291,6 +4325,7 @@
       ],
       "buckets": [],
       "edges": [
+        "message-delivery",
         "talkx-send"
       ],
       "rpcs": [
@@ -4443,7 +4478,9 @@
         }
       ],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "message-delivery"
+      ],
       "rpcs": [
         "can_delete_contacts",
         "contacts_count_by_type",
@@ -4692,7 +4729,8 @@
         "ai-enhance-message",
         "classify-audio-meme",
         "classify-emoji",
-        "classify-sticker"
+        "classify-sticker",
+        "message-delivery"
       ],
       "rpcs": [
         "create_department_invite",
@@ -4960,7 +4998,9 @@
         }
       ],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "message-delivery"
+      ],
       "rpcs": [
         "app_bootstrap",
         "can_delete_contacts",
@@ -5077,7 +5117,9 @@
         }
       ],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "message-delivery"
+      ],
       "rpcs": [
         "app_bootstrap",
         "enqueue_outbound_message",
@@ -5196,7 +5238,9 @@
         }
       ],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "message-delivery"
+      ],
       "rpcs": [
         "enqueue_outbound_message",
         "enqueue_rich_outbound_message",

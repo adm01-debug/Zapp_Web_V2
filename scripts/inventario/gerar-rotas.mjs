@@ -71,8 +71,9 @@ export function extrairChamadas(texto) {
     buckets,
     // `.rpc('x')` e o apelido `const rpc = supabase.rpc.bind(...)` + `rpc('x')`.
     rpcs: [...pegar(/(?:\.|\b)rpc\(\s*['"`]([A-Za-z0-9_]+)['"`]/g), ...pegar(/\/rest\/v1\/rpc\/([A-Za-z0-9_]+)/g)],
-    // `invoke('evolution-api/connect')` conta como a edge `evolution-api`.
-    edges: pegar(/functions\.invoke\(\s*['"`]([A-Za-z0-9_-]+)(?:\/[^'"`]*)?['"`]/g),
+    // `functions.invoke` (inclusive quebrado em linha) e o atalho `invokeEdge<T>(...)` de
+    // src/lib/invokeEdge.ts; `invoke('evolution-api/connect')` conta como a edge `evolution-api`.
+    edges: pegar(/(?:functions\s*\.\s*invoke|\binvokeEdge)(?:<[^>()]*>)?\(\s*['"`]([A-Za-z0-9_-]+)(?:\/[^'"`]*)?['"`]/g),
   };
 }
 

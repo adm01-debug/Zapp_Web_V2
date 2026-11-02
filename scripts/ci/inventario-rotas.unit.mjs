@@ -136,6 +136,10 @@ test('extratores: imports nomeados/dinamicos e chamadas ao Supabase', () => {
       + " fetch(`${u}/rest/v1/so_rest?x=1`); fetch(`${u}/rest/v1/rpc/fn_rest`)"),
     { tabelas: ['stickers', 'so_rest'], buckets: ['stickers', 'fotos'], rpcs: ['fn_rest'], edges: [] },
     'storage.from e bucket, nao tabela; /rest/v1 conta tabela e rpc');
+  assert.deepEqual(
+    extrairChamadas("invokeEdge('message-delivery', {}); invokeEdge<{ ok: boolean }>(\"generico\"); supabase.functions\n  .invoke('quebrada');"
+      + " invokeMultiplixDispatch('acao_nao_e_edge')").edges,
+    ['message-delivery', 'generico', 'quebrada'], 'atalho invokeEdge (com generico) e invoke quebrado em linha');
 });
 
 test('repo real: toda URL e tela resolve para arquivo existente e o menu tem o tamanho esperado', () => {
