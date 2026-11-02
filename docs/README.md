@@ -15,9 +15,9 @@
 ### 📐 Arquitetura e Design
 | Documento | Descrição |
 |-----------|-----------|
-| [TECHNICAL_DOCUMENTATION.md](./TECHNICAL_DOCUMENTATION.md) | Documentação técnica completa (90KB) |
+| [TECHNICAL_DOCUMENTATION.md](./_arquivo/docs/TECHNICAL_DOCUMENTATION.md) | Documentação técnica completa (90KB) |
 | [COMPLETE_SYSTEM_FEATURES.md](./COMPLETE_SYSTEM_FEATURES.md) | Funcionalidades do sistema (45KB) |
-| [FUNCTIONALITIES_INVENTORY.md](./FUNCTIONALITIES_INVENTORY.md) | Inventário de funcionalidades |
+| [FUNCTIONALITIES_INVENTORY.md](./_arquivo/docs/FUNCTIONALITIES_INVENTORY.md) | Inventário de funcionalidades |
 | [architecture/](./architecture/) | Diagramas de arquitetura |
 | [catalogo/](./catalogo/README.md) | Módulo Catálogo — plano de 100 etapas, estado inicial, paridade com os mocks |
 | [multiplix/CHANGELOG_MULTIPLIX.md](./multiplix/CHANGELOG_MULTIPLIX.md) | Módulo Multiplix — registro de execução do módulo (disparos por departamento, público, fila) |
@@ -50,9 +50,9 @@
 |-----------|-----------|
 | [AUDITORIA_COMPLETA_ZAPP_WEB.md](./AUDITORIA_COMPLETA_ZAPP_WEB.md) | Auditoria completa (33KB) |
 | [AUDIT_REPORT.md](./AUDIT_REPORT.md) | Relatório de auditoria |
-| [IMPROVEMENT_PLAN.md](./IMPROVEMENT_PLAN.md) | Plano de melhorias |
+| [IMPROVEMENT_PLAN.md](./_arquivo/docs/IMPROVEMENT_PLAN.md) | Plano de melhorias |
 | [plans/PLANO_100_ETAPAS_PARIDADE_V1_V3_2026-09-01.md](./plans/PLANO_100_ETAPAS_PARIDADE_V1_V3_2026-09-01.md) | Plano de 100 etapas — funcionalidades e ferramentas de V1/V3 ausentes no V2 (2026-09-01) |
-| [FORGOTTEN_FEATURES_REPORT.md](./FORGOTTEN_FEATURES_REPORT.md) | Features esquecidas |
+| [FORGOTTEN_FEATURES_REPORT.md](./_arquivo/docs/FORGOTTEN_FEATURES_REPORT.md) | Features esquecidas |
 
 ### 📝 Procedimentos e Templates
 | Documento | Descrição |
