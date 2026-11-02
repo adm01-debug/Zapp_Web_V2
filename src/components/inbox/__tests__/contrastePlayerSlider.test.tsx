@@ -125,10 +125,10 @@ function tokensDoBloco(css: string, cabecalho: string): { cru: Record<string, st
         const corpo = limpo.slice(abre + 1, j);
         const cru: Record<string, string> = {};
         const rgb: Record<string, Rgb> = {};
-        for (const t of corpo.matchAll(/--([\w-]+):\s*([^;]+);/g)) {
+        for (const t of corpo.matchAll(/--([\.\w-]+):\s*([^;]+);/g)) {
           cru[t[1]] = t[2].trim().replace(/\s+/g, ' ');
         }
-        for (const t of corpo.matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g)) {
+        for (const t of corpo.matchAll(/--([\.\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*(?:!important\s*)?;/g)) {
           rgb[t[1]] = hslParaRgb(Number(t[2]), Number(t[3]), Number(t[4]));
         }
         return { cru, rgb };
@@ -256,7 +256,7 @@ interface MedicaoDial {
 
 /** `hsl(var(--nome))` / `url(#grad)` pairam no atributo; extrai só o nome do token. */
 function nomeDoToken(declaracao: string): string {
-  const m = declaracao.match(/--([\w-]+)/);
+  const m = declaracao.match(/--([\.\w-]+)/);
   if (!m) throw new Error(`atributo sem token var(--...): ${declaracao}`);
   return m[1];
 }

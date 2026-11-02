@@ -8,11 +8,14 @@
  */
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';
+import { allowedOriginFor } from '../_shared/cors-origins.ts';
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+function cors(req: Request) {
+  return {
+    'Access-Control-Allow-Origin': allowedOriginFor(req),
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+}
 
 interface TickPayload {
   session_id?: string;
@@ -26,7 +29,7 @@ interface TickPayload {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: CORS });
+    return new Response('ok', { headers: cors(req) });
   }
 
   try {
@@ -38,7 +41,7 @@ serve(async (req) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing authorization' }), {
         status: 401,
-        headers: { ...CORS, 'Content-Type': 'application/json' },
+        headers: { ...cors(req), 'Content-Type': 'application/json' },
       });
     }
 
@@ -48,7 +51,7 @@ serve(async (req) => {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { ...CORS, 'Content-Type': 'application/json' },
+        headers: { ...cors(req), 'Content-Type': 'application/json' },
       });
     }
 
@@ -66,7 +69,7 @@ serve(async (req) => {
     if (!profileRow) {
       return new Response(JSON.stringify({ error: 'Profile not found' }), {
         status: 403,
-        headers: { ...CORS, 'Content-Type': 'application/json' },
+        headers: { ...cors(req), 'Content-Type': 'application/json' },
       });
     }
     // profileId é usado SOMENTE para comparar com contacts.assigned_to.
@@ -77,7 +80,7 @@ serve(async (req) => {
     if (!payload.conversation_id) {
       return new Response(JSON.stringify({ error: 'conversation_id is required' }), {
         status: 400,
-        headers: { ...CORS, 'Content-Type': 'application/json' },
+        headers: { ...cors(req), 'Content-Type': 'application/json' },
       });
     }
 
@@ -109,7 +112,7 @@ serve(async (req) => {
         console.error('session insert error', insertError);
         return new Response(JSON.stringify({ error: 'Session error' }), {
           status: 500,
-          headers: { ...CORS, 'Content-Type': 'application/json' },
+          headers: { ...cors(req), 'Content-Type': 'application/json' },
         });
       } else {
         // Conflito: atualiza apenas campos não-proprietários, ownership guardado
@@ -144,7 +147,7 @@ serve(async (req) => {
           if (!existingSession || existingSession.contact_id !== contactId) {
             return new Response(JSON.stringify({ error: 'Forbidden' }), {
               status: 403,
-              headers: { ...CORS, 'Content-Type': 'application/json' },
+              headers: { ...cors(req), 'Content-Type': 'application/json' },
             });
           }
 
@@ -159,7 +162,7 @@ serve(async (req) => {
           if (!contact || contact.assigned_to !== profileId) {
             return new Response(JSON.stringify({ error: 'Forbidden' }), {
               status: 403,
-              headers: { ...CORS, 'Content-Type': 'application/json' },
+              headers: { ...cors(req), 'Content-Type': 'application/json' },
             });
           }
 
@@ -174,7 +177,7 @@ serve(async (req) => {
           if (transferError || !transferredSession) {
             return new Response(JSON.stringify({ error: 'Forbidden' }), {
               status: 403,
-              headers: { ...CORS, 'Content-Type': 'application/json' },
+              headers: { ...cors(req), 'Content-Type': 'application/json' },
             });
           }
           // Transfere também os insights para que o novo dono os veja.
@@ -209,13 +212,13 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ ok: true, session_id: session?.id ?? null, insight }),
-      { headers: { ...CORS, 'Content-Type': 'application/json' } }
+      { headers: { ...cors(req), 'Content-Type': 'application/json' } }
     );
   } catch (err) {
     console.error('copilot-live error', err);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
-      headers: { ...CORS, 'Content-Type': 'application/json' },
+      headers: { ...cors(req), 'Content-Type': 'application/json' },
     });
   }
 });
