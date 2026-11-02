@@ -59,7 +59,7 @@ import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
 import { TalkXCampaignReport } from '../TalkXCampaignReport';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 
-const mockCampaign: TalkXCampaign = {
+const mockCampaign = {
   id: 'camp-test-1',
   name: 'Campanha Teste',
   status: 'completed',
@@ -85,7 +85,7 @@ function renderReport(canDownload: boolean) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <TalkXCampaignReport campaign={mockCampaign} onBack={vi.fn()} />
+      <TalkXCampaignReport campaign={mockCampaign as TalkXCampaign} onBack={vi.fn()} />
     </QueryClientProvider>,
   );
 }
