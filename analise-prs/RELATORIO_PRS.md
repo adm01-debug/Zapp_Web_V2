@@ -25,7 +25,7 @@ Todas mergearão automaticamente quando os required checks passarem (3 obrigató
 
 | PR | Título | HEAD SHA |
 |----|--------|----------|
-| #2494 | chore(db): sincronizar artefatos (types-sync) | `ef3c4ba843255f026c7d58552fd7f2072fe06242` |
+| #2494 | chore(db): sincronizar artefatos (types-sync) | `d27d941f` — **atualizado** (types-sync rodou em run 41386672065 pós-merge #2567; artefatos regenerados; CI aguardando) |
 | #2498 | fix(admin): RPC get_search_insights→search_insights | `984104a1e22cc924303055fff3ff96048d8bac6e` |
 | #2522 | fix(e2e): aguarda teclado visível — Firefox GR-012 | `737518f952999dad4f023e9eb36270bd6203ed75` |
 | #2543 | fix: E2E alto-contraste e N-008 healthcheck | `68dff679c1551472f7b5c06a0bf0855c920fc7eb` |
@@ -36,11 +36,9 @@ Todas mergearão automaticamente quando os required checks passarem (3 obrigató
 
 ---
 
-## 🚫 BLOQUEADO — CI VERMELHO (DRIFT TYPES-SYNC)
+## ✅ CI DRIFT TYPES-SYNC — RESOLVIDO (2026-11-02)
 
-| PR | HEAD SHA | Falha | Causa |
-|----|----------|-------|-------|
-| #2494 | `7ec60581a0ac88b843d1bfcacc2ca2613c4193c3` | `db-inventory-doc.unit.mjs` — 7 tabelas `copilot_*` ausentes no catálogo; contagem diverge (204 banco vs 211 catálogo) | Banco evoluiu desde snapshot; re-disparar `types-sync.yml` (ver PENDENCIAS.md §4) |
+`types-sync.yml` rodou automaticamente após merge do #2567 (run `41386672065`, main `8ba0b436`). PR #2494 atualizada para HEAD `d27d941f` com artefatos regenerados. Movida para tabela AGUARDANDO_CI acima.
 
 ---
 

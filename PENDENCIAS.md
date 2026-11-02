@@ -83,7 +83,7 @@ gerado não é o que o `deno check` procura. Este workflow **não é um required
 
 ---
 
-## 4. PR #2494 (types-sync) — CI vermelho por drift do banco de produção
+## 4. PR #2494 (types-sync) — ✅ RESOLVIDO (2026-11-02)
 
 **Run com falha:** `41382586082` | Job Node CI Scripts (id `125076435071`) | 2026-11-02T03:22Z  
 **Head SHA do PR:** `7ec60581a0ac88b843d1bfcacc2ca2613c4193c3`
@@ -104,10 +104,7 @@ de produção ter evoluído (7 tabelas `copilot_*` adicionadas) depois que o sna
 foi gerado. O teste compara o arquivo `docs/DB-INVENTORY.md` do PR contra o banco ao vivo, e detecta drift.
 A PR tem `auto_merge=SQUASH` ativo mas não vai mergear enquanto este check falhar.
 
-**O que o Joaquim precisa fazer:**
-1. Disparar `workflow_dispatch` do `types-sync.yml` **na branch `main`** para regenerar o snapshot a partir do estado atual do banco de produção
-2. Isso criará um novo commit no branch do PR #2494 (ou abrirá um novo PR se o workflow recria)
-3. Após o novo commit, os required checks serão reiniciados e o `db-inventory-doc.unit.mjs` deve passar
+**Resolução (2026-11-02):** `types-sync.yml` rodou automaticamente após o merge do PR #2567 (run `41386672065`, main `8ba0b4361290f37171fd6ec27012a46665ca5b7e`). PR #2494 recebeu novos commits com artefatos regenerados; HEAD atual `d27d941faa8d337d8adf546ac47e64db2f92b887`. CI aguardando no novo HEAD; auto_merge=squash ativo — mergeará automaticamente quando CI passar.
 
 ---
 
