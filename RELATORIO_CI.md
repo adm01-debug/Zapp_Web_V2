@@ -1,6 +1,6 @@
 # RELATORIO_CI.md — Diagnóstico e Estado Final dos Workflows
 
-**Data:** 2026-11-01 (atualizado)  
+**Data:** 2026-11-02 (atualizado após cancelamento de runs travados)  
 **Branch de trabalho:** `claude_04/pensive-tesla-ixtl9w`  
 **PR:** [#2526](https://github.com/adm01-debug/Zapp_Web_V2/pull/2526)
 
@@ -9,7 +9,7 @@
 ## 0. Fixes aplicados em 2026-11-01 (esta sessão) — commit `e798dcc`
 
 **PR:** [#2526](https://github.com/adm01-debug/Zapp_Web_V2/pull/2526) — branch `claude_04/pensive-tesla-ixtl9w`  
-**CI:** DB Guard run [41357706184](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41357706184) `queued` / CI/CD Pipeline run [41357013021](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41357013021) `queued` (2026-11-01T22:33Z)
+**CI (re-run limpo):** Disparado em 2026-11-02T00:18Z após cancelamento das tentativas 1–3 (runs 41363919940/41364880858/41364894252/41363153245/41363153199 travados em pending/queued sem jobs)
 
 ### Inventário de workflows com falha — última execução na main (2026-11-01)
 
@@ -188,7 +188,7 @@ Esta sessão (`claude_04/pensive-tesla-ixtl9w`) incluiu mudanças de código al�
 
 ---
 
-*Relatório concluído em 2026-11-01 — branch `claude_04/pensive-tesla-ixtl9w` — PR #2526.*
+*Relatório concluído em 2026-11-02 — branch `claude_04/pensive-tesla-ixtl9w` — PR #2526.*
 
 <details>
 <summary>Relatório histórico da correção de CI na PR #2394 (2026-10-30)</summary>
