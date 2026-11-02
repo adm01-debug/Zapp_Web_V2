@@ -63,8 +63,8 @@ function varsDoBloco(css: string, seletor: string): Record<string, string> {
   }
   if (fim < 0) throw new Error(`bloco ${seletor} sem fechamento`);
   const vars: Record<string, string> = {};
-  for (const m of css.slice(abre + 1, fim).matchAll(/--([\w-]+):\s*([^;]+);/g)) {
-    vars[m[1]] = m[2].trim().replace(/\s+/g, ' ');
+  for (const m of css.slice(abre + 1, fim).matchAll(/--(\w[\w-]*):\s*([^;]+);/g)) {
+    vars[m[1]] = m[2].trim().replace(/\s+/g, ' ').replace(/\s*!important\s*$/, '');
   }
   return vars;
 }
