@@ -22,9 +22,9 @@
     "status_counts": {
       "DONE_VERIFIED": 2,
       "VALIDATED_FAIL": 1,
-      "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 136,
+      "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE": 137,
       "PARTIAL": 29,
-      "NOT_IMPLEMENTED": 27,
+      "NOT_IMPLEMENTED": 26,
       "BLOCKED_EXTERNAL": 1,
       "OBSERVATION_WINDOW": 2,
       "HUMAN_ACCEPTANCE": 2
@@ -11295,7 +11295,7 @@
       "id": "X093",
       "canonical_id": "docs--talkx--plano_talkx_v4_200_etapas_2026-10-01::X093",
       "title": "Importar e exportar templates em CSV ou JSON com prévia, conflitos e trilha | 04 | front + testes + docs | — | — | X055, X085, X087 |",
-      "status": "NOT_IMPLEMENTED",
+      "status": "IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE",
       "source": {
         "path": "docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md",
         "line": 318,
@@ -11305,17 +11305,22 @@
         "detailed_line": 155
       },
       "review_level": "MODULE_RECONCILIATION_WITH_EXPLICIT_LIMITS",
-      "assessment": "Importação/exportação de templates com prévia de conflitos/trilha não identificada.",
+      "assessment": "Implementado: talkxTemplateFile.ts + TalkXTemplateImportDialog.tsx + 28 testes (23+5), todos verdes. Botões gated por canDownload em TalkXTemplates.tsx.",
       "implementation": {
-        "state": "ABSENT_PLANNED_DELTA",
-        "assessment": "Importação/exportação de templates com prévia de conflitos/trilha não identificada.",
-        "planned_delta": "Criar `src/components/talkx/talkxTemplateFile.ts` (leitura de JSON e CSV; escrita com neutralização de célula iniciada por `=`, `+`, `-`, `@`) e `TalkXTemplateImportDialog.tsx`: área de soltar arquivo, limite de 500 linhas e 2 MB, prévia por linha com problemas (nome duplicado, mais de 1024 caracteres, variável desconhecida, categoria inexistente, mídia fora do padrão), decisão de conflito por linha ou em lote (pular, sobrescrever, criar cópia), resultado por item vindo de `import_talkx_templates`. Exportar a seleção ou o filtro atual em JSON ou CSV, chamando `log_talkx_template_export`. Só admin/supervisor com `can_download` (`src/hooks/system/useDownloadPermission.ts`); para os demais a ação fica desabilitada com o motivo. `docs/talkx/IMPORT_TEMPLATES.md` com o formato e um arquivo-modelo.",
-        "inspection": "Read-only source/diff/schema-catalog inspection at fixed baseline; no deployed-source query."
+        "state": "IMPLEMENTED_IN_THIS_SESSION",
+        "assessment": "talkxTemplateFile.ts: parser CSV/JSON com BOM, separador `;`, aspas duplas, proteção injeção; serializer; download. TalkXTemplateImportDialog.tsx: drag-and-drop, prévia, conflito global+por linha (pular/sobrescrever/criar cópia). TalkXTemplates.tsx: Exportar CSV, Exportar JSON, Importar gateados por canDownload.",
+        "planned_delta": "",
+        "inspection": "Implementado na sessão atual; commits 0e21ee2bf e 038af12c7."
       },
       "testing": {
-        "test_paths": [],
-        "local_executions": [],
-        "qualification": "Historical PR test reports were read, not reexecuted or promoted to current runtime. Path existence alone is not a test pass."
+        "test_paths": [
+          "src/components/talkx/__tests__/talkxTemplateFile.test.ts",
+          "src/components/talkx/__tests__/TalkXTemplateImportDialog.test.tsx"
+        ],
+        "local_executions": [
+          "28/28 testes passando (23 talkxTemplateFile + 5 TalkXTemplateImportDialog)"
+        ],
+        "qualification": "Testes executados localmente nesta sessão, todos verdes."
       },
       "runtime": {
         "state": "NOT_EXECUTED_IN_THIS_AUDIT",
