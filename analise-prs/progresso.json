@@ -105,8 +105,8 @@
       "motivo": "contém 3 migrations RLS sem testes Postgres + 12 arquivos vs título diz 2; BLOQUEADO_RLS_SEM_TESTE; auto_merge desabilitado 2026-11-02"
     }
   ],
-  "status": "analise_completa_98_prs_revisado_12",
-  "nota": "2026-11-02T10:00Z: revisão 12ª sessão. #2567 confirmada MERGEADA (SHA 8ba0b436, merged_at 2026-11-02T03:51:55Z). #2563 atualizada para BLOQUEADO_CONFLITO (supersedida por #2567, dirty). main_sha_atual atualizado. Total analisadas: 98. Total abertas: 24 (7 AGUARDANDO_CI + 1 AGUARDANDO_CI_APOS_UPDATE + 6 BLOQUEADO_CONFLITO + 5 DRAFT_SKIP + 2 BLOQUEADO_AGUARDANDO_APROVACAO + 1 BLOQUEADO_RLS_SEM_TESTE + 1 BLOQUEADO_DDL_WORKFLOW + 1 BLOQUEADO_FEATURE_FREEZE + 1 BLOQUEADO_DECISAO_HUMANA). FECHADAS sem merge: 66. MERGEADAS: 7.",
+  "status": "analise_completa_98_prs_revisado_13",
+  "nota": "2026-11-02: revisão 13ª sessão. #2494 CI VERMELHO (run 41382586082): db-inventory-doc.unit.mjs falha — 7 tabelas copilot_* no banco ausentes no catálogo; banco=204 tabelas vs catálogo=211. Drift causado por evolução do banco de produção após snapshot. Não é falha do código da PR. Fix: re-disparar types-sync.yml (ver PENDENCIAS.md §4). Verdict atualizado para BLOQUEADO_CI_DRIFT_TYPES_SYNC.",
   "verdicts": {
     "1930": "FECHADA_SEM_MERGE",
     "1997": "FECHADA_SEM_MERGE",
@@ -165,7 +165,7 @@
     "2491": "FECHADA_SEM_MERGE",
     "2492": "FECHADA_SEM_MERGE",
     "2493": "FECHADA_SEM_MERGE",
-    "2494": "AGUARDANDO_CI_APOS_UPDATE",
+    "2494": "BLOQUEADO_CI_DRIFT_TYPES_SYNC",
     "2495": "FECHADA_SEM_MERGE",
     "2496": "BLOQUEADO_DDL_WORKFLOW",
     "2497": "FECHADA_SEM_MERGE",
@@ -211,7 +211,7 @@
     "FECHADA_SEM_MERGE": 66,
     "MERGEADA": 7,
     "BLOQUEADO_AGUARDANDO_APROVACAO": 2,
-    "AGUARDANDO_CI_APOS_UPDATE": 1,
+    "BLOQUEADO_CI_DRIFT_TYPES_SYNC": 1,
     "BLOQUEADO_DDL_WORKFLOW": 1,
     "AGUARDANDO_CI": 7,
     "DRAFT_SKIP": 5,

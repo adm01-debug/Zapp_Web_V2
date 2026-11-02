@@ -36,11 +36,11 @@ Todas mergearão automaticamente quando os required checks passarem (3 obrigató
 
 ---
 
-## ⏳ AGUARDANDO_CI_APOS_UPDATE
+## 🚫 BLOQUEADO — CI VERMELHO (DRIFT TYPES-SYNC)
 
-| PR | HEAD SHA | Observação |
-|----|----------|------------|
-| #2494 | `ef3c4ba843255f026c7d58552fd7f2072fe06242` | bot push 2026-11-02T03:18; auto_merge=SQUASH; CI a confirmar |
+| PR | HEAD SHA | Falha | Causa |
+|----|----------|-------|-------|
+| #2494 | `7ec60581a0ac88b843d1bfcacc2ca2613c4193c3` | `db-inventory-doc.unit.mjs` — 7 tabelas `copilot_*` ausentes no catálogo; contagem diverge (204 banco vs 211 catálogo) | Banco evoluiu desde snapshot; re-disparar `types-sync.yml` (ver PENDENCIAS.md §4) |
 
 ---
 

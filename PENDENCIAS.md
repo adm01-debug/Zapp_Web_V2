@@ -83,4 +83,32 @@ gerado não é o que o `deno check` procura. Este workflow **não é um required
 
 ---
 
+## 4. PR #2494 (types-sync) — CI vermelho por drift do banco de produção
+
+**Run com falha:** `41382586082` | Job Node CI Scripts (id `125076435071`) | 2026-11-02T03:22Z  
+**Head SHA do PR:** `7ec60581a0ac88b843d1bfcacc2ca2613c4193c3`
+
+**O que falha:**  
+`scripts/ci/db-inventory-doc.unit.mjs` — teste "docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir"
+
+**Evidência da falha:**
+- 7 tabelas `copilot_*` existem no banco mas **não** aparecem em `docs/DB-INVENTORY.md` da PR:
+  `copilot_conversation_scores`, `copilot_help_requests`, `copilot_learning_moments`,
+  `copilot_objection_catalog`, `copilot_outcomes`, `copilot_seller_settings`, `copilot_usage`
+- Contagem diverge: banco tem 204 tabelas, catálogo tem 211
+- Contagem de columns: banco=2315, catálogo=2362
+- Contagem de functions: banco=378, catálogo=381
+
+**Por que não foi corrigido:** A falha NÃO é causada pelo código da PR #2494 — é causada pelo banco
+de produção ter evoluído (7 tabelas `copilot_*` adicionadas) depois que o snapshot `types-sync`
+foi gerado. O teste compara o arquivo `docs/DB-INVENTORY.md` do PR contra o banco ao vivo, e detecta drift.
+A PR tem `auto_merge=SQUASH` ativo mas não vai mergear enquanto este check falhar.
+
+**O que o Joaquim precisa fazer:**
+1. Disparar `workflow_dispatch` do `types-sync.yml` **na branch `main`** para regenerar o snapshot a partir do estado atual do banco de produção
+2. Isso criará um novo commit no branch do PR #2494 (ou abrirá um novo PR se o workflow recria)
+3. Após o novo commit, os required checks serão reiniciados e o `db-inventory-doc.unit.mjs` deve passar
+
+---
+
 _Nota: Este arquivo deve ser atualizado quando os itens acima forem resolvidos._
