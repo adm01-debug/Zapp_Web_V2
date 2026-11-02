@@ -11,6 +11,7 @@ set -euo pipefail
 
 MIGRATION="supabase/migrations/20261010063527_user_sessions_expire_diario.sql"
 CNAME="usess-expire-$$-$(date +%s)"
+PG_IMG="${N008_POSTGRES_IMAGE:-${POSTGRES_TEST_IMAGE:-postgres:17-alpine}}"
 PSQL=(docker exec -i "$CNAME" psql -v ON_ERROR_STOP=1 -q -U postgres -d postgres)
 
 cleanup() { docker rm -f "$CNAME" >/dev/null 2>&1 || true; }
@@ -18,7 +19,7 @@ trap cleanup EXIT
 
 [ -f "$MIGRATION" ] || { echo "[FALHOU] migration nao encontrada: $MIGRATION"; exit 1; }
 
-docker run --rm -d --no-healthcheck --name "$CNAME" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres postgres:17-alpine >/dev/null
+docker run --rm -d --no-healthcheck --name "$CNAME" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres "$PG_IMG" >/dev/null
 bash scripts/db-audit/wait-postgres-final-start.sh "$CNAME" 60
 
 # fixtures: papeis, stub de pg_cron e user_sessions minima (mesmas colunas da tabela real)
