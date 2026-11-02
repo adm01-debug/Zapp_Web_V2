@@ -457,12 +457,16 @@ jobs:
         # resolucao de @types/node. Declarado em supabase/functions/deno.json (imports)
         # mas ausente do deno.lock; --frozen=false permite que deno resolva e instale
         # sem exigir que o pacote ja esteja no lockfile.
+        # GR-001: cd para supabase/functions garante que node_modules e criado em
+        # supabase/functions/node_modules/, onde deno check com --config o encontra.
         run: |
           set -euo pipefail
-          deno install --config supabase/functions/deno.json --frozen=false
+          cd supabase/functions && deno install --frozen=false
 
       - name: Typecheck das edge functions (deno check)
-        run: deno check supabase/functions/**/index.ts
+        # GR-001: --config garante que deno check le nodeModulesDir:"auto" de
+        # supabase/functions/deno.json e encontra @types/node em node_modules/.
+        run: deno check --config supabase/functions/deno.json supabase/functions/**/index.ts
 
       - name: Deploy
         if: inputs.dry_run != true
