@@ -1,5 +1,5 @@
 # docs:
-#   gatilho: push na main e dispatch sobre main
+#   gatilho: workflow_run (CI/CD Pipeline concluiu com sucesso na main) e dispatch sobre main
 #   prova: o fluxo logado (Playwright com login real) contra producao
 #   falha: artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro
 #   avisa: issue de E2E e autor do push
@@ -8,8 +8,9 @@
 # ==========================================================================
 # SEGURANCA: este workflow deliberadamente NAO possui pull_request. Ele usa
 # os secrets E2E_TEST_EMAIL/E2E_TEST_PASSWORD (usuario de teste dedicado, perfil
-# supervisor -- enxerga Campanhas/Talk X) apenas depois de o codigo chegar a main ou em dispatch feito sobre
-# main. Workflows de PR nao podem referenciar secrets
+# supervisor -- enxerga Campanhas/Talk X) apenas depois de o codigo chegar a main
+# (via workflow_run, quando CI/CD Pipeline conclui com sucesso na main) ou em
+# dispatch feito sobre main. Workflows de PR nao podem referenciar secrets
 # (scripts/ci/check-pr-workflow-secrets.mjs), por isso este teste nao fica no
 # ci.yml e nao bloqueia PR.
 #
@@ -23,8 +24,10 @@
 name: E2E logado
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
     branches: [main]
+    types: [completed]
   workflow_dispatch:
 
 defaults:
@@ -52,6 +55,7 @@ jobs:
   e2e-logado:
     name: 🎭 E2E logado (Playwright)
     runs-on: ubuntu-24.04
+    if: (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || github.event_name == 'workflow_dispatch'
     # Relogio por grupo (valor na matriz). O grupo authenticated era cortado aos 15 min
     # em TODOS os commits da main (ex.: 3b5f8a9, 20:07:15 -> 20:22:32 UTC) antes do
     # fim: o Playwright morria antes de imprimir quais testes
@@ -101,7 +105,7 @@ jobs:
       issues: write # abrir/comentar o alerta em falha e fechar quando a suite volta
     steps:
       - name: ✋ Somente executa na main
-        if: github.ref != 'refs/heads/main'
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
         run: |
           echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
           exit 1
