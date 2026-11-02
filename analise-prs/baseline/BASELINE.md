@@ -1,23 +1,23 @@
-# Baseline do main — SHA: ac97c0ea300877335a43600ed025c28b6dfa4579
-Data: 2026-10-29
-
-## Typecheck
-- SIGABRT (falta de memória/OOM no container) — sem contagem de erros TS disponível
-- NÃO VERIFICADO por limitação do container (não é erro de código)
-
-## Lint (bun run lint — ESLint)
-Erros pré-existentes no main (NÃO são regressão das PRs):
-- local/no-secret-compare: ~14 erros em _shared/cron-secret-auth.ts (comparação direta de credencial)
-- @typescript-eslint/no-explicit-any: 2 erros
-- react-refresh/only-export-components: ~7 warnings
-- no-restricted-imports: ~4 warnings (supabase client em componentes)
-- no-setState-in-effect: 2 erros
-- no-impure-in-render: 1 erro
-- EXIT: 0 (lint não faz exit 1 por erro de regra, só relata)
+# Baseline do main — SHA: c4280ef4c0f60f2cdfb31bcdf56e26b1ee7e9b32
+Data: 2026-11-02
 
 ## Build
-- vite: command not found (antes de instalar deps)
-- Após bun install: não reexecutado (tempo/tokens)
+- `bun run build` → exit 0 (20.96s, sem erros)
+- Arquivo: `analise-prs/baseline/build.txt`
 
-## Unit tests (bun test)
-- NÃO executado (limite de tempo/tokens — container lento)
+## TypeCheck
+- `tsc --noEmit` → SIGABRT/OOM — falha pré-existente do container (sem RAM suficiente)
+- NÃO é regressão de código; é limitação do container de CI
+- Arquivo: `analise-prs/baseline/typecheck.txt`
+
+## Lint
+- `eslint src/` → 746 problemas: 533 erros + 213 warnings (todos pré-existentes)
+- Arquivo: `analise-prs/baseline/lint.txt` (parcial — 6 linhas de sumário)
+
+## Unit tests
+- `vitest run` → 67 testes passando, 0 falhas (3 arquivos: contratosModulo, emailContactContext, useSupervisorQueue)
+- Arquivo: `analise-prs/baseline/tests.txt`
+
+## Merge-trees
+- 21 PRs testadas contra main `630fb557` com `git merge-tree --write-tree`
+- Arquivo: `analise-prs/baseline/merge-trees.txt` (311 linhas)
