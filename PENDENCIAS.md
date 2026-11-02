@@ -1,6 +1,6 @@
 # PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-11-02 por sessão `GF-001..GF-056`._
+_Atualizado em 2026-11-02T01:50Z por sessão `GF-001..GF-056`._
 
 ---
 
