@@ -61,7 +61,9 @@ Storage.
 | `useTeamPresence`                  | `useTeamPresence.ts`         | canal   | `team-presence-<conversationId>`       |
 | `useDepartmentProfiles`            | `useDepartmentManagement.ts` | rpc     | `get_team_profiles`                    |
 | `useDepartmentAuditLogs`           | `useDepartmentManagement.ts` | tabela  | `department_audit_logs`                |
-| `useDepartmentInvites`             | `useDepartmentManagement.ts` | tabela  | `department_invites`                   |
+| `useDepartmentInvites`             | `useDepartmentManagement.ts` | tabela  | `department_invitations`               |
+| `useCreateDepartmentInvite`        | `useDepartmentManagement.ts` | rpc     | `create_department_invite`             |
+| `useDeleteDepartmentInvite`        | `useDepartmentManagement.ts` | tabela  | `department_invitations`               |
 | `useDepartmentWhatsAppCredentials` | `useDepartmentManagement.ts` | rpc     | `get_department_whatsapp_mode`         |
 | `uploadTeamMedia`                  | `uploadTeamMedia.ts`         | storage | `team-chat-files`                      |
 
@@ -138,15 +140,20 @@ Os tipos de linha saem de `types.ts` em vez de serem escritos à mão:
 ## Permissões de convite de departamento
 
 Decisão do dono (01/11/2026): **somente admin** cria e apaga convites de
-departamento. A regra vive na RLS de `department_invites`
-(migration `20261102012200_department_invites_restringe_escrita.sql`):
+departamento. O convite vive em `department_invitations`, a mesma tabela que o
+aceite (`accept_department_invite`) lê; `department_invites` é legada e fica
+fechada para escrita. Regra na migration
+`20261102012200_department_invites_restringe_escrita.sql`:
 
-- criar (`useCreateDepartmentInvite`): só usuário com papel `admin` em
-  `user_roles`; `created_by` tem de ser nulo ou o próprio perfil;
+- criar (`useCreateDepartmentInvite`): RPC `create_department_invite`, que só
+  aceita papel `admin` em `user_roles`; o banco sorteia o código, grava o perfil
+  criador e a auditoria `invite_created`. Convite de 1 uso, válido por 7 dias;
 - apagar (`useDeleteDepartmentInvite`): só `admin`;
-- listar: qualquer usuário logado (inalterado).
+- listar: admin e supervisor.
 
 Supervisor e agent recebem erro de permissão do banco ao tentar criar ou apagar.
+A tela ainda mostra o botão de criar para quem gerencia departamento
+(`canManageDepartments`); para supervisor, a criação volta `not_authorized`.
 
 ## Pendências conhecidas (não são convenção)
 
@@ -158,6 +165,3 @@ Supervisor e agent recebem erro de permissão do banco ao tentar criar ou apagar
   `department_whatsapp_configs`, que não existe em `types.ts`. A troca pelas
   RPCs (`create_department_invite`, `set_department_whatsapp_config`) é do item
   F62 do plano de finalização.
-- `useCreateDepartmentInvite` grava `created_by: user.id` (id do auth), mas a coluna
-  referencia `profiles(id)`: o INSERT falha por FK e nenhum convite consegue ser criado
-  hoje. Correção: gravar o id do perfil do usuário logado.

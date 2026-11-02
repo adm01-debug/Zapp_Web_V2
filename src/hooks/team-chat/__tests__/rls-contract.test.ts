@@ -121,7 +121,7 @@ describe('Contrato de schema real do Team Chat (TC-011 / #166)', () => {
 
   it('o snapshot do banco enxerga as tabelas do Team Chat (nao passa por vacuidade)', () => {
     expect(colunasReais('team_messages')).toContain('message_type');
-    expect(colunasReais('department_invites')).toContain('code');
+    expect(colunasReais('department_invitations')).toContain('code');
   });
 
   it('useSendTeamMessage grava so colunas que existem em team_messages', async () => {
@@ -136,16 +136,19 @@ describe('Contrato de schema real do Team Chat (TC-011 / #166)', () => {
     expect(chaves.filter((chave) => !colunasReais('team_messages').includes(chave))).toEqual([]);
   });
 
-  it('useCreateDepartmentInvite grava so colunas que existem em department_invites', async () => {
+  it('useCreateDepartmentInvite chama RPC que existe no snapshot do banco', async () => {
     const { result } = renderHook(() => useCreateDepartmentInvite('dep-1'), { wrapper: TestQueryWrapper });
 
     await act(async () => {
-      await result.current.mutateAsync('Ana');
+      await result.current.mutateAsync('Ana').catch(() => undefined);
     });
 
-    const chaves = chavesDe(ultimaAresta('department_invites', 'insert').payload);
-    expect(chaves.length).toBeGreaterThan(0);
-    expect(chaves.filter((chave) => !colunasReais('department_invites').includes(chave))).toEqual([]);
+    const chamada = f.rpcs.find((rpc) => rpc.nome === 'create_department_invite');
+    expect(chamada).toBeDefined();
+    const assinatura = Object.keys(manifesto.functions).find((chave) => chave.startsWith('f:create_department_invite('));
+    expect(assinatura).toBeDefined();
+    const argsEsperados = [...(assinatura ?? '').matchAll(/(p_[a-z_]+)\s/g)].map((m) => m[1]).sort();
+    expect(chavesDe(chamada?.args)).toEqual(argsEsperados);
   });
 
   it('a leitura de mensagens passa por RPC que existe no snapshot do banco', async () => {
