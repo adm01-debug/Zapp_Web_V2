@@ -6,23 +6,29 @@
 **Total de PRs analisadas:** 98  
 **CI main pós-merge (todos os 13 merges verificados individualmente):**
 
-| PR | Merge SHA | CI Gate | Run/Job | Concluído |
-|---|---|---|---|---|
-| #2283 | `6271b716` | ✅ success | job `122443305669` | 2026-10-27T20:14:28Z |
-| #2447 | `3617a2ac` | ✅ success | job `124954752604` | 2026-11-01T19:48:46Z |
-| #2482 | `3b5f8a96` | ✅ success | job `124976599067` | 2026-11-01T21:41:02Z |
-| #2547 | `3066fac0` | ✅ success | — | 2026-11-02T02:44Z |
-| #2560 | `a7a53f56` | ✅ success | — | 2026-11-02T02:57Z |
-| #2545 | `c16f3c69` | ⚠️ failure → **flake** | run `41380773345` / job `125070880679` | 2026-11-02T03:12Z |
-| #2567 | `8ba0b436` | ✅ success | — | 2026-11-02T04:15Z |
-| #2543 | `3e6ed32a` | ✅ success | — | 2026-11-02T04:40Z |
-| #2569 | `50ca61a6` | ✅ success | — | 2026-11-02T05:00Z |
-| #2522 | `4b5c6e79` | ✅ success | — | 2026-11-02T05:31Z |
-| #2549 | `dfef2487` | ✅ success | — | 2026-11-02T05:47Z |
-| #2565 | `ac04c5c0` | ✅ success | — | 2026-11-02T06:02Z |
-| #2570 | `d45033e8` | ✅ success | job `41397424005` | 2026-11-02T06:20:06Z |
+| PR | Merge SHA | CI Gate | Job ID | Run ID | Concluído |
+|---|---|---|---|---|---|
+| #2283 | `6271b716` | ✅ success | `122443305669` | `40574770535` | 2026-10-27T20:14:28Z |
+| #2447 | `3617a2ac` | ✅ success | `124954752604` | `41337427133` | 2026-11-01T19:48:46Z |
+| #2482 | `3b5f8a96` | ✅ success | `124976599067` | `41343946533` | 2026-11-01T21:41:02Z |
+| #2547 | `3066fac0` | ✅ success | `125066369782` | `41376578021` | 2026-11-02T02:44:23Z |
+| #2560 | `a7a53f56` | ✅ success | `125069459798` | `41379237707` | 2026-11-02T02:57:37Z |
+| #2545 | `c16f3c69` | ⚠️ failure → **flake** | `125073945387` | `41380773345` | 2026-11-02T03:12:19Z |
+| #2567 | `8ba0b436` | ✅ success | `125090905050` | `41385347360` | 2026-11-02T04:15:41Z |
+| #2543 | `3e6ed32a` | ✅ success | `125098241757` | `41387517970` | 2026-11-02T04:40:53Z |
+| #2569 | `50ca61a6` | ✅ success | `125103354144` | `41390035434` | 2026-11-02T05:00:56Z |
+| #2522 | `4b5c6e79` | ✅ success | `125112680096` | `41393445297` | 2026-11-02T05:31:11Z |
+| #2549 | `dfef2487` | ✅ success | `125117105696` | `41394672141` | 2026-11-02T05:47:33Z |
+| #2565 | `ac04c5c0` | ✅ success | `125121494178` | `41396210357` | 2026-11-02T06:02:43Z |
+| #2570 | `d45033e8` | ✅ success | `41397424005` | — | 2026-11-02T06:20:06Z |
 
-**Nota sobre SHA `c16f3c69` (PR #2545):** CI Gate = failure no job `🧪 Unit Tests (1/3)` — teste `src/components/contacts/__tests__/ContactFormRecalculoCorrida.test.tsx:189` falhou. Confirmado **flake documentado** em `analise-prs/baseline/BASELINE.md:26` ("confirmado flake, não se reproduz no SHA seguinte"). O SHA seguinte `8ba0b436` (PR #2567) passou com CI Gate = success, confirmando que não houve regressão introduzida pelo PR #2545.  
+**Nota sobre SHA `c16f3c69` (PR #2545):** CI Gate = failure no job `🧪 Unit Tests (1/3)` (job `125073945387`, run `41380773345`) — teste `src/components/contacts/__tests__/ContactFormRecalculoCorrida.test.tsx:189` falhou com valores de latitude/longitude incorretos. Confirmado **flake** por prova de três vias:
+
+1. **Baseline por nome:** grep de `ContactFormRecalculoCorrida` em `analise-prs/baseline/unit-tests-failing.txt` (baseline SHA `2d97c44c`, CI run `40189526836`) retornou `NAO_ENCONTRADO` — o teste estava **passando** no baseline, logo a falha não é regressão introduzida por essa sessão.
+2. **Diff do PR #2545:** apenas 3 arquivos modificados (`.claude/CLAUDE.md` +39 linhas, `AGENTS.md` +4 linhas, `docs/PRONTO_PRODUCAO.md` +48 linhas) — zero arquivos de código ou teste alterados; o teste não pode ter quebrado por essa mudança.
+3. **SHA seguinte:** `8ba0b436` (PR #2567) passou com CI Gate = success (job `125090905050`) sem nenhuma mudança no arquivo do teste — prova de que a falha não persistiu.
+
+`BASELINE.md:26` confirma independentemente: "confirmado flake, não se reproduz no SHA seguinte".  
 
 ---
 
@@ -69,6 +75,8 @@
 | BLOQUEADO_FEATURE_FREEZE | 1 |
 | BLOQUEADO_DECISAO_HUMANA | 0 |
 | **TOTAL** | **98** |
+
+**Nenhuma escrita extra no GitHub:** verificado — a única ferramenta de escrita usada foi `mcp__GITHUB_-_MCP_-_FOREVER__github_merge_pull_request` (13 merges via squash). Nenhuma branch foi deletada, editada ou comentada por esta sessão.
 
 ---
 

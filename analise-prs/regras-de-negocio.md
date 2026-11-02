@@ -1,127 +1,177 @@
 # Regras de Negócio — Zapp Web V2
 
 **Gerado em:** 2026-11-02  
-**Fontes:** migrations, policies RLS, hooks, testes E2E, CLAUDE.md
+**Fontes:** CLAUDE.md, docs/PRONTO_PRODUCAO.md, docs/DB-INVENTORY.md, docs/DB-SECURITY.md,  
+`src/config/supabase.ts`, migrations, policies e testes identificados na análise de 98 PRs.
 
 ---
 
-## 1. Autenticação e Autorização
+## 1. Congelamento de features (desde 2026-11-01)
 
-| Regra | Fonte |
-|---|---|
-| Todo acesso ao banco passa por RLS; `service_role` é para edges/workers | policies em `supabase/migrations/` |
-| `is_admin()` = `auth.role() = 'authenticated' AND user é admin no tenant` | função RLS em migrations |
-| `is_admin_or_supervisor()` = admin OU supervisor no tenant | idem |
-| Sem autenticação → sem dados | RLS default DENY |
-| JWT claims: `sub` = user_id, `app_metadata.tenant_id` = tenant | src/config/supabase.ts |
+**Fonte:** `.claude/CLAUDE.md` (adicionado pelo PR #2545, mergeado 2026-11-02T03:01Z)
 
----
+Só entram na `main`:
+- Correção de bug nos 9 fluxos críticos de `docs/PRONTO_PRODUCAO.md`
+- Correção de CI que impede verificar esses fluxos
+- Correção de segurança (RLS aberta, segredo exposto, vazamento de dados)
 
-## 2. Multi-Tenancy
-
-| Regra | Fonte |
-|---|---|
-| Dados isolados por `tenant_id` em toda tabela de negócio | policies RLS |
-| Usuário pertence a exatamente 1 tenant no cadastro | constraint DB |
-| Admin só vê dados do seu tenant | RLS `tenant_id = auth.jwt()->>'tenant_id'` |
-| Nenhum cross-tenant por query direta | design RLS |
+**Não entra:**
+- Feature nova (TalkX V4, Copiloto/Radar, War Room, gamificação, metas, IA nova)
+- Ajuste visual, contraste, a11y, animação, snapshot — salvo se quebra fluxo crítico
+- Relatório, dossiê, inventário ou placar em markdown/JSON
+- Workflow, guarda ou script de CI novo
 
 ---
 
-## 3. WhatsApp / Conexão
+## 2. Fluxos críticos de produção (9 fluxos)
 
-| Regra | Fonte |
-|---|---|
-| Instância WhatsApp: `PRINCIPAL` (Evolution GO) | CLAUDE.md §2 |
-| Reconexão automática via health check (não poll do front) | PR #2549 |
-| QR code: 3 polls × 1,5s; sem QR + jid → recria instância | CLAUDE.md §2 runbook |
-| Status possíveis: connected, disconnected, reconnecting | `whatsapp_connections` |
-| `whatsapp_connections` não é tocado no fluxo de reconexão | CLAUDE.md §2 |
+**Fonte:** `docs/PRONTO_PRODUCAO.md` (PR #2545)
 
----
+| # | Fluxo | Estado (2026-11-01) |
+|---|---|---|
+| 1 | Login, sessão e papéis (agente/supervisor/admin) | NÃO VERIFICADO |
+| 2 | Conectar número WhatsApp (QR / instância Evolution) | **QUEBRADO** |
+| 3 | Receber mensagem (webhook → banco → inbox) | **QUEBRADO** |
+| 4 | Enviar mensagem (texto e mídia) | **QUEBRADO** |
+| 5 | Inbox: lista, atribuição, transferência, fechamento | NÃO VERIFICADO |
+| 6 | Contatos (criar, editar, buscar, mesclar, excluir) | NÃO VERIFICADO |
+| 7 | Admin de usuários (criar, editar, desativar, papéis) | NÃO VERIFICADO |
+| 8 | Filas e roteamento (Talk-me, SLA) | NÃO VERIFICADO |
+| 9 | Saúde da conexão (monitor e alerta de queda) | PARCIAL |
 
-## 4. Contatos
-
-| Regra | Fonte |
-|---|---|
-| Contato visível = `deleted_at IS NULL AND is_lid_legacy = false AND phone ~ '^[0-9]{10,15}$'` | CLAUDE.md "Contatos" + migration 20260930450000 |
-| `search_contacts(..., include_legacy=false)` aplica critério | migration 20260930450000 |
-| Toggle "Mostrar legados" = `localStorage` `contact-show-legacy` | src/hooks/crm |
-| KPI Total deve coincidir com aba "Todos" (mesmo filtro) | useContactsKpi |
+"Pronto" = todos os 9 fluxos OK **com prova em produção** (query/request/log real com data+hora) **e** E2E passando na `main`.
 
 ---
 
-## 5. Conversas / Inbox
+## 3. Tenancy e isolamento de dados
 
-| Regra | Fonte |
-|---|---|
-| Status possíveis: `open`, `pending`, `archived` | schema conversations |
-| Transição `archived → open|pending` controlada por constraint | migrations |
-| Chat Panel Header → "Mais ações" → "Marcar como resolvido" → CloseConversationDialog | e2e/README.md |
-| Token inbox: `--inbox-panel-bg` (definido por tema em tokens.css) | CLAUDE.md "Lição de UI" |
+**Fonte:** RLS policies em produção + migrations + `docs/DB-SECURITY.md`
 
----
-
-## 6. Campanha / Talk X
-
-| Regra | Fonte |
-|---|---|
-| Plano vigente: V4 (200 etapas X001–X200) | docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md |
-| V3 substituído (PR #2482 mergeado 2026-11-01) | docs/talkx/ + progresso.json |
-| `useCampaignEditor` filtra `.eq('status','connected')` | código-fonte |
-| Fixtures E2E: conexão `e2e0e2e0...` status `connected`; segmento `621521f3...` | CLAUDE.md |
+- Toda tabela com dados de usuário tem RLS ativado
+- Isolamento por `tenant_id` (cada empresa/conta tem acesso somente aos seus dados)
+- Acesso cross-tenant: apenas funções com `security definer` e GRANT explícito
+- Papéis: `authenticated` (agentes), `service_role` (edge functions), `anon` (sem acesso a dados sensíveis)
+- Hierarquia: `admin` > `supervisor` > `agent`; permissões verificadas via `user_has_permission()`
+- Função `is_admin_or_supervisor()` — guards policies de escrita sensível
 
 ---
 
-## 7. Migrations / Banco
+## 4. Regras de escrita em `department_invites`
 
-| Regra | Fonte |
-|---|---|
-| Ordem obrigatória: arquivo → PR → merge → deploy → apply | CLAUDE.md §1 regra 6 |
-| Migration destrutiva (DROP/RENAME/ALTER TYPE/DELETE/UPDATE em massa): nunca sem aprovação | CLAUDE.md §1 |
-| Migration aditiva em produção: `db_query` + INSERT ledger na mesma transação | CLAUDE.md §1 |
-| `supabase_apply_migration` está bugado — usar `db_query` direto | CLAUDE.md §1 regra 1 |
-| Versão nova = `max(version) + 10000`; reservar com `reserve_migration_version()` | CLAUDE.md alocação versão |
-| `statements` no ledger = SQL real e completo, sem `;` final, sem comentários | CLAUDE.md §1 regra 7 |
+**Fonte:** Migration `20261102012200` (PR #2570, mergeado 2026-11-02T06:01Z)  
+**Evidência:** `analise-prs/dossies/PR-2570.md` + query ao banco em produção
 
----
-
-## 8. Feature Freeze (vigente desde PR #2545, 2026-11-02)
-
-| Regra | Fonte |
-|---|---|
-| Somente merges de: fix de CI, fix de segurança, fix dos 9 fluxos críticos | PR #2545 |
-| Features novas bloqueadas (ex.: PR #2562 feat LGPD) | progresso.json BLOQUEADO_FEATURE_FREEZE |
-| 9 fluxos críticos definidos no PR #2545 | PR #2545 corpo |
+- `INSERT` em `department_invites`: apenas admins (`is_admin_or_supervisor()`)
+- `DELETE` em `department_invites`: apenas admins
+- `SELECT`: qualquer autenticado
+- RPC `create_department_invite`: substitui INSERT direto do front — valida `created_by` + permissão
 
 ---
 
-## 9. CI / GitHub Actions
+## 5. Contatos — critério de visibilidade
 
-| Regra | Fonte |
-|---|---|
-| 6 checks obrigatórios na main: Lint & TypeCheck, Unit Tests, Build, Security Audit, Contrato DB offline, E2E Tests | CLAUDE.md perímetro |
-| `strict=true` — PR deve estar atualizada com main para mergear | CLAUDE.md perímetro |
-| `auto_merge=squash` — merges automáticos quando todos os checks passam | configuração repo |
-| TypeCheck ratchet: baseline=93, novas=0 | baseline/BASELINE.md |
-| Lint ratchet: baseline=820, novas=0 | baseline/BASELINE.md |
+**Fonte:** `CLAUDE.md §Contatos`, migration `20260930450000`, `src/hooks/crm/contactsAggregates.ts`
 
----
+Contato visível em Contatos = **todos os 3** critérios:
+1. `deleted_at IS NULL`
+2. `is_lid_legacy = false`
+3. `phone ~ '^[0-9]{10,15}$'`
 
-## 10. Departamentos / Convites
-
-| Regra | Fonte |
-|---|---|
-| INSERT em `department_invites` restrito a admin | migration + policies |
-| `create_department_invite` RPC escreve em `department_invitations` | PR #2570 |
-| `accept_department_invite` RPC aceita via código normalizado | useRedeemDepartmentInvite.ts |
-| SELECT em `department_invitations` para admin/supervisor | policies |
+`include_legacy: true` só quando toggle "Mostrar legados" está ligado (`localStorage contact-show-legacy`).  
+Mudar o critério exige alterar os três pontos juntos: migration + `CONTACT_VISIBLE_PHONE_PATTERN` + `scripts/db-audit/contacts-legacy-visibility.test.sh`.
 
 ---
 
-## 11. SINGU (sistema externo)
+## 6. WhatsApp / Evolution GO
 
-| Regra | Fonte |
+**Fonte:** `CLAUDE.md §2`, edge function `evolution-api`, runbook de QR Code
+
+- Instância padrão: `PRINCIPAL` (Evolution GO, flavor `go`)
+- Autenticação: `EVOLUTION_API_KEY` (admin) e `EVOLUTION_INSTANCE_TOKEN` (por instância)
+- Secrets são de edge functions — nunca no front
+- Status `connected` = pré-requisito para qualquer operação de envio
+- Reconexão automática: edge `connection-health-check` (checagem ~5 min); se `jid` presente mas `connected=false` → recria instância na GO (delete + create com mesmo token, sem mudar `whatsapp_connections`)
+- Banco interno da Evolution GO ≠ banco do projeto — nunca aplicar migrations do repo nele
+
+---
+
+## 7. RLS sem WITH CHECK — contexto PR #2481
+
+**Fonte:** Análise PR #2481 em `analise-prs/dossies/PR-2481.md`
+
+8 tabelas têm policies `UPDATE` sem `WITH CHECK`:
+Isso permite que usuário autenticado atualize linha para valor que não satisfaz a policy.
+Exemplo: policy `USING (owner_id = auth.uid())` sem `WITH CHECK (owner_id = auth.uid())` → usuário pode "passar a propriedade" para outro UID após o UPDATE ser aceito.
+
+**Impacto:** brecha de segurança ativa em produção. Correção = PR #2481 (aguardando aprovação do Joaquim).
+
+---
+
+## 8. Migrations — regras de apply
+
+**Fonte:** `CLAUDE.md §1`
+
+- Apply em produção: arquivo em `supabase/migrations/` → PR → merge em `main` → deploy → `db-migrate.yml`
+- Nunca DDL antes do merge (exceto DDL aditivo + compatível com main atual — ver seção 0 CLAUDE.md)
+- Migrations destrutivas (DROP, RENAME, ALTER TYPE, DELETE/UPDATE em massa) exigem aprovação do Joaquim
+- `statements` no ledger = SQL completo, nunca resumo em prosa
+- Versão nova = `max(version) + 10000`; reservar via `reserve_migration_version()` antes de criar arquivo
+
+---
+
+## 9. Tabelas `copilot_*` — inventário pendente
+
+**Fonte:** falha em `db-inventory-doc.unit.mjs:406`, PR #2494
+
+7 tabelas existem no banco de produção mas **não estão documentadas** em `docs/DB-INVENTORY.md`:
+- `copilot_connections`
+- `copilot_conversations`
+- `copilot_messages`
+- `copilot_objection_catalog`
+- `copilot_outcomes`
+- `copilot_seller_settings`
+- `copilot_usage`
+
+CI `Contrato DB offline` falha em qualquer PR que rode o `db-inventory-doc.unit.mjs`. Corrigir = adicionar as 7 ao inventário ou atualizar o step `types-sync.yml` para regenerar automaticamente.
+
+---
+
+## 10. Edge Functions — deploy
+
+**Fonte:** `CLAUDE.md §Retificação de 2026-10-07`
+
+- Deploy automático ao alterar código em `supabase/functions/` ou `supabase/config.toml` (exceto `*.test.ts`, `.md`, `fixtures/`)
+- Push em `main` → `deploy-functions.yml` → environment `producao-edge-functions` (sem aprovação humana)
+- `workflow_dispatch` para: rollback, função única, dry-run, rotação de secrets
+
+---
+
+## 11. Banco oficial e bancos proibidos
+
+**Fonte:** `CLAUDE.md §1`
+
+| Banco | Uso |
 |---|---|
-| SINGU é READ-ONLY neste projeto | CLAUDE.md + goal |
-| Nenhuma PR que escreva no SINGU pode ser mergeada | goal regras |
+| `tnnnlkbymytvtqngbbqh` | **banco oficial do projeto** — único destino de migrations |
+| `uqysyzndkfiwfztbqvsl` | MCP legado — NUNCA escrever |
+| `vpkmqeumtxhrwgawxdrl` | read-only legado — NUNCA escrever |
+| `pgxfvjmuubtbowutlide` | Gestão de Clientes/CRM — externo, somente leitura |
+| `doufsxqlfjyuvxuezpln` | Catálogo de Produtos — externo, somente leitura |
+
+---
+
+## 12. SINGU — somente leitura
+
+Qualquer PR que escreva no sistema SINGU não é mergeada. SINGU é externo e Read-Only para este projeto.
+
+---
+
+## 13. Verificação pós-merge (quando aplicável)
+
+Para PRs com migration ou edge function, confirmar em produção via MCP `SUPABASE - ZAPP WEB V2 - MCP`:
+- Migration: `SELECT version, name FROM supabase_migrations.schema_migrations WHERE version = '<versão>'`
+- Edge function: deploy automático confirmado no run de `deploy-functions.yml`
+- Logs: zero erros novos nas últimas 1h
+
+**Evidência de verificação pós-merge nesta sessão:**
+- PR #2570 (migration `20261102012200` + RPC `create_department_invite`): verificado via `db_query` em `tnnnlkbymytvtqngbbqh` — migration presente, 3 policies em `pg_policy`, função em `pg_proc` ✅ (ver `analise-prs/dossies/PR-2570.md §Verificação pós-merge`)

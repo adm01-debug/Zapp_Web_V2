@@ -60,7 +60,7 @@ numero,veredito,merge_sha,merged_at,motivo
 2495,FECHADA_SEM_MERGE,,,
 2496,BLOQUEADO_DDL_WORKFLOW,,,feature freeze + DDL em producao sem aprovacao
 2497,FECHADA_SEM_MERGE,,,
-2498,BLOQUEADO_CONFLITO,,,conflito real confirmado via API update_pr_branch 422 apos #2570
+2498,BLOQUEADO_CONFLITO,,,conflito real confirmado — update_pr_branch → 422 em 2026-11-02 após #2570
 2499,FECHADA_SEM_MERGE,,,
 2500,FECHADA_SEM_MERGE,,,
 2501,FECHADA_SEM_MERGE,,,
