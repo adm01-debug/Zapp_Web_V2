@@ -4,7 +4,7 @@
   "main_commit": "Último merge confirmado: #2482 docs(talkx): marca V4 como vigente e V3 como substituido",
   "data_baseline": "2026-11-01",
   "data_analise": "2026-11-02",
-  "total_prs_analisadas": 94,
+  "total_prs_analisadas": 98,
   "total_prs_abertas_no_inicio": 67,
   "drafts": 14,
   "ci_baseline": "72 erros TypeCheck (baseline 93; -21 via PR #2188); ESLint 820 ocorrências; Build passando; Testes unitários passando — SHA main 1252bb5a41123ba4d49efd84d0f91604bff6c87c",
@@ -100,7 +100,7 @@
     }
   ],
   "status": "analise_completa_94_prs_revisado_08",
-  "nota": "2026-11-02T09:00Z: revisão 10ª sessão. #2566 confirmada FECHADA_SEM_MERGE (closed_at=2026-11-02T03:38:56Z). Dossies de #2565 e #2566 criados. Contagens corrigidas. Abertas restantes: 22 (6 AGUARDANDO_CI + 1 AGUARDANDO_CI_APOS_UPDATE + 4 BLOQUEADO_CONFLITO + 5 DRAFT_SKIP + 2 BLOQUEADO_AGUARDANDO_APROVACAO + 1 BLOQUEADO_RLS_SEM_TESTE + 1 BLOQUEADO_DDL_WORKFLOW + 1 BLOQUEADO_FEATURE_FREEZE + 1 BLOQUEADO_DECISAO_HUMANA). FECHADAS sem merge: 66. MERGEADAS total: 6.",
+  "nota": "2026-11-02T09:30Z: revisão 11ª sessão. 4 PRs novas analisadas (#2567/#2569/#2570: AGUARDANDO_CI; #2571: BLOQUEADO_CONFLITO). Total analisadas: 98. Total abertas: 25 (9 AGUARDANDO_CI + 1 AGUARDANDO_CI_APOS_UPDATE + 5 BLOQUEADO_CONFLITO + 5 DRAFT_SKIP + 2 BLOQUEADO_AGUARDANDO_APROVACAO + 1 BLOQUEADO_RLS_SEM_TESTE + 1 BLOQUEADO_DDL_WORKFLOW + 1 BLOQUEADO_FEATURE_FREEZE + 1 BLOQUEADO_DECISAO_HUMANA). FECHADAS sem merge: 66. MERGEADAS: 6. CI pós-merge das 4 mergeadas pela sessão: Gate=success em todas (#2482/#2547/#2560/#2545).",
   "verdicts": {
     "1930": "FECHADA_SEM_MERGE",
     "1997": "FECHADA_SEM_MERGE",
@@ -195,7 +195,11 @@
     "2563": "AGUARDANDO_CI",
     "2564": "FECHADA_SEM_MERGE",
     "2565": "BLOQUEADO_DECISAO_HUMANA",
-    "2566": "FECHADA_SEM_MERGE"
+    "2566": "FECHADA_SEM_MERGE",
+    "2567": "AGUARDANDO_CI",
+    "2569": "AGUARDANDO_CI",
+    "2570": "AGUARDANDO_CI",
+    "2571": "BLOQUEADO_CONFLITO"
   },
   "contagem_por_veredito": {
     "FECHADA_SEM_MERGE": 66,
@@ -203,12 +207,12 @@
     "BLOQUEADO_AGUARDANDO_APROVACAO": 2,
     "AGUARDANDO_CI_APOS_UPDATE": 1,
     "BLOQUEADO_DDL_WORKFLOW": 1,
-    "AGUARDANDO_CI": 6,
+    "AGUARDANDO_CI": 9,
     "DRAFT_SKIP": 5,
     "BLOQUEADO_RLS_SEM_TESTE": 1,
     "BLOQUEADO_FEATURE_FREEZE": 1,
     "BLOQUEADO_DECISAO_HUMANA": 1,
-    "BLOQUEADO_CONFLITO": 4,
-    "TOTAL": 94
+    "BLOQUEADO_CONFLITO": 5,
+    "TOTAL": 98
   }
 }

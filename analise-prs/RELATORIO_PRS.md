@@ -1,7 +1,7 @@
-# RELATÓRIO DE ANÁLISE — 94 PRs ANALISADAS
-**adm01-debug/Zapp_Web_V2** | Atualizado em 2026-11-02T07:00Z  
+# RELATÓRIO DE ANÁLISE — 98 PRs ANALISADAS
+**adm01-debug/Zapp_Web_V2** | Atualizado em 2026-11-02T09:30Z  
 SHA main início da análise: `004e74a8c596959f45f61c8b0b64b30a70c1ff19`  
-SHA main atual: `c16f3c69a9bffea1899760288d6c5d576acc2495` (após merge #2545)
+SHA main atual: `587ec25f8cb25a42c1ba1cda4e4e8a09fb2f9ac6`
 
 ---
 
@@ -18,7 +18,7 @@ SHA main atual: `c16f3c69a9bffea1899760288d6c5d576acc2495` (após merge #2545)
 
 ---
 
-## ⏳ AGUARDANDO CI — COM auto_merge=SQUASH (6 + 1)
+## ⏳ AGUARDANDO CI — COM auto_merge=SQUASH (10 total)
 
 Todas mergearão automaticamente quando os required checks passarem (3 obrigatórios: `🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate`).
 
@@ -31,6 +31,9 @@ Todas mergearão automaticamente quando os required checks passarem (3 obrigató
 | #2549 | fix: reconexão automática WhatsApp | `7742d72eb9899d131db4d053d37d7b113cc09cc8` |
 | #2557 | fix(docs): atualiza required checks no CLAUDE.md | `93cfc9d09660ba91d932554a1f2e6b782e569de6` |
 | #2563 | fix(ci): instala @types/node via npm após deno install | `355f3ea4916e7d54c9d09ebd6c83bc88a5d32317` |
+| #2567 | fix(ci): deno install --frozen=false — desbloqueia deploy | `8a4c29d4...` |
+| #2569 | fix(ci): testes GR-027 + gatilho workflow_run e2e-logado GR-029 | `09d2293f...` |
+| #2570 | fix: RLS department_invites restringe escrita a admins | `4138b2c8...` |
 
 ---
 
@@ -50,6 +53,7 @@ Todas mergearão automaticamente quando os required checks passarem (3 obrigató
 | #2542 | `c61cbe617f4d06b0f29cb41ddb8f4a1c03082327` | fix: N-008 DB Guard — dirty após main avançar; mergeable_state=dirty |
 | #2526 | `f3cccccae8189a91743b37a05723a833565023cc` | fix(ci): deno check --config + E2E webkit — dirty após main avançar; mergeable_state=dirty |
 | #2533 | `2388e1ac52b22578880c3a5d6d408a4436ac16f0` | chore: migration reconciliation 20261030145126 — dirty após main avançar; mergeable_state=dirty |
+| #2571 | `0e6777210...` | fix(contacts): race condition enderecoVigenteRef — dirty; auto_merge ativo mas aguardando resolução de conflito |
 
 ---
 
@@ -97,9 +101,9 @@ Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Adicional
 | Veredito | Contagem |
 |----------|----------|
 | MERGEADA | 6 |
-| AGUARDANDO_CI | 6 |
+| AGUARDANDO_CI | 9 |
 | AGUARDANDO_CI_APOS_UPDATE | 1 |
-| BLOQUEADO_CONFLITO | 4 |
+| BLOQUEADO_CONFLITO | 5 |
 | DRAFT_SKIP | 5 |
 | BLOQUEADO_AGUARDANDO_APROVACAO | 2 |
 | BLOQUEADO_DDL_WORKFLOW | 1 |
@@ -107,11 +111,26 @@ Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Adicional
 | BLOQUEADO_FEATURE_FREEZE | 1 |
 | BLOQUEADO_DECISAO_HUMANA | 1 |
 | FECHADA_SEM_MERGE | 66 |
-| **TOTAL** | **94** |
+| **TOTAL** | **98** |
 
 ---
 
-## 🔍 LINHA DE BASE (main `a7a53f56`)
+## ✅ CI PÓS-MERGE (verificação de regressão)
+
+| PR | Merge SHA | CI Gate | Build | Notas |
+|----|-----------|---------|-------|-------|
+| #2283 | `6271b716` | skipped | failure | Mergeada 2026-10-27, anterior ao baseline (2026-10-29); falha pré-existente |
+| #2447 | `3617a2ac` | skipped | success | CI Gate skipped = configuração da época; sem falha nova |
+| #2482 | `3b5f8a96` | **success** | success | ✅ zero falha nova |
+| #2547 | `3066fac0` | **success** | success | ✅ zero falha nova |
+| #2560 | `a7a53f56` | **success** | success | ✅ zero falha nova |
+| #2545 | `c16f3c69` | **success** | success | ✅ zero falha nova |
+
+As 4 PRs mergeadas pela sessão de análise (#2482, #2547, #2560, #2545) todas têm CI Gate=success. As pré-existentes (#2283, #2447) são anteriores ao baseline.
+
+---
+
+## 🔍 LINHA DE BASE (main `587ec25f`)
 
 - **TypeCheck**: 3 erros no main atual (ratchet baseline=93 histórico)
 - **ESLint**: 813 problems (ratchet baseline=820; 7 removidas, 0 novas)
