@@ -3,9 +3,9 @@
     "data_analise": "2026-11-02",
     "total_prs": 98,
     "sha_main_inicio": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
-    "sha_main_atual": "4b5c6e7970512d16db5501a35cb2e7176941f69d",
+    "sha_main_atual": "dfef2487a2c3b86101f23ef50d2c1d862b4fe03a",
     "gerado_em": "2026-11-02T06:00Z",
-    "nota": "98 PRs analisadas; 10 mergeadas; SHA main final: 4b5c6e79 (PR #2522)"
+    "nota": "98 PRs analisadas; 11 mergeadas; SHA main final: dfef2487 (PR #2549)"
   },
   "prs": [
     { "numero": 1930, "veredito": "FECHADA_SEM_MERGE" },
@@ -86,7 +86,7 @@
     { "numero": 2543, "veredito": "MERGEADA", "merge_sha": "3e6ed32ac34d9bcb9734ccfb05e580500bf5623d", "merged_at": "2026-11-02T04:16:16Z" },
     { "numero": 2545, "veredito": "MERGEADA", "merge_sha": "c16f3c69a9bffea1899760288d6c5d576acc2495", "merged_at": "2026-11-02T03:01:17Z" },
     { "numero": 2547, "veredito": "MERGEADA", "merge_sha": "3066fac062f934e5469bb573e88bc464559a023c", "merged_at": "2026-11-02T02:13:43Z" },
-    { "numero": 2549, "veredito": "AGUARDANDO_CI", "motivo": "behind; auto_merge=squash" },
+    { "numero": 2549, "veredito": "MERGEADA", "merge_sha": "dfef2487a2c3b86101f23ef50d2c1d862b4fe03a", "merged_at": "2026-11-02T05:32:58Z" },
     { "numero": 2551, "veredito": "BLOQUEADO_RLS_SEM_TESTE", "motivo": "3 migrations RLS sem testes Postgres; titulo enganoso" },
     { "numero": 2552, "veredito": "FECHADA_SEM_MERGE" },
     { "numero": 2553, "veredito": "DRAFT_SKIP" },
@@ -109,8 +109,8 @@
   ],
   "contagem": {
     "FECHADA_SEM_MERGE": 66,
-    "MERGEADA": 9,
-    "AGUARDANDO_CI": 6,
+    "MERGEADA": 11,
+    "AGUARDANDO_CI": 4,
     "BLOQUEADO_CONFLITO": 6,
     "DRAFT_SKIP": 5,
     "BLOQUEADO_AGUARDANDO_APROVACAO": 2,
