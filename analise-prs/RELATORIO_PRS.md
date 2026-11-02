@@ -5,7 +5,7 @@ SHA main atual: `8ba0b4361290f37171fd6ec27012a46665ca5b7e`
 
 ---
 
-## ✅ MERGEADAS COM SHA DE EVIDÊNCIA (6 total)
+## ✅ MERGEADAS COM SHA DE EVIDÊNCIA (8 total)
 
 | PR | Título | Merge SHA | Mergeada em |
 |----|--------|-----------|-------------|
@@ -16,23 +16,35 @@ SHA main atual: `8ba0b4361290f37171fd6ec27012a46665ca5b7e`
 | #2560 | fix(e2e): workers 1→2 em CI — GR-016 | `a7a53f56771257106ad79847e6a9f13b9ddada80` | 2026-11-02T02:43:28Z |
 | #2545 | chore: congela features — 9 fluxos críticos | `c16f3c69a9bffea1899760288d6c5d576acc2495` | 2026-11-02T03:01:17Z |
 | #2567 | fix(ci): deno install --frozen=false — desbloqueia deploy | `8ba0b4361290f37171fd6ec27012a46665ca5b7e` | 2026-11-02T03:51:55Z |
+| #2543 | fix: E2E alto-contraste e N-008 healthcheck | `3e6ed32ac34d9bcb9734ccfb05e580500bf5623d` | 2026-11-02T04:16:16Z |
 
 ---
 
-## ⏳ AGUARDANDO CI — COM auto_merge=SQUASH (8 restantes; #2567 mergeada, #2563 conflito)
+## ⏳ AGUARDANDO CI — COM auto_merge=SQUASH (7 restantes; #2543 e #2567 mergeadas, #2563 conflito)
 
-Todas mergearão automaticamente quando os required checks passarem (3 obrigatórios: `🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate`). **#2567 mergeada em 2026-11-02T03:51:55Z — removida desta tabela.**
+Todas mergearão automaticamente quando os required checks passarem (3 obrigatórios: `🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate`). **#2567 mergeada em 2026-11-02T03:51:55Z; #2543 mergeada em 2026-11-02T04:16:16Z — removidas desta tabela.**
 
 | PR | Título | HEAD SHA |
 |----|--------|----------|
-| #2494 | chore(db): sincronizar artefatos (types-sync) | `d27d941f` — **atualizado** (types-sync rodou em run 41386672065 pós-merge #2567; artefatos regenerados; CI aguardando) |
-| #2498 | fix(admin): RPC get_search_insights→search_insights | `984104a1e22cc924303055fff3ff96048d8bac6e` |
-| #2522 | fix(e2e): aguarda teclado visível — Firefox GR-012 | `737518f952999dad4f023e9eb36270bd6203ed75` |
-| #2543 | fix: E2E alto-contraste e N-008 healthcheck | `68dff679c1551472f7b5c06a0bf0855c920fc7eb` |
-| #2549 | fix: reconexão automática WhatsApp | `7742d72eb9899d131db4d053d37d7b113cc09cc8` |
-| #2557 | fix(docs): atualiza required checks no CLAUDE.md | `93cfc9d09660ba91d932554a1f2e6b782e569de6` |
-| #2569 | fix(ci): testes GR-027 + gatilho workflow_run e2e-logado GR-029 | `09d2293f...` |
-| #2570 | fix: RLS department_invites restringe escrita a admins | `4138b2c8...` |
+| #2494 | chore(db): sincronizar artefatos (types-sync) | `2957bbe9` — **CI VERMELHO** (run 41388205922): `db-inventory-doc.unit.mjs:406` falha — 7 tabelas `copilot_*` no banco não estão em `docs/DB-INVENTORY.md`; `types-sync.yml` não regenera este arquivo; ver PENDENCIAS.md §5 |
+| #2498 | fix(admin): RPC get_search_insights→search_insights | `984104a1e22cc924303055fff3ff96048d8bac6e` — behind, auto_merge=squash |
+| #2522 | fix(e2e): aguarda teclado visível — Firefox GR-012 | `ac6f690e` — blocked, auto_merge=squash |
+| #2549 | fix: reconexão automática WhatsApp | `7742d72eb9899d131db4d053d37d7b113cc09cc8` — behind, auto_merge=squash |
+| #2557 | fix(docs): atualiza required checks no CLAUDE.md | `dc3a3c50` — blocked, auto_merge=squash |
+| #2569 | fix(ci): testes GR-027 + gatilho workflow_run e2e-logado GR-029 | `cc79696a` — blocked, auto_merge=squash |
+| #2570 | fix: RLS department_invites restringe escrita a admins | `a9596bd1` — behind, auto_merge=squash |
+
+---
+
+## ⚠️ PR #2494 — CI BLOQUEADO: DB-INVENTORY.md não regenerado por types-sync (2026-11-02)
+
+**Diagnóstico (run 41388205922, job 125094371344, HEAD `2957bbe9`):**
+- `🧩 Node CI Scripts` FALHOU — `db-inventory-doc.unit.mjs:406` — teste "docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir"
+- 7 tabelas `copilot_*` no banco vivo mas ausentes de `docs/DB-INVENTORY.md`: `copilot_conversation_scores`, `copilot_help_requests`, `copilot_learning_moments`, `copilot_objection_catalog`, `copilot_outcomes`, `copilot_seller_settings`, `copilot_usage`
+- Contagens divergentes: banco=204 tabelas, catálogo=211; columns: banco=2315, catálogo=2362; functions: banco=378, catálogo=381
+- **Causa raiz**: `types-sync.yml` regenera `types.ts`, `schema-catalog.json`, `schema-manifest.json` — mas NÃO regenera `docs/DB-INVENTORY.md`. A cada ciclo em que novas tabelas aparecem no banco, este teste vai continuar falhando.
+- **Não é flake**: mesma falha em HEADs `f5ab7c54` (run 41387183061) e `2957bbe9` (run 41388205922).
+- **Ação necessária do Joaquim**: adicionar passo em `types-sync.yml` para regenerar `docs/DB-INVENTORY.md` — ver PENDENCIAS.md §5.
 
 ---
 
@@ -98,9 +110,8 @@ Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Adicional
 
 | Veredito | Contagem |
 |----------|----------|
-| MERGEADA | 7 |
+| MERGEADA | 8 |
 | AGUARDANDO_CI | 7 |
-| AGUARDANDO_CI_APOS_UPDATE | 1 |
 | BLOQUEADO_CONFLITO | 6 |
 | DRAFT_SKIP | 5 |
 | BLOQUEADO_AGUARDANDO_APROVACAO | 2 |
@@ -123,7 +134,8 @@ Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Adicional
 | #2547 | `3066fac0` | **success** | success | ✅ zero falha nova |
 | #2560 | `a7a53f56` | **success** | success | ✅ zero falha nova |
 | #2545 | `c16f3c69` | ~~failure~~ **flake** | success | ⚠️ Unit test `ContactFormRecalculoCorrida.test.tsx:189` falhou (run 41380773345); flake confirmado: mesmo teste passou em `8ba0b436` sem alteração no código. PR #2545 só altera CLAUDE.md. |
-| #2567 | `8ba0b436` | **in_progress** (2026-11-02) | success | CI Gate ainda rodando: unit tests=success, typecheck=success, build=success; E2E `deslogado-secundario` em andamento |
+| #2567 | `8ba0b436` | **success** (run 41385347360) | success | ✅ CI Gate=success confirmado pós-merge |
+| #2543 | `3e6ed32a` | verificado via auto-merge | success | ✅ PR tinha auto_merge=squash; mergeada em 2026-11-02T04:16:16Z após checks verdes no HEAD `68dff679` |
 
 As 4 PRs mergeadas pela sessão de análise (#2482, #2547, #2560, #2545) + #2567 (mergeada via auto_merge) têm build=success. #2545 teve flake de unit test que não se reproduz no SHA seguinte. #2567 tem CI Gate em andamento.
 

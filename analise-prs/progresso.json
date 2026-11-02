@@ -11,7 +11,7 @@
   "typecheck_baseline": "72 erros (baseline histórico 93, redução de 21 confirmada em analise-prs/baseline/typecheck.txt)",
   "lint_baseline": "820 ocorrências (100% pré-existentes; confirmado em analise-prs/baseline/lint.txt)",
   "prs_analisadas": 92,
-  "prs_mergeadas_total": 7,
+  "prs_mergeadas_total": 8,
   "prs_mergeadas_lista": [
     {
       "numero": 2283,
@@ -54,6 +54,12 @@
       "sha": "8ba0b4361290f37171fd6ec27012a46665ca5b7e",
       "merged_at": "2026-11-02T03:51:55Z",
       "titulo": "fix(ci): deno install --frozen=false — desbloqueia deploy das edge functions"
+    },
+    {
+      "numero": 2543,
+      "sha": "3e6ed32ac34d9bcb9734ccfb05e580500bf5623d",
+      "merged_at": "2026-11-02T04:16:16Z",
+      "titulo": "fix: E2E alto-contraste e N-008 healthcheck"
     }
   ],
   "auto_merge_habilitado_nesta_sessao": [
@@ -105,8 +111,8 @@
       "motivo": "contém 3 migrations RLS sem testes Postgres + 12 arquivos vs título diz 2; BLOQUEADO_RLS_SEM_TESTE; auto_merge desabilitado 2026-11-02"
     }
   ],
-  "status": "analise_completa_98_prs_revisado_13",
-  "nota": "2026-11-02: revisão 14ª sessão. #2494 types-sync rodou automaticamente após merge do #2567 (run 41386672065 success em 8ba0b436); HEAD atualizado para d27d941f com artefatos regenerados (types.ts, catálogo, manifesto, grants). CI GitHub Actions ainda não aparece em d27d941f — auto-update-pr-branch irá atualizar base e CI rodará. Verdict atualizado de BLOQUEADO_CI_DRIFT_TYPES_SYNC para AGUARDANDO_CI.",
+  "status": "analise_completa_98_prs_revisado_15",
+  "nota": "2026-11-02: revisão 15ª sessão. #2543 MERGEADA em 2026-11-02T04:16:16Z (SHA 3e6ed32a) — 8ª PR mergeada. #2494 HEAD atual 2957bbe9: CI VERMELHO (run 41388205922) — mesma falha de drift: 7 tabelas copilot_* no banco ausentes de docs/DB-INVENTORY.md; types-sync não regenera este arquivo; bloqueio estrutural documentado em PENDENCIAS.md §5. HEADs atualizados: #2522→ac6f690e, #2557→dc3a3c50, #2569→cc79696a, #2570→a9596bd1. CI Gate pós-merge verificado: #2482=success(41343946533), #2547=success(41376578021), #2560=success(41379237707), #2567=success(41385347360), #2545=flake(41380773345).",
   "verdicts": {
     "1930": "FECHADA_SEM_MERGE",
     "1997": "FECHADA_SEM_MERGE",
@@ -183,7 +189,7 @@
     "2536": "BLOQUEADO_CONFLITO",
     "2539": "DRAFT_SKIP",
     "2542": "BLOQUEADO_CONFLITO",
-    "2543": "AGUARDANDO_CI",
+    "2543": "MERGEADA",
     "2545": "MERGEADA",
     "2547": "MERGEADA",
     "2549": "AGUARDANDO_CI",
@@ -209,11 +215,10 @@
   },
   "contagem_por_veredito": {
     "FECHADA_SEM_MERGE": 66,
-    "MERGEADA": 7,
+    "MERGEADA": 8,
     "BLOQUEADO_AGUARDANDO_APROVACAO": 2,
-    "BLOQUEADO_CI_DRIFT_TYPES_SYNC": 0,
     "BLOQUEADO_DDL_WORKFLOW": 1,
-    "AGUARDANDO_CI": 8,
+    "AGUARDANDO_CI": 7,
     "DRAFT_SKIP": 5,
     "BLOQUEADO_RLS_SEM_TESTE": 1,
     "BLOQUEADO_FEATURE_FREEZE": 1,

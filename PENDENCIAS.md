@@ -108,4 +108,28 @@ A PR tem `auto_merge=SQUASH` ativo mas não vai mergear enquanto este check falh
 
 ---
 
+## 5. PR #2494 (types-sync) — CI vermelho: `types-sync.yml` não regenera `docs/DB-INVENTORY.md`
+
+**Runs com falha confirmados:**
+- Run `41387183061` — HEAD `f5ab7c54` (2026-11-02)
+- Run `41388205922` — HEAD `2957bbe9` (2026-11-02, job `125094371344`)
+
+**O que falha:**
+`scripts/ci/db-inventory-doc.unit.mjs:406` — teste "docs/DB-INVENTORY.md cobre o catálogo do banco, sem mentir"
+
+**Evidência concreta (run 41388205922):**
+- 7 tabelas `copilot_*` estão no banco vivo mas **não** aparecem em `docs/DB-INVENTORY.md`: `copilot_conversation_scores`, `copilot_help_requests`, `copilot_learning_moments`, `copilot_objection_catalog`, `copilot_outcomes`, `copilot_seller_settings`, `copilot_usage`
+- Contagem diverge: banco=204 tabelas, catálogo=211; columns: banco=2315, catálogo=2362; functions: banco=378, catálogo=381
+
+**Causa raiz:** `types-sync.yml` regenera `types.ts`, `schema-catalog.json`, `schema-manifest.json` a partir do banco vivo — mas **não** regenera `docs/DB-INVENTORY.md`. A cada ciclo em que novas tabelas aparecem no banco, este teste falhará permanentemente.
+
+**Por que não foi corrigido:** Adicionar o passo de regeneração de `docs/DB-INVENTORY.md` ao `types-sync.yml` requer editar um arquivo de workflow — proibido sem autorização explícita do Joaquim. A PR #2494 tem `auto_merge=SQUASH` ativo mas não vai mergear enquanto este check falhar.
+
+**O que o Joaquim precisa fazer:**
+1. Identificar o script que gera `docs/DB-INVENTORY.md` (provavelmente `scripts/ci/db-inventory-doc.mjs` ou equivalente)
+2. Adicionar um passo em `types-sync.yml` para rodar esse script após regenerar os demais artefatos
+3. Com isso, cada run do types-sync atualizará todos os artefatos de uma vez e a PR auto-mergeará
+
+---
+
 _Nota: Este arquivo deve ser atualizado quando os itens acima forem resolvidos._
