@@ -52,7 +52,7 @@ Storage.
 | `useTransferConversation`          | `useTeamChatMutations.ts`    | rpc     | `transfer_team_conversation_ownership` |
 | `useTransferConversationDepartment` | `useTeamChatMutations.ts`   | rpc     | `transfer_team_conversation_department` |
 | `useDeleteConversation`            | `useTeamChatMutations.ts`    | tabela  | `team_conversations`                   |
-| `useAddConversationMembers`        | `useTeamChatMembers.ts`      | tabela  | `team_conversation_members`            |
+| `useAddConversationMembers`        | `useTeamChatMutations.ts`    | tabela  | `team_conversation_members`            |
 | `useTeamMemberDetails`             | `useTeamMemberDetails.ts`    | rpc     | `get_team_birthdays`                   |
 | `useTeamPerformance`               | `useTeamPerformance.ts`      | tabela  | `team_messages`                        |
 | `useParticipantStats`              | `useParticipantStats.ts`     | tabela  | `team_messages`                        |
@@ -61,7 +61,8 @@ Storage.
 | `useTeamPresence`                  | `useTeamPresence.ts`         | canal   | `team-presence-<conversationId>`       |
 | `useDepartmentProfiles`            | `useDepartmentManagement.ts` | rpc     | `get_team_profiles`                    |
 | `useDepartmentAuditLogs`           | `useDepartmentManagement.ts` | tabela  | `department_audit_logs`                |
-| `useDepartmentInvites`             | `useDepartmentManagement.ts` | tabela  | `department_invites`                   |
+| `useDepartmentInvites`             | `useDepartmentManagement.ts` | tabela  | `department_invitations`               |
+| `useCreateDepartmentInvite`        | `useDepartmentManagement.ts` | rpc     | `create_department_invite`             |
 | `useDepartmentWhatsAppCredentials` | `useDepartmentManagement.ts` | rpc     | `get_department_whatsapp_mode`         |
 | `uploadTeamMedia`                  | `uploadTeamMedia.ts`         | storage | `team-chat-files`                      |
 
@@ -142,6 +143,5 @@ Os tipos de linha saem de `types.ts` em vez de serem escritos à mão:
   fora deste módulo.
 - `useDepartmentManagement` ainda grava em `department_audit_logs` pelo cliente
   (e o `INSERT` de `authenticated` foi revogado) e faz `upsert` em
-  `department_whatsapp_configs`, que não existe em `types.ts`. A troca pelas
-  RPCs (`create_department_invite`, `set_department_whatsapp_config`) é do item
-  F62 do plano de finalização.
+  `department_whatsapp_configs`, que não existe em `types.ts`. A troca pela
+  RPC `set_department_whatsapp_config` é do item F62 do plano de finalização.
