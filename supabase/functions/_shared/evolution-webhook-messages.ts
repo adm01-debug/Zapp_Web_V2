@@ -965,15 +965,35 @@ export async function handleOutgoingWhatsAppMessage(
     ? new Date((data.messageTimestamp as number) * 1000).toISOString() : new Date().toISOString();
 
   const recentCutoff = new Date(Date.now() - 60_000).toISOString();
-  const { data: pendingMessage } = await supabase.from('messages').select('id')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: pendingMessageInitial, error: pendingMsgError } = await (supabase.from('messages') as any).select('id, manually_resolved_at')
     .eq('contact_id', contact.id).eq('sender', 'agent').eq('message_type', parsed.messageType)
     .is('external_id', null).gte('created_at', recentCutoff)
     .order('created_at', { ascending: true }).limit(1).maybeSingle();
+  let pendingMessage = pendingMessageInitial;
+  // 42703 = coluna ainda não existe (pre-DDL): re-query sem manually_resolved_at.
+  let pendingColumnExists = true;
+  if (pendingMsgError?.code === '42703') {
+    pendingColumnExists = false;
+    const { data: fbPending } = await supabase.from('messages').select('id')
+      .eq('contact_id', contact.id).eq('sender', 'agent').eq('message_type', parsed.messageType)
+      .is('external_id', null).gte('created_at', recentCutoff)
+      .order('created_at', { ascending: true }).limit(1).maybeSingle();
+    pendingMessage = fbPending as typeof pendingMessage;
+  } else if (pendingMsgError) {
+    console.warn('[FROM_ME] pendingMessage query error:', (pendingMsgError as { message?: string }).message);
+  }
 
-  if (pendingMessage?.id) {
-    await supabase.from('messages').update({ status: 'sent', external_id: externalId, status_updated_at: new Date().toISOString() }).eq('id', pendingMessage.id);
+  // C110: recibo tardio não sobrescreve decisão manual do operador
+  if (pendingMessage?.id && !(pendingMessage as { manually_resolved_at?: unknown }).manually_resolved_at) {
+    // Predicado atômico: impede TOCTOU entre leitura e escrita.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let updatePendingQ: any = supabase.from('messages').update({ status: 'sent', external_id: externalId, status_updated_at: new Date().toISOString() }).eq('id', pendingMessage.id);
+    if (pendingColumnExists) updatePendingQ = updatePendingQ.is('manually_resolved_at', null);
+    await updatePendingQ;
     return;
   }
+  if (pendingMessage?.id) return; // manually_resolved_at presente — não atualizar, mas não criar duplicata
 
   // E08: upsert idempotente contra race condition de webhooks paralelos.
   // onConflict explicito e obrigatorio — sem ele o PostgREST usa a PK (id,

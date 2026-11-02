@@ -12,6 +12,7 @@ import {
 import { resolvePrivateBucketUrl } from '../_shared/evolution-api-proxy.ts';
 import { evoFetch, extractMessageId } from '../_shared/evolution-send.ts';
 import { resolveInstanceToken, type InstanceTokenClient } from '../_shared/evolution-instance-token.ts';
+import { providerErrorInfo } from '../_shared/messaging/errors.ts';
 import {
   EFFECT_MESSAGE_SEND,
   enqueueEffectReconcile,
@@ -42,6 +43,172 @@ interface ServiceClient {
     data: unknown;
     error: { code?: string } | null;
   }>;
+}
+
+// ── Código de erro estável para o cliente (PD-80) ────────────────────────────
+// O corpo de erro passa a carregar um `code` estável, se a falha é retentável
+// (`retryable`) e se o resultado ficou AMBÍGUO (`ambiguous`: a mensagem PODE ter
+// saído). O `error` é mensagem FIXA por código — nunca o corpo do provedor,
+// telefone, token ou texto da mensagem.
+export type DeliveryErrorCode =
+  | 'invalid_number'
+  | 'instance_unavailable'
+  | 'provider_rejected'
+  | 'provider_unavailable'
+  | 'rate_limited'
+  | 'in_progress'
+  | 'receipt_unconfirmed'
+  | 'media_invalid';
+
+export interface DeliveryFailure {
+  status: number;
+  code: DeliveryErrorCode;
+  /** Causa temporária: o OPERADOR pode tentar de novo (não é reenvio automático). */
+  retryable: boolean;
+  /** true SOMENTE quando o POST já saiu e a confirmação falhou: não reenvie cego. */
+  ambiguous: boolean;
+}
+
+/** Mensagem fixa (pt-BR) por código — nunca inclui dado do provedor/pessoal. */
+export const DELIVERY_ERROR_MESSAGES: Record<DeliveryErrorCode, string> = {
+  invalid_number: 'Número inválido ou sem WhatsApp.',
+  instance_unavailable: 'A conexão do WhatsApp está desconectada. Reconecte a instância e tente de novo.',
+  provider_rejected: 'O provedor recusou o envio da mensagem.',
+  provider_unavailable: 'O WhatsApp está indisponível no momento. Tente de novo em instantes.',
+  rate_limited: 'Muitos envios em pouco tempo. Aguarde e tente de novo.',
+  in_progress: 'O envio desta mensagem já está em andamento.',
+  receipt_unconfirmed: 'A mensagem pode ter sido entregue, mas não foi possível confirmar. Confira a conversa antes de enviar de novo.',
+  media_invalid: 'Não foi possível montar o envio: mídia ou conteúdo do pedido inválido.',
+};
+
+export function deliveryFailureBody(failure: DeliveryFailure): Record<string, unknown> {
+  return {
+    error: DELIVERY_ERROR_MESSAGES[failure.code],
+    code: failure.code,
+    retryable: failure.retryable,
+    ambiguous: failure.ambiguous,
+  };
+}
+
+/** Resposta de falha de ENTREGA (4xx/409/422/429/502) com o envelope estável. */
+export function deliveryFailureResponse(failure: DeliveryFailure, req?: Request): Response {
+  return jsonResponse(deliveryFailureBody(failure), failure.status, req);
+}
+
+/** Recusa definitiva do provedor para o PEDIDO (não há efeito a reconciliar). */
+export const PROMPT_REJECTED_FAILURE: DeliveryFailure = {
+  status: 422, code: 'provider_rejected', retryable: false, ambiguous: false,
+};
+/** Outro worker tem o lease: o envio está em andamento — não reenvie às cegas. */
+export const IN_PROGRESS_FAILURE: DeliveryFailure = {
+  status: 409, code: 'in_progress', retryable: false, ambiguous: false,
+};
+/** Claim vazio porque a conexão não está 'connected' (ou não há instância):
+ *  causa temporária — o OPERADOR pode tentar de novo depois de reconectar. */
+export const CONNECTION_DOWN_FAILURE: DeliveryFailure = {
+  status: 409, code: 'instance_unavailable', retryable: true, ambiguous: false,
+};
+/** Claim vazio porque o telefone do contato não tem 8–15 dígitos: o pedido
+ *  nunca será reivindicável sem corrigir o número. Não é retentável. */
+export const INVALID_NUMBER_FAILURE: DeliveryFailure = {
+  status: 422, code: 'invalid_number', retryable: false, ambiguous: false,
+};
+/** Linha terminal sem recibo (ex.: status 'failed' gravado por
+ *  fail_outbound_message): a tentativa anterior encerrou de forma definitiva,
+ *  não há lease nem recibo pendente — não está "em andamento" nem é ambíguo.
+ *  Nova tentativa exige ação explícita do operador. */
+export const TERMINAL_WITHOUT_RECEIPT_FAILURE: DeliveryFailure = {
+  status: 422, code: 'provider_rejected', retryable: false, ambiguous: false,
+};
+/** Limite de envios do próprio Zapp (não é recusa do provedor). */
+export const EDGE_RATE_LIMITED_FAILURE: DeliveryFailure = {
+  status: 429, code: 'rate_limited', retryable: true, ambiguous: false,
+};
+/** POST saiu e o recibo não chegou (200 sem id, recibo não gravado, rede/timeout). */
+export function unconfirmedReceiptFailure(): DeliveryFailure {
+  return { status: 502, code: 'receipt_unconfirmed', retryable: false, ambiguous: true };
+}
+/** Falha ANTES do POST: a carga do pedido não pôde ser montada. Nada saiu. */
+export function preDispatchFailure(): DeliveryFailure {
+  return { status: 422, code: 'media_invalid', retryable: false, ambiguous: false };
+}
+/** Falha de INFRA antes do POST (ex.: assinar URL privada no storage ou ler o
+ *  payload rico): nada saiu para o provedor, logo não é ambíguo e não há o
+ *  que reconciliar; causa temporária — o OPERADOR pode tentar de novo. */
+export function preDispatchInfraFailure(): DeliveryFailure {
+  return { status: 503, code: 'provider_unavailable', retryable: true, ambiguous: false };
+}
+/** Marca os throws da fase pré-POST que são infra (storage/payload ilegível),
+ *  não erro de conteúdo. Só carrega texto fixo — nunca dado do pedido. */
+export class PreDispatchInfraError extends Error {}
+
+/** Marcas textuais de instância/conexão fora do ar. O corpo do provedor NUNCA é
+ *  devolvido; ele só decide o código estável (nada ambíguo: não houve entrega). */
+const INSTANCE_DOWN_CUES: readonly string[] = [
+  'connection closed', 'not connected', 'disconnected', 'instance closed',
+  'instance not found', 'instance token ausente', 'desconectad', 'logged out', 'logout',
+];
+
+function providerBodyText(body: unknown): string {
+  if (typeof body === 'string') return body.toLowerCase();
+  if (body === null || body === undefined) return '';
+  try { return JSON.stringify(body).toLowerCase(); } catch { return ''; }
+}
+
+/**
+ * Traduz a recusa do provedor em código estável. O POST já saiu em TODOS os
+ * ramos desta função; `ambiguous` só é true no 5xx (o provedor falhou e a
+ * confirmação não veio). Nos 4xx/429 ele recusou de forma definitiva → sem
+ * entrega, logo não ambíguo.
+ */
+export function classifyProviderFailure(status: number, body: unknown): DeliveryFailure {
+  // 408 (Request Timeout) e 425 (Too Early): o provedor pode ter processado
+  // a requisição antes de retornar — efeito INCERTO, reconciliar.
+  if (status === 408 || status === 425) return unconfirmedReceiptFailure();
+
+  // Verificar conteúdo do body ANTES dos early-returns de 429/5xx: um body com
+  // invalid_number ou auth_failed em resposta a qualquer status é definitivo
+  // (sem ambiguidade), e um 429 com body de instância fora do ar é instance_unavailable.
+  const text = providerBodyText(body);
+  if (INSTANCE_DOWN_CUES.some((cue) => text.includes(cue))) {
+    return { status: 409, code: 'instance_unavailable', retryable: true, ambiguous: false };
+  }
+  const info = providerErrorInfo(status, body);
+  if (info.code === 'invalid_number' || info.code === 'number_not_exists') {
+    return { status: 422, code: 'invalid_number', retryable: false, ambiguous: false };
+  }
+  if (info.code === 'auth_failed') {
+    return { status: 409, code: 'instance_unavailable', retryable: true, ambiguous: false };
+  }
+
+  if (status === 429) return EDGE_RATE_LIMITED_FAILURE;
+  if (status >= 500) {
+    return { status: 502, code: 'provider_unavailable', retryable: false, ambiguous: true };
+  }
+  return PROMPT_REJECTED_FAILURE;
+}
+
+// ── Costura de dependências (injetável para teste; produção usa os defaults) ──
+// O builder do PostgREST é tipado por fora; o client injetável segue o MESMO
+// idioma do resto do repo (efeito-reconcile.ts usa o mesmo `any` controlado).
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export type DeliveryDbClient = any;
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+export interface MessageDeliveryDeps {
+  requireAuth?: (req: Request) => Promise<{ userId: string } | Response>;
+  enforceRateLimit?: (
+    key: string,
+    maxRequests: number,
+    windowMs: number,
+  ) => Promise<{ allowed: boolean }>;
+  createClient?: (
+    url: string,
+    key: string,
+    options: { auth?: { persistSession?: boolean }; global?: { headers?: Record<string, string> } },
+  ) => DeliveryDbClient;
+  requireEnv?: (name: string) => string;
+  evoFetch?: typeof evoFetch;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -275,9 +442,19 @@ export async function deliverOutbound(
   outbound: { path: string; body: Record<string, unknown> },
   instanceName: string,
   fetcher?: (url: string, options: RequestInit) => Promise<Response>,
+  // Costura de teste do PD-80 (deps.evoFetch). O default é o evoFetch real, então
+  // o caminho de produção e a resolução do token da instância não mudam.
+  send: typeof evoFetch = evoFetch,
+  // Fix #4: token pré-resolvido antes do mark_outbound_post_started — se passado,
+  // pula a resolução interna (o token foi obtido antes do carimbo, portanto erros
+  // de lookup não são tratados como pós-POST).
+  preResolvedToken?: string,
 ): Promise<Response> {
-  const instanceToken = await resolveInstanceToken(service, instanceName);
-  return evoFetch(
+  // eslint-disable-next-line local/no-secret-compare
+  const instanceToken = preResolvedToken !== undefined
+    ? preResolvedToken
+    : await resolveInstanceToken(service, instanceName);
+  return send(
     evolutionUrl,
     evolutionKey,
     outbound.path,
@@ -301,6 +478,86 @@ async function failClaim(
     p_retryable: false,
   });
   if (error) console.error(JSON.stringify({ event: 'message_delivery_fail_transition', code: error.code }));
+}
+
+/**
+ * Claim vazio: descobre a CAUSA lendo contato + conexão (os mesmos critérios
+ * da claim_outbound_message: conexão 'connected' com instance_id e telefone
+ * de 8–15 dígitos) e devolve o código estável correspondente. Ordem:
+ * conexão → número → lease vivo (sending) → linha terminal sem recibo.
+ * Nunca loga nem devolve o telefone.
+ */
+async function classifyUnclaimedCause(
+  service: DeliveryDbClient,
+  existing: {
+    status?: string | null; contact_id?: string | null;
+    whatsapp_connection_id?: string | null;
+    delivery_post_started_at?: string | null;
+  },
+): Promise<DeliveryFailure> {
+  // Mensagem sem contato (envio para GRUPO, `whatsapp_group_id`; 20261011155946):
+  // o destino é o JID do grupo, não um telefone de `contacts`. Esta leitura de
+  // causa só entende contato + conexão, então NÃO classifica às cegas (diria
+  // "número inválido"/"conexão fora" para um grupo). Mantém o comportamento
+  // anterior: 'sending' = em andamento (409); estado final sem recibo = terminal.
+  // Também não seleciona `whatsapp_group_id`: a coluna só existe depois do apply
+  // dessa migration, e a função não pode depender dela.
+  // PD-79: POST já iniciado = resultado ambíguo, independente do estado da conexão.
+  // Verificar ANTES de qualquer lookup de contato/conexão: uma conexão que cai
+  // após o POST sair não torna o resultado "não ambíguo".
+  if (existing.delivery_post_started_at && existing.status === 'sending') {
+    return unconfirmedReceiptFailure();
+  }
+  if (!existing.contact_id) {
+    return existing.status === 'sending' ? IN_PROGRESS_FAILURE : TERMINAL_WITHOUT_RECEIPT_FAILURE;
+  }
+  let contact: { phone?: unknown; whatsapp_connection_id?: unknown } | null = null;
+  let causeLookupFailed = false;
+  if (existing.contact_id) {
+    const { data, error } = await service.from('contacts')
+      .select('phone, whatsapp_connection_id')
+      .eq('id', existing.contact_id)
+      .maybeSingle();
+    if (error) {
+      console.error(JSON.stringify({ event: 'message_delivery_cause_contact_error', code: error.code }));
+      causeLookupFailed = true;
+    } else {
+      const row = (data ?? null) as { phone?: unknown; whatsapp_connection_id?: unknown } | null;
+      contact = row;
+    }
+  }
+  const connectionId = (existing.whatsapp_connection_id ??
+    (typeof contact?.whatsapp_connection_id === 'string' ? contact.whatsapp_connection_id : null)) as string | null;
+  let connection: { status?: unknown; instance_id?: unknown } | null = null;
+  if (connectionId) {
+    const { data, error } = await service.from('whatsapp_connections')
+      .select('status, instance_id')
+      .eq('id', connectionId)
+      .maybeSingle();
+    if (error) {
+      console.error(JSON.stringify({ event: 'message_delivery_cause_connection_error', code: error.code }));
+      causeLookupFailed = true;
+    } else {
+      const row = (data ?? null) as { status?: unknown; instance_id?: unknown } | null;
+      connection = row;
+    }
+  }
+  // Leitura de causa falhou (transitório): sem classificar às cegas — nada
+  // saiu, não ambíguo, o OPERADOR pode tentar de novo. Sem reconciliação.
+  if (causeLookupFailed) {
+    return preDispatchInfraFailure();
+  }
+  if (!connection || connection.status !== 'connected' || !connection.instance_id) {
+    return CONNECTION_DOWN_FAILURE;
+  }
+  const digits = typeof contact?.phone === 'string' ? contact.phone.replace(/\D/g, '') : '';
+  if (!/^[0-9]{8,15}$/.test(digits)) {
+    return INVALID_NUMBER_FAILURE;
+  }
+  if (existing.status === 'sending') {
+    return IN_PROGRESS_FAILURE;
+  }
+  return TERMINAL_WITHOUT_RECEIPT_FAILURE;
 }
 
 /**
@@ -331,15 +588,26 @@ async function enqueueDeliveryReconciliation(
   }
 }
 
-export async function handleMessageDeliveryRequest(req: Request): Promise<Response> {
+export async function handleMessageDeliveryRequest(
+  req: Request,
+  deps: MessageDeliveryDeps = {},
+): Promise<Response> {
   const cors = handleCors(req);
   if (cors) return cors;
   if (req.method !== 'POST') return errorResponse('Method not allowed', 405, req);
 
-  const auth = await requireAuth(req);
+  const authFn = deps.requireAuth ?? requireAuth;
+  const rateLimitFn = deps.enforceRateLimit ?? enforceRateLimit;
+  const readEnv = deps.requireEnv ?? requireEnv;
+  const fetchProvider = deps.evoFetch ?? evoFetch;
+  const makeClient = deps.createClient
+    ?? ((url: string, key: string, options: { auth?: { persistSession?: boolean }; global?: { headers?: Record<string, string> } }) =>
+      createClient(url, key, options as never) as DeliveryDbClient);
+
+  const auth = await authFn(req);
   if (auth instanceof Response) return auth;
-  const rate = await enforceRateLimit(`message-delivery:${auth.userId}:${getClientIP(req)}`, 60, 60_000);
-  if (!rate.allowed) return errorResponse('Rate limit exceeded', 429, req);
+  const rate = await rateLimitFn(`message-delivery:${auth.userId}:${getClientIP(req)}`, 60, 60_000);
+  if (!rate.allowed) return deliveryFailureResponse(EDGE_RATE_LIMITED_FAILURE, req);
 
   const messageId = await readMessageId(req);
   if (!messageId) return errorResponse('messageId must be a UUID', 400, req);
@@ -350,17 +618,17 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
   let evolutionUrl: string;
   let evolutionKey: string;
   try {
-    supabaseUrl = requireEnv('SUPABASE_URL');
-    serviceRoleKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
-    anonKey = requireEnv('SUPABASE_ANON_KEY');
-    evolutionUrl = requireEnv('EVOLUTION_API_URL').replace(/\/+$/, '');
-    evolutionKey = requireEnv('EVOLUTION_API_KEY');
+    supabaseUrl = readEnv('SUPABASE_URL');
+    serviceRoleKey = readEnv('SUPABASE_SERVICE_ROLE_KEY');
+    anonKey = readEnv('SUPABASE_ANON_KEY');
+    evolutionUrl = readEnv('EVOLUTION_API_URL').replace(/\/+$/, '');
+    evolutionKey = readEnv('EVOLUTION_API_KEY');
   } catch {
     return errorResponse('Message delivery is not configured', 503, req);
   }
 
-  const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
-  const caller = createClient(supabaseUrl, anonKey, {
+  const service = makeClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+  const caller = makeClient(supabaseUrl, anonKey, {
     auth: { persistSession: false },
     global: { headers: { Authorization: req.headers.get('authorization') || req.headers.get('Authorization') || '' } },
   });
@@ -388,7 +656,7 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
   if (!claim) {
     const { data: existing, error: existingError } = await service
       .from('messages')
-      .select('agent_id, sender, status, external_id')
+      .select('agent_id, sender, status, external_id, contact_id, whatsapp_connection_id, delivery_post_started_at')
       .eq('id', messageId)
       .maybeSingle();
     if (existingError || !existing || existing.agent_id !== profile.id || existing.sender !== 'agent') {
@@ -397,7 +665,11 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
     if (existing.external_id && ['sent', 'delivered', 'read'].includes(existing.status || '')) {
       return jsonResponse({ messageId, status: existing.status, externalId: existing.external_id, idempotent: true }, 200, req);
     }
-    return errorResponse('Message delivery is already in progress or cannot be sent', 409, req);
+    // Claim vazio: a causa decide o código — conexão fora do ar, número
+    // inválido, lease vivo em outro worker ou linha terminal sem recibo.
+    // PD-79: o subcaso "POST iniciado + lease vencido" continua resolvido pelo
+    // fluxo PD-78/PD-79 (fail_outbound_unclaimed), não aqui. Não reenviamos.
+    return deliveryFailureResponse(await classifyUnclaimedCause(service, existing), req);
   }
 
   // IA-047: rastreia se o POST ao provedor já saiu. Se saiu e o resultado ficou
@@ -405,9 +677,15 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
   let providerPostAttempted = false;
   let externalId: string | null = null;
   try {
-    const mediaUrl = claim.media_url
-      ? await resolvePrivateBucketUrl(caller, claim.media_url, undefined, supabaseUrl)
-      : null;
+    let mediaUrl: string | null = null;
+    try {
+      mediaUrl = claim.media_url
+        ? await resolvePrivateBucketUrl(caller, claim.media_url, undefined, supabaseUrl)
+        : null;
+    } catch {
+      // Assinar a URL privada falhou (storage): infra, não conteúdo.
+      throw new PreDispatchInfraError('media_resolve_failed');
+    }
     let richPayload: Record<string, unknown> | null = null;
     if (claim.message_type === 'poll' || claim.message_type === 'contact'
         || claim.message_type === 'buttons' || claim.message_type === 'list') {
@@ -416,37 +694,53 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
         .select('media_meta')
         .eq('id', claim.message_id)
         .maybeSingle();
+      // Leitura do payload rico falhou: infra (nada saiu para o provedor).
+      if (metadataError) throw new PreDispatchInfraError('rich_payload_read_failed');
       const meta = asRecord(messageMetadata?.media_meta);
       richPayload = asRecord(meta?.outbound_delivery_payload);
-      if (metadataError || !richPayload) throw new Error('missing_rich_delivery_payload');
+      // Linha legível mas sem payload: conteúdo, não infra.
+      if (!richPayload) throw new Error('missing_rich_delivery_payload');
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
+    // Fix #4: resolver o token da instância ANTES do carimbo — se o lookup falhar,
+    // nada foi enviado ainda (erro pré-dispatch sem ambiguidade).
+    const instanceToken = await resolveInstanceToken(service, claim.whatsapp_instance_name) ?? undefined;
+    // PD-79: carimbo durável antes do POST — fencing contra reenvio após lease vencido.
+    // Falha aqui = infra pré-dispatch: nada saiu, sem ambiguidade.
+    const { error: markError } = await service.rpc('mark_outbound_post_started', {
+      p_message_id: claim.message_id,
+      p_claim_token: claim.claim_token,
+    });
+    if (markError) throw new PreDispatchInfraError('mark_outbound_post_started_failed');
     providerPostAttempted = true;
     const providerResponse = await deliverOutbound(
       service, evolutionUrl, evolutionKey, outbound, claim.whatsapp_instance_name,
+      undefined, fetchProvider, instanceToken,
     );
     const raw = await providerResponse.text();
     let providerData: unknown = null;
     try { providerData = raw ? JSON.parse(raw) : null; } catch { /* provider response is invalid */ }
 
     if (!providerResponse.ok) {
-      await failClaim(service, claim);
-      // 5xx: o provedor pode ter aceitado antes de falhar → efeito INCERTO.
-      // 4xx: rejeição definitiva, nada a reconciliar.
-      if (providerResponse.status >= 500) {
+      const failure = classifyProviderFailure(providerResponse.status, providerData ?? raw);
+      if (failure.ambiguous) {
+        // POST efeito incerto (408/425/5xx): o provedor pode ter processado — reconciliar.
         await enqueueDeliveryReconciliation(service, claim, null);
+      } else {
+        // Rejeição definitiva (4xx): o provedor não processou o envio — marcar failed.
+        await failClaim(service, claim);
       }
-      console.error(JSON.stringify({ event: 'message_delivery_provider_error', status: providerResponse.status }));
-      return errorResponse('Message provider rejected the delivery', 502, req);
+      console.error(JSON.stringify({ event: 'message_delivery_provider_error', status: providerResponse.status, code: failure.code }));
+      return deliveryFailureResponse(failure, req);
     }
 
     externalId = extractMessageId(providerData) ?? null;
     if (!externalId || externalId.length > 512) {
-      await failClaim(service, claim);
+      // C110: sem chamar failClaim — POST saiu, resultado ambíguo.
       // 200 sem id: ambíguo (pode ter enviado). Efeito INCERTO.
       await enqueueDeliveryReconciliation(service, claim, null);
       console.error(JSON.stringify({ event: 'message_delivery_missing_provider_id' }));
-      return errorResponse('Message provider returned an invalid delivery receipt', 502, req);
+      return deliveryFailureResponse(unconfirmedReceiptFailure(), req);
     }
 
     const { data: completed, error: completeError } = await service.rpc('complete_outbound_message', {
@@ -456,14 +750,11 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
       p_delivery_status: 'sent',
     });
     if (completeError || !completed?.id) {
-      // Evolution may have accepted the send even though its receipt could not
-      // be persisted. Make this terminal so an expired lease can never resend
-      // the same WhatsApp message; reconciliation is an explicit operation.
-      await failClaim(service, claim);
+      // C110: não chamar failClaim — POST iniciado, externalId existe.
       // IA-047: temos o id do provedor — o varredor confirma por ele, SOMENTE-LEITURA.
       await enqueueDeliveryReconciliation(service, claim, externalId);
       console.error(JSON.stringify({ event: 'message_delivery_complete_error', code: completeError?.code }));
-      return errorResponse('Unable to persist delivery receipt', 502, req);
+      return deliveryFailureResponse(unconfirmedReceiptFailure(), req);
     }
 
     // O SLA de 1ª resposta é registrado pelo trigger trg_messages_sla_first_response,
@@ -473,15 +764,23 @@ export async function handleMessageDeliveryRequest(req: Request): Promise<Respon
     // com service_role. Nada a fazer depois do recibo.
     return jsonResponse({ messageId: completed.id, status: completed.status, externalId, idempotent: false }, 200, req);
   } catch (error) {
-    await failClaim(service, claim);
+    // C110: só chama failClaim antes do POST — se o POST foi iniciado, a mensagem
+    // fica no estado atual (delivery_post_started_at setado) para reconciliação.
+    if (!providerPostAttempted) await failClaim(service, claim);
     // IA-047: exceção depois do POST (rede/timeout/corpo): efeito INCERTO.
     // Enfileira a reconciliação com o id se já o tínhamos; nunca reenvia.
+    // Antes do POST há dois casos: infra (storage/payload ilegível — nada
+    // saiu, não ambíguo, sem reconciliar, OPERADOR pode tentar de novo) e
+    // conteúdo (payload/mídia inválidos — nada saiu → não ambíguo).
+    const failure = providerPostAttempted
+      ? unconfirmedReceiptFailure()
+      : error instanceof PreDispatchInfraError ? preDispatchInfraFailure() : preDispatchFailure();
     if (providerPostAttempted) {
       await enqueueDeliveryReconciliation(service, claim, externalId);
     }
     console.error(JSON.stringify({ event: 'message_delivery_exception', code: error instanceof Error ? error.message : 'unknown' }));
-    return errorResponse('Message delivery failed', 502, req);
+    return deliveryFailureResponse(failure, req);
   }
 }
 
-if (import.meta.main) Deno.serve(handleMessageDeliveryRequest);
+if (import.meta.main) Deno.serve((req) => handleMessageDeliveryRequest(req));
