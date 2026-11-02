@@ -79,9 +79,11 @@ export class NavigationService {
   escrever('src/components/a/AView.tsx', `
 import { useCoisa } from '@/hooks/useCoisa';
 import { Filho } from './Filho';
+import { Painel } from './Painel';
 import { Button } from '@/components/ui/button';
 export function AView() { useCoisa(); return null; }`);
   escrever('src/components/a/Filho.tsx', "export const Filho = () => supabase.functions.invoke('edge-a'); supabase.functions.invoke('edge-sub/acao');\nconst rpc = supabase.rpc.bind(supabase); rpc('rpc_por_apelido');");
+  escrever('src/components/a/Painel.tsx', "export const Painel = () => <code>\n  {SUPABASE_URL}/functions/v1/so-mostrada\n</code>;");
   escrever('src/components/a/Filho.test.tsx', "supabase.from('so_no_teste')");
   escrever('src/components/ui/button.tsx', "supabase.from('nao_e_da_feature')");
   escrever('src/hooks/useCoisa.ts', `
@@ -110,7 +112,7 @@ test('repo de brinquedo: URLs, telas, menu, fecho e problemas saem do codigo', (
   assert.deepEqual(telas.a.menu, { rotulo: 'Tela A', secao: 'primary', grupo: null, papeis: [], permissao: 'a.ver', atalho: 'Alt+A', layout: null });
   assert.deepEqual(telas.a.hooks, [{ nome: 'useCoisa', arquivo: 'src/hooks/useCoisa.ts' }]);
   assert.deepEqual(telas.a.edges, ['edge-a', 'edge-da-lib', 'edge-por-url', 'edge-sub'],
-    "invoke('edge-sub/acao') conta como edge-sub; segue service -> src/lib; fetch em /functions/v1/<edge> conta, URL dinamica nao");
+    "invoke('edge-sub/acao') conta como edge-sub; segue service -> src/lib; fetch em /functions/v1/<edge> conta; URL dinamica e URL so mostrada em JSX nao");
   assert.deepEqual(telas.a.rpcs, ['fn_servico', 'rpc_por_apelido'], 'segue hook -> service e pega rpc por apelido');
   assert.deepEqual(telas.a.tabelas, ['coisas'], 'ignora teste e componente compartilhado de UI');
   assert.equal(telas.b.especial, true);

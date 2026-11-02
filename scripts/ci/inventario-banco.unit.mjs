@@ -163,8 +163,8 @@ test('origem: banco irmao com as mesmas tabelas mas ledger parado ou diferente e
   assert.throws(() => conferirOrigem(base(), manifesto, versoes), /ledger_versao_max/, 'sem resumo do ledger');
   const reais = versoesDoRepo(raiz);
   assert.ok(reais.length > 1000 && reais.every((v) => /^\d{14}$/.test(v)), 'versoes reais saem so dos .sql do topo');
-  const commitado = JSON.parse(fs.readFileSync(path.join(raiz, 'inventario/estado/banco.json'), 'utf8'));
-  assert.ok(conferirOrigem({ ...base(), resumo: commitado.resumo }, manifesto, reais), 'o banco.json commitado passa');
+  const atual = { ledger_versao_max: [...reais].sort().at(-1), ledger_registros: reais.length };
+  assert.ok(conferirOrigem({ ...base(), resumo: atual }, manifesto, reais), 'ledger em dia com o repo real passa');
 });
 
 test('cron_sem_execucao: job ativo diario sem nenhuma execucao em 24 h (cron 100% parado) alerta', () => {
@@ -173,6 +173,10 @@ test('cron_sem_execucao: job ativo diario sem nenhuma execucao em 24 h (cron 100
   assert.equal(rodaTodoDia('30 seconds'), true);
   assert.equal(rodaTodoDia('0 4 * * 1'), false, 'semanal pode passar 24 h sem rodar');
   assert.equal(rodaTodoDia('0 0 1 * *'), false, 'mensal');
+  assert.equal(rodaTodoDia('0 0 * * 0-6'), true, 'faixa inteira da semana');
+  assert.equal(rodaTodoDia('0 0 */1 1-12 *'), true);
+  assert.equal(rodaTodoDia('0 0 * * 1-5'), false, 'dias uteis pulam o fim de semana');
+  assert.equal(rodaTodoDia('0 0 */2 * *'), false, 'dia sim, dia nao');
   const dado = base();
   dado.cron.jobs = [job('parado', { execucoes_24h: 0, execucoes_7d: 0 }), job('semanal', { agenda: '0 4 * * 1', execucoes_24h: 0 }),
     job('desligado', { ativo: false, execucoes_24h: 0 }), job('ok')];

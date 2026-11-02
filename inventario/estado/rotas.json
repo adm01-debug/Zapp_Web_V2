@@ -1804,9 +1804,7 @@
       "arquivos_lidos": 2,
       "hooks": [],
       "buckets": [],
-      "edges": [
-        "gmail-webhook"
-      ],
+      "edges": [],
       "rpcs": [
         "get_own_gmail_accounts"
       ],

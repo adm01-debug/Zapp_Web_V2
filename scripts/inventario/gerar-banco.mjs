@@ -173,12 +173,16 @@ function ordenar(valor) {
   return valor;
 }
 
-/** A agenda do pg_cron roda ao menos uma vez por dia? ('N seconds' ou dia do mes, mes e dia da semana = *). */
+/**
+ * A agenda do pg_cron roda ao menos uma vez por dia? 'N seconds', ou dia do mes, mes e dia da semana
+ * cobrindo tudo: `*`, `*\/1` ou a faixa inteira (1-31, 1-12, 0-6/0-7).
+ */
+const CAMPO_TODO = [/^(\*|\*\/1|1-31)$/, /^(\*|\*\/1|1-12)$/, /^(\*|\*\/1|0-6|0-7|1-7)$/];
 export function rodaTodoDia(agenda) {
   const a = String(agenda ?? '').trim();
   if (/^\d+\s+seconds?$/i.test(a)) return true;
   const campos = a.split(/\s+/);
-  return campos.length === 5 && campos[2] === '*' && campos[3] === '*' && campos[4] === '*';
+  return campos.length === 5 && CAMPO_TODO.every((re, i) => re.test(campos[i + 2]));
 }
 
 /** Junta banco + codigo + edges e calcula orfas e alertas. Funcao pura (testada em scripts/ci/). */
