@@ -1,28 +1,7 @@
-# RELATÓRIO DE ANÁLISE — TODAS AS 67 PRs ABERTAS
-**adm01-debug/Zapp_Web_V2** | Gerado em 2026-11-01T22:05Z  
-SHA main início: `004e74a8c596959f45f61c8b0b64b30a70c1ff19`  
+# RELATÓRIO DE ANÁLISE — 91 PRs ANALISADAS
+**adm01-debug/Zapp_Web_V2** | Atualizado em 2026-11-02T03:00Z  
+SHA main início da análise: `004e74a8c596959f45f61c8b0b64b30a70c1ff19`  
 SHA main atual: `1252bb5a41123ba4d49efd84d0f91604bff6c87c`
-
----
-
-## ⚠️ RISCOS E DECISÕES HUMANAS
-
-| PR | Veredito | Razão |
-|----|----------|-------|
-| #2238 | BLOQUEADO_DECISAO_HUMANA | Decisão de produto requerida |
-| #2137 | BLOQUEADO_RLS_SEM_TESTE | RLS alterado sem prova em Postgres temporário |
-| #2097 | BLOQUEADO_CONFLITO | Conflito com main — rebase necessário |
-| #2095 | BLOQUEADO_CONFLITO | Conflito com main |
-| #2091 | BLOQUEADO_CONFLITO | Conflito com main |
-| #2078 | BLOQUEADO_CONFLITO | Conflito com main |
-| #2111 | BLOQUEADO_CONFLITO | Conflito com main |
-| #2492 | BLOQUEADO_CONFLITO | Conflito com main |
-| #2426 | BLOQUEADO_CONFLITO | Conflito com main |
-| #2460 | BLOQUEADO_DDL_FALTANDO | DDL referenciado mas arquivo de migration ausente |
-| #1997 | BLOQUEADO_DDL_WORKFLOW | Workflow de DDL bloqueado aguardando aprovação manual |
-| #2493 | BLOQUEADO_FALSO_CLAUDE_MD | Modificação indevida de CLAUDE.md |
-| #2457 | INCOMPLETO | Implementação incompleta — funcionalidade pela metade |
-| #2468 | SUPERSEDIDA | Substituída por PR mais recente |
 
 ---
 
@@ -36,111 +15,139 @@ SHA main atual: `1252bb5a41123ba4d49efd84d0f91604bff6c87c`
 
 ---
 
-## ⏳ AGUARDANDO CI (outage GitHub Actions ~20:30Z-22:00Z 2026-11-01)
+## ⏳ AGUARDANDO CI — COM auto_merge=SQUASH
 
-> Todas as PRs abaixo têm CI travado por outage do GitHub Actions. Quando CI ficar verde, as PRs com `auto_merge=squash` se mergeiam automaticamente; as sem auto_merge precisam de merge manual.
+Todas mergearão automaticamente quando os 3 required checks passarem:
+`✅ CI Gate (required check)`, `🏗️ Build`, `🔎 TypeCheck`
 
-### Com auto_merge=squash (merge automático quando CI verde)
-
-| PR | HEAD SHA | Veredito CI esperado |
-|----|----------|---------------------|
-| #2418 | `108128f371cb945fb4b99f2a99d465ae85fe1764` | AGUARDANDO_CI |
-| #2462 | `f258d5acf83cf1e8d571f1a640e04e18d35447a7` | AGUARDANDO_CI |
-| #2465 | `0eed116b72533a0be5a7752307668d0f6cab8f5c` | AGUARDANDO_CI |
-| #2471 | `14d1417a783ad1989beec00f25139d2cb44be86b` | AGUARDANDO_CI |
-| #2475 | `ac145076c027fe78a721270a5932dc5645e9ad48` | AGUARDANDO_CI |
-| #2478 | `c46e71fa1c92af8723ebfebdc8be1e4dd98fea00` | AGUARDANDO_CI |
-| #2479 | `7f572d1f83b034c07c0cee8e2290e1e26c1f118a` | AGUARDANDO_CI |
-| #2480 | `c5178c37dddaffa096fe8fa4a4228f4d8a128c64` | AGUARDANDO_CI |
-| #2483 | `bbccc427fd38446d07ef4cbcc5519065e693728e` | AGUARDANDO_CI |
-| #2484 | `de9584f20314ff94438b8cd5f007a7f6aadf19a8` | AGUARDANDO_CI |
-| #2485 | `7e33fb553251711422334284ffe095153e0bf551` | AGUARDANDO_CI |
-| #2486 | `34d14be76610ef39bbaf376977ef97967e9e931e` | AGUARDANDO_CI |
-| #2489 | `e5fd0eb9a63b2cd01f063c9781b515367ef0384b` | AGUARDANDO_CI |
-| #2491 | `07ac5c6f0550bb12ffa990435d8be820bad2d251` | AGUARDANDO_CI |
-| #2495 | `4b780aaf465aef27c92d3d38a1a02bdb98ca60b7` | AGUARDANDO_CI |
-| #2501 | `c6ddabeac652e3bb4a21402a82bc00b3f0b7160b` | AGUARDANDO_CI |
-| #2504 | `f67082c37ce35496f366705a639465e01200b71f` | AGUARDANDO_CI |
-| #1930 | `1b904f6a1f9e177dd7e55533645bc9ddb3068c7f` | AGUARDANDO_CI |
-
-### Sem auto_merge (merge manual quando CI verde)
-
-| PR | HEAD SHA | Estado GraphQL |
-|----|----------|---------------|
-| #2431 | `4940f384757f7921b3eac8d29f2cc9c40ee602a0` | BLOCKED (CI queued) |
-| #2469 | `4d77db544fa415138e367303efffe1dba87eadbe` | BLOCKED (CI queued) |
-| #2472 | `5c759d8f1bb355db7ae44b1a98df4f310872078f` | BLOCKED (CI queued) |
-| #2473 | `7a6c255646a735687218f8a5775bca00e4375cc2` | BLOCKED (CI queued) |
-
-### AGUARDANDO_CI_APOS_UPDATE (ci.yml reiniciou após outage)
-
-| PR | HEAD SHA | ci.yml iniciou | Estado |
-|----|----------|---------------|--------|
-| #2463 | `8fa57120c82c254d58ad1f4267fc3673f3d3bd74` | 21:58Z | queued |
-| #2461 | `7a8bea7d4b974bec52e1dd2eda37b67fe1b2fe37` | 22:01Z | queued |
-| #2498 | `eb03117a823947804ba1659449968714c36b4ac1` | não iniciou | só db-guard |
-| #2494 | (verificar) | — | AGUARDANDO_CI_APOS_UPDATE |
+| PR | Título (resumo) | HEAD SHA |
+|----|-----------------|----------|
+| #1930 | — aguardando CI | `1b904f6a1f9` |
+| #2418 | — aguardando CI | `108128f371c` |
+| #2462 | — aguardando CI | `f258d5acf83` |
+| #2465 | — aguardando CI | `0eed116b725` |
+| #2471 | — aguardando CI | `14d1417a783` |
+| #2475 | — aguardando CI | `ac145076c02` |
+| #2478 | — aguardando CI | `c46e71fa1c9` |
+| #2479 | — aguardando CI | `7f572d1f83b` |
+| #2480 | — aguardando CI | `c5178c37ddd` |
+| #2483 | — aguardando CI | `bbccc427fd3` |
+| #2484 | — aguardando CI | `de9584f2031` |
+| #2485 | — aguardando CI | `7e33fb55325` |
+| #2486 | — aguardando CI | `34d14be7661` |
+| #2491 | — aguardando CI | `07ac5c6f055` |
+| #2495 | — aguardando CI | `4b780aaf465` |
+| #2498 | fix(admin): RPC get_search_insights→search_insights | `eb03117a823` |
+| #2501 | — aguardando CI | `c6ddabeac65` |
+| #2504 | — aguardando CI | `f67082c37ce` |
+| #2522 | fix(e2e): aguarda teclado visível (Firefox GR-012) | `06a692502df` |
+| #2526 | fix(ci): deno check --config + E2E webkit | — |
+| #2533 | chore: migration reconciliation 20261030145126 | — |
+| #2536 | fix(e2e): workers sempre 2 — timeout Email fixture | — |
+| #2542 | fix: N-008 DB Guard N008_POSTGRES_IMAGE | — |
+| #2543 | fix: E2E alto-contraste e N-008 healthcheck | — |
+| #2545 | chore: congela features — 9 fluxos críticos | — |
+| #2547 | infra: E2E logado timeout 45 min | — |
+| #2549 | fix: reconexão automática WhatsApp | — |
+| #2557 | fix(docs): atualiza required checks no CLAUDE.md | — |
+| #2559 | fix(ci): corrige mocks supabase e dependência migrations | — |
+| #2560 | fix(e2e): workers 1→2 em CI — GR-016 | — |
+| #2563 | fix(ci): instala @types/node via npm após deno install | `355f3ea4916` |
 
 ---
 
-## 🚫 BLOQUEADAS (não mergear)
+## ⏳ AGUARDANDO CI — SEM auto_merge (merge manual necessário)
 
-### Conflito com main
+| PR | HEAD SHA | Observação |
+|----|----------|------------|
+| #2431 | `4940f384757` | Sem auto_merge |
+| #2469 | `4d77db544fa` | Conflita com #2472 em `_shared/instance_pause.ts` |
+| #2472 | `5c759d8f1bb` | Mergear antes de #2469 |
+| #2473 | `7a6c255646a` | Sem auto_merge |
+
+---
+
+## ⏳ AGUARDANDO_CI_APOS_UPDATE
+
+| PR | Descrição |
+|----|-----------|
+| #2461 | CI reiniciado após outage |
+| #2463 | CI reiniciado após outage |
+| #2494 | CI aguardando após update |
+
+---
+
+## 🚫 BLOQUEADAS — REQUEREM JOAQUIM
+
+| PR | Veredito | Motivo |
+|----|----------|--------|
+| #2481 | BLOQUEADO_AGUARDANDO_APROVACAO | DDL em produção (WITH CHECK RLS) — corpo diz "AGUARDANDO APROVAÇÃO DO JOAQUIM". auto_merge **desabilitado**. |
+| #2561 | BLOQUEADO_AGUARDANDO_APROVACAO | DDL em produção (convites departamento RLS) — requer aprovação. |
+| #2496 | BLOQUEADO_DDL_WORKFLOW | Feature freeze + DDL em produção sem aprovação. |
+| #2562 | BLOQUEADO_FEATURE_FREEZE | feat(lgpd) — feature nova, fora do escopo do freeze. |
+| #2466 | BLOQUEADO_AGUARDANDO_APROVACAO | Decisão de produto pendente. |
+| #2476 | BLOQUEADO_AGUARDANDO_APROVACAO | Decisão de produto pendente. |
+| #2487 | BLOQUEADO_AGUARDANDO_APROVACAO | Decisão de produto pendente. |
+
+---
+
+## 🚫 BLOQUEADAS — CI VERMELHO (falha real, não outage)
+
+| PR | Motivo |
+|----|--------|
+| #2233 | CI vermelho — falha real |
+| #2417 | CI vermelho — falha real |
+
+---
+
+## 🚫 BLOQUEADAS — CONFLITO COM MAIN
+
 | PR | Motivo |
 |----|--------|
 | #2078 | Conflito — rebase necessário |
 | #2091 | Conflito — rebase necessário |
 | #2095 | Conflito — rebase necessário |
 | #2097 | Conflito — rebase necessário |
-| #2107 | DIRTY — mergeStateStatus=DIRTY (GraphQL 22:04Z) |
+| #2107 | DIRTY — mergeStateStatus=DIRTY |
 | #2111 | Conflito — rebase necessário |
-| #2146 | Conflito — update_pr_branch 422 (22:20Z) |
-| #2279 | Conflito — update_pr_branch 422 (22:20Z) |
 | #2426 | Conflito — rebase necessário |
-| #2428 | Conflito — update_pr_branch 422 (22:20Z) |
 | #2492 | Conflito — rebase necessário |
-
-### Aguardando aprovação humana
-| PR | Motivo |
-|----|--------|
-| #2466 | Decisão de produto pendente |
-| #2476 | Decisão de produto pendente |
-| #2481 | Decisão de produto pendente |
-| #2487 | Decisão de produto pendente |
-| #2496 | Decisão de produto pendente |
-
-### CI com falha real
-| PR | Motivo |
-|----|--------|
-| #2233 | CI vermelho — falha real (não outage) |
-| #2417 | CI vermelho — falha real |
-
-### Outras razões
-| PR | Veredito | Motivo |
-|----|----------|--------|
-| #1997 | BLOQUEADO_DDL_WORKFLOW | Workflow DDL aguarda aprovação humana `producao-ddl` |
-| #2137 | BLOQUEADO_RLS_SEM_TESTE | RLS sem prova em Postgres temporário |
-| #2238 | BLOQUEADO_DECISAO_HUMANA | Decisão de produto/negócio |
-| #2460 | BLOQUEADO_DDL_FALTANDO | Arquivo de migration ausente para o DDL referenciado |
-| #2493 | BLOQUEADO_FALSO_CLAUDE_MD | Modifica CLAUDE.md indevidamente |
-| #2457 | INCOMPLETO | Implementação incompleta |
-| #2468 | SUPERSEDIDA | Substituída por PR mais recente |
 
 ---
 
-## 📝 DRAFT — IGNORADAS
+## 🚫 BLOQUEADAS — OUTRAS RAZÕES
 
-| PR |
-|----|
-| #2113 |
-| #2206 |
-| #2245 |
-| #2249 |
-| #2265 |
-| #2445 |
-| #2500 |
-| #2502 |
-| #2505 |
+| PR | Veredito | Motivo |
+|----|----------|--------|
+| #1997 | BLOQUEADO_DDL_WORKFLOW | Workflow DDL aguarda aprovação `producao-ddl` |
+| #2137 | BLOQUEADO_RLS_SEM_TESTE | RLS alterado sem prova em Postgres temporário |
+| #2238 | BLOQUEADO_DECISAO_HUMANA | Decisão de produto/negócio requerida |
+| #2460 | BLOQUEADO_DDL_FALTANDO | Arquivo de migration ausente |
+| #2493 | BLOQUEADO_FALSO_CLAUDE_MD | Modifica CLAUDE.md indevidamente |
+| #2457 | INCOMPLETO | Implementação incompleta |
+| #2468 | SUPERSEDIDA | Substituída por PR mais recente |
+| #2551 | BLOQUEADO_RLS_SEM_TESTE | Título diz fix(ci) mas contém 3 migrations RLS + 12 arquivos; sem testes Postgres temporário. auto_merge **desabilitado**. |
+
+---
+
+## 📝 DRAFT — IGNORADAS (feature freeze)
+
+| PR | Título |
+|----|--------|
+| #2113 | draft |
+| #2206 | draft |
+| #2245 | draft |
+| #2249 | draft |
+| #2265 | draft |
+| #2445 | draft |
+| #2500 | draft |
+| #2502 | draft |
+| #2505 | draft |
+| #2539 | fix: reconcilia migrations 20261026 (draft) |
+| #2553 | feat: Dialog→TalkXDialogShell (draft — feature freeze) |
+| #2555 | feat: useTalkXLifecycle (draft — feature freeze) |
+| #2556 | feat: E2E reload test URL (draft — feature freeze) |
+| #2558 | feat(talkx): trilha navegação (draft — feature freeze) |
 
 ---
 
@@ -155,26 +162,56 @@ SHA main atual: `1252bb5a41123ba4d49efd84d0f91604bff6c87c`
 
 ---
 
+## 📋 FECHADAS SEM MERGE
+
+| PR | Motivo |
+|----|--------|
+| #2146 | Fechada sem merge |
+| #2186 | Fechada sem merge |
+| #2277 | Fechada sem merge |
+| #2279 | Fechada sem merge |
+| #2428 | Fechada sem merge |
+| #2489 | Fechada sem merge |
+| #2492 | Fechada sem merge |
+| #2552 | Fechada sem merge |
+
+---
+
 ## 📊 CONTAGEM POR VEREDITO
 
 | Veredito | Contagem |
 |----------|----------|
 | MERGEADA | 3 |
-| AGUARDANDO_CI | 22 |
-| AGUARDANDO_CI_APOS_UPDATE | 4 |
-| DRAFT_SKIP | 9 |
-| BLOQUEADO_CONFLITO | 11 |
+| AGUARDANDO_CI | 36 |
+| AGUARDANDO_CI_APOS_UPDATE | 3 |
+| DRAFT_SKIP | 14 |
+| BLOQUEADO_CONFLITO | 7 |
 | BLOQUEADO_AGUARDANDO_APROVACAO | 5 |
 | BLOQUEADO_CI | 2 |
 | SKIP_WORKFLOWS | 4 |
 | BLOQUEADO_DECISAO_HUMANA | 1 |
 | BLOQUEADO_DDL_FALTANDO | 1 |
-| BLOQUEADO_DDL_WORKFLOW | 1 |
-| BLOQUEADO_RLS_SEM_TESTE | 1 |
+| BLOQUEADO_DDL_WORKFLOW | 2 |
+| BLOQUEADO_RLS_SEM_TESTE | 2 |
 | BLOQUEADO_FALSO_CLAUDE_MD | 1 |
 | INCOMPLETO | 1 |
 | SUPERSEDIDA | 1 |
-| **TOTAL** | **67** |
+| BLOQUEADO_FEATURE_FREEZE | 1 |
+| FECHADA_SEM_MERGE | 8 |
+| **TOTAL** | **92** |
+
+*Nota: TOTAL 92 inclui PRs fechadas; PRs_ANALISADAS=91 (algumas fechadas não listadas no endpoint open).*
+
+---
+
+## 🔍 LINHA DE BASE (main `1252bb5a`)
+
+- **TypeCheck**: 3 erros no main atual (ratchet baseline=93 histórico)
+- **ESLint**: 813 problems (ratchet baseline=820; 7 removidas, 0 novas)
+- **Build**: passando
+- **Testes unitários**: passando
+
+Fonte: `analise-prs/baseline/` — commit `05c6aca3f` branch `claude/busy-cannon-40szm9`
 
 ---
 
@@ -186,19 +223,17 @@ Para cada PR foi verificado:
 3. **Já implementada**: `git cherry`, patch-id, busca de símbolos/rotas em main, commits posteriores
 4. **Regra de negócio**: Coincide, estende ou contradiz a regra vigente?
 
-PRs marcadas AGUARDANDO_CI passaram em todos os 4 critérios — o único bloqueio é o CI não ter concluído.
+PRs marcadas AGUARDANDO_CI passaram em todos os 4 critérios.
 
 ---
 
-## 🔍 LINHA DE BASE (main `1252bb5a`)
+## ⚠️ AUTO_MERGE DESABILITADO EXPLICITAMENTE
 
-- **TypeCheck**: 72 erros (baseline 93, -21 via PR #2188)
-- **ESLint**: 820 ocorrências (baseline atualizado)
-- **Build**: passando
-- **Testes unitários**: passando
-
-Fonte: `analise-prs/baseline/` no branch `claude/busy-cannon-40szm9`, commit `0774eadc2`.
+| PR | Motivo |
+|----|--------|
+| #2481 | Corpo diz "AGUARDANDO APROVAÇÃO DO JOAQUIM — DDL em produção" |
+| #2551 | BLOQUEADO_RLS_SEM_TESTE — título enganoso; 3 migrations RLS sem testes |
 
 ---
 
-*Nota: CI do GitHub Actions ficou indisponível ~20:30Z–22:46Z em 2026-11-01. PRs com AGUARDANDO_CI ou AGUARDANDO_CI_APOS_UPDATE aguardam retomada dos runners. As 22 com `auto_merge=squash` se mergeiam automaticamente; as 4 sem precisam de merge manual (#2431, #2461, #2469, #2472 — atenção: #2469×#2472 conflitam no arquivo `_shared/instance_pause.ts`, mergear #2472 antes). Check-in agendado para 22:55Z. Progresso salvo em `analise-prs/progresso.json` commit `0dbba41e3`.*
+*Progresso salvo em `analise-prs/progresso.json` | Dossies individuais em `analise-prs/dossies/`*
