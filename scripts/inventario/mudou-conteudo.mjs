@@ -44,7 +44,9 @@ function normalizarAlerta(a) {
   if (a.tipo === 'cron_falhando') {
     return { ...a, detalhe: a.detalhe.map((d) => (typeof d === 'string' ? d.replace(PORCENTAGEM_7D, '') : d)) };
   }
-  if (a.tipo === 'cron_parado') return { ...a, detalhe: [] };
+  // Mesmo bug do cron_parado: `mais_de_7_dias` rola todo dia com a retencao diaria
+  // (20261102022200_cron_historico_retencao_7d) e vai virar ruido assim que cruzar o limiar.
+  if (a.tipo === 'cron_parado' || a.tipo === 'historico_cron_sem_limpeza') return { ...a, detalhe: [] };
   return a;
 }
 
