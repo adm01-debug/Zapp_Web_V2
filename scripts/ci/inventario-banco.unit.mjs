@@ -9,7 +9,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { extrairInventario, contarUsoNoCodigo, montarInventario, LIMIARES } from '../inventario/gerar-banco.mjs';
+import {
+  extrairInventario, contarUsoNoCodigo, montarInventario, compararEdges, LIMIARES, PARECE_CREDENCIAL,
+} from '../inventario/gerar-banco.mjs';
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -35,6 +37,7 @@ test('extrairInventario aceita a resposta crua do MCP, o objeto direto e a linha
   assert.equal(extrairInventario(JSON.stringify({ rows: [{ inventario: dado }] })).tabelas.length, 4);
   assert.equal(extrairInventario(JSON.stringify(dado) + '\n').tabelas.length, 4);
   assert.equal(extrairInventario({ rows: [{ inventario: JSON.stringify(dado) }] }).tabelas.length, 4);
+  assert.equal(extrairInventario([{ inventario: dado }]).tabelas.length, 4, 'formato da Management API: array de linhas');
 });
 
 test('extrairInventario recusa entrada incompleta, vazia ou de outra versao', () => {
@@ -92,7 +95,7 @@ test('contarUsoNoCodigo conta .from() em src e edges e ignora testes', () => {
   fs.writeFileSync(path.join(dir, 'src/hooks/a.ts'), "supabase.from('contatos').select(); db.from(\"contatos\")\n.from(`outra`)");
   fs.writeFileSync(path.join(dir, 'src/__tests__/a.test.ts'), "supabase.from('contatos')");
   fs.writeFileSync(path.join(dir, 'src/hooks/b.test.tsx'), "supabase.from('contatos')");
-  fs.writeFileSync(path.join(dir, 'supabase/functions/x/index.ts'), "admin.from( 'contatos' )");
+  fs.writeFileSync(path.join(dir, 'supabase/functions/x/index.ts'), "admin.from( 'contatos' ); admin.storage.from('contatos').upload()");
   const uso = contarUsoNoCodigo(dir, ['contatos', 'nada']);
   assert.deepEqual(uso, { contatos: { src: 2, edges: 1 }, nada: { src: 0, edges: 0 } });
   fs.rmSync(dir, { recursive: true, force: true });
@@ -104,4 +107,28 @@ test('banco.sql so le: nenhum comando de escrita e nada de command/telefone/QR/t
   assert.doesNotMatch(sql, /\b(INSERT|UPDATE|DELETE|TRUNCATE|DROP|ALTER|CREATE|GRANT|REVOKE)\b/i);
   assert.doesNotMatch(sql, /'command'|phone_number|qr_code|instance_token/);
   assert.match(sql, /regexp_matches\(j\.command/, 'de cron.job sai so o nome das funcoes chamadas');
+});
+
+test('edges: publicadas x repo, e sem token fica explicito que nao foi consultado', () => {
+  const api = [
+    { slug: 'a', version: 3, status: 'ACTIVE', verify_jwt: false, updated_at: 1730000000000 },
+    { slug: 'so-em-producao', version: 1, status: 'ACTIVE', verify_jwt: true, updated_at: 1730000000000 },
+  ];
+  const ed = compararEdges(api, ['a', 'sem-deploy']);
+  assert.deepEqual(ed.publicadas_sem_codigo_no_repo, ['so-em-producao']);
+  assert.deepEqual(ed.no_repo_sem_deploy, ['sem-deploy']);
+  assert.equal(ed.publicadas[0].atualizada_em, '2024-10-27T03:33Z');
+  const tipos = montarInventario(base(), {}, ed).alertas.map((a) => a.tipo);
+  assert.deepEqual(tipos, ['edge_sem_deploy', 'edge_publicada_sem_codigo']);
+  const semToken = compararEdges(null, ['a']);
+  assert.equal(semToken.publicadas, null);
+  assert.equal(semToken.no_repo, 1);
+  assert.deepEqual(montarInventario(base(), {}, semToken).alertas, []);
+});
+
+test('trava de credencial reconhece Bearer, JWT e sb_secret_ e deixa texto normal passar', () => {
+  assert.match('Authorization: Bearer abcdefghijklmnopqrstuvwxyz123', PARECE_CREDENCIAL);
+  assert.match('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMifQ.x', PARECE_CREDENCIAL);
+  assert.match('sb_secret_abc', PARECE_CREDENCIAL);
+  assert.doesNotMatch(JSON.stringify(montarInventario(base(), {})), PARECE_CREDENCIAL);
 });

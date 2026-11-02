@@ -538,7 +538,13 @@
       }
     ]
   },
-  "fonte": "scripts/inventario/banco.sql + .from() em src/ e supabase/functions/ (scripts/inventario/gerar-banco.mjs)",
+  "edge_functions": {
+    "no_repo": 85,
+    "no_repo_sem_deploy": null,
+    "publicadas": null,
+    "publicadas_sem_codigo_no_repo": null
+  },
+  "fonte": "scripts/inventario/banco.sql + GET /functions + .from() em src/ e supabase/functions/ (scripts/inventario/gerar-banco.mjs)",
   "format_version": 1,
   "medido_em": "2026-11-02T14:08:25Z",
   "resumo": {
@@ -2984,7 +2990,7 @@
       "triggers": 0,
       "uso_no_codigo": {
         "edges": 2,
-        "src": 34
+        "src": 22
       }
     },
     {
