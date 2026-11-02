@@ -13,7 +13,42 @@ type ConnRow = {
   instance_id: string;
   status: string | null;
   phone_number: string | null;
+  retry_count?: number | null;
+  auto_reconnect_enabled?: boolean | null;
+  reconnect_max_attempts?: number | null;
+  reconnect_interval_seconds?: number | null;
 };
+
+/**
+ * Reconexão automática (política por conexão: auto_reconnect_enabled,
+ * reconnect_max_attempts, reconnect_interval_seconds — migration
+ * 20261012134000). A coluna existia, mas nada a executava: a conexão padrão
+ * ficou desconectada por semanas sem nenhuma tentativa em `reconnection_logs`.
+ * Regra: só tenta com a política LIGADA (ausente = desligada), no máximo
+ * `maxAttempts` vezes por queda (contador `retry_count`, zerado quando a
+ * conexão volta) e respeitando o intervalo mínimo desde a última tentativa.
+ * Esgotou = para (sem laço infinito) e o motivo de saúde pede o QR.
+ */
+export type ReconnectDecision = 'attempt' | 'wait' | 'exhausted' | 'disabled';
+
+export function decideReconnect(input: {
+  enabled: boolean;
+  attempts: number;
+  maxAttempts: number;
+  intervalSeconds: number;
+  lastAttemptAt: Date | null;
+  now: Date;
+}): ReconnectDecision {
+  if (!input.enabled) return 'disabled';
+  const max = Number.isFinite(input.maxAttempts) && input.maxAttempts > 0 ? input.maxAttempts : 3;
+  if (input.attempts >= max) return 'exhausted';
+  const intervalMs = (Number.isFinite(input.intervalSeconds) && input.intervalSeconds > 0
+    ? input.intervalSeconds : 60) * 1000;
+  if (input.lastAttemptAt && input.now.getTime() - input.lastAttemptAt.getTime() < intervalMs) return 'wait';
+  return 'attempt';
+}
+
+export const RECONNECT_EXHAUSTED_REASON = 'Reconexão automática esgotada — gere um novo QR Code na tela Conexões.';
 
 /**
  * Mesma regex do cadastro de conexão (`evolution-api`, ação create-connection):
@@ -469,7 +504,7 @@ export async function handleConnectionHealthCheck(
     const baseUrl = evolutionUrl.replace(/\/+$/, '');
 
     let connQuery = supabase
-      .from('whatsapp_connections').select('id, instance_id, status, phone_number')
+      .from('whatsapp_connections').select('id, instance_id, status, phone_number, retry_count, auto_reconnect_enabled, reconnect_max_attempts, reconnect_interval_seconds')
       .neq('instance_id', 'E2E_FIXTURE'); // Pular fixture E2E — status seeded nao deve ser sobrescrito pelo health check
     if (requested) connQuery = connQuery.eq('instance_id', requested);
 
@@ -531,6 +566,57 @@ export async function handleConnectionHealthCheck(
     // Uma conexão: lê a credencial dela, consulta o provedor, grava log/estado e,
     // na queda real com CAS vitorioso, enfileira o alerta. Extraída de dentro do
     // laço para permitir concorrência limitada sem duplicar a lógica.
+    // Uma tentativa de reconexão (GO: POST /instance/reconnect via tradutor). O
+    // resultado da chamada NÃO é "conectou": quem confirma é a próxima sonda. Falha
+    // da tentativa nunca derruba a sonda; o registro em `reconnection_logs` guarda
+    // só status HTTP/mensagem curta — nunca token, QR ou payload do provedor.
+    const tryAutoReconnect = async (conn: ConnRow, instanceToken: string | undefined, now: Date): Promise<void> => {
+      try {
+        const attempts = conn.retry_count ?? 0;
+        let lastAttemptAt: Date | null = null;
+        const { data: lastLog } = await supabase.from('reconnection_logs').select('created_at')
+          .eq('connection_id', conn.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+        const lastCreated = (lastLog as { created_at?: string } | null)?.created_at;
+        if (typeof lastCreated === 'string') {
+          const parsed = new Date(lastCreated);
+          if (!Number.isNaN(parsed.getTime())) lastAttemptAt = parsed;
+        }
+        const decision = decideReconnect({
+          enabled: conn.auto_reconnect_enabled === true,
+          attempts,
+          maxAttempts: Number(conn.reconnect_max_attempts ?? 3),
+          intervalSeconds: Number(conn.reconnect_interval_seconds ?? 60),
+          lastAttemptAt,
+          now,
+        });
+        if (decision === 'exhausted') {
+          await supabase.from('whatsapp_connections')
+            .update({ health_reason: RECONNECT_EXHAUSTED_REASON }).eq('id', conn.id);
+          return;
+        }
+        if (decision !== 'attempt') return;
+
+        const attempt = attempts + 1;
+        let ok = false;
+        let reason: string | null = null;
+        try {
+          const resp = await evoFetch(baseUrl, evolutionKey, `/instance/restart/${conn.instance_id}`, {},
+            (u, o) => fetch(u, { ...o, signal: AbortSignal.timeout(10000) }), 'PUT', undefined, instanceToken);
+          ok = resp.ok;
+          if (!ok) reason = `HTTP ${resp.status}: ${(await resp.text()).slice(0, 150)}`;
+        } catch (err) {
+          reason = (err instanceof Error ? err.message : 'falha desconhecida').slice(0, 150);
+        }
+        await supabase.from('reconnection_logs').insert({
+          connection_id: conn.id, attempt, result: ok ? 'success' : 'failure', reason,
+        });
+        await supabase.from('whatsapp_connections').update({ retry_count: attempt }).eq('id', conn.id);
+        log.warn('Reconexão automática tentada', { instance_id: conn.instance_id, attempt, ok });
+      } catch (err) {
+        log.warn('Falha na reconexão automática', { error: err instanceof Error ? err.message : String(err) });
+      }
+    };
+
     const checkConnection = async (conn: ConnRow, index: number): Promise<void> => {
       const start = performance.now();
       const now = new Date();
@@ -642,6 +728,11 @@ export async function handleConnectionHealthCheck(
               // recebida além do limiar, DENTRO do horário comercial. Alerta
               // idempotente por episódio (dedupe_key) e auto-resolve quando a
               // mensagem volta a chegar.
+              if (dbStatus === 'connected' && (conn.retry_count ?? 0) > 0) {
+                // Conexão voltou: zera o contador da queda e o motivo de saúde.
+                await supabase.from('whatsapp_connections')
+                  .update({ retry_count: 0, health_reason: null }).eq('id', conn.id);
+              }
               if (dbStatus === 'connected') {
                 // Libera a chave apenas depois que o CAS confirmar a recuperação;
                 // a linha do alerta permanece como histórico do incidente.
@@ -663,6 +754,7 @@ export async function handleConnectionHealthCheck(
             } else {
               healthStatus = state === 'close' ? 'disconnected' : 'degraded';
               dbStatus = state === 'close' ? 'disconnected' : null;
+              if (state === 'close') await tryAutoReconnect(conn, instanceToken, now);
             }
 
             // Only update for definitive states; skip transient (connecting/qr_pending).
