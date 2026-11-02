@@ -62,7 +62,7 @@ expect_error_as() {
   local l="$1" needle="$2" r="$3" j="$4" s="$5" out st
   set +e; out="$(as_role "$r" "$j" "$s" 2>&1)"; st=$?; set -e
   (( st == 0 )) && { printf '%s\n' "$out" >&2; fail "$l: deveria falhar, mas passou"; }
-  [[ "$out" == *"$needle"* ]] || { printf '%s\n' "$out" >&2; fail "$l: esperava '$needle' no erro"; }
+  [[  "$out" == *"$needle"* ]] || { printf '%s\n' "$out" >&2; fail "$l: esperava '$needle' no erro"; }
   printf '[PASS] %s\n' "$l"
 }
 expect_same_success_as() {
@@ -249,6 +249,7 @@ expect_ok_as() {  # expect_ok_as <rotulo> <papel> <jwt> <sql>  (sql NAO pode ter
 }
 
 printf '\n============ BLOCO B — migration aplicada ============\n'
+psql_file "$repo_root/supabase/migrations/20261006231105_recuperacao_gatilho_sem_coluna_removida.sql" >/dev/null
 psql_file "$migration" >/dev/null
 psql_file "$tmp_dir/seed.sql" >/dev/null
 
