@@ -2,7 +2,7 @@
 
 **Gerado em:** 2026-11-02  
 **SHA main no início:** `004e74a8c596959f45f61c8b0b64b30a70c1ff19`  
-**SHA main atual:** `dfef2487a2c3b86101f23ef50d2c1d862b4fe03a` (após PR #2549)  
+**SHA main atual:** `ac04c5c03e1caef48a45819f2322cf96f0bbb6b6` (após PR #2565)  
 **Total de PRs analisadas:** 98  
 
 ---
@@ -40,8 +40,9 @@
 | #2569 | `50ca61a6` | 2026-11-02T04:43Z | fix(ci): testes GR-027 + gatilho e2e-logado GR-029 |
 | #2522 | `4b5c6e79` | 2026-11-02T05:20Z | fix(e2e): aguarda teclado visível antes do clique — Firefox GR-012 |
 | #2549 | `dfef2487` | 2026-11-02T05:32Z | fix: reconexão automática WhatsApp pelo health check |
+| #2565 | `ac04c5c0` | 2026-11-02T05:49Z | chore: CLAUDE.md revisado — regras do Joaquim no topo e arquitetura abandonada removida |
 
-**Pós-merge CI:** todos os 11 merges entraram via auto_merge=squash com CI Gate = success (ou CI Gate passando em run precedente confirmado).
+**Pós-merge CI:** todos os 12 merges entraram via auto_merge=squash com CI Gate = success (ou CI Gate passando em run precedente confirmado).
 
 ---
 
@@ -49,7 +50,7 @@
 
 | PR | Status | Detalhe |
 |---|---|---|
-| #2557 | blocked | fix(docs): atualiza required checks no CLAUDE.md (GR-011) — CI rodando |
+| ~~#2557~~ | FECHADA | coberta pela #2565 (mergeada); fechada por adm01-debug em 2026-11-02T05:49:39Z |
 | #2570 | blocked | fix: RLS department_invites — CI rodando (Contrato DB + Replay in_progress) |
 | #2498 | behind→updated | fix(admin): RPC get_search_insights→search_insights — branch atualizado 05:35Z |
 | #2494 | aguardando | db-inventory-doc falha: 7 tabelas copilot_* ausentes de DB-INVENTORY.md — bloqueio estrutural (ver §Pendências) |
@@ -85,7 +86,7 @@
 | #2496 | BLOQUEADO_DDL_WORKFLOW | feature freeze + DDL sem aprovação |
 | #2551 | BLOQUEADO_RLS_SEM_TESTE | 3 migrations RLS sem testes Postgres |
 | #2562 | BLOQUEADO_FEATURE_FREEZE | feat(lgpd) — feature nova fora do freeze |
-| #2565 | BLOQUEADO_DECISAO_HUMANA | conflita com #2557 em CLAUDE.md — Joaquim decide qual mergear |
+| ~~#2565~~ | MERGEADA | SHA `ac04c5c0` — 2026-11-02T05:49:02Z via auto_merge=squash |
 
 ---
 
@@ -98,8 +99,8 @@
 ### §2 — PR #2561: DDL RLS department_invites
 - Requer aprovação do Joaquim
 
-### §3 — PR #2565: CLAUDE.md conflita com #2557
-- Dois PRs tocam CLAUDE.md; Joaquim decide qual versão manter
+### §3 — PR #2565: MERGEADA em 2026-11-02T05:49:02Z ✅
+- Decisão de Joaquim: #2565 mergeada via auto_merge=squash; #2557 fechada como coberta
 
 ### §4 — PR #2494: DB-INVENTORY.md desatualizado
 - `db-inventory-doc.unit.mjs:406` falha porque 7 tabelas `copilot_*` existem no banco mas não em `docs/DB-INVENTORY.md`

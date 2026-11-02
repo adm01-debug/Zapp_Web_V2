@@ -1,7 +1,7 @@
 {
   "main_sha": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
-  "main_sha_atual": "dfef2487a2c3b86101f23ef50d2c1d862b4fe03a",
-  "main_commit": "Último merge confirmado: #2549 fix: reconexão automática WhatsApp — 2026-11-02T05:32:58Z",
+  "main_sha_atual": "ac04c5c03e1caef48a45819f2322cf96f0bbb6b6",
+  "main_commit": "Último merge confirmado: #2565 chore: CLAUDE.md revisado — regras do Joaquim no topo e arquitetura abandonada removida — 2026-11-02T05:49:02Z",
   "data_baseline": "2026-11-01",
   "data_analise": "2026-11-02",
   "total_prs_analisadas": 98,
@@ -11,7 +11,7 @@
   "typecheck_baseline": "72 erros (baseline histórico 93, redução de 21 confirmada em analise-prs/baseline/typecheck.txt)",
   "lint_baseline": "820 ocorrências (100% pré-existentes; confirmado em analise-prs/baseline/lint.txt)",
   "prs_analisadas": 92,
-  "prs_mergeadas_total": 11,
+  "prs_mergeadas_total": 12,
   "prs_mergeadas_lista": [
     {
       "numero": 2283,
@@ -78,6 +78,12 @@
       "sha": "dfef2487a2c3b86101f23ef50d2c1d862b4fe03a",
       "merged_at": "2026-11-02T05:32:58Z",
       "titulo": "fix: reconexão automática WhatsApp passa a ser executada pelo health check"
+    },
+    {
+      "numero": 2565,
+      "sha": "ac04c5c03e1caef48a45819f2322cf96f0bbb6b6",
+      "merged_at": "2026-11-02T05:49:02Z",
+      "titulo": "chore: CLAUDE.md revisado — regras do Joaquim no topo e arquitetura abandonada removida"
     }
   ],
   "auto_merge_habilitado_nesta_sessao": [
@@ -129,8 +135,8 @@
       "motivo": "contém 3 migrations RLS sem testes Postgres + 12 arquivos vs título diz 2; BLOQUEADO_RLS_SEM_TESTE; auto_merge desabilitado 2026-11-02"
     }
   ],
-  "status": "analise_completa_98_prs_revisado_16",
-  "nota": "2026-11-02: revisão 17ª sessão. #2549 MERGEADA em 2026-11-02T05:32:58Z (SHA dfef2487) — 11ª PR mergeada. verdicts[2522] corrigido para MERGEADA. 4 PRs AGUARDANDO_CI: #2557, #2570, #2498, #2494.",
+  "status": "analise_completa_98_prs_revisado_17",
+  "nota": "2026-11-02: revisão 18ª sessão. #2565 MERGEADA em 2026-11-02T05:49:02Z (SHA ac04c5c0) — 12ª PR mergeada. #2557 FECHADA_SEM_MERGE (coberta pela #2565, fechada por adm01-debug). 3 PRs AGUARDANDO_CI: #2570, #2498, #2494.",
   "verdicts": {
     "1930": "FECHADA_SEM_MERGE",
     "1997": "FECHADA_SEM_MERGE",
@@ -216,7 +222,7 @@
     "2553": "DRAFT_SKIP",
     "2555": "DRAFT_SKIP",
     "2556": "DRAFT_SKIP",
-    "2557": "AGUARDANDO_CI",
+    "2557": "FECHADA_SEM_MERGE",
     "2558": "DRAFT_SKIP",
     "2559": "FECHADA_SEM_MERGE",
     "2560": "MERGEADA",
@@ -224,7 +230,7 @@
     "2562": "BLOQUEADO_FEATURE_FREEZE",
     "2563": "BLOQUEADO_CONFLITO",
     "2564": "FECHADA_SEM_MERGE",
-    "2565": "BLOQUEADO_DECISAO_HUMANA",
+    "2565": "MERGEADA",
     "2566": "FECHADA_SEM_MERGE",
     "2567": "MERGEADA",
     "2569": "MERGEADA",
@@ -232,15 +238,15 @@
     "2571": "BLOQUEADO_CONFLITO"
   },
   "contagem_por_veredito": {
-    "FECHADA_SEM_MERGE": 66,
-    "MERGEADA": 11,
+    "FECHADA_SEM_MERGE": 67,
+    "MERGEADA": 12,
     "BLOQUEADO_AGUARDANDO_APROVACAO": 2,
     "BLOQUEADO_DDL_WORKFLOW": 1,
-    "AGUARDANDO_CI": 4,
+    "AGUARDANDO_CI": 3,
     "DRAFT_SKIP": 5,
     "BLOQUEADO_RLS_SEM_TESTE": 1,
     "BLOQUEADO_FEATURE_FREEZE": 1,
-    "BLOQUEADO_DECISAO_HUMANA": 1,
+    "BLOQUEADO_DECISAO_HUMANA": 0,
     "BLOQUEADO_CONFLITO": 6,
     "TOTAL": 98
   }

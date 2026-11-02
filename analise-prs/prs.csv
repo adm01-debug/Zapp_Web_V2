@@ -83,7 +83,7 @@ numero,veredito,merge_sha,merged_at,motivo
 2553,DRAFT_SKIP,,,
 2555,DRAFT_SKIP,,,
 2556,DRAFT_SKIP,,,
-2557,AGUARDANDO_CI,,,CI rodando pos-update auto_merge=squash
+2557,FECHADA_SEM_MERGE,,,coberta pela 2565 mergeada fechada por adm01-debug 2026-11-02T05:49:39Z
 2558,DRAFT_SKIP,,,
 2559,FECHADA_SEM_MERGE,,,
 2560,MERGEADA,a7a53f56771257106ad79847e6a9f13b9ddada80,2026-11-02T02:43:28Z,
@@ -91,7 +91,7 @@ numero,veredito,merge_sha,merged_at,motivo
 2562,BLOQUEADO_FEATURE_FREEZE,,,feat lgpd feature nova fora do freeze
 2563,BLOQUEADO_CONFLITO,,,dirty apos 2567 mergear o mesmo fix
 2564,FECHADA_SEM_MERGE,,,
-2565,BLOQUEADO_DECISAO_HUMANA,,,conflita com 2557 em CLAUDE.md Joaquim decide
+2565,MERGEADA,ac04c5c03e1caef48a45819f2322cf96f0bbb6b6,2026-11-02T05:49:02Z,chore: CLAUDE.md revisado
 2566,FECHADA_SEM_MERGE,,,
 2567,MERGEADA,8ba0b4361290f37171fd6ec27012a46665ca5b7e,2026-11-02T03:51:55Z,
 2569,MERGEADA,50ca61a6ef96b366084548fbb3866974083def52,2026-11-02T04:43:24Z,

@@ -3,9 +3,9 @@
     "data_analise": "2026-11-02",
     "total_prs": 98,
     "sha_main_inicio": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
-    "sha_main_atual": "dfef2487a2c3b86101f23ef50d2c1d862b4fe03a",
+    "sha_main_atual": "ac04c5c03e1caef48a45819f2322cf96f0bbb6b6",
     "gerado_em": "2026-11-02T06:00Z",
-    "nota": "98 PRs analisadas; 11 mergeadas; SHA main final: dfef2487 (PR #2549)"
+    "nota": "98 PRs analisadas; 12 mergeadas; SHA main final: ac04c5c0 (PR #2565)"
   },
   "prs": [
     { "numero": 1930, "veredito": "FECHADA_SEM_MERGE" },
@@ -92,7 +92,7 @@
     { "numero": 2553, "veredito": "DRAFT_SKIP" },
     { "numero": 2555, "veredito": "DRAFT_SKIP" },
     { "numero": 2556, "veredito": "DRAFT_SKIP" },
-    { "numero": 2557, "veredito": "AGUARDANDO_CI", "motivo": "CI rodando pos-update; auto_merge=squash" },
+    { "numero": 2557, "veredito": "FECHADA_SEM_MERGE", "motivo": "coberta pela #2565 (mergeada); fechada por adm01-debug em 2026-11-02T05:49:39Z" },
     { "numero": 2558, "veredito": "DRAFT_SKIP" },
     { "numero": 2559, "veredito": "FECHADA_SEM_MERGE" },
     { "numero": 2560, "veredito": "MERGEADA", "merge_sha": "a7a53f56771257106ad79847e6a9f13b9ddada80", "merged_at": "2026-11-02T02:43:28Z" },
@@ -100,7 +100,7 @@
     { "numero": 2562, "veredito": "BLOQUEADO_FEATURE_FREEZE", "motivo": "feat(lgpd) — feature nova fora do freeze" },
     { "numero": 2563, "veredito": "BLOQUEADO_CONFLITO", "motivo": "dirty apos #2567 mergear o mesmo fix" },
     { "numero": 2564, "veredito": "FECHADA_SEM_MERGE" },
-    { "numero": 2565, "veredito": "BLOQUEADO_DECISAO_HUMANA", "motivo": "conflita com #2557 em CLAUDE.md; Joaquim decide qual mergear" },
+    { "numero": 2565, "veredito": "MERGEADA", "merge_sha": "ac04c5c03e1caef48a45819f2322cf96f0bbb6b6", "merged_at": "2026-11-02T05:49:02Z" },
     { "numero": 2566, "veredito": "FECHADA_SEM_MERGE" },
     { "numero": 2567, "veredito": "MERGEADA", "merge_sha": "8ba0b4361290f37171fd6ec27012a46665ca5b7e", "merged_at": "2026-11-02T03:51:55Z" },
     { "numero": 2569, "veredito": "MERGEADA", "merge_sha": "50ca61a6ef96b366084548fbb3866974083def52", "merged_at": "2026-11-02T04:43:24Z" },
@@ -108,16 +108,16 @@
     { "numero": 2571, "veredito": "BLOQUEADO_CONFLITO", "motivo": "dirty; auto_merge ativo mas conflito pendente" }
   ],
   "contagem": {
-    "FECHADA_SEM_MERGE": 66,
-    "MERGEADA": 11,
-    "AGUARDANDO_CI": 4,
+    "FECHADA_SEM_MERGE": 67,
+    "MERGEADA": 12,
+    "AGUARDANDO_CI": 3,
     "BLOQUEADO_CONFLITO": 6,
     "DRAFT_SKIP": 5,
     "BLOQUEADO_AGUARDANDO_APROVACAO": 2,
     "BLOQUEADO_DDL_WORKFLOW": 1,
     "BLOQUEADO_RLS_SEM_TESTE": 1,
     "BLOQUEADO_FEATURE_FREEZE": 1,
-    "BLOQUEADO_DECISAO_HUMANA": 1,
+    "BLOQUEADO_DECISAO_HUMANA": 0,
     "TOTAL": 98
   }
 }
