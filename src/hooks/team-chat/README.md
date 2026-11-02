@@ -135,6 +135,19 @@ Os tipos de linha saem de `types.ts` em vez de serem escritos à mão:
 `invite_accepted`, `member_added`, `member_removed`, `department_transferred`,
 `add_member`, `delete_invite`.
 
+## Permissões de convite de departamento
+
+Decisão do dono (01/11/2026): **somente admin** cria e apaga convites de
+departamento. A regra vive na RLS de `department_invites`
+(migration `20261102012200_department_invites_restringe_escrita.sql`):
+
+- criar (`useCreateDepartmentInvite`): só usuário com papel `admin` em
+  `user_roles`; `created_by` tem de ser nulo ou o próprio perfil;
+- apagar (`useDeleteDepartmentInvite`): só `admin`;
+- listar: qualquer usuário logado (inalterado).
+
+Supervisor e agent recebem erro de permissão do banco ao tentar criar ou apagar.
+
 ## Pendências conhecidas (não são convenção)
 
 - `src/components/team-chat/TransferConversationDialog.tsx` ainda usa a chave
@@ -145,3 +158,6 @@ Os tipos de linha saem de `types.ts` em vez de serem escritos à mão:
   `department_whatsapp_configs`, que não existe em `types.ts`. A troca pelas
   RPCs (`create_department_invite`, `set_department_whatsapp_config`) é do item
   F62 do plano de finalização.
+- `useCreateDepartmentInvite` grava `created_by: user.id` (id do auth), mas a coluna
+  referencia `profiles(id)`: o INSERT falha por FK e nenhum convite consegue ser criado
+  hoje. Correção: gravar o id do perfil do usuário logado.
