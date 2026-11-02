@@ -1,6 +1,6 @@
 # PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-11-02 por sessão `claude/trusting-albattani-9x3ipg` (GF-001..GF-056)._
+_Atualizado em 2026-11-02 por sessão `d231ac24` (pós GF-001..GF-056, run db-live-guard #1421)._
 
 ---
 
@@ -14,8 +14,8 @@ _Atualizado em 2026-11-02 por sessão `claude/trusting-albattani-9x3ipg` (GF-001
 
 ## 1. DB Live Guard — falhas em contrato vivo (bloqueadas por escrita no ledger)
 
-**Último run com falha:** [41400432274](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41400432274)  
-**Head SHA:** `b1040225d9d9dbe5d9b22670b5191a16a8347dce` (main pós PR #2570)
+**Último run com falha:** [41425677046](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41425677046) (run #1421)  
+**Head SHA:** `7c42b7ce1dee44314aef6f9b270b08603e26eaac` (main pós PR #2606)
 
 **O que foi corrigido:**
 - ✅ PR #2579 — 13 SQL-divergente adicionados como `pinned-replay` em `migration-evidence.json`
@@ -24,8 +24,9 @@ _Atualizado em 2026-11-02 por sessão `claude/trusting-albattani-9x3ipg` (GF-001
 - ✅ PR #2579 — 9 policies copilot adicionadas à allowlist de invariantes
 - ~~PR #2589 fechada sem merge~~ — drift `gen_random_bytes` não existe; SHA256 do arquivo e ledger batem (falso alarme, investigado em 2026-11-02)
 - ✅ PR #2598 — 24 prosa-pura adicionadas como `name-and-file-pinned` em `migration-evidence.json`
+- ✅ PR #2606 — 2 arquivos sem entrada no ledger movidos para `_superseded/` (`db-migrate.yml` passa com `missing_count=0`)
 
-**Falhas remanescentes que dependem do Joaquim (3 restantes — guard ainda falha):**
+**Falhas remanescentes que dependem do Joaquim (guard ainda falha — §1B + §1E + §1F):**
 
 ### A. ✅ RESOLVIDO — statements "prosa pura" no ledger (24 migrations)
 
@@ -82,7 +83,7 @@ RETURNING version, name;
 | `20261016112802` | `whisper_audio_path` | `20261016112802_whisper_audio_path.sql` |
 | `20261016115413` | `realtime_publication_agent_achievements` | `20261016115413_realtime_publication_agent_achievements.sql` |
 
-### B. nome divergente no ledger (1 migration)
+### B. nome divergente no ledger (1 migration) — ⚠️ BLOQUEADO (Joaquim)
 
 - **version:** `20261016130000`
 - **arquivo no repo:** `20261016130000_revert_wrong_security_fixes.sql`
@@ -108,11 +109,61 @@ Os 2 arquivos que causavam `missing_count=2` no `db-migrate.yml` foram movidos p
 futuramente (quando TalkX V4 e E2E forem retomados), recorrer ao arquivo em `_superseded/` e
 aplicar via `producao-ddl` com aprovação do Joaquim.
 
-### D. types.ts desatualizado
+### D. ⏳ types.ts desatualizado — types-sync disparado (2026-11-02)
 
-Após as novas tabelas copilot e functions entrarem em produção, o `src/integrations/supabase/types.ts` ficou desatualizado. Disparar o `types-sync.yml` via `workflow_dispatch` na `main` para regenerar.
+Após as novas tabelas `copilot_conversation_scores` e `copilot_help_requests` entrarem em produção,
+o `src/integrations/supabase/types.ts` ficou desatualizado (detectado em `step-types.log` do run #1421).
+
+**Ação tomada:** `types-sync.yml` disparado via `workflow_dispatch` na `main` em 2026-11-02. O workflow
+criará uma PR automática para regenerar `types.ts` (e possivelmente `schema-manifest.json`).
 
 Este workflow **não é um required check** — não bloqueia merges na `main`.
+
+### E. SQL divergente no ledger — `20261102012200` ⚠️ BLOQUEADO (Joaquim)
+
+- **version:** `20261102012200`
+- **arquivo:** `20261102012200_department_invites_restringe_escrita.sql`
+- **problema detectado em:** `step-migrations.log` do run #1421
+
+O ledger armazena os 8 statements desta migration com whitespace colapsado (linha única), enquanto
+`register-migration.mjs` preserva as quebras de linha internas do arquivo. Os SHA256 divergem:
+- arquivo (via `splitStatements`): `fe7fd53e...`
+- ledger `sql_sha256`: `5f4bd13a...` / `statements_sha256`: `6a17ff4d...`
+
+**O que o Joaquim precisa fazer:**
+1. Gerar o SQL correto:
+   ```bash
+   node scripts/db-audit/register-migration.mjs supabase/migrations/20261102012200_department_invites_restringe_escrita.sql
+   ```
+2. Copiar o array `statements` impresso e rodar via MCP `SUPABASE - ZAPP WEB V2 - MCP`:
+   ```sql
+   UPDATE supabase_migrations.schema_migrations
+   SET statements = ARRAY[...SQL_MULTI_LINE...]
+   WHERE version = '20261102012200'
+   RETURNING version, name;
+   ```
+
+**Alternativa sem tocar o ledger:** Adicionar entrada `pinned-replay` em
+`scripts/db-audit/migration-evidence.json` com `evidence_class: "name-and-file-pinned"` para suprimir
+o erro no guard (como feito em §1A). O SQL no ledger continuaria errado, mas o guard passaria.
+
+### F. schema-manifest.json desatualizado — 3 default_grants ⚠️ BLOQUEADO (Joaquim ou types-sync)
+
+**Detectado em:** `step-manifest.log` do run #1421:
+```
+[default_grants] so em arquivo: 3 | so em banco: 0 | divergente: 0
+```
+
+O `supabase/schema-manifest.json` commitado contém 3 entradas de `default_grants` que não existem
+mais no banco de produção (grantor `postgres`, tipos `REFERENCES`, `TRIGGER`, `TRUNCATE` no schema `public`).
+
+**O que precisa acontecer:**
+1. Se o `types-sync` disparado em §1D também regenera o manifesto → a PR do types-sync corrige §1F junto.
+2. Caso contrário, Joaquim precisa rodar:
+   ```bash
+   psql "$DESTINO_URL" -X -v ON_ERROR_STOP=1 -At -f scripts/db-audit/manifest.sql > supabase/schema-manifest.json
+   ```
+   e commitar o resultado na `main`.
 
 ---
 
