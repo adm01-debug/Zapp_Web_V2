@@ -26,12 +26,12 @@
 | `bun run test` (shard 2) | ✅ exit 0 | 617 files passed, 3 skipped; **5300** tests passed, 7 xfail, 29 todo |
 | `bun run test` (shard 3) | ✅ exit 0 | conforme shards acima |
 
-### Estado dos runs na PR #2526 — HEAD `dfb0047`
+### Estado dos runs na PR #2526 — HEAD `336b020` (rerun attempt 2)
 
 | Workflow | Run | Status | Motivo |
 |---|---|---|---|
-| CI/CD Pipeline | [41367543344](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41367543344) | ⏳ pending | Saturação de runners — 5 pipelines paralelas ativas |
-| DB Guard (offline) | [41367543421](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41367543421) | ⏳ queued | Saturação de runners — 5 pipelines paralelas ativas |
+| CI/CD Pipeline | [41368603945](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41368603945) | ⏳ pending (attempt 2) | Aguardando runner |
+| DB Guard (offline) | [41368603885](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41368603885) | ⏳ queued (attempt 2) | Aguardando runner |
 
 ### Workflows não corrigíveis via código (PENDENCIAS.md)
 
@@ -131,17 +131,16 @@ A branch `claude/kind-gates-87mwoe` tinha import estático de `framer-motion` em
 
 | Workflow | Última execução | Conclusion |
 |---|---|---|
-| `deploy-functions.yml` | ⏳ CI [41367543344](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41367543344) pending | ⏳ aguardando runner |
-| `🎭 E2E Tests (Playwright)` | ⏳ CI [41367543344](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41367543344) pending | ⏳ aguardando runner |
+| `deploy-functions.yml` | CI [41368603945](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41368603945) attempt 2 | ⏳ aguardando runner |
+| `🎭 E2E Tests (Playwright)` | CI [41368603945](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41368603945) attempt 2 | ⏳ aguardando runner |
 | DB Live Guard | [41318522203](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41318522203) | ❌ não corrigível — PENDENCIAS.md §1 |
 | Copilot Code Review | [41167331596](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41167331596) | ❌ não corrigível — PENDENCIAS.md §2 |
 | E2E logado | [41240478106](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41240478106) | ❌ não corrigível — PENDENCIAS.md §3 |
 | DB Migrate | [41313326544](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41313326544) | ❌ não corrigível — PENDENCIAS.md §4 |
 
-> **Bloqueio:** Runs `41367543344` e `41367543421` aguardam runner desde 00:30Z (2026-11-02).
-> 5 pipelines paralelas de outras branches consumindo todos os runners disponíveis.
-> Wakeup agendado para 00:54Z — quando runners liberarem, checks completam e PR #2526 é mergeada.
+> **Bloqueio:** Runs `41368603945` (CI) e `41368603885` (DB Guard) aguardam runner desde 00:46Z.
+> Reruns attempt 2 ativos — conclusão esperada em ~10 min.
 
 ---
 
-*Atualizado em 2026-11-02T00:44Z — sessão `claude_04/pensive-tesla-ixtl9w`.*
+*Atualizado em 2026-11-02T00:52Z — sessão `claude_04/pensive-tesla-ixtl9w`.*
