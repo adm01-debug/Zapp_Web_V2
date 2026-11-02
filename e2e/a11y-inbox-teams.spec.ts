@@ -40,8 +40,19 @@ async function violacoes(
     async (ids) => {
       const win = window as unknown as { axe: { run: (c: unknown, o: unknown) => Promise<{ violations: ViolacaoAxe[] }> } };
       const axe = win.axe;
-      const r = await axe.run(document.body, { runOnly: { type: 'rule', values: ids } });
-      return r.violations;
+      const opts = { runOnly: { type: 'rule', values: ids } };
+      // @axe-core/react pode estar rodando automaticamente no bundle de dev; aguardamos (GR-016).
+      for (let i = 0; i < 10; i++) {
+        try {
+          const r = await axe.run(document.body, opts);
+          return r.violations;
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : String(e);
+          if (!msg.includes('already running')) throw e;
+          await new Promise<void>((res) => setTimeout(res, 200 * (i + 1)));
+        }
+      }
+      throw new Error('axe: @axe-core/react bloqueando apos 10 tentativas (GR-016)');
     },
     regras as string[],
   );
