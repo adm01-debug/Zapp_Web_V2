@@ -99,6 +99,10 @@
     "20261013230007_my_active_sessions.sql": {
       "categoria": "ambiente",
       "motivo": "relation 'auth.sessions' does not exist. O schema auth do Supabase nao esta presente na imagem efemera de replay. Canonico: aplicada. Medido em 23/10/2026."
+    },
+    "20261031100000_copilot_fases13_15_tabelas.sql": {
+      "categoria": "nao-idempotente-inerte",
+      "motivo": "policy 'copilot_outcomes_insert' (e demais) for table 'copilot_outcomes' already exists. A migration 20261030145126 (remote_only reconciliada) cria as mesmas 7 tabelas e todas as politicas antes desta no replay. CREATE TABLE IF NOT EXISTS e inerte; CREATE POLICY sem IF NOT EXISTS falha com duplicate_object. Canonico: todas as tabelas e politicas existem. Efeito real: nenhum — o objeto esta correto no canonico. Medido em 02/11/2026."
     }
   }
 }
