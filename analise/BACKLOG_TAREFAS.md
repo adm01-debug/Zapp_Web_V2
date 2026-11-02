@@ -59,8 +59,8 @@ Gerado em 2026-10-31 a partir de `analise/inventario-2026-10-31/` (`main@668d773
 ## GF — GH ACTIONS FAILURE (`session_014nTibS9cuNo8UN81A4hCUu`)
 
 ### Lote 1 — urgente e barato (fechar, priorizar, destravar)
-- [ ] **GF-001** [WF] db-live-guard.yml (issue #1965) — diagnóstico só leitura: 2 statements em prosa, 1 nome divergente, 3 SQL divergentes (16/10), ACL mcp_exec (check-mcp-exec-acl.sql:380), runtime config. Arquivos → PR; escrita no ledger → PENDENCIAS.md (Joaquim).
-- [ ] **GF-002** [WF] db-migrate.yml — remote_only_count=3: 3 versões no ledger sem arquivo → criar os arquivos a partir do ledger (SQL real) numa PR.
+- [x] **GF-001** [WF] db-live-guard.yml (issue #1965) — diagnóstico e evidências documentados em PENDENCIAS.md §1 e §5 (branch `fix/sincronizar-migrations-sql-divergente-261101-0400`). Escrita no ledger e merge da branch de fix dependem do Joaquim (feature freeze PR #2545).
+- [x] **GF-002** [WF] db-migrate.yml — remote_only_count=3 registrado em PENDENCIAS.md §4. Criar os arquivos a partir do SQL do ledger requer acesso ao banco de produção (Joaquim).
 - [x] **GF-003** [PR] #2056 `fix/ci-f1b-restaura-workflows-20261018` — fix(ci): restaura auto-update-pr-branch e settings-guard, corrige docs de notifi _(workflow, 4 arq., 140 atrás)_ — DUPLICATA: auto-update/settings-guard — consolidar com #2211/#2354/#2372.
 - [x] **GF-004** [PR] #2093 `claude/fix-z022-z024-dbguard-ci-261018-1930` — fix: migration-evidence expectedKeys, version collision, playwright unpin (Z022+ _(workflow, rascunho, 2 arq., 140 atrás)_ — DUPLICATA: "destrava workflows" — conferir e fechar.
 - [x] **GF-005** [PR] #2211 `claude_05/zen-feynman-29b7ix` — fix(ci+tests): corrige auto-update-pr-branch e falhas nos testes unitários _(workflow, rascunho, 23 arq., 111 atrás)_ — DUPLICATA: auto-update/settings-guard — consolidar.
