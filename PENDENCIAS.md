@@ -14,16 +14,17 @@ _Atualizado em 2026-11-02 por sessão `claude/trusting-albattani-9x3ipg` (GF-001
 
 ## 1. DB Live Guard — falhas em contrato vivo (bloqueadas por escrita no ledger)
 
-**Último run com falha:** [41385849215](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41385849215)  
-**Head SHA:** `8ba0b4361290f37171fd6ec27012a46665ca5b7e` (main pós PR #2551)
+**Último run com falha:** [41400432274](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41400432274)  
+**Head SHA:** `b1040225d9d9dbe5d9b22670b5191a16a8347dce` (main pós PR #2579)
 
-**O que foi corrigido nesta sessão (PR #2579):**
+**O que foi corrigido nesta sessão (PR #2579 + esta PR):**
 - ✅ 13 SQL-divergente → adicionados como `pinned-replay` em `migration-evidence.json`
 - ✅ `20260927600000` — exceção obsoleta removida de `migration-evidence.json`
 - ✅ Catálogo regenerado com 10 tabelas copilot (`supabase/schema-catalog.json`)
 - ✅ Grants-baseline regenerado (`scripts/db-audit/grants-baseline.json`)
 - ✅ Manifesto regenerado (`supabase/schema-manifest.json`)
 - ✅ Invariante copilot — 9 policies open-write adicionadas à allowlist (`check-live-invariants.sql`)
+- ✅ `20261102012200` SQL divergente — `extensions.gen_random_bytes` → `gen_random_bytes` (alinha arquivo com ledger de produção)
 
 **Falhas remanescentes que dependem do Joaquim:**
 

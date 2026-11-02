@@ -81,7 +81,7 @@ begin
   end if;
 
   for v_attempt in 1..5 loop
-    v_code := upper(substr(translate(encode(extensions.gen_random_bytes(16), 'base64'), '+/=', ''), 1, 8));
+    v_code := upper(substr(translate(encode(gen_random_bytes(16), 'base64'), '+/=', ''), 1, 8));
     begin
       insert into public.department_invitations(
         department_id, code, max_uses, expires_at, created_by, status
