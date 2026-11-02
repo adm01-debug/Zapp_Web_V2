@@ -3,11 +3,14 @@ import { toast } from 'sonner';
 import { TalkXTemplateEditor } from './TalkXTemplateEditor';
 import {
   Plus, FileText, Star, Pencil, Trash2, Copy, Image, Video, Music, Check, ChevronRight, BarChart3,
-  Sparkles, TrendingUp, Lightbulb,
+  Sparkles, TrendingUp, Lightbulb, Download, Upload,
 } from 'lucide-react';
 import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import { useTalkXTemplates, type TalkXTemplate } from '@/hooks/integrations/useTalkXTemplates';
+import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
+import { TalkXTemplateImportDialog } from './TalkXTemplateImportDialog';
+import { serializeTemplatesToCsv, serializeTemplatesToJson, downloadTemplateFile, type TemplateImportRow, type ConflictAction } from './talkxTemplateFile';
 import { useTalkXTemplateLibraryStats, pointsDelta } from '@/hooks/integrations/useTalkXTemplateStats';
 import { RailCard, RailAction, HeroCard, TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, extractVariables, fmtInt, fmtDateTime, fmtTime, TalkXConfirmDialog } from './talkxShared';
 import { useTalkXFilterState } from './kit/useFilterState';
@@ -101,6 +104,8 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
   const [galleryMode, setGalleryMode] = useState<GalleryMode>(lerModoGaleria);
   /** T04-040: galeria ordenada por taxa de resposta (aberta pelo "Ver todos"). */
   const [orderByReply, setOrderByReply] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const { canDownload } = useDownloadPermission();
 
   const trocarModo = (modo: GalleryMode) => { setGalleryMode(modo); salvarModoGaleria(modo); };
 
@@ -124,6 +129,48 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
     setRoute(nextRoute);
     pushTalkXTemplateRoute(nextRoute);
   }, []);
+
+  const handleExportCsv = useCallback(() => {
+    const rows: TemplateImportRow[] = templates.map((t) => ({
+      name: t.name, content: t.content, description: t.description ?? '',
+      category: t.category, tags: t.tags.join(','), status: t.status,
+    }));
+    downloadTemplateFile('talkx-templates.csv', serializeTemplatesToCsv(rows), 'text/csv');
+    toast.success('Templates exportados em CSV.');
+  }, [templates]);
+
+  const handleExportJson = useCallback(() => {
+    const rows: TemplateImportRow[] = templates.map((t) => ({
+      name: t.name, content: t.content, description: t.description ?? undefined,
+      category: t.category, tags: t.tags.join(','), status: t.status,
+    }));
+    downloadTemplateFile('talkx-templates.json', serializeTemplatesToJson(rows), 'application/json');
+    toast.success('Templates exportados em JSON.');
+  }, [templates]);
+
+  const handleImport = useCallback(async (
+    rows: Array<{ row: TemplateImportRow; action: ConflictAction }>,
+  ): Promise<{ imported: number; skipped: number; errors: number }> => {
+    let imported = 0; let skipped = 0; let errors = 0;
+    for (const { row, action } of rows) {
+      if (action === 'skip') { skipped++; continue; }
+      const nameToUse = action === 'copy' ? `${row.name} (cópia)` : row.name;
+      try {
+        await createTemplate.mutateAsync({
+          name: nameToUse, content: row.content,
+          description: row.description || undefined,
+          category: row.category || 'geral',
+          tags: row.tags ? row.tags.split(',').map((s) => s.trim()).filter(Boolean) : [],
+          status: (row.status as TalkXTemplate['status']) || 'draft',
+        });
+        imported++;
+      } catch {
+        errors++;
+      }
+    }
+    if (imported > 0) void refetch();
+    return { imported, skipped, errors };
+  }, [createTemplate, refetch]);
 
   // X094 — o endereço acompanha a troca feita DENTRO do editor (biblioteca lateral)
   // sem mexer no estado do React: remontar o editor aqui perderia a edição em curso
@@ -310,7 +357,26 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
           filters={filterDefs} values={filterValues} onFilter={(k, v) => { setFilterValue(k as 'cat' | 'st', v); setPage(1); }}
           hasActive={hasActive} onClear={limparFiltros}
           view={galleryMode} onView={trocarModo}
-          rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo Template</PrimaryButton>}
+          rightSlot={
+            <div className="flex items-center gap-2">
+              {canDownload && templates.length > 0 && (
+                <>
+                  <button type="button" onClick={handleExportCsv} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50">
+                    <Download className="w-3.5 h-3.5" />CSV
+                  </button>
+                  <button type="button" onClick={handleExportJson} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50">
+                    <Download className="w-3.5 h-3.5" />JSON
+                  </button>
+                </>
+              )}
+              {canDownload && (
+                <button type="button" onClick={() => setShowImport(true)} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50">
+                  <Upload className="w-3.5 h-3.5" />Importar
+                </button>
+              )}
+              <PrimaryButton icon={Plus} onClick={openNew}>Novo Template</PrimaryButton>
+            </div>
+          }
         />
 
         <TalkXQueryBoundary
@@ -437,6 +503,14 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
         entityName={deleting?.name}
         loading={deleteTemplate.isPending}
       />
+
+      {showImport && (
+        <TalkXTemplateImportDialog
+          existingTemplates={templates}
+          onImport={handleImport}
+          onClose={() => setShowImport(false)}
+        />
+      )}
     </div>
   );
 }
