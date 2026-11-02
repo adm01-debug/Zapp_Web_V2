@@ -33,8 +33,10 @@ As 24 exceções `ledger-only/name-and-file-pinned` foram adicionadas a `migrati
 (PR que adiciona esta seção). O guard suprime esses 24 erros assim que o PR mergear.
 
 O UPDATE do ledger continua sendo a solução permanente ideal (sem exceptions), mas não é obrigatório
-para o guard passar. Se quiser limpar: use `register-migration.mjs` para cada arquivo abaixo e
-`UPDATE supabase_migrations.schema_migrations SET statements = ARRAY[...SQL...] WHERE version = '...'`.
+para o guard passar. Se quiser limpar: **os dois passos abaixo devem ser feitos juntos**; fazer só
+um deles deixa o guard falhando:
+1. Atualizar `statements` no ledger: `UPDATE supabase_migrations.schema_migrations SET statements = ARRAY[...SQL...] WHERE version = '...'`
+2. Remover a entrada correspondente de `migration-evidence.json` (o `evidence_class: "ledger-only/name-and-file-pinned"` para aquela versão) e também de `ledger-history-limitations.json`.
 
 ### A-histórico. statements "prosa pura" (referência para UPDATE manual)
 
