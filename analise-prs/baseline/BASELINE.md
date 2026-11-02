@@ -1,23 +1,42 @@
-# Baseline do main — SHA: ac97c0ea300877335a43600ed025c28b6dfa4579
-Data: 2026-10-29
+# Baseline do main — SHA: 50ca61a6ef96b366084548fbb3866974083def52
+Data: 2026-11-02
 
-## Typecheck
-- SIGABRT (falta de memória/OOM no container) — sem contagem de erros TS disponível
-- NÃO VERIFICADO por limitação do container (não é erro de código)
+Última PR mergeada: #2569 (fix(ci): testes GR-027 + gatilho workflow_run e2e-logado GR-029) em 2026-11-02T04:43:24Z
 
-## Lint (bun run lint — ESLint)
-Erros pré-existentes no main (NÃO são regressão das PRs):
-- local/no-secret-compare: ~14 erros em _shared/cron-secret-auth.ts (comparação direta de credencial)
-- @typescript-eslint/no-explicit-any: 2 erros
-- react-refresh/only-export-components: ~7 warnings
-- no-restricted-imports: ~4 warnings (supabase client em componentes)
-- no-setState-in-effect: 2 erros
-- no-impure-in-render: 1 erro
-- EXIT: 0 (lint não faz exit 1 por erro de regra, só relata)
+## TypeCheck (ratchet)
+- Baseline histórico: 93 erros
+- Atual no main: 3 erros (redução de 90 vs baseline histórico)
+- Novas dívidas introduzidas: 0
+- Status: ✅ ZERO erros novos
+
+## Lint (ESLint ratchet)
+- Baseline histórico: 820 ocorrências
+- Atual no main: 813 ocorrências (redução de 7 vs baseline histórico)
+- Novas dívidas introduzidas: 0
+- Status: ✅ ZERO ocorrências novas
 
 ## Build
-- vite: command not found (antes de instalar deps)
-- Após bun install: não reexecutado (tempo/tokens)
+- Status: ✅ PASSANDO
+- Evidência: CI Gate success em todos os 9 merges desta sessão
+- Último run confirmado: PR #2569 via auto_merge (SHA 50ca61a6, CI Gate=success)
 
-## Unit tests (bun test)
-- NÃO executado (limite de tempo/tokens — container lento)
+## Unit Tests
+- Status: ✅ PASSANDO
+- Evidência: `🧪 Unit Tests` passou no CI dos merges desta sessão
+- Flake documentado: ContactFormRecalculoCorrida.test.tsx:189 — confirmado flake (não se reproduz no SHA seguinte), não regressão
+
+## E2E Tests
+- Status: ✅ PASSANDO
+- Evidência: CI Gate success em SHA 50ca61a6 (e2e-logado após fix GR-029 em #2569)
+
+## Migrations (supabase/migrations/)
+- Arquivos válidos: 1073 .sql files
+- Paridade com ledger: validada em CI (Contrato DB offline check)
+
+## Baseline de regressão
+Para medir regressão das PRs, o critério é:
+- TypeCheck: novas=0 vs baseline=93 (ratchet)
+- Lint: novas=0 vs baseline=820 (ratchet)
+- Build: passando
+- Unit tests: passando (sem novos failures)
+- Migrations: paridade arquivos↔ledger OK
