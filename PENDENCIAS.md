@@ -1,35 +1,71 @@
 # PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-11-01 por sessão `claude/trusting-albattani-9x3ipg`._
+_Atualizado em 2026-11-02 por sessão `claude/trusting-albattani-9x3ipg`._
 
 ---
 
 ## 1. DB Live Guard — falhas em contrato vivo (investigação pendente)
 
-**Último run com falha:** [41162077590](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162077590)  
-**Head SHA:** vários (pós-merge de `main`)
+**Último run com falha:** [41385849215](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41385849215)  
+**Head SHA:** `8ba0b4361290f37171fd6ec27012a46665ca5b7e` (main pós PR #2551)  
+**Artifact de evidências:** `13115417258` (arquivo `step-migrations.log`)
 
-**O que falha:**
-- Step "Consolidar veredito do contrato vivo" — artifact `13027601857` contém evidências
-- Compara o estado do banco de produção com artefatos do repositório (types.ts, schema-catalog.json,
-  schema-manifest.json)
+**Progresso desde run anterior (41162077590):**
+- ✅ **ACL/mcp_exec** — RESOLVIDO (step 10 passa)
+- ✅ **runtime-config** — RESOLVIDO (step 22 passa)
 
-**Falhas identificadas no run 41162077590 (3 contratos reais, não deriva transitória):**
-1. **migrations/ledger** — diferença entre migrations no disco (`supabase/migrations/`) e entradas no ledger do banco
-2. **ACL/mcp_exec** — contrato de permissão `mcp_exec` não satisfeito
-3. **configuração runtime** — `runtime-config` com divergência detectada
+**Falhas remanescentes no run 41385849215 (lidas do artifact `step-migrations.log`):**
 
-**Por que não foi corrigido:** DB Live Guard conecta ao banco de produção e exige análise
-das evidências no artifact `db-live-evidence-{run_id}-1` para diagnosticar cada divergência.
-Requer acesso ao banco de produção para comparação e possível migration corretiva. Este
-workflow **não é um required check** — não bloqueia merges na `main`.
+**A. statements "prosa pura" no ledger** (5 migrations — necessitam UPDATE no ledger):
+- `20261016102337` — `get_team_birthdays` — statements são só descrição em prosa
+- `20261016102541` — `delivery_stats_rpc` — idem
+- `20261016105108` — `n011_storage_drop_duplicate_avatar_policies` — idem
+- `20261016112802` — `whisper_audio_path` — idem
+- `20261016115413` — `realtime_publication_agent_achievements` — idem
+
+**B. nome divergente** (1 migration — arquivo vs ledger):
+- `20261016130000` — arquivo=`revert_wrong_security_fixes`; ledger=`revert_wrong_security_fixes_passkey_search_events_purge_gmail`
+
+**C. conteúdo SQL divergente** (6 migrations — o arquivo no repo difere do que foi aplicado em produção):
+- `20261016180000` — `set_trusted_domains_guc`
+- `20261016190000` — `fix_security_definer_search_path_batch2`
+- `20261016220000` — `fix_domain_case_sensitivity`
+- `20261026190300` — `saved_filters_inbox_limites`
+- `20261031100000` — `copilot_fases13_15_tabelas`
+- `20261031130000` — `search_event_rpc`
+
+**Cascatas** (consequência direta das falhas acima): paridade tripla, catálogo, manifesto, types.ts, invariantes gerais.
+
+**Por que não foi corrigido:** DB Live Guard conecta ao banco de produção. As correções de tipo A
+(prosa pura) precisam de `UPDATE` no ledger com o SQL real de cada arquivo via `register-migration.mjs`.
+As de tipo B (nome divergente) e tipo C (SQL divergente) precisam de investigação: o arquivo no repo
+diverge do que está em produção — pode indicar arquivo editado pós-apply ou apply de versão diferente.
+Este workflow **não é um required check** — não bloqueia merges na `main`.
 
 **O que o Joaquim precisa fazer:**
-1. Disparar manualmente o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`
-2. Se falhar, os logs do artifact `db-live-evidence-{run_id}-1` mostrarão qual passo tem diferença real
-3. Se o passo "Verificar frescor do types.ts" falhar: disparar `workflow_dispatch` do `types-sync.yml` **na branch `main`**
-4. Se o passo "Comparar migrations com schema_migrations" falhar: verificar se há migration
-   no disco (em `supabase/migrations/`) sem entrada no ledger
+
+**Para falhas tipo A (prosa pura) — UPDATE no ledger:**
+Para cada migration da lista A, rodar via MCP `SUPABASE - ZAPP WEB V2 - MCP`:
+```sql
+-- Exemplo para 20261016102337 (adaptar para cada):
+UPDATE supabase_migrations.schema_migrations
+SET statements = ARRAY[<SQL_REAL_DO_ARQUIVO>]
+WHERE version = '20261016102337' AND statements IS NOT NULL
+  AND array_length(statements,1) = 1
+  AND statements[1] NOT LIKE '%CREATE%' -- confirmar que é prosa
+RETURNING version, name;
+```
+Usar `node scripts/db-audit/register-migration.mjs supabase/migrations/<arquivo>.sql` para gerar o SQL exato.
+
+**Para falha tipo B (nome divergente):**
+Verificar se o arquivo `20261016130000_revert_wrong_security_fixes.sql` deve ser renomeado para
+incluir `_passkey_search_events_purge_gmail` ou se o ledger precisa ter o nome atualizado.
+
+**Para falhas tipo C (SQL divergente):**
+Para cada uma, comparar o conteúdo real aplicado (via `pg_get_functiondef` ou similar) com o
+arquivo no repo. Decidir qual é a fonte de verdade e reconciliar conforme regra 7 do CLAUDE.md.
+
+**Referência:** `docs/MIGRATIONS.md` seção 7 — procedimento de reconciliação.
 
 ---
 
