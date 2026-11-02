@@ -105,12 +105,12 @@ const AUTH_LOGIN_REGION = 'us-west-2';
  * este limite um banco indisponivel deixa a promise pendurada para sempre: o
  * usuario fica no spinner ("Entrando...") sem erro e sem resposta.
  *
- * 12s e ~100x o p50 medido (101ms com a regiao fixada) — nao corta login
- * legitimo em rede ruim e ainda assim limita a espera. O resultado da expiracao
- * entra no caminho de `unavailable`, entao a falha continua FECHADA (nunca cai
- * no GoTrue direto) e o lockout segue sendo aplicado pela Edge.
+ * 30s cobre cold starts do Deno (medidos em 15-25s); ~300x o p50 em condicoes
+ * normais (101ms com a regiao fixada) — nao corta login legitimo em rede ruim.
+ * O resultado da expiracao entra no caminho de `unavailable`, entao a falha
+ * continua FECHADA (nunca cai no GoTrue direto) e o lockout segue sendo aplicado.
  */
-export const AUTH_LOGIN_TIMEOUT_MS = 12_000;
+export const AUTH_LOGIN_TIMEOUT_MS = 30_000;
 
 function parseLock(body: Record<string, unknown>): ServerLoginLock {
   if (typeof body.isLocked !== 'boolean') return NO_LOCK;
