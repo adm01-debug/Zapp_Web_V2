@@ -1,31 +1,14 @@
 # PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-11-02T02:15Z por sessão `GF-001..GF-056`._
+_Atualizado em 2026-11-02T03:18Z — PR #2551 mergeado automaticamente._
 
 ---
 
-## 0. GitHub Actions — runners bloqueados (problema de plataforma)
+## 0. GitHub Actions — runners bloqueados ✅ RESOLVIDO (2026-11-02T03:17Z)
 
-**Estado:** Desde ~2026-11-02T01:40Z todos os runs do repositório entram em `queued` e **nunca progridem** (`updated_at` idêntico ao `created_at`). Afeta CI/CD Pipeline, DB Guard e qualquer outro workflow.
+**Estado:** Os runners se recuperaram. PR #2551 passou nos required checks (`🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate`) e foi mergeado automaticamente (squash) às 03:17:51Z no SHA `587ec25f8cb25a42c1ba1cda4e4e8a09fb2f9ac6` da `main`.
 
-**Sintoma:** `status: "queued"`, `updated_at == created_at` em todos os runs criados após 01:40Z.
-
-**Impacto direto:** PR #2551 (`claude/hopeful-knuth-4brqti`) não consegue ter os required checks (`🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate`) aprovados. Auto-merge está ativo mas bloqueado.
-
-**Tentativas já feitas (sem sucesso):**
-- 8+ runs via PR event (`pull_request` trigger)
-- 3 runs via `workflow_dispatch` (grupos de concorrência diferentes)
-- Múltiplos commits de retry
-- Force-cancel + novo dispatch
-
-**O que o Joaquim precisa fazer:**
-1. Verificar https://www.githubstatus.com — pode haver incidente ativo de Actions
-2. Acessar Settings → Billing para verificar se o limite de minutos de Actions foi atingido
-3. Quando a plataforma se recuperar: o PR #2551 tem `auto_merge` habilitado — o merge acontecerá automaticamente quando os checks passarem (sem ação adicional necessária)
-4. Alternativamente: mergear manualmente o PR #2551 com squash — o código já está correto, o CI é o único bloqueio
-
-**Branch:** `claude/hopeful-knuth-4brqti` → PR [#2551](https://github.com/adm01-debug/Zapp_Web_V2/pull/2551)  
-**SHA atual:** `171ca20ac4d09f30b23cf8bf27c51d90aa5810e7`
+**Histórico:** Entre ~01:40Z e ~03:05Z os runners ficaram bloqueados (`status: "queued"`, `updated_at == created_at`). O problema foi de plataforma GitHub — se repetir, verificar https://www.githubstatus.com e Settings → Billing.
 
 ---
 
@@ -120,7 +103,7 @@ gerado não é o que o `deno check` procura. Este workflow **não é um required
   no replay zerado, `20261030145126` cria as políticas antes desta, causando `duplicate_object`.
   Efeito no canônico: nenhum — todos os objetos existem.
 
-**Estado:** Aguardando merge do PR #2551 para entrar na `main`.
+**Estado:** ✅ RESOLVIDO — PR #2551 mergeado em 2026-11-02T03:17Z, SHA `587ec25f` na `main`.
 
 ---
 
@@ -204,7 +187,7 @@ esse workflows nunca entraram na main. Não há ação necessária.
 
 ---
 
-## 7. Branch de trabalho GF — mudança de nome
+## 7. Branch de trabalho GF — mudança de nome ✅ RESOLVIDO
 
 **Branch original** do enunciado da tarefa: `claude/trusting-albattani-9x3ipg` (PR #2532).  
 **Branch efetiva**: `claude/hopeful-knuth-4brqti` (PR #2551 — "fix(ci): branch-hygiene-audit timeout no step KPI (GF-010)").
@@ -213,8 +196,7 @@ esse workflows nunca entraram na main. Não há ação necessária.
 O trabalho GF foi continuado na branch `claude/hopeful-knuth-4brqti`, que contém todos os
 commits das 56 tarefas GF-001..GF-056.
 
-**Estado:** PR #2551 aberta com auto-merge ativo. Quando o CI (Build, TypeCheck, CI Gate) passar
-e o merge ocorrer, as 56 tarefas estarão na `main`.
+**Estado:** ✅ RESOLVIDO — PR #2551 mergeada em 2026-11-02T03:17Z. As 56 tarefas GF-001..GF-056 estão na `main` (SHA `587ec25f`).
 
 ---
 
