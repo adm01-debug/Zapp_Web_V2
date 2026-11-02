@@ -10,8 +10,8 @@
 set -euo pipefail
 
 MIGRATION="supabase/migrations/20261010063527_user_sessions_expire_diario.sql"
-CNAME="usess-expire-$$-$(date +%ts)"
-PG_IMG="${N008_POSTGRES_IMAGE:-postgres:17-alpine}"
+CNAME="usess-expire-$$-$(date +%s)"
+PG_IMG="${N008_POSTGRES_IMAGE:-${POSTGRES_TEST_IMAGE:-postgres:17-alpine}}"
 PSQL=(docker exec -i "$CNAME" psql -v ON_ERROR_STOP=1 -q -U postgres -d postgres)
 
 cleanup() { docker rm -f "$CNAME" >/dev/null 2>&1 || true; }
@@ -50,7 +50,7 @@ insert into public.user_sessions (id, user_id, expires_at) values
   ('22222222-2222-4222-8222-222222222222', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', now() + interval '2 hours');
 SQL
 
-if "${PSQLR@]}" -c "select public.expire_user_sessions()" >/dev/null 2>&1; then
+if "${PSQL[@]}" -c "select public.expire_user_sessions()" >/dev/null 2>&1; then
   echo "[FALHOU] expire_user_sessions ja existia antes da migration"; exit 1
 fi
 echo "[OK] RED: expire_user_sessions nao existia antes"
@@ -62,7 +62,7 @@ N="$("${PSQL[@]}" -Atc "set role service_role; select public.expire_user_session
 [ "$N" = "1" ] || { echo "[FALHOU] deveria encerrar 1 sessao, encerrou $N"; exit 1; }
 VENC="$("${PSQL[@]}" -Atc "select is_active::text || ',' || (ended_at is not null)::text from public.user_sessions where id='11111111-1111-4111-8111-111111111111'")"
 [ "$VENC" = "false,true" ] || { echo "[FALHOU] sessao vencida: $VENC"; exit 1; }
-VALI="$("${PSQLR@]}" -Atc "select is_active::text || ',' || (ended_at is null)::text from public.user_sessions where id='22222222-2222-4222-8222-222222222222'")"
+VALI="$("${PSQL[@]}" -Atc "select is_active::text || ',' || (ended_at is null)::text from public.user_sessions where id='22222222-2222-4222-8222-222222222222'")"
 [ "$VALI" = "true,true" ] || { echo "[FALHOU] sessao valida mudou: $VALI"; exit 1; }
 echo "[OK] GREEN: vencida encerrada com ended_at; valida intacta"
 
@@ -71,15 +71,15 @@ JOBS="$("${PSQL[@]}" -Atc "select count(*) || ',' || min(schedule) from cron.job
 echo "[OK] GREEN: 1 job diario no pg_cron (stub), sem duplicar ao reaplicar"
 
 for R in authenticated anon; do
-  if "${PSQLR@]}" -Atc "BEGIN; SET LOCAL ROLE $R; SET LOCAL request.jwt.claims TO '{\"sub\":\"00000000-0000-4000-8000-000000000000\",\"role\":\"$R\"}'; SELECT pg3Ð3 expire_user_sessions(); ROLLBACK;" >/dev/null 2>&1; then
+  if "${PSQL[@]}" -Atc "BEGIN; SET LOCAL ROLE $R; SET LOCAL request.jwt.claims TO '{\"sub\":\"00000000-0000-4000-8000-000000000000\",\"role\":\"$R\"}'; SELECT public.expire_user_sessions(); ROLLBACK;" >/dev/null 2>&1; then
     echo "[FALHOU] $R executou expire_user_sessions"; exit 1
   fi
 done
-echo "[OK] privilegio: authenticated/anon negados (SET LOCAL ROLE em transacoe, com request.jwt.claims)"
+echo "[OK] privilegio: authenticated/anon negados (SET LOCAL ROLE em transacao, com request.jwt.claims)"
 
 ROLLBACK="$(sed -n 's/^-- Rollback: //p' "$MIGRATION" | head -1)"
-"${PSQLR@]}" -c "$ROLLBACK"
-LEFT="$("${PSQLR@]}" -Atc "select (select count(*) from cron.job) + (select count(*) from pg_proc where proname='expire_user_sessions')")"
+"${PSQL[@]}" -c "$ROLLBACK"
+LEFT="$("${PSQL[@]}" -Atc "select (select count(*) from cron.job) + (select count(*) from pg_proc where proname='expire_user_sessions')")"
 [ "$LEFT" = "0" ] || { echo "[FALHOU] rollback deixou resto: $LEFT"; exit 1; }
 echo "[OK] rollback remove funcao e job"
 echo "[PASSOU] user-sessions-expire"
