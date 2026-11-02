@@ -83,40 +83,6 @@ gerado não é o que o `deno check` procura. Este workflow **não é um required
 
 ---
 
-## 6. Workflows "fantasma" — GF-032 (24 templates sem arquivo no repo)
-
-**O que são:** workflows que aparecem no histórico do GitHub Actions mas **não têm arquivo** em `.github/workflows/`. São originados de branches `adm01-debug-patch-*` criadas pelo Joaquim via interface do GitHub para testar templates prontos (Bearer Security Scanning, Hadolint Docker linting, Super-Linter, main.yml e outros).
-
-**Quantidade:** ~25 runs fantasma identificados no inventário de 2026-10-31.
-
-**Por que não foi corrigido:** Os runs históricos são apenas histórico — não consomem quotas ativas nem afetam required checks. A decisão de incorporar os templates ao repositório é do Joaquim (cada template precisa ser avaliado quanto a fit com o projeto, custo de manutenção e possível conflito com checks existentes).
-
-**O que o Joaquim precisa fazer:**
-1. Revisar quais templates os patches adicionavam (Bearer, Hadolint, super-linter, etc.)
-2. Para cada template desejado: criar o arquivo YAML em `.github/workflows/`, abrir PR e passar pelos required checks
-3. Os runs históricos ficam no GitHub Actions como orphans — sem impacto; podem ser ignorados
-4. Não há ação de limpeza necessária (apagar runs históricos não remove os runs e não agrega valor)
-
----
-
-## 7. Branches `adm01-debug-patch-*` — GF-033..056 (24 branches, já deletadas)
-
-**Estado em 2026-11-02:** todas as 24 branches foram **verificadas como já deletadas** — nenhuma encontrada nas 300+ branches listadas via API em 2026-11-02. As branches são:
-`adm01-debug-patch-1`, `adm01-debug-patch-1-2` a `adm01-debug-patch-1-8`,
-`adm01-debug-patch-2`, `adm01-debug-patch-2-1` a `adm01-debug-patch-2-12`,
-`adm01-debug-patch-3`, `adm01-debug-patch-3-2`, `adm01-debug-patch-4`.
-
-**O que continham:** templates de workflows do GitHub (adicionados via interface do GitHub). Eram a origem dos ~25 workflows "fantasma" documentados na seção 6 acima.
-
-**Conteúdo perdido:** como as branches foram deletadas sem PR mergeada, o conteúdo dos templates não está na `main`. Se algum template tiver valor, precisa ser recriado manualmente (ver seção 6).
-
-**O que o Joaquim precisa fazer:**
-1. Decidir se quer recriar algum dos templates (Bearer, Hadolint, super-linter, etc.)
-2. Se sim: criar o arquivo diretamente em `.github/workflows/` e abrir PR
-3. Não há recuperação automática das branches — conteúdo é perdido
-
----
-
 ## 4. DB Migrate — 3 versões no ledger sem arquivo no disco
 
 **Versões afetadas (remote_only):** encontradas pelo step "Paridade arquivos↔ledger" do
