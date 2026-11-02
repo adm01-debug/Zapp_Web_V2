@@ -134,9 +134,8 @@ globalThis.fetch = ((input: unknown, init?: unknown) => {
 // O virtual-core 3.19 mede o contêiner de rolagem por `clientHeight` e os
 // itens por `offsetHeight`. O jsdom retorna zeros para ambos, fazendo o
 // virtualizador nao renderizar nenhum item. A correcao:
-//   • getBoundingClientRect: le style.height do elemento (itens tem style
-//     inline do virtualizador = estimateSize); para elementos sem style.height
-//     retorna 600 (suficiente para qualquer contêiner de teste).
+//   • getBoundingClientRect: retorna 600 de altura para qualquer elemento —
+//     suficiente para o contêiner de teste ser visto como viewport não-nulo.
 //   • clientHeight / clientWidth: retorna 600/800 para todo HTMLElement —
 //     o contêiner de rolagem usa clientHeight para calcular o viewport.
 //   • offsetHeight: le style.height do elemento — itens com style.height
@@ -146,13 +145,12 @@ globalThis.fetch = ((input: unknown, init?: unknown) => {
 // Testes que precisam de valores especificos sobrescrevem via vi.spyOn ou
 // Object.defineProperty com configurable: true.
 // ==========================================================================
-Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
   configurable: true,
-  value: function (this: Element) {
-    const styleEl = this as HTMLElement;
-    const styleHeight = styleEl.style ? parseInt(styleEl.style.height, 10) : NaN;
-    const h = Number.isFinite(styleHeight) && styleHeight > 0 ? styleHeight : 600;
-    return { width: 800, height: h, top: 0, left: 0, right: 800, bottom: h, x: 0, y: 0, toJSON: () => ({}) };
+  // Sem `writable`, `elemento.getBoundingClientRect = ...` falha em modo estrito.
+  writable: true,
+  value: function () {
+    return { width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) };
   },
 });
 
