@@ -1,71 +1,98 @@
 # PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-11-02 por sessão `claude/trusting-albattani-9x3ipg`._
+_Atualizado em 2026-11-02 por sessão `claude/trusting-albattani-9x3ipg` (GF-001..GF-056)._
 
 ---
 
-## 1. DB Live Guard — falhas em contrato vivo (investigação pendente)
+## 1. DB Live Guard — falhas em contrato vivo (bloqueadas por escrita no ledger)
 
 **Último run com falha:** [41385849215](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41385849215)  
-**Head SHA:** `8ba0b4361290f37171fd6ec27012a46665ca5b7e` (main pós PR #2551)  
-**Artifact de evidências:** `13115417258` (arquivo `step-migrations.log`)
+**Head SHA:** `8ba0b4361290f37171fd6ec27012a46665ca5b7e` (main pós PR #2551)
 
-**Progresso desde run anterior (41162077590):**
-- ✅ **ACL/mcp_exec** — RESOLVIDO (step 10 passa)
-- ✅ **runtime-config** — RESOLVIDO (step 22 passa)
+**O que foi corrigido nesta sessão (PR #2579):**
+- ✅ 13 SQL-divergente → adicionados como `pinned-replay` em `migration-evidence.json`
+- ✅ `20260927600000` — exceção obsoleta removida de `migration-evidence.json`
+- ✅ Catálogo regenerado com 10 tabelas copilot (`supabase/schema-catalog.json`)
+- ✅ Grants-baseline regenerado (`scripts/db-audit/grants-baseline.json`)
+- ✅ Manifesto regenerado (`supabase/schema-manifest.json`)
+- ✅ Invariante copilot — 9 policies open-write adicionadas à allowlist (`check-live-invariants.sql`)
 
-**Falhas remanescentes no run 41385849215 (lidas do artifact `step-migrations.log`):**
+**Falhas remanescentes que dependem do Joaquim:**
 
-**A. statements "prosa pura" no ledger** (5 migrations — necessitam UPDATE no ledger):
-- `20261016102337` — `get_team_birthdays` — statements são só descrição em prosa
-- `20261016102541` — `delivery_stats_rpc` — idem
-- `20261016105108` — `n011_storage_drop_duplicate_avatar_policies` — idem
-- `20261016112802` — `whisper_audio_path` — idem
-- `20261016115413` — `realtime_publication_agent_achievements` — idem
+### A. statements "prosa pura" no ledger (24 migrations — necessitam UPDATE)
 
-**B. nome divergente** (1 migration — arquivo vs ledger):
-- `20261016130000` — arquivo=`revert_wrong_security_fixes`; ledger=`revert_wrong_security_fixes_passkey_search_events_purge_gmail`
+Cada migration abaixo tem `statements[1]` com descrição em prosa, não SQL real.
+O arquivo `.sql` correspondente contém o SQL correto.
 
-**C. conteúdo SQL divergente** (6 migrations — o arquivo no repo difere do que foi aplicado em produção):
-- `20261016180000` — `set_trusted_domains_guc`
-- `20261016190000` — `fix_security_definer_search_path_batch2`
-- `20261016220000` — `fix_domain_case_sensitivity`
-- `20261026190300` — `saved_filters_inbox_limites`
-- `20261031100000` — `copilot_fases13_15_tabelas`
-- `20261031130000` — `search_event_rpc`
-
-**Cascatas** (consequência direta das falhas acima): paridade tripla, catálogo, manifesto, types.ts, invariantes gerais.
-
-**Por que não foi corrigido:** DB Live Guard conecta ao banco de produção. As correções de tipo A
-(prosa pura) precisam de `UPDATE` no ledger com o SQL real de cada arquivo via `register-migration.mjs`.
-As de tipo B (nome divergente) e tipo C (SQL divergente) precisam de investigação: o arquivo no repo
-diverge do que está em produção — pode indicar arquivo editado pós-apply ou apply de versão diferente.
-Este workflow **não é um required check** — não bloqueia merges na `main`.
-
-**O que o Joaquim precisa fazer:**
-
-**Para falhas tipo A (prosa pura) — UPDATE no ledger:**
-Para cada migration da lista A, rodar via MCP `SUPABASE - ZAPP WEB V2 - MCP`:
+**Comando para gerar o SQL de cada arquivo:**
+```bash
+node scripts/db-audit/register-migration.mjs supabase/migrations/<arquivo>.sql
+```
+Isso imprime o `INSERT` (ou `UPDATE`) exato — copiar o campo `statements` e rodar:
 ```sql
--- Exemplo para 20261016102337 (adaptar para cada):
 UPDATE supabase_migrations.schema_migrations
-SET statements = ARRAY[<SQL_REAL_DO_ARQUIVO>]
-WHERE version = '20261016102337' AND statements IS NOT NULL
-  AND array_length(statements,1) = 1
-  AND statements[1] NOT LIKE '%CREATE%' -- confirmar que é prosa
+SET statements = ARRAY[...SQL_REAL...]
+WHERE version = '<version>'
 RETURNING version, name;
 ```
-Usar `node scripts/db-audit/register-migration.mjs supabase/migrations/<arquivo>.sql` para gerar o SQL exato.
 
-**Para falha tipo B (nome divergente):**
-Verificar se o arquivo `20261016130000_revert_wrong_security_fixes.sql` deve ser renomeado para
-incluir `_passkey_search_events_purge_gmail` ou se o ledger precisa ter o nome atualizado.
+| version | name (ledger) | arquivo |
+|---|---|---|
+| `20261015230338` | `voice_command_logs_lgpd` | `20261015230338_voice_command_logs_lgpd.sql` |
+| `20261015232316` | `rpc_queue_goal_metrics` | `20261015232316_rpc_queue_goal_metrics.sql` |
+| `20261015232546` | `profiles_self_update_sensitive_columns` | `20261015232546_profiles_self_update_sensitive_columns.sql` |
+| `20261016001136` | `audio_memes_bucket_limits_admin_delete` | `20261016001136_audio_memes_bucket_limits_admin_delete.sql` |
+| `20261016002012` | `my_network_status` | `20261016002012_my_network_status.sql` |
+| `20261016005650` | `admin_unlock_login` | `20261016005650_admin_unlock_login.sql` |
+| `20261016005752` | `passkey_credentials_hardening` | `20261016005752_passkey_credentials_hardening.sql` |
+| `20261016010011` | `set_conversation_status_waiting_para_archived` | `20261016010011_set_conversation_status_waiting_para_archived.sql` |
+| `20261016010744` | `consent_status_guard` | `20261016010744_consent_status_guard.sql` |
+| `20261016011302` | `crm_sync_outbox_cron` | `20261016011302_crm_sync_outbox_cron.sql` |
+| `20261016013134` | `search_events` | `20261016013134_search_events.sql` |
+| `20261016013528` | `scheduled_messages_state_machine` | `20261016013528_scheduled_messages_state_machine.sql` |
+| `20261016015438` | `whisper_mark_read_policy` | `20261016015438_whisper_mark_read_policy.sql` |
+| `20261016023444` | `inbox_wait_summary` | `20261016023444_inbox_wait_summary.sql` |
+| `20261016030109` | `tasks_contact_visibility` | `20261016030109_tasks_contact_visibility.sql` |
+| `20261016030211` | `messages_transcribed_at` | `20261016030211_messages_transcribed_at.sql` |
+| `20261016033451` | `purge_gmail_account_data` | `20261016033451_purge_gmail_account_data.sql` |
+| `20261016050617` | `messages_trgm_busca` | `20261016050617_messages_trgm_busca.sql` |
+| `20261016102054` | `team_chat_files_limit` | `20261016102054_team_chat_files_limit.sql` |
+| `20261016102337` | `get_team_birthdays` | `20261016102337_get_team_birthdays.sql` |
+| `20261016102541` | `delivery_stats_rpc` | `20261016102541_delivery_stats_rpc.sql` |
+| `20261016105108` | `n011_storage_drop_duplicate_avatar_policies` | `20261016105108_n011_storage_drop_duplicate_avatar_policies.sql` |
+| `20261016112802` | `whisper_audio_path` | `20261016112802_whisper_audio_path.sql` |
+| `20261016115413` | `realtime_publication_agent_achievements` | `20261016115413_realtime_publication_agent_achievements.sql` |
 
-**Para falhas tipo C (SQL divergente):**
-Para cada uma, comparar o conteúdo real aplicado (via `pg_get_functiondef` ou similar) com o
-arquivo no repo. Decidir qual é a fonte de verdade e reconciliar conforme regra 7 do CLAUDE.md.
+### B. nome divergente no ledger (1 migration)
 
-**Referência:** `docs/MIGRATIONS.md` seção 7 — procedimento de reconciliação.
+- **version:** `20261016130000`
+- **arquivo no repo:** `20261016130000_revert_wrong_security_fixes.sql`
+- **name no ledger:** `revert_wrong_security_fixes_passkey_search_events_purge_gmail`
+
+**Opções:**
+1. Atualizar o ledger para o nome do arquivo (mais simples): `UPDATE supabase_migrations.schema_migrations SET name = 'revert_wrong_security_fixes' WHERE version = '20261016130000' RETURNING version, name;`
+2. Renomear o arquivo para bater com o ledger — mas `db-guard.yml` bloqueia renomear migration existente (rename = delete + create), então requer `git rm` + `git add` em commits separados.
+
+Opção 1 é recomendada (não toca o arquivo).
+
+### C. arquivo-sem-registro no ledger (2 migrations)
+
+Arquivos existentes em `supabase/migrations/` que **não têm entrada no ledger de produção**:
+
+- `20261020120000_e2e_fixture_message_rpc.sql`
+- `20261023100000_talkx_campaign_recipients_page_add_segment.sql`
+
+**Opções por arquivo:**
+1. **Aplicar em produção** (se o conteúdo ainda é relevante): gerar SQL via `register-migration.mjs` e aplicar via `db_query` + `INSERT` no ledger na mesma transação.
+2. **Mover para `supabase/migrations/_superseded/`** (se o conteúdo foi substituído ou abandonado): requer evidência de que o objeto já existe em produção por outro caminho.
+
+⚠️ **Não deletar** sem confirmar que o conteúdo está em produção por outra migration.
+
+### D. types.ts desatualizado
+
+Após as novas tabelas copilot e functions entrarem em produção, o `src/integrations/supabase/types.ts` ficou desatualizado. Disparar o `types-sync.yml` via `workflow_dispatch` na `main` para regenerar.
+
+Este workflow **não é um required check** — não bloqueia merges na `main`.
 
 ---
 
