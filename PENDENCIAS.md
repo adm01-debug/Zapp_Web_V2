@@ -83,4 +83,55 @@ gerado não é o que o `deno check` procura. Este workflow **não é um required
 
 ---
 
+## 4. DB Migrate — 3 versões no ledger sem arquivo no disco
+
+**Versões afetadas (remote_only):** encontradas pelo step "Paridade arquivos↔ledger" do
+`db-live-guard`. Versões que existem no ledger do banco mas não têm arquivo em `supabase/migrations/`.
+
+**Por que não foi corrigido:** Requer análise de cada versão para determinar se o arquivo foi
+deletado por engano, nunca foi commitado, ou se a migration foi aplicada manualmente sem
+passar pelo fluxo de arquivo→PR→merge. Risco de criar arquivo errado e introduzir drift.
+Este workflow **não é um required check** — não bloqueia merges na `main`.
+
+**O que o Joaquim precisa fazer:**
+1. Consultar `SELECT version, name, statements FROM supabase_migrations.schema_migrations
+   WHERE version NOT IN (SELECT regexp_replace(filename, '^(\\d{14}).*$', '\\1') FROM ...)` para listar as versões
+2. Para cada versão remote_only: decidir se o arquivo precisa ser criado (reconciliação) ou
+   se a entrada do ledger está errada (correção)
+3. Seguir CLAUDE.md §1 regra 7: o arquivo deve ter o SQL exato aplicado em produção
+
+---
+
+## 5. Congelamento de features — PR #2545 (Joaquim, 01/11/2026)
+
+**Estado:** PR #2545 (feature freeze) aberta com auto-merge desde 2026-11-01 23:36Z.
+
+**Decisão do Joaquim:** só entram correções dos 9 fluxos críticos de `docs/PRONTO_PRODUCAO.md`,
+CI que impede verificá-los e segurança. Features novas (TalkX V4, Copiloto, a11y) aguardam
+até os fluxos críticos estarem OK em produção.
+
+**PRs fechadas pelo congelamento (01/11/2026 ~23:48Z):**
+- PR #1930 (db-guard workflow) — branch preservada
+- PR #2426 (branch-hygiene-audit) — branch preservada
+- PR #2491 (migrations copilot fases 13-15) — branch preservada
+- PR #2513 (email navy contrast) — branch preservada
+- PR #2532 (docs GF tasks + PENDENCIAS) — branch `claude/trusting-albattani-9x3ipg` preservada
+
+**Fix pendente do db-live-guard (não qualificado para o congelamento):**
+Branch `fix/sincronizar-migrations-sql-divergente-261101-0400` criada com:
+- `supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql` — `DROP POLICY IF EXISTS`
+  adicionados para corresponder ao ledger de produção (SAME: true)
+- `scripts/db-audit/migration-evidence.json` — 4 exceções pinned-replay para migrations
+  20261016180000, 20261016190000, 20261016220000, 20261031130000 (ledger com resumo em prosa)
+Esta correção reduz 5 das falhas "SQL divergente" no db-live-guard.
+**Reabrir quando o congelamento levantar.**
+
+**O que o Joaquim precisa fazer:**
+1. Verificar se PR #2545 mergeou na main (status atual: OPEN, auto-merge habilitado)
+2. Após o freeze: os 9 fluxos críticos de `docs/PRONTO_PRODUCAO.md` devem ser verificados em produção
+3. O fluxo 2 (WhatsApp conectar) está QUEBRADO — prioridade máxima; sem ele fluxos 3 e 4 não funcionam
+4. Após o freeze: reabrir branches fechadas ou criar novas PRs para as correções pendentes
+
+---
+
 _Nota: Este arquivo deve ser atualizado quando os itens acima forem resolvidos._
