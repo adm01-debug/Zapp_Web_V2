@@ -4,7 +4,25 @@
 **SHA main no início:** `004e74a8c596959f45f61c8b0b64b30a70c1ff19`  
 **SHA main atual:** `d45033e812ba7e8338f07d8b83682ca559ec93bb` (após PR #2570)  
 **Total de PRs analisadas:** 98  
-**CI main pós-merge:** `✅ CI Gate (required check)` = **success** — run `41397424005`, completed 2026-11-02T06:20:06Z (verificado via `github_list_check_runs` na SHA `d45033e8`)  
+**CI main pós-merge (todos os 13 merges verificados individualmente):**
+
+| PR | Merge SHA | CI Gate | Run/Job | Concluído |
+|---|---|---|---|---|
+| #2283 | `6271b716` | ✅ success | job `122443305669` | 2026-10-27T20:14:28Z |
+| #2447 | `3617a2ac` | ✅ success | job `124954752604` | 2026-11-01T19:48:46Z |
+| #2482 | `3b5f8a96` | ✅ success | job `124976599067` | 2026-11-01T21:41:02Z |
+| #2547 | `3066fac0` | ✅ success | — | 2026-11-02T02:44Z |
+| #2560 | `a7a53f56` | ✅ success | — | 2026-11-02T02:57Z |
+| #2545 | `c16f3c69` | ⚠️ failure → **flake** | run `41380773345` / job `125070880679` | 2026-11-02T03:12Z |
+| #2567 | `8ba0b436` | ✅ success | — | 2026-11-02T04:15Z |
+| #2543 | `3e6ed32a` | ✅ success | — | 2026-11-02T04:40Z |
+| #2569 | `50ca61a6` | ✅ success | — | 2026-11-02T05:00Z |
+| #2522 | `4b5c6e79` | ✅ success | — | 2026-11-02T05:31Z |
+| #2549 | `dfef2487` | ✅ success | — | 2026-11-02T05:47Z |
+| #2565 | `ac04c5c0` | ✅ success | — | 2026-11-02T06:02Z |
+| #2570 | `d45033e8` | ✅ success | job `41397424005` | 2026-11-02T06:20:06Z |
+
+**Nota sobre SHA `c16f3c69` (PR #2545):** CI Gate = failure no job `🧪 Unit Tests (1/3)` — teste `src/components/contacts/__tests__/ContactFormRecalculoCorrida.test.tsx:189` falhou. Confirmado **flake documentado** em `analise-prs/baseline/BASELINE.md:26` ("confirmado flake, não se reproduz no SHA seguinte"). O SHA seguinte `8ba0b436` (PR #2567) passou com CI Gate = success, confirmando que não houve regressão introduzida pelo PR #2545.  
 
 ---
 
