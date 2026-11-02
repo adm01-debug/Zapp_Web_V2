@@ -99,8 +99,8 @@
       "motivo": "contém 3 migrations RLS sem testes Postgres + 12 arquivos vs título diz 2; BLOQUEADO_RLS_SEM_TESTE; auto_merge desabilitado 2026-11-02"
     }
   ],
-  "status": "analise_completa_94_prs_revisado_07",
-  "nota": "2026-11-02T07:00Z: revisão 7ª sessão. #2545 mergeou (main=c16f3c69a9). Required checks atualizados para 3: Build+TypeCheck+CI Gate. Total: 94 PRs. Abertas: 26 (12 AGUARDANDO_CI + 1 AGUARDANDO_CI_APOS_UPDATE + 1 BLOQUEADO_CONFLITO + 5 DRAFT_SKIP + 2 BLOQUEADO_AGUARDANDO_APROVACAO + 1 BLOQUEADO_RLS_SEM_TESTE + 1 BLOQUEADO_DDL_WORKFLOW + 1 BLOQUEADO_FEATURE_FREEZE + 1 BLOQUEADO_DECISAO_HUMANA). FECHADAS sem merge: 63. MERGEADAS total: 6.",
+  "status": "analise_completa_94_prs_revisado_08",
+  "nota": "2026-11-02T07:30Z: revisão 8ª sessão. #2526/#2533/#2542 viraram dirty (mergeable_state=dirty) após main avançar — movidos para BLOQUEADO_CONFLITO (total 5). #2494 atualizou HEAD para ef3c4ba8. Abertas restantes: 23 (6 AGUARDANDO_CI + 1 AGUARDANDO_CI_APOS_UPDATE + 5 BLOQUEADO_CONFLITO + 5 DRAFT_SKIP + 2 BLOQUEADO_AGUARDANDO_APROVACAO + 1 BLOQUEADO_RLS_SEM_TESTE + 1 BLOQUEADO_DDL_WORKFLOW + 1 BLOQUEADO_FEATURE_FREEZE + 1 BLOQUEADO_DECISAO_HUMANA). FECHADAS sem merge: 65. MERGEADAS total: 6.",
   "verdicts": {
     "1930": "FECHADA_SEM_MERGE",
     "1997": "FECHADA_SEM_MERGE",
@@ -172,11 +172,11 @@
     "2504": "FECHADA_SEM_MERGE",
     "2505": "FECHADA_SEM_MERGE",
     "2522": "AGUARDANDO_CI",
-    "2526": "AGUARDANDO_CI",
-    "2533": "AGUARDANDO_CI",
+    "2526": "BLOQUEADO_CONFLITO",
+    "2533": "BLOQUEADO_CONFLITO",
     "2536": "BLOQUEADO_CONFLITO",
     "2539": "DRAFT_SKIP",
-    "2542": "AGUARDANDO_CI",
+    "2542": "BLOQUEADO_CONFLITO",
     "2543": "AGUARDANDO_CI",
     "2545": "MERGEADA",
     "2547": "MERGEADA",
@@ -203,12 +203,12 @@
     "BLOQUEADO_AGUARDANDO_APROVACAO": 2,
     "AGUARDANDO_CI_APOS_UPDATE": 1,
     "BLOQUEADO_DDL_WORKFLOW": 1,
-    "AGUARDANDO_CI": 9,
+    "AGUARDANDO_CI": 6,
     "DRAFT_SKIP": 5,
     "BLOQUEADO_RLS_SEM_TESTE": 1,
     "BLOQUEADO_FEATURE_FREEZE": 1,
     "BLOQUEADO_DECISAO_HUMANA": 1,
-    "BLOQUEADO_CONFLITO": 2,
+    "BLOQUEADO_CONFLITO": 5,
     "TOTAL": 94
   }
 }

@@ -69,11 +69,11 @@ numero,titulo,veredito,auto_merge,arquivos,criada_em
 2504,,FECHADA_SEM_MERGE,,,
 2505,,FECHADA_SEM_MERGE,,,
 2522,fix(e2e): aguarda teclado visível antes do primeiro clique — Firefox GR-012,AGUARDANDO_CI,SQUASH,0,2026-11-01T22:03:42Z
-2526,fix(ci): deno check --config + waitForAppliedTheme corrigem deploy-functions e E2E webkit,AGUARDANDO_CI,SQUASH,0,2026-11-01T22:24:56Z
-2533,chore: arquivo de reconciliação migration 20261030145126 (copilot_fases13_15_tabelas),AGUARDANDO_CI,SQUASH,0,2026-11-01T22:50:47Z
+2526,fix(ci): deno check --config + waitForAppliedTheme corrigem deploy-functions e E2E webkit,BLOQUEADO_CONFLITO,SQUASH,0,2026-11-01T22:24:56Z
+2533,chore: arquivo de reconciliação migration 20261030145126 (copilot_fases13_15_tabelas),BLOQUEADO_CONFLITO,SQUASH,0,2026-11-01T22:50:47Z
 2536,fix(e2e): workers sempre 2 — elimina timeout do Email fixture no CI (GR-016),BLOQUEADO_CONFLITO,SQUASH,0,2026-11-01T22:56:54Z
 2539,"fix: reconcilia migrations 20261026 — arquivo 240300, replay-known-failures, TC-009",DRAFT_SKIP,,0,2026-11-01T23:20:12Z
-2542,fix: N-008 DB Guard — N008_POSTGRES_IMAGE ausente causava falha de pull (fix/ci-workflows),AGUARDANDO_CI,SQUASH,0,2026-11-01T23:30:30Z
+2542,fix: N-008 DB Guard — N008_POSTGRES_IMAGE ausente causava falha de pull (fix/ci-workflows),BLOQUEADO_CONFLITO,SQUASH,0,2026-11-01T23:30:30Z
 2543,fix: E2E alto-contraste e N-008 healthcheck,AGUARDANDO_CI,SQUASH,0,2026-11-01T23:31:15Z
 2545,chore: congela features e define os 9 fluxos críticos para produção,MERGEADA,SQUASH,0,2026-11-02T03:01:17Z
 2547,infra: E2E logado (grupo autenticado) com 45 min para terminar e reportar falhas,MERGEADA,SQUASH,0,2026-11-01T23:44:44Z

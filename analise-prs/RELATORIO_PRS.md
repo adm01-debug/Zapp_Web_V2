@@ -18,18 +18,15 @@ SHA main atual: `c16f3c69a9bffea1899760288d6c5d576acc2495` (após merge #2545)
 
 ---
 
-## ⏳ AGUARDANDO CI — COM auto_merge=SQUASH (9 + 1)
+## ⏳ AGUARDANDO CI — COM auto_merge=SQUASH (6 + 1)
 
 Todas mergearão automaticamente quando os required checks passarem (3 obrigatórios: `🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate`).
 
 | PR | Título | HEAD SHA |
 |----|--------|----------|
-| #2494 | chore(db): sincronizar artefatos (types-sync) | `b936b6453b848862ebf6efed6f1f453fa0812a7f` |
+| #2494 | chore(db): sincronizar artefatos (types-sync) | `ef3c4ba843255f026c7d58552fd7f2072fe06242` |
 | #2498 | fix(admin): RPC get_search_insights→search_insights | `984104a1e22cc924303055fff3ff96048d8bac6e` |
 | #2522 | fix(e2e): aguarda teclado visível — Firefox GR-012 | `737518f952999dad4f023e9eb36270bd6203ed75` |
-| #2526 | fix(ci): deno check --config + E2E webkit | `f3cccccae8189a91743b37a05723a833565023cc` |
-| #2533 | chore: migration reconciliation 20261030145126 | `2388e1ac52b22578880c3a5d6d408a4436ac16f0` |
-| #2542 | fix: N-008 DB Guard N008_POSTGRES_IMAGE | `c61cbe617f4d06b0f29cb41ddb8f4a1c03082327` |
 | #2543 | fix: E2E alto-contraste e N-008 healthcheck | `68dff679c1551472f7b5c06a0bf0855c920fc7eb` |
 | #2549 | fix: reconexão automática WhatsApp | `7742d72eb9899d131db4d053d37d7b113cc09cc8` |
 | #2557 | fix(docs): atualiza required checks no CLAUDE.md | `93cfc9d09660ba91d932554a1f2e6b782e569de6` |
@@ -41,7 +38,7 @@ Todas mergearão automaticamente quando os required checks passarem (3 obrigató
 
 | PR | HEAD SHA | Observação |
 |----|----------|------------|
-| #2494 | `b936b6453b848862ebf6efed6f1f453fa0812a7f` | CI não iniciou no novo head SHA (bot push); auto_merge=SQUASH |
+| #2494 | `ef3c4ba843255f026c7d58552fd7f2072fe06242` | bot push 2026-11-02T03:18; auto_merge=SQUASH; CI a confirmar |
 
 ---
 
@@ -50,6 +47,9 @@ Todas mergearão automaticamente quando os required checks passarem (3 obrigató
 | PR | HEAD SHA | Motivo |
 |----|----------|--------|
 | #2536 | `901357404c7cad5fcc398fdf2e66512077e16956` | fix(e2e) workers sempre 2 GR-016; dirty após #2560 mergear mesmo tema; verificar se supersedido |
+| #2542 | `c61cbe617f4d06b0f29cb41ddb8f4a1c03082327` | fix: N-008 DB Guard — dirty após main avançar; mergeable_state=dirty |
+| #2526 | `f3cccccae8189a91743b37a05723a833565023cc` | fix(ci): deno check --config + E2E webkit — dirty após main avançar; mergeable_state=dirty |
+| #2533 | `2388e1ac52b22578880c3a5d6d408a4436ac16f0` | chore: migration reconciliation 20261030145126 — dirty após main avançar; mergeable_state=dirty |
 | #2566 | `f12084606dcdd9d9d8c71605ab0235e9126431ee` | fix(ci) GR-027+GR-029 (mocks supabase + e2e-logado workflow_run); dirty — precisa resolver conflito; auto_merge=SQUASH |
 
 ---
@@ -98,9 +98,9 @@ Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Adicional
 | Veredito | Contagem |
 |----------|----------|
 | MERGEADA | 6 |
-| AGUARDANDO_CI | 9 |
+| AGUARDANDO_CI | 6 |
 | AGUARDANDO_CI_APOS_UPDATE | 1 |
-| BLOQUEADO_CONFLITO | 2 |
+| BLOQUEADO_CONFLITO | 5 |
 | DRAFT_SKIP | 5 |
 | BLOQUEADO_AGUARDANDO_APROVACAO | 2 |
 | BLOQUEADO_DDL_WORKFLOW | 1 |
