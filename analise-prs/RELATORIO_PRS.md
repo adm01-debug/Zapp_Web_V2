@@ -3,8 +3,8 @@
 **Data:** 2026-11-02  
 **main SHA no início:** `f6ed4b618bc6243b50dc6ff4f6149a763a6a3c38`  
 **main SHA atual:** `c4280ef4c` (após #2590, #2592, #2593, #2583, #2599)  
-**Total PRs analisadas (histórico):** 138  
-**PRs abertas analisadas (esta sessão):** 21  
+**Total PRs analisadas (histórico):** 140 (+#2603, +#2606 abertas pós-início de sessão)  
+**PRs abertas analisadas (esta sessão):** 23  
 
 ---
 
@@ -22,10 +22,12 @@
 | PR | Título | Bloqueio | Estado |
 |---|---|---|---|
 | ~~#2590~~ | ~~fix(ci): timeout preflight PromoGifts~~ | ~~Regra 8 workflow~~ | **MERGEADA** (#946565d4) |
-| #2589 | fix(db): gen_random_bytes sem `extensions.` | Edita migration existente — proibido pelo db-guard | Aguarda decisão: nova migration ou edit autorizado |
+| ~~#2589~~ | ~~fix(db): gen_random_bytes sem `extensions.`~~ | ~~Edita migration existente~~ | **FECHADA** por outra sessão (2026-11-02T08:46Z) — investigação confirmou que não havia drift; SHA-256 batem |
 | #2542 | fix: N-008 DB Guard postgres image | workflow + conflito | Aguarda Joaquim |
 | #2533 | chore: reconciliação migration copilot_fases13_15 | migration + conflito | Aguarda Joaquim |
 | #2526 | fix(ci): deno check + waitForAppliedTheme | workflow + conflito | Aguarda Joaquim |
+| #2603 | fix(db): adicionar arquivo migration 20261102012200 ausente | drift: arquivo ausente na main, DDL já aplicado no banco | Aguarda Joaquim (Rule 8 — toca supabase/migrations/) |
+| #2606 | chore(db): move 2 migrations não-aplicadas para _superseded/ | fix CI db-migrate — missing_count=2 → 0 | auto_merge habilitado, aguarda CI verde (Regra 8 — outra sessão) |
 
 ### Feature freeze
 
@@ -46,7 +48,7 @@
 | #2543 | fix(ci): path do vitest config no ci.yml | `3e6ed32a` | ✅ run `41387517970` | — |
 | #2545 | docs: CLAUDE.md congelamento de features | `c16f3c69` | ❌ run `41380773345` | — |
 | #2547 | fix(ci): fila-merge para squash auto | `3066fac0` | ✅ run `41376578021` | — |
-| #2549 | fix(edge): handler 401 em copilot-live | `dfef2487` | ✅ run `41394672141` | Edge function (deploy NÃO VERIFICADO — workflow falhou no step secrets) |
+| #2549 | fix(edge): handler 401 em copilot-live | `dfef2487` | ❌ run `41394672141` (pós-merge) | Edge function (deploy NÃO VERIFICADO — workflow falhou no step secrets; CI Gate no PR branch era ✅) |
 | #2560 | fix(ci): workers 1→2 playwright.config.ts | `a7a53f56` | ✅ run `41379237707` | — |
 | #2565 | fix(contacts): paginação CRM | `ac04c5c0` | ✅ run `41396210357` | Vercel auto-deploy |
 | #2567 | fix(inbox): handler mensagem recebida | `8ba0b436` | ✅ run `41385347360` | Vercel auto-deploy |
@@ -131,7 +133,7 @@
 | TypeCheck completo | OOM/SIGABRT no container (pré-existente) — `analise-prs/baseline/typecheck.txt` mostra stack trace de OOM |
 | Deploy de `connection-health-check` (#2549) | `deploy-functions.yml` run `41394672177` falhou no step "Configurar secrets nas edges" — função pode não estar em produção |
 | Testes unitários por nome (vitest run) | Em execução — ver `analise-prs/baseline/tests.txt` (rodou em background) |
-| Suítes E2E logada na main | Cancelada por timeout de 15min em todos os commits recentes |
+| Suíte E2E logada na main | Cancelada por timeout de 15min em todos os commits recentes |
 | PR #2542 conflito detalhado | Merge-tree mostra 2 conflitos em `.github/workflows/` — não expandido (Regra 8 bloqueia independente) |
 | PR #2526 conflito detalhado | 4 conflitos em `.github/workflows/` e `e2e/` — não expandido (Regra 8 bloqueia) |
 
@@ -146,7 +148,7 @@ Arquivos: `analise-prs/baseline/build.txt`, `typecheck.txt`, `lint.txt`, `tests.
 | `bun run build` | ✅ exit 0, 20.96s, sem erros (`analise-prs/baseline/build.txt`) |
 | `tsc --noEmit` | ❌ OOM/SIGABRT — falha pré-existente (`analise-prs/baseline/typecheck.txt`) |
 | `eslint src/` | ⚠️ 746 problemas (533 erros + 213 warnings) — todos pré-existentes (`analise-prs/baseline/lint.txt`) |
-| `vitest run` | Em captura (`analise-prs/baseline/tests.txt`) |
+| `vitest run` (direcionado) | ✅ 67 testes pass, 0 falhas — 3 arquivos (contratosModulo, emailContactContext, useSupervisorQueue) |
 | Merge-trees (21 PRs vs `c4280ef4`) | `analise-prs/baseline/merge-trees.txt` (311 linhas) |
 
 ---
@@ -165,15 +167,16 @@ Arquivos: `analise-prs/baseline/build.txt`, `typecheck.txt`, `lint.txt`, `tests.
 | BLOQUEADO_CI | 14 |
 | BLOQUEADO_CONFLITO | 7 |
 | REGRA8_WORKFLOW | 6 |
-| REGRA8_MIGRATION | 1 |
+| REGRA8_MIGRATION | 2 (#2603, #2606) |
 | DECISAO_HUMANA_RLS | 2 |
 | DECISAO_HUMANA_DDL | 1 |
 | DECISAO_HUMANA_CRITICA | 1 |
 | FEATURE_FREEZE_VIOLACAO | 2 |
 | SUPERSEDED | 2 |
 | FECHADA_SUPERSEDIDA | 1 |
+| FECHADA_OUTRA_SESSAO | 1 (#2589) |
 | NOOP | 3 |
-| **TOTAL** | **138** ✅ |
+| **TOTAL** | **140** ✅ |
 
 ---
 

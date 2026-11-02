@@ -1,7 +1,24 @@
-Processo cancelado por timeout antes de completar.
-Motivo: npx vitest run — suíte completa leva >5 minutos no container.
+Suíte completa: NÃO VERIFICADO (timeout/OOM no container — suíte leva >5 min).
 EXIT=processo_interrompido
 
 Nota: typecheck também falhou por OOM (SIGABRT — falha pré-existente no container,
 mesma causa do typecheck.txt). Regressão é medida pela diferença: só conta erro
 NOVO não presente neste baseline.
+
+--- TESTES DIRECIONADOS (runs no container desta sessão) ---
+
+Arquivo: src/hooks/team-chat/__tests__/contratosModulo.test.ts
+Resultado: 22 testes ✅ PASS (sessão 3677075d)
+
+Arquivo: src/hooks/context/__tests__/emailContactContext.test.ts
+Resultado: 31 testes ✅ PASS (sessão 3677075d)
+
+Arquivo: src/hooks/admin/__tests__/useSupervisorQueue.test.tsx
+Resultado: 14 testes ✅ PASS (sessão 3677075d, 2026-11-02T06:43Z)
+
+Total verificado: 67 testes, 0 falhas (3 arquivos)
+Testes falhos por nome: NENHUM nos arquivos verificados
+
+Notas:
+- useSearchInsights.test.ts: arquivo não encontrado (path errado na busca; RPC rename de PR #2498 não aplicado)
+- Testes de contraste a11y: não rodados (requerem ambiente Playwright)
