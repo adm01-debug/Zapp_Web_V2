@@ -1,11 +1,11 @@
 # RELATÓRIO DE ANÁLISE — 98 PRs ANALISADAS
-**adm01-debug/Zapp_Web_V2** | Atualizado em 2026-11-02T10:00Z  
+**adm01-debug/Zapp_Web_V2** | Atualizado em 2026-11-02T05:00Z  
 SHA main início da análise: `004e74a8c596959f45f61c8b0b64b30a70c1ff19`  
-SHA main atual: `8ba0b4361290f37171fd6ec27012a46665ca5b7e`
+SHA main atual: `50ca61a6ef96b366084548fbb3866974083def52`
 
 ---
 
-## ✅ MERGEADAS COM SHA DE EVIDÊNCIA (8 total)
+## ✅ MERGEADAS COM SHA DE EVIDÊNCIA (9 total)
 
 | PR | Título | Merge SHA | Mergeada em |
 |----|--------|-----------|-------------|
@@ -17,22 +17,22 @@ SHA main atual: `8ba0b4361290f37171fd6ec27012a46665ca5b7e`
 | #2545 | chore: congela features — 9 fluxos críticos | `c16f3c69a9bffea1899760288d6c5d576acc2495` | 2026-11-02T03:01:17Z |
 | #2567 | fix(ci): deno install --frozen=false — desbloqueia deploy | `8ba0b4361290f37171fd6ec27012a46665ca5b7e` | 2026-11-02T03:51:55Z |
 | #2543 | fix: E2E alto-contraste e N-008 healthcheck | `3e6ed32ac34d9bcb9734ccfb05e580500bf5623d` | 2026-11-02T04:16:16Z |
+| #2569 | fix(ci): testes GR-027 + gatilho workflow_run e2e-logado GR-029 | `50ca61a6ef96b366084548fbb3866974083def52` | 2026-11-02T04:43:24Z |
 
 ---
 
-## ⏳ AGUARDANDO CI — COM auto_merge=SQUASH (7 restantes; #2543 e #2567 mergeadas, #2563 conflito)
+## ⏳ AGUARDANDO CI — COM auto_merge=SQUASH (6 restantes; #2569 mergeada 2026-11-02T04:43:24Z)
 
-Todas mergearão automaticamente quando os required checks passarem (3 obrigatórios: `🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate`). **#2567 mergeada em 2026-11-02T03:51:55Z; #2543 mergeada em 2026-11-02T04:16:16Z — removidas desta tabela.**
+Todas mergearão automaticamente quando os required checks passarem (3 obrigatórios: `🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate`).
 
 | PR | Título | HEAD SHA |
 |----|--------|----------|
-| #2494 | chore(db): sincronizar artefatos (types-sync) | `2957bbe9` — **CI VERMELHO** (run 41388205922): `db-inventory-doc.unit.mjs:406` falha — 7 tabelas `copilot_*` no banco não estão em `docs/DB-INVENTORY.md`; `types-sync.yml` não regenera este arquivo; ver PENDENCIAS.md §5 |
+| #2494 | chore(db): sincronizar artefatos (types-sync) | `7ac5326a` — **CI VERMELHO**: `db-inventory-doc.unit.mjs:406` falha — 7 tabelas `copilot_*` no banco não estão em `docs/DB-INVENTORY.md`; `types-sync.yml` não regenera este arquivo; ver PENDENCIAS.md §5 |
 | #2498 | fix(admin): RPC get_search_insights→search_insights | `984104a1e22cc924303055fff3ff96048d8bac6e` — behind, auto_merge=squash |
-| #2522 | fix(e2e): aguarda teclado visível — Firefox GR-012 | `ac6f690e` — blocked, auto_merge=squash |
+| #2522 | fix(e2e): aguarda teclado visível — Firefox GR-012 | `ac6f690e` — behind, auto_merge=squash |
 | #2549 | fix: reconexão automática WhatsApp | `7742d72eb9899d131db4d053d37d7b113cc09cc8` — behind, auto_merge=squash |
-| #2557 | fix(docs): atualiza required checks no CLAUDE.md | `dc3a3c50` — blocked, auto_merge=squash |
-| #2569 | fix(ci): testes GR-027 + gatilho workflow_run e2e-logado GR-029 | `cc79696a` — blocked, auto_merge=squash |
-| #2570 | fix: RLS department_invites restringe escrita a admins | `a9596bd1` — behind, auto_merge=squash |
+| #2557 | fix(docs): atualiza required checks no CLAUDE.md | `dc3a3c50` — behind, auto_merge=squash |
+| #2570 | fix: RLS department_invites restringe escrita a admins | `1456db651` — behind, auto_merge=squash |
 
 ---
 
@@ -110,8 +110,8 @@ Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Adicional
 
 | Veredito | Contagem |
 |----------|----------|
-| MERGEADA | 8 |
-| AGUARDANDO_CI | 7 |
+| MERGEADA | 9 |
+| AGUARDANDO_CI | 6 |
 | BLOQUEADO_CONFLITO | 6 |
 | DRAFT_SKIP | 5 |
 | BLOQUEADO_AGUARDANDO_APROVACAO | 2 |
@@ -136,8 +136,9 @@ Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Adicional
 | #2545 | `c16f3c69` | ~~failure~~ **flake** | success | ⚠️ Unit test `ContactFormRecalculoCorrida.test.tsx:189` falhou (run 41380773345); flake confirmado: mesmo teste passou em `8ba0b436` sem alteração no código. PR #2545 só altera CLAUDE.md. |
 | #2567 | `8ba0b436` | **success** (run 41385347360) | success | ✅ CI Gate=success confirmado pós-merge |
 | #2543 | `3e6ed32a` | verificado via auto-merge | success | ✅ PR tinha auto_merge=squash; mergeada em 2026-11-02T04:16:16Z após checks verdes no HEAD `68dff679` |
+| #2569 | `50ca61a6` | verificado via auto-merge | success | ✅ PR tinha auto_merge=squash; mergeada em 2026-11-02T04:43:24Z |
 
-As 4 PRs mergeadas pela sessão de análise (#2482, #2547, #2560, #2545) + #2567 (mergeada via auto_merge) têm build=success. #2545 teve flake de unit test que não se reproduz no SHA seguinte. #2567 tem CI Gate em andamento.
+As 4 PRs mergeadas pela sessão de análise (#2482, #2547, #2560, #2545) + #2567/#2543/#2569 (mergeadas via auto_merge) têm build=success. #2545 teve flake de unit test que não se reproduz no SHA seguinte.
 
 ---
 
