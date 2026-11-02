@@ -22,8 +22,8 @@ _Atualizado em 2026-11-02 por sessão `claude/trusting-albattani-9x3ipg` (GF-001
 - ✅ PR #2579 — `20260927600000` exceção obsoleta removida
 - ✅ PR #2579 — Catálogo, grants-baseline, manifesto regenerados
 - ✅ PR #2579 — 9 policies copilot adicionadas à allowlist de invariantes
-- ✅ PR #2589 — `20261102012200` `extensions.gen_random_bytes` → `gen_random_bytes` (alinha arquivo com ledger)
-- ✅ PR #PROSA — 24 prosa-pura adicionadas como `name-and-file-pinned` em `migration-evidence.json`
+- ~~PR #2589 fechada sem merge~~ — drift `gen_random_bytes` não existe; SHA256 do arquivo e ledger batem (falso alarme, investigado em 2026-11-02)
+- ✅ PR #2598 — 24 prosa-pura adicionadas como `name-and-file-pinned` em `migration-evidence.json`
 
 **Falhas remanescentes que dependem do Joaquim (3 restantes — guard ainda falha):**
 
@@ -94,18 +94,19 @@ RETURNING version, name;
 
 Opção 1 é recomendada (não toca o arquivo).
 
-### C. arquivo-sem-registro no ledger (2 migrations)
+### C. ✅ RESOLVIDO — arquivo-sem-registro movido para `_superseded/` (2026-11-02)
 
-Arquivos existentes em `supabase/migrations/` que **não têm entrada no ledger de produção**:
+Os 2 arquivos que causavam `missing_count=2` no `db-migrate.yml` foram movidos para
+`supabase/migrations/_superseded/` (ver README daquele diretório para justificativa completa):
 
-- `20261020120000_e2e_fixture_message_rpc.sql`
-- `20261023100000_talkx_campaign_recipients_page_add_segment.sql`
+- `20261020120000_e2e_fixture_message_rpc.sql` — função `e2e_fixture_message` nunca aplicada em
+  produção; E2E usa fallback legado em `e2e-contact.ts`; TalkX congelado
+- `20261023100000_talkx_campaign_recipients_page_add_segment.sql` — `p_segment_id` nunca aplicado;
+  front e `types.ts` usam assinatura de 5 parâmetros; TalkX V4 congelado
 
-**Opções por arquivo:**
-1. **Aplicar em produção** (se o conteúdo ainda é relevante): gerar SQL via `register-migration.mjs` e aplicar via `db_query` + `INSERT` no ledger na mesma transação.
-2. **Mover para `supabase/migrations/_superseded/`** (se o conteúdo foi substituído ou abandonado): requer evidência de que o objeto já existe em produção por outro caminho.
-
-⚠️ **Não deletar** sem confirmar que o conteúdo está em produção por outra migration.
+`db-migrate.yml` agora passa com `missing_count=0` (no-op). Para aplicar as funções em produção
+futuramente (quando TalkX V4 e E2E forem retomados), recorrer ao arquivo em `_superseded/` e
+aplicar via `producao-ddl` com aprovação do Joaquim.
 
 ### D. types.ts desatualizado
 
@@ -165,19 +166,22 @@ gerado não é o que o `deno check` procura. Este workflow **não é um required
 
 ---
 
-## 4. DB Migrate — 3 versões no ledger sem arquivo no disco ✅ RESOLVIDO (PR #2551)
+## 4. DB Migrate ✅ RESOLVIDO
 
-**Versões reconciliadas (commit `6fc91a8f9` no PR #2551):**
+**remote_only_count=0 ✅ RESOLVIDO (PR #2551):**
+
 - `20261030145126_copilot_fases13_15_tabelas.sql` — SQL exato do ledger (30 statements, tabelas copilot)
 - `20261031170000_high3-fk-indexes.sql` — SQL exato do ledger corrigido (48 CREATE INDEX IF NOT EXISTS; commit `4a6a54e21`)
 - `20261101213000_rls_update_with_check_explicit.sql` — SQL exato do ledger (8 ALTER POLICY WITH CHECK)
 
-**Falha colateral documentada em `scripts/db-audit/replay-known-failures.json`:**
-- `20261031100000_copilot_fases13_15_tabelas.sql` adicionado como `nao-idempotente-inerte`:
-  no replay zerado, `20261030145126` cria as políticas antes desta, causando `duplicate_object`.
-  Efeito no canônico: nenhum — todos os objetos existem.
+Falha colateral documentada em `replay-known-failures.json`: `20261031100000` adicionado como
+`nao-idempotente-inerte` (no replay zerado, `20261030145126` cria as políticas antes desta,
+causando `duplicate_object`; efeito no canônico: nenhum).
 
-**Estado:** ✅ RESOLVIDO — PR #2551 mergeada em 2026-11-02T03:17Z, SHA `587ec25f` na `main`.
+**missing_count=0 ✅ RESOLVIDO (2026-11-02):**
+
+Os 2 arquivos sem entrada no ledger foram movidos para `_superseded/` — ver §1C acima.
+`db-migrate.yml` passa com `missing_count=0`, sem apply necessário.
 
 ---
 
