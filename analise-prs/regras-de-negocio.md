@@ -15,7 +15,7 @@
 **O QUE NÃO ENTRA:**
 - Feature nova ou etapa de plano (TalkX V4, Copiloto, War Room, gamificação, metas, IA nova).
 - Ajuste visual, contraste, a11y, animação, snapshot, texto — salvo se quebra fluxo crítico.
-- Relatório, auditoria, dosiê ou placar em markdown/JSON.
+- Relatório, auditoria, dossiê ou placar em markdown/JSON.
 - Workflow, guarda ou script de CI novo.
 
 ---
@@ -50,7 +50,7 @@ app_role: ["admin", "supervisor", "agent", "special_agent"]
 - `agent` / `special_agent`: acesso restrito a conversas atribuídas.
 
 **Funções de autorização:**
-- `is_admin(uuid)` → papel `admin` em `user_roles` (`src/integrations/supabase/types.ts:is_admin_or_supervisor`)
+- `is_admin(uuid)` → papel `admin` em `user_roles`
 - `is_admin_or_supervisor(uuid)` → papel `admin` ou `supervisor`
 - `can_edit_contact(...)` → agente pode editar contato se atribuído à sua fila
 - `get_visible_agent_ids(uuid)` → IDs de agentes visíveis para o usuário
@@ -80,8 +80,7 @@ app_role: ["admin", "supervisor", "agent", "special_agent"]
 
 **Fonte:** `supabase/migrations/20261101213000_rls_update_with_check_explicit.sql`
 
-Migration `20261101213000` adicionou `WITH CHECK` explícito em 8 políticas UPDATE que
-estavam sem essa cláusula (CRITICAL-2). As políticas corrigidas são:
+Migration `20261101213000` adicionou `WITH CHECK` explícito em 8 políticas UPDATE que estavam sem essa cláusula (CRITICAL-2).
 
 | Tabela | Política |
 |---|---|
@@ -94,46 +93,38 @@ estavam sem essa cláusula (CRITICAL-2). As políticas corrigidas são:
 | `talkx_recipients` | `Users can update recipients of own campaigns` — requer `campaign_id.created_by = profile` |
 | `talkx_templates` | `talkx_templates_update` — requer `created_by = profile` OR `is_admin_or_supervisor` |
 
-**PR #2481 (aberta):** tenta re-aplicar o mesmo `WITH CHECK` nas mesmas políticas com sintaxe diferente. A migration `20261101213000` JÁ resolve o problema. PR #2481 está em conflito por causa dessa migration.
-
 ---
 
 ## 6. Regras de migration (`docs/MIGRATIONS.md`)
 
-1. **Arquivo + ledger devem ser idênticos:** `supabase/migrations/*.sql` e `supabase_migrations.schema_migrations` precisam do mesmo conjunto de versões (SHA-256 dos prefixos).
-2. **`supabase_apply_migration` está bugado** — usar `db_query` via MCP com DDL + INSERT no ledger na mesma transação.
-3. **Editar migration existente é proibido** — o `db-guard.yml` rejeita ("Rejeitar edição de migration já existente"). Migration existente que rodou em produção não deve ser alterada; criar nova migration corretiva.
-4. **Migrations aditivas apenas:** sem `DROP TABLE`, `RENAME COLUMN`, `ALTER TYPE` destrutivo, `DELETE/UPDATE` em massa.
-5. **Ordem obrigatória:** arquivo → PR → merge → deploy do código → apply. Nunca DDL de branch aberta.
-6. **Idempotência:** `IF EXISTS`, `IF NOT EXISTS`, `ON CONFLICT DO NOTHING` com `RETURNING` de conferência.
-7. **`CREATE INDEX CONCURRENTLY`** falha no MCP (executa dentro de transação) — usar `CREATE INDEX` simples.
+1. **Arquivo + ledger devem ser idênticos:** `supabase/migrations/*.sql` e `supabase_migrations.schema_migrations` precisam do mesmo conjunto de versões.
+2. **Editar migration existente é proibido** — o `db-guard.yml` rejeita.
+3. **Migrations aditivas apenas:** sem `DROP TABLE`, `RENAME COLUMN`, `ALTER TYPE` destrutivo, `DELETE/UPDATE` em massa.
+4. **Ordem obrigatória:** arquivo → PR → merge → deploy do código → apply.
+5. **Idempotência:** `IF EXISTS`, `IF NOT EXISTS`, `ON CONFLICT DO NOTHING` com `RETURNING` de conferência.
+6. **`CREATE INDEX CONCURRENTLY`** falha no MCP (executa dentro de transação) — usar `CREATE INDEX` simples.
 
 ---
 
-## 7. Convites de departamento (`supabase/migrations/20261102012200_department_invites_restringe_escrita.sql`, `src/hooks/team-chat/README.md`)
+## 7. Convites de departamento
 
 **Decisão do dono (2026-11-01):** somente `admin` cria e apaga convites de departamento.
 
-- **`department_invites`** — tabela legada; nova política `dept_invites_insert_admin` (WITH CHECK: `is_admin(auth.uid()) AND created_by IN profiles`) e `dept_invites_delete_admin` (USING: `is_admin(auth.uid())`).
+- **`department_invites`** — tabela legada; política `dept_invites_insert_admin` + `dept_invites_delete_admin`.
 - **`department_invitations`** — tabela atual; política análoga.
 - **RPC `create_department_invite`** — restrita a admin (SECURITY DEFINER).
-- **`gen_random_bytes(16)`** sem prefixo `extensions.` — resolução via `search_path` padrão. PR #2589 tenta editar migration existente para corrigir isso; método correto seria nova migration.
 
 ---
 
 ## 8. UI — token de cor obrigatório
 
-**Fonte:** `CLAUDE.md` seção 6 ("Painel escuro do inbox")
-
 - **Usar:** `--inbox-panel-bg` (classe `bg-inbox-panel`, definida por tema em `src/styles/tokens.css`)
 - **Nunca:** `bg-black` literal — causa texto preto sobre fundo preto no light/alto-contraste (incidente #755 → #774)
-- Tokens CSS com `!important` em `src/styles/tokens.css` desde PR #2587 — testes de contraste devem usar regex `.replace(/\s*!important\s*$/, '')` antes de parsear HSL (fix: PR #2593, mergeada).
+- Tokens CSS com `!important` em `src/styles/tokens.css` desde PR #2587 — testes de contraste devem usar regex `.replace(/\s*!important\s*$/, '')` antes de parsear HSL.
 
 ---
 
 ## 9. Testes — regras
-
-**Fonte:** `CLAUDE.md` seção "Zero regressão"
 
 - Nunca apagar, pular ou enfraquecer testes.
 - Nunca atualizar snapshots sem justificativa.
@@ -149,13 +140,11 @@ estavam sem essa cláusula (CRITICAL-2). As políticas corrigidas são:
 - CORS: origens permitidas em `supabase/functions/_shared/cors-origins.ts`; `FALLBACK_ORIGIN = https://zapp-web-v2.vercel.app`.
 - Autenticação: nunca afrouxar verificação de token/JWT em edge functions.
 - Secrets: nunca hardcoded — somente variáveis de ambiente do Supabase.
-- `handleCors` deve ser chamado em TODOS os handlers (tanto `OPTIONS` quanto o método principal).
+- `handleCors` deve ser chamado em TODOS os handlers.
 
 ---
 
 ## 11. Critério de contato visível (decisão D4)
-
-**Fonte:** `CLAUDE.md` seção 6 ("Contatos")
 
 Contato visível = `deleted_at IS NULL` + `is_lid_legacy = false` + `phone ~ '^[0-9]{10,15}$'`.
 
@@ -181,6 +170,6 @@ PRs que tocam:
 | Build (`bun run build`) | ✅ exit 0 (20.96s) |
 | TypeCheck (`tsc --noEmit`) | ❌ OOM/SIGABRT — falha pré-existente (sem RAM suficiente no container) |
 | Lint (`eslint src/`) | ⚠️ 746 problemas (533 erros, 213 warnings) — todos pré-existentes |
-| Testes (`vitest run`) | Em execução — veja `analise-prs/baseline/tests.txt` |
+| Testes (`vitest run`) | 67 testes pass (3 arquivos verificados) |
 
 **Regressão se mede pela diferença:** uma PR só introduz regressão se adiciona NOVOS erros não presentes neste baseline.

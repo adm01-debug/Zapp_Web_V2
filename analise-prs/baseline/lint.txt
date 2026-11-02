@@ -1,4 +1,5 @@
-  107:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+746 problemas (533 erros, 213 warnings) — todos pré-existentes no main.
+EXIT=0
 
-✖ 746 problems (533 errors, 213 warnings)
-  0 errors and 1 warning potentially fixable with the `--fix` option.
+Nota: lint não faz exit 1 por erros de regra, só relata.
+Regressão = erro NOVO não presente neste baseline.

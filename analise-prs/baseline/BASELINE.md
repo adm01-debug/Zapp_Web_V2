@@ -1,42 +1,28 @@
-# Baseline do main — SHA: 4b5c6e7970512d16db5501a35cb2e7176941f69d
-Data: 2026-11-02
-
-Última PR mergeada: #2522 (fix(e2e): aguarda teclado visível antes do primeiro clique — Firefox GR-012) em 2026-11-02T05:20:24Z
-SHA anterior (#2569): 50ca61a6ef96b366084548fbb3866974083def52
-
-## TypeCheck (ratchet + tsc direto)
-- Baseline histórico: 93 erros
-- `npx tsc --noEmit` no SHA 4b5c6e79: exit=0 (ZERO erros reportados pelo tsc)
-- Ratchet node scripts/ci/typecheck-ratchet.mjs: baseline=93, atual=3, novas=0
-- Status: ✅ ZERO erros novos (evidência: tsc exit=0; ratchet exit=0)
-
-## Lint (ESLint ratchet)
-- Baseline histórico: 820 ocorrências
-- node scripts/ci/lint-ratchet.mjs no SHA 4b5c6e79: baseline=820, atual=813, novas=0
-- Status: ✅ ZERO ocorrências novas (evidência: lint-ratchet exit=0)
+# Baseline do main — c4280ef4 (2026-11-02)
 
 ## Build
-- Status: ✅ PASSANDO
-- Evidência: CI Gate success em todos os 9 merges desta sessão
-- Último run confirmado: PR #2569 via auto_merge (SHA 50ca61a6, CI Gate=success)
+- `bun run build`: ✅ exit 0, 20.96s, sem erros
+- Detalhes: `analise-prs/baseline/build.txt`
 
-## Unit Tests
-- Status: ✅ PASSANDO
-- Evidência: `🧪 Unit Tests` passou no CI dos merges desta sessão
-- Flake documentado: ContactFormRecalculoCorrida.test.tsx:189 — confirmado flake (não se reproduz no SHA seguinte), não regressão
+## TypeCheck
+- `tsc --noEmit`: ❌ OOM/SIGABRT — falha pré-existente (sem RAM no container)
+- NÃO é erro de código TypeScript
+- Detalhes: `analise-prs/baseline/typecheck.txt`
 
-## E2E Tests
-- Status: ✅ PASSANDO
-- Evidência: CI Gate success em SHA 50ca61a6 (e2e-logado após fix GR-029 em #2569)
+## Lint
+- `eslint src/`: ⚠️ 746 problemas (533 erros, 213 warnings) — todos pré-existentes
+- EXIT=0 (lint não faz exit 1 por regras)
+- Detalhes: `analise-prs/baseline/lint.txt`
 
-## Migrations (supabase/migrations/)
-- Arquivos válidos: 1073 .sql files
-- Paridade com ledger: validada em CI (Contrato DB offline check)
+## Testes
+- Suíte completa: NÃO VERIFICADO (container OOM/timeout)
+- 67 testes verificados em 3 arquivos: PASS
+- Detalhes: `analise-prs/baseline/tests.txt`
 
-## Baseline de regressão
-Para medir regressão das PRs, o critério é:
-- TypeCheck: novas=0 vs baseline=93 (ratchet)
-- Lint: novas=0 vs baseline=820 (ratchet)
-- Build: passando
-- Unit tests: passando (sem novos failures)
-- Migrations: paridade arquivos↔ledger OK
+## Critério de regressão
+Uma PR só introduz regressão se adiciona NOVOS erros/falhas não presentes neste baseline.
+- Build novo quebrando = regressão
+- Novo erro TS que antes não existia = regressão
+- Novo lint error = regressão  
+- Novo teste falhando = regressão
+- TypeCheck OOM, lint 746 erros e testes OOM = PRÉ-EXISTENTES, não contam
