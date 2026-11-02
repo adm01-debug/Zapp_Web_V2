@@ -14,20 +14,31 @@ _Atualizado em 2026-11-02 por sessão `claude/trusting-albattani-9x3ipg` (GF-001
 
 ## 1. DB Live Guard — falhas em contrato vivo (bloqueadas por escrita no ledger)
 
-**Último run com falha:** [41385849215](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41385849215)  
-**Head SHA:** `8ba0b4361290f37171fd6ec27012a46665ca5b7e` (main pós PR #2551)
+**Último run com falha:** [41400432274](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41400432274)  
+**Head SHA:** `b1040225d9d9dbe5d9b22670b5191a16a8347dce` (main pós PR #2570)
 
-**O que foi corrigido nesta sessão (PR #2579):**
-- ✅ 13 SQL-divergente → adicionados como `pinned-replay` em `migration-evidence.json`
-- ✅ `20260927600000` — exceção obsoleta removida de `migration-evidence.json`
-- ✅ Catálogo regenerado com 10 tabelas copilot (`supabase/schema-catalog.json`)
-- ✅ Grants-baseline regenerado (`scripts/db-audit/grants-baseline.json`)
-- ✅ Manifesto regenerado (`supabase/schema-manifest.json`)
-- ✅ Invariante copilot — 9 policies open-write adicionadas à allowlist (`check-live-invariants.sql`)
+**O que foi corrigido:**
+- ✅ PR #2579 — 13 SQL-divergente adicionados como `pinned-replay` em `migration-evidence.json`
+- ✅ PR #2579 — `20260927600000` exceção obsoleta removida
+- ✅ PR #2579 — Catálogo, grants-baseline, manifesto regenerados
+- ✅ PR #2579 — 9 policies copilot adicionadas à allowlist de invariantes
+- ✅ PR #2589 — `20261102012200` `extensions.gen_random_bytes` → `gen_random_bytes` (alinha arquivo com ledger)
+- ✅ PR #PROSA — 24 prosa-pura adicionadas como `name-and-file-pinned` em `migration-evidence.json`
 
-**Falhas remanescentes que dependem do Joaquim:**
+**Falhas remanescentes que dependem do Joaquim (3 restantes — guard ainda falha):**
 
-### A. statements "prosa pura" no ledger (24 migrations — necessitam UPDATE)
+### A. ✅ RESOLVIDO — statements "prosa pura" no ledger (24 migrations)
+
+As 24 exceções `ledger-only/name-and-file-pinned` foram adicionadas a `migration-evidence.json`
+(PR que adiciona esta seção). O guard suprime esses 24 erros assim que o PR mergear.
+
+O UPDATE do ledger continua sendo a solução permanente ideal (sem exceptions), mas não é obrigatório
+para o guard passar. Se quiser limpar: **os dois passos abaixo devem ser feitos juntos**; fazer só
+um deles deixa o guard falhando:
+1. Atualizar `statements` no ledger: `UPDATE supabase_migrations.schema_migrations SET statements = ARRAY[...SQL...] WHERE version = '...'`
+2. Remover a entrada correspondente de `migration-evidence.json` (o `evidence_class: "ledger-only/name-and-file-pinned"` para aquela versão) e também de `ledger-history-limitations.json`.
+
+### A-histórico. statements "prosa pura" (referência para UPDATE manual)
 
 Cada migration abaixo tem `statements[1]` com descrição em prosa, não SQL real.
 O arquivo `.sql` correspondente contém o SQL correto.
