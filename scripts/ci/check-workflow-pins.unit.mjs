@@ -22,6 +22,8 @@ const FONTE = {
   "postgres-image": "postgres:17-alpine@sha256:" + "a".repeat(64),
   actionlint: "1.7.7",
   "actionlint-sha256-linux-amd64": "0".repeat(64),
+  "shellcheck-version": "0.10.0",
+  "shellcheck-sha256": "1".repeat(64),
   zizmor: "0.9.0",
 };
 
@@ -259,6 +261,30 @@ test("W88 rejeita actionlint_sha256 divergente da fonte única", () => {
   const source = `        actionlint_sha256="${"f".repeat(64)}"\n`;
   assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), [
     { file: "ci.yml", line: 1, tool: "actionlint-sha256-linux-amd64", value: "f".repeat(64), expected: "0".repeat(64) },
+  ]);
+});
+
+test("W88 aceita shellcheck_version igual à fonte única", () => {
+  const source = '          shellcheck_version="0.10.0"\n';
+  assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), []);
+});
+
+test("W88 rejeita shellcheck_version divergente da fonte única", () => {
+  const source = '          shellcheck_version="0.9.0"\n';
+  assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), [
+    { file: "ci.yml", line: 1, tool: "shellcheck-version", value: "0.9.0", expected: "0.10.0" },
+  ]);
+});
+
+test("W88 aceita shellcheck_sha256 igual à fonte única", () => {
+  const source = `          shellcheck_sha256="${"1".repeat(64)}"\n`;
+  assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), []);
+});
+
+test("W88 rejeita shellcheck_sha256 divergente da fonte única (achado da revisão de hoje: o guard não cobria shellcheck, só actionlint/zizmor)", () => {
+  const source = `          shellcheck_sha256="${"f".repeat(64)}"\n`;
+  assert.deepEqual(findToolchainDrift(source, "ci.yml", FONTE), [
+    { file: "ci.yml", line: 1, tool: "shellcheck-sha256", value: "f".repeat(64), expected: "1".repeat(64) },
   ]);
 });
 
