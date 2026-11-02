@@ -230,6 +230,23 @@ test("fonte única sem uma das chaves falha indicando a versão que falta", () =
   }
 });
 
+// Achado da auditoria de hoje: os testes de W88 chamam findToolchainDrift(source, file, FONTE)
+// direto, sem passar por loadToolchain() -- nenhum deles exercitava TOOLCHAIN_KEYS. Sem este
+// teste, remover "shellcheck-version"/"shellcheck-sha256" de TOOLCHAIN_KEYS não quebrava nada
+// (confirmado por mutation testing: 30/30 continuavam passando).
+test("fonte única sem shellcheck-sha256 falha indicando a chave que falta", () => {
+  const dir = mkdtempSync(join(tmpdir(), "toolchain-sem-shellcheck-"));
+  try {
+    mkdirSync(join(dir, ".github"), { recursive: true });
+    const incompleta = { ...FONTE };
+    delete incompleta["shellcheck-sha256"];
+    writeFileSync(join(dir, ".github", "toolchain.json"), JSON.stringify(incompleta));
+    assert.throws(() => loadToolchain(dir), /shellcheck-sha256/u);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("fonte única ausente falha apontando .github/toolchain.json", () => {
   const dir = mkdtempSync(join(tmpdir(), "toolchain-ausente-"));
   try {
