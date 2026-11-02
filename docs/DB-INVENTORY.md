@@ -105,16 +105,16 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `contact_protection_policy` | Política de proteção de contato por regra de negócio | roadmap | — |
 | `contact_purchases` | Histórico de compras do contato (valor, moeda e status) | ativo | `src/components/contacts/ContactPurchaseHistory.tsx`, `src/components/inbox/ContactPurchasesPanel.tsx`, `src/hooks/crm/__tests__/useContactPurchases.criar.test.tsx` … |
 | `contacts` | Cadastro central de contatos (telefone, e-mail, dono e campos de CRM) | ativo | `src/App.tsx`, `src/__tests__/a11y/icon-buttons-baseline.json`, `src/__tests__/coverage-catalogo.test.ts` … |
-| `copilot_conversation_scores` | Scores de qualidade de conversa do copilot de vendas | roadmap | — |
+| `copilot_conversation_scores` | Scores de qualidade de conversa do copilot de vendas | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
 | `copilot_feedback` | Feedback do vendedor sobre sugestões do copilot (aceitou, editou, descartou; distância de edição) | ativo | `src/hooks/copilot/useCopilotFeedback.ts` |
-| `copilot_help_requests` | Pedidos de ajuda do copilot durante conversas | roadmap | — |
+| `copilot_help_requests` | Pedidos de ajuda do copilot durante conversas | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
 | `copilot_insights` | Insights gerados pelo copilot por conversa | ativo | `supabase/functions/copilot-live/index.ts` |
-| `copilot_learning_moments` | Momentos de aprendizado identificados pelo copilot | roadmap | — |
-| `copilot_objection_catalog` | Catálogo de objeções para treinamento do copilot | roadmap | — |
-| `copilot_outcomes` | Resultados e desfechos registrados pelo copilot | roadmap | — |
-| `copilot_seller_settings` | Configurações do copilot por vendedor | roadmap | — |
+| `copilot_learning_moments` | Momentos de aprendizado identificados pelo copilot | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
+| `copilot_objection_catalog` | Catálogo de objeções para treinamento do copilot | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
+| `copilot_outcomes` | Resultados e desfechos registrados pelo copilot | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json`, `scripts/db-audit/replay-known-failures.json` |
+| `copilot_seller_settings` | Configurações do copilot por vendedor | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
 | `copilot_sessions` | Sessões ativas do copilot por agente e conversa | ativo | `src/hooks/copilot/useSupervisorInsights.ts`, `supabase/functions/copilot-live/index.ts` |
-| `copilot_usage` | Log de uso do copilot por conversa e agente | roadmap | — |
+| `copilot_usage` | Log de uso do copilot por conversa e agente | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
 | `conversation_analyses` | Análises de IA da conversa (resumo, sentimento, pontos-chave e risco) | ativo | `src/components/dashboard/AIQuickAccess.tsx`, `src/components/dashboard/SentimentTrendChart.tsx`, `src/components/dashboard/__tests__/AIQuickAccess.test.tsx` … |
 | `conversation_closures` | Fechamentos de conversa (motivo, desfecho e classificação) | ativo | `src/components/inbox/CRMAutoSync.tsx`, `src/components/inbox/__tests__/CRMAutoSync.fsm.test.tsx`, `src/components/reports/PeriodComparison.tsx` … |
 | `conversation_events` | Eventos da conversa (transferência, mudança de estado e autor) | ativo | `src/components/contacts/ContactActivityTimeline.tsx`, `src/components/contacts/__tests__/ContactActivityTimeline.eventos.test.tsx`, `src/components/contacts/__tests__/ContactActivityTimeline.nota.test.tsx` … |
