@@ -13,7 +13,7 @@ import { openContactChat } from '@/components/catalog/useSendProduct';
 import { toast } from 'sonner';
 import { ShieldBan, Plus, Trash2, Search, UserX, ShieldCheck, Settings, ListChecks, X, AlertTriangle, UserPlus, UserMinus, PencilLine, FileInput, FileOutput, Activity, Pencil, Eye, Megaphone, RotateCcw, Save } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { TalkXDialogShell } from './kit/dialogs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -733,9 +733,13 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
       </div>
 
       {/* Modal adicionar: contato existente ou telefone avulso (duas abas) */}
-      <Dialog open={showAdd} onOpenChange={(o) => { setShowAdd(o); if (!o) resetAddForm(); }}>
-        <DialogContent className="rounded-2xl border-border/70 max-w-md" aria-describedby={undefined}>
-          <DialogHeader><DialogTitle>Adicionar à Lista de Supressão</DialogTitle></DialogHeader>
+      <TalkXDialogShell
+        open={showAdd}
+        onClose={() => { setShowAdd(false); resetAddForm(); }}
+        title="Adicionar à Lista de Supressão"
+        className="max-w-md"
+        footer={<><GhostButton onClick={() => { setShowAdd(false); resetAddForm(); }}>Cancelar</GhostButton><PrimaryButton icon={ShieldBan} onClick={() => addMutation.mutate()} disabled={!addReady || addMutation.isPending}>Bloquear</PrimaryButton></>}
+      >
           <Tabs value={addTab} onValueChange={(v) => setAddTab(v as 'contact' | 'phone')}>
             <TabsList className="grid w-full grid-cols-2 h-auto">
               <TabsTrigger value="contact">Contato existente</TabsTrigger>
@@ -776,17 +780,16 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
               {addReason === 'Outro' && <Textarea value={addCustomReason} onChange={(e) => setAddCustomReason(e.target.value)} placeholder="Descreva o motivo…" className="mt-2 bg-input/40 border-border/70" rows={2} />}
             </div>
           </div>
-          <DialogFooter>
-            <GhostButton onClick={() => { setShowAdd(false); resetAddForm(); }}>Cancelar</GhostButton>
-            <PrimaryButton icon={ShieldBan} onClick={() => addMutation.mutate()} disabled={!addReady || addMutation.isPending}>Bloquear</PrimaryButton>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </TalkXDialogShell>
 
       {/* Modal editar motivo e expiração (1 linha ou a seleção) */}
-      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="rounded-2xl border-border/70 max-w-md" aria-describedby={undefined}>
-          <DialogHeader><DialogTitle>{editing?.bulk ? `Editar ${editing.ids.length} contatos suprimidos` : 'Editar supressão'}</DialogTitle></DialogHeader>
+      <TalkXDialogShell
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        title={editing?.bulk ? `Editar ${editing.ids.length} contatos suprimidos` : 'Editar supressão'}
+        className="max-w-md"
+        footer={<><GhostButton onClick={() => setEditing(null)}>Cancelar</GhostButton><PrimaryButton icon={Save} onClick={saveEdit} disabled={editExpiry === 'date' && !editDate} className={cn(editMutation.isPending && 'opacity-50 pointer-events-none')}>Salvar</PrimaryButton></>}
+      >
           <div className="space-y-4 py-2">
             <div>
               <Label className="text-xs text-foreground-secondary">Motivo</Label>
@@ -813,12 +816,7 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
               {editExpiry === 'date' && <Input type="date" min={todayDateInput()} value={editDate} onChange={(e) => setEditDate(e.target.value)} aria-label="Data de expiração" className="mt-2 bg-input/40 border-border/70" />}
             </div>
           </div>
-          <DialogFooter>
-            <GhostButton onClick={() => setEditing(null)}>Cancelar</GhostButton>
-            <PrimaryButton icon={Save} onClick={saveEdit} disabled={editExpiry === 'date' && !editDate} className={cn(editMutation.isPending && 'opacity-50 pointer-events-none')}>Salvar</PrimaryButton>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </TalkXDialogShell>
 
       {/* Modal remover (kit, X050) — texto do preset `removerSupressao` (tile e
           botão violeta, nome do contato nas linhas de detalhe). Opt-out/LGPD exige
@@ -842,9 +840,12 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
       />
 
       {/* X184 — "Ver todas": histórico paginado da trilha (20 por página) */}
-      <Dialog open={showHistory} onOpenChange={setShowHistory}>
-        <DialogContent className="rounded-2xl border-border/70 max-w-xl" aria-describedby={undefined}>
-          <DialogHeader><DialogTitle>Atividade recente</DialogTitle></DialogHeader>
+      <TalkXDialogShell
+        open={showHistory}
+        onClose={() => setShowHistory(false)}
+        title="Atividade recente"
+        className="max-w-xl"
+      >
           <div className="space-y-3 py-1">
             <Select value={historyType} onValueChange={(v) => { setHistoryType(v as SuppressionActivityEventType | 'all'); setHistoryPage(1); }}>
               <SelectTrigger className="bg-input/40 border-border/70"><SelectValue /></SelectTrigger>
@@ -874,13 +875,16 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
               />
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+      </TalkXDialogShell>
 
       {/* Modal gerenciar motivos */}
-      <Dialog open={showReasons} onOpenChange={setShowReasons}>
-        <DialogContent className="rounded-2xl border-border/70 max-w-md" aria-describedby={undefined}>
-          <DialogHeader><DialogTitle>Motivos de supressão</DialogTitle></DialogHeader>
+      <TalkXDialogShell
+        open={showReasons}
+        onClose={() => setShowReasons(false)}
+        title="Motivos de supressão"
+        className="max-w-md"
+        footer={<GhostButton onClick={() => setShowReasons(false)}>Fechar</GhostButton>}
+      >
           <ul className="divide-y divide-border/50 rounded-lg border border-border/60 max-h-72 overflow-auto">
             {REASONS.map((r) => {
               const usos = reasonUsage.get(r) ?? 0;
@@ -896,9 +900,7 @@ export function TalkXSuppression({ onOpenContact, onOpenCampaign }: {
             })}
           </ul>
           <p className="text-2xs text-foreground-secondary">Criar, renomear e desativar categorias depende da tabela de motivos do módulo (ainda não criada).</p>
-          <DialogFooter><GhostButton onClick={() => setShowReasons(false)}>Fechar</GhostButton></DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </TalkXDialogShell>
     </div>
   );
 }
