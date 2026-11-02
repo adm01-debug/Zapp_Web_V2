@@ -6,6 +6,7 @@
 #   4. Privilegio: authenticated/anon nao executam; service_role executa.
 #   5. Rollback: a linha -- Rollback: remove funcao e job.
 # Uso: bash scripts/db-audit/user-sessions-expire.test.sh
+# N-008: --no-healthcheck evita FATAL role root does not exist do HEALTHCHECK nativo da imagem.
 set -euo pipefail
 
 MIGRATION="supabase/migrations/20261010063527_user_sessions_expire_diario.sql"
@@ -17,7 +18,7 @@ trap cleanup EXIT
 
 [ -f "$MIGRATION" ] || { echo "[FALHOU] migration nao encontrada: $MIGRATION"; exit 1; }
 
-docker run --rm -d --name "$CNAME" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres postgres:17-alpine >/dev/null
+docker run --rm -d --no-healthcheck --name "$CNAME" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres postgres:17-alpine >/dev/null
 bash scripts/db-audit/wait-postgres-final-start.sh "$CNAME" 60
 
 # fixtures: papeis, stub de pg_cron e user_sessions minima (mesmas colunas da tabela real)
