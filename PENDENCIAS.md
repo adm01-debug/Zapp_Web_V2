@@ -1,6 +1,6 @@
 # PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-11-02T03:18Z — PR #2551 mergeado automaticamente._
+_Atualizado em 2026-11-02T04:06Z — run db-live-guard 41385849215 + types-sync disparado._
 
 ---
 
@@ -14,30 +14,37 @@ _Atualizado em 2026-11-02T03:18Z — PR #2551 mergeado automaticamente._
 
 ## 1. DB Live Guard — falhas em contrato vivo (investigação pendente)
 
-**Último run com falha:** [41162077590](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162077590)  
-**Head SHA:** vários (pós-merge de `main`)
+**Último run com falha:** [41385849215](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41385849215)  
+**Head SHA:** `8ba0b4361290f37171fd6ec27012a46665ca5b7e` (2026-11-02T03:57Z — main pós-merge PR #2551)
 
 **O que falha:**
-- Step "Consolidar veredito do contrato vivo" — artifact `13027601857` contém evidências
+- Step "Consolidar veredito do contrato vivo" — artifact `db-live-evidence-41385849215-1` (ID 13115417258) contém evidências
 - Compara o estado do banco de produção com artefatos do repositório (types.ts, schema-catalog.json,
   schema-manifest.json)
 
-**Falhas identificadas no run 41162077590 (3 contratos reais, não deriva transitória):**
-1. **migrations/ledger** — diferença entre migrations no disco (`supabase/migrations/`) e entradas no ledger do banco
-2. **ACL/mcp_exec** — contrato de permissão `mcp_exec` não satisfeito
-3. **configuração runtime** — `runtime-config` com divergência detectada
+**Falhas identificadas no run 41385849215 (6 passos — vs. run anterior 41162077590 com 3):**
+1. **Comparar migrations com schema_migrations** — diferença entre migrations no disco e ledger do banco
+2. **Verificar invariantes gerais do banco vivo** — algum invariante do banco não satisfeito
+3. **Regenerar catalogo e comparar com o commitado** — schema-catalog.json desatualizado
+4. **Regenerar manifesto e comparar com o commitado** — schema-manifest.json desatualizado
+5. **Verificar frescor do types.ts** — types.ts desatualizado (types-sync disparado em 2026-11-02T04:05Z)
+6. **Paridade tripla (migrations, edges, grants)** — paridade entre migrations, edges e grants quebrada
 
-**Por que não foi corrigido:** DB Live Guard conecta ao banco de produção e exige análise
-das evidências no artifact `db-live-evidence-{run_id}-1` para diagnosticar cada divergência.
-Requer acesso ao banco de produção para comparação e possível migration corretiva. Este
-workflow **não é um required check** — não bloqueia merges na `main`.
+**Ação tomada em 2026-11-02T04:05Z:** `types-sync.yml` disparado via `workflow_dispatch` na `main` para
+regenerar `types.ts` e possivelmente `schema-catalog.json` / `schema-manifest.json`.
+Quando o PR do types-sync mergear, re-disparar o DB Live Guard para verificar se as falhas 3, 4 e 5 foram corrigidas.
+
+**Por que não foi corrigido por completo:** As falhas 1, 2 e 6 exigem análise das evidências no artifact
+e possivelmente correções no banco de produção. Este workflow **não é um required check** — não bloqueia merges na `main`.
 
 **O que o Joaquim precisa fazer:**
-1. Disparar manualmente o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`
-2. Se falhar, os logs do artifact `db-live-evidence-{run_id}-1` mostrarão qual passo tem diferença real
-3. Se o passo "Verificar frescor do types.ts" falhar: disparar `workflow_dispatch` do `types-sync.yml` **na branch `main`**
-4. Se o passo "Comparar migrations com schema_migrations" falhar: verificar se há migration
-   no disco (em `supabase/migrations/`) sem entrada no ledger
+1. Aguardar o PR do types-sync mergear (auto-merge habilitado)
+2. Após o merge: re-disparar o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`
+3. Se "Comparar migrations com schema_migrations" ainda falhar: baixar artifact `db-live-evidence-{run_id}-1`
+   e verificar quais migrations estão no disco mas não no ledger (ou vice-versa)
+4. Se "Verificar invariantes gerais do banco vivo" falhar: verificar os logs do artifact para entender
+   qual invariante (ex.: ACL/mcp_exec, runtime-config) está quebrado
+5. Se "Paridade tripla" falhar: verificar paridade entre migrations, edges functions e grants no banco
 
 ---
 
@@ -65,29 +72,25 @@ workflow **não é um required check** — não bloqueia merges na `main`.
 
 ---
 
-## 3. Deploy Edge Functions — fix de @types/node tentado (PR #2407) mas ainda falha
+## 3. Deploy Edge Functions — fix --frozen=false aplicado (PR #2567) — verificação pendente
 
 **Comportamento esperado:** `deploy-functions.yml` só executa quando o push na `main` altera
 código implantável em `supabase/functions/` ou `supabase/config.toml`. Quando o push toca
 apenas arquivos de frontend, documentação ou configuração de CI, o workflow não é disparado
 (condição `paths:` no trigger).
 
-**Run com falha após o fix:** Run `41162076060` executou no SHA `004e74a8c5` (pós-merge da
-PR #2407, que adicionou a instalação npm de `@types/node` em `deploy-functions.yml`),
-e **ainda falhou** com `Could not find "@types/node"` no step `deno check`. O fix da PR #2407
-não foi suficiente para resolver o erro.
+**Fix aplicado:** PR #2567 (mergeada em 2026-11-02T03:52Z, SHA `8ba0b4361290f37171fd6ec27012a46665ca5b7e`)
+adicionou `--frozen=false` ao passo `deno install` em `deploy-functions.yml`. Este fix permite que
+o Deno resolva e instale `@types/node` ausente do lockfile, resolvendo o erro
+`Could not find "@types/node"` no step `deno check`.
 
-**Por que não foi corrigido:** O mecanismo pelo qual `deno check` falha mesmo após a instalação
-npm de `@types/node` requer investigação adicional — provavelmente o path do `node_modules`
-gerado não é o que o `deno check` procura. Este workflow **não é um required check** — não bloqueia merges na `main`.
+**Verificação pendente:** O próximo push na `main` que alterar código implantável em `supabase/functions/`
+ou `supabase/config.toml` disparará `deploy-functions.yml` automaticamente. O resultado confirmará
+se o fix é suficiente.
 
-**O que o Joaquim precisa fazer:**
-1. Disparar `workflow_dispatch` do `deploy-functions.yml` **na branch `main`** com
-   **`dry_run: true`** (ensaio: roda tudo até o deploy exclusive, sem publicar nada e sem
-   reescrever secrets) para diagnosticar o erro `@types/node` sem risco de side-effects
-2. Se falhar, investigar por que a instalação npm de `@types/node` não resolve o `Could not find "@types/node"` do `deno check`; verificar o path do `node_modules` gerado versus o caminho que o Deno resolve
-3. **Não** disparar sem `dry_run: true` — o deploy sem ensaio reescreve secrets e publica
-   as funções imediatamente no ambiente de produção
+**O que o Joaquim pode fazer para verificar agora (opcional):**
+Disparar `workflow_dispatch` do `deploy-functions.yml` **na branch `main`** com
+**`dry_run: true`** — roda tudo até o deploy exclusive, sem publicar nada e sem reescrever secrets.
 
 ---
 
@@ -104,6 +107,14 @@ gerado não é o que o `deno check` procura. Este workflow **não é um required
   Efeito no canônico: nenhum — todos os objetos existem.
 
 **Estado:** ✅ RESOLVIDO — PR #2551 mergeado em 2026-11-02T03:17Z, SHA `587ec25f` na `main`.
+
+**Gate de apply ainda pendente (Joaquim):** O `db-migrate.yml` pausa em `waiting` no environment
+`producao-ddl` para qualquer dispatch — inclusive dry-run. Para aplicar no banco de produção:
+1. Acessar [Actions → DB Migrate](https://github.com/adm01-debug/Zapp_Web_V2/actions/workflows/db-migrate.yml)
+2. Clicar em "Run workflow" com `migration_version`, `confirm_project_ref=tnnnlkbymytvtqngbbqh` e `apply=false` (dry-run)
+3. Quando o run pausar em "Waiting for producao-ddl environment", clicar em "Review deployments" → aprovar
+4. Aguardar o dry-run concluir e verificar o hash SHA-256 retornado
+5. Repetir com `apply=true` e `confirm_runtime_sha256` do dry-run anterior para o apply real
 
 ---
 
