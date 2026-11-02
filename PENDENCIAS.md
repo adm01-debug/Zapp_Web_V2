@@ -83,4 +83,26 @@ gerado não é o que o `deno check` procura. Este workflow **não é um required
 
 ---
 
+## 4. DB Migrate — gate `producao-ddl` exige aprovação humana (não pode ser verde por agente)
+
+**Run em espera:** [41384024756](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41384024756) — cancelado em 2026-11-02T03:42Z por estar indefinidamente em `waiting`.
+
+**Contexto:** o `db-migrate.yml` pausa em `status: "waiting"` no environment `producao-ddl` para **qualquer** dispatch — inclusive dry-run (`apply=false`). O gate exige aprovação manual na aba Actions do GitHub. Nenhum agente pode completar este workflow sozinho.
+
+**Parâmetros do último dispatch (dry-run):**
+- `migration_version`: `20261030145126`
+- `confirm_project_ref`: `tnnnlkbymytvtqngbbqh`
+- `apply`: `false` (dry-run)
+
+**O que o Joaquim precisa fazer para rodar o db-migrate:**
+1. Acessar [Actions → DB Migrate](https://github.com/adm01-debug/Zapp_Web_V2/actions/workflows/db-migrate.yml)
+2. Clicar em "Run workflow" com `migration_version`, `confirm_project_ref=tnnnlkbymytvtqngbbqh` e `apply=false` (dry-run)
+3. Quando o run pausar em "Waiting for producao-ddl environment", clicar em "Review deployments" → aprovar
+4. Aguardar o dry-run concluir e verificar o hash SHA-256 retornado
+5. Repetir com `apply=true` e `confirm_runtime_sha256` do dry-run anterior para o apply real
+
+**Nota:** este workflow **não é um required check** — não bloqueia merges na `main`.
+
+---
+
 _Nota: Este arquivo deve ser atualizado quando os itens acima forem resolvidos._
