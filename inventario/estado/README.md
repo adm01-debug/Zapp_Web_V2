@@ -25,9 +25,9 @@ regere o arquivo (comandos abaixo) em vez de corrigir à mão.
 - **`linhas`** é `count(*)` exato quando a tabela tem menos de 200 mil linhas (`linhas_exatas: true`);
   acima disso, a estimativa do planner. Não confie em `pg_stat_user_tables.n_live_tup`: zera quando o
   banco reinicia.
-- Contagens rodam com o papel da conexão. Com `service_role` (MCP) ou dono das tabelas, RLS não filtra
-  (papel do endpoint read-only da Management API: **NÃO VERIFICADO**);
-  com outro papel, tabelas com `rls_forcado` podem aparecer com 0.
+- Contagens rodam com o papel da conexão. Nos dois caminhos o RLS não filtra: `service_role` (MCP) e
+  `supabase_read_only_user` (endpoint read-only da Management API) têm `rolbypassrls = true` no banco oficial
+  (conferido em 2026-11-02 via `pg_roles`); com outro papel, tabelas com RLS e `cron.job` podem vir incompletas.
 - A resposta só é gravada se as tabelas baterem (≥ 90 %, nos dois sentidos) com `supabase/schema-manifest.json`:
   barra resposta colada de outro banco (ex.: MCP errado).
 - Nada de segredo sai do banco: de `cron.job` só o nome das funções chamadas (nunca o comando, que pode

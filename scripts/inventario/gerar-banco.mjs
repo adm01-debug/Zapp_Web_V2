@@ -43,9 +43,12 @@ export const LIMIARES = {
 /** Algo com cara de credencial no texto? (mesma regra do Promo_Gifts_V4) */
 export const PARECE_CREDENCIAL = /Bearer\s+[A-Za-z0-9._-]{20,}|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]+\.|sb_secret_/;
 
-/** Extrai o objeto do inventario da resposta do psql, da Management API ou do MCP. */
+/** Extrai o objeto do inventario da Management API, do MCP (resposta ou envelope tools/call) ou do objeto direto. */
 export function extrairInventario(bruto) {
   let dado = typeof bruto === 'string' ? JSON.parse(bruto.trim()) : bruto;
+  // Envelope cru de tools/call do MCP: { result: { content: [{ type: 'text', text: '<json>' }] } }.
+  const conteudo = dado?.result?.content ?? dado?.content;
+  if (Array.isArray(conteudo) && typeof conteudo[0]?.text === 'string') dado = JSON.parse(conteudo[0].text);
   if (dado && Array.isArray(dado.rows)) dado = dado.rows[0];
   if (Array.isArray(dado)) dado = dado[0];
   if (dado && dado.inventario) dado = dado.inventario;

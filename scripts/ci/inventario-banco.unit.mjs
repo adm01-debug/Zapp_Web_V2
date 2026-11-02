@@ -38,6 +38,8 @@ test('extrairInventario aceita a resposta crua do MCP, o objeto direto e a linha
   assert.equal(extrairInventario(JSON.stringify(dado) + '\n').tabelas.length, 4);
   assert.equal(extrairInventario({ rows: [{ inventario: JSON.stringify(dado) }] }).tabelas.length, 4);
   assert.equal(extrairInventario([{ inventario: dado }]).tabelas.length, 4, 'formato da Management API: array de linhas');
+  const envelope = { jsonrpc: '2.0', result: { content: [{ type: 'text', text: JSON.stringify({ rows: [{ inventario: dado }] }) }] } };
+  assert.equal(extrairInventario(JSON.stringify(envelope)).tabelas.length, 4, 'envelope cru de tools/call do MCP');
 });
 
 test('extrairInventario recusa entrada incompleta, vazia ou de outra versao', () => {
