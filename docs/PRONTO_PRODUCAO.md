@@ -1,7 +1,7 @@
 # Pronto para produção — fluxos críticos do Zapp Web V2
 
 Lista fechada. O sistema está "pronto" quando **todos** os fluxos abaixo estiverem **OK**.
-Tudo o que não está aqui fica para depois (ver `.claude/CLAUDE.md`, congelamento de features).
+Tudo o que não está aqui fica para depois.
 
 Regra para marcar OK: prova em produção (query, request ou log real, com data e hora) **e** E2E do fluxo
 passando na `main`. Quem marcar OK cola a prova na linha.
