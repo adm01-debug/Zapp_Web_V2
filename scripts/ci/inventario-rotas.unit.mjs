@@ -201,3 +201,21 @@ export function handlerB() {
   assert.deepEqual(extrairChamadas(texto).tabelas, [],
     'const declarada dentro de funcao nao e nivel de modulo: nao deve resolver nem misturar valor entre escopos');
 });
+
+test('constantesDeString nao trata const de funcao em coluna zero (sem Prettier) como nivel de modulo', () => {
+  const texto = `
+export function handlerA() {
+const TABELA = 'tabela_a';
+return supabase.from(TABELA).select();
+}
+export function handlerB() {
+const TABELA = 'tabela_b';
+return supabase.from(TABELA).select();
+}`;
+  // Achado do Qodo na revisao desta mesma correcao: coluna zero sozinha nao prova nivel de
+  // modulo, porque o repo nao roda `prettier --check` no CI -- um arquivo sem Prettier pode ter
+  // `const` de funcao sem indentacao nenhuma. Com o tracking de profundidade de chaves, nenhuma
+  // das duas resolve (mesmo veredito do teste de const indentada acima).
+  assert.deepEqual(extrairChamadas(texto).tabelas, [],
+    'const de funcao em coluna zero nao deve ser tratada como nivel de modulo');
+});

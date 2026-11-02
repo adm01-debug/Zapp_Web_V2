@@ -61,15 +61,25 @@ export function extrairImports(texto) {
  * So resolve o caso mais comum do repo: identificador passado direto pra `.from`/`fromTable`/
  * `storage.from`/`rpc`/`invoke` que e, no mesmo arquivo, uma constante de string (ex.:
  * `TALKX_MEDIA_BUCKET`, `ACL_ALERTS_TABLE`). Nao resolve parametro de funcao nem ternario.
- * `^` sem `\s*` antes de `const` e de proposito: exige coluna zero (nivel de modulo de
- * verdade), senao um `const` indentado dentro de funcao (nivel de bloco) tambem bate e, se
- * duas funcoes do mesmo arquivo tiverem uma const local com o mesmo nome e valores diferentes,
- * a ultima declaracao "vence" para as DUAS chamadas (falso positivo silencioso em tabelas/rpcs).
+ * Coluna zero sozinha nao basta (achado do Qodo na revisao desta correcao): um `const` dentro
+ * de funcao tambem pode estar em coluna zero se o arquivo nao passou pelo Prettier (o repo nao
+ * tem `prettier --check` no CI). Por isso conta profundidade de `{`/`}` linha a linha e so
+ * aceita o `const` quando a profundidade, ANTES de processar a linha, e zero (nivel de modulo
+ * de verdade). Contagem ingenua (nao ignora chave dentro de string/template) e de proposito:
+ * na duvida, prefere nao resolver a resolver errado.
  */
 function constantesDeString(texto) {
   const mapa = new Map();
-  for (const m of texto.matchAll(/^(?:export\s+)?const\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?::\s*[^=]+)?=\s*['"`]([A-Za-z0-9_.-]+)['"`]\s*[;,]?\s*$/gm)) {
-    mapa.set(m[1], m[2]);
+  let profundidade = 0;
+  for (const linha of texto.split('\n')) {
+    if (profundidade === 0) {
+      const m = linha.match(/^(?:export\s+)?const\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?::\s*[^=]+)?=\s*['"`]([A-Za-z0-9_.-]+)['"`]\s*[;,]?\s*$/);
+      if (m) mapa.set(m[1], m[2]);
+    }
+    for (const ch of linha) {
+      if (ch === '{') profundidade++;
+      else if (ch === '}') profundidade--;
+    }
   }
   return mapa;
 }
