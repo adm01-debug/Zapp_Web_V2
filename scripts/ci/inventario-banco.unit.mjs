@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   extrairInventario, contarUsoNoCodigo, montarInventario, compararEdges, conferirOrigem, LIMIARES, PARECE_CREDENCIAL,
+  rodaTodoDia, versoesDoRepo,
 } from '../inventario/gerar-banco.mjs';
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -19,7 +20,7 @@ const tabela = (nome, extra = {}) => ({
   nome, rls: true, rls_forcado: false, policies: 1, triggers: 0, linhas: 0, linhas_exatas: true, bytes: 8192, citada_no_banco: false, ...extra,
 });
 const job = (nome, extra = {}) => ({
-  nome, agenda: '* * * * *', ativo: true, chama: [], execucoes_24h: 0, falhas_24h: 0, execucoes_7d: 100, falhas_7d: 0,
+  nome, agenda: '* * * * *', ativo: true, chama: [], execucoes_24h: 1440, falhas_24h: 0, execucoes_7d: 100, falhas_7d: 0,
   startup_timeout_7d: 0, taxa_falha_7d_pct: 0, ultima_falha: null, duracao_max_s_7d: 1, ...extra,
 });
 const base = () => ({
@@ -147,6 +148,37 @@ test('origem: resposta de outro banco (tabelas nao batem com o manifesto) e recu
   assert.throws(() => conferirOrigem({ ...dado, tabelas: dado.tabelas.slice(0, 1) }, manifesto), /nao parece/);
   const real = Object.keys(JSON.parse(fs.readFileSync(path.join(raiz, 'supabase/schema-manifest.json'), 'utf8')).rls);
   assert.ok(real.length > 100, 'manifesto real tem as tabelas de producao');
+});
+
+test('origem: banco irmao com as mesmas tabelas mas ledger parado ou diferente e recusado', () => {
+  const versoes = Array.from({ length: 100 }, (_, i) => String(20260101000000 + i * 100));
+  const manifesto = base().tabelas.map((t) => t.nome);
+  const comLedger = (max, registros) => ({ ...base(), resumo: { ledger_versao_max: max, ledger_registros: registros } });
+  const ok = conferirOrigem(comLedger(versoes.at(-1), 100), manifesto, versoes);
+  assert.equal(ok.migrations_no_repo, 100);
+  assert.ok(conferirOrigem(comLedger(versoes.at(-20), 95), manifesto, versoes), 'migration mergeada ainda nao aplicada passa');
+  assert.ok(conferirOrigem(comLedger('20991231000000', 101), manifesto, versoes), 'ledger a frente do repo passa');
+  assert.throws(() => conferirOrigem(comLedger(versoes.at(-21), 100), manifesto, versoes), /maior versao/, 'ledger parado');
+  assert.throws(() => conferirOrigem(comLedger(versoes.at(-1), 60), manifesto, versoes), /nao parece/, 'contagem muito diferente');
+  assert.throws(() => conferirOrigem(base(), manifesto, versoes), /ledger_versao_max/, 'sem resumo do ledger');
+  const reais = versoesDoRepo(raiz);
+  assert.ok(reais.length > 1000 && reais.every((v) => /^\d{14}$/.test(v)), 'versoes reais saem so dos .sql do topo');
+  const commitado = JSON.parse(fs.readFileSync(path.join(raiz, 'inventario/estado/banco.json'), 'utf8'));
+  assert.ok(conferirOrigem({ ...base(), resumo: commitado.resumo }, manifesto, reais), 'o banco.json commitado passa');
+});
+
+test('cron_sem_execucao: job ativo diario sem nenhuma execucao em 24 h (cron 100% parado) alerta', () => {
+  assert.equal(rodaTodoDia('* * * * *'), true);
+  assert.equal(rodaTodoDia('17 3 * * *'), true);
+  assert.equal(rodaTodoDia('30 seconds'), true);
+  assert.equal(rodaTodoDia('0 4 * * 1'), false, 'semanal pode passar 24 h sem rodar');
+  assert.equal(rodaTodoDia('0 0 1 * *'), false, 'mensal');
+  const dado = base();
+  dado.cron.jobs = [job('parado', { execucoes_24h: 0, execucoes_7d: 0 }), job('semanal', { agenda: '0 4 * * 1', execucoes_24h: 0 }),
+    job('desligado', { ativo: false, execucoes_24h: 0 }), job('ok')];
+  const alerta = montarInventario(dado, {}).alertas.find((a) => a.tipo === 'cron_sem_execucao');
+  assert.deepEqual(alerta, { tipo: 'cron_sem_execucao', detalhe: ['parado'] });
+  assert.equal(montarInventario(base(), {}).alertas.some((a) => a.tipo === 'cron_sem_execucao'), false);
 });
 
 test('WhatsApp conectado mas com saude degradada vira alerta proprio', () => {

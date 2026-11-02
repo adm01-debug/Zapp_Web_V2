@@ -96,9 +96,12 @@ export function contarUsoNoCodigo(raiz, nomes) {
 /**
  * A resposta e mesmo do banco oficial? Confere contra supabase/schema-manifest.json (foto da
  * producao mantida pelo types-sync), fonte independente do arquivo de entrada: pelo menos 90%
- * das tabelas do manifesto tem de estar na resposta, e vice-versa.
+ * das tabelas do manifesto tem de estar na resposta, e vice-versa. Com `versoesRepo` (versoes dos
+ * .sql de supabase/migrations/) confere tambem o ledger: um banco irmao com quase as mesmas tabelas
+ * (ex.: o antigo do Lovable) passa no criterio das tabelas, mas nao tem as migrations recentes.
  */
-export function conferirOrigem(dado, tabelasManifesto) {
+export const LEDGER_TOLERANCIA = { versoesRecentes: 20, registrosPct: 10 };
+export function conferirOrigem(dado, tabelasManifesto, versoesRepo = null) {
   const resposta = new Set(dado.tabelas.map((t) => t.nome));
   const manifesto = new Set(tabelasManifesto);
   const comuns = [...manifesto].filter((t) => resposta.has(t)).length;
@@ -109,8 +112,26 @@ export function conferirOrigem(dado, tabelasManifesto) {
       + `(${Math.round(cobreManifesto * 100)}% do manifesto, ${Math.round(cobreResposta * 100)}% da resposta). `
       + 'Confira se o MCP usado e o SUPABASE - ZAPP WEB V2 - MCP.');
   }
-  return { tabelas_em_comum_com_manifesto: comuns, tabelas_no_manifesto: manifesto.size };
+  const origem = { tabelas_em_comum_com_manifesto: comuns, tabelas_no_manifesto: manifesto.size };
+  if (!versoesRepo?.length) return origem;
+  const { ledger_versao_max: max, ledger_registros: registros } = dado.resumo ?? {};
+  if (!max || !Number.isFinite(registros)) {
+    throw new Error('a resposta nao traz resumo.ledger_versao_max/ledger_registros; rode o banco.sql atual.');
+  }
+  const recentes = [...versoesRepo].sort().reverse();
+  const limite = recentes[Math.min(LEDGER_TOLERANCIA.versoesRecentes, recentes.length) - 1];
+  const difPct = Math.abs(registros - versoesRepo.length) * 100 / versoesRepo.length;
+  if (String(max) < limite || difPct > LEDGER_TOLERANCIA.registrosPct) {
+    throw new Error(`a resposta nao parece ser do banco oficial: ledger com ${registros} registros e maior versao ${max}; `
+      + `o repo tem ${versoesRepo.length} migrations e a ${LEDGER_TOLERANCIA.versoesRecentes}a mais recente e ${limite}. `
+      + 'Confira se o MCP usado e o SUPABASE - ZAPP WEB V2 - MCP.');
+  }
+  return { ...origem, ledger_registros: registros, migrations_no_repo: versoesRepo.length };
 }
+
+/** Versoes (prefixo numerico) dos .sql de supabase/migrations/ (sem _foreign/ e _superseded/). */
+export const versoesDoRepo = (raiz) => fs.readdirSync(path.join(raiz, 'supabase/migrations'))
+  .filter((f) => /^\d+_.*\.sql$/.test(f)).map((f) => f.split('_')[0]);
 
 const tabelasDoManifesto = (raiz) => Object.keys(
   JSON.parse(fs.readFileSync(path.join(raiz, 'supabase/schema-manifest.json'), 'utf8')).rls ?? {},
@@ -152,6 +173,14 @@ function ordenar(valor) {
   return valor;
 }
 
+/** A agenda do pg_cron roda ao menos uma vez por dia? ('N seconds' ou dia do mes, mes e dia da semana = *). */
+export function rodaTodoDia(agenda) {
+  const a = String(agenda ?? '').trim();
+  if (/^\d+\s+seconds?$/i.test(a)) return true;
+  const campos = a.split(/\s+/);
+  return campos.length === 5 && campos[2] === '*' && campos[3] === '*' && campos[4] === '*';
+}
+
 /** Junta banco + codigo + edges e calcula orfas e alertas. Funcao pura (testada em scripts/ci/). */
 export function montarInventario(dado, uso, edges = compararEdges(null, [])) {
   const tabelas = dado.tabelas.map((t) => ({ ...t, uso_no_codigo: uso[t.nome] ?? { src: 0, edges: 0 } }));
@@ -166,6 +195,10 @@ export function montarInventario(dado, uso, edges = compararEdges(null, [])) {
     .filter((j) => j.ativo && j.taxa_falha_7d_pct >= LIMIARES.taxaFalhaCronPct)
     .map((j) => `${j.nome} (${j.taxa_falha_7d_pct}% em 7d)`);
   if (cronRuim.length) alertas.push({ tipo: 'cron_falhando', detalhe: cronRuim });
+  // Cron 100% parado nao grava linha em job_run_details: some de horas_paradas_7d e a taxa fica 0.
+  // Job ativo que deveria rodar todo dia (dia/mes/semana = *) sem nenhuma execucao em 24 h.
+  const mudos = dado.cron.jobs.filter((j) => j.ativo && j.execucoes_24h === 0 && rodaTodoDia(j.agenda)).map((j) => j.nome);
+  if (mudos.length) alertas.push({ tipo: 'cron_sem_execucao', detalhe: mudos });
   if (dado.cron.horas_paradas_7d.length) {
     alertas.push({ tipo: 'cron_parado', detalhe: dado.cron.horas_paradas_7d.map((h) => h.hora) });
   }
@@ -238,7 +271,7 @@ async function main(argv) {
   if (!publicadasApi && token) publicadasApi = await chamarApi('/functions');
 
   const dado = extrairInventario(bruto);
-  conferirOrigem(dado, tabelasDoManifesto(RAIZ));
+  conferirOrigem(dado, tabelasDoManifesto(RAIZ), versoesDoRepo(RAIZ));
   const uso = contarUsoNoCodigo(RAIZ, dado.tabelas.map((t) => t.nome));
   const inventario = montarInventario(dado, uso, compararEdges(publicadasApi, edgesNoRepo(RAIZ)));
   const texto = JSON.stringify(inventario, null, 2) + '\n';

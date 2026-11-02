@@ -203,6 +203,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -293,6 +294,7 @@
         "avatars"
       ],
       "edges": [
+        "auth-login",
         "create-user",
         "crm-integration",
         "detect-new-device",
@@ -398,6 +400,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "evolution-api",
         "invite-user",
@@ -537,6 +540,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -642,6 +646,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery",
         "promogifts-catalog"
@@ -826,6 +831,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "connection-health-check",
         "detect-new-device",
         "evolution-api",
@@ -1026,6 +1032,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "crm-integration",
         "detect-new-device",
         "external-db-proxy",
@@ -1146,6 +1153,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "crm-integration",
         "detect-new-device",
         "external-db-proxy",
@@ -1376,6 +1384,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -1563,6 +1572,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "crm-integration",
         "detect-new-device",
         "message-delivery"
@@ -1671,6 +1681,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "connection-health-check",
         "detect-new-device",
         "evolution-api",
@@ -1750,6 +1761,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -1792,7 +1804,9 @@
       "arquivos_lidos": 2,
       "hooks": [],
       "buckets": [],
-      "edges": [],
+      "edges": [
+        "gmail-webhook"
+      ],
       "rpcs": [
         "get_own_gmail_accounts"
       ],
@@ -2510,6 +2524,7 @@
         "ai-proxy",
         "ai-suggest-reply",
         "ai-transcribe-audio",
+        "auth-login",
         "batch-fetch-avatars",
         "classify-audio-meme",
         "classify-emoji",
@@ -2517,12 +2532,16 @@
         "crm-integration",
         "detect-new-device",
         "elevenlabs-scribe-token",
+        "elevenlabs-sts",
+        "elevenlabs-tts",
+        "elevenlabs-tts-stream",
         "evolution-api",
         "external-db-proxy",
         "get-mapbox-token",
         "message-delivery",
         "promogifts-catalog",
-        "sentiment-alert"
+        "sentiment-alert",
+        "voice-changer"
       ],
       "rpcs": [
         "app_bootstrap",
@@ -2678,6 +2697,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "bitrix-api",
         "detect-new-device",
         "message-delivery"
@@ -3179,6 +3199,7 @@
       ],
       "edges": [
         "ai-conversation-analysis",
+        "auth-login",
         "crm-integration",
         "detect-new-device",
         "evolution-api",
@@ -3320,6 +3341,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -3380,6 +3402,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -3580,6 +3603,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -3740,6 +3764,7 @@
       "buckets": [],
       "edges": [
         "approve-password-reset",
+        "auth-login",
         "detect-new-device",
         "external-db-proxy",
         "message-delivery",
@@ -3973,10 +3998,13 @@
       ],
       "edges": [
         "ai-proxy",
+        "auth-login",
         "chatbot-l1",
         "classify-audio-meme",
         "detect-new-device",
+        "elevenlabs-dialogue",
         "elevenlabs-sfx",
+        "elevenlabs-voice-design",
         "evolution-api",
         "message-delivery"
       ],
@@ -4157,6 +4185,7 @@
       "buckets": [],
       "edges": [
         "ai-proxy",
+        "auth-login",
         "detect-new-device",
         "evolution-api",
         "message-delivery"
@@ -4376,10 +4405,12 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "crm-integration",
         "detect-new-device",
         "external-db-proxy",
         "message-delivery",
+        "talkx-link",
         "talkx-send"
       ],
       "rpcs": [
@@ -4533,6 +4564,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -4782,11 +4814,15 @@
       ],
       "edges": [
         "ai-enhance-message",
+        "auth-login",
         "classify-audio-meme",
         "classify-emoji",
         "classify-sticker",
         "detect-new-device",
-        "message-delivery"
+        "elevenlabs-sts",
+        "elevenlabs-tts",
+        "message-delivery",
+        "voice-changer"
       ],
       "rpcs": [
         "create_department_invite",
@@ -5055,7 +5091,9 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
+        "get-call-recording",
         "message-delivery"
       ],
       "rpcs": [
@@ -5175,6 +5213,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],
@@ -5297,6 +5336,7 @@
       ],
       "buckets": [],
       "edges": [
+        "auth-login",
         "detect-new-device",
         "message-delivery"
       ],

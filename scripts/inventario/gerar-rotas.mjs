@@ -58,7 +58,7 @@ export function extrairImports(texto) {
 
 /**
  * Chamadas ao Supabase num texto: tabelas (`.from` do cliente e `/rest/v1/<tabela>`), buckets
- * (`storage.from`), RPCs (`.rpc`) e edges (`functions.invoke`).
+ * (`storage.from`), RPCs (`.rpc`) e edges (`functions.invoke`, `invokeEdge`, `/functions/v1/<edge>`).
  */
 export function extrairChamadas(texto) {
   const pegar = (re) => [...texto.matchAll(re)].map((m) => m[1]);
@@ -73,7 +73,11 @@ export function extrairChamadas(texto) {
     rpcs: [...pegar(/(?:\.|\b)rpc\(\s*['"`]([A-Za-z0-9_]+)['"`]/g), ...pegar(/\/rest\/v1\/rpc\/([A-Za-z0-9_]+)/g)],
     // `functions.invoke` (inclusive quebrado em linha) e o atalho `invokeEdge<T>(...)` de
     // src/lib/invokeEdge.ts; `invoke('evolution-api/connect')` conta como a edge `evolution-api`.
-    edges: pegar(/(?:functions\s*\.\s*invoke|\binvokeEdge)(?:<[^>()]*>)?\(\s*['"`]([A-Za-z0-9_-]+)(?:\/[^'"`]*)?['"`]/g),
+    // `fetch(`${SUPABASE_URL}/functions/v1/get-call-recording`)` (chamada direta pela URL).
+    edges: [
+      ...pegar(/(?:functions\s*\.\s*invoke|\binvokeEdge)(?:<[^>()]*>)?\(\s*['"`]([A-Za-z0-9_-]+)(?:\/[^'"`]*)?['"`]/g),
+      ...pegar(/\/functions\/v1\/([A-Za-z0-9_-]+)/g),
+    ],
   };
 }
 
