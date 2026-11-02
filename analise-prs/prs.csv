@@ -71,11 +71,11 @@ numero,titulo,veredito,auto_merge,arquivos,criada_em
 2522,fix(e2e): aguarda teclado visível antes do primeiro clique — Firefox GR-012,AGUARDANDO_CI,SQUASH,0,2026-11-01T22:03:42Z
 2526,fix(ci): deno check --config + waitForAppliedTheme corrigem deploy-functions e E2E webkit,AGUARDANDO_CI,SQUASH,0,2026-11-01T22:24:56Z
 2533,chore: arquivo de reconciliação migration 20261030145126 (copilot_fases13_15_tabelas),AGUARDANDO_CI,SQUASH,0,2026-11-01T22:50:47Z
-2536,fix(e2e): workers sempre 2 — elimina timeout do Email fixture no CI (GR-016),AGUARDANDO_CI,SQUASH,0,2026-11-01T22:56:54Z
+2536,fix(e2e): workers sempre 2 — elimina timeout do Email fixture no CI (GR-016),BLOQUEADO_CONFLITO,SQUASH,0,2026-11-01T22:56:54Z
 2539,"fix: reconcilia migrations 20261026 — arquivo 240300, replay-known-failures, TC-009",DRAFT_SKIP,,0,2026-11-01T23:20:12Z
 2542,fix: N-008 DB Guard — N008_POSTGRES_IMAGE ausente causava falha de pull (fix/ci-workflows),AGUARDANDO_CI,SQUASH,0,2026-11-01T23:30:30Z
 2543,fix: E2E alto-contraste e N-008 healthcheck,AGUARDANDO_CI,SQUASH,0,2026-11-01T23:31:15Z
-2545,chore: congela features e define os 9 fluxos críticos para produção,AGUARDANDO_CI,SQUASH,0,2026-11-01T23:36:30Z
+2545,chore: congela features e define os 9 fluxos críticos para produção,MERGEADA,SQUASH,0,2026-11-02T03:01:17Z
 2547,infra: E2E logado (grupo autenticado) com 45 min para terminar e reportar falhas,MERGEADA,SQUASH,0,2026-11-01T23:44:44Z
 2549,fix: reconexão automática do WhatsApp passa a ser executada pelo health check,AGUARDANDO_CI,SQUASH,0,2026-11-01T23:55:56Z
 2551,fix(ci): branch-hygiene-audit timeout no step KPI (GF-010),BLOQUEADO_RLS_SEM_TESTE,SQUASH,0,2026-11-02T00:15:09Z
@@ -85,11 +85,11 @@ numero,titulo,veredito,auto_merge,arquivos,criada_em
 2556,feat: E2E reload test para preservação de rota URL (X052),DRAFT_SKIP,,0,2026-11-02T00:45:03Z
 2557,fix(docs): atualiza required checks no CLAUDE.md — 3 checks reais (GR-011),AGUARDANDO_CI,SQUASH,0,2026-11-02T00:51:43Z
 2558,feat(talkx): trilha de navegação clicável no monitor (X053),DRAFT_SKIP,,0,2026-11-02T00:58:02Z
-2559,fix(ci): corrige mocks de supabase e dependência de migration no teste GR-027,AGUARDANDO_CI,SQUASH,0,2026-11-02T00:59:53Z
+2559,fix(ci): corrige mocks de supabase e dependência de migration no teste GR-027,FECHADA_SEM_MERGE,,0,2026-11-02T00:59:53Z
 2560,fix(e2e): workers 1→2 em CI — GR-016,MERGEADA,SQUASH,0,2026-11-02T01:13:24Z
 2561,fix(rls): convites de departamento só admin cria e apaga (S3-01),BLOQUEADO_AGUARDANDO_APROVACAO,,0,2026-11-02T01:20:26Z
 2562,feat(lgpd): apagar tentativas de login sem atividade há mais de 90 dias,BLOQUEADO_FEATURE_FREEZE,,0,2026-11-02T01:21:09Z
 2563,fix(ci): instala @types/node via npm após deno install em deploy-functions (GR-001),AGUARDANDO_CI,SQUASH,0,2026-11-02T01:39:37Z
-2564,fix(ci): W71 e2e-logado dispara via workflow_run em vez de merge direto na main,AGUARDANDO_CI,SQUASH,0,2026-11-02
+2564,fix(ci): W71 e2e-logado dispara via workflow_run em vez de merge direto na main,FECHADA_SEM_MERGE,,0,2026-11-02
 2565,chore: CLAUDE.md revisado — regras do Joaquim no topo e arquitetura abandonada removida,BLOQUEADO_DECISAO_HUMANA,SQUASH,1,2026-11-02T02:01:24Z
 2566,fix(ci): mocks de supabase + workflow_run no e2e-logado (GR-027 + GR-029),BLOQUEADO_CONFLITO,SQUASH,11,2026-11-02T02:47:15Z

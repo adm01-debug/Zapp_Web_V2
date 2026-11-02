@@ -1,11 +1,11 @@
 # RELATÓRIO DE ANÁLISE — 94 PRs ANALISADAS
-**adm01-debug/Zapp_Web_V2** | Atualizado em 2026-11-02T06:00Z  
+**adm01-debug/Zapp_Web_V2** | Atualizado em 2026-11-02T07:00Z  
 SHA main início da análise: `004e74a8c596959f45f61c8b0b64b30a70c1ff19`  
-SHA main atual: `a7a53f56771257106ad79847e6a9f13b9ddada80`
+SHA main atual: `c16f3c69a9bffea1899760288d6c5d576acc2495` (após merge #2545)
 
 ---
 
-## ✅ MERGEADAS COM SHA DE EVIDÊNCIA
+## ✅ MERGEADAS COM SHA DE EVIDÊNCIA (6 total)
 
 | PR | Título | Merge SHA | Mergeada em |
 |----|--------|-----------|-------------|
@@ -14,28 +14,26 @@ SHA main atual: `a7a53f56771257106ad79847e6a9f13b9ddada80`
 | #2482 | docs(talkx): marca V4 como vigente e V3 como substituído (X001) | `3b5f8a96db0337af7310eec1b0dc5f86bb45912c` | 2026-11-01 |
 | #2547 | infra: E2E logado timeout 45 min | `3066fac062f934e5469bb573e88bc464559a023c` | 2026-11-02T02:13:43Z |
 | #2560 | fix(e2e): workers 1→2 em CI — GR-016 | `a7a53f56771257106ad79847e6a9f13b9ddada80` | 2026-11-02T02:43:28Z |
+| #2545 | chore: congela features — 9 fluxos críticos | `c16f3c69a9bffea1899760288d6c5d576acc2495` | 2026-11-02T03:01:17Z |
 
 ---
 
-## ⏳ AGUARDANDO CI — COM auto_merge=SQUASH
+## ⏳ AGUARDANDO CI — COM auto_merge=SQUASH (9 + 1)
 
-Todas mergearão automaticamente quando os required checks passarem.
+Todas mergearão automaticamente quando os required checks passarem (3 obrigatórios: `🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate`).
 
 | PR | Título | HEAD SHA |
 |----|--------|----------|
+| #2494 | chore(db): sincronizar artefatos (types-sync) | `b936b6453b848862ebf6efed6f1f453fa0812a7f` |
 | #2498 | fix(admin): RPC get_search_insights→search_insights | `984104a1e22cc924303055fff3ff96048d8bac6e` |
 | #2522 | fix(e2e): aguarda teclado visível — Firefox GR-012 | `737518f952999dad4f023e9eb36270bd6203ed75` |
 | #2526 | fix(ci): deno check --config + E2E webkit | `f3cccccae8189a91743b37a05723a833565023cc` |
 | #2533 | chore: migration reconciliation 20261030145126 | `2388e1ac52b22578880c3a5d6d408a4436ac16f0` |
-| #2536 | fix(e2e): workers sempre 2 — timeout Email fixture | `901357404c7cad5fcc398fdf2e66512077e16956` |
 | #2542 | fix: N-008 DB Guard N008_POSTGRES_IMAGE | `c61cbe617f4d06b0f29cb41ddb8f4a1c03082327` |
 | #2543 | fix: E2E alto-contraste e N-008 healthcheck | `68dff679c1551472f7b5c06a0bf0855c920fc7eb` |
-| #2545 | chore: congela features — 9 fluxos críticos | `0a04a1d36874a6cd95721e658876ba10af0f0644` |
 | #2549 | fix: reconexão automática WhatsApp | `7742d72eb9899d131db4d053d37d7b113cc09cc8` |
 | #2557 | fix(docs): atualiza required checks no CLAUDE.md | `93cfc9d09660ba91d932554a1f2e6b782e569de6` |
-| #2559 | fix(ci): corrige mocks supabase e dependência migrations | `3caf2e3bfb16d90702e10623ef07a658e60646de` |
 | #2563 | fix(ci): instala @types/node via npm após deno install | `355f3ea4916e7d54c9d09ebd6c83bc88a5d32317` |
-| #2564 | fix(ci): W71 e2e-logado via workflow_run | `e00c8857bd36085547840ce5f26497115b4d54eb` |
 
 ---
 
@@ -43,7 +41,7 @@ Todas mergearão automaticamente quando os required checks passarem.
 
 | PR | HEAD SHA | Observação |
 |----|----------|------------|
-| #2494 | `7c765b95a0fd05fcc168eed1951e14ad0c6984a4` | CI reiniciado após update; auto_merge=SQUASH |
+| #2494 | `b936b6453b848862ebf6efed6f1f453fa0812a7f` | CI não iniciou no novo head SHA (bot push); auto_merge=SQUASH |
 
 ---
 
@@ -51,6 +49,7 @@ Todas mergearão automaticamente quando os required checks passarem.
 
 | PR | HEAD SHA | Motivo |
 |----|----------|--------|
+| #2536 | `901357404c7cad5fcc398fdf2e66512077e16956` | fix(e2e) workers sempre 2 GR-016; dirty após #2560 mergear mesmo tema; verificar se supersedido |
 | #2566 | `f12084606dcdd9d9d8c71605ab0235e9126431ee` | fix(ci) GR-027+GR-029 (mocks supabase + e2e-logado workflow_run); dirty — precisa resolver conflito; auto_merge=SQUASH |
 
 ---
