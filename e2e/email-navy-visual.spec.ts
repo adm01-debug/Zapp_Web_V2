@@ -142,8 +142,10 @@ test('rota real renderiza lista, conversa e compositor com o tema do sistema sem
 test('workspace do Email não introduz violações axe', async ({ page }) => {
   await abrirEmail(page);
   await expect(page.getByTestId('email-header').getByRole('heading', { name: 'Email', exact: true })).toBeVisible();
+  // WebKit lê cores interpoladas quando o tema ainda está em transição (ver waitForAppliedTheme).
+  // Esperar o tema dark estabilizar ANTES de congelar evita falso color-contrast no webkit-email-navy.
+  await waitForAppliedTheme(page, 'dark');
   await freezeVisualTransitions(page);
-  await page.waitForTimeout(400);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => {
     const axe = (window as unknown as Window & {
