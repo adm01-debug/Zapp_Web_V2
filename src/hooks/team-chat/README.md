@@ -52,7 +52,7 @@ Storage.
 | `useTransferConversation`          | `useTeamChatMutations.ts`    | rpc     | `transfer_team_conversation_ownership` |
 | `useTransferConversationDepartment` | `useTeamChatMutations.ts`   | rpc     | `transfer_team_conversation_department` |
 | `useDeleteConversation`            | `useTeamChatMutations.ts`    | tabela  | `team_conversations`                   |
-| `useAddConversationMembers`        | `useTeamChatMutations.ts`    | tabela  | `team_conversation_members`            |
+| `useAddConversationMembers`        | `useTeamChatMembers.ts`      | tabela  | `team_conversation_members`            |
 | `useTeamMemberDetails`             | `useTeamMemberDetails.ts`    | rpc     | `get_team_birthdays`                   |
 | `useTeamPerformance`               | `useTeamPerformance.ts`      | tabela  | `team_messages`                        |
 | `useParticipantStats`              | `useParticipantStats.ts`     | tabela  | `team_messages`                        |
