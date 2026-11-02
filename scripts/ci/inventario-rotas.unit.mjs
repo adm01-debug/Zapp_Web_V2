@@ -182,3 +182,22 @@ export function f() {
   assert.deepEqual(c.tabelas.sort(), ['security_acl_alerts', 'user_sessions']);
   assert.deepEqual(c.buckets, ['talkx-media']);
 });
+
+test('constantesDeString ignora const de bloco/funcao: nao mistura valor entre duas funcoes do mesmo arquivo', () => {
+  const texto = `
+export function handlerA() {
+  const TABELA = 'tabela_a';
+  return supabase.from(TABELA).select();
+}
+export function handlerB() {
+  const TABELA = 'tabela_b';
+  return supabase.from(TABELA).select();
+}`;
+  // Antes do fix, `^\s*const` casava a const indentada dentro da funcao como se fosse de
+  // nivel de modulo; a ULTIMA declaracao do arquivo (tabela_b) sobrescrevia o mapa e as DUAS
+  // chamadas resolviam para 'tabela_b' (falso positivo silencioso: handlerA nunca usa tabela_a
+  // no inventario, e tabela_a nem aparece). Com `^` exigindo coluna zero, nenhuma das duas
+  // consts de bloco resolve — o inventario corretamente nao finge saber a tabela.
+  assert.deepEqual(extrairChamadas(texto).tabelas, [],
+    'const declarada dentro de funcao nao e nivel de modulo: nao deve resolver nem misturar valor entre escopos');
+});

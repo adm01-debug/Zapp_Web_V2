@@ -61,10 +61,14 @@ export function extrairImports(texto) {
  * So resolve o caso mais comum do repo: identificador passado direto pra `.from`/`fromTable`/
  * `storage.from`/`rpc`/`invoke` que e, no mesmo arquivo, uma constante de string (ex.:
  * `TALKX_MEDIA_BUCKET`, `ACL_ALERTS_TABLE`). Nao resolve parametro de funcao nem ternario.
+ * `^` sem `\s*` antes de `const` e de proposito: exige coluna zero (nivel de modulo de
+ * verdade), senao um `const` indentado dentro de funcao (nivel de bloco) tambem bate e, se
+ * duas funcoes do mesmo arquivo tiverem uma const local com o mesmo nome e valores diferentes,
+ * a ultima declaracao "vence" para as DUAS chamadas (falso positivo silencioso em tabelas/rpcs).
  */
 function constantesDeString(texto) {
   const mapa = new Map();
-  for (const m of texto.matchAll(/^\s*(?:export\s+)?const\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?::\s*[^=]+)?=\s*['"`]([A-Za-z0-9_.-]+)['"`]\s*[;,]?\s*$/gm)) {
+  for (const m of texto.matchAll(/^(?:export\s+)?const\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?::\s*[^=]+)?=\s*['"`]([A-Za-z0-9_.-]+)['"`]\s*[;,]?\s*$/gm)) {
     mapa.set(m[1], m[2]);
   }
   return mapa;
