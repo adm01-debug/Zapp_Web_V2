@@ -363,4 +363,6 @@ O projeto tem um grafo de conhecimento do código em `graphify-out/` quando ele 
 - Frescura: compare `git rev-parse --short HEAD` com a linha "Built from commit" do
   `GRAPH_REPORT.md`; se divergir, `graphify update .` (só AST, sem custo de API).
 - Os hooks em `.claude/settings.json` chamam `graphify hook-guard` e não fazem nada onde o graphify
-  não estiver instalado. Em sessão de nuvem sem graphify, siga sem ele.
+  não estiver instalado. Em sessão de nuvem, `.claude/hooks/session-start.sh` instala o graphify e gera o
+  grafo em segundo plano (~3 min; log em `graphify-out/.session-start.log`; pula se o grafo já é do commit
+  atual); até terminar, siga sem ele.
