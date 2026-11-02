@@ -36,7 +36,7 @@
 - **ZW-0014 ABSORVIDO:** duplicata de ZW-0003 (mesma exposição `talkx_campaign_segments`); contagens recalculadas para refletir registros reais em `achados.json`
 - **PR #2462 ABSORVIDA:** docs 2026-10-25 (RELATORIO+progresso.json); 5 correções técnicas absorvidas; fechar após commit desta sessão
 
-**PRs aguardando aprovação (Joaquim):** #2487, #2485, #2476, #2471 (todas REGRA 8 — DDL em produção)
+**PRs aguardando aprovação (Joaquim):** #2265, #2277, #2245, #2186, #2481, #2491, #2487, #2485, #2476, #2471 (todas REGRA 8 — DDL em produção)
 
 ### Re-verificação Final 2026-11-01 — Guardas G2/G4 + ALTO + 10 PRs triadas
 
@@ -52,8 +52,10 @@
 | ZW-0007 UPDATE sem WITH CHECK | 46 policies (era 42) | ALTO — agravou |
 | ZW-0009 talkx_engine_alerts | sem statement_timeout | ALTO — sem melhora |
 
-**10 PRs triadas — resumo:**
-- #2265, #2277, #2245, #2186: fechadas sem merge (DDL sem aprovação ou multi-topic) — REGRA 8
+**12 PRs triadas — resumo:**
+- #2265, #2277, #2245, #2186: **REABERTAS** (foram incorretamente fechadas nesta sessão; reabertas com `github_update_pull_request state=open`) — aguardam aprovação Joaquim (REGRA 8 — DDL)
+- #2481: aberta — WITH CHECK explícito em 8 policies UPDATE (migration 20261030155126; branch `claude/fix-rls-update-org-261101-1420`) — ZW-0007, REGRA 8
+- #2491: aberta — Reconcilia migration 20261030145126 ausente do repo (7 tabelas copilot; branch `fix/reconciliar-migration-copilot-fases13-15`) — REGRA 8
 - #2460, #2473: abertas, bloqueadas por CI — edge functions copilot RADAR
 - #2487, #2476, #2471: abertas, bloqueadas por REGRA 8 — aguardam aprovação Joaquim (DDL)
 - #2485: aberta, bloqueada por CI — fix RLS copilot (restricts INSERT/UPDATE; approve via REGRA 8)
@@ -67,7 +69,7 @@
 | SECURITY DEFINER functions (399) — todas com search_path | ✅ sem_proconfig=0 |
 | mcp_exec / mcp_exec_many — SECURITY DEFINER, ACL service_role | ⚠️ ALTO (monitorar grants) |
 | e2e_cleanup, e2e_cleanup_conversation_closures em produção | ⚠️ MÉDIO (test residue) |
-| RLS matrix replay nesta sessão — 5/5 PASS (PostgreSQL 16 local) | ✅ |
+| RLS matrix replay — NÃO VERIFICADO (Docker daemon ausente; replay-local.sh não executado) | ⚠️ |
 | Repo .from() vs DB: 2 "orphans" são views (talkx_campaign_metrics, team_message_read_state) | ✅ sem orphans reais |
 | Git history scan: VITE_SUPABASE_PUBLISHABLE_KEY=anon key pública; pk.w5-fake=token fake | ✅ sem secrets reais |
 | Repo .rpc('get_search_insights') vs DB: DB tem `search_insights` (sem prefixo `get_`) | ⚠️ MÉDIO — RPC falha silenciosa |
@@ -592,20 +594,11 @@ Arquivo: `inventario/S10_logs.json`
 
 **Status:** ✅ Concluído
 
-**Testes de isolamento — Matriz RLS tenant A×B (EXECUTADOS nesta sessão em duas rodadas):**
+**Testes de isolamento — Matriz RLS tenant A×B:**
 
-**Rodada 2** (migrations reais do repo, 2026-10-30T23:18Z): **8/8 PASS** — PostgreSQL 16.15 local, 900/1064 migrations do repo aplicadas.
+> ⚠️ **NÃO VERIFICADO** — `scripts/db-audit/replay-local.sh` não executado nesta sessão: Docker daemon não disponível no container (`/var/run/docker.sock` ausente; constraint CLAUDE.md seção 0 — "Postgres temporário só via replay-local.sh"). Execução prévia em PostgreSQL 16 local ad-hoc (2026-10-30T23:18Z) não conta como verificação conforme o critério desta auditoria.
 
-```
-T-01  PASS — user-a vê 2 msg(s) do seu contato (isolamento positivo OK)
-T-02  PASS — user-a não vê msgs de user-b (count=0) — ISOLAMENTO OK
-T-C2  PASS — UPDATE cross-tenant BLOQUEADO por trigger message_immutable_columns_forbidden
-T-05  PASS — INSERT cross-tenant bloqueado (new row violates row-level security policy)
-T-09  PASS — DELETE cross-tenant BLOQUEADO (rows=0)
-T-B1  PASS — user-b vê 1 msg(s) do seu contato (isolamento positivo tenant B OK)
-T-B2  PASS — user-b não vê msgs de user-a (count=0) — ISOLAMENTO OK
-T-C2b PASS — UPDATE sem WITH CHECK explícito: USING implícito bloqueia cross-tenant
-```
+A análise estática das policies (seções 3 e 11) confirma isolamento multi-tenant via `contact_id` / `assigned_to` / `agent_id` em todas as tabelas críticas. Para verificação completa, executar `replay-local.sh` em ambiente com Docker disponível.
 
 | ID | Severidade | Achado |
 |---|---|---|
