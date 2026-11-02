@@ -12,16 +12,38 @@ import { pathToFileURL } from 'node:url';
 
 export const PADRAO = ['inventario/estado/banco.json', 'inventario/estado/rotas.json', 'inventario/estado/edges.json'];
 const CARIMBOS = new Set(['medido_em', 'gerado_em']);
+// Telemetria viva do cron/WhatsApp: muda quase toda semana so pela janela rolante de 7 dias, sem
+// mudanca estrutural nenhuma (achado da revisao de 2026-11-02 em scripts/inventario/gerar-banco.mjs:
+// mudar so `taxa_falha_7d_pct` de 9 para 9.3 ja fazia `mudou()` dar `true`). Fora desses nomes, nada
+// muda: a lista de alertas, tabelas_orfas e o resto de `banco.json`/`rotas.json` continuam
+// comparados normalmente.
+const TELEMETRIA = new Set([
+  'execucoes_24h', 'falhas_24h', 'execucoes_7d', 'falhas_7d', 'taxa_falha_7d_pct',
+  'startup_timeout_7d', 'ultima_falha', 'duracao_max_s_7d', 'horas_paradas_7d',
+  'mais_antigo', 'mais_de_7_dias', 'mensagens_7d', 'ultimo_health_check', 'atualizada_em',
+]);
+const IGNORADOS = new Set([...CARIMBOS, ...TELEMETRIA]);
+// `historico.linhas`/`historico.bytes` tambem rolam todo dia com a retencao de 7 dias
+// (20261102022200_cron_historico_retencao_7d), mas o nome `linhas`/`bytes` e compartilhado com
+// cada tabela em `tabelas[]`, onde a contagem real importa. So ignora dentro de `cron.historico`.
+function limparHistoricoCron(historico) {
+  if (!historico || typeof historico !== 'object') return historico;
+  const { linhas, bytes, ...resto } = historico;
+  return resto;
+}
 
-/** JSON canonico sem os carimbos de data. Texto que nao e JSON volta como esta. */
+/** JSON canonico sem os carimbos de data e sem a telemetria viva. Texto que nao e JSON volta como esta. */
 export function semCarimbos(texto) {
   if (texto === null) return null;
   let dado;
   try { dado = JSON.parse(texto); } catch { return texto; }
-  const limpar = (v) => {
-    if (Array.isArray(v)) return v.map(limpar);
+  const limpar = (v, chave) => {
+    if (Array.isArray(v)) return v.map((x) => limpar(x));
     if (v && typeof v === 'object') {
-      return Object.fromEntries(Object.keys(v).filter((k) => !CARIMBOS.has(k)).sort().map((k) => [k, limpar(v[k])]));
+      const base = chave === 'historico' ? limparHistoricoCron(v) : v;
+      return Object.fromEntries(
+        Object.keys(base).filter((k) => !IGNORADOS.has(k)).sort().map((k) => [k, limpar(base[k], k)]),
+      );
     }
     return v;
   };

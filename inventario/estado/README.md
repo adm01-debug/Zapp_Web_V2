@@ -34,8 +34,13 @@ regere o arquivo (comandos abaixo) em vez de corrigir à mão.
   **e** o ledger bater com `supabase/migrations/`: maior versão aplicada entre as 20 migrations mais recentes do
   repo (ou à frente) e quantidade de registros a até 10 % da de arquivos. Barra resposta colada de outro banco
   (ex.: MCP errado ou o banco antigo do Lovable, que tem quase as mesmas tabelas).
-- O PR semanal (`inventario-estado-semanal.yml`) abre toda semana: contagens de linhas, bytes e execuções do
-  cron mudam sempre, e manter esses números frescos é o objetivo. Só `medido_em`/`gerado_em` sozinhos não abrem PR.
+- O PR semanal (`inventario-estado-semanal.yml`) só abre quando algo estrutural mudou de verdade:
+  tabela nova/apagada, alerta novo, RLS/policy, contagem real de linhas de tabela, tela/rota, edge etc.
+  `medido_em`/`gerado_em` sozinhos não abrem PR, e desde 2026-11-02 a telemetria viva do cron/WhatsApp
+  também não (`execucoes_24h`, `taxa_falha_7d_pct`, `horas_paradas_7d`, `cron.historico.linhas/bytes`,
+  `mensagens_7d`, `ultimo_health_check`/`atualizada_em`): esses números rolam toda semana só pela
+  janela de 7 dias, sem mudança real, e abrir PR por isso era ruído. Quem quiser o valor fresco desses
+  campos regenera à mão (comandos acima) — o commitado pode estar até uma semana atrasado neles.
 - Nada de segredo sai do banco: de `cron.job` só o nome das funções chamadas (nunca o comando, que pode
   ter URL/cabeçalho); de `whatsapp_connections`, nem telefone, QR ou token. O teste
   `scripts/ci/inventario-banco.unit.mjs` barra escrita e esses campos no SQL, e o script se recusa a gravar
