@@ -28,7 +28,7 @@ function escapeCell(raw: string): string {
   // Precisa de aspas quando contém separador, aspas ou quebra de linha
   const needsQuotes = value.includes(SEP) || value.includes('"') || value.includes('\n') || value.includes('\r');
   if (needsQuotes) {
-    value = `"${value.replaceAll('"', '""')}"`;
+    value = `"${value.split('"').join('""')}"`;
   }
 
   return value;
@@ -41,7 +41,7 @@ function escapeCell(raw: string): string {
  * @param columns Mapeamento de `{ key, header }` para ordem e rótulo das colunas.
  *                Se omitido, usa as chaves do primeiro objeto.
  */
-export function serializeTalkXCsv<T extends Record<string, unknown>>(
+export function serializeTalkXCsv<T extends object>(
   rows: T[],
   columns?: Array<{ key: keyof T; header: string }>,
 ): string {
