@@ -1,6 +1,6 @@
 # PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-11-02T02:05Z por sessão `GF-001..GF-056`._
+_Atualizado em 2026-11-02T02:15Z por sessão `GF-001..GF-056`._
 
 ---
 
@@ -25,7 +25,7 @@ _Atualizado em 2026-11-02T02:05Z por sessão `GF-001..GF-056`._
 4. Alternativamente: mergear manualmente o PR #2551 com squash — o código já está correto, o CI é o único bloqueio
 
 **Branch:** `claude/hopeful-knuth-4brqti` → PR [#2551](https://github.com/adm01-debug/Zapp_Web_V2/pull/2551)  
-**SHA atual:** `757b5e4ff35da2c50e71849bfdde5c9a5bad3c93`
+**SHA atual:** `171ca20ac4d09f30b23cf8bf27c51d90aa5810e7`
 
 ---
 
@@ -130,7 +130,7 @@ gerado não é o que o `deno check` procura. Este workflow **não é um required
 
 **Decisão do Joaquim:** só entram correções dos 9 fluxos críticos de `docs/PRONTO_PRODUCAO.md`,
 CI que impede verificá-los e segurança. Features novas (TalkX V4, Copiloto, a11y) aguardam
-até os fluxos críticos estarem OK em produção.
+até os fluxos críticos estiverem OK em produção.
 
 **PRs fechadas pelo congelamento (01/11/2026 ~23:48Z):**
 - PR #1930 (db-guard workflow) — branch preservada
@@ -166,7 +166,7 @@ de workflow e foram apagadas sem PR mergeada.
 **GF-032 — 25 workflows "fantasma"**
 As branches originavam workflows não presentes no `.github/workflows/` da main (Bearer Scanner,
 Hadolint, super-linter, main.yml etc.). Como as branches foram apagadas sem PR mergeada,
-esses workflows nunca entraram na main. Não há ação necessária.
+esse workflows nunca entraram na main. Não há ação necessária.
 
 **GF-033..GF-056 — inventário (pelo BACKLOG de 2026-10-31):**
 
@@ -215,6 +215,32 @@ commits das 56 tarefas GF-001..GF-056.
 
 **Estado:** PR #2551 aberta com auto-merge ativo. Quando o CI (Build, TypeCheck, CI Gate) passar
 e o merge ocorrer, as 56 tarefas estarão na `main`.
+
+---
+
+## 8. Retry HTTP em fila-merge.mjs — consolidação de duplicatas ✅ RESOLVIDO (PR #2432)
+
+**Contexto (GF-006..GF-008, GF-021..GF-023):** Entre outubro/2026 várias sessões paralelas
+abriram PRs independentes adicionando lógica de retry (HTTP 502/503/504) ao
+`scripts/ci/fila-merge.mjs` (usado pelo `auto-update-pr-branch.yml`). O BACKLOG pedia
+"ficar com UMA entre #2218 / #2246 / #2261 / #2273 / #2274".
+
+**Resolução:** Todas as 5 PRs tinham ancestral divergente da `main` e não podiam mergear sem
+conflito. Foram fechadas como duplicatas (sem merge). Uma PR limpa foi criada a partir da
+`main` atual:
+
+- **PR #2432** (`claude/fix-retry-http502-261031`) — mergeada em main via commit `78fe258e7`
+- Fix: função `execComRetry` em `scripts/ci/fila-merge.mjs` — 4 tentativas com backoff
+  `[5 000, 10 000, 20 000]` ms para erros de rede/5xx transitórios.
+
+**PRs fechadas sem merge (todas confirmadas `state: closed`, `merged_at: null`):**
+- #2218 (`claude_05/brave-mccarthy-zvzky4`) — fechada como duplicata (GF-006)
+- #2246 (`claude_05/festive-carson-ub43wu`) — fechada como duplicata (GF-022)
+- #2261 (`fix/ci-workflows`) — fechada como duplicata (GF-023)
+- #2273 (`claude_04/trusting-newton-duiglt`) — fechada como duplicata (GF-007)
+- #2274 (`claude_04/nice-cori-7snz6b`) — fechada como duplicata (GF-008)
+
+**Estado:** Consolidação concluída. `fila-merge.mjs` com retry está na `main`.
 
 ---
 
