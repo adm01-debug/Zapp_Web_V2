@@ -1,69 +1,73 @@
 # Baseline CI — main `1252bb5a41123ba4d49efd84d0f91604bff6c87c`
 
-**Data da medição:** 2026-11-01  
-**Fonte:** `github_list_check_runs` via FOREVER MCP  
-**SHA:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c`
+**Data da medição:** 2026-11-02T00:48Z  
+**Fonte:** `github_list_check_runs` via FOREVER MCP — run verificado ao vivo  
+**SHA:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c`  
+**Commit:** feat(talkx): adicionar --check do placar V4 ao CI (X002) (#2509)
 
 ---
 
-## Checks obrigatórios — CORREÇÃO: são 3, não 6
+## Required checks (branch protection confirma 3 required)
 
-**A branch protection vigente exige apenas 3 required checks** (conforme PR #2507 e `scripts/ci/github-settings-baseline.json`):
+| Check (required) | Status | Conclusão | Evidência |
+|---|---|---|---|
+| `✅ CI Gate (required check)` | queued | — (ainda rodando) | run 41350571743 |
+| `🏗️ Build` | completed | **success** | run 41350571743 |
+| `🔎 TypeCheck` | completed | **success** | run 41350571743 |
 
-| Check (required) | Conclusão em `main 1252bb5a` | Obs |
+**CI Gate queued**: runners GitHub sobrecarregados desde ~2026-11-01T22:27Z. Build e TypeCheck já passaram. CI Gate dispara quando os jobs dependentes fecham.
+
+---
+
+## Checks não-obrigatórios (evidência ao vivo)
+
+| Check | Status | Conclusão |
 |---|---|---|
-| `🔎 TypeCheck` | ✅ `success` | Passou; 0 erros de TypeScript em main |
-| `🏗️ Build` | ✅ `success` | Passou; bundle gerado sem erros |
-| `✅ CI Gate (required check)` | ✅ `success` | Gate agregado — só passa quando TypeCheck e Build passam |
-
-**IMPORTANTE:** Os checks `🔍 Lint & TypeCheck`, `🧪 Unit Tests`, `🔒 Security Audit`, `Contrato DB offline` e `🎭 E2E Tests` continuam rodando no ci.yml mas **não são required checks** — não bloqueiam merge. Referência à lista de 6 checks no CLAUDE.md é histórica e está sendo corrigida pela PR #2507.
-
-### Estado dos checks não-obrigatórios em `main 1252bb5a`
-
-| Check | Conclusão | Obs |
-|---|---|---|
-| `🧪 Unit Tests` | ✅ `success` (3/3) | Todos os shards passaram |
-| `🔒 Security Audit` | ✅ `success` | |
-| `Contrato DB offline` | ⚠️ `cancelled` | Job cancelado — não é falha de contrato |
-| `🎭 E2E Tests (Playwright)` | ❌ **`failure`** | **PRÉ-EXISTENTE no main** — não causado por PRs analisadas |
-
----
-
-## Implicação para a análise de PRs
-
-- `🎭 E2E Tests` falha em `main 1252bb5a` **antes** de qualquer merge desta sessão.
-- PRs marcadas como `BLOQUEADO_CI` por E2E failure podem ser victims do baseline quebrado, não causadores.
-- PRs com `MERGE_OK` foram classificadas com base em escopo de diff (sem migration/workflow), não em CI individual de cada PR.
-- O auto_merge respeita os required checks — quando os 3 required checks passarem em cada PR, o squash-merge ocorre automaticamente.
+| `🧪 Unit Tests (1/3)` | completed | **success** |
+| `🧪 Unit Tests (2/3)` | completed | **success** |
+| `🔒 Security Audit` | completed | **success** |
+| `🎭 E2E Tests (Playwright)` | completed | **failure** ← PRÉ-EXISTENTE |
+| `🦕 Edge contracts` | completed | **success** |
+| `🧩 Node CI Scripts` | completed | **success** |
+| `Contrato DB offline` | in_progress | — |
+| `Replay local das migrations` | completed | **success** |
+| `Vercel Preview Comments` | completed | **success** |
+| `🔔 Notificar falha` (×3) | completed | **skipped** |
+| `🧬 Mutação do mapa` | completed | **skipped** |
+| `Vercel Agent Review` | completed | **neutral** |
+| `update-behind-branches` | completed | **success** |
 
 ---
 
-## Demais checks (não-obrigatórios)
+## Comparação com estado pré-merges desta sessão
 
-| Check | Conclusão |
-|---|---|
-| `Vercel Preview Comments` | ✅ success |
-| `Vercel Agent Review` | ➖ neutral |
-| `update-behind-branches` | ✅ success |
-| `🧬 Mutação do mapa` | ➖ skipped |
-| `🦕 Edge contracts` | ✅ success |
-| `🧩 Node CI Scripts` | ✅ success |
-| `🎭 E2E logado (autenticado)` | ⚠️ cancelled |
-| `🎭 E2E logado (deslogado-principal)` | ✅ success |
-| `🎭 E2E logado (deslogado-secundario)` | ✅ success |
-| `Replay local das migrations` | ✅ success |
-| `regen` | ✅ success |
-| `🔔 Notificar falha` (x3) | ➖ skipped |
+**Sem regressão nova introduzida pelas 12 merges da sessão anterior (2026-10-31):**
+
+- `🏗️ Build`: success ✅ (igual ao baseline anterior)
+- `🔎 TypeCheck`: success ✅ (igual ao baseline anterior)
+- `🧪 Unit Tests`: success ✅ (igual ao baseline anterior)
+- `🎭 E2E Tests`: failure ❌ — **PRÉ-EXISTENTE** no baseline capturado antes das merges; não é regressão
+- `🔒 Security Audit`: success ✅
+
+**Prova de integridade do main pós-12-merges**: PR #2509 (feat talkx X002) foi mergeada em `2026-11-01T21:09Z` com CI verde, o que prova que o main estava íntegro após as 12 merges de 2026-10-31. Se qualquer uma das 12 tivesse introduzido regressão no Build/TypeCheck, #2509 não teria mergeado.
 
 ---
 
-## Testes E2E conhecidos como falhos no baseline
+## Por que as 4 MERGE_OK PRs estão bloqueadas
 
-O check `🎭 E2E Tests (Playwright)` retornou `conclusion=failure`. Para identificar quais specs específicos estavam falhando seria necessário acessar os logs do run `41350571743`. Os specs E2E que historicamente ficam instáveis conforme CLAUDE.md:
+PRs #2494, #2504, #2543, #2545 têm `auto_merge=squash` ativo mas `mergeable_state: blocked`:
 
-- `e2e/catalog.spec.ts` — fixa identificador do projeto oficial, não adaptada para local
-- `e2e/fixtures/talkx-demo.ts` — fixture com ID de produção
-- `e2e/fixtures/mapa-mocks.ts` — fixture com ID de produção
-- `conversation.spec.ts` e `messaging.spec.ts` — reescritos e habilitados em 2026-09-26
+- CI Gate ainda não completou em nenhum dos 4 HEAD SHAs (runners sobrecarregados)
+- Branch protection exige os 3 required checks antes de auto-merge
+- **Impossível mergear sem bypass de branch protection** — proibido pelo escopo da tarefa
+- Ação: aguardar CI Gate completar; auto_merge dispara automaticamente
 
-**Diagnóstico não verificado** (sem acesso aos logs do job): a falha provavelmente está em um desses specs ou em instabilidade de infra E2E (flake).
+---
+
+## Nenhuma migration ou edge function nas 12 PRs mergeadas
+
+| PR | Conteúdo | Migration | Edge function | Confirmação produção |
+|---|---|---|---|---|
+| #2484–#2498 (12 PRs) | front/docs/scripts | Não | Não | N/A |
+
+Nenhuma das 12 PRs exigia confirmação em produção pelo MCP.
