@@ -1,99 +1,22 @@
-numero,veredito,merge_sha,merged_at,motivo
-1930,FECHADA_SEM_MERGE,,,
-1997,FECHADA_SEM_MERGE,,,
-2051,FECHADA_SEM_MERGE,,,
-2078,FECHADA_SEM_MERGE,,,
-2091,FECHADA_SEM_MERGE,,,
-2095,FECHADA_SEM_MERGE,,,
-2097,FECHADA_SEM_MERGE,,,
-2107,FECHADA_SEM_MERGE,,,
-2111,FECHADA_SEM_MERGE,,,
-2113,FECHADA_SEM_MERGE,,,
-2137,FECHADA_SEM_MERGE,,,
-2146,FECHADA_SEM_MERGE,,,
-2186,FECHADA_SEM_MERGE,,,
-2206,FECHADA_SEM_MERGE,,,
-2233,FECHADA_SEM_MERGE,,,
-2238,FECHADA_SEM_MERGE,,,
-2245,FECHADA_SEM_MERGE,,,
-2249,FECHADA_SEM_MERGE,,,
-2265,FECHADA_SEM_MERGE,,,
-2277,FECHADA_SEM_MERGE,,,
-2279,FECHADA_SEM_MERGE,,,
-2283,MERGEADA,6271b716e08df80d21b6cfdbdfd9263ddb6e7acb,2026-10-27T20:04:29Z,
-2417,FECHADA_SEM_MERGE,,,
-2418,FECHADA_SEM_MERGE,,,
-2426,FECHADA_SEM_MERGE,,,
-2428,FECHADA_SEM_MERGE,,,
-2431,FECHADA_SEM_MERGE,,,
-2445,FECHADA_SEM_MERGE,,,
-2447,MERGEADA,3617a2acd517dcc9a6eaf2533cd256913e462c21,2026-11-01,
-2457,FECHADA_SEM_MERGE,,,
-2460,FECHADA_SEM_MERGE,,,
-2461,FECHADA_SEM_MERGE,,,
-2462,FECHADA_SEM_MERGE,,,
-2463,FECHADA_SEM_MERGE,,,
-2465,FECHADA_SEM_MERGE,,,
-2466,FECHADA_SEM_MERGE,,,
-2468,FECHADA_SEM_MERGE,,,
-2469,FECHADA_SEM_MERGE,,,
-2471,FECHADA_SEM_MERGE,,,
-2472,FECHADA_SEM_MERGE,,,
-2473,FECHADA_SEM_MERGE,,,
-2475,FECHADA_SEM_MERGE,,,
-2476,FECHADA_SEM_MERGE,,,
-2478,FECHADA_SEM_MERGE,,,
-2479,FECHADA_SEM_MERGE,,,
-2480,FECHADA_SEM_MERGE,,,
-2481,BLOQUEADO_AGUARDANDO_APROVACAO,,,DDL RLS em producao requer aprovacao do Joaquim
-2482,MERGEADA,3b5f8a96db0337af7310eec1b0dc5f86bb45912c,2026-11-01,
-2483,FECHADA_SEM_MERGE,,,
-2484,FECHADA_SEM_MERGE,,,
-2485,FECHADA_SEM_MERGE,,,
-2486,FECHADA_SEM_MERGE,,,
-2487,FECHADA_SEM_MERGE,,,
-2489,FECHADA_SEM_MERGE,,,
-2491,FECHADA_SEM_MERGE,,,
-2492,FECHADA_SEM_MERGE,,,
-2493,FECHADA_SEM_MERGE,,,
-2494,AGUARDANDO_CI,,,CI vermelho db-inventory-doc 7 tabelas copilot_* ausentes
-2495,FECHADA_SEM_MERGE,,,
-2496,BLOQUEADO_DDL_WORKFLOW,,,feature freeze + DDL em producao sem aprovacao
-2497,FECHADA_SEM_MERGE,,,
-2498,BLOQUEADO_CONFLITO,,,conflito real confirmado — update_pr_branch → 422 em 2026-11-02 após #2570
-2499,FECHADA_SEM_MERGE,,,
-2500,FECHADA_SEM_MERGE,,,
-2501,FECHADA_SEM_MERGE,,,
-2502,FECHADA_SEM_MERGE,,,
-2503,FECHADA_SEM_MERGE,,,
-2504,FECHADA_SEM_MERGE,,,
-2505,FECHADA_SEM_MERGE,,,
-2522,MERGEADA,4b5c6e7970512d16db5501a35cb2e7176941f69d,2026-11-02T05:20:24Z,fix(e2e) Firefox GR-012
-2526,BLOQUEADO_CONFLITO,,,dirty apos main avancar
-2533,BLOQUEADO_CONFLITO,,,dirty apos main avancar
-2536,BLOQUEADO_CONFLITO,,,supersedido por 2560
-2539,DRAFT_SKIP,,,
-2542,BLOQUEADO_CONFLITO,,,dirty apos main avancar
-2543,MERGEADA,3e6ed32ac34d9bcb9734ccfb05e580500bf5623d,2026-11-02T04:16:16Z,
-2545,MERGEADA,c16f3c69a9bffea1899760288d6c5d576acc2495,2026-11-02T03:01:17Z,
-2547,MERGEADA,3066fac062f934e5469bb573e88bc464559a023c,2026-11-02T02:13:43Z,
-2549,MERGEADA,dfef2487a2c3b86101f23ef50d2c1d862b4fe03a,2026-11-02T05:32:58Z,fix reconexão automática WhatsApp
-2551,BLOQUEADO_RLS_SEM_TESTE,,,3 migrations RLS sem testes Postgres
-2552,FECHADA_SEM_MERGE,,,
-2553,DRAFT_SKIP,,,
-2555,DRAFT_SKIP,,,
-2556,DRAFT_SKIP,,,
-2557,FECHADA_SEM_MERGE,,,coberta pela 2565 mergeada fechada por adm01-debug 2026-11-02T05:49:39Z
-2558,DRAFT_SKIP,,,
-2559,FECHADA_SEM_MERGE,,,
-2560,MERGEADA,a7a53f56771257106ad79847e6a9f13b9ddada80,2026-11-02T02:43:28Z,
-2561,BLOQUEADO_AGUARDANDO_APROVACAO,,,DDL RLS department_invites requer aprovacao
-2562,BLOQUEADO_FEATURE_FREEZE,,,feat lgpd feature nova fora do freeze
-2563,BLOQUEADO_CONFLITO,,,dirty apos 2567 mergear o mesmo fix
-2564,FECHADA_SEM_MERGE,,,
-2565,MERGEADA,ac04c5c03e1caef48a45819f2322cf96f0bbb6b6,2026-11-02T05:49:02Z,chore: CLAUDE.md revisado
-2566,FECHADA_SEM_MERGE,,,
-2567,MERGEADA,8ba0b4361290f37171fd6ec27012a46665ca5b7e,2026-11-02T03:51:55Z,
-2569,MERGEADA,50ca61a6ef96b366084548fbb3866974083def52,2026-11-02T04:43:24Z,
-2570,MERGEADA,d45033e812ba7e8338f07d8b83682ca559ec93bb,2026-11-02T06:01:52Z,fix RLS department_invites
-2571,BLOQUEADO_CONFLITO,,,dirty auto_merge ativo mas conflito pendente
+numero,titulo,autor,draft,bot,estado,mergeable,files,veredito,motivo,sessao
+2594,"fix(tests): aceita !important nos tokens CSS nos testes de contraste a11y",adm01-debug,false,false,closed,FECHADA,2,FECHADA_SUPERSEDIDA,"Fechada por outra sessão (não mergeada) — supersedida pelo fix completo de #2593",2026-11-02
+2593,"fix: regex !important nos 10 testes de contraste a11y quebrados pelo #2587",adm01-debug,false,false,closed,MERGED,10,MERGEADA_POS_SESSAO,"Mergeada por outra sessão em 2026-11-02T07:59:01Z SHA 5911a25d. Fix regex !important nos 10 testes de contraste — desbloqueou CI para #2583 e #2592",2026-11-02
+2592,"fix(e2e): GR-012 — waits intermediários entre cliques de apagar no Firefox",adm01-debug,false,false,closed,MERGED,1,MERGEADA_POS_SESSAO,"Mergeada por auto_merge em 2026-11-02T08:19:17Z SHA 6d14ac06. CI Gate ✅ run 41411237974. Fix E2E GR-012: waits intermediários entre cliques no Firefox",2026-11-02
+2590,"fix(ci): timeout e non-fatal no preflight PromoGifts do deploy-functions",adm01-debug,false,false,open,MERGEABLE,1,REGRA8_WORKFLOW,"Modifica .github/workflows/deploy-functions.yml — Regra 8 do Fluxo Git, aguarda Joaquim",2026-11-02
+2589,"fix(db): alinhar 20261102012200 com ledger — gen_random_bytes sem prefixo extensions",adm01-debug,false,false,open,MERGEABLE,2,REGRA8_MIGRATION,"Edita migration existente supabase/migrations/20261102012200_department_invites_restringe_escrita.sql — proibido pelo db-guard ('Rejeitar edição de migration já existente'). Aguarda Joaquim",2026-11-02
+2583,"fix(edge): CORS preflight em ai-usage-outbox-drain e copilot-live (smoke 83/85→85/85)",adm01-debug,false,false,closed,MERGED,3,MERGEADA_POS_SESSAO,"Mergeada por auto_merge em 2026-11-02T08:10:25Z SHA e92a0901. Fix CORS preflight. Deploy run 41411106061 success 08:18Z.",2026-11-02
+2576,"fix(contacts): substituir useEffect por useLayoutEffect para eliminar race condition no ref de endereço",adm01-debug,false,false,open,CONFLICTING,1,BLOQUEADO_CONFLITO,"mergeable=CONFLICTING — rebase necessário",2026-11-02
+2562,"feat(lgpd): apagar tentativas de login sem atividade há mais de 90 dias",adm01-debug,false,false,open,MERGEABLE,1,FEATURE_FREEZE_VIOLACAO,"Feature nova durante congelamento — não é correção de fluxo crítico nem CI",2026-11-02
+2558,"feat(talkx): trilha de navegação clicável no monitor (X053)",adm01-debug,true,false,open,MERGEABLE,3,DRAFT_SKIP,"Draft + feature TalkX durante congelamento",2026-11-02
+2556,"feat: E2E reload test para preservação de rota URL (X052)",adm01-debug,true,false,open,MERGEABLE,1,DRAFT_SKIP,"Draft + feature TalkX durante congelamento",2026-11-02
+2555,"feat: unificar ciclo de vida de campanha em useTalkXLifecycle nas 5 telas (X051)",adm01-debug,true,false,open,MERGEABLE,2,DRAFT_SKIP,"Draft + feature TalkX durante congelamento",2026-11-02
+2553,"feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050)",adm01-debug,true,false,open,MERGEABLE,2,DRAFT_SKIP,"Draft + feature TalkX durante congelamento",2026-11-02
+2542,"fix: N-008 DB Guard — N008_POSTGRES_IMAGE ausente causava falha de pull (fix/ci-workflows)",adm01-debug,false,false,open,CONFLICTING,4,BLOQUEADO_CONFLITO,"mergeable=CONFLICTING; válido mas precisa rebase",2026-11-02
+2539,"fix: reconcilia migrations 20261026 — arquivo 240300, replay-known-failures, TC-009",adm01-debug,true,false,open,CONFLICTING,4,DRAFT_SKIP,"Draft + conflito",2026-11-02
+2536,"fix(e2e): workers sempre 2 — elimina timeout do Email fixture no CI (GR-016)",adm01-debug,false,false,open,CONFLICTING,2,SUPERSEDED_POR_2560,"Fix idêntico já mergeado via PR #2560 (workers 1→2 em playwright.config.ts)",2026-11-02
+2533,"chore: arquivo de reconciliação migration 20261030145126 (copilot_fases13_15_tabelas)",adm01-debug,false,false,open,CONFLICTING,2,BLOQUEADO_CONFLITO,"mergeable=CONFLICTING; válido mas precisa rebase",2026-11-02
+2526,"fix(ci): deno check --config + waitForAppliedTheme corrigem deploy-functions e E2E webkit",adm01-debug,false,false,open,CONFLICTING,4,BLOQUEADO_CONFLITO,"mergeable=CONFLICTING; modifica .github/workflows → Regra 8 mesmo que rebaseado",2026-11-02
+2498,"fix(admin): corrige RPC get_search_insights → search_insights + consolidação auditoria (ZW-0011)",adm01-debug,false,false,open,CONFLICTING,7,BLOQUEADO_CONFLITO,"mergeable=CONFLICTING; válido mas precisa rebase",2026-11-02
+2496,"feat(message-delivery): carimbo do POST iniciado (PD-79) + código de erro estável (PD-80) [C110]",adm01-debug,false,false,open,CONFLICTING,14,FEATURE_FREEZE_VIOLACAO,"Feature nova + conflito + viola congelamento",2026-11-02
+2494,"chore(db): sincronizar artefatos derivados do banco",bot,false,true,open,CONFLICTING,5,DECISAO_HUMANA_DDL,"PR de bot (types-sync) com 7 tabelas copilot_ novas em docs/DB-INVENTORY.md — precisa aprovação Joaquim antes de confirmar DDL no inventário",2026-11-02
+2481,"fix(rls): WITH CHECK explícito em 8 policies UPDATE críticas — fecha CRITICAL-2",adm01-debug,false,false,open,CONFLICTING,1,DECISAO_HUMANA_RLS,"8 políticas UPDATE sem WITH CHECK (gap de segurança real). Conteúdo correto mas conflito + decisão de negócio (RLS crítico)",2026-11-02
