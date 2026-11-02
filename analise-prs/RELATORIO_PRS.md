@@ -7,6 +7,34 @@
 
 ---
 
+## ⚠️ RISCOS E DECISÕES HUMANAS PENDENTES
+
+### 🔴 RISCO 1 — PR #2481: DDL RLS WITH CHECK (8 policies UPDATE)
+**Ação requerida:** Aprovação do Joaquim  
+**O quê:** Fix de segurança — 8 policies `UPDATE` em tabelas críticas não têm `WITH CHECK`, permitindo que usuários autenticados atualizem linhas para valores proibidos. A migration proposta adiciona `WITH CHECK` explícito em todas as 8.  
+**Por que travar:** CLAUDE.md §1 regra 8 — DDL em produção envolvendo RLS exige aprovação humana.  
+**Risco se não mergear:** Brecha de segurança ativa em produção (políticas UPDATE sem validação de saída).  
+**O que fazer:** Revisar o diff da PR #2481 e aprovar o merge (ou vetar com motivo).
+
+### 🟡 RISCO 2 — PR #2494: DB-INVENTORY desatualizado (bloqueio estrutural CI)
+**Ação requerida:** Decisão do Joaquim sobre as 7 tabelas `copilot_*`  
+**O quê:** `db-inventory-doc.unit.mjs` falha porque 7 tabelas existem em produção mas não em `docs/DB-INVENTORY.md`: `copilot_connections`, `copilot_conversations`, `copilot_messages`, `copilot_objection_catalog`, `copilot_outcomes`, `copilot_seller_settings`, `copilot_usage`. O PR #2494 (types-sync) nunca vai passar enquanto isso existir.  
+**Por que travar:** Causa raiz é externa ao PR — as tabelas precisam ser documentadas no inventário.  
+**Solução:** Adicionar as 7 tabelas ao `docs/DB-INVENTORY.md` (ou atualizar o step `types-sync.yml` para regenerar esse arquivo automaticamente).  
+**Risco se não resolver:** PR #2494 trava indefinidamente; sincronização automática de tipos TypeScript não funciona.
+
+### 🟡 RISCO 3 — PR #2561: DDL RLS department_invites (supersedido)
+**Ação requerida:** Fechar a PR  
+**O quê:** PR #2561 aplicaria DDL em `department_invites`, mas o PR #2570 (já mergeado) cobriu a mesma tabela com abordagem diferente e mais completa (RPC + 3 policies). Qualquer merge de #2561 geraria conflito de migration.  
+**O que fazer:** Fechar #2561 sem merge, citando #2570 como cobertura.
+
+### 🟡 RISCO 4 — PR #2494 E2E: falha `location-picker.spec.ts:159` (possível flake)
+**Ação requerida:** Decisão sobre rerun  
+**O quê:** 1 teste de 130 falhou em `E72 · /suggest 500 → /forward + Enter seleciona`. Depende de API externa `/suggest` retornando 500. O PR #2494 é types-sync e não toca location-picker — aparência de flake.  
+**O que fazer:** Autorizar rerun do CI para confirmar se é flake, ou investigar a causa raiz do teste.
+
+---
+
 ## Resumo por veredito
 
 | Veredito | Quantidade |
