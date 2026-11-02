@@ -1,6 +1,6 @@
 {
   "main_sha": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
-  "main_sha_atual": "587ec25f8cb25a42c1ba1cda4e4e8a09fb2f9ac6",
+  "main_sha_atual": "8ba0b4361290f37171fd6ec27012a46665ca5b7e",
   "main_commit": "Último merge confirmado: #2482 docs(talkx): marca V4 como vigente e V3 como substituido",
   "data_baseline": "2026-11-01",
   "data_analise": "2026-11-02",
@@ -11,7 +11,7 @@
   "typecheck_baseline": "72 erros (baseline histórico 93, redução de 21 confirmada em analise-prs/baseline/typecheck.txt)",
   "lint_baseline": "820 ocorrências (100% pré-existentes; confirmado em analise-prs/baseline/lint.txt)",
   "prs_analisadas": 92,
-  "prs_mergeadas_total": 6,
+  "prs_mergeadas_total": 7,
   "prs_mergeadas_lista": [
     {
       "numero": 2283,
@@ -48,6 +48,12 @@
       "sha": "c16f3c69a9bffea1899760288d6c5d576acc2495",
       "merged_at": "2026-11-02T03:01:17Z",
       "titulo": "chore: congela features e define os 9 fluxos críticos para produção"
+    },
+    {
+      "numero": 2567,
+      "sha": "8ba0b4361290f37171fd6ec27012a46665ca5b7e",
+      "merged_at": "2026-11-02T03:51:55Z",
+      "titulo": "fix(ci): deno install --frozen=false — desbloqueia deploy das edge functions"
     }
   ],
   "auto_merge_habilitado_nesta_sessao": [
@@ -99,8 +105,8 @@
       "motivo": "contém 3 migrations RLS sem testes Postgres + 12 arquivos vs título diz 2; BLOQUEADO_RLS_SEM_TESTE; auto_merge desabilitado 2026-11-02"
     }
   ],
-  "status": "analise_completa_94_prs_revisado_08",
-  "nota": "2026-11-02T09:30Z: revisão 11ª sessão. 4 PRs novas analisadas (#2567/#2569/#2570: AGUARDANDO_CI; #2571: BLOQUEADO_CONFLITO). Total analisadas: 98. Total abertas: 25 (9 AGUARDANDO_CI + 1 AGUARDANDO_CI_APOS_UPDATE + 5 BLOQUEADO_CONFLITO + 5 DRAFT_SKIP + 2 BLOQUEADO_AGUARDANDO_APROVACAO + 1 BLOQUEADO_RLS_SEM_TESTE + 1 BLOQUEADO_DDL_WORKFLOW + 1 BLOQUEADO_FEATURE_FREEZE + 1 BLOQUEADO_DECISAO_HUMANA). FECHADAS sem merge: 66. MERGEADAS: 6. CI pós-merge das 4 mergeadas pela sessão: Gate=success em todas (#2482/#2547/#2560/#2545).",
+  "status": "analise_completa_98_prs_revisado_12",
+  "nota": "2026-11-02T10:00Z: revisão 12ª sessão. #2567 confirmada MERGEADA (SHA 8ba0b436, merged_at 2026-11-02T03:51:55Z). #2563 atualizada para BLOQUEADO_CONFLITO (supersedida por #2567, dirty). main_sha_atual atualizado. Total analisadas: 98. Total abertas: 24 (7 AGUARDANDO_CI + 1 AGUARDANDO_CI_APOS_UPDATE + 6 BLOQUEADO_CONFLITO + 5 DRAFT_SKIP + 2 BLOQUEADO_AGUARDANDO_APROVACAO + 1 BLOQUEADO_RLS_SEM_TESTE + 1 BLOQUEADO_DDL_WORKFLOW + 1 BLOQUEADO_FEATURE_FREEZE + 1 BLOQUEADO_DECISAO_HUMANA). FECHADAS sem merge: 66. MERGEADAS: 7.",
   "verdicts": {
     "1930": "FECHADA_SEM_MERGE",
     "1997": "FECHADA_SEM_MERGE",
@@ -192,27 +198,27 @@
     "2560": "MERGEADA",
     "2561": "BLOQUEADO_AGUARDANDO_APROVACAO",
     "2562": "BLOQUEADO_FEATURE_FREEZE",
-    "2563": "AGUARDANDO_CI",
+    "2563": "BLOQUEADO_CONFLITO",
     "2564": "FECHADA_SEM_MERGE",
     "2565": "BLOQUEADO_DECISAO_HUMANA",
     "2566": "FECHADA_SEM_MERGE",
-    "2567": "AGUARDANDO_CI",
+    "2567": "MERGEADA",
     "2569": "AGUARDANDO_CI",
     "2570": "AGUARDANDO_CI",
     "2571": "BLOQUEADO_CONFLITO"
   },
   "contagem_por_veredito": {
     "FECHADA_SEM_MERGE": 66,
-    "MERGEADA": 6,
+    "MERGEADA": 7,
     "BLOQUEADO_AGUARDANDO_APROVACAO": 2,
     "AGUARDANDO_CI_APOS_UPDATE": 1,
     "BLOQUEADO_DDL_WORKFLOW": 1,
-    "AGUARDANDO_CI": 9,
+    "AGUARDANDO_CI": 7,
     "DRAFT_SKIP": 5,
     "BLOQUEADO_RLS_SEM_TESTE": 1,
     "BLOQUEADO_FEATURE_FREEZE": 1,
     "BLOQUEADO_DECISAO_HUMANA": 1,
-    "BLOQUEADO_CONFLITO": 5,
+    "BLOQUEADO_CONFLITO": 6,
     "TOTAL": 98
   }
 }

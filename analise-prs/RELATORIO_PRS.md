@@ -1,7 +1,7 @@
 # RELATÓRIO DE ANÁLISE — 98 PRs ANALISADAS
-**adm01-debug/Zapp_Web_V2** | Atualizado em 2026-11-02T09:30Z  
+**adm01-debug/Zapp_Web_V2** | Atualizado em 2026-11-02T10:00Z  
 SHA main início da análise: `004e74a8c596959f45f61c8b0b64b30a70c1ff19`  
-SHA main atual: `587ec25f8cb25a42c1ba1cda4e4e8a09fb2f9ac6`
+SHA main atual: `8ba0b4361290f37171fd6ec27012a46665ca5b7e`
 
 ---
 
@@ -15,12 +15,13 @@ SHA main atual: `587ec25f8cb25a42c1ba1cda4e4e8a09fb2f9ac6`
 | #2547 | infra: E2E logado timeout 45 min | `3066fac062f934e5469bb573e88bc464559a023c` | 2026-11-02T02:13:43Z |
 | #2560 | fix(e2e): workers 1→2 em CI — GR-016 | `a7a53f56771257106ad79847e6a9f13b9ddada80` | 2026-11-02T02:43:28Z |
 | #2545 | chore: congela features — 9 fluxos críticos | `c16f3c69a9bffea1899760288d6c5d576acc2495` | 2026-11-02T03:01:17Z |
+| #2567 | fix(ci): deno install --frozen=false — desbloqueia deploy | `8ba0b4361290f37171fd6ec27012a46665ca5b7e` | 2026-11-02T03:51:55Z |
 
 ---
 
-## ⏳ AGUARDANDO CI — COM auto_merge=SQUASH (10 total)
+## ⏳ AGUARDANDO CI — COM auto_merge=SQUASH (8 restantes; #2567 mergeada, #2563 conflito)
 
-Todas mergearão automaticamente quando os required checks passarem (3 obrigatórios: `🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate`).
+Todas mergearão automaticamente quando os required checks passarem (3 obrigatórios: `🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate`). **#2567 mergeada em 2026-11-02T03:51:55Z — removida desta tabela.**
 
 | PR | Título | HEAD SHA |
 |----|--------|----------|
@@ -30,8 +31,6 @@ Todas mergearão automaticamente quando os required checks passarem (3 obrigató
 | #2543 | fix: E2E alto-contraste e N-008 healthcheck | `68dff679c1551472f7b5c06a0bf0855c920fc7eb` |
 | #2549 | fix: reconexão automática WhatsApp | `7742d72eb9899d131db4d053d37d7b113cc09cc8` |
 | #2557 | fix(docs): atualiza required checks no CLAUDE.md | `93cfc9d09660ba91d932554a1f2e6b782e569de6` |
-| #2563 | fix(ci): instala @types/node via npm após deno install | `355f3ea4916e7d54c9d09ebd6c83bc88a5d32317` |
-| #2567 | fix(ci): deno install --frozen=false — desbloqueia deploy | `8a4c29d4...` |
 | #2569 | fix(ci): testes GR-027 + gatilho workflow_run e2e-logado GR-029 | `09d2293f...` |
 | #2570 | fix: RLS department_invites restringe escrita a admins | `4138b2c8...` |
 
@@ -53,6 +52,7 @@ Todas mergearão automaticamente quando os required checks passarem (3 obrigató
 | #2542 | `c61cbe617f4d06b0f29cb41ddb8f4a1c03082327` | fix: N-008 DB Guard — dirty após main avançar; mergeable_state=dirty |
 | #2526 | `f3cccccae8189a91743b37a05723a833565023cc` | fix(ci): deno check --config + E2E webkit — dirty após main avançar; mergeable_state=dirty |
 | #2533 | `2388e1ac52b22578880c3a5d6d408a4436ac16f0` | chore: migration reconciliation 20261030145126 — dirty após main avançar; mergeable_state=dirty |
+| #2563 | `355f3ea4916e7d54c9d09ebd6c83bc88a5d32317` | fix(ci): instala @types/node — dirty após #2567 mergear o mesmo fix em deploy-functions.yml; PR supersedida |
 | #2571 | `0e6777210...` | fix(contacts): race condition enderecoVigenteRef — dirty; auto_merge ativo mas aguardando resolução de conflito |
 
 ---
@@ -100,10 +100,10 @@ Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Adicional
 
 | Veredito | Contagem |
 |----------|----------|
-| MERGEADA | 6 |
-| AGUARDANDO_CI | 9 |
+| MERGEADA | 7 |
+| AGUARDANDO_CI | 7 |
 | AGUARDANDO_CI_APOS_UPDATE | 1 |
-| BLOQUEADO_CONFLITO | 5 |
+| BLOQUEADO_CONFLITO | 6 |
 | DRAFT_SKIP | 5 |
 | BLOQUEADO_AGUARDANDO_APROVACAO | 2 |
 | BLOQUEADO_DDL_WORKFLOW | 1 |
@@ -125,8 +125,9 @@ Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Adicional
 | #2547 | `3066fac0` | **success** | success | ✅ zero falha nova |
 | #2560 | `a7a53f56` | **success** | success | ✅ zero falha nova |
 | #2545 | `c16f3c69` | **success** | success | ✅ zero falha nova |
+| #2567 | `8ba0b436` | **success** | success | ✅ zero falha nova — fix deno --frozen=false |
 
-As 4 PRs mergeadas pela sessão de análise (#2482, #2547, #2560, #2545) todas têm CI Gate=success. As pré-existentes (#2283, #2447) são anteriores ao baseline.
+As 4 PRs mergeadas pela sessão de análise (#2482, #2547, #2560, #2545) + #2567 (mergeada via auto_merge) todas têm CI Gate=success. As pré-existentes (#2283, #2447) são anteriores ao baseline.
 
 ---
 
