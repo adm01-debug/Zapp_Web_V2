@@ -1,3 +1,12 @@
-=== TYPECHECK ===
-error: script "typecheck" was terminated by signal SIGABRT (Abort)
-EXIT: 0
+<--- Last few GCs --->
+
+[14608:0x2ff38000]   103237 ms: Mark-Compact (reduce) 2043.4 -> 2042.0 MB, 506.94 ms
+[14608:0x2ff38000]   104264 ms: Mark-Compact 2043.0 -> 2039.8 MB, 1018.71 ms
+
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+ 1: node::OOMErrorHandler
+ 2: v8::Utils::ReportOOMFailure
+ 3: v8::internal::V8::FatalProcessOutOfMemory
+Aborted
+EXIT=0
