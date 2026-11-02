@@ -1,6 +1,6 @@
 {
   "main_sha": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
-  "main_sha_atual": "c16f3c69a9bffea1899760288d6c5d576acc2495",
+  "main_sha_atual": "587ec25f8cb25a42c1ba1cda4e4e8a09fb2f9ac6",
   "main_commit": "Último merge confirmado: #2482 docs(talkx): marca V4 como vigente e V3 como substituido",
   "data_baseline": "2026-11-01",
   "data_analise": "2026-11-02",
@@ -100,7 +100,7 @@
     }
   ],
   "status": "analise_completa_94_prs_revisado_08",
-  "nota": "2026-11-02T07:30Z: revisão 8ª sessão. #2526/#2533/#2542 viraram dirty (mergeable_state=dirty) após main avançar — movidos para BLOQUEADO_CONFLITO (total 5). #2494 atualizou HEAD para ef3c4ba8. Abertas restantes: 23 (6 AGUARDANDO_CI + 1 AGUARDANDO_CI_APOS_UPDATE + 5 BLOQUEADO_CONFLITO + 5 DRAFT_SKIP + 2 BLOQUEADO_AGUARDANDO_APROVACAO + 1 BLOQUEADO_RLS_SEM_TESTE + 1 BLOQUEADO_DDL_WORKFLOW + 1 BLOQUEADO_FEATURE_FREEZE + 1 BLOQUEADO_DECISAO_HUMANA). FECHADAS sem merge: 65. MERGEADAS total: 6.",
+  "nota": "2026-11-02T08:00Z: revisão 9ª sessão. main avançou para 587ec25f. #2494 com CI ativo (base 587ec25f); #2498/#2522/#2543/#2549/#2557/#2563 com mergeable_state=behind, aguardando auto-update-pr-branch. Todas com auto_merge=SQUASH habilitado. Abertas restantes: 23 (6 AGUARDANDO_CI + 1 AGUARDANDO_CI_APOS_UPDATE + 5 BLOQUEADO_CONFLITO + 5 DRAFT_SKIP + 2 BLOQUEADO_AGUARDANDO_APROVACAO + 1 BLOQUEADO_RLS_SEM_TESTE + 1 BLOQUEADO_DDL_WORKFLOW + 1 BLOQUEADO_FEATURE_FREEZE + 1 BLOQUEADO_DECISAO_HUMANA). FECHADAS sem merge: 65. MERGEADAS total: 6.",
   "verdicts": {
     "1930": "FECHADA_SEM_MERGE",
     "1997": "FECHADA_SEM_MERGE",
