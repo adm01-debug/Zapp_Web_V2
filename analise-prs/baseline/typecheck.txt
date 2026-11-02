@@ -1,10 +1,21 @@
-SHA main: 3617a2acd517dcc9a6eaf2533cd256913e462c21
-Comando: NODE_OPTIONS="--max-old-space-size=4096" npx tsc -b --noEmit
-Data: 2026-11-01
 
-ERROS (3 — pré-existentes):
-src/components/queues/QueueAlertsDisplay.tsx(94,19): error TS17001: JSX elements cannot have multiple attributes with the same name.
-src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx(123,55): error TS2353: Object literal may only specify known properties, and 'tags' does not exist in type 'InboxFiltersState'.
-src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx(124,55): error TS2353: Object literal may only specify known properties, and 'tags' does not exist in type 'InboxFiltersState'.
+<--- Last few GCs --->
 
-BASELINE: 3 erros TS no main. Qualquer PR que introduza erro NOVO é regressão.
+[14608:0x2ff38000]   103237 ms: Mark-Compact (reduce) 2043.4 (2087.3) -> 2042.0 (2083.1) MB, pooled: 0 MB, 506.94 / 0.00 ms  (+ 265.4 ms in 0 steps since start of marking, biggest step 0.0 ms, walltime since start of marking 815 ms) (average mu = 0.173, c[14608:0x2ff38000]   104264 ms: Mark-Compact 2043.0 (2083.3) -> 2039.8 (2086.3) MB, pooled: 0 MB, 1018.71 / 0.00 ms  (average mu = 0.091, current mu = 0.008) allocation failure; scavenge might not succeed
+
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0xe40d24 node::OOMErrorHandler(char const*, v8::OOMDetails const&) [node]
+ 2: 0x1216be0 v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [node]
+ 3: 0x1216eb7 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [node]
+ 4: 0x1444875  [node]
+ 5: 0x14448a3  [node]
+ 6: 0x145d97a  [node]
+ 7: 0x1460b48  [node]
+ 8: 0x1cc69b1  [node]
+Aborted
+EXIT=0
