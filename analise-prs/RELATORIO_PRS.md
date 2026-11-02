@@ -1,5 +1,5 @@
-# RELATÓRIO DE ANÁLISE — 93 PRs ANALISADAS
-**adm01-debug/Zapp_Web_V2** | Atualizado em 2026-11-02T05:00Z  
+# RELATÓRIO DE ANÁLISE — 94 PRs ANALISADAS
+**adm01-debug/Zapp_Web_V2** | Atualizado em 2026-11-02T06:00Z  
 SHA main início da análise: `004e74a8c596959f45f61c8b0b64b30a70c1ff19`  
 SHA main atual: `a7a53f56771257106ad79847e6a9f13b9ddada80`
 
@@ -47,11 +47,19 @@ Todas mergearão automaticamente quando os required checks passarem.
 
 ---
 
+## 🚫 BLOQUEADAS — CONFLITO COM MAIN
+
+| PR | HEAD SHA | Motivo |
+|----|----------|--------|
+| #2566 | `f12084606dcdd9d9d8c71605ab0235e9126431ee` | fix(ci) GR-027+GR-029 (mocks supabase + e2e-logado workflow_run); dirty — precisa resolver conflito; auto_merge=SQUASH |
+
+---
+
 ## 🚫 BLOQUEADAS — REQUEREM JOAQUIM
 
 | PR | Veredito | Motivo |
 |----|----------|--------|
-| #2481 | BLOQUEADO_AGUARDANDO_APROVACAO | DDL em produção (WITH CHECK RLS) — corpo diz "AGUARDANDO APROVAÇÃO DO JOAQUIM". auto_merge **desabilitado**. |
+| #2481 | BLOQUEADO_AGUARDANDO_APROVACAO | DDL em produção (WITH CHECK RLS) — corpo diz "AGUARDANDO APROVAÇÃO DO JOAQUIM". auto_merge **desabilitado** (re-desabilitado 2026-11-02T06). |
 | #2561 | BLOQUEADO_AGUARDANDO_APROVACAO | DDL em produção (convites departamento RLS) — requer aprovação. |
 | #2496 | BLOQUEADO_DDL_WORKFLOW | Feature freeze + DDL em produção sem aprovação. |
 | #2562 | BLOQUEADO_FEATURE_FREEZE | feat(lgpd) — feature nova, fora do escopo do freeze. |
@@ -63,7 +71,7 @@ Todas mergearão automaticamente quando os required checks passarem.
 
 | PR | Motivo |
 |----|--------|
-| #2551 | Título diz fix(ci) mas contém 3 migrations RLS + 12 arquivos; sem testes Postgres temporário. auto_merge **desabilitado**. |
+| #2551 | Título diz fix(ci) mas contém 3 migrations RLS + 12 arquivos; sem testes Postgres temporário. auto_merge **desabilitado** (re-desabilitado 2026-11-02T06). |
 
 ---
 
@@ -93,6 +101,7 @@ Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Números:
 | MERGEADA | 5 |
 | AGUARDANDO_CI | 13 |
 | AGUARDANDO_CI_APOS_UPDATE | 1 |
+| BLOQUEADO_CONFLITO | 1 |
 | DRAFT_SKIP | 5 |
 | BLOQUEADO_AGUARDANDO_APROVACAO | 2 |
 | BLOQUEADO_DDL_WORKFLOW | 1 |
@@ -100,7 +109,7 @@ Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Números:
 | BLOQUEADO_FEATURE_FREEZE | 1 |
 | BLOQUEADO_DECISAO_HUMANA | 1 |
 | FECHADA_SEM_MERGE | 63 |
-| **TOTAL** | **93** |
+| **TOTAL** | **94** |
 
 ---
 

@@ -92,3 +92,4 @@ numero,titulo,veredito,auto_merge,arquivos,criada_em
 2563,fix(ci): instala @types/node via npm após deno install em deploy-functions (GR-001),AGUARDANDO_CI,SQUASH,0,2026-11-02T01:39:37Z
 2564,fix(ci): W71 e2e-logado dispara via workflow_run em vez de merge direto na main,AGUARDANDO_CI,SQUASH,0,2026-11-02
 2565,chore: CLAUDE.md revisado — regras do Joaquim no topo e arquitetura abandonada removida,BLOQUEADO_DECISAO_HUMANA,SQUASH,1,2026-11-02T02:01:24Z
+2566,fix(ci): mocks de supabase + workflow_run no e2e-logado (GR-027 + GR-029),BLOQUEADO_CONFLITO,SQUASH,11,2026-11-02T02:47:15Z
