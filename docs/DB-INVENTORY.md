@@ -40,13 +40,13 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas (`tables`) | 204 |
+| Tabelas (`tables`) | 211 |
 | Views (`views`) | 13 |
-| Colunas (`columns`) | 2315 |
-| Funções (`functions`) | 378 |
-| Assinaturas de função (`function_signatures`) | 381 |
+| Colunas (`columns`) | 2362 |
+| Funções (`functions`) | 381 |
+| Assinaturas de função (`function_signatures`) | 384 |
 | Funções de gatilho (`trigger_functions`) | 97 |
-| Restrições de verificação (`check_constraints`) | 239 |
+| Restrições de verificação (`check_constraints`) | 243 |
 
 As tabelas estão inventariadas uma a uma na seção seguinte. Views, funções, colunas e restrições
 têm o inventário completo no catálogo (`supabase/schema-catalog.json`) e o manifesto com hash de
@@ -105,9 +105,16 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `contact_protection_policy` | Política de proteção de contato por regra de negócio | roadmap | — |
 | `contact_purchases` | Histórico de compras do contato (valor, moeda e status) | ativo | `src/components/contacts/ContactPurchaseHistory.tsx`, `src/components/inbox/ContactPurchasesPanel.tsx`, `src/hooks/crm/__tests__/useContactPurchases.criar.test.tsx` … |
 | `contacts` | Cadastro central de contatos (telefone, e-mail, dono e campos de CRM) | ativo | `src/App.tsx`, `src/__tests__/a11y/icon-buttons-baseline.json`, `src/__tests__/coverage-catalogo.test.ts` … |
+| `copilot_conversation_scores` | Scores de qualidade de conversa do copilot de vendas | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
 | `copilot_feedback` | Feedback do vendedor sobre sugestões do copilot (aceitou, editou, descartou; distância de edição) | ativo | `src/hooks/copilot/useCopilotFeedback.ts` |
+| `copilot_help_requests` | Pedidos de ajuda do copilot durante conversas | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
 | `copilot_insights` | Insights gerados pelo copilot por conversa | ativo | `supabase/functions/copilot-live/index.ts` |
+| `copilot_learning_moments` | Momentos de aprendizado identificados pelo copilot | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
+| `copilot_objection_catalog` | Catálogo de objeções para treinamento do copilot | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
+| `copilot_outcomes` | Resultados e desfechos registrados pelo copilot | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json`, `scripts/db-audit/replay-known-failures.json` |
+| `copilot_seller_settings` | Configurações do copilot por vendedor | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
 | `copilot_sessions` | Sessões ativas do copilot por agente e conversa | ativo | `src/hooks/copilot/useSupervisorInsights.ts`, `supabase/functions/copilot-live/index.ts` |
+| `copilot_usage` | Log de uso do copilot por conversa e agente | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
 | `conversation_analyses` | Análises de IA da conversa (resumo, sentimento, pontos-chave e risco) | ativo | `src/components/dashboard/AIQuickAccess.tsx`, `src/components/dashboard/SentimentTrendChart.tsx`, `src/components/dashboard/__tests__/AIQuickAccess.test.tsx` … |
 | `conversation_closures` | Fechamentos de conversa (motivo, desfecho e classificação) | ativo | `src/components/inbox/CRMAutoSync.tsx`, `src/components/inbox/__tests__/CRMAutoSync.fsm.test.tsx`, `src/components/reports/PeriodComparison.tsx` … |
 | `conversation_events` | Eventos da conversa (transferência, mudança de estado e autor) | ativo | `src/components/contacts/ContactActivityTimeline.tsx`, `src/components/contacts/__tests__/ContactActivityTimeline.eventos.test.tsx`, `src/components/contacts/__tests__/ContactActivityTimeline.nota.test.tsx` … |
@@ -124,7 +131,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `deal_activities` | Atividades registradas em uma negociação do CRM | ativo | `src/hooks/chat/__tests__/useConversationHistoryTimeline.paginacao.test.tsx`, `src/hooks/chat/useConversationHistoryTimeline.ts`, `src/hooks/crm/useContactCrm360.ts` … |
 | `department_audit_logs` | Auditoria de alterações em departamento do chat interno | ativo | `src/hooks/team-chat/README.md`, `src/hooks/team-chat/useDepartmentManagement.ts`, `scripts/db-audit/department-invite-contract-audit-vocabulary.test.sh` … |
 | `department_invitations` | Convites de departamento (código, e-mail, papel e validade) | ativo | `src/hooks/team-chat/useRedeemDepartmentInvite.ts`, `scripts/db-audit/department-invite-contract-audit-vocabulary.test.sh`, `scripts/db-audit/migration-evidence.json` |
-| `department_invites` | Convites de departamento por código, com validade | ativo | `src/hooks/team-chat/README.md`, `src/hooks/team-chat/__tests__/departmentInviteCode.random.test.tsx`, `src/hooks/team-chat/__tests__/rls-contract.test.ts` … |
+| `department_invites` | Convites de departamento por código, com validade | ativo | `src/hooks/team-chat/__tests__/rls-contract.test.ts`, `src/hooks/team-chat/useDepartmentManagement.ts` … |
 | `departments` | Departamentos do chat interno e o modo de WhatsApp de cada um | ativo | `src/components/dashboard/SentimentTrendChart.tsx`, `src/components/talkx/TalkXAnalytics.tsx`, `src/components/team-chat/NewConversationDialog.tsx` … |
 | `edge_rate_limits` | Contador de requisições por chave nas Edge Functions, em janela | ativo | `supabase/functions/_shared/ai-circuit.test.ts`, `supabase/functions/_shared/ai-circuit.ts`, `supabase/functions/_shared/ai-generate.ts` … |
 | `email_attachments` | Anexos de e-mail (arquivo, MIME, tamanho e origem no Gmail) | ativo | `src/components/integrations/GmailIntegrationCard.tsx`, `src/components/integrations/__tests__/GmailIntegrationCard.apagar-dados.test.tsx`, `src/hooks/integrations/__tests__/useGmail.historicoPaginacao.test.tsx` … |
@@ -279,4 +286,4 @@ inventário apura hoje:
   `.github/workflows/`) as cita. `multiplix_audience_members`, `multiplix_audiences` e
   `talkx_campaign_segments` saíram dessa lista: viraram `ativo` (consumidoras de produto).
 
-As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 204.
+As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 211.

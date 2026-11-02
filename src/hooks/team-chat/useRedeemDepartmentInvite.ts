@@ -9,8 +9,8 @@ import { queryKeys } from './queryKeys';
  * canal sem recarregar. O caminho é a RPC canônica
  * `accept_department_invite(p_code text)` (SECURITY DEFINER; migration
  * 20260928510000/e15, regravada em 20261007012808), a ÚNICA porta para um
- * agente: a tabela `department_invitations` é admin-only por RLS
- * (`department_invitations_admin_all` = `is_admin_or_supervisor(auth.uid())`),
+ * agente: a tabela `department_invitations` só é lida por admin/supervisor por RLS
+ * (`department_invitations_select_admin_supervisor`),
  * então um não-admin não lê o convite pelo cliente. A RPC resolve a identidade
  * com `current_profile_id()`, trava a linha (`FOR UPDATE`), valida status
  * 'pending'/expiração/teto de usos, grava `profiles.department_id` e a
@@ -23,9 +23,10 @@ import { queryKeys } from './queryKeys';
  *
  * DESACOPLADO DE PROPÓSITO: este hook vive em módulo próprio e NÃO altera
  * `useDepartmentManagement.ts`. O diagnóstico ponta-a-ponta (ver PR2131) mostra
- * que a CRIAÇÃO grava na tabela legada `department_invites` enquanto o ACEITE
- * (esta RPC) lê `department_invitations` — o gap NÃO é corrigido aqui; só o
- * lado do aceite é entregue. A montagem no bloqueio "Conteúdo Protegido" do
+ * que a CRIAÇÃO gravava na tabela legada `department_invites` enquanto o ACEITE
+ * (esta RPC) lê `department_invitations`. Fechado em 01/11/2026: a criação passou
+ * a usar a RPC `create_department_invite`, que grava em `department_invitations`.
+ * A montagem no bloqueio "Conteúdo Protegido" do
  * `TeamChatPanel` é de outra PR (ver `EnterDepartmentByCode` + corpo da PR,
  * dependência da PR1987 que detém o painel).
  */

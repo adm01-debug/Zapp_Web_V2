@@ -35,11 +35,21 @@ async function violacoes(
     async ([sel, ids]) => {
       const win = window as unknown as { axe: { run: (c: unknown, o: unknown) => Promise<{ violations: ViolacaoAxe[] }> } };
       const axe = win.axe;
-      const r = await axe.run(
-        sel === 'body' ? document.body : document.querySelector(sel) ?? document.body,
-        { runOnly: { type: 'rule', values: ids } },
-      );
-      return r.violations;
+      const ctx = sel === 'body' ? document.body : (document.querySelector(sel) ?? document.body);
+      const opts = { runOnly: { type: 'rule', values: ids } };
+      // @axe-core/react detecta window.axe e pode iniciar scan concorrente (GR-016).
+      // Re-tenta ate 10x com backoff linear de 200 ms antes de desistir.
+      for (let i = 0; i < 10; i++) {
+        try {
+          const r = await axe.run(ctx, opts);
+          return r.violations;
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : String(e);
+          if (!msg.includes('already running')) throw e;
+          await new Promise<void>((res) => setTimeout(res, 200 * (i + 1)));
+        }
+      }
+      throw new Error('axe: @axe-core/react bloqueando apos 10 tentativas (GR-016)');
     },
     [seletor, regras] as const,
   );

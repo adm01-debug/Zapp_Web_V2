@@ -57,7 +57,7 @@ setup('authenticate', async ({ page }) => {
   );
   // "Login temporariamente indisponivel" NAO e recusa de credencial: e o caminho
   // `unavailable` do AuthService.signIn -- a edge `auth-login` nao respondeu dentro de
-  // AUTH_LOGIN_TIMEOUT_MS (12 s, src/lib/serverLogin.ts) ou devolveu 5xx/429. Medido no
+  // AUTH_LOGIN_TIMEOUT_MS (30 s, src/lib/serverLogin.ts) ou devolveu 5xx/429. Medido no
   // run 38773362900 (W06): clique as 17:00:35.7, o front desistiu as 17:00:48.4 (12,4 s),
   // a edge so gravou o primeiro rate limit as 17:00:52.4 e o GoTrue criou a sessao as
   // 17:00:55.9 -- a edge levou ~20 s, e a credencial estava certa. A propria tela manda
@@ -106,13 +106,13 @@ setup('authenticate', async ({ page }) => {
       if (tentativa < TENTATIVAS) {
         console.warn(
           `[E2E setup] tentativa ${tentativa}/${TENTATIVAS}: "Login temporariamente indisponivel" ` +
-            '(edge auth-login sem resposta em 12 s, ou 5xx/429) -- tentando de novo.',
+            '(edge auth-login sem resposta em 30 s, ou 5xx/429) -- tentando de novo.',
         );
         continue;
       }
       throw new Error(
         `[E2E setup] Login indisponivel em ${TENTATIVAS} tentativas: a edge auth-login nao ` +
-          'respondeu em 12 s (AUTH_LOGIN_TIMEOUT_MS) ou devolveu 5xx/429. NAO e credencial ' +
+          'respondeu em 30 s (AUTH_LOGIN_TIMEOUT_MS) ou devolveu 5xx/429. NAO e credencial ' +
           'errada -- verifique os logs da edge auth-login no Supabase.',
       );
     }

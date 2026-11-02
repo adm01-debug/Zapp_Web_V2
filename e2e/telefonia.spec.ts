@@ -50,7 +50,7 @@ const CONTATO_E2E = {
   assigned_to: FAKE_USER_ID, queue_id: null, tags: [], notes: null, created_at: NOW,
   updated_at: NOW, deleted_at: null, is_lid_legacy: false, channel_type: 'whatsapp',
   channel_connection_id: null, whatsapp_connection_id: null, lead_origin: null, lead_score: null,
-  risk_score: null, ai_priority: null, ai_sentiment: null, ai_projection_analysis_id: null,
+  risk_score: null, ai_priority: null, ai_projection_analysis_id: null,
   ai_projection_updated_at: null, avatar_fetch_attempted_at: null, consent_status: null,
   group_category: null, address: null, address_number: null, city: null, state: null,
   neighborhood: null, postal_code: null, latitude: null, longitude: null, surname: null,
@@ -186,6 +186,8 @@ async function abrirDiscador(page: Page) {
 
   await expect(telView).toBeVisible({ timeout: BOOT_DEADLINE_MS });
   await expect(page.getByRole('heading', { name: 'Telefonia' })).toBeVisible();
+  // GR-012: aguarda teclado totalmente renderizado antes de retornar (Firefox)
+  await expect(teclado(page)).toBeVisible();
   return page.getByTestId('tel-new-call-panel');
 }
 
@@ -231,8 +233,12 @@ test.describe('Y11 · Telefonia', () => {
     await expect(page.getByTestId('tel-dial-button')).toBeDisabled();
 
     // Apagar dígito volta o painel ao estado inicial (nem número, nem aviso).
+    // GR-012: aguarda estado intermediário entre cada clique — Firefox não processa
+    // três cliques consecutivos sem renderizar entre eles.
     await page.getByRole('button', { name: 'Apagar dígito' }).click();
+    await expect(page.getByTestId('tel-number-display')).toContainText('11');
     await page.getByRole('button', { name: 'Apagar dígito' }).click();
+    await expect(page.getByTestId('tel-number-display')).not.toContainText('11');
     await page.getByRole('button', { name: 'Apagar dígito' }).click();
     await expect(page.getByTestId('tel-number-display')).toContainText('Digite o número');
     await expect(page.getByTestId('tel-number-incomplete')).toHaveCount(0);

@@ -79,7 +79,7 @@ function tokensDoBloco(css: string, cabecalho: string): Record<string, Rgb> {
         for (const t of Array.from(
           limpo
             .slice(abre + 1, j)
-            .matchAll(/--([\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*;/g)
+            .matchAll(/--([\/\w-]+):\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\s*(?:!important\s*)?;/g)
         )) {
           out[t[1]] = hslParaRgb(Number(t[2]), Number(t[3]), Number(t[4]));
         }
@@ -122,7 +122,7 @@ function tokenDoChipNoAltoContrasteClaro(css: string): string | null {
   const regra = limpo.match(/([^{}]*\.status-chip-active[^{}]*)\{([^}]*)\}/);
   if (!regra) return null;
   const [, seletor, declaracoes] = regra;
-  if (!/\.high-contrast/.test(seletor) || !/:not\(\.dark\)/.test(seletor)) return null;
+  if (!/.high-contrast/.test(seletor) || !/:not\(\.dark\)/.test(seletor)) return null;
   const cor = declaracoes.match(/color:\s*hsl\(var\(--([a-z0-9-]+)\)\)/);
   return cor ? cor[1] : null;
 }
