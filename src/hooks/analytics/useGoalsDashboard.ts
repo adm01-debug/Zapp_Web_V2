@@ -119,13 +119,15 @@ export function useGoalsDashboard() {
     enabled: !!profile?.id,
   });
 
-  const { data: resolvedContactsCount, isLoading: loadingResolved } = useQuery({
+  const { data: resolvedContactsCount, isLoading: loadingAnalyses } = useQuery({
     queryKey: ['goals-resolved-contacts', period, profile?.id],
     queryFn: async () => {
       if (!profile?.id) return 0;
       const { count, error } = await supabase.from('contacts').select('id', { count: 'exact', head: true })
-        .eq('assigned_to', profile.id).eq('conversation_status', 'resolved')
-        .gte('created_at', dateRange.from.toISOString()).lte('created_at', dateRange.to.toISOString());
+        .eq('assigned_to', profile.id)
+        .eq('conversation_status', 'resolved')
+        .gte('created_at', dateRange.from.toISOString())
+        .lte('created_at', dateRange.to.toISOString());
       if (error) throw error;
       return count ?? 0;
     },
@@ -146,9 +148,9 @@ export function useGoalsDashboard() {
   const goals = useMemo((): Goal[] => {
     const messagesSent = messagesCount ?? 0;
     const contactsHandled = contactsCount ?? 0;
-    const resolved = resolvedContactsCount ?? 0;
-    const hasContactData = contactsHandled > 0;
-    const resolutionRate = hasContactData ? Math.round((resolved / contactsHandled) * 100) : 0;
+    const resolvedContacts = resolvedContactsCount ?? 0;
+    const hasResolutionData = contactsHandled > 0;
+    const resolutionRate = hasResolutionData ? Math.round((resolvedContacts / contactsHandled) * 100) : 0;
 
     // E42: bug de precedência — `!x === false` avalia (!x) === false, então
     // "sem config" (x undefined) virava SEMPRE inativo em vez de "usar
@@ -172,20 +174,19 @@ export function useGoalsDashboard() {
     if (isResolutionGoalActive) {
       allGoals.push({ id: 'resolution-rate', label: 'Taxa de Resolução', description: 'Percentual de conversas resolvidas',
         target: getGoalTarget('resolution_rate', period, customGoals), current: resolutionRate, unit: '%',
-        icon: CheckCircle2, color: 'hsl(var(--chart-3))', priority: 'medium',
-        hasData: hasContactData });
+        icon: CheckCircle2, color: 'hsl(var(--chart-3))', priority: 'medium', hasData: hasResolutionData });
     }
     return allGoals;
   }, [messagesCount, contactsCount, resolvedContactsCount, period, customGoals]);
 
   const overallProgress = useMemo(() => {
-    const countable = goals.filter(g => g.hasData !== false);
-    if (countable.length === 0) return 0;
-    return Math.round(countable.reduce((acc, g) => acc + Math.min((g.current / g.target) * 100, 100), 0) / countable.length);
+    const active = goals.filter(g => g.hasData !== false);
+    if (active.length === 0) return 0;
+    return Math.round(active.reduce((acc, g) => acc + Math.min((g.current / g.target) * 100, 100), 0) / active.length);
   }, [goals]);
 
-  const completedGoals = useMemo(() => goals.filter(g => g.hasData !== false && g.current >= g.target).length, [goals]);
-  const isLoading = loadingMessages || loadingContacts || loadingResolved;
+  const completedGoals = useMemo(() => goals.filter(g => g.current >= g.target).length, [goals]);
+  const isLoading = loadingMessages || loadingContacts || loadingAnalyses;
 
   useEffect(() => {
     if (isLoading || goals.length === 0) return;

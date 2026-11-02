@@ -14,7 +14,7 @@ import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
 import {
   Shield, Users, Search, Crown, UserCog, User, History, RefreshCw,
   UserPlus, Building, Eye, Loader2,
-  AlertTriangle, ChevronLeft, ChevronRight,
+  AlertTriangle, CalendarClock, ChevronLeft, ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 import { useUserRole, AppRole } from '@/hooks/system/useUserRole';
@@ -24,6 +24,7 @@ import { AdminUsersTable } from './AdminUsersTable';
 import { AdminAuditTable } from './AdminAuditTable';
 import { VoipRamalField } from './VoipRamalField';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
+import { CronJobsTab } from './CronJobsTab';
 
 const roleIconMap = { admin: Crown, supervisor: UserCog, agent: User, special_agent: Eye } as const;
 const roleLabelMap = { admin: 'Administrador', supervisor: 'Supervisor', agent: 'Atendente', special_agent: 'Agente Especial' } as const;
@@ -43,7 +44,7 @@ function normalizarLimiteChats(valor: number): number {
 
 type GoogleServiceKey = 'google_sheets' | 'google_docs' | 'google_calendar' | 'google_drive';
 
-type AdminTab = 'users' | 'audit' | 'crm';
+type AdminTab = 'users' | 'audit' | 'crm' | 'cron';
 
 // SL-160/P2-3.4: a integração com Google Calendar não existe no produto (não há OAuth
 // nem sincronização em src/ ou supabase/functions — só a tela de demonstração, fora dos
@@ -80,7 +81,7 @@ export function AdminView() {
   const [auditPage, setAuditPage] = useState(1);
 
   const { users, auditLogs, auditTotal, loading, error, fetchData, handleRoleChange, handleToggleActive, handleSaveUser, handleSaveRamal, handleCreateUser } =
-    useAdminData(activeTab as 'users' | 'audit' | 'crm', {
+    useAdminData(activeTab, {
       from: auditFrom || undefined,
       to: auditTo || undefined,
       page: auditPage,
@@ -96,6 +97,12 @@ export function AdminView() {
     if (!editAvatarPreview) return undefined;
     return () => URL.revokeObjectURL(editAvatarPreview);
   }, [editAvatarPreview]);
+
+  // Carrega os dados da aba que os usa (Usuários e Auditoria), inclusive no primeiro
+  // render e ao voltar para ela. CRM 360° e Tarefas agendadas têm leitura própria.
+  useEffect(() => {
+    if (activeTab === 'users' || activeTab === 'audit') void fetchData();
+  }, [activeTab, fetchData]);
 
   // Trocar o período volta para a primeira página: sem isso a página 3 de um
   // período novo poderia cair fora do intervalo e mostrar tabela vazia.
@@ -178,10 +185,14 @@ export function AdminView() {
     );
   }
 
+  // A aba "Tarefas agendadas" é SÓ de admin: as RPCs que ela usa
+  // (`admin_list_cron_jobs`/`admin_toggle_cron_job`) recusam quem não é admin — um
+  // supervisor não deve nem ver a aba (evita abrir uma tela que só daria acesso negado).
   const abas: ReadonlyArray<readonly [AdminTab, LucideIcon, string]> = [
     ['users', Users, `Usuários (${users.length})`],
     ['audit', History, 'Auditoria'],
     ['crm', Building, 'CRM 360°'],
+    ...(isAdmin ? ([['cron', CalendarClock, 'Tarefas agendadas']] as const) : []),
   ];
 
   const navegarNasAbas = (event: KeyboardEvent<HTMLButtonElement>, tab: AdminTab) => {
@@ -487,6 +498,10 @@ export function AdminView() {
       ) : activeTab === 'crm' ? (
         <SectionErrorBoundary key="crm" sectionName="CRM Admin">
           <AdminCRMDashboard />
+        </SectionErrorBoundary>
+      ) : activeTab === 'cron' && isAdmin ? (
+        <SectionErrorBoundary key="cron" sectionName="Tarefas agendadas">
+          <CronJobsTab />
         </SectionErrorBoundary>
       ) : null}
       </div>

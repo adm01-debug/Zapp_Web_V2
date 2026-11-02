@@ -909,7 +909,7 @@ jobs:
           APPLY_BUNDLE: ${{ steps.preflight.outputs.apply_bundle }}
         run: |
           set -euo pipefail
-          supabase db push --include-all --skip-vault --dry-run --yes 2>&1 | tee dry-run.out
+          supabase db push --db-url "$SUPABASE_DB_URL" --include-all --skip-vault --dry-run --yes 2>&1 | tee dry-run.out
           if [ "$APPLY_BUNDLE" = "true" ]; then
             node scripts/db-audit/dry-run-plan.mjs --arquivo dry-run.out --esperado "$TARGET_VERSION" --bundle
           else
@@ -919,7 +919,7 @@ jobs:
       - name: Aplicar alvo unico ou bundle ordenado autorizado
         if: inputs.apply == true && steps.preflight.outputs.needs_apply == 'true'
         run: >-
-          supabase db push --include-all
+          supabase db push --db-url "$SUPABASE_DB_URL" --include-all
           --skip-vault --yes
 
       - name: Validar registro no ledger

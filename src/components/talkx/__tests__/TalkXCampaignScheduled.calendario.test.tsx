@@ -13,7 +13,8 @@ process.env.TZ = 'America/Sao_Paulo';
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { createTestQueryClient } from '@/test/mocks/queryClient';
 
 /**
  * X138 (TL-150) — coluna central da tela 10.
@@ -101,10 +102,10 @@ const BASE_CAMPAIGN = {
   revision: 2,
 };
 
+// O editor lê o estado da conexão (`useTalkXConnectionStatus`, um useQuery): precisa de QueryClient.
 function view() {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
-    <QueryClientProvider client={qc}>
+    <QueryClientProvider client={createTestQueryClient()}>
       <TalkXCampaignScheduled
         campaignId="camp-agendada-x138"
         onBack={h.onBack}

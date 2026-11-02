@@ -4,33 +4,28 @@
  * registrada) ALÉM da permissão já concedida. Quem autorizou o navegador mas não
  * assinou o push ficava só com o som e sem aviso visual.
  *
- * O `showNotification` de produção publica pela inscrição do service worker LOCAL
- * (`registration.showNotification`), que exige apenas `permission === 'granted'`.
+ * O aviso sai pela API `Notification` direta (`showBrowserNotification`): o caminho
+ * por `usePushNotifications.showNotification` exige Service Worker de aplicação,
+ * desligado em `config/service_worker.ts`, e devolvia `false` em silêncio. Aqui o
+ * hook de push NÃO é montado nem mockado — o aviso não depende dele — e a API
+ * `Notification` é observada por uma classe falsa.
  *
- * Como é provado: com permissão concedida e `isSubscribed: false`, o alerta TEM de
- * sair; e as guardas que existem de verdade (sem permissão / liga-desliga do painel
- * em `notifSettings.browserNotifications`) continuam valendo.
+ * Como é provado: com permissão concedida (sem nenhuma assinatura de push), o alerta
+ * TEM de sair; e as guardas que existem de verdade (sem permissão / liga-desliga do
+ * painel em `notifSettings.browserNotifications`) continuam valendo.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
 const h = vi.hoisted(() => {
-  const avisos: Array<{ title: string; data: Record<string, unknown> }> = [];
-  const showNotification = vi.fn(
-    async (payload: { title: string; data: Record<string, unknown> }) => {
-      avisos.push(payload);
-      return true;
-    },
-  );
+  const avisos: Array<{ title: string; options?: NotificationOptions }> = [];
 
   return {
     membership: [{ id: 'm1', is_muted: false }],
     settings: { soundEnabled: false, soundVolume: 60, browserNotifications: true },
     quiet: false,
     permission: 'granted' as NotificationPermission,
-    isSubscribed: false,
     avisos,
-    showNotification,
     /** Callback de `postgres_changes` registrado pelo canal, como em produção. */
     handler: null as ((payload: unknown) => unknown) | null,
   };
@@ -65,13 +60,17 @@ vi.mock('@/hooks/system/useNotificationSettings', () => ({
   useNotificationSettings: () => ({ settings: h.settings, isQuietHours: () => h.quiet }),
 }));
 
-vi.mock('@/hooks/system/usePushNotifications', () => ({
-  usePushNotifications: () => ({
-    showNotification: h.showNotification,
-    isSubscribed: h.isSubscribed,
-    permission: h.permission,
-  }),
-}));
+class FakeNotification {
+  static get permission(): NotificationPermission {
+    return h.permission;
+  }
+  onclick: (() => void) | null = null;
+  close = vi.fn();
+
+  constructor(public title: string, public options?: NotificationOptions) {
+    h.avisos.push({ title, options });
+  }
+}
 
 vi.mock('@/lib/logger', () => ({
   getLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),
@@ -100,7 +99,7 @@ describe('useTeamChatNotifications — aviso do navegador (HZ3-001)', () => {
     h.settings = { soundEnabled: false, soundVolume: 60, browserNotifications: true };
     h.quiet = false;
     h.permission = 'granted';
-    h.isSubscribed = false;
+    Object.defineProperty(window, 'Notification', { configurable: true, value: FakeNotification });
   });
 
   it('avisa no navegador com a permissão concedida, mesmo sem assinatura de push', async () => {
@@ -111,11 +110,8 @@ describe('useTeamChatNotifications — aviso do navegador (HZ3-001)', () => {
 
     expect(h.avisos).toHaveLength(1);
     expect(h.avisos[0].title).toContain('Teams');
-    expect(h.avisos[0].data).toMatchObject({
-      type: 'team_chat',
-      conversationId: 'c1',
-      messageId: 'm1',
-    });
+    expect(h.avisos[0].options?.tag).toBe('team-msg-c1');
+    expect(h.avisos[0].options?.body).toBe('oi');
   });
 
   it('não avisa sem permissão do navegador (guarda de permissão preservada)', async () => {
@@ -124,7 +120,7 @@ describe('useTeamChatNotifications — aviso do navegador (HZ3-001)', () => {
 
     await h.handler!(mensagem('outro'));
 
-    expect(h.showNotification).not.toHaveBeenCalled();
+    expect(h.avisos).toHaveLength(0);
   });
 
   it('não avisa com o liga/desliga do painel desligado', async () => {
@@ -133,6 +129,6 @@ describe('useTeamChatNotifications — aviso do navegador (HZ3-001)', () => {
 
     await h.handler!(mensagem('outro'));
 
-    expect(h.showNotification).not.toHaveBeenCalled();
+    expect(h.avisos).toHaveLength(0);
   });
 });

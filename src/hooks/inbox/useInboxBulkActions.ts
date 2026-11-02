@@ -140,9 +140,9 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
       for (const contactId of contactIds) {
         const { error } = await supabase.rpc('transfer_conversation', {
           p_contact_id: contactId,
-          p_to_agent_id: type === 'agent' ? targetId : null,
-          p_to_queue_id: type === 'queue' ? targetId : null,
-          p_note: null,
+          p_to_agent_id: type === 'agent' ? targetId : undefined,
+          p_to_queue_id: type === 'queue' ? targetId : undefined,
+          p_note: undefined,
         });
         if (error) failures.push(error);
         else transferidos += 1;
@@ -177,9 +177,9 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
     const contactIds = Array.from(selectedIds);
 
     try {
-      // Retrato do estado ANTERIOR: o desfazer devolve cada conversa ao
-      // `conversation_status` que ela tinha (não a um valor fixo). A leitura
-      // pode ser barrada pelo RLS — erro aqui aborta sem arquivar nada.
+      // Retrato do estado ANTERIOR: o desfazer devolve cada contato ao
+      // `conversation_status` original. A leitura pode ser barrada pelo RLS —
+      // erro aqui aborta sem arquivar nada.
       const { data: originals, error: selectError } = await supabase
         .from('contacts')
         .select('id, conversation_status')
@@ -188,12 +188,16 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
 
       const previousStatus = new Map<string, string | null>();
       for (const row of originals ?? []) {
-        previousStatus.set(row.id, (row as { id: string; conversation_status: string | null }).conversation_status ?? null);
+        previousStatus.set(row.id, row.conversation_status ?? null);
       }
-      // Só arquiva quem foi LIDO: sem o valor anterior o desfazer não teria como
-      // devolver a conversa ao estado dela. Zero linha lida (RLS filtrando) não é
-      // sucesso — sem alvo, avisa em vez de arquivar às cegas.
-      const targetIds = contactIds.filter((id) => previousStatus.has(id));
+      // Só arquiva quem foi LIDO e não está already archived. Zero linha lida
+      // (RLS filtrando) não é sucesso — sem alvo, avisa em vez de arquivar às cegas.
+      // Contato já 'archived' é excluído: arquivar não muda seu estado, mas o
+      // desfazer mapearia 'archived' → 'open' (fora de validFromArchived), abrindo
+      // uma conversa que estava arquivada antes da ação do operador.
+      const targetIds = contactIds.filter(
+        (id) => previousStatus.has(id) && previousStatus.get(id) !== 'archived',
+      );
       if (targetIds.length === 0) throw new Error('nenhum contato lido');
 
       await executeUndoable({
@@ -202,23 +206,34 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
         action: async () => {
           const { error } = await supabase
             .from('contacts')
-            .update({ conversation_status: 'archived', updated_at: new Date().toISOString() })
+            .update({ conversation_status: 'archived' })
             .in('id', targetIds);
           if (error) throw error;
           clearSelection();
           refetch();
         },
         undoAction: async () => {
-          // A trigger enforce_conversation_status_transition só permite archived → open|pending.
-          // Estados que não fazem essa transição (waiting, resolved, closed) voltam para 'open'.
-          const VALID_FROM_ARCHIVED = new Set(['open', 'pending']);
+          // Agrupa por status original para emitir um UPDATE por grupo —
+          // restauração atômica por valor: uma falha não deixa o lote parcialmente
+          // revertido.
+          // Trigger enforce_conversation_status_transition (produção): a partir de
+          // 'archived' só são válidos 'open' e 'pending'. Qualquer outro original
+          // (waiting/resolved/closed/null) voltaria erro e o desfazer falharia —
+          // cai em 'open'.
+          const validFromArchived = new Set(['open', 'pending']);
+          const byStatus = new Map<string | null, string[]>();
           for (const id of targetIds) {
-            const prev = previousStatus.get(id);
-            const restoreStatus = prev && VALID_FROM_ARCHIVED.has(prev) ? prev : 'open';
+            const raw = previousStatus.get(id) ?? null;
+            const original = raw !== null && validFromArchived.has(raw) ? raw : 'open';
+            const group = byStatus.get(original) ?? [];
+            group.push(id);
+            byStatus.set(original, group);
+          }
+          for (const [status, ids] of byStatus) {
             const { error } = await supabase
               .from('contacts')
-              .update({ conversation_status: restoreStatus, updated_at: new Date().toISOString() })
-              .eq('id', id);
+              .update({ conversation_status: status as unknown as string })
+              .in('id', ids);
             if (error) throw error;
           }
           refetch();

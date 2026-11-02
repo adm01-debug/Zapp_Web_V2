@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,
-  Archive, AlertTriangle, PowerOff, Tag, LayoutList, LayoutGrid,
+  Archive, AlertTriangle, PowerOff, Tag, RefreshCw, LayoutList, LayoutGrid,
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 import { PrimaryButton, GhostButton, Pill, ProgressBar, InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { DashboardKpiCard, type KpiDelta } from '@/components/dashboard/overview/DashboardKpiCard';
 import { cn } from '@/lib/utils';
-import { useTalkXSegments, emptyRules, RULE_FIELDS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type TalkXSegmentBulkAction, type TalkXSegmentBulkResult } from '@/hooks/integrations/useTalkXSegments';
+import { useTalkXSegments, emptyRules, RULE_FIELDS, RULE_OPS, useAudienceEstimate, countAudience, DEFAULT_SEGMENT_LIBRARY_FILTERS, SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT, SEGMENT_LIBRARY_OWNER_NONE, parseSegmentLibraryFilters, readSegmentLibraryPageSize, readSegmentLibraryPageSizeFromUrl, saveSegmentLibraryPageSize, syncSegmentLibraryUrl, clearSegmentLibraryUrl, type SegmentRule, type SegmentLibraryFilters, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSegmentLibraryMonth, type TalkXSegmentBulkAction, type TalkXSegmentBulkResult } from '@/hooks/integrations/useTalkXSegments';
 import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, TalkXBulkBar, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
@@ -31,23 +31,34 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     libraryStats = null, libraryStatsLoading = false, libraryStatsError = null, refetchLibraryStats = () => {},
     // X114 — seleção/ações em massa. Defaults só para os mocks de tela que
     // injetam um hook mínimo: o hook real sempre devolve os seis.
+    userId = null,
     selectedIds = [], toggleSelect = () => {}, selectAll = () => {}, clearSelection = () => {}, runBulkAction = async () => [], isBulkRunning = false,
+    refreshEstimates = { mutate: (_: TalkXSegment[]) => {} },
   } = useTalkXSegments();
   const [bulkResult, setBulkResult] = useState<TalkXSegmentBulkResult[] | null>(null);
   const [bulkTag, setBulkTag] = useState('');
-  const [search, setSearch] = useState('');
-  const [filterOrigin, setFilterOrigin] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(8);
+  // X115 — o recorte da biblioteca (busca, origem, status, proprietário e página) vive
+  // no endereço: o link compartilhado abre a tela já recortada. O tamanho da página
+  // é preferência do operador (localStorage, por usuário) e também pode vir no link.
+  const [filters, setFilters] = useState<SegmentLibraryFilters>(
+    () => parseSegmentLibraryFilters(window.location.search),
+  );
+  const [pageSize, setPageSize] = useState<number>(
+    () => readSegmentLibraryPageSizeFromUrl(window.location.search) ?? readSegmentLibraryPageSize(userId),
+  );
+  // Link com `segporpagina` manda mais que a preferência guardada.
+  const pageSizeFromUrl = useRef(readSegmentLibraryPageSizeFromUrl(window.location.search));
+  const { search, origin: filterOrigin, status: filterStatus, owner: filterOwner } = filters;
   const [selected, setSelected] = useState<TalkXSegment | null>(null);
   const [deleting, setDeleting] = useState<TalkXSegment | null>(null);
   const [editing, setEditing] = useState<EditingSeed | null>(null);
   const [saving, setSaving] = useState(false);
+  // X112 — alternância lista/grade da biblioteca de segmentos.
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const selectedRowRef = useRef<HTMLTableRowElement | null>(null);
   // TL-134: gaveta "Meus segmentos" (<xl) e guarda de edição suja do construtor
   // (o construtor registra a guarda via onGuardChange a cada render).
   const [sideListOpen, setSideListOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const builderGuardRef = useRef<((proceed: () => void) => void) | null>(null);
   // X111 — o construtor da tela 03 vive no endereço (?view=talkx&tab=segments&segment=<id>&mode=edit|new):
   // o link direto abre o segmento, o F5 mantém a tela e voltar/avançar do navegador fecham e reabrem.
@@ -74,6 +85,27 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   // A cópia local ganha do endereço: é ela que tem o que o usuário acabou de digitar.
   const activeEditing = editing ?? routedSeed;
 
+  const selectedSegment = useMemo(() => {
+    const cached = segments.find((s) => s.id === selected?.id);
+    if (!cached || !selected) return selected ?? null;
+    const cachedTs = cached.updated_at ?? '';
+    const selectedTs = selected.updated_at ?? '';
+    return cachedTs >= selectedTs ? cached : selected;
+  }, [segments, selected]);
+  const closePanel = useCallback(() => {
+    const row = selectedRowRef.current;
+    setSelected(null);
+    row?.focus();
+  }, []);
+  useEffect(() => {
+    if (!selected || activeEditing) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !e.defaultPrevented) closePanel(); // eslint-disable-line local/no-secret-compare
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [selected, activeEditing, closePanel]);
+
   const syncFromBrowserHistory = useCallback(() => {
     const routed = parseTalkXSegmentsRoute(window.location.search);
     if (routed.needsNormalization) replaceTalkXSegmentsRoute(routed.route);
@@ -81,6 +113,8 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     // não sobrevive à navegação.
     setEditing(null);
     setRoute(routed.route);
+    // O recorte da biblioteca acompanha o endereço do histórico.
+    setFilters(parseSegmentLibraryFilters(window.location.search));
   }, []);
 
   useEffect(() => {
@@ -99,15 +133,60 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     if (!isError) toast.error('Segmento não encontrado ou sem acesso.');
   }, [isError, isLoading, route, routedSegment]);
 
+  // Opções de proprietário derivadas dos próprios segmentos que a consulta (com RLS)
+  // devolveu: o filtro nunca oferece nem recorta nada além do que o usuário já lê.
+  const ownerOptions = useMemo(() => {
+    const owners = new Map<string, string>();
+    segments.forEach((s) => { if (s.created_by && s.creator?.name) owners.set(s.created_by, s.creator.name); });
+    return Array.from(owners.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [segments]);
+
   const filtered = useMemo(() => {
     let r = segments;
     if (filterOrigin !== 'all') r = r.filter((s) => s.origin === filterOrigin);
     if (filterStatus !== 'all') r = r.filter((s) => s.status === filterStatus);
+    if (filterOwner === SEGMENT_LIBRARY_OWNER_NONE) r = r.filter((s) => !s.created_by);
+    else if (filterOwner !== 'all') r = r.filter((s) => s.created_by === filterOwner);
     if (search.trim()) { const q = search.toLowerCase(); r = r.filter((s) => s.name.toLowerCase().includes(q) || (s.description ?? '').toLowerCase().includes(q)); }
     return r;
-  }, [segments, filterOrigin, filterStatus, search]);
+  }, [segments, filterOrigin, filterStatus, filterOwner, search]);
 
+  // Página fora do intervalo (link antigo, filtro que encolheu a lista) cai na última existente.
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const page = Math.min(filters.page, pageCount);
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  // O perfil pode chegar depois da primeira renderização: relê a preferência do usuário certo.
+  useEffect(() => {
+    if (pageSizeFromUrl.current === null) setPageSize(readSegmentLibraryPageSize(userId));
+  }, [userId]);
+
+  // Espelha o recorte no endereço sem criar entrada de histórico (filtrar não é navegar).
+  // Enquanto a lista carrega `filtered` está vazio: não regrava a página pedida pelo link.
+  useEffect(() => {
+    syncSegmentLibraryUrl({ ...filters, page: isLoading ? filters.page : page }, pageSize);
+  }, [filters, page, pageSize, isLoading]);
+  // Ao sair da tela os parâmetros `seg*` saem do endereço (não vazam para outras abas).
+  useEffect(() => clearSegmentLibraryUrl, []);
+
+  // Mudar o recorte volta para a 1ª página; só `setPage` mexe na página.
+  const setFilterValue = (campo: 'search' | 'origin' | 'status' | 'owner', value: string) => {
+    setFilters((prev) => ({ ...prev, [campo]: value, page: 1 }));
+  };
+  const setSearch = (v: string) => setFilterValue('search', v);
+  const setPage = (p: number) => setFilters((prev) => ({ ...prev, page: p }));
+  // "Limpar filtros" também devolve o tamanho de página ao padrão e grava a escolha:
+  // sem persistir, a preferência antiga voltaria na próxima visita.
+  const clearFilters = () => {
+    setFilters(DEFAULT_SEGMENT_LIBRARY_FILTERS);
+    saveSegmentLibraryPageSize(userId, SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT);
+    setPageSize(SEGMENT_LIBRARY_PAGE_SIZE_DEFAULT);
+  };
+  const choosePageSize = (size: number) => {
+    saveSegmentLibraryPageSize(userId, size);
+    setPageSize(size);
+    setPage(1);
+  };
 
   /* X114 — seleção e ações em massa da biblioteca. O resultado vem POR SEGMENTO
      do hook (RPC guardada): a tela nunca resume o lote como um veredito único. */
@@ -157,12 +236,25 @@ export function TalkXSegments({ onUseCampaign }: Props) {
     openBuilder({ id: s.id, name: s.name, description: s.description ?? '', rules: s.rules }, { segmentId: s.id, mode: 'edit' });
   };
   // Fechar o construtor (cancelar ou publicar) devolve a tela e o endereço à biblioteca.
-  const closeBuilder = () => {
+  const closeBuilder = useCallback(() => {
     builderGuardRef.current = null;
     setEditing(null);
     setRoute(null);
     replaceTalkXSegmentsRoute(null);
-  };
+  }, []);
+
+  // Esc enquanto o construtor está aberto e limpo (sem alterações não salvas) fecha o construtor.
+  useEffect(() => {
+    if (!activeEditing) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !e.defaultPrevented) { // eslint-disable-line local/no-secret-compare
+        const guard = builderGuardRef.current;
+        if (guard) { guard(closeBuilder); } else { closeBuilder(); }
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [activeEditing, closeBuilder]);
 
   const save = async (draft: SegmentBuilderContent) => {
     if (saving) return;
@@ -262,6 +354,29 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           <span className="text-border">›</span>
           <span className="text-foreground font-medium">Segmentos</span>
         </nav>
+        {/* Tela 03 — cabeçalho (título, subtítulo, botão de atualização) */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Segmentos</h1>
+            <p className="text-sm text-foreground-secondary">Crie, gerencie e utilize segmentos inteligentes para suas campanhas no Talk X.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => { void refetch(); refreshEstimates.mutate(segments); }}
+            className="h-9 px-3 rounded-lg border border-border/70 bg-input/40 inline-flex items-center gap-1.5 text-xs font-medium text-foreground-secondary hover:bg-muted/50 shrink-0"
+          >
+            <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
+            Atualizar
+          </button>
+        </div>
+        {/* Abas superiores da tela 03 (X111) */}
+        <nav aria-label="Abas superiores de segmentos" className="flex gap-1 border-b border-border/50 pb-2">
+          <button type="button" aria-current="page" className="h-8 px-3 rounded-lg text-xs font-semibold bg-primary/10 text-primary">Segmentos</button>
+          <button type="button" disabled className="h-8 px-3 rounded-lg text-xs text-muted-foreground opacity-50 cursor-not-allowed">Regras Avançadas</button>
+          <button type="button" className="h-8 px-3 rounded-lg text-xs text-foreground-secondary hover:bg-muted/50">Audiências</button>
+          <button type="button" className="h-8 px-3 rounded-lg text-xs text-foreground-secondary hover:bg-muted/50">Modelos</button>
+          <button type="button" disabled className="h-8 px-3 rounded-lg text-xs text-muted-foreground opacity-50 cursor-not-allowed">Insights com IA</button>
+        </nav>
         {/* TL-134 (X099): SEM `key` de propósito — a troca de segmento repõe o
             rascunho pela ação `reset` do reducer, num `useEffect [initial]`. */}
         <TalkXSegmentBuilder
@@ -317,42 +432,30 @@ export function TalkXSegments({ onUseCampaign }: Props) {
         </TalkXQueryBoundary>
 
         <FilterBarV2
-          search={search} onSearch={(v) => { setSearch(v); setPage(1); }} placeholder="Buscar segmentos…"
+          search={search} onSearch={setSearch} placeholder="Buscar segmentos…"
           filters={[
-            { key: 'origin', label: 'Todas as origens', options: [{ value: 'zapp', label: 'ZAPP' }, { value: 'crm360', label: 'CRM 360°' }, { value: 'custom', label: 'Personalizado' }] },
-            { key: 'status', label: 'Todos os status', options: [{ value: 'active', label: 'Ativo' }, { value: 'inactive', label: 'Inativo' }] },
+            { key: 'origin', label: 'Origem', allLabel: 'Todas as origens', options: [{ value: 'zapp', label: 'ZAPP' }, { value: 'crm360', label: 'CRM 360°' }, { value: 'custom', label: 'Personalizado' }] },
+            { key: 'status', label: 'Status', allLabel: 'Todos os status', options: [{ value: 'active', label: 'Ativo' }, { value: 'inactive', label: 'Inativo' }, { value: 'draft', label: 'Rascunho' }] },
+            // "Sem proprietário" cobre o segmento sem `created_by`: ele não entra na lista de
+            // criadores e, sem a opção, não teria como ser recortado. O item "Todos" é o
+            // sentinela `all` da barra ("sem recorte").
+            { key: 'owner', label: 'Proprietário', allLabel: 'Todos', options: [...ownerOptions.map(([id, name]) => ({ value: id, label: name })), { value: SEGMENT_LIBRARY_OWNER_NONE, label: 'Sem proprietário' }] },
           ]}
-          values={{ origin: filterOrigin, status: filterStatus }}
-          onFilter={(k, v) => { if (k === 'origin') setFilterOrigin(v); else setFilterStatus(v); setPage(1); }}
-          hasActive={filterOrigin !== 'all' || filterStatus !== 'all' || search.trim() !== ''}
-          onClear={() => { setSearch(''); setFilterOrigin('all'); setFilterStatus('all'); setPage(1); }}
-          rightSlot={
-            <div className="flex items-center gap-2">
-              <div className="flex rounded-lg border border-border/70 overflow-hidden">
-                <button
-                  type="button"
-                  data-testid="segments-view-list"
-                  aria-pressed={viewMode === 'list'}
-                  onClick={() => setViewMode('list')}
-                  className={cn('h-8 px-2.5 inline-flex items-center justify-center transition-colors', viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'bg-input/40 text-muted-foreground hover:bg-muted/50')}
-                  aria-label="Visualização em lista"
-                >
-                  <LayoutList className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  data-testid="segments-view-grid"
-                  aria-pressed={viewMode === 'grid'}
-                  onClick={() => setViewMode('grid')}
-                  className={cn('h-8 px-2.5 inline-flex items-center justify-center transition-colors border-l border-border/70', viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'bg-input/40 text-muted-foreground hover:bg-muted/50')}
-                  aria-label="Visualização em grade"
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </button>
+          values={{ origin: filterOrigin, status: filterStatus, owner: filterOwner }}
+          onFilter={(k, v) => {
+            if (k === 'origin' || k === 'status' || k === 'owner') setFilterValue(k, v);
+          }}
+          hasActive={filterOrigin !== 'all' || filterStatus !== 'all' || filterOwner !== 'all' || search.trim() !== ''}
+          onClear={clearFilters}
+          rightSlot={(
+            <>
+              <div className="flex items-center gap-0.5 rounded-lg border border-border/70 bg-input/40 p-0.5">
+                <button type="button" data-testid="segments-view-list" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')} aria-label="Visualização em lista" className={cn('h-7 w-7 rounded-md inline-flex items-center justify-center', viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50')}><LayoutList className="w-3.5 h-3.5" /></button>
+                <button type="button" data-testid="segments-view-grid" aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')} aria-label="Visualização em grade" className={cn('h-7 w-7 rounded-md inline-flex items-center justify-center', viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50')}><LayoutGrid className="w-3.5 h-3.5" /></button>
               </div>
               <PrimaryButton icon={Plus} onClick={openNew}>Novo segmento</PrimaryButton>
-            </div>
-          }
+            </>
+          )}
         />
 
         <TalkXBulkBar
@@ -386,39 +489,28 @@ export function TalkXSegments({ onUseCampaign }: Props) {
           >
            {filtered.length === 0 ? (<div className="p-4"><TalkXEmptyState icon={Search} title="Nenhum segmento encontrado" description="Ajuste os filtros ou tente outro termo." /></div>)
            : viewMode === 'grid' ? (
-            <div data-testid="segments-grid" className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div data-testid="segments-grid" className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 p-4">
               {paged.map((s) => {
+                const rulesFlat = (s.rules?.groups ?? []).flatMap((g) => g.rules);
                 const originLabel = s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado';
-                const statusLabel = s.status === 'active' ? 'Ativo' : 'Inativo';
-                const allRules = (s.rules?.groups ?? []).flatMap((g) => g.rules);
+                const statusLabel = s.status === 'active' ? 'Ativo' : s.status === 'inactive' ? 'Inativo' : 'Rascunho';
                 return (
-                  <div key={s.id} data-testid="segment-card" className={cn('rounded-xl border border-border/70 bg-card p-4 cursor-pointer hover:border-primary/40 transition-colors space-y-3', selected?.id === s.id && 'border-primary/60 bg-primary/5')} onClick={() => setSelected(s)}>
+                  <div key={s.id} data-testid="segment-card" role="button" tabIndex={0} onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); setSelected(s); } /* eslint-disable-line local/no-secret-compare */ }} onClick={() => setSelected(s)} className={cn('bg-card border border-border/70 rounded-xl p-3 cursor-pointer hover:bg-muted/20 transition-colors space-y-2', selected?.id === s.id && 'ring-1 ring-primary')}>
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-semibold text-foreground leading-tight">{s.name}</p>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber shrink-0">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 items-center">
-                      <Pill label={originLabel} tone={s.origin === 'crm360' ? 'violet' : 'info'} />
-                      <span className={cn('text-2xs px-2 py-0.5 rounded-full font-medium', s.status === 'active' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-muted text-muted-foreground')}>{statusLabel}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-2xs text-foreground-secondary">
-                      <Users className="w-3.5 h-3.5 shrink-0" />
-                      <span className="font-bold text-foreground text-sm">{fmtInt(s.estimated_count)}</span>
-                      <span>contatos</span>
+                      <p className="text-sm font--semibold text-foreground line-clamp-2">{s.name}</p>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="shrink-0 text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button>
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {allRules.slice(0, 3).map((r, i) => {
-                        const field = RULE_FIELDS.find((f) => f.value === r.field)?.label ?? r.field;
-                        return <span key={i} className="text-3xs px-1.5 py-0.5 rounded bg-primary/10 text-[hsl(var(--primary-text))] border border-primary/20">{field}</span>;
-                      })}
-                      {allRules.length > 3 && <span className="text-3xs text-muted-foreground">+{allRules.length - 3}</span>}
-                      {allRules.length === 0 && <span className="text-2xs text-muted-foreground italic">Toda a base</span>}
+                      <Pill label={originLabel} tone={s.origin === 'crm360' ? 'violet' : 'info'} />
+                      <Pill label={statusLabel} tone={s.status === 'active' ? 'success' : 'muted'} dot />
                     </div>
+                    <p className="text-xs text-foreground-secondary">{rulesFlat.length === 0 ? 'Toda a base' : `${rulesFlat.length} critério${rulesFlat.length === 1 ? '' : 's'}`}</p>
+                    <p className="text-sm font-bold text-foreground">{fmtInt(s.estimated_count)} <span className="text-2xs text-foreground-secondary font-normal">contatos</span></p>
                   </div>
                 );
               })}
             </div>
-          ) : (
+           ) : (
             <div data-testid="segments-list" className="overflow-x-auto">
               <table className="w-full min-w-[820px] border-collapse">
                 <thead className="bg-muted/20 border-b border-border/60"><tr>
@@ -427,7 +519,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                 </tr></thead>
                 <tbody>
                   {paged.map((s) => (
-                    <tr key={s.id} data-testid="segment-card" className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
+                    <tr key={s.id} data-testid="segment-card" ref={selected?.id === s.id ? selectedRowRef : null} tabIndex={0} onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); setSelected(s); } /* eslint-disable-line local/no-secret-compare */ }} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
                       <Td><div onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} aria-label={`Selecionar ${s.name}`} className="w-3.5 h-3.5 accent-primary cursor-pointer" /></div></Td>
                       <Td><button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
                       <Td>
@@ -472,14 +564,14 @@ export function TalkXSegments({ onUseCampaign }: Props) {
             </div>
           )}
           </TalkXQueryBoundary>
-          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={(n) => { setPageSize(n); setPage(1); }} noun="segmentos" /></div>}
+          {filtered.length > 0 && <div className="px-4 pb-4 pt-2 border-t border-border/50"><TalkXPagination page={page} pageSize={pageSize} total={filtered.length} onPage={setPage} onPageSize={choosePageSize} noun="segmentos" /></div>}
         </section>
       </div>
 
       {/* Detail rail */}
       <div className="space-y-4 min-w-0">
         {selected ? (
-          <SegmentDetailRail s={selected} onEdit={() => openEdit(selected)} onCampaign={() => onUseCampaign([selected.id])} onClose={() => setSelected(null)} />
+          <SegmentDetailRail s={selectedSegment!} onEdit={() => openEdit(selectedSegment!)} onCampaign={() => onUseCampaign([selectedSegment!.id])} onClose={closePanel} onFavorite={() => updateSegment.mutateAsync({ id: selectedSegment!.id, is_favorite: !selectedSegment!.is_favorite })} />
         ) : (
           <RailCard icon={Bookmark} title="Selecione um segmento" subtitle="Clique em um segmento para ver os detalhes e ações disponíveis.">
             <p className="text-xs text-foreground-secondary">Os segmentos permitem direcionar suas campanhas para grupos específicos de contatos com base em regras de comportamento e dados do CRM.</p>
@@ -636,35 +728,59 @@ function BulkResultPanel({ results, nameOf, onClose }: { results: TalkXSegmentBu
   );
 }
 
-function SegmentDetailRail({ s, onEdit, onCampaign, onClose }: { s: TalkXSegment; onEdit: () => void; onCampaign: () => void; onClose: () => void }) {
-  const { data: est } = useAudienceEstimate(s.rules, true);
+function describeRule(rule: SegmentRule): string {
+  const fieldDef = RULE_FIELDS.find((f) => f.value === rule.field);
+  const fieldLabel = fieldDef?.label ?? rule.field;
+  if (rule.op === 'in_last_days') return `${fieldLabel} nos últimos ${rule.value} dias`;
+  if (rule.op === 'not_in_last_days') return `${fieldLabel} há mais de ${rule.value} dias`;
+  if (rule.op === 'is_set') return `${fieldLabel} está preenchido`;
+  if (rule.op === 'is_empty') return `${fieldLabel} está vazio`;
+  const kindOps = RULE_OPS[fieldDef?.kind ?? 'text'] ?? [];
+  const opLabel = kindOps.find((o) => o.value === rule.op)?.label ?? rule.op;
+  return `${fieldLabel} ${opLabel} ${rule.value}`;
+}
+
+function SegmentDetailRail({ s, onEdit, onCampaign, onClose, onFavorite }: {
+  s: TalkXSegment; onEdit: () => void; onCampaign: () => void; onClose: () => void;
+  onFavorite: () => void;
+}) {
+  const { data: est, refetch: refetchEst } = useAudienceEstimate(s.rules, true);
+  const rulesFlat = (s.rules?.groups ?? []).flatMap((g) => g.rules);
+  const originLabel = s.origin === 'crm360' ? 'Dados do CRM 360°, sincronizado' : s.origin === 'zapp' ? 'Dados do ZAPP, em tempo real' : 'Personalizado';
   return (
-    <RailCard icon={Bookmark} color="violet" title={s.name} subtitle={s.description || undefined}
-      right={<button type="button" onClick={onClose} aria-label="Fechar" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50"><X className="w-4 h-4" /></button>}
-    >
-      <div className="flex items-center gap-2 flex-wrap mb-2">
-        <Pill label={s.status === 'active' ? 'Ativo' : 'Inativo'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
-        <Pill label={s.is_favorite ? '⭐ Favorito' : 'Padrão'} tone={s.is_favorite ? 'warning' : 'muted'} />
+    <section className="bg-card border border-border/70 rounded-xl flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-border/50">
+        <h2 className="text-sm font-semibold text-foreground">Detalhes do segmento</h2>
+        <button type="button" onClick={onClose} aria-label="Fechar" className="h-7 w-7 rounded-md border border-border/70 bg-input/40 flex items-center justify-center hover:bg-muted/50"><X className="w-4 h-4" /></button>
       </div>
-      <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{fmtInt(est?.count ?? s.estimated_count)} contatos</span>} />
-      <MetaRow label="Origem" value={s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado'} />
-      <MetaRow label="Último uso" value={s.last_used_at ? fmtDateTime(s.last_used_at) : 'Nunca'} />
-      <MetaRow label="Criado em" value={fmtDateTime(s.created_at)} />
-      {est?.sample && est.sample.length > 0 && (
-        <div className="mt-2">
-          <p className="text-2xs text-foreground-secondary mb-1.5">Amostra de contatos</p>
-          {est.sample.map((c) => (
-            <div key={c.id} className="flex items-center gap-2 py-1.5">
-              <InitialsAvatar name={c.name || '?'} size={28} />
-              <div className="min-w-0"><p className="text-xs font-medium text-foreground truncate">{c.name}</p><p className="text-2xs text-foreground-secondary truncate">{c.company || c.phone}</p></div>
-            </div>
-          ))}
+      <div className="p-3 flex flex-col gap-2 overflow-y-auto">
+        <div>
+          <p className="text-sm font-medium text-foreground">{s.name}</p>
+          {s.description && <p className="text-xs text-foreground-secondary">{s.description}</p>}
         </div>
-      )}
-      <div className="flex flex-col gap-2 mt-3">
-        <PrimaryButton icon={Zap} onClick={onCampaign} className="w-full justify-center">Usar em campanha</PrimaryButton>
-        <GhostButton icon={Pencil} onClick={onEdit} className="w-full justify-center">Editar segmento</GhostButton>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Pill label={s.status === 'active' ? 'Ativo' : s.status === 'inactive' ? 'Inativo' : 'Rascunho'} tone={s.status === 'active' ? 'success' : 'muted'} dot />
+          {s.is_favorite && <Pill label="⭐ Favorito" tone="warning" />}
+        </div>
+        {rulesFlat.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-foreground mb-1">Principais critérios</p>
+            {rulesFlat.slice(0, 5).map((r) => (
+              <p key={r.id} className="text-xs text-foreground-secondary py-0.5">{describeRule(r)}</p>
+            ))}
+          </div>
+        )}
+        <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{fmtInt(est?.count ?? s.estimated_count)} contatos</span>} />
+        <MetaRow label="Origem" value={originLabel} />
+        <MetaRow label="Último uso" value={s.last_used_at ? fmtDateTime(s.last_used_at) : 'Nunca'} />
+        <div className="flex flex-col gap-2 mt-1">
+          <PrimaryButton icon={Zap} onClick={onCampaign} disabled={s.status !== 'active'} className="w-full justify-center">Usar em campanha</PrimaryButton>
+          {s.status !== 'active' && <p className="text-xs text-destructive text-center">Segmento inativo: não pode ser usado em campanha.</p>}
+          <GhostButton icon={Pencil} onClick={onEdit} className="w-full justify-center">Editar segmento</GhostButton>
+          <GhostButton icon={RefreshCw} onClick={() => refetchEst()} className="w-full justify-center">Recontar público</GhostButton>
+          <GhostButton icon={s.is_favorite ? StarOff : Star} onClick={onFavorite} className="w-full justify-center">{s.is_favorite ? 'Desfavoritar' : 'Favoritar'}</GhostButton>
+        </div>
       </div>
-    </RailCard>
+    </section>
   );
 }

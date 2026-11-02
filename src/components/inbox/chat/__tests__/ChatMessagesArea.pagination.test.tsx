@@ -12,7 +12,7 @@
  * Todas as mensagens usam o MESMO timestamp de proposito: a ancora e o item
  * (key do virtualizer), nunca o timestamp.
  */
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import type { ComponentProps } from 'react';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -52,13 +52,24 @@ class ResizeObserverMock {
   disconnect() {}
 }
 
+let getBCRSpy: ReturnType<typeof vi.spyOn>;
+
 beforeAll(() => {
   (window as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;
-  // virtual-core usa clientHeight/clientWidth (não getBoundingClientRect) para
-  // calcular o tamanho do viewport: com 0, calculateRange retorna null e
-  // getVirtualItems() devolve []. Simular 600px de altura para que itens sejam renderizados.
-  Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, get() { return 600; } });
-  Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get() { return 800; } });
+  (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = vi.fn();
+  Object.defineProperty(Element.prototype, 'clientHeight', { get: () => 600, configurable: true });
+  // TanStack Virtual chama getBoundingClientRect() no scroll element para medir
+  // a altura do container; jsdom retorna 0 por padrão, impedindo a renderização.
+  getBCRSpy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+    height: 600, width: 800, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0,
+    toJSON: () => ({}),
+  } as DOMRect);
+  // jsdom nao calcula offsetHeight, que o virtual-core usa para medir cada linha.
+  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, get: () => 120 });
+});
+
+afterAll(() => {
+  getBCRSpy.mockRestore();
 });
 
 vi.mock('../MessageBubble', () => ({
@@ -76,11 +87,6 @@ vi.mock('@/services/realtime.service', () => ({
 
 vi.mock('@/services/chat.service', () => ({
   ChatService: { deleteMessage: vi.fn(async () => {}) },
-}));
-
-vi.mock('@/hooks/reactions/useBatchReactions', () => ({
-  ReactionsBatchProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  useReactionsBatch: () => null,
 }));
 
 const MESMO_TIMESTAMP = new Date('2026-09-02T12:00:00Z');

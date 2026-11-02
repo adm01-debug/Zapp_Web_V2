@@ -18,8 +18,9 @@ vi.mock('@/lib/logger', () => ({
   createLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), withCorrelation: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })) })),
 }));
 
+// TemplatesWithVariables exige AuthProvider via useAuth (só lê profile?.name).
 vi.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: vi.fn(() => ({ user: { id: 'u1', email: 'test@test.com' }, profile: null, loading: false })),
+  useAuth: () => ({ user: { id: 'auth-user-1' }, profile: { id: 'perfil-atual-1', name: 'Agente' } }),
 }));
 
 const template = {
@@ -41,7 +42,7 @@ describe('inbox — botões de ícone com nome acessível (UK-13/UK-13b)', () =>
         templates={[template]}
         onUseTemplate={vi.fn()}
         contactData={{ name: 'Ana' }}
-      />,
+      />
     );
 
     expect(screen.getByRole('button', { name: 'Editar template' })).toBeInTheDocument();

@@ -94,7 +94,7 @@ function readStoredPrefs(storageKey: string | null): Partial<InboxFilterPrefs> |
 }
 
 export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInboxFiltersProps) {
-  const [searchParams, setTypeSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const storageKey = profileId ? inboxFiltersStorageKey(profileId) : null;
   const ownerKey = storageKey ?? NO_OWNER;
 
@@ -107,13 +107,12 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
 
   const basePrefs = useMemo<InboxFilterPrefs>(() => {
     const chipTab = storedPrefs?.chipTab ?? DEFAULT_CHIP;
-    // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
-    const typeParam = searchParams.get('type');
     return {
       chipTab,
       ...tabsForChip(chipTab),
       queueId: storedPrefs?.queueId ?? null,
-      contactType: typeParam !== null ? normalizeContactType(typeParam) : (storedPrefs?.contactType ?? null),
+      // O tipo do deep-link manda; sem ele, vale o que o dono guardou.
+      contactType: normalizeContactType(searchParams.get('type')) ?? storedPrefs?.contactType ?? null,
     };
   }, [storedPrefs, searchParams]);
 
@@ -157,16 +156,16 @@ export function useInboxFilters({ conversations, profileId, snoozedIds }: UseInb
 
   const handleContactTypeChange = useCallback((value: string | null) => {
     applyPrefs({ contactType: value && value !== 'all' ? value : null });
-    setTypeSearchParams(prev => {
-      const params = new URLSearchParams(prev);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
       if (value && value !== 'all') {
-        params.set('type', value);
+        next.set('type', value);
       } else {
-        params.delete('type');
+        next.delete('type');
       }
-      return params;
+      return next;
     }, { replace: true });
-  }, [applyPrefs, setTypeSearchParams]);
+  }, [applyPrefs, setSearchParams]);
 
   // Convert URL filters to InboxFiltersState
   const filters = useMemo<InboxFiltersState>(() => ({

@@ -7,10 +7,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
  * X092 / TL-124 — painel lateral da tela 04 (Templates).
  *
  * O painel era um `RailCard` "Mais usados" ordenado por `use_count`, com o rótulo
- * "Do zero ou com IA" (IA que não existe) e sem "Mais convertidos" nem "Sugestões".
+ * "Do zero ou com IA" (IA que não existe) e sem "Mais respondidos" nem "Sugestões".
  * Aqui se prova, no componente REAL, o que o painel passou a fazer:
  *
- *   1. "Mais convertidos" é ranking por TAXA DE RESPOSTA (base mínima A9) — o
+ *   1. "Mais respondidos" é ranking por TAXA DE RESPOSTA (base mínima A9) — o
  *      template de maior taxa vem primeiro, mesmo com MENOS usos que os outros;
  *   2. sem base mínima, o painel diz "sem dados ainda" — nunca "mais usados" sob o
  *      mesmo título;
