@@ -1,98 +1,127 @@
 # Regras de Negócio — Zapp Web V2
 
-**SHA main de referência:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c`  
-**Data:** 2026-11-01
-
-## Fontes consultadas
-
-- `CLAUDE.md` (regras gerais, banco, CI, workflows)
-- `supabase/migrations/` (schema e RLS)
-- `src/hooks/`, `src/services/` (lógica de negócio)
-- `docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md`
-- `docs/audits/`
+**Gerado em:** 2026-11-02  
+**Fontes:** migrations, policies RLS, hooks, testes E2E, CLAUDE.md
 
 ---
 
-## 1. Contatos
+## 1. Autenticação e Autorização
 
-**Regra vigente (F5/D4, migration 20260930450000):**
-
-Contato visível = `deleted_at IS NULL` + `is_lid_legacy = false` + `phone ~ '^[0-9]{10,15}$'`
-
-Qualquer PR que altere esse critério deve atualizar **simultaneamente**:
-1. Migration com nova RLS
-2. `CONTACT_VISIBLE_PHONE_PATTERN` em `src/hooks/crm/contactsAggregates.ts`
-3. `scripts/db-audit/contacts-legacy-visibility.test.sh`
-
----
-
-## 2. Conversas / Inbox
-
-**Estados de transição (migration de constraint):**  
-`archived → open` ou `archived → pending` são as únicas transições permitidas desde `cbe53b574`.  
-PR #2463 (contexto): sem DDL de conversa, só serviço de mídia.
-
-**Regra de undo de archive:**  
-Voltar conversa arquivada ao estado original respeita constraint `archived → open|pending`.
+| Regra | Fonte |
+|---|---|
+| Todo acesso ao banco passa por RLS; `service_role` é para edges/workers | policies em `supabase/migrations/` |
+| `is_admin()` = `auth.role() = 'authenticated' AND user é admin no tenant` | função RLS em migrations |
+| `is_admin_or_supervisor()` = admin OU supervisor no tenant | idem |
+| Sem autenticação → sem dados | RLS default DENY |
+| JWT claims: `sub` = user_id, `app_metadata.tenant_id` = tenant | src/config/supabase.ts |
 
 ---
 
-## 3. Copiloto / RADAR (em desenvolvimento)
+## 2. Multi-Tenancy
 
-**Tabelas copilot** (migration 20261030145126 — PR #2461):
-`copilot_sessions`, `copilot_insights`, `copilot_conversation_context`, `copilot_product_catalog`, `copilot_objection_patterns`, `copilot_success_patterns`, `copilot_performance_metrics`
-
-**Edge functions copilot** (PR #2460 — BLOQUEADO):
-Dependem das tabelas acima + `copilot_sessions`/`copilot_insights` da migration 20261030200000 (ainda em `producao-ddl`). Não mergear edge functions antes das tabelas.
-
----
-
-## 4. TalkX / Campanhas
-
-**Plano vigente:** V4 (200 etapas X001–X200), `docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md`  
-V3 e anteriores: substituídos, não executar.
-
-**Convenção de branch:** `<agente>/<tipo>-talkx-x<NNN>-<slug>-<AAMMDD-HHMM>`
+| Regra | Fonte |
+|---|---|
+| Dados isolados por `tenant_id` em toda tabela de negócio | policies RLS |
+| Usuário pertence a exatamente 1 tenant no cadastro | constraint DB |
+| Admin só vê dados do seu tenant | RLS `tenant_id = auth.jwt()->>'tenant_id'` |
+| Nenhum cross-tenant por query direta | design RLS |
 
 ---
 
-## 5. Migrations — regras obrigatórias
+## 3. WhatsApp / Conexão
 
-Ver `CLAUDE.md` seção 1 para detalhes completos. Resumo:
-
-- **Aditiva e não destrutiva:** sem `DROP`, `RENAME`, `ALTER TYPE`, `DELETE`/`UPDATE` em massa
-- **Ordem obrigatória:** arquivo → PR → merge → deploy → apply
-- **Teste:** aplicar toda cadeia de migrations em Postgres temporário
-- **Registro:** `version` > max(ledger), `statements` = SQL real (não prosa)
-- **RLS:** sempre com teste provando que nenhum acesso foi ampliado
-
----
-
-## 6. Edge Functions
-
-- Deploy automático: push na `main` que altera `supabase/functions/` ou `supabase/config.toml`
-- Autenticação: nunca afrouxar (sem remover `Authorization` checks, sem ampliar roles)
-- Testes obrigatórios antes do merge
+| Regra | Fonte |
+|---|---|
+| Instância WhatsApp: `PRINCIPAL` (Evolution GO) | CLAUDE.md §2 |
+| Reconexão automática via health check (não poll do front) | PR #2549 |
+| QR code: 3 polls × 1,5s; sem QR + jid → recria instância | CLAUDE.md §2 runbook |
+| Status possíveis: connected, disconnected, reconnecting | `whatsapp_connections` |
+| `whatsapp_connections` não é tocado no fluxo de reconexão | CLAUDE.md §2 |
 
 ---
 
-## 7. Permissões / Roles
+## 4. Contatos
 
-- `is_admin_or_supervisor()`: admins e supervisores
-- `is_admin()`: apenas admins
-- RLS: toda nova policy deve ser testada isoladamente em Postgres temporário
-- Nunca ampliar acesso via RLS sem evidência de teste
-
----
-
-## 8. Workflows de CI (.github/workflows/)
-
-Proibido alterar workflows nesta sessão (regra de segurança). PRs com apenas mudanças de workflow → SKIP_WORKFLOWS.
-
-6 required checks: `🔍 Lint & TypeCheck`, `🧪 Unit Tests`, `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline`, `🎭 E2E Tests (Playwright)`
-
-CI Gate = aggregate check `✅ CI Gate (required check)` — aparece após todos os individuais.
+| Regra | Fonte |
+|---|---|
+| Contato visível = `deleted_at IS NULL AND is_lid_legacy = false AND phone ~ '^[0-9]{10,15}$'` | CLAUDE.md "Contatos" + migration 20260930450000 |
+| `search_contacts(..., include_legacy=false)` aplica critério | migration 20260930450000 |
+| Toggle "Mostrar legados" = `localStorage` `contact-show-legacy` | src/hooks/crm |
+| KPI Total deve coincidir com aba "Todos" (mesmo filtro) | useContactsKpi |
 
 ---
 
-*Gerado automaticamente em 2026-11-01 com base nas fontes acima.*
+## 5. Conversas / Inbox
+
+| Regra | Fonte |
+|---|---|
+| Status possíveis: `open`, `pending`, `archived` | schema conversations |
+| Transição `archived → open|pending` controlada por constraint | migrations |
+| Chat Panel Header → "Mais ações" → "Marcar como resolvido" → CloseConversationDialog | e2e/README.md |
+| Token inbox: `--inbox-panel-bg` (definido por tema em tokens.css) | CLAUDE.md "Lição de UI" |
+
+---
+
+## 6. Campanha / Talk X
+
+| Regra | Fonte |
+|---|---|
+| Plano vigente: V4 (200 etapas X001–X200) | docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md |
+| V3 substituído (PR #2482 mergeado 2026-11-01) | docs/talkx/ + progresso.json |
+| `useCampaignEditor` filtra `.eq('status','connected')` | código-fonte |
+| Fixtures E2E: conexão `e2e0e2e0...` status `connected`; segmento `621521f3...` | CLAUDE.md |
+
+---
+
+## 7. Migrations / Banco
+
+| Regra | Fonte |
+|---|---|
+| Ordem obrigatória: arquivo → PR → merge → deploy → apply | CLAUDE.md §1 regra 6 |
+| Migration destrutiva (DROP/RENAME/ALTER TYPE/DELETE/UPDATE em massa): nunca sem aprovação | CLAUDE.md §1 |
+| Migration aditiva em produção: `db_query` + INSERT ledger na mesma transação | CLAUDE.md §1 |
+| `supabase_apply_migration` está bugado — usar `db_query` direto | CLAUDE.md §1 regra 1 |
+| Versão nova = `max(version) + 10000`; reservar com `reserve_migration_version()` | CLAUDE.md alocação versão |
+| `statements` no ledger = SQL real e completo, sem `;` final, sem comentários | CLAUDE.md §1 regra 7 |
+
+---
+
+## 8. Feature Freeze (vigente desde PR #2545, 2026-11-02)
+
+| Regra | Fonte |
+|---|---|
+| Somente merges de: fix de CI, fix de segurança, fix dos 9 fluxos críticos | PR #2545 |
+| Features novas bloqueadas (ex.: PR #2562 feat LGPD) | progresso.json BLOQUEADO_FEATURE_FREEZE |
+| 9 fluxos críticos definidos no PR #2545 | PR #2545 corpo |
+
+---
+
+## 9. CI / GitHub Actions
+
+| Regra | Fonte |
+|---|---|
+| 6 checks obrigatórios na main: Lint & TypeCheck, Unit Tests, Build, Security Audit, Contrato DB offline, E2E Tests | CLAUDE.md perímetro |
+| `strict=true` — PR deve estar atualizada com main para mergear | CLAUDE.md perímetro |
+| `auto_merge=squash` — merges automáticos quando todos os checks passam | configuração repo |
+| TypeCheck ratchet: baseline=93, novas=0 | baseline/BASELINE.md |
+| Lint ratchet: baseline=820, novas=0 | baseline/BASELINE.md |
+
+---
+
+## 10. Departamentos / Convites
+
+| Regra | Fonte |
+|---|---|
+| INSERT em `department_invites` restrito a admin | migration + policies |
+| `create_department_invite` RPC escreve em `department_invitations` | PR #2570 |
+| `accept_department_invite` RPC aceita via código normalizado | useRedeemDepartmentInvite.ts |
+| SELECT em `department_invitations` para admin/supervisor | policies |
+
+---
+
+## 11. SINGU (sistema externo)
+
+| Regra | Fonte |
+|---|---|
+| SINGU é READ-ONLY neste projeto | CLAUDE.md + goal |
+| Nenhuma PR que escreva no SINGU pode ser mergeada | goal regras |
