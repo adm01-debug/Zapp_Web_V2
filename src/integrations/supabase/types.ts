@@ -3207,6 +3207,27 @@ export type Database = {
           },
         ]
       }
+      copilot_conversation_scores: {
+        Row: {
+          conversation_id: string
+          score: number
+          scored_by: string
+          updated_at: string
+        }
+        Insert: {
+          conversation_id: string
+          score: number
+          scored_by: string
+          updated_at?: string
+        }
+        Update: {
+          conversation_id?: string
+          score?: number
+          scored_by?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       copilot_feedback: {
         Row: {
           contact_id: string
@@ -3249,6 +3270,30 @@ export type Database = {
           sent_text?: string | null
           suggestion_id?: string | null
           suggestion_text?: string | null
+        }
+        Relationships: []
+      }
+      copilot_help_requests: {
+        Row: {
+          contact_id: string
+          conversation_id: string
+          created_at: string
+          id: string
+          seller_id: string
+        }
+        Insert: {
+          contact_id: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          seller_id: string
+        }
+        Update: {
+          contact_id?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          seller_id?: string
         }
         Relationships: []
       }
@@ -3305,23 +3350,139 @@ export type Database = {
           },
         ]
       }
+      copilot_learning_moments: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          message_id: string
+          notes: string | null
+          tag: string
+          tagged_by: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          message_id: string
+          notes?: string | null
+          tag: string
+          tagged_by: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          message_id?: string
+          notes?: string | null
+          tag?: string
+          tagged_by?: string
+        }
+        Relationships: []
+      }
+      copilot_objection_catalog: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          objection_type: string
+          status: string
+          submitted_by: string
+          treatment_text: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          objection_type: string
+          status?: string
+          submitted_by: string
+          treatment_text: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          objection_type?: string
+          status?: string
+          submitted_by?: string
+          treatment_text?: string
+        }
+        Relationships: []
+      }
+      copilot_outcomes: {
+        Row: {
+          contact_id: string
+          conversation_id: string
+          created_at: string
+          deal_value: number | null
+          id: string
+          outcome: string
+          segment: string | null
+          seller_id: string
+        }
+        Insert: {
+          contact_id: string
+          conversation_id: string
+          created_at?: string
+          deal_value?: number | null
+          id?: string
+          outcome: string
+          segment?: string | null
+          seller_id: string
+        }
+        Update: {
+          contact_id?: string
+          conversation_id?: string
+          created_at?: string
+          deal_value?: number | null
+          id?: string
+          outcome?: string
+          segment?: string | null
+          seller_id?: string
+        }
+        Relationships: []
+      }
+      copilot_seller_settings: {
+        Row: {
+          opted_in: boolean
+          seller_id: string
+          updated_at: string
+        }
+        Insert: {
+          opted_in?: boolean
+          seller_id: string
+          updated_at?: string
+        }
+        Update: {
+          opted_in?: boolean
+          seller_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       copilot_sessions: {
         Row: {
           brinde_budget: string | null
           brinde_deadline: string | null
           brinde_delivery: string | null
+          brinde_evidence: Json
           brinde_intention: string | null
           brinde_meter: number
           brinde_quantity: number | null
           brinde_responsible: string | null
           closed_at: string | null
+          comm_style: string[]
           contact_id: string
           conversation_id: string
           created_at: string
+          decision_role: string | null
           id: string
           last_tick_at: string | null
+          occasion: string | null
           profile_id: string
           sale_stage: string
+          stakeholders: Json
           started_at: string
           state_version: number
           temperature: number
@@ -3331,18 +3492,23 @@ export type Database = {
           brinde_budget?: string | null
           brinde_deadline?: string | null
           brinde_delivery?: string | null
+          brinde_evidence?: Json
           brinde_intention?: string | null
           brinde_meter?: number
           brinde_quantity?: number | null
           brinde_responsible?: string | null
           closed_at?: string | null
+          comm_style?: string[]
           contact_id: string
           conversation_id: string
           created_at?: string
+          decision_role?: string | null
           id?: string
           last_tick_at?: string | null
+          occasion?: string | null
           profile_id: string
           sale_stage?: string
+          stakeholders?: Json
           started_at?: string
           state_version?: number
           temperature?: number
@@ -3352,22 +3518,57 @@ export type Database = {
           brinde_budget?: string | null
           brinde_deadline?: string | null
           brinde_delivery?: string | null
+          brinde_evidence?: Json
           brinde_intention?: string | null
           brinde_meter?: number
           brinde_quantity?: number | null
           brinde_responsible?: string | null
           closed_at?: string | null
+          comm_style?: string[]
           contact_id?: string
           conversation_id?: string
           created_at?: string
+          decision_role?: string | null
           id?: string
           last_tick_at?: string | null
+          occasion?: string | null
           profile_id?: string
           sale_stage?: string
+          stakeholders?: Json
           started_at?: string
           state_version?: number
           temperature?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      copilot_usage: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          endpoint: string
+          estimated_cost_usd: number
+          id: string
+          seller_id: string
+          tokens: number
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          endpoint: string
+          estimated_cost_usd: number
+          id?: string
+          seller_id: string
+          tokens: number
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          endpoint?: string
+          estimated_cost_usd?: number
+          id?: string
+          seller_id?: string
+          tokens?: number
         }
         Relationships: []
       }
@@ -7894,6 +8095,7 @@ export type Database = {
       search_events: {
         Row: {
           clicked: boolean
+          client_event_id: string
           created_at: string
           had_results: boolean
           id: string
@@ -7903,6 +8105,7 @@ export type Database = {
         }
         Insert: {
           clicked?: boolean
+          client_event_id?: string
           created_at?: string
           had_results: boolean
           id?: string
@@ -7912,6 +8115,7 @@ export type Database = {
         }
         Update: {
           clicked?: boolean
+          client_event_id?: string
           created_at?: string
           had_results?: boolean
           id?: string
@@ -12342,6 +12546,14 @@ export type Database = {
             }
             Returns: boolean
           }
+      can_insert_team_conversation_member: {
+        Args: {
+          _conversation_id: string
+          _member_role: string
+          _profile_id: string
+        }
+        Returns: boolean
+      }
       cancel_ai_job: {
         Args: { p_id: string; p_reason: string }
         Returns: boolean
@@ -13799,6 +14011,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_search_event: {
+        Args: {
+          p_clicked: boolean
+          p_event_id?: string
+          p_result_count: number
+          p_result_kind?: string
+          p_term: string
+        }
+        Returns: undefined
+      }
       log_talkx_campaign_checklist: {
         Args: { p_campaign_id: string; p_items: Json }
         Returns: string
@@ -13835,6 +14057,10 @@ export type Database = {
       mcp_exec_many: {
         Args: { max_rows?: number; statements: string[] }
         Returns: Json
+      }
+      merge_brinde_state: {
+        Args: { p_delta: Json; p_session_id: string; p_version: number }
+        Returns: boolean
       }
       merge_contacts_atomic: {
         Args: {

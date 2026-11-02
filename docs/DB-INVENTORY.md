@@ -40,13 +40,13 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas (`tables`) | 204 |
+| Tabelas (`tables`) | 211 |
 | Views (`views`) | 13 |
-| Colunas (`columns`) | 2315 |
-| Funções (`functions`) | 378 |
-| Assinaturas de função (`function_signatures`) | 381 |
+| Colunas (`columns`) | 2362 |
+| Funções (`functions`) | 381 |
+| Assinaturas de função (`function_signatures`) | 384 |
 | Funções de gatilho (`trigger_functions`) | 97 |
-| Restrições de verificação (`check_constraints`) | 239 |
+| Restrições de verificação (`check_constraints`) | 243 |
 
 As tabelas estão inventariadas uma a uma na seção seguinte. Views, funções, colunas e restrições
 têm o inventário completo no catálogo (`supabase/schema-catalog.json`) e o manifesto com hash de
@@ -105,9 +105,16 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `contact_protection_policy` | Política de proteção de contato por regra de negócio | roadmap | — |
 | `contact_purchases` | Histórico de compras do contato (valor, moeda e status) | ativo | `src/components/contacts/ContactPurchaseHistory.tsx`, `src/components/inbox/ContactPurchasesPanel.tsx`, `src/hooks/crm/__tests__/useContactPurchases.criar.test.tsx` … |
 | `contacts` | Cadastro central de contatos (telefone, e-mail, dono e campos de CRM) | ativo | `src/App.tsx`, `src/__tests__/a11y/icon-buttons-baseline.json`, `src/__tests__/coverage-catalogo.test.ts` … |
+| `copilot_conversation_scores` | Pontuação de conversa pelo supervisor (1–5) para treinamento do copiloto RADAR | roadmap | — |
 | `copilot_feedback` | Feedback do vendedor sobre sugestões do copilot (aceitou, editou, descartou; distância de edição) | ativo | `src/hooks/copilot/useCopilotFeedback.ts` |
+| `copilot_help_requests` | Pedidos de ajuda ao supervisor durante atendimento copiloto (fases 13-15 RADAR) | roadmap | — |
 | `copilot_insights` | Insights gerados pelo copilot por conversa | ativo | `supabase/functions/copilot-live/index.ts` |
+| `copilot_learning_moments` | Momentos de aprendizado marcados pelo supervisor para retroalimentação do copiloto | roadmap | — |
+| `copilot_objection_catalog` | Catálogo de objeções enviadas pelo vendedor para revisão e treinamento do supervisor | roadmap | — |
+| `copilot_outcomes` | Resultado de venda registrado pelo copiloto (fechado/perdido), com valor e segmento | roadmap | — |
+| `copilot_seller_settings` | Preferências do vendedor no copiloto (opt-in/out e data de atualização) | roadmap | — |
 | `copilot_sessions` | Sessões ativas do copilot por agente e conversa | ativo | `src/hooks/copilot/useSupervisorInsights.ts`, `supabase/functions/copilot-live/index.ts` |
+| `copilot_usage` | Log de uso de tokens por chamada ao copiloto, com custo estimado em USD | roadmap | — |
 | `conversation_analyses` | Análises de IA da conversa (resumo, sentimento, pontos-chave e risco) | ativo | `src/components/dashboard/AIQuickAccess.tsx`, `src/components/dashboard/SentimentTrendChart.tsx`, `src/components/dashboard/__tests__/AIQuickAccess.test.tsx` … |
 | `conversation_closures` | Fechamentos de conversa (motivo, desfecho e classificação) | ativo | `src/components/inbox/CRMAutoSync.tsx`, `src/components/inbox/__tests__/CRMAutoSync.fsm.test.tsx`, `src/components/reports/PeriodComparison.tsx` … |
 | `conversation_events` | Eventos da conversa (transferência, mudança de estado e autor) | ativo | `src/components/contacts/ContactActivityTimeline.tsx`, `src/components/contacts/__tests__/ContactActivityTimeline.eventos.test.tsx`, `src/components/contacts/__tests__/ContactActivityTimeline.nota.test.tsx` … |
@@ -279,4 +286,4 @@ inventário apura hoje:
   `.github/workflows/`) as cita. `multiplix_audience_members`, `multiplix_audiences` e
   `talkx_campaign_segments` saíram dessa lista: viraram `ativo` (consumidoras de produto).
 
-As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 204.
+As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 211.

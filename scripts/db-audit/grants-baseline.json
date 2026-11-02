@@ -2,7 +2,7 @@
     "note": "Regenerar apos qualquer GRANT/REVOKE e revisar o diff antes de commitar.",
     "anon_execute": [
     ],
-    "generated_at": "2026-10-30",
+    "generated_at": "2026-11-01",
     "anon_table_select": [
         "agent_achievements",
         "agent_presence",
@@ -106,6 +106,6 @@
         "whisper_messages"
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 391,
-    "authenticated_execute_count": 220
+    "service_role_execute_count": 394,
+    "authenticated_execute_count": 223
 }
