@@ -7,123 +7,70 @@ added in both
  ALTER POLICY "Users can update their assigned contacts" ON public.contacts WITH CHECK ( can_edit_contact( assigned_to, queue_id, (SELECT array_agg(v.v) FROM get_visible_agent_ids(auth.uid()) v(v)), (SELECT get_profile_id_for_user(auth.uid())), (SELECT is_admin_or_supervisor(auth.uid())) ) );
  ALTER POLICY "Users can update their calls" ON public.calls WITH CHECK ( agent_id IN ( SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid() ) );
  ALTER POLICY "Users can update their own templates" ON public.message_templates WITH CHECK (user_id = auth.uid());
-@@ -6,3 +7,116 @@
- ALTER POLICY "Users can update own campaigns" ON public.talkx_campaigns WITH CHECK ( ( created_by = ( SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid() LIMIT 1 ) ) AND is_admin_or_supervisor(auth.uid()) );
- ALTER POLICY "Users can update recipients of own campaigns" ON public.talkx_recipients WITH CHECK ( EXISTS ( SELECT 1 FROM talkx_campaigns tc WHERE tc.id = talkx_recipients.campaign_id AND tc.created_by = ( SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid() LIMIT 1 ) ) );
- ALTER POLICY "talkx_templates_update" ON public.talkx_templates WITH CHECK ( ( created_by = ( SELECT p.id FROM profiles p WHERE p.user_id = auth.uid() LIMIT 1 ) ) OR is_admin_or_supervisor(auth.uid()) );
-+=======
-+-- CRITICAL-2 audit closure: policies UPDATE sem organization_id
-+-- migration adds WITH CHECK explicit = USING nas 8 policies de maior risco
-+=======
 
 === PR #2494: 44 conflito(s) ===
-merged
-  result 100644 58b5ab580070223b34e91b513f2312e577607eb3 scripts/db-audit/known-violations.json
-  our    100644 74421857df5127e66633b9e13f0019bfcc63bd3f scripts/db-audit/known-violations.json
-@@ -3,7 +3,6 @@
-   "_gerado_em": "2026-08-27",
-   "known": [
--    "rpc:log_search_event:src/components/inbox/useGlobalSearchData.ts",
-     "rpc:get_search_insights:src/hooks/admin/useSearchInsights.ts",
-merged
-  result 100644 3dd9568a584641aadd7dfe53c1f296670065fd63 src/integrations/supabase/types.ts
-@@ -3207,6 +3207,27 @@
-+      copilot_conversation_scores: { Row: { conversation_id: string, score: number } }
-[... 44 conflitos no total: types.ts + docs de inventário copilot]
+(schema-manifest.json, schema-catalog.json, DB-INVENTORY.md, types.ts — ver PR diff completo)
 
 === PR #2498: 2 conflito(s) ===
-merged
-  result 100644 05f2ef69953888b87d760f91d96c51e57bbdcf57 auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md
-@@ -1,10 +1,66 @@
--**Auditado em:** 2026-10-30 | **Re-verificado em:** 2026-10-31
-+**Auditado em:** 2026-10-30 | **Re-verificado em:** 2026-10-31, **2026-11-01**
-merged
-  result scripts/db-audit/grants-baseline.json
-[Código do fix não conflita: useSearchInsights.ts e SearchInsightsView.tsx LIMPAS]
+merged: auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md
+merged: scripts/db-audit/grants-baseline.json
+(auditoria/relatorio — não bloqueia conteudo principal do fix)
 
 === PR #2526: 4 conflito(s) ===
-changed in both
-  base   100644 21e59b4a27bfa50666d7a8de2c722de91b6969fb .github/workflows/deploy-functions.yml
-  our    100644 ecfad27557abea3485f2983969defb63b1815c17 .github/workflows/deploy-functions.yml
-  their  100644 e0ca645ba05c316e87b33526077103c395176f31 .github/workflows/deploy-functions.yml
-@@ -484,8 +484,11 @@
-       - name: Typecheck das edge functions (deno check)
-+<<<<<<< .our
-         # GR-001: --config garante que deno check le nodeModulesDir
-+=======
-+>>>>>>> .their
-         run: deno check --config supabase/functions/deno.json supabase/functions/**/index.ts
-changed in both
-  PENDENCIAS.md (conflito de atualização de sessões diferentes)
-[Regra 8: workflows .github/ — aguarda Joaquim]
+changed in both: .github/workflows/deploy-functions.yml
+changed in both: PENDENCIAS.md
+(Regra 8 — workflows)
 
 === PR #2533: 2 conflito(s) ===
-changed in both
-  base   100644 58a24feb34528f75a3fb33400985f9d03a6b6009 scripts/db-audit/replay-known-failures.json
-@@ -2,7 +2,7 @@
--  "_atualizado_em": "2026-10-30",
-+  "_atualizado_em": "2026-11-01",
--      "motivo": "CREATE POLICY IF NOT EXISTS nao existe no PostgreSQL..."
-+      "motivo": "CREATE POLCIY IE NOT EXISTS..."
-  PENDENCIAS.md conflito de sessões
-[Regra 8: migration + conflito — aguarda Joaquim]
+changed in both: scripts/db-audit/replay-known-failures.json
+added in both: supabase/migrations/20261030145126_copilot_fases13_15_tabelas.sql
 
 === PR #2536: 1 conflito(s) ===
-changed in both
-  base   100644 d2788fdda2447e318cc59eb22832e77b81455e2a playwright.config.ts
-@@ -32,7 +32,13 @@
-+<<<<<<< .our
-   // GR-016: 2 workers em todos os ambientes (CI e local).
-+=======
-+  // W75/GR-016: 2 workers sempre. Pool de 2 é suficiente.
-+>>>>>>> .their
-   workers: 2,
-[SUPERSEDIDA por #2560 que já está no main]
+changed in both: playwright.config.ts
+(main já tem workers:2 via PR #2560)
+
+=== PR #2539: 1 conflito(s) ===
+changed in both: scripts/db-audit/replay-known-failures.json
 
 === PR #2542: 2 conflito(s) ===
-merged
-  result 100644 079273f5f6c085d2b0ffc102e6f47da2e304b832 .github/workflows/db-guard.yml
-@@ -1478,6 +1478,7 @@
-+          N008_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-           SKIP_DOCKER_SHIM: "1"
-  PENDENCIAS.md conflito
-[Regra 8: workflow .github/ — aguarda Joaquim]
+merged: .github/workflows/db-guard.yml (auto-resolved)
+changed in both: PENDENCIAS.md
+(Regra 8 — workflows)
 
-=== PR #2562: 0 conflito(s) ===
-added in remote
-  their  100644 dfbaca56b85047abd5473f00e9962c34ad2a410b supabase/migrations/20261102012400_login_attempts_retencao_90d.sql
-@@ -0,0 +1,25 @@
-+-- S12-PII: login_attempts LGPD retencao 90d
-+SELECT cron.schedule('login-attempts-retention-90d', '41 4 * * *', $job$
-+  DELETE FROM public.login_attempts WHERE ... < now() - interval '90 days'
-+$job$);
-[CLEAN_MERGE mas FEATURE FREEZE — feature nova, não é fluxo crítico]
+=== PR #2553: CLEAN_MERGE ===
+(TalkX X050 draft — nenhum conflito técnico)
+
+=== PR #2555: CLEAN_MERGE ===
+(TalkX X051 draft — nenhum conflito técnico)
+
+=== PR #2556: CLEAN_MERGE ===
+(TalkX X052 draft — nenhum conflito técnico)
+
+=== PR #2558: CLEAN_MERGE ===
+(TalkX X053 draft — nenhum conflito técnico)
+
+=== PR #2562: CLEAN_MERGE ===
+added in remote: supabase/migrations/20261102012400_login_attempts_retencao_90d.sql
+(feature freeze + Regra 8 bloqueiam)
 
 === PR #2576: 1 conflito(s) ===
-changed in both
-  base   100644 cb746ecaebb16bbe49ccdd0b6574f2b429cd929e src/components/contacts/ContactForm.tsx
+changed in both: src/components/contacts/ContactForm.tsx
 @@ -1,4 +1,4 @@
 -import React, { useState, useRef, useEffect } from 'react';
 +import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
-@@ -155,7 +155,11 @@
-   const enderecoVigenteRef = useRef(assinaturaEndereco(values));
+...
 +<<<<<<< .our
    useEffect(() => {
 +=======
 +  useLayoutEffect(() => {
 +>>>>>>> .their
-     enderecoVigenteRef.current = assinaturaEndereco(values);
-[VÁLIDA — rebase resolve em 1 linha, conflito só na importação]
 
-=== PR #2589: 0 conflito(s) ===
-merged
-  result 100644 605a89fd478b717b65dc3c007b0eb8389a2691b4 PENDENCIAS.md
-@@ -14,16 +14,17 @@
--**Último run com falha:** [41385849215]...
-+**Último run com falha:** [41400432274]...
-merged
-  result 100644 e2821f00fb74edb7e28c0f84ae99a3e14fc6d7d9 supabase/migrations/20261102012200_department_invites_restringe_escrita.sql
-@@ -81,7 +81,7 @@
--  extensions.gen_random_bytes(16)
-+  gen_random_bytes(16)
-[CLEAN_MERGE mas REGRA 8: edita migration existente — db-guard proibiria]
+=== PR #2603: CLEAN_MERGE ===
+(vs main 630fb557 — arquivo migration ausente; DDL já no banco)
+
+=== PR #2606: CLEAN_MERGE ===
+(vs main 630fb557 — move 2 migrations para _superseded/)
+
+---
+Gerado em: 2026-11-02
+main SHA base: 630fb557 / 946565d4
