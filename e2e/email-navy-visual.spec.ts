@@ -493,9 +493,13 @@ test('alto contraste e movimento reduzido mantêm o workspace acessível', async
   // e, sem esperar ela fechar, o axe lia a cor INTERPOLADA da troca — medido no cartão t_c13c7283:
   // 148 violações falsas de `color-contrast` com texto rgb(24, 24, 24) sobre rgb(0, 0, 0).
   // O `freezeVisualTransitions` abaixo NÃO resolve isso: `html.theme-transitioning *` é mais
-  // específico e vence o `*` dele. Espera o tema ASSENTADO — a mesma checagem que o teste de tokens
-  // acima usa antes de medir — e só então congela e mede.
+  // específico (0,1,1) e vence o `*` dele (0,0,0). Espera o tema ASSENTADO e aguarda
+  // explicitamente a remoção de `theme-transitioning` — webkit pode levar um frame a mais.
   await waitForAppliedTheme(page, 'dark');
+  // webkit pode levar um frame extra para resolver os valores computados após `theme-transitioning`
+  // sair — `waitForAppliedTheme` já garante a ausência da classe, mas o repaint pode não ter
+  // ocorrido ainda quando o ponteiro de execução volta ao Playwright.
+  await page.evaluate(() => new Promise<void>(r => requestAnimationFrame(() => r())));
   await freezeVisualTransitions(page);
   await page.addScriptTag({ path: join(process.cwd(), 'node_modules/axe-core/axe.min.js') });
   const violations = await page.evaluate(async () => {
