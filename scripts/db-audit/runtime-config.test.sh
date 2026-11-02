@@ -35,6 +35,7 @@ CREATE TABLE public.audio_meme_favorites(id int);
 CREATE TABLE public.audio_memes(id int);
 CREATE TABLE public.audit_logs(id int);
 CREATE TABLE public.calls(id int);
+CREATE TABLE public.copilot_insights(id int);
 CREATE TABLE public.conversation_sla(id int);
 CREATE TABLE public.conversation_tasks(id int);
 CREATE TABLE public.message_reactions(id int);
@@ -62,8 +63,8 @@ CREATE TABLE public.warroom_alerts(id int);
 CREATE TABLE public.whatsapp_connections(id int);
 CREATE TABLE public.whisper_messages(id int);
 CREATE PUBLICATION supabase_realtime FOR TABLE
-  public.agent_presence, public.agent_stats, public.audio_meme_favorites, public.audio_memes, public.audit_logs,
-  public.calls, public.contacts, public.conversation_sla,
+  public.agent_presence, public.agent_stats, public.audio_meme_favorites, public.audio_memes,
+  public.calls, public.contacts, public.copilot_insights, public.conversation_sla,
   public.conversation_tasks,
   public.email_messages, public.email_threads, public.message_reactions,
   public.messages, public.multiplix_dispatches, public.multiplix_recipients,
