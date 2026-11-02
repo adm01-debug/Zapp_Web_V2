@@ -35,7 +35,7 @@ import {
   type ResultadoReprocessamentoLogEssencial,
 } from "../_shared/ai-usage.ts";
 import { timingSafeStringEqual } from "../_shared/cron-secret-auth.ts";
-import { errorResponse, internalErrorResponse, jsonResponse } from "../_shared/validation.ts";
+import { errorResponse, handleCors, internalErrorResponse, jsonResponse } from "../_shared/validation.ts";
 
 /** Tamanho do lote quando a requisição não pede outro. */
 export const LIMITE_PADRAO = 50;
@@ -73,6 +73,8 @@ export async function handleAiUsageOutboxDrain(
   req: Request,
   deps: AiUsageOutboxDrainDeps = {},
 ): Promise<Response> {
+  const cors = handleCors(req);
+  if (cors) return cors;
   // ── Autorização primeiro: sem credencial de cron não se toca na fila ──
   const cronSecret = deps.cronSecret !== undefined
     ? deps.cronSecret

@@ -451,8 +451,8 @@
     },
     {
       "path": "supabase/functions/ai-usage-outbox-drain/index.ts",
-      "bytes": 4951,
-      "sha256": "8b0fa9f0cceaae7ef155bb0526cc4d34ceff08c3cc93111947d33d3e37b36eb5"
+      "bytes": 5020,
+      "sha256": "86c54a35071d79320119273adea52929c6b0df8e3b7c084ab027a9c083d40c3e"
     },
     {
       "path": "supabase/functions/approve-password-reset/index.ts",
@@ -516,8 +516,8 @@
     },
     {
       "path": "supabase/functions/copilot-live/index.ts",
-      "bytes": 8261,
-      "sha256": "3d5688f38a9282077823dafd50dc28a752601960b457246b24c7fc864be0ebe1"
+      "bytes": 8431,
+      "sha256": "6c026c0b57bd9384db4c5ba6e57376a8738c5cefae52741636fc060fd18869f5"
     },
     {
       "path": "supabase/functions/create-user/index.ts",
@@ -1149,7 +1149,7 @@
       "name": "ai-usage-outbox-drain",
       "entrypoint": "supabase/functions/ai-usage-outbox-drain/index.ts",
       "verify_jwt": true,
-      "source_sha256": "44d30bb60f15e6977fe24325a96fe268b5a1c49e1ca6d4dc25a3965bef6d6e75",
+      "source_sha256": "224f9ebc102728205daf2da7d0ad40b49699740323ce694f377615f880d52051",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1423,8 +1423,9 @@
       "name": "copilot-live",
       "entrypoint": "supabase/functions/copilot-live/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2c16e34a3a17d7ed478adbd9509397274e5126e125c43552b04072a7c1a1dfea",
+      "source_sha256": "bba1619105eb40429c9431ae50b8d31c044f37b688497a06130fe82b01ff93d8",
       "source_files": [
+        "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/copilot-live/index.ts"
       ]
     },
@@ -2533,5 +2534,5 @@
       ]
     }
   ],
-  "manifest_sha256": "5f5df208ef325a27c80e5f187954ad2d08ac8223ee121933063158ea9bcaa13d"
+  "manifest_sha256": "c7ee87feb08686159ba719226f900cea02f9cf498c73c8c0e9c60d4e06928332"
 }
