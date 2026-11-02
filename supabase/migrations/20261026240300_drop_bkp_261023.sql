@@ -1,0 +1,31 @@
+-- Migracao: DROP schema _bkp_261023
+-- Versao: 20261026240300
+-- Reservada em: 2026-10-27 (sessao claude_04/clever-ramanujan-xllbpo)
+--
+-- NAO APLICAR ANTES DE 22/11/2026
+--
+-- Contexto:
+--   _bkp_261023 e snapshot de seguranca criado em 23/10/2026 antes de migrations criticas
+--   do GOAL "Backend 100% operacional". Conteudo ao momento da reserva:
+--     contacts (3730 linhas, 1192 kB) -- verificar contra public.contacts ao aplicar
+--     schema_migrations (922 linhas, 1568 kB)
+--     functions_before (356 funcoes, 600 kB)
+--     policies_before (456 politicas, 264 kB)
+--     user_settings, team_messages, global_settings, csat_surveys, agent_stats
+--
+-- Pre-requisito para aplicar (executar manualmente ANTES do db_query):
+--   SELECT count(*) FROM _bkp_261023.contacts;           -- deve bater >= 3730
+--   SELECT count(*) FROM public.contacts WHERE deleted_at IS NULL;
+--   -- Se a producao perdeu contatos desde 23/10/2026, investigar ANTES de dropar.
+--   -- Confirmar que nenhum incidente de dados ocorreu entre 23/10 e a data de apply.
+--
+-- Registro no ledger (executar junto com o DROP em uma unica chamada db_query):
+--   INSERT INTO supabase_migrations.schema_migrations(version, name, statements)
+--   VALUES ('20261026240300', 'drop_bkp_261023', ARRAY['DROP SCHEMA _bkp_261023 CASCADE'])
+--   ON CONFLICT DO NOTHING RETURNING version;
+--
+-- Apos o apply: confirmar que 'DROP SCHEMA _bkp_261023 CASCADE' foi aplicado com
+--   SELECT schema_name FROM information_schema.schemata WHERE schema_name = '_bkp_261023';
+--   -- deve retornar 0 linhas.
+
+DROP SCHEMA _bkp_261023 CASCADE;
