@@ -171,7 +171,7 @@ regerado. Não há passo manual no Postgres da GO (o MCP `HOSTINGER` não expõe
 | `scripts/ci/` | guardas do CI (`fila-merge.mjs`, `render-workflow-docs.mjs`, `check-claude-md-integrity.mjs`, baselines) |
 | `e2e/` | 51 specs Playwright; fixtures em `e2e/fixtures/` |
 | `docs/` | `DEPLOYMENT.md`, `MIGRATIONS.md`, `INCIDENT-RUNBOOK.md`, `CONEXOES_WHATSAPP_RUNBOOK.md`, `ci/README.md` (gerado), `talkx/`, `audits/` |
-| `analise/`, `analise-prs/`, `auditoria-supabase/`, `inventario/`, `qa/` | relatórios de sessões anteriores — leitura de contexto, não fonte de verdade |
+| `docs/_arquivo/`, `qa/` | relatórios de sessões anteriores (`analise/`, `analise-prs/`, `auditoria-supabase/`, `inventario/` antigo, prosa velha da raiz e de `docs/`) — leitura de contexto, não fonte de verdade; `inventario/estado/` é o inventário vivo |
 
 Comandos (o repo usa **bun**: há `bun.lock` e **não** há `package-lock.json`, então `npm ci` falha —
 use `bun install --frozen-lockfile`):
