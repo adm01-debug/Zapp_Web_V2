@@ -379,7 +379,7 @@ jobs:
               exit 1
             fi
             echo "Validando acesso server-side minimo ao catalogo"
-            # GR-001: captura o exit code do curl sem acionar set -e; um timeout
+            # GR-001: captura o exit code sem acionar set -e; um timeout
             # (exit 28) sob set -euo pipefail encerraria o step antes de chegar
             # ao bloco if, tornando o caminho nao-fatal (REESCREVER=false) inatingivel.
             CURL_EXIT=0
@@ -390,10 +390,10 @@ jobs:
               -H "Authorization: Bearer $PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY") || CURL_EXIT=$?
             if [ "$CURL_EXIT" -ne 0 ]; then
               if [ "$REESCREVER" = "true" ]; then
-                echo "::error::Preflight do catalogo falhou (transporte curl $CURL_EXIT) — necessario para reescrever secrets."
+                echo "::error::Preflight do catalogo falhou (transporte: exit $CURL_EXIT) — necessario para reescrever secrets."
                 exit 1
               else
-                echo "::warning::Preflight do catalogo: erro de transporte (curl $CURL_EXIT) — secrets inalterados; deploy prossegue."
+                echo "::warning::Preflight do catalogo: erro de transporte (exit $CURL_EXIT) — secrets inalterados; deploy prossegue."
               fi
             elif [ "$STATUS" != "200" ]; then
               if [ "$REESCREVER" = "true" ]; then
