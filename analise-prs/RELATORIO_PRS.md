@@ -4,6 +4,7 @@
 **SHA main no início:** `004e74a8c596959f45f61c8b0b64b30a70c1ff19`  
 **SHA main atual:** `d45033e812ba7e8338f07d8b83682ca559ec93bb` (após PR #2570)  
 **Total de PRs analisadas:** 98  
+**CI main pós-merge:** `✅ CI Gate (required check)` = **success** — run `41397424005`, completed 2026-11-02T06:20:06Z (verificado via `github_list_check_runs` na SHA `d45033e8`)  
 
 ---
 
@@ -41,14 +42,14 @@
 |---|---|
 | FECHADA_SEM_MERGE | 67 |
 | **MERGEADA** | **13** |
-| AGUARDANDO_CI | 2 |
-| BLOQUEADO_CONFLITO | 6 |
+| AGUARDANDO_CI | 1 |
+| BLOQUEADO_CONFLITO | 7 |
 | DRAFT_SKIP | 5 |
 | BLOQUEADO_AGUARDANDO_APROVACAO | 2 |
 | BLOQUEADO_DDL_WORKFLOW | 1 |
 | BLOQUEADO_RLS_SEM_TESTE | 1 |
 | BLOQUEADO_FEATURE_FREEZE | 1 |
-| BLOQUEADO_DECISAO_HUMANA | 1 |
+| BLOQUEADO_DECISAO_HUMANA | 0 |
 | **TOTAL** | **98** |
 
 ---
@@ -81,15 +82,16 @@
 |---|---|---|
 | ~~#2557~~ | FECHADA | coberta pela #2565 (mergeada); fechada por adm01-debug em 2026-11-02T05:49:39Z |
 | ~~#2570~~ | MERGEADA | SHA `d45033e8` — 2026-11-02T06:01:52Z via auto_merge=squash |
-| #2498 | behind | fix(admin): RPC get_search_insights→search_insights — aguardando auto-update-pr-branch |
+| ~~#2498~~ | BLOQUEADO_CONFLITO | conflito real entre branch e main após #2570 — `update_pr_branch` retornou 422 em 2026-11-02T06:xx |
 | #2494 | aguardando | db-inventory-doc falha: 7 tabelas copilot_* ausentes de DB-INVENTORY.md — bloqueio estrutural (ver §Pendências) |
 
 ---
 
-## PRs com Conflito (6)
+## PRs com Conflito (7)
 
 | PR | Motivo |
 |---|---|
+| #2498 | conflito real confirmado — `update_pr_branch` → 422 em 2026-11-02 após #2570 |
 | #2526 | dirty após main avançar |
 | #2533 | dirty após main avançar |
 | #2536 | supersedido por #2560 (já mergeada) |

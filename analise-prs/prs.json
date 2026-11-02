@@ -69,7 +69,7 @@
     { "numero": 2495, "veredito": "FECHADA_SEM_MERGE" },
     { "numero": 2496, "veredito": "BLOQUEADO_DDL_WORKFLOW", "motivo": "feature freeze + DDL em producao sem aprovacao" },
     { "numero": 2497, "veredito": "FECHADA_SEM_MERGE" },
-    { "numero": 2498, "veredito": "AGUARDANDO_CI", "motivo": "behind; auto_merge=squash" },
+    { "numero": 2498, "veredito": "BLOQUEADO_CONFLITO", "motivo": "merge conflict entre branch e main após #2570 (update_pr_branch → 422); real conflict confirmado via API 2026-11-02" },
     { "numero": 2499, "veredito": "FECHADA_SEM_MERGE" },
     { "numero": 2500, "veredito": "FECHADA_SEM_MERGE" },
     { "numero": 2501, "veredito": "FECHADA_SEM_MERGE" },
