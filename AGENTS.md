@@ -7,6 +7,9 @@ Conteúdo técnico do projeto (banco, Evolution, CI, Vercel) fica em [`CLAUDE.md
 
 ---
 
+<!-- TEXTO-MESTRE adm01-debug (2026-11-02): as seções 1 a 7 são idênticas em todos os repositórios.
+     Mudou aqui → mude em todos. O que é específico deste repo fica só na seção 8 e no CLAUDE.md. -->
+
 ## 1. Contexto
 
 Sistema ~80% pronto, em manutenção: bug em front, edge functions, SQL, workflows; auditoria e hardening
@@ -122,8 +125,8 @@ Próximos passos
 
 ## 7. Fluxo Git (vários agentes nos mesmos repos ao mesmo tempo)
 
-Escrita no GitHub em repos `adm01-debug`: use o MCP **`GITHUB - MCP - FOREVER`**. O MCP padrão do GitHub,
-o `gh` CLI e o `git push` retornam 403 do proxy em write.
+Escrita no GitHub em repos `adm01-debug`: use o MCP **`GITHUB - MCP - FOREVER`**. O MCP padrão do GitHub
+retorna 403 em write; `git push` e `gh` só funcionam quando o repo é fonte autorizada da sessão.
 
 1. Nunca commite em `main`/`master`. Toda mudança nasce em branch própria.
 2. Só escreva em branch que **você** criou nesta sessão. Branch de outro agente/sessão é somente leitura —
