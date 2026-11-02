@@ -149,6 +149,8 @@ case "${1:-}" in
     cur="$(_svc -d postgres -tAX -c "SELECT rolname FROM pg_roles ORDER BY rolname" 2>/dev/null || true)"
     while IFS= read -r role; do
       [[ -z "$role" ]] && continue
+      [[ "$role" == pg_* ]] && continue  # nunca dropar roles built-in do PostgreSQL (pg_read_all_settings, pg_create_subscription, etc.)
+      [[ "$role" == "postgres" ]] && continue  # superusuário padrão não pode ser dropado
       _svc -d postgres -c "DROP ROLE IF EXISTS \"$role\";" > /dev/null 2>&1 || true
     done < <(comm -23 <(printf '%s\n' "$cur" | sort) <(printf '%s\n' "$old" | sort))
     rm -f "$STATE/$cname.db" "$STATE/$cname.roles"
