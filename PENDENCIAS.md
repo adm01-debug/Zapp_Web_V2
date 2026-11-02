@@ -1,6 +1,6 @@
 # PENDENCIAS.md — Workflows com falha não corrigível via código
 
-_Atualizado em 2026-11-02T03:18Z — PR #2551 mergeado automaticamente._
+_Atualizado em 2026-11-02 por sessão `claude/trusting-albattani-9x3ipg` (GF-001..GF-056)._
 
 ---
 
@@ -12,32 +12,95 @@ _Atualizado em 2026-11-02T03:18Z — PR #2551 mergeado automaticamente._
 
 ---
 
-## 1. DB Live Guard — falhas em contrato vivo (investigação pendente)
+## 1. DB Live Guard — falhas em contrato vivo (bloqueadas por escrita no ledger)
 
-**Último run com falha:** [41162077590](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162077590)  
-**Head SHA:** vários (pós-merge de `main`)
+**Último run com falha:** [41385849215](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41385849215)  
+**Head SHA:** `8ba0b4361290f37171fd6ec27012a46665ca5b7e` (main pós PR #2551)
 
-**O que falha:**
-- Step "Consolidar veredito do contrato vivo" — artifact `13027601857` contém evidências
-- Compara o estado do banco de produção com artefatos do repositório (types.ts, schema-catalog.json,
-  schema-manifest.json)
+**O que foi corrigido nesta sessão (PR #2579):**
+- ✅ 13 SQL-divergente → adicionados como `pinned-replay` em `migration-evidence.json`
+- ✅ `20260927600000` — exceção obsoleta removida de `migration-evidence.json`
+- ✅ Catálogo regenerado com 10 tabelas copilot (`supabase/schema-catalog.json`)
+- ✅ Grants-baseline regenerado (`scripts/db-audit/grants-baseline.json`)
+- ✅ Manifesto regenerado (`supabase/schema-manifest.json`)
+- ✅ Invariante copilot — 9 policies open-write adicionadas à allowlist (`check-live-invariants.sql`)
 
-**Falhas identificadas no run 41162077590 (3 contratos reais, não deriva transitória):**
-1. **migrations/ledger** — diferença entre migrations no disco (`supabase/migrations/`) e entradas no ledger do banco
-2. **ACL/mcp_exec** — contrato de permissão `mcp_exec` não satisfeito
-3. **configuração runtime** — `runtime-config` com divergência detectada
+**Falhas remanescentes que dependem do Joaquim:**
 
-**Por que não foi corrigido:** DB Live Guard conecta ao banco de produção e exige análise
-das evidências no artifact `db-live-evidence-{run_id}-1` para diagnosticar cada divergência.
-Requer acesso ao banco de produção para comparação e possível migration corretiva. Este
-workflow **não é um required check** — não bloqueia merges na `main`.
+### A. statements "prosa pura" no ledger (24 migrations — necessitam UPDATE)
 
-**O que o Joaquim precisa fazer:**
-1. Disparar manualmente o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`
-2. Se falhar, os logs do artifact `db-live-evidence-{run_id}-1` mostrarão qual passo tem diferença real
-3. Se o passo "Verificar frescor do types.ts" falhar: disparar `workflow_dispatch` do `types-sync.yml` **na branch `main`**
-4. Se o passo "Comparar migrations com schema_migrations" falhar: verificar se há migration
-   no disco (em `supabase/migrations/`) sem entrada no ledger
+Cada migration abaixo tem `statements[1]` com descrição em prosa, não SQL real.
+O arquivo `.sql` correspondente contém o SQL correto.
+
+**Comando para gerar o SQL de cada arquivo:**
+```bash
+node scripts/db-audit/register-migration.mjs supabase/migrations/<arquivo>.sql
+```
+Isso imprime o `INSERT` (ou `UPDATE`) exato — copiar o campo `statements` e rodar:
+```sql
+UPDATE supabase_migrations.schema_migrations
+SET statements = ARRAY[...SQL_REAL...]
+WHERE version = '<version>'
+RETURNING version, name;
+```
+
+| version | name (ledger) | arquivo |
+|---|---|---|
+| `20261015230338` | `voice_command_logs_lgpd` | `20261015230338_voice_command_logs_lgpd.sql` |
+| `20261015232316` | `rpc_queue_goal_metrics` | `20261015232316_rpc_queue_goal_metrics.sql` |
+| `20261015232546` | `profiles_self_update_sensitive_columns` | `20261015232546_profiles_self_update_sensitive_columns.sql` |
+| `20261016001136` | `audio_memes_bucket_limits_admin_delete` | `20261016001136_audio_memes_bucket_limits_admin_delete.sql` |
+| `20261016002012` | `my_network_status` | `20261016002012_my_network_status.sql` |
+| `20261016005650` | `admin_unlock_login` | `20261016005650_admin_unlock_login.sql` |
+| `20261016005752` | `passkey_credentials_hardening` | `20261016005752_passkey_credentials_hardening.sql` |
+| `20261016010011` | `set_conversation_status_waiting_para_archived` | `20261016010011_set_conversation_status_waiting_para_archived.sql` |
+| `20261016010744` | `consent_status_guard` | `20261016010744_consent_status_guard.sql` |
+| `20261016011302` | `crm_sync_outbox_cron` | `20261016011302_crm_sync_outbox_cron.sql` |
+| `20261016013134` | `search_events` | `20261016013134_search_events.sql` |
+| `20261016013528` | `scheduled_messages_state_machine` | `20261016013528_scheduled_messages_state_machine.sql` |
+| `20261016015438` | `whisper_mark_read_policy` | `20261016015438_whisper_mark_read_policy.sql` |
+| `20261016023444` | `inbox_wait_summary` | `20261016023444_inbox_wait_summary.sql` |
+| `20261016030109` | `tasks_contact_visibility` | `20261016030109_tasks_contact_visibility.sql` |
+| `20261016030211` | `messages_transcribed_at` | `20261016030211_messages_transcribed_at.sql` |
+| `20261016033451` | `purge_gmail_account_data` | `20261016033451_purge_gmail_account_data.sql` |
+| `20261016050617` | `messages_trgm_busca` | `20261016050617_messages_trgm_busca.sql` |
+| `20261016102054` | `team_chat_files_limit` | `20261016102054_team_chat_files_limit.sql` |
+| `20261016102337` | `get_team_birthdays` | `20261016102337_get_team_birthdays.sql` |
+| `20261016102541` | `delivery_stats_rpc` | `20261016102541_delivery_stats_rpc.sql` |
+| `20261016105108` | `n011_storage_drop_duplicate_avatar_policies` | `20261016105108_n011_storage_drop_duplicate_avatar_policies.sql` |
+| `20261016112802` | `whisper_audio_path` | `20261016112802_whisper_audio_path.sql` |
+| `20261016115413` | `realtime_publication_agent_achievements` | `20261016115413_realtime_publication_agent_achievements.sql` |
+
+### B. nome divergente no ledger (1 migration)
+
+- **version:** `20261016130000`
+- **arquivo no repo:** `20261016130000_revert_wrong_security_fixes.sql`
+- **name no ledger:** `revert_wrong_security_fixes_passkey_search_events_purge_gmail`
+
+**Opções:**
+1. Atualizar o ledger para o nome do arquivo (mais simples): `UPDATE supabase_migrations.schema_migrations SET name = 'revert_wrong_security_fixes' WHERE version = '20261016130000' RETURNING version, name;`
+2. Renomear o arquivo para bater com o ledger — mas `db-guard.yml` bloqueia renomear migration existente (rename = delete + create), então requer `git rm` + `git add` em commits separados.
+
+Opção 1 é recomendada (não toca o arquivo).
+
+### C. arquivo-sem-registro no ledger (2 migrations)
+
+Arquivos existentes em `supabase/migrations/` que **não têm entrada no ledger de produção**:
+
+- `20261020120000_e2e_fixture_message_rpc.sql`
+- `20261023100000_talkx_campaign_recipients_page_add_segment.sql`
+
+**Opções por arquivo:**
+1. **Aplicar em produção** (se o conteúdo ainda é relevante): gerar SQL via `register-migration.mjs` e aplicar via `db_query` + `INSERT` no ledger na mesma transação.
+2. **Mover para `supabase/migrations/_superseded/`** (se o conteúdo foi substituído ou abandonado): requer evidência de que o objeto já existe em produção por outro caminho.
+
+⚠️ **Não deletar** sem confirmar que o conteúdo está em produção por outra migration.
+
+### D. types.ts desatualizado
+
+Após as novas tabelas copilot e functions entrarem em produção, o `src/integrations/supabase/types.ts` ficou desatualizado. Disparar o `types-sync.yml` via `workflow_dispatch` na `main` para regenerar.
+
+Este workflow **não é um required check** — não bloqueia merges na `main`.
 
 ---
 
@@ -65,7 +128,7 @@ workflow **não é um required check** — não bloqueia merges na `main`.
 
 ---
 
-## 3. Deploy Edge Functions — fix de @types/node tentado (PR #2407) mas ainda falha
+## 3. Deploy Edge Functions — @types/node ✅ RESOLVIDO (PR #2575)
 
 **Comportamento esperado:** `deploy-functions.yml` só executa quando o push na `main` altera
 código implantável em `supabase/functions/` ou `supabase/config.toml`. Quando o push toca
@@ -103,7 +166,7 @@ gerado não é o que o `deno check` procura. Este workflow **não é um required
   no replay zerado, `20261030145126` cria as políticas antes desta, causando `duplicate_object`.
   Efeito no canônico: nenhum — todos os objetos existem.
 
-**Estado:** ✅ RESOLVIDO — PR #2551 mergeado em 2026-11-02T03:17Z, SHA `587ec25f` na `main`.
+**Estado:** ✅ RESOLVIDO — PR #2551 mergeada em 2026-11-02T03:17Z, SHA `587ec25f` na `main`.
 
 ---
 
