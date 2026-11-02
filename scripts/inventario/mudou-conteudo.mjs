@@ -32,13 +32,29 @@ function limparHistoricoCron(historico) {
   return resto;
 }
 
+// Achado da revisao (Codex, 2026-11-02): a telemetria tambem vaza pro TEXTO de alertas[].detalhe,
+// que a lista IGNORADOS (por nome de campo) nao alcanca. `cron_falhando` grava
+// "nome (9.0% em 7d)" — a porcentagem rola toda semana mesmo sem o job sair da lista; `cron_parado`
+// grava a lista de horas de `horas_paradas_7d`, que ja ignoramos na raiz pelo mesmo motivo (janela
+// rolante de 7 dias). So normaliza o TEXTO; se um job entra ou sai da lista (`cron_falhando`) ou o
+// alerta `cron_parado` aparece/desaparece, a mudanca de verdade continua sendo pega.
+const PORCENTAGEM_7D = /\s*\([\d.]+%\s*em\s*7d\)\s*$/;
+function normalizarAlerta(a) {
+  if (!a || typeof a !== 'object' || !('tipo' in a) || !Array.isArray(a.detalhe)) return a;
+  if (a.tipo === 'cron_falhando') {
+    return { ...a, detalhe: a.detalhe.map((d) => (typeof d === 'string' ? d.replace(PORCENTAGEM_7D, '') : d)) };
+  }
+  if (a.tipo === 'cron_parado') return { ...a, detalhe: [] };
+  return a;
+}
+
 /** JSON canonico sem os carimbos de data e sem a telemetria viva. Texto que nao e JSON volta como esta. */
 export function semCarimbos(texto) {
   if (texto === null) return null;
   let dado;
   try { dado = JSON.parse(texto); } catch { return texto; }
   const limpar = (v, chave) => {
-    if (Array.isArray(v)) return v.map((x) => limpar(x));
+    if (Array.isArray(v)) return v.map((x) => limpar(chave === 'alertas' ? normalizarAlerta(x) : x));
     if (v && typeof v === 'object') {
       const base = chave === 'historico' ? limparHistoricoCron(v) : v;
       return Object.fromEntries(

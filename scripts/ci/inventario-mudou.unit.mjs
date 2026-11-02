@@ -67,3 +67,29 @@ test('mas um alerta novo ou tabela orfa nova conta (mudanca estrutural de verdad
   });
   assert.equal(mudou(['a.json'], ler({ 'a.json': dado([]) }), ler({ 'a.json': dado([{ tipo: 'rls_sem_policy', detalhe: ['x'] }]) })), true);
 });
+
+test('telemetria tambem some do TEXTO dos alertas cron_falhando/cron_parado (achado do Codex)', () => {
+  const dado = (pct, horas) => JSON.stringify({
+    alertas: [
+      { tipo: 'cron_falhando', detalhe: [`job-x (${pct}% em 7d)`, 'job-y (20% em 7d)'] },
+      { tipo: 'cron_parado', detalhe: horas },
+      { tipo: 'whatsapp_desconectado', detalhe: ['PRINCIPAL: disconnected'] },
+    ],
+  });
+  assert.equal(
+    mudou(['a.json'], ler({ 'a.json': dado(9.0, ['2026-10-31T04:00Z']) }), ler({ 'a.json': dado(9.3, ['2026-11-01T05:00Z']) })),
+    false, 'so a porcentagem e as horas (janela rolante) mudaram',
+  );
+  const semJobX = JSON.parse(dado(9.0, []));
+  semJobX.alertas[0].detalhe = ['job-y (20% em 7d)'];
+  assert.equal(
+    mudou(['a.json'], ler({ 'a.json': dado(9.0, []) }), ler({ 'a.json': JSON.stringify(semJobX) })),
+    true, 'job saindo da lista de cron_falhando e mudanca real',
+  );
+  const semAlertaParado = JSON.parse(dado(9.0, ['2026-10-31T04:00Z']));
+  semAlertaParado.alertas = semAlertaParado.alertas.filter((a) => a.tipo !== 'cron_parado');
+  assert.equal(
+    mudou(['a.json'], ler({ 'a.json': dado(9.0, ['2026-10-31T04:00Z']) }), ler({ 'a.json': JSON.stringify(semAlertaParado) })),
+    true, 'cron_parado deixar de existir e mudanca real',
+  );
+});
