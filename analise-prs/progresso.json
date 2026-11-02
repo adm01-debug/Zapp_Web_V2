@@ -452,6 +452,20 @@
     "2545": "open/blocked — auto_merge=squash ativo, aguardando CI"
   },
   "motivo_bloqueio_merge_ok": "GitHub Actions runners sobrecarregados desde 2026-11-01T22:27Z. CI Gate still queued. auto_merge dispara automaticamente quando os 3 required checks passarem: Build(ok)+TypeCheck(ok)+CI_Gate(queued). Nao e possivel mergear sem bypass de branch protection (proibido pelo escopo).",
+  "ci_gate_check_2026-11-02T01Z": {
+    "verificado_em": "2026-11-02T01:12Z",
+    "sessao": "8cda0990 (nova janela de contexto)",
+    "pr_2494_sha": "7c765b95a0fd05fcc168eed1951e14ad0c6984a4",
+    "pr_2494_ci_gate": "0 check_runs — runner nunca pegou",
+    "pr_2504_sha": "3153268fe4b3f26d69317d56f136d389bd85cd24",
+    "pr_2504_ci_gate": "queued desde 2026-11-02T00:44:48Z — runner nao atribuido",
+    "pr_2543_sha": "68dff679c1551472f7b5c06a0bf0855c920fc7eb",
+    "pr_2543_ci_gate": "0 check_runs — runner nunca pegou",
+    "pr_2545_sha": "0a04a1d36874a6cd95721e658876ba10af0f0644",
+    "pr_2545_ci_gate": "0 check_runs — runner nunca pegou",
+    "mergeable_state": "blocked em TODAS as 4 — auto_merge=squash ativo, aguardando CI Gate",
+    "acao": "nada a fazer; auto_merge dispara automaticamente quando CI Gate concluir; proximo check-in agendado"
+  },
   "12_merges_sessao_anterior_evidencia": {
     "nota": "Merges dos PRs #2484-#2498 ocorreram em sessao anterior (2026-10-31). Main evoluiu de pre-merge ate 1252bb5a (atual) atraves dessas merges + PR #2509. CI do main apos as 12 merges: Build+TypeCheck SUCCESS (evidenciado pelo fato de que PR #2509 foi mergeada posteriormente com CI verde, provando que o main estava integro).",
     "nenhuma_tinha_migration": true,
