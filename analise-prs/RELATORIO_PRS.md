@@ -124,10 +124,10 @@ Fechadas por Joaquim em lote em 2026-11-01T23:48-50Z ou anteriormente. Adicional
 | #2482 | `3b5f8a96` | **success** | success | ✅ zero falha nova |
 | #2547 | `3066fac0` | **success** | success | ✅ zero falha nova |
 | #2560 | `a7a53f56` | **success** | success | ✅ zero falha nova |
-| #2545 | `c16f3c69` | **success** | success | ✅ zero falha nova |
-| #2567 | `8ba0b436` | **success** | success | ✅ zero falha nova — fix deno --frozen=false |
+| #2545 | `c16f3c69` | ~~failure~~ **flake** | success | ⚠️ Unit test `ContactFormRecalculoCorrida.test.tsx:189` falhou (run 41380773345); flake confirmado: mesmo teste passou em `8ba0b436` sem alteração no código. PR #2545 só altera CLAUDE.md. |
+| #2567 | `8ba0b436` | **in_progress** (2026-11-02) | success | CI Gate ainda rodando: unit tests=success, typecheck=success, build=success; E2E `deslogado-secundario` em andamento |
 
-As 4 PRs mergeadas pela sessão de análise (#2482, #2547, #2560, #2545) + #2567 (mergeada via auto_merge) todas têm CI Gate=success. As pré-existentes (#2283, #2447) são anteriores ao baseline.
+As 4 PRs mergeadas pela sessão de análise (#2482, #2547, #2560, #2545) + #2567 (mergeada via auto_merge) têm build=success. #2545 teve flake de unit test que não se reproduz no SHA seguinte. #2567 tem CI Gate em andamento.
 
 ---
 
