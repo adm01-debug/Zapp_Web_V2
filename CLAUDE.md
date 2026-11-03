@@ -251,10 +251,10 @@ Fatos do perímetro que já custaram retrabalho:
 
 ### Workflows
 
-**Inventário vigente (2026-11-02):** **18** arquivos em `.github/workflows/` — `auto-update-pr-branch`,
+**Inventário vigente (2026-11-03):** **19** arquivos em `.github/workflows/` — `auto-update-pr-branch`,
 `branch-hygiene-audit`, `ci`, `codeql`, `crm-sync-worker`, `db-guard`, `db-live-guard`, `db-migrate`,
 `deploy-functions`, `e2e-logado`, `e2e-talkx`, `inventario-estado-semanal`, `notifica-falha-main`, `settings-guard`,
-`talkx-status-regen`, `targeted-ledger-evidence`, `types-sync`, `vercel-env-cleanup` — mais os
+`supabase-snapshot`, `talkx-status-regen`, `targeted-ledger-evidence`, `types-sync`, `vercel-env-cleanup` — mais os
 dinâmicos do GitHub (Dependabot, Dependency Graph, Copilot). A fonte canônica do inventário é o
 **gerado** `docs/ci/README.md` (`scripts/ci/render-workflow-docs.mjs --check` roda no CI); esta lista
 é conveniência.
