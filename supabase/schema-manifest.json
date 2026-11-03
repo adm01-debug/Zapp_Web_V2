@@ -5330,7 +5330,7 @@
         "f:instance_auth_event_series(p_window text)": "0f72a97fc1e97447d1eff706953f7fd4",
         "f:multiplix_bump_version_on_dispatch_edit()": "e2f6028825acc81625bfbf0a33a37dc2",
         "f:prevent_conversation_task_field_forgery()": "a43a392c95f0133ac70cb7555a6a925b",
-        "f:purge_talkx_expired_data(p_limit integer)": "6a49e803e3fafbd1213264797f3b513c",
+        "f:purge_talkx_expired_data(p_limit integer)": "2a6cbb078fc25100627d084a2e0b7859",
         "f:talkx_validate_template_variant_weights()": "e91724093bdabf1aa47d76441699e6f0",
         "f:backfill_reminders_to_conversation_tasks()": "15ce0b4ff2d83000aa7415eb0f2150d7",
         "f:conversation_events_default_performed_by()": "fb93687f1999a8cb456ab6b93dbb514a",
@@ -6445,7 +6445,7 @@
         "e:public.multiplix_dispatch_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.multiplix_recipient_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-11-03T12:39:33Z",
+    "generated_at": "2026-11-03T18:23:49Z",
     "column_grants": {
         "r:public.departments.id|authenticated|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
