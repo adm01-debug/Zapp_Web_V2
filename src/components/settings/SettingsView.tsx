@@ -74,7 +74,7 @@ export function SettingsView() {
   const { settings, isLoading, isSaving, updateSettings, saveAppearanceSettings } = useUserSettings();
   const { resetOnboarding } = useOnboarding();
   const { isAdmin, isSupervisor } = useUserRole();
-  // Agent/special_agent so vem as 4 abas pessoais — o resto configura a
+  // Agent so vem as 4 abas pessoais — o resto configura a
   // operacao inteira (horario, roteamento, IA, integracoes...), nao o usuario.
   const isStaff = isAdmin || isSupervisor;
 

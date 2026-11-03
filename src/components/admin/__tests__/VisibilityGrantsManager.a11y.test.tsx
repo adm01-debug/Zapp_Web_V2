@@ -12,7 +12,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (tabela: string) => {
       const mockData = {
-        user_roles: [{ id: 'ur1', user_id: 'u1', role: 'special_agent' }],
+        user_roles: [{ id: 'ur1', user_id: 'u1', role: 'agent' }],
         profiles: [{ id: 'p1', user_id: 'u1', name: 'Ana Especial', email: 'ana@test.local' }],
         agent_visibility_grants: [],
       };
@@ -51,11 +51,11 @@ describe('a11y: seletores de visibilidade têm nome acessível (N-065)', () => {
     const selects = await screen.findAllByRole('combobox');
     expect(selects).toHaveLength(2);
 
-    expect(screen.getByRole('combobox', { name: 'Agente Especial' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Agente' })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Pode ver contatos de' })).toBeInTheDocument();
 
     // associação programática rótulo <-> controle (N-065)
-    const specialTrigger = screen.getByRole('combobox', { name: 'Agente Especial' });
+    const specialTrigger = screen.getByRole('combobox', { name: 'Agente' });
     const targetTrigger = screen.getByRole('combobox', { name: 'Pode ver contatos de' });
     for (const [trigger, labelId, forId] of [
       [specialTrigger, 'special-agent-select-label', 'special-agent-select'],
@@ -69,6 +69,6 @@ describe('a11y: seletores de visibilidade têm nome acessível (N-065)', () => {
     }
 
     // <Select> (Root) não carrega aria-label espúrio
-    expect(document.querySelector('[aria-label="Agente Especial"]')).toBeNull();
+    expect(document.querySelector('[aria-label="Agente"]')).toBeNull();
   });
 });

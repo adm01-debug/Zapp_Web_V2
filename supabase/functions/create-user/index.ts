@@ -113,7 +113,7 @@ export async function handleCreateUserRequest(req: Request, deps: CreateUserDeps
       signature: z.string().max(500).optional(),
       job_title: z.string().max(255).optional(),
       avatar_url: z.string().url("URL inválida").max(500).optional(),
-      role: z.enum(["admin", "supervisor", "agent", "special_agent"]).optional().default("agent"),
+      role: z.enum(["admin", "supervisor", "agent"]).optional().default("agent"),
       gmail_email: z.string().email("Email Gmail inválido").max(255).optional(),
       google_services: z.array(z.enum(["google_sheets", "google_docs", "google_calendar", "google_drive"])).optional().default([]),
       dropbox_email: z.string().email("Email Dropbox inválido").max(255).optional(),

@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Prova de fronteira do hook `useVisibleAgents`: o alvo é o hook; a fronteira
 // mockada é o cliente Supabase (a RPC `get_visible_agent_ids`). O que se prova
 // aqui é o CONTRATO do front (papel -> chamada da RPC -> ids devolvidos); o
-// enforcement por papel (agent/special_agent/supervisor/admin) sobre
+// enforcement por papel (agent/supervisor/admin) sobre
 // profiles/contacts/Sala de Crise é provado no SQL
 // supabase/tests/special_agent_visibility.sql, no banco local.
 const mockRpc = vi.fn();
@@ -52,7 +52,7 @@ describe('useVisibleAgents', () => {
     expect(result.current.data).toEqual(['p-agent']);
   });
 
-  it('special_agent: devolve exatamente o conjunto concedido (próprio + can_see_agent_id)', async () => {
+  it('agent com grants: devolve exatamente o conjunto concedido (próprio + can_see_agent_id)', async () => {
     mockUseAuth.mockReturnValue({ user: { id: 'u-special' } });
     mockRpc.mockResolvedValue({ data: ['p-special', 'p-granted-a', 'p-granted-b'], error: null });
 

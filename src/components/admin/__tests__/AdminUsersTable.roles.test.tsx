@@ -5,9 +5,8 @@ import type { UserWithRole } from '../useAdminData';
 import type { AppRole } from '@/hooks/system/useUserRole';
 
 /**
- * Cartão t_672cd537: `AdminUsersTable` não listava a role `special_agent`
- * (existe no enum `app_role` e é usada pelo VisibilityGrantsManager) — quem
- * tinha essa role ficava com o seletor vazio e não havia como promovê-la.
+ * Papel "agente especial" excluído por decisão do dono (2026-11-03): o seletor
+ * de role oferece só admin, supervisor e agent.
  */
 function usuario(role: AppRole, over: Partial<UserWithRole> = {}): UserWithRole {
   return {
@@ -39,29 +38,14 @@ function abrirSeletorDeRole() {
   });
 }
 
-describe('AdminUsersTable — role special_agent', () => {
-  it('nomeia a role special_agent na linha de quem a tem', () => {
-    render(<AdminUsersTable users={[usuario('special_agent')]} isAdmin={false} {...props} />);
-
-    expect(screen.getByText('Agente Especial')).toBeInTheDocument();
-  });
-
-  it('o seletor de role do admin oferece Agente Especial', () => {
+describe('AdminUsersTable — roles', () => {
+  it('o seletor de role do admin não oferece Agente Especial', () => {
     render(<AdminUsersTable users={[usuario('agent')]} isAdmin {...props} />);
 
     abrirSeletorDeRole();
 
-    expect(screen.getByRole('option', { name: 'Agente Especial' })).toBeInTheDocument();
-  });
-
-  it('escolher Agente Especial entrega special_agent ao onRoleChange', () => {
-    const onRoleChange = vi.fn();
-    render(<AdminUsersTable users={[usuario('agent')]} isAdmin {...props} onRoleChange={onRoleChange} />);
-
-    abrirSeletorDeRole();
-    fireEvent.click(screen.getByRole('option', { name: 'Agente Especial' }));
-
-    expect(onRoleChange).toHaveBeenCalledWith('u1', 'special_agent');
+    expect(screen.getByRole('option', { name: 'Atendente' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Agente Especial' })).toBeNull();
   });
 
   it('a coluna de nível de acesso se declara informativa', () => {

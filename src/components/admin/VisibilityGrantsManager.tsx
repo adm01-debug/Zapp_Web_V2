@@ -35,11 +35,11 @@ export function VisibilityGrantsManager() {
   const fetchData = useCallback(async () => {
     setLoading(true);
 
-    // Fetch special agents (users with special_agent role)
+    // Fetch agents (users with agent role)
     const { data: specialAgentRoles } = await supabase
       .from('user_roles')
       .select('user_id')
-      .eq('role', 'special_agent');
+      .eq('role', 'agent');
 
     const specialAgentUserIds = specialAgentRoles?.map(r => r.user_id) || [];
 
@@ -154,9 +154,9 @@ export function VisibilityGrantsManager() {
       <Card>
         <CardContent className="pt-6 text-center">
           <Star className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">Nenhum Agente Especial</h3>
+          <h3 className="text-lg font-semibold mb-2">Nenhum Agente</h3>
           <p className="text-muted-foreground text-sm">
-            Primeiro atribua a role "Agente Especial" a um usuário na aba Usuários para configurar visibilidade.
+            Primeiro atribua a role "Atendente" a um usuário na aba Usuários para configurar visibilidade.
           </p>
         </CardContent>
       </Card>
@@ -170,16 +170,16 @@ export function VisibilityGrantsManager() {
         <CardHeader>
           <CardTitle className="text-base">Adicionar Visibilidade</CardTitle>
           <CardDescription>
-            Defina quais contatos/chats um Agente Especial pode visualizar além dos seus
+            Defina quais contatos/chats um Agente pode visualizar além dos seus
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-end gap-3 flex-wrap">
             <div className="space-y-2 min-w-[200px] flex-1">
-              <label id="special-agent-select-label" className="text-sm font-medium" htmlFor="special-agent-select">Agente Especial</label>
+              <label id="special-agent-select-label" className="text-sm font-medium" htmlFor="special-agent-select">Agente</label>
               <Select value={selectedSpecialAgent} onValueChange={setSelectedSpecialAgent}>
                 <SelectTrigger id="special-agent-select" aria-labelledby="special-agent-select-label">
-                  <SelectValue placeholder="Selecione o agente especial" />
+                  <SelectValue placeholder="Selecione o agente" />
                 </SelectTrigger>
                 <SelectContent>
                   {specialAgents.map(agent => (
@@ -223,7 +223,7 @@ export function VisibilityGrantsManager() {
         </CardContent>
       </Card>
 
-      {/* Existing grants grouped by special agent */}
+      {/* Existing grants grouped by agent */}
       <div className="grid gap-4 md:grid-cols-2">
         {grantsByAgent.map(({ agent, grants: agentGrants }) => (
           <Card key={agent.id}>

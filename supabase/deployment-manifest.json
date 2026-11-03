@@ -521,8 +521,8 @@
     },
     {
       "path": "supabase/functions/create-user/index.ts",
-      "bytes": 13075,
-      "sha256": "e6c3ce7de06c3af49e108e52537eb432044f953b22f46cbc960c797f09be3241"
+      "bytes": 13058,
+      "sha256": "d40a00fb96fbb1f074d031702fe8a1e5f17306056e15e4a07dfa961d1270340c"
     },
     {
       "path": "supabase/functions/crm-integration/index.ts",
@@ -666,8 +666,8 @@
     },
     {
       "path": "supabase/functions/invite-user/index.ts",
-      "bytes": 7840,
-      "sha256": "d1debd29b3b018132014c402dc91e38852b97c6199b11fd47cb2e7fe5284bdea"
+      "bytes": 7823,
+      "sha256": "80171175e5364d639f3522c41abba3f019b612bc67b7dd57e8d2cd02a339c380"
     },
     {
       "path": "supabase/functions/message-delivery/index.ts",
@@ -751,8 +751,8 @@
     },
     {
       "path": "supabase/functions/revoke-auth-sessions/index.ts",
-      "bytes": 14308,
-      "sha256": "2cd75bfb0e445c45039e7537c4074b19a82b03363ccaa0a445d21b990642626e"
+      "bytes": 14224,
+      "sha256": "78739e35b50d07c5cd4731efffe020d5328f9f171fad23f1d03d950daa7f0845"
     },
     {
       "path": "supabase/functions/searchbox-budget-alert/index.ts",
@@ -1433,7 +1433,7 @@
       "name": "create-user",
       "entrypoint": "supabase/functions/create-user/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f403bdcd775b30bb7b0702832a3d3a9567508b28101d31e7cdf27cc58469dca8",
+      "source_sha256": "e8e2e9095f0f020fca4e2445c7db66faa7cc3958e5ca5d934a3bb6a6c8af514f",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -1934,7 +1934,7 @@
       "name": "invite-user",
       "entrypoint": "supabase/functions/invite-user/index.ts",
       "verify_jwt": true,
-      "source_sha256": "777cf8f054d46e994d3454e4ff5217c48da80f0b5697c4dff24114e4fdfbaad0",
+      "source_sha256": "d84b56a637146f84cb575cf71761db5cf298fe6b5cf6a3c18769c39b2e70d6fd",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/hmac-validation.ts",
@@ -2176,7 +2176,7 @@
       "name": "revoke-auth-sessions",
       "entrypoint": "supabase/functions/revoke-auth-sessions/index.ts",
       "verify_jwt": true,
-      "source_sha256": "c16e7d51fd51999a5f9dfa8098059157545639446f4d058f6f5766952630a20f",
+      "source_sha256": "f3fc885913833b58ca615cddac914cfcb4dd27d1b3de8e371e2f7b3d5c33fb28",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-control-authz.ts",
@@ -2534,5 +2534,5 @@
       ]
     }
   ],
-  "manifest_sha256": "6fa948cdc1636fd845b140ab96abacb2feba04938163cac21859b291f69e8be6"
+  "manifest_sha256": "fa47c44f5231e3839e9fdd3b01a601c8c955b6ab444dc056b12956301aa457c2"
 }
