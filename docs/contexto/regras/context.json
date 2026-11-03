@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "f798a88267571bcbe5d2886c1b4b0ba792868887",
+  "sha": "d96e1e71e8735db06c28925ab97cedaed40318f1",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-03 12:26 UTC",
+  "generated_at": "2026-11-03 12:39 UTC",
   "files_total": 7977,
   "code_files": 5919,
   "code_lines": 1018827
@@ -397726,10 +397726,22 @@
   }
  },
  "git": {
-  "sha": "f798a88267571bcbe5d2886c1b4b0ba792868887",
+  "sha": "d96e1e71e8735db06c28925ab97cedaed40318f1",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d96e1e7",
+    "date": "2026-11-03",
+    "author": "dependabot[bot]",
+    "subject": "⬆️ ci: Bump the actions-misc group with 2 updates (#2620)",
+    "files": [
+     ".github/workflows/db-live-guard.yml",
+     ".github/workflows/db-migrate.yml",
+     ".github/workflows/deploy-functions.yml",
+     ".github/workflows/types-sync.yml"
+    ]
+   },
    {
     "sha": "f798a88",
     "date": "2026-11-03",
@@ -398499,15 +398511,6 @@
      "src/lib/__tests__/serverLogin.test.ts",
      "src/lib/serverLogin.ts"
     ]
-   },
-   {
-    "sha": "3b044f8",
-    "date": "2026-11-02",
-    "author": "adm01-debug",
-    "subject": "chore: PENDENCIAS §1D..§1F — novos bloqueios db-live-guard run #1421 (#2612)",
-    "files": [
-     "PENDENCIAS.md"
-    ]
    }
   ],
   "hot_files": [
@@ -398552,6 +398555,10 @@
     3
    ],
    [
+    ".github/workflows/db-migrate.yml",
+    2
+   ],
+   [
     ".github/workflows/supabase-snapshot.yml",
     2
    ],
@@ -398586,10 +398593,6 @@
    [
     "inventario/estado/edges.json",
     2
-   ],
-   [
-    ".github/workflows/contexto.yml",
-    1
    ]
   ]
  }

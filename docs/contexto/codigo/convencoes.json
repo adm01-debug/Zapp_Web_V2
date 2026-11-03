@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "⬆️ ci: Bump the actions-misc group with 2 updates (#2620)",
    "feat(ia): contexto unificado para agentes — um workflow (codigo + banco + regras), um índice, uma branch `contexto` (#2664)",
    "infra: snapshot do Supabase a cada 10 min para agentes de IA (scripts/supabase_snapshot + workflow) (#2662)",
    "ci: lint dos workflows no CI (actionlint + shellcheck + zizmor) e correções apontadas (#2656)",
-   "chore: baixa o baseline do lint ratchet para a dívida real (819 → 813) (#2657)",
-   "fix: remove escapes inúteis em regex de testes de contraste (lint ratchet) (#2655)"
+   "chore: baixa o baseline do lint ratchet para a dívida real (819 → 813) (#2657)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

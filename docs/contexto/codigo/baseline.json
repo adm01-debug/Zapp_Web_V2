@@ -2,9 +2,9 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f798a88267571bcbe5d2886c1b4b0ba792868887",
+  "commit": "d96e1e71e8735db06c28925ab97cedaed40318f1",
   "branch": "main",
-  "data_commit": "2026-11-03T12:21:39Z",
+  "data_commit": "2026-11-03T09:38:28-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
   "arquivos_mudados_7d": 1409,
@@ -85,7 +85,7 @@
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
-    "mudancas": 21
+    "mudancas": 20
    },
    {
     "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
@@ -108,6 +108,10 @@
     "mudancas": 14
    },
    {
+    "arquivo": ".github/workflows/deploy-functions.yml",
+    "mudancas": 13
+   },
+   {
     "arquivo": "ESTADO.md",
     "mudancas": 13
    },
@@ -116,8 +120,8 @@
     "mudancas": 13
    },
    {
-    "arquivo": ".github/workflows/deploy-functions.yml",
-    "mudancas": 12
+    "arquivo": ".github/workflows/db-migrate.yml",
+    "mudancas": 11
    },
    {
     "arquivo": ".github/workflows/e2e-talkx.yml",
@@ -144,7 +148,7 @@
     "mudancas": 10
    },
    {
-    "arquivo": ".github/workflows/db-migrate.yml",
+    "arquivo": ".github/workflows/types-sync.yml",
     "mudancas": 10
    },
    {
@@ -166,20 +170,16 @@
    {
     "arquivo": ".github/workflows/auto-update-pr-branch.yml",
     "mudancas": 9
-   },
-   {
-    "arquivo": ".github/workflows/types-sync.yml",
-    "mudancas": 9
    }
   ],
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 283
+    "commits": 282
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 11
+    "commits": 12
    },
    {
     "autor": "github-actions[bot]",
