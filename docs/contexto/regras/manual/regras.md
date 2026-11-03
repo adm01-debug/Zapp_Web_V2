@@ -5,6 +5,23 @@
 > ou se é **decisão pendente de implementação** — agente que for mexer nesses fluxos deve respeitar a
 > decisão, não o comportamento atual.
 
+## 2. Atores / perfis e o que cada um pode fazer
+
+Papéis reais do sistema (enum `app_role`, `src/lib/appRole.ts:13`): **`admin` · `supervisor` · `agent` · `special_agent`**.
+`leader`, `owner` e `customer` **não são papéis**: `owner`/`admin`/`member` são papéis *dentro de um grupo do Team Chat*
+(`team_conversation_members.member_role`, migration `20260927270019`); "líder" = supervisor. Medido em 2026-11-03:
+4 admins, 3 supervisores, 4 agentes, 0 `special_agent`.
+
+| Perfil | Pode | Não pode |
+|---|---|---|
+| **admin** | **Só ele** cria e remove a infraestrutura do atendimento: conexões WhatsApp, filas e membros, usuários e seus papéis (`user_roles`), horário comercial, SLA (`sla_configurations`), limites de campanha (`talkx_settings`), automações, chatbot, templates, blacklist, `app_settings`, provedores de IA, bloqueio de IP/país, logs de auditoria. **Único** que apaga dados em massa (contatos, campanhas, playbooks, logs). | — |
+| **supervisor** | Tudo do agente **mais**: enxerga e intervém em **qualquer** conversa e contato (reatribui, muda status, encerra — `is_admin_or_supervisor` em ~120 funções); configura regras de SLA, automações e relatórios agendados; amplia a visibilidade de um agente (`agent_visibility_grants`); vê tentativas de login; **dispara campanhas** (`confirm_talkx_campaign_launch` → `talkx_confirm_launch_unauthorized` para quem não é admin/supervisor). | Criar ou apagar conexão, fila ou usuário; mexer em configuração global. |
+| **agent** | Só o que é dele ou da sua fila (`can_edit_contact` = atendente dono **ou** membro da fila): cria contato, envia mensagem, cria/edita suas tarefas, agendamentos e **rascunhos** de campanha. | Ver ou mexer em conversa que não é sua nem da sua fila; mudar o próprio papel/permissões (`prevent_profile_privilege_escalation`); apagar contato ou mensagem; alterar qualquer configuração; **disparar** campanha. |
+| **special_agent** | = agent + flag `profiles.can_download` (exportar/baixar), protegida contra auto-promoção por trigger (`20261012032331`). | Idem agent. Hoje **ninguém** tem o papel — ver §9. |
+
+Evidência: 18 policies RLS citam só `admin`, 10 tabelas só admin lê; funções `effective_role`, `is_admin`,
+`is_admin_or_supervisor`, `can_edit_contact`, `require_contact_edit_permission` (banco ao vivo, 2026-11-03).
+
 ## 4. Ciclo de vida / estados e transições permitidas
 
 ### 4.1 Conversa (`contacts.conversation_status`)
@@ -70,6 +87,6 @@ limite efetivo é o `daily_limit_per_connection`.
 
 1. SLA: minutos padrão de primeira resposta e canal da notificação (tela / e-mail / WhatsApp); critério de "em alguns casos o admin".
 2. Reconexão da `PRINCIPAL` após nível 1: QR Code novo é sempre ação do supervisor/admin, ou atendente também pode?
-3. Perfis: o que exatamente `supervisor` pode além do `agent`, e o que só `admin` faz.
+3. `special_agent` (0 usuários): continua como papel ou vira só a flag `can_download` do agente comum? (sugestão: remover o papel, manter a flag).
 4. LGPD: retenção de mensagens e mídia; o que apagar quando um contato pede exclusão.
 5. Áreas congeladas: módulos que não devem ser mexidos sem o dono.
