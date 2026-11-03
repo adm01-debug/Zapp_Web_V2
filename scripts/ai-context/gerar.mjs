@@ -271,7 +271,7 @@ const hooksOut = secao('hooks', () => {
 // ---------- rotas / telas ----------
 const lazyMap = new Map();
 for (const [f, d] of FILE) {
-  const re = /(?:export\s+)?const\s+(\w+)\s*=\s*(?:lazy\w*|React\.lazy|loadable|defineAsyncComponent)\s*\(\s*(?:\(\)\s*=>\s*)?import\(\s*['"]([^'"]+)['"]/g; let m;
+  const re = /(?:export\s+)?const\s+(\w+)\s*=\s*(?:lazy\w*|React\.lazy|loadable|defineAsyncComponent)\s*\(\s*(?:async\s*)?(?:\(\)\s*=>\s*)?(?:\{[^}]{0,200}?)?(?:await\s+)?import\(\s*['"]([^'"]+)['"]/g; let m;
   while ((m = re.exec(d.conteudo))) { const t = resolveImport(f, m[2]); if (t) lazyMap.set(m[1], t); }
 }
 const ambiguos = new Set();
