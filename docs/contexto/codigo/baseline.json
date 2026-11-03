@@ -2,12 +2,12 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "639a500050dc401759ec7987c187adbddea4c00b",
+  "commit": "1c0f516ff693950dc949e79b871fc729548457f0",
   "branch": "main",
-  "data_commit": "2026-11-03T14:11:30Z",
+  "data_commit": "2026-11-03T15:12:40Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
-  "arquivos_mudados_7d": 1373,
+  "arquivos_mudados_7d": 1366,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -73,7 +73,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 27
+    "mudancas": 26
    },
    {
     "arquivo": "CLAUDE.md",
@@ -81,14 +81,10 @@
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 20
-   },
-   {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 19
    },
    {
-    "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 18
    },
    {
@@ -101,6 +97,10 @@
    },
    {
     "arquivo": "docs/ci/README.md",
+    "mudancas": 17
+   },
+   {
+    "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
     "mudancas": 17
    },
    {
@@ -128,15 +128,15 @@
     "mudancas": 11
    },
    {
-    "arquivo": ".github/workflows/e2e-talkx.yml",
-    "mudancas": 11
-   },
-   {
     "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
     "mudancas": 11
    },
    {
     "arquivo": ".github/workflows/branch-hygiene-audit.yml",
+    "mudancas": 10
+   },
+   {
+    "arquivo": ".github/workflows/e2e-talkx.yml",
     "mudancas": 10
    },
    {
@@ -175,11 +175,11 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 281
+    "commits": 282
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 12
+    "commits": 11
    },
    {
     "autor": "github-actions[bot]",

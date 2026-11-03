@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `639a500050` · branch `main` · 2026-11-03 14:12 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `1c0f516ff6` · branch `main` · 2026-11-03 15:13 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -47,11 +47,29 @@ webhook mudo por meia hora significa que mensagens de clientes não estão chega
 
 Tempos decididos: **15 min** (esgota reconexão) · **30 min** (`degraded` vira nível 1) · **1 h** (nível 2).
 
+## 6. Prazos, limites e quotas — Talk X / campanhas
+
+Valores de consentimento: `granted` / `unknown` / `revoked` (não existe `opt_in`;
+`supabase/migrations/20261016010744_consent_status_guard.sql:40`).
+
+| Regra | Estado | Evidência |
+|---|---|---|
+| **Consentimento:** `unknown` **recebe** campanha; `revoked` **nunca** recebe. O setting `require_granted_consent` fica **desligado** (base é de clientes/leads da própria empresa; legítimo interesse com saída fácil). Ligar esse setting hoje zeraria toda campanha: 100% dos contatos ativos estão `unknown`. | **existe** (decisão: manter) | `20261003232707_talkx_lgpd_consentimento_expurgo.sql:32,163`; banco `talkx_settings.require_granted_consent = false` (medido 2026-11-03) |
+| **Toda campanha inclui instrução de saída.** Contato que pedir saída ("sair"/"parar") vira `revoked` e entra na supressão por **contato e por telefone** — **nunca mais** entra em campanha, nem se for reimportado com outro cadastro. | **existe** (supressão por telefone); instrução de saída no texto é **regra de uso**, não validada pelo sistema | `20261003232707…sql:449,469` (`talkx_suppress_contact`, eixos `contact_id` e `phone`) |
+| **Limite diário: 500 envios por conexão por dia.** Não há limite por hora — o ritmo vem do `speed_profile` (`slow`/`moderate`/`fast`) + intervalo entre envios. | **existe** | banco `talkx_settings.daily_limit_per_connection = 500`; `supabase/functions/talkx-send/index.ts:513-530`; `20260908120000_talkx_segments_templates_events.sql:82` |
+| **Horário comercial é o padrão:** seg–sex 08:00–18:00 (America/Sao_Paulo). **Campanha nova nasce com `business_hours_only = true`**; quem quiser enviar fora do horário desliga de propósito. | **pendente de implementação** — hoje o padrão é `false` no banco e no formulário | `20260908120000…sql:74` (`DEFAULT false`); `src/components/talkx/TalkXCampaignScheduled.tsx:204` (`?? false`); janela avaliada por `talkx_engine_window_open` |
+| **Legado / telefone inválido nunca entra em campanha:** `deleted_at`, `is_lid_legacy` ou telefone fora de `^[0-9]{10,15}$` ficam fora da audiência. O toggle "Mostrar legados" da tela de contatos **não** os faz entrar em campanha. | **existe** | `20261003232707…sql:347-349` (`talkx_audience_query`) |
+
+Lacuna registrada: `number_reputation.daily_limit` (200, migration `20260409014536…sql:151`) é um contador de
+aquecimento de número que **`talkx-send` não consulta** (grep vazio em 2026-11-03) — coluna morta; o único
+limite efetivo é o `daily_limit_per_connection`.
+
 ## 8. Decisões já tomadas (o que NÃO mudar e por quê)
 
 - Reabertura automática mantém o atendente anterior — o dono quer continuidade de atendimento.
 - Não existe "waiting por inatividade" — `waiting` é só ação humana ou reabertura sem dono.
 - Alerta de desconexão nível 1 para admin/supervisor **não é opt-out**.
+- Campanhas: `require_granted_consent` fica desligado; `revoked` nunca recebe; 500/dia por conexão; sem limite por hora.
 - Convites de departamento: só admin cria e apaga (decisão 2026-11-01; `src/hooks/team-chat/README.md`).
 - Contato visível = `deleted_at IS NULL` + `is_lid_legacy = false` + telefone `^[0-9]{10,15}$` (decisão D4; `CLAUDE.md` §6).
 
@@ -59,12 +77,11 @@ Tempos decididos: **15 min** (esgota reconexão) · **30 min** (`degraded` vira 
 
 1. SLA: minutos padrão de primeira resposta e canal da notificação (tela / e-mail / WhatsApp); critério de "em alguns casos o admin".
 2. Reconexão da `PRINCIPAL` após nível 1: QR Code novo é sempre ação do supervisor/admin, ou atendente também pode?
-3. Talk X / campanhas: limites de envio por hora, consentimento/opt-out, horário permitido.
-4. Pagamentos / planos (se houver): o que bloqueia ao inadimplir.
-5. Perfis: o que exatamente `supervisor` pode além do `agent`, e o que só `admin` faz.
-6. Multiempresa (`company_id`): um usuário pode pertencer a mais de uma?
-7. LGPD: retenção de mensagens e mídia; o que apagar quando um contato pede exclusão.
-8. Áreas congeladas: módulos que não devem ser mexidos sem o dono.
+3. Pagamentos / planos (se houver): o que bloqueia ao inadimplir.
+4. Perfis: o que exatamente `supervisor` pode além do `agent`, e o que só `admin` faz.
+5. Multiempresa (`company_id`): um usuário pode pertencer a mais de uma?
+6. LGPD: retenção de mensagens e mídia; o que apagar quando um contato pede exclusão.
+7. Áreas congeladas: módulos que não devem ser mexidos sem o dono.
 
 ## B. Quem pode ver/alterar o quê (RLS — conforme migrations do repo; schema real em `06`)
 
