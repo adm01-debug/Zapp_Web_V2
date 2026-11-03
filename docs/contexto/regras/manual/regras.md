@@ -47,7 +47,7 @@ vira alerta para ninguém. A sonda `connection-health-check` roda a cada 5 min (
 | Nível | Quando | O que acontece | Estado |
 |---|---|---|---|
 | **0 — queda rápida** | `disconnected`/`degraded` enquanto a reconexão automática ainda tem tentativas (~15 min) | Ninguém recebe push/e-mail. Na tela, conexão em **amarelo** e a caixa de mensagem avisa "sem conexão — a mensagem ficará na fila". A mensagem **entra na fila e sai quando voltar**; nada é perdido. | **pendente**: fila já aceita (`enqueue_outbound_message`, `20261010211000`, não checa saúde) mas **não há aviso nem cor na tela** (grep no inbox vazio) |
-| **1 — queda confirmada** | reconexão esgotou as tentativas **ou** motivo `phantom_session` (celular desvinculou; precisa de QR Code) | **Admin e supervisores recebem push + e-mail sempre**, independentemente das preferências (`alert_on_disconnected` etc. só **adicionam** gente, nunca tiram). Atendentes da conexão veem bloqueio **vermelho**: "WhatsApp desconectado, precisa de QR Code — avise o supervisor". Envio continua enfileirado, não falha. | **pendente**: hoje alerta só vai a quem optou (`push_enabled`/`email_enabled`); bloqueio vermelho não existe |
+| **1 — queda confirmada** | reconexão esgotou as tentativas **ou** motivo `phantom_session` (celular desvinculou; precisa de QR Code) | **Admin e supervisores recebem push + e-mail sempre**, independentemente das preferências (`alert_on_disconnected` etc. só **adicionam** gente, nunca tiram). Atendentes e supervisores da conexão veem bloqueio **vermelho**: "WhatsApp desconectado, precisa de QR Code — avise o admin". Envio continua enfileirado, não falha. | **pendente**: hoje alerta só vai a quem optou (`push_enabled`/`email_enabled`); bloqueio vermelho não existe |
 | **2 — persistente** | > 1 h desconectada | Repete o aviso **de hora em hora para o admin**. **Campanhas Talk X dessa conexão pausam automaticamente** e retomam quando a conexão voltar a `healthy`. | **pendente**: NÃO VERIFICADO se campanha checa saúde da conexão hoje — tratar como lacuna |
 
 Regra adicional: `degraded` (webhook mudo) conta como nível 0; se durar **mais de 30 min**, sobe para nível 1 —
@@ -55,7 +55,7 @@ webhook mudo por meia hora significa que mensagens de clientes não estão chega
 
 Tempos decididos: **15 min** (esgota reconexão) · **30 min** (`degraded` vira nível 1) · **1 h** (nível 2).
 
-Reconexão por QR Code (nível 1 em diante): **só admin ou supervisor** escaneia — atendente nunca vê a tela de conexões (decisão 2026-11-03; já é assim: policy `whatsapp_connections: Admin supervisor view connections`). O bloqueio vermelho do atendente diz "avise o supervisor", não oferece o QR.
+Reconexão por QR Code (nível 1 em diante): **só o admin** conecta/escaneia — supervisor e atendente **não** (decisão 2026-11-03, corrigida pelo dono). **Pendente de implementação:** hoje o supervisor ainda vê conexões e consegue pedir QR (`get_connection_qr_code` e `get_connection_instance` usam `is_admin_or_supervisor`; policy `whatsapp_connections: Admin supervisor view connections`). O bloqueio vermelho do atendente/supervisor diz "avise o admin", não oferece o QR. Alerta de nível 1 continua indo para admin **e** supervisor (supervisor precisa saber, mesmo sem poder reconectar).
 
 ## 6. Prazos, limites e quotas — Talk X / campanhas
 
