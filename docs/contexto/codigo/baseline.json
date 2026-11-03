@@ -1,0 +1,1275 @@
+{
+ "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
+ "format_version": 2,
+ "git": {
+  "commit": "f798a88267571bcbe5d2886c1b4b0ba792868887",
+  "branch": "main",
+  "data_commit": "2026-11-03T12:21:39Z",
+  "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
+  "ultimos_commits": [],
+  "arquivos_mudados_7d": 1409,
+  "pastas_mais_mudadas_30d": [
+   {
+    "pasta": "src/components/inbox",
+    "mudancas": 1758
+   },
+   {
+    "pasta": "src/components/talkx",
+    "mudancas": 724
+   },
+   {
+    "pasta": "docs/reconciliation/reaudit",
+    "mudancas": 538
+   },
+   {
+    "pasta": "src/hooks/__tests__",
+    "mudancas": 376
+   },
+   {
+    "pasta": "src/components/dashboard",
+    "mudancas": 353
+   },
+   {
+    "pasta": "src/components/ui",
+    "mudancas": 316
+   },
+   {
+    "pasta": "src/hooks/integrations",
+    "mudancas": 315
+   },
+   {
+    "pasta": "supabase/functions/_shared",
+    "mudancas": 309
+   },
+   {
+    "pasta": "src/hooks/chat",
+    "mudancas": 267
+   },
+   {
+    "pasta": "src/components/settings",
+    "mudancas": 263
+   },
+   {
+    "pasta": "src/components/contacts",
+    "mudancas": 256
+   },
+   {
+    "pasta": "src/components/tasks",
+    "mudancas": 254
+   },
+   {
+    "pasta": "src/lib/__tests__",
+    "mudancas": 233
+   },
+   {
+    "pasta": "docs/_arquivo/analise-prs",
+    "mudancas": 211
+   },
+   {
+    "pasta": "src/components/catalog",
+    "mudancas": 210
+   }
+  ],
+  "arquivos_mais_mudados_90d": [
+   {
+    "arquivo": ".github/workflows/ci.yml",
+    "mudancas": 28
+   },
+   {
+    "arquivo": "CLAUDE.md",
+    "mudancas": 25
+   },
+   {
+    "arquivo": ".github/workflows/e2e-logado.yml",
+    "mudancas": 21
+   },
+   {
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "mudancas": 21
+   },
+   {
+    "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
+    "mudancas": 19
+   },
+   {
+    "arquivo": "docs/ci/README.md",
+    "mudancas": 18
+   },
+   {
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 18
+   },
+   {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 17
+   },
+   {
+    "arquivo": "scripts/ci/github-settings-guard.unit.mjs",
+    "mudancas": 14
+   },
+   {
+    "arquivo": "ESTADO.md",
+    "mudancas": 13
+   },
+   {
+    "arquivo": "supabase/deployment-manifest.json",
+    "mudancas": 13
+   },
+   {
+    "arquivo": ".github/workflows/deploy-functions.yml",
+    "mudancas": 12
+   },
+   {
+    "arquivo": ".github/workflows/e2e-talkx.yml",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "scripts/ci/github-settings-baseline.json",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "supabase/schema-manifest.json",
+    "mudancas": 11
+   },
+   {
+    "arquivo": ".github/workflows/branch-hygiene-audit.yml",
+    "mudancas": 10
+   },
+   {
+    "arquivo": ".github/workflows/codeql.yml",
+    "mudancas": 10
+   },
+   {
+    "arquivo": ".github/workflows/db-migrate.yml",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "scripts/db-audit/check-migration-drift.mjs",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "scripts/db-audit/known-violations.json",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "src/hooks/integrations/useTalkXSuppression.ts",
+    "mudancas": 10
+   },
+   {
+    "arquivo": ".github/workflows/auto-update-pr-branch.yml",
+    "mudancas": 9
+   },
+   {
+    "arquivo": ".github/workflows/types-sync.yml",
+    "mudancas": 9
+   }
+  ],
+  "autores_30d": [
+   {
+    "autor": "adm01-debug",
+    "commits": 283
+   },
+   {
+    "autor": "dependabot[bot]",
+    "commits": 11
+   },
+   {
+    "autor": "github-actions[bot]",
+    "commits": 5
+   },
+   {
+    "autor": "devin-ai-integration[bot]",
+    "commits": 1
+   }
+  ]
+ },
+ "contagens": {
+  "arquivos_total": 8135,
+  "arquivos_codigo": 4641,
+  "linhas_codigo": 850136,
+  "rotas": 18,
+  "rotas_http_backend": 12,
+  "vistas_por_id": 55,
+  "itens_menu": 61,
+  "modulos": 142,
+  "componentes": 886,
+  "hooks": 490,
+  "edge_functions": 85,
+  "tabelas": 226,
+  "migrations": 1105,
+  "cron_jobs": 25,
+  "testes": 2529,
+  "workflows": 19,
+  "scripts": 376,
+  "docs_md": 1029
+ },
+ "por_pasta": {
+  "docs/_arquivo": {
+   "arquivos": 3,
+   "linhas": 686
+  },
+  "docs/design": {
+   "arquivos": 2,
+   "linhas": 370
+  },
+  "docs/evidencias": {
+   "arquivos": 1,
+   "linhas": 159
+  },
+  "docs/reconciliation": {
+   "arquivos": 155,
+   "linhas": 22251
+  },
+  "e2e/a11y-config-admin.spec.ts": {
+   "arquivos": 1,
+   "linhas": 282
+  },
+  "e2e/a11y-contraste.spec.ts": {
+   "arquivos": 1,
+   "linhas": 273
+  },
+  "e2e/a11y-fab-cabecalho.spec.ts": {
+   "arquivos": 1,
+   "linhas": 147
+  },
+  "e2e/a11y-inbox-teams.spec.ts": {
+   "arquivos": 1,
+   "linhas": 286
+  },
+  "e2e/a11y-tarefas-dashboard.spec.ts": {
+   "arquivos": 1,
+   "linhas": 137
+  },
+  "e2e/a11y-toque-44px.spec.ts": {
+   "arquivos": 1,
+   "linhas": 288
+  },
+  "e2e/auth.setup.ts": {
+   "arquivos": 1,
+   "linhas": 130
+  },
+  "e2e/auth.spec.ts": {
+   "arquivos": 1,
+   "linhas": 45
+  },
+  "e2e/busca-global-paleta.spec.ts": {
+   "arquivos": 1,
+   "linhas": 335
+  },
+  "e2e/catalog.spec.ts": {
+   "arquivos": 1,
+   "linhas": 311
+  },
+  "e2e/conexoes.spec.ts": {
+   "arquivos": 1,
+   "linhas": 60
+  },
+  "e2e/contact-address.spec.ts": {
+   "arquivos": 1,
+   "linhas": 280
+  },
+  "e2e/contact-form-email-duplicate.spec.ts": {
+   "arquivos": 1,
+   "linhas": 146
+  },
+  "e2e/contact-map-pin.spec.ts": {
+   "arquivos": 1,
+   "linhas": 112
+  },
+  "e2e/contacts-crud.spec.ts": {
+   "arquivos": 1,
+   "linhas": 55
+  },
+  "e2e/contacts-detail.spec.ts": {
+   "arquivos": 1,
+   "linhas": 33
+  },
+  "e2e/contacts-selection.spec.ts": {
+   "arquivos": 1,
+   "linhas": 44
+  },
+  "e2e/contacts-snapshots.spec.ts": {
+   "arquivos": 1,
+   "linhas": 174
+  },
+  "e2e/contacts-tabs-geometry.spec.ts": {
+   "arquivos": 1,
+   "linhas": 70
+  },
+  "e2e/contacts-view.spec.ts": {
+   "arquivos": 1,
+   "linhas": 80
+  },
+  "e2e/contacts-views.spec.ts": {
+   "arquivos": 1,
+   "linhas": 70
+  },
+  "e2e/conversation.spec.ts": {
+   "arquivos": 1,
+   "linhas": 116
+  },
+  "e2e/ct94-ui-429.spec.ts": {
+   "arquivos": 1,
+   "linhas": 142
+  },
+  "e2e/dialog-rodape-viewport.spec.ts": {
+   "arquivos": 1,
+   "linhas": 108
+  },
+  "e2e/email-link-contato.spec.ts": {
+   "arquivos": 1,
+   "linhas": 318
+  },
+  "e2e/email-navy-visual.spec.ts": {
+   "arquivos": 1,
+   "linhas": 570
+  },
+  "e2e/files-tab.spec.ts": {
+   "arquivos": 1,
+   "linhas": 602
+  },
+  "e2e/fixtures": {
+   "arquivos": 16,
+   "linhas": 2493
+  },
+  "e2e/inbox-contact-sidebar.spec.ts": {
+   "arquivos": 1,
+   "linhas": 160
+  },
+  "e2e/inbox-contraste.spec.ts": {
+   "arquivos": 1,
+   "linhas": 62
+  },
+  "e2e/inbox-sidebar-topo.spec.ts": {
+   "arquivos": 1,
+   "linhas": 192
+  },
+  "e2e/location-picker.spec.ts": {
+   "arquivos": 1,
+   "linhas": 201
+  },
+  "e2e/media-volume.spec.ts": {
+   "arquivos": 1,
+   "linhas": 177
+  },
+  "e2e/messaging.spec.ts": {
+   "arquivos": 1,
+   "linhas": 77
+  },
+  "e2e/monitoring.spec.ts": {
+   "arquivos": 1,
+   "linhas": 174
+  },
+  "e2e/multiplix-responsivo.spec.ts": {
+   "arquivos": 1,
+   "linhas": 298
+  },
+  "e2e/multiplix.spec.ts": {
+   "arquivos": 1,
+   "linhas": 576
+  },
+  "e2e/navegacao-modulos.spec.ts": {
+   "arquivos": 1,
+   "linhas": 1686
+  },
+  "e2e/onboarding-dispensar.spec.ts": {
+   "arquivos": 1,
+   "linhas": 98
+  },
+  "e2e/onboarding-tour.spec.ts": {
+   "arquivos": 1,
+   "linhas": 133
+  },
+  "e2e/quarantine.js": {
+   "arquivos": 1,
+   "linhas": 23
+  },
+  "e2e/quarantine.unit.mjs": {
+   "arquivos": 1,
+   "linhas": 117
+  },
+  "e2e/quick-controls-volume.spec.ts": {
+   "arquivos": 1,
+   "linhas": 640
+  },
+  "e2e/reactions.spec.ts": {
+   "arquivos": 1,
+   "linhas": 148
+  },
+  "e2e/skins-e2e.spec.ts": {
+   "arquivos": 1,
+   "linhas": 745
+  },
+  "e2e/support": {
+   "arquivos": 1,
+   "linhas": 12
+  },
+  "e2e/talk-me.spec.ts": {
+   "arquivos": 1,
+   "linhas": 342
+  },
+  "e2e/talkx-demo.spec.ts": {
+   "arquivos": 1,
+   "linhas": 42
+  },
+  "e2e/talkx-launch.spec.ts": {
+   "arquivos": 1,
+   "linhas": 231
+  },
+  "e2e/talkx-visual.spec.ts": {
+   "arquivos": 1,
+   "linhas": 410
+  },
+  "e2e/talkx.spec.ts": {
+   "arquivos": 1,
+   "linhas": 286
+  },
+  "e2e/tarefas-linha-de-base.spec.ts": {
+   "arquivos": 1,
+   "linhas": 373
+  },
+  "e2e/tarefas-quadro.spec.ts": {
+   "arquivos": 1,
+   "linhas": 400
+  },
+  "e2e/team-chat.spec.ts": {
+   "arquivos": 1,
+   "linhas": 393
+  },
+  "e2e/telefonia.spec.ts": {
+   "arquivos": 1,
+   "linhas": 429
+  },
+  "e2e/theme-alto-contraste.spec.ts": {
+   "arquivos": 1,
+   "linhas": 220
+  },
+  "eslint.config.js": {
+   "arquivos": 1,
+   "linhas": 74
+  },
+  "generate_audit_pdf.ts": {
+   "arquivos": 1,
+   "linhas": 71
+  },
+  "playwright.config.ts": {
+   "arquivos": 1,
+   "linhas": 377
+  },
+  "postcss.config.js": {
+   "arquivos": 1,
+   "linhas": 7
+  },
+  "scripts/ai-context": {
+   "arquivos": 3,
+   "linhas": 1340
+  },
+  "scripts/catalog": {
+   "arquivos": 2,
+   "linhas": 228
+  },
+  "scripts/ci": {
+   "arquivos": 149,
+   "linhas": 28341
+  },
+  "scripts/db-audit": {
+   "arquivos": 79,
+   "linhas": 14854
+  },
+  "scripts/db-tests": {
+   "arquivos": 3,
+   "linhas": 442
+  },
+  "scripts/docs": {
+   "arquivos": 1,
+   "linhas": 229
+  },
+  "scripts/edge-deploy": {
+   "arquivos": 29,
+   "linhas": 4090
+  },
+  "scripts/eslint": {
+   "arquivos": 1,
+   "linhas": 39
+  },
+  "scripts/ia": {
+   "arquivos": 1,
+   "linhas": 509
+  },
+  "scripts/inventario": {
+   "arquivos": 4,
+   "linhas": 786
+  },
+  "scripts/lib": {
+   "arquivos": 2,
+   "linhas": 166
+  },
+  "scripts/mutation": {
+   "arquivos": 1,
+   "linhas": 507
+  },
+  "scripts/qa": {
+   "arquivos": 6,
+   "linhas": 1591
+  },
+  "scripts/regras_negocio": {
+   "arquivos": 2,
+   "linhas": 2320
+  },
+  "scripts/supabase_snapshot": {
+   "arquivos": 1,
+   "linhas": 1590
+  },
+  "scripts/talkx": {
+   "arquivos": 6,
+   "linhas": 1354
+  },
+  "scripts/tarefas": {
+   "arquivos": 1,
+   "linhas": 333
+  },
+  "scripts/team-chat-db-validate.mjs": {
+   "arquivos": 1,
+   "linhas": 130
+  },
+  "scripts/team-chat-db-validate.unit.mjs": {
+   "arquivos": 1,
+   "linhas": 164
+  },
+  "scripts/ui-audit": {
+   "arquivos": 7,
+   "linhas": 651
+  },
+  "scripts/vercel": {
+   "arquivos": 2,
+   "linhas": 218
+  },
+  "src/App.tsx": {
+   "arquivos": 1,
+   "linhas": 230
+  },
+  "src/__tests__": {
+   "arquivos": 12,
+   "linhas": 1690
+  },
+  "src/adapters": {
+   "arquivos": 5,
+   "linhas": 590
+  },
+  "src/components": {
+   "arquivos": 2158,
+   "linhas": 368168
+  },
+  "src/config": {
+   "arquivos": 3,
+   "linhas": 125
+  },
+  "src/contexts": {
+   "arquivos": 2,
+   "linhas": 28
+  },
+  "src/data": {
+   "arquivos": 1,
+   "linhas": 637
+  },
+  "src/features": {
+   "arquivos": 6,
+   "linhas": 3298
+  },
+  "src/hooks": {
+   "arquivos": 981,
+   "linhas": 159433
+  },
+  "src/i18n": {
+   "arquivos": 2,
+   "linhas": 424
+  },
+  "src/integrations": {
+   "arquivos": 4,
+   "linhas": 15703
+  },
+  "src/lib": {
+   "arquivos": 279,
+   "linhas": 38505
+  },
+  "src/main.tsx": {
+   "arquivos": 1,
+   "linhas": 95
+  },
+  "src/pages": {
+   "arquivos": 70,
+   "linhas": 10678
+  },
+  "src/providers": {
+   "arquivos": 10,
+   "linhas": 2841
+  },
+  "src/routes": {
+   "arquivos": 2,
+   "linhas": 225
+  },
+  "src/segments": {
+   "arquivos": 2,
+   "linhas": 393
+  },
+  "src/services": {
+   "arquivos": 35,
+   "linhas": 5574
+  },
+  "src/styles": {
+   "arquivos": 10,
+   "linhas": 997
+  },
+  "src/test": {
+   "arquivos": 12,
+   "linhas": 1216
+  },
+  "src/types": {
+   "arquivos": 13,
+   "linhas": 1482
+  },
+  "src/utils": {
+   "arquivos": 15,
+   "linhas": 1708
+  },
+  "supabase/functions": {
+   "arquivos": 380,
+   "linhas": 114725
+  },
+  "tailwind.config.ts": {
+   "arquivos": 1,
+   "linhas": 441
+  },
+  "tests/contracts": {
+   "arquivos": 95,
+   "linhas": 20464
+  },
+  "vite.config.ts": {
+   "arquivos": 1,
+   "linhas": 132
+  },
+  "vitest.config.ts": {
+   "arquivos": 1,
+   "linhas": 69
+  },
+  "vitest.contracts.config.ts": {
+   "arquivos": 1,
+   "linhas": 36
+  }
+ },
+ "maiores_arquivos": [
+  {
+   "arquivo": "src/integrations/supabase/types.ts",
+   "linhas": 15630
+  },
+  {
+   "arquivo": "scripts/regras_negocio/generate.py",
+   "linhas": 2128
+  },
+  {
+   "arquivo": "scripts/supabase_snapshot/snapshot.py",
+   "linhas": 1590
+  },
+  {
+   "arquivo": "supabase/functions/talkx-send/index.ts",
+   "linhas": 1467
+  },
+  {
+   "arquivo": "supabase/functions/_shared/evolution-webhook-messages.ts",
+   "linhas": 1426
+  },
+  {
+   "arquivo": "supabase/functions/_shared/ai-usage.ts",
+   "linhas": 1364
+  },
+  {
+   "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/database/build_report.py",
+   "linhas": 1298
+  },
+  {
+   "arquivo": "src/components/catalog/ExternalProductManagement.tsx",
+   "linhas": 1228
+  },
+  {
+   "arquivo": "supabase/functions/multiplix-send/index.ts",
+   "linhas": 1199
+  },
+  {
+   "arquivo": "src/components/talkx/useCampaignEditor.ts",
+   "linhas": 1165
+  },
+  {
+   "arquivo": "supabase/functions/evolution-api/index.ts",
+   "linhas": 1123
+  },
+  {
+   "arquivo": "supabase/functions/multiplix-dispatch/actions/audience.ts",
+   "linhas": 1085
+  },
+  {
+   "arquivo": "src/components/catalog/catalogShared.tsx",
+   "linhas": 1066
+  },
+  {
+   "arquivo": "src/lib/journey/mappers.ts",
+   "linhas": 1046
+  },
+  {
+   "arquivo": "supabase/functions/_shared/ai-generate.ts",
+   "linhas": 1045
+  },
+  {
+   "arquivo": "supabase/functions/multiplix-dispatch/actions/inspect.ts",
+   "linhas": 1040
+  },
+  {
+   "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/providers/build_report.py",
+   "linhas": 1024
+  },
+  {
+   "arquivo": "supabase/functions/crm-integration/index.ts",
+   "linhas": 998
+  },
+  {
+   "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/auth/extend-second-pass.py",
+   "linhas": 975
+  },
+  {
+   "arquivo": "src/features/talk-me/TalkMeView.tsx",
+   "linhas": 960
+  },
+  {
+   "arquivo": "supabase/functions/ai-proxy/index.ts",
+   "linhas": 953
+  },
+  {
+   "arquivo": "src/components/multiplix/MultiplixView.tsx",
+   "linhas": 949
+  },
+  {
+   "arquivo": "src/components/talkx/TalkXCampaignRunning.tsx",
+   "linhas": 947
+  },
+  {
+   "arquivo": "supabase/functions/connection-health-check/index.ts",
+   "linhas": 917
+  },
+  {
+   "arquivo": "scripts/ai-context/gerar.mjs",
+   "linhas": 916
+  }
+ ],
+ "qualidade": {
+  "any": 349,
+  "console_log": 419,
+  "ts_ignore": 0,
+  "eslint_disable": 1,
+  "todos": 46,
+  "arquivos_acima_500_linhas": 98
+ },
+ "todos": [
+  {
+   "arquivo": "e2e/onboarding-tour.spec.ts",
+   "linha": 10,
+   "tipo": "TODO",
+   "texto": "navegador/sessão nova, porque `useOnboarding`"
+  },
+  {
+   "arquivo": "scripts/ai-context/gerar.mjs",
+   "linha": 185,
+   "tipo": "TODO",
+   "texto": "|FIXME|HACK|XXX)\\b[:\\s-]*([^\\n]{0,100})/.exec(line); if (m) todos.push({ linha: ln, tipo: m[1], text"
+  },
+  {
+   "arquivo": "scripts/ai-context/gerar.mjs",
+   "linha": 219,
+   "tipo": "TODO",
+   "texto": "|FIXME|HACK|XXX)\\b[:\\s-]*([^\\n]{0,100})/.exec(l); return m ? { linha: i + 1, tipo: m[1], texto: m[2]"
+  },
+  {
+   "arquivo": "scripts/ci/ci-artifacts.unit.mjs",
+   "linha": 11,
+   "tipo": "TODO",
+   "texto": "PR"
+  },
+  {
+   "arquivo": "scripts/ci/types-sync-workflow.unit.mjs",
+   "linha": 4,
+   "tipo": "TODO",
+   "texto": "run `action_required` devolvido por `listWorkflowRunsForRepo` filtrando"
+  },
+  {
+   "arquivo": "scripts/edge-deploy/manifest.unit.mjs",
+   "linha": 262,
+   "tipo": "TODO",
+   "texto": "deploy de Edge da main, entao"
+  },
+  {
+   "arquivo": "scripts/edge-deploy/secrets-scope.mjs",
+   "linha": 30,
+   "tipo": "TODO",
+   "texto": "deploy, quando ha valor. */"
+  },
+  {
+   "arquivo": "src/components/agents/__tests__/AgentsView.capacidade.test.tsx",
+   "linha": 2,
+   "tipo": "TODO",
+   "texto": "contato com"
+  },
+  {
+   "arquivo": "src/components/alerts/__tests__/EvolutionDisconnectBanner.a11y.test.tsx",
+   "linha": 9,
+   "tipo": "TODO",
+   "texto": "o texto dela com a regra"
+  },
+  {
+   "arquivo": "src/components/automations/AutomationEditorDialog.tsx",
+   "linha": 121,
+   "tipo": "TODO",
+   "texto": "tipo que declara a chave `message`"
+  },
+  {
+   "arquivo": "src/components/contacts/ContactActivityTimeline.tsx",
+   "linha": 63,
+   "tipo": "TODO",
+   "texto": "o texto dele com a regra `region` (fora de `<main>`)."
+  },
+  {
+   "arquivo": "src/components/contacts/__tests__/ContactKanbanAggregates.test.tsx",
+   "linha": 7,
+   "tipo": "TODO",
+   "texto": "update aceito pelo banco — inclusive quando um drag"
+  },
+  {
+   "arquivo": "src/components/inbox/FileUploader.tsx",
+   "linha": 137,
+   "tipo": "TODO",
+   "texto": "o resultado como ref-like e marcar cada"
+  },
+  {
+   "arquivo": "src/components/reports/__tests__/AbandonmentRate.test.tsx",
+   "linha": 6,
+   "tipo": "TODO",
+   "texto": "contato com qualquer mensagem de agente no"
+  },
+  {
+   "arquivo": "src/components/talkx/__tests__/TalkXSegments.filtrosPaginacao.test.tsx",
+   "linha": 31,
+   "tipo": "TODO",
+   "texto": "o recorte na URL;"
+  },
+  {
+   "arquivo": "src/components/talkx/__tests__/TalkXSegments.filtrosPaginacao.test.tsx",
+   "linha": 337,
+   "tipo": "TODO",
+   "texto": "o recorte na URL (não é o recorte que se perde na página)."
+  },
+  {
+   "arquivo": "src/components/tasks/__tests__/quadroCapturaConcluidoToggleVazios.test.tsx",
+   "linha": 193,
+   "tipo": "TODO",
+   "texto": "controle novo do cartão tem alvo de >= 40 px nas"
+  },
+  {
+   "arquivo": "src/components/tasks/list/taskRowCells.tsx",
+   "linha": 17,
+   "tipo": "TODO",
+   "texto": "arquivo prazoCompleto.tsx não implementado — inline temporário abaixo"
+  },
+  {
+   "arquivo": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",
+   "linha": 656,
+   "tipo": "TODO",
+   "texto": "handle paste image upload');"
+  },
+  {
+   "arquivo": "src/hooks/chat/__tests__/useMessages.overlay.test.tsx",
+   "linha": 9,
+   "tipo": "TODO",
+   "texto": "fetch. Um `delivered`/conteúdo antigo (evento ocorrido antes da consulta) voltava"
+  },
+  {
+   "arquivo": "src/hooks/payments/usePaymentLinks.ts",
+   "linha": 2,
+   "tipo": "TODO",
+   "texto": "hook de links de pagamento — não implementado."
+  },
+  {
+   "arquivo": "src/hooks/tasks/__tests__/useMyWorkItems.test.tsx",
+   "linha": 405,
+   "tipo": "TODO",
+   "texto": "o estado ------------"
+  },
+  {
+   "arquivo": "src/hooks/team-chat/useTeamFiles.ts",
+   "linha": 9,
+   "tipo": "XXX",
+   "texto": "— painel \"Arquivos da Equipe\" (V3): fonte ÚNICA da lista de anexos do"
+  },
+  {
+   "arquivo": "src/lib/__tests__/rlsSchemaGuard.test.ts",
+   "linha": 25,
+   "tipo": "TODO",
+   "texto": "o schema public bate exatamente"
+  },
+  {
+   "arquivo": "src/lib/journey/__tests__/stats.test.ts",
+   "linha": 200,
+   "tipo": "TODO",
+   "texto": "o histórico, inclusive o que está fora do período', () => {"
+  },
+  {
+   "arquivo": "src/lib/journey/stats.ts",
+   "linha": 12,
+   "tipo": "TODO",
+   "texto": "o histórico."
+  },
+  {
+   "arquivo": "src/providers/__tests__/CallSessionProvider.test.tsx",
+   "linha": 457,
+   "tipo": "TODO",
+   "texto": "desfecho em `HANGUP_REMOTE`"
+  },
+  {
+   "arquivo": "supabase/functions/_shared/evolution-go-routes.ts",
+   "linha": 240,
+   "tipo": "TODO",
+   "texto": "not working\" no fonte — retornava vazio."
+  },
+  {
+   "arquivo": "supabase/functions/_shared/messaging/media.ts",
+   "linha": 186,
+   "tipo": "TODO",
+   "texto": "binário conhecido ter sido descartado. Assinatura desconhecida devolve"
+  },
+  {
+   "arquivo": "supabase/functions/ai-jobs-worker/index.ts",
+   "linha": 389,
+   "tipo": "TODO",
+   "texto": "caminho — inclusive erro e infra."
+  },
+  {
+   "arquivo": "supabase/functions/auto-close-conversations/index.test.ts",
+   "linha": 48,
+   "tipo": "TODO",
+   "texto": "acesso de tabela, insert e update — é"
+  },
+  {
+   "arquivo": "supabase/functions/classify-emoji/index.ts",
+   "linha": 197,
+   "tipo": "TODO",
+   "texto": "desfecho de erro (HTTP não-ok,"
+  },
+  {
+   "arquivo": "supabase/functions/classify-sticker/index.ts",
+   "linha": 217,
+   "tipo": "TODO",
+   "texto": "desfecho de erro (HTTP não-ok,"
+  },
+  {
+   "arquivo": "supabase/functions/elevenlabs-webhook/index.test.ts",
+   "linha": 12,
+   "tipo": "TODO",
+   "texto": "insert,"
+  },
+  {
+   "arquivo": "supabase/functions/elevenlabs-webhook/index.ts",
+   "linha": 109,
+   "tipo": "TODO",
+   "texto": ""
+  },
+  {
+   "arquivo": "supabase/functions/multiplix-send/index.test.ts",
+   "linha": 2035,
+   "tipo": "TODO",
+   "texto": "erro do provedor em retry:"
+  },
+  {
+   "arquivo": "supabase/functions/talkx-ai/index.test.ts",
+   "linha": 565,
+   "tipo": "TODO",
+   "texto": "caminho: se falhou, é 500 — nunca"
+  },
+  {
+   "arquivo": "supabase/functions/talkx-ai/index.ts",
+   "linha": 496,
+   "tipo": "TODO",
+   "texto": "caminho: se falhar, a"
+  },
+  {
+   "arquivo": "supabase/functions/talkx-send/engine.integration.test.ts",
+   "linha": 40,
+   "tipo": "TODO",
+   "texto": "o arquivo — a"
+  },
+  {
+   "arquivo": "supabase/functions/voice-copilot-action/index.ts",
+   "linha": 246,
+   "tipo": "TODO",
+   "texto": ""
+  },
+  {
+   "arquivo": "tests/contracts/ia051-correlacao-no-caminho-sincrono.test.ts",
+   "linha": 105,
+   "tipo": "TODO",
+   "texto": "log de consumo do ai-proxy carregue o id."
+  },
+  {
+   "arquivo": "tests/contracts/pdfjs-sob-demanda.contract.test.ts",
+   "linha": 178,
+   "tipo": "TODO",
+   "texto": "o src/** com o compilador, e o teto padrão de 5 s do `vitest.contracts.config.ts` (o"
+  },
+  {
+   "arquivo": "tests/contracts/schemas.contract.test.ts",
+   "linha": 75,
+   "tipo": "TODO",
+   "texto": "schema exportado tem casos de payload válido,"
+  },
+  {
+   "arquivo": "docs/_arquivo/inventario/gen_report.py",
+   "linha": 74,
+   "tipo": "TODO",
+   "texto": "/FIXME/WIP) | {cat_counts.get('F',0)} |\")"
+  },
+  {
+   "arquivo": "docs/_arquivo/inventario/gen_report.py",
+   "linha": 232,
+   "tipo": "TODO",
+   "texto": "|FIXME|WIP|XXX|placeholder|not implemented` nas linhas adicionadas (linhas começando com `+`). Não é"
+  },
+  {
+   "arquivo": "scripts/regras_negocio/generate.py",
+   "linha": 565,
+   "tipo": "TODO",
+   "texto": "\", \"http\", \"import\")) and \"://\" not in c:"
+  }
+ ],
+ "alertas": {
+  "rotas_sem_arquivo": [],
+  "componentes_ambiguos": [],
+  "menu_sem_destino": [
+   "Enviados -> SENT",
+   "Favoritos -> STARRED",
+   "Importantes -> IMPORTANT",
+   "Inbox -> INBOX",
+   "Lixeira -> TRASH",
+   "Não lidos -> UNREAD",
+   "Rascunhos -> DRAFT",
+   "Spam -> SPAM"
+  ],
+  "edges_orfas": [
+   "ai-auto-tag",
+   "ai-usage-outbox-drain",
+   "auto-close-conversations",
+   "cleanup-rate-limit-logs",
+   "copilot-live",
+   "create-user",
+   "elevenlabs-agent-token",
+   "external-db-bridge",
+   "fetch-link-preview",
+   "gmail-send",
+   "gmail-sync",
+   "health",
+   "message-delivery",
+   "metrics",
+   "migrate-media-storage",
+   "multiplix-voices",
+   "recover-corrupted-audios",
+   "recover-message-media",
+   "send-rate-limit-alert",
+   "status",
+   "talkx-ai",
+   "talkx-report",
+   "talkx-scheduler",
+   "talkx-storage-purge",
+   "voice-copilot-action"
+  ],
+  "edges_chamadas_sem_pasta": [
+   "ai-contrato",
+   "alguma-edge",
+   "edge-a",
+   "edge-por-url",
+   "endpoint-novo",
+   "foo",
+   "inexistente",
+   "other",
+   "outra-funcao",
+   "so-mostrada",
+   "test",
+   "tick",
+   "x"
+  ],
+  "tabelas_sem_rls": [],
+  "tabelas_usadas_sem_definicao": [
+   "a",
+   "avatars",
+   "bucket",
+   "carriers",
+   "categories",
+   "companies",
+   "company_addresses",
+   "company_social_media",
+   "contact_phones",
+   "customers",
+   "fantasma",
+   "product_variants",
+   "so_teste",
+   "suppliers",
+   "t",
+   "t1",
+   "tabela",
+   "tx"
+  ],
+  "tabelas_com_drift_migration_vs_types": [
+   "app_settings",
+   "edge_rate_limits",
+   "email_attachments",
+   "email_messages",
+   "entity_versions",
+   "feature_flags",
+   "global_settings",
+   "gmail_accounts",
+   "messages",
+   "talkx_blacklist",
+   "talkx_contact_attributes",
+   "talkx_settings"
+  ],
+  "rpcs_sem_definicao": [
+   "complete_crm_sync_outbox",
+   "f",
+   "fn",
+   "fn_servico",
+   "get_companies_by_phones_batch",
+   "get_contact_360_by_phone",
+   "log_event",
+   "r1",
+   "record_away_message",
+   "record_incoming_call_event",
+   "same_day_rpc",
+   "should_send_away_message",
+   "sync_interaction_from_zapp",
+   "talkx_campaign_resume_precheck",
+   "zapp_catalog_stats"
+  ],
+  "componentes_orfaos": [
+   "src/components/calls/DialPad.tsx",
+   "src/components/cognitive/ProgressiveDisclosure.tsx",
+   "src/components/CommandPalette.tsx",
+   "src/components/dashboard/DraggableWidgetContainer.tsx",
+   "src/components/dashboard/SatisfactionAgentRanking.tsx",
+   "src/components/dashboard/SentimentHelpers.tsx",
+   "src/components/effects/ParallaxContainer.tsx",
+   "src/components/effects/ScrollEffects.tsx",
+   "src/components/gamification/AchievementDetailDialog.tsx",
+   "src/components/inbox/AIToolsPopover.tsx",
+   "src/components/inbox/AnalysisBadges.tsx",
+   "src/components/inbox/BusinessHoursBadge.tsx",
+   "src/components/inbox/chat/ChatHeaderToolbar.tsx",
+   "src/components/inbox/KeyboardShortcutsHelp.tsx",
+   "src/components/inbox/LinkPreview.tsx",
+   "src/components/inbox/MessageContextActions.tsx",
+   "src/components/inbox/MessagePreview.tsx",
+   "src/components/inbox/SentimentIndicator.tsx",
+   "src/components/inbox/SpeedSelector.tsx",
+   "src/components/inbox/tabs/journey/JourneyFilters.tsx",
+   "src/components/inbox/tabs/journey/JourneyStatsHero.tsx",
+   "src/components/inbox/tabs/journey/JourneyTimeline.tsx",
+   "src/components/inbox/TemplatesWithVariables.tsx",
+   "src/components/mfa/MFABackupCodes.tsx",
+   "src/components/payments/PaymentLinksView.tsx",
+   "src/components/reports/ScheduledReportsManager.tsx",
+   "src/components/SearchInput.tsx",
+   "src/components/settings/ConnectionAlertPreferences.tsx",
+   "src/components/talkx/report/TalkXCampaignReport.tsx",
+   "src/components/talkx/TalkXHelp.tsx",
+   "src/components/talkx/TalkXInteractiveEditor.tsx",
+   "src/components/talkx/TalkXMediaDropzone.tsx",
+   "src/components/talkx/tracking/TalkXOperationalTimeline.tsx",
+   "src/components/talkx/tracking/TalkXSegmentProgressTable.tsx",
+   "src/components/tasks/list/taskRowCells.tsx",
+   "src/components/tasks/shared/TaskCheckbox.tsx",
+   "src/components/team-chat/EnterDepartmentByCode.tsx",
+   "src/components/team-chat/GroupManagementDialog.tsx",
+   "src/components/team-chat/ParticipantStatsGraph.tsx",
+   "src/components/team-chat/TeamChatA11y.tsx",
+   "src/components/team-chat/TeamPerformancePanel.tsx",
+   "src/components/team-chat/TransferConversationDialog.tsx",
+   "src/components/ui/empty-states.tsx",
+   "src/components/ui/form.tsx",
+   "src/components/ui/SkeletonList.tsx"
+  ],
+  "componentes_com_nome_duplicado": [
+   "AchievementBadge",
+   "BreadcrumbItem",
+   "CommandGroup",
+   "CommandItem",
+   "CommandPalette",
+   "ContactsEmptyState",
+   "ConversationHeatmap",
+   "DashboardEmptyState",
+   "EmptyState",
+   "FeatureSpotlight",
+   "FilterOption",
+   "FloatingParticles",
+   "HandoffDialog",
+   "InboxEmptyState",
+   "InfoBanner",
+   "InternalNotesPanel",
+   "LiveRegion",
+   "MagneticButton",
+   "MessagePreview",
+   "MotionButton",
+   "NotificationsEmptyState",
+   "RippleButton",
+   "SLAAgentTable",
+   "ScheduledReportsManager",
+   "SearchEmptyState",
+   "SectionCard",
+   "SectionHeader",
+   "SkeletonList",
+   "SkipLinks",
+   "StaggerList",
+   "StatusPill",
+   "TalkXNoData",
+   "TemplatePreview",
+   "Toaster",
+   "TranscriptionsEmptyState",
+   "TrendIndicator",
+   "VariableInserter",
+   "ViewersIndicator",
+   "VoiceDictationButton"
+  ],
+  "scripts_orfaos": [
+   "scripts/ai-context/cenarios.mjs",
+   "scripts/db-audit/n118-window-open-proof.test.sql",
+   "scripts/db-audit/validate-talkx-runtime.mjs"
+  ],
+  "env_usadas_nao_declaradas": [
+   "DEV",
+   "MODE",
+   "NODE_ENV",
+   "PROD",
+   "TZ",
+   "VITE_APP_VERSION",
+   "VITE_SEARCHBOX_MONTHLY_SESSION_LIMIT",
+   "ZAPP_CSS_UNDER_TEST"
+  ],
+  "ciclos_de_import": 11,
+  "possiveis_segredos_no_codigo": [
+   "scripts/ai-context/cenarios.mjs:102",
+   "scripts/ci/edge-coverage-authz.unit.mjs:398",
+   "scripts/ci/inventario-banco.unit.mjs:147",
+   "src/integrations/supabase/client.ts:17"
+  ]
+ },
+ "erros_do_gerador": []
+}

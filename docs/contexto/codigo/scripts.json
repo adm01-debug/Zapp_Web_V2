@@ -1,0 +1,4034 @@
+{
+ "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
+ "format_version": 2,
+ "total": 376,
+ "scripts": [
+  {
+   "arquivo": "scripts/ai-context/cenarios.mjs",
+   "descricao": "Simulação de cenários do gerador: monta centenas de repositórios sintéticos (variantes de SQL, rotas, menus, edges, workflows, monorepo, Python, arquivos corrompidos, fuzz) e confere:",
+   "linhas": 173,
+   "env": [
+    "A",
+    "K",
+    "NODE_ENV",
+    "SCRIPT_ONLY",
+    "SRK",
+    "SUPABASE_URL",
+    "VITE_A",
+    "VITE_C",
+    "VITE_FEATURE_X",
+    "X"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": true
+  },
+  {
+   "arquivo": "scripts/ai-context/gerar.mjs",
+   "descricao": "Gera o contexto de projeto para agentes de IA (padrão: inventario/ia/*). Zero dependências. Node >= 18. Genérico: funciona em qualquer repositório.",
+   "linhas": 916,
+   "env": [
+    "AI_CONTEXT_DIR",
+    "AI_CONTEXT_ROOT"
+   ],
+   "npm_scripts": [
+    "contexto:ia"
+   ],
+   "workflows": [
+    "contexto.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/catalog/validate-plan.mjs",
+   "descricao": "Valida docs/catalogo/PLANO_IMPLEMENTACAO_CATALOGO_100.md: 100 etapas, 10 sub-etapas e checklist em cada. S8707: o caminho do plano vem do argumento; nunca entra cru no readFileSync.",
+   "linhas": 56,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/a11y-button-name-ratchet.mjs",
+   "descricao": "Ratchet: fails CI if the count of a11y button-name violations grows above baseline. Covers three defect classes from the Y13 audit:",
+   "linhas": 307,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/actions-kpi.mjs",
+   "descricao": "E79: KPI de uso do GitHub Actions, para o branch-hygiene-audit semanal. Medido antes de escrever (03/10/2026): a API devolve `run_started_at` e",
+   "linhas": 246,
+   "env": [
+    "GH_TOKEN",
+    "GITHUB_API_URL",
+    "GITHUB_REPOSITORY",
+    "GITHUB_STEP_SUMMARY",
+    "GITHUB_TOKEN",
+    "JANELA_DIAS"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "branch-hygiene-audit.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/audit-prod.mjs",
+   "descricao": "Bloqueia o CI quando `bun audit` reporta advisory HIGH/CRITICAL alcancavel a partir de uma dependencia de PRODUCAO (package.json#dependencies). Advisories",
+   "linhas": 221,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "ci.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/branch-podaveis.mjs",
+   "descricao": "W98 — comando pronto de poda de branches (usado pelo branch-hygiene-audit.yml). O plano oferecia duas saídas: apagar sozinho ou só gerar o comando. Apagar é",
+   "linhas": 193,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/bump-toolchain.mjs",
+   "descricao": "* W40: Verifica se há versão mais nova das ferramentas em .github/toolchain.json.",
+   "linhas": 164,
+   "env": [
+    "GH_TOKEN",
+    "GITHUB_STEP_SUMMARY",
+    "GITHUB_TOKEN"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/bundle-budget.mjs",
+   "descricao": "Guard do budget de bundle inicial. Le dist/index.html, soma o gzip de todo JS carregado no first paint (script[type=module] + link[rel=modulepreload]) e do",
+   "linhas": 149,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "ci.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/check-audit-pdf-determinism.mjs",
+   "descricao": null,
+   "linhas": 27,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/check-bundle-secrets.mjs",
+   "descricao": "Guarda que o bundle publicado (dist/) nao expoe o JWT service_role do Supabase. Incidente de 20/08 (porta da V3): a variavel de ambiente errada",
+   "linhas": 176,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/check-claude-md-integrity.mjs",
+   "descricao": "* GA02: garante que o CLAUDE.md nao foi apagado ou esvaziado por outra sessao.",
+   "linhas": 53,
+   "env": [
+    "CLAUDE_MD_BASE"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "ci.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/check-e2e-artifact-secrets.mjs",
+   "descricao": "* Guarda: workflow que usa as credenciais de E2E nao pode publicar o report do",
+   "linhas": 162,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/check-edge-error-exposure.mjs",
+   "descricao": "E33 do PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01: trava a invariante que fechou o alerta de Code Scanning #13 (js/stack-trace-exposure, supabase/functions/_shared/validation.ts).",
+   "linhas": 293,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/check-pr-workflow-secrets.mjs",
+   "descricao": null,
+   "linhas": 190,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/check-quarantine.mjs",
+   "descricao": "E87: quarentena formal da suite E2E. Uma quarentena sem prazo e' um `skip` com outro nome: ninguem revisa, o motivo se",
+   "linhas": 99,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/check-supabase-url-import-meta.mjs",
+   "descricao": "N-024: guarda contra leitura de VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY em src/. O ambiente de hospedagem injeta essas variaveis apontando para outro",
+   "linhas": 168,
+   "env": [
+    "VITE_",
+    "VITE_SUPABASE_URL"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/check-talkx-pr-body.mjs",
+   "descricao": "* Verifica a \"definição de pronto\" no corpo da PR de cada etapa do plano V4",
+   "linhas": 123,
+   "env": [
+    "PR_BODY",
+    "PR_TITLE"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/check-test-inventory.mjs",
+   "descricao": "E48: verifica que todo .test.ts (supabase/functions/) e .test.sh (scripts/db-audit/) tem correspondente registrado em ci.yml / db-guard.yml.",
+   "linhas": 356,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/check-workflow-pins-resolvem.mjs",
+   "descricao": "Todo pin de Action (`owner/repo@<sha40> # vX.Y.Z`) precisa ser o commit REAL da tag declarada no comentário.",
+   "linhas": 98,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/check-workflow-pins.mjs",
+   "descricao": "Fonte única de versões (E75): os valores vivem em .github/toolchain.json e nenhum workflow pode literalizar uma versão diferente da declarada ali. O arquivo guarda a",
+   "linhas": 251,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/commit-msg-lint.mjs",
+   "descricao": "Gate de mensagem de commit: a funcao do commitlint sem dependencia nova (os pacotes lint-staged/commitlint sao proibidos pelas regras da 2a leva). O hook .husky/commit-msg",
+   "linhas": 108,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/e2e-teardown.mjs",
+   "descricao": "E25 (docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md, achado G-09): limpeza da fixture do E2E logado SEM a chave mestra do banco.",
+   "linhas": 108,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "e2e-logado.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/fila-merge.mjs",
+   "descricao": "Fila de merge serial (substitui a fila nativa, indisponível em conta `User`). Problema medido em 15/10/2026: com `strict=true`, cada merge na `main` deixava",
+   "linhas": 205,
+   "env": [
+    "GITHUB_OUTPUT",
+    "GITHUB_REPOSITORY",
+    "GITHUB_STEP_SUMMARY"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "auto-update-pr-branch.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/gerar-matriz-edge-tabela.mjs",
+   "descricao": "Inventário 23: matriz edge function x tabela. Escaneia supabase/functions/<funcao>/**/*.ts (sem testes, sem _shared) e anota cada tabela citada em `.from('tabela')`.",
+   "linhas": 87,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/github-settings-guard.mjs",
+   "descricao": "* E13/E14 + E95: confere o perimetro do GitHub contra o baseline versionado",
+   "linhas": 619,
+   "env": [
+    "ADMIN_READ_TOKEN",
+    "GITHUB_REPOSITORY",
+    "GITHUB_RUN_ID",
+    "GITHUB_TOKEN",
+    "PERIMETER_SNAPSHOT_PATH",
+    "SETTINGS_GUARD_AUTOR"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "settings-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/implicit-any-ratchet.mjs",
+   "descricao": "Ratchet: fails CI if noImplicitAny error count grows above baseline. To tighten: fix errors, update baseline.json to the new lower count.",
+   "linhas": 140,
+   "env": [],
+   "npm_scripts": [
+    "implicit-any-check"
+   ],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/install-pgbouncer.sh",
+   "descricao": "GitHub-hosted runners incluem repositorios de terceiros (Chrome, Microsoft, etc.). Um espelho inconsistente nesses repositorios nao pode impedir jobs que",
+   "linhas": 37,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-live-guard.yml",
+    "types-sync.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/install-postgresql-client.sh",
+   "descricao": "GitHub-hosted runners incluem repositorios de terceiros (Chrome, Microsoft, etc.). Um espelho inconsistente nesses repositorios nao pode impedir jobs que",
+   "linhas": 37,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-live-guard.yml",
+    "db-migrate.yml",
+    "targeted-ledger-evidence.yml",
+    "types-sync.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/issue-rotativa.mjs",
+   "descricao": "* W91 / E51 — política de rotação de issue de alerta.",
+   "linhas": 120,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/lint-ratchet.mjs",
+   "descricao": "Artefatos produzidos por testes nao sao fonte do projeto. O ESLint nao le o .gitignore por padrao em todas as versoes/configuracoes, entao o ratchet os",
+   "linhas": 651,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/marcador-specs.mjs",
+   "descricao": "E83: dedupe do alerta da suite logada, no mesmo mecanismo da E44 (db-live-guard.yml): um marcador HTML invisivel identifica a causa, e o alerta so e' repetido quando a",
+   "linhas": 92,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/matriz-oth013-validar.py",
+   "descricao": "Valida a matriz documental canônica do achado OTH-013.\"\"\"",
+   "linhas": 164,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/redigir-relatorio.mjs",
+   "descricao": "E82: redige o relatório do Playwright ANTES de virar artifact. `::add-mask::` protege o LOG do run -- não o arquivo. Dois motivos, ambos medidos:",
+   "linhas": 411,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "e2e-logado.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/render-workflow-docs.mjs",
+   "descricao": "* W96: gera `docs/ci/README.md` a partir dos blocos `# docs:` e `# nao-e-bug:` de cada workflow.",
+   "linhas": 217,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "ci.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/reuso-arvore.mjs",
+   "descricao": "Reuso de árvore já testada: o push na `main` não refaz a CI que a PR acabou de provar. Com `strict=true` + squash, a PR só entra atualizada com a main, então o commit de",
+   "linhas": 132,
+   "env": [
+    "GH_TOKEN",
+    "GITHUB_EVENT_NAME",
+    "GITHUB_OUTPUT",
+    "GITHUB_REPOSITORY",
+    "GITHUB_SHA",
+    "GITHUB_STEP_SUMMARY",
+    "GITHUB_TOKEN"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/sla-code-scanning.mjs",
+   "descricao": "W83 — SLA dos alertas abertos de Code Scanning (usado pelo branch-hygiene-audit.yml). high/critical → 14 dias; medium/low → 30 dias. Violação → exit 1.",
+   "linhas": 79,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/team-chat-local-gates.sh",
+   "descricao": "N-069 — comando único das provas de banco do chat interno (Team Chat). POR QUE EXISTE: as provas de banco do chat interno vivem soltas em",
+   "linhas": 88,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/typecheck-ratchet.mjs",
+   "descricao": "tsc --noEmit (sem -p/-b) e um no-op nesta config: tsconfig.json tem \"files\": [] e so \"references\" para tsconfig.app.json/tsconfig.node.json. Sem \"--build\", o",
+   "linhas": 373,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "ci.yml",
+    "types-sync.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/vercel-env-baseline.mjs",
+   "descricao": "V069: CLI — valida lista de vars reais contra o baseline. Uso: echo '[\"VITE_A\",\"VITE_B\"]' | node scripts/ci/vercel-env-baseline.mjs --target=production",
+   "linhas": 73,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/vercel-env-cleanup.mjs",
+   "descricao": "* V043-V065 — Remove vars perigosas/mortas do Vercel.",
+   "linhas": 95,
+   "env": [
+    "DRY_RUN",
+    "VERCEL_TOKEN"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "vercel-env-cleanup.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/workflow-invariants.mjs",
+   "descricao": "* scripts/ci/workflow-invariants.mjs — invariantes estáticos R3 e R5",
+   "linhas": 222,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/admin-cron-jobs-rpc.test.sh",
+   "descricao": "t_ac2fa555 (paridade global admin, 11/10/2026): o painel admin do V3 lista os jobs do pg_cron e liga/desliga os da propria aplicacao. No V2 nao havia RPC: nada acessava",
+   "linhas": 350,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/ai-block03-vocabulary-contract.test.sh",
+   "descricao": "IA-030 — ensaio de MIGRACAO + REVERSAO do contrato de vocabulario de IA (Bloco 03). Ate aqui a migration de contrato",
+   "linhas": 574,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/ai-read-policies-queue-scope.test.sh",
+   "descricao": "Contrato de autorizacao da LEITURA de analises de IA e etiquetas — lacuna L8 da matriz IA-004 (caso de aceite N6).",
+   "linhas": 310,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/ai-usage-cost-window-open.test.sh",
+   "descricao": "Item 265 (R2-AUTH-041, P2) — a consulta de CUSTO do painel de IA recebia `p_until` nulo (janela aberta ate agora) e comparava `l.created_at < NULL`:",
+   "linhas": 158,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/anon-privileges-contact-messages.test.sh",
+   "descricao": "Contrato executavel da migration 20261011003020 (SEC-RLS_CONTATOS_MENSAGENS-05): - as 17 tabelas de contatos/mensagens deixam de conceder QUALQUER privilegio de",
+   "linhas": 156,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/assume-return-conversation.test.sh",
+   "descricao": "Cartao t_675d0cac / t_7602496c (feat(db) RPCs assumir_conversa / devolver_conversa_fila): a V2 so tinha \"Transferir\"; a V3 tem \"Assumir\" e \"Devolver a fila\". A correcao",
+   "linhas": 631,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/auto-reconnect-logs.test.sh",
+   "descricao": "feat(db): auto-reconexao de conexoes WhatsApp (colunas por conexao + reconnection_logs). BLOCO A — estado ANTERIOR (defeito): sem a migration, a tabela public.reconnection_logs",
+   "linhas": 372,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/buckets-stickers-team-chat-files.test.sh",
+   "descricao": "SEC-DEFINER_GRANTS_STORAGE-06/08 (docs/audits/SEGURANCA_DEFINER_GRANTS_STORAGE_2026-10-07.md). Prova, em PostgreSQL descartavel, a migration",
+   "linhas": 287,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/calls-telefonia-contract.test.sh",
+   "descricao": "Contrato comportamental da Telefonia v2 (plano 100 etapas, Fase 2). Prova, em PostgreSQL descartável, que:",
+   "linhas": 374,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/catalog-manifest.test.sh",
+   "descricao": null,
+   "linhas": 256,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh",
+   "descricao": "R2-DB-010 (item 296, P2) — \"Usuario pode zerar o contador de requisicoes do catalogo pela RPC publica autenticada\" (docs/reconciliation/reaudit/2026-10-03/reports/database/report.md).",
+   "linhas": 250,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/catalog.sql",
+   "descricao": null,
+   "linhas": 88,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-catalog-fresh.mjs",
+   "descricao": "* Confere se supabase/schema-catalog.json ainda reflete o banco.",
+   "linhas": 177,
+   "env": [
+    "CATALOG_IDENTITY_PATH",
+    "CATALOG_PATH",
+    "DESTINO_URL"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-live-guard.yml",
+    "types-sync.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-e2e-fixtures.sql",
+   "descricao": null,
+   "linhas": 111,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-grants-fresh.mjs",
+   "descricao": "* Confere se scripts/db-audit/grants-baseline.json ainda reflete o banco.",
+   "linhas": 103,
+   "env": [
+    "GRANTS_BASELINE_PATH"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "types-sync.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-live-invariants.sql",
+   "descricao": null,
+   "linhas": 305,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-live-invariants.test.sh",
+   "descricao": "Prova, num PostgreSQL descartavel, que a guarda geral de invariantes do banco vivo scripts/db-audit/check-live-invariants.sql:",
+   "linhas": 295,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-manifest-fresh.mjs",
+   "descricao": "* Compara supabase/schema-manifest.json com uma geracao fresca do banco oficial.",
+   "linhas": 115,
+   "env": [
+    "CATALOG_IDENTITY_PATH",
+    "DESTINO_URL",
+    "MANIFEST_PATH"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-live-guard.yml",
+    "types-sync.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-mcp-exec-acl.sql",
+   "descricao": null,
+   "linhas": 385,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-mcp-exec-acl.test.sh",
+   "descricao": null,
+   "linhas": 360,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-migration-drift.mjs",
+   "descricao": "* Valida supabase/migrations e compara cada migration com",
+   "linhas": 892,
+   "env": [
+    "DESTINO_URL",
+    "LEDGER_RETRY_DELAYS_MS",
+    "MIGRATIONS_DIR",
+    "MIGRATION_EVIDENCE_PATH",
+    "PSQL_BIN"
+   ],
+   "npm_scripts": [
+    "db:guard"
+   ],
+   "workflows": [
+    "db-guard.yml",
+    "db-migrate.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-realtime-subscriptions.mjs",
+   "descricao": null,
+   "linhas": 243,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-reconcile-ledger-drift.test.sh",
+   "descricao": null,
+   "linhas": 186,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-remocoes-destrutivas.mjs",
+   "descricao": "* Gate 3 do types-sync — remocoes destrutivas (E19 da auditoria de GitHub Actions",
+   "linhas": 141,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "types-sync.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-runtime-config.mjs",
+   "descricao": "S8707: o caminho de saida vem do argumento; nunca entra cru no writeFileSync. A guarda vive no modulo compartilhado (scripts/lib/seguranca-processo.mjs):",
+   "linhas": 127,
+   "env": [
+    "DESTINO_URL",
+    "PSQL_BIN"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-live-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-screen-permission-db-guards.mjs",
+   "descricao": "* Lista as permissoes NOMEADAS que a tela usa para esconder acao e diz, para",
+   "linhas": 220,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-secdef-public-execute.sql",
+   "descricao": null,
+   "linhas": 59,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-secdef-public-execute.test.sh",
+   "descricao": "M-DB-02: prova, num PostgreSQL descartavel, que a guarda generica scripts/db-audit/check-secdef-public-execute.sql (a) bloqueia o estado anterior",
+   "linhas": 214,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-talkx-transition-contract.sql",
+   "descricao": null,
+   "linhas": 95,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-talkx-view-invoker.sql",
+   "descricao": null,
+   "linhas": 72,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-triple-parity.mjs",
+   "descricao": "* Gate de paridade tripla (E10 do plano 2026-09-20): consolida em um comando",
+   "linhas": 197,
+   "env": [
+    "DESTINO_URL",
+    "FUNCTIONS_DIR",
+    "GRANTS_BASELINE_PATH",
+    "GRANTS_SQL_PATH",
+    "MANIFEST_PATH",
+    "MIGRATIONS_DIR",
+    "PSQL_BIN"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-live-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-webhook-failures-acl.sql",
+   "descricao": null,
+   "linhas": 142,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-webhook-failures-acl.test.sh",
+   "descricao": null,
+   "linhas": 142,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/confirm-hash.mjs",
+   "descricao": "E64 (auditoria de GitHub Actions, 2026-10-01) -- defeito F-11, ja documentado: \"confirm_runtime_sha256 nao amarra o arquivo\" (PLANO_..._2026-09-27.md:196 e",
+   "linhas": 65,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/consolidar-veredito.mjs",
+   "descricao": "Veredito do contrato vivo do DB Live Guard (.github/workflows/db-live-guard.yml). Por que esta logica vive aqui e nao num heredoc do YAML: os passos de",
+   "linhas": 187,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-live-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/contacts-legacy-visibility.test.sh",
+   "descricao": "Contrato da F5 do plano de Contatos (docs/audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md, etapa 51, decisao D4): contato legado (is_lid_legacy) ou com telefone nao numerico fica",
+   "linhas": 225,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/contacts-soft-delete-and-status.test.sh",
+   "descricao": "Contrato de comportamento do modulo Contatos (plano de 100 etapas, F1):   7/8/10 - delete_contact/delete_contacts (soft-delete) e filtro de excluidos nas leituras",
+   "linhas": 799,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/contacts-stats-series-rpc.test.sh",
+   "descricao": "CT-E / PB-30 — prova em Postgres 17 descartavel (docker) que public.contacts_stats_series(boolean) devolve empresas_distinct e as 4 series do useContactsKpi (novos 30d em buckets de 4/6 dias,",
+   "linhas": 174,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/contracts/20260830170000.sql",
+   "descricao": null,
+   "linhas": 21,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/contracts/20260831120000.sql",
+   "descricao": null,
+   "linhas": 48,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/contracts/20260831150000.sql",
+   "descricao": null,
+   "linhas": 27,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/contracts/20260908180000.sql",
+   "descricao": null,
+   "linhas": 44,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/contracts/20260908220000.sql",
+   "descricao": null,
+   "linhas": 35,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/contracts/20260909120000.sql",
+   "descricao": null,
+   "linhas": 52,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/contracts/20260909180000.sql",
+   "descricao": null,
+   "linhas": 32,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/contracts/20260909200000.sql",
+   "descricao": null,
+   "linhas": 3,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/contracts/20260909210000.sql",
+   "descricao": null,
+   "linhas": 7,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/contracts/20260909230000.sql",
+   "descricao": null,
+   "linhas": 3,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/contracts/20260910100000.sql",
+   "descricao": null,
+   "linhas": 7,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/contracts/20260922220000.sql",
+   "descricao": ") Antes este fallback rejeitava a migration. Como cada contrato",
+   "linhas": 15,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/conversation-analyses-authorization.test.sh",
+   "descricao": "Contrato de autorizacao do INSERT em conversation_analyses — lacuna L3 da matriz IA-004 (caso de aceite N14).",
+   "linhas": 311,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/conversation-closures-reopen-same-day.test.sh",
+   "descricao": "R2-DB-008 / item 295 (P2) — \"Índice de um fechamento por dia impede encerrar novamente uma conversa reaberta\".",
+   "linhas": 450,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/conversation-events-insert-autor-visivel.test.sh",
+   "descricao": "Contrato do INSERT em public.conversation_events (N-143, SEC-RLS_CONTATOS_MENSAGENS-09). Defeito: a politica \"Authorized users can insert events\" (20260412170036) aceitava",
+   "linhas": 265,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/conversation-tasks-completed-indexes.test.sh",
+   "descricao": "N-083 — índices de tarefas concluídas do kanban (performance da listagem de tarefas em src/hooks/tasks/useMyWorkItems.ts).",
+   "linhas": 189,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/conversation-tasks-events-insert-authorization.test.sh",
+   "descricao": "Contrato de autorizacao dos INSERTs de conversation_tasks e conversation_events (auditoria docs/audits/SEGURANCA_RLS_CONTATOS_MENSAGENS_2026-10-07.md: SEC-...-06 e -09).",
+   "linhas": 278,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/crisis-room-snapshot.test.sh",
+   "descricao": "R2-AUTH-036 (Sala de Crise): prova, em PostgreSQL 17 descartável, que a RPC public.crisis_room_snapshot() mede as 4 métricas da tela num único agregado",
+   "linhas": 299,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/crm-sync-outbox-behavior.test.sh",
+   "descricao": "The official image briefly exposes a temporary bootstrap server before",
+   "linhas": 470,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/cron-remocao-vacuum-messages.test.sh",
+   "descricao": "Prova, em PostgreSQL descartavel, da remocao do job pg_cron residual `vacuum-messages-post-expurgo` (item 471 / DELTA-CRON-ANUAL).",
+   "linhas": 228,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/cron-secret-l5-contract.test.sh",
+   "descricao": "L5 da matriz docs/ia/IA-004-matriz-autorizacao.md: credencial DEDICADA de cron. Contrato A/B/C/D em PostgreSQL descartavel (docker), no mesmo formato dos testes",
+   "linhas": 883,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/dashboard-daily-series.test.sh",
+   "descricao": "Harness descartavel (Docker postgres:17-alpine) — DASHBOARD-03 (paridade V3 -> V2). Prova, em PostgreSQL 17, que a RPC public.dashboard_daily_series(p_days int)",
+   "linhas": 268,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
+   "descricao": "Fronteira real de autorização das RPCs do Dashboard (DASH-ACCEPTANCE-001, aceites DASH-091/DASH-092: testes executáveis no código produtivo, com JWT",
+   "linhas": 667,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/database-identity.mjs",
+   "descricao": null,
+   "linhas": 202,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/department-invite-contract-audit-vocabulary.test.sh",
+   "descricao": "TC-008 / item 163 (P2) — \"Contrato de convites e vocabulário de auditoria permanecem legados\" (docs/reconciliation/reports/team-chat/CODE_DATABASE_TRUTH_TEAM_CHAT.md; planos F09/F15/F17/TC-17/TC-28).",
+   "linhas": 473,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/department-whatsapp-mode-rpc.test.sh",
+   "descricao": "QA5-09 (cartao t_ed6b41cc): a tela de WhatsApp do departamento chamava, do NAVEGADOR, a RPC get_department_whatsapp_credentials — service_role-only no",
+   "linhas": 340,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/departments-admin-management.test.sh",
+   "descricao": "departments-admin-gestao (cartao t_8f85d6e8): a tela de departamentos do V3 e do admin precisa CRIAR, RENOMEAR e EXCLUIR com seguranca. Em V2 `departments` tinha escrita ampla",
+   "linhas": 583,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/diff.mjs",
+   "descricao": "* Diffa duas saidas v2 de manifest.sql.",
+   "linhas": 53,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/dispatch-scheduled-messages.test.sh",
+   "descricao": "Contrato do despacho de mensagens agendadas (public.dispatch_scheduled_messages). Causa raiz: public.scheduled_messages tem RLS, indice de pendentes e hook de tela,",
+   "linhas": 552,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/docker-shim.test.sh",
+   "descricao": "W56: teste offline do docker-shim. Nao precisa de Docker real nem de Postgres real — usa stubs no PATH.",
+   "linhas": 164,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/drop-redundant-messages-external-id-index.test.sh",
+   "descricao": "Contrato do drop do indice redundante idx_messages_external_id (performance da matriz docs/ia/IA-004-matriz-autorizacao.md).",
+   "linhas": 144,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/dry-run-plan.mjs",
+   "descricao": "E63 (auditoria de GitHub Actions, 2026-10-01): o passo \"Dry-run oficial do Supabase CLI\" roda `supabase db push --include-all --skip-vault --dry-run",
+   "linhas": 172,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-migrate.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/e44-whatsapp-connections-anon-grants.test.sh",
+   "descricao": "E44 (inventario F6, PLANO_MULTI_CONEXAO_EVOLUTION_GO_50_ETAPAS_2026-09-25.md): \"anon\" tinha concessao viva ALL em public.whatsapp_connections e SELECT nas 3",
+   "linhas": 333,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/edit-message-authorization.test.sh",
+   "descricao": "Contrato de autorizacao da EDICAO de mensagem (RPC public.edit_message). Causa raiz: o cliente editava mensagem com UPDATE direto em public.messages. A",
+   "linhas": 351,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/email-rls-sem-ramo-admin.test.sh",
+   "descricao": "N-147 (P3) — remover o ramo `OR is_admin_or_supervisor` das policies de email_threads/email_messages. O ramo e inerte (gmail_accounts so mostra a conta ao dono), entao o ACESSO nao muda: so o dono",
+   "linhas": 206,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/email-signatures-rls.test.sh",
+   "descricao": "feat(db): assinaturas de e-mail por usuario (email_signatures) — contrato de acesso. BLOCO A — estado ANTERIOR (defeito): sem a migration, a tabela public.email_signatures",
+   "linhas": 230,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/enqueue-connection-scope.test.sh",
+   "descricao": "Contrato de escopo de conexao no envio (L7 da matriz docs/ia/IA-004-matriz-autorizacao.md). Causa raiz: enqueue_outbound_message aceitava qualquer conexao 'connected' informada em",
+   "linhas": 699,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/export-targeted-ledger-evidence.mjs",
+   "descricao": "Fallback (sem LEDGER_EVIDENCE_OUTPUT): diretorio privado por execucao (0700) via mkdtemp, em vez de um caminho fixo e previsivel em /tmp (S5443).",
+   "linhas": 199,
+   "env": [
+    "DESTINO_URL",
+    "LEDGER_EVIDENCE_OUTPUT",
+    "LEDGER_EVIDENCE_PUBLIC_KEY_BASE64",
+    "PSQL_BIN",
+    "TARGET_VERSIONS"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "targeted-ledger-evidence.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/extrair-consulta-ledger.mjs",
+   "descricao": "* R2-INF-005 (reauditoria de 03/10/2026): extrai o heredoc EXATO que o passo",
+   "linhas": 114,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/extrair-contratos-runtime.mjs",
+   "descricao": "E62: extrai os contratos de runtime que hoje vivem embutidos no passo \"Provar estado runtime antes do push\" do db-migrate.yml.",
+   "linhas": 98,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/f64-voz-assets-e-grants.test.sh",
+   "descricao": "F64 do Bloco H (docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md). Prova, em PostgreSQL descartavel, a migration 20261003132707_f64_voz_assets_e_grants.sql:",
+   "linhas": 258,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/feature-flags-rollout.test.sh",
+   "descricao": "Etapa 5 do plano de paridade V3 -> V2 (cartao t_c9beaa19): rollout gradual das flags do chat. A V2 so tinha key/enabled (useFeatureFlag, liga-desliga); a V3",
+   "linhas": 391,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/gamification-marco-nao-bloqueia-envio.test.sh",
+   "descricao": "Contrato da gamificacao no enfileiramento (R2-DB-009, item #79, P1). Defeito: no marco de mensagens (10/50/100/500/1000), o trigger AFTER INSERT do",
+   "linhas": 394,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/gen-types.sh",
+   "descricao": "gen-types.sh [--local] [output_path] Gera types TypeScript a partir do schema do banco.",
+   "linhas": 208,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-live-guard.yml",
+    "types-sync.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/gen-types.test.sh",
+   "descricao": "---------- Caso 1: preserva linhas internas e normaliza o EOF ----------",
+   "linhas": 103,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/generic-migration-runtime.sql",
+   "descricao": null,
+   "linhas": 169,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/generic-migration-runtime.test.sh",
+   "descricao": "Prova as propriedades do contrato runtime GENERICO usado pelo db-migrate.yml quando a migration alvo nao tem contrato dedicado.",
+   "linhas": 167,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/gmail-accounts-sync-backoff.test.sh",
+   "descricao": "Contrato de banco da espera crescente do gmail-cron-sync (t_d7ef14d6). A migration 20261014023912_gmail_accounts_sync_backoff.sql acrescenta",
+   "linhas": 140,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/gmail-write-blocks-restrictive.test.sh",
+   "descricao": "SEC-RLS_TAREFAS_EMAIL_LIGACOES-04 (P3) — as 3 policies \"Block authenticated gmail inserts/updates/deletes\" de public.gmail_accounts (20260404174826) foram criadas",
+   "linhas": 175,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/grants-baseline.sql",
+   "descricao": null,
+   "linhas": 40,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/higiene-grants-public-policies.test.sh",
+   "descricao": "Higiene de grants (SEC-DEFINER_GRANTS_STORAGE-07):  1) public.multiplix_audiences_validate_shared_roles() deixa de ter EXECUTE para",
+   "linhas": 165,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/ia-usage-outbox-duravel.test.sh",
+   "descricao": "Item 44 (IA-TIMEOUT-001) — a OUTBOX DURÁVEL do log essencial de IA não existia. Contexto medido: `supabase/functions/_shared/ai-usage.ts` (já na ponta, commit",
+   "linhas": 172,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/ia131-audio-stt-cadeia.test.sh",
+   "descricao": "IA-131 / IA-AUDIO-001 (item 133) — cadeia REAL do `audio_stt` do OpenRouter. Prova, em PostgreSQL 17 descartável, o efeito das DUAS migrations JÁ APLICADAS, na ordem em",
+   "linhas": 131,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/ia131-audio-stt-openrouter.test.sh",
+   "descricao": "IA-131 / IA-AUDIO-001 — prova que a migration de audio_stt do OpenRouter acrescenta somente a modalidade nova, preserva modalidades/capacidades existentes,",
+   "linhas": 135,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/inbox-contact-authorization-runtime.sql",
+   "descricao": null,
+   "linhas": 130,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/inbox-contact-authorization.test.sh",
+   "descricao": null,
+   "linhas": 486,
+   "env": [
+    "RUNTIME_JSON"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/interactive-buttons-list-behavior.test.sh",
+   "descricao": "R2-INB-003 (t_bbb7e130): transporte canônico de mensagens interativas. Prova no mesmo padrão de message-delivery-phase1-behavior.test.sh: um",
+   "linhas": 322,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/l11-departments-acl-escrita.test.sh",
+   "descricao": "L11 (docs/ia/IA-004-matriz-autorizacao.md:297): ACL de ESCRITA de public.departments. DEFEITO (medido no banco canonico em 01/10/2026): public.departments tem DUAS colunas de",
+   "linhas": 272,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/ledger-postapply-query.integration.mjs",
+   "descricao": "* R2-INF-005 (reauditoria de 03/10/2026): prova em PostgreSQL 17 descartavel que",
+   "linhas": 190,
+   "env": [
+    "LEDGER_POSTAPPLY_TEST_POSTGRES_IMAGE"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/local-pg-proxy.mjs",
+   "descricao": "scripts/db-audit/local-pg-proxy.mjs <diretorio-temporario-0700> Escreve a config de um pgbouncer LOCAL (bind 127.0.0.1) que repassa para o",
+   "linhas": 133,
+   "env": [
+    "DESTINO_URL"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/login_gate_rpc.test.sh",
+   "descricao": "auth-login — RPC única consume_login_gate (cartão t_105af186, retomada de #113). Prova, em PostgreSQL descartável (postgres:17-alpine), o defeito e a correção:",
+   "linhas": 330,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/lote-pendente.mjs",
+   "descricao": "* W26: fonte única da regra \"apply pendente\".",
+   "linhas": 82,
+   "env": [
+    "DESTINO_URL",
+    "GITHUB_STEP_SUMMARY"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-live-guard.yml",
+    "types-sync.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/manifest-lib.mjs",
+   "descricao": null,
+   "linhas": 99,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/manifest.sql",
+   "descricao": null,
+   "linhas": 384,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/mapa-f1-address-contract.test.sh",
+   "descricao": "Contrato da Fase 1 (E02 + E06) em PostgreSQL descartável. Prova, com a fixture mínima que o módulo precisa, que:",
+   "linhas": 127,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/message-attempts-log.test.sh",
+   "descricao": "Prova de permissao e contrato do log de tentativas de envio (message_attempts). Postgres descartavel: aplica as migrations REAIS (helpers canonicos de visibilidade,",
+   "linhas": 421,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
+   "descricao": null,
+   "linhas": 753,
+   "env": [
+    "RUNTIME_PROOF"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/message-delivery-phase1-runtime.sql",
+   "descricao": null,
+   "linhas": 335,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/message-reactions-author-model.test.sh",
+   "descricao": "R2-DB-021 / item 303 (P2) — \"A segunda reação ao mesmo emoji conflita com a chave reservada ao contato\".",
+   "linhas": 277,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/message-reactions-autoria.test.sh",
+   "descricao": "R2-DB-019 / item 302 do BACKLOG_VERIFICADO (P2) — \"Reacoes do WhatsApp nao vinculam a autoria ao usuario que grava\".",
+   "linhas": 360,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/messages-group-sender.test.sh",
+   "descricao": "Contrato do remetente de grupo em public.messages (sender_participant_jid, sender_display_name) — paridade V3 -> V2, decisao do Joaquim 11/10/2026.",
+   "linhas": 272,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/multiplix-audience-parity.mjs",
+   "descricao": "* multiplix-audience-parity.mjs — F23 (prova de contagem da ponte Singu).",
+   "linhas": 301,
+   "env": [
+    "EXTERNAL_SUPABASE_SERVICE_ROLE_KEY",
+    "EXTERNAL_SUPABASE_URL",
+    "MULTIPLIX_SCOPE_HMAC_SECRET",
+    "SUPABASE_ACCESS_TOKEN"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/multiplix-completion-item-queue.test.sh",
+   "descricao": "Item 47 do BACKLOG_VERIFICADO (MX03, P1 funcional): \"Conclusao usa a fila antiga de recipients apos enviar itens\".",
+   "linhas": 278,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/multiplix-delivery-leases.test.sh",
+   "descricao": "F57 do Bloco F (docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md). Prova, em PostgreSQL 17 descartavel, o contrato da FILA POR ITEM do Multiplix",
+   "linhas": 1202,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/multiplix-drain-enum-cast.test.sh",
+   "descricao": "R2-DB-007 (item #78 do BACKLOG_VERIFICADO) - Multiplix: as DUAS rotinas de concluir disparo escrevem status (enum) e nao text.",
+   "linhas": 425,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/multiplix-resolve-escopo.test.sh",
+   "descricao": "R2-DB-003 (cartao t_c1431127, item 28 do BACKLOG_VERIFICADO, P1 seguranca): multiplix_resolve_recipients devolvia metadados de empresas e contatos",
+   "linhas": 356,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/multiplix-revoke-execute-public.test.sh",
+   "descricao": "N-144 — Prova que a migration 20261010101613 revoga EXECUTE de PUBLIC, anon e authenticated na função de gatilho REAL",
+   "linhas": 266,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/multiplix-rls.test.sh",
+   "descricao": "F20 do Bloco A (docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md). Prova, em PostgreSQL 17 descartavel, o contrato de acesso e de fila do modulo",
+   "linhas": 696,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/multiplix-scope.test.sh",
+   "descricao": "F24 (Bloco B) — docs/multiplix/PLANO_FINALIZACAO_MULTIPLIX_100_ETAPAS_2026-09-29.md e docs/multiplix/PERMISSOES.md (matriz F25, PR #1417).",
+   "linhas": 329,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/multiplix-send-mutation.py",
+   "descricao": "Mutation testing do worker do Multiplix (Bloco A edge/front).",
+   "linhas": 169,
+   "env": [
+    "MULTIPLIX_BATCH_SIZE"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/n011-storage-avatar-policies-dedup.test.sh",
+   "descricao": "N-011 (P2 · banco, inventario A4): dedup de policies de leitura e exclusao em storage.objects para avatar, figurinha (stickers), meme (audio-memes) e emoji",
+   "linhas": 203,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/n118-window-open-proof.test.sql",
+   "descricao": null,
+   "linhas": 82,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": true
+  },
+  {
+   "arquivo": "scripts/db-audit/n142-message-reactions-select-user-id.test.sh",
+   "descricao": "N-142 (P3) — \"Banco: leitura de reações compara o id certo do usuário\" (docs/audits/SEGURANCA_RLS_CONTATOS_MENSAGENS_2026-10-07.md SEC-RLS_CONTATOS_MENSAGENS-08).",
+   "linhas": 253,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/network-policy-rpc.test.sh",
+   "descricao": "R2-AUTH-022 / item 27.1 — contrato comportamental da RPC canônica de política de rede. Prova, em PostgreSQL descartável, que a fronteira de decisão que faltava (o defeito",
+   "linhas": 279,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/notification-delivery-atomicity-runtime.sql",
+   "descricao": null,
+   "linhas": 116,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/notification-delivery-atomicity.test.sh",
+   "descricao": null,
+   "linhas": 357,
+   "env": [
+    "RUNTIME_JSON"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/notify-due-tasks-authorization.test.sh",
+   "descricao": "Contrato de autorizacao do notify_due_tasks() — a unica RPC SECURITY DEFINER de escrita ainda sem guarda de papel (auditoria de 30/09).",
+   "linhas": 169,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/pg-cron-concorrencia.py",
+   "descricao": "Conta quantos jobs do pg_cron disparam em cada slot hora:minuto do dia. Mesmas raizes de `scripts/lib/seguranca-processo.mjs`: o repositorio e o",
+   "linhas": 86,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/pg-cron-escalonamento.test.sh",
+   "descricao": "Prova em PG descartavel do escalonamento dos jobs do pg_cron (20261002541230). A. reproduz fielmente a API usada (cron.job / cron.alter_job) + os 3 roles do",
+   "linhas": 128,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/pg-cron-jobs-baseline.js",
+   "descricao": "* Compara o estado atual dos jobs do pg_cron (cron.job) contra o baseline",
+   "linhas": 90,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/profiles-can-download-authorization.test.sh",
+   "descricao": "R2-AUTH-027 (backlog #252): o dono de um perfil normal nao pode liberar o proprio flag administrativo profiles.can_download.",
+   "linhas": 320,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/profiles-role-escalation-guard.test.sh",
+   "descricao": "N-002 (P1 · seguranca): trava de escalada de privilegio em public.profiles. A trava existe — gatilho prevent_privilege_escalation -> public.prevent_profile_privilege_escalation(),",
+   "linhas": 318,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/psql-environment.integration.mjs",
+   "descricao": "Valor SINTETICO (nao e credencial): existe so para provar que withPsqlEnvironment() escapa ':' '@' e a barra invertida no arquivo pgpass.",
+   "linhas": 128,
+   "env": [
+    "ZAPP_TEST_PG_PASSWORD"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/psql-environment.mjs",
+   "descricao": "libpq does not expand a URI supplied through the PGDATABASE default. Callers must validate project identity/TLS before calling this transport.",
+   "linhas": 136,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/psql-safe.mjs",
+   "descricao": "* Proxy transparente para psql: nunca poe a connection string no argv",
+   "linhas": 59,
+   "env": [
+    "DESTINO_URL",
+    "PSQL_BIN"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-live-guard.yml",
+    "db-migrate.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/public-api-disable.test.sh",
+   "descricao": null,
+   "linhas": 81,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/queues-distribution-overflow.test.sh",
+   "descricao": "Contrato de distribuicao de filas (round robin / menos ocupado / habilidade), limite por atendente, fixacao por contato e transbordo sem ciclo.",
+   "linhas": 479,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/reconcile-schema-migrations-20260924203300.sql",
+   "descricao": null,
+   "linhas": 121,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/recriar-banco-local.test.sh",
+   "descricao": "Teste do runbook recriar-banco-local.md — R2-DB-020 / N-136. O runbook documenta o comando para recriar o banco local do zero.",
+   "linhas": 74,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh",
+   "descricao": "R2-AUTH-006 (item 72 / P1) — \"Recuperacao anonima consulta profiles protegido e nao cria solicitacao\" (docs/reconciliation/reaudit/2026-10-03/reports/auth/findings.json, achado",
+   "linhas": 331,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/register-migration.mjs",
+   "descricao": "* Registra uma migration no ledger (supabase_migrations.schema_migrations)",
+   "linhas": 341,
+   "env": [
+    "DATABASE_IDENTITY_PATH",
+    "DESTINO_URL",
+    "PSQL_BIN"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/reminders-migracao-identidade.test.sh",
+   "descricao": "Item 293 do BACKLOG_VERIFICADO (R2-DB-005): a migração de lembretes associava tarefas por TÍTULO, sem preservar a identidade da origem.",
+   "linhas": 328,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/replay-classify.py",
+   "descricao": "Classifica as falhas do replay local contra o allowlist.",
+   "linhas": 64,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/replay-classify.test.sh",
+   "descricao": "Teste do classificador do replay (replay-classify.py). Prova o que faz o script servir de gate: falha esperada nao derruba, falha INESPERADA derruba,",
+   "linhas": 47,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/replay-local-harness.test.sh",
+   "descricao": "Teste do harness do replay local (scripts/db-audit/replay-local.sh) - R2-INF-014 / item 361. O replay sobe container de verdade, entao aqui um `docker` de mentira entra no PATH e registra",
+   "linhas": 191,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/replay-local.sh",
+   "descricao": "E24 - Replay LOCAL e descartavel das migrations (nunca no banco canonico). Sobe a imagem do Supabase (que traz roles, schemas auth e as extensoes), cria o bootstrap que",
+   "linhas": 205,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/request-department-access.test.sh",
+   "descricao": "N-071 — request_department_access: notificacao p/ admins do departamento + access_requested na auditoria; anon barrado. PostgreSQL descartavel (docker); ARQUIVOS REAIS das migrations (F10 = anterior; ",
+   "linhas": 300,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/reset-gatilho-coluna-removida.test.sh",
+   "descricao": "R2-DB-023 (item 304 / #304, P2) — \"Trigger de recuperacao ainda escreve campo removido e bloqueia o pedido autenticado\" (docs/reconciliation/reaudit/2026-10-03/reports/database/findings.json,",
+   "linhas": 298,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/retry-disposable-postgres-test.sh",
+   "descricao": "GitHub-hosted runners can sporadically terminate a brand-new disposable PostgreSQL container before its first readiness probe. Retry only that exact",
+   "linhas": 170,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/revoke-auth-sessions.test.sh",
+   "descricao": "Harness de migration em PostgreSQL DESCARTÁVEL — prova fora de produção da migration revoke_auth_sessions (R2-AUTH-004, item 6).",
+   "linhas": 171,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/run-runtime-contract.mjs",
+   "descricao": "E62 + R2-INF-004: executor do contrato de runtime. O passo \"Provar estado runtime antes do push\" do db-migrate.yml tinha um braco de",
+   "linhas": 300,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-migrate.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/runtime-config.sql",
+   "descricao": null,
+   "linhas": 51,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/runtime-config.test.sh",
+   "descricao": null,
+   "linhas": 126,
+   "env": [
+    "TEST_EVIDENCE_DIR"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/scheduled-whisper-visibility-rls.test.sh",
+   "descricao": "RLS de scheduled_messages e whisper_messages: agendar só com contato visível e permissão de envio; sussurrar só com contato visível.",
+   "linhas": 408,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/scope-public-policies-authenticated.test.sh",
+   "descricao": "Contrato de higiene de papel das policies TO public -> TO authenticated E da correcao da clausula morta de message_reactions (message_reactions.user_id referencia profiles.id).",
+   "linhas": 247,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/scope-snoozes-pins-favorites-authenticated.test.sh",
+   "descricao": "N-141: as 9 policies de snooze/favorite/pin criadas pela 20260924230500 sem clausula TO (vale para PUBLIC) passam a TO authenticated.",
+   "linhas": 205,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/search-email-threads.test.sh",
+   "descricao": "PE-09 (paridade V3 -> V2, docs 10..40, t_59d66c7a): \"A caixa promete buscar e-mails, remetentes, assuntos, anexos, mas a busca local",
+   "linhas": 352,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/search_path_pg_temp_is_admin_get_own_gmail.test.sh",
+   "descricao": "n-148 (P3 · SEC-RLS_TAREFAS_EMAIL_LIGACOES-07) — search_path com pg_temp nas duas funcoes SECURITY DEFINER que o audit adversarial encontrou com `SET search_path = public`:",
+   "linhas": 231,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/searchbox-budget-alert-monthly-idempotency.test.sh",
+   "descricao": "R2-API-058 / #230 (P2, area banco): \"Alerta mensal de custo repete e-mail em cada execucao diaria do cron\".",
+   "linhas": 401,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/sec-y25-01-insert-alvo.test.sh",
+   "descricao": "SEC-Y25-01 (P0) — SEC-RLS_TAREFAS_EMAIL_LIGACOES-01 (docs/audits/SEGURANCA_RLS_TAREFAS_EMAIL_LIGACOES_2026-10-07.md)",
+   "linhas": 401,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/secd-caller-check.test.sh",
+   "descricao": "M-DB-05 / item 474 — prova, em PostgreSQL 17 descartavel, que as 13 funcoes SECURITY DEFINER de `public` executaveis por qualquer usuario logado sem checagem do chamador (MAPA_BANCO secoes 2 e 7, retr",
+   "linhas": 434,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/send-messages-permission-authorization.test.sh",
+   "descricao": "Contrato de autorizacao do envio: a permissao send_messages imposta no banco (L9 da matriz docs/ia/IA-004-matriz-autorizacao.md).",
+   "linhas": 471,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/sql-lexer.mjs",
+   "descricao": "* Lexer SQL compartilhado entre check-migration-drift.mjs e",
+   "linhas": 265,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/storage-buckets-baseline.js",
+   "descricao": null,
+   "linhas": 44,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/storage-limits-stickers-audio-memes.test.sh",
+   "descricao": "N-009 (SEC-DEFINER_GRANTS_STORAGE-06): prova que a migration 20261011003015_storage_limits_stickers_audio_memes.sql restringe os buckets",
+   "linhas": 149,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/storage-limits-whatsapp-audio-multiplix.test.sh",
+   "descricao": "N-010: prova que a migration 20261010130000_storage_limits_whatsapp_audio_multiplix.sql fixa file_size_limit em whatsapp-media, audio-messages e multiplix-voice.",
+   "linhas": 218,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/supabase-usage-guard.mjs",
+   "descricao": "* Guard de acoplamento codigo <-> banco.",
+   "linhas": 366,
+   "env": [],
+   "npm_scripts": [
+    "db:guard"
+   ],
+   "workflows": [
+    "db-guard.yml",
+    "types-sync.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talk-me-client-privileges.test.sh",
+   "descricao": "Contrato executavel da migration 20260930460000: - papeis clientes recebem somente o DML necessario;",
+   "linhas": 269,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talk-me-queue-contract.test.sh",
+   "descricao": "Contrato executavel do TALK ME: elegibilidade, escopo por fila, busca, cursor, auditoria e exclusao mutua de dois aceites concorrentes.",
+   "linhas": 472,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-ab-weights.test.sh",
+   "descricao": "N-103 Talk X: pesos das variantes somam 100 e atribuicao estável. Contrato num PostgreSQL 17 descartavel, no mesmo formato dos testes irmaos",
+   "linhas": 323,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-alerts-outcome-unknown-lote.test.sh",
+   "descricao": "Harness descartavel (Docker postgres:17-alpine) — item 33 / R3-OBS-001 (R3-DELTA-001). Prova, em PostgreSQL 17, com as MIGRATIONS REAIS aplicadas por marcador interno, que a",
+   "linhas": 194,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-attribution.test.sh",
+   "descricao": "X041 (PLANO_TALKX_V4_200_ETAPAS_2026-10-01): prova, em PostgreSQL 17 descartável, que um negócio ganho (contact_purchases.source='bitrix24') passa a",
+   "linhas": 379,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-audience-rpc.test.sh",
+   "descricao": "X016 (Fase 2 · Tela 03/08/09 · banco): RPC unica de audiencia (talkx_resolve_audience) com a funcao interna talkx_audience_query — whitelist de campo/operador, elegibilidade,",
+   "linhas": 656,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-audience-snapshot.test.sh",
+   "descricao": "X017 (Fase 2 · Tela 06/08/09/10 · banco + front/hook): gerar os destinatarios no servidor a partir do rascunho salvo. Fecha CAP-004, CAP-028, CAP-030, CAP-103.",
+   "linhas": 347,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-benchmarks-period-names.test.sh",
+   "descricao": "Harness descartavel: N-123 / X075 — talkx_benchmarks(p_days, p_limit) com nomes. Prova: a assinatura antiga sem argumentos e removida; a nova devolve nome de segmento",
+   "linhas": 151,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-blacklist-audit-trigger.test.sh",
+   "descricao": "N-107 Talk X banco: lista de bloqueio guarda trilha e nao apaga linha. Prova comportamental (banco descartavel PG17, papel real via SET ROLE +",
+   "linhas": 298,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-blacklist-policy-forward-only.test.sh",
+   "descricao": null,
+   "linhas": 239,
+   "env": [
+    "PROOF"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-blacklist-policy-runtime.sql",
+   "descricao": null,
+   "linhas": 42,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-blacklist-realtime.test.sh",
+   "descricao": "talkx-blacklist-realtime (X069p1 · banco): escopo MINIMO de colunas da publicacao Realtime da lista de supressao.",
+   "linhas": 224,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-campaign-launch-checks.test.sh",
+   "descricao": null,
+   "linhas": 125,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-campaign-logs-cursor.test.sh",
+   "descricao": "Harness descartavel (Docker postgres:17-alpine) — item 122 / R3-DELTA-003. Defeito: o cursor de log do Talk X por timestamp perde linhas empatadas.",
+   "linhas": 342,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-campaign-recipients-page.test.sh",
+   "descricao": "N-095 — ensaio da funcao talkx_campaign_recipients_page. Prova, em PostgreSQL 17 descartavel, que:",
+   "linhas": 196,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-campaign-recurrence.test.sh",
+   "descricao": "Talk X · recorrência de campanha (cartão t_1dbea713, refazer 3). Aplica a migration REAL 20261006232024_talkx_campaign_recurrence.sql sobre um",
+   "linhas": 305,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-campaign-segments-rpc.test.sh",
+   "descricao": "X057b (Fase 6 · banco): COMPORTAMENTO de \"varios segmentos por campanha\". ESCOPO — o que este harness prova (contrato real, PostgreSQL 17 descartavel):",
+   "linhas": 477,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-campaign-segments.test.sh",
+   "descricao": "X057a (Fase 6 · banco): parte ESTRUTURAL de \"varios segmentos por campanha\". ESCOPO DESTA ENTREGA — leia antes de interpretar um verde:",
+   "linhas": 367,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-campaign-state-transitions.test.sh",
+   "descricao": null,
+   "linhas": 180,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-campaign-transitions.test.sh",
+   "descricao": "X010: a assinatura de 2 args da migration acima é substituída pela de 4 args (a que o talkx-send chama) e a retomada de start passa a ser idempotente",
+   "linhas": 124,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-campaign-window-open.test.sh",
+   "descricao": "N-118 (cartao t_f0720c47): versiona a prova SQL de talkx_campaign_window_open. Antes a prova (E1) vivia so no .tmp do cartao complexo; aqui ela passa a rodar",
+   "linhas": 261,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-campaign-worker-lease.test.sh",
+   "descricao": "X010 (Fase 2 · Tela motor · banco): trava por campanha (worker lease), fila do worker em RPC e segredo de cron dedicado do Talk X.",
+   "linhas": 331,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-contact-attributes.test.sh",
+   "descricao": "N-094 r2 (X037) — attrs/RLS, refresh com cursor, RLS no DDD, rollback real. A: sem objetos (vermelho). B: migration REAL. Deps reais 20251215025014,",
+   "linhas": 149,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-conversion-defaults.test.sh",
+   "descricao": "#210 (R2-API-036): prova, em PostgreSQL 17 descartável, que a RPC public.record_talkx_conversion aplica os defaults internos quando o",
+   "linhas": 308,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-counters-integrity.test.sh",
+   "descricao": "Harness descartável (Docker postgres:17-alpine) — X026. Fecha CAP-056, CAP-079, CAP-106, CAP-107, CAP-109.",
+   "linhas": 471,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-current-template-version.test.sh",
+   "descricao": "Harness descartavel (postgres:17-alpine) do ponteiro da versao corrente do template. Reproduz o ambiente do APPLIER de migracoes em producao:",
+   "linhas": 619,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-delivery-leases.test.sh",
+   "descricao": null,
+   "linhas": 224,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-draft-recipients.test.sh",
+   "descricao": null,
+   "linhas": 182,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-draft-save.test.sh",
+   "descricao": "A migration sob teste é a última da cadeia: as anteriores reproduzem o estado da main (V21 flags, V23 draft_step, V25 owner) e a X009 fecha passo/responsável,",
+   "linhas": 292,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-e27-replay-divergence.test.sh",
+   "descricao": "#464 / CAIXA-7eb1 — Talk X E27: divergencia de replay da publicacao supabase_realtime. O E27 publicou tres tabelas do Talk X (talkx_campaign_events, talkx_segments,",
+   "linhas": 136,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-engine-cron-runs-role-gate.test.sh",
+   "descricao": "Harness descartavel (Docker postgres:17-alpine) — R3-SEC-001 / item 118 (M-DB-03). Prova, em PostgreSQL 17, que o helper SECURITY DEFINER public.talkx_engine_cron_runs",
+   "linhas": 338,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-engine-health.test.sh",
+   "descricao": "Harness descartavel (Docker postgres:17-alpine) — X033. Fecha CAP-100, CAP-101.",
+   "linhas": 415,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-engine-provider.test.sh",
+   "descricao": "X034 — integração do MOTOR Talk X com provedor falso. Sobe um PostgreSQL 17 descartável, aplica as MIGRATIONS REAIS do repo que",
+   "linhas": 519,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-engine-tick.test.sh",
+   "descricao": "X012 (Fase 2 · Tela motor · banco + cron): o tick do motor — reaper, conclusão, re-invocação (fan-out 1-por-conexão) e cron com segredo e timeout.",
+   "linhas": 353,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-escape-hatch-auth.test.sh",
+   "descricao": "V09d do PLANO_TALKX_V3_100_ETAPAS_2026-09-29 — fecha o GAP do escape hatch `app.talkx_limits_write` (achado #6 da auditoria adversarial, red-team).",
+   "linhas": 188,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-events-contract.test.sh",
+   "descricao": "V11 (PLANO_TALKX_V3_100_ETAPAS_2026-09-29): prova, em PostgreSQL 17 descartável, que o contrato de eventos do Talk X não aceitava o que as etapas",
+   "linhas": 473,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-expurgo-escopo-ai-jobs.test.sh",
+   "descricao": "Harness descartavel (Docker postgres:17-alpine) — #130 (R3-DELTA-015). Prova, em PostgreSQL 17, que o expurgo LGPD do Talk X NAO apaga ai_jobs de outros",
+   "linhas": 296,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-guards-fail-closed.test.sh",
+   "descricao": "MAPA (achado de auditoria, red-team): fecha o FAIL-OPEN dos dois guards de mutabilidade do Talk X — enforce_talkx_campaign_mutability e",
+   "linhas": 201,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-help-top-topics.test.sh",
+   "descricao": "N-135: talkx_help_views + talkx_help_top_topics. RED: antes da migration, tabela/RPC nao existem. GREEN: existem, agregam sem user_id,",
+   "linhas": 98,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-history-saved-by-fk.test.sh",
+   "descricao": null,
+   "linhas": 117,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-insights-rules.test.sh",
+   "descricao": "N-124/X075: talkx_insights = dicas por regra no servidor (migration REAL num Postgres 17 descartavel; caminho feliz como authenticated, nunca postgres).",
+   "linhas": 174,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-lgpd.test.sh",
+   "descricao": "Harness descartavel (Docker postgres:17-alpine) — X032. Fecha CAP-104, CAP-105, CAP-106.",
+   "linhas": 487,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-lifecycle-events.test.sh",
+   "descricao": "X024 — prova, em PostgreSQL 17 descartável, o delta de ciclo de vida do Talk X:   - start -> pause(com motivo e ator) -> resume -> cancel gera 4 eventos EM ORDEM",
+   "linhas": 196,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-links-conversions.test.sh",
+   "descricao": "X021 (PLANO_TALKX_V4_200_ETAPAS_2026-10-01): prova, em PostgreSQL 17 descartável, que a migration abre no banco a escrita de links (UTM, created_by,",
+   "linhas": 326,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-message-snapshot.test.sh",
+   "descricao": null,
+   "linhas": 85,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-metrics-view-invoker.test.sh",
+   "descricao": "V01 (PLANO_TALKX_V3_100_ETAPAS_2026-09-29): prova, em PostgreSQL 17 descartavel, que a view public.talkx_campaign_metrics (a) vaza metrica de",
+   "linhas": 254,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-monitor-panel.test.sh",
+   "descricao": "X140 (Fase 11 · banco + testes): talkx_monitor_panel — KPIs, comparativo com ontem, serie por minuto com zeros, saude do worker e autorizacao.",
+   "linhas": 385,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-n102-window-acl.test.sh",
+   "descricao": "N-102 (refazer t_b7ce25ec sobre a entrega 26101319059cbc): versiona a prova de que supabase/migrations/20261013085500_talkx_n102_window_fixes.sql APLICA em qualquer",
+   "linhas": 179,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-n102a-ddl.test.sh",
+   "descricao": "N-102a (fatia de DDL da janela de envio do Talk X) — inventario de melhorias, banco. A janela de envio precisa guardar os dias da semana (send_weekdays) e o respeito ao",
+   "linhas": 134,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-n102b-cast.test.sh",
+   "descricao": "N-102b (fatia b) — send_weekdays/respect_dnd persistem via save/update com 22023. Pré-estado = corpos VIGENTES extraídos verbatim da base (últimas definições:",
+   "linhas": 256,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-n102c-window.test.sh",
+   "descricao": "N-102c — janela de envio das campanhas TalkX: prova, em PostgreSQL 17 descartavel, que public.talkx_campaign_window_open (migration 20261011003008_talkx_n102c_window_open.sql):",
+   "linhas": 159,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-optout.test.sh",
+   "descricao": "X029 (Fase 3 · Tela 06/10/11/14 · banco): tornar o opt-out configuravel e ligado a campanha. Fecha CAP-023, CAP-024, CAP-026 e CAP-031.",
+   "linhas": 385,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-overview-stats.test.sh",
+   "descricao": "X072 (Fase 6 · Tela 07/01 · banco + testes): corrigir e parametrizar talkx_overview_stats (status, alcance, series, periodo anterior). Fecha",
+   "linhas": 590,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-purge-nao-falsa-falha.test.sh",
+   "descricao": "Harness descartavel (Docker postgres:17-alpine) — #126 / achado R3-DELTA-009. Defeito: a purga LGPD (public.purge_talkx_expired_data) grava updated_at = now() nos",
+   "linhas": 430,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-receipts-replies.test.sh",
+   "descricao": "Harness descartável (Docker postgres:17-alpine) — X027. Fecha CAP-016, CAP-017, CAP-018, CAP-019, CAP-020, CAP-099, CAP-110.",
+   "linhas": 405,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-recovery-runtime.sql",
+   "descricao": null,
+   "linhas": 176,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-regressoes-chain.test.sh",
+   "descricao": "talkx-regressoes-chain — auditoria das DUAS regressoes de banco do Talk X. Aplica a CADEIA COMPLETA das migrations Talk X que (re)criam as duas funcoes,",
+   "linhas": 422,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-retry-resolve.test.sh",
+   "descricao": "Harness descartável (Docker postgres:17-alpine) — X031. Fecha CAP-047, CAP-048, CAP-049.",
+   "linhas": 685,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-rfm.test.sh",
+   "descricao": "X040 (Fase 4 · Tela dados · camada banco + cron): calcular recência, frequência, valor e segmento RFM a partir das COMPRAS LOCAIS (public.contact_purchases).",
+   "linhas": 363,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-role-gates.test.sh",
+   "descricao": "X014 (Fase 2 · Tela 08/17 · banco): exigir papel admin/supervisor para criar, agendar e alterar campanha. Fecha CAP-096 e CAP-097.",
+   "linhas": 358,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-save-template-variants.test.sh",
+   "descricao": "Harness descartavel (postgres:17-alpine): public.save_talkx_template_variants. RED: a migration anterior falha as provas novas (id preservado, sucesso 2/3, payload",
+   "linhas": 281,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-segment-fields.test.sh",
+   "descricao": "N-111: contrato de banco da tabela oficial de campos/operadores de segmento do Talk X (talkx_segment_fields) e da funcao de compilacao",
+   "linhas": 194,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-segment-health.test.sh",
+   "descricao": "N-116/X102 (banco): talkx_segment_health - risco, sinais, composicao e sugestoes, so agregados. Migrations REAIS num PG 17 descartavel, como authenticated.",
+   "linhas": 259,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-segment-library-stats.test.sh",
+   "descricao": "X103 (Fase 9 · telas 02/03 · banco + testes · DDL: sim) — estatisticas da biblioteca de segmentos (talkx_segment_library_stats).",
+   "linhas": 650,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-segment-progress.test.sh",
+   "descricao": "N-096 / X142 (parte 1): talkx_campaign_segment_progress em PostgreSQL 17 descartavel. Campanha com 3 segmentos de fixture (10/10 processados, 4/10, 0/10):",
+   "linhas": 141,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-send-budget.test.sh",
+   "descricao": "X018 — limites por minuto/dia/conexão + perfis de velocidade. A migration sob teste é a última; as anteriores reproduzem a main (V21/V23/V25/X009/V26/X014/",
+   "linhas": 322,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-send-interval-teto-24h.test.sh",
+   "descricao": "A2 do PLANO_TALKX_V3_100_ETAPAS_2026-09-29: teto semântico de send_interval_max = 24h. Prova, em PostgreSQL 17 descartável, que:",
+   "linhas": 194,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-settings-replay-idempotent.test.sh",
+   "descricao": "R2-01 (achado da auditoria Onda 2, domínio replay/DBA): fecha a cadeia de replay do talkx_settings. A migration original 20260916230000 usa `CREATE POLICY IF NOT EXISTS`",
+   "linhas": 127,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-settings-rls.test.sh",
+   "descricao": "V06 do docs/talkx/PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md. Prova, em PostgreSQL 17 descartavel, que talkx_settings passou a ter policy de",
+   "linhas": 144,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-suppress-phone-axis.test.sh",
+   "descricao": "V07b do PLANO_TALKX_V3_100_ETAPAS_2026-09-29 — corrige o eixo phone da RPC talkx_suppress_contact (achado V07 phone-axis da auditoria adversarial).",
+   "linhas": 207,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-suppression-read-rpcs.test.sh",
+   "descricao": "X176 (TL-164) — \"Criar RPCs de leitura da supressão: listagem paginada, KPIs e atividade\". Prova, em PostgreSQL 17 descartável, aplicando a MIGRATION REAL, as três funções",
+   "linhas": 466,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-template-columns.test.sh",
+   "descricao": "N-126b (fonte X083, parte 2 de 2): prova por script as 8 colunas novas de public.talkx_templates criadas pela migration 20261011000020_talkx_templates_channel_media_archive.sql",
+   "linhas": 304,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-template-history-behavior.test.sh",
+   "descricao": null,
+   "linhas": 589,
+   "env": [
+    "RUNTIME_PROOF"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-template-history-runtime.sql",
+   "descricao": null,
+   "linhas": 411,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-template-second-update-snapshot.test.sh",
+   "descricao": "R2-DB-013 / item 298 (P2, area migrations) — \"Segundo UPDATE do template pode ser rejeitado pela guarda de snapshot da propria RPC\".",
+   "linhas": 354,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-tick-expurgo.test.sh",
+   "descricao": "Harness descartavel (Docker postgres:17-alpine) — M-DB-01 (= R3-DELTA-006/007). Prova, em PostgreSQL 17, que o tick do motor Talk X nao aborta mais no expurgo LGPD:",
+   "linhas": 317,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-transition-overload-postgrest.test.sh",
+   "descricao": "V02 (PLANO_TALKX_V3_100_ETAPAS_2026-09-29): prova, contra um PostgREST REAL e sem nenhum mock, que:",
+   "linhas": 295,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-update-limits-22009.test.sh",
+   "descricao": "V09e do PLANO_TALKX_V3_100_ETAPAS_2026-09-29 — fecha o vazamento de SQLSTATE 22009 (invalid_time_zone_displacement) na RPC update_talkx_campaign_limits (achado A1 da",
+   "linhas": 176,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-update-limits-casts.test.sh",
+   "descricao": "V09c do PLANO_TALKX_V3_100_ETAPAS_2026-09-29 — endurece a conversão de tipos na RPC update_talkx_campaign_limits (achado da auditoria: casts vazavam 22P02/22003/22007).",
+   "linhas": 191,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-update-limits-rpc.test.sh",
+   "descricao": "V09 do PLANO_TALKX_V3_100_ETAPAS_2026-09-29 (P1-3): \"Editar limites\" via RPC. Prova, em PostgreSQL 17 descartável, que:",
+   "linhas": 274,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-update-limits-send-window.test.sh",
+   "descricao": "V09b do PLANO_TALKX_V3_100_ETAPAS_2026-09-29 — corrige a validação da janela de envio. Prova, em PostgreSQL 17 descartável, que a RPC update_talkx_campaign_limits:",
+   "linhas": 224,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-v12-lifecycle-events.test.sh",
+   "descricao": "V12 do PLANO_TALKX_V3_100_ETAPAS_2026-09-29: o SERVIDOR grava os eventos do ciclo de vida (started/resumed/paused/cancelled/completed) dentro de",
+   "linhas": 210,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-v15-replied-count-guard.test.sh",
+   "descricao": "Harness descartável: V15 — replied_count protegido pelo guard + increment_talkx_template_use removida. Prova: (1) UPDATE direto de replied_count como authenticated → erro 42501;",
+   "linhas": 117,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-v16-time-series.test.sh",
+   "descricao": "Harness descartável: V16 — série horária conta sent + delivered (P2-5). Prova: com 3 recipients 'sent' + 2 'delivered', a soma da série horária de",
+   "linhas": 120,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-v17-read-at.test.sh",
+   "descricao": "Harness descartável: V17 — READ marca read_at e incrementa read_count. Prova: record_talkx_recipient_delivered(..., 'read') preenche read_at + read_count=1,",
+   "linhas": 125,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-v19-retry-recipient.test.sh",
+   "descricao": "Harness descartável: V19 — retry manual de destinatário terminal. Prova: retry_talkx_recipient reabre failed/outcome_unknown para pending,",
+   "linhas": 315,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-v21-launch-flags.test.sh",
+   "descricao": "Harness descartável: V21 — flags de lançamento persistidas. Prova: (1) colunas respect_suppression/confirm_consent/launched_by/launched_at;",
+   "linhas": 272,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-v23-draft-step.test.sh",
+   "descricao": "Harness descartável: V23 — rascunho restaura filtros e passo (coluna draft_step). Prova: antes da migration a coluna nao existe (RED);",
+   "linhas": 153,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-v25-owner.test.sh",
+   "descricao": "Harness descartavel: V25 — talkx_campaigns.owner + save_talkx_campaign_draft grava owner. Prova: RED antes (coluna owner nao existe);",
+   "linhas": 238,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-v26-template-version.test.sh",
+   "descricao": "Harness descartavel: V26 — talkx_campaigns.template_version_id + save_talkx_campaign_draft grava a versao. Prova: RED antes (coluna template_version_id nao existe);",
+   "linhas": 267,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/tasks-rearm-on-remind-change.test.sh",
+   "descricao": "R2-MOD-052 / item 420 (P2) — \"Reagendar alarme pelo Salvar nao rearma uma tarefa que ja foi notificada\".",
+   "linhas": 536,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/tc002-direct-conversation-race.test.sh",
+   "descricao": "TC-002 (#55) — \"RPC ativa de conversa direta perdeu a proteção contra criação concorrente\" (docs/reconciliation/reports/team-chat/CODE_DATABASE_TRUTH_TEAM_CHAT.md, TC-002).",
+   "linhas": 335,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/team-chat-department-transfer-guards.test.sh",
+   "descricao": "QA5-10 (P1, cartão t_ab98c520) — frestas de 20261004185228 no team chat:   a) create_team_group_conversation deixava QUALQUER autenticado criar a conversa",
+   "linhas": 364,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/team-chat-department-whatsapp-safe-config.test.sh",
+   "descricao": "TC-005 / R2-AUTH-017 — item 56: \"Gerenciamento de departamento esta inacessivel e contem contratos de banco invalidos\" (docs/reconciliation/reports/team-chat/CODE_DATABASE_TRUTH_TEAM_CHAT.md:92).",
+   "linhas": 398,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh",
+   "descricao": "R2-DB-020 (P1). Contrato de autorização da mídia do Team Chat — a ACL de leitura de storage.objects (bucket team-chat-files) e a persistência de",
+   "linhas": 541,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/team-chat-media-contract.test.sh",
+   "descricao": "TC-001 (#54) — \"Fluxo de mídia usa três contratos incompatíveis entre storage, mensagem e renderização\" (docs/reconciliation/reports/team-chat/CODE_DATABASE_TRUTH_TEAM_CHAT.md).",
+   "linhas": 317,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/team-chat-rpc-ambiguity.test.sh",
+   "descricao": "#1266 — dois defeitos no DDL do team chat, ambos concedidos a `authenticated`:   1) `get_team_messages_page` com referencias AMBIGUAS (42702): o nome da tabela/pseudotabela colide com",
+   "linhas": 334,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/team-direct-conversation-race.test.sh",
+   "descricao": "Item 55 do BACKLOG_VERIFICADO (P1 funcional) — prova em Postgres descartavel que a RPC ativa de conversa direta voltou a usar a garantia de banco contra criacao concorrente.",
+   "linhas": 369,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/team-member-role-rpcs.test.sh",
+   "descricao": "Cartao t_2e1eaf9b (#31) — as duas RPCs de membros do team chat `leave_team_group` e `remove_team_member` referenciavam a coluna INEXISTENTE `tcm.role` em",
+   "linhas": 428,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/team-membership-bootstrap-owner.test.sh",
+   "descricao": "TC-003 (P1) — \"Membership não protege bootstrap e último owner; grants de conversa continuam amplos\" (docs/reconciliation/reports/team-chat/CODE_DATABASE_TRUTH_TEAM_CHAT.md).",
+   "linhas": 469,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/team-message-read-state.test.sh",
+   "descricao": "N-070: view team_message_read_state com security_invoker = true. Roda o MESMO roteiro no mesmo container, em dois blocos:",
+   "linhas": 313,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/team-messages-page-cursor-tiebreak.test.sh",
+   "descricao": "N-072 — get_team_messages_page: (a) desempate do cursor por (created_at, id); (b) p_limit <= 0 recusado. Mesmo roteiro no mesmo container:",
+   "linhas": 203,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/team-reaction-membership.test.sh",
+   "descricao": "#1265 (ALTO, demonstrado): reacao cross-team em `team_message_reactions`. Roda o MESMO roteiro no mesmo container:",
+   "linhas": 337,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/team-receipts-membership.test.sh",
+   "descricao": "Auditoria adversarial da Onda 3 (docs/audits/onda3-260930), ACHADO 2 — confirmado por PoC em PostgreSQL descartavel, com controle negativo que negou corretamente.",
+   "linhas": 353,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/team-receipts-reactions-conversation-id.test.sh",
+   "descricao": "Item 164 / TC-009 (P2) + R2-DB-011 — \"Recibos e reações não forçam conversation_id derivado da mensagem\" (docs/reconciliation/reports/team-chat/CODE_DATABASE_TRUTH_TEAM_CHAT.md:148-160).",
+   "linhas": 470,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/telefonia-snapshot.mjs",
+   "descricao": "* Snapshot do contrato de Telefonia (etapas T04 e T93 do plano",
+   "linhas": 125,
+   "env": [
+    "CATALOG_IDENTITY_PATH",
+    "DESTINO_URL",
+    "PSQL_BIN",
+    "TELEFONIA_SNAPSHOT_OUT",
+    "TELEFONIA_SNAPSHOT_SQL"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/telefonia-snapshot.sql",
+   "descricao": null,
+   "linhas": 95,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/user-sessions-expire.test.sh",
+   "descricao": "Prova em PostgreSQL DESCARTAVEL da migration user_sessions_expire_diario (N-008).   1. RED: expire_user_sessions nao existe antes da migration.",
+   "linhas": 86,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/user-settings-sound-integrity-contract.test.sh",
+   "descricao": "Ensaio de MIGRACAO + REVERSAO do contrato de integridade de som em user_settings. Ate aqui a migration de contrato",
+   "linhas": 453,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/validate-runtime-proof.mjs",
+   "descricao": "W28 (2026-10-01): extrai a validacao de proof do heredoc inline do db-migrate.yml. Lê RUNTIME_JSON, TARGET_VERSION, NEEDS_APPLY do env; saída:",
+   "linhas": 638,
+   "env": [
+    "APPLY_BUNDLE",
+    "GITHUB_SHA",
+    "NEEDS_APPLY",
+    "RUNTIME_JSON",
+    "TARGET_VERSION"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-migrate.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/validate-talkx-runtime.mjs",
+   "descricao": "W28 (2026-10-01): extrai a validacao do bundle Talk X do heredoc inline do db-migrate.yml. Lê RUNTIME_JSON do env. Exit != 0 se o proof divergir do contrato.",
+   "linhas": 30,
+   "env": [
+    "RUNTIME_JSON"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": true
+  },
+  {
+   "arquivo": "scripts/db-audit/verify-ledger-statements.mjs",
+   "descricao": "* E65 (auditoria de GitHub Actions, 2026-10-01): o passo \"Validar registro no",
+   "linhas": 112,
+   "env": [
+    "DESTINO_URL",
+    "TARGET_NAME",
+    "TARGET_VERSION"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "db-migrate.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/wa-label-connection-scope.test.sh",
+   "descricao": "Escopo por conexao das RPCs de etiqueta de WhatsApp — item 22 / TRA-006 (P1). O teste roda o MESMO roteiro no mesmo container descartavel:",
+   "linhas": 405,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/wa-tag-and-status-authorization.test.sh",
+   "descricao": "Contrato de autorizacao das RPCs de contato — lacunas L1 e L2 da matriz IA-004. O teste roda o MESMO roteiro duas vezes no mesmo container:",
+   "linhas": 514,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/wait-postgres-final-start.sh",
+   "descricao": "O pg_isready pode responder durante o servidor temporário do entrypoint oficial, imediatamente antes de ele ser desligado. Aguarde o marcador da",
+   "linhas": 22,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/whatsapp-default-connection-atomicity.test.sh",
+   "descricao": "TRA-004 / item 174 (P2, area migrations) — \"Troca de conexao padrao nao e atomica e anuncia sucesso sem verificar erros\".",
+   "linhas": 373,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/whatsapp-media-policies-sem-curinga.test.sh",
+   "descricao": "SEC-DEFINER_GRANTS_STORAGE-02 (docs/audits/SEGURANCA_DEFINER_GRANTS_STORAGE_2026-10-07.md). Prova, em PostgreSQL 17 descartavel, que as policies de SELECT de midia do WhatsApp",
+   "linhas": 186,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/whatsapp-media-select-scope.test.sh",
+   "descricao": "Contrato de escopo de posse da midia privada do Storage (auditoria docs/audits/SEGURANCA_DEFINER_GRANTS_STORAGE_2026-10-07.md, achado 01 P1).",
+   "linhas": 516,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-tests/01-security-grants.sql",
+   "descricao": null,
+   "linhas": 35,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-tests/02-fsm-transitions.sql",
+   "descricao": null,
+   "linhas": 62,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-tests/03-gamification-bounds.sql",
+   "descricao": null,
+   "linhas": 52,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-tests/04-schema-contracts.sql",
+   "descricao": null,
+   "linhas": 50,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-tests/05-rls-smoke.sql",
+   "descricao": null,
+   "linhas": 25,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-tests/rpc-envelope.mjs",
+   "descricao": "* scripts/db-tests/rpc-envelope.mjs",
+   "linhas": 140,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-tests/run-all.mjs",
+   "descricao": "* scripts/db-tests/run-all.mjs",
+   "linhas": 91,
+   "env": [
+    "DB_TESTS_DIR",
+    "SUPABASE_SERVICE_KEY",
+    "SUPABASE_URL"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db/seed-contatos-redesign-local.sh",
+   "descricao": "seed-contatos-redesign-local.sh — RD-009 Roda scripts/db/seed-contatos-redesign-local.sql (DML puro, NAO e migration) e",
+   "linhas": 150,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db/seed-contatos-redesign-local.sql",
+   "descricao": null,
+   "linhas": 138,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/docs/verificar-docs-realtime.mjs",
+   "descricao": "* Verificador das páginas de documentação de Realtime/mensagem.",
+   "linhas": 229,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/collect-remote.mjs",
+   "descricao": null,
+   "linhas": 51,
+   "env": [
+    "PROJECT_REF",
+    "SUPABASE_ACCESS_TOKEN"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/deploy-plan.mjs",
+   "descricao": "E57 (auditoria de GitHub Actions, 2026-10-01): o workflow nao tem modo de ensaio. Um dispatch ou publica, ou nao faz nada -- nao existe \"mostre o que",
+   "linhas": 96,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/deployment-record.mjs",
+   "descricao": "E60 (auditoria de GitHub Actions, plano de 2026-10-01): a rastreabilidade do deploy de edge e' uma TAG `edge-deploy/<data>-<sha8>-<run>`. Tag nao aparece na",
+   "linhas": 64,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/generate-manifest.mjs",
+   "descricao": null,
+   "linhas": 68,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "deploy-functions.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/health-check.mjs",
+   "descricao": "W65: pós-deploy health check — 5 min após deploy, consulta logs de erro pela Management API e falha com ::error:: se a taxa de 5xx superar o limiar.",
+   "linhas": 159,
+   "env": [
+    "SUPABASE_ACCESS_TOKEN"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/manifest-lib.mjs",
+   "descricao": null,
+   "linhas": 359,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/preparar-artifact-deploy.sh",
+   "descricao": "R2-INF-002: monta o diretorio PUBLICAVEL do artifact do deploy de Edge Functions SEM o log bruto. O `deploy-output.log` carrega a URL com `access_token=` embutido",
+   "linhas": 56,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/redigir-log.mjs",
+   "descricao": "E74: o `deploy-output.log` vai para o artifact do GitHub. A saida do CLI carrega URL com `access_token=` embutido -- publicar isso e' publicar credencial num",
+   "linhas": 86,
+   "env": [
+    "REDIGIR_LOG_BASE",
+    "RUNNER_TEMP"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/register-deployment.mjs",
+   "descricao": "E60: registra o Deployment de rastreabilidade do deploy de edge. Best-effort por decisao: falha ao registrar AVISA e nao derruba o deploy (o",
+   "linhas": 111,
+   "env": [
+    "GITHUB_API_URL",
+    "GITHUB_SERVER_URL"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/secrets-scope.mjs",
+   "descricao": "E58 (auditoria de GitHub Actions, 2026-10-01): todo deploy reescrevia TODOS os secrets das edges, sempre. Sao 4 blocos de escrita, condicionados ao escopo da",
+   "linhas": 151,
+   "env": [
+    "GITHUB_OUTPUT"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/serialize-scope.mjs",
+   "descricao": "Serializa o deploy de TODAS as funcoes contra deploys por funcao. A concurrency do workflow e por funcao (`deploy-edge-functions-<fn|all>`), para",
+   "linhas": 95,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/smoke-functions.mjs",
+   "descricao": "W61: origens canônicas lidas de allowed-origins.json (sincronizado com validation.ts) verify_jwt=false is required for cron callers that cannot mint a user JWT,",
+   "linhas": 200,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "deploy-functions.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/stable-inventory.mjs",
+   "descricao": "Only whitelisted structural fields enter artifacts; never store raw API bodies.",
+   "linhas": 205,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/talkx-preflight.mjs",
+   "descricao": "X023 — Preflight de paridade de deploy das 5 edges + segredos, antes do primeiro disparo real (CAP-046, CAP-051).",
+   "linhas": 270,
+   "env": [
+    "SUPABASE_ACCESS_TOKEN"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/unchanged-from-log.mjs",
+   "descricao": "E56 (auditoria de GitHub Actions, 2026-10-01): extrator testavel de \"No change found in Function: X\", com fixture do log real.",
+   "linhas": 64,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/edge-deploy/verify-remote.mjs",
+   "descricao": null,
+   "linhas": 48,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/eslint/no-secret-compare.js",
+   "descricao": "* Z012 — proíbe comparação direta (===|!==) de identificadores que aludam a credenciais.",
+   "linhas": 39,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/graphify/setup.sh",
+   "descricao": "Instala o graphify (grafo de conhecimento do código) e o configura neste clone. Uso: bun run graph:setup   (Linux, macOS ou WSL; precisa de uv ou pipx)",
+   "linhas": 44,
+   "env": [],
+   "npm_scripts": [
+    "graph:setup"
+   ],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ia/ensaio-provisionamento.mjs",
+   "descricao": "* IA-010 / cartão SL-059 — provisionamento do ambiente de ensaio.",
+   "linhas": 509,
+   "env": [
+    "DB_URL"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/inventario/banco.sql",
+   "descricao": null,
+   "linhas": 160,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/inventario/gerar-banco.mjs",
+   "descricao": "* Inventario do banco oficial -> inventario/estado/banco.json (fonte de consulta dos agentes).",
+   "linhas": 306,
+   "env": [
+    "INVENTARIO_PERMITIR_OUTRO_PROJETO",
+    "SUPABASE_ACCESS_TOKEN",
+    "SUPABASE_API_URL",
+    "SUPABASE_PROJECT_REF"
+   ],
+   "npm_scripts": [],
+   "workflows": [
+    "inventario-estado-semanal.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/inventario/gerar-repo.mjs",
+   "descricao": "Inventario gerado do lado do repositorio (sem acesso ao banco):  - edge functions: linhas, segredos lidos (Deno.env.get) e quem as invoca (src, migrations, outras edges, e2e, CI)",
+   "linhas": 70,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "inventario-estado-semanal.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/inventario/gerar-rotas.mjs",
+   "descricao": "* Inventario das rotas do front -> inventario/estado/rotas.json (fonte de consulta dos agentes).",
+   "linhas": 326,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "inventario-estado-semanal.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/inventario/mudou-conteudo.mjs",
+   "descricao": "* O inventario mudou de verdade? Compara cada arquivo de inventario/estado/ com a versao do",
+   "linhas": 84,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "inventario-estado-semanal.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/lib/seguranca-processo.mjs",
+   "descricao": "* Utilidades compartilhadas pelos scripts de auditoria/CI.",
+   "linhas": 76,
+   "env": [
+    "PATH"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/mutation/run-mapa.mjs",
+   "descricao": "* E69 · Script de mutação reproduzível do módulo do mapa (Fase 7).",
+   "linhas": 507,
+   "env": [],
+   "npm_scripts": [
+    "mutation:mapa"
+   ],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/regras_negocio/generate.py",
+   "descricao": null,
+   "linhas": 2128,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "contexto.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/regras_negocio/indice.py",
+   "descricao": null,
+   "linhas": 192,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "contexto.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/regras_negocio/publish.sh",
+   "descricao": "Publica docs/ai-context gerados: commit + push na branch padrão, ou PR quando a branch é protegida. Variáveis:",
+   "linhas": 106,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/supabase_snapshot/snapshot.py",
+   "descricao": "Somente leitura no banco (sessão read-only, statement_timeout, lock_timeout). Nunca grava linhas de tabelas, valores de segredos, chaves, senhas ou DSN.",
+   "linhas": 1590,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "contexto.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/talkx/gen-estados.mjs",
+   "descricao": "* X055 — gera a matriz tela × estado do Talk X em `docs/talkx/ESTADOS.md`.",
+   "linhas": 203,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/talkx/lado-a-lado.mjs",
+   "descricao": "* Régua visual do Talk X — compara, lado a lado, os mockups de referência",
+   "linhas": 190,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "e2e-talkx.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/talkx/v4-status.mjs",
+   "descricao": "* v4-status.mjs — placar automático do plano V4 do Talk X (etapa X002).",
+   "linhas": 372,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "ci.yml",
+    "talkx-status-regen.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/tarefas/seed-local-imagens.ts",
+   "descricao": "* Semente LOCAL que reproduz as tarefas das imagens de referência do módulo de",
+   "linhas": 333,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/team-chat-db-validate.mjs",
+   "descricao": "* E97-E99: Team Chat DB validation script.",
+   "linhas": 130,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ui-audit/layout-guard.mjs",
+   "descricao": "* layout-guard.mjs — Etapa 27",
+   "linhas": 179,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ui-audit/root-className.mjs",
+   "descricao": "* Extrai o className da raiz JSX de um componente de view.",
+   "linhas": 75,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ui-audit/width-check.mjs",
+   "descricao": "* width-check.mjs — predicado puro do teste de regressão de largura",
+   "linhas": 48,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ui-audit/width-regression.mjs",
+   "descricao": "* width-regression.mjs — Etapa 28",
+   "linhas": 198,
+   "env": [
+    "APP_URL",
+    "CHROMIUM_PATH",
+    "STORAGE_STATE",
+    "VITE_PORT"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/vercel/ignore-build.sh",
+   "descricao": "V076: Ignora build do Vercel quando apenas arquivos não-front mudaram. Contrato: exit 1 = buildar, exit 0 = pular.",
+   "linhas": 36,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/vercel/verify-production.mjs",
+   "descricao": "V162: Smoke de pós-deploy do Vercel para ZAPP Web V2. Uso: node scripts/vercel/verify-production.mjs [--url=https://zappweb.app.br]",
+   "linhas": 134,
+   "env": [
+    "SMOKE_BASE_URL"
+   ],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  }
+ ]
+}

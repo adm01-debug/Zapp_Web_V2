@@ -1,0 +1,3209 @@
+{
+ "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
+ "format_version": 2,
+ "stack": {
+  "linguagens": [
+   "TypeScript (4177)",
+   "SQL (1274)",
+   "Markdown (1029)",
+   "JSON (591)",
+   "JavaScript (351)",
+   "Shell (230)",
+   "Python (115)",
+   "YAML (27)"
+  ],
+  "linguagem_principal": "TypeScript",
+  "framework": "React",
+  "backend_http": [],
+  "bundler": "Vite",
+  "roteador": "react-router",
+  "banco": "Supabase",
+  "testes": [
+   "vitest",
+   "playwright"
+  ],
+  "ui": [
+   "tailwind",
+   "radix/shadcn"
+  ],
+  "estado": [
+   "react-query"
+  ],
+  "gerenciador_pacotes": "bun",
+  "node": "24",
+  "python": null,
+  "deploy": [
+   "vercel",
+   "compose/swarm"
+  ],
+  "monorepo": null,
+  "pastas_fonte": [
+   "src"
+  ]
+ },
+ "workspaces": [],
+ "package": {
+  "nome": "zapp-web-v2",
+  "versao": "0.2.0",
+  "scripts": {
+   "build": "vite build",
+   "build:dev": "vite build --mode development",
+   "contexto:ia": "node scripts/ai-context/gerar.mjs --out docs/contexto/codigo",
+   "contexto:ia:test": "node --test scripts/ai-context/gerar.unit.mjs",
+   "db:guard": "node scripts/db-audit/supabase-usage-guard.mjs && node scripts/db-audit/check-migration-drift.mjs",
+   "dev": "vite",
+   "graph:setup": "bash scripts/graphify/setup.sh",
+   "graph:update": "graphify update .",
+   "implicit-any-check": "node scripts/ci/implicit-any-ratchet.mjs",
+   "lint": "eslint .",
+   "lint:fix": "eslint . --fix",
+   "mutation:mapa": "node scripts/mutation/run-mapa.mjs",
+   "prepare": "husky || true",
+   "preview": "vite preview",
+   "test": "vitest run",
+   "test:contracts": "vitest run --config vitest.contracts.config.ts",
+   "test:coverage": "vitest run --coverage",
+   "test:e2e": "playwright test",
+   "test:e2e:report": "playwright show-report",
+   "test:watch": "vitest",
+   "typecheck": "tsc -b --force"
+  },
+  "dependencias": 69,
+  "dev_dependencias": 31,
+  "principais": {
+   "@supabase/supabase-js": "^2.117.3",
+   "@tanstack/react-query": "^5.104.5",
+   "@tanstack/react-virtual": "^3.14.22",
+   "date-fns": "^3.6.0",
+   "framer-motion": "^12.43.0",
+   "i18next": "^26.5.6",
+   "next-themes": "^0.4.6",
+   "react": "^19.3.1",
+   "react-day-picker": "^8.10.2",
+   "react-dom": "^19.3.1",
+   "react-hook-form": "^7.90.0",
+   "react-i18next": "^17.1.4",
+   "react-resizable-panels": "^2.1.9",
+   "react-router-dom": "^7",
+   "recharts": "^3.10.1",
+   "tailwindcss-animate": "^1.0.7",
+   "zod": "^4.6.7"
+  },
+  "engines": {
+   "node": ">=24",
+   "bun": ">=1.3"
+  },
+  "packageManager": null
+ },
+ "python": {
+  "dependencias": [
+   "psycopg"
+  ]
+ },
+ "configs": [
+  ".editorconfig",
+  ".github/CODEOWNERS",
+  ".github/PULL_REQUEST_TEMPLATE.md",
+  ".github/dependabot.yml",
+  ".husky/commit-msg",
+  ".husky/pre-commit",
+  ".husky/pre-push",
+  ".nvmrc",
+  ".prettierrc",
+  "components.json",
+  "eslint.config.js",
+  "package.json",
+  "playwright.config.ts",
+  "postcss.config.js",
+  "supabase/config.toml",
+  "tailwind.config.ts",
+  "tsconfig.app.json",
+  "tsconfig.e2e.json",
+  "tsconfig.json",
+  "tsconfig.node.json",
+  "tsconfig.strict.json",
+  "vercel.json",
+  "vite.config.ts",
+  "vitest.config.ts"
+ ],
+ "workflows": [
+  {
+   "arquivo": ".github/workflows/auto-update-pr-branch.yml",
+   "nome": "Auto Update PR Branches",
+   "gatilhos": [
+    "push",
+    "schedule",
+    "workflow_dispatch",
+    "workflow_run"
+   ],
+   "crons": [
+    "7,37 * * * *"
+   ],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "update-behind-branches"
+   ],
+   "permissoes": [],
+   "scripts_usados": [
+    "scripts/ci/fila-merge.mjs"
+   ],
+   "npm_scripts": [],
+   "secrets": [
+    "GITHUB_TOKEN"
+   ],
+   "actions": [
+    "actions/checkout",
+    "actions/setup-node"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/branch-hygiene-audit.yml",
+   "nome": "Branch Hygiene Audit",
+   "gatilhos": [
+    "schedule",
+    "workflow_dispatch"
+   ],
+   "crons": [
+    "56 7 * * 1"
+   ],
+   "branches": [],
+   "jobs": [
+    "audit"
+   ],
+   "permissoes": [
+    "contents: read",
+    "pull-requests: read"
+   ],
+   "scripts_usados": [
+    "scripts/ci/actions-kpi.mjs"
+   ],
+   "npm_scripts": [],
+   "secrets": [],
+   "actions": [
+    "actions/checkout"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/ci.yml",
+   "nome": "CI/CD Pipeline",
+   "gatilhos": [
+    "pull_request",
+    "push",
+    "workflow_dispatch"
+   ],
+   "crons": [],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "typecheck",
+    "unit-tests",
+    "node-scripts",
+    "edge-contracts",
+    "build",
+    "security",
+    "workflow-lint",
+    "ci-gate",
+    "e2e",
+    "mutation-mapa"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/ci/audit-prod.mjs",
+    "scripts/ci/bundle-budget.mjs",
+    "scripts/ci/check-claude-md-integrity.mjs",
+    "scripts/ci/render-workflow-docs.mjs",
+    "scripts/ci/typecheck-ratchet.mjs",
+    "scripts/talkx/v4-status.mjs",
+    "scripts/vercel/ignore-build.unit.mjs"
+   ],
+   "npm_scripts": [
+    "build",
+    "mutation:mapa",
+    "test:e2e"
+   ],
+   "secrets": [
+    "VITE_SUPABASE_PUBLISHABLE_KEY",
+    "VITE_SUPABASE_URL"
+   ],
+   "actions": [
+    "actions/cache",
+    "actions/checkout",
+    "actions/setup-node",
+    "actions/upload-artifact",
+    "denoland/setup-deno",
+    "gitleaks/gitleaks-action",
+    "oven-sh/setup-bun"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/codeql.yml",
+   "nome": "CodeQL",
+   "gatilhos": [
+    "schedule",
+    "workflow_dispatch"
+   ],
+   "crons": [
+    "30 9 * * *"
+   ],
+   "branches": [],
+   "jobs": [
+    "analyze",
+    "analyze-actions"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [],
+   "npm_scripts": [],
+   "secrets": [],
+   "actions": [
+    "actions/checkout",
+    "github/codeql-action/analyze",
+    "github/codeql-action/init"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/contexto.yml",
+   "nome": "Contexto para agentes de IA (10 min)",
+   "gatilhos": [
+    "push",
+    "schedule",
+    "workflow_dispatch"
+   ],
+   "crons": [
+    "3-59/10 * * * *"
+   ],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "gate",
+    "codigo",
+    "banco",
+    "regras",
+    "publicar"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/ai-context/gerar.mjs",
+    "scripts/regras_negocio/generate.py",
+    "scripts/regras_negocio/indice.py",
+    "scripts/supabase_snapshot/snapshot.py"
+   ],
+   "npm_scripts": [],
+   "secrets": [
+    "SUPABASE_DB_URL"
+   ],
+   "actions": [
+    "actions/cache",
+    "actions/checkout",
+    "actions/download-artifact",
+    "actions/setup-node",
+    "actions/upload-artifact"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/crm-sync-worker.yml",
+   "nome": "CRM Sync Worker",
+   "gatilhos": [
+    "workflow_dispatch"
+   ],
+   "crons": [
+    "*/5 * * * *"
+   ],
+   "branches": [],
+   "jobs": [
+    "drain"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [],
+   "npm_scripts": [],
+   "secrets": [
+    "CRON_SECRET"
+   ],
+   "actions": []
+  },
+  {
+   "arquivo": ".github/workflows/db-guard.yml",
+   "nome": "DB Guard (offline)",
+   "gatilhos": [
+    "merge_group",
+    "pull_request",
+    "push",
+    "workflow_dispatch"
+   ],
+   "crons": [],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "offline-contract",
+    "replay-migrations"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/db-audit/admin-cron-jobs-rpc.test.sh",
+    "scripts/db-audit/ai-block03-vocabulary-contract.test.sh",
+    "scripts/db-audit/ai-read-policies-queue-scope.test.sh",
+    "scripts/db-audit/ai-usage-cost-window-open.test.sh",
+    "scripts/db-audit/anon-privileges-contact-messages.test.sh",
+    "scripts/db-audit/assume-return-conversation.test.sh",
+    "scripts/db-audit/auto-reconnect-logs.test.sh",
+    "scripts/db-audit/buckets-stickers-team-chat-files.test.sh",
+    "scripts/db-audit/calls-telefonia-contract.test.sh",
+    "scripts/db-audit/catalog-manifest.test.sh",
+    "scripts/db-audit/catalog-rate-limit-policy-pinned.test.sh",
+    "scripts/db-audit/check-live-invariants.test.sh",
+    "scripts/db-audit/check-mcp-exec-acl.test.sh",
+    "scripts/db-audit/check-migration-drift.mjs",
+    "scripts/db-audit/check-realtime-subscriptions.mjs",
+    "scripts/db-audit/check-reconcile-ledger-drift.test.sh",
+    "scripts/db-audit/check-secdef-public-execute.test.sh",
+    "scripts/db-audit/check-webhook-failures-acl.test.sh",
+    "scripts/db-audit/contacts-legacy-visibility.test.sh",
+    "scripts/db-audit/contacts-soft-delete-and-status.test.sh",
+    "scripts/db-audit/conversation-analyses-authorization.test.sh",
+    "scripts/db-audit/conversation-events-insert-autor-visivel.test.sh",
+    "scripts/db-audit/conversation-tasks-completed-indexes.test.sh",
+    "scripts/db-audit/conversation-tasks-events-insert-authorization.test.sh",
+    "scripts/db-audit/crm-sync-outbox-behavior.test.sh",
+    "scripts/db-audit/cron-secret-l5-contract.test.sh",
+    "scripts/db-audit/dashboard-daily-series.test.sh",
+    "scripts/db-audit/dashboard-rls-authorization.test.sh",
+    "scripts/db-audit/department-invite-contract-audit-vocabulary.test.sh",
+    "scripts/db-audit/department-whatsapp-mode-rpc.test.sh",
+    "scripts/db-audit/departments-admin-management.test.sh",
+    "scripts/db-audit/dispatch-scheduled-messages.test.sh",
+    "scripts/db-audit/drop-redundant-messages-external-id-index.test.sh",
+    "scripts/db-audit/edit-message-authorization.test.sh",
+    "scripts/db-audit/email-rls-sem-ramo-admin.test.sh",
+    "scripts/db-audit/email-signatures-rls.test.sh",
+    "scripts/db-audit/enqueue-connection-scope.test.sh",
+    "scripts/db-audit/f64-voz-assets-e-grants.test.sh",
+    "scripts/db-audit/feature-flags-rollout.test.sh",
+    "scripts/db-audit/gamification-marco-nao-bloqueia-envio.test.sh",
+    "scripts/db-audit/gen-types.test.sh",
+    "scripts/db-audit/generic-migration-runtime.test.sh",
+    "scripts/db-audit/gmail-accounts-sync-backoff.test.sh",
+    "scripts/db-audit/gmail-write-blocks-restrictive.test.sh",
+    "scripts/db-audit/higiene-grants-public-policies.test.sh",
+    "scripts/db-audit/ia-usage-outbox-duravel.test.sh",
+    "scripts/db-audit/inbox-contact-authorization.test.sh",
+    "scripts/db-audit/interactive-buttons-list-behavior.test.sh",
+    "scripts/db-audit/l11-departments-acl-escrita.test.sh",
+    "scripts/db-audit/mapa-f1-address-contract.test.sh",
+    "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
+    "scripts/db-audit/messages-group-sender.test.sh",
+    "scripts/db-audit/multiplix-delivery-leases.test.sh",
+    "scripts/db-audit/multiplix-drain-enum-cast.test.sh",
+    "scripts/db-audit/multiplix-resolve-escopo.test.sh",
+    "scripts/db-audit/multiplix-revoke-execute-public.test.sh",
+    "scripts/db-audit/multiplix-rls.test.sh",
+    "scripts/db-audit/multiplix-scope.test.sh",
+    "scripts/db-audit/multiplix-send-mutation.py",
+    "scripts/db-audit/n011-storage-avatar-policies-dedup.test.sh",
+    "scripts/db-audit/n142-message-reactions-select-user-id.test.sh",
+    "scripts/db-audit/network-policy-rpc.test.sh",
+    "scripts/db-audit/notification-delivery-atomicity.test.sh",
+    "scripts/db-audit/notify-due-tasks-authorization.test.sh",
+    "scripts/db-audit/profiles-can-download-authorization.test.sh",
+    "scripts/db-audit/profiles-role-escalation-guard.test.sh",
+    "scripts/db-audit/psql-environment.integration.mjs",
+    "scripts/db-audit/public-api-disable.test.sh",
+    "scripts/db-audit/queues-distribution-overflow.test.sh",
+    "scripts/db-audit/recriar-banco-local.test.sh",
+    "scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh",
+    "scripts/db-audit/replay-classify.test.sh",
+    "scripts/db-audit/replay-local.sh",
+    "scripts/db-audit/request-department-access.test.sh",
+    "scripts/db-audit/reset-gatilho-coluna-removida.test.sh",
+    "scripts/db-audit/retry-disposable-postgres-test.sh",
+    "scripts/db-audit/revoke-auth-sessions.test.sh",
+    "scripts/db-audit/runtime-config.test.sh",
+    "scripts/db-audit/scheduled-whisper-visibility-rls.test.sh",
+    "scripts/db-audit/scope-public-policies-authenticated.test.sh",
+    "scripts/db-audit/scope-snoozes-pins-favorites-authenticated.test.sh",
+    "scripts/db-audit/search-email-threads.test.sh",
+    "scripts/db-audit/search_path_pg_temp_is_admin_get_own_gmail.test.sh",
+    "scripts/db-audit/searchbox-budget-alert-monthly-idempotency.test.sh",
+    "scripts/db-audit/sec-y25-01-insert-alvo.test.sh",
+    "scripts/db-audit/secd-caller-check.test.sh",
+    "scripts/db-audit/send-messages-permission-authorization.test.sh",
+    "scripts/db-audit/storage-limits-stickers-audio-memes.test.sh",
+    "scripts/db-audit/storage-limits-whatsapp-audio-multiplix.test.sh",
+    "scripts/db-audit/supabase-usage-guard.mjs",
+    "scripts/db-audit/talk-me-queue-contract.test.sh",
+    "scripts/db-audit/talkx-ab-weights.test.sh",
+    "scripts/db-audit/talkx-alerts-outcome-unknown-lote.test.sh",
+    "scripts/db-audit/talkx-attribution.test.sh",
+    "scripts/db-audit/talkx-audience-rpc.test.sh",
+    "scripts/db-audit/talkx-audience-snapshot.test.sh",
+    "scripts/db-audit/talkx-benchmarks-period-names.test.sh",
+    "scripts/db-audit/talkx-blacklist-audit-trigger.test.sh",
+    "scripts/db-audit/talkx-blacklist-policy-forward-only.test.sh",
+    "scripts/db-audit/talkx-blacklist-realtime.test.sh",
+    "scripts/db-audit/talkx-campaign-launch-checks.test.sh",
+    "scripts/db-audit/talkx-campaign-recipients-page.test.sh",
+    "scripts/db-audit/talkx-campaign-recurrence.test.sh",
+    "scripts/db-audit/talkx-campaign-state-transitions.test.sh",
+    "scripts/db-audit/talkx-campaign-transitions.test.sh",
+    "scripts/db-audit/talkx-campaign-worker-lease.test.sh",
+    "scripts/db-audit/talkx-conversion-defaults.test.sh",
+    "scripts/db-audit/talkx-counters-integrity.test.sh",
+    "scripts/db-audit/talkx-delivery-leases.test.sh",
+    "scripts/db-audit/talkx-draft-recipients.test.sh",
+    "scripts/db-audit/talkx-draft-save.test.sh",
+    "scripts/db-audit/talkx-engine-cron-runs-role-gate.test.sh",
+    "scripts/db-audit/talkx-engine-health.test.sh",
+    "scripts/db-audit/talkx-engine-tick.test.sh",
+    "scripts/db-audit/talkx-escape-hatch-auth.test.sh",
+    "scripts/db-audit/talkx-events-contract.test.sh",
+    "scripts/db-audit/talkx-expurgo-escopo-ai-jobs.test.sh",
+    "scripts/db-audit/talkx-guards-fail-closed.test.sh",
+    "scripts/db-audit/talkx-help-top-topics.test.sh",
+    "scripts/db-audit/talkx-history-saved-by-fk.test.sh",
+    "scripts/db-audit/talkx-insights-rules.test.sh",
+    "scripts/db-audit/talkx-lgpd.test.sh",
+    "scripts/db-audit/talkx-lifecycle-events.test.sh",
+    "scripts/db-audit/talkx-links-conversions.test.sh",
+    "scripts/db-audit/talkx-message-snapshot.test.sh",
+    "scripts/db-audit/talkx-metrics-view-invoker.test.sh",
+    "scripts/db-audit/talkx-n102-window-acl.test.sh",
+    "scripts/db-audit/talkx-n102a-ddl.test.sh",
+    "scripts/db-audit/talkx-n102b-cast.test.sh",
+    "scripts/db-audit/talkx-n102c-window.test.sh",
+    "scripts/db-audit/talkx-receipts-replies.test.sh",
+    "scripts/db-audit/talkx-regressoes-chain.test.sh",
+    "scripts/db-audit/talkx-retry-resolve.test.sh",
+    "scripts/db-audit/talkx-rfm.test.sh",
+    "scripts/db-audit/talkx-role-gates.test.sh",
+    "scripts/db-audit/talkx-save-template-variants.test.sh",
+    "scripts/db-audit/talkx-segment-fields.test.sh",
+    "scripts/db-audit/talkx-segment-health.test.sh",
+    "scripts/db-audit/talkx-segment-progress.test.sh",
+    "scripts/db-audit/talkx-send-budget.test.sh",
+    "scripts/db-audit/talkx-send-interval-teto-24h.test.sh",
+    "scripts/db-audit/talkx-settings-replay-idempotent.test.sh",
+    "scripts/db-audit/talkx-settings-rls.test.sh",
+    "scripts/db-audit/talkx-suppress-phone-axis.test.sh",
+    "scripts/db-audit/talkx-suppression-read-rpcs.test.sh",
+    "scripts/db-audit/talkx-template-columns.test.sh",
+    "scripts/db-audit/talkx-template-history-behavior.test.sh",
+    "scripts/db-audit/talkx-template-second-update-snapshot.test.sh",
+    "scripts/db-audit/talkx-tick-expurgo.test.sh",
+    "scripts/db-audit/talkx-transition-overload-postgrest.test.sh",
+    "scripts/db-audit/talkx-update-limits-22009.test.sh",
+    "scripts/db-audit/talkx-update-limits-casts.test.sh",
+    "scripts/db-audit/talkx-update-limits-rpc.test.sh",
+    "scripts/db-audit/talkx-update-limits-send-window.test.sh",
+    "scripts/db-audit/talkx-v12-lifecycle-events.test.sh",
+    "scripts/db-audit/talkx-v15-replied-count-guard.test.sh",
+    "scripts/db-audit/talkx-v16-time-series.test.sh",
+    "scripts/db-audit/talkx-v17-read-at.test.sh",
+    "scripts/db-audit/talkx-v19-retry-recipient.test.sh",
+    "scripts/db-audit/talkx-v21-launch-flags.test.sh",
+    "scripts/db-audit/tasks-rearm-on-remind-change.test.sh",
+    "scripts/db-audit/tc002-direct-conversation-race.test.sh",
+    "scripts/db-audit/team-chat-department-transfer-guards.test.sh",
+    "scripts/db-audit/team-chat-department-whatsapp-safe-config.test.sh",
+    "scripts/db-audit/team-chat-media-acl-r2-db-020.test.sh",
+    "scripts/db-audit/team-chat-media-contract.test.sh",
+    "scripts/db-audit/team-chat-rpc-ambiguity.test.sh",
+    "scripts/db-audit/team-direct-conversation-race.test.sh",
+    "scripts/db-audit/team-member-role-rpcs.test.sh",
+    "scripts/db-audit/team-membership-bootstrap-owner.test.sh",
+    "scripts/db-audit/team-message-read-state.test.sh",
+    "scripts/db-audit/team-messages-page-cursor-tiebreak.test.sh",
+    "scripts/db-audit/team-reaction-membership.test.sh",
+    "scripts/db-audit/team-receipts-membership.test.sh",
+    "scripts/db-audit/team-receipts-reactions-conversation-id.test.sh",
+    "scripts/db-audit/user-sessions-expire.test.sh",
+    "scripts/db-audit/user-settings-sound-integrity-contract.test.sh",
+    "scripts/db-audit/wa-label-connection-scope.test.sh",
+    "scripts/db-audit/wa-tag-and-status-authorization.test.sh",
+    "scripts/db-audit/whatsapp-default-connection-atomicity.test.sh",
+    "scripts/db-audit/whatsapp-media-select-scope.test.sh"
+   ],
+   "npm_scripts": [],
+   "secrets": [],
+   "actions": [
+    "actions/cache",
+    "actions/checkout",
+    "actions/github-script",
+    "actions/setup-node",
+    "actions/upload-artifact",
+    "denoland/setup-deno",
+    "oven-sh/setup-bun"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/db-live-guard.yml",
+   "nome": "DB Live Guard",
+   "gatilhos": [
+    "schedule",
+    "workflow_dispatch"
+   ],
+   "crons": [
+    "13 6 * * 1"
+   ],
+   "branches": [],
+   "jobs": [
+    "live-contract"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/ci/install-pgbouncer.sh",
+    "scripts/ci/install-postgresql-client.sh",
+    "scripts/db-audit/check-catalog-fresh.mjs",
+    "scripts/db-audit/check-manifest-fresh.mjs",
+    "scripts/db-audit/check-runtime-config.mjs",
+    "scripts/db-audit/check-triple-parity.mjs",
+    "scripts/db-audit/consolidar-veredito.mjs",
+    "scripts/db-audit/gen-types.sh",
+    "scripts/db-audit/lote-pendente.mjs",
+    "scripts/db-audit/psql-safe.mjs"
+   ],
+   "npm_scripts": [],
+   "secrets": [
+    "DESTINO_URL",
+    "GITHUB_TOKEN"
+   ],
+   "actions": [
+    "actions/checkout",
+    "actions/github-script",
+    "actions/setup-node",
+    "actions/upload-artifact",
+    "supabase/setup-cli"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/db-migrate.yml",
+   "nome": "DB Migrate (production)",
+   "gatilhos": [
+    "workflow_dispatch"
+   ],
+   "crons": [],
+   "branches": [],
+   "jobs": [
+    "migrate"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/ci/install-postgresql-client.sh",
+    "scripts/db-audit/check-migration-drift.mjs",
+    "scripts/db-audit/dry-run-plan.mjs",
+    "scripts/db-audit/psql-safe.mjs",
+    "scripts/db-audit/run-runtime-contract.mjs",
+    "scripts/db-audit/validate-runtime-proof.mjs",
+    "scripts/db-audit/verify-ledger-statements.mjs"
+   ],
+   "npm_scripts": [],
+   "secrets": [
+    "DESTINO_URL"
+   ],
+   "actions": [
+    "actions/checkout",
+    "actions/setup-node",
+    "supabase/setup-cli"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/deploy-functions.yml",
+   "nome": "Deploy Edge Functions",
+   "gatilhos": [
+    "push",
+    "workflow_dispatch"
+   ],
+   "crons": [],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "deploy"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/edge-deploy/generate-manifest.mjs",
+    "scripts/edge-deploy/smoke-functions.mjs"
+   ],
+   "npm_scripts": [],
+   "secrets": [
+    "CRON_SECRET",
+    "EXTERNAL_SUPABASE_SERVICE_ROLE_KEY",
+    "EXTERNAL_SUPABASE_URL",
+    "PREVIEW_EGRESS_PROXY_URL",
+    "PREVIEW_EGRESS_SHARED_SECRET",
+    "PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY",
+    "PROMOGIFTS_SUPABASE_URL",
+    "SUPABASE_ACCESS_TOKEN",
+    "outputs"
+   ],
+   "actions": [
+    "actions/checkout",
+    "actions/setup-node",
+    "actions/upload-artifact",
+    "denoland/setup-deno",
+    "supabase/setup-cli"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/e2e-logado.yml",
+   "nome": "E2E logado",
+   "gatilhos": [
+    "workflow_dispatch",
+    "workflow_run"
+   ],
+   "crons": [],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "e2e-logado"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/ci/e2e-teardown.mjs",
+    "scripts/ci/redigir-relatorio.mjs"
+   ],
+   "npm_scripts": [
+    "test:e2e"
+   ],
+   "secrets": [
+    "E2E_TEST_EMAIL",
+    "E2E_TEST_PASSWORD",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "VITE_SUPABASE_PUBLISHABLE_KEY",
+    "VITE_SUPABASE_URL",
+    "mjs"
+   ],
+   "actions": [
+    "actions/cache",
+    "actions/checkout",
+    "actions/github-script",
+    "actions/upload-artifact",
+    "oven-sh/setup-bun"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/e2e-talkx.yml",
+   "nome": "E2E Talk X (visual/launch + Auth smoke)",
+   "gatilhos": [
+    "pull_request",
+    "workflow_dispatch"
+   ],
+   "crons": [],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "e2e-talkx"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/talkx/lado-a-lado.mjs"
+   ],
+   "npm_scripts": [
+    "test:e2e"
+   ],
+   "secrets": [
+    "mjs"
+   ],
+   "actions": [
+    "actions/cache",
+    "actions/checkout",
+    "actions/upload-artifact",
+    "oven-sh/setup-bun"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/inventario-estado-semanal.yml",
+   "nome": "Inventário do estado real (semanal)",
+   "gatilhos": [
+    "schedule",
+    "workflow_dispatch"
+   ],
+   "crons": [
+    "23 10 * * 1"
+   ],
+   "branches": [],
+   "jobs": [
+    "gerar"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/inventario/gerar-banco.mjs",
+    "scripts/inventario/gerar-repo.mjs",
+    "scripts/inventario/gerar-rotas.mjs",
+    "scripts/inventario/mudou-conteudo.mjs"
+   ],
+   "npm_scripts": [],
+   "secrets": [
+    "SUPABASE_ACCESS_TOKEN"
+   ],
+   "actions": [
+    "actions/checkout",
+    "actions/github-script",
+    "actions/setup-node",
+    "actions/upload-artifact",
+    "peter-evans/create-pull-request"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/notifica-falha-main.yml",
+   "nome": "Notifica falha na main",
+   "gatilhos": [
+    "workflow_run"
+   ],
+   "crons": [],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "notificar"
+   ],
+   "permissoes": [],
+   "scripts_usados": [],
+   "npm_scripts": [],
+   "secrets": [],
+   "actions": [
+    "actions/github-script"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/settings-guard.yml",
+   "nome": "Settings Guard",
+   "gatilhos": [
+    "schedule",
+    "workflow_dispatch"
+   ],
+   "crons": [
+    "15 7 * * *"
+   ],
+   "branches": [],
+   "jobs": [
+    "guard"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/ci/github-settings-guard.mjs"
+   ],
+   "npm_scripts": [],
+   "secrets": [
+    "GITHUB_TOKEN",
+    "SETTINGS_GUARD_TOKEN"
+   ],
+   "actions": [
+    "actions/checkout",
+    "actions/setup-node",
+    "actions/upload-artifact"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/talkx-status-regen.yml",
+   "nome": "Talk X V4 placar regen (push + semanal)",
+   "gatilhos": [
+    "push",
+    "schedule",
+    "workflow_dispatch"
+   ],
+   "crons": [
+    "45 7 * * 1"
+   ],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "regen"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/talkx/v4-status.mjs"
+   ],
+   "npm_scripts": [],
+   "secrets": [],
+   "actions": [
+    "actions/checkout",
+    "actions/github-script",
+    "peter-evans/create-pull-request"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/targeted-ledger-evidence.yml",
+   "nome": "Targeted Ledger Evidence",
+   "gatilhos": [
+    "workflow_dispatch"
+   ],
+   "crons": [],
+   "branches": [],
+   "jobs": [
+    "export-encrypted-evidence"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/ci/install-postgresql-client.sh",
+    "scripts/db-audit/export-targeted-ledger-evidence.mjs"
+   ],
+   "npm_scripts": [],
+   "secrets": [
+    "DESTINO_URL"
+   ],
+   "actions": [
+    "actions/checkout",
+    "actions/setup-node",
+    "actions/upload-artifact"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/types-sync.yml",
+   "nome": "types-sync",
+   "gatilhos": [
+    "push",
+    "schedule",
+    "workflow_dispatch"
+   ],
+   "crons": [
+    "49 5 * * 1"
+   ],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "preflight",
+    "ler-banco",
+    "gates-e-pr"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/ci/install-pgbouncer.sh",
+    "scripts/ci/install-postgresql-client.sh",
+    "scripts/ci/typecheck-ratchet.mjs",
+    "scripts/db-audit/check-catalog-fresh.mjs",
+    "scripts/db-audit/check-grants-fresh.mjs",
+    "scripts/db-audit/check-manifest-fresh.mjs",
+    "scripts/db-audit/check-remocoes-destrutivas.mjs",
+    "scripts/db-audit/gen-types.sh",
+    "scripts/db-audit/lote-pendente.mjs",
+    "scripts/db-audit/supabase-usage-guard.mjs"
+   ],
+   "npm_scripts": [],
+   "secrets": [
+    "DESTINO_URL",
+    "GITHUB_TOKEN",
+    "TYPES_SYNC_PR_TOKEN"
+   ],
+   "actions": [
+    "actions/cache",
+    "actions/checkout",
+    "actions/download-artifact",
+    "actions/github-script",
+    "actions/upload-artifact",
+    "oven-sh/setup-bun",
+    "peter-evans/create-pull-request",
+    "supabase/setup-cli"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/vercel-env-cleanup.yml",
+   "nome": "V043-V065 Vercel Env Cleanup",
+   "gatilhos": [
+    "workflow_dispatch"
+   ],
+   "crons": [],
+   "branches": [],
+   "jobs": [
+    "cleanup"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/ci/vercel-env-cleanup.mjs"
+   ],
+   "npm_scripts": [],
+   "secrets": [
+    "VERCEL_READONLY_TOKEN"
+   ],
+   "actions": [
+    "actions/checkout",
+    "actions/setup-node"
+   ]
+  }
+ ],
+ "hooks_git": [
+  {
+   "arquivo": ".husky/commit-msg",
+   "comandos": [
+    "node scripts/ci/commit-msg-lint.mjs \"$1\""
+   ]
+  },
+  {
+   "arquivo": ".husky/pre-commit",
+   "comandos": [
+    "node scripts/ci/lint-ratchet.mjs --staged",
+    "if git diff --cached --name-only | grep -qE '^supabase/(functions/|config\\.toml$)'; then",
+    "  node scripts/edge-deploy/generate-manifest.mjs",
+    "  git add supabase/deployment-manifest.json",
+    "fi"
+   ]
+  },
+  {
+   "arquivo": ".husky/pre-push",
+   "comandos": [
+    "set -e",
+    "node scripts/ci/typecheck-ratchet.mjs",
+    "node scripts/ci/lint-ratchet.mjs",
+    "node scripts/db-audit/check-migration-drift.mjs"
+   ]
+  }
+ ],
+ "docs_raiz": [
+  {
+   "arquivo": ".github/PULL_REQUEST_TEMPLATE.md",
+   "titulo": null,
+   "linhas": 65
+  },
+  {
+   "arquivo": "AGENTS.md",
+   "titulo": "AGENTS.md — Zapp Web V2",
+   "linhas": 195
+  },
+  {
+   "arquivo": "CHANGELOG.md",
+   "titulo": "Changelog",
+   "linhas": 90
+  },
+  {
+   "arquivo": "CLAUDE.md",
+   "titulo": "CLAUDE.md — ZAPP WEB V2 (ficha técnica do repositório)",
+   "linhas": 380
+  },
+  {
+   "arquivo": "CONTRIBUTING.md",
+   "titulo": "Guia de Contribuição — Zapp Web V2",
+   "linhas": 112
+  },
+  {
+   "arquivo": "ESTADO.md",
+   "titulo": "ESTADO.md — o que está ligado e quem chama",
+   "linhas": 151
+  },
+  {
+   "arquivo": "FEATURE_REGISTRY.md",
+   "titulo": "FEATURE_REGISTRY.md — registro das views do V2",
+   "linhas": 90
+  },
+  {
+   "arquivo": "HANDOFF_NEXT_SESSION.md",
+   "titulo": "HANDOFF — Próxima sessão (Claude Code)",
+   "linhas": 177
+  },
+  {
+   "arquivo": "README.md",
+   "titulo": "🚀 ZAPP-WEB (Pronto Talk Suite)",
+   "linhas": 369
+  },
+  {
+   "arquivo": "SECURITY.md",
+   "titulo": "🔒 Política de Segurança — ZAPP-WEB",
+   "linhas": 95
+  },
+  {
+   "arquivo": "TESTING_CONVENTION.md",
+   "titulo": "TESTING_CONVENTION.md — onde cada teste mora e como ele roda",
+   "linhas": 104
+  },
+  {
+   "arquivo": "docs/BACKUP-RECOVERY-STRATEGY.md",
+   "titulo": "🔐 ZAPP-WEB — Estratégia de Backup e Recovery",
+   "linhas": 336
+  },
+  {
+   "arquivo": "docs/CAPACIDADES.md",
+   "titulo": "Capacidades de chamada por canal",
+   "linhas": 59
+  },
+  {
+   "arquivo": "docs/COMPLETE_SYSTEM_FEATURES.md",
+   "titulo": "📋 Levantamento Completo de Funcionalidades do Sistema",
+   "linhas": 1061
+  },
+  {
+   "arquivo": "docs/CONEXOES_WHATSAPP_RUNBOOK.md",
+   "titulo": "Runbook — Conexões de WhatsApp (V2)",
+   "linhas": 235
+  },
+  {
+   "arquivo": "docs/CRM360_TECHNICAL_DOCS.md",
+   "titulo": "ZAPP-WEB × CRM 360° — Documentação Técnica",
+   "linhas": 109
+  },
+  {
+   "arquivo": "docs/DB-INVENTORY.md",
+   "titulo": "Inventário de objetos do banco — `public`",
+   "linhas": 290
+  },
+  {
+   "arquivo": "docs/DB-SECURITY.md",
+   "titulo": "Seguranca do banco — notas operacionais",
+   "linhas": 279
+  },
+  {
+   "arquivo": "docs/DEPLOYMENT.md",
+   "titulo": "🚀 Guia de Deploy - ZAPP-WEB",
+   "linhas": 349
+  },
+  {
+   "arquivo": "docs/DISTRIBUTION-FALLBACKS.md",
+   "titulo": "Distribuição de Atendimentos — Tabela-Verdade de Fallbacks",
+   "linhas": 314
+  },
+  {
+   "arquivo": "docs/EVOLUTION_API_GAPS_ANALYSIS.md",
+   "titulo": "🔬 ZAPP-WEB × EVOLUTION API — ANÁLISE DE GAPS",
+   "linhas": 158
+  },
+  {
+   "arquivo": "docs/EVOLUTION_API_REFERENCE.md",
+   "titulo": "⚡ EVOLUTION API v2 — Análise Técnica Completa",
+   "linhas": 1285
+  },
+  {
+   "arquivo": "docs/EVOLUTION_WEBHOOKS_DOCUMENTATION.md",
+   "titulo": "📡 EVOLUTION API - DOCUMENTAÇÃO COMPLETA DE WEBHOOKS",
+   "linhas": 2471
+  },
+  {
+   "arquivo": "docs/HANDOFF_EVOLUTION_SECURITY_2026-04-12.md",
+   "titulo": "🔄 HANDOFF — ZAPP-WEB × Evolution API Security Improvements",
+   "linhas": 293
+  },
+  {
+   "arquivo": "docs/INCIDENT-RUNBOOK.md",
+   "titulo": "🚨 ZAPP-WEB — Runbook de Incidentes",
+   "linhas": 349
+  },
+  {
+   "arquivo": "docs/JORNADA_MENSAGEM_WHATSAPP.md",
+   "titulo": "Jornada da mensagem de WhatsApp — Zapp Web V2",
+   "linhas": 92
+  },
+  {
+   "arquivo": "docs/LGPD-RETENTION-POLICY.md",
+   "titulo": "🛡️ ZAPP-WEB — Política de Retenção de Dados (LGPD)",
+   "linhas": 398
+  },
+  {
+   "arquivo": "docs/MIGRATIONS.md",
+   "titulo": "Migrations — procedimento e armadilhas",
+   "linhas": 580
+  },
+  {
+   "arquivo": "docs/POP-ATENDIMENTO-BASICO.md",
+   "titulo": "📝 POP — Procedimento Operacional Padrão",
+   "linhas": 256
+  },
+  {
+   "arquivo": "docs/PROJECT_TEMPLATE.md",
+   "titulo": "🏗️ Template de Projeto Base - WhatsApp CRM",
+   "linhas": 875
+  },
+  {
+   "arquivo": "docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md",
+   "titulo": "PROMPT PARA LOVABLE — Integração completa CRM 360° no zapp-web",
+   "linhas": 222
+  },
+  {
+   "arquivo": "docs/PROMPT_LOVABLE_INTELLIGENCE_PANEL.md",
+   "titulo": "PROMPT LOVABLE — Integração do Painel de Inteligência Comercial",
+   "linhas": 96
+  },
+  {
+   "arquivo": "docs/PRONTO_PRODUCAO.md",
+   "titulo": "Pronto para produção — fluxos críticos do Zapp Web V2",
+   "linhas": 49
+  },
+  {
+   "arquivo": "docs/README.md",
+   "titulo": "📚 ZAPP-WEB Documentation",
+   "linhas": 98
+  },
+  {
+   "arquivo": "docs/REALTIME-CHANNELS-INVENTORY.md",
+   "titulo": "Inventário dos canais Realtime — Zapp Web V2",
+   "linhas": 145
+  },
+  {
+   "arquivo": "docs/SLA-ESCALATION-CRON.md",
+   "titulo": "SLA Escalation Cron — Documentação Técnica",
+   "linhas": 273
+  },
+  {
+   "arquivo": "docs/TROUBLESHOOTING.md",
+   "titulo": "🔧 Guia de Troubleshooting - ZAPP-WEB",
+   "linhas": 415
+  },
+  {
+   "arquivo": "docs/WEBHOOK_EVENTS.md",
+   "titulo": "📡 ZAPP-WEB — WEBHOOK EVENTS DOCUMENTATION",
+   "linhas": 401
+  },
+  {
+   "arquivo": "docs/WEBHOOK_SECURITY.md",
+   "titulo": "Webhook Security - HMAC Signature Validation",
+   "linhas": 207
+  },
+  {
+   "arquivo": "docs/audit_report.md",
+   "titulo": "🛡️ Relatório de Auditoria Enterprise: Pronto Talk Suite (ZAPP-WEB)",
+   "linhas": 108
+  },
+  {
+   "arquivo": "docs/contracts.md",
+   "titulo": "Contratos das Edge Functions",
+   "linhas": 51
+  },
+  {
+   "arquivo": "docs/crm-external-grants.md",
+   "titulo": "GRANTs Externos — CRM pgxfvjmuubtbowutlide",
+   "linhas": 111
+  }
+ ],
+ "docs_em_subpastas": [
+  {
+   "pasta": "docs/_arquivo",
+   "arquivos_md": 332
+  },
+  {
+   "pasta": "docs/audits",
+   "arquivos_md": 176
+  },
+  {
+   "pasta": "docs/reconciliation",
+   "arquivos_md": 134
+  },
+  {
+   "pasta": "docs/design",
+   "arquivos_md": 64
+  },
+  {
+   "pasta": "docs/plans",
+   "arquivos_md": 58
+  },
+  {
+   "pasta": "docs/talkx",
+   "arquivos_md": 52
+  },
+  {
+   "pasta": "docs/ia",
+   "arquivos_md": 19
+  },
+  {
+   "pasta": "docs/adr",
+   "arquivos_md": 17
+  },
+  {
+   "pasta": "docs/catalogo",
+   "arquivos_md": 15
+  },
+  {
+   "pasta": "docs/runbooks",
+   "arquivos_md": 14
+  },
+  {
+   "pasta": "docs/multiplix",
+   "arquivos_md": 12
+  },
+  {
+   "pasta": "docs/mapa",
+   "arquivos_md": 10
+  },
+  {
+   "pasta": "docs/copiloto",
+   "arquivos_md": 8
+  },
+  {
+   "pasta": "docs/decisions",
+   "arquivos_md": 8
+  },
+  {
+   "pasta": "docs/handoffs",
+   "arquivos_md": 8
+  },
+  {
+   "pasta": "docs/ci",
+   "arquivos_md": 7
+  },
+  {
+   "pasta": "docs/migration",
+   "arquivos_md": 6
+  },
+  {
+   "pasta": "docs/tipografia",
+   "arquivos_md": 6
+  },
+  {
+   "pasta": "docs/evidencias",
+   "arquivos_md": 4
+  },
+  {
+   "pasta": "docs/telefonia",
+   "arquivos_md": 3
+  },
+  {
+   "pasta": "docs/architecture",
+   "arquivos_md": 2
+  },
+  {
+   "pasta": "docs/contexto",
+   "arquivos_md": 2
+  },
+  {
+   "pasta": "docs/security",
+   "arquivos_md": 2
+  },
+  {
+   "pasta": "docs/team-chat",
+   "arquivos_md": 2
+  },
+  {
+   "pasta": "docs/crm-integration",
+   "arquivos_md": 1
+  },
+  {
+   "pasta": "docs/dashboard",
+   "arquivos_md": 1
+  },
+  {
+   "pasta": "docs/design-system",
+   "arquivos_md": 1
+  },
+  {
+   "pasta": "docs/edge-functions-recovered",
+   "arquivos_md": 1
+  },
+  {
+   "pasta": "docs/hermes",
+   "arquivos_md": 1
+  },
+  {
+   "pasta": "docs/ops",
+   "arquivos_md": 1
+  }
+ ],
+ "changelog_topo": "[Unreleased]",
+ "env": {
+  "declaradas_no_env_example": [
+   "ANTHROPIC_API_KEY",
+   "EVOLUTION_API_FLAVOR",
+   "EVOLUTION_API_KEY",
+   "EVOLUTION_API_URL",
+   "EVOLUTION_INSTANCE_NAME",
+   "EVOLUTION_INSTANCE_TOKEN",
+   "GOOGLE_CLIENT_ID",
+   "GOOGLE_CLIENT_SECRET",
+   "GOOGLE_REDIRECT_URI",
+   "GROQ_API_KEY",
+   "OPENAI_API_KEY",
+   "PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY",
+   "PROMOGIFTS_SUPABASE_URL",
+   "VITE_APP_ENV",
+   "VITE_APP_NAME",
+   "VITE_CRM_INTEGRATION_ENABLED",
+   "VITE_ENABLE_ANALYTICS",
+   "VITE_ENABLE_DEBUG",
+   "VITE_ENABLE_GAMIFICATION",
+   "VITE_ENABLE_GMAIL_INTEGRATION",
+   "VITE_SENTRY_DSN",
+   "VITE_SENTRY_ENVIRONMENT",
+   "VITE_SUPABASE_PUBLISHABLE_KEY",
+   "VITE_SUPABASE_URL"
+  ],
+  "usadas_no_front": [
+   "DEV",
+   "MODE",
+   "NODE_ENV",
+   "PROD",
+   "TZ",
+   "VITE_APP_VERSION",
+   "VITE_CRM_INTEGRATION_ENABLED",
+   "VITE_SEARCHBOX_MONTHLY_SESSION_LIMIT",
+   "ZAPP_CSS_UNDER_TEST"
+  ],
+  "usadas_nas_edges": [
+   "BITRIX_WEBHOOK_URL",
+   "CHATBOT_L1_WEBHOOK_SECRET",
+   "CRON_SECRET",
+   "DENO_ENV",
+   "ELEVENLABS_WEBHOOK_SECRET",
+   "EVOLUTION_API_FLAVOR",
+   "EVOLUTION_API_KEY",
+   "EVOLUTION_API_URL",
+   "EVOLUTION_INSTANCE_NAME",
+   "EVOLUTION_INSTANCE_TOKEN",
+   "EVOLUTION_VPS_SUPABASE_ANON_KEY",
+   "EVOLUTION_VPS_SUPABASE_URL",
+   "EVOLUTION_WEBHOOK_ENFORCE",
+   "EVOLUTION_WEBHOOK_SECRET",
+   "GMAIL_CAS_JWT",
+   "GMAIL_CAS_POSTGREST_URL",
+   "GMAIL_OIDC_AUDIENCE",
+   "GMAIL_OIDC_EMAIL",
+   "GMAIL_OIDC_JWKS_URL",
+   "INTERNAL_ALERT_SECRET",
+   "MEDIA_EGRESS_ALLOWED_HOSTS",
+   "MEDIA_EGRESS_ALLOWED_ORIGINS",
+   "MESSAGING_MEDIA_MAX_BYTES",
+   "MULTIPLIX_BATCH_SIZE",
+   "MULTIPLIX_SCOPE_HMAC_SECRET",
+   "PREVIEW_EGRESS_PROXY_URL",
+   "PREVIEW_EGRESS_SHARED_SECRET",
+   "PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY",
+   "PROMOGIFTS_SUPABASE_URL",
+   "PROVIDER_UNDER_TEST",
+   "RESEND_API_KEY",
+   "SIP_PASSWORD",
+   "SUPABASE_ANON_KEY",
+   "SUPABASE_PUBLISHABLE_KEY",
+   "SUPABASE_SERVICE_ROLE_KEY",
+   "SUPABASE_URL",
+   "TALKX_BATCH_BUDGET_MS",
+   "TALKX_BATCH_SIZE",
+   "TALKX_CONVERT_SECRET",
+   "TALKX_ENGINE_ANON_JWT",
+   "TALKX_ENGINE_JWT",
+   "TALKX_ENGINE_POSTGREST_URL",
+   "TALKX_LINK_BASE_URL",
+   "TRUSTED_EMAIL_DOMAINS",
+   "WEBHOOK_SECRET",
+   "WHATSAPP_APP_SECRET",
+   "WHATSAPP_VERIFY_TOKEN",
+   "ZAPP_BUILD_ID"
+  ],
+  "usadas_no_python": [
+   "AI_CONTEXT_INDEX",
+   "AI_CONTEXT_MODEL",
+   "AI_CONTEXT_PROFILE",
+   "AI_CONTEXT_SCHEMA_SNAPSHOT",
+   "ANTHROPIC_API_KEY",
+   "CODE_SCAN_DIRS",
+   "CODE_SCAN_MAX_FILES",
+   "CRON_RUNS_PER_JOB",
+   "GEN_TYPES",
+   "INBOX_SOURCE_ROOT",
+   "PGDUMP",
+   "PGDUMP_SCHEMAS",
+   "READ_BEGIN",
+   "READ_END",
+   "RECONCILIATION_REPO",
+   "REPO_ROOT",
+   "SNAPSHOT_DIR",
+   "SNAPSHOT_EXCLUDE_SCHEMAS",
+   "SNAPSHOT_INCLUDE_SCHEMAS",
+   "SOURCE",
+   "STAT_STATEMENTS_TOP",
+   "SUPABASE_ACCESS_TOKEN",
+   "SUPABASE_DB_URL",
+   "SUPABASE_PROJECT_REF"
+  ],
+  "usadas_mas_nao_declaradas": [
+   "DEV",
+   "MODE",
+   "NODE_ENV",
+   "PROD",
+   "TZ",
+   "VITE_APP_VERSION",
+   "VITE_SEARCHBOX_MONTHLY_SESSION_LIMIT",
+   "ZAPP_CSS_UNDER_TEST"
+  ],
+  "secrets_em_workflows": [
+   "CRON_SECRET",
+   "DESTINO_URL",
+   "E2E_TEST_EMAIL",
+   "E2E_TEST_PASSWORD",
+   "EXTERNAL_SUPABASE_SERVICE_ROLE_KEY",
+   "EXTERNAL_SUPABASE_URL",
+   "GITHUB_TOKEN",
+   "PREVIEW_EGRESS_PROXY_URL",
+   "PREVIEW_EGRESS_SHARED_SECRET",
+   "PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY",
+   "PROMOGIFTS_SUPABASE_URL",
+   "SETTINGS_GUARD_TOKEN",
+   "SUPABASE_ACCESS_TOKEN",
+   "SUPABASE_DB_URL",
+   "SUPABASE_SERVICE_ROLE_KEY",
+   "TYPES_SYNC_PR_TOKEN",
+   "VERCEL_READONLY_TOKEN",
+   "VITE_SUPABASE_PUBLISHABLE_KEY",
+   "VITE_SUPABASE_URL",
+   "mjs",
+   "outputs"
+  ]
+ },
+ "deploy": {
+  "alvos": [
+   "vercel",
+   "compose/swarm"
+  ],
+  "dockerfiles": [
+   {
+    "arquivo": "infrastructure/preview-egress-proxy/Dockerfile",
+    "base": [
+     "gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab",
+     "golang:1.27-alpine@sha256:d200d2dd76b03a99b52651fd1325aff7dcd35422c35c01bac56571b0507f3deb"
+    ],
+    "portas": [
+     "8080"
+    ]
+   }
+  ],
+  "compose": [
+   {
+    "arquivo": "infrastructure/preview-egress-proxy/docker-compose.yml",
+    "servicos": [
+     "preview-egress-proxy"
+    ]
+   }
+  ],
+  "vercel": {
+   "framework": "vite",
+   "build": "bun run build",
+   "rewrites": 2,
+   "redirects": 0,
+   "headers": 5,
+   "ignore_command": "sh scripts/vercel/ignore-build.sh",
+   "crons": []
+  }
+ },
+ "integracoes": {
+  "sdks": [
+   {
+    "pacote": "@elevenlabs/react",
+    "servico": "ElevenLabs",
+    "versao": "^1.19.1"
+   },
+   {
+    "pacote": "i18next",
+    "servico": "i18next",
+    "versao": "^26.5.6"
+   },
+   {
+    "pacote": "react-i18next",
+    "servico": "i18next",
+    "versao": "^17.1.4"
+   },
+   {
+    "pacote": "@tanstack/react-query",
+    "servico": "react-query",
+    "versao": "^5.104.5"
+   },
+   {
+    "pacote": "@supabase/supabase-js",
+    "servico": "Supabase",
+    "versao": "^2.117.3"
+   },
+   {
+    "pacote": "zod",
+    "servico": "zod",
+    "versao": "^4.6.7"
+   }
+  ],
+  "hosts_externos": [
+   {
+    "host": "stub.supabase.co",
+    "arquivos": 29
+   },
+   {
+    "host": "cdn.test",
+    "arquivos": 25
+   },
+   {
+    "host": "edge.invalid",
+    "arquivos": 23
+   },
+   {
+    "host": "proj.supabase.co",
+    "arquivos": 23
+   },
+   {
+    "host": "zapp-web-v2.vercel.app",
+    "arquivos": 20
+   },
+   {
+    "host": "edge.test",
+    "arquivos": 19
+   },
+   {
+    "host": "tnnnlkbymytvtqngbbqh.supabase.co",
+    "arquivos": 15
+   },
+   {
+    "host": "example.supabase.co",
+    "arquivos": 13
+   },
+   {
+    "host": "exemplo.test",
+    "arquivos": 13
+   },
+   {
+    "host": "projeto.supabase.co",
+    "arquivos": 13
+   },
+   {
+    "host": "api.elevenlabs.io",
+    "arquivos": 12
+   },
+   {
+    "host": "exemplo.com",
+    "arquivos": 12
+   },
+   {
+    "host": "signed.test",
+    "arquivos": 12
+   },
+   {
+    "host": "api.resend.com",
+    "arquivos": 11
+   },
+   {
+    "host": "local.test",
+    "arquivos": 11
+   },
+   {
+    "host": "supabase-test.example",
+    "arquivos": 11
+   },
+   {
+    "host": "evolution.test",
+    "arquivos": 10
+   },
+   {
+    "host": "example.invalid",
+    "arquivos": 9
+   },
+   {
+    "host": "gmail.googleapis.com",
+    "arquivos": 9
+   },
+   {
+    "host": "accounts.google.com",
+    "arquivos": 8
+   },
+   {
+    "host": "evil.example",
+    "arquivos": 8
+   },
+   {
+    "host": "zapp.example",
+    "arquivos": 8
+   },
+   {
+    "host": "cdn.exemplo",
+    "arquivos": 7
+   },
+   {
+    "host": "mmg.whatsapp.net",
+    "arquivos": 7
+   },
+   {
+    "host": "projeto-de-teste.supabase.co",
+    "arquivos": 7
+   },
+   {
+    "host": "projeto-teste.supabase.co",
+    "arquivos": 7
+   },
+   {
+    "host": "evolution-test.example",
+    "arquivos": 6
+   },
+   {
+    "host": "fixture.invalid",
+    "arquivos": 6
+   },
+   {
+    "host": "pps.whatsapp.net",
+    "arquivos": 6
+   },
+   {
+    "host": "provider.invalid",
+    "arquivos": 6
+   },
+   {
+    "host": "test.supabase.co",
+    "arquivos": 6
+   },
+   {
+    "host": "x.supabase.co",
+    "arquivos": 6
+   },
+   {
+    "host": "zappweb.app.br",
+    "arquivos": 6
+   },
+   {
+    "host": "cdn.exemplo.com",
+    "arquivos": 5
+   },
+   {
+    "host": "db.invalid",
+    "arquivos": 5
+   },
+   {
+    "host": "imagedelivery.net",
+    "arquivos": 5
+   },
+   {
+    "host": "projeto.teste.supabase.co",
+    "arquivos": 5
+   },
+   {
+    "host": "x.com",
+    "arquivos": 5
+   },
+   {
+    "host": "api.mapbox.com",
+    "arquivos": 4
+   },
+   {
+    "host": "api.supabase.com",
+    "arquivos": 4
+   },
+   {
+    "host": "exemplo.invalid",
+    "arquivos": 4
+   },
+   {
+    "host": "img.test",
+    "arquivos": 4
+   },
+   {
+    "host": "instagram.com",
+    "arquivos": 4
+   },
+   {
+    "host": "pgxfvjmuubtbowutlide.supabase.co",
+    "arquivos": 4
+   },
+   {
+    "host": "project.test",
+    "arquivos": 4
+   },
+   {
+    "host": "wa.me",
+    "arquivos": 4
+   },
+   {
+    "host": "api.base.test",
+    "arquivos": 3
+   },
+   {
+    "host": "attacker.example",
+    "arquivos": 3
+   },
+   {
+    "host": "evolution.exemplo.com",
+    "arquivos": 3
+   },
+   {
+    "host": "evolution.invalid",
+    "arquivos": 3
+   },
+   {
+    "host": "exemplo.supabase.co",
+    "arquivos": 3
+   },
+   {
+    "host": "fonts.googleapis.com",
+    "arquivos": 3
+   },
+   {
+    "host": "funcao.teste",
+    "arquivos": 3
+   },
+   {
+    "host": "go.exemplo.com",
+    "arquivos": 3
+   },
+   {
+    "host": "img.youtube.com",
+    "arquivos": 3
+   },
+   {
+    "host": "local.supabase.test",
+    "arquivos": 3
+   },
+   {
+    "host": "oauth2.googleapis.com",
+    "arquivos": 3
+   },
+   {
+    "host": "offline.invalid",
+    "arquivos": 3
+   },
+   {
+    "host": "openrouter.ai",
+    "arquivos": 3
+   },
+   {
+    "host": "outro.supabase.co",
+    "arquivos": 3
+   },
+   {
+    "host": "projeto-de-teste.invalid",
+    "arquivos": 3
+   },
+   {
+    "host": "promobrindes.com.br",
+    "arquivos": 3
+   },
+   {
+    "host": "promogifts.com.br",
+    "arquivos": 3
+   },
+   {
+    "host": "storage.local",
+    "arquivos": 3
+   },
+   {
+    "host": "stub.invalid",
+    "arquivos": 3
+   },
+   {
+    "host": "test.com",
+    "arquivos": 3
+   },
+   {
+    "host": "www.zappweb.app.br",
+    "arquivos": 3
+   },
+   {
+    "host": "a.com",
+    "arquivos": 2
+   },
+   {
+    "host": "api.deepseek.test",
+    "arquivos": 2
+   },
+   {
+    "host": "api.exemplo.test",
+    "arquivos": 2
+   },
+   {
+    "host": "api.openai.com",
+    "arquivos": 2
+   },
+   {
+    "host": "api.pwnedpasswords.com",
+    "arquivos": 2
+   },
+   {
+    "host": "edge-smoke.invalid",
+    "arquivos": 2
+   },
+   {
+    "host": "edge.local",
+    "arquivos": 2
+   },
+   {
+    "host": "egress.proxy.test",
+    "arquivos": 2
+   },
+   {
+    "host": "empresa.example.test",
+    "arquivos": 2
+   },
+   {
+    "host": "evilzappweb.app.br",
+    "arquivos": 2
+   },
+   {
+    "host": "exemplo.invalido",
+    "arquivos": 2
+   },
+   {
+    "host": "facebook.com",
+    "arquivos": 2
+   },
+   {
+    "host": "facebook.example",
+    "arquivos": 2
+   },
+   {
+    "host": "gravacoes.exemplo",
+    "arquivos": 2
+   },
+   {
+    "host": "linkedin.com",
+    "arquivos": 2
+   },
+   {
+    "host": "loja.com",
+    "arquivos": 2
+   },
+   {
+    "host": "loja.example",
+    "arquivos": 2
+   },
+   {
+    "host": "phishing.example",
+    "arquivos": 2
+   },
+   {
+    "host": "project.supabase.co",
+    "arquivos": 2
+   },
+   {
+    "host": "projeto-interno.supabase.co",
+    "arquivos": 2
+   },
+   {
+    "host": "storage.invalid",
+    "arquivos": 2
+   },
+   {
+    "host": "supabase.test",
+    "arquivos": 2
+   },
+   {
+    "host": "tts.local",
+    "arquivos": 2
+   },
+   {
+    "host": "tts.local.test",
+    "arquivos": 2
+   },
+   {
+    "host": "www.google.com",
+    "arquivos": 2
+   },
+   {
+    "host": "www.googleapis.com",
+    "arquivos": 2
+   },
+   {
+    "host": "www.linkedin.com",
+    "arquivos": 2
+   },
+   {
+    "host": "www.youtube.com",
+    "arquivos": 2
+   },
+   {
+    "host": "x.test",
+    "arquivos": 2
+   },
+   {
+    "host": "zappweb.app.br.evil.example",
+    "arquivos": 2
+   },
+   {
+    "host": "a.cdn.parceiro.com",
+    "arquivos": 1
+   },
+   {
+    "host": "ai.gateway.lovable.dev",
+    "arquivos": 1
+   },
+   {
+    "host": "api.github.test",
+    "arquivos": 1
+   },
+   {
+    "host": "api.resend.com.evil.tld",
+    "arquivos": 1
+   },
+   {
+    "host": "api.x.com",
+    "arquivos": 1
+   },
+   {
+    "host": "api.zappweb.app.br",
+    "arquivos": 1
+   },
+   {
+    "host": "app.example.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "app.local",
+    "arquivos": 1
+   },
+   {
+    "host": "app.test",
+    "arquivos": 1
+   },
+   {
+    "host": "atacante.local",
+    "arquivos": 1
+   },
+   {
+    "host": "atomicabr.com.br",
+    "arquivos": 1
+   },
+   {
+    "host": "audio.ogg",
+    "arquivos": 1
+   },
+   {
+    "host": "audit-project.example",
+    "arquivos": 1
+   },
+   {
+    "host": "b.com",
+    "arquivos": 1
+   },
+   {
+    "host": "banco-falso-de-teste.supabase.co",
+    "arquivos": 1
+   },
+   {
+    "host": "banco-local.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "blog.exemplo.com",
+    "arquivos": 1
+   },
+   {
+    "host": "broken.test",
+    "arquivos": 1
+   },
+   {
+    "host": "cdn.example",
+    "arquivos": 1
+   },
+   {
+    "host": "cdn.externo.example",
+    "arquivos": 1
+   },
+   {
+    "host": "cdn.promo.test",
+    "arquivos": 1
+   },
+   {
+    "host": "chat.whatsapp.com",
+    "arquivos": 1
+   },
+   {
+    "host": "cid.mmg.whatsapp.net",
+    "arquivos": 1
+   },
+   {
+    "host": "database.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "db.interno.test",
+    "arquivos": 1
+   },
+   {
+    "host": "evil-site.com",
+    "arquivos": 1
+   },
+   {
+    "host": "evil.com",
+    "arquivos": 1
+   },
+   {
+    "host": "evil.test",
+    "arquivos": 1
+   },
+   {
+    "host": "evil.tld",
+    "arquivos": 1
+   },
+   {
+    "host": "evil2.example",
+    "arquivos": 1
+   },
+   {
+    "host": "evo.exemplo.com",
+    "arquivos": 1
+   },
+   {
+    "host": "evo.test",
+    "arquivos": 1
+   },
+   {
+    "host": "evolution.example",
+    "arquivos": 1
+   },
+   {
+    "host": "ex.com",
+    "arquivos": 1
+   },
+   {
+    "host": "example.test",
+    "arquivos": 1
+   },
+   {
+    "host": "fonts.gstatic.com",
+    "arquivos": 1
+   },
+   {
+    "host": "fresh.test",
+    "arquivos": 1
+   },
+   {
+    "host": "ghe.empresa.com",
+    "arquivos": 1
+   },
+   {
+    "host": "github.test",
+    "arquivos": 1
+   },
+   {
+    "host": "gmail-sync-fixture.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "google.com",
+    "arquivos": 1
+   },
+   {
+    "host": "host.example",
+    "arquivos": 1
+   },
+   {
+    "host": "images.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "img.com",
+    "arquivos": 1
+   },
+   {
+    "host": "img.jpg",
+    "arquivos": 1
+   },
+   {
+    "host": "img.remoto.test",
+    "arquivos": 1
+   },
+   {
+    "host": "img.teste",
+    "arquivos": 1
+   },
+   {
+    "host": "instagram.example",
+    "arquivos": 1
+   },
+   {
+    "host": "l.talkx.exemplo",
+    "arquivos": 1
+   },
+   {
+    "host": "linkedin.com.evil.example",
+    "arquivos": 1
+   },
+   {
+    "host": "linkedin.example",
+    "arquivos": 1
+   },
+   {
+    "host": "locator.test",
+    "arquivos": 1
+   },
+   {
+    "host": "loja.exemplo",
+    "arquivos": 1
+   },
+   {
+    "host": "malicioso.example",
+    "arquivos": 1
+   },
+   {
+    "host": "mmg.whatsapp.net.evil.com",
+    "arquivos": 1
+   },
+   {
+    "host": "noticia.test",
+    "arquivos": 1
+   },
+   {
+    "host": "oauth.google.com",
+    "arquivos": 1
+   },
+   {
+    "host": "other-project.example",
+    "arquivos": 1
+   },
+   {
+    "host": "other.com",
+    "arquivos": 1
+   },
+   {
+    "host": "other.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "outra-empresa.example.test",
+    "arquivos": 1
+   },
+   {
+    "host": "outro.com",
+    "arquivos": 1
+   },
+   {
+    "host": "outro.exemplo.com",
+    "arquivos": 1
+   },
+   {
+    "host": "outro.host",
+    "arquivos": 1
+   },
+   {
+    "host": "override.supabase.co",
+    "arquivos": 1
+   },
+   {
+    "host": "pgxfvjmuubtbowutlide.supabase.co.evil.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "portal-b.bitrix.test",
+    "arquivos": 1
+   },
+   {
+    "host": "portal.bitrix.test",
+    "arquivos": 1
+   },
+   {
+    "host": "portal.example",
+    "arquivos": 1
+   },
+   {
+    "host": "preview-egress.example.test",
+    "arquivos": 1
+   },
+   {
+    "host": "proj.supabase.test",
+    "arquivos": 1
+   },
+   {
+    "host": "project.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "projeto-errado.supabase.co",
+    "arquivos": 1
+   },
+   {
+    "host": "projeto-teste.local",
+    "arquivos": 1
+   },
+   {
+    "host": "provedor-falso.test",
+    "arquivos": 1
+   },
+   {
+    "host": "provedor-teste.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "provedor-visao.test",
+    "arquivos": 1
+   },
+   {
+    "host": "provedor-visao.teste",
+    "arquivos": 1
+   },
+   {
+    "host": "provedor.exemplo",
+    "arquivos": 1
+   },
+   {
+    "host": "provedor.test",
+    "arquivos": 1
+   },
+   {
+    "host": "provedor.teste",
+    "arquivos": 1
+   },
+   {
+    "host": "proxy.example.test",
+    "arquivos": 1
+   },
+   {
+    "host": "qualqueroutroref.supabase.co",
+    "arquivos": 1
+   },
+   {
+    "host": "rastreador.example",
+    "arquivos": 1
+   },
+   {
+    "host": "recipient.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "registry.npmjs.org",
+    "arquivos": 1
+   },
+   {
+    "host": "sb-testref.supabase.co",
+    "arquivos": 1
+   },
+   {
+    "host": "seudominio.bitrix24.com.br",
+    "arquivos": 1
+   },
+   {
+    "host": "signed.example",
+    "arquivos": 1
+   },
+   {
+    "host": "signed.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "sticker.webp",
+    "arquivos": 1
+   },
+   {
+    "host": "storage.test",
+    "arquivos": 1
+   },
+   {
+    "host": "suaempresa.com",
+    "arquivos": 1
+   },
+   {
+    "host": "supabase-sintetico.exemplo.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "supabase.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "synthetic.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "t.co",
+    "arquivos": 1
+   },
+   {
+    "host": "t.exemplo",
+    "arquivos": 1
+   },
+   {
+    "host": "talkx-link.example",
+    "arquivos": 1
+   },
+   {
+    "host": "teste.local",
+    "arquivos": 1
+   },
+   {
+    "host": "tnnnlkbymytvtqngbbqh.functions.supabase.co",
+    "arquivos": 1
+   },
+   {
+    "host": "tnnnlkbymytvtqngbbqh.supabase.co.evil.test",
+    "arquivos": 1
+   },
+   {
+    "host": "tracker.example.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "tracker.exemplo",
+    "arquivos": 1
+   },
+   {
+    "host": "va.vercel-scripts.com",
+    "arquivos": 1
+   },
+   {
+    "host": "vimeo.com",
+    "arquivos": 1
+   },
+   {
+    "host": "vpkmqeumtxhrwgawxdrl.supabase.co",
+    "arquivos": 1
+   },
+   {
+    "host": "vps-evolution.test",
+    "arquivos": 1
+   },
+   {
+    "host": "web.dev",
+    "arquivos": 1
+   },
+   {
+    "host": "webhook.test",
+    "arquivos": 1
+   },
+   {
+    "host": "whatsapp.com",
+    "arquivos": 1
+   },
+   {
+    "host": "whatsapp.net",
+    "arquivos": 1
+   },
+   {
+    "host": "wrong-origin.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "www.exemplo.com",
+    "arquivos": 1
+   },
+   {
+    "host": "www.instagram.com",
+    "arquivos": 1
+   },
+   {
+    "host": "www.mapbox.com",
+    "arquivos": 1
+   },
+   {
+    "host": "www.radix-ui.com",
+    "arquivos": 1
+   },
+   {
+    "host": "x.co",
+    "arquivos": 1
+   },
+   {
+    "host": "x.functions.supabase.co",
+    "arquivos": 1
+   },
+   {
+    "host": "youtu.be",
+    "arquivos": 1
+   },
+   {
+    "host": "zapp-local.supabase.co",
+    "arquivos": 1
+   },
+   {
+    "host": "zapp-test.local",
+    "arquivos": 1
+   },
+   {
+    "host": "zapp-test.supabase.co",
+    "arquivos": 1
+   }
+  ],
+  "env_de_integracao": [
+   "ANTHROPIC_API_KEY",
+   "BITRIX_WEBHOOK_URL",
+   "CHATBOT_L1_WEBHOOK_SECRET",
+   "CRON_SECRET",
+   "ELEVENLABS_WEBHOOK_SECRET",
+   "EVOLUTION_API_FLAVOR",
+   "EVOLUTION_API_KEY",
+   "EVOLUTION_API_URL",
+   "EVOLUTION_INSTANCE_NAME",
+   "EVOLUTION_INSTANCE_TOKEN",
+   "EVOLUTION_VPS_SUPABASE_ANON_KEY",
+   "EVOLUTION_VPS_SUPABASE_URL",
+   "EVOLUTION_WEBHOOK_ENFORCE",
+   "EVOLUTION_WEBHOOK_SECRET",
+   "GMAIL_CAS_JWT",
+   "GMAIL_CAS_POSTGREST_URL",
+   "GMAIL_OIDC_AUDIENCE",
+   "GMAIL_OIDC_EMAIL",
+   "GMAIL_OIDC_JWKS_URL",
+   "GOOGLE_CLIENT_ID",
+   "GOOGLE_CLIENT_SECRET",
+   "GOOGLE_REDIRECT_URI",
+   "GROQ_API_KEY",
+   "INTERNAL_ALERT_SECRET",
+   "MULTIPLIX_SCOPE_HMAC_SECRET",
+   "OPENAI_API_KEY",
+   "PREVIEW_EGRESS_SHARED_SECRET",
+   "RESEND_API_KEY",
+   "TALKX_CONVERT_SECRET",
+   "VITE_ENABLE_GMAIL_INTEGRATION",
+   "VITE_SENTRY_DSN",
+   "VITE_SENTRY_ENVIRONMENT",
+   "WEBHOOK_SECRET",
+   "WHATSAPP_APP_SECRET",
+   "WHATSAPP_VERIFY_TOKEN"
+  ],
+  "webhooks_recebidos": [
+   "auth-login",
+   "batch-fetch-avatars",
+   "connection-health-check",
+   "crm-integration",
+   "csp-report",
+   "elevenlabs-webhook",
+   "evolution-webhook",
+   "gmail-cron-sync",
+   "gmail-webhook",
+   "public-api",
+   "searchbox-budget-alert",
+   "sync-call-records",
+   "talkx-link",
+   "whatsapp-webhook"
+  ],
+  "realtime": [
+   "agent-presence-changes",
+   "calls-kpi-realtime",
+   "chat-reactions:${messageId}",
+   "conversation:${contactId}",
+   "diagnostics-realtime-probe",
+   "disconnect-banner",
+   "gmail-threads-realtime",
+   "monitoring-status-${Math.random().toString(36).slice(2)}",
+   "multiplix-mon-${dispatchId}",
+   "notifications-changes",
+   "smoke-messages",
+   "talkx-logs-${campaignId}",
+   "talkx-mon-${campaignId}",
+   "team-chat-updates",
+   "team-messages-${conversationId}",
+   "team-presence-${conversationId}",
+   "team-reactions-${conversationId}",
+   "team-read-state-${conversationId}",
+   "team-typing-${conversationId}",
+   "termino-remoto-${callIdEmCurso}",
+   "typing:${contact.id}",
+   "typing:${conversationId}",
+   "warroom-alerts-realtime",
+   "whatsapp-connections-changes",
+   "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
+  ]
+ },
+ "permissoes": {
+  "papeis_no_codigo": [
+   {
+    "papel": "alert",
+    "ocorrencias": 110
+   },
+   {
+    "papel": "status",
+    "ocorrencias": 102
+   },
+   {
+    "papel": "admin",
+    "ocorrencias": 65
+   },
+   {
+    "papel": "agent",
+    "ocorrencias": 52
+   },
+   {
+    "papel": "supervisor",
+    "ocorrencias": 29
+   },
+   {
+    "papel": "dialog",
+    "ocorrencias": 28
+   },
+   {
+    "papel": "user",
+    "ocorrencias": 26
+   },
+   {
+    "papel": "img",
+    "ocorrencias": 19
+   },
+   {
+    "papel": "region",
+    "ocorrencias": 19
+   },
+   {
+    "papel": "button",
+    "ocorrencias": 15
+   },
+   {
+    "papel": "group",
+    "ocorrencias": 15
+   },
+   {
+    "papel": "tab",
+    "ocorrencias": 15
+   },
+   {
+    "papel": "listbox",
+    "ocorrencias": 14
+   },
+   {
+    "papel": "radiogroup",
+    "ocorrencias": 14
+   },
+   {
+    "papel": "tablist",
+    "ocorrencias": 14
+   },
+   {
+    "papel": "authenticated",
+    "ocorrencias": 13
+   },
+   {
+    "papel": "menuitem",
+    "ocorrencias": 11
+   },
+   {
+    "papel": "radio",
+    "ocorrencias": 11
+   },
+   {
+    "papel": "option",
+    "ocorrencias": 10
+   },
+   {
+    "papel": "progressbar",
+    "ocorrencias": 10
+   },
+   {
+    "papel": "combobox",
+    "ocorrencias": 9
+   },
+   {
+    "papel": "service_role",
+    "ocorrencias": 8
+   },
+   {
+    "papel": "system",
+    "ocorrencias": 8
+   },
+   {
+    "papel": "alertdialog",
+    "ocorrencias": 7
+   },
+   {
+    "papel": "note",
+    "ocorrencias": 7
+   },
+   {
+    "papel": "toolbar",
+    "ocorrencias": 7
+   },
+   {
+    "papel": "list",
+    "ocorrencias": 6
+   },
+   {
+    "papel": "anon",
+    "ocorrencias": 5
+   },
+   {
+    "papel": "log",
+    "ocorrencias": 5
+   },
+   {
+    "papel": "menu",
+    "ocorrencias": 4
+   },
+   {
+    "papel": "special_agent",
+    "ocorrencias": 4
+   },
+   {
+    "papel": "tabpanel",
+    "ocorrencias": 4
+   },
+   {
+    "papel": "article",
+    "ocorrencias": 3
+   },
+   {
+    "papel": "assistant",
+    "ocorrencias": 3
+   },
+   {
+    "papel": "cliente",
+    "ocorrencias": 3
+   },
+   {
+    "papel": "grid",
+    "ocorrencias": 3
+   },
+   {
+    "papel": "leader",
+    "ocorrencias": 3
+   },
+   {
+    "papel": "main",
+    "ocorrencias": 3
+   },
+   {
+    "papel": "navigation",
+    "ocorrencias": 3
+   },
+   {
+    "papel": "row",
+    "ocorrencias": 3
+   },
+   {
+    "papel": "separator",
+    "ocorrencias": 3
+   },
+   {
+    "papel": "slider",
+    "ocorrencias": 3
+   },
+   {
+    "papel": "tooltip",
+    "ocorrencias": 3
+   },
+   {
+    "papel": "complementary",
+    "ocorrencias": 2
+   },
+   {
+    "papel": "follower",
+    "ocorrencias": 2
+   },
+   {
+    "papel": "fornecedor",
+    "ocorrencias": 2
+   },
+   {
+    "papel": "gridcell",
+    "ocorrencias": 2
+   },
+   {
+    "papel": "listitem",
+    "ocorrencias": 2
+   },
+   {
+    "papel": "switch",
+    "ocorrencias": 2
+   },
+   {
+    "papel": "A",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "B",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "ausente",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "banner",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "checkbox",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "customer",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "form",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "fundo",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "link",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "member",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "presentation",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "primary",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "public",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "search",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "string",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "sup",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "textbox",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "texto",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "timer",
+    "ocorrencias": 1
+   }
+  ],
+  "enums_de_papel": [
+   {
+    "enum": "app_role",
+    "valores": [
+     "admin",
+     "supervisor",
+     "agent",
+     "special_agent"
+    ]
+   }
+  ],
+  "rpcs_de_autorizacao": [
+   "admin_set_role",
+   "can_delete_contacts",
+   "can_edit_contact",
+   "consume_gmail_oauth_state",
+   "count_searchbox_sessions_this_month",
+   "effective_role",
+   "has_role",
+   "is_account_locked",
+   "is_admin",
+   "is_admin_or_supervisor",
+   "is_contact_visible_to_user",
+   "is_within_business_hours",
+   "revoke_auth_sessions",
+   "talkx_recipient_is_suppressed",
+   "user_has_permission"
+  ],
+  "guards": [
+   "src/components/auth/ProtectedRoute.tsx",
+   "src/components/copilot/DiscountGuardrailBanner.tsx"
+  ],
+  "rotas_protegidas": 10,
+  "rotas_publicas": [
+   "/*",
+   "/access-denied",
+   "/auth/callback",
+   "/forgot-password",
+   "/install",
+   "/reset-password",
+   "/verify-email"
+  ],
+  "menu_com_papeis": [
+   {
+    "rotulo": "Admin",
+    "papeis": [
+     "admin"
+    ]
+   },
+   {
+    "rotulo": "Agendamentos",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Auditoria",
+    "papeis": [
+     "admin"
+    ]
+   },
+   {
+    "rotulo": "Automações",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Base de Conhecimento",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Calendário",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Campanhas",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Canais Omnichannel",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Carteira",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Chatbot",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Classificador IA",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Conexões",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Consumo IA",
+    "papeis": [
+     "admin"
+    ]
+   },
+   {
+    "rotulo": "CRM 360°",
+    "papeis": [
+     "admin"
+    ]
+   },
+   {
+    "rotulo": "Diagnóstico",
+    "papeis": [
+     "admin"
+    ]
+   },
+   {
+    "rotulo": "Documentação",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Equipe",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Filas",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Gmail",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Gmail Webhook",
+    "papeis": [
+     "admin"
+    ]
+   },
+   {
+    "rotulo": "Grupos",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Insights de Busca",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Integrações",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "LGPD",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Meta CAPI",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Migração Mídia",
+    "papeis": [
+     "admin"
+    ]
+   },
+   {
+    "rotulo": "Monitor Evolution",
+    "papeis": [
+     "admin"
+    ]
+   },
+   {
+    "rotulo": "NPS",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Omnichannel",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Performance",
+    "papeis": [
+     "admin"
+    ]
+   },
+   {
+    "rotulo": "Previsão Churn",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Relatórios",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Segurança",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Sentimento",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Skins",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "SLA",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Supervisão",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Telemetria BD",
+    "papeis": [
+     "admin"
+    ]
+   },
+   {
+    "rotulo": "Templates WA",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Transcrições",
+    "papeis": [
+     "admin"
+    ]
+   },
+   {
+    "rotulo": "War Room",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "WhatsApp Flows",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   }
+  ],
+  "tabelas_sem_rls": []
+ },
+ "feature_flags": {
+  "total": 15,
+  "flags": [
+   {
+    "flag": "ENABLE_ANALYTICS",
+    "arquivos": 1
+   },
+   {
+    "flag": "ENABLE_DEBUG",
+    "arquivos": 1
+   },
+   {
+    "flag": "ENABLE_GAMIFICATION",
+    "arquivos": 1
+   },
+   {
+    "flag": "ENABLE_GMAIL_INTEGRATION",
+    "arquivos": 1
+   },
+   {
+    "flag": "FEATURE_CTA",
+    "arquivos": 1
+   },
+   {
+    "flag": "FEATURE_FLAGS_QUERY_KEY",
+    "arquivos": 1
+   },
+   {
+    "flag": "FEATURE_GATES",
+    "arquivos": 1
+   },
+   {
+    "flag": "FEATURE_REGISTRY",
+    "arquivos": 1
+   },
+   {
+    "flag": "FEATURE_TILE",
+    "arquivos": 1
+   },
+   {
+    "flag": "FEATURE_X",
+    "arquivos": 1
+   },
+   {
+    "flag": "crm.integration",
+    "arquivos": 1
+   },
+   {
+    "flag": "inbox.talk-me",
+    "arquivos": 1
+   },
+   {
+    "flag": "nova-tela",
+    "arquivos": 1
+   },
+   {
+    "flag": "novo-inbox",
+    "arquivos": 1
+   },
+   {
+    "flag": "video_call",
+    "arquivos": 1
+   }
+  ],
+  "tabelas_de_flag": [
+   "app_settings",
+   "copilot_seller_settings",
+   "feature_flags",
+   "geo_blocking_settings",
+   "global_settings",
+   "talkx_settings",
+   "user_settings"
+  ]
+ },
+ "providers": {
+  "entrada": "src/main.tsx",
+  "providers": [
+   "AIProvider",
+   "AccessibleToastProvider",
+   "AppErrorBoundary",
+   "AuthProvider",
+   "BrowserRouter",
+   "CallSessionContext.Provider",
+   "CallSessionProvider",
+   "EasterEggsProvider",
+   "ErrorBoundary",
+   "GlobalKeyboardProvider",
+   "HighContrastProvider",
+   "QuarantineMonitorProvider",
+   "QueryClientProvider",
+   "RealtimeSentimentAlertProvider",
+   "TooltipProvider"
+  ]
+ },
+ "i18n": {
+  "arquivos": 2,
+  "idiomas": [],
+  "lib": [
+   "i18next"
+  ]
+ }
+}

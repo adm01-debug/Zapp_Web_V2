@@ -1,0 +1,647 @@
+{
+ "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
+ "format_version": 2,
+ "nos": 2204,
+ "arestas": 7740,
+ "hubs": [
+  {
+   "arquivo": "src/lib/utils.ts",
+   "importado_por": 461
+  },
+  {
+   "arquivo": "src/integrations/supabase/client.ts",
+   "importado_por": 409
+  },
+  {
+   "arquivo": "src/components/ui/button.tsx",
+   "importado_por": 393
+  },
+  {
+   "arquivo": "src/lib/logger.ts",
+   "importado_por": 220
+  },
+  {
+   "arquivo": "src/components/ui/badge.tsx",
+   "importado_por": 219
+  },
+  {
+   "arquivo": "src/components/ui/card.tsx",
+   "importado_por": 192
+  },
+  {
+   "arquivo": "src/components/ui/tooltip.tsx",
+   "importado_por": 188
+  },
+  {
+   "arquivo": "src/components/ui/input.tsx",
+   "importado_por": 165
+  },
+  {
+   "arquivo": "supabase/functions/_shared/validation.ts",
+   "importado_por": 121
+  },
+  {
+   "arquivo": "src/types/chat.ts",
+   "importado_por": 120
+  },
+  {
+   "arquivo": "src/hooks/auth/useAuth.tsx",
+   "importado_por": 113
+  },
+  {
+   "arquivo": "src/components/ui/select.tsx",
+   "importado_por": 110
+  },
+  {
+   "arquivo": "src/components/ui/label.tsx",
+   "importado_por": 106
+  },
+  {
+   "arquivo": "src/components/ui/dialog.tsx",
+   "importado_por": 101
+  },
+  {
+   "arquivo": "src/components/ui/scroll-area.tsx",
+   "importado_por": 76
+  },
+  {
+   "arquivo": "src/components/ui/skeleton.tsx",
+   "importado_por": 74
+  },
+  {
+   "arquivo": "src/hooks/ui/use-toast.ts",
+   "importado_por": 68
+  },
+  {
+   "arquivo": "src/hooks/tasks/workItem.types.ts",
+   "importado_por": 66
+  },
+  {
+   "arquivo": "src/components/ui/avatar.tsx",
+   "importado_por": 62
+  },
+  {
+   "arquivo": "src/components/ui/switch.tsx",
+   "importado_por": 55
+  },
+  {
+   "arquivo": "src/components/talkx/talkxShared.ts",
+   "importado_por": 52
+  },
+  {
+   "arquivo": "src/components/ui/alert-dialog.tsx",
+   "importado_por": 50
+  },
+  {
+   "arquivo": "src/hooks/integrations/useExternalCatalog.ts",
+   "importado_por": 50
+  },
+  {
+   "arquivo": "supabase/functions/_shared/schemas.ts",
+   "importado_por": 48
+  },
+  {
+   "arquivo": "src/components/ui/popover.tsx",
+   "importado_por": 47
+  },
+  {
+   "arquivo": "src/components/ui/textarea.tsx",
+   "importado_por": 47
+  },
+  {
+   "arquivo": "src/hooks/chat/useContactMedia.ts",
+   "importado_por": 47
+  },
+  {
+   "arquivo": "src/hooks/integrations/useGmail.ts",
+   "importado_por": 44
+  },
+  {
+   "arquivo": "src/hooks/integrations/useTalkX.ts",
+   "importado_por": 44
+  },
+  {
+   "arquivo": "src/lib/localDay.ts",
+   "importado_por": 44
+  },
+  {
+   "arquivo": "src/components/dashboard/overview/DashboardCard.tsx",
+   "importado_por": 42
+  },
+  {
+   "arquivo": "src/components/ui/dropdown-menu.tsx",
+   "importado_por": 41
+  },
+  {
+   "arquivo": "src/components/ui/tabs.tsx",
+   "importado_por": 40
+  },
+  {
+   "arquivo": "src/hooks/chat/useRealtimeMessages.ts",
+   "importado_por": 40
+  },
+  {
+   "arquivo": "src/hooks/integrations/useTalkXSegments.ts",
+   "importado_por": 40
+  },
+  {
+   "arquivo": "src/hooks/system/useUserRole.ts",
+   "importado_por": 37
+  },
+  {
+   "arquivo": "src/integrations/supabase/types.ts",
+   "importado_por": 35
+  },
+  {
+   "arquivo": "src/hooks/system/useNavigationHistory.ts",
+   "importado_por": 34
+  },
+  {
+   "arquivo": "supabase/functions/_shared/ai-usage.ts",
+   "importado_por": 32
+  },
+  {
+   "arquivo": "src/lib/supabaseHelpers.ts",
+   "importado_por": 31
+  }
+ ],
+ "ciclos": {
+  "total": 11,
+  "maiores": [
+   {
+    "tamanho": 8,
+    "arquivos": [
+     "src/hooks/auth/useAuth.tsx",
+     "src/hooks/chat/useRealtimeMessages.ts",
+     "src/hooks/realtime/realtimeUtils.ts",
+     "src/hooks/realtime/useMessageUpdateBatcher.ts",
+     "src/hooks/realtime/useRealtimeNotifications.ts",
+     "src/hooks/system/useNotificationSettings.ts",
+     "src/hooks/system/useOfflineCache.ts",
+     "src/services/realtime.service.ts"
+    ]
+   },
+   {
+    "tamanho": 6,
+    "arquivos": [
+     "src/components/inbox/InboxFilters.tsx",
+     "src/components/inbox/InboxSavedFiltersMenu.tsx",
+     "src/components/inbox/TicketTabs.tsx",
+     "src/components/inbox/conversation-list/StatusChips.tsx",
+     "src/hooks/inbox/chipCounts.ts",
+     "src/hooks/inbox/useInboxFilterPresets.ts"
+    ]
+   },
+   {
+    "tamanho": 6,
+    "arquivos": [
+     "supabase/functions/multiplix-dispatch/actions/audience.ts",
+     "supabase/functions/multiplix-dispatch/actions/blocks.ts",
+     "supabase/functions/multiplix-dispatch/actions/inspect.ts",
+     "supabase/functions/multiplix-dispatch/actions/lifecycle.ts",
+     "supabase/functions/multiplix-dispatch/actions/listing.ts",
+     "supabase/functions/multiplix-dispatch/index.ts"
+    ]
+   },
+   {
+    "tamanho": 3,
+    "arquivos": [
+     "src/components/notifications/ReminderNotification.tsx",
+     "src/hooks/system/useNotifications.ts",
+     "src/hooks/tasks/useWorkItemNotifications.ts"
+    ]
+   },
+   {
+    "tamanho": 3,
+    "arquivos": [
+     "src/components/onboarding/OnboardingTour.tsx",
+     "src/components/onboarding/TourOverlay.tsx",
+     "src/components/onboarding/defaultTourSteps.ts"
+    ]
+   },
+   {
+    "tamanho": 2,
+    "arquivos": [
+     "src/components/catalog/useSendProduct.ts",
+     "src/hooks/integrations/useCatalogContactSearch.ts"
+    ]
+   },
+   {
+    "tamanho": 2,
+    "arquivos": [
+     "src/components/crm360/crm360TabsConfig.ts",
+     "src/components/crm360/crm360TabsData.ts"
+    ]
+   },
+   {
+    "tamanho": 2,
+    "arquivos": [
+     "src/components/talkx/TalkXCampaignWizard.tsx",
+     "src/components/talkx/TalkXWizardDelivery.tsx"
+    ]
+   },
+   {
+    "tamanho": 2,
+    "arquivos": [
+     "src/hooks/integrations/useQuarantineMedia.ts",
+     "src/lib/quarantineStore.ts"
+    ]
+   },
+   {
+    "tamanho": 2,
+    "arquivos": [
+     "src/hooks/shortcuts/defaultShortcuts.ts",
+     "src/hooks/ui/useCustomShortcuts.ts"
+    ]
+   },
+   {
+    "tamanho": 2,
+    "arquivos": [
+     "supabase/functions/_shared/request-policy.ts",
+     "supabase/functions/_shared/validation.ts"
+    ]
+   }
+  ]
+ },
+ "orfaos": [
+  "docs/_arquivo/inventario/build_prs.py",
+  "docs/_arquivo/inventario/classify.py",
+  "docs/_arquivo/inventario/gen_report.py",
+  "docs/design/ZAPP_DARKBLUE_PREMIUM_MOTION.ts",
+  "docs/design/contatos-redesign-2026-10-12/design-comportamento.js",
+  "docs/evidencias/plano-volume-50/mut-plano-volume.py",
+  "docs/reconciliation/reaudit/2026-10-03/probes/auth/gamification-probe.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/probes/auth/second-pass-probes.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/probes/auth/source-probes.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/auth/add_focus_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/auth/build_report.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/auth/build_style_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/auth/extend-second-pass.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/auth/update_database_peer_test_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/auth/update_shell_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/auth/update_test_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/auth/validate_checkpoint.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/build_access_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/build_coverage_files.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/build_inventory.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/build_remaining_ddl.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/build_report.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/build_view_trigger_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/finalize_access_notes.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/finalize_ddl_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/finalize_test_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/read_access.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/read_ddl_queue.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/read_inbox_shell_queue.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/read_shell_queue.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/read_test_queue.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/read_winners.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/record_ddl_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/record_inbox_peer_shell.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/record_policy_notes.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/record_shell_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/record_test_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/database/validate_references.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/build_report.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/integrate_peer_shell_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/integrate_peer_test_reviews.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/pass5_findings.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/probes/pass2/run.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/probes/pass2/verify-provenance.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/probes/pass3/run.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/probes/pass3/verify-provenance.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/probes/pass4/run.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/probes/pass4/verify-provenance.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/probes/pass5/run.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/probes/pass5/verify-provenance.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/probes/run.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/probes/verify-provenance.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/read_allocated.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/read_source.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/read_tests.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/record_allocated_reviews.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/record_pass5_tail.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/record_test_reviews.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/refresh_manifest.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/inbox/validate_deliverables.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/append_second_pass.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/build_ai_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/build_layout_onboarding_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/build_observability_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/build_peer_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/build_report.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/build_ui_performance_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/extend_inf019.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/finalize_ai_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/finalize_entrypoint_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/finalize_layout_onboarding_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/finalize_observability_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/finalize_shell_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/finalize_telemetry_error_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/finalize_test_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/finalize_ui_performance_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/merge_finite_batch.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/note_test_batch.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/probe-ai-review.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/probe-layout-onboarding.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/probe-observability.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/probe-second-pass.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/probe-telemetry-error.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/probe-ui-performance.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/probe.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/infra/second_pass.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/modules/build_database_peer_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/modules/build_reports.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/modules/build_shell_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/modules/build_test_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/modules/final_frontend_probes.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/modules/offline_probes.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/modules/read_database_peer.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/modules/read_source.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/modules/read_vendor.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/modules/vendor_build.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/modules/vendor_prepare.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/modules/vendor_probes.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/modules/write_gov_peer_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/build_database_peer_test_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/build_report.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/build_shell_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/record_test_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-channel-consumers.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-final-endpoints.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-frontend-persistence.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-frontend-providers.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-gmail-monitor.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-media-ai-control.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-multiplix-review.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-privileged-effects.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-provider-control.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-security-maintenance.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/reports/providers/validate_audit_artifacts.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/additional_language_inventory.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/allocate_test_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/audit_coverage.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/build_calls_report.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/build_communication_report.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/build_offline_probe_registry.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/build_platform_report.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/build_root_report.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/call_engine_probes.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/tools/call_lifecycle_probes.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/tools/call_overlay_probes.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/tools/catalog_microfunctions.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/tools/check_finite_validator.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/communication_probes.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/tools/consolidate_reaudit.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/export_validation_probe.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/finalize_routine_acl_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/gmail_oauth_probes.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/tools/hydrate_artifacts.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/import_graph.mjs",
+  "docs/reconciliation/reaudit/2026-10-03/tools/mobile_shell_probes.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/tools/package_checkpoint.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/platform_probes.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/tools/queue_tail_probes.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/tools/record_peer_inbox_tests.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/record_root_shell_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/record_root_style_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/record_root_test_review.py",
+  "docs/reconciliation/reaudit/2026-10-03/tools/root_source_probes.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/tools/sla_navigation_probe.cjs",
+  "docs/reconciliation/reaudit/2026-10-03/tools/validate_finite_review.py",
+  "docs/reconciliation/reaudit/2026-10-04-delta-65679f3/reproduce_manifest_gap.py",
+  "docs/reconciliation/reaudit/2026-10-04-delta-65679f3/run_probes.py",
+  "docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py",
+  "docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs",
+  "docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs",
+  "docs/reconciliation/reproduce/other/reproduce_findings.mjs",
+  "docs/reconciliation/reproduce/other/reproduce_findings.py",
+  "docs/reconciliation/reproduce/skins/skins_probe.mjs",
+  "docs/reconciliation/reproduce/transversal/local-semantic-probes.mjs",
+  "docs/reconciliation/reproduce/validate_package.py",
+  "docs/reconciliation/reproduce/volume/volume_offline_probe.mjs",
+  "generate_audit_pdf.ts",
+  "src/components/CommandPalette.tsx",
+  "src/components/ErrorBoundary.tsx",
+  "src/components/SearchInput.tsx",
+  "src/components/a11y/KeyboardNavigation.tsx",
+  "src/components/ai/ticketClassification.ts",
+  "src/components/calls/DialPad.tsx",
+  "src/components/cognitive/ProgressiveDisclosure.tsx",
+  "src/components/contacts/contactDisplay.ts",
+  "src/components/contacts/contactsMotion.ts",
+  "src/components/copilot/index.ts",
+  "src/components/dashboard/DraggableWidgetContainer.tsx",
+  "src/components/dashboard/MetricComponents.tsx",
+  "src/components/dashboard/SatisfactionAgentRanking.tsx",
+  "src/components/dashboard/SentimentHelpers.tsx",
+  "src/components/effects/ParallaxContainer.tsx",
+  "src/components/effects/ScrollEffects.tsx",
+  "src/components/gamification/AchievementDetailDialog.tsx",
+  "src/components/inbox/AIToolsPopover.tsx",
+  "src/components/inbox/AnalysisBadges.tsx",
+  "src/components/inbox/BusinessHoursBadge.tsx",
+  "src/components/inbox/KeyboardShortcutsHelp.tsx",
+  "src/components/inbox/LinkPreview.tsx",
+  "src/components/inbox/MessageContextActions.tsx",
+  "src/components/inbox/MessagePreview.tsx",
+  "src/components/inbox/SentimentIndicator.tsx",
+  "src/components/inbox/SpeedSelector.tsx",
+  "src/components/inbox/TemplatesWithVariables.tsx",
+  "src/components/inbox/chat/ChatHeaderToolbar.tsx",
+  "src/components/inbox/chat/dialogKeys.ts",
+  "src/components/inbox/chat/index.ts",
+  "src/components/inbox/tabs/journey/JourneyFilters.tsx",
+  "src/components/inbox/tabs/journey/JourneyStatsHero.tsx",
+  "src/components/inbox/tabs/journey/JourneyTimeline.tsx",
+  "src/components/mfa/MFABackupCodes.tsx",
+  "src/components/payments/PaymentLinksView.tsx",
+  "src/components/performance/index.ts",
+  "src/components/performance/metricThresholds.ts",
+  "src/components/reports/ScheduledReportsManager.tsx",
+  "src/components/settings/ConnectionAlertPreferences.tsx",
+  "src/components/talkx/TalkXHelp.tsx",
+  "src/components/talkx/TalkXInteractiveEditor.tsx",
+  "src/components/talkx/TalkXMediaDropzone.tsx",
+  "src/components/talkx/report/TalkXCampaignReport.tsx",
+  "src/components/talkx/talkxCampaignDraft.ts",
+  "src/components/talkx/tracking/TalkXOperationalTimeline.tsx",
+  "src/components/talkx/tracking/TalkXSegmentProgressTable.tsx",
+  "src/components/tasks/list/taskRowCells.tsx",
+  "src/components/tasks/shared/TaskCheckbox.tsx",
+  "src/components/team-chat/EnterDepartmentByCode.tsx",
+  "src/components/team-chat/GroupManagementDialog.tsx",
+  "src/components/team-chat/ParticipantStatsGraph.tsx",
+  "src/components/team-chat/TeamChatA11y.tsx",
+  "src/components/team-chat/TeamPerformancePanel.tsx",
+  "src/components/team-chat/TransferConversationDialog.tsx",
+  "src/components/ui/SkeletonList.tsx",
+  "src/components/ui/empty-states.tsx",
+  "src/components/ui/form.tsx",
+  "src/components/ui/use-toast.ts",
+  "src/hooks/admin/useSupervisorQueue.ts",
+  "src/hooks/analytics/index.ts",
+  "src/hooks/analytics/usePerformanceOptimizations.ts",
+  "src/hooks/analytics/useSentimentTrend.ts",
+  "src/hooks/auth/index.ts",
+  "src/hooks/business/index.ts",
+  "src/hooks/chat/index.ts",
+  "src/hooks/chat/journey/useJourneyActors.ts",
+  "src/hooks/chat/journey/useJourneyCalls.ts",
+  "src/hooks/chat/journey/useJourneyEmails.ts",
+  "src/hooks/chat/useAutomationSuggestions.ts",
+  "src/hooks/chat/useMessageStatus.ts",
+  "src/hooks/communication/index.ts",
+  "src/hooks/contacts/useContainerColumns.ts",
+  "src/hooks/copilot/index.ts",
+  "src/hooks/crm/index.ts",
+  "src/hooks/dashboard/index.ts",
+  "src/hooks/evolution/index.ts",
+  "src/hooks/gamification/index.ts",
+  "src/hooks/gmail/index.ts",
+  "src/hooks/groups/index.ts",
+  "src/hooks/inbox/index.ts",
+  "src/hooks/integrations/index.ts",
+  "src/hooks/integrations/useTalkXCampaignList.ts",
+  "src/hooks/performance/index.ts",
+  "src/hooks/reactions/index.ts",
+  "src/hooks/realtime/index.ts",
+  "src/hooks/shortcuts/index.ts",
+  "src/hooks/sip/index.ts",
+  "src/hooks/sla/index.ts",
+  "src/hooks/sla/useContactSlaTimeline.ts",
+  "src/hooks/sticker-picker/index.ts",
+  "src/hooks/system/index.ts",
+  "src/hooks/tasks/useMyTasks.ts",
+  "src/hooks/tasks/useWorkItemDraft.ts",
+  "src/hooks/tasks/workItemBoardGroups.ts",
+  "src/hooks/team-chat/index.ts",
+  "src/hooks/team-chat/useTeamFiles.ts",
+  "src/hooks/team-chat/useTeamMessageSearch.ts",
+  "src/hooks/team-chat/useTeamPresence.ts",
+  "src/hooks/team-chat/useTeamTyping.ts",
+  "src/hooks/ui/index.ts",
+  "src/hooks/ui/usePrefetchOnHover.ts",
+  "src/hooks/voice/index.ts",
+  "src/i18n/team-chat.ts",
+  "src/lib/a11y.ts",
+  "src/lib/aiJobs/status.ts",
+  "src/lib/audio/gravacaoFormato.ts",
+  "src/lib/calls/MediaTransport.ts",
+  "src/lib/calls/WhatsAppCallEngine.ts",
+  "src/lib/chartColors.ts",
+  "src/lib/engagementScore.ts",
+  "src/lib/journey/stats.ts",
+  "src/lib/mentionText.ts",
+  "src/lib/runGuard.ts",
+  "src/lib/zappSchemas.ts",
+  "src/segments/segmentRules.ts",
+  "src/services/crm/singu-adapter.ts",
+  "src/services/index.ts",
+  "supabase/functions/talkx-send/_test-utils.ts"
+ ],
+ "modulos_mais_acoplados": [
+  {
+   "modulo": "lib",
+   "depende_de": 9,
+   "importado_por": 102
+  },
+  {
+   "modulo": "components/ui",
+   "depende_de": 7,
+   "importado_por": 66
+  },
+  {
+   "modulo": "pages",
+   "depende_de": 64,
+   "importado_por": 3
+  },
+  {
+   "modulo": "integrations/supabase",
+   "depende_de": 1,
+   "importado_por": 64
+  },
+  {
+   "modulo": "hooks/system",
+   "depende_de": 13,
+   "importado_por": 41
+  },
+  {
+   "modulo": "components/inbox",
+   "depende_de": 39,
+   "importado_por": 14
+  },
+  {
+   "modulo": "hooks/integrations",
+   "depende_de": 21,
+   "importado_por": 23
+  },
+  {
+   "modulo": "hooks/ui",
+   "depende_de": 10,
+   "importado_por": 32
+  },
+  {
+   "modulo": "components/layout",
+   "depende_de": 18,
+   "importado_por": 19
+  },
+  {
+   "modulo": "hooks/chat",
+   "depende_de": 20,
+   "importado_por": 17
+  },
+  {
+   "modulo": "hooks/auth",
+   "depende_de": 6,
+   "importado_por": 29
+  },
+  {
+   "modulo": "components/dashboard",
+   "depende_de": 18,
+   "importado_por": 12
+  },
+  {
+   "modulo": "hooks/crm",
+   "depende_de": 10,
+   "importado_por": 19
+  },
+  {
+   "modulo": "services",
+   "depende_de": 6,
+   "importado_por": 23
+  },
+  {
+   "modulo": "components/settings",
+   "depende_de": 21,
+   "importado_por": 6
+  },
+  {
+   "modulo": "hooks/communication",
+   "depende_de": 12,
+   "importado_por": 12
+  },
+  {
+   "modulo": "hooks/realtime",
+   "depende_de": 10,
+   "importado_por": 14
+  },
+  {
+   "modulo": "components/catalog",
+   "depende_de": 10,
+   "importado_por": 12
+  },
+  {
+   "modulo": "hooks/inbox",
+   "depende_de": 17,
+   "importado_por": 5
+  },
+  {
+   "modulo": "components/contacts",
+   "depende_de": 17,
+   "importado_por": 4
+  }
+ ],
+ "arestas_em": "docs/contexto/codigo/grafo-arestas.json"
+}
