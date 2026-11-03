@@ -4,8 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 /**
  * Regra dos três níveis (docs/contexto/regras/manual/regras.md §4.2): o atendente
  * nunca pode mandar mensagem sem saber que a conexão caiu. Nível 0 = amarelo
- * ("sem conexão — a mensagem ficará na fila"); nível 1+ = vermelho ("precisa de
- * QR Code — avise o admin"). A mensagem continua entrando na fila; nada é bloqueado.
+ * ("sem conexão — o envio falha até voltar"); nível 1+ = vermelho ("precisa de
+ * QR Code — avise o admin"). Hoje `enqueue_outbound_message` RECUSA o envio sem
+ * conexão viva (`no_connected_whatsapp_connection`) — não há fila offline; o aviso
+ * diz isso. A caixa continua aberta: o erro de envio já aparece no SendErrorBanner.
  *
  * Fonte: `whatsapp_connections` (status/health_status/health_reason), leitura direta.
  * A RLS só libera a tabela para admin/supervisor: o AGENTE só passa a ver o aviso
@@ -62,11 +64,11 @@ export function useConnectionHealthBanner(instanceName: string | undefined): Con
 export function connectionBannerText(banner: ConnectionBanner, isAdmin: boolean): string | null {
   if (banner.level === 'down') {
     return isAdmin
-      ? 'WhatsApp desconectado — precisa de QR Code. Gere um novo na tela Conexões. As mensagens ficam na fila.'
-      : 'WhatsApp desconectado — precisa de QR Code. Avise o admin. As mensagens ficam na fila.';
+      ? 'WhatsApp desconectado — precisa de QR Code. Gere um novo na tela Conexões. Envios falham até reconectar.'
+      : 'WhatsApp desconectado — precisa de QR Code. Avise o admin. Envios falham até reconectar.';
   }
   if (banner.level === 'warn') {
-    return 'Sem conexão com o WhatsApp — a mensagem ficará na fila e sai quando a conexão voltar.';
+    return 'Sem conexão com o WhatsApp — o envio vai falhar até a conexão voltar.';
   }
   return null;
 }

@@ -87,6 +87,10 @@ interface Fake {
   roleRows: Array<{ user_id: string; role: string }>;
   /** created_at do alerta de warroom aberto (início do episódio) */
   episodeStartedAt: string | null;
+  /** campanhas pausadas por connection_lost na conexão (talkx_campaigns) */
+  pausedCampaigns: Array<{ id: string }>;
+  /** Resend recusa (500) quando true */
+  resendDown: boolean;
   fetchImpl: (call: { path: string; apikey: string | null }) => Response | Promise<Response>;
 }
 
@@ -112,6 +116,8 @@ function baseFake(): Fake {
     rpcCalls: [],
     roleRows: [],
     episodeStartedAt: null,
+    pausedCampaigns: [],
+    resendDown: false,
     fetchImpl: () => jsonResponse({ instance: { state: 'open' } }),
   };
 }
@@ -205,6 +211,15 @@ function result(
     fake.pushNotifications.push(pending);
     return { data: null, error: null };
   }
+  if (table === 'notifications' && op === 'select') {
+    const u = filters.find(([c]) => c === 'user_id')?.[1];
+    const k = filters.find(([c]) => c === 'dedupe_key')?.[1];
+    const hit = fake.pushNotifications.find((n) => (n as Row).user_id === u && (n as Row).dedupe_key === k);
+    return { data: hit ? { id: 'n' } : null, error: null };
+  }
+  if (table === 'talkx_campaigns' && op === 'select') {
+    return { data: fake.pausedCampaigns, error: null };
+  }
   if (table === 'notifications' && op === 'update' && pending) {
     for (const n of fake.pushNotifications) Object.assign(n as Row, pending);
     return { data: null, error: null };
@@ -215,7 +230,10 @@ function result(
     return { data: fake.roleRows.filter((r) => !allowed || allowed.includes(r.role)), error: null };
   }
   if (table === 'warroom_alerts' && op === 'select') {
-    return { data: fake.episodeStartedAt ? { created_at: fake.episodeStartedAt } : null, error: null };
+    if (fake.episodeStartedAt) return { data: { created_at: fake.episodeStartedAt }, error: null };
+    const k = filters.find(([c]) => c === 'dedupe_key')?.[1];
+    const aberto = fake.alerts.find((a) => a.dedupe_key === k);
+    return { data: aberto ? { created_at: String(aberto.created_at ?? new Date().toISOString()) } : null, error: null };
   }
   if (table === 'global_settings' && op === 'select') {
     return { data: null, error: null };
@@ -308,6 +326,10 @@ function makeDeps(fake: Fake): any {
         // PE-87: dentro/fora do horário comercial (contracheque da "caixa muda").
         if (name === 'is_within_business_hours') {
           return Promise.resolve({ data: fake.withinHours, error: null });
+        }
+        if (name === 'transition_talkx_campaign') {
+          fake.rpcCalls.push(`transition:${String(params?.p_campaign_id)}:${String(params?.p_action)}`);
+          return Promise.resolve({ data: null, error: null });
         }
         return Promise.resolve({ data: null, error: null });
       },
@@ -889,15 +911,15 @@ Deno.test('reconexão: conexão que volta zera o contador e o motivo', async () 
 Deno.test('3 níveis: decideEscalation — rápida=0, esgotada/fantasma/15min=1, 1h=2, degraded só ≥30min', () => {
   const now = new Date('2026-11-03T12:30:00Z');
   const ago = (min: number) => new Date(now.getTime() - min * 60_000);
-  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: false, episodeStart: ago(5), now }) === 0);
-  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: true, episodeStart: ago(5), now }) === 1);
-  assert(decideEscalation({ kind: 'disconnected', reason: 'phantom_session', exhausted: false, episodeStart: null, now }) === 1);
-  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: false, episodeStart: ago(15), now }) === 1);
-  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: true, episodeStart: ago(60), now }) === 2);
-  assert(decideEscalation({ kind: 'degraded', reason: 'webhook_silent', exhausted: false, episodeStart: ago(29), now }) === 0);
-  assert(decideEscalation({ kind: 'degraded', reason: 'webhook_silent', exhausted: false, episodeStart: ago(30), now }) === 1);
+  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: false, episodeStart: ago(5), now }) === 0, 'esperado nível 0: { kind: disconnected, reason: null, exhausted: false, episodeStart: ago');
+  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: true, episodeStart: ago(5), now }) === 1, 'esperado nível 1: { kind: disconnected, reason: null, exhausted: true, episodeStart: ago(');
+  assert(decideEscalation({ kind: 'disconnected', reason: 'phantom_session', exhausted: false, episodeStart: null, now }) === 1, 'esperado nível 1: { kind: disconnected, reason: phantom_session, exhausted: false, epis');
+  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: false, episodeStart: ago(15), now }) === 1, 'esperado nível 1: { kind: disconnected, reason: null, exhausted: false, episodeStart: ago');
+  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: true, episodeStart: ago(60), now }) === 2, 'esperado nível 2: { kind: disconnected, reason: null, exhausted: true, episodeStart: ago(');
+  assert(decideEscalation({ kind: 'degraded', reason: 'webhook_silent', exhausted: false, episodeStart: ago(29), now }) === 0, 'esperado nível 0: { kind: degraded, reason: webhook_silent, exhausted: false, episodeSt');
+  assert(decideEscalation({ kind: 'degraded', reason: 'webhook_silent', exhausted: false, episodeStart: ago(30), now }) === 1, 'esperado nível 1: { kind: degraded, reason: webhook_silent, exhausted: false, episodeSt');
   assert(decideEscalation({ kind: 'degraded', reason: 'webhook_silent', exhausted: false, episodeStart: ago(600), now }) === 1, 'degraded nunca sobe a nível 2');
-  assert(levelDedupeKey(1, 'c1', now) === 'conn-l1:v1:c1');
+  assert(levelDedupeKey(1, 'c1', now) === 'conn-l1:v1:c1', 'chave do nível 1');
   assert(levelDedupeKey(2, 'c1', now) === levelDedupeKey(2, 'c1', ago(20)), 'nível 2 repete por hora cheia');
   assert(levelDedupeKey(2, 'c1', now) !== levelDedupeKey(2, 'c1', ago(60)), 'hora seguinte = chave nova');
 });
@@ -909,7 +931,7 @@ Deno.test('3 níveis: queda rápida (nível 0) grava o warroom mas NÃO manda pu
   fake.tokens = { padrao: 'tok-da-padrao' };
   fake.roleRows = [{ user_id: 'adm', role: 'admin' }, { user_id: 'sup', role: 'supervisor' }];
   fake.adminProfiles = [{ user_id: 'adm', email: 'adm@x.test' }];
-  fake.fetchImpl = ({ path }) => path.includes('api.resend.com') ? jsonResponse({ id: 'mail' }) : jsonResponse({ instance: { state: 'close' } });
+  fake.fetchImpl = ({ path }) => path.includes('/emails') ? jsonResponse({ id: 'mail' }) : jsonResponse({ instance: { state: 'close' } });
   await run(fake);
   assert(fake.alerts.some((a) => a.dedupe_key === 'conn-down:v1:c1'), 'warroom (tela) deve registrar a queda');
   assert(fake.pushNotifications.length === 0, `nível 0 não manda push: ${JSON.stringify(fake.pushNotifications)}`);
@@ -924,7 +946,7 @@ Deno.test('3 níveis: reconexão esgotada (nível 1) avisa admin E supervisor po
   fake.roleRows = [{ user_id: 'adm', role: 'admin' }, { user_id: 'sup', role: 'supervisor' }, { user_id: 'ag', role: 'agent' }];
   fake.adminProfiles = [{ user_id: 'adm', email: 'adm@x.test' }, { user_id: 'sup', email: 'sup@x.test' }];
   fake.episodeStartedAt = new Date(Date.now() - 5 * 60_000).toISOString();
-  fake.fetchImpl = ({ path }) => path.includes('api.resend.com') ? jsonResponse({ id: 'mail' }) : jsonResponse({ instance: { state: 'close' } });
+  fake.fetchImpl = ({ path }) => path.includes('/emails') ? jsonResponse({ id: 'mail' }) : jsonResponse({ instance: { state: 'close' } });
   const originalKey = Deno.env.get('RESEND_API_KEY');
   Deno.env.set('RESEND_API_KEY', 're_test');
   try {
@@ -962,4 +984,55 @@ Deno.test('3 níveis: sessão fantasma é nível 1 imediato (sem esperar 15 min)
   assert(ev.reason === 'phantom_session');
   assert(decideEscalation({ kind: 'disconnected', reason: ev.reason, exhausted: false, episodeStart: now, now }) === 1);
   assert(PHANTOM_SESSION_REASON.includes('QR Code'), 'motivo de saúde deve pedir QR');
+});
+
+Deno.test('3 níveis: e-mail recusado pelo Resend não grava o marcador — a próxima sonda tenta de novo', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 3, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'adm', role: 'admin' }];
+  fake.adminProfiles = [{ user_id: 'adm', email: 'adm@x.test' }];
+  fake.episodeStartedAt = new Date(Date.now() - 5 * 60_000).toISOString();
+  let resendDown = true;
+  fake.fetchImpl = ({ path }) => path.includes('/emails')
+    ? (resendDown ? new Response('down', { status: 500 }) : jsonResponse({ id: 'mail' }))
+    : jsonResponse({ instance: { state: 'close' } });
+  const originalKey = Deno.env.get('RESEND_API_KEY');
+  Deno.env.set('RESEND_API_KEY', 're_test');
+  try {
+    await run(fake);
+    assert(fake.pushNotifications.length === 0, 'com o e-mail recusado, o push (marcador) não pode ser gravado');
+    resendDown = false;
+    await run(fake);
+    assert(fake.pushNotifications.length === 1, 'na sonda seguinte, e-mail aceito → push gravado uma vez');
+    const emails = fake.calls.filter((c) => c.path.includes('/emails')).length;
+    assert(emails === 2, `duas tentativas de e-mail (1 recusada + 1 aceita), veio ${emails}`);
+  } finally {
+    if (originalKey === undefined) Deno.env.delete('RESEND_API_KEY'); else Deno.env.set('RESEND_API_KEY', originalKey);
+  }
+});
+
+Deno.test('3 níveis: recuperação já gravada pelo webhook ainda retoma campanhas e libera as chaves de nível', async () => {
+  const fake = baseFake();
+  // O webhook já deixou status='connected'; a sonda não transiciona nada (CAS não entra).
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 0 }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.pausedCampaigns = [{ id: 'camp-1' }];
+  fake.pushNotifications = [{ user_id: 'adm', dedupe_key: 'conn-l1:v1:c1' }];
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
+  await run(fake);
+  assert(fake.rpcCalls.includes('transition:camp-1:start'), `campanha pausada por queda deve retomar: ${JSON.stringify(fake.rpcCalls)}`);
+  assert((fake.pushNotifications[0] as Row).dedupe_key === null, 'chave de nível liberada para a próxima queda');
+});
+
+Deno.test('3 níveis: sem linha no warroom, a sonda cria o registro e o relógio do episódio começa (não fica em zero)', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 0, auto_reconnect_enabled: false }];
+  fake.statusById = { c1: 'disconnected' }; // já caída antes, sem alerta gravado
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
+  await run(fake);
+  assert(fake.alerts.some((a) => a.dedupe_key === 'conn-down:v1:c1'), 'episódio sem registro deve ser criado pela sonda');
 });

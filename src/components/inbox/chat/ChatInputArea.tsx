@@ -256,7 +256,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
                 }}
                 onBlur={onBlur} onPaste={logic.handlePaste}
                 onClick={(e) => { const t = e.target as HTMLTextAreaElement; checkForMention(t.value, t.selectionStart ?? 0); }}
-                placeholder={connectionBanner.level !== 'ok' ? "Sem conexão — a mensagem ficará na fila" : editingMessage ? "Editar mensagem..." : replyToMessage ? "Digite sua resposta..." : "Digite uma mensagem… (/ para comandos, @ para mencionar)"}
+                placeholder={connectionBanner.level !== 'ok' ? "Sem conexão com o WhatsApp — o envio vai falhar até voltar" : editingMessage ? "Editar mensagem..." : replyToMessage ? "Digite sua resposta..." : "Digite uma mensagem… (/ para comandos, @ para mencionar)"}
                 rows={1}
                 className={cn(
                   "w-full bg-transparent border-0 outline-none text-sm text-foreground",

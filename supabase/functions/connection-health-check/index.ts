@@ -353,11 +353,13 @@ async function syncInboxSilenceAlert(
   }
 }
 
+/** Um e-mail por destinatário; devolve quem o Resend ACEITOU (o resto fica para a próxima sonda). */
 async function sendAlertEmails(
   log: Logger,
   args: { resendKey: string; to: string[]; subject: string; instanceId: string; line: string },
-): Promise<void> {
+): Promise<Set<string>> {
   const { resendKey, to, subject, instanceId, line } = args;
+  const aceitos = new Set<string>();
   for (const recipient of to) {
     try {
       const resp = await fetch('https://api.resend.com/emails', {
@@ -372,11 +374,13 @@ async function sendAlertEmails(
             `<p>A instância <strong>${escapeHtml(instanceId)}</strong>${line}</p></div>`,
         }),
       });
-      if (!resp.ok) log.warn('Resend recusou o alerta de conexão', { status: resp.status });
+      if (resp.ok) aceitos.add(recipient);
+      else log.warn('Resend recusou o alerta de conexão', { status: resp.status });
     } catch (err) {
       log.error('Falha ao enviar alerta de conexão por e-mail', { error: err instanceof Error ? err.message : String(err) });
     }
   }
+  return aceitos;
 }
 
 /** Episódio em escalada (conexão caída/degradada nesta sonda), avaliado depois do laço. */
@@ -417,32 +421,82 @@ async function notifyEscalation(
       ? `A instância ${alert.instance_id} não reconectou sozinha. Só um admin pode gerar o QR Code na tela Conexões.`
       : `A instância ${alert.instance_id} está conectada mas não recebe mensagens há mais de 30 min (${REASON_LABEL[alert.reason ?? ''] ?? 'webhook parado'}).`;
 
-  let novos = 0;
+  // Quem ainda NÃO foi avisado neste episódio/hora (a linha de push é o marcador).
+  const pendentes: string[] = [];
   for (const userId of pushUsers) {
+    const { data: existente, error } = await supabase.from('notifications').select('id')
+      .eq('user_id', userId).eq('dedupe_key', dedupeKey).maybeSingle();
+    if (error) {
+      log.warn('Falha ao conferir aviso de nível já enviado', { error: error.message });
+      continue;
+    }
+    if (!existente) pendentes.push(userId);
+  }
+  if (pendentes.length === 0) return;
+
+  // E-mail ANTES do marcador: se o Resend falhar, o push não é gravado e a próxima
+  // sonda tenta os dois de novo. Sem chave ou sem e-mail no perfil, o push sai mesmo assim.
+  const emailPendentes = pendentes.filter((u) => emailUsers.has(u));
+  const emailOk = new Set<string>();
+  const semEmail = new Set<string>();
+  if (emailPendentes.length > 0) {
+    const { data: perfis, error: perfisError } = await supabase.from('profiles').select('user_id, email').in('user_id', emailPendentes);
+    if (perfisError) {
+      log.warn('Falha ao ler e-mails dos destinatários obrigatórios; tenta na próxima sonda', { error: perfisError.message });
+      return;
+    }
+    const emailPorUsuario = new Map<string, string>();
+    for (const p of (perfis ?? []) as Array<{ user_id?: unknown; email?: unknown }>) {
+      if (typeof p.user_id === 'string' && typeof p.email === 'string' && p.email !== '') emailPorUsuario.set(p.user_id, p.email);
+    }
+    for (const u of emailPendentes) if (!emailPorUsuario.has(u)) semEmail.add(u);
+    if (!resendKey) {
+      log.warn('Alerta obrigatório sem canal de e-mail (RESEND_API_KEY ausente)', { level });
+      for (const u of emailPendentes) semEmail.add(u);
+    } else if (emailPorUsuario.size > 0) {
+      const aceitos = await sendAlertEmails(log, {
+        resendKey, to: [...emailPorUsuario.values()], subject: `🔴 ${title} — ZAPP`, instanceId: alert.instance_id, line: `: ${escapeHtml(message)}`,
+      });
+      for (const [u, e] of emailPorUsuario) if (aceitos.has(e)) emailOk.add(u);
+    }
+  }
+
+  for (const userId of pendentes) {
+    if (emailUsers.has(userId) && !emailOk.has(userId) && !semEmail.has(userId)) continue; // e-mail falhou: retenta na próxima sonda
     const { error } = await supabase.from('notifications').insert({
       user_id: userId, title, message, type: 'connection_alert', dedupe_key: dedupeKey,
       metadata: { connection_id: alert.connection_id, instance_id: alert.instance_id, kind: alert.kind, reason: alert.reason, level },
     });
-    if (!error) novos += 1;
-    else if ((error as { code?: string }).code !== '23505') log.warn('notifications insert failed', { error: error.message });
+    if (error && (error as { code?: string }).code !== '23505') log.warn('notifications insert failed', { error: error.message });
   }
-  if (novos === 0 || emailUsers.size === 0) return;
-  const { data: perfis } = await supabase.from('profiles').select('user_id, email').in('user_id', [...emailUsers]);
-  const to = (perfis ?? []).map((a) => (a as { email?: unknown }).email).filter((e): e is string => typeof e === 'string' && e !== '');
-  if (!resendKey || to.length === 0) {
-    log.warn('Alerta obrigatório sem canal de e-mail (sem chave ou sem e-mail nos perfis)', { recipients: to.length, level });
-    return;
-  }
-  await sendAlertEmails(log, { resendKey, to, subject: `🔴 ${title} — ZAPP`, instanceId: alert.instance_id, line: `: ${escapeHtml(message)}` });
 }
 
-/** Início do episódio = created_at do alerta de warroom ainda "aberto" (dedupe_key preenchida). */
-async function readEpisodeStart(supabase: SupabaseClient, alert: AlertToCreate): Promise<Date | null> {
-  const { data } = await supabase.from('warroom_alerts').select('created_at').eq('dedupe_key', alertDedupeKey(alert)).maybeSingle();
+/**
+ * Início do episódio = created_at do alerta de warroom ainda "aberto" (dedupe_key
+ * preenchida). Se a linha não existe (insert da transição falhou), cria agora: o
+ * relógio começa na primeira sonda que conseguiu registrar — nunca fica em zero.
+ */
+async function readEpisodeStart(supabase: SupabaseClient, log: Logger, alert: AlertToCreate, now: Date): Promise<Date | null> {
+  const key = alertDedupeKey(alert);
+  const { data, error } = await supabase.from('warroom_alerts').select('created_at').eq('dedupe_key', key).maybeSingle();
+  if (error) {
+    log.warn('Falha ao ler início do episódio no warroom', { error: error.message });
+    return null;
+  }
   const raw = data && !Array.isArray(data) ? (data as { created_at?: unknown }).created_at : undefined;
-  if (typeof raw !== 'string') return null;
-  const d = new Date(raw);
-  return Number.isNaN(d.getTime()) ? null : d;
+  if (typeof raw === 'string') {
+    const d = new Date(raw);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  const { title, message } = alertContent(alert);
+  const { error: insertError } = await supabase.from('warroom_alerts').insert({
+    alert_type: alert.kind === 'disconnected' ? 'critical' : 'warning', title, message, source: 'connection-health-check', dedupe_key: key,
+  });
+  if (insertError && (insertError as { code?: string }).code !== '23505') {
+    log.warn('Falha ao registrar início do episódio no warroom', { error: insertError.message });
+    return null;
+  }
+  return now;
 }
 
 /** Conexão voltou: libera as chaves de nível e retoma campanhas pausadas por connection_lost. */
@@ -828,6 +882,13 @@ export async function handleConnectionHealthCheck(
                   .update({ retry_count: 0, health_reason: null }).eq('id', conn.id);
               }
               if (dbStatus === 'connected') {
+                // Idempotente em TODA sonda com a conexão viva: a recuperação pode ter sido
+                // gravada pelo webhook (connection.update 'open') antes desta sonda, e aí o
+                // CAS abaixo não transiciona — mas as chaves de nível e as campanhas pausadas
+                // por queda precisam ser liberadas do mesmo jeito.
+                await onConnectionRecovered(supabase, log, conn.id);
+              }
+              if (dbStatus === 'connected') {
                 // Libera a chave apenas depois que o CAS confirmar a recuperação;
                 // a linha do alerta permanece como histórico do incidente.
                 connectionRecoveryConfirmed = conn.status !== 'connected';
@@ -877,7 +938,6 @@ export async function handleConnectionHealthCheck(
                       .update({ dedupe_key: null })
                       .in('dedupe_key', [`conn-down:v1:${conn.id}`, `conn-degraded:v1:${conn.id}`]);
                     if (resolvedIncidentError) log.warn('Falha ao encerrar alerta de conexão recuperada', { error: resolvedIncidentError.message });
-                    await onConnectionRecovered(supabase, log, conn.id);
                   }
                   // Trilha de auditoria: só quando o CAS CONFIRMOU a transição —
                   // é isso que o diálogo de auditoria (CA2) lê por instance_id.
@@ -1000,7 +1060,7 @@ export async function handleConnectionHealthCheck(
     const now = new Date();
     let escalated = 0;
     for (const e of escalations) {
-      const episodeStart = await readEpisodeStart(supabase, e.alert);
+      const episodeStart = await readEpisodeStart(supabase, log, e.alert, now);
       const level = decideEscalation({ kind: e.alert.kind, reason: e.alert.reason, exhausted: e.exhausted, episodeStart, now });
       if (level === 0) continue;
       escalated += 1;
