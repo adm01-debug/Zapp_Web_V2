@@ -1,6 +1,6 @@
 # ============================================
-# ZAPP-WEB .gitignore - Segurança Primeiro!
-# ============================================
+# ZAPP-WEB .gitignore - Segurança Primeiro
+# =============================================
 
 # ====================
 # SECRETS E AMBIENTE (CRÍTICO!)
@@ -88,7 +88,8 @@ Thumbs.db
 *:Zone.Identifier
 *.swp
 *.swo
-*~
+*`
+**~
 supabase/.branches/
 supabase/.temp/
 .supabase/
@@ -103,7 +104,7 @@ supabase/.temp/
 *.orig
 *.suo
 *.ntvs*
-*.njsproj
+*.jsproj
 *.sln
 *.sw?
 .eslintcache
@@ -128,6 +129,9 @@ docs/design/*.png
 # Worktrees isolados de agentes (Agent tool, isolation: worktree) — efêmeros, nunca versionar
 .claude/worktrees/
 .vercel
+
+# Python bytecode cache
+__pycache__/
 
 # gerado pelo contexto.yml na branch contexto (nunca em main); manual/ e texto humano e fica em main
 docs/contexto/*
