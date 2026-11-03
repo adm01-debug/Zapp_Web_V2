@@ -155,3 +155,10 @@ CREATE POLICY "Agents can view own grants"
 ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check
   CHECK (role = ANY (ARRAY['admin'::text, 'supervisor'::text, 'agent'::text]));
+
+-- 9. (f) user_roles: o rotulo 'special_agent' continua no enum (nao recriado), entao o banco
+--    ainda aceitaria o valor por INSERT direto; o front/edges (#2692) ja nao o oferecem. O CHECK
+--    fecha a porta sem recriar o tipo. 0 linhas com esse valor em producao (2026-11-03).
+ALTER TABLE public.user_roles DROP CONSTRAINT IF EXISTS user_roles_no_special_agent;
+ALTER TABLE public.user_roles ADD CONSTRAINT user_roles_no_special_agent
+  CHECK (role <> 'special_agent'::app_role);
