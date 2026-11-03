@@ -3170,6 +3170,7 @@
         "team_messages.team_messages_no_self_reply:CHECK (((reply_to_id IS NULL) OR (reply_to_id <> id)))",
         "team_messages.team_messages_status_check:CHECK ((status = ANY (ARRAY['sent'::text, 'delivered'::text, 'read'::text, 'failed'::text])))",
         "team_messages.team_messages_type_media_check:CHECK (((message_type = ANY (ARRAY['text'::text, 'image'::text, 'audio'::text, 'video'::text, 'file'::text, 'sticker'::text, 'system'::text])) OR (media_url IS NULL)))",
+        "user_roles.user_roles_no_special_agent:CHECK ((role <> 'special_agent'::app_role))",
         "user_settings.user_settings_goal_sound_type_valid:CHECK ((goal_sound_type = ANY (ARRAY['beep'::text, 'chime'::text, 'bell'::text, 'alert'::text, 'soft'::text])))",
         "user_settings.user_settings_mention_sound_type_valid:CHECK ((mention_sound_type = ANY (ARRAY['beep'::text, 'chime'::text, 'bell'::text, 'alert'::text, 'soft'::text])))",
         "user_settings.user_settings_message_sound_type_valid:CHECK ((message_sound_type = ANY (ARRAY['beep'::text, 'chime'::text, 'bell'::text, 'alert'::text, 'soft'::text])))",

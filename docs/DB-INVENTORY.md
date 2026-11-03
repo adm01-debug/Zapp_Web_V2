@@ -46,7 +46,7 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 | Funções (`functions`) | 379 |
 | Assinaturas de função (`function_signatures`) | 382 |
 | Funções de gatilho (`trigger_functions`) | 96 |
-| Restrições de verificação (`check_constraints`) | 243 |
+| Restrições de verificação (`check_constraints`) | 244 |
 
 As tabelas estão inventariadas uma a uma na seção seguinte. Views, funções, colunas e restrições
 têm o inventário completo no catálogo (`supabase/schema-catalog.json`) e o manifesto com hash de
