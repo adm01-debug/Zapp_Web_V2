@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `8f2d06ac49` · branch `main` · 2026-11-03 13:18 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `639a500050` · branch `main` · 2026-11-03 14:12 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -521,7 +521,6 @@
 
 ## Lacunas — o que este contexto NÃO consegue responder (perguntas para o dono do negócio)
 
-- Nenhuma regra manual em `manual/`: prazos, limites, exceções comerciais, quem aprova o quê — só o negócio sabe.
 - `contact_purchases.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `conversation_analyses.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `conversation_tasks.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
@@ -581,4 +580,4 @@
 
 ## Regras manuais presentes
 
-_nenhuma — copie `manual/TEMPLATE-regras-de-negocio.md`_
+- `manual/regras.md`

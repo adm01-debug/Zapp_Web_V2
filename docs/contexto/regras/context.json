@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "8f2d06ac49dd25a8ff59be3d23b7d9d65072ee44",
+  "sha": "639a500050dc401759ec7987c187adbddea4c00b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-03 13:18 UTC",
+  "generated_at": "2026-11-03 14:12 UTC",
   "files_total": 7977,
   "code_files": 5919,
   "code_lines": 1018839
  },
  "version": "1.3.2",
- "facts_hash": "a1a1aa498e6ab378",
+ "facts_hash": "70b8081cc7ffbd21",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -257024,7 +257024,6 @@
    }
   ],
   "gaps": [
-   "Nenhuma regra manual em `manual/`: prazos, limites, exceções comerciais, quem aprova o quê — só o negócio sabe.",
    "`contact_purchases.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`conversation_analyses.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`conversation_tasks.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
@@ -257083,7 +257082,12 @@
    "Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel."
   ]
  },
- "manual": [],
+ "manual": [
+  {
+   "file": "regras.md",
+   "content": "# Regras de negócio — decididas pelo dono do produto\n\n> Escrito por humanos (entrevista com o dono, 2026-11-03). Entra em `07-REGRAS-DE-NEGOCIO.md` seção A com\n> prioridade sobre o que foi extraído do código. Cada regra diz se **já existe no código** (com a evidência)\n> ou se é **decisão pendente de implementação** — agente que for mexer nesses fluxos deve respeitar a\n> decisão, não o comportamento atual.\n\n## 4. Ciclo de vida / estados e transições permitidas\n\n### 4.1 Conversa (`contacts.conversation_status`)\n\n| Regra | Estado | Evidência |\n|---|---|---|\n| Estados: `open`, `waiting`, `resolved`, `archived`. Transições permitidas: open → waiting/resolved/archived · waiting → open/resolved · resolved → open/archived · archived → open. | **existe** | `supabase/migrations/20260905090000_contacts_fsm_trigger.sql` |\n| Quem muda status: admin/supervisor, ou o atendente dono da conversa / membro da fila dela (`can_edit_contact`). | **existe** | `supabase/migrations/20260930090000_harden_status_and_wa_tag_rpc_authorization.sql` (`set_conversation_status`, `require_contact_edit_permission`) |\n| Cliente manda mensagem em conversa `resolved`/`archived` → reabre sozinha: volta para `open` **com o mesmo atendente** se ela tinha dono; sem dono vai para `waiting`. Decisão do dono: manter — as conversas tendem a ficar sempre com os mesmos atendentes, e isso é desejado. | **existe** | `supabase/migrations/20261013210003_reabre_conversa_com_nova_mensagem.sql` (`trg_conversation_reopen_on_inbound`) |\n| Tempo sem resposta do atendente **não** muda o status para `waiting`. Continua como está. | **decisão** (nada a implementar) | — |\n| Atendente demorando além do SLA de primeira resposta → **atendente e seu supervisor são notificados**; admin em alguns casos (critério do \"alguns casos\" ainda não definido — ver §9). | **parcial** | alertas existem em `sla_alert_events` (`20261011180337`), visíveis para dono da conversa + admin/supervisor; minutos configuráveis em `sla_configurations` (`20261005151753`). Canal de notificação (tela/e-mail/push) e minutos padrão: pendentes (§9) |\n| Conversa sem nenhuma interação (nem cliente, nem atendente) por **30 dias** → arquivada automaticamente (`archived`). Cliente que escrever depois reabre pela regra acima. | **pendente de implementação** (job `pg_cron` — DDL em produção, exige PR aberta para o dono) | hoje não há job de arquivamento (NÃO VERIFICADO em `cron.job` ao vivo; grep nas migrations não achou) |\n| Fechar de novo uma conversa **sem ela ter sido reaberta** desde o último fechamento é rejeitado (`conversation_closure_requires_reopen`). Reabrir e fechar no mesmo dia **é permitido** — o limite \"um fechamento por dia\" foi removido da operação e vale só nos indicadores. | **existe** | `supabase/migrations/20261007013217_conversation_closures_reopen_same_day.sql:143` (drop do índice diário) e `:175-179` (guarda) |\n\n### 4.2 Conexão WhatsApp (`whatsapp_connections`) — regra dos três níveis\n\nPrincípio: **o atendente nunca pode mandar mensagem sem saber que a conexão caiu**, mas queda rápida não\nvira alerta para ninguém. A sonda `connection-health-check` roda a cada 5 min (pg_cron) e classifica\n`healthy` / `degraded` / `disconnected` com motivos `phantom_session` / `stale_session` / `webhook_silent`\n(`supabase/functions/connection-health-check/index.ts`); reconexão automática por conexão usa\n`auto_reconnect_enabled`, `reconnect_max_attempts`, `reconnect_interval_seconds` (migration `20261012134000`).\n\n| Nível | Quando | O que acontece | Estado |\n|---|---|---|---|\n| **0 — queda rápida** | `disconnected`/`degraded` enquanto a reconexão automática ainda tem tentativas (~15 min) | Ninguém recebe push/e-mail. Na tela, conexão em **amarelo** e a caixa de mensagem avisa \"sem conexão — a mensagem ficará na fila\". A mensagem **entra na fila e sai quando voltar**; nada é perdido. | **pendente**: fila já aceita (`enqueue_outbound_message`, `20261010211000`, não checa saúde) mas **não há aviso nem cor na tela** (grep no inbox vazio) |\n| **1 — queda confirmada** | reconexão esgotou as tentativas **ou** motivo `phantom_session` (celular desvinculou; precisa de QR Code) | **Admin e supervisores recebem push + e-mail sempre**, independentemente das preferências (`alert_on_disconnected` etc. só **adicionam** gente, nunca tiram). Atendentes da conexão veem bloqueio **vermelho**: \"WhatsApp desconectado, precisa de QR Code — avise o supervisor\". Envio continua enfileirado, não falha. | **pendente**: hoje alerta só vai a quem optou (`push_enabled`/`email_enabled`); bloqueio vermelho não existe |\n| **2 — persistente** | > 1 h desconectada | Repete o aviso **de hora em hora para o admin**. **Campanhas Talk X dessa conexão pausam automaticamente** e retomam quando a conexão voltar a `healthy`. | **pendente**: NÃO VERIFICADO se campanha checa saúde da conexão hoje — tratar como lacuna |\n\nRegra adicional: `degraded` (webhook mudo) conta como nível 0; se durar **mais de 30 min**, sobe para nível 1 —\nwebhook mudo por meia hora significa que mensagens de clientes não estão chegando, tão grave quanto não enviar.\n\nTempos decididos: **15 min** (esgota reconexão) · **30 min** (`degraded` vira nível 1) · **1 h** (nível 2).\n\n## 8. Decisões já tomadas (o que NÃO mudar e por quê)\n\n- Reabertura automática mantém o atendente anterior — o dono quer continuidade de atendimento.\n- Não existe \"waiting por inatividade\" — `waiting` é só ação humana ou reabertura sem dono.\n- Alerta de desconexão nível 1 para admin/supervisor **não é opt-out**.\n- Convites de departamento: só admin cria e apaga (decisão 2026-11-01; `src/hooks/team-chat/README.md`).\n- Contato visível = `deleted_at IS NULL` + `is_lid_legacy = false` + telefone `^[0-9]{10,15}$` (decisão D4; `CLAUDE.md` §6).\n\n## 9. Dúvidas em aberto (entrevista continua)\n\n1. SLA: minutos padrão de primeira resposta e canal da notificação (tela / e-mail / WhatsApp); critério de \"em alguns casos o admin\".\n2. Reconexão da `PRINCIPAL` após nível 1: QR Code novo é sempre ação do supervisor/admin, ou atendente também pode?\n3. Talk X / campanhas: limites de envio por hora, consentimento/opt-out, horário permitido.\n4. Pagamentos / planos (se houver): o que bloqueia ao inadimplir.\n5. Perfis: o que exatamente `supervisor` pode além do `agent`, e o que só `admin` faz.\n6. Multiempresa (`company_id`): um usuário pode pertencer a mais de uma?\n7. LGPD: retenção de mensagens e mídia; o que apagar quando um contato pede exclusão.\n8. Áreas congeladas: módulos que não devem ser mexidos sem o dono.\n"
+  }
+ ],
  "readme": "# 🚀 ZAPP-WEB (Pronto Talk Suite)\n\n> ⚠️ **Agentes (Claude & afins): leiam [`CLAUDE.md`](./CLAUDE.md) antes de qualquer ação** — define o banco oficial do projeto e a Evolution GO (Hostinger).\n\n![CI](https://github.com/adm01-debug/Zapp_Web_V2/actions/workflows/ci.yml/badge.svg)\n![DB Live Guard](https://github.com/adm01-debug/Zapp_Web_V2/actions/workflows/db-live-guard.yml/badge.svg)\n![E2E logado](https://github.com/adm01-debug/Zapp_Web_V2/actions/workflows/e2e-logado.yml/badge.svg)\n![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)\n![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react)\n![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase)\n![Tailwind](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwindcss)\n![License](https://img.shields.io/badge/license-MIT-green)\n\n> Plataforma omnichannel de atendimento ao cliente com WhatsApp, IA integrada, CRM e automações.\n\n**Deploy**: [zapp-web-v2.vercel.app](https://zapp-web-v2.vercel.app)\n\n---\n\n## 📋 Índice\n\n- [Visão Geral](#visão-geral)\n- [Stack Tecnológico](#stack-tecnológico)\n- [Setup Local](#setup-local)\n- [Arquitetura](#arquitetura)\n- [Estrutura do Projeto](#estrutura-do-projeto)\n- [Funcionalidades Principais](#funcionalidades-principais)\n- [Edge Functions](#edge-functions)\n- [Integrações](#integrações)\n- [Segurança](#segurança)\n- [Testes](#testes)\n - [Auditoria](#-auditoria-e-conformidade)\n - [Deploy](#deploy)\n - [Documentação Adicional](#documentação-adicional)\n - [Contribuição](#contribuição)\n\n---\n\n ## 🛡️ Auditoria e Conformidade\n \n O sistema passa por auditorias regulares de segurança e funcionalidade.\n - **Relatório em Markdown:** [docs/audit_report.md](docs/audit_report.md)\n - **Relatório em PDF:** [docs/audit_report.pdf](docs/audit_report.pdf)\n \n *O PDF é gerado manualmente; a geração automática via CI foi removida (PR #915).*\n \n ---\n \n## Visão Geral\n\nZAPP-WEB (Pronto Talk Suite) é uma plataforma completa de atendimento ao cliente que centraliza comunicações via WhatsApp, oferece sugestões de IA, CRM integrado, gamificação de agentes, dashboards analíticos e automações de fluxo.\n\n### Público-alvo\n- Equipes de atendimento ao cliente\n- Gestores de suporte e vendas\n- Empresas que usam WhatsApp Business como canal principal\n\n---\n\n## Stack Tecnológico\n\n| Camada | Tecnologia |\n|--------|-----------|\n| **Frontend** | React 18, TypeScript 5, Vite 5 |\n| **Estilização** | TailwindCSS 3, shadcn/ui, Framer Motion |\n| **Estado** | TanStack React Query, Context API |\n| **Backend** | Supabase (Auth, Database, Storage, Edge Functions, Realtime) |\n| **IA** | Gemini, GPT via Edge Functions |\n| **WhatsApp** | Evolution API v2.3.7+ |\n| **CRM** | Bitrix24 API |\n| **Áudio** | ElevenLabs (TTS, STT, SFX) |\n| **Mapas** | Mapbox GL |\n| **Email** | Resend |\n| **VoIP** | SIP.js |\n\n---\n\n## Setup Local\n\n```bash\n# 1. Clone o repositório\ngit clone git@github.com:adm01-debug/zapp-web.git\ncd zapp-web\n\n# 2. Use a versão correta do Node.js\nnvm use\n\n# 3. Instale dependências\nbun install  # ou npm install\n\n# 4. Configure variáveis de ambiente\ncp .env.example .env.local\n\n# 5. Inicie o servidor de desenvolvimento\nbun run dev\n```\n\n### Variáveis de ambiente obrigatórias:\n- `VITE_SUPABASE_URL` - URL do projeto Supabase\n- `VITE_SUPABASE_ANON_KEY` - Chave pública do Supabase\n\n---\n\n## Arquitetura\n\n```\n┌─────────────────────────────────────────┐\n│            React SPA (Vite)             │\n│  ┌───────┐ ┌────────┐ ┌──────────────┐ │\n│  │ Pages │ │ Hooks  │ │ Components   │ │\n│  └───┬───┘ └───┬────┘ └──────┬───────┘ │\n│      └─────────┼─────────────┘         │\n│            ┌───┴───┐                    │\n│            │ Query │ (TanStack)         │\n│            └───┬───┘                    │\n└────────────────┼────────────────────────┘\n                 │ HTTPS\n┌────────────────┼────────────────────────┐\n│              Supabase                   │\n│  ┌──────┐ ┌────┐ ┌─────────┐ ┌──────┐  │\n│  │ Auth │ │ DB │ │ Storage │ │ Real │  │\n│  └──────┘ └────┘ …",
  "code_files": {
   "eslint.config.js": {
@@ -380857,10 +380861,19 @@
   }
  },
  "git": {
-  "sha": "8f2d06ac49dd25a8ff59be3d23b7d9d65072ee44",
+  "sha": "639a500050dc401759ec7987c187adbddea4c00b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "639a500",
+    "date": "2026-11-03",
+    "author": "adm01-debug",
+    "subject": "chore(contexto): regras manuais de conversas e conexão WhatsApp (#2672)",
+    "files": [
+     "docs/contexto/regras/manual/regras.md"
+    ]
+   },
    {
     "sha": "8f2d06a",
     "date": "2026-11-03",
@@ -381605,35 +381618,6 @@
     "subject": "fix(e2e): hover antes do segundo clique em Apagar dígito (GR-012 Firefox) (#2616)",
     "files": [
      "e2e/telefonia.spec.ts"
-    ]
-   },
-   {
-    "sha": "0575bc5",
-    "date": "2026-11-02",
-    "author": "adm01-debug",
-    "subject": "chore(analise): entrega analise-prs/ — 294 PRs analisadas, 13 mergeadas (#2617)",
-    "files": [
-     "analise-prs/RELATORIO_PRS.md",
-     "analise-prs/baseline/BASELINE.md",
-     "analise-prs/baseline/build.txt",
-     "analise-prs/baseline/lint.txt",
-     "analise-prs/baseline/tests.txt",
-     "analise-prs/baseline/typecheck.txt",
-     "analise-prs/dossies/BLOQUEADAS_CONFLITO.md",
-     "analise-prs/dossies/FECHADAS_SEM_MERGE.md",
-     "analise-prs/dossies/MERGEADAS.md",
-     "analise-prs/dossies/PR-2494.md",
-     "analise-prs/dossies/PR-2526.md",
-     "analise-prs/dossies/PR-2533.md",
-     "analise-prs/dossies/PR-2542.md",
-     "analise-prs/dossies/PR-2553.md",
-     "analise-prs/dossies/PR-2562.md",
-     "analise-prs/dossies/PR-2576.md",
-     "analise-prs/dossies/PR-2603.md",
-     "analise-prs/dossies/PR-2606.md",
-     "analise-prs/progresso.json",
-     "analise-prs/prs.csv",
-     "analise-prs/regras-de-negocio.md"
     ]
    }
   ],

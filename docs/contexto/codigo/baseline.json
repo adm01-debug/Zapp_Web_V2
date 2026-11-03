@@ -2,12 +2,12 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "8f2d06ac49dd25a8ff59be3d23b7d9d65072ee44",
+  "commit": "639a500050dc401759ec7987c187adbddea4c00b",
   "branch": "main",
-  "data_commit": "2026-11-03T13:17:16Z",
+  "data_commit": "2026-11-03T14:11:30Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
-  "arquivos_mudados_7d": 1409,
+  "arquivos_mudados_7d": 1373,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -140,10 +140,6 @@
     "mudancas": 10
    },
    {
-    "arquivo": ".github/workflows/codeql.yml",
-    "mudancas": 10
-   },
-   {
     "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 10
    },
@@ -165,6 +161,10 @@
    },
    {
     "arquivo": ".github/workflows/auto-update-pr-branch.yml",
+    "mudancas": 9
+   },
+   {
+    "arquivo": ".github/workflows/codeql.yml",
     "mudancas": 9
    },
    {
@@ -192,7 +192,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8135,
+  "arquivos_total": 8136,
   "arquivos_codigo": 4641,
   "linhas_codigo": 850148,
   "rotas": 18,
@@ -209,7 +209,7 @@
   "testes": 2529,
   "workflows": 19,
   "scripts": 376,
-  "docs_md": 1029
+  "docs_md": 1030
  },
  "por_pasta": {
   "docs/_arquivo": {

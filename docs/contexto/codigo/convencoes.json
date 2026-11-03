@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore(contexto): regras manuais de conversas e conexão WhatsApp (#2672)",
    "fix(contexto): regras/ ignora constantes, prazos e erros vindos de arquivos de teste (#2667)",
    "fix(contexto): índice lê a data do snapshot pelo CHANGELOG/git quando não há manifest datado (#2666)",
    "chore(db): sincronizar artefatos derivados do banco (#2669)",
-   "⬆️ ci: Bump the actions-misc group with 2 updates (#2620)",
-   "feat(ia): contexto unificado para agentes — um workflow (codigo + banco + regras), um índice, uma branch `contexto` (#2664)"
+   "⬆️ ci: Bump the actions-misc group with 2 updates (#2620)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

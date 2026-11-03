@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a cada 10 minutos pelo workflow `contexto-ia.yml`; gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `8f2d06ac49dd25a8ff59be3d23b7d9d65072ee44` (2026-11-03T13:17:16Z).
+Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a cada 10 minutos pelo workflow `contexto-ia.yml`; gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `639a500050dc401759ec7987c187adbddea4c00b` (2026-11-03T14:11:30Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a 
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4177), SQL (1274), Markdown (1029), JSON (591), JavaScript (351), Shell (230), Python (115), YAML (27)
+- linguagens: TypeScript (4177), SQL (1274), Markdown (1030), JSON (591), JavaScript (351), Shell (230), Python (115), YAML (27)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,7 +34,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8135 |
+| arquivos_total | 8136 |
 | arquivos_codigo | 4641 |
 | linhas_codigo | 850148 |
 | rotas | 18 |
@@ -51,7 +51,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | testes | 2529 |
 | workflows | 19 |
 | scripts | 376 |
-| docs_md | 1029 |
+| docs_md | 1030 |
 
 ## Onde ficam as coisas
 - telas: src/components (54), src/pages (18)
@@ -384,8 +384,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 54385 nós · 111113 arestas · 4240 comunidades · grafo do commit `8f2d06ac`
-- comunidades maiores: react (1029), cn (833), vitest (667), lucide-react (653), button.tsx (621), chat.ts (534), evolution-webhook-messages.ts (403), ExternalProductManagement.tsx (373), ref_node_fs (361), validation.ts (330), DashboardView.tsx (306), useTalkXSegments.ts (303)
+- 54392 nós · 111121 arestas · 4080 comunidades · grafo do commit `639a5000`
+- comunidades maiores: vitest (920), react (838), card.tsx (604), lucide-react (595), ExternalProductManagement.tsx (527), WorkItemSheet.tsx (511), tooltip.tsx (461), useTalkXSegments.ts (386), validation.ts (361), @tanstack/react-query (360), cn (331), ref_node_fs (316)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -493,7 +493,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `docs/audit_report.md` — 🛡️ Relatório de Auditoria Enterprise: Pronto Talk Suite (ZAPP-WEB) (108 linhas)
 - `docs/contracts.md` — Contratos das Edge Functions (51 linhas)
 - `docs/crm-external-grants.md` — GRANTs Externos — CRM pgxfvjmuubtbowutlide (111 linhas)
-- subpastas de docs/: docs/_arquivo (332), docs/audits (176), docs/reconciliation (134), docs/design (64), docs/plans (58), docs/talkx (52), docs/ia (19), docs/adr (17), docs/catalogo (15), docs/runbooks (14), docs/multiplix (12), docs/mapa (10), docs/copiloto (8), docs/decisions (8), docs/handoffs (8), docs/ci (7), docs/migration (6), docs/tipografia (6), docs/evidencias (4), docs/telefonia (3), docs/architecture (2), docs/contexto (2), docs/security (2), docs/team-chat (2), docs/crm-integration (1), docs/dashboard (1), docs/design-system (1), docs/edge-functions-recovered (1), docs/hermes (1), docs/ops (1)
+- subpastas de docs/: docs/_arquivo (332), docs/audits (176), docs/reconciliation (134), docs/design (64), docs/plans (58), docs/talkx (52), docs/ia (19), docs/adr (17), docs/catalogo (15), docs/runbooks (14), docs/multiplix (12), docs/mapa (10), docs/copiloto (8), docs/decisions (8), docs/handoffs (8), docs/ci (7), docs/migration (6), docs/tipografia (6), docs/evidencias (4), docs/contexto (3), docs/telefonia (3), docs/architecture (2), docs/security (2), docs/team-chat (2), docs/crm-integration (1), docs/dashboard (1), docs/design-system (1), docs/edge-functions-recovered (1), docs/hermes (1), docs/ops (1)
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
