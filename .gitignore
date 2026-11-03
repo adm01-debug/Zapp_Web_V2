@@ -128,3 +128,6 @@ docs/design/*.png
 # Worktrees isolados de agentes (Agent tool, isolation: worktree) — efêmeros, nunca versionar
 .claude/worktrees/
 .vercel
+
+# gerado por scripts/ai-context/gerar.mjs; versao oficial vive na branch contexto-ia
+inventario/ia/
