@@ -89,7 +89,7 @@
    "hooks_exportados": [
     "useAdminData"
    ],
-   "linhas": 523,
+   "linhas": 522,
    "dominio": "components/admin",
    "tabelas": [
     "audit_logs",
@@ -10802,7 +10802,7 @@
    "hooks_exportados": [
     "useUserRole"
    ],
-   "linhas": 141,
+   "linhas": 140,
    "dominio": "hooks/system",
    "tabelas": [],
    "rpcs": [
@@ -12358,7 +12358,7 @@
    "hooks_exportados": [
     "useRolesPageState"
    ],
-   "linhas": 115,
+   "linhas": 114,
    "dominio": "pages/admin",
    "tabelas": [
     "profiles",

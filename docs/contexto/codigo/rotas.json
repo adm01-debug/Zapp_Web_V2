@@ -1241,7 +1241,6 @@
     "search",
     "separator",
     "slider",
-    "special_agent",
     "status",
     "supervisor",
     "system",
@@ -1472,7 +1471,6 @@
    "papeis": [
     "admin",
     "alert",
-    "special_agent",
     "supervisor"
    ],
    "arquivos_puxados": 67
@@ -1564,7 +1562,6 @@
     "admin",
     "agent",
     "alert",
-    "special_agent",
     "supervisor"
    ],
    "arquivos_puxados": 62
@@ -2070,7 +2067,6 @@
     "row",
     "search",
     "slider",
-    "special_agent",
     "status",
     "supervisor",
     "system",
@@ -2517,7 +2513,6 @@
     "list",
     "listitem",
     "slider",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -2659,7 +2654,6 @@
     "dialog",
     "list",
     "slider",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -3160,7 +3154,6 @@
     "agent",
     "alert",
     "progressbar",
-    "special_agent",
     "status",
     "supervisor",
     "tab",
@@ -3272,7 +3265,6 @@
     "alert",
     "link",
     "presentation",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -3697,7 +3689,6 @@
     "alert",
     "link",
     "presentation",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -3905,7 +3896,6 @@
     "radiogroup",
     "region",
     "row",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -4005,7 +3995,6 @@
     "admin",
     "link",
     "presentation",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -4214,7 +4203,6 @@
     "listbox",
     "option",
     "region",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -5196,7 +5184,6 @@
     "search",
     "separator",
     "slider",
-    "special_agent",
     "status",
     "supervisor",
     "system",
@@ -5304,7 +5291,6 @@
    "papeis": [
     "admin",
     "alert",
-    "special_agent",
     "supervisor"
    ],
    "arquivos_puxados": 75
@@ -5940,7 +5926,6 @@
     "row",
     "search",
     "slider",
-    "special_agent",
     "status",
     "supervisor",
     "system",
@@ -6455,7 +6440,6 @@
    "papeis": [
     "admin",
     "alert",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -6657,7 +6641,6 @@
     "listbox",
     "option",
     "radiogroup",
-    "special_agent",
     "status",
     "supervisor",
     "system",
@@ -6823,7 +6806,6 @@
     "customer",
     "link",
     "presentation",
-    "special_agent",
     "status",
     "supervisor",
     "system",
@@ -7705,7 +7687,6 @@
     "presentation",
     "radio",
     "radiogroup",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -7820,7 +7801,6 @@
    "flags": [],
    "papeis": [
     "admin",
-    "special_agent",
     "supervisor"
    ],
    "arquivos_puxados": 58

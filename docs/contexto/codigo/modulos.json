@@ -181,7 +181,6 @@
    "papeis": [
     "admin",
     "alert",
-    "special_agent",
     "supervisor"
    ],
    "diretos": {
@@ -293,7 +292,7 @@
    "modulo": "components/admin",
    "arquivos": 25,
    "testes": 37,
-   "linhas": 5212,
+   "linhas": 5207,
    "itens_menu": [
     "Admin",
     "Consumo IA",
@@ -412,7 +411,6 @@
     "link",
     "presentation",
     "progressbar",
-    "special_agent",
     "status",
     "supervisor",
     "system",
@@ -554,7 +552,6 @@
     "alert",
     "link",
     "presentation",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -781,7 +778,6 @@
     "admin",
     "alert",
     "progressbar",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -1001,7 +997,6 @@
     "presentation",
     "radio",
     "radiogroup",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -1129,7 +1124,6 @@
     "radio",
     "radiogroup",
     "row",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -1432,7 +1426,6 @@
     "alert",
     "link",
     "presentation",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -1626,7 +1619,6 @@
     "radiogroup",
     "region",
     "row",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -1847,7 +1839,6 @@
     "admin",
     "link",
     "presentation",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -2073,7 +2064,6 @@
     "log",
     "option",
     "region",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -3063,7 +3053,6 @@
     "search",
     "separator",
     "slider",
-    "special_agent",
     "status",
     "supervisor",
     "system",
@@ -3250,7 +3239,6 @@
    "papeis": [
     "admin",
     "alert",
-    "special_agent",
     "supervisor"
    ],
    "diretos": {
@@ -3371,7 +3359,6 @@
     "menu",
     "menuitem",
     "option",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -3455,7 +3442,7 @@
    "modulo": "components/layout",
    "arquivos": 18,
    "testes": 11,
-   "linhas": 1534,
+   "linhas": 1532,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -4199,7 +4186,6 @@
     "search",
     "separator",
     "slider",
-    "special_agent",
     "status",
     "supervisor",
     "system",
@@ -4482,7 +4468,6 @@
     "admin",
     "dialog",
     "navigation",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -5173,7 +5158,6 @@
     "row",
     "search",
     "slider",
-    "special_agent",
     "status",
     "supervisor",
     "system",
@@ -5937,7 +5921,6 @@
     "search",
     "separator",
     "slider",
-    "special_agent",
     "status",
     "supervisor",
     "system",
@@ -6430,7 +6413,6 @@
    "papeis": [
     "admin",
     "alert",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -6620,7 +6602,6 @@
     "option",
     "radio",
     "radiogroup",
-    "special_agent",
     "status",
     "supervisor",
     "system",
@@ -7599,7 +7580,6 @@
     "presentation",
     "region",
     "slider",
-    "special_agent",
     "status",
     "supervisor",
     "toolbar"
@@ -10432,7 +10412,6 @@
     "group",
     "radio",
     "radiogroup",
-    "special_agent",
     "status",
     "supervisor",
     "system",
@@ -10787,7 +10766,6 @@
     "menu",
     "menuitem",
     "option",
-    "special_agent",
     "status",
     "supervisor"
    ],
@@ -11568,7 +11546,7 @@
    "modulo": "hooks/system",
    "arquivos": 42,
    "testes": 20,
-   "linhas": 6057,
+   "linhas": 6056,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -12402,7 +12380,6 @@
     "search",
     "separator",
     "slider",
-    "special_agent",
     "status",
     "supervisor",
     "system",
@@ -14578,7 +14555,6 @@
     "search",
     "separator",
     "slider",
-    "special_agent",
     "status",
     "supervisor",
     "system",
@@ -14714,7 +14690,7 @@
    "modulo": "pages/admin",
    "arquivos": 4,
    "testes": 4,
-   "linhas": 872,
+   "linhas": 870,
    "itens_menu": [],
    "telas": [
     "/admin/rate-limit",
@@ -14780,7 +14756,6 @@
     "admin",
     "agent",
     "alert",
-    "special_agent",
     "supervisor"
    ],
    "diretos": {
@@ -15813,7 +15788,6 @@
     "search",
     "separator",
     "slider",
-    "special_agent",
     "status",
     "supervisor",
     "system",

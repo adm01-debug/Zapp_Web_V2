@@ -243,7 +243,7 @@
     "AdminUsersTable"
    ],
    "export_default": null,
-   "linhas": 139,
+   "linhas": 135,
    "dominio": "components/admin",
    "hooks_locais": [],
    "tabelas": [],
@@ -7946,7 +7946,7 @@
     "RoleBadge"
    ],
    "export_default": null,
-   "linhas": 25,
+   "linhas": 23,
    "dominio": "components/layout",
    "hooks_locais": [],
    "tabelas": [],
@@ -14337,7 +14337,7 @@
     "RolesPage"
    ],
    "export_default": "RolesPage",
-   "linhas": 199,
+   "linhas": 198,
    "dominio": "pages/admin",
    "hooks_locais": [
     "useRolesPageState",

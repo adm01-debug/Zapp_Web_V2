@@ -2,12 +2,12 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "bd4c4bd7a255573822171e7f4562e1037d6394f1",
+  "commit": "1f77f7917fdf8814634f4721c144032fbb879a9f",
   "branch": "main",
-  "data_commit": "2026-11-03T19:28:37Z",
+  "data_commit": "2026-11-03T19:48:39Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
-  "arquivos_mudados_7d": 1392,
+  "arquivos_mudados_7d": 1423,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -27,7 +27,7 @@
    },
    {
     "pasta": "src/components/dashboard",
-    "mudancas": 353
+    "mudancas": 356
    },
    {
     "pasta": "src/components/ui",
@@ -47,7 +47,7 @@
    },
    {
     "pasta": "src/components/settings",
-    "mudancas": 263
+    "mudancas": 264
    },
    {
     "pasta": "src/components/contacts",
@@ -59,7 +59,7 @@
    },
    {
     "pasta": "src/lib/__tests__",
-    "mudancas": 233
+    "mudancas": 234
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -77,7 +77,7 @@
    },
    {
     "arquivo": "CLAUDE.md",
-    "mudancas": 20
+    "mudancas": 19
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
@@ -97,10 +97,14 @@
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 13
+    "mudancas": 14
    },
    {
     "arquivo": "docs/ci/README.md",
+    "mudancas": 13
+   },
+   {
+    "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 13
    },
    {
@@ -113,10 +117,6 @@
    },
    {
     "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
-    "mudancas": 12
-   },
-   {
-    "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 12
    },
    {
@@ -156,10 +156,6 @@
     "mudancas": 8
    },
    {
-    "arquivo": "scripts/ci/github-settings-guard.unit.mjs",
-    "mudancas": 8
-   },
-   {
     "arquivo": "scripts/db-audit/check-migration-drift.test.mjs",
     "mudancas": 8
    },
@@ -169,6 +165,10 @@
    },
    {
     "arquivo": "src/hooks/integrations/useTalkXSegments.ts",
+    "mudancas": 8
+   },
+   {
+    "arquivo": "supabase/functions/connection-health-check/index.test.ts",
     "mudancas": 8
    }
   ],
@@ -194,7 +194,7 @@
  "contagens": {
   "arquivos_total": 8134,
   "arquivos_codigo": 4637,
-  "linhas_codigo": 849766,
+  "linhas_codigo": 849730,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -566,7 +566,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 367420
+   "linhas": 367396
   },
   "src/config": {
    "arquivos": 3,
@@ -586,7 +586,7 @@
   },
   "src/hooks": {
    "arquivos": 980,
-   "linhas": 159208
+   "linhas": 159207
   },
   "src/i18n": {
    "arquivos": 2,
@@ -606,7 +606,7 @@
   },
   "src/pages": {
    "arquivos": 70,
-   "linhas": 10678
+   "linhas": 10673
   },
   "src/providers": {
    "arquivos": 10,
@@ -622,7 +622,7 @@
   },
   "src/services": {
    "arquivos": 35,
-   "linhas": 5574
+   "linhas": 5573
   },
   "src/styles": {
    "arquivos": 10,
@@ -642,7 +642,7 @@
   },
   "supabase/functions": {
    "arquivos": 380,
-   "linhas": 115257
+   "linhas": 115252
   },
   "tailwind.config.ts": {
    "arquivos": 1,

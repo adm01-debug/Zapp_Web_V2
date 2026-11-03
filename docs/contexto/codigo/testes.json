@@ -2289,13 +2289,13 @@
   {
    "arquivo": "src/components/admin/__tests__/AdminUsersTable.roles.test.tsx",
    "tipo": "unit",
-   "linhas": 73,
+   "linhas": 57,
    "testa": [
     "src/components/admin/AdminUsersTable.tsx",
     "src/components/admin/useAdminData.ts",
     "src/hooks/system/useUserRole.ts"
    ],
-   "casos": 4
+   "casos": 2
   },
   {
    "arquivo": "src/components/admin/__tests__/AdminView.a11y.test.tsx",
@@ -8796,7 +8796,7 @@
   {
    "arquivo": "src/components/layout/__tests__/Sidebar.test.tsx",
    "tipo": "unit",
-   "linhas": 403,
+   "linhas": 402,
    "testa": [
     "src/components/layout/Sidebar.tsx",
     "src/components/theme/HighContrastToggle.tsx",
@@ -19581,7 +19581,7 @@
   {
    "arquivo": "src/pages/__tests__/ViewRouter.multiplix-gate.test.tsx",
    "tipo": "unit",
-   "linhas": 86,
+   "linhas": 85,
    "testa": [
     "src/pages/ViewRouter.tsx"
    ],
@@ -19590,7 +19590,7 @@
   {
    "arquivo": "src/pages/__tests__/ViewRouter.search-insights.test.tsx",
    "tipo": "unit",
-   "linhas": 73,
+   "linhas": 72,
    "testa": [
     "src/pages/ViewRouter.tsx"
    ],
@@ -19599,7 +19599,7 @@
   {
    "arquivo": "src/pages/__tests__/ViewRouter.supervisao-gate.test.tsx",
    "tipo": "unit",
-   "linhas": 84,
+   "linhas": 83,
    "testa": [
     "src/pages/ViewRouter.tsx"
    ],
@@ -19928,7 +19928,7 @@
   {
    "arquivo": "src/services/__tests__/navigation.service.test.ts",
    "tipo": "unit",
-   "linhas": 205,
+   "linhas": 204,
    "testa": [
     "src/services/navigation.service.ts"
    ],
@@ -21801,12 +21801,12 @@
   {
    "arquivo": "supabase/functions/revoke-auth-sessions/index.test.ts",
    "tipo": "unit",
-   "linhas": 362,
+   "linhas": 357,
    "testa": [
     "supabase/functions/_shared/validation.ts",
     "supabase/functions/revoke-auth-sessions/index.ts"
    ],
-   "casos": 29
+   "casos": 28
   },
   {
    "arquivo": "supabase/functions/searchbox-budget-alert/index.test.ts",

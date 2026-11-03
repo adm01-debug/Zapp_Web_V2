@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a cada 10 minutos pelo workflow `contexto-ia.yml`; gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `bd4c4bd7a255573822171e7f4562e1037d6394f1` (2026-11-03T19:28:37Z).
+Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a cada 10 minutos pelo workflow `contexto-ia.yml`; gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `1f77f7917fdf8814634f4721c144032fbb879a9f` (2026-11-03T19:48:39Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8134 |
 | arquivos_codigo | 4637 |
-| linhas_codigo | 849766 |
+| linhas_codigo | 849730 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -361,7 +361,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - env de integração (só nomes): ANTHROPIC_API_KEY, BITRIX_WEBHOOK_URL, CHATBOT_L1_WEBHOOK_SECRET, CRON_SECRET, ELEVENLABS_WEBHOOK_SECRET, EVOLUTION_API_FLAVOR, EVOLUTION_API_KEY, EVOLUTION_API_URL, EVOLUTION_INSTANCE_NAME, EVOLUTION_INSTANCE_TOKEN, EVOLUTION_VPS_SUPABASE_ANON_KEY, EVOLUTION_VPS_SUPABASE_URL, EVOLUTION_WEBHOOK_ENFORCE, EVOLUTION_WEBHOOK_SECRET, GMAIL_CAS_JWT, GMAIL_CAS_POSTGREST_URL, GMAIL_OIDC_AUDIENCE, GMAIL_OIDC_EMAIL, GMAIL_OIDC_JWKS_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, GROQ_API_KEY, INTERNAL_ALERT_SECRET, MULTIPLIX_SCOPE_HMAC_SECRET, OPENAI_API_KEY, PREVIEW_EGRESS_SHARED_SECRET, RESEND_API_KEY, TALKX_CONVERT_SECRET, VITE_ENABLE_GMAIL_INTEGRATION, VITE_SENTRY_DSN, VITE_SENTRY_ENVIRONMENT, WEBHOOK_SECRET, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN
 
 ## Permissões / papéis
-- papéis no código: alert (109), status (103), admin (66), agent (53), supervisor (30), dialog (28), user (26), img (19), region (19), button (15), group (15), tab (15), listbox (14), radiogroup (14), tablist (14), authenticated (13), menuitem (11), radio (11), option (10), progressbar (10), combobox (9), service_role (8), system (8), alertdialog (7), toolbar (7), list (6), note (6), anon (5), log (5), menu (4), special_agent (4), tabpanel (4), article (3), assistant (3), cliente (3), grid (3), leader (3), main (3), navigation (3), row (3), separator (3), slider (3), tooltip (3), complementary (2), follower (2), fornecedor (2), gridcell (2), listitem (2), switch (2), A (1), B (1), ausente (1), banner (1), checkbox (1), customer (1), form (1), fundo (1), link (1), member (1), presentation (1), primary (1), public (1), search (1), string (1), sup (1), textbox (1), texto (1), timer (1)
+- papéis no código: alert (109), status (103), admin (66), agent (54), supervisor (30), dialog (28), user (26), img (19), region (19), button (15), group (15), tab (15), listbox (14), radiogroup (14), tablist (14), authenticated (13), menuitem (11), radio (11), option (10), progressbar (10), combobox (9), service_role (8), system (8), alertdialog (7), toolbar (7), list (6), note (6), anon (5), log (5), menu (4), tabpanel (4), article (3), assistant (3), cliente (3), grid (3), leader (3), main (3), navigation (3), row (3), separator (3), slider (3), tooltip (3), complementary (2), follower (2), fornecedor (2), gridcell (2), listitem (2), switch (2), A (1), B (1), ausente (1), banner (1), checkbox (1), customer (1), form (1), fundo (1), link (1), member (1), presentation (1), primary (1), public (1), search (1), special_agent (1), string (1), sup (1), textbox (1), texto (1), timer (1)
 - enums de papel: app_role: admin|supervisor|agent|special_agent
 - guards: src/components/auth/ProtectedRoute.tsx, src/components/copilot/DiscountGuardrailBanner.tsx · rotas protegidas: 10 · públicas: /*, /access-denied, /auth/callback, /forgot-password, /install, /reset-password, /verify-email
 - feature flags: ENABLE_ANALYTICS, ENABLE_DEBUG, ENABLE_GAMIFICATION, ENABLE_GMAIL_INTEGRATION, FEATURE_CTA, FEATURE_FLAGS_QUERY_KEY, FEATURE_GATES, FEATURE_REGISTRY, FEATURE_TILE, FEATURE_X, crm.integration, inbox.talk-me, nova-tela, novo-inbox, video_call
@@ -384,24 +384,24 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 54400 nós · 111012 arestas · 4151 comunidades · grafo do commit `bd4c4bd7`
+- 54400 nós · 111012 arestas · 4151 comunidades · grafo do commit `1f77f791`
 - comunidades maiores: react (932), lucide-react (879), @tanstack/react-query (684), input.tsx (647), useAuth (624), vitest (577), TalkXCampaignWizard.tsx (433), validation.ts (389), evolution-webhook-messages.ts (329), ref_node_fs (278), ai-generate.ts (258), chat.ts (257)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - .github/workflows/ci.yml (23)
-- CLAUDE.md (20)
+- CLAUDE.md (19)
 - src/integrations/supabase/types.ts (18)
 - .github/workflows/e2e-logado.yml (16)
 - scripts/ci/ci-docs-baseline.unit.mjs (16)
 - .github/workflows/db-guard.yml (15)
-- ESTADO.md (13)
+- ESTADO.md (14)
 - docs/ci/README.md (13)
+- supabase/deployment-manifest.json (13)
 - supabase/schema-manifest.json (13)
 - .github/workflows/deploy-functions.yml (12)
 - scripts/ci/workflow-contracts.unit.mjs (12)
-- supabase/deployment-manifest.json (12)
 - docs/DB-INVENTORY.md (11)
 - .github/workflows/db-migrate.yml (10)
 - docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (10)

@@ -2517,7 +2517,7 @@
    },
    {
     "papel": "agent",
-    "ocorrencias": 53
+    "ocorrencias": 54
    },
    {
     "papel": "supervisor",
@@ -2621,10 +2621,6 @@
    },
    {
     "papel": "menu",
-    "ocorrencias": 4
-   },
-   {
-    "papel": "special_agent",
     "ocorrencias": 4
    },
    {
@@ -2753,6 +2749,10 @@
    },
    {
     "papel": "search",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "special_agent",
     "ocorrencias": 1
    },
    {

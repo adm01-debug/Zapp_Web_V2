@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `bd4c4bd7a2` · branch `main` · 2026-11-03 19:32 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `1f77f7917f` · branch `main` · 2026-11-03 19:50 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1623,7 +1623,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `status` | `demo` | compara, escreve | `src/components/integrations/IntegrationsHub.tsx` |
 | `status` | `dialing` | compara, escreve | `src/components/calls/CallDialog.tsx`<br>`src/components/calls/NewCallPanel.tsx`<br>`src/lib/calls/session.ts`<br>`src/providers/CallSessionProvider.tsx` |
 | `status` | `disabled` | compara | `src/components/email/EmailContactPanel.tsx`<br>`src/components/inbox/contact-details/sidebar/ContactSidebarSections.tsx`<br>`src/components/inbox/contact-details/sidebar/PersonalSection.tsx`<br>`src/components/inbox/contact-details/sidebar/SinguProfileSection.tsx`<br>`src/components/security/SecuritySettingsPanel.tsx` |
-| … +222 linhas — lista completa em `context.json` | | | |
+| … +221 linhas — lista completa em `context.json` | | | |
 
 ### E.4 Enums e listas de valores
 
@@ -4521,13 +4521,11 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `admin` | `src/hooks/system/useUserRole.ts` |
 | `role` | `src/hooks/system/useUserRole.ts` |
 | `rolePermission` | `src/hooks/system/useUserRole.ts` |
-| `special_agent` | `src/hooks/system/useUserRole.ts` |
 | `supervisor` | `src/hooks/system/useUserRole.ts` |
 | `leader` | `src/lib/calls/tabLeaderStore.ts` |
 | `next` | `src/lib/calls/tabLeaderStore.ts` |
 | `admin` | `src/pages/admin/useRolesPageState.ts` |
 | `agent` | `src/pages/admin/useRolesPageState.ts` |
-| `special_agent` | `src/pages/admin/useRolesPageState.ts` |
 | `supervisor` | `src/pages/admin/useRolesPageState.ts` |
 | `admin` | `src/providers/QuarantineMonitorProvider.tsx` |
 | `supervisor` | `src/providers/QuarantineMonitorProvider.tsx` |
@@ -4558,7 +4556,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21054 testes em 2243 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21051 testes em 2243 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4662,7 +4660,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/team-chat/__tests__/team-chat-comprehensive.test.ts` | 29 | Team Chat — autenticação · useSendTeamMessage recusa o envio sem perfil e não chega ao banco · useSendTeamMessage grava a mensagem quando há perfil · Team Chat — regras usadas pela produção … |
 | `src/hooks/__tests__/useChatSearch.test.ts` | 29 | useChatSearch · returns empty results initially · searches text content after debounce · excludes deleted messages … |
 | `src/services/__tests__/contact-bulk.service.test.ts` | 29 | emptyOutcome / pendingIds · emptyOutcome devolve listas NOVAS a cada chamada (mutar uma não afeta a outra) · pendingIds junta recusados e falhos, na ordem (recusados primeiro) · applyContactFieldUpdate … |
-| `supabase/functions/revoke-auth-sessions/index.test.ts` | 29 | global self: usuário comum pode revogar as próprias sessões sem ser admin · global de terceiro por usuário comum é recusado (403) · global de terceiro por admin é permitido (revoga por user_id) · local exige target_session_id … |
 | `src/components/contacts/__tests__/ExternalDataIntegration.test.tsx` | 28 | useExternalEmpresas · usa a ação estreita  · não cai mais no RPC admin-only nem no select genérico · sem  … |
 | `src/components/email/__tests__/EmailContactPanel.test.tsx` | 28 | EmailContactPanel · renders only the safe company fields returned by the Email context · does not mistake a disabled CRM integration for a missing company · informs an authorized user when the explicit company link fails … |
 | `src/components/layout/__tests__/Sidebar.test.tsx` | 28 | Sidebar — nav primária e grupos compartilham uma única área de rolagem · Multiplix continua entre Contatos e Catálogo, e todos os três estão dentro do mesmo container com scroll · staff SEM a permissão nomeada não vê Multiplix na nav primária (papel não basta — F25) · agente COM a permissão nomeada vê Multiplix na nav primária (F25) … |
@@ -4670,6 +4667,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/system/__tests__/useGeoBlocking.test.ts` | 28 | useGeoBlocking — leitura dos dados · carrega settings e as duas listas, com ordem decrescente por created_at · lista vazia (data null) não quebra e vira lista vazia · exceção de rede na primeira leitura avisa e encerra o carregamento … |
 | `supabase/functions/evolution-api/index.test.ts` | 28 | R2-API-001: ${action} sem papel devolve 403 e não produz I/O no provedor · R2-API-001: admin conserva a operação (set-webhook chega ao provedor) · R2-API-001: ${action} sem papel devolve 403 e não produz I/O no provedor · R2-API-001: ação desconhecida com admin passa o gate e cai no 404 do handler … |
 | `supabase/functions/promogifts-catalog/index.actions.test.ts` | 28 | CT-77 sem Authorization devolve 401 e nem toca no client externo · CT-77 ação desconhecida devolve 400 Invalid request · CT-77 sem secrets do catálogo (e sem client injetado) devolve 503 CATALOG_NOT_CONFIGURED · CT-77 list_products devolve data + meta.total e aplica busca sem acento e OR de cores … |
+| `supabase/functions/revoke-auth-sessions/index.test.ts` | 28 | global self: usuário comum pode revogar as próprias sessões sem ser admin · global de terceiro por usuário comum é recusado (403) · global de terceiro por admin é permitido (revoga por user_id) · local exige target_session_id … |
 | `tests/contracts/ia131-audio-meme-conteudo.contract.test.ts` | 28 | (1) ai-audio-input: download AUTENTICADO e limites · baixa o objeto no endpoint autenticado e devolve base64 + formato mp3 · identidade de serviço usa a service role EXPLÍCITA (fluxo interno) · sem storageIdentity falha FECHADO, sem nenhuma rede … |
 | `src/components/catalog/__tests__/useSendProduct.test.tsx` | 27 | useSendToContact — CT-04: caption na primeira foto, texto só sem foto · 3 fotos viram 3 mensagens (não 4), só a primeira com o texto como caption · sem foto, o texto vai como mensagem de texto (1 mensagem) · 1 foto usa o mesmo caminho de 1 mensagem (sem texto solto) … |
 | `src/components/talkx/__tests__/talkxRoute.test.ts` | 27 | Talk X route contract (X052) · sem parâmetros abre a Visão geral e não normaliza nada · lê a aba e a sub-visão gravadas · tab=campaigns é alias de overview … |
