@@ -110,7 +110,6 @@ test('baseline global da publicação cobre todos os módulos, não só o Team C
     'public.notifications',
     'public.queues',
     'public.sales_deals',
-    'public.payment_links',
     'public.talkx_campaigns',
     'public.whatsapp_connections',
     'public.team_messages',

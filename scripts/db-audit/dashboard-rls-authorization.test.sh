@@ -138,7 +138,7 @@ assert_last_definer 'helper get_profile_id_for_user' \
   '20260909200000_harden_inbox_contact_authorization.sql' \
   '(CREATE( OR REPLACE)? FUNCTION public\.get_profile_id_for_user|ALTER FUNCTION[^;]*public\.get_profile_id_for_user|DROP FUNCTION[^;]*public\.get_profile_id_for_user)'
 assert_last_definer 'helper get_visible_agent_ids' \
-  '20260909200000_harden_inbox_contact_authorization.sql' \
+  '20261102062200_remove_pagamentos_e_special_agent.sql' \
   '(CREATE( OR REPLACE)? FUNCTION public\.get_visible_agent_ids|ALTER FUNCTION[^;]*public\.get_visible_agent_ids|DROP FUNCTION[^;]*public\.get_visible_agent_ids)'
 assert_last_definer 'helper is_contact_visible_to_user' \
   '20260909200000_harden_inbox_contact_authorization.sql' \
@@ -298,7 +298,8 @@ mig_canedit="$migrations_dir/20260929810000_contacts_can_edit_contact_hoisted_pa
 mig_msgs="$migrations_dir/20260902023200_consolidate_rls_select_messages_contacts.sql"
 mig_sla="$migrations_dir/20260830110000_extend_special_agent_visibility_to_related_tables.sql"
 mig_clos="$migrations_dir/20260409222809_7b8a951e-3892-4b0f-84b1-68820d2d2f27.sql"
-for f in "$mig_admin" "$mig_inbox" "$mig_canedit" "$mig_msgs" "$mig_sla" "$mig_clos"; do
+mig_grants="$migrations_dir/20261102062200_remove_pagamentos_e_special_agent.sql"
+for f in "$mig_admin" "$mig_inbox" "$mig_canedit" "$mig_msgs" "$mig_sla" "$mig_clos" "$mig_grants"; do
   [[ -f "$f" ]] || fail "migration de autorizacao nao encontrada: $(basename "$f")"
 done
 
@@ -311,9 +312,11 @@ grep -q 'CREATE OR REPLACE FUNCTION public.is_admin_or_supervisor' "$tmp_dir/hel
 grep -q '\$\$;' "$tmp_dir/helpers.sql" \
   || fail 'extracao de is_admin_or_supervisor nao fechou o corpo da funcao'
 
+# get_visible_agent_ids vem de 20261102062200 (grants valem para 'agent'); os outros dois de 20260909200000.
 for fn in get_profile_id_for_user get_visible_agent_ids is_contact_visible_to_user; do
+  src="$mig_inbox"; [[ "$fn" == get_visible_agent_ids ]] && src="$mig_grants"
   extract_between "CREATE OR REPLACE FUNCTION public.$fn" 'TO authenticated, service_role;' \
-    "$mig_inbox" "$tmp_dir/h.sql"
+    "$src" "$tmp_dir/h.sql"
   grep -q "CREATE OR REPLACE FUNCTION public.$fn" "$tmp_dir/h.sql" \
     || fail "extracao de $fn veio vazia"
   grep -q 'TO authenticated, service_role;' "$tmp_dir/h.sql" \
@@ -402,7 +405,7 @@ prosrc_contains() { # $1=label, $2=proname, $3=pronargs, $4=marcador LIKE
 }
 prosrc_contains "HLP is_admin_or_supervisor: role IN ('admin','supervisor')" is_admin_or_supervisor 1 "%role IN (''admin'', ''supervisor'')%"
 prosrc_contains 'HLP get_profile_id_for_user: profile.user_id = _user_id'    get_profile_id_for_user 1 '%profile.user_id = _user_id%'
-prosrc_contains "HLP get_visible_agent_ids: trava 'special_agent'"           get_visible_agent_ids    1 "%''special_agent''%"
+prosrc_contains "HLP get_visible_agent_ids: grants so para 'agent'"        get_visible_agent_ids    1 "%role_assignment.role = ''agent''%"
 prosrc_contains 'HLP is_contact_visible_to_user: usa get_visible_agent_ids'  is_contact_visible_to_user 2 '%get_visible_agent_ids(_user_id)%'
 prosrc_contains 'HLP can_edit_contact(5): COALESCE(p_is_admin, ...)'         can_edit_contact         5 '%COALESCE(p_is_admin%'
 prosrc_contains 'HLP can_edit_contact(2): delega com NULLs'                  can_edit_contact         2 '%NULL::uuid[]%'
