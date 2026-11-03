@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `535074caeaef1f58834ed294696a07f583991133` (2026-11-03T20:30:11Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `bd25801a2007d254211ddd8565c6c8633bbca78b` (2026-11-03T20:43:01Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4173), SQL (1277), Markdown (1031), JSON (592), JavaScript (351), Shell (230), Python (115), YAML (27)
+- linguagens: TypeScript (4173), SQL (1276), Markdown (1031), JSON (592), JavaScript (351), Shell (228), Python (115), YAML (27)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8137 |
+| arquivos_total | 8134 |
 | arquivos_codigo | 4637 |
-| linhas_codigo | 849743 |
+| linhas_codigo | 849742 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -46,11 +46,11 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | hooks | 490 |
 | edge_functions | 85 |
 | tabelas | 226 |
-| migrations | 1108 |
+| migrations | 1109 |
 | cron_jobs | 26 |
-| testes | 2526 |
+| testes | 2524 |
 | workflows | 19 |
-| scripts | 376 |
+| scripts | 374 |
 | docs_md | 1031 |
 
 ## Onde ficam as coisas
@@ -61,7 +61,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - testes: co-localizado (__tests__) (1945), co-localizado (*.test) (168), outro (155)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
-- scripts: scripts/db-audit (283), scripts/ci (39), scripts/edge-deploy (16)
+- scripts: scripts/db-audit (281), scripts/ci (39), scripts/edge-deploy (16)
 - docs: docs (31), (raiz) (10), .github (1)
 - nomenclatura: {"componentes":"PascalCase (90%)","hooks":"use + PascalCase","servicos":"camelCase (76%)","edge_functions":"kebab-case (95%)","tabelas":"snake_case (91%)"}
 - instruções para agentes no repo: AGENTS.md, CLAUDE.md
@@ -385,8 +385,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 54403 nós · 111014 arestas · 4161 comunidades · grafo do commit `535074ca`
-- comunidades maiores: cn (875), react (730), framer-motion (682), TalkXSuppression.tsx (671), lucide-react (668), vitest (584), @tanstack/react-query (438), framer-motion (382), avatar.tsx (348), ref_node_fs (320), ref_node_assert (304), useExternalCatalog.ts (301)
+- 54387 nós · 110979 arestas · 4116 comunidades · grafo do commit `bd25801a`
+- comunidades maiores: TalkXSuppression.tsx (1087), vitest (840), lucide-react (788), react (736), cn (536), ExternalProductManagement.tsx (531), card.tsx (456), NotesTab.tsx (431), evolution-webhook-messages.ts (402), mediaVolumeStore.ts (394), DashboardView.tsx (379), ref_node_fs (323)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -394,16 +394,16 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - .github/workflows/ci.yml (22)
 - CLAUDE.md (19)
 - src/integrations/supabase/types.ts (18)
+- .github/workflows/db-guard.yml (15)
 - .github/workflows/e2e-logado.yml (15)
 - scripts/ci/ci-docs-baseline.unit.mjs (15)
-- .github/workflows/db-guard.yml (14)
 - ESTADO.md (14)
 - supabase/schema-manifest.json (14)
 - supabase/deployment-manifest.json (13)
 - .github/workflows/deploy-functions.yml (12)
+- docs/DB-INVENTORY.md (12)
 - docs/ci/README.md (12)
 - scripts/ci/workflow-contracts.unit.mjs (12)
-- docs/DB-INVENTORY.md (11)
 - .github/workflows/db-migrate.yml (10)
 - docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (10)
 
@@ -468,7 +468,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `docs/COMPLETE_SYSTEM_FEATURES.md` — 📋 Levantamento Completo de Funcionalidades do Sistema (1061 linhas)
 - `docs/CONEXOES_WHATSAPP_RUNBOOK.md` — Runbook — Conexões de WhatsApp (V2) (235 linhas)
 - `docs/CRM360_TECHNICAL_DOCS.md` — ZAPP-WEB × CRM 360° — Documentação Técnica (109 linhas)
-- `docs/DB-INVENTORY.md` — Inventário de objetos do banco — `public` (290 linhas)
+- `docs/DB-INVENTORY.md` — Inventário de objetos do banco — `public` (288 linhas)
 - `docs/DB-SECURITY.md` — Seguranca do banco — notas operacionais (279 linhas)
 - `docs/DEPLOYMENT.md` — 🚀 Guia de Deploy - ZAPP-WEB (349 linhas)
 - `docs/DISTRIBUTION-FALLBACKS.md` — Distribuição de Atendimentos — Tabela-Verdade de Fallbacks (314 linhas)

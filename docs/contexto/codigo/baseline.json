@@ -2,12 +2,12 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "535074caeaef1f58834ed294696a07f583991133",
+  "commit": "bd25801a2007d254211ddd8565c6c8633bbca78b",
   "branch": "main",
-  "data_commit": "2026-11-03T20:30:11Z",
+  "data_commit": "2026-11-03T20:43:01Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
-  "arquivos_mudados_7d": 1424,
+  "arquivos_mudados_7d": 1429,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -84,16 +84,16 @@
     "mudancas": 18
    },
    {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 15
+   },
+   {
     "arquivo": ".github/workflows/e2e-logado.yml",
     "mudancas": 15
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 15
-   },
-   {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 14
    },
    {
     "arquivo": "ESTADO.md",
@@ -112,16 +112,16 @@
     "mudancas": 12
    },
    {
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 12
+   },
+   {
     "arquivo": "docs/ci/README.md",
     "mudancas": 12
    },
    {
     "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
     "mudancas": 12
-   },
-   {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 11
    },
    {
     "arquivo": ".github/workflows/db-migrate.yml",
@@ -141,7 +141,7 @@
    },
    {
     "arquivo": "supabase/schema-catalog.json",
-    "mudancas": 9
+    "mudancas": 10
    },
    {
     "arquivo": ".github/workflows/e2e-talkx.yml",
@@ -149,6 +149,10 @@
    },
    {
     "arquivo": "scripts/db-audit/check-migration-drift.mjs",
+    "mudancas": 8
+   },
+   {
+    "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 8
    },
    {
@@ -165,10 +169,6 @@
    },
    {
     "arquivo": ".github/workflows/branch-hygiene-audit.yml",
-    "mudancas": 7
-   },
-   {
-    "arquivo": ".github/workflows/notifica-falha-main.yml",
     "mudancas": 7
    }
   ],
@@ -192,9 +192,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8137,
+  "arquivos_total": 8134,
   "arquivos_codigo": 4637,
-  "linhas_codigo": 849743,
+  "linhas_codigo": 849742,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -204,11 +204,11 @@
   "hooks": 490,
   "edge_functions": 85,
   "tabelas": 226,
-  "migrations": 1108,
+  "migrations": 1109,
   "cron_jobs": 26,
-  "testes": 2526,
+  "testes": 2524,
   "workflows": 19,
-  "scripts": 376,
+  "scripts": 374,
   "docs_md": 1031
  },
  "por_pasta": {
@@ -482,7 +482,7 @@
   },
   "scripts/db-audit": {
    "arquivos": 79,
-   "linhas": 14854
+   "linhas": 14853
   },
   "scripts/db-tests": {
    "arquivos": 3,

@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `535074caea` · branch `main` · 2026-11-03 20:33 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `bd25801a20` · branch `main` · 2026-11-03 20:45 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -186,9 +186,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `warroom_alerts` | Admins can update alerts | UPDATE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `conversation_sla` | Admins can update SLA | UPDATE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `whisper_messages` | Users can delete own whisper messages | DELETE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
-| `payment_links` | Authenticated can insert payment links | INSERT | authenticated | permissive |  | `created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())` |
-| `payment_links` | Users can update own payment links | UPDATE | authenticated | permissive | `created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())` |  |
-| `payment_links` | Admins can delete payment links | DELETE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `queue_positions` | Admins can manage queue positions | ALL | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` | `public.is_admin_or_supervisor(auth.uid())` |
 | `sales_deals` | Users can update assigned deals | UPDATE | authenticated | permissive | `assigned_to IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())` |  |
 | `sales_deals` | Admins can delete deals | DELETE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
@@ -243,7 +240,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `conversation_sla` | Admins can insert SLA | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
 | `client_wallet_rules` | Admins can manage wallet rules | ALL | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` | `public.is_admin_or_supervisor(auth.uid())` |
 | `whisper_messages` | Users can view own whisper messages | SELECT | authenticated | permissive | `sender_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR target_agent_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())` |  |
-| `payment_links` | Users can view own payment links | SELECT | authenticated | permissive | `created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())` |  |
 | `entity_versions` | Admins can view entity versions | SELECT | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `calls` | Users can view own calls | SELECT | authenticated | permissive | `agent_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())` |  |
 | `csat_surveys` | Users can view own CSAT surveys | SELECT | authenticated | permissive | `agent_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())` |  |
@@ -372,8 +368,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `number_reputation` | Admins can update reputation | UPDATE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `talkx_blacklist` | Admins can add to blacklist | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
 | `talkx_blacklist` | Admins can remove from blacklist | DELETE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
-| `contact_purchases` | Agents can view purchases for assigned contacts | SELECT | authenticated | permissive | `is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid())` |  |
-| `contact_purchases` | Agents can update purchases for assigned contacts | UPDATE | authenticated | permissive | `is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid())` |  |
 | `training_sessions` | Users can view own training sessions | SELECT | authenticated | permissive | `profile_id = get_profile_id_for_user(auth.uid()) OR is_admin_or_supervisor(auth.uid())` |  |
 | `training_sessions` | Users can insert own training sessions | INSERT | authenticated | permissive |  | `profile_id = get_profile_id_for_user(auth.uid()) OR is_admin_or_supervisor(auth.uid())` |
 | `training_sessions` | Users can update own training sessions | UPDATE | authenticated | permissive | `profile_id = get_profile_id_for_user(auth.uid()) OR is_admin_or_supervisor(auth.uid())` |  |
@@ -419,7 +413,13 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `storage.objects` | Users can delete their own or assigned media | DELETE | authenticated | permissive | `((bucket_id = 'whatsapp-media'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] IN ( SELECT (c.id)::text AS id FROM contacts c WHERE (c.assigned_to IN (SELECT p.id FROM profiles p WHERE (p.user_id = auth.uid()))) )) OR ((storage.foldername(name))[1] = (auth.uid())::te …` |  |
 | `storage.objects` | Users can update own audio messages | UPDATE | authenticated | permissive | `((bucket_id = 'audio-messages'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] IN ( SELECT (c.id)::text AS id FROM contacts c WHERE (c.assigned_to IN (SELECT p.id FROM profiles p WHERE (p.user_id = auth.uid()))) ))))` |  |
 | `storage.objects` | Users can update own custom emojis | UPDATE | authenticated | permissive | `((bucket_id = 'custom-emojis'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] = (auth.uid())::text)))` |  |
-| … +293 linhas — lista completa em `context.json` | | | | | | |
+| `storage.objects` | Users can update own stickers | UPDATE | authenticated | permissive | `((bucket_id = 'stickers'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] = (auth.uid())::text)))` |  |
+| `storage.objects` | Users can upload assigned audio messages | INSERT | authenticated | permissive |  | `((bucket_id = 'audio-messages'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] IN ( SELECT (c.id)::text AS id FROM contacts c WHERE (c.assigned_to IN (SELECT p.id FROM profiles p WHERE (p.user_id = auth.uid()))) )) OR ((storage.foldername(name))[1] = (auth.uid())::te …` |
+| `storage.objects` | Users can upload assigned whatsapp media | INSERT | authenticated | permissive |  | `((bucket_id = 'whatsapp-media'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] IN ( SELECT (c.id)::text AS id FROM contacts c WHERE (c.assigned_to IN (SELECT p.id FROM profiles p WHERE (p.user_id = auth.uid()))) )) OR ((storage.foldername(name))[1] = (auth.uid())::te …` |
+| `audio_meme_favorites` | Users manage own meme favorites | ALL | authenticated | permissive | `user_id = auth.uid()` | `user_id = auth.uid()` |
+| `link_preview_cache_metrics` | Admins/supervisors can read metrics | SELECT | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
+| `link_preview_cache_metrics` | service_role inserts cache metrics | INSERT | service_role | permissive |  | `true` |
+| … +285 linhas — lista completa em `context.json` | | | | | | |
 
 ## C. Restrições de dados (obrigatório / único / default / CHECK / FK / calculada)
 
@@ -469,16 +469,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `contact_notes` | `is_done` | obrigatório |
 | `contact_notes` | `is_pinned` | obrigatório |
 | `contact_notes` | `updated_at` | obrigatório |
-| `contact_purchases` | `id` | PK; default gen_random_uuid() |
-| `contact_purchases` | `contact_id` | obrigatório; FK → contacts.id ON DELETE CASCADE |
-| `contact_purchases` | `title` | obrigatório |
-| `contact_purchases` | `currency` | default 'BRL' |
-| `contact_purchases` | `status` | default 'pending' |
-| `contact_purchases` | `purchase_type` | default 'purchase' |
-| `contact_purchases` | `deal_id` | FK → sales_deals.id |
-| `contact_purchases` | `created_by` | FK → profiles.id |
-| `contact_purchases` | `created_at` | default now() |
-| `contact_purchases` | `updated_at` | default now() |
 | `conversation_analyses` | `id` | PK; default gen_random_uuid() |
 | `conversation_analyses` | `contact_id` | obrigatório; FK → contacts.id ON DELETE CASCADE |
 | `conversation_analyses` | `analyzed_by` | FK → profiles.id |
@@ -603,17 +593,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `nps_surveys` | `score` | obrigatório; CHECK score >= 0 AND score <= 10 |
 | `nps_surveys` | `survey_type` | default 'manual'; CHECK survey_type IN ('periodic', 'post_resolution', 'manual') |
 | `nps_surveys` | `created_at` | default now() |
-| `payment_links` | `id` | PK; default gen_random_uuid() |
-| `payment_links` | `title` | obrigatório |
-| `payment_links` | `amount` | obrigatório |
-| `payment_links` | `currency` | default 'BRL' |
-| `payment_links` | `status` | default 'active' |
-| `payment_links` | `payment_method` | default 'pix' |
-| `payment_links` | `contact_id` | FK → contacts.id ON DELETE SET NULL |
-| `payment_links` | `deal_id` | FK → sales_deals.id ON DELETE SET NULL |
-| `payment_links` | `created_by` | FK → profiles.id ON DELETE SET NULL |
-| `payment_links` | `created_at` | default now() |
-| `payment_links` | `updated_at` | default now() |
 | `pinned_conversations` | `id` | PK; default gen_random_uuid() |
 | `pinned_conversations` | `contact_id` | obrigatório; FK → contacts.id ON DELETE CASCADE |
 | `pinned_conversations` | `pinned_by` | obrigatório; FK → profiles.id ON DELETE CASCADE |
@@ -725,7 +704,28 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `entity_versions` | `id` | PK; default gen_random_uuid() |
 | `entity_versions` | `entity_type` | obrigatório |
 | `entity_versions` | `entity_id` | obrigatório |
-| … +1358 linhas — lista completa em `context.json` | | |
+| `entity_versions` | `version_number` | obrigatório |
+| `entity_versions` | `data` | default '{}'::jsonb |
+| `entity_versions` | `changed_by` | FK → users.id |
+| `entity_versions` | `changed_at` | default NOW() |
+| `entity_versions` | `created_at` | obrigatório |
+| `entity_versions` | `(tabela)` | CONSTRAINT unique_entity_version UNIQUE (entity_type, entity_id, version_number) |
+| `gmail_accounts` | `id` | PK; default gen_random_uuid() |
+| `gmail_accounts` | `created_at` | obrigatório |
+| `gmail_accounts` | `email_address` | obrigatório |
+| `gmail_accounts` | `error_count` | obrigatório |
+| `gmail_accounts` | `is_active` | obrigatório |
+| `gmail_accounts` | `sync_status` | obrigatório |
+| `gmail_accounts` | `updated_at` | obrigatório |
+| `saved_filters` | `id` | PK; default gen_random_uuid() |
+| `saved_filters` | `user_id` | obrigatório; FK → users.id ON DELETE CASCADE |
+| `saved_filters` | `entity_type` | obrigatório |
+| `saved_filters` | `name` | obrigatório |
+| `saved_filters` | `filters` | default '{}'::jsonb |
+| `saved_filters` | `is_default` | default false |
+| `saved_filters` | `created_at` | default NOW() |
+| `saved_filters` | `updated_at` | default NOW() |
+| … +1345 linhas — lista completa em `context.json` | | |
 
 ## D. Automações no banco (triggers e funções — regras que rodam sozinhas)
 
@@ -871,6 +871,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | set_connection_alert_preferences_updated_at | BEFORE UPDATE | `connection_alert_preferences` | `update_updated_at_column` |  |
 | trg_conversation_reopen_on_inbound | AFTER INSERT | `messages` | `handle_inbound_message_reopen` | `new.sender = 'contact' and new.contact_id is not null and new.is_deleted is not true` |
 | trg_voip_profile_credentials_updated_at | BEFORE UPDATE | `voip_profile_credentials` | `update_updated_at_column` |  |
+| guard_contact_purchase_identity_insert | BEFORE INSERT | `contact_purchases` | `guard_contact_purchase_identity` |  |
 | audit_queues_config | AFTER INSERT OR UPDATE OR DELETE | `queues` | `audit_operational_config` |  |
 | audit_queue_members_config | AFTER INSERT OR UPDATE OR DELETE | `queue_members` | `audit_operational_config` |  |
 | audit_connection_queues_config | AFTER INSERT OR UPDATE OR DELETE | `whatsapp_connection_queues` | `audit_operational_config` |  |
@@ -1207,7 +1208,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `calls` | `recording_status` | `available`, `failed`, `none`, `pending` |  |
 | `campaign_contacts` | `status` | `delivered`, `failed`, `pending`, `read`, `sent` | `pending` |
 | `chatbot_executions` | `status` | `cancelled`, `completed`, `failed`, `paused`, `running` | `running` |
-| `contact_purchases` | `status` | **livre (sem enum/CHECK)** | `pending` |
 | `conversation_analyses` | `status` | **livre (sem enum/CHECK)** | `pendente` |
 | `conversation_tasks` | `status` | **livre (sem enum/CHECK)** |  |
 | `csat_surveys` | `status` | **livre (sem enum/CHECK)** |  |
@@ -1216,7 +1216,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `followup_executions` | `status` | **livre (sem enum/CHECK)** | `pending` |
 | `messages` | `status` | **livre (sem enum/CHECK)** |  |
 | `messages` | `transcription_status` | **livre (sem enum/CHECK)** |  |
-| `payment_links` | `status` | **livre (sem enum/CHECK)** | `active` |
 | `sales_deals` | `status` | **livre (sem enum/CHECK)** | `open` |
 | `scheduled_messages` | `status` | **livre (sem enum/CHECK)** |  |
 | `talkx_recipients` | `status` | **livre (sem enum/CHECK)** | `pending` |
@@ -1274,6 +1273,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `copilot_insights` | `state_version` | **livre (sem enum/CHECK)** | `1` |
 | `copilot_objection_catalog` | `status` | **livre (sem enum/CHECK)** | `pending_review` |
 | `_zapp_mig133_log` | `status` | **livre (sem enum/CHECK)** |  |
+| `contact_purchases` | `status` | **livre (sem enum/CHECK)** |  |
+| `payment_links` | `status` | **livre (sem enum/CHECK)** |  |
 | `channel_connections_safe` | `status` | **livre (sem enum/CHECK)** |  |
 | `gmail_accounts_safe` | `sync_status` | **livre (sem enum/CHECK)** |  |
 | `password_reset_requests_safe` | `status` | **livre (sem enum/CHECK)** |  |

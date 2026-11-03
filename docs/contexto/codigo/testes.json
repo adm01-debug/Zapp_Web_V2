@@ -5,7 +5,7 @@
   "vitest",
   "playwright"
  ],
- "total": 2526,
+ "total": 2524,
  "por_tipo": {
   "contrato": 113,
   "e2e": 71,
@@ -1578,7 +1578,7 @@
   {
    "arquivo": "scripts/db-audit/global-guards-regression.test.mjs",
    "tipo": "unit",
-   "linhas": 129,
+   "linhas": 128,
    "testa": [],
    "casos": 5
   },
@@ -22903,7 +22903,6 @@
   "supabase/tests/connection_alert_preferences_rls.sql",
   "supabase/tests/contact_notes_pinned.sql",
   "supabase/tests/contact_protection_policy_rls.sql",
-  "supabase/tests/contact_purchases_rls_author.sql",
   "supabase/tests/contacts_consent_status_guard.sql",
   "supabase/tests/crm_sync_outbox_cron.sql",
   "supabase/tests/csat_pipeline.sql",
@@ -22957,7 +22956,6 @@
   "supabase/tests/set_conversation_status_waiting_para_archived.sql",
   "supabase/tests/sla_alert_events_and_preferences.sql",
   "supabase/tests/sla_configurations_single_default.sql",
-  "supabase/tests/special_agent_visibility.sql",
   "supabase/tests/talkx_cancel_em_voo_mantem_confirmacao.sql",
   "supabase/tests/talkx_segment_bulk_actions.sql",
   "supabase/tests/talkx_segment_lifecycle.sql",

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "535074caeaef1f58834ed294696a07f583991133",
+  "sha": "bd25801a2007d254211ddd8565c6c8633bbca78b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-03 20:33 UTC",
-  "files_total": 7978,
-  "code_files": 5918,
-  "code_lines": 1018938
+  "generated_at": "2026-11-03 20:45 UTC",
+  "files_total": 7975,
+  "code_files": 5917,
+  "code_lines": 1018220
  },
  "version": "1.3.2",
- "facts_hash": "f9cb250a21f69b95",
+ "facts_hash": "5e8167d1968180e4",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -298,7 +298,7 @@
   "languages": {
    ".tsx": 2319,
    ".ts": 1854,
-   ".sql": 1277,
+   ".sql": 1276,
    ".mjs": 325,
    ".py": 115,
    ".cjs": 19,
@@ -830,119 +830,6 @@
     ],
     "constraints": [],
     "src": "supabase/tests/sla_alert_events_and_preferences.sql",
-    "comment": "",
-    "origin": "migration"
-   },
-   "contact_purchases": {
-    "columns": [
-     {
-      "name": "id",
-      "type": "UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql"
-     },
-     {
-      "name": "contact_id",
-      "type": "UUID NOT NULL REFERENCES public.contacts(id) ON DELETE CASCADE",
-      "fk": "contacts.id ON DELETE CASCADE",
-      "generated": "",
-      "src": "supabase/migrations/20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql"
-     },
-     {
-      "name": "title",
-      "type": "TEXT NOT NULL",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql"
-     },
-     {
-      "name": "description",
-      "type": "TEXT",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql"
-     },
-     {
-      "name": "amount",
-      "type": "NUMERIC(12,2)",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql"
-     },
-     {
-      "name": "currency",
-      "type": "TEXT DEFAULT 'BRL'",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql"
-     },
-     {
-      "name": "status",
-      "type": "TEXT DEFAULT 'pending'",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql"
-     },
-     {
-      "name": "purchase_type",
-      "type": "TEXT DEFAULT 'purchase'",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql"
-     },
-     {
-      "name": "deal_id",
-      "type": "UUID REFERENCES public.sales_deals(id)",
-      "fk": "sales_deals.id",
-      "generated": "",
-      "src": "supabase/migrations/20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql"
-     },
-     {
-      "name": "created_by",
-      "type": "UUID REFERENCES public.profiles(id)",
-      "fk": "profiles.id",
-      "generated": "",
-      "src": "supabase/migrations/20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql"
-     },
-     {
-      "name": "purchased_at",
-      "type": "TIMESTAMPTZ",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql"
-     },
-     {
-      "name": "created_at",
-      "type": "TIMESTAMPTZ NOT NULL DEFAULT now()",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql"
-     },
-     {
-      "name": "updated_at",
-      "type": "TIMESTAMPTZ NOT NULL DEFAULT now()",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql"
-     },
-     {
-      "name": "source",
-      "type": "text",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261009031958_talkx_v4_x041_atribuicao_negocio_ganho_receita_roi.sql"
-     },
-     {
-      "name": "external_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "supabase/migrations/20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql",
     "comment": "",
     "origin": "migration"
    },
@@ -2487,126 +2374,6 @@
     ],
     "constraints": [],
     "src": "supabase/migrations/20260402110555_b67a6b07-66c5-4056-952b-af7672296937.sql",
-    "comment": "",
-    "origin": "migration"
-   },
-   "payment_links": {
-    "columns": [
-     {
-      "name": "id",
-      "type": "UUID PRIMARY KEY DEFAULT gen_random_uuid()",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     },
-     {
-      "name": "title",
-      "type": "TEXT NOT NULL",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     },
-     {
-      "name": "description",
-      "type": "TEXT",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     },
-     {
-      "name": "amount",
-      "type": "NUMERIC(12,2) NOT NULL",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     },
-     {
-      "name": "currency",
-      "type": "TEXT DEFAULT 'BRL'",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     },
-     {
-      "name": "status",
-      "type": "TEXT DEFAULT 'active'",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     },
-     {
-      "name": "payment_method",
-      "type": "TEXT DEFAULT 'pix'",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     },
-     {
-      "name": "payment_url",
-      "type": "TEXT",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     },
-     {
-      "name": "external_id",
-      "type": "TEXT",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     },
-     {
-      "name": "contact_id",
-      "type": "UUID REFERENCES public.contacts(id) ON DELETE SET NULL",
-      "fk": "contacts.id ON DELETE SET NULL",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     },
-     {
-      "name": "deal_id",
-      "type": "UUID REFERENCES public.sales_deals(id) ON DELETE SET NULL",
-      "fk": "sales_deals.id ON DELETE SET NULL",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     },
-     {
-      "name": "created_by",
-      "type": "UUID REFERENCES public.profiles(id) ON DELETE SET NULL",
-      "fk": "profiles.id ON DELETE SET NULL",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     },
-     {
-      "name": "paid_at",
-      "type": "TIMESTAMP WITH TIME ZONE",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     },
-     {
-      "name": "expires_at",
-      "type": "TIMESTAMP WITH TIME ZONE",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     },
-     {
-      "name": "created_at",
-      "type": "TIMESTAMP WITH TIME ZONE DEFAULT now()",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     },
-     {
-      "name": "updated_at",
-      "type": "TIMESTAMP WITH TIME ZONE DEFAULT now()",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql"
-     }
-    ],
-    "constraints": [],
-    "src": "supabase/migrations/20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql",
     "comment": "",
     "origin": "migration"
    },
@@ -18038,35 +17805,6 @@
     "comment": "",
     "origin": "migration"
    },
-   "_res": {
-    "columns": [
-     {
-      "name": "papel",
-      "type": "text",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/tests/special_agent_visibility.sql"
-     },
-     {
-      "name": "metrica",
-      "type": "text",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/tests/special_agent_visibility.sql"
-     },
-     {
-      "name": "valor",
-      "type": "bigint",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/tests/special_agent_visibility.sql"
-     }
-    ],
-    "constraints": [],
-    "src": "supabase/tests/special_agent_visibility.sql",
-    "comment": "",
-    "origin": "migration"
-   },
    "vault.decrypted_secrets": {
     "columns": [
      {
@@ -18143,6 +17881,119 @@
      },
      {
       "name": "version",
+      "type": "string not null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     }
+    ],
+    "constraints": [],
+    "src": "src/integrations/supabase/types.ts",
+    "comment": "",
+    "origin": "types.ts"
+   },
+   "contact_purchases": {
+    "columns": [
+     {
+      "name": "amount",
+      "type": "number | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "contact_id",
+      "type": "string not null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "created_at",
+      "type": "string not null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "created_by",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "currency",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "deal_id",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "description",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "external_id",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "id",
+      "type": "string not null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "purchase_type",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "purchased_at",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "source",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "status",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "title",
+      "type": "string not null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "updated_at",
       "type": "string not null",
       "fk": "",
       "generated": "",
@@ -18293,6 +18144,126 @@
      {
       "name": "tipo",
       "type": "string not null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     }
+    ],
+    "constraints": [],
+    "src": "src/integrations/supabase/types.ts",
+    "comment": "",
+    "origin": "types.ts"
+   },
+   "payment_links": {
+    "columns": [
+     {
+      "name": "amount",
+      "type": "number not null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "contact_id",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "created_at",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "created_by",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "currency",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "deal_id",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "description",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "expires_at",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "external_id",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "id",
+      "type": "string not null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "paid_at",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "payment_method",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "payment_url",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "status",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "title",
+      "type": "string not null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
+      "name": "updated_at",
+      "type": "string | null",
       "fk": "",
       "generated": "",
       "src": "src/integrations/supabase/types.ts"
@@ -20105,36 +20076,6 @@
     "src": "supabase/migrations/20260317222442_f3acf46c-cd94-44ae-9757-1ac21e2aeefa.sql"
    },
    {
-    "name": "Authenticated can insert payment links",
-    "table": "payment_links",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222442_f3acf46c-cd94-44ae-9757-1ac21e2aeefa.sql"
-   },
-   {
-    "name": "Users can update own payment links",
-    "table": "payment_links",
-    "cmd": "UPDATE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260317222442_f3acf46c-cd94-44ae-9757-1ac21e2aeefa.sql"
-   },
-   {
-    "name": "Admins can delete payment links",
-    "table": "payment_links",
-    "cmd": "DELETE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "public.is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260317222442_f3acf46c-cd94-44ae-9757-1ac21e2aeefa.sql"
-   },
-   {
     "name": "Admins can manage queue positions",
     "table": "queue_positions",
     "cmd": "ALL",
@@ -20671,16 +20612,6 @@
     "roles": "authenticated",
     "mode": "permissive",
     "using": "sender_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR target_agent_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260317223223_c85cceeb-728c-476f-af90-92e9ba976a7a.sql"
-   },
-   {
-    "name": "Users can view own payment links",
-    "table": "payment_links",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())",
     "check": "",
     "src": "supabase/migrations/20260317223223_c85cceeb-728c-476f-af90-92e9ba976a7a.sql"
    },
@@ -21965,26 +21896,6 @@
     "src": "supabase/migrations/20260409190343_9e6b4939-a27d-4294-b9d8-516db9a02b21.sql"
    },
    {
-    "name": "Agents can view purchases for assigned contacts",
-    "table": "contact_purchases",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260409222809_7b8a951e-3892-4b0f-84b1-68820d2d2f27.sql"
-   },
-   {
-    "name": "Agents can update purchases for assigned contacts",
-    "table": "contact_purchases",
-    "cmd": "UPDATE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260409222809_7b8a951e-3892-4b0f-84b1-68820d2d2f27.sql"
-   },
-   {
     "name": "Users can view own training sessions",
     "table": "training_sessions",
     "cmd": "SELECT",
@@ -22563,16 +22474,6 @@
     "using": "is_admin_or_supervisor(auth.uid()) OR contact_id IN ( SELECT c.id FROM public.contacts c WHERE c.assigned_to IN (SELECT get_visible_agent_ids(auth.uid())) )",
     "check": "",
     "src": "supabase/migrations/20260830110000_extend_special_agent_visibility_to_related_tables.sql"
-   },
-   {
-    "name": "Special agents can view own grants",
-    "table": "agent_visibility_grants",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "has_role(auth.uid(), 'special_agent'::app_role) AND agent_id IN ( SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() )",
-    "check": "",
-    "src": "supabase/migrations/20260830120000_fix_agent_visibility_grants_constraints_and_policy.sql"
    },
    {
     "name": "Admins can insert blocked IPs",
@@ -25085,6 +24986,16 @@
     "src": "supabase/migrations/20261102012200_department_invites_restringe_escrita.sql"
    },
    {
+    "name": "Agents can view own grants",
+    "table": "agent_visibility_grants",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "has_role(auth.uid(), 'agent'::app_role) AND agent_id IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql"
+   },
+   {
     "name": "Users can view own filters",
     "table": "saved_filters",
     "cmd": "SELECT",
@@ -25273,26 +25184,6 @@
     "using": "EXISTS (SELECT 1 FROM public.profiles WHERE user_id = auth.uid())",
     "check": "",
     "src": "supabase/migrations/_superseded/20260412230000_fix_rls_policies_security.sql"
-   },
-   {
-    "name": "Agents can insert purchases for assigned contacts",
-    "table": "contact_purchases",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "is_contact_visible_to_user(contact_id, auth.uid()) or is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/tests/contact_purchases_rls_author.sql"
-   },
-   {
-    "name": "Agents can delete purchases for assigned contacts",
-    "table": "contact_purchases",
-    "cmd": "DELETE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "is_contact_visible_to_user(contact_id, auth.uid()) or is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/tests/contact_purchases_rls_author.sql"
    },
    {
     "name": "Users can view own profile",
@@ -26627,6 +26518,15 @@
     "src": "supabase/migrations/20261013230011_voip_profile_credentials.sql"
    },
    {
+    "name": "guard_contact_purchase_identity_insert",
+    "when": "BEFORE INSERT",
+    "table": "contact_purchases",
+    "function": "guard_contact_purchase_identity",
+    "condition": "",
+    "each": "row",
+    "src": "supabase/migrations/20261015190000_contact_purchases_rls_author.sql"
+   },
+   {
     "name": "audit_queues_config",
     "when": "AFTER INSERT OR UPDATE OR DELETE",
     "table": "queues",
@@ -27647,10 +27547,10 @@
     "args": "_user_id uuid",
     "returns": "app_role",
     "lang": "sql",
-    "src": "supabase/migrations/20260830070000_fn_effective_role_and_sync_trigger.sql",
+    "src": "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
     "security_definer": true,
     "search_path": true,
-    "body": "SELECT CASE WHEN bool_or(role = 'admin'::app_role) THEN 'admin'::app_role WHEN bool_or(role = 'supervisor'::app_role) THEN 'supervisor'::app_role WHEN bool_or(role = 'special_agent'::app_role) THEN 'special_agent'::app_role ELSE 'agent'::app_role END FROM public.user_roles WHERE user_id = _user_id",
+    "body": "SELECT CASE WHEN bool_or(role = 'admin'::app_role) THEN 'admin'::app_role WHEN bool_or(role = 'supervisor'::app_role) THEN 'supervisor'::app_role ELSE 'agent'::app_role END FROM public.user_roles WHERE user_id = _user_id",
     "raises": [],
     "tables": [
      "user_roles"
@@ -27660,10 +27560,10 @@
     "args": "",
     "returns": "trigger",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20260830161547_fix_prevent_privilege_escalation_allow_internal_sync.sql",
+    "src": "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
     "security_definer": true,
     "search_path": true,
-    "body": "DECLARE v_user_id uuid; v_new_role app_role; BEGIN v_user_id := COALESCE(NEW.user_id, OLD.user_id); SELECT CASE WHEN bool_or(role = 'admin'::app_role) THEN 'admin'::app_role WHEN bool_or(role = 'supervisor'::app_role) THEN 'supervisor'::app_role WHEN bool_or(role = 'special_agent'::app_role) THEN 'special_agent'::app_role ELSE 'agent'::app_role END INTO v_new_role FROM public.user_roles WHERE user_id = v_user_id; IF v_new_role IS NOT NULL THEN PERFORM set_config('app.internal_role_sync', 'true', true); UPDATE public.profiles SET role = v_new_role::text WHERE user_id = v_user_id AND role IS DISTINCT FROM v_new_role::text; PERFORM set_config('app.internal_role_sync', 'false', true); END IF; RE …",
+    "body": "DECLARE v_user_id uuid; v_new_role app_role; BEGIN v_user_id := COALESCE(NEW.user_id, OLD.user_id); SELECT CASE WHEN bool_or(role = 'admin'::app_role) THEN 'admin'::app_role WHEN bool_or(role = 'supervisor'::app_role) THEN 'supervisor'::app_role ELSE 'agent'::app_role END INTO v_new_role FROM public.user_roles WHERE user_id = v_user_id; IF v_new_role IS NOT NULL THEN PERFORM set_config('app.internal_role_sync', 'true', true); UPDATE public.profiles SET role = v_new_role::text WHERE user_id = v_user_id AND role IS DISTINCT FROM v_new_role::text; PERFORM set_config('app.internal_role_sync', 'false', true); END IF; RETURN NULL; END;",
     "raises": [],
     "tables": [
      "profiles",
@@ -32772,25 +32672,6 @@
      "v_sent"
     ]
    },
-   "talkx_attribute_purchases": {
-    "args": "p_since timestamptz DEFAULT NULL",
-    "returns": "jsonb",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261009031958_talkx_v4_x041_atribuicao_negocio_ganho_receita_roi.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_window_days integer; v_since timestamptz; v_scanned integer := 0; v_attributed integer := 0; v_no_touch integer := 0; v_duplicate integer := 0; v_rejected integer := 0; v_purchase record; v_recipient record; v_result jsonb; BEGIN v_window_days := COALESCE( (SELECT NULLIF(value #>> '{}', '')::integer FROM public.talkx_settings WHERE key = 'attribution_window_days'), 30 ); IF v_window_days < 0 THEN RAISE EXCEPTION 'talkx_attribution_window_invalid' USING ERRCODE = '22023'; END IF; v_since := COALESCE(p_since, now() - (v_window_days || ' days')::interval); FOR v_purchase IN SELECT cp.id, cp.contact_id, cp.external_id, cp.amount, cp.currency, cp.purchased_at FROM public.contact_purchas …",
-    "raises": [
-     "talkx_attribution_window_invalid"
-    ],
-    "tables": [
-     "contact_purchases",
-     "talkx_conversions",
-     "talkx_recipients",
-     "talkx_settings",
-     "v_recipient"
-    ]
-   },
    "talkx_campaign_revenue": {
     "args": "p_campaign uuid",
     "returns": "jsonb",
@@ -32804,35 +32685,6 @@
      "agg",
      "talkx_campaigns",
      "talkx_conversions"
-    ]
-   },
-   "talkx_recompute_purchase_metrics": {
-    "args": "p_limit integer DEFAULT 5000",
-    "returns": "integer",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261009032406_talkx_v4_x040_rfm_local_purchases.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_bands jsonb; v_recency integer[]; v_frequency integer[]; v_monetary numeric[]; v_min_buyers integer; v_buyer_count integer; v_changed integer := 0; BEGIN v_bands := COALESCE((SELECT value FROM public.talkx_settings WHERE key = 'rfm_bands'), '{}'::jsonb); v_recency := CASE WHEN jsonb_typeof(v_bands -> 'recency_days') = 'array' THEN ARRAY(SELECT x::integer FROM jsonb_array_elements_text(v_bands -> 'recency_days') AS t(x)) ELSE ARRAY[30, 90, 180, 365] END; IF array_length(v_recency, 1) IS DISTINCT FROM 4 THEN v_recency := ARRAY[30, 90, 180, 365]; END IF; v_frequency := CASE WHEN jsonb_typeof(v_bands -> 'frequency') = 'array' THEN ARRAY(SELECT x::integer FROM jsonb_array_elements_text( …",
-    "raises": [],
-    "tables": [
-     "SET",
-     "buyer_count",
-     "buyers",
-     "contact_purchases",
-     "effective_purchases",
-     "final",
-     "jsonb_array_elements_text",
-     "noted",
-     "reset_candidates",
-     "reseted",
-     "scored",
-     "selected",
-     "talkx_contact_attributes",
-     "talkx_settings",
-     "upsert_candidates",
-     "upserted",
-     "v_changed"
     ]
    },
    "talkx_sync_campaign_segments": {
@@ -36039,6 +35891,28 @@
     "tables": []
    },
    "set_voip_profile_credentials": {
+    "args": "",
+    "returns": "?",
+    "lang": "",
+    "src": "src/integrations/supabase/types.ts",
+    "security_definer": false,
+    "search_path": false,
+    "body": "",
+    "raises": [],
+    "tables": []
+   },
+   "talkx_attribute_purchases": {
+    "args": "",
+    "returns": "?",
+    "lang": "",
+    "src": "src/integrations/supabase/types.ts",
+    "security_definer": false,
+    "search_path": false,
+    "body": "",
+    "raises": [],
+    "tables": []
+   },
+   "talkx_recompute_purchase_metrics": {
     "args": "",
     "returns": "?",
     "lang": "",
@@ -44681,6 +44555,7 @@
    "supabase/migrations/20261102032200_revoga_execute_public_cron_schedule.sql",
    "supabase/migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql",
    "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql",
+   "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
    "supabase/migrations/_foreign/20260611120000_fix_media_security_file_size.sql",
    "supabase/migrations/_foreign/20260612110000_index_cleanup_and_autovacuum.sql",
    "supabase/migrations/_foreign/20260612120000_rate_limit_admin_criar_usuario.sql",
@@ -44727,7 +44602,6 @@
    "supabase/tests/connection_alert_preferences_rls.sql",
    "supabase/tests/contact_notes_pinned.sql",
    "supabase/tests/contact_protection_policy_rls.sql",
-   "supabase/tests/contact_purchases_rls_author.sql",
    "supabase/tests/contacts_consent_status_guard.sql",
    "supabase/tests/crm_sync_outbox_cron.sql",
    "supabase/tests/csat_pipeline.sql",
@@ -44781,7 +44655,6 @@
    "supabase/tests/set_conversation_status_waiting_para_archived.sql",
    "supabase/tests/sla_alert_events_and_preferences.sql",
    "supabase/tests/sla_configurations_single_default.sql",
-   "supabase/tests/special_agent_visibility.sql",
    "supabase/tests/talkx_cancel_em_voo_mantem_confirmacao.sql",
    "supabase/tests/talkx_segment_bulk_actions.sql",
    "supabase/tests/talkx_segment_lifecycle.sql",
@@ -57488,6 +57361,22 @@
    {
     "kind": "revoke",
     "privs": "all",
+    "object": "get_visible_agent_ids",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "get_visible_agent_ids",
+    "objkind": "function",
+    "roles": "authenticated, service_role",
+    "src": "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
     "object": "multiplix_resolve_recipients",
     "objkind": "function",
     "roles": "PUBLIC",
@@ -68973,7 +68862,7 @@
   {
    "module": "scripts",
    "files": 342,
-   "lines": 64191,
+   "lines": 64190,
    "tables": [
     "a",
     "alem_do_limite",
@@ -70894,8 +70783,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1108,
-   "lines": 107203,
+   "files": 1109,
+   "lines": 107381,
    "tables": [
     "audit_logs",
     "departments",
@@ -70990,8 +70879,8 @@
   },
   {
    "module": "supabase/tests",
-   "files": 92,
-   "lines": 28415,
+   "files": 90,
+   "lines": 27520,
    "tables": [],
    "exports": [],
    "docs": [],
@@ -71017,7 +70906,6 @@
     "supabase/tests/connection_alert_preferences_rls.sql",
     "supabase/tests/contact_notes_pinned.sql",
     "supabase/tests/contact_protection_policy_rls.sql",
-    "supabase/tests/contact_purchases_rls_author.sql",
     "supabase/tests/contacts_consent_status_guard.sql",
     "supabase/tests/crm_sync_outbox_cron.sql",
     "supabase/tests/csat_pipeline.sql",
@@ -71071,13 +70959,14 @@
     "supabase/tests/set_conversation_status_waiting_para_archived.sql",
     "supabase/tests/sla_alert_events_and_preferences.sql",
     "supabase/tests/sla_configurations_single_default.sql",
-    "supabase/tests/special_agent_visibility.sql",
     "supabase/tests/talkx_cancel_em_voo_mantem_confirmacao.sql",
     "supabase/tests/talkx_segment_bulk_actions.sql",
     "supabase/tests/talkx_segment_lifecycle.sql",
     "supabase/tests/tasks_contact_visibility.sql",
     "supabase/tests/tc002_find_or_create_direct_pair.sql",
-    "supabase/tests/team_chat_files_bucket_limit.sql"
+    "supabase/tests/team_chat_files_bucket_limit.sql",
+    "supabase/tests/transfer_conversation_atomicidade.sql",
+    "supabase/tests/update_own_profile_sem_email.sql"
    ]
   },
   {
@@ -76870,7 +76759,6 @@
     "chatbot_executions",
     "contact_custom_fields",
     "contact_notes",
-    "contact_purchases",
     "conversation_analyses",
     "conversation_closures",
     "conversation_events",
@@ -77110,7 +76998,6 @@
   ],
   "tables_only_in_schema": [
    "_rb_message_reactions_contato_20261007001008",
-   "_res",
    "_zapp_fn_before",
    "_zapp_mig133_log",
    "agent_mini_game_xp_daily",
@@ -95733,56 +95620,6 @@
     "rule": "obrigatório"
    },
    {
-    "table": "contact_purchases",
-    "column": "id",
-    "rule": "PK; default gen_random_uuid()"
-   },
-   {
-    "table": "contact_purchases",
-    "column": "contact_id",
-    "rule": "obrigatório; FK → contacts.id ON DELETE CASCADE"
-   },
-   {
-    "table": "contact_purchases",
-    "column": "title",
-    "rule": "obrigatório"
-   },
-   {
-    "table": "contact_purchases",
-    "column": "currency",
-    "rule": "default 'BRL'"
-   },
-   {
-    "table": "contact_purchases",
-    "column": "status",
-    "rule": "default 'pending'"
-   },
-   {
-    "table": "contact_purchases",
-    "column": "purchase_type",
-    "rule": "default 'purchase'"
-   },
-   {
-    "table": "contact_purchases",
-    "column": "deal_id",
-    "rule": "FK → sales_deals.id"
-   },
-   {
-    "table": "contact_purchases",
-    "column": "created_by",
-    "rule": "FK → profiles.id"
-   },
-   {
-    "table": "contact_purchases",
-    "column": "created_at",
-    "rule": "default now()"
-   },
-   {
-    "table": "contact_purchases",
-    "column": "updated_at",
-    "rule": "default now()"
-   },
-   {
     "table": "conversation_analyses",
     "column": "id",
     "rule": "PK; default gen_random_uuid()"
@@ -96400,61 +96237,6 @@
    {
     "table": "nps_surveys",
     "column": "created_at",
-    "rule": "default now()"
-   },
-   {
-    "table": "payment_links",
-    "column": "id",
-    "rule": "PK; default gen_random_uuid()"
-   },
-   {
-    "table": "payment_links",
-    "column": "title",
-    "rule": "obrigatório"
-   },
-   {
-    "table": "payment_links",
-    "column": "amount",
-    "rule": "obrigatório"
-   },
-   {
-    "table": "payment_links",
-    "column": "currency",
-    "rule": "default 'BRL'"
-   },
-   {
-    "table": "payment_links",
-    "column": "status",
-    "rule": "default 'active'"
-   },
-   {
-    "table": "payment_links",
-    "column": "payment_method",
-    "rule": "default 'pix'"
-   },
-   {
-    "table": "payment_links",
-    "column": "contact_id",
-    "rule": "FK → contacts.id ON DELETE SET NULL"
-   },
-   {
-    "table": "payment_links",
-    "column": "deal_id",
-    "rule": "FK → sales_deals.id ON DELETE SET NULL"
-   },
-   {
-    "table": "payment_links",
-    "column": "created_by",
-    "rule": "FK → profiles.id ON DELETE SET NULL"
-   },
-   {
-    "table": "payment_links",
-    "column": "created_at",
-    "rule": "default now()"
-   },
-   {
-    "table": "payment_links",
-    "column": "updated_at",
     "rule": "default now()"
    },
    {
@@ -103623,6 +103405,31 @@
     "rule": "obrigatório"
    },
    {
+    "table": "contact_purchases",
+    "column": "contact_id",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "contact_purchases",
+    "column": "created_at",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "contact_purchases",
+    "column": "id",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "contact_purchases",
+    "column": "title",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "contact_purchases",
+    "column": "updated_at",
+    "rule": "obrigatório"
+   },
+   {
     "table": "instance_pauses",
     "column": "auto",
     "rule": "obrigatório"
@@ -103695,6 +103502,21 @@
    {
     "table": "outbox_events",
     "column": "tipo",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "payment_links",
+    "column": "amount",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "payment_links",
+    "column": "id",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "payment_links",
+    "column": "title",
     "rule": "obrigatório"
    },
    {
@@ -211992,36 +211814,6 @@
     "src": "supabase/migrations/20260317222442_f3acf46c-cd94-44ae-9757-1ac21e2aeefa.sql"
    },
    {
-    "name": "Authenticated can insert payment links",
-    "table": "payment_links",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222442_f3acf46c-cd94-44ae-9757-1ac21e2aeefa.sql"
-   },
-   {
-    "name": "Users can update own payment links",
-    "table": "payment_links",
-    "cmd": "UPDATE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260317222442_f3acf46c-cd94-44ae-9757-1ac21e2aeefa.sql"
-   },
-   {
-    "name": "Admins can delete payment links",
-    "table": "payment_links",
-    "cmd": "DELETE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "public.is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260317222442_f3acf46c-cd94-44ae-9757-1ac21e2aeefa.sql"
-   },
-   {
     "name": "Admins can manage queue positions",
     "table": "queue_positions",
     "cmd": "ALL",
@@ -212558,16 +212350,6 @@
     "roles": "authenticated",
     "mode": "permissive",
     "using": "sender_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR target_agent_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260317223223_c85cceeb-728c-476f-af90-92e9ba976a7a.sql"
-   },
-   {
-    "name": "Users can view own payment links",
-    "table": "payment_links",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())",
     "check": "",
     "src": "supabase/migrations/20260317223223_c85cceeb-728c-476f-af90-92e9ba976a7a.sql"
    },
@@ -213852,26 +213634,6 @@
     "src": "supabase/migrations/20260409190343_9e6b4939-a27d-4294-b9d8-516db9a02b21.sql"
    },
    {
-    "name": "Agents can view purchases for assigned contacts",
-    "table": "contact_purchases",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260409222809_7b8a951e-3892-4b0f-84b1-68820d2d2f27.sql"
-   },
-   {
-    "name": "Agents can update purchases for assigned contacts",
-    "table": "contact_purchases",
-    "cmd": "UPDATE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260409222809_7b8a951e-3892-4b0f-84b1-68820d2d2f27.sql"
-   },
-   {
     "name": "Users can view own training sessions",
     "table": "training_sessions",
     "cmd": "SELECT",
@@ -214450,16 +214212,6 @@
     "using": "is_admin_or_supervisor(auth.uid()) OR contact_id IN ( SELECT c.id FROM public.contacts c WHERE c.assigned_to IN (SELECT get_visible_agent_ids(auth.uid())) )",
     "check": "",
     "src": "supabase/migrations/20260830110000_extend_special_agent_visibility_to_related_tables.sql"
-   },
-   {
-    "name": "Special agents can view own grants",
-    "table": "agent_visibility_grants",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "has_role(auth.uid(), 'special_agent'::app_role) AND agent_id IN ( SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() )",
-    "check": "",
-    "src": "supabase/migrations/20260830120000_fix_agent_visibility_grants_constraints_and_policy.sql"
    },
    {
     "name": "Admins can insert blocked IPs",
@@ -216972,6 +216724,16 @@
     "src": "supabase/migrations/20261102012200_department_invites_restringe_escrita.sql"
    },
    {
+    "name": "Agents can view own grants",
+    "table": "agent_visibility_grants",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "has_role(auth.uid(), 'agent'::app_role) AND agent_id IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql"
+   },
+   {
     "name": "Users can view own filters",
     "table": "saved_filters",
     "cmd": "SELECT",
@@ -217160,26 +216922,6 @@
     "using": "EXISTS (SELECT 1 FROM public.profiles WHERE user_id = auth.uid())",
     "check": "",
     "src": "supabase/migrations/_superseded/20260412230000_fix_rls_policies_security.sql"
-   },
-   {
-    "name": "Agents can insert purchases for assigned contacts",
-    "table": "contact_purchases",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "is_contact_visible_to_user(contact_id, auth.uid()) or is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/tests/contact_purchases_rls_author.sql"
-   },
-   {
-    "name": "Agents can delete purchases for assigned contacts",
-    "table": "contact_purchases",
-    "cmd": "DELETE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "is_contact_visible_to_user(contact_id, auth.uid()) or is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/tests/contact_purchases_rls_author.sql"
    },
    {
     "name": "Users can view own profile",
@@ -218514,6 +218256,15 @@
     "src": "supabase/migrations/20261013230011_voip_profile_credentials.sql"
    },
    {
+    "name": "guard_contact_purchase_identity_insert",
+    "when": "BEFORE INSERT",
+    "table": "contact_purchases",
+    "function": "guard_contact_purchase_identity",
+    "condition": "",
+    "each": "row",
+    "src": "supabase/migrations/20261015190000_contact_purchases_rls_author.sql"
+   },
+   {
     "name": "audit_queues_config",
     "when": "AFTER INSERT OR UPDATE OR DELETE",
     "table": "queues",
@@ -219534,10 +219285,10 @@
     "args": "_user_id uuid",
     "returns": "app_role",
     "lang": "sql",
-    "src": "supabase/migrations/20260830070000_fn_effective_role_and_sync_trigger.sql",
+    "src": "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
     "security_definer": true,
     "search_path": true,
-    "body": "SELECT CASE WHEN bool_or(role = 'admin'::app_role) THEN 'admin'::app_role WHEN bool_or(role = 'supervisor'::app_role) THEN 'supervisor'::app_role WHEN bool_or(role = 'special_agent'::app_role) THEN 'special_agent'::app_role ELSE 'agent'::app_role END FROM public.user_roles WHERE user_id = _user_id",
+    "body": "SELECT CASE WHEN bool_or(role = 'admin'::app_role) THEN 'admin'::app_role WHEN bool_or(role = 'supervisor'::app_role) THEN 'supervisor'::app_role ELSE 'agent'::app_role END FROM public.user_roles WHERE user_id = _user_id",
     "raises": [],
     "tables": [
      "user_roles"
@@ -219547,10 +219298,10 @@
     "args": "",
     "returns": "trigger",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20260830161547_fix_prevent_privilege_escalation_allow_internal_sync.sql",
+    "src": "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
     "security_definer": true,
     "search_path": true,
-    "body": "DECLARE v_user_id uuid; v_new_role app_role; BEGIN v_user_id := COALESCE(NEW.user_id, OLD.user_id); SELECT CASE WHEN bool_or(role = 'admin'::app_role) THEN 'admin'::app_role WHEN bool_or(role = 'supervisor'::app_role) THEN 'supervisor'::app_role WHEN bool_or(role = 'special_agent'::app_role) THEN 'special_agent'::app_role ELSE 'agent'::app_role END INTO v_new_role FROM public.user_roles WHERE user_id = v_user_id; IF v_new_role IS NOT NULL THEN PERFORM set_config('app.internal_role_sync', 'true', true); UPDATE public.profiles SET role = v_new_role::text WHERE user_id = v_user_id AND role IS DISTINCT FROM v_new_role::text; PERFORM set_config('app.internal_role_sync', 'false', true); END IF; RE …",
+    "body": "DECLARE v_user_id uuid; v_new_role app_role; BEGIN v_user_id := COALESCE(NEW.user_id, OLD.user_id); SELECT CASE WHEN bool_or(role = 'admin'::app_role) THEN 'admin'::app_role WHEN bool_or(role = 'supervisor'::app_role) THEN 'supervisor'::app_role ELSE 'agent'::app_role END INTO v_new_role FROM public.user_roles WHERE user_id = v_user_id; IF v_new_role IS NOT NULL THEN PERFORM set_config('app.internal_role_sync', 'true', true); UPDATE public.profiles SET role = v_new_role::text WHERE user_id = v_user_id AND role IS DISTINCT FROM v_new_role::text; PERFORM set_config('app.internal_role_sync', 'false', true); END IF; RETURN NULL; END;",
     "raises": [],
     "tables": [
      "profiles",
@@ -224659,25 +224410,6 @@
      "v_sent"
     ]
    },
-   "talkx_attribute_purchases": {
-    "args": "p_since timestamptz DEFAULT NULL",
-    "returns": "jsonb",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261009031958_talkx_v4_x041_atribuicao_negocio_ganho_receita_roi.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_window_days integer; v_since timestamptz; v_scanned integer := 0; v_attributed integer := 0; v_no_touch integer := 0; v_duplicate integer := 0; v_rejected integer := 0; v_purchase record; v_recipient record; v_result jsonb; BEGIN v_window_days := COALESCE( (SELECT NULLIF(value #>> '{}', '')::integer FROM public.talkx_settings WHERE key = 'attribution_window_days'), 30 ); IF v_window_days < 0 THEN RAISE EXCEPTION 'talkx_attribution_window_invalid' USING ERRCODE = '22023'; END IF; v_since := COALESCE(p_since, now() - (v_window_days || ' days')::interval); FOR v_purchase IN SELECT cp.id, cp.contact_id, cp.external_id, cp.amount, cp.currency, cp.purchased_at FROM public.contact_purchas …",
-    "raises": [
-     "talkx_attribution_window_invalid"
-    ],
-    "tables": [
-     "contact_purchases",
-     "talkx_conversions",
-     "talkx_recipients",
-     "talkx_settings",
-     "v_recipient"
-    ]
-   },
    "talkx_campaign_revenue": {
     "args": "p_campaign uuid",
     "returns": "jsonb",
@@ -224691,35 +224423,6 @@
      "agg",
      "talkx_campaigns",
      "talkx_conversions"
-    ]
-   },
-   "talkx_recompute_purchase_metrics": {
-    "args": "p_limit integer DEFAULT 5000",
-    "returns": "integer",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261009032406_talkx_v4_x040_rfm_local_purchases.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_bands jsonb; v_recency integer[]; v_frequency integer[]; v_monetary numeric[]; v_min_buyers integer; v_buyer_count integer; v_changed integer := 0; BEGIN v_bands := COALESCE((SELECT value FROM public.talkx_settings WHERE key = 'rfm_bands'), '{}'::jsonb); v_recency := CASE WHEN jsonb_typeof(v_bands -> 'recency_days') = 'array' THEN ARRAY(SELECT x::integer FROM jsonb_array_elements_text(v_bands -> 'recency_days') AS t(x)) ELSE ARRAY[30, 90, 180, 365] END; IF array_length(v_recency, 1) IS DISTINCT FROM 4 THEN v_recency := ARRAY[30, 90, 180, 365]; END IF; v_frequency := CASE WHEN jsonb_typeof(v_bands -> 'frequency') = 'array' THEN ARRAY(SELECT x::integer FROM jsonb_array_elements_text( …",
-    "raises": [],
-    "tables": [
-     "SET",
-     "buyer_count",
-     "buyers",
-     "contact_purchases",
-     "effective_purchases",
-     "final",
-     "jsonb_array_elements_text",
-     "noted",
-     "reset_candidates",
-     "reseted",
-     "scored",
-     "selected",
-     "talkx_contact_attributes",
-     "talkx_settings",
-     "upsert_candidates",
-     "upserted",
-     "v_changed"
     ]
    },
    "talkx_sync_campaign_segments": {
@@ -227926,6 +227629,28 @@
     "tables": []
    },
    "set_voip_profile_credentials": {
+    "args": "",
+    "returns": "?",
+    "lang": "",
+    "src": "src/integrations/supabase/types.ts",
+    "security_definer": false,
+    "search_path": false,
+    "body": "",
+    "raises": [],
+    "tables": []
+   },
+   "talkx_attribute_purchases": {
+    "args": "",
+    "returns": "?",
+    "lang": "",
+    "src": "src/integrations/supabase/types.ts",
+    "security_definer": false,
+    "search_path": false,
+    "body": "",
+    "raises": [],
+    "tables": []
+   },
+   "talkx_recompute_purchase_metrics": {
     "args": "",
     "returns": "?",
     "lang": "",
@@ -233422,14 +233147,6 @@
      "type": "TEXT NOT NULL DEFAULT 'running' CHECK (status IN ('running', 'completed', 'failed', 'paused', 'cancelled'))"
     },
     {
-     "table": "contact_purchases",
-     "column": "status",
-     "enum": "",
-     "allowed": [],
-     "default": "pending",
-     "type": "TEXT DEFAULT 'pending'"
-    },
-    {
      "table": "conversation_analyses",
      "column": "status",
      "enum": "",
@@ -233497,14 +233214,6 @@
      "allowed": [],
      "default": "",
      "type": "string | null"
-    },
-    {
-     "table": "payment_links",
-     "column": "status",
-     "enum": "",
-     "allowed": [],
-     "default": "active",
-     "type": "TEXT DEFAULT 'active'"
     },
     {
      "table": "sales_deals",
@@ -234079,6 +233788,22 @@
      "allowed": [],
      "default": "",
      "type": "string not null"
+    },
+    {
+     "table": "contact_purchases",
+     "column": "status",
+     "enum": "",
+     "allowed": [],
+     "default": "",
+     "type": "string | null"
+    },
+    {
+     "table": "payment_links",
+     "column": "status",
+     "enum": "",
+     "allowed": [],
+     "default": "",
+     "type": "string | null"
     },
     {
      "table": "channel_connections_safe",
@@ -236934,11 +236659,6 @@
     "department_invitations",
     "role",
     "text NOT NULL DEFAULT 'agent'"
-   ],
-   [
-    "_res",
-    "papel",
-    "text"
    ]
   ],
   "jwt_claims": [
@@ -236965,13 +236685,6 @@
   "matrix": {
    "_rb_message_reactions_contato_20261007001008": {
     "rls": "enabled",
-    "SELECT": [],
-    "INSERT": [],
-    "UPDATE": [],
-    "DELETE": []
-   },
-   "_res": {
-    "rls": "não encontrado",
     "SELECT": [],
     "INSERT": [],
     "UPDATE": [],
@@ -237055,7 +236768,7 @@
     "rls": "enabled",
     "SELECT": [
      "authenticated: public.is_admin_or_supervisor(auth.uid())",
-     "authenticated: has_role(auth.uid(), 'special_agent'::app_role) AND agent_id IN ( SELECT p.id FROM public.profiles p WHERE p.user_id = auth.u"
+     "authenticated: has_role(auth.uid(), 'agent'::app_role) AND agent_id IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid())"
     ],
     "INSERT": [
      "authenticated: public.is_admin_or_supervisor(auth.uid())"
@@ -237637,18 +237350,10 @@
    },
    "contact_purchases": {
     "rls": "enabled",
-    "SELECT": [
-     "authenticated: is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid())"
-    ],
-    "INSERT": [
-     "authenticated: is_contact_visible_to_user(contact_id, auth.uid()) or is_admin_or_supervisor(auth.uid())"
-    ],
-    "UPDATE": [
-     "authenticated: is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid())"
-    ],
-    "DELETE": [
-     "authenticated: is_contact_visible_to_user(contact_id, auth.uid()) or is_admin_or_supervisor(auth.uid())"
-    ]
+    "SELECT": [],
+    "INSERT": [],
+    "UPDATE": [],
+    "DELETE": []
    },
    "contacts": {
     "rls": "enabled",
@@ -238730,18 +238435,10 @@
    },
    "payment_links": {
     "rls": "enabled",
-    "SELECT": [
-     "authenticated: created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())"
-    ],
-    "INSERT": [
-     "authenticated: created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())"
-    ],
-    "UPDATE": [
-     "authenticated: created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())"
-    ],
-    "DELETE": [
-     "authenticated: public.is_admin_or_supervisor(auth.uid())"
-    ]
+    "SELECT": [],
+    "INSERT": [],
+    "UPDATE": [],
+    "DELETE": []
    },
    "performance_snapshots": {
     "rls": "enabled",
@@ -240744,6 +240441,7 @@
    "supabase/migrations/20261031110000_copilot_live_helpers.sql",
    "supabase/migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql",
    "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql",
+   "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
    "supabase/migrations/_foreign/singu/20261001154000_singu_e014_b2b_e_papeis.sql",
    "supabase/migrations/_foreign/singu/20261001160000_singu_guard_hmac_escopo.sql",
    "supabase/migrations/_foreign/singu/20261005103000_singu_resolve_redige_fora_escopo.sql",
@@ -240769,7 +240467,6 @@
    "supabase/tests/connection_alert_preferences_rls.sql",
    "supabase/tests/contact_notes_pinned.sql",
    "supabase/tests/contact_protection_policy_rls.sql",
-   "supabase/tests/contact_purchases_rls_author.sql",
    "supabase/tests/contacts_consent_status_guard.sql",
    "supabase/tests/crm_sync_outbox_cron.sql",
    "supabase/tests/csat_pipeline.sql",
@@ -240814,7 +240511,6 @@
    "supabase/tests/set_conversation_status_waiting_para_archived.sql",
    "supabase/tests/sla_alert_events_and_preferences.sql",
    "supabase/tests/sla_configurations_single_default.sql",
-   "supabase/tests/special_agent_visibility.sql",
    "supabase/tests/talkx_cancel_em_voo_mantem_confirmacao.sql",
    "supabase/tests/talkx_segment_lifecycle.sql",
    "supabase/tests/tasks_contact_visibility.sql",
@@ -241168,7 +240864,6 @@
    "talk_me_list_queues",
    "talk_me_list_waiting",
    "talkx_assign_variant",
-   "talkx_attribute_purchases",
    "talkx_audience_query",
    "talkx_benchmarks",
    "talkx_blacklist_audit_trigger",
@@ -241195,7 +240890,6 @@
    "talkx_multiplix_connection_sent_count",
    "talkx_next_recipients",
    "talkx_recipient_is_suppressed",
-   "talkx_recompute_purchase_metrics",
    "talkx_refresh_local_attributes",
    "talkx_resolve_audience",
    "talkx_resolve_speed_pace",
@@ -253732,6 +253426,22 @@
    {
     "kind": "revoke",
     "privs": "all",
+    "object": "get_visible_agent_ids",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "get_visible_agent_ids",
+    "objkind": "function",
+    "roles": "authenticated, service_role",
+    "src": "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
     "object": "multiplix_resolve_recipients",
     "objkind": "function",
     "roles": "PUBLIC",
@@ -254605,11 +254315,6 @@
     "created_at",
     "updated_at"
    ],
-   "contact_purchases": [
-    "created_at",
-    "created_by",
-    "updated_at"
-   ],
    "conversation_analyses": [
     "created_at"
    ],
@@ -254661,11 +254366,6 @@
    ],
    "nps_surveys": [
     "created_at"
-   ],
-   "payment_links": [
-    "created_at",
-    "created_by",
-    "updated_at"
    ],
    "pinned_conversations": [
     "created_at"
@@ -255276,15 +254976,24 @@
    "optout_call_log": [],
    "tags": [],
    "prova_hz503_asserts": [],
-   "_res": [],
    "vault.decrypted_secrets": [],
    "_zapp_fn_before": [],
    "_zapp_mig133_log": [],
+   "contact_purchases": [
+    "created_at",
+    "created_by",
+    "updated_at"
+   ],
    "instance_pauses": [
     "created_at"
    ],
    "outbox_events": [
     "created_at"
+   ],
+   "payment_links": [
+    "created_at",
+    "created_by",
+    "updated_at"
    ],
    "search_events": [
     "created_at"
@@ -255417,11 +255126,6 @@
   "money_float": [],
   "money_cols": [
    [
-    "contact_purchases",
-    "amount",
-    "NUMERIC(12,2)"
-   ],
-   [
     "conversation_analyses",
     "customer_satisfaction",
     "INTEGER"
@@ -255440,11 +255144,6 @@
     "nps_surveys",
     "feedback",
     "TEXT"
-   ],
-   [
-    "payment_links",
-    "amount",
-    "NUMERIC(12,2)"
    ],
    [
     "campaigns",
@@ -255512,9 +255211,14 @@
     "TEXT"
    ],
    [
-    "_res",
-    "valor",
-    "bigint"
+    "contact_purchases",
+    "amount",
+    "number"
+   ],
+   [
+    "payment_links",
+    "amount",
+    "number"
    ],
    [
     "catalog_send_stats",
@@ -256955,7 +256659,6 @@
    }
   ],
   "gaps": [
-   "`contact_purchases.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`conversation_analyses.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`conversation_tasks.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`csat_surveys.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
@@ -256963,7 +256666,6 @@
    "`followup_executions.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`messages.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`messages.transcription_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "`payment_links.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`sales_deals.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`scheduled_messages.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`talkx_recipients.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
@@ -257000,6 +256702,8 @@
    "`copilot_insights.state_version` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`copilot_objection_catalog.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`_zapp_mig133_log.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
+   "`contact_purchases.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
+   "`payment_links.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`channel_connections_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`gmail_accounts_safe.sync_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`password_reset_requests_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
@@ -257009,7 +256713,7 @@
    "`whatsapp_connections_public.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`whatsapp_connections_safe.health_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`whatsapp_connections_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "173/236 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `contact_purchases`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks` …",
+   "172/235 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …",
    "Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel."
   ]
  },
@@ -265109,7 +264813,7 @@
   },
   "scripts/db-audit/global-guards-regression.test.mjs": {
    "path": "scripts/db-audit/global-guards-regression.test.mjs",
-   "lines": 129,
+   "lines": 128,
    "is_test": true,
    "env": [
     "PATH"
@@ -376781,6 +376485,11 @@
    "lines": 237,
    "uses_service_role": true
   },
+  "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql": {
+   "path": "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
+   "lines": 178,
+   "uses_service_role": true
+  },
   "supabase/migrations/_foreign/20260611120000_fix_media_security_file_size.sql": {
    "path": "supabase/migrations/_foreign/20260611120000_fix_media_security_file_size.sql",
    "lines": 107
@@ -377081,12 +376790,6 @@
   "supabase/tests/contact_protection_policy_rls.sql": {
    "path": "supabase/tests/contact_protection_policy_rls.sql",
    "lines": 410,
-   "is_test": true,
-   "uses_service_role": true
-  },
-  "supabase/tests/contact_purchases_rls_author.sql": {
-   "path": "supabase/tests/contact_purchases_rls_author.sql",
-   "lines": 679,
    "is_test": true,
    "uses_service_role": true
   },
@@ -377620,20 +377323,6 @@
    "path": "supabase/tests/sla_configurations_single_default.sql",
    "lines": 227,
    "is_test": true,
-   "uses_service_role": true
-  },
-  "supabase/tests/special_agent_visibility.sql": {
-   "path": "supabase/tests/special_agent_visibility.sql",
-   "lines": 216,
-   "is_test": true,
-   "temporal": [
-    "('ccccccc1-0000-0000-0000-000000000001', 'bbbbbbb1-0000-0000-0000-000000000001', 'contact', 'fixt inbound A', now() - interval '10 minutes'),",
-    "('ccccccc2-0000-0000-0000-000000000002', 'bbbbbbb2-0000-0000-0000-000000000002', 'contact', 'fixt inbound B', now() - interval '20 minutes');",
-    "('ddddddd1-0000-0000-0000-000000000001', 'bbbbbbb1-0000-0000-0000-000000000001', now() - interval '2 hours', null, true),",
-    "('ddddddd2-0000-0000-0000-000000000002', 'bbbbbbb2-0000-0000-0000-000000000002', now() - interval '2 hours', null, true);",
-    "select count(*) from public.messages where sender = 'agent' and created_at >= now() - interval '1 hour'",
-    "select count(*) from public.messages where sender = 'contact' and created_at >= now() - interval '1 hour'"
-   ],
    "uses_service_role": true
   },
   "supabase/tests/talkx_cancel_em_voo_mantem_confirmacao.sql": {
@@ -380780,10 +380469,32 @@
   }
  },
  "git": {
-  "sha": "535074caeaef1f58834ed294696a07f583991133",
+  "sha": "bd25801a2007d254211ddd8565c6c8633bbca78b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "bd25801",
+    "date": "2026-11-03",
+    "author": "adm01-debug",
+    "subject": "chore(db): remove payment_links/contact_purchases e special_agent de funções/policy/CHECK (DDL) (#2693)",
+    "files": [
+     ".github/workflows/db-guard.yml",
+     "docs/DB-INVENTORY.md",
+     "scripts/db-audit/dashboard-rls-authorization.test.sh",
+     "scripts/db-audit/global-guards-regression.test.mjs",
+     "scripts/db-audit/grants-baseline.json",
+     "scripts/db-audit/realtime-publication-baseline.json",
+     "scripts/db-audit/runtime-config.test.sh",
+     "scripts/db-audit/talkx-attribution.test.sh",
+     "scripts/db-audit/talkx-rfm.test.sh",
+     "src/hooks/crm/__tests__/useVisibleAgents.test.tsx",
+     "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
+     "supabase/schema-catalog.json",
+     "supabase/tests/contact_purchases_rls_author.sql",
+     "supabase/tests/special_agent_visibility.sql"
+    ]
+   },
    {
     "sha": "535074c",
     "date": "2026-11-03",
@@ -381156,15 +380867,6 @@
     "files": [
      "HANDOFF_NEXT_SESSION.md"
     ]
-   },
-   {
-    "sha": "c7dde79",
-    "date": "2026-11-02",
-    "author": "adm01-debug",
-    "subject": "infra: revoga EXECUTE de PUBLIC em cron.schedule/unschedule (#2645)",
-    "files": [
-     "supabase/migrations/20261102032200_revoga_execute_public_cron_schedule.sql"
-    ]
    }
   ],
   "hot_files": [
@@ -381187,6 +380889,14 @@
    [
     "docs/ci/README.md",
     3
+   ],
+   [
+    "docs/DB-INVENTORY.md",
+    2
+   ],
+   [
+    "src/hooks/crm/__tests__/useVisibleAgents.test.tsx",
+    2
    ],
    [
     "scripts/ai-context/gerar.mjs",
@@ -381233,19 +380943,11 @@
     2
    ],
    [
-    "ai-context.config.json",
+    ".github/workflows/db-guard.yml",
     1
    ],
    [
-    "scripts/ai-context/README.md",
-    1
-   ],
-   [
-    "supabase/migrations/20261102012400_login_attempts_retencao_90d.sql",
-    1
-   ],
-   [
-    "ESTADO.md",
+    "scripts/db-audit/dashboard-rls-authorization.test.sh",
     1
    ]
   ]

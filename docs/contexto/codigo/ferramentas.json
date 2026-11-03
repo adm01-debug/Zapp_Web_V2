@@ -4,11 +4,11 @@
  "stack": {
   "linguagens": [
    "TypeScript (4173)",
-   "SQL (1277)",
+   "SQL (1276)",
    "Markdown (1031)",
    "JSON (592)",
    "JavaScript (351)",
-   "Shell (230)",
+   "Shell (228)",
    "Python (115)",
    "YAML (27)"
   ],
@@ -447,7 +447,6 @@
     "scripts/db-audit/talk-me-queue-contract.test.sh",
     "scripts/db-audit/talkx-ab-weights.test.sh",
     "scripts/db-audit/talkx-alerts-outcome-unknown-lote.test.sh",
-    "scripts/db-audit/talkx-attribution.test.sh",
     "scripts/db-audit/talkx-audience-rpc.test.sh",
     "scripts/db-audit/talkx-audience-snapshot.test.sh",
     "scripts/db-audit/talkx-benchmarks-period-names.test.sh",
@@ -487,7 +486,6 @@
     "scripts/db-audit/talkx-receipts-replies.test.sh",
     "scripts/db-audit/talkx-regressoes-chain.test.sh",
     "scripts/db-audit/talkx-retry-resolve.test.sh",
-    "scripts/db-audit/talkx-rfm.test.sh",
     "scripts/db-audit/talkx-role-gates.test.sh",
     "scripts/db-audit/talkx-save-template-variants.test.sh",
     "scripts/db-audit/talkx-segment-fields.test.sh",
@@ -1072,7 +1070,7 @@
   {
    "arquivo": "docs/DB-INVENTORY.md",
    "titulo": "Inventário de objetos do banco — `public`",
-   "linhas": 290
+   "linhas": 288
   },
   {
    "arquivo": "docs/DB-SECURITY.md",

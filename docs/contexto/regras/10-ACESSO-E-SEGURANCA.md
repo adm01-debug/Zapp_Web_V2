@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `535074caea` · branch `main` · 2026-11-03 20:33 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `bd25801a20` · branch `main` · 2026-11-03 20:45 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -8,7 +8,7 @@
 `admin`, `agent`, `anon`, `boolean`, `customer`, `customers_own`, `denied`, `granted`, `leader`, `next`, `owner`, `postgres`, `role`, `service_role`, `special_agent`, `string`, `supervisor`, `value`
 
 - Tabelas de perfil/permissão: `permissions`, `team_conversation_members`, `queue_members`, `role_permissions`, `user_roles`, `multiplix_audience_members`
-- Colunas de perfil: `whatsapp_groups.is_admin` (boolean | null), `role_permissions.role` (Database["public"]["Enums"]["app_role"] not null), `user_roles.role` (app_role NOT NULL), `profiles.role` (text DEFAULT 'agent'), `department_invitations.role` (text NOT NULL DEFAULT 'agent'), `_res.papel` (text)
+- Colunas de perfil: `whatsapp_groups.is_admin` (boolean | null), `role_permissions.role` (Database["public"]["Enums"]["app_role"] not null), `user_roles.role` (app_role NOT NULL), `profiles.role` (text DEFAULT 'agent'), `department_invitations.role` (text NOT NULL DEFAULT 'agent')
 - Claims do JWT usados em políticas/funções: `email`
 - Funções usadas dentro de políticas RLS (a regra real está no corpo delas — veja `06`): `can_access_realtime_topic`, `can_edit_contact`, `can_insert_team_conversation_member`, `can_manage_contacts`, `current_profile_id`, `foldername`, `get_profile_id_for_user`, `get_visible_agent_ids`, `has_role`, `is_admin`, `is_admin_or_supervisor`, `is_contact_visible_to_user`, `is_last_team_conversation_owner`, `is_privileged_contact_caller`, `is_team_conversation_member`, `uid`
 
@@ -17,7 +17,6 @@
 | Tabela | RLS | SELECT | INSERT | UPDATE | DELETE |
 |---|---|---|---|---|---|
 | `_rb_message_reactions_contato_20261007001008` | enabled | — | — | — | — |
-| `_res` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `_zapp_fn_before` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `_zapp_mig133_log` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `agent_achievements` | enabled | authenticated: profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid()) | — | — |
@@ -25,7 +24,7 @@
 | `agent_presence` | enabled | authenticated: true | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | — |
 | `agent_skills` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `agent_stats` | enabled | authenticated: profile_id IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: (profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid())) AND ( is_admin_or_ | authenticated: public.is_admin_or_supervisor(auth.uid()) | — |
-| `agent_visibility_grants` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: has_role(auth.uid(), 'special_agent'::app_role) AND agent_id IN ( SELECT p.id FROM public.profiles p WHERE p.user_id = auth.u | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
+| `agent_visibility_grants` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: has_role(auth.uid(), 'agent'::app_role) AND agent_id IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `ai_budget_reservations` | enabled | — | — | — | — |
 | `ai_conversation_tags` | enabled | authenticated: contact_id IN ( SELECT c.id FROM public.contacts c WHERE c.assigned_to IN ( SELECT p.id FROM public.profiles p WHERE p.user_i | authenticated: contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT id FROM profiles WHERE user_id = auth.uid()) ) OR  | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: EXISTS ( SELECT 1 FROM public.contacts c JOIN public.profiles p ON p.id = c.assigned_to WHERE c.id = ai_conversation_tags.con |
 | `ai_jobs` | enabled | — | — | — | — |
@@ -68,7 +67,7 @@
 | `contact_identity_map` | enabled | authenticated: is_admin_or_supervisor(auth.uid()) | — | — | — |
 | `contact_notes` | enabled | authenticated: contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT profiles.id FROM profiles WHERE profiles.user_id =<br>authenticated: public.is_contact_visible_to_user(contact_id, auth.uid()) | authenticated: author_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())<br>authenticated: author_id = public.get_profile_id_for_user(auth.uid()) AND public.is_contact_visible_to_user(contact_id, auth.uid()) | authenticated: author_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())<br>authenticated: author_id = public.get_profile_id_for_user(auth.uid()) AND public.is_contact_visible_to_user(contact_id, auth.uid()) | authenticated: author_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())<br>authenticated: author_id = public.get_profile_id_for_user(auth.uid()) AND public.is_contact_visible_to_user(contact_id, auth.uid()) |
 | `contact_protection_policy` | enabled | authenticated: public.has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') |
-| `contact_purchases` | enabled | authenticated: is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: is_contact_visible_to_user(contact_id, auth.uid()) or is_admin_or_supervisor(auth.uid()) | authenticated: is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: is_contact_visible_to_user(contact_id, auth.uid()) or is_admin_or_supervisor(auth.uid()) |
+| `contact_purchases` | enabled | — | — | — | — |
 | `contacts` | enabled | authenticated: public.can_edit_contact(assigned_to, queue_id, (SELECT array_agg(v) FROM public.get_visible_agent_ids(auth.uid()) v), (SELECT | authenticated: public.is_admin_or_supervisor(auth.uid()) OR ( assigned_to IS NOT NULL AND assigned_to IN ( SELECT id FROM public.profiles WH | authenticated: public.can_edit_contact(assigned_to, queue_id, (SELECT array_agg(v) FROM public.get_visible_agent_ids(auth.uid()) v), (SELECT | — |
 | `conversation_analyses` | enabled | authenticated: contact_id IN ( SELECT c.id FROM public.contacts c WHERE c.assigned_to IN ( SELECT p.id FROM public.profiles p WHERE p.user_i | authenticated: analyzed_by = public.get_profile_id_for_user(auth.uid()) AND public.is_contact_visible_to_user(contact_id, auth.uid()) | — | — |
 | `conversation_closures` | enabled | authenticated: is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: public.is_contact_visible_to_user(contact_id, auth.uid()) | — | — |
@@ -150,7 +149,7 @@
 | `passkey_credentials` | enabled | authenticated: user_id = auth.uid() | — | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() |
 | `password_reset_requests` | enabled | authenticated: false | anon: user_id IS NOT NULL AND status = 'pending' AND reviewed_by IS NULL AND reviewed_at IS NULL AND rejection_reason IS NULL AND token_expi<br>authenticated: user_id = auth.uid() | authenticated: has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') |
 | `password_reset_requests_safe` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
-| `payment_links` | enabled | authenticated: created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid()) | authenticated: created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid()) | authenticated: created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
+| `payment_links` | enabled | — | — | — | — |
 | `performance_snapshots` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: profile_id = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1) | authenticated: profile_id = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1) | — | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `permissions` | enabled | authenticated: is_admin(auth.uid())<br>authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) |
 | `pinned_conversations` | enabled | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) AND EXISTS (SELECT 1 FROM public.contacts | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) |
@@ -255,7 +254,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 717 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 716 arquivo(s)
 
 - `docs/_arquivo/auditoria-supabase/propostas/01_revogar_grants_anon.sql`
 - `docs/migration/source-ddl/table_gmail_accounts.sql`
@@ -407,7 +406,7 @@
 - `supabase/functions/classify-audio-meme/index.test.ts`
 - `supabase/functions/classify-emoji/index.test.ts`
 - `supabase/functions/classify-sticker/index.test.ts`
-- … +567 (lista completa em `context.json`)
+- … +566 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 
@@ -734,7 +733,6 @@
 - `talk_me_list_queues`
 - `talk_me_list_waiting`
 - `talkx_assign_variant`
-- `talkx_attribute_purchases`
 - `talkx_audience_query`
 - `talkx_benchmarks`
 - `talkx_blacklist_audit_trigger`
@@ -761,7 +759,6 @@
 - `talkx_multiplix_connection_sent_count`
 - `talkx_next_recipients`
 - `talkx_recipient_is_suppressed`
-- `talkx_recompute_purchase_metrics`
 - `talkx_refresh_local_attributes`
 - `talkx_resolve_audience`
 - `talkx_resolve_speed_pace`
@@ -877,7 +874,7 @@ Middleware matcher (Next.js): nenhum
 | grant | authenticated, anon, service_role | execute | `pg_temp.assert_permitido`, `pg_temp.assert_negado`, `is_contact_visible_to_user`, `get_visible_agent_ids`, `get_profile_id_for_user`, `is_admin_or_supervisor` |
 | grant | authenticated, anon, service_role | insert | `prova_hz503_asserts` |
 | grant | authenticated, anon, service_role | select, insert, update, delete | `password_reset_requests`, `conversation_analyses` |
-| grant | authenticated, service_role | execute | `get_department_whatsapp_credentials`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `close_conversation_atomic`, `is_valid_talkx_schedule_timezone`, `is_valid_talkx_schedule_timezone`, `set_conversation_status`, `get_last_message_dates`, `dashboard_leaderboard`, `search_contacts`, `search_contacts` … +114 |
+| grant | authenticated, service_role | execute | `get_department_whatsapp_credentials`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `close_conversation_atomic`, `is_valid_talkx_schedule_timezone`, `is_valid_talkx_schedule_timezone`, `set_conversation_status`, `get_last_message_dates`, `dashboard_leaderboard`, `search_contacts`, `search_contacts` … +115 |
 | grant | authenticated, service_role | select | `talkx_campaign_optouts`, `talkx_engine_health`, `talkx_engine_health`, `talkx_ddd_regions`, `security_acl_alerts`, `profiles`, `user_roles`, `t88_ids`, `profiles`, `profiles` |
 | grant | authenticated, service_role | select, insert, update | `messages` |
 | grant | authenticated, service_role | select, insert, update, delete | `contact_notes`, `contact_protection_policy` |
@@ -894,7 +891,7 @@ Middleware matcher (Next.js): nenhum
 | grant | service_role, postgres | execute | `mcp_exec`, `mcp_exec_many` |
 | revoke | PUBLIC | all | `get_identity_matrix`, `enqueue_crm_sync_from_closure`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `enforce_talkx_campaign_mutability`, `is_valid_talkx_schedule_timezone`, `talkx_overview_stats`, `talkx_campaign_report`, `talkx_segment_tags`, `talkx_benchmarks`, `talkx_links`, `talkx_link_clicks`, `talkx_conversions` … +46 |
 | revoke | PUBLIC | execute | `record_failed_login`, `messages_sla_first_response_trigger`, `calculate_level`, `normalize_contact_phone`, `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `grant_agent_achievement`, `grant_agent_achievement`, `add_agent_xp`, `update_agent_streak`, `increment_agent_messages`, `increment_agent_resolutions`, `set_conversation_status`, `accept_department_invite` … +25 |
-| revoke | PUBLIC, anon | all | `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `close_conversation_atomic`, `replace_talkx_draft_recipients` … +116 |
+| revoke | PUBLIC, anon | all | `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `close_conversation_atomic`, `replace_talkx_draft_recipients` … +117 |
 | revoke | PUBLIC, anon | execute | `clear_login_attempts`, `get_department_whatsapp_credentials`, `get_identity_matrix`, `get_own_lockout_status`, `effective_role`, `is_admin`, `is_ip_blocked`, `is_ip_whitelisted`, `is_country_allowed`, `is_country_blocked`, `audit_role_permissions_changes`, `sync_profile_role_from_user_roles`, `sync_thread_last_sender`, `update_device_last_seen`, `update_global_settings_updated_at` … +65 |
 | revoke | PUBLIC, anon, authenticated | all | `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens`, `store_gmail_tokens`, `register_first_response_internal`, `register_first_response_internal`, `claim_crm_sync_outbox`, `claim_crm_sync_outbox_by_id`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `upsert_crm_contact_link_guarded`, `redact_crm_sync_on_contact_delete`, `claim_crm_sync_outbox` … +191 |
 | revoke | PUBLIC, anon, authenticated | all privileges | `webhook_failures` |
@@ -1020,7 +1017,6 @@ Middleware matcher (Next.js): nenhum
 | `chatbot_executions` | `created_at` |
 | `contact_custom_fields` | `created_at`, `updated_at` |
 | `contact_notes` | `created_at`, `updated_at` |
-| `contact_purchases` | `created_at`, `created_by`, `updated_at` |
 | `conversation_analyses` | `created_at` |
 | `conversation_closures` | `created_at` |
 | `conversation_events` | `created_at` |
@@ -1036,7 +1032,6 @@ Middleware matcher (Next.js): nenhum
 | `messages` | `created_at`, `updated_at` |
 | `meta_capi_events` | `created_at` |
 | `nps_surveys` | `created_at` |
-| `payment_links` | `created_at`, `created_by`, `updated_at` |
 | `pinned_conversations` | `created_at` |
 | `queue_positions` | `created_at` |
 | `reminders` | `created_at` |
@@ -1196,8 +1191,10 @@ Middleware matcher (Next.js): nenhum
 | `copilot_help_requests` | `created_at` |
 | `copilot_learning_moments` | `created_at` |
 | `copilot_conversation_scores` | `updated_at` |
+| `contact_purchases` | `created_at`, `created_by`, `updated_at` |
 | `instance_pauses` | `created_at` |
 | `outbox_events` | `created_at` |
+| `payment_links` | `created_at`, `created_by`, `updated_at` |
 | `search_events` | `created_at` |
 | `voip_profile_credentials` | `created_at`, `updated_at` |
 | `channel_connections_safe` | `created_at`, `created_by`, `updated_at` |
@@ -1237,12 +1234,10 @@ Middleware matcher (Next.js): nenhum
 
 | Tabela | Coluna | Tipo |
 |---|---|---|
-| `contact_purchases` | `amount` | `NUMERIC(12,2)` |
 | `conversation_analyses` | `customer_satisfaction` | `INTEGER` |
 | `csat_surveys` | `feedback` | `text` |
 | `meta_capi_events` | `custom_data` | `JSONB` |
 | `nps_surveys` | `feedback` | `TEXT` |
-| `payment_links` | `amount` | `NUMERIC(12,2)` |
 | `campaigns` | `total_contacts` | `INTEGER` |
 | `agent_stats` | `customer_satisfaction_score` | `DECIMAL(3,2)` |
 | `training_sessions` | `feedback` | `TEXT` |
@@ -1256,7 +1251,8 @@ Middleware matcher (Next.js): nenhum
 | `talkx_contact_attributes` | `total_spent` | `number` |
 | `talkx_segment_library_history` | `total_segments` | `integer` |
 | `copilot_feedback` | `feedback_type` | `TEXT` |
-| `_res` | `valor` | `bigint` |
+| `contact_purchases` | `amount` | `number` |
+| `payment_links` | `amount` | `number` |
 | `catalog_send_stats` | `taxa_falha` | `number` |
 | `catalog_send_stats` | `taxa_parcial` | `number` |
 | `catalog_send_stats` | `total` | `number` |

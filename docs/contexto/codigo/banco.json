@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1108,
+ "migrations": 1109,
  "seeds": [
   "e2e/fixtures/seed-talk-me.sql",
   "e2e/fixtures/seed-talkx-segment.sql",
@@ -313,7 +313,6 @@
   "grant_agent_achievement",
   "grant_agent_achievement_internal",
   "guard_contact_note_identity",
-  "guard_contact_purchase_identity",
   "guard_conversation_closure_request_id",
   "guard_conversation_event_closure_id",
   "guard_message_delivery_internal_fields",
@@ -528,7 +527,6 @@
   "talk_me_list_waiting",
   "talkx_analytics_scope",
   "talkx_assign_variant",
-  "talkx_attribute_purchases",
   "talkx_audience_query",
   "talkx_benchmarks",
   "talkx_blacklist_audit_trigger",
@@ -559,7 +557,6 @@
   "talkx_normalize_optout_text",
   "talkx_overview_stats",
   "talkx_recipient_is_suppressed",
-  "talkx_recompute_purchase_metrics",
   "talkx_refresh_local_attributes",
   "talkx_refresh_segment_library_history",
   "talkx_resolve_audience",
@@ -2601,7 +2598,7 @@
      "tipo": "permissive"
     },
     {
-     "nome": "Special agents can view own grants",
+     "nome": "Agents can view own grants",
      "comando": "select",
      "para": "authenticated",
      "tipo": "permissive"
@@ -7715,168 +7712,12 @@
    "nao_usada": true
   },
   "contact_purchases": {
-   "colunas": {
-    "amount": {
-     "tipo": "numeric(12,2)",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "contact_id": {
-     "tipo": "uuid",
-     "nn": true,
-     "pk": false,
-     "default": null,
-     "ref": "contacts"
-    },
-    "created_at": {
-     "tipo": "timestamptz",
-     "nn": true,
-     "pk": false,
-     "default": "now()",
-     "ref": null
-    },
-    "created_by": {
-     "tipo": "uuid",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": "profiles"
-    },
-    "currency": {
-     "tipo": "text",
-     "nn": false,
-     "pk": false,
-     "default": "'BRL'",
-     "ref": null
-    },
-    "deal_id": {
-     "tipo": "uuid",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": "sales_deals"
-    },
-    "description": {
-     "tipo": "text",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "external_id": {
-     "tipo": "text",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "id": {
-     "tipo": "uuid",
-     "nn": true,
-     "pk": true,
-     "default": "gen_random_uuid()",
-     "ref": null
-    },
-    "purchase_type": {
-     "tipo": "text",
-     "nn": false,
-     "pk": false,
-     "default": "'purchase'",
-     "ref": null
-    },
-    "purchased_at": {
-     "tipo": "timestamptz",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "source": {
-     "tipo": "text",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "status": {
-     "tipo": "text",
-     "nn": false,
-     "pk": false,
-     "default": "'pending'",
-     "ref": null
-    },
-    "title": {
-     "tipo": "text",
-     "nn": true,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "updated_at": {
-     "tipo": "timestamptz",
-     "nn": true,
-     "pk": false,
-     "default": "now()",
-     "ref": null
-    }
-   },
-   "rls": true,
-   "policies": [
-    {
-     "nome": "Agents can delete purchases for assigned contacts",
-     "comando": "delete",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
-     "nome": "Agents can insert purchases for assigned contacts",
-     "comando": "insert",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
-     "nome": "Agents can update purchases for assigned contacts",
-     "comando": "update",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
-     "nome": "Agents can view purchases for assigned contacts",
-     "comando": "select",
-     "para": "authenticated",
-     "tipo": "permissive"
-    }
-   ],
-   "indices": [
-    {
-     "nome": "contact_purchases_source_external_id_key",
-     "colunas": "source, external_id",
-     "unico": true
-    },
-    {
-     "nome": "idx_contact_purchases_contact_id",
-     "colunas": "contact_id",
-     "unico": false
-    },
-    {
-     "nome": "idx_contact_purchases_created_by",
-     "colunas": "created_by",
-     "unico": false
-    },
-    {
-     "nome": "idx_contact_purchases_deal_id",
-     "colunas": "deal_id",
-     "unico": false
-    }
-   ],
-   "fks": [
-    "contact_id->contacts",
-    "created_by->profiles",
-    "deal_id->sales_deals"
-   ],
-   "criada_em": "20260409020732_7e37c849-85fd-4308-88c9-7faa9dc18693.sql",
+   "colunas": {},
+   "rls": false,
+   "policies": [],
+   "indices": [],
+   "fks": [],
+   "criada_em": null,
    "colunas_types": {
     "amount": "number | null",
     "contact_id": "string",
@@ -7893,10 +7734,6 @@
     "status": "string | null",
     "title": "string",
     "updated_at": "string"
-   },
-   "drift": {
-    "so_na_migration": [],
-    "so_no_types": []
    },
    "usada_no_front": 0,
    "usada_em_edges": [],
@@ -19572,170 +19409,12 @@
    "nao_usada": false
   },
   "payment_links": {
-   "colunas": {
-    "amount": {
-     "tipo": "numeric(12,2)",
-     "nn": true,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "contact_id": {
-     "tipo": "uuid",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": "contacts"
-    },
-    "created_at": {
-     "tipo": "timestamp with time zone",
-     "nn": false,
-     "pk": false,
-     "default": "now()",
-     "ref": null
-    },
-    "created_by": {
-     "tipo": "uuid",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": "profiles"
-    },
-    "currency": {
-     "tipo": "text",
-     "nn": false,
-     "pk": false,
-     "default": "'BRL'",
-     "ref": null
-    },
-    "deal_id": {
-     "tipo": "uuid",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": "sales_deals"
-    },
-    "description": {
-     "tipo": "text",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "expires_at": {
-     "tipo": "timestamp with time zone",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "external_id": {
-     "tipo": "text",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "id": {
-     "tipo": "uuid",
-     "nn": false,
-     "pk": true,
-     "default": "gen_random_uuid()",
-     "ref": null
-    },
-    "paid_at": {
-     "tipo": "timestamp with time zone",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "payment_method": {
-     "tipo": "text",
-     "nn": false,
-     "pk": false,
-     "default": "'pix'",
-     "ref": null
-    },
-    "payment_url": {
-     "tipo": "text",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "status": {
-     "tipo": "text",
-     "nn": false,
-     "pk": false,
-     "default": "'active'",
-     "ref": null
-    },
-    "title": {
-     "tipo": "text",
-     "nn": true,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "updated_at": {
-     "tipo": "timestamp with time zone",
-     "nn": false,
-     "pk": false,
-     "default": "now()",
-     "ref": null
-    }
-   },
-   "rls": true,
-   "policies": [
-    {
-     "nome": "Admins can delete payment links",
-     "comando": "delete",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
-     "nome": "Authenticated can insert payment links",
-     "comando": "insert",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
-     "nome": "Users can update own payment links",
-     "comando": "update",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
-     "nome": "Users can view own payment links",
-     "comando": "select",
-     "para": "authenticated",
-     "tipo": "permissive"
-    }
-   ],
-   "indices": [
-    {
-     "nome": "idx_payment_links_contact_id",
-     "colunas": "contact_id",
-     "unico": false
-    },
-    {
-     "nome": "idx_payment_links_created_by",
-     "colunas": "created_by",
-     "unico": false
-    },
-    {
-     "nome": "idx_payment_links_deal_id",
-     "colunas": "deal_id",
-     "unico": false
-    }
-   ],
-   "fks": [
-    "contact_id->contacts",
-    "created_by->profiles",
-    "deal_id->sales_deals"
-   ],
-   "criada_em": "20260315203210_e3fc9cb2-d7f5-4bb0-b5fe-ef563a584c9b.sql",
+   "colunas": {},
+   "rls": false,
+   "policies": [],
+   "indices": [],
+   "fks": [],
+   "criada_em": null,
    "colunas_types": {
     "amount": "number",
     "contact_id": "string | null",
@@ -19753,10 +19432,6 @@
     "status": "string | null",
     "title": "string",
     "updated_at": "string | null"
-   },
-   "drift": {
-    "so_na_migration": [],
-    "so_no_types": []
    },
    "usada_no_front": 0,
    "usada_em_edges": [],

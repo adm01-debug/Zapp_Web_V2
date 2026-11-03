@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 376,
+ "total": 374,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -1117,7 +1117,7 @@
   {
    "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
    "descricao": "Fronteira real de autorização das RPCs do Dashboard (DASH-ACCEPTANCE-001, aceites DASH-091/DASH-092: testes executáveis no código produtivo, com JWT",
-   "linhas": 667,
+   "linhas": 670,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -2077,7 +2077,7 @@
   {
    "arquivo": "scripts/db-audit/runtime-config.test.sh",
    "descricao": null,
-   "linhas": 126,
+   "linhas": 125,
    "env": [
     "TEST_EVIDENCE_DIR"
    ],
@@ -2275,17 +2275,6 @@
    "arquivo": "scripts/db-audit/talkx-alerts-outcome-unknown-lote.test.sh",
    "descricao": "Harness descartavel (Docker postgres:17-alpine) — item 33 / R3-OBS-001 (R3-DELTA-001). Prova, em PostgreSQL 17, com as MIGRATIONS REAIS aplicadas por marcador interno, que a",
    "linhas": 194,
-   "env": [],
-   "npm_scripts": [],
-   "workflows": [
-    "db-guard.yml"
-   ],
-   "orfao": false
-  },
-  {
-   "arquivo": "scripts/db-audit/talkx-attribution.test.sh",
-   "descricao": "X041 (PLANO_TALKX_V4_200_ETAPAS_2026-10-01): prova, em PostgreSQL 17 descartável, que um negócio ganho (contact_purchases.source='bitrix24') passa a",
-   "linhas": 379,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -2843,17 +2832,6 @@
    "arquivo": "scripts/db-audit/talkx-retry-resolve.test.sh",
    "descricao": "Harness descartável (Docker postgres:17-alpine) — X031. Fecha CAP-047, CAP-048, CAP-049.",
    "linhas": 685,
-   "env": [],
-   "npm_scripts": [],
-   "workflows": [
-    "db-guard.yml"
-   ],
-   "orfao": false
-  },
-  {
-   "arquivo": "scripts/db-audit/talkx-rfm.test.sh",
-   "descricao": "X040 (Fase 4 · Tela dados · camada banco + cron): calcular recência, frequência, valor e segmento RFM a partir das COMPRAS LOCAIS (public.contact_purchases).",
-   "linhas": 363,
    "env": [],
    "npm_scripts": [],
    "workflows": [
