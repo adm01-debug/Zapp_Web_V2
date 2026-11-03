@@ -15,6 +15,8 @@
 --   * guard_contact_purchase_identity(): funcao de trigger usada SO pelos dois triggers de
 --     contact_purchases (nenhuma outra funcao a cita) -> DROP depois da tabela.
 --   * special_agent: 0 linhas em user_roles e 0 em profiles com esse papel.
+--   * agent_visibility_grants: 0 linhas em producao (2026-11-03 20:27Z) — nenhum grant antigo passa
+--     a valer para 'agent' com a troca em get_visible_agent_ids.
 --
 -- O que muda (corpo-base = pg_get_functiondef em producao, 2026-11-03):
 --   (a) effective_role(uuid)              md5 base c9e9842e86cefd715be8a3545d06b726 — remove o ramo
@@ -31,6 +33,7 @@
 -- funcao, policy ou CHECK passa a aceitar/produzir esse valor depois desta migration.
 --
 -- Rollback (ordem inversa; as tabelas tinham 0 linhas, nada a restaurar de dado):
+--   ALTER TABLE public.user_roles DROP CONSTRAINT user_roles_no_special_agent;
 --   ALTER TABLE public.profiles DROP CONSTRAINT profiles_role_check;
 --   ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check
 --     CHECK (role = ANY (ARRAY['admin'::text, 'supervisor'::text, 'agent'::text, 'special_agent'::text]));
