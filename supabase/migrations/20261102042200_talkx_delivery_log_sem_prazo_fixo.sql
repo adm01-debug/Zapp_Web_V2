@@ -7,7 +7,10 @@
 --
 -- Unica mudanca no corpo: `interval '30 days'` -> `make_interval(days => v_days_message)` no bloco 6.
 -- Corpo base = pg_get_functiondef em producao (md5 cee3d4eb8fd84d5a0648bd8554add170, 2026-11-03).
--- Rollback: reaplicar a versao de 20261006205053_talkx_expurgo_escopo_ai_jobs.sql (prazo fixo 30d).
+-- Depois da funcao: (a) UPSERT idempotente dos 4 settings em 36500 dias (replay do zero semeava
+-- 180/365/90/90 e apagaria historico); (b) COMMENT ON FUNCTION atualizado (dizia "30 dias").
+-- Rollback: reaplicar a versao de 20261006205053_talkx_expurgo_escopo_ai_jobs.sql (prazo fixo 30d)
+-- e, se quiser voltar os prazos, UPDATE talkx_settings SET value = to_jsonb(180|365|90|90).
 
 CREATE OR REPLACE FUNCTION public.purge_talkx_expired_data(p_limit integer DEFAULT 1000)
  RETURNS jsonb
@@ -221,3 +224,17 @@ BEGIN
   RETURN v_counts || jsonb_build_object('events', v_events);
 END;
 $function$
+
+-- Replay do zero: os seeds originais (X032) deixam 180/365/90/90; sem este passo um banco novo
+-- apagaria historico de campanha. Idempotente: fixa os 4 prazos em 36500 dias (= producao).
+INSERT INTO public.talkx_settings AS settings (key, value, description, updated_at)
+VALUES
+  ('retention_days_message',    to_jsonb(36500), 'X032: dias de retencao do texto/snapshot de midia dos destinatarios de campanhas terminais. Decisao 2026-11-03: historico de campanha fica para sempre (36500 = 100 anos; a funcao nao tem 0 = desligado).', now()),
+  ('retention_days_clicks',     to_jsonb(36500), 'X032: dias de retencao de ua/ip_hash em talkx_link_clicks. Decisao 2026-11-03: para sempre (36500).', now()),
+  ('retention_days_test_sends', to_jsonb(36500), 'X032: dias de retencao das linhas de envio de teste (talkx_test_send_claims). Decisao 2026-11-03: para sempre (36500).', now()),
+  ('retention_days_ai',         to_jsonb(36500), 'X032 + #130: dias de retencao das linhas TERMINAIS de ai_jobs do PROPRIO Talk X. Decisao 2026-11-03: para sempre (36500).', now())
+ON CONFLICT (key) DO UPDATE
+  SET value = EXCLUDED.value, description = EXCLUDED.description, updated_at = EXCLUDED.updated_at;
+
+COMMENT ON FUNCTION public.purge_talkx_expired_data(integer) IS
+  'Talk X (X032 + X033 + M-DB-01 + #130): expurgo LGPD por prazo. Roda no maximo 1x/dia (talkx_settings.last_purge_at). Anula personalized_message/media snapshots de destinatarios de campanhas terminais vencidas, limpa ua/ip_hash, apaga linhas vencidas de teste, do talkx_delivery_log (prazo = retention_days_message, desde 2026-11-03; antes 30 dias fixos) e, em ai_jobs, SOMENTE os jobs terminais vencidos do PROPRIO Talk X (idempotency_key com prefixo reconcile:talkx.); a fila de IA de outros modulos fica intacta. Objetos de talkx-media orfaos vao para talkx_storage_purge_queue para a Storage API apagar — nunca DELETE em storage.objects. Grava evento com as contagens. Nunca apaga talkx_blacklist, contadores nem eventos. Decisao 2026-11-03: os 4 prazos estao em 36500 dias (historico de campanha fica para sempre).';
