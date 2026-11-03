@@ -6,21 +6,21 @@ qualquer tarefa ou planejamento que toque banco, RLS, functions, cron, storage o
 ## Onde está o resultado (neste repo)
 
 A main tem branch protection, então o snapshot **não** é comitado na main: o workflow
-`.github/workflows/supabase-snapshot.yml` roda a cada 10 min e publica em `docs/supabase/` da branch
-**`supabase-snapshot`** (mesmo desenho da branch `contexto-ia`). Só há commit quando algo mudou.
+O job `banco` de `.github/workflows/contexto.yml` roda a cada 10 min e publica em `docs/contexto/supabase/` da branch
+**`contexto`** (junto com `codigo/` e `regras/`; índice em `docs/contexto/00-INDEX.md`). Só há commit quando algo mudou.
 
 Como ler, sem trocar de branch:
 
 ```sh
-git fetch origin supabase-snapshot
-git show origin/supabase-snapshot:docs/supabase/README.md          # protocolo + resumo
-git show origin/supabase-snapshot:docs/supabase/tables/public/<tabela>.md
-git show origin/supabase-snapshot:docs/supabase/lints.md           # antes de mexer em RLS/functions/índices
+git fetch origin contexto
+git show origin/contexto:docs/contexto/supabase/README.md          # protocolo + resumo
+git show origin/contexto:docs/contexto/supabase/tables/public/<tabela>.md
+git show origin/contexto:docs/contexto/supabase/lints.md           # antes de mexer em RLS/functions/índices
 ```
 
-Ou por URL (sem clone): `https://raw.githubusercontent.com/adm01-debug/Zapp_Web_V2/supabase-snapshot/docs/supabase/README.md`.
+Ou por URL (sem clone): `https://raw.githubusercontent.com/adm01-debug/Zapp_Web_V2/contexto/docs/contexto/supabase/README.md`.
 
-Frescor: `git log -1 --format=%cI origin/supabase-snapshot`. Seções com falha na última coleta: `errors.md`.
+Frescor: `git log -1 --format=%cI origin/contexto -- docs/contexto/supabase`. Seções com falha na última coleta: `errors.md`.
 
 Neste repo `schema.sql` e `types.ts` estão desligados (`PGDUMP=false`, `GEN_TYPES=false` no workflow):
 o runner só tem `pg_dump` 16 (banco é PG 17) e `types.ts` já vem do `types-sync.yml`.
@@ -69,7 +69,7 @@ grant usage on schema cron, vault, storage, auth, supabase_migrations to snapsho
 
 | Var | Default | Efeito |
 |---|---|---|
-| `SNAPSHOT_DIR` | `docs/supabase` | pasta de saída |
+| `SNAPSHOT_DIR` | `docs/supabase` (no workflow: `docs/contexto/supabase`) | pasta de saída |
 | `PGDUMP_SCHEMAS` | `public` | schemas do `schema.sql`, separados por vírgula |
 | `GEN_TYPES` | `true` | gera `types.ts` via `npx supabase gen types` |
 | `PGDUMP` | `true` | gera `schema.sql` via `pg_dump` (exige pg_dump >= versão do servidor) |
