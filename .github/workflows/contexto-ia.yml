@@ -49,7 +49,7 @@ on:
 
 concurrency:
   group: contexto-ia
-  cancel-in-progress: true
+  cancel-in-progress: false # contrato E98 do repo: push em main nunca é cancelado; o gate por commit evita trabalho repetido
 
 permissions:
   contents: write

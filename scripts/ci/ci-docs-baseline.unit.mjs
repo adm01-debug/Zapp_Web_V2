@@ -293,9 +293,9 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
 
 test('inventario: 16 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
-  assert.equal(arquivos.length, 18);
+  assert.equal(arquivos.length, 19);
   const readme = await readFile(README_CI, 'utf8');
-  assert.match(readme, /\*\*18 workflows\.\*\*/);
+  assert.match(readme, /\*\*19 workflows\.\*\*/);
   for (const f of arquivos) assert.ok(readme.includes(f));
 });
 
@@ -335,7 +335,7 @@ test('plano: nenhuma etapa superada pede reexecucao', async () => {
 test('plano: inventario atual e 16 YAML com fonte gerada', async () => {
   const plano = await readFile(PLANO, 'utf8');
   const chato = achata(plano);
-  assert.match(chato, /\*\*18\*\* arquivos YAML em `\.github\/workflows\/`/);
+  assert.match(chato, /\*\*19\*\* arquivos YAML em `\.github\/workflows\/`/);
   assert.ok(plano.includes('docs/ci/README.md'));
   assert.ok(plano.includes('render-workflow-docs.mjs'));
   assert.match(chato, /403[^.]*limite de evidência/i);

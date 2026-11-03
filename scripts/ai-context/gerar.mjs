@@ -301,7 +301,7 @@ secao('rotas-jsx', () => {
     while ((m = re.exec(src))) {
       if (m[0].startsWith('</')) { stack.pop(); continue; }
       const attrs = m[1] || ''; const self = m[2] === '/';
-      const p = /\bpath=["']([^"']*)["']/.exec(attrs); const isIndex = /\bindex\b/.test(attrs);
+      const p = /\bpath=["']([^"']*)["']/.exec(attrs) || /\bpath:\s*["']([^"']*)["']/.exec(attrs); const isIndex = /\bindex\b/.test(attrs);
       const parent = stack.length ? stack[stack.length - 1] : null;
       const full = p ? joinPath(parent, p[1]) : isIndex ? parent || '/' : parent;
       const tags = [...attrs.matchAll(/<([A-Z]\w*)/g)].map((x) => x[1]);
@@ -355,6 +355,8 @@ secao('vistas', () => {
     while ((m = re1.exec(src))) vistas.push({ id: m[1], componente: m[2], arquivo: componentFile(m[2], f), registrada_em: f });
     const re2 = /['"]?([\w-]+)['"]?\s*:\s*(?:<)?(?:[A-Z]\w*\.)?([A-Z]\w*)\s*(?:\/?>|,|\}|as\b)/g;
     while ((m = re2.exec(src))) if (lazyMap.has(m[2]) || d.imports.some((i) => FILE.get(i)?.exports.includes(m[2]))) vistas.push({ id: m[1], componente: m[2], arquivo: componentFile(m[2], f), registrada_em: f });
+    const re3 = /['"]?([\w-]+)['"]?\s*:\s*\([^)]*\)\s*=>\s*\(?\s*([\s\S]{0,400}?)(?:\)\s*,|,\s*\n|\n\s*\}|$)/g;
+    while ((m = re3.exec(src))) { const tags = [...m[2].matchAll(/<(?:[A-Z]\w*\.)?([A-Z]\w*)/g)].map((x) => x[1]).filter((t) => !/Boundary|Provider|Suspense|Fragment/.test(t)); for (const t of tags) { const fl = lazyMap.has(t) ? lazyMap.get(t) : componentFile(t, f, true); if (fl) { vistas.push({ id: m[1], componente: t, arquivo: fl, registrada_em: f }); break; } } }
   }
 });
 const vistasUniq = Object.values(Object.fromEntries(vistas.map((v) => [v.id + '|' + v.componente, v]))).sort((a, b) => a.id.localeCompare(b.id));
@@ -379,8 +381,13 @@ secao('menu', () => {
       const label = m[2] || m[8]; const dest = m[4] || m[6]; const block = m[0];
       if (!/^[\w/.:#?=&-]+$/.test(dest) || label.length > 60) continue;
       const before = src.slice(0, m.index); const g = [...before.matchAll(/(?:title|label|group|section|id|name)\s*:\s*['"`]([^'"`]+)['"`]\s*,?\s*\n?\s*(?:items|children|links|routes)\s*:/g)];
-      const roles = [...block.matchAll(/(?:roles?|permissions?|allowedRoles|requiredRole)\s*:\s*\[?([^\]\n}]*)\]?/g)].flatMap((x) => x[1].split(',').map((s) => s.replace(/['"`\s]/g, '')).filter((s) => /^\w+$/.test(s)));
-      menu.push({ rotulo: label, destino: dest, grupo: g.length ? g[g.length - 1][1] : null, papeis: uniq(roles), definido_em: f });
+      let papeisExpr = null; const roles = [];
+      for (const x of block.matchAll(/(?:roles?|permissions?|allowedRoles|requiredRole)\s*:\s*(\[[^\]]*\]|[A-Za-z_$][\w$.]*)/g)) {
+        let expr = x[1];
+        if (!expr.startsWith('[')) { const cm = new RegExp(`(?:const|let|var)\\s+${expr.replace(/[.$]/g, '\\$&')}\\b[^=]*=\\s*(\\[[^\\]]*\\])`).exec(src) || [...(FILE.get(f)?.imports || [])].map((i) => new RegExp(`(?:const|let|var)\\s+${expr.replace(/[.$]/g, '\\$&')}\\b[^=]*=\\s*(\\[[^\\]]*\\])`).exec(FILE.get(i)?.conteudo || '')).find(Boolean); if (cm) expr = cm[1]; else { papeisExpr = x[1]; continue; } }
+        roles.push(...expr.replace(/^\[|\]$/g, '').split(',').map((s0) => s0.replace(/['"`\s]/g, '')).filter((s0) => /^\w+$/.test(s0)));
+      }
+      menu.push({ rotulo: label, destino: dest, grupo: g.length ? g[g.length - 1][1] : null, papeis: uniq(roles), papeis_nao_resolvidos: papeisExpr, definido_em: f });
     }
   }
 });
@@ -422,7 +429,7 @@ for (const co of componentes) for (const e of co.exports) (nomesComp[e] = nomesC
 const componentesDuplicados = sortObj(Object.fromEntries(Object.entries(nomesComp).filter(([k, v]) => v.length > 1 && !/^(Index|Page|Layout|App|Default|Root|Props)$/.test(k))));
 
 // ---------- banco (SQL em ordem de statement) ----------
-const banco = { tabelas: {}, funcoes: new Set(), triggers: [], views: new Set(), enums: {}, extensoes: new Set(), migrations: 0, fonte: [], cron: [], buckets_sql: new Set(), seeds: [] };
+const banco = { tabelas: {}, funcoes: new Set(), triggers: [], views: new Set(), enums: {}, extensoes: new Set(), migrations: 0, fonte: [], cron: [], buckets_sql: new Set(), seeds: [], ddl_dinamico: 0 };
 let SQL_TEXT_LOWER = '';
 const migDir = ['supabase/migrations', 'migrations', 'db/migrations', 'database/migrations', 'prisma/migrations', 'drizzle', 'sql', 'db'].find((d) => exists(d) && ALL.some((f) => f.startsWith(d + '/') && f.endsWith('.sql')));
 const tname = (name) => { const n = name.replace(/"/g, ''); return n.startsWith('public.') ? n.slice(7) : n; };
@@ -433,7 +440,7 @@ const parseCols = (body, table) => {
   parts.push(cur);
   for (let p of parts) {
     p = p.trim().replace(/\s+/g, ' '); if (!p) continue;
-    const m = /^"?([a-zA-Z_]\w*)"?\s+([a-zA-Z_][\w[\]]*(?:\s*\([^)]*\))?(?:\s+with time zone|\s+without time zone|\s+varying(?:\s*\([^)]*\))?)?)(.*)$/i.exec(p);
+    const m = /^"?([a-zA-Z_]\w*)"?\s+((?:double\s+precision|character\s+varying|bit\s+varying|timestamp\s+with(?:out)?\s+time\s+zone|time\s+with(?:out)?\s+time\s+zone|[a-zA-Z_][\w[\]]*)(?:\s*\([^)]*\))?(?:\s+with(?:out)?\s+time\s+zone)?(?:\[\])?)(.*)$/i.exec(p);
     if (!m || /^(constraint|primary|foreign|unique|check|exclude|like|index|key)$/i.test(m[1])) {
       const fk = /foreign key\s*\(\s*"?(\w+)"?\s*\)\s*references\s+"?(?:public\.)?"?(\w+)/i.exec(p); if (fk) table.fks.push({ coluna: fk[1], ref: fk[2] });
       continue;
@@ -452,7 +459,9 @@ secao('banco-sql', () => {
     const sql = readText(f).replace(/--[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
     const bodies = []; const sqlNoBody = sql.replace(/\$(\w*)\$[\s\S]*?\$\1\$/g, (m0) => { bodies.push(m0); return "''"; });
     allSql.push(sql.toLowerCase());
-    for (const stRaw of sqlNoBody.split(';')) {
+    // DO $$ ... $$ e corpos de função: statements literais (CREATE/DROP POLICY, ALTER TABLE) também valem; DDL dinâmico (EXECUTE format) é só sinalizado
+    const bodyStatements = bodies.flatMap((b) => { const inner = b.replace(/^\$\w*\$|\$\w*\$$/g, '').replace(/\$(\w*)\$[\s\S]*?\$\1\$/g, "''"); if (/\bexecute\s+(format|'|\$)/i.test(inner)) banco.ddl_dinamico++; return inner.split(';').filter((x) => /^\s*(create|drop|alter)\s/i.test(x)); });
+    for (const stRaw of [...sqlNoBody.split(';'), ...bodyStatements]) {
       const st = stRaw.trim(); if (!st) continue; let m;
       if ((m = /^create\s+(?:unlogged\s+)?table\s+(?:if\s+not\s+exists\s+)?("?[\w.]+"?)\s*\(/i.exec(st))) {
         let i = m[0].length, depth = 1, body = '';
@@ -471,6 +480,9 @@ secao('banco-sql', () => {
           else if ((x = /^drop\s+column\s+(?:if\s+exists\s+)?"?(\w+)"?/i.exec(op))) delete t.colunas[x[1]];
           else if ((x = /^rename\s+column\s+"?(\w+)"?\s+to\s+"?(\w+)"?/i.exec(op)) && t.colunas[x[1]]) { t.colunas[x[2]] = t.colunas[x[1]]; delete t.colunas[x[1]]; }
           else if ((x = /^alter\s+column\s+"?(\w+)"?\s+(?:set\s+data\s+)?type\s+([\w\s()[\]]+?)(?:\s+using|$)/i.exec(op)) && t.colunas[x[1]]) t.colunas[x[1]].tipo = x[2].trim().toLowerCase();
+          else if ((x = /^alter\s+column\s+"?(\w+)"?\s+(set|drop)\s+not\s+null/i.exec(op)) && t.colunas[x[1]]) t.colunas[x[1]].nn = x[2].toLowerCase() === 'set';
+          else if ((x = /^alter\s+column\s+"?(\w+)"?\s+set\s+default\s+([\s\S]+)$/i.exec(op)) && t.colunas[x[1]]) t.colunas[x[1]].default = x[2].trim();
+          else if ((x = /^alter\s+column\s+"?(\w+)"?\s+drop\s+default/i.exec(op)) && t.colunas[x[1]]) t.colunas[x[1]].default = null;
           else if (/^enable\s+row\s+level\s+security/i.test(op)) t.rls = true;
           else if (/^disable\s+row\s+level\s+security/i.test(op)) t.rls = false;
         }
@@ -532,9 +544,9 @@ secao('banco-types', () => {
 for (const [t, cols] of Object.entries(tabelasTypes)) T(t).colunas_types = cols;
 const EDGE_DIR = ['supabase/functions', 'functions', 'netlify/functions', 'edge-functions'].find((d) => exists(d)) || 'supabase/functions';
 const tabelasUsadas = new Map();
-for (const [f, d] of FILE) for (const t of d.tabelas) { if (!tabelasUsadas.has(t)) tabelasUsadas.set(t, { front: [], edges: [] }); (f.startsWith(EDGE_DIR) ? tabelasUsadas.get(t).edges : tabelasUsadas.get(t).front).push(f); }
+for (const [f, d] of FILE) for (const t of d.teste ? [] : d.tabelas) { if (!tabelasUsadas.has(t)) tabelasUsadas.set(t, { front: [], edges: [] }); (f.startsWith(EDGE_DIR) ? tabelasUsadas.get(t).edges : tabelasUsadas.get(t).front).push(f); }
 const bancoOut = {
-  fonte: uniq(banco.fonte), migrations: banco.migrations, seeds: banco.seeds, extensoes: [...banco.extensoes].sort(), enums: sortObj(banco.enums), views: [...banco.views].sort(), funcoes: [...banco.funcoes].sort(),
+  fonte: uniq(banco.fonte), migrations: banco.migrations, seeds: banco.seeds, avisos: banco.ddl_dinamico ? [`${banco.ddl_dinamico} bloco(s) com DDL dinâmico (EXECUTE format/...) não modelado — policies/colunas criadas dinamicamente podem faltar; confira no banco vivo`] : [], extensoes: [...banco.extensoes].sort(), enums: sortObj(banco.enums), views: [...banco.views].sort(), funcoes: [...banco.funcoes].sort(),
   triggers: banco.triggers.sort((a, b) => a.tabela.localeCompare(b.tabela) || a.nome.localeCompare(b.nome)),
   cron_jobs: banco.cron.sort((a, b) => a.nome.localeCompare(b.nome)),
   buckets: uniq([...banco.buckets_sql, ...[...FILE.values()].flatMap((d) => d.buckets)]).map((b) => ({ nome: b, criado_em_sql: banco.buckets_sql.has(b), usado_em: [...FILE.values()].filter((d) => d.buckets.includes(b)).length })),

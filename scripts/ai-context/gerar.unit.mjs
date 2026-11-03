@@ -34,6 +34,8 @@ export function AppRoutes() {
       <Route path="contacts/:id" element={<ContactPage />} />
     </Route>
     <Route path="/admin" element={<Admin />} />
+    <Route {...{ path: '/access-denied' }} element={<Login />} />
+    <Route path="/old" element={<Navigate to="/app" />} />
   </Routes>);
 }
 import { Shell } from '@/components/layout/Shell';
@@ -41,7 +43,10 @@ import { Home } from '@/components/home/Home';
 import { ContactPage } from '@/components/contacts/ContactPage';`);
   w(root, 'src/components/auth/ProtectedRoute.tsx', `export const ProtectedRoute = ({ children }) => <>{children}</>;`);
   w(root, 'src/components/layout/Shell.tsx', `import { Outlet } from 'react-router-dom';\nexport const Shell = () => <div><Outlet/></div>;`);
-  w(root, 'src/components/layout/sidebarNav.ts', `export const sidebarGroups = [{ title: 'Principal', items: [{ id: 'home', label: 'Início', path: '/app' }, { id: 'contacts', label: 'Contatos', path: '/app/contacts/:id', roles: ['admin'] }, { id: 'ghost', label: 'Fantasma', path: '/nada' }] }];`);
+  w(root, 'src/pages/ViewRouter.tsx', `import * as Views from '@/pages/lazyViews';\nconst VIEW_MAP = { home: Views.HomeLazy };\nconst SPECIAL_VIEWS = {\n  'achievements': (props) => (\n    <Boundary><Views.AchievementsLazy userId={props.userId} /></Boundary>\n  ),\n};\nexport const ViewRouter = ({ v }) => SPECIAL_VIEWS[v] ? SPECIAL_VIEWS[v]({}) : null;`);
+  w(root, 'src/pages/lazyViews.ts', `import { lazy } from 'react';\nexport const HomeLazy = lazy(() => import('@/components/home/Home').then(m => ({ default: m.Home })));\nexport const AchievementsLazy = lazy(() => import('@/components/achievements/Achievements'));`);
+  w(root, 'src/components/achievements/Achievements.tsx', `export default function Achievements() { return <ol/>; }`);
+  w(root, 'src/components/layout/sidebarNav.ts', `const STAFF: string[] = ['admin', 'supervisor'];\nexport const sidebarGroups = [{ title: 'Principal', items: [{ id: 'home', label: 'Início', path: '/app' }, { id: 'contacts', label: 'Contatos', path: '/app/contacts/:id', roles: ['admin'] }, { id: 'staff', label: 'Equipe', path: '/admin', roles: STAFF }, { id: 'x', label: 'Externo', path: '/login', roles: EXTERNAL }, { id: 'ghost', label: 'Fantasma', path: '/nada' }] }];`);
   w(root, 'src/components/home/Home.tsx', `import { useContacts } from '@/hooks/useContacts';\nexport const Home = () => { const c = useContacts(); return <div>{c.length}</div>; };`);
   w(root, 'src/components/contacts/ContactPage.tsx', `import { Card } from '@/components/ui';\nimport { useContacts } from '@/hooks/useContacts';\nexport const ContactPage = () => { useContacts(); return <Card/>; };`);
   w(root, 'src/components/ui/index.ts', `export { Card } from './Card';\nexport * from './Button';`);
@@ -62,7 +67,7 @@ export function useContacts() { return useQuery(['c'], async () => { const { dat
   w(root, 'supabase/functions/send-email/index.ts', `const key = Deno.env.get('RESEND_API_KEY');\nDeno.serve(async (req) => { if (req.method === 'POST') { await supabase.from('emails').insert({}); } return fetch('https://api.resend.com/x'); });`);
   w(root, 'supabase/functions/stripe-webhook/index.ts', `Deno.serve(async (req) => { await supabase.from('payments').insert({}); return new Response('ok'); });`);
   w(root, 'supabase/functions/orphan-fn/index.ts', `Deno.serve(() => new Response('x'));`);
-  w(root, 'supabase/migrations/001_init.sql', `create table public.contacts (id uuid primary key default gen_random_uuid(), name text not null, email text, "createdAt" timestamptz default now());
+  w(root, 'supabase/migrations/001_init.sql', `create table public.contacts (id uuid primary key default gen_random_uuid(), name text not null, email text, "createdAt" timestamptz default now(), lat double precision, created2 timestamp with time zone);
 alter table public.contacts enable row level security;
 create policy "contacts_select" on public.contacts for select to authenticated using (true);
 create index contacts_email_idx on public.contacts (email);
@@ -78,7 +83,13 @@ create policy "contacts_select" on public.contacts for select to authenticated u
 create policy "contacts_insert" on public.contacts for insert to authenticated with check (true);
 drop table public.legacy;
 create table public.payments (id uuid primary key, amount numeric);
-create trigger trg_pay after insert on public.payments for each row execute function public.is_admin();`);
+create trigger trg_pay after insert on public.payments for each row execute function public.is_admin();
+alter table public.contacts alter column phone set not null, alter column phone set default 'n/a';
+do $$ begin
+  drop policy if exists "contacts_insert" on public.contacts;
+  create policy "contacts_insert" on public.contacts for insert to service_role with check (true);
+  execute format('create policy %I on public.payments for select using (true)', 'dyn');
+end $$;`);
   w(root, 'src/integrations/supabase/types.ts', `export type Database = {\n  public: {\n    Tables: {\n      contacts: {\n        Row: {\n          id: string\n          name: string\n          phone: string | null\n          extra_col: string\n        }\n        Insert: { id?: string }\n      }\n    }\n  }\n}`);
   w(root, 'scripts/audit.mjs', `// Audita o banco.\nconsole.log(process.env.DB_URL);`);
   w(root, 'scripts/orphan.sh', `#!/bin/sh\necho x`);
@@ -115,6 +126,11 @@ test('rotas: aninhamento, index, lazy, proteção herdada e fecho transitivo', (
   assert.deepEqual(by['/app/contacts/:id'].edges, ['send-email']);
   assert.deepEqual(by['/app/contacts/:id'].hooks_locais, ['useContacts']);
   assert.deepEqual(by['/admin'].papeis, ['admin']);
+  assert.equal(by['/access-denied'].arquivo, 'src/pages/Login.tsx', 'path via spread');
+  assert.equal(by['/old'].tipo, 'redirect'); assert.equal(by['/old'].redireciona, '/app');
+  const vistas = Object.fromEntries(r.vistas.map((v) => [v.id, v]));
+  assert.equal(vistas.home.arquivo, 'src/components/home/Home.tsx');
+  assert.equal(vistas.achievements.arquivo, 'src/components/achievements/Achievements.tsx', 'SPECIAL_VIEWS com função');
 });
 
 test('rotas HTTP de backend (express) e Python (FastAPI)', () => {
@@ -129,6 +145,8 @@ test('menu: resolve destino, grupo, papéis e aponta item sem destino', () => {
   assert.equal(m['Início'].grupo, 'Principal');
   assert.deepEqual(m['Contatos'].papeis, ['admin']);
   assert.deepEqual(J('baseline.json').alertas.menu_sem_destino, ['Fantasma -> /nada']);
+  assert.deepEqual(m['Equipe'].papeis, ['admin', 'supervisor'], 'roles por constante');
+  assert.equal(m['Externo'].papeis_nao_resolvidos, 'EXTERNAL');
 });
 
 test('módulos: menu → módulo → hooks → edges → tabelas', () => {
@@ -173,7 +191,13 @@ test('edge functions: verify_jwt, env, quem chama, cron e órfãs', () => {
 
 test('banco: migrations em ordem (add/drop coluna, drop+create policy, drop table), cron, buckets, drift', () => {
   const b = J('banco.json'); const t = b.tabelas.contacts;
-  assert.deepEqual(Object.keys(t.colunas), ['createdAt', 'id', 'name', 'phone'], 'email removida, phone adicionada');
+  assert.deepEqual(Object.keys(t.colunas), ['created2', 'createdAt', 'id', 'lat', 'name', 'phone'], 'email removida, phone adicionada');
+  assert.equal(t.colunas.lat.tipo, 'double precision');
+  assert.equal(t.colunas.created2.tipo, 'timestamp with time zone');
+  assert.equal(t.colunas.phone.nn, true, 'SET NOT NULL aplicado');
+  assert.equal(t.colunas.phone.default, "'n/a'");
+  assert.equal(t.policies.find((p) => p.nome === 'contacts_insert').para, 'service_role', 'policy recriada dentro de DO $$');
+  assert.equal(b.avisos.length, 1, 'DDL dinâmico sinalizado');
   assert.equal(t.colunas.name.nn, true);
   assert.equal(t.rls, true);
   assert.deepEqual(t.policies.map((p) => p.nome + ':' + p.comando), ['contacts_insert:insert', 'contacts_select:select']);
@@ -186,7 +210,7 @@ test('banco: migrations em ordem (add/drop coluna, drop+create policy, drop tabl
   assert.deepEqual(b.enums.app_role, ['admin', 'agent']);
   assert.deepEqual(b.cron_jobs, [{ nome: 'nightly', agenda: '0 3 * * *', migration: '001_init.sql', chama_edge: 'send-email' }]);
   assert.ok(b.buckets.some((x) => x.nome === 'avatars' && x.criado_em_sql));
-  assert.deepEqual(t.drift, { so_na_migration: ['createdAt'], so_no_types: ['extra_col'] });
+  assert.deepEqual(t.drift, { so_na_migration: ['createdAt', 'lat', 'created2'], so_no_types: ['extra_col'] });
   assert.deepEqual(b.rpcs_usadas_no_codigo, [{ nome: 'is_admin', definida: true, usada_em: 1 }]);
 });
 
