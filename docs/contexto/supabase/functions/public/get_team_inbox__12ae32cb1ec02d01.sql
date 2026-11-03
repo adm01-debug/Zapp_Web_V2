@@ -1,0 +1,55 @@
+CREATE OR REPLACE FUNCTION public.get_team_inbox()
+ RETURNS TABLE(conversation_id uuid, conversation_type text, conversation_name text, department_id uuid, last_message_at timestamp with time zone, last_message_text text, last_sender_id uuid, unread_count bigint, is_muted boolean, member_count bigint)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_profile_id uuid := public.current_profile_id();
+BEGIN
+  IF v_profile_id IS NULL THEN
+    RAISE EXCEPTION 'not_authenticated';
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    c.id,
+    c.type,
+    c.name,
+    c.department_id,
+    c.updated_at,
+    lm.content,
+    lm.sender_id,
+    COALESCE(unread.cnt, 0)::bigint,
+    COALESCE(m.is_muted, false),
+    COALESCE(mc.cnt, 0)::bigint
+  FROM public.team_conversations c
+  JOIN public.team_conversation_members m
+    ON m.conversation_id = c.id AND m.profile_id = v_profile_id
+  LEFT JOIN LATERAL (
+    SELECT msg.content, msg.sender_id
+      FROM public.team_messages msg
+     WHERE msg.conversation_id = c.id
+     ORDER BY msg.created_at DESC
+     LIMIT 1
+  ) lm ON true
+  LEFT JOIN LATERAL (
+    SELECT count(*) AS cnt
+      FROM public.team_messages msg
+     WHERE msg.conversation_id = c.id
+       AND msg.sender_id <> v_profile_id
+       AND NOT EXISTS (
+         SELECT 1 FROM public.team_message_receipts r
+          WHERE r.message_id = msg.id
+            AND r.profile_id = v_profile_id
+            AND r.status = 'read'
+       )
+  ) unread ON true
+  LEFT JOIN LATERAL (
+    SELECT count(*) AS cnt
+      FROM public.team_conversation_members mc2
+     WHERE mc2.conversation_id = c.id
+  ) mc ON true
+  ORDER BY c.updated_at DESC NULLS LAST;
+END;
+$function$

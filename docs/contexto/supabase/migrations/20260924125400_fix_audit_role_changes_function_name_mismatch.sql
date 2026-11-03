@@ -1,0 +1,1 @@
+-- aplicado via MCP, ver PR #569

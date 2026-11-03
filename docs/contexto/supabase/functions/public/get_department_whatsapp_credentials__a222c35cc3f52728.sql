@@ -1,0 +1,21 @@
+CREATE OR REPLACE FUNCTION public.get_department_whatsapp_credentials(p_department_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_row public.departments%ROWTYPE;
+BEGIN
+  IF current_setting('request.jwt.claims', true)::jsonb ->> 'role' <> 'service_role' THEN
+    RAISE EXCEPTION 'access_denied';
+  END IF;
+  SELECT * INTO v_row FROM public.departments WHERE id = p_department_id;
+  IF NOT FOUND THEN RETURN NULL; END IF;
+  RETURN jsonb_build_object(
+    'whatsapp_mode',        v_row.whatsapp_mode,
+    'whatsapp_api_key',     v_row.whatsapp_api_key,
+    'whatsapp_instance_id', v_row.whatsapp_instance_id
+  );
+END;
+$function$

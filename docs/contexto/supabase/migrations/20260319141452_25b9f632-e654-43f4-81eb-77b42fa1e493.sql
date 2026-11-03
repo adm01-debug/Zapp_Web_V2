@@ -1,0 +1,1 @@
+ALTER TABLE public.whatsapp_groups ADD CONSTRAINT whatsapp_groups_group_id_key UNIQUE (group_id);

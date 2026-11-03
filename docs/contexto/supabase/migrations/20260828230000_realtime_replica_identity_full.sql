@@ -1,0 +1,23 @@
+ALTER TABLE public.agent_stats REPLICA IDENTITY FULL
+
+ALTER TABLE public.connection_health_logs REPLICA IDENTITY FULL
+
+ALTER TABLE public.email_messages REPLICA IDENTITY FULL
+
+ALTER TABLE public.email_threads REPLICA IDENTITY FULL
+
+ALTER TABLE public.password_reset_requests REPLICA IDENTITY FULL
+
+ALTER TABLE public.payment_links REPLICA IDENTITY FULL
+
+ALTER TABLE public.queue_goals REPLICA IDENTITY FULL
+
+ALTER TABLE public.rate_limit_logs REPLICA IDENTITY FULL
+
+ALTER TABLE public.sales_deals REPLICA IDENTITY FULL
+
+ALTER TABLE public.talkx_recipients REPLICA IDENTITY FULL
+
+ALTER TABLE public.warroom_alerts REPLICA IDENTITY FULL
+
+ALTER TABLE public.whisper_messages REPLICA IDENTITY FULL

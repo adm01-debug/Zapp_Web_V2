@@ -1,0 +1,1 @@
+-- applied via MCP db_batch_query; file in repo supabase/migrations/20260902120000_team_chat_v3_parity_reactions_status_departments.sql

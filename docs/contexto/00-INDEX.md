@@ -1,6 +1,6 @@
 # CONTEXTO PARA AGENTES DE IA — ÍNDICE ÚNICO
 
-> Gerado automaticamente por indice.py · 2026-11-03 12:25 UTC · HEAD `f798a88267` · Não edite à mão.
+> Gerado automaticamente por indice.py · 2026-11-03 12:28 UTC · HEAD `f798a88267` · Não edite à mão.
 
 Um sistema, três fontes de verdade, três produtores independentes. **Leia este arquivo e vá direto à fonte certa.** Cada fato tem um dono: se duas fontes discordarem, vale o dono.
 
@@ -8,8 +8,8 @@ Um sistema, três fontes de verdade, três produtores independentes. **Leia este
 
 | Preciso de… | Fonte (dona do fato) | Onde ler | Estado |
 |---|---|---|---|
-| Regras que não podem ser quebradas: RLS por operação, estados e transições, validações, fórmulas, prazos, erros de negócio, testes como especificação, inconsistências código×schema (NÃO VERIFICADO) e regras humanas (`manual/`) | **regras de negócio** | `docs/contexto/regras/07-REGRAS-DE-NEGOCIO.md` | ok · 3 min atrás |
-| Tabelas, colunas, RLS/políticas, funções, triggers, cron, storage, lints — **como está em produção agora** | **banco real** | `docs/contexto/supabase/` (ainda não existe — o produtor não rodou) | ainda não gerado |
+| Regras que não podem ser quebradas: RLS por operação, estados e transições, validações, fórmulas, prazos, erros de negócio, testes como especificação, inconsistências código×schema (NÃO VERIFICADO) e regras humanas (`manual/`) | **regras de negócio** | `docs/contexto/regras/07-REGRAS-DE-NEGOCIO.md` | ok · 2 min atrás |
+| Tabelas, colunas, RLS/políticas, funções, triggers, cron, storage, lints — **como está em produção agora** | **banco real** | `docs/contexto/supabase/README.md` | ok |
 | Rotas, telas, módulos, hooks, edge functions, grafo de dependências, testes, scripts, convenções | **código** | `docs/contexto/codigo/INDEX.md` | ok · 0 min atrás |
 
 ## Ordem de leitura antes de qualquer tarefa ou planejamento
@@ -25,6 +25,92 @@ Um sistema, três fontes de verdade, três produtores independentes. **Leia este
 - Pode fazer isso? Qual estado vem depois? Qual o limite? → **regras de negócio** (inclui `manual/`, escrito por humanos, prioridade máxima).
 - Item listado como **NÃO VERIFICADO** ou **inconsistência** em qualquer fonte: confirme na fonte dona antes de assumir.
 - Nada aqui é editado à mão. Para registrar uma regra que só o negócio sabe, escreva em `manual/` da fonte de regras.
+
+<details><summary>Arquivos de <b>banco real</b> (`docs/contexto/supabase/`)</summary>
+
+- `docs/contexto/supabase/CHANGELOG.md`
+- `docs/contexto/supabase/README.md`
+- `docs/contexto/supabase/auth.md`
+- `docs/contexto/supabase/cron-runs.md`
+- `docs/contexto/supabase/cron.md`
+- `docs/contexto/supabase/edge-functions.md`
+- `docs/contexto/supabase/errors.md`
+- `docs/contexto/supabase/extensions.md`
+- `docs/contexto/supabase/foreign-servers.md`
+- `docs/contexto/supabase/functions.md`
+- `docs/contexto/supabase/grants.md`
+- `docs/contexto/supabase/indexes.md`
+- `docs/contexto/supabase/lints.md`
+- `docs/contexto/supabase/migrations.md`
+- `docs/contexto/supabase/policies.md`
+- `docs/contexto/supabase/project-config.md`
+- `docs/contexto/supabase/queues.md`
+- `docs/contexto/supabase/realtime.md`
+- `docs/contexto/supabase/relationships.md`
+- `docs/contexto/supabase/roles.md`
+- `docs/contexto/supabase/schemas.md`
+- `docs/contexto/supabase/sequences.md`
+- `docs/contexto/supabase/snapshot.json`
+- `docs/contexto/supabase/stats.json`
+- `docs/contexto/supabase/stats.md`
+- `docs/contexto/supabase/storage.md`
+- `docs/contexto/supabase/tables.md`
+- `docs/contexto/supabase/tables/_supabase_internal_triggers.md`
+- `docs/contexto/supabase/tables/bkp_261023/agent_stats.md`
+- `docs/contexto/supabase/tables/bkp_261023/contacts.md`
+- `docs/contexto/supabase/tables/bkp_261023/csat_surveys.md`
+- `docs/contexto/supabase/tables/bkp_261023/functions_before.md`
+- `docs/contexto/supabase/tables/bkp_261023/global_settings.md`
+- `docs/contexto/supabase/tables/bkp_261023/policies_before.md`
+- `docs/contexto/supabase/tables/bkp_261023/schema_migrations.md`
+- `docs/contexto/supabase/tables/bkp_261023/team_messages.md`
+- `docs/contexto/supabase/tables/bkp_261023/user_settings.md`
+- `docs/contexto/supabase/tables/ops/hermes_change_log.md`
+- `docs/contexto/supabase/tables/public/agent_achievements.md`
+- `docs/contexto/supabase/tables/public/agent_mini_game_xp_daily.md`
+- `docs/contexto/supabase/tables/public/agent_presence.md`
+- `docs/contexto/supabase/tables/public/agent_skills.md`
+- `docs/contexto/supabase/tables/public/agent_stats.md`
+- `docs/contexto/supabase/tables/public/agent_visibility_grants.md`
+- `docs/contexto/supabase/tables/public/ai_budget_reservations.md`
+- `docs/contexto/supabase/tables/public/ai_conversation_tags.md`
+- `docs/contexto/supabase/tables/public/ai_jobs.md`
+- `docs/contexto/supabase/tables/public/ai_model_prices.md`
+- `docs/contexto/supabase/tables/public/ai_providers.md`
+- `docs/contexto/supabase/tables/public/ai_usage_logs.md`
+- `docs/contexto/supabase/tables/public/ai_usage_outbox.md`
+- `docs/contexto/supabase/tables/public/allowed_countries.md`
+- `docs/contexto/supabase/tables/public/app_settings.md`
+- `docs/contexto/supabase/tables/public/audio_meme_favorites.md`
+- `docs/contexto/supabase/tables/public/audio_memes.md`
+- `docs/contexto/supabase/tables/public/audit_logs.md`
+- `docs/contexto/supabase/tables/public/auto_close_config.md`
+- `docs/contexto/supabase/tables/public/automations.md`
+- `docs/contexto/supabase/tables/public/away_messages.md`
+- `docs/contexto/supabase/tables/public/blocked_countries.md`
+- `docs/contexto/supabase/tables/public/blocked_ips.md`
+- `docs/contexto/supabase/tables/public/business_hours.md`
+- `docs/contexto/supabase/tables/public/calls.md`
+- `docs/contexto/supabase/tables/public/campaign_ab_variants.md`
+- `docs/contexto/supabase/tables/public/campaign_contacts.md`
+- `docs/contexto/supabase/tables/public/campaigns.md`
+- `docs/contexto/supabase/tables/public/catalog_favorites.md`
+- `docs/contexto/supabase/tables/public/catalog_rate_limit_hits.md`
+- `docs/contexto/supabase/tables/public/catalog_rate_limits.md`
+- `docs/contexto/supabase/tables/public/catalog_send_events.md`
+- `docs/contexto/supabase/tables/public/channel_connections.md`
+- `docs/contexto/supabase/tables/public/channel_routing_rules.md`
+- `docs/contexto/supabase/tables/public/chatbot_executions.md`
+- `docs/contexto/supabase/tables/public/chatbot_flows.md`
+- `docs/contexto/supabase/tables/public/client_wallet_rules.md`
+- `docs/contexto/supabase/tables/public/connection_alert_preferences.md`
+- `docs/contexto/supabase/tables/public/connection_health_logs.md`
+- `docs/contexto/supabase/tables/public/contact_block_audit.md`
+- `docs/contexto/supabase/tables/public/contact_custom_fields.md`
+- `docs/contexto/supabase/tables/public/contact_deletion_audit.md`
+- … +174
+
+</details>
 
 <details><summary>Arquivos de <b>código</b> (`docs/contexto/codigo/`)</summary>
 

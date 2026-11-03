@@ -1,0 +1,1 @@
+ALTER TABLE public.contacts ADD CONSTRAINT contacts_phone_unique UNIQUE (phone);
