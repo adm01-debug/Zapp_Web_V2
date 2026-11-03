@@ -1,0 +1,143 @@
+# docs:
+#   gatilho: agendado (a cada 10 min, minuto 7) e dispatch
+#   prova: docs/supabase/ na branch supabase-snapshot regerado do banco oficial (schema, RLS, functions, triggers, cron, migrations, storage, lints)
+#   falha: o job fica vermelho e o snapshot nao e atualizado (a branch mantem a ultima versao boa)
+#   avisa: ninguem (a branch supabase-snapshot e a prova; errors.md lista secoes com falha)
+# nao-e-bug:
+#   - sem-commit: "Sem mudancas" no log significa que o banco nao mudou desde a ultima coleta
+#   - metricas: mudancas so em stats.md/cron-runs.md sao comitadas no maximo 1x por hora
+name: Supabase snapshot (10 min)
+
+# Mantem docs/supabase/ (contexto do banco para agentes de IA) sincronizado com o
+# banco OFICIAL a cada 10 minutos. Publica na branch `supabase-snapshot`, nunca na
+# main: a main tem branch protection (push direto e recusado com GH006, ver
+# talkx-status-regen.yml) e um PR a cada 10 min dispararia o CI inteiro.
+# Push feito com GITHUB_TOKEN nao dispara outros workflows (politica anti-loop).
+#
+# Como ler (agentes): scripts/supabase_snapshot/README.md.
+# Secret necessario: SUPABASE_DB_URL (connection string, pooler em session mode;
+# recomendado role somente leitura — SQL no README do script).
+
+on:
+  schedule:
+    # minuto 7: fora do minuto 0 (fila do GitHub) e dos outros crons do repo
+    - cron: '7-59/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Regenerar tudo ignorando o snapshot anterior'
+        type: boolean
+        default: false
+
+concurrency:
+  group: supabase-snapshot
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+permissions:
+  contents: read
+
+env:
+  SNAPSHOT_BRANCH: supabase-snapshot
+  SNAPSHOT_DIR: docs/supabase
+  # schema.sql exigiria pg_dump 17 (o runner tem o client 16 do Ubuntu 24.04);
+  # types.ts ja e gerado pelo types-sync.yml. Os dois ficam desligados aqui.
+  PGDUMP: 'false'
+  GEN_TYPES: 'false'
+
+jobs:
+  snapshot:
+    # O dispatch nao deve executar codigo de uma ref arbitraria com token de escrita.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:  # zizmor: ignore[excessive-permissions]
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Dependencias Python (runner ubuntu-24.04 ja tem python3)
+        run: python3 -m pip install --user --quiet -r scripts/supabase_snapshot/requirements.txt
+
+      - name: Recuperar snapshot anterior da branch de publicacao
+        env:
+          FORCE: ${{ inputs.force }}
+        run: |
+          mkdir -p "$SNAPSHOT_DIR"
+          if git fetch --quiet --depth 1 origin "$SNAPSHOT_BRANCH" 2>/dev/null; then
+            git archive FETCH_HEAD -- "$SNAPSHOT_DIR" | tar -x
+          else
+            echo "Branch $SNAPSHOT_BRANCH ainda nao existe: primeira coleta."
+          fi
+          if [ "$FORCE" = "true" ]; then rm -f "$SNAPSHOT_DIR/snapshot.json"; fi
+
+      - name: Gerar snapshot
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: python3 scripts/supabase_snapshot/snapshot.py
+
+      - name: Guard — nenhum segredo na saida
+        run: |
+          if grep -rIEl 'eyJ[A-Za-z0-9_-]{40,}|sb_secret_|postgres(ql)?://[^ ]*:[^ @]+@' "$SNAPSHOT_DIR"; then
+            echo "::error::Possivel segredo detectado no snapshot — publicacao abortada"; exit 1
+          fi
+
+      - name: Publicar na branch de snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VOLATILE_MIN_INTERVAL_MIN: '60'
+          HUSKY: '0'
+        run: |
+          PUB="$RUNNER_TEMP/pub"
+          rm -rf "$PUB"
+          REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git fetch --quiet --depth 1 origin "$SNAPSHOT_BRANCH" 2>/dev/null; then
+            git worktree add --quiet --detach "$PUB" FETCH_HEAD
+            cd "$PUB"
+            git checkout --quiet -B "$SNAPSHOT_BRANCH"
+          else
+            mkdir -p "$PUB"
+            cd "$PUB"
+            git init --quiet -b "$SNAPSHOT_BRANCH"
+          fi
+          mkdir -p "$SNAPSHOT_DIR"
+          rsync -a --delete "$GITHUB_WORKSPACE/$SNAPSHOT_DIR/" "$SNAPSHOT_DIR/"
+          cat > README.md <<'EOF'
+          # Branch gerada: snapshot do Supabase
+
+          Conteudo em `docs/supabase/`, regerado a cada 10 min pelo workflow `supabase-snapshot.yml` da main.
+          Nao edite nem abra PR desta branch. Leia `docs/supabase/README.md`.
+          EOF
+          git config user.name 'supabase-snapshot[bot]'
+          git config user.email 'supabase-snapshot[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then echo 'Sem mudancas no Supabase.'; exit 0; fi
+          STRUCTURAL=$(git diff --cached --name-only -- "$SNAPSHOT_DIR" | grep -vE '/(stats\.md|stats\.json|cron-runs\.md|errors\.md|README\.md)$' || true)
+          if [ -z "$STRUCTURAL" ] && git rev-parse --verify -q HEAD >/dev/null; then
+            LAST=$(git log -1 --format=%ct)
+            AGE_MIN=$(( ( $(date +%s) - LAST ) / 60 ))
+            if [ "$AGE_MIN" -lt "$VOLATILE_MIN_INTERVAL_MIN" ]; then
+              echo "So metricas volateis mudaram (ultimo commit ha ${AGE_MIN} min) — aguardando."; exit 0
+            fi
+            MSG="chore(supabase): metricas do snapshot [auto]"
+          else
+            MSG="chore(supabase): snapshot do banco $(date -u +%Y-%m-%dT%H:%MZ) [auto]"
+          fi
+          SUMMARY=$(awk '/^## /{c++} c==1 && /^- /{print; n++} n>=3{exit}' "$SNAPSHOT_DIR/CHANGELOG.md" | sed 's/\*\*//g; s/`//g' | cut -c1-110 | paste -sd ';' - || true)
+          git commit --quiet -m "$MSG" -m "${SUMMARY:-atualizacao do snapshot}"
+          git push --quiet "$REMOTE" "HEAD:refs/heads/$SNAPSHOT_BRANCH"
+          echo "Publicado em $SNAPSHOT_BRANCH: $(git rev-parse --short HEAD)"
+
+      - name: Reportar secoes com erro (nao falha o job)
+        if: always()
+        run: |
+          if [ -f "$SNAPSHOT_DIR/errors.md" ] && ! grep -q '_nenhum_' "$SNAPSHOT_DIR/errors.md"; then
+            echo "::warning::Algumas secoes falharam — veja $SNAPSHOT_DIR/errors.md na branch $SNAPSHOT_BRANCH"
+            cat "$SNAPSHOT_DIR/errors.md"
+          fi
