@@ -71,6 +71,12 @@ vi.mock('@/hooks/system/useNavigationHistory', () => ({ navigateToView: vi.fn() 
 
 // Filhos decorativos do campo: nada disso participa do limite/acionamento testado.
 vi.mock('@/components/inbox/FileUploader', () => ({ FileUploader: () => null }));
+// Aviso de conexão (regras.md §4.2) usa react-query e papel do usuário — fora do escopo destes testes.
+vi.mock('@/hooks/inbox/useConnectionHealthBanner', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/hooks/inbox/useConnectionHealthBanner')>()),
+  useConnectionHealthBanner: () => ({ level: 'ok', reason: null }),
+}));
+vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isAdmin: false, isSupervisor: false, roles: [], loading: false }) }));
 vi.mock('@/components/inbox/chat/ChatInputToolbars', () => ({
   SecondaryToolbar: () => null,
   TertiaryToolsMenu: () => null,

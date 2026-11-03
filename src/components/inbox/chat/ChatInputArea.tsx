@@ -27,6 +27,9 @@ import { Send, Mic, Check, Camera, Loader2, Plus } from 'lucide-react';
 import { toast } from '@/hooks/ui/use-toast';
 import { InputPreviewBars } from './InputPreviewBars';
 import { useChatInputLogic, setNativeValue } from './useChatInputLogic';
+import { ConnectionHealthBanner } from './ConnectionHealthBanner';
+import { useConnectionHealthBanner } from '@/hooks/inbox/useConnectionHealthBanner';
+import { useUserRole } from '@/hooks/system/useUserRole';
 
 interface QuickReplyItem {
   id: string;
@@ -121,6 +124,10 @@ export function ChatInputArea(props: ChatInputAreaProps) {
   );
   const lastClientMessage = radarMessages.filter((m) => m.sender === 'contact').slice(-1)[0]?.content;
 
+  const connectionBanner = useConnectionHealthBanner(instanceName);
+
+  const { isAdmin } = useUserRole();
+
   const logic = useChatInputLogic({
     inputValue, contactId, editingMessage, inputRef, fileUploaderRef, onSend, onPasteFiles,
     // R2-INB-016 (item 312): a barra recebe o par da assinatura (ligada + nome do agente) que
@@ -214,6 +221,9 @@ export function ChatInputArea(props: ChatInputAreaProps) {
 
         <SlashCommands inputValue={inputValue} onSelectCommand={onSlashCommand} onClose={onCloseSlashCommands} isOpen={showSlashCommands} />
 
+        {/* Regra dos três níveis (regras.md §4.2): o atendente sempre sabe que a conexão caiu. */}
+        <ConnectionHealthBanner banner={connectionBanner} isAdmin={isAdmin} />
+
         <div className="flex items-end gap-2" role="toolbar" aria-label="Barra de mensagem">
           <div className={cn(
             "flex-1 min-w-0 relative flex items-end gap-1 rounded-xl bg-input border border-border",
@@ -246,7 +256,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
                 }}
                 onBlur={onBlur} onPaste={logic.handlePaste}
                 onClick={(e) => { const t = e.target as HTMLTextAreaElement; checkForMention(t.value, t.selectionStart ?? 0); }}
-                placeholder={editingMessage ? "Editar mensagem..." : replyToMessage ? "Digite sua resposta..." : "Digite uma mensagem… (/ para comandos, @ para mencionar)"}
+                placeholder={connectionBanner.level !== 'ok' ? "Sem conexão — a mensagem ficará na fila" : editingMessage ? "Editar mensagem..." : replyToMessage ? "Digite sua resposta..." : "Digite uma mensagem… (/ para comandos, @ para mencionar)"}
                 rows={1}
                 className={cn(
                   "w-full bg-transparent border-0 outline-none text-sm text-foreground",

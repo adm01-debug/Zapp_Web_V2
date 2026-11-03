@@ -1,4 +1,4 @@
-import { handleConnectionHealthCheck, decideReconnect, RECONNECT_EXHAUSTED_REASON, evaluateOpenConnectionHealth, parseOwnerJid, parseSilenceMinutes, inboxSilenceDedupeKey, buildConnectionAlertPrefs } from './index.ts';
+import { handleConnectionHealthCheck, decideReconnect, RECONNECT_EXHAUSTED_REASON, PHANTOM_SESSION_REASON, evaluateOpenConnectionHealth, parseOwnerJid, parseSilenceMinutes, inboxSilenceDedupeKey, buildConnectionAlertPrefs, decideEscalation, levelDedupeKey } from './index.ts';
 
 // ---------------------------------------------------------------------------
 // SL-053 / F3 E23-E29 do plano multi-conexão (E24/E25/E26/E28).
@@ -83,6 +83,10 @@ interface Fake {
   insertTables: string[];
   calls: Array<{ path: string; apikey: string | null }>;
   rpcCalls: string[];
+  /** papéis (user_roles) — destinatários obrigatórios da escalada */
+  roleRows: Array<{ user_id: string; role: string }>;
+  /** created_at do alerta de warroom aberto (início do episódio) */
+  episodeStartedAt: string | null;
   fetchImpl: (call: { path: string; apikey: string | null }) => Response | Promise<Response>;
 }
 
@@ -106,6 +110,8 @@ function baseFake(): Fake {
     insertTables: [],
     calls: [],
     rpcCalls: [],
+    roleRows: [],
+    episodeStartedAt: null,
     fetchImpl: () => jsonResponse({ instance: { state: 'open' } }),
   };
 }
@@ -189,9 +195,27 @@ function result(
     return { data: fake.adminProfiles, error: null };
   }
   if (table === 'notifications' && op === 'insert' && pending) {
+    // ux_notifications_user_dedupe_key: (user_id, dedupe_key) único quando a chave existe.
+    const dup = pending.dedupe_key && fake.pushNotifications.some((n) => {
+      const r = n as Row;
+      return r.user_id === pending.user_id && r.dedupe_key === pending.dedupe_key;
+    });
+    if (dup) return { data: null, error: { code: '23505', message: 'duplicate' } };
     fake.insertTables.push(table);
     fake.pushNotifications.push(pending);
     return { data: null, error: null };
+  }
+  if (table === 'notifications' && op === 'update' && pending) {
+    for (const n of fake.pushNotifications) Object.assign(n as Row, pending);
+    return { data: null, error: null };
+  }
+  if (table === 'user_roles' && op === 'select') {
+    const roleFilter = filters.find(([c]) => c === 'role')?.[1];
+    const allowed: string[] | null = roleFilter ? JSON.parse(roleFilter) : null;
+    return { data: fake.roleRows.filter((r) => !allowed || allowed.includes(r.role)), error: null };
+  }
+  if (table === 'warroom_alerts' && op === 'select') {
+    return { data: fake.episodeStartedAt ? { created_at: fake.episodeStartedAt } : null, error: null };
   }
   if (table === 'global_settings' && op === 'select') {
     return { data: null, error: null };
@@ -222,6 +246,7 @@ function builder(fake: Fake, table: string): Row {
   self.select = chain;
   self.neq = chain;
   self.not = chain;
+  self.like = chain;
   self.lt = chain;
   self.limit = chain;
   self.order = chain;
@@ -857,4 +882,84 @@ Deno.test('reconexão: conexão que volta zera o contador e o motivo', async () 
   fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
   await run(fake);
   assert(fake.connUpdates.some((u) => u.retry_count === 0 && u.health_reason === null), 'deve zerar retry_count e health_reason');
+});
+
+// ───────────────────── regra dos três níveis (regras.md §4.2) ─────────────────────
+
+Deno.test('3 níveis: decideEscalation — rápida=0, esgotada/fantasma/15min=1, 1h=2, degraded só ≥30min', () => {
+  const now = new Date('2026-11-03T12:30:00Z');
+  const ago = (min: number) => new Date(now.getTime() - min * 60_000);
+  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: false, episodeStart: ago(5), now }) === 0);
+  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: true, episodeStart: ago(5), now }) === 1);
+  assert(decideEscalation({ kind: 'disconnected', reason: 'phantom_session', exhausted: false, episodeStart: null, now }) === 1);
+  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: false, episodeStart: ago(15), now }) === 1);
+  assert(decideEscalation({ kind: 'disconnected', reason: null, exhausted: true, episodeStart: ago(60), now }) === 2);
+  assert(decideEscalation({ kind: 'degraded', reason: 'webhook_silent', exhausted: false, episodeStart: ago(29), now }) === 0);
+  assert(decideEscalation({ kind: 'degraded', reason: 'webhook_silent', exhausted: false, episodeStart: ago(30), now }) === 1);
+  assert(decideEscalation({ kind: 'degraded', reason: 'webhook_silent', exhausted: false, episodeStart: ago(600), now }) === 1, 'degraded nunca sobe a nível 2');
+  assert(levelDedupeKey(1, 'c1', now) === 'conn-l1:v1:c1');
+  assert(levelDedupeKey(2, 'c1', now) === levelDedupeKey(2, 'c1', ago(20)), 'nível 2 repete por hora cheia');
+  assert(levelDedupeKey(2, 'c1', now) !== levelDedupeKey(2, 'c1', ago(60)), 'hora seguinte = chave nova');
+});
+
+Deno.test('3 níveis: queda rápida (nível 0) grava o warroom mas NÃO manda push nem e-mail a ninguém', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 0, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'adm', role: 'admin' }, { user_id: 'sup', role: 'supervisor' }];
+  fake.adminProfiles = [{ user_id: 'adm', email: 'adm@x.test' }];
+  fake.fetchImpl = ({ path }) => path.includes('api.resend.com') ? jsonResponse({ id: 'mail' }) : jsonResponse({ instance: { state: 'close' } });
+  await run(fake);
+  assert(fake.alerts.some((a) => a.dedupe_key === 'conn-down:v1:c1'), 'warroom (tela) deve registrar a queda');
+  assert(fake.pushNotifications.length === 0, `nível 0 não manda push: ${JSON.stringify(fake.pushNotifications)}`);
+  assert(!fake.calls.some((c) => c.path.includes('/emails')), 'nível 0 não manda e-mail');
+});
+
+Deno.test('3 níveis: reconexão esgotada (nível 1) avisa admin E supervisor por push+e-mail, mesmo sem opt-in, uma vez por episódio', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 3, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'adm', role: 'admin' }, { user_id: 'sup', role: 'supervisor' }, { user_id: 'ag', role: 'agent' }];
+  fake.adminProfiles = [{ user_id: 'adm', email: 'adm@x.test' }, { user_id: 'sup', email: 'sup@x.test' }];
+  fake.episodeStartedAt = new Date(Date.now() - 5 * 60_000).toISOString();
+  fake.fetchImpl = ({ path }) => path.includes('api.resend.com') ? jsonResponse({ id: 'mail' }) : jsonResponse({ instance: { state: 'close' } });
+  const originalKey = Deno.env.get('RESEND_API_KEY');
+  Deno.env.set('RESEND_API_KEY', 're_test');
+  try {
+    await run(fake);
+    await run(fake);
+  } finally {
+    if (originalKey === undefined) Deno.env.delete('RESEND_API_KEY'); else Deno.env.set('RESEND_API_KEY', originalKey);
+  }
+  // admin e supervisor são obrigatórios; o agente entra pelo opt-in padrão (1C: ligado
+  // até desligar no cartão) — preferência só ACRESCENTA gente. Uma vez por episódio.
+  const users = fake.pushNotifications.map((n) => (n as Row).user_id).sort();
+  assert(JSON.stringify(users) === JSON.stringify(['adm', 'ag', 'sup']), `push uma vez para cada destinatário: ${JSON.stringify(users)}`);
+  assert(fake.pushNotifications.every((n) => (n as Row).dedupe_key === 'conn-l1:v1:c1'), 'chave do nível 1');
+  const emails = fake.calls.filter((c) => c.path.includes('/emails')).length;
+  assert(emails === 2, `e-mail uma vez para cada perfil com e-mail (adm, sup), veio ${emails}`);
+});
+
+Deno.test('3 níveis: ≥ 1 h caída (nível 2) repete por hora só para o admin', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 3, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'adm', role: 'admin' }, { user_id: 'sup', role: 'supervisor' }];
+  fake.episodeStartedAt = new Date(Date.now() - 2 * 60 * 60_000).toISOString();
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
+  await run(fake);
+  const users = fake.pushNotifications.map((n) => (n as Row).user_id);
+  assert(JSON.stringify(users) === JSON.stringify(['adm']), `nível 2 só admin: ${JSON.stringify(users)}`);
+  assert(String((fake.pushNotifications[0] as Row).dedupe_key).startsWith('conn-l2:v1:c1:'), 'chave horária do nível 2');
+});
+
+Deno.test('3 níveis: sessão fantasma é nível 1 imediato (sem esperar 15 min)', () => {
+  const now = new Date();
+  const ev = evaluateOpenConnectionHealth({ owner: { known: true, ownerJid: null }, lastActivityAt: null, now });
+  assert(ev.reason === 'phantom_session');
+  assert(decideEscalation({ kind: 'disconnected', reason: ev.reason, exhausted: false, episodeStart: now, now }) === 1);
+  assert(PHANTOM_SESSION_REASON.includes('QR Code'), 'motivo de saúde deve pedir QR');
 });
