@@ -55,6 +55,8 @@ webhook mudo por meia hora significa que mensagens de clientes não estão chega
 
 Tempos decididos: **15 min** (esgota reconexão) · **30 min** (`degraded` vira nível 1) · **1 h** (nível 2).
 
+Reconexão por QR Code (nível 1 em diante): **só admin ou supervisor** escaneia — atendente nunca vê a tela de conexões (decisão 2026-11-03; já é assim: policy `whatsapp_connections: Admin supervisor view connections`). O bloqueio vermelho do atendente diz "avise o supervisor", não oferece o QR.
+
 ## 6. Prazos, limites e quotas — Talk X / campanhas
 
 Valores de consentimento: `granted` / `unknown` / `revoked` (não existe `opt_in`;
@@ -96,5 +98,4 @@ limite efetivo é o `daily_limit_per_connection`.
 
 ## 9. Dúvidas em aberto (entrevista continua)
 
-1. Reconexão da `PRINCIPAL` após nível 1: QR Code novo é sempre ação do supervisor/admin, ou atendente também pode?
-2. Áreas congeladas: módulos que não devem ser mexidos sem o dono.
+1. Áreas congeladas: módulos que não devem ser mexidos sem o dono.
