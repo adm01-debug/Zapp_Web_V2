@@ -17,7 +17,7 @@
 | Tempo sem resposta do atendente **não** muda o status para `waiting`. Continua como está. | **decisão** (nada a implementar) | — |
 | Atendente demorando além do SLA de primeira resposta → **atendente e seu supervisor são notificados**; admin em alguns casos (critério do "alguns casos" ainda não definido — ver §9). | **parcial** | alertas existem em `sla_alert_events` (`20261011180337`), visíveis para dono da conversa + admin/supervisor; minutos configuráveis em `sla_configurations` (`20261005151753`). Canal de notificação (tela/e-mail/push) e minutos padrão: pendentes (§9) |
 | Conversa sem nenhuma interação (nem cliente, nem atendente) por **30 dias** → arquivada automaticamente (`archived`). Cliente que escrever depois reabre pela regra acima. | **pendente de implementação** (job `pg_cron` — DDL em produção, exige PR aberta para o dono) | hoje não há job de arquivamento (NÃO VERIFICADO em `cron.job` ao vivo; grep nas migrations não achou) |
-| Fechar a mesma conversa duas vezes no mesmo dia é rejeitado. | **existe** | `supabase/migrations/20261007013217_*.sql` (`conversation_closures`) |
+| Fechar de novo uma conversa **sem ela ter sido reaberta** desde o último fechamento é rejeitado (`conversation_closure_requires_reopen`). Reabrir e fechar no mesmo dia **é permitido** — o limite "um fechamento por dia" foi removido da operação e vale só nos indicadores. | **existe** | `supabase/migrations/20261007013217_conversation_closures_reopen_same_day.sql:143` (drop do índice diário) e `:175-179` (guarda) |
 
 ### 4.2 Conexão WhatsApp (`whatsapp_connections`) — regra dos três níveis
 
