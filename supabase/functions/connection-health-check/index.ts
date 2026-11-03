@@ -52,6 +52,8 @@ export function decideReconnect(input: {
 export const RECONNECT_EXHAUSTED_REASON = 'Reconexão automática esgotada — gere um novo QR Code na tela Conexões.';
 /** Sessão fantasma: o celular desvinculou; só um QR Code novo resolve (nível 1 imediato). */
 export const PHANTOM_SESSION_REASON = 'Sessão desvinculada no celular — gere um novo QR Code na tela Conexões.';
+/** Queda confirmada pelo tempo (≥ 15 min sem voltar): o composer fica vermelho e pede QR. */
+export const CONFIRMED_DOWN_REASON = 'Queda confirmada — não reconectou sozinha; gere um novo QR Code na tela Conexões.';
 
 /**
  * Regra dos três níveis (docs/contexto/regras/manual/regras.md §4.2, decisão de
@@ -80,10 +82,14 @@ export function decideEscalation(input: {
   return 0;
 }
 
-/** Chave de idempotência do aviso de nível por usuário (notifications.dedupe_key). */
-export function levelDedupeKey(level: 1 | 2, connectionId: string, now: Date): string {
-  if (level === 1) return `conn-l1:v1:${connectionId}`;
-  return `conn-l2:v1:${connectionId}:${Math.floor(now.getTime() / LEVEL2_MS)}`;
+/**
+ * Chave de idempotência do aviso de nível por usuário (notifications.dedupe_key). O
+ * TIPO entra na chave: um episódio `degraded` (socket aberto, sem status novo) nunca
+ * passa pela recuperação de queda, e sem o tipo ele travaria o nível 1 das quedas reais.
+ */
+export function levelDedupeKey(level: 1 | 2, kind: 'disconnected' | 'degraded', connectionId: string, now: Date): string {
+  if (level === 1) return `conn-l1:v1:${kind}:${connectionId}`;
+  return `conn-l2:v1:${kind}:${connectionId}:${Math.floor(now.getTime() / LEVEL2_MS)}`;
 }
 
 /**
@@ -387,6 +393,8 @@ async function sendAlertEmails(
 interface Escalation {
   alert: AlertToCreate;
   exhausted: boolean;
+  /** health_reason já gravado na linha (null = o composer ainda mostra amarelo). */
+  healthReason: string | null;
 }
 
 /**
@@ -411,7 +419,7 @@ async function notifyEscalation(
   const pushUsers = new Set<string>([...mandatory, ...opted.filter((p) => p['channel'] === 'push').map((p) => p['user_id'] as string)]);
   const emailUsers = new Set<string>([...mandatory, ...opted.filter((p) => p['channel'] === 'email').map((p) => p['user_id'] as string)]);
 
-  const dedupeKey = levelDedupeKey(level, alert.connection_id, now);
+  const dedupeKey = levelDedupeKey(level, alert.kind, alert.connection_id, now);
   const title = level === 2
     ? `WhatsApp ${alert.instance_id} ainda desconectado`
     : alert.kind === 'disconnected' ? `WhatsApp ${alert.instance_id} desconectado — precisa de QR Code` : `Conexão ${alert.instance_id} sem receber mensagens`;
@@ -499,11 +507,20 @@ async function readEpisodeStart(supabase: SupabaseClient, log: Logger, alert: Al
   return now;
 }
 
-/** Conexão voltou: libera as chaves de nível e retoma campanhas pausadas por connection_lost. */
+/** Libera as chaves de nível de UM tipo de episódio (idempotente; sem linhas = nada a fazer). */
+async function releaseLevelKeys(supabase: SupabaseClient, log: Logger, connectionId: string, kind: 'disconnected' | 'degraded'): Promise<void> {
+  const { error } = await supabase.from('notifications').update({ dedupe_key: null })
+    .like('dedupe_key', `conn-l%:v1:${kind}:${connectionId}%`);
+  if (error) log.warn('Falha ao liberar chaves de nível', { kind, error: error.message });
+}
+
+/**
+ * Conexão com socket aberto (`connected`): libera as chaves da QUEDA e retoma campanhas
+ * pausadas por connection_lost. Roda em toda sonda com a conexão viva — a recuperação
+ * pode ter sido gravada pelo webhook antes, e aí o CAS não transiciona.
+ */
 async function onConnectionRecovered(supabase: SupabaseClient, log: Logger, connectionId: string): Promise<void> {
-  const { error: keyError } = await supabase.from('notifications').update({ dedupe_key: null })
-    .like('dedupe_key', `conn-l%:v1:${connectionId}%`);
-  if (keyError) log.warn('Falha ao liberar chaves de nível da conexão recuperada', { error: keyError.message });
+  await releaseLevelKeys(supabase, log, connectionId, 'disconnected');
   const { data: pausadas, error: campError } = await supabase.from('talkx_campaigns').select('id')
     .eq('whatsapp_connection_id', connectionId).eq('status', 'paused').eq('pause_reason', 'connection_lost');
   if (campError) {
@@ -888,6 +905,14 @@ export async function handleConnectionHealthCheck(
                 // por queda precisam ser liberadas do mesmo jeito.
                 await onConnectionRecovered(supabase, log, conn.id);
               }
+              if (healthStatus === 'healthy') {
+                // Fim de um episódio `degraded` (nunca muda o status, logo nunca passa pelo
+                // CAS): libera a chave de nível e o alerta de warroom da degradação.
+                await releaseLevelKeys(supabase, log, conn.id, 'degraded');
+                const { error: degradedKeyError } = await supabase.from('warroom_alerts')
+                  .update({ dedupe_key: null }).eq('dedupe_key', `conn-degraded:v1:${conn.id}`);
+                if (degradedKeyError) log.warn('Falha ao encerrar alerta de degradação', { error: degradedKeyError.message });
+              }
               if (dbStatus === 'connected') {
                 // Libera a chave apenas depois que o CAS confirmar a recuperação;
                 // a linha do alerta permanece como histórico do incidente.
@@ -972,6 +997,7 @@ export async function handleConnectionHealthCheck(
               escalations.push({
                 alert: { connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number, kind: healthStatus === 'disconnected' ? 'disconnected' : 'degraded', reason: openReason },
                 exhausted: reconnectExhausted,
+                healthReason: reconnectExhausted ? RECONNECT_EXHAUSTED_REASON : (openReason === 'phantom_session' ? PHANTOM_SESSION_REASON : (conn.health_reason ?? null)),
               });
             }
           } else {
@@ -1064,6 +1090,14 @@ export async function handleConnectionHealthCheck(
       const level = decideEscalation({ kind: e.alert.kind, reason: e.alert.reason, exhausted: e.exhausted, episodeStart, now });
       if (level === 0) continue;
       escalated += 1;
+      if (e.alert.kind === 'disconnected' && !e.healthReason) {
+        // Queda confirmada pelo tempo: o composer passa a vermelho (precisa de QR) — mesmo
+        // sinal que a reconexão esgotada/sessão fantasma já gravam.
+        await supabase.from('whatsapp_connections').update({ health_reason: CONFIRMED_DOWN_REASON }).eq('id', e.alert.connection_id);
+      }
+      // Nível 2 pressupõe o nível 1 (admin+supervisor+opt-in) — se a primeira sonda elegível
+      // já chegou depois de 1 h, o nível 1 sai antes; a chave própria garante uma vez só.
+      if (level === 2) await notifyEscalation(supabase, log, { alert: e.alert, level: 1, now, prefs, resendKey });
       await notifyEscalation(supabase, log, { alert: e.alert, level, now, prefs, resendKey });
     }
 

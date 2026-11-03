@@ -1,4 +1,4 @@
-import { handleConnectionHealthCheck, decideReconnect, RECONNECT_EXHAUSTED_REASON, PHANTOM_SESSION_REASON, evaluateOpenConnectionHealth, parseOwnerJid, parseSilenceMinutes, inboxSilenceDedupeKey, buildConnectionAlertPrefs, decideEscalation, levelDedupeKey } from './index.ts';
+import { handleConnectionHealthCheck, decideReconnect, RECONNECT_EXHAUSTED_REASON, PHANTOM_SESSION_REASON, CONFIRMED_DOWN_REASON, evaluateOpenConnectionHealth, parseOwnerJid, parseSilenceMinutes, inboxSilenceDedupeKey, buildConnectionAlertPrefs, decideEscalation, levelDedupeKey } from './index.ts';
 
 // ---------------------------------------------------------------------------
 // SL-053 / F3 E23-E29 do plano multi-conexão (E24/E25/E26/E28).
@@ -141,6 +141,7 @@ function result(
   pending: Row | null,
   filters: Array<[string, string]>,
   orExpr: string,
+  likePattern = '',
 ): { data: unknown; error: unknown } {
   if (table === 'whatsapp_connections' && op === 'update' && pending) {
     fake.connUpdates.push(pending);
@@ -221,7 +222,10 @@ function result(
     return { data: fake.pausedCampaigns, error: null };
   }
   if (table === 'notifications' && op === 'update' && pending) {
-    for (const n of fake.pushNotifications) Object.assign(n as Row, pending);
+    const pattern = likePattern ? new RegExp('^' + likePattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/%/g, '.*') + '$') : null;
+    for (const n of fake.pushNotifications) {
+      if (!pattern || pattern.test(String((n as Row).dedupe_key))) Object.assign(n as Row, pending);
+    }
     return { data: null, error: null };
   }
   if (table === 'user_roles' && op === 'select') {
@@ -264,7 +268,11 @@ function builder(fake: Fake, table: string): Row {
   self.select = chain;
   self.neq = chain;
   self.not = chain;
-  self.like = chain;
+  let likePattern = '';
+  self.like = (_c: string, v: string) => {
+    likePattern = v;
+    return self;
+  };
   self.lt = chain;
   self.limit = chain;
   self.order = chain;
@@ -298,7 +306,7 @@ function builder(fake: Fake, table: string): Row {
     op = 'delete';
     return self;
   };
-  const done = () => Promise.resolve(result(fake, table, op, pending, filters, orExpr));
+  const done = () => Promise.resolve(result(fake, table, op, pending, filters, orExpr, likePattern));
   self.single = done;
   self.maybeSingle = done;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -919,9 +927,10 @@ Deno.test('3 níveis: decideEscalation — rápida=0, esgotada/fantasma/15min=1,
   assert(decideEscalation({ kind: 'degraded', reason: 'webhook_silent', exhausted: false, episodeStart: ago(29), now }) === 0, 'esperado nível 0: { kind: degraded, reason: webhook_silent, exhausted: false, episodeSt');
   assert(decideEscalation({ kind: 'degraded', reason: 'webhook_silent', exhausted: false, episodeStart: ago(30), now }) === 1, 'esperado nível 1: { kind: degraded, reason: webhook_silent, exhausted: false, episodeSt');
   assert(decideEscalation({ kind: 'degraded', reason: 'webhook_silent', exhausted: false, episodeStart: ago(600), now }) === 1, 'degraded nunca sobe a nível 2');
-  assert(levelDedupeKey(1, 'c1', now) === 'conn-l1:v1:c1', 'chave do nível 1');
-  assert(levelDedupeKey(2, 'c1', now) === levelDedupeKey(2, 'c1', ago(20)), 'nível 2 repete por hora cheia');
-  assert(levelDedupeKey(2, 'c1', now) !== levelDedupeKey(2, 'c1', ago(60)), 'hora seguinte = chave nova');
+  assert(levelDedupeKey(1, 'disconnected', 'c1', now) === 'conn-l1:v1:disconnected:c1', 'chave do nível 1 leva o tipo');
+  assert(levelDedupeKey(1, 'degraded', 'c1', now) !== levelDedupeKey(1, 'disconnected', 'c1', now), 'degraded e disconnected não dividem chave');
+  assert(levelDedupeKey(2, 'disconnected', 'c1', now) === levelDedupeKey(2, 'disconnected', 'c1', ago(20)), 'nível 2 repete por hora cheia');
+  assert(levelDedupeKey(2, 'disconnected', 'c1', now) !== levelDedupeKey(2, 'disconnected', 'c1', ago(60)), 'hora seguinte = chave nova');
 });
 
 Deno.test('3 níveis: queda rápida (nível 0) grava o warroom mas NÃO manda push nem e-mail a ninguém', async () => {
@@ -959,7 +968,7 @@ Deno.test('3 níveis: reconexão esgotada (nível 1) avisa admin E supervisor po
   // até desligar no cartão) — preferência só ACRESCENTA gente. Uma vez por episódio.
   const users = fake.pushNotifications.map((n) => (n as Row).user_id).sort();
   assert(JSON.stringify(users) === JSON.stringify(['adm', 'ag', 'sup']), `push uma vez para cada destinatário: ${JSON.stringify(users)}`);
-  assert(fake.pushNotifications.every((n) => (n as Row).dedupe_key === 'conn-l1:v1:c1'), 'chave do nível 1');
+  assert(fake.pushNotifications.every((n) => (n as Row).dedupe_key === 'conn-l1:v1:disconnected:c1'), 'chave do nível 1');
   const emails = fake.calls.filter((c) => c.path.includes('/emails')).length;
   assert(emails === 2, `e-mail uma vez para cada perfil com e-mail (adm, sup), veio ${emails}`);
 });
@@ -973,9 +982,12 @@ Deno.test('3 níveis: ≥ 1 h caída (nível 2) repete por hora só para o admin
   fake.episodeStartedAt = new Date(Date.now() - 2 * 60 * 60_000).toISOString();
   fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
   await run(fake);
-  const users = fake.pushNotifications.map((n) => (n as Row).user_id);
-  assert(JSON.stringify(users) === JSON.stringify(['adm']), `nível 2 só admin: ${JSON.stringify(users)}`);
-  assert(String((fake.pushNotifications[0] as Row).dedupe_key).startsWith('conn-l2:v1:c1:'), 'chave horária do nível 2');
+  // Primeira sonda elegível já depois de 1 h: o nível 1 (admin+supervisor) sai ANTES do nível 2 (só admin).
+  const l1 = fake.pushNotifications.filter((n) => String((n as Row).dedupe_key).startsWith('conn-l1:')).map((n) => (n as Row).user_id).sort();
+  const l2 = fake.pushNotifications.filter((n) => String((n as Row).dedupe_key).startsWith('conn-l2:')).map((n) => (n as Row).user_id);
+  assert(JSON.stringify(l1) === JSON.stringify(['adm', 'sup']), `nível 1 implícito para admin+supervisor: ${JSON.stringify(l1)}`);
+  assert(JSON.stringify(l2) === JSON.stringify(['adm']), `nível 2 só admin: ${JSON.stringify(l2)}`);
+  assert(String((fake.pushNotifications.find((n) => String((n as Row).dedupe_key).startsWith('conn-l2:')) as Row).dedupe_key).startsWith('conn-l2:v1:disconnected:c1:'), 'chave horária do nível 2');
 });
 
 Deno.test('3 níveis: sessão fantasma é nível 1 imediato (sem esperar 15 min)', () => {
@@ -1020,7 +1032,7 @@ Deno.test('3 níveis: recuperação já gravada pelo webhook ainda retoma campan
   fake.statusById = { c1: 'connected' };
   fake.tokens = { padrao: 'tok-da-padrao' };
   fake.pausedCampaigns = [{ id: 'camp-1' }];
-  fake.pushNotifications = [{ user_id: 'adm', dedupe_key: 'conn-l1:v1:c1' }];
+  fake.pushNotifications = [{ user_id: 'adm', dedupe_key: 'conn-l1:v1:disconnected:c1' }];
   fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
   await run(fake);
   assert(fake.rpcCalls.includes('transition:camp-1:start'), `campanha pausada por queda deve retomar: ${JSON.stringify(fake.rpcCalls)}`);
@@ -1035,4 +1047,35 @@ Deno.test('3 níveis: sem linha no warroom, a sonda cria o registro e o relógio
   fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
   await run(fake);
   assert(fake.alerts.some((a) => a.dedupe_key === 'conn-down:v1:c1'), 'episódio sem registro deve ser criado pela sonda');
+});
+
+Deno.test('3 níveis: degradação encerrada (sonda saudável) libera só a chave degraded; a de queda fica intacta até a conexão voltar', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 0 }];
+  fake.statusById = { c1: 'connected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.lastInbound = [{ created_at: new Date().toISOString() }]; // mensagem recente = healthy
+  fake.pushNotifications = [
+    { user_id: 'adm', dedupe_key: 'conn-l1:v1:degraded:c1' },
+    { user_id: 'adm', dedupe_key: 'conn-l1:v1:disconnected:c1' },
+  ];
+  fake.alerts = [{ source: 'connection-health-check', dedupe_key: 'conn-degraded:v1:c1', created_at: new Date().toISOString() }];
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'open' } });
+  await run(fake);
+  assert((fake.pushNotifications[0] as Row).dedupe_key === null, 'chave degraded liberada ao ficar saudável');
+  assert((fake.pushNotifications[1] as Row).dedupe_key === null, 'conexão connected também libera a chave de queda (recuperação idempotente)');
+  assert(fake.alerts[0].dedupe_key === null, 'alerta de warroom da degradação encerrado');
+});
+
+Deno.test('3 níveis: queda confirmada só pelo tempo (sem reconexão automática) grava motivo que pede QR — composer vermelho', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 0, auto_reconnect_enabled: false }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'adm', role: 'admin' }];
+  fake.episodeStartedAt = new Date(Date.now() - 20 * 60_000).toISOString();
+  fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
+  await run(fake);
+  assert(fake.connUpdates.some((u) => u.health_reason === CONFIRMED_DOWN_REASON), 'queda confirmada pelo tempo grava o motivo');
+  assert(fake.pushNotifications.some((n) => (n as Row).dedupe_key === 'conn-l1:v1:disconnected:c1'), 'admin avisado no nível 1');
 });

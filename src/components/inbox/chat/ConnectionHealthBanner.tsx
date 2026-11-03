@@ -4,14 +4,12 @@ import { connectionBannerText, type ConnectionBanner } from '@/hooks/inbox/useCo
 
 interface Props {
   banner: ConnectionBanner;
-  /** Admin vê a instrução de gerar o QR; os demais, "avise o admin" (QR é só admin — regras.md §4.2). */
-  isAdmin: boolean;
   className?: string;
 }
 
 /** Aviso amarelo (nível 0) ou vermelho (nível 1+) acima da caixa de mensagem. */
-export function ConnectionHealthBanner({ banner, isAdmin, className }: Props) {
-  const texto = connectionBannerText(banner, isAdmin);
+export function ConnectionHealthBanner({ banner, className }: Props) {
+  const texto = connectionBannerText(banner);
   if (!texto) return null;
   const down = banner.level === 'down';
   return (

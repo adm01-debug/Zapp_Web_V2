@@ -97,12 +97,6 @@ vi.mock('@/hooks/ui/useAmbientColor', () => ({ useAmbientColor: () => ({ classNa
 vi.mock('@/lib/calls/events', () => ({ dispatchStartCall: vi.fn() }));
 
 // Componentes pesados que não participam do caminho do atalho.
-// Aviso de conexão (regras.md §4.2) usa react-query e papel do usuário — fora do escopo destes testes.
-vi.mock('@/hooks/inbox/useConnectionHealthBanner', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/hooks/inbox/useConnectionHealthBanner')>()),
-  useConnectionHealthBanner: () => ({ level: 'ok', reason: null }),
-}));
-vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isAdmin: false, isSupervisor: false, roles: [], loading: false }) }));
 vi.mock('../CRMAutoSync', () => ({ CRMAutoSync: () => null }));
 vi.mock('../chat/ChatToolPanels', () => ({ ChatToolPanels: () => null }));
 vi.mock('../chat/ChatPanelHeader', () => ({ ChatPanelHeader: () => null }));

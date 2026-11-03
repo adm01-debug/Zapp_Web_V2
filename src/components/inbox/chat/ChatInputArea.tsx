@@ -29,7 +29,6 @@ import { InputPreviewBars } from './InputPreviewBars';
 import { useChatInputLogic, setNativeValue } from './useChatInputLogic';
 import { ConnectionHealthBanner } from './ConnectionHealthBanner';
 import { useConnectionHealthBanner } from '@/hooks/inbox/useConnectionHealthBanner';
-import { useUserRole } from '@/hooks/system/useUserRole';
 
 interface QuickReplyItem {
   id: string;
@@ -126,7 +125,6 @@ export function ChatInputArea(props: ChatInputAreaProps) {
 
   const connectionBanner = useConnectionHealthBanner(instanceName);
 
-  const { isAdmin } = useUserRole();
 
   const logic = useChatInputLogic({
     inputValue, contactId, editingMessage, inputRef, fileUploaderRef, onSend, onPasteFiles,
@@ -222,7 +220,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
         <SlashCommands inputValue={inputValue} onSelectCommand={onSlashCommand} onClose={onCloseSlashCommands} isOpen={showSlashCommands} />
 
         {/* Regra dos três níveis (regras.md §4.2): o atendente sempre sabe que a conexão caiu. */}
-        <ConnectionHealthBanner banner={connectionBanner} isAdmin={isAdmin} />
+        <ConnectionHealthBanner banner={connectionBanner} />
 
         <div className="flex items-end gap-2" role="toolbar" aria-label="Barra de mensagem">
           <div className={cn(
@@ -256,7 +254,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
                 }}
                 onBlur={onBlur} onPaste={logic.handlePaste}
                 onClick={(e) => { const t = e.target as HTMLTextAreaElement; checkForMention(t.value, t.selectionStart ?? 0); }}
-                placeholder={connectionBanner.level !== 'ok' ? "Sem conexão com o WhatsApp — o envio vai falhar até voltar" : editingMessage ? "Editar mensagem..." : replyToMessage ? "Digite sua resposta..." : "Digite uma mensagem… (/ para comandos, @ para mencionar)"}
+                placeholder={editingMessage ? "Editar mensagem..." : replyToMessage ? "Digite sua resposta..." : connectionBanner.level !== 'ok' ? "Sem conexão com o WhatsApp — o envio vai falhar até voltar" : "Digite uma mensagem… (/ para comandos, @ para mencionar)"}
                 rows={1}
                 className={cn(
                   "w-full bg-transparent border-0 outline-none text-sm text-foreground",
