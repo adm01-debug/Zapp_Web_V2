@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `031d5e596a` · branch `main` · 2026-11-03 16:58 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `1616721f01` · branch `main` · 2026-11-03 17:12 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -55,9 +55,9 @@ vira alerta para ninguém. A sonda `connection-health-check` roda a cada 5 min (
 
 | Nível | Quando | O que acontece | Estado |
 |---|---|---|---|
-| **0 — queda rápida** | `disconnected`/`degraded` enquanto a reconexão automática ainda tem tentativas (~15 min) | Ninguém recebe push/e-mail. Na tela, conexão em **amarelo** e a caixa de mensagem avisa "sem conexão — a mensagem ficará na fila". A mensagem **entra na fila e sai quando voltar**; nada é perdido. | **pendente**: fila já aceita (`enqueue_outbound_message`, `20261010211000`, não checa saúde) mas **não há aviso nem cor na tela** (grep no inbox vazio) |
-| **1 — queda confirmada** | reconexão esgotou as tentativas **ou** motivo `phantom_session` (celular desvinculou; precisa de QR Code) | **Admin e supervisores recebem push + e-mail sempre**, independentemente das preferências (`alert_on_disconnected` etc. só **adicionam** gente, nunca tiram). Atendentes e supervisores da conexão veem bloqueio **vermelho**: "WhatsApp desconectado, precisa de QR Code — avise o admin". Envio continua enfileirado, não falha. | **pendente**: hoje alerta só vai a quem optou (`push_enabled`/`email_enabled`); bloqueio vermelho não existe |
-| **2 — persistente** | > 1 h desconectada | Repete o aviso **de hora em hora para o admin**. **Campanhas Talk X dessa conexão pausam automaticamente** e retomam quando a conexão voltar a `healthy`. | **pendente**: NÃO VERIFICADO se campanha checa saúde da conexão hoje — tratar como lacuna |
+| **0 — queda rápida** | `disconnected`/`degraded` enquanto a reconexão automática ainda tem tentativas (~15 min) | Ninguém recebe push/e-mail. Na tela, conexão em **amarelo** e a caixa de mensagem avisa "sem conexão com o WhatsApp — o envio vai falhar até a conexão voltar". **Hoje o envio falha** (não existe fila offline): `enqueue_outbound_message` recusa com `no_connected_whatsapp_connection` quando não há conexão `connected`. | **implementado** (PR #2677, merge em 2026-11-03): aviso amarelo/vermelho em `src/components/inbox/chat/ConnectionHealthBanner.tsx` + `src/hooks/inbox/useConnectionHealthBanner.ts`. **Lacuna:** o atendente só vê o aviso quando a RPC `get_contact_connection_health` entrar (RLS de `whatsapp_connections` é só admin/supervisor) — DDL pendente |
+| **1 — queda confirmada** | reconexão esgotou as tentativas **ou** motivo `phantom_session` (celular desvinculou; precisa de QR Code) | **Admin e supervisores recebem push + e-mail sempre**, independentemente das preferências (`alert_on_disconnected` etc. só **adicionam** gente, nunca tiram). Atendentes e supervisores da conexão veem bloqueio **vermelho**: "WhatsApp desconectado — precisa de um novo QR Code (só o admin conecta). Envios falham até reconectar." | **implementado** (PR #2677, merge em 2026-11-03): `connection-health-check` escala por nível (`decideEscalation`), push + e-mail obrigatórios para admin/supervisor via `user_roles`, opt-in só adiciona; marcadores por canal em `notifications` (`conn-l1:v1:<tipo>:<id>`) |
+| **2 — persistente** | > 1 h desconectada | Repete o aviso **de hora em hora só para o admin** (nível 2 implica nível 1). Campanhas pausadas por `connection_lost` **retomam** quando a conexão volta (`onConnectionRecovered` → `transition_talkx_campaign` `start`). | **implementado** (PR #2677, merge em 2026-11-03): chave `conn-l2:v1:<tipo>:<id>:<hora>`. Pausa automática ao cair: já existia (`connection_lost`), NÃO VERIFICADO neste PR |
 
 Regra adicional: `degraded` (webhook mudo) conta como nível 0; se durar **mais de 30 min**, sobe para nível 1 —
 webhook mudo por meia hora significa que mensagens de clientes não estão chegando, tão grave quanto não enviar.
@@ -97,6 +97,7 @@ limite efetivo é o `daily_limit_per_connection`.
 - Reabertura automática mantém o atendente anterior — o dono quer continuidade de atendimento.
 - Não existe "waiting por inatividade" — `waiting` é só ação humana ou reabertura sem dono.
 - Alerta de desconexão nível 1 para admin/supervisor **não é opt-out**.
+- **Envio com WhatsApp caído: hoje falha, não enfileira** (medido 2026-11-03: `enqueue_outbound_message` → `no_connected_whatsapp_connection`). **Decisão pendente do dono:** (A) manter — aviso na tela + erro de envio, zero DDL; ou (B) fila offline — guardar a mensagem e enviar quando voltar (exige DDL + worker + regra de expiração). Até decidir, a tela diz a verdade: "o envio vai falhar".
 - SLA: 15/30 min em horário comercial; push atendente+supervisor no vermelho; e-mail supervisor após 1 h; admin só com 3+ no vermelho na mesma fila.
 - **Nenhuma área congelada** (decisão 2026-11-03): qualquer módulo pode ser alterado por agente de IA, seguindo o fluxo de PR do `AGENTS.md` (regra 8 continua valendo para DDL, CI, segredos e deleção).
 - Papel `special_agent` **excluído** — só existem admin, supervisor e agent; exportar/baixar é a flag `can_download` do agente.
@@ -108,7 +109,9 @@ limite efetivo é o `daily_limit_per_connection`.
 
 ## 9. Dúvidas em aberto
 
-Nenhuma — entrevista concluída em 2026-11-03. Novas dúvidas: adicionar aqui e avisar o dono.
+1. **Mensagem enviada com WhatsApp caído: falhar (A) ou guardar em fila offline (B)?** — ver §8. Hoje falha.
+
+Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: adicionar aqui e avisar o dono.
 
 ## B. Quem pode ver/alterar o quê (RLS — conforme migrations do repo; schema real em `06`)
 

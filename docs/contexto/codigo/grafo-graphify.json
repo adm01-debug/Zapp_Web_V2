@@ -4,11 +4,11 @@
  "presente": true,
  "como_gerar": "uvx --from \"graphifyy[sql]\" graphify update .  (ou: bun run graph:update); saída em graphify-out/ — graph.json e graph.html NÃO são versionados (dezenas de MB); use `graphify query/path/explain` localmente",
  "relatorio": null,
- "commit_do_grafo": "031d5e596af02705ea45487aaf0fc65aa26ad4d1",
+ "commit_do_grafo": "1616721f011e8e639f691071fe351717c4da4c92",
  "grafo_atual": true,
  "nos": 54424,
- "arestas": 111189,
- "comunidades_total": 4103,
+ "arestas": 111191,
+ "comunidades_total": 4096,
  "relacoes": {
   "calls": 13538,
   "cites": 26,
@@ -26,12 +26,12 @@
   "rationale_for": 33,
   "re_exports": 936,
   "reads_from": 1129,
-  "references": 8003,
+  "references": 8005,
   "triggers": 300
  },
  "origem": {
   "EXTRACTED": 103857,
-  "INFERRED": 7332
+  "INFERRED": 7334
  },
  "comunidades": [
   {
@@ -155,10 +155,27 @@
   },
   {
    "id": 7,
+   "nome": "evolution-webhook-messages.ts",
+   "nos": 391,
+   "callables": 266,
+   "arquivos": 53,
+   "exemplos_arquivos": [
+    "docs/JORNADA_MENSAGEM_WHATSAPP.md",
+    "docs/TROUBLESHOOTING.md",
+    "docs/talkx/v4/etapas/F03-integridade-observabilidade-e-ensaio-real.md",
+    "docs/talkx/v4/inventario/H_motor_backend.md",
+    "docs/telefonia/CAPACIDADES.md",
+    "supabase/functions/_shared/__tests__/avatar-storage-path.test.ts",
+    "supabase/functions/_shared/__tests__/client-wallet-inbound.test.ts",
+    "supabase/functions/_shared/__tests__/evolution-call-events.test.ts"
+   ]
+  },
+  {
+   "id": 8,
    "nome": "validation.ts",
-   "nos": 416,
-   "callables": 259,
-   "arquivos": 100,
+   "nos": 376,
+   "callables": 251,
+   "arquivos": 92,
    "exemplos_arquivos": [
     "docs/_arquivo/auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md",
     "docs/audits/AUDITORIA_PARIDADE_V3_DOC_07_2026-10-13_PARTE4_INVENTARIO.md",
@@ -171,7 +188,7 @@
    ]
   },
   {
-   "id": 8,
+   "id": 9,
    "nome": "@tanstack/react-query",
    "nos": 369,
    "callables": 138,
@@ -185,23 +202,6 @@
     "src/components/calls/__tests__/SelectedCallPanel.notas.test.tsx",
     "src/components/calls/__tests__/TelefoniaView.test.tsx",
     "src/components/contacts/__tests__/ContactDetailPanel.activity.test.tsx"
-   ]
-  },
-  {
-   "id": 9,
-   "nome": "evolution-webhook-messages.ts",
-   "nos": 357,
-   "callables": 237,
-   "arquivos": 50,
-   "exemplos_arquivos": [
-    "docs/JORNADA_MENSAGEM_WHATSAPP.md",
-    "docs/TROUBLESHOOTING.md",
-    "docs/talkx/_arquivo/PLANO_TALKX_V3_100_ETAPAS_2026-09-29.md",
-    "docs/talkx/v4/etapas/F03-integridade-observabilidade-e-ensaio-real.md",
-    "docs/talkx/v4/inventario/H_motor_backend.md",
-    "docs/telefonia/CAPACIDADES.md",
-    "supabase/functions/_shared/__tests__/avatar-storage-path.test.ts",
-    "supabase/functions/_shared/__tests__/client-wallet-inbound.test.ts"
    ]
   },
   {
@@ -275,9 +275,9 @@
   {
    "id": 14,
    "nome": "multiplix-send/index.ts",
-   "nos": 269,
-   "callables": 164,
-   "arquivos": 39,
+   "nos": 271,
+   "callables": 158,
+   "arquivos": 38,
    "exemplos_arquivos": [
     "docs/multiplix/AUDITORIA_IMPLEMENTACAO_MULTIPLIX_2026-09-29.md",
     "docs/multiplix/CANAL.md",
@@ -291,6 +291,23 @@
   },
   {
    "id": 15,
+   "nome": "ai-conversation-summary/index.ts",
+   "nos": 258,
+   "callables": 150,
+   "arquivos": 42,
+   "exemplos_arquivos": [
+    "docs/audits/PLANO_AUDITORIA_500_COMMITS_200_ETAPAS_2026-10-18.md",
+    "docs/audits/PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md",
+    "docs/ia/IA-002-inventario-functions-ia.md",
+    "docs/ia/IA-004-matriz-autorizacao.md",
+    "docs/ia/IA-007-reuso-infraestrutura.md",
+    "docs/ia/IA-011-a-IA-020-contencao-P0.md",
+    "docs/ia/IA-011-a-IA-020-verificacao-adversarial.md",
+    "docs/ia/IA-021-a-IA-030-contratos-integridade.md"
+   ]
+  },
+  {
+   "id": 16,
    "nome": "useExternalCatalog.ts",
    "nos": 258,
    "callables": 127,
@@ -304,23 +321,6 @@
     "src/components/catalog/__tests__/CT25_cardActions.test.tsx",
     "src/components/catalog/__tests__/CT28_bulkBar.test.tsx",
     "src/components/catalog/__tests__/CT30_responsivo.test.tsx"
-   ]
-  },
-  {
-   "id": 16,
-   "nome": "ai-generate.ts",
-   "nos": 256,
-   "callables": 173,
-   "arquivos": 25,
-   "exemplos_arquivos": [
-    "docs/audits/AUDITORIA_TECNICA_22_DIMENSOES_2026-09-05.md",
-    "docs/audits/funcionalidades-pendentes-2026-10-11/02-ia-dashboard.md",
-    "docs/ia/IA-006-natureza-e-verificacao-dos-achados.md",
-    "docs/ia/IA-031-a-IA-040-camada-de-provedores-e-capacidades.md",
-    "docs/ia/IA-041-a-IA-050-execucao-resiliente-filas-e-consumo.md",
-    "docs/plans/PLANO_COPILOTO_VENDAS_AO_VIVO_150_ETAPAS_2026-10-16.md",
-    "supabase/functions/_shared/ai-budget.ts",
-    "supabase/functions/_shared/ai-capabilities.ts"
    ]
   },
   {
@@ -359,6 +359,23 @@
   },
   {
    "id": 19,
+   "nome": "ai-generate.ts",
+   "nos": 221,
+   "callables": 153,
+   "arquivos": 20,
+   "exemplos_arquivos": [
+    "docs/audits/AUDITORIA_TECNICA_22_DIMENSOES_2026-09-05.md",
+    "docs/audits/funcionalidades-pendentes-2026-10-11/02-ia-dashboard.md",
+    "docs/ia/IA-006-natureza-e-verificacao-dos-achados.md",
+    "docs/ia/IA-031-a-IA-040-camada-de-provedores-e-capacidades.md",
+    "docs/ia/IA-041-a-IA-050-execucao-resiliente-filas-e-consumo.md",
+    "docs/plans/PLANO_COPILOTO_VENDAS_AO_VIVO_150_ETAPAS_2026-10-16.md",
+    "supabase/functions/_shared/ai-budget.ts",
+    "supabase/functions/_shared/ai-capabilities.ts"
+   ]
+  },
+  {
+   "id": 20,
    "nome": "tarefas.ts",
    "nos": 219,
    "callables": 150,
@@ -375,7 +392,24 @@
    ]
   },
   {
-   "id": 20,
+   "id": 21,
+   "nome": "gmail-helpers.ts",
+   "nos": 219,
+   "callables": 163,
+   "arquivos": 24,
+   "exemplos_arquivos": [
+    "supabase/functions/_shared/__tests__/gmail-cursor-cas-db.test.ts",
+    "supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts",
+    "supabase/functions/_shared/__tests__/gmail-helpers.test.ts",
+    "supabase/functions/_shared/__tests__/gmail-mime.test.ts",
+    "supabase/functions/_shared/__tests__/gmail-reauth-required.test.ts",
+    "supabase/functions/_shared/gmail-helpers.ts",
+    "supabase/functions/_shared/gmail-mime.ts",
+    "supabase/functions/_shared/hmac-validation.ts"
+   ]
+  },
+  {
+   "id": 22,
    "nome": "ref_node_child_process",
    "nos": 211,
    "callables": 89,
@@ -392,24 +426,24 @@
    ]
   },
   {
-   "id": 21,
-   "nome": "gmail-helpers.ts",
-   "nos": 199,
-   "callables": 149,
+   "id": 23,
+   "nome": "media.ts",
+   "nos": 183,
+   "callables": 129,
    "arquivos": 21,
    "exemplos_arquivos": [
-    "supabase/functions/_shared/__tests__/gmail-cursor-cas-db.test.ts",
-    "supabase/functions/_shared/__tests__/gmail-helpers-account-scope.test.ts",
-    "supabase/functions/_shared/__tests__/gmail-helpers.test.ts",
-    "supabase/functions/_shared/__tests__/gmail-mime.test.ts",
-    "supabase/functions/_shared/__tests__/gmail-reauth-required.test.ts",
-    "supabase/functions/_shared/__tests__/webhook-auth-gates.test.ts",
-    "supabase/functions/_shared/gmail-helpers.ts",
-    "supabase/functions/_shared/gmail-mime.ts"
+    "docs/plans/PLANO_100_ETAPAS_PARIDADE_V1_V3_2026-09-01.md",
+    "supabase/functions/_shared/__tests__/evolution-go-routes.test.ts",
+    "supabase/functions/_shared/__tests__/messaging-evolution-go.test.ts",
+    "supabase/functions/_shared/evolution-go-routes.ts",
+    "supabase/functions/_shared/evolution-helpers.ts",
+    "supabase/functions/_shared/messaging/__tests__/media.test.ts",
+    "supabase/functions/_shared/messaging/__tests__/personalize.test.ts",
+    "supabase/functions/_shared/messaging/__tests__/phone.test.ts"
    ]
   },
   {
-   "id": 22,
+   "id": 24,
    "nome": "DashboardView.tsx",
    "nos": 182,
    "callables": 78,
@@ -423,40 +457,6 @@
     "docs/design/REDESIGN_DASHBOARD_STATUS.md",
     "docs/plans/00_PROMPT_MESTRE_DASHBOARD_WIDE_24_FULLHD_ZAPP_WEB_V2 (1).md",
     "src/components/csat/CSATDashboard.tsx"
-   ]
-  },
-  {
-   "id": 23,
-   "nome": "ai-conversation-summary/index.ts",
-   "nos": 174,
-   "callables": 103,
-   "arquivos": 21,
-   "exemplos_arquivos": [
-    "docs/audits/PLANO_MELHORIAS_50_ETAPAS_2026-09-20.md",
-    "docs/ia/IA-021-a-IA-030-contratos-integridade.md",
-    "supabase/functions/_shared/__tests__/ai-context-atomic-persist.test.ts",
-    "supabase/functions/_shared/__tests__/ai-response-contracts.test.ts",
-    "supabase/functions/_shared/__tests__/ai-vocabulary.test.ts",
-    "supabase/functions/_shared/__tests__/chatbot-l1-output.test.ts",
-    "supabase/functions/_shared/ai-conversation-pipeline.ts",
-    "supabase/functions/_shared/ai-json.ts"
-   ]
-  },
-  {
-   "id": 24,
-   "nome": "schemas.ts",
-   "nos": 174,
-   "callables": 78,
-   "arquivos": 22,
-   "exemplos_arquivos": [
-    "docs/audits/repro-espelho-n217-f515122db.md",
-    "docs/contracts.md",
-    "docs/plans/PLANO_100_ETAPAS_PARIDADE_V1_V3_2026-09-01.md",
-    "https://esm.sh/qrcode@1.5.3",
-    "supabase/functions/_shared/__tests__/ai-context-revalidation.test.ts",
-    "supabase/functions/_shared/__tests__/evolution-control-authz.test.ts",
-    "supabase/functions/_shared/__tests__/gmail-send-schema.test.ts",
-    "supabase/functions/_shared/contract-kit.ts"
    ]
   },
   {
@@ -495,23 +495,6 @@
   },
   {
    "id": 27,
-   "nome": "ai-usage.ts",
-   "nos": 164,
-   "callables": 107,
-   "arquivos": 15,
-   "exemplos_arquivos": [
-    "docs/audits/funcionalidades-pendentes-2026-10-11/02-ia-dashboard.md",
-    "docs/design/MODULO_MULTIPLIX_TALKX_CONFIG_SEGURANCA.md",
-    "docs/ia/IA-003-registro-achados.md",
-    "docs/ia/IA-007-reuso-infraestrutura.md",
-    "docs/multiplix/PERMISSOES.md",
-    "docs/talkx/v4/etapas/F06-capacidades-novas-do-motor-e-agregacoes.md",
-    "supabase/functions/_shared/__tests__/ai-quota-acao-calculada.test.ts",
-    "supabase/functions/_shared/ai-usage-outbox-eventos.test.ts"
-   ]
-  },
-  {
-   "id": 28,
    "nome": "8. Arquivos-chave com caminhos",
    "nos": 161,
    "callables": 97,
@@ -528,24 +511,24 @@
    ]
   },
   {
-   "id": 29,
-   "nome": "ai-transcribe-audio/index.ts",
-   "nos": 154,
-   "callables": 93,
-   "arquivos": 19,
+   "id": 28,
+   "nome": "ai-usage.ts",
+   "nos": 156,
+   "callables": 107,
+   "arquivos": 15,
    "exemplos_arquivos": [
-    "docs/ia/IA-002-inventario-functions-ia.md",
-    "docs/ia/IA-006-natureza-e-verificacao-dos-achados.md",
-    "supabase/functions/_shared/__tests__/ssrf.test.ts",
-    "supabase/functions/_shared/ai-audio-authz.ts",
-    "supabase/functions/_shared/ai-auth.ts",
-    "supabase/functions/_shared/evolution-helpers.ts",
-    "supabase/functions/_shared/messaging/__tests__/media.test.ts",
-    "supabase/functions/_shared/messaging/__tests__/personalize.test.ts"
+    "docs/audits/funcionalidades-pendentes-2026-10-11/02-ia-dashboard.md",
+    "docs/design/MODULO_MULTIPLIX_TALKX_CONFIG_SEGURANCA.md",
+    "docs/ia/IA-003-registro-achados.md",
+    "docs/ia/IA-007-reuso-infraestrutura.md",
+    "docs/multiplix/PERMISSOES.md",
+    "docs/talkx/v4/etapas/F06-capacidades-novas-do-motor-e-agregacoes.md",
+    "supabase/functions/_shared/__tests__/ai-quota-acao-calculada.test.ts",
+    "supabase/functions/_shared/ai-usage-outbox-eventos.test.ts"
    ]
   },
   {
-   "id": 30,
+   "id": 29,
    "nome": "workItem.types.ts",
    "nos": 154,
    "callables": 92,
@@ -562,7 +545,7 @@
    ]
   },
   {
-   "id": 31,
+   "id": 30,
    "nome": "EmailContactPanel.tsx",
    "nos": 150,
    "callables": 98,
@@ -576,6 +559,23 @@
     "src/components/crm360/CRM360StatsCards.tsx",
     "src/components/email/EmailChatThread.tsx",
     "src/components/email/EmailContactPanel.tsx"
+   ]
+  },
+  {
+   "id": 31,
+   "nome": "connection-health-check/index.ts",
+   "nos": 149,
+   "callables": 99,
+   "arquivos": 14,
+   "exemplos_arquivos": [
+    "docs/audits/SEGURANCA_EDGE_FUNCTIONS_2026-10-07.md",
+    "docs/contexto/regras/manual/regras.md",
+    "supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts",
+    "supabase/functions/_shared/__tests__/edge-boot.test.ts",
+    "supabase/functions/_shared/__tests__/evolution-connection-state.test.ts",
+    "supabase/functions/_shared/ai-kb-ingest.ts",
+    "supabase/functions/_shared/cron-secret-auth.ts",
+    "supabase/functions/_shared/edge-boot.ts"
    ]
   },
   {
@@ -597,6 +597,23 @@
   },
   {
    "id": 33,
+   "nome": "ia131-audio-meme-conteudo.contract.test.ts",
+   "nos": 146,
+   "callables": 107,
+   "arquivos": 11,
+   "exemplos_arquivos": [
+    "supabase/functions/_shared/ai-audio-input.ts",
+    "supabase/functions/_shared/ai-image-input.ts",
+    "supabase/functions/_shared/ai-usage.ts",
+    "supabase/functions/_shared/schemas.ts",
+    "supabase/functions/classify-audio-meme/index.test.ts",
+    "supabase/functions/classify-audio-meme/index.ts",
+    "supabase/functions/classify-emoji/index.ts",
+    "supabase/functions/classify-sticker/index.ts"
+   ]
+  },
+  {
+   "id": 34,
    "nome": "useInboxFilters",
    "nos": 144,
    "callables": 68,
@@ -610,23 +627,6 @@
     "docs/plans/PLANO_BADGE_ARQUIVADAS_2026-10-11.md",
     "docs/plans/PLANO_CONTADORES_ACOMPANHAM_FILTROS_2026-10-11.md",
     "docs/plans/PLANO_REMOCAO_TAGS_2026-10-12.md"
-   ]
-  },
-  {
-   "id": 34,
-   "nome": "connection-health-check/index.ts",
-   "nos": 142,
-   "callables": 95,
-   "arquivos": 12,
-   "exemplos_arquivos": [
-    "docs/audits/SEGURANCA_EDGE_FUNCTIONS_2026-10-07.md",
-    "supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts",
-    "supabase/functions/_shared/__tests__/edge-boot.test.ts",
-    "supabase/functions/_shared/ai-kb-ingest.ts",
-    "supabase/functions/_shared/cron-secret-auth.ts",
-    "supabase/functions/_shared/edge-boot.ts",
-    "supabase/functions/_shared/evolution-send.ts",
-    "supabase/functions/ai-kb-ingest/index.test.ts"
    ]
   },
   {
@@ -665,6 +665,23 @@
   },
   {
    "id": 37,
+   "nome": "ai-transcribe-audio/index.ts",
+   "nos": 136,
+   "callables": 60,
+   "arquivos": 21,
+   "exemplos_arquivos": [
+    "docs/audits/SEGURANCA_EDGE_FUNCTIONS_2026-10-07.md",
+    "docs/audits/SEGURANCA_SAIDAS_DE_INFORMACAO_2026-10-07.md",
+    "docs/ia/IA-003-registro-achados.md",
+    "docs/ia/IA-004-matriz-autorizacao.md",
+    "docs/ia/IA-006-natureza-e-verificacao-dos-achados.md",
+    "docs/ia/IA-011-a-IA-020-contencao-P0.md",
+    "docs/ia/IA-011-a-IA-020-verificacao-adversarial.md",
+    "supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts"
+   ]
+  },
+  {
+   "id": 38,
    "nome": "resolveAudience",
    "nos": 134,
    "callables": 31,
@@ -681,32 +698,15 @@
    ]
   },
   {
-   "id": 38,
-   "nome": "ref_https",
-   "nos": 132,
-   "callables": 81,
-   "arquivos": 29,
-   "exemplos_arquivos": [
-    "supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts",
-    "supabase/functions/_shared/__tests__/consumo-pago-no-ledger.test.ts",
-    "supabase/functions/_shared/__tests__/evolution-connection-state.test.ts",
-    "supabase/functions/_shared/__tests__/evolution-message-id.test.ts",
-    "supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts",
-    "supabase/functions/_shared/__tests__/postgrest-filters.test.ts",
-    "supabase/functions/_shared/__tests__/require-auth-profile-active.test.ts",
-    "supabase/functions/_shared/__tests__/webhook-signature-ambiguity.test.ts"
-   ]
-  },
-  {
    "id": 39,
    "nome": "ai-jobs-worker/index.ts",
-   "nos": 131,
-   "callables": 104,
+   "nos": 130,
+   "callables": 102,
    "arquivos": 9,
    "exemplos_arquivos": [
     "supabase/functions/_shared/__tests__/effect-reconcile.test.ts",
-    "supabase/functions/_shared/ai-generate.ts",
     "supabase/functions/_shared/ai-jobs.ts",
+    "supabase/functions/_shared/ai-routing.ts",
     "supabase/functions/_shared/effect-reconcile.ts",
     "supabase/functions/_shared/evolution-instance-token.ts",
     "supabase/functions/ai-jobs-worker/index.test.ts",
@@ -818,6 +818,23 @@
   },
   {
    "id": 46,
+   "nome": "ref_https",
+   "nos": 117,
+   "callables": 72,
+   "arquivos": 22,
+   "exemplos_arquivos": [
+    "docs/design/PLANO_TELEFONIA_FINALIZACAO_100_ETAPAS_2026-09-29.md",
+    "supabase/functions/_shared/__tests__/consumo-pago-no-ledger.test.ts",
+    "supabase/functions/_shared/__tests__/evolution-message-id.test.ts",
+    "supabase/functions/_shared/__tests__/webhook-signature-ambiguity.test.ts",
+    "supabase/functions/_shared/__tests__/webhook-signature.test.ts",
+    "supabase/functions/_shared/deno-types.ts",
+    "supabase/functions/_shared/evolution-send.ts",
+    "supabase/functions/_shared/webhook-signature.ts"
+   ]
+  },
+  {
+   "id": 47,
    "nome": "TalkXAudienceFilters.tsx",
    "nos": 115,
    "callables": 80,
@@ -834,7 +851,7 @@
    ]
   },
   {
-   "id": 47,
+   "id": 48,
    "nome": "ChatPopup.rolagem-mensagem-nova.test.tsx",
    "nos": 115,
    "callables": 44,
@@ -851,7 +868,24 @@
    ]
   },
   {
-   "id": 48,
+   "id": 49,
+   "nome": "evolution-api/index.ts",
+   "nos": 113,
+   "callables": 63,
+   "arquivos": 20,
+   "exemplos_arquivos": [
+    "docs/audits/repro-espelho-n217-f515122db.md",
+    "docs/catalogo/ARQUITETURA.md",
+    "docs/multiplix/AUDITORIA_IMPLEMENTACAO_MULTIPLIX_2026-09-29.md",
+    "docs/multiplix/CANAL.md",
+    "docs/talkx/v4/etapas/F06-capacidades-novas-do-motor-e-agregacoes.md",
+    "https://esm.sh/qrcode@1.5.3",
+    "scripts/ci/evolution-api-proxy.unit.mjs",
+    "supabase/functions/_shared/__tests__/evolution-api-media-hosts.test.ts"
+   ]
+  },
+  {
+   "id": 50,
    "nome": "TasksModule.tsx",
    "nos": 112,
    "callables": 60,
@@ -868,7 +902,7 @@
    ]
   },
   {
-   "id": 49,
+   "id": 51,
    "nome": "useReducedMotion",
    "nos": 111,
    "callables": 27,
@@ -885,7 +919,7 @@
    ]
   },
   {
-   "id": 50,
+   "id": 52,
    "nome": "ConversationListSidebar.tsx",
    "nos": 111,
    "callables": 62,
@@ -902,7 +936,7 @@
    ]
   },
   {
-   "id": 51,
+   "id": 53,
    "nome": "Método de execução futura",
    "nos": 111,
    "callables": 0,
@@ -912,7 +946,7 @@
    ]
   },
   {
-   "id": 52,
+   "id": 54,
    "nome": "hooks/copilot/index.ts",
    "nos": 108,
    "callables": 68,
@@ -929,7 +963,7 @@
    ]
   },
   {
-   "id": 53,
+   "id": 55,
    "nome": "queryClient.tsx",
    "nos": 107,
    "callables": 31,
@@ -946,7 +980,7 @@
    ]
   },
   {
-   "id": 54,
+   "id": 56,
    "nome": "useContactMedia.ts",
    "nos": 107,
    "callables": 57,
@@ -963,7 +997,24 @@
    ]
   },
   {
-   "id": 55,
+   "id": 57,
+   "nome": "schemas.ts",
+   "nos": 106,
+   "callables": 36,
+   "arquivos": 13,
+   "exemplos_arquivos": [
+    "docs/contracts.md",
+    "docs/plans/PLANO_100_ETAPAS_PARIDADE_V1_V3_2026-09-01.md",
+    "supabase/functions/_shared/__tests__/ai-context-revalidation.test.ts",
+    "supabase/functions/_shared/__tests__/gmail-send-schema.test.ts",
+    "supabase/functions/_shared/contract-kit.ts",
+    "supabase/functions/_shared/contracts.ts",
+    "supabase/functions/_shared/cors-origins.ts",
+    "supabase/functions/_shared/schemas.ts"
+   ]
+  },
+  {
+   "id": 58,
    "nome": "SLAMetricsDashboard.tsx",
    "nos": 105,
    "callables": 49,
@@ -980,7 +1031,7 @@
    ]
   },
   {
-   "id": 56,
+   "id": 59,
    "nome": "useChatPanelHandlers.ts",
    "nos": 105,
    "callables": 62,
@@ -997,7 +1048,7 @@
    ]
   },
   {
-   "id": 57,
+   "id": 60,
    "nome": ".done",
    "nos": 104,
    "callables": 2,
@@ -1014,7 +1065,7 @@
    ]
   },
   {
-   "id": 58,
+   "id": 61,
    "nome": "useResolvedStorageUrl",
    "nos": 104,
    "callables": 49,
@@ -1031,7 +1082,7 @@
    ]
   },
   {
-   "id": 59,
+   "id": 62,
    "nome": "TalkXSuppression",
    "nos": 103,
    "callables": 55,
@@ -1048,7 +1099,7 @@
    ]
   },
   {
-   "id": 60,
+   "id": 63,
    "nome": "useMessages.ts",
    "nos": 102,
    "callables": 55,
@@ -1065,7 +1116,7 @@
    ]
   },
   {
-   "id": 61,
+   "id": 64,
    "nome": "00_PROMPT_MESTRE_DASHBOARD_WIDE_24_FULLHD_ZAPP_WEB_V2 (1).md",
    "nos": 102,
    "callables": 0,
@@ -1075,7 +1126,7 @@
    ]
   },
   {
-   "id": 62,
+   "id": 65,
    "nome": "8. Cartões executáveis 001–100",
    "nos": 101,
    "callables": 0,
@@ -1085,7 +1136,7 @@
    ]
   },
   {
-   "id": 63,
+   "id": 66,
    "nome": "AIQuickAccess.tsx",
    "nos": 100,
    "callables": 37,
@@ -1102,7 +1153,7 @@
    ]
   },
   {
-   "id": 64,
+   "id": 67,
    "nome": "FilesToolbar.tsx",
    "nos": 99,
    "callables": 52,
@@ -1119,7 +1170,7 @@
    ]
   },
   {
-   "id": 65,
+   "id": 68,
    "nome": "useMyWorkItems.ts",
    "nos": 98,
    "callables": 40,
@@ -1136,7 +1187,7 @@
    ]
   },
   {
-   "id": 66,
+   "id": 69,
    "nome": "lamejs",
    "nos": 98,
    "callables": 97,
@@ -1146,7 +1197,7 @@
    ]
   },
   {
-   "id": 67,
+   "id": 70,
    "nome": "useSLANotifications.ts",
    "nos": 98,
    "callables": 44,
@@ -1163,7 +1214,7 @@
    ]
   },
   {
-   "id": 68,
+   "id": 71,
    "nome": "GoalsDashboard.tsx",
    "nos": 96,
    "callables": 41,
@@ -1180,7 +1231,7 @@
    ]
   },
   {
-   "id": 69,
+   "id": 72,
    "nome": "theme/presets.ts",
    "nos": 96,
    "callables": 47,
@@ -1197,7 +1248,7 @@
    ]
   },
   {
-   "id": 70,
+   "id": 73,
    "nome": "multiplix-dispatch/index.ts",
    "nos": 96,
    "callables": 66,
@@ -1214,7 +1265,7 @@
    ]
   },
   {
-   "id": 71,
+   "id": 74,
    "nome": "WorkItemSheet.tsx",
    "nos": 95,
    "callables": 62,
@@ -1231,7 +1282,7 @@
    ]
   },
   {
-   "id": 72,
+   "id": 75,
    "nome": "useFilesViewState.ts",
    "nos": 93,
    "callables": 50,
@@ -1248,7 +1299,7 @@
    ]
   },
   {
-   "id": 73,
+   "id": 76,
    "nome": "Crm360Tab.tsx",
    "nos": 93,
    "callables": 40,
@@ -1265,24 +1316,7 @@
    ]
   },
   {
-   "id": 74,
-   "nome": "evolution-go.ts",
-   "nos": 93,
-   "callables": 66,
-   "arquivos": 12,
-   "exemplos_arquivos": [
-    "docs/plans/PLANO_100_ETAPAS_PARIDADE_V1_V3_2026-09-01.md",
-    "supabase/functions/_shared/__tests__/evolution-go-routes.test.ts",
-    "supabase/functions/_shared/__tests__/messaging-evolution-go.test.ts",
-    "supabase/functions/_shared/evolution-go-routes.ts",
-    "supabase/functions/_shared/messaging/evolution-go.ts",
-    "supabase/functions/_shared/providers/__tests__/registry.test.ts",
-    "supabase/functions/_shared/providers/env.ts",
-    "supabase/functions/_shared/providers/evolution/index.ts"
-   ]
-  },
-  {
-   "id": 75,
+   "id": 77,
    "nome": "inventario/README.md",
    "nos": 92,
    "callables": 0,
@@ -1299,7 +1333,7 @@
    ]
   },
   {
-   "id": 76,
+   "id": 78,
    "nome": "resolve",
    "nos": 88,
    "callables": 25,
@@ -1316,7 +1350,7 @@
    ]
   },
   {
-   "id": 77,
+   "id": 79,
    "nome": "useForwardMedia.ts",
    "nos": 88,
    "callables": 58,
@@ -1330,40 +1364,6 @@
     "src/config/__tests__/supabase.test.ts",
     "src/config/supabase.ts",
     "src/hooks/chat/__tests__/useForwardMedia.test.ts"
-   ]
-  },
-  {
-   "id": 78,
-   "nome": "fetchAllRows",
-   "nos": 87,
-   "callables": 61,
-   "arquivos": 15,
-   "exemplos_arquivos": [
-    "docs/adr/ADR-009-arquitetura-sla-canonica.md",
-    "src/components/inbox/VirtualizedRealtimeList.tsx",
-    "src/hooks/agents/useAgentRecentSends.ts",
-    "src/hooks/business/useQueueAnalytics.ts",
-    "src/hooks/integrations/useCatalogSendHistory.ts",
-    "src/hooks/sla/__tests__/useApplicableSLA.test.tsx",
-    "src/hooks/sla/index.ts",
-    "src/hooks/sla/slaFirstResponse.ts"
-   ]
-  },
-  {
-   "id": 79,
-   "nome": "catalogShared.tsx",
-   "nos": 87,
-   "callables": 51,
-   "arquivos": 14,
-   "exemplos_arquivos": [
-    "docs/catalogo/AUDITORIA_CATALOGO_2026-09-29.md",
-    "docs/catalogo/CHANGELOG_CATALOGO.md",
-    "docs/catalogo/COMPONENTES.md",
-    "docs/catalogo/PERF.md",
-    "docs/catalogo/PLANO_IMPLEMENTACAO_CATALOGO_100.md",
-    "src/components/catalog/CatalogAdvancedFilters.tsx",
-    "src/components/catalog/CatalogRail.tsx",
-    "src/components/catalog/ExternalProductManagement.tsx"
    ]
   }
  ],
@@ -2630,7 +2630,7 @@
   "docs/audits/AUDITORIA_ENTREGAS_HERMES_RODADA3_2026-09-30.md": "localDay.ts",
   "docs/audits/AUDITORIA_ESTRUTURA_LEGADA_TAGS_2026-09-27.md": "5. Viabilidade de exclusão TOTAL — veredito",
   "docs/audits/AUDITORIA_MIGRACAO_DB_2026-08-27.md": "4. Achados",
-  "docs/audits/AUDITORIA_MIGRACAO_DB_2026-08-28.md": "md5",
+  "docs/audits/AUDITORIA_MIGRACAO_DB_2026-08-28.md": "9. PLANO DE MELHORIAS E CORREÇÕES — 100 ETAPAS",
   "docs/audits/AUDITORIA_MODULO_CONTATOS_2026-09-29.md": "BulkActionsBar",
   "docs/audits/AUDITORIA_PARIDADE_LOCAL_GITHUB_SUPABASE_2026-09-22.md": "Auditoria bidirecional — local, GitHub e Supabase canônico",
   "docs/audits/AUDITORIA_PARIDADE_V3_CHAT_UI_PARTE1_2026-10-11.md": "ConversationDeliverySummary.tsx",
@@ -2691,7 +2691,7 @@
   "docs/audits/PLANO_AUDITORIA_500_COMMITS_200_ETAPAS_2026-10-18.md": "VirtualizedRealtimeList",
   "docs/audits/PLANO_BANCO_UNICO_200_ETAPAS_2026-09-24.md": "react",
   "docs/audits/PLANO_CONTATOS_100_ETAPAS_2026-09-29.md": "useContactsSearch",
-  "docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md": "FASE 3 — Integridade e segurança do schema (E21–E28)",
+  "docs/audits/PLANO_CORRECOES_50_ETAPAS_2026-09-16.md": "FASE 1 — Higiene Git local ↔ GitHub (E06–E13)",
   "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-26.md": "test",
   "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-09-27.md": "ref_node_crypto",
   "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md": ".schedule",
@@ -2785,7 +2785,7 @@
   "docs/audits/prefetch-views-quentes-2026-10-03.md": "ChatPanel",
   "docs/audits/react19-e38-2026-10-03.md": "GmailInboxView",
   "docs/audits/referential-integrity-2026-09-26.md": "Integridade referencial — E17 (PLANO_MELHORIAS_50)",
-  "docs/audits/repro-espelho-n217-f515122db.md": "schemas.ts",
+  "docs/audits/repro-espelho-n217-f515122db.md": "evolution-api/index.ts",
   "docs/audits/rls-matrix-2026-09-16.md": "Matriz RLS — 2026-09-16 (E24)",
   "docs/audits/slow-queries-2026-09.md": "Baseline de queries lentas — E19 (PLANO_MELHORIAS_50)",
   "docs/audits/talkx-2026-09-11/DIAGNOSTICO_CAMPANHAS.md": "TalkXSuppression.tsx",
@@ -2924,21 +2924,21 @@
   "docs/ia/IA-001-referencia-de-execucao.md": "IA-001 — Referência técnica da execução",
   "docs/ia/IA-002-inventario-fluxos.md": "IA-002 — Inventário dos fluxos de IA (mapa botão → hook → função → provedor → tabela → permissão → efeito → teste)",
   "docs/ia/IA-002-inventario-frontend-ia.md": "react",
-  "docs/ia/IA-002-inventario-functions-ia.md": "ai-transcribe-audio/index.ts",
+  "docs/ia/IA-002-inventario-functions-ia.md": "ai-conversation-summary/index.ts",
   "docs/ia/IA-003-registro-achados.md": "ai-usage.ts",
   "docs/ia/IA-004-matriz-autorizacao.md": "react",
   "docs/ia/IA-005-metas-de-qualidade.md": "test",
   "docs/ia/IA-006-natureza-e-verificacao-dos-achados.md": "IA-006 — Verificação dos 10 achados do Plano IA 200 Etapas e classificação da natureza da inteligência",
-  "docs/ia/IA-007-reuso-infraestrutura.md": "ai-usage.ts",
+  "docs/ia/IA-007-reuso-infraestrutura.md": "ai-conversation-summary/index.ts",
   "docs/ia/IA-008-organizacao-das-entregas.md": "ia/README.md",
   "docs/ia/IA-009-desligamento-seguro.md": "8. Arquivos-chave com caminhos",
   "docs/ia/IA-010-ambiente-de-ensaio.md": "agent",
-  "docs/ia/IA-011-a-IA-020-contencao-P0.md": "ia/README.md",
-  "docs/ia/IA-011-a-IA-020-verificacao-adversarial.md": "ia/README.md",
+  "docs/ia/IA-011-a-IA-020-contencao-P0.md": "ai-conversation-summary/index.ts",
+  "docs/ia/IA-011-a-IA-020-verificacao-adversarial.md": "ai-conversation-summary/index.ts",
   "docs/ia/IA-021-a-IA-030-contratos-integridade.md": "ai-conversation-summary/index.ts",
   "docs/ia/IA-031-a-IA-040-camada-de-provedores-e-capacidades.md": "ai-generate.ts",
   "docs/ia/IA-041-a-IA-050-execucao-resiliente-filas-e-consumo.md": "ai-generate.ts",
-  "docs/ia/IA-171-a-IA-180-agentes-especializados.md": "ia/README.md",
+  "docs/ia/IA-171-a-IA-180-agentes-especializados.md": "ai-conversation-summary/index.ts",
   "docs/ia/README.md": "Bloco 01 do Plano IA 200 Etapas — Escopo, evidências e regras de execução",
   "docs/mapa/ARQUITETURA_BUSCA.md": "SuggestionList",
   "docs/mapa/AUDITORIA_ADVERSARIAL_E98.md": "useAddressAutocomplete",
@@ -3195,8 +3195,8 @@
   "eslint.config.js": "package.json",
   "framer-motion": "framer-motion",
   "generate_audit_pdf.ts": "package.json",
-  "https://esm.sh/@supabase/supabase-js@2.87.1": "webauthn/index.ts",
-  "https://esm.sh/qrcode@1.5.3": "schemas.ts",
+  "https://esm.sh/@supabase/supabase-js@2.87.1": "observability.ts",
+  "https://esm.sh/qrcode@1.5.3": "evolution-api/index.ts",
   "infrastructure/preview-egress-proxy/go.mod": "github.com/adm01-debug/zapp-web-v2/preview-egress-proxy",
   "infrastructure/preview-egress-proxy/main.go": "main.go",
   "infrastructure/preview-egress-proxy/main_test.go": "main.go",
@@ -3293,7 +3293,7 @@
   "scripts/ci/e2e-teardown.unit.mjs": "e2e-teardown.unit.mjs",
   "scripts/ci/edge-coverage-authz.unit.mjs": "edge-coverage-authz.unit.mjs",
   "scripts/ci/email-en088-medicao-docs.unit.mjs": "ref_node_assert",
-  "scripts/ci/evolution-api-proxy.unit.mjs": "migrate-media-storage/index.ts",
+  "scripts/ci/evolution-api-proxy.unit.mjs": "evolution-api/index.ts",
   "scripts/ci/evolution-edge-fixes.unit.mjs": "ref_node_assert",
   "scripts/ci/fila-merge.mjs": "fila-merge.mjs",
   "scripts/ci/fila-merge.unit.mjs": "Plano: paridade V3 → V2 do módulo admin (doc 05), 3ª passada — 13/10/2026",
@@ -3798,7 +3798,7 @@
   "scripts/ui-audit/width-check.mjs": "width-regression.mjs",
   "scripts/ui-audit/width-regression.mjs": "width-regression.mjs",
   "scripts/vercel/ignore-build.sh": "ignore-build.sh",
-  "scripts/vercel/ignore-build.unit.mjs": "ref_node_child_process",
+  "scripts/vercel/ignore-build.unit.mjs": "test",
   "scripts/vercel/verify-production.mjs": "render-workflow-docs.mjs",
   "sip.js": "SipCallAdapter",
   "sonner": "MediaPreviewDialog",
@@ -5136,14 +5136,14 @@
   "src/components/monitoring/__tests__/MonitoringEventTimeline.no-content.test.tsx": "cn",
   "src/components/monitoring/__tests__/MonitoringHealthLogs.status.test.tsx": "framer-motion",
   "src/components/monitoring/__tests__/MonitoringInboxSilence.behavior.test.tsx": "vitest-axe",
-  "src/components/monitoring/__tests__/MonitoringIncidents.test.tsx": "connection-health.service.ts",
+  "src/components/monitoring/__tests__/MonitoringIncidents.test.tsx": "api",
   "src/components/monitoring/__tests__/monitoring-a11y.test.tsx": "cn",
   "src/components/monitoring/__tests__/sla-janela-24h.test.tsx": ".value",
   "src/components/monitoring/__tests__/useConnectionIncidents.test.ts": "useConnectionIncidents.test.ts",
   "src/components/monitoring/__tests__/useEvolutionMonitoring.realtime.test.ts": "vitest",
   "src/components/monitoring/__tests__/useInboxSilence.behavior.test.ts": "inbox.service.ts",
   "src/components/monitoring/__tests__/useMonitoringData.buckets.test.ts": "useMonitoringData.buckets.test.ts",
-  "src/components/monitoring/__tests__/useMonitoringData.errors.test.ts": "useMonitoringData.errors.test.ts",
+  "src/components/monitoring/__tests__/useMonitoringData.errors.test.ts": "useMonitoringData",
   "src/components/monitoring/__tests__/useMonitoringNotifications.audiocontext.test.ts": "useMonitoringNotifications.audiocontext.test.ts",
   "src/components/monitoring/__tests__/useMonitoringNotifications.behavior.test.ts": "useMonitoringNotifications.behavior.test.ts",
   "src/components/monitoring/hooks/types.ts": "button.tsx",
@@ -5151,7 +5151,7 @@
   "src/components/monitoring/hooks/useEvolutionMonitoring.ts": "useEvolutionMonitoring.ts",
   "src/components/monitoring/hooks/useInboxSilence.ts": "inbox.service.ts",
   "src/components/monitoring/hooks/useMonitoringActions.ts": "useEvolutionMonitoring.ts",
-  "src/components/monitoring/hooks/useMonitoringData.ts": "useMonitoringData.ts",
+  "src/components/monitoring/hooks/useMonitoringData.ts": "useMonitoringData",
   "src/components/monitoring/hooks/useMonitoringNotifications.ts": "useEvolutionMonitoring.ts",
   "src/components/multiplix/MultiplixMonitor.tsx": "TalkXSuppression.tsx",
   "src/components/multiplix/MultiplixView.tsx": "button.tsx",
@@ -7467,10 +7467,10 @@
   "supabase-export/import.sh": "import.sh",
   "supabase-export/manifest.json": "supabase-export/manifest.json",
   "supabase-export/validate_destino.sh": "validate_destino.sh",
-  "supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts": "ref_https",
-  "supabase/functions/_shared/__tests__/ai-audio-authz.test.ts": "validation.ts",
-  "supabase/functions/_shared/__tests__/ai-auth-service-path.test.ts": "validation.ts",
-  "supabase/functions/_shared/__tests__/ai-auth.test.ts": "validation.ts",
+  "supabase/functions/_shared/__tests__/ai-audio-authz-runtime.test.ts": "ai-transcribe-audio/index.ts",
+  "supabase/functions/_shared/__tests__/ai-audio-authz.test.ts": "ai-transcribe-audio/index.ts",
+  "supabase/functions/_shared/__tests__/ai-auth-service-path.test.ts": "ai-transcribe-audio/index.ts",
+  "supabase/functions/_shared/__tests__/ai-auth.test.ts": "ai-transcribe-audio/index.ts",
   "supabase/functions/_shared/__tests__/ai-context-atomic-persist.test.ts": "ai-conversation-summary/index.ts",
   "supabase/functions/_shared/__tests__/ai-context-revalidation.test.ts": "schemas.ts",
   "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts": "validation.ts",
@@ -7486,20 +7486,20 @@
   "supabase/functions/_shared/__tests__/dlq-backoff-compartilhado.test.ts": "multiplix-send/index.ts",
   "supabase/functions/_shared/__tests__/edge-boot.test.ts": "connection-health-check/index.ts",
   "supabase/functions/_shared/__tests__/effect-reconcile.test.ts": "ai-jobs-worker/index.ts",
-  "supabase/functions/_shared/__tests__/evolution-api-media-hosts.test.ts": "migrate-media-storage/index.ts",
-  "supabase/functions/_shared/__tests__/evolution-api-proxy-circuit-breaker.test.ts": "migrate-media-storage/index.ts",
+  "supabase/functions/_shared/__tests__/evolution-api-media-hosts.test.ts": "evolution-api/index.ts",
+  "supabase/functions/_shared/__tests__/evolution-api-proxy-circuit-breaker.test.ts": "evolution-api/index.ts",
   "supabase/functions/_shared/__tests__/evolution-call-events.test.ts": "evolution-webhook-messages.ts",
   "supabase/functions/_shared/__tests__/evolution-connection-lookup-failure.test.ts": "evolution-webhook-messages.ts",
-  "supabase/functions/_shared/__tests__/evolution-connection-state.test.ts": "ref_https",
-  "supabase/functions/_shared/__tests__/evolution-control-authz.test.ts": "schemas.ts",
+  "supabase/functions/_shared/__tests__/evolution-connection-state.test.ts": "connection-health-check/index.ts",
+  "supabase/functions/_shared/__tests__/evolution-control-authz.test.ts": "evolution-api/index.ts",
   "supabase/functions/_shared/__tests__/evolution-go-group-routing.test.ts": "evolution-webhook-messages.ts",
-  "supabase/functions/_shared/__tests__/evolution-go-routes.test.ts": "evolution-go.ts",
+  "supabase/functions/_shared/__tests__/evolution-go-routes.test.ts": "media.ts",
   "supabase/functions/_shared/__tests__/evolution-helpers-phone-status.test.ts": "evolution-webhook-messages.ts",
   "supabase/functions/_shared/__tests__/evolution-message-id.test.ts": "ref_https",
   "supabase/functions/_shared/__tests__/evolution-presence-group-typing.test.ts": "evolution-webhook-messages.ts",
   "supabase/functions/_shared/__tests__/evolution-presence-status.test.ts": "evolution-webhook-messages.ts",
   "supabase/functions/_shared/__tests__/evolution-presence-typing-private.test.ts": "evolution-webhook-messages.ts",
-  "supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts": "ref_https",
+  "supabase/functions/_shared/__tests__/evolution-send-instance-token.test.ts": "evolution-webhook-messages.ts",
   "supabase/functions/_shared/__tests__/evolution-sync-actions.test.ts": "evolution-sync/index.ts",
   "supabase/functions/_shared/__tests__/evolution-typebot-events.test.ts": "evolution-webhook-messages.ts",
   "supabase/functions/_shared/__tests__/evolution-webhook-alert-dedup.test.ts": "evolution-webhook-messages.ts",
@@ -7519,15 +7519,15 @@
   "supabase/functions/_shared/__tests__/gmail-send-schema.test.ts": "schemas.ts",
   "supabase/functions/_shared/__tests__/media-egress.test.ts": "evolution-webhook-messages.ts",
   "supabase/functions/_shared/__tests__/messaging-errors.test.ts": "multiplix-send/index.ts",
-  "supabase/functions/_shared/__tests__/messaging-evolution-go.test.ts": "evolution-go.ts",
+  "supabase/functions/_shared/__tests__/messaging-evolution-go.test.ts": "media.ts",
   "supabase/functions/_shared/__tests__/multiplix-eligibility.test.ts": "multiplix-dispatch.contract.test.ts",
-  "supabase/functions/_shared/__tests__/postgrest-filters.test.ts": "ref_https",
+  "supabase/functions/_shared/__tests__/postgrest-filters.test.ts": "validation.ts",
   "supabase/functions/_shared/__tests__/r2-api-016-webhook-status-envelope.test.ts": "evolution-webhook-messages.ts",
-  "supabase/functions/_shared/__tests__/rate-limit-log.test.ts": "webauthn/index.ts",
-  "supabase/functions/_shared/__tests__/request-policy.test.ts": "webauthn/index.ts",
-  "supabase/functions/_shared/__tests__/require-auth-profile-active.test.ts": "ref_https",
+  "supabase/functions/_shared/__tests__/rate-limit-log.test.ts": "observability.ts",
+  "supabase/functions/_shared/__tests__/request-policy.test.ts": "validation.ts",
+  "supabase/functions/_shared/__tests__/require-auth-profile-active.test.ts": "validation.ts",
   "supabase/functions/_shared/__tests__/secure-egress.test.ts": "fetch-link-preview/index.ts",
-  "supabase/functions/_shared/__tests__/ssrf.test.ts": "ai-transcribe-audio/index.ts",
+  "supabase/functions/_shared/__tests__/ssrf.test.ts": "fetch-link-preview/index.ts",
   "supabase/functions/_shared/__tests__/sts-upload.test.ts": "elevenlabs-sts/index.test.ts",
   "supabase/functions/_shared/__tests__/talkx-delivery-connection.test.ts": "multiplix-send/index.ts",
   "supabase/functions/_shared/__tests__/talkx-reply-window.test.ts": "evolution-webhook-messages.ts",
@@ -7536,9 +7536,9 @@
   "supabase/functions/_shared/__tests__/talkx-webhook-optout.test.ts": "evolution-webhook-messages.ts",
   "supabase/functions/_shared/__tests__/talkx-webhook-receipts.test.ts": "evolution-webhook-messages.ts",
   "supabase/functions/_shared/__tests__/talkx-webhook-reply.test.ts": "evolution-webhook-messages.ts",
-  "supabase/functions/_shared/__tests__/voice-copilot-authz.test.ts": "voice-copilot-authz.ts",
-  "supabase/functions/_shared/__tests__/webhook-auth-gates.test.ts": "gmail-helpers.ts",
-  "supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts": "validation.ts",
+  "supabase/functions/_shared/__tests__/voice-copilot-authz.test.ts": "ai-transcribe-audio/index.ts",
+  "supabase/functions/_shared/__tests__/webhook-auth-gates.test.ts": "hmac-validation.ts",
+  "supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts": "ai-conversation-summary/index.ts",
   "supabase/functions/_shared/__tests__/webhook-edit-reaction-connection-scope.test.ts": "evolution-webhook-messages.ts",
   "supabase/functions/_shared/__tests__/webhook-signature-ambiguity.test.ts": "ref_https",
   "supabase/functions/_shared/__tests__/webhook-signature.test.ts": "ref_https",
@@ -7552,16 +7552,16 @@
   "supabase/functions/_shared/ai-conversation-pipeline.ts": "ai-conversation-summary/index.ts",
   "supabase/functions/_shared/ai-feature-flags.ts": "validation.ts",
   "supabase/functions/_shared/ai-generate.test.ts": "ai-generate.ts",
-  "supabase/functions/_shared/ai-generate.ts": "ai-generate.ts",
+  "supabase/functions/_shared/ai-generate.ts": "ai-conversation-summary/index.ts",
   "supabase/functions/_shared/ai-guards.ts": "validation.ts",
-  "supabase/functions/_shared/ai-image-input.ts": "ai-vision-classifiers-mock.contract.test.ts",
+  "supabase/functions/_shared/ai-image-input.ts": "ia131-audio-meme-conteudo.contract.test.ts",
   "supabase/functions/_shared/ai-jobs.ts": "ai-jobs-worker/index.ts",
   "supabase/functions/_shared/ai-json.ts": "ai-conversation-summary/index.ts",
   "supabase/functions/_shared/ai-kb-ingest.ts": "connection-health-check/index.ts",
   "supabase/functions/_shared/ai-providers.test.ts": "ai-generate.ts",
   "supabase/functions/_shared/ai-providers.ts": "ai-generate.ts",
   "supabase/functions/_shared/ai-response-contracts.ts": "ai-conversation-summary/index.ts",
-  "supabase/functions/_shared/ai-routing.ts": "ai-generate.ts",
+  "supabase/functions/_shared/ai-routing.ts": "ai-conversation-summary/index.ts",
   "supabase/functions/_shared/ai-usage-outbox-eventos.test.ts": "ai-usage.ts",
   "supabase/functions/_shared/ai-usage.test.ts": "ai-usage.ts",
   "supabase/functions/_shared/ai-usage.ts": "ai-usage.ts",
@@ -7576,15 +7576,15 @@
   "supabase/functions/_shared/edge-boot.ts": "connection-health-check/index.ts",
   "supabase/functions/_shared/effect-reconcile.ts": "ai-jobs-worker/index.ts",
   "supabase/functions/_shared/email-font-stack.ts": "validation.ts",
-  "supabase/functions/_shared/evolution-api-proxy.ts": "migrate-media-storage/index.ts",
-  "supabase/functions/_shared/evolution-control-authz.ts": "schemas.ts",
+  "supabase/functions/_shared/evolution-api-proxy.ts": "evolution-api/index.ts",
+  "supabase/functions/_shared/evolution-control-authz.ts": "evolution-api/index.ts",
   "supabase/functions/_shared/evolution-go-adapter.ts": "evolution-webhook-messages.ts",
-  "supabase/functions/_shared/evolution-go-routes.ts": "evolution-go.ts",
+  "supabase/functions/_shared/evolution-go-routes.ts": "media.ts",
   "supabase/functions/_shared/evolution-helpers.ts": "evolution-webhook-messages.ts",
   "supabase/functions/_shared/evolution-instance-token.ts": "ai-jobs-worker/index.ts",
   "supabase/functions/_shared/evolution-media.ts": "evolution-webhook-messages.ts",
-  "supabase/functions/_shared/evolution-send.ts": "ref_https",
-  "supabase/functions/_shared/evolution-session-routes.ts": "schemas.ts",
+  "supabase/functions/_shared/evolution-send.ts": "evolution-webhook-messages.ts",
+  "supabase/functions/_shared/evolution-session-routes.ts": "evolution-api/index.ts",
   "supabase/functions/_shared/evolution-sync-actions.ts": "evolution-sync/index.ts",
   "supabase/functions/_shared/evolution-types.ts": "useTeamChatPanel.ts",
   "supabase/functions/_shared/evolution-webhook-handlers.ts": "evolution-webhook-messages.ts",
@@ -7593,41 +7593,41 @@
   "supabase/functions/_shared/evolution-webhook-msg-handlers.ts": "evolution-webhook-messages.ts",
   "supabase/functions/_shared/gmail-helpers.ts": "gmail-helpers.ts",
   "supabase/functions/_shared/gmail-mime.ts": "gmail-helpers.ts",
-  "supabase/functions/_shared/hmac-validation.ts": "gmail-helpers.ts",
-  "supabase/functions/_shared/media-egress.ts": "migrate-media-storage/index.ts",
+  "supabase/functions/_shared/hmac-validation.ts": "hmac-validation.ts",
+  "supabase/functions/_shared/media-egress.ts": "evolution-api/index.ts",
   "supabase/functions/_shared/messaging/__tests__/eligibility.test.ts": "multiplix-dispatch.contract.test.ts",
   "supabase/functions/_shared/messaging/__tests__/index.test.ts": "multiplix-send/index.ts",
-  "supabase/functions/_shared/messaging/__tests__/media.test.ts": "ai-transcribe-audio/index.ts",
-  "supabase/functions/_shared/messaging/__tests__/personalize.test.ts": "ai-transcribe-audio/index.ts",
-  "supabase/functions/_shared/messaging/__tests__/phone.test.ts": "ai-transcribe-audio/index.ts",
+  "supabase/functions/_shared/messaging/__tests__/media.test.ts": "media.ts",
+  "supabase/functions/_shared/messaging/__tests__/personalize.test.ts": "media.ts",
+  "supabase/functions/_shared/messaging/__tests__/phone.test.ts": "media.ts",
   "supabase/functions/_shared/messaging/eligibility.ts": "multiplix-dispatch.contract.test.ts",
   "supabase/functions/_shared/messaging/errors.ts": "multiplix-send/index.ts",
-  "supabase/functions/_shared/messaging/evolution-go.ts": "ai-transcribe-audio/index.ts",
+  "supabase/functions/_shared/messaging/evolution-go.ts": "media.ts",
   "supabase/functions/_shared/messaging/index.ts": "multiplix-send/index.ts",
-  "supabase/functions/_shared/messaging/media.ts": "ai-transcribe-audio/index.ts",
-  "supabase/functions/_shared/messaging/personalize.ts": "ai-transcribe-audio/index.ts",
-  "supabase/functions/_shared/messaging/phone.ts": "ai-transcribe-audio/index.ts",
+  "supabase/functions/_shared/messaging/media.ts": "media.ts",
+  "supabase/functions/_shared/messaging/personalize.ts": "media.ts",
+  "supabase/functions/_shared/messaging/phone.ts": "media.ts",
   "supabase/functions/_shared/messaging/timing.ts": "multiplix-send/index.ts",
-  "supabase/functions/_shared/messaging/types.ts": "ai-transcribe-audio/index.ts",
+  "supabase/functions/_shared/messaging/types.ts": "media.ts",
   "supabase/functions/_shared/multiplix-content.ts": "multiplix-send/index.ts",
   "supabase/functions/_shared/multiplix-eligibility.ts": "multiplix-dispatch.contract.test.ts",
   "supabase/functions/_shared/notification-events.ts": "evolution-webhook-messages.ts",
   "supabase/functions/_shared/observability.test.ts": "observability.ts",
   "supabase/functions/_shared/observability.ts": "observability.ts",
-  "supabase/functions/_shared/postgrest-filters.ts": "ref_https",
-  "supabase/functions/_shared/providers/__tests__/registry.test.ts": "evolution-go.ts",
-  "supabase/functions/_shared/providers/env.ts": "evolution-go.ts",
-  "supabase/functions/_shared/providers/evolution/index.ts": "evolution-go.ts",
-  "supabase/functions/_shared/providers/fake/index.ts": "evolution-go.ts",
-  "supabase/functions/_shared/providers/index.ts": "evolution-go.ts",
-  "supabase/functions/_shared/providers/registry.ts": "evolution-go.ts",
-  "supabase/functions/_shared/providers/types.ts": "evolution-go.ts",
-  "supabase/functions/_shared/rate-limit-log.ts": "webauthn/index.ts",
-  "supabase/functions/_shared/request-policy.ts": "webauthn/index.ts",
+  "supabase/functions/_shared/postgrest-filters.ts": "validation.ts",
+  "supabase/functions/_shared/providers/__tests__/registry.test.ts": "media.ts",
+  "supabase/functions/_shared/providers/env.ts": "media.ts",
+  "supabase/functions/_shared/providers/evolution/index.ts": "media.ts",
+  "supabase/functions/_shared/providers/fake/index.ts": "media.ts",
+  "supabase/functions/_shared/providers/index.ts": "media.ts",
+  "supabase/functions/_shared/providers/registry.ts": "media.ts",
+  "supabase/functions/_shared/providers/types.ts": "media.ts",
+  "supabase/functions/_shared/rate-limit-log.ts": "observability.ts",
+  "supabase/functions/_shared/request-policy.ts": "validation.ts",
   "supabase/functions/_shared/schemas.ts": "schemas.ts",
   "supabase/functions/_shared/secure-egress.ts": "fetch-link-preview/index.ts",
   "supabase/functions/_shared/secure-random.ts": "multiplix-send/index.ts",
-  "supabase/functions/_shared/ssrf.ts": "ai-transcribe-audio/index.ts",
+  "supabase/functions/_shared/ssrf.ts": "fetch-link-preview/index.ts",
   "supabase/functions/_shared/sts-upload.ts": "elevenlabs-sts/index.test.ts",
   "supabase/functions/_shared/talkx-delivery-connection.ts": "multiplix-send/index.ts",
   "supabase/functions/_shared/talkx-reply.ts": "evolution-webhook-messages.ts",
@@ -7637,12 +7637,12 @@
   "supabase/functions/_shared/validation.cors.test.ts": "validation.ts",
   "supabase/functions/_shared/validation.degraded.test.ts": "validation.ts",
   "supabase/functions/_shared/validation.logger.test.ts": "validation.ts",
-  "supabase/functions/_shared/validation.ts": "ref_https",
-  "supabase/functions/_shared/voice-copilot-authz.ts": "voice-copilot-authz.ts",
+  "supabase/functions/_shared/validation.ts": "validation.ts",
+  "supabase/functions/_shared/voice-copilot-authz.ts": "ai-transcribe-audio/index.ts",
   "supabase/functions/_shared/webhook-signature.ts": "ref_https",
-  "supabase/functions/ai-auto-tag/auth.test.ts": "ref_https",
-  "supabase/functions/ai-auto-tag/index.test.ts": "ai-generate.ts",
-  "supabase/functions/ai-auto-tag/index.ts": "ai-generate.ts",
+  "supabase/functions/ai-auto-tag/auth.test.ts": "ai-conversation-summary/index.ts",
+  "supabase/functions/ai-auto-tag/index.test.ts": "ai-conversation-summary/index.ts",
+  "supabase/functions/ai-auto-tag/index.ts": "ai-conversation-summary/index.ts",
   "supabase/functions/ai-churn-analysis/churn-risk.test.ts": "churn-risk.test.ts",
   "supabase/functions/ai-churn-analysis/churn-risk.ts": "churn-risk.test.ts",
   "supabase/functions/ai-churn-analysis/index.ts": "validation.ts",
@@ -7660,8 +7660,8 @@
   "supabase/functions/ai-kb-ingest/index.ts": "connection-health-check/index.ts",
   "supabase/functions/ai-proxy/index.test.ts": "ai-proxy/index.test.ts",
   "supabase/functions/ai-proxy/index.ts": "ai-generate.ts",
-  "supabase/functions/ai-suggest-reply/index.test.ts": "ai-generate.ts",
-  "supabase/functions/ai-suggest-reply/index.ts": "ai-generate.ts",
+  "supabase/functions/ai-suggest-reply/index.test.ts": "ai-suggest-reply/index.test.ts",
+  "supabase/functions/ai-suggest-reply/index.ts": "ai-conversation-summary/index.ts",
   "supabase/functions/ai-transcribe-audio/index.test.ts": "ai-transcribe-audio/index.ts",
   "supabase/functions/ai-transcribe-audio/index.ts": "ai-transcribe-audio/index.ts",
   "supabase/functions/ai-usage-outbox-drain/index.test.ts": "ai-usage.ts",
@@ -7669,23 +7669,23 @@
   "supabase/functions/approve-password-reset/index.test.ts": "revoke-auth-sessions/index.ts",
   "supabase/functions/approve-password-reset/index.ts": "revoke-auth-sessions/index.ts",
   "supabase/functions/auth-login/index.test.ts": "auth-login/index.test.ts",
-  "supabase/functions/auth-login/index.ts": "webauthn/index.ts",
+  "supabase/functions/auth-login/index.ts": "validation.ts",
   "supabase/functions/auto-close-conversations/index.test.ts": "auto-close-conversations/index.test.ts",
   "supabase/functions/auto-close-conversations/index.ts": "validation.ts",
-  "supabase/functions/automation-suggest-reply/index.test.ts": "ai-generate.ts",
-  "supabase/functions/automation-suggest-reply/index.ts": "ai-generate.ts",
+  "supabase/functions/automation-suggest-reply/index.test.ts": "ai-conversation-summary/index.ts",
+  "supabase/functions/automation-suggest-reply/index.ts": "ai-conversation-summary/index.ts",
   "supabase/functions/batch-fetch-avatars/index.ts": "connection-health-check/index.ts",
-  "supabase/functions/bitrix-api/index.test.ts": "bitrix-api/index.ts",
-  "supabase/functions/bitrix-api/index.ts": "bitrix-api/index.ts",
+  "supabase/functions/bitrix-api/index.test.ts": "bitrix-api/index.test.ts",
+  "supabase/functions/bitrix-api/index.ts": "validation.ts",
   "supabase/functions/chatbot-l1/index.test.ts": "chatbot-l1/index.test.ts",
-  "supabase/functions/chatbot-l1/index.ts": "validation.ts",
+  "supabase/functions/chatbot-l1/index.ts": "ai-conversation-summary/index.ts",
   "supabase/functions/classify-audio-meme/index.test.ts": "ia131-audio-meme-conteudo.contract.test.ts",
   "supabase/functions/classify-audio-meme/index.ts": "ia131-audio-meme-conteudo.contract.test.ts",
   "supabase/functions/classify-emoji/index.test.ts": "classify-emoji/index.test.ts",
-  "supabase/functions/classify-emoji/index.ts": "validation.ts",
+  "supabase/functions/classify-emoji/index.ts": "ia131-audio-meme-conteudo.contract.test.ts",
   "supabase/functions/classify-sticker/index.test.ts": "classify-sticker/index.test.ts",
-  "supabase/functions/classify-sticker/index.ts": "ai-vision-classifiers-mock.contract.test.ts",
-  "supabase/functions/cleanup-rate-limit-logs/index.test.ts": "cleanup-rate-limit-logs/index.test.ts",
+  "supabase/functions/classify-sticker/index.ts": "ia131-audio-meme-conteudo.contract.test.ts",
+  "supabase/functions/cleanup-rate-limit-logs/index.test.ts": "validation.ts",
   "supabase/functions/cleanup-rate-limit-logs/index.ts": "validation.ts",
   "supabase/functions/connection-health-check/index.test.ts": "connection-health-check/index.ts",
   "supabase/functions/connection-health-check/index.ts": "connection-health-check/index.ts",
@@ -7697,7 +7697,7 @@
   "supabase/functions/crm-integration/index.ts": "crm-integration/index.ts",
   "supabase/functions/csp-report/index.ts": "validation.ts",
   "supabase/functions/deno.json": "functions/deno.json",
-  "supabase/functions/detect-new-device/index.test.ts": "detect-new-device/index.test.ts",
+  "supabase/functions/detect-new-device/index.test.ts": "validation.ts",
   "supabase/functions/detect-new-device/index.ts": "validation.ts",
   "supabase/functions/elevenlabs-agent-token/index.test.ts": "elevenlabs-agent-token/index.test.ts",
   "supabase/functions/elevenlabs-agent-token/index.ts": "validation.ts",
@@ -7719,32 +7719,32 @@
   "supabase/functions/elevenlabs-voice-design/index.ts": "validation.ts",
   "supabase/functions/elevenlabs-webhook/index.test.ts": "elevenlabs-webhook/index.test.ts",
   "supabase/functions/elevenlabs-webhook/index.ts": "ref_https",
-  "supabase/functions/evolution-api/index.test.ts": "schemas.ts",
-  "supabase/functions/evolution-api/index.ts": "schemas.ts",
-  "supabase/functions/evolution-api/session-flavor-routes.test.ts": "schemas.ts",
+  "supabase/functions/evolution-api/index.test.ts": "evolution-api/index.ts",
+  "supabase/functions/evolution-api/index.ts": "evolution-api/index.ts",
+  "supabase/functions/evolution-api/session-flavor-routes.test.ts": "evolution-api/index.ts",
   "supabase/functions/evolution-sync/index.test.ts": "evolution-sync/index.ts",
   "supabase/functions/evolution-sync/index.ts": "evolution-sync/index.ts",
   "supabase/functions/evolution-webhook/index.test.ts": "revoke-auth-sessions/index.ts",
   "supabase/functions/evolution-webhook/index.ts": "evolution-webhook-messages.ts",
-  "supabase/functions/external-db-bridge/index.test.ts": "external-db-bridge/index.test.ts",
-  "supabase/functions/external-db-bridge/index.ts": "validation.ts",
+  "supabase/functions/external-db-bridge/index.test.ts": "ai-transcribe-audio/index.ts",
+  "supabase/functions/external-db-bridge/index.ts": "ai-transcribe-audio/index.ts",
   "supabase/functions/external-db-proxy/index.test.ts": "external-db-proxy/index.ts",
   "supabase/functions/external-db-proxy/index.ts": "external-db-proxy/index.ts",
   "supabase/functions/fetch-link-preview/__tests__/image-proxy.test.ts": "preview",
   "supabase/functions/fetch-link-preview/index.test.ts": "fetch-link-preview/index.test.ts",
   "supabase/functions/fetch-link-preview/index.ts": "fetch-link-preview/index.ts",
   "supabase/functions/get-call-recording/index.test.ts": "MetaTile",
-  "supabase/functions/get-call-recording/index.ts": "validation.ts",
+  "supabase/functions/get-call-recording/index.ts": "ref_https",
   "supabase/functions/get-mapbox-token/index.ts": "validation.ts",
-  "supabase/functions/get-sip-password/index.test.ts": "ref_https",
-  "supabase/functions/get-sip-password/index.ts": "ref_https",
+  "supabase/functions/get-sip-password/index.test.ts": "validation.ts",
+  "supabase/functions/get-sip-password/index.ts": "validation.ts",
   "supabase/functions/gmail-cron-sync/index.ts": "gmail-helpers.ts",
   "supabase/functions/gmail-cron-sync/reauth-e-backoff.test.ts": "gmail-helpers.ts",
   "supabase/functions/gmail-oauth/index.test.ts": "gmail-helpers.ts",
   "supabase/functions/gmail-oauth/index.ts": "gmail-helpers.ts",
-  "supabase/functions/gmail-send/index.test.ts": "gmail-send/index.test.ts",
+  "supabase/functions/gmail-send/index.test.ts": "gmail-helpers.ts",
   "supabase/functions/gmail-send/index.ts": "gmail-helpers.ts",
-  "supabase/functions/gmail-send/reauth-409.test.ts": "ref_https",
+  "supabase/functions/gmail-send/reauth-409.test.ts": "gmail-helpers.ts",
   "supabase/functions/gmail-send/trash-persistencia.test.ts": "gmail-helpers.ts",
   "supabase/functions/gmail-sync/gmail-labels-mutation.test.ts": "gmail-helpers.ts",
   "supabase/functions/gmail-sync/gmail-labels-schema.test.ts": "gmail-helpers.ts",
@@ -7753,7 +7753,7 @@
   "supabase/functions/gmail-webhook/attachments.test.ts": "attachments.test.ts",
   "supabase/functions/gmail-webhook/history-404-cas.test.ts": "history-404-cas.test.ts",
   "supabase/functions/gmail-webhook/index.ts": "gmail-helpers.ts",
-  "supabase/functions/health/index.test.ts": "observability.ts",
+  "supabase/functions/health/index.test.ts": "validation.ts",
   "supabase/functions/health/index.ts": "observability.ts",
   "supabase/functions/invite-user/index.test.ts": "invite-user/index.test.ts",
   "supabase/functions/invite-user/index.ts": "validation.ts",
@@ -7761,8 +7761,8 @@
   "supabase/functions/message-delivery/index.ts": "ai-jobs-worker/index.ts",
   "supabase/functions/metrics/index.test.ts": "observability.ts",
   "supabase/functions/metrics/index.ts": "observability.ts",
-  "supabase/functions/migrate-media-storage/__tests__/index.test.ts": "migrate-media-storage/index.ts",
-  "supabase/functions/migrate-media-storage/index.ts": "migrate-media-storage/index.ts",
+  "supabase/functions/migrate-media-storage/__tests__/index.test.ts": "evolution-webhook-messages.ts",
+  "supabase/functions/migrate-media-storage/index.ts": "evolution-webhook-messages.ts",
   "supabase/functions/multiplix-audience/index.test.ts": "multiplix-audience/index.ts",
   "supabase/functions/multiplix-audience/index.ts": "multiplix-audience/index.ts",
   "supabase/functions/multiplix-dispatch/__tests__/draft.test.ts": "multiplix-dispatch/index.ts",
@@ -7806,14 +7806,14 @@
   "supabase/functions/sentiment-alert/index.ts": "validation.ts",
   "supabase/functions/status/index.test.ts": "observability.ts",
   "supabase/functions/status/index.ts": "observability.ts",
-  "supabase/functions/sync-call-records/index.test.ts": "validation.ts",
-  "supabase/functions/sync-call-records/index.ts": "validation.ts",
+  "supabase/functions/sync-call-records/index.test.ts": "ref_https",
+  "supabase/functions/sync-call-records/index.ts": "ref_https",
   "supabase/functions/talkx-ai/index.test.ts": "ai-usage.ts",
   "supabase/functions/talkx-ai/index.ts": "ai-usage.ts",
   "supabase/functions/talkx-link/index.test.ts": "talkx-link/index.ts",
   "supabase/functions/talkx-link/index.ts": "talkx-link/index.ts",
-  "supabase/functions/talkx-report/index.test.ts": "ref_https",
-  "supabase/functions/talkx-report/index.ts": "validation.ts",
+  "supabase/functions/talkx-report/index.test.ts": "gmail-helpers.ts",
+  "supabase/functions/talkx-report/index.ts": "gmail-helpers.ts",
   "supabase/functions/talkx-scheduler/index.test.ts": "multiplix-send/index.ts",
   "supabase/functions/talkx-scheduler/index.ts": "multiplix-send/index.ts",
   "supabase/functions/talkx-send/_test-utils.ts": "multiplix-send/index.ts",
@@ -7830,9 +7830,9 @@
   "supabase/functions/talkx-send/x019-connection-budget.test.ts": "multiplix-send/index.ts",
   "supabase/functions/talkx-send/x020-variavel-precedencia.test.ts": "multiplix-send/index.ts",
   "supabase/functions/talkx-send/x033-delivery-log.test.ts": "multiplix-send/index.ts",
-  "supabase/functions/talkx-storage-purge/index.test.ts": "talkx-storage-purge/index.ts",
-  "supabase/functions/talkx-storage-purge/index.ts": "talkx-storage-purge/index.ts",
-  "supabase/functions/voice-agent/index.ts": "validation.ts",
+  "supabase/functions/talkx-storage-purge/index.test.ts": "hmac-validation.ts",
+  "supabase/functions/talkx-storage-purge/index.ts": "hmac-validation.ts",
+  "supabase/functions/voice-agent/index.ts": "ai-transcribe-audio/index.ts",
   "supabase/functions/voice-changer/index.test.ts": "elevenlabs-sts/index.test.ts",
   "supabase/functions/voice-changer/index.ts": "validation.ts",
   "supabase/functions/voice-copilot-action/index.test.ts": "voice-copilot-action/index.test.ts",
@@ -9064,7 +9064,7 @@
   "tests/contracts/ai-endpoints-auth.contract.test.ts": "ai-endpoints-auth.contract.test.ts",
   "tests/contracts/ai-fallback-and-test.contract.test.ts": "ai-fallback-and-test.contract.test.ts",
   "tests/contracts/ai-generate.contract.test.ts": "ai-generate.contract.test.ts",
-  "tests/contracts/ai-image-input.contract.test.ts": "ai-vision-classifiers-mock.contract.test.ts",
+  "tests/contracts/ai-image-input.contract.test.ts": "ia131-audio-meme-conteudo.contract.test.ts",
   "tests/contracts/ai-jobs-estados-e-durabilidade.contract.test.ts": "ai-jobs-estados-e-durabilidade.contract.test.ts",
   "tests/contracts/ai-json-extraction.contract.test.ts": "ai-conversation-summary/index.ts",
   "tests/contracts/ai-quality-golden-set.contract.test.ts": "ai-conversation-summary/index.ts",
@@ -9074,7 +9074,7 @@
   "tests/contracts/ai-response-envelope.contract.test.ts": "ref_node_fs",
   "tests/contracts/ai-routing.contract.test.ts": "ai-routing.contract.test.ts",
   "tests/contracts/ai-values.contract.test.ts": "ai-conversation-summary/index.ts",
-  "tests/contracts/ai-vision-classifiers-mock.contract.test.ts": "ai-vision-classifiers-mock.contract.test.ts",
+  "tests/contracts/ai-vision-classifiers-mock.contract.test.ts": "ia131-audio-meme-conteudo.contract.test.ts",
   "tests/contracts/ai-vision-modality.contract.test.ts": "ai-generate.ts",
   "tests/contracts/ai-vocabulary-consumers.contract.test.ts": "ai-vocabulary-consumers.contract.test.ts",
   "tests/contracts/ai-vocabulary-parity.contract.test.ts": "ai-vocabulary-parity.contract.test.ts",
@@ -9102,7 +9102,7 @@
   "tests/contracts/evolution-call-handler.contract.test.ts": "evolution-webhook-messages.ts",
   "tests/contracts/evolution-labels-edit.contract.test.ts": "evolution-webhook-messages.ts",
   "tests/contracts/evolution-presence-status.contract.test.ts": "evolution-webhook-messages.ts",
-  "tests/contracts/evolution-private-storage-url.test.ts": "migrate-media-storage/index.ts",
+  "tests/contracts/evolution-private-storage-url.test.ts": "evolution-api/index.ts",
   "tests/contracts/ia047-idempotencia-de-efeitos.contract.test.ts": "ia047-idempotencia-de-efeitos.contract.test.ts",
   "tests/contracts/ia051-correlacao-no-caminho-sincrono.test.ts": "ref_node_fs",
   "tests/contracts/ia052-rota-efetiva.test.ts": "ref_node_fs",
@@ -9114,7 +9114,7 @@
   "tests/contracts/ia131-audio-meme-conteudo.contract.test.ts": "ia131-audio-meme-conteudo.contract.test.ts",
   "tests/contracts/log-injection-sanitizacao.contract.test.ts": "ref_node_child_process",
   "tests/contracts/media-volume-surfaces.contract.test.ts": "ref_node_fs",
-  "tests/contracts/messaging-adapter.contract.test.ts": "multiplix-send/index.ts",
+  "tests/contracts/messaging-adapter.contract.test.ts": "media.ts",
   "tests/contracts/multiplix-audience.contract.test.ts": "ref_node_fs",
   "tests/contracts/multiplix-dispatch-audience-saved.contract.test.ts": "multiplix-dispatch-audience-saved.contract.test.ts",
   "tests/contracts/multiplix-dispatch-domain-api.contract.test.ts": "multiplix-dispatch-domain-api.contract.test.ts",

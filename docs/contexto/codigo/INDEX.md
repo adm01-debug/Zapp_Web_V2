@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a cada 10 minutos pelo workflow `contexto-ia.yml`; gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `031d5e596af02705ea45487aaf0fc65aa26ad4d1` (2026-11-03T16:56:16Z).
+Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a cada 10 minutos pelo workflow `contexto-ia.yml`; gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `1616721f011e8e639f691071fe351717c4da4c92` (2026-11-03T17:09:33Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -384,14 +384,14 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 54424 nós · 111189 arestas · 4103 comunidades · grafo do commit `031d5e59`
-- comunidades maiores: button.tsx (910), react (813), TalkXSuppression.tsx (808), vitest (586), lucide-react (552), cn (491), avatar.tsx (417), validation.ts (416), @tanstack/react-query (369), evolution-webhook-messages.ts (357), ref_node_assert (313), ref_node_fs (303)
+- 54424 nós · 111191 arestas · 4096 comunidades · grafo do commit `1616721f`
+- comunidades maiores: button.tsx (910), react (813), TalkXSuppression.tsx (808), vitest (586), lucide-react (552), cn (491), avatar.tsx (417), evolution-webhook-messages.ts (391), validation.ts (376), @tanstack/react-query (369), ref_node_assert (313), ref_node_fs (303)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
-- .github/workflows/ci.yml (25)
-- CLAUDE.md (24)
+- .github/workflows/ci.yml (24)
+- CLAUDE.md (23)
 - .github/workflows/e2e-logado.yml (18)
 - src/integrations/supabase/types.ts (18)
 - scripts/ci/ci-docs-baseline.unit.mjs (17)
@@ -399,12 +399,12 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - docs/ci/README.md (16)
 - scripts/ci/workflow-contracts.unit.mjs (16)
 - ESTADO.md (13)
-- supabase/deployment-manifest.json (13)
 - .github/workflows/deploy-functions.yml (12)
+- supabase/deployment-manifest.json (12)
 - supabase/schema-manifest.json (12)
-- scripts/ci/github-settings-guard.unit.mjs (11)
 - .github/workflows/db-migrate.yml (10)
 - docs/DB-INVENTORY.md (10)
+- docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (10)
 
 ## Workflows
 - `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)

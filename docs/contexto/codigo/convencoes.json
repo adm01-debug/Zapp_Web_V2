@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore(regras): §4.2 — envio com WhatsApp caído falha (não há fila offline); estado pós #2677 (#2679)",
    "feat(conexao): regra dos três níveis — aviso na caixa, alerta obrigatório admin/supervisor, QR só admin (#2677)",
    "chore(contexto): regras manuais — pagamentos, single-tenant, perfis, retenção/LGPD, SLA (#2674)",
    "chore(contexto): regras manuais de campanhas Talk X (#2673)",
-   "chore(contexto): regras manuais de conversas e conexão WhatsApp (#2672)",
-   "fix(contexto): regras/ ignora constantes, prazos e erros vindos de arquivos de teste (#2667)"
+   "chore(contexto): regras manuais de conversas e conexão WhatsApp (#2672)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

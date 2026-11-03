@@ -2,12 +2,12 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "031d5e596af02705ea45487aaf0fc65aa26ad4d1",
+  "commit": "1616721f011e8e639f691071fe351717c4da4c92",
   "branch": "main",
-  "data_commit": "2026-11-03T16:56:16Z",
+  "data_commit": "2026-11-03T17:09:33Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
-  "arquivos_mudados_7d": 1372,
+  "arquivos_mudados_7d": 1369,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -39,7 +39,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 309
+    "mudancas": 306
    },
    {
     "pasta": "src/hooks/chat",
@@ -73,11 +73,11 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 25
+    "mudancas": 24
    },
    {
     "arquivo": "CLAUDE.md",
-    "mudancas": 24
+    "mudancas": 23
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
@@ -108,20 +108,16 @@
     "mudancas": 13
    },
    {
-    "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 13
+    "arquivo": ".github/workflows/deploy-functions.yml",
+    "mudancas": 12
    },
    {
-    "arquivo": ".github/workflows/deploy-functions.yml",
+    "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 12
    },
    {
     "arquivo": "supabase/schema-manifest.json",
     "mudancas": 12
-   },
-   {
-    "arquivo": "scripts/ci/github-settings-guard.unit.mjs",
-    "mudancas": 11
    },
    {
     "arquivo": ".github/workflows/db-migrate.yml",
@@ -133,6 +129,10 @@
    },
    {
     "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "scripts/ci/github-settings-guard.unit.mjs",
     "mudancas": 10
    },
    {
@@ -152,15 +152,7 @@
     "mudancas": 9
    },
    {
-    "arquivo": "scripts/ci/github-settings-baseline.json",
-    "mudancas": 9
-   },
-   {
     "arquivo": "scripts/db-audit/check-migration-drift.mjs",
-    "mudancas": 9
-   },
-   {
-    "arquivo": "scripts/db-audit/check-migration-drift.test.mjs",
     "mudancas": 9
    },
    {
@@ -169,6 +161,14 @@
    },
    {
     "arquivo": ".github/workflows/auto-update-pr-branch.yml",
+    "mudancas": 8
+   },
+   {
+    "arquivo": ".github/workflows/codeql.yml",
+    "mudancas": 8
+   },
+   {
+    "arquivo": ".github/workflows/notifica-falha-main.yml",
     "mudancas": 8
    }
   ],
