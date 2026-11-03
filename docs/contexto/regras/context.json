@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "259758826e0652ca4686310609320508b0cd810b",
+  "sha": "b441a434249aaab255d5d9b84c53f55631fda41d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-03 17:52 UTC",
-  "files_total": 7981,
-  "code_files": 5923,
-  "code_lines": 1019835
+  "generated_at": "2026-11-03 18:25 UTC",
+  "files_total": 7982,
+  "code_files": 5924,
+  "code_lines": 1020072
  },
  "version": "1.3.2",
- "facts_hash": "b4f15e63f55190d2",
+ "facts_hash": "f75ca12d4a31b321",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -298,7 +298,7 @@
   "languages": {
    ".tsx": 2325,
    ".ts": 1855,
-   ".sql": 1275,
+   ".sql": 1276,
    ".mjs": 325,
    ".py": 115,
    ".cjs": 19,
@@ -31992,7 +31992,7 @@
     "args": "p_limit integer DEFAULT 1000",
     "returns": "jsonb",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql",
+    "src": "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql",
     "security_definer": true,
     "search_path": true,
     "body": "DECLARE v_days_message integer; v_days_clicks integer; v_days_test integer; v_days_ai integer; v_now timestamptz := statement_timestamp(); v_last timestamptz; v_msg integer := 0; v_clicks integer := 0; v_test integer := 0; v_ai integer := 0; v_media integer := 0; v_log integer := 0; v_events integer := 0; v_entity_id uuid := gen_random_uuid(); v_counts jsonb; BEGIN IF COALESCE(auth.role(), '') <> 'service_role' THEN RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501'; END IF; IF p_limit IS NULL OR p_limit NOT BETWEEN 1 AND 100000 THEN RAISE EXCEPTION 'invalid_talkx_purge_limit' USING ERRCODE = '22023'; END IF; SELECT (settings.value #>> '{}')::timestamptz INTO v_last FROM public. …",
@@ -44679,6 +44679,7 @@
    "supabase/migrations/20261102022200_cron_historico_retencao_7d.sql",
    "supabase/migrations/20261102032200_revoga_execute_public_cron_schedule.sql",
    "supabase/migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql",
+   "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql",
    "supabase/migrations/_foreign/20260611120000_fix_media_security_file_size.sql",
    "supabase/migrations/_foreign/20260612110000_index_cleanup_and_autovacuum.sql",
    "supabase/migrations/_foreign/20260612120000_rate_limit_admin_criar_usuario.sql",
@@ -62475,12 +62476,12 @@
    {
     "function": "purge_talkx_expired_data",
     "msg": "service_role_required",
-    "src": "supabase/migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql"
+    "src": "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql"
    },
    {
     "function": "purge_talkx_expired_data",
     "msg": "invalid_talkx_purge_limit",
-    "src": "supabase/migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql"
+    "src": "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql"
    },
    {
     "function": "admin_criar_usuario_painel",
@@ -70903,8 +70904,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1106,
-   "lines": 106940,
+   "files": 1107,
+   "lines": 107177,
    "tables": [
     "audit_logs",
     "departments",
@@ -224113,7 +224114,7 @@
     "args": "p_limit integer DEFAULT 1000",
     "returns": "jsonb",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql",
+    "src": "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql",
     "security_definer": true,
     "search_path": true,
     "body": "DECLARE v_days_message integer; v_days_clicks integer; v_days_test integer; v_days_ai integer; v_now timestamptz := statement_timestamp(); v_last timestamptz; v_msg integer := 0; v_clicks integer := 0; v_test integer := 0; v_ai integer := 0; v_media integer := 0; v_log integer := 0; v_events integer := 0; v_entity_id uuid := gen_random_uuid(); v_counts jsonb; BEGIN IF COALESCE(auth.role(), '') <> 'service_role' THEN RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501'; END IF; IF p_limit IS NULL OR p_limit NOT BETWEEN 1 AND 100000 THEN RAISE EXCEPTION 'invalid_talkx_purge_limit' USING ERRCODE = '22023'; END IF; SELECT (settings.value #>> '{}')::timestamptz INTO v_last FROM public. …",
@@ -232695,12 +232696,12 @@
    {
     "function": "purge_talkx_expired_data",
     "msg": "service_role_required",
-    "src": "supabase/migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql"
+    "src": "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql"
    },
    {
     "function": "purge_talkx_expired_data",
     "msg": "invalid_talkx_purge_limit",
-    "src": "supabase/migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql"
+    "src": "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql"
    },
    {
     "function": "admin_criar_usuario_painel",
@@ -240988,6 +240989,7 @@
    "supabase/migrations/20261030160000_tcm_insert_member_conversation_authorization.sql",
    "supabase/migrations/20261031110000_copilot_live_helpers.sql",
    "supabase/migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql",
+   "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql",
    "supabase/migrations/_foreign/singu/20261001154000_singu_e014_b2b_e_papeis.sql",
    "supabase/migrations/_foreign/singu/20261001160000_singu_guard_hmac_escopo.sql",
    "supabase/migrations/_foreign/singu/20261005103000_singu_resolve_redige_fora_escopo.sql",
@@ -377239,6 +377241,11 @@
    ],
    "uses_service_role": true
   },
+  "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql": {
+   "path": "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql",
+   "lines": 237,
+   "uses_service_role": true
+  },
   "supabase/migrations/_foreign/20260611120000_fix_media_security_file_size.sql": {
    "path": "supabase/migrations/_foreign/20260611120000_fix_media_security_file_size.sql",
    "lines": 107
@@ -381238,10 +381245,19 @@
   }
  },
  "git": {
-  "sha": "259758826e0652ca4686310609320508b0cd810b",
+  "sha": "b441a434249aaab255d5d9b84c53f55631fda41d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b441a43",
+    "date": "2026-11-03",
+    "author": "adm01-debug",
+    "subject": "chore(db): expurgo Talk X — prazo ≤ 0 vira 1 dia; test_sends volta a 90 (idempotência, não histórico) (#2686)",
+    "files": [
+     "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql"
+    ]
+   },
    {
     "sha": "2597588",
     "date": "2026-11-03",
@@ -381575,26 +381591,15 @@
      "scripts/ci/inventario-rotas.unit.mjs",
      "scripts/inventario/gerar-rotas.mjs"
     ]
-   },
-   {
-    "sha": "32acd6f",
-    "date": "2026-11-02",
-    "author": "adm01-debug",
-    "subject": "chore: sessão na nuvem gera o grafo do código (graphify) ao iniciar (#2632)",
-    "files": [
-     ".claude/hooks/session-start.sh",
-     ".claude/settings.json",
-     "CLAUDE.md"
-    ]
    }
   ],
   "hot_files": [
    [
-    "CLAUDE.md",
-    5
+    "docs/contexto/regras/manual/regras.md",
+    4
    ],
    [
-    "docs/contexto/regras/manual/regras.md",
+    "CLAUDE.md",
     4
    ],
    [
@@ -381666,7 +381671,7 @@
     2
    ],
    [
-    "supabase/migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql",
+    "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql",
     1
    ]
   ]

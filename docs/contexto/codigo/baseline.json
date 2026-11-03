@@ -2,12 +2,12 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "259758826e0652ca4686310609320508b0cd810b",
+  "commit": "b441a434249aaab255d5d9b84c53f55631fda41d",
   "branch": "main",
-  "data_commit": "2026-11-03T17:49:39Z",
+  "data_commit": "2026-11-03T15:22:14-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
-  "arquivos_mudados_7d": 1372,
+  "arquivos_mudados_7d": 1373,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -77,7 +77,7 @@
    },
    {
     "arquivo": "CLAUDE.md",
-    "mudancas": 21
+    "mudancas": 20
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
@@ -104,11 +104,11 @@
     "mudancas": 13
    },
    {
-    "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
-    "mudancas": 13
+    "arquivo": ".github/workflows/deploy-functions.yml",
+    "mudancas": 12
    },
    {
-    "arquivo": ".github/workflows/deploy-functions.yml",
+    "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
     "mudancas": 12
    },
    {
@@ -140,10 +140,6 @@
     "mudancas": 10
    },
    {
-    "arquivo": "scripts/ci/github-settings-guard.unit.mjs",
-    "mudancas": 9
-   },
-   {
     "arquivo": "scripts/db-audit/check-migration-drift.mjs",
     "mudancas": 9
    },
@@ -164,11 +160,15 @@
     "mudancas": 8
    },
    {
-    "arquivo": "scripts/ci/github-settings-baseline.json",
+    "arquivo": "scripts/ci/github-settings-guard.unit.mjs",
     "mudancas": 8
    },
    {
     "arquivo": "scripts/db-audit/check-migration-drift.test.mjs",
+    "mudancas": 8
+   },
+   {
+    "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 8
    }
   ],
@@ -192,7 +192,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8140,
+  "arquivos_total": 8141,
   "arquivos_codigo": 4644,
   "linhas_codigo": 850903,
   "rotas": 18,
@@ -204,7 +204,7 @@
   "hooks": 491,
   "edge_functions": 85,
   "tabelas": 226,
-  "migrations": 1106,
+  "migrations": 1107,
   "cron_jobs": 25,
   "testes": 2530,
   "workflows": 19,
