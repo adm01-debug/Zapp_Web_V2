@@ -2,9 +2,9 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "bd25801a2007d254211ddd8565c6c8633bbca78b",
+  "commit": "ded01b535dc046ba8d2931947b3b3d1f4ce2dbb1",
   "branch": "main",
-  "data_commit": "2026-11-03T20:43:01Z",
+  "data_commit": "2026-11-03T20:56:45Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
   "arquivos_mudados_7d": 1429,
@@ -148,10 +148,6 @@
     "mudancas": 8
    },
    {
-    "arquivo": "scripts/db-audit/check-migration-drift.mjs",
-    "mudancas": 8
-   },
-   {
     "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 8
    },
@@ -169,6 +165,10 @@
    },
    {
     "arquivo": ".github/workflows/branch-hygiene-audit.yml",
+    "mudancas": 7
+   },
+   {
+    "arquivo": ".github/workflows/notifica-falha-main.yml",
     "mudancas": 7
    }
   ],
@@ -194,7 +194,7 @@
  "contagens": {
   "arquivos_total": 8134,
   "arquivos_codigo": 4637,
-  "linhas_codigo": 849742,
+  "linhas_codigo": 849748,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -526,7 +526,7 @@
   },
   "scripts/supabase_snapshot": {
    "arquivos": 1,
-   "linhas": 1590
+   "linhas": 1596
   },
   "scripts/talkx": {
    "arquivos": 6,
@@ -676,7 +676,7 @@
   },
   {
    "arquivo": "scripts/supabase_snapshot/snapshot.py",
-   "linhas": 1590
+   "linhas": 1596
   },
   {
    "arquivo": "supabase/functions/talkx-send/index.ts",

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "bd25801a2007d254211ddd8565c6c8633bbca78b",
+  "sha": "ded01b535dc046ba8d2931947b3b3d1f4ce2dbb1",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-03 20:45 UTC",
+  "generated_at": "2026-11-03 20:59 UTC",
   "files_total": 7975,
   "code_files": 5917,
-  "code_lines": 1018220
+  "code_lines": 1018226
  },
  "version": "1.3.2",
- "facts_hash": "5e8167d1968180e4",
+ "facts_hash": "8bd49daacfa5e734",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68862,7 +68862,7 @@
   {
    "module": "scripts",
    "files": 342,
-   "lines": 64190,
+   "lines": 64196,
    "tables": [
     "a",
     "alem_do_limite",
@@ -267040,7 +267040,7 @@
   },
   "scripts/supabase_snapshot/snapshot.py": {
    "path": "scripts/supabase_snapshot/snapshot.py",
-   "lines": 1590,
+   "lines": 1596,
    "exports": [
     "def log",
     "def record_error",
@@ -267147,6 +267147,7 @@
    ],
    "rule_comments": [
     "Somente leitura no banco (sessão read-only, statement_timeout, lock_timeout).",
+    "Role sem SELECT em auth.* (ex.: role de leitura do workflow) nao pode derrubar a secao inteira:",
     "Auth\\n\", \"Contagens de usuários em `stats.md` (apenas agregados — sem dados pessoais).\\n\"]",
     "Vault (somente nomes — valores nunca são exportados)\\n\\n\" + banner(\"vault\") + md_table(",
     "# Secrets (apenas nomes)\\n\\n\" + md_table([\"nome\"], [[s] for s in api_.get(\"secrets_names\") or []]))",
@@ -380469,10 +380470,19 @@
   }
  },
  "git": {
-  "sha": "bd25801a2007d254211ddd8565c6c8633bbca78b",
+  "sha": "ded01b535dc046ba8d2931947b3b3d1f4ce2dbb1",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "ded01b5",
+    "date": "2026-11-03",
+    "author": "adm01-debug",
+    "subject": "fix(supabase-snapshot): falha em auth.* não derruba a seção db_stats inteira (#2697)",
+    "files": [
+     "scripts/supabase_snapshot/snapshot.py"
+    ]
+   },
    {
     "sha": "bd25801",
     "date": "2026-11-03",
@@ -380858,21 +380868,16 @@
     "files": [
      "AGENTS.md"
     ]
-   },
-   {
-    "sha": "cd159a6",
-    "date": "2026-11-02",
-    "author": "adm01-debug",
-    "subject": "chore: handoff para próxima sessão (fase B + cron) (#2628)",
-    "files": [
-     "HANDOFF_NEXT_SESSION.md"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/contexto/regras/manual/regras.md",
     5
+   ],
+   [
+    "scripts/supabase_snapshot/snapshot.py",
+    3
    ],
    [
     "supabase/schema-manifest.json",
@@ -380932,10 +380937,6 @@
    ],
    [
     "scripts/supabase_snapshot/README.md",
-    2
-   ],
-   [
-    "scripts/supabase_snapshot/snapshot.py",
     2
    ],
    [

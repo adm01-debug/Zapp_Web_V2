@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(supabase-snapshot): falha em auth.* não derruba a seção db_stats inteira (#2697)",
    "chore(db): remove payment_links/contact_purchases e special_agent de funções/policy/CHECK (DDL) (#2693)",
    "fix(ai-context): rodapé do INDEX.md configurável por repo + README da automação (#2696)",
    "chore(db): sincronizar artefatos derivados do banco (#2695)",
-   "feat(lgpd): apagar tentativas de login sem atividade há mais de 90 dias (#2562)",
-   "chore(auth): remove papel special_agent do front e das edges (decisão 2026-11-03) (#2692)"
+   "feat(lgpd): apagar tentativas de login sem atividade há mais de 90 dias (#2562)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
