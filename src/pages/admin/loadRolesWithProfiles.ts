@@ -14,7 +14,7 @@
 // `@/lib/supabaseHelpers` é o re-export permitido do mesmo client.
 import { supabase } from '@/lib/supabaseHelpers';
 
-export type RoleType = 'admin' | 'supervisor' | 'agent' | 'special_agent';
+export type RoleType = 'admin' | 'supervisor' | 'agent';
 
 export interface ProfileSummary {
   name: string;
