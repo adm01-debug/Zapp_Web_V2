@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a cada 10 minutos pelo workflow `contexto-ia.yml`; gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `1616721f011e8e639f691071fe351717c4da4c92` (2026-11-03T17:09:33Z).
+Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a cada 10 minutos pelo workflow `contexto-ia.yml`; gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `259758826e0652ca4686310609320508b0cd810b` (2026-11-03T17:49:39Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a 
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4180), SQL (1274), Markdown (1030), JSON (591), JavaScript (351), Shell (230), Python (115), YAML (27)
+- linguagens: TypeScript (4180), SQL (1275), Markdown (1030), JSON (591), JavaScript (351), Shell (230), Python (115), YAML (27)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8139 |
+| arquivos_total | 8140 |
 | arquivos_codigo | 4644 |
-| linhas_codigo | 850844 |
+| linhas_codigo | 850903 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -46,7 +46,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | hooks | 491 |
 | edge_functions | 85 |
 | tabelas | 226 |
-| migrations | 1105 |
+| migrations | 1106 |
 | cron_jobs | 25 |
 | testes | 2530 |
 | workflows | 19 |
@@ -384,21 +384,21 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 54424 nós · 111191 arestas · 4096 comunidades · grafo do commit `1616721f`
-- comunidades maiores: button.tsx (910), react (813), TalkXSuppression.tsx (808), vitest (586), lucide-react (552), cn (491), avatar.tsx (417), evolution-webhook-messages.ts (391), validation.ts (376), @tanstack/react-query (369), ref_node_assert (313), ref_node_fs (303)
+- 54433 nós · 111199 arestas · 4066 comunidades · grafo do commit `25975882`
+- comunidades maiores: lucide-react (769), TalkXSuppression.tsx (759), react (664), vitest (577), utils.ts (557), cn (524), DashboardView.tsx (447), validation.ts (429), Tarefas + Lembretes + Quadro — STATUS (310), framer-motion (308), tooltip.tsx (301), useMyWorkItems.ts (292)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
-- .github/workflows/ci.yml (24)
-- CLAUDE.md (23)
-- .github/workflows/e2e-logado.yml (18)
+- .github/workflows/ci.yml (23)
+- CLAUDE.md (21)
 - src/integrations/supabase/types.ts (18)
-- scripts/ci/ci-docs-baseline.unit.mjs (17)
-- .github/workflows/db-guard.yml (16)
-- docs/ci/README.md (16)
-- scripts/ci/workflow-contracts.unit.mjs (16)
+- .github/workflows/e2e-logado.yml (17)
+- scripts/ci/ci-docs-baseline.unit.mjs (16)
+- .github/workflows/db-guard.yml (15)
+- docs/ci/README.md (14)
 - ESTADO.md (13)
+- scripts/ci/workflow-contracts.unit.mjs (13)
 - .github/workflows/deploy-functions.yml (12)
 - supabase/deployment-manifest.json (12)
 - supabase/schema-manifest.json (12)

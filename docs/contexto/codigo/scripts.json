@@ -231,7 +231,7 @@
   {
    "arquivo": "scripts/ci/check-workflow-pins.mjs",
    "descricao": "Fonte única de versões (E75): os valores vivem em .github/toolchain.json e nenhum workflow pode literalizar uma versão diferente da declarada ali. O arquivo guarda a",
-   "linhas": 251,
+   "linhas": 259,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

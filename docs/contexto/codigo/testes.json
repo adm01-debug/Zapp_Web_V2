@@ -747,11 +747,11 @@
   {
    "arquivo": "scripts/ci/check-workflow-pins.unit.mjs",
    "tipo": "unit",
-   "linhas": 282,
+   "linhas": 325,
    "testa": [
     "scripts/ci/check-workflow-pins.mjs"
    ],
-   "casos": 26
+   "casos": 31
   },
   {
    "arquivo": "scripts/ci/ci-artifacts.unit.mjs",
@@ -1847,11 +1847,11 @@
   {
    "arquivo": "scripts/edge-deploy/secrets-scope.unit.mjs",
    "tipo": "unit",
-   "linhas": 271,
+   "linhas": 279,
    "testa": [
     "scripts/edge-deploy/secrets-scope.mjs"
    ],
-   "casos": 15
+   "casos": 16
   },
   {
    "arquivo": "scripts/edge-deploy/serialize-scope.unit.mjs",

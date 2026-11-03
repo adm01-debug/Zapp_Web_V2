@@ -2,12 +2,12 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1616721f011e8e639f691071fe351717c4da4c92",
+  "commit": "259758826e0652ca4686310609320508b0cd810b",
   "branch": "main",
-  "data_commit": "2026-11-03T17:09:33Z",
+  "data_commit": "2026-11-03T17:49:39Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
-  "arquivos_mudados_7d": 1369,
+  "arquivos_mudados_7d": 1372,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -73,38 +73,38 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 24
-   },
-   {
-    "arquivo": "CLAUDE.md",
     "mudancas": 23
    },
    {
-    "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 18
+    "arquivo": "CLAUDE.md",
+    "mudancas": 21
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 18
    },
    {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "arquivo": ".github/workflows/e2e-logado.yml",
     "mudancas": 17
    },
    {
-    "arquivo": ".github/workflows/db-guard.yml",
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 16
+   },
+   {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 15
    },
    {
     "arquivo": "docs/ci/README.md",
-    "mudancas": 16
-   },
-   {
-    "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
-    "mudancas": 16
+    "mudancas": 14
    },
    {
     "arquivo": "ESTADO.md",
+    "mudancas": 13
+   },
+   {
+    "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
     "mudancas": 13
    },
    {
@@ -132,10 +132,6 @@
     "mudancas": 10
    },
    {
-    "arquivo": "scripts/ci/github-settings-guard.unit.mjs",
-    "mudancas": 10
-   },
-   {
     "arquivo": "scripts/db-audit/known-violations.json",
     "mudancas": 10
    },
@@ -144,11 +140,7 @@
     "mudancas": 10
    },
    {
-    "arquivo": ".github/workflows/branch-hygiene-audit.yml",
-    "mudancas": 9
-   },
-   {
-    "arquivo": ".github/workflows/e2e-talkx.yml",
+    "arquivo": "scripts/ci/github-settings-guard.unit.mjs",
     "mudancas": 9
    },
    {
@@ -160,15 +152,23 @@
     "mudancas": 9
    },
    {
-    "arquivo": ".github/workflows/auto-update-pr-branch.yml",
-    "mudancas": 8
-   },
-   {
     "arquivo": ".github/workflows/codeql.yml",
     "mudancas": 8
    },
    {
+    "arquivo": ".github/workflows/e2e-talkx.yml",
+    "mudancas": 8
+   },
+   {
     "arquivo": ".github/workflows/notifica-falha-main.yml",
+    "mudancas": 8
+   },
+   {
+    "arquivo": "scripts/ci/github-settings-baseline.json",
+    "mudancas": 8
+   },
+   {
+    "arquivo": "scripts/db-audit/check-migration-drift.test.mjs",
     "mudancas": 8
    }
   ],
@@ -192,9 +192,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8139,
+  "arquivos_total": 8140,
   "arquivos_codigo": 4644,
-  "linhas_codigo": 850844,
+  "linhas_codigo": 850903,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -204,7 +204,7 @@
   "hooks": 491,
   "edge_functions": 85,
   "tabelas": 226,
-  "migrations": 1105,
+  "migrations": 1106,
   "cron_jobs": 25,
   "testes": 2530,
   "workflows": 19,
@@ -478,7 +478,7 @@
   },
   "scripts/ci": {
    "arquivos": 149,
-   "linhas": 28341
+   "linhas": 28392
   },
   "scripts/db-audit": {
    "arquivos": 79,
@@ -494,7 +494,7 @@
   },
   "scripts/edge-deploy": {
    "arquivos": 29,
-   "linhas": 4090
+   "linhas": 4098
   },
   "scripts/eslint": {
    "arquivos": 1,
