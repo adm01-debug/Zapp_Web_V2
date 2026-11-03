@@ -32,7 +32,6 @@ vi.mock('@/services/contact.service', () => ({
 
 vi.mock('../ContactActivityTimeline', () => ({ ContactActivityTimeline: () => <div data-testid="timeline" /> }));
 vi.mock('../ContactNotes', () => ({ ContactNotes: () => <div data-testid="notes" /> }));
-vi.mock('../ContactPurchaseHistory', () => ({ ContactPurchaseHistory: () => <div data-testid="purchases" /> }));
 vi.mock('@/hooks/integrations/useCatalogSendHistory', () => ({
   useCatalogSendHistory: () => ({ rows: [], isLoading: false, error: null }),
 }));
