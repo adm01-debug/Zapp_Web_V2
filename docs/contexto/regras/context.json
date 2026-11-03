@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "7a2e35e508a9f6053de661f66136307e6d6ec9e6",
+  "sha": "bd4c4bd7a255573822171e7f4562e1037d6394f1",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-03 18:55 UTC",
-  "files_total": 7982,
-  "code_files": 5924,
-  "code_lines": 1020072
+  "generated_at": "2026-11-03 19:32 UTC",
+  "files_total": 7975,
+  "code_files": 5917,
+  "code_lines": 1018935
  },
  "version": "1.3.2",
- "facts_hash": "2c10b2c9fa2c2609",
+ "facts_hash": "2728dfe110d2ac15",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -296,8 +296,8 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".tsx": 2325,
-   ".ts": 1855,
+   ".tsx": 2319,
+   ".ts": 1854,
    ".sql": 1276,
    ".mjs": 325,
    ".py": 115,
@@ -63193,7 +63193,6 @@
      "ai_conversation_tags",
      "contact_custom_fields",
      "contact_notes",
-     "contact_purchases",
      "conversation_events",
      "conversation_memory",
      "conversation_sla",
@@ -66223,7 +66222,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2159,
+  "components_count": 2155,
   "hooks": [
    {
     "name": "useContacts",
@@ -67336,14 +67335,6 @@
    {
     "name": "useContactNotes",
     "file": "src/hooks/crm/useContactNotes.ts"
-   },
-   {
-    "name": "useCreateContactPurchase",
-    "file": "src/hooks/crm/useContactPurchases.ts"
-   },
-   {
-    "name": "useContactPurchases",
-    "file": "src/hooks/crm/useContactPurchases.ts"
    },
    {
     "name": "useContactSidebar",
@@ -69302,8 +69293,8 @@
   },
   {
    "module": "src/components",
-   "files": 2159,
-   "lines": 368218,
+   "files": 2155,
+   "lines": 367420,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -69323,7 +69314,6 @@
     "chatbot_flows",
     "connection_health_logs",
     "contact_notes",
-    "contact_purchases",
     "contacts",
     "conversation_analyses",
     "conversation_closures",
@@ -69639,8 +69629,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 983,
-   "lines": 159547,
+   "files": 980,
+   "lines": 159208,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -69661,7 +69651,6 @@
     "connection_alert_preferences",
     "connection_health_logs",
     "contact_notes",
-    "contact_purchases",
     "contacts",
     "conversation_analyses",
     "conversation_closures",
@@ -71664,17 +71653,6 @@
    "contact_phones": {
     "select": [
      "supabase/functions/crm-integration/index.ts"
-    ]
-   },
-   "contact_purchases": {
-    "select": [
-     "src/components/contacts/ContactPurchaseHistory.tsx",
-     "src/hooks/crm/useContactCrm360.ts",
-     "src/hooks/crm/useContactPurchases.ts"
-    ],
-    "insert": [
-     "src/components/inbox/ContactPurchasesPanel.tsx",
-     "src/hooks/crm/useContactPurchases.ts"
     ]
    },
    "contacts": {
@@ -73788,17 +73766,6 @@
    "contact_phones": [
     "contact_id",
     "numero_e164"
-   ],
-   "contact_purchases": [
-    "amount",
-    "contact_id",
-    "created_at",
-    "currency",
-    "id",
-    "purchase_type",
-    "purchased_at",
-    "status",
-    "title"
    ],
    "contacts": [
     "ai_priority",
@@ -77159,6 +77126,7 @@
    "contact_block_audit",
    "contact_deletion_audit",
    "contact_protection_policy",
+   "contact_purchases",
    "copilot_conversation_scores",
    "copilot_help_requests",
    "copilot_learning_moments",
@@ -82791,18 +82759,6 @@
     "msg": "Selecione o motivo de encerramento"
    },
    {
-    "file": "src/components/inbox/ContactPurchasesPanel.tsx",
-    "msg": " className="
-   },
-   {
-    "file": "src/components/inbox/ContactPurchasesPanel.tsx",
-    "msg": "Não foi possível registrar. Tente novamente."
-   },
-   {
-    "file": "src/components/inbox/ContactPurchasesPanel.tsx",
-    "msg": "Não foi possível registrar: usuário não identificado."
-   },
-   {
     "file": "src/components/inbox/ConversationListSidebar.tsx",
     "msg": "Ação indisponível — tente recarregar a página"
    },
@@ -84741,10 +84697,6 @@
    {
     "file": "src/hooks/crm/useContactNotes.ts",
     "msg": "Perfil não encontrado"
-   },
-   {
-    "file": "src/hooks/crm/useContactPurchases.ts",
-    "msg": "Não foi possível registrar. Tente novamente."
    },
    {
     "file": "src/hooks/crm/useContactSummaryNote.ts",
@@ -88481,14 +88433,6 @@
    {
     "file": "src/components/inbox/ContactDetails.tsx",
     "text": "isContentEditable: mesma situação em divs/spans editáveis — Esc deve"
-   },
-   {
-    "file": "src/components/inbox/ContactPurchasesPanel.tsx",
-    "text": "* `created_at`/`purchased_at` inválido não pode derrubar a lista: vira '—'. */"
-   },
-   {
-    "file": "src/components/inbox/ContactPurchasesPanel.tsx",
-    "text": "Trava de duplo clique: o insert em voo não pode ser disparado de novo."
    },
    {
     "file": "src/components/inbox/ConversationListSidebar.tsx",
@@ -104170,16 +104114,6 @@
     "value": "30"
    },
    {
-    "file": "src/components/inbox/ContactPurchasesPanel.tsx",
-    "name": "MAX_AMOUNT",
-    "value": "100"
-   },
-   {
-    "file": "src/components/inbox/ContactPurchasesPanel.tsx",
-    "name": "AMOUNT_HINT",
-    "value": "'Informe um valor entre R$ 0,00 e R$ 100.000.000,00.'"
-   },
-   {
     "file": "src/components/inbox/ConversationListSidebar.tsx",
     "name": "SIDEBAR_MIN_WIDTH",
     "value": "280"
@@ -105568,11 +105502,6 @@
     "file": "src/hooks/crm/useAgentPresence.ts",
     "name": "STALE_MS",
     "value": "75"
-   },
-   {
-    "file": "src/hooks/crm/useContactCrm360.ts",
-    "name": "SIX_MONTHS_MS",
-    "value": "1000"
    },
    {
     "file": "src/hooks/crm/useContactsKpi.ts",
@@ -110047,24 +109976,6 @@
     "kind": "compara"
    },
    {
-    "file": "src/components/contacts/ContactPurchaseHistory.tsx",
-    "field": "status",
-    "value": "cancelled",
-    "kind": "compara"
-   },
-   {
-    "file": "src/components/contacts/ContactPurchaseHistory.tsx",
-    "field": "status",
-    "value": "completed",
-    "kind": "compara"
-   },
-   {
-    "file": "src/components/contacts/ContactPurchaseHistory.tsx",
-    "field": "status",
-    "value": "pending",
-    "kind": "compara"
-   },
-   {
     "file": "src/components/contacts/ContactSearchWithSuggestions.tsx",
     "field": "type",
     "value": "company",
@@ -110699,12 +110610,6 @@
     "field": "conversation_status",
     "value": "archived",
     "kind": "escreve"
-   },
-   {
-    "file": "src/components/inbox/ContactPurchasesPanel.tsx",
-    "field": "status",
-    "value": "cancelled",
-    "kind": "compara"
    },
    {
     "file": "src/components/inbox/ConversationSummary.tsx",
@@ -123285,12 +123190,6 @@
     "body": "const topo = cascaRef.current?.getBoundingClientRect().top ?? 0; const disponivel = vv.height - topo - 12; setTetoTeclado(disponivel > 0 ? Math.round(disponivel) : null);"
    },
    {
-    "file": "src/components/inbox/tabs/CommercialSummaryStrip.tsx",
-    "name": "formatCurrency",
-    "params": "v: number",
-    "body": "v > 0 ? `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—';"
-   },
-   {
     "file": "src/components/inbox/tabs/journey/JourneyStatsHero.tsx",
     "name": "Ranking",
     "params": "{ ranking }: { ranking: JourneyStatsHeroRankingEntry[] }",
@@ -124771,10 +124670,6 @@
     "line": "staleTime: 5 * 60 * 1000,"
    },
    {
-    "file": "src/hooks/crm/useContactCrm360.ts",
-    "line": "const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 6;"
-   },
-   {
     "file": "src/hooks/crm/useEmailContactContext.ts",
     "line": "gcTime: 15 * 60 * 1000,"
    },
@@ -125893,10 +125788,6 @@
     "line": "transition={{ delay: i * 0.03 }}"
    },
    {
-    "file": "src/components/contacts/ContactPurchaseHistory.tsx",
-    "line": "transition={{ delay: i * 0.04 }}"
-   },
-   {
     "file": "src/components/contacts/ContactsTable.tsx",
     "line": "transition={{ delay: index * 0.015 }}"
    },
@@ -126019,10 +125910,6 @@
    {
     "file": "src/components/inbox/ContactDetailsResponsive.tsx",
     "line": "* No celular o painel ocupa 100% da largura do sheet (`w-full` na raiz de"
-   },
-   {
-    "file": "src/components/inbox/ContactPurchasesPanel.tsx",
-    "line": "transition={{ delay: idx * 0.05 }}"
    },
    {
     "file": "src/components/inbox/ConversationListSidebar.tsx",
@@ -141991,54 +141878,6 @@
     "name": "a seção "
    },
    {
-    "file": "src/components/inbox/__tests__/ContactPurchasesPanel.erro-gravacao.test.tsx",
-    "name": "ContactPurchasesPanel — falha de gravação visível"
-   },
-   {
-    "file": "src/components/inbox/__tests__/ContactPurchasesPanel.erro-gravacao.test.tsx",
-    "name": "mostra toast de erro e registra no log quando o insert falha"
-   },
-   {
-    "file": "src/components/inbox/__tests__/ContactPurchasesPanel.erro-gravacao.test.tsx",
-    "name": "sem erro fecha o diálogo e anuncia sucesso"
-   },
-   {
-    "file": "src/components/inbox/__tests__/ContactPurchasesPanel.total-erro-data.test.tsx",
-    "name": "ContactPurchasesPanel — total, data, valor e duplo clique"
-   },
-   {
-    "file": "src/components/inbox/__tests__/ContactPurchasesPanel.total-erro-data.test.tsx",
-    "name": "total soma só o que não está cancelado e diz "
-   },
-   {
-    "file": "src/components/inbox/__tests__/ContactPurchasesPanel.total-erro-data.test.tsx",
-    "name": "data inválida vira "
-   },
-   {
-    "file": "src/components/inbox/__tests__/ContactPurchasesPanel.total-erro-data.test.tsx",
-    "name": "valor R$ 0,00 aparece na linha e no total"
-   },
-   {
-    "file": "src/components/inbox/__tests__/ContactPurchasesPanel.total-erro-data.test.tsx",
-    "name": "falha da consulta mostra erro com "
-   },
-   {
-    "file": "src/components/inbox/__tests__/ContactPurchasesPanel.total-erro-data.test.tsx",
-    "name": "duplo clique em Criar gera um único insert"
-   },
-   {
-    "file": "src/components/inbox/__tests__/ContactPurchasesPanel.total-erro-data.test.tsx",
-    "name": "valor negativo ou acima do teto bloqueia o envio"
-   },
-   {
-    "file": "src/components/inbox/__tests__/ContactPurchasesPanel.total-erro-data.test.tsx",
-    "name": "sem profileId não há como registrar"
-   },
-   {
-    "file": "src/components/inbox/__tests__/ContactPurchasesPanel.total-erro-data.test.tsx",
-    "name": "não tem violação do axe"
-   },
-   {
     "file": "src/components/inbox/__tests__/ContactTypeFilter.grupos.test.tsx",
     "name": "ContactTypeFilter — classificação de grupo (R2-INB-055)"
    },
@@ -150728,10 +150567,6 @@
    },
    {
     "file": "src/components/inbox/tabs/__tests__/Crm360Tab.test.tsx",
-    "name": "exibe o ticket médio formatado em BRL quando há compras concluídas"
-   },
-   {
-    "file": "src/components/inbox/tabs/__tests__/Crm360Tab.test.tsx",
     "name": "renderiza o stepper de etapas quando há um deal aberto"
    },
    {
@@ -151928,23 +151763,15 @@
    },
    {
     "file": "src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx",
-    "name": "estado vazio: tiles do resumo, "
+    "name": "estado vazio: tiles do resumo e empty state interno de propostas — sem módulo de compras"
    },
    {
     "file": "src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx",
-    "name": "com dados: "
-   },
-   {
-    "file": "src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx",
-    "name": "profileId chega ao insert do ContactPurchasesPanel como created_by"
+    "name": "com dados: a proposta em aberto aparece — sem empty state"
    },
    {
     "file": "src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx",
     "name": "nunca renderiza o texto "
-   },
-   {
-    "file": "src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx",
-    "name": "aviso de escopo: o resumo explicita que Compras e Ticket médio consideram somente compras concluídas/aprovadas"
    },
    {
     "file": "src/components/inbox/tabs/__tests__/SectionCard.test.tsx",
@@ -179588,15 +179415,11 @@
    },
    {
     "file": "src/hooks/crm/__tests__/useContactCrm360.test.ts",
-    "name": "calcula ticket medio só com compras completed/approved e delta só com as duas janelas de 6 meses preenchidas"
-   },
-   {
-    "file": "src/hooks/crm/__tests__/useContactCrm360.test.ts",
     "name": "agrupa deals abertos em propostas (etapa com nome "
    },
    {
     "file": "src/hooks/crm/__tests__/useContactCrm360.test.ts",
-    "name": "últimas interações mescla compras + atividades de deal + eventos de transferência/encerramento, mais recentes primeiro, limitado a 4"
+    "name": "últimas interações mescla atividades de deal + eventos de transferência/encerramento, mais recentes primeiro, limitado a 4"
    },
    {
     "file": "src/hooks/crm/__tests__/useContactCrm360.test.ts",
@@ -179641,38 +179464,6 @@
    {
     "file": "src/hooks/crm/__tests__/useContactIntelligence.test.tsx",
     "name": "devolve null e registra o erro quando a Edge falha"
-   },
-   {
-    "file": "src/hooks/crm/__tests__/useContactPurchases.criar.test.tsx",
-    "name": "useCreateContactPurchase — gravação das compras do contato"
-   },
-   {
-    "file": "src/hooks/crm/__tests__/useContactPurchases.criar.test.tsx",
-    "name": "erro do insert vira toast pt-BR e a mutation rejeita (os dados digitados ficam)"
-   },
-   {
-    "file": "src/hooks/crm/__tests__/useContactPurchases.criar.test.tsx",
-    "name": "sucesso invalida a lista do painel e o card 360, sem toast de erro"
-   },
-   {
-    "file": "src/hooks/crm/__tests__/useContactPurchases.criar.test.tsx",
-    "name": "profileId ausente grava created_by nulo"
-   },
-   {
-    "file": "src/hooks/crm/__tests__/useContactPurchases.test.tsx",
-    "name": "useContactPurchases — leitura das compras do contato"
-   },
-   {
-    "file": "src/hooks/crm/__tests__/useContactPurchases.test.tsx",
-    "name": "busca por contact_id, ordena por created_at desc e devolve as linhas"
-   },
-   {
-    "file": "src/hooks/crm/__tests__/useContactPurchases.test.tsx",
-    "name": "erro do banco (ex.: RLS negando) rejeita a query em vez de virar lista vazia"
-   },
-   {
-    "file": "src/hooks/crm/__tests__/useContactPurchases.test.tsx",
-    "name": "contactId vazio mantém a query desligada (não chama o banco)"
    },
    {
     "file": "src/hooks/crm/__tests__/useContactSidebar.test.tsx",
@@ -180996,19 +180787,11 @@
    },
    {
     "file": "src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts",
-    "name": "PK-16 (hugo): insert de compra com erro mostra feedback — hoje ContactPurchasesPanel engole o erro (só trata !error)"
-   },
-   {
-    "file": "src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts",
     "name": "PK-07 (hugo): useNextBestAction com VÁRIAS linhas de SLA — hoje lê uma única linha de conversation_sla por contato"
    },
    {
     "file": "src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts",
     "name": "PK-05 (workersql): política de UPDATE do sussurro / marcação de lido limita ao autor"
-   },
-   {
-    "file": "src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts",
-    "name": "PK-15 (workersql): RLS de contact_purchases pela regra nova do cartão (prova de enforcement com papel real em scripts/db-audit)"
    },
    {
     "file": "src/hooks/inbox/__tests__/useConnectionHealthBanner.test.ts",
@@ -233112,10 +232895,6 @@
     "limit": "1"
    },
    {
-    "file": "src/components/contacts/ContactPurchaseHistory.tsx",
-    "limit": "20"
-   },
-   {
     "file": "src/components/contacts/useContactFormValidation.ts",
     "limit": "1"
    },
@@ -235727,7 +235506,6 @@
      "pending": [
       "compara:src/components/admin/GmailWebhookMonitor.tsx",
       "compara:src/components/connections/ConnectionsView.tsx",
-      "compara:src/components/contacts/ContactPurchaseHistory.tsx",
       "compara:src/components/omnichannel/OmnichannelInbox.tsx",
       "compara:src/components/schedule/ScheduleCalendarView.tsx",
       "compara:src/components/security/PasswordResetRequestsPanel.tsx",
@@ -235819,7 +235597,6 @@
      "completed": [
       "compara:src/components/admin/TrainingMode.tsx",
       "compara:src/components/chatbot/ChatbotExecutionsDashboard.tsx",
-      "compara:src/components/contacts/ContactPurchaseHistory.tsx",
       "compara:src/components/knowledge/KnowledgeBaseView.tsx",
       "compara:src/components/multiplix/MultiplixMonitor.tsx",
       "compara:src/components/talkx/TalkXLiveMonitor.tsx",
@@ -236054,24 +235831,6 @@
       "filtra:supabase/functions/multiplix-send/index.ts",
       "filtra:supabase/functions/talkx-send/index.ts",
       "filtra:supabase/migrations/_foreign/seed-talkx-connection.sql"
-     ],
-     "cancelled": [
-      "compara:src/components/contacts/ContactPurchaseHistory.tsx",
-      "compara:src/components/inbox/ContactPurchasesPanel.tsx",
-      "compara:src/components/multiplix/MultiplixMonitor.tsx",
-      "compara:src/components/talkx/TalkXLiveMonitor.tsx",
-      "compara:src/components/talkx/talkxRoute.ts",
-      "compara:src/components/talkx/useCampaignRowActions.tsx",
-      "compara:src/components/tasks/list/taskRowCells.tsx",
-      "compara:src/components/tasks/shared/WorkItemCard.tsx",
-      "compara:src/components/tasks/shared/sheet/rodape.ts",
-      "compara:src/hooks/tasks/workItemAggregates.ts",
-      "compara:src/lib/calls/callStatus.ts",
-      "compara:supabase/functions/_shared/ai-usage.ts",
-      "escreve:src/hooks/chat/useScheduledMessages.ts",
-      "escreve:src/hooks/tasks/useMyWorkItems.ts",
-      "escreve:supabase/functions/_shared/ai-conversation-pipeline.ts",
-      "escreve:supabase/functions/_shared/schemas.ts"
      ],
      "ativo": [
       "escreve:src/components/crm360/CompanyFormDialog.tsx"
@@ -236327,6 +236086,22 @@
      ],
      "completed_with_failures": [
       "compara:src/components/multiplix/MultiplixMonitor.tsx"
+     ],
+     "cancelled": [
+      "compara:src/components/multiplix/MultiplixMonitor.tsx",
+      "compara:src/components/talkx/TalkXLiveMonitor.tsx",
+      "compara:src/components/talkx/talkxRoute.ts",
+      "compara:src/components/talkx/useCampaignRowActions.tsx",
+      "compara:src/components/tasks/list/taskRowCells.tsx",
+      "compara:src/components/tasks/shared/WorkItemCard.tsx",
+      "compara:src/components/tasks/shared/sheet/rodape.ts",
+      "compara:src/hooks/tasks/workItemAggregates.ts",
+      "compara:src/lib/calls/callStatus.ts",
+      "compara:supabase/functions/_shared/ai-usage.ts",
+      "escreve:src/hooks/chat/useScheduledMessages.ts",
+      "escreve:src/hooks/tasks/useMyWorkItems.ts",
+      "escreve:supabase/functions/_shared/ai-conversation-pipeline.ts",
+      "escreve:supabase/functions/_shared/schemas.ts"
      ],
      "pending_setup": [
       "compara:src/components/omnichannel/OmnichannelInbox.tsx",
@@ -275802,7 +275577,7 @@
   },
   "src/components/contacts/ContactDetailPanel.tsx": {
    "path": "src/components/contacts/ContactDetailPanel.tsx",
-   "lines": 449,
+   "lines": 445,
    "exports": [
     "interface ContactActivity",
     "function ContactCatalogSendHistory",
@@ -276054,55 +275829,6 @@
    ],
    "percents": [
     "transition={{ delay: i * 0.03 }}"
-   ]
-  },
-  "src/components/contacts/ContactPurchaseHistory.tsx": {
-   "path": "src/components/contacts/ContactPurchaseHistory.tsx",
-   "lines": 168,
-   "exports": [
-    "function ContactPurchaseHistory"
-   ],
-   "tables": [
-    {
-     "table": "contact_purchases",
-     "op": "select"
-    }
-   ],
-   "table_cols": {
-    "contact_purchases": [
-     "amount",
-     "contact_id",
-     "created_at",
-     "currency",
-     "id",
-     "purchase_type",
-     "purchased_at",
-     "status",
-     "title"
-    ]
-   },
-   "status_values": [
-    {
-     "field": "status",
-     "value": "cancelled",
-     "kind": "compara"
-    },
-    {
-     "field": "status",
-     "value": "completed",
-     "kind": "compara"
-    },
-    {
-     "field": "status",
-     "value": "pending",
-     "kind": "compara"
-    }
-   ],
-   "percents": [
-    "transition={{ delay: i * 0.04 }}"
-   ],
-   "pagination": [
-    "20"
    ]
   },
   "src/components/contacts/ContactRegionMap.tsx": {
@@ -276547,7 +276273,7 @@
   },
   "src/components/contacts/__tests__/CT51_52_sendProduct.test.tsx": {
    "path": "src/components/contacts/__tests__/CT51_52_sendProduct.test.tsx",
-   "lines": 251,
+   "lines": 250,
    "is_test": true,
    "rule_comments": [
     "aqui a permissão é concedida para o teste observar o caminho de sempre."
@@ -276722,7 +276448,7 @@
   },
   "src/components/contacts/__tests__/ContactDetailPanel.activity.test.tsx": {
    "path": "src/components/contacts/__tests__/ContactDetailPanel.activity.test.tsx",
-   "lines": 170,
+   "lines": 169,
    "is_test": true,
    "tests": [
     "#253 — atividade do contato no painel de detalhe",
@@ -276735,7 +276461,7 @@
   },
   "src/components/contacts/__tests__/ContactDetailPanel.esc-e-rotulo.test.tsx": {
    "path": "src/components/contacts/__tests__/ContactDetailPanel.esc-e-rotulo.test.tsx",
-   "lines": 68,
+   "lines": 67,
    "is_test": true,
    "doc": "#CT: o painel de detalhe tinha um listener próprio de `Escape` no `document`. Com um diálogo Radix aberto por cima (ex.: editar contato), um único `Esc` fechava o diálogo E o painel — duas camadas de uma vez. O `Esc` agora é só do handler central (`useContactsViewState`), que fecha a camada de topo. …",
    "tests": [
@@ -276870,7 +276596,7 @@
   },
   "src/components/contacts/__tests__/ContactHealthIndicator.test.tsx": {
    "path": "src/components/contacts/__tests__/ContactHealthIndicator.test.tsx",
-   "lines": 189,
+   "lines": 188,
    "is_test": true,
    "doc": "Completude do cadastro — o indicador REAL (ContactHealthIndicator), o cartão REAL (ContactCard) e a ficha REAL (ContactDetailPanel). Prova o critério do cartão: a completude fica visível e explicada nos cartões e na ficha, com barra + número + nível em TEXTO (a cor não é o único sinal) e a lista dos …",
    "tests": [
@@ -281695,48 +281421,6 @@
     "* No celular o painel ocupa 100% da largura do sheet (`w-full` na raiz de"
    ]
   },
-  "src/components/inbox/ContactPurchasesPanel.tsx": {
-   "path": "src/components/inbox/ContactPurchasesPanel.tsx",
-   "lines": 218,
-   "exports": [
-    "function ContactPurchasesPanel"
-   ],
-   "tables": [
-    {
-     "table": "contact_purchases",
-     "op": "insert"
-    }
-   ],
-   "errors": [
-    " className=",
-    "Não foi possível registrar. Tente novamente.",
-    "Não foi possível registrar: usuário não identificado."
-   ],
-   "params": [
-    {
-     "name": "MAX_AMOUNT",
-     "value": "100"
-    },
-    {
-     "name": "AMOUNT_HINT",
-     "value": "'Informe um valor entre R$ 0,00 e R$ 100.000.000,00.'"
-    }
-   ],
-   "status_values": [
-    {
-     "field": "status",
-     "value": "cancelled",
-     "kind": "compara"
-    }
-   ],
-   "rule_comments": [
-    "* `created_at`/`purchased_at` inválido não pode derrubar a lista: vira '—'. */",
-    "Trava de duplo clique: o insert em voo não pode ser disparado de novo."
-   ],
-   "percents": [
-    "transition={{ delay: idx * 0.05 }}"
-   ]
-  },
   "src/components/inbox/ContactTypeFilter.tsx": {
    "path": "src/components/inbox/ContactTypeFilter.tsx",
    "lines": 241,
@@ -282549,7 +282233,7 @@
   },
   "src/components/inbox/RealtimeInboxView.tsx": {
    "path": "src/components/inbox/RealtimeInboxView.tsx",
-   "lines": 573,
+   "lines": 572,
    "exports": [
     "function RealtimeInboxView"
    ],
@@ -283886,36 +283570,6 @@
    "tests": [
     "ContactDetails — ações rápidas persistem (cartão #241)",
     "a seção "
-   ]
-  },
-  "src/components/inbox/__tests__/ContactPurchasesPanel.erro-gravacao.test.tsx": {
-   "path": "src/components/inbox/__tests__/ContactPurchasesPanel.erro-gravacao.test.tsx",
-   "lines": 65,
-   "is_test": true,
-   "doc": "Contato → Compras/Propostas: a falha do insert era silenciosa (`if (!error) {...}` sem `else`), o diálogo fechava como se tivesse salvado e o usuário não sabia. Vermelho antes: nenhum toast de erro e nada no log. Verde depois: toast de erro visível e o diálogo continua aberto para tentar de novo.",
-   "tests": [
-    "ContactPurchasesPanel — falha de gravação visível",
-    "mostra toast de erro e registra no log quando o insert falha",
-    "sem erro fecha o diálogo e anuncia sucesso"
-   ]
-  },
-  "src/components/inbox/__tests__/ContactPurchasesPanel.total-erro-data.test.tsx": {
-   "path": "src/components/inbox/__tests__/ContactPurchasesPanel.total-erro-data.test.tsx",
-   "lines": 197,
-   "is_test": true,
-   "rule_comments": [
-    "Mais o estado de erro da consulta (não pode cair no \"Nenhum registro\")."
-   ],
-   "tests": [
-    "ContactPurchasesPanel — total, data, valor e duplo clique",
-    "total soma só o que não está cancelado e diz ",
-    "data inválida vira ",
-    "valor R$ 0,00 aparece na linha e no total",
-    "falha da consulta mostra erro com ",
-    "duplo clique em Criar gera um único insert",
-    "valor negativo ou acima do teto bloqueia o envio",
-    "sem profileId não há como registrar",
-    "não tem violação do axe"
    ]
   },
   "src/components/inbox/__tests__/ContactTypeFilter.grupos.test.tsx": {
@@ -287004,7 +286658,7 @@
   },
   "src/components/inbox/chat/ConversationTabContent.tsx": {
    "path": "src/components/inbox/chat/ConversationTabContent.tsx",
-   "lines": 207,
+   "lines": 205,
    "exports": [
     "function ConversationTabContent"
    ],
@@ -291318,16 +290972,9 @@
   },
   "src/components/inbox/tabs/CommercialSummaryStrip.tsx": {
    "path": "src/components/inbox/tabs/CommercialSummaryStrip.tsx",
-   "lines": 42,
+   "lines": 32,
    "exports": [
     "function CommercialSummaryStrip"
-   ],
-   "calc_fns": [
-    {
-     "name": "formatCurrency",
-     "params": "v: number",
-     "body": "v > 0 ? `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—';"
-    }
    ]
   },
   "src/components/inbox/tabs/ContactStatsStrip.tsx": {
@@ -291342,7 +290989,7 @@
   },
   "src/components/inbox/tabs/Crm360Tab.tsx": {
    "path": "src/components/inbox/tabs/Crm360Tab.tsx",
-   "lines": 312,
+   "lines": 269,
    "exports": [
     "function Crm360Tab"
    ]
@@ -291698,7 +291345,7 @@
   },
   "src/components/inbox/tabs/SalesViewTab.tsx": {
    "path": "src/components/inbox/tabs/SalesViewTab.tsx",
-   "lines": 55,
+   "lines": 47,
    "exports": [
     "function SalesViewTab"
    ]
@@ -291899,7 +291546,7 @@
   },
   "src/components/inbox/tabs/__tests__/Crm360Tab.test.tsx": {
    "path": "src/components/inbox/tabs/__tests__/Crm360Tab.test.tsx",
-   "lines": 345,
+   "lines": 330,
    "is_test": true,
    "errors": [
     "link sem cor de texto resolvível: ",
@@ -291915,7 +291562,6 @@
     "sem origem, diz ",
     "mostra empty states honestos quando não há dados comerciais",
     "nunca inventa nomes ou valores das imagens de referência",
-    "exibe o ticket médio formatado em BRL quando há compras concluídas",
     "renderiza o stepper de etapas quando há um deal aberto",
     "editar contato repassa endereço e coordenada do dado enriquecido ao editor",
     "com cache frio, só monta o editor quando o dado enriquecido chega",
@@ -292513,15 +292159,13 @@
   },
   "src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx": {
    "path": "src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx",
-   "lines": 162,
+   "lines": 99,
    "is_test": true,
    "tests": [
     "SalesViewTab",
-    "estado vazio: tiles do resumo, ",
-    "com dados: ",
-    "profileId chega ao insert do ContactPurchasesPanel como created_by",
-    "nunca renderiza o texto ",
-    "aviso de escopo: o resumo explicita que Compras e Ticket médio consideram somente compras concluídas/aprovadas"
+    "estado vazio: tiles do resumo e empty state interno de propostas — sem módulo de compras",
+    "com dados: a proposta em aberto aparece — sem empty state",
+    "nunca renderiza o texto "
    ]
   },
   "src/components/inbox/tabs/__tests__/SectionCard.test.tsx": {
@@ -324799,9 +324443,8 @@
   },
   "src/hooks/crm/useContactCrm360.ts": {
    "path": "src/hooks/crm/useContactCrm360.ts",
-   "lines": 259,
+   "lines": 211,
    "exports": [
-    "interface Crm360Purchase",
     "interface Crm360Deal",
     "interface Crm360Stage",
     "interface Crm360Activity",
@@ -324815,10 +324458,6 @@
     "function useAdvanceDealStage"
    ],
    "tables": [
-    {
-     "table": "contact_purchases",
-     "op": "select"
-    },
     {
      "table": "sales_deals",
      "op": "select"
@@ -324853,14 +324492,6 @@
     }
    ],
    "table_cols": {
-    "contact_purchases": [
-     "amount",
-     "contact_id",
-     "id",
-     "purchased_at",
-     "status",
-     "title"
-    ],
     "sales_deals": [
      "contact_id",
      "expected_close_date",
@@ -324897,12 +324528,6 @@
      "id"
     ]
    },
-   "params": [
-    {
-     "name": "SIX_MONTHS_MS",
-     "value": "1000"
-    }
-   ],
    "status_values": [
     {
      "field": "status",
@@ -324919,9 +324544,6 @@
     "useContactCrm360",
     "useContactLeadScore",
     "useAdvanceDealStage"
-   ],
-   "temporal": [
-    "const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 6;"
    ],
    "pagination": [
     "20"
@@ -325071,39 +324693,6 @@
      "params": "",
      "body": "queryClient.invalidateQueries({ queryKey: contactNotesKey(contactId, user?.id) }); queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId) });"
     }
-   ]
-  },
-  "src/hooks/crm/useContactPurchases.ts": {
-   "path": "src/hooks/crm/useContactPurchases.ts",
-   "lines": 76,
-   "exports": [
-    "interface ContactPurchase",
-    "const contactPurchasesKey",
-    "interface NovoRegistroCompra",
-    "function useCreateContactPurchase",
-    "function useContactPurchases"
-   ],
-   "tables": [
-    {
-     "table": "contact_purchases",
-     "op": "insert"
-    },
-    {
-     "table": "contact_purchases",
-     "op": "select"
-    }
-   ],
-   "table_cols": {
-    "contact_purchases": [
-     "contact_id"
-    ]
-   },
-   "errors": [
-    "Não foi possível registrar. Tente novamente."
-   ],
-   "hooks": [
-    "useCreateContactPurchase",
-    "useContactPurchases"
    ]
   },
   "src/hooks/crm/useContactSidebar.ts": {
@@ -325425,18 +325014,13 @@
   },
   "src/hooks/crm/__tests__/useContactCrm360.test.ts": {
    "path": "src/hooks/crm/__tests__/useContactCrm360.test.ts",
-   "lines": 90,
+   "lines": 59,
    "is_test": true,
-   "temporal": [
-    "const eightMonthsAgo = new Date(NOW.getTime() - 8 * 30 * 24 * 60 * 60 * 1000).toISOString();",
-    "const oneMonthAgo = new Date(NOW.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();"
-   ],
    "tests": [
     "aggregateCrm360",
     "retorna estado vazio honesto quando nao ha dados",
-    "calcula ticket medio só com compras completed/approved e delta só com as duas janelas de 6 meses preenchidas",
     "agrupa deals abertos em propostas (etapa com nome ",
-    "últimas interações mescla compras + atividades de deal + eventos de transferência/encerramento, mais recentes primeiro, limitado a 4",
+    "últimas interações mescla atividades de deal + eventos de transferência/encerramento, mais recentes primeiro, limitado a 4",
     "produtos de interesse: dedup e limitado a 3"
    ]
   },
@@ -325468,30 +325052,6 @@
     "não chama a Edge sem contato selecionado",
     "busca a inteligência do contato e devolve os dados",
     "devolve null e registra o erro quando a Edge falha"
-   ]
-  },
-  "src/hooks/crm/__tests__/useContactPurchases.criar.test.tsx": {
-   "path": "src/hooks/crm/__tests__/useContactPurchases.criar.test.tsx",
-   "lines": 99,
-   "is_test": true,
-   "doc": "Paridade V3 -> doc 06 (L5) — compras do contato: a GRAVAÇÃO não engole o erro. No erro do insert o usuário vê o toast pt-BR, o erro é logado e a mutation rejeita — por isso quem chama só fecha/limpa o formulário no sucesso, e no erro os dados digitados permanecem. No sucesso, as duas consultas são i …",
-   "tests": [
-    "useCreateContactPurchase — gravação das compras do contato",
-    "erro do insert vira toast pt-BR e a mutation rejeita (os dados digitados ficam)",
-    "sucesso invalida a lista do painel e o card 360, sem toast de erro",
-    "profileId ausente grava created_by nulo"
-   ]
-  },
-  "src/hooks/crm/__tests__/useContactPurchases.test.tsx": {
-   "path": "src/hooks/crm/__tests__/useContactPurchases.test.tsx",
-   "lines": 79,
-   "is_test": true,
-   "doc": "Paridade V3 -> V2 (doc 06) — compras do contato: contrato de ERRO do hook. `useContactPurchases` é casca fina sobre `contact_purchases`, mas o erro do banco precisa SUBIR (a RLS de `contact_purchases` nega quem não enxerga o contato — ver `supabase/tests/`, item PK-15); engolir o erro faria a tela m …",
-   "tests": [
-    "useContactPurchases — leitura das compras do contato",
-    "busca por contact_id, ordena por created_at desc e devolve as linhas",
-    "erro do banco (ex.: RLS negando) rejeita a query em vez de virar lista vazia",
-    "contactId vazio mantém a query desligada (não chama o banco)"
    ]
   },
   "src/hooks/crm/__tests__/useContactSidebar.test.tsx": {
@@ -328037,7 +327597,7 @@
   },
   "src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts": {
    "path": "src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts",
-   "lines": 42,
+   "lines": 36,
    "is_test": true,
    "doc": "Paridade V3 -> V2 (doc 06) — PENDÊNCIAS SEM CÓDIGO INTEGRADO NA CÓPIA. Não são testes que fingem: cada linha é um `it.todo` nomeado com o CARTÃO (ou o achado/decisão) que vai entregar o comportamento. Quando o cartão integrar, o todo vira teste real. Isto trava a lacuna para ela não sumir em silênci …",
    "tests": [
@@ -328048,10 +327608,8 @@
     "P2-6 (DECISÃO do dono, sem cartão): pipeline de filtros esconde o canal sem permissão (inbox.view_whatsapp / view_instagram / view_chat) — a V2 não tem essas permissões e o dono ainda não decidiu",
     "DL1 (done, não integrado) + PD-92 (iris): deep link ?contact=/?message=/?msg= — a V2 só tem evento em memória + fallback global legado, não lê a URL",
     "C8 (sem cartão): debounce do save de configurações (useDebouncedSaveSettings) — a V2 salva só no clique do botão, não há debounce a testar",
-    "PK-16 (hugo): insert de compra com erro mostra feedback — hoje ContactPurchasesPanel engole o erro (só trata !error)",
     "PK-07 (hugo): useNextBestAction com VÁRIAS linhas de SLA — hoje lê uma única linha de conversation_sla por contato",
-    "PK-05 (workersql): política de UPDATE do sussurro / marcação de lido limita ao autor",
-    "PK-15 (workersql): RLS de contact_purchases pela regra nova do cartão (prova de enforcement com papel real em scripts/db-audit)"
+    "PK-05 (workersql): política de UPDATE do sussurro / marcação de lido limita ao autor"
    ]
   },
   "src/hooks/inbox/__tests__/useConnectionHealthBanner.test.ts": {
@@ -381245,10 +380803,42 @@
   }
  },
  "git": {
-  "sha": "7a2e35e508a9f6053de661f66136307e6d6ec9e6",
+  "sha": "bd4c4bd7a255573822171e7f4562e1037d6394f1",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "bd4c4bd",
+    "date": "2026-11-03",
+    "author": "adm01-debug",
+    "subject": "chore(crm): remove módulo de pagamentos/compras do front (decisão 2026-11-03) (#2690)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "scripts/ci/eslint-baseline.json",
+     "src/components/contacts/ContactDetailPanel.tsx",
+     "src/components/contacts/ContactPurchaseHistory.tsx",
+     "src/components/contacts/__tests__/CT51_52_sendProduct.test.tsx",
+     "src/components/contacts/__tests__/ContactDetailPanel.activity.test.tsx",
+     "src/components/contacts/__tests__/ContactDetailPanel.esc-e-rotulo.test.tsx",
+     "src/components/contacts/__tests__/ContactHealthIndicator.test.tsx",
+     "src/components/inbox/ContactPurchasesPanel.tsx",
+     "src/components/inbox/RealtimeInboxView.tsx",
+     "src/components/inbox/__tests__/ContactPurchasesPanel.erro-gravacao.test.tsx",
+     "src/components/inbox/__tests__/ContactPurchasesPanel.total-erro-data.test.tsx",
+     "src/components/inbox/chat/ConversationTabContent.tsx",
+     "src/components/inbox/tabs/CommercialSummaryStrip.tsx",
+     "src/components/inbox/tabs/Crm360Tab.tsx",
+     "src/components/inbox/tabs/SalesViewTab.tsx",
+     "src/components/inbox/tabs/__tests__/Crm360Tab.test.tsx",
+     "src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx",
+     "src/hooks/crm/__tests__/useContactCrm360.test.ts",
+     "src/hooks/crm/__tests__/useContactPurchases.criar.test.tsx",
+     "src/hooks/crm/__tests__/useContactPurchases.test.tsx",
+     "src/hooks/crm/useContactCrm360.ts",
+     "src/hooks/crm/useContactPurchases.ts",
+     "src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts"
+    ]
+   },
    {
     "sha": "7a2e35e",
     "date": "2026-11-03",
@@ -381571,16 +381161,6 @@
     "files": [
      "supabase/migrations/20261102022200_cron_historico_retencao_7d.sql"
     ]
-   },
-   {
-    "sha": "9774a67",
-    "date": "2026-11-02",
-    "author": "github-actions[bot]",
-    "subject": "chore: inventário do estado real (semanal) (#2641)",
-    "files": [
-     "inventario/estado/banco.json",
-     "inventario/estado/edges.json"
-    ]
    }
   ],
   "hot_files": [
@@ -381599,6 +381179,10 @@
    [
     "docs/ci/README.md",
     3
+   ],
+   [
+    "scripts/ci/eslint-baseline.json",
+    2
    ],
    [
     "supabase/schema-manifest.json",
@@ -381653,15 +381237,11 @@
     2
    ],
    [
-    "inventario/estado/banco.json",
-    2
-   ],
-   [
-    "supabase/migrations/20261102052200_talkx_retencao_guarda_e_test_sends_90.sql",
+    "docs/DB-INVENTORY.md",
     1
    ],
    [
-    "supabase/migrations/20261102042200_talkx_delivery_log_sem_prazo_fixo.sql",
+    "src/components/contacts/ContactDetailPanel.tsx",
     1
    ]
   ]

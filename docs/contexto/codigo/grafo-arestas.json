@@ -1293,7 +1293,6 @@
    "src/components/contacts/ContactCard.tsx",
    "src/components/contacts/ContactEngagementScore.tsx",
    "src/components/contacts/ContactNotes.tsx",
-   "src/components/contacts/ContactPurchaseHistory.tsx",
    "src/components/contacts/contactTypeConfig.tsx",
    "src/components/ui/avatar.tsx",
    "src/components/ui/badge.tsx",
@@ -1401,12 +1400,6 @@
    "src/hooks/crm/useContactNotes.ts",
    "src/integrations/supabase/client.ts",
    "src/lib/avatar-colors.ts",
-   "src/lib/utils.ts"
-  ],
-  "src/components/contacts/ContactPurchaseHistory.tsx": [
-   "src/components/ui/badge.tsx",
-   "src/components/ui/button.tsx",
-   "src/integrations/supabase/client.ts",
    "src/lib/utils.ts"
   ],
   "src/components/contacts/ContactRegionMap.tsx": [
@@ -2698,17 +2691,6 @@
    "src/components/ui/sheet.tsx",
    "src/hooks/ui/use-mobile.tsx",
    "src/types/chat.ts"
-  ],
-  "src/components/inbox/ContactPurchasesPanel.tsx": [
-   "src/components/ui/badge.tsx",
-   "src/components/ui/button.tsx",
-   "src/components/ui/dialog.tsx",
-   "src/components/ui/input.tsx",
-   "src/components/ui/select.tsx",
-   "src/hooks/crm/useContactCrm360.ts",
-   "src/hooks/crm/useContactPurchases.ts",
-   "src/integrations/supabase/client.ts",
-   "src/lib/logger.ts"
   ],
   "src/components/inbox/ContactTypeFilter.tsx": [
    "src/components/ui/select.tsx",
@@ -4077,7 +4059,6 @@
    "src/components/inbox/tabs/KpiStrip.tsx",
    "src/components/inbox/tabs/OpenDealsList.tsx",
    "src/components/inbox/tabs/SectionCard.tsx",
-   "src/components/ui/empty-state.tsx",
    "src/hooks/chat/useNextBestAction.ts",
    "src/hooks/crm/useContactCrm360.ts",
    "src/hooks/crm/useContactEnrichedData.ts",
@@ -4253,7 +4234,6 @@
    "src/lib/formatters.ts"
   ],
   "src/components/inbox/tabs/SalesViewTab.tsx": [
-   "src/components/inbox/ContactPurchasesPanel.tsx",
    "src/components/inbox/chat/ConversationTabs.tsx",
    "src/components/inbox/tabs/CommercialSummaryStrip.tsx",
    "src/components/inbox/tabs/OpenDealsList.tsx",
@@ -8318,11 +8298,6 @@
    "src/lib/logger.ts",
    "src/services/auth.service.ts",
    "src/services/contact.service.ts"
-  ],
-  "src/hooks/crm/useContactPurchases.ts": [
-   "src/hooks/crm/useContactCrm360.ts",
-   "src/integrations/supabase/client.ts",
-   "src/lib/logger.ts"
   ],
   "src/hooks/crm/useContactSidebar.ts": [
    "src/hooks/system/useCRMIntegrationEnabled.ts",

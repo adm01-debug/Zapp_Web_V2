@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 491,
+ "total": 490,
  "hooks": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -6193,10 +6193,9 @@
     "useContactCrm360",
     "useContactLeadScore"
    ],
-   "linhas": 259,
+   "linhas": 211,
    "dominio": "hooks/crm",
    "tabelas": [
-    "contact_purchases",
     "contacts",
     "conversation_events",
     "deal_activities",
@@ -6211,17 +6210,15 @@
     "useQueryClient"
    ],
    "canais_realtime": [],
-   "usado_por": 9,
+   "usado_por": 7,
    "usado_por_arquivos": [
-    "src/components/inbox/ContactPurchasesPanel.tsx",
     "src/components/inbox/RealtimeInboxView.tsx",
     "src/components/inbox/tabs/AiTab.tsx",
     "src/components/inbox/tabs/CommercialSummaryStrip.tsx",
     "src/components/inbox/tabs/Crm360Tab.tsx",
     "src/components/inbox/tabs/OpenDealsList.tsx",
     "src/components/inbox/tabs/SalesViewTab.tsx",
-    "src/hooks/chat/useConversationPanelInvalidation.ts",
-    "src/hooks/crm/useContactPurchases.ts"
+    "src/hooks/chat/useConversationPanelInvalidation.ts"
    ],
    "coberto_por_testes": 3
   },
@@ -6327,31 +6324,6 @@
     "src/hooks/crm/index.ts"
    ],
    "coberto_por_testes": 7
-  },
-  {
-   "arquivo": "src/hooks/crm/useContactPurchases.ts",
-   "hooks_exportados": [
-    "useContactPurchases",
-    "useCreateContactPurchase"
-   ],
-   "linhas": 76,
-   "dominio": "hooks/crm",
-   "tabelas": [
-    "contact_purchases"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useMutation",
-    "useQuery",
-    "useQueryClient"
-   ],
-   "canais_realtime": [],
-   "usado_por": 1,
-   "usado_por_arquivos": [
-    "src/components/inbox/ContactPurchasesPanel.tsx"
-   ],
-   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/crm/useContactSidebar.ts",

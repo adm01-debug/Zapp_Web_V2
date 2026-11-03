@@ -3,7 +3,7 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4180)",
+   "TypeScript (4173)",
    "SQL (1276)",
    "Markdown (1030)",
    "JSON (591)",
@@ -2505,7 +2505,7 @@
   "papeis_no_codigo": [
    {
     "papel": "alert",
-    "ocorrencias": 110
+    "ocorrencias": 109
    },
    {
     "papel": "status",
@@ -2600,15 +2600,15 @@
     "ocorrencias": 7
    },
    {
-    "papel": "note",
-    "ocorrencias": 7
-   },
-   {
     "papel": "toolbar",
     "ocorrencias": 7
    },
    {
     "papel": "list",
+    "ocorrencias": 6
+   },
+   {
+    "papel": "note",
     "ocorrencias": 6
    },
    {

@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2530,
+ "total": 2526,
  "por_tipo": {
   "contrato": 113,
   "e2e": 71,
   "pytest": 1,
   "qa": 6,
-  "unit": 2247
+  "unit": 2243
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 1949
+   "arquivos": 1945
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -4054,7 +4054,7 @@
   {
    "arquivo": "src/components/contacts/__tests__/ContactDetailPanel.activity.test.tsx",
    "tipo": "unit",
-   "linhas": 170,
+   "linhas": 169,
    "testa": [
     "src/components/contacts/ContactDetailPanel.tsx"
    ],
@@ -4063,7 +4063,7 @@
   {
    "arquivo": "src/components/contacts/__tests__/ContactDetailPanel.esc-e-rotulo.test.tsx",
    "tipo": "unit",
-   "linhas": 68,
+   "linhas": 67,
    "testa": [
     "src/components/contacts/ContactDetailPanel.tsx"
    ],
@@ -4155,7 +4155,7 @@
   {
    "arquivo": "src/components/contacts/__tests__/ContactHealthIndicator.test.tsx",
    "tipo": "unit",
-   "linhas": 189,
+   "linhas": 188,
    "testa": [
     "src/components/contacts/ContactCard.tsx",
     "src/components/contacts/ContactDetailPanel.tsx",
@@ -4375,7 +4375,7 @@
   {
    "arquivo": "src/components/contacts/__tests__/CT51_52_sendProduct.test.tsx",
    "tipo": "unit",
-   "linhas": 251,
+   "linhas": 250,
    "testa": [
     "src/components/catalog/useSendProduct.ts",
     "src/components/contacts/ContactDetailPanel.tsx",
@@ -5661,24 +5661,6 @@
     "src/types/chat.ts"
    ],
    "casos": 4
-  },
-  {
-   "arquivo": "src/components/inbox/__tests__/ContactPurchasesPanel.erro-gravacao.test.tsx",
-   "tipo": "unit",
-   "linhas": 65,
-   "testa": [
-    "src/components/inbox/ContactPurchasesPanel.tsx"
-   ],
-   "casos": 2
-  },
-  {
-   "arquivo": "src/components/inbox/__tests__/ContactPurchasesPanel.total-erro-data.test.tsx",
-   "tipo": "unit",
-   "linhas": 197,
-   "testa": [
-    "src/components/inbox/ContactPurchasesPanel.tsx"
-   ],
-   "casos": 8
   },
   {
    "arquivo": "src/components/inbox/__tests__/ContactTypeFilter.grupos.test.tsx",
@@ -8133,13 +8115,13 @@
   {
    "arquivo": "src/components/inbox/tabs/__tests__/Crm360Tab.test.tsx",
    "tipo": "unit",
-   "linhas": 345,
+   "linhas": 330,
    "testa": [
     "src/components/inbox/tabs/Crm360Tab.tsx",
     "src/hooks/crm/useContactCrm360.ts",
     "src/types/chat.ts"
    ],
-   "casos": 17
+   "casos": 15
   },
   {
    "arquivo": "src/components/inbox/tabs/__tests__/fileActionButton.test.tsx",
@@ -8468,12 +8450,12 @@
   {
    "arquivo": "src/components/inbox/tabs/__tests__/SalesViewTab.test.tsx",
    "tipo": "unit",
-   "linhas": 162,
+   "linhas": 99,
    "testa": [
     "src/components/inbox/tabs/SalesViewTab.tsx",
     "src/hooks/crm/useContactCrm360.ts"
    ],
-   "casos": 6
+   "casos": 4
   },
   {
    "arquivo": "src/components/inbox/tabs/__tests__/SectionCard.test.tsx",
@@ -15912,11 +15894,11 @@
   {
    "arquivo": "src/hooks/crm/__tests__/useContactCrm360.test.ts",
    "tipo": "unit",
-   "linhas": 90,
+   "linhas": 59,
    "testa": [
     "src/hooks/crm/useContactCrm360.ts"
    ],
-   "casos": 5
+   "casos": 4
   },
   {
    "arquivo": "src/hooks/crm/__tests__/useContactEnrichedData.test.tsx",
@@ -15936,24 +15918,6 @@
     "src/hooks/crm/useContactIntelligence.ts"
    ],
    "casos": 4
-  },
-  {
-   "arquivo": "src/hooks/crm/__tests__/useContactPurchases.criar.test.tsx",
-   "tipo": "unit",
-   "linhas": 99,
-   "testa": [
-    "src/hooks/crm/useContactPurchases.ts"
-   ],
-   "casos": 3
-  },
-  {
-   "arquivo": "src/hooks/crm/__tests__/useContactPurchases.test.tsx",
-   "tipo": "unit",
-   "linhas": 79,
-   "testa": [
-    "src/hooks/crm/useContactPurchases.ts"
-   ],
-   "casos": 3
   },
   {
    "arquivo": "src/hooks/crm/__tests__/useContactSidebar.test.tsx",
@@ -16292,9 +16256,9 @@
   {
    "arquivo": "src/hooks/inbox/__tests__/paridade-v3.pendencias.test.ts",
    "tipo": "unit",
-   "linhas": 42,
+   "linhas": 36,
    "testa": [],
-   "casos": 10
+   "casos": 8
   },
   {
    "arquivo": "src/hooks/inbox/__tests__/useConnectionHealthBanner.test.ts",
@@ -23311,7 +23275,6 @@
   "src/components/inbox/CloseConversationDialog.tsx": 1,
   "src/components/inbox/ContactDetails.tsx": 3,
   "src/components/inbox/ContactDetailsResponsive.tsx": 1,
-  "src/components/inbox/ContactPurchasesPanel.tsx": 2,
   "src/components/inbox/ContactTypeFilter.tsx": 2,
   "src/components/inbox/ConversationListSidebar.tsx": 7,
   "src/components/inbox/ConversationSummary.tsx": 4,
@@ -23955,7 +23918,6 @@
   "src/hooks/crm/useContactEnrichedData.ts": 2,
   "src/hooks/crm/useContactIntelligence.ts": 1,
   "src/hooks/crm/useContactNotes.ts": 7,
-  "src/hooks/crm/useContactPurchases.ts": 2,
   "src/hooks/crm/useContactSidebar.ts": 1,
   "src/hooks/crm/useContactStats.ts": 3,
   "src/hooks/crm/useContactSummaryNote.ts": 1,

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a cada 10 minutos pelo workflow `contexto-ia.yml`; gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `7a2e35e508a9f6053de661f66136307e6d6ec9e6` (2026-11-03T18:53:25Z).
+Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a cada 10 minutos pelo workflow `contexto-ia.yml`; gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `bd4c4bd7a255573822171e7f4562e1037d6394f1` (2026-11-03T19:28:37Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a 
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4180), SQL (1276), Markdown (1030), JSON (591), JavaScript (351), Shell (230), Python (115), YAML (27)
+- linguagens: TypeScript (4173), SQL (1276), Markdown (1030), JSON (591), JavaScript (351), Shell (230), Python (115), YAML (27)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,31 +34,31 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8141 |
-| arquivos_codigo | 4644 |
-| linhas_codigo | 850903 |
+| arquivos_total | 8134 |
+| arquivos_codigo | 4637 |
+| linhas_codigo | 849766 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
 | itens_menu | 61 |
 | modulos | 142 |
-| componentes | 887 |
-| hooks | 491 |
+| componentes | 885 |
+| hooks | 490 |
 | edge_functions | 85 |
 | tabelas | 226 |
 | migrations | 1107 |
 | cron_jobs | 25 |
-| testes | 2530 |
+| testes | 2526 |
 | workflows | 19 |
 | scripts | 376 |
 | docs_md | 1030 |
 
 ## Onde ficam as coisas
 - telas: src/components (54), src/pages (18)
-- componentes: src/components (853), src/pages (26), src/features (2)
-- hooks: src/hooks (410), src/components (72), src/contexts (2)
+- componentes: src/components (851), src/pages (26), src/features (2)
+- hooks: src/hooks (409), src/components (72), src/contexts (2)
 - servicos_logica: src/lib (143), src/services (17), src/utils (8)
-- testes: co-localizado (__tests__) (1949), co-localizado (*.test) (168), outro (155)
+- testes: co-localizado (__tests__) (1945), co-localizado (*.test) (168), outro (155)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (283), scripts/ci (39), scripts/edge-deploy (16)
@@ -79,7 +79,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | components/chatbot | 1 | 1 | 6 | 2 | 0 | 2 |
 | components/compliance | 1 | 1 | 1 | 11 | 2 | 4 |
 | components/connections | 1 | 1 | 11 | 26 | 4 | 14 |
-| components/contacts | 1 | 1 | 49 | 52 | 6 | 17 |
+| components/contacts | 1 | 1 | 48 | 52 | 6 | 16 |
 | components/copilot | 0 | 0 | 22 | 32 | 2 | 6 |
 | components/crm360 | 1 | 1 | 7 | 20 | 4 | 6 |
 | components/dashboard | 3 | 3 | 73 | 65 | 2 | 22 |
@@ -90,19 +90,19 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | components/gamification | 1 | 1 | 10 | 16 | 2 | 6 |
 | components/gmail | 1 | 1 | 6 | 15 | 2 | 8 |
 | components/groups | 1 | 1 | 1 | 6 | 1 | 3 |
-| components/inbox | 1 | 1 | 241 | 177 | 22 | 46 |
+| components/inbox | 1 | 1 | 240 | 175 | 22 | 45 |
 | components/integrations | 2 | 2 | 6 | 20 | 3 | 9 |
 | components/knowledge | 1 | 1 | 1 | 4 | 1 | 2 |
-| components/layout | 0 | 0 | 18 | 407 | 48 | 117 |
+| components/layout | 0 | 0 | 18 | 405 | 48 | 116 |
 | components/meta-capi | 1 | 1 | 1 | 2 | 0 | 2 |
 | components/mobile | 0 | 0 | 9 | 26 | 2 | 8 |
 | components/monitoring | 1 | 1 | 20 | 19 | 6 | 7 |
 | components/multiplix | 1 | 1 | 2 | 23 | 3 | 2 |
 | components/notifications | 0 | 0 | 13 | 32 | 2 | 15 |
 | components/nps | 1 | 1 | 1 | 2 | 0 | 2 |
-| components/omnichannel | 2 | 2 | 4 | 118 | 21 | 48 |
+| components/omnichannel | 2 | 2 | 4 | 118 | 21 | 47 |
 | components/onboarding | 0 | 0 | 6 | 12 | 2 | 6 |
-| components/performance | 1 | 1 | 9 | 308 | 33 | 94 |
+| components/performance | 1 | 1 | 9 | 306 | 33 | 93 |
 | components/queues | 2 | 2 | 16 | 17 | 0 | 9 |
 | components/reports | 1 | 1 | 10 | 18 | 3 | 9 |
 | components/schedule | 1 | 1 | 1 | 17 | 2 | 7 |
@@ -121,20 +121,20 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | hooks/auth | 0 | 0 | 7 | 18 | 3 | 5 |
 | hooks/business | 0 | 0 | 14 | 31 | 2 | 15 |
 | hooks/calls | 0 | 0 | 8 | 31 | 4 | 8 |
-| hooks/chat | 0 | 0 | 48 | 83 | 6 | 37 |
+| hooks/chat | 0 | 0 | 48 | 83 | 6 | 36 |
 | hooks/communication | 0 | 0 | 17 | 27 | 7 | 6 |
 | hooks/copilot | 0 | 0 | 59 | 71 | 2 | 6 |
-| hooks/crm | 0 | 0 | 26 | 46 | 4 | 17 |
+| hooks/crm | 0 | 0 | 25 | 44 | 4 | 16 |
 | hooks/dashboard | 0 | 0 | 10 | 25 | 2 | 7 |
 | hooks/evolution | 0 | 0 | 5 | 4 | 0 | 0 |
 | hooks/gamification | 0 | 0 | 6 | 13 | 2 | 6 |
 | hooks/gmail | 0 | 0 | 5 | 2 | 0 | 2 |
-| hooks/inbox | 0 | 0 | 20 | 68 | 7 | 27 |
+| hooks/inbox | 0 | 0 | 20 | 68 | 7 | 26 |
 | hooks/integrations | 0 | 0 | 56 | 104 | 14 | 29 |
 | hooks/performance | 0 | 0 | 5 | 9 | 0 | 0 |
 | hooks/realtime | 0 | 0 | 11 | 17 | 2 | 5 |
 | hooks/sla | 0 | 0 | 13 | 23 | 2 | 10 |
-| hooks/system | 0 | 0 | 42 | 438 | 49 | 120 |
+| hooks/system | 0 | 0 | 42 | 436 | 49 | 119 |
 | hooks/tasks | 0 | 0 | 13 | 22 | 2 | 7 |
 | hooks/team-chat | 0 | 0 | 22 | 48 | 2 | 12 |
 | hooks/ui | 0 | 0 | 33 | 50 | 4 | 7 |
@@ -142,7 +142,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | lib | 0 | 0 | 108 | 17 | 5 | 15 |
 | lib/calls | 0 | 0 | 22 | 2 | 1 | 0 |
 | lib/journey | 0 | 0 | 6 | 0 | 0 | 0 |
-| pages | 1 | 16 | 18 | 430 | 49 | 118 |
+| pages | 1 | 16 | 18 | 428 | 49 | 117 |
 | pages/admin | 0 | 2 | 4 | 17 | 2 | 11 |
 | pages/admin-telemetria | 0 | 0 | 6 | 1 | 0 | 1 |
 | services | 0 | 0 | 14 | 11 | 4 | 15 |
@@ -361,7 +361,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - env de integração (só nomes): ANTHROPIC_API_KEY, BITRIX_WEBHOOK_URL, CHATBOT_L1_WEBHOOK_SECRET, CRON_SECRET, ELEVENLABS_WEBHOOK_SECRET, EVOLUTION_API_FLAVOR, EVOLUTION_API_KEY, EVOLUTION_API_URL, EVOLUTION_INSTANCE_NAME, EVOLUTION_INSTANCE_TOKEN, EVOLUTION_VPS_SUPABASE_ANON_KEY, EVOLUTION_VPS_SUPABASE_URL, EVOLUTION_WEBHOOK_ENFORCE, EVOLUTION_WEBHOOK_SECRET, GMAIL_CAS_JWT, GMAIL_CAS_POSTGREST_URL, GMAIL_OIDC_AUDIENCE, GMAIL_OIDC_EMAIL, GMAIL_OIDC_JWKS_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, GROQ_API_KEY, INTERNAL_ALERT_SECRET, MULTIPLIX_SCOPE_HMAC_SECRET, OPENAI_API_KEY, PREVIEW_EGRESS_SHARED_SECRET, RESEND_API_KEY, TALKX_CONVERT_SECRET, VITE_ENABLE_GMAIL_INTEGRATION, VITE_SENTRY_DSN, VITE_SENTRY_ENVIRONMENT, WEBHOOK_SECRET, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN
 
 ## Permissões / papéis
-- papéis no código: alert (110), status (103), admin (66), agent (53), supervisor (30), dialog (28), user (26), img (19), region (19), button (15), group (15), tab (15), listbox (14), radiogroup (14), tablist (14), authenticated (13), menuitem (11), radio (11), option (10), progressbar (10), combobox (9), service_role (8), system (8), alertdialog (7), note (7), toolbar (7), list (6), anon (5), log (5), menu (4), special_agent (4), tabpanel (4), article (3), assistant (3), cliente (3), grid (3), leader (3), main (3), navigation (3), row (3), separator (3), slider (3), tooltip (3), complementary (2), follower (2), fornecedor (2), gridcell (2), listitem (2), switch (2), A (1), B (1), ausente (1), banner (1), checkbox (1), customer (1), form (1), fundo (1), link (1), member (1), presentation (1), primary (1), public (1), search (1), string (1), sup (1), textbox (1), texto (1), timer (1)
+- papéis no código: alert (109), status (103), admin (66), agent (53), supervisor (30), dialog (28), user (26), img (19), region (19), button (15), group (15), tab (15), listbox (14), radiogroup (14), tablist (14), authenticated (13), menuitem (11), radio (11), option (10), progressbar (10), combobox (9), service_role (8), system (8), alertdialog (7), toolbar (7), list (6), note (6), anon (5), log (5), menu (4), special_agent (4), tabpanel (4), article (3), assistant (3), cliente (3), grid (3), leader (3), main (3), navigation (3), row (3), separator (3), slider (3), tooltip (3), complementary (2), follower (2), fornecedor (2), gridcell (2), listitem (2), switch (2), A (1), B (1), ausente (1), banner (1), checkbox (1), customer (1), form (1), fundo (1), link (1), member (1), presentation (1), primary (1), public (1), search (1), string (1), sup (1), textbox (1), texto (1), timer (1)
 - enums de papel: app_role: admin|supervisor|agent|special_agent
 - guards: src/components/auth/ProtectedRoute.tsx, src/components/copilot/DiscountGuardrailBanner.tsx · rotas protegidas: 10 · públicas: /*, /access-denied, /auth/callback, /forgot-password, /install, /reset-password, /verify-email
 - feature flags: ENABLE_ANALYTICS, ENABLE_DEBUG, ENABLE_GAMIFICATION, ENABLE_GMAIL_INTEGRATION, FEATURE_CTA, FEATURE_FLAGS_QUERY_KEY, FEATURE_GATES, FEATURE_REGISTRY, FEATURE_TILE, FEATURE_X, crm.integration, inbox.talk-me, nova-tela, novo-inbox, video_call
@@ -384,8 +384,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 54441 nós · 111207 arestas · 4148 comunidades · grafo do commit `7a2e35e5`
-- comunidades maiores: react (1013), lucide-react (900), cn (767), ExternalProductManagement.tsx (597), DashboardView.tsx (526), TalkXCampaignWizard.tsx (380), dialog.tsx (335), ref_node_fs (298), MultiplixView.tsx (296), validation.ts (292), framer-motion (275), react-router-dom (270)
+- 54400 nós · 111012 arestas · 4151 comunidades · grafo do commit `bd4c4bd7`
+- comunidades maiores: react (932), lucide-react (879), @tanstack/react-query (684), input.tsx (647), useAuth (624), vitest (577), TalkXCampaignWizard.tsx (433), validation.ts (389), evolution-webhook-messages.ts (329), ref_node_fs (278), ai-generate.ts (258), chat.ts (257)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -402,8 +402,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - .github/workflows/deploy-functions.yml (12)
 - scripts/ci/workflow-contracts.unit.mjs (12)
 - supabase/deployment-manifest.json (12)
+- docs/DB-INVENTORY.md (11)
 - .github/workflows/db-migrate.yml (10)
-- docs/DB-INVENTORY.md (10)
 - docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (10)
 
 ## Workflows

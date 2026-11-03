@@ -2,16 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "7a2e35e508a9f6053de661f66136307e6d6ec9e6",
+  "commit": "bd4c4bd7a255573822171e7f4562e1037d6394f1",
   "branch": "main",
-  "data_commit": "2026-11-03T18:53:25Z",
+  "data_commit": "2026-11-03T19:28:37Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
-  "arquivos_mudados_7d": 1372,
+  "arquivos_mudados_7d": 1392,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 1760
+    "mudancas": 1770
    },
    {
     "pasta": "src/components/talkx",
@@ -51,7 +51,7 @@
    },
    {
     "pasta": "src/components/contacts",
-    "mudancas": 256
+    "mudancas": 262
    },
    {
     "pasta": "src/components/tasks",
@@ -120,11 +120,11 @@
     "mudancas": 12
    },
    {
-    "arquivo": ".github/workflows/db-migrate.yml",
-    "mudancas": 10
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 11
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
+    "arquivo": ".github/workflows/db-migrate.yml",
     "mudancas": 10
    },
    {
@@ -192,21 +192,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8141,
-  "arquivos_codigo": 4644,
-  "linhas_codigo": 850903,
+  "arquivos_total": 8134,
+  "arquivos_codigo": 4637,
+  "linhas_codigo": 849766,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 142,
-  "componentes": 887,
-  "hooks": 491,
+  "componentes": 885,
+  "hooks": 490,
   "edge_functions": 85,
   "tabelas": 226,
   "migrations": 1107,
   "cron_jobs": 25,
-  "testes": 2530,
+  "testes": 2526,
   "workflows": 19,
   "scripts": 376,
   "docs_md": 1030
@@ -565,8 +565,8 @@
    "linhas": 590
   },
   "src/components": {
-   "arquivos": 2159,
-   "linhas": 368218
+   "arquivos": 2155,
+   "linhas": 367420
   },
   "src/config": {
    "arquivos": 3,
@@ -585,8 +585,8 @@
    "linhas": 3298
   },
   "src/hooks": {
-   "arquivos": 983,
-   "linhas": 159547
+   "arquivos": 980,
+   "linhas": 159208
   },
   "src/i18n": {
    "arquivos": 2,

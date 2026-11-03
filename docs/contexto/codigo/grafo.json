@@ -1,28 +1,28 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2206,
- "arestas": 7745,
+ "nos": 2203,
+ "arestas": 7726,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
-   "importado_por": 462
+   "importado_por": 461
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 410
+   "importado_por": 407
   },
   {
    "arquivo": "src/components/ui/button.tsx",
-   "importado_por": 393
+   "importado_por": 391
   },
   {
    "arquivo": "src/lib/logger.ts",
-   "importado_por": 220
+   "importado_por": 218
   },
   {
    "arquivo": "src/components/ui/badge.tsx",
-   "importado_por": 219
+   "importado_por": 217
   },
   {
    "arquivo": "src/components/ui/card.tsx",
@@ -34,7 +34,7 @@
   },
   {
    "arquivo": "src/components/ui/input.tsx",
-   "importado_por": 165
+   "importado_por": 164
   },
   {
    "arquivo": "supabase/functions/_shared/validation.ts",
@@ -50,7 +50,7 @@
   },
   {
    "arquivo": "src/components/ui/select.tsx",
-   "importado_por": 110
+   "importado_por": 109
   },
   {
    "arquivo": "src/components/ui/label.tsx",
@@ -58,7 +58,7 @@
   },
   {
    "arquivo": "src/components/ui/dialog.tsx",
-   "importado_por": 101
+   "importado_por": 100
   },
   {
    "arquivo": "src/components/ui/scroll-area.tsx",

@@ -7,12 +7,12 @@
    "src/pages (18)"
   ],
   "componentes": [
-   "src/components (853)",
+   "src/components (851)",
    "src/pages (26)",
    "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (410)",
+   "src/hooks (409)",
    "src/components (72)",
    "src/contexts (2)"
   ],
@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (1949)",
+   "co-localizado (__tests__) (1945)",
    "co-localizado (*.test) (168)",
    "outro (155)"
   ],
@@ -48,7 +48,7 @@
  },
  "barrels_index": 70,
  "extensao_componentes": [
-  ".tsx (887)"
+  ".tsx (885)"
  ],
  "alias_imports": {
   "(raiz)": {
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore(crm): remove módulo de pagamentos/compras do front (decisão 2026-11-03) (#2690)",
    "chore(regras): §7 histórico Talk X sem prazo fixo (aplicado); test_sends 90; decisão pendente sobre alerta a atendentes (#2687)",
    "chore(db): sincronizar artefatos derivados do banco (#2688)",
    "chore(db): expurgo Talk X — prazo ≤ 0 vira 1 dia; test_sends volta a 90 (idempotência, não histórico) (#2686)",
-   "chore(db): purge_talkx_expired_data — delivery_log segue retention_days_message (sem 30 dias fixos) (#2678)",
-   "fix(ci): deploy-functions bloqueado — teste E57/E58 contava guardas de preflight como escrita de secrets (#2680)"
+   "chore(db): purge_talkx_expired_data — delivery_log segue retention_days_message (sem 30 dias fixos) (#2678)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

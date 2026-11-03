@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 887,
+ "total": 885,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -2060,7 +2060,7 @@
     "ContactDetailPanel"
    ],
    "export_default": null,
-   "linhas": 449,
+   "linhas": 445,
    "dominio": "components/contacts",
    "hooks_locais": [
     "useCatalogSendHistory"
@@ -2237,22 +2237,6 @@
    "tabelas": [
     "contact_notes",
     "profiles"
-   ],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "src/components/contacts/ContactPurchaseHistory.tsx",
-   "exports": [
-    "ContactPurchaseHistory"
-   ],
-   "export_default": null,
-   "linhas": 168,
-   "dominio": "components/contacts",
-   "hooks_locais": [],
-   "tabelas": [
-    "contact_purchases"
    ],
    "edges": [],
    "usado_por": 1,
@@ -5095,7 +5079,7 @@
     "ConversationTabContent"
    ],
    "export_default": null,
-   "linhas": 207,
+   "linhas": 205,
    "dominio": "components/inbox",
    "hooks_locais": [],
    "tabelas": [],
@@ -5933,24 +5917,6 @@
    "orfao": false
   },
   {
-   "arquivo": "src/components/inbox/ContactPurchasesPanel.tsx",
-   "exports": [
-    "ContactPurchasesPanel"
-   ],
-   "export_default": null,
-   "linhas": 218,
-   "dominio": "components/inbox",
-   "hooks_locais": [
-    "useContactPurchases"
-   ],
-   "tabelas": [
-    "contact_purchases"
-   ],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
    "arquivo": "src/components/inbox/ContactTypeFilter.tsx",
    "exports": [
     "ContactTypeFilter",
@@ -6617,7 +6583,7 @@
     "RealtimeInboxView"
    ],
    "export_default": null,
-   "linhas": 573,
+   "linhas": 572,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useContactCrm360",
@@ -6954,7 +6920,7 @@
     "CommercialSummaryStrip"
    ],
    "export_default": null,
-   "linhas": 42,
+   "linhas": 32,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useContactCrm360"
@@ -6986,7 +6952,7 @@
     "Crm360Tab"
    ],
    "export_default": null,
-   "linhas": 312,
+   "linhas": 269,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useAdvanceDealStage",
@@ -7401,7 +7367,7 @@
     "SalesViewTab"
    ],
    "export_default": null,
-   "linhas": 55,
+   "linhas": 47,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useContactCrm360"
@@ -12784,7 +12750,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 218,
+   "usado_por": 216,
    "orfao": false
   },
   {
@@ -12821,7 +12787,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 389,
+   "usado_por": 387,
    "orfao": false
   },
   {
@@ -12996,7 +12962,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 97,
+   "usado_por": 96,
    "orfao": false
   },
   {
@@ -13105,7 +13071,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 11,
+   "usado_por": 10,
    "orfao": false
   },
   {
@@ -13272,7 +13238,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 165,
+   "usado_por": 164,
    "orfao": false
   },
   {
@@ -13615,7 +13581,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 109,
+   "usado_por": 108,
    "orfao": false
   },
   {

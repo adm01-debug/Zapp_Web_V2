@@ -120,7 +120,6 @@
     "useContactMedia",
     "useContactMediaCounts",
     "useContactNotes",
-    "useContactPurchases",
     "useContactQuickActions",
     "useContactSearch",
     "useContactSearchV2",
@@ -143,7 +142,6 @@
     "useConversationViewers",
     "useCopilotFeedback",
     "useCountUp",
-    "useCreateContactPurchase",
     "useCreateDepartmentInvite",
     "useCreateMultiplixDispatch",
     "useCreateTeamConversation",
@@ -592,7 +590,6 @@
     "useContactMedia",
     "useContactMediaCounts",
     "useContactNotes",
-    "useContactPurchases",
     "useContactQuickActions",
     "useContactSearch",
     "useContactSearchV2",
@@ -613,7 +610,6 @@
     "useConversationViewers",
     "useCopilotFeedback",
     "useCountUp",
-    "useCreateContactPurchase",
     "useCreateDepartmentInvite",
     "useCreateMultiplixDispatch",
     "useCreateTeamConversation",
@@ -957,7 +953,6 @@
     "connection_health_logs",
     "contact_custom_fields",
     "contact_notes",
-    "contact_purchases",
     "contacts",
     "conversation_analyses",
     "conversation_closures",
@@ -1257,7 +1252,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 1408
+   "arquivos_puxados": 1405
   },
   {
    "protegida": false,
@@ -1961,7 +1956,6 @@
     "catalog_send_events",
     "contact_custom_fields",
     "contact_notes",
-    "contact_purchases",
     "contacts",
     "conversation_analyses",
     "conversation_events",
@@ -3845,7 +3839,6 @@
     "catalog_send_events",
     "contact_custom_fields",
     "contact_notes",
-    "contact_purchases",
     "contacts",
     "conversation_events",
     "conversation_sla",
@@ -3916,7 +3909,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 215
+   "arquivos_puxados": 214
   },
   {
    "id": "crm360",
@@ -4727,7 +4720,6 @@
     "useContactMedia",
     "useContactMediaCounts",
     "useContactNotes",
-    "useContactPurchases",
     "useContactQuickActions",
     "useContactSearch",
     "useContactSidebar",
@@ -4744,7 +4736,6 @@
     "useConversationViewers",
     "useCopilotFeedback",
     "useCountUp",
-    "useCreateContactPurchase",
     "useCustomEmojis",
     "useCustomShortcuts",
     "useDebounce",
@@ -4932,7 +4923,6 @@
     "useContactMedia",
     "useContactMediaCounts",
     "useContactNotes",
-    "useContactPurchases",
     "useContactQuickActions",
     "useContactSearch",
     "useContactSidebar",
@@ -4948,7 +4938,6 @@
     "useConversationViewers",
     "useCopilotFeedback",
     "useCountUp",
-    "useCreateContactPurchase",
     "useCustomEmojis",
     "useCustomShortcuts",
     "useDebounce",
@@ -5074,7 +5063,6 @@
     "catalog_send_events",
     "contact_custom_fields",
     "contact_notes",
-    "contact_purchases",
     "contacts",
     "conversation_analyses",
     "conversation_closures",
@@ -5219,7 +5207,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 585
+   "arquivos_puxados": 583
   },
   {
    "id": "integrations",
@@ -5830,7 +5818,6 @@
     "channel_connections_safe",
     "contact_custom_fields",
     "contact_notes",
-    "contact_purchases",
     "contacts",
     "conversation_analyses",
     "conversation_events",

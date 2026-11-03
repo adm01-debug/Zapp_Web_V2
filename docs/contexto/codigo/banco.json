@@ -7893,14 +7893,14 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 4,
+   "usada_no_front": 0,
    "usada_em_edges": [],
    "triggers": [
     "guard_contact_purchase_identity_insert",
     "update_contact_purchases_updated_at"
    ],
    "sem_rls": false,
-   "nao_usada": false
+   "nao_usada": true
   },
   "contacts": {
    "colunas": {

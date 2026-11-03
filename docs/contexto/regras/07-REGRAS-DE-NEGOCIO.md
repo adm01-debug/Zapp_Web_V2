@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `7a2e35e508` · branch `main` · 2026-11-03 18:55 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `bd4c4bd7a2` · branch `main` · 2026-11-03 19:32 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1609,9 +1609,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `status` | `block` | compara, escreve | `src/hooks/integrations/useEvolutionApi.ts` |
 | `status` | `breached` | compara, escreve | `src/components/inbox/SLAIndicator.tsx`<br>`src/hooks/sla/useSLACalculation.ts`<br>`src/lib/slaTimeline.ts` |
 | `status` | `busy` | compara | `src/hooks/business/useWarRoomData.ts`<br>`src/lib/calls/callStatus.ts` |
-| `status` | `cancelled` | compara, escreve | `src/components/contacts/ContactPurchaseHistory.tsx`<br>`src/components/inbox/ContactPurchasesPanel.tsx`<br>`src/components/multiplix/MultiplixMonitor.tsx`<br>`src/components/talkx/TalkXLiveMonitor.tsx`<br>`src/components/talkx/talkxRoute.ts`<br>… +11 |
+| `status` | `cancelled` | compara, escreve | `src/components/multiplix/MultiplixMonitor.tsx`<br>`src/components/talkx/TalkXLiveMonitor.tsx`<br>`src/components/talkx/talkxRoute.ts`<br>`src/components/talkx/useCampaignRowActions.tsx`<br>`src/components/tasks/list/taskRowCells.tsx`<br>… +9 |
 | `status` | `checking` | compara, escreve | `src/components/auth/ProtectedRoute.tsx`<br>`src/hooks/system/useSupabaseConnectivity.ts`<br>`src/pages/TwoFactorAuth.tsx` |
-| `status` | `completed` | compara, escreve, filtra | `src/components/admin/TrainingMode.tsx`<br>`src/components/chatbot/ChatbotExecutionsDashboard.tsx`<br>`src/components/contacts/ContactPurchaseHistory.tsx`<br>`src/components/knowledge/KnowledgeBaseView.tsx`<br>`src/components/multiplix/MultiplixMonitor.tsx`<br>… +9 |
+| `status` | `completed` | compara, escreve, filtra | `src/components/admin/TrainingMode.tsx`<br>`src/components/chatbot/ChatbotExecutionsDashboard.tsx`<br>`src/components/knowledge/KnowledgeBaseView.tsx`<br>`src/components/multiplix/MultiplixMonitor.tsx`<br>`src/components/talkx/TalkXLiveMonitor.tsx`<br>… +8 |
 | `status` | `completed_with_failures` | compara | `src/components/multiplix/MultiplixMonitor.tsx` |
 | `status` | `connected` | compara, escreve, filtra | `src/components/connections/ConnectionCard.tsx`<br>`src/components/connections/ConnectionsView.tsx`<br>`src/components/dashboard/systemHealth.ts`<br>`src/components/diagnostics/ConnectionHealthPanel.tsx`<br>`src/components/diagnostics/DiagnosticsView.tsx`<br>… +36 |
 | `status` | `connecting` | compara, escreve | `src/components/calls/CallDialog.tsx`<br>`src/components/calls/NewCallPanel.tsx`<br>`src/components/connections/ConnectionCard.tsx`<br>`src/components/diagnostics/DiagnosticsView.tsx`<br>`src/components/inbox/RealtimeTranscription.tsx`<br>… +6 |
@@ -2593,10 +2593,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   const topo = cascaRef.current?.getBoundingClientRect().top ?? 0; const disponivel = vv.height - topo - 12; setTetoTeclado(disponivel > 0 ? Math.round(disponivel) : null);
   ```
-- **formatCurrency(v: number)** — `src/components/inbox/tabs/CommercialSummaryStrip.tsx`
-  ```
-  v > 0 ? `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—';
-  ```
 - **Ranking({ ranking }: { ranking: JourneyStatsHeroRankingEntry[] })** — `src/components/inbox/tabs/journey/JourneyStatsHero.tsx`
   ```
   const topo = ranking.slice(0, 3); return ( <div data-testid="journey-stats-hero-ranking" className="flex flex-col gap-2 rounded-xl border border-border/60 bg-card p-3" > <p className="flex items-center gap-1.5 text-2xs font-medium uppercase tracking-wider text-muted-foreground"> <Users aria-hidden="true" className="h-3.5 w-3.5" /> Quem atendeu </p> {topo.length === 0 ? ( <p className="text-xs text-muted-foreground">Sem atendimentos no período.</p> ) : ( <ol className="flex flex-col gap-2"> {topo …
@@ -3292,7 +3288,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `transition={{ delay: i * 0.04 + 0.2, duration: 0.5 }}` | `src/components/contacts/ContactMapView.tsx` |
 | `transition={{ delay: i * 0.04 }}` | `src/components/contacts/ContactMapView.tsx` |
 | `transition={{ delay: i * 0.03 }}` | `src/components/contacts/ContactNotes.tsx` |
-| `transition={{ delay: i * 0.04 }}` | `src/components/contacts/ContactPurchaseHistory.tsx` |
 | `transition={{ delay: index * 0.015 }}` | `src/components/contacts/ContactsTable.tsx` |
 | `// Média ausente é "sem dado" (—), nunca 0% nem 50% (IA-023); 0 continua 0%.` | `src/components/dashboard/AIStatsWidget.tsx` |
 | `// Proporcional: 180s de meta com 360s medidos = 50% do caminho andado.` | `src/components/dashboard/DashboardWidgetRenderer.tsx` |
@@ -3324,7 +3319,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `transition={{ duration: 0.5, repeat: isPlaying && isActive ? Infinity : 0, delay: i * 0.02 }}` | `src/components/inbox/AudioMessagePlayer.tsx` |
 | `delay: i * 0.02,` | `src/components/inbox/AudioRecorder.tsx` |
 | `* No celular o painel ocupa 100% da largura do sheet (`w-full` na raiz de` | `src/components/inbox/ContactDetailsResponsive.tsx` |
-| `transition={{ delay: idx * 0.05 }}` | `src/components/inbox/ContactPurchasesPanel.tsx` |
 | `transition={{ delay: i * 0.06, duration: 0.3, ease: 'easeOut' }}` | `src/components/inbox/ConversationListSidebar.tsx` |
 | `transition={{ delay: index * 0.05 }}` | `src/components/inbox/InteractiveMessage.tsx` |
 | `transition={{ delay: rowIndex * 0.03 }}` | `src/components/inbox/InteractiveMessage.tsx` |
@@ -3508,8 +3502,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `CHAVE_RECORDES` | `'miniGameHighScores'` | `src/components/gamification/TrainingMiniGames.tsx` |
 | `SEARCH_DEBOUNCE_MS` | `300` | `src/components/gmail/GmailInboxView.tsx` |
 | `INACTIVE_MINUTES` | `30` | `src/components/inbox/AgentReassignmentPanel.tsx` |
-| `MAX_AMOUNT` | `100` | `src/components/inbox/ContactPurchasesPanel.tsx` |
-| `AMOUNT_HINT` | `'Informe um valor entre R$ 0,00 e R$ 100.000.000,00.'` | `src/components/inbox/ContactPurchasesPanel.tsx` |
 | `SIDEBAR_MIN_WIDTH` | `280` | `src/components/inbox/ConversationListSidebar.tsx` |
 | `SIDEBAR_MAX_WIDTH` | `600` | `src/components/inbox/ConversationListSidebar.tsx` |
 | `SIDEBAR_DEFAULT_WIDTH` | `350` | `src/components/inbox/ConversationListSidebar.tsx` |
@@ -3747,7 +3739,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `MEDIA_PAGE_SIZE` | `60` | `src/hooks/chat/useContactMedia.ts` |
 | `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMedia.ts` |
 | `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMediaCounts.ts` |
-| … +618 linhas — lista completa em `context.json` | | |
+| `NOTA_MAX` | `120` | `src/hooks/chat/useConversationHistoryTimeline.ts` |
+| `CONVERSATION_PANEL_INVALIDATION_WINDOW_MS` | `2000` | `src/hooks/chat/useConversationPanelInvalidation.ts` |
+| … +615 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -3872,7 +3866,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `const cutoff = Date.now() - 5 * 60 * 1000;` | `src/hooks/copilot/useWhisperChannel.ts` |
 | `staleTime: 5 * 60 * 1000,` | `src/hooks/crm/useAgentsLite.ts` |
 | `staleTime: 5 * 60 * 1000,` | `src/hooks/crm/useCRMAdminAccess.ts` |
-| `const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 6;` | `src/hooks/crm/useContactCrm360.ts` |
 | `gcTime: 15 * 60 * 1000,` | `src/hooks/crm/useEmailContactContext.ts` |
 | `staleTime: 5 * 60 * 1000,` | `src/hooks/crm/useEmailContactContext.ts` |
 | `gcTime: 1000 * 60 * 60,` | `src/hooks/crm/useExternalCargos.ts` |
@@ -4053,7 +4046,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `count(*) FILTER (WHERE replied_at >= v_now - interval '10 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `count(*) FILTER (WHERE replied_at >= v_now - interval '20 minutes'` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `count(*) FILTER (WHERE sent_at < v_now - interval '10 minutes' AND delivered_at IS NOT NULL),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
-| … +77 linhas — lista completa em `context.json` | |
+| `count(*) FILTER (WHERE sent_at < v_now - interval '10 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
+| … +76 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 
@@ -4068,7 +4062,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 10 | `src/components/contacts/ContactActivityTimeline.tsx` |
 | 20 | `src/components/contacts/ContactActivityTimeline.tsx` |
 | 1 | `src/components/contacts/ContactCRMDialog.tsx` |
-| 20 | `src/components/contacts/ContactPurchaseHistory.tsx` |
 | 1 | `src/components/contacts/useContactFormValidation.ts` |
 | 50 | `src/components/diagnostics/ConnectionHealthPanel.tsx` |
 | 20 | `src/components/inbox/WhisperMode.tsx` |
@@ -4495,7 +4488,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | ${rotulo}: ${ultimo.message} | `scripts/db-audit/multiplix-audience-parity.mjs` |
 | Management API HTTP ${res.status}: ${texto.slice(0, 300)} | `scripts/db-audit/multiplix-audience-parity.mjs` |
 | PostgREST HTTP ${res.status}: ${texto.slice(0, 300)} | `scripts/db-audit/multiplix-audience-parity.mjs` |
-| … +1493 linhas — lista completa em `context.json` | |
+| … +1489 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4565,7 +4558,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21080 testes em 2247 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21054 testes em 2243 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4869,7 +4862,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/__tests__/mapboxSession.test.ts` | 16 | mapboxSession · duas chamadas dentro de 2 min compartilham o mesmo token · inatividade maior que 2 min abre uma sessão nova · depois de um /retrieve, a próxima sessão é nova … |
 | `src/lib/__tests__/mapboxToken.test.ts` | 16 | getMapboxToken · devolve o token e reaproveita o cache na segunda chamada · chamadas simultâneas compartilham uma única invoke · force ignora o cache … |
 | `src/lib/__tests__/queryRetry.test.ts` | 16 | shouldRetryQuery — erro permanente nao repete · status HTTP 401/403/404: false ja na primeira falha · codigos Postgres 42501/42P01/42703: false · PGRST116/PGRST301: false … |
-| … +1947 linhas — lista completa em `context.json` | | |
+| … +1943 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5248,8 +5241,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | (regra react-hooks/purity): alem de impuro, o sorteio acontecia a cada re-render — e o timer da | `src/components/inbox/AudioRecorder.tsx` |
 | contato, então o anexo agendado não pode ficar fora de `<contact_id>/...`. | `src/components/inbox/ChatPanel.tsx` |
 | isContentEditable: mesma situação em divs/spans editáveis — Esc deve | `src/components/inbox/ContactDetails.tsx` |
-| * `created_at`/`purchased_at` inválido não pode derrubar a lista: vira '—'. */ | `src/components/inbox/ContactPurchasesPanel.tsx` |
-| Trava de duplo clique: o insert em voo não pode ser disparado de novo. | `src/components/inbox/ContactPurchasesPanel.tsx` |
 | O teto acompanha a janela: a lista não pode engolir o painel da conversa. | `src/components/inbox/ConversationListSidebar.tsx` |
 | * Setas ajustam de pouco em pouco; Home/End vão ao mínimo/máximo. */ | `src/components/inbox/ConversationListSidebar.tsx` |
 | vivas ficam de fora: uma mensagem que chega não pode descartar o resumo em voo. | `src/components/inbox/ConversationSummary.tsx` |
@@ -5371,4 +5362,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | apenas o tipo — nunca "0 KB" nem separador solto. Acima de 1 GB o `formatSize` segue | `src/components/inbox/tabs/fileDisplay.ts` |
 | medindo em MB (nao ha faixa de GB nele, e este cartao nao pode altera-lo). | `src/components/inbox/tabs/fileDisplay.ts` |
 | A regra de nome tecnico continua sendo a `isTechnicalFilename` da consulta de midias. | `src/components/inbox/tabs/fileDisplay.ts` |
-| … +1649 linhas — lista completa em `context.json` | |
+| * Componente de APRESENTAÇÃO: não consulta banco nem Supabase, não guarda dado de negócio e não | `src/components/inbox/tabs/journey/JourneyFilters.tsx` |
+| 2) * (1 - ponto.count / maximo), | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
+| … +1647 linhas — lista completa em `context.json` | |
