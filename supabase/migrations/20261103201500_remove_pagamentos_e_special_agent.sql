@@ -1,4 +1,4 @@
--- 20261102062200_remove_pagamentos_e_special_agent
+-- 20261103201500_remove_pagamentos_e_special_agent
 -- Decisao do dono em 2026-11-03 (docs/contexto/regras/manual/regras.md, §2 e §8): o modulo de
 -- pagamentos/compras saiu do front na #2690 e o papel `special_agent` deixa de existir como
 -- conceito de produto (todo agente pode receber grants de visibilidade — front #2692).
@@ -47,6 +47,16 @@ DROP FUNCTION IF EXISTS public.talkx_attribute_purchases(timestamp with time zon
 DROP FUNCTION IF EXISTS public.talkx_recompute_purchase_metrics(integer);
 
 -- 2. Tabelas do modulo de pagamentos (CASCADE: policies, triggers, indices, publicacao).
+--    Policies derrubadas explicitamente antes do DROP TABLE para o guard de paridade
+--    (src/lib/__tests__/rlsSchemaGuard.test.ts) enxergar a mudanca como "em transito".
+DROP POLICY IF EXISTS "Agents can delete purchases for assigned contacts" ON public.contact_purchases;
+DROP POLICY IF EXISTS "Agents can insert purchases for assigned contacts" ON public.contact_purchases;
+DROP POLICY IF EXISTS "Agents can update purchases for assigned contacts" ON public.contact_purchases;
+DROP POLICY IF EXISTS "Agents can view purchases for assigned contacts" ON public.contact_purchases;
+DROP POLICY IF EXISTS "Admins can delete payment links" ON public.payment_links;
+DROP POLICY IF EXISTS "Authenticated can insert payment links" ON public.payment_links;
+DROP POLICY IF EXISTS "Users can update own payment links" ON public.payment_links;
+DROP POLICY IF EXISTS "Users can view own payment links" ON public.payment_links;
 DROP TABLE IF EXISTS public.contact_purchases CASCADE;
 DROP TABLE IF EXISTS public.payment_links CASCADE;
 

@@ -8,7 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // aqui é o CONTRATO do front (papel -> chamada da RPC -> ids devolvidos); o
 // enforcement por papel (agent/supervisor/admin) sobre profiles/contacts é
 // provado em scripts/db-audit/dashboard-rls-authorization.test.sh (Postgres
-// descartável); os grants de visibilidade valem para 'agent' desde 20261102062200.
+// descartável); os grants de visibilidade valem para 'agent' desde 20261103201500.
 const mockRpc = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
