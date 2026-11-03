@@ -511,8 +511,8 @@
     },
     {
       "path": "supabase/functions/connection-health-check/index.ts",
-      "bytes": 58853,
-      "sha256": "3bb47ed74ba8743ed29c2269ccb40f76fd85e79f7233ff988750f4b4abf507c4"
+      "bytes": 59059,
+      "sha256": "50862c64422dd904f7bfa60ea100323924519c8df4e6a276c6e597579c9584a8"
     },
     {
       "path": "supabase/functions/copilot-live/index.ts",
@@ -1402,7 +1402,7 @@
       "name": "connection-health-check",
       "entrypoint": "supabase/functions/connection-health-check/index.ts",
       "verify_jwt": false,
-      "source_sha256": "8f2f3b4d70029bb9a7952f55993db92f3be6fd99708cbf387c0733e96335749b",
+      "source_sha256": "620eb8370463b1f8e163d3b1c7ab5f0e26b9461a8b008e4c5a86dcc948f015b5",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/cron-secret-auth.ts",
@@ -2534,5 +2534,5 @@
       ]
     }
   ],
-  "manifest_sha256": "7f80b5f8908674394078bf98aef81e540ad65e605239b182fe76d09e1fb7df43"
+  "manifest_sha256": "6fa948cdc1636fd845b140ab96abacb2feba04938163cac21859b291f69e8be6"
 }

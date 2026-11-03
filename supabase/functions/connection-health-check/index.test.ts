@@ -1138,3 +1138,29 @@ Deno.test('3 níveis: recusa definitiva do Resend (4xx) marca o e-mail e não re
   assert(emails === 1, `4xx é final: uma tentativa só, veio ${emails}`);
   assert(fake.pushNotifications.some((n) => (n as Row).dedupe_key === 'conn-l1:v1:disconnected:c1'), 'push obrigatório sai mesmo assim');
 });
+
+Deno.test('3 níveis: 429 do Resend é transitório — sem marcador, o e-mail sai na sonda seguinte', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 3, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'adm', role: 'admin' }];
+  fake.adminProfiles = [{ user_id: 'adm', email: 'adm@x.test' }];
+  fake.episodeStartedAt = new Date(Date.now() - 5 * 60_000).toISOString();
+  let limited = true;
+  fake.fetchImpl = ({ path }) => path.includes('/emails')
+    ? (limited ? new Response('rate limited', { status: 429 }) : jsonResponse({ id: 'mail' }))
+    : jsonResponse({ instance: { state: 'close' } });
+  const originalKey = Deno.env.get('RESEND_API_KEY');
+  Deno.env.set('RESEND_API_KEY', 're_test');
+  try {
+    await run(fake);
+    const keys = () => fake.pushNotifications.map((n) => String((n as Row).dedupe_key));
+    assert(!keys().includes('conn-l1:v1:disconnected:c1:email'), '429 não grava marcador de e-mail');
+    limited = false;
+    await run(fake);
+    assert(keys().includes('conn-l1:v1:disconnected:c1:email'), 'depois do 429, e-mail aceito e marcado');
+  } finally {
+    if (originalKey === undefined) Deno.env.delete('RESEND_API_KEY'); else Deno.env.set('RESEND_API_KEY', originalKey);
+  }
+});

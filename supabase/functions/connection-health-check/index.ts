@@ -383,6 +383,9 @@ async function sendAlertEmail(
     });
     if (resp.ok) return 'accepted';
     log.warn('Resend recusou o alerta de conexão', { status: resp.status });
+    // 429 (limite de taxa/cota) é passageiro: tenta de novo na próxima sonda. Outros 4xx
+    // (endereço/domínio inválido, payload) são definitivos.
+    if (resp.status === 429) return 'transient';
     return resp.status >= 400 && resp.status < 500 ? 'rejected' : 'transient';
   } catch (err) {
     log.error('Falha ao enviar alerta de conexão por e-mail', { error: err instanceof Error ? err.message : String(err) });
