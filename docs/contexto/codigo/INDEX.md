@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a cada 10 minutos pelo workflow `contexto-ia.yml`; gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b441a434249aaab255d5d9b84c53f55631fda41d` (2026-11-03T15:22:14-03:00).
+Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a cada 10 minutos pelo workflow `contexto-ia.yml`; gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `7a2e35e508a9f6053de661f66136307e6d6ec9e6` (2026-11-03T18:53:25Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -384,7 +384,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 54441 nós · 111206 arestas · 4148 comunidades · grafo do commit `b441a434`
+- 54441 nós · 111207 arestas · 4148 comunidades · grafo do commit `7a2e35e5`
 - comunidades maiores: react (1013), lucide-react (900), cn (767), ExternalProductManagement.tsx (597), DashboardView.tsx (526), TalkXCampaignWizard.tsx (380), dialog.tsx (335), ref_node_fs (298), MultiplixView.tsx (296), validation.ts (292), framer-motion (275), react-router-dom (270)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -393,15 +393,15 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - .github/workflows/ci.yml (23)
 - CLAUDE.md (20)
 - src/integrations/supabase/types.ts (18)
-- .github/workflows/e2e-logado.yml (17)
+- .github/workflows/e2e-logado.yml (16)
 - scripts/ci/ci-docs-baseline.unit.mjs (16)
 - .github/workflows/db-guard.yml (15)
-- docs/ci/README.md (14)
 - ESTADO.md (13)
+- docs/ci/README.md (13)
+- supabase/schema-manifest.json (13)
 - .github/workflows/deploy-functions.yml (12)
 - scripts/ci/workflow-contracts.unit.mjs (12)
 - supabase/deployment-manifest.json (12)
-- supabase/schema-manifest.json (12)
 - .github/workflows/db-migrate.yml (10)
 - docs/DB-INVENTORY.md (10)
 - docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (10)

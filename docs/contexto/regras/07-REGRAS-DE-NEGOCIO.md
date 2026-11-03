@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b441a43424` · branch `main` · 2026-11-03 18:25 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `7a2e35e508` · branch `main` · 2026-11-03 18:55 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -88,7 +88,7 @@ limite efetivo é o `daily_limit_per_connection`.
 | Regra | Estado | Evidência |
 |---|---|---|
 | **Dados de atendimento** (contato, mensagens, mídia, gravação de chamada em `calls`) **não expiram**: ficam até um admin excluir (`delete_contact` / `delete_contacts` = soft-delete, registrado em `contact_deletion_audit`; eliminação física só via o fluxo LGPD abaixo). Nenhum agente cria job de expurgo nessas tabelas. | **existe** (não há expurgo; decisão: manter) | cron ao vivo 2026-11-03: só logs técnicos têm retenção (`reconnection-logs-retention-30d`, `search-events-retention`, `purge-qr-attempts`, caches) |
-| **Histórico de campanha Talk X também fica para sempre** (`talkx_recipients`, cliques, IA, mídia, `talkx_delivery_log`). O expurgo `purge_talkx_expired_data` (chamado por `trigger_talkx_engine_tick`, 1×/dia) foi **parcialmente** neutralizado em 2026-11-03: os 4 prazos em `talkx_settings` passaram de 180/365/90/90 para **36.500 dias** (a função não tem "0 = desligado"; NULL cai no padrão 180 — **não** zere nem apague essas chaves). **Exceção pendente:** `talkx_delivery_log` é apagado com `interval '30 days'` **fixo** dentro da função, fora dos settings — precisa de `CREATE OR REPLACE` da função (DDL em produção, PR aguardando o dono). | **parcial** — settings aplicados; `delivery_log` **pendente** | `talkx_settings.retention_days_* = 36500` (UPDATE 2026-11-03); `purge_talkx_expired_data` usa `COALESCE(v_days_*, 180/365/90/90)` e `log.created_at < v_now - interval '30 days'` (`20261006205053_talkx_expurgo_escopo_ai_jobs.sql:213-225`) |
+| **Histórico de campanha Talk X também fica para sempre** (`talkx_recipients`, cliques, IA, mídia, `talkx_delivery_log`). O expurgo `purge_talkx_expired_data` (chamado por `trigger_talkx_engine_tick`, 1×/dia) obedece os prazos em `talkx_settings`: `retention_days_message/clicks/ai = 36.500` dias (a função não tem "0 = desligado"; NULL cai no padrão 180 — **não** zere nem apague essas chaves) e, desde 2026-11-03, `talkx_delivery_log` segue `retention_days_message` (antes: 30 dias fixos). **Exceção deliberada:** `retention_days_test_sends = 90` — `talkx_test_send_claims` é idempotência operacional (sem `idempotencyKey` do front, `talkx-send` deriva a chave de instância+telefone+template+mídia; guardar o claim para sempre impediria repetir o mesmo teste). Prazo ≤ 0 em qualquer chave é tratado como 1 dia. | **existe** | migrations `20261102042200` (aplicada 2026-11-03, `delivery_log` sem prazo fixo) e `20261102052200` (guarda ≤ 0 + `test_sends` 90; PR #2686) |
 | **Pedido de exclusão (LGPD, art. 18): atender em até 15 dias**, eliminando **de verdade** contato + mensagens + mídia + gravações. **Atenção:** a exclusão de admin na tela é **soft-delete** — `delete_contact`/`delete_contacts` só fazem `UPDATE contacts SET deleted_at = now()`; mensagens, mídia e `calls` continuam no banco. Hoje **não existe** eliminação definitiva — é **implementação pendente** (função de purga por contato, só admin, registrada em `contact_deletion_audit`). Até lá, o pedido LGPD **não** pode ser dado como atendido só com a exclusão da tela. "Sair" de campanha (`revoked`) não apaga dados — só bloqueia envio. | **pendente** (hoje só oculta) | `20260929810000_contacts_can_edit_contact_hoisted_params.sql:143-151,177-185`; `src/components/contacts/useContactsCRUD.ts:244-274` |
 | **Encerramento automático por inatividade (24 h) fica desligado** — coerente com "sem `waiting`/fechamento por tempo" (§4.1). Único fechamento automático é o arquivamento aos 30 dias (§4.1, pendente). | **existe** (desligado) | `auto_close_config.is_enabled = false`, `inactivity_hours = 24` (banco ao vivo) |
 
@@ -97,6 +97,7 @@ limite efetivo é o `daily_limit_per_connection`.
 - Reabertura automática mantém o atendente anterior — o dono quer continuidade de atendimento.
 - Não existe "waiting por inatividade" — `waiting` é só ação humana ou reabertura sem dono.
 - Alerta de desconexão nível 1 para admin/supervisor **não é opt-out**.
+- **Alerta de conexão sem preferência cadastrada = ligado** (comportamento herdado, `connection-health-check/index.ts` `buildConnectionAlertPrefs`): hoje `connection_alert_preferences` está vazia e os 4 atendentes também recebem push + e-mail no nível 1. **Decisão pendente do dono:** manter (todos avisados) ou padrão desligado para atendente (só admin/supervisor obrigatórios + quem ligar o cartão).
 - **Envio com WhatsApp caído: hoje falha, não enfileira** (medido 2026-11-03: `enqueue_outbound_message` → `no_connected_whatsapp_connection`). **Decisão pendente do dono:** (A) manter — aviso na tela + erro de envio, zero DDL; ou (B) fila offline — guardar a mensagem e enviar quando voltar (exige DDL + worker + regra de expiração). Até decidir, a tela diz a verdade: "o envio vai falhar".
 - SLA: 15/30 min em horário comercial; push atendente+supervisor no vermelho; e-mail supervisor após 1 h; admin só com 3+ no vermelho na mesma fila.
 - **Nenhuma área congelada** (decisão 2026-11-03): qualquer módulo pode ser alterado por agente de IA, seguindo o fluxo de PR do `AGENTS.md` (regra 8 continua valendo para DDL, CI, segredos e deleção).
@@ -110,6 +111,7 @@ limite efetivo é o `daily_limit_per_connection`.
 ## 9. Dúvidas em aberto
 
 1. **Mensagem enviada com WhatsApp caído: falhar (A) ou guardar em fila offline (B)?** — ver §8. Hoje falha.
+2. **Atendente recebe push/e-mail de queda de conexão por padrão?** — ver §8. Hoje recebe (padrão ligado sem preferência).
 
 Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: adicionar aqui e avisar o dono.
 

@@ -2,12 +2,12 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b441a434249aaab255d5d9b84c53f55631fda41d",
+  "commit": "7a2e35e508a9f6053de661f66136307e6d6ec9e6",
   "branch": "main",
-  "data_commit": "2026-11-03T15:22:14-03:00",
+  "data_commit": "2026-11-03T18:53:25Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
-  "arquivos_mudados_7d": 1373,
+  "arquivos_mudados_7d": 1372,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -85,7 +85,7 @@
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 17
+    "mudancas": 16
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
@@ -96,11 +96,15 @@
     "mudancas": 15
    },
    {
-    "arquivo": "docs/ci/README.md",
-    "mudancas": 14
+    "arquivo": "ESTADO.md",
+    "mudancas": 13
    },
    {
-    "arquivo": "ESTADO.md",
+    "arquivo": "docs/ci/README.md",
+    "mudancas": 13
+   },
+   {
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 13
    },
    {
@@ -113,10 +117,6 @@
    },
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 12
-   },
-   {
-    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 12
    },
    {
@@ -148,10 +148,6 @@
     "mudancas": 9
    },
    {
-    "arquivo": ".github/workflows/codeql.yml",
-    "mudancas": 8
-   },
-   {
     "arquivo": ".github/workflows/e2e-talkx.yml",
     "mudancas": 8
    },
@@ -170,12 +166,16 @@
    {
     "arquivo": "scripts/db-audit/migration-evidence.json",
     "mudancas": 8
+   },
+   {
+    "arquivo": "src/hooks/integrations/useTalkXSegments.ts",
+    "mudancas": 8
    }
   ],
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 282
+    "commits": 281
    },
    {
     "autor": "dependabot[bot]",
@@ -183,7 +183,7 @@
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 6
+    "commits": 7
    },
    {
     "autor": "devin-ai-integration[bot]",

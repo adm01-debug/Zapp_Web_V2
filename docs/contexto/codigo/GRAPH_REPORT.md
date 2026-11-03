@@ -1,17 +1,17 @@
 # Graph Report - Zapp_Web_V2  (2026-11-03)
 
 ## Corpus Check
-- 7055 files · ~8,799,116 words
+- 7055 files · ~8,799,192 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 92 file(s) not represented in the graph (top: .tsv 32, (none) 12, .csv 12)
 
 ## Summary
-- 54441 nodes · 111206 edges · 4148 communities (2404 shown, 1744 thin omitted)
-- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 7334 edges (avg confidence: 0.94)
+- 54441 nodes · 111207 edges · 4148 communities (2404 shown, 1744 thin omitted)
+- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 7335 edges (avg confidence: 0.94)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b441a434`
+- Built from commit: `7a2e35e5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -12948,8 +12948,8 @@ Cohesion: 0.67
 Nodes (3): idx_team_conversations_direct_member_a, idx_team_conversations_direct_member_b, public.team_conversations
 
 ## Knowledge Gaps
-- **18790 isolated node(s):** `session-start.sh script`, `PATH`, `$schema`, `style`, `rsc` (+18785 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 28045 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **18789 isolated node(s):** `session-start.sh script`, `PATH`, `$schema`, `style`, `rsc` (+18784 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 28044 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **1744 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
@@ -12964,7 +12964,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 3 inferred relationships involving `cn()` (e.g. with `2.2 Traz regressão?` and `F2 — Arbitrários com equivalente exato (254 usos)`) actually correct?**
   _`cn()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `session-start.sh script`, `PATH`, `$schema` to the rest of the system?**
-  _18790 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _18789 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `react` be split into smaller, more focused modules?**
   _Cohesion score 0.004863650020094503 - nodes in this community are weakly interconnected._
 - **Should `lucide-react` be split into smaller, more focused modules?**
