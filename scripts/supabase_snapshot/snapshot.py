@@ -218,8 +218,8 @@ def redact(obj: Any) -> Any:
         return {k: ("[REDACTED]" if REDACT_RE.search(str(k)) else redact(v)) for k, v in obj.items()}
     if isinstance(obj, list):
         return [redact(v) for v in obj]
-    if isinstance(obj, str) and re.search(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|sb_secret_|://[^/\s]+:[^@\s]+@", obj):
-        return "[REDACTED]"
+    if isinstance(obj, str):
+        return scrub(obj)
     return obj
 
 
@@ -239,11 +239,48 @@ def group(rows, keyfn):
 # Database introspection
 # --------------------------------------------------------------------------- #
 
+SCRUB_RULES: list[tuple[re.Pattern, str]] = [
+    # JWT (3 partes) — anon/service_role keys do Supabase
+    (re.compile(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{5,}"), "[REDACTED_JWT]"),
+    # chaves novas do Supabase
+    (re.compile(r"sb_(?:secret|publishable)_[A-Za-z0-9_-]{8,}"), "[REDACTED_KEY]"),
+    # Authorization: Bearer <token>  /  apikey: <token>
+    (re.compile(r"(?i)(bearer\s+)[A-Za-z0-9._~+/=-]{16,}"), r"\1[REDACTED]"),
+    # valor precisa parecer token: >= 16 chars, sem espaço, com pelo menos um dígito (evita redigir prosa)
+    (re.compile(r"""(?i)((?:apikey|api_key|x-api-key|authorization|token|secret|password|passwd|service_role_key|anon_key)\s*["']?\s*[:=]\s*["']?)(?=[^"'\s,;)}]*\d)[^"'\s,;)}]{16,}"""), r"\1[REDACTED]"),
+    # PASSWORD 'x' em DDL de role
+    (re.compile(r"(?i)(password\s+)'[^']*'"), r"\1'[REDACTED]'"),
+    # DSN com senha
+    (re.compile(r"(\w+://[^/\s:@]+:)[^@\s]+(@)"), r"\1[REDACTED]\2"),
+    # chaves de provedores comuns
+    (re.compile(r"\b(?:sk-[A-Za-z0-9_-]{20,}|sk_live_[A-Za-z0-9]{10,}|sk_test_[A-Za-z0-9]{10,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10,})\b"), "[REDACTED_KEY]"),
+]
+
+
+def scrub(text: str) -> str:
+    """Redige segredos em texto vindo do banco (comandos de cron, corpos de função, migrations, webhooks...)."""
+    for rx, rep in SCRUB_RULES:
+        text = rx.sub(rep, text)
+    return text
+
+
+def scrub_value(v: Any) -> Any:
+    if isinstance(v, str):
+        return scrub(v) if len(v) > 7 else v
+    if isinstance(v, list):
+        return [scrub_value(x) for x in v]
+    if isinstance(v, dict):
+        return {k: scrub_value(x) for k, x in v.items()}
+    return v
+
+
 def q(conn: psycopg.Connection, sql: str, params: tuple | None = None) -> list[dict]:
     # params=None -> psycopg não interpreta '%' como placeholder (LIKE 'pg_%' funciona sem escapar).
+    # Todo texto que sai do banco passa pelo scrub: pg_cron chamando edge function com service_role no
+    # header, migration com senha, trigger http_request com apikey — tudo isso existe na prática.
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(sql, params or None)
-        return [dict(r) for r in cur.fetchall()]
+        return [{k: scrub_value(v) for k, v in dict(r).items()} for r in cur.fetchall()]
 
 
 def has_ext(conn, name: str) -> bool:
@@ -588,7 +625,9 @@ def get_queues(conn):
 def get_migrations(conn):
     if not has_table(conn, "supabase_migrations", "schema_migrations"):
         return []
-    return q(conn, "SELECT version, name, statements FROM supabase_migrations.schema_migrations ORDER BY version")
+    has_name = bool(q(conn, "SELECT 1 FROM information_schema.columns WHERE table_schema = 'supabase_migrations' "
+                            "AND table_name = 'schema_migrations' AND column_name = 'name'"))
+    return q(conn, f"SELECT version, {'name' if has_name else 'NULL AS name'}, statements FROM supabase_migrations.schema_migrations ORDER BY version")
 
 
 @section("storage")
@@ -754,8 +793,11 @@ def get_db_stats(conn):
             FROM pg_stat_statements s JOIN pg_roles r ON r.oid = s.userid
             WHERE s.dbid = (SELECT oid FROM pg_database WHERE datname = current_database())
               AND r.rolname NOT IN ('supabase_admin','supabase_auth_admin','supabase_storage_admin','supabase_replication_admin')
-              AND query NOT ILIKE '%pg_stat_statements%'
+              AND query NOT ILIKE '%%pg_stat_statements%%'
+              AND query ~* '^\\s*(select|with|insert|update|delete|merge)\\b'   -- utilitários (CREATE ROLE ... PASSWORD) não são normalizados
             ORDER BY total_exec_time DESC LIMIT %s""", (STAT_STATEMENTS_TOP,))
+        for row in out["top_queries"]:
+            row["query"] = re.sub(r"'(?:[^']|'')*'", "'?'", row["query"])  # literais que escaparam da normalização
     return out
 
 
@@ -1004,7 +1046,8 @@ def fingerprints(snap: dict[str, Any]) -> dict[str, dict[str, str]]:
     add("constraints", db.get("constraints"), lambda r: f"{r['schema']}.{r['table']}.{r['name']}")
     add("indexes", db.get("indexes"), lambda r: f"{r['schema']}.{r['name']}")
     add("views", db.get("views"), lambda r: f"{r['schema']}.{r['name']}")
-    add("functions", db.get("functions"), lambda r: f"{r['schema']}.{r['name']}({r['args']})")
+    add("functions", [{**r, "definition": None, "definition_sha": r.get("definition_sha") or (sha(r["definition"]) if r.get("definition") else None)}
+                      for r in (db.get("functions") or [])], lambda r: f"{r['schema']}.{r['name']}({r['args']})")
     add("triggers", db.get("triggers"), lambda r: f"{r['schema']}.{r['table']}.{r['name']}")
     add("policies (RLS)", db.get("policies"), lambda r: f"{r['schema']}.{r['table']}.{r['name']}")
     add("types/enums", db.get("types"), lambda r: f"{r['schema']}.{r['name']}")
@@ -1014,7 +1057,9 @@ def fingerprints(snap: dict[str, Any]) -> dict[str, dict[str, str]]:
     add("roles", db.get("roles"), lambda r: r["name"])
     add("cron jobs", (db.get("cron") or {}).get("jobs"), lambda r: f"{r['jobid']}:{r.get('jobname') or ''}")
     add("queues (pgmq)", (db.get("queues") or {}).get("queues"), lambda r: r["queue_name"])
-    add("migrations", db.get("migrations"), lambda r: f"{r['version']}_{r.get('name') or ''}")
+    add("migrations", [{"version": r["version"], "name": r.get("name"),
+                        "statements_sha": r.get("statements_sha") or (sha(r["statements"]) if r.get("statements") else None)}
+                       for r in (db.get("migrations") or [])], lambda r: f"{r['version']}_{r.get('name') or ''}")
     add("storage buckets", db.get("storage"), lambda r: r["id"])
     add("edge functions", api_.get("edge_functions"), lambda r: r["slug"], strip=("updated_at",))
     add("vault secrets (nomes)", db.get("vault"), lambda r: r["name"])
@@ -1526,7 +1571,14 @@ def main() -> int:
     diff = diff_fingerprints(old_fp, new_fp) if previous else []
     update_changelog(diff, previous_existed=previous is not None)
     render_readme(snap, api_)
-    write(prev_path, dumps(snap))
+    slim = json.loads(dumps(snap))
+    for f in slim["db"].get("functions") or []:
+        if f.get("definition"):
+            f["definition_sha"] = sha(f["definition"]); f["definition"] = None
+    for m in slim["db"].get("migrations") or []:
+        if m.get("statements"):
+            m["statements_sha"] = sha(m["statements"]); m["statements"] = len(m["statements"]) if isinstance(m["statements"], list) else 1
+    write(prev_path, dumps(slim))
     write(OUT / ".gitattributes", "* linguist-generated=true\n*.sql linguist-generated=true\n")
 
     log(f"concluído: {len(diff)} grupos de mudança, {len(ERRORS)} erros, {len(CARRIED)} seções reaproveitadas, saída em {OUT}")

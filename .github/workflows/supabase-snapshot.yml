@@ -72,7 +72,7 @@ jobs:
         run: |
           mkdir -p "$SNAPSHOT_DIR"
           if git fetch --quiet --depth 1 origin "$SNAPSHOT_BRANCH" 2>/dev/null; then
-            git archive FETCH_HEAD -- "$SNAPSHOT_DIR" | tar -x
+            git archive FETCH_HEAD -- "$SNAPSHOT_DIR" 2>/dev/null | tar -x || echo "::warning::branch existe mas sem $SNAPSHOT_DIR — recomecando do zero"
           else
             echo "Branch $SNAPSHOT_BRANCH ainda nao existe: primeira coleta."
           fi
