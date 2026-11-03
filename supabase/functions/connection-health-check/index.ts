@@ -359,34 +359,35 @@ async function syncInboxSilenceAlert(
   }
 }
 
-/** Um e-mail por destinatário; devolve quem o Resend ACEITOU (o resto fica para a próxima sonda). */
-async function sendAlertEmails(
+/** Resultado de UM e-mail: aceito, recusa definitiva (4xx) ou falha transitória (5xx/rede). */
+type EmailOutcome = 'accepted' | 'rejected' | 'transient';
+
+/** Um e-mail por destinatário. 4xx do Resend é final (endereço/domínio ruim) — não adianta repetir. */
+async function sendAlertEmail(
   log: Logger,
-  args: { resendKey: string; to: string[]; subject: string; instanceId: string; line: string },
-): Promise<Set<string>> {
+  args: { resendKey: string; to: string; subject: string; instanceId: string; line: string },
+): Promise<EmailOutcome> {
   const { resendKey, to, subject, instanceId, line } = args;
-  const aceitos = new Set<string>();
-  for (const recipient of to) {
-    try {
-      const resp = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: 'ZAPP Alertas <alertas@promobrindes.com.br>',
-          to: recipient,
-          subject,
-          html: `<div style="font-family:${EMAIL_FONT_STACK};max-width:600px;margin:0 auto">` +
-            `<h2>${escapeHtml(subject)}</h2>` +
-            `<p>A instância <strong>${escapeHtml(instanceId)}</strong>${line}</p></div>`,
-        }),
-      });
-      if (resp.ok) aceitos.add(recipient);
-      else log.warn('Resend recusou o alerta de conexão', { status: resp.status });
-    } catch (err) {
-      log.error('Falha ao enviar alerta de conexão por e-mail', { error: err instanceof Error ? err.message : String(err) });
-    }
+  try {
+    const resp = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'ZAPP Alertas <alertas@promobrindes.com.br>',
+        to,
+        subject,
+        html: `<div style="font-family:${EMAIL_FONT_STACK};max-width:600px;margin:0 auto">` +
+          `<h2>${escapeHtml(subject)}</h2>` +
+          `<p>A instância <strong>${escapeHtml(instanceId)}</strong>${line}</p></div>`,
+      }),
+    });
+    if (resp.ok) return 'accepted';
+    log.warn('Resend recusou o alerta de conexão', { status: resp.status });
+    return resp.status >= 400 && resp.status < 500 ? 'rejected' : 'transient';
+  } catch (err) {
+    log.error('Falha ao enviar alerta de conexão por e-mail', { error: err instanceof Error ? err.message : String(err) });
+    return 'transient';
   }
-  return aceitos;
 }
 
 /** Episódio em escalada (conexão caída/degradada nesta sonda), avaliado depois do laço. */
@@ -400,9 +401,8 @@ interface Escalation {
 /**
  * Nível 1/2 da regra dos três níveis. Destinatários OBRIGATÓRIOS (admin e
  * supervisor no nível 1; só admin no nível 2) + quem optou no cartão. Idempotente
- * por episódio/hora via `notifications.dedupe_key` (único por usuário): o e-mail
- * só sai quando ao menos um push obrigatório foi NOVO — a sonda roda a cada 5 min
- * e não pode repetir o aviso.
+ * por episódio/hora via `notifications.dedupe_key` (único por usuário), com um
+ * marcador por canal — a sonda roda a cada 5 min e não pode repetir o aviso.
  */
 async function notifyEscalation(
   supabase: SupabaseClient,
@@ -429,53 +429,63 @@ async function notifyEscalation(
       ? `A instância ${alert.instance_id} não reconectou sozinha. Só um admin pode gerar o QR Code na tela Conexões.`
       : `A instância ${alert.instance_id} está conectada mas não recebe mensagens há mais de 30 min (${REASON_LABEL[alert.reason ?? ''] ?? 'webhook parado'}).`;
 
-  // Quem ainda NÃO foi avisado neste episódio/hora (a linha de push é o marcador).
-  const pendentes: string[] = [];
-  for (const userId of pushUsers) {
-    const { data: existente, error } = await supabase.from('notifications').select('id')
-      .eq('user_id', userId).eq('dedupe_key', dedupeKey).maybeSingle();
+  // Marcadores por CANAL em notifications (único por usuário × dedupe_key):
+  //   push  → a própria linha de push, chave K;
+  //   e-mail → linha "lida" com chave K:email, gravada só quando o Resend aceitou (2xx) ou
+  //            recusou em definitivo (4xx); 5xx/rede não grava e a próxima sonda retenta.
+  // Push nunca depende do e-mail (um admin com e-mail ruim continua recebendo o push).
+  const jaMarcado = async (userId: string, key: string): Promise<boolean | null> => {
+    const { data, error } = await supabase.from('notifications').select('id')
+      .eq('user_id', userId).eq('dedupe_key', key).maybeSingle();
     if (error) {
-      log.warn('Falha ao conferir aviso de nível já enviado', { error: error.message });
+      log.warn('Falha ao conferir marcador de aviso', { key, error: error.message });
+      return null;
+    }
+    return Boolean(data);
+  };
+  const marcar = async (userId: string, key: string, extra: Record<string, unknown>, isRead: boolean): Promise<void> => {
+    const { error } = await supabase.from('notifications').insert({
+      user_id: userId, title, message, type: 'connection_alert', dedupe_key: key, is_read: isRead,
+      metadata: { connection_id: alert.connection_id, instance_id: alert.instance_id, kind: alert.kind, reason: alert.reason, level, ...extra },
+    });
+    if (error && (error as { code?: string }).code !== '23505') log.warn('notifications insert failed', { key, error: error.message });
+  };
+
+  for (const userId of pushUsers) {
+    const marcado = await jaMarcado(userId, dedupeKey);
+    if (marcado === false) await marcar(userId, dedupeKey, { channel: 'push' }, false);
+  }
+
+  const emailKey = `${dedupeKey}:email`;
+  const emailPendentes: string[] = [];
+  for (const userId of emailUsers) {
+    const marcado = await jaMarcado(userId, emailKey);
+    if (marcado === false) emailPendentes.push(userId);
+  }
+  if (emailPendentes.length === 0) return;
+  if (!resendKey) {
+    log.warn('Alerta obrigatório sem canal de e-mail (RESEND_API_KEY ausente)', { level, pendentes: emailPendentes.length });
+    return;
+  }
+  const { data: perfis, error: perfisError } = await supabase.from('profiles').select('user_id, email').in('user_id', emailPendentes);
+  if (perfisError) {
+    log.warn('Falha ao ler e-mails dos destinatários; tenta na próxima sonda', { error: perfisError.message });
+    return;
+  }
+  const emailPorUsuario = new Map<string, string>();
+  for (const p of (perfis ?? []) as Array<{ user_id?: unknown; email?: unknown }>) {
+    if (typeof p.user_id === 'string' && typeof p.email === 'string' && p.email !== '') emailPorUsuario.set(p.user_id, p.email);
+  }
+  for (const userId of emailPendentes) {
+    const to = emailPorUsuario.get(userId);
+    if (!to) {
+      log.warn('Destinatário de e-mail sem e-mail no perfil', { level });
       continue;
     }
-    if (!existente) pendentes.push(userId);
-  }
-  if (pendentes.length === 0) return;
-
-  // E-mail ANTES do marcador: se o Resend falhar, o push não é gravado e a próxima
-  // sonda tenta os dois de novo. Sem chave ou sem e-mail no perfil, o push sai mesmo assim.
-  const emailPendentes = pendentes.filter((u) => emailUsers.has(u));
-  const emailOk = new Set<string>();
-  const semEmail = new Set<string>();
-  if (emailPendentes.length > 0) {
-    const { data: perfis, error: perfisError } = await supabase.from('profiles').select('user_id, email').in('user_id', emailPendentes);
-    if (perfisError) {
-      log.warn('Falha ao ler e-mails dos destinatários obrigatórios; tenta na próxima sonda', { error: perfisError.message });
-      return;
-    }
-    const emailPorUsuario = new Map<string, string>();
-    for (const p of (perfis ?? []) as Array<{ user_id?: unknown; email?: unknown }>) {
-      if (typeof p.user_id === 'string' && typeof p.email === 'string' && p.email !== '') emailPorUsuario.set(p.user_id, p.email);
-    }
-    for (const u of emailPendentes) if (!emailPorUsuario.has(u)) semEmail.add(u);
-    if (!resendKey) {
-      log.warn('Alerta obrigatório sem canal de e-mail (RESEND_API_KEY ausente)', { level });
-      for (const u of emailPendentes) semEmail.add(u);
-    } else if (emailPorUsuario.size > 0) {
-      const aceitos = await sendAlertEmails(log, {
-        resendKey, to: [...emailPorUsuario.values()], subject: `🔴 ${title} — ZAPP`, instanceId: alert.instance_id, line: `: ${escapeHtml(message)}`,
-      });
-      for (const [u, e] of emailPorUsuario) if (aceitos.has(e)) emailOk.add(u);
-    }
-  }
-
-  for (const userId of pendentes) {
-    if (emailUsers.has(userId) && !emailOk.has(userId) && !semEmail.has(userId)) continue; // e-mail falhou: retenta na próxima sonda
-    const { error } = await supabase.from('notifications').insert({
-      user_id: userId, title, message, type: 'connection_alert', dedupe_key: dedupeKey,
-      metadata: { connection_id: alert.connection_id, instance_id: alert.instance_id, kind: alert.kind, reason: alert.reason, level },
-    });
-    if (error && (error as { code?: string }).code !== '23505') log.warn('notifications insert failed', { error: error.message });
+    const outcome = await sendAlertEmail(log, { resendKey, to, subject: `🔴 ${title} — ZAPP`, instanceId: alert.instance_id, line: `: ${escapeHtml(message)}` });
+    if (outcome === 'transient') continue; // retenta na próxima sonda
+    // Usuário só-e-mail (push desligado no cartão) fica com o registro em tela já LIDO — não é push.
+    await marcar(userId, emailKey, { channel: 'email', email_outcome: outcome }, true);
   }
 }
 
@@ -521,6 +531,11 @@ async function releaseLevelKeys(supabase: SupabaseClient, log: Logger, connectio
  */
 async function onConnectionRecovered(supabase: SupabaseClient, log: Logger, connectionId: string): Promise<void> {
   await releaseLevelKeys(supabase, log, connectionId, 'disconnected');
+  // O warroom da queda também fecha aqui (o webhook pode ter transicionado antes da sonda);
+  // sem isso a próxima queda herdaria o created_at do episódio anterior. A linha fica como histórico.
+  const { error: warroomError } = await supabase.from('warroom_alerts').update({ dedupe_key: null })
+    .eq('dedupe_key', `conn-down:v1:${connectionId}`);
+  if (warroomError) log.warn('Falha ao encerrar alerta de queda no warroom', { error: warroomError.message });
   const { data: pausadas, error: campError } = await supabase.from('talkx_campaigns').select('id')
     .eq('whatsapp_connection_id', connectionId).eq('status', 'paused').eq('pause_reason', 'connection_lost');
   if (campError) {
@@ -893,8 +908,9 @@ export async function handleConnectionHealthCheck(
               // recebida além do limiar, DENTRO do horário comercial. Alerta
               // idempotente por episódio (dedupe_key) e auto-resolve quando a
               // mensagem volta a chegar.
-              if (dbStatus === 'connected' && (conn.retry_count ?? 0) > 0) {
-                // Conexão voltou: zera o contador da queda e o motivo de saúde.
+              if (dbStatus === 'connected' && ((conn.retry_count ?? 0) > 0 || conn.health_reason)) {
+                // Conexão voltou: zera o contador da queda e o motivo de saúde (fantasma/queda
+                // confirmada gravam motivo sem mexer no contador — o composer sairia do vermelho só aqui).
                 await supabase.from('whatsapp_connections')
                   .update({ retry_count: 0, health_reason: null }).eq('id', conn.id);
               }

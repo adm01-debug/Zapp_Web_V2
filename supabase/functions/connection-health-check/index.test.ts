@@ -91,6 +91,8 @@ interface Fake {
   pausedCampaigns: Array<{ id: string }>;
   /** Resend recusa (500) quando true */
   resendDown: boolean;
+  /** connection_alert_preferences (cartão "Alertas de Conexão") */
+  prefRows: Array<Record<string, unknown>>;
   fetchImpl: (call: { path: string; apikey: string | null }) => Response | Promise<Response>;
 }
 
@@ -118,6 +120,7 @@ function baseFake(): Fake {
     episodeStartedAt: null,
     pausedCampaigns: [],
     resendDown: false,
+    prefRows: [],
     fetchImpl: () => jsonResponse({ instance: { state: 'open' } }),
   };
 }
@@ -217,6 +220,9 @@ function result(
     const k = filters.find(([c]) => c === 'dedupe_key')?.[1];
     const hit = fake.pushNotifications.find((n) => (n as Row).user_id === u && (n as Row).dedupe_key === k);
     return { data: hit ? { id: 'n' } : null, error: null };
+  }
+  if (table === 'connection_alert_preferences' && op === 'select') {
+    return { data: fake.prefRows, error: null };
   }
   if (table === 'talkx_campaigns' && op === 'select') {
     return { data: fake.pausedCampaigns, error: null };
@@ -966,9 +972,11 @@ Deno.test('3 níveis: reconexão esgotada (nível 1) avisa admin E supervisor po
   }
   // admin e supervisor são obrigatórios; o agente entra pelo opt-in padrão (1C: ligado
   // até desligar no cartão) — preferência só ACRESCENTA gente. Uma vez por episódio.
-  const users = fake.pushNotifications.map((n) => (n as Row).user_id).sort();
+  const pushes = fake.pushNotifications.filter((n) => (n as Row).dedupe_key === 'conn-l1:v1:disconnected:c1');
+  const users = pushes.map((n) => (n as Row).user_id).sort();
   assert(JSON.stringify(users) === JSON.stringify(['adm', 'ag', 'sup']), `push uma vez para cada destinatário: ${JSON.stringify(users)}`);
-  assert(fake.pushNotifications.every((n) => (n as Row).dedupe_key === 'conn-l1:v1:disconnected:c1'), 'chave do nível 1');
+  const emailMarks = fake.pushNotifications.filter((n) => (n as Row).dedupe_key === 'conn-l1:v1:disconnected:c1:email').map((n) => (n as Row).user_id).sort();
+  assert(JSON.stringify(emailMarks) === JSON.stringify(['adm', 'sup']), `marcador de e-mail só para quem tem e-mail no perfil: ${JSON.stringify(emailMarks)}`);
   const emails = fake.calls.filter((c) => c.path.includes('/emails')).length;
   assert(emails === 2, `e-mail uma vez para cada perfil com e-mail (adm, sup), veio ${emails}`);
 });
@@ -983,8 +991,8 @@ Deno.test('3 níveis: ≥ 1 h caída (nível 2) repete por hora só para o admin
   fake.fetchImpl = () => jsonResponse({ instance: { state: 'close' } });
   await run(fake);
   // Primeira sonda elegível já depois de 1 h: o nível 1 (admin+supervisor) sai ANTES do nível 2 (só admin).
-  const l1 = fake.pushNotifications.filter((n) => String((n as Row).dedupe_key).startsWith('conn-l1:')).map((n) => (n as Row).user_id).sort();
-  const l2 = fake.pushNotifications.filter((n) => String((n as Row).dedupe_key).startsWith('conn-l2:')).map((n) => (n as Row).user_id);
+  const l1 = fake.pushNotifications.filter((n) => (n as Row).dedupe_key === 'conn-l1:v1:disconnected:c1').map((n) => (n as Row).user_id).sort();
+  const l2 = fake.pushNotifications.filter((n) => String((n as Row).dedupe_key).startsWith('conn-l2:') && !String((n as Row).dedupe_key).endsWith(':email')).map((n) => (n as Row).user_id);
   assert(JSON.stringify(l1) === JSON.stringify(['adm', 'sup']), `nível 1 implícito para admin+supervisor: ${JSON.stringify(l1)}`);
   assert(JSON.stringify(l2) === JSON.stringify(['adm']), `nível 2 só admin: ${JSON.stringify(l2)}`);
   assert(String((fake.pushNotifications.find((n) => String((n as Row).dedupe_key).startsWith('conn-l2:')) as Row).dedupe_key).startsWith('conn-l2:v1:disconnected:c1:'), 'chave horária do nível 2');
@@ -993,8 +1001,8 @@ Deno.test('3 níveis: ≥ 1 h caída (nível 2) repete por hora só para o admin
 Deno.test('3 níveis: sessão fantasma é nível 1 imediato (sem esperar 15 min)', () => {
   const now = new Date();
   const ev = evaluateOpenConnectionHealth({ owner: { known: true, ownerJid: null }, lastActivityAt: null, now });
-  assert(ev.reason === 'phantom_session');
-  assert(decideEscalation({ kind: 'disconnected', reason: ev.reason, exhausted: false, episodeStart: now, now }) === 1);
+  assert(ev.reason === 'phantom_session', 'owner conhecido sem jid = sessão fantasma');
+  assert(decideEscalation({ kind: 'disconnected', reason: ev.reason, exhausted: false, episodeStart: now, now }) === 1, 'fantasma é nível 1 imediato');
   assert(PHANTOM_SESSION_REASON.includes('QR Code'), 'motivo de saúde deve pedir QR');
 });
 
@@ -1014,12 +1022,15 @@ Deno.test('3 níveis: e-mail recusado pelo Resend não grava o marcador — a pr
   Deno.env.set('RESEND_API_KEY', 're_test');
   try {
     await run(fake);
-    assert(fake.pushNotifications.length === 0, 'com o e-mail recusado, o push (marcador) não pode ser gravado');
+    const pushKeys = () => fake.pushNotifications.map((n) => String((n as Row).dedupe_key));
+    assert(pushKeys().includes('conn-l1:v1:disconnected:c1'), 'push obrigatório sai mesmo com o Resend fora (5xx)');
+    assert(!pushKeys().includes('conn-l1:v1:disconnected:c1:email'), 'e-mail com 5xx não grava marcador');
     resendDown = false;
     await run(fake);
-    assert(fake.pushNotifications.length === 1, 'na sonda seguinte, e-mail aceito → push gravado uma vez');
+    assert(pushKeys().includes('conn-l1:v1:disconnected:c1:email'), 'na sonda seguinte, e-mail aceito → marcador de e-mail');
+    await run(fake);
     const emails = fake.calls.filter((c) => c.path.includes('/emails')).length;
-    assert(emails === 2, `duas tentativas de e-mail (1 recusada + 1 aceita), veio ${emails}`);
+    assert(emails === 2, `duas tentativas de e-mail (1 recusada + 1 aceita), nunca uma terceira: veio ${emails}`);
   } finally {
     if (originalKey === undefined) Deno.env.delete('RESEND_API_KEY'); else Deno.env.set('RESEND_API_KEY', originalKey);
   }
@@ -1037,6 +1048,7 @@ Deno.test('3 níveis: recuperação já gravada pelo webhook ainda retoma campan
   await run(fake);
   assert(fake.rpcCalls.includes('transition:camp-1:start'), `campanha pausada por queda deve retomar: ${JSON.stringify(fake.rpcCalls)}`);
   assert((fake.pushNotifications[0] as Row).dedupe_key === null, 'chave de nível liberada para a próxima queda');
+  assert(fake.alertUpdates.some((u) => u.filters.some(([c, v]) => c === 'dedupe_key' && v === 'conn-down:v1:c1')), 'warroom da queda encerrado mesmo com recuperação vinda do webhook');
 });
 
 Deno.test('3 níveis: sem linha no warroom, a sonda cria o registro e o relógio do episódio começa (não fica em zero)', async () => {
@@ -1078,4 +1090,51 @@ Deno.test('3 níveis: queda confirmada só pelo tempo (sem reconexão automátic
   await run(fake);
   assert(fake.connUpdates.some((u) => u.health_reason === CONFIRMED_DOWN_REASON), 'queda confirmada pelo tempo grava o motivo');
   assert(fake.pushNotifications.some((n) => (n as Row).dedupe_key === 'conn-l1:v1:disconnected:c1'), 'admin avisado no nível 1');
+});
+
+Deno.test('3 níveis: quem só optou por e-mail recebe o e-mail (marcador lido em tela), sem push', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 3, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'ag', role: 'agent' }];
+  fake.adminProfiles = [{ user_id: 'ag', email: 'ag@x.test' }];
+  fake.episodeStartedAt = new Date(Date.now() - 5 * 60_000).toISOString();
+  fake.fetchImpl = ({ path }) => path.includes('/emails') ? jsonResponse({ id: 'mail' }) : jsonResponse({ instance: { state: 'close' } });
+  const originalKey = Deno.env.get('RESEND_API_KEY');
+  Deno.env.set('RESEND_API_KEY', 're_test');
+  try {
+    // connection_alert_preferences: push desligado, e-mail ligado
+    fake.prefRows = [{ user_id: 'ag', push_enabled: false, email_enabled: true, alert_on_degraded: true, alert_on_disconnected: true }];
+    await run(fake);
+  } finally {
+    if (originalKey === undefined) Deno.env.delete('RESEND_API_KEY'); else Deno.env.set('RESEND_API_KEY', originalKey);
+  }
+  const keys = fake.pushNotifications.map((n) => String((n as Row).dedupe_key));
+  assert(!keys.includes('conn-l1:v1:disconnected:c1'), 'sem push para quem desligou push');
+  assert(keys.includes('conn-l1:v1:disconnected:c1:email'), 'marcador de e-mail gravado');
+  assert((fake.pushNotifications[0] as Row).is_read === true, 'marcador de e-mail nasce lido (não é push)');
+  assert(fake.calls.some((c) => c.path.includes('/emails')), 'e-mail enviado');
+});
+
+Deno.test('3 níveis: recusa definitiva do Resend (4xx) marca o e-mail e não repete a cada sonda', async () => {
+  const fake = baseFake();
+  fake.rows = [{ id: 'c1', instance_id: 'padrao', phone_number: null, retry_count: 3, auto_reconnect_enabled: true, reconnect_max_attempts: 3, reconnect_interval_seconds: 60 }];
+  fake.statusById = { c1: 'disconnected' };
+  fake.tokens = { padrao: 'tok-da-padrao' };
+  fake.roleRows = [{ user_id: 'adm', role: 'admin' }];
+  fake.adminProfiles = [{ user_id: 'adm', email: 'adm@x.test' }];
+  fake.episodeStartedAt = new Date(Date.now() - 5 * 60_000).toISOString();
+  fake.fetchImpl = ({ path }) => path.includes('/emails') ? new Response('bad address', { status: 422 }) : jsonResponse({ instance: { state: 'close' } });
+  const originalKey = Deno.env.get('RESEND_API_KEY');
+  Deno.env.set('RESEND_API_KEY', 're_test');
+  try {
+    await run(fake);
+    await run(fake);
+  } finally {
+    if (originalKey === undefined) Deno.env.delete('RESEND_API_KEY'); else Deno.env.set('RESEND_API_KEY', originalKey);
+  }
+  const emails = fake.calls.filter((c) => c.path.includes('/emails')).length;
+  assert(emails === 1, `4xx é final: uma tentativa só, veio ${emails}`);
+  assert(fake.pushNotifications.some((n) => (n as Row).dedupe_key === 'conn-l1:v1:disconnected:c1'), 'push obrigatório sai mesmo assim');
 });
