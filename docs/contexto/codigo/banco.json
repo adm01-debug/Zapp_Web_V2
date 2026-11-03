@@ -25861,6 +25861,7 @@
    "usada_no_front": 4,
    "usada_em_edges": [
     "_shared",
+    "connection-health-check",
     "talkx-report",
     "talkx-scheduler",
     "talkx-send"
@@ -31608,7 +31609,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 22,
+   "usada_no_front": 23,
    "usada_em_edges": [
     "_shared",
     "batch-fetch-avatars",
@@ -33215,7 +33216,7 @@
   {
    "nome": "transition_talkx_campaign",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 3
   },
   {
    "nome": "update_own_profile",

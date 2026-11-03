@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "f3c9b5d5caf428728279e09c3007895e9acd43b5",
+  "sha": "031d5e596af02705ea45487aaf0fc65aa26ad4d1",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-03 15:40 UTC",
-  "files_total": 7977,
-  "code_files": 5919,
-  "code_lines": 1018839
+  "generated_at": "2026-11-03 16:58 UTC",
+  "files_total": 7980,
+  "code_files": 5922,
+  "code_lines": 1019535
  },
  "version": "1.3.2",
- "facts_hash": "d247d65a05609f7f",
+ "facts_hash": "3bbce98a7cd3ec6b",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -296,8 +296,8 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".tsx": 2324,
-   ".ts": 1853,
+   ".tsx": 2325,
+   ".ts": 1855,
    ".sql": 1274,
    ".mjs": 325,
    ".py": 115,
@@ -63928,6 +63928,7 @@
      "notifications",
      "profiles",
      "reconnection_logs",
+     "talkx_campaigns",
      "user_roles",
      "warroom_alerts",
      "whatsapp_connections"
@@ -63945,7 +63946,7 @@
     "doc": "",
     "errors": [],
     "side_effects": [
-     "notifyOptedIn"
+     "notifyEscalation"
     ],
     "webhook_events": [],
     "idempotency": true
@@ -66220,7 +66221,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2158,
+  "components_count": 2159,
   "hooks": [
    {
     "name": "useContacts",
@@ -67469,6 +67470,10 @@
    {
     "name": "useConnectionAuditLogs",
     "file": "src/hooks/inbox/useConnectionAuditLogs.ts"
+   },
+   {
+    "name": "useConnectionHealthBanner",
+    "file": "src/hooks/inbox/useConnectionHealthBanner.ts"
    },
    {
     "name": "useConnectionQueues",
@@ -69295,8 +69300,8 @@
   },
   {
    "module": "src/components",
-   "files": 2158,
-   "lines": 368168,
+   "files": 2159,
+   "lines": 368218,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -69632,8 +69637,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 981,
-   "lines": 159433,
+   "files": 983,
+   "lines": 159547,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -70664,7 +70669,7 @@
   {
    "module": "supabase/functions",
    "files": 380,
-   "lines": 114725,
+   "lines": 115257,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -72530,11 +72535,13 @@
      "supabase/functions/send-rate-limit-alert/index.ts"
     ],
     "select": [
-     "src/hooks/system/useNotifications.ts"
+     "src/hooks/system/useNotifications.ts",
+     "supabase/functions/connection-health-check/index.ts"
     ],
     "update": [
      "src/hooks/system/useNotifications.ts",
-     "src/hooks/tasks/useWorkItemNotifications.ts"
+     "src/hooks/tasks/useWorkItemNotifications.ts",
+     "supabase/functions/connection-health-check/index.ts"
     ],
     "delete": [
      "src/hooks/system/useNotifications.ts"
@@ -73121,6 +73128,7 @@
      "src/hooks/integrations/useTalkXCampaignList.ts",
      "src/hooks/integrations/useTalkXInsights.ts",
      "supabase/functions/_shared/effect-reconcile.ts",
+     "supabase/functions/connection-health-check/index.ts",
      "supabase/functions/talkx-report/index.ts",
      "supabase/functions/talkx-scheduler/index.ts",
      "supabase/functions/talkx-send/index.ts",
@@ -73391,7 +73399,8 @@
    "warroom_alerts": {
     "select": [
      "src/hooks/business/useWarRoomAlerts.ts",
-     "supabase/functions/_shared/evolution-webhook-handlers.ts"
+     "supabase/functions/_shared/evolution-webhook-handlers.ts",
+     "supabase/functions/connection-health-check/index.ts"
     ],
     "update": [
      "src/hooks/business/useWarRoomAlerts.ts",
@@ -73450,6 +73459,7 @@
      "src/hooks/chat/useGroupsManager.ts",
      "src/hooks/chat/useNewConversation.ts",
      "src/hooks/connections/useConnectionsHealth.ts",
+     "src/hooks/inbox/useConnectionHealthBanner.ts",
      "src/hooks/inbox/useConnectionsManager.ts",
      "src/hooks/integrations/useCatalogSendReadiness.ts",
      "src/hooks/integrations/useTalkXConnectionStatus.ts",
@@ -74171,6 +74181,7 @@
     "voice_id"
    ],
    "notifications": [
+    "dedupe_key",
     "id",
     "is_read",
     "user_id"
@@ -74592,6 +74603,7 @@
     "capabilities",
     "created_at",
     "created_by",
+    "health_reason",
     "health_response_ms",
     "health_status",
     "id",
@@ -75280,6 +75292,7 @@
    ],
    "RESEND_API_KEY": [
     "scripts/ai-context/gerar.unit.mjs",
+    "supabase/functions/connection-health-check/index.test.ts",
     "supabase/functions/connection-health-check/index.ts",
     "supabase/functions/detect-new-device/index.ts",
     "supabase/functions/send-scheduled-report/index.test.ts",
@@ -76315,6 +76328,7 @@
     "supabase/functions/multiplix-send/index.ts"
    ],
    "transition_talkx_campaign": [
+    "supabase/functions/connection-health-check/index.ts",
     "supabase/functions/talkx-send/index.ts",
     "supabase/functions/talkx-send/process-recipient.ts"
    ],
@@ -79182,6 +79196,11 @@
     "file": "src/hooks/inbox/conversationArchive.ts",
     "name": "ConversationStatus",
     "values": "open | waiting | resolved | archived"
+   },
+   {
+    "file": "src/hooks/inbox/useConnectionHealthBanner.ts",
+    "name": "ConnectionBannerLevel",
+    "values": "ok | warn | down"
    },
    {
     "file": "src/hooks/inbox/useInboxFilterPresets.ts",
@@ -88614,6 +88633,10 @@
     "text": "LIMIT devolvia zero quando o contato marcado era o 11º da ordem."
    },
    {
+    "file": "src/components/inbox/chat/ChatInputArea.tsx",
+    "text": "Regra dos três níveis (regras.md §4.2): o atendente sempre sabe que a conexão caiu. */}"
+   },
+   {
     "file": "src/components/inbox/chat/ChatMessagesArea.tsx",
     "text": "apenas consumimos o contrato — nenhuma consulta e feita neste componente."
    },
@@ -90896,6 +90919,10 @@
    {
     "file": "src/hooks/inbox/conversationArchive.ts",
     "text": "mexer em `assigned_to`. Antes cada tela tinha a sua regra: o painel de"
+   },
+   {
+    "file": "src/hooks/inbox/useConnectionHealthBanner.ts",
+    "text": "* Regra dos três níveis (docs/contexto/regras/manual/regras.md §4.2): o atendente"
    },
    {
     "file": "src/hooks/inbox/useConnectionsManager.ts",
@@ -94415,11 +94442,27 @@
    },
    {
     "file": "supabase/functions/connection-health-check/index.ts",
+    "text": "* Regra dos três níveis (docs/contexto/regras/manual/regras.md §4.2, decisão de"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.ts",
     "text": "* Roda `worker` sobre `items` com no máximo `limit` tarefas em voo. Sem item não"
    },
    {
     "file": "supabase/functions/connection-health-check/index.ts",
     "text": "abre runner nenhum; com menos itens que o limite, não cria runner ocioso."
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.ts",
+    "text": "429 (limite de taxa/cota) é passageiro: tenta de novo na próxima sonda. Outros 4xx"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.ts",
+    "text": "* Nível 1/2 da regra dos três níveis. Destinatários OBRIGATÓRIOS (admin e"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.ts",
+    "text": "marcador por canal — a sonda roda a cada 5 min e não pode repetir o aviso."
    },
    {
     "file": "supabase/functions/connection-health-check/index.ts",
@@ -94448,18 +94491,6 @@
    {
     "file": "supabase/functions/connection-health-check/index.ts",
     "text": "essa conexão em vez de varrer TODAS (até 10 s cada) gastando o limite do"
-   },
-   {
-    "file": "supabase/functions/connection-health-check/index.ts",
-    "text": "Pular fixture E2E — status seeded nao deve ser sobrescrito pelo health check"
-   },
-   {
-    "file": "supabase/functions/connection-health-check/index.ts",
-    "text": "Libera a chave apenas depois que o CAS confirmar a recuperação;"
-   },
-   {
-    "file": "supabase/functions/connection-health-check/index.ts",
-    "text": "devolver 500 faria parecer que a checagem falhou (mesma regra do helper) —"
    },
    {
     "file": "supabase/functions/copilot-live/index.ts",
@@ -105632,6 +105663,11 @@
     "value": "'id, action, user_id, created_at'"
    },
    {
+    "file": "src/hooks/inbox/useConnectionHealthBanner.ts",
+    "name": "CONNECTION_BANNER_POLL_MS",
+    "value": "60"
+   },
+   {
     "file": "src/hooks/inbox/useContactDeliveryStats.ts",
     "name": "DELIVERY_WINDOW_HOURS",
     "value": "24"
@@ -107783,6 +107819,21 @@
    },
    {
     "file": "supabase/functions/connection-health-check/index.ts",
+    "name": "LEVEL1_DISCONNECTED_MS",
+    "value": "15"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.ts",
+    "name": "LEVEL1_DEGRADED_MS",
+    "value": "30"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.ts",
+    "name": "LEVEL2_MS",
+    "value": "60"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.ts",
     "name": "HEALTH_CHECK_CONCURRENCY",
     "value": "3"
    },
@@ -109793,6 +109844,12 @@
     "file": "src/components/connections/ConnectionCard.tsx",
     "field": "health_status",
     "value": "error",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/connections/ConnectionCard.tsx",
+    "field": "status",
+    "value": "connected",
     "kind": "compara"
    },
    {
@@ -116708,6 +116765,24 @@
     "kind": "compara"
    },
    {
+    "file": "src/hooks/inbox/useConnectionHealthBanner.ts",
+    "field": "status",
+    "value": "connected",
+    "kind": "compara"
+   },
+   {
+    "file": "src/hooks/inbox/useConnectionHealthBanner.ts",
+    "field": "health_status",
+    "value": "degraded",
+    "kind": "compara"
+   },
+   {
+    "file": "src/hooks/inbox/useConnectionHealthBanner.ts",
+    "field": "health_status",
+    "value": "disconnected",
+    "kind": "compara"
+   },
+   {
     "file": "src/hooks/inbox/useConnectionsManager.ts",
     "field": "status",
     "value": "loading",
@@ -121694,6 +121769,12 @@
     "kind": "compara"
    },
    {
+    "file": "supabase/functions/connection-health-check/index.ts",
+    "field": "status",
+    "value": "paused",
+    "kind": "filtra"
+   },
+   {
     "file": "supabase/functions/copilot-live/index.ts",
     "field": "type",
     "value": "suggestion",
@@ -124994,6 +125075,18 @@
    {
     "file": "supabase/functions/connection-health-check/index.ts",
     "line": "const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.ts",
+    "line": "export const LEVEL1_DEGRADED_MS = 30 * 60 * 1000;"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.ts",
+    "line": "export const LEVEL1_DISCONNECTED_MS = 15 * 60 * 1000;"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.ts",
+    "line": "export const LEVEL2_MS = 60 * 60 * 1000;"
    },
    {
     "file": "supabase/functions/detect-new-device/index.ts",
@@ -180908,6 +181001,22 @@
     "name": "PK-15 (workersql): RLS de contact_purchases pela regra nova do cartão (prova de enforcement com papel real em scripts/db-audit)"
    },
    {
+    "file": "src/hooks/inbox/__tests__/useConnectionHealthBanner.test.ts",
+    "name": "regra dos três níveis — aviso na caixa de mensagem (regras.md §4.2)"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionHealthBanner.test.ts",
+    "name": "conexão saudável: sem aviso"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionHealthBanner.test.ts",
+    "name": "nível 0 (queda rápida ou degradada): amarelo, avisa que o envio falha (não há fila offline)"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionHealthBanner.test.ts",
+    "name": "nível 1 (precisa de QR): vermelho, diz que só o admin conecta e que envios falham"
+   },
+   {
     "file": "src/hooks/inbox/__tests__/useConnectionsManager.add-connection-error.test.ts",
     "name": "useConnectionsManager — erro de nova conexão ([refazer 1] P1/P2/P3)"
    },
@@ -202332,6 +202441,58 @@
     "name": "reconexão: conexão que volta zera o contador e o motivo"
    },
    {
+    "file": "supabase/functions/connection-health-check/index.test.ts",
+    "name": "3 níveis: decideEscalation — rápida=0, esgotada/fantasma/15min=1, 1h=2, degraded só ≥30min"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.test.ts",
+    "name": "3 níveis: queda rápida (nível 0) grava o warroom mas NÃO manda push nem e-mail a ninguém"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.test.ts",
+    "name": "3 níveis: reconexão esgotada (nível 1) avisa admin E supervisor por push+e-mail, mesmo sem opt-in, uma vez por episódio"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.test.ts",
+    "name": "3 níveis: ≥ 1 h caída (nível 2) repete por hora só para o admin"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.test.ts",
+    "name": "3 níveis: sessão fantasma é nível 1 imediato (sem esperar 15 min)"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.test.ts",
+    "name": "3 níveis: e-mail recusado pelo Resend não grava o marcador — a próxima sonda tenta de novo"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.test.ts",
+    "name": "3 níveis: recuperação já gravada pelo webhook ainda retoma campanhas e libera as chaves de nível"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.test.ts",
+    "name": "3 níveis: sem linha no warroom, a sonda cria o registro e o relógio do episódio começa (não fica em zero)"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.test.ts",
+    "name": "3 níveis: degradação encerrada (sonda saudável) libera só a chave degraded; a de queda fica intacta até a conexão voltar"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.test.ts",
+    "name": "3 níveis: queda confirmada só pelo tempo (sem reconexão automática) grava motivo que pede QR — composer vermelho"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.test.ts",
+    "name": "3 níveis: quem só optou por e-mail recebe o e-mail (marcador lido em tela), sem push"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.test.ts",
+    "name": "3 níveis: recusa definitiva do Resend (4xx) marca o e-mail e não repete a cada sonda"
+   },
+   {
+    "file": "supabase/functions/connection-health-check/index.test.ts",
+    "name": "3 níveis: 429 do Resend é transitório — sem marcador, o e-mail sai na sonda seguinte"
+   },
+   {
     "file": "supabase/functions/create-user/index.test.ts",
     "name": "R2-AUTH-016 (a): falha no upsert de user_roles -> erro + deleteUser"
    },
@@ -211217,7 +211378,7 @@
    },
    {
     "file": "supabase/functions/connection-health-check/index.ts",
-    "call": "notifyOptedIn"
+    "call": "notifyEscalation"
    },
    {
     "file": "supabase/functions/evolution-api/index.ts",
@@ -235850,6 +236011,7 @@
       "compara:src/components/omnichannel/OmnichannelManager.tsx",
       "compara:src/components/talkx/useCampaignEditor.ts",
       "compara:src/hooks/calls/useCallChannels.ts",
+      "compara:src/hooks/inbox/useConnectionHealthBanner.ts",
       "compara:src/hooks/inbox/useConnectionsManager.ts",
       "compara:src/hooks/system/useDiagnosticsData.ts",
       "compara:src/services/evolution.service.ts",
@@ -236073,6 +236235,7 @@
       "compara:src/hooks/integrations/useTalkXResumeChecklist.ts",
       "compara:src/hooks/integrations/useTalkXServerResumePrecheck.ts",
       "escreve:src/components/inbox/location-picker/useAddressAutocomplete.ts",
+      "filtra:supabase/functions/connection-health-check/index.ts",
       "filtra:supabase/functions/talkx-scheduler/index.ts"
      ],
      "empty": [
@@ -236796,7 +236959,8 @@
       "compara:src/components/diagnostics/ConnectionHealthPanel.tsx"
      ],
      "degraded": [
-      "compara:src/components/connections/ConnectionCard.tsx"
+      "compara:src/components/connections/ConnectionCard.tsx",
+      "compara:src/hooks/inbox/useConnectionHealthBanner.ts"
      ],
      "error": [
       "compara:src/components/connections/ConnectionCard.tsx"
@@ -236805,7 +236969,8 @@
       "compara:src/components/connections/ConnectionCard.tsx"
      ],
      "disconnected": [
-      "compara:src/components/connections/ConnectionCard.tsx"
+      "compara:src/components/connections/ConnectionCard.tsx",
+      "compara:src/hooks/inbox/useConnectionHealthBanner.ts"
      ]
     },
     "warmup_status": {
@@ -274673,7 +274838,7 @@
   },
   "src/components/connections/ConnectionCard.tsx": {
    "path": "src/components/connections/ConnectionCard.tsx",
-   "lines": 270,
+   "lines": 276,
    "exports": [
     "function ConnectionCard"
    ],
@@ -274756,6 +274921,11 @@
     {
      "field": "health_status",
      "value": "error",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "connected",
      "kind": "compara"
     },
     {
@@ -286659,9 +286829,12 @@
   },
   "src/components/inbox/chat/ChatInputArea.tsx": {
    "path": "src/components/inbox/chat/ChatInputArea.tsx",
-   "lines": 344,
+   "lines": 352,
    "exports": [
     "function ChatInputArea"
+   ],
+   "rule_comments": [
+    "Regra dos três níveis (regras.md §4.2): o atendente sempre sabe que a conexão caiu. */}"
    ]
   },
   "src/components/inbox/chat/ChatInputToolbars.tsx": {
@@ -286771,6 +286944,13 @@
    "lines": 11,
    "exports": [
     "const ChatWatermark"
+   ]
+  },
+  "src/components/inbox/chat/ConnectionHealthBanner.tsx": {
+   "path": "src/components/inbox/chat/ConnectionHealthBanner.tsx",
+   "lines": 36,
+   "exports": [
+    "function ConnectionHealthBanner"
    ]
   },
   "src/components/inbox/chat/ContactPresenceIndicator.tsx": {
@@ -327024,6 +327204,67 @@
     "useConnectionAuditLogs"
    ]
   },
+  "src/hooks/inbox/useConnectionHealthBanner.ts": {
+   "path": "src/hooks/inbox/useConnectionHealthBanner.ts",
+   "lines": 90,
+   "exports": [
+    "type ConnectionBannerLevel",
+    "interface ConnectionBanner",
+    "const CONNECTION_BANNER_POLL_MS",
+    "function classifyConnectionHealth",
+    "function useConnectionHealthBanner",
+    "function connectionBannerText"
+   ],
+   "tables": [
+    {
+     "table": "whatsapp_connections",
+     "op": "select"
+    }
+   ],
+   "table_cols": {
+    "whatsapp_connections": [
+     "health_reason",
+     "health_status",
+     "instance_id",
+     "status"
+    ]
+   },
+   "enums": [
+    {
+     "name": "ConnectionBannerLevel",
+     "values": "ok | warn | down"
+    }
+   ],
+   "params": [
+    {
+     "name": "CONNECTION_BANNER_POLL_MS",
+     "value": "60"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "status",
+     "value": "connected",
+     "kind": "compara"
+    },
+    {
+     "field": "health_status",
+     "value": "degraded",
+     "kind": "compara"
+    },
+    {
+     "field": "health_status",
+     "value": "disconnected",
+     "kind": "compara"
+    }
+   ],
+   "rule_comments": [
+    "* Regra dos três níveis (docs/contexto/regras/manual/regras.md §4.2): o atendente"
+   ],
+   "hooks": [
+    "useConnectionHealthBanner"
+   ]
+  },
   "src/hooks/inbox/useConnectionQueues.ts": {
    "path": "src/hooks/inbox/useConnectionQueues.ts",
    "lines": 81,
@@ -327799,6 +328040,17 @@
     "PK-07 (hugo): useNextBestAction com VÁRIAS linhas de SLA — hoje lê uma única linha de conversation_sla por contato",
     "PK-05 (workersql): política de UPDATE do sussurro / marcação de lido limita ao autor",
     "PK-15 (workersql): RLS de contact_purchases pela regra nova do cartão (prova de enforcement com papel real em scripts/db-audit)"
+   ]
+  },
+  "src/hooks/inbox/__tests__/useConnectionHealthBanner.test.ts": {
+   "path": "src/hooks/inbox/__tests__/useConnectionHealthBanner.test.ts",
+   "lines": 24,
+   "is_test": true,
+   "tests": [
+    "regra dos três níveis — aviso na caixa de mensagem (regras.md §4.2)",
+    "conexão saudável: sem aviso",
+    "nível 0 (queda rápida ou degradada): amarelo, avisa que o envio falha (não há fila offline)",
+    "nível 1 (precisa de QR): vermelho, diz que só o admin conecta e que envios falham"
    ]
   },
   "src/hooks/inbox/__tests__/useConnectionsManager.add-connection-error.test.ts": {
@@ -361930,13 +362182,18 @@
   },
   "supabase/functions/connection-health-check/index.test.ts": {
    "path": "supabase/functions/connection-health-check/index.test.ts",
-   "lines": 861,
+   "lines": 1167,
    "is_test": true,
+   "env": [
+    "RESEND_API_KEY"
+   ],
    "errors": [
+    "bad address",
     "esperado 2 destinatários, veio ${pushQueda.length}",
     "esperado nenhum aviso, veio ${prefs.length}",
     "esperado os 4 avisos padrão, veio ${JSON.stringify(chaves)}",
-    "esperado só push:disconnected, veio ${JSON.stringify(chaves)}"
+    "esperado só push:disconnected, veio ${JSON.stringify(chaves)}",
+    "rate limited"
    ],
    "params": [
     {
@@ -361954,7 +362211,11 @@
     "// O DEFEITO que esta matriz fecha: a dispensa de papel/limite era decidida pela",
     "para o gate de admin/supervisor e o rate limit serem pulados. Por isso o último",
     "─── Testes de autorização e rate limit (N-162) ──────────────────────────",
-    "E não pode ter consultado o provedor nem transicionado status: barrado antes."
+    "E não pode ter consultado o provedor nem transicionado status: barrado antes.",
+    "───────────────────── regra dos três níveis (regras.md §4.2) ─────────────────────"
+   ],
+   "temporal": [
+    "fake.episodeStartedAt = new Date(Date.now() - 2 * 60 * 60_000).toISOString();"
    ],
    "tests": [
     "E24: cada conexão consulta o provedor com o token DELA, nunca com a chave global",
@@ -361983,16 +362244,37 @@
     "reconexão: conexão caída com política ligada chama /instance/reconnect e registra a tentativa",
     "reconexão: política desligada (ou ausente) não tenta",
     "reconexão: esgotadas as tentativas, para e pede o QR no motivo de saúde",
-    "reconexão: conexão que volta zera o contador e o motivo"
+    "reconexão: conexão que volta zera o contador e o motivo",
+    "3 níveis: decideEscalation — rápida=0, esgotada/fantasma/15min=1, 1h=2, degraded só ≥30min",
+    "3 níveis: queda rápida (nível 0) grava o warroom mas NÃO manda push nem e-mail a ninguém",
+    "3 níveis: reconexão esgotada (nível 1) avisa admin E supervisor por push+e-mail, mesmo sem opt-in, uma vez por episódio",
+    "3 níveis: ≥ 1 h caída (nível 2) repete por hora só para o admin",
+    "3 níveis: sessão fantasma é nível 1 imediato (sem esperar 15 min)",
+    "3 níveis: e-mail recusado pelo Resend não grava o marcador — a próxima sonda tenta de novo",
+    "3 níveis: recuperação já gravada pelo webhook ainda retoma campanhas e libera as chaves de nível",
+    "3 níveis: sem linha no warroom, a sonda cria o registro e o relógio do episódio começa (não fica em zero)",
+    "3 níveis: degradação encerrada (sonda saudável) libera só a chave degraded; a de queda fica intacta até a conexão voltar",
+    "3 níveis: queda confirmada só pelo tempo (sem reconexão automática) grava motivo que pede QR — composer vermelho",
+    "3 níveis: quem só optou por e-mail recebe o e-mail (marcador lido em tela), sem push",
+    "3 níveis: recusa definitiva do Resend (4xx) marca o e-mail e não repete a cada sonda",
+    "3 níveis: 429 do Resend é transitório — sem marcador, o e-mail sai na sonda seguinte"
    ]
   },
   "supabase/functions/connection-health-check/index.ts": {
    "path": "supabase/functions/connection-health-check/index.ts",
-   "lines": 917,
+   "lines": 1143,
    "exports": [
     "type ReconnectDecision",
     "function decideReconnect",
     "const RECONNECT_EXHAUSTED_REASON",
+    "const PHANTOM_SESSION_REASON",
+    "const CONFIRMED_DOWN_REASON",
+    "type EscalationLevel",
+    "const LEVEL1_DISCONNECTED_MS",
+    "const LEVEL1_DEGRADED_MS",
+    "const LEVEL2_MS",
+    "function decideEscalation",
+    "function levelDedupeKey",
     "type HealthLevel",
     "function parseOwnerJid",
     "function evaluateOpenConnectionHealth",
@@ -362020,11 +362302,39 @@
      "op": "insert"
     },
     {
+     "table": "user_roles",
+     "op": "select"
+    },
+    {
+     "table": "notifications",
+     "op": "select"
+    },
+    {
      "table": "notifications",
      "op": "insert"
     },
     {
      "table": "profiles",
+     "op": "select"
+    },
+    {
+     "table": "warroom_alerts",
+     "op": "select"
+    },
+    {
+     "table": "warroom_alerts",
+     "op": "insert"
+    },
+    {
+     "table": "notifications",
+     "op": "update"
+    },
+    {
+     "table": "warroom_alerts",
+     "op": "update"
+    },
+    {
+     "table": "talkx_campaigns",
      "op": "select"
     },
     {
@@ -362069,6 +362379,14 @@
     },
     {
      "table": "whatsapp_connections",
+     "op": "update"
+    },
+    {
+     "table": "warroom_alerts",
+     "op": "update"
+    },
+    {
+     "table": "whatsapp_connections",
      "op": "select,update"
     },
     {
@@ -362092,12 +362410,17 @@
      "op": "insert"
     },
     {
+     "table": "whatsapp_connections",
+     "op": "update"
+    },
+    {
      "table": "connection_health_logs",
      "op": "delete"
     }
    ],
    "table_cols": {
     "user_roles": [
+     "role",
      "user_id"
     ],
     "connection_alert_preferences": [
@@ -362108,14 +362431,27 @@
      "user_id"
     ],
     "warroom_alerts": [
+     "created_at",
      "dedupe_key"
+    ],
+    "notifications": [
+     "dedupe_key",
+     "id",
+     "user_id"
     ],
     "profiles": [
      "email",
      "user_id"
     ],
+    "talkx_campaigns": [
+     "id",
+     "pause_reason",
+     "status",
+     "whatsapp_connection_id"
+    ],
     "whatsapp_connections": [
      "auto_reconnect_enabled",
+     "health_reason",
      "id",
      "instance_id",
      "phone_number",
@@ -362145,7 +362481,8 @@
     "get_connection_health_check_cron_secret",
     "get_instance_token",
     "is_admin_or_supervisor",
-    "is_within_business_hours"
+    "is_within_business_hours",
+    "transition_talkx_campaign"
    ],
    "external_urls": [
     "https://api.resend.com/emails"
@@ -362167,6 +362504,18 @@
     }
    ],
    "params": [
+    {
+     "name": "LEVEL1_DISCONNECTED_MS",
+     "value": "15"
+    },
+    {
+     "name": "LEVEL1_DEGRADED_MS",
+     "value": "30"
+    },
+    {
+     "name": "LEVEL2_MS",
+     "value": "60"
+    },
     {
      "name": "HEALTH_CHECK_CONCURRENCY",
      "value": "3"
@@ -362241,31 +362590,40 @@
      "field": "status",
      "value": "connected",
      "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "paused",
+     "kind": "filtra"
     }
    ],
    "rule_comments": [
     "Regra: só tenta com a política LIGADA (ausente = desligada), no máximo",
     "conexão volta) e respeitando o intervalo mínimo desde a última tentativa.",
+    "* Regra dos três níveis (docs/contexto/regras/manual/regras.md §4.2, decisão de",
     "* Roda `worker` sobre `items` com no máximo `limit` tarefas em voo. Sem item não",
     "abre runner nenhum; com menos itens que o limite, não cria runner ocioso.",
+    "429 (limite de taxa/cota) é passageiro: tenta de novo na próxima sonda. Outros 4xx",
+    "* Nível 1/2 da regra dos três níveis. Destinatários OBRIGATÓRIOS (admin e",
+    "marcador por canal — a sonda roda a cada 5 min e não pode repetir o aviso.",
     "guard (autorização) e à decisão de cron (dispensa de papel/limite), sem duas",
     "N-162: o cron (consumidor automatizado legítimo) dispensa papel e limite;",
     "o resto é chamada de USUÁRIO e exige admin/supervisor + rate limit.",
     "mandar `x-cron-secret` com qualquer valor para o gate de papel e o rate limit",
     "Identidade do chamante para o cheque de papel e o rate limit.",
     "Limite por USUÁRIO (não por IP): o mesmo usuário por trás de IPs diferentes",
-    "essa conexão em vez de varrer TODAS (até 10 s cada) gastando o limite do",
-    "Pular fixture E2E — status seeded nao deve ser sobrescrito pelo health check",
-    "Libera a chave apenas depois que o CAS confirmar a recuperação;",
-    "devolver 500 faria parecer que a checagem falhou (mesma regra do helper) —"
+    "essa conexão em vez de varrer TODAS (até 10 s cada) gastando o limite do"
    ],
    "temporal": [
     "const STALE_SESSION_MS = 6 * 60 * 60 * 1000;",
     "const WEBHOOK_SILENT_MS = 30 * 60 * 1000;",
-    "const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();"
+    "const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();",
+    "export const LEVEL1_DEGRADED_MS = 30 * 60 * 1000;",
+    "export const LEVEL1_DISCONNECTED_MS = 15 * 60 * 1000;",
+    "export const LEVEL2_MS = 60 * 60 * 1000;"
    ],
    "side_effects": [
-    "notifyOptedIn"
+    "notifyEscalation"
    ],
    "pagination": [
     "1"
@@ -380861,10 +381219,28 @@
   }
  },
  "git": {
-  "sha": "f3c9b5d5caf428728279e09c3007895e9acd43b5",
+  "sha": "031d5e596af02705ea45487aaf0fc65aa26ad4d1",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "031d5e5",
+    "date": "2026-11-03",
+    "author": "adm01-debug",
+    "subject": "feat(conexao): regra dos três níveis — aviso na caixa, alerta obrigatório admin/supervisor, QR só admin (#2677)",
+    "files": [
+     "src/components/connections/ConnectionCard.tsx",
+     "src/components/inbox/chat/ChatInputArea.tsx",
+     "src/components/inbox/chat/ConnectionHealthBanner.tsx",
+     "src/hooks/inbox/__tests__/useConnectionHealthBanner.test.ts",
+     "src/hooks/inbox/useConnectionHealthBanner.ts",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts",
+     "supabase/functions/_shared/__tests__/evolution-connection-state.test.ts",
+     "supabase/functions/connection-health-check/index.test.ts",
+     "supabase/functions/connection-health-check/index.ts"
+    ]
+   },
    {
     "sha": "f3c9b5d",
     "date": "2026-11-03",
@@ -381609,15 +381985,6 @@
      "AGENTS.md",
      "CLAUDE.md",
      "docs/PRONTO_PRODUCAO.md"
-    ]
-   },
-   {
-    "sha": "54a3221",
-    "date": "2026-11-02",
-    "author": "adm01-debug",
-    "subject": "fix: N-008 usa imagem Docker pinada via POSTGRES_TEST_IMAGE (#2622)",
-    "files": [
-     "scripts/db-audit/user-sessions-expire.test.sh"
     ]
    }
   ],

@@ -977,7 +977,7 @@
    "nome": "connection-health-check",
    "entrada": "supabase/functions/connection-health-check/index.ts",
    "arquivos": 1,
-   "linhas": 917,
+   "linhas": 1143,
    "verify_jwt": false,
    "metodos": [],
    "tabelas": [
@@ -989,6 +989,7 @@
     "notifications",
     "profiles",
     "reconnection_logs",
+    "talkx_campaigns",
     "user_roles",
     "warroom_alerts",
     "whatsapp_connections"
@@ -997,7 +998,8 @@
     "get_connection_health_check_cron_secret",
     "get_instance_token",
     "is_admin_or_supervisor",
-    "is_within_business_hours"
+    "is_within_business_hours",
+    "transition_talkx_campaign"
    ],
    "env": [
     "EVOLUTION_API_FLAVOR",

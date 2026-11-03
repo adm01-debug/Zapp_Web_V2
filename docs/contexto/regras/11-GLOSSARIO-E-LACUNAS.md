@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f3c9b5d5ca` · branch `main` · 2026-11-03 15:40 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `031d5e596a` · branch `main` · 2026-11-03 16:58 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -307,7 +307,7 @@
 | `KpiTone` (TS) | blue \| green \| purple \| yellow \| red |  | `src/components/inbox/tabs/KpiStrip.tsx` |
 | `SenderAvatarSize` (TS) | sm \| md |  | `src/components/inbox/tabs/SenderAvatar.tsx` |
 | `DocumentFamily` (TS) | pdf \| sheet \| doc \| ppt \| archive \| generic |  | `src/components/inbox/tabs/fileDisplay.ts` |
-| … +348 linhas — lista completa em `context.json` | | | |
+| … +349 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 

@@ -2,16 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f3c9b5d5caf428728279e09c3007895e9acd43b5",
+  "commit": "031d5e596af02705ea45487aaf0fc65aa26ad4d1",
   "branch": "main",
-  "data_commit": "2026-11-03T15:39:20Z",
+  "data_commit": "2026-11-03T16:56:16Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
-  "arquivos_mudados_7d": 1366,
+  "arquivos_mudados_7d": 1372,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 1758
+    "mudancas": 1760
    },
    {
     "pasta": "src/components/talkx",
@@ -39,7 +39,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 307
+    "mudancas": 309
    },
    {
     "pasta": "src/hooks/chat",
@@ -108,11 +108,11 @@
     "mudancas": 13
    },
    {
-    "arquivo": ".github/workflows/deploy-functions.yml",
-    "mudancas": 12
+    "arquivo": "supabase/deployment-manifest.json",
+    "mudancas": 13
    },
    {
-    "arquivo": "supabase/deployment-manifest.json",
+    "arquivo": ".github/workflows/deploy-functions.yml",
     "mudancas": 12
    },
    {
@@ -192,21 +192,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8136,
-  "arquivos_codigo": 4641,
-  "linhas_codigo": 850148,
+  "arquivos_total": 8139,
+  "arquivos_codigo": 4644,
+  "linhas_codigo": 850844,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 142,
-  "componentes": 886,
-  "hooks": 490,
+  "componentes": 887,
+  "hooks": 491,
   "edge_functions": 85,
   "tabelas": 226,
   "migrations": 1105,
   "cron_jobs": 25,
-  "testes": 2529,
+  "testes": 2530,
   "workflows": 19,
   "scripts": 376,
   "docs_md": 1030
@@ -565,8 +565,8 @@
    "linhas": 590
   },
   "src/components": {
-   "arquivos": 2158,
-   "linhas": 368168
+   "arquivos": 2159,
+   "linhas": 368218
   },
   "src/config": {
    "arquivos": 3,
@@ -585,8 +585,8 @@
    "linhas": 3298
   },
   "src/hooks": {
-   "arquivos": 981,
-   "linhas": 159433
+   "arquivos": 983,
+   "linhas": 159547
   },
   "src/i18n": {
    "arquivos": 2,
@@ -642,7 +642,7 @@
   },
   "supabase/functions": {
    "arquivos": 380,
-   "linhas": 114725
+   "linhas": 115257
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -707,6 +707,10 @@
    "linhas": 1165
   },
   {
+   "arquivo": "supabase/functions/connection-health-check/index.ts",
+   "linhas": 1143
+  },
+  {
    "arquivo": "supabase/functions/evolution-api/index.ts",
    "linhas": 1123
   },
@@ -757,10 +761,6 @@
   {
    "arquivo": "src/components/talkx/TalkXCampaignRunning.tsx",
    "linhas": 947
-  },
-  {
-   "arquivo": "supabase/functions/connection-health-check/index.ts",
-   "linhas": 917
   },
   {
    "arquivo": "scripts/ai-context/gerar.mjs",

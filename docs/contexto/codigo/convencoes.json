@@ -7,12 +7,12 @@
    "src/pages (18)"
   ],
   "componentes": [
-   "src/components (852)",
+   "src/components (853)",
    "src/pages (26)",
    "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (409)",
+   "src/hooks (410)",
    "src/components (72)",
    "src/contexts (2)"
   ],
@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (1948)",
+   "co-localizado (__tests__) (1949)",
    "co-localizado (*.test) (168)",
    "outro (155)"
   ],
@@ -48,7 +48,7 @@
  },
  "barrels_index": 70,
  "extensao_componentes": [
-  ".tsx (886)"
+  ".tsx (887)"
  ],
  "alias_imports": {
   "(raiz)": {
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(conexao): regra dos três níveis — aviso na caixa, alerta obrigatório admin/supervisor, QR só admin (#2677)",
    "chore(contexto): regras manuais — pagamentos, single-tenant, perfis, retenção/LGPD, SLA (#2674)",
    "chore(contexto): regras manuais de campanhas Talk X (#2673)",
    "chore(contexto): regras manuais de conversas e conexão WhatsApp (#2672)",
-   "fix(contexto): regras/ ignora constantes, prazos e erros vindos de arquivos de teste (#2667)",
-   "fix(contexto): índice lê a data do snapshot pelo CHANGELOG/git quando não há manifest datado (#2666)"
+   "fix(contexto): regras/ ignora constantes, prazos e erros vindos de arquivos de teste (#2667)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

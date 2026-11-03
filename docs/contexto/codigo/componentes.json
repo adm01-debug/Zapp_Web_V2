@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 886,
+ "total": 887,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -1759,7 +1759,7 @@
     "ConnectionCard"
    ],
    "export_default": null,
-   "linhas": 270,
+   "linhas": 276,
    "dominio": "components/connections",
    "hooks_locais": [
     "useUserRole"
@@ -4878,10 +4878,11 @@
     "ChatInputArea"
    ],
    "export_default": null,
-   "linhas": 344,
+   "linhas": 352,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useChatInputLogic",
+    "useConnectionHealthBanner",
     "useMentions"
    ],
    "tabelas": [],
@@ -5036,6 +5037,20 @@
    ],
    "export_default": null,
    "linhas": 11,
+   "dominio": "components/inbox",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/inbox/chat/ConnectionHealthBanner.tsx",
+   "exports": [
+    "ConnectionHealthBanner"
+   ],
+   "export_default": null,
+   "linhas": 36,
    "dominio": "components/inbox",
    "hooks_locais": [],
    "tabelas": [],

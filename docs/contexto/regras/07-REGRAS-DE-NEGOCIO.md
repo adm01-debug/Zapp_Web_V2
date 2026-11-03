@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f3c9b5d5ca` · branch `main` · 2026-11-03 15:40 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `031d5e596a` · branch `main` · 2026-11-03 16:58 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1608,7 +1608,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `status` | `checking` | compara, escreve | `src/components/auth/ProtectedRoute.tsx`<br>`src/hooks/system/useSupabaseConnectivity.ts`<br>`src/pages/TwoFactorAuth.tsx` |
 | `status` | `completed` | compara, escreve, filtra | `src/components/admin/TrainingMode.tsx`<br>`src/components/chatbot/ChatbotExecutionsDashboard.tsx`<br>`src/components/contacts/ContactPurchaseHistory.tsx`<br>`src/components/knowledge/KnowledgeBaseView.tsx`<br>`src/components/multiplix/MultiplixMonitor.tsx`<br>… +9 |
 | `status` | `completed_with_failures` | compara | `src/components/multiplix/MultiplixMonitor.tsx` |
-| `status` | `connected` | compara, escreve, filtra | `src/components/connections/ConnectionCard.tsx`<br>`src/components/connections/ConnectionsView.tsx`<br>`src/components/dashboard/systemHealth.ts`<br>`src/components/diagnostics/ConnectionHealthPanel.tsx`<br>`src/components/diagnostics/DiagnosticsView.tsx`<br>… +35 |
+| `status` | `connected` | compara, escreve, filtra | `src/components/connections/ConnectionCard.tsx`<br>`src/components/connections/ConnectionsView.tsx`<br>`src/components/dashboard/systemHealth.ts`<br>`src/components/diagnostics/ConnectionHealthPanel.tsx`<br>`src/components/diagnostics/DiagnosticsView.tsx`<br>… +36 |
 | `status` | `connecting` | compara, escreve | `src/components/calls/CallDialog.tsx`<br>`src/components/calls/NewCallPanel.tsx`<br>`src/components/connections/ConnectionCard.tsx`<br>`src/components/diagnostics/DiagnosticsView.tsx`<br>`src/components/inbox/RealtimeTranscription.tsx`<br>… +6 |
 | `status` | `critical` | compara | `src/components/performance/PerformanceMonitor.tsx` |
 | `status` | `declined` | compara, escreve | `src/lib/calls/WhatsAppCallAdapter.ts`<br>`src/lib/calls/callStatus.ts` |
@@ -1808,6 +1808,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | UnreadEmailCountStatus | loading \| ok \| erro | `src/hooks/gmail/useUnreadEmailCount.ts` |
 | GROUP_CATEGORIES | { value: 'orcamentos', label: 'Orçamentos \| Fornecedores', color: 'text-info', icon: '📋' }, { value: 'aprovacao', label: 'Aprovação \| Fornecedores', color: 'text-success', icon: '✅' }, { value: 'os', label: 'O.S. \| Fornecedores', color: 'text-warning', icon: '🔧' }, { value: 'acerto', label: 'Acerto … | `src/hooks/groups/types.ts` |
 | ConversationStatus | open \| waiting \| resolved \| archived | `src/hooks/inbox/conversationArchive.ts` |
+| ConnectionBannerLevel | ok \| warn \| down | `src/hooks/inbox/useConnectionHealthBanner.ts` |
 | INBOX_FILTER_PRESETS_QUERY_KEY | 'saved-filters', INBOX_FILTER_PRESET_ENTITY, | `src/hooks/inbox/useInboxFilterPresets.ts` |
 | CatalogSendStatus | sent \| partial \| failed | `src/hooks/integrations/useCatalogContactSearch.ts` |
 | CatalogSendTemplate | formal \| informal \| promo \| custom | `src/hooks/integrations/useCatalogContactSearch.ts` |
@@ -1923,8 +1924,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | EndReason | completed \| busy \| no_answer \| cancelled \| declined \| failed \| cancelled_remote \| timeout \| busy_here \| hangup_local \| hangup_remote | `src/lib/calls/callStatus.ts` |
 | EndedBy | hangup_local \| hangup_remote \| reject \| cancel_remote \| timeout \| failure | `src/lib/calls/callStatus.ts` |
 | ResultTone | success \| destructive \| warning \| muted \| primary | `src/lib/calls/callStatus.ts` |
-| CapabilityReason | voip_unavailable \| voip_reconnecting \| voip_not_configured \| mic_blocked \| mic_missing \| mic_busy \| whatsapp_unavailable \| whatsapp_no_outbound \| whatsapp_disconnected \| whatsapp_restrito_supervisores \| line_in_use_other_user \| line_in_use_other_tab \| line_busy_here \| unknown | `src/lib/calls/capabilities.ts` |
-| … +112 linhas — lista completa em `context.json` | | |
+| … +113 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -3742,7 +3742,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `MEDIA_PAGE_SIZE` | `60` | `src/hooks/chat/useContactMedia.ts` |
 | `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMedia.ts` |
 | `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMediaCounts.ts` |
-| … +614 linhas — lista completa em `context.json` | | |
+| … +618 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -3944,6 +3944,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `const STALE_SESSION_MS = 6 * 60 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
 | `const WEBHOOK_SILENT_MS = 30 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
 | `const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/connection-health-check/index.ts` |
+| `export const LEVEL1_DEGRADED_MS = 30 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
+| `export const LEVEL1_DISCONNECTED_MS = 15 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
+| `export const LEVEL2_MS = 60 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
 | `expires_at: new Date(args.now.getTime() + 24 * 60 * 60 * 1000).toISOString(),` | `supabase/functions/detect-new-device/index.ts` |
 | `await new Promise((r) => setTimeout(r, 1500));` | `supabase/functions/evolution-api/index.ts` |
 | `await new Promise((r) => setTimeout(r, 2000));` | `supabase/functions/evolution-api/index.ts` |
@@ -4045,10 +4048,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `count(*) FILTER (WHERE replied_at >= v_now - interval '10 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `count(*) FILTER (WHERE replied_at >= v_now - interval '20 minutes'` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `count(*) FILTER (WHERE sent_at < v_now - interval '10 minutes' AND delivered_at IS NOT NULL),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
-| `count(*) FILTER (WHERE sent_at < v_now - interval '10 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
-| `count(*) FILTER (WHERE sent_at >= v_now - interval '5 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
-| `v_step := CASE p_bucket WHEN 'hour' THEN interval '1 hour' ELSE interval '1 minute' END;` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
-| … +72 linhas — lista completa em `context.json` | |
+| … +75 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 
@@ -4560,7 +4560,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21063 testes em 2246 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21080 testes em 2247 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4605,6 +4605,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/chat/__tests__/useForwardMessage.test.ts` | 40 | useForwardMessage — carga dos destinos ao abrir · só consulta o banco quando  · com allowGroups=false não busca a tabela de grupos · erro de rede/RLS ao buscar contatos: lista vazia, erro registrado e isLoading de volta a false … |
 | `src/hooks/integrations/__tests__/useTalkXTemplates.test.ts` | 40 | useTalkXTemplates — listagem · carrega a lista com o select do criador e a ordem por uso/atualizacao · expoe lista vazia quando o banco responde null · propaga o erro de RLS/rede da listagem (nao engole) … |
 | `src/lib/calls/adapters/__tests__/SipCallAdapter.test.ts` | 40 | SipCallAdapter — host, destino e validação do número (T09) · o host da URI vem do UA, não da sessão · é discável quando a URI resolve, e a URI leva o número com o host do UA · número malformado (a URI não resolve) não é discável … |
+| `supabase/functions/connection-health-check/index.test.ts` | 40 | E24: cada conexão consulta o provedor com o token DELA, nunca com a chave global · E24: sem token próprio no Vault a instância não é consultada com a credencial de outra · E24: falha ao LER a credencial do Vault não usa a rede e registra o motivo · E25: GO logada SEM socket (Connected:false, LoggedIn:true) → degraded, nunca healthy … |
 | `src/components/catalog/__tests__/ProductDetailDialog.test.tsx` | 39 | ProductDetailDialog — Fase 6 (galeria, SKU, rodapé) · mostra o contador  · com 1 imagem so nao mostra contador · seta → avanca a galeria e atualiza o contador … |
 | `tests/contracts/ai-generate.contract.test.ts` | 39 | (1) interface congelada: o despacho existe com a forma do desenho · o módulo existe no caminho congelado e exporta generateWithRouting · GenerateParams carrega os 11 campos do desenho (lista pinada) · GenerateResult carrega os 10 campos do desenho (lista pinada) … |
 | `tests/contracts/ai-jobs-estados-e-durabilidade.contract.test.ts` | 39 | (1) vocabulário congelado: os 7 estados nos três artefatos (IA-046) · worker  · interface  · banco: o check de ai_jobs.status contém exatamente os 7 congelados (e nada mais) … |
@@ -4679,7 +4680,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/__tests__/scenario-simulation.test.ts` | 27 | Simulação: computeChurnRisk (500 contatos aleatórios) · score sempre dentro de [0, 100] · riskLevel sempre coerente com o score · reasons nunca vazio e payload sempre completo … |
 | `src/lib/journey/__tests__/model.test.ts` | 27 | KIND_TO_CATEGORY · cobre todos os tipos finos e só eles · CATEGORY_META · cobre todas as categorias e só elas … |
 | `supabase/functions/_shared/__tests__/ai-response-contracts.test.ts` | 27 | análise bem formada passa e preserva os valores · sentiment fora do vocabulário canônico é rejeitado · sentimentScore em string é rejeitado (não vira 80) · sentimentScore fora da faixa 0-100 é rejeitado … |
-| `supabase/functions/connection-health-check/index.test.ts` | 27 | E24: cada conexão consulta o provedor com o token DELA, nunca com a chave global · E24: sem token próprio no Vault a instância não é consultada com a credencial de outra · E24: falha ao LER a credencial do Vault não usa a rede e registra o motivo · E25: GO logada SEM socket (Connected:false, LoggedIn:true) → degraded, nunca healthy … |
 | `tests/contracts/ai-conversation-summary-contract.test.ts` | 27 | ai-conversation-summary — sem fallback que invente análise (IA-023) · não inventa defaults numéricos para sentimento/satisfação ausentes · não usa o fallback textual que sintetizava um resumo · não aplica o default de churnRisk nem clamp em braço … |
 | `e2e/skins-e2e.spec.ts` | 26 | CP8 — fidelidade das 19 skins · as 19 skins aplicam as vars exatas do catálogo e a cor pintada (sidebar/fundo, ΔE76 ≤ 6) · modo claro mantém a skin: corporate, gx-classic e diversity · raio: GX trava em 10px, clássica em 14px, presets rápidos seguem livres … |
 | `src/components/gmail/__tests__/GmailInboxView.test.tsx` | 26 | GmailInboxView · exibe estado  · renderiza a lista de threads do inbox quando há conta ativa · pasta inicial (Inbox) consulta o rótulo INBOX e não filtra em memória … |
@@ -4864,7 +4864,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/__tests__/mapboxSession.test.ts` | 16 | mapboxSession · duas chamadas dentro de 2 min compartilham o mesmo token · inatividade maior que 2 min abre uma sessão nova · depois de um /retrieve, a próxima sessão é nova … |
 | `src/lib/__tests__/mapboxToken.test.ts` | 16 | getMapboxToken · devolve o token e reaproveita o cache na segunda chamada · chamadas simultâneas compartilham uma única invoke · force ignora o cache … |
 | `src/lib/__tests__/queryRetry.test.ts` | 16 | shouldRetryQuery — erro permanente nao repete · status HTTP 401/403/404: false ja na primeira falha · codigos Postgres 42501/42P01/42703: false · PGRST116/PGRST301: false … |
-| … +1946 linhas — lista completa em `context.json` | | |
+| … +1947 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5019,7 +5019,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `.add("link"` | `supabase/functions/_shared/messaging/personalize.ts` |
 | `notify` | `supabase/functions/ai-auto-tag/index.ts` |
 | `notifyError` | `supabase/functions/ai-auto-tag/index.ts` |
-| `notifyOptedIn` | `supabase/functions/connection-health-check/index.ts` |
+| `notifyEscalation` | `supabase/functions/connection-health-check/index.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/evolution-api/index.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/message-delivery/index.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/multiplix-send/index.ts` |
@@ -5281,6 +5281,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | * Mínimo de caracteres para a busca virar evento (abaixo disso é navegação, não consulta). */ | `src/components/inbox/useGlobalSearchData.ts` |
 | A tag entra na CONSULTA, antes do `.limit(10)`: filtrar em JS depois do | `src/components/inbox/useGlobalSearchData.ts` |
 | LIMIT devolvia zero quando o contato marcado era o 11º da ordem. | `src/components/inbox/useGlobalSearchData.ts` |
+| Regra dos três níveis (regras.md §4.2): o atendente sempre sabe que a conexão caiu. */} | `src/components/inbox/chat/ChatInputArea.tsx` |
 | apenas consumimos o contrato — nenhuma consulta e feita neste componente. | `src/components/inbox/chat/ChatMessagesArea.tsx` |
 | lendo e nada pode mover o scroll. Mesmo limite do painel de equipe. */ | `src/components/inbox/chat/ChatMessagesArea.tsx` |
 | * Prazo seguro de 1ª resposta enquanto o prazo aplicável ainda não chegou do hook. */ | `src/components/inbox/chat/ChatPanelHeader.tsx` |
@@ -5365,5 +5366,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | apenas o tipo — nunca "0 KB" nem separador solto. Acima de 1 GB o `formatSize` segue | `src/components/inbox/tabs/fileDisplay.ts` |
 | medindo em MB (nao ha faixa de GB nele, e este cartao nao pode altera-lo). | `src/components/inbox/tabs/fileDisplay.ts` |
 | A regra de nome tecnico continua sendo a `isTechnicalFilename` da consulta de midias. | `src/components/inbox/tabs/fileDisplay.ts` |
-| * Componente de APRESENTAÇÃO: não consulta banco nem Supabase, não guarda dado de negócio e não | `src/components/inbox/tabs/journey/JourneyFilters.tsx` |
-| … +1646 linhas — lista completa em `context.json` | |
+| … +1649 linhas — lista completa em `context.json` | |

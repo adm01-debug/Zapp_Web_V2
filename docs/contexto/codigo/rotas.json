@@ -103,6 +103,7 @@
     "useConfirmMultiplixDispatch",
     "useConnectionAlertPreferences",
     "useConnectionAuditLogs",
+    "useConnectionHealthBanner",
     "useConnectionIncidents",
     "useConnectionQueues",
     "useConnectionsHealth",
@@ -575,6 +576,7 @@
     "useConfirmMultiplixDispatch",
     "useConnectionAlertPreferences",
     "useConnectionAuditLogs",
+    "useConnectionHealthBanner",
     "useConnectionIncidents",
     "useConnectionQueues",
     "useConnectionsHealth",
@@ -1255,7 +1257,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 1406
+   "arquivos_puxados": 1408
   },
   {
    "protegida": false,
@@ -1724,6 +1726,7 @@
     "useChatMessageNavigation",
     "useChatPanelHandlers",
     "useChatSearch",
+    "useConnectionHealthBanner",
     "useContactCrm360",
     "useContactLeadScore",
     "useContactMedia",
@@ -1863,6 +1866,7 @@
     "useChatMessageNavigation",
     "useChatPanelHandlers",
     "useChatSearch",
+    "useConnectionHealthBanner",
     "useContactCrm360",
     "useContactLeadScore",
     "useContactMedia",
@@ -2082,7 +2086,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 376
+   "arquivos_puxados": 378
   },
   {
    "protegida": false,
@@ -4712,6 +4716,7 @@
     "useChatMessageNavigation",
     "useChatPanelHandlers",
     "useChatSearch",
+    "useConnectionHealthBanner",
     "useContactCrm360",
     "useContactDeliveryStats",
     "useContactEnrichedData",
@@ -4916,6 +4921,7 @@
     "useChatMessageNavigation",
     "useChatPanelHandlers",
     "useChatSearch",
+    "useConnectionHealthBanner",
     "useContactCrm360",
     "useContactDeliveryStats",
     "useContactEnrichedData",
@@ -5213,7 +5219,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 583
+   "arquivos_puxados": 585
   },
   {
    "id": "integrations",
@@ -5575,6 +5581,7 @@
     "useChatMessageNavigation",
     "useChatPanelHandlers",
     "useChatSearch",
+    "useConnectionHealthBanner",
     "useContactCrm360",
     "useContactLeadScore",
     "useContactMedia",
@@ -5721,6 +5728,7 @@
     "useChatMessageNavigation",
     "useChatPanelHandlers",
     "useChatSearch",
+    "useConnectionHealthBanner",
     "useContactCrm360",
     "useContactLeadScore",
     "useContactMedia",
@@ -5955,7 +5963,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 410
+   "arquivos_puxados": 412
   },
   {
    "id": "omnichannel",

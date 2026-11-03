@@ -3361,6 +3361,7 @@
    "src/components/inbox/StickerPicker.tsx",
    "src/components/inbox/chat/AIRewriteButton.tsx",
    "src/components/inbox/chat/ChatInputToolbars.tsx",
+   "src/components/inbox/chat/ConnectionHealthBanner.tsx",
    "src/components/inbox/chat/InputPreviewBars.tsx",
    "src/components/inbox/chat/MarkdownPreview.tsx",
    "src/components/inbox/chat/MentionAutocomplete.tsx",
@@ -3371,6 +3372,7 @@
    "src/components/ui/popover.tsx",
    "src/components/ui/tooltip.tsx",
    "src/hooks/chat/useQuickReplies.ts",
+   "src/hooks/inbox/useConnectionHealthBanner.ts",
    "src/hooks/ui/use-toast.ts",
    "src/lib/utils.ts",
    "src/types/chat.ts"
@@ -3482,6 +3484,10 @@
    "src/components/inbox/ai-tools/VisionIcon.tsx",
    "src/components/ui/section-error-boundary.tsx",
    "src/types/chat.ts"
+  ],
+  "src/components/inbox/chat/ConnectionHealthBanner.tsx": [
+   "src/hooks/inbox/useConnectionHealthBanner.ts",
+   "src/lib/utils.ts"
   ],
   "src/components/inbox/chat/ContactPresenceIndicator.tsx": [
    "src/components/inbox/chat/contactPresence.ts",
@@ -8507,6 +8513,9 @@
   "src/hooks/inbox/useConnectionAuditLogs.ts": [
    "src/integrations/supabase/client.ts",
    "src/lib/logger.ts"
+  ],
+  "src/hooks/inbox/useConnectionHealthBanner.ts": [
+   "src/integrations/supabase/client.ts"
   ],
   "src/hooks/inbox/useConnectionQueues.ts": [
    "src/integrations/supabase/client.ts",
