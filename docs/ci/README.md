@@ -12,7 +12,7 @@
 | Branch Hygiene Audit | [`branch-hygiene-audit.yml`](../../.github/workflows/branch-hygiene-audit.yml) | agendado (semanal) e dispatch | quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias | relatorio nao e publicado nem a issue e atualizada | issue `[branch-hygiene]` no repositorio | — | — |
 | CI/CD Pipeline | [`ci.yml`](../../.github/workflows/ci.yml) | pull_request, push na main e dispatch | tipos, testes de unidade, contratos Node/Edge, build, security, lint dos workflows (actionlint + shellcheck + zizmor) e E2E publico | PR fica vermelho e o merge e bloqueado pelos required checks | autor do PR e revisor, via checks do GitHub | — | — |
 | CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | agendado (diário) e dispatch | analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows | alerta aparece em Security -> Code scanning | aba Security | — | — |
-| Contexto para agentes de IA | [`contexto-ia.yml`](../../.github/workflows/contexto-ia.yml) | push em main, a cada 10 min e dispatch | branch contexto-ia = main + 1 commit com inventario/ia/* regerado do código | o job fica vermelho; a branch contexto-ia fica no último estado bom | nada (force-push na branch derivada contexto-ia) | — | — |
+| Contexto para agentes de IA | [`contexto-ia.yml`](../../.github/workflows/contexto-ia.yml) | push em main que toque código/banco/scripts/workflows/docs (filtro de caminhos), a cada 10 min e dispatch | branch contexto-ia = main + 1 commit com inventario/ia/* (regerado do código) e graphify-out/GRAPH_REPORT.md | o job fica vermelho; a branch contexto-ia fica no último estado bom | nada (force-push na branch derivada contexto-ia) | — | — |
 | CRM Sync Worker | [`crm-sync-worker.yml`](../../.github/workflows/crm-sync-worker.yml) | dispatch (operacao manual; schedule desligado e nenhum job do pg_cron drena o outbox — W93) | health do CRM externo e um lote de 1..10 itens do crm_sync_outbox processado sem falha | o job fica vermelho e nada e sincronizado; os itens continuam no outbox para replay | quem disparou | — | — |
 | DB Guard (offline) | [`db-guard.yml`](../../.github/workflows/db-guard.yml) | pull_request, push na main, merge_group e dispatch | guardas OFFLINE do banco (nunca recebe DESTINO_URL, roda codigo de PR) | PR fica vermelho; nenhum codigo de PR alcanca o banco de producao | autor do PR e revisor | — | — |
 | DB Live Guard | [`db-live-guard.yml`](../../.github/workflows/db-live-guard.yml) | agendado (semanal, segunda) e dispatch sobre main | o contrato do banco de PRODUCAO (drift, paridade, runtime config) | issue aberta ou comentada com a causa; o guarda vivo nao passa em silencio | issue de guardas vivos | — | — |
@@ -60,8 +60,8 @@
 
 ### Contexto para agentes de IA (`contexto-ia.yml`)
 
-- **Gatilho:** push em main, a cada 10 min e dispatch
-- **O que prova:** branch contexto-ia = main + 1 commit com inventario/ia/* regerado do código
+- **Gatilho:** push em main que toque código/banco/scripts/workflows/docs (filtro de caminhos), a cada 10 min e dispatch
+- **O que prova:** branch contexto-ia = main + 1 commit com inventario/ia/* (regerado do código) e graphify-out/GRAPH_REPORT.md
 - **Quando falha:** o job fica vermelho; a branch contexto-ia fica no último estado bom
 - **Quem é avisado:** nada (force-push na branch derivada contexto-ia)
 

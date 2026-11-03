@@ -1,13 +1,14 @@
 # docs:
-#   gatilho: push em main, a cada 10 min e dispatch
-#   prova: branch contexto-ia = main + 1 commit com inventario/ia/* regerado do código
+#   gatilho: push em main que toque código/banco/scripts/workflows/docs (filtro de caminhos), a cada 10 min e dispatch
+#   prova: branch contexto-ia = main + 1 commit com inventario/ia/* (regerado do código) e graphify-out/GRAPH_REPORT.md
 #   falha: o job fica vermelho; a branch contexto-ia fica no último estado bom
 #   avisa: nada (force-push na branch derivada contexto-ia)
 name: Contexto para agentes de IA
 
-# Mantém inventario/ia/ (rotas, módulos, hooks, edges, banco, testes, scripts, grafo, baseline)
-# sempre igual ao código em main, para qualquer agente consultar antes de planejar/executar.
-# Gerador: scripts/ai-context/gerar.mjs (zero dependências; ~6 s neste repo).
+# Mantém inventario/ia/ (rotas, módulos, hooks, edges, banco, testes, scripts, grafo, convenções,
+# baseline, graphify) sempre igual ao código em main, para qualquer agente consultar antes de
+# planejar/executar. Gerador: scripts/ai-context/gerar.mjs (zero dependências; ~10 s neste repo),
+# testado por scripts/ai-context/gerar.unit.mjs (node --test) antes de cada geração.
 #
 # Onde fica: na branch derivada `contexto-ia` (= main + 1 commit), nunca em main — main tem
 # checks obrigatórios + enforce_admins, então push direto do GITHUB_TOKEN seria recusado, e PR a
@@ -15,14 +16,36 @@ name: Contexto para agentes de IA
 # Leitura: raw.githubusercontent.com/<owner>/<repo>/contexto-ia/inventario/ia/INDEX.md,
 # `git show origin/contexto-ia:inventario/ia/<arquivo>` ou MCP get_file(ref=contexto-ia).
 #
+# graphify (grafo de código por AST): roda via uvx quando disponível; só GRAPH_REPORT.md e o resumo
+# inventario/ia/grafo-graphify.json vão para a branch (graph.json tem ~70 MB). O cache de AST fica
+# em actions/cache, então runs seguintes só reextraem arquivos que mudaram.
+#
 # Custo: no agendamento, se HEAD de main == commit do manifest da branch, sai em ~15 s sem gerar.
 
 on:
   push:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'supabase/**'
+      - 'scripts/**'
+      - 'api/**'
+      - 'server/**'
+      - 'package.json'
+      - 'tsconfig*.json'
+      - 'vercel.json'
+      - '.env.example'
+      - '.github/workflows/**'
+      - 'docs/**'
+      - '*.md'
   schedule:
     - cron: '*/10 * * * *'
   workflow_dispatch:
+    inputs:
+      graphify:
+        description: 'Rodar graphify (grafo por AST) neste run'
+        type: boolean
+        default: true
 
 concurrency:
   group: contexto-ia
@@ -39,13 +62,13 @@ jobs:
   gerar:
     name: Regerar inventario/ia
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
-          fetch-depth: 300 # baseline.json usa git log dos últimos 30 dias
+          fetch-depth: 300 # baseline.json usa git log dos últimos 90 dias
           persist-credentials: false
 
       - name: Pular se nada mudou desde a última geração (só no agendamento)
@@ -69,7 +92,30 @@ jobs:
         if: steps.gate.outputs.run == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 'lts/*'
+          node-version-file: '.nvmrc'
+
+      - name: Testar o gerador
+        if: steps.gate.outputs.run == 'true'
+        run: node --test scripts/ai-context/gerar.unit.mjs
+
+      - name: Cache do graphify (AST já extraída)
+        if: steps.gate.outputs.run == 'true' && (github.event_name != 'workflow_dispatch' || inputs.graphify)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: graphify-out/cache
+          key: graphify-cache-${{ github.sha }}
+          restore-keys: |
+            graphify-cache-
+
+      - name: Grafo de código (graphify, opcional)
+        if: steps.gate.outputs.run == 'true' && (github.event_name != 'workflow_dispatch' || inputs.graphify)
+        continue-on-error: true # grafo é extra: se falhar, o inventário sai sem ele
+        env:
+          GRAPHIFY_VERSION: '0.9.68'
+        run: |
+          if ! command -v uvx >/dev/null 2>&1; then pip install --quiet --user uv && export PATH="$HOME/.local/bin:$PATH"; fi
+          uvx --from "graphifyy[sql]==${GRAPHIFY_VERSION}" graphify update . --force
+          rm -f graphify-out/graph.html
 
       - name: Gerar contexto
         if: steps.gate.outputs.run == 'true'
@@ -85,7 +131,8 @@ jobs:
           GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
         run: |
           git add -f -A inventario/ia  # pasta está no .gitignore de main; aqui é versionada de propósito
-          git diff --cached --stat -- inventario/ia | tail -3
+          [ -f graphify-out/GRAPH_REPORT.md ] && git add -f graphify-out/GRAPH_REPORT.md || true
+          git diff --cached --stat | tail -3
           git commit -q -m "chore(ia): contexto para agentes @ main $(git rev-parse --short HEAD) [skip ci]"
           # branch derivada: sempre main + este commit; force é esperado e seguro (ninguém trabalha nela)
           git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/contexto-ia
