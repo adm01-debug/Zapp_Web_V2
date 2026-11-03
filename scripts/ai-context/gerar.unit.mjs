@@ -248,3 +248,13 @@ test('grafo, convenções e determinismo', () => {
   assert.equal(fs.readFileSync(path.join(out, 'rotas.json'), 'utf8'), antes, 'saída determinística');
   const l = J('logica.json'); assert.ok(l.arquivos.some((x) => x.arquivo === 'backend/models.py' && x.exports.includes('Item')));
 });
+
+test('INDEX.md: rodapé de publicação é genérico por padrão e segue ai-context.config.json → publicacao', () => {
+  const idx = fs.readFileSync(path.join(out, 'INDEX.md'), 'utf8');
+  assert.match(idx, /Publicado pelo workflow de contexto do repositório/);
+  assert.doesNotMatch(idx, /contexto-ia/, 'nome de branch/workflow de um repo específico não pode estar fixo no gerador');
+  w(root, 'ai-context.config.json', JSON.stringify({ publicacao: 'Publicado na branch `xyz` pelo workflow `xyz.yml`.' }));
+  execFileSync(process.execPath, [GERADOR, '--quiet'], { cwd: root });
+  assert.match(fs.readFileSync(path.join(out, 'INDEX.md'), 'utf8'), /Publicado na branch `xyz` pelo workflow `xyz.yml`\./);
+  fs.rmSync(path.join(root, 'ai-context.config.json'));
+});
