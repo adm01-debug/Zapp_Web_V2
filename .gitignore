@@ -128,3 +128,9 @@ docs/design/*.png
 # Worktrees isolados de agentes (Agent tool, isolation: worktree) — efêmeros, nunca versionar
 .claude/worktrees/
 .vercel
+
+# gerado pelo contexto.yml na branch contexto (nunca em main); manual/ e texto humano e fica em main
+docs/contexto/*
+!docs/contexto/regras/
+docs/contexto/regras/*
+!docs/contexto/regras/manual/

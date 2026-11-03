@@ -12,6 +12,7 @@
 | Branch Hygiene Audit | [`branch-hygiene-audit.yml`](../../.github/workflows/branch-hygiene-audit.yml) | agendado (semanal) e dispatch | quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias | relatorio nao e publicado nem a issue e atualizada | issue `[branch-hygiene]` no repositorio | — | — |
 | CI/CD Pipeline | [`ci.yml`](../../.github/workflows/ci.yml) | pull_request, push na main e dispatch | tipos, testes de unidade, contratos Node/Edge, build, security, lint dos workflows (actionlint + shellcheck + zizmor) e E2E publico | PR fica vermelho e o merge e bloqueado pelos required checks | autor do PR e revisor, via checks do GitHub | — | — |
 | CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | agendado (diário) e dispatch | analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows | alerta aparece em Security -> Code scanning | aba Security | — | — |
+| Contexto para agentes de IA (10 min) | [`contexto.yml`](../../.github/workflows/contexto.yml) | push em main que toque código, banco, scripts das automações ou docs/contexto/regras/manual/; a cada 10 min (minuto 3); dispatch | branch contexto com docs/contexto/{codigo,supabase,regras}/ regerados das três fontes de verdade (código em main, banco oficial, código+migrations+manual/) e docs/contexto/00-INDEX.md montado a partir dos manifests | o job que falhou fica vermelho e a sua pasta mantém a última versão boa na branch; os outros publicam normalmente (jobs independentes) | ninguém (a branch contexto é a prova; errors.md em supabase/ e erros_do_gerador em codigo/ listam seções com falha) | — | — |
 | CRM Sync Worker | [`crm-sync-worker.yml`](../../.github/workflows/crm-sync-worker.yml) | dispatch (operacao manual; schedule desligado e nenhum job do pg_cron drena o outbox — W93) | health do CRM externo e um lote de 1..10 itens do crm_sync_outbox processado sem falha | o job fica vermelho e nada e sincronizado; os itens continuam no outbox para replay | quem disparou | — | — |
 | DB Guard (offline) | [`db-guard.yml`](../../.github/workflows/db-guard.yml) | pull_request, push na main, merge_group e dispatch | guardas OFFLINE do banco (nunca recebe DESTINO_URL, roda codigo de PR) | PR fica vermelho; nenhum codigo de PR alcanca o banco de producao | autor do PR e revisor | — | — |
 | DB Live Guard | [`db-live-guard.yml`](../../.github/workflows/db-live-guard.yml) | agendado (semanal, segunda) e dispatch sobre main | o contrato do banco de PRODUCAO (drift, paridade, runtime config) | issue aberta ou comentada com a causa; o guarda vivo nao passa em silencio | issue de guardas vivos | — | — |
@@ -22,7 +23,6 @@
 | Inventário do estado real (semanal) | [`inventario-estado-semanal.yml`](../../.github/workflows/inventario-estado-semanal.yml) | agendado (seg 10:23 UTC) e dispatch | inventario/estado (banco, rotas, edges) regerado do banco oficial e do codigo | o job fica vermelho e o inventario nao e atualizado | PR automation/inventario-estado com o inventario novo | — | — |
 | Notifica falha na main | [`notifica-falha-main.yml`](../../.github/workflows/notifica-falha-main.yml) | workflow_run (conclusao dos workflows principais na main) | abre issue quando qualquer workflow critico falha na main | a falha do workflow original fica sem issue de acompanhamento | equipe de operacao, por meio da issue criada no repositorio | — | — |
 | Settings Guard | [`settings-guard.yml`](../../.github/workflows/settings-guard.yml) | agendado e dispatch | o perimetro do GitHub (branch protection, merge, environments) contra o baseline versionado | issue aberta; sem escopo suficiente o guarda reporta ponto cego em vez de falhar em silencio | issue de settings | — | — |
-| Supabase snapshot (10 min) | [`supabase-snapshot.yml`](../../.github/workflows/supabase-snapshot.yml) | agendado (a cada 10 min, minuto 7) e dispatch | docs/supabase/ na branch supabase-snapshot regerado do banco oficial (schema, RLS, functions, triggers, cron, migrations, storage, lints) | o job fica vermelho e o snapshot nao e atualizado (a branch mantem a ultima versao boa) | ninguem (a branch supabase-snapshot e a prova; errors.md lista secoes com falha) | — | — |
 | Talk X V4 placar regen (push + semanal) | [`talkx-status-regen.yml`](../../.github/workflows/talkx-status-regen.yml) | push na main; schedule semanal (seg 07:45 UTC); dispatch | o placar do Talk X regenerado a partir dos dados atuais | o job fica vermelho e o placar nao e atualizado | autor do push | — | — |
 | Targeted Ledger Evidence | [`targeted-ledger-evidence.yml`](../../.github/workflows/targeted-ledger-evidence.yml) | dispatch | a evidencia do ledger de migrations para uma version especifica | o job aborta sem publicar evidencia | operador que disparou | — | — |
 | types-sync | [`types-sync.yml`](../../.github/workflows/types-sync.yml) | push na main, agendado e dispatch | os tipos gerados batem com o banco oficial (Gates 1 e 2) | PR em `automation/types-sync` ou issue `[types-sync]`; nunca passa com tipo divergente | PR de types e issue de gate | — | — |
@@ -57,6 +57,13 @@
 - **O que prova:** analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows
 - **Quando falha:** alerta aparece em Security -> Code scanning
 - **Quem é avisado:** aba Security
+
+### Contexto para agentes de IA (10 min) (`contexto.yml`)
+
+- **Gatilho:** push em main que toque código, banco, scripts das automações ou docs/contexto/regras/manual/; a cada 10 min (minuto 3); dispatch
+- **O que prova:** branch contexto com docs/contexto/{codigo,supabase,regras}/ regerados das três fontes de verdade (código em main, banco oficial, código+migrations+manual/) e docs/contexto/00-INDEX.md montado a partir dos manifests
+- **Quando falha:** o job que falhou fica vermelho e a sua pasta mantém a última versão boa na branch; os outros publicam normalmente (jobs independentes)
+- **Quem é avisado:** ninguém (a branch contexto é a prova; errors.md em supabase/ e erros_do_gerador em codigo/ listam seções com falha)
 
 ### CRM Sync Worker (`crm-sync-worker.yml`)
 
@@ -128,13 +135,6 @@
 - **Quando falha:** issue aberta; sem escopo suficiente o guarda reporta ponto cego em vez de falhar em silencio
 - **Quem é avisado:** issue de settings
 
-### Supabase snapshot (10 min) (`supabase-snapshot.yml`)
-
-- **Gatilho:** agendado (a cada 10 min, minuto 7) e dispatch
-- **O que prova:** docs/supabase/ na branch supabase-snapshot regerado do banco oficial (schema, RLS, functions, triggers, cron, migrations, storage, lints)
-- **Quando falha:** o job fica vermelho e o snapshot nao e atualizado (a branch mantem a ultima versao boa)
-- **Quem é avisado:** ninguem (a branch supabase-snapshot e a prova; errors.md lista secoes com falha)
-
 ### Talk X V4 placar regen (push + semanal) (`talkx-status-regen.yml`)
 
 - **Gatilho:** push na main; schedule semanal (seg 07:45 UTC); dispatch
@@ -171,7 +171,8 @@
 | Workflow | Situação | Por quê não é bug |
 |---|---|---|
 | [`ci.yml`](../../.github/workflows/ci.yml) | **merge_group ausente** | este workflow declara somente push, pull_request e workflow_dispatch; a fila de merge nao esta disponivel para a conta adm01-debug (tipo User, nao Organization) |
+| [`contexto.yml`](../../.github/workflows/contexto.yml) | **sem-commit** | "nada mudou" no publicar significa que nenhuma das três fontes mudou desde a última publicação |
+| [`contexto.yml`](../../.github/workflows/contexto.yml) | **metricas** | mudanças só em stats/cron-runs do snapshot são comitadas no máximo 1x por hora |
+| [`contexto.yml`](../../.github/workflows/contexto.yml) | **banco-pulado** | sem o secret SUPABASE_DB_URL o job do banco sai verde com aviso e a pasta supabase/ fica como estava |
 | [`crm-sync-worker.yml`](../../.github/workflows/crm-sync-worker.yml) | **schedule comentado** | decisao pendente do dono (W93); religar exige vars.CRM_SYNC_WORKER_ENABLED=true e o roteiro em docs/runbooks/CRM_INTEGRATION_ROLLOUT.md |
-| [`supabase-snapshot.yml`](../../.github/workflows/supabase-snapshot.yml) | **sem-commit** | "Sem mudancas" no log significa que o banco nao mudou desde a ultima coleta |
-| [`supabase-snapshot.yml`](../../.github/workflows/supabase-snapshot.yml) | **metricas** | mudancas so em stats.md/cron-runs.md sao comitadas no maximo 1x por hora |
 | [`types-sync.yml`](../../.github/workflows/types-sync.yml) | **TYPES_SYNC_PR_TOKEN ausente** | esperado -- o workflow usa GITHUB_TOKEN; o passo "Destravar os checks" aprova os runs com actions:write; um PAT funciona mas nao e necessario |
