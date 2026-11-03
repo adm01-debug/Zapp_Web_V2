@@ -778,13 +778,19 @@ def get_db_stats(conn):
     out["storage"] = q(conn, """
         SELECT bucket_id, count(*) AS objects, COALESCE(sum((metadata->>'size')::bigint), 0) AS bytes
         FROM storage.objects GROUP BY 1 ORDER BY 1""")
-    out["auth"] = {
-        "users_total": q(conn, "SELECT count(*) AS c FROM auth.users")[0]["c"],
-        "users_confirmed": q(conn, "SELECT count(*) AS c FROM auth.users WHERE email_confirmed_at IS NOT NULL OR phone_confirmed_at IS NOT NULL")[0]["c"],
-        "users_last_30d": q(conn, "SELECT count(*) AS c FROM auth.users WHERE created_at > now() - interval '30 days'")[0]["c"],
-        "identities_by_provider": q(conn, "SELECT provider, count(*) AS users FROM auth.identities GROUP BY 1 ORDER BY 1"),
-        "mfa_factors": q(conn, "SELECT factor_type, status, count(*) AS total FROM auth.mfa_factors GROUP BY 1, 2 ORDER BY 1, 2"),
-    }
+    # Role sem SELECT em auth.* (ex.: role de leitura do workflow) nao pode derrubar a secao inteira:
+    # em producao isso apagava tamanho do banco, conexoes, storage e filas de stats.md.
+    try:
+        out["auth"] = {
+            "users_total": q(conn, "SELECT count(*) AS c FROM auth.users")[0]["c"],
+            "users_confirmed": q(conn, "SELECT count(*) AS c FROM auth.users WHERE email_confirmed_at IS NOT NULL OR phone_confirmed_at IS NOT NULL")[0]["c"],
+            "users_last_30d": q(conn, "SELECT count(*) AS c FROM auth.users WHERE created_at > now() - interval '30 days'")[0]["c"],
+            "identities_by_provider": q(conn, "SELECT provider, count(*) AS users FROM auth.identities GROUP BY 1 ORDER BY 1"),
+            "mfa_factors": q(conn, "SELECT factor_type, status, count(*) AS total FROM auth.mfa_factors GROUP BY 1, 2 ORDER BY 1, 2"),
+        }
+    except Exception as e:  # noqa: BLE001
+        record_error("db_stats.auth", e)
+        out["auth"] = {}
     out["queues"] = q(conn, "SELECT queue_name, queue_length, newest_msg_age_sec, oldest_msg_age_sec, total_messages FROM pgmq.metrics_all() ORDER BY 1") if has_ext(conn, "pgmq") else []
     if STAT_STATEMENTS_TOP > 0 and has_ext(conn, "pg_stat_statements"):
         out["top_queries"] = q(conn, """
