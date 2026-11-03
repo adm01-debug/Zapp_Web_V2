@@ -166,6 +166,7 @@ retorna 403 em write; `git push` e `gh` só funcionam quando o repo é fonte aut
 | **Qual banco, qual Evolution API, regras de migration, perímetro do GitHub, Vercel, regras de domínio** | **`CLAUDE.md`, seções 0 a 6** |
 | Comandos do repo (build, typecheck, lint, testes, guards) | `CLAUDE.md`, "Mapa rápido e comandos" |
 | Inventário de workflows de CI | `docs/ci/README.md` (gerado — não editar à mão) |
+| **Contexto gerado para agentes: regras de negócio, banco real, código** — antes de qualquer tarefa ou planejamento | **`docs/contexto/00-INDEX.md`** na branch `contexto` (`git show origin/contexto:docs/contexto/00-INDEX.md`): diz qual fonte é dona de cada fato e a ordem de leitura. Gerado — não editar; regras humanas em `docs/contexto/regras/manual/` |
 | Histórico, auditorias, planos antigos | `docs/`, `analise/`, `inventario/`, `qa/` — contexto, **não** fonte de verdade |
 
 `CLAUDE.md` é de leitura obrigatória antes de rodar SQL, migration ou deploy: errar o banco já causou

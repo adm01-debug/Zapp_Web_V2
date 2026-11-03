@@ -128,3 +128,8 @@ docs/design/*.png
 # Worktrees isolados de agentes (Agent tool, isolation: worktree) — efêmeros, nunca versionar
 .claude/worktrees/
 .vercel
+
+# gerado por scripts/regras_negocio/ (versao oficial vive na branch contexto); manual/ e texto humano e fica em main
+docs/contexto/regras/*
+!docs/contexto/regras/manual/
+docs/contexto/00-INDEX.md

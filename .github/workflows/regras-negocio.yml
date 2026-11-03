@@ -1,0 +1,101 @@
+# docs:
+#   gatilho: push em main que toque src/, supabase/, scripts/regras_negocio/ ou docs/contexto/regras/manual/; a cada 10 min (sai em segundos se main não mudou); dispatch
+#   prova: branch contexto = main + 1 commit com docs/contexto/regras/* (regras de negócio extraídas do código, migrations/types e manual/) e docs/contexto/00-INDEX.md (índice único das três fontes)
+#   falha: o job fica vermelho; a branch contexto fica no último estado bom
+#   avisa: nada (force-push na branch derivada contexto; não comita em main)
+name: Regras de negócio para agentes de IA
+
+# Fonte de verdade: código + migrations/types + docs/contexto/regras/manual/ (texto humano).
+# Gera só o que nenhum outro produtor gera (07 regras, 10 acesso/segurança, 11 glossário e lacunas);
+# schema real é do snapshot do banco, código é do contexto-ia. Os três se encontram em
+# docs/contexto/00-INDEX.md, montado por scripts/regras_negocio/indice.py a partir dos manifests.
+#
+# Onde fica: branch derivada `contexto` (= main + 1 commit), mesmo desenho das branches contexto-ia e
+# supabase-snapshot: main tem checks obrigatórios + enforce_admins (push direto = GH006). O
+# publish.sh preserva as pastas de outros produtores que já estiverem na branch (KEEP_DIRS).
+# Vercel não builda a branch: scripts/vercel/ignore-build.sh só builda quando muda arquivo de front.
+# Leitura: git show origin/contexto:docs/contexto/00-INDEX.md, MCP get_file(ref=contexto) ou raw.
+#
+# Zero dependências: python3 do runner (stdlib). Testes do gerador: scripts/regras_negocio/README.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'supabase/**'
+      - 'scripts/regras_negocio/**'
+      - 'docs/contexto/regras/manual/**'
+      - 'package.json'
+      - 'tsconfig*.json'
+  schedule:
+    - cron: '3-59/10 * * * *' # defasado dos outros produtores (contexto-ia */10, supabase-snapshot 7-59/10)
+  workflow_dispatch:
+
+concurrency:
+  group: contexto # mesmo grupo para todos os produtores da branch contexto: nunca dois publicando ao mesmo tempo
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+jobs:
+  gerar:
+    name: Regerar docs/contexto/regras
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write # push na branch derivada contexto
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 60 # 09 não é gerado neste perfil; 60 cobre o último commit não-bot
+          persist-credentials: false
+
+      - name: Pular se nada mudou desde a última geração (só no agendamento)
+        id: gate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          head="$(git rev-parse HEAD)"
+          last=""
+          if git fetch -q --depth=1 origin contexto 2>/dev/null; then
+            last="$(git show FETCH_HEAD:docs/contexto/regras/manifest.json 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("commit",""))' 2>/dev/null || echo "")"
+          fi
+          if [ "$EVENT_NAME" = "schedule" ] && [ "$head" = "$last" ]; then
+            echo "HEAD ($head) já processado; nada a fazer."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Gerar regras de negócio
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          python3 scripts/regras_negocio/generate.py --repo . --out docs/contexto/regras \
+            --profile regras --schema-snapshot docs/supabase --index-path docs/contexto/00-INDEX.md --no-pointer
+
+      - name: Publicar na branch contexto (main + 1 commit, preservando as outras fontes)
+        if: steps.gate.outputs.run == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GIT_USER_NAME: regras-negocio[bot]
+          GIT_USER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          MODE: branch
+          BRANCH: main
+          BRANCH_OUT: contexto
+          OUT_DIR: docs/contexto/regras
+          KEEP_DIRS: docs/contexto/supabase docs/contexto/codigo
+        run: |
+          export PUSH_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          export INDEX_CMD="python3 scripts/regras_negocio/indice.py --repo . --out docs/contexto/00-INDEX.md \
+            --fonte 'banco real=docs/supabase@supabase-snapshot' \
+            --fonte 'código=inventario/ia@contexto-ia' \
+            --fonte 'regras de negócio=docs/contexto/regras'"
+          bash scripts/regras_negocio/publish.sh

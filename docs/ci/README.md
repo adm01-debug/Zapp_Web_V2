@@ -4,7 +4,7 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**18 workflows.**
+**19 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
@@ -21,6 +21,7 @@
 | E2E Talk X (visual/launch + Auth smoke) | [`e2e-talkx.yml`](../../.github/workflows/e2e-talkx.yml) | pull_request e dispatch | o fluxo do Talk X no navegador | PR fica vermelho com o artefato do Playwright | autor do PR | — | — |
 | Inventário do estado real (semanal) | [`inventario-estado-semanal.yml`](../../.github/workflows/inventario-estado-semanal.yml) | agendado (seg 10:23 UTC) e dispatch | inventario/estado (banco, rotas, edges) regerado do banco oficial e do codigo | o job fica vermelho e o inventario nao e atualizado | PR automation/inventario-estado com o inventario novo | — | — |
 | Notifica falha na main | [`notifica-falha-main.yml`](../../.github/workflows/notifica-falha-main.yml) | workflow_run (conclusao dos workflows principais na main) | abre issue quando qualquer workflow critico falha na main | a falha do workflow original fica sem issue de acompanhamento | equipe de operacao, por meio da issue criada no repositorio | — | — |
+| Regras de negócio para agentes de IA | [`regras-negocio.yml`](../../.github/workflows/regras-negocio.yml) | push em main que toque src/, supabase/, scripts/regras_negocio/ ou docs/contexto/regras/manual/; a cada 10 min (sai em segundos se main não mudou); dispatch | branch contexto = main + 1 commit com docs/contexto/regras/* (regras de negócio extraídas do código, migrations/types e manual/) e docs/contexto/00-INDEX.md (índice único das três fontes) | o job fica vermelho; a branch contexto fica no último estado bom | nada (force-push na branch derivada contexto; não comita em main) | — | — |
 | Settings Guard | [`settings-guard.yml`](../../.github/workflows/settings-guard.yml) | agendado e dispatch | o perimetro do GitHub (branch protection, merge, environments) contra o baseline versionado | issue aberta; sem escopo suficiente o guarda reporta ponto cego em vez de falhar em silencio | issue de settings | — | — |
 | Talk X V4 placar regen (push + semanal) | [`talkx-status-regen.yml`](../../.github/workflows/talkx-status-regen.yml) | push na main; schedule semanal (seg 07:45 UTC); dispatch | o placar do Talk X regenerado a partir dos dados atuais | o job fica vermelho e o placar nao e atualizado | autor do push | — | — |
 | Targeted Ledger Evidence | [`targeted-ledger-evidence.yml`](../../.github/workflows/targeted-ledger-evidence.yml) | dispatch | a evidencia do ledger de migrations para uma version especifica | o job aborta sem publicar evidencia | operador que disparou | — | — |
@@ -119,6 +120,13 @@
 - **O que prova:** abre issue quando qualquer workflow critico falha na main
 - **Quando falha:** a falha do workflow original fica sem issue de acompanhamento
 - **Quem é avisado:** equipe de operacao, por meio da issue criada no repositorio
+
+### Regras de negócio para agentes de IA (`regras-negocio.yml`)
+
+- **Gatilho:** push em main que toque src/, supabase/, scripts/regras_negocio/ ou docs/contexto/regras/manual/; a cada 10 min (sai em segundos se main não mudou); dispatch
+- **O que prova:** branch contexto = main + 1 commit com docs/contexto/regras/* (regras de negócio extraídas do código, migrations/types e manual/) e docs/contexto/00-INDEX.md (índice único das três fontes)
+- **Quando falha:** o job fica vermelho; a branch contexto fica no último estado bom
+- **Quem é avisado:** nada (force-push na branch derivada contexto; não comita em main)
 
 ### Settings Guard (`settings-guard.yml`)
 
