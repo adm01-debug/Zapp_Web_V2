@@ -293,7 +293,7 @@ function componentFile(name, fromFile, strict = false) {
 const joinPath = (parent, child) => { if (child === undefined || child === null || child === '') return parent || '/'; if (child.startsWith('/')) return child; const p = (parent || '').replace(/\/$/, ''); return (p + '/' + child).replace(/\/+/g, '/'); };
 const mk = (o) => ({ protegida: false, wrappers: [], pai: null, indice: false, lazy: false, tipo: 'tela', ...o });
 const rotas = [];
-const routeFiles = uniq([...CODE_FILES.filter((f) => !FILE.get(f)?.teste && (/<Route\b/.test(FILE.get(f).conteudo) || /create(Browser|Hash|Memory)Router|createRoutesFromElements|\bRouteObject\b|new\s+VueRouter|createRouter\(/.test(FILE.get(f).conteudo))), ...(CFG.routeFiles || [])]);
+const routeFiles = uniq([...CODE_FILES.filter((f) => !FILE.get(f)?.teste && (isSrc(f) || /^(app|pages|routes|server|api)\//.test(f)) && (/<Route\b/.test(FILE.get(f).conteudo) || /create(Browser|Hash|Memory)Router|createRoutesFromElements|\bRouteObject\b|new\s+VueRouter|createRouter\(/.test(FILE.get(f).conteudo))), ...(CFG.routeFiles || [])]);
 secao('rotas-jsx', () => {
   for (const rf of routeFiles) {
     const src = FILE.get(rf)?.conteudo || ''; const stack = [];
@@ -352,7 +352,7 @@ apiHttp.sort((a, b) => a.caminho.localeCompare(b.caminho) || a.metodo.localeComp
 const vistas = [];
 secao('vistas', () => {
   for (const [f, d] of FILE) {
-    if (d.teste || !/ViewRouter|viewRegistry|viewMap|VIEW_MAP|VIEW_COMPONENTS|SPECIAL_VIEWS|renderView|screenMap|SCREEN_MAP|TAB_COMPONENTS/i.test(f + d.conteudo.slice(0, 4000))) continue;
+    if (d.teste || !isSrc(f) || !/ViewRouter|viewRegistry|viewMap|VIEW_MAP|VIEW_COMPONENTS|SPECIAL_VIEWS|renderView|screenMap|SCREEN_MAP|TAB_COMPONENTS/i.test(f + d.conteudo.slice(0, 4000))) continue;
     const src = d.conteudo; let m;
     const re1 = /case\s+['"]([\w-]+)['"]\s*:[\s\S]{0,200}?<(?:[A-Z]\w*\.)?([A-Z]\w*)/g;
     while ((m = re1.exec(src))) vistas.push({ id: m[1], componente: m[2], arquivo: componentFile(m[2], f), registrada_em: f });
