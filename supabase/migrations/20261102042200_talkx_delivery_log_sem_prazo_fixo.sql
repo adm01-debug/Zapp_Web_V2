@@ -223,7 +223,7 @@ BEGIN
 
   RETURN v_counts || jsonb_build_object('events', v_events);
 END;
-$function$
+$function$;
 
 -- Replay do zero: os seeds originais (X032) deixam 180/365/90/90; sem este passo um banco novo
 -- apagaria historico de campanha. Idempotente: fixa os 4 prazos em 36500 dias (= producao).
