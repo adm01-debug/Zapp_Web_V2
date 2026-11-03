@@ -52,7 +52,7 @@ def git(root: Path, *a: str) -> str:
 def parse_dt(v) -> datetime | None:
     if not isinstance(v, str):
         return None
-    for fmt in ("%Y-%m-%d %H:%M UTC", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S.%f%z", "%Y-%m-%d %H:%M:%S"):
+    for fmt in ("%Y-%m-%d %H:%M UTC", "%Y-%m-%d %H:%M:%S UTC", "%Y-%m-%dT%H:%M UTC", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S.%f%z", "%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
         try:
             d = datetime.strptime(v, fmt)
             return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
@@ -110,6 +110,15 @@ def main() -> int:
         local = d.is_dir() and any(d.iterdir())
         man = read_manifest(d) if local else {}
         gerado = parse_dt(man.get("gerado_em") or man.get("generated_at") or man.get("timestamp") or man.get("data"))
+        if local and not gerado:
+            # produtor sem manifest datado: 1º "## <data>" do CHANGELOG.md, senão o último commit da pasta
+            cl = d / "CHANGELOG.md"
+            if cl.exists():
+                m = re.search(r"^## (\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?(?: UTC|Z)?)", cl.read_text(encoding="utf-8", errors="replace"), re.M)
+                if m:
+                    gerado = parse_dt(m.group(1).replace("Z", " UTC") if m.group(1).endswith("Z") else m.group(1))
+            if not gerado:
+                gerado = parse_dt(git(root, "log", "-1", "--format=%cI", "--", caminho))
         idade_min = int((now - gerado).total_seconds() // 60) if gerado else None
         commit = man.get("commit") or man.get("sha") or ""
         status = "ok"
