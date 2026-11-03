@@ -175,12 +175,15 @@ export function ConnectionCard({
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button variant="outline" size="sm" onClick={() => onCopyId(connection.id)}><Copy className="w-4 h-4 mr-2" />Copiar ID</Button>
               </motion.div>
-              {connection.status !== 'connected' && (
+              {connection.status !== 'connected' && isAdmin && (
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button variant="outline" size="sm" onClick={() => onShowQrCode(connection)} className="border-whatsapp text-whatsapp hover:bg-whatsapp hover:text-primary-foreground">
                     <QrCode className="w-4 h-4 mr-2" />Conectar
                   </Button>
                 </motion.div>
+              )}
+              {connection.status !== 'connected' && !isAdmin && (
+                <span className="text-xs text-muted-foreground" data-testid="qr-only-admin">Reconexão por QR Code: só admin</span>
               )}
               {connection.status === 'connected' && (
                 <motion.div whileHover={{ scale: disconnecting ? 1 : 1.05 }} whileTap={{ scale: disconnecting ? 1 : 0.95 }}>
@@ -205,7 +208,10 @@ export function ConnectionCard({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => onSetDefault(connection.id)}><Star className="w-4 h-4 mr-2" />Definir como padrão</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onShowQrCode(connection)}><QrCode className="w-4 h-4 mr-2" />Gerar QR Code</DropdownMenuItem>
+                  {/* QR Code é só admin (regras.md §4.2, 2026-11-03); supervisor vê a conexão mas não pareia. */}
+                  {isAdmin && (
+                    <DropdownMenuItem onClick={() => onShowQrCode(connection)}><QrCode className="w-4 h-4 mr-2" />Gerar QR Code</DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={() => onBusinessHours(connection.id, connection.name)}><Clock className="w-4 h-4 mr-2" />Horário de Atendimento</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onQueues(connection.id, connection.name)}><Link2 className="w-4 h-4 mr-2" />Vincular Filas</DropdownMenuItem>
                   {connection.instance_id && (

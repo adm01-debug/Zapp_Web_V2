@@ -166,10 +166,18 @@ retorna 403 em write; `git push` e `gh` só funcionam quando o repo é fonte aut
 | **Qual banco, qual Evolution API, regras de migration, perímetro do GitHub, Vercel, regras de domínio** | **`CLAUDE.md`, seções 0 a 6** |
 | Comandos do repo (build, typecheck, lint, testes, guards) | `CLAUDE.md`, "Mapa rápido e comandos" |
 | Inventário de workflows de CI | `docs/ci/README.md` (gerado — não editar à mão) |
+| **Contexto gerado para agentes — antes de qualquer tarefa ou planejamento:** banco real (tabelas, RLS, functions, cron, lints), código (rotas, módulos, hooks, edges, grafo) e regras de negócio (estados, validações, fórmulas, lacunas) | **`docs/contexto/00-INDEX.md` na branch `contexto`** (`git show origin/contexto:docs/contexto/00-INDEX.md`): diz qual fonte é dona de cada fato e a ordem de leitura. Gerado a cada 10 min — não editar; regras humanas em `docs/contexto/regras/manual/` (main) |
 | Histórico, auditorias, planos antigos | `docs/`, `analise/`, `inventario/`, `qa/` — contexto, **não** fonte de verdade |
 
 `CLAUDE.md` é de leitura obrigatória antes de rodar SQL, migration ou deploy: errar o banco já causou
 retrabalho real, e os bancos proibidos têm nome quase idêntico ao oficial.
+
+### Automações (`scripts/`)
+
+Automação vive em `scripts/<nome>/`, um subdiretório por automação, cada um com `README.md` dizendo o que
+faz, como rodar e que secrets usa. Nada solto na raiz de `scripts/`. Scripts em `scripts/`; a saída deles
+em `docs/` (ou numa branch gerada) — nunca misturar os dois. Não use `supabase/scripts` (o CLI do Supabase
+é dono de `supabase/`) nem `src/scripts` (entra no bundle). **Leia o README da automação antes de alterar.**
 
 ### Grafo de código (graphify)
 

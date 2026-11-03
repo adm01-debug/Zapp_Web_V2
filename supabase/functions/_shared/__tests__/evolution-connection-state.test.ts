@@ -88,7 +88,7 @@ function makeSupabase(rows: unknown[], calls: EdgeCall[]): any {
     const b: Record<string, any> = {};
     const chain = () => b;
     b.select = chain; b.eq = chain; b.neq = chain; b.or = chain; b.is = chain;
-    b.in = chain; b.not = chain; b.lt = chain; b.order = chain; b.limit = chain;
+    b.in = chain; b.not = chain; b.lt = chain; b.order = chain; b.limit = chain; b.like = chain;
     b.update = (payload: Record<string, unknown>) => { calls.push({ table, op: "update", payload }); return b; };
     b.insert = (payload: Record<string, unknown>) => { calls.push({ table, op: "insert", payload }); return b; };
     b.delete = () => { calls.push({ table, op: "delete" }); return b; };

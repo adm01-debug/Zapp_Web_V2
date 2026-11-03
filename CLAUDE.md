@@ -67,9 +67,14 @@ Fatos técnicos que continuam valendo:
    e o `INSERT` no ledger na **mesma** chamada (1 transação) e `RETURNING` não-vazio como guarda.
    Gere o SQL exato com `node scripts/db-audit/register-migration.mjs <arquivo.sql>` (dry-run) — nunca
    transcreva à mão. O `.github/workflows/db-migrate.yml` (dry-run + hash SHA-256 + aprovação no
-   environment `producao-ddl`) existe, mas **as 3 últimas execuções falharam** (25/10, 31/10 e 01/11) —
-   não conte com ele até alguém consertar; se usar, `apply=false` primeiro, depois `apply=true` com o
-   `confirm_runtime_sha256` do dry-run, e se outra sessão aplicar DDL no meio, repita o dry-run.
+   environment `producao-ddl`) existe e é o caminho com aprovação humana; estado medido em 02/11: a
+   falha de 31/10 (`Cannot find project ref`) já foi corrigida na `main` (`db push --db-url`), a de
+   01/11 foi recusa correta (9 migrations locais fora do ledger, hoje reconciliadas: 1.077 arquivos ×
+   1.076 registros, só a `20261102032200` pendente) e a de 02/11 foi cancelada pelo operador — mas
+   **nenhuma execução verde de ponta a ponta foi observada desde a correção** (NÃO VERIFICADO). Se
+   usar, `apply=false` primeiro, depois `apply=true` com o `confirm_runtime_sha256` do dry-run, e se
+   outra sessão aplicar DDL no meio, repita o dry-run. Ele conecta como `postgres`, que não é
+   superuser: `REVOKE` de grant do `supabase_admin` e `CREATE INDEX` em `cron.*` só pelo SQL Editor.
 2. **Versão sem colisão:** antes de criar arquivo ou aplicar DDL, no mesmo turno: `SELECT max(version)`
    no ledger, `ls supabase/migrations | tail` e busca de PRs abertas tocando `supabase/migrations/`.
    Para reservar de forma atômica: `SELECT supabase_migrations.reserve_migration_version('<sessao>', '<motivo>')`
@@ -172,6 +177,7 @@ regerado. Não há passo manual no Postgres da GO (o MCP `HOSTINGER` não expõe
 | `e2e/` | 51 specs Playwright; fixtures em `e2e/fixtures/` |
 | `docs/` | `DEPLOYMENT.md`, `MIGRATIONS.md`, `INCIDENT-RUNBOOK.md`, `CONEXOES_WHATSAPP_RUNBOOK.md`, `ci/README.md` (gerado), `talkx/`, `audits/` |
 | `inventario/estado/` | **estado real gerado por script — consulte antes de buscar por texto:** `banco.json` (tabelas, RLS, uso no código, órfãs, cron com falhas, WhatsApp, edges publicadas, `alertas`), `rotas.json` (URL/tela → menu, papéis, hooks, edges, RPCs, tabelas), `edges.json`. Refeito toda segunda pelo `inventario-estado-semanal.yml` (PR automático); como gerar à mão em `inventario/estado/README.md` |
+| `docs/contexto/` (branch **`contexto`**) | **contexto gerado para agentes — comece por `docs/contexto/00-INDEX.md`:** índice único das três fontes de verdade, cada uma com um dono: `supabase/` (banco oficial ao vivo: tabelas, RLS, funções, triggers, cron, lints — `scripts/supabase_snapshot/`), `codigo/` (rotas, módulos, hooks, edges, grafo, testes, convenções — `scripts/ai-context/gerar.mjs`), `regras/` (regras de negócio: RLS por operação, estados, validações, fórmulas, lacunas — `scripts/regras_negocio/`). Regerado a cada 10 min e a cada push por `contexto.yml`; **não existe em main** (só `docs/contexto/regras/manual/`, texto humano). Ler: `git fetch origin contexto && git show origin/contexto:docs/contexto/00-INDEX.md`, MCP `get_file(ref=contexto)` ou raw; local: `bun run contexto:ia` (codigo/) e `python3 scripts/regras_negocio/generate.py --profile regras` |
 | `docs/_arquivo/`, `qa/` | relatórios de sessões anteriores (`analise/`, `analise-prs/`, `auditoria-supabase/`, `inventario/` antigo, prosa velha da raiz e de `docs/`) — leitura de contexto, não fonte de verdade; `inventario/estado/` é o inventário vivo |
 
 Comandos (o repo usa **bun**: há `bun.lock` e **não** há `package-lock.json`, então `npm ci` falha —
@@ -246,14 +252,18 @@ Fatos do perímetro que já custaram retrabalho:
 
 ### Workflows
 
-**Inventário vigente (2026-11-02):** **18** arquivos em `.github/workflows/` — `auto-update-pr-branch`,
+**Inventário vigente (2026-11-03):** **19** arquivos em `.github/workflows/` — `auto-update-pr-branch`,
 `branch-hygiene-audit`, `ci`, `codeql`, `crm-sync-worker`, `db-guard`, `db-live-guard`, `db-migrate`,
-`deploy-functions`, `e2e-logado`, `e2e-talkx`, `inventario-estado-semanal`, `notifica-falha-main`, `settings-guard`,
+`contexto`, `deploy-functions`, `e2e-logado`, `e2e-talkx`, `inventario-estado-semanal`, `notifica-falha-main`, `settings-guard`,
 `talkx-status-regen`, `targeted-ledger-evidence`, `types-sync`, `vercel-env-cleanup` — mais os
 dinâmicos do GitHub (Dependabot, Dependency Graph, Copilot). A fonte canônica do inventário é o
 **gerado** `docs/ci/README.md` (`scripts/ci/render-workflow-docs.mjs --check` roda no CI); esta lista
 é conveniência.
 
+- **Lint dos próprios workflows mora no `ci.yml`** (job `workflow-lint`, no gate desde 02/11):
+  actionlint 1.7.7 + shellcheck 0.10.0 + zizmor 1.30.1, pins em `.github/toolchain.json` (W88).
+  Reproduz local com `uvx zizmor==1.30.1 --no-online-audits --min-severity medium .github/workflows`;
+  `workflow_run` legítimo leva `# zizmor: ignore[dangerous-triggers]` na linha do gatilho.
 - **Agendamentos (UTC):** types-sync `49 5 * * 1` · db-live-guard `13 6 * * 1` · settings-guard
   `15 7 * * *` · talkx-status-regen `45 7 * * 1` · branch-hygiene `56 7 * * 1` · codeql `30 9 * * *` ·
   inventario-estado-semanal `23 10 * * 1` · auto-update-pr-branch `7,37 * * * *`.

@@ -1,6 +1,6 @@
 # docs:
 #   gatilho: pull_request, push na main e dispatch
-#   prova: tipos, testes de unidade, contratos Node/Edge, build, security e E2E publico
+#   prova: tipos, testes de unidade, contratos Node/Edge, build, security, lint dos workflows (actionlint + shellcheck + zizmor) e E2E publico
 #   falha: PR fica vermelho e o merge e bloqueado pelos required checks
 #   avisa: autor do PR e revisor, via checks do GitHub
 # nao-e-bug:
@@ -182,7 +182,8 @@ jobs:
       - name: 🦕 Test Edge handlers
         run: |
           deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts
-          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')
+          mapfile -t testes_edge < <(git ls-files 'supabase/functions/**/*.test.ts')
+          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 "${testes_edge[@]}"
 
   build:
     name: 🏗️ Build
@@ -306,13 +307,59 @@ jobs:
           GITLEAKS_ENABLE_SUMMARY: 'false'
 
   # ===========================================
+  # JOB 4b: Lint dos workflows (actionlint + shellcheck + zizmor)
+  # ===========================================
+  # Os pins vivem em .github/toolchain.json (fonte unica): check-workflow-pins.mjs
+  # le `actionlint_version`/`actionlint_sha256` e `zizmor==` daqui e reprova se
+  # divergirem. zizmor roda sem auditorias online de proposito: o impostor-commit
+  # ja e coberto por check-workflow-pins-resolvem.mjs, e assim o resultado do CI e
+  # identico ao de `uvx zizmor==1.30.1 --no-online-audits .github/workflows` local.
+  workflow-lint:
+    name: 🛡️ Workflow lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 📦 Instalar actionlint e shellcheck (versao + sha256 pinados)
+        run: |
+          actionlint_version="1.7.7"
+          actionlint_sha256="023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757"
+          shellcheck_version="0.10.0"
+          shellcheck_sha256="6c881ab0698e4e6ea235245f22832860544f17ba386442fe7e9d629f8cbedf87"
+          mkdir -p "$HOME/.local/bin"
+          curl --proto '=https' --tlsv1.2 --silent --show-error --location --output /tmp/actionlint.tar.gz \
+            "https://github.com/rhysd/actionlint/releases/download/v${actionlint_version}/actionlint_${actionlint_version}_linux_amd64.tar.gz"
+          echo "${actionlint_sha256}  /tmp/actionlint.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/actionlint.tar.gz -C "$HOME/.local/bin" actionlint
+          curl --proto '=https' --tlsv1.2 --silent --show-error --location --output /tmp/shellcheck.tar.xz \
+            "https://github.com/koalaman/shellcheck/releases/download/v${shellcheck_version}/shellcheck-v${shellcheck_version}.linux.x86_64.tar.xz"
+          echo "${shellcheck_sha256}  /tmp/shellcheck.tar.xz" | sha256sum -c -
+          tar -xJf /tmp/shellcheck.tar.xz -C /tmp "shellcheck-v${shellcheck_version}/shellcheck"
+          mv "/tmp/shellcheck-v${shellcheck_version}/shellcheck" "$HOME/.local/bin/shellcheck"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: 🔍 actionlint (sintaxe, expressoes e shellcheck dos blocos run)
+        run: actionlint -no-color .github/workflows/*.yml
+
+      - name: 📦 Instalar zizmor (pinado)
+        run: |
+          python3 -m pip install --quiet --break-system-packages --only-binary :all: zizmor==1.30.1
+
+      - name: 🛡️ zizmor (seguranca dos workflows)
+        run: zizmor --no-online-audits --min-severity medium --format plain .github/workflows
+
+  # ===========================================
   # JOB 5: CI Gate (required check)
   # ===========================================
   ci-gate:
     name: ✅ CI Gate (required check)
     runs-on: ubuntu-24.04
     if: always()
-    needs: [typecheck, unit-tests, node-scripts, edge-contracts, build, security]
+    needs: [typecheck, unit-tests, node-scripts, edge-contracts, build, security, workflow-lint]
     steps:
       - name: Verificar resultado dos jobs obrigatórios
         run: |
@@ -322,12 +369,14 @@ jobs:
           echo "edge-contracts: ${{ needs.edge-contracts.result }}"
           echo "build: ${{ needs.build.result }}"
           echo "security: ${{ needs.security.result }}"
+          echo "workflow-lint: ${{ needs.workflow-lint.result }}"
           if [[  "${{ needs.typecheck.result }}" == "failure" || \
                 "${{ needs.unit-tests.result }}" == "failure" || \
                 "${{ needs.node-scripts.result }}" == "failure" || \
                 "${{ needs.edge-contracts.result }}" == "failure" || \
                 "${{ needs.build.result }}" == "failure" || \
-                "${{ needs.security.result }}" == "failure" ]]; then
+                "${{ needs.security.result }}" == "failure" || \
+                "${{ needs.workflow-lint.result }}" == "failure" ]]; then
             echo "❌ Um ou mais jobs obrigatórios falharam"
             exit 1
           fi
