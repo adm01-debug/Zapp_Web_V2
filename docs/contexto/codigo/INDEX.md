@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `ded01b535dc046ba8d2931947b3b3d1f4ce2dbb1` (2026-11-03T20:56:45Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `da9f551f40daf0bc6c88c24075211201e43a613b` (2026-11-03T19:17:59-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8134 |
 | arquivos_codigo | 4637 |
-| linhas_codigo | 849748 |
+| linhas_codigo | 849749 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -385,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 54387 nós · 110980 arestas · 4116 comunidades · grafo do commit `ded01b53`
+- 54387 nós · 110980 arestas · 4116 comunidades · grafo do commit `da9f551f`
 - comunidades maiores: TalkXSuppression.tsx (1087), vitest (840), lucide-react (788), react (736), cn (536), ExternalProductManagement.tsx (531), card.tsx (456), NotesTab.tsx (431), evolution-webhook-messages.ts (402), mediaVolumeStore.ts (394), DashboardView.tsx (379), ref_node_fs (323)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -393,17 +393,17 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Hotspots (arquivos mais alterados, 90 dias)
 - .github/workflows/ci.yml (22)
 - CLAUDE.md (19)
-- src/integrations/supabase/types.ts (18)
+- src/integrations/supabase/types.ts (17)
 - .github/workflows/db-guard.yml (15)
 - .github/workflows/e2e-logado.yml (15)
 - scripts/ci/ci-docs-baseline.unit.mjs (15)
 - ESTADO.md (14)
-- supabase/schema-manifest.json (14)
 - supabase/deployment-manifest.json (13)
-- .github/workflows/deploy-functions.yml (12)
+- supabase/schema-manifest.json (13)
 - docs/DB-INVENTORY.md (12)
 - docs/ci/README.md (12)
 - scripts/ci/workflow-contracts.unit.mjs (12)
+- .github/workflows/deploy-functions.yml (11)
 - .github/workflows/db-migrate.yml (10)
 - docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md (10)
 

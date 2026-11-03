@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "ded01b535dc046ba8d2931947b3b3d1f4ce2dbb1",
+  "sha": "da9f551f40daf0bc6c88c24075211201e43a613b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-03 20:59 UTC",
+  "generated_at": "2026-11-03 22:19 UTC",
   "files_total": 7975,
   "code_files": 5917,
-  "code_lines": 1018226
+  "code_lines": 1018227
  },
  "version": "1.3.2",
- "facts_hash": "8bd49daacfa5e734",
+ "facts_hash": "229bb273dd13424d",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68862,7 +68862,7 @@
   {
    "module": "scripts",
    "files": 342,
-   "lines": 64196,
+   "lines": 64197,
    "tables": [
     "a",
     "alem_do_limite",
@@ -75305,6 +75305,9 @@
     "supabase/functions/talkx-send/index.ts",
     "supabase/functions/webhook-diagnostic/index.ts",
     "tests/contracts/warroom-rpcs-params.contract.test.ts"
+   ],
+   "SUPABASE_SNAPSHOT_PUBLICACAO": [
+    "scripts/supabase_snapshot/snapshot.py"
    ],
    "SUPABASE_URL": [
     "scripts/ai-context/cenarios.mjs",
@@ -267040,7 +267043,7 @@
   },
   "scripts/supabase_snapshot/snapshot.py": {
    "path": "scripts/supabase_snapshot/snapshot.py",
-   "lines": 1596,
+   "lines": 1597,
    "exports": [
     "def log",
     "def record_error",
@@ -267121,7 +267124,8 @@
     "STAT_STATEMENTS_TOP",
     "SUPABASE_ACCESS_TOKEN",
     "SUPABASE_DB_URL",
-    "SUPABASE_PROJECT_REF"
+    "SUPABASE_PROJECT_REF",
+    "SUPABASE_SNAPSHOT_PUBLICACAO"
    ],
    "server_routes": [
     {
@@ -380470,10 +380474,28 @@
   }
  },
  "git": {
-  "sha": "ded01b535dc046ba8d2931947b3b3d1f4ce2dbb1",
+  "sha": "da9f551f40daf0bc6c88c24075211201e43a613b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "da9f551",
+    "date": "2026-11-03",
+    "author": "adm01-debug",
+    "subject": "chore(snapshot): footer configurável via SUPABASE_SNAPSHOT_PUBLICACAO (#2704)",
+    "files": [
+     "scripts/supabase_snapshot/snapshot.py"
+    ]
+   },
+   {
+    "sha": "9b15c8b",
+    "date": "2026-11-03",
+    "author": "adm01-debug",
+    "subject": "chore: adiciona __pycache__/ ao .gitignore",
+    "files": [
+     ".gitignore"
+    ]
+   },
    {
     "sha": "ded01b5",
     "date": "2026-11-03",
@@ -380849,25 +380871,6 @@
      "scripts/ci/inventario-rotas.unit.mjs",
      "scripts/inventario/gerar-rotas.mjs"
     ]
-   },
-   {
-    "sha": "71bc6cc",
-    "date": "2026-11-02",
-    "author": "adm01-debug",
-    "subject": "fix: historico_cron_sem_limpeza também ignora o contador rolante na comparação (#2649)",
-    "files": [
-     "scripts/ci/inventario-mudou.unit.mjs",
-     "scripts/inventario/mudou-conteudo.mjs"
-    ]
-   },
-   {
-    "sha": "aa83e12",
-    "date": "2026-11-02",
-    "author": "adm01-debug",
-    "subject": "chore: AGENTS.md vira texto-mestre adm01-debug (seções 1-7) e corrige linha do git push (#2629)",
-    "files": [
-     "AGENTS.md"
-    ]
    }
   ],
   "hot_files": [
@@ -380877,14 +380880,10 @@
    ],
    [
     "scripts/supabase_snapshot/snapshot.py",
-    3
+    4
    ],
    [
     "supabase/schema-manifest.json",
-    3
-   ],
-   [
-    "AGENTS.md",
     3
    ],
    [
@@ -380894,6 +380893,10 @@
    [
     "docs/ci/README.md",
     3
+   ],
+   [
+    ".gitignore",
+    2
    ],
    [
     "docs/DB-INVENTORY.md",
@@ -380936,6 +380939,10 @@
     2
    ],
    [
+    "AGENTS.md",
+    2
+   ],
+   [
     "scripts/supabase_snapshot/README.md",
     2
    ],
@@ -380945,10 +380952,6 @@
    ],
    [
     ".github/workflows/db-guard.yml",
-    1
-   ],
-   [
-    "scripts/db-audit/dashboard-rls-authorization.test.sh",
     1
    ]
   ]
