@@ -90,7 +90,7 @@ const SEGREDOS_DE_DEPLOY = [
   'PREVIEW_EGRESS_PROXY_URL',
   'PREVIEW_EGRESS_SHARED_SECRET',
 ];
-const JOBS_DE_DEPLOY = new Set(['deploy-functions.yml:deploy', 'crm-sync-worker.yml:drain']);
+const JOBS_DE_DEPLOY = new Set(['deploy-functions.yml:deploy', 'crm-sync-worker.yml:drain', 'inventario-estado-semanal.yml:gerar']);
 
 test('parser de jobs: le environment inline e na forma longa, ignora comentario', () => {
   const amostra = [

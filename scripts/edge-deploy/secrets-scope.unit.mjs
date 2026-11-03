@@ -128,9 +128,17 @@ function corpoRunDoPasso(nome) {
     .join('\n');
 }
 
+// Blocos `if REESCREVER ... fi` que de fato escrevem (`supabase secrets set`).
+// O preflight do catalogo usa a mesma guarda so' para decidir entre erro e aviso
+// (sem escrita) -- esses blocos nao contam como escrita.
+function escritasGuardadas() {
+  const blocos = workflow.match(/if \[ "\$REESCREVER" = "true" \]; then\n[\s\S]*?\n\s*fi\n/g) ?? [];
+  return blocos.filter((b) => /supabase secrets set/.test(b));
+}
+
 test('E57/E58: CLI falsa prova ZERO secrets set em dry_run, nas 3 condicoes', async () => {
   const decisaoShell = corpoRunDoPasso('Decidir se os secrets das edges precisam ser reescritos');
-  const escritas = workflow.match(/if \[ "\$REESCREVER" = "true" \]; then\n[\s\S]*?\n\s*fi\n/g) ?? [];
+  const escritas = escritasGuardadas();
   assert.equal(escritas.length, 4, `as 4 escritas guardadas por REESCREVER tem de existir (achei ${escritas.length})`);
   const valoresFixture = Object.fromEntries(TODOS.map((n) => [n, `fixture-${n.toLowerCase()}`]));
 
@@ -196,7 +204,7 @@ exit 0
 
 test('E57/E58: controle — sem ensaio as 4 escritas acontecem (a prova acima nao e vazia)', async () => {
   const decisaoShell = corpoRunDoPasso('Decidir se os secrets das edges precisam ser reescritos');
-  const escritas = workflow.match(/if \[ "\$REESCREVER" = "true" \]; then\n[\s\S]*?\n\s*fi\n/g) ?? [];
+  const escritas = escritasGuardadas();
   const dir = await mkdtemp(join(tmpdir(), 'secrets-scope-controle-'));
   const toolDir = join(dir, 'edge-tooling', 'scripts', 'edge-deploy');
   await mkdir(toolDir, { recursive: true });
@@ -249,7 +257,7 @@ exit 0
 test('E58: o workflow declara o input e guarda as 4 escritas pela decisao (pin)', () => {
   assert.match(workflow, /^ {6}rotate_secrets:$/m, 'input rotate_secrets tem de existir');
   assert.match(workflow, /secrets-scope\.mjs/, 'a decisao tem de ser calculada pelo modulo testado');
-  const guardas = workflow.match(/if \[ "\$REESCREVER" = "true" \]; then/g) ?? [];
+  const guardas = escritasGuardadas();
   assert.equal(guardas.length, 4, `cada uma das 4 escritas precisa da guarda (achei ${guardas.length})`);
 });
 

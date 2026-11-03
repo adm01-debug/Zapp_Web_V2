@@ -7,6 +7,9 @@ Conteúdo técnico do projeto (banco, Evolution, CI, Vercel) fica em [`CLAUDE.md
 
 ---
 
+<!-- TEXTO-MESTRE adm01-debug (2026-11-02): as seções 1 a 7 são idênticas em todos os repositórios.
+     Mudou aqui → mude em todos. O que é específico deste repo fica só na seção 8 e no CLAUDE.md. -->
+
 ## 1. Contexto
 
 Sistema ~80% pronto, em manutenção: bug em front, edge functions, SQL, workflows; auditoria e hardening
@@ -122,8 +125,8 @@ Próximos passos
 
 ## 7. Fluxo Git (vários agentes nos mesmos repos ao mesmo tempo)
 
-Escrita no GitHub em repos `adm01-debug`: use o MCP **`GITHUB - MCP - FOREVER`**. O MCP padrão do GitHub,
-o `gh` CLI e o `git push` retornam 403 do proxy em write.
+Escrita no GitHub em repos `adm01-debug`: use o MCP **`GITHUB - MCP - FOREVER`**. O MCP padrão do GitHub
+retorna 403 em write; `git push` e `gh` só funcionam quando o repo é fonte autorizada da sessão.
 
 1. Nunca commite em `main`/`master`. Toda mudança nasce em branch própria.
 2. Só escreva em branch que **você** criou nesta sessão. Branch de outro agente/sessão é somente leitura —
@@ -163,10 +166,18 @@ o `gh` CLI e o `git push` retornam 403 do proxy em write.
 | **Qual banco, qual Evolution API, regras de migration, perímetro do GitHub, Vercel, regras de domínio** | **`CLAUDE.md`, seções 0 a 6** |
 | Comandos do repo (build, typecheck, lint, testes, guards) | `CLAUDE.md`, "Mapa rápido e comandos" |
 | Inventário de workflows de CI | `docs/ci/README.md` (gerado — não editar à mão) |
+| **Contexto gerado para agentes — antes de qualquer tarefa ou planejamento:** banco real (tabelas, RLS, functions, cron, lints), código (rotas, módulos, hooks, edges, grafo) e regras de negócio (estados, validações, fórmulas, lacunas) | **`docs/contexto/00-INDEX.md` na branch `contexto`** (`git show origin/contexto:docs/contexto/00-INDEX.md`): diz qual fonte é dona de cada fato e a ordem de leitura. Gerado a cada 10 min — não editar; regras humanas em `docs/contexto/regras/manual/` (main) |
 | Histórico, auditorias, planos antigos | `docs/`, `analise/`, `inventario/`, `qa/` — contexto, **não** fonte de verdade |
 
 `CLAUDE.md` é de leitura obrigatória antes de rodar SQL, migration ou deploy: errar o banco já causou
 retrabalho real, e os bancos proibidos têm nome quase idêntico ao oficial.
+
+### Automações (`scripts/`)
+
+Automação vive em `scripts/<nome>/`, um subdiretório por automação, cada um com `README.md` dizendo o que
+faz, como rodar e que secrets usa. Nada solto na raiz de `scripts/`. Scripts em `scripts/`; a saída deles
+em `docs/` (ou numa branch gerada) — nunca misturar os dois. Não use `supabase/scripts` (o CLI do Supabase
+é dono de `supabase/`) nem `src/scripts` (entra no bundle). **Leia o README da automação antes de alterar.**
 
 ### Grafo de código (graphify)
 

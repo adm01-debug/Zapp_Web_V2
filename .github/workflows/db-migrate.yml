@@ -80,8 +80,10 @@ jobs:
     steps:
       - name: ✋ Somente executa na main
         if: github.ref != 'refs/heads/main'
+        env:
+          REF_DISPARO: ${{ github.ref }}
         run: |
-          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
+          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${REF_DISPARO})."
           exit 1
 
       # E47 (auditoria de GitHub Actions, 2026-09-26) — considerado e
@@ -112,7 +114,7 @@ jobs:
           node-version: '24'
 
       - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
-        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        uses: supabase/setup-cli@d239d1052f6f024a8d746d7e5aeddead63b9cb53 # v3.1.0
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
 
@@ -227,7 +229,7 @@ jobs:
           fi
           TARGET_FILE=$(find supabase/migrations -maxdepth 1 -type f \
             -name "${TARGET_VERSION}_*.sql" -printf '%f\n')
-          TARGET_NAME=${TARGET_FILE#${TARGET_VERSION}_}
+          TARGET_NAME=${TARGET_FILE#"${TARGET_VERSION}"_}
           TARGET_NAME=${TARGET_NAME%.sql}
           if [ "$APPLY" = "true" ] && [ "$NEEDS_APPLY" != "true" ]; then
             echo "::error::A migration alvo ja esta registrada; apply repetido foi bloqueado."
