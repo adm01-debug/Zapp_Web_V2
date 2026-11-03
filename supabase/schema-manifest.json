@@ -6445,7 +6445,7 @@
         "e:public.multiplix_dispatch_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.multiplix_recipient_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-11-02T10:10:59Z",
+    "generated_at": "2026-11-03T12:39:33Z",
     "column_grants": {
         "r:public.departments.id|authenticated|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
@@ -6487,6 +6487,7 @@
         "public|postgres|USAGE|grantor=pg_database_owner": "68934a3e9455fa72420237eb05902327",
         "public|service_role|USAGE|grantor=pg_database_owner": "68934a3e9455fa72420237eb05902327",
         "public|authenticated|USAGE|grantor=pg_database_owner": "68934a3e9455fa72420237eb05902327",
+        "public|snapshot_reader|USAGE|grantor=pg_database_owner": "68934a3e9455fa72420237eb05902327",
         "public|pg_database_owner|USAGE|grantor=pg_database_owner": "68934a3e9455fa72420237eb05902327",
         "public|pg_database_owner|CREATE|grantor=pg_database_owner": "68934a3e9455fa72420237eb05902327"
     },
