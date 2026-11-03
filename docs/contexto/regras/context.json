@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "29ae259dee5e2c9544829a075afb53497a95551b",
+  "sha": "535074caeaef1f58834ed294696a07f583991133",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-03 20:05 UTC",
-  "files_total": 7976,
+  "generated_at": "2026-11-03 20:33 UTC",
+  "files_total": 7978,
   "code_files": 5918,
-  "code_lines": 1018925
+  "code_lines": 1018938
  },
  "version": "1.3.2",
- "facts_hash": "b8b35f7d803e38e4",
+ "facts_hash": "f9cb250a21f69b95",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -68973,7 +68973,7 @@
   {
    "module": "scripts",
    "files": 342,
-   "lines": 64178,
+   "lines": 64191,
    "tables": [
     "a",
     "alem_do_limite",
@@ -74633,6 +74633,9 @@
    ],
    "AI_CONTEXT_PROFILE": [
     "scripts/regras_negocio/generate.py"
+   ],
+   "AI_CONTEXT_PUBLICACAO": [
+    "scripts/ai-context/gerar.mjs"
    ],
    "AI_CONTEXT_ROOT": [
     "scripts/ai-context/gerar.mjs"
@@ -261268,9 +261271,10 @@
   },
   "scripts/ai-context/gerar.mjs": {
    "path": "scripts/ai-context/gerar.mjs",
-   "lines": 916,
+   "lines": 919,
    "env": [
     "AI_CONTEXT_DIR",
+    "AI_CONTEXT_PUBLICACAO",
     "AI_CONTEXT_ROOT"
    ],
    "params": [
@@ -261293,7 +261297,7 @@
   },
   "scripts/ai-context/gerar.unit.mjs": {
    "path": "scripts/ai-context/gerar.unit.mjs",
-   "lines": 251,
+   "lines": 261,
    "exports": [
     "function AppRoutes",
     "function useContacts"
@@ -380776,10 +380780,31 @@
   }
  },
  "git": {
-  "sha": "29ae259dee5e2c9544829a075afb53497a95551b",
+  "sha": "535074caeaef1f58834ed294696a07f583991133",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "535074c",
+    "date": "2026-11-03",
+    "author": "adm01-debug",
+    "subject": "fix(ai-context): rodapé do INDEX.md configurável por repo + README da automação (#2696)",
+    "files": [
+     "ai-context.config.json",
+     "scripts/ai-context/README.md",
+     "scripts/ai-context/gerar.mjs",
+     "scripts/ai-context/gerar.unit.mjs"
+    ]
+   },
+   {
+    "sha": "a3fb2a2",
+    "date": "2026-11-03",
+    "author": "github-actions[bot]",
+    "subject": "chore(db): sincronizar artefatos derivados do banco (#2695)",
+    "files": [
+     "supabase/schema-manifest.json"
+    ]
+   },
    {
     "sha": "29ae259",
     "date": "2026-11-03",
@@ -381140,38 +381165,16 @@
     "files": [
      "supabase/migrations/20261102032200_revoga_execute_public_cron_schedule.sql"
     ]
-   },
-   {
-    "sha": "c9e6d13",
-    "date": "2026-11-02",
-    "author": "adm01-debug",
-    "subject": "fix: inventário semanal ignora telemetria viva do cron/WhatsApp na comparação (#2646)",
-    "files": [
-     "inventario/estado/README.md",
-     "scripts/ci/inventario-mudou.unit.mjs",
-     "scripts/inventario/mudou-conteudo.mjs"
-    ]
-   },
-   {
-    "sha": "c6c86af",
-    "date": "2026-11-02",
-    "author": "adm01-debug",
-    "subject": "fix: inventário vê edge chamada por URL, cron parado de vez e banco irmão com as mesmas tabelas (#2642)",
-    "files": [
-     "inventario/estado/README.md",
-     "inventario/estado/banco.json",
-     "inventario/estado/rotas.json",
-     "scripts/ci/inventario-banco.unit.mjs",
-     "scripts/ci/inventario-rotas.unit.mjs",
-     "scripts/inventario/gerar-banco.mjs",
-     "scripts/inventario/gerar-rotas.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/contexto/regras/manual/regras.md",
     5
+   ],
+   [
+    "supabase/schema-manifest.json",
+    3
    ],
    [
     "AGENTS.md",
@@ -381186,15 +381189,19 @@
     3
    ],
    [
+    "scripts/ai-context/gerar.mjs",
+    2
+   ],
+   [
+    "scripts/ai-context/gerar.unit.mjs",
+    2
+   ],
+   [
     "supabase/deployment-manifest.json",
     2
    ],
    [
     "scripts/ci/eslint-baseline.json",
-    2
-   ],
-   [
-    "supabase/schema-manifest.json",
     2
    ],
    [
@@ -381226,27 +381233,19 @@
     2
    ],
    [
-    "scripts/ci/inventario-rotas.unit.mjs",
-    2
+    "ai-context.config.json",
+    1
    ],
    [
-    "scripts/inventario/gerar-rotas.mjs",
-    2
-   ],
-   [
-    "scripts/ci/inventario-mudou.unit.mjs",
-    2
-   ],
-   [
-    "scripts/inventario/mudou-conteudo.mjs",
-    2
-   ],
-   [
-    "inventario/estado/README.md",
-    2
+    "scripts/ai-context/README.md",
+    1
    ],
    [
     "supabase/migrations/20261102012400_login_attempts_retencao_90d.sql",
+    1
+   ],
+   [
+    "ESTADO.md",
     1
    ]
   ]

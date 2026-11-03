@@ -5,8 +5,8 @@
   "linguagens": [
    "TypeScript (4173)",
    "SQL (1277)",
-   "Markdown (1030)",
-   "JSON (591)",
+   "Markdown (1031)",
+   "JSON (592)",
    "JavaScript (351)",
    "Shell (230)",
    "Python (115)",
@@ -110,6 +110,7 @@
   ".husky/pre-push",
   ".nvmrc",
   ".prettierrc",
+  "ai-context.config.json",
   "components.json",
   "eslint.config.js",
   "package.json",

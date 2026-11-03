@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a cada 10 minutos pelo workflow `contexto-ia.yml`; gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `29ae259dee5e2c9544829a075afb53497a95551b` (2026-11-03T20:02:12Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `535074caeaef1f58834ed294696a07f583991133` (2026-11-03T20:30:11Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a 
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4173), SQL (1277), Markdown (1030), JSON (591), JavaScript (351), Shell (230), Python (115), YAML (27)
+- linguagens: TypeScript (4173), SQL (1277), Markdown (1031), JSON (592), JavaScript (351), Shell (230), Python (115), YAML (27)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8135 |
+| arquivos_total | 8137 |
 | arquivos_codigo | 4637 |
-| linhas_codigo | 849730 |
+| linhas_codigo | 849743 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -51,7 +51,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | testes | 2526 |
 | workflows | 19 |
 | scripts | 376 |
-| docs_md | 1030 |
+| docs_md | 1031 |
 
 ## Onde ficam as coisas
 - telas: src/components (54), src/pages (18)
@@ -379,27 +379,27 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - rpcs_sem_definicao: 15 — ex.: complete_crm_sync_outbox, f, fn
 - componentes_orfaos: 45 — ex.: src/components/calls/DialPad.tsx, src/components/cognitive/ProgressiveDisclosure.tsx, src/components/CommandPalette.tsx
 - componentes_com_nome_duplicado: 39 — ex.: AchievementBadge, BreadcrumbItem, CommandGroup
-- scripts_orfaos: 3 — ex.: scripts/ai-context/cenarios.mjs, scripts/db-audit/n118-window-open-proof.test.sql, scripts/db-audit/validate-talkx-runtime.mjs
+- scripts_orfaos: 2 — ex.: scripts/db-audit/n118-window-open-proof.test.sql, scripts/db-audit/validate-talkx-runtime.mjs
 - env_usadas_nao_declaradas: 8 — ex.: DEV, MODE, NODE_ENV
 - ciclos_de_import: 11
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 54401 nós · 111012 arestas · 4152 comunidades · grafo do commit `29ae259d`
-- comunidades maiores: react (932), lucide-react (879), @tanstack/react-query (684), input.tsx (647), useAuth (624), vitest (577), TalkXCampaignWizard.tsx (433), validation.ts (389), evolution-webhook-messages.ts (329), ref_node_fs (278), ai-generate.ts (258), chat.ts (257)
+- 54403 nós · 111014 arestas · 4161 comunidades · grafo do commit `535074ca`
+- comunidades maiores: cn (875), react (730), framer-motion (682), TalkXSuppression.tsx (671), lucide-react (668), vitest (584), @tanstack/react-query (438), framer-motion (382), avatar.tsx (348), ref_node_fs (320), ref_node_assert (304), useExternalCatalog.ts (301)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
-- .github/workflows/ci.yml (23)
+- .github/workflows/ci.yml (22)
 - CLAUDE.md (19)
 - src/integrations/supabase/types.ts (18)
-- .github/workflows/e2e-logado.yml (16)
-- .github/workflows/db-guard.yml (15)
+- .github/workflows/e2e-logado.yml (15)
 - scripts/ci/ci-docs-baseline.unit.mjs (15)
+- .github/workflows/db-guard.yml (14)
 - ESTADO.md (14)
+- supabase/schema-manifest.json (14)
 - supabase/deployment-manifest.json (13)
-- supabase/schema-manifest.json (13)
 - .github/workflows/deploy-functions.yml (12)
 - docs/ci/README.md (12)
 - scripts/ci/workflow-contracts.unit.mjs (12)

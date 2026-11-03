@@ -552,13 +552,13 @@
   {
    "arquivo": "scripts/ai-context/gerar.unit.mjs",
    "tipo": "unit",
-   "linhas": 251,
+   "linhas": 261,
    "testa": [
     "src/components/auth/ProtectedRoute.tsx",
     "src/pages/lazyViews.ts",
     "src/routes/AppRoutes.tsx"
    ],
-   "casos": 12
+   "casos": 13
   },
   {
    "arquivo": "scripts/catalog/validate-plan.test.mjs",

@@ -21,14 +21,15 @@
    ],
    "npm_scripts": [],
    "workflows": [],
-   "orfao": true
+   "orfao": false
   },
   {
    "arquivo": "scripts/ai-context/gerar.mjs",
    "descricao": "Gera o contexto de projeto para agentes de IA (padrão: inventario/ia/*). Zero dependências. Node >= 18. Genérico: funciona em qualquer repositório.",
-   "linhas": 916,
+   "linhas": 919,
    "env": [
     "AI_CONTEXT_DIR",
+    "AI_CONTEXT_PUBLICACAO",
     "AI_CONTEXT_ROOT"
    ],
    "npm_scripts": [

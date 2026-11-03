@@ -2,9 +2,9 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "29ae259dee5e2c9544829a075afb53497a95551b",
+  "commit": "535074caeaef1f58834ed294696a07f583991133",
   "branch": "main",
-  "data_commit": "2026-11-03T20:02:12Z",
+  "data_commit": "2026-11-03T20:30:11Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
   "arquivos_mudados_7d": 1424,
@@ -73,7 +73,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 23
+    "mudancas": 22
    },
    {
     "arquivo": "CLAUDE.md",
@@ -85,10 +85,6 @@
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 16
-   },
-   {
-    "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 15
    },
    {
@@ -96,15 +92,19 @@
     "mudancas": 15
    },
    {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 14
+   },
+   {
     "arquivo": "ESTADO.md",
     "mudancas": 14
    },
    {
-    "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 13
+    "arquivo": "supabase/schema-manifest.json",
+    "mudancas": 14
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
+    "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 13
    },
    {
@@ -140,10 +140,6 @@
     "mudancas": 10
    },
    {
-    "arquivo": "scripts/db-audit/check-migration-drift.mjs",
-    "mudancas": 9
-   },
-   {
     "arquivo": "supabase/schema-catalog.json",
     "mudancas": 9
    },
@@ -152,15 +148,7 @@
     "mudancas": 8
    },
    {
-    "arquivo": ".github/workflows/notifica-falha-main.yml",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "scripts/db-audit/check-migration-drift.test.mjs",
-    "mudancas": 8
-   },
-   {
-    "arquivo": "scripts/db-audit/migration-evidence.json",
+    "arquivo": "scripts/db-audit/check-migration-drift.mjs",
     "mudancas": 8
    },
    {
@@ -170,6 +158,18 @@
    {
     "arquivo": "supabase/functions/connection-health-check/index.test.ts",
     "mudancas": 8
+   },
+   {
+    "arquivo": "supabase/functions/connection-health-check/index.ts",
+    "mudancas": 8
+   },
+   {
+    "arquivo": ".github/workflows/branch-hygiene-audit.yml",
+    "mudancas": 7
+   },
+   {
+    "arquivo": ".github/workflows/notifica-falha-main.yml",
+    "mudancas": 7
    }
   ],
   "autores_30d": [
@@ -179,11 +179,11 @@
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 11
+    "commits": 10
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 7
+    "commits": 8
    },
    {
     "autor": "devin-ai-integration[bot]",
@@ -192,9 +192,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8135,
+  "arquivos_total": 8137,
   "arquivos_codigo": 4637,
-  "linhas_codigo": 849730,
+  "linhas_codigo": 849743,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -209,7 +209,7 @@
   "testes": 2526,
   "workflows": 19,
   "scripts": 376,
-  "docs_md": 1030
+  "docs_md": 1031
  },
  "por_pasta": {
   "docs/_arquivo": {
@@ -470,7 +470,7 @@
   },
   "scripts/ai-context": {
    "arquivos": 3,
-   "linhas": 1340
+   "linhas": 1353
   },
   "scripts/catalog": {
    "arquivos": 2,
@@ -764,7 +764,7 @@
   },
   {
    "arquivo": "scripts/ai-context/gerar.mjs",
-   "linhas": 916
+   "linhas": 919
   }
  ],
  "qualidade": {
@@ -784,13 +784,13 @@
   },
   {
    "arquivo": "scripts/ai-context/gerar.mjs",
-   "linha": 185,
+   "linha": 188,
    "tipo": "TODO",
    "texto": "|FIXME|HACK|XXX)\\b[:\\s-]*([^\\n]{0,100})/.exec(line); if (m) todos.push({ linha: ln, tipo: m[1], text"
   },
   {
    "arquivo": "scripts/ai-context/gerar.mjs",
-   "linha": 219,
+   "linha": 222,
    "tipo": "TODO",
    "texto": "|FIXME|HACK|XXX)\\b[:\\s-]*([^\\n]{0,100})/.exec(l); return m ? { linha: i + 1, tipo: m[1], texto: m[2]"
   },
@@ -1249,7 +1249,6 @@
    "VoiceDictationButton"
   ],
   "scripts_orfaos": [
-   "scripts/ai-context/cenarios.mjs",
    "scripts/db-audit/n118-window-open-proof.test.sql",
    "scripts/db-audit/validate-talkx-runtime.mjs"
   ],
