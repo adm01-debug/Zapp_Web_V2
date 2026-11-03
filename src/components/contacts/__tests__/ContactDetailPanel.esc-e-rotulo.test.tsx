@@ -21,7 +21,6 @@ vi.mock('@/services/contact.service', () => ({
 // Filhos que falam com a rede: fora do escopo deste teste.
 vi.mock('../ContactActivityTimeline', () => ({ ContactActivityTimeline: () => <div /> }));
 vi.mock('../ContactNotes', () => ({ ContactNotes: () => <div /> }));
-vi.mock('../ContactPurchaseHistory', () => ({ ContactPurchaseHistory: () => <div /> }));
 vi.mock('@/hooks/integrations/useCatalogSendHistory', () => ({
   useCatalogSendHistory: () => ({ rows: [], isLoading: false, error: null }),
 }));
