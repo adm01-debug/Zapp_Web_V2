@@ -164,7 +164,7 @@ const RE = {
   urlHost: /https?:\/\/([a-z0-9.-]+\.[a-z]{2,})(?=[/'"`\s)?]|$)/gi,
   flag: /(?:isFeatureEnabled|useFeatureFlag|useFlag|useFeature|getFlag|featureFlag|isEnabled)\(\s*['"`]([\w.:-]+)['"`]/g,
   flagEnv: /\b(?:VITE_|NEXT_PUBLIC_|REACT_APP_|PUBLIC_)?(FEATURE_[A-Z0-9_]+|FF_[A-Z0-9_]+|ENABLE_[A-Z0-9_]+)\b/g,
-  role: /\b(?:role|roles|papel|userRole|requiredRole|allowedRoles|hasRole|requireRole)\b\s*(?:[:=!]==?|\(|\.includes\(|:\s*\[)\s*\[?\s*['"`](\w+)['"`]/g,
+  role: /\b(?:role|roles|papel|userRole|requiredRole|allowedRoles|hasRole|requireRole)\b\s*(?:[:=!]=?=?|\(|\.includes\(|:\s*\[)\s*\[?\s*['"`](\w+)['"`]/g,
   zod: /\b(?:z|zod)\.object\(/g,
   prisma: /\bprisma\.(\w+)\.(?:findMany|findFirst|findUnique|create|update|delete|upsert|count|aggregate)/g,
   drizzleTable: /\b(?:pgTable|mysqlTable|sqliteTable)\(\s*['"](\w+)['"]/g,
@@ -318,13 +318,16 @@ secao('rotas-jsx', () => {
       if (p || isIndex) rotas.push(mk({ caminho: full, componente: comp, arquivo: file, protegida: tags.some((w) => /Protected|Private|Auth|Guard|Require|Admin/i.test(w)) || paiProtegido, wrappers: tags.filter((t) => t !== comp), pai: parent, indice: isIndex, definida_em: rf, lazy: comp ? lazyMap.has(comp) : false, tipo: redir && !comp ? 'redirect' : 'tela', redireciona: redir ? redir[1] : null }));
       if (!self) stack.push(full);
     }
-    const re2 = /\{\s*(?:[^{}]*?\b)?path:\s*['"]([^'"]*)['"]([^{}]*?(?:\{[^{}]*\}[^{}]*?)*)/g; let mm;
-    while ((mm = re2.exec(src))) {
-      const body = mm[2]; const compM = /(?:element|Component|component|lazy)\s*:\s*(?:<)?(?:\(\)\s*=>\s*import\(\s*['"]([^'"]+)['"]\s*\))?([A-Z]\w*)?/.exec(body);
-      const file = compM && compM[1] ? resolveImport(rf, compM[1]) : componentFile(compM && compM[2], rf);
-      if (!compM) continue;
-      rotas.push(mk({ caminho: joinPath(null, mm[1]), componente: (compM && compM[2]) || null, arquivo: file, definida_em: rf, lazy: !!(compM && compM[1]) }));
-    }
+    const scanObjs = (text, parent, depth) => {
+      const re2 = /\{\s*(?:[^{}]*?\b)?path:\s*['"]([^'"]*)['"]([^{}]*(?:\{[^{}]*\}[^{}]*)*)/g; let mm;
+      while ((mm = re2.exec(text))) {
+        const body = mm[2].replace(/children\s*:\s*\[[\s\S]*$/, ''); const compM = /(?:element|Component|component|lazy)\s*:\s*(?:<)?(?:\(\)\s*=>\s*import\(\s*['"]([^'"]+)['"]\s*\))?([A-Z]\w*)?/.exec(body);
+        const full = joinPath(parent, mm[1]);
+        if (compM && (compM[1] || compM[2])) rotas.push(mk({ caminho: full, componente: compM[2] || null, arquivo: compM[1] ? resolveImport(rf, compM[1]) : componentFile(compM[2], rf), pai: parent, definida_em: rf, lazy: !!compM[1] }));
+        const ch = /children\s*:\s*\[([\s\S]*)$/.exec(mm[2]); if (ch && depth < 6) scanObjs(ch[1], full, depth + 1);
+      }
+    };
+    scanObjs(src, null, 0);
   }
 });
 secao('rotas-fs', () => {
@@ -332,14 +335,14 @@ secao('rotas-fs', () => {
   for (const f of ALL) {
     let m;
     if ((m = /^(?:src\/)?app\/((?:.*\/)?)(page|route|layout)\.(tsx|jsx|ts|js)$/.exec(f)) && has('next')) rotas.push(mk({ caminho: '/' + dyn(m[1].replace(/\/$/, '')), componente: m[2], arquivo: f, definida_em: 'next/app', tipo: m[2] === 'route' ? 'api' : m[2] === 'layout' ? 'layout' : 'tela' }));
-    else if ((m = /^(?:src\/)?pages\/api\/(.+)\.(ts|js)$/.exec(f)) && has('next')) rotas.push(mk({ caminho: '/api/' + dyn(m[1].replace(/\/index$/, '')), componente: baseOf(f), arquivo: f, definida_em: 'next/pages', tipo: 'api' }));
-    else if ((m = /^(?:src\/)?pages\/(.+)\.(tsx|jsx|ts|js)$/.exec(f)) && has('next') && !/^_/.test(m[1])) rotas.push(mk({ caminho: '/' + dyn(m[1].replace(/\/index$/, '')), componente: baseOf(f), arquivo: f, definida_em: 'next/pages' }));
+    else if ((m = /^(?:src\/)?pages\/api\/(.+)\.(ts|js)$/.exec(f)) && has('next')) rotas.push(mk({ caminho: '/api/' + dyn(m[1].replace(/(^|\/)index$/, '')), componente: baseOf(f), arquivo: f, definida_em: 'next/pages', tipo: 'api' }));
+    else if ((m = /^(?:src\/)?pages\/(.+)\.(tsx|jsx|ts|js)$/.exec(f)) && has('next') && !/^_/.test(m[1])) rotas.push(mk({ caminho: '/' + dyn(m[1].replace(/(^|\/)index$/, '')), componente: baseOf(f), arquivo: f, definida_em: 'next/pages' }));
     else if ((m = /^src\/routes\/((?:.*\/)?)\+(page|server|layout)(?:\.\w+)?\.(svelte|ts|js)$/.exec(f)) && has('@sveltejs/kit')) rotas.push(mk({ caminho: '/' + dyn(m[1].replace(/\/$/, '')), componente: m[2], arquivo: f, definida_em: 'sveltekit', tipo: m[2] === 'server' ? 'api' : m[2] }));
-    else if ((m = /^(?:src\/)?pages\/(.+)\.vue$/.exec(f)) && has('nuxt')) rotas.push(mk({ caminho: '/' + dyn(m[1].replace(/\/index$/, '')), componente: baseOf(f), arquivo: f, definida_em: 'nuxt' }));
-    else if ((m = /^(?:src\/)?server\/api\/(.+)\.(ts|js)$/.exec(f)) && has('nuxt')) rotas.push(mk({ caminho: '/api/' + dyn(m[1].replace(/\.(get|post|put|delete|patch)$/, '').replace(/\/index$/, '')), componente: baseOf(f), arquivo: f, definida_em: 'nuxt', tipo: 'api' }));
-    else if ((m = /^app\/routes\/(.+)\.(tsx|jsx|ts|js)$/.exec(f)) && has('@remix-run/react')) rotas.push(mk({ caminho: '/' + m[1].replace(/\./g, '/').replace(/\/_index$/, '').replace(/\$(\w+)/g, ':$1'), componente: baseOf(f), arquivo: f, definida_em: 'remix' }));
-    else if ((m = /^src\/pages\/(.+)\.(astro|md|mdx)$/.exec(f)) && has('astro')) rotas.push(mk({ caminho: '/' + dyn(m[1].replace(/\/index$/, '')), componente: baseOf(f), arquivo: f, definida_em: 'astro' }));
-    else if ((m = /^api\/(.+)\.(ts|js|py|go)$/.exec(f)) && exists('vercel.json')) rotas.push(mk({ caminho: '/api/' + dyn(m[1].replace(/\/index$/, '')), componente: baseOf(f), arquivo: f, definida_em: 'vercel/api', tipo: 'api' }));
+    else if ((m = /^(?:src\/)?pages\/(.+)\.vue$/.exec(f)) && has('nuxt')) rotas.push(mk({ caminho: '/' + dyn(m[1].replace(/(^|\/)index$/, '')), componente: baseOf(f), arquivo: f, definida_em: 'nuxt' }));
+    else if ((m = /^(?:src\/)?server\/api\/(.+)\.(ts|js)$/.exec(f)) && has('nuxt')) rotas.push(mk({ caminho: '/api/' + dyn(m[1].replace(/\.(get|post|put|delete|patch)$/, '').replace(/(^|\/)index$/, '')), componente: baseOf(f), arquivo: f, definida_em: 'nuxt', tipo: 'api' }));
+    else if ((m = /^app\/routes\/(.+)\.(tsx|jsx|ts|js)$/.exec(f)) && has('@remix-run/react')) rotas.push(mk({ caminho: '/' + m[1].replace(/\./g, '/').replace(/(^|\/)_index$/, '').replace(/\$(\w+)/g, ':$1'), componente: baseOf(f), arquivo: f, definida_em: 'remix' }));
+    else if ((m = /^src\/pages\/(.+)\.(astro|md|mdx)$/.exec(f)) && has('astro')) rotas.push(mk({ caminho: '/' + dyn(m[1].replace(/(^|\/)index$/, '')), componente: baseOf(f), arquivo: f, definida_em: 'astro' }));
+    else if ((m = /^api\/(.+)\.(ts|js|py|go)$/.exec(f)) && exists('vercel.json')) rotas.push(mk({ caminho: '/api/' + dyn(m[1].replace(/(^|\/)index$/, '')), componente: baseOf(f), arquivo: f, definida_em: 'vercel/api', tipo: 'api' }));
     else if ((m = /^(?:netlify\/)?functions\/([\w-]+)\.(ts|js)$/.exec(f)) && exists('netlify.toml')) rotas.push(mk({ caminho: '/.netlify/functions/' + m[1], componente: m[1], arquivo: f, definida_em: 'netlify', tipo: 'api' }));
   }
 });
@@ -351,7 +354,7 @@ secao('vistas', () => {
   for (const [f, d] of FILE) {
     if (d.teste || !/ViewRouter|viewRegistry|viewMap|VIEW_MAP|VIEW_COMPONENTS|SPECIAL_VIEWS|renderView|screenMap|SCREEN_MAP|TAB_COMPONENTS/i.test(f + d.conteudo.slice(0, 4000))) continue;
     const src = d.conteudo; let m;
-    const re1 = /case\s+['"]([\w-]+)['"]\s*:[\s\S]{0,200}?<([A-Z]\w*)/g;
+    const re1 = /case\s+['"]([\w-]+)['"]\s*:[\s\S]{0,200}?<(?:[A-Z]\w*\.)?([A-Z]\w*)/g;
     while ((m = re1.exec(src))) vistas.push({ id: m[1], componente: m[2], arquivo: componentFile(m[2], f), registrada_em: f });
     const re2 = /['"]?([\w-]+)['"]?\s*:\s*(?:<)?(?:[A-Z]\w*\.)?([A-Z]\w*)\s*(?:\/?>|,|\}|as\b)/g;
     while ((m = re2.exec(src))) if (lazyMap.has(m[2]) || d.imports.some((i) => FILE.get(i)?.exports.includes(m[2]))) vistas.push({ id: m[1], componente: m[2], arquivo: componentFile(m[2], f), registrada_em: f });
@@ -366,7 +369,7 @@ const enrich = (r) => {
   return { ...r, hooks: a.hooks, hooks_locais: localHooks(a.hooks), tabelas: a.tabelas, rpcs: a.rpcs, edges: a.edges, canais_realtime: a.canais_realtime, flags: a.flags, papeis: a.papeis, arquivos_puxados: files.length - 1 };
 };
 const rotasDedup = Object.values(Object.fromEntries(rotas.map((r) => [`${r.caminho}|${r.componente}|${r.definida_em}`, r])));
-const rotasEnriched = rotasDedup.sort((a, b) => a.caminho.localeCompare(b.caminho) || a.definida_em.localeCompare(b.definida_em)).map(enrich);
+const rotasEnriched = rotasDedup.sort((a, b) => a.caminho.localeCompare(b.caminho) || (a.indice ? 1 : 0) - (b.indice ? 1 : 0) || a.tipo.localeCompare(b.tipo) || a.definida_em.localeCompare(b.definida_em)).map(enrich);
 const vistasEnriched = vistasUniq.map(enrich);
 
 // ---------- menu ----------
@@ -432,8 +435,9 @@ const componentesDuplicados = sortObj(Object.fromEntries(Object.entries(nomesCom
 const banco = { tabelas: {}, funcoes: new Set(), triggers: [], views: new Set(), enums: {}, extensoes: new Set(), migrations: 0, fonte: [], cron: [], buckets_sql: new Set(), seeds: [], ddl_dinamico: 0 };
 let SQL_TEXT_LOWER = '';
 const migDir = ['supabase/migrations', 'migrations', 'db/migrations', 'database/migrations', 'prisma/migrations', 'drizzle', 'sql', 'db'].find((d) => exists(d) && ALL.some((f) => f.startsWith(d + '/') && f.endsWith('.sql')));
-const tname = (name) => { const n = name.replace(/"/g, ''); return n.startsWith('public.') ? n.slice(7) : n; };
+const tname = (name) => { const n = name.replace(/"/g, ''); return /^public\./i.test(n) ? n.slice(7) : n; };
 const T = (name) => { const n = tname(name); if (!banco.tabelas[n]) banco.tabelas[n] = { colunas: {}, rls: false, policies: [], indices: [], fks: [], criada_em: null }; return banco.tabelas[n]; };
+const splitStatements = (text) => { const out = []; let cur = '', q = null; for (let i = 0; i < text.length; i++) { const ch = text[i]; if (q) { cur += ch; if (ch === q) { if (text[i + 1] === q) { cur += q; i++; } else q = null; } continue; } if (ch === "'" || ch === '"') { q = ch; cur += ch; continue; } if (ch === ';') { out.push(cur); cur = ''; continue; } cur += ch; } out.push(cur); return out; };
 const parseCols = (body, table) => {
   let depth = 0, cur = ''; const parts = [];
   for (const ch of body) { if (ch === '(') depth++; if (ch === ')') depth--; if (ch === ',' && depth === 0) { parts.push(cur); cur = ''; } else cur += ch; }
@@ -460,18 +464,18 @@ secao('banco-sql', () => {
     const bodies = []; const sqlNoBody = sql.replace(/\$(\w*)\$[\s\S]*?\$\1\$/g, (m0) => { bodies.push(m0); return "''"; });
     allSql.push(sql.toLowerCase());
     // DO $$ ... $$ e corpos de função: statements literais (CREATE/DROP POLICY, ALTER TABLE) também valem; DDL dinâmico (EXECUTE format) é só sinalizado
-    const bodyStatements = bodies.flatMap((b) => { const inner = b.replace(/^\$\w*\$|\$\w*\$$/g, '').replace(/\$(\w*)\$[\s\S]*?\$\1\$/g, "''"); if (/\bexecute\s+(format|'|\$)/i.test(inner)) banco.ddl_dinamico++; return inner.split(';').filter((x) => /^\s*(create|drop|alter)\s/i.test(x)); });
-    for (const stRaw of [...sqlNoBody.split(';'), ...bodyStatements]) {
+    const bodyStatements = bodies.flatMap((b) => { const inner = b.replace(/^\$\w*\$|\$\w*\$$/g, '').replace(/\$(\w*)\$[\s\S]*?\$\1\$/g, "''"); if (/\bexecute\s+(format|'|\$|[a-z_]+\s*\()/i.test(inner)) banco.ddl_dinamico++; return splitStatements(inner).map((x) => { const m0 = /\b(create|drop|alter)\s[\s\S]*$/i.exec(x); return m0 ? m0[0] : ''; }).filter(Boolean); });
+    for (const stRaw of [...splitStatements(sqlNoBody), ...bodyStatements]) {
       const st = stRaw.trim(); if (!st) continue; let m;
-      if ((m = /^create\s+(?:unlogged\s+)?table\s+(?:if\s+not\s+exists\s+)?("?[\w.]+"?)\s*\(/i.exec(st))) {
+      if ((m = /^create\s+(?:unlogged\s+)?table\s+(?:if\s+not\s+exists\s+)?((?:"?\w+"?\.)?"?\w+"?)\s*\(/i.exec(st))) {
         let i = m[0].length, depth = 1, body = '';
         while (i < st.length && depth > 0) { const ch = st[i++]; if (ch === '(') depth++; if (ch === ')') depth--; if (depth > 0) body += ch; }
         const t = T(m[1]); if (!t.criada_em) t.criada_em = path.posix.basename(f); parseCols(body, t); continue;
       }
-      if ((m = /^create\s+table\s+(?:if\s+not\s+exists\s+)?("?[\w.]+"?)\s+(?:partition\s+of|as\s+)/i.exec(st))) { const t = T(m[1]); if (!t.criada_em) t.criada_em = path.posix.basename(f); continue; }
-      if ((m = /^drop\s+table\s+(?:if\s+exists\s+)?("?[\w.]+"?)/i.exec(st))) { delete banco.tabelas[tname(m[1])]; continue; }
-      if ((m = /^alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?("?[\w.]+"?)\s+rename\s+to\s+("?\w+"?)/i.exec(st))) { const o = tname(m[1]); if (banco.tabelas[o]) { banco.tabelas[m[2].replace(/"/g, '')] = banco.tabelas[o]; delete banco.tabelas[o]; } continue; }
-      if ((m = /^alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?("?[\w.]+"?)\s+([\s\S]+)$/i.exec(st))) {
+      if ((m = /^create\s+table\s+(?:if\s+not\s+exists\s+)?((?:"?\w+"?\.)?"?\w+"?)\s+(?:partition\s+of|as\s+)/i.exec(st))) { const t = T(m[1]); if (!t.criada_em) t.criada_em = path.posix.basename(f); continue; }
+      if ((m = /^drop\s+table\s+(?:if\s+exists\s+)?((?:"?\w+"?\.)?"?\w+"?)/i.exec(st))) { delete banco.tabelas[tname(m[1])]; continue; }
+      if ((m = /^alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?((?:"?\w+"?\.)?"?\w+"?)\s+rename\s+to\s+("?\w+"?)/i.exec(st))) { const o = tname(m[1]); if (banco.tabelas[o]) { banco.tabelas[m[2].replace(/"/g, '')] = banco.tabelas[o]; delete banco.tabelas[o]; } continue; }
+      if ((m = /^alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?((?:"?\w+"?\.)?"?\w+"?)\s+([\s\S]+)$/i.exec(st))) {
         const t = T(m[1]); const ops = m[2].split(/,\s*(?=(?:add|drop|alter|enable|disable|force|rename)\s)/i);
         for (const op of ops) {
           let x;
@@ -488,22 +492,22 @@ secao('banco-sql', () => {
         }
         continue;
       }
-      if ((m = /^create\s+policy\s+("[^"]+"|\w+)\s+on\s+("?[\w.]+"?)(?:\s+as\s+(permissive|restrictive))?(?:\s+for\s+(select|insert|update|delete|all))?(?:\s+to\s+([\w, ]+?))?\s+(?:using|with\s+check)/i.exec(st))) {
+      if ((m = /^create\s+policy\s+("[^"]+"|\w+)\s+on\s+((?:"?\w+"?\.)?"?\w+"?)(?:\s+as\s+(permissive|restrictive))?(?:\s+for\s+(select|insert|update|delete|all))?(?:\s+to\s+([\w, ]+?))?\s+(?:using|with\s+check)/i.exec(st))) {
         const t = T(m[2]); const nome = m[1].replace(/"/g, ''); t.policies = t.policies.filter((p) => p.nome !== nome);
         t.policies.push({ nome, comando: (m[4] || 'all').toLowerCase(), para: (m[5] || 'public').trim(), tipo: (m[3] || 'permissive').toLowerCase() }); continue;
       }
-      if ((m = /^drop\s+policy\s+(?:if\s+exists\s+)?("[^"]+"|\w+)\s+on\s+("?[\w.]+"?)/i.exec(st))) { const t = T(m[2]); t.policies = t.policies.filter((p) => p.nome !== m[1].replace(/"/g, '')); continue; }
-      if ((m = /^create\s+(unique\s+)?index\s+(?:concurrently\s+)?(?:if\s+not\s+exists\s+)?("?\w+"?)\s+on\s+(?:only\s+)?("?[\w.]+"?)\s*(?:using\s+\w+\s*)?\(([^)]+)\)/i.exec(st))) {
+      if ((m = /^drop\s+policy\s+(?:if\s+exists\s+)?("[^"]+"|\w+)\s+on\s+((?:"?\w+"?\.)?"?\w+"?)/i.exec(st))) { const t = T(m[2]); t.policies = t.policies.filter((p) => p.nome !== m[1].replace(/"/g, '')); continue; }
+      if ((m = /^create\s+(unique\s+)?index\s+(?:concurrently\s+)?(?:if\s+not\s+exists\s+)?("?\w+"?)\s+on\s+(?:only\s+)?((?:"?\w+"?\.)?"?\w+"?)\s*(?:using\s+\w+\s*)?\(([^)]+)\)/i.exec(st))) {
         const t = T(m[3]); const nome = m[2].replace(/"/g, ''); t.indices = t.indices.filter((i) => i.nome !== nome); t.indices.push({ nome, colunas: m[4].replace(/\s+/g, ' ').trim(), unico: !!m[1] }); continue;
       }
       if ((m = /^drop\s+index\s+(?:concurrently\s+)?(?:if\s+exists\s+)?(?:public\.)?"?(\w+)"?/i.exec(st))) { for (const t of Object.values(banco.tabelas)) t.indices = t.indices.filter((i) => i.nome !== m[1]); continue; }
       if ((m = /^create\s+(?:or\s+replace\s+)?(?:function|procedure)\s+(?:public\.)?"?(\w+)"?/i.exec(st))) { banco.funcoes.add(m[1]); continue; }
       if ((m = /^drop\s+(?:function|procedure)\s+(?:if\s+exists\s+)?(?:public\.)?"?(\w+)"?/i.exec(st))) { banco.funcoes.delete(m[1]); continue; }
-      if ((m = /^create\s+(?:or\s+replace\s+)?trigger\s+"?(\w+)"?\s+(before|after|instead\s+of)\s+([\w\s]+?)\s+on\s+("?[\w.]+"?)[\s\S]*?execute\s+(?:function|procedure)\s+(?:public\.)?"?(\w+)"?/i.exec(st))) {
+      if ((m = /^create\s+(?:or\s+replace\s+)?trigger\s+"?(\w+)"?\s+(before|after|instead\s+of)\s+([\w\s]+?)\s+on\s+((?:"?\w+"?\.)?"?\w+"?)[\s\S]*?execute\s+(?:function|procedure)\s+(?:public\.)?"?(\w+)"?/i.exec(st))) {
         const tb = tname(m[4]); banco.triggers = banco.triggers.filter((t) => !(t.nome === m[1] && t.tabela === tb));
         banco.triggers.push({ nome: m[1], quando: m[2].toLowerCase(), evento: m[3].replace(/\s+/g, ' ').toLowerCase(), tabela: tb, funcao: m[5] }); continue;
       }
-      if ((m = /^drop\s+trigger\s+(?:if\s+exists\s+)?"?(\w+)"?\s+on\s+("?[\w.]+"?)/i.exec(st))) { const tb = tname(m[2]); banco.triggers = banco.triggers.filter((t) => !(t.nome === m[1] && t.tabela === tb)); continue; }
+      if ((m = /^drop\s+trigger\s+(?:if\s+exists\s+)?"?(\w+)"?\s+on\s+((?:"?\w+"?\.)?"?\w+"?)/i.exec(st))) { const tb = tname(m[2]); banco.triggers = banco.triggers.filter((t) => !(t.nome === m[1] && t.tabela === tb)); continue; }
       if ((m = /^create\s+(?:or\s+replace\s+)?(?:materialized\s+)?view\s+(?:public\.)?"?(\w+)"?/i.exec(st))) { banco.views.add(m[1]); continue; }
       if ((m = /^drop\s+(?:materialized\s+)?view\s+(?:if\s+exists\s+)?(?:public\.)?"?(\w+)"?/i.exec(st))) { banco.views.delete(m[1]); continue; }
       if ((m = /^create\s+type\s+(?:public\.)?"?(\w+)"?\s+as\s+enum\s*\(([^)]*)\)/i.exec(st))) { banco.enums[m[1]] = m[2].split(',').map((v) => v.trim().replace(/'/g, '')).filter(Boolean); continue; }
@@ -523,7 +527,7 @@ secao('banco-orm', () => {
   for (const f of ALL.filter((x) => x.endsWith('.prisma'))) {
     banco.fonte.push(f); const s = readText(f); let m; const re = /model\s+(\w+)\s*\{([^}]*)\}/g;
     while ((m = re.exec(s))) { const t = T(m[1]); t.criada_em = path.posix.basename(f); for (const l of m[2].split('\n')) { const cm = /^\s*(\w+)\s+([\w[\]?]+)(.*)$/.exec(l); if (cm && !cm[1].startsWith('@')) { const ref = /@relation/.test(cm[3]) ? cm[2].replace(/[[\]?]/g, '') : null; t.colunas[cm[1]] = { tipo: cm[2].toLowerCase(), nn: !cm[2].endsWith('?'), pk: /@id/.test(cm[3]), default: (/@default\(([^)]*)\)/.exec(cm[3]) || [])[1] || null, ref }; if (ref) t.fks.push({ coluna: cm[1], ref }); } } }
-    const re2 = /enum\s+(\w+)\s*\{([^}]*)\}/g; while ((m = re2.exec(s))) banco.enums[m[1]] = m[2].split('\n').map((x) => x.trim()).filter((x) => /^\w+$/.test(x));
+    const re2 = /enum\s+(\w+)\s*\{([^}]*)\}/g; while ((m = re2.exec(s))) banco.enums[m[1]] = m[2].split(/\s+/).map((x) => x.trim()).filter((x) => /^\w+$/.test(x) && !/^@/.test(x));
   }
   for (const [f, d] of FILE) for (const t of d.drizzle) { const tb = T(t); tb.criada_em = tb.criada_em || f; if (!banco.fonte.includes('drizzle')) banco.fonte.push('drizzle'); const m = new RegExp(`(?:pgTable|mysqlTable|sqliteTable)\\(\\s*['"]${t}['"]\\s*,\\s*\\{([^}]*)\\}`).exec(d.conteudo); if (m) for (const cm of m[1].matchAll(/(\w+)\s*:\s*(\w+)\(/g)) tb.colunas[cm[1]] = tb.colunas[cm[1]] || { tipo: cm[2], nn: /notNull/.test(m[1]), pk: false, default: null, ref: null }; }
   for (const [f, d] of FILE) { let m; const re = /@Entity\(\s*(?:['"](\w+)['"])?\s*\)[\s\S]*?class\s+(\w+)/g; while ((m = re.exec(d.conteudo))) { const tb = T(m[1] || m[2]); tb.criada_em = tb.criada_em || f; if (!banco.fonte.includes('typeorm')) banco.fonte.push('typeorm'); for (const cm of d.conteudo.matchAll(/@(?:Primary\w*|Column|CreateDateColumn|UpdateDateColumn)\([^)]*\)\s*\n\s*(\w+)\s*[?!]?:\s*([\w[\]]+)/g)) tb.colunas[cm[1]] = tb.colunas[cm[1]] || { tipo: cm[2].toLowerCase(), nn: true, pk: false, default: null, ref: null }; } }
@@ -539,7 +543,7 @@ secao('banco-types', () => {
   let i = ti + 'Tables: {'.length, depth = 1, body = '';
   while (i < src.length && depth > 0) { const ch = src[i++]; if (ch === '{') depth++; if (ch === '}') depth--; if (depth > 0) body += ch; }
   const re = /(\w+):\s*\{\s*Row:\s*\{/g; let m;
-  while ((m = re.exec(body))) { let j = re.lastIndex, d2 = 1, row = ''; while (j < body.length && d2 > 0) { const ch = body[j++]; if (ch === '{') d2++; if (ch === '}') d2--; if (d2 > 0) row += ch; } tabelasTypes[m[1]] = Object.fromEntries([...row.matchAll(/^\s*(\w+)\??:\s*(.+?)\s*$/gm)].map((cm) => [cm[1], cm[2].replace(/\s+/g, ' ')])); }
+  while ((m = re.exec(body))) { let j = re.lastIndex, d2 = 1, row = ''; while (j < body.length && d2 > 0) { const ch = body[j++]; if (ch === '{') d2++; if (ch === '}') d2--; if (d2 > 0) row += ch; } const campos = []; let dd = 0, cur = ''; for (const ch of row) { if (ch === '{' || ch === '[' || ch === '(') dd++; if (ch === '}' || ch === ']' || ch === ')') dd--; if ((ch === ';' || ch === '\n') && dd === 0) { campos.push(cur); cur = ''; } else cur += ch; } campos.push(cur); tabelasTypes[m[1]] = Object.fromEntries(campos.map((cmp) => /^\s*(\w+)\??:\s*([\s\S]+?)\s*$/.exec(cmp)).filter(Boolean).map((cm) => [cm[1], cm[2].replace(/\s+/g, ' ')])); }
 });
 for (const [t, cols] of Object.entries(tabelasTypes)) T(t).colunas_types = cols;
 const EDGE_DIR = ['supabase/functions', 'functions', 'netlify/functions', 'edge-functions'].find((d) => exists(d)) || 'supabase/functions';
@@ -622,7 +626,7 @@ const vercelJson = readJson('vercel.json');
 const changelogTopo = (() => { const s = readText(ALL.find((f) => /^CHANGELOG\.md$/i.test(f)) || ''); const m = /^##\s+(.+)$/m.exec(s); return m ? m[1].trim() : null; })();
 const integracoes = secao('integracoes', () => {
   const SDK = { stripe: 'Stripe', '@stripe/stripe-js': 'Stripe', twilio: 'Twilio', openai: 'OpenAI', '@anthropic-ai/sdk': 'Anthropic', '@google/generative-ai': 'Gemini', '@elevenlabs/react': 'ElevenLabs', '@sentry/react': 'Sentry', '@sentry/node': 'Sentry', '@sentry/nextjs': 'Sentry', 'posthog-js': 'PostHog', mixpanel: 'Mixpanel', '@segment/analytics-next': 'Segment', resend: 'Resend', nodemailer: 'SMTP', '@sendgrid/mail': 'SendGrid', 'aws-sdk': 'AWS', '@aws-sdk/client-s3': 'AWS S3', firebase: 'Firebase', 'firebase-admin': 'Firebase', '@upstash/redis': 'Upstash', ioredis: 'Redis', redis: 'Redis', 'socket.io': 'Socket.IO', pusher: 'Pusher', 'web-push': 'Web Push', '@vercel/analytics': 'Vercel Analytics', 'next-auth': 'NextAuth', '@clerk/nextjs': 'Clerk', '@auth0/auth0-react': 'Auth0', axios: 'HTTP (axios)', i18next: 'i18next', 'react-i18next': 'i18next', zod: 'zod', '@tanstack/react-query': 'react-query', 'googleapis': 'Google APIs', '@supabase/supabase-js': 'Supabase' };
-  const sdks = Object.keys(deps).filter((d) => SDK[d]).sort().map((d) => ({ pacote: d, servico: SDK[d], versao: deps[d] }));
+  const sdks = Object.keys(deps).filter((d) => SDK[d]).map((d) => ({ pacote: d, servico: SDK[d], versao: deps[d] })).sort((a, b) => a.servico.localeCompare(b.servico) || a.pacote.localeCompare(b.pacote));
   const hosts = byCount([...FILE.values()].flatMap((d) => d.hosts_externos)).map(([h, n]) => ({ host: h, arquivos: n }));
   const envHints = uniq([...envUsadas, ...envEdges, ...envExample]).filter((e) => /(API_KEY|TOKEN|SECRET|WEBHOOK|DSN|SID|CLIENT_ID|SMTP|S3|BUCKET|STRIPE|TWILIO|OPENAI|ELEVEN|SENTRY|EVOLUTION|WHATSAPP|GMAIL|GOOGLE|FIREBASE|REDIS|RESEND)/i.test(e));
   const webhooks = edges.filter((e) => !e.verify_jwt).map((e) => e.nome).concat(apiHttp.filter((r) => /webhook|callback|hook/i.test(r.caminho)).map((r) => `${r.metodo} ${r.caminho}`));
@@ -639,7 +643,7 @@ const permissoes = secao('permissoes', () => ({
 }), {});
 const flags = secao('flags', () => { const all = byCount([...FILE.values()].flatMap((d) => d.flags)); return { total: all.length, flags: all.map(([f, n]) => ({ flag: f, arquivos: n })), tabelas_de_flag: Object.keys(bancoOut.tabelas).filter((t) => /flag|feature|toggle|setting/i.test(t)) }; }, { total: 0, flags: [], tabelas_de_flag: [] });
 const providers = secao('providers', () => { const entry = ALL.find((f) => /^(?:src\/)?(main|index)\.[tj]sx$/.test(f)) || ALL.find((f) => /^(?:src\/)?(App|app|root|_app)\.[tj]sx$/.test(f)) || ALL.find((f) => /^(?:src\/)?app\/layout\.tsx$/.test(f)); if (!entry) return { entrada: null, providers: [] }; const files = [entry, ...closure(entry).filter((f) => /App\.[tj]sx$|providers?\//i.test(f)).slice(0, 10)]; return { entrada: entry, providers: uniq(files.flatMap((f) => allMatches(/<([A-Z]\w*(?:Provider|Context|Boundary|Router|Client|Store)\b[\w.]*)/g, FILE.get(f)?.conteudo || ''))) }; }, { entrada: null, providers: [] });
-const i18n = secao('i18n', () => { const arqs = ALL.filter((f) => /(^|\/)(i18n|locales?|lang|translations?)\/.+\.(json|ts|js|yml|yaml)$/.test(f)); const idiomas = uniq(arqs.map((f) => { const m = /\/([a-z]{2}(?:[-_][A-Za-z]{2,4})?)(?:\/|\.[a-z]+\.|\.)(?:json|ts|js|yml|yaml|[a-z]+\/)/.exec(f + '/'); return m ? m[1] : null; }).filter(Boolean)); return { arquivos: arqs.length, idiomas, lib: [has('i18next') && 'i18next', has('react-intl') && 'react-intl', has('vue-i18n') && 'vue-i18n', has('next-intl') && 'next-intl'].filter(Boolean) }; }, { arquivos: 0, idiomas: [], lib: [] });
+const i18n = secao('i18n', () => { const arqs = ALL.filter((f) => /(^|\/)(i18n|locales?|lang|translations?)\/.+\.(json|ts|js|yml|yaml)$/.test(f)); const LANG = /^[a-z]{2}(?:[-_][A-Za-z]{2,4})?$/; const idiomas = uniq(arqs.map((f) => { const partes = f.split('/'); const i = partes.findIndex((p0) => /^(i18n|locales?|lang|translations?)$/.test(p0)); const resto = partes.slice(i + 1); const b0 = baseOf(f).split('.')[0]; return resto.slice(0, -1).find((p0) => LANG.test(p0)) || (LANG.test(b0) ? b0 : null); }).filter(Boolean)); return { arquivos: arqs.length, idiomas, lib: [has('i18next') && 'i18next', has('react-intl') && 'react-intl', has('vue-i18n') && 'vue-i18n', has('next-intl') && 'next-intl'].filter(Boolean) }; }, { arquivos: 0, idiomas: [], lib: [] });
 const ferramentas = {
   stack, workspaces, package: { nome: pkg.name || null, versao: pkg.version || null, scripts: sortObj(pkg.scripts || {}), dependencias: Object.keys(pkg.dependencies || {}).length, dev_dependencias: Object.keys(pkg.devDependencies || {}).length, principais: sortObj(Object.fromEntries(Object.entries(pkg.dependencies || {}).filter(([k]) => /^(react|react-dom|next|vue|nuxt|svelte|@supabase|@tanstack|zustand|react-router|vue-router|zod|react-hook-form|tailwindcss|vite|typescript|axios|date-fns|dayjs|i18next|framer-motion|recharts|@prisma|drizzle|express|hono|fastify|@nestjs)/.test(k)))), engines: pkg.engines || null, packageManager: pkg.packageManager || null },
   python: pyReqs.size ? { dependencias: [...pyReqs].sort().slice(0, 80) } : null,
@@ -655,12 +659,12 @@ const testFiles = [...FILE.entries(), ...PY.entries()].filter(([, d]) => d.teste
 const cobertoPor = new Map();
 for (const [, d] of testFiles) for (const i of d.imports) { if (anyFile(i)?.teste) continue; cobertoPor.set(i, (cobertoPor.get(i) || 0) + 1); }
 for (const h of hooksOut) h.coberto_por_testes = cobertoPor.get(h.arquivo) || 0;
-const tipoTeste = (f) => (/\/e2e\/|\.e2e\.|cypress|playwright/.test(f) ? 'e2e' : /contract/.test(f) ? 'contrato' : /\/qa\//.test(f) ? 'qa' : /\.py$/.test(f) ? 'pytest' : 'unit');
+const tipoTeste = (f) => (/(^|\/)(e2e|cypress|playwright)\/|\.e2e\./.test(f) ? 'e2e' : /contract/.test(f) ? 'contrato' : /\/qa\//.test(f) ? 'qa' : /\.py$/.test(f) ? 'pytest' : 'unit');
 const testes = secao('testes', () => ({
   frameworks: stack.testes, total: testFiles.length + ALL.filter((f) => /^supabase\/tests\/.*\.sql$/.test(f)).length,
   por_tipo: sortObj(testFiles.reduce((acc, [f]) => { const t = tipoTeste(f); acc[t] = (acc[t] || 0) + 1; return acc; }, {})),
   onde_ficam: byCount(testFiles.map(([f]) => (/__tests__\//.test(f) ? 'co-localizado (__tests__)' : /\.(test|spec)\./.test(f) && !/^(tests?|e2e|qa)\//.test(f) ? 'co-localizado (*.test)' : /^e2e\//.test(f) ? 'e2e/' : /^tests?\//.test(f) ? 'tests/' : 'outro'))).map(([k, n]) => ({ padrao: k, arquivos: n })),
-  arquivos: testFiles.map(([f, d]) => ({ arquivo: f, tipo: tipoTeste(f), linhas: d.linhas, testa: d.imports.filter((i) => !anyFile(i)?.teste), casos: d.conteudo ? (d.conteudo.match(/\b(it|test)\s*\(/g) || []).length : (d.defs || []).filter((x) => /^test_/.test(x)).length })).sort((a, b) => a.arquivo.localeCompare(b.arquivo)),
+  arquivos: testFiles.map(([f, d]) => ({ arquivo: f, tipo: tipoTeste(f), linhas: d.linhas, testa: d.imports.filter((i) => !anyFile(i)?.teste), casos: d.conteudo ? (d.conteudo.match(/\b(?:it|test)(?:\.(?:each|only|skip|concurrent|todo))?\s*\(/g) || []).length : (d.defs || []).filter((x) => /^test_/.test(x)).length })).sort((a, b) => a.arquivo.localeCompare(b.arquivo)),
   sql: ALL.filter((f) => /^supabase\/tests\/.*\.sql$/.test(f)),
   cobertura_por_arquivo: sortObj(Object.fromEntries(cobertoPor)),
   sem_teste: { telas: uniq(rotasEnriched.filter((r) => r.arquivo && !cobertoPor.has(r.arquivo)).map((r) => r.arquivo)), hooks: hooksOut.filter((h) => !h.coberto_por_testes).map((h) => h.arquivo), edges: edges.filter((e) => !e.testes).map((e) => e.nome), servicos: [] },
