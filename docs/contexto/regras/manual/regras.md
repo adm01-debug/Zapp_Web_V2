@@ -61,6 +61,8 @@ limite efetivo é o `daily_limit_per_connection`.
 - Não existe "waiting por inatividade" — `waiting` é só ação humana ou reabertura sem dono.
 - Alerta de desconexão nível 1 para admin/supervisor **não é opt-out**.
 - Campanhas: `require_granted_consent` fica desligado; `revoked` nunca recebe; 500/dia por conexão; sem limite por hora.
+- **Pagamentos (`payment_links`, `contact_purchases`) será removido do sistema** (decisão 2026-11-03). Nenhum agente corrige, estende ou constrói sobre esse módulo; a tarefa pendente é a remoção. Estado medido: as duas tabelas têm **0 linhas** (`inventario/estado/banco.json`), não há edge function de pagamento, e a UI vive em `src/components/inbox/ContactPurchasesPanel.tsx` (aba vendas do inbox), `src/components/contacts/ContactPurchaseHistory.tsx` (painel do contato), `src/hooks/crm/useContactPurchases.ts` e a leitura em `src/hooks/crm/useContactCrm360.ts:181`. Moeda, desconto, expiração e permissões: **não se aplicam**.
+- **ZAPP é de uma empresa só (single-tenant)** — decisão 2026-11-03. Não existe isolamento por empresa e **não deve ser criado**: RLS significa só **papel** (admin / supervisor / agent) e **propriedade** (atendente dono ou membro da fila, `can_edit_contact`). Nenhuma policy nova filtra por `company_id` e nenhuma tabela nova o exige. Estado medido: `company_id` existe só em `multiplix_recipients`, **0 policies** o usam e não há tabela `companies` — a coluna é resíduo, não propagar.
 - Convites de departamento: só admin cria e apaga (decisão 2026-11-01; `src/hooks/team-chat/README.md`).
 - Contato visível = `deleted_at IS NULL` + `is_lid_legacy = false` + telefone `^[0-9]{10,15}$` (decisão D4; `CLAUDE.md` §6).
 
@@ -68,8 +70,6 @@ limite efetivo é o `daily_limit_per_connection`.
 
 1. SLA: minutos padrão de primeira resposta e canal da notificação (tela / e-mail / WhatsApp); critério de "em alguns casos o admin".
 2. Reconexão da `PRINCIPAL` após nível 1: QR Code novo é sempre ação do supervisor/admin, ou atendente também pode?
-3. Pagamentos / planos (se houver): o que bloqueia ao inadimplir.
-4. Perfis: o que exatamente `supervisor` pode além do `agent`, e o que só `admin` faz.
-5. Multiempresa (`company_id`): um usuário pode pertencer a mais de uma?
-6. LGPD: retenção de mensagens e mídia; o que apagar quando um contato pede exclusão.
-7. Áreas congeladas: módulos que não devem ser mexidos sem o dono.
+3. Perfis: o que exatamente `supervisor` pode além do `agent`, e o que só `admin` faz.
+4. LGPD: retenção de mensagens e mídia; o que apagar quando um contato pede exclusão.
+5. Áreas congeladas: módulos que não devem ser mexidos sem o dono.
