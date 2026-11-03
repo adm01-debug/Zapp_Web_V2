@@ -27,10 +27,19 @@ o runner só tem `pg_dump` 16 (banco é PG 17) e `types.ts` já vem do `types-sy
 
 ## Secret necessário
 
-`SUPABASE_DB_URL` (Settings → Secrets and variables → Actions). Connection string do pooler em
-**session mode** do banco oficial, de preferência com role somente leitura (SQL abaixo). Não reutiliza
-`DESTINO_URL` de propósito: aquele secret está preso ao environment `banco-leitura` e a um mapa fechado
-de jobs (`scripts/ci/secrets-environments.unit.mjs`).
+`SUPABASE_DB_URL` (Settings → Secrets and variables → Actions), com estas três exigências:
+
+1. **Session pooler, não conexão direta.** O host direto `db.<ref>.supabase.co` é só IPv6 e o runner do
+   GitHub não tem IPv6 → falha na conexão. Use o "Session pooler" do dashboard:
+   `postgresql://postgres.<ref>:<senha>@aws-0-<regiao>.pooler.supabase.com:5432/postgres`.
+2. **Usuário `postgres` (recomendado).** O `cron.job` e `cron.job_run_details` têm RLS com policy
+   `username = current_user`; um role read-only comum enxerga zero jobs. O `postgres` do Supabase tem
+   `BYPASSRLS`. O script abre a sessão em `default_transaction_read_only = on` — mesmo com `postgres`
+   nada é escrito.
+3. Se preferir um role separado (perde o cron, vê o resto): SQL abaixo.
+
+Não reutiliza `DESTINO_URL` de propósito: aquele secret está preso ao environment `banco-leitura` e a um
+mapa fechado de jobs (`scripts/ci/secrets-environments.unit.mjs`).
 
 ## O que é coletado
 
@@ -47,7 +56,7 @@ de jobs (`scripts/ci/secrets-environments.unit.mjs`).
 
 Nunca sai: linha de tabela, dado de usuário, valor de secret/chave/senha, connection string.
 
-### Role somente leitura (recomendado)
+### Role somente leitura (opcional — não enxerga pg_cron)
 
 ```sql
 create role snapshot_reader login password '<senha-forte>';

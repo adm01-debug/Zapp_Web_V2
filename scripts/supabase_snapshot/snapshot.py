@@ -197,6 +197,17 @@ def slug(text: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]+", "_", text).strip("_") or "_"
 
 
+_SLUG_SEEN: dict[str, str] = {}
+
+
+def uslug(text: str, scope: str = "") -> str:
+    """slug único dentro de um escopo: nomes diferentes que colidem no slug ganham sufixo com hash."""
+    base = slug(text)
+    key = f"{scope}/{base}"
+    owner = _SLUG_SEEN.setdefault(key, text)
+    return base if owner == text else f"{base}__{sha(text)[:6]}"
+
+
 def write(path: pathlib.Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content if content.endswith("\n") else content + "\n", encoding="utf-8")
@@ -207,7 +218,7 @@ def redact(obj: Any) -> Any:
         return {k: ("[REDACTED]" if REDACT_RE.search(str(k)) else redact(v)) for k, v in obj.items()}
     if isinstance(obj, list):
         return [redact(v) for v in obj]
-    if isinstance(obj, str) and re.search(r"eyJ[A-Za-z0-9_-]{20,}\.|sb_secret_|://[^/\s]+:[^@\s]+@", obj):
+    if isinstance(obj, str) and re.search(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|sb_secret_|://[^/\s]+:[^@\s]+@", obj):
         return "[REDACTED]"
     return obj
 
@@ -662,11 +673,11 @@ def get_lints(conn):
     for r in q(conn, f"""
         SELECT n.nspname AS schema, p.proname AS name, pg_get_function_identity_arguments(p.oid) AS args
         FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-        WHERE n.nspname = 'public' AND p.prokind = 'f' AND p.prorettype <> 'trigger'::regtype
+        WHERE n.nspname = 'public' AND p.prokind = 'f' AND p.prorettype <> 'trigger'::regtype AND p.prosecdef
           AND has_function_privilege('anon', p.oid, 'EXECUTE')
           AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e')"""):
         out.append({"severity": "INFO", "code": "rpc_anon_executable", "object": f"{r['schema']}.{r['name']}({r['args']})",
-                    "detail": "Função chamável via RPC por anon (sem login). Confirme que é intencional."})
+                    "detail": "SECURITY DEFINER chamável via RPC por anon (sem login): roda com privilégios do owner. Confirme que é intencional (Supabase dá EXECUTE a anon por padrão; revogue se não for API pública)."})
     for r in q(conn, """
         SELECT e.extname FROM pg_extension e JOIN pg_namespace n ON n.oid = e.extnamespace
         WHERE n.nspname = 'public' AND e.extname NOT IN ('plpgsql')"""):
@@ -932,6 +943,10 @@ def scan_code_files() -> list[tuple[str, str]]:
     return out
 
 
+def rx_name_keys(names: list[str]) -> set[str]:
+    return set(names)
+
+
 def build_function_callers(db: dict) -> None:
     """Preenche f["callers"] = {"code": [...], "cron": [...], "triggers": [...], "db": [...]} em cada função."""
     fns = db.get("functions") or []
@@ -939,12 +954,18 @@ def build_function_callers(db: dict) -> None:
         return
     names = sorted({f["name"] for f in fns}, key=len, reverse=True)
     alt = "|".join(re.escape(n) for n in names)
-    # .rpc('nome'  |  schema.nome(  |  nome(  (nome isolado, seguido de parêntese)
-    rx = re.compile(r"""(?:\.rpc\(\s*['"`](?P<rpc>%s)['"`])|(?<![A-Za-z0-9_.])(?:[a-z_][a-z0-9_]*\.)?(?P<call>%s)\s*\(""" % (alt, alt))
+    schemas = "|".join(re.escape(x) for x in sorted({f["schema"] for f in fns} | {"public"}))
+    # Em código (ts/js/...): só `.rpc('nome')` ou `schema.nome(` — `nome(` solto seria qualquer função JS.
+    # Em SQL/Python: também `nome(` solto (evita que uma função chamada `count` case com `.count(` do JS).
+    rx_code = re.compile(r"""\.rpc\(\s*['"`](?P<rpc>%s)['"`]|(?<![A-Za-z0-9_.])(?:%s)\.(?P<call>%s)\s*\(""" % (alt, schemas, alt))
+    rx_sql = re.compile(r"""(?<![A-Za-z0-9_.])(?:(?:%s)\.)?(?P<call>%s)\s*\(""" % (schemas, alt), re.I)
     code_hits: dict[str, dict[str, int]] = {}
     for rel, text in scan_code_files():
+        rx = rx_sql if rel.endswith((".sql", ".py")) else rx_code
         for m in rx.finditer(text):
-            n = m.group("rpc") or m.group("call")
+            n = (m.groupdict().get("rpc") or m.group("call"))
+            if n not in rx_name_keys(names):
+                n = next((k for k in names if k.lower() == n.lower()), n)
             code_hits.setdefault(n, {})
             code_hits[n][rel] = code_hits[n].get(rel, 0) + 1
     cron_jobs = ((db.get("cron") or {}).get("jobs")) or []
@@ -958,7 +979,10 @@ def build_function_callers(db: dict) -> None:
             "code_total_files": len(code),
             "cron": [f"{j['jobid']}:{j.get('jobname') or ''}" for j in cron_jobs if rx_name[n].search(j.get("command") or "")],
             "triggers": [f"{t['schema']}.{t['table']}.{t['name']}" for t in trigs if t["function"] == f"{f['schema']}.{n}"],
-            "db": sorted({f"{g['schema']}.{g['name']}" for g in fns if g is not f and g.get("definition") and rx_name[n].search(g["definition"])}),
+            # outras funções: ignora overloads do mesmo nome e o cabeçalho CREATE FUNCTION (1ª linha)
+            "db": sorted({f"{g['schema']}.{g['name']}" for g in fns
+                          if g["name"] != n and g.get("definition") and rx_name[n].search(g["definition"].split("\n", 1)[-1])}),
+            "views": sorted({f"{v['schema']}.{v['name']}" for v in (db.get("views") or []) if rx_name[n].search(v.get("definition") or "")}),
         }
     log(f"callers: código cruzado em {len(code_hits)} funções referenciadas")
 
@@ -1044,7 +1068,7 @@ def render_tables(db: dict) -> None:
     index_rows = []
     for t in tables:
         key = (t["schema"], t["name"])
-        rel = f"tables/{slug(t['schema'])}/{slug(t['name'])}.md"
+        rel = f"tables/{slug(t['schema'])}/{uslug(t['name'], 'tables/' + t['schema'])}.md"
         index_rows.append([f"[{t['schema']}.{t['name']}]({rel})", t["kind"] + (" (partição)" if t["is_partition"] else ""),
                            t["rls_enabled"], len(pol.get(key, [])), len(cols.get(key, [])), key in rt, t.get("comment")])
         md = [f"# {t['schema']}.{t['name']}\n"]
@@ -1154,7 +1178,8 @@ def render_simple(db: dict, api_: dict) -> None:
         rows.append([f"[{f['schema']}.{f['name']}]({rel})", code(f["args"]), code(f["returns"]), f["language"], f["kind"],
                      "trigger" if f["is_trigger_fn"] else "", f["security_definer"], f["volatility"], ", ".join(f["config"] or []),
                      f["execute_api_roles"] or ("PUBLIC" if f["execute_public"] else ""),
-                     code_refs or ("—" if cl else "n/d"), cl.get("cron") or "", cl.get("triggers") or "", cl.get("db") or "", f.get("comment")])
+                     code_refs or ("—" if cl else "n/d"), cl.get("cron") or "", cl.get("triggers") or "",
+                     (cl.get("db") or []) + [f"view:{v}" for v in cl.get("views") or []], f.get("comment")])
         if f.get("definition"):
             write(OUT / rel, f["definition"].strip())
     write(OUT / "functions.md", "# Functions / Procedures\n\n" + banner("functions") +
@@ -1162,7 +1187,7 @@ def render_simple(db: dict, api_: dict) -> None:
           "Função em schema exposto com EXECUTE para anon/authenticated = endpoint RPC (`/rest/v1/rpc/<nome>`). "
           "`security definer` executa com privilégios do owner — exige `SET search_path`.\n\n"
           "Colunas de uso: **código** = arquivos do repo que chamam (`.rpc('fn')` ou `fn(`), **cron** = jobs do pg_cron que a executam, "
-          "**triggers** = triggers que a disparam, **banco** = outras funções que a chamam. Função sem nenhum uso = candidata a morta.\n\n"
+          "**triggers** = triggers que a disparam, **banco** = outras funções e views que a usam. Busca é por nome (overloads compartilham). Função sem nenhum uso = candidata a morta.\n\n"
           + md_table(["função", "args", "retorno", "linguagem", "tipo", "trigger fn", "security definer", "volatilidade", "config", "EXECUTE (roles API)",
                       "código", "cron", "triggers", "banco", "comentário"], rows))
 

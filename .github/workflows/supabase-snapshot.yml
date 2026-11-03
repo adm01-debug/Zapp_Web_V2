@@ -63,7 +63,8 @@ jobs:
           persist-credentials: false
 
       - name: Dependencias Python (runner ubuntu-24.04 ja tem python3)
-        run: python3 -m pip install --user --quiet -r scripts/supabase_snapshot/requirements.txt
+        run: |
+          python3 -m pip install --quiet --break-system-packages --only-binary :all: -r scripts/supabase_snapshot/requirements.txt
 
       - name: Recuperar snapshot anterior da branch de publicacao
         env:
@@ -80,22 +81,35 @@ jobs:
       - name: Gerar snapshot
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: python3 scripts/supabase_snapshot/snapshot.py
+          EVENTO: ${{ github.event_name }}
+        run: |
+          if [ -z "${SUPABASE_DB_URL:-}" ]; then
+            # Sem o secret nao ha o que coletar. No agendamento sai verde com aviso para nao
+            # pintar 144 runs/dia de vermelho; no dispatch manual falha para a pessoa ver.
+            echo "::warning::Secret SUPABASE_DB_URL nao definido — snapshot pulado (ver scripts/supabase_snapshot/README.md)"
+            echo "SNAPSHOT_SKIPPED=1" >> "$GITHUB_ENV"
+            [ "$EVENTO" = "workflow_dispatch" ] && exit 1
+            exit 0
+          fi
+          python3 scripts/supabase_snapshot/snapshot.py
 
       - name: Guard — nenhum segredo na saida
+        if: env.SNAPSHOT_SKIPPED != '1'
         run: |
-          if grep -rIEl 'eyJ[A-Za-z0-9_-]{40,}|sb_secret_|postgres(ql)?://[^ ]*:[^ @]+@' "$SNAPSHOT_DIR"; then
+          if grep -rIEl 'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|sb_secret_|sb_publishable_|postgres(ql)?://[^ ]*:[^ @]+@' "$SNAPSHOT_DIR"; then
             echo "::error::Possivel segredo detectado no snapshot — publicacao abortada"; exit 1
           fi
 
       - name: Publicar na branch de snapshot
+        if: env.SNAPSHOT_SKIPPED != '1'
         env:
           GH_TOKEN: ${{ github.token }}
           VOLATILE_MIN_INTERVAL_MIN: '60'
           HUSKY: '0'
         run: |
           PUB="$RUNNER_TEMP/pub"
-          rm -rf "$PUB"
+          git worktree remove --force "$PUB" 2>/dev/null || true
+          rm -rf "$PUB"; git worktree prune
           REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           if git fetch --quiet --depth 1 origin "$SNAPSHOT_BRANCH" 2>/dev/null; then
             git worktree add --quiet --detach "$PUB" FETCH_HEAD
@@ -106,13 +120,18 @@ jobs:
             cd "$PUB"
             git init --quiet -b "$SNAPSHOT_BRANCH"
           fi
-          mkdir -p "$SNAPSHOT_DIR"
-          rsync -a --delete "$GITHUB_WORKSPACE/$SNAPSHOT_DIR/" "$SNAPSHOT_DIR/"
+          rm -rf "$SNAPSHOT_DIR" && mkdir -p "$(dirname "$SNAPSHOT_DIR")"
+          cp -a "$GITHUB_WORKSPACE/$SNAPSHOT_DIR" "$SNAPSHOT_DIR"
           cat > README.md <<'EOF'
           # Branch gerada: snapshot do Supabase
 
           Conteudo em `docs/supabase/`, regerado a cada 10 min pelo workflow `supabase-snapshot.yml` da main.
           Nao edite nem abra PR desta branch. Leia `docs/supabase/README.md`.
+          EOF
+          # Sem isto a Vercel faria um preview deploy a cada push desta branch (o vercel.json da
+          # main nao vale aqui: a Vercel le o vercel.json do commit que esta deployando).
+          cat > vercel.json <<'EOF'
+          { "ignoreCommand": "exit 0", "git": { "deploymentEnabled": { "supabase-snapshot": false } } }
           EOF
           git config user.name 'supabase-snapshot[bot]'
           git config user.email 'supabase-snapshot[bot]@users.noreply.github.com'
