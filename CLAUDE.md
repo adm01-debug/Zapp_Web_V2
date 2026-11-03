@@ -177,6 +177,7 @@ regerado. Não há passo manual no Postgres da GO (o MCP `HOSTINGER` não expõe
 | `e2e/` | 51 specs Playwright; fixtures em `e2e/fixtures/` |
 | `docs/` | `DEPLOYMENT.md`, `MIGRATIONS.md`, `INCIDENT-RUNBOOK.md`, `CONEXOES_WHATSAPP_RUNBOOK.md`, `ci/README.md` (gerado), `talkx/`, `audits/` |
 | `inventario/estado/` | **estado real gerado por script — consulte antes de buscar por texto:** `banco.json` (tabelas, RLS, uso no código, órfãs, cron com falhas, WhatsApp, edges publicadas, `alertas`), `rotas.json` (URL/tela → menu, papéis, hooks, edges, RPCs, tabelas), `edges.json`. Refeito toda segunda pelo `inventario-estado-semanal.yml` (PR automático); como gerar à mão em `inventario/estado/README.md` |
+| `docs/contexto/` (branch **`contexto`**) | **contexto gerado para agentes — comece por `docs/contexto/00-INDEX.md`:** índice único das três fontes de verdade, cada uma com um dono: `supabase/` (banco oficial ao vivo: tabelas, RLS, funções, triggers, cron, lints — `scripts/supabase_snapshot/`), `codigo/` (rotas, módulos, hooks, edges, grafo, testes, convenções — `scripts/ai-context/gerar.mjs`), `regras/` (regras de negócio: RLS por operação, estados, validações, fórmulas, lacunas — `scripts/regras_negocio/`). Regerado a cada 10 min e a cada push por `contexto.yml`; **não existe em main** (só `docs/contexto/regras/manual/`, texto humano). Ler: `git fetch origin contexto && git show origin/contexto:docs/contexto/00-INDEX.md`, MCP `get_file(ref=contexto)` ou raw; local: `bun run contexto:ia` (codigo/) e `python3 scripts/regras_negocio/generate.py --profile regras` |
 | `docs/_arquivo/`, `qa/` | relatórios de sessões anteriores (`analise/`, `analise-prs/`, `auditoria-supabase/`, `inventario/` antigo, prosa velha da raiz e de `docs/`) — leitura de contexto, não fonte de verdade; `inventario/estado/` é o inventário vivo |
 
 Comandos (o repo usa **bun**: há `bun.lock` e **não** há `package-lock.json`, então `npm ci` falha —
@@ -253,8 +254,8 @@ Fatos do perímetro que já custaram retrabalho:
 
 **Inventário vigente (2026-11-03):** **19** arquivos em `.github/workflows/` — `auto-update-pr-branch`,
 `branch-hygiene-audit`, `ci`, `codeql`, `crm-sync-worker`, `db-guard`, `db-live-guard`, `db-migrate`,
-`deploy-functions`, `e2e-logado`, `e2e-talkx`, `inventario-estado-semanal`, `notifica-falha-main`, `settings-guard`,
-`supabase-snapshot`, `talkx-status-regen`, `targeted-ledger-evidence`, `types-sync`, `vercel-env-cleanup` — mais os
+`contexto`, `deploy-functions`, `e2e-logado`, `e2e-talkx`, `inventario-estado-semanal`, `notifica-falha-main`, `settings-guard`,
+`talkx-status-regen`, `targeted-ledger-evidence`, `types-sync`, `vercel-env-cleanup` — mais os
 dinâmicos do GitHub (Dependabot, Dependency Graph, Copilot). A fonte canônica do inventário é o
 **gerado** `docs/ci/README.md` (`scripts/ci/render-workflow-docs.mjs --check` roda no CI); esta lista
 é conveniência.
