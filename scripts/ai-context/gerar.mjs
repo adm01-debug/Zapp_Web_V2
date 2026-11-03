@@ -9,7 +9,7 @@
 // Uso: node scripts/ai-context/gerar.mjs [--root <dir>] [--out <dir>] [--quiet]
 // Config opcional na raiz do repo: ai-context.config.json
 //   { "out": "inventario/ia", "skipDirs": [...], "srcDirs": [...], "menuFiles": [...],
-//     "routeFiles": [...], "aliases": { "@/": "src/" }, "typesFile": "...", "maxFileMB": 8 }
+//     "routeFiles": [...], "aliases": { "@/": "src/" }, "typesFile": "...", "maxFileMB": 8, "publicacao": "texto do rodapé do INDEX.md" }
 // Saída determinística: só manifest.json carrega data/hora.
 
 import fs from 'node:fs';
@@ -33,6 +33,9 @@ const CFG = (() => { try { return JSON.parse(fs.readFileSync(abs('ai-context.con
 const OUT = path.resolve(ROOT, argOf('--out', process.env.AI_CONTEXT_DIR || CFG.out || 'inventario/ia'));
 const OUT_REL = rel(OUT);
 const MAX_FILE_BYTES = (CFG.maxFileMB || 8) * 1024 * 1024;
+// Rodapé do INDEX.md: onde este contexto é publicado. Genérico por padrão; cada repo descreve o seu
+// workflow/branch em ai-context.config.json → "publicacao" (ou env AI_CONTEXT_PUBLICACAO).
+const PUBLICACAO = process.env.AI_CONTEXT_PUBLICACAO || CFG.publicacao || 'Publicado pelo workflow de contexto do repositório (ver .github/workflows).';
 const exists = (p) => fs.existsSync(abs(p));
 const readText = (p) => { try { const a = path.isAbsolute(p) ? p : abs(p); if (fs.statSync(a).size > MAX_FILE_BYTES) return ''; return fs.readFileSync(a, 'utf8'); } catch { return ''; } };
 const readJson = (p) => { try { return JSON.parse(readText(p).replace(/^﻿/, '')); } catch { return null; } };
@@ -821,7 +824,7 @@ const kv = (o) => Object.entries(o || {}).map(([k, v]) => `- ${k}: ${Array.isArr
 const indexMd = `# Contexto do projeto para agentes de IA
 
 ${AVISO}
-Publicado na branch \`contexto-ia\` (= main + 1 commit) a cada push em \`main\` e a cada 10 minutos pelo workflow \`contexto-ia.yml\`; gere local com \`node scripts/ai-context/gerar.mjs\`. Commit-base: \`${gitInfo.commit || 'n/d'}\` (${gitInfo.data_commit || 'n/d'}).${ERROS.length ? `\n\n> ⚠️ ${ERROS.length} seção(ões) falharam na geração — ver \`baseline.json → erros_do_gerador\`.` : ''}
+${PUBLICACAO} Gere local com \`node scripts/ai-context/gerar.mjs\`. Commit-base: \`${gitInfo.commit || 'n/d'}\` (${gitInfo.data_commit || 'n/d'}).${ERROS.length ? `\n\n> ⚠️ ${ERROS.length} seção(ões) falharam na geração — ver \`baseline.json → erros_do_gerador\`.` : ''}
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → \`rotas.json\` (url/vista/menu → arquivo → hooks → tabelas → edges; \`rotas_http_backend\` para APIs) e \`modulos.json\` (módulo inteiro + dependências entre módulos).
