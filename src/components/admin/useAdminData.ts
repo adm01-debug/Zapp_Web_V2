@@ -65,7 +65,6 @@ export const roleConfig: Record<AppRole, { label: string; icon: string; color: s
   admin: { label: 'Administrador', icon: 'Crown', color: 'text-warning' },
   supervisor: { label: 'Supervisor', icon: 'UserCog', color: 'text-info' },
   agent: { label: 'Atendente', icon: 'User', color: 'text-muted-foreground' },
-  special_agent: { label: 'Agente Especial', icon: 'Eye', color: 'text-accent-foreground' },
 };
 
 // Mensagens claras para os erros levantados pela RPC `admin_set_role`

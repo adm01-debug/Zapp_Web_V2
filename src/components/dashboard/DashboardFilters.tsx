@@ -45,7 +45,7 @@ interface DashboardFiltersProps {
   onFiltersChange: (filters: DashboardFiltersState) => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
-  /** false para agent/special_agent: dashboard ja e pessoal, filtro por fila/agente nao se aplica. */
+  /** false para agent: dashboard ja e pessoal, filtro por fila/agente nao se aplica. */
   showTeamFilters?: boolean;
 }
 
@@ -147,7 +147,7 @@ export function DashboardFilters({
   };
 
   // Conta só o que está de fato aplicado. Fila/agente só contam quando o filtro de time é exibido:
-  // para agent/special_agent ele não aparece e os dois ficam sempre vazios (não há o que limpar).
+  // para agent ele não aparece e os dois ficam sempre vazios (não há o que limpar).
   const activeFiltersCount =
     (filters.period !== 'today' ? 1 : 0) +
     (showTeamFilters && filters.queueId !== null ? 1 : 0) +

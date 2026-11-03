@@ -54,7 +54,7 @@ export interface InviteUserDeps {
   admin?: InviteUserAdminClient;
 }
 
-const INVITABLE_ROLES = ["admin", "supervisor", "agent", "special_agent"] as const;
+const INVITABLE_ROLES = ["admin", "supervisor", "agent"] as const;
 
 const bodySchema = z.object({
   email: z.string().email("Email inválido").max(255),

@@ -76,9 +76,9 @@ describe('RolesPage — falha do carregador vira estado de erro (R2-AUTH-035)', 
     expect(await screen.findByText('Ana Souza')).toBeInTheDocument();
     expect(screen.getByText('Bruno Lima')).toBeInTheDocument();
 
-    // O estado de erro saiu de cena e os cartões voltaram (2 roles vazias + 2 cheias).
+    // O estado de erro saiu de cena e os cartões voltaram (1 role vazia + 2 cheias).
     expect(screen.queryByText('Não foi possível carregar as roles')).not.toBeInTheDocument();
-    expect(screen.getAllByText('Nenhum usuário com esta role')).toHaveLength(2);
+    expect(screen.getAllByText('Nenhum usuário com esta role')).toHaveLength(1);
     expect(loadRoles).toHaveBeenCalledTimes(2);
   });
 });
