@@ -6,9 +6,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Prova de fronteira do hook `useVisibleAgents`: o alvo é o hook; a fronteira
 // mockada é o cliente Supabase (a RPC `get_visible_agent_ids`). O que se prova
 // aqui é o CONTRATO do front (papel -> chamada da RPC -> ids devolvidos); o
-// enforcement por papel (agent/supervisor/admin) sobre
-// profiles/contacts/Sala de Crise é provado no SQL
-// supabase/tests/special_agent_visibility.sql, no banco local.
+// enforcement por papel (agent/supervisor/admin) sobre profiles/contacts é
+// provado em scripts/db-audit/dashboard-rls-authorization.test.sh (Postgres
+// descartável); os grants de visibilidade valem para 'agent' desde 20261103201500.
 const mockRpc = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({

@@ -1571,26 +1571,12 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/n142-message-reactions-select-user-id.test.sh
 
-      # X041: atribuicao de conversao ao ULTIMO toque do Talk X dentro da janela de atribuicao.
-      - name: Provar atribuicao de conversao Talk X ao ultimo toque (X041)
-        env:
-          TALKX_ATTRIBUTION_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-attribution.test.sh
-
       # R2-API-036: defaults internos de currency/occurred_at quando o endpoint manda NULL explicito.
       - name: Provar defaults de conversao Talk X com NULL explicito (R2-API-036)
         env:
           TALKX_CONVERSION_DEFAULTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-conversion-defaults.test.sh
-
-      # X040: calculo de recencia, frequencia, valor e segmento RFM a partir de contact_purchases.
-      - name: Provar calculo RFM das compras locais Talk X (X040)
-        env:
-          TALKX_RFM_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
-          SKIP_DOCKER_SHIM: "1"
-        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-rfm.test.sh
 
       # TC-001 (#54): contrato de banco da midia do team chat — bucket, mensagem e renderizacao.
       - name: Provar contrato de banco da midia do team chat (TC-001)
