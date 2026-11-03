@@ -32,6 +32,7 @@ Variáveis de ambiente:
   STAT_STATEMENTS_TOP        (default 15) consultas mais custosas em stats.md (0 desliga)
   REPO_ROOT                  (default ".") raiz do repo para cruzar funções x código (vazio desliga)
   CODE_SCAN_DIRS             (default src,supabase/functions,supabase/migrations,scripts,...) pastas varridas
+  SUPABASE_SNAPSHOT_PUBLICACAO  (default "Gerado automaticamente...") rodapé do índice
 """
 
 from __future__ import annotations
@@ -1451,7 +1452,7 @@ def render_readme(snap: dict, api_: dict) -> None:
     server = db.get("server") or {}
     md = [
         "# Snapshot Supabase — contexto para agentes de IA\n",
-        "Gerado automaticamente a cada 10 min pelo workflow `contexto` (job `banco`). **Não edite manualmente.**\n",
+        os.environ.get("SUPABASE_SNAPSHOT_PUBLICACAO", "Gerado automaticamente a cada 10 min pelo workflow `contexto` (job `banco`). **Não edite manualmente.**") + "\n",
         "Frescor: `git log -1 --format=%cI -- docs/contexto/supabase`. Só há commit quando algo mudou; o histórico está em `CHANGELOG.md`.\n",
         "## Protocolo para agentes\n",
         "1. **Tabela**: leia só `tables/<schema>/<tabela>.md` (colunas, FKs, índices, RLS, triggers, grants). ER geral em `relationships.md`.",
