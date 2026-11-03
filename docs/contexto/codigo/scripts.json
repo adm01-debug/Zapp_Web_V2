@@ -3891,7 +3891,7 @@
   {
    "arquivo": "scripts/regras_negocio/indice.py",
    "descricao": null,
-   "linhas": 192,
+   "linhas": 201,
    "env": [],
    "npm_scripts": [],
    "workflows": [

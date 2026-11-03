@@ -2,9 +2,9 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d96e1e71e8735db06c28925ab97cedaed40318f1",
+  "commit": "803055f14891419900ece8043d554810b81f2da3",
   "branch": "main",
-  "data_commit": "2026-11-03T09:38:28-03:00",
+  "data_commit": "2026-11-03T13:06:12Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
   "arquivos_mudados_7d": 1409,
@@ -73,7 +73,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 28
+    "mudancas": 27
    },
    {
     "arquivo": "CLAUDE.md",
@@ -92,10 +92,6 @@
     "mudancas": 19
    },
    {
-    "arquivo": "docs/ci/README.md",
-    "mudancas": 18
-   },
-   {
     "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 18
    },
@@ -104,8 +100,8 @@
     "mudancas": 17
    },
    {
-    "arquivo": "scripts/ci/github-settings-guard.unit.mjs",
-    "mudancas": 14
+    "arquivo": "docs/ci/README.md",
+    "mudancas": 17
    },
    {
     "arquivo": ".github/workflows/deploy-functions.yml",
@@ -120,6 +116,14 @@
     "mudancas": 13
    },
    {
+    "arquivo": "scripts/ci/github-settings-guard.unit.mjs",
+    "mudancas": 12
+   },
+   {
+    "arquivo": "supabase/schema-manifest.json",
+    "mudancas": 12
+   },
+   {
     "arquivo": ".github/workflows/db-migrate.yml",
     "mudancas": 11
    },
@@ -132,14 +136,6 @@
     "mudancas": 11
    },
    {
-    "arquivo": "scripts/ci/github-settings-baseline.json",
-    "mudancas": 11
-   },
-   {
-    "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 11
-   },
-   {
     "arquivo": ".github/workflows/branch-hygiene-audit.yml",
     "mudancas": 10
    },
@@ -148,11 +144,11 @@
     "mudancas": 10
    },
    {
-    "arquivo": ".github/workflows/types-sync.yml",
+    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 10
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
+    "arquivo": "scripts/ci/github-settings-baseline.json",
     "mudancas": 10
    },
    {
@@ -170,12 +166,16 @@
    {
     "arquivo": ".github/workflows/auto-update-pr-branch.yml",
     "mudancas": 9
+   },
+   {
+    "arquivo": ".github/workflows/db-live-guard.yml",
+    "mudancas": 9
    }
   ],
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 282
+    "commits": 281
    },
    {
     "autor": "dependabot[bot]",
@@ -183,7 +183,7 @@
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 5
+    "commits": 6
    },
    {
     "autor": "devin-ai-integration[bot]",
@@ -194,7 +194,7 @@
  "contagens": {
   "arquivos_total": 8135,
   "arquivos_codigo": 4641,
-  "linhas_codigo": 850136,
+  "linhas_codigo": 850145,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -522,7 +522,7 @@
   },
   "scripts/regras_negocio": {
    "arquivos": 2,
-   "linhas": 2320
+   "linhas": 2329
   },
   "scripts/supabase_snapshot": {
    "arquivos": 1,
