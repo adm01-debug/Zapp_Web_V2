@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(lgpd): apagar tentativas de login sem atividade há mais de 90 dias (#2562)",
    "chore(auth): remove papel special_agent do front e das edges (decisão 2026-11-03) (#2692)",
    "chore(crm): remove módulo de pagamentos/compras do front (decisão 2026-11-03) (#2690)",
    "chore(regras): §7 histórico Talk X sem prazo fixo (aplicado); test_sends 90; decisão pendente sobre alerta a atendentes (#2687)",
-   "chore(db): sincronizar artefatos derivados do banco (#2688)",
-   "chore(db): expurgo Talk X — prazo ≤ 0 vira 1 dia; test_sends volta a 90 (idempotência, não histórico) (#2686)"
+   "chore(db): sincronizar artefatos derivados do banco (#2688)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

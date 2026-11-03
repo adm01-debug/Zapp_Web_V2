@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1107,
+ "migrations": 1108,
  "seeds": [
   "e2e/fixtures/seed-talk-me.sql",
   "e2e/fixtures/seed-talkx-segment.sql",
@@ -1846,6 +1846,11 @@
    "agenda": "*/5 * * * *",
    "migration": "20260829110000_gmail_incremental_sync_cron.sql",
    "chama_edge": "gmail-cron-sync"
+  },
+  {
+   "nome": "login-attempts-retention-90d",
+   "agenda": "41 4 * * *",
+   "migration": "20261102012400_login_attempts_retencao_90d.sql"
   },
   {
    "nome": "multiplix-send-trigger",

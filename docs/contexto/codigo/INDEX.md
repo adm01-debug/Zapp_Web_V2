@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a cada 10 minutos pelo workflow `contexto-ia.yml`; gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `1f77f7917fdf8814634f4721c144032fbb879a9f` (2026-11-03T19:48:39Z).
+Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a cada 10 minutos pelo workflow `contexto-ia.yml`; gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `29ae259dee5e2c9544829a075afb53497a95551b` (2026-11-03T20:02:12Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado na branch `contexto-ia` (= main + 1 commit) a cada push em `main` e a 
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4173), SQL (1276), Markdown (1030), JSON (591), JavaScript (351), Shell (230), Python (115), YAML (27)
+- linguagens: TypeScript (4173), SQL (1277), Markdown (1030), JSON (591), JavaScript (351), Shell (230), Python (115), YAML (27)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,7 +34,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8134 |
+| arquivos_total | 8135 |
 | arquivos_codigo | 4637 |
 | linhas_codigo | 849730 |
 | rotas | 18 |
@@ -46,8 +46,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | hooks | 490 |
 | edge_functions | 85 |
 | tabelas | 226 |
-| migrations | 1107 |
-| cron_jobs | 25 |
+| migrations | 1108 |
+| cron_jobs | 26 |
 | testes | 2526 |
 | workflows | 19 |
 | scripts | 376 |
@@ -342,6 +342,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `expire-orphan-user-sessions` 23 3 * * * (20261013230007_my_active_sessions.sql)
 - `expire-stale-agent-presence` */2 * * * * (20260925100542_agent_presence_server_ttl.sql)
 - `gmail-incremental-sync` */5 * * * * → edge gmail-cron-sync (20260829110000_gmail_incremental_sync_cron.sql)
+- `login-attempts-retention-90d` 41 4 * * * (20261102012400_login_attempts_retencao_90d.sql)
 - `multiplix-send-trigger` */2 * * * * (20260927320000_multiplix_cron_scheduler.sql)
 - `purge-processed-webhook-events` 30 3 * * * (20260612141500_purge_processed_webhook_events_cron.sql)
 - `purge-qr-attempts` 25 3 * * * (20261015215658_qr_attempts_history.sql)
@@ -384,7 +385,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 54400 nós · 111012 arestas · 4151 comunidades · grafo do commit `1f77f791`
+- 54401 nós · 111012 arestas · 4152 comunidades · grafo do commit `29ae259d`
 - comunidades maiores: react (932), lucide-react (879), @tanstack/react-query (684), input.tsx (647), useAuth (624), vitest (577), TalkXCampaignWizard.tsx (433), validation.ts (389), evolution-webhook-messages.ts (329), ref_node_fs (278), ai-generate.ts (258), chat.ts (257)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -394,13 +395,13 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CLAUDE.md (19)
 - src/integrations/supabase/types.ts (18)
 - .github/workflows/e2e-logado.yml (16)
-- scripts/ci/ci-docs-baseline.unit.mjs (16)
 - .github/workflows/db-guard.yml (15)
+- scripts/ci/ci-docs-baseline.unit.mjs (15)
 - ESTADO.md (14)
-- docs/ci/README.md (13)
 - supabase/deployment-manifest.json (13)
 - supabase/schema-manifest.json (13)
 - .github/workflows/deploy-functions.yml (12)
+- docs/ci/README.md (12)
 - scripts/ci/workflow-contracts.unit.mjs (12)
 - docs/DB-INVENTORY.md (11)
 - .github/workflows/db-migrate.yml (10)

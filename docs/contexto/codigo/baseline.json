@@ -2,12 +2,12 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1f77f7917fdf8814634f4721c144032fbb879a9f",
+  "commit": "29ae259dee5e2c9544829a075afb53497a95551b",
   "branch": "main",
-  "data_commit": "2026-11-03T19:48:39Z",
+  "data_commit": "2026-11-03T20:02:12Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
-  "arquivos_mudados_7d": 1423,
+  "arquivos_mudados_7d": 1424,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -88,20 +88,16 @@
     "mudancas": 16
    },
    {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
-    "mudancas": 16
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 15
    },
    {
-    "arquivo": ".github/workflows/db-guard.yml",
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 15
    },
    {
     "arquivo": "ESTADO.md",
     "mudancas": 14
-   },
-   {
-    "arquivo": "docs/ci/README.md",
-    "mudancas": 13
    },
    {
     "arquivo": "supabase/deployment-manifest.json",
@@ -113,6 +109,10 @@
    },
    {
     "arquivo": ".github/workflows/deploy-functions.yml",
+    "mudancas": 12
+   },
+   {
+    "arquivo": "docs/ci/README.md",
     "mudancas": 12
    },
    {
@@ -192,7 +192,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8134,
+  "arquivos_total": 8135,
   "arquivos_codigo": 4637,
   "linhas_codigo": 849730,
   "rotas": 18,
@@ -204,8 +204,8 @@
   "hooks": 490,
   "edge_functions": 85,
   "tabelas": 226,
-  "migrations": 1107,
-  "cron_jobs": 25,
+  "migrations": 1108,
+  "cron_jobs": 26,
   "testes": 2526,
   "workflows": 19,
   "scripts": 376,
