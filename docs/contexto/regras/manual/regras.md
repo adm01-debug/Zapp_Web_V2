@@ -72,6 +72,15 @@ Lacuna registrada: `number_reputation.daily_limit` (200, migration `202604090145
 aquecimento de número que **`talkx-send` não consulta** (grep vazio em 2026-11-03) — coluna morta; o único
 limite efetivo é o `daily_limit_per_connection`.
 
+## 7. Dados pessoais, retenção e LGPD
+
+| Regra | Estado | Evidência |
+|---|---|---|
+| **Dados de atendimento** (contato, mensagens, mídia, gravação de chamada em `calls`) **não expiram**: ficam até um admin excluir (`delete_contact` / `delete_contacts`, registrado em `contact_deletion_audit`). Nenhum agente cria job de expurgo nessas tabelas. | **existe** (não há expurgo; decisão: manter) | cron ao vivo 2026-11-03: só logs técnicos têm retenção (`reconnection-logs-retention-30d`, `search-events-retention`, `purge-qr-attempts`, caches) |
+| **Histórico de campanha Talk X também fica para sempre** (`talkx_delivery_log`, `talkx_recipients`, cliques, IA, mídia). O expurgo `purge_talkx_expired_data` (chamado por `trigger_talkx_engine_tick`, 1×/dia) **foi neutralizado** em 2026-11-03: os 4 prazos em `talkx_settings` passaram de 180/365/90/90 para **36.500 dias**. A função não tem "0 = desligado" (NULL cai no padrão 180) — **não** zere nem apague essas chaves. | **existe** (aplicado) | `talkx_settings.retention_days_message/clicks/test_sends/ai = 36500` (UPDATE 2026-11-03); `purge_talkx_expired_data` usa `COALESCE(v_days_*, 180/365/90/90)` |
+| **Pedido de exclusão (LGPD, art. 18): atender em até 15 dias**, apagando contato + mensagens + mídia + gravações pela exclusão de admin. "Sair" de campanha (`consent_status = revoked`) **não apaga dados** — só bloqueia envio. Não existe fluxo nem fila de pedidos no sistema; é processo manual do admin. | **regra de processo** (sem código) | `delete_contact` / `contact_deletion_audit` |
+| **Encerramento automático por inatividade (24 h) fica desligado** — coerente com "sem `waiting`/fechamento por tempo" (§4.1). Único fechamento automático é o arquivamento aos 30 dias (§4.1, pendente). | **existe** (desligado) | `auto_close_config.is_enabled = false`, `inactivity_hours = 24` (banco ao vivo) |
+
 ## 8. Decisões já tomadas (o que NÃO mudar e por quê)
 
 - Reabertura automática mantém o atendente anterior — o dono quer continuidade de atendimento.
@@ -88,5 +97,4 @@ limite efetivo é o `daily_limit_per_connection`.
 1. SLA: minutos padrão de primeira resposta e canal da notificação (tela / e-mail / WhatsApp); critério de "em alguns casos o admin".
 2. Reconexão da `PRINCIPAL` após nível 1: QR Code novo é sempre ação do supervisor/admin, ou atendente também pode?
 3. `special_agent` (0 usuários): continua como papel ou vira só a flag `can_download` do agente comum? (sugestão: remover o papel, manter a flag).
-4. LGPD: retenção de mensagens e mídia; o que apagar quando um contato pede exclusão.
-5. Áreas congeladas: módulos que não devem ser mexidos sem o dono.
+4. Áreas congeladas: módulos que não devem ser mexidos sem o dono.
