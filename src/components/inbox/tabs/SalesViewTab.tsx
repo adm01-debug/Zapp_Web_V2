@@ -13,7 +13,7 @@ interface SalesViewTabProps {
 
 /**
  * Aba SalesView — resumo comercial e propostas do contato.
- * O módulo de compras (contact_purchases) foi removido em 2026-11-03 (decisão do dono).
+ * O módulo de compras foi removido em 2026-11-03 (decisão do dono).
  */
 export function SalesViewTab({ contactId, onTabChange }: SalesViewTabProps) {
   const { data: crm360, isLoading } = useContactCrm360(contactId);
