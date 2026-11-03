@@ -59,7 +59,6 @@
         "number_reputation",
         "password_reset_requests",
         "password_reset_requests_safe",
-        "payment_links",
         "performance_snapshots",
         "permissions",
         "playbooks",
