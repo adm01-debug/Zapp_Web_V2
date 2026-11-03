@@ -41,7 +41,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "1.3.1"
+VERSION = "1.3.2"
 BOT_COMMIT_PREFIX = "chore(ai-context)"
 
 # --------------------------------------------------------------------------- #
@@ -1266,8 +1266,12 @@ def collect_rules(code: dict[str, dict], schema: dict, feats: dict, dataflow: di
                    "db_enums": schema["enums"], "db_raises": schema["raises"], "db_generated": [], "db_views": schema["views"],
                    "pagination": []}
     for r, info in code.items():
-        if not is_app_code(r) and not info["is_test"]:
-            # fora do app (docs/, scripts/, qa/…): só tabelas/env/erros contam; regras de UI/estado não
+        if info["is_test"]:
+            # teste: só os nomes contam (especificação); constantes/prazos/erros de fixture não são regra
+            rules["tests"] += [{"file": r, "name": t} for t in info["tests"]]
+            continue
+        if not is_app_code(r):
+            # fora do app (docs/, scripts/, qa/…): só erros contam; regras de UI/estado não
             rules["error_messages"] += [{"file": r, "msg": m} for m in info["errors"]]
             continue
         rules["validation_schemas"] += [{"file": r, **z} for z in info["zod"]]
@@ -1283,7 +1287,6 @@ def collect_rules(code: dict[str, dict], schema: dict, feats: dict, dataflow: di
         rules["calc_fns"] += [{"file": r, **x} for x in info["calc_fns"]]
         rules["temporal"] += [{"file": r, "line": x} for x in info["temporal"]]
         rules["percents"] += [{"file": r, "line": x} for x in info["percents"]]
-        rules["tests"] += [{"file": r, "name": t} for t in info["tests"]]
         rules["webhook_events"] += [{"file": r, "event": e} for e in info["webhook_events"]]
         rules["side_effects"] += [{"file": r, "call": s} for s in info["side_effects"]]
         rules["pagination"] += [{"file": r, "limit": s} for s in info["pagination"]]
