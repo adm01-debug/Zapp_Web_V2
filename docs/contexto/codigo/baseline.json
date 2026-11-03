@@ -2,9 +2,9 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1c0f516ff693950dc949e79b871fc729548457f0",
+  "commit": "f3c9b5d5caf428728279e09c3007895e9acd43b5",
   "branch": "main",
-  "data_commit": "2026-11-03T15:12:40Z",
+  "data_commit": "2026-11-03T15:39:20Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
   "arquivos_mudados_7d": 1366,
@@ -15,7 +15,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 724
+    "mudancas": 722
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -39,7 +39,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 309
+    "mudancas": 307
    },
    {
     "pasta": "src/hooks/chat",
@@ -73,18 +73,14 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 26
-   },
-   {
-    "arquivo": "CLAUDE.md",
     "mudancas": 25
    },
    {
-    "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 19
+    "arquivo": "CLAUDE.md",
+    "mudancas": 24
    },
    {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "arquivo": ".github/workflows/e2e-logado.yml",
     "mudancas": 18
    },
    {
@@ -92,31 +88,31 @@
     "mudancas": 18
    },
    {
-    "arquivo": ".github/workflows/db-guard.yml",
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 17
+   },
+   {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 16
    },
    {
     "arquivo": "docs/ci/README.md",
-    "mudancas": 17
+    "mudancas": 16
    },
    {
     "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
-    "mudancas": 17
-   },
-   {
-    "arquivo": ".github/workflows/deploy-functions.yml",
-    "mudancas": 13
+    "mudancas": 16
    },
    {
     "arquivo": "ESTADO.md",
     "mudancas": 13
    },
    {
-    "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 13
+    "arquivo": ".github/workflows/deploy-functions.yml",
+    "mudancas": 12
    },
    {
-    "arquivo": "scripts/ci/github-settings-guard.unit.mjs",
+    "arquivo": "supabase/deployment-manifest.json",
     "mudancas": 12
    },
    {
@@ -124,19 +120,11 @@
     "mudancas": 12
    },
    {
+    "arquivo": "scripts/ci/github-settings-guard.unit.mjs",
+    "mudancas": 11
+   },
+   {
     "arquivo": ".github/workflows/db-migrate.yml",
-    "mudancas": 11
-   },
-   {
-    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
-    "mudancas": 11
-   },
-   {
-    "arquivo": ".github/workflows/branch-hygiene-audit.yml",
-    "mudancas": 10
-   },
-   {
-    "arquivo": ".github/workflows/e2e-talkx.yml",
     "mudancas": 10
    },
    {
@@ -144,11 +132,7 @@
     "mudancas": 10
    },
    {
-    "arquivo": "scripts/ci/github-settings-baseline.json",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "scripts/db-audit/check-migration-drift.mjs",
+    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
     "mudancas": 10
    },
    {
@@ -160,16 +144,32 @@
     "mudancas": 10
    },
    {
+    "arquivo": ".github/workflows/branch-hygiene-audit.yml",
+    "mudancas": 9
+   },
+   {
+    "arquivo": ".github/workflows/e2e-talkx.yml",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "scripts/ci/github-settings-baseline.json",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "scripts/db-audit/check-migration-drift.mjs",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "scripts/db-audit/check-migration-drift.test.mjs",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "supabase/schema-catalog.json",
+    "mudancas": 9
+   },
+   {
     "arquivo": ".github/workflows/auto-update-pr-branch.yml",
-    "mudancas": 9
-   },
-   {
-    "arquivo": ".github/workflows/codeql.yml",
-    "mudancas": 9
-   },
-   {
-    "arquivo": ".github/workflows/db-live-guard.yml",
-    "mudancas": 9
+    "mudancas": 8
    }
   ],
   "autores_30d": [

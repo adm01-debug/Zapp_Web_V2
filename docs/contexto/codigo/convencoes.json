@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore(contexto): regras manuais — pagamentos, single-tenant, perfis, retenção/LGPD, SLA (#2674)",
    "chore(contexto): regras manuais de campanhas Talk X (#2673)",
    "chore(contexto): regras manuais de conversas e conexão WhatsApp (#2672)",
    "fix(contexto): regras/ ignora constantes, prazos e erros vindos de arquivos de teste (#2667)",
-   "fix(contexto): índice lê a data do snapshot pelo CHANGELOG/git quando não há manifest datado (#2666)",
-   "chore(db): sincronizar artefatos derivados do banco (#2669)"
+   "fix(contexto): índice lê a data do snapshot pelo CHANGELOG/git quando não há manifest datado (#2666)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
