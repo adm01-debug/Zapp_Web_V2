@@ -1445,8 +1445,8 @@ def render_readme(snap: dict, api_: dict) -> None:
     server = db.get("server") or {}
     md = [
         "# Snapshot Supabase — contexto para agentes de IA\n",
-        "Gerado automaticamente a cada 10 min pelo workflow `supabase-snapshot`. **Não edite manualmente.**\n",
-        "Frescor: `git log -1 --format=%cI -- docs/supabase`. Só há commit quando algo mudou; o histórico está em `CHANGELOG.md`.\n",
+        "Gerado automaticamente a cada 10 min pelo workflow `contexto` (job `banco`). **Não edite manualmente.**\n",
+        "Frescor: `git log -1 --format=%cI -- docs/contexto/supabase`. Só há commit quando algo mudou; o histórico está em `CHANGELOG.md`.\n",
         "## Protocolo para agentes\n",
         "1. **Tabela**: leia só `tables/<schema>/<tabela>.md` (colunas, FKs, índices, RLS, triggers, grants). ER geral em `relationships.md`.",
         "2. **Antes de mexer em RLS/functions/índices**: leia `lints.md` e `policies.md`. Não repita problemas já listados.",
