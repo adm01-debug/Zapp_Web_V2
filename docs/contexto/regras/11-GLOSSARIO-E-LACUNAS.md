@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.1 · commit `803055f148` · branch `main` · 2026-11-03 13:07 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `8f2d06ac49` · branch `main` · 2026-11-03 13:18 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -253,8 +253,6 @@
 | `multiplix_block_type` (enum) | text, voice_ai, audio_recorded, file |  | banco |
 | `multiplix_eligibility` (enum) | eligible, no_destination, suppressed, out_of_scope, media_pending, connection_unavailable, requires_template |  | banco |
 | `talkx_blacklist_reason` (enum) | opt_out, bounce, spam, manual, other |  | banco |
-| `CONTACT_TYPES` (TS) | \n { value: 'a', label: 'A' },\n { value: 'b', label: 'B' },\n |  | `scripts/db-audit/contact-types-contract.test.mjs` |
-| `IconTag` (TS) | Button \| IconButton |  | `src/__tests__/a11y/scan-icon-buttons.ts` |
 | `CHAVE_TAREFAS_AGENDADAS` (TS) | 'admin-cron-jobs' |  | `src/components/admin/useTarefasAgendadas.ts` |
 | `TriggerConfigInput` (TS) | keywords \| number \| text |  | `src/components/automations/automationConstants.ts` |
 | `CanalDeSaida` (TS) | voip \| whatsapp |  | `src/components/calls/NewCallPanel.tsx` |
@@ -307,7 +305,9 @@
 | `LocationOrigin` (TS) | suggest \| forward \| click \| gps |  | `src/components/inbox/location-picker/useLocationPicker.ts` |
 | `FileThumbSize` (TS) | card \| row \| cell |  | `src/components/inbox/tabs/FileThumb.tsx` |
 | `KpiTone` (TS) | blue \| green \| purple \| yellow \| red |  | `src/components/inbox/tabs/KpiStrip.tsx` |
-| … +358 linhas — lista completa em `context.json` | | | |
+| `SenderAvatarSize` (TS) | sm \| md |  | `src/components/inbox/tabs/SenderAvatar.tsx` |
+| `DocumentFamily` (TS) | pdf \| sheet \| doc \| ppt \| archive \| generic |  | `src/components/inbox/tabs/fileDisplay.ts` |
+| … +348 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 

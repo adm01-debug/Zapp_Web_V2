@@ -2,9 +2,9 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "803055f14891419900ece8043d554810b81f2da3",
+  "commit": "8f2d06ac49dd25a8ff59be3d23b7d9d65072ee44",
   "branch": "main",
-  "data_commit": "2026-11-03T13:06:12Z",
+  "data_commit": "2026-11-03T13:17:16Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [],
   "arquivos_mudados_7d": 1409,
@@ -81,15 +81,15 @@
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 21
-   },
-   {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 20
    },
    {
-    "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 19
+   },
+   {
+    "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
+    "mudancas": 18
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
@@ -194,7 +194,7 @@
  "contagens": {
   "arquivos_total": 8135,
   "arquivos_codigo": 4641,
-  "linhas_codigo": 850145,
+  "linhas_codigo": 850148,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -522,7 +522,7 @@
   },
   "scripts/regras_negocio": {
    "arquivos": 2,
-   "linhas": 2329
+   "linhas": 2332
   },
   "scripts/supabase_snapshot": {
    "arquivos": 1,
@@ -672,7 +672,7 @@
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
-   "linhas": 2128
+   "linhas": 2131
   },
   {
    "arquivo": "scripts/supabase_snapshot/snapshot.py",

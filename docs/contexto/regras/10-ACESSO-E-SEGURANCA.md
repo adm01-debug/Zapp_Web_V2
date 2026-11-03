@@ -1,11 +1,11 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.1 · commit `803055f148` · branch `main` · 2026-11-03 13:07 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `8f2d06ac49` · branch `main` · 2026-11-03 13:18 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
 
-`admin`, `agent`, `anon`, `anything`, `boolean`, `customer`, `customers_own`, `denied`, `dialog`, `granted`, `leader`, `manage_users`, `next`, `nonexistent`, `owner`, `permissao_de_teste`, `postgres`, `r`, `role`, `service_role`, `special_agent`, `string`, `supervisor`, `value`
+`admin`, `agent`, `anon`, `boolean`, `customer`, `customers_own`, `denied`, `granted`, `leader`, `next`, `owner`, `postgres`, `role`, `service_role`, `special_agent`, `string`, `supervisor`, `value`
 
 - Tabelas de perfil/permissão: `permissions`, `team_conversation_members`, `queue_members`, `role_permissions`, `user_roles`, `multiplix_audience_members`
 - Colunas de perfil: `whatsapp_groups.is_admin` (boolean | null), `role_permissions.role` (Database["public"]["Enums"]["app_role"] not null), `user_roles.role` (app_role NOT NULL), `profiles.role` (text DEFAULT 'agent'), `department_invitations.role` (text NOT NULL DEFAULT 'agent'), `_res.papel` (text)

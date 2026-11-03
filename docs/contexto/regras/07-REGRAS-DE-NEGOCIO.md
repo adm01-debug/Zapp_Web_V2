@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.1 · commit `803055f148` · branch `main` · 2026-11-03 13:07 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `8f2d06ac49` · branch `main` · 2026-11-03 13:18 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1210,22 +1210,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```ts
   get_companies_by_phones_batch: new Set(['p_phones']), get_contact_360_by_phone: new Set(['p_phone']), get_contact_intelligence_by_phone: new Set(['p_phone']), get_contact_sidebar_by_phone: new Set(['p_phone']), search_contacts_advanced: new Set([ 'p_search', 'p_vendedor', 'p_ramo', 'p_rfm_segment', 'p_estado', 'p_cliente_ativado', 'p_ja_comprou', 'p_sort_by', 'p_page', 'p_page_size', ]),
   ```
-- **ALLOWED** (`supabase/functions/_shared/__tests__/request-policy.test.ts`):
-  ```ts
-  data: [ { allowed: true, reason: null, rate_limit_max_requests: 25, rate_limit_window_seconds: 120 }, ], error: null,
-  ```
-- **ALLOWED_POLICY** (`supabase/functions/auth-login/index.test.ts`):
-  ```ts
-  data: [{ allowed: true, reason: null, rate_limit_max_requests: 10, rate_limit_window_seconds: 60 }], error: null,
-  ```
-- **ROTA_RATE_LIMIT_ALLOWED** (`supabase/functions/detect-new-device/index.test.ts`):
-  ```ts
-  match: "/rest/v1/rpc/consume_rate_limit", body: [{ allowed: true, remaining: 4 }]
-  ```
-- **FROZEN_TRANSITIONS** (`tests/contracts/ai-jobs-estados-e-durabilidade.contract.test.ts`):
-  ```ts
-  queued: ['running', 'cancelled'], running: ['partial', 'succeeded', 'failed', 'cancelled', 'outcome_unknown'], partial: ['running', 'succeeded', 'failed', 'cancelled', 'outcome_unknown'], succeeded: [], failed: [], cancelled: [], outcome_unknown: [],
-  ```
 
 ### E.3 Valores de status usados no código (escreve / compara / filtra)
 
@@ -1547,8 +1531,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | multiplix_block_type | `text`, `voice_ai`, `audio_recorded`, `file` | banco |
 | multiplix_eligibility | `eligible`, `no_destination`, `suppressed`, `out_of_scope`, `media_pending`, `connection_unavailable`, `requires_template` | banco |
 | talkx_blacklist_reason | `opt_out`, `bounce`, `spam`, `manual`, `other` | banco |
-| CONTACT_TYPES | \n { value: 'a', label: 'A' },\n { value: 'b', label: 'B' },\n | `scripts/db-audit/contact-types-contract.test.mjs` |
-| IconTag | Button \| IconButton | `src/__tests__/a11y/scan-icon-buttons.ts` |
 | CHAVE_TAREFAS_AGENDADAS | 'admin-cron-jobs' | `src/components/admin/useTarefasAgendadas.ts` |
 | TriggerConfigInput | keywords \| number \| text | `src/components/automations/automationConstants.ts` |
 | CanalDeSaida | voip \| whatsapp | `src/components/calls/NewCallPanel.tsx` |
@@ -1828,7 +1810,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | PriorityLevel | critical \| high \| medium \| normal | `src/lib/supervisorPriority.ts` |
 | PRIORITY_RULES_TEXT | 'P1 Crítica → sem atendente há 30 min ou mais, ou risco ≥ 80, ou marcação de urgência da IA.', 'P2 Alta → aguardando há 15 min ou mais, ou risco ≥ 60.', 'P3 Média → aguardando há 5 min ou mais, ou risco ≥ 40.', 'P4 Normal → demais conversas em atendimento.', | `src/lib/supervisorPriority.ts` |
 | TeamChatFileSizeError | empty \| too-large | `src/lib/teamChatRules.ts` |
-| ComandoRls | SELECT \| INSERT \| UPDATE \| DELETE | `src/lib/__tests__/helpers/rlsSchema.ts` |
 | AI_JOB_STATUSES | 'queued', 'running', 'partial', 'succeeded', 'failed', 'cancelled', 'outcome_unknown', | `src/lib/aiJobs/status.ts` |
 | AI_JOB_TERMINAL_STATUSES | 'succeeded', 'failed', 'cancelled', 'outcome_unknown', | `src/lib/aiJobs/status.ts` |
 | ExecutorDaAcao | whatsapp \| sip | `src/lib/calls/acaoDoAlerta.ts` |
@@ -1837,7 +1818,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | PersistedStatus | ringing \| answered \| ended \| missed \| busy \| failed \| cancelled \| declined | `src/lib/calls/callStatus.ts` |
 | CallResult | completed \| missed \| no_answer \| busy \| failed \| cancelled \| declined \| in_progress \| ringing | `src/lib/calls/callStatus.ts` |
 | EndReason | completed \| busy \| no_answer \| cancelled \| declined \| failed \| cancelled_remote \| timeout \| busy_here \| hangup_local \| hangup_remote | `src/lib/calls/callStatus.ts` |
-| … +122 linhas — lista completa em `context.json` | | |
+| EndedBy | hangup_local \| hangup_remote \| reject \| cancel_remote \| timeout \| failure | `src/lib/calls/callStatus.ts` |
+| ResultTone | success \| destructive \| warning \| muted \| primary | `src/lib/calls/callStatus.ts` |
+| CapabilityReason | voip_unavailable \| voip_reconnecting \| voip_not_configured \| mic_blocked \| mic_missing \| mic_busy \| whatsapp_unavailable \| whatsapp_no_outbound \| whatsapp_disconnected \| whatsapp_restrito_supervisores \| line_in_use_other_user \| line_in_use_other_tab \| line_busy_here \| unknown | `src/lib/calls/capabilities.ts` |
+| … +112 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -2271,18 +2255,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```ts
   { object: z.string(), entry: z.array(z.object({ id: z.string(), changes: z.array(z.object({ value: z.object({ messaging_product: z.string().optional(), metadata: z.object({ display_phone_number: z.string(), phone_number_id: z.string(), }).optional(), statuses: z.array(WhatsAppStatusSchema).optional(), // `profile.name` NÃO é obrigatório no payload da Meta: sem ele o // schema derrubava o lote inteiro para "Invalid payload format" // (200 + warning) e a mensagem nunca era persistida. Sem nome, o // push_name vira null e o RPC cai no telefone. contacts: z.array(z.object({ profile: z.object({ name: z.string().optional() }).optional(), })).optional(), messages: z.array(z.object({ id: z.string(), from: z.string(), timestamp: z.string(), type: z.string(), text: z.object({ body: z.string() }).opt …
   ```
-- **explosivo** (`tests/contracts/contract-kit.contract.test.ts`, z.object):
-  ```ts
-  { a: z.custom(() => { throw new Error('boom'); }) }
-  ```
-- **r** (`tests/contracts/error-format.contract.test.ts`, z.object):
-  ```ts
-  { a: z.string() }
-  ```
-- **r** (`tests/contracts/error-format.contract.test.ts`, z.string):
-  ```ts
-  
-  ```
 
 ### F.2 react-hook-form (register/rules)
 
@@ -2369,26 +2341,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   (this as unknown as import('vite').Rollup.PluginContext).emitFile({ type: "asset", fileName: "version.json", source: JSON.stringify({ buildId }), });
   ```
-- **aplicarStatementsDePolicy(estadoInicial, statements)** — `scripts/db-audit/n011-storage-policies-dedup.test.mjs`
-  ```
-  const resultado = new Map(estadoInicial); for (const statement of statements) { if (/^select\s+1$/i.test(statement.replace(/;$/, '').trim())) continue; const create = statement.match(RE_CP); if (create) { const name = create[1] ?? create[2]; assert.equal(resultado.has(name), false, `CREATE POLICY duplicada (${name})`); resultado.set(name, parseCriacao(create[3])); continue; } const drop = statement.match(RE_DP); if (drop) { const name = drop[2] ?? drop[3]; assert.ok(drop[1] || resultado.has(name …
-  ```
-- **sizeIsIcon(attr: ts.JsxAttribute)** — `src/__tests__/a11y/scan-icon-buttons.ts`
-  ```
-  const init = attr.initializer; if (!init) return false; if (ts.isStringLiteral(init)) return init.text.trim().startsWith("icon"); if (ts.isJsxExpression(init) && init.expression) { return stringLiteralsIn(init.expression).some((t) => t.trim().startsWith("icon")); } return false;
-  ```
-- **scanSource(sourceText: string, fileName = "Sintetico.tsx",)** — `src/__tests__/a11y/scan-icon-buttons.ts`
-  ```
-  const sourceFile = ts.createSourceFile( fileName, sourceText, ts.ScriptTarget.Latest, /* setParentNodes */ true, ts.ScriptKind.TSX, ); const findings: IconButtonFinding[] = []; walk(sourceFile, (node) => { if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) { const finding = analyzeElement(node, sourceFile, fileName); if (finding) findings.push(finding); } }); findings.sort((a, b) => a.line - b.line || a.column - b.column); return findings;
-  ```
-- **scanProject(projectRoot: string)** — `src/__tests__/a11y/scan-icon-buttons.ts`
-  ```
-  const srcDir = path.join(projectRoot, "src"); const findings: IconButtonFinding[] = []; for (const abs of listTsxFiles(srcDir)) { const rel = path.relative(projectRoot, abs).split(path.sep).join("/"); const text = fs.readFileSync(abs, "utf8"); findings.push(...scanSource(text, rel)); } findings.sort( (a, b) => a.file.localeCompare(b.file) || a.line - b.line || a.column - b.column, ); return findings;
-  ```
-- **fixtureValida()** — `src/components/admin/__tests__/GmailWebhookMonitor.falha-consulta.test.tsx`
-  ```
-  state.rpc = { data: [account], error: null }; state.from = [ { data: null, count: 12, error: null }, { data: null, count: 4, error: null }, ];
-  ```
 - **applyServerClassifications(list: ClassifiedTicket[], results: ServerClassification[],)** — `src/components/ai/AutoTicketClassifier.tsx`
   ```
   tickets: ClassifiedTicket[]; appliedCount: number
@@ -2416,14 +2368,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **PriceTag({ value, suggested, size = 'md' }: PriceTagProps)** — `src/components/catalog/catalogShared.tsx`
   ```
   return ( <span className="inline-flex items-baseline gap-2"> <span className={`catalog-price tabular-nums ${PRICE_SIZE_CLASS[size]}`}>{formatPrice(value)}</span> {suggested != null && suggested !== value && ( <span className="text-xs text-muted-foreground line-through tabular-nums">{formatPrice(suggested)}</span> )} </span> );
-  ```
-- **scanBody()** — `src/components/catalog/__tests__/CT67_a11y.test.tsx`
-  ```
-  document.body;
-  ```
-- **doisCores()** — `src/components/catalog/__tests__/ProductDetailDialog.test.tsx`
-  ```
-  mockProduct({
   ```
 - **applyWeekdayTemplate()** — `src/components/connections/BusinessHoursDialog.tsx`
   ```
@@ -2485,22 +2429,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   const cleaned = phone.replace(/\D/g, ''); return cleaned.length >= 10 && cleaned.length <= 15;
   ```
-- **invalidatedKeys()** — `src/components/contacts/__tests__/ContactKanbanAggregates.test.tsx`
-  ```
-  mocks.invalidate.mock.calls.map(([a]) => (a as { queryKey: unknown[] }).queryKey[0]);
-  ```
-- **totalCardValue()** — `src/components/contacts/__tests__/ContactStatsCards.test.tsx`
-  ```
-  const card = screen.getByText('Total de Contatos').closest('[data-testid="kpi-card"]') as HTMLElement; return card.querySelector('[data-testid="kpi-value"]')?.textContent ?? null;
-  ```
-- **validateEmail(email: string)** — `src/components/contacts/__tests__/ExternalDataIntegration.test.tsx`
-  ```
-  if (!email) return true; return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  ```
-- **validatePhone(phone: string)** — `src/components/contacts/__tests__/ExternalDataIntegration.test.tsx`
-  ```
-  const cleaned = phone.replace(/\D/g, ''); return cleaned.length >= 10 && cleaned.length <= 15;
-  ```
 - **DiscountGuardrailBanner({ result, onSelectAlternative, onDismiss, className }: DiscountGuardrailBannerProps)** — `src/components/copilot/DiscountGuardrailBanner.tsx`
   ```
   if (!result.detected) return null; return ( <div className={cn('rounded-lg border border-red-400/30 bg-red-50/50 dark:bg-red-900/10 p-3', className)}> <div className="flex items-start justify-between"> <div className="flex items-center gap-1.5"> <ShieldAlert className="w-3.5 h-3.5 text-red-500 shrink-0" /> <span className="text-xs font-medium text-red-700 dark:text-red-400"> {result.warningMessage} </span> </div> <button type="button" onClick={onDismiss} className="text-muted-foreground hover:te …
@@ -2521,10 +2449,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   return normalizeScore(raw, { min: 0, max: 100, scale: 'percent' }).value;
   ```
-- **valorDoKpi(indice: number)** — `src/components/dashboard/__tests__/AgentPerformancePanel.equipe.test.tsx`
-  ```
-  const cartoes = screen.getAllByTestId('kpi-card'); if (!cartoes[indice]) throw new Error(`card de KPI na posição ${indice} não encontrado`); return within(cartoes[indice]).getAllByTestId('kpi-value')[0].textContent ?? '';
-  ```
 - **RankIndicator({ index }: { index: number })** — `src/components/dashboard/overview/TeamHighlightCard.tsx`
   ```
   if (index < 3) { return <Medal className={cn('w-5 h-5 shrink-0', MEDAL_CLASS[index])} />; } return <span className="w-5 h-5 flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">{index + 1}</span>;
@@ -2541,26 +2465,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   if (!canGenerateSummary) { toast.error('O período selecionado precisa ter pelo menos 10 mensagens.'); return; } const request = beginRequest(); setIsLoading(true); try { const { data, error } = await supabase.functions.invoke('ai-conversation-summary', { body: { messages: filteredMessages.map(m => ({ sender: m.sender, content: m.content, created_at: m.created_at })), contactName, contactId, requestId: request.requestId }, }); // IA-048 — a resposta só vale se contato/período ainda forem os do cl …
   ```
-- **focaveisDe(raiz: HTMLElement)** — `src/components/inbox/__tests__/InboxSavedFiltersMenu.test.tsx`
-  ```
-  
-  ```
-- **composeValidMessage()** — `src/components/inbox/__tests__/InteractiveMessageBuilder.send-pending.test.tsx`
-  ```
-  fireEvent.change(screen.getByPlaceholderText('Digite o corpo da mensagem...'), { target: { value: 'Confirme seu pedido' }, }); fireEvent.click(screen.getByRole('button', { name: /resposta/i })); fireEvent.change(screen.getByPlaceholderText(/Título do botão/i), { target: { value: 'Confirmar' }, });
-  ```
-- **variaveisDoBloco(css: string, cabecalho: string)** — `src/components/inbox/__tests__/SLAIndicator.contrasteSelos.test.tsx`
-  ```
-  const limpo = css.replace(/\/\*[\s\S]*?\*\//g, ''); const alvo = `${cabecalho} {`; const i = limpo.indexOf(alvo); if (i < 0) throw new Error(`bloco ${alvo} ausente no CSS`); const abre = i + alvo.length - 1; let nivel = 0; for (let j = abre; j < limpo.length; j++) { if (limpo[j] === '{') nivel += 1; else if (limpo[j] === '}') { nivel -= 1; if (nivel === 0) { const out: Record<string, Rgb> = {}; for (const t of Array.from( limpo .slice(abre + 1, j) .matchAll(/--(\w[\w-]*):\s*(\d+(?:\.\d+)?)\s+(\d …
-  ```
-- **calculateSLAState(firstMessageAt: Date, firstResponseAt: Date | null | undefined, firstResponseMinutes: number)** — `src/components/inbox/__tests__/SLAIndicator.test.tsx`
-  ```
-  const now = new Date(); const firstResponseDeadline = new Date(firstMessageAt.getTime() + firstResponseMinutes * 60 * 1000); let firstResponseStatus: SLAStatus = 'ok'; let firstResponseRemaining = firstResponseDeadline.getTime() - now.getTime(); let firstResponseBreached = false; if (firstResponseAt) { firstResponseBreached = firstResponseAt > firstResponseDeadline; firstResponseStatus = firstResponseBreached ? 'breached' : 'ok'; firstResponseRemaining = 0; } else { // regra de negocio: warning …
-  ```
-- **applyOrders(rows: Row[], orders: OrderClause[])** — `src/components/inbox/__tests__/StickerPicker.catalogo.test.tsx`
-  ```
-  return [...rows].sort((a, b) => { for (const { column, ascending } of orders) { const av = a[column] as string | number; const bv = b[column] as string | number; if (av === bv) continue; const cmp = av < bv ? -1 : 1; return ascending ? cmp : -cmp; } return 0; });
-  ```
 - **applyFormat(type: FormatType)** — `src/components/inbox/chat/RichTextToolbar.tsx`
   ```
   const input = inputRef.current; if (!input) return; const { prefix, suffix } = FORMAT_MAP[type]; const start = input.selectionStart ?? inputValue.length; const end = input.selectionEnd ?? inputValue.length; const selectedText = inputValue.substring(start, end); let newValue: string; let newCursorPos: number; if (type === 'list' || type === 'ordered-list') { const lineStart = inputValue.lastIndexOf('\n', start - 1) + 1; newValue = inputValue.substring(0, lineStart) + prefix + inputValue.substring …
@@ -2568,14 +2472,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **podeReenviarComoTexto(mensagem: Message | null | undefined)** — `src/components/inbox/chat/SendErrorBanner.tsx`
   ```
   return mensagem?.type === 'text';
-  ```
-- **applySignature(text: string)** — `src/components/inbox/chat/__tests__/useChatPanelHandlers.assinatura-retry.test.tsx`
-  ```
-  ASSINATURA
-  ```
-- **depoisDoFiltro(result: unknown)** — `src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx`
-  ```
-  // `.select('id')` devolve as linhas afetadas; o objeto também é "awaitável". select: () => Promise.resolve(result), then: (res: (v: unknown) => unknown) => Promise.resolve(result).then(res),
   ```
 - **engagementScore(()** — `src/components/inbox/contact-details/ContactHeaderSection.tsx`
   ```
@@ -2588,14 +2484,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **recalcular()** — `src/components/inbox/location-picker/SuggestionList.tsx`
   ```
   const topo = cascaRef.current?.getBoundingClientRect().top ?? 0; const disponivel = vv.height - topo - 12; setTetoTeclado(disponivel > 0 ? Math.round(disponivel) : null);
-  ```
-- **apply()** — `src/components/inbox/stickers/__tests__/StickerManager.envio.test.tsx`
-  ```
-  let rows = tableRows(table).slice(); for (const [col, val] of filters) rows = rows.filter((r) => r[col] === val); return rows;
-  ```
-- **apply()** — `src/components/inbox/stickers/__tests__/StickerManager.recentes.r2-inb-062.test.tsx`
-  ```
-  let rows = tableRows(table).slice(); for (const [col, val] of filters) rows = rows.filter((r) => r[col] === val); if (sortCol) { const col = sortCol; rows = rows.sort((a, b) => { const av = a[col] as string | number; const bv = b[col] as string | number; if (av === bv) return 0; return av < bv ? (sortAsc ? -1 : 1) : sortAsc ? 1 : -1; }); } return rows;
   ```
 - **formatCurrency(v: number)** — `src/components/inbox/tabs/CommercialSummaryStrip.tsx`
   ```
@@ -2641,10 +2529,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   const r: SparklineData = { messages: [], latency: [], uptime: [] }; const ms = periodMs[period]; const bucketSize = ms / 8; for (let i = 7; i >= 0; i--) { const s = new Date(now.getTime() - (i + 1) * bucketSize); const e = new Date(now.getTime() - i * bucketSize); const hl = logs.filter(l => { const t = new Date(l.checked_at); return t >= s && t < e; }); const hh = hl.filter(l => HEALTHY_STATUSES.includes(l.status)); r.uptime.push(hl.length > 0 ? Math.round((hh.length / hl.length) * 100) : 100); …
   ```
-- **valorDoToken(token: string)** — `src/components/multiplix/__tests__/fundacaoVisual.test.tsx`
-  ```
-  return getComputedStyle(document.documentElement).getPropertyValue(token).trim();
-  ```
 - **ScoreGauge({ score }: { score: number })** — `src/components/nps/NPSDashboard.tsx`
   ```
   const color = score >= 50 ? 'text-success' : score >= 0 ? 'text-warning' : 'text-destructive'; const bg = score >= 50 ? 'bg-success/10' : score >= 0 ? 'bg-warning/10' : 'bg-destructive/10'; const label = score >= 70 ? 'Excelente' : score >= 50 ? 'Bom' : score >= 0 ? 'Neutro' : 'Crítico'; return ( <div className={`flex flex-col items-center justify-center p-6 rounded-xl ${bg}`}> <span className={`text-5xl font-bold ${color}`}>{score}</span> <span className="text-sm text-muted-foreground mt-1">NPS …
@@ -2657,53 +2541,13 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   return Math.round((metrics.filter(m => m.status === 'good').length / Math.max(metrics.length, 1)) * 100);
   ```
-- **score()** — `src/components/performance/__tests__/PerformanceMonitor.apis-ausentes.test.tsx`
-  ```
-  screen.getByTestId('overall-score').textContent;
-  ```
 - **calculateTrend(current: number, previous: number)** — `src/components/reports/useReportsData.ts`
   ```
   if (!compareEnabled || previous === 0) return undefined; return ((current - previous) / previous) * 100;
   ```
-- **aplicarFiltros()** — `src/components/reports/__tests__/AbandonmentRate.test.tsx`
-  ```
-  let rows = state.rows.slice(); for (const f of filters) { if (f[0] === 'gte') rows = rows.filter(r => r.created_at >= String(f[2])); if (f[0] === 'lte') rows = rows.filter(r => r.created_at <= String(f[2])); } return rows;
-  ```
-- **valor(rotulo: RegExp)** — `src/components/reports/__tests__/AbandonmentRate.test.tsx`
-  ```
-  const el = screen.getByText(rotulo); return (el.parentElement?.textContent ?? '').replace(rotulo, '').replace(/[^\d-]/g, '').trim();
-  ```
-- **valorDoCard(rotulo: string)** — `src/components/security/__tests__/AuditLogDashboard.hoje-janela24h.test.tsx`
-  ```
-  screen.getByText(rotulo).previousElementSibling?.textContent;
-  ```
-- **valorDoCartao(rotulo: string)** — `src/components/security/__tests__/AuditLogDashboard.test.tsx`
-  ```
-  
-  ```
-- **valorDoCartao(rotulo: string)** — `src/components/security/__tests__/AuditLogDashboard.test.tsx`
-  ```
-  screen.getByText(rotulo).previousElementSibling?.textContent;
-  ```
-- **variaveisDoBloco(css: string, cabecalho: string)** — `src/components/security/__tests__/IPListasErro.contrasteTema.test.tsx`
-  ```
-  const limpo = css.replace(/\/\*[\s\S]*?\*\//g, ''); const alvo = `${cabecalho} {`; const i = limpo.indexOf(alvo); if (i < 0) throw new Error(`bloco ${alvo} ausente no CSS`); const abre = i + alvo.length - 1; let nivel = 0; for (let j = abre; j < limpo.length; j++) { if (limpo[j] === '{') nivel += 1; else if (limpo[j] === '}') { nivel -= 1; if (nivel === 0) { const out: Record<string, Rgb> = {}; for (const t of Array.from( limpo .slice(abre + 1, j) .matchAll(/--(\w[\w-]*):\s*(\d+(?:\.\d+)?)\s+(\d …
-  ```
 - **aplicarSom(category: CategoryKey, soundId: SoundTypeOption)** — `src/components/settings/SoundCustomizationPanel.tsx`
   ```
   const campo = CATEGORY_SOUND_FIELD[category]; const alteracao: Partial<NotificationSettings> = {}; alteracao[campo] = soundId; updateSettings(alteracao);
-  ```
-- **applyOrders(rows: Row[], orders: OrderClause[])** — `src/components/settings/__tests__/MediaLibraryAdmin.catalogo.test.tsx`
-  ```
-  return [...rows].sort((a, b) => { for (const { column, ascending } of orders) { const av = a[column] as string | number; const bv = b[column] as string | number; if (av === bv) continue; const cmp = av < bv ? -1 : 1; return ascending ? cmp : -cmp; } return 0; });
-  ```
-- **valorDoCampo(nome: string)** — `src/components/settings/__tests__/ScheduleSettings.test.tsx`
-  ```
-  (screen.getByLabelText(nome) as HTMLInputElement).value;
-  ```
-- **gerarPreviaESalvar()** — `src/components/settings/media-library/__tests__/AIGenerateDialog.pasta-usuario.test.tsx`
-  ```
-  render(<Harness />); fireEvent.change(screen.getByPlaceholderText(/Risada de vilão/), { target: { value: 'Trovão distante com chuva' }, }); await act(async () => { fireEvent.click(screen.getByRole('button', { name: /Gerar Preview/i })); }); await waitFor(() => { expect(screen.getByRole('button', { name: /Salvar na Biblioteca/i })).toBeInTheDocument(); }); await act(async () => { fireEvent.click(screen.getByRole('button', { name: /Salvar na Biblioteca/i })); });
   ```
 - **applyGxDarkSurfaces(preset: ThemePreset)** — `src/components/settings/theme/presets.ts`
   ```
@@ -2745,22 +2589,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   if (!mediaTypeFromMime(file.type)) { const extension = file.name.split('.').pop()?.toLowerCase(); const hint = extension ? `.${extension}` : 'este tipo'; return { ok: false, error: `Arquivo ${hint} não é aceito. Use imagem, vídeo MP4, PDF, DOCX, XLSX ou áudio.` }; } if (file.size > TALKX_MEDIA_MAX_BYTES) { return { ok: false, error: `O arquivo tem ${formatMediaBytes(file.size)} e passa do limite de 16 MB.` }; } return { ok: true };
   ```
-- **rolaveisSemFoco(root: HTMLElement)** — `src/components/talkx/__tests__/TalkXA11yNomePapel.test.tsx`
-  ```
-  return Array.from( root.querySelectorAll<HTMLElement>( '[class*="overflow-auto"],[class*="overflow-x-auto"],[class*="overflow-y-auto"],[class*="overflow-scroll"]', ), ).filter((el) => el.getAttribute('tabindex') !== '0');
-  ```
-- **aplicar(next: SegmentRules)** — `src/components/talkx/__tests__/TalkXAudienceFilters.test.tsx`
-  ```
-  enviadas.push(next); setRules(next);
-  ```
-- **aplicarCursor(dados: Record<string, unknown>[], orFilter: string)** — `src/components/talkx/__tests__/TalkXOperationalTimeline.test.tsx`
-  ```
-  const m = orFilter.match(/^created_at\.lt\.([^,]+),and\(created_at\.eq\.([^,]+),id\.lt\.(.+)\)$/); if (!m) return []; const [, limiteAt, atIgual, idLimite] = m; return dados .filter((row) => { const at = String(row.created_at); const id = String(row.id); return at < limiteAt || (at === atIgual && id < idLimite); }) .sort((a, b) => { const porAt = String(b.created_at).localeCompare(String(a.created_at)); return porAt !== 0 ? porAt : String(b.id).localeCompare(String(a.id)); });
-  ```
-- **preencherValor(i: number, valor: string)** — `src/components/talkx/__tests__/TalkXSegments.groups.test.tsx`
-  ```
-  const campos = screen.getAllByPlaceholderText('Valor…'); fireEvent.change(campos[i], { target: { value: valor } });
-  ```
 - **rankHelpDoc(doc: TalkXHelpDoc, tokens: string[])** — `src/components/talkx/help/useTalkXHelpSearch.ts`
   ```
   if (tokens.length === 0) return 0; const title = foldHelpText(doc.title); const keywords = foldHelpText(doc.keywords.join(' ')); const body = foldHelpText(doc.body); if (tokens.every((token) => title.includes(token))) return 3; if (tokens.every((token) => title.includes(token) || keywords.includes(token))) return 2; if (tokens.every((token) => title.includes(token) || keywords.includes(token) || body.includes(token))) return 1; return 0;
@@ -2801,30 +2629,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   return points.reduce( (acc, p) => ({ sent: acc.sent + (p.sent ?? 0), delivered: acc.delivered + (p.delivered ?? 0), replied: acc.replied + (p.replied ?? 0), }), { sent: 0, delivered: 0, replied: 0 }, );
   ```
-- **valorDe(label: string)** — `src/components/tasks/__tests__/TasksModule.test.tsx`
-  ```
-  
-  ```
-- **valorDe(label: string)** — `src/components/tasks/__tests__/TasksModule.test.tsx`
-  ```
-  
-  ```
-- **kpiValor(label: string)** — `src/components/tasks/__tests__/contagensReaisVsFiltradas.test.tsx`
-  ```
-  const strip = within(screen.getByTestId('tasks-kpi-strip')); const card = strip.getByText(label).closest('[data-testid="kpi-card"]'); return card?.querySelector('[data-testid="kpi-value"]')?.textContent ?? '<sem card>';
-  ```
-- **valor(label: string)** — `src/components/tasks/__tests__/etapa100FaixaCompactaAbasD3.test.tsx`
-  ```
-  const card = within(faixa()).getByText(label).closest('[data-testid="kpi-card"]'); return card?.querySelector('[data-testid="kpi-value"]')?.textContent ?? '<sem card>';
-  ```
-- **valor(label: string)** — `src/components/tasks/__tests__/kpiStripTarefas.test.tsx`
-  ```
-  parteDoCard(label, 'kpi-value');
-  ```
-- **valoresDe()** — `src/components/tasks/__tests__/kpiStripTarefas.test.tsx`
-  ```
-  
-  ```
 - **podeReabrir(status: WorkItemStatus)** — `src/components/tasks/shared/sheet/rodape.ts`
   ```
   return status === 'done' || status === 'cancelled';
@@ -2845,10 +2649,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   const v = limitar(proximo, min, max); if (v !== value) onChange(v);
   ```
-- **valorDoOffset(elemento: HTMLElement, propriedade: string)** — `src/components/ui/__tests__/sonner-offset-mobile.test.tsx`
-  ```
-  const doStyle = elemento.style.getPropertyValue(propriedade); return doStyle || extrairDoAtributo(elemento, propriedade);
-  ```
 - **FeedbackAnimation({ type, show, size = 48 }: FeedbackAnimationProps)** — `src/components/ui/micro-interactions/feedback.tsx`
   ```
   const path = type === 'success' ? 'M7 13l3 3 7-7' : 'M18 6L6 18M6 6l12 12'; return ( <AnimatePresence> {show && ( <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className={cn('rounded-full flex items-center justify-center', type === 'success' ? 'bg-success/20' : 'bg-destructive/20')} style={{ width: size, height: size }} > <motion.svg width={size * 0.5} height={size * 0.5} viewBox="0 0 24 24" fill="none" stroke={type === 'success' ? 'hsl(var(--success))' : 'hsl(var …
@@ -2860,18 +2660,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **generateVoice()** — `src/components/voice/ElevenLabsVoiceDesign.tsx`
   ```
   if (!name.trim()) { toast.error('Dê um nome para a voz'); return; } setGenerating(true); try { const { data: { session } } = await supabase.auth.getSession(); const response = await fetch( `${SUPABASE_URL}/functions/v1/elevenlabs-voice-design`, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`, }, body: JSON.stringify({ action: 'generate', name, description: `${description}. Gender: ${ …
-  ```
-- **seedValidCache(id: string)** — `src/hooks/__tests__/useOfflineCache.test.ts`
-  ```
-  localStorage.setItem('offline_conversations', JSON.stringify({ data: [makeConversation(id)], timestamp: Date.now() }));
-  ```
-- **totalMensagens(result: { current: { queuesPerformance: Array<{ totalMessages: number }> } })** — `src/hooks/__tests__/useQueuesComparison.race.test.tsx`
-  ```
-  return result.current.queuesPerformance[0]?.totalMessages ?? 0;
-  ```
-- **calculateStatus(remainingMs: number, totalMs: number, warningMs: number, completed: boolean, completedAt?: Date | null, deadline?: Date)** — `src/hooks/__tests__/useSLACalculation.test.ts`
-  ```
-  if (completed && completedAt && deadline) { const breached = completedAt > deadline; return { status: breached ? 'breached' : 'ok', remainingMs: 0, breached }; } if (remainingMs <= 0) return { status: 'breached', remainingMs, breached: true }; // alerta (laranja) quando decorridos >= warningMinutes (restante <= total - warning) if (remainingMs <= totalMs - warningMs) return { status: 'warning', remainingMs, breached: false }; return { status: 'ok', remainingMs, breached: false };
   ```
 - **calculateTrend(current: number | null, previous: number | null)** — `src/hooks/analytics/useAIStats.ts`
   ```
@@ -2893,25 +2681,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   return Array.from({ length: 12 }, (_, i) => ({ hora: `${8 + i}h`, atendimentos: 0, }));
   ```
-- **aplicarFiltros()** — `src/hooks/business/__tests__/useAbandonmentRate.test.tsx`
-  ```
-  let rows = state.rows.slice(); for (const f of filters) { if (f[0] === 'gte') rows = rows.filter(r => r.created_at >= String(f[2])); if (f[0] === 'lte') rows = rows.filter(r => r.created_at <= String(f[2])); } return rows;
-  ```
 - **calculateNextSendAt(frequency: string)** — `src/hooks/chat/useScheduledReports.ts`
   ```
   const now = new Date(); const next = new Date(now); switch (frequency) { case 'daily': next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break; case 'weekly': next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break; case 'monthly': next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break; } return next.toISOString();
-  ```
-- **invalidatedKeys(spy: { mock: { calls: unknown[][] } })** — `src/hooks/chat/__tests__/useConversationPanelInvalidation.test.tsx`
-  ```
-  
-  ```
-- **valorDe(linha: Record<string, unknown>, caminho: string)** — `src/hooks/chat/journey/__tests__/useJourneyCalls.test.ts`
-  ```
-  
-  ```
-- **valorDe(linha: Record<string, unknown>, caminho: string)** — `src/hooks/chat/journey/__tests__/useJourneyEmails.test.ts`
-  ```
-  
   ```
 - **aplicarDoStore()** — `src/hooks/communication/useMediaElementVolume.ts`
   ```
@@ -2945,10 +2717,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   queryClient.invalidateQueries({ queryKey: contactNotesKey(contactId, user?.id) }); queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId) });
   ```
-- **invalidated(key: unknown[])** — `src/hooks/crm/__tests__/contactsAggregates.test.ts`
-  ```
-  qc.getQueryState(key)?.isInvalidated;
-  ```
 - **avgScore(row: SentimentTrendRow)** — `src/hooks/dashboard/useSentimentTrend.ts`
   ```
   const media = toNumberOrNull(row.media); if (media !== null) return media / 50 - 1; return toNumberOrNull(row.indice) ?? 0;
@@ -2972,14 +2740,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **invalidate()** — `src/hooks/inbox/useInboxUnreadTotal.ts`
   ```
   if (debounce) clearTimeout(debounce); debounce = setTimeout(() => { debounce = undefined; void queryClient.invalidateQueries({ queryKey: inboxUnreadTotalQueryKey }); }, DEBOUNCE_MS);
-  ```
-- **aplicarCombo(result: { current: Hook }, combo: Combo)** — `src/hooks/inbox/__tests__/chipCounts.test.ts`
-  ```
-  act(() => result.current.setSearch(combo.search ?? '')); act(() => result.current.setFilters(estadoFiltros(combo))); act(() => result.current.handleContactTypeChange(combo.contactType ?? null)); act(() => result.current.setShowAll(Boolean(combo.showAll))); act(() => result.current.setSelectedQueueId(combo.queueId ?? null));
-  ```
-- **mockTotal(valor: number | null, error: { message: string } | null = null)** — `src/hooks/inbox/__tests__/useInboxUnreadTotal.test.tsx`
-  ```
-  mocks.rpc.mockResolvedValue({ data: valor, error });
   ```
 - **applyMultiplixAudience(input: MultiplixAudienceApplyInput,)** — `src/hooks/integrations/useMultiplixDispatches.ts`
   ```
@@ -3017,14 +2777,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   qc.invalidateQueries({ queryKey: ['talkx-templates'] });
   ```
-- **apply()** — `src/hooks/integrations/__tests__/usePersonalStickers.identidade.test.tsx`
-  ```
-  let rows = tableRows(table).slice(); for (const [col, val] of filters) rows = rows.filter((r) => r[col] === val); if (sortCol) { const col = sortCol; rows = rows.sort((a, b) => { const av = a[col] as string | number; const bv = b[col] as string | number; if (av === bv) return 0; return av < bv ? (sortAsc ? -1 : 1) : sortAsc ? 1 : -1; }); } if (limit !== null) rows = rows.slice(0, limit); return rows;
-  ```
-- **applyFilters()** — `src/hooks/integrations/__tests__/usePersonalStickers.uso.test.tsx`
-  ```
-  let rows = tableRows(table).slice(); for (const [coluna, valor] of filters) rows = rows.filter((r) => r[coluna] === valor); return rows;
-  ```
 - **computeStatus()** — `src/hooks/realtime/realtimeStatusStore.ts`
   ```
   if (channels.size === 0) return 'idle'; let connected = false; for (const health of channels.values()) { if (health === 'error') return 'disconnected'; if (health === 'connected') connected = true; } return connected ? 'connected' : 'connecting';
@@ -3057,10 +2809,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   const totalRequests = data.reduce((sum, log) => sum + log.request_count, 0); const blockedRequests = data.filter(log => log.blocked).length; const uniqueIPs = new Set(data.map(log => log.ip_address)).size; const endpointCounts: Record<string, number> = {}; data.forEach(log => { endpointCounts[log.endpoint] = (endpointCounts[log.endpoint] || 0) + log.request_count; }); const topEndpoints = Object.entries(endpointCounts) .map(([endpoint, count]) => ({ endpoint, count })) .sort((a, b) => b.count - …
   ```
-- **aplicarFiltros(rows: Array<Record<string, unknown>>, consulta: Consulta)** — `src/hooks/system/__tests__/useSecurityPushNotifications.test.ts`
-  ```
-  let out = rows.slice(); for (const [op, col, val] of consulta.filters) { if (op === 'eq') out = out.filter((r) => r[col] === val); if (op === 'gt') out = out.filter((r) => String(r[col]) > String(val)); } const c = consulta.cursor; if (c) { out = out.filter( (r) => String(r.created_at) > c.createdAt || (String(r.created_at) === c.createdAt && String(r.id) > c.id), ); } for (let i = consulta.orders.length - 1; i >= 0; i -= 1) { const [col, ascending] = consulta.orders[i]; out = out.slice().sort(( …
-  ```
 - **generateClientTaskId()** — `src/hooks/tasks/useMyWorkItems.ts`
   ```
   const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto; return typeof c?.randomUUID === 'function' ? c.randomUUID() : null;
@@ -3088,10 +2836,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **revalidar()** — `src/hooks/team-chat/useTeamMessages.ts`
   ```
   void queryClient.invalidateQueries({ queryKey: queryKeys.messages(conversationId) }); void queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
-  ```
-- **invalidada(qc: QueryClient, key: readonly unknown[])** — `src/hooks/team-chat/__tests__/queryKeys.test.ts`
-  ```
-  return qc.getQueryState(key)?.isInvalidated ?? false;
   ```
 - **aplicarGravados(bindings: StoredBindings)** — `src/hooks/ui/useCustomShortcuts.ts`
   ```
@@ -3189,18 +2933,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   if (senderId === profileId) return false; if (!documentHidden && activeConversationId === conversationId) return false; return membership !== null && !membership.is_muted;
   ```
-- **valorDoArquivo(nome: string)** — `src/lib/__tests__/e2e-supabase-env.test.ts`
-  ```
-  const conteudo = readFileSync(ENV_FILE, 'utf8'); const linha = conteudo.split('\n').find((l) => l.trim().startsWith(`${nome}=`)); return (linha ?? '') .split('=') .slice(1) .join('=') .trim() .replace(/^["']|["']$/g, ''); } /** Importa a fixture num processo bun limpo e devolve url + md5 da chave. */ function carregar(extraEnv: Record<string, string>) { const script = ` const m = await import(${JSON.stringify(FIX
-  ```
-- **canSelectGroups(auth: boolean)** — `src/lib/__tests__/rlsSchemaGuard.test.ts`
-  ```
-  return auth;
-  ```
-- **balanceado(texto: string, inicio: number)** — `src/lib/__tests__/helpers/rlsSchema.ts`
-  ```
-  let profundidade = 0; for (let i = inicio; i < texto.length; i++) { if (texto[i] === '(') profundidade++; else if (texto[i] === ')') { profundidade--; if (profundidade === 0) return texto.slice(inicio + 1, i); } } return texto.slice(inicio + 1);
-  ```
 - **canTransitionAiJob(from: AiJobStatus, to: AiJobStatus)** — `src/lib/aiJobs/status.ts`
   ```
   const allowed = AI_JOB_TRANSITIONS[from]; if (!Array.isArray(allowed)) return false; return (allowed as readonly AiJobStatus[]).includes(to);
@@ -3249,18 +2981,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   const all = [ ...this.getPrimaryNav(), ...this.getGroups().flatMap(g => g.items), ...this.getAdvancedNav(), ]; const item = all.find(i => i.id === viewId); if (!item) return false; if (item.permission) return userPermissions.includes(item.permission); if (!item.roles) return true; return item.roles.some(role => userRoles.includes(role));
   ```
-- **aplicarDensidade(modo: Modo | null)** — `src/styles/__tests__/densityTextSizeCascade.test.ts`
-  ```
-  if (modo) document.documentElement.setAttribute('data-density', modo); else document.documentElement.removeAttribute('data-density');
-  ```
-- **valor(row: Record<string, unknown>, coluna: string)** — `src/test/mocks/auditLogsServer.ts`
-  ```
-  
-  ```
-- **valor(row: FakeScheduledMessageRow, coluna: string)** — `src/test/mocks/scheduledMessagesServer.ts`
-  ```
-  
-  ```
 - **convertAudioToMp3(file: File | Blob, originalName: string)** — `src/utils/audioToMp3.ts`
   ```
   let lamejs: LamejsModule; try { lamejs = await loadLamejs(); } catch (err) { return { ok: false, reason: 'encoder-unavailable', detail: String(err) }; } let arrayBuffer: ArrayBuffer; try { arrayBuffer = await file.arrayBuffer(); } catch (err) { return { ok: false, reason: 'decode-failed', detail: String(err) }; } const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return { ok: false, reason: 'encoder-unavailable', detail: 'AudioContext indisponível' }; const audioCtx = new AC() …
@@ -3276,10 +2996,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **validateFileContent(file: File)** — `src/utils/whatsappFileTypes.ts`
   ```
   const head = await readFileHead(file, 16); const signature = detectFileSignature(head); if (!signature) return { valid: true }; const declared = getFileCategory(file.type) ?? categoryFromFileName(file.name); if (!declared || signature.categories.includes(declared)) { return { valid: true, category: declared ?? undefined }; } const declaredLabel = file.type || ('.' + getFileExtensionWithDefault(file.name, '')); return { valid: false, category: declared, error: `Arquivo recusado: o conteúdo não co …
-  ```
-- **chamarGenerate()** — `supabase/functions/_shared/ai-circuit.test.ts`
-  ```
-  return generateWithRouting({ purpose: "tagging", functionName: "ai-circuit-teste", userId: null, messages: [{ role: "user", content: "oi" }], // Orçamento desligado no teste: isola o circuito (reserva é da IA-044). budgetTokens: 0, });
   ```
 - **applyVocabularyConversion(target: Record<string, unknown>, field: string, match: { value: string | null }, conversions: Array<{ field: string; fro)** — `supabase/functions/_shared/ai-conversation-pipeline.ts`
   ```
@@ -3389,29 +3105,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   return { start: "", end: "", sundays: false, holidays: [], invalid: true, invalidReason: reason };
   ```
-- **cancel()** — `supabase/functions/_shared/__tests__/media-egress.test.ts`
-  ```
-  onCancel?.();
-  ```
-- **validClaims(over: Record<string, unknown> = {})** — `supabase/functions/_shared/__tests__/webhook-auth-gates.test.ts`
-  ```
-  iss: "https://accounts.google.com", aud: OIDC_AUD, sub: "1234567890", email: OIDC_EMAIL, email_verified: true, iat: Math.floor(Date.now() / 1000) - 60, exp: Math.floor(Date.now() / 1000) + 3600, ...over,
-  ```
 - **eligibility(recipient: EligibilityRecipient | null | undefined, ctx?: EligibilityContext | null,)** — `supabase/functions/_shared/messaging/eligibility.ts`
   ```
   const context = ctx ?? {}; const destination = typeof recipient?.destination === "string" ? recipient.destination.trim() : ""; // 1) Sem destino (ou marcado inválido): nada mais é avaliável. if (destination === "") { return { class: "no_destination", reason: "missing_destination" }; } if (context.destinationValid === false) { return { class: "no_destination", reason: "invalid_destination" }; } // 2) Opt-out (talkx_blacklist) — bloqueio duro, domina o transitório. if (isBlacklisted(destination, c …
-  ```
-- **makeGenerate(output: AutoTagOutput)** — `supabase/functions/ai-auto-tag/index.test.ts`
-  ```
-  Promise<GenerateResult> {
-  ```
-- **generate(params: GenerateParams)** — `supabase/functions/ai-suggest-reply/index.test.ts`
-  ```
-  seen.push(params); return Promise.resolve({ ok: true, response: new Response(JSON.stringify({}), { status: 200 }), data: { choices: [{ message: { content } }] }, providerId: "provedor-de-teste", providerName: "provedor-de-teste", model: "modelo-de-teste", durationMs: 1, status: "ok", });
-  ```
-- **generate(params: GenerateParams)** — `supabase/functions/automation-suggest-reply/index.test.ts`
-  ```
-  seen.push(params); return Promise.resolve({ ok: true, response: new Response(JSON.stringify({}), { status: 200 }), data: { choices: [{ message: { content } }] }, providerId: "provedor-de-teste", providerName: "provedor-de-teste", model: "modelo-de-teste", durationMs: 1, status: "ok", ...overrides, });
   ```
 - **validExternalId(value: unknown)** — `supabase/functions/crm-integration/index.ts`
   ```
@@ -3424,14 +3120,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **validIdentifier(value: unknown)** — `supabase/functions/external-db-proxy/index.ts`
   ```
   return typeof value === 'string' && /^[a-z_][a-z0-9_]*$/i.test(value)
-  ```
-- **validClaims()** — `supabase/functions/gmail-webhook/attachments.test.ts`
-  ```
-  iss: "https://accounts.google.com", aud: OIDC_AUD, sub: "1234567890", email: OIDC_EMAIL, email_verified: true, iat: Math.floor(Date.now() / 1000) - 60, exp: Math.floor(Date.now() / 1000) + 3600,
-  ```
-- **validClaims()** — `supabase/functions/gmail-webhook/history-404-cas.test.ts`
-  ```
-  iss: "https://accounts.google.com", aud: OIDC_AUD, sub: "1234567890", email: OIDC_EMAIL, email_verified: true, iat: Math.floor(Date.now() / 1000) - 60, exp: Math.floor(Date.now() / 1000) + 3600,
   ```
 - **applyExclusions(set: AudienceIdSet, exclude: AudienceIdSet)** — `supabase/functions/multiplix-dispatch/actions/audience.ts`
   ```
@@ -3453,10 +3141,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   if (asset.invalidated_at) return false; if (caller.isStaff) return true; if (asset.created_by !== null && caller.profileId !== null && asset.created_by === caller.profileId) { return true; } return grants.some((grant) => grant.voice_id === asset.voice_id && grantReachesCaller(grant, caller));
   ```
-- **applyOrder(rows: Row[], execution: number)** — `supabase/functions/promogifts-catalog/pagination.test.ts`
-  ```
-  const physical = new Map<Row, number>(); rows.forEach((row, i) => physical.set(row, i)); return [...rows].sort((a, b) => { for (const o of this.orders) { const cmp = compareValues(a[o.column], b[o.column]); if (cmp !== 0) return o.ascending ? cmp : -cmp; } // Empate em TODAS as chaves pedidas: sem `id` na consulta a ordem entre // os empatados não é garantida e pode variar entre execuções (aqui, // insertion-order numa e invertida na outra). Com `id` a ordenação // acima já desempatou e este ram …
-  ```
 - **calculateNextSend(frequency: string)** — `supabase/functions/send-scheduled-report/index.ts`
   ```
   const next = new Date(); switch (frequency) { case "daily": next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break; case "weekly": next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break; case "monthly": next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break; } return next.toISOString();
@@ -3469,57 +3153,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   if (kind === "message_variation" && entrada.kind === "message_variation") { const esperadas = [...new Set([...entrada.texto.matchAll(/\{\{[^{}]+\}\}/g)].map((m) => m[0]))]; const faltando = esperadas.filter((variavel) => !saida.includes(variavel)); if (faltando.length > 0) return { ok: false, reason: "missing_variable", variaveis: faltando }; return { ok: true, output: saida }; } if (kind === "segment_suggestion") { try { const objeto: unknown = JSON.parse(saida); if (!objeto || typeof objeto != …
   ```
-- **validForm(voicePreset = "grave")** — `supabase/functions/voice-changer/index.test.ts`
-  ```
-  const form = new FormData(); form.append("audio", new File([oggBytes()], "voz.ogg", { type: "audio/ogg" })); form.append("voice_preset", voicePreset); return form;
-  ```
-- **generateLink(params: { type: string; email: string })** — `supabase/functions/webauthn/index.test.ts`
-  ```
-  linkCalls.push(params); return Promise.resolve(opts.link ?? { data: { properties: { hashed_[REDACTED] } }, error: null });
-  ```
 - **generateChallenge()** — `supabase/functions/webauthn/index.ts`
   ```
   const array = new Uint8Array(32); crypto.getRandomValues(array); return base64URLEncode(array.buffer);
-  ```
-- **validarCoberturaExata(arquivosVarridos: readonly string[], arquivosEsperados: readonly string[])** — `tests/contracts/_adv_edge_legacy_producers.test.ts`
-  ```
-  const varridos = [...arquivosVarridos].sort(); const esperados = [...arquivosEsperados].sort(); if (varridos.length === esperados.length && varridos.every((arquivo, i) => arquivo === esperados[i])) return; const conjuntoVarrido = new Set(varridos); const conjuntoEsperado = new Set(esperados); const faltantes = esperados.filter((arquivo) => !conjuntoVarrido.has(arquivo)); const inesperados = varridos.filter((arquivo) => !conjuntoEsperado.has(arquivo)); throw new Error( `arquivos varridos divergir …
-  ```
-- **blocoBalanceado(fonte: string, inicio: number)** — `tests/contracts/ai-fallback-and-test.contract.test.ts`
-  ```
-  const abre = fonte.indexOf('{', inicio); if (abre < 0) return ''; let nivel = 0; for (let i = abre; i < fonte.length; i++) { const ch = fonte[i]; if (ch === '{') nivel++; else if (ch === '}') { nivel--; if (nivel === 0) return fonte.slice(abre, i + 1); } } return fonte.slice(abre);
-  ```
-- **canTransition(mod: AiJobsModule, from: string, to: string, quem: string)** — `tests/contracts/ai-jobs-estados-e-durabilidade.contract.test.ts`
-  ```
-  const f = mod.canTransitionAiJob; if (typeof f !== 'function') throw new Error(`${quem}: não exporta canTransitionAiJob`); return f(from, to);
-  ```
-- **validar(capacidade: CapacidadeAvaliada, bruto: unknown)** — `tests/contracts/ai-quality-golden-set.contract.test.ts`
-  ```
-  switch (capacidade) { case 'analise': return parseModelOutput(ConversationAnalysisOutput, bruto); case 'resumo': return parseModelOutput(ConversationSummaryOutput, bruto); case 'respostas': return parseModelOutput(SuggestedRepliesEnvelope, bruto); case 'etiquetas': return parseModelOutput(AutoTagOutput, bruto); }
-  ```
-- **sinaisDeEstadoDesconhecido()** — `tests/contracts/ai-resilience-prazos-retry.contract.test.ts`
-  ```
-  const err = (extra: Record<string, unknown>) => Object.assign(new Error('efeito nao idempotente ja enviado, desfecho desconhecido'), extra); return [ err({ name: 'AiStateUnknownError' }), err({ name: 'StateUnknownError' }), err({ name: 'OutcomeUnknownError' }), err({ code: 'STATE_UNKNOWN' }), err({ code: 'OUTCOME_UNKNOWN' }), err({ code: 'UNKNOWN_STATE' }), err({ stateUnknown: true }), err({ unknownState: true }), err({ outcomeUnknown: true }), err({ effectSent: true }), err({ dispatched: true, …
-  ```
-- **analiseValida()** — `tests/contracts/ai-response-contracts.behavior.contract.test.ts`
-  ```
-  department: 'vendas', relationshipType: 'cliente novo', summary: 'Cliente pediu orçamento de brindes personalizados.', status: 'pendente', keyPoints: ['pediu orçamento', 'prazo curto'], nextSteps: ['enviar proposta'], sentiment: 'positivo', urgency: 'media', topics: ['orçamento'],
-  ```
-- **gerar(over: Partial<GenerateParams> = {})** — `tests/contracts/ai-vision-modality.contract.test.ts`
-  ```
-  return await generateWithRouting({ purpose: 'tagging', functionName: 'classify-sticker', userId: 'usuario-1', messages: [{ role: 'user', content: 'oi' }], ...over, });
-  ```
-- **cancel()** — `tests/contracts/ia131-audio-meme-conteudo.contract.test.ts`
-  ```
-  cancelado = true;
-  ```
-- **papeisDoEnumReal()** — `tests/contracts/sl059-ia010-provisionamento.contract.test.ts`
-  ```
-  const dir = resolve(RAIZ, 'supabase/migrations'); const arquivos = readdirSync(dir).filter((nome) => nome.endsWith('.sql')); const linha = arquivos .map((nome) => readFileSync(resolve(dir, nome), 'utf8')) .flatMap((texto) => texto.split('\n')) .find((linha) => /CREATE TYPE public\.app_role AS ENUM/iu.test(linha)); expect(linha, 'nenhuma migration cria o enum public.app_role').toBeTruthy(); return (linha ?? '') .replace(/.*ENUM\s*\(/iu, '') .replace(/\).*/u, '') .split(',') .map((papel) => papel. …
-  ```
-- **valido()** — `tests/contracts/web-vitals-alvos.contract.test.ts`
-  ```
-  LCP: { target: 2500, poor: 4000, field: true, unit: 'ms', rating: 'good' }, INP: { target: 200, poor: 500, field: true, unit: 'ms' }, CLS: { target: 0.1, poor: 0.25, field: true, unit: 'score' }, TTFB: { target: 800, poor: 1800, field: true, unit: 'ms' }, FCP: { target: 1500, poor: 3000, field: true, unit: 'ms' }, FID: { target: 100, poor: 300, field: false, unit: 'ms', note: 'aposentada; o campo não publica' }, TTI: { target: 3000, poor: 5000, field: false, unit: 'ms', note: 'laboratório; o cam …
   ```
 
 ### G.4 Percentuais e multiplicadores no código
@@ -3703,124 +3339,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 
 | Constante | Valor | Arquivo |
 |---|---|---|
-| `DONO` | `'00000000-0000-4000-8000-000000000001'` | `e2e/a11y-inbox-teams.spec.ts` |
-| `PALETA` | `'Paleta de comandos'` | `e2e/busca-global-paleta.spec.ts` |
-| `CAMPO_PALETA` | `'Buscar módulo… (ex: tarefas, chatbot)'` | `e2e/busca-global-paleta.spec.ts` |
-| `ENDERECO` | `'Avenida Paulista, 1000'` | `e2e/contact-address.spec.ts` |
-| `TELEFONE_DDI` | `'5511'` | `e2e/contact-address.spec.ts` |
-| `FIXTURE_EMAIL` | `'e2e-dup-guard@promobrindes.com.br'` | `e2e/contact-form-email-duplicate.spec.ts` |
-| `FIXTURE_PHONE` | `'11988776655'` | `e2e/contact-form-email-duplicate.spec.ts` |
-| `SNAPSHOT_EXT` | `'.png'` | `e2e/contacts-snapshots.spec.ts` |
-| `DIA` | `86` | `e2e/contacts-snapshots.spec.ts` |
-| `SEM_TOASTS` | `'[data-sonner-toaster], [role="` | `e2e/contacts-snapshots.spec.ts` |
-| `EDGE_CATALOG` | `'/functions/v1/promogifts-catalog'` | `e2e/ct94-ui-429.spec.ts` |
-| `TOAST_RATE_LIMIT` | `'Muitas requisições, aguarde 1 min'` | `e2e/ct94-ui-429.spec.ts` |
-| `ESCRITA_NAO_PREVISTA` | `'escrita não prevista'` | `e2e/ct94-ui-429.spec.ts` |
-| `CONTATO_EMAIL` | `'e2e.l08.contato@example.com'` | `e2e/email-link-contato.spec.ts` |
-| `CONTA_EMAIL` | `'e2e.l08.conta@example.com'` | `e2e/email-link-contato.spec.ts` |
-| `THREAD_MARK` | `'e2e-l08-thread'` | `e2e/email-link-contato.spec.ts` |
-| `MSG_MARK` | `'e2e-l08-msg'` | `e2e/email-link-contato.spec.ts` |
-| `ASSUNTO` | `'[E2E] Conversa do contato L08'` | `e2e/email-link-contato.spec.ts` |
-| `CORPO` | `'corpo-semeado-l08'` | `e2e/email-link-contato.spec.ts` |
-| `MSG_SETUP` | `'[E2E L08 setup] mensagem para abrir a conversa'` | `e2e/email-link-contato.spec.ts` |
-| `BOOT_DEADLINE_MS` | `60000` | `e2e/email-navy-visual.spec.ts` |
-| `PRIMEIRA_CONVERSA` | `'Preview deployment failed for departamento-pessoal-v3'` | `e2e/email-navy-visual.spec.ts` |
-| `NAV_TIMEOUT` | `60` | `e2e/files-tab.spec.ts` |
-| `CANONICAL_EMAIL` | `'e2e.files-tab.local@example.test'` | `e2e/files-tab.spec.ts` |
-| `NAV_TIMEOUT` | `60` | `e2e/inbox-sidebar-topo.spec.ts` |
-| `NOW` | `'2026-10-02T12:00:00.000Z'` | `e2e/location-picker.spec.ts` |
-| `VIEW` | `'evolution-monitor'` | `e2e/monitoring.spec.ts` |
-| `NOME_PAINEL` | `'Painel de monitoramento Evolution API'` | `e2e/monitoring.spec.ts` |
-| `MIN` | `60` | `e2e/monitoring.spec.ts` |
-| `HORA` | `60` | `e2e/monitoring.spec.ts` |
-| `PAGE_SIZE` | `50` | `e2e/multiplix-responsivo.spec.ts` |
-| `EMPRESA_P1` | `'E2E Empresa 01'` | `e2e/multiplix-responsivo.spec.ts` |
-| `CRIADO_EM` | `'2026-03-02T12:00:00.000Z'` | `e2e/multiplix-responsivo.spec.ts` |
-| `PAGE_SIZE` | `50` | `e2e/multiplix.spec.ts` |
-| `EMPRESA_CHEIA` | `'51'` | `e2e/multiplix.spec.ts` |
-| `EMPRESA_P1` | `'E2E Empresa 01'` | `e2e/multiplix.spec.ts` |
-| `EMPRESA_P2` | `'E2E Empresa 02'` | `e2e/multiplix.spec.ts` |
-| `CRIADO_EM` | `'2026-03-02T12:00:00.000Z'` | `e2e/multiplix.spec.ts` |
-| `PLACEHOLDER_BUSCA` | `'Buscar módulo… (ex: tarefas, chatbot)'` | `e2e/navegacao-modulos.spec.ts` |
-| `MENU_DESKTOP` | `'Menu de navegação principal'` | `e2e/navegacao-modulos.spec.ts` |
-| `MENU_CELULAR` | `'Menu de navegação'` | `e2e/navegacao-modulos.spec.ts` |
-| `NAV_INFERIOR` | `'Navegação principal'` | `e2e/navegacao-modulos.spec.ts` |
-| `ESTABILIDADE_MS` | `1` | `e2e/navegacao-modulos.spec.ts` |
-| `HOST_LOCAL` | `'http://127.0.0.1:21186'` | `e2e/navegacao-modulos.spec.ts` |
-| `CORPO_SIP` | `'{"` | `e2e/navegacao-modulos.spec.ts` |
-| `PROBE` | `5` | `e2e/onboarding-tour.spec.ts` |
-| `SETTLE` | `9` | `e2e/onboarding-tour.spec.ts` |
-| `NAV_TIMEOUT` | `60` | `e2e/quick-controls-volume.spec.ts` |
-| `TELA` | `'/?view=themes'` | `e2e/skins-e2e.spec.ts` |
-| `RAIO_GX` | `'0.625rem'` | `e2e/skins-e2e.spec.ts` |
-| `TETO_TAB` | `250` | `e2e/skins-e2e.spec.ts` |
-| `STUB_HEADER` | `'x-talkx-launch-stub'` | `e2e/talkx-launch.spec.ts` |
-| `ESCRITA_NAO_PREVISTA` | `'escrita não prevista'` | `e2e/talkx-launch.spec.ts` |
-| `FAKE_EMAIL` | `'visual@test.local'` | `e2e/talkx-launch.spec.ts` |
-| `ALTURA_DESKTOP` | `900` | `e2e/tarefas-linha-de-base.spec.ts` |
-| `ALTURA_MOBILE` | `800` | `e2e/tarefas-linha-de-base.spec.ts` |
-| `DIA` | `86` | `e2e/tarefas-linha-de-base.spec.ts` |
-| `CRIADO_EM` | `'2026-03-02T12:00:00.000Z'` | `e2e/tarefas-quadro.spec.ts` |
-| `TITULO_BACKLOG` | `'Regar as plantas da recepção'` | `e2e/tarefas-quadro.spec.ts` |
-| `TITULO_TODO` | `'Revisar proposta do cliente'` | `e2e/tarefas-quadro.spec.ts` |
-| `TITULO_NOVO` | `'Comprar café para a copa'` | `e2e/tarefas-quadro.spec.ts` |
-| `MIN` | `60` | `e2e/team-chat.spec.ts` |
-| `OUTRO_NOME` | `'Ana Sintetica'` | `e2e/team-chat.spec.ts` |
-| `NOME_GRUPO` | `'Equipe Sintetica'` | `e2e/team-chat.spec.ts` |
-| `BOOT_DEADLINE_MS` | `180` | `e2e/telefonia.spec.ts` |
-| `NOW` | `'2026-10-02T12:00:00.000Z'` | `e2e/telefonia.spec.ts` |
-| `HC_PRIMARY_CLARO` | `'258 100% 45%'` | `e2e/theme-alto-contraste.spec.ts` |
-| `HC_BACKGROUND_CLARO` | `'0 0% 100%'` | `e2e/theme-alto-contraste.spec.ts` |
-| `CONTATO` | `'d0000000-0000-0000-0000-000000000123'` | `scripts/db-audit/ai-projection-version-guard.test.mjs` |
-| `T_B` | `'2026-10-06T10:00:00Z'` | `scripts/db-audit/ai-projection-version-guard.test.mjs` |
-| `T_A` | `'2026-10-06T10:00:05Z'` | `scripts/db-audit/ai-projection-version-guard.test.mjs` |
-| `T_C` | `'2026-10-06T10:00:10Z'` | `scripts/db-audit/ai-projection-version-guard.test.mjs` |
-| `PROJECT_REF` | `'tnnnlkbymytvtqngbbqh'` | `scripts/db-audit/check-catalog-fresh.test.mjs` |
-| `PROJECT_REF` | `'tnnnlkbymytvtqngbbqh'` | `scripts/db-audit/check-manifest-fresh.test.mjs` |
-| `VERSION` | `'20260829050000'` | `scripts/db-audit/check-migration-drift.test.mjs` |
-| `SQL` | `'CREATE TABLE public.demo (id integer);\n'` | `scripts/db-audit/check-migration-drift.test.mjs` |
-| `OTHER_SQL` | `'CREATE TABLE public.legacy_demo (id integer);\n'` | `scripts/db-audit/check-migration-drift.test.mjs` |
-| `HASH_DOMAIN` | `'zapp-migration-ledger-statements-v1\0'` | `scripts/db-audit/check-migration-drift.test.mjs` |
-| `RELATED_VERSION` | `'20260829060000'` | `scripts/db-audit/check-migration-drift.test.mjs` |
-| `MULTIPLIX_DISPATCH_CREATE` | `'multiplix.dispatch.create'` | `scripts/db-audit/check-screen-permission-db-guards.test.mjs` |
-| `NOME_FIXTURES` | `'Fixtures de E2E em producao (E85)'` | `scripts/db-audit/consolidar-veredito.test.mjs` |
-| `ID_FIXTURES` | `'e2e-fixtures'` | `scripts/db-audit/consolidar-veredito.test.mjs` |
-| `LOG_FIXTURES` | `'/tmp/step-e2e-fixtures.log'` | `scripts/db-audit/consolidar-veredito.test.mjs` |
-| `NOME_MIGRATIONS` | `'Comparar migrations com schema_migrations'` | `scripts/db-audit/consolidar-veredito.test.mjs` |
-| `REF` | `'tnnnlkbymytvtqngbbqh'` | `scripts/db-audit/database-identity.test.mjs` |
-| `SCRIPT_RUNTIME` | `'scripts/db-audit/runtime-config.test.sh'` | `scripts/db-audit/global-guards-regression.test.mjs` |
-| `PINNED` | `'name-and-file-pinned'` | `scripts/db-audit/ledger-history-limitations.test.mjs` |
-| `WARNING` | `'live-guard-warning-no-historical-content'` | `scripts/db-audit/ledger-history-limitations.test.mjs` |
-| `PINNED_KIND` | `'ledger-only/name-and-file-pinned'` | `scripts/db-audit/ledger-history-limitations.test.mjs` |
-| `ORIGEM` | `'20260511233306_0e3f3b66-5585-4762-af6b-549c050f6275.sql'` | `scripts/db-audit/n011-storage-policies-dedup.test.mjs` |
-| `AVATAR_SELECT_VIGENTE` | `'avatars authenticated read'` | `scripts/db-audit/n011-storage-policies-dedup.test.mjs` |
-| `AVATAR_DELETE_VIGENTE` | `'Users can delete their own avatar'` | `scripts/db-audit/n011-storage-policies-dedup.test.mjs` |
-| `FIXTURE_REF` | `'aaaaaaaaaaaaaaaaaaaa'` | `scripts/db-audit/register-migration.test.mjs` |
-| `RESOLVER_FN` | `'resolve_applicable_first_response_minutes'` | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| `REGISTER_FN` | `'register_first_response_internal'` | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| `TRIGGER_FN` | `'messages_sla_first_response_trigger'` | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| `C_PENDENTE` | `'11111111-1111-1111-1111-111111111111'` | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| `C_RETENTATIVA` | `'22222222-2222-2222-2222-222222222222'` | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| `C_DIRETO` | `'33333333-3333-3333-3333-333333333333'` | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| `RESOLVER_FN` | `'resolve_applicable_first_response_minutes'` | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| `REGISTER_FN` | `'register_first_response_internal'` | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| `MINIMO_ESPERADO` | `8` | `scripts/db-audit/types-sync-psql-buffer.test.mjs` |
-| `SUCESSO` | `'Destino validado com sucesso'` | `scripts/db-audit/validate-destino.test.mjs` |
-| `MODULO` | `"src/components/catalog"` | `src/__tests__/coverage-catalogo.test.ts` |
-| `FORA_DO_MODULO` | `"src/components/contacts/ContactForm.tsx"` | `src/__tests__/coverage-catalogo.test.ts` |
-| `CHANGELOG_MODULO` | `'docs/multiplix/CHANGELOG_MULTIPLIX.md'` | `src/__tests__/multiplix-changelog-registry.test.ts` |
-| `INDICE` | `'docs/README.md'` | `src/__tests__/multiplix-changelog-registry.test.ts` |
-| `CHANGELOG_RAIZ` | `'CHANGELOG.md'` | `src/__tests__/multiplix-changelog-registry.test.ts` |
-| `MANIFESTO_GRAFO` | `'docs/reconciliation/evidence/graphify_evidence_manifest.json'` | `src/__tests__/multiplix-changelog-registry.test.ts` |
-| `TESTE_REGISTRO` | `'src/__tests__/multiplix-changelog-registry.test.ts'` | `src/__tests__/multiplix-changelog-registry.test.ts` |
-| `MAX_ATALHOS` | `4` | `src/__tests__/pwa-manifest-shortcuts.test.ts` |
-| `TETO_BASELINE` | `46` | `src/__tests__/a11y/icon-button-names.test.ts` |
 | `MAX_RECENT` | `5` | `src/components/CommandPalette.tsx` |
-| `ESTE_TESTE` | `'componentesDuplicados.test.ts'` | `src/components/__tests__/componentesDuplicados.test.ts` |
-| `MIN_TEXTO` | `4.5` | `src/components/__tests__/coresCruasInboxCrm.test.tsx` |
-| `ARB_INI` | `'text-'` | `src/components/__tests__/coresCruasInboxCrm.test.tsx` |
-| `ARB_FIM` | `'\\)\\)\\]'` | `src/components/__tests__/coresCruasInboxCrm.test.tsx` |
-| `MIN_TEXTO` | `4.5` | `src/components/__tests__/y17Selos.contraste.test.tsx` |
 | `LIMITE_CHATS_MIN` | `1` | `src/components/admin/AdminView.tsx` |
 | `LIMITE_CHATS_MAX` | `50` | `src/components/admin/AdminView.tsx` |
 | `LIMITE_CHATS_PADRAO` | `5` | `src/components/admin/AdminView.tsx` |
@@ -3832,20 +3351,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `MAX_ROTULOS` | `200` | `src/components/admin/dedupeEntreAbas.ts` |
 | `AVATAR_BUCKET` | `'avatars'` | `src/components/admin/useAdminData.ts` |
 | `AUDIT_PAGE_SIZE` | `50` | `src/components/admin/useAdminData.ts` |
-| `MINUTE` | `60` | `src/components/admin/__tests__/CrisisRoom.metricas.test.tsx` |
-| `VAZIA` | `'ok'` | `src/components/admin/__tests__/TrainingMode.avaliacao.test.tsx` |
-| `CENARIO` | `'Reclamação sobre entrega'` | `src/components/admin/__tests__/TrainingMode.avaliacao.test.tsx` |
-| `HORA` | `60` | `src/components/agents/__tests__/AgentsView.pendencias.test.tsx` |
-| `DIA` | `24` | `src/components/agents/__tests__/AgentsView.pendencias.test.tsx` |
-| `TITULO` | `'Tudo que você precisa para'` | `src/components/auth/__tests__/HeroBenefits.test.tsx` |
-| `SUBTITULO` | `'atender com excelência'` | `src/components/auth/__tests__/HeroBenefits.test.tsx` |
-| `SENHA_A` | `'Antiga!Senha1'` | `src/components/auth/__tests__/PasswordStrengthMeter.corrida.test.tsx` |
-| `SENHA_B` | `'Atual#Senha2'` | `src/components/auth/__tests__/PasswordStrengthMeter.corrida.test.tsx` |
-| `TXT_COMPROMETIDA` | `'Senha comprometida!'` | `src/components/auth/__tests__/PasswordStrengthMeter.corrida.test.tsx` |
-| `TXT_LIMPA` | `'Senha não encontrada em vazamentos conhecidos'` | `src/components/auth/__tests__/PasswordStrengthMeter.corrida.test.tsx` |
-| `NOTE_MSG` | `'Digite a mensagem automática...'` | `src/components/automations/__tests__/AutomationEditorDialog.test.tsx` |
-| `NOTE_MINUTES` | `'30'` | `src/components/automations/__tests__/AutomationEditorDialog.test.tsx` |
-| `NOTE_TAG` | `'Ex: lead-quente'` | `src/components/automations/__tests__/AutomationEditorDialog.test.tsx` |
 | `ESPERA_BUSCA_MS` | `300` | `src/components/calls/ContactPicker.tsx` |
 | `LIMITE` | `6` | `src/components/calls/ContactPicker.tsx` |
 | `RING_GAIN_CAP` | `0.2` | `src/components/calls/IncomingCallAlert.tsx` |
@@ -3853,7 +3358,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `POS_CHAMADA_MS` | `3000` | `src/components/calls/PostCallSummary.tsx` |
 | `JANELA_PAGINAS` | `7` | `src/components/calls/paginas.ts` |
 | `JANELA` | `7` | `src/components/calls/paginas.ts` |
-| `MIN_TEXTO` | `4.5` | `src/components/calls/__tests__/telefoniaContraste.test.tsx` |
 | `FALLBACK_PRICE_CEILING` | `2000` | `src/components/catalog/CatalogAdvancedFilters.tsx` |
 | `CATALOG_BULK_SEND_MAX` | `10` | `src/components/catalog/CatalogBulkBar.tsx` |
 | `CATALOG_RAIL_SYNC_ALERT_DAYS` | `3` | `src/components/catalog/CatalogRail.tsx` |
@@ -3870,16 +3374,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `UNKNOWN_STOCK_LABEL` | `'Estoque a confirmar'` | `src/components/catalog/catalogShared.tsx` |
 | `PHOTO_MIN_INTERVAL_MS` | `800` | `src/components/catalog/useSendProduct.ts` |
 | `PHOTO_INTERVAL_JITTER_MS` | `700` | `src/components/catalog/useSendProduct.ts` |
-| `MENU_LABEL` | `'Ações do produto Caneta Bambu'` | `src/components/catalog/__tests__/CT25_cardActions.test.tsx` |
-| `FOCUS` | `'focus-visible:ring-2'` | `src/components/catalog/__tests__/CT68_acessibilidade.test.tsx` |
-| `LIMIAR` | `4.5` | `src/components/catalog/__tests__/CT69_contrasteBadges.test.tsx` |
-| `TOTAL` | `60` | `src/components/catalog/__tests__/ExternalProductCatalog.test.tsx` |
-| `SCROLL_VIEWPORT_HEIGHT` | `720` | `src/components/catalog/__tests__/ExternalProductCatalog.virtualizacao.test.tsx` |
-| `LIST_ROW_HEIGHT` | `72` | `src/components/catalog/__tests__/ExternalProductCatalog.virtualizacao.test.tsx` |
-| `TOTAL_PRODUCTS` | `50` | `src/components/catalog/__tests__/ExternalProductCatalog.virtualizacao.test.tsx` |
-| `TOTAL` | `60` | `src/components/catalog/__tests__/ExternalProductManagement.test.tsx` |
 | `DEFAULT_CONDITION_OPERATOR` | `'equals'` | `src/components/chatbot/chatbotNodeConfig.ts` |
-| `TEXTO_CONFIRMACAO` | `'Tem certeza? Esta ação não pode ser desfeita.'` | `src/components/compliance/__tests__/LGPDComplianceView.test.tsx` |
 | `MULTI_CONNECTION_LOCKED_MESSAGE` | `'Múltiplas conexões ainda não estão habilitadas neste sistema'` | `src/components/connections/ConnectionsView.tsx` |
 | `ERRO_CONFIG` | `'Não foi possível ler as configurações desta conexão.'` | `src/components/connections/InstanceSettingsDialog.tsx` |
 | `ERRO_PERFIL` | `'Não foi possível ler o perfil desta conexão.'` | `src/components/connections/InstanceSettingsDialog.tsx` |
@@ -3888,11 +3383,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `ADDRESS_SEARCH_TYPES` | `'address,street,place'` | `src/components/contacts/ContactForm.tsx` |
 | `MAX_RECENT` | `5` | `src/components/contacts/ContactSearchWithSuggestions.tsx` |
 | `CONTACTS_FICHA_DISTANCE` | `12` | `src/components/contacts/contactsMotion.ts` |
-| `NOTA_MAX` | `120` | `src/components/contacts/__tests__/ContactActivityTimeline.nota.test.tsx` |
-| `TOOLTIP` | `'Métrica indisponível neste ambiente'` | `src/components/crm360/__tests__/CRM360StatsCards.disponibilidade.test.tsx` |
-| `CNPJ_VALIDO` | `'11.222.333/0001-81'` | `src/components/crm360/__tests__/CompanyFormDialog.cnpj.test.tsx` |
-| `CNPJ_INVALIDO` | `'11.222.333/0001-80'` | `src/components/crm360/__tests__/CompanyFormDialog.cnpj.test.tsx` |
-| `MENSAGEM_CNPJ` | `'CNPJ inválido — confira os dígitos verificadores.'` | `src/components/crm360/__tests__/CompanyFormDialog.cnpj.test.tsx` |
 | `COUNT_LABEL` | `'mensagens'` | `src/components/dashboard/ActivityHeatmap.tsx` |
 | `OVERVIEW_TAB` | `'overview'` | `src/components/dashboard/DashboardView.tsx` |
 | `MAX_PERCENT_TARGET` | `100` | `src/components/dashboard/GoalsConfigDialog.tsx` |
@@ -3902,20 +3392,13 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `FAILURE_ZERO_RATE` | `0.1` | `src/components/dashboard/systemHealth.ts` |
 | `STALLED_STEP` | `10` | `src/components/dashboard/systemHealth.ts` |
 | `PAGE` | `1000` | `src/components/dashboard/useSentimentData.ts` |
-| `MIN_TEXTO` | `4.5` | `src/components/dashboard/__tests__/DashboardCard.test.tsx` |
-| `RESIDUO` | `'src/components/dashboard/RealtimeMetricsPanel.tsx'` | `src/components/dashboard/__tests__/ResiduoVisaoGeral.test.ts` |
-| `REFERENCIA` | `'dashboard/RealtimeMetricsPanel'` | `src/components/dashboard/__tests__/ResiduoVisaoGeral.test.ts` |
-| `ESTE_TESTE` | `'ResiduoVisaoGeral.test.ts'` | `src/components/dashboard/__tests__/ResiduoVisaoGeral.test.ts` |
 | `RADIUS` | `42` | `src/components/dashboard/overview/DailyGoalsCard.tsx` |
 | `CIRCUMFERENCE` | `2` | `src/components/dashboard/overview/DailyGoalsCard.tsx` |
 | `PAGE_SIZE` | `8` | `src/components/dashboard/sla/SLAAgentTable.tsx` |
 | `MIN_INTERVALO_ENTRE_CHECKS_MS` | `60` | `src/components/diagnostics/ConnectionHealthPanel.tsx` |
 | `INITIAL_LIST_SIZE` | `5` | `src/components/email/EmailContactPanel.tsx` |
-| `SEARCH_LABEL` | `'Busca global do Email'` | `src/components/email/__tests__/EmailChatInbox.buscaEstados.test.tsx` |
 | `CHAVE_RECORDES` | `'miniGameHighScores'` | `src/components/gamification/TrainingMiniGames.tsx` |
-| `CHAVE` | `'miniGameHighScores'` | `src/components/gamification/__tests__/TrainingMiniGames.storage.test.tsx` |
 | `SEARCH_DEBOUNCE_MS` | `300` | `src/components/gmail/GmailInboxView.tsx` |
-| `MENSAGEM` | `'Olá, clientes! Promoção desta semana.'` | `src/components/groups/__tests__/GroupsView.broadcast.test.tsx` |
 | `INACTIVE_MINUTES` | `30` | `src/components/inbox/AgentReassignmentPanel.tsx` |
 | `MAX_AMOUNT` | `100` | `src/components/inbox/ContactPurchasesPanel.tsx` |
 | `AMOUNT_HINT` | `'Informe um valor entre R$ 0,00 e R$ 100.000.000,00.'` | `src/components/inbox/ContactPurchasesPanel.tsx` |
@@ -3935,32 +3418,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `CONEXAO_WHATSAPP_INDISPONIVEL` | `'Conexão WhatsApp não disponível.'` | `src/components/inbox/useChatMediaSending.ts` |
 | `MAX_FILES` | `10` | `src/components/inbox/useFileUploadLogic.ts` |
 | `MIN_SEARCH_EVENT_TERM_LENGTH` | `3` | `src/components/inbox/useGlobalSearchData.ts` |
-| `ORIGIN` | `'https://project.test'` | `src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx` |
-| `QUEUE_ATUAL` | `'queue-77'` | `src/components/inbox/__tests__/ChatTransferContract.test.tsx` |
-| `SERVER_MSG` | `'O serviço de mapas está indisponível no servidor.'` | `src/components/inbox/__tests__/LocationMessage.test.tsx` |
-| `CONTATO` | `'11111111-1111-1111-1111-111111111111'` | `src/components/inbox/__tests__/RealtimeInboxView.contato-fora-lista.test.tsx` |
-| `ERRO` | `'Erro de conexão'` | `src/components/inbox/__tests__/RealtimeInboxView.offline-cache.test.tsx` |
-| `SELO` | `'Reconectando…'` | `src/components/inbox/__tests__/RealtimeStatusBadge.test.tsx` |
-| `MINUTO` | `60` | `src/components/inbox/__tests__/SLAIndicator.contrasteSelos.test.tsx` |
-| `MIN_TEXTO` | `4.5` | `src/components/inbox/__tests__/SLAIndicator.contrasteSelos.test.tsx` |
-| `LIMIAR_TEXTO` | `4.5` | `src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx` |
-| `TOTAL` | `1001` | `src/components/inbox/__tests__/StickerPicker.catalogo.test.tsx` |
-| `PAGE_DELAY_MS` | `25` | `src/components/inbox/__tests__/StickerPicker.catalogo.test.tsx` |
-| `NARRACAO` | `'RESUMO COMPLETO NARRADO'` | `src/components/inbox/__tests__/SummaryResult.test.tsx` |
-| `TITULO` | `'Ex: Boas-vindas Inicial'` | `src/components/inbox/__tests__/TemplateEditorDialog.test.tsx` |
-| `TEXTO` | `'Olá, tudo bem?'` | `src/components/inbox/__tests__/TextToAudioButton.preview-send.test.tsx` |
-| `PEEK_DELAY_MS` | `500` | `src/components/inbox/__tests__/VirtualizedRealtimeList.quickPeek.test.tsx` |
-| `BLOQUEIO` | `'O navegador bloqueou a reprodução. Toque no botão de novo.'` | `src/components/inbox/__tests__/VoiceChanger.falhas.test.tsx` |
-| `BLOQUEIO` | `'O navegador bloqueou a reprodução. Toque no botão de novo.'` | `src/components/inbox/__tests__/VoiceChangerPicker.falhas.test.tsx` |
-| `UID_GRAVADOR` | `'44444444-4444-4444-8444-444444444444'` | `src/components/inbox/__tests__/WhisperMode.voz.test.tsx` |
-| `CONTATO` | `'22222222-2222-4222-8222-222222222222'` | `src/components/inbox/__tests__/WhisperMode.voz.test.tsx` |
-| `AGENTE` | `'11111111-1111-4111-8111-111111111111'` | `src/components/inbox/__tests__/WhisperMode.voz.test.tsx` |
-| `UUID_OBJETO` | `'99999999-9999-4999-8999-999999999999'` | `src/components/inbox/__tests__/WhisperMode.voz.test.tsx` |
-| `LIMIAR_TEXTO` | `4.5` | `src/components/inbox/__tests__/contrastePlayerSlider.test.tsx` |
-| `LIMIAR_GRAFICO` | `3` | `src/components/inbox/__tests__/contrastePlayerSlider.test.tsx` |
-| `NOME_FAVORITAR` | `'Favoritar Boas-vindas'` | `src/components/inbox/__tests__/hover-actions-a11y.test.tsx` |
-| `CONTATO` | `'contato-1'` | `src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts` |
-| `TELEFONE` | `'5511999999999'` | `src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts` |
 | `DAY_MS` | `24` | `src/components/inbox/ai-tools/PeriodFilterSelector.tsx` |
 | `SESSION_GAP_MS` | `4` | `src/components/inbox/ai-tools/PeriodFilterSelector.tsx` |
 | `BOTTOM_FOLLOW_THRESHOLD_PX` | `100` | `src/components/inbox/chat/ChatMessagesArea.tsx` |
@@ -3973,21 +3430,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `JANELA_AGRUPAMENTO_MS` | `5` | `src/components/inbox/chat/groupWindow.ts` |
 | `CHAR_LIMIT` | `4096` | `src/components/inbox/chat/useChatInputLogic.ts` |
 | `EDIT_WINDOW_MINUTES` | `15` | `src/components/inbox/chat/useChatPanelHandlers.ts` |
-| `ALTURA_ITEM` | `120` | `src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx` |
-| `ALTURA_ITEM` | `120` | `src/components/inbox/chat/__tests__/ChatMessagesArea.pagination.test.tsx` |
-| `RESIDUO_TEMA_HC_ESCURO` | `4.45` | `src/components/inbox/chat/__tests__/MessageBubble.contrasteStatus.test.tsx` |
-| `LIMIAR_TEXTO` | `4.5` | `src/components/inbox/chat/__tests__/MessageBubble.contrasteStatus.test.tsx` |
-| `PHONE` | `'+5511999999999'` | `src/components/inbox/chat/__tests__/handlers-audio-contrato-retorno-350a.test.tsx` |
-| `CONTATO` | `'contato-x'` | `src/components/inbox/chat/__tests__/useChatInputLogic.rascunho-por-usuario.test.tsx` |
-| `RASCUNHO_DO_B` | `'texto que o atendente B digitou'` | `src/components/inbox/chat/__tests__/useChatInputLogic.rascunho-por-usuario.test.tsx` |
-| `ASSINATURA` | `'*Ana:'` | `src/components/inbox/chat/__tests__/useChatPanelHandlers.assinatura-retry.test.tsx` |
-| `TEXTO` | `'resposta corrigida'` | `src/components/inbox/chat/__tests__/useChatPanelHandlers.edicao-rejeitada.test.tsx` |
-| `CONTACT_PHONE` | `'5511999999999'` | `src/components/inbox/chat/__tests__/useChatPanelHandlers.edicao-rejeitada.test.tsx` |
-| `TEXTO` | `'resposta corrigida'` | `src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx` |
-| `CONTACT_PHONE` | `'5511999999999'` | `src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx` |
-| `CONTATO` | `'11111111-1111-4111-8111-111111111111'` | `src/components/inbox/chat/__tests__/useChatPanelHandlers.sussurro.test.tsx` |
-| `RESPONSAVEL` | `'22222222-2222-4222-8222-222222222222'` | `src/components/inbox/chat/__tests__/useChatPanelHandlers.sussurro.test.tsx` |
-| `PERFIL` | `'33333333-3333-4333-8333-333333333333'` | `src/components/inbox/chat/__tests__/useChatPanelHandlers.sussurro.test.tsx` |
 | `STORY_DURATION_MS` | `5000` | `src/components/inbox/contact-details/storyUtils.ts` |
 | `DEBOUNCE_MS` | `300` | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
 | `RATE_LIMIT_BACKOFF_MS` | `60` | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
@@ -3997,187 +3439,212 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `DETAIL_PANEL_GAP` | `16` | `src/components/inbox/tabs/FilesTab.tsx` |
 | `MAX_PAGES_TO_LOAD_ALL` | `500` | `src/components/inbox/tabs/FilesTab.tsx` |
 | `AREA_DE_TOQUE` | `"[@media(pointer:coarse)]:after:content-['` | `src/components/inbox/tabs/fileActionButton.ts` |
-| `FOTO` | `'https://cdn.test/foto.png'` | `src/components/inbox/tabs/__tests__/FileCard.test.tsx` |
-| `FOTO` | `'https://cdn.test/foto-atendente.png'` | `src/components/inbox/tabs/__tests__/FileDetailPanel.test.tsx` |
-| `CAMINHO` | `'documentos/contrato.pdf'` | `src/components/inbox/tabs/__tests__/FileThumb.pdf.integration.test.tsx` |
-| `FOTO` | `'https://cdn.test/ana.png'` | `src/components/inbox/tabs/__tests__/FilesListView.test.tsx` |
-| `CONTATO` | `'Ana Cliente'` | `src/components/inbox/tabs/__tests__/FilesTab.cabecalho-funil.test.tsx` |
-| `DIA_MS` | `24` | `src/components/inbox/tabs/__tests__/FilesTab.cabecalho-funil.test.tsx` |
-| … +1372 linhas — lista completa em `context.json` | | |
+| `TEXTO_QUALQUER_DATA` | `'Qualquer data'` | `src/components/inbox/tabs/journey/JourneyFilters.tsx` |
+| `MIN_USUARIOS_PARA_BUSCA` | `8` | `src/components/inbox/tabs/journey/JourneyFilters.tsx` |
+| `CONSULTA_MOVIMENTO_REDUZIDO` | `'(prefers-reduced-motion: reduce)'` | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
+| `DURACAO_CONTAGEM_MS` | `600` | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
+| `MAX_ESCALONADOS` | `8` | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
+| `PASSO_ESCALONADO_MS` | `60` | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
+| `SERIE_LARGURA` | `320` | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
+| `SERIE_ALTURA` | `64` | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
+| `SERIE_MARGEM` | `6` | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
+| `DISTANCIA_PX` | `8` | `src/components/inbox/tabs/journey/motion/FadeSlideIn.tsx` |
+| `HIGHLIGHT_DURATION_MS` | `1500` | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
+| `STAGGER_PER_ITEM_MS` | `60` | `src/components/inbox/tabs/journey/motion/presets.ts` |
+| `STAGGER_MAX_ITEMS` | `8` | `src/components/inbox/tabs/journey/motion/presets.ts` |
+| `COUNT_UP_DURATION_MS` | `600` | `src/components/inbox/tabs/journey/motion/useCountUp.ts` |
+| `MAX_RECENTS` | `5` | `src/components/mobile/MobileDrawerMenu.tsx` |
+| `SWIPE_THRESHOLD` | `60` | `src/components/mobile/SwipeableMessage.tsx` |
+| `DAYS` | `7` | `src/components/monitoring/MonitoringAvailabilityHeatmap.tsx` |
+| `INBOX_SILENCE_MIN_MINUTES` | `1` | `src/components/monitoring/MonitoringInboxSilence.tsx` |
+| `INBOX_SILENCE_MAX_MINUTES` | `1440` | `src/components/monitoring/MonitoringInboxSilence.tsx` |
+| `INBOX_SILENCE_DEFAULT_MINUTES` | `10` | `src/components/monitoring/MonitoringInboxSilence.tsx` |
+| `UPTIME_TARGET` | `99.5` | `src/components/monitoring/MonitoringIncidents.tsx` |
+| `SLA_TARGET` | `99.5` | `src/components/monitoring/MonitoringSLAPanel.tsx` |
+| `SLA_WINDOW_MS` | `24` | `src/components/monitoring/hooks/types.ts` |
+| `AVAILABILITY_WINDOW_MS` | `7` | `src/components/monitoring/hooks/types.ts` |
+| `HEALTH_LOGS_LIMIT` | `2000` | `src/components/monitoring/hooks/types.ts` |
+| `REALTIME_DEBOUNCE_MS` | `500` | `src/components/monitoring/hooks/useEvolutionMonitoring.ts` |
+| `INBOX_SILENCE_POLL_MS` | `60` | `src/components/monitoring/hooks/useInboxSilence.ts` |
+| `RPC_TIMEOUT_MS` | `15` | `src/components/monitoring/hooks/useInboxSilence.ts` |
+| `HOUR_MS` | `60` | `src/components/monitoring/hooks/useMonitoringData.ts` |
+| `DAY_MS` | `24` | `src/components/monitoring/hooks/useMonitoringData.ts` |
+| `RAMO_NAO_INFORMADO` | `'Não informado'` | `src/components/multiplix/MultiplixView.tsx` |
+| `PAGE_SIZE` | `50` | `src/components/multiplix/MultiplixView.tsx` |
+| `SERVER_PAGE_MAX` | `200` | `src/components/multiplix/MultiplixView.tsx` |
+| `POLICY_MAX_IDS` | `10` | `src/components/multiplix/MultiplixView.tsx` |
+| `PREVIEW_OPTIONS_MAX` | `200` | `src/components/multiplix/MultiplixView.tsx` |
+| `AUDIENCE_ROW_ESTIMATE` | `56` | `src/components/multiplix/MultiplixView.tsx` |
+| `SOUND_VOLUME_STEP` | `5` | `src/components/notifications/SoundVolumeControl.tsx` |
+| `SOUND_VOLUME_MIN` | `10` | `src/components/notifications/SoundVolumeControl.tsx` |
+| `SOUND_VOLUME_MAX` | `100` | `src/components/notifications/SoundVolumeControl.tsx` |
+| `LOW_VOLUME_THRESHOLD` | `30` | `src/components/notifications/SoundVolumeControl.tsx` |
+| `SAVE_DEBOUNCE_MS` | `400` | `src/components/notifications/SoundVolumeControl.tsx` |
+| `SEARCH_MIN_LENGTH` | `2` | `src/components/omnichannel/OmnichannelInbox.tsx` |
+| `SEARCH_DEBOUNCE_MS` | `300` | `src/components/omnichannel/OmnichannelInbox.tsx` |
+| `SEARCH_RESULT_LIMIT` | `50` | `src/components/omnichannel/OmnichannelInbox.tsx` |
+| `SEARCH_MESSAGES_LIMIT` | `500` | `src/components/omnichannel/OmnichannelInbox.tsx` |
+| `HISTORY_NOT_LOADED_LABEL` | `'Histórico não carregado'` | `src/components/omnichannel/OmnichannelInbox.tsx` |
+| `PAUSA_ENTRE_CHUNKS_MS` | `150` | `src/components/performance/hotRoutePrefetch.ts` |
+| `SEM_AMOSTRA_LABEL` | `'Sem dados avaliados no período'` | `src/components/queues/SLAMetricCards.tsx` |
+| `EMPTY` | `'—'` | `src/components/reports/PeriodComparison.tsx` |
+| `ACL_ALERTS_TABLE` | `'security_acl_alerts'` | `src/components/security/AclAlertsPanel.tsx` |
+| `ACL_ALERTS_LIMIT` | `200` | `src/components/security/AclAlertsPanel.tsx` |
+| `ACL_ALERTS_REFRESH_MS` | `30` | `src/components/security/AclAlertsPanel.tsx` |
+| `ROLE_FILTER_VALUE` | `'role_events'` | `src/components/security/AuditLogDashboard.tsx` |
+| `LOGS_PAGE_LIMIT` | `200` | `src/components/security/AuditLogDashboard.tsx` |
+| `DISMISS_TTL_MS` | `24` | `src/components/security/MfaAdminNudge.tsx` |
+| `MAX_TIMEOUT_MS` | `2` | `src/components/security/MfaAdminNudge.tsx` |
+| `VISIBLE_LIMIT` | `3` | `src/components/security/RateLimitRealtimeAlerts.tsx` |
+| `CHAVE_TRANSCRICAO` | `'auto_transcription_enabled'` | `src/components/settings/AutomationSettings.tsx` |
+| `DEFAULT_OPEN_TIME` | `'09:00'` | `src/components/settings/ScheduleSettings.tsx` |
+| `DEFAULT_CLOSE_TIME` | `'18:00'` | `src/components/settings/ScheduleSettings.tsx` |
+| `HORAS_DA_JANELA` | `24` | `src/components/settings/ai-providers/AIProviderHealthPanel.tsx` |
+| `MAX_UPLOAD_SIZE_MB` | `10` | `src/components/settings/media-library/useMediaLibrary.ts` |
+| `FIRST_RESPONSE_MINUTES` | `5` | `src/components/settings/sla/SLARuleFormDialog.tsx` |
+| `RESOLUTION_MINUTES_PADRAO` | `60` | `src/components/settings/sla/SLARuleFormDialog.tsx` |
+| `PRIDE_RED` | `'0 85% 55%'` | `src/components/settings/theme/presets.ts` |
+| `PRIDE_ORANGE` | `'30 90% 55%'` | `src/components/settings/theme/presets.ts` |
+| `PRIDE_YELLOW` | `'55 90% 50%'` | `src/components/settings/theme/presets.ts` |
+| `PRIDE_GREEN` | `'130 70% 45%'` | `src/components/settings/theme/presets.ts` |
+| `PRIDE_BLUE` | `'210 80% 55%'` | `src/components/settings/theme/presets.ts` |
+| `PRIDE_PURPLE` | `'280 80% 58%'` | `src/components/settings/theme/presets.ts` |
+| `PRIDE_PINK` | `'330 85% 52%'` | `src/components/settings/theme/presets.ts` |
+| `NO_DATA_LABEL` | `'sem dados ainda'` | `src/components/talkx/TalkXAudienceFilters.tsx` |
+| `ANY_VALUE` | `'all'` | `src/components/talkx/TalkXAudienceFilters.tsx` |
+| `INSIGHT_REPLY_GROWTH_MIN` | `30` | `src/components/talkx/TalkXCampaignRunning.tsx` |
+| `NO_VALUE` | `'—'` | `src/components/talkx/TalkXCampaignWizard.tsx` |
+| `CONTACT_ROW_ESTIMATE` | `56` | `src/components/talkx/TalkXContactSelector.tsx` |
+| `CONTACT_OVERSCAN` | `6` | `src/components/talkx/TalkXContactSelector.tsx` |
+| `FIELD` | `'h-9 text-xs bg-input/40 border-border/70'` | `src/components/talkx/TalkXInteractiveEditor.tsx` |
+| `REFETCH` | `4000` | `src/components/talkx/TalkXLiveMonitor.tsx` |
+| `ADD_CONTACT_LIST_LIMIT` | `50` | `src/components/talkx/TalkXSuppression.tsx` |
+| `CONTACT_SEARCH_DEBOUNCE_MS` | `300` | `src/components/talkx/TalkXSuppression.tsx` |
+| `PHONE_MIN_DIGITS` | `10` | `src/components/talkx/TalkXSuppression.tsx` |
+| `PHONE_MAX_DIGITS` | `15` | `src/components/talkx/TalkXSuppression.tsx` |
+| `ACTIVITY_RAIL_LIMIT` | `5` | `src/components/talkx/TalkXSuppression.tsx` |
+| `ACTIVITY_HISTORY_PAGE_SIZE` | `20` | `src/components/talkx/TalkXSuppression.tsx` |
+| `CONSULTA_PAINEL_LARGO` | `'(min-width: 1280px)'` | `src/components/talkx/TalkXTemplateEditor.tsx` |
+| `REVIEW_STALE_DAYS` | `3` | `src/components/talkx/TalkXTemplates.tsx` |
+| `FORECAST_MIN_CAMPAIGNS` | `5` | `src/components/talkx/TalkXWizardDelivery.tsx` |
+| `FORECAST_MIN_SENT` | `100` | `src/components/talkx/TalkXWizardDelivery.tsx` |
+| `FORECAST_WINDOW_DAYS` | `90` | `src/components/talkx/TalkXWizardDelivery.tsx` |
+| `MAX_INTERACTIVE_BUTTONS` | `3` | `src/components/talkx/talkxInteractive.ts` |
+| `MAX_BUTTON_LABEL` | `20` | `src/components/talkx/talkxInteractive.ts` |
+| `MAX_POLL_QUESTION` | `255` | `src/components/talkx/talkxInteractive.ts` |
+| `MIN_POLL_OPTIONS` | `2` | `src/components/talkx/talkxInteractive.ts` |
+| `MAX_POLL_OPTIONS` | `12` | `src/components/talkx/talkxInteractive.ts` |
+| `LIMITS_MIN_S` | `3` | `src/components/talkx/talkxLimits.ts` |
+| `LIMITS_MAX_S` | `600` | `src/components/talkx/talkxLimits.ts` |
+| `TEMPLATE_TAB` | `'templates'` | `src/components/talkx/talkxTemplateRoute.ts` |
+| `MESSAGE_LIMIT` | `4096` | `src/components/talkx/useCampaignEditor.ts` |
+| `DEFAULT_SCHEDULE_TIMEZONE` | `'America/Sao_Paulo'` | `src/components/talkx/useCampaignEditor.ts` |
+| `AUDIENCE_FILTER_DEBOUNCE_MS` | `350` | `src/components/talkx/useCampaignEditor.ts` |
+| `AUDIENCE_PREVIEW_LIMIT` | `5000` | `src/components/talkx/useCampaignEditor.ts` |
+| `TAG_FIELD` | `'tags'` | `src/components/talkx/useCampaignEditor.ts` |
+| `ENVIO_NAO_ACEITO` | `'O envio não foi aceito. Tente novamente.'` | `src/components/talkx/useTalkXLifecycle.tsx` |
+| `TALKX_MEDIA_BUCKET` | `'talkx-media'` | `src/components/talkx/useTalkXMediaUpload.ts` |
+| `TALKX_MEDIA_MAX_BYTES` | `16` | `src/components/talkx/useTalkXMediaUpload.ts` |
+| `VIEW_W` | `320` | `src/components/talkx/analytics/AnalyticsFunnel.tsx` |
+| `STEP_H` | `34` | `src/components/talkx/analytics/AnalyticsFunnel.tsx` |
+| `GAP` | `8` | `src/components/talkx/analytics/AnalyticsFunnel.tsx` |
+| `FUNNEL_TITLE` | `'Entrega → Leitura → Resposta → Conversão'` | `src/components/talkx/analytics/AnalyticsFunnel.tsx` |
+| `HELP_GUIDES_SLUG` | `'guias'` | `src/components/talkx/help/talkxHelpIndex.ts` |
+| `HELP_ALL_TOPICS` | `'all'` | `src/components/talkx/help/talkxHelpIndex.ts` |
+| `HELP_WORDS_PER_MINUTE` | `200` | `src/components/talkx/help/talkxHelpIndex.ts` |
+| `HELP_SCREEN` | `'help'` | `src/components/talkx/help/talkxHelpRoute.ts` |
+| `LIMIT` | `5` | `src/components/talkx/kit/ActiveCampaignIndicator.tsx` |
+| `PREVIEW_DEFAULT_TIMEZONE` | `"America/Sao_Paulo"` | `src/components/talkx/kit/personalize.ts` |
+| `DEFAULT_TIMEZONE` | `'America/Sao_Paulo'` | `src/components/talkx/report/TalkXCampaignReport.tsx` |
+| `REPORT_SAMPLE_LIMIT` | `20` | `src/components/talkx/report/talkxReportData.ts` |
+| `HISTORY_LIMIT` | `50` | `src/components/talkx/segments/segmentBuilderReducer.ts` |
+| `COALESCE_MS` | `800` | `src/components/talkx/segments/segmentBuilderReducer.ts` |
+| `SEGMENT_DESCRIPTION_MAX` | `160` | `src/components/talkx/segments/segmentValidation.ts` |
+| `GAUGE_RADIUS` | `34` | `src/components/talkx/suppression/ProtectionGauge.tsx` |
+| `GAUGE_CIRCUMFERENCE` | `2` | `src/components/talkx/suppression/ProtectionGauge.tsx` |
+| `SPARK_POINTS` | `7` | `src/components/talkx/tracking/TalkXLiveKpiRow.tsx` |
+| `PAGE_SIZE` | `50` | `src/components/talkx/tracking/TalkXRecipientsTable.tsx` |
+| `TALKX_STALL_MIN_MS` | `180` | `src/components/talkx/tracking/talkxHealth.ts` |
+| `TALKX_RATE_WINDOW_MIN` | `5` | `src/components/talkx/tracking/talkxHealth.ts` |
+| `SEGMENT_PREVIEW_SIZE` | `4` | `src/components/talkx/tracking/talkxSegmentProgress.ts` |
+| `MANUAL_SEGMENT_LABEL` | `'Seleção manual'` | `src/components/talkx/tracking/talkxSegmentProgress.ts` |
+| `SUMMARY_BUCKET` | `'hour'` | `src/components/talkx/tracking/talkxSentSummary.ts` |
+| `HOUR_MS` | `3` | `src/components/talkx/tracking/talkxSentSummary.ts` |
+| `ID_PAINEL_ABAS` | `'board-tabpanel'` | `src/components/tasks/board/TasksBoardMode.tsx` |
+| `UMA_HORA_MS` | `3` | `src/components/tasks/shared/new-task/CoerenciaLembrete.tsx` |
+| `HORA_PADRAO` | `'09:00'` | `src/components/tasks/shared/new-task/RemindField.tsx` |
+| `TITLE_MAX` | `200` | `src/components/tasks/shared/new-task/TaskTitleField.tsx` |
+| `COR_APOIO` | `'text-2xs text-muted-foreground'` | `src/components/tasks/shared/sheet/PlanejamentoSection.tsx` |
+| `CHAVE_PAINEL_EXPANDIDO` | `'tasks-painel-expandido'` | `src/components/tasks/shared/sheet/painel.ts` |
+| `VALOR_EXPANDIDO` | `'1'` | `src/components/tasks/shared/sheet/painel.ts` |
+| `TEXTO_AGENDADO` | `'Agendado'` | `src/components/tasks/shared/sheet/planejamento.ts` |
+| `MIN_SEARCH_CHARS` | `2` | `src/components/team-chat/useTeamChatPanel.ts` |
+| `SEARCH_LIMIT` | `100` | `src/components/team-chat/useTeamChatPanel.ts` |
+| `CHAT_FONT_SIZE_VAR` | `'--chat-font-size'` | `src/components/theme/useChatTextSize.ts` |
+| `DEFAULT_CHAT_TEXT_SIZE` | `'padrao'` | `src/components/theme/useChatTextSize.ts` |
+| `MAX_DURATION` | `0.4` | `src/components/transitions/transitionVariants.ts` |
+| `ARCO_GRAUS` | `270` | `src/components/ui/VolumeDial.tsx` |
+| `INICIO_GRAUS` | `135` | `src/components/ui/VolumeDial.tsx` |
+| `RAIO` | `42` | `src/components/ui/VolumeDial.tsx` |
+| `ESPESSURA` | `8` | `src/components/ui/VolumeDial.tsx` |
+| `DURACAO_CONTAGEM` | `0.25` | `src/components/ui/VolumeDial.tsx` |
+| `TAMANHO_BASE` | `96` | `src/components/ui/VolumeDial.tsx` |
+| `KNOB_BASE` | `14` | `src/components/ui/VolumeDial.tsx` |
+| `FONTE_BASE` | `24` | `src/components/ui/VolumeDial.tsx` |
+| `RAIO_MINIMO_ARRASTE` | `0.6` | `src/components/ui/VolumeDial.tsx` |
+| `FOCAVEIS` | `'button:not([disabled]), [role="` | `src/components/ui/VolumeSliderPopoverContent.tsx` |
+| `DURACAO_SAIDA_MS` | `300` | `src/components/ui/accessible-toast.tsx` |
+| `BALLOON_GAP` | `8` | `src/components/ui/quick-peek.tsx` |
+| `BAR_COUNT` | `24` | `src/components/voice/AudioFrequencyVisualizer.tsx` |
+| `MIN_HEIGHT` | `3` | `src/components/voice/AudioFrequencyVisualizer.tsx` |
+| `MAX_HEIGHT` | `32` | `src/components/voice/AudioFrequencyVisualizer.tsx` |
+| `BAR_WIDTH` | `3` | `src/components/voice/AudioFrequencyVisualizer.tsx` |
+| `BAR_GAP` | `2` | `src/components/voice/AudioFrequencyVisualizer.tsx` |
+| `TARGET_UPDATE_INTERVAL_MS` | `120` | `src/components/voice/AudioFrequencyVisualizer.tsx` |
+| `PAGE_SIZE` | `50` | `src/features/talk-me/useTalkMeQueue.ts` |
+| `MAX_RECONCILE_PAGES` | `3` | `src/features/talk-me/useTalkMeQueue.ts` |
+| `REALTIME_DEBOUNCE_MS` | `350` | `src/features/talk-me/useTalkMeQueue.ts` |
+| `REALTIME_MAX_WAIT_MS` | `2` | `src/features/talk-me/useTalkMeQueue.ts` |
+| `ELIGIBILITY_RECONCILE_INTERVAL_MS` | `60` | `src/features/talk-me/useTalkMeQueue.ts` |
+| `RESOLVED_CONFLICT_MESSAGE` | `'Este atendimento já foi resolvido'` | `src/features/talk-me/useTalkMeQueue.ts` |
+| `DEFAULT_SEARCH_INSIGHTS_PERIOD` | `30` | `src/hooks/admin/useSearchInsights.ts` |
+| `SUPERVISOR_PAGE_SIZE` | `200` | `src/hooks/admin/useSupervisorQueue.ts` |
+| `DEFAULT_REFRESH_MS` | `60` | `src/hooks/admin/useSupervisorQueue.ts` |
+| `RECENT_SENDS_WINDOW_DAYS` | `30` | `src/hooks/agents/useAgentRecentSends.ts` |
+| `DAY_MS` | `24` | `src/hooks/agents/useAgentRecentSends.ts` |
+| `LOGS_PER_PAGE` | `50` | `src/hooks/analytics/useAIUsageDashboard.ts` |
+| `MESMO_CICLO_MS` | `1` | `src/hooks/analytics/useAIUsageDashboard.ts` |
+| `QUEUE_GOAL_ALERTS_INTERVAL_MS` | `5` | `src/hooks/analytics/useQueueGoalAlerts.ts` |
+| `MAX_HISTORY` | `60` | `src/hooks/analytics/useRealtimeDashboard.ts` |
+| `JANELA_HORA_MS` | `60` | `src/hooks/analytics/useRealtimeDashboard.ts` |
+| `MAX_IDS_CONTABILIZADOS` | `500` | `src/hooks/analytics/useRealtimeDashboard.ts` |
+| `FLUSH_MS` | `4000` | `src/hooks/analytics/useRealtimeDashboard.ts` |
+| `MAX_LOGIN_ATTEMPTS` | `5` | `src/hooks/auth/useAuthForm.ts` |
+| `SESSION_SILENCE_MS` | `4` | `src/hooks/business/useAbandonmentRate.ts` |
+| `CSAT_PAGE_SIZE` | `1000` | `src/hooks/business/useCSAT.ts` |
+| `CSAT_MAX_PAGES` | `50` | `src/hooks/business/useCSAT.ts` |
+| `NPS_SURVEY_LIMIT` | `500` | `src/hooks/business/useNPSSurveys.ts` |
+| `ANALYTICS_PAGE_SIZE` | `1000` | `src/hooks/business/useQueueAnalytics.ts` |
+| `SLA_MONITOR_SOURCE` | `'sla-monitor'` | `src/hooks/business/useWarRoomAlerts.ts` |
+| `SLA_BREACH_PAGE` | `1000` | `src/hooks/business/useWarRoomAlerts.ts` |
+| `WARROOM_MAX_ROWS` | `200` | `src/hooks/business/useWarRoomData.ts` |
+| `CANAL_VOIP` | `'voip'` | `src/hooks/calls/useCallChannels.ts` |
+| `CANAL_WHATSAPP` | `'whatsapp'` | `src/hooks/calls/useCallChannels.ts` |
+| `PAGE_SIZE` | `8` | `src/hooks/calls/useMyCalls.ts` |
+| `SNOOZE_HOUR` | `9` | `src/hooks/chat/snoozeDurations.ts` |
+| `AUTOMATION_SUGGESTIONS_DEBOUNCE_MS` | `400` | `src/hooks/chat/useAutomationSuggestions.ts` |
+| `MAX_CACHED_MESSAGES` | `50` | `src/hooks/chat/useAutomationSuggestions.ts` |
+| `GAP_MS` | `4` | `src/hooks/chat/useChatSearch.ts` |
+| `AGENT_SENDER_LABEL` | `'Atendente'` | `src/hooks/chat/useContactMedia.ts` |
+| `MEDIA_PAGE_SIZE` | `60` | `src/hooks/chat/useContactMedia.ts` |
+| `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMedia.ts` |
+| `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMediaCounts.ts` |
+| … +614 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
 | Trecho | Arquivo |
 |---|---|
-| `).toBeVisible({ timeout: 20_000 });` | `e2e/a11y-config-admin.spec.ts` |
-| `.goto('/?view=security', { waitUntil: 'domcontentloaded', timeout: 60_000 })` | `e2e/a11y-config-admin.spec.ts` |
-| `.goto('/?view=settings', { waitUntil: 'domcontentloaded', timeout: 60_000 })` | `e2e/a11y-config-admin.spec.ts` |
-| `await expect(painel).toBeVisible({ timeout: 20_000 });` | `e2e/a11y-config-admin.spec.ts` |
-| `timeout: 20_000,` | `e2e/a11y-config-admin.spec.ts` |
-| `await expect(page.getByRole('heading', { name: 'Campanhas' })).toBeVisible({ timeout: 30_000 });` | `e2e/a11y-contraste.spec.ts` |
-| `await expect(page.getByRole('main', { name: 'Conteúdo principal' })).toBeVisible({ timeout: 20_000 });` | `e2e/a11y-contraste.spec.ts` |
-| `await expect(fab).toBeVisible({ timeout: 15_000 });` | `e2e/a11y-fab-cabecalho.spec.ts` |
-| `await expect(page.getByRole('dialog', { name: 'Adicionar Contato' })).toBeVisible({ timeout: 15_000 });` | `e2e/a11y-fab-cabecalho.spec.ts` |
-| `await expect(topo).toBeVisible({ timeout: 5_000 });` | `e2e/a11y-fab-cabecalho.spec.ts` |
-| `await alvo().waitFor({ state: 'visible', timeout: 12_000 });` | `e2e/a11y-inbox-teams.spec.ts` |
-| `await expect(page.getByTestId(alvo)).toBeVisible({ timeout: 60_000 });` | `e2e/a11y-tarefas-dashboard.spec.ts` |
-| `await expect(dialogo).toBeVisible({ timeout: 15_000 });` | `e2e/a11y-toque-44px.spec.ts` |
-| `new Promise((resolve) => setTimeout(resolve, 1000)),` | `e2e/a11y-toque-44px.spec.ts` |
-| `await expect(page.getByPlaceholder('Buscar conversas…')).toBeVisible({ timeout: 60_000 });` | `e2e/busca-global-paleta.spec.ts` |
-| `await expect(paleta).toBeVisible({ timeout: 1_000 });` | `e2e/busca-global-paleta.spec.ts` |
-| `).toBeVisible({ timeout: 30_000 });` | `e2e/catalog.spec.ts` |
-| `.click({ timeout: 5_000 });` | `e2e/catalog.spec.ts` |
-| `await expect(contato).toBeVisible({ timeout: 20_000 });` | `e2e/catalog.spec.ts` |
-| `await expect(enviarAgora).toBeEnabled({ timeout: 30_000 });` | `e2e/catalog.spec.ts` |
-| `await expect(page.getByText(/Produto enviado/)).toBeVisible({ timeout: 60_000 });` | `e2e/catalog.spec.ts` |
-| `await expect(search).toBeVisible({ timeout: 20_000 });` | `e2e/catalog.spec.ts` |
-| `await expect(sendDialog.getByText('Modelo de mensagem', { exact: true })).toBeVisible({ timeout: 20_000 });` | `e2e/catalog.spec.ts` |
-| `await expect(ver).toBeVisible({ timeout: 30_000 });` | `e2e/catalog.spec.ts` |
-| `await ver.click({ timeout: 5_000 });` | `e2e/catalog.spec.ts` |
-| `test.describe.configure({ timeout: 150_000 });` | `e2e/catalog.spec.ts` |
-| `timeout: 30_000,` | `e2e/catalog.spec.ts` |
-| `{ timeout: 30_000, message: `nenhuma mensagem em ${E2E_CATALOG_MESSAGES_TABLE} com o marcador "${marker}"` }` | `e2e/catalog.spec.ts` |
-| `}).toPass({ timeout: 45_000 });` | `e2e/catalog.spec.ts` |
-| `await cartao.first().locator('button[aria-haspopup="menu"]').click({ timeout: 5_000 });` | `e2e/contact-address.spec.ts` |
-| `await expect(cartao).toBeVisible({ timeout: 15_000 });` | `e2e/contact-address.spec.ts` |
-| `await expect(cartao).toHaveCount(0, { timeout: 10_000 });` | `e2e/contact-address.spec.ts` |
-| `await expect(cartaoEditado).toBeVisible({ timeout: 15_000 });` | `e2e/contact-address.spec.ts` |
-| `await expect(dialogoEditar).toBeHidden({ timeout: 15_000 });` | `e2e/contact-address.spec.ts` |
-| `await expect(lista).toBeVisible({ timeout: 2_000 });` | `e2e/contact-address.spec.ts` |
-| `await expect(page.getByText('Contato Adicionado!')).toBeVisible({ timeout: 15_000 });` | `e2e/contact-address.spec.ts` |
-| `await page.getByRole('alertdialog').getByRole('button', { name: /Excluir/ }).click({ timeout: 5_000 });` | `e2e/contact-address.spec.ts` |
-| `await page.getByRole('menuitem', { name: /Excluir/ }).click({ timeout: 5_000 });` | `e2e/contact-address.spec.ts` |
-| `}).toPass({ timeout: 15_000 });` | `e2e/contact-address.spec.ts` |
-| `).toBeVisible({ timeout: 8000 });` | `e2e/contact-form-email-duplicate.spec.ts` |
-| `await expect(addDialog).toBeHidden({ timeout: 15_000 });` | `e2e/contacts-crud.spec.ts` |
-| `await expect(editDialog).toBeHidden({ timeout: 15_000 });` | `e2e/contacts-crud.spec.ts` |
-| `await expect(editedRow).toHaveCount(0, { timeout: 15_000 });` | `e2e/contacts-crud.spec.ts` |
-| `await expect(row).toBeVisible({ timeout: 15_000 });` | `e2e/contacts-crud.spec.ts` |
-| `await expect(contactCards(page).first()).toBeVisible({ timeout: 15_000 });` | `e2e/contacts-detail.spec.ts` |
-| `await expect(page.getByRole('heading', { level: 3, name })).toBeVisible({ timeout: 15_000 });` | `e2e/contacts-detail.spec.ts` |
-| `await expect(contactCards(page).first()).toBeVisible({ timeout: 15_000 });` | `e2e/contacts-selection.spec.ts` |
-| `await expect(contactCards(page)).toHaveCount(0, { timeout: 15_000 });` | `e2e/contacts-snapshots.spec.ts` |
-| `await expect(contactCards(page)).toHaveCount(CONTATOS.length, { timeout: 15_000 });` | `e2e/contacts-snapshots.spec.ts` |
-| `await expect(page.getByRole('grid', { name: 'Lista de contatos' })).toBeVisible({ timeout: 15_000 });` | `e2e/contacts-snapshots.spec.ts` |
-| `await expect(contactCards(page).first()).toBeVisible({ timeout: 15_000 });` | `e2e/contacts-view.spec.ts` |
-| `}).toPass({ timeout: 15_000 });` | `e2e/contacts-view.spec.ts` |
-| `await expect(contactCards(page).first()).toBeVisible({ timeout: 15_000 });` | `e2e/contacts-views.spec.ts` |
-| `await expect(page.getByRole('heading', { name: 'Catálogo de Produtos' })).toBeVisible({ timeout: 30_000 });` | `e2e/ct94-ui-429.spec.ts` |
-| `await expect.poll(() => harness.chamadas.length, { timeout: 20_000 }).toBeGreaterThan(0);` | `e2e/ct94-ui-429.spec.ts` |
-| `expect(page.getByRole('button', { name: 'Atualizar', exact: true })).toBeDisabled({ timeout: 20_000 }),` | `e2e/ct94-ui-429.spec.ts` |
-| `expect(page.getByRole('button', { name: 'Tentar de novo', exact: true })).toBeDisabled({ timeout: 20_000 }),` | `e2e/ct94-ui-429.spec.ts` |
-| `expect(page.getByText(TOAST_RATE_LIMIT).first()).toBeVisible({ timeout: 20_000 }),` | `e2e/ct94-ui-429.spec.ts` |
-| `await expect(addDialog).toBeHidden({ timeout: 15_000 });` | `e2e/dialog-rodape-viewport.spec.ts` |
-| `await expect(editDialog).toBeHidden({ timeout: 15_000 });` | `e2e/dialog-rodape-viewport.spec.ts` |
-| `await expect(row).toBeVisible({ timeout: 15_000 });` | `e2e/dialog-rodape-viewport.spec.ts` |
-| `await save.click({ timeout: 10_000 });` | `e2e/dialog-rodape-viewport.spec.ts` |
-| `await submit.click({ timeout: 10_000 });` | `e2e/dialog-rodape-viewport.spec.ts` |
-| `await expect(destinatarios).toBeVisible({ timeout: 20_000 });` | `e2e/email-link-contato.spec.ts` |
-| `await expect(page).toHaveURL(/emailThread=/, { timeout: 20_000 });` | `e2e/email-link-contato.spec.ts` |
-| `await expect(page).toHaveURL(/view=email-chat/, { timeout: 20_000 });` | `e2e/email-link-contato.spec.ts` |
-| `await expect(page.getByTestId('contact-panel')).toBeVisible({ timeout: 20_000 });` | `e2e/email-link-contato.spec.ts` |
-| `await expect(page.getByTestId('status-chip-all')).toBeVisible({ timeout: 30_000 });` | `e2e/email-link-contato.spec.ts` |
-| `await expect(page.getByText('Conecte seu Gmail ao ZAPP')).toBeVisible({ timeout: 20_000 });` | `e2e/email-link-contato.spec.ts` |
-| `await expect(page.getByText(ASSUNTO).first()).toBeVisible({ timeout: 20_000 });` | `e2e/email-link-contato.spec.ts` |
-| `await expect(tile).toBeVisible({ timeout: 15_000 });` | `e2e/email-link-contato.spec.ts` |
-| `await expect(barra).not.toBeVisible({ timeout: 500 });` | `e2e/files-tab.spec.ts` |
-| `await expect(dialogo).toBeVisible({ timeout: 20_000 });` | `e2e/files-tab.spec.ts` |
-| `await nav.waitFor({ state: 'visible', timeout: 30_000 });` | `e2e/files-tab.spec.ts` |
-| `body: JSON.stringify({ expiresIn: 60 }),` | `e2e/files-tab.spec.ts` |
-| `const NAV_TIMEOUT = 60_000;` | `e2e/files-tab.spec.ts` |
-| `timeout: 20_000,` | `e2e/files-tab.spec.ts` |
-| `timeout: 30_000,` | `e2e/files-tab.spec.ts` |
-| `{ timeout: 20_000 }` | `e2e/inbox-contraste.spec.ts` |
-| `await chips.waitFor({ state: 'visible', timeout: 30_000 });` | `e2e/inbox-sidebar-topo.spec.ts` |
-| `const NAV_TIMEOUT = 60_000;` | `e2e/inbox-sidebar-topo.spec.ts` |
-| `timeout: 10_000,` | `e2e/media-volume.spec.ts` |
-| `).toBeVisible({ timeout: 20_000 });` | `e2e/messaging.spec.ts` |
-| `await expect(page.getByRole('heading', { name: 'Acesso restrito' })).toBeVisible({ timeout: 20_000 });` | `e2e/monitoring.spec.ts` |
-| `await expect(painel).toBeVisible({ timeout: 20_000 });` | `e2e/monitoring.spec.ts` |
-| `.toBeVisible({ timeout: 60_000 });` | `e2e/multiplix-responsivo.spec.ts` |
-| `await expect(page.getByRole('heading', { name: 'Multiplix' })).toBeVisible({ timeout: 60_000 });` | `e2e/multiplix.spec.ts` |
-| `await buscar.click({ timeout: 20_000 });` | `e2e/navegacao-modulos.spec.ts` |
-| `await expect(avisos, `${etapa}: aviso não saiu da tela`).toHaveCount(0, { timeout: 15_000 });` | `e2e/navegacao-modulos.spec.ts` |
-| `await expect(menu, 'o menu móvel não abriu').toBeVisible({ timeout: 10_000 });` | `e2e/navegacao-modulos.spec.ts` |
-| `await expect(nudge, `${etapa}: o aviso de 2FA continuou na tela`).toBeHidden({ timeout: 15_000 });` | `e2e/navegacao-modulos.spec.ts` |
-| `await mais.click({ timeout: 10_000 });` | `e2e/navegacao-modulos.spec.ts` |
-| `await menu.getByRole('button', { name: item.label, exact: true }).first().click({ timeout: 10_000 });` | `e2e/navegacao-modulos.spec.ts` |
-| `await page.goto('/auth', { timeout: 90_000, waitUntil: 'domcontentloaded' });` | `e2e/navegacao-modulos.spec.ts` |
-| `await shell.waitFor({ state: 'visible', timeout: 45_000 }).catch(() => undefined);` | `e2e/navegacao-modulos.spec.ts` |
-| `const teto = { timeout: 90_000 };` | `e2e/navegacao-modulos.spec.ts` |
-| `test.describe.configure({ timeout: 15 * 60_000 });` | `e2e/navegacao-modulos.spec.ts` |
-| `timeout: 10_000,` | `e2e/navegacao-modulos.spec.ts` |
-| `timeout: 25_000,` | `e2e/navegacao-modulos.spec.ts` |
-| `timeout: 45_000,` | `e2e/navegacao-modulos.spec.ts` |
-| `{ timeout: 5_000 },` | `e2e/navegacao-modulos.spec.ts` |
-| `await aba.click({ timeout: 5_000 });` | `e2e/onboarding-dispensar.spec.ts` |
-| `await expect(aba).toBeVisible({ timeout: 20_000 });` | `e2e/onboarding-dispensar.spec.ts` |
-| `await expect(modal).toBeVisible({ timeout: 20_000 });` | `e2e/onboarding-dispensar.spec.ts` |
-| `await expect(modal).toHaveCount(0, { timeout: 10_000 });` | `e2e/onboarding-dispensar.spec.ts` |
-| `await expect(page.locator(OVERLAY_ONBOARDING)).toHaveCount(0, { timeout: 10_000 });` | `e2e/onboarding-dispensar.spec.ts` |
-| `.poll(() => lerPercentualDoRotulo(gatilho), { timeout: 5_000 })` | `e2e/quick-controls-volume.spec.ts` |
-| `await expect(page.getByRole('tooltip')).toHaveCount(0, { timeout: 5_000 });` | `e2e/quick-controls-volume.spec.ts` |
-| `await expect(page.getByRole('tooltip').filter({ hasText: texto }).first()).toBeVisible({ timeout: 7_000 });` | `e2e/quick-controls-volume.spec.ts` |
-| `await nav.waitFor({ state: 'visible', timeout: 30_000 });` | `e2e/quick-controls-volume.spec.ts` |
-| `const NAV_TIMEOUT = 60_000;` | `e2e/quick-controls-volume.spec.ts` |
-| `timeout: 15_000,` | `e2e/quick-controls-volume.spec.ts` |
-| `}, { timeout: 5_000 })` | `e2e/quick-controls-volume.spec.ts` |
-| `).toBeVisible({ timeout: 8_000 });` | `e2e/reactions.spec.ts` |
-| `await bar.waitFor({ timeout: 10_000 });` | `e2e/reactions.spec.ts` |
-| `await bar.waitFor({ timeout: 3_000 });` | `e2e/reactions.spec.ts` |
-| `await expect(badge).not.toBeVisible({ timeout: 8_000 });` | `e2e/reactions.spec.ts` |
-| `await expect(badge).toBeVisible({ timeout: 8_000 });` | `e2e/reactions.spec.ts` |
-| `await expect(bar).toHaveCSS('opacity', '1', { timeout: 5_000 });` | `e2e/reactions.spec.ts` |
-| `await page.waitForSelector('[data-testid="message-group"]', { timeout: 10_000 });` | `e2e/reactions.spec.ts` |
-| `.poll(() => card.evaluate((n) => getComputedStyle(n).transform), { timeout: 5_000 })` | `e2e/skins-e2e.spec.ts` |
-| `.poll(async () => (await lerStorage(page)).cachePreset, { timeout: 15_000 })` | `e2e/skins-e2e.spec.ts` |
-| `await expect(page.getByTestId('skins-gx-grid')).toBeVisible({ timeout: 60_000 });` | `e2e/skins-e2e.spec.ts` |
-| `await expect(page.getByText('Não foi possível salvar o tema')).toBeVisible({ timeout: 10_000 });` | `e2e/skins-e2e.spec.ts` |
-| `await expect(page.getByText('Tema restaurado ao padrão')).toBeVisible({ timeout: 10_000 });` | `e2e/skins-e2e.spec.ts` |
-| `await expect(page.getByText('Tema salvo com sucesso!')).toBeVisible({ timeout: 10_000 });` | `e2e/skins-e2e.spec.ts` |
-| `await expect(page.locator('#main-navigation')).toBeVisible({ timeout: 60_000 });` | `e2e/skins-e2e.spec.ts` |
-| `await expect(pageB.locator('html')).toHaveAttribute('data-preset-id', 'gx-razer', { timeout: 10_000 });` | `e2e/skins-e2e.spec.ts` |
-| `await expect(button).toBeVisible({ timeout: 30_000 });` | `e2e/talk-me.spec.ts` |
-| `await expect.poll(() => harness.envios.length, { timeout: 10_000 }).toBe(1);` | `e2e/talkx-launch.spec.ts` |
-| `await expect.poll(() => harness.envios.length, { timeout: 10_000 }).toBe(2);` | `e2e/talkx-launch.spec.ts` |
-| `await expect.poll(() => harness.envios.length, { timeout: 10_000 }).toBe(3);` | `e2e/talkx-launch.spec.ts` |
-| `await expect.poll(() => harness.envios.length, { timeout: 10_000 }).toBe(4);` | `e2e/talkx-launch.spec.ts` |
-| `await expect(ajuda).toBeVisible({ timeout: 30_000 });` | `e2e/talkx-visual.spec.ts` |
-| `await expect(page.getByRole('button', { name: 'Ajuda' })).toBeVisible({ timeout: 30_000 });` | `e2e/talkx-visual.spec.ts` |
-| `await page.locator('#main-navigation').waitFor({ state: 'visible', timeout: 15_000 });` | `e2e/talkx.spec.ts` |
-| `await expect(page.getByTestId('tasks-module')).toBeVisible({ timeout: 30_000 });` | `e2e/tarefas-linha-de-base.spec.ts` |
-| `await expect(page.getByTestId('tasks-module')).toBeVisible({ timeout: 60_000 });` | `e2e/tarefas-quadro.spec.ts` |
-| `await expect(item).toBeVisible({ timeout: 20_000 });` | `e2e/team-chat.spec.ts` |
-| `timeout: 20_000,` | `e2e/team-chat.spec.ts` |
-| `await expect(conversa).toBeVisible({ timeout: 60_000 });` | `e2e/telefonia.spec.ts` |
-| `await expect(painel).toBeVisible({ timeout: 60_000 });` | `e2e/telefonia.spec.ts` |
-| `await expect(telView).toBeVisible({ timeout: 15_000 });` | `e2e/telefonia.spec.ts` |
-| `await expect(abertura).toBeHidden({ timeout: 30_000 });` | `e2e/theme-alto-contraste.spec.ts` |
-| `await new Promise((resolve) => setTimeout(resolve, 4000));` | `e2e/theme-alto-contraste.spec.ts` |
-| `test('R2-INF-023: trava atômica de versão da projeção (Postgres descartável)', { timeout: 300000 }, async () => {` | `scripts/db-audit/ai-projection-version-guard.test.mjs` |
-| `timeout: 10_000,` | `scripts/db-audit/check-migration-drift.test.mjs` |
-| `assert.match(migration, /locked_at < now\(\) - interval '5 minutes'/i);` | `scripts/db-audit/crm-sync-outbox-contract.test.mjs` |
-| `assert.match(migration, /status = 'processing' AND locked_at < now\(\) - interval '5 minutes'/i);` | `scripts/db-audit/crm-sync-outbox-contract.test.mjs` |
-| `timeout: 60_000,` | `scripts/db-audit/global-guards-regression.test.mjs` |
-| `const uri = '[REDACTED]fixture.invalid:6543/postgres?sslmode=verify-full&sslrootcert=fixtures%2Froot%20ca.pem&connect_timeout=7';` | `scripts/db-audit/psql-environment.test.mjs` |
-| `timeout: 10_000,` | `scripts/db-audit/register-migration.test.mjs` |
-| `('${C_DIRETO}', 'agent', 'sent', '${T}'::timestamptz + interval '1 minute', '${T}'::timestamptz + interval '3 minutes');` | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| `('${C_PENDENTE}', 'agent', 'sending', '${T}'::timestamptz + interval '4 minutes', '${T}'::timestamptz + interval '4 minutes');` | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| `('${C_RETENTATIVA}', 'agent', 'sending', '${T}'::timestamptz + interval '2 minutes', '${T}'::timestamptz + interval '2 minutes');` | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| `UPDATE public.messages SET status = 'failed', status_updated_at = '${T}'::timestamptz + interval '2 minutes'` | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| `UPDATE public.messages SET status = 'sending', status_updated_at = '${T}'::timestamptz + interval '2 minutes'` | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| `UPDATE public.messages SET status = 'sent', status_updated_at = '${T}'::timestamptz + interval '10 minutes'` | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| `UPDATE public.messages SET status = 'sent', status_updated_at = '${T}'::timestamptz + interval '11 minutes'` | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| `${registerCall(c11min, `'${T}'::timestamptz + interval '11 minutes'`)}` | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| `${registerCall(c3min, `'${T}'::timestamptz + interval '3 minutes'`)}` | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| `${registerCall(c6min, `'${T}'::timestamptz + interval '6 minutes'`)}` | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| `${registerCall(cCompany, `'${T}'::timestamptz + interval '3 minutes'`)}` | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| `${registerCall(cContact, `'${T}'::timestamptz + interval '3 minutes'`)}` | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| `${registerCall(contact, `'${T}'::timestamptz + interval '3 minutes'`)}` | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| `${registerCall(contact, `'${T}'::timestamptz + interval '30 minutes'`)}` | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| `${registerCall(contact, `'${T}'::timestamptz + interval '35 minutes'`)}` | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| `('${contact}', 'agent', 'sent', '${T}'::timestamptz + interval '3 minutes');` | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| `timeout: 30000,` | `scripts/db-audit/validate-destino.test.mjs` |
 | `staleTime: 10 * 60 * 1000,` | `src/components/admin/AdminCRMDashboard.tsx` |
 | `staleTime: 15 * 60 * 1000,` | `src/components/admin/AdminCRMDashboard.tsx` |
 | `staleTime: 5 * 60 * 1000,` | `src/components/admin/AdminCRMDashboard.tsx` |
@@ -4185,47 +3652,23 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `const periodStart = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();` | `src/components/admin/SupervisorCopilot.tsx` |
 | `return { since: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(), now };` | `src/components/admin/SupervisorCopilot.tsx` |
 | `: 6 * 60 * 60_000;` | `src/components/admin/telemetry/TelemetryCharts.tsx` |
-| `const HORA = 60 * 60 * 1000;` | `src/components/agents/__tests__/AgentsView.pendencias.test.tsx` |
-| `const limite = Date.now() - RECENT_SENDS_WINDOW_DAYS * 24 * 60 * 60 * 1000;` | `src/components/agents/__tests__/AgentsView.pendencias.test.tsx` |
-| `expect(corte).toBeGreaterThanOrEqual(limite - 5 * 60 * 1000);` | `src/components/agents/__tests__/AgentsView.pendencias.test.tsx` |
 | `const permTimeout = setTimeout(() => { if (hasPermission === null) { log.warn('[ProtectedRoute] Permission check timed out'); setHasPermission(false); } }, 5000 …` | `src/components/auth/ProtectedRoute.tsx` |
 | `const timer = setTimeout(() => setSaidaLiberada(true), 5000);` | `src/components/auth/ProtectedRoute.tsx` |
-| `await waitFor(() => expect(chamadas.length).toBe(total), { timeout: 4000 });` | `src/components/auth/__tests__/PasswordStrengthMeter.corrida.test.tsx` |
-| `{ timeout: 450 },` | `src/components/auth/__tests__/PasswordStrengthMeter.corrida.test.tsx` |
-| `await screen.findByText('Senha não encontrada em vazamentos conhecidos', undefined, { timeout: 4000 }),` | `src/components/auth/__tests__/PasswordStrengthMeter.test.tsx` |
-| `await waitFor(() => expect(fetchMock).toHaveBeenCalled(), { timeout: 4000 });` | `src/components/auth/__tests__/PasswordStrengthMeter.test.tsx` |
-| `expect(await screen.findByText('Senha comprometida!', undefined, { timeout: 4000 })).toBeInTheDocument();` | `src/components/auth/__tests__/PasswordStrengthMeter.test.tsx` |
-| `timeout = 0;` | `src/components/calls/__tests__/websocketSpy.ts` |
 | `return Date.now() - new Date(lastSyncAt).getTime() < 24 * 60 * 60 * 1000;` | `src/components/catalog/ExternalProductManagement.tsx` |
-| `await screen.findByTestId('send-dialog', {}, { timeout: 5000 });` | `src/components/catalog/__tests__/CT55_57_management.test.tsx` |
-| `const dialog = await screen.findByTestId('send-dialog', {}, { timeout: 5000 });` | `src/components/catalog/__tests__/CT55_57_management.test.tsx` |
-| `const stale = new Date(Date.now() - 30 * 60 * 60 * 1000).toISOString();` | `src/components/catalog/__tests__/ExternalProductManagement.test.tsx` |
-| `const cincoMinAtras = new Date(Date.now() - 5 * 60 * 1000).toISOString();` | `src/components/connections/__tests__/ConnectionCard.saude.test.tsx` |
-| `return waitFor(() => Promise.resolve(), { timeout: 200 });` | `src/components/connections/__tests__/ConnectionsView.telefone-validacao.test.tsx` |
 | `const accountAgeDays = Math.max(1, (now - created) / (1000 * 60 * 60 * 24));` | `src/components/contacts/ContactEngagementScore.tsx` |
 | `const daysSinceLastMsg = lastMsg ? (now - lastMsg) / (1000 * 60 * 60 * 24) : 999;` | `src/components/contacts/ContactEngagementScore.tsx` |
-| `new Date(AGORA.getTime() - n * 24 * 60 * 60 * 1000).toISOString();` | `src/components/contacts/__tests__/ContactEngagementScore.test.tsx` |
-| `await waitFor(() => expect(callsTo('/search/searchbox/v1/suggest')).not.toHaveLength(0), { timeout: 2000 });` | `src/components/contacts/__tests__/ContactFormEndereco.integration.test.tsx` |
-| `const ESPERA = { timeout: 15000 };` | `src/components/contacts/__tests__/ContactFormRecalculoCorrida.test.tsx` |
 | `setTimeout(() => setCopied(false), 2000);` | `src/components/copilot/QuoteDraftCard.tsx` |
 | `staleTime: 10 * 60 * 1000,` | `src/components/crm360/CRM360StatsCards.tsx` |
 | `staleTime: 5 * 60 * 1000,` | `src/components/dashboard/ActivityHeatmap.tsx` |
 | `.gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());` | `src/components/dashboard/ConversationHeatmap.tsx` |
 | `staleTime: 5 * 60 * 1000,` | `src/components/dashboard/ConversationHeatmap.tsx` |
-| `const buscaEm = Date.now() - 3 * 60 * 60 * 1000;` | `src/components/dashboard/__tests__/ProgressiveDisclosureDashboard.test.tsx` |
-| `const alerta = await screen.findByTestId('sentiment-error', {}, { timeout: 45000 });` | `src/components/dashboard/__tests__/SentimentAlertsDashboard.a11y.test.tsx` |
-| `it('falha de leitura mostra o erro com "Tentar de novo" em vez de fingir vazio', { timeout: 60000 }, async () => {` | `src/components/dashboard/__tests__/SentimentAlertsDashboard.a11y.test.tsx` |
-| `await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 15000 });` | `src/components/dashboard/__tests__/useSentimentData.test.tsx` |
 | `const timer = setTimeout(() => { setShow(false); onComplete?.(); }, 3500);` | `src/components/effects/Confetti.tsx` |
 | `setTimeout(() => setMatrixMode(false), 8000);` | `src/components/effects/EasterEggs.tsx` |
 | `setTimeout(() => setPartyMode(false), 10000);` | `src/components/effects/EasterEggs.tsx` |
 | `setTimeout(() => { document.body.classList.remove('disco-mode'); }, 8000);` | `src/components/effects/EasterEggs.tsx` |
 | `setTimeout(() => { document.body.classList.remove('rainbow-mode'); }, 5000);` | `src/components/effects/EasterEggs.tsx` |
-| `const oitoDiasAtras = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();` | `src/components/email/__tests__/EmailChatReplyBar.rascunho.test.tsx` |
-| `const botao = await screen.findByRole('button', { name: /tentar novamente/i }, { timeout: 8000 });` | `src/components/errors/__tests__/error-boundary-chunk-reload.test.tsx` |
 | `return new Date(earnedAt) > new Date(Date.now() - 60 * 60 * 1000);` | `src/components/gamification/AchievementsStats.tsx` |
 | `setTimeout(() => { if (currentQuestion < QUIZ_QUESTIONS.length - 1) { setCurrentQuestion(c => c + 1); setAnswered(null); } else { setShowResult(true); onComplet …` | `src/components/gamification/MiniGameDialogs.tsx` |
-| `{ timeout: 1500 },` | `src/components/gamification/__tests__/AchievementToast.test.tsx` |
 | `destaqueTimerRef.current = setTimeout(() => { destaqueTimerRef.current = null; setDeliveryFocusId(null); }, 1200);` | `src/components/inbox/ChatPanel.tsx` |
 | `const [date, setDate] = useState(format(addDays(new Date(), 1), 'yyyy-MM-dd'));` | `src/components/inbox/ScheduleMessageDialog.tsx` |
 | `{ label: 'Amanhã 14h', getDate: () => setMinutes(setHours(addDays(new Date(), 1), 14), 0) },` | `src/components/inbox/ScheduleMessageDialog.tsx` |
@@ -4237,41 +3680,13 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `case '30days': return subMonths(now, 1);` | `src/components/inbox/useGlobalSearchData.ts` |
 | `case '7days': return subDays(now, 7);` | `src/components/inbox/useGlobalSearchData.ts` |
 | `case '90days': return subMonths(now, 3);` | `src/components/inbox/useGlobalSearchData.ts` |
-| `expect(await screen.findByRole('tooltip', undefined, { timeout: 3000 })).toHaveTextContent('CRM não configurado');` | `src/components/inbox/__tests__/CRMSyncButton.dica-focavel.test.tsx` |
-| `* o diálogo fechava ANTES do envio (fluxo único) e com `setTimeout(handleClose, 1000)`` | `src/components/inbox/__tests__/FileUploader.retry-envio.test.tsx` |
-| `await waitFor(() => expect(retryAll).toBeEnabled(), { timeout: 4000 });` | `src/components/inbox/__tests__/FileUploader.retry-envio.test.tsx` |
-| `await waitFor(() => expect(retryItem).toBeEnabled(), { timeout: 4000 });` | `src/components/inbox/__tests__/FileUploader.retry-envio.test.tsx` |
-| `const resultado = await screen.findByRole('button', { name: /Conversa com Ana Souza/i }, { timeout: 3000 });` | `src/components/inbox/__tests__/GlobalSearch.r2-inb-018.test.tsx` |
-| `const ESPERA_LAZY = { timeout: 10000, interval: 50 };` | `src/components/inbox/__tests__/RealtimeInboxView.pagination.test.tsx` |
-| `const warningMs = 2 * 60 * 1000;` | `src/components/inbox/__tests__/SLAIndicator.test.tsx` |
-| `renderList([comUltimaMensagemEm(new Date(Date.now() - 30 * 60 * 1000).toISOString())]);` | `src/components/inbox/__tests__/VirtualizedRealtimeList.test.tsx` |
-| `await screen.findByRole('button', { name: /Conversa com Ana Souza/i }, { timeout: 3000 });` | `src/components/inbox/__tests__/useGlobalSearchData.eventos.test.tsx` |
 | `setTimeout(() => setCopied(false), 2000);` | `src/components/inbox/ai-tools/AIResponseCard.tsx` |
 | `const DAY_MS = 24 * 60 * 60 * 1000;` | `src/components/inbox/ai-tools/PeriodFilterSelector.tsx` |
 | `const SESSION_GAP_MS = 4 * 60 * 60 * 1000;` | `src/components/inbox/ai-tools/PeriodFilterSelector.tsx` |
 | `export const PRESENCE_ONLINE_WINDOW_MS = 2 * 60 * 1000;` | `src/components/inbox/chat/contactPresence.ts` |
-| `fireEvent.click(await screen.findByRole('button', { name: 'transcrever' }, { timeout: 5000 }));` | `src/components/inbox/chat/__tests__/ChatDialogs.transcricao.test.tsx` |
-| `}, { timeout: 3000 });` | `src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx` |
-| `}, { timeout: 10000 });` | `src/components/inbox/chat/__tests__/ChatMessagesArea.loop.test.tsx` |
-| `await waitFor(() => expect(bolha('s1')?.getAttribute('data-realce')).toBe('ativo'), { timeout: 3000 });` | `src/components/inbox/chat/__tests__/ChatPanel.entrega-conversa.test.tsx` |
-| `await waitFor(() => expect(screen.queryByRole('alert')).toBeNull(), { timeout: 3000 });` | `src/components/inbox/chat/__tests__/SendErrorBanner.test.tsx` |
-| `{ timeout: 3000 },` | `src/components/inbox/chat/__tests__/useChatInputLogic.rascunho-por-usuario.test.tsx` |
-| `await waitFor(() => expect(caminho.getAttribute('stroke-dashoffset')).toBe('0'), { timeout: 1000 });` | `src/components/inbox/chat/motion/__tests__/chat-motion.test.tsx` |
-| `await waitFor(() => expect(el).toHaveTextContent('1.234'), { timeout: 4000 });` | `src/components/inbox/chat/motion/__tests__/chat-motion.test.tsx` |
-| `await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1), { timeout: 1000 });` | `src/components/inbox/chat/motion/__tests__/chat-motion.test.tsx` |
 | `{ enableHighAccuracy: true, timeout: 10000 }` | `src/components/inbox/location-picker/useLocationPicker.ts` |
-| `* resposta do aparelho chega quando chegar (o `timeout: 10000` é o teto, não a promessa de` | `src/components/inbox/location-picker/__tests__/LocationPicker.gpsAtrasado.test.tsx` |
-| `const opcao = await screen.findByRole('option', { name: /^XBZ/, }, { timeout: 5_000 });` | `src/components/inbox/location-picker/__tests__/LocationPicker.gpsAtrasado.test.tsx` |
-| `const DIA_MS = 24 * 60 * 60 * 1000;` | `src/components/inbox/tabs/__tests__/FilesTab.cabecalho-funil.test.tsx` |
-| `const DIA_MS = 24 * 60 * 60 * 1000;` | `src/components/inbox/tabs/__tests__/FilesTab.period.integration.test.tsx` |
-| `it('caminho do "De": a varredura que nunca cruza o inicio para no TETO, sem skeleton infinito', { timeout: 60_000 }, async () => {` | `src/components/inbox/tabs/__tests__/FilesTab.period.integration.test.tsx` |
-| `it('tres paginas de 60: a varredura busca a pagina antiga ate CRUZAR o inicio do periodo e para nela', { timeout: 30_000 }, async () => {` | `src/components/inbox/tabs/__tests__/FilesTab.period.integration.test.tsx` |
-| `const DIA_MS = 24 * 60 * 60 * 1000;` | `src/components/inbox/tabs/__tests__/FilesTab.periodo.test.tsx` |
 | `const timer = setTimeout(() => setShowCelebration(false), 2000);` | `src/components/leaderboard/LeaderboardHelpers.tsx` |
 | `setTimeout(() => setCopied(false), 2000);` | `src/components/mfa/MFABackupCodes.tsx` |
-| `checked_at: new Date(NOW - 30 * 60 * 1000).toISOString(),` | `src/components/monitoring/__tests__/sla-janela-24h.test.tsx` |
-| `const HOUR = 60 * 60 * 1000;` | `src/components/monitoring/__tests__/sla-janela-24h.test.tsx` |
-| `const SINCE_ISO = new Date(NOW.getTime() - 24 * 60 * 60 * 1000).toISOString();` | `src/components/monitoring/__tests__/useConnectionIncidents.test.ts` |
 | `'12h': 12 * 60 * 60 * 1000,` | `src/components/monitoring/hooks/types.ts` |
 | `'1h': 60 * 60 * 1000,` | `src/components/monitoring/hooks/types.ts` |
 | `'24h': 24 * 60 * 60 * 1000,` | `src/components/monitoring/hooks/types.ts` |
@@ -4281,14 +3696,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `export const SLA_WINDOW_MS = 24 * 60 * 60 * 1000;` | `src/components/monitoring/hooks/types.ts` |
 | `await new Promise(r => setTimeout(r, 1000));` | `src/components/monitoring/hooks/useMonitoringActions.ts` |
 | `const HOUR_MS = 60 * 60 * 1000;` | `src/components/monitoring/hooks/useMonitoringData.ts` |
-| `await waitFor(() => expect(estado.searchMutate).toHaveBeenCalledTimes(2), { timeout: 2000 });` | `src/components/multiplix/__tests__/MultiplixView.painel01.test.tsx` |
-| `await waitFor(() => expect(estado.searchMutate).toHaveBeenCalledTimes(4), { timeout: 2000 });` | `src/components/multiplix/__tests__/MultiplixView.painel01.test.tsx` |
 | `setTimeout(() => setIsTestingSound(false), 1000);` | `src/components/notifications/NotificationSettingsPanel.tsx` |
 | `setTimeout(() => setIsTesting(false), 1000);` | `src/components/notifications/NotificationTypeCards.tsx` |
-| `await waitFor(() => expect(h.state.lastContactsQuery?.or).toHaveBeenCalled(), { timeout: 3000 });` | `src/components/omnichannel/__tests__/OmnichannelInbox.test.tsx` |
 | `const timer = setTimeout(() => setIsExpanded(false), 8000);` | `src/components/onboarding/OnboardingChecklist.tsx` |
-| `await new Promise((resolve) => setTimeout(resolve, 2500));` | `src/components/onboarding/__tests__/TourOverlay.a11y.test.tsx` |
-| `await new Promise((resolve) => setTimeout(resolve, 2500));` | `src/components/onboarding/__tests__/defaultTourSteps.alvos.test.tsx` |
 | `await new Promise((resolve) => setTimeout(resolve, 2000));` | `src/components/performance/Prefetcher.tsx` |
 | `staleTime: 5 * 60 * 1000, // 5 minutes` | `src/components/performance/Prefetcher.tsx` |
 | `const [dateRange, setDateRange] = useState(() => ({ from: subDays(new Date(), 6), to: new Date() }));` | `src/components/queues/QueueCharts.tsx` |
@@ -4298,18 +3708,244 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `currentStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);` | `src/components/reports/PeriodComparison.tsx` |
 | `previousStart = new Date(previousEnd.getTime() - 30 * 24 * 60 * 60 * 1000);` | `src/components/reports/PeriodComparison.tsx` |
 | `previousStart = new Date(previousEnd.getTime() - 7 * 24 * 60 * 60 * 1000);` | `src/components/reports/PeriodComparison.tsx` |
-| `const base = appDayStart(d).getTime() + 12 * 60 * 60 * 1000; // 12:00 do dia` | `src/components/reports/__tests__/AdvancedReportsView.periodComparison.test.tsx` |
 | `onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}` | `src/components/schedule/ScheduleCalendarView.tsx` |
 | `onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}` | `src/components/schedule/ScheduleCalendarView.tsx` |
-| `const PROXIMO_MES = addMonths(MES_EXIBIDO, 1);` | `src/components/schedule/__tests__/ScheduleCalendarView.agenda.test.tsx` |
 | `const DISMISS_TTL_MS = 24 * 60 * 60 * 1000;` | `src/components/security/MfaAdminNudge.tsx` |
-| `const HORA = 60 * 60 * 1000;` | `src/components/security/__tests__/AuditLogDashboard.hoje-janela24h.test.tsx` |
-| `const maisDe24h = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();` | `src/components/security/__tests__/AuditLogDashboard.test.tsx` |
-| `act(() => { vi.advanceTimersByTime(24 * 60 * 60 * 1000 + 1); });` | `src/components/security/__tests__/MfaAdminNudge.test.tsx` |
 | `setTimeout(() => setSaved(null), 2000);` | `src/components/talkx/TalkXSettings.tsx` |
 | `return new Date(now + Number(choice) * 24 * 60 * 60 * 1000).toISOString();` | `src/components/talkx/TalkXSuppression.tsx` |
-| `const ESPERA_MOUNT = { timeout: 15000 };` | `src/components/talkx/__tests__/RuleValueInput.test.tsx` |
-| … +643 linhas — lista completa em `context.json` | |
+| `destaqueTimer.current = window.setTimeout(() => setDestaqueId(null), 1200);` | `src/components/tasks/TasksModule.tsx` |
+| `setTimeout(() => el.classList.remove('animate-pulse-subtle'), 2000);` | `src/components/team-chat/TeamMessageItem.tsx` |
+| `setTimeout(() => setCopiedId(null), 2000);` | `src/components/team-chat/department-management/DepartmentInvitesView.tsx` |
+| `wasOfflineTimerRef.current = setTimeout(() => { wasOfflineTimerRef.current = null; setWasOffline(false); }, 3000);` | `src/components/ui/offline-indicator.tsx` |
+| `const t4 = setTimeout(() => setProgress(90), 1500);` | `src/components/ui/route-loading-bar.tsx` |
+| `indicatorTimerRef.current = window.setTimeout(() => { indicatorTimerRef.current = null; setShowIndicator(false); }, 3000);` | `src/components/ui/skip-link.tsx` |
+| `const timer = setTimeout(() => setRestored(false), 4000);` | `src/components/ui/supabase-connectivity-banner.tsx` |
+| `const DAY_MS = 24 * 60 * 60 * 1000;` | `src/hooks/agents/useAgentRecentSends.ts` |
+| `const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();` | `src/hooks/analytics/useAIStats.ts` |
+| `case '1h': return subHours(agora, 1);` | `src/hooks/analytics/useAIUsageDashboard.ts` |
+| `case '24h': return subDays(agora, 1);` | `src/hooks/analytics/useAIUsageDashboard.ts` |
+| `case '30d': return subDays(agora, 30);` | `src/hooks/analytics/useAIUsageDashboard.ts` |
+| `case '6h': return subHours(agora, 6);` | `src/hooks/analytics/useAIUsageDashboard.ts` |
+| `case '7d': return subDays(agora, 7);` | `src/hooks/analytics/useAIUsageDashboard.ts` |
+| `export function useIdleCallback(callback: () => void, timeout = 1000) {` | `src/hooks/analytics/usePerformanceOptimizations.ts` |
+| `const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();` | `src/hooks/analytics/usePerformanceSnapshots.ts` |
+| `const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();` | `src/hooks/analytics/usePerformanceSnapshots.ts` |
+| `export const QUEUE_GOAL_ALERTS_INTERVAL_MS = 5 * 60 * 1000;` | `src/hooks/analytics/useQueueGoalAlerts.ts` |
+| `const JANELA_HORA_MS = 60 * 60 * 1000;` | `src/hooks/analytics/useRealtimeDashboard.ts` |
+| `const hourAgo = new Date(now.getTime() - 60 * 60 * 1000);` | `src/hooks/analytics/useRealtimeDashboard.ts` |
+| `const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);` | `src/hooks/analytics/useRealtimeDashboard.ts` |
+| `useVisiblePolling(fetchInitialData, 5 * 60 * 1000);` | `src/hooks/analytics/useRealtimeDashboard.ts` |
+| `'24h': () => subHours(new Date(), 24),` | `src/hooks/analytics/useRecentAnalyses.ts` |
+| `'30d': () => subDays(new Date(), 30),` | `src/hooks/analytics/useRecentAnalyses.ts` |
+| `'7d': () => subDays(new Date(), 7),` | `src/hooks/analytics/useRecentAnalyses.ts` |
+| `staleTime: 5 * 60 * 1000,` | `src/hooks/analytics/useSentimentTrend.ts` |
+| `staleTime: 5 * 60 * 1000,` | `src/hooks/auth/useMFA.ts` |
+| `const since = new Date(windowEnd.getTime() - days * 24 * 60 * 60 * 1000);` | `src/hooks/business/useAbandonmentRate.ts` |
+| `export const SESSION_SILENCE_MS = 4 * 60 * 60 * 1000;` | `src/hooks/business/useAbandonmentRate.ts` |
+| `.gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());` | `src/hooks/business/useDemandPrediction.ts` |
+| `const time = new Date(now.getTime() + i * 60 * 60 * 1000);` | `src/hooks/business/useDemandPrediction.ts` |
+| `staleTime: 5 * 60 * 1000,` | `src/hooks/business/useDemandPrediction.ts` |
+| `const dayEnd = nextBucket ? startOfDay(nextBucket) : addDays(startOfDay(range.to), 1);` | `src/hooks/business/useQueueAnalytics.ts` |
+| `* Antes, `nextweek` era `addDays(now, 7 - now.getDay() + 1)` + `setHours(9)`,` | `src/hooks/chat/snoozeDurations.ts` |
+| `return addHours(now, 1);` | `src/hooks/chat/snoozeDurations.ts` |
+| `return addHours(now, 3);` | `src/hooks/chat/snoozeDurations.ts` |
+| `const GAP_MS = 4 * 60 * 60 * 1000; // 4 hours` | `src/hooks/chat/useChatSearch.ts` |
+| `staleTime: 5 * 60 * 1000,` | `src/hooks/chat/useContactMedia.ts` |
+| `staleTime: 5 * 60 * 1000,` | `src/hooks/chat/useMediaSenderProfiles.ts` |
+| `gcTime: 10 * 60 * 1000,` | `src/hooks/chat/useMessageReactions.ts` |
+| `gcTime: 5 * 60 * 1000,` | `src/hooks/chat/useMessageReactions.ts` |
+| `staleTime: 5 * 60 * 1000,` | `src/hooks/chat/useMessageReactions.ts` |
+| `const hoursSinceLastMsg = (Date.now() - new Date(lastMsg.created_at).getTime()) / (1000 * 60 * 60);` | `src/hooks/chat/useNextBestAction.ts` |
+| `contactTypingTimeoutRef.current = setTimeout(() => { setIsContactTyping(false); }, 5000);` | `src/hooks/chat/useTypingPresence.ts` |
+| `typingTimeoutRef.current = setTimeout(() => { setTyping(false); }, 3000);` | `src/hooks/chat/useTypingPresence.ts` |
+| `staleTime: 5 * 60 * 1000,` | `src/hooks/chat/journey/useJourneyActors.ts` |
+| `setTimeout(resolve, 3000);` | `src/hooks/communication/useAudioMemes.ts` |
+| `const SIGNED_URL_REFRESH_AFTER_MS = 50 * 60 * 1000;` | `src/hooks/communication/useAudioPlayer.ts` |
+| `const cutoff = Date.now() - 5 * 60 * 1000;` | `src/hooks/copilot/useWhisperChannel.ts` |
+| `staleTime: 5 * 60 * 1000,` | `src/hooks/crm/useAgentsLite.ts` |
+| `staleTime: 5 * 60 * 1000,` | `src/hooks/crm/useCRMAdminAccess.ts` |
+| `const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 6;` | `src/hooks/crm/useContactCrm360.ts` |
+| `gcTime: 15 * 60 * 1000,` | `src/hooks/crm/useEmailContactContext.ts` |
+| `staleTime: 5 * 60 * 1000,` | `src/hooks/crm/useEmailContactContext.ts` |
+| `gcTime: 1000 * 60 * 60,` | `src/hooks/crm/useExternalCargos.ts` |
+| `gcTime: 1000 * 60 * 60,` | `src/hooks/crm/useExternalEmpresas.ts` |
+| `const since = subHours(new Date(), 24).toISOString();` | `src/hooks/dashboard/useRecentConversationEvents.ts` |
+| `staleTime: 5 * 60 * 1000,` | `src/hooks/dashboard/useSentimentTrend.ts` |
+| `export const BROADCAST_ACTION_TTL_MS = 2 * 60 * 1000;` | `src/hooks/groups/actions.ts` |
+| `setTimeout(() => setCopiedIdx(null), 2000);` | `src/hooks/inbox/useObjectionDetector.ts` |
+| `const since = new Date(Date.now() - WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();` | `src/hooks/integrations/useCatalogRecentSends.ts` |
+| `gcTime: 10 * 60 * 1000,` | `src/hooks/integrations/useExternalCatalog.ts` |
+| `gcTime: 30 * 60 * 1000,` | `src/hooks/integrations/useExternalCatalog.ts` |
+| `staleTime: 10 * 60 * 1000,` | `src/hooks/integrations/useExternalCatalog.ts` |
+| `staleTime: 5 * 60 * 1000,` | `src/hooks/integrations/useExternalCatalog.ts` |
+| `const { table, select, filters, order, limit = 50, offset = 0, countMode, enabled = true, staleTime = 5 * 60 * 1000 } = options;` | `src/hooks/integrations/useExternalDB.ts` |
+| `staleTime: 2 * 60 * 1000,` | `src/hooks/integrations/useExternalDB.ts` |
+| `staleTime: options.staleTime ?? 10 * 60 * 1000,` | `src/hooks/integrations/useExternalDB.ts` |
+| `staleTime: 5 * 60 * 1000,` | `src/hooks/integrations/useMultiplixAudience.ts` |
+| `gcTime: 60 * 60 * 1000,` | `src/hooks/integrations/useTalkXInsights.ts` |
+| `staleTime: 60 * 60 * 1000,` | `src/hooks/integrations/useTalkXInsights.ts` |
+| `staleTime: 5 * 60 * 1000,` | `src/hooks/integrations/useTalkXSettings.ts` |
+| `const HORA = 60 * 60 * 1000;` | `src/hooks/security/useAuditLogDashboard.ts` |
+| `export const SLA_ALERT_DEDUPE_TTL_MS = 24 * 60 * 60 * 1000;` | `src/hooks/sla/useSLANotifications.ts` |
+| `const HEARTBEAT_DEGRADADO_MS = 60 * 60 * 1000;` | `src/hooks/system/useDiagnosticsData.ts` |
+| `const HEARTBEAT_SAUDAVEL_MS = 15 * 60 * 1000;` | `src/hooks/system/useDiagnosticsData.ts` |
+| `const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();` | `src/hooks/system/useDiagnosticsData.ts` |
+| `const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();` | `src/hooks/system/useDiagnosticsData.ts` |
+| `refetchInterval: 5 * 60 * 1000,` | `src/hooks/system/useFeatureFlag.ts` |
+| `staleTime: 5 * 60 * 1000,` | `src/hooks/system/useFeatureFlag.ts` |
+| `gcTime: 10 * 60 * 1000,` | `src/hooks/system/useGlobalSettings.ts` |
+| `staleTime: 5 * 60 * 1000, // 5 min — deduplica entre todos os consumidores` | `src/hooks/system/useGlobalSettings.ts` |
+| `const scheduleIdle = useCallback((work: () => void, timeout = 5000) => {` | `src/hooks/system/useIdleCallback.ts` |
+| `const { timeout = 2000, enabled = true } = options;` | `src/hooks/system/useIdleCallback.ts` |
+| `gcTime: 10 * 60 * 1000,` | `src/hooks/system/useNotificationSettings.ts` |
+| `staleTime: 5 * 60 * 1000, // 5 min — deduplicate across all consumers` | `src/hooks/system/useNotificationSettings.ts` |
+| `cacheDuration = 5 * 60 * 1000, // 5 minutes` | `src/hooks/system/useResourcePrefetch.ts` |
+| `timeoutId = setTimeout(prefetchAll, 1000);` | `src/hooks/system/useResourcePrefetch.ts` |
+| `const FAILURE_WINDOW_MS = 24 * 60 * 60 * 1000;` | `src/hooks/system/useSystemHealthSignals.ts` |
+| `const STALL_WINDOW_MS = 5 * 60 * 1000;` | `src/hooks/system/useSystemHealthSignals.ts` |
+| `inactivity_timeout: 30,` | `src/hooks/system/useUserSettings.ts` |
+| `const day2Start = startOfDay(addDays(now, 2));` | `src/hooks/tasks/workItemAggregates.ts` |
+| `const sevenDayLimit = startOfDay(addDays(now, 7));` | `src/hooks/tasks/workItemAggregates.ts` |
+| `const tomorrowStart = startOfDay(addDays(now, 1));` | `src/hooks/tasks/workItemAggregates.ts` |
+| `if (filtro === 'today') return due < startOfDay(addDays(now, 1));` | `src/hooks/tasks/workItemAggregates.ts` |
+| `return due < startOfDay(addDays(now, 7)); // filtro === 'week'` | `src/hooks/tasks/workItemAggregates.ts` |
+| `const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();` | `src/hooks/team-chat/useTeamPerformance.ts` |
+| `const timeout = setTimeout(() => controller.abort(), 15000);` | `src/hooks/voice/processTranscript.ts` |
+| `export const AUDIO_STATE_TTL_MS = 30 * 60 * 1000;` | `src/lib/audioPlayerState.ts` |
+| `const CHECK_INTERVAL_MS = 10 * 60 * 1000;` | `src/lib/deployment-update.ts` |
+| `const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;` | `src/lib/emailDraftSession.ts` |
+| `setTimeout(() => resolve(load()), 1000 * attempt)` | `src/lib/lazyWithRetry.ts` |
+| `const POLL_INTERVAL_MS = 5 * 60 * 1000;` | `src/lib/mapboxCostGuard.ts` |
+| `export const MESSAGE_GROUP_WINDOW_MS = 10 * 60 * 1000;` | `src/lib/journey/mappers.ts` |
+| `const DIA_MS = 24 * 60 * 60 * 1000;` | `src/lib/journey/periodRange.ts` |
+| `const threshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();` | `src/pages/AdminTelemetriaPage.tsx` |
+| `const t = setTimeout(() => setNotifReady(true), 2000);` | `src/pages/Index.tsx` |
+| `const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);` | `src/pages/ResetPassword.tsx` |
+| `const timer = setTimeout(() => { if (statusRef.current === 'loading') { statusRef.current = 'error'; setStatus('error'); setErrorMessage('Tempo esgotado. Tente …` | `src/pages/SSOCallback.tsx` |
+| `setTimeout(() => navigate(destinoPosLogin), 1500);` | `src/pages/SSOCallback.tsx` |
+| `return { start: start.toISOString(), end: addDays(start, 1).toISOString() };` | `src/pages/queue-details/queueMetrics.ts` |
+| `setTimeout(() => setErrorKey(prev => prev + 1), 2000 * retryCountRef.current);` | `src/providers/AppProviders.tsx` |
+| `const DAY_MS = 24 * 60 * 60 * 1000;` | `src/services/contact.service.ts` |
+| `export const PENDING_ACTION_TTL_MS = 2 * 60 * 1000;` | `src/services/outbound-message.service.ts` |
+| `if (!options?.requireInteraction) { setTimeout(() => notification.close(), 5000); }` | `src/utils/notificationSounds.ts` |
+| `const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/_shared/ai-guards.ts` |
+| `const TOKEN_CACHE_TTL_MS = 5 * 60 * 1000;` | `supabase/functions/_shared/evolution-instance-token.ts` |
+| `const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/_shared/evolution-webhook-messages.ts` |
+| `if (Date.now() < new Date(account.token_expires_at).getTime() - 5 * 60 * 1000) return storedTokens.access_token;` | `supabase/functions/_shared/gmail-helpers.ts` |
+| `const JWKS_CACHE_TTL_MS = 15 * 60 * 1000;` | `supabase/functions/_shared/hmac-validation.ts` |
+| `const DAY_MS = 24 * 60 * 60 * 1000;` | `supabase/functions/ai-churn-analysis/churn-risk.ts` |
+| `const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/batch-fetch-avatars/index.ts` |
+| `if (i + 5 < contacts.length) await new Promise(r => setTimeout(r, 1000));` | `supabase/functions/batch-fetch-avatars/index.ts` |
+| `const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/cleanup-rate-limit-logs/index.ts` |
+| `const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/cleanup-rate-limit-logs/index.ts` |
+| `const STALE_SESSION_MS = 6 * 60 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
+| `const WEBHOOK_SILENT_MS = 30 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
+| `const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/connection-health-check/index.ts` |
+| `expires_at: new Date(args.now.getTime() + 24 * 60 * 60 * 1000).toISOString(),` | `supabase/functions/detect-new-device/index.ts` |
+| `await new Promise((r) => setTimeout(r, 1500));` | `supabase/functions/evolution-api/index.ts` |
+| `await new Promise((r) => setTimeout(r, 2000));` | `supabase/functions/evolution-api/index.ts` |
+| `const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6h for hits` | `supabase/functions/fetch-link-preview/index.ts` |
+| `const WINDOW_MS = 24 * 60 * 60 * 1000;` | `supabase/functions/metrics/index.ts` |
+| `const NEW_PRODUCT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;` | `supabase/functions/promogifts-catalog/index.ts` |
+| `export const RECOVERY_COOLDOWN_MS = 10 * 60 * 1000;` | `supabase/functions/recover-message-media/index.ts` |
+| `const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);` | `supabase/functions/send-scheduled-report/index.ts` |
+| `const desde = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/sync-call-records/index.ts` |
+| `const CACHE_TTL_MS = 24 * 60 * 60 * 1000;` | `supabase/functions/talkx-ai/index.ts` |
+| `const CONVERT_WINDOW_MS = 5 * 60 * 1000; // x-talkx-timestamp tolera ±5 min` | `supabase/functions/talkx-link/index.ts` |
+| `const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString();` | `supabase/functions/talkx-send/index.ts` |
+| `options: { challenge, rpId, timeout: 60000, userVerification: 'required' },` | `supabase/functions/webauthn/index.ts` |
+| `timeout: 60000, attestation: 'none', excludeCredentials,` | `supabase/functions/webauthn/index.ts` |
+| `const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();` | `supabase/functions/webhook-diagnostic/index.ts` |
+| `expires_at TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '5 minutes')` | `supabase/migrations/20251231115910_4da9c2d9-f6a8-4dc8-90ad-6efa0e1c9de0.sql` |
+| `expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (now() + interval '24 hours'),` | `supabase/migrations/20251231123128_44dfe57a-e66d-4ffe-ad25-544966e4b9a3.sql` |
+| `expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (now() + interval '5 minutes')` | `supabase/migrations/20251231124607_b7b9f19a-a6cf-43d2-9ddf-5f87f4a84244.sql` |
+| `AND created_at > now() - interval '1 hour';` | `supabase/migrations/20260410105209_872755b9-b0b5-4338-a541-688258a70ae9.sql` |
+| `AND attempt_time < now() - interval '15 minutes';` | `supabase/migrations/20260829080000_fix_guard_session_user.sql` |
+| `AND m.created_at > now() - interval '30 days'` | `supabase/migrations/20260902100005_e24_backfill_assigned_to_active_contacts.sql` |
+| `first_response_breached = v_now > first_message_at + interval '5 minutes'` | `supabase/migrations/20260903120000_register_first_response.sql` |
+| `v_now > v_first_message_at + interval '5 minutes'` | `supabase/migrations/20260903120000_register_first_response.sql` |
+| `first_response_breached = v_now > first_message_at + interval '5 minutes'` | `supabase/migrations/20260903160000_harden_mark_first_response.sql` |
+| `v_now > v_first_message_at + interval '5 minutes'` | `supabase/migrations/20260903160000_harden_mark_first_response.sql` |
+| `p_responded_at > v_first_message_at + interval '5 minutes'` | `supabase/migrations/20260903225000_sla_first_response_v2.sql` |
+| `p_responded_at > v_first_message_at + interval '5 minutes'` | `supabase/migrations/20260903233000_sla_base_only_valid_messages.sql` |
+| `SELECT cron.schedule('cleanup-edge-rate-limits', '15 4 * * *', $cron$DELETE FROM public.edge_rate_limits WHERE updated_at < now() - interval '1 day'$cron$);` | `supabase/migrations/20260905020000_edge_rate_limits.sql` |
+| `SELECT cron.schedule('cleanup-edge-rate-limits', '*/15 * * * *', $cron$DELETE FROM public.edge_rate_limits WHERE updated_at < now() - interval '1 hour'$cron$);` | `supabase/migrations/20260905070000_ingest_lock_feature_flags_audit_rate_limit_cleanup.sql` |
+| `OR (q.status = 'processing' AND q.locked_at < now() - interval '5 minutes')` | `supabase/migrations/20260908180000_crm_contact_links_and_sync_outbox.sql` |
+| `OR (status = 'processing' AND locked_at < now() - interval '5 minutes')` | `supabase/migrations/20260908180000_crm_contact_links_and_sync_outbox.sql` |
+| `WHERE status = 'succeeded' AND completed_at >= now() - interval '24 hours'` | `supabase/migrations/20260908180000_crm_contact_links_and_sync_outbox.sql` |
+| `AND locked_at < now() - interval '5 minutes'` | `supabase/migrations/20260908220000_harden_crm_sync_outbox_leases.sql` |
+| `OR (q.status = 'processing' AND q.locked_at < now() - interval '5 minutes')` | `supabase/migrations/20260908220000_harden_crm_sync_outbox_leases.sql` |
+| `OR (status = 'processing' AND locked_at < now() - interval '5 minutes')` | `supabase/migrations/20260908220000_harden_crm_sync_outbox_leases.sql` |
+| `WHERE status = 'succeeded' AND completed_at >= now() - interval '24 hours'` | `supabase/migrations/20260908220000_harden_crm_sync_outbox_leases.sql` |
+| `AND locked_at < now() - interval '5 minutes'` | `supabase/migrations/20260909120000_validate_crm_outbox_acl_and_atomic_merge.sql` |
+| `WHERE status = 'processing' AND locked_at < now() - interval '5 minutes'` | `supabase/migrations/20260909120000_validate_crm_outbox_acl_and_atomic_merge.sql` |
+| `v_cutoff timestamptz := now() - interval '90 days';` | `supabase/migrations/20260916150000_talkx_e89_benchmarks.sql` |
+| `v_cutoff timestamptz := now() - interval '90 days';` | `supabase/migrations/20260916220000_fix_talkx_benchmarks_anon_grant_and_e90_execute.sql` |
+| `AND updated_at < now() - interval '90 seconds';` | `supabase/migrations/20260925100542_agent_presence_server_ttl.sql` |
+| `ELSE (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') - interval '6 days') AT TIME ZONE 'America/Sao_Paulo'` | `supabase/migrations/20260926112500_dashboard_leaderboard_rpc.sql` |
+| `WHEN 'month' THEN (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') - interval '29 days') AT TIME ZONE 'America/Sao_Paulo'` | `supabase/migrations/20260926112500_dashboard_leaderboard_rpc.sql` |
+| `p_since timestamptz DEFAULT now() - interval '1 day',` | `supabase/migrations/20260927120000_dashboard_kpi_p_since_default_null_guard.sql` |
+| `IF v_dispatch.status = 'sending' AND v_dispatch.updated_at > now() - interval '3 minutes' THEN` | `supabase/migrations/20260927600000_fix_multiplix_dispatch_start_sending.sql` |
+| `CREATE OR REPLACE FUNCTION public.team_messages_edit_guard() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$ BEGIN IF OLD.send …` | `supabase/migrations/20260929180000_team_chat_e28_edit_guard_trigger.sql` |
+| `ALTER TABLE public.team_conversation_members ADD CONSTRAINT team_conv_members_last_read_at_check CHECK (last_read_at IS NULL OR last_read_at <= now() + interval …` | `supabase/migrations/20260929210000_team_chat_e31_conversation_members_constraints.sql` |
+| `IF v_dispatch.status = 'sending' AND v_dispatch.updated_at > now() - interval '3 minutes' THEN` | `supabase/migrations/20260929600000_multiplix_send_engine_fixes.sql` |
+| `date_trunc('day', p_to) - interval '1 day',` | `supabase/migrations/20260930670000_talkx_v16_time_series_sent_delivered.sql` |
+| `interval '1 day'` | `supabase/migrations/20260930670000_talkx_v16_time_series_sent_delivered.sql` |
+| `where created_at >= (now() - interval '30 days')` | `supabase/migrations/20260930740000_catalogo_send_stats.sql` |
+| `IF v_dispatch.status = 'sending' AND v_dispatch.updated_at > now() - interval '3 minutes' THEN` | `supabase/migrations/20261002521230_f59_transition_dispatch_enum_cast.sql` |
+| `v_minute_start := statement_timestamp() - interval '1 minute';` | `supabase/migrations/20261002551230_talkx_limits_ritmo.sql` |
+| `v_next_day_at := v_day_start + interval '1 day';` | `supabase/migrations/20261002551230_talkx_limits_ritmo.sql` |
+| `((p_to - interval '1 microsecond') AT TIME ZONE p_timezone)::date,` | `supabase/migrations/20261002631230_talkx_v4_x072_overview_stats.sql` |
+| `interval '1 day'` | `supabase/migrations/20261002631230_talkx_v4_x072_overview_stats.sql` |
+| `AND d.paused_at >= statement_timestamp() - interval '5 seconds';` | `supabase/migrations/20261002671230_f60_conexao_capacidades_e_risco.sql` |
+| `IF p_occurred_at > now() + interval '1 hour' THEN` | `supabase/migrations/20261002691230_talkx_v4_x021_links_conversoes_investimento.sql` |
+| `now() - interval '1 minute'` | `supabase/migrations/20261003192707_fixture_e2e_aba_arquivos_segunda_midia.sql` |
+| `AND r.updated_at >= now() - interval '24 hours'` | `supabase/migrations/20261003242707_talkx_log_saude_alertas.sql` |
+| `WHERE a.last_activity_at < now() - interval '15 minutes'` | `supabase/migrations/20261003242707_talkx_log_saude_alertas.sql` |
+| `WHERE log.created_at < v_now - interval '30 days'` | `supabase/migrations/20261003242707_talkx_log_saude_alertas.sql` |
+| `WHERE r.updated_at >= now() - interval '15 minutes'` | `supabase/migrations/20261003242707_talkx_log_saude_alertas.sql` |
+| `ELSE (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') - interval '6 days') AT TIME ZONE 'America/Sao_Paulo'` | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
+| `IF OLD.created_at < now() - interval '48 hours' THEN` | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
+| `WHEN 'month' THEN (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') - interval '29 days') AT TIME ZONE 'America/Sao_Paulo'` | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
+| `IF v_purge_attempt_at IS NULL OR v_purge_attempt_at <= now() - interval '1 hour' THEN` | `supabase/migrations/20261004173439_talkx_tick_nao_aborta_no_expurgo.sql` |
+| `WHERE log.created_at < v_now - interval '30 days'` | `supabase/migrations/20261004173439_talkx_tick_nao_aborta_no_expurgo.sql` |
+| `expires_at timestamptz not null default (now() + interval '10 minutes'),` | `supabase/migrations/20261004195051_gmail_oauth_state_attempts.sql` |
+| `IF v_purge_attempt_at IS NULL OR v_purge_attempt_at <= now() - interval '1 hour' THEN` | `supabase/migrations/20261005111026_talkx_storage_purge_drain.sql` |
+| `-- CREATE OR REPLACE FUNCTION public.register_first_response_internal(p_contact_id uuid, p_responded_at timestamptz, p_before_created_at timestamptz DEFAULT NUL …` | `supabase/migrations/20261005151753_sla_first_response_granular.sql` |
+| `ai_projection_updated_at = greatest(p_analyzed_at, v_current_projection + interval '1 microsecond'),` | `supabase/migrations/20261006160117_ai_context_version_atomic_persist.sql` |
+| `-- and r.updated_at >= now() - interval '24 hours'` | `supabase/migrations/20261006193547_talkx_purge_nao_falsa_falha_recente.sql` |
+| `-- where a.last_activity_at < now() - interval '15 minutes'` | `supabase/migrations/20261006193547_talkx_purge_nao_falsa_falha_recente.sql` |
+| `-- where r.updated_at >= now() - interval '15 minutes'` | `supabase/migrations/20261006193547_talkx_purge_nao_falsa_falha_recente.sql` |
+| `AND r.status_changed_at >= now() - interval '24 hours'` | `supabase/migrations/20261006193547_talkx_purge_nao_falsa_falha_recente.sql` |
+| `WHERE a.last_activity_at < now() - interval '15 minutes'` | `supabase/migrations/20261006193547_talkx_purge_nao_falsa_falha_recente.sql` |
+| `WHERE r.status_changed_at >= now() - interval '15 minutes'` | `supabase/migrations/20261006193547_talkx_purge_nao_falsa_falha_recente.sql` |
+| `-- Rollback: UPDATE public.talkx_settings SET description = 'X032: dias de retencao de linhas terminais de IA (ai_jobs).' WHERE key = 'retention_days_ai'; CREAT …` | `supabase/migrations/20261006205053_talkx_expurgo_escopo_ai_jobs.sql` |
+| `WHERE log.created_at < v_now - interval '30 days'` | `supabase/migrations/20261006205053_talkx_expurgo_escopo_ai_jobs.sql` |
+| `-- CREATE OR REPLACE FUNCTION public.talkx_connection_send_budget(p_connection_id uuid) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = …` | `supabase/migrations/20261006211601_mx04_cota_conexao_itens_e_legado.sql` |
+| `v_minute_start := statement_timestamp() - interval '1 minute';` | `supabase/migrations/20261006211601_mx04_cota_conexao_itens_e_legado.sql` |
+| `v_next_day_at := v_day_start + interval '1 day';` | `supabase/migrations/20261006211601_mx04_cota_conexao_itens_e_legado.sql` |
+| `AND created_at > now() - interval '1 hour';` | `supabase/migrations/20261006221242_recuperacao_anonima_pedido_reset.sql` |
+| `-- Rollback: IF p_occurred_at > now() + interval '1 hour' THEN` | `supabase/migrations/20261006222007_talkx_conversion_defaults_webhook.sql` |
+| `IF v_occurred_at > now() + interval '1 hour' THEN` | `supabase/migrations/20261006222007_talkx_conversion_defaults_webhook.sql` |
+| `v_window := interval '60 seconds';` | `supabase/migrations/20261007000311_catalogo_rate_limit_politica_confiavel.sql` |
+| `v_minute_start := statement_timestamp() - interval '1 minute';` | `supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql` |
+| `v_next_day_at := v_day_start + interval '1 day';` | `supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql` |
+| `-- create or replace function public.record_talkx_conversion(p_campaign_id uuid, p_external_ref text, p_value numeric, p_source text, p_currency text default 'B …` | `supabase/migrations/20261009031958_talkx_v4_x041_atribuicao_negocio_ganho_receita_roi.sql` |
+| `IF p_occurred_at > now() + interval '1 hour' THEN` | `supabase/migrations/20261009031958_talkx_v4_x041_atribuicao_negocio_ganho_receita_roi.sql` |
+| `AND hh.counted_on < (m.month_start + interval '1 month')::date` | `supabase/migrations/20261009063248_talkx_segment_library_stats.sql` |
+| `v_end := (v_start + interval '1 month')::date;` | `supabase/migrations/20261009063248_talkx_segment_library_stats.sql` |
+| `v_previous := (v_month - interval '1 month')::date;` | `supabase/migrations/20261009063248_talkx_segment_library_stats.sql` |
+| `v_to := ((p_month_start + interval '1 month')::timestamp AT TIME ZONE v_tz);` | `supabase/migrations/20261009063248_talkx_segment_library_stats.sql` |
+| `IF v_purge_attempt_at IS NULL OR v_purge_attempt_at <= now() - interval '1 hour' THEN` | `supabase/migrations/20261009160000_talkx_storage_purge_drain.sql` |
+| `AND replied_at < v_now - interval '10 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
+| `LEAST(((p_day + 1)::timestamp AT TIME ZONE v_tz) - interval '1 microsecond', v_now), v_tz);` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
+| `count(*) FILTER (WHERE replied_at >= v_now - interval '10 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
+| `count(*) FILTER (WHERE replied_at >= v_now - interval '20 minutes'` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
+| `count(*) FILTER (WHERE sent_at < v_now - interval '10 minutes' AND delivered_at IS NOT NULL),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
+| `count(*) FILTER (WHERE sent_at < v_now - interval '10 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
+| `count(*) FILTER (WHERE sent_at >= v_now - interval '5 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
+| `v_step := CASE p_bucket WHEN 'hour' THEN interval '1 hour' ELSE interval '1 minute' END;` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
+| … +72 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 
@@ -4326,7 +3962,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 1 | `src/components/contacts/ContactCRMDialog.tsx` |
 | 20 | `src/components/contacts/ContactPurchaseHistory.tsx` |
 | 1 | `src/components/contacts/useContactFormValidation.ts` |
-| 10 | `src/components/contacts/__tests__/ContactActivityTimeline.eventos.test.tsx` |
 | 50 | `src/components/diagnostics/ConnectionHealthPanel.tsx` |
 | 20 | `src/components/inbox/WhisperMode.tsx` |
 | 1 | `src/components/inbox/useChatMediaSending.ts` |
@@ -4334,7 +3969,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 10 | `src/components/inbox/useGlobalSearchData.ts` |
 | 15 | `src/components/inbox/useGlobalSearchData.ts` |
 | 20 | `src/components/inbox/useGlobalSearchData.ts` |
-| 1000 | `src/components/inbox/__tests__/StickerPicker.catalogo.test.tsx` |
 | 50 | `src/components/inbox/chat/MentionAutocomplete.tsx` |
 | 50 | `src/components/inbox/collaboration/InternalNotesPanel.tsx` |
 | 15 | `src/components/monitoring/MonitoringEventTimeline.tsx` |
@@ -4348,7 +3982,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 1 | `src/components/settings/ChatbotL1Config.tsx` |
 | 100 | `src/components/settings/FollowUpExecutionsHistory.tsx` |
 | 1 | `src/components/settings/SkillBasedRoutingSettings.tsx` |
-| 1000 | `src/components/settings/__tests__/MediaLibraryAdmin.catalogo.test.tsx` |
 | 50 | `src/components/settings/ai-providers/AIProviderHealthPanel.tsx` |
 | 1000 | `src/components/settings/media-library/useMediaLibrary.ts` |
 | 20 | `src/components/settings/sla/SLARuleFormDialog.tsx` |
@@ -4358,12 +3991,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 2000 | `src/components/talkx/TalkXCampaignRunning.tsx` |
 | 50 | `src/components/talkx/TalkXCampaignRunning.tsx` |
 | 200 | `src/components/talkx/TalkXLiveMonitor.tsx` |
-| 200 | `src/components/talkx/__tests__/TalkXLiveMonitor.kpiRow.test.tsx` |
 | 60 | `src/components/team-chat/useTeamChatPanel.ts` |
-| 60 | `src/components/team-chat/__tests__/useTeamChatPanel.pagination.test.tsx` |
-| 60 | `src/components/team-chat/__tests__/useTeamChatPanel.search-antigas.test.tsx` |
-| 20 | `src/hooks/__tests__/useAgentGamification.test.tsx` |
-| 1 | `src/hooks/__tests__/useTeamChatNotifications.behavior.test.ts` |
 | 1000 | `src/hooks/admin/useSupervisorQueue.ts` |
 | 500 | `src/hooks/admin/useSupervisorQueue.ts` |
 | 5 | `src/hooks/analytics/useAIStats.ts` |
@@ -4372,8 +4000,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 5000 | `src/hooks/analytics/useRealtimeDashboard.ts` |
 | 400 | `src/hooks/analytics/useRecentSentimentAlerts.ts` |
 | 400 | `src/hooks/analytics/useSentimentTrend.ts` |
-| 500 | `src/hooks/analytics/__tests__/usePerformanceSnapshots.limpeza.test.tsx` |
-| 400 | `src/hooks/analytics/__tests__/useSentimentTrend.test.tsx` |
 | 1000 | `src/hooks/business/useAbandonmentRate.ts` |
 | 50 | `src/hooks/business/useWarRoomAlerts.ts` |
 | 1 | `src/hooks/calls/useCallChannels.ts` |
@@ -4404,7 +4030,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 1 | `src/hooks/integrations/useTalkXServiceStatus.ts` |
 | 10 | `src/hooks/integrations/useTalkXTemplates.ts` |
 | 1 | `src/hooks/integrations/useWhatsAppStatus.ts` |
-| 0 | `src/hooks/integrations/__tests__/useGmail.threadListQuery.test.tsx` |
 | 50 | `src/hooks/queues/useQueueDetails.ts` |
 | 200 | `src/hooks/security/useAuditLogDashboard.ts` |
 | 1 | `src/hooks/sla/useApplicableSLA.ts` |
@@ -4430,13 +4055,11 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 1 | `supabase/functions/_shared/evolution-webhook-handlers.ts` |
 | 1 | `supabase/functions/_shared/evolution-webhook-messages.ts` |
 | 1 | `supabase/functions/_shared/evolution-webhook-msg-handlers.ts` |
-| 1 | `supabase/functions/_shared/__tests__/webhook-edit-reaction-connection-scope.test.ts` |
 | 20 | `supabase/functions/ai-auto-tag/index.ts` |
 | 5 | `supabase/functions/ai-auto-tag/index.ts` |
 | 1 | `supabase/functions/ai-churn-analysis/churn-risk.ts` |
 | 5 | `supabase/functions/ai-suggest-reply/index.ts` |
 | 500 | `supabase/functions/batch-fetch-avatars/index.ts` |
-| 1 | `supabase/functions/chatbot-l1/index.test.ts` |
 | 1 | `supabase/functions/chatbot-l1/index.ts` |
 | 15 | `supabase/functions/chatbot-l1/index.ts` |
 | 5 | `supabase/functions/chatbot-l1/index.ts` |
@@ -4459,7 +4082,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 1 | `supabase/functions/whatsapp-webhook/index.ts` |
 | 1000 | `supabase/migrations/20261003072707_ia056_agregacao_no_servidor.sql` |
 | 1 | `supabase/migrations/20261005151753_sla_first_response_granular.sql` |
-| 1000 | `tests/contracts/ia056-agregacao-no-servidor.test.ts` |
 
 ## I. Regras implícitas em mensagens de erro/validação
 
@@ -4616,41 +4238,11 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | simulated quota exhausted | `docs/reconciliation/reproduce/skins/skins_probe.mjs` |
 | Unattested module: ${p} | `docs/reconciliation/reproduce/volume/volume_offline_probe.mjs` |
 | storage denied | `docs/reconciliation/reproduce/volume/volume_offline_probe.mjs` |
-| axe: @axe-core/react bloqueando apos 10 tentativas (GR-016) | `e2e/a11y-config-admin.spec.ts` |
-| axe: @axe-core/react bloqueando apos 10 tentativas (GR-016) | `e2e/a11y-contraste.spec.ts` |
-| axe: @axe-core/react bloqueando apos 10 tentativas (GR-016) | `e2e/a11y-inbox-teams.spec.ts` |
-| axe: @axe-core/react bloqueando apos 10 tentativas (GR-016) | `e2e/a11y-tarefas-dashboard.spec.ts` |
 | ) generico: o app dispara toasts alheios ao login   // (ex.:  | `e2e/auth.setup.ts` |
 | E2E_TEST_EMAIL e/ou E2E_TEST_PASSWORD nao estao definidas. Os testes que dependem de  | `e2e/auth.setup.ts` |
 | [E2E setup] Credencial recusada — o app mostrou:  | `e2e/auth.setup.ts` |
 | [E2E setup] Login indisponivel em ${TENTATIVAS} tentativas: a edge auth-login nao  | `e2e/auth.setup.ts` |
 | [E2E setup] O app nao respondeu em 15 s ao navegar para /auth.  | `e2e/auth.setup.ts` |
-| Sessão do Supabase não encontrada no localStorage — o project  | `e2e/catalog.spec.ts` |
-| consulta de ${E2E_CATALOG_MESSAGES_TABLE} falhou: HTTP ${res.status()}  | `e2e/catalog.spec.ts` |
-| consulta de ${E2E_CATALOG_SEND_EVENTS_TABLE} falhou: HTTP ${res.status()}  | `e2e/catalog.spec.ts` |
-| soft delete de ${E2E_CATALOG_MESSAGES_TABLE} falhou: HTTP ${res.status()}  | `e2e/catalog.spec.ts` |
-| ).filter({ hasText: /email já cadastrado/i }),     ).toBeVisible({ timeout: 8000 });   }); });  test.describe( | `e2e/contact-form-email-duplicate.spec.ts` |
-| Sessão Supabase não encontrada no localStorage | `e2e/contact-form-email-duplicate.spec.ts` |
-| ensureFixtureEmail falhou: HTTP ${res.status()} ${         await res.text().catch(() =>  | `e2e/contact-form-email-duplicate.spec.ts` |
-| ensureFixtureEmail: PATCH retornou 0 linhas — RLS bloqueou ou contato ${FIXTURE_CONTACT_ID} não existe.  | `e2e/contact-form-email-duplicate.spec.ts` |
-| ensureFixturePhone falhou: HTTP ${res.status()} ${         await res.text().catch(() =>  | `e2e/contact-form-email-duplicate.spec.ts` |
-| ensureFixturePhone: PATCH retornou 0 linhas — RLS bloqueou ou contato ${FIXTURE_CONTACT_ID} não existe.  | `e2e/contact-form-email-duplicate.spec.ts` |
-| tablist não encontrada | `e2e/contacts-tabs-geometry.spec.ts` |
-| Sessão do Supabase não encontrada no localStorage — o project  | `e2e/email-link-contato.spec.ts` |
-| recorte nao encontrado na tela: ${sel} | `e2e/multiplix-responsivo.spec.ts` |
-| E2E_TEST_EMAIL/E2E_TEST_PASSWORD não estão definidas e não há sessão montada. Rode pelo  | `e2e/navegacao-modulos.spec.ts` |
-| login local não concluiu (banco local do conjunto). Tela: ${visivel.slice(0, 400)} | `e2e/navegacao-modulos.spec.ts` |
-| nem o shell autenticado nem a tela de login ficaram de pé (banco local do conjunto do cartão) | `e2e/navegacao-modulos.spec.ts` |
-| rótulo sem porcentagem:  | `e2e/quick-controls-volume.spec.ts` |
-| #main-navigation sem caixa | `e2e/skins-e2e.spec.ts` |
-| HSL inválido: ${hsl} | `e2e/skins-e2e.spec.ts` |
-| sem ${id} no catálogo | `e2e/skins-e2e.spec.ts` |
-| sem contexto 2d para ler o recorte | `e2e/skins-e2e.spec.ts` |
-| )).toHaveCount(0);   });    test( | `e2e/talk-me.spec.ts` |
-| );     await expect(alert).toContainText( | `e2e/talk-me.spec.ts` |
-| Falha ao limpar ${cleanupErrors.length} draft(s) E2E: ${cleanupErrors.join( | `e2e/talkx.spec.ts` |
-| Defina CAPTURA_DIR ou escreva .tmp/captura-dir.txt com um diretório fora do repositório para salvar as capturas. | `e2e/tarefas-linha-de-base.spec.ts` |
-| cor não reconhecida: ${rgb} | `e2e/theme-alto-contraste.spec.ts` |
 | Sessão Supabase não encontrada no localStorage | `e2e/fixtures/contacts-page.ts` |
 | consulta de contacts falhou: HTTP ${res.status()} | `e2e/fixtures/contacts-page.ts` |
 | limpeza E97: consulta de contacts falhou HTTP ${res.status()} | `e2e/fixtures/contacts-page.ts` |
@@ -4765,13 +4357,42 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Canonical database identity/TLS required | `scripts/db-audit/check-runtime-config.mjs` |
 | Invalid Realtime publication baseline | `scripts/db-audit/check-runtime-config.mjs` |
 | Invalid Realtime publication table list | `scripts/db-audit/check-runtime-config.mjs` |
-| … +2299 linhas — lista completa em `context.json` | |
+| Missing or duplicate runtime sections | `scripts/db-audit/check-runtime-config.mjs` |
+| Output path required | `scripts/db-audit/check-runtime-config.mjs` |
+| diretorio inexistente:  | `scripts/db-audit/check-screen-permission-db-guards.mjs` |
+| invalid ledger aggregate | `scripts/db-audit/check-triple-parity.mjs` |
+| componente arquivoSha256 nao e SHA-256 lowercase de 64 hex | `scripts/db-audit/confirm-hash.mjs` |
+| componente commitSha nao e SHA de commit do GitHub | `scripts/db-audit/confirm-hash.mjs` |
+| componente runtimeSha256 nao e SHA-256 lowercase de 64 hex | `scripts/db-audit/confirm-hash.mjs` |
+| identidade versionada invalida ( | `scripts/db-audit/database-identity.mjs` |
+| DESTINO_URL ausente | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
+| TARGET_VERSIONS possui duplicatas | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
+| TARGET_VERSIONS possui version invalida | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
+| envelope de evidencia invalido | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
+| falha na consulta read-only: ${safeError(error?.stderr, connectionString)} | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
+| hash da evidencia descriptografada diverge | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
+| informe entre 1 e 20 versions | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
+| ledger incompleto, duplicado ou fora do escopo solicitado | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
+| ledger retornou JSON invalido na linha ${index + 1} | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
+| ledger retornou name invalido para ${record.version} | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
+| ledger retornou registro invalido na linha ${index + 1} | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
+| ledger retornou statements invalidos para ${record.version} | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
+| bloco  | `scripts/db-audit/extrair-consulta-ledger.mjs` |
+| heredoc << | `scripts/db-audit/extrair-consulta-ledger.mjs` |
+| passo  | `scripts/db-audit/extrair-consulta-ledger.mjs` |
+| nenhum braco de versao encontrado | `scripts/db-audit/extrair-contratos-runtime.mjs` |
+| passo nao encontrado:  | `scripts/db-audit/extrair-contratos-runtime.mjs` |
+| FAIL: PostgreSQL de teste não iniciou (logs sem marcador de init ou SELECT 1 falhou em 60s) | `scripts/db-audit/ledger-postapply-query.integration.mjs` |
+| docker ${args.join( | `scripts/db-audit/ledger-postapply-query.integration.mjs` |
+| ${rotulo}: ${ultimo.message} | `scripts/db-audit/multiplix-audience-parity.mjs` |
+| Management API HTTP ${res.status}: ${texto.slice(0, 300)} | `scripts/db-audit/multiplix-audience-parity.mjs` |
+| PostgREST HTTP ${res.status}: ${texto.slice(0, 300)} | `scripts/db-audit/multiplix-audience-parity.mjs` |
+| … +1493 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
 | Valor comparado | Arquivo |
 |---|---|
-| `permissao_de_teste` | `scripts/db-audit/check-screen-permission-db-guards.test.mjs` |
 | `agent` | `src/components/admin/TrainingMode.tsx` |
 | `customer` | `src/components/admin/TrainingMode.tsx` |
 | `admin` | `src/components/agents/AgentsView.tsx` |
@@ -4782,10 +4403,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `undefined` | `src/components/contacts/BulkActionsBar.tsx` |
 | `admin` | `src/components/inbox/WhisperMode.tsx` |
 | `supervisor` | `src/components/inbox/WhisperMode.tsx` |
-| `dialog` | `src/components/inbox/__tests__/VideoFullscreen.dialogo.test.tsx` |
-| `admin` | `src/components/keyboard/__tests__/paleta-unica.test.tsx` |
-| `r` | `src/components/keyboard/__tests__/paleta-unica.test.tsx` |
-| `supervisor` | `src/components/keyboard/__tests__/paleta-unica.test.tsx` |
 | `granted` | `src/components/monitoring/hooks/useMonitoringNotifications.ts` |
 | `value` | `src/components/multiplix/MultiplixView.tsx` |
 | `denied` | `src/components/notifications/PushNotificationCard.tsx` |
@@ -4796,13 +4413,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `granted` | `src/components/security/SecurityNotificationsPanel.tsx` |
 | `admin` | `src/components/security/SecurityOverview.tsx` |
 | `admin` | `src/components/security/SecurityView.tsx` |
-| `admin` | `src/components/security/__tests__/SecurityView.supervisor.test.tsx` |
-| `anything` | `src/hooks/__tests__/usePermissions.test.tsx` |
-| `manage_users` | `src/hooks/__tests__/usePermissions.test.tsx` |
-| `nonexistent` | `src/hooks/__tests__/usePermissions.test.tsx` |
-| `leader` | `src/hooks/__tests__/useSipClient.test.ts` |
-| `admin` | `src/hooks/__tests__/useUserRole.test.tsx` |
-| `agent` | `src/hooks/__tests__/useUserRole.test.tsx` |
 | `profileId` | `src/hooks/gamification/useAgentCelebrations.ts` |
 | `denied` | `src/hooks/system/usePushNotifications.ts` |
 | `granted` | `src/hooks/system/usePushNotifications.ts` |
@@ -4826,35 +4436,26 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `granted` | `src/utils/notificationSounds.ts` |
 | `anon` | `supabase/functions/_shared/crm-integration-contract.ts` |
 | `service_role` | `supabase/functions/_shared/crm-integration-contract.ts` |
-| `true` | `supabase/functions/_shared/__tests__/cron-secret-authz-l5.test.ts` |
 | `true` | `supabase/functions/ai-kb-ingest/index.ts` |
-| `false` | `supabase/functions/approve-password-reset/index.test.ts` |
 | `true` | `supabase/functions/approve-password-reset/index.ts` |
-| `agent` | `supabase/functions/create-user/index.test.ts` |
-| `supervisor` | `supabase/functions/create-user/index.test.ts` |
 | `true` | `supabase/functions/elevenlabs-voice-design/index.ts` |
 | `true` | `supabase/functions/external-db-bridge/index.ts` |
-| `agent` | `supabase/functions/invite-user/index.test.ts` |
-| `supervisor` | `supabase/functions/invite-user/index.test.ts` |
 | `admin` | `supabase/functions/invite-user/index.ts` |
 | `agent` | `supabase/functions/invite-user/index.ts` |
 | `supervisor` | `supabase/functions/invite-user/index.ts` |
 | `true` | `supabase/functions/migrate-media-storage/index.ts` |
 | `true` | `supabase/functions/multiplix-dispatch/index.ts` |
-| `String` | `supabase/functions/multiplix-dispatch/__tests__/draft.test.ts` |
 | `customers_own` | `supabase/functions/multiplix-dispatch/actions/audience.ts` |
 | `string` | `supabase/functions/multiplix-dispatch/actions/audience.ts` |
 | `true` | `supabase/functions/multiplix-dispatch/actions/lifecycle.ts` |
 | `true` | `supabase/functions/multiplix-dispatch/actions/listing.ts` |
 | `true` | `supabase/functions/multiplix-send/index.ts` |
-| `true` | `supabase/functions/recover-corrupted-audios/index.test.ts` |
 | `true` | `supabase/functions/recover-corrupted-audios/index.ts` |
 | `admin` | `supabase/migrations/20260830080000_fn_is_admin_and_fix_permissions_rls.sql` |
 | `admin` | `supabase/migrations/20260902023200_consolidate_rls_select_messages_contacts.sql` |
 | `postgres` | `supabase/migrations/20260925120000_fix_messages_insert_rls_contact_visibility.sql` |
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
-| `admin` | `supabase/tests/user_roles_troca_de_papel_autorizacao_e_auditoria.sql` |
 
 ## K. Testes como especificação (21063 testes em 2246 arquivos — nomes completos em `context.json`)
 
@@ -5166,19 +4767,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 
 | Evento | Arquivo |
 |---|---|
-| `linkEmailContactCompany` | `e2e/email-navy-visual.spec.ts` |
-| `dispatch.list` | `e2e/multiplix-responsivo.spec.ts` |
-| `recipients.list` | `e2e/multiplix-responsivo.spec.ts` |
-| `dispatch.list` | `e2e/multiplix.spec.ts` |
-| `draft.create` | `e2e/multiplix.spec.ts` |
-| `recipients.list` | `e2e/multiplix.spec.ts` |
 | `image` | `src/components/inbox/LinkPreview.tsx` |
 | `video` | `src/components/inbox/LinkPreview.tsx` |
-| `confirm` | `src/components/multiplix/__tests__/MultiplixMonitor.confirm.test.tsx` |
-| `dispatch.list` | `src/components/multiplix/__tests__/MultiplixMonitor.confirm.test.tsx` |
-| `recipients.list` | `src/components/multiplix/__tests__/MultiplixMonitor.confirm.test.tsx` |
-| `dispatch.list` | `src/components/multiplix/__tests__/MultiplixMonitor.estimativa.test.tsx` |
-| `recipients.list` | `src/components/multiplix/__tests__/MultiplixMonitor.estimativa.test.tsx` |
 | `delete` | `src/components/team-chat/useTeamChatPanel.ts` |
 | `string` | `src/hooks/integrations/useMultiplixDispatches.ts` |
 | `NOTIFICATION_CLICK` | `src/hooks/system/useSecurityPushNotifications.ts` |
@@ -5195,56 +4785,37 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `tts.failed` | `supabase/functions/elevenlabs-webhook/index.ts` |
 | `voice_clone.completed` | `supabase/functions/elevenlabs-webhook/index.ts` |
 | `string` | `supabase/functions/evolution-api/index.ts` |
-| `dead_lettered` | `supabase/functions/multiplix-send/index.test.ts` |
 | `assets.sign` | `supabase/functions/multiplix-voices/index.ts` |
 | `voices.list` | `supabase/functions/multiplix-voices/index.ts` |
-| `start` | `supabase/functions/talkx-scheduler/index.test.ts` |
 
 ## M. Efeitos colaterais (e-mail, SMS, cobrança, fila — não são idempotentes por padrão)
 
 | Chamada | Arquivo |
 |---|---|
-| `sendWhatsAppAudio` | `scripts/db-audit/talkx-schedule-timezone-contract.test.mjs` |
 | `invoke(` | `src/components/admin/ForceLogoutButton.tsx` |
 | `invoke(` | `src/components/admin/SupervisorCopilot.tsx` |
-| `notify` | `src/components/admin/__tests__/CronJobsTab.tarefas.test.tsx` |
 | `invoke(` | `src/components/agents/InviteAgentDialog.tsx` |
 | `invoke(` | `src/components/ai/AutoTicketClassifier.tsx` |
 | `invoke(` | `src/components/ai/ChurnPredictionDashboard.tsx` |
 | `invoke(` | `src/components/alerts/EvolutionDisconnectBanner.tsx` |
-| `invoke(` | `src/components/alerts/__tests__/EvolutionDisconnectBanner.janela-manutencao.test.tsx` |
 | `notifyDownloadBlocked` | `src/components/catalog/SendProductDialog.tsx` |
 | `notifyDownloadBlocked` | `src/components/catalog/sendProductUtils.ts` |
 | `invoke(` | `src/components/connections/ConnectionsView.tsx` |
-| `invoke(` | `src/components/contacts/__tests__/ContactMapView.test.tsx` |
-| `invoke(` | `src/components/contacts/__tests__/ContactRegionMap.test.tsx` |
 | `messages.create` | `src/components/dashboard/ActivityHeatmap.tsx` |
-| `.add('dark'` | `src/components/dashboard/__tests__/DashboardCard.test.tsx` |
-| `.add('dark'` | `src/components/dashboard/__tests__/SLAMetricsDashboard.sem-dados-erro.test.tsx` |
-| `.add('dark'` | `src/components/dashboard/sla/__tests__/SLASummaryCard.semAmostra.test.tsx` |
 | `invoke(` | `src/components/diagnostics/ConnectionHealthPanel.tsx` |
 | `.add('disco-mode'` | `src/components/effects/EasterEggs.tsx` |
 | `.add('rainbow-mode'` | `src/components/effects/EasterEggs.tsx` |
 | `sendEmail` | `src/components/email/EmailChatReplyBar.tsx` |
-| `sendEmail` | `src/components/email/__tests__/EmailChatReplyBar.rascunho.test.tsx` |
-| `sendEmail` | `src/components/email/__tests__/EmailChatReplyBar.test.tsx` |
-| `.add('reduced-motion'` | `src/components/email/__tests__/EmailChatThread.test.tsx` |
 | `sendEmail` | `src/components/gmail/EmailComposer.tsx` |
-| `sendEmail` | `src/components/gmail/__tests__/EmailComposer.atalhoAssunto.test.tsx` |
-| `sendEmail` | `src/components/gmail/__tests__/EmailComposer.test.tsx` |
 | `invoke(` | `src/components/inbox/AIConversationAssistant.tsx` |
 | `invoke(` | `src/components/inbox/AISuggestions.tsx` |
 | `invoke(` | `src/components/inbox/AudioMessagePlayer.tsx` |
 | `invoke(` | `src/components/inbox/ConversationSummary.tsx` |
 | `invoke(` | `src/components/inbox/RealtimeTranscription.tsx` |
-| `invoke(` | `src/components/inbox/__tests__/LocationMessage.liveUntil.test.tsx` |
-| `invoke(` | `src/components/inbox/__tests__/LocationMessage.test.tsx` |
-| `invoke(` | `src/components/inbox/__tests__/RealtimeTranscription.erro.test.tsx` |
 | `invoke(` | `src/components/inbox/chat/AIEnhanceButton.tsx` |
 | `invoke(` | `src/components/inbox/chat/AIRewriteButton.tsx` |
 | `invoke(` | `src/components/inbox/chat/MessageBubble.tsx` |
 | `enqueue(` | `src/components/inbox/chat/useChatPanelHandlers.ts` |
-| `notify` | `src/components/inbox/chat/__tests__/ChatMessagesArea.loop.test.tsx` |
 | `notify` | `src/components/inbox/chat/motion/FlashRing.tsx` |
 | `notify` | `src/components/inbox/chat/motion/PopBurst.tsx` |
 | `notifyDownloadBlocked` | `src/components/inbox/media-gallery/mediaUtils.ts` |
@@ -5252,17 +4823,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `invoke(` | `src/components/integrations/BitrixIntegrationView.tsx` |
 | `invoke(` | `src/components/monitoring/MonitoringConnectionsList.tsx` |
 | `invoke(` | `src/components/monitoring/hooks/useMonitoringActions.ts` |
-| `invoke(` | `src/components/multiplix/__tests__/MultiplixMonitor.estimativa.test.tsx` |
-| `invoke(` | `src/components/multiplix/__tests__/MultiplixMonitor.replies.test.tsx` |
-| `invoke(` | `src/components/multiplix/__tests__/MultiplixView.historico-parcial.test.tsx` |
-| `.add('dark'` | `src/components/multiplix/__tests__/fundacaoVisual.test.tsx` |
 | `notify_due_tasks` | `src/components/notifications/ReminderNotification.tsx` |
-| `.add('dark'` | `src/components/queues/__tests__/SLAMetricCards.semAmostra.test.tsx` |
 | `invoke(` | `src/components/security/PasswordResetRequestsPanel.tsx` |
 | `invoke(` | `src/components/settings/ChatbotL1Config.tsx` |
-| `invoke(` | `src/components/settings/__tests__/MediaLibraryAdmin.orphan-cleanup.test.tsx` |
-| `.add('s1'` | `src/components/settings/__tests__/MediaLibraryAdmin.test.tsx` |
-| `invoke(` | `src/components/settings/__tests__/MediaLibraryAdmin.test.tsx` |
 | `invoke(` | `src/components/settings/ai-providers/useAIProviders.ts` |
 | `invoke(` | `src/components/settings/media-library/AIGenerateDialog.tsx` |
 | `invoke(` | `src/components/settings/media-library/useMediaLibrary.ts` |
@@ -5270,42 +4833,20 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `notify` | `src/components/settings/sla/SLARuleFormDialog.tsx` |
 | `notify_on_warning` | `src/components/settings/sla/SLARuleFormDialog.tsx` |
 | `notify_on_warning` | `src/components/settings/sla/SLARuleRow.tsx` |
-| `notify_on_warning` | `src/components/settings/sla/__tests__/SLARuleFormDialog.zodResolver.test.tsx` |
 | `.add('theme-transitioning'` | `src/components/settings/theme/presets.ts` |
-| `.add('high-contrast'` | `src/components/settings/theme/__tests__/contraste-decisao-aa.test.ts` |
-| `.add('high-contrast'` | `src/components/settings/theme/__tests__/presets.test.ts` |
-| `.add('dark'` | `src/components/sla/__tests__/SLAHistoryDashboard.sem-dados-erro.test.tsx` |
-| `notify_due_tasks` | `src/components/tasks/__tests__/WorkItemSheet.test.tsx` |
-| `notify_due_tasks` | `src/components/tasks/__tests__/cardAcoes.test.tsx` |
 | `notify_due_tasks` | `src/components/tasks/shared/WorkItemSheet.tsx` |
 | `notify_due_tasks` | `src/components/tasks/shared/cardActions.ts` |
 | `.add('animate-pulse-subtle'` | `src/components/team-chat/TeamMessageItem.tsx` |
 | `.add('high-contrast'` | `src/components/theme/HighContrastToggle.tsx` |
 | `.add('large-text'` | `src/components/theme/HighContrastToggle.tsx` |
 | `.add('reduced-motion'` | `src/components/theme/HighContrastToggle.tsx` |
-| `.add('high-contrast'` | `src/components/theme/__tests__/HighContrastTokens.test.tsx` |
-| `.add('reduced-motion'` | `src/components/ui/__tests__/accessible-toast.test.tsx` |
-| `notifyCaller` | `src/hooks/__tests__/sentimentAlerts.behavior.test.ts` |
-| `notifyCaller` | `src/hooks/__tests__/sentimentAlerts.navegacao.test.tsx` |
-| `notifyAboutIncomingMessage` | `src/hooks/__tests__/useRealtimeNotifications.behavior.test.ts` |
-| `notifyAboutIncomingMessage` | `src/hooks/__tests__/useRealtimeNotifications.permissaoAbaLider.test.ts` |
-| `notifyOnWarning` | `src/hooks/__tests__/useSLANotifications.policy.test.ts` |
-| `notify_on_warning` | `src/hooks/__tests__/useSLANotifications.policy.test.ts` |
-| `notifyCaller` | `src/hooks/__tests__/useSentimentAlerts.test.ts` |
-| `invoke(` | `src/hooks/__tests__/helpers/alertBehaviorTestKit.ts` |
-| `notify_on_warning` | `src/hooks/__tests__/helpers/alertBehaviorTestKit.ts` |
 | `invoke(` | `src/hooks/auth/useWebAuthn.ts` |
-| `enqueue(` | `src/hooks/auth/__tests__/useAuth.fila-offline-logout.test.tsx` |
 | `invoke(` | `src/hooks/chat/useAutomationSuggestions.ts` |
 | `notify` | `src/hooks/chat/useExclusiveAudio.ts` |
 | `invoke(` | `src/hooks/chat/useNewConversation.ts` |
 | `notifyAboutIncomingMessage` | `src/hooks/chat/useRealtimeMessages.ts` |
 | `invoke(` | `src/hooks/chat/useScheduledReports.ts` |
 | `notify` | `src/hooks/chat/useTeamChatNotifications.ts` |
-| `enqueue(` | `src/hooks/chat/__tests__/sendQueue.test.ts` |
-| `notify` | `src/hooks/chat/__tests__/useFilesContainerColumns.test.tsx` |
-| `notifyAboutIncomingMessage` | `src/hooks/chat/__tests__/useRealtimeMessages.markAsRead.test.tsx` |
-| `notifyAboutIncomingMessage` | `src/hooks/chat/__tests__/useRealtimeMessages.reconexao.test.tsx` |
 | `invoke(` | `src/hooks/communication/useAudioMemes.ts` |
 | `invoke(` | `src/hooks/communication/useVoiceAgent.ts` |
 | `invoke(` | `src/hooks/connections/useConnectionsHealth.ts` |
@@ -5317,7 +4858,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `notifyAboutIncomingMessage` | `src/hooks/inbox/useRealtimeInbox.ts` |
 | `invoke(` | `src/hooks/inbox/useSentimentAlerts.ts` |
 | `notifyCaller` | `src/hooks/inbox/useSentimentAlerts.ts` |
-| `notifyAboutIncomingMessage` | `src/hooks/inbox/__tests__/useRealtimeInbox.aviso-conversa-aberta.test.tsx` |
 | `invoke(` | `src/hooks/integrations/useBitrixApi.ts` |
 | `invoke(` | `src/hooks/integrations/useCatalogQuickSearch.ts` |
 | `invoke(` | `src/hooks/integrations/useCustomEmojis.ts` |
@@ -5342,14 +4882,11 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `invoke(` | `src/hooks/sticker-picker/useStickerPicker.ts` |
 | `messages.create` | `src/hooks/system/useCRUD.ts` |
 | `notify` | `src/hooks/system/useSecurityPushNotifications.ts` |
-| `invoke(` | `src/hooks/system/__tests__/useDiagnosticsData.test.ts` |
-| `enqueue(` | `src/hooks/system/__tests__/useOfflineSendQueueDrain.test.tsx` |
 | `notify_due_tasks` | `src/hooks/tasks/useWorkItemNotifications.ts` |
 | `invoke(` | `src/hooks/ui/useDeviceDetection.ts` |
 | `.add('theme-transitioning'` | `src/hooks/ui/useTheme.ts` |
 | `notify` | `src/hooks/ui/useTheme.ts` |
 | `invoke(` | `src/hooks/ui/useUniversityHelp.ts` |
-| `notify` | `src/hooks/ui/__tests__/use-toast.test.tsx` |
 | `notify_due_reminders` | `src/integrations/supabase/types.ts` |
 | `notify_due_tasks` | `src/integrations/supabase/types.ts` |
 | `notify_searchbox_budget` | `src/integrations/supabase/types.ts` |
@@ -5363,41 +4900,26 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `invoke(` | `src/lib/mapboxToken.ts` |
 | `enqueue(` | `src/lib/offlineQueue.ts` |
 | `invoke(` | `src/lib/supabaseHelpers.ts` |
-| `invoke(` | `src/lib/__tests__/crmIntegration.test.ts` |
-| `notifyDownloadBlocked` | `src/lib/__tests__/downloadFile.test.ts` |
-| `invoke(` | `src/lib/__tests__/mapboxToken.test.ts` |
-| `enqueue(` | `src/lib/__tests__/offlineQueue.test.ts` |
 | `invoke(` | `src/lib/calls/sipProvisioning.ts` |
 | `publish(` | `src/lib/calls/tabLeaderStore.ts` |
 | `messages.create` | `src/lib/journey/rawRows.ts` |
 | `notify_on_warning` | `src/lib/schemas/slaRule.ts` |
 | `invoke(` | `src/pages/ResetPassword.tsx` |
-| `invoke(` | `src/pages/__tests__/ResetPassword.acessivel.test.tsx` |
-| `invoke(` | `src/pages/__tests__/ResetPassword.redirect-cancelavel.test.tsx` |
-| `invoke(` | `src/pages/__tests__/ResetPassword.segundo-fator-sessoes.test.tsx` |
 | `invoke(` | `src/services/evolution.service.ts` |
 | `enqueue(` | `src/services/outbound-message.service.ts` |
-| `enqueue(` | `src/services/__tests__/outbound-message.service.test.ts` |
 | `enqueue(` | `supabase/functions/_shared/ai-providers.ts` |
-| `enqueue(` | `supabase/functions/_shared/ai-usage.test.ts` |
 | `enqueue(` | `supabase/functions/_shared/ai-usage.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/_shared/evolution-go-routes.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/_shared/evolution-send.ts` |
 | `notify` | `supabase/functions/_shared/evolution-webhook-handlers.ts` |
-| `sendWhatsAppAudio` | `supabase/functions/_shared/__tests__/evolution-go-routes.test.ts` |
-| `sendWhatsAppAudio` | `supabase/functions/_shared/__tests__/evolution-message-id.test.ts` |
-| `enqueue(` | `supabase/functions/_shared/__tests__/media-egress.test.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/_shared/messaging/evolution-go.ts` |
 | `.add("link"` | `supabase/functions/_shared/messaging/personalize.ts` |
 | `notify` | `supabase/functions/ai-auto-tag/index.ts` |
 | `notifyError` | `supabase/functions/ai-auto-tag/index.ts` |
 | `notifyOptedIn` | `supabase/functions/connection-health-check/index.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/evolution-api/index.ts` |
-| `enqueue(` | `supabase/functions/get-call-recording/index.test.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/message-delivery/index.ts` |
-| `sendWhatsAppAudio` | `supabase/functions/multiplix-send/index.test.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/multiplix-send/index.ts` |
-| `invoke(` | `supabase/functions/promogifts-catalog/index.actions.test.ts` |
 | `notify_searchbox_budget` | `supabase/functions/searchbox-budget-alert/index.ts` |
 | `notifyCaller` | `supabase/functions/sentiment-alert/index.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/talkx-send/index.ts` |
@@ -5436,9 +4958,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `notify_sicoob_on_reply` | `supabase-export/BLOCO_05_triggers.sql` |
 | `notify_sicoob_on_reply` | `supabase-export/BLOCO_10_functions.sql` |
 | `notify_sicoob_on_reply` | `supabase-export/BLOCO_15_triggers.sql` |
-| `notify` | `tests/contracts/admin-cron-jobs-rpc.contract.test.ts` |
-| `invoke(` | `tests/contracts/ia051-correlacao-no-caminho-sincrono.test.ts` |
-| `enqueue(` | `tests/contracts/ia131-audio-meme-conteudo.contract.test.ts` |
 
 ## N. Regras citadas em comentários do código
 
@@ -5456,124 +4975,11 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | a propria porta e' o comportamento util. O que nao pode acontecer e' | `playwright.config.ts` |
 | sem esta regra cai num chunk "dist-*" importado pelo ChatPanel. | `vite.config.ts` |
 | carga 33 e mais de 5 s com a maquina em carga 46-51 — ou seja, reprovava por PRAZO e nao | `vitest.contracts.config.ts` |
-| * N-080 · régua axe de Configurações, Administração e Segurança na regra button-name. | `e2e/a11y-config-admin.spec.ts` |
-| Esta regra fica fora do alcance do jsdom. | `e2e/a11y-config-admin.spec.ts` |
-| controle, senao a regra button-name mediria um DOM incompleto e passaria sem | `e2e/a11y-config-admin.spec.ts` |
-| medir nada. O seletor casa com o que a regra do axe avalia: `button` e | `e2e/a11y-config-admin.spec.ts` |
-| * N-090 · painel de regressões de permissão (ACL/RLS) na aba Admin. | `e2e/a11y-config-admin.spec.ts` |
-| é respondida aqui com linhas SINTÉTICAS (nunca banco real, regra R1) e a captura sai | `e2e/a11y-config-admin.spec.ts` |
-| sem transformar uma falha de bootstrap local em falso negativo da regra axe. | `e2e/a11y-inbox-teams.spec.ts` |
-| dois alvos continuam compactos e o clique continua fechando/abrindo — ou seja a regra | `e2e/a11y-toque-44px.spec.ts` |
-| `afterEach`). Nada de credencial ou dado de produção (regra R1). | `e2e/a11y-toque-44px.spec.ts` |
-| parte dele). Se a regra coarse sumir, os cantos caem em outro elemento e o teste falha. | `e2e/a11y-toque-44px.spec.ts` |
-| não pode ser trocado dentro de um describe, então só os campos de contexto entram: é | `e2e/a11y-toque-44px.spec.ts` |
-| A paleta não pode estourar a largura da viewport de 390px. | `e2e/busca-global-paleta.spec.ts` |
-| * BUG (não corrigido neste cartão — só documentado): ⌘K/Ctrl+K abre apenas a busca | `e2e/busca-global-paleta.spec.ts` |
-| consulta/limpeza por `created_at >= sinceIso` não pode passar por cima do | `e2e/catalog.spec.ts` |
-| explícito para não fingir cobertura (regra R1). | `e2e/conexoes.spec.ts` |
-| Email exclusivo do fixture E2E; não deve coincidir com nenhum contato real. | `e2e/contact-form-email-duplicate.spec.ts` |
-| Telefone exclusivo do fixture E2E; sufixo "88776655" não deve existir em outro contato. | `e2e/contact-form-email-duplicate.spec.ts` |
-| devolve um estilo MÍNIMO (sem sources/layers) e as rotas `map-sessions`/telemetria que o | `e2e/contact-map-pin.spec.ts` |
-| * Estilo mínimo do Mapbox: sem sources/layers o mapa carrega sem tocar tiles reais. */ | `e2e/contact-map-pin.spec.ts` |
-| warn (e não log): a regra de lint do repo só permite warn/error no console; a | `e2e/contacts-tabs-geometry.spec.ts` |
-| `supabase.auth.getUser()` (usado por useCatalogFavorites) não deve ir à rede | `e2e/ct94-ui-429.spec.ts` |
-| se precisar de uma 3ª tentativa, a regressão de teclado deve aparecer no teste. | `e2e/files-tab.spec.ts` |
-| layout e portanto nao calcula contraste — a regra `color-contrast` fica de fora por limitacao | `e2e/inbox-contraste.spec.ts` |
-| regra de papel que está sob teste. | `e2e/monitoring.spec.ts` |
-| disparo) NÃO pode fazer `document.documentElement.scrollWidth` passar de | `e2e/multiplix-responsivo.spec.ts` |
-| * Overflow horizontal do DOCUMENTO (a regra que a casa já usa: é a mesma de | `e2e/multiplix-responsivo.spec.ts` |
-| nem regra por texto solto: endpoint novo, outro status ou outro corpo REPROVAM. | `e2e/navegacao-modulos.spec.ts` |
-| * tag que CONTÉM (o React acusa "X dentro de X" / "X não pode conter X") */ | `e2e/navegacao-modulos.spec.ts` |
-| 4xx de validação, endpoint novo, par de tags novo) entra em `reprovam`. | `e2e/navegacao-modulos.spec.ts` |
-| `completeOnboarding()` gravava apenas no localStorage — e, reaparecendo, | `e2e/onboarding-tour.spec.ts` |
-| * Enquanto está aberto ele DEVE bloquear: é um modal, isso é o esperado. O que | `e2e/onboarding-tour.spec.ts` |
-| * Sem `mode: 'serial'`: uma falha num teste não pode esconder o resultado do | `e2e/onboarding-tour.spec.ts` |
-| * O tour não pode estar por cima depois do tempo de acomodar a checagem. */ | `e2e/onboarding-tour.spec.ts` |
-| O clique comum NÃO pode mais alternar o mudo (o mudo rápido é a tecla M). | `e2e/quick-controls-volume.spec.ts` |
-| * COMO A TELA É ABERTA (deslogado, sem produção — regra R1 de 05/10) | `e2e/skins-e2e.spec.ts` |
-| A aba que só OUVE não pode reescrever: seria eco, e o eco vira laço entre abas. | `e2e/skins-e2e.spec.ts` |
-| E o app não pode mentir dizendo que aplicou. | `e2e/skins-e2e.spec.ts` |
-| no inbox deve aparecer depois do aceite; não usar a página inteira sem nível. | `e2e/talk-me.spec.ts` |
-| * Override do deadline do watchdog de boot (index.html). */ | `e2e/talkx-visual.spec.ts` |
-| eleva o deadline para 60s. Sem isso a régua é flaky: com o dev server vite | `e2e/talkx-visual.spec.ts` |
-| A régua não pode passar sem medir: se a captura não chegou ao disco (ou | `e2e/talkx-visual.spec.ts` |
-| buraco. Tamanho mínimo de 1 KB — um PNG 1672×941 real fica muito acima. | `e2e/talkx-visual.spec.ts` |
-| Coerência das fixtures da régua, por REGRA — não por olho. | `e2e/talkx-visual.spec.ts` |
-| cada regra reprova pelo campo e pela linha — assim, no dia em que a | `e2e/talkx-visual.spec.ts` |
-| has no saved group-open state, so the group must be expanded before clicking | `e2e/talkx.spec.ts` |
-| the pointer-event interception that required force: true at 1280×720. | `e2e/talkx.spec.ts` |
-| V25: o mínimo do nome subiu de "não vazio" para 3 caracteres (e o passo 1 | `e2e/talkx.spec.ts` |
-| The name field must be non-empty for canProceed[1] to be satisfied. | `e2e/talkx.spec.ts` |
-| * Dias em relação a hoje (null = sem prazo). */ | `e2e/tarefas-linha-de-base.spec.ts` |
-| 3. mover o card entre colunas e — o ponto da etapa — o limite duro da coluna | `e2e/tarefas-quadro.spec.ts` |
-| * Por que o limite importa: `WIP_LIMITS.doing.hard = 3` (workItem.types.ts) é | `e2e/tarefas-quadro.spec.ts` |
-| * A fixture nasce com **três** cards em "Fazendo" — o limite duro —, um em | `e2e/tarefas-quadro.spec.ts` |
-| Pré-condição do limite: três em "Fazendo" e o contador duro anunciado. | `e2e/tarefas-quadro.spec.ts` |
-| Nenhuma escrita de status 'doing' saiu do limite. | `e2e/tarefas-quadro.spec.ts` |
-| * AMBIENTE (REGRA R1 — nenhuma produção): a sessão é FALSA (`installFakeSession`, de | `e2e/telefonia.spec.ts` |
-| por tempo de build, não pelo comportamento. `test.setTimeout` + o deadline de boot do | `e2e/telefonia.spec.ts` |
-| contato. Enquanto o produto não decidir se disca fora do Brasil, a spec NÃO pode ficar | `e2e/telefonia.spec.ts` |
-| A origem: com o alto contraste ligado, o preset NÃO pode deixar a cor dele inline, | `e2e/theme-alto-contraste.spec.ts` |
-| alto contraste ligado ele NÃO pode escrever cor (senão o primeiro quadro pinta com a | `e2e/theme-alto-contraste.spec.ts` |
-| Um 302 nunca deve seguir o Location de uma resposta potencialmente fora | `e2e/fixtures/e2e-talkx.unit.test.mjs` |
 | Unskewed requests must not pay the worst-case retention (nonce map capacity). | `infrastructure/preview-egress-proxy/main_test.go` |
-| OTH-011: o total do checklist deve contar itens marcados E nao marcados. | `scripts/catalog/validate-plan.test.mjs` |
-| Sem docker o ensaio FALHA — prova ausente não pode sair como sucesso. | `scripts/db-audit/ai-projection-version-guard.test.mjs` |
-| Front de mentira: cada regra do extrator aparece UMA vez, e as duas armadilhas | `scripts/db-audit/check-screen-permission-db-guards.test.mjs` |
-| (permissao que so existe em teste da tela; `permission:` que nao e permissao | `scripts/db-audit/check-screen-permission-db-guards.test.mjs` |
-| NotificationPermission: nao e permissao nomeada | `scripts/db-audit/check-screen-permission-db-guards.test.mjs` |
-| cada regra de leitura do front chega na tabela | `scripts/db-audit/check-screen-permission-db-guards.test.mjs` |
-| _foreign nao pode contar (regra CLAUDE.md §1.8) | `scripts/db-audit/check-triple-parity.test.mjs` |
-| S4790: o fingerprint de paridade arquivos↔ledger nao pode voltar a ser um | `scripts/db-audit/check-triple-parity.test.mjs` |
-| \(/i, 'o ledger deve ser consultado com sha256()'); | `scripts/db-audit/check-triple-parity.test.mjs` |
-| \(/i, 'md5 nao pode voltar na paridade'); | `scripts/db-audit/check-triple-parity.test.mjs` |
-| // O teste CHAMA a regra de producao (consolidar/executar/CLI) com tabela de casos | `scripts/db-audit/consolidar-veredito.test.mjs` |
-| falha — ou seja, falha de validação passaria a contar como "aprovado"; | `scripts/db-audit/global-guards-regression.test.mjs` |
-| na frente do PATH) e um DESTINO_URL de mentira no ambiente. O cenário é "a validação | `scripts/db-audit/global-guards-regression.test.mjs` |
-| // Regra: nenhuma destas RPCs pode ter EXECUTE para `anon`. Como `anon` herda | `scripts/db-audit/grants-baseline-module-rpcs.test.mjs` |
-| * Regra do inventario informativo das limitacoes historicas: | `scripts/db-audit/ledger-history-limitations.test.mjs` |
-| Simula apenas DDL de policy sobre um snapshot em memoria; nao executa SQL nem | `scripts/db-audit/n011-storage-policies-dedup.test.mjs` |
-| ─── Fixes da validação adversarial de 2026-09-20 ─────────────────────── | `scripts/db-audit/register-migration.test.mjs` |
-| , 'URL com credencial nao pode aparecer'); | `scripts/db-audit/register-migration.test.mjs` |
-| ─── Validação de 2026-09-22: psql real (sem -q) imprime a tag do comando ───── | `scripts/db-audit/register-migration.test.mjs` |
-| resposta aos 4 min e NAO estoura o prazo de 5 min — este teste fica VERMELHO. | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| o defeito: o instante da resposta nao pode ser o created_at da mensagem | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| o que nao pode regredir | `scripts/db-audit/sla-first-response-delivery-contract.test.mjs` |
-| prazo granular aplicavel ao contato — a MESMA precedencia da UI | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| * Antes da migration de prazo granular o caso "regra de 2 min + resposta aos | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| 3 min" sai classificado como dentro do prazo (intervalo fixo de 5 min) — | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| company (30 min) vence queue (45 min): 3 min fica dentro do prazo | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| A UI exige apenas !contact_id no nivel queue; ela nao exige company nula. | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| a definicao vigente resolve o prazo granular (nada de intervalo fixo de 5 min) | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| o que nao pode regredir | `scripts/db-audit/sla-granular-contract.test.mjs` |
-| Leitura falha NÃO pode virar "sem resultados": a queryFn lança o `error` do envelope do | `scripts/db-audit/talkx-analytics-contract.test.mjs` |
-| (cartão t_51bf1772 / refazer t_cae6d61c: o id no link era IDOR). O contrato acompanha a regra | `scripts/db-audit/talkx-e90-links-contract.test.mjs` |
-| "nome"/"empresa"/etc.) nao pode sequestrar o placeholder built-in | `scripts/db-audit/talkx-e90-links-contract.test.mjs` |
-| enforceRateLimit[^}]*\} from "\.\.\/_shared\/validation\.ts"/); | `scripts/db-audit/talkx-e90-links-contract.test.mjs` |
-| getClientIP[^}]*\} from "\.\.\/_shared\/validation\.ts"/); | `scripts/db-audit/talkx-e90-links-contract.test.mjs` |
-| `--allow-read`, e imports locais de .ts não exigem permissão. Assim o script | `scripts/db-audit/talkx-personalize-parity.test.mjs` |
-| roda sem nenhuma flag de permissão. | `scripts/db-audit/talkx-personalize-parity.test.mjs` |
-| Além da paridade, trava a regra X020 no front para os casos que o fixture | `scripts/db-audit/talkx-personalize-parity.test.mjs` |
-| existir. O que ela protege é o mesmo: a janela não pode ser reimplementada | `scripts/db-audit/talkx-schedule-timezone-contract.test.mjs` |
-| V03.2: a fiação do status da conexão NÃO pode voltar a morar inline no | `scripts/db-audit/talkx-schedule-timezone-contract.test.mjs` |
-| consulta ao mapa não pode reaparecer no scheduler. | `scripts/db-audit/talkx-schedule-timezone-contract.test.mjs` |
-| regra de negócio) sem mudar o estado da campanha, que a fase 2 exige 'draft'. | `scripts/db-audit/talkx-transition-postgrest.test.ts` |
-| 2. `node "$PSQL_SAFE" ... -o "$JSON_FILE"` (geração do JSON de validação) não tinha | `scripts/db-audit/validate-destino.test.mjs` |
-| E o MESMO binario que o shell resolveria: nao pode pegar outro shim do PATH. | `scripts/lib/seguranca-processo.test.mjs` |
 | the app must remain usable even if a non-critical overlay fails to load. | `src/App.tsx` |
-| * Arquivo real de outro escopo: o glob do Catálogo não pode alcançá-lo. */ | `src/__tests__/coverage-catalogo.test.ts` |
-| Fonte independente 2: o manifesto de evidência do grafo declara o limite da extração AST. | `src/__tests__/multiplix-changelog-registry.test.ts` |
-| * Telas de entrada que todo atalho do app instalado deve cobrir (as 4 do topo do menu). */ | `src/__tests__/pwa-manifest-shortcuts.test.ts` |
-| * Limite de atalhos que o navegador exibe (Chrome mostra no máximo 4). */ | `src/__tests__/pwa-manifest-shortcuts.test.ts` |
-| Mitigation: service_role key must never appear in src/ (client bundles). | `src/__tests__/rls-boundary.test.ts` |
-| Real guard: scripts/db-audit/supabase-usage-guard.mjs — must exit 0 in CI. | `src/__tests__/rls-boundary.test.ts` |
 | Presenca real do WhatsApp: contato derivado apenas do historico nao tem | `src/adapters/evolutionAdapter.ts` |
 | firstResponseAt DEVE ser null (cronometro conta). So usamos a linha | `src/adapters/inboxAdapter.ts` |
 | * Global theme initializer — must be mounted at the app root. | `src/components/ThemeInitializer.tsx` |
-| * O `TeamPerformancePanel` saiu daqui: ele não oferece mais exportação (regra | `src/components/__tests__/Y29_gateDownloadOutros.test.tsx` |
-| Y29 — a permissão vem de `useDownloadPermission` (`profiles.can_download`). | `src/components/__tests__/Y29_gateDownloadOutros.test.tsx` |
-| Nenhum caminho de exportação (regra do dono: nenhuma informação sai). | `src/components/__tests__/Y29_gateDownloadOutros.test.tsx` |
-| que exige AuthProvider. Aqui só o selo do delta interessa, então a permissão | `src/components/__tests__/y17Selos.contraste.test.tsx` |
 | O campo "Limite de Chats" usa type=number, mas o navegador permite apagar o | `src/components/admin/AdminView.tsx` |
 | grupos principais da navegação). A permissão `google_calendar` era oferecida aqui e | `src/components/admin/AdminView.tsx` |
 | supervisor não deve nem ver a aba (evita abrir uma tela que só daria acesso negado). | `src/components/admin/AdminView.tsx` |
@@ -5589,42 +4995,15 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Guarda o caminho do arquivo (não a URL assinada, que expira) | `src/components/admin/useAdminData.ts` |
 | Guarda o caminho do arquivo (não a URL assinada, que expira) | `src/components/admin/useAdminData.ts` |
 | não pode mostrá-lo. | `src/components/admin/useTarefasAgendadas.ts` |
-| permissão `google_calendar` em `user_service_accounts` sem nenhum consumidor. | `src/components/admin/__tests__/AdminView.servicosGoogle.test.tsx` |
-| Mock no LIMITE (cliente Supabase): a tela e o hook reais rodam; só o `rpc` é | `src/components/admin/__tests__/CronJobsTab.tarefas.test.tsx` |
-| devolve o SQL do job, e a tela não pode mostrá-lo). | `src/components/admin/__tests__/CronJobsTab.tarefas.test.tsx` |
-| A chave crua carrega contato e conteúdo da mensagem: não pode ir para a tela. | `src/components/admin/__tests__/CrossTabDedupePanel.test.tsx` |
-| Mock supabase: ForceLogoutButton só deve falar com a Edge Function | `src/components/admin/__tests__/ForceLogoutButton.test.tsx` |
-| Prova de regressão: nunca mais atualizar apenas session_invalidated_at. | `src/components/admin/__tests__/ForceLogoutButton.test.tsx` |
-| Dois cliques antes de a promise resolver — a trava síncrona (ref) deve | `src/components/admin/__tests__/ForceLogoutButton.test.tsx` |
-| permitir apenas a primeira invocação. | `src/components/admin/__tests__/ForceLogoutButton.test.tsx` |
-| p_sip_password) e traduz os erros de negócio (ramal_em_uso etc.) em mensagem | `src/components/admin/__tests__/useAdminDataRamal.test.ts` |
-| `functions.invoke` NÃO deve ser chamado por essa ação administrativa. | `src/components/admin/__tests__/useAdminDataToggleActive.test.ts` |
 | (regra `react-refresh/only-export-components` do lint do projeto). | `src/components/agents/inviteErrors.ts` |
-| `Configurações`, `Desativar`) existiam apenas para ficar `disabled` com tooltip | `src/components/agents/__tests__/AgentsView.actions.test.tsx` |
-| dentro da janela de envios recentes (LIMITE explicito, não o último lido). | `src/components/agents/__tests__/AgentsView.pendencias.test.tsx` |
-| inteiro): o corte pedido é de, no mínimo, RECENT_SENDS_WINDOW_DAYS atrás. | `src/components/agents/__tests__/AgentsView.pendencias.test.tsx` |
-| raríssimas ocasiões, então reabrir o diálogo dentro da janela de 5 min não pode | `src/components/agents/__tests__/ConfigurePermissionsDialog.staleTime.test.tsx` |
-| vira constante e a regra no-constant-binary-expression acusa. | `src/components/ai/__tests__/AutoTicketClassifier.test.tsx` |
-| fora de qualquer landmark. Sem papel de landmark o axe acusa TODO o texto dela com a regra | `src/components/alerts/__tests__/EvolutionDisconnectBanner.a11y.test.tsx` |
-| Varre o document.body: com o container (fragmento) a regra nao dispara em jsdom. | `src/components/alerts/__tests__/EvolutionDisconnectBanner.a11y.test.tsx` |
 | Testemunho — apenas no desktop */} | `src/components/auth/HeroBenefits.tsx` |
 | * BUG-8 FIX: reset hasPermission whenever the user identity or the required | `src/components/auth/ProtectedRoute.tsx` |
 | permission changes so stale permission state is never shown to a new user. | `src/components/auth/ProtectedRoute.tsx` |
 | enquanto ainda estamos buscando permissão/MFA (o conteúdo segue fail closed). | `src/components/auth/ProtectedRoute.tsx` |
 | só a rota tentada e o papel/permissão exigidos. `rotaNegada` muda quando a | `src/components/auth/ProtectedRoute.tsx` |
-| fim de propósito: a regra `dark:from-*` sobrescreve `--tw-gradient-to` e o | `src/components/auth/__tests__/HeroBenefits.test.tsx` |
-| requisitos eram ditos apenas por cor e ícone — quem usa leitor de tela não | `src/components/auth/__tests__/PasswordStrengthMeter.acessivel.test.tsx` |
-| A consulta ANTIGA termina depois, dizendo "vazada": nao pode valer. | `src/components/auth/__tests__/PasswordStrengthMeter.corrida.test.tsx` |
-| A consulta ANTIGA termina depois, dizendo "limpa": nao pode apagar o alerta. | `src/components/auth/__tests__/PasswordStrengthMeter.corrida.test.tsx` |
-| A consulta antiga resolve "vazada" depois da troca: nao pode aparecer. | `src/components/auth/__tests__/PasswordStrengthMeter.corrida.test.tsx` |
-| Falha de rede da consulta ANTIGA nao pode apagar o alerta vigente. | `src/components/auth/__tests__/PasswordStrengthMeter.corrida.test.tsx` |
-| Resposta de erro HTTP da consulta ANTIGA tambem nao pode apagar o alerta. | `src/components/auth/__tests__/PasswordStrengthMeter.corrida.test.tsx` |
-| "vazada": mesma senha na tela, consulta encerrada -- nao pode valer. | `src/components/auth/__tests__/PasswordStrengthMeter.corrida.test.tsx` |
-| permissão, então uma sessão aal1 de conta com TOTP verificado entrava direto | `src/components/auth/__tests__/ProtectedRoute.mfa.test.tsx` |
 | condição vazia; a validação do save barra o campo obrigatório sem valor. | `src/components/automations/AutomationEditorDialog.tsx` |
 | apenas a prop `automation` (o `open` só o esconde). Como os inicializadores de | `src/components/automations/AutomationEditorDialog.tsx` |
 | somente dados comprovadamente incompatíveis com o novo tipo são removidos. | `src/components/automations/automationConstants.ts` |
-| e a validação bloqueava salvar/renomear esse tipo. | `src/components/automations/__tests__/AutomationEditorDialog.test.tsx` |
 | permissão de microfone à página (comportamento do navegador, não bug): nesse | `src/components/calls/CallDialog.tsx` |
 | demorar (o navegador pergunta a permissão) e um clique sem resposta na | `src/components/calls/CallDialog.tsx` |
 | O navegador recusou (saída desconectada, sem permissão): o motivo fica na | `src/components/calls/CallDialog.tsx` |
@@ -5644,27 +5023,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | apenas as proprias ligacoes. | `src/components/calls/TelefoniaView.tsx` |
 | * Mostra no maximo 7 botoes deslizando em volta da pagina atual, em vez de listar | `src/components/calls/paginas.ts` |
 | (regra `react-refresh/only-export-components`), e a constante e consumida tambem | `src/components/calls/periodos.ts` |
-| usuário não pode ver. O texto vem pronto (`rotuloLinhaWhatsApp`); aqui se prova | `src/components/calls/__tests__/CallChannelBadge.linha.test.tsx` |
-| em `calls`**. Como a UI saiu do negócio de persistir (quem grava é o motor, | `src/components/calls/__tests__/CallDialog.test.tsx` |
-| === INPUT VALIDATION === | `src/components/calls/__tests__/DialPad.test.tsx` |
-| aceite de VoIP é dublado; nenhum dos casos deste teste deve encerrar sozinho. | `src/components/calls/__tests__/IncomingCallAlert.canal.test.tsx` |
-| alerta NÃO pode falar com o banco nem com o inbox por conta própria. O resto | `src/components/calls/__tests__/IncomingCallAlert.canal.test.tsx` |
-| Legado: o alerta NÃO pode mais escrever desfecho direto na tabela `calls`. | `src/components/calls/__tests__/IncomingCallAlert.provider.test.tsx` |
-| argument must be an instance of Event. Received an instance of Event") porque o `Event` | `src/components/calls/__tests__/IncomingCallAlert.provider.test.tsx` |
-| lança 'useCallSession deve ser usado dentro de CallSessionProvider' e o render cai. | `src/components/calls/__tests__/IncomingCallAlert.ringtone.test.tsx` |
-| argument must be an instance of Event. Received an instance of Event") porque o `Event` | `src/components/calls/__tests__/IncomingCallAlert.ringtone.test.tsx` |
-| no máximo o ganho aplicado é 0,2; com 50 é 0,1. O cartão Q10 NÃO muda esse valor — | `src/components/calls/__tests__/IncomingCallAlert.volume.test.tsx` |
-| nesse numero SEM passar por `escolherContato`. O chip nao pode continuar dizendo | `src/components/calls/__tests__/NewCallPanel.test.tsx` |
-| origem sem os bytes nao pode fazer o player renderizar nem expor essa URL no DOM. | `src/components/calls/__tests__/RecordingPlayer.test.tsx` |
-| A remontagem nao pode herdar a URL revogada: nasce uma URL blob NOVA... | `src/components/calls/__tests__/RecordingPlayer.test.tsx` |
-| Mute global chega ao elemento (a gravacao nao pode tocar com a midia muda). | `src/components/calls/__tests__/RecordingPlayer.test.tsx` |
-| O rascunho de A nao pode vazar para B: a tela mostra as notas reais de B. | `src/components/calls/__tests__/SelectedCallPanel.notas.test.tsx` |
-| 3. DETALHE SELECIONADO: `SelectedCallPanel` (anotacao + registro somente | `src/components/calls/__tests__/TelefoniaView.a11y.test.tsx` |
-| * Superfície de telefonia: é aqui que a regra de acesso vale. */ | `src/components/calls/__tests__/calls-access.test.ts` |
-| A consulta precede o bookkeeping: sessão em claro não pode aparecer como | `src/components/calls/__tests__/calls-access.test.ts` |
-| * Regra do plano (T76/T78): o módulo usa os tokens de PREENCHIMENTO como texto | `src/components/calls/__tests__/telefoniaContraste.test.tsx` |
-| * 3:1 é o mínimo de WCAG 1.4.11 para ícone/indicador de interface. */ | `src/components/calls/__tests__/telefoniaContraste.test.tsx` |
-| * Temas em que o par NÃO fecha o mínimo (os resíduos publicados no laudo). */ | `src/components/calls/__tests__/telefoniaContraste.test.tsx` |
 | valor fixo na UI (placeholder do campo "Máximo" usa priceCeiling, que já | `src/components/catalog/CatalogAdvancedFilters.tsx` |
 | CT-28 — além do envio, a barra favorita os selecionados e impõe o limite de | `src/components/catalog/CatalogBulkBar.tsx` |
 | * CT-28 — limite de produtos por envio em massa. Acima disso o envio é | `src/components/catalog/CatalogBulkBar.tsx` |
@@ -5708,40 +5066,201 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | * Não é `Math.random()`: a regra S2245 do Sonar marca PRNG fraco como | `src/components/catalog/useSendProduct.ts` |
 | CT-43 — debounce de 300 ms e mínimo de 2 caracteres: um único caractere | `src/components/catalog/useSendProduct.ts` |
 | ou remount, porque staleTime apenas marca o cache como velho. | `src/components/catalog/useSendProduct.ts` |
-| chat (grade e lista), com "Favoritar N" e o limite por envio com mensagem | `src/components/catalog/__tests__/CT28_bulkBar.test.tsx` |
-| favoritar continua liberado: o limite é só do envio | `src/components/catalog/__tests__/CT28_bulkBar.test.tsx` |
-| permissão é concedida para o teste observar o caminho de sempre. | `src/components/catalog/__tests__/CT39_downloadFotos.test.tsx` |
-| contato do link sem telefone utilizável não pode habilitar o envio. | `src/components/catalog/__tests__/CT55_57_management.test.tsx` |
-| com o `limit(500)` do hook, tudo além do 500º envio mais recente era | `src/components/catalog/__tests__/CT57_historicoAlem500.test.tsx` |
-| Comportamento ANTIGO (`limit(500)`): devolve só o começo da tabela. | `src/components/catalog/__tests__/CT57_historicoAlem500.test.tsx` |
-| Sem botão de exportação (regra do dono: nenhuma informação sai do sistema). | `src/components/catalog/__tests__/CT57_historicoAlem500.test.tsx` |
-| Nenhuma regra foi desabilitada: a varredura séria do CT-67 roda sobre os | `src/components/catalog/__tests__/CT67_a11y.test.tsx` |
-| `DialogContent` real ele some — não foi preciso desabilitar regra. | `src/components/catalog/__tests__/CT67_a11y.test.tsx` |
-| regra `button-name` do axe: o matcher TEM que reprovar (por isso o `.not`). | `src/components/catalog/__tests__/CT67_a11y.test.tsx` |
-| O anel foi ligado apenas onde o elemento JÁ era interativo: o card da grade e | `src/components/catalog/__tests__/CT68_acessibilidade.test.tsx` |
-| permissão é concedida para o teste observar o caminho de sempre. | `src/components/catalog/__tests__/CT68_acessibilidade.test.tsx` |
-| * ── Regra ───────────────────────────────────────────────────────────────── | `src/components/catalog/__tests__/CT69_alts.test.tsx` |
-| permissão é concedida para o teste observar o caminho de sempre. | `src/components/catalog/__tests__/CT70_reducedMotion.test.tsx` |
-| apenas EMPURRADA. Quem crescia era o bloco acima: a tela alternava um esqueleto | `src/components/catalog/__tests__/CT74_headerSemTroca.test.tsx` |
-| Concluir não pode lançar mesmo com setItem falhando. | `src/components/catalog/__tests__/CT83_84_helpSheet.test.tsx` |
-| R2-MOD-008 — o diálogo do lote agora consome a MESMA pré-validação do envio | `src/components/catalog/__tests__/CatalogBulkSendDialog.bulkOutcome.test.tsx` |
-| * R2-MOD-008 (item 389 / P2) — pré-validação de envio do catálogo no LOTE. | `src/components/catalog/__tests__/CatalogBulkSendDialog.readiness.test.tsx` |
-| permissão é concedida para o teste observar o caminho de sempre. | `src/components/catalog/__tests__/ExternalProductCatalog.test.tsx` |
-| O card real precisa de dezenas de campos; aqui interessa apenas que o | `src/components/catalog/__tests__/ExternalProductCatalog.test.tsx` |
-| permissão é concedida para o teste observar o caminho de sempre. | `src/components/catalog/__tests__/ExternalProductCatalog.virtualizacao.test.tsx` |
-| apenas garante que o toggle nao quebra o render; a asserção visual fica para a Fase 4 | `src/components/catalog/__tests__/ExternalProductManagement.test.tsx` |
-| URL limpa: a leitura de `?page=`/`?tab=` no mount não pode herdar o que | `src/components/catalog/__tests__/ExternalProductManagement.test.tsx` |
-| (4) as três abas têm no mínimo 44 px no celular (min-h-11) sem mudar o | `src/components/catalog/__tests__/ExternalProductManagementN058.test.tsx` |
-| * R2-MOD-046 — reabrir o detalhe de um cartão não pode continuar exibindo o | `src/components/catalog/__tests__/ProductDetailDialog.test.tsx` |
-| * R2-MOD-010 — "Catálogo conta seleção persistente mas envia somente produtos | `src/components/catalog/__tests__/R2_MOD_010_selecaoPersistente.test.tsx` |
-| ─── Comportamento ANTERIOR que o diff não pode perder ───────────────────── | `src/components/catalog/__tests__/R2_MOD_010_selecaoPersistente.test.tsx` |
-| 4. o par fecha o mínimo de 3:1 de componente de UI (WCAG 1.4.11) nos 4. | `src/components/catalog/__tests__/SL038_badgesTokensTema.test.tsx` |
-| R2-MOD-011 — o dialog agora abre com no máximo MAX_IMAGES fotos marcadas | `src/components/catalog/__tests__/SendProductDialog.test.tsx` |
-| * R2-MOD-011 — "Limite de dez imagens não é aplicado à seleção inicial ou ao | `src/components/catalog/__tests__/SendProductDialog.test.tsx` |
-| 1. produto com 11+ imagens abre com no máximo dez selecionadas e explica a | `src/components/catalog/__tests__/SendProductDialog.test.tsx` |
-| 2. o comando final recusa qualquer estado acima do limite. | `src/components/catalog/__tests__/SendProductDialog.test.tsx` |
-| ninguém chama `URL.createObjectURL` nem clica em anchor; com a permissão, o | `src/components/catalog/__tests__/Y29_gateDownload.test.tsx` |
-| * A exportação CSV do catálogo e do histórico de envios saiu do produto (regra | `src/components/catalog/__tests__/Y29_gateDownload.test.tsx` |
-| Y29 — a permissão vem de `useDownloadPermission` (lida por | `src/components/catalog/__tests__/Y29_gateDownload.test.tsx` |
-| botão de exportação com a tabela ainda no ar (regra do dono: nenhuma | `src/components/catalog/__tests__/Y29_gateDownloadManagement.test.tsx` |
-| … +3271 linhas — lista completa em `context.json` | |
+| nenhum controle para definir a regra, a ação ou o destino — e `Salvar` | `src/components/chatbot/chatbotNodeConfig.ts` |
+| fluxo usem a mesma regra. | `src/components/chatbot/chatbotNodeConfig.ts` |
+| * Operadores oferecidos para a regra de um nó Condição. */ | `src/components/chatbot/chatbotNodeConfig.ts` |
+| cartão, e alargar a validação para os tipos já configuráveis mudaria o | `src/components/chatbot/chatbotNodeConfig.ts` |
+| limit(1) em vez de single(): single() força o header | `src/components/connections/BusinessHoursIndicator.tsx` |
+| Check if current time is within business hours | `src/components/connections/BusinessHoursIndicator.tsx` |
+| ja aciona o retry com backoff) nao deve esconder o badge — so !data | `src/components/connections/BusinessHoursIndicator.tsx` |
+| Validação do telefone antes de criar: número brasileiro (DDI 55) precisa ter | `src/components/connections/ConnectionsView.tsx` |
+| * Valida a URL da foto de perfil (http(s) e tamanho máximo). Devolve o problema em pt-BR, ou null. */ | `src/components/connections/InstanceSettingsDialog.tsx` |
+| erro é o caso do atendente e não pode virar "Aquecimento iniciado". | `src/components/connections/NumberReputationMonitor.tsx` |
+| precedência — é o dado do banco, não uma segunda cópia da regra. | `src/components/contacts/BulkActionsBar.tsx` |
+| - `canChangeTypeSelection` (permissão por contato, do banco) tem precedência | `src/components/contacts/BulkActionsBar.tsx` |
+| axe acusa TODO o texto dele com a regra `region` (fora de `<main>`). | `src/components/contacts/ContactActivityTimeline.tsx` |
+| * Comparar é uma leitura lado a lado: no máximo 3 contatos (a CT-089 aplica o | `src/components/contacts/ContactCompareDialog.tsx` |
+| mesmo limite na seleção do módulo). Menos de 2 não é comparação. | `src/components/contacts/ContactCompareDialog.tsx` |
+| erro e vazio são explicitamente tratados — contato sem envio não pode | `src/components/contacts/ContactDetailPanel.tsx` |
+| * Regra 3 (item 5): campos cuja edição MANUAL pode invalidar a coordenada já gravada. */ | `src/components/contacts/ContactForm.tsx` |
+| digitando — a resposta de um endereço que saiu de cena não pode valer para o endereço vigente. | `src/components/contacts/ContactForm.tsx` |
+| Regra 3 da decisão 20260930-122408-sem-tarefa (opção a): o operador reescreveu o endereço à | `src/components/contacts/ContactForm.tsx` |
+| Regra 2: a coordenada nova acompanha o endereço escolhido — o aviso de "coordenada velha" sai. | `src/components/contacts/ContactForm.tsx` |
+| snapshot da prop foi capturado antes dele e nao pode sobrescreve-lo — senao | `src/components/contacts/ContactKanbanView.tsx` |
+| Item só aparece quando o usuário pode excluir ESTE contato (a permissão vem | `src/components/contacts/ContactListItem.tsx` |
+| `total_count` vem do servidor sobre o filtro inteiro (antes do LIMIT), não | `src/components/contacts/ContactToolbar.tsx` |
+| deve ser bloqueado -- mesma semântica do item avulso (`undefined` = segue | `src/components/contacts/ContactsView.tsx` |
+| permissão habilita; seleção sem informação não bloqueia. | `src/components/contacts/ContactsView.tsx` |
+| * Mesclar não tem permissão por contato: a RPC `merge_contacts_atomic` recusa | `src/components/contacts/ContactsView.tsx` |
+| resumo do Singu, quando existe) no que a tela deve mostrar. Regra única: | `src/components/contacts/contactDisplay.ts` |
+| * O item "Excluir" só deve ser oferecido quando o usuário pode excluir aquele | `src/components/contacts/contactPermissions.ts` |
+| * Por que não replicar a regra no front: a condição depende de `assigned_to` e | `src/components/contacts/contactPermissions.ts` |
+| uma segunda cópia da regra — foi assim que "Editar" e "Excluir" divergiram | `src/components/contacts/contactPermissions.ts` |
+| bloqueado (mesma regra do item avulso — `undefined` = segue disponível). O bug | `src/components/contacts/contactPermissions.ts` |
+| * Basta UM selecionado conhecido com permissão para habilitar — o lote é parcial | `src/components/contacts/contactPermissions.ts` |
+| * Decide se o botão "Mesclar" da barra de ações em massa deve ser oferecido. | `src/components/contacts/contactPermissions.ts` |
+| * Diferente de excluir, mesclar não tem permissão por contato: a RPC | `src/components/contacts/contactPermissions.ts` |
+| segunda cópia da regra. Ele devolve `boolean \| null` (`null` = consulta em | `src/components/contacts/contactPermissions.ts` |
+| cópia da regra no cliente (foi assim que "Editar" e "Excluir" divergiram, | `src/components/contacts/contactPermissions.ts` |
+| * Semântica idêntica à série: basta UM selecionado conhecido com permissão para | `src/components/contacts/contactPermissions.ts` |
+| (mesmo predicado de permissão do banco). `undefined` = ainda não respondeu | `src/components/contacts/types.ts` |
+| * Exibe no máximo 2 sugestões ao mesmo tempo para não poluir a UI. | `src/components/copilot/AttachmentSuggestion.tsx` |
+| * Motivos rápidos disponíveis (somente no thumbs down): | `src/components/copilot/CopilotFeedback.tsx` |
+| * Card que exibe o resultado do cálculo de prazo de entrega. | `src/components/copilot/DeadlineCalcCard.tsx` |
+| * Banner de aviso quando vendedor está prestes a dar desconto impulsivo. | `src/components/copilot/DiscountGuardrailBanner.tsx` |
+| Deve ser filho do mesmo container relativo que envolve o textarea. | `src/components/copilot/GhostTextOverlay.tsx` |
+| Aparece somente quando há ghost text ativo. | `src/components/copilot/GhostTextOverlay.tsx` |
+| Desconto — alerta inline (sempre visível enquanto o draft tem desconto) */} | `src/components/copilot/RadarPhase8Panel.tsx` |
+| Guardrail de desconto */} | `src/components/copilot/RadarPhase8to15Panel.tsx` |
+| Prazo de entrega */} | `src/components/copilot/RadarPhase8to15Panel.tsx` |
+| * Painel RADAR da Fase 9: catálogo, prazo reverso, orçamento, frete, upsell, kits, mockup. | `src/components/copilot/RadarPhase9Panel.tsx` |
+| * Limite de aviso em segundos (padrão: 120 = 2 min). */ | `src/components/copilot/SpeedToLeadAlert.tsx` |
+| * Limite crítico em segundos (padrão: 300 = 5 min). */ | `src/components/copilot/SpeedToLeadAlert.tsx` |
+| * Exibe ao vendedor (e somente ao vendedor) um indicador discreto de que o | `src/components/copilot/TransparencyLabel.tsx` |
+| Reforça a regra CV-064: sugestão vai para o rascunho, o vendedor decide o envio. | `src/components/copilot/TransparencyLabel.tsx` |
+| CV-081-090 — Fase 9: catálogo, prazo, orçamento | `src/components/copilot/index.ts` |
+| Enquanto a permissão de supervisor é checada, mostra um esqueleto do | `src/components/crm360/CRM360ExplorerView.tsx` |
+| Mesma regra para o tempo de resposta: só entra na média quem teve 1ª resposta medida. | `src/components/dashboard/AgentPerformancePanel.tsx` |
+| * Alvo de cada desafio = regra do jogo (o que a tela NÃO pode inventar é o | `src/components/dashboard/DashboardWidgetRenderer.tsx` |
+| * R2-SLA-001 — "no prazo" no dia: o denominador é a conversa avaliada; a pendente NÃO é sucesso. */ | `src/components/dashboard/SLAMetricsDashboard.tsx` |
+| `totalConversations - totalBreaches`, que contava a pendente como "no prazo". | `src/components/dashboard/SLAMetricsDashboard.tsx` |
+| systemHealth.ts — regra pura da nota "Saúde do Sistema" (0-100) do painel principal. | `src/components/dashboard/systemHealth.ts` |
+| Componente não pode exportar isto (lint react-refresh/only-export-components), por isso | `src/components/dashboard/systemHealth.ts` |
+| a regra vive fora do .tsx. | `src/components/dashboard/systemHealth.ts` |
+| * Pontos obtidos e o máximo do sinal. */ | `src/components/dashboard/systemHealth.ts` |
+| gráfico diário e o ranking de agentes com apenas uma fatia. Agora a leitura | `src/components/dashboard/useSentimentData.ts` |
+| 0-100 e o detalhe por sinal vêm da regra pura em ../systemHealth.ts, calculada no cliente | `src/components/dashboard/overview/SystemHealthCard.tsx` |
+| de alerta do backend), então clique repetido não pode virar enxurrada. | `src/components/diagnostics/ConnectionHealthPanel.tsx` |
+| * Detalhe por sinal: coleta falhada ou não executada não pode ser exibida como se | `src/components/diagnostics/DiagnosticsView.tsx` |
+| Os mini-games NÃO creditam XP: o cliente não pode creditar XP (PB-18/D4) e | `src/components/gamification/miniGamesData.ts` |
+| HTML sanitizado é a fonte visual da verdade quando existe (mesma regra do | `src/components/gmail/EmailThreadView.tsx` |
+| Consulta fracassada nao e thread vazia: o array padrao vazio nao pode | `src/components/gmail/EmailThreadView.tsx` |
+| Geração falhou: o chip não pode continuar marcado como se o tom tivesse | `src/components/inbox/AISuggestions.tsx` |
+| * Telefone do cartão de contato: 8 a 15 dígitos — o MESMO limite que o | `src/components/inbox/AdvancedMessageMenu.tsx` |
+| (regra react-hooks/purity): alem de impuro, o sorteio acontecia a cada re-render — e o timer da | `src/components/inbox/AudioRecorder.tsx` |
+| contato, então o anexo agendado não pode ficar fora de `<contact_id>/...`. | `src/components/inbox/ChatPanel.tsx` |
+| isContentEditable: mesma situação em divs/spans editáveis — Esc deve | `src/components/inbox/ContactDetails.tsx` |
+| * `created_at`/`purchased_at` inválido não pode derrubar a lista: vira '—'. */ | `src/components/inbox/ContactPurchasesPanel.tsx` |
+| Trava de duplo clique: o insert em voo não pode ser disparado de novo. | `src/components/inbox/ContactPurchasesPanel.tsx` |
+| O teto acompanha a janela: a lista não pode engolir o painel da conversa. | `src/components/inbox/ConversationListSidebar.tsx` |
+| * Setas ajustam de pouco em pouco; Home/End vão ao mínimo/máximo. */ | `src/components/inbox/ConversationListSidebar.tsx` |
+| vivas ficam de fora: uma mensagem que chega não pode descartar o resumo em voo. | `src/components/inbox/ConversationSummary.tsx` |
+| * R2-INB-018: operação REAL do host para as ações rápidas que não são apenas | `src/components/inbox/GlobalSearch.tsx` |
+| apenas fechavam a busca, sem abrir conversa nem gestão de respostas. | `src/components/inbox/GlobalSearch.tsx` |
+| passar por `handleSearch`: o índice não pode sobrar fora dela. | `src/components/inbox/GlobalSearch.tsx` |
+| de gravar — a regra é a mesma função nos dois lugares). | `src/components/inbox/InboxSavedFiltersMenu.tsx` |
+| `tecla`: a regra local/no-secret-compare confunde `.key` (tecla) com credencial. | `src/components/inbox/InboxSavedFiltersMenu.tsx` |
+| Sem `load` nem `error` no prazo: vira erro com retry em vez de spinner eterno. | `src/components/inbox/LocationMessage.tsx` |
+| useRef não pode ser lido/escrito durante o render (react-hooks/refs) - useState é o | `src/components/inbox/LocationPicker.tsx` |
+| candidatos) — Enter com o campo vazio não pode abrir uma caixa vazia só com a atribuição. | `src/components/inbox/LocationPicker.tsx` |
+| E26: falha do `/retrieve` (com o fallback do E16 já tentado) não pode fechar a lista — o | `src/components/inbox/LocationPicker.tsx` |
+| Enquanto a lista visível é a da busca manual, o teclado não pode mexer no | `src/components/inbox/LocationPicker.tsx` |
+| caminho de imagem (`profiles.can_download`); sem permissão, nem fetch nem anchor. | `src/components/inbox/MediaPreview.tsx` |
+| fila, o guard só permite atribuir para o próprio usuário (mesma regra do | `src/components/inbox/RealtimeCollaboration.tsx` |
+| retomá-la no vencimento do prazo (R2-INB-029). | `src/components/inbox/RealtimeInboxView.tsx` |
+| já com conversas não lidas não é mensagem nova e não pode ser anunciado. | `src/components/inbox/RealtimeInboxView.tsx` |
+| Esc é do diálogo: não pode vazar para o painel de baixo (inbox fecha por baixo). | `src/components/inbox/VideoFullscreen.tsx` |
+| pré-visualização. Valor desconhecido NÃO vira rótulo inventado (mesma regra | `src/components/inbox/VirtualizedRealtimeList.tsx` |
+| R2-SLA-003: a linha enviava o prazo FIXO de 5 min ao badge compacto, | `src/components/inbox/VirtualizedRealtimeList.tsx` |
+| mesmo quando uma regra granular (por contato/empresa/cargo/tipo/fila/ | `src/components/inbox/VirtualizedRealtimeList.tsx` |
+| caimos no indicador com o prazo fixo anterior, sem chamar o hook e sem | `src/components/inbox/VirtualizedRealtimeList.tsx` |
+| Regra 4 do cartao: nenhum setState depois de desmontar. | `src/components/inbox/VoiceChanger.tsx` |
+| Regra 4: depois de desmontar, não entrega o blob nem mexe em estado. | `src/components/inbox/VoiceChanger.tsx` |
+| desmontado) enquanto a permissão estava pendente. Nesse caso o stream | `src/components/inbox/VoiceChangerPicker.tsx` |
+| O motivo real muda a ação do usuário: permissão negada, microfone | `src/components/inbox/VoiceChangerPicker.tsx` |
+| Stop any current preview (e a geração anterior, que não pode tocar por baixo desta) | `src/components/inbox/VoiceSelector.tsx` |
+| e um supervisor não pode marcar como lidos os sussurros endereçados a outro. | `src/components/inbox/WhisperMode.tsx` |
+| * `HOVER_REVEAL_TAP` acrescenta o alvo de toque mínimo de 40 px | `src/components/inbox/hoverActions.ts` |
+| muda de tamanho. Onde o ponto é um contêiner de ações, o mínimo vale para a | `src/components/inbox/hoverActions.ts` |
+| * Regra (medida em produção em 03/10, item 6 do S41): | `src/components/inbox/resolveActiveTab.ts` |
+| ausente (objeto orfao); `null` = estado indeterminado (a consulta falhou). Somente | `src/components/inbox/useFileUploadLogic.ts` |
+| for incerto: o retry nao pode refazer o upload (URL novo mudaria a actionKey) nem criar | `src/components/inbox/useFileUploadLogic.ts` |
+| * Mínimo de caracteres para a busca virar evento (abaixo disso é navegação, não consulta). */ | `src/components/inbox/useGlobalSearchData.ts` |
+| A tag entra na CONSULTA, antes do `.limit(10)`: filtrar em JS depois do | `src/components/inbox/useGlobalSearchData.ts` |
+| LIMIT devolvia zero quando o contato marcado era o 11º da ordem. | `src/components/inbox/useGlobalSearchData.ts` |
+| apenas consumimos o contrato — nenhuma consulta e feita neste componente. | `src/components/inbox/chat/ChatMessagesArea.tsx` |
+| lendo e nada pode mover o scroll. Mesmo limite do painel de equipe. */ | `src/components/inbox/chat/ChatMessagesArea.tsx` |
+| * Prazo seguro de 1ª resposta enquanto o prazo aplicável ainda não chegou do hook. */ | `src/components/inbox/chat/ChatPanelHeader.tsx` |
+| * Escalonamento máximo por item (cartão: no máximo 40 ms). */ | `src/components/inbox/chat/ChatSearchResultsList.tsx` |
+| `event.key` comparado direto esbarra na regra local/no-secret-compare (o nome | `src/components/inbox/chat/ConversationTabs.tsx` |
+| do membro tem "key"); o alias mantém a leitura e passa a regra. | `src/components/inbox/chat/ConversationTabs.tsx` |
+| * Nº de e-mails não lidos do contato; o chip só deve ser montado com count > 0. */ | `src/components/inbox/chat/EmailUnreadChip.tsx` |
+| * Acima de 99 o número visível vira `99+` (mesma regra do selo da sidebar — D01). */ | `src/components/inbox/chat/EmailUnreadChip.tsx` |
+| embutido como `data:` URL. Prévia antiga guardada com URL remota não pode ser | `src/components/inbox/chat/LinkPreviewCard.tsx` |
+| Code blocks (```...```) — must come before inline | `src/components/inbox/chat/MarkdownPreview.tsx` |
+| não pode compartilhar o objeto da mensagem: apagar a mensagem/arquivo não pode quebrar o | `src/components/inbox/chat/MessageBubble.tsx` |
+| então quem fala é o badge — o id cru não pode aparecer no balão. | `src/components/inbox/chat/MessageBubble.tsx` |
+| * O balão não pode ficar vazio: sem ramo para `type === 'unsupported'` o `MessageBubble` | `src/components/inbox/chat/MessageBubbleUnsupported.tsx` |
+| coluna/migration/Edge nova. O corte é a regra da casa `react-refresh/only-export-components` | `src/components/inbox/chat/MessageSendHistorySheet.tsx` |
+| AA do E.3; `--info` só no ícone), animação apenas com `motion-safe:`, nada de exportar/baixar novo | `src/components/inbox/chat/MessageSendHistorySheet.tsx` |
+| * Regra única (uma só fonte para o limiar): só afirma "Online" quando | `src/components/inbox/chat/contactPresence.ts` |
+| 2 minutos — um `online` velho é sinal morto e não pode virar afirmação. | `src/components/inbox/chat/contactPresence.ts` |
+| (regra react-refresh/only-export-components). | `src/components/inbox/chat/contactPresence.ts` |
+| * O minimo que a regra de agrupamento precisa de uma mensagem. */ | `src/components/inbox/chat/groupWindow.ts` |
+| `MessageSendHistorySheet.tsx`; o cálculo mora aqui porque a regra da casa | `src/components/inbox/chat/messageSendTimeline.ts` |
+| entao nunca casa com pilula (volta `confirmed`). Mora aqui (e nao no `.tsx`) porque a regra | `src/components/inbox/chat/messageSendTimeline.ts` |
+| * Limite de caracteres do editor de mensagem — fonte única (contador, botão e envio). */ | `src/components/inbox/chat/useChatInputLogic.ts` |
+| * R2-INB-016 (item 312) — a assinatura de texto CONTA no limite de 4096: o limite representa | `src/components/inbox/chat/useChatInputLogic.ts` |
+| `__tests__/ChatInputArea.limite-enter.test.tsx`, e não por convenção. | `src/components/inbox/chat/useChatInputLogic.ts` |
+| * Grandeza do limite: corpo que vai ser enviado (sem espaços nas pontas, como o transporte | `src/components/inbox/chat/useChatInputLogic.ts` |
+| (useChatPanelHandlers.handleSend), então lá o limite segue medindo o corpo do editor. | `src/components/inbox/chat/useChatInputLogic.ts` |
+| ENVIO — com o editor aberto, o prazo pode vencer antes de o usuário salvar, e o | `src/components/inbox/chat/useChatPanelHandlers.ts` |
+| * R2-INB-016 (item 312) — limite de caracteres do editor. O botão Enviar já era | `src/components/inbox/chat/useChatPanelHandlers.ts` |
+| payload acima do limite anunciado saía sem resistência. A recusa (com aviso, sem | `src/components/inbox/chat/useChatPanelHandlers.ts` |
+| R2-INB-016 (item 312): o limite mede o payload REAL deste envio — o mesmo número do | `src/components/inbox/chat/useChatPanelHandlers.ts` |
+| R2-INB-016: os dois valores são os que o limite mediu no topo do comando. | `src/components/inbox/chat/useChatPanelHandlers.ts` |
+| R2-INB-014: `writeText` pode rejeitar (permissão negada / contexto inseguro). Sem | `src/components/inbox/chat/useChatPanelHandlers.ts` |
+| `zappMotion` (`deliberate` + `ease.standard`) — o kit não carrega prazo solto. | `src/components/inbox/chat/motion/DrawLine.tsx` |
+| * Prazo do realce, em ms — derivado de `zappDurations` (nada solto no kit). */ | `src/components/inbox/chat/motion/FlashRing.tsx` |
+| * Prazo do realce (ms) — encurtado nos testes. */ | `src/components/inbox/chat/motion/FlashRing.tsx` |
+| * Prazo da celebração, em ms — derivado de `zappDurations` (nada solto no kit). */ | `src/components/inbox/chat/motion/PopBurst.tsx` |
+| O atraso de cada item sai de `zappStaggerDelaySeconds` (a regra, com o teto, | `src/components/inbox/chat/motion/StaggerList.tsx` |
+| * Regra do dono (11/10/2026): só as cores que o sistema já tem. Toda cor sai | `src/components/inbox/chat/motion/tone.ts` |
+| Falha real (ID inválido, permissão negada, nada gravado): o diálogo | `src/components/inbox/collaboration/HandoffDialog.tsx` |
+| apenas com quem casa o termo digitado, sem corte pela amostra de 20. | `src/components/inbox/collaboration/MentionInput.tsx` |
+| * Acima de 99 o selo vira `99+` (mesma regra do selo da sidebar — D01). */ | `src/components/inbox/contact-details/ContactActionButtons.tsx` |
+| abaixo do mínimo WCAG 1.4.11 (3:1) para ícones. L reduzido pra | `src/components/inbox/contact-details/ContactActionButtons.tsx` |
+| mais etiquetas); o selo por etiqueta deve sumir quando a coluna dedicada | `src/components/inbox/contact-details/ContactHeaderSection.tsx` |
+| APENAS risco de churn (nível + motivo) e melhores horários de contato. | `src/components/inbox/contact-details/ContactIntelligencePanel.tsx` |
+| apenas mais um valor conhecido: a chave de storage NÃO muda, então a | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
+| 2026-10-16 e segue a MESMA regra de `intelligence`: valor conhecido a mais, | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
+| Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
+| * E27: a pausa é limite de uso, não ausência de resultado — o aviso diz quanto falta e lembra que | `src/components/inbox/location-picker/SuggestionList.tsx` |
+| expira, o texto cai para o aviso genérico (o hook decide quando tentar de novo). | `src/components/inbox/location-picker/SuggestionList.tsx` |
+| mês não ganha botão: nova tentativa não muda o limite, seria só ruído. | `src/components/inbox/location-picker/SuggestionList.tsx` |
+| "Tentar novamente". Chegando ao fim do prazo, o próprio aviso pede a retomada (o hook vê o | `src/components/inbox/location-picker/SuggestionList.tsx` |
+| morto, que dizia limite vigente quando não havia mais nenhum. Zero é "já pode tentar". | `src/components/inbox/location-picker/searchErrors.ts` |
+| * F2/E15: causas de falha do `/suggest` que são **rota quebrada** (não limite de uso) e por isso | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
+| caem no `/forward`. `rate_limited` (429) e guarda de custo ficam de fora: são limite, não rota — | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
+| é limite de uso (429 / teto do mês). Com isso a UI nunca mais escreve "Nada encontrado" em | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
+| E54 · 429 do `/forward`: a rede de proteção também pode estar limitada. Pausa com prazo — | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
+| E27 · item 1: 429 não é "Falha ao buscar sugestões" — é pausa com prazo. Vai para o estado | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
+| novamente" é justamente o que a tela não pode fazer; digitação continua com o piso. | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
+| A3-03 (onda 2): o termo mudou — a resposta do termo anterior não pode mais virar estado, | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
+| E54 · 429 do `/forward` é limite de uso, não falha de rota: pausa com prazo, em vez de deixar | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
+| E54 · 429 do `/retrieve` também é limite de uso: liga o backoff de 60 s. Antes ele ficava | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
+| Sem `load` nem `error` no prazo (chunk, estilo ou tiles pendurados): vira erro com retry. | `src/components/inbox/location-picker/useLocationPicker.ts` |
+| enquanto o endereço deste ponto carrega não pode vencer o ponto que o operador marcou. | `src/components/inbox/location-picker/useLocationPicker.ts` |
+| Item sem nome fica com o rótulo genérico de antes; nome longo é truncado no mesmo limite | `src/components/inbox/tabs/AudioPlayButton.tsx` |
+| com a permissao concedida — sem ela o botao e o cadeado com o motivo a vista. | `src/components/inbox/tabs/FileDetailPanel.tsx` |
+| de `onError`. A imagem usa `object-contain` no cartao (print de planilha nao pode ser cortado), | `src/components/inbox/tabs/FileThumb.tsx` |
+| de perfis que o `FilesTab` repassa por props (D04) — a Lista nao consulta o banco. A regra | `src/components/inbox/tabs/FilesListView.tsx` |
+| * Etapa 39: motivo pelo qual o encaminhamento excede o limite (desabilita o botao). */ | `src/components/inbox/tabs/FilesSelectionBar.tsx` |
+| * A varredura do periodo pode parar quando o item MAIS ANTIGO carregado ja cruzou o limite que | `src/components/inbox/tabs/FilesTab.tsx` |
+| #144/OTH-002: erro na contagem nao pode virar "0" confirmado — vira "indisponivel" (—). | `src/components/inbox/tabs/FilesTab.tsx` |
+| identidade de cada item sai de `resolveSenderIdentity` no cartao. D06: a permissao de | `src/components/inbox/tabs/FilesTab.tsx` |
+| arquivos que estao nele. Enquanto o item mais antigo carregado nao cruzar o limite que | `src/components/inbox/tabs/FilesTab.tsx` |
+| sincrona dentro do efeito) e o efeito nao pode chamar `setState` direto, entao o espelho e | `src/components/inbox/tabs/FilesTab.tsx` |
+| Nao cruzou o limite ainda: pode haver arquivo do periodo em pagina mais antiga. Com so | `src/components/inbox/tabs/FilesTab.tsx` |
+| "Ate" isso e a REGRA (as primeiras paginas podem ser todas posteriores ao `to`), nao excecao. | `src/components/inbox/tabs/FilesTab.tsx` |
+| limite do periodo; ou o teto de paginas foi atingido. So entao da para afirmar "nenhum arquivo | `src/components/inbox/tabs/FilesTab.tsx` |
+| recorte filtrado (`filtered`). Trocar o filtro/busca depois de selecionar não pode | `src/components/inbox/tabs/FilesTab.tsx` |
+| cabe no `sort` do hook (que so conhece arquivo/tamanho/data): ela vive aqui e vale apenas | `src/components/inbox/tabs/FilesTableView.tsx` |
+| R06 (S48): foto + nome de quem enviou (mesma regra do cartao). */} | `src/components/inbox/tabs/FilesTableView.tsx` |
+| ja resolvidos pelo `FilesTab` (quem monta/rotula cada remetente e a regra D01, la), entao | `src/components/inbox/tabs/FilesToolbar.tsx` |
+| Concluída reabre (volta para "A fazer"); aberta conclui. Mesma regra do módulo. | `src/components/inbox/tabs/TasksTab.tsx` |
+| apenas o tipo — nunca "0 KB" nem separador solto. Acima de 1 GB o `formatSize` segue | `src/components/inbox/tabs/fileDisplay.ts` |
+| medindo em MB (nao ha faixa de GB nele, e este cartao nao pode altera-lo). | `src/components/inbox/tabs/fileDisplay.ts` |
+| A regra de nome tecnico continua sendo a `isTechnicalFilename` da consulta de midias. | `src/components/inbox/tabs/fileDisplay.ts` |
+| * Componente de APRESENTAÇÃO: não consulta banco nem Supabase, não guarda dado de negócio e não | `src/components/inbox/tabs/journey/JourneyFilters.tsx` |
+| … +1646 linhas — lista completa em `context.json` | |
