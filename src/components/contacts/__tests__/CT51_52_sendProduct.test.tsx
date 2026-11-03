@@ -48,7 +48,6 @@ vi.mock('@/services/contact.service', () => ({
 // escopo do CT-51/52, então viram stubs para isolar o botão em teste.
 vi.mock('../ContactActivityTimeline', () => ({ ContactActivityTimeline: () => <div data-testid="timeline" /> }));
 vi.mock('../ContactNotes', () => ({ ContactNotes: () => <div data-testid="notes" /> }));
-vi.mock('../ContactPurchaseHistory', () => ({ ContactPurchaseHistory: () => <div data-testid="purchases" /> }));
 vi.mock('../ContactEngagementScore', () => ({ ContactEngagementScore: () => <div data-testid="score" /> }));
 
 const mockCatalog = vi.fn();

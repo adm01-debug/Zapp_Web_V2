@@ -91,13 +91,10 @@ vi.mock('@/hooks/system/useNavigationHistory', () => ({
 }));
 
 const EMPTY_CRM360: Crm360Result = {
-  purchases: [],
   openDeals: [],
   stages: [],
   currentStage: null,
   currentDeal: null,
-  ticketMedio: null,
-  ticketDeltaPct: null,
   interesses: [],
   pipeline: {
     propostas: { total: 0, count: 0 },
@@ -105,7 +102,7 @@ const EMPTY_CRM360: Crm360Result = {
     ganhos: { total: 0, count: 0 },
   },
   interacoes: [],
-  resumo: { comprasTotal: 0, comprasCount: 0, propostas: 0, emAberto: 0 },
+  resumo: { propostas: 0, emAberto: 0 },
 };
 
 const conversation: Conversation = {
@@ -191,7 +188,6 @@ describe('Crm360Tab', () => {
 
   it('mostra empty states honestos quando não há dados comerciais', () => {
     renderTab();
-    expect(screen.getByText('Nenhuma compra registrada')).toBeInTheDocument();
     expect(screen.getByText('Nenhuma proposta em aberto')).toBeInTheDocument();
     expect(screen.getByText('Nenhuma negociação aberta')).toBeInTheDocument();
     expect(screen.getByText('Sem negociações')).toBeInTheDocument();
@@ -203,12 +199,6 @@ describe('Crm360Tab', () => {
   it('nunca inventa nomes ou valores das imagens de referência', () => {
     renderTab();
     expect(screen.queryByText(/Joaquim|Ana Souza|12\.450|Score 92|Segmento Varejo/)).not.toBeInTheDocument();
-  });
-
-  it('"Ver no SalesView →" de Últimas compras troca para a aba SalesView', () => {
-    const { onTabChange } = renderTab();
-    fireEvent.click(screen.getByText('Ver no SalesView →'));
-    expect(onTabChange).toHaveBeenCalledWith('orders');
   });
 
   it('"Ver na Journey →" troca para a aba Journey', () => {
@@ -236,11 +226,6 @@ describe('Crm360Tab', () => {
     const card = screen.getByText('Pipeline comercial').closest('section')!;
     fireEvent.click(within(card).getByText('Ver tarefas →'));
     expect(mockNavigateToView).toHaveBeenCalledWith('tasks');
-  });
-
-  it('exibe o ticket médio formatado em BRL quando há compras concluídas', () => {
-    renderTab({ ...EMPTY_CRM360, ticketMedio: 1234.5 });
-    expect(screen.getByText(/R\$\s*1\.234,50/)).toBeInTheDocument();
   });
 
   it('renderiza o stepper de etapas quando há um deal aberto', () => {
@@ -309,7 +294,7 @@ describe('Crm360Tab', () => {
   it('links de ação do CRM 360° têm área de toque ≥24px e usam o par de texto --primary-text', () => {
     h.nextActions.push({ label: 'Ligar de volta', description: 'Cliente pediu retorno' });
     renderTab();
-    for (const label of ['Ver no SalesView →', 'Criar tarefa →', 'Ver na Journey →']) {
+    for (const label of ['Criar tarefa →', 'Ver na Journey →']) {
       const el = screen.getByText(label);
       // jsdom não tem layout: o contrato medido aqui é a classe; h-7 = 1,75rem = 28px.
       expect(el.className, label).toContain('h-7');
@@ -320,7 +305,7 @@ describe('Crm360Tab', () => {
   it('o par de texto aplicado nos links fecha AA (≥4,5:1) sobre o card nos temas claro e escuro', () => {
     h.nextActions.push({ label: 'Ligar de volta', description: 'Cliente pediu retorno' });
     renderTab();
-    for (const label of ['Ver no SalesView →', 'Criar tarefa →', 'Ver na Journey →']) {
+    for (const label of ['Criar tarefa →', 'Ver na Journey →']) {
       const token = tokenDeTexto(screen.getByText(label));
       for (const [tema, css] of [['claro', TOKENS_CSS], ['escuro', DARK_TOKENS]] as const) {
         const razao = razaoContraste(hslToRgb(tokenHsl(css, token)), hslToRgb(tokenHsl(css, 'card')));
