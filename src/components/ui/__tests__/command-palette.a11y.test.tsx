@@ -209,7 +209,7 @@ describe('CommandPalette — devolução de foco sem DialogTrigger', () => {
         const input = palette.open();
 
         if (close === 'Escape') fireEvent.keyDown(input, { key: 'Escape' });
-        else if (close === 'Fechar') fireEvent.click(screen.getByRole('button', { name: 'Fechar', exact: true }));
+        else if (close === 'Fechar') fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
         else palette.setOpen(false); // mesmo contrato controlado usado pelo toggle do provider
         flushFocus();
 
@@ -277,7 +277,7 @@ describe('CommandPalette — devolução de foco sem DialogTrigger', () => {
       });
       palette.open();
 
-      fireEvent.click(screen.getByRole('option', { name: 'Continuar operação', exact: true }));
+      fireEvent.click(screen.getByRole('option', { name: 'Continuar operação' }));
       flushFocus();
 
       expect(callback).toHaveBeenCalledTimes(1);
