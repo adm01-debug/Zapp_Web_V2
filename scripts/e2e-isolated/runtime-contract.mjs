@@ -3,6 +3,8 @@ import { networkInterfaces } from 'node:os';
 import { readlinkSync } from 'node:fs';
 
 export const ORIGIN = 'https://127.0.0.1:5173';
+export const PROVIDER_ORIGIN = 'http://127.0.0.1:8081';
+export const CATALOG_SKU = 'E2E-LOCAL-001';
 export const OFFICIAL_HOST = 'tnnnlkbymytvtqngbbqh.supabase.co';
 
 export function assertOfficialHostIsLocal(hosts) {
@@ -69,13 +71,15 @@ export function assertNoProxy(env) {
 
 const BROWSER_ENV = new Set([
   'PATH', 'HOME', 'TMPDIR', 'TMP', 'TEMP', 'LANG', 'LC_ALL', 'TZ',
-  'DISPLAY', 'XAUTHORITY', 'XDG_RUNTIME_DIR', 'LD_LIBRARY_PATH', 'PLAYWRIGHT_FIREFOX_POLICIES_JSON',
+  'DISPLAY', 'XAUTHORITY', 'XDG_RUNTIME_DIR', 'LD_LIBRARY_PATH',
+  'PLAYWRIGHT_FIREFOX_POLICIES_JSON',
 ]);
 
 /** Playwright passes this complete map instead of inheriting driver credentials. */
 export function browserEnvironment(env) {
-  if (env.PLAYWRIGHT_FIREFOX_POLICIES_JSON !== undefined && env.PLAYWRIGHT_FIREFOX_POLICIES_JSON !== '/run/zapp-e2e-tls/firefox-policies.json') fail('invalid-browser-tls-policy');
   const result = {};
+  if (env.PLAYWRIGHT_FIREFOX_POLICIES_JSON !== undefined &&
+      env.PLAYWRIGHT_FIREFOX_POLICIES_JSON !== '/run/zapp-e2e-tls/firefox-policies.json') fail('invalid-browser-tls-policy');
   for (const name of BROWSER_ENV) {
     if (typeof env[name] === 'string') result[name] = env[name];
   }
@@ -121,6 +125,7 @@ export function syntheticCredentials(now = Date.now()) {
     password: randomBytes(24).toString('base64url') + '!Aa1',
     evolutionKey: 'e2e-local-' + randomBytes(24).toString('hex'),
     instanceToken: 'e2e-instance-' + randomBytes(24).toString('hex'),
+    catalogKey: 'e2e-catalog-' + randomBytes(24).toString('hex'),
   };
 }
 

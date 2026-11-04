@@ -7,7 +7,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { assertPinnedImages, functionPolicy, prepareMountTargets } from '../e2e-isolated/run.mjs';
 import { gitBlob } from '../e2e-isolated/migrations.mjs';
-import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST } from '../e2e-isolated/runtime-contract.mjs';
+import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST, GROUPS } from '../e2e-isolated/runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from '../e2e-isolated/stack.mjs';
 import { createTlsMaterial } from '../e2e-isolated/tls.mjs';
 
@@ -19,6 +19,11 @@ const SQL = 'select 1;\n';
 const lock = () => JSON.parse(readFileSync(path.join(MODULES, 'images.lock.json'), 'utf8'));
 const ok = stdout => ({ status: 0, stdout: stdout ?? '', stderr: '' });
 const error = stderr => ({ status: 1, stdout: '', stderr: stderr ?? 'simulated command failure' });
+const FUNCTIONS = ['auth-login', 'message-delivery', 'promogifts-catalog'];
+const FUNCTION_SOURCE = '// graph fixture, never executed\n';
+const SEED_FLAGS = ['main_contact_rls', 'files_owner_preserved', 'pagination_rls', 'talkx_connection_rls', 'talkx_segment_rls', 'instance_tokens_stored', 'inbox_fixture_rls', 'onboarding_persisted'];
+const PROVIDER_FLAGS = ['delivery_real', 'provider_observed', 'delivery_user_rls', 'catalog_real',
+  'catalog_media_https', 'storage_upload_real', 'storage_media_https', 'http_media_rejected'];
 const TLS_CHECKS = { identity: true, image: true, untrusted_rejected: true, wrong_san_rejected: true };
 let certificateFixture;
 let certificateRoot;
@@ -60,11 +65,52 @@ function playwrightJson({ listed = false, failed = false } = {}) {
       tests: [{
         projectName: 'setup', projectId: 'setup', expectedStatus: 'passed',
         status: listed ? 'skipped' : failed ? 'unexpected' : 'expected', annotations: [],
-        results: listed ? [] : [{ status: failed ? 'failed' : 'passed', workerIndex: 0, retry: 0, errors: failed ? [{}] : [] }],
+        results: listed ? [] : [{ status: failed ? 'failed' : 'passed', workerIndex: 0, retry: 0, errors: failed ? [{}] : [], annotations: [] }],
       }],
     }] }],
     errors: [], stats: { expected: listed || failed ? 0 : 1, unexpected: failed ? 1 : 0, flaky: 0, skipped: listed ? 1 : 0 },
   };
+}
+
+function suiteJson({ listed = false, fault, group = 'authenticated' } = {}) {
+  const projects = GROUPS[group].filter(name => fault !== 'missing-project-' + name);
+  const report = playwrightJson({ listed });
+  report.config.projects = projects.map(name => ({ name, repeatEach: 1 }));
+  report.suites = projects.map(name => {
+    const suite = structuredClone(report.suites[0]);
+    suite.title = name + '.spec.ts';
+    suite.file = suite.title;
+    const spec = suite.specs[0];
+    spec.file = suite.file;
+    spec.tests[0].projectName = spec.tests[0].projectId = name;
+    const item = spec.tests[0];
+    if (name === 'chromium-authenticated' && fault === 'explicit-skip') {
+      item.expectedStatus = 'skipped'; item.status = 'skipped'; item.annotations = [{ type: 'fixme', description: 'historical explicit contract' }];
+      if (!listed) item.results = [{ status: 'skipped', workerIndex: -1, retry: 0, errors: [] }];
+    }
+    if (!listed && name === 'chromium-authenticated' && ['runtime-skip', 'suite-browser-failure'].includes(fault)) {
+      item.status = fault === 'runtime-skip' ? 'skipped' : 'unexpected';
+      item.expectedStatus = fault === 'runtime-skip' ? 'skipped' : 'passed';
+      item.results = [{ status: fault === 'runtime-skip' ? 'skipped' : 'failed', workerIndex: 0, retry: 0, errors: [] }];
+    }
+    if (['chromium-e2e-core', 'firefox-conversation', 'webkit-conversation'].includes(name)) {
+      suite.title = suite.file = spec.file = 'conversation.spec.ts';
+      spec.title = 'resolving conversation via CloseConversationDialog succeeds';
+      spec.line = 59; spec.column = 3;
+      suite.specs = [];
+      suite.suites = [{ title: 'Conversation state transitions', specs: [spec] }];
+      if (!listed && name !== 'chromium-e2e-core' && fault === 'known-platform-skips') {
+        item.expectedStatus = 'skipped'; item.status = 'skipped';
+        item.annotations = [{ type: 'skip', description: "CloseConversationDialog coberto em Chromium; Radix Select portal nao responde a getByRole('option') de forma confiavel em Firefox/WebKit no CI" }];
+        item.results = [{ status: 'skipped', workerIndex: 0, retry: 0, errors: [], annotations: structuredClone(item.annotations) }];
+      }
+    }
+    return suite;
+  });
+  report.stats = { expected: 0, unexpected: 0, flaky: 0, skipped: 0 };
+  for (const suite of report.suites) report.stats[(suite.specs[0] ?? suite.suites[0].specs[0]).tests[0].status]++;
+  if (!listed && fault === 'suite-stats-mismatch') report.stats.expected--;
+  return report;
 }
 
 for (const name of ['postgres', 'auth', 'rest', 'storage', 'realtime', 'edge', 'driver']) {
@@ -156,7 +202,9 @@ for (const name of [...checkoutServices, ...officialServices]) for (const varian
   });
 }
 
-async function controllerFixture(t, fault, manifest = value => value, tlsDiagnostic) {
+async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
+  const { scope = 'login', group = 'authenticated', manifest = value => value } = typeof options === 'function' ? { manifest: options } : options;
+  const fullSeed = scope === 'suite' && group === 'authenticated';
   const temporary = mkdtempSync(path.join(tmpdir(), 'isolated-controller-test-'));
   t.after(() => rmSync(temporary, { recursive: true, force: true }));
   const root = path.join(temporary, 'repo');
@@ -167,6 +215,15 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
   writeFileSync(path.join(root, 'node_modules/@playwright/test/package.json'), JSON.stringify({ version: fault === 'wrong-playwright' ? '1.0.0' : '1.64.1' }));
   writeFileSync(path.join(temporary, 'bun'), 'unused simulated binary');
   writeFileSync(path.join(root, 'supabase/config.toml'), '[functions.auth-login]\nverify_jwt = ' + (fault === 'jwt-policy' ? 'true' : 'false') + '\n');
+  if (scope === 'suite') {
+    for (const name of [...FUNCTIONS, '_shared']) {
+      if (fault === 'missing-delivery-handler' && name === 'message-delivery') continue;
+      mkdirSync(path.join(root, 'supabase/functions', name), { recursive: true });
+      writeFileSync(path.join(root, 'supabase/functions', name, 'index.ts'), FUNCTION_SOURCE);
+    }
+    mkdirSync(path.join(root, 'e2e'), { recursive: true });
+    cpSync(path.join(ROOT, 'e2e/conversation.spec.ts'), path.join(root, 'e2e/conversation.spec.ts'));
+  }
   let sql = SQL;
   if (fault === 'unreviewed-vault') sql += "select vault.create_secret('synthetic-fixture-only');\n";
   if (fault === 'historical-jwt') sql += "select 'eyJaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaa';\n";
@@ -187,6 +244,8 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
   let cleanupSeen = false;
   let controlDir;
   let pgReadyChecks = 0;
+  const suiteStages = [];
+  const bundled = [];
   let localKeyConfigured = false;
   let driverLocalAnonKey;
   let diagnosticCredentials = {};
@@ -203,7 +262,10 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
     if (program === 'git') {
       if (args[0] === 'rev-parse') return ok(SOURCE_SHA + '\n');
       if (args[0] === 'diff') return fault === 'dirty-checkout' ? error() : ok();
-      if (args[0] === 'ls-files') return ok(manifest('100644 ' + gitBlob(sql) + ' 0\tsupabase/migrations/' + MIGRATION + '\n'));
+      if (args[0] === 'ls-files') {
+        if (args.at(-1) === 'supabase/functions') return ok(FUNCTIONS.filter(name => fault !== 'untracked-handler' || name !== 'message-delivery').map(name => '100644 ' + (fault === 'changed-handler' && name === 'message-delivery' ? 'b'.repeat(40) : gitBlob(FUNCTION_SOURCE)) + ' 0\tsupabase/functions/' + name + '/index.ts').join('\n'));
+        return ok(manifest('100644 ' + gitBlob(sql) + ' 0\tsupabase/migrations/' + MIGRATION + '\n'));
+      }
       assert.fail('unexpected git command');
     }
     if (program === 'which') return ok(path.join(temporary, 'bun'));
@@ -247,12 +309,13 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
         if (fault === 'bundle-failure' || (fault === 'tls-probe-bundle' && name.endsWith('-tls-edge-probe'))) return error();
         const bundleMount = mounts.find(mount => mount.Destination === '/bundles');
         const filename = path.basename(valueAfter(argv, '--output'));
+        bundled.push(filename);
         writeFileSync(path.join(bundleMount.Source, filename), fault === 'empty-bundle' || (fault === 'tls-probe-empty-bundle' && filename === 'tls-edge-probe.eszip') ? '' : 'simulated-eszip-' + filename);
         return ok();
       }
       const checkoutProcess = ['-anchor', '-driver', '-vite', '-gateway'].some(suffix => name.endsWith(suffix));
       assert.deepEqual(allAfter(argv, '--workdir'), checkoutProcess ? ['/work'] : [], 'the real controller must preserve official image working directories');
-      if (checkoutProcess) {
+      if (checkoutProcess || name.endsWith('-provider')) {
         assert.equal(valueAfter(argv, '--user'), process.getuid() + ':' + process.getgid(), 'Node/Bun bind writes must belong to the runner');
       }
       if (name.endsWith('-anchor')) assert.equal(valueAfter(argv, '--add-host'), OFFICIAL_HOST + ':127.0.0.1');
@@ -260,6 +323,7 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
       if (name.endsWith('-gateway') && fault === 'tls-gateway-start') return error();
       if (name.endsWith('-tls-edge') && fault === 'tls-edge-start') return error();
       if (name.endsWith('-postgres') && fault === 'postgres-start') return error();
+      if (name.endsWith('-provider') && fault === 'provider-start') return error();
       if (name.endsWith('-anchor') && fault === 'anchor-network') metadata.HostConfig.NetworkMode = 'bridge';
       if (name.endsWith('-driver') && fault === 'driver-network') metadata.HostConfig.NetworkMode = 'host';
       if (name.endsWith('-driver') && fault === 'tls-driver-user') metadata.Config.User = '99999:99999';
@@ -392,13 +456,46 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
         writeFileSync(path.join(output, 'seed-ready.json'), JSON.stringify({ run_id: containers.values().next().value.Config.Labels[OWNER_LABEL], source_sha: SOURCE_SHA, auth_login_real: true, supervisor_rls_read: true }));
         return ok('{"seed_ready":true}');
       }
+      const suiteCommands = {
+        'e2e/fixtures/arquivos-local/seed.ts': 'files-volume',
+        'e2e/fixtures/seed-files-tab.mjs': 'files-canonical',
+        'scripts/e2e-isolated/seed-suite.mjs': 'suite-seed',
+        'scripts/e2e-isolated/verify-providers.mjs': 'provider-verification',
+      };
+      for (const [file, name] of Object.entries(suiteCommands)) {
+        if (!argv.includes(file)) continue;
+        assert.equal(scope, 'suite');
+        assert.equal(seedCalls, 1);
+        assert.ok(containers.has([...containers.keys()].find(key => key.endsWith('-provider'))));
+        suiteStages.push(name);
+        if (fault === name + '-failure') return error('private-sentinel-from-seed');
+        const runId = containers.values().next().value.Config.Labels[OWNER_LABEL];
+        if (name === 'suite-seed' && fault !== 'suite-proof-missing') {
+          const data = { schema: 1, run_id: runId, source_sha: SOURCE_SHA, ...Object.fromEntries(SEED_FLAGS.map(key => [key, true])), pagination_seed_count: 51 };
+          if (fault.startsWith('suite-proof-')) data[fault.slice('suite-proof-'.length)] = false;
+          writeFileSync(path.join(output, 'suite-seed-ready.json'), JSON.stringify(data));
+        }
+        if (name === 'provider-verification' && fault !== 'provider-proof-missing') {
+          const data = { schema: 1, run_id: runId, source_sha: SOURCE_SHA, ...Object.fromEntries(PROVIDER_FLAGS.map(key => [key, true])), catalog_sku: 'E2E-LOCAL-001', delivery_proofs: { text: true, catalog_image: true, storage_image: true } };
+          if (fault.startsWith('provider-proof-')) data[fault.slice('provider-proof-'.length)] = false;
+          if (fault.startsWith('provider-proof-delivery_proofs.')) data.delivery_proofs[fault.split('.')[1]] = false;
+          if (fault === 'provider-proof-delivery_proofs-extra') data.delivery_proofs.extra = true;
+          writeFileSync(path.join(output, 'provider-ready.json'), JSON.stringify(data));
+        }
+        return ok('private-sentinel-from-seed');
+      }
       if (argv.includes('node_modules/@playwright/test/cli.js')) {
+        if (scope === 'suite') {
+          assert.deepEqual(allAfter(argv, '--project'), GROUPS[group]);
+          assert.equal(argv.includes('E2E_CATALOG_PRODUCT_SKU_VERIFIED=true'), fullSeed);
+          assert.deepEqual(suiteStages, fullSeed ? ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification'] : []);
+        }
         if (argv.includes('--list')) {
           listCalls++;
           assert.equal(argv.includes('--reporter=json'), true);
           assert.equal(existsSync(path.join(controlDir, 'proof.json')), true, 'collection also runs after environment proof');
           if (fault === 'collection-failure') return error();
-          const inventory = playwrightJson({ listed: true });
+          const inventory = scope === 'suite' ? suiteJson({ listed: true, fault, group }) : playwrightJson({ listed: true });
           if (fault === 'collection-extra') {
             const extra = structuredClone(inventory.suites[0].specs[0]); extra.line = 90;
             inventory.suites[0].specs.push(extra); inventory.stats.skipped = 2;
@@ -408,10 +505,10 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
         browserCalls++;
         assert.equal(listCalls, 1, 'execution requires exactly one separate inventory');
         assert.equal(existsSync(path.join(controlDir, 'proof.json')), true, 'browser starts only after proof');
-        const report = playwrightJson({ failed: fault === 'browser-failure' });
+        const report = scope === 'suite' ? suiteJson({ fault, group }) : playwrightJson({ failed: fault === 'browser-failure' });
         if (fault === 'wrong-result') report.stats.expected = 0;
         writeFileSync(path.join(output, 'results.json'), JSON.stringify(report));
-        if (fault === 'browser-failure') return error('controlled browser failure');
+        if (fault === 'browser-failure' || fault === 'suite-browser-failure') return error('controlled browser failure');
         mkdirSync(path.join(output, 'playwright-report'), { recursive: true });
         writeFileSync(path.join(output, 'playwright-report/raw.html'), 'must-never-publish-session-token');
         return ok('1 passed');
@@ -433,7 +530,7 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
   const realTimeout = globalThis.setTimeout;
   globalThis.setTimeout = (callback, _delay, ...args) => realTimeout(callback, 0, ...args);
   let exit;
-  try { exit = await runLogin({ outputDirectory: output, command: fakeCommand }); }
+  try { exit = await runLogin({ outputDirectory: output, command: fakeCommand, scope, ...(scope === 'suite' ? { group } : {}) }); }
   finally { globalThis.setTimeout = realTimeout; }
   const state = JSON.parse(readFileSync(path.join(output, 'status.json'), 'utf8'));
   const publicFiles = readdirSync(path.join(output, 'public'), { recursive: true });
@@ -445,7 +542,7 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
   }
   const tlsDiagnosticLog = tlsDiagnostic && existsSync(path.join(output, 'public', 'tls-' + tlsDiagnostic.runtime + '-gate.log'))
     ? readFileSync(path.join(output, 'public', 'tls-' + tlsDiagnostic.runtime + '-gate.log'), 'utf8') : null;
-  const result = { tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
+  const result = { tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
   return result;
 }
 
@@ -553,6 +650,79 @@ for (const fault of ['browser-failure', 'wrong-result', 'redactor-failure', 'cle
     if (fault === 'foreign-volume-cleanup') assert.ok(value.volumes.size > 0, 'foreign-labelled volumes must not be removed');
   });
 }
+
+test('suite controller: authenticated collects exactly its nine existing projects after every seed/provider check', async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite' });
+  assert.equal(value.exit, 0);
+  assert.equal(value.state.scope, 'authenticated-suite');
+  assert.equal(value.state.suite.passed, GROUPS.authenticated.length);
+  assert.equal(value.state.suite.total, GROUPS.authenticated.length);
+  assert.equal(value.browserCalls, 1);
+  assert.equal(value.listCalls, 1);
+  assert.deepEqual(value.bundled, ['main.eszip', ...FUNCTIONS.map(name => name + '.eszip'), 'tls-edge-probe.eszip']);
+  assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification']);
+  assert.equal(value.containers.size, 0);
+  assert.equal(value.volumes.size, 0);
+  for (const name of ['suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json']) assert.ok(value.publicFiles.includes(name));
+  assert.ok(!value.publicFiles.some(name => /files-volume|files-canonical|suite-seed\.log|verify-providers\.log/.test(name)), 'raw seed/provider output stays private');
+});
+for (const group of ['deslogado-principal', 'deslogado-secundario']) test('suite controller: ' + group + ' preserves its three projects without messaging seed or provider', async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite', group });
+  assert.equal(value.exit, 0);
+  assert.equal(value.state.scope, group);
+  assert.equal(value.state.suite.passed, 3);
+  assert.equal(value.state.suite.total, 3);
+  assert.deepEqual(value.suiteStages, []);
+  assert.deepEqual(value.bundled, ['main.eszip', 'auth-login.eszip', 'tls-edge-probe.eszip']);
+  assert.ok(!value.calls.some(call => call.args.some(value => /-provider$/.test(value))));
+});
+test('suite controller: strict fullsuite reports predeclared fixme separately and keeps the gate red', async t => {
+  const value = await controllerFixture(t, 'explicit-skip', { scope: 'suite' });
+  assert.equal(value.exit, 1);
+  assert.equal(value.state.error, 'suite-result-not-clean');
+  assert.equal(value.state.suite.passed, 8);
+  assert.equal(value.state.suite.skipped_explicit, 1);
+});
+test('suite controller: only the two source-bound platform skips are distinct from seven passes', async t => {
+  const value = await controllerFixture(t, 'known-platform-skips', { scope: 'suite' });
+  assert.equal(value.exit, 0);
+  assert.equal(value.state.suite.passed, 7);
+  assert.equal(value.state.suite.known_runtime_skip, 2);
+  assert.equal(value.state.suite.skipped_runtime, 0);
+});
+const suiteFaults = {
+  'untracked-handler': 'function-source-changed',
+  'changed-handler': 'function-source-changed',
+  'missing-delivery-handler': 'suite-handler-missing',
+  'provider-start': 'start-provider-failed',
+  'files-volume-failure': 'seed-files-volume',
+  'files-canonical-failure': 'seed-files-canonical',
+  'suite-seed-failure': 'seed-suite',
+  'provider-verification-failure': 'verify-providers',
+  'suite-proof-missing': 'suite-proof-unreadable',
+  'provider-proof-missing': 'suite-proof-unreadable',
+  ...Object.fromEntries([...SEED_FLAGS, 'schema', 'run_id', 'source_sha', 'pagination_seed_count'].map(key => ['suite-proof-' + key, 'suite-seed-proof-mismatch'])),
+  ...Object.fromEntries([...PROVIDER_FLAGS, 'schema', 'run_id', 'source_sha', 'catalog_sku', 'delivery_proofs', 'delivery_proofs.text', 'delivery_proofs.catalog_image', 'delivery_proofs.storage_image', 'delivery_proofs-extra'].map(key => ['provider-proof-' + key, 'provider-proof-mismatch'])),
+  ...Object.fromEntries(GROUPS.authenticated.map(name => ['missing-project-' + name, 'suite-inventory-invalid'])),
+};
+for (const [fault, expectedCode] of Object.entries(suiteFaults)) test('suite controller: ' + fault + ' blocks browser without concealing cleanup', async t => {
+  const value = await controllerFixture(t, fault, { scope: 'suite' });
+  assert.equal(value.exit, 1);
+  assert.equal(value.state.success, false);
+  assert.equal(value.state.error, expectedCode);
+  assert.equal(value.browserCalls, 0);
+  assert.equal(value.containers.size, 0);
+  assert.equal(value.volumes.size, 0);
+});
+for (const fault of ['runtime-skip', 'suite-stats-mismatch', 'suite-browser-failure']) test('suite controller: ' + fault + ' keeps native report counts and fails the suite', async t => {
+  const value = await controllerFixture(t, fault, { scope: 'suite' });
+  assert.equal(value.exit, 1);
+  assert.equal(value.state.success, false);
+  assert.equal(value.browserCalls, 1);
+  assert.equal(value.state.error, fault === 'suite-browser-failure' ? 'browser-suite-failed' : 'suite-result-not-clean');
+  if (fault === 'runtime-skip') assert.equal(value.state.suite.skipped_runtime, 1);
+  if (fault === 'suite-browser-failure') assert.equal(value.state.suite.failed, 1);
+});
 
 
 // Native Git contains both regular modes. These scenarios exercise the real

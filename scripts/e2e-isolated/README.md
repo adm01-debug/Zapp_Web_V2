@@ -1,6 +1,6 @@
 # E2E em ambiente descartável
 
-Esta automação prepara o substituto isolado do E2E autenticado. Não usa credenciais de produção. O primeiro corte executável cobre bootstrap e o teste real `setup/authenticate`. Seu sucesso não significa que os 15 projetos da suíte autenticada tenham sido executados. A preparação de imagens continua uma etapa separada.
+Esta automação executa login ou os grupos E2E em ambiente descartável, sem credenciais de produção. O modo `login` seleciona somente `setup/authenticate`; seu sucesso não significa que os 15 projetos da suíte tenham sido executados. A preparação de imagens continua uma etapa separada.
 
 ## Resolver imagens antes de criar o ambiente
 
@@ -79,4 +79,31 @@ O reporter JSON, HTML, traces e screenshots brutos ficam somente no runner efêm
 
 As regressões executam funções reais e o controlador com interfaces Docker, Git e serviços simuladas, além do redator real. Elas provam decisões e interrupções. O teste do gateway faz handshake HTTPS real em Node com uma CA temporária e recusa a conexão sem essa confiança; não usa serviços da aplicação. As demais simulações não são prova de PostgreSQL, Deno, ESZIP, Realtime, Bun ou Playwright nativos. Essa prova é produzida pelo job `bootstrap-login` no Actions, sobre a branch, sem secrets.
 
-A configuração isolada preserva os projetos e assertions originais; nesta etapa o comando seleciona somente `setup`. O restante ainda exige seed de conversas, catálogo, arquivos e Talk X, fake Evolution local e o fluxo real de `message-delivery`, além das correções de fixture que ainda apontam para hosts oficiais. Sucesso do login não é usado para declarar esses testes aprovados. A reativação do workflow autenticado anterior depende da substituição completa e validada.
+A configuração isolada preserva projetos, dependências e assertions. O modo `login` seleciona somente `setup`; os modos abaixo executam a seleção explícita de cada grupo. Sucesso do login não declara os demais casos aprovados. A reativação do workflow autenticado anterior depende da substituição completa e validada.
+
+
+## Suíte em três grupos
+
+    bash scripts/e2e-isolated/run.sh suite authenticated /tmp/e2e-isolated-authenticated
+    bash scripts/e2e-isolated/run.sh suite deslogado-principal /tmp/e2e-isolated-deslogado-principal
+    bash scripts/e2e-isolated/run.sh suite deslogado-secundario /tmp/e2e-isolated-deslogado-secundario
+
+A entrada aceita somente esses três grupos e exige saída fora do checkout, inicialmente vazia. Cada comando cria seu próprio ambiente. Os projetos conservam a união de 9 + 3 + 3; não há expressão livre de shell, nome de projeto arbitrário ou desativação das dependências.
+
+| Grupo | Projetos explícitos |
+|---|---|
+| `authenticated` | `setup`, `chromium-e2e-core`, `chromium-authenticated`, `firefox-talkx`, `webkit-talkx`, `firefox-conversation`, `webkit-conversation`, `firefox-catalog`, `webkit-catalog` |
+| `deslogado-principal` | `chromium-mapa`, `firefox-auth`, `webkit-auth` |
+| `deslogado-secundario` | `chromium-telefonia`, `firefox-telefonia`, `webkit-telefonia` |
+
+A coleta `--list --reporter=json` é uma chamada separada da execução. Ambas usam os mesmos projetos e `--workers 1`, porque os testes existentes compartilham recursos. O resumo confronta identidades e resultados; teste ausente, extra, flaky, erro de coleta ou skip inesperado não vira aprovação. O limite de execução do navegador é 45 minutos no grupo autenticado e 15 nos grupos deslogados, além do preparo do ambiente. A prova de isolamento só é emitida após as verificações do seed e mantém validade máxima de 60 minutos.
+
+O grupo autenticado compila todos os entrypoints Edge ativos e versionados antes de criar credenciais, verificando seus blobs. Não basta compilar `auth-login`. O provider de Evolution GO e do catálogo externo opera apenas em `127.0.0.1:8081`, no namespace fechado; seus dados e recibos são sintéticos. Auth, PostgREST, Storage, Realtime, RPCs e handlers da aplicação continuam reais. A fronteira do catálogo aceita somente as consultas documentadas da fixture e recusa formas desconhecidas; não é um substituto geral de PostgreSQL ou busca textual.
+
+Depois do login real, o controller executa os seeds existentes de Arquivos, o seed de suíte e o verificador de providers. O seed conserva os proprietários de Arquivos, prepara paginação, conversa principal, inbox e Talk X e verifica leituras com o JWT do usuário. A preferência de onboarding do supervisor compartilhado e do usuário de Arquivos precisa ser realmente `true`; o Tour usa usuário novo por teste, preferência comprovada `false`, sessão vazia e limpeza por posse, sem redefinir preferências compartilhadas.
+
+A prontidão de entrega precisa provar três fluxos completos: texto, imagem do catálogo via HTTPS e objeto do Storage enviado com JWT e assinado pelo worker real. Cada um usa `enqueue_outbound_message`, `message-delivery`, recibo observado no provider e leitura da linha real de `messages` com RLS. Para mídia, o provider precisa baixar os bytes HTTPS antes de emitir recibo; hash e tamanho devem coincidir. Uma contraprova HTTP deve receber `22023` e não inserir mensagem. Nenhuma linha artificial é inserida para simular a entrega. Só depois disso o SKU recebe `E2E_CATALOG_PRODUCT_SKU_VERIFIED=true` no processo executor.
+
+Os dois skips históricos de plataforma de `conversation.spec.ts` permanecem na categoria `known_runtime_skip`, vinculados a arquivo/blob/linha/título/projeto, motivo exato e inventário independente; o caso Chromium equivalente precisa ter passado. Eles não contam como `passed` e `allPassed` permanece falso. Outras ausências de fixture, Auth ou serviço, e os fixmes estáticos ainda existentes, não são reclassificadas para forçar verde. A lista nativa de testes e a decisão específica sobre essas pendências devem acompanhar o resultado da execução.
+
+Tarefas conserva os três cenários, suas asserções e a guarda R1 deslogada, com seleção explícita no projeto Chromium público e saída apenas do catch-all autenticado. Essa execução pertence ao CI público; não é contada duas vezes entre os 15 projetos acima. O arquivo de conversas permanece intacto para conservar o vínculo preciso da política de plataforma.

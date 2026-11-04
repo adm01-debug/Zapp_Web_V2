@@ -42,14 +42,34 @@ function fromEnvFileStrict(name: string): string {
   return value;
 }
 
-// Fonte PRIMARIA: .env.production versionado, que aponta para o projeto oficial.
-const FILE_URL = fromEnvFileStrict('VITE_SUPABASE_URL');
-const FILE_KEY = fromEnvFileStrict('VITE_SUPABASE_PUBLISHABLE_KEY');
+function isolatedConfiguration(): { url: string; key: string } | null {
+  const mode = process.env.ZAPP_E2E_LOCAL;
+  if (!mode) return null;
+  const deny = () => { throw new Error('[e2e/isolated-fixture] configuração local incompleta ou divergente'); };
+  if (mode !== '1') return deny();
+  const url = process.env.E2E_SUPABASE_URL_OVERRIDE?.trim();
+  const key = process.env.E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE?.trim();
+  const appUrl = process.env.VITE_ZAPP_LOCAL_SUPABASE_URL?.trim();
+  const appKey = process.env.VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY?.trim();
+  if (!url || !key || url !== 'https://127.0.0.1:5173' || url !== appUrl || key !== appKey) return deny();
+  try {
+    const parts = key.split('.');
+    if (parts.length !== 3 || !parts[2]) return deny();
+    const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString());
+    const claims = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+    if (header.alg !== 'HS256' || claims.role !== 'anon' || !Number.isSafeInteger(claims.exp) || claims.exp <= Date.now() / 1000) return deny();
+  } catch { return deny(); }
+  return { url, key };
+}
 
-// Override EXPLICITO, com nome dedicado (E2E_*), para redirecionar de proposito.
-// Os nomes VITE_* NAO sao lidos aqui de proposito: o Supabase Cloud injeta essas
-// variaveis apontando para outro projeto (ver src/integrations/supabase/client.ts),
-// e um teste de e2e que escreve no banco nao pode cair no projeto errado em silencio.
-export const SUPABASE_URL = process.env.E2E_SUPABASE_URL_OVERRIDE?.trim() || FILE_URL;
-export const SUPABASE_ANON_KEY =
-  process.env.E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE?.trim() || FILE_KEY;
+// No modo isolado, a decisão precede qualquer leitura de .env.production. A
+// admissão do setup confere também a posse, o namespace e o hash desta anon key.
+const isolated = isolatedConfiguration();
+const FILE_URL = isolated ? undefined : fromEnvFileStrict('VITE_SUPABASE_URL');
+const FILE_KEY = isolated ? undefined : fromEnvFileStrict('VITE_SUPABASE_PUBLISHABLE_KEY');
+
+// O contrato legado, fora do modo isolado, preserva a fonte primária e o
+// override dedicado. Somente no modo isolado os pares app/fixture devem coincidir.
+export const SUPABASE_URL = isolated?.url || process.env.E2E_SUPABASE_URL_OVERRIDE?.trim() || FILE_URL!;
+export const SUPABASE_ANON_KEY = isolated?.key || process.env.E2E_SUPABASE_PUBLISHABLE_KEY_OVERRIDE?.trim() || FILE_KEY!;
+export const SUPABASE_STORAGE_KEY = `sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`;

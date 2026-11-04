@@ -11,6 +11,61 @@ const integer = value => Number.isSafeInteger(value) && value >= 0;
 const string = value => typeof value === 'string' && value.length > 0 && value.length <= 4096;
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 
+// Fixed exception for one reviewed test, never a caller-supplied allowlist.
+// Reporter v1.64.1 makes file/title relative to rootDir (the isolated testDir).
+// The native inventory supplies the column; the complete identity must match.
+const CONVERSATION_SKIP = Object.freeze({
+  sourceFile: 'e2e/conversation.spec.ts',
+  sourceBlob: '96a821d6c8389d526a9a5d65554687412510a92a',
+  reportFile: 'conversation.spec.ts', line: 59,
+  titlePath: ['conversation.spec.ts', 'Conversation state transitions'],
+  title: 'resolving conversation via CloseConversationDialog succeeds',
+  reason: "CloseConversationDialog coberto em Chromium; Radix Select portal nao responde a getByRole('option') de forma confiavel em Firefox/WebKit no CI",
+  projects: ['firefox-conversation', 'webkit-conversation'],
+  chromium: 'chromium-e2e-core',
+});
+
+function conversationSkipContract(proof, inventory, scope) {
+  if (scope !== 'authenticated-suite') fail('PLATFORM_SKIP_SCOPE');
+  if (!record(proof) || JSON.stringify(Object.keys(proof).sort()) !== JSON.stringify(['sourceBlobs', 'sourceSha']) ||
+      typeof proof.sourceSha !== 'string' || !/^[0-9a-f]{40}$/.test(proof.sourceSha) || /^0{40}$/.test(proof.sourceSha) ||
+      !record(proof.sourceBlobs) || Object.keys(proof.sourceBlobs).length !== 1 ||
+      proof.sourceBlobs[CONVERSATION_SKIP.sourceFile] !== CONVERSATION_SKIP.sourceBlob) fail('PLATFORM_SKIP_SOURCE');
+  const keys = new Map();
+  for (const project of [...CONVERSATION_SKIP.projects, CONVERSATION_SKIP.chromium]) {
+    const matches = inventory.cases.filter(item => item.project === project && item.location?.file === CONVERSATION_SKIP.reportFile && item.location?.line === CONVERSATION_SKIP.line);
+    if (matches.length !== 1) fail('PLATFORM_SKIP_INVENTORY');
+    const item = matches[0];
+    if (!integer(item.location.column) || item.location.column === 0 || item.expectedStatus !== 'passed' || !Array.isArray(item.annotationTypes) ||
+        item.annotationTypes.some(type => !string(type) || ['skip', 'fixme', 'fail'].includes(type))) fail('PLATFORM_SKIP_INVENTORY');
+    const key = createHash('sha256').update(JSON.stringify([project, CONVERSATION_SKIP.reportFile, CONVERSATION_SKIP.line, item.location.column, CONVERSATION_SKIP.titlePath, CONVERSATION_SKIP.title])).digest('hex');
+    if (item.key !== key) fail('PLATFORM_SKIP_IDENTITY');
+    keys.set(project, key);
+  }
+  return { keys: new Set(CONVERSATION_SKIP.projects.map(project => keys.get(project))), allKeys: new Set(keys.values()), chromiumKey: keys.get(CONVERSATION_SKIP.chromium),
+    metadata: { sourceSha: proof.sourceSha, file: CONVERSATION_SKIP.sourceFile, gitBlob: CONVERSATION_SKIP.sourceBlob } };
+}
+
+function matchingPlatformAnnotations(testAnnotations, resultAnnotations, skipped) {
+  const pairs = annotations => {
+    if (!Array.isArray(annotations) || annotations.some(annotation => !record(annotation) || !string(annotation.type) ||
+        (annotation.description !== undefined && (typeof annotation.description !== 'string' || annotation.description.length > 4096)))) return null;
+    if (annotations.some(annotation => ['fixme', 'fail'].includes(annotation.type))) return null;
+    const skips = annotations.filter(annotation => annotation.type === 'skip');
+    if (skipped ? skips.length !== 1 || skips[0].description !== CONVERSATION_SKIP.reason : skips.length !== 0) return null;
+    return annotations.map(annotation => JSON.stringify([annotation.type, annotation.description ?? null])).sort();
+  };
+  const left = pairs(testAnnotations), right = pairs(resultAnnotations);
+  return left !== null && right !== null && JSON.stringify(left) === JSON.stringify(right);
+}
+
+function knownConversationSkip(item) {
+  if (item.expectedStatus !== 'skipped' || item.status !== 'skipped' || item.results.length !== 1) return false;
+  const result = item.results[0];
+  return result.status === 'skipped' && result.workerIndex >= 0 && result.retry === 0 && result.errors.length === 0 && result.error === undefined &&
+    matchingPlatformAnnotations(item.annotations, result.annotations, true);
+}
+
 function projectList(values) {
   if (!Array.isArray(values) || values.length === 0 || values.some(value => !string(value)) || new Set(values).size !== values.length) fail('INVALID_PROJECTS');
   return [...values].sort();
@@ -47,6 +102,7 @@ function readReport(json) {
             location: { file: spec.file, line: spec.line, column: spec.column },
             expectedStatus: item.expectedStatus, status: item.status,
             annotationTypes: item.annotations.map(annotation => annotation?.type).filter(type => typeof type === 'string'),
+            annotations: item.annotations,
             results: item.results,
           });
         }
@@ -93,9 +149,12 @@ function publicCase(item, outcome) {
  * ok preserves predeclared skips/expected failures, but never counts them as
  * passes. allPassed additionally requires every listed case to have passed.
  * Newly skipped tests, absent results, flaky retries and collection errors fail.
+ * The opt-in authenticated-suite contract classifies only the two pinned
+ * platform skips; every other skip fails. Known skips never make allPassed true.
  */
-export function summarizePlaywrightResult(json, { scope = 'unknown', expectedProjects, inventory } = {}) {
+export function summarizePlaywrightResult(json, { scope = 'unknown', expectedProjects, inventory, conversationPlatformSkips } = {}) {
   const summary = { schema: 1, scope: /^[a-z0-9_-]{1,64}$/.test(scope) ? scope : 'invalid', ok: false, allPassed: false, inventoryVerified: false, counts: emptyCounts(), projects: [], reasons: [], cases: [] };
+  if (conversationPlatformSkips !== undefined) summary.counts.known_runtime_skip = 0;
   const reason = code => { if (!summary.reasons.includes(code)) summary.reasons.push(code); };
   try {
     if (summary.scope === 'invalid') fail('INVALID_SCOPE');
@@ -106,6 +165,8 @@ export function summarizePlaywrightResult(json, { scope = 'unknown', expectedPro
     summary.projects = projects;
     summary.counts.total = expected.size;
     const report = readReport(json);
+    const platform = conversationPlatformSkips === undefined ? null : conversationSkipContract(conversationPlatformSkips, inventory, scope);
+    if (platform) summary.runtimeSkipContract = platform.metadata;
     summary.inventoryVerified = true;
     summary.counts.collected = report.cases.length;
     summary.counts.collection_errors = report.errors;
@@ -155,9 +216,15 @@ export function summarizePlaywrightResult(json, { scope = 'unknown', expectedPro
         outcome = 'failed';
         reason('inconsistent_skip');
       }
+      if (platform && platform.keys.has(item.key) && outcome === 'skipped_runtime' && knownConversationSkip(item)) outcome = 'known_runtime_skip';
+      if (platform && platform.allKeys.has(item.key) && outcome === 'passed' && !matchingPlatformAnnotations(item.annotations, last.annotations, false)) {
+        outcome = 'failed';
+        reason('inconsistent_platform_annotations');
+      }
+      if (platform && outcome === 'skipped_explicit') reason('unreviewed_skip');
       summary.counts[outcome] += 1;
       summary.cases.push(publicCase(item, outcome));
-      if (!['passed', 'skipped_explicit', 'expected_failure'].includes(outcome)) reason(outcome);
+      if (!['passed', 'skipped_explicit', 'expected_failure', 'known_runtime_skip'].includes(outcome)) reason(outcome);
     }
     for (const [key, item] of expected) {
       if (seen.has(key)) continue;
@@ -168,7 +235,8 @@ export function summarizePlaywrightResult(json, { scope = 'unknown', expectedPro
     for (const name of Object.keys(actualStats)) {
       if (!integer(json.stats[name]) || json.stats[name] !== actualStats[name]) reason('stats_mismatch');
     }
-    if (summary.counts.total !== summary.counts.passed + summary.counts.expected_failure + summary.counts.unexpected_pass + summary.counts.failed + summary.counts.flaky + summary.counts.skipped_explicit + summary.counts.skipped_runtime + summary.counts.not_run + summary.counts.missing_from_report) reason('case_count_mismatch');
+    if (platform && summary.counts.known_runtime_skip > 0 && !summary.cases.some(item => item.key === platform.chromiumKey && item.outcome === 'passed')) reason('platform_skip_without_chromium_pass');
+    if (summary.counts.total !== summary.counts.passed + summary.counts.expected_failure + summary.counts.unexpected_pass + summary.counts.failed + summary.counts.flaky + summary.counts.skipped_explicit + summary.counts.skipped_runtime + summary.counts.not_run + summary.counts.missing_from_report + (summary.counts.known_runtime_skip || 0)) reason('case_count_mismatch');
     summary.ok = summary.reasons.length === 0;
     summary.allPassed = summary.ok && summary.counts.passed === summary.counts.total;
   } catch (error) {
