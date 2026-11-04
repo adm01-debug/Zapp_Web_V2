@@ -237,7 +237,7 @@ function ThreadItem({ thread, isSelected, onClick }: { thread: EmailThread; isSe
   // last_from_name → last_from_address → contact.email)
   const initialsSource = thread.contact?.name || thread.last_from_name || thread.last_from_address || thread.contact?.email || undefined;
   // A opacidade do botão também atenua o texto: durante a entrada, o WebKit chegou a
-  // medir #444 sobre preto com alto contraste ativo. Mostrar a linha já no estado final
+  // medir contraste insuficiente com alto contraste ativo. Mostrar a linha já no estado final
   // quando o usuário pede contraste ou menos movimento preserva o contraste desde o mount.
   const showImmediately = typeof document !== 'undefined' && (
     document.documentElement.classList.contains('high-contrast') ||
