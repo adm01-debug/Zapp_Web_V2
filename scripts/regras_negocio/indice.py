@@ -66,10 +66,39 @@ def read_manifest(d: Path) -> dict:
         p = d / name
         if p.exists():
             try:
-                return json.loads(p.read_text(encoding="utf-8"))
+                manifest = json.loads(p.read_text(encoding="utf-8"))
+                if not isinstance(manifest, dict):
+                    return {"_erro": f"{name} não contém um objeto JSON"}
+                return manifest
             except Exception:
                 return {"_erro": f"{name} ilegível"}
     return {}
+
+
+def producer_health(d: Path, man: dict) -> tuple[str, list[str]]:
+    """Resume falhas de coleta; achados de negócio não são erros do produtor."""
+    if man.get("_erro"):
+        return "não verificável", [man["_erro"]]
+    avisos = []
+    for key in ("erros", "errors", "erros_do_gerador"):
+        errors = man.get(key)
+        if errors:
+            total = len(errors) if isinstance(errors, (list, dict)) else 1
+            avisos.append(f"{total} erro(s) de coleta no manifest ({key})")
+    if man.get("carried"):
+        avisos.append("seções reaproveitadas da coleta anterior")
+    report = d / "errors.md"
+    if report.exists():
+        try:
+            # O snapshot publica uma tabela com um registro por seção que falhou.
+            rows = [line for line in report.read_text(encoding="utf-8").splitlines()
+                    if re.match(r"^\s*\|", line)]
+            errors = [line for line in rows[2:] if line.strip().strip("|").strip()]
+            if errors:
+                avisos.append(f"{len(errors)} seção(ões) com erro em errors.md")
+        except (OSError, UnicodeError):
+            return "não verificável", avisos + ["errors.md ilegível"]
+    return ("parcial" if avisos else "ok"), avisos
 
 
 def entry_file(d: Path, man: dict) -> str:
@@ -121,16 +150,23 @@ def main() -> int:
                 gerado = parse_dt(git(root, "log", "-1", "--format=%cI", "--", caminho))
         idade_min = int((now - gerado).total_seconds() // 60) if gerado else None
         commit = man.get("commit") or man.get("sha") or ""
-        status = "ok"
-        avisos = []
+        status, avisos = producer_health(d, man) if local else ("ok", [])
         if not local:
             status = "não disponível neste checkout" if branch else "ainda não gerado"
-        elif man.get("_erro"):
-            avisos.append(man["_erro"])
-        if idade_min is not None and idade_min > args.stale_min:
+        mesmo_commit = (isinstance(commit, str) and isinstance(head, str)
+                        and min(len(commit), len(head)) >= 7
+                        and (head.startswith(commit) or commit.startswith(head)))
+        # Código/regras dependem do commit: o gate pode reutilizar a mesma revisão
+        # por dias. O banco muda sem push e continua sujeito à idade da coleta.
+        atual_por_commit = nome in ("código", "regras de negócio") and mesmo_commit
+        if idade_min is not None and idade_min > args.stale_min and not atual_por_commit:
             avisos.append(f"desatualizado há {idade_min // 60}h{idade_min % 60:02d}")
-        if commit and head and not head.startswith(commit[:7]) and not commit.startswith(head[:7]) and nome != "banco real":
-            avisos.append(f"gerado no commit `{commit[:7]}`, HEAD é `{head[:7]}`")
+            if status == "ok":
+                status = "desatualizado"
+        if commit and head and not mesmo_commit and nome != "banco real":
+            avisos.append(f"gerado no commit `{str(commit)[:7]}`, HEAD é `{head[:7]}`")
+            if status == "ok":
+                status = "desatualizado"
         arquivos = sorted(p.relative_to(d).as_posix() for p in d.rglob("*") if p.is_file() and p.suffix in (".md", ".json") and not p.name.startswith(".")) if local else []
         fontes.append({"nome": nome, "caminho": caminho, "branch": branch, "local": local, "manifest": man, "gerado": gerado, "idade_min": idade_min,
                        "commit": commit, "status": status, "avisos": avisos, "arquivos": arquivos, "entrada": entry_file(d, man) if local else ""})

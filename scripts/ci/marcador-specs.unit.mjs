@@ -4,6 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { corpoDe, eLoginFalhou, marcadorDe, nomesDeTestResults, PREFIXO, tituloDe } from './marcador-specs.mjs';
+import { conditionOf, jobOf, jobsOf, nestedValue, onlyStep, permission, scriptOf, shellCode, stepsOf, valueOf } from './workflow-test-support.mjs';
 
 test('E83: a ordem dos nomes nao muda o marcador -- o dedupe e pelo CONJUNTO', () => {
   const a = marcadorDe(['b-spec-chromium', 'a-spec-firefox']);
@@ -46,31 +47,29 @@ test('E83: o corpo da issue lista os testes e explica a falha sem test-results',
   assert.match(corpoDe([]), /sem deixar `test-results\/`/);
 });
 
-test.skip('E83: o workflow alerta em falha, fecha ao recuperar, e as permissoes ficam no JOB', () => {
+test('E83: o workflow alerta em falha, fecha ao recuperar, e as permissoes ficam no JOB', () => {
   const y = readFileSync(new URL('../../.github/workflows/e2e-logado.yml', import.meta.url), 'utf8');
   const topo = y.slice(0, y.indexOf('jobs:'));
-  const job = y.slice(y.indexOf('jobs:'));
-
-  assert.match(y, /\[e2e-logado\] Suíte logada quebrada na main/, 'titulo combinado no plano');
-  assert.match(job, /actions\/github-script@[0-9a-f]{40}/, 'zizmor exige `uses` pinado por SHA');
-  assert.match(job, /issues:\s*write/, 'abrir/comentar/fechar issue exige issues: write');
-  assert.doesNotMatch(
-    topo,
-    /issues:\s*write/,
-    'write no nivel do WORKFLOW o zizmor reprova (excessive-permissions) -- foi o erro do #1784',
-  );
-  assert.match(y, /scripts\/ci\/marcador-specs\.mjs/, 'o marcador tem de vir do modulo testado');
-
-  const playwright = y.indexOf('Run Playwright E2E');
-  const alerta = y.indexOf('Abrir/comentar a issue');
-  const fecha = y.indexOf('Fechar a issue');
-  assert.ok(alerta > playwright, 'o alerta le test-results, entao vem depois do Playwright');
-  assert.ok(fecha > alerta, 'fechar e o passo de recuperacao, por ultimo');
-
-  const recorteAlerta = y.slice(y.lastIndexOf('- name:', alerta), fecha);
-  assert.match(recorteAlerta, /if:\s*failure\(\)/, 'o alerta so roda em falha');
-  const recorteFecha = y.slice(fecha - 200);
-  assert.match(recorteFecha, /if:\s*success\(\)/, 'o fechamento so roda quando a suite passa');
+  const job = jobOf(y, 'e2e-logado');
+  const steps = stepsOf(job);
+  const playwright = onlyStep(steps, (s) => /^\s*bun run test:e2e\b/m.test(shellCode(s)), 'Playwright');
+  const alerta = onlyStep(steps, (s) => scriptOf(s).includes('github.rest.issues.create('), 'alerta');
+  const fechamentos = [...jobsOf(y)].flatMap(([id, bloco]) => stepsOf(bloco)
+    .filter((s) => /state:\s*['"]closed['"]/.test(scriptOf(s))).map((step) => ({ id, bloco, step })));
+  assert.equal(fechamentos.length, 1, 'um unico fechamento');
+  const fecha = fechamentos[0];
+  assert.notEqual(fecha.id, 'e2e-logado', 'recuperacao espera o resultado da matriz inteira');
+  assert.match(valueOf(fecha.bloco, 'needs', 4) ?? '', /^(?:e2e-logado|\[\s*e2e-logado\s*\])$/);
+  assert.notEqual(permission(topo, 'issues', 0), 'write', 'escrita fica no job');
+  for (const [bloco, step] of [[job, alerta], [fecha.bloco, fecha.step]]) {
+    assert.equal(permission(bloco, 'issues'), 'write');
+    assert.match(valueOf(step, 'uses') ?? '', /^actions\/github-script@[0-9a-f]{40}$/);
+    assert.equal(nestedValue(step, 'env', 'TITULO'), '[e2e-logado] Suíte logada quebrada na main');
+  }
+  assert.match(scriptOf(alerta), /await import\(\s*`[^`]*\/scripts\/ci\/marcador-specs\.mjs`\s*\)/, 'o corpo executado importa o marcador testado');
+  assert.ok(steps.indexOf(alerta) > steps.indexOf(playwright), 'o alerta le os resultados depois do Playwright');
+  assert.equal(conditionOf(alerta), 'failure()');
+  assert.equal(conditionOf(fecha.step), 'success()');
 });
 
 test('W80: eLoginFalhou detecta falha so de setup de auth', () => {
