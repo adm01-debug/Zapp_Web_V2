@@ -692,9 +692,7 @@ test('workspace do Email é desmontado ao alternar entre módulos', async ({ pag
     await expect(page).toHaveURL(/view=dashboard/);
     await expect(page.locator('.email-workspace')).toHaveCount(0);
     await page.getByRole('button', { name: 'Email', exact: true }).click();
-    // O retorno também passa pelo boot da view sob contenção da CI. A URL é
-    // atualizada antes de o React concluir a transição e montar o workspace.
-    await expect(page.locator('.email-workspace')).toHaveCount(1, { timeout: BOOT_DEADLINE_MS });
+    await expect(page.locator('.email-workspace')).toHaveCount(1);
   } finally {
     // O resultado atravessa uma fronteira browser → Node: reconstrói apenas o schema
     // fechado. Falha na coleta/anexação nunca substitui o resultado original do teste.
