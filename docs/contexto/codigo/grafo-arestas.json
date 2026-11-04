@@ -49,6 +49,7 @@
    "scripts/eslint/no-secret-compare.js"
   ],
   "playwright.config.ts": [
+   "e2e/auth-diagnostics.ts",
    "e2e/quarantine.js"
   ],
   "scripts/ai-context/cenarios.mjs": [

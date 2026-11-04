@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "451373f549d3214beb57ad3728bed9986aba1d32",
+  "commit": "b46f5d291f4684048f11b8986468e91b333c1029",
   "branch": "main",
-  "data_commit": "2026-11-03T22:30:01-03:00",
+  "data_commit": "2026-11-04T06:29:44-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b46f5d2",
+    "data": "2026-11-04",
+    "assunto": "fix(ci): restaurar auditorias e fortalecer automações (#2710)"
+   },
    {
     "sha": "451373f",
     "data": "2026-11-03",
@@ -126,14 +131,9 @@
     "sha": "1061a91",
     "data": "2026-11-03",
     "assunto": "chore(db): sincronizar artefatos derivados do banco (#2669)"
-   },
-   {
-    "sha": "d96e1e7",
-    "data": "2026-11-03",
-    "assunto": "⬆️ ci: Bump the actions-misc group with 2 updates (#2620)"
    }
   ],
-  "arquivos_mudados_7d": 1260,
+  "arquivos_mudados_7d": 1272,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -141,7 +141,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 722
+    "mudancas": 723
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 22
+    "mudancas": 23
    },
    {
     "arquivo": "CLAUDE.md",
@@ -211,11 +211,11 @@
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 15
+    "mudancas": 16
    },
    {
     "arquivo": ".github/workflows/e2e-logado.yml",
-    "mudancas": 15
+    "mudancas": 16
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
@@ -224,6 +224,10 @@
    {
     "arquivo": "ESTADO.md",
     "mudancas": 14
+   },
+   {
+    "arquivo": "docs/ci/README.md",
+    "mudancas": 13
    },
    {
     "arquivo": "supabase/deployment-manifest.json",
@@ -235,10 +239,6 @@
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 12
-   },
-   {
-    "arquivo": "docs/ci/README.md",
     "mudancas": 12
    },
    {
@@ -270,7 +270,15 @@
     "mudancas": 9
    },
    {
+    "arquivo": ".github/workflows/branch-hygiene-audit.yml",
+    "mudancas": 8
+   },
+   {
     "arquivo": ".github/workflows/e2e-talkx.yml",
+    "mudancas": 8
+   },
+   {
+    "arquivo": "playwright.config.ts",
     "mudancas": 8
    },
    {
@@ -286,15 +294,7 @@
     "mudancas": 8
    },
    {
-    "arquivo": ".github/workflows/branch-hygiene-audit.yml",
-    "mudancas": 7
-   },
-   {
     "arquivo": ".github/workflows/notifica-falha-main.yml",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "bun.lock",
     "mudancas": 7
    }
   ],
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8140,
-  "arquivos_codigo": 4643,
-  "linhas_codigo": 851177,
+  "arquivos_total": 8150,
+  "arquivos_codigo": 4652,
+  "linhas_codigo": 853361,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -332,9 +332,9 @@
   "tabelas": 218,
   "migrations": 1082,
   "cron_jobs": 25,
-  "testes": 2530,
+  "testes": 2538,
   "workflows": 19,
-  "scripts": 374,
+  "scripts": 376,
   "docs_md": 1031
  },
  "por_pasta": {
@@ -378,9 +378,13 @@
    "arquivos": 1,
    "linhas": 288
   },
+  "e2e/auth-diagnostics.ts": {
+   "arquivos": 1,
+   "linhas": 118
+  },
   "e2e/auth.setup.ts": {
    "arquivos": 1,
-   "linhas": 130
+   "linhas": 145
   },
   "e2e/auth.spec.ts": {
    "arquivos": 1,
@@ -456,7 +460,7 @@
   },
   "e2e/email-navy-visual.spec.ts": {
    "arquivos": 1,
-   "linhas": 570
+   "linhas": 601
   },
   "e2e/files-tab.spec.ts": {
    "arquivos": 1,
@@ -480,7 +484,7 @@
   },
   "e2e/location-picker.spec.ts": {
    "arquivos": 1,
-   "linhas": 201
+   "linhas": 203
   },
   "e2e/media-volume.spec.ts": {
    "arquivos": 1,
@@ -588,7 +592,7 @@
   },
   "playwright.config.ts": {
    "arquivos": 1,
-   "linhas": 377
+   "linhas": 381
   },
   "postcss.config.js": {
    "arquivos": 1,
@@ -603,8 +607,8 @@
    "linhas": 228
   },
   "scripts/ci": {
-   "arquivos": 153,
-   "linhas": 28560
+   "arquivos": 161,
+   "linhas": 30566
   },
   "scripts/db-audit": {
    "arquivos": 79,
@@ -692,7 +696,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 367396
+   "linhas": 367404
   },
   "src/config": {
    "arquivos": 3,
@@ -895,7 +899,7 @@
  ],
  "qualidade": {
   "any": 349,
-  "console_log": 419,
+  "console_log": 420,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 46,

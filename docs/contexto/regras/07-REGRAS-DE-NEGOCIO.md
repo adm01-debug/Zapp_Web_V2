@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `451373f549` · branch `main` · 2026-11-04 01:38 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b46f5d291f` · branch `main` · 2026-11-04 09:30 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4336,10 +4336,18 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | simulated quota exhausted | `docs/reconciliation/reproduce/skins/skins_probe.mjs` |
 | Unattested module: ${p} | `docs/reconciliation/reproduce/volume/volume_offline_probe.mjs` |
 | storage denied | `docs/reconciliation/reproduce/volume/volume_offline_probe.mjs` |
+| REMOTE_FULL_SUITE_BLOCKED | `e2e/auth-diagnostics.ts` |
+| TARGET_CREDENTIALS | `e2e/auth-diagnostics.ts` |
+| TARGET_DOMAIN_UNVERIFIED | `e2e/auth-diagnostics.ts` |
+| TARGET_HTTPS_REQUIRED | `e2e/auth-diagnostics.ts` |
+| TARGET_INVALID | `e2e/auth-diagnostics.ts` |
+| TARGET_NOT_ORIGIN | `e2e/auth-diagnostics.ts` |
+| TARGET_ORIGIN_REJECTED | `e2e/auth-diagnostics.ts` |
 | ) generico: o app dispara toasts alheios ao login   // (ex.:  | `e2e/auth.setup.ts` |
 | E2E_TEST_EMAIL e/ou E2E_TEST_PASSWORD nao estao definidas. Os testes que dependem de  | `e2e/auth.setup.ts` |
-| [E2E setup] Credencial recusada — o app mostrou:  | `e2e/auth.setup.ts` |
-| [E2E setup] Login indisponivel em ${TENTATIVAS} tentativas: a edge auth-login nao  | `e2e/auth.setup.ts` |
+| [E2E setup/${diagnostic.code}] ${diagnostic.message} | `e2e/auth.setup.ts` |
+| [E2E setup/${diagnostic.code}] ${diagnostic.message} Tentativas realizadas: ${tentativa}. | `e2e/auth.setup.ts` |
+| [E2E setup/${diagnostic.code}] ${diagnostic.message} Veja o trace do Playwright. | `e2e/auth.setup.ts` |
 | [E2E setup] O app nao respondeu em 15 s ao navegar para /auth.  | `e2e/auth.setup.ts` |
 | Sessão Supabase não encontrada no localStorage | `e2e/fixtures/contacts-page.ts` |
 | consulta de contacts falhou: HTTP ${res.status()} | `e2e/fixtures/contacts-page.ts` |
@@ -4375,6 +4383,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | ${metodo} ${caminho} -> ${r.status} | `scripts/ci/actions-kpi.mjs` |
 | --level invalido: ${args.level} | `scripts/ci/audit-prod.mjs` |
 | Argumento desconhecido: ${argv[index]} | `scripts/ci/audit-prod.mjs` |
+| network disabled in fixture | `scripts/ci/branch-hygiene-runtime.unit.mjs` |
 | PR sem headRefName | `scripts/ci/branch-podaveis.mjs` |
 | a lista de PRs abertas não é um array | `scripts/ci/branch-podaveis.mjs` |
 | a lista de PRs abertas veio cheia (${dados.length} >= limite ${limite}); pode haver PR que não veio | `scripts/ci/branch-podaveis.mjs` |
@@ -4397,7 +4406,14 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | funcao desconhecida em  | `scripts/ci/ci-artifacts.unit.mjs` |
 | operando nao booleano em  | `scripts/ci/ci-artifacts.unit.mjs` |
 | sobrou token em  | `scripts/ci/ci-artifacts.unit.mjs` |
+| Artifact-id sem arquivo correspondente | `scripts/ci/contexto-publicacao.unit.mjs` |
+| Download simulado falhou: ${failDownload} | `scripts/ci/contexto-publicacao.unit.mjs` |
 | ).   assert.doesNotMatch(readme, /não mais\s+lido direto pelo dashboard/,  | `scripts/ci/dashboard-readme-drift.unit.mjs` |
+| I/O não permitido | `scripts/ci/e2e-auth-diagnostics.unit.mjs` |
+| I/O externo proibido nesta simulação | `scripts/ci/e2e-auth-setup.unit.mjs` |
+| Leitura de dados sensiveis proibida | `scripts/ci/e2e-auth-setup.unit.mjs` |
+| prazo simulado | `scripts/ci/e2e-auth-setup.unit.mjs` |
+| rede proibida neste teste | `scripts/ci/e2e-recovery.unit.mjs` |
 | RPC ${rpc} recusada (HTTP ${resposta.status}) | `scripts/ci/e2e-teardown.mjs` |
 | login do usuario de teste nao devolveu access_token | `scripts/ci/e2e-teardown.mjs` |
 | login do usuario de teste recusado (HTTP ${login.status}) | `scripts/ci/e2e-teardown.mjs` |
@@ -4469,23 +4485,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | envelope de evidencia invalido | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
 | falha na consulta read-only: ${safeError(error?.stderr, connectionString)} | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
 | hash da evidencia descriptografada diverge | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
-| informe entre 1 e 20 versions | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
-| ledger incompleto, duplicado ou fora do escopo solicitado | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
-| ledger retornou JSON invalido na linha ${index + 1} | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
-| ledger retornou name invalido para ${record.version} | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
-| ledger retornou registro invalido na linha ${index + 1} | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
-| ledger retornou statements invalidos para ${record.version} | `scripts/db-audit/export-targeted-ledger-evidence.mjs` |
-| bloco  | `scripts/db-audit/extrair-consulta-ledger.mjs` |
-| heredoc << | `scripts/db-audit/extrair-consulta-ledger.mjs` |
-| passo  | `scripts/db-audit/extrair-consulta-ledger.mjs` |
-| nenhum braco de versao encontrado | `scripts/db-audit/extrair-contratos-runtime.mjs` |
-| passo nao encontrado:  | `scripts/db-audit/extrair-contratos-runtime.mjs` |
-| FAIL: PostgreSQL de teste não iniciou (logs sem marcador de init ou SELECT 1 falhou em 60s) | `scripts/db-audit/ledger-postapply-query.integration.mjs` |
-| docker ${args.join( | `scripts/db-audit/ledger-postapply-query.integration.mjs` |
-| ${rotulo}: ${ultimo.message} | `scripts/db-audit/multiplix-audience-parity.mjs` |
-| Management API HTTP ${res.status}: ${texto.slice(0, 300)} | `scripts/db-audit/multiplix-audience-parity.mjs` |
-| PostgREST HTTP ${res.status}: ${texto.slice(0, 300)} | `scripts/db-audit/multiplix-audience-parity.mjs` |
-| … +1497 linhas — lista completa em `context.json` | |
+| … +1513 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 

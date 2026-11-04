@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "451373f549d3214beb57ad3728bed9986aba1d32",
+  "sha": "b46f5d291f4684048f11b8986468e91b333c1029",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-04 01:38 UTC",
-  "files_total": 7981,
-  "code_files": 5896,
-  "code_lines": 1016427
+  "generated_at": "2026-11-04 09:30 UTC",
+  "files_total": 7991,
+  "code_files": 5905,
+  "code_lines": 1018611
  },
  "version": "1.3.2",
- "facts_hash": "d49b39d27165fd79",
+ "facts_hash": "a2362b53a2395b69",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -297,9 +297,9 @@
   "package_manager": "bun",
   "languages": {
    ".tsx": 2319,
-   ".ts": 1854,
+   ".ts": 1855,
    ".sql": 1276,
-   ".mjs": 329,
+   ".mjs": 337,
    ".py": 117,
    ".cjs": 19,
    ".js": 7,
@@ -67627,7 +67627,7 @@
   {
    "module": "(raiz)",
    "files": 8,
-   "lines": 1207,
+   "lines": 1211,
    "tables": [],
    "exports": [
     "eslint.config.js: tseslint",
@@ -67832,10 +67832,11 @@
   },
   {
    "module": "e2e",
-   "files": 74,
-   "lines": 16586,
+   "files": 75,
+   "lines": 16752,
    "tables": [],
    "exports": [
+    "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
     "quarantine.d.ts: quarentena",
     "quarantine.js: quarentena",
     "catalog.ts: E2E_CATALOG_VIEW, E2E_CATALOG_PATH, E2E_CATALOG_PRODUCT_SKU, E2E_CATALOG_PRODUCT_SKU_VERIFIED, E2E_CATALOG_TEMPLATE_INFORMAL, E2E_CATALOG_SEND_EVENTS_TABLE",
@@ -67876,7 +67877,8 @@
    ],
    "imports_modules": [
     "src/components",
-    "src/lib"
+    "src/lib",
+    "supabase/functions"
    ],
    "file_list": [
     "e2e/a11y-config-admin.spec.ts",
@@ -67885,6 +67887,7 @@
     "e2e/a11y-inbox-teams.spec.ts",
     "e2e/a11y-tarefas-dashboard.spec.ts",
     "e2e/a11y-toque-44px.spec.ts",
+    "e2e/auth-diagnostics.ts",
     "e2e/auth.setup.ts",
     "e2e/auth.spec.ts",
     "e2e/busca-global-paleta.spec.ts",
@@ -67973,8 +67976,8 @@
   },
   {
    "module": "scripts",
-   "files": 348,
-   "lines": 65625,
+   "files": 356,
+   "lines": 67631,
    "tables": [
     "a",
     "alem_do_limite",
@@ -68089,12 +68092,13 @@
     "node:crypto",
     "node:fs",
     "node:http",
+    "node:https",
     "node:module",
     "node:net",
-    "node:os",
-    "node:path"
+    "node:os"
    ],
    "imports_modules": [
+    "e2e",
     "src/b",
     "src/components",
     "src/config",
@@ -68123,6 +68127,7 @@
     "scripts/ci/arquitetura-sem-desperdicio.unit.mjs",
     "scripts/ci/audit-prod.mjs",
     "scripts/ci/audit-prod.unit.mjs",
+    "scripts/ci/branch-hygiene-runtime.unit.mjs",
     "scripts/ci/branch-hygiene-workflow.unit.mjs",
     "scripts/ci/branch-podaveis.mjs",
     "scripts/ci/branch-podaveis.unit.mjs",
@@ -68165,8 +68170,10 @@
     "scripts/ci/complete-system-features-doc.unit.mjs",
     "scripts/ci/confirm-hash.unit.mjs",
     "scripts/ci/contexto-indice.unit.mjs",
+    "scripts/ci/contexto-publicacao.unit.mjs",
     "scripts/ci/crm-integration-contract.unit.mjs",
     "scripts/ci/dashboard-readme-drift.unit.mjs",
+    "scripts/ci/db-guard-confiabilidade.unit.mjs",
     "scripts/ci/db-inventory-doc.unit.mjs",
     "scripts/ci/db-migrate-contratos.unit.mjs",
     "scripts/ci/db-migrate-workflow.unit.mjs",
@@ -68177,17 +68184,14 @@
     "scripts/ci/docs-design-drift.unit.mjs",
     "scripts/ci/docs-estado-registry-convention.unit.mjs",
     "scripts/ci/dry-run-plan.unit.mjs",
+    "scripts/ci/e2e-auth-diagnostics.unit.mjs",
+    "scripts/ci/e2e-auth-setup.unit.mjs",
+    "scripts/ci/e2e-email-axe-ready.unit.mjs",
+    "scripts/ci/e2e-recovery.unit.mjs",
     "scripts/ci/e2e-teardown.mjs",
     "scripts/ci/e2e-teardown.unit.mjs",
     "scripts/ci/edge-coverage-authz.unit.mjs",
-    "scripts/ci/email-en088-medicao-docs.unit.mjs",
-    "scripts/ci/evolution-api-proxy.unit.mjs",
-    "scripts/ci/evolution-edge-fixes.unit.mjs",
-    "scripts/ci/fila-merge.mjs",
-    "scripts/ci/fila-merge.unit.mjs",
-    "scripts/ci/gerar-matriz-edge-tabela.mjs",
-    "scripts/ci/gerar-matriz-edge-tabela.unit.mjs",
-    "scripts/ci/github-settings-guard.mjs"
+    "scripts/ci/email-en088-medicao-docs.unit.mjs"
    ]
   },
   {
@@ -68301,7 +68305,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 367396,
+   "lines": 367404,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -73815,6 +73819,9 @@
    "E2E_CATALOG_PRODUCT_SKU_VERIFIED": [
     "e2e/fixtures/catalog.ts"
    ],
+   "E2E_EXPECTED_COMMIT_SHA": [
+    "scripts/ci/e2e-auth-diagnostics.unit.mjs"
+   ],
    "E2E_LOCAL_SUPABASE_ANON_KEY": [
     "e2e/files-tab.spec.ts",
     "e2e/fixtures/seed-files-tab.mjs"
@@ -73836,15 +73843,20 @@
    "E2E_SUPABASE_URL_OVERRIDE": [
     "e2e/fixtures/supabase-env.ts"
    ],
+   "E2E_TEST_": [
+    "scripts/ci/e2e-auth-setup.unit.mjs"
+   ],
    "E2E_TEST_EMAIL": [
     "e2e/auth.setup.ts",
     "e2e/inbox-sidebar-topo.spec.ts",
-    "e2e/navegacao-modulos.spec.ts"
+    "e2e/navegacao-modulos.spec.ts",
+    "scripts/ci/e2e-auth-setup.unit.mjs"
    ],
    "E2E_TEST_PASSWORD": [
     "e2e/auth.setup.ts",
     "e2e/inbox-sidebar-topo.spec.ts",
-    "e2e/navegacao-modulos.spec.ts"
+    "e2e/navegacao-modulos.spec.ts",
+    "scripts/ci/e2e-auth-setup.unit.mjs"
    ],
    "ELEVENLABS_WEBHOOK_SECRET": [
     "supabase/functions/elevenlabs-webhook/index.ts"
@@ -73951,6 +73963,18 @@
    ],
    "FAKE_PSQL_OUTPUT": [
     "scripts/db-audit/check-migration-drift.test.mjs"
+   ],
+   "FIXTURE_CALLS": [
+    "scripts/ci/branch-hygiene-runtime.unit.mjs"
+   ],
+   "FIXTURE_CONFIG": [
+    "scripts/ci/branch-hygiene-runtime.unit.mjs"
+   ],
+   "FIXTURE_NETWORK": [
+    "scripts/ci/branch-hygiene-runtime.unit.mjs"
+   ],
+   "FIXTURE_PUBLISHED": [
+    "scripts/ci/branch-hygiene-runtime.unit.mjs"
    ],
    "FUNCTIONS_DIR": [
     "scripts/db-audit/check-triple-parity.mjs"
@@ -74141,6 +74165,8 @@
    ],
    "PATH": [
     "scripts/ci/branch-hygiene-workflow.unit.mjs",
+    "scripts/ci/contexto-publicacao.unit.mjs",
+    "scripts/ci/db-guard-confiabilidade.unit.mjs",
     "scripts/ci/prova-orcamento-argv-secrets.unit.mjs",
     "scripts/db-audit/global-guards-regression.test.mjs",
     "scripts/db-audit/validate-destino.test.mjs",
@@ -74188,7 +74214,8 @@
     "scripts/db-audit/check-triple-parity.test.mjs"
    ],
    "PLAYWRIGHT_BASE_URL": [
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "scripts/ci/e2e-auth-setup.unit.mjs"
    ],
    "POSTGRES_TEST_IMAGE": [
     "scripts/db-audit/sla-first-response-delivery-contract.test.mjs",
@@ -74302,6 +74329,24 @@
     "supabase/functions/send-scheduled-report/index.test.ts",
     "supabase/functions/send-scheduled-report/index.ts",
     "supabase/functions/sentiment-alert/index.ts"
+   ],
+   "REVIEW_CALLS": [
+    "scripts/ci/db-guard-confiabilidade.unit.mjs"
+   ],
+   "REVIEW_COUNTER": [
+    "scripts/ci/db-guard-confiabilidade.unit.mjs"
+   ],
+   "REVIEW_DATABASE": [
+    "scripts/ci/db-guard-confiabilidade.unit.mjs"
+   ],
+   "REVIEW_FAIL_CREATE_DATABASE": [
+    "scripts/ci/db-guard-confiabilidade.unit.mjs"
+   ],
+   "REVIEW_FAIL_ROLE_QUERY": [
+    "scripts/ci/db-guard-confiabilidade.unit.mjs"
+   ],
+   "REVIEW_OUTCOMES": [
+    "scripts/ci/db-guard-confiabilidade.unit.mjs"
    ],
    "RUNNER_TEMP": [
     "scripts/edge-deploy/redigir-log.mjs"
@@ -79999,6 +80044,34 @@
     "msg": "storage denied"
    },
    {
+    "file": "e2e/auth-diagnostics.ts",
+    "msg": "REMOTE_FULL_SUITE_BLOCKED"
+   },
+   {
+    "file": "e2e/auth-diagnostics.ts",
+    "msg": "TARGET_CREDENTIALS"
+   },
+   {
+    "file": "e2e/auth-diagnostics.ts",
+    "msg": "TARGET_DOMAIN_UNVERIFIED"
+   },
+   {
+    "file": "e2e/auth-diagnostics.ts",
+    "msg": "TARGET_HTTPS_REQUIRED"
+   },
+   {
+    "file": "e2e/auth-diagnostics.ts",
+    "msg": "TARGET_INVALID"
+   },
+   {
+    "file": "e2e/auth-diagnostics.ts",
+    "msg": "TARGET_NOT_ORIGIN"
+   },
+   {
+    "file": "e2e/auth-diagnostics.ts",
+    "msg": "TARGET_ORIGIN_REJECTED"
+   },
+   {
     "file": "e2e/auth.setup.ts",
     "msg": ") generico: o app dispara toasts alheios ao login\n  // (ex.: "
    },
@@ -80008,11 +80081,15 @@
    },
    {
     "file": "e2e/auth.setup.ts",
-    "msg": "[E2E setup] Credencial recusada — o app mostrou: "
+    "msg": "[E2E setup/${diagnostic.code}] ${diagnostic.message}"
    },
    {
     "file": "e2e/auth.setup.ts",
-    "msg": "[E2E setup] Login indisponivel em ${TENTATIVAS} tentativas: a edge auth-login nao "
+    "msg": "[E2E setup/${diagnostic.code}] ${diagnostic.message} Tentativas realizadas: ${tentativa}."
+   },
+   {
+    "file": "e2e/auth.setup.ts",
+    "msg": "[E2E setup/${diagnostic.code}] ${diagnostic.message} Veja o trace do Playwright."
    },
    {
     "file": "e2e/auth.setup.ts",
@@ -80155,6 +80232,10 @@
     "msg": "Argumento desconhecido: ${argv[index]}"
    },
    {
+    "file": "scripts/ci/branch-hygiene-runtime.unit.mjs",
+    "msg": "network disabled in fixture"
+   },
+   {
     "file": "scripts/ci/branch-podaveis.mjs",
     "msg": "PR sem headRefName"
    },
@@ -80243,8 +80324,36 @@
     "msg": "sobrou token em "
    },
    {
+    "file": "scripts/ci/contexto-publicacao.unit.mjs",
+    "msg": "Artifact-id sem arquivo correspondente"
+   },
+   {
+    "file": "scripts/ci/contexto-publicacao.unit.mjs",
+    "msg": "Download simulado falhou: ${failDownload}"
+   },
+   {
     "file": "scripts/ci/dashboard-readme-drift.unit.mjs",
     "msg": ").\n  assert.doesNotMatch(readme, /não mais\\s+lido direto pelo dashboard/, "
+   },
+   {
+    "file": "scripts/ci/e2e-auth-diagnostics.unit.mjs",
+    "msg": "I/O não permitido"
+   },
+   {
+    "file": "scripts/ci/e2e-auth-setup.unit.mjs",
+    "msg": "I/O externo proibido nesta simulação"
+   },
+   {
+    "file": "scripts/ci/e2e-auth-setup.unit.mjs",
+    "msg": "Leitura de dados sensiveis proibida"
+   },
+   {
+    "file": "scripts/ci/e2e-auth-setup.unit.mjs",
+    "msg": "prazo simulado"
+   },
+   {
+    "file": "scripts/ci/e2e-recovery.unit.mjs",
+    "msg": "rede proibida neste teste"
    },
    {
     "file": "scripts/ci/e2e-teardown.mjs",
@@ -255456,7 +255565,7 @@
   },
   "playwright.config.ts": {
    "path": "playwright.config.ts",
-   "lines": 377,
+   "lines": 381,
    "exports": [
     "default defineConfig"
    ],
@@ -257618,9 +257727,42 @@
     "ponteiro fino: nada muda no visual — os alvos continuam compactos"
    ]
   },
+  "e2e/auth-diagnostics.ts": {
+   "path": "e2e/auth-diagnostics.ts",
+   "lines": 118,
+   "exports": [
+    "class AuthTargetError",
+    "type AuthTarget",
+    "function classifyAuthTarget",
+    "function usesExternalHttpsServer",
+    "function assertAuthenticatedTarget",
+    "type AuthObservation",
+    "function isAuthLoginRequest",
+    "function diagnoseAuthFailure"
+   ],
+   "errors": [
+    "REMOTE_FULL_SUITE_BLOCKED",
+    "TARGET_CREDENTIALS",
+    "TARGET_DOMAIN_UNVERIFIED",
+    "TARGET_HTTPS_REQUIRED",
+    "TARGET_INVALID",
+    "TARGET_NOT_ORIGIN",
+    "TARGET_ORIGIN_REJECTED"
+   ],
+   "params": [
+    {
+     "name": "OFFICIAL_BACKEND",
+     "value": "'https://tnnnlkbymytvtqngbbqh.supabase.co'"
+    },
+    {
+     "name": "CANONICAL_APP",
+     "value": "'https://zapp-web-v2.vercel.app'"
+    }
+   ]
+  },
   "e2e/auth.setup.ts": {
    "path": "e2e/auth.setup.ts",
-   "lines": 130,
+   "lines": 145,
    "env": [
     "E2E_TEST_EMAIL",
     "E2E_TEST_PASSWORD"
@@ -257628,8 +257770,9 @@
    "errors": [
     ") generico: o app dispara toasts alheios ao login\n  // (ex.: ",
     "E2E_TEST_EMAIL e/ou E2E_TEST_PASSWORD nao estao definidas. Os testes que dependem de ",
-    "[E2E setup] Credencial recusada — o app mostrou: ",
-    "[E2E setup] Login indisponivel em ${TENTATIVAS} tentativas: a edge auth-login nao ",
+    "[E2E setup/${diagnostic.code}] ${diagnostic.message}",
+    "[E2E setup/${diagnostic.code}] ${diagnostic.message} Tentativas realizadas: ${tentativa}.",
+    "[E2E setup/${diagnostic.code}] ${diagnostic.message} Veja o trace do Playwright.",
     "[E2E setup] O app nao respondeu em 15 s ao navegar para /auth. "
    ],
    "params": [
@@ -257643,13 +257786,11 @@
     }
    ],
    "rule_comments": [
-    "(auth.spec.ts), que testa a tela de login deslogada e nao pode depender",
-    "a edge so gravou o primeiro rate limit as 17:00:52.4 e o GoTrue criou a sessao as"
+    "(auth.spec.ts), que testa a tela de login deslogada e nao pode depender"
    ],
    "temporal": [
-    "await expect(shell.or(erroLogin).first()).toBeVisible({ timeout: 120_000 });",
-    "await page.goto('/auth', { timeout: 15_000 });",
-    "const resposta = ((await erroLogin.last().textContent({ timeout: 2_000 }).catch(() => null)) ?? '').trim();"
+    "await expect(shell.or(erroLogin).or(bloqueioAcesso).first()).toBeVisible({ timeout: 120_000 });",
+    "await page.goto('/auth', { timeout: 15_000 });"
    ]
   },
   "e2e/auth.spec.ts": {
@@ -258069,7 +258210,7 @@
   },
   "e2e/email-navy-visual.spec.ts": {
    "path": "e2e/email-navy-visual.spec.ts",
-   "lines": 570,
+   "lines": 601,
    "is_test": true,
    "params": [
     {
@@ -258215,7 +258356,7 @@
   },
   "e2e/location-picker.spec.ts": {
    "path": "e2e/location-picker.spec.ts",
-   "lines": 201,
+   "lines": 203,
    "is_test": true,
    "params": [
     {
@@ -259975,10 +260116,7 @@
   },
   "scripts/ci/actions-kpi.unit.mjs": {
    "path": "scripts/ci/actions-kpi.unit.mjs",
-   "lines": 190,
-   "rule_comments": [
-    "read/, 'nem actions: read deve ficar no topo');"
-   ]
+   "lines": 195
   },
   "scripts/ci/ai-context-generator.unit.mjs": {
    "path": "scripts/ci/ai-context-generator.unit.mjs",
@@ -260029,6 +260167,27 @@
    "rule_comments": [
     "R2-INF-009: o reconhecimento do relatorio nao pode aceitar qualquer texto que",
     "chega pelo --status e crash/abort nao pode passar como verde."
+   ]
+  },
+  "scripts/ci/branch-hygiene-runtime.unit.mjs": {
+   "path": "scripts/ci/branch-hygiene-runtime.unit.mjs",
+   "lines": 256,
+   "env": [
+    "FIXTURE_CALLS",
+    "FIXTURE_CONFIG",
+    "FIXTURE_NETWORK",
+    "FIXTURE_PUBLISHED"
+   ],
+   "errors": [
+    "network disabled in fixture"
+   ],
+   "rule_comments": [
+    "Implementa somente a superficie usada pelos corpos atuais. Sem delegar a gh/git.",
+    "day).toISOString(), rule: { id: 'fixture-rule', security_severity_level: severity }, most_recent_instance: { location: { path: 'fixture.ts' } } });"
+   ],
+   "doc": "Executa os run bodies reais com gh/git locais: nenhuma API ou poda real.",
+   "temporal": [
+    "const result = spawnSync('/bin/bash', ['--noprofile', '--norc', '-euo', 'pipefail', script], { cwd: root, env, encoding: 'utf8', timeout: 30_000, maxBuffer: 102 …"
    ]
   },
   "scripts/ci/branch-hygiene-workflow.unit.mjs": {
@@ -260083,7 +260242,7 @@
   },
   "scripts/ci/branch-podaveis.unit.mjs": {
    "path": "scripts/ci/branch-podaveis.unit.mjs",
-   "lines": 172,
+   "lines": 181,
    "rule_comments": [
     "relatório. Os testes cobrem a regra (elegível, com PR, recente, main, protegida),"
    ],
@@ -260704,6 +260863,36 @@
     "Erros\\n\\n| seção | erro |\\n|---|---|\\n| db_stats | permissão negada |\\n');"
    ]
   },
+  "scripts/ci/contexto-publicacao.unit.mjs": {
+   "path": "scripts/ci/contexto-publicacao.unit.mjs",
+   "lines": 374,
+   "env": [
+    "PATH"
+   ],
+   "errors": [
+    "Artifact-id sem arquivo correspondente",
+    "Download simulado falhou: ${failDownload}"
+   ],
+   "rule_comments": [
+    "dentro do shell, somente o destino do push é redirecionado para um bare local.",
+    "Regra humana preservada\\n',",
+    "Regra humana preservada');",
+    "Erros da última coleta\\n\\n| seção | erro |\\n|---|---|\\n| auth | permissão insuficiente |\\n';"
+   ],
+   "doc": "Executa o publisher real com Git local. Downloads usam fixtures no formato da action v7; dentro do shell, somente o destino do push é redirecionado para um bare local.",
+   "temporal": [
+    "cwd: repo, encoding: 'utf8', timeout: 25_000,",
+    "test('relógio bancário: commits frequentes só de código não adiam o heartbeat', { timeout: 90_000 }, (t) => {",
+    "test('três artefatos idênticos não criam novo commit', { timeout: 45_000 }, (t) => {",
+    "test(`falha fatal de ${failed} mantém sua versão anterior e publica as duas fontes saudáveis`, { timeout: 45_000 }, (t) => {",
+    "test(`falha no download ${key} ${previousBranch ? 'preserva a branch existente' : 'não publica a primeira branch'}`, { timeout: 45_000 }, (t) => {",
+    "test(`métricas sem mudança de saúde: manifest publicado há ${ageMinutes} minutos`, { timeout: 45_000 }, (t) => {",
+    "test(`publisher ${previousBranch ? 'com' : 'sem'} branch anterior: ${selected.join('+') || 'nenhum artefato'}`, { timeout: 45_000 }, (t) => {",
+    "test(`relógio bancário: ${scenario.name} permite publicar sem congelar as métricas`, { timeout: 45_000 }, (t) => {",
+    "test(`saúde: ${recovering ? 'recuperação' : 'erro novo'} é publicada antes de 60 minutos`, { timeout: 45_000 }, (t) => {",
+    "test(`índice: fonte ${recovering ? 'atualizada' : 'desatualizada'} por commit muda sem esperar 60 minutos`, { timeout: 45_000 }, (t) => {"
+   ]
+  },
   "scripts/ci/crm-integration-contract.unit.mjs": {
    "path": "scripts/ci/crm-integration-contract.unit.mjs",
    "lines": 71,
@@ -260726,6 +260915,31 @@
     }
    ],
    "doc": "!/usr/bin/env node Guarda de drift do mapa do Dashboard (docs/dashboard/README.md). O README do Dashboard nasceu como mapa \"de onde cada número vem\" e historicamente ficou para trás do código: apontava para um plano de 50 etapas que nunca existiu no repositório e reabria correções já concluídas (ran …"
+  },
+  "scripts/ci/db-guard-confiabilidade.unit.mjs": {
+   "path": "scripts/ci/db-guard-confiabilidade.unit.mjs",
+   "lines": 348,
+   "env": [
+    "PATH",
+    "REVIEW_CALLS",
+    "REVIEW_COUNTER",
+    "REVIEW_DATABASE",
+    "REVIEW_FAIL_CREATE_DATABASE",
+    "REVIEW_FAIL_ROLE_QUERY",
+    "REVIEW_OUTCOMES"
+   ],
+   "params": [
+    {
+     "name": "BOOTSTRAP",
+     "value": "'connection to server on socket fixture failed: FATAL'"
+    }
+   ],
+   "rule_comments": [
+    "Injeta erro após saída parcial apenas no printf do snapshot; mensagens e"
+   ],
+   "temporal": [
+    "const result = spawnSync('bash', [script, ...args], { cwd: dir, env: { ...env, ...extraEnv }, encoding: 'utf8', timeout: 10_000 });"
+   ]
   },
   "scripts/ci/db-inventory-doc.unit.mjs": {
    "path": "scripts/ci/db-inventory-doc.unit.mjs",
@@ -260827,7 +261041,7 @@
   },
   "scripts/ci/deno-reproducibility.unit.mjs": {
    "path": "scripts/ci/deno-reproducibility.unit.mjs",
-   "lines": 47
+   "lines": 59
   },
   "scripts/ci/deploy-functions-workflow.unit.mjs": {
    "path": "scripts/ci/deploy-functions-workflow.unit.mjs",
@@ -260934,6 +261148,96 @@
     }
    ],
    "doc": "E63: o dry-run do Supabase CLI tem a saida lida e conferida contra o alvo autorizado. Antes disso o passo rodava o dry-run e descartava o texto -- o dry-run nao provava nada. As fixtures abaixo NAO sao inventadas: reproduzem a saida real do CLI registrada em supabase/cli#776 (\"DRY RUN: migrations wi …"
+  },
+  "scripts/ci/e2e-auth-diagnostics.unit.mjs": {
+   "path": "scripts/ci/e2e-auth-diagnostics.unit.mjs",
+   "lines": 165,
+   "env": [
+    "E2E_EXPECTED_COMMIT_SHA"
+   ],
+   "errors": [
+    "I/O não permitido"
+   ],
+   "params": [
+    {
+     "name": "APP",
+     "value": "'https://zapp-web-v2.vercel.app'"
+    },
+    {
+     "name": "BACKEND",
+     "value": "'https://tnnnlkbymytvtqngbbqh.supabase.co'"
+    }
+   ],
+   "rule_comments": [
+    "Não é uma validação de deployment: esses cenários provam apenas que informar"
+   ]
+  },
+  "scripts/ci/e2e-auth-setup.unit.mjs": {
+   "path": "scripts/ci/e2e-auth-setup.unit.mjs",
+   "lines": 214,
+   "env": [
+    "E2E_TEST_",
+    "E2E_TEST_EMAIL",
+    "E2E_TEST_PASSWORD",
+    "PLAYWRIGHT_BASE_URL"
+   ],
+   "errors": [
+    "I/O externo proibido nesta simulação",
+    "Leitura de dados sensiveis proibida",
+    "prazo simulado"
+   ],
+   "params": [
+    {
+     "name": "APP",
+     "value": "'https://zapp-web-v2.vercel.app'"
+    },
+    {
+     "name": "OFFICIAL",
+     "value": "'https://tnnnlkbymytvtqngbbqh.supabase.co'"
+    },
+    {
+     "name": "LOCAL",
+     "value": "'http://127.0.0.1:54321'"
+    }
+   ],
+   "role_checks": [
+    "button"
+   ],
+   "rule_comments": [
+    "Executa o setup e a configuração reais, retirando apenas tipos e substituindo"
+   ]
+  },
+  "scripts/ci/e2e-email-axe-ready.unit.mjs": {
+   "path": "scripts/ci/e2e-email-axe-ready.unit.mjs",
+   "lines": 327,
+   "params": [
+    {
+     "name": "PRIMEIRA_CONVERSA",
+     "value": "\"fixture-ready\""
+    }
+   ],
+   "role_checks": [
+    "body",
+    "grand",
+    "html",
+    "parent",
+    "target"
+   ],
+   "temporal": [
+    "vm.runInContext(compiled, context, { timeout: 1000 });",
+    "}, { timeout: 1000 });"
+   ]
+  },
+  "scripts/ci/e2e-recovery.unit.mjs": {
+   "path": "scripts/ci/e2e-recovery.unit.mjs",
+   "lines": 130,
+   "errors": [
+    "rede proibida neste teste"
+   ],
+   "rule_comments": [
+    "Executa os corpos reais de github-script com uma API somente em memoria."
+   ],
+   "doc": "Executa os corpos reais de github-script com uma API somente em memoria. O agendamento do Actions nao e emulado: o contrato estrutural abaixo exige um job unico dependente da matriz, e os cenarios avaliam seu guard real."
   },
   "scripts/ci/e2e-teardown.mjs": {
    "path": "scripts/ci/e2e-teardown.mjs",
@@ -261731,7 +262035,7 @@
   },
   "scripts/ci/marcador-specs.unit.mjs": {
    "path": "scripts/ci/marcador-specs.unit.mjs",
-   "lines": 101
+   "lines": 100
   },
   "scripts/ci/matriz-oth013-validar.py": {
    "path": "scripts/ci/matriz-oth013-validar.py",
@@ -261946,7 +262250,7 @@
   },
   "scripts/ci/redigir-relatorio.unit.mjs": {
    "path": "scripts/ci/redigir-relatorio.unit.mjs",
-   "lines": 231,
+   "lines": 260,
    "params": [
     {
      "name": "EMAIL",
@@ -262128,7 +262432,7 @@
   },
   "scripts/ci/sla-code-scanning.unit.mjs": {
    "path": "scripts/ci/sla-code-scanning.unit.mjs",
-   "lines": 65
+   "lines": 73
   },
   "scripts/ci/slo-docs-honesty.unit.mjs": {
    "path": "scripts/ci/slo-docs-honesty.unit.mjs",
@@ -262389,10 +262693,9 @@
   },
   "scripts/ci/talkx-status-warn.unit.mjs": {
    "path": "scripts/ci/talkx-status-warn.unit.mjs",
-   "lines": 63,
+   "lines": 59,
    "rule_comments": [
-    "true/, 'o step do placar deve ter continue-on-error: true (aviso, não bloqueia)');",
-    "github\\.event_name\\s*==\\s*['\"]pull_request['\"]/, 'o check deve rodar só em PR');",
+    "de ser o contrato; não se deve restaurar `continue-on-error` para passar o teste.",
     "\\n\\s*push:\\s*\\n\\s*branches:\\s*\\[main\\]/, 'deve disparar no push da main');",
     "git push\\s*$/m, 'não pode empurrar direto na main');"
    ]
@@ -262687,6 +262990,29 @@
     "existia sozinho, e apenas porque uma falha do CLI mascarada pelo `tee` custou"
    ],
    "doc": "E59 (auditoria de GitHub Actions, 2026-10-01): todo bloco `run:` multi-linha do deploy-functions.yml abre com modo estrito de shell. Por que isto virou teste: a auditoria pediu `set -euo pipefail` no topo de cada bloco multi-linha e encontrou ZERO. O `set -o pipefail` do passo Deploy existia sozinho …"
+  },
+  "scripts/ci/workflow-test-support.mjs": {
+   "path": "scripts/ci/workflow-test-support.mjs",
+   "lines": 134,
+   "exports": [
+    "function jobsOf",
+    "function jobOf",
+    "function stepsOf",
+    "function valueOf",
+    "const nestedValue",
+    "const permission",
+    "const runOf",
+    "const scriptOf",
+    "const shellCode",
+    "const conditionOf",
+    "function onlyStep",
+    "function assertBlocking",
+    "function conditionAllows"
+   ],
+   "rule_comments": [
+    "Avalia apenas o subconjunto booleano usado nos guards sob teste. Identificadores"
+   ],
+   "doc": "Leitores restritos ao formato em blocos dos workflows deste repositorio. Nao sao um parser YAML geral: formatos nao reconhecidos falham nos contratos. Isolar job/step evita que comentarios e passos vizinhos satisfaçam garantias."
   },
   "scripts/db/seed-contatos-redesign-local.sql": {
    "path": "scripts/db/seed-contatos-redesign-local.sql",
@@ -301291,7 +301617,7 @@
   },
   "src/components/talkx/__tests__/TalkXAnalytics.performance.test.tsx": {
    "path": "src/components/talkx/__tests__/TalkXAnalytics.performance.test.tsx",
-   "lines": 303,
+   "lines": 311,
    "is_test": true,
    "tests": [
     "AnalyticsPerformanceChart — séries diárias (X186)",
@@ -379161,10 +379487,49 @@
   }
  },
  "git": {
-  "sha": "451373f549d3214beb57ad3728bed9986aba1d32",
+  "sha": "b46f5d291f4684048f11b8986468e91b333c1029",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b46f5d2",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "fix(ci): restaurar auditorias e fortalecer automações (#2710)",
+    "files": [
+     ".github/workflows/branch-hygiene-audit.yml",
+     ".github/workflows/ci.yml",
+     ".github/workflows/contexto.yml",
+     ".github/workflows/db-guard.yml",
+     ".github/workflows/e2e-logado.yml",
+     "docs/ci/README.md",
+     "e2e/README.md",
+     "e2e/auth-diagnostics.ts",
+     "e2e/auth.setup.ts",
+     "e2e/email-navy-visual.spec.ts",
+     "e2e/location-picker.spec.ts",
+     "playwright.config.ts",
+     "scripts/ci/actions-kpi.unit.mjs",
+     "scripts/ci/branch-hygiene-runtime.unit.mjs",
+     "scripts/ci/branch-podaveis.unit.mjs",
+     "scripts/ci/contexto-publicacao.unit.mjs",
+     "scripts/ci/db-guard-confiabilidade.unit.mjs",
+     "scripts/ci/deno-reproducibility.unit.mjs",
+     "scripts/ci/e2e-auth-diagnostics.unit.mjs",
+     "scripts/ci/e2e-auth-setup.unit.mjs",
+     "scripts/ci/e2e-email-axe-ready.unit.mjs",
+     "scripts/ci/e2e-recovery.unit.mjs",
+     "scripts/ci/marcador-specs.unit.mjs",
+     "scripts/ci/redigir-relatorio.unit.mjs",
+     "scripts/ci/sla-code-scanning.unit.mjs",
+     "scripts/ci/talkx-status-warn.unit.mjs",
+     "scripts/ci/workflow-test-support.mjs",
+     "scripts/db-audit/README.md",
+     "scripts/db-audit/docker-shim",
+     "scripts/db-audit/supabase-snapshot-stats.test.sh",
+     "src/components/talkx/__tests__/TalkXAnalytics.performance.test.tsx"
+    ]
+   },
    {
     "sha": "451373f",
     "date": "2026-11-03",
@@ -379556,20 +379921,6 @@
     "files": [
      "scripts/ci/eslint-baseline.json"
     ]
-   },
-   {
-    "sha": "669ff49",
-    "date": "2026-11-02",
-    "author": "adm01-debug",
-    "subject": "fix: remove escapes inúteis em regex de testes de contraste (lint ratchet) (#2655)",
-    "files": [
-     "src/components/inbox/__tests__/ContactDetails.mobile-iniciais-sentimento.test.tsx",
-     "src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx",
-     "src/components/inbox/__tests__/contrastePlayerSlider.test.tsx",
-     "src/components/inbox/chat/__tests__/MessageBubble.contrasteStatus.test.tsx",
-     "src/components/inbox/tabs/__tests__/KpiStrip.contraste.test.tsx",
-     "src/components/settings/__tests__/ThemeCustomizer.a11y.test.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -379580,6 +379931,10 @@
    [
     "docs/contexto/regras/manual/regras.md",
     5
+   ],
+   [
+    "docs/ci/README.md",
+    4
    ],
    [
     "scripts/ai-context/gerar.mjs",
@@ -379610,8 +379965,20 @@
     3
    ],
    [
-    "docs/ci/README.md",
-    3
+    ".github/workflows/ci.yml",
+    2
+   ],
+   [
+    ".github/workflows/contexto.yml",
+    2
+   ],
+   [
+    ".github/workflows/db-guard.yml",
+    2
+   ],
+   [
+    ".github/workflows/e2e-logado.yml",
+    2
    ],
    [
     "scripts/ai-context/README.md",
@@ -379635,22 +380002,6 @@
    ],
    [
     "supabase/deployment-manifest.json",
-    2
-   ],
-   [
-    "scripts/ci/eslint-baseline.json",
-    2
-   ],
-   [
-    ".github/workflows/db-migrate.yml",
-    2
-   ],
-   [
-    ".github/workflows/supabase-snapshot.yml",
-    2
-   ],
-   [
-    "AGENTS.md",
     2
    ]
   ]

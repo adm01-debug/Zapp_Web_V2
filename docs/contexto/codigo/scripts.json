@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 374,
+ "total": 376,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -93,7 +93,9 @@
    "linhas": 193,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "branch-hygiene-audit.yml"
+   ],
    "orfao": false
   },
   {
@@ -418,7 +420,9 @@
    "linhas": 79,
    "env": [],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "branch-hygiene-audit.yml"
+   ],
    "orfao": false
   },
   {
@@ -469,6 +473,15 @@
    "arquivo": "scripts/ci/workflow-invariants.mjs",
    "descricao": "* scripts/ci/workflow-invariants.mjs — invariantes estáticos R3 e R5",
    "linhas": 222,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/ci/workflow-test-support.mjs",
+   "descricao": "Leitores restritos ao formato em blocos dos workflows deste repositorio. Nao sao um parser YAML geral: formatos nao reconhecidos falham nos contratos.",
+   "linhas": 134,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -2219,6 +2232,17 @@
    "arquivo": "scripts/db-audit/storage-limits-whatsapp-audio-multiplix.test.sh",
    "descricao": "N-010: prova que a migration 20261010130000_storage_limits_whatsapp_audio_multiplix.sql fixa file_size_limit em whatsapp-media, audio-messages e multiplix-voice.",
    "linhas": 218,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/supabase-snapshot-stats.test.sh",
+   "descricao": "Contrato do filtro de top_queries: o regex vem do AST do snapshot real; somente PostgreSQL decide se as 48 strings casam. Nenhum banco oficial é usado.",
+   "linhas": 165,
    "env": [],
    "npm_scripts": [],
    "workflows": [

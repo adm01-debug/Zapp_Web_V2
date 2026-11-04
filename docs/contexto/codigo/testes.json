@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2530,
+ "total": 2538,
  "por_tipo": {
   "contrato": 113,
-  "e2e": 71,
+  "e2e": 72,
   "pytest": 3,
   "qa": 6,
-  "unit": 2247
+  "unit": 2254
  },
  "onde_ficam": [
   {
@@ -24,7 +24,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 161
+   "arquivos": 168
   },
   {
    "padrao": "tests/",
@@ -32,7 +32,7 @@
   },
   {
    "padrao": "e2e/",
-   "arquivos": 71
+   "arquivos": 72
   }
  ],
  "arquivos": [
@@ -86,9 +86,18 @@
    "casos": 3
   },
   {
+   "arquivo": "e2e/auth-diagnostics.ts",
+   "tipo": "e2e",
+   "linhas": 118,
+   "testa": [
+    "supabase/functions/_shared/cors-origins.ts"
+   ],
+   "casos": 2
+  },
+  {
    "arquivo": "e2e/auth.setup.ts",
    "tipo": "e2e",
-   "linhas": 130,
+   "linhas": 145,
    "testa": [],
    "casos": 0
   },
@@ -221,7 +230,7 @@
   {
    "arquivo": "e2e/email-navy-visual.spec.ts",
    "tipo": "e2e",
-   "linhas": 570,
+   "linhas": 601,
    "testa": [],
    "casos": 22
   },
@@ -370,7 +379,7 @@
   {
    "arquivo": "e2e/location-picker.spec.ts",
    "tipo": "e2e",
-   "linhas": 201,
+   "linhas": 203,
    "testa": [],
    "casos": 2
   },
@@ -581,11 +590,12 @@
   {
    "arquivo": "scripts/ci/actions-kpi.unit.mjs",
    "tipo": "unit",
-   "linhas": 190,
+   "linhas": 195,
    "testa": [
-    "scripts/ci/actions-kpi.mjs"
+    "scripts/ci/actions-kpi.mjs",
+    "scripts/ci/workflow-test-support.mjs"
    ],
-   "casos": 12
+   "casos": 13
   },
   {
    "arquivo": "scripts/ci/ai-context-generator.unit.mjs",
@@ -611,6 +621,15 @@
    "casos": 9
   },
   {
+   "arquivo": "scripts/ci/branch-hygiene-runtime.unit.mjs",
+   "tipo": "unit",
+   "linhas": 256,
+   "testa": [
+    "scripts/ci/workflow-test-support.mjs"
+   ],
+   "casos": 5
+  },
+  {
    "arquivo": "scripts/ci/branch-hygiene-workflow.unit.mjs",
    "tipo": "unit",
    "linhas": 221,
@@ -620,9 +639,10 @@
   {
    "arquivo": "scripts/ci/branch-podaveis.unit.mjs",
    "tipo": "unit",
-   "linhas": 172,
+   "linhas": 181,
    "testa": [
-    "scripts/ci/branch-podaveis.mjs"
+    "scripts/ci/branch-podaveis.mjs",
+    "scripts/ci/workflow-test-support.mjs"
    ],
    "casos": 16
   },
@@ -821,6 +841,13 @@
    "casos": 18
   },
   {
+   "arquivo": "scripts/ci/contexto-publicacao.unit.mjs",
+   "tipo": "unit",
+   "linhas": 374,
+   "testa": [],
+   "casos": 15
+  },
+  {
    "arquivo": "scripts/ci/crm-integration-contract.unit.mjs",
    "tipo": "contrato",
    "linhas": 71,
@@ -835,6 +862,13 @@
    "linhas": 94,
    "testa": [],
    "casos": 7
+  },
+  {
+   "arquivo": "scripts/ci/db-guard-confiabilidade.unit.mjs",
+   "tipo": "unit",
+   "linhas": 348,
+   "testa": [],
+   "casos": 26
   },
   {
    "arquivo": "scripts/ci/db-inventory-doc.unit.mjs",
@@ -865,9 +899,11 @@
   {
    "arquivo": "scripts/ci/deno-reproducibility.unit.mjs",
    "tipo": "unit",
-   "linhas": 47,
-   "testa": [],
-   "casos": 2
+   "linhas": 59,
+   "testa": [
+    "scripts/ci/workflow-test-support.mjs"
+   ],
+   "casos": 3
   },
   {
    "arquivo": "scripts/ci/deploy-functions-workflow.unit.mjs",
@@ -914,6 +950,36 @@
     "scripts/db-audit/dry-run-plan.mjs"
    ],
    "casos": 13
+  },
+  {
+   "arquivo": "scripts/ci/e2e-auth-diagnostics.unit.mjs",
+   "tipo": "unit",
+   "linhas": 165,
+   "testa": [],
+   "casos": 12
+  },
+  {
+   "arquivo": "scripts/ci/e2e-auth-setup.unit.mjs",
+   "tipo": "unit",
+   "linhas": 214,
+   "testa": [],
+   "casos": 6
+  },
+  {
+   "arquivo": "scripts/ci/e2e-email-axe-ready.unit.mjs",
+   "tipo": "unit",
+   "linhas": 327,
+   "testa": [],
+   "casos": 18
+  },
+  {
+   "arquivo": "scripts/ci/e2e-recovery.unit.mjs",
+   "tipo": "unit",
+   "linhas": 130,
+   "testa": [
+    "scripts/ci/workflow-test-support.mjs"
+   ],
+   "casos": 3
   },
   {
    "arquivo": "scripts/ci/e2e-teardown.unit.mjs",
@@ -1078,11 +1144,12 @@
   {
    "arquivo": "scripts/ci/marcador-specs.unit.mjs",
    "tipo": "unit",
-   "linhas": 101,
+   "linhas": 100,
    "testa": [
-    "scripts/ci/marcador-specs.mjs"
+    "scripts/ci/marcador-specs.mjs",
+    "scripts/ci/workflow-test-support.mjs"
    ],
-   "casos": 9
+   "casos": 11
   },
   {
    "arquivo": "scripts/ci/media-dedupe.unit.mjs",
@@ -1192,11 +1259,12 @@
   {
    "arquivo": "scripts/ci/redigir-relatorio.unit.mjs",
    "tipo": "unit",
-   "linhas": 231,
+   "linhas": 260,
    "testa": [
-    "scripts/ci/redigir-relatorio.mjs"
+    "scripts/ci/redigir-relatorio.mjs",
+    "scripts/ci/workflow-test-support.mjs"
    ],
-   "casos": 13
+   "casos": 17
   },
   {
    "arquivo": "scripts/ci/regras-negocio.unit.mjs",
@@ -1279,11 +1347,12 @@
   {
    "arquivo": "scripts/ci/sla-code-scanning.unit.mjs",
    "tipo": "unit",
-   "linhas": 65,
+   "linhas": 73,
    "testa": [
-    "scripts/ci/sla-code-scanning.mjs"
+    "scripts/ci/sla-code-scanning.mjs",
+    "scripts/ci/workflow-test-support.mjs"
    ],
-   "casos": 6
+   "casos": 7
   },
   {
    "arquivo": "scripts/ci/slo-docs-honesty.unit.mjs",
@@ -1351,9 +1420,11 @@
   {
    "arquivo": "scripts/ci/talkx-status-warn.unit.mjs",
    "tipo": "unit",
-   "linhas": 63,
-   "testa": [],
-   "casos": 2
+   "linhas": 59,
+   "testa": [
+    "scripts/ci/workflow-test-support.mjs"
+   ],
+   "casos": 3
   },
   {
    "arquivo": "scripts/ci/talkx-template-history-caller.unit.mjs",
@@ -10743,7 +10814,7 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXAnalytics.performance.test.tsx",
    "tipo": "unit",
-   "linhas": 303,
+   "linhas": 311,
    "testa": [
     "src/components/talkx/TalkXAnalytics.tsx",
     "src/components/talkx/analytics/AnalyticsFunnel.tsx",
@@ -23045,6 +23116,7 @@
   "scripts/ci/sla-code-scanning.mjs": 1,
   "scripts/ci/typecheck-ratchet.mjs": 1,
   "scripts/ci/vercel-env-baseline.mjs": 1,
+  "scripts/ci/workflow-test-support.mjs": 9,
   "scripts/db-audit/check-realtime-subscriptions.mjs": 1,
   "scripts/db-audit/check-runtime-config.mjs": 1,
   "scripts/db-audit/confirm-hash.mjs": 1,
@@ -24393,7 +24465,7 @@
   "supabase/functions/_shared/ai-vocabulary.ts": 7,
   "supabase/functions/_shared/contract-kit.ts": 1,
   "supabase/functions/_shared/contracts.ts": 1,
-  "supabase/functions/_shared/cors-origins.ts": 1,
+  "supabase/functions/_shared/cors-origins.ts": 2,
   "supabase/functions/_shared/crm-integration-contract.ts": 3,
   "supabase/functions/_shared/edge-boot.ts": 1,
   "supabase/functions/_shared/effect-reconcile.ts": 1,

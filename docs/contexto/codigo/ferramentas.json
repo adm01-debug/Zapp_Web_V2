@@ -3,12 +3,12 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4173)",
+   "TypeScript (4174)",
    "SQL (1276)",
    "Markdown (1031)",
    "JSON (592)",
-   "JavaScript (355)",
-   "Shell (228)",
+   "JavaScript (363)",
+   "Shell (229)",
    "Python (117)",
    "YAML (27)"
   ],
@@ -178,7 +178,9 @@
     "pull-requests: read"
    ],
    "scripts_usados": [
-    "scripts/ci/actions-kpi.mjs"
+    "scripts/ci/actions-kpi.mjs",
+    "scripts/ci/branch-podaveis.mjs",
+    "scripts/ci/sla-code-scanning.mjs"
    ],
    "npm_scripts": [],
    "secrets": [],
@@ -443,6 +445,7 @@
     "scripts/db-audit/send-messages-permission-authorization.test.sh",
     "scripts/db-audit/storage-limits-stickers-audio-memes.test.sh",
     "scripts/db-audit/storage-limits-whatsapp-audio-multiplix.test.sh",
+    "scripts/db-audit/supabase-snapshot-stats.test.sh",
     "scripts/db-audit/supabase-usage-guard.mjs",
     "scripts/db-audit/talk-me-queue-contract.test.sh",
     "scripts/db-audit/talkx-ab-weights.test.sh",
@@ -674,7 +677,8 @@
     "main"
    ],
    "jobs": [
-    "e2e-logado"
+    "e2e-logado",
+    "recuperar-alerta"
    ],
    "permissoes": [
     "contents: read"
@@ -1557,7 +1561,7 @@
    },
    {
     "host": "zapp-web-v2.vercel.app",
-    "arquivos": 20
+    "arquivos": 23
    },
    {
     "host": "edge.test",
@@ -1565,7 +1569,7 @@
    },
    {
     "host": "tnnnlkbymytvtqngbbqh.supabase.co",
-    "arquivos": 15
+    "arquivos": 18
    },
    {
     "host": "example.supabase.co",
@@ -1581,6 +1585,10 @@
    },
    {
     "host": "api.elevenlabs.io",
+    "arquivos": 12
+   },
+   {
+    "host": "example.invalid",
     "arquivos": 12
    },
    {
@@ -1606,10 +1614,6 @@
    {
     "host": "evolution.test",
     "arquivos": 10
-   },
-   {
-    "host": "example.invalid",
-    "arquivos": 9
    },
    {
     "host": "gmail.googleapis.com",
@@ -1644,6 +1648,10 @@
     "arquivos": 7
    },
    {
+    "host": "zappweb.app.br",
+    "arquivos": 7
+   },
+   {
     "host": "evolution-test.example",
     "arquivos": 6
    },
@@ -1665,10 +1673,6 @@
    },
    {
     "host": "x.supabase.co",
-    "arquivos": 6
-   },
-   {
-    "host": "zappweb.app.br",
     "arquivos": 6
    },
    {
@@ -1721,6 +1725,10 @@
    },
    {
     "host": "wa.me",
+    "arquivos": 4
+   },
+   {
+    "host": "www.zappweb.app.br",
     "arquivos": 4
    },
    {
@@ -1801,10 +1809,6 @@
    },
    {
     "host": "test.com",
-    "arquivos": 3
-   },
-   {
-    "host": "www.zappweb.app.br",
     "arquivos": 3
    },
    {
@@ -2418,6 +2422,22 @@
    {
     "host": "zapp-test.supabase.co",
     "arquivos": 1
+   },
+   {
+    "host": "zapp-web-v2.vercel.app.example.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "zappwebv2-123-outra.vercel.app",
+    "arquivos": 1
+   },
+   {
+    "host": "zappwebv2-feature-123-juca1.vercel.app",
+    "arquivos": 1
+   },
+   {
+    "host": "zappwebv2-feature-juca1.vercel.app",
+    "arquivos": 1
    }
   ],
   "env_de_integracao": [
@@ -2541,7 +2561,7 @@
    },
    {
     "papel": "button",
-    "ocorrencias": 15
+    "ocorrencias": 16
    },
    {
     "papel": "group",
@@ -2712,6 +2732,10 @@
     "ocorrencias": 1
    },
    {
+    "papel": "body",
+    "ocorrencias": 1
+   },
+   {
     "papel": "checkbox",
     "ocorrencias": 1
    },
@@ -2728,11 +2752,27 @@
     "ocorrencias": 1
    },
    {
+    "papel": "grand",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "html",
+    "ocorrencias": 1
+   },
+   {
     "papel": "link",
     "ocorrencias": 1
    },
    {
     "papel": "member",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "parent",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "postgres",
     "ocorrencias": 1
    },
    {
@@ -2761,6 +2801,10 @@
    },
    {
     "papel": "sup",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "target",
     "ocorrencias": 1
    },
    {
