@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b46f5d291f` · branch `main` · 2026-11-04 09:34 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `a96bbd4cba` · branch `main` · 2026-11-04 10:08 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -67,7 +67,6 @@
 | `contact_identity_map` | enabled | authenticated: is_admin_or_supervisor(auth.uid()) | — | — | — |
 | `contact_notes` | enabled | authenticated: contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT profiles.id FROM profiles WHERE profiles.user_id =<br>authenticated: public.is_contact_visible_to_user(contact_id, auth.uid()) | authenticated: author_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())<br>authenticated: author_id = public.get_profile_id_for_user(auth.uid()) AND public.is_contact_visible_to_user(contact_id, auth.uid()) | authenticated: author_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())<br>authenticated: author_id = public.get_profile_id_for_user(auth.uid()) AND public.is_contact_visible_to_user(contact_id, auth.uid()) | authenticated: author_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())<br>authenticated: author_id = public.get_profile_id_for_user(auth.uid()) AND public.is_contact_visible_to_user(contact_id, auth.uid()) |
 | `contact_protection_policy` | enabled | authenticated: public.has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') |
-| `contact_purchases` | enabled | — | — | — | — |
 | `contacts` | enabled | authenticated: public.can_edit_contact(assigned_to, queue_id, (SELECT array_agg(v) FROM public.get_visible_agent_ids(auth.uid()) v), (SELECT | authenticated: public.is_admin_or_supervisor(auth.uid()) OR ( assigned_to IS NOT NULL AND assigned_to IN ( SELECT id FROM public.profiles WH | authenticated: public.can_edit_contact(assigned_to, queue_id, (SELECT array_agg(v) FROM public.get_visible_agent_ids(auth.uid()) v), (SELECT | — |
 | `conversation_analyses` | enabled | authenticated: contact_id IN ( SELECT c.id FROM public.contacts c WHERE c.assigned_to IN ( SELECT p.id FROM public.profiles p WHERE p.user_i | authenticated: analyzed_by = public.get_profile_id_for_user(auth.uid()) AND public.is_contact_visible_to_user(contact_id, auth.uid()) | — | — |
 | `conversation_closures` | enabled | authenticated: is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: public.is_contact_visible_to_user(contact_id, auth.uid()) | — | — |
@@ -149,7 +148,6 @@
 | `passkey_credentials` | enabled | authenticated: user_id = auth.uid() | — | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() |
 | `password_reset_requests` | enabled | authenticated: false | anon: user_id IS NOT NULL AND status = 'pending' AND reviewed_by IS NULL AND reviewed_at IS NULL AND rejection_reason IS NULL AND token_expi<br>authenticated: user_id = auth.uid() | authenticated: has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') |
 | `password_reset_requests_safe` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
-| `payment_links` | enabled | — | — | — | — |
 | `performance_snapshots` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: profile_id = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1) | authenticated: profile_id = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1) | — | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `permissions` | enabled | authenticated: is_admin(auth.uid())<br>authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) |
 | `pinned_conversations` | enabled | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) AND EXISTS (SELECT 1 FROM public.contacts | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) |
@@ -1182,10 +1180,8 @@ Middleware matcher (Next.js): nenhum
 | `copilot_help_requests` | `created_at` |
 | `copilot_learning_moments` | `created_at` |
 | `copilot_conversation_scores` | `updated_at` |
-| `contact_purchases` | `created_at`, `created_by`, `updated_at` |
 | `instance_pauses` | `created_at` |
 | `outbox_events` | `created_at` |
-| `payment_links` | `created_at`, `created_by`, `updated_at` |
 | `search_events` | `created_at` |
 | `voip_profile_credentials` | `created_at`, `updated_at` |
 | `channel_connections_safe` | `created_at`, `created_by`, `updated_at` |
@@ -1242,8 +1238,6 @@ Middleware matcher (Next.js): nenhum
 | `talkx_contact_attributes` | `total_spent` | `number` |
 | `talkx_segment_library_history` | `total_segments` | `integer` |
 | `copilot_feedback` | `feedback_type` | `TEXT` |
-| `contact_purchases` | `amount` | `number` |
-| `payment_links` | `amount` | `number` |
 | `catalog_send_stats` | `taxa_falha` | `number` |
 | `catalog_send_stats` | `taxa_parcial` | `number` |
 | `catalog_send_stats` | `total` | `number` |

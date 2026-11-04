@@ -23,8 +23,8 @@
   ],
   "testes": [
    "co-localizado (__tests__) (1945)",
-   "co-localizado (*.test) (168)",
-   "outro (168)"
+   "outro (169)",
+   "co-localizado (*.test) (168)"
   ],
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(ci): bloquear cancelamentos e skips indevidos no gate (#2711)",
+   "chore(db): sincronizar artefatos derivados do banco (#2698)",
    "fix(ci): restaurar auditorias e fortalecer automações (#2710)",
    "fix: corrigir geração e saúde dos contextos automáticos (#2708)",
-   "chore(snapshot): footer configurável via SUPABASE_SNAPSHOT_PUBLICACAO (#2704)",
-   "chore: adiciona __pycache__/ ao .gitignore",
-   "fix(supabase-snapshot): falha em auth.* não derruba a seção db_stats inteira (#2697)"
+   "chore(snapshot): footer configurável via SUPABASE_SNAPSHOT_PUBLICACAO (#2704)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

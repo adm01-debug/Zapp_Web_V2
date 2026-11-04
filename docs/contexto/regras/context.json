@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "b46f5d291f4684048f11b8986468e91b333c1029",
+  "sha": "a96bbd4cbaeed5a8bad7c42af347e56960e6cac7",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-04 09:34 UTC",
-  "files_total": 7991,
-  "code_files": 5905,
-  "code_lines": 1018611
+  "generated_at": "2026-11-04 10:08 UTC",
+  "files_total": 7992,
+  "code_files": 5906,
+  "code_lines": 1018567
  },
  "version": "1.3.2",
- "facts_hash": "a2362b53a2395b69",
+ "facts_hash": "bfafa6cef6f28a14",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -299,7 +299,7 @@
    ".tsx": 2319,
    ".ts": 1855,
    ".sql": 1276,
-   ".mjs": 337,
+   ".mjs": 338,
    ".py": 117,
    ".cjs": 19,
    ".js": 7,
@@ -17877,119 +17877,6 @@
     "comment": "",
     "origin": "types.ts"
    },
-   "contact_purchases": {
-    "columns": [
-     {
-      "name": "amount",
-      "type": "number | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "contact_id",
-      "type": "string not null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "created_at",
-      "type": "string not null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "created_by",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "currency",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "deal_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "description",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "external_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "id",
-      "type": "string not null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "purchase_type",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "purchased_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "source",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "status",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "title",
-      "type": "string not null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "updated_at",
-      "type": "string not null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "src/integrations/supabase/types.ts",
-    "comment": "",
-    "origin": "types.ts"
-   },
    "instance_pauses": {
     "columns": [
      {
@@ -18129,126 +18016,6 @@
      {
       "name": "tipo",
       "type": "string not null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     }
-    ],
-    "constraints": [],
-    "src": "src/integrations/supabase/types.ts",
-    "comment": "",
-    "origin": "types.ts"
-   },
-   "payment_links": {
-    "columns": [
-     {
-      "name": "amount",
-      "type": "number not null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "contact_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "created_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "created_by",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "currency",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "deal_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "description",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "expires_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "external_id",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "id",
-      "type": "string not null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "paid_at",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "payment_method",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "payment_url",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "status",
-      "type": "string | null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "title",
-      "type": "string not null",
-      "fk": "",
-      "generated": "",
-      "src": "src/integrations/supabase/types.ts"
-     },
-     {
-      "name": "updated_at",
-      "type": "string | null",
       "fk": "",
       "generated": "",
       "src": "src/integrations/supabase/types.ts"
@@ -35461,28 +35228,6 @@
     "tables": []
    },
    "set_voip_profile_credentials": {
-    "args": "",
-    "returns": "?",
-    "lang": "",
-    "src": "src/integrations/supabase/types.ts",
-    "security_definer": false,
-    "search_path": false,
-    "body": "",
-    "raises": [],
-    "tables": []
-   },
-   "talkx_attribute_purchases": {
-    "args": "",
-    "returns": "?",
-    "lang": "",
-    "src": "src/integrations/supabase/types.ts",
-    "security_definer": false,
-    "search_path": false,
-    "body": "",
-    "raises": [],
-    "tables": []
-   },
-   "talkx_recompute_purchase_metrics": {
     "args": "",
     "returns": "?",
     "lang": "",
@@ -67976,8 +67721,8 @@
   },
   {
    "module": "scripts",
-   "files": 356,
-   "lines": 67631,
+   "files": 357,
+   "lines": 67761,
    "tables": [
     "a",
     "alem_do_limite",
@@ -68164,6 +67909,7 @@
     "scripts/ci/ci-artifacts.unit.mjs",
     "scripts/ci/ci-docs-baseline.unit.mjs",
     "scripts/ci/ci-e2e-projects.unit.mjs",
+    "scripts/ci/ci-gate.unit.mjs",
     "scripts/ci/codeql-paths.unit.mjs",
     "scripts/ci/commit-msg-lint.mjs",
     "scripts/ci/commit-msg-lint.unit.mjs",
@@ -68190,8 +67936,7 @@
     "scripts/ci/e2e-recovery.unit.mjs",
     "scripts/ci/e2e-teardown.mjs",
     "scripts/ci/e2e-teardown.unit.mjs",
-    "scripts/ci/edge-coverage-authz.unit.mjs",
-    "scripts/ci/email-en088-medicao-docs.unit.mjs"
+    "scripts/ci/edge-coverage-authz.unit.mjs"
    ]
   },
   {
@@ -68927,7 +68672,7 @@
   {
    "module": "src/integrations",
    "files": 4,
-   "lines": 15703,
+   "lines": 15529,
    "tables": [],
    "exports": [
     "client.ts: SUPABASE_ANON_KEY, GOOGLE_OAUTH_ENABLED, supabase, SupabaseClient",
@@ -76251,7 +75996,6 @@
    "contact_block_audit",
    "contact_deletion_audit",
    "contact_protection_policy",
-   "contact_purchases",
    "copilot_conversation_scores",
    "copilot_help_requests",
    "copilot_learning_moments",
@@ -76278,7 +76022,6 @@
    "objects",
    "optout_call_log",
    "outbox_events",
-   "payment_links",
    "profiles_public",
    "prova_anterior",
    "prova_hz503_asserts",
@@ -102772,31 +102515,6 @@
     "rule": "obrigatório"
    },
    {
-    "table": "contact_purchases",
-    "column": "contact_id",
-    "rule": "obrigatório"
-   },
-   {
-    "table": "contact_purchases",
-    "column": "created_at",
-    "rule": "obrigatório"
-   },
-   {
-    "table": "contact_purchases",
-    "column": "id",
-    "rule": "obrigatório"
-   },
-   {
-    "table": "contact_purchases",
-    "column": "title",
-    "rule": "obrigatório"
-   },
-   {
-    "table": "contact_purchases",
-    "column": "updated_at",
-    "rule": "obrigatório"
-   },
-   {
     "table": "instance_pauses",
     "column": "auto",
     "rule": "obrigatório"
@@ -102869,21 +102587,6 @@
    {
     "table": "outbox_events",
     "column": "tipo",
-    "rule": "obrigatório"
-   },
-   {
-    "table": "payment_links",
-    "column": "amount",
-    "rule": "obrigatório"
-   },
-   {
-    "table": "payment_links",
-    "column": "id",
-    "rule": "obrigatório"
-   },
-   {
-    "table": "payment_links",
-    "column": "title",
     "rule": "obrigatório"
    },
    {
@@ -226532,28 +226235,6 @@
     "body": "",
     "raises": [],
     "tables": []
-   },
-   "talkx_attribute_purchases": {
-    "args": "",
-    "returns": "?",
-    "lang": "",
-    "src": "src/integrations/supabase/types.ts",
-    "security_definer": false,
-    "search_path": false,
-    "body": "",
-    "raises": [],
-    "tables": []
-   },
-   "talkx_recompute_purchase_metrics": {
-    "args": "",
-    "returns": "?",
-    "lang": "",
-    "src": "src/integrations/supabase/types.ts",
-    "security_definer": false,
-    "search_path": false,
-    "body": "",
-    "raises": [],
-    "tables": []
    }
   },
   "db_enums": {
@@ -232659,22 +232340,6 @@
      "type": "string not null"
     },
     {
-     "table": "contact_purchases",
-     "column": "status",
-     "enum": "",
-     "allowed": [],
-     "default": "",
-     "type": "string | null"
-    },
-    {
-     "table": "payment_links",
-     "column": "status",
-     "enum": "",
-     "allowed": [],
-     "default": "",
-     "type": "string | null"
-    },
-    {
      "table": "channel_connections_safe",
      "column": "status",
      "enum": "",
@@ -236216,13 +235881,6 @@
      "authenticated: public.has_role(auth.uid(), 'admin')"
     ]
    },
-   "contact_purchases": {
-    "rls": "enabled",
-    "SELECT": [],
-    "INSERT": [],
-    "UPDATE": [],
-    "DELETE": []
-   },
    "contacts": {
     "rls": "enabled",
     "SELECT": [
@@ -237265,13 +236923,6 @@
    },
    "password_reset_requests_safe": {
     "rls": "não encontrado",
-    "SELECT": [],
-    "INSERT": [],
-    "UPDATE": [],
-    "DELETE": []
-   },
-   "payment_links": {
-    "rls": "enabled",
     "SELECT": [],
     "INSERT": [],
     "UPDATE": [],
@@ -253643,21 +253294,11 @@
    "vault.decrypted_secrets": [],
    "_zapp_fn_before": [],
    "_zapp_mig133_log": [],
-   "contact_purchases": [
-    "created_at",
-    "created_by",
-    "updated_at"
-   ],
    "instance_pauses": [
     "created_at"
    ],
    "outbox_events": [
     "created_at"
-   ],
-   "payment_links": [
-    "created_at",
-    "created_by",
-    "updated_at"
    ],
    "search_events": [
     "created_at"
@@ -253873,16 +253514,6 @@
     "copilot_feedback",
     "feedback_type",
     "TEXT"
-   ],
-   [
-    "contact_purchases",
-    "amount",
-    "number"
-   ],
-   [
-    "payment_links",
-    "amount",
-    "number"
    ],
    [
     "catalog_send_stats",
@@ -255522,8 +255153,6 @@
    "`copilot_insights.state_version` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`copilot_objection_catalog.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`_zapp_mig133_log.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "`contact_purchases.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "`payment_links.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`channel_connections_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`gmail_accounts_safe.sync_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`password_reset_requests_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
@@ -255533,7 +255162,7 @@
    "`whatsapp_connections_public.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`whatsapp_connections_safe.health_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`whatsapp_connections_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "175/235 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …",
+   "173/233 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …",
    "Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel."
   ]
  },
@@ -260780,6 +260409,13 @@
   "scripts/ci/ci-e2e-projects.unit.mjs": {
    "path": "scripts/ci/ci-e2e-projects.unit.mjs",
    "lines": 188
+  },
+  "scripts/ci/ci-gate.unit.mjs": {
+   "path": "scripts/ci/ci-gate.unit.mjs",
+   "lines": 130,
+   "temporal": [
+    "timeout: 3000,"
+   ]
   },
   "scripts/ci/codeql-paths.unit.mjs": {
    "path": "scripts/ci/codeql-paths.unit.mjs",
@@ -338960,7 +338596,7 @@
   },
   "src/integrations/supabase/types.ts": {
    "path": "src/integrations/supabase/types.ts",
-   "lines": 15630,
+   "lines": 15456,
    "exports": [
     "type Json",
     "type Database",
@@ -379487,10 +379123,32 @@
   }
  },
  "git": {
-  "sha": "b46f5d291f4684048f11b8986468e91b333c1029",
+  "sha": "a96bbd4cbaeed5a8bad7c42af347e56960e6cac7",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "a96bbd4",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "fix(ci): bloquear cancelamentos e skips indevidos no gate (#2711)",
+    "files": [
+     ".github/workflows/ci.yml",
+     "scripts/ci/README.md",
+     "scripts/ci/ci-gate.unit.mjs"
+    ]
+   },
+   {
+    "sha": "93965f7",
+    "date": "2026-11-04",
+    "author": "github-actions[bot]",
+    "subject": "chore(db): sincronizar artefatos derivados do banco (#2698)",
+    "files": [
+     "scripts/db-audit/grants-baseline.json",
+     "src/integrations/supabase/types.ts",
+     "supabase/schema-manifest.json"
+    ]
+   },
    {
     "sha": "b46f5d2",
     "date": "2026-11-04",
@@ -379895,32 +379553,6 @@
      "scripts/supabase_snapshot/requirements.txt",
      "scripts/supabase_snapshot/snapshot.py"
     ]
-   },
-   {
-    "sha": "818f76b",
-    "date": "2026-11-02",
-    "author": "adm01-debug",
-    "subject": "ci: lint dos workflows no CI (actionlint + shellcheck + zizmor) e correções apontadas (#2656)",
-    "files": [
-     ".github/workflows/auto-update-pr-branch.yml",
-     ".github/workflows/ci.yml",
-     ".github/workflows/db-migrate.yml",
-     ".github/workflows/e2e-logado.yml",
-     ".github/workflows/notifica-falha-main.yml",
-     ".github/workflows/vercel-env-cleanup.yml",
-     "CLAUDE.md",
-     "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
-     "docs/ci/README.md"
-    ]
-   },
-   {
-    "sha": "c081705",
-    "date": "2026-11-02",
-    "author": "adm01-debug",
-    "subject": "chore: baixa o baseline do lint ratchet para a dívida real (819 → 813) (#2657)",
-    "files": [
-     "scripts/ci/eslint-baseline.json"
-    ]
    }
   ],
   "hot_files": [
@@ -379933,8 +379565,12 @@
     5
    ],
    [
-    "docs/ci/README.md",
+    "supabase/schema-manifest.json",
     4
+   ],
+   [
+    "docs/ci/README.md",
+    3
    ],
    [
     "scripts/ai-context/gerar.mjs",
@@ -379957,15 +379593,11 @@
     3
    ],
    [
-    "supabase/schema-manifest.json",
-    3
-   ],
-   [
-    "CLAUDE.md",
-    3
-   ],
-   [
     ".github/workflows/ci.yml",
+    2
+   ],
+   [
+    "scripts/db-audit/grants-baseline.json",
     2
    ],
    [
@@ -379974,10 +379606,6 @@
    ],
    [
     ".github/workflows/db-guard.yml",
-    2
-   ],
-   [
-    ".github/workflows/e2e-logado.yml",
     2
    ],
    [
@@ -380002,6 +379630,10 @@
    ],
    [
     "supabase/deployment-manifest.json",
+    2
+   ],
+   [
+    ".github/workflows/supabase-snapshot.yml",
     2
    ]
   ]

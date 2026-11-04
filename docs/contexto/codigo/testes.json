@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2538,
+ "total": 2539,
  "por_tipo": {
   "contrato": 113,
   "e2e": 72,
   "pytest": 3,
   "qa": 6,
-  "unit": 2254
+  "unit": 2255
  },
  "onde_ficam": [
   {
@@ -19,11 +19,11 @@
    "arquivos": 1945
   },
   {
-   "padrao": "co-localizado (*.test)",
-   "arquivos": 168
+   "padrao": "outro",
+   "arquivos": 169
   },
   {
-   "padrao": "outro",
+   "padrao": "co-localizado (*.test)",
    "arquivos": 168
   },
   {
@@ -800,6 +800,15 @@
    "linhas": 188,
    "testa": [],
    "casos": 9
+  },
+  {
+   "arquivo": "scripts/ci/ci-gate.unit.mjs",
+   "tipo": "unit",
+   "linhas": 130,
+   "testa": [
+    "scripts/ci/workflow-test-support.mjs"
+   ],
+   "casos": 3
   },
   {
    "arquivo": "scripts/ci/codeql-paths.unit.mjs",
@@ -23116,7 +23125,7 @@
   "scripts/ci/sla-code-scanning.mjs": 1,
   "scripts/ci/typecheck-ratchet.mjs": 1,
   "scripts/ci/vercel-env-baseline.mjs": 1,
-  "scripts/ci/workflow-test-support.mjs": 9,
+  "scripts/ci/workflow-test-support.mjs": 10,
   "scripts/db-audit/check-realtime-subscriptions.mjs": 1,
   "scripts/db-audit/check-runtime-config.mjs": 1,
   "scripts/db-audit/confirm-hash.mjs": 1,

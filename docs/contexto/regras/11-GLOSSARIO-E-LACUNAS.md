@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b46f5d291f` · branch `main` · 2026-11-04 09:34 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `a96bbd4cba` · branch `main` · 2026-11-04 10:08 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -58,7 +58,6 @@
 | `contact_identity_map` | Mapa LID -> JID do WhatsApp (identidade anonima vs numero) para reconciliar contatos. | 5 colunas | migration |
 | `contact_notes` | _(sem COMMENT ON TABLE — significado não documentado)_ | 10 colunas | migration |
 | `contact_protection_policy` | CT-091: politica de protecao de contatos. scope_role NULL = padrao global; linha por papel sobrepoe. Só o admin altera. | 9 colunas | migration |
-| `contact_purchases` | _(sem COMMENT ON TABLE — significado não documentado)_ | 15 colunas | types.ts |
 | `contacts` | Contato/cliente por canal (WhatsApp, e-mail, SICOOB): identidade, atribuicao (assigned_to, queue_id), classificacao por IA e conexao de origem. Uma linha = uma conversa/thread ativa com o contato. | 46 colunas | migration |
 | `conversation_analyses` | _(sem COMMENT ON TABLE — significado não documentado)_ | 25 colunas | migration |
 | `conversation_closures` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | migration |
@@ -140,7 +139,6 @@
 | `passkey_credentials` | _(sem COMMENT ON TABLE — significado não documentado)_ | 11 colunas | migration |
 | `password_reset_requests` | _(sem COMMENT ON TABLE — significado não documentado)_ | 13 colunas | migration |
 | `password_reset_requests_safe` | _(sem COMMENT ON TABLE — significado não documentado)_ | 13 colunas | types.ts |
-| `payment_links` | _(sem COMMENT ON TABLE — significado não documentado)_ | 16 colunas | types.ts |
 | `performance_snapshots` | _(sem COMMENT ON TABLE — significado não documentado)_ | 14 colunas | migration |
 | `permissions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 5 colunas | migration |
 | `pinned_conversations` | _(sem COMMENT ON TABLE — significado não documentado)_ | 5 colunas | migration |
@@ -307,7 +305,9 @@
 | `SenderAvatarSize` (TS) | sm \| md |  | `src/components/inbox/tabs/SenderAvatar.tsx` |
 | `DocumentFamily` (TS) | pdf \| sheet \| doc \| ppt \| archive \| generic |  | `src/components/inbox/tabs/fileDisplay.ts` |
 | `GlowToken` (TS) | primary \| success \| warning \| info \| muted |  | `src/components/inbox/tabs/journey/motion/presets.ts` |
-| … +348 linhas — lista completa em `context.json` | | | |
+| `TimePeriod` (TS) | 1h \| 6h \| 12h \| 24h \| 7d |  | `src/components/monitoring/hooks/types.ts` |
+| `AlertSeverity` (TS) | critical \| warning |  | `src/components/monitoring/hooks/useConnectionIncidents.ts` |
+| … +346 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -585,8 +585,6 @@
 - `copilot_insights.state_version` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `copilot_objection_catalog.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `_zapp_mig133_log.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- `contact_purchases.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- `payment_links.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `channel_connections_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `gmail_accounts_safe.sync_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `password_reset_requests_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
@@ -596,7 +594,7 @@
 - `whatsapp_connections_public.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `whatsapp_connections_safe.health_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `whatsapp_connections_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- 175/235 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …
+- 173/233 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …
 - Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel.
 
 ## Regras manuais presentes

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b46f5d291f4684048f11b8986468e91b333c1029` (2026-11-04T06:29:44-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `a96bbd4cbaeed5a8bad7c42af347e56960e6cac7` (2026-11-04T10:07:16Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4174), SQL (1276), Markdown (1031), JSON (592), JavaScript (363), Shell (229), Python (117), YAML (27)
+- linguagens: TypeScript (4174), SQL (1276), Markdown (1031), JSON (592), JavaScript (364), Shell (229), Python (117), YAML (27)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8150 |
-| arquivos_codigo | 4652 |
-| linhas_codigo | 853361 |
+| arquivos_total | 8151 |
+| arquivos_codigo | 4653 |
+| linhas_codigo | 853317 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -45,10 +45,10 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | componentes | 885 |
 | hooks | 490 |
 | edge_functions | 85 |
-| tabelas | 218 |
+| tabelas | 216 |
 | migrations | 1082 |
 | cron_jobs | 25 |
-| testes | 2538 |
+| testes | 2539 |
 | workflows | 19 |
 | scripts | 376 |
 | docs_md | 1031 |
@@ -58,7 +58,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - componentes: src/components (851), src/pages (26), src/features (2)
 - hooks: src/hooks (409), src/components (72), src/contexts (2)
 - servicos_logica: src/lib (143), src/services (17), src/utils (8)
-- testes: co-localizado (__tests__) (1945), co-localizado (*.test) (168), outro (168)
+- testes: co-localizado (__tests__) (1945), outro (169), co-localizado (*.test) (168)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (282), scripts/ci (40), scripts/edge-deploy (16)
@@ -384,22 +384,22 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 54645 nós · 111657 arestas · 4093 comunidades · grafo do commit `b46f5d29`
-- comunidades maiores: lucide-react (799), TalkXSuppression.tsx (782), utils.ts (680), button.tsx (658), cn (484), vitest (449), DashboardView.tsx (437), useAuth (394), errorResponse (354), ExternalProductManagement.tsx (350), ref_node_fs (304), logger.ts (268)
+- 54660 nós · 111687 arestas · 4128 comunidades · grafo do commit `a96bbd4c`
+- comunidades maiores: react (828), cn (767), lucide-react (734), TalkXSuppression.tsx (587), validation.ts (482), button.tsx (430), input.tsx (415), DashboardView.tsx (407), ref_node_fs (360), evolution-webhook-messages.ts (358), schemas.ts (281), framer-motion (266)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - .github/workflows/ci.yml (23)
 - CLAUDE.md (18)
-- src/integrations/supabase/types.ts (17)
+- src/integrations/supabase/types.ts (18)
 - .github/workflows/db-guard.yml (16)
 - .github/workflows/e2e-logado.yml (16)
 - scripts/ci/ci-docs-baseline.unit.mjs (15)
 - ESTADO.md (14)
+- supabase/schema-manifest.json (14)
 - docs/ci/README.md (13)
 - supabase/deployment-manifest.json (13)
-- supabase/schema-manifest.json (13)
 - docs/DB-INVENTORY.md (12)
 - scripts/ci/workflow-contracts.unit.mjs (12)
 - .github/workflows/deploy-functions.yml (11)
@@ -497,6 +497,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-04 `a96bbd4` fix(ci): bloquear cancelamentos e skips indevidos no gate (#2711)
+- 2026-11-04 `93965f7` chore(db): sincronizar artefatos derivados do banco (#2698)
 - 2026-11-04 `b46f5d2` fix(ci): restaurar auditorias e fortalecer automações (#2710)
 - 2026-11-03 `451373f` fix: corrigir geração e saúde dos contextos automáticos (#2708)
 - 2026-11-03 `da9f551` chore(snapshot): footer configurável via SUPABASE_SNAPSHOT_PUBLICACAO (#2704)
@@ -510,8 +512,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-03 `bd4c4bd` chore(crm): remove módulo de pagamentos/compras do front (decisão 2026-11-03) (#2690)
 - 2026-11-03 `7a2e35e` chore(regras): §7 histórico Talk X sem prazo fixo (aplicado); test_sends 90; decisão pendente sobre alerta a atendentes 
 - 2026-11-03 `94d6ca2` chore(db): sincronizar artefatos derivados do banco (#2688)
-- 2026-11-03 `b441a43` chore(db): expurgo Talk X — prazo ≤ 0 vira 1 dia; test_sends volta a 90 (idempotência, não histórico) (#2686)
-- 2026-11-03 `2597588` chore(db): purge_talkx_expired_data — delivery_log segue retention_days_message (sem 30 dias fixos) (#2678)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

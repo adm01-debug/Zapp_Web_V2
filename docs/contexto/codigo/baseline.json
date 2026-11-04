@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b46f5d291f4684048f11b8986468e91b333c1029",
+  "commit": "a96bbd4cbaeed5a8bad7c42af347e56960e6cac7",
   "branch": "main",
-  "data_commit": "2026-11-04T06:29:44-03:00",
+  "data_commit": "2026-11-04T10:07:16Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "a96bbd4",
+    "data": "2026-11-04",
+    "assunto": "fix(ci): bloquear cancelamentos e skips indevidos no gate (#2711)"
+   },
+   {
+    "sha": "93965f7",
+    "data": "2026-11-04",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#2698)"
+   },
    {
     "sha": "b46f5d2",
     "data": "2026-11-04",
@@ -121,19 +131,9 @@
     "sha": "8f2d06a",
     "data": "2026-11-03",
     "assunto": "fix(contexto): regras/ ignora constantes, prazos e erros vindos de arquivos de teste (#2667)"
-   },
-   {
-    "sha": "803055f",
-    "data": "2026-11-03",
-    "assunto": "fix(contexto): índice lê a data do snapshot pelo CHANGELOG/git quando não há manifest datado (#2666)"
-   },
-   {
-    "sha": "1061a91",
-    "data": "2026-11-03",
-    "assunto": "chore(db): sincronizar artefatos derivados do banco (#2669)"
    }
   ],
-  "arquivos_mudados_7d": 1272,
+  "arquivos_mudados_7d": 1273,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -207,7 +207,7 @@
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 17
+    "mudancas": 18
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
@@ -226,15 +226,15 @@
     "mudancas": 14
    },
    {
+    "arquivo": "supabase/schema-manifest.json",
+    "mudancas": 14
+   },
+   {
     "arquivo": "docs/ci/README.md",
     "mudancas": 13
    },
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 13
-   },
-   {
-    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 13
    },
    {
@@ -282,6 +282,10 @@
     "mudancas": 8
    },
    {
+    "arquivo": "scripts/db-audit/grants-baseline.json",
+    "mudancas": 8
+   },
+   {
     "arquivo": "src/hooks/integrations/useTalkXSegments.ts",
     "mudancas": 8
    },
@@ -292,24 +296,20 @@
    {
     "arquivo": "supabase/functions/connection-health-check/index.ts",
     "mudancas": 8
-   },
-   {
-    "arquivo": ".github/workflows/notifica-falha-main.yml",
-    "mudancas": 7
    }
   ],
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 282
+    "commits": 283
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 10
+    "commits": 8
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 7
+    "commits": 8
    },
    {
     "autor": "devin-ai-integration[bot]",
@@ -318,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8150,
-  "arquivos_codigo": 4652,
-  "linhas_codigo": 853361,
+  "arquivos_total": 8151,
+  "arquivos_codigo": 4653,
+  "linhas_codigo": 853317,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -329,10 +329,10 @@
   "componentes": 885,
   "hooks": 490,
   "edge_functions": 85,
-  "tabelas": 218,
+  "tabelas": 216,
   "migrations": 1082,
   "cron_jobs": 25,
-  "testes": 2538,
+  "testes": 2539,
   "workflows": 19,
   "scripts": 376,
   "docs_md": 1031
@@ -607,8 +607,8 @@
    "linhas": 228
   },
   "scripts/ci": {
-   "arquivos": 161,
-   "linhas": 30566
+   "arquivos": 162,
+   "linhas": 30696
   },
   "scripts/db-audit": {
    "arquivos": 79,
@@ -724,7 +724,7 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 15703
+   "linhas": 15529
   },
   "src/lib": {
    "arquivos": 279,
@@ -798,7 +798,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15630
+   "linhas": 15456
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
