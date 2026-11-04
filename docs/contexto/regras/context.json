@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "5f3f7bd28914fd3b4ab1679e4ad4c064abf223f5",
+  "sha": "f00ed02f216c4ff91cee54809f1176c8b311553e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-04 20:31 UTC",
+  "generated_at": "2026-11-04 22:27 UTC",
   "files_total": 8060,
   "code_files": 5963,
-  "code_lines": 1032225
+  "code_lines": 1032285
  },
  "version": "1.3.2",
- "facts_hash": "7e875d4c38939412",
+ "facts_hash": "e6ff078fbc5bd332",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -67586,7 +67586,7 @@
   {
    "module": "e2e",
    "files": 76,
-   "lines": 17336,
+   "lines": 17388,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -68064,7 +68064,7 @@
   {
    "module": "src/components",
    "files": 2155,
-   "lines": 367968,
+   "lines": 367976,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -258643,7 +258643,7 @@
   },
   "e2e/email-navy-visual.spec.ts": {
    "path": "e2e/email-navy-visual.spec.ts",
-   "lines": 712,
+   "lines": 764,
    "is_test": true,
    "params": [
     {
@@ -258656,6 +258656,7 @@
     }
    ],
    "rule_comments": [
+    "Mede novamente somente na falha: a primeira leitura conserva a asserção original,",
     "O resultado atravessa uma fronteira browser → Node: reconstrói apenas o schema"
    ],
    "tests": [
@@ -280496,7 +280497,7 @@
   },
   "src/components/email/EmailThreadList.tsx": {
    "path": "src/components/email/EmailThreadList.tsx",
-   "lines": 295,
+   "lines": 303,
    "exports": [
     "function EmailThreadList"
    ],
@@ -381255,10 +381256,20 @@
   }
  },
  "git": {
-  "sha": "5f3f7bd28914fd3b4ab1679e4ad4c064abf223f5",
+  "sha": "f00ed02f216c4ff91cee54809f1176c8b311553e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f00ed02",
+    "date": "2026-11-04",
+    "author": "adm01-debug",
+    "subject": "fix: preservar contraste das threads de Email durante entrada (#2720)",
+    "files": [
+     "e2e/email-navy-visual.spec.ts",
+     "src/components/email/EmailThreadList.tsx"
+    ]
+   },
    {
     "sha": "5f3f7bd",
     "date": "2026-11-04",
@@ -381778,16 +381789,6 @@
     "files": [
      "scripts/edge-deploy/secrets-scope.unit.mjs"
     ]
-   },
-   {
-    "sha": "c1c25d3",
-    "date": "2026-11-03",
-    "author": "adm01-debug",
-    "subject": "fix: check-workflow-pins.mjs (W88) também valida o pin do shellcheck (#2659)",
-    "files": [
-     "scripts/ci/check-workflow-pins.mjs",
-     "scripts/ci/check-workflow-pins.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -381802,6 +381803,10 @@
    [
     "scripts/e2e-isolated/run.mjs",
     4
+   ],
+   [
+    "e2e/email-navy-visual.spec.ts",
+    3
    ],
    [
     ".github/workflows/e2e-logado-isolado.yml",
@@ -381845,10 +381850,6 @@
    ],
    [
     "e2e/README.md",
-    2
-   ],
-   [
-    "e2e/email-navy-visual.spec.ts",
     2
    ],
    [

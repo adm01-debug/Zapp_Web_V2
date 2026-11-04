@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix: preservar contraste das threads de Email durante entrada (#2720)",
    "fix: validar owners, áudio e coleta do E2E isolado (#2719)",
    "fix: restaurar foco da paleta com regressões de integração (#2718)",
    "fix: validar a suíte logada em ambiente isolado (#2717)",
-   "⬆️ deps: Bump the deps-semanal group with 14 updates (#2621)",
-   "fix(ci): validar HTTPS e completar suíte E2E isolada (#2716)"
+   "⬆️ deps: Bump the deps-semanal group with 14 updates (#2621)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

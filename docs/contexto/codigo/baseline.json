@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "5f3f7bd28914fd3b4ab1679e4ad4c064abf223f5",
+  "commit": "f00ed02f216c4ff91cee54809f1176c8b311553e",
   "branch": "main",
-  "data_commit": "2026-11-04T17:30:48-03:00",
+  "data_commit": "2026-11-04T22:25:59Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f00ed02",
+    "data": "2026-11-04",
+    "assunto": "fix: preservar contraste das threads de Email durante entrada (#2720)"
+   },
    {
     "sha": "5f3f7bd",
     "data": "2026-11-04",
@@ -126,14 +131,9 @@
     "sha": "bd4c4bd",
     "data": "2026-11-03",
     "assunto": "chore(crm): remove módulo de pagamentos/compras do front (decisão 2026-11-03) (#2690)"
-   },
-   {
-    "sha": "7a2e35e",
-    "data": "2026-11-03",
-    "assunto": "chore(regras): §7 histórico Talk X sem prazo fixo (aplicado); test_sends 90; decisão pendente sobre alerta a atendentes "
    }
   ],
-  "arquivos_mudados_7d": 1259,
+  "arquivos_mudados_7d": 1242,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -206,11 +206,11 @@
     "mudancas": 15
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 15
+    "arquivo": "docs/ci/README.md",
+    "mudancas": 14
    },
    {
-    "arquivo": "docs/ci/README.md",
+    "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 14
    },
    {
@@ -286,16 +286,16 @@
     "mudancas": 6
    },
    {
+    "arquivo": "e2e/email-navy-visual.spec.ts",
+    "mudancas": 6
+   },
+   {
     "arquivo": "playwright.config.ts",
     "mudancas": 6
    },
    {
     "arquivo": "supabase/schema-catalog.json",
     "mudancas": 6
-   },
-   {
-    "arquivo": ".github/workflows/codeql.yml",
-    "mudancas": 5
    }
   ],
   "autores_30d": [
@@ -320,7 +320,7 @@
  "contagens": {
   "arquivos_total": 8219,
   "arquivos_codigo": 4707,
-  "linhas_codigo": 866778,
+  "linhas_codigo": 866838,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -460,7 +460,7 @@
   },
   "e2e/email-navy-visual.spec.ts": {
    "arquivos": 1,
-   "linhas": 712
+   "linhas": 764
   },
   "e2e/files-tab.spec.ts": {
    "arquivos": 1,
@@ -700,7 +700,7 @@
   },
   "src/components": {
    "arquivos": 2155,
-   "linhas": 367968
+   "linhas": 367976
   },
   "src/config": {
    "arquivos": 3,

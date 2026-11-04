@@ -232,7 +232,7 @@
   {
    "arquivo": "e2e/email-navy-visual.spec.ts",
    "tipo": "e2e",
-   "linhas": 712,
+   "linhas": 764,
    "testa": [],
    "casos": 22
   },
