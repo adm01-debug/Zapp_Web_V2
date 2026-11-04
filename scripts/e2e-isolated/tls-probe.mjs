@@ -3,7 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { assertLoopbackOnly, assertNoProxy, assertRunId, assertSourceSha, browserEnvironment } from './runtime-contract.mjs';
 import { TLS_ORIGIN, TLS_PUBLIC, TLS_CONTROLS, TLS_PNG } from './tls.mjs';
 
-const fail = code => { throw new Error('[e2e-isolated/tls-' + code + ']'); };
+const fail = (code, cause) => { throw new Error('[e2e-isolated/tls-' + code + ']', { cause }); };
 const hash = value => createHash('sha256').update(value).digest('hex');
 const controlUrl = name => 'https://127.0.0.1:' + TLS_CONTROLS[name] + '/__e2e/tls-control';
 
@@ -78,7 +78,7 @@ export async function probeBrowsers({ runId, sourceSha, env, engines, environmen
           catch (error) { rejection = error; }
           finally { await negative.close(); }
           if (!rejection) fail('browser-' + name + '-' + kind + '-accepted');
-          if (!certificateFailure(rejection, kind, name)) fail('browser-' + name + '-' + kind + '-not-certificate-error');
+          if (!certificateFailure(rejection, kind, name)) fail('browser-' + name + '-' + kind + '-not-certificate-error', rejection);
         }
         results[name] = { identity: true, image: true, untrusted_rejected: true, wrong_san_rejected: true };
       } finally { await context.close(); }

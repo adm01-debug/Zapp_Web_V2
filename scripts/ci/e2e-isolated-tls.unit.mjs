@@ -210,7 +210,7 @@ for (const [name, patch] of [
   await assert.rejects(probeClient({ runId, sourceSha, fetcher: clientFetch(patch) }));
 });
 
-function browserFixture(fault, affected = 'chromium') {
+function browserFixture(fault, affected = 'chromium', negativeOverride) {
   const closed = [], launched = [];
   const engines = Object.fromEntries(['chromium', 'firefox', 'webkit'].map(engine => [engine, { launch: async options => {
     assert.deepEqual(Object.keys(options).sort(), ['env', 'headless']);
@@ -225,6 +225,7 @@ function browserFixture(fault, affected = 'chromium') {
           image: !(fault === 'image' && engine === affected) }),
         goto: async url => {
           if (url.startsWith(TLS_ORIGIN)) return { status: () => fault === 'positive-status' && engine === affected ? 503 : 200 };
+          if (engine === affected && negativeOverride) { const failure = negativeOverride(url); if (failure) throw failure; }
           if (engine === affected && fault === 'accepted') return { status: () => 200 };
           if (engine === affected && fault === 'timeout') throw new Error('Timeout 15000ms exceeded');
           if (engine === 'webkit') throw new Error('Unacceptable TLS certificate');
@@ -324,3 +325,20 @@ test('rota de probe serve mídia local real e não captura rotas de aplicação'
   assert.deepEqual(calls[1], TLS_PNG);
   assert.equal(serveTlsProbe({ url: '/storage/v1/object', method: 'GET' }, res, identity), false);
 });
+
+// Preserve an unclassified negative navigation error as the cause; do not
+// accept unknown errors or turn transport failures into certificate proof.
+for (const engine of ['chromium', 'firefox', 'webkit']) for (const kind of ['untrusted', 'wrong_san']) {
+  for (const message of ['ECONNREFUSED', 'ETIMEDOUT', 'NS_BINDING_ABORTED',
+    'MOZILLA_PKIX_ERROR_SELF_SIGNED_CERT', 'SEC_ERROR_UNTRUSTED_ISSUER', 'unrecognized synthetic navigation failure']) {
+    test('TLS negative diagnostic: ' + engine + '/' + kind + '/' + message, async () => {
+      const original = new Error(message);
+      const fixture = browserFixture(undefined, engine, url => url.includes(kind === 'untrusted' ? ':5175/' : ':5176/') ? original : null);
+      let failure;
+      try { await probeBrowsers({ runId, sourceSha, env, ...fixture }); } catch (error) { failure = error; }
+      assert.match(failure?.message ?? '', new RegExp('tls-browser-' + engine + '-' + kind + '-not-certificate-error'));
+      assert.equal(failure.cause, original, 'retain exact native cause without approving it');
+      assert.ok(fixture.closed.includes(engine));
+    });
+  }
+}
