@@ -12,13 +12,11 @@ import { installFakeSession } from './fixtures/talkx-demo';
  * vite) com a rede dublada na fronteira. Mesmo desenho de
  * `e2e/onboarding-dispensar.spec.ts` e `e2e/talkx-visual.spec.ts`.
  *
- * MEDIDO no código ATUAL (07/10/2026), e é isso que os testes abaixo fixam:
- *   - Ctrl+K abre UMA superfície: o diálogo "Paleta de comandos" (cmdk,
- *     `src/components/CommandPalette.tsx`), aberto pelo evento `open-global-search`
- *     despachado pela ação `global-search` de
- *     `src/hooks/ui/useGlobalKeyboardShortcuts.ts` (`Ctrl+K` em `defaultShortcuts`);
- *   - a paleta lista TELAS (módulos de `sidebarNavGroups`), filtra por termo, anda com
- *     as setas e navega no Enter;
+ * Contrato do caminho atual exercitado abaixo:
+ *   - Ctrl+K alterna o estado no `GlobalKeyboardProvider`, antes de carregar o
+ *     `CommandPaletteHost` e `src/components/ui/command-palette.tsx`;
+ *   - o diálogo "Paleta de comandos" mostra cinco acessos rápidos sem consulta,
+ *     pesquisa os módulos permitidos, anda com as setas e navega no Enter;
  *   - a busca que consulta CONTATOS/mensagens (`src/components/inbox/GlobalSearch.tsx`,
  *     ligada a `Ctrl+K` por `useGlobalSearchShortcut`) NÃO abre por nenhum caminho —
  *     ver o primeiro `test.fixme` no fim do arquivo, com a causa raiz.
@@ -35,26 +33,24 @@ test.use({ storageState: { cookies: [], origins: [] } });
 test.setTimeout(120_000);
 
 const PALETA = 'Paleta de comandos';
-const CAMPO_PALETA = 'Buscar módulo… (ex: tarefas, chatbot)';
+const CAMPO_PALETA = 'Buscar comandos';
 
 /**
  * Abre a paleta pelo CAMINHO PEDIDO (atalho ou clique) e devolve o diálogo.
  *
- * A repetição é necessária e está medida: o listener de `open-global-search` mora no
- * chunk LAZY do `CommandPalette` (`src/pages/Index.tsx` → `React.lazy`), enquanto o
- * evento é despachado pelo registry eager. Enquanto o chunk não chega, a tecla é
- * engolida e o evento NÃO é reenvido (ver o `test.fixme` "primeiro Ctrl+K corre
- * solto"). A condição de parada é o diálogo visível — nunca uma espera fixa.
+ * O provider eager guarda a intenção enquanto o host lazy carrega. Repetir Ctrl+K
+ * alternaria esse estado e poderia fechar a paleta antes de ela aparecer. Só a
+ * espera se repete, preservando os prazos existentes e a condição de visibilidade.
  */
 async function abrirPaleta(page: Page, abrir: () => Promise<void>): Promise<Locator> {
   const paleta = page.getByRole('dialog', { name: PALETA });
+  await abrir();
   for (let tentativa = 0; tentativa < 12; tentativa++) {
-    await abrir();
     try {
       await expect(paleta).toBeVisible({ timeout: 1_000 });
       return paleta;
     } catch {
-      // O chunk do palette ainda não estava montado: repete o mesmo comando.
+      // Aguarda a mesma intenção de abertura, sem outro atalho ou clique.
     }
   }
   await expect(paleta).toBeVisible();
@@ -99,7 +95,7 @@ test.describe('Busca global (Ctrl+K) — paleta de comandos e atalhos', () => {
     expect(registro.redeBarrada).toEqual([]);
   });
 
-  test('Ctrl+K abre a paleta, foca o campo e lista as telas do sistema', async ({ page }) => {
+  test('Ctrl+K abre a paleta, foca o campo e pesquisa as telas do sistema', async ({ page }) => {
     await abrirInbox(page);
 
     // Pré-condição: fechada antes do atalho (senão "abriu" não significa nada).
@@ -108,9 +104,16 @@ test.describe('Busca global (Ctrl+K) — paleta de comandos e atalhos', () => {
     const paleta = await porAtalho(page);
 
     // O foco vai para o campo de busca: é o que permite digitar direto.
-    await expect(paleta.getByPlaceholder(CAMPO_PALETA)).toBeFocused();
-    // Telas (módulos) do sistema na lista — não é uma lista de contatos.
+    const campo = paleta.getByRole('combobox', { name: CAMPO_PALETA, exact: true });
+    await expect(campo).toBeFocused();
+    // Sem consulta, o host atual exibe os cinco primeiros módulos permitidos.
+    await expect(paleta.getByRole('option')).toHaveCount(5);
+    for (const tela of ['Chat', 'Teams', 'Email', 'Contatos', 'Multiplix']) {
+      await expect(paleta.getByRole('option', { name: new RegExp(`^${tela}\\b`) })).toBeVisible();
+    }
+    // As quatro telas continuam exigidas; cada busca pode alcançar todo o registry.
     for (const tela of ['Chat', 'Contatos', 'Dashboard', 'Configurações']) {
+      await campo.fill(tela);
       await expect(paleta.getByRole('option', { name: new RegExp(`^${tela}\\b`) })).toBeVisible();
     }
   });
@@ -118,12 +121,12 @@ test.describe('Busca global (Ctrl+K) — paleta de comandos e atalhos', () => {
   test('a busca filtra as telas e o Enter navega para a tela escolhida', async ({ page }) => {
     await abrirInbox(page);
     const paleta = await porAtalho(page);
-    const campo = paleta.getByPlaceholder(CAMPO_PALETA);
+    const campo = paleta.getByRole('combobox', { name: CAMPO_PALETA, exact: true });
     await expect(campo).toBeFocused();
 
     await campo.fill('dashboard');
 
-    // A lista inteira (mais de 30 telas) some; sobra a tela que casa com o termo.
+    // A busca encontra a tela escolhida e retira o acesso rápido que não casa.
     await expect(paleta.getByRole('option', { name: /Dashboard/ })).toBeVisible();
     await expect(paleta.getByRole('option', { name: /^Chat\b/ })).toHaveCount(0);
 
@@ -137,18 +140,18 @@ test.describe('Busca global (Ctrl+K) — paleta de comandos e atalhos', () => {
   test('as setas movem a seleção e o Enter dispara o item destacado', async ({ page }) => {
     await abrirInbox(page);
     const paleta = await porAtalho(page);
-    await expect(paleta.getByPlaceholder(CAMPO_PALETA)).toBeFocused();
+    await expect(paleta.getByRole('combobox', { name: CAMPO_PALETA, exact: true })).toBeFocused();
 
     // Sem consulta, a lista é a de telas na ordem do registry: o 1º é "Chat".
-    const selecionado = paleta.locator('[cmdk-item][aria-selected="true"]');
-    await expect(selecionado).toHaveText(/^Chat\b/);
+    const selecionado = paleta.getByRole('option', { selected: true });
+    await expect(selecionado).toHaveAccessibleName(/^Chat\b/);
 
     await page.keyboard.press('ArrowDown');
-    await expect(selecionado).toHaveText(/^Teams\b/);
+    await expect(selecionado).toHaveAccessibleName(/^Teams\b/);
     await page.keyboard.press('ArrowDown');
-    await expect(selecionado).toHaveText(/^Email\b/);
+    await expect(selecionado).toHaveAccessibleName(/^Email\b/);
     await page.keyboard.press('ArrowUp');
-    await expect(selecionado).toHaveText(/^Teams\b/);
+    await expect(selecionado).toHaveAccessibleName(/^Teams\b/);
 
     await page.keyboard.press('Enter');
     await expect(paleta).toHaveCount(0);
@@ -159,16 +162,16 @@ test.describe('Busca global (Ctrl+K) — paleta de comandos e atalhos', () => {
     await abrirInbox(page);
     const paleta = await porAtalho(page);
 
-    await paleta.getByPlaceholder(CAMPO_PALETA).fill('zzzznadaaqui');
+    await paleta.getByRole('combobox', { name: CAMPO_PALETA, exact: true }).fill('zzzznadaaqui');
 
-    await expect(paleta.getByText('Nenhum módulo encontrado.')).toBeVisible();
+    await expect(paleta.getByText('Nenhum resultado para "zzzznadaaqui"', { exact: true })).toBeVisible();
     await expect(paleta.getByRole('option')).toHaveCount(0);
   });
 
   test('Esc fecha a paleta', async ({ page }) => {
     await abrirInbox(page);
     const paleta = await porAtalho(page);
-    await expect(paleta.getByPlaceholder(CAMPO_PALETA)).toBeFocused();
+    await expect(paleta.getByRole('combobox', { name: CAMPO_PALETA, exact: true })).toBeFocused();
 
     await page.keyboard.press('Escape');
 
@@ -212,7 +215,7 @@ test.describe('Busca global (Ctrl+K) — paleta de comandos e atalhos', () => {
       const buscar = page.getByRole('button', { name: 'Buscar' });
       const paleta = await abrirPaleta(page, () => buscar.click());
 
-      const campo = paleta.getByPlaceholder(CAMPO_PALETA);
+      const campo = paleta.getByRole('combobox', { name: CAMPO_PALETA, exact: true });
       await expect(campo).toBeFocused();
 
       // A paleta não pode estourar a largura da viewport de 390px.
@@ -250,27 +253,17 @@ test.describe('Busca global (Ctrl+K) — paleta de comandos e atalhos', () => {
     await abrirInbox(page);
     const paleta = await porAtalho(page);
 
-    await paleta.getByPlaceholder(CAMPO_PALETA).fill('[E2E]');
+    await paleta.getByRole('combobox', { name: CAMPO_PALETA, exact: true }).fill('[E2E]');
 
     await expect(paleta.getByRole('option', { name: /Contato de teste/ })).toBeVisible();
   });
 
   /**
-   * BUG (não corrigido neste cartão — só documentado): o PRIMEIRO Ctrl+K depois de a
-   * tela carregar é engolido. MEDIDO (`zapp-e2e-local`, banco local, sessão falsa):
-   * com a inbox já visível, o 1º `Ctrl+K` não abre nada e continua sem abrir 5s
-   * depois; o 2º abre normalmente.
-   *
-   * Causa: o evento `open-global-search` é despachado pelo registry EAGER
-   * (`src/hooks/ui/useGlobalKeyboardShortcuts.ts:30`), mas o listener mora no chunk
-   * LAZY do palette (`src/pages/Index.tsx:22` → `React.lazy` →
-   * `src/components/CommandPalette.tsx:77`). Enquanto o chunk não resolve, o
-   * `CustomEvent` não tem quem o escute e é descartado — não há reenvio.
-   *
-   * Vira `test(...)` quando o atalho não puder mais ser perdido (ex.: o listener subir
-   * junto do registry, ou o estado do palette viver no provider).
+   * Regressão do primeiro atalho: o provider eager mantém a intenção de abertura
+   * enquanto CommandPaletteHost carrega. Um único Ctrl+K deve tornar o diálogo
+   * visível, sem repetir o atalho.
    */
-  test.fixme('o primeiro Ctrl+K logo após carregar a tela já abre a paleta', async ({ page }) => {
+  test('o primeiro Ctrl+K logo após carregar a tela já abre a paleta', async ({ page }) => {
     await abrirInbox(page);
     await page.keyboard.press('Control+k');
 
@@ -278,21 +271,11 @@ test.describe('Busca global (Ctrl+K) — paleta de comandos e atalhos', () => {
   });
 
   /**
-   * BUG (não corrigido neste cartão — só documentado): o Ctrl+K SEGUINTE, com a paleta
-   * já aberta, não a fecha. MEDIDO (`zapp-e2e-local`, banco local, sessão falsa): a
-   * paleta continua visível depois do segundo `Ctrl+K`; o atalho só ABRE.
-   *
-   * Causa: a ação `global-search` do registry SEMPRE despacha `open-global-search`
-   * (`src/hooks/ui/useGlobalKeyboardShortcuts.ts:29-31`), e o handler de CAPTURA em
-   * `window` (`:140-143`, com `event.stopPropagation()` em `:132`) impede que a tecla
-   * chegue ao listener de alternância do próprio palette
-   * (`src/components/CommandPalette.tsx:66-76`, `setOpen(o => !o)`). Na fase de captura
-   * o evento não chega nem ao `document` nem ao `window` no bubble, e o
-   * `open-global-search` do registry abre de novo.
-   *
-   * Vira `test(...)` quando o segundo Ctrl+K alternar (fechar a paleta aberta).
+   * Regressão da alternância: o provider sobrescreve global-search e alterna o
+   * estado com atualização funcional. A captura consome a tecla; o Ctrl+K
+   * seguinte deve fechar a paleta sem outra alternância no bubble.
    */
-  test.fixme('o Ctrl+K seguinte fecha a paleta aberta (alterna)', async ({ page }) => {
+  test('o Ctrl+K seguinte fecha a paleta aberta (alterna)', async ({ page }) => {
     await abrirInbox(page);
     const paleta = await porAtalho(page);
     await expect(paleta).toBeVisible();
@@ -324,7 +307,7 @@ test.describe('Busca global (Ctrl+K) — paleta de comandos e atalhos', () => {
     await expect(origem).toBeFocused();
 
     const paleta = await porAtalho(page);
-    await expect(paleta.getByPlaceholder(CAMPO_PALETA)).toBeFocused();
+    await expect(paleta.getByRole('combobox', { name: CAMPO_PALETA, exact: true })).toBeFocused();
 
     await page.keyboard.press('Escape');
 

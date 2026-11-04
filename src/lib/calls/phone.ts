@@ -16,6 +16,12 @@ export { cleanPhone, formatBrazilianPhone };
 /** Rótulo usado quando não há telefone exibível. */
 export const NO_PHONE_LABEL = '—';
 
+/** O `+` declara o país; outro DDI não pode virar uma identidade brasileira. */
+function hasExplicitForeignCountryCode(raw: string): boolean {
+  const digits = cleanPhone(raw);
+  return raw.trimStart().startsWith('+') && digits.length > 0 && !digits.startsWith('55');
+}
+
 /**
  * Normaliza um telefone brasileiro para E.164 (`+55` + DDD + assinante).
  *
@@ -24,7 +30,7 @@ export const NO_PHONE_LABEL = '—';
  * Devolve `null` quando não dá para normalizar com segurança.
  */
 export function normalizeE164BR(raw: string | null | undefined): string | null {
-  if (typeof raw !== 'string') return null;
+  if (typeof raw !== 'string' || hasExplicitForeignCountryCode(raw)) return null;
 
   let digits = cleanPhone(raw);
   if (digits.length === 0) return null;
@@ -60,10 +66,11 @@ export function normalizeE164BR(raw: string | null | undefined): string | null {
 
 /**
  * Telefone formatado para exibição: '+55 (11) 99999-2048'.
- * Sem número exibível → '—'. Entrada não normalizável cai no formatador
- * legado (devolve o original) para não perder informação na tela.
+ * Sem número exibível → '—'. País estrangeiro explícito preserva a grafia.
+ * Outras entradas não normalizáveis mantêm o formatador legado.
  */
 export function formatPhoneBR(raw: string | null | undefined): string {
+  if (typeof raw === 'string' && hasExplicitForeignCountryCode(raw)) return raw.trim();
   const e164 = normalizeE164BR(raw);
   if (e164 === null) {
     const original = typeof raw === 'string' ? raw.trim() : '';

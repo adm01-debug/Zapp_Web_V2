@@ -1,14 +1,23 @@
 # docs:
-#   gatilho: pull_request nos arquivos do ambiente isolado e dispatch
-#   prova: valida digests e executa bootstrap Supabase e login real em namespace sem rede externa
-#   falha: lock, isolamento, plataforma, migrations, seed, login ou limpeza inválidos bloqueiam
+#   gatilho: pull_request valida login; dispatch escolhe login ou full-suite em três grupos fixos
+#   prova: executa login ou os 15 projetos em backend descartável, com TLS local e namespace sem saída
+#   falha: lock, isolamento, TLS, plataforma, migrations, seed, testes ou limpeza inválidos bloqueiam
 #   avisa: autor e revisor via check; publica somente metadados e logs redigidos
-# Primeiro corte nativo: bootstrap e um teste setup. A suíte de 15 projetos
-# continua pendente até seu inventário/seed serem executados no mesmo isolamento.
-name: E2E isolado - bootstrap e login
+# PR continua com um teste setup. A suíte completa exige dispatch explícito;
+# o workflow legado permanece desativado até a prova nativa dos três grupos.
+name: E2E isolado - login e suíte completa
 
 on:
   workflow_dispatch:
+    inputs:
+      scope:
+        description: Escopo da prova no backend descartável
+        type: choice
+        required: false
+        default: login
+        options:
+          - login
+          - full-suite
   pull_request:
     paths:
       - '.github/workflows/e2e-logado-isolado.yml'
@@ -16,6 +25,7 @@ on:
       - 'scripts/ci/e2e-isolated*.unit.mjs'
       - 'e2e/auth.setup.ts'
       - 'e2e/auth-diagnostics.ts'
+      - 'src/config/supabase.ts'
       - 'playwright.config.ts'
 
 permissions:
@@ -30,11 +40,38 @@ jobs:
     name: Resolver imagens sem banco ou credenciais
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    outputs:
+      scope: ${{ steps.request.outputs.scope }}
+      sha: ${{ steps.request.outputs.sha }}
     steps:
+      - name: Validar evento, escopo e SHA antes do checkout
+        id: request
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REQUEST_SCOPE: ${{ inputs.scope }}
+          CHECKOUT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          case "$EVENT_NAME" in
+            pull_request) scope=login ;;
+            workflow_dispatch)
+              scope="${REQUEST_SCOPE:-login}"
+              case "$scope" in login|full-suite) ;; *) echo '::error::Escopo de execução inválido.'; exit 1 ;; esac
+              ;;
+            *) echo '::error::Evento não permitido neste workflow.'; exit 1 ;;
+          esac
+          if [[ ! "$CHECKOUT_SHA" =~ ^[0-9a-f]{40}$ || "$CHECKOUT_SHA" == 0000000000000000000000000000000000000000 ]]; then
+            echo '::error::SHA de checkout inválido.'
+            exit 1
+          fi
+          printf 'scope=%s\nsha=%s\n' "$scope" "$CHECKOUT_SHA" >> "$GITHUB_OUTPUT"
       - name: Checkout do código da revisão
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: ${{ steps.request.outputs.sha }}
       - name: Resolver digests e bloquear lock pendente
         id: resolve
         shell: bash
@@ -45,7 +82,7 @@ jobs:
         if: always() && steps.resolve.outputs.report_ready == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: e2e-isolated-images-${{ github.run_id }}
+          name: e2e-isolated-images-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/e2e-isolated-images/report.json
           retention-days: 3
           if-no-files-found: error
@@ -53,6 +90,7 @@ jobs:
   bootstrap-login:
     name: Bootstrap e login real no ambiente descartável
     needs: image-metadata
+    if: needs.image-metadata.result == 'success' && needs.image-metadata.outputs.scope == 'login'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -60,6 +98,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: ${{ needs.image-metadata.outputs.sha }}
       - name: Preparar Bun da versão do repositório
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
@@ -91,7 +130,82 @@ jobs:
         if: always() && steps.bootstrap.outputs.report_ready == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: e2e-isolated-login-${{ github.run_id }}
+          name: e2e-isolated-login-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/e2e-isolated-login/public
+          retention-days: 3
+          if-no-files-found: error
+
+  full-suite:
+    name: Suíte isolada (${{ matrix.name }})
+    needs: image-metadata
+    if: github.event_name == 'workflow_dispatch' && needs.image-metadata.result == 'success' && needs.image-metadata.outputs.scope == 'full-suite'
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ matrix.timeout-minutes }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # O controller executa workers1: as fixtures compartilham estado.
+          # O orçamento inclui preparo/limpeza além do browser (45/15/15 min).
+          - name: authenticated
+            projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=firefox-conversation --project=webkit-conversation --project=firefox-catalog --project=webkit-catalog
+            timeout-minutes: 75
+          - name: deslogado-principal
+            projects: --project=chromium-mapa --project=firefox-auth --project=webkit-auth
+            timeout-minutes: 45
+          - name: deslogado-secundario
+            projects: --project=chromium-telefonia --project=firefox-telefonia --project=webkit-telefonia
+            timeout-minutes: 45
+    steps:
+      - name: Checkout do SHA validado da revisão
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ needs.image-metadata.outputs.sha }}
+      - name: Preparar Bun da versão do repositório
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+      - name: Restaurar cache de pacotes do Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+      - name: Instalar dependências antes do ambiente sem saída de rede
+        shell: bash
+        run: |
+          set -euo pipefail
+          bun install --frozen-lockfile --ignore-scripts
+      - name: Preparar ferramentas TLS antes de gerar certificados ou credenciais
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y openssl libnss3-tools
+      - name: Validar grupo e executar a suíte no backend descartável
+        id: suite
+        shell: bash
+        env:
+          E2E_GROUP: ${{ matrix.name }}
+          E2E_PROJECTS: ${{ matrix.projects }}
+          E2E_OUTPUT: ${{ runner.temp }}/e2e-isolated-suite-${{ matrix.name }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { GROUPS } from './scripts/e2e-isolated/runtime-contract.mjs';
+          const group = process.env.E2E_GROUP;
+          const expected = process.env.E2E_PROJECTS?.split(' ');
+          if (!Object.hasOwn(GROUPS, group) || JSON.stringify(expected) !== JSON.stringify(GROUPS[group].map(name => '--project=' + name))) {
+            throw new Error('Grupo e inventário de projetos divergentes.');
+          }
+          NODE
+          bash scripts/e2e-isolated/run.sh suite "$E2E_GROUP" "$E2E_OUTPUT"
+      - name: Publicar somente o diagnóstico redigido do grupo
+        if: always() && steps.suite.outputs.report_ready == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-isolated-suite-${{ matrix.name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/e2e-isolated-suite-${{ matrix.name }}/public
           retention-days: 3
           if-no-files-found: error

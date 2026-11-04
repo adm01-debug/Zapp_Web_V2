@@ -102,6 +102,35 @@ describe('NewCallPanel (T56/T59/T60)', () => {
     expect(screen.getByTestId('tel-number-display').textContent).toContain('(11) 91111-2222');
   });
 
+  it.each(['VoIP', 'WhatsApp'] as const)('preserva o país estrangeiro e não disca com %s disponível', (canal) => {
+    pendente = '+14155552671';
+    renderPainel();
+    const opcao = screen.getByRole('radio', { name: canal });
+    expect((opcao as HTMLButtonElement).disabled).toBe(false);
+    if (canal === 'WhatsApp') fireEvent.click(opcao);
+
+    const visor = screen.getByTestId('tel-number-display').querySelector('[aria-live="polite"]');
+    expect(visor?.textContent).toBe('+14155552671');
+    expect(screen.getByTestId('tel-number-incomplete').textContent).toBe('Número incompleto');
+    const cta = screen.getByTestId('tel-dial-button');
+    expect((cta as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(cta);
+    expect(dispatchStartCall).not.toHaveBeenCalled();
+    expect(hangup).not.toHaveBeenCalled();
+  });
+
+  it('mantém Cancelar em uma sessão ativa com número estrangeiro pendente', () => {
+    sessao = { status: 'active' };
+    pendente = '+14155552671';
+    renderPainel();
+    const cta = screen.getByTestId('tel-dial-button');
+    expect(cta.textContent).toContain('Cancelar');
+    expect((cta as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(cta);
+    expect(hangup).toHaveBeenCalledTimes(1);
+    expect(dispatchStartCall).not.toHaveBeenCalled();
+  });
+
   it('com a linha reconectando o CTA avisa em vez de discar', () => {
     sipStatus = 'reconnecting';
     renderPainel();

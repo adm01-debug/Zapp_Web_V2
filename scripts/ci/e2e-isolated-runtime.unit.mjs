@@ -1,15 +1,16 @@
 import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
 import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { assertPinnedImages, functionPolicy, prepareMountTargets } from '../e2e-isolated/run.mjs';
 import { gitBlob } from '../e2e-isolated/migrations.mjs';
-import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST } from '../e2e-isolated/runtime-contract.mjs';
+import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST, GROUPS } from '../e2e-isolated/runtime-contract.mjs';
 import { containerArguments, serviceConfiguration } from '../e2e-isolated/stack.mjs';
 import { createTlsMaterial } from '../e2e-isolated/tls.mjs';
+import { SIGNATURES, PROVIDER_CATALOG_SQL, CATALOG_EXECUTOR_OPTIONS } from '../e2e-isolated/provider-diagnostics.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const MODULES = path.join(ROOT, 'scripts/e2e-isolated');
@@ -19,6 +20,11 @@ const SQL = 'select 1;\n';
 const lock = () => JSON.parse(readFileSync(path.join(MODULES, 'images.lock.json'), 'utf8'));
 const ok = stdout => ({ status: 0, stdout: stdout ?? '', stderr: '' });
 const error = stderr => ({ status: 1, stdout: '', stderr: stderr ?? 'simulated command failure' });
+const FUNCTIONS = ['auth-login', 'message-delivery', 'promogifts-catalog'];
+const FUNCTION_SOURCE = '// graph fixture, never executed\n';
+const SEED_FLAGS = ['main_contact_rls', 'files_owner_preserved', 'pagination_rls', 'talkx_connection_rls', 'talkx_segment_rls', 'instance_tokens_stored', 'inbox_fixture_rls', 'onboarding_persisted'];
+const PROVIDER_FLAGS = ['delivery_real', 'provider_observed', 'delivery_user_rls', 'catalog_real',
+  'catalog_media_https', 'storage_upload_real', 'storage_media_https', 'http_media_rejected'];
 const TLS_CHECKS = { identity: true, image: true, untrusted_rejected: true, wrong_san_rejected: true };
 let certificateFixture;
 let certificateRoot;
@@ -60,11 +66,52 @@ function playwrightJson({ listed = false, failed = false } = {}) {
       tests: [{
         projectName: 'setup', projectId: 'setup', expectedStatus: 'passed',
         status: listed ? 'skipped' : failed ? 'unexpected' : 'expected', annotations: [],
-        results: listed ? [] : [{ status: failed ? 'failed' : 'passed', workerIndex: 0, retry: 0, errors: failed ? [{}] : [] }],
+        results: listed ? [] : [{ status: failed ? 'failed' : 'passed', workerIndex: 0, retry: 0, errors: failed ? [{}] : [], annotations: [] }],
       }],
     }] }],
     errors: [], stats: { expected: listed || failed ? 0 : 1, unexpected: failed ? 1 : 0, flaky: 0, skipped: listed ? 1 : 0 },
   };
+}
+
+function suiteJson({ listed = false, fault, group = 'authenticated' } = {}) {
+  const projects = GROUPS[group].filter(name => fault !== 'missing-project-' + name);
+  const report = playwrightJson({ listed });
+  report.config.projects = projects.map(name => ({ name, repeatEach: 1 }));
+  report.suites = projects.map(name => {
+    const suite = structuredClone(report.suites[0]);
+    suite.title = name + '.spec.ts';
+    suite.file = suite.title;
+    const spec = suite.specs[0];
+    spec.file = suite.file;
+    spec.tests[0].projectName = spec.tests[0].projectId = name;
+    const item = spec.tests[0];
+    if (name === 'chromium-authenticated' && fault === 'explicit-skip') {
+      item.expectedStatus = 'skipped'; item.status = 'skipped'; item.annotations = [{ type: 'fixme', description: 'historical explicit contract' }];
+      if (!listed) item.results = [{ status: 'skipped', workerIndex: -1, retry: 0, errors: [] }];
+    }
+    if (!listed && name === 'chromium-authenticated' && ['runtime-skip', 'suite-browser-failure'].includes(fault)) {
+      item.status = fault === 'runtime-skip' ? 'skipped' : 'unexpected';
+      item.expectedStatus = fault === 'runtime-skip' ? 'skipped' : 'passed';
+      item.results = [{ status: fault === 'runtime-skip' ? 'skipped' : 'failed', workerIndex: 0, retry: 0, errors: [] }];
+    }
+    if (['chromium-e2e-core', 'firefox-conversation', 'webkit-conversation'].includes(name)) {
+      suite.title = suite.file = spec.file = 'conversation.spec.ts';
+      spec.title = 'resolving conversation via CloseConversationDialog succeeds';
+      spec.line = 59; spec.column = 3;
+      suite.specs = [];
+      suite.suites = [{ title: 'Conversation state transitions', specs: [spec] }];
+      if (!listed && name !== 'chromium-e2e-core' && fault === 'known-platform-skips') {
+        item.expectedStatus = 'skipped'; item.status = 'skipped';
+        item.annotations = [{ type: 'skip', description: "CloseConversationDialog coberto em Chromium; Radix Select portal nao responde a getByRole('option') de forma confiavel em Firefox/WebKit no CI" }];
+        item.results = [{ status: 'skipped', workerIndex: 0, retry: 0, errors: [], annotations: structuredClone(item.annotations) }];
+      }
+    }
+    return suite;
+  });
+  report.stats = { expected: 0, unexpected: 0, flaky: 0, skipped: 0 };
+  for (const suite of report.suites) report.stats[(suite.specs[0] ?? suite.suites[0].specs[0]).tests[0].status]++;
+  if (!listed && fault === 'suite-stats-mismatch') report.stats.expected--;
+  return report;
 }
 
 for (const name of ['postgres', 'auth', 'rest', 'storage', 'realtime', 'edge', 'driver']) {
@@ -156,17 +203,29 @@ for (const name of [...checkoutServices, ...officialServices]) for (const varian
   });
 }
 
-async function controllerFixture(t, fault, manifest = value => value, tlsDiagnostic) {
+async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
+  const { scope = 'login', group = 'authenticated', manifest = value => value, pullDiagnostic, seedDiagnostic,
+    catalogResult, providerObservation } = typeof options === 'function' ? { manifest: options } : options;
+  const fullSeed = scope === 'suite' && group === 'authenticated';
   const temporary = mkdtempSync(path.join(tmpdir(), 'isolated-controller-test-'));
   t.after(() => rmSync(temporary, { recursive: true, force: true }));
   const root = path.join(temporary, 'repo');
   const output = path.join(temporary, 'output');
   for (const folder of ['scripts/e2e-isolated', 'scripts/ci', 'scripts/db-audit', 'supabase/migrations', 'node_modules/@playwright/test']) mkdirSync(path.join(root, folder), { recursive: true });
-  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
+  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts', 'provider-diagnostics.mjs']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
   cpSync(path.join(ROOT, 'scripts/ci/redigir-relatorio.mjs'), path.join(root, 'scripts/ci/redigir-relatorio.mjs'));
   writeFileSync(path.join(root, 'node_modules/@playwright/test/package.json'), JSON.stringify({ version: fault === 'wrong-playwright' ? '1.0.0' : '1.64.1' }));
   writeFileSync(path.join(temporary, 'bun'), 'unused simulated binary');
   writeFileSync(path.join(root, 'supabase/config.toml'), '[functions.auth-login]\nverify_jwt = ' + (fault === 'jwt-policy' ? 'true' : 'false') + '\n');
+  if (scope === 'suite') {
+    for (const name of [...FUNCTIONS, '_shared']) {
+      if (fault === 'missing-delivery-handler' && name === 'message-delivery') continue;
+      mkdirSync(path.join(root, 'supabase/functions', name), { recursive: true });
+      writeFileSync(path.join(root, 'supabase/functions', name, 'index.ts'), FUNCTION_SOURCE);
+    }
+    mkdirSync(path.join(root, 'e2e'), { recursive: true });
+    cpSync(path.join(ROOT, 'e2e/conversation.spec.ts'), path.join(root, 'e2e/conversation.spec.ts'));
+  }
   let sql = SQL;
   if (fault === 'unreviewed-vault') sql += "select vault.create_secret('synthetic-fixture-only');\n";
   if (fault === 'historical-jwt') sql += "select 'eyJaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaa';\n";
@@ -187,6 +246,9 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
   let cleanupSeen = false;
   let controlDir;
   let pgReadyChecks = 0;
+  const suiteStages = [];
+  const catalogCalls = [];
+  const bundled = [];
   let localKeyConfigured = false;
   let driverLocalAnonKey;
   let diagnosticCredentials = {};
@@ -203,7 +265,10 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
     if (program === 'git') {
       if (args[0] === 'rev-parse') return ok(SOURCE_SHA + '\n');
       if (args[0] === 'diff') return fault === 'dirty-checkout' ? error() : ok();
-      if (args[0] === 'ls-files') return ok(manifest('100644 ' + gitBlob(sql) + ' 0\tsupabase/migrations/' + MIGRATION + '\n'));
+      if (args[0] === 'ls-files') {
+        if (args.at(-1) === 'supabase/functions') return ok(FUNCTIONS.filter(name => fault !== 'untracked-handler' || name !== 'message-delivery').map(name => '100644 ' + (fault === 'changed-handler' && name === 'message-delivery' ? 'b'.repeat(40) : gitBlob(FUNCTION_SOURCE)) + ' 0\tsupabase/functions/' + name + '/index.ts').join('\n'));
+        return ok(manifest('100644 ' + gitBlob(sql) + ' 0\tsupabase/migrations/' + MIGRATION + '\n'));
+      }
       assert.fail('unexpected git command');
     }
     if (program === 'which') return ok(path.join(temporary, 'bun'));
@@ -220,6 +285,21 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
     if (argv[0] === 'pull') {
       const privateDir = path.join(path.dirname(options.env.DOCKER_CONFIG), 'private');
       assert.equal(readdirSync(privateDir).length, 0, 'pull must precede credential generation');
+      assert.equal(options.timeout, 15 * 60_000, 'the existing pull timeout remains bounded');
+      if (pullDiagnostic && argv[1] === lock().images[pullDiagnostic.role]) {
+        const message = 'OCI_PULL_DIAGNOSTIC role=' + pullDiagnostic.role + ' synthetic-redaction-control-not-a-credential ' +
+          'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzeW50aGV0aWMifQ.c3ludGhldGlj\n';
+        const stdout = 'stdout ' + message, stderr = 'stderr ' + message;
+        switch (pullDiagnostic.kind) {
+          case 'success': return { status: 0, stdout, stderr };
+          case 'stderr': return { status: 1, stdout: '', stderr };
+          case 'stdout': return { status: 2, stdout, stderr: '' };
+          case 'both': return { status: 1, stdout, stderr };
+          case 'timeout': return { status: null, error: Object.assign(new Error('controlled timeout'), { code: 'ETIMEDOUT' }), signal: 'SIGTERM', stdout, stderr };
+          case 'empty-signal': return { status: null, signal: 'SIGKILL', stdout: '', stderr: '' };
+          default: assert.fail('unknown pull diagnostic case');
+        }
+      }
       return fault === 'pull-auth' && argv[1] === lock().images.auth ? error() : ok();
     }
     if (argv[0] === 'image') return ok(JSON.stringify([fault === 'wrong-image-digest' ? 'registry.invalid/image@sha256:' + '0'.repeat(64) : argv[2]]));
@@ -247,12 +327,13 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
         if (fault === 'bundle-failure' || (fault === 'tls-probe-bundle' && name.endsWith('-tls-edge-probe'))) return error();
         const bundleMount = mounts.find(mount => mount.Destination === '/bundles');
         const filename = path.basename(valueAfter(argv, '--output'));
+        bundled.push(filename);
         writeFileSync(path.join(bundleMount.Source, filename), fault === 'empty-bundle' || (fault === 'tls-probe-empty-bundle' && filename === 'tls-edge-probe.eszip') ? '' : 'simulated-eszip-' + filename);
         return ok();
       }
       const checkoutProcess = ['-anchor', '-driver', '-vite', '-gateway'].some(suffix => name.endsWith(suffix));
       assert.deepEqual(allAfter(argv, '--workdir'), checkoutProcess ? ['/work'] : [], 'the real controller must preserve official image working directories');
-      if (checkoutProcess) {
+      if (checkoutProcess || name.endsWith('-provider')) {
         assert.equal(valueAfter(argv, '--user'), process.getuid() + ':' + process.getgid(), 'Node/Bun bind writes must belong to the runner');
       }
       if (name.endsWith('-anchor')) assert.equal(valueAfter(argv, '--add-host'), OFFICIAL_HOST + ':127.0.0.1');
@@ -260,6 +341,7 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
       if (name.endsWith('-gateway') && fault === 'tls-gateway-start') return error();
       if (name.endsWith('-tls-edge') && fault === 'tls-edge-start') return error();
       if (name.endsWith('-postgres') && fault === 'postgres-start') return error();
+      if (name.endsWith('-provider') && fault === 'provider-start') return error();
       if (name.endsWith('-anchor') && fault === 'anchor-network') metadata.HostConfig.NetworkMode = 'bridge';
       if (name.endsWith('-driver') && fault === 'driver-network') metadata.HostConfig.NetworkMode = 'host';
       if (name.endsWith('-driver') && fault === 'tls-driver-user') metadata.Config.User = '99999:99999';
@@ -354,6 +436,13 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
       if (argv.includes('pg_isready')) { pgReadyChecks++; return ok(); }
       if (argv.includes('psql')) {
         const input = String(options.input);
+        if (input.includes('pg_catalog.pg_proc')) {
+          catalogCalls.push({ input, timeout: options.timeout, killSignal: options.killSignal,
+            maxBuffer: options.maxBuffer, afterStages: [...suiteStages] });
+          if (catalogResult && Object.hasOwn(catalogResult, 'throws')) throw catalogResult.throws;
+          return catalogResult ?? ok(JSON.stringify({ schema: 1,
+            routines: SIGNATURES.map(signature => ({ signature, owner: 'postgres', security_definer: true })) }));
+        }
         if (input.includes('alter database postgres set app.settings.e2e_anon_key')) {
           if (fault === 'local-key-setting-write') return error('controlled setting failure');
           const configured = input.match(/set app\.settings\.e2e_anon_key = '([^']+)'/i)?.[1];
@@ -392,13 +481,52 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
         writeFileSync(path.join(output, 'seed-ready.json'), JSON.stringify({ run_id: containers.values().next().value.Config.Labels[OWNER_LABEL], source_sha: SOURCE_SHA, auth_login_real: true, supervisor_rls_read: true }));
         return ok('{"seed_ready":true}');
       }
+      const suiteCommands = {
+        'e2e/fixtures/arquivos-local/seed.ts': 'files-volume',
+        'e2e/fixtures/seed-files-tab.mjs': 'files-canonical',
+        'scripts/e2e-isolated/seed-suite.mjs': 'suite-seed',
+        'scripts/e2e-isolated/verify-providers.mjs': 'provider-verification',
+      };
+      for (const [file, name] of Object.entries(suiteCommands)) {
+        if (!argv.includes(file)) continue;
+        assert.equal(scope, 'suite');
+        assert.equal(seedCalls, 1);
+        assert.ok(containers.has([...containers.keys()].find(key => key.endsWith('-provider'))));
+        suiteStages.push(name);
+        if (name === 'provider-verification' && providerObservation) {
+          if (Object.hasOwn(providerObservation, 'raw')) writeFileSync(path.join(output, 'provider-diagnostic.json'), providerObservation.raw);
+          const result = providerObservation.result;
+          if (result.status !== 0 || result.error || result.signal) return result;
+        }
+        if (name === 'files-volume' && seedDiagnostic) return seedDiagnostic;
+        if (fault === name + '-failure') return error('private-sentinel-from-seed');
+        const runId = containers.values().next().value.Config.Labels[OWNER_LABEL];
+        if (name === 'suite-seed' && fault !== 'suite-proof-missing') {
+          const data = { schema: 1, run_id: runId, source_sha: SOURCE_SHA, ...Object.fromEntries(SEED_FLAGS.map(key => [key, true])), pagination_seed_count: 51 };
+          if (fault.startsWith('suite-proof-')) data[fault.slice('suite-proof-'.length)] = false;
+          writeFileSync(path.join(output, 'suite-seed-ready.json'), JSON.stringify(data));
+        }
+        if (name === 'provider-verification' && fault !== 'provider-proof-missing') {
+          const data = { schema: 1, run_id: runId, source_sha: SOURCE_SHA, ...Object.fromEntries(PROVIDER_FLAGS.map(key => [key, true])), catalog_sku: 'E2E-LOCAL-001', delivery_proofs: { text: true, catalog_image: true, storage_image: true } };
+          if (fault.startsWith('provider-proof-')) data[fault.slice('provider-proof-'.length)] = false;
+          if (fault.startsWith('provider-proof-delivery_proofs.')) data.delivery_proofs[fault.split('.')[1]] = false;
+          if (fault === 'provider-proof-delivery_proofs-extra') data.delivery_proofs.extra = true;
+          writeFileSync(path.join(output, 'provider-ready.json'), JSON.stringify(data));
+        }
+        return ok('private-sentinel-from-seed');
+      }
       if (argv.includes('node_modules/@playwright/test/cli.js')) {
+        if (scope === 'suite') {
+          assert.deepEqual(allAfter(argv, '--project'), GROUPS[group]);
+          assert.equal(argv.includes('E2E_CATALOG_PRODUCT_SKU_VERIFIED=true'), fullSeed);
+          assert.deepEqual(suiteStages, fullSeed ? ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification'] : []);
+        }
         if (argv.includes('--list')) {
           listCalls++;
           assert.equal(argv.includes('--reporter=json'), true);
           assert.equal(existsSync(path.join(controlDir, 'proof.json')), true, 'collection also runs after environment proof');
           if (fault === 'collection-failure') return error();
-          const inventory = playwrightJson({ listed: true });
+          const inventory = scope === 'suite' ? suiteJson({ listed: true, fault, group }) : playwrightJson({ listed: true });
           if (fault === 'collection-extra') {
             const extra = structuredClone(inventory.suites[0].specs[0]); extra.line = 90;
             inventory.suites[0].specs.push(extra); inventory.stats.skipped = 2;
@@ -408,10 +536,10 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
         browserCalls++;
         assert.equal(listCalls, 1, 'execution requires exactly one separate inventory');
         assert.equal(existsSync(path.join(controlDir, 'proof.json')), true, 'browser starts only after proof');
-        const report = playwrightJson({ failed: fault === 'browser-failure' });
+        const report = scope === 'suite' ? suiteJson({ fault, group }) : playwrightJson({ failed: fault === 'browser-failure' });
         if (fault === 'wrong-result') report.stats.expected = 0;
         writeFileSync(path.join(output, 'results.json'), JSON.stringify(report));
-        if (fault === 'browser-failure') return error('controlled browser failure');
+        if (fault === 'browser-failure' || fault === 'suite-browser-failure') return error('controlled browser failure');
         mkdirSync(path.join(output, 'playwright-report'), { recursive: true });
         writeFileSync(path.join(output, 'playwright-report/raw.html'), 'must-never-publish-session-token');
         return ok('1 passed');
@@ -432,9 +560,18 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
   const { runLogin } = await import(pathToFileURL(path.join(root, 'scripts/e2e-isolated/run.mjs')).href);
   const realTimeout = globalThis.setTimeout;
   globalThis.setTimeout = (callback, _delay, ...args) => realTimeout(callback, 0, ...args);
+  const originalOutput = process.env.GITHUB_OUTPUT;
+  const diagnosticOutput = path.join(temporary, 'github-output');
+  if (seedDiagnostic) process.env.GITHUB_OUTPUT = diagnosticOutput;
   let exit;
-  try { exit = await runLogin({ outputDirectory: output, command: fakeCommand }); }
-  finally { globalThis.setTimeout = realTimeout; }
+  try { exit = await runLogin({ outputDirectory: output, command: fakeCommand, scope, ...(scope === 'suite' ? { group } : {}) }); }
+  finally {
+    globalThis.setTimeout = realTimeout;
+    if (seedDiagnostic) {
+      if (originalOutput === undefined) delete process.env.GITHUB_OUTPUT;
+      else process.env.GITHUB_OUTPUT = originalOutput;
+    }
+  }
   const state = JSON.parse(readFileSync(path.join(output, 'status.json'), 'utf8'));
   const publicFiles = readdirSync(path.join(output, 'public'), { recursive: true });
   assert.equal(publicFiles.some(name => ['results.json', 'inventory.json'].includes(name) || /raw\.html|playwright-report/.test(name)), false, 'raw browser artifacts never publish');
@@ -445,8 +582,116 @@ async function controllerFixture(t, fault, manifest = value => value, tlsDiagnos
   }
   const tlsDiagnosticLog = tlsDiagnostic && existsSync(path.join(output, 'public', 'tls-' + tlsDiagnostic.runtime + '-gate.log'))
     ? readFileSync(path.join(output, 'public', 'tls-' + tlsDiagnostic.runtime + '-gate.log'), 'utf8') : null;
-  const result = { tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
+  const pullLogs = pullDiagnostic ? Object.fromEntries(Object.keys(assertPinnedImages(lock())).flatMap(role => {
+    const file = 'pull-' + role + '.log', privateFile = path.join(output, file), publicFile = path.join(output, 'public', file);
+    return existsSync(privateFile) && existsSync(publicFile) ? [[role, { private: readFileSync(privateFile, 'utf8'),
+      published: readFileSync(publicFile, 'utf8'), privateMode: statSync(privateFile).mode & 0o777, publicMode: statSync(publicFile).mode & 0o777 }]] : [];
+  })) : null;
+  const seedDiagnosticFile = path.join(output, 'seed-files-volume-diagnostic.json');
+  const seedDiagnosticPublic = path.join(output, 'public', 'seed-files-volume-diagnostic.json');
+  const filesDiagnostic = seedDiagnostic && existsSync(seedDiagnosticFile) ? {
+    private: JSON.parse(readFileSync(seedDiagnosticFile, 'utf8')),
+    published: JSON.parse(readFileSync(seedDiagnosticPublic, 'utf8')),
+    privateMode: statSync(seedDiagnosticFile).mode & 0o777,
+    publicMode: statSync(seedDiagnosticPublic).mode & 0o777,
+  } : null;
+  const reportOutput = seedDiagnostic ? readFileSync(diagnosticOutput, 'utf8') : null;
+  const providerMetadata = Object.fromEntries(['provider-catalog.json', 'provider-diagnostic.json'].flatMap(name => {
+    const file = path.join(output, 'public', name);
+    return existsSync(file) ? [[name, { value: JSON.parse(readFileSync(file, 'utf8')), mode: statSync(file).mode & 0o777 }]] : [];
+  }));
+  const result = { providerMetadata, catalogCalls, filesDiagnostic, reportOutput, pullLogs, tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgReadyChecks, suiteStages, bundled, tlsStages, tlsInstalled, tlsUpdated, tlsProbeRemoved };
   return result;
+}
+
+// Actual controller, metadata whitelist, cleanup and report redactor. The raw
+// subprocess channels contain canaries and must never become a seed .log.
+const filesDiagnosticPrefix = '[e2e-isolated/seed-files-volume-diagnostic] ';
+const filesDiagnosticRecord = { schema: 1, failure: { stage: 'sql-profile-update', error_name: 'PostgresError', code: 'ERR_POSTGRES_SERVER_ERROR', sqlstate: '42501' } };
+const filesDiagnosticLine = value => filesDiagnosticPrefix + JSON.stringify(value) + '\n';
+const filesDiagnosticNoise = 'private-sentinel raw SQL must never publish ' +
+  'https://synthetic:must-never-publish@127.0.0.1:5173/path?token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjYW5hcnkifQ.c2VjcmV0\n';
+const filesDiagnosticCases = [
+  ['SQL failure', { status: 1, stderr: filesDiagnosticLine(filesDiagnosticRecord) }, true],
+  ['HTTP failure', { status: 1, stderr: filesDiagnosticLine({ schema: 1, failure: { stage: 'storage-upload-image', error_name: 'Error', http_status: 403 } }) }, true],
+  ['unknown thrown value', { status: 1, stderr: filesDiagnosticLine({ schema: 1, failure: { stage: 'sql-commit', error_name: 'UnknownError' } }) }, true],
+  ['primary and cleanup', { status: 1, stderr: filesDiagnosticLine({ ...filesDiagnosticRecord, cleanup: { stage: 'db-close', error_name: 'PostgresError', code: 'ERR_POSTGRES_CONNECTION_CLOSED' } }) }, true],
+  ['missing record', { status: 1, stderr: '' }, false, 'missing'],
+  ['untrusted field', { status: 1, stderr: filesDiagnosticLine({ ...filesDiagnosticRecord, query: filesDiagnosticNoise }) }, false, 'invalid'],
+  ['ambiguous records', { status: 1, stderr: filesDiagnosticLine(filesDiagnosticRecord).repeat(2) }, false, 'ambiguous'],
+  ['signal with zero status', { status: 0, signal: 'SIGTERM', stderr: filesDiagnosticLine(filesDiagnosticRecord) }, true],
+  ['spawn error with zero status', { status: 0, error: new Error('private-sentinel'), stderr: filesDiagnosticLine(filesDiagnosticRecord) }, true],
+];
+for (const [label, subprocess, available, reason] of filesDiagnosticCases) test('seed diagnostic controller/' + label, async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite', seedDiagnostic: { ...subprocess, stdout: filesDiagnosticNoise, stderr: filesDiagnosticNoise + subprocess.stderr + filesDiagnosticNoise } });
+  assert.equal(value.exit, 1); assert.equal(value.state.error, 'seed-files-volume');
+  assert.equal(value.state.success, false); assert.equal(value.state.native_e2e, false);
+  assert.equal(value.state.failed_phase, 'seed-suite-and-verify-providers');
+  assert.equal(value.state.phase, 'complete'); assert.equal(value.state.cleanup_error, undefined);
+  assert.deepEqual(value.suiteStages, ['files-volume']); assert.equal(value.listCalls, 0); assert.equal(value.browserCalls, 0);
+  assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+  assert.equal(value.filesDiagnostic.private.available, available);
+  if (!available) assert.equal(value.filesDiagnostic.private.reason, reason);
+  assert.deepEqual(value.filesDiagnostic.published, value.filesDiagnostic.private);
+  assert.equal(value.filesDiagnostic.privateMode, 0o600); assert.equal(value.filesDiagnostic.publicMode, 0o600);
+  assert.equal(value.reportOutput, 'report_ready=true\n');
+  assert.ok(value.publicFiles.includes('seed-files-volume-diagnostic.json'));
+  assert.ok(!value.publicFiles.some(name => /seed-files-volume\.log|seed-files-canonical\.log|seed-suite\.log|verify-providers\.log/.test(name)));
+});
+test('seed diagnostic controller/success does not publish an error even when a line is forged', async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite', seedDiagnostic: { status: 0, stdout: filesDiagnosticNoise, stderr: filesDiagnosticLine(filesDiagnosticRecord) } });
+  assert.equal(value.exit, 0); assert.equal(value.state.success, true); assert.equal(value.filesDiagnostic, null);
+  assert.equal(value.reportOutput, 'report_ready=true\n');
+  assert.ok(!value.publicFiles.includes('seed-files-volume-diagnostic.json'));
+  assert.equal(value.browserCalls, 1); assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+});
+test('seed diagnostic controller/report redaction failure preserves the seed failure and closes upload gate', async t => {
+  const value = await controllerFixture(t, 'redactor-failure', { scope: 'suite', seedDiagnostic: { status: 1, stdout: filesDiagnosticNoise, stderr: filesDiagnosticLine(filesDiagnosticRecord) } });
+  assert.equal(value.exit, 1); assert.equal(value.state.error, 'seed-files-volume'); assert.equal(value.state.success, false);
+  assert.equal(value.filesDiagnostic.published.available, true); assert.equal(value.reportOutput, 'report_ready=false\n');
+  assert.equal(value.browserCalls, 0); assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+});
+
+// Capture both subprocess channels before required() throws. No registry/network
+// runs here; controller, cleanup and both publication redactors remain real.
+for (const role of ['postgres', 'auth', 'rest', 'storage', 'realtime', 'edge', 'driver']) {
+  for (const kind of ['success', 'stderr', 'stdout', 'both', 'timeout', 'empty-signal']) {
+    test('OCI pull diagnostic: ' + role + '/' + kind, async t => {
+      const value = await controllerFixture(t, 'none', { pullDiagnostic: { role, kind } });
+      const success = kind === 'success';
+      assert.equal(value.exit, success ? 0 : 1);
+      assert.equal(value.state.success, success);
+      if (!success) {
+        assert.equal(value.state.error, 'pull-' + role + '-failed');
+        assert.equal(value.state.failed_phase, 'pull-immutable-images');
+        assert.equal(value.credentialFilesSeen, false);
+        assert.equal(value.migrationCalls, 0); assert.equal(value.seedCalls, 0);
+        assert.equal(value.listCalls, 0); assert.equal(value.browserCalls, 0);
+        assert.deepEqual(value.bundled, []);
+      }
+      const roles = Object.keys(assertPinnedImages(lock()));
+      const reached = success ? roles : roles.slice(0, roles.indexOf(role) + 1);
+      const pulls = value.calls.filter(call => call.program === 'docker' && call.args[2] === 'pull');
+      assert.deepEqual(pulls.map(call => call.args[3]), reached.map(name => lock().images[name]), 'each fixed digest is pulled exactly once, in the original order');
+      const inspections = value.calls.filter(call => call.program === 'docker' && call.args[2] === 'image');
+      assert.equal(inspections.length, reached.length - (success ? 0 : 1), 'a failed pull never reaches its digest inspection');
+      assert.deepEqual(Object.keys(value.pullLogs), reached, 'a failed pull still leaves its own log and later images are not attempted');
+      const log = value.pullLogs[role];
+      assert.equal(log.privateMode, 0o600); assert.equal(log.publicMode, 0o600);
+      if (kind === 'empty-signal') { assert.equal(log.private, ''); assert.equal(log.published, ''); }
+      else {
+        assert.match(log.private, /OCI_PULL_DIAGNOSTIC/); assert.match(log.published, /OCI_PULL_DIAGNOSTIC/);
+        assert.equal(log.published.includes('stdout '), kind !== 'stderr');
+        assert.equal(log.published.includes('stderr '), kind !== 'stdout');
+        assert.match(log.private, /\[JWT REDACTED\]/, 'the first redactor strips tokens before writing');
+        assert.match(log.private, /synthetic-redaction-control-not-a-credential/);
+        assert.doesNotMatch(log.published, /synthetic-redaction-control-not-a-credential/, 'the final redactor removes its configured sentinel');
+        assert.doesNotMatch(log.published, /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/);
+      }
+      assert.equal(value.state.phase, 'complete'); assert.equal(value.state.cleanup_error, undefined);
+      assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+    });
+  }
 }
 
 test('controller real: percurso completo com interfaces falsas preserva a ordem e limpa os recursos próprios', async t => {
@@ -553,6 +798,79 @@ for (const fault of ['browser-failure', 'wrong-result', 'redactor-failure', 'cle
     if (fault === 'foreign-volume-cleanup') assert.ok(value.volumes.size > 0, 'foreign-labelled volumes must not be removed');
   });
 }
+
+test('suite controller: authenticated collects exactly its nine existing projects after every seed/provider check', async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite' });
+  assert.equal(value.exit, 0);
+  assert.equal(value.state.scope, 'authenticated-suite');
+  assert.equal(value.state.suite.passed, GROUPS.authenticated.length);
+  assert.equal(value.state.suite.total, GROUPS.authenticated.length);
+  assert.equal(value.browserCalls, 1);
+  assert.equal(value.listCalls, 1);
+  assert.deepEqual(value.bundled, ['main.eszip', ...FUNCTIONS.map(name => name + '.eszip'), 'tls-edge-probe.eszip']);
+  assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification']);
+  assert.equal(value.containers.size, 0);
+  assert.equal(value.volumes.size, 0);
+  for (const name of ['suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json']) assert.ok(value.publicFiles.includes(name));
+  assert.ok(!value.publicFiles.some(name => /files-volume|files-canonical|suite-seed\.log|verify-providers\.log/.test(name)), 'raw seed/provider output stays private');
+});
+for (const group of ['deslogado-principal', 'deslogado-secundario']) test('suite controller: ' + group + ' preserves its three projects without messaging seed or provider', async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite', group });
+  assert.equal(value.exit, 0);
+  assert.equal(value.state.scope, group);
+  assert.equal(value.state.suite.passed, 3);
+  assert.equal(value.state.suite.total, 3);
+  assert.deepEqual(value.suiteStages, []);
+  assert.deepEqual(value.bundled, ['main.eszip', 'auth-login.eszip', 'tls-edge-probe.eszip']);
+  assert.ok(!value.calls.some(call => call.args.some(value => /-provider$/.test(value))));
+});
+test('suite controller: strict fullsuite reports predeclared fixme separately and keeps the gate red', async t => {
+  const value = await controllerFixture(t, 'explicit-skip', { scope: 'suite' });
+  assert.equal(value.exit, 1);
+  assert.equal(value.state.error, 'suite-result-not-clean');
+  assert.equal(value.state.suite.passed, 8);
+  assert.equal(value.state.suite.skipped_explicit, 1);
+});
+test('suite controller: only the two source-bound platform skips are distinct from seven passes', async t => {
+  const value = await controllerFixture(t, 'known-platform-skips', { scope: 'suite' });
+  assert.equal(value.exit, 0);
+  assert.equal(value.state.suite.passed, 7);
+  assert.equal(value.state.suite.known_runtime_skip, 2);
+  assert.equal(value.state.suite.skipped_runtime, 0);
+});
+const suiteFaults = {
+  'untracked-handler': 'function-source-changed',
+  'changed-handler': 'function-source-changed',
+  'missing-delivery-handler': 'suite-handler-missing',
+  'provider-start': 'start-provider-failed',
+  'files-volume-failure': 'seed-files-volume',
+  'files-canonical-failure': 'seed-files-canonical',
+  'suite-seed-failure': 'seed-suite',
+  'provider-verification-failure': 'verify-providers',
+  'suite-proof-missing': 'suite-proof-unreadable',
+  'provider-proof-missing': 'suite-proof-unreadable',
+  ...Object.fromEntries([...SEED_FLAGS, 'schema', 'run_id', 'source_sha', 'pagination_seed_count'].map(key => ['suite-proof-' + key, 'suite-seed-proof-mismatch'])),
+  ...Object.fromEntries([...PROVIDER_FLAGS, 'schema', 'run_id', 'source_sha', 'catalog_sku', 'delivery_proofs', 'delivery_proofs.text', 'delivery_proofs.catalog_image', 'delivery_proofs.storage_image', 'delivery_proofs-extra'].map(key => ['provider-proof-' + key, 'provider-proof-mismatch'])),
+  ...Object.fromEntries(GROUPS.authenticated.map(name => ['missing-project-' + name, 'suite-inventory-invalid'])),
+};
+for (const [fault, expectedCode] of Object.entries(suiteFaults)) test('suite controller: ' + fault + ' blocks browser without concealing cleanup', async t => {
+  const value = await controllerFixture(t, fault, { scope: 'suite' });
+  assert.equal(value.exit, 1);
+  assert.equal(value.state.success, false);
+  assert.equal(value.state.error, expectedCode);
+  assert.equal(value.browserCalls, 0);
+  assert.equal(value.containers.size, 0);
+  assert.equal(value.volumes.size, 0);
+});
+for (const fault of ['runtime-skip', 'suite-stats-mismatch', 'suite-browser-failure']) test('suite controller: ' + fault + ' keeps native report counts and fails the suite', async t => {
+  const value = await controllerFixture(t, fault, { scope: 'suite' });
+  assert.equal(value.exit, 1);
+  assert.equal(value.state.success, false);
+  assert.equal(value.browserCalls, 1);
+  assert.equal(value.state.error, fault === 'suite-browser-failure' ? 'browser-suite-failed' : 'suite-result-not-clean');
+  if (fault === 'runtime-skip') assert.equal(value.state.suite.skipped_runtime, 1);
+  if (fault === 'suite-browser-failure') assert.equal(value.state.suite.failed, 1);
+});
 
 
 // Native Git contains both regular modes. These scenarios exercise the real
@@ -685,3 +1003,115 @@ for (const runtime of ['node', 'bun', 'browsers', 'edge']) {
     });
   }
 }
+
+// Exercise the actual controller and the final redactor. Only subprocess I/O
+// and the verifier's private file are controlled; metadata never approves SQL.
+const providerCatalogRows = owner => ({ schema: 1, routines: SIGNATURES.map(signature => ({
+  signature, owner, security_definer: owner === 'missing' ? null : true,
+})) });
+const providerCatalogResult = rows => ({ status: 0, stdout: JSON.stringify(rows), stderr: 'private-sentinel-catalog-stderr' });
+const providerCatalogCases = [
+  ['postgres', providerCatalogResult(providerCatalogRows('postgres')), true],
+  ['supabase_admin divergence', providerCatalogResult(providerCatalogRows('supabase_admin')), true],
+  ['unknown owner normalized', providerCatalogResult(providerCatalogRows('other')), true],
+  ['missing routines', providerCatalogResult(providerCatalogRows('missing')), true],
+  ['invoker instead of definer', providerCatalogResult({ schema: 1, routines: providerCatalogRows('postgres').routines.map(row => ({ ...row, security_definer: false })) }), true],
+  ['nonzero status', { ...providerCatalogResult(providerCatalogRows('postgres')), status: 1 }, false],
+  ['status zero with error', { ...providerCatalogResult(providerCatalogRows('postgres')), error: new Error('private-sentinel') }, false],
+  ['status zero with signal', { ...providerCatalogResult(providerCatalogRows('postgres')), signal: 'SIGTERM' }, false],
+  ['timeout and signal', { status: null, error: Object.assign(new Error('private-sentinel'), { code: 'ETIMEDOUT' }), signal: 'SIGKILL', stderr: 'private-sentinel' }, false],
+  ['executor throws falsy', { throws: false }, false],
+  ['invalid JSON', { status: 0, stdout: 'private-sentinel-not-json', stderr: 'private-sentinel' }, false],
+  ['unapproved raw field', providerCatalogResult({ ...providerCatalogRows('postgres'), definition: 'private-sentinel' }), false],
+];
+for (const [name, catalogResult, available] of providerCatalogCases) {
+  test('provider catalog controller: ' + name + ' does not change verifier success', async t => {
+    const value = await controllerFixture(t, 'none', { scope: 'suite', catalogResult });
+    assert.equal(value.exit, 0); assert.equal(value.state.success, true);
+    assert.equal(value.listCalls, 1); assert.equal(value.browserCalls, 1);
+    assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+    assert.equal(value.catalogCalls.length, 1);
+    assert.deepEqual(value.catalogCalls[0], { input: PROVIDER_CATALOG_SQL,
+      ...CATALOG_EXECUTOR_OPTIONS, afterStages: ['files-volume', 'files-canonical', 'suite-seed'] });
+    const published = value.providerMetadata['provider-catalog.json'];
+    assert.equal(published.mode, 0o600); assert.equal(published.value.available, available);
+    assert.equal(value.providerMetadata['provider-diagnostic.json'], undefined);
+    assert.ok(!value.publicFiles.includes('verify-providers.log'));
+    if (available) assert.deepEqual(published.value.routines, JSON.parse(catalogResult.stdout).routines);
+  });
+}
+
+const providerFailureMetadata = { schema: 1, phase: 'text-enqueue', http_status: 403, sqlstate: '42501' };
+const providerRawCases = [
+  ['valid record', JSON.stringify(providerFailureMetadata), true],
+  ['raw body field', JSON.stringify({ ...providerFailureMetadata, body: 'private-sentinel' }), false],
+  ['unknown phase', JSON.stringify({ ...providerFailureMetadata, phase: 'private-sentinel' }), false],
+  ['status as string', JSON.stringify({ ...providerFailureMetadata, http_status: '403' }), false],
+  ['malformed JSON', 'private-sentinel', false],
+  ['oversized JSON', ' '.repeat(1025) + JSON.stringify(providerFailureMetadata), false],
+  ['missing file', undefined, false],
+];
+for (const [name, raw, available] of providerRawCases) {
+  test('provider diagnostic controller: ' + name + ' preserves failure and publishes only closed metadata', async t => {
+    const value = await controllerFixture(t, 'none', { scope: 'suite', providerObservation: {
+      result: { status: 1, stdout: 'private-sentinel-provider-stdout', stderr: 'private-sentinel-provider-stderr' },
+      ...(raw !== undefined ? { raw } : {}),
+    } });
+    assert.equal(value.exit, 1); assert.equal(value.state.success, false);
+    assert.equal(value.state.error, 'verify-providers');
+    assert.equal(value.state.failed_phase, 'seed-suite-and-verify-providers');
+    assert.equal(value.listCalls, 0); assert.equal(value.browserCalls, 0);
+    assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+    assert.equal(value.catalogCalls.length, 1);
+    assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification']);
+    const published = value.providerMetadata['provider-diagnostic.json'];
+    assert.equal(published.mode, 0o600); assert.equal(published.value.available, available);
+    if (available) assert.deepEqual(published.value, { available: true, ...providerFailureMetadata });
+    else assert.deepEqual(published.value, { available: false, reason: raw === undefined ? 'diagnostic-unavailable' : 'invalid-diagnostic' });
+    assert.equal(value.providerMetadata['provider-catalog.json'].value.available, true);
+    assert.ok(!value.publicFiles.includes('verify-providers.log'));
+    assert.ok(!value.publicFiles.includes('provider-ready.json'));
+  });
+}
+
+for (const [name, fields] of [['error', { error: new Error('private-sentinel') }], ['signal', { signal: 'SIGTERM' }]]) {
+  test('provider diagnostic controller: status zero with ' + name + ' keeps the real executor failure', async t => {
+    const value = await controllerFixture(t, 'none', { scope: 'suite', providerObservation: {
+      result: { status: 0, stdout: 'private-sentinel', stderr: 'private-sentinel', ...fields },
+      raw: JSON.stringify(providerFailureMetadata),
+    } });
+    assert.equal(value.exit, 1); assert.equal(value.state.error, 'verify-providers');
+    assert.equal(value.browserCalls, 0); assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+    assert.deepEqual(value.providerMetadata['provider-diagnostic.json'].value, { available: true, ...providerFailureMetadata });
+  });
+}
+
+test('provider diagnostic controller: forged private error file does not turn a successful verifier into failure metadata', async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite', providerObservation: {
+    result: ok(), raw: JSON.stringify({ ...providerFailureMetadata, message: 'private-sentinel' }),
+  } });
+  assert.equal(value.exit, 0); assert.equal(value.browserCalls, 1);
+  assert.equal(value.providerMetadata['provider-diagnostic.json'], undefined);
+  assert.ok(value.publicFiles.includes('provider-ready.json'));
+  assert.ok(!value.publicFiles.includes('verify-providers.log'));
+});
+
+test('provider diagnostic controller: unavailable catalog never substitutes the verifier failure', async t => {
+  const value = await controllerFixture(t, 'none', { scope: 'suite',
+    catalogResult: { throws: new Error('private-sentinel-catalog') },
+    providerObservation: { result: error('private-sentinel-provider'), raw: JSON.stringify(providerFailureMetadata) },
+  });
+  assert.equal(value.exit, 1); assert.equal(value.state.error, 'verify-providers');
+  assert.deepEqual(value.providerMetadata['provider-catalog.json'].value, { available: false, reason: 'query-failed' });
+  assert.deepEqual(value.providerMetadata['provider-diagnostic.json'].value, { available: true, ...providerFailureMetadata });
+  assert.equal(value.listCalls, 0); assert.equal(value.browserCalls, 0);
+  assert.equal(value.containers.size, 0); assert.equal(value.volumes.size, 0);
+});
+
+test('provider catalog executor: the actual Node timeout kills a child that ignores SIGTERM', { timeout: 12000 }, () => {
+  assert.deepEqual(CATALOG_EXECUTOR_OPTIONS, { timeout: 5000, killSignal: 'SIGKILL', maxBuffer: 8192 });
+  const result = spawnSync(process.execPath, ['-e', 'process.on("SIGTERM", () => {}); setInterval(() => {}, 1000);'], CATALOG_EXECUTOR_OPTIONS);
+  assert.equal(result.status, null); assert.equal(result.signal, 'SIGKILL'); assert.equal(result.error?.code, 'ETIMEDOUT');
+  assert.match(PROVIDER_CATALOG_SQL, /^BEGIN READ ONLY;\nSET LOCAL statement_timeout = '3s';/);
+  assert.match(PROVIDER_CATALOG_SQL, /ROLLBACK;\s*$/);
+});

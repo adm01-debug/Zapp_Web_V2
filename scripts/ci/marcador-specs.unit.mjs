@@ -52,7 +52,7 @@ test('E83: o workflow alerta em falha, fecha ao recuperar, e as permissoes ficam
   const topo = y.slice(0, y.indexOf('jobs:'));
   const job = jobOf(y, 'e2e-logado');
   const steps = stepsOf(job);
-  const playwright = onlyStep(steps, (s) => /^\s*bun run test:e2e\b/m.test(shellCode(s)), 'Playwright');
+  const playwright = onlyStep(steps, (s) => /^\s*bash scripts\/e2e-isolated\/run\.sh suite\b/m.test(shellCode(s)), 'controller Playwright isolado');
   const alerta = onlyStep(steps, (s) => scriptOf(s).includes('github.rest.issues.create('), 'alerta');
   const fechamentos = [...jobsOf(y)].flatMap(([id, bloco]) => stepsOf(bloco)
     .filter((s) => /state:\s*['"]closed['"]/.test(scriptOf(s))).map((step) => ({ id, bloco, step })));
@@ -68,7 +68,7 @@ test('E83: o workflow alerta em falha, fecha ao recuperar, e as permissoes ficam
   }
   assert.match(scriptOf(alerta), /await import\(\s*`[^`]*\/scripts\/ci\/marcador-specs\.mjs`\s*\)/, 'o corpo executado importa o marcador testado');
   assert.ok(steps.indexOf(alerta) > steps.indexOf(playwright), 'o alerta le os resultados depois do Playwright');
-  assert.equal(conditionOf(alerta), 'failure()');
+  assert.equal(conditionOf(alerta), "failure() && steps.checkout.outcome == 'success'");
   assert.equal(conditionOf(fecha.step), 'success()');
 });
 

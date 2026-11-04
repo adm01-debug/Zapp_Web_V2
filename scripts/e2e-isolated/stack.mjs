@@ -1,6 +1,6 @@
-import { ORIGIN, OFFICIAL_HOST, OWNER_LABEL, PURPOSE, PURPOSE_LABEL, assertRunId, assertSourceSha, fail } from './runtime-contract.mjs';
+import { ORIGIN, PROVIDER_ORIGIN, CATALOG_SKU, OFFICIAL_HOST, OWNER_LABEL, PURPOSE, PURPOSE_LABEL, assertRunId, assertSourceSha, fail } from './runtime-contract.mjs';
 
-export function serviceConfiguration({ credentials: c, runId, sourceSha }) {
+export function serviceConfiguration({ credentials: c, runId, sourceSha, fullSuite = false }) {
   assertRunId(runId); assertSourceSha(sourceSha);
   const database = role => 'postgres://' + role + ':' + c.databasePassword + '@127.0.0.1:5432/postgres';
   const shared = { TZ: 'UTC' };
@@ -66,9 +66,10 @@ export function serviceConfiguration({ credentials: c, runId, sourceSha }) {
         ...shared, JWT_SECRET: c.jwtSecret, SUPABASE_URL: ORIGIN, SUPABASE_PUBLIC_URL: ORIGIN,
         SUPABASE_ANON_KEY: c.anonKey, SUPABASE_SERVICE_ROLE_KEY: c.serviceRoleKey,
         SUPABASE_DB_URL: database('postgres'),
-        EVOLUTION_API_URL: 'http://127.0.0.1:8081', EVOLUTION_API_KEY: c.evolutionKey,
+        EVOLUTION_API_URL: PROVIDER_ORIGIN, EVOLUTION_API_KEY: c.evolutionKey,
         EVOLUTION_API_FLAVOR: 'GO', EVOLUTION_DEFAULT_INSTANCE: 'E2E_LOCAL',
         EVOLUTION_DEFAULT_INSTANCE_TOKEN: c.instanceToken,
+        ...(fullSuite ? { PROMOGIFTS_SUPABASE_URL: PROVIDER_ORIGIN, PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY: c.catalogKey } : {}),
         ZAPP_E2E_RUN_ID: runId, GITHUB_SHA: sourceSha,
       },
       args: ['start', '--user-worker-request-idle-timeout', '150000', '--main-service', '/bundles/main.eszip'],
@@ -77,6 +78,12 @@ export function serviceConfiguration({ credentials: c, runId, sourceSha }) {
       env: { ...shared, ZAPP_E2E_RUN_ID: runId, GITHUB_SHA: sourceSha },
       args: ['node', '/work/scripts/e2e-isolated/gateway.mjs'],
     },
+    ...(fullSuite ? { provider: {
+      env: { ...shared, ZAPP_E2E_RUN_ID: runId, GITHUB_SHA: sourceSha,
+        EVOLUTION_API_KEY: c.evolutionKey, EVOLUTION_DEFAULT_INSTANCE_TOKEN: c.instanceToken,
+        PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY: c.catalogKey },
+      args: ['node', '/work/scripts/e2e-isolated/providers.mjs'],
+    } } : {}),
     vite: {
       env: {
         ...shared, NODE_ENV: 'development', HOME: '/tmp', GITHUB_SHA: sourceSha,
@@ -95,6 +102,8 @@ export function serviceConfiguration({ credentials: c, runId, sourceSha }) {
         E2E_LOCAL_SUPABASE_URL: ORIGIN, E2E_LOCAL_SUPABASE_ANON_KEY: c.anonKey,
         E2E_LOCAL_SUPABASE_SERVICE_ROLE_KEY: c.serviceRoleKey,
         E2E_TEST_EMAIL: c.email, E2E_TEST_PASSWORD: c.password,
+        ...(fullSuite ? { DB_URL: database('supabase_admin'), EVOLUTION_DEFAULT_INSTANCE_TOKEN: c.instanceToken,
+          E2E_CATALOG_PRODUCT_SKU: CATALOG_SKU } : {}),
         CAPTURA_DIR: '/output/captures', PLAYWRIGHT_HTML_OPEN: 'never',
       },
       args: ['node', '-e', 'setInterval(() => {}, 1000)'],

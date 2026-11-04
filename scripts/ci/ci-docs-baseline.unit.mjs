@@ -364,15 +364,21 @@ test('E62/E76: os numeros citados conferem com o repositorio', async () => {
   assert.ok(new RegExp(`@playwright/test@${pwEsc}`).test(lock), `@playwright/test@${pwVer} deve estar no bun.lock`);
 
   const tres = ['ci.yml', 'e2e-logado.yml', 'e2e-talkx.yml'];
-  for (const f of tres) {
+  for (const f of ['ci.yml', 'e2e-talkx.yml']) {
     const wf = await readFile(join(DIR_WF, f), 'utf8');
     assert.ok(wf.includes(`playwright@${pwVer}`), `${f} deve usar playwright@${pwVer} (versao do bun.lock)`);
   }
+  // O workflow isolado usa os browsers da imagem fixada, sem reinstalação no host.
+  // A paridade com o lock continua obrigatória, agora no digest consumido pelo controller.
+  const logado = await readFile(join(DIR_WF, 'e2e-logado.yml'), 'utf8');
+  assert.match(logado, /bash scripts\/e2e-isolated\/run\.sh suite\b/);
+  const images = JSON.parse(await readFile(join(RAIZ, 'scripts/e2e-isolated/images.lock.json'), 'utf8'));
+  assert.match(images.images.driver, new RegExp(`^mcr\\.microsoft\\.com/playwright:v${pwEsc}-noble@sha256:[a-f0-9]{64}$`), 'imagem Playwright deve corresponder ao bun.lock e ter digest imutável');
   const e76 = rec.get('E76');
   assert.ok(e76);
   for (const f of tres) assert.ok(e76.linha.includes(f), `E76 deve citar ${f}`);
   // Não verificar versão literal aqui: a linha do plano menciona a versão em texto livre,
-  // mas o contrato é que a paridade seja verdadeira (todos os três arquivos == bun.lock).
+  // mas o contrato é que a paridade seja verdadeira (CLI ou imagem == bun.lock).
   assert.match(e76.linha, /não há mismatch/i);
 });
 

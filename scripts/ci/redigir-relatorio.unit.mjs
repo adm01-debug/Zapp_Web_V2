@@ -78,35 +78,29 @@ test('E82: diretorio ausente nao derruba o CI', () => {
   assert.deepEqual(r, { arquivos: 0, arquivosTocados: 0, ocorrencias: 0, segredos: 1 });
 });
 
-test('E82: o workflow mascara o log e redige o arquivo ANTES de subir o artifact', () => {
+test('E82: o workflow só publica o diretório público após o redator do controller', () => {
   const y = readFileSync(new URL('../../.github/workflows/e2e-logado.yml', import.meta.url), 'utf8');
   const steps = stepsOf(jobOf(y, 'e2e-logado'));
-  const mascara = onlyStep(steps, (s) => /^\s*echo "::add-mask::\$E2E_TEST_EMAIL"/m.test(shellCode(s)), 'mascara no log');
-  const playwright = onlyStep(steps, (s) => /^\s*bun run test:e2e\b/m.test(shellCode(s)), 'Playwright');
-  const redige = onlyStep(steps, (s) => /^\s*node scripts\/ci\/redigir-relatorio\.mjs\b/m.test(shellCode(s)), 'redacao');
-  assert.ok(steps.indexOf(mascara) < steps.indexOf(playwright), 'mascarar antes do Playwright');
-  assert.ok(steps.indexOf(redige) > steps.indexOf(playwright), 'redigir depois da geracao do relatorio');
-  assert.match(shellCode(redige), /node scripts\/ci\/redigir-relatorio\.mjs playwright-report\s/);
-  assert.match(shellCode(redige), /--segredo-env=E2E_TEST_EMAIL\b/);
-  assert.match(shellCode(redige), /--segredo-env=E2E_TEST_PASSWORD\b/);
-  const redactorId = valueOf(redige, 'id');
-  assert.ok(redactorId, 'a guarda precisa referenciar o passo real de redacao');
+  const controller = onlyStep(steps, (s) => /^\s*bash scripts\/e2e-isolated\/run\.sh suite\b/m.test(shellCode(s)), 'controller isolado');
+  const controllerId = valueOf(controller, 'id');
+  assert.ok(controllerId, 'o gate referencia o produtor real do resumo redigido');
+  assert.doesNotMatch(y, /secrets\.(?:E2E_TEST_EMAIL|E2E_TEST_PASSWORD)/);
   const uploads = [...jobsOf(y)].flatMap(([id, job]) => stepsOf(job)
     .filter((s) => (valueOf(s, 'uses') ?? '').startsWith('actions/upload-artifact@')).map((step) => ({ id, step })));
   assert.ok(uploads.length > 0, 'o relatorio redigido continua sendo arquivado');
   for (const { id, step } of uploads) {
     assert.equal(id, 'e2e-logado', 'o upload precisa usar o relatorio redigido no mesmo job');
-    assert.ok(steps.indexOf(step) > steps.indexOf(redige), 'todo upload vem depois da redacao');
+    assert.ok(steps.indexOf(step) > steps.indexOf(controller), 'todo upload vem depois do controller e sua redacao');
     assert.match(valueOf(step, 'uses'), /^actions\/upload-artifact@[0-9a-f]{40}$/);
-    assert.equal(nestedValue(step, 'with', 'path')?.replace(/\/$/, ''), 'playwright-report');
+    assert.equal(nestedValue(step, 'with', 'path'), '${{ runner.temp }}/e2e-isolated-suite-${{ matrix.name }}/public');
     assert.equal(nestedValue(step, 'with', 'retention-days'), '3');
-    assert.equal(nestedValue(step, 'with', 'if-no-files-found'), 'ignore');
-    for (const failed of [false, true]) for (const outcome of ['success', 'failure', 'skipped', 'cancelled']) {
+    assert.equal(nestedValue(step, 'with', 'if-no-files-found'), 'error');
+    for (const failed of [false, true]) for (const ready of ['true', 'false', '', undefined]) {
       const allowed = conditionAllows(conditionOf(step), {
         'failure()': failed, 'success()': !failed, 'always()': true, 'cancelled()': false,
-        [`steps.${redactorId}.outcome`]: outcome,
+        [`steps.${controllerId}.outputs.report_ready`]: ready,
       });
-      assert.equal(allowed, failed && outcome === 'success', 'upload exige falha e redacao bem-sucedida');
+      assert.equal(allowed, ready === 'true', 'upload exige redacao bem-sucedida, inclusive ao diagnosticar falha');
     }
   }
 });
