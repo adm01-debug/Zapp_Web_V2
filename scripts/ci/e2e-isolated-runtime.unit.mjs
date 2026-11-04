@@ -79,7 +79,7 @@ test('mounts RO: não segue symlink para diretório alheio', t => {
   assert.throws(() => prepareMountTargets(root, ['/work/e2e/.auth']), /unsafe-work-mount-target/);
 });
 
-async function controllerFixture(t, fault) {
+async function controllerFixture(t, fault, manifest = value => value) {
   const temporary = mkdtempSync(path.join(tmpdir(), 'isolated-controller-test-'));
   t.after(() => rmSync(temporary, { recursive: true, force: true }));
   const root = path.join(temporary, 'repo');
@@ -119,7 +119,7 @@ async function controllerFixture(t, fault) {
     if (program === 'git') {
       if (args[0] === 'rev-parse') return ok(SOURCE_SHA + '\n');
       if (args[0] === 'diff') return fault === 'dirty-checkout' ? error() : ok();
-      if (args[0] === 'ls-files') return ok('100644 ' + gitBlob(sql) + ' 0\tsupabase/migrations/' + MIGRATION + '\n');
+      if (args[0] === 'ls-files') return ok(manifest('100644 ' + gitBlob(sql) + ' 0\tsupabase/migrations/' + MIGRATION + '\n'));
       assert.fail('unexpected git command');
     }
     if (program === 'which') return ok(path.join(temporary, 'bun'));
@@ -388,5 +388,60 @@ for (const fault of ['browser-failure', 'wrong-result', 'redactor-failure', 'cle
     if (fault === 'browser-failure') assert.equal(value.state.login.failed, 1, 'failed Playwright exit still yields real report counts');
     if (fault === 'foreign-container-cleanup') assert.ok(value.containers.size > 0, 'foreign-labelled containers must not be removed');
     if (fault === 'foreign-volume-cleanup') assert.ok(value.volumes.size > 0, 'foreign-labelled volumes must not be removed');
+  });
+}
+
+
+// Native Git contains both regular modes. These scenarios exercise the real
+// controller with different git-index observations, before credential creation.
+const sourceIndexScenarios = [];
+for (const mode of ['100644', '100755']) {
+  const regular = value => value.replace(/^100644 /, mode + ' ');
+  for (const [label, wrap] of [
+    ['single active file', value => value],
+    ['archived SQL before', value => '100644 ' + 'b'.repeat(40) + ' 0\tsupabase/migrations/_superseded/old.sql\n' + value],
+    ['directory README after', value => value + '100644 ' + 'c'.repeat(40) + ' 0\tsupabase/migrations/README.md\n'],
+    ['no final linefeed', value => value.trimEnd()],
+  ]) sourceIndexScenarios.push({ label: mode + ' / ' + label, allow: true, manifest: value => wrap(regular(value)) });
+  sourceIndexScenarios.push({ label: mode + ' wrong blob', allow: false, manifest: value => regular(value).replace(gitBlob(SQL), 'f'.repeat(40)) });
+  for (const stage of ['1', '2', '3']) sourceIndexScenarios.push({ label: mode + ' unresolved stage ' + stage, allow: false, manifest: value => regular(value).replace(' 0\t', ' ' + stage + '\t') });
+}
+for (const mode of ['100600', '100664', '100666', '040000', '120000', '160000']) {
+  sourceIndexScenarios.push({ label: 'non-regular mode ' + mode, allow: false, manifest: value => value.replace(/^100644 /, mode + ' ') });
+}
+for (const [label, manifest] of [
+  ['missing record', () => ''],
+  ['missing mode', value => value.replace(/^100644 /, '')],
+  ['missing hash', value => value.replace(gitBlob(SQL), '')],
+  ['truncated hash', value => value.replace(gitBlob(SQL), 'a'.repeat(39))],
+  ['SHA256-like hash in SHA1 checkout', value => value.replace(gitBlob(SQL), 'a'.repeat(64))],
+  ['nonhex hash', value => value.replace(gitBlob(SQL), 'g'.repeat(40))],
+  ['missing stage', value => value.replace(' 0\t', '\t')],
+  ['missing field separator', value => value.replace('\t', ' ')],
+  ['different active filename', value => value.replace(MIGRATION, '20260101000001_other.sql')],
+  ['different directory', value => value.replace('supabase/migrations/', 'other/migrations/')],
+  ['archived instead of active', value => value.replace('supabase/migrations/', 'supabase/migrations/_superseded/')],
+  ['quoted instead of literal path', value => value.replace('\tsupabase/', '\t"supabase/').trimEnd() + '"\n'],
+  ['absolute instead of repository path', value => value.replace('\tsupabase/', '\t/work/supabase/')],
+  ['line suffix', value => value.trimEnd() + ' unexpected\n'],
+]) sourceIndexScenarios.push({ label, allow: false, manifest });
+
+for (const scenario of sourceIndexScenarios) {
+  test('índice Git real: ' + scenario.label, async t => {
+    const value = await controllerFixture(t, 'none', scenario.manifest);
+    assert.equal(value.exit, scenario.allow ? 0 : 1);
+    assert.equal(value.state.success, scenario.allow);
+    if (scenario.allow) {
+      assert.equal(value.migrationCalls, 1);
+      assert.equal(value.browserCalls, 1);
+    } else {
+      assert.equal(value.state.error, 'migration-source-changed');
+      assert.equal(value.credentialFilesSeen, false);
+      assert.equal(value.migrationCalls, 0);
+      assert.equal(value.seedCalls, 0);
+      assert.equal(value.browserCalls, 0);
+    }
+    assert.equal(value.containers.size, 0);
+    assert.equal(value.volumes.size, 0);
   });
 }

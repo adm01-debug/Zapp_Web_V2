@@ -251,7 +251,7 @@ export async function runLogin({ outputDirectory, command = spawnSync } = {}) {
     if (!migrations.length) throw new Error('active-migrations-missing');
     const tracked = required(execute('git', ['ls-files', '-s', '--', 'supabase/migrations']), 'migration-source-manifest-failed');
     const trackedBlobs = new Map(tracked.split('\n').map(line => {
-      const match = line.match(/^100644 ([a-f0-9]{40}) 0\tsupabase\/migrations\/([^/]+\.sql)$/);
+      const match = line.match(/^100(?:644|755) ([a-f0-9]{40}) 0\tsupabase\/migrations\/([^/]+\.sql)$/);
       return match ? [match[2], match[1]] : [null, null];
     }));
     if (migrations.some(item => trackedBlobs.get(item.evidence.name) !== item.evidence.original_git_blob)) throw new Error('migration-source-changed');
