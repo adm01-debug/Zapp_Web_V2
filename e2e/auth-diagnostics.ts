@@ -78,19 +78,25 @@ export type AuthObservation = {
   transportFailed?: boolean;
   timedOut?: boolean;
   credentialRejected?: boolean;
+  accessBlocked?: boolean;
 };
 
 export function isAuthLoginRequest(raw: string): boolean {
   try { return new URL(raw).pathname === '/functions/v1/auth-login'; } catch { return false; }
 }
 
-/** Usa apenas evidência de transporte/status; nunca lê body, senha, token ou email. */
+/** Usa metadados e marcadores específicos da UI; nunca lê body, senha, token ou email. */
 export function diagnoseAuthFailure(baseURL: unknown, observation: AuthObservation) {
   const result = (code: string, message: string, retryable = false) => ({ code, message, retryable });
   const status = observation.status;
   if (status === 429) return result('RATE_LIMIT', 'auth-login respondeu HTTP 429; limite temporário de requisições.', true);
   if (status && status >= 500) return result('UPSTREAM_HTTP', `auth-login respondeu HTTP ${status}.`, true);
-  if (status === 401 || status === 403 || observation.credentialRejected) {
+  // useAuthForm exibe esse título para networkBlocked. O servidor pode negar
+  // a política de rede antes de conferir a senha; HTTP 403 sozinho não prova a causa.
+  if (observation.accessBlocked) {
+    return result('ACCESS_BLOCKED', 'O app exibiu bloqueio de acesso. Confira a política de acesso do ambiente de teste; isso não comprova senha inválida.');
+  }
+  if (status === 401 || observation.credentialRejected) {
     return result('AUTH_REJECTED', 'A autenticação foi recusada. Confira as credenciais e o estado da conta de teste; o diagnóstico não revela seus valores.');
   }
   if (status && status >= 400) return result('REQUEST_REJECTED', `auth-login respondeu HTTP ${status}; consulte o contrato da requisição antes de repetir.`);

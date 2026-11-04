@@ -355,14 +355,19 @@ em `src/components/inbox/tabs/__tests__/FilesContent.test.tsx`.
 
 ## Diagnóstico do setup e limites de execução remota
 
-O setup registra somente origem do endpoint, status HTTP e ocorrência de falha de
-transporte do POST de `auth-login`. Não lê nem imprime corpo, headers, credenciais,
-tokens ou conteúdo do storageState para diagnosticar uma falha.
+O setup registra somente origem do endpoint, status HTTP, ocorrência de falha de
+transporte do POST de `auth-login` e presença de marcadores específicos de recusa
+na UI. Não lê nem imprime corpo, headers, credenciais, tokens ou conteúdo do
+storageState para diagnosticar uma falha.
 
 O toast "Login temporariamente indisponível" também pode resultar de CORS/fetch;
 ele não comprova timeout, HTTP 5xx/429 nem senha incorreta. O diagnóstico distingue
 origem incompatível com a política CORS oficial, transporte sem resposta, recusa
 de autenticação, HTTP 429/5xx e resposta 2xx sem sessão/app shell confirmada.
+O título exato "Acesso bloqueado" encerra a espera como bloqueio observado pelo
+app; HTTP 403 isolado é recusa da requisição, sem atribuir senha inválida ou uma
+regra de rede específica. O setup observa apenas a presença desse título, sem
+ler o corpo da resposta nem a descrição do toast.
 Respostas tardias de uma tentativa anterior não alimentam a tentativa seguinte.
 O diagnóstico controla somente o laço interno de tentativas do setup; os retries
 do projeto Playwright (`RETRIES_LOGADOS`) permanecem como estavam.

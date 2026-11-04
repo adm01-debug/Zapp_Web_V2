@@ -42,7 +42,7 @@ setup('authenticate', async ({ page, baseURL }) => {
     );
   }
 
-  // Só registramos metadados de transporte. Não ler/logar body, headers, senha,
+  // Observamos metadados e marcadores específicos da UI. Não ler/logar body, headers, senha,
   // email, access token ou storageState para diagnosticar uma falha de login.
   let observation: AuthObservation = {};
   let currentLoginRequest: object | undefined;
@@ -65,7 +65,7 @@ setup('authenticate', async ({ page, baseURL }) => {
 
   // Sidebar da app shell (#main-navigation) so aparece apos login bem-sucedido.
   //
-  // Espera o DESFECHO: a sidebar OU a mensagem ESPECIFICA de recusa, o que vier
+  // Espera o DESFECHO: a sidebar OU a mensagem ESPECIFICA de recusa/bloqueio, o que vier
   // primeiro. A recusa chega num toast que some em poucos segundos (useAuthForm),
   // entao nao da' para esperar a sidebar por inteiro e so' depois procurar o erro.
   // Nao usar getByRole('alert') generico: o app dispara toasts alheios ao login
@@ -80,6 +80,8 @@ setup('authenticate', async ({ page, baseURL }) => {
   const erroLogin = page.getByText(
     /erro ao entrar|e-?mail ou senha incorretos|conta bloqueada|invalid login|credenciais? inv[aá]lid|temporariamente indispon[ií]vel/i,
   );
+  // Título do ramo networkBlocked em useAuthForm: não equivale a senha incorreta.
+  const bloqueioAcesso = page.getByText(/^acesso bloqueado$/i);
   // O toast "indisponivel" também cobre falha de fetch/CORS. Só a resposta HTTP
   // observada permite atribuir 5xx/429; retries não corrigem origem incompatível.
   const indisponivel = page.getByText(/temporariamente indispon[ií]vel/i);
@@ -104,7 +106,7 @@ setup('authenticate', async ({ page, baseURL }) => {
     await page.getByRole('button', { name: /^entrar$/i }).click();
 
     try {
-      await expect(shell.or(erroLogin).first()).toBeVisible({ timeout: 120_000 });
+      await expect(shell.or(erroLogin).or(bloqueioAcesso).first()).toBeVisible({ timeout: 120_000 });
     } catch {
       const diagnostic = diagnoseAuthFailure(baseURL, { ...observation, timedOut: true });
       throw new Error(
@@ -114,6 +116,7 @@ setup('authenticate', async ({ page, baseURL }) => {
 
     if (await shell.isVisible().catch(() => false)) break;
 
+    observation.accessBlocked = await bloqueioAcesso.first().isVisible().catch(() => false);
     if (await indisponivel.first().isVisible().catch(() => false)) {
       const diagnostic = diagnoseAuthFailure(baseURL, observation);
       if (diagnostic.retryable && tentativa < TENTATIVAS) {

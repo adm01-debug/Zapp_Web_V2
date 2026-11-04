@@ -17,8 +17,13 @@ test('integração offline do auth.setup e playwright.config reais', async t => 
   const stub = dataModule(`
     const test = (name, callback) => { globalThis.__offlineAuthProbe.callback = callback; };
     test.setTimeout = () => {};
-    const expect = () => ({ toBeVisible: async () => {
-      if (globalThis.__offlineAuthProbe.timeout) throw new Error('prazo simulado');
+    const expect = actual => ({ toBeVisible: async ({ timeout }) => {
+      const probe = globalThis.__offlineAuthProbe;
+      probe.state.timeoutBudgets.push(timeout);
+      if (probe.timeout || !(await actual.isVisible())) {
+        probe.state.expiredWaits++;
+        throw new Error('prazo simulado');
+      }
     } });
     const defineConfig = value => value;
     const devices = new Proxy({}, { get: () => ({}) });
@@ -45,37 +50,47 @@ test('integração offline do auth.setup e playwright.config reais', async t => 
 
   function fakePage(scenario) {
     const handlers = new Map();
-    const state = { clicks: 0, gotos: 0, fills: 0, saved: 0, waits: 0 };
+    const state = { clicks: 0, gotos: 0, fills: 0, saved: 0, waits: 0, expiredWaits: 0, timeoutBudgets: [], forbiddenReads: 0 };
     const requests = [];
     const emit = (event, value) => handlers.get(event)?.(value);
     const locator = visible => ({
       isVisible: async () => visible(), first() { return this; },
-      or() { return this; }, fill: async () => { state.fills++; },
+      or(other) { return locator(async () => (await visible()) || (await other.isVisible())); },
+      fill: async () => { state.fills++; },
+    });
+    const texts = () => (scenario.textsByAttempt?.[state.clicks - 1] ?? scenario.texts ??
+      (scenario.unavailable ? ['Login temporariamente indisponível'] :
+        scenario.credential ? ['E-mail ou senha incorretos'] : []))
+      .map(text => text.replace(/\s+/g, ' ').trim());
+    const forbidden = () => { state.forbiddenReads++; throw new Error('Leitura de dados sensiveis proibida'); };
+    const response = (request, status) => ({
+      request: () => request, status: () => status,
+      body: forbidden, json: forbidden, text: forbidden, headers: forbidden, allHeaders: forbidden,
     });
     const preflight = () => {
       const request = { method: () => 'OPTIONS', url: () => `${scenario.backend ?? LOCAL}/functions/v1/auth-login` };
       emit('request', request);
-      emit('response', { request: () => request, status: () => 200 });
+      emit('response', response(request, 200));
     };
     const page = {
       on: (name, handler) => handlers.set(name, handler),
       goto: async () => { state.gotos++; },
       waitForTimeout: async () => { state.waits++; },
-      locator: () => locator(() => !!scenario.success),
-      getByText: pattern => locator(() => pattern.test('temporariamente indisponivel')
-        ? !!scenario.unavailable : !!scenario.credential),
+      locator: selector => locator(() => selector === '#main-navigation' && !!scenario.success),
+      getByText: pattern => locator(() => texts().some(text => pattern.test(text))),
       getByRole: role => role === 'button' ? { click: async () => {
         state.clicks++;
         if (scenario.options === 'before') preflight();
         const request = { method: () => 'POST', url: () => `${scenario.backend ?? LOCAL}/functions/v1/auth-login` };
         requests.push(request);
+        Object.assign(request, { postData: forbidden, postDataJSON: forbidden, headers: forbidden });
         emit('request', request);
         const status = scenario.statuses?.[state.clicks - 1] ?? scenario.status;
-        if (status) emit('response', { request: () => request, status: () => status });
+        if (status) emit('response', response(request, status));
         if (scenario.options === 'after') preflight();
         if (scenario.transport) emit('requestfailed', request);
         if (scenario.late && state.clicks === 2) {
-          emit('response', { request: () => requests[0], status: () => 503 });
+          emit('response', response(requests[0], 503));
         }
       } } : locator(() => false),
       context: () => ({ storageState: async () => { state.saved++; } }),
@@ -101,14 +116,30 @@ test('integração offline do auth.setup e playwright.config reais', async t => 
       ['2xx sem shell não é login confirmado', { status: 200, timeout: true }, 'LOGIN_RESULT_NOT_CONFIRMED', 1],
       ['sucesso simulado mantém storageState existente', { status: 200, success: true }, null, 1],
       ['resposta tardia não substitui status atual', { statuses: [503, 401], unavailable: true, late: true }, 'AUTH_REJECTED', 2],
+      ['403 com título exato de bloqueio encerra a espera', { status: 403, texts: ['Acesso bloqueado'] }, 'ACCESS_BLOCKED', 1],
+      ['bloqueio aceita caixa e espaços normalizados da UI', { status: 403, texts: ['  ACESSO   BLOQUEADO  '] }, 'ACCESS_BLOCKED', 1],
+      ['403 genérico não confirma senha inválida', { status: 403, texts: ['Erro ao entrar'] }, 'REQUEST_REJECTED', 1],
+      ['403 com indisponibilidade genérica não repete', { status: 403, unavailable: true }, 'REQUEST_REJECTED', 1],
+      ['403 sem toast não inventa prova da causa', { status: 403 }, 'REQUEST_REJECTED', 1, 1],
+      ['toast SIP não confirma bloqueio de acesso', { status: 403, texts: ['Erro ao conectar ao servidor SIP'] }, 'REQUEST_REJECTED', 1, 1],
+      ['frase semelhante não é o título de bloqueio', { status: 403, texts: ['Histórico de acesso bloqueado'] }, 'REQUEST_REJECTED', 1, 1],
+      ['bloqueio na UI sem status observado', { texts: ['Acesso bloqueado'] }, 'ACCESS_BLOCKED', 1],
+      ['503 com UI de política conserva o diagnóstico HTTP', { status: 503, texts: ['Acesso bloqueado'] }, 'UPSTREAM_HTTP', 1],
+      ['503 seguido de bloqueio não herda resposta tardia', { statuses: [503, 403], textsByAttempt: [['Login temporariamente indisponível'], ['Acesso bloqueado']], late: true }, 'ACCESS_BLOCKED', 2],
+      ['shell confirmado vence toast antigo de bloqueio', { status: 200, texts: ['Acesso bloqueado'], success: true }, null, 1],
+      ['preflight tardio não muda bloqueio do POST', { status: 403, texts: ['Acesso bloqueado'], options: 'after' }, 'ACCESS_BLOCKED', 1],
+      ['423 com conta bloqueada continua recusa de autenticação', { status: 423, texts: ['Conta bloqueada temporariamente'] }, 'AUTH_REJECTED', 1],
+      ['403 com recusa específica da UI mantém essa evidência', { status: 403, credential: true }, 'AUTH_REJECTED', 1],
+      ['bloqueio junto de indisponibilidade genérica não repete', { status: 403, texts: ['Acesso bloqueado', 'Login temporariamente indisponível'] }, 'ACCESS_BLOCKED', 1],
     ];
-    for (const [name, scenario, expected, clicks] of cases) {
+    for (const [name, scenario, expected, clicks, expiredWaits = Number(Boolean(scenario.timeout))] of cases) {
       await t.test(`setup: ${name}`, async () => {
         process.env.E2E_TEST_EMAIL = 'offline@example.invalid';
         process.env.E2E_TEST_PASSWORD = 'offline-probe-never-auth';
         if (scenario.missing) { delete process.env.E2E_TEST_EMAIL; delete process.env.E2E_TEST_PASSWORD; }
         globalThis.__offlineAuthProbe.timeout = scenario.timeout;
         const { page, state } = fakePage(scenario);
+        globalThis.__offlineAuthProbe.state = state;
         const originalEnv = process.env;
         const secretReads = [];
         if (scenario.guardSecrets) {
@@ -126,6 +157,10 @@ test('integração offline do auth.setup e playwright.config reais', async t => 
         }
         assert.equal(state.clicks, clicks);
         assert.equal(state.saved, scenario.success ? 1 : 0);
+        assert.equal(state.expiredWaits, expiredWaits, 'toast reconhecido deve despertar a união de locators sem esgotar o prazo');
+        assert.ok(state.timeoutBudgets.every(timeout => timeout === 120_000));
+        assert.equal(state.waits, Math.max(0, clicks - 1));
+        assert.equal(state.forbiddenReads, 0);
         if (scenario.base) {
           assert.equal(state.gotos, 0);
           assert.equal(state.fills, 0);
