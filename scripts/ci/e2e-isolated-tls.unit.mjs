@@ -309,13 +309,18 @@ function browserFixture(fault, affected = 'chromium', negativeOverride) {
       if (fault === 'context' && engine === affected) throw new Error('context failed');
       return { close: async () => closed.push(engine + '-context'), newPage: async () => {
         const page = new EventEmitter(), frame = {};
+        let currentUrl = 'about:blank';
         return Object.assign(page, {
         mainFrame: () => frame,
+        url: () => currentUrl,
         close: async () => {},
         evaluate: async () => ({ identity: fault === 'identity' && engine === affected ? { ...identity, source_sha: 'b'.repeat(40) } : identity,
           image: !(fault === 'image' && engine === affected) }),
         goto: async url => {
-          if (url.startsWith(TLS_ORIGIN)) return { status: () => fault === 'positive-status' && engine === affected ? 503 : 200 };
+          if (url.startsWith(TLS_ORIGIN)) {
+            currentUrl = url;
+            return { status: () => fault === 'positive-status' && engine === affected ? 503 : 200, json: async () => identity };
+          }
           const reject = failure => {
             const request = { url: () => url, method: () => 'GET', resourceType: () => 'document',
               isNavigationRequest: () => true, frame: () => frame, failure: () => ({ errorText: failure.message }) };
@@ -508,12 +513,17 @@ function tlsDiagnosticFixture(spec) {
         newPage: async () => {
           const page = new EventEmitter(), frame = {}, otherFrame = {};
           pages.push(page); page.mainFrame = () => frame;
+          let currentUrl = 'about:blank';
+          page.url = () => currentUrl;
           page.evaluate = async () => ({ identity, image: true });
           let request, target = false;
           page.close = async () => { order.push(target ? 'target-close' : 'page-close'); if (target && spec.delivery === 'close') page.emit('requestfailed', request); };
           page.goto = async (url, options) => {
             assert.deepEqual(options, { waitUntil: 'load', timeout: 15_000 });
-            if (url === TLS_ORIGIN + '/__e2e/tls-probe') return { status: () => 200 };
+            if ([TLS_ORIGIN + '/__e2e/tls-probe', TLS_ORIGIN + '/__e2e/identity'].includes(url)) {
+              currentUrl = url;
+              return { status: () => 200, json: async () => identity };
+            }
             target = engine === engineName && url.includes(kind === 'untrusted' ? ':5175/' : ':5176/');
             const change = target ? spec.request ?? {} : {};
             const errorText = target ? spec.text ?? 'TLS certificate is not trusted' : nativeMessage(engine);
@@ -601,4 +611,127 @@ test('TLS request diagnostic: both existing redactors preserve evidence and remo
   const published = readFileSync(log, 'utf8');
   assert.ok(!published.includes(firstSecret)); assert.ok(!published.includes(secondSecret));
   assert.match(published, /TLS certificate is not trusted/); assert.match(published, /request_failed_count/);
+});
+
+// These controlled lifecycles test the contract, not a native WebKit race.
+const tlsWarmupTargets = ['chromium', 'firefox', 'webkit'].flatMap(engine => ['untrusted', 'wrong_san'].map(kind => ({ engine, kind })));
+const tlsWarmupCases = [
+  ...tlsWarmupTargets.map(target => ({ ...target, name: 'valid/' + target.engine + '/' + target.kind })),
+  ...tlsWarmupTargets.map(target => ({ ...target, name: 'generic-stays-rejected/' + target.engine + '/' + target.kind, negative: 'cancelled' })),
+  ...tlsWarmupTargets.map(target => ({ ...target, name: 'invalid-certificate-accepted/' + target.engine + '/' + target.kind, negative: 'accepted' })),
+  ...['Timeout 15000ms exceeded', 'ECONNREFUSED', 'Unacceptable TLS certificate', 'Frame was detached', 'Operation was cancelled', 'Target page has been closed']
+    .map((message, index) => ({ ...tlsWarmupTargets[index], name: 'warmup-goto-error/' + index, warmupError: message })),
+  ...[null, 204, 302, 401, 404, 500].map((status, index) => ({ ...tlsWarmupTargets[index], name: 'warmup-status/' + status, status })),
+  ...[
+    ['schema', { ...identity, schema: 2 }], ['run', { ...identity, run_id: runId + '-foreign' }],
+    ['source', { ...identity, source_sha: 'b'.repeat(40) }], ['origin', { ...identity, origin: 'http://127.0.0.1:5173' }],
+    ['missing', {}], ['invalid-json', null],
+  ].map(([name, body], index) => ({ ...tlsWarmupTargets[index], name: 'warmup-identity/' + name, body })),
+  ...[
+    ['no-document-commit', 'about:blank'], ['http', 'http://127.0.0.1:5173/__e2e/identity'],
+    ['other-host', 'https://localhost:5173/__e2e/identity'], ['other-port', 'https://127.0.0.1:5175/__e2e/identity'],
+    ['other-path', TLS_ORIGIN + '/__e2e/other'], ['query', TLS_ORIGIN + '/__e2e/identity?other=1'],
+  ].map(([name, url], index) => ({ ...tlsWarmupTargets[index], name: 'warmup-lifecycle/' + name, finalUrl: url })),
+];
+assert.equal(tlsWarmupCases.length, 42);
+
+function tlsWarmupFixture(spec) {
+  const pages = [], diagnostics = [], closed = [];
+  const original = new Error('Operation was cancelled; maybe frame was detached?');
+  const warmupError = spec.warmupError ? new Error(spec.warmupError) : null;
+  const engines = Object.fromEntries(['chromium', 'firefox', 'webkit'].map(engine => [engine, { launch: async () => ({
+    close: async () => closed.push(engine),
+    newContext: async options => {
+      assert.deepEqual(options, { ignoreHTTPSErrors: false });
+      let number = 0;
+      return { close: async () => closed.push(engine + '-context'), newPage: async () => {
+        const role = ['positive', 'untrusted', 'wrong_san'][number++], page = new EventEmitter(), frame = {};
+        const record = { engine, role, warmups: 0, jsonReads: 0, negativeAttempts: 0, beforeIdentity: false,
+          listenersAtWarmup: [], closed: false, url: 'about:blank', committed: false, identityCompleted: false, warmupEvents: 0 };
+        pages.push(record);
+        const target = engine === spec.engine && role === spec.kind;
+        page.mainFrame = () => frame; page.url = () => record.url;
+        page.close = async () => { record.closed = true; };
+        page.evaluate = async () => ({ identity, image: true });
+        page.goto = async (url, options) => {
+          assert.deepEqual(options, { waitUntil: 'load', timeout: 15_000 });
+          if (role === 'positive') { assert.equal(url, TLS_ORIGIN + '/__e2e/tls-probe'); record.url = url; return { status: () => 200 }; }
+          const request = { url: () => url, method: () => 'GET', resourceType: () => 'document',
+            isNavigationRequest: () => true, frame: () => frame, failure: () => ({ errorText: target && spec.negative === 'cancelled'
+              ? 'Operation was cancelled' : engine === 'webkit' ? 'Unacceptable TLS certificate' : role === 'untrusted' ? 'ERR_CERT_AUTHORITY_INVALID' : 'ERR_CERT_COMMON_NAME_INVALID' }) };
+          if (url === TLS_ORIGIN + '/__e2e/identity') {
+            record.warmups++;
+            record.listenersAtWarmup.push(['request', 'requestfailed', 'response', 'requestfinished'].reduce((n, event) => n + page.listenerCount(event), 0));
+            if (target && warmupError) throw warmupError;
+            record.url = target && spec.finalUrl ? spec.finalUrl : url;
+            record.committed = record.url !== 'about:blank';
+            const status = target && Object.hasOwn(spec, 'status') ? spec.status : 200;
+            if (status === null) return null;
+            const response = { request: () => request, status: () => status, json: async () => {
+              record.jsonReads++;
+              // Deliberately asynchronous so advancing without reading identity is observable.
+              await Promise.resolve();
+              record.identityCompleted = true;
+              if (target && Object.hasOwn(spec, 'body')) {
+                if (spec.body === null) throw new SyntaxError('controlled invalid JSON');
+                return spec.body;
+              }
+              return identity;
+            } };
+            page.emit('request', request); page.emit('response', response); page.emit('requestfinished', request);
+            record.warmupEvents += 3;
+            return response;
+          }
+          assert.equal(url, 'https://127.0.0.1:' + (role === 'untrusted' ? '5175' : '5176') + '/__e2e/tls-control');
+          record.negativeAttempts++;
+          record.beforeIdentity ||= record.warmups !== 1 || record.jsonReads !== 1 || !record.identityCompleted || !record.committed;
+          page.emit('request', request);
+          if (target && spec.negative === 'accepted') {
+            const response = { request: () => request, status: () => 200 };
+            page.emit('response', response); page.emit('requestfinished', request); return response;
+          }
+          page.emit('requestfailed', request);
+          if (target && spec.negative === 'cancelled') throw original;
+          throw new Error(request.failure().errorText);
+        };
+        return page;
+      } };
+    },
+  }) }]));
+  return { engines, pages, diagnostics, closed, original, warmupError,
+    diagnostic: record => diagnostics.push(structuredClone(record)) };
+}
+
+for (const spec of tlsWarmupCases) test('TLS same-page warmup: ' + spec.name, async () => {
+  const fixture = tlsWarmupFixture(spec);
+  let failure, checks;
+  try { checks = await probeBrowsers({ runId, sourceSha, env, engines: fixture.engines,
+    environment: value => value, diagnostic: fixture.diagnostic }); } catch (error) { failure = error; }
+  const target = fixture.pages.find(page => page.engine === spec.engine && page.role === spec.kind);
+  assert.ok(target);
+  assert.equal(target.warmups, 1, 'each negative page must load its own valid HTTPS document first');
+  const badWarmup = spec.warmupError || Object.hasOwn(spec, 'status') || Object.hasOwn(spec, 'body') || spec.finalUrl;
+  if (badWarmup) {
+    assert.ok(failure); assert.equal(target.negativeAttempts, 0, 'failed warmup cannot reach the negative control');
+    assert.equal(fixture.diagnostics.some(record => record.engine === spec.engine && record.kind === spec.kind), false);
+    if (spec.warmupError) assert.equal(failure, fixture.warmupError);
+  } else if (spec.negative) {
+    assert.match(failure?.message ?? '', new RegExp(spec.negative === 'accepted' ? '-accepted' : '-not-certificate-error'));
+    assert.equal(target.negativeAttempts, 1, 'no negative retry');
+    if (spec.negative === 'cancelled') assert.equal(failure.cause, fixture.original);
+  } else {
+    assert.equal(failure, undefined); assert.equal(Object.keys(checks).length, 3);
+    assert.equal(fixture.pages.filter(page => page.role !== 'positive').length, 6);
+    for (const record of fixture.diagnostics) {
+      assert.equal(record.request_count, 1); assert.equal(record.request_failed_count, 1);
+      assert.equal(record.response_count, 0); assert.equal(record.request_finished_count, 0);
+      assert.equal(record.ignored_event_count, 0, 'warmup events precede diagnostic observation');
+    }
+  }
+  for (const page of fixture.pages.filter(page => page.role !== 'positive')) {
+    assert.equal(page.warmups, 1); assert.deepEqual(page.listenersAtWarmup, [0]);
+    assert.equal(page.beforeIdentity, false); assert.ok(page.negativeAttempts <= 1); assert.equal(page.closed, true);
+  }
+  assert.ok(fixture.pages.every(page => page.closed), 'all pages close, including failed warmups');
+  assert.ok(fixture.closed.includes(spec.engine)); assert.ok(fixture.closed.includes(spec.engine + '-context'));
 });

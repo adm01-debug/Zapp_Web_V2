@@ -126,16 +126,22 @@ export async function probeBrowsers({ runId, sourceSha, env, engines, environmen
         await page.close();
         for (const kind of Object.keys(TLS_CONTROLS)) {
           const negative = await context.newPage();
-          const observation = navigationDiagnostic(negative, controlUrl(kind), runId, sourceSha);
-          let rejection;
+          let observation, rejection;
           try {
+            // Establish a committed, trusted HTTPS document on this exact page
+            // before exercising a failed navigation. Each control starts fresh.
+            const warmupUrl = TLS_ORIGIN + '/__e2e/identity';
+            const warmup = await negative.goto(warmupUrl, { waitUntil: 'load', timeout: 15_000 });
+            if (warmup?.status() !== 200 || negative.url() !== warmupUrl) fail('browser-' + name + '-' + kind + '-warmup-document');
+            assertIdentity(await warmup.json(), runId, sourceSha);
+            observation = navigationDiagnostic(negative, controlUrl(kind), runId, sourceSha);
             try { await negative.goto(controlUrl(kind), { waitUntil: 'load', timeout: 15_000 }); }
             catch (error) { rejection = error; }
             // WebKit provisional-load failure can abort goto independently of
             // Network.loadingFailed. This bounded observation never approves TLS.
             if (rejection && !certificateFailure(rejection, kind, name)) await observation.wait();
             diagnostic({ engine: name, kind, ...observation.record });
-          } finally { observation.stop(); await negative.close(); }
+          } finally { observation?.stop(); await negative.close(); }
           if (!rejection) fail('browser-' + name + '-' + kind + '-accepted');
           if (!certificateFailure(rejection, kind, name)) fail('browser-' + name + '-' + kind + '-not-certificate-error', rejection);
         }
