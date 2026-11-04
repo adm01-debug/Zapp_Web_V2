@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `da9f551f40` · branch `main` · 2026-11-03 22:19 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `451373f549` · branch `main` · 2026-11-04 01:31 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -89,12 +89,12 @@
 | `department_invites` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
 | `departments` | Organizational departments; each may own a team_conversation of type=department | 8 colunas | migration |
 | `edge_rate_limits` | [RLS-sem-policy: intencional] Bucket de rate limiting das edge functions. Escrito/lido pelo middleware de rate limit (service_role). Cron cleanup-edge-rate-limits purga a cada 15 min. | 4 colunas | migration |
-| `email_attachments` | Anexos de email Gmail - RLS corrigido em 2026-04-12 | 8 colunas | migration |
+| `email_attachments` | Anexos de email_messages (unico por mensagem+attachment_id). | 7 colunas | migration |
 | `email_labels` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | migration |
-| `email_messages` | Mensagens de email Gmail - RLS corrigido em 2026-04-12 | 25 colunas | migration |
+| `email_messages` | Mensagens de e-mail de uma email_thread (corpo texto/HTML sanitizado no front por src/lib/emailHtml.ts). | 24 colunas | migration |
 | `email_signatures` | Assinaturas de e-mail do proprio usuario (nome, HTML) com no maximo uma padrao por dono (indice unico parcial em user_id when is_default). Dono em user_id = auth.uid(); acesso so do dono. | 7 colunas | migration |
-| `email_threads` | Threads de email Gmail - RLS corrigido em 2026-04-12 | 20 colunas | migration |
-| `entity_versions` | Versionamento de entidades - RLS corrigido em 2026-04-12 | 9 colunas | migration |
+| `email_threads` | Threads do Gmail sincronizadas por conta (gmail_accounts), com contato associado, atribuicao e remetente da ultima mensagem. | 20 colunas | migration |
+| `entity_versions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 8 colunas | migration |
 | `favorite_contacts` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | migration |
 | `feature_flags` | Feature flags globais (key -> enabled). Leitura por qualquer usuario autenticado, escrita apenas admin via RLS. Consumido por useFeatureFlag no front. | 11 colunas | migration |
 | `followup_executions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | migration |
@@ -164,7 +164,7 @@
 | `role_permissions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | migration |
 | `sales_deals` | _(sem COMMENT ON TABLE — significado não documentado)_ | 17 colunas | migration |
 | `sales_pipeline_stages` | _(sem COMMENT ON TABLE — significado não documentado)_ | 7 colunas | migration |
-| `saved_filters` | Filtros salvos por usuários para diferentes entidades | 9 colunas | migration |
+| `saved_filters` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | migration |
 | `scheduled_messages` | _(sem COMMENT ON TABLE — significado não documentado)_ | 14 colunas | migration |
 | `scheduled_report_configs` | _(sem COMMENT ON TABLE — significado não documentado)_ | 12 colunas | migration |
 | `scheduled_reports` | _(sem COMMENT ON TABLE — significado não documentado)_ | 12 colunas | migration |
@@ -233,7 +233,7 @@
 | `webauthn_challenges` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
 | `webhook_failures` | Dead-letter dos webhooks (endpoint, evento, payload truncado, erro, retries). ACL restrita a service_role. | 11 colunas | migration |
 | `webhook_rate_limits` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
-| `whatsapp_connection_queues` | Conexões WhatsApp-Filas - RLS corrigido em 2026-04-12 | 4 colunas | migration |
+| `whatsapp_connection_queues` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | migration |
 | `whatsapp_connections` | Instancias da Evolution GO conectadas (instance_id unico), status da sessao e configuracao de webhook. | 25 colunas | migration |
 | `whatsapp_connections_agent` | _(sem COMMENT ON TABLE — significado não documentado)_ | 5 colunas | types.ts |
 | `whatsapp_connections_public` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | types.ts |
@@ -315,7 +315,6 @@
 |---|---|---|---|
 | `goals_configurations` | `profile_id, goal_type, daily_target, weekly_target, monthly_target, is_active` | `(NEW.id, 'messages_sent', CASE WHEN NEW.role IN ('admin', 'supervisor') THEN 10 ELSE 50 END, CASE WHEN NEW.role IN ('admin', 'supervisor') THEN 50 ELSE 250 END, CASE WHEN NEW.role IN ('admin', 'supervisor') THEN 200 ELSE 1000 END, true), (NEW.id, 'contacts_handled', CASE WHEN NEW.role IN ('admin', 'supervisor') THEN 3 ELSE 10 END, CASE WHEN NEW.role IN ('admin', 'supervisor') THEN 15 ELSE 50 END, …` | `supabase/migrations/20260925190001_dashboard_e42_seed_goals_by_role.sql` |
 | `permissions` | `name, description, category` | `('multiplix.audience.suppliers', 'Multiplix: enviar para fornecedores', 'multiplix'), ('multiplix.audience.carriers', 'Multiplix: enviar para transportadoras', 'multiplix'), ('multiplix.audience.customers.own', 'Multiplix: enviar para a propria carteira de clientes', 'multiplix'), ('multiplix.audience.customers.all', 'Multiplix: enviar para todos os clientes', 'multiplix'), ('multiplix.audience.ad …` | `supabase/migrations/20260926150000_seed_multiplix_audience_permissions.sql` |
-| `whatsapp_connections` | `id, name, phone_number, instance_id, status, created_by, created_at, updated_at` | `( 'e2e0e2e0-0000-4000-a000-e2e000000001', '[E2E] Conexão WhatsApp Teste', '00000000000', 'E2E_FIXTURE', 'connected', '2264678e-17f4-4b4e-b89b-5fc4852bfa86', now(), now() ) ON CONFLICT (id) DO NOTHING` | `supabase/migrations/_foreign/seed-talkx-connection.sql` |
 
 ## Auditoria de consistência (código × schema) — trate como NÃO VERIFICADO
 
@@ -405,10 +404,13 @@
 | tabela | tabela `contact_phones` usada no código não existe nas migrations/types do repo | `supabase/functions/crm-integration/index.ts` |
 | tabela | tabela `contatos` usada no código não existe nas migrations/types do repo | `scripts/ci/inventario-banco.unit.mjs` |
 | tabela | tabela `customers` usada no código não existe nas migrations/types do repo | `supabase/functions/crm-integration/index.ts` |
+| tabela | tabela `dashboard_table` usada no código não existe nas migrations/types do repo | `scripts/ai-context/gerar.unit.mjs` |
 | tabela | tabela `de_outra_feature` usada no código não existe nas migrations/types do repo | `scripts/ci/inventario-rotas.unit.mjs` |
 | tabela | tabela `emails` usada no código não existe nas migrations/types do repo | `scripts/ai-context/gerar.unit.mjs` |
 | tabela | tabela `fantasma` usada no código não existe nas migrations/types do repo | `scripts/ai-context/cenarios.mjs` |
+| tabela | tabela `fixture_table` usada no código não existe nas migrations/types do repo | `scripts/ai-context/gerar.unit.mjs` |
 | tabela | tabela `fotos` usada no código não existe nas migrations/types do repo | `scripts/ci/inventario-rotas.unit.mjs` |
+| tabela | tabela `ghost_table` usada no código não existe nas migrations/types do repo | `scripts/ai-context/gerar.unit.mjs` |
 | tabela | tabela `ignorada` usada no código não existe nas migrations/types do repo | `scripts/ci/gerar-matriz-edge-tabela.unit.mjs` |
 | tabela | tabela `inventado` usada no código não existe nas migrations/types do repo | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |
 | tabela | tabela `mv` usada no código não existe nas migrations/types do repo | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |
@@ -419,6 +421,7 @@
 | tabela | tabela `outra` usada no código não existe nas migrations/types do repo | `scripts/ci/inventario-banco.unit.mjs` |
 | tabela | tabela `payments` usada no código não existe nas migrations/types do repo | `scripts/ai-context/gerar.unit.mjs` |
 | tabela | tabela `product_variants` usada no código não existe nas migrations/types do repo | `supabase/functions/promogifts-catalog/index.ts` |
+| tabela | tabela `runtime_table` usada no código não existe nas migrations/types do repo | `scripts/ai-context/gerar.unit.mjs` |
 | tabela | tabela `shared_nao_conta` usada no código não existe nas migrations/types do repo | `scripts/ci/gerar-matriz-edge-tabela.unit.mjs` |
 | tabela | tabela `so_no_teste` usada no código não existe nas migrations/types do repo | `scripts/ci/inventario-rotas.unit.mjs` |
 | tabela | tabela `so_teste` usada no código não existe nas migrations/types do repo | `scripts/ai-context/cenarios.mjs` |
@@ -427,6 +430,7 @@
 | tabela | tabela `t1` usada no código não existe nas migrations/types do repo | `scripts/ai-context/cenarios.mjs`<br>`scripts/ci/inventario-rotas.unit.mjs` |
 | tabela | tabela `tabela` usada no código não existe nas migrations/types do repo | `scripts/ci/gerar-matriz-edge-tabela.mjs`<br>`scripts/inventario/gerar-banco.mjs`<br>`scripts/inventario/gerar-repo.mjs` |
 | tabela | tabela `tabela_viva` usada no código não existe nas migrations/types do repo | `scripts/ci/check-remocoes-destrutivas.unit.mjs` |
+| tabela | tabela `tools_runtime` usada no código não existe nas migrations/types do repo | `scripts/ai-context/gerar.unit.mjs` |
 | tabela | tabela `tx` usada no código não existe nas migrations/types do repo | `scripts/ai-context/cenarios.mjs` |
 | tabela | tabela `v` usada no código não existe nas migrations/types do repo | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |
 | tabela | tabela `w_novo` usada no código não existe nas migrations/types do repo | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |
@@ -444,25 +448,43 @@
 | rls | `team_message_read_state`: acessada do front (1 arquivo(s)) sem RLS (não encontrado) | `src/hooks/team-chat/useTeamReadState.ts` |
 | rls | `whatsapp_connections_safe`: acessada do front (2 arquivo(s)) sem RLS (não encontrado) | `src/components/omnichannel/OmnichannelManager.tsx`<br>`src/services/evolution.service.ts` |
 | rls | `whisper_messages`: front faz UPDATE mas nenhuma política RLS permite UPDATE → vai falhar/retornar vazio para usuários | `src/components/inbox/WhisperMode.tsx` |
+| edge | edge function `dashboard-edge` invocada mas não existe em supabase/functions/ | `scripts/ai-context/gerar.unit.mjs` |
 | edge | edge function `edge-a` invocada mas não existe em supabase/functions/ | `scripts/ci/inventario-rotas.unit.mjs` |
+| edge | edge function `fixture-edge` invocada mas não existe em supabase/functions/ | `scripts/ai-context/gerar.unit.mjs` |
+| edge | edge function `ghost-edge` invocada mas não existe em supabase/functions/ | `scripts/ai-context/gerar.unit.mjs` |
 | edge | edge function `inexistente` invocada mas não existe em supabase/functions/ | `scripts/ai-context/cenarios.mjs` |
+| edge | edge function `orphan-fn` invocada mas não existe em supabase/functions/ | `scripts/ai-context/gerar.unit.mjs` |
 | edge | edge function `other` invocada mas não existe em supabase/functions/ | `scripts/ai-context/cenarios.mjs` |
+| edge | edge function `runtime-fn` invocada mas não existe em supabase/functions/ | `scripts/ai-context/gerar.unit.mjs` |
+| edge | edge function `runtime-missing` invocada mas não existe em supabase/functions/ | `scripts/ai-context/gerar.unit.mjs` |
+| edge | edge function `tools-edge` invocada mas não existe em supabase/functions/ | `scripts/ai-context/gerar.unit.mjs` |
 | rpc | RPC `anon` chamada mas não definida nas migrations/types | `supabase/tests/admin_unlock_login_autorizacao.sql` |
 | rpc | RPC `authenticated` chamada mas não definida nas migrations/types | `supabase/tests/admin_unlock_login_autorizacao.sql` |
+| rpc | RPC `dashboard_rpc` chamada mas não definida nas migrations/types | `scripts/ai-context/gerar.unit.mjs` |
+| rpc | RPC `demo` chamada mas não definida nas migrations/types | `scripts/supabase_snapshot/test_snapshot.py` |
 | rpc | RPC `f` chamada mas não definida nas migrations/types | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |
+| rpc | RPC `fixture_rpc` chamada mas não definida nas migrations/types | `scripts/ai-context/gerar.unit.mjs` |
 | rpc | RPC `fn` chamada mas não definida nas migrations/types | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs`<br>`scripts/supabase_snapshot/snapshot.py` |
 | rpc | RPC `fn_servico` chamada mas não definida nas migrations/types | `scripts/ci/inventario-rotas.unit.mjs` |
 | rpc | RPC `get_companies_by_phones_batch` chamada mas não definida nas migrations/types | `supabase/functions/crm-integration/index.ts` |
 | rpc | RPC `get_contact_360_by_phone` chamada mas não definida nas migrations/types | `scripts/ci/crm-integration-contract.unit.mjs`<br>`supabase/functions/crm-integration/index.ts` |
 | rpc | RPC `get_search_insights` chamada mas não definida nas migrations/types | `src/hooks/admin/useSearchInsights.ts` |
+| rpc | RPC `ghost_rpc` chamada mas não definida nas migrations/types | `scripts/ai-context/gerar.unit.mjs` |
 | rpc | RPC `log_event` chamada mas não definida nas migrations/types | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |
+| rpc | RPC `multiplix_count_audience` chamada mas não definida nas migrations/types | `supabase/functions/multiplix-audience/index.ts`<br>`supabase/functions/multiplix-dispatch/actions/audience.ts`<br>`tests/contracts/multiplix-audience.contract.test.ts` |
+| rpc | RPC `multiplix_list_ramos` chamada mas não definida nas migrations/types | `supabase/functions/multiplix-audience/index.ts`<br>`tests/contracts/multiplix-audience.contract.test.ts` |
+| rpc | RPC `multiplix_list_ufs` chamada mas não definida nas migrations/types | `supabase/functions/multiplix-audience/index.ts`<br>`tests/contracts/multiplix-audience.contract.test.ts` |
+| rpc | RPC `multiplix_resolve_recipients` chamada mas não definida nas migrations/types | `supabase/functions/multiplix-audience/index.ts`<br>`supabase/functions/multiplix-dispatch/actions/audience.ts`<br>`tests/contracts/multiplix-audience.contract.test.ts` |
+| rpc | RPC `multiplix_search_audience` chamada mas não definida nas migrations/types | `supabase/functions/multiplix-audience/index.ts`<br>`supabase/functions/multiplix-dispatch/actions/audience.ts`<br>`tests/contracts/multiplix-audience.contract.test.ts` |
 | rpc | RPC `nome` chamada mas não definida nas migrations/types | `scripts/supabase_snapshot/snapshot.py` |
 | rpc | RPC `r1` chamada mas não definida nas migrations/types | `scripts/ai-context/cenarios.mjs`<br>`scripts/ci/inventario-rotas.unit.mjs` |
 | rpc | RPC `record_away_message` chamada mas não definida nas migrations/types | `supabase/functions/_shared/evolution-webhook-messages.ts` |
+| rpc | RPC `runtime_rpc` chamada mas não definida nas migrations/types | `scripts/ai-context/gerar.unit.mjs` |
 | rpc | RPC `same_day_rpc` chamada mas não definida nas migrations/types | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |
 | rpc | RPC `should_send_away_message` chamada mas não definida nas migrations/types | `supabase/functions/_shared/evolution-webhook-messages.ts` |
 | rpc | RPC `sync_interaction_from_zapp` chamada mas não definida nas migrations/types | `scripts/ci/crm-integration-contract.unit.mjs`<br>`supabase/functions/crm-integration/index.ts` |
 | rpc | RPC `talkx_campaign_resume_precheck` chamada mas não definida nas migrations/types | `src/hooks/integrations/useTalkXServerResumePrecheck.ts` |
+| rpc | RPC `tools_rpc` chamada mas não definida nas migrations/types | `scripts/ai-context/gerar.unit.mjs` |
 | rpc | RPC `x` chamada mas não definida nas migrations/types | `scripts/inventario/gerar-rotas.mjs` |
 | rpc | RPC `y` chamada mas não definida nas migrations/types | `scripts/db-audit/supabase-usage-guard.mjs` |
 | rpc | RPC `zapp_catalog_stats` chamada mas não definida nas migrations/types | `supabase/functions/promogifts-catalog/index.ts` |
@@ -512,8 +534,6 @@
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `supabase/functions/webauthn/index.test.ts` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `tests/contracts/ai-vision-classifiers-mock.contract.test.ts` |
 | segurança | função `talkx_increment_delivered` é SECURITY DEFINER sem `set search_path` (risco de escalação) | `supabase/migrations/20260911120000_talkx_e87_external_id_delivered.sql` |
-| segurança | função `fn_trg_security_check_media_queue` é SECURITY DEFINER sem `set search_path` (risco de escalação) | `supabase/migrations/_foreign/20260611120000_fix_media_security_file_size.sql` |
-| segurança | função `fn_process_pending_scans` é SECURITY DEFINER sem `set search_path` (risco de escalação) | `supabase/migrations/_foreign/20260611120000_fix_media_security_file_size.sql` |
 | segurança | função `z296_hits` é SECURITY DEFINER sem `set search_path` (risco de escalação) | `supabase/tests/catalog_rate_limit_policy_confiavel.sql` |
 | segurança | função `z296_aplicar_rollback` é SECURITY DEFINER sem `set search_path` (risco de escalação) | `supabase/tests/catalog_rate_limit_policy_confiavel.sql` |
 | segurança | função `zz_prova_secd` é SECURITY DEFINER sem `set search_path` (risco de escalação) | `supabase/tests/security_acl_alerts_monitor.sql` |
@@ -524,6 +544,7 @@
 - `conversation_analyses.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `conversation_tasks.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `csat_surveys.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
+- `email_threads.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `followup_executions.current_step` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `followup_executions.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `messages.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
@@ -575,7 +596,7 @@
 - `whatsapp_connections_public.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `whatsapp_connections_safe.health_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `whatsapp_connections_safe.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- 172/235 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …
+- 175/235 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `ai_conversation_tags`, `calls`, `campaign_contacts`, `chatbot_executions`, `contact_custom_fields`, `contact_notes`, `conversation_analyses`, `conversation_closures`, `conversation_memory`, `conversation_snoozes`, `conversation_tasks`, `csat_surveys` …
 - Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel.
 
 ## Regras manuais presentes

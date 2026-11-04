@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2524,
+ "total": 2530,
  "por_tipo": {
   "contrato": 113,
   "e2e": 71,
-  "pytest": 1,
+  "pytest": 3,
   "qa": 6,
-  "unit": 2243
+  "unit": 2247
  },
  "onde_ficam": [
   {
@@ -24,7 +24,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 155
+   "arquivos": 161
   },
   {
    "padrao": "tests/",
@@ -552,13 +552,13 @@
   {
    "arquivo": "scripts/ai-context/gerar.unit.mjs",
    "tipo": "unit",
-   "linhas": 261,
+   "linhas": 361,
    "testa": [
     "src/components/auth/ProtectedRoute.tsx",
     "src/pages/lazyViews.ts",
     "src/routes/AppRoutes.tsx"
    ],
-   "casos": 13
+   "casos": 18
   },
   {
    "arquivo": "scripts/catalog/validate-plan.test.mjs",
@@ -586,6 +586,13 @@
     "scripts/ci/actions-kpi.mjs"
    ],
    "casos": 12
+  },
+  {
+   "arquivo": "scripts/ci/ai-context-generator.unit.mjs",
+   "tipo": "unit",
+   "linhas": 3,
+   "testa": [],
+   "casos": 0
   },
   {
    "arquivo": "scripts/ci/arquitetura-sem-desperdicio.unit.mjs",
@@ -805,6 +812,13 @@
     "scripts/db-audit/confirm-hash.mjs"
    ],
    "casos": 5
+  },
+  {
+   "arquivo": "scripts/ci/contexto-indice.unit.mjs",
+   "tipo": "unit",
+   "linhas": 135,
+   "testa": [],
+   "casos": 18
   },
   {
    "arquivo": "scripts/ci/crm-integration-contract.unit.mjs",
@@ -1185,6 +1199,13 @@
    "casos": 13
   },
   {
+   "arquivo": "scripts/ci/regras-negocio.unit.mjs",
+   "tipo": "unit",
+   "linhas": 11,
+   "testa": [],
+   "casos": 1
+  },
+  {
    "arquivo": "scripts/ci/replay-migrations-guard.unit.mjs",
    "tipo": "unit",
    "linhas": 75,
@@ -1270,6 +1291,13 @@
    "linhas": 580,
    "testa": [],
    "casos": 42
+  },
+  {
+   "arquivo": "scripts/ci/supabase-snapshot.unit.mjs",
+   "tipo": "unit",
+   "linhas": 19,
+   "testa": [],
+   "casos": 1
   },
   {
    "arquivo": "scripts/ci/supabase-usage-guard-forward-projection.unit.mjs",
@@ -1951,6 +1979,20 @@
    "linhas": 228,
    "testa": [],
    "casos": 8
+  },
+  {
+   "arquivo": "scripts/regras_negocio/test_generate.py",
+   "tipo": "pytest",
+   "linhas": 164,
+   "testa": [],
+   "casos": 0
+  },
+  {
+   "arquivo": "scripts/supabase_snapshot/test_snapshot.py",
+   "tipo": "pytest",
+   "linhas": 822,
+   "testa": [],
+   "casos": 0
   },
   {
    "arquivo": "scripts/talkx/gen-estados.unit.mjs",

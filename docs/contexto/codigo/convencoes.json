@@ -24,7 +24,7 @@
   "testes": [
    "co-localizado (__tests__) (1945)",
    "co-localizado (*.test) (168)",
-   "outro (155)"
+   "outro (161)"
   ],
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
@@ -44,7 +44,7 @@
   "hooks": "use + PascalCase",
   "servicos": "camelCase (76%)",
   "edge_functions": "kebab-case (95%)",
-  "tabelas": "snake_case (91%)"
+  "tabelas": "snake_case (92%)"
  },
  "barrels_index": 70,
  "extensao_componentes": [
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix: corrigir geração e saúde dos contextos automáticos (#2708)",
    "chore(snapshot): footer configurável via SUPABASE_SNAPSHOT_PUBLICACAO (#2704)",
    "chore: adiciona __pycache__/ ao .gitignore",
    "fix(supabase-snapshot): falha em auth.* não derruba a seção db_stats inteira (#2697)",
-   "chore(db): remove payment_links/contact_purchases e special_agent de funções/policy/CHECK (DDL) (#2693)",
-   "fix(ai-context): rodapé do INDEX.md configurável por repo + README da automação (#2696)"
+   "chore(db): remove payment_links/contact_purchases e special_agent de funções/policy/CHECK (DDL) (#2693)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

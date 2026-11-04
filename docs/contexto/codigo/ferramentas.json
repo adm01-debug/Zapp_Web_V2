@@ -7,9 +7,9 @@
    "SQL (1276)",
    "Markdown (1031)",
    "JSON (592)",
-   "JavaScript (351)",
+   "JavaScript (355)",
    "Shell (228)",
-   "Python (115)",
+   "Python (117)",
    "YAML (27)"
   ],
   "linguagem_principal": "TypeScript",
@@ -2790,11 +2790,9 @@
   "rpcs_de_autorizacao": [
    "admin_set_role",
    "can_delete_contacts",
-   "can_edit_contact",
    "consume_gmail_oauth_state",
    "count_searchbox_sessions_this_month",
    "effective_role",
-   "has_role",
    "is_account_locked",
    "is_admin",
    "is_admin_or_supervisor",

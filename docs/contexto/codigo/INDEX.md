@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `da9f551f40daf0bc6c88c24075211201e43a613b` (2026-11-03T19:17:59-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `451373f549d3214beb57ad3728bed9986aba1d32` (2026-11-03T22:30:01-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4173), SQL (1276), Markdown (1031), JSON (592), JavaScript (351), Shell (228), Python (115), YAML (27)
+- linguagens: TypeScript (4173), SQL (1276), Markdown (1031), JSON (592), JavaScript (355), Shell (228), Python (117), YAML (27)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 8134 |
-| arquivos_codigo | 4637 |
-| linhas_codigo | 849749 |
+| arquivos_total | 8140 |
+| arquivos_codigo | 4643 |
+| linhas_codigo | 851177 |
 | rotas | 18 |
 | rotas_http_backend | 12 |
 | vistas_por_id | 55 |
@@ -45,10 +45,10 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | componentes | 885 |
 | hooks | 490 |
 | edge_functions | 85 |
-| tabelas | 226 |
-| migrations | 1109 |
-| cron_jobs | 26 |
-| testes | 2524 |
+| tabelas | 218 |
+| migrations | 1082 |
+| cron_jobs | 25 |
+| testes | 2530 |
 | workflows | 19 |
 | scripts | 374 |
 | docs_md | 1031 |
@@ -58,12 +58,12 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - componentes: src/components (851), src/pages (26), src/features (2)
 - hooks: src/hooks (409), src/components (72), src/contexts (2)
 - servicos_logica: src/lib (143), src/services (17), src/utils (8)
-- testes: co-localizado (__tests__) (1945), co-localizado (*.test) (168), outro (155)
+- testes: co-localizado (__tests__) (1945), co-localizado (*.test) (168), outro (161)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (281), scripts/ci (39), scripts/edge-deploy (16)
 - docs: docs (31), (raiz) (10), .github (1)
-- nomenclatura: {"componentes":"PascalCase (90%)","hooks":"use + PascalCase","servicos":"camelCase (76%)","edge_functions":"kebab-case (95%)","tabelas":"snake_case (91%)"}
+- nomenclatura: {"componentes":"PascalCase (90%)","hooks":"use + PascalCase","servicos":"camelCase (76%)","edge_functions":"kebab-case (95%)","tabelas":"snake_case (92%)"}
 - instruções para agentes no repo: AGENTS.md, CLAUDE.md
 
 ## Módulos (menu → domínio)
@@ -249,47 +249,47 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `ai-enhance-message` — tabelas: -; chamada por 2 arquivo(s) do front
 - `ai-jobs-worker` — tabelas: ai_jobs; chamada por 0 arquivo(s) do front, por SQL/cron
 - `ai-kb-ingest` — tabelas: knowledge_base_articles, knowledge_base_files; chamada por 1 arquivo(s) do front
-- `ai-proxy` — tabelas: ai_providers; chamada por 6 arquivo(s) do front
+- `ai-proxy` — tabelas: ai_providers; chamada por 4 arquivo(s) do front
 - `ai-suggest-reply` — tabelas: contact_custom_fields, contact_notes, contacts; chamada por 1 arquivo(s) do front
 - `ai-transcribe-audio` — tabelas: messages; chamada por 1 arquivo(s) do front
 - `ai-usage-outbox-drain` — tabelas: -; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `approve-password-reset` — tabelas: audit_logs, password_reset_requests; chamada por 2 arquivo(s) do front
-- `auth-login` (verify_jwt=false) — tabelas: profiles; chamada por 3 arquivo(s) do front
+- `auth-login` (verify_jwt=false) — tabelas: profiles; chamada por 1 arquivo(s) do front
 - `auto-close-conversations` — tabelas: auto_close_config, contacts, conversation_closures, messages; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `automation-suggest-reply` — tabelas: messages; chamada por 1 arquivo(s) do front
 - `batch-fetch-avatars` (verify_jwt=false) — tabelas: avatars, contacts, whatsapp_connections; chamada por 2 arquivo(s) do front, por SQL/cron
 - `bitrix-api` — tabelas: contacts; chamada por 2 arquivo(s) do front
 - `chatbot-l1` — tabelas: chatbot_flows, contacts, knowledge_base_articles, messages; chamada por 1 arquivo(s) do front
 - `classify-audio-meme` — tabelas: -; chamada por 2 arquivo(s) do front
-- `classify-emoji` — tabelas: -; chamada por 2 arquivo(s) do front
-- `classify-sticker` — tabelas: -; chamada por 3 arquivo(s) do front
+- `classify-emoji` — tabelas: -; chamada por 1 arquivo(s) do front
+- `classify-sticker` — tabelas: -; chamada por 2 arquivo(s) do front
 - `cleanup-rate-limit-logs` — tabelas: blocked_ips, rate_limit_logs, security_alerts; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `connection-health-check` (verify_jwt=false) — tabelas: audit_logs, connection_alert_preferences, connection_health_logs, global_settings, messages, notifications, profiles, reconnection_logs, talkx_campaigns, user_roles, warroom_alerts, whatsapp_connections; chamada por 3 arquivo(s) do front, por SQL/cron
 - `copilot-live` — tabelas: contacts, copilot_insights, copilot_sessions, profiles; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `create-user` — tabelas: audit_logs, gmail_accounts, profiles, user_roles, user_service_accounts; chamada por 0 arquivo(s) do front — **ÓRFÃ**
-- `crm-integration` (verify_jwt=false) — tabelas: carriers, companies, company_addresses, company_social_media, contact_phones, contacts, conversation_closures, crm_contact_links, crm_sync_outbox, customers, email_messages, email_threads, feature_flags, gmail_accounts, profiles, suppliers; chamada por 3 arquivo(s) do front
+- `crm-integration` (verify_jwt=false) — tabelas: carriers, companies, company_addresses, company_social_media, contact_phones, contacts, conversation_closures, crm_contact_links, crm_sync_outbox, customers, email_messages, email_threads, feature_flags, gmail_accounts, profiles, suppliers; chamada por 1 arquivo(s) do front
 - `csp-report` (verify_jwt=false) — tabelas: -; chamada por 0 arquivo(s) do front
-- `detect-new-device` — tabelas: security_alerts, user_devices, user_sessions; chamada por 2 arquivo(s) do front
+- `detect-new-device` — tabelas: security_alerts, user_devices, user_sessions; chamada por 1 arquivo(s) do front
 - `elevenlabs-agent-token` — tabelas: -; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `elevenlabs-dialogue` — tabelas: -; chamada por 1 arquivo(s) do front
 - `elevenlabs-scribe-token` — tabelas: -; chamada por 2 arquivo(s) do front
 - `elevenlabs-sfx` — tabelas: -; chamada por 1 arquivo(s) do front
-- `elevenlabs-sts` — tabelas: -; chamada por 3 arquivo(s) do front
-- `elevenlabs-tts` — tabelas: -; chamada por 3 arquivo(s) do front
+- `elevenlabs-sts` — tabelas: -; chamada por 1 arquivo(s) do front
+- `elevenlabs-tts` — tabelas: -; chamada por 2 arquivo(s) do front
 - `elevenlabs-tts-stream` — tabelas: -; chamada por 1 arquivo(s) do front
 - `elevenlabs-voice-design` — tabelas: audit_logs; chamada por 1 arquivo(s) do front
 - `elevenlabs-webhook` (verify_jwt=false) — tabelas: audit_logs; chamada por 0 arquivo(s) do front
-- `evolution-api` — tabelas: audit_logs, contacts, global_settings, whatsapp_connections; chamada por 3 arquivo(s) do front
+- `evolution-api` — tabelas: audit_logs, contacts, global_settings, whatsapp_connections; chamada por 2 arquivo(s) do front
 - `evolution-sync` — tabelas: -; chamada por 1 arquivo(s) do front
-- `evolution-webhook` (verify_jwt=false) — tabelas: whatsapp_connections; chamada por 3 arquivo(s) do front
+- `evolution-webhook` (verify_jwt=false) — tabelas: whatsapp_connections; chamada por 1 arquivo(s) do front
 - `external-db-bridge` — tabelas: query_telemetry; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `external-db-proxy` — tabelas: -; chamada por 1 arquivo(s) do front
 - `fetch-link-preview` — tabelas: link_preview_cache; chamada por 0 arquivo(s) do front — **ÓRFÃ**
-- `get-call-recording` — tabelas: calls; chamada por 3 arquivo(s) do front
+- `get-call-recording` — tabelas: calls; chamada por 1 arquivo(s) do front
 - `get-mapbox-token` — tabelas: -; chamada por 1 arquivo(s) do front
-- `get-sip-password` — tabelas: profiles; chamada por 2 arquivo(s) do front
+- `get-sip-password` — tabelas: profiles; chamada por 1 arquivo(s) do front
 - `gmail-cron-sync` (verify_jwt=false) — tabelas: gmail_accounts; chamada por 0 arquivo(s) do front, por SQL/cron
-- `gmail-oauth` — tabelas: audit_logs, gmail_accounts, gmail_oauth_states; chamada por 2 arquivo(s) do front
+- `gmail-oauth` — tabelas: audit_logs, gmail_accounts, gmail_oauth_states; chamada por 1 arquivo(s) do front
 - `gmail-send` — tabelas: email_messages, email_threads, gmail_accounts; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `gmail-sync` — tabelas: email_attachments, email_labels, email_messages, email_threads, gmail_accounts; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `gmail-webhook` (verify_jwt=false) — tabelas: contacts, email_attachments, email_messages, email_threads, gmail_accounts; chamada por 1 arquivo(s) do front
@@ -298,32 +298,32 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `message-delivery` — tabelas: messages, profiles; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `metrics` — tabelas: query_telemetry, rate_limit_logs, webhook_rate_limits; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `migrate-media-storage` — tabelas: audit_logs, messages, whatsapp_connections; chamada por 0 arquivo(s) do front — **ÓRFÃ**
-- `multiplix-audience` — tabelas: profiles; chamada por 2 arquivo(s) do front
-- `multiplix-dispatch` — tabelas: multiplix_audience_members, multiplix_audiences, multiplix_blocks, multiplix_dispatches, multiplix_recipients, profiles; chamada por 3 arquivo(s) do front
+- `multiplix-audience` — tabelas: profiles; chamada por 1 arquivo(s) do front
+- `multiplix-dispatch` — tabelas: multiplix_audience_members, multiplix_audiences, multiplix_blocks, multiplix_dispatches, multiplix_recipients, profiles; chamada por 1 arquivo(s) do front
 - `multiplix-send` — tabelas: multiplix_delivery_items, multiplix_dispatches, multiplix_events, multiplix_voice_assets, profiles, whatsapp_connections; chamada por 1 arquivo(s) do front, por SQL/cron
 - `multiplix-voices` — tabelas: multiplix_voice_assets, multiplix_voice_grants, profiles, user_roles; chamada por 0 arquivo(s) do front — **ÓRFÃ**
-- `promogifts-catalog` — tabelas: categories, product_variants, products, suppliers; chamada por 5 arquivo(s) do front
+- `promogifts-catalog` — tabelas: categories, product_variants, products, suppliers; chamada por 2 arquivo(s) do front
 - `public-api` (verify_jwt=false) — tabelas: -; chamada por 0 arquivo(s) do front
 - `recover-corrupted-audios` — tabelas: messages, whatsapp_connections; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `recover-message-media` — tabelas: messages, whatsapp_connections; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `revoke-auth-sessions` — tabelas: audit_logs; chamada por 3 arquivo(s) do front
 - `searchbox-budget-alert` (verify_jwt=false) — tabelas: searchbox_usage_daily; chamada por 0 arquivo(s) do front, por SQL/cron
-- `send-email` — tabelas: -; chamada por 1 arquivo(s) do front
+- `send-email` — tabelas: -; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `send-rate-limit-alert` — tabelas: blocked_ips, notifications, security_alerts, user_roles; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `send-scheduled-report` — tabelas: agent_stats, contacts, conversation_analyses, conversation_sla, messages, scheduled_reports; chamada por 1 arquivo(s) do front
 - `sentiment-alert` — tabelas: contacts, conversation_analyses, profiles, user_settings; chamada por 1 arquivo(s) do front
 - `status` — tabelas: -; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `sync-call-records` (verify_jwt=false) — tabelas: calls; chamada por 0 arquivo(s) do front
 - `talkx-ai` — tabelas: -; chamada por 0 arquivo(s) do front — **ÓRFÃ**
-- `talkx-link` (verify_jwt=false) — tabelas: talkx_links, talkx_recipients; chamada por 2 arquivo(s) do front
+- `talkx-link` (verify_jwt=false) — tabelas: talkx_links, talkx_recipients; chamada por 1 arquivo(s) do front
 - `talkx-report` — tabelas: profiles, talkx_campaigns, talkx_recipients; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `talkx-scheduler` — tabelas: talkx_campaigns, talkx_settings, whatsapp_connections; chamada por 0 arquivo(s) do front — **ÓRFÃ**
-- `talkx-send` — tabelas: contact_custom_fields, profiles, talkx_campaign_events, talkx_campaigns, talkx_delivery_log, talkx_links, talkx_recipients, talkx_settings, talkx_template_variants, talkx_templates, talkx_test_send_claims, talkx_test_sends, whatsapp_connections; chamada por 4 arquivo(s) do front, por SQL/cron
+- `talkx-send` — tabelas: contact_custom_fields, profiles, talkx_campaign_events, talkx_campaigns, talkx_delivery_log, talkx_links, talkx_recipients, talkx_settings, talkx_template_variants, talkx_templates, talkx_test_send_claims, talkx_test_sends, whatsapp_connections; chamada por 2 arquivo(s) do front, por SQL/cron
 - `talkx-storage-purge` — tabelas: -; chamada por 0 arquivo(s) do front — **ÓRFÃ**
 - `voice-agent` — tabelas: -; chamada por 1 arquivo(s) do front
-- `voice-changer` — tabelas: -; chamada por 7 arquivo(s) do front
+- `voice-changer` — tabelas: -; chamada por 1 arquivo(s) do front
 - `voice-copilot-action` — tabelas: contact_notes, contacts, conversation_analyses, conversation_tasks, messages, profiles, queues, user_roles; chamada por 0 arquivo(s) do front — **ÓRFÃ**
-- `webauthn` — tabelas: audit_logs, passkey_credentials, webauthn_challenges; chamada por 2 arquivo(s) do front
+- `webauthn` — tabelas: audit_logs, passkey_credentials, webauthn_challenges; chamada por 1 arquivo(s) do front
 - `webhook-diagnostic` — tabelas: messages, whatsapp_connections; chamada por 1 arquivo(s) do front
 - `whatsapp-webhook` (verify_jwt=false) — tabelas: channel_connections, messages; chamada por 0 arquivo(s) do front
 
@@ -344,7 +344,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `gmail-incremental-sync` */5 * * * * → edge gmail-cron-sync (20260829110000_gmail_incremental_sync_cron.sql)
 - `login-attempts-retention-90d` 41 4 * * * (20261102012400_login_attempts_retencao_90d.sql)
 - `multiplix-send-trigger` */2 * * * * (20260927320000_multiplix_cron_scheduler.sql)
-- `purge-processed-webhook-events` 30 3 * * * (20260612141500_purge_processed_webhook_events_cron.sql)
 - `purge-qr-attempts` 25 3 * * * (20261015215658_qr_attempts_history.sql)
 - `reconnection-logs-retention-30d` 30 4 * * * (20261012134000_auto_reconnect_logs.sql)
 - `search-events-retention` 10 4 * * * (20261016013134_search_events.sql)
@@ -371,12 +370,12 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - rotas_sem_arquivo: 0
 - componentes_ambiguos: 0
 - menu_sem_destino: 8 — ex.: Enviados -> SENT, Favoritos -> STARRED, Importantes -> IMPORTANT
-- edges_orfas: 25 — ex.: ai-auto-tag, ai-usage-outbox-drain, auto-close-conversations
-- edges_chamadas_sem_pasta: 13 — ex.: ai-contrato, alguma-edge, edge-a
+- edges_orfas: 26 — ex.: ai-auto-tag, ai-usage-outbox-drain, auto-close-conversations
+- edges_chamadas_sem_pasta: 0
 - tabelas_sem_rls: 0
-- tabelas_usadas_sem_definicao: 18 — ex.: a, avatars, bucket
-- tabelas_com_drift_migration_vs_types: 12 — ex.: app_settings, edge_rate_limits, email_attachments
-- rpcs_sem_definicao: 15 — ex.: complete_crm_sync_outbox, f, fn
+- tabelas_usadas_sem_definicao: 10 — ex.: avatars, carriers, categories
+- tabelas_com_drift_migration_vs_types: 7 — ex.: app_settings, edge_rate_limits, feature_flags
+- rpcs_sem_definicao: 14 — ex.: complete_crm_sync_outbox, get_companies_by_phones_batch, get_contact_360_by_phone
 - componentes_orfaos: 45 — ex.: src/components/calls/DialPad.tsx, src/components/cognitive/ProgressiveDisclosure.tsx, src/components/CommandPalette.tsx
 - componentes_com_nome_duplicado: 39 — ex.: AchievementBadge, BreadcrumbItem, CommandGroup
 - scripts_orfaos: 2 — ex.: scripts/db-audit/n118-window-open-proof.test.sql, scripts/db-audit/validate-talkx-runtime.mjs
@@ -385,14 +384,14 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 54387 nós · 110980 arestas · 4116 comunidades · grafo do commit `da9f551f`
-- comunidades maiores: TalkXSuppression.tsx (1087), vitest (840), lucide-react (788), react (736), cn (536), ExternalProductManagement.tsx (531), card.tsx (456), NotesTab.tsx (431), evolution-webhook-messages.ts (402), mediaVolumeStore.ts (394), DashboardView.tsx (379), ref_node_fs (323)
+- 54513 nós · 111358 arestas · 4100 comunidades · grafo do commit `451373f5`
+- comunidades maiores: react (812), framer-motion (705), vitest (672), lucide-react (543), utils.ts (413), cn (407), DashboardView.tsx (376), useMyWorkItems.ts (368), chat.ts (353), TalkXSuppression.tsx (352), @tanstack/react-query (347), react-router-dom (340)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), getCorsHeaders() (supabase/functions/_shared/validation.ts), json() (e2e/fixtures/mapa-mocks.ts), q() (scripts/supabase_snapshot/snapshot.py)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - .github/workflows/ci.yml (22)
-- CLAUDE.md (19)
+- CLAUDE.md (18)
 - src/integrations/supabase/types.ts (17)
 - .github/workflows/db-guard.yml (15)
 - .github/workflows/e2e-logado.yml (15)
@@ -498,7 +497,21 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
-- (nenhum)
+- 2026-11-03 `451373f` fix: corrigir geração e saúde dos contextos automáticos (#2708)
+- 2026-11-03 `da9f551` chore(snapshot): footer configurável via SUPABASE_SNAPSHOT_PUBLICACAO (#2704)
+- 2026-11-03 `9b15c8b` chore: adiciona __pycache__/ ao .gitignore
+- 2026-11-03 `ded01b5` fix(supabase-snapshot): falha em auth.* não derruba a seção db_stats inteira (#2697)
+- 2026-11-03 `bd25801` chore(db): remove payment_links/contact_purchases e special_agent de funções/policy/CHECK (DDL) (#2693)
+- 2026-11-03 `535074c` fix(ai-context): rodapé do INDEX.md configurável por repo + README da automação (#2696)
+- 2026-11-03 `a3fb2a2` chore(db): sincronizar artefatos derivados do banco (#2695)
+- 2026-11-03 `29ae259` feat(lgpd): apagar tentativas de login sem atividade há mais de 90 dias (#2562)
+- 2026-11-03 `1f77f79` chore(auth): remove papel special_agent do front e das edges (decisão 2026-11-03) (#2692)
+- 2026-11-03 `bd4c4bd` chore(crm): remove módulo de pagamentos/compras do front (decisão 2026-11-03) (#2690)
+- 2026-11-03 `7a2e35e` chore(regras): §7 histórico Talk X sem prazo fixo (aplicado); test_sends 90; decisão pendente sobre alerta a atendentes 
+- 2026-11-03 `94d6ca2` chore(db): sincronizar artefatos derivados do banco (#2688)
+- 2026-11-03 `b441a43` chore(db): expurgo Talk X — prazo ≤ 0 vira 1 dia; test_sends volta a 90 (idempotência, não histórico) (#2686)
+- 2026-11-03 `2597588` chore(db): purge_talkx_expired_data — delivery_log segue retention_days_message (sem 30 dias fixos) (#2678)
+- 2026-11-03 `a9aa6cf` fix(ci): deploy-functions bloqueado — teste E57/E58 contava guardas de preflight como escrita de secrets (#2680)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

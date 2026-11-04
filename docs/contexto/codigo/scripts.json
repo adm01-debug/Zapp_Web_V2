@@ -26,7 +26,7 @@
   {
    "arquivo": "scripts/ai-context/gerar.mjs",
    "descricao": "Gera o contexto de projeto para agentes de IA (padrão: inventario/ia/*). Zero dependências. Node >= 18. Genérico: funciona em qualquer repositório.",
-   "linhas": 919,
+   "linhas": 924,
    "env": [
     "AI_CONTEXT_DIR",
     "AI_CONTEXT_PUBLICACAO",
@@ -3859,7 +3859,7 @@
   {
    "arquivo": "scripts/regras_negocio/generate.py",
    "descricao": null,
-   "linhas": 2131,
+   "linhas": 2138,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -3870,7 +3870,7 @@
   {
    "arquivo": "scripts/regras_negocio/indice.py",
    "descricao": null,
-   "linhas": 201,
+   "linhas": 237,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -3890,7 +3890,7 @@
   {
    "arquivo": "scripts/supabase_snapshot/snapshot.py",
    "descricao": "Somente leitura no banco (sessão read-only, statement_timeout, lock_timeout). Nunca grava linhas de tabelas, valores de segredos, chaves, senhas ou DSN.",
-   "linhas": 1597,
+   "linhas": 1723,
    "env": [],
    "npm_scripts": [],
    "workflows": [

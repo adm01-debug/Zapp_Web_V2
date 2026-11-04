@@ -490,9 +490,7 @@
     "src/components/admin/SupervisorCopilot.tsx",
     "src/components/settings/ai-providers/useAIProviders.ts",
     "src/hooks/inbox/useObjectionDetector.ts",
-    "src/hooks/ui/useUniversityHelp.ts",
-    "tests/contracts/ia051-correlacao-no-caminho-sincrono.test.ts",
-    "tests/contracts/requireauth-network-policy.contract.test.ts"
+    "src/hooks/ui/useUniversityHelp.ts"
    ],
    "chamada_por_edges": [
     "talkx-ai"
@@ -663,9 +661,7 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "src/lib/__tests__/serverLogin.test.ts",
-    "src/lib/serverLogin.ts",
-    "tests/contracts/requireauth-network-policy.contract.test.ts"
+    "src/lib/serverLogin.ts"
    ],
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
@@ -901,7 +897,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "scripts/qa/prova-visao-classificadores.unit.mjs",
     "src/hooks/integrations/useCustomEmojis.ts"
    ],
    "chamada_por_edges": [],
@@ -931,7 +926,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "scripts/qa/prova-visao-classificadores.unit.mjs",
     "src/components/inbox/chat/MessageBubble.tsx",
     "src/hooks/sticker-picker/useStickerPicker.ts"
    ],
@@ -1144,8 +1138,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "e2e/email-navy-visual.spec.ts",
-    "e2e/inbox-contact-sidebar.spec.ts",
     "src/lib/crmIntegration.ts"
    ],
    "chamada_por_edges": [],
@@ -1205,7 +1197,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "e2e/navegacao-modulos.spec.ts",
     "src/lib/avisoDispositivo.ts"
    ],
    "chamada_por_edges": [],
@@ -1349,9 +1340,7 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "src/components/inbox/VoiceChanger.tsx",
-    "src/components/inbox/__tests__/VoiceChanger.falhas.test.tsx",
-    "src/components/inbox/__tests__/VoiceChanger.reduced-motion.test.tsx"
+    "src/components/inbox/VoiceChanger.tsx"
    ],
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
@@ -1381,8 +1370,7 @@
    ],
    "chamada_pelo_front": [
     "src/components/inbox/TextToAudioButton.tsx",
-    "src/components/inbox/VoiceSelector.tsx",
-    "src/hooks/communication/__tests__/useTextToSpeech.vozLocal.test.tsx"
+    "src/components/inbox/VoiceSelector.tsx"
    ],
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
@@ -1523,7 +1511,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-provider-control.mjs",
     "src/components/monitoring/MonitoringConnectionsList.tsx",
     "src/hooks/groups/actions.ts"
    ],
@@ -1602,8 +1589,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-final-endpoints.mjs",
-    "scripts/ci/evolution-api-proxy.unit.mjs",
     "src/components/monitoring/hooks/useMonitoringActions.ts"
    ],
    "chamada_por_edges": [
@@ -1725,8 +1710,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "src/components/calls/__tests__/RecordingPlayer.test.tsx",
-    "src/hooks/calls/__tests__/useCallRecording.test.tsx",
     "src/hooks/calls/useCallRecording.ts"
    ],
    "chamada_por_edges": [],
@@ -1779,7 +1762,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "e2e/navegacao-modulos.spec.ts",
     "src/lib/calls/sipProvisioning.ts"
    ],
    "chamada_por_edges": [],
@@ -1848,7 +1830,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "e2e/navegacao-modulos.spec.ts",
     "src/hooks/integrations/useGmailOAuth.ts"
    ],
    "chamada_por_edges": [],
@@ -2144,7 +2125,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "e2e/navegacao-modulos.spec.ts",
     "src/hooks/integrations/useMultiplixAudience.ts"
    ],
    "chamada_por_edges": [],
@@ -2192,9 +2172,7 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "src/hooks/integrations/useMultiplixDispatches.ts",
-    "tests/contracts/multiplix-dispatch-audience-saved.contract.test.ts",
-    "tests/contracts/requireauth-network-policy.contract.test.ts"
+    "src/hooks/integrations/useMultiplixDispatches.ts"
    ],
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
@@ -2327,15 +2305,10 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "e2e/ct94-ui-429.spec.ts",
-    "e2e/navegacao-modulos.spec.ts",
     "src/hooks/integrations/useCatalogQuickSearch.ts",
-    "src/hooks/integrations/useExternalCatalog.ts",
-    "src/test/guardaDeRede.test.ts"
+    "src/hooks/integrations/useExternalCatalog.ts"
    ],
-   "chamada_por_edges": [
-    "voice-copilot-action"
-   ],
+   "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": false,
    "testes": 3
@@ -2512,12 +2485,10 @@
     "schemas.ts",
     "validation.ts"
    ],
-   "chamada_pelo_front": [
-    "scripts/ai-context/gerar.unit.mjs"
-   ],
+   "chamada_pelo_front": [],
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
-   "orfa": false,
+   "orfa": true,
    "testes": 1
   },
   {
@@ -2749,7 +2720,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "src/components/talkx/__tests__/TalkXLinksManager.test.tsx",
     "src/hooks/integrations/useTalkXLinks.ts"
    ],
    "chamada_por_edges": [
@@ -2902,8 +2872,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "e2e/talkx-launch.spec.ts",
-    "src/hooks/integrations/__tests__/useTalkXTemplates.testTemplate.host.test.tsx",
     "src/hooks/integrations/useTalkX.ts",
     "src/hooks/integrations/useTalkXTemplates.ts"
    ],
@@ -2985,13 +2953,7 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "src/components/inbox/VoiceChangerPicker.tsx",
-    "src/components/inbox/__tests__/VoiceChangerPicker.cancelamento-teto.test.tsx",
-    "src/components/inbox/__tests__/VoiceChangerPicker.falhas.test.tsx",
-    "src/components/inbox/__tests__/VoiceChangerPicker.preview-send.test.tsx",
-    "src/components/inbox/__tests__/VoiceChangerPicker.reduced-motion.test.tsx",
-    "src/components/inbox/__tests__/VoiceChangerPicker.voz-temporaria.test.tsx",
-    "src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts"
+    "src/components/inbox/VoiceChangerPicker.tsx"
    ],
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
@@ -3059,7 +3021,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "docs/reconciliation/reaudit/2026-10-03/probes/auth/source-probes.cjs",
     "src/hooks/auth/useWebAuthn.ts"
    ],
    "chamada_por_edges": [],
@@ -3147,19 +3108,5 @@
    "testes": 1
   }
  ],
- "chamadas_sem_pasta": [
-  "ai-contrato",
-  "alguma-edge",
-  "edge-a",
-  "edge-por-url",
-  "endpoint-novo",
-  "foo",
-  "inexistente",
-  "other",
-  "outra-funcao",
-  "so-mostrada",
-  "test",
-  "tick",
-  "x"
- ]
+ "chamadas_sem_pasta": []
 }

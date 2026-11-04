@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `da9f551f40` · branch `main` · 2026-11-03 22:19 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `451373f549` · branch `main` · 2026-11-04 01:31 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -143,6 +143,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `saved_filters` | Users can insert own saved filters | INSERT | authenticated | permissive |  | `user_id = auth.uid()` |
 | `saved_filters` | Users can update own saved filters | UPDATE | authenticated | permissive | `user_id = auth.uid()` |  |
 | `saved_filters` | Users can delete own saved filters | DELETE | authenticated | permissive | `user_id = auth.uid()` |  |
+| `whatsapp_connection_queues` | Authenticated can view connection queues | SELECT | authenticated | permissive | `true` |  |
 | `agent_skills` | Admins can manage skills | ALL | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `queue_skill_requirements` | Authenticated can view queue skills | SELECT | authenticated | permissive | `true` |  |
 | `queue_skill_requirements` | Admins can manage queue skills | ALL | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
@@ -399,6 +400,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `channel_connections` | Admins full access to channels | ALL | authenticated | permissive | `has_role(auth.uid(), 'admin')` | `has_role(auth.uid(), 'admin')` |
 | `password_reset_requests` | Admins can update reset requests without token access | UPDATE | authenticated | permissive | `has_role(auth.uid(), 'admin')` | `has_role(auth.uid(), 'admin')` |
 | `password_reset_requests` | Admins can delete password reset requests | DELETE | authenticated | permissive | `public.has_role(auth.uid(), 'admin')` |  |
+| `gmail_accounts` | Users can view their own gmail accounts | SELECT | authenticated | permissive | `user_id = auth.uid()` |  |
 | `message_reactions` | Users can view reactions on accessible messages | SELECT | authenticated | permissive | `message_id IN ( SELECT m.id FROM messages m WHERE m.contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN ( SELECT p.id FROM profiles p WHERE p.user_id = auth.uid() ) OR c.assigned_to IS NULL ) ) OR is_admin_or_supervisor(auth.uid())` |  |
 | `storage.objects` | Admins can delete team chat files | DELETE | authenticated | permissive | `((bucket_id = 'team-chat-files'::text) AND is_admin_or_supervisor(auth.uid()))` |  |
 | `storage.objects` | Anyone can view stickers | SELECT | authenticated | permissive | `(bucket_id = 'stickers'::text)` |  |
@@ -417,9 +419,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `storage.objects` | Users can upload assigned audio messages | INSERT | authenticated | permissive |  | `((bucket_id = 'audio-messages'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] IN ( SELECT (c.id)::text AS id FROM contacts c WHERE (c.assigned_to IN (SELECT p.id FROM profiles p WHERE (p.user_id = auth.uid()))) )) OR ((storage.foldername(name))[1] = (auth.uid())::te …` |
 | `storage.objects` | Users can upload assigned whatsapp media | INSERT | authenticated | permissive |  | `((bucket_id = 'whatsapp-media'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] IN ( SELECT (c.id)::text AS id FROM contacts c WHERE (c.assigned_to IN (SELECT p.id FROM profiles p WHERE (p.user_id = auth.uid()))) )) OR ((storage.foldername(name))[1] = (auth.uid())::te …` |
 | `audio_meme_favorites` | Users manage own meme favorites | ALL | authenticated | permissive | `user_id = auth.uid()` | `user_id = auth.uid()` |
-| `link_preview_cache_metrics` | Admins/supervisors can read metrics | SELECT | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
-| `link_preview_cache_metrics` | service_role inserts cache metrics | INSERT | service_role | permissive |  | `true` |
-| … +285 linhas — lista completa em `context.json` | | | | | | |
+| … +268 linhas — lista completa em `context.json` | | | | | | |
 
 ## C. Restrições de dados (obrigatório / único / default / CHECK / FK / calculada)
 
@@ -542,14 +542,16 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `email_threads` | `gmail_account_id` | obrigatório; FK → gmail_accounts.id ON DELETE CASCADE |
 | `email_threads` | `gmail_thread_id` | obrigatório |
 | `email_threads` | `contact_id` | FK → contacts.id ON DELETE SET NULL |
+| `email_threads` | `subject` | default '' |
+| `email_threads` | `snippet` | default '' |
 | `email_threads` | `label_ids` | default '{}' |
 | `email_threads` | `message_count` | default 0 |
 | `email_threads` | `is_unread` | default true |
 | `email_threads` | `is_starred` | default false |
 | `email_threads` | `is_important` | default false |
-| `email_threads` | `assigned_to` | FK → profiles.id ON DELETE SET NULL |
-| `email_threads` | `status` | default 'open'; CHECK status IN ('open', 'pending', 'resolved', 'archived') |
-| `email_threads` | `priority` | default 'medium'; CHECK priority IN ('high', 'medium', 'low') |
+| `email_threads` | `last_message_at` | default now() |
+| `email_threads` | `status` | default 'open' |
+| `email_threads` | `priority` | default 'medium' |
 | `email_threads` | `tags` | default '{}' |
 | `email_threads` | `created_at` | default now() |
 | `email_threads` | `updated_at` | default now() |
@@ -681,35 +683,40 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `email_labels` | `gmail_account_id` | obrigatório; FK → gmail_accounts.id ON DELETE CASCADE |
 | `email_labels` | `gmail_label_id` | obrigatório |
 | `email_labels` | `name` | obrigatório |
-| `email_labels` | `label_type` | default 'user'; CHECK label_type IN ('system', 'user') |
+| `email_labels` | `label_type` | default 'user' |
 | `email_labels` | `message_count` | default 0 |
 | `email_labels` | `unread_count` | default 0 |
 | `email_labels` | `created_at` | default now() |
 | `email_labels` | `(tabela)` | UNIQUE(gmail_account_id, gmail_label_id) |
 | `email_messages` | `id` | PK; default gen_random_uuid() |
 | `email_messages` | `thread_id` | obrigatório; FK → email_threads.id ON DELETE CASCADE |
-| `email_messages` | `gmail_message_id` | obrigatório; único |
+| `email_messages` | `gmail_message_id` | obrigatório |
 | `email_messages` | `gmail_account_id` | obrigatório; FK → gmail_accounts.id ON DELETE CASCADE |
-| `email_messages` | `from_address` | obrigatório |
+| `email_messages` | `from_address` | default '' |
 | `email_messages` | `to_addresses` | default '{}' |
 | `email_messages` | `cc_addresses` | default '{}' |
 | `email_messages` | `bcc_addresses` | default '{}' |
+| `email_messages` | `subject` | default '' |
+| `email_messages` | `body_text` | default '' |
+| `email_messages` | `body_html` | default '' |
+| `email_messages` | `snippet` | default '' |
 | `email_messages` | `label_ids` | default '{}' |
 | `email_messages` | `is_read` | default false |
 | `email_messages` | `is_starred` | default false |
 | `email_messages` | `has_attachments` | default false |
-| `email_messages` | `direction` | default 'inbound'; CHECK direction IN ('inbound', 'outbound') |
-| `email_messages` | `zapp_message_id` | FK → messages.id ON DELETE SET NULL |
+| `email_messages` | `internal_date` | default now() |
+| `email_messages` | `direction` | default 'inbound' |
 | `email_messages` | `created_at` | default now() |
+| `email_messages` | `(tabela)` | UNIQUE(gmail_account_id, gmail_message_id) |
+| `email_messages` | `(tabela)` | constraint email_messages_from_format CHECK ( from_address ~* '^[^@\s]+@[^@\s]+\.[^@\s]+$' ) |
+| `email_messages` | `(tabela)` | constraint email_messages_direction_check CHECK ( direction IN ('inbound', 'outbound') ) |
 | `entity_versions` | `id` | PK; default gen_random_uuid() |
 | `entity_versions` | `entity_type` | obrigatório |
 | `entity_versions` | `entity_id` | obrigatório |
 | `entity_versions` | `version_number` | obrigatório |
 | `entity_versions` | `data` | default '{}'::jsonb |
-| `entity_versions` | `changed_by` | FK → users.id |
-| `entity_versions` | `changed_at` | default NOW() |
-| `entity_versions` | `created_at` | obrigatório |
-| `entity_versions` | `(tabela)` | CONSTRAINT unique_entity_version UNIQUE (entity_type, entity_id, version_number) |
+| `entity_versions` | `created_at` | default now() |
+| `entity_versions` | `(tabela)` | UNIQUE(entity_type, entity_id, version_number) |
 | `gmail_accounts` | `id` | PK; default gen_random_uuid() |
 | `gmail_accounts` | `created_at` | obrigatório |
 | `gmail_accounts` | `email_address` | obrigatório |
@@ -718,14 +725,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `gmail_accounts` | `sync_status` | obrigatório |
 | `gmail_accounts` | `updated_at` | obrigatório |
 | `saved_filters` | `id` | PK; default gen_random_uuid() |
-| `saved_filters` | `user_id` | obrigatório; FK → users.id ON DELETE CASCADE |
-| `saved_filters` | `entity_type` | obrigatório |
-| `saved_filters` | `name` | obrigatório |
-| `saved_filters` | `filters` | default '{}'::jsonb |
-| `saved_filters` | `is_default` | default false |
-| `saved_filters` | `created_at` | default NOW() |
-| `saved_filters` | `updated_at` | default NOW() |
-| … +1345 linhas — lista completa em `context.json` | | |
+| … +1354 linhas — lista completa em `context.json` | | |
 
 ## D. Automações no banco (triggers e funções — regras que rodam sozinhas)
 
@@ -882,10 +882,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | enforce_saved_filters_inbox_limite_trigger | BEFORE INSERT OR UPDATE | `saved_filters` | `enforce_saved_filters_inbox_limite` |  |
 | team_reactions_force_conversation_id_trig | BEFORE INSERT OR UPDATE | `team_message_reactions` | `team_reactions_force_conversation_id` |  |
 | trg_copilot_sessions_updated_at | BEFORE UPDATE | `copilot_sessions` | `copilot_sessions_updated_at` |  |
-| trigger_saved_filters_updated_at | BEFORE UPDATE | `saved_filters` | `update_saved_filters_updated_at` |  |
-| trigger_single_default_filter | BEFORE INSERT OR UPDATE OF IS_DEFAULT | `saved_filters` | `ensure_single_default_filter` | `NEW.is_default = true` |
-| trigger_gmail_accounts_updated_at | BEFORE UPDATE | `gmail_accounts` | `update_gmail_updated_at` |  |
-| trigger_email_threads_updated_at | BEFORE UPDATE | `email_threads` | `update_gmail_updated_at` |  |
 | update_queues_updated_at | BEFORE UPDATE | `queues` | `update_updated_at_column` |  |
 | update_rate_limit_configs_updated_at | BEFORE UPDATE | `rate_limit_configs` | `update_updated_at_column` |  |
 | update_messages_updated_at | BEFORE UPDATE | `messages` | `update_updated_at_column` |  |
@@ -1196,7 +1192,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `duplicate_talkx_campaign` | authentication_required | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
 | `duplicate_talkx_campaign` | active_profile_not_found | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
 | `duplicate_talkx_campaign` | talkx_campaign_role_required | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
-| … +650 linhas — lista completa em `context.json` | | |
+| … +646 linhas — lista completa em `context.json` | | |
 
 ## E. Estados, máquinas de estado e transições
 
@@ -1211,7 +1207,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `conversation_analyses` | `status` | **livre (sem enum/CHECK)** | `pendente` |
 | `conversation_tasks` | `status` | **livre (sem enum/CHECK)** |  |
 | `csat_surveys` | `status` | **livre (sem enum/CHECK)** |  |
-| `email_threads` | `status` | `archived`, `open`, `pending`, `resolved` | `open` |
+| `email_threads` | `status` | **livre (sem enum/CHECK)** | `open` |
 | `followup_executions` | `current_step` | **livre (sem enum/CHECK)** | `0` |
 | `followup_executions` | `status` | **livre (sem enum/CHECK)** | `pending` |
 | `messages` | `status` | **livre (sem enum/CHECK)** |  |
@@ -1614,7 +1610,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `status` | `checking` | compara, escreve | `src/components/auth/ProtectedRoute.tsx`<br>`src/hooks/system/useSupabaseConnectivity.ts`<br>`src/pages/TwoFactorAuth.tsx` |
 | `status` | `completed` | compara, escreve, filtra | `src/components/admin/TrainingMode.tsx`<br>`src/components/chatbot/ChatbotExecutionsDashboard.tsx`<br>`src/components/knowledge/KnowledgeBaseView.tsx`<br>`src/components/multiplix/MultiplixMonitor.tsx`<br>`src/components/talkx/TalkXLiveMonitor.tsx`<br>… +8 |
 | `status` | `completed_with_failures` | compara | `src/components/multiplix/MultiplixMonitor.tsx` |
-| `status` | `connected` | compara, escreve, filtra | `src/components/connections/ConnectionCard.tsx`<br>`src/components/connections/ConnectionsView.tsx`<br>`src/components/dashboard/systemHealth.ts`<br>`src/components/diagnostics/ConnectionHealthPanel.tsx`<br>`src/components/diagnostics/DiagnosticsView.tsx`<br>… +36 |
+| `status` | `connected` | compara, escreve, filtra | `src/components/connections/ConnectionCard.tsx`<br>`src/components/connections/ConnectionsView.tsx`<br>`src/components/dashboard/systemHealth.ts`<br>`src/components/diagnostics/ConnectionHealthPanel.tsx`<br>`src/components/diagnostics/DiagnosticsView.tsx`<br>… +35 |
 | `status` | `connecting` | compara, escreve | `src/components/calls/CallDialog.tsx`<br>`src/components/calls/NewCallPanel.tsx`<br>`src/components/connections/ConnectionCard.tsx`<br>`src/components/diagnostics/DiagnosticsView.tsx`<br>`src/components/inbox/RealtimeTranscription.tsx`<br>… +6 |
 | `status` | `critical` | compara | `src/components/performance/PerformanceMonitor.tsx` |
 | `status` | `declined` | compara, escreve | `src/lib/calls/WhatsAppCallAdapter.ts`<br>`src/lib/calls/callStatus.ts` |
@@ -4048,7 +4044,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `count(*) FILTER (WHERE replied_at >= v_now - interval '20 minutes'` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `count(*) FILTER (WHERE sent_at < v_now - interval '10 minutes' AND delivered_at IS NOT NULL),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `count(*) FILTER (WHERE sent_at < v_now - interval '10 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
-| … +77 linhas — lista completa em `context.json` | |
+| … +64 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 
@@ -4489,7 +4485,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | ${rotulo}: ${ultimo.message} | `scripts/db-audit/multiplix-audience-parity.mjs` |
 | Management API HTTP ${res.status}: ${texto.slice(0, 300)} | `scripts/db-audit/multiplix-audience-parity.mjs` |
 | PostgREST HTTP ${res.status}: ${texto.slice(0, 300)} | `scripts/db-audit/multiplix-audience-parity.mjs` |
-| … +1489 linhas — lista completa em `context.json` | |
+| … +1497 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -5363,4 +5359,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | A regra de nome tecnico continua sendo a `isTechnicalFilename` da consulta de midias. | `src/components/inbox/tabs/fileDisplay.ts` |
 | * Componente de APRESENTAÇÃO: não consulta banco nem Supabase, não guarda dado de negócio e não | `src/components/inbox/tabs/journey/JourneyFilters.tsx` |
 | 2) * (1 - ponto.count / maximo), | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
-| … +1647 linhas — lista completa em `context.json` | |
+| … +1645 linhas — lista completa em `context.json` | |

@@ -2869,8 +2869,13 @@
    "arquivo": "scripts/ai-context/gerar.unit.mjs",
    "tabelas": [
     "contacts",
+    "dashboard_table",
     "emails",
-    "payments"
+    "fixture_table",
+    "ghost_table",
+    "payments",
+    "runtime_table",
+    "tools_runtime"
    ],
    "env": [
     "DB_URL",

@@ -2,12 +2,138 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "da9f551f40daf0bc6c88c24075211201e43a613b",
+  "commit": "451373f549d3214beb57ad3728bed9986aba1d32",
   "branch": "main",
-  "data_commit": "2026-11-03T19:17:59-03:00",
+  "data_commit": "2026-11-03T22:30:01-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "ultimos_commits": [],
-  "arquivos_mudados_7d": 1418,
+  "ultimos_commits": [
+   {
+    "sha": "451373f",
+    "data": "2026-11-03",
+    "assunto": "fix: corrigir geração e saúde dos contextos automáticos (#2708)"
+   },
+   {
+    "sha": "da9f551",
+    "data": "2026-11-03",
+    "assunto": "chore(snapshot): footer configurável via SUPABASE_SNAPSHOT_PUBLICACAO (#2704)"
+   },
+   {
+    "sha": "9b15c8b",
+    "data": "2026-11-03",
+    "assunto": "chore: adiciona __pycache__/ ao .gitignore"
+   },
+   {
+    "sha": "ded01b5",
+    "data": "2026-11-03",
+    "assunto": "fix(supabase-snapshot): falha em auth.* não derruba a seção db_stats inteira (#2697)"
+   },
+   {
+    "sha": "bd25801",
+    "data": "2026-11-03",
+    "assunto": "chore(db): remove payment_links/contact_purchases e special_agent de funções/policy/CHECK (DDL) (#2693)"
+   },
+   {
+    "sha": "535074c",
+    "data": "2026-11-03",
+    "assunto": "fix(ai-context): rodapé do INDEX.md configurável por repo + README da automação (#2696)"
+   },
+   {
+    "sha": "a3fb2a2",
+    "data": "2026-11-03",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#2695)"
+   },
+   {
+    "sha": "29ae259",
+    "data": "2026-11-03",
+    "assunto": "feat(lgpd): apagar tentativas de login sem atividade há mais de 90 dias (#2562)"
+   },
+   {
+    "sha": "1f77f79",
+    "data": "2026-11-03",
+    "assunto": "chore(auth): remove papel special_agent do front e das edges (decisão 2026-11-03) (#2692)"
+   },
+   {
+    "sha": "bd4c4bd",
+    "data": "2026-11-03",
+    "assunto": "chore(crm): remove módulo de pagamentos/compras do front (decisão 2026-11-03) (#2690)"
+   },
+   {
+    "sha": "7a2e35e",
+    "data": "2026-11-03",
+    "assunto": "chore(regras): §7 histórico Talk X sem prazo fixo (aplicado); test_sends 90; decisão pendente sobre alerta a atendentes "
+   },
+   {
+    "sha": "94d6ca2",
+    "data": "2026-11-03",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#2688)"
+   },
+   {
+    "sha": "b441a43",
+    "data": "2026-11-03",
+    "assunto": "chore(db): expurgo Talk X — prazo ≤ 0 vira 1 dia; test_sends volta a 90 (idempotência, não histórico) (#2686)"
+   },
+   {
+    "sha": "2597588",
+    "data": "2026-11-03",
+    "assunto": "chore(db): purge_talkx_expired_data — delivery_log segue retention_days_message (sem 30 dias fixos) (#2678)"
+   },
+   {
+    "sha": "a9aa6cf",
+    "data": "2026-11-03",
+    "assunto": "fix(ci): deploy-functions bloqueado — teste E57/E58 contava guardas de preflight como escrita de secrets (#2680)"
+   },
+   {
+    "sha": "c1c25d3",
+    "data": "2026-11-03",
+    "assunto": "fix: check-workflow-pins.mjs (W88) também valida o pin do shellcheck (#2659)"
+   },
+   {
+    "sha": "1616721",
+    "data": "2026-11-03",
+    "assunto": "chore(regras): §4.2 — envio com WhatsApp caído falha (não há fila offline); estado pós #2677 (#2679)"
+   },
+   {
+    "sha": "031d5e5",
+    "data": "2026-11-03",
+    "assunto": "feat(conexao): regra dos três níveis — aviso na caixa, alerta obrigatório admin/supervisor, QR só admin (#2677)"
+   },
+   {
+    "sha": "f3c9b5d",
+    "data": "2026-11-03",
+    "assunto": "chore(contexto): regras manuais — pagamentos, single-tenant, perfis, retenção/LGPD, SLA (#2674)"
+   },
+   {
+    "sha": "1c0f516",
+    "data": "2026-11-03",
+    "assunto": "chore(contexto): regras manuais de campanhas Talk X (#2673)"
+   },
+   {
+    "sha": "639a500",
+    "data": "2026-11-03",
+    "assunto": "chore(contexto): regras manuais de conversas e conexão WhatsApp (#2672)"
+   },
+   {
+    "sha": "8f2d06a",
+    "data": "2026-11-03",
+    "assunto": "fix(contexto): regras/ ignora constantes, prazos e erros vindos de arquivos de teste (#2667)"
+   },
+   {
+    "sha": "803055f",
+    "data": "2026-11-03",
+    "assunto": "fix(contexto): índice lê a data do snapshot pelo CHANGELOG/git quando não há manifest datado (#2666)"
+   },
+   {
+    "sha": "1061a91",
+    "data": "2026-11-03",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#2669)"
+   },
+   {
+    "sha": "d96e1e7",
+    "data": "2026-11-03",
+    "assunto": "⬆️ ci: Bump the actions-misc group with 2 updates (#2620)"
+   }
+  ],
+  "arquivos_mudados_7d": 1260,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -77,7 +203,7 @@
    },
    {
     "arquivo": "CLAUDE.md",
-    "mudancas": 19
+    "mudancas": 18
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
@@ -192,9 +318,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 8134,
-  "arquivos_codigo": 4637,
-  "linhas_codigo": 849749,
+  "arquivos_total": 8140,
+  "arquivos_codigo": 4643,
+  "linhas_codigo": 851177,
   "rotas": 18,
   "rotas_http_backend": 12,
   "vistas_por_id": 55,
@@ -203,10 +329,10 @@
   "componentes": 885,
   "hooks": 490,
   "edge_functions": 85,
-  "tabelas": 226,
-  "migrations": 1109,
-  "cron_jobs": 26,
-  "testes": 2524,
+  "tabelas": 218,
+  "migrations": 1082,
+  "cron_jobs": 25,
+  "testes": 2530,
   "workflows": 19,
   "scripts": 374,
   "docs_md": 1031
@@ -470,15 +596,15 @@
   },
   "scripts/ai-context": {
    "arquivos": 3,
-   "linhas": 1353
+   "linhas": 1458
   },
   "scripts/catalog": {
    "arquivos": 2,
    "linhas": 228
   },
   "scripts/ci": {
-   "arquivos": 149,
-   "linhas": 28392
+   "arquivos": 153,
+   "linhas": 28560
   },
   "scripts/db-audit": {
    "arquivos": 79,
@@ -521,12 +647,12 @@
    "linhas": 1591
   },
   "scripts/regras_negocio": {
-   "arquivos": 2,
-   "linhas": 2332
+   "arquivos": 3,
+   "linhas": 2539
   },
   "scripts/supabase_snapshot": {
-   "arquivos": 1,
-   "linhas": 1597
+   "arquivos": 2,
+   "linhas": 2545
   },
   "scripts/talkx": {
    "arquivos": 6,
@@ -672,11 +798,11 @@
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
-   "linhas": 2131
+   "linhas": 2138
   },
   {
    "arquivo": "scripts/supabase_snapshot/snapshot.py",
-   "linhas": 1597
+   "linhas": 1723
   },
   {
    "arquivo": "supabase/functions/talkx-send/index.ts",
@@ -764,7 +890,7 @@
   },
   {
    "arquivo": "scripts/ai-context/gerar.mjs",
-   "linhas": 919
+   "linhas": 924
   }
  ],
  "qualidade": {
@@ -1048,7 +1174,7 @@
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
-   "linha": 565,
+   "linha": 570,
    "tipo": "TODO",
    "texto": "\", \"http\", \"import\")) and \"://\" not in c:"
   }
@@ -1085,6 +1211,7 @@
    "multiplix-voices",
    "recover-corrupted-audios",
    "recover-message-media",
+   "send-email",
    "send-rate-limit-alert",
    "status",
    "talkx-ai",
@@ -1093,26 +1220,10 @@
    "talkx-storage-purge",
    "voice-copilot-action"
   ],
-  "edges_chamadas_sem_pasta": [
-   "ai-contrato",
-   "alguma-edge",
-   "edge-a",
-   "edge-por-url",
-   "endpoint-novo",
-   "foo",
-   "inexistente",
-   "other",
-   "outra-funcao",
-   "so-mostrada",
-   "test",
-   "tick",
-   "x"
-  ],
+  "edges_chamadas_sem_pasta": [],
   "tabelas_sem_rls": [],
   "tabelas_usadas_sem_definicao": [
-   "a",
    "avatars",
-   "bucket",
    "carriers",
    "categories",
    "companies",
@@ -1120,41 +1231,29 @@
    "company_social_media",
    "contact_phones",
    "customers",
-   "fantasma",
    "product_variants",
-   "so_teste",
-   "suppliers",
-   "t",
-   "t1",
-   "tabela",
-   "tx"
+   "suppliers"
   ],
   "tabelas_com_drift_migration_vs_types": [
    "app_settings",
    "edge_rate_limits",
-   "email_attachments",
-   "email_messages",
-   "entity_versions",
    "feature_flags",
    "global_settings",
-   "gmail_accounts",
-   "messages",
    "talkx_blacklist",
    "talkx_contact_attributes",
    "talkx_settings"
   ],
   "rpcs_sem_definicao": [
    "complete_crm_sync_outbox",
-   "f",
-   "fn",
-   "fn_servico",
    "get_companies_by_phones_batch",
    "get_contact_360_by_phone",
-   "log_event",
-   "r1",
+   "multiplix_count_audience",
+   "multiplix_list_ramos",
+   "multiplix_list_ufs",
+   "multiplix_resolve_recipients",
+   "multiplix_search_audience",
    "record_away_message",
    "record_incoming_call_event",
-   "same_day_rpc",
    "should_send_away_message",
    "sync_interaction_from_zapp",
    "talkx_campaign_resume_precheck",

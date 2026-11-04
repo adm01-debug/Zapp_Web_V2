@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1109,
+ "migrations": 1082,
  "seeds": [
   "e2e/fixtures/seed-talk-me.sql",
   "e2e/fixtures/seed-talkx-segment.sql",
@@ -130,7 +130,6 @@
   "add_agent_xp",
   "add_contact_tag",
   "add_wa_tag_if_not_exists",
-  "admin_criar_usuario_painel",
   "admin_cron_jobs_permitidos",
   "admin_inbox_silence",
   "admin_list_cron_jobs",
@@ -239,7 +238,6 @@
   "duplicate_talkx_campaign",
   "e2e_cleanup",
   "e2e_cleanup_conversation_closures",
-  "e2e_fixture_message",
   "edit_message",
   "effective_role",
   "encrypt_gmail_token",
@@ -270,11 +268,8 @@
   "fn_capture_csat_replies",
   "fn_list_audio_meme_categories",
   "fn_list_audio_memes_for_user",
-  "fn_process_pending_scans",
-  "fn_purge_processed_webhook_events",
   "fn_send_audio_meme",
   "fn_toggle_user_meme_favorite",
-  "fn_trg_security_check_media_queue",
   "get_ai_jobs_cron_secret",
   "get_avatars_refresh_cron_secret",
   "get_channel_credentials",
@@ -386,15 +381,9 @@
   "multiplix_bump_version_on_dispatch_edit",
   "multiplix_confirm_dispatch",
   "multiplix_connection_daily_usage",
-  "multiplix_count_audience",
   "multiplix_create_draft",
   "multiplix_dispatch_window_is_open",
-  "multiplix_list_ramos",
-  "multiplix_list_ufs",
   "multiplix_materialize_legacy_queue",
-  "multiplix_resolve_recipients",
-  "multiplix_search_audience",
-  "multiplix_validate_scope_signature",
   "my_active_sessions",
   "my_calls_kpi",
   "my_network_status",
@@ -604,9 +593,7 @@
   "update_agent_streak",
   "update_device_last_seen",
   "update_global_settings_updated_at",
-  "update_gmail_updated_at",
   "update_own_profile",
-  "update_saved_filters_updated_at",
   "update_talkx_campaign_limits",
   "update_talkx_template_with_snapshot",
   "update_updated_at_column",
@@ -993,13 +980,6 @@
    "funcao": "update_updated_at_column"
   },
   {
-   "nome": "trigger_email_threads_updated_at",
-   "quando": "before",
-   "evento": "update",
-   "tabela": "email_threads",
-   "funcao": "update_gmail_updated_at"
-  },
-  {
    "nome": "update_email_threads_updated_at",
    "quando": "before",
    "evento": "update",
@@ -1026,13 +1006,6 @@
    "evento": "update",
    "tabela": "global_settings",
    "funcao": "update_global_settings_updated_at"
-  },
-  {
-   "nome": "trigger_gmail_accounts_updated_at",
-   "quando": "before",
-   "evento": "update",
-   "tabela": "gmail_accounts",
-   "funcao": "update_gmail_updated_at"
   },
   {
    "nome": "update_gmail_accounts_updated_at",
@@ -1374,20 +1347,6 @@
    "nome": "ensure_single_default_filter_trigger",
    "quando": "before",
    "evento": "insert or update",
-   "tabela": "saved_filters",
-   "funcao": "ensure_single_default_filter"
-  },
-  {
-   "nome": "trigger_saved_filters_updated_at",
-   "quando": "before",
-   "evento": "update",
-   "tabela": "saved_filters",
-   "funcao": "update_saved_filters_updated_at"
-  },
-  {
-   "nome": "trigger_single_default_filter",
-   "quando": "before",
-   "evento": "insert or update of is_default",
    "tabela": "saved_filters",
    "funcao": "ensure_single_default_filter"
   },
@@ -1855,11 +1814,6 @@
    "migration": "20260927320000_multiplix_cron_scheduler.sql"
   },
   {
-   "nome": "purge-processed-webhook-events",
-   "agenda": "30 3 * * *",
-   "migration": "20260612141500_purge_processed_webhook_events_cron.sql"
-  },
-  {
    "nome": "purge-qr-attempts",
    "agenda": "25 3 * * *",
    "migration": "20261015215658_qr_attempts_history.sql"
@@ -1936,11 +1890,6 @@
    "nome": "custom-emojis",
    "criado_em_sql": true,
    "usado_em": 1
-  },
-  {
-   "nome": "email-attachments",
-   "criado_em_sql": true,
-   "usado_em": 0
   },
   {
    "nome": "multiplix-voice",
@@ -3782,25 +3731,6 @@
    "sem_rls": false,
    "nao_usada": false
   },
-  "app_notifications": {
-   "colunas": {},
-   "rls": false,
-   "policies": [],
-   "indices": [
-    {
-     "nome": "idx_app_notifications_created_at",
-     "colunas": "created_at DESC",
-     "unico": false
-    }
-   ],
-   "fks": [],
-   "criada_em": null,
-   "usada_no_front": 0,
-   "usada_em_edges": [],
-   "triggers": [],
-   "sem_rls": false,
-   "nao_usada": true
-  },
   "app_settings": {
    "colunas": {
     "updated_at": {
@@ -4154,11 +4084,6 @@
     {
      "nome": "idx_audit_logs_created_at",
      "colunas": "created_at DESC",
-     "unico": false
-    },
-    {
-     "nome": "idx_audit_logs_user_action_created",
-     "colunas": "user_id, action, created_at",
      "unico": false
     },
     {
@@ -9555,25 +9480,6 @@
    "sem_rls": false,
    "nao_usada": false
   },
-  "conversations": {
-   "colunas": {},
-   "rls": false,
-   "policies": [],
-   "indices": [
-    {
-     "nome": "idx_conversations_contact_id",
-     "colunas": "contact_id",
-     "unico": false
-    }
-   ],
-   "fks": [],
-   "criada_em": null,
-   "usada_no_front": 0,
-   "usada_em_edges": [],
-   "triggers": [],
-   "sem_rls": false,
-   "nao_usada": true
-  },
   "copilot_conversation_scores": {
    "colunas": {
     "conversation_id": {
@@ -12159,14 +12065,14 @@
     },
     "filename": {
      "tipo": "text",
-     "nn": true,
+     "nn": false,
      "pk": false,
      "default": null,
      "ref": null
     },
     "gmail_attachment_id": {
      "tipo": "text",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": null,
      "ref": null
@@ -12186,14 +12092,7 @@
      "ref": null
     },
     "size_bytes": {
-     "tipo": "integer",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "storage_path": {
-     "tipo": "text",
+     "tipo": "bigint",
      "nn": false,
      "pk": false,
      "default": null,
@@ -12202,18 +12101,6 @@
    },
    "rls": true,
    "policies": [
-    {
-     "nome": "email_attachments_manage_via_messages",
-     "comando": "all",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
-     "nome": "email_attachments_select_via_messages",
-     "comando": "select",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
     {
      "nome": "service_role inserts email attachments",
      "comando": "insert",
@@ -12237,11 +12124,6 @@
      "nome": "idx_email_attachments_email_message_id",
      "colunas": "email_message_id",
      "unico": false
-    },
-    {
-     "nome": "idx_email_attachments_message",
-     "colunas": "email_message_id",
-     "unico": false
     }
    ],
    "fks": [
@@ -12258,9 +12140,7 @@
     "size_bytes": "number | null"
    },
    "drift": {
-    "so_na_migration": [
-     "storage_path"
-    ],
+    "so_na_migration": [],
     "so_no_types": []
    },
    "usada_no_front": 2,
@@ -12305,21 +12185,21 @@
     },
     "id": {
      "tipo": "uuid",
-     "nn": false,
+     "nn": true,
      "pk": true,
      "default": "gen_random_uuid()",
      "ref": null
     },
     "label_type": {
      "tipo": "text",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "'user'",
      "ref": null
     },
     "message_count": {
      "tipo": "integer",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "0",
      "ref": null
@@ -12333,7 +12213,7 @@
     },
     "unread_count": {
      "tipo": "integer",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "0",
      "ref": null
@@ -12348,30 +12228,13 @@
      "tipo": "permissive"
     },
     {
-     "nome": "Users can manage their email labels",
-     "comando": "all",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
      "nome": "Users can view labels of own accounts",
-     "comando": "select",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
-     "nome": "Users can view their email labels",
      "comando": "select",
      "para": "authenticated",
      "tipo": "permissive"
     }
    ],
    "indices": [
-    {
-     "nome": "idx_email_labels_account",
-     "colunas": "gmail_account_id",
-     "unico": false
-    },
     {
      "nome": "idx_email_labels_gmail_account_id",
      "colunas": "gmail_account_id",
@@ -12410,28 +12273,28 @@
    "colunas": {
     "bcc_addresses": {
      "tipo": "text[]",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "'{}'",
      "ref": null
     },
     "body_html": {
      "tipo": "text",
-     "nn": false,
+     "nn": true,
      "pk": false,
-     "default": null,
+     "default": "''",
      "ref": null
     },
     "body_text": {
      "tipo": "text",
-     "nn": false,
+     "nn": true,
      "pk": false,
-     "default": null,
+     "default": "''",
      "ref": null
     },
     "cc_addresses": {
      "tipo": "text[]",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "'{}'",
      "ref": null
@@ -12454,7 +12317,7 @@
      "tipo": "text",
      "nn": true,
      "pk": false,
-     "default": null,
+     "default": "''",
      "ref": null
     },
     "from_name": {
@@ -12480,14 +12343,14 @@
     },
     "has_attachments": {
      "tipo": "boolean",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "false",
      "ref": null
     },
     "id": {
      "tipo": "uuid",
-     "nn": false,
+     "nn": true,
      "pk": true,
      "default": "gen_random_uuid()",
      "ref": null
@@ -12501,28 +12364,28 @@
     },
     "internal_date": {
      "tipo": "timestamptz",
-     "nn": false,
+     "nn": true,
      "pk": false,
-     "default": null,
+     "default": "now()",
      "ref": null
     },
     "is_read": {
      "tipo": "boolean",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "false",
      "ref": null
     },
     "is_starred": {
      "tipo": "boolean",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "false",
      "ref": null
     },
     "label_ids": {
      "tipo": "text[]",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "'{}'",
      "ref": null
@@ -12550,16 +12413,16 @@
     },
     "snippet": {
      "tipo": "text",
-     "nn": false,
+     "nn": true,
      "pk": false,
-     "default": null,
+     "default": "''",
      "ref": null
     },
     "subject": {
      "tipo": "text",
-     "nn": false,
+     "nn": true,
      "pk": false,
-     "default": null,
+     "default": "''",
      "ref": null
     },
     "thread_id": {
@@ -12571,33 +12434,14 @@
     },
     "to_addresses": {
      "tipo": "text[]",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "'{}'",
      "ref": null
-    },
-    "zapp_message_id": {
-     "tipo": "uuid",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": "messages"
     }
    },
    "rls": true,
    "policies": [
-    {
-     "nome": "email_messages_manage_own",
-     "comando": "all",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
-     "nome": "email_messages_select_own",
-     "comando": "select",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
     {
      "nome": "Users can update messages of own accounts",
      "comando": "update",
@@ -12618,33 +12462,13 @@
      "unico": false
     },
     {
-     "nome": "idx_email_messages_account",
-     "colunas": "gmail_account_id",
-     "unico": false
-    },
-    {
      "nome": "idx_email_messages_date",
      "colunas": "internal_date DESC",
      "unico": false
     },
     {
-     "nome": "idx_email_messages_from",
-     "colunas": "from_address",
-     "unico": false
-    },
-    {
      "nome": "idx_email_messages_gmail_account_id",
      "colunas": "gmail_account_id",
-     "unico": false
-    },
-    {
-     "nome": "idx_email_messages_gmail_id",
-     "colunas": "gmail_message_id",
-     "unico": false
-    },
-    {
-     "nome": "idx_email_messages_thread",
-     "colunas": "thread_id",
      "unico": false
     },
     {
@@ -12660,8 +12484,7 @@
    ],
    "fks": [
     "gmail_account_id->gmail_accounts",
-    "thread_id->email_threads",
-    "zapp_message_id->messages"
+    "thread_id->email_threads"
    ],
    "criada_em": "20260403105341_f342fbf7-d1d3-48b1-83b0-03df78b6c590.sql",
    "colunas_types": {
@@ -12691,9 +12514,7 @@
     "to_addresses": "string[]"
    },
    "drift": {
-    "so_na_migration": [
-     "zapp_message_id"
-    ],
+    "so_na_migration": [],
     "so_no_types": []
    },
    "usada_no_front": 4,
@@ -12829,7 +12650,7 @@
      "nn": false,
      "pk": false,
      "default": null,
-     "ref": "profiles"
+     "ref": null
     },
     "contact_id": {
      "tipo": "uuid",
@@ -12861,35 +12682,35 @@
     },
     "id": {
      "tipo": "uuid",
-     "nn": false,
+     "nn": true,
      "pk": true,
      "default": "gen_random_uuid()",
      "ref": null
     },
     "is_important": {
      "tipo": "boolean",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "false",
      "ref": null
     },
     "is_starred": {
      "tipo": "boolean",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "false",
      "ref": null
     },
     "is_unread": {
      "tipo": "boolean",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "true",
      "ref": null
     },
     "label_ids": {
      "tipo": "text[]",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "'{}'",
      "ref": null
@@ -12910,49 +12731,49 @@
     },
     "last_message_at": {
      "tipo": "timestamptz",
-     "nn": false,
+     "nn": true,
      "pk": false,
-     "default": null,
+     "default": "now()",
      "ref": null
     },
     "message_count": {
      "tipo": "integer",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "0",
      "ref": null
     },
     "priority": {
      "tipo": "text",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "'medium'",
      "ref": null
     },
     "snippet": {
      "tipo": "text",
-     "nn": false,
+     "nn": true,
      "pk": false,
-     "default": null,
+     "default": "''",
      "ref": null
     },
     "status": {
      "tipo": "text",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "'open'",
      "ref": null
     },
     "subject": {
      "tipo": "text",
-     "nn": false,
+     "nn": true,
      "pk": false,
-     "default": null,
+     "default": "''",
      "ref": null
     },
     "tags": {
      "tipo": "text[]",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "'{}'",
      "ref": null
@@ -12967,18 +12788,6 @@
    },
    "rls": true,
    "policies": [
-    {
-     "nome": "email_threads_manage_own",
-     "comando": "all",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
-     "nome": "email_threads_select_own_or_assigned",
-     "comando": "select",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
     {
      "nome": "Users can delete threads of own accounts",
      "comando": "delete",
@@ -13000,11 +12809,6 @@
    ],
    "indices": [
     {
-     "nome": "idx_email_threads_account",
-     "colunas": "gmail_account_id",
-     "unico": false
-    },
-    {
      "nome": "idx_email_threads_account_date",
      "colunas": "gmail_account_id, last_message_at DESC",
      "unico": false
@@ -13020,23 +12824,12 @@
      "unico": false
     },
     {
-     "nome": "idx_email_threads_gmail_thread",
-     "colunas": "gmail_thread_id",
-     "unico": false
-    },
-    {
      "nome": "idx_email_threads_last_message",
      "colunas": "last_message_at DESC",
-     "unico": false
-    },
-    {
-     "nome": "idx_email_threads_status",
-     "colunas": "status",
      "unico": false
     }
    ],
    "fks": [
-    "assigned_to->profiles",
     "contact_id->contacts",
     "gmail_account_id->gmail_accounts"
    ],
@@ -13076,30 +12869,10 @@
     "gmail-webhook"
    ],
    "triggers": [
-    "trigger_email_threads_updated_at",
     "update_email_threads_updated_at"
    ],
    "sem_rls": false,
    "nao_usada": false
-  },
-  "empresas": {
-   "colunas": {},
-   "rls": false,
-   "policies": [],
-   "indices": [
-    {
-     "nome": "idx_empresas_created_at",
-     "colunas": "created_at DESC NULLS LAST",
-     "unico": false
-    }
-   ],
-   "fks": [],
-   "criada_em": null,
-   "usada_no_front": 0,
-   "usada_em_edges": [],
-   "triggers": [],
-   "sem_rls": false,
-   "nao_usada": true
   },
   "entity_versions": {
    "colunas": {
@@ -13110,19 +12883,12 @@
      "default": null,
      "ref": null
     },
-    "changed_at": {
-     "tipo": "timestamptz",
-     "nn": true,
-     "pk": false,
-     "default": "NOW()",
-     "ref": null
-    },
     "changed_by": {
      "tipo": "uuid",
      "nn": false,
      "pk": false,
      "default": null,
-     "ref": "auth"
+     "ref": null
     },
     "created_at": {
      "tipo": "timestamptz",
@@ -13160,7 +12926,7 @@
      "ref": null
     },
     "version_number": {
-     "tipo": "int",
+     "tipo": "integer",
      "nn": true,
      "pk": false,
      "default": null,
@@ -13180,35 +12946,16 @@
      "comando": "insert",
      "para": "authenticated",
      "tipo": "permissive"
-    },
-    {
-     "nome": "entity_versions_insert_own",
-     "comando": "insert",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
-     "nome": "entity_versions_select_own_org",
-     "comando": "select",
-     "para": "authenticated",
-     "tipo": "permissive"
     }
    ],
    "indices": [
     {
      "nome": "idx_versions_date",
-     "colunas": "changed_at DESC",
-     "unico": false
-    },
-    {
-     "nome": "idx_versions_entity",
-     "colunas": "entity_type, entity_id",
+     "colunas": "created_at DESC",
      "unico": false
     }
    ],
-   "fks": [
-    "changed_by->auth"
-   ],
+   "fks": [],
    "criada_em": "20260315172343_620fdf49-ed46-4dd2-a33e-d1cd4bd89870.sql",
    "colunas_types": {
     "change_summary": "string | null",
@@ -13221,73 +12968,9 @@
     "version_number": "number"
    },
    "drift": {
-    "so_na_migration": [
-     "changed_at"
-    ],
+    "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 0,
-   "usada_em_edges": [],
-   "triggers": [],
-   "sem_rls": false,
-   "nao_usada": true
-  },
-  "evolution_contacts": {
-   "colunas": {},
-   "rls": false,
-   "policies": [],
-   "indices": [
-    {
-     "nome": "idx_evo_contacts_instance_active",
-     "colunas": "instance_name, last_message_at DESC",
-     "unico": false
-    }
-   ],
-   "fks": [],
-   "criada_em": null,
-   "usada_no_front": 0,
-   "usada_em_edges": [],
-   "triggers": [],
-   "sem_rls": false,
-   "nao_usada": true
-  },
-  "evolution_conversations": {
-   "colunas": {},
-   "rls": false,
-   "policies": [],
-   "indices": [
-    {
-     "nome": "idx_evolution_conversations_contact_id",
-     "colunas": "contact_id",
-     "unico": false
-    },
-    {
-     "nome": "idx_evolution_conversations_status_assigned",
-     "colunas": "status, assigned_to",
-     "unico": false
-    }
-   ],
-   "fks": [],
-   "criada_em": null,
-   "usada_no_front": 0,
-   "usada_em_edges": [],
-   "triggers": [],
-   "sem_rls": false,
-   "nao_usada": true
-  },
-  "evolution_messages_wpp2": {
-   "colunas": {},
-   "rls": false,
-   "policies": [],
-   "indices": [
-    {
-     "nome": "idx_evo_msgs_wpp2_updated_at",
-     "colunas": "updated_at DESC NULLS LAST",
-     "unico": false
-    }
-   ],
-   "fks": [],
-   "criada_em": null,
    "usada_no_front": 0,
    "usada_em_edges": [],
    "triggers": [],
@@ -14042,13 +13725,6 @@
   },
   "gmail_accounts": {
    "colunas": {
-    "access_token": {
-     "tipo": "text",
-     "nn": true,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
     "access_token_encrypted": {
      "tipo": "bytea",
      "nn": false,
@@ -14086,14 +13762,14 @@
     },
     "id": {
      "tipo": "uuid",
-     "nn": false,
+     "nn": true,
      "pk": true,
      "default": "gen_random_uuid()",
      "ref": null
     },
     "is_active": {
      "tipo": "boolean",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "true",
      "ref": null
@@ -14119,20 +13795,6 @@
      "default": null,
      "ref": null
     },
-    "profile_id": {
-     "tipo": "uuid",
-     "nn": true,
-     "pk": false,
-     "default": null,
-     "ref": "profiles"
-    },
-    "refresh_token": {
-     "tipo": "text",
-     "nn": true,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
     "refresh_token_encrypted": {
      "tipo": "bytea",
      "nn": false,
@@ -14140,23 +13802,16 @@
      "default": null,
      "ref": null
     },
-    "scopes": {
-     "tipo": "text[]",
-     "nn": false,
-     "pk": false,
-     "default": "'{}'",
-     "ref": null
-    },
     "sync_status": {
      "tipo": "text",
-     "nn": false,
+     "nn": true,
      "pk": false,
      "default": "'pending'",
      "ref": null
     },
     "token_expires_at": {
      "tipo": "timestamptz",
-     "nn": true,
+     "nn": false,
      "pk": false,
      "default": null,
      "ref": null
@@ -14204,12 +13859,6 @@
      "tipo": "restrictive"
     },
     {
-     "nome": "Users can manage their own gmail accounts",
-     "comando": "all",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
      "nome": "Users can view their own gmail accounts",
      "comando": "select",
      "para": "authenticated",
@@ -14218,23 +13867,12 @@
    ],
    "indices": [
     {
-     "nome": "idx_gmail_accounts_email",
-     "colunas": "email_address",
-     "unico": false
-    },
-    {
-     "nome": "idx_gmail_accounts_profile",
-     "colunas": "profile_id",
-     "unico": false
-    },
-    {
      "nome": "idx_gmail_accounts_user_id",
      "colunas": "user_id",
      "unico": false
     }
    ],
    "fks": [
-    "profile_id->profiles",
     "user_id->auth"
    ],
    "criada_em": "20260403105341_f342fbf7-d1d3-48b1-83b0-03df78b6c590.sql",
@@ -14257,12 +13895,7 @@
     "watch_expiration": "string | null"
    },
    "drift": {
-    "so_na_migration": [
-     "profile_id",
-     "access_token",
-     "refresh_token",
-     "scopes"
-    ],
+    "so_na_migration": [],
     "so_no_types": []
    },
    "usada_no_front": 0,
@@ -14277,7 +13910,6 @@
     "gmail-webhook"
    ],
    "triggers": [
-    "trigger_gmail_accounts_updated_at",
     "update_gmail_accounts_updated_at"
    ],
    "sem_rls": false,
@@ -14612,25 +14244,6 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 0,
-   "usada_em_edges": [],
-   "triggers": [],
-   "sem_rls": false,
-   "nao_usada": true
-  },
-  "instance_processing_pauses": {
-   "colunas": {},
-   "rls": false,
-   "policies": [],
-   "indices": [
-    {
-     "nome": "idx_inst_pause_active",
-     "colunas": "instance_name, paused_until",
-     "unico": false
-    }
-   ],
-   "fks": [],
-   "criada_em": null,
    "usada_no_front": 0,
    "usada_em_edges": [],
    "triggers": [],
@@ -15994,48 +15607,6 @@
      "default": null,
      "ref": null
     },
-    "email_cc": {
-     "tipo": "text[]",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "email_from": {
-     "tipo": "text",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "email_html_body": {
-     "tipo": "text",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "email_subject": {
-     "tipo": "text",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
-    "email_thread_id": {
-     "tipo": "uuid",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": "email_threads"
-    },
-    "email_to": {
-     "tipo": "text[]",
-     "nn": false,
-     "pk": false,
-     "default": null,
-     "ref": null
-    },
     "external_id": {
      "tipo": "text",
      "nn": false,
@@ -16362,7 +15933,6 @@
     "audio_meme_id->audio_memes",
     "channel_connection_id->channel_connections",
     "contact_id->contacts",
-    "email_thread_id->email_threads",
     "reply_to_id->messages",
     "whatsapp_connection_id->whatsapp_connections",
     "whatsapp_group_id->whatsapp_groups"
@@ -16412,14 +15982,7 @@
     "whatsapp_group_id": "string | null"
    },
    "drift": {
-    "so_na_migration": [
-     "email_subject",
-     "email_from",
-     "email_to",
-     "email_cc",
-     "email_html_body",
-     "email_thread_id"
-    ],
+    "so_na_migration": [],
     "so_no_types": []
    },
    "usada_no_front": 44,
@@ -18949,30 +18512,6 @@
    ],
    "fks": [],
    "criada_em": "20260903135434_create_ops_hermes_change_log.sql",
-   "usada_no_front": 0,
-   "usada_em_edges": [],
-   "triggers": [],
-   "sem_rls": false,
-   "nao_usada": true
-  },
-  "outbound_message_queue": {
-   "colunas": {},
-   "rls": false,
-   "policies": [],
-   "indices": [
-    {
-     "nome": "idx_outbound_queue_audio_meme_id",
-     "colunas": "audio_meme_id",
-     "unico": false
-    },
-    {
-     "nome": "idx_outbound_queue_status_created",
-     "colunas": "status, created_at DESC",
-     "unico": false
-    }
-   ],
-   "fks": [],
-   "criada_em": null,
    "usada_no_front": 0,
    "usada_em_edges": [],
    "triggers": [],
@@ -22040,7 +21579,7 @@
      "tipo": "timestamptz",
      "nn": true,
      "pk": false,
-     "default": "NOW()",
+     "default": "now()",
      "ref": null
     },
     "entity_type": {
@@ -22066,7 +21605,7 @@
     },
     "is_default": {
      "tipo": "boolean",
-     "nn": true,
+     "nn": false,
      "pk": false,
      "default": "false",
      "ref": null
@@ -22089,7 +21628,7 @@
      "tipo": "timestamptz",
      "nn": true,
      "pk": false,
-     "default": "NOW()",
+     "default": "now()",
      "ref": null
     },
     "user_id": {
@@ -22097,27 +21636,15 @@
      "nn": true,
      "pk": false,
      "default": null,
-     "ref": "auth"
+     "ref": null
     }
    },
    "rls": true,
    "policies": [
     {
-     "nome": "Users can delete own filters",
-     "comando": "delete",
-     "para": "public",
-     "tipo": "permissive"
-    },
-    {
      "nome": "Users can delete own saved filters",
      "comando": "delete",
      "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
-     "nome": "Users can insert own filters",
-     "comando": "insert",
-     "para": "public",
      "tipo": "permissive"
     },
     {
@@ -22127,21 +21654,9 @@
      "tipo": "permissive"
     },
     {
-     "nome": "Users can update own filters",
-     "comando": "update",
-     "para": "public",
-     "tipo": "permissive"
-    },
-    {
      "nome": "Users can update own saved filters",
      "comando": "update",
      "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
-     "nome": "Users can view own filters",
-     "comando": "select",
-     "para": "public",
      "tipo": "permissive"
     },
     {
@@ -22159,23 +21674,8 @@
    ],
    "indices": [
     {
-     "nome": "idx_saved_filters_default",
-     "colunas": "user_id, entity_type, is_default",
-     "unico": false
-    },
-    {
-     "nome": "idx_saved_filters_entity_type",
-     "colunas": "entity_type",
-     "unico": false
-    },
-    {
      "nome": "idx_saved_filters_user_entity",
      "colunas": "user_id, entity_type",
-     "unico": false
-    },
-    {
-     "nome": "idx_saved_filters_user_id",
-     "colunas": "user_id",
      "unico": false
     },
     {
@@ -22208,8 +21708,6 @@
    "triggers": [
     "enforce_saved_filters_inbox_limite_trigger",
     "ensure_single_default_filter_trigger",
-    "trigger_saved_filters_updated_at",
-    "trigger_single_default_filter",
     "update_saved_filters_updated_at"
    ],
    "sem_rls": false,
@@ -23979,7 +23477,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 6,
+   "usada_no_front": 5,
    "usada_em_edges": [
     "_shared"
    ],
@@ -24029,18 +23527,6 @@
     },
     {
      "nome": "Auth upload voice changer tmp owned",
-     "comando": "insert",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
-     "nome": "Authenticated users can read email attachments",
-     "comando": "select",
-     "para": "authenticated",
-     "tipo": "permissive"
-    },
-    {
-     "nome": "Authenticated users can upload email attachments",
      "comando": "insert",
      "para": "authenticated",
      "tipo": "permissive"
@@ -30980,7 +30466,7 @@
      "tipo": "permissive"
     },
     {
-     "nome": "whatsapp_connection_queues_select_org",
+     "nome": "Authenticated can view connection queues",
      "comando": "select",
      "para": "authenticated",
      "tipo": "permissive"
@@ -31918,9 +31404,7 @@
   }
  },
  "tabelas_usadas_no_codigo_sem_definicao": [
-  "a",
   "avatars",
-  "bucket",
   "carriers",
   "categories",
   "companies",
@@ -31928,14 +31412,8 @@
   "company_social_media",
   "contact_phones",
   "customers",
-  "fantasma",
   "product_variants",
-  "so_teste",
-  "suppliers",
-  "t",
-  "t1",
-  "tabela",
-  "tx"
+  "suppliers"
  ],
  "rpcs_usadas_no_codigo": [
   {
@@ -32000,11 +31478,6 @@
   },
   {
    "nome": "can_delete_contacts",
-   "definida": true,
-   "usada_em": 1
-  },
-  {
-   "nome": "can_edit_contact",
    "definida": true,
    "usada_em": 1
   },
@@ -32194,11 +31667,6 @@
    "usada_em": 1
   },
   {
-   "nome": "f",
-   "definida": false,
-   "usada_em": 1
-  },
-  {
    "nome": "fail_crm_sync_outbox",
    "definida": true,
    "usada_em": 1
@@ -32219,11 +31687,6 @@
    "usada_em": 1
   },
   {
-   "nome": "fn",
-   "definida": false,
-   "usada_em": 1
-  },
-  {
    "nome": "fn_list_audio_memes_for_user",
    "definida": true,
    "usada_em": 1
@@ -32231,11 +31694,6 @@
   {
    "nome": "fn_send_audio_meme",
    "definida": true,
-   "usada_em": 1
-  },
-  {
-   "nome": "fn_servico",
-   "definida": false,
    "usada_em": 1
   },
   {
@@ -32266,7 +31724,7 @@
   {
    "nome": "get_contact_360_by_phone",
    "definida": false,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "get_conversation_tab_counts",
@@ -32344,11 +31802,6 @@
    "usada_em": 1
   },
   {
-   "nome": "has_role",
-   "definida": true,
-   "usada_em": 2
-  },
-  {
    "nome": "heartbeat_ai_job",
    "definida": true,
    "usada_em": 1
@@ -32381,12 +31834,12 @@
   {
    "nome": "is_admin",
    "definida": true,
-   "usada_em": 6
+   "usada_em": 4
   },
   {
    "nome": "is_admin_or_supervisor",
    "definida": true,
-   "usada_em": 26
+   "usada_em": 25
   },
   {
    "nome": "is_contact_visible_to_user",
@@ -32401,7 +31854,7 @@
   {
    "nome": "kick_talkx_campaign",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "link_email_crm_contact_guarded",
@@ -32417,11 +31870,6 @@
    "nome": "log_audit_event",
    "definida": true,
    "usada_em": 2
-  },
-  {
-   "nome": "log_event",
-   "definida": false,
-   "usada_em": 1
   },
   {
    "nome": "log_login_block",
@@ -32475,8 +31923,8 @@
   },
   {
    "nome": "multiplix_count_audience",
-   "definida": true,
-   "usada_em": 3
+   "definida": false,
+   "usada_em": 2
   },
   {
    "nome": "multiplix_create_draft",
@@ -32485,13 +31933,13 @@
   },
   {
    "nome": "multiplix_list_ramos",
-   "definida": true,
-   "usada_em": 2
+   "definida": false,
+   "usada_em": 1
   },
   {
    "nome": "multiplix_list_ufs",
-   "definida": true,
-   "usada_em": 2
+   "definida": false,
+   "usada_em": 1
   },
   {
    "nome": "multiplix_materialize_legacy_queue",
@@ -32500,13 +31948,13 @@
   },
   {
    "nome": "multiplix_resolve_recipients",
-   "definida": true,
-   "usada_em": 3
+   "definida": false,
+   "usada_em": 2
   },
   {
    "nome": "multiplix_search_audience",
-   "definida": true,
-   "usada_em": 3
+   "definida": false,
+   "usada_em": 2
   },
   {
    "nome": "my_calls_kpi",
@@ -32521,7 +31969,7 @@
   {
    "nome": "persist_conversation_analysis",
    "definida": true,
-   "usada_em": 4
+   "usada_em": 2
   },
   {
    "nome": "persist_multiplix_item_message_snapshot",
@@ -32531,7 +31979,7 @@
   {
    "nome": "persist_sentiment_alert",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "persist_talkx_recipient_message_snapshot",
@@ -32542,11 +31990,6 @@
    "nome": "purge_gmail_account_data",
    "definida": true,
    "usada_em": 1
-  },
-  {
-   "nome": "r1",
-   "definida": false,
-   "usada_em": 2
   },
   {
    "nome": "reap_ai_jobs",
@@ -32656,12 +32099,12 @@
   {
    "nome": "reorder_multiplix_blocks",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "replace_ai_conversation_tags",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "reschedule_multiplix_item",
@@ -32694,14 +32137,9 @@
    "usada_em": 2
   },
   {
-   "nome": "same_day_rpc",
-   "definida": false,
-   "usada_em": 1
-  },
-  {
    "nome": "search_contacts",
    "definida": true,
-   "usada_em": 3
+   "usada_em": 1
   },
   {
    "nome": "search_email_threads",
@@ -32711,7 +32149,7 @@
   {
    "nome": "search_knowledge_base",
    "definida": true,
-   "usada_em": 5
+   "usada_em": 4
   },
   {
    "nome": "search_my_calls",
@@ -32771,7 +32209,7 @@
   {
    "nome": "sync_interaction_from_zapp",
    "definida": false,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "talk_me_claim",
@@ -32916,12 +32354,12 @@
   {
    "nome": "user_has_permission",
    "definida": true,
-   "usada_em": 12
+   "usada_em": 10
   },
   {
    "nome": "warroom_agent_today",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "warroom_queue_stats",
